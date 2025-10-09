@@ -668,9 +668,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 					}
 					if (this.paused.get(assignment.partition) && this.topic === assignment.topic) {
 						// if the partition was paused, we need to pause it again
-						consumer.pause([
-							{ topic: assignment.topic, partition: assignment.partition },
-						]);
+						consumer.pause([{ topic: assignment.topic, partition: assignment.partition }]);
 						// ensure that we continue reading from the paused offset
 						if (
 							this.pausedOffsets.has(assignment.partition) &&
@@ -786,17 +784,9 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		try {
 			if (err.code === this.kafka.CODES.ERRORS.ERR__ASSIGN_PARTITIONS) {
 				topicPartitions.forEach((tp) => this.assignedPartitions.add(tp.partition));
-				this.emit(
-					"coop.rebalance.assign",
-					this.convertPartitions(topicPartitions),
-					err.code,
-				);
+				this.emit("coop.rebalance.assign", this.convertPartitions(topicPartitions), err.code);
 			} else if (err.code === this.kafka.CODES.ERRORS.ERR__REVOKE_PARTITIONS) {
-				this.emit(
-					"coop.rebalance.revoke",
-					this.convertPartitions(topicPartitions),
-					err.code,
-				);
+				this.emit("coop.rebalance.revoke", this.convertPartitions(topicPartitions), err.code);
 
 				// clean up things left over from the lost partitions
 				topicPartitions.forEach((tp) => {

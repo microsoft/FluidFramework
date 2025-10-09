@@ -57,7 +57,9 @@ export class SameContainerMigrator
 	/**
 	 * Detached model used to import data. This is stored for retry scenarios.
 	 */
-	private _detachedModel: IDetachedModel<ISameContainerMigratableModel> | undefined;
+	private _detachedModel:
+		| IDetachedModel<ISameContainerMigratableModel>
+		| undefined;
 	/**
 	 * Transformed v1 data ready to be imported into the migrated model. This is stored for retry scenarios.
 	 */
@@ -65,7 +67,9 @@ export class SameContainerMigrator
 	/**
 	 * Detached model that is ready to attach. This is stored for retry scenarios.
 	 */
-	private _preparedDetachedModel: IDetachedModel<ISameContainerMigratableModel> | undefined;
+	private _preparedDetachedModel:
+		| IDetachedModel<ISameContainerMigratableModel>
+		| undefined;
 
 	public constructor(
 		private readonly modelLoader: IModelLoader<ISameContainerMigratableModel>,
@@ -76,7 +80,9 @@ export class SameContainerMigrator
 		super();
 		this._currentModel = initialMigratable;
 		this._currentModelId = initialId;
-		this._currentModel.migrationTool.setContainerRef(this._currentModel.container);
+		this._currentModel.migrationTool.setContainerRef(
+			this._currentModel.container,
+		);
 		this.monitorMigration()
 			.then(() => {
 				console.log("done!");
@@ -96,7 +102,9 @@ export class SameContainerMigrator
 			throw new Error("Expect an accepted version before migration starts");
 		}
 
-		const migrationSupported = await this.modelLoader.supportsVersion(this._acceptedVersion);
+		const migrationSupported = await this.modelLoader.supportsVersion(
+			this._acceptedVersion,
+		);
 		if (!migrationSupported) {
 			this.emit("migrationNotSupported", this._acceptedVersion);
 			return;
@@ -111,13 +119,17 @@ export class SameContainerMigrator
 			acceptedSeqNum,
 		);
 		assert(
-			this._pausedModel.container.deltaManager.lastSequenceNumber === acceptedSeqNum,
+			this._pausedModel.container.deltaManager.lastSequenceNumber ===
+				acceptedSeqNum,
 			"paused model should be at accepted sequence number",
 		);
 	};
 
 	private readonly getExportedData = async () => {
-		assert(this._pausedModel !== undefined, "this._pausedModel should be defined");
+		assert(
+			this._pausedModel !== undefined,
+			"this._pausedModel should be defined",
+		);
 		this._exportedData = await this._pausedModel.exportData();
 	};
 
@@ -129,8 +141,13 @@ export class SameContainerMigrator
 		// TODO: Does the app developer have everything they need to dispose gracefully when recovering with
 		// a new ModelLoader?
 
-		assert(this._acceptedVersion !== undefined, "this._acceptedVersion should be defined");
-		this._detachedModel = await this.modelLoader.createDetached(this._acceptedVersion);
+		assert(
+			this._acceptedVersion !== undefined,
+			"this._acceptedVersion should be defined",
+		);
+		this._detachedModel = await this.modelLoader.createDetached(
+			this._acceptedVersion,
+		);
 	};
 
 	private readonly generateTransformedData = async () => {
@@ -139,8 +156,13 @@ export class SameContainerMigrator
 		// clients with old ModelLoaders can use that opportunity to dispose early and try to get new
 		// ModelLoaders.
 
-		assert(this._detachedModel !== undefined, "this._detachedModel should be defined");
-		if (this._detachedModel.model.supportsDataFormat(this._exportedData) === true) {
+		assert(
+			this._detachedModel !== undefined,
+			"this._detachedModel should be defined",
+		);
+		if (
+			this._detachedModel.model.supportsDataFormat(this._exportedData) === true
+		) {
 			// If the migrated model already supports the data format, go ahead with the migration.
 			this._transformedData = this._exportedData;
 			return;
@@ -149,7 +171,10 @@ export class SameContainerMigrator
 		if (this.dataTransformationCallback !== undefined) {
 			// Otherwise, try using the dataTransformationCallback if provided to get the exported data into
 			// a format that we can import.
-			assert(this._acceptedVersion !== undefined, "this._acceptedVersion should be defined");
+			assert(
+				this._acceptedVersion !== undefined,
+				"this._acceptedVersion should be defined",
+			);
 			try {
 				this._transformedData = await this.dataTransformationCallback(
 					this._exportedData,
@@ -169,8 +194,14 @@ export class SameContainerMigrator
 	};
 
 	private readonly importDataIntoDetachedModel = async () => {
-		assert(this._detachedModel !== undefined, "this._detachedModel should be defined");
-		assert(this._transformedData !== undefined, "this._transformedData should be defined");
+		assert(
+			this._detachedModel !== undefined,
+			"this._detachedModel should be defined",
+		);
+		assert(
+			this._transformedData !== undefined,
+			"this._transformedData should be defined",
+		);
 		await this._detachedModel.model.importData(this._transformedData);
 		// Store the detached model for later use and retry scenarios
 		this._preparedDetachedModel = this._detachedModel;
@@ -198,7 +229,8 @@ export class SameContainerMigrator
 			throw new Error("Expect an accepted version before migration starts");
 		}
 
-		const migrationSupported = await this.modelLoader.supportsVersion(acceptedVersion);
+		const migrationSupported =
+			await this.modelLoader.supportsVersion(acceptedVersion);
 		if (!migrationSupported) {
 			this.emit("migrationNotSupported", acceptedVersion);
 			return;
@@ -226,10 +258,14 @@ export class SameContainerMigrator
 	private readonly monitorMigration = async () => {
 		// Ensure we are connected
 		if (!this.currentModel.connected()) {
-			await new Promise<void>((resolve) => this.currentModel.once("connected", resolve));
+			await new Promise<void>((resolve) =>
+				this.currentModel.once("connected", resolve),
+			);
 		}
 		// Ensure the migration tool has reached the "readyForMigration" stage
-		if (this.currentModel.migrationTool.migrationState !== "readyForMigration") {
+		if (
+			this.currentModel.migrationTool.migrationState !== "readyForMigration"
+		) {
 			await new Promise<void>((resolve) =>
 				this.currentModel.migrationTool.once("readyForMigration", resolve),
 			);

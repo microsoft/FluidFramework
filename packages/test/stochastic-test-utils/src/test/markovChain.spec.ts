@@ -5,7 +5,10 @@
 
 import { strict as assert } from "assert";
 
-import { PerformanceWordMarkovChain, SpaceEfficientWordMarkovChain } from "../markovChain.js";
+import {
+	PerformanceWordMarkovChain,
+	SpaceEfficientWordMarkovChain,
+} from "../markovChain.js";
 import { makeRandom } from "../random.js";
 
 const testSentences = [
@@ -36,7 +39,9 @@ describe("MarkovChain", () => {
 			markovChain.initialize(testSentences);
 			assert.strictEqual(markovChain.chain !== undefined, true);
 			assert.deepEqual(
-				markovChain.chain[SpaceEfficientWordMarkovChain.MARKOV_SENTENCE_BEGIN_KEY],
+				markovChain.chain[
+					SpaceEfficientWordMarkovChain.MARKOV_SENTENCE_BEGIN_KEY
+				],
 				[
 					["hello", 3],
 					["my", 2],
@@ -95,7 +100,9 @@ describe("MarkovChain", () => {
 
 			generatedSentences.forEach((sentence) => {
 				assert.ok(sentence.length < 30);
-				sentence.split(" ").forEach((word) => assert.ok(expectedWordChoices.has(word)));
+				sentence
+					.split(" ")
+					.forEach((word) => assert.ok(expectedWordChoices.has(word)));
 			});
 		});
 
@@ -117,7 +124,9 @@ describe("MarkovChain", () => {
 			assert.strictEqual(markovChain.chain !== undefined, true);
 			assert.deepEqual(
 				wordArrayToWordCount(
-					markovChain.chain[PerformanceWordMarkovChain.MARKOV_SENTENCE_BEGIN_KEY],
+					markovChain.chain[
+						PerformanceWordMarkovChain.MARKOV_SENTENCE_BEGIN_KEY
+					],
 				),
 				{
 					hello: 3,
@@ -148,7 +157,9 @@ describe("MarkovChain", () => {
 			assert.deepEqual(wordArrayToWordCount(markovChain.chain.ozzie), {
 				[PerformanceWordMarkovChain.MARKOV_SENTENCE_END_KEY]: 1,
 			});
-			assert.deepEqual(wordArrayToWordCount(markovChain.chain.there), { my: 1 });
+			assert.deepEqual(wordArrayToWordCount(markovChain.chain.there), {
+				my: 1,
+			});
 			assert.deepEqual(wordArrayToWordCount(markovChain.chain.friend), {
 				[PerformanceWordMarkovChain.MARKOV_SENTENCE_END_KEY]: 1,
 			});
@@ -176,7 +187,9 @@ describe("MarkovChain", () => {
 
 			generatedSentences.forEach((sentence) => {
 				assert.ok(sentence.length < 30);
-				sentence.split(" ").forEach((word) => assert.ok(expectedWordChoices.has(word)));
+				sentence
+					.split(" ")
+					.forEach((word) => assert.ok(expectedWordChoices.has(word)));
 			});
 		});
 

@@ -8,8 +8,15 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import type { AsyncGenerator, BaseOperation } from "@fluid-private/stochastic-test-utils";
-import { chainAsync, done, takeAsync } from "@fluid-private/stochastic-test-utils";
+import type {
+	AsyncGenerator,
+	BaseOperation,
+} from "@fluid-private/stochastic-test-utils";
+import {
+	chainAsync,
+	done,
+	takeAsync,
+} from "@fluid-private/stochastic-test-utils";
 // eslint-disable-next-line import/no-internal-modules
 import { Counter } from "@fluid-private/stochastic-test-utils/internal/test/utils";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
@@ -47,7 +54,10 @@ import { _dirname } from "./dirname.cjs";
 import type { Operation, SharedNothingFactory } from "./sharedNothing.js";
 import { baseModel, isNoopOp } from "./sharedNothing.js";
 
-type Model = DDSFuzzModel<SharedNothingFactory, Operation | ChangeConnectionState>;
+type Model = DDSFuzzModel<
+	SharedNothingFactory,
+	Operation | ChangeConnectionState
+>;
 
 /**
  * Mixes in spying functionality to a DDS fuzz model.
@@ -81,7 +91,10 @@ function mixinSpying<
 			return op;
 		};
 	};
-	const spiedReducer = async (state: TState, op: TOperation): Promise<void | TState> => {
+	const spiedReducer = async (
+		state: TState,
+		op: TOperation,
+	): Promise<void | TState> => {
 		processedOperations.push(op);
 		return model.reducer(state, op);
 	};
@@ -96,12 +109,16 @@ function mixinSpying<
 	};
 }
 
-function verifyClientsSendOpsToEachOther(state: DDSFuzzTestState<SharedNothingFactory>): void {
+function verifyClientsSendOpsToEachOther(
+	state: DDSFuzzTestState<SharedNothingFactory>,
+): void {
 	const { clients, containerRuntimeFactory } = state;
 	containerRuntimeFactory.processAllMessages();
 	for (const client of clients) {
 		// Send an op from each client, synchronize, and verify that each other client processed one more message.
-		const processCoreCallsByClient = clients.map(({ channel }) => channel.processCoreCalls);
+		const processCoreCallsByClient = clients.map(
+			({ channel }) => channel.processCoreCalls,
+		);
 		client.channel.noop();
 		containerRuntimeFactory.processAllMessages();
 		for (const [i, { channel }] of clients.entries()) {
@@ -120,7 +137,8 @@ describe("DDS Fuzz Harness", () => {
 	// for that behavior makes them brittle.
 	describe("Fluid mocks", () => {
 		it("update the quorum when a new client joins", () => {
-			const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+			const containerRuntimeFactory =
+				new MockContainerRuntimeFactoryForReconnection();
 			const addedClientIds: string[] = [];
 			containerRuntimeFactory.quorum.on("addMember", (clientId: string) => {
 				addedClientIds.push(clientId);
@@ -141,7 +159,10 @@ describe("DDS Fuzz Harness", () => {
 				generatorFactory: () => takeAsync(1, baseModel.generatorFactory()),
 			};
 			const finalState = await runTestForSeed(model, defaultOptions, 0);
-			assert.equal(finalState.summarizerClient.containerRuntime.clientId, "summarizer");
+			assert.equal(
+				finalState.summarizerClient.containerRuntime.clientId,
+				"summarizer",
+			);
 			for (const client of finalState.clients) {
 				assert.equal(client.containerRuntime.clientId, client.channel.id);
 			}
@@ -157,7 +178,11 @@ describe("DDS Fuzz Harness", () => {
 				generatorFactory: () => takeAsync(1, baseModel.generatorFactory()),
 			};
 			const finalState = await runTestForSeed(model, defaultOptions, 0);
-			assert(finalState.summarizerClient.channel.methodCalls.includes("summarizeCore"));
+			assert(
+				finalState.summarizerClient.channel.methodCalls.includes(
+					"summarizeCore",
+				),
+			);
 			for (const client of finalState.clients) {
 				assert.deepEqual(client.channel.methodCalls, ["loadCore"]);
 			}
@@ -192,14 +217,17 @@ describe("DDS Fuzz Harness", () => {
 					mixinSynchronization(
 						{
 							...baseModel,
-							generatorFactory: () => takeAsync(4, baseModel.generatorFactory()),
+							generatorFactory: () =>
+								takeAsync(4, baseModel.generatorFactory()),
 						},
 						options,
 					),
 				);
 				await runTestForSeed(model, options, 0);
 				assert.equal(
-					generatedOperations.filter((op) => op !== done && op.type === "synchronize").length,
+					generatedOperations.filter(
+						(op) => op !== done && op.type === "synchronize",
+					).length,
 					2,
 				);
 				assert.deepEqual(generatedOperations[2], synchronize);
@@ -291,7 +319,9 @@ describe("DDS Fuzz Harness", () => {
 									takeAsync(1, baseModel.generatorFactory()),
 								),
 							validateConsistency: (a, b) => {
-								perPairCallCounts.increment(`${a.channel.id} vs ${b.channel.id}`);
+								perPairCallCounts.increment(
+									`${a.channel.id} vs ${b.channel.id}`,
+								);
 							},
 						},
 						options,
@@ -324,7 +354,8 @@ describe("DDS Fuzz Harness", () => {
 					mixinSynchronization(
 						{
 							...baseModel,
-							generatorFactory: () => takeAsync(30, baseModel.generatorFactory()),
+							generatorFactory: () =>
+								takeAsync(30, baseModel.generatorFactory()),
 						},
 						options,
 					),
@@ -332,7 +363,11 @@ describe("DDS Fuzz Harness", () => {
 				await runTestForSeed(model, options, 0);
 				// Since we fix the seed above, this test is reliable.
 				// Probability of this not occurring for a given seed is 0.75^30 which is roughly 1 in 5000.
-				assert(generatedOperations.some((op) => op !== done && op.type === "synchronize"));
+				assert(
+					generatedOperations.some(
+						(op) => op !== done && op.type === "synchronize",
+					),
+				);
 			});
 		});
 	});
@@ -345,7 +380,8 @@ describe("DDS Fuzz Harness", () => {
 					mixinReconnect(
 						{
 							...baseModel,
-							generatorFactory: () => takeAsync(30, baseModel.generatorFactory()),
+							generatorFactory: () =>
+								takeAsync(30, baseModel.generatorFactory()),
 						},
 						options,
 					),
@@ -402,7 +438,8 @@ describe("DDS Fuzz Harness", () => {
 					mixinRebase(
 						{
 							...baseModel,
-							generatorFactory: () => takeAsync(count, baseModel.generatorFactory()),
+							generatorFactory: () =>
+								takeAsync(count, baseModel.generatorFactory()),
 						},
 						options,
 					),
@@ -410,9 +447,10 @@ describe("DDS Fuzz Harness", () => {
 				),
 			);
 			await runTestForSeed(model, options, 0);
-			const rebaseOps: TriggerRebase[] = generatedOperations.filter<TriggerRebase>(
-				(op): op is TriggerRebase => op !== done && op.type === "rebase",
-			);
+			const rebaseOps: TriggerRebase[] =
+				generatedOperations.filter<TriggerRebase>(
+					(op): op is TriggerRebase => op !== done && op.type === "rebase",
+				);
 			assert(rebaseOps.length > 0 && rebaseOps.length <= count / 2);
 		});
 	});
@@ -426,10 +464,13 @@ describe("DDS Fuzz Harness", () => {
 				{
 					...baseModel,
 					generatorFactory: () =>
-						takeAsync(30, async (state: DDSFuzzTestState<SharedNothingFactory>) => {
-							generatorSelectionCounts.increment(state.client.channel.id);
-							return { type: "noop" };
-						}),
+						takeAsync(
+							30,
+							async (state: DDSFuzzTestState<SharedNothingFactory>) => {
+								generatorSelectionCounts.increment(state.client.channel.id);
+								return { type: "noop" };
+							},
+						),
 					reducer: async ({ client }) => {
 						reducerSelectionCounts.increment(client.channel.id);
 					},
@@ -438,12 +479,19 @@ describe("DDS Fuzz Harness", () => {
 				options,
 			);
 			await runTestForSeed(model, options, 0);
-			assert.deepEqual([...reducerSelectionCounts.values()].sort(), ["A", "B", "C"]);
+			assert.deepEqual([...reducerSelectionCounts.values()].sort(), [
+				"A",
+				"B",
+				"C",
+			]);
 			assert.equal(
 				[...reducerSelectionCounts.counts()].reduce((a, b) => a + b),
 				30,
 			);
-			assert.deepEqual(reducerSelectionCounts.entries(), generatorSelectionCounts.entries());
+			assert.deepEqual(
+				reducerSelectionCounts.entries(),
+				generatorSelectionCounts.entries(),
+			);
 		});
 
 		it("injects clientId onto generated operations", async () => {
@@ -459,7 +507,8 @@ describe("DDS Fuzz Harness", () => {
 			await runTestForSeed(model, options, 0);
 			assert(
 				generatedOperations.every(
-					(op) => op === done || (op as unknown as ClientSpec).clientId !== undefined,
+					(op) =>
+						op === done || (op as unknown as ClientSpec).clientId !== undefined,
 				),
 			);
 		});
@@ -545,7 +594,10 @@ describe("DDS Fuzz Harness", () => {
 			assert.equal(finalState.clients.length, 1);
 			assert.strictEqual(clientCreates.length, 3);
 
-			assert.strictEqual(clientCreates[0].containerRuntime.clientId, "summarizer");
+			assert.strictEqual(
+				clientCreates[0].containerRuntime.clientId,
+				"summarizer",
+			);
 
 			// original client
 			assert.strictEqual(clientCreates[1].channel.applyStashedOpCalls, 0);
@@ -596,7 +648,10 @@ describe("DDS Fuzz Harness", () => {
 			assert.equal(finalState.clients.length, 1);
 			assert.strictEqual(clientCreates.length, 3);
 
-			assert.strictEqual(clientCreates[0].containerRuntime.clientId, "summarizer");
+			assert.strictEqual(
+				clientCreates[0].containerRuntime.clientId,
+				"summarizer",
+			);
 
 			// original client
 			assert.strictEqual(clientCreates[1].channel.applyStashedOpCalls, 0);
@@ -634,7 +689,10 @@ describe("DDS Fuzz Harness", () => {
 					(initialState: DDSFuzzTestState<SharedNothingFactory>) => {
 						assert.equal(initialState.clients.length, 1);
 						assert.equal(initialState.clients[0].channel.isAttached(), false);
-						assert.equal(initialState.clients[0], initialState.summarizerClient);
+						assert.equal(
+							initialState.clients[0],
+							initialState.summarizerClient,
+						);
 						testStartAssertsRan = true;
 					},
 				);
@@ -656,7 +714,8 @@ describe("DDS Fuzz Harness", () => {
 					mixinAttach(
 						{
 							...baseModel,
-							generatorFactory: () => takeAsync(12, baseModel.generatorFactory()),
+							generatorFactory: () =>
+								takeAsync(12, baseModel.generatorFactory()),
 						},
 						options,
 					),
@@ -692,7 +751,10 @@ describe("DDS Fuzz Harness", () => {
 					(initialState: DDSFuzzTestState<SharedNothingFactory>) => {
 						assert.equal(initialState.clients.length, 3);
 						assert.equal(initialState.clients[0].channel.isAttached(), true);
-						assert.notEqual(initialState.clients[0], initialState.summarizerClient);
+						assert.notEqual(
+							initialState.clients[0],
+							initialState.summarizerClient,
+						);
 						verifyClientsSendOpsToEachOther(initialState);
 						testStartAssertsRan = true;
 					},
@@ -736,7 +798,13 @@ describe("DDS Fuzz Harness", () => {
 				};
 				const finalState = await runTestForSeed(model, options, 0);
 				assert.equal(finalState.clients.length, 3);
-				assert.deepEqual(log, ["summarizer", "A", "B", "C", "generated an operation"]);
+				assert.deepEqual(log, [
+					"summarizer",
+					"A",
+					"B",
+					"C",
+					"generated an operation",
+				]);
 			});
 
 			it("is raised for clients added to the test mid-run", async () => {
@@ -925,13 +993,18 @@ describe("DDS Fuzz Harness", () => {
 					.sort();
 				assert.deepEqual(
 					tests.map((t) => t.title),
-					["workload: 2: .only via options seed: 4", "workload: 2: .only via options seed: 7"],
+					[
+						"workload: 2: .only via options seed: 4",
+						"workload: 2: .only via options seed: 7",
+					],
 				);
 			});
 
 			it("via a combination of .only() and `only: []`", () => {
 				const tests = runResults.passes
-					.filter((p) => p.fullTitle.includes("3: .only via function and options"))
+					.filter((p) =>
+						p.fullTitle.includes("3: .only via function and options"),
+					)
 					.sort();
 				assert.deepEqual(
 					tests.map((t) => t.title),
@@ -964,7 +1037,9 @@ describe("DDS Fuzz Harness", () => {
 					.sort();
 				assert.deepEqual(
 					tests.map((t) => t.title),
-					[0, 1, 4, 5, 6, 7, 8, 9].map((i) => `workload: 1: .skip via function seed: ${i}`),
+					[0, 1, 4, 5, 6, 7, 8, 9].map(
+						(i) => `workload: 1: .skip via function seed: ${i}`,
+					),
 				);
 			});
 
@@ -974,13 +1049,17 @@ describe("DDS Fuzz Harness", () => {
 					.sort();
 				assert.deepEqual(
 					tests.map((t) => t.title),
-					[0, 1, 2, 3, 5, 6, 8, 9].map((i) => `workload: 2: .skip via options seed: ${i}`),
+					[0, 1, 2, 3, 5, 6, 8, 9].map(
+						(i) => `workload: 2: .skip via options seed: ${i}`,
+					),
 				);
 			});
 
 			it("via a combination of .skip() and `skip: []`", () => {
 				const tests = runResults.passes
-					.filter((p) => p.fullTitle.includes("3: .skip via function and options"))
+					.filter((p) =>
+						p.fullTitle.includes("3: .skip via function and options"),
+					)
 					.sort();
 				assert.deepEqual(
 					tests.map((t) => t.title),
@@ -1000,7 +1079,10 @@ describe("DDS Fuzz Harness", () => {
 
 		describe("failure", () => {
 			let runResults: MochaReport;
-			const jsonDir = path.join(_dirname, "./ddsSuiteCases/failing-configuration");
+			const jsonDir = path.join(
+				_dirname,
+				"./ddsSuiteCases/failing-configuration",
+			);
 			before(async function () {
 				this.timeout(5000);
 				fs.rmSync(jsonDir, { force: true, recursive: true });
@@ -1017,7 +1099,9 @@ describe("DDS Fuzz Harness", () => {
 					],
 				);
 				assert(
-					runResults.failures.every((test) => test.err.message.includes("Injected failure")),
+					runResults.failures.every((test) =>
+						test.err.message.includes("Injected failure"),
+					),
 				);
 			});
 

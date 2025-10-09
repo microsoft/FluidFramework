@@ -9,7 +9,11 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { tryGetTreeNodeSchema } from "./treeNodeKernel.js";
 import { NodeKind, type TreeNodeSchemaClass } from "./treeNodeSchema.js";
 // eslint-disable-next-line import/no-deprecated
-import { type WithType, typeNameSymbol, type typeSchemaSymbol } from "./withType.js";
+import {
+	type WithType,
+	typeNameSymbol,
+	type typeSchemaSymbol,
+} from "./withType.js";
 import { markEager } from "./flexList.js";
 
 /**
@@ -112,7 +116,10 @@ export abstract class TreeNode implements WithType {
 		) => TreeNode,
 	>(this: TSchema, value: unknown): value is InstanceType<TSchema>;
 
-	public static [Symbol.hasInstance](this: { prototype: object }, value: unknown): boolean {
+	public static [Symbol.hasInstance](
+		this: { prototype: object },
+		value: unknown,
+	): boolean {
 		const schema = tryGetTreeNodeSchema(value);
 
 		if (schema === undefined || schema.kind === NodeKind.Leaf) {
@@ -133,7 +140,9 @@ export abstract class TreeNode implements WithType {
 	 */
 	protected constructor(token: unknown) {
 		if (token !== privateToken) {
-			throw new UsageError("TreeNodes must extend schema classes created by SchemaFactory");
+			throw new UsageError(
+				"TreeNodes must extend schema classes created by SchemaFactory",
+			);
 		}
 	}
 }
@@ -152,7 +161,10 @@ export const privateToken = {};
  * @returns true iff `base` is in the prototype chain starting at `derived`.
  */
 // eslint-disable-next-line @rushstack/no-new-null
-export function inPrototypeChain(derived: object | null, base: object): boolean {
+export function inPrototypeChain(
+	derived: object | null,
+	base: object,
+): boolean {
 	let checking = derived;
 	while (checking !== null) {
 		if (base === checking) {

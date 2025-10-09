@@ -81,17 +81,27 @@ export const CollaborativeTextArea: React.FC<ICollaborativeTextAreaProps> = (
 		// This is also a bad assumption, in the undo case.
 		const isTextInserted = newCaretPosition - oldSelectionStart > 0;
 		if (isTextInserted) {
-			const insertedText = newText.substring(oldSelectionStart, newCaretPosition);
+			const insertedText = newText.substring(
+				oldSelectionStart,
+				newCaretPosition,
+			);
 			const isTextReplaced = oldSelectionEnd - oldSelectionStart > 0;
 			if (!isTextReplaced) {
 				sharedStringHelper.insertText(insertedText, oldSelectionStart);
 			} else {
-				sharedStringHelper.replaceText(insertedText, oldSelectionStart, oldSelectionEnd);
+				sharedStringHelper.replaceText(
+					insertedText,
+					oldSelectionStart,
+					oldSelectionEnd,
+				);
 			}
 		} else {
 			// Text was removed
 			const charactersDeleted = oldText.length - newText.length;
-			sharedStringHelper.removeText(newCaretPosition, newCaretPosition + charactersDeleted);
+			sharedStringHelper.removeText(
+				newCaretPosition,
+				newCaretPosition + charactersDeleted,
+			);
 		}
 	};
 
@@ -113,7 +123,9 @@ export const CollaborativeTextArea: React.FC<ICollaborativeTextAreaProps> = (
 	 */
 	const storeSelectionInReact = () => {
 		if (!textareaRef.current) {
-			throw new Error("Trying to remember selection without current textarea ref?");
+			throw new Error(
+				"Trying to remember selection without current textarea ref?",
+			);
 		}
 		const textareaElement = textareaRef.current;
 
@@ -133,15 +145,21 @@ export const CollaborativeTextArea: React.FC<ICollaborativeTextAreaProps> = (
 		 * 2. If the change came from a remote source, it may have moved our selection.
 		 * Compute it, update the textarea, and store it in React
 		 */
-		const handleTextChanged = (event: ISharedStringHelperTextChangedEventArgs) => {
+		const handleTextChanged = (
+			event: ISharedStringHelperTextChangedEventArgs,
+		) => {
 			const newText = sharedStringHelper.getText();
 			setText(newText);
 
 			// If the event was our own then the caret will already be in the new location.
 			// Otherwise, transform our selection position based on the change.
 			if (!event.isLocal) {
-				const newSelectionStart = event.transformPosition(selectionStartRef.current);
-				const newSelectionEnd = event.transformPosition(selectionEndRef.current);
+				const newSelectionStart = event.transformPosition(
+					selectionStartRef.current,
+				);
+				const newSelectionEnd = event.transformPosition(
+					selectionEndRef.current,
+				);
 				setTextareaSelection(newSelectionStart, newSelectionEnd);
 				storeSelectionInReact();
 			}

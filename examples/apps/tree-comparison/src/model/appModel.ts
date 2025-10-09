@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { IInventoryList, IInventoryListAppModel } from "../modelInterfaces.js";
+import type {
+	IInventoryList,
+	IInventoryListAppModel,
+} from "../modelInterfaces.js";
 
 /**
  * The InventoryListAppModel provides two inventory lists, one using legacy SharedTree

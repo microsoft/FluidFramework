@@ -46,7 +46,10 @@ interface ILocalRegister<T> {
 	sequenceNumber: number;
 }
 
-const newLocalRegister = <T>(sequenceNumber: number, value: T): ILocalRegister<T> => ({
+const newLocalRegister = <T>(
+	sequenceNumber: number,
+	value: T,
+): ILocalRegister<T> => ({
 	sequenceNumber,
 	value: {
 		type: "Plain",
@@ -95,11 +98,14 @@ interface IRegisterOperationPlain<T> {
 }
 
 /** Incoming ops could match any of these types */
-type IIncomingRegisterOperation<T> = IRegisterOperationSerialized | IRegisterOperationPlain<T>;
+type IIncomingRegisterOperation<T> =
+	| IRegisterOperationSerialized
+	| IRegisterOperationPlain<T>;
 
 /** Distinguish between incoming op formats so we know which type it is */
-const incomingOpMatchesPlainFormat = <T>(op): op is IRegisterOperationPlain<T> =>
-	"value" in op;
+const incomingOpMatchesPlainFormat = <T>(
+	op,
+): op is IRegisterOperationPlain<T> => "value" in op;
 
 const snapshotFileName = "header";
 
@@ -219,7 +225,10 @@ export class ConsensusRegisterCollection<T>
 	 * @param key - The key to read
 	 * @param readPolicy - The ReadPolicy to apply. Defaults to Atomic.
 	 */
-	public read(key: string, readPolicy: ReadPolicy = ReadPolicy.Atomic): T | undefined {
+	public read(
+		key: string,
+		readPolicy: ReadPolicy = ReadPolicy.Atomic,
+	): T | undefined {
 		if (readPolicy === ReadPolicy.Atomic) {
 			return this.readAtomic(key);
 		}
@@ -228,7 +237,10 @@ export class ConsensusRegisterCollection<T>
 
 		if (versions !== undefined) {
 			// We don't support deletion. So there should be at least one value.
-			assert(versions.length > 0, 0x06c /* "Value should be undefined or non-empty" */);
+			assert(
+				versions.length > 0,
+				0x06c /* "Value should be undefined or non-empty" */,
+			);
 
 			return versions[versions.length - 1];
 		}
@@ -236,7 +248,9 @@ export class ConsensusRegisterCollection<T>
 
 	public readVersions(key: string): T[] | undefined {
 		const data = this.data.get(key);
-		return data?.versions.map((element: ILocalRegister<T>) => element.value.value);
+		return data?.versions.map(
+			(element: ILocalRegister<T>) => element.value.value,
+		);
 	}
 
 	public keys(): string[] {
@@ -249,7 +263,10 @@ export class ConsensusRegisterCollection<T>
 			dataObj[k] = v;
 		});
 
-		return createSingleBlobSummary(snapshotFileName, this.stringify(dataObj, serializer));
+		return createSingleBlobSummary(
+			snapshotFileName,
+			this.stringify(dataObj, serializer),
+		);
 	}
 
 	/**
@@ -310,7 +327,11 @@ export class ConsensusRegisterCollection<T>
 							typeof localOpMetadata === "number",
 							0xc0e /* Expect localOpMetadata to be a number */,
 						);
-						this.internalEvents.emit("pendingMessageAck", localOpMetadata, isWinner);
+						this.internalEvents.emit(
+							"pendingMessageAck",
+							localOpMetadata,
+							isWinner,
+						);
 					}
 					break;
 				}
@@ -360,7 +381,10 @@ export class ConsensusRegisterCollection<T>
 		}
 
 		// Remove versions that were known to the remote client at the time of write
-		while (data.versions.length > 0 && refSeq >= data.versions[0].sequenceNumber) {
+		while (
+			data.versions.length > 0 &&
+			refSeq >= data.versions[0].sequenceNumber
+		) {
 			data.versions.shift();
 		}
 
@@ -375,7 +399,8 @@ export class ConsensusRegisterCollection<T>
 		} else if (data.versions.length > 0) {
 			assert(
 				// seqNum should always be increasing, except for the case of grouped batches (seqNum will be the same)
-				sequenceNumber >= data.versions[data.versions.length - 1].sequenceNumber,
+				sequenceNumber >=
+					data.versions[data.versions.length - 1].sequenceNumber,
 				0x071 /* "Versions should naturally be ordered by sequenceNumber" */,
 			);
 		}

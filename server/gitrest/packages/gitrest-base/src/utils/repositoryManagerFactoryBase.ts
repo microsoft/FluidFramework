@@ -29,7 +29,9 @@ import * as helpers from "./helpers";
 
 type RepoOperationType = "create" | "open";
 
-export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepositoryManagerFactory {
+export abstract class RepositoryManagerFactoryBase<TRepo>
+	implements IRepositoryManagerFactory
+{
 	// Map each mutex to one repo. We don't want to block concurrent requests on the mutex if
 	// the requests are meant for different repos.
 	private readonly mutexes = new Map<string, MutexInterface>();
@@ -321,10 +323,7 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 					lumberjackBaseProperties,
 					e,
 				);
-				throw new NetworkError(
-					500,
-					`Unknown error when trying to run action:  ${e?.message}`,
-				);
+				throw new NetworkError(500, `Unknown error when trying to run action:  ${e?.message}`);
 			}
 		} else {
 			return action();

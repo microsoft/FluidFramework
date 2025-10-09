@@ -4,7 +4,10 @@
  */
 
 import { IUser } from "@fluidframework/driver-definitions";
-import { ITokenClaims, ScopeType } from "@fluidframework/driver-definitions/internal";
+import {
+	ITokenClaims,
+	ScopeType,
+} from "@fluidframework/driver-definitions/internal";
 import { KJUR as jsrsasign } from "jsrsasign";
 import { v4 as uuid } from "uuid";
 

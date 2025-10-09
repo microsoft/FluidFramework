@@ -29,7 +29,12 @@ export {
 } from "./datastructures";
 export { DeferredPromise } from "./deferredPromise";
 export { DeterministicRandomGenerator } from "./deterministicRandomGenerator";
-export { FlaggedError, HTTPError, HTTPErrorNoStack, OperationError } from "./error_objects";
+export {
+	FlaggedError,
+	HTTPError,
+	HTTPErrorNoStack,
+	OperationError,
+} from "./error_objects";
 export { GuidUtils } from "./guidUtils";
 export { calculateHash } from "./hashCalculator";
 export { joinPaths } from "./joinPaths";

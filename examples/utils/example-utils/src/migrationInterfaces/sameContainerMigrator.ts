@@ -32,7 +32,8 @@ export interface ISameContainerMigratorEvents extends IEvent {
 /**
  * @internal
  */
-export interface ISameContainerMigrator extends IEventProvider<ISameContainerMigratorEvents> {
+export interface ISameContainerMigrator
+	extends IEventProvider<ISameContainerMigratorEvents> {
 	/**
 	 * The currently monitored migratable model.  As the Migrator completes a migration, it will swap in the new
 	 * migrated model and emit a "migrated" event.

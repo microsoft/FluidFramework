@@ -33,7 +33,11 @@ const assertIntervals = (
 			0,
 			sharedString.getLength() - 1,
 		);
-		assert.deepEqual(actual, overlapping, "Interval search returned inconsistent results");
+		assert.deepEqual(
+			actual,
+			overlapping,
+			"Interval search returned inconsistent results",
+		);
 	}
 	assert.strictEqual(
 		actual.length,

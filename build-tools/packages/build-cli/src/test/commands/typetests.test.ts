@@ -35,7 +35,9 @@ function packageMinimal(): PackageWithTypeTestSettings {
  *
  * @param enabled - Set this to false to return a package with disabled type tests.
  */
-function packageWithTypeValidation(enabled = true): PackageWithTypeTestSettings {
+function packageWithTypeValidation(
+	enabled = true,
+): PackageWithTypeTestSettings {
 	return {
 		...packageMinimal(),
 		devDependencies: {
@@ -160,7 +162,9 @@ describe("typetests tests", () => {
 				},
 			};
 			resetBrokenTests(pkgJson);
-			assert.deepEqual(pkgJson, { typeValidation: { broken: {}, entrypoint: "legacyAlpha" } });
+			assert.deepEqual(pkgJson, {
+				typeValidation: { broken: {}, entrypoint: "legacyAlpha" },
+			});
 		});
 
 		it("ignores packages with no typeValidation node", () => {

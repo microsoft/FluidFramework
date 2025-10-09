@@ -82,7 +82,8 @@ describe("SharedOT", () => {
 				runtimes = [];
 				trace = [];
 
-				containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+				containerRuntimeFactory =
+					new MockContainerRuntimeFactoryForReconnection();
 
 				// Create docs for this stress run.
 				for (let i = 0; i < numClients; i++) {
@@ -110,7 +111,8 @@ describe("SharedOT", () => {
 				// eslint-disable-next-line no-bitwise
 				const int32 = (max = 0x7fffffff) => (float64() * max) | 0;
 
-				const randomText = () => `${float64().toString(36).substr(0, int32(12))}`;
+				const randomText = () =>
+					`${float64().toString(36).substr(0, int32(12))}`;
 
 				const insert = (docIndex: number, position: number, text: string) => {
 					trace?.push(
@@ -122,7 +124,9 @@ describe("SharedOT", () => {
 				};
 
 				const del = (docIndex: number, start: number, end: number) => {
-					trace?.push(`doc${docIndex + 1}.delete(/* start: */ ${start}, /* end: */ ${end});`);
+					trace?.push(
+						`doc${docIndex + 1}.delete(/* start: */ ${start}, /* end: */ ${end});`,
+					);
 					docs[docIndex].delete(start, end);
 				};
 
@@ -155,7 +159,10 @@ describe("SharedOT", () => {
 							break;
 					}
 
-					if (runtimes[docIndex].connected && float64() < disconnectProbability) {
+					if (
+						runtimes[docIndex].connected &&
+						float64() < disconnectProbability
+					) {
 						trace?.push(`containerRuntime${docIndex + 1}.connected = false;`);
 
 						runtimes[docIndex].connected = false;
@@ -187,7 +194,13 @@ describe("SharedOT", () => {
 			}
 		}
 
-		for (const { numClients, numOps, syncProbability, disconnectProbability, seed } of [
+		for (const {
+			numClients,
+			numOps,
+			syncProbability,
+			disconnectProbability,
+			seed,
+		} of [
 			{
 				numClients: 2,
 				numOps: 1000,
@@ -223,7 +236,13 @@ describe("SharedOT", () => {
 				// Note: Must use 'function' rather than arrow '() => { .. }' in order to set 'this.timeout(..)'
 				this.timeout(20000);
 
-				await stress(numClients, numOps, syncProbability, disconnectProbability, seed);
+				await stress(
+					numClients,
+					numOps,
+					syncProbability,
+					disconnectProbability,
+					seed,
+				);
 			});
 		}
 

@@ -44,7 +44,9 @@ export function createExpectsTest(
 		} catch (error) {
 			// only use TestException if the event is provided.
 			// it must be last, as the events are ordered, so all other events must come first
-			if (orderedEvents[orderedEvents.length - 1]?.eventName === "TestException") {
+			if (
+				orderedEvents[orderedEvents.length - 1]?.eventName === "TestException"
+			) {
 				createChildLogger({ logger: provider.logger }).sendErrorEvent(
 					{ eventName: "TestException" },
 					error,

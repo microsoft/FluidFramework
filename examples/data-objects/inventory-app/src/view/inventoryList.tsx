@@ -28,7 +28,9 @@ import { Counter } from "./counter.js";
  * the type system will not allow this component to access any of the contents of the node that can change
  * and thus no custom invalidation is needed.
  */
-export const MainView: React.FC<{ root: PropTreeNode<Inventory> }> = ({ root }) => {
+export const MainView: React.FC<{ root: PropTreeNode<Inventory> }> = ({
+	root,
+}) => {
 	return (
 		// <React.StrictMode>
 		<InventoryView root={root} />
@@ -66,7 +68,9 @@ const InventoryView: React.FC<{ root: PropTreeNode<Inventory> }> =
 				{partViews}
 				<hr />
 				<button
-					onClick={() => root.parts.insertAtEnd(new Part({ name: "New Part", quantity: 0 }))}
+					onClick={() =>
+						root.parts.insertAtEnd(new Part({ name: "New Part", quantity: 0 }))
+					}
 				>
 					Add Part
 				</button>
@@ -128,33 +132,39 @@ export const InventoryViewMonolithic =
  *
  * This version uses usePropTreeNode. See InventoryView for a version using withMemoizedTreeObservations.
  */
-export const InventoryViewWithHook: React.FC<{ root: PropTreeNode<Inventory> }> = ({
-	root,
-}) => {
-	const data: { nodes: readonly PropTreeNode<Part>[]; removeChild: (part: Part) => void } =
-		usePropTreeNode(root, (inventory: Inventory) => {
-			const partsList = inventory.parts;
-			// Example manually wrapping in PropNodes, showing how types without automatic support can still be made type safe.
-			// partsList.map((node) => toPropTreeNode(node)),
-			// Note that Array support is built in now, so this can just be:
-			const nodes = [...partsList];
+export const InventoryViewWithHook: React.FC<{
+	root: PropTreeNode<Inventory>;
+}> = ({ root }) => {
+	const data: {
+		nodes: readonly PropTreeNode<Part>[];
+		removeChild: (part: Part) => void;
+	} = usePropTreeNode(root, (inventory: Inventory) => {
+		const partsList = inventory.parts;
+		// Example manually wrapping in PropNodes, showing how types without automatic support can still be made type safe.
+		// partsList.map((node) => toPropTreeNode(node)),
+		// Note that Array support is built in now, so this can just be:
+		const nodes = [...partsList];
 
-			// React's linter does not allow hooks in callbacks, but it is safe to suppress this for usePropTreeNode since it runs the callback immediately.
-			// eslint-disable-next-line react-hooks/rules-of-hooks
-			const removeChild = React.useCallback(
-				(part: Part) => partsList.removeAt(Tree.key(part) as number),
-				[partsList],
-			);
+		// React's linter does not allow hooks in callbacks, but it is safe to suppress this for usePropTreeNode since it runs the callback immediately.
+		// eslint-disable-next-line react-hooks/rules-of-hooks
+		const removeChild = React.useCallback(
+			(part: Part) => partsList.removeAt(Tree.key(part) as number),
+			[partsList],
+		);
 
-			return { nodes, removeChild };
-		});
+		return { nodes, removeChild };
+	});
 
 	// Since usePropTreeNode is a hook, we can't use it on each item in this array.
 	// We can however use a component which uses the hook internally.
 	// Passing the node to the components as a PropTreeNode in its Props (as is done here)
 	// is the design pattern after which PropTreeNode was named.
 	const parts: readonly React.JSX.Element[] = data.nodes.map((part) => (
-		<PartView key={objectIdNumber(part)} part={part} remove={data.removeChild} />
+		<PartView
+			key={objectIdNumber(part)}
+			part={part}
+			remove={data.removeChild}
+		/>
 	));
 
 	return (

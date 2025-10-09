@@ -11,7 +11,10 @@ import {
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { EndOfTreeSegment } from "./endOfTreeSegment.js";
-import { LocalReferenceCollection, type LocalReferencePosition } from "./localReference.js";
+import {
+	LocalReferenceCollection,
+	type LocalReferencePosition,
+} from "./localReference.js";
 import { type MergeTree, findRootMergeBlock } from "./mergeTree.js";
 import type { IMergeTreeDeltaCallbackArgs } from "./mergeTreeDeltaCallback.js";
 import { depthFirstNodeWalk } from "./mergeTreeNodeWalk.js";
@@ -54,8 +57,12 @@ export type MergeTreeDeltaRevertible =
  * Tests whether x is a MergeTreeDeltaRevertible
  * @internal
  */
-export function isMergeTreeDeltaRevertible(x: unknown): x is MergeTreeDeltaRevertible {
-	return !!x && typeof x === "object" && "operation" in x && "trackingGroup" in x;
+export function isMergeTreeDeltaRevertible(
+	x: unknown,
+): x is MergeTreeDeltaRevertible {
+	return (
+		!!x && typeof x === "object" && "operation" in x && "trackingGroup" in x
+	);
 }
 
 type TypedRevertible<T extends MergeTreeDeltaRevertible["operation"]> =
@@ -94,7 +101,8 @@ export interface MergeTreeWithRevert extends MergeTree {
 	};
 }
 
-export type PickPartial<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
+export type PickPartial<T, K extends keyof T> = Omit<T, K> &
+	Partial<Pick<T, K>>;
 function findMergeTreeWithRevert(trackable: Trackable): MergeTreeWithRevert {
 	const segmentOrNode = trackable.isLeaf() ? trackable : trackable.getSegment();
 	const maybeRoot = findRootMergeBlock(toSegmentLeaf(segmentOrNode));
@@ -107,14 +115,18 @@ function findMergeTreeWithRevert(trackable: Trackable): MergeTreeWithRevert {
 
 	if (mergeTree.__mergeTreeRevertible === undefined) {
 		const detachedReferences = new EndOfTreeSegment(maybeRoot.mergeTree);
-		const refCallbacks: MergeTreeWithRevert["__mergeTreeRevertible"]["refCallbacks"] = {
-			afterSlide: (r: LocalReferencePosition) => {
-				if (mergeTree.referencePositionToLocalPosition(r) === DetachedReferencePosition) {
-					const refs = LocalReferenceCollection.setOrGet(detachedReferences);
-					refs.addAfterTombstones([r]);
-				}
-			},
-		};
+		const refCallbacks: MergeTreeWithRevert["__mergeTreeRevertible"]["refCallbacks"] =
+			{
+				afterSlide: (r: LocalReferencePosition) => {
+					if (
+						mergeTree.referencePositionToLocalPosition(r) ===
+						DetachedReferencePosition
+					) {
+						const refs = LocalReferenceCollection.setOrGet(detachedReferences);
+						refs.addAfterTombstones([r]);
+					}
+				},
+			};
 		mergeTree.__mergeTreeRevertible = {
 			refCallbacks,
 			detachedReferences,
@@ -127,7 +139,9 @@ function appendLocalInsertToRevertibles(
 	deltaArgs: IMergeTreeDeltaCallbackArgs,
 	revertibles: MergeTreeDeltaRevertible[],
 ): MergeTreeDeltaRevertible[] {
-	if (revertibles[revertibles.length - 1]?.operation !== MergeTreeDeltaType.INSERT) {
+	if (
+		revertibles[revertibles.length - 1]?.operation !== MergeTreeDeltaType.INSERT
+	) {
 		revertibles.push({
 			operation: MergeTreeDeltaType.INSERT,
 			trackingGroup: new UnorderedTrackingGroup(),
@@ -143,7 +157,9 @@ function appendLocalRemoveToRevertibles(
 	deltaArgs: IMergeTreeDeltaCallbackArgs,
 	revertibles: MergeTreeDeltaRevertible[],
 ): MergeTreeDeltaRevertible[] {
-	if (revertibles[revertibles.length - 1]?.operation !== MergeTreeDeltaType.REMOVE) {
+	if (
+		revertibles[revertibles.length - 1]?.operation !== MergeTreeDeltaType.REMOVE
+	) {
 		revertibles.push({
 			operation: MergeTreeDeltaType.REMOVE,
 			trackingGroup: new UnorderedTrackingGroup(),
@@ -151,7 +167,9 @@ function appendLocalRemoveToRevertibles(
 	}
 	const last = revertibles[revertibles.length - 1];
 
-	const mergeTreeWithRevert = findMergeTreeWithRevert(deltaArgs.deltaSegments[0].segment);
+	const mergeTreeWithRevert = findMergeTreeWithRevert(
+		deltaArgs.deltaSegments[0].segment,
+	);
 
 	for (const t of deltaArgs.deltaSegments) {
 		const props: RemoveSegmentRefProperties = {
@@ -303,7 +321,10 @@ function revertLocalRemove(
 			throw new UsageError("Cannot insert at detached references position");
 		}
 
-		if (toRemovalInfo(refSeg) === undefined && refSeg.localRefs?.isAfterTombstone(tracked)) {
+		if (
+			toRemovalInfo(refSeg) === undefined &&
+			refSeg.localRefs?.isAfterTombstone(tracked)
+		) {
 			realPos++;
 		}
 
@@ -316,8 +337,8 @@ function revertLocalRemove(
 		assertSegmentLeaf(insertSegment);
 
 		const localSlideFilter = (lref: LocalReferencePosition): boolean =>
-			(lref.properties as Partial<RemoveSegmentRefProperties>)?.referenceSpace ===
-			"mergeTreeDeltaRevertible";
+			(lref.properties as Partial<RemoveSegmentRefProperties>)
+				?.referenceSpace === "mergeTreeDeltaRevertible";
 
 		const insertRef: Partial<
 			Record<"before" | "after", DoublyLinkedList<LocalReferencePosition>>
@@ -353,7 +374,9 @@ function revertLocalRemove(
 			forward,
 		);
 		if (
-			mergeTreeWithRevert?.__mergeTreeRevertible?.detachedReferences?.localRefs?.has(tracked)
+			mergeTreeWithRevert?.__mergeTreeRevertible?.detachedReferences?.localRefs?.has(
+				tracked,
+			)
 		) {
 			assert(forward, 0x3f6 /* forward should always be true when detached */);
 			mergeTreeWithRevert?.__mergeTreeRevertible.detachedReferences.localRefs.walkReferences(
@@ -387,17 +410,32 @@ function revertLocalAnnotate(
 ): void {
 	while (revertible.trackingGroup.size > 0) {
 		const tracked = revertible.trackingGroup.tracked[0];
-		const unlinked = tracked.trackingCollection.unlink(revertible.trackingGroup);
-		assert(unlinked && isSegmentLeaf(tracked), 0x3f7 /* annotates must track segments */);
+		const unlinked = tracked.trackingCollection.unlink(
+			revertible.trackingGroup,
+		);
+		assert(
+			unlinked && isSegmentLeaf(tracked),
+			0x3f7 /* annotates must track segments */,
+		);
 		if (toRemovalInfo(tracked) === undefined) {
 			const start = getPosition(mergeTreeWithRevert, tracked);
-			driver.annotateRange(start, start + tracked.cachedLength, revertible.propertyDeltas);
+			driver.annotateRange(
+				start,
+				start + tracked.cachedLength,
+				revertible.propertyDeltas,
+			);
 		}
 	}
 }
 
-function getPosition(mergeTreeWithRevert: MergeTreeWithRevert, segment: ISegmentLeaf): number {
-	return mergeTreeWithRevert.getPosition(segment, mergeTreeWithRevert.localPerspective);
+function getPosition(
+	mergeTreeWithRevert: MergeTreeWithRevert,
+	segment: ISegmentLeaf,
+): number {
+	return mergeTreeWithRevert.getPosition(
+		segment,
+		mergeTreeWithRevert.localPerspective,
+	);
 }
 
 /**
@@ -416,7 +454,9 @@ export function revertMergeTreeDeltaRevertibles(
 		const r = revertibles.pop()!;
 		const operation = r.operation;
 		if (r.trackingGroup.size > 0) {
-			mergeTreeWithRevert ??= findMergeTreeWithRevert(r.trackingGroup.tracked[0]);
+			mergeTreeWithRevert ??= findMergeTreeWithRevert(
+				r.trackingGroup.tracked[0],
+			);
 			switch (operation) {
 				case MergeTreeDeltaType.INSERT: {
 					revertLocalInsert(driver, mergeTreeWithRevert, r);

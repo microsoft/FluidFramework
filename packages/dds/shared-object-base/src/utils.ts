@@ -59,7 +59,10 @@ export function makeHandlesSerializable(
  * @returns The mostly-plain object with handle objects within
  * @legacy @beta
  */
-export function parseHandles(value: unknown, serializer: IFluidSerializer): unknown {
+export function parseHandles(
+	value: unknown,
+	serializer: IFluidSerializer,
+): unknown {
 	return serializer.decode(value);
 }
 

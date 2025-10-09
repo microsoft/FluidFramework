@@ -76,7 +76,10 @@ export class Collection<T> implements ICollection<T> {
 		}
 	}
 
-	public async findAndUpdate(query: any, value: any): Promise<{ value: any; existing: boolean }> {
+	public async findAndUpdate(
+		query: any,
+		value: any,
+	): Promise<{ value: any; existing: boolean }> {
 		throw new Error("Method Not Implemented");
 	}
 
@@ -95,7 +98,10 @@ export class Collection<T> implements ICollection<T> {
 		return this.insertOneInternal(value);
 	}
 
-	public async findOrCreate(query: any, value: any): Promise<{ value: any; existing: boolean }> {
+	public async findOrCreate(
+		query: any,
+		value: any,
+	): Promise<{ value: any; existing: boolean }> {
 		const existing = await this.findOneInternal(query);
 		if (existing) {
 			return { value: existing, existing: true };
@@ -181,9 +187,7 @@ export class Collection<T> implements ICollection<T> {
 		for (let i = 0; i < indexLen; ++i) {
 			const queryValue = query[indexes[i]];
 			if (queryValue !== undefined) {
-				queryValues.push(
-					isNaN(queryValue) ? queryValue : charwise.encode(Number(queryValue)),
-				);
+				queryValues.push(isNaN(queryValue) ? queryValue : charwise.encode(Number(queryValue)));
 			}
 		}
 		const key = queryValues.join("!");

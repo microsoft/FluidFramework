@@ -43,7 +43,8 @@ async function start() {
 		documentServiceFactory: createRouterliciousDocumentServiceFactory(
 			createInsecureTinyliciousTestTokenProvider(),
 		),
-		codeLoader: modelVersion === "1.0" ? new DemoCodeLoader1() : new DemoCodeLoader2(),
+		codeLoader:
+			modelVersion === "1.0" ? new DemoCodeLoader1() : new DemoCodeLoader2(),
 		generateCreateNewRequest: createTinyliciousTestCreateNewRequest,
 	});
 

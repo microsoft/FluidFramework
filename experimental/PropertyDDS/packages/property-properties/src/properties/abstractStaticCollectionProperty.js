@@ -3,8 +3,14 @@
  * Licensed under the MIT License.
  */
 
-const { PathHelper, ChangeSet } = require("@fluid-experimental/property-changeset");
-const { ConsoleUtils, constants } = require("@fluid-experimental/property-common");
+const {
+	PathHelper,
+	ChangeSet,
+} = require("@fluid-experimental/property-changeset");
+const {
+	ConsoleUtils,
+	constants,
+} = require("@fluid-experimental/property-common");
 const _ = require("lodash");
 
 const { BaseProperty } = require("./baseProperty");
@@ -58,7 +64,10 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
 		var prop = this;
 		if (typeof in_ids === "string" || typeof in_ids === "number") {
 			prop = this._get(in_ids);
-			if (in_options.referenceResolutionMode === BaseProperty.REFERENCE_RESOLUTION.ALWAYS) {
+			if (
+				in_options.referenceResolutionMode ===
+				BaseProperty.REFERENCE_RESOLUTION.ALWAYS
+			) {
 				if (prop instanceof Property.ReferenceProperty) {
 					prop = prop.ref;
 				}
@@ -76,7 +85,10 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
 							? BaseProperty.REFERENCE_RESOLUTION.ALWAYS
 							: BaseProperty.REFERENCE_RESOLUTION.NEVER;
 				}
-				if (in_ids[i - 1] === PATH_TOKENS.REF || in_ids[i + 1] === PATH_TOKENS.REF) {
+				if (
+					in_ids[i - 1] === PATH_TOKENS.REF ||
+					in_ids[i + 1] === PATH_TOKENS.REF
+				) {
 					mode = BaseProperty.REFERENCE_RESOLUTION.NEVER;
 				}
 				prop = prop.get(in_ids[i], { referenceResolutionMode: mode });
@@ -202,7 +214,9 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
 	 * @return {Array.<string>} An array of all the property ids
 	 */
 	_getIds() {
-		return Object.keys(this._staticChildren).concat(Object.keys(this._constantChildren));
+		return Object.keys(this._staticChildren).concat(
+			Object.keys(this._constantChildren),
+		);
 	}
 
 	/**
@@ -293,12 +307,16 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
 			if (tokenTypes[i] !== PathHelper.TOKEN_TYPES.DEREFERENCE_TOKEN) {
 				node = node._resolvePathSegment(pathArr[i], tokenTypes[i]);
 				if (
-					in_options.referenceResolutionMode === BaseProperty.REFERENCE_RESOLUTION.ALWAYS ||
-					(in_options.referenceResolutionMode === BaseProperty.REFERENCE_RESOLUTION.NO_LEAFS &&
+					in_options.referenceResolutionMode ===
+						BaseProperty.REFERENCE_RESOLUTION.ALWAYS ||
+					(in_options.referenceResolutionMode ===
+						BaseProperty.REFERENCE_RESOLUTION.NO_LEAFS &&
 						i !== pathArr.length - 1)
 				) {
 					if (node instanceof Property.ReferenceProperty) {
-						if (tokenTypes[i + 1] !== PathHelper.TOKEN_TYPES.DEREFERENCE_TOKEN) {
+						if (
+							tokenTypes[i + 1] !== PathHelper.TOKEN_TYPES.DEREFERENCE_TOKEN
+						) {
 							// recursive function to resolve nested reference properties
 							node = node.ref;
 						}
@@ -318,7 +336,10 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
 	 * @protected
 	 */
 	_getPathSegmentForChildNode(in_childNode) {
-		return PROPERTY_PATH_DELIMITER + PathHelper.quotePathSegmentIfNeeded(in_childNode.getId());
+		return (
+			PROPERTY_PATH_DELIMITER +
+			PathHelper.quotePathSegmentIfNeeded(in_childNode.getId())
+		);
 	}
 
 	/**
@@ -372,11 +393,16 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
 				property instanceof Property.StringProperty
 			) {
 				property.setValue(propertyValue);
-			} else if (property instanceof BaseProperty && _.isObject(propertyValue)) {
+			} else if (
+				property instanceof BaseProperty &&
+				_.isObject(propertyValue)
+			) {
 				property._setValues(propertyValue, in_typed, in_initial);
 			} else if (property instanceof BaseProperty) {
 				const typeid = property.getTypeid();
-				throw new Error(MSG.SET_VALUES_PATH_PROPERTY + propertyKey + ", of type: " + typeid);
+				throw new Error(
+					MSG.SET_VALUES_PATH_PROPERTY + propertyKey + ", of type: " + typeid,
+				);
 			} else if (property === undefined) {
 				throw new Error(MSG.SET_VALUES_PATH_INVALID + propertyKey);
 			}
@@ -452,7 +478,8 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
 
 			// if child is untyped then merge its properties
 			if (
-				this._staticChildren[id].getTypeid() === "AbstractStaticCollectionProperty" &&
+				this._staticChildren[id].getTypeid() ===
+					"AbstractStaticCollectionProperty" &&
 				this._staticChildren[id].getContext() === "single"
 			) {
 				// if the property's type is different than the child type, throw error.
@@ -490,7 +517,10 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
 	 * @inheritdoc
 	 */
 	_getDirtyChildren(in_flags) {
-		var flags = in_flags === undefined ? ~BaseProperty.MODIFIED_STATE_FLAGS.CLEAN : in_flags;
+		var flags =
+			in_flags === undefined
+				? ~BaseProperty.MODIFIED_STATE_FLAGS.CLEAN
+				: in_flags;
 		var rtn = [];
 		var childKeys = _.keys(this._staticChildren);
 		for (var i = 0; i < childKeys.length; i++) {
@@ -539,7 +569,8 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
 		for (i = 0; i < childKeys.length; i++) {
 			child = this._get(childKeys[i]);
 			childPath =
-				in_pathFromTraversalStart + PathHelper.quotePathSegmentIfNeeded(child.getId());
+				in_pathFromTraversalStart +
+				PathHelper.quotePathSegmentIfNeeded(child.getId());
 
 			result = in_callback(child, childPath);
 			if (result !== BREAK_TRAVERSAL) {
@@ -570,7 +601,9 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
 			var property = this._staticChildren[propertyKeys[i]];
 			var childPath =
 				in_pathFromTraversalStart +
-				(in_pathFromTraversalStart.length !== 0 ? PROPERTY_PATH_DELIMITER : "") +
+				(in_pathFromTraversalStart.length !== 0
+					? PROPERTY_PATH_DELIMITER
+					: "") +
 				PathHelper.quotePathSegmentIfNeeded(property.getId());
 
 			// We only recursively traverse ContainerProperties, since these are used to define the hierarchy within
@@ -615,36 +648,39 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
 				? BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE
 				: in_dirtinessType;
 
-		this._traverseStaticProperties(function (in_node, in_pathFromTraversalStart) {
-			if (in_dirtyOnly && !in_node._isDirty(in_dirtinessType)) {
-				return;
-			}
-
-			childrenType = in_node.getFullTypeid();
-
-			if (
-				childrenType !== "AbstractStaticCollectionProperty" &&
-				childrenType !== "ContainerProperty"
-			) {
-				// we don't want to keep BaseProperties
-				// as they mostly behave as 'paths' to
-				// a ValueProperty.
-				var serialized = in_node._serialize(
-					in_dirtyOnly,
-					false,
-					in_dirtinessType,
-					in_includeReferencedRepositories,
-				);
-
-				// Add the root typeid if requested
-				if (!ChangeSet.isEmptyChangeSet(serialized) || !in_dirtyOnly) {
-					if (!serializedChildren[childrenType]) {
-						serializedChildren[childrenType] = {};
-					}
-					serializedChildren[childrenType][in_pathFromTraversalStart] = serialized;
+		this._traverseStaticProperties(
+			function (in_node, in_pathFromTraversalStart) {
+				if (in_dirtyOnly && !in_node._isDirty(in_dirtinessType)) {
+					return;
 				}
-			}
-		});
+
+				childrenType = in_node.getFullTypeid();
+
+				if (
+					childrenType !== "AbstractStaticCollectionProperty" &&
+					childrenType !== "ContainerProperty"
+				) {
+					// we don't want to keep BaseProperties
+					// as they mostly behave as 'paths' to
+					// a ValueProperty.
+					var serialized = in_node._serialize(
+						in_dirtyOnly,
+						false,
+						in_dirtinessType,
+						in_includeReferencedRepositories,
+					);
+
+					// Add the root typeid if requested
+					if (!ChangeSet.isEmptyChangeSet(serialized) || !in_dirtyOnly) {
+						if (!serializedChildren[childrenType]) {
+							serializedChildren[childrenType] = {};
+						}
+						serializedChildren[childrenType][in_pathFromTraversalStart] =
+							serialized;
+					}
+				}
+			},
+		);
 
 		if (in_includeRootTypeid) {
 			serializedChildren["typeid"] = this.getFullTypeid();
@@ -668,37 +704,43 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
 		var changeSet = {};
 
 		// Traverse all properties of this template
-		this._traverseStaticProperties(function (in_node, in_pathFromTraversalStart) {
-			// We do not deserialize base properties, since the traverseStatic function
-			// already traverses recursively
-			if (in_node.getTypeid() === "ContainerProperty" && in_node.getContext() === "single") {
-				return;
-			}
+		this._traverseStaticProperties(
+			function (in_node, in_pathFromTraversalStart) {
+				// We do not deserialize base properties, since the traverseStatic function
+				// already traverses recursively
+				if (
+					in_node.getTypeid() === "ContainerProperty" &&
+					in_node.getContext() === "single"
+				) {
+					return;
+				}
 
-			var typeid = in_node.getFullTypeid();
+				var typeid = in_node.getFullTypeid();
 
-			// Get the ChangeSet
-			// If there is a ChangeSet in the serialized object, we use that as the
-			// target ChangeSet, otherwise we use an empty ChangeSet (since properties with
-			// empty Sub-ChangeSets are removed from the parent ChangeSet, we have to
-			// explicitly use an empty ChangeSet for those)
-			var propertyChangeSet = {};
-			if (
-				in_serializedObj[typeid] !== undefined &&
-				in_serializedObj[typeid][in_pathFromTraversalStart] !== undefined
-			) {
-				propertyChangeSet = in_serializedObj[typeid][in_pathFromTraversalStart];
-			}
+				// Get the ChangeSet
+				// If there is a ChangeSet in the serialized object, we use that as the
+				// target ChangeSet, otherwise we use an empty ChangeSet (since properties with
+				// empty Sub-ChangeSets are removed from the parent ChangeSet, we have to
+				// explicitly use an empty ChangeSet for those)
+				var propertyChangeSet = {};
+				if (
+					in_serializedObj[typeid] !== undefined &&
+					in_serializedObj[typeid][in_pathFromTraversalStart] !== undefined
+				) {
+					propertyChangeSet =
+						in_serializedObj[typeid][in_pathFromTraversalStart];
+				}
 
-			// Deserialize the ChangeSet into the property
-			var changes = in_node._deserialize(propertyChangeSet, false);
+				// Deserialize the ChangeSet into the property
+				var changes = in_node._deserialize(propertyChangeSet, false);
 
-			// And track the performed modification in the result
-			if (!ChangeSet.isEmptyChangeSet(changes)) {
-				changeSet[typeid] = changeSet[typeid] || {};
-				changeSet[typeid][in_pathFromTraversalStart] = changes;
-			}
-		});
+				// And track the performed modification in the result
+				if (!ChangeSet.isEmptyChangeSet(changes)) {
+					changeSet[typeid] = changeSet[typeid] || {};
+					changeSet[typeid][in_pathFromTraversalStart] = changes;
+				}
+			},
+		);
 
 		// Finally report the dirtiness to the view (we postponed this above)
 		if (in_reportToView) {
@@ -725,7 +767,9 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
 		for (var i = 0; i < keys.length; i++) {
 			var key = keys[i];
 			var child = this._get(key);
-			flattenedRepresentation[key] = child._isFlattenLeaf() ? child : child._flatten();
+			flattenedRepresentation[key] = child._isFlattenLeaf()
+				? child
+				: child._flatten();
 		}
 
 		flattenedRepresentation.propertyNode = this;
@@ -749,7 +793,8 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
 	_setConstants(in_constants) {
 		ConsoleUtils.assert(
 			_.isObject(in_constants),
-			MSG.ASSERTION_FAILED + " setConstants parameter: in_constants must be an object.",
+			MSG.ASSERTION_FAILED +
+				" setConstants parameter: in_constants must be an object.",
 		);
 		this._constantChildren = in_constants;
 	}

@@ -224,7 +224,9 @@ class PackageNode extends BaseNode {
 	}
 
 	public get dotName(): string {
-		return this.name.replace(/@fluidframework\//i, "").replace(/@fluid-internal\//i, "");
+		return this.name
+			.replace(/@fluidframework\//i, "")
+			.replace(/@fluid-internal\//i, "");
 	}
 
 	public get pkg(): Package {
@@ -236,12 +238,16 @@ class PackageNode extends BaseNode {
 
 	public set pkg(pkg: Package) {
 		if (this._pkg) {
-			throw new Error(`ERROR: Package assigned twice to a PackageNode ${this.name}`);
+			throw new Error(
+				`ERROR: Package assigned twice to a PackageNode ${this.name}`,
+			);
 		}
 		this._pkg = pkg;
 	}
 
-	public initializedDependencies(packageNodeMap: Map<string, PackageNode>): void {
+	public initializedDependencies(
+		packageNodeMap: Map<string, PackageNode>,
+	): void {
 		for (const dep of this.pkg.dependencies) {
 			const depPackageNode = packageNodeMap.get(dep);
 			if (depPackageNode) {
@@ -265,14 +271,13 @@ class PackageNode extends BaseNode {
 		if (this._indirectDependencies === undefined) {
 			// NOTE: recursive isn't great, but the graph should be small enough
 			// eslint-disable-next-line unicorn/no-array-reduce
-			this._indirectDependencies = this._childDependencies.reduce<Set<PackageNode>>(
-				(accum, childPackage) => {
-					for (const pkg of childPackage.childDependencies) accum.add(pkg);
-					for (const pkg of childPackage.indirectDependencies) accum.add(pkg);
-					return accum;
-				},
-				new Set<PackageNode>(),
-			);
+			this._indirectDependencies = this._childDependencies.reduce<
+				Set<PackageNode>
+			>((accum, childPackage) => {
+				for (const pkg of childPackage.childDependencies) accum.add(pkg);
+				for (const pkg of childPackage.indirectDependencies) accum.add(pkg);
+				return accum;
+			}, new Set<PackageNode>());
 		}
 		return this._indirectDependencies;
 	}
@@ -280,9 +285,12 @@ class PackageNode extends BaseNode {
 	public get level(): number {
 		if (this._level === undefined) {
 			// eslint-disable-next-line unicorn/no-array-reduce
-			this._level = this._childDependencies.reduce<number>((accum, childPackage) => {
-				return Math.max(accum, childPackage.level + 1);
-			}, 0);
+			this._level = this._childDependencies.reduce<number>(
+				(accum, childPackage) => {
+					return Math.max(accum, childPackage.level + 1);
+				},
+				0,
+			);
 		}
 		return this._level;
 	}
@@ -308,7 +316,11 @@ export class LayerGraph {
 		return packageNode;
 	}
 
-	private constructor(root: string, layerInfo: ILayerInfoFile, packages: Package[]) {
+	private constructor(
+		root: string,
+		layerInfo: ILayerInfoFile,
+		packages: Package[],
+	) {
 		this.initializeLayers(root, layerInfo);
 		this.initializePackages(packages);
 
@@ -333,7 +345,8 @@ export class LayerGraph {
 						this.dirMapping[path.resolve(root, dir)] = layerNode;
 				}
 				if (layerInfo.packages) {
-					for (const pkg of layerInfo.packages) this.createPackageNode(pkg, layerNode);
+					for (const pkg of layerInfo.packages)
+						this.createPackageNode(pkg, layerNode);
 				}
 
 				if (layerInfo.dev && layerInfo.deps) {
@@ -386,7 +399,9 @@ export class LayerGraph {
 			for (const dir of Object.keys(this.dirMapping)) {
 				if (pkg.directory.startsWith(dir)) {
 					const layerNode = this.dirMapping[dir];
-					traceLayerCheck(`${pkg.nameColored}: matched with ${layerNode.name} (${dir})`);
+					traceLayerCheck(
+						`${pkg.nameColored}: matched with ${layerNode.name} (${dir})`,
+					);
 					const newPackageNode = this.createPackageNode(pkg.name, layerNode);
 					newPackageNode.pkg = pkg;
 					matched = true;
@@ -452,14 +467,19 @@ export class LayerGraph {
 	public generateDotGraph(): string {
 		const dotEdges: string[] = [];
 		this.forEachDependencies((packageNode, depPackageNode) => {
-			if (packageNode.doDot && !packageNode.indirectDependencies.has(depPackageNode)) {
+			if (
+				packageNode.doDot &&
+				!packageNode.indirectDependencies.has(depPackageNode)
+			) {
 				const suffix = packageNode.indirectDependencies.has(depPackageNode)
 					? " [constraint=false color=lightgrey]"
 					: packageNode.layerNode !== depPackageNode.layerNode &&
 							packageNode.level - depPackageNode.level > 3
 						? " [constraint=false]"
 						: "";
-				dotEdges.push(`"${packageNode.dotName}"->"${depPackageNode.dotName}"${suffix}`);
+				dotEdges.push(
+					`"${packageNode.dotName}"->"${depPackageNode.dotName}"${suffix}`,
+				);
 			}
 			return true;
 		});
@@ -487,16 +507,20 @@ export class LayerGraph {
 	 */
 	private traverseLayerDependencyGraph(): void {
 		// Walk all packages, grouping by layers and which layers contain dependencies of that layer
-		const layers: (LayerDependencyNode & { childrenToVisit: LayerNode[] })[] = [];
+		const layers: (LayerDependencyNode & { childrenToVisit: LayerNode[] })[] =
+			[];
 		for (const groupNode of this.groupNodes) {
 			for (const layerNode of groupNode.layerNodes) {
 				const childLayers: Set<LayerNode> = new Set();
 				for (const packageNode of layerNode.packages) {
-					for (const p of packageNode.childDependencies) childLayers.add(p.layerNode);
+					for (const p of packageNode.childDependencies)
+						childLayers.add(p.layerNode);
 				}
 				layers.push({
 					node: layerNode,
-					childrenToVisit: [...childLayers].filter((l) => l.name !== layerNode.name),
+					childrenToVisit: [...childLayers].filter(
+						(l) => l.name !== layerNode.name,
+					),
 					orderedChildren: [],
 				});
 			}
@@ -561,7 +585,9 @@ But some packages in layer A depend on packages in layer B, and likewise some in
 					.relative(repoRoot, packageNode.pkg.directory)
 					.replace(/\\/g, "/")}`;
 				const ifPrivate = packageNode.pkg.isPublished ? "" : " (private)";
-				packagesInCell.push(`- [${packageNode.name}](${dirRelativePath})${ifPrivate}`);
+				packagesInCell.push(
+					`- [${packageNode.name}](${dirRelativePath})${ifPrivate}`,
+				);
 			}
 
 			const layersInCell: string[] = [];
@@ -593,8 +619,13 @@ ${lines.join(newline)}
 		return packagesMdContents;
 	}
 
-	public static load(root: string, packages: Package[], info?: string): LayerGraph {
-		const layerInfoFile = info ?? path.join(__dirname, "..", "..", "data", "layerInfo.json");
+	public static load(
+		root: string,
+		packages: Package[],
+		info?: string,
+	): LayerGraph {
+		const layerInfoFile =
+			info ?? path.join(__dirname, "..", "..", "data", "layerInfo.json");
 		const layerData = readJsonSync(layerInfoFile) as ILayerInfoFile;
 		return new LayerGraph(root, layerData, packages);
 	}

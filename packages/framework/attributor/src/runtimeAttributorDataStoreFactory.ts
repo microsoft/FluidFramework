@@ -8,7 +8,10 @@ import type {
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
 } from "@fluidframework/runtime-definitions/internal";
-import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	PerformanceEvent,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { RuntimeAttributorDataStoreChannel } from "./runtimeAttributorDataStoreChannel.js";
 

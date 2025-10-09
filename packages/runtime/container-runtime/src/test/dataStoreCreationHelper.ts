@@ -4,7 +4,10 @@
  */
 
 import type { ILayerCompatDetails } from "@fluid-internal/client-utils";
-import type { FluidObject, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type {
+	FluidObject,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 import type { IClientDetails } from "@fluidframework/driver-definitions/internal";
 import {
 	CreateSummarizerNodeSource,
@@ -114,7 +117,8 @@ export function createLocalDataStoreContext(
 		...defaultCreateProps,
 		...props,
 		parentContext:
-			props.parentContext ?? createParentContext(undefined, undefined, compatDetails),
+			props.parentContext ??
+			createParentContext(undefined, undefined, compatDetails),
 		createSummarizerNodeFn:
 			props.createSummarizerNodeFn ??
 			createSummarizerNodeAndGetCreateFn(props.id ?? defaultCreateProps.id)

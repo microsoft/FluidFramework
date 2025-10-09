@@ -14,7 +14,10 @@ import type {
 } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { makeMessageCodec, makeMessageCodecs } from "../../shared-tree-core/messageCodecs.js";
+import {
+	makeMessageCodec,
+	makeMessageCodecs,
+} from "../../shared-tree-core/messageCodecs.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { Message } from "../../shared-tree-core/messageFormatV1ToV4.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -171,14 +174,18 @@ describe("message codec", () => {
 				commit: {
 					revision,
 					change: TestChange.mint([], 1),
-					parent: "Extra field that should be dropped" as unknown as GraphCommit<TestChange>,
+					parent:
+						"Extra field that should be dropped" as unknown as GraphCommit<TestChange>,
 				},
 				branchId: "main",
 			};
 
-			const actual = codec.decode(codec.encode(message, { idCompressor: testIdCompressor }), {
-				idCompressor: testIdCompressor,
-			});
+			const actual = codec.decode(
+				codec.encode(message, { idCompressor: testIdCompressor }),
+				{
+					idCompressor: testIdCompressor,
+				},
+			);
 			assert.deepEqual(actual, {
 				type: "commit",
 				branchId: "main",
@@ -198,7 +205,9 @@ describe("message codec", () => {
 				originatorId,
 				changeset: {},
 			} satisfies Message);
-			const actual = codec.decode(JSON.parse(encoded), { idCompressor: testIdCompressor });
+			const actual = codec.decode(JSON.parse(encoded), {
+				idCompressor: testIdCompressor,
+			});
 			assert.deepEqual(actual, {
 				type: "commit",
 				commit: {
@@ -223,7 +232,9 @@ describe("message codec", () => {
 				changeset: {},
 				version: 1,
 			} satisfies Message);
-			const actual = codec.decode(JSON.parse(encoded), { idCompressor: testIdCompressor });
+			const actual = codec.decode(JSON.parse(encoded), {
+				idCompressor: testIdCompressor,
+			});
 			assert.deepEqual(actual, {
 				type: "commit",
 				commit: {
@@ -249,8 +260,11 @@ describe("message codec", () => {
 				version: -1,
 			} satisfies Message);
 			assert.throws(
-				() => codec.decode(JSON.parse(encoded), { idCompressor: testIdCompressor }),
-				validateUsageError(/Unsupported version -1 encountered while decoding data/),
+				() =>
+					codec.decode(JSON.parse(encoded), { idCompressor: testIdCompressor }),
+				validateUsageError(
+					/Unsupported version -1 encountered while decoding data/,
+				),
 			);
 		});
 	});

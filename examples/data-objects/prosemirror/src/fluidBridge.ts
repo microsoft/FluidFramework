@@ -146,7 +146,10 @@ export class ProseMirrorTransactionBuilder {
 				//
 				// For positions we *will* need to include any newly inserted nodes. We can count these as "new" ether
 
-				assert(i < this.things.length, "Trying to insert removal node out-of-bounds!");
+				assert(
+					i < this.things.length,
+					"Trying to insert removal node out-of-bounds!",
+				);
 
 				i = this.splitAt(position, i);
 				let length = range.segment.cachedLength;
@@ -310,7 +313,11 @@ export class ProseMirrorTransactionBuilder {
 				this.getOpenEnd(fragment),
 			);
 
-			this.transaction.replaceRange(group.position, group.position + removalSize, slice);
+			this.transaction.replaceRange(
+				group.position,
+				group.position + removalSize,
+				slice,
+			);
 		} else if (groups.length > 1) {
 			const removalSizes: number[] = [];
 			const insertSizes: number[] = [];
@@ -368,7 +375,11 @@ export class ProseMirrorTransactionBuilder {
 						this.schema.marks[prop].create(value),
 					);
 				} else {
-					this.transaction.removeMark(annotation.from, annotation.to, this.schema.marks[prop]);
+					this.transaction.removeMark(
+						annotation.from,
+						annotation.to,
+						this.schema.marks[prop],
+					);
 				}
 			}
 		}
@@ -382,7 +393,9 @@ export class ProseMirrorTransactionBuilder {
 		}
 
 		const start = node[0];
-		return !start._open || !start.content ? 0 : 1 + this.getOpenStart(start.content);
+		return !start._open || !start.content
+			? 0
+			: 1 + this.getOpenStart(start.content);
 	}
 
 	private getOpenEnd(node: IProseMirrorNode[]): number {
@@ -460,7 +473,13 @@ function sliceToGroupOpsInternal(
 			const segment = TextSegment.make(value.text, props);
 			ops.push(createInsertSegmentOp(from + offset, segment));
 
-			offset = adjustOffset(from, offset, value.text.length, insert, gapDistance);
+			offset = adjustOffset(
+				from,
+				offset,
+				value.text.length,
+				insert,
+				gapDistance,
+			);
 		} else {
 			const nodeProps = {
 				...props,

@@ -24,14 +24,17 @@ import type {
 // The final schema object will later be used as an argument to the schematize call.  AB#5967
 const builder = new SchemaFactory("inventory app");
 
-export class InventoryItem extends builder.object("Contoso:InventoryItem-1.0.0", {
-	// Some unique identifier appropriate for the inventory scenario (e.g. a UPC or model number)
-	id: builder.string,
-	// A user-friendly name
-	name: builder.string,
-	// The number in stock
-	quantity: builder.number,
-}) {}
+export class InventoryItem extends builder.object(
+	"Contoso:InventoryItem-1.0.0",
+	{
+		// Some unique identifier appropriate for the inventory scenario (e.g. a UPC or model number)
+		id: builder.string,
+		// A user-friendly name
+		name: builder.string,
+		// The number in stock
+		quantity: builder.number,
+	},
+) {}
 const InventoryItemList = builder.array(InventoryItem);
 type InventoryItemList = NodeFromSchema<typeof InventoryItemList>;
 
@@ -39,7 +42,9 @@ export class InventorySchema extends builder.object("Contoso:Inventory-1.0.0", {
 	inventoryItemList: InventoryItemList,
 }) {}
 
-export const treeConfiguration = new TreeViewConfiguration({ schema: InventorySchema });
+export const treeConfiguration = new TreeViewConfiguration({
+	schema: InventorySchema,
+});
 
 /**
  * NewTreeInventoryItem is the local object with a friendly interface for the view to use.
@@ -72,9 +77,13 @@ class NewTreeInventoryItem
 		// Note that this is not a normal Node EventEmitter and functions differently.  There is no "off" method,
 		// but instead "on" returns a callback to unregister the event.  AB#5973
 		// Tree.on() is the way to register events on the inventory item (the first argument).  AB#6051
-		this._unregisterChangingEvent = Tree.on(this._inventoryItemNode, "nodeChanged", () => {
-			this.emit("quantityChanged");
-		});
+		this._unregisterChangingEvent = Tree.on(
+			this._inventoryItemNode,
+			"nodeChanged",
+			() => {
+				this.emit("quantityChanged");
+			},
+		);
 	}
 	public readonly deleteItem = () => {
 		// TODO: Maybe expose a public dispose() method for disposing the NewTreeInventoryItem without
@@ -84,10 +93,16 @@ class NewTreeInventoryItem
 	};
 }
 
-export class NewTreeInventoryListController extends EventEmitter implements IInventoryList {
+export class NewTreeInventoryListController
+	extends EventEmitter
+	implements IInventoryList
+{
 	// TODO: See note in inventoryList.ts for why this duplicative schematizeView call is here.
 	// TODO: initial tree type - and revisit if we get separate schematize/initialize calls
-	public static initializeTree(tree: ITree, initialTree: InventorySchema): void {
+	public static initializeTree(
+		tree: ITree,
+		initialTree: InventorySchema,
+	): void {
 		const view = tree.viewWith(treeConfiguration);
 		view.initialize(initialTree);
 
@@ -100,7 +115,8 @@ export class NewTreeInventoryListController extends EventEmitter implements IInv
 
 	public constructor(private readonly _tree: ITree) {
 		super();
-		this._inventoryItemList = this._tree.viewWith(treeConfiguration).root.inventoryItemList;
+		this._inventoryItemList =
+			this._tree.viewWith(treeConfiguration).root.inventoryItemList;
 		// "treeChanged" will fire for any change of any type anywhere in the subtree. In this application we expect
 		// three types of tree changes that will trigger this handler - add items, delete items, change item quantities.
 		// Since "treeChanged" doesn't provide event args, we need to scan the tree and compare it to our InventoryItems
@@ -120,9 +136,11 @@ export class NewTreeInventoryListController extends EventEmitter implements IInv
 			}
 
 			// Search for deleted inventory items to update our collection
-			const currentInventoryIds = this._inventoryItemList.map((inventoryItemNode) => {
-				return inventoryItemNode.id;
-			});
+			const currentInventoryIds = this._inventoryItemList.map(
+				(inventoryItemNode) => {
+					return inventoryItemNode.id;
+				},
+			);
 			for (const trackedItemId of this._inventoryItems.keys()) {
 				// If the tree doesn't contain the id of an item we're tracking, then it must have
 				// been deleted in this change.
@@ -135,7 +153,8 @@ export class NewTreeInventoryListController extends EventEmitter implements IInv
 
 		// Last step of initializing is to populate our map of InventoryItems.
 		for (const inventoryItemNode of this._inventoryItemList) {
-			const inventoryItem = this.makeInventoryItemFromInventoryItemNode(inventoryItemNode);
+			const inventoryItem =
+				this.makeInventoryItemFromInventoryItemNode(inventoryItemNode);
 			this._inventoryItems.set(inventoryItemNode.id, inventoryItem);
 		}
 	}
@@ -160,9 +179,14 @@ export class NewTreeInventoryListController extends EventEmitter implements IInv
 		const removeItemFromTree = () => {
 			// We pass in the delete capability as a callback to withold this.inventory access from the
 			// inventory items.  AB#6015
-			this._inventoryItemList.removeAt(this._inventoryItemList.indexOf(inventoryItemNode));
+			this._inventoryItemList.removeAt(
+				this._inventoryItemList.indexOf(inventoryItemNode),
+			);
 		};
-		const inventoryItem = new NewTreeInventoryItem(inventoryItemNode, removeItemFromTree);
+		const inventoryItem = new NewTreeInventoryItem(
+			inventoryItemNode,
+			removeItemFromTree,
+		);
 		return inventoryItem;
 	}
 }

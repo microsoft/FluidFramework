@@ -75,7 +75,8 @@ export async function getMergeBaseRemote(
 		await git.fetch([remote]);
 	}
 
-	const compareRef = remote === undefined ? branch : `refs/remotes/${remote}/${branch}`;
+	const compareRef =
+		remote === undefined ? branch : `refs/remotes/${remote}/${branch}`;
 	const base = await git.raw("merge-base", compareRef, localRef);
 	return base;
 }
@@ -97,7 +98,8 @@ export async function getChangedFilesSinceRef(
 	}
 
 	// Find the merge base commit
-	const divergedAt = remote === undefined ? ref : await getMergeBaseRemote(git, ref, remote);
+	const divergedAt =
+		remote === undefined ? ref : await getMergeBaseRemote(git, ref, remote);
 	// Now we can find which files have changed
 	const changed = await git.diff([
 		divergedAt,
@@ -173,11 +175,15 @@ export async function getChangedSinceRef<P extends IPackage>(
 		.map((name) => buildProject.packages.get(name as PackageName))
 		.filter((pkg): pkg is P => pkg !== undefined);
 
-	const changedReleaseGroups = [...new Set(changedPackages.map((pkg) => pkg.releaseGroup))]
+	const changedReleaseGroups = [
+		...new Set(changedPackages.map((pkg) => pkg.releaseGroup)),
+	]
 		.map((rg) => buildProject.releaseGroups.get(rg))
 		.filter((rg): rg is IReleaseGroup => rg !== undefined);
 
-	const changedWorkspaces = [...new Set(changedReleaseGroups.map((ws) => ws.workspace))];
+	const changedWorkspaces = [
+		...new Set(changedReleaseGroups.map((ws) => ws.workspace)),
+	];
 
 	return {
 		files,
@@ -220,7 +226,10 @@ export async function getRemote(
  * @param directory - A directory to filter the results by. Only files under this directory will be returned. To
  * return all files in the repo use the value `"."`.
  */
-export async function getFiles(git: SimpleGit, directory: string): Promise<string[]> {
+export async function getFiles(
+	git: SimpleGit,
+	directory: string,
+): Promise<string[]> {
 	// Note that `--deduplicate` is not used here because it is not available until git version 2.31.0.
 	const results = await git.raw(
 		"ls-files",

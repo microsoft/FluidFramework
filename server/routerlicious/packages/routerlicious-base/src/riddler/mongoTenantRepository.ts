@@ -62,7 +62,12 @@ export interface ITenantRepository {
  */
 export class MongoTenantRepository implements ITenantRepository {
 	constructor(private readonly collection: ICollection<ITenantDocument>) {}
-	async find(query: any, sort: any, limit?: number, skip?: number): Promise<ITenantDocument[]> {
+	async find(
+		query: any,
+		sort: any,
+		limit?: number,
+		skip?: number,
+	): Promise<ITenantDocument[]> {
 		return this.collection.find(query, sort, limit, skip);
 	}
 	async findOne(query: any, options?: any): Promise<ITenantDocument | null> {

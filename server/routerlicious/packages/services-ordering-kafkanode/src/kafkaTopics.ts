@@ -29,7 +29,10 @@ export async function ensureTopics(
 	}
 
 	const topicsNotExistError = topicExistsError as kafka.TopicsNotExistError;
-	if (typeof topicsNotExistError !== "object" || typeof topicsNotExistError.topics !== "object") {
+	if (
+		typeof topicsNotExistError !== "object" ||
+		typeof topicsNotExistError.topics !== "object"
+	) {
 		throw new TypeError(`Failed to ensure topics. ${topicExistsError}`);
 	}
 

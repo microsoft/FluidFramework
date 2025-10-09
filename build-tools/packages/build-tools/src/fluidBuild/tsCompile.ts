@@ -57,12 +57,18 @@ export function tsCompile(
 	if (commandLine) {
 		configFileName = tscUtils.findConfigFile(cwd, commandLine);
 		if (configFileName) {
-			commandLine = ts.getParsedCommandLineOfConfigFile(configFileName, commandLine.options, {
-				...currentDirectorySystem,
-				onUnRecoverableConfigFileDiagnostic: (diagnostic: tsTypes.Diagnostic) => {
-					diagnostics.push(diagnostic);
+			commandLine = ts.getParsedCommandLineOfConfigFile(
+				configFileName,
+				commandLine.options,
+				{
+					...currentDirectorySystem,
+					onUnRecoverableConfigFileDiagnostic: (
+						diagnostic: tsTypes.Diagnostic,
+					) => {
+						diagnostics.push(diagnostic);
+					},
 				},
-			});
+			);
 		} else {
 			throw new Error("Unknown config file in command line");
 		}
@@ -72,7 +78,10 @@ export function tsCompile(
 	if (commandLine && diagnostics.length === 0) {
 		// When specified, overrides current directory's package.json type field so tsc may cleanly
 		// transpile .ts files to CommonJS or ESM using compilerOptions.module Node16 or NodeNext.
-		let packageJsonTypeOverrideUsage = "not read" as "not read" | "already present" | "used";
+		let packageJsonTypeOverrideUsage = "not read" as
+			| "not read"
+			| "already present"
+			| "used";
 		const applyPackageJsonTypeOverride = !packageJsonTypeOverride
 			? undefined
 			: (
@@ -81,7 +90,9 @@ export function tsCompile(
 						| tsTypes.WatchCompilerHostOfConfigFile<tsTypes.EmitAndSemanticDiagnosticsBuilderProgram>,
 				): void => {
 					const originalReadFile = host.readFile;
-					const packageJsonPath = normalizeSlashes(path.join(cwd, "package.json"));
+					const packageJsonPath = normalizeSlashes(
+						path.join(cwd, "package.json"),
+					);
 					host.readFile = (fileName: string) => {
 						const rawFile = originalReadFile(fileName);
 						if (fileName === packageJsonPath && rawFile !== undefined) {
@@ -91,7 +102,10 @@ export function tsCompile(
 								(packageJson.type ?? "commonjs") !== packageJsonTypeOverride
 									? "used"
 									: "already present";
-							return JSON.stringify({ ...packageJson, type: packageJsonTypeOverride });
+							return JSON.stringify({
+								...packageJson,
+								type: packageJsonTypeOverride,
+							});
 						}
 						return rawFile;
 					};
@@ -104,7 +118,9 @@ export function tsCompile(
 				);
 			}
 			if (!configFileName) {
-				throw new Error("A config file is required when --watch option is specified.");
+				throw new Error(
+					"A config file is required when --watch option is specified.",
+				);
 			}
 
 			const host = ts.createWatchCompilerHost(
@@ -118,7 +134,9 @@ export function tsCompile(
 			return undefined;
 		}
 
-		const incremental = !!(commandLine.options.incremental || commandLine.options.composite);
+		const incremental = !!(
+			commandLine.options.incremental || commandLine.options.composite
+		);
 
 		const host = incremental
 			? ts.createIncrementalCompilerHost(commandLine.options)
@@ -127,11 +145,17 @@ export function tsCompile(
 
 		const param = {
 			rootNames: commandLine.fileNames,
-			options: tscUtils.convertOptionPaths(commandLine.options, cwd, path.resolve),
+			options: tscUtils.convertOptionPaths(
+				commandLine.options,
+				cwd,
+				path.resolve,
+			),
 			host,
 			projectReferences: commandLine.projectReferences,
 		};
-		const program = incremental ? ts.createIncrementalProgram(param) : ts.createProgram(param);
+		const program = incremental
+			? ts.createIncrementalProgram(param)
+			: ts.createProgram(param);
 
 		diagnostics.push(...program.getConfigFileParsingDiagnostics());
 		diagnostics.push(...program.getSyntacticDiagnostics());
@@ -170,7 +194,10 @@ export function tsCompile(
 		// TODO: tsc has more complicated summary than this
 		if (commandLine?.options?.pretty !== false) {
 			console.log(
-				ts.formatDiagnosticsWithColorAndContext(sortedDiagnostics, formatDiagnosticsHost),
+				ts.formatDiagnosticsWithColorAndContext(
+					sortedDiagnostics,
+					formatDiagnosticsHost,
+				),
 			);
 			console.log(
 				`${ts.sys.newLine}Found ${sortedDiagnostics.length} error${
@@ -178,7 +205,9 @@ export function tsCompile(
 				}.`,
 			);
 		} else {
-			console.log(ts.formatDiagnostics(sortedDiagnostics, formatDiagnosticsHost));
+			console.log(
+				ts.formatDiagnostics(sortedDiagnostics, formatDiagnosticsHost),
+			);
 		}
 	}
 	return code;

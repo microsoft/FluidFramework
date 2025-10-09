@@ -109,7 +109,11 @@ describe("Throttler", () => {
 
 				// Loop through attempts periodically dropping off.
 				for (let i = 0; i < 100; i++) {
-					assert.strictEqual(getDelayAndTick(), expectedDelays[2], `iteration ${i}`);
+					assert.strictEqual(
+						getDelayAndTick(),
+						expectedDelays[2],
+						`iteration ${i}`,
+					);
 					clock.tick(i % 3 === 2 ? remainingTicks : oneThirdTicks);
 				}
 				assert.strictEqual(getDelayAndTick(), expectedDelayAt(2));
@@ -121,7 +125,11 @@ describe("Throttler", () => {
 			it("Should stop increasing number of attempts after max", () => {
 				for (let i = 0; i < expectedMaxAttempts; i++) {
 					getDelayAndTick();
-					assert.strictEqual(throttler.numAttempts, i + 1, `loop 1; iteration ${i}`);
+					assert.strictEqual(
+						throttler.numAttempts,
+						i + 1,
+						`loop 1; iteration ${i}`,
+					);
 				}
 				for (let i = 0; i < 100; i++) {
 					getDelayAndTick();
@@ -196,7 +204,9 @@ describe("Throttler", () => {
 			coefficient: 20,
 			initialDelay: 0,
 		}),
-		expectedDelays: [0, 20, 40, 80, 160, 320, 640, 1280, 2560, 5120, 10240, 20480],
+		expectedDelays: [
+			0, 20, 40, 80, 160, 320, 640, 1280, 2560, 5120, 10240, 20480,
+		],
 	});
 
 	runTests({

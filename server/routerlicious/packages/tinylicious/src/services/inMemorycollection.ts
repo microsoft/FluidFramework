@@ -25,7 +25,10 @@ export class Collection<T> implements ICollection<T> {
 		throw new Error("Method Not Implemented");
 	}
 
-	public async findAndUpdate(query: any, value: any): Promise<{ value: any; existing: boolean }> {
+	public async findAndUpdate(
+		query: any,
+		value: any,
+	): Promise<{ value: any; existing: boolean }> {
 		throw new Error("Method Not Implemented");
 	}
 
@@ -70,7 +73,10 @@ export class Collection<T> implements ICollection<T> {
 		return this.insertOneInternal(value);
 	}
 
-	public async findOrCreate(query: any, value: any): Promise<{ value: any; existing: boolean }> {
+	public async findOrCreate(
+		query: any,
+		value: any,
+	): Promise<{ value: any; existing: boolean }> {
 		const existing = this.findOneInternal(query);
 		if (existing) {
 			return { value: existing, existing: true };

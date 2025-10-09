@@ -4,4 +4,7 @@
  */
 
 export { type ITelemetryConsumer } from "./consumers/index.js";
-export { type IFluidTelemetry, type FluidTelemetryEventName } from "./telemetry/index.js";
+export {
+	type IFluidTelemetry,
+	type FluidTelemetryEventName,
+} from "./telemetry/index.js";

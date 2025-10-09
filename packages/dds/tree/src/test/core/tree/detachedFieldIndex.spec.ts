@@ -22,7 +22,10 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import type { FormatV1 } from "../../../core/tree/detachedFieldIndexFormatV1.js";
 // eslint-disable-next-line import/no-internal-modules
-import { version2, type FormatV2 } from "../../../core/tree/detachedFieldIndexFormatV2.js";
+import {
+	version2,
+	type FormatV2,
+} from "../../../core/tree/detachedFieldIndexFormatV2.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { DetachedFieldSummaryData } from "../../../core/tree/detachedFieldIndexTypes.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
@@ -32,14 +35,20 @@ import {
 	brand,
 	idAllocatorFromMaxId,
 } from "../../../util/index.js";
-import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
+import {
+	takeJsonSnapshot,
+	useSnapshotDirectory,
+} from "../../snapshots/index.js";
 import {
 	testIdCompressor,
 	testRevisionTagCodec,
 	createSnapshotCompressor,
 	assertIsSessionId,
 } from "../../utils.js";
-import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index.js";
+import {
+	FluidClientVersion,
+	type CodecWriteOptions,
+} from "../../../codec/index.js";
 
 const mintedTag = testIdCompressor.generateCompressedId();
 const finalizedTag = testIdCompressor.normalizeToOpSpace(mintedTag);
@@ -125,7 +134,10 @@ const validV1Data: readonly [string, FormatV1][] = [
 	],
 ];
 const validV2Data: readonly [string, FormatV2][] = [
-	...validV1Data.map(([name, data]): [string, FormatV2] => [name, { ...data, version: 2 }]),
+	...validV1Data.map(([name, data]): [string, FormatV2] => [
+		name,
+		{ ...data, version: 2 },
+	]),
 	[
 		"revision represented as a StableId",
 		{
@@ -214,7 +226,9 @@ function generateTestCases(
 			validFor: new Set([version2]),
 			data: {
 				maxId,
-				data: new Map([[unfinalizedRevision, new Map([[0, { root: brand(1) }]])]]),
+				data: new Map([
+					[unfinalizedRevision, new Map([[0, { root: brand(1) }]])],
+				]),
 			},
 			idCompressor: unfinalizedCompressor,
 		},
@@ -255,7 +269,11 @@ describe("DetachedFieldIndex Codecs", () => {
 					idCompressor,
 				);
 				for (const version of family.getSupportedFormats()) {
-					if (validFor !== undefined && version !== undefined && !validFor.has(version)) {
+					if (
+						validFor !== undefined &&
+						version !== undefined &&
+						!validFor.has(version)
+					) {
 						continue;
 					}
 					it(`version ${version}`, () => {
@@ -269,7 +287,11 @@ describe("DetachedFieldIndex Codecs", () => {
 		}
 	});
 	describe("loadData", () => {
-		const codec = makeDetachedFieldIndexCodec(testRevisionTagCodec, options, testIdCompressor);
+		const codec = makeDetachedFieldIndexCodec(
+			testRevisionTagCodec,
+			options,
+			testIdCompressor,
+		);
 		for (const [version, cases] of validData) {
 			describe(`accepts correct version ${version} data`, () => {
 				for (const [name, data] of cases) {
@@ -303,7 +325,11 @@ describe("DetachedFieldIndex Codecs", () => {
 					idCompressor,
 				);
 				for (const version of family.getSupportedFormats()) {
-					if (validFor !== undefined && version !== undefined && !validFor.has(version)) {
+					if (
+						validFor !== undefined &&
+						version !== undefined &&
+						!validFor.has(version)
+					) {
 						continue;
 					}
 					const dir = path.join("detached-field-index", name, `V${version}`);

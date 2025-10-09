@@ -21,7 +21,9 @@ function ensureIsomorphicGitTreeEntryType(
 	return originalITreeEntryType as IsomorphicGitTreeEntryType;
 }
 
-function ensureIsomorphicGitTagObjectType(originalITagType: string): IsomorphicGitTagObjectType {
+function ensureIsomorphicGitTagObjectType(
+	originalITagType: string,
+): IsomorphicGitTagObjectType {
 	if (!["commit", "blob", "tree", "tag"].includes(originalITagType)) {
 		throw new NetworkError(400, "Invalid Tag Object type.");
 	}
@@ -73,7 +75,9 @@ function getIsoGitAuthorOrCommitterOrTaggerFromCommitOrTag(
 /**
  * Helper function to convert an `isomorphic-git` ReadCommitResult to our resource representation
  */
-export function commitToICommit(commitResult: isomorphicGit.ReadCommitResult): resources.ICommit {
+export function commitToICommit(
+	commitResult: isomorphicGit.ReadCommitResult,
+): resources.ICommit {
 	return {
 		author: getIAuthorOrICommitterOrITaggerFromIsoGitData(commitResult.commit.author),
 		committer: getIAuthorOrICommitterOrITaggerFromIsoGitData(commitResult.commit.committer),
@@ -146,7 +150,9 @@ export function refToIRef(resolvedRef: string, expandedRef: string): resources.I
 /**
  * Helper function to convert an `isomorphic-git` TreeEntry to our resource representation ITreeEntry
  */
-export function treeEntryToITreeEntry(treeEntry: isomorphicGit.TreeEntry): resources.ITreeEntry {
+export function treeEntryToITreeEntry(
+	treeEntry: isomorphicGit.TreeEntry,
+): resources.ITreeEntry {
 	return {
 		// remove leading 0s from hexadecimal mode string coming from isomorphic-git
 		mode: parseInt(treeEntry.mode, 16).toString(16),
@@ -175,7 +181,9 @@ export function iCreateTreeEntryToTreeEntry(
 /**
  * Helper function to convert an `isomorphic-git` ReadTagResult to our resource representation of a tag
  */
-export async function tagToITag(tagResult: isomorphicGit.ReadTagResult): Promise<resources.ITag> {
+export async function tagToITag(
+	tagResult: isomorphicGit.ReadTagResult,
+): Promise<resources.ITag> {
 	return {
 		message: tagResult.tag.message,
 		object: {

@@ -1,8 +1,8 @@
 {
-  "version": 1,
-  "nodes": {},
-  "root": {
-    "kind": "Optional",
-    "types": []
-  }
+	"version": 1,
+	"nodes": {},
+	"root": {
+		"kind": "Optional",
+		"types": []
+	}
 }

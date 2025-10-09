@@ -172,9 +172,7 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 				// Skip packages that are published, but are not intended for direct public consumption.
 				// TODO: Also skip `@fluid-internal` packages once we no longer have public, user-facing APIs that reference their contents.
 				if (
-					["@fluid-example", "@fluid-experimental", "@fluid-private"].includes(
-						packageScope,
-					)
+					["@fluid-example", "@fluid-experimental", "@fluid-private"].includes(packageScope)
 				) {
 					return true;
 				}
@@ -234,9 +232,7 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 
 				const frontMatter = createFrontMatter(documentApiItem, config);
 
-				fileContents = [frontMatter, generatedContentNotice, documentBody]
-					.join("\n\n")
-					.trim();
+				fileContents = [frontMatter, generatedContentNotice, documentBody].join("\n\n").trim();
 			} catch (error) {
 				logErrorAndRethrow(
 					`Encountered error while rendering Markdown contents for "${documentApiItem.displayName}"`,

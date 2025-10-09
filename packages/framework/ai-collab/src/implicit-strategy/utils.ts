@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { type TreeMapNode, type TreeArrayNode, NodeKind } from "@fluidframework/tree";
+import {
+	type TreeMapNode,
+	type TreeArrayNode,
+	NodeKind,
+} from "@fluidframework/tree";
 
 import type { ObjectPath } from "./sharedTreeDiff.js";
 
@@ -13,7 +17,8 @@ import type { ObjectPath } from "./sharedTreeDiff.js";
 export function isTreeMapNode(obj: unknown): obj is TreeMapNode {
 	if (typeof obj === "object" && obj !== null) {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		const maybeNodeKind: unknown = Object.getPrototypeOf(obj)?.constructor?.kind;
+		const maybeNodeKind: unknown =
+			Object.getPrototypeOf(obj)?.constructor?.kind;
 		return maybeNodeKind === NodeKind.Map;
 	}
 	return false;
@@ -25,7 +30,8 @@ export function isTreeMapNode(obj: unknown): obj is TreeMapNode {
 export function isTreeArrayNode(obj: unknown): obj is TreeArrayNode {
 	if (typeof obj === "object" && obj !== null) {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		const maybeNodeKind: unknown = Object.getPrototypeOf(obj)?.constructor?.kind;
+		const maybeNodeKind: unknown =
+			Object.getPrototypeOf(obj)?.constructor?.kind;
 		return maybeNodeKind === NodeKind.Array;
 	}
 	return false;
@@ -47,7 +53,9 @@ export function sharedTreeTraverse<T = unknown>(
 			return undefined;
 		}
 
-		current = isTreeMapNode(current) ? current.get(key as string) : current[key];
+		current = isTreeMapNode(current)
+			? current.get(key as string)
+			: current[key];
 	}
 
 	return current as T;

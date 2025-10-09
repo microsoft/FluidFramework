@@ -5,7 +5,11 @@
 
 import { unreachableCase, fail } from "@fluidframework/core-utils/internal";
 
-import { NodeKind, type TreeNodeSchema, type AllowedTypes } from "../core/index.js";
+import {
+	NodeKind,
+	type TreeNodeSchema,
+	type AllowedTypes,
+} from "../core/index.js";
 import {
 	type FieldSchema,
 	type FieldSchemaAlpha,
@@ -37,7 +41,9 @@ const factory = new SchemaFactoryAlpha(undefined);
  * If any particular choice is required for such cases, this API should not be used.
  * @alpha
  */
-export function generateSchemaFromSimpleSchema(simple: SimpleTreeSchema): TreeSchema {
+export function generateSchemaFromSimpleSchema(
+	simple: SimpleTreeSchema,
+): TreeSchema {
 	const context: Context = new Map(
 		[...simple.definitions].map(
 			([id, schema]): [string, () => TreeNodeSchema & SimpleNodeSchema] => [
@@ -84,8 +90,13 @@ function generateFieldSchema(
 	}
 }
 
-function generateAllowedTypes(allowed: ReadonlySet<string>, context: Context): AllowedTypes {
-	return [...allowed].map((id) => context.get(id) ?? fail(0xb5a /* Missing schema */));
+function generateAllowedTypes(
+	allowed: ReadonlySet<string>,
+	context: Context,
+): AllowedTypes {
+	return [...allowed].map(
+		(id) => context.get(id) ?? fail(0xb5a /* Missing schema */),
+	);
 }
 
 function generateNode(

@@ -11,12 +11,12 @@
 		"declarationMap": true,
 		"noImplicitAny": false,
 		"noUncheckedIndexedAccess": false,
-		"exactOptionalPropertyTypes": false,
+		"exactOptionalPropertyTypes": false
 	},
 	"include": ["./**/*"],
 	"references": [
 		{
-			"path": "../..",
-		},
-	],
+			"path": "../.."
+		}
+	]
 }

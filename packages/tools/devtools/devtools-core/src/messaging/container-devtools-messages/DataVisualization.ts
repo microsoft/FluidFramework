@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { HasContainerKey, HasFluidObjectId } from "../../CommonInterfaces.js";
+import type {
+	HasContainerKey,
+	HasFluidObjectId,
+} from "../../CommonInterfaces.js";
 import type { FluidObjectNode } from "../../data-visualization/index.js";
 import type { IDevtoolsMessage } from "../Messages.js";
 

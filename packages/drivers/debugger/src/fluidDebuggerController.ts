@@ -29,15 +29,22 @@ import { Sanitizer } from "./sanitizer.js";
  * @internal
  */
 // eslint-disable-next-line @rushstack/no-new-null
-export type debuggerUIFactory = (controller: IDebuggerController) => IDebuggerUI | null;
+export type debuggerUIFactory = (
+	controller: IDebuggerController,
+) => IDebuggerUI | null;
 
 /**
  * Replay controller that uses pop-up window to control op playback
  * @internal
  */
-export class DebugReplayController extends ReplayController implements IDebuggerController {
+export class DebugReplayController
+	extends ReplayController
+	implements IDebuggerController
+{
 	// eslint-disable-next-line @rushstack/no-new-null
-	public static create(createUi: debuggerUIFactory): DebugReplayController | null {
+	public static create(
+		createUi: debuggerUIFactory,
+	): DebugReplayController | null {
 		if (typeof localStorage === "object" && localStorage?.FluidDebugger) {
 			const controller = new DebugReplayController();
 			const ui = createUi(controller);
@@ -101,8 +108,15 @@ export class DebugReplayController extends ReplayController implements IDebugger
 		}
 
 		const tree = await this.documentStorageService.getSnapshotTree(version);
-		const seq = await DebugReplayController.seqFromTree(this.documentStorageService, tree);
-		this.resolveStorage(seq, new SnapshotStorage(this.documentStorageService, tree), version);
+		const seq = await DebugReplayController.seqFromTree(
+			this.documentStorageService,
+			tree,
+		);
+		this.resolveStorage(
+			seq,
+			new SnapshotStorage(this.documentStorageService, tree),
+			version,
+		);
 	}
 
 	public onOpButtonClick(steps: number) {
@@ -117,7 +131,9 @@ export class DebugReplayController extends ReplayController implements IDebugger
 			return;
 		}
 		if (/.*_expanded.*/.exec(file.name)) {
-			alert(`Incorrect file name - please use non-extended files: ${file.name}`);
+			alert(
+				`Incorrect file name - please use non-extended files: ${file.name}`,
+			);
 			return;
 		}
 
@@ -159,11 +175,18 @@ export class DebugReplayController extends ReplayController implements IDebugger
 			throw new Error("DocumentService required");
 		}
 
-		const documentDeltaStorageService = await this.documentService.connectToDeltaStorage();
-		let messages = await this.fetchOpsFromDeltaStorage(documentDeltaStorageService);
+		const documentDeltaStorageService =
+			await this.documentService.connectToDeltaStorage();
+		let messages = await this.fetchOpsFromDeltaStorage(
+			documentDeltaStorageService,
+		);
 
 		if (anonymize) {
-			const sanitizer = new Sanitizer(messages, false /* fullScrub */, false /* noBail */);
+			const sanitizer = new Sanitizer(
+				messages,
+				false /* fullScrub */,
+				false /* noBail */,
+			);
 			messages = sanitizer.sanitize();
 		}
 
@@ -205,7 +228,10 @@ export class DebugReplayController extends ReplayController implements IDebugger
 		await prevRequest;
 
 		const treeV = await documentStorageService.getSnapshotTree(version);
-		const seqV = await DebugReplayController.seqFromTree(documentStorageService, treeV);
+		const seqV = await DebugReplayController.seqFromTree(
+			documentStorageService,
+			treeV,
+		);
 
 		if (!this.isSelectionMade()) {
 			this.versionCount--;
@@ -214,14 +240,19 @@ export class DebugReplayController extends ReplayController implements IDebugger
 		}
 	}
 
-	public async initStorage(documentService: IDocumentService): Promise<boolean> {
+	public async initStorage(
+		documentService: IDocumentService,
+	): Promise<boolean> {
 		if (this.shouldUseController !== undefined) {
 			return this.shouldUseController;
 		}
 
 		assert(!!documentService, 0x080 /* "Invalid document service!" */);
 		assert(!this.documentService, 0x081 /* "Document service already set!" */);
-		assert(!this.documentStorageService, 0x082 /* "Document storage service already set!" */);
+		assert(
+			!this.documentStorageService,
+			0x082 /* "Document storage service already set!" */,
+		);
 		this.documentService = documentService;
 		this.documentStorageService = await documentService.connectToStorage();
 
@@ -262,7 +293,8 @@ export class DebugReplayController extends ReplayController implements IDebugger
 
 		// This hangs until the user makes a selection or closes the window.
 		this.shouldUseController =
-			(await this.startSeqDeferred.promise) !== DebugReplayController.WindowClosedSeq;
+			(await this.startSeqDeferred.promise) !==
+			DebugReplayController.WindowClosedSeq;
 
 		assert(
 			this.isSelectionMade() === this.shouldUseController,
@@ -279,7 +311,10 @@ export class DebugReplayController extends ReplayController implements IDebugger
 	}
 
 	// eslint-disable-next-line @rushstack/no-new-null
-	public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
+	public async getVersions(
+		versionId: string | null,
+		count: number,
+	): Promise<IVersion[]> {
 		if (this.storage !== undefined) {
 			return this.storage.getVersions(versionId, count);
 		}
@@ -287,7 +322,9 @@ export class DebugReplayController extends ReplayController implements IDebugger
 	}
 
 	// eslint-disable-next-line @rushstack/no-new-null
-	public async getSnapshotTree(versionRequested?: IVersion): Promise<ISnapshotTree | null> {
+	public async getSnapshotTree(
+		versionRequested?: IVersion,
+	): Promise<ISnapshotTree | null> {
 		if (this.storage !== undefined) {
 			return this.storage.getSnapshotTree(versionRequested);
 		}

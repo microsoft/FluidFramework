@@ -5,6 +5,6 @@
 	"include": ["src/compatOptions.ts"],
 	"compilerOptions": {
 		"rootDir": "./src",
-		"outDir": "./dist",
-	},
+		"outDir": "./dist"
+	}
 }

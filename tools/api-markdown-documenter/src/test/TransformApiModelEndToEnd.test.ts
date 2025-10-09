@@ -13,13 +13,23 @@ import {
 } from "@microsoft/api-extractor-model";
 
 import { checkForDuplicateDocumentPaths } from "../api-item-transforms/index.js";
-import { loadModel, transformApiModel, type ApiItemTransformationOptions } from "../index.js";
+import {
+	loadModel,
+	transformApiModel,
+	type ApiItemTransformationOptions,
+} from "../index.js";
 
-import { HierarchyConfigurations, testDataDirectoryPath } from "./EndToEndTestUtilities.js";
+import {
+	HierarchyConfigurations,
+	testDataDirectoryPath,
+} from "./EndToEndTestUtilities.js";
 
 const apiModels: string[] = ["simple-suite-test"];
 
-const testConfigs = new Map<string, Omit<ApiItemTransformationOptions, "apiModel">>([
+const testConfigs = new Map<
+	string,
+	Omit<ApiItemTransformationOptions, "apiModel">
+>([
 	[
 		"default-config",
 		{

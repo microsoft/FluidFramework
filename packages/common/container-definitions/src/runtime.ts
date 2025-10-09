@@ -99,7 +99,9 @@ export interface IRuntime extends IDisposable {
 	 * Propagate the container state when container is attaching or attached.
 	 * @param attachState - State of the container.
 	 */
-	setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
+	setAttachState(
+		attachState: AttachState.Attaching | AttachState.Attached,
+	): void;
 
 	/**
 	 * Get pending local state in a serializable format to be given back to a newly loaded container
@@ -183,7 +185,10 @@ export interface IContainerStorageService {
 	 */
 	// TODO: use `undefined` instead.
 	// eslint-disable-next-line @rushstack/no-new-null
-	getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
+	getSnapshotTree(
+		version?: IVersion,
+		scenarioName?: string,
+	): Promise<ISnapshotTree | null>;
 
 	/**
 	 * Returns the snapshot which can contain other artifacts too like blob contents, ops etc. It is different from
@@ -191,7 +196,9 @@ export interface IContainerStorageService {
 	 * @param snapshotFetchOptions - Options specified by the caller to specify and want certain behavior from the
 	 * driver when fetching the snapshot.
 	 */
-	getSnapshot?(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot>;
+	getSnapshot?(
+		snapshotFetchOptions?: ISnapshotFetchOptions,
+	): Promise<ISnapshot>;
 
 	/**
 	 * Retrieves all versions of the document starting at the specified versionId - or null if from the head
@@ -229,7 +236,10 @@ export interface IContainerStorageService {
 	 * referencing from the previously acked summary.
 	 * Returns the uploaded summary handle.
 	 */
-	uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
+	uploadSummaryWithContext(
+		summary: ISummaryTree,
+		context: ISummaryContext,
+	): Promise<string>;
 
 	/**
 	 * Retrieves the commit that matches the packfile handle. If the packfile has already been committed and the
@@ -291,7 +301,10 @@ export interface IContainerContext {
 	/**
 	 * @returns clientSequenceNumber of last message in a batch
 	 */
-	readonly submitBatchFn: (batch: IBatchMessage[], referenceSequenceNumber?: number) => number;
+	readonly submitBatchFn: (
+		batch: IBatchMessage[],
+		referenceSequenceNumber?: number,
+	) => number;
 	readonly submitSummaryFn: (
 		summaryOp: ISummaryContent,
 		referenceSequenceNumber?: number,
@@ -299,7 +312,10 @@ export interface IContainerContext {
 	readonly submitSignalFn: (contents: unknown, targetClientId?: string) => void;
 	readonly disposeFn?: (error?: ICriticalContainerError) => void;
 	readonly closeFn: (error?: ICriticalContainerError) => void;
-	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+	readonly deltaManager: IDeltaManager<
+		ISequencedDocumentMessage,
+		IDocumentMessage
+	>;
 	readonly quorum: IQuorumClients;
 	readonly audience: IAudience;
 	readonly loader: ILoader;
@@ -379,7 +395,10 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
 	 * @param context - container context to be supplied to the runtime
 	 * @param existing - whether to instantiate for the first time or from an existing context
 	 */
-	instantiateRuntime(context: IContainerContext, existing: boolean): Promise<IRuntime>;
+	instantiateRuntime(
+		context: IContainerContext,
+		existing: boolean,
+	): Promise<IRuntime>;
 }
 
 /**

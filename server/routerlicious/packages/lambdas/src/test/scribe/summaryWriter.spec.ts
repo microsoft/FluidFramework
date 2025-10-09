@@ -61,10 +61,7 @@ describe("Routerlicious", () => {
 					);
 					assert.strictEqual(false, deltaServiceSpy.called);
 					const logMessage = lumberJackSpy.getCalls()[0].args[0];
-					assert.strictEqual(
-						"LogTail of length 10 fetched from seq no 0 to 11",
-						logMessage,
-					);
+					assert.strictEqual("LogTail of length 10 fetched from seq no 0 to 11", logMessage);
 					const logProperties = lumberJackSpy.getCalls()[0].args[1];
 					verifyLogResult(
 						logMessage,
@@ -303,6 +300,9 @@ function verifyLogResult(
 		expectedLogtailRangeFromMemory,
 	);
 	assert.deepStrictEqual(actualLogProperties["logtailGaps"], expectedLogtailGaps);
-	assert.deepStrictEqual(actualLogProperties["retrievedGapsRange"], expectedRetrievedGapsRange);
+	assert.deepStrictEqual(
+		actualLogProperties["retrievedGapsRange"],
+		expectedRetrievedGapsRange,
+	);
 	assert.deepStrictEqual(actualLogProperties["finalLogtailRange"], expectedFinalLogtailRange);
 }

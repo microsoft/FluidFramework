@@ -35,8 +35,8 @@ const links: CommunityLinkItem[] = [
 		Icon: DiscussionIcon,
 		description: (
 			<>
-				Our GitHub Discussions are a great way to participate. Feel free to ask questions
-				or, if you can, give us a hand by answering some.
+				Our GitHub Discussions are a great way to participate. Feel free to ask questions or,
+				if you can, give us a hand by answering some.
 			</>
 		),
 		linkUrl: "https://www.github.com/Microsoft/fluidframework/discussions",
@@ -46,8 +46,8 @@ const links: CommunityLinkItem[] = [
 		Icon: ReportIssuesIcon,
 		description: (
 			<>
-				Found something not working as expected? Please file a GitHub issue, so we can take
-				a look together.
+				Found something not working as expected? Please file a GitHub issue, so we can take a
+				look together.
 			</>
 		),
 		linkUrl: "https://www.github.com/Microsoft/fluidframework/issues",

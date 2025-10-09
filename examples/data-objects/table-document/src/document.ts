@@ -44,7 +44,10 @@ export interface ITableDocumentEvents extends IEvent {
 	);
 	(
 		event: "sequenceDelta",
-		listener: (delta: SequenceDeltaEvent, target: SharedNumberSequence | SparseMatrix) => void,
+		listener: (
+			delta: SequenceDeltaEvent,
+			target: SharedNumberSequence | SparseMatrix,
+		) => void,
 	);
 }
 
@@ -64,7 +67,10 @@ export class TableDocument
 	private static readonly factory = new DataObjectFactory({
 		type: TableDocumentType,
 		ctor: TableDocument,
-		sharedObjects: [SparseMatrix.getFactory(), SharedNumberSequence.getFactory()],
+		sharedObjects: [
+			SparseMatrix.getFactory(),
+			SharedNumberSequence.getFactory(),
+		],
 		registryEntries: [TableSlice.getFactory().registryEntry],
 	});
 
@@ -93,7 +99,9 @@ export class TableDocument
 	}
 
 	public async getRange(label: string): Promise<CellRange> {
-		const endpointIndex = createEndpointIndex(this.matrix as unknown as SharedString);
+		const endpointIndex = createEndpointIndex(
+			this.matrix as unknown as SharedString,
+		);
 		const intervals = this.matrix.getIntervalCollection(label);
 		intervals.attachIndex(endpointIndex);
 		const interval = endpointIndex.nextInterval(0);
@@ -109,19 +117,26 @@ export class TableDocument
 		maxRow: number,
 		maxCol: number,
 	): Promise<ITable> {
-		const component = await TableSlice.getFactory().createChildInstance(this.context, {
-			docId: this.runtime.id,
-			name,
-			minRow,
-			minCol,
-			maxRow,
-			maxCol,
-		});
+		const component = await TableSlice.getFactory().createChildInstance(
+			this.context,
+			{
+				docId: this.runtime.id,
+				name,
+				minRow,
+				minCol,
+				maxRow,
+				maxCol,
+			},
+		);
 		this.root.set(sliceId, component.handle);
 		return component;
 	}
 
-	public annotateRows(startRow: number, endRow: number, properties: PropertySet) {
+	public annotateRows(
+		startRow: number,
+		endRow: number,
+		properties: PropertySet,
+	) {
 		this.rows.annotateRange(startRow, endRow, properties);
 	}
 
@@ -129,7 +144,11 @@ export class TableDocument
 		return this.rows.getPropertiesAtPosition(row);
 	}
 
-	public annotateCols(startCol: number, endCol: number, properties: PropertySet) {
+	public annotateCols(
+		startCol: number,
+		endCol: number,
+		properties: PropertySet,
+	) {
 		this.cols.annotateRange(startCol, endCol, properties);
 	}
 
@@ -194,16 +213,28 @@ export class TableDocument
 	}
 
 	protected async hasInitialized() {
-		this.matrix = await this.root.get<IFluidHandle<SparseMatrix>>("matrix").get();
-		this.rows = await this.root.get<IFluidHandle<SharedNumberSequence>>("rows").get();
-		this.cols = await this.root.get<IFluidHandle<SharedNumberSequence>>("cols").get();
+		this.matrix = await this.root
+			.get<IFluidHandle<SparseMatrix>>("matrix")
+			.get();
+		this.rows = await this.root
+			.get<IFluidHandle<SharedNumberSequence>>("rows")
+			.get();
+		this.cols = await this.root
+			.get<IFluidHandle<SharedNumberSequence>>("cols")
+			.get();
 
 		this.cols.on("op", (...args: any[]) => this.emit("op", ...args));
-		this.cols.on("sequenceDelta", (...args: any[]) => this.emit("sequenceDelta", ...args));
+		this.cols.on("sequenceDelta", (...args: any[]) =>
+			this.emit("sequenceDelta", ...args),
+		);
 		this.rows.on("op", (...args: any[]) => this.emit("op", ...args));
-		this.rows.on("sequenceDelta", (...args: any[]) => this.emit("sequenceDelta", ...args));
+		this.rows.on("sequenceDelta", (...args: any[]) =>
+			this.emit("sequenceDelta", ...args),
+		);
 		this.matrix.on("op", (...args: any[]) => this.emit("op", ...args));
-		this.matrix.on("sequenceDelta", (...args: any[]) => this.emit("sequenceDelta", ...args));
+		this.matrix.on("sequenceDelta", (...args: any[]) =>
+			this.emit("sequenceDelta", ...args),
+		);
 	}
 
 	private readonly localRefToRowCol = (localRef: ReferencePosition) => {

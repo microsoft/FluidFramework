@@ -5,7 +5,10 @@
 
 import { strict as assert } from "assert";
 
-import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
+import {
+	ITestDataObject,
+	describeCompat,
+} from "@fluid-private/test-version-utils";
 import {
 	DefaultSummaryConfiguration,
 	ISummaryAckMessage,
@@ -46,7 +49,10 @@ describeCompat(
 			};
 			const mockLogger = new MockLogger();
 			const configProvider = createTestConfigProvider();
-			configProvider.set("Fluid.Summarizer.immediatelyRefreshLatestSummaryAck", true);
+			configProvider.set(
+				"Fluid.Summarizer.immediatelyRefreshLatestSummaryAck",
+				true,
+			);
 			const testContainerConfig: ITestContainerConfig = {
 				runtimeOptions: {
 					summaryOptions: {
@@ -76,8 +82,14 @@ describeCompat(
 				[
 					{ eventName: "fluid:telemetry:Summarizer:Running:Summarize_start" },
 					{ eventName: "fluid:telemetry:Summarizer:Running:Summarize_end" },
-					{ eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_start" },
-					{ eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_end" },
+					{
+						eventName:
+							"fluid:telemetry:SummarizerNode:refreshLatestSummary_start",
+					},
+					{
+						eventName:
+							"fluid:telemetry:SummarizerNode:refreshLatestSummary_end",
+					},
 				],
 				"expected first summary to be generated",
 			);
@@ -112,16 +124,32 @@ describeCompat(
 				[
 					{ eventName: "fluid:telemetry:Summarizer:Running:Summarize_start" },
 					{ eventName: "fluid:telemetry:Summarizer:Running:Summarize_end" },
-					{ eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_start" },
-					{ eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_end" },
+					{
+						eventName:
+							"fluid:telemetry:SummarizerNode:refreshLatestSummary_start",
+					},
+					{
+						eventName:
+							"fluid:telemetry:SummarizerNode:refreshLatestSummary_end",
+					},
 					{ eventName: "fluid:telemetry:Summarizer:Running:Summarize_start" },
 					{ eventName: "fluid:telemetry:Summarizer:Running:Summarize_end" },
-					{ eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_start" },
-					{ eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_end" },
+					{
+						eventName:
+							"fluid:telemetry:SummarizerNode:refreshLatestSummary_start",
+					},
+					{
+						eventName:
+							"fluid:telemetry:SummarizerNode:refreshLatestSummary_end",
+					},
 				],
 				"two summaries should be generated in succession from two ops.",
 			);
-			assert.strictEqual(summaryVersions.length, 2, "expected 2 consecutive summaries");
+			assert.strictEqual(
+				summaryVersions.length,
+				2,
+				"expected 2 consecutive summaries",
+			);
 		});
 	},
 );

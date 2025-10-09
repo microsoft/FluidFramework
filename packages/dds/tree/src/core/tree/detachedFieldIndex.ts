@@ -44,7 +44,8 @@ export class DetachedFieldIndex {
 	/**
 	 * A mapping from detached node ids to detached fields.
 	 */
-	private detachedNodeToField: NestedMap<Major, Minor, DetachedField> = new Map();
+	private detachedNodeToField: NestedMap<Major, Minor, DetachedField> =
+		new Map();
 	/**
 	 * A map from revisions to all detached fields for which the revision is the latest relevant revision.
 	 * See {@link DetachedField.latestRelevantRevision}.
@@ -86,18 +87,28 @@ export class DetachedFieldIndex {
 			jsonValidator: FormatValidatorNoOp,
 			oldestCompatibleClient: FluidClientVersion.v2_0,
 		};
-		this.codec = makeDetachedFieldIndexCodec(revisionTagCodec, this.options, idCompressor);
+		this.codec = makeDetachedFieldIndexCodec(
+			revisionTagCodec,
+			this.options,
+			idCompressor,
+		);
 	}
 
 	public clone(): DetachedFieldIndex {
 		const clone = new DetachedFieldIndex(
 			this.name,
-			idAllocatorFromMaxId(this.rootIdAllocator.getMaxId()) as IdAllocator<ForestRootId>,
+			idAllocatorFromMaxId(
+				this.rootIdAllocator.getMaxId(),
+			) as IdAllocator<ForestRootId>,
 			this.revisionTagCodec,
 			this.idCompressor,
 			this.options,
 		);
-		populateNestedMap(this.detachedNodeToField, clone.detachedNodeToField, true);
+		populateNestedMap(
+			this.detachedNodeToField,
+			clone.detachedNodeToField,
+			true,
+		);
 		populateNestedMap(
 			this.latestRelevantRevisionToFields,
 			clone.latestRelevantRevisionToFields,
@@ -214,7 +225,8 @@ export class DetachedFieldIndex {
 	 * Returns undefined if no such id is known to the index.
 	 */
 	public tryGetEntry(id: Delta.DetachedNodeId): ForestRootId | undefined {
-		return tryGetFromNestedMap(this.detachedNodeToField, id.major, id.minor)?.root;
+		return tryGetFromNestedMap(this.detachedNodeToField, id.major, id.minor)
+			?.root;
 	}
 
 	/**
@@ -230,7 +242,9 @@ export class DetachedFieldIndex {
 	/**
 	 * Returns the detached root IDs for all the trees that were detached or last modified by the given revision.
 	 */
-	public *getRootsLastTouchedByRevision(revision: RevisionTag): Iterable<ForestRootId> {
+	public *getRootsLastTouchedByRevision(
+		revision: RevisionTag,
+	): Iterable<ForestRootId> {
 		const roots = this.latestRelevantRevisionToFields.get(revision);
 		if (roots !== undefined) {
 			yield* roots.keys();
@@ -258,7 +272,11 @@ export class DetachedFieldIndex {
 	}
 
 	public deleteEntry(nodeId: Delta.DetachedNodeId): void {
-		const entry = tryGetFromNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor);
+		const entry = tryGetFromNestedMap(
+			this.detachedNodeToField,
+			nodeId.major,
+			nodeId.minor,
+		);
 		assert(entry !== undefined, 0x9bb /* Unable to delete unknown entry */);
 		deleteFromNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor);
 		deleteFromNestedMap(
@@ -285,15 +303,28 @@ export class DetachedFieldIndex {
 		if (nodeId !== undefined) {
 			for (let i = 0; i < count; i++) {
 				assert(
-					tryGetFromNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor + i) ===
-						undefined,
+					tryGetFromNestedMap(
+						this.detachedNodeToField,
+						nodeId.major,
+						nodeId.minor + i,
+					) === undefined,
 					0x7ce /* Detached node ID already exists in index */,
 				);
-				setInNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor + i, {
-					root: brand<ForestRootId>(root + i),
-					latestRelevantRevision: revision,
-				});
-				setInNestedMap(this.latestRelevantRevisionToFields, revision, root, nodeId);
+				setInNestedMap(
+					this.detachedNodeToField,
+					nodeId.major,
+					nodeId.minor + i,
+					{
+						root: brand<ForestRootId>(root + i),
+						latestRelevantRevision: revision,
+					},
+				);
+				setInNestedMap(
+					this.latestRelevantRevisionToFields,
+					revision,
+					root,
+					nodeId,
+				);
 			}
 		}
 		return root;
@@ -306,7 +337,11 @@ export class DetachedFieldIndex {
 		id: Delta.DetachedNodeId,
 		revision: RevisionTag | undefined,
 	): void {
-		const fieldEntry = tryGetFromNestedMap(this.detachedNodeToField, id.major, id.minor);
+		const fieldEntry = tryGetFromNestedMap(
+			this.detachedNodeToField,
+			id.major,
+			id.minor,
+		);
 		assert(
 			fieldEntry !== undefined,
 			0x9bc /* detached node id does not exist in the detached field index */,
@@ -314,7 +349,11 @@ export class DetachedFieldIndex {
 		const { root, latestRelevantRevision: previousRevision } = fieldEntry;
 
 		// remove this root from the set of roots for the previous latest revision
-		deleteFromNestedMap(this.latestRelevantRevisionToFields, previousRevision, root);
+		deleteFromNestedMap(
+			this.latestRelevantRevisionToFields,
+			previousRevision,
+			root,
+		);
 
 		// add this root to the set of roots for the new latest revision
 		setInNestedMap(this.latestRelevantRevisionToFields, revision, root, id);
@@ -335,7 +374,8 @@ export class DetachedFieldIndex {
 	 * Loads the tree index from the given string, this overrides any existing data.
 	 */
 	public loadData(data: JsonCompatibleReadOnly): void {
-		const detachedFieldIndex: DetachedFieldSummaryData = this.codec.decode(data);
+		const detachedFieldIndex: DetachedFieldSummaryData =
+			this.codec.decode(data);
 
 		this.rootIdAllocator = idAllocatorFromMaxId(
 			detachedFieldIndex.maxId,
@@ -364,7 +404,8 @@ export class DetachedFieldIndex {
 			0x9bd /* revisions should only be set once using this function after loading data from a summary */,
 		);
 
-		const newDetachedNodeToField: NestedMap<Major, Minor, DetachedField> = new Map();
+		const newDetachedNodeToField: NestedMap<Major, Minor, DetachedField> =
+			new Map();
 		const rootMap = new Map();
 		forEachInNestedMap(this.detachedNodeToField, ({ root }, major, minor) => {
 			setInNestedMap(newDetachedNodeToField, major, minor, {

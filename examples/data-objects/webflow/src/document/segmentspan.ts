@@ -17,7 +17,10 @@ export class SegmentSpan {
 		return this.firstPosition + this._startOffset;
 	}
 	public get endPosition() {
-		return this.lastPosition + Math.min(this._endOffset, this.lastSegment.cachedLength);
+		return (
+			this.lastPosition +
+			Math.min(this._endOffset, this.lastSegment.cachedLength)
+		);
 	}
 	public get isEmpty() {
 		return isNaN(this.firstPosition);
@@ -80,7 +83,12 @@ export class SegmentSpan {
 		}
 	}
 
-	public append(position: number, segment: ISegment, startOffset: number, endOffset: number) {
+	public append(
+		position: number,
+		segment: ISegment,
+		startOffset: number,
+		endOffset: number,
+	) {
 		this._segments.push(segment);
 		this.lastPosition = position;
 		this._endOffset = endOffset;
@@ -93,8 +101,12 @@ export class SegmentSpan {
 			this._startOffset = Math.max(startOffset, 0);
 		}
 
-		console.assert(0 <= this._startOffset && this._startOffset <= segment.cachedLength);
-		console.assert(0 <= this.startPosition && this.startPosition <= this.endPosition);
+		console.assert(
+			0 <= this._startOffset && this._startOffset <= segment.cachedLength,
+		);
+		console.assert(
+			0 <= this.startPosition && this.startPosition <= this.endPosition,
+		);
 	}
 
 	/**

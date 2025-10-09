@@ -62,7 +62,10 @@ function createTestMatrix(options: TestMatrixOptions): {
 	const { matrixSize, initialCellValue } = options;
 
 	// Create and initialize the matrix
-	const matrix = matrixFactory.create(new MockFluidDataStoreRuntime(), "test-matrix");
+	const matrix = matrixFactory.create(
+		new MockFluidDataStoreRuntime(),
+		"test-matrix",
+	);
 	matrix.insertRows(0, matrixSize);
 	matrix.insertCols(0, matrixSize);
 
@@ -117,7 +120,10 @@ interface MatrixBenchmarkOptions extends TestMatrixOptions {
 	/**
 	 * The operation to be measured.
 	 */
-	readonly operation: (matrix: ISharedMatrix, undoRedo: UndoRedoStackManager) => void;
+	readonly operation: (
+		matrix: ISharedMatrix,
+		undoRedo: UndoRedoStackManager,
+	) => void;
 
 	/**
 	 * Optional action to perform on the matrix after the operation being measured.
@@ -139,7 +145,9 @@ interface MatrixBenchmarkOptions extends TestMatrixOptions {
 /**
  * {@link runExecutionTimeBenchmark} configuration.
  */
-interface ExecutionTimeBenchmarkConfig extends BenchmarkTimingOptions, MatrixBenchmarkOptions {
+interface ExecutionTimeBenchmarkConfig
+	extends BenchmarkTimingOptions,
+		MatrixBenchmarkOptions {
 	readonly maxBenchmarkDurationSeconds: number;
 }
 
@@ -162,7 +170,11 @@ function runExecutionTimeBenchmark({
 		benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
 			let duration: number;
 			do {
-				assert.equal(state.iterationsPerBatch, 1, "Expected exactly one iteration per batch");
+				assert.equal(
+					state.iterationsPerBatch,
+					1,
+					"Expected exactly one iteration per batch",
+				);
 
 				// Create matrix
 				const { matrix, undoRedoStack, cleanUp } = createTestMatrix({
@@ -217,7 +229,10 @@ function runMemoryBenchmark({
 
 			async run(): Promise<void> {
 				assert(this.matrix !== undefined, "matrix is not initialized");
-				assert(this.undoRedoStack !== undefined, "undoRedoStack is not initialized");
+				assert(
+					this.undoRedoStack !== undefined,
+					"undoRedoStack is not initialized",
+				);
 				operation(this.matrix, this.undoRedoStack);
 			}
 
@@ -235,7 +250,10 @@ function runMemoryBenchmark({
 
 			afterIteration(): void {
 				assert(this.matrix !== undefined, "matrix is not initialized");
-				assert(this.undoRedoStack !== undefined, "undoRedoStack is not initialized");
+				assert(
+					this.undoRedoStack !== undefined,
+					"undoRedoStack is not initialized",
+				);
 				assert(this.cleanUp !== undefined, "cleanUp is not initialized");
 
 				afterOperation?.(this.matrix, this.undoRedoStack);
@@ -275,7 +293,9 @@ function runBenchmark(options: BenchmarkOptions): Test {
  * If you modify or add tests here, consider updating the corresponding SharedTree benchmarks as well
  * to ensure consistency and comparability between the two implementations.
  */
-export function runBenchmarkTestSuite(mode: "memory" | "execution-time"): Suite {
+export function runBenchmarkTestSuite(
+	mode: "memory" | "execution-time",
+): Suite {
 	return describe(`SharedMatrix ${mode} benchmark`, () => {
 		// The value to be set in the cells of the matrix.
 		const initialCellValue = "cellValue";
@@ -319,7 +339,9 @@ export function runBenchmarkTestSuite(mode: "memory" | "execution-time"): Suite 
 
 			describe(`Size of ${matrixSize}*${matrixSize} SharedMatrix`, () => {
 				// Filter counts to ensure remove operation do not exceed matrixSize
-				const validRemoveCounts = operationCounts.filter((count) => count <= matrixSize);
+				const validRemoveCounts = operationCounts.filter(
+					(count) => count <= matrixSize,
+				);
 
 				// Insert-related tests that are not limited by matrixSize
 				for (const count of operationCounts) {

@@ -78,7 +78,10 @@ export default function DocsVersionDropdownNavbarItem({
 	const versions = useVersions(docsPluginId);
 	const { savePreferredVersionName } = useDocsPreferredVersion(docsPluginId);
 
-	function versionToAccessibleLink(version: GlobalVersion, index: number): AccessibleLinkProps {
+	function versionToAccessibleLink(
+		version: GlobalVersion,
+		index: number,
+	): AccessibleLinkProps {
 		const targetDoc = getVersionTargetDoc(version, activeDocContext);
 		return {
 			"label": version.label,

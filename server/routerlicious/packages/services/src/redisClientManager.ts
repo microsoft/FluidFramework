@@ -4,7 +4,10 @@
  */
 
 import type { IClient, ISignalClient } from "@fluidframework/protocol-definitions";
-import type { IClientManager, ISequencedSignalClient } from "@fluidframework/server-services-core";
+import type {
+	IClientManager,
+	ISequencedSignalClient,
+} from "@fluidframework/server-services-core";
 import {
 	executeRedisMultiWithHmsetExpire,
 	type IRedisParameters,

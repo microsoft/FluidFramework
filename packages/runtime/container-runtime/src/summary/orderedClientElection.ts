@@ -28,7 +28,13 @@ import { summarizerClientType } from "./summarizerTypes.js";
 
 // helper types for recursive readonly.
 // eslint-disable-next-line @typescript-eslint/ban-types
-export type ImmutablePrimitives = undefined | null | boolean | string | number | Function;
+export type ImmutablePrimitives =
+	| undefined
+	| null
+	| boolean
+	| string
+	| number
+	| Function;
 export type Immutable<T> = T extends ImmutablePrimitives
 	? T
 	: T extends (infer A)[]
@@ -150,7 +156,10 @@ export class OrderedClientCollection
 		quorum: Pick<IQuorumClients, "getMembers" | "on">,
 	) {
 		super();
-		this.logger = createChildLogger({ logger, namespace: "OrderedClientCollection" });
+		this.logger = createChildLogger({
+			logger,
+			namespace: "OrderedClientCollection",
+		});
 		const members = quorum.getMembers();
 		for (const [clientId, client] of members) {
 			this.addClient(clientId, client);
@@ -175,7 +184,10 @@ export class OrderedClientCollection
 		});
 	}
 
-	private addClient(clientId: string, client: ISequencedClient): ITrackedClient {
+	private addClient(
+		clientId: string,
+		client: ISequencedClient,
+	): ITrackedClient {
 		// Normal case is adding the latest client, which will bypass loop.
 		// Find where it belongs otherwise (maybe possible during initial load?).
 		assert(
@@ -306,7 +318,8 @@ export interface ISerializedElection {
 /**
  * Contract for maintaining a deterministic client election based on eligibility.
  */
-export interface IOrderedClientElection extends IEventProvider<IOrderedClientElectionEvents> {
+export interface IOrderedClientElection
+	extends IEventProvider<IOrderedClientElectionEvents> {
 	/**
 	 * Count of eligible clients in the collection.
 	 */
@@ -443,7 +456,9 @@ export class OrderedClientElection
 				}
 			}
 		}
-		orderedClientCollection.on("addClient", (client, seq) => this.addClient(client, seq));
+		orderedClientCollection.on("addClient", (client, seq) =>
+			this.addClient(client, seq),
+		);
 		orderedClientCollection.on("removeClient", (client, seq) =>
 			this.removeClient(client, seq),
 		);
@@ -463,7 +478,8 @@ export class OrderedClientElection
 				});
 			} else if (initialClient !== undefined && !isEligibleFn(initialClient)) {
 				// Initially elected client is ineligible, so elect next eligible client.
-				initialClient = initialParent = this.findFirstEligibleParent(initialParent);
+				initialClient = initialParent =
+					this.findFirstEligibleParent(initialParent);
 				this.logger.sendErrorEvent({
 					eventName: "InitialElectedClientIneligible",
 					electionSequenceNumber: initialState.electionSequenceNumber,
@@ -495,7 +511,8 @@ export class OrderedClientElection
 			reason,
 		);
 		let change = false;
-		const isSummarizerClient = client?.client.details.type === summarizerClientType;
+		const isSummarizerClient =
+			client?.client.details.type === summarizerClientType;
 		const prevClient = this._electedClient;
 		if (this._electedClient !== client) {
 			this.sendPerformanceEvent(
@@ -548,7 +565,12 @@ export class OrderedClientElection
 				reason,
 			);
 			this._electedParent = client;
-			this.emit("election", this._electedClient, sequenceNumber, this._electedClient);
+			this.emit(
+				"election",
+				this._electedClient,
+				sequenceNumber,
+				this._electedClient,
+			);
 		}
 	}
 
@@ -582,7 +604,8 @@ export class OrderedClientElection
 		this.sendPerformanceEvent("AddClient", client, sequenceNumber);
 		if (this.isEligibleFn(client)) {
 			this._eligibleCount++;
-			const newClientIsSummarizer = client.client.details.type === summarizerClientType;
+			const newClientIsSummarizer =
+				client.client.details.type === summarizerClientType;
 			const electedClientIsSummarizer =
 				this._electedClient?.client.details.type === summarizerClientType;
 			// Note that we allow a summarizer client to supersede an interactive client as elected client.
@@ -615,13 +638,19 @@ export class OrderedClientElection
 					// Automatically shift to next oldest client.
 					const nextClient =
 						this.findFirstEligibleParent(this._electedParent?.youngerClient) ??
-						this.findFirstEligibleParent(this.orderedClientCollection.oldestClient);
+						this.findFirstEligibleParent(
+							this.orderedClientCollection.oldestClient,
+						);
 					this.tryElectingClient(nextClient, sequenceNumber, "RemoveClient");
 				} else {
 					// 2. The _electedClient is a summarizer that we've been allowing to finish its work.
 					// Let the _electedParent become the _electedClient so that it can start its own summarizer.
-					if (this._electedClient.client.details.type !== summarizerClientType) {
-						throw new UsageError("Elected client should be a summarizer client 1");
+					if (
+						this._electedClient.client.details.type !== summarizerClientType
+					) {
+						throw new UsageError(
+							"Elected client should be a summarizer client 1",
+						);
 					}
 					this.tryElectingClient(
 						this._electedParent,
@@ -634,11 +663,15 @@ export class OrderedClientElection
 				// Shift to the next oldest parent, but do not replace the _electedClient,
 				// which is a summarizer that is still doing work.
 				if (this._electedClient?.client.details.type !== summarizerClientType) {
-					throw new UsageError("Elected client should be a summarizer client 2");
+					throw new UsageError(
+						"Elected client should be a summarizer client 2",
+					);
 				}
 				const nextParent =
 					this.findFirstEligibleParent(this._electedParent?.youngerClient) ??
-					this.findFirstEligibleParent(this.orderedClientCollection.oldestClient);
+					this.findFirstEligibleParent(
+						this.orderedClientCollection.oldestClient,
+					);
 				this.tryElectingParent(nextParent, sequenceNumber, "RemoveClient");
 			}
 		}
@@ -658,7 +691,10 @@ export class OrderedClientElection
 		const firstClient = this.findFirstEligibleParent(
 			this.orderedClientCollection.oldestClient,
 		);
-		if (this._electedClient === undefined || this._electedClient === this._electedParent) {
+		if (
+			this._electedClient === undefined ||
+			this._electedClient === this._electedParent
+		) {
 			this.tryElectingClient(firstClient, sequenceNumber, "ResetElectedClient");
 		} else {
 			// The _electedClient is a summarizer and should not be replaced until it leaves the quorum.
@@ -697,7 +733,8 @@ export class OrderedClientElection
 				electedClientId: this.electedClient?.clientId,
 				electedParentId: this.electedParent?.clientId,
 				isEligible: client === undefined ? false : this.isEligibleFn(client),
-				isSummarizerClient: client?.client.details.type === summarizerClientType,
+				isSummarizerClient:
+					client?.client.details.type === summarizerClientType,
 				reason,
 			});
 		}

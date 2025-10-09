@@ -8,7 +8,10 @@ import type { IUser } from "@fluidframework/driver-definitions";
 import type { AttributionInfo } from "@fluidframework/runtime-definitions/internal";
 
 import type { IAttributor } from "./attributor.js";
-import { type InternedStringId, MutableStringInterner } from "./stringInterner.js";
+import {
+	type InternedStringId,
+	MutableStringInterner,
+} from "./stringInterner.js";
 
 export interface Encoder<TDecoded, TEncoded> {
 	encode(decoded: TDecoded): TEncoded;
@@ -95,10 +98,13 @@ export class AttributorSerializer implements IAttributorSerializer {
 		const { seqs, timestamps: encodedTimestamps, attributionRefs } = encoded;
 		const timestamps = this.timestampEncoder.decode(encodedTimestamps);
 		assert(
-			seqs.length === timestamps.length && timestamps.length === attributionRefs.length,
+			seqs.length === timestamps.length &&
+				timestamps.length === attributionRefs.length,
 			0x4b1 /* serialized attribution columns should have the same length */,
 		);
-		const entries: [number, AttributionInfo][] = Array.from({ length: seqs.length });
+		const entries: [number, AttributionInfo][] = Array.from({
+			length: seqs.length,
+		});
 		for (const [i, key] of seqs.entries()) {
 			const timestamp = timestamps[i];
 			const ref = attributionRefs[i];

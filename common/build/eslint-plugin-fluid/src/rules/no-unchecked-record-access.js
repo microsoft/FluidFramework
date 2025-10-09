@@ -200,8 +200,7 @@ function isIndexSignatureType(parserServices, node) {
 		if (node.computed) {
 			const prop = node.property;
 			if (
-				(prop.type === "Literal" &&
-					(typeof prop.value === "number" || !isNaN(prop.value))) ||
+				(prop.type === "Literal" && (typeof prop.value === "number" || !isNaN(prop.value))) ||
 				prop.kind === 8 || // TypeScript's SyntaxKind.NumericLiteral
 				prop.argumentExpression?.kind === 8
 			) {
@@ -369,8 +368,7 @@ function propertyHasBeenChecked(node, context) {
 					(parent.test.operator === "!==" || parent.test.operator === "!=") &&
 					((nodesAreEquivalent(parent.test.left, node) &&
 						isUndefinedNode(parent.test.right)) ||
-						(nodesAreEquivalent(parent.test.right, node) &&
-							isUndefinedNode(parent.test.left)))
+						(nodesAreEquivalent(parent.test.right, node) && isUndefinedNode(parent.test.left)))
 				) {
 					return true;
 				}
@@ -391,10 +389,7 @@ function propertyHasBeenChecked(node, context) {
 					const testKey = statement.test.left;
 					if (testBase === baseObj && nodesAreEquivalent(testKey, currentKeyNode)) {
 						const elseBlock = statement.alternate;
-						if (
-							elseBlock &&
-							checkElseBlockAssignsKey(elseBlock, testBase, testKey, context)
-						) {
+						if (elseBlock && checkElseBlockAssignsKey(elseBlock, testBase, testKey, context)) {
 							return true;
 						}
 					}
@@ -532,7 +527,10 @@ function isTypeAllowedToBeUndefined(tsNode, typeChecker) {
 	}
 	const signatureDeclaration = symbol.valueDeclaration;
 	// Check for Promise<T | undefined>
-	if (signatureDeclaration.type && signatureDeclaration.type.kind === SyntaxKind.TypeReference) {
+	if (
+		signatureDeclaration.type &&
+		signatureDeclaration.type.kind === SyntaxKind.TypeReference
+	) {
 		const typeNode = signatureDeclaration.type;
 		if (typeNode.typeName.text === "Promise") {
 			return (

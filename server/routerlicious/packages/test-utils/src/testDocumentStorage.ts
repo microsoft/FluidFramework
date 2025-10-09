@@ -204,7 +204,11 @@ export class TestDocumentStorage implements IDocumentStorage {
 		return gitManager.getCommits(documentId, count);
 	}
 
-	public async getVersion(tenantId: string, documentId: string, sha: string): Promise<ICommit> {
+	public async getVersion(
+		tenantId: string,
+		documentId: string,
+		sha: string,
+	): Promise<ICommit> {
 		const gitManager = await this.tenantManager.getTenantGitManager(tenantId, documentId);
 
 		return gitManager.getCommit(sha);

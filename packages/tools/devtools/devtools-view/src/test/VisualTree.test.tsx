@@ -54,28 +54,30 @@ describe("VisualTreeView component tests", () => {
 	});
 
 	it("FluidObjectTreeView", async (): Promise<void> => {
-		const messageRelay = new MockMessageRelay((untypedMessage: IDevtoolsMessage) => {
-			switch (untypedMessage.type) {
-				case GetDataVisualization.MessageType: {
-					const message = untypedMessage as GetDataVisualization.Message;
-					const visualization: FluidObjectValueNode = {
-						fluidObjectId: message.data.fluidObjectId,
-						value: `test-value: ${message.data.fluidObjectId}`,
-						nodeKind: VisualNodeKind.FluidValueNode,
-					};
-					return {
-						type: DataVisualization.MessageType,
-						data: {
-							containerKey: testContainerKey,
-							visualization,
-						},
-					};
+		const messageRelay = new MockMessageRelay(
+			(untypedMessage: IDevtoolsMessage) => {
+				switch (untypedMessage.type) {
+					case GetDataVisualization.MessageType: {
+						const message = untypedMessage as GetDataVisualization.Message;
+						const visualization: FluidObjectValueNode = {
+							fluidObjectId: message.data.fluidObjectId,
+							value: `test-value: ${message.data.fluidObjectId}`,
+							nodeKind: VisualNodeKind.FluidValueNode,
+						};
+						return {
+							type: DataVisualization.MessageType,
+							data: {
+								containerKey: testContainerKey,
+								visualization,
+							},
+						};
+					}
+					default: {
+						throw new Error("Received unexpected message.");
+					}
 				}
-				default: {
-					throw new Error("Received unexpected message.");
-				}
-			}
-		});
+			},
+		);
 
 		const treeData: FluidObjectTreeNode = {
 			fluidObjectId: testFluidObjectId,
@@ -91,7 +93,12 @@ describe("VisualTreeView component tests", () => {
 
 		render(
 			<MessageRelayContext.Provider value={messageRelay}>
-				<FluidTreeView containerKey={testContainerKey} label={testLabel} node={treeData} />,
+				<FluidTreeView
+					containerKey={testContainerKey}
+					label={testLabel}
+					node={treeData}
+				/>
+				,
 			</MessageRelayContext.Provider>,
 		);
 

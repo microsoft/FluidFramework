@@ -117,9 +117,7 @@ export class SummaryReader implements ISummaryReader {
 				const scribeContent = scribeBlobId
 					? normalizedSummary.blobs.get(scribeBlobId)
 					: undefined;
-				const deliContent = deliBlobId
-					? normalizedSummary.blobs.get(deliBlobId)
-					: undefined;
+				const deliContent = deliBlobId ? normalizedSummary.blobs.get(deliBlobId) : undefined;
 				const opsContent = opsBlobId ? normalizedSummary.blobs.get(opsBlobId) : undefined;
 
 				const attributes = attributesContent
@@ -132,9 +130,7 @@ export class SummaryReader implements ISummaryReader {
 					? (JSON.parse(bufferToString(deliContent, "utf8")) as IDeliState)
 					: this.getDefaultDeli();
 				const messages = opsContent
-					? (JSON.parse(
-							bufferToString(opsContent, "utf8"),
-					  ) as ISequencedDocumentMessage[])
+					? (JSON.parse(bufferToString(opsContent, "utf8")) as ISequencedDocumentMessage[])
 					: this.getDefaultMesages();
 
 				summaryReaderMetric.setProperties({
@@ -175,58 +171,48 @@ export class SummaryReader implements ISummaryReader {
 				if (!existingRef) {
 					throw new Error("Could not find a ref for the document.");
 				}
-				const [attributesContent, scribeContent, deliContent, opsContent] =
-					await Promise.all([
-						requestWithRetry(
-							async () =>
-								this.summaryStorage.getContent(
-									existingRef.object.sha,
-									".protocol/attributes",
-								),
-							"readSummary_getProtocolAttributesContent",
-							this.lumberProperties,
-							shouldRetryNetworkError,
-							this.maxRetriesOnError,
-						).catch(() => undefined),
-						requestWithRetry(
-							async () =>
-								this.summaryStorage.getContent(
-									existingRef.object.sha,
-									".serviceProtocol/scribe",
-								),
-							"readSummary_getServiceProtocolScribeContent",
-							this.lumberProperties,
-							shouldRetryNetworkError,
-							this.maxRetriesOnError,
-						).catch(() => undefined),
-						requestWithRetry(
-							async () =>
-								this.summaryStorage.getContent(
-									existingRef.object.sha,
-									".serviceProtocol/deli",
-								),
-							"readSummary_getServiceProtocolDeliContent",
-							this.lumberProperties,
-							shouldRetryNetworkError,
-							this.maxRetriesOnError,
-						).catch(() => undefined),
-						requestWithRetry(
-							async () =>
-								this.summaryStorage.getContent(
-									existingRef.object.sha,
-									".logTail/logTail",
-								),
-							"readSummary_getLogTailContent",
-							this.lumberProperties,
-							shouldRetryNetworkError,
-							this.maxRetriesOnError,
-						).catch(() => undefined),
-					]);
+				const [attributesContent, scribeContent, deliContent, opsContent] = await Promise.all([
+					requestWithRetry(
+						async () =>
+							this.summaryStorage.getContent(existingRef.object.sha, ".protocol/attributes"),
+						"readSummary_getProtocolAttributesContent",
+						this.lumberProperties,
+						shouldRetryNetworkError,
+						this.maxRetriesOnError,
+					).catch(() => undefined),
+					requestWithRetry(
+						async () =>
+							this.summaryStorage.getContent(
+								existingRef.object.sha,
+								".serviceProtocol/scribe",
+							),
+						"readSummary_getServiceProtocolScribeContent",
+						this.lumberProperties,
+						shouldRetryNetworkError,
+						this.maxRetriesOnError,
+					).catch(() => undefined),
+					requestWithRetry(
+						async () =>
+							this.summaryStorage.getContent(existingRef.object.sha, ".serviceProtocol/deli"),
+						"readSummary_getServiceProtocolDeliContent",
+						this.lumberProperties,
+						shouldRetryNetworkError,
+						this.maxRetriesOnError,
+					).catch(() => undefined),
+					requestWithRetry(
+						async () =>
+							this.summaryStorage.getContent(existingRef.object.sha, ".logTail/logTail"),
+						"readSummary_getLogTailContent",
+						this.lumberProperties,
+						shouldRetryNetworkError,
+						this.maxRetriesOnError,
+					).catch(() => undefined),
+				]);
 
 				const attributes = attributesContent
 					? (JSON.parse(
 							toUtf8(attributesContent.content, attributesContent.encoding),
-					  ) as IDocumentAttributes)
+						) as IDocumentAttributes)
 					: this.getDefaultAttributes();
 				const scribe = scribeContent
 					? toUtf8(scribeContent.content, scribeContent.encoding)
@@ -237,7 +223,7 @@ export class SummaryReader implements ISummaryReader {
 				const messages = opsContent
 					? (JSON.parse(
 							toUtf8(opsContent.content, opsContent.encoding),
-					  ) as ISequencedDocumentMessage[])
+						) as ISequencedDocumentMessage[])
 					: this.getDefaultMesages();
 
 				summaryReaderMetric.setProperties({

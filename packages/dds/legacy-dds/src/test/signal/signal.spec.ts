@@ -33,7 +33,8 @@ describe("SharedSignal", () => {
 		factory = SharedSignal.getFactory();
 
 		containerRuntimeFactory = new MockContainerRuntimeFactory();
-		const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+		const containerRuntime1 =
+			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 		const services1 = {
 			deltaConnection: containerRuntime1.createDeltaConnection(),
 			objectStorage: new MockStorage(),

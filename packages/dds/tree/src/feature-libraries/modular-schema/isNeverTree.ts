@@ -102,13 +102,18 @@ export function isNeverTreeRecursive(
 				// This breaks even if there are other allowed types.
 				// Such schema should either be rejected (as an error here) or considered never (and thus detected by this).
 				// This can be done by passing a set/stack of current types recursively here.
-				if (isNeverFieldRecursive(policy, originalData, field, parentTypeStack)) {
+				if (
+					isNeverFieldRecursive(policy, originalData, field, parentTypeStack)
+				) {
 					return true;
 				}
 			}
 			return false;
 		} else {
-			assert(treeNode instanceof LeafNodeStoredSchema, 0x897 /* unsupported node kind */);
+			assert(
+				treeNode instanceof LeafNodeStoredSchema,
+				0x897 /* unsupported node kind */,
+			);
 			return false;
 		}
 	} finally {

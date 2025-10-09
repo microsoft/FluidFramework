@@ -5,7 +5,11 @@
 
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import type * as git from "@fluidframework/gitresources";
-import { type IClient, type IClientJoin, ScopeType } from "@fluidframework/protocol-definitions";
+import {
+	type IClient,
+	type IClientJoin,
+	ScopeType,
+} from "@fluidframework/protocol-definitions";
 import {
 	type IRoom,
 	type IRuntimeSignalEnvelope,
@@ -65,7 +69,9 @@ export function create(
 		throttleIdPrefix: (req) => req.params.tenantId,
 		throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
 	};
-	const generalTenantThrottler = tenantThrottlers.get(Constants.generalRestCallThrottleIdPrefix);
+	const generalTenantThrottler = tenantThrottlers.get(
+		Constants.generalRestCallThrottleIdPrefix,
+	);
 
 	// Jwt token cache
 	const enableJwtTokenCache: boolean = getBooleanFromConfig(

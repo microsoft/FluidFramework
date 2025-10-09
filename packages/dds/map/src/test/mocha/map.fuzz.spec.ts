@@ -6,7 +6,10 @@
 import * as path from "node:path";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { createDDSFuzzSuite, type DDSFuzzHarnessEvents } from "@fluid-private/test-dds-utils";
+import {
+	createDDSFuzzSuite,
+	type DDSFuzzHarnessEvents,
+} from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 import { SharedMapOracle } from "../mapOracle.js";
@@ -37,7 +40,9 @@ describe("Map fuzz tests", () => {
 		emitter: oracleEmitter,
 		// Uncomment to replay a particular seed.
 		// replay: 0,
-		saveFailures: { directory: path.join(_dirname, "../../../src/test/mocha/results/map") },
+		saveFailures: {
+			directory: path.join(_dirname, "../../../src/test/mocha/results/map"),
+		},
 	});
 
 	createDDSFuzzSuite(
@@ -55,7 +60,10 @@ describe("Map fuzz tests", () => {
 			// Uncomment to replay a particular seed.
 			// replay: 0,
 			saveFailures: {
-				directory: path.join(_dirname, "../../../src/test/mocha/results/map-reconnect"),
+				directory: path.join(
+					_dirname,
+					"../../../src/test/mocha/results/map-reconnect",
+				),
 			},
 		},
 	);
@@ -79,7 +87,10 @@ describe("Map fuzz tests", () => {
 			// Uncomment to replay a particular seed.
 			// replay: 0,
 			saveFailures: {
-				directory: path.join(_dirname, "../../../src/test/mocha/results/map-rebase"),
+				directory: path.join(
+					_dirname,
+					"../../../src/test/mocha/results/map-rebase",
+				),
 			},
 		},
 	);

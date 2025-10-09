@@ -239,7 +239,11 @@ describe("Parallel Requests", () => {
 			10,
 			logger.toTelemetryLogger(),
 			async (request: number, _from: number, _to: number) => {
-				return { cancel: false, partial: false, payload: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] };
+				return {
+					cancel: false,
+					partial: false,
+					payload: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+				};
 			},
 			(deltas: number[]) => {
 				throw new Error("response");

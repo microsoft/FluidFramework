@@ -7,7 +7,10 @@ import type {
 	IConfigProviderBase,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { OdspClient, type OdspConnectionConfig } from "@fluidframework/odsp-client/internal";
+import {
+	OdspClient,
+	type OdspConnectionConfig,
+} from "@fluidframework/odsp-client/internal";
 import {
 	type MockLogger,
 	createChildLogger,
@@ -60,7 +63,8 @@ export interface IOdspCredentials extends IOdspLoginCredentials {
  */
 export function getCredentials(): IOdspLoginCredentials[] {
 	const creds: IOdspLoginCredentials[] = [];
-	const loginTenants = process.env.login__odspclient__spe__test__tenants as string;
+	const loginTenants = process.env
+		.login__odspclient__spe__test__tenants as string;
 
 	if (loginTenants === "" || loginTenants === undefined) {
 		throw new Error("Login tenant is missing");
@@ -93,7 +97,11 @@ export function getCredentials(): IOdspLoginCredentials[] {
 
 	const [client1Creds, client2Creds] = creds;
 
-	if (client1Creds === undefined || client2Creds === undefined || creds.length < 2) {
+	if (
+		client1Creds === undefined ||
+		client2Creds === undefined ||
+		creds.length < 2
+	) {
 		throw new Error("Insufficient number of login credentials");
 	}
 

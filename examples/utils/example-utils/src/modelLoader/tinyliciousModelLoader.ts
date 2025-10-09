@@ -25,14 +25,17 @@ class TinyliciousService {
 	constructor(tinyliciousPort?: number) {
 		const tokenProvider = createInsecureTinyliciousTestTokenProvider();
 		this.urlResolver = createInsecureTinyliciousTestUrlResolver();
-		this.documentServiceFactory = createRouterliciousDocumentServiceFactory(tokenProvider);
+		this.documentServiceFactory =
+			createRouterliciousDocumentServiceFactory(tokenProvider);
 	}
 }
 
 /**
  * @internal
  */
-export class TinyliciousModelLoader<ModelType> implements IModelLoader<ModelType> {
+export class TinyliciousModelLoader<ModelType>
+	implements IModelLoader<ModelType>
+{
 	private readonly tinyliciousService = new TinyliciousService();
 	private readonly modelLoader: ModelLoader<ModelType>;
 
@@ -49,13 +52,18 @@ export class TinyliciousModelLoader<ModelType> implements IModelLoader<ModelType
 		return this.modelLoader.supportsVersion(version);
 	}
 
-	public async createDetached(version: string): Promise<IDetachedModel<ModelType>> {
+	public async createDetached(
+		version: string,
+	): Promise<IDetachedModel<ModelType>> {
 		return this.modelLoader.createDetached(version);
 	}
 	public async loadExisting(id: string): Promise<ModelType> {
 		return this.modelLoader.loadExisting(id);
 	}
-	public async loadExistingPaused(id: string, sequenceNumber: number): Promise<ModelType> {
+	public async loadExistingPaused(
+		id: string,
+		sequenceNumber: number,
+	): Promise<ModelType> {
 		return this.modelLoader.loadExistingPaused(id, sequenceNumber);
 	}
 }

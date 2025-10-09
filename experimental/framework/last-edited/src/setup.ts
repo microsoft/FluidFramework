@@ -8,7 +8,10 @@ import type { IContainerRuntime } from "@fluidframework/container-runtime-defini
 import type { IQuorumClients } from "@fluidframework/driver-definitions";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
-import type { IFluidLastEditedTracker, ILastEditDetails } from "./interfaces.js";
+import type {
+	IFluidLastEditedTracker,
+	ILastEditDetails,
+} from "./interfaces.js";
 
 /**
  * Default implementation of {@link setupLastEditedTrackerForContainer}'s `shouldDiscardMessageFn` parameter,
@@ -17,7 +20,9 @@ import type { IFluidLastEditedTracker, ILastEditDetails } from "./interfaces.js"
  * {@link @fluidframework/container-runtime#ContainerMessageType.FluidDataStoreOp} type messages should be
  * discarded.
  */
-const shouldDiscardMessageDefault = (message: ISequencedDocumentMessage): boolean =>
+const shouldDiscardMessageDefault = (
+	message: ISequencedDocumentMessage,
+): boolean =>
 	message.type !== ContainerMessageType.Attach &&
 	message.type !== ContainerMessageType.FluidDataStoreOp &&
 	message.type !== ContainerMessageType.Alias;
@@ -70,18 +75,24 @@ export function setupLastEditedTrackerForContainer(
 	// Register an op listener on the runtime. If the lastEditedTracker has loaded,
 	// it passes the last edited information to its
 	// last edited tracker. If the lastEditedTracker hasn't loaded, store the last edited information temporarily.
-	runtime.on("op", (message: ISequencedDocumentMessage, runtimeMessage?: boolean) => {
-		// If this message should be discarded as per shouldDiscardMessageFn, return.
-		if (runtimeMessage === false || shouldDiscardMessageFn(message)) {
-			return;
-		}
+	runtime.on(
+		"op",
+		(message: ISequencedDocumentMessage, runtimeMessage?: boolean) => {
+			// If this message should be discarded as per shouldDiscardMessageFn, return.
+			if (runtimeMessage === false || shouldDiscardMessageFn(message)) {
+				return;
+			}
 
-		// Get the last edited details from the message. If it doesn't exist, return.
-		const lastEditDetails = getLastEditDetailsFromMessage(message, runtime.getQuorum());
-		if (lastEditDetails === undefined) {
-			return;
-		}
+			// Get the last edited details from the message. If it doesn't exist, return.
+			const lastEditDetails = getLastEditDetailsFromMessage(
+				message,
+				runtime.getQuorum(),
+			);
+			if (lastEditDetails === undefined) {
+				return;
+			}
 
-		lastEditedTracker.updateLastEditDetails(lastEditDetails);
-	});
+			lastEditedTracker.updateLastEditDetails(lastEditDetails);
+		},
+	);
 }

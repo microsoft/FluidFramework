@@ -26,14 +26,38 @@ function expectEqual<T>(
 describe("SparseArray2D", () => {
 	it("read/write top-left 256x256", () => {
 		const a = new SparseArray2D();
-		fill(a, /* rowStart: */ 0, /* colStart: */ 0, /* rowCount: */ 256, /* colCount: */ 256);
-		check(a, /* rowStart: */ 0, /* colStart: */ 0, /* rowCount: */ 256, /* colCount: */ 256);
+		fill(
+			a,
+			/* rowStart: */ 0,
+			/* colStart: */ 0,
+			/* rowCount: */ 256,
+			/* colCount: */ 256,
+		);
+		check(
+			a,
+			/* rowStart: */ 0,
+			/* colStart: */ 0,
+			/* rowCount: */ 256,
+			/* colCount: */ 256,
+		);
 	});
 
 	it("read/write bottom-right 256x256", () => {
 		const a = new SparseArray2D();
-		fill(a, /* rowStart: */ 0, /* colStart: */ 0, /* rowCount: */ 256, /* colCount: */ 256);
-		check(a, /* rowStart: */ 0, /* colStart: */ 0, /* rowCount: */ 256, /* colCount: */ 256);
+		fill(
+			a,
+			/* rowStart: */ 0,
+			/* colStart: */ 0,
+			/* rowCount: */ 256,
+			/* colCount: */ 256,
+		);
+		check(
+			a,
+			/* rowStart: */ 0,
+			/* colStart: */ 0,
+			/* rowCount: */ 256,
+			/* colCount: */ 256,
+		);
 
 		fill(
 			a,
@@ -172,14 +196,22 @@ describe("SparseArray2D", () => {
 				const expected = new SparseArray2D();
 				fill(expected, rowStart, colStart, rowCount, colCount);
 
-				for (let row = rowClearStart; row < rowClearStart + rowClearCount; row++) {
+				for (
+					let row = rowClearStart;
+					row < rowClearStart + rowClearCount;
+					row++
+				) {
 					for (let col = colStart; col < colStart + colCount; col++) {
 						expected.setCell(row, col, undefined);
 					}
 				}
 
 				for (let row = rowStart; row < rowStart + rowCount; row++) {
-					for (let col = colClearStart; col < colClearStart + colClearCount; col++) {
+					for (
+						let col = colClearStart;
+						col < colClearStart + colClearCount;
+						col++
+					) {
 						expected.setCell(row, col, undefined);
 					}
 				}

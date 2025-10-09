@@ -33,7 +33,9 @@ export type DependencyUpdateType =
  *
  * @internal
  */
-export function isDependencyUpdateType(str: string | undefined): str is DependencyUpdateType {
+export function isDependencyUpdateType(
+	str: string | undefined,
+): str is DependencyUpdateType {
 	if (str === undefined) {
 		return false;
 	}

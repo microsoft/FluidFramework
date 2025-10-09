@@ -19,7 +19,10 @@ export type NestedMap<Key1, Key2, Value> = Map<Key1, Map<Key2, Value>>;
 /**
  * A read-only version of {@link NestedMap}.
  */
-export type ReadonlyNestedMap<Key1, Key2, Value> = ReadonlyMap<Key1, ReadonlyMap<Key2, Value>>;
+export type ReadonlyNestedMap<Key1, Key2, Value> = ReadonlyMap<
+	Key1,
+	ReadonlyMap<Key2, Value>
+>;
 
 /**
  * If (key1, key2) already has a value in the map, it is returned, otherwise value is added under (key1, key2) and undefined is returned.
@@ -301,7 +304,9 @@ export class SizedNestedMap<Key1, Key2, Value> {
 	/**
 	 * Runs the supplied delegate for every (value, key1, key2).
 	 */
-	public forEach(delegate: (value: Value, key1: Key1, key2: Key2) => void): void {
+	public forEach(
+		delegate: (value: Value, key1: Key1, key2: Key2) => void,
+	): void {
 		forEachInNestedMap(this.nestedMap, delegate);
 	}
 
@@ -315,7 +320,9 @@ export class SizedNestedMap<Key1, Key2, Value> {
 
 	public values(): IterableIterator<Value> {
 		return (
-			Array.from(this.nestedMap.values()).flatMap((innerMap) => innerMap.values())[0] ?? oob()
+			Array.from(this.nestedMap.values()).flatMap((innerMap) =>
+				innerMap.values(),
+			)[0] ?? oob()
 		);
 	}
 

@@ -16,7 +16,9 @@ import { isCombinedAppAndProtocolSummary } from "./summaryForCreateNew.js";
  * @param summaryTree - summary tree in ISummaryTree format
  * @internal
  */
-export function convertSummaryTreeToSnapshotITree(summaryTree: ISummaryTree): ITree {
+export function convertSummaryTreeToSnapshotITree(
+	summaryTree: ISummaryTree,
+): ITree {
 	const entries: ITreeEntry[] = [];
 	const adaptSummaryTree = isCombinedAppAndProtocolSummary(summaryTree);
 	const allSummaryEntries = adaptSummaryTree
@@ -43,7 +45,9 @@ export function convertSummaryTreeToSnapshotITree(summaryTree: ISummaryTree): IT
 			}
 
 			case SummaryType.Tree: {
-				entries.push(new TreeTreeEntry(k, convertSummaryTreeToSnapshotITree(value)));
+				entries.push(
+					new TreeTreeEntry(k, convertSummaryTreeToSnapshotITree(value)),
+				);
 				break;
 			}
 

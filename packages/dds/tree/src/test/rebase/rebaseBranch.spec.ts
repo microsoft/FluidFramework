@@ -16,7 +16,11 @@ import {
 	rebaseBranch,
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../core/rebase/index.js";
-import { type NonEmptyTestChange, TestChange, TestChangeRebaser } from "../testChange.js";
+import {
+	type NonEmptyTestChange,
+	TestChange,
+	TestChangeRebaser,
+} from "../testChange.js";
 import { mintRevisionTag } from "../utils.js";
 
 function newCommit(
@@ -57,7 +61,10 @@ describe("rebaseBranch", () => {
 		assert(changes.length === 0, "Fewer commits than changes");
 	}
 
-	function assertOutputContext(change?: TestChange, ...expected: number[]): void {
+	function assertOutputContext(
+		change?: TestChange,
+		...expected: number[]
+	): void {
 		const outputContext =
 			(change as NonEmptyTestChange | undefined)?.outputContext ??
 			fail("Expected output context");
@@ -90,7 +97,8 @@ describe("rebaseBranch", () => {
 
 		assert.throws(
 			() => rebaseBranch(mintRevisionTag, new TestChangeRebaser(), n2, n3, n1),
-			(e: Error) => validateAssertionError(e, "target commit is not in target branch"),
+			(e: Error) =>
+				validateAssertionError(e, "target commit is not in target branch"),
 		);
 	});
 

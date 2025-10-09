@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { assert, Lazy, fail, debugAssert } from "@fluidframework/core-utils/internal";
+import {
+	assert,
+	Lazy,
+	fail,
+	debugAssert,
+} from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
@@ -96,15 +101,16 @@ import { convertField, convertFieldKind } from "../../toStoredSchema.js";
  * or using some other method like {@link (TreeAlpha:interface).create}.
  * @system @public
  */
-export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> =
-	RestrictiveStringRecord<ImplicitFieldSchema> extends T
-		? // eslint-disable-next-line @typescript-eslint/ban-types
-			{}
-		: {
-				-readonly [Property in keyof T]: Property extends string
-					? TreeFieldFromImplicitField<T[Property]>
-					: unknown;
-			};
+export type ObjectFromSchemaRecord<
+	T extends RestrictiveStringRecord<ImplicitFieldSchema>,
+> = RestrictiveStringRecord<ImplicitFieldSchema> extends T
+	? // eslint-disable-next-line @typescript-eslint/ban-types
+		{}
+	: {
+			-readonly [Property in keyof T]: Property extends string
+				? TreeFieldFromImplicitField<T[Property]>
+				: unknown;
+		};
 
 /**
  * A {@link TreeNode} which models a JavaScript object.
@@ -123,7 +129,9 @@ export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFie
 export type TreeObjectNode<
 	T extends RestrictiveStringRecord<ImplicitFieldSchema>,
 	TypeName extends string = string,
-> = TreeNode & ObjectFromSchemaRecord<T> & WithType<TypeName, NodeKind.Object, T>;
+> = TreeNode &
+	ObjectFromSchemaRecord<T> &
+	WithType<TypeName, NodeKind.Object, T>;
 
 /**
  * Type utility for determining if an implicit field schema is known to have a default value.
@@ -184,7 +192,9 @@ export type InsertableObjectFromSchemaRecord<
 				>;
 			} & {
 				// Field does not have a known default, make it required:
-				readonly [Property in keyof T as FieldHasDefault<T[Property & string]> extends false
+				readonly [Property in keyof T as FieldHasDefault<
+					T[Property & string]
+				> extends false
 					? Property
 					: never]: InsertableTreeFieldFromImplicitField<T[Property & string]>;
 			}
@@ -206,8 +216,13 @@ export type SimpleKeyMap = ReadonlyMap<
 /**
  * Caches the mappings from property keys to stored keys for the provided object field schemas in {@link simpleKeyToFlexKeyCache}.
  */
-function createFlexKeyMapping(fields: Record<string, ImplicitFieldSchema>): SimpleKeyMap {
-	const keyMap: Map<string | symbol, { storedKey: FieldKey; schema: FieldSchema }> = new Map();
+function createFlexKeyMapping(
+	fields: Record<string, ImplicitFieldSchema>,
+): SimpleKeyMap {
+	const keyMap: Map<
+		string | symbol,
+		{ storedKey: FieldKey; schema: FieldSchema }
+	> = new Map();
 	for (const [propertyKey, fieldSchema] of Object.entries(fields)) {
 		const schema = normalizeFieldSchema(fieldSchema);
 		const storedKey = getStoredKey(propertyKey, schema);
@@ -244,7 +259,9 @@ function createProxyHandler(
 			const fieldInfo = schema.flexKeyMap.get(propertyKey);
 			if (fieldInfo !== undefined) {
 				const flexNode = getInnerNode(proxy);
-				debugAssert(() => !flexNode.context.isDisposed() || "FlexTreeNode is disposed");
+				debugAssert(
+					() => !flexNode.context.isDisposed() || "FlexTreeNode is disposed",
+				);
 				const field = flexNode.tryGetField(fieldInfo.storedKey);
 				if (field !== undefined) {
 					return tryGetTreeNodeForField(field);
@@ -276,7 +293,9 @@ function createProxyHandler(
 
 			const innerNode = getInnerNode(proxy);
 
-			const innerSchema = innerNode.context.schema.nodeSchema.get(brand(schema.identifier));
+			const innerSchema = innerNode.context.schema.nodeSchema.get(
+				brand(schema.identifier),
+			);
 			assert(
 				innerSchema instanceof ObjectNodeStoredSchema,
 				0xc18 /* Expected ObjectNodeStoredSchema */,
@@ -320,7 +339,8 @@ function createProxyHandler(
 			// For some reason, the getOwnPropertyDescriptor is not passed in the receiver, so use a weak map.
 			// If a refactoring is done to associated flex tree data with the target not the proxy, this extra map could be removed,
 			// and the design would be more compatible with proxyless nodes.
-			const proxy = targetToProxy.get(target) ?? fail(0xadd /* missing proxy */);
+			const proxy =
+				targetToProxy.get(target) ?? fail(0xadd /* missing proxy */);
 			const field = getInnerNode(proxy).tryGetField(fieldInfo.storedKey);
 
 			const p: PropertyDescriptor = {
@@ -354,7 +374,10 @@ export function setField(
 
 	switch (field.schema) {
 		case FieldKinds.required.identifier: {
-			assert(mapTree !== undefined, 0xa04 /* Cannot set a required field to undefined */);
+			assert(
+				mapTree !== undefined,
+				0xa04 /* Cannot set a required field to undefined */,
+			);
 			const typedField = field as FlexTreeRequiredField;
 			typedField.editor.set(mapTree);
 			break;
@@ -439,7 +462,12 @@ export function objectSchema<
 	}
 
 	const lazyChildTypes = new Lazy(
-		() => new Set(Array.from(flexKeyMap.values(), (f) => [...f.schema.allowedTypeSet]).flat()),
+		() =>
+			new Set(
+				Array.from(flexKeyMap.values(), (f) => [
+					...f.schema.allowedTypeSet,
+				]).flat(),
+			),
 	);
 
 	let privateData: TreeNodeSchemaPrivateData | undefined;
@@ -461,17 +489,19 @@ export function objectSchema<
 			]),
 		);
 		public static readonly flexKeyMap: SimpleKeyMap = flexKeyMap;
-		public static readonly storedKeyToPropertyKey: ReadonlyMap<FieldKey, string> = new Map<
+		public static readonly storedKeyToPropertyKey: ReadonlyMap<
 			FieldKey,
 			string
-		>(
+		> = new Map<FieldKey, string>(
 			Array.from(flexKeyMap, ([key, value]): [FieldKey, string] => [
 				value.storedKey,
 				key as string,
 			]),
 		);
-		public static readonly identifierFieldKeys: readonly FieldKey[] = identifierFieldKeys;
-		public static readonly allowUnknownOptionalFields: boolean = allowUnknownOptionalFields;
+		public static readonly identifierFieldKeys: readonly FieldKey[] =
+			identifierFieldKeys;
+		public static readonly allowUnknownOptionalFields: boolean =
+			allowUnknownOptionalFields;
 
 		public static override prepareInstance<T2>(
 			this: typeof TreeNodeValid<T2>,
@@ -511,7 +541,8 @@ export function objectSchema<
 			return unhydratedFlexTreeFromInsertable(input as object, this as Output);
 		}
 
-		protected static override constructorCached: MostDerivedData | undefined = undefined;
+		protected static override constructorCached: MostDerivedData | undefined =
+			undefined;
 
 		protected static override oneTimeSetup(): TreeNodeSchemaInitializedData {
 			// One time initialization that required knowing the most derived type (from this.constructor) and thus has to be lazy.
@@ -561,16 +592,19 @@ export function objectSchema<
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;
 		}
-		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
-		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
-			persistedMetadata;
+		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> =
+			metadata ?? {};
+		public static readonly persistedMetadata:
+			| JsonCompatibleReadOnlyObject
+			| undefined = persistedMetadata;
 
 		// eslint-disable-next-line import/no-deprecated
 		public get [typeNameSymbol](): TName {
 			return identifier;
 		}
 		public get [typeSchemaSymbol](): Output {
-			return CustomObjectNode.constructorCached?.constructor as unknown as Output;
+			return CustomObjectNode.constructorCached
+				?.constructor as unknown as Output;
 		}
 
 		public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
@@ -661,7 +695,9 @@ function objectToFlexContent(
 		Symbol.iterator in data ||
 		isFluidHandle(data)
 	) {
-		throw new UsageError(`Input data is incompatible with Object schema: ${data}`);
+		throw new UsageError(
+			`Input data is incompatible with Object schema: ${data}`,
+		);
 	}
 
 	const fields = new Map<FieldKey, UnhydratedFlexTreeField>();
@@ -679,12 +715,16 @@ function objectToFlexContent(
 			children = isConstant(fieldProvider) ? fieldProvider() : fieldProvider;
 		} else {
 			children = [
-				unhydratedFlexTreeFromInsertableNode(value, fieldInfo.schema.allowedTypeSet),
+				unhydratedFlexTreeFromInsertableNode(
+					value,
+					fieldInfo.schema.allowedTypeSet,
+				),
 			];
 		}
 
 		const kind =
-			convertFieldKind.get(fieldInfo.schema.kind) ?? fail(0xbb2 /* Invalid field kind */);
+			convertFieldKind.get(fieldInfo.schema.kind) ??
+			fail(0xbb2 /* Invalid field kind */);
 		fields.set(
 			fieldInfo.storedKey,
 			createField(context, kind.identifier, fieldInfo.storedKey, children),

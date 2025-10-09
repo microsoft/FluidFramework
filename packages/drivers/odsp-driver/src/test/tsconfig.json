@@ -5,12 +5,12 @@
 		"outDir": "../../lib/test",
 		"types": ["mocha"],
 		"noUncheckedIndexedAccess": false,
-		"exactOptionalPropertyTypes": false,
+		"exactOptionalPropertyTypes": false
 	},
 	"include": ["./**/*"],
 	"references": [
 		{
-			"path": "../..",
-		},
-	],
+			"path": "../.."
+		}
+	]
 }

@@ -5,7 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
-import { type IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
+import {
+	type IGCTestProvider,
+	runGCTests,
+} from "@fluid-private/test-dds-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import {
 	MockContainerRuntimeFactory,
@@ -50,9 +53,13 @@ function createDetachedCell(id: string, options?: ICellOptions): SharedCell {
 function createCellForReconnection(
 	id: string,
 	runtimeFactory: MockContainerRuntimeFactoryForReconnection,
-): { cell: ISharedCell; containerRuntime: MockContainerRuntimeForReconnection } {
+): {
+	cell: ISharedCell;
+	containerRuntime: MockContainerRuntimeForReconnection;
+} {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
+	const containerRuntime =
+		runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
@@ -106,7 +113,11 @@ describe("Cell", () => {
 				);
 				await cell2.load(services);
 
-				assert.equal(cell2.get(), "testValue", "Could not load SharedCell from snapshot");
+				assert.equal(
+					cell2.get(),
+					"testValue",
+					"Could not load SharedCell from snapshot",
+				);
 			});
 
 			it("can load a SharedCell with undefined value from snapshot", async () => {
@@ -120,14 +131,22 @@ describe("Cell", () => {
 				);
 				await cell2.load(services);
 
-				assert.equal(cell2.get(), undefined, "Could not load SharedCell from snapshot");
+				assert.equal(
+					cell2.get(),
+					undefined,
+					"Could not load SharedCell from snapshot",
+				);
 			});
 		});
 
 		describe("Op processing in detached state", () => {
 			it("should correctly process a set operation sent in detached state", async () => {
 				const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
-				const cell1 = new SharedCell("cell1", dataStoreRuntime1, CellFactory.Attributes);
+				const cell1 = new SharedCell(
+					"cell1",
+					dataStoreRuntime1,
+					CellFactory.Attributes,
+				);
 				// Set a value in detached state.
 				const value = "testValue";
 				cell1.set(value);
@@ -142,7 +161,11 @@ describe("Cell", () => {
 				);
 				services2.deltaConnection = dataStoreRuntime2.createDeltaConnection();
 
-				const cell2 = new SharedCell("cell2", dataStoreRuntime2, CellFactory.Attributes);
+				const cell2 = new SharedCell(
+					"cell2",
+					dataStoreRuntime2,
+					CellFactory.Attributes,
+				);
 				await cell2.load(services2);
 
 				// Now connect the first SharedCell
@@ -156,8 +179,16 @@ describe("Cell", () => {
 				cell1.connect(services1);
 
 				// Verify that both the cells have the value.
-				assert.equal(cell1.get(), value, "The first cell does not have the key");
-				assert.equal(cell2.get(), value, "The second cell does not have the key");
+				assert.equal(
+					cell1.get(),
+					value,
+					"The first cell does not have the key",
+				);
+				assert.equal(
+					cell2.get(),
+					value,
+					"The second cell does not have the key",
+				);
 
 				// Set a new value in the second SharedCell.
 				const newValue = "newValue";
@@ -167,8 +198,16 @@ describe("Cell", () => {
 				containerRuntimeFactory.processAllMessages();
 
 				// Verify that both the cells have the new value.
-				assert.equal(cell1.get(), newValue, "The first cell did not get the new value");
-				assert.equal(cell2.get(), newValue, "The second cell did not get the new value");
+				assert.equal(
+					cell1.get(),
+					newValue,
+					"The first cell did not get the new value",
+				);
+				assert.equal(
+					cell2.get(),
+					newValue,
+					"The second cell did not get the new value",
+				);
 			});
 		});
 
@@ -181,7 +220,11 @@ describe("Cell", () => {
 
 				let key = cell.getAttribution();
 
-				assert.equal(key?.type, "detached", "the first cell should have detached attribution");
+				assert.equal(
+					key?.type,
+					"detached",
+					"the first cell should have detached attribution",
+				);
 
 				// load a cell from the snapshot
 				const services = MockSharedObjectServices.createFromSummary(
@@ -249,7 +292,11 @@ describe("Cell", () => {
 				containerRuntimeFactory.processAllMessages();
 
 				assert.equal(cell1.get(), undefined, "Could not delete cell value");
-				assert.equal(cell2.get(), undefined, "Could not delete cell value from remote client");
+				assert.equal(
+					cell2.get(),
+					undefined,
+					"Could not delete cell value from remote client",
+				);
 			});
 
 			it("Shouldn't overwrite value if there is pending set", () => {
@@ -267,8 +314,16 @@ describe("Cell", () => {
 				assert.equal(cell1.get(), value1, "could not get the set value");
 
 				// Verify the SharedCell with 2 pending messages
-				assert.equal(cell2.empty(), false, "could not find the set value in pending cell");
-				assert.equal(cell2.get(), pending2, "could not get the set value from pending cell");
+				assert.equal(
+					cell2.empty(),
+					false,
+					"could not find the set value in pending cell",
+				);
+				assert.equal(
+					cell2.get(),
+					pending2,
+					"could not get the set value from pending cell",
+				);
 
 				containerRuntimeFactory.processSomeMessages(1);
 
@@ -277,8 +332,16 @@ describe("Cell", () => {
 				assert.equal(cell1.get(), pending1, "could not get the set value");
 
 				// Verify the SharedCell with 1 pending message
-				assert.equal(cell2.empty(), false, "could not find the set value in pending cell");
-				assert.equal(cell2.get(), pending2, "could not get the set value from pending cell");
+				assert.equal(
+					cell2.empty(),
+					false,
+					"could not find the set value in pending cell",
+				);
+				assert.equal(
+					cell2.get(),
+					pending2,
+					"could not get the set value from pending cell",
+				);
 			});
 		});
 
@@ -406,15 +469,22 @@ describe("Cell", () => {
 		let cell2: ISharedCell;
 
 		beforeEach("createCellsForReconnection", () => {
-			containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+			containerRuntimeFactory =
+				new MockContainerRuntimeFactoryForReconnection();
 
 			// Connect the first SharedCell.
-			const response1 = createCellForReconnection("cell1", containerRuntimeFactory);
+			const response1 = createCellForReconnection(
+				"cell1",
+				containerRuntimeFactory,
+			);
 			cell1 = response1.cell;
 			containerRuntime1 = response1.containerRuntime;
 
 			// Create a second SharedCell.
-			const response2 = createCellForReconnection("cell2", containerRuntimeFactory);
+			const response2 = createCellForReconnection(
+				"cell2",
+				containerRuntimeFactory,
+			);
 			cell2 = response2.cell;
 			containerRuntime2 = response2.containerRuntime;
 		});
@@ -433,8 +503,16 @@ describe("Cell", () => {
 			containerRuntimeFactory.processAllMessages();
 
 			// Verify that the set value is processed by both clients.
-			assert.equal(cell1.get(), value, "The first client did not process the set");
-			assert.equal(cell2.get(), value, "The second client did not process the set");
+			assert.equal(
+				cell1.get(),
+				value,
+				"The first client did not process the set",
+			);
+			assert.equal(
+				cell2.get(),
+				value,
+				"The second client did not process the set",
+			);
 
 			// Delete the value from the second SharedCell.
 			cell2.delete();
@@ -447,8 +525,16 @@ describe("Cell", () => {
 			containerRuntimeFactory.processAllMessages();
 
 			// Verify that the deleted value is processed by both clients.
-			assert.equal(cell1.get(), undefined, "The first client did not process the delete");
-			assert.equal(cell2.get(), undefined, "The second client did not process the delete");
+			assert.equal(
+				cell1.get(),
+				undefined,
+				"The first client did not process the delete",
+			);
+			assert.equal(
+				cell2.get(),
+				undefined,
+				"The second client did not process the delete",
+			);
 		});
 
 		it("can store ops in disconnected state and resend them on reconnection", async () => {
@@ -467,8 +553,16 @@ describe("Cell", () => {
 			containerRuntimeFactory.processAllMessages();
 
 			// Verify that the set value is processed by both clients.
-			assert.equal(cell1.get(), value, "The first client did not process the set");
-			assert.equal(cell2.get(), value, "The second client did not process the set");
+			assert.equal(
+				cell1.get(),
+				value,
+				"The first client did not process the set",
+			);
+			assert.equal(
+				cell2.get(),
+				value,
+				"The second client did not process the set",
+			);
 
 			// Disconnect the second client.
 			containerRuntime2.connected = false;
@@ -483,8 +577,16 @@ describe("Cell", () => {
 			containerRuntimeFactory.processAllMessages();
 
 			// Verify that the deleted value is processed by both clients.
-			assert.equal(cell1.get(), undefined, "The first client did not process the delete");
-			assert.equal(cell2.get(), undefined, "The second client did not process the delete");
+			assert.equal(
+				cell1.get(),
+				undefined,
+				"The first client did not process the delete",
+			);
+			assert.equal(
+				cell2.get(),
+				undefined,
+				"The second client did not process the delete",
+			);
 		});
 	});
 
@@ -541,7 +643,9 @@ describe("Cell", () => {
 			 */
 			public async addNestedHandles(): Promise<void> {
 				const newSubCell = createDetachedCell(`subCell-${++this.subCellCount}`);
-				const newSubCell2 = createDetachedCell(`subCell-${++this.subCellCount}`);
+				const newSubCell2 = createDetachedCell(
+					`subCell-${++this.subCellCount}`,
+				);
 				const containingObject = {
 					subcellHandle: newSubCell.handle,
 					nestedObj: {

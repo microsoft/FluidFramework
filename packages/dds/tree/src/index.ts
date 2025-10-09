@@ -284,7 +284,10 @@ export {
 	configuredSharedTreeBeta,
 	configuredSharedTreeBetaLegacy,
 } from "./treeFactory.js";
-export { SharedTreeAttributes, SharedTreeFactoryType } from "./sharedTreeAttributes.js";
+export {
+	SharedTreeAttributes,
+	SharedTreeFactoryType,
+} from "./sharedTreeAttributes.js";
 export { persistedToSimpleSchema } from "./shared-tree/index.js";
 
 export {

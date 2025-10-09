@@ -135,7 +135,8 @@ interface ICodeMirrorPresenceInfo {
  * This will be the codemirror specific implementation
  */
 export class CodeMirrorPresenceManager extends EventEmitter {
-	private readonly presenceMap: Map<string, ICodeMirrorPresenceInfo> = new Map();
+	private readonly presenceMap: Map<string, ICodeMirrorPresenceInfo> =
+		new Map();
 
 	private get doc(): CodeMirror.Doc {
 		return this.codeMirror.getDoc();

@@ -115,7 +115,9 @@ export type BenchmarkRunningOptions =
 	| BenchmarkAsyncArguments
 	| CustomBenchmarkArguments;
 
-export type BenchmarkRunningOptionsSync = BenchmarkSyncArguments & BenchmarkTimingOptions & OnBatch;
+export type BenchmarkRunningOptionsSync = BenchmarkSyncArguments &
+	BenchmarkTimingOptions &
+	OnBatch;
 
 export type BenchmarkRunningOptionsAsync = BenchmarkAsyncArguments &
 	BenchmarkTimingOptions &

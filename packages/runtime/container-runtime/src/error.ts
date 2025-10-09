@@ -4,12 +4,18 @@
  */
 
 import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
-import { type IFluidErrorBase, LoggingError } from "@fluidframework/telemetry-utils/internal";
+import {
+	type IFluidErrorBase,
+	LoggingError,
+} from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Error indicating that a client's session has reached its time limit and is closed.
  */
-export class ClientSessionExpiredError extends LoggingError implements IFluidErrorBase {
+export class ClientSessionExpiredError
+	extends LoggingError
+	implements IFluidErrorBase
+{
 	readonly errorType = ContainerErrorTypes.clientSessionExpiredError;
 
 	constructor(

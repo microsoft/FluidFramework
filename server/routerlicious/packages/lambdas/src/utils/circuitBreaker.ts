@@ -97,8 +97,8 @@ export class LambdaCircuitBreaker {
 		return this.circuitBreaker.opened
 			? "opened"
 			: this.circuitBreaker.halfOpen
-			? "halfOpen"
-			: "closed";
+				? "halfOpen"
+				: "closed";
 	}
 
 	public shutdown(): void {

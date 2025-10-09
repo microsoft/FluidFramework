@@ -10,7 +10,10 @@ import { Deferred } from "@fluidframework/core-utils/internal";
 import type { IRuntimeStorageService } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
-import { BlobManager, type IBlobManagerRuntime } from "../../blobManager/index.js";
+import {
+	BlobManager,
+	type IBlobManagerRuntime,
+} from "../../blobManager/index.js";
 import {
 	ContainerFluidHandleContext,
 	type IContainerHandleContextRuntime,
@@ -35,7 +38,9 @@ export const failProxy = <T extends object>(handler: Partial<T> = {}): T => {
 function createBlobManager(
 	overrides?: Partial<ConstructorParameters<typeof BlobManager>[0]>,
 ): BlobManager {
-	const runtime = failProxy<IBlobManagerRuntime & IContainerHandleContextRuntime>({
+	const runtime = failProxy<
+		IBlobManagerRuntime & IContainerHandleContextRuntime
+	>({
 		baseLogger: createChildLogger(),
 		attachState: AttachState.Attached,
 		resolveHandle: async () => {

@@ -138,7 +138,9 @@ class FooKernel implements SharedKernel {
 	summarizeCore(
 		serializer: IFluidSerializer,
 		telemetryContext: ITelemetryContext | undefined,
-		incrementalSummaryContext: IExperimentalIncrementalSummaryContext | undefined,
+		incrementalSummaryContext:
+			| IExperimentalIncrementalSummaryContext
+			| undefined,
 		fullTree?: boolean,
 	): ISummaryTreeWithStats {
 		throw new Error("Method not implemented.");
@@ -169,7 +171,9 @@ describe("createSharedObjectKind with minVersionForCollab", () => {
 	 * @param options - The options for the factory.
 	 * @returns A `SharedKernelFactory` that creates `FooKernelView` instances.
 	 */
-	function fooKernelFactory(options: FooOptionsInternal): SharedKernelFactory<FooKernelView> {
+	function fooKernelFactory(
+		options: FooOptionsInternal,
+	): SharedKernelFactory<FooKernelView> {
 		function fooFromKernelArgs(args: KernelArgs): FooKernel {
 			return new FooKernel(args.minVersionForCollab);
 		}

@@ -8,7 +8,10 @@ import React from "react";
 
 import "@testing-library/jest-dom";
 
-import { DynamicComposedChart, type GraphDataSet } from "../components/graphs/index.js";
+import {
+	DynamicComposedChart,
+	type GraphDataSet,
+} from "../components/graphs/index.js";
 
 // ResizeObserver is a hook used by Recharts that needs to be mocked for unit tests to function.
 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
@@ -74,14 +77,18 @@ describe("DynamicComposedChart component test", () => {
 
 	test("renders without crashing with data", () => {
 		render(<DynamicComposedChart dataSets={testDataSets} />);
-		const dynamicComposedChartElement = screen.findByTestId("test-dynamic-composed-chart");
+		const dynamicComposedChartElement = screen.findByTestId(
+			"test-dynamic-composed-chart",
+		);
 		expect(dynamicComposedChartElement).not.toBeNull();
 		expect(dynamicComposedChartElement).toBeDefined();
 	});
 
 	test("renders without crashing without data", () => {
 		render(<DynamicComposedChart dataSets={[]} />);
-		const dynamicComposedChartElement = screen.findByTestId("test-dynamic-composed-chart");
+		const dynamicComposedChartElement = screen.findByTestId(
+			"test-dynamic-composed-chart",
+		);
 		expect(dynamicComposedChartElement).not.toBeNull();
 		expect(dynamicComposedChartElement).toBeDefined();
 	});

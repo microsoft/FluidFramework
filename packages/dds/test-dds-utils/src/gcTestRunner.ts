@@ -50,7 +50,11 @@ export const runGCTests = (ctor: new () => IGCTestProvider): void => {
 
 	function validateGCData(): void {
 		const gcNodes = Object.entries(provider.sharedObject.getGCData().gcNodes);
-		assert.strictEqual(gcNodes.length, 1, "There should only be one GC node in summary");
+		assert.strictEqual(
+			gcNodes.length,
+			1,
+			"There should only be one GC node in summary",
+		);
 
 		const [id, outboundRoutes] = gcNodes[0];
 		assert.strictEqual(id, "/", "GC node's id should be /");

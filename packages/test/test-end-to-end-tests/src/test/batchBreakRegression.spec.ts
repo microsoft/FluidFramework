@@ -22,7 +22,10 @@ import {
 	ISequencedDocumentSystemMessage,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { isFluidError, isILoggingError } from "@fluidframework/telemetry-utils/internal";
+import {
+	isFluidError,
+	isILoggingError,
+} from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestObjectProvider,
 	TestFluidObject,
@@ -56,8 +59,12 @@ async function runAndValidateBatch(
 			[provider.defaultCodeDetails, provider.createFluidEntryPoint()],
 		]);
 
-		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
-		await container.attach(provider.driver.createCreateNewRequest(Date.now().toString()));
+		const container = await loader.createDetachedContainer(
+			provider.defaultCodeDetails,
+		);
+		await container.attach(
+			provider.driver.createCreateNewRequest(Date.now().toString()),
+		);
 		containerUrl = await container.getAbsoluteUrl("");
 		container.close();
 	}
@@ -132,7 +139,11 @@ describeCompat("Batching failures", "NoCompat", (getTestObjectProvider) => {
 
 	it("working batch", async function () {
 		const provider = getTestObjectProvider({ resetAfterEach: true });
-		await runAndValidateBatch(provider, provider.documentServiceFactory, this.timeout());
+		await runAndValidateBatch(
+			provider,
+			provider.documentServiceFactory,
+			this.timeout(),
+		);
 	});
 
 	[true, false].forEach((enableGroupedBatching) => {
@@ -164,7 +175,11 @@ describeCompat("Batching failures", "NoCompat", (getTestObjectProvider) => {
 					compressionAlgorithm: CompressionAlgorithms.lz4,
 				},
 			});
-			assert.strictEqual(batchesSent, 1, "expected only a single batch to be sent");
+			assert.strictEqual(
+				batchesSent,
+				1,
+				"expected only a single batch to be sent",
+			);
 
 			{
 				let batch = sentMessages[0];
@@ -192,7 +207,12 @@ describeCompat("Batching failures", "NoCompat", (getTestObjectProvider) => {
 	describe("client sends invalid batches ", () => {
 		itExpects.skip(
 			"Batch end without start",
-			[{ eventName: "fluid:telemetry:Container:ContainerClose", error: "OpBatchIncomplete" }],
+			[
+				{
+					eventName: "fluid:telemetry:Container:ContainerClose",
+					error: "OpBatchIncomplete",
+				},
+			],
 			async function () {
 				const provider = getTestObjectProvider({ resetAfterEach: true });
 
@@ -204,7 +224,9 @@ describeCompat("Batching failures", "NoCompat", (getTestObjectProvider) => {
 								submit: (ds) => (messages) => {
 									const newMessages = [...messages];
 									const batchStartIndex = newMessages.findIndex(
-										(m) => (m.metadata as { batch?: unknown } | undefined)?.batch === true,
+										(m) =>
+											(m.metadata as { batch?: unknown } | undefined)?.batch ===
+											true,
 									);
 									if (batchStartIndex >= 0) {
 										newMessages[batchStartIndex] = {
@@ -246,7 +268,9 @@ describeCompat("Batching failures", "NoCompat", (getTestObjectProvider) => {
 							submit: (ds) => (messages) => {
 								const newMessages = [...messages];
 								const batchEndIndex = newMessages.findIndex(
-									(m) => (m.metadata as { batch?: unknown } | undefined)?.batch === false,
+									(m) =>
+										(m.metadata as { batch?: unknown } | undefined)?.batch ===
+										false,
 								);
 								if (batchEndIndex >= 0) {
 									newMessages[batchEndIndex] = {
@@ -285,7 +309,9 @@ describeCompat("Batching failures", "NoCompat", (getTestObjectProvider) => {
 							submit: (ds) => (messages) => {
 								const newMessages = [...messages];
 								const batchEndIndex = newMessages.findIndex(
-									(m) => (m.metadata as { batch?: unknown } | undefined)?.batch === false,
+									(m) =>
+										(m.metadata as { batch?: unknown } | undefined)?.batch ===
+										false,
 								);
 								if (batchEndIndex >= 1) {
 									ds.submit(newMessages.slice(0, batchEndIndex - 1));
@@ -321,7 +347,9 @@ describeCompat("Batching failures", "NoCompat", (getTestObjectProvider) => {
 								submit: (ds) => (messages) => {
 									const newMessages = [...messages];
 									const batchEndIndex = newMessages.findIndex(
-										(m) => (m.metadata as { batch?: unknown } | undefined)?.batch === false,
+										(m) =>
+											(m.metadata as { batch?: unknown } | undefined)?.batch ===
+											false,
 									);
 									if (batchEndIndex >= 1) {
 										// set reference seq number to below min seq so the server nacks the batch
@@ -384,7 +412,9 @@ describeCompat("Batching failures", "NoCompat", (getTestObjectProvider) => {
 											| ISequencedDocumentSystemMessage
 										)[] = [...args[1]];
 										const batchEndIndex = newMessages.findIndex(
-											(m) => (m.metadata as { batch?: unknown } | undefined)?.batch === false,
+											(m) =>
+												(m.metadata as { batch?: unknown } | undefined)
+													?.batch === false,
 										);
 										if (batchEndIndex >= 0) {
 											args[1] = newMessages

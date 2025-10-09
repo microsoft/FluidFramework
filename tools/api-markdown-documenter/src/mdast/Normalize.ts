@@ -5,7 +5,15 @@
 
 import type { Element } from "hast";
 import { toHtml } from "hast-util-to-html";
-import type { BlockContent, Break, Html, Nodes, Root, RootContent, Strong } from "mdast";
+import type {
+	BlockContent,
+	Break,
+	Html,
+	Nodes,
+	Root,
+	RootContent,
+	Strong,
+} from "mdast";
 
 import type { Section } from "./Section.js";
 import type { SectionHeading } from "./SectionHeading.js";
@@ -56,7 +64,9 @@ export function normalizeDocumentContents(
 	options?: NormalizationOptions,
 ): Root {
 	const normalizedContents: NormalizedRootContent[] = [];
-	const context: NormalizationContext = { headingLevel: options?.startingHeadingLevel ?? 1 };
+	const context: NormalizationContext = {
+		headingLevel: options?.startingHeadingLevel ?? 1,
+	};
 	for (const section of contents) {
 		normalizedContents.push(...normalizeSection(section, context));
 	}

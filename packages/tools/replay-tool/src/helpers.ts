@@ -47,14 +47,18 @@ export interface ReplayToolContainerEntryPoint {
 }
 
 const normalizeOpts: ISnapshotNormalizerConfig = {
-	excludedChannelContentTypes: excludeChannelContentDdsFactories.map((f) => f.type),
+	excludedChannelContentTypes: excludeChannelContentDdsFactories.map(
+		(f) => f.type,
+	),
 };
 /**
  * Helper function that normalizes the snapshot trees in the given file snapshot.
  * @returns the normalized file snapshot.
  * @internal
  */
-export function getNormalizedFileSnapshot(snapshot: IFileSnapshot): IFileSnapshot {
+export function getNormalizedFileSnapshot(
+	snapshot: IFileSnapshot,
+): IFileSnapshot {
 	const normalizedSnapshot: IFileSnapshot = {
 		commits: {},
 		tree: getNormalizedSnapshot(snapshot.tree, normalizeOpts),
@@ -112,17 +116,19 @@ export function compareWithReferenceSnapshot(
 		),
 	);
 	const normalizedReferenceSnapshot = JSON.parse(
-		stringify(getNormalizedFileSnapshot(referenceSnapshot), { space: 2 }).replace(
-			packageVersionRegex,
-			packageVersionPlaceholder,
-		),
+		stringify(getNormalizedFileSnapshot(referenceSnapshot), {
+			space: 2,
+		}).replace(packageVersionRegex, packageVersionPlaceholder),
 	);
 
 	// Put the assert in a try catch block, so that we can report errors, if any.
 	try {
 		strict.deepStrictEqual(normalizedSnapshot, normalizedReferenceSnapshot);
 	} catch (error) {
-		errorHandler(`Mismatch in snapshot ${referenceSnapshotFilename}.json`, error);
+		errorHandler(
+			`Mismatch in snapshot ${referenceSnapshotFilename}.json`,
+			error,
+		);
 	}
 }
 
@@ -172,7 +178,10 @@ export async function loadContainer(
 		["@fluidx/tasks", Promise.resolve(dataStoreFactory)],
 		["@ms/tablero/TableroView", Promise.resolve(dataStoreFactory)],
 		["@ms/tablero/TableroDocument", Promise.resolve(dataStoreFactory)],
-		["@fluid-example/table-document/TableDocument", Promise.resolve(dataStoreFactory)],
+		[
+			"@fluid-example/table-document/TableDocument",
+			Promise.resolve(dataStoreFactory),
+		],
 		["LastEditedComponent", Promise.resolve(dataStoreFactory)],
 		["OfficeRootComponent", Promise.resolve(dataStoreFactory)],
 		["OneNoteRootComponentType", Promise.resolve(dataStoreFactory)],
@@ -222,7 +231,10 @@ export async function uploadSummary(container: IContainer) {
 	const entryPoint: FluidObject<ReplayToolContainerEntryPoint> =
 		await container.getEntryPoint();
 	const runtime = entryPoint?.ReplayToolContainerEntryPoint?.containerRuntime;
-	assert(runtime !== undefined, 0x5a7 /* ContainerRuntime entryPoint was not initialized */);
+	assert(
+		runtime !== undefined,
+		0x5a7 /* ContainerRuntime entryPoint was not initialized */,
+	);
 	const summaryResult = await runtime.summarize({
 		fullTree: true,
 		fullGC: true,

@@ -68,7 +68,11 @@ import {
 	type WithBreakable,
 } from "../util/index.js";
 
-import { canInitialize, initialize, initializerFromChunk } from "./schematizeTree.js";
+import {
+	canInitialize,
+	initialize,
+	initializerFromChunk,
+} from "./schematizeTree.js";
 import type { ITreeCheckout, TreeCheckout } from "./treeCheckout.js";
 
 /**
@@ -137,13 +141,17 @@ export class SchematizingSimpleTreeView<
 	) {
 		this.breaker = checkout.breaker;
 		if (checkout.forest.anchors.slots.has(ViewSlot)) {
-			throw new UsageError("Cannot create a second tree view from the same checkout");
+			throw new UsageError(
+				"Cannot create a second tree view from the same checkout",
+			);
 		}
 		checkout.forest.anchors.slots.set(ViewSlot, this);
 
 		this.rootFieldSchema = normalizeFieldSchema(config.schema);
 
-		const configAlpha = new TreeViewConfigurationAlpha({ schema: config.schema });
+		const configAlpha = new TreeViewConfigurationAlpha({
+			schema: config.schema,
+		});
 
 		this.viewSchema = new SchemaCompatibilityTester(configAlpha);
 		// This must be initialized before `update` can be called.
@@ -200,9 +208,15 @@ export class SchematizingSimpleTreeView<
 				this,
 				schema.rootFieldSchema,
 				(batches, doHydration) => {
-					assert(this.pendingHydration === undefined, "pendingHydration already set");
+					assert(
+						this.pendingHydration === undefined,
+						"pendingHydration already set",
+					);
 					this.pendingHydration = () => {
-						assert(batches.length <= 1, "initialize should at most one hydration batch");
+						assert(
+							batches.length <= 1,
+							"initialize should at most one hydration batch",
+						);
 						for (const batch of batches) {
 							doHydration(batch, {
 								parent: undefined,
@@ -254,7 +268,10 @@ export class SchematizingSimpleTreeView<
 	 */
 	public getFlexTreeContext(): Context {
 		this.ensureUndisposed();
-		assert(this.flexTreeContext !== undefined, 0x8c0 /* unexpected getViewOrError */);
+		assert(
+			this.flexTreeContext !== undefined,
+			0x8c0 /* unexpected getViewOrError */,
+		);
 		return this.flexTreeContext;
 	}
 
@@ -283,7 +300,11 @@ export class SchematizingSimpleTreeView<
 			constraintsOnRevert: boolean,
 			constraints: readonly TransactionConstraint[] = [],
 		): void => {
-			addConstraintsToTransaction(this.checkout, constraintsOnRevert, constraints);
+			addConstraintsToTransaction(
+				this.checkout,
+				constraintsOnRevert,
+				constraints,
+			);
 		};
 
 		this.checkout.transaction.start();
@@ -293,7 +314,10 @@ export class SchematizingSimpleTreeView<
 		const transactionCallbackStatus = transaction();
 		const rollback = transactionCallbackStatus?.rollback;
 		const value = (
-			transactionCallbackStatus as TransactionCallbackStatus<TSuccessValue, TFailureValue>
+			transactionCallbackStatus as TransactionCallbackStatus<
+				TSuccessValue,
+				TFailureValue
+			>
 		)?.value;
 
 		if (rollback === true) {
@@ -339,7 +363,9 @@ export class SchematizingSimpleTreeView<
 	private update(): void {
 		this.disposeFlexView();
 
-		const compatibility = this.viewSchema.checkCompatibility(this.checkout.storedSchema);
+		const compatibility = this.viewSchema.checkCompatibility(
+			this.checkout.storedSchema,
+		);
 
 		this.currentCompatibility = {
 			...compatibility,
@@ -355,7 +381,10 @@ export class SchematizingSimpleTreeView<
 				this.checkout,
 				this.nodeKeyManager,
 			);
-			assert(!slots.has(SimpleContextSlot), 0xa47 /* extra simple tree context */);
+			assert(
+				!slots.has(SimpleContextSlot),
+				0xa47 /* extra simple tree context */,
+			);
 			assert(
 				this.rootFieldSchema instanceof FieldSchemaAlpha,
 				0xbfa /* all field schema should be FieldSchemaAlpha */,
@@ -402,7 +431,9 @@ export class SchematizingSimpleTreeView<
 
 		this.flexTreeViewUnregisterCallbacks.add(
 			// Will dispose the old view (if there is one) when its no longer valid, and create a new one if appropriate.
-			this.checkout.storedSchema.events.on("afterSchemaChange", () => this.update()),
+			this.checkout.storedSchema.events.on("afterSchemaChange", () =>
+				this.update(),
+			),
 		);
 
 		if (!this.midUpgrade) {
@@ -504,7 +535,8 @@ export class SchematizingSimpleTreeView<
 
 	// #region Branching
 
-	public fork(): ReturnType<TreeBranch["fork"]> & SchematizingSimpleTreeView<TRootSchema> {
+	public fork(): ReturnType<TreeBranch["fork"]> &
+		SchematizingSimpleTreeView<TRootSchema> {
 		return this.checkout.branch().viewWith(this.config);
 	}
 
@@ -556,7 +588,10 @@ export function addConstraintsToTransaction(
 						`Attempted to add a "nodeInDocument" constraint${revertText}, but the node is not currently in the document. Node status: ${nodeStatus}`,
 					);
 				}
-				assert(node.isHydrated(), 0xbc2 /* In document node must be hydrated. */);
+				assert(
+					node.isHydrated(),
+					0xbc2 /* In document node must be hydrated. */,
+				);
 				if (constraintsOnRevert) {
 					checkout.editor.addNodeExistsConstraintOnRevert(node.anchorNode);
 				} else {

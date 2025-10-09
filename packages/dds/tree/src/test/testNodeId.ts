@@ -43,7 +43,11 @@ function composeChild(
 	id2: NodeId | undefined,
 	verify: boolean = true,
 ): TestNodeId {
-	const testChange = TestChange.compose(tryGetTestChange(id1), tryGetTestChange(id2), verify);
+	const testChange = TestChange.compose(
+		tryGetTestChange(id1),
+		tryGetTestChange(id2),
+		verify,
+	);
 	const resultId = id1 ?? id2 ?? fail("Should not compose two undefined IDs");
 	const composed: TestNodeId = {
 		...resultId,
@@ -57,8 +61,12 @@ function rebaseChild(
 	idToRebase: NodeId | undefined,
 	baseId: NodeId | undefined,
 ): TestNodeId | undefined {
-	const testChange = TestChange.rebase(tryGetTestChange(idToRebase), tryGetTestChange(baseId));
-	const resultId = idToRebase ?? baseId ?? fail("Should not rebase two undefined IDs");
+	const testChange = TestChange.rebase(
+		tryGetTestChange(idToRebase),
+		tryGetTestChange(baseId),
+	);
+	const resultId =
+		idToRebase ?? baseId ?? fail("Should not rebase two undefined IDs");
 	if (testChange === undefined) {
 		return undefined;
 	}
@@ -79,7 +87,10 @@ function deltaFromChild(id: NodeId): DeltaFieldMap {
 const fieldKey: FieldKey = brand("");
 const fieldKind: FieldKindIdentifier = brand("");
 
-function encode(id: NodeId, context: ChangeEncodingContext): EncodedNodeChangeset {
+function encode(
+	id: NodeId,
+	context: ChangeEncodingContext,
+): EncodedNodeChangeset {
 	const encodedId = {
 		...id,
 		testChange: TestChange.codec.encode((id as TestNodeId).testChange, context),
@@ -90,9 +101,13 @@ function encode(id: NodeId, context: ChangeEncodingContext): EncodedNodeChangese
 	};
 }
 
-function decode(encoded: JsonCompatibleReadOnly, context: ChangeEncodingContext): NodeId {
+function decode(
+	encoded: JsonCompatibleReadOnly,
+	context: ChangeEncodingContext,
+): NodeId {
 	const fieldChanges =
-		(encoded as EncodedNodeChangeset).fieldChanges ?? fail("Invalid encoded TestNodeId");
+		(encoded as EncodedNodeChangeset).fieldChanges ??
+		fail("Invalid encoded TestNodeId");
 
 	return fieldChanges[0].change as TestNodeId;
 }

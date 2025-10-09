@@ -27,8 +27,12 @@ export class OdspTestTokenProvider implements IOdspTokenProvider {
 		this.creds = credentials;
 	}
 
-	public async fetchWebsocketToken(siteUrl: string, refresh: boolean): Promise<TokenResponse> {
-		const pushScope = "offline_access https://pushchannel.1drv.ms/PushChannel.ReadWrite.All";
+	public async fetchWebsocketToken(
+		siteUrl: string,
+		refresh: boolean,
+	): Promise<TokenResponse> {
+		const pushScope =
+			"offline_access https://pushchannel.1drv.ms/PushChannel.ReadWrite.All";
 		const tokens = await this.fetchTokens(siteUrl, pushScope);
 		return {
 			fromCache: true,
@@ -36,7 +40,10 @@ export class OdspTestTokenProvider implements IOdspTokenProvider {
 		};
 	}
 
-	public async fetchStorageToken(siteUrl: string, refresh: boolean): Promise<TokenResponse> {
+	public async fetchStorageToken(
+		siteUrl: string,
+		refresh: boolean,
+	): Promise<TokenResponse> {
 		const sharePointScopes = `${siteUrl}/Container.Selected`;
 		const tokens = await this.fetchTokens(siteUrl, sharePointScopes);
 		return {

@@ -36,7 +36,8 @@ import { RELEASE_NOTES_TOC_LINK_TEXT } from "../../library/releaseNotes.js";
 export default class GenerateReleaseNotesCommand extends BaseCommand<
 	typeof GenerateReleaseNotesCommand
 > {
-	static readonly summary = `Generates release notes from individual changeset files.`;
+	static readonly summary =
+		`Generates release notes from individual changeset files.`;
 
 	// Enables the global JSON flag in oclif.
 	static readonly enableJsonFlag = true;
@@ -47,7 +48,8 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 		}),
 		releaseType: Flags.custom<"major" | "minor">({
 			char: "t",
-			description: "The type of release for which the release notes are being generated.",
+			description:
+				"The type of release for which the release notes are being generated.",
 			options: ["major", "minor"],
 			required: true,
 			parse: async (input) => {
@@ -115,7 +117,10 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 			);
 		}
 
-		const changesetDir = path.join(releaseGroup.directory, DEFAULT_CHANGESET_PATH);
+		const changesetDir = path.join(
+			releaseGroup.directory,
+			DEFAULT_CHANGESET_PATH,
+		);
 		const changesets = await loadChangesets(changesetDir, logger);
 
 		const { version } = releaseGroup;
@@ -147,14 +152,19 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 			}
 
 			const sectionsInChangesets = new Set<string>(bySection.keys());
-			const configuredSections = new Set<string>(Object.keys(releaseNotesConfig.sections));
-			const unknownSections = difference(sectionsInChangesets, configuredSections).add(
-				UNKNOWN_SECTION,
+			const configuredSections = new Set<string>(
+				Object.keys(releaseNotesConfig.sections),
 			);
+			const unknownSections = difference(
+				sectionsInChangesets,
+				configuredSections,
+			).add(UNKNOWN_SECTION);
 
 			if (flags.includeUnknown) {
 				for (const sectionName of unknownSections) {
-					sectionsToBuild.set(sectionName, { heading: `Unknown section: ${sectionName}` });
+					sectionsToBuild.set(sectionName, {
+						heading: `Unknown section: ${sectionName}`,
+					});
 				}
 			} else {
 				for (const section of unknownSections) {
@@ -175,7 +185,8 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 				(change) =>
 					// filter out changes that shouldn't be in the release notes
 					(change.additionalMetadata?.includeInReleaseNotes ??
-						fluidCustomChangeSetMetadataDefaults.includeInReleaseNotes) === true,
+						fluidCustomChangeSetMetadataDefaults.includeInReleaseNotes) ===
+					true,
 			);
 			if (changes === undefined || changes.length === 0) {
 				this.info(`No changes in section "${name}", so it will be omitted.`);
@@ -193,7 +204,8 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 					change.changeTypes.includes(flags.releaseType)
 				) {
 					const pr = change.commit?.githubPullRequest;
-					const changeTitle = pr === undefined ? change.summary : `${change.summary} (#${pr})`;
+					const changeTitle =
+						pr === undefined ? change.summary : `${change.summary} (#${pr})`;
 					body.append(`### ${changeTitle}\n\n${change.body}\n\n`);
 
 					body.append(`#### Change details\n\n`);
@@ -242,10 +254,14 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 				},
 			});
 
-		const processor = flags.headingLinks ? baseProcessor.use(addHeadingLinks) : baseProcessor;
+		const processor = flags.headingLinks
+			? baseProcessor.use(addHeadingLinks)
+			: baseProcessor;
 
 		const contents = String(
-			await processor.process(`${header}\n\n${intro}\n\n${body.toString()}\n\n${footer}`),
+			await processor.process(
+				`${header}\n\n${intro}\n\n${body.toString()}\n\n${footer}`,
+			),
 		);
 
 		const outputPath = path.join(context.repo.resolvedRoot, flags.outFile);

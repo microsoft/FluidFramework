@@ -92,7 +92,10 @@ export abstract class SharedOT<TState, TOp> extends SharedObject {
 			0x5f6 /* Summarizer must not have locally pending changes. */,
 		);
 
-		return createSingleBlobSummary("header", serializer.stringify(this.global, this.handle));
+		return createSingleBlobSummary(
+			"header",
+			serializer.stringify(this.global, this.handle),
+		);
 	}
 
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
@@ -148,7 +151,10 @@ export abstract class SharedOT<TState, TOp> extends SharedObject {
 			// Adjust our queue of locally pending ops to account for the incoming op so that they
 			// may be reapplied to the global state if needed.
 			for (let i = 0; i < this.pendingOps.length; i++) {
-				this.pendingOps[i] = this.transform(this.pendingOps[i], remoteOp as TOp);
+				this.pendingOps[i] = this.transform(
+					this.pendingOps[i],
+					remoteOp as TOp,
+				);
 			}
 		}
 	}

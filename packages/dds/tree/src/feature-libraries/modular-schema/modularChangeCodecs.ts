@@ -45,7 +45,10 @@ import {
 	type TreeCompressionStrategyPrivate,
 } from "../treeCompressionUtils.js";
 
-import type { FieldChangeEncodingContext, FieldChangeHandler } from "./fieldChangeHandler.js";
+import type {
+	FieldChangeEncodingContext,
+	FieldChangeHandler,
+} from "./fieldChangeHandler.js";
 import type {
 	FieldKindConfiguration,
 	FieldKindConfigurationEntry,
@@ -124,12 +127,19 @@ function makeModularChangeCodec(
 	chunkCompressionStrategy: TreeCompressionStrategyPrivate = TreeCompressionStrategy.Compressed,
 ): ModularChangeCodec {
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-	const getMapEntry = ({ kind, formatVersion }: FieldKindConfigurationEntry) => {
-		const codec = kind.changeHandler.codecsFactory(revisionTagCodec).resolve(formatVersion);
+	const getMapEntry = ({
+		kind,
+		formatVersion,
+	}: FieldKindConfigurationEntry) => {
+		const codec = kind.changeHandler
+			.codecsFactory(revisionTagCodec)
+			.resolve(formatVersion);
 		return {
 			codec,
 			compiledSchema: codec.json.encodedSchema
-				? extractJsonValidator(codecOptions.jsonValidator).compile(codec.json.encodedSchema)
+				? extractJsonValidator(codecOptions.jsonValidator).compile(
+						codec.json.encodedSchema,
+					)
 				: undefined,
 		};
 	};
@@ -147,7 +157,10 @@ function makeModularChangeCodec(
 	> = new Map([
 		[
 			genericFieldKind.identifier,
-			getMapEntry({ kind: genericFieldKind, formatVersion: genericFieldKindFormatVersion }),
+			getMapEntry({
+				kind: genericFieldKind,
+				formatVersion: genericFieldKindFormatVersion,
+			}),
 		],
 	]);
 
@@ -162,7 +175,10 @@ function makeModularChangeCodec(
 		codec: FieldCodec;
 	} => {
 		const entry = fieldChangesetCodecs.get(fieldKind);
-		assert(entry !== undefined, 0x5ea /* Tried to encode unsupported fieldKind */);
+		assert(
+			entry !== undefined,
+			0x5ea /* Tried to encode unsupported fieldKind */,
+		);
 		return entry;
 	};
 
@@ -180,7 +196,8 @@ function makeModularChangeCodec(
 				return encodeNodeChangesForJson(node, fieldContext);
 			},
 
-			decodeNode: () => fail(0xb1e /* Should not decode nodes during field encoding */),
+			decodeNode: () =>
+				fail(0xb1e /* Should not decode nodes during field encoding */),
 		};
 
 		return encodeFieldChangesForJsonI(change, fieldContext);
@@ -193,9 +210,14 @@ function makeModularChangeCodec(
 		const encodedFields: EncodedFieldChangeMap = [];
 
 		for (const [field, fieldChange] of change) {
-			const { codec, compiledSchema } = getFieldChangesetCodec(fieldChange.fieldKind);
+			const { codec, compiledSchema } = getFieldChangesetCodec(
+				fieldChange.fieldKind,
+			);
 			const encodedChange = codec.json.encode(fieldChange.change, context);
-			if (compiledSchema !== undefined && !compiledSchema.check(encodedChange)) {
+			if (
+				compiledSchema !== undefined &&
+				!compiledSchema.check(encodedChange)
+			) {
 				fail(0xb1f /* Encoded change didn't pass schema validation. */);
 			}
 
@@ -221,7 +243,10 @@ function makeModularChangeCodec(
 		const { fieldChanges, nodeExistsConstraint } = change;
 
 		if (fieldChanges !== undefined) {
-			encodedChange.fieldChanges = encodeFieldChangesForJsonI(fieldChanges, context);
+			encodedChange.fieldChanges = encodeFieldChangesForJsonI(
+				fieldChanges,
+				context,
+			);
 		}
 
 		if (nodeExistsConstraint !== undefined) {
@@ -253,7 +278,8 @@ function makeModularChangeCodec(
 			const fieldContext: FieldChangeEncodingContext = {
 				baseContext: context,
 
-				encodeNode: () => fail(0xb21 /* Should not encode nodes during field decoding */),
+				encodeNode: () =>
+					fail(0xb21 /* Should not encode nodes during field decoding */),
 
 				decodeNode: (encodedNode: EncodedNodeChangeset): NodeId => {
 					const nodeId: NodeId = {
@@ -277,9 +303,10 @@ function makeModularChangeCodec(
 
 			const fieldChangeset = codec.json.decode(field.change, fieldContext);
 
-			const crossFieldKeys = getChangeHandler(fieldKinds, field.fieldKind).getCrossFieldKeys(
-				fieldChangeset,
-			);
+			const crossFieldKeys = getChangeHandler(
+				fieldKinds,
+				field.fieldKind,
+			).getCrossFieldKeys(fieldChangeset);
 
 			for (const { key, count } of crossFieldKeys) {
 				decoded.crossFieldKeys.set(key, count, fieldId);
@@ -340,14 +367,22 @@ function makeModularChangeCodec(
 			| undefined;
 
 		for (const [[revision, id], chunk] of detachedNodes.entries()) {
-			const encodedRevision = encodeRevisionOpt(revisionTagCodec, revision, context);
+			const encodedRevision = encodeRevisionOpt(
+				revisionTagCodec,
+				revision,
+				context,
+			);
 
-			if (buildsForRevision === undefined || buildsForRevision[1] !== encodedRevision) {
+			if (
+				buildsForRevision === undefined ||
+				buildsForRevision[1] !== encodedRevision
+			) {
 				if (buildsForRevision !== undefined) {
 					buildsArray.push(buildsForRevision);
 				}
 
-				buildsForRevision = encodedRevision !== undefined ? [[], encodedRevision] : [[]];
+				buildsForRevision =
+					encodedRevision !== undefined ? [[], encodedRevision] : [[]];
 			}
 
 			treesToEncode.push(chunk.cursor());
@@ -386,7 +421,10 @@ function makeModularChangeCodec(
 			idCompressor: context.idCompressor,
 		});
 		const getChunk = (index: number): TreeChunk => {
-			assert(index < chunks.length, 0x898 /* out of bounds index for build chunk */);
+			assert(
+				index < chunks.length,
+				0x898 /* out of bounds index for build chunk */,
+			);
 			return chunkFieldSingle(chunks[index] ?? oob(), {
 				policy: defaultChunkPolicy,
 				idCompressor: context.idCompressor,
@@ -397,12 +435,13 @@ function makeModularChangeCodec(
 		encoded.builds.forEach((build) => {
 			// EncodedRevisionTag cannot be an array so this ensures that we can isolate the tuple
 			const revision =
-				build[1] === undefined ? context.revision : revisionTagCodec.decode(build[1], context);
+				build[1] === undefined
+					? context.revision
+					: revisionTagCodec.decode(build[1], context);
 
-			const decodedChunks: [ChangesetLocalId, TreeChunk][] = build[0].map(([i, n]) => [
-				i,
-				getChunk(n),
-			]);
+			const decodedChunks: [ChangesetLocalId, TreeChunk][] = build[0].map(
+				([i, n]) => [i, getChunk(n)],
+			);
 
 			for (const [id, chunk] of decodedChunks) {
 				map.set([revision, id], chunk);
@@ -435,7 +474,10 @@ function makeModularChangeCodec(
 			};
 
 			if (revision.rollbackOf !== undefined) {
-				encodedRevision.rollbackOf = revisionTagCodec.encode(revision.rollbackOf, context);
+				encodedRevision.rollbackOf = revisionTagCodec.encode(
+					revision.rollbackOf,
+					context,
+				);
 			}
 
 			encodedRevisions.push(encodedRevision);
@@ -449,7 +491,9 @@ function makeModularChangeCodec(
 		context: ChangeEncodingContext,
 	): RevisionInfo[] | undefined {
 		if (revisions === undefined) {
-			return context.revision !== undefined ? [{ revision: context.revision }] : undefined;
+			return context.revision !== undefined
+				? [{ revision: context.revision }]
+				: undefined;
 		}
 
 		const decodedRevisions = [];
@@ -459,7 +503,10 @@ function makeModularChangeCodec(
 			};
 
 			if (revision.rollbackOf !== undefined) {
-				decodedRevision.rollbackOf = revisionTagCodec.decode(revision.rollbackOf, context);
+				decodedRevision.rollbackOf = revisionTagCodec.decode(
+					revision.rollbackOf,
+					context,
+				);
 			}
 
 			decodedRevisions.push(decodedRevision);
@@ -471,14 +518,21 @@ function makeModularChangeCodec(
 	const modularChangeCodec: ModularChangeCodec = {
 		encode: (change, context) => {
 			// Destroys only exist in rollback changesets, which are never sent.
-			assert(change.destroys === undefined, 0x899 /* Unexpected changeset with destroys */);
+			assert(
+				change.destroys === undefined,
+				0x899 /* Unexpected changeset with destroys */,
+			);
 			return {
 				maxId: change.maxId,
 				revisions:
 					change.revisions === undefined
 						? undefined
 						: encodeRevisionInfos(change.revisions, context),
-				changes: encodeFieldChangesForJson(change.fieldChanges, context, change.nodeChanges),
+				changes: encodeFieldChangesForJson(
+					change.fieldChanges,
+					context,
+					change.nodeChanges,
+				),
 				builds: encodeDetachedNodes(change.builds, context),
 				refreshers: encodeDetachedNodes(change.refreshers, context),
 				violations: change.constraintViolationCount,
@@ -506,14 +560,20 @@ function makeModularChangeCodec(
 				decoded.builds = decodeDetachedNodes(encodedChange.builds, context);
 			}
 			if (encodedChange.refreshers !== undefined) {
-				decoded.refreshers = decodeDetachedNodes(encodedChange.refreshers, context);
+				decoded.refreshers = decodeDetachedNodes(
+					encodedChange.refreshers,
+					context,
+				);
 			}
 
 			if (encodedChange.violations !== undefined) {
 				decoded.constraintViolationCount = encodedChange.violations;
 			}
 
-			const decodedRevInfos = decodeRevisionInfos(encodedChange.revisions, context);
+			const decodedRevInfos = decodeRevisionInfos(
+				encodedChange.revisions,
+				context,
+			);
 			if (decodedRevInfos !== undefined) {
 				decoded.revisions = decodedRevInfos;
 			}
@@ -558,5 +618,7 @@ function encodeRevisionOpt(
 		return undefined;
 	}
 
-	return revision === context.revision ? undefined : revisionCodec.encode(revision, context);
+	return revision === context.revision
+		? undefined
+		: revisionCodec.encode(revision, context);
 }

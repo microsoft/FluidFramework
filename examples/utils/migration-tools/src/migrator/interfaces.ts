@@ -6,7 +6,10 @@
 import type { IContainer } from "@fluidframework/container-definitions/legacy";
 import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 
-import type { IAcceptedMigrationDetails, MigrationState } from "../migrationTool/index.js";
+import type {
+	IAcceptedMigrationDetails,
+	MigrationState,
+} from "../migrationTool/index.js";
 
 // #region Migrator callbacks
 
@@ -14,7 +17,9 @@ import type { IAcceptedMigrationDetails, MigrationState } from "../migrationTool
  * Callback that should take the given container and export its data in some format.
  * @alpha
  */
-export type ExportDataCallback = (sourceContainer: IContainer) => Promise<unknown>;
+export type ExportDataCallback = (
+	sourceContainer: IContainer,
+) => Promise<unknown>;
 /**
  * Callback provided to load the source container that data will be exported from.  Should be a separately
  * loaded container to avoid including local changes.
@@ -26,7 +31,10 @@ export type LoadSourceContainerCallback = () => Promise<IContainer>;
  * exported.  Typically creating a new container and importing the data into it.
  * @alpha
  */
-export type MigrationCallback = (version: string, exportedData: unknown) => Promise<unknown>;
+export type MigrationCallback = (
+	version: string,
+	exportedData: unknown,
+) => Promise<unknown>;
 
 // #region Entry point
 

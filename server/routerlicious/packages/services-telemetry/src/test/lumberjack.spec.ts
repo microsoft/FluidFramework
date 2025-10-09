@@ -49,19 +49,31 @@ describe("Lumberjack", () => {
 		TestLumberjack.setup([engine1]);
 		assert.strictEqual(handleErrorStub.notCalled, true, "Handle error should not be called.");
 		TestLumberjack.setup([engine2]);
-		assert.strictEqual(handleErrorStub.calledOnce, true, "Handle error should be called once.");
+		assert.strictEqual(
+			handleErrorStub.calledOnce,
+			true,
+			"Handle error should be called once.",
+		);
 	});
 
 	it("Lumberjack should fail when trying to use it with an empty engine list.", () => {
 		const handleErrorStub = Sinon.stub(resources, "handleError");
 		TestLumberjack.setup([]);
-		assert.strictEqual(handleErrorStub.calledOnce, true, "Handle error should be called once.");
+		assert.strictEqual(
+			handleErrorStub.calledOnce,
+			true,
+			"Handle error should be called once.",
+		);
 	});
 
 	it("Lumberjack should fail when trying to create a metric before being properly set up.", () => {
 		const handleErrorStub = Sinon.stub(resources, "handleError");
 		TestLumberjack.newLumberMetric(LumberEventName.UnitTestEvent);
-		assert.strictEqual(handleErrorStub.calledOnce, true, "Handle error should be called once.");
+		assert.strictEqual(
+			handleErrorStub.calledOnce,
+			true,
+			"Handle error should be called once.",
+		);
 	});
 });
 

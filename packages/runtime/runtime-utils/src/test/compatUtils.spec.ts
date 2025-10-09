@@ -274,7 +274,11 @@ describe("compatibilityBase", () => {
 			},
 			{
 				minVersionForCollab: "5.0.0",
-				runtimeOptions: { featureA: "a3", featureB: true, featureC: { foo: 1, bax: 10 } },
+				runtimeOptions: {
+					featureA: "a3",
+					featureB: true,
+					featureC: { foo: 1, bax: 10 },
+				},
 			},
 			{
 				minVersionForCollab: "8.0.0",
@@ -282,11 +286,17 @@ describe("compatibilityBase", () => {
 			},
 			{
 				minVersionForCollab: "9.0.0",
-				runtimeOptions: { featureC: { foo: 2, bar: "bax", qaz: true }, featureA: "a4" },
+				runtimeOptions: {
+					featureC: { foo: 2, bar: "bax", qaz: true },
+					featureA: "a4",
+				},
 			},
 			{
 				minVersionForCollab: "1.0.0",
-				runtimeOptions: { featureC: { notDocSchemaAffecting: true }, featureA: "a1" },
+				runtimeOptions: {
+					featureC: { notDocSchemaAffecting: true },
+					featureA: "a1",
+				},
 			},
 		];
 

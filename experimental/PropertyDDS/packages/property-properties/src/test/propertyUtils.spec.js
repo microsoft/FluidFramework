@@ -36,9 +36,12 @@ describe("PropertyUtils", function () {
 			myProperty.get("nested").get("c").setValue(42);
 			myProperty.get("nested").get("d").setValue("Hello again!");
 
-			var result = PropertyUtils.gatherProperties(myProperty, function (property) {
-				return _.isNumber(property.value);
-			});
+			var result = PropertyUtils.gatherProperties(
+				myProperty,
+				function (property) {
+					return _.isNumber(property.value);
+				},
+			);
 			expect(result["a"]).to.exist;
 			expect(result["b"]).to.not.exist;
 			expect(result["nested.c"]).to.exist;

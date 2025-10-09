@@ -18,7 +18,11 @@ module.exports = {
 	devtool: "inline-source-map", // TODO: remove this
 	entry: {
 		// The Devtools script and view
-		"devtools/DevtoolsScript": path.join(sourceDirectoryPath, "devtools", "DevtoolsScript.ts"),
+		"devtools/DevtoolsScript": path.join(
+			sourceDirectoryPath,
+			"devtools",
+			"DevtoolsScript.ts",
+		),
 		"devtools/InitializeViewScript": path.join(
 			sourceDirectoryPath,
 			"devtools",
@@ -33,10 +37,18 @@ module.exports = {
 		),
 
 		// The Content script
-		"content/ContentScript": path.join(sourceDirectoryPath, "content", "ContentScript.ts"),
+		"content/ContentScript": path.join(
+			sourceDirectoryPath,
+			"content",
+			"ContentScript.ts",
+		),
 
 		// The action button pop-up script
-		"popup/PopupScript": path.join(sourceDirectoryPath, "popup", "PopupScript.ts"),
+		"popup/PopupScript": path.join(
+			sourceDirectoryPath,
+			"popup",
+			"PopupScript.ts",
+		),
 	},
 	output: {
 		path: bundleDirectoryPath,

@@ -21,9 +21,11 @@ export async function getBundleBuddyConfigMap(
 	args.bundleFileData.forEach((bundle) => {
 		if (bundle.relativePathToConfigFile) {
 			asyncWork.push(
-				args.getBundleBuddyConfig(bundle.relativePathToConfigFile).then((configFile) => {
-					result.set(bundle.bundleName, configFile);
-				}),
+				args
+					.getBundleBuddyConfig(bundle.relativePathToConfigFile)
+					.then((configFile) => {
+						result.set(bundle.bundleName, configFile);
+					}),
 			);
 		}
 	});

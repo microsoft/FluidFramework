@@ -10,7 +10,11 @@ import type { LocalReferenceCollection } from "./localReference.js";
 import type { MergeTree } from "./mergeTree.js";
 import { NodeAction, depthFirstNodeWalk } from "./mergeTreeNodeWalk.js";
 import type { ISegment, ISegmentLeaf, MergeBlock } from "./mergeTreeNodes.js";
-import type { IHasInsertionInfo, IHasRemovalInfo, IMergeNodeInfo } from "./segmentInfos.js";
+import type {
+	IHasInsertionInfo,
+	IHasRemovalInfo,
+	IMergeNodeInfo,
+} from "./segmentInfos.js";
 
 /**
  * This is a special segment that is not bound or known by the merge tree itself,
@@ -99,7 +103,10 @@ const notSupported = (): never => {
 /**
  * The position immediately prior to the start of the tree
  */
-export class StartOfTreeSegment extends BaseEndpointSegment implements ISegment {
+export class StartOfTreeSegment
+	extends BaseEndpointSegment
+	implements ISegment
+{
 	type: string = "StartOfTreeSegment";
 	readonly endpointType = "start";
 
@@ -193,6 +200,8 @@ export class EndOfTreeSegment extends BaseEndpointSegment implements ISegment {
 		// we base it on the depth of the tree
 		// to ensure it is bigger than all ordinals in
 		// the tree, as each layer appends to the previous
-		return String.fromCodePoint(0xffff).repeat(this.endpointSegmentProps().depth);
+		return String.fromCodePoint(0xffff).repeat(
+			this.endpointSegmentProps().depth,
+		);
 	}
 }

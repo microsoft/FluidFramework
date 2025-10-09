@@ -134,7 +134,11 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
 	 * @param runtime - The runtime the Ink will be associated with
 	 * @param id - Unique ID for the Ink
 	 */
-	constructor(runtime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes) {
+	constructor(
+		runtime: IFluidDataStoreRuntime,
+		id: string,
+		attributes: IChannelAttributes,
+	) {
 		super(id, runtime, attributes, "fluid_ink_");
 	}
 
@@ -203,7 +207,10 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
 	 */
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
-		const content = await readAndParse<ISerializableInk>(storage, snapshotFileName);
+		const content = await readAndParse<ISerializableInk>(
+			storage,
+			snapshotFileName,
+		);
 		this.inkData = new InkData(content);
 	}
 
@@ -258,7 +265,9 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
 	 * @param operation - The operation object
 	 * @returns The stroke that was created
 	 */
-	private executeCreateStrokeOperation(operation: ICreateStrokeOperation): IInkStroke {
+	private executeCreateStrokeOperation(
+		operation: ICreateStrokeOperation,
+	): IInkStroke {
 		const stroke: IInkStroke = {
 			id: operation.id,
 			points: [],

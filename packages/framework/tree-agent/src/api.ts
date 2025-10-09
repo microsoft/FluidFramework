@@ -5,7 +5,10 @@
 
 import type { ImplicitFieldSchema, TreeNode } from "@fluidframework/tree";
 // This is used for doc links
-import type { FactoryContentObject, ReadableField } from "@fluidframework/tree/alpha";
+import type {
+	FactoryContentObject,
+	ReadableField,
+} from "@fluidframework/tree/alpha";
 
 /**
  * Logger interface for logging events from a {@link SharedTreeSemanticAgent}.
@@ -43,7 +46,10 @@ export interface SemanticAgentOptions {
 	 * @remarks If this function is not provided, the generated code will be executed using a simple `eval` call, which may not provide sufficient security guarantees for some environments.
 	 * Use a library such as SES to provide a more secure implementation - see {@link createSesEditEvaluator} for a drop-in option.
 	 */
-	executeEdit?: (context: Record<string, unknown>, code: string) => void | Promise<void>;
+	executeEdit?: (
+		context: Record<string, unknown>,
+		code: string,
+	) => void | Promise<void>;
 	/**
 	 * The maximum number of sequential edits the LLM can make before we assume it's stuck in a loop.
 	 */

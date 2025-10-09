@@ -5,7 +5,10 @@
 
 import { strict as assert } from "assert";
 
-import { ITestDriver, RouterliciousEndpoint } from "@fluid-internal/test-driver-definitions";
+import {
+	ITestDriver,
+	RouterliciousEndpoint,
+} from "@fluid-internal/test-driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
 	IDocumentServiceFactory,
@@ -90,7 +93,9 @@ function getEndpointConfigFromEnv(r11sEndpointName: RouterliciousEndpoint) {
 	const configStr = process.env[`fluid__test__driver__${r11sEndpointName}`];
 	if (r11sEndpointName === "docker") {
 		const dockerDriverPolicies =
-			configStr === undefined ? configStr : JSON.parse(configStr).driverPolicies;
+			configStr === undefined
+				? configStr
+				: JSON.parse(configStr).driverPolicies;
 		return dockerConfig(dockerDriverPolicies);
 	}
 	if (r11sEndpointName === "r11s" && configStr === undefined) {
@@ -115,7 +120,9 @@ function getConfigFromEnv(r11sEndpointName?: RouterliciousEndpoint) {
 			// default to get it with the per service env for r11s
 			return getEndpointConfigFromEnv("r11s");
 		}
-		return fluidHost.includes("localhost") ? dockerConfig() : getLegacyConfigFromEnv();
+		return fluidHost.includes("localhost")
+			? dockerConfig()
+			: getLegacyConfigFromEnv();
 	}
 	return getEndpointConfigFromEnv(r11sEndpointName);
 }
@@ -146,9 +153,8 @@ export class RouterliciousTestDriver implements ITestDriver {
 		api: RouterliciousDriverApiType = RouterliciousDriverApi,
 	) {
 		assertRouterliciousEndpoint(config?.r11sEndpointName);
-		const { serviceEndpoint, tenantId, tenantSecret, driverPolicies } = getConfigFromEnv(
-			config?.r11sEndpointName,
-		);
+		const { serviceEndpoint, tenantId, tenantSecret, driverPolicies } =
+			getConfigFromEnv(config?.r11sEndpointName);
 		return new RouterliciousTestDriver(
 			tenantId,
 			tenantSecret,
@@ -172,8 +178,12 @@ export class RouterliciousTestDriver implements ITestDriver {
 		public readonly endpointName?: string,
 	) {}
 
-	async createContainerUrl(testId: string, containerUrl?: IResolvedUrl): Promise<string> {
-		const containerId = containerUrl && "id" in containerUrl ? containerUrl.id : testId;
+	async createContainerUrl(
+		testId: string,
+		containerUrl?: IResolvedUrl,
+	): Promise<string> {
+		const containerId =
+			containerUrl && "id" in containerUrl ? containerUrl.id : testId;
 		return `${this.serviceEndpoints.hostUrl}/${encodeURIComponent(
 			this.tenantId,
 		)}/${encodeURIComponent(containerId)}`;

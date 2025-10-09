@@ -10,7 +10,11 @@ import { nodeIdFromChangeAtom } from "../deltaUtils.js";
 import type { RelevantRemovedRootsFromChild } from "../modular-schema/index.js";
 
 import type { Changeset, Mark } from "./types.js";
-import { isAttachAndDetachEffect, isDetachOfRemovedNodes, isInsert } from "./utils.js";
+import {
+	isAttachAndDetachEffect,
+	isDetachOfRemovedNodes,
+	isInsert,
+} from "./utils.js";
 
 export function* relevantRemovedRoots(
 	change: Changeset,

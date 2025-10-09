@@ -15,9 +15,18 @@ import type {
 } from "@fluidframework/core-interfaces";
 import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import { LazyPromise } from "@fluidframework/core-utils/internal";
-import { DataStoreMessageType, FluidObjectHandle } from "@fluidframework/datastore/internal";
-import { type ISummaryBlob, SummaryType } from "@fluidframework/driver-definitions";
-import type { IBlob, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import {
+	DataStoreMessageType,
+	FluidObjectHandle,
+} from "@fluidframework/datastore/internal";
+import {
+	type ISummaryBlob,
+	SummaryType,
+} from "@fluidframework/driver-definitions";
+import type {
+	IBlob,
+	ISnapshotTree,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	type IGarbageCollectionData,
 	type CreateChildSummarizerNodeFn,
@@ -128,9 +137,14 @@ describe("Data Store Context Tests", () => {
 
 				try {
 					await localDataStoreContext.realize();
-					assert.fail("realize should have thrown an error due to empty pkg array");
+					assert.fail(
+						"realize should have thrown an error due to empty pkg array",
+					);
 				} catch (error) {
-					assert(isFluidError(error), "Expected a valid Fluid Error to be thrown");
+					assert(
+						isFluidError(error),
+						"Expected a valid Fluid Error to be thrown",
+					);
 					assert.equal(
 						error.errorType,
 						ContainerErrorTypes.dataProcessingError,
@@ -138,17 +152,20 @@ describe("Data Store Context Tests", () => {
 					);
 					const props = error.getTelemetryProperties();
 					assert.strictEqual(
-						(props.fullPackageName as Tagged<TelemetryBaseEventPropertyType>)?.value,
+						(props.fullPackageName as Tagged<TelemetryBaseEventPropertyType>)
+							?.value,
 						fullPackageName.join("/"),
 						"The error should have the full package name in its telemetry properties",
 					);
 					assert.equal(
-						(props.failedPkgPath as Tagged<TelemetryBaseEventPropertyType>)?.value,
+						(props.failedPkgPath as Tagged<TelemetryBaseEventPropertyType>)
+							?.value,
 						"BOGUS1",
 						"The error should have the failed package path in its telemetry properties",
 					);
 					assert.equal(
-						(props.fluidDataStoreId as Tagged<TelemetryBaseEventPropertyType>)?.value,
+						(props.fluidDataStoreId as Tagged<TelemetryBaseEventPropertyType>)
+							?.value,
 						"Test1",
 						"The error should have the fluidDataStoreId in its telemetry properties",
 					);
@@ -230,7 +247,8 @@ describe("Data Store Context Tests", () => {
 			});
 
 			it("can initialize and generate attributes when correctly created with array of packages", async () => {
-				const registryWithSubRegistries: IFluidDataStoreRegistry & IFluidDataStoreFactory = {
+				const registryWithSubRegistries: IFluidDataStoreRegistry &
+					IFluidDataStoreFactory = {
 					get IFluidDataStoreFactory() {
 						return registryWithSubRegistries;
 					},
@@ -245,7 +263,8 @@ describe("Data Store Context Tests", () => {
 
 				parentContext = {
 					IFluidDataStoreRegistry: registryWithSubRegistries,
-					clientDetails: {} as unknown as IFluidParentContextPrivate["clientDetails"],
+					clientDetails:
+						{} as unknown as IFluidParentContextPrivate["clientDetails"],
 					deltaManager: new MockDeltaManager(),
 					isReadOnly: () => false,
 				} satisfies Partial<IFluidParentContextPrivate> as unknown as IFluidParentContextPrivate;
@@ -315,7 +334,11 @@ describe("Data Store Context Tests", () => {
 				});
 
 				const isRootNode = await localDataStoreContext.isRoot();
-				assert.strictEqual(isRootNode, false, "The data store should not be root.");
+				assert.strictEqual(
+					isRootNode,
+					false,
+					"The data store should not be root.",
+				);
 			});
 		});
 
@@ -428,13 +451,19 @@ describe("Data Store Context Tests", () => {
 				}
 				for (const event of mockLogger.events) {
 					if (
-						event.eventName === "FluidDataStoreContext:DataStoreMessageWhileReadonly" ||
-						event.eventName === "FluidDataStoreContext:DataStoreCreatedWhileReadonly"
+						event.eventName ===
+							"FluidDataStoreContext:DataStoreMessageWhileReadonly" ||
+						event.eventName ===
+							"FluidDataStoreContext:DataStoreCreatedWhileReadonly"
 					) {
 						eventCount++;
 					}
 				}
-				assert.strictEqual(eventCount, 10, "There should be only 10 events per data store");
+				assert.strictEqual(
+					eventCount,
+					10,
+					"There should be only 10 events per data store",
+				);
 			});
 		});
 
@@ -452,7 +481,11 @@ describe("Data Store Context Tests", () => {
 				});
 
 				const gcData = await localDataStoreContext.getGCData();
-				assert.deepStrictEqual(gcData, emptyGCData, "GC data from getGCData should be empty.");
+				assert.deepStrictEqual(
+					gcData,
+					emptyGCData,
+					"GC data from getGCData should be empty.",
+				);
 			});
 
 			it("can successfully update referenced state", () => {
@@ -505,7 +538,10 @@ describe("Data Store Context Tests", () => {
 				});
 
 				localDataStoreContext.setTombstone(true);
-				assert(localDataStoreContext.tombstoned, `Local data store should be tombstoned!`);
+				assert(
+					localDataStoreContext.tombstoned,
+					`Local data store should be tombstoned!`,
+				);
 				localDataStoreContext.setTombstone(false);
 				assert(
 					!localDataStoreContext.tombstoned,
@@ -541,7 +577,8 @@ describe("Data Store Context Tests", () => {
 
 			parentContext = {
 				IFluidDataStoreRegistry: registry,
-				clientDetails: {} as unknown as IFluidParentContextPrivate["clientDetails"],
+				clientDetails:
+					{} as unknown as IFluidParentContextPrivate["clientDetails"],
 				containerRuntime: parentContext as unknown as IContainerRuntimeBase,
 				deltaManager: new MockDeltaManager(),
 				isReadOnly: () => false,
@@ -588,13 +625,17 @@ describe("Data Store Context Tests", () => {
 				 * @param hasIsolatedChannels - whether we expect to read a snapshot tree with isolated channels or not
 				 * @param attributes - datastore attributes that are in the base snapshot we load from
 				 */
-				async function testGenerateAttributesCore(attributes: ReadFluidDataStoreAttributes) {
+				async function testGenerateAttributesCore(
+					attributes: ReadFluidDataStoreAttributes,
+				) {
 					const buffer = stringToBuffer(JSON.stringify(attributes), "utf8");
 					const attachBlobs = new Map<string, ArrayBufferLike>([
 						["fluidDataStoreAttributes", buffer],
 					]);
 					const snapshotTree: ISnapshotTree = {
-						blobs: { [dataStoreAttributesBlobName]: "fluidDataStoreAttributes" },
+						blobs: {
+							[dataStoreAttributesBlobName]: "fluidDataStoreAttributes",
+						},
 						trees: {},
 					};
 					// If we are expecting to read isolated channels as intended by the test, then make sure
@@ -618,9 +659,15 @@ describe("Data Store Context Tests", () => {
 					});
 
 					const isRootNode = await remoteDataStoreContext.isRoot();
-					assert.strictEqual(isRootNode, true, "The data store should be root.");
+					assert.strictEqual(
+						isRootNode,
+						true,
+						"The data store should be root.",
+					);
 
-					const summarizeResult = await remoteDataStoreContext.summarize(true /* fullTree */);
+					const summarizeResult = await remoteDataStoreContext.summarize(
+						true /* fullTree */,
+					);
 					assert(
 						summarizeResult.summary.type === SummaryType.Tree,
 						"summarize should always return a tree when fullTree is true",
@@ -629,7 +676,9 @@ describe("Data Store Context Tests", () => {
 						dataStoreAttributesBlobName
 					] as ISummaryBlob;
 
-					const contents = JSON.parse(blob.content as string) as WriteFluidDataStoreAttributes;
+					const contents = JSON.parse(
+						blob.content as string,
+					) as WriteFluidDataStoreAttributes;
 
 					// Validate that generated attributes are as expected.
 					assert.deepStrictEqual(
@@ -676,13 +725,16 @@ describe("Data Store Context Tests", () => {
 			// The base GC details of the root summarizer node. The child base GC details from this is passed on to the
 			// child summarizer node during its creation.
 			let rootBaseGCDetails: IGarbageCollectionDetailsBase;
-			const getRootBaseGCDetails = async (): Promise<IGarbageCollectionDetailsBase> =>
-				rootBaseGCDetails;
+			const getRootBaseGCDetails =
+				async (): Promise<IGarbageCollectionDetailsBase> => rootBaseGCDetails;
 
 			/**
 			 * Given the GC data of a data store, build the GC data of the root (parent) node.
 			 */
-			function buildRootGCData(dataStoreGCData: IGarbageCollectionData, id: string) {
+			function buildRootGCData(
+				dataStoreGCData: IGarbageCollectionData,
+				id: string,
+			) {
 				const builder = new GCDataBuilder();
 				builder.prefixAndAddNodes(id, dataStoreGCData.gcNodes);
 				return builder.getGCData();
@@ -718,7 +770,10 @@ describe("Data Store Context Tests", () => {
 					pkg: "TestDataStore1",
 					summaryFormatVersion: undefined,
 				};
-				const buffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "utf8");
+				const buffer = stringToBuffer(
+					JSON.stringify(dataStoreAttributes),
+					"utf8",
+				);
 				const attachBlobs = new Map<string, ArrayBufferLike>([
 					["fluidDataStoreAttributes", buffer],
 				]);
@@ -742,7 +797,11 @@ describe("Data Store Context Tests", () => {
 				});
 
 				const gcData = await remoteDataStoreContext.getGCData();
-				assert.deepStrictEqual(gcData, emptyGCData, "GC data from getGCData should be empty.");
+				assert.deepStrictEqual(
+					gcData,
+					emptyGCData,
+					"GC data from getGCData should be empty.",
+				);
 			});
 
 			it("can generate GC data with GC details in initial summary", async () => {
@@ -750,7 +809,10 @@ describe("Data Store Context Tests", () => {
 					pkg: "TestDataStore1",
 					summaryFormatVersion: undefined,
 				};
-				const attributesBuffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "utf8");
+				const attributesBuffer = stringToBuffer(
+					JSON.stringify(dataStoreAttributes),
+					"utf8",
+				);
 				const attachBlobs = new Map<string, ArrayBufferLike>([
 					["fluidDataStoreAttributes", attributesBuffer],
 				]);
@@ -799,7 +861,10 @@ describe("Data Store Context Tests", () => {
 					pkg: "TestDataStore1",
 					summaryFormatVersion: undefined,
 				};
-				const attributesBuffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "utf8");
+				const attributesBuffer = stringToBuffer(
+					JSON.stringify(dataStoreAttributes),
+					"utf8",
+				);
 				const attachBlobs = new Map<string, ArrayBufferLike>([
 					["fluidDataStoreAttributes", attributesBuffer],
 				]);
@@ -849,7 +914,9 @@ describe("Data Store Context Tests", () => {
 
 				// The data in the store has not changed since last summary and the reference used routes (from initial
 				// used routes) and current used routes (default) are both empty. So, summarize should return a handle.
-				let summarizeResult = await remoteDataStoreContext.summarize(false /* fullTree */);
+				let summarizeResult = await remoteDataStoreContext.summarize(
+					false /* fullTree */,
+				);
 				assert(
 					summarizeResult.summary.type === SummaryType.Handle,
 					"summarize should return a handle since nothing changed",
@@ -859,7 +926,9 @@ describe("Data Store Context Tests", () => {
 				remoteDataStoreContext.updateUsedRoutes([]);
 
 				// Since the used state has changed, it should generate a full summary tree.
-				summarizeResult = await remoteDataStoreContext.summarize(false /* fullTree */);
+				summarizeResult = await remoteDataStoreContext.summarize(
+					false /* fullTree */,
+				);
 				assert(
 					summarizeResult.summary.type === SummaryType.Tree,
 					"summarize should return a tree since used state changed",
@@ -867,7 +936,10 @@ describe("Data Store Context Tests", () => {
 			});
 
 			function updateReferencedStateTest() {
-				const buffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "utf8");
+				const buffer = stringToBuffer(
+					JSON.stringify(dataStoreAttributes),
+					"utf8",
+				);
 				const attachBlobs = new Map<string, ArrayBufferLike>([
 					["fluidDataStoreAttributes", buffer],
 				]);
@@ -942,7 +1014,10 @@ describe("Data Store Context Tests", () => {
 					pkg: JSON.stringify(["TestDataStore1"]),
 					isRootDataStore: false,
 				};
-				const buffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "utf8");
+				const buffer = stringToBuffer(
+					JSON.stringify(dataStoreAttributes),
+					"utf8",
+				);
 				const attachBlobs = new Map<string, ArrayBufferLike>([
 					["fluidDataStoreAttributes", buffer],
 				]);
@@ -965,7 +1040,10 @@ describe("Data Store Context Tests", () => {
 				});
 
 				remoteDataStoreContext.setTombstone(true);
-				assert(remoteDataStoreContext.tombstoned, `Local data store should be tombstoned!`);
+				assert(
+					remoteDataStoreContext.tombstoned,
+					`Local data store should be tombstoned!`,
+				);
 				remoteDataStoreContext.setTombstone(false);
 				assert(
 					!remoteDataStoreContext.tombstoned,
@@ -992,12 +1070,13 @@ describe("Data Store Context Tests", () => {
 		let provideDsRuntimeWithFailingEntrypoint = false;
 
 		beforeEach(async () => {
-			const summarizerNode: IRootSummarizerNodeWithGC = createRootSummarizerNodeWithGC(
-				createChildLogger(),
-				(() => undefined) as unknown as SummarizeInternalFn,
-				0,
-				0,
-			);
+			const summarizerNode: IRootSummarizerNodeWithGC =
+				createRootSummarizerNodeWithGC(
+					createChildLogger(),
+					(() => undefined) as unknown as SummarizeInternalFn,
+					0,
+					0,
+				);
 			summarizerNode.startSummary(0, createChildLogger(), 0);
 
 			createSummarizerNodeFn = (
@@ -1025,7 +1104,10 @@ describe("Data Store Context Tests", () => {
 				get IFluidDataStoreFactory() {
 					return factory;
 				},
-				instantiateDataStore: async (context: IFluidDataStoreContext, existing: boolean) =>
+				instantiateDataStore: async (
+					context: IFluidDataStoreContext,
+					existing: boolean,
+				) =>
 					provideDsRuntimeWithFailingEntrypoint
 						? new MockFluidDataStoreRuntime({ entryPoint: failingEntryPoint })
 						: new MockFluidDataStoreRuntime(),
@@ -1039,7 +1121,8 @@ describe("Data Store Context Tests", () => {
 			parentContext = {
 				IFluidDataStoreRegistry: registry,
 				baseLogger: createChildLogger(),
-				clientDetails: {} as unknown as IFluidParentContextPrivate["clientDetails"],
+				clientDetails:
+					{} as unknown as IFluidParentContextPrivate["clientDetails"],
 				deltaManager: new MockDeltaManager(),
 				isReadOnly: () => false,
 			} satisfies Partial<IFluidParentContextPrivate> as unknown as IFluidParentContextPrivate;
@@ -1084,7 +1167,10 @@ describe("Data Store Context Tests", () => {
 						channelToDataStoreFn,
 					});
 
-					const dataStore = await factory.instantiateDataStore(localDataStoreContext, false);
+					const dataStore = await factory.instantiateDataStore(
+						localDataStoreContext,
+						false,
+					);
 					await localDataStoreContext
 						.attachRuntime(factory, dataStore)
 						.catch((error: Error) => {
@@ -1100,7 +1186,10 @@ describe("Data Store Context Tests", () => {
 						true,
 						"attachRuntime() call did not fail as expected.",
 					);
-					assert.strictEqual(localDataStoreContext.attachState, AttachState.Detached);
+					assert.strictEqual(
+						localDataStoreContext.attachState,
+						AttachState.Detached,
+					);
 				});
 
 				it("because of entryPoint that fails to initialize", async () => {
@@ -1119,7 +1208,10 @@ describe("Data Store Context Tests", () => {
 						channelToDataStoreFn,
 					});
 
-					const dataStore = await factory.instantiateDataStore(localDataStoreContext, false);
+					const dataStore = await factory.instantiateDataStore(
+						localDataStoreContext,
+						false,
+					);
 					await localDataStoreContext
 						.attachRuntime(factory, dataStore)
 						.catch((error: Error) => {
@@ -1135,7 +1227,10 @@ describe("Data Store Context Tests", () => {
 						true,
 						"attachRuntime() call did not fail as expected.",
 					);
-					assert.strictEqual(localDataStoreContext.attachState, AttachState.Detached);
+					assert.strictEqual(
+						localDataStoreContext.attachState,
+						AttachState.Detached,
+					);
 				});
 			});
 		});

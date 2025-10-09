@@ -64,13 +64,15 @@ export interface ObservationOptions {
  * Such an approach is implemented in {@link useObservationPure}.
  */
 export function useObservation<TResult>(
-	trackDuring: (invalidate: () => void) => { result: TResult; unsubscribe: () => void },
+	trackDuring: (invalidate: () => void) => {
+		result: TResult;
+		unsubscribe: () => void;
+	},
 	options?: ObservationOptions,
 ): TResult {
 	// Use a React state hook to invalidate this component something tracked by `trackDuring` changes.
-	const [subscriptions, setSubscriptions] = React.useState<SubscriptionsWrapper>(
-		new SubscriptionsWrapper(),
-	);
+	const [subscriptions, setSubscriptions] =
+		React.useState<SubscriptionsWrapper>(new SubscriptionsWrapper());
 
 	// Because `subscriptions` is used in `finalizationRegistry` for cleanup, it is important that nothing save a reference to it which is retained by the invalidation callback.
 	// TO help with this, pull out `inner` so it can be closed over without retaining `subscriptions`.
@@ -138,12 +140,14 @@ export function useObservation<TResult>(
  * Handles unsubscribing from events when the {@link SubscriptionsWrapper} is garbage collected.
  * See comments in {@link useTreeObservations} for details.
  */
-const finalizationRegistry = new FinalizationRegistry((subscriptions: Subscriptions) => {
-	subscriptions.unsubscribe?.();
-	// Clear out the unsubscribe function to ensure it is not called again.
-	// This should not be needed, but maintains the invariant that unsubscribe should be removed after being called.
-	subscriptions.unsubscribe = undefined;
-});
+const finalizationRegistry = new FinalizationRegistry(
+	(subscriptions: Subscriptions) => {
+		subscriptions.unsubscribe?.();
+		// Clear out the unsubscribe function to ensure it is not called again.
+		// This should not be needed, but maintains the invariant that unsubscribe should be removed after being called.
+		subscriptions.unsubscribe = undefined;
+	},
+);
 
 //
 // Below here are some alternative approaches.
@@ -175,7 +179,10 @@ export interface ObservationPureOptions {
  * If using this directly, ensure it has tests other than via the other hooks which use it.
  */
 function useObservationPure<TResult>(
-	trackDuring: () => { result: TResult; subscribe: (invalidate: () => void) => () => void },
+	trackDuring: () => {
+		result: TResult;
+		subscribe: (invalidate: () => void) => () => void;
+	},
 	options?: ObservationPureOptions,
 ): TResult {
 	// Dummy state used to trigger invalidations.
@@ -310,10 +317,16 @@ class SubscriptionTracker {
  * This simply adds a layer of indirection to the invalidation through useEffect.
  */
 export function useObservationWithEffects<TResult>(
-	trackDuring: (invalidate: () => void) => { result: TResult; unsubscribe: () => void },
+	trackDuring: (invalidate: () => void) => {
+		result: TResult;
+		unsubscribe: () => void;
+	},
 	options?: ObservationOptions & ObservationPureOptions,
 ): TResult {
-	const pureResult = useObservationPure(observationAdapter(trackDuring, options), options);
+	const pureResult = useObservationPure(
+		observationAdapter(trackDuring, options),
+		options,
+	);
 	return pureResult.innerResult;
 }
 
@@ -321,7 +334,10 @@ export function useObservationWithEffects<TResult>(
  * An adapter wrapping `trackDuring` to help implement the {@link useObservation} using {@link useObservationPure}.
  */
 function observationAdapter<TResult>(
-	trackDuring: (invalidate: () => void) => { result: TResult; unsubscribe: () => void },
+	trackDuring: (invalidate: () => void) => {
+		result: TResult;
+		unsubscribe: () => void;
+	},
 	options?: ObservationOptions & ObservationPureOptions,
 ): () => {
 	result: {
@@ -358,7 +374,10 @@ function observationAdapter<TResult>(
  * This is just a {@link useObservationPure}, except with the eager cleanup on re-render from {@link useObservation}.
  */
 export function useObservationStrict<TResult>(
-	trackDuring: (invalidate: () => void) => { result: TResult; unsubscribe: () => void },
+	trackDuring: (invalidate: () => void) => {
+		result: TResult;
+		unsubscribe: () => void;
+	},
 	options?: ObservationOptions & ObservationPureOptions,
 ): TResult {
 	// Used to unsubscribe from the previous render's subscriptions.
@@ -367,7 +386,10 @@ export function useObservationStrict<TResult>(
 		previousTracker: SubscriptionTracker | undefined;
 	}>({ previousTracker: undefined });
 
-	const pureResult = useObservationPure(observationAdapter(trackDuring, options), options);
+	const pureResult = useObservationPure(
+		observationAdapter(trackDuring, options),
+		options,
+	);
 
 	subscriptions.previousTracker?.dispose();
 	subscriptions.previousTracker = pureResult.tracker;

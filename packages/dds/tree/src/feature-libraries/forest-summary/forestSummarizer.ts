@@ -34,7 +34,10 @@ import type {
 } from "../../shared-tree-core/index.js";
 import { idAllocatorFromMaxId, type JsonCompatible } from "../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { chunkFieldSingle, defaultChunkPolicy } from "../chunked-forest/chunkTree.js";
+import {
+	chunkFieldSingle,
+	defaultChunkPolicy,
+} from "../chunked-forest/chunkTree.js";
 import {
 	defaultIncrementalEncodingPolicy,
 	type FieldBatchCodec,
@@ -110,31 +113,40 @@ export class ForestSummarizer implements Summarizable {
 		const { stringify, fullTree = false, incrementalSummaryContext } = props;
 
 		const rootCursor = this.forest.getCursorAboveDetachedFields();
-		const fieldMap: Map<FieldKey, ITreeCursorSynchronous & ITreeSubscriptionCursor> =
-			new Map();
+		const fieldMap: Map<
+			FieldKey,
+			ITreeCursorSynchronous & ITreeSubscriptionCursor
+		> = new Map();
 		// TODO: Encode all detached fields in one operation for better performance and compression
 		forEachField(rootCursor, (cursor) => {
 			const key = cursor.getFieldKey();
 			const innerCursor = this.forest.allocateCursor("getTreeString");
 			assert(
-				this.forest.tryMoveCursorToField({ fieldKey: key, parent: undefined }, innerCursor) ===
-					TreeNavigationResult.Ok,
+				this.forest.tryMoveCursorToField(
+					{ fieldKey: key, parent: undefined },
+					innerCursor,
+				) === TreeNavigationResult.Ok,
 				0x892 /* failed to navigate to field */,
 			);
-			fieldMap.set(key, innerCursor as ITreeCursorSynchronous & ITreeSubscriptionCursor);
+			fieldMap.set(
+				key,
+				innerCursor as ITreeCursorSynchronous & ITreeSubscriptionCursor,
+			);
 		});
 
 		// Let the incremental summary builder know that we are starting a new summary.
 		// It returns whether incremental encoding is enabled.
-		const incrementalSummaryBehavior = this.incrementalSummaryBuilder.startSummary({
-			fullTree,
-			incrementalSummaryContext,
-			stringify,
-		});
+		const incrementalSummaryBehavior =
+			this.incrementalSummaryBuilder.startSummary({
+				fullTree,
+				incrementalSummaryContext,
+				stringify,
+			});
 		const encoderContext: FieldBatchEncodingContext = {
 			...this.encoderContext,
 			incrementalEncoderDecoder:
-				incrementalSummaryBehavior === ForestIncrementalSummaryBehavior.Incremental
+				incrementalSummaryBehavior ===
+				ForestIncrementalSummaryBehavior.Incremental
 					? this.incrementalSummaryBuilder
 					: undefined,
 		};
@@ -176,10 +188,13 @@ export class ForestSummarizer implements Summarizable {
 
 		// TODO: this code is parsing data without an optional validator, this should be defined in a typebox schema as part of the
 		// forest summary format.
-		const fields = this.codec.decode(await readAndParseBlob(forestSummaryContentKey), {
-			...this.encoderContext,
-			incrementalEncoderDecoder: this.incrementalSummaryBuilder,
-		});
+		const fields = this.codec.decode(
+			await readAndParseBlob(forestSummaryContentKey),
+			{
+				...this.encoderContext,
+				incrementalEncoderDecoder: this.incrementalSummaryBuilder,
+			},
+		);
 		const allocator = idAllocatorFromMaxId();
 		const fieldChanges: [FieldKey, DeltaFieldChanges][] = [];
 		const build: DeltaDetachedNodeBuild[] = [];
@@ -193,7 +208,10 @@ export class ForestSummarizer implements Summarizable {
 				id: buildId,
 				trees: chunked,
 			});
-			fieldChanges.push([fieldKey, [{ count: chunked.topLevelLength, attach: buildId }]]);
+			fieldChanges.push([
+				fieldKey,
+				[{ count: chunked.topLevelLength, attach: buildId }],
+			]);
 		}
 
 		assert(this.forest.isEmpty, 0x797 /* forest must be empty */);

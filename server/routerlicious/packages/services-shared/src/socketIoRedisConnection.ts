@@ -38,8 +38,10 @@ export class SocketIoRedisSubscriptionConnection
 	/**
 	 * Map of pubsub callbacks
 	 */
-	private readonly subscriptions: Map<string, (channel: string, messageBuffer: Buffer) => void> =
-		new Map();
+	private readonly subscriptions: Map<
+		string,
+		(channel: string, messageBuffer: Buffer) => void
+	> = new Map();
 
 	constructor(redisClientConnectionManager: IRedisClientConnectionManager) {
 		super(redisClientConnectionManager);

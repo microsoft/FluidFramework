@@ -162,9 +162,7 @@ describe("Routerlicious", () => {
 					webSocketServer = new LocalWebSocketServer(pubsub);
 
 					const testConnectionThrottlerPerTenant = new TestThrottler(throttleLimitTenant);
-					const testConnectionThrottlerPerCluster = new TestThrottler(
-						throttleLimitConnectDoc,
-					);
+					const testConnectionThrottlerPerCluster = new TestThrottler(throttleLimitConnectDoc);
 					const testSubmitOpThrottler = new TestThrottler(throttleLimitTenant);
 					testClusterDrainingChecker = new TestClusterDrainingChecker();
 					testRevokedTokenChecker = new TestRevokedTokenChecker();
@@ -261,8 +259,7 @@ describe("Routerlicious", () => {
 
 						// Verify a connection message was sent
 						const message = deliKafka.getLastMessage();
-						const systemJoinMessage =
-							message.operation as ISequencedDocumentSystemMessage;
+						const systemJoinMessage = message.operation as ISequencedDocumentSystemMessage;
 						assert.equal(message.documentId, testId);
 						assert.equal(systemJoinMessage.clientId, undefined);
 						assert.equal(systemJoinMessage.type, MessageType.ClientJoin);
@@ -305,8 +302,7 @@ describe("Routerlicious", () => {
 
 							// Verify a connection message was sent
 							const message = deliKafka.getLastMessage();
-							const systemJoinMessage =
-								message.operation as ISequencedDocumentSystemMessage;
+							const systemJoinMessage = message.operation as ISequencedDocumentSystemMessage;
 							assert.equal(message.documentId, id);
 							assert.equal(systemJoinMessage.clientId, undefined);
 							assert.equal(systemJoinMessage.type, MessageType.ClientJoin);
@@ -327,10 +323,7 @@ describe("Routerlicious", () => {
 								return err;
 							})) as INackContent;
 						assert.strictEqual(failedConnectMessage.code, 429);
-						assert.strictEqual(
-							failedConnectMessage.type,
-							NackErrorType.ThrottlingError,
-						);
+						assert.strictEqual(failedConnectMessage.type, NackErrorType.ThrottlingError);
 						assert.strictEqual(failedConnectMessage.retryAfter, 1);
 
 						// A separate tenant should also be throttled, since throttleLimitConnectDoc is reached
@@ -347,10 +340,7 @@ describe("Routerlicious", () => {
 								return err;
 							})) as INackContent;
 						assert.strictEqual(failedConnectMessage2.code, 429);
-						assert.strictEqual(
-							failedConnectMessage2.type,
-							NackErrorType.ThrottlingError,
-						);
+						assert.strictEqual(failedConnectMessage2.type, NackErrorType.ThrottlingError);
 						assert.strictEqual(failedConnectMessage2.retryAfter, 1);
 					});
 
@@ -423,8 +413,7 @@ describe("Routerlicious", () => {
 						assert.equal(deliKafka.getRawMessages().length, 3);
 						const message = deliKafka.getMessage(1);
 						assert.equal(message.documentId, testId);
-						const systemLeaveMessage =
-							message.operation as ISequencedDocumentSystemMessage;
+						const systemLeaveMessage = message.operation as ISequencedDocumentSystemMessage;
 						assert.equal(systemLeaveMessage.clientId, undefined);
 						assert.equal(systemLeaveMessage.type, MessageType.ClientLeave);
 						const clientId = JSON.parse(systemLeaveMessage.data) as string;
@@ -477,9 +466,7 @@ describe("Routerlicious", () => {
 							assert.equal(
 								client.signalsReceived.length,
 								expectedSignals.length,
-								`User ${index + 1} should have received ${
-									expectedSignals.length
-								} signal(s)`,
+								`User ${index + 1} should have received ${expectedSignals.length} signal(s)`,
 							);
 							expectedSignals.forEach((signal, signalIndex) => {
 								const receivedSignal = client.signalsReceived[signalIndex];
@@ -510,9 +497,7 @@ describe("Routerlicious", () => {
 						client: TestSignalClient,
 						content: unknown[],
 					): ISignalMessage[] {
-						const signals = content.map((c) =>
-							client.version === 2 ? { content: c } : c,
-						);
+						const signals = content.map((c) => (client.version === 2 ? { content: c } : c));
 						return sendAndReturnExpectedSignals(client, signals);
 					}
 
@@ -552,15 +537,8 @@ describe("Routerlicious", () => {
 						});
 					}
 
-					function checkNack(
-						client: TestSignalClient,
-						expectedNackMessageContent: string,
-					) {
-						assert.equal(
-							client.nacksReceived.length,
-							1,
-							"Client should have received 1 nack",
-						);
+					function checkNack(client: TestSignalClient, expectedNackMessageContent: string) {
+						assert.equal(client.nacksReceived.length, 1, "Client should have received 1 nack");
 						const nackMessage = client.nacksReceived[0];
 						assert.equal(nackMessage.content.code, 400, "Nack code should be 400");
 						assert.equal(
@@ -586,10 +564,7 @@ describe("Routerlicious", () => {
 					[
 						["with v1 clients", () => 1 as const] as const,
 						["with v2 clients", () => 2 as const] as const,
-						[
-							"with v1 and v2 clients",
-							(index: number) => (1 + (index % 2)) as 1 | 2,
-						] as const,
+						["with v1 and v2 clients", (index: number) => (1 + (index % 2)) as 1 | 2] as const,
 					].forEach(([description, fnVersion]) =>
 						describe(description, () => {
 							const clientVersion: TestSignalClient["version"][] = [];
@@ -631,9 +606,7 @@ describe("Routerlicious", () => {
 											[stringSignalContent],
 										);
 										verifyExpectedClientSignals(
-											clients.filter(
-												(_, index) => index !== (clientIndex ^ 1),
-											),
+											clients.filter((_, index) => index !== (clientIndex ^ 1)),
 											expectedSignals,
 										);
 										verifyExpectedClientSignals([clients[clientIndex ^ 1]], []);
@@ -641,11 +614,9 @@ describe("Routerlicious", () => {
 									[null, "invalid"].forEach((clientId) => {
 										it(`${fromClient} should nack signal with ${clientId} client ID`, () => {
 											listenForNacks(clients[clientIndex]);
-											clients[clientIndex].socket.send(
-												"submitSignal",
-												clientId,
-												[stringSignalContent],
-											);
+											clients[clientIndex].socket.send("submitSignal", clientId, [
+												stringSignalContent,
+											]);
 											checkNack(clients[clientIndex], "Nonexistent client");
 										});
 									});
@@ -665,11 +636,10 @@ describe("Routerlicious", () => {
 										{ key1: "value1", key2: 42, key3: true },
 									].forEach((signalContent) =>
 										it(`${fromClient} should broadcast signal with ${typeof signalContent} content`, () => {
-											const expectedSignals =
-												sendValidAndReturnExpectedSignals(
-													clients[clientIndex],
-													[signalContent],
-												);
+											const expectedSignals = sendValidAndReturnExpectedSignals(
+												clients[clientIndex],
+												[signalContent],
+											);
 											verifyExpectedClientSignals(clients, expectedSignals);
 										}),
 									);
@@ -684,10 +654,9 @@ describe("Routerlicious", () => {
 											referenceSequenceNumber: 1,
 										};
 
-										const expectedSignals = sendAndReturnExpectedSignals(
-											clients[1],
-											[targetedSignal],
-										);
+										const expectedSignals = sendAndReturnExpectedSignals(clients[1], [
+											targetedSignal,
+										]);
 										verifyExpectedClientSignals([clients[0]], expectedSignals);
 										verifyExpectedClientSignals(
 											clients.filter((_, index) => index !== 0),
@@ -716,9 +685,7 @@ describe("Routerlicious", () => {
 												content: stringSignalContent,
 											};
 
-											sendAndReturnExpectedSignals(clients[0], [
-												targetedSignal,
-											]);
+											sendAndReturnExpectedSignals(clients[0], [targetedSignal]);
 
 											verifyExpectedClientSignals(clients, []);
 										});
@@ -730,15 +697,11 @@ describe("Routerlicious", () => {
 												additionalField: "test field",
 											};
 
-											const expectedSignals = sendAndReturnExpectedSignals(
-												clients[1],
-												[targetedSignal],
-											);
+											const expectedSignals = sendAndReturnExpectedSignals(clients[1], [
+												targetedSignal,
+											]);
 
-											verifyExpectedClientSignals(
-												[clients[0]],
-												expectedSignals,
-											);
+											verifyExpectedClientSignals([clients[0]], expectedSignals);
 											verifyExpectedClientSignals(
 												clients.filter((_, index) => index !== 0),
 												[],
@@ -751,9 +714,7 @@ describe("Routerlicious", () => {
 												content: stringSignalContent,
 											};
 
-											sendAndReturnExpectedSignals(clients[0], [
-												targetedSignal,
-											]);
+											sendAndReturnExpectedSignals(clients[0], [targetedSignal]);
 
 											checkNack(clients[0], "Invalid signal message");
 										});
@@ -763,11 +724,9 @@ describe("Routerlicious", () => {
 												targetClientId: clients[1],
 												content: stringSignalContent,
 											};
-											clients[0].socket.send(
-												"submitSignal",
-												"invalidClientID",
-												[targetedSignal],
-											);
+											clients[0].socket.send("submitSignal", "invalidClientID", [
+												targetedSignal,
+											]);
 											checkNack(clients[0], "Nonexistent client");
 										});
 
@@ -776,9 +735,7 @@ describe("Routerlicious", () => {
 												targetClientId: clients[1].clientId,
 											};
 
-											sendAndReturnExpectedSignals(clients[0], [
-												targetedSignal,
-											]);
+											sendAndReturnExpectedSignals(clients[0], [targetedSignal]);
 
 											checkNack(clients[0], "Invalid signal message");
 										});
@@ -791,9 +748,7 @@ describe("Routerlicious", () => {
 												referenceSequenceNumber: "invalid",
 											};
 
-											sendAndReturnExpectedSignals(clients[0], [
-												targetedSignal,
-											]);
+											sendAndReturnExpectedSignals(clients[0], [targetedSignal]);
 
 											checkNack(clients[0], "Invalid signal message");
 										});
@@ -819,10 +774,9 @@ describe("Routerlicious", () => {
 											content: stringSignalContent,
 										};
 
-										const expectedSignals = sendAndReturnExpectedSignals(
-											clients[1],
-											[targetedSignal],
-										);
+										const expectedSignals = sendAndReturnExpectedSignals(clients[1], [
+											targetedSignal,
+										]);
 
 										verifyExpectedClientSignals([clients[0]], expectedSignals);
 										verifyExpectedClientSignals(
@@ -844,10 +798,7 @@ describe("Routerlicious", () => {
 											["second signal"],
 										);
 
-										verifyExpectedClientSignals(
-											clients,
-											firstSignal.concat(secondSignal),
-										);
+										verifyExpectedClientSignals(clients, firstSignal.concat(secondSignal));
 									});
 								});
 								if (description === "with v2 clients") {
@@ -860,20 +811,16 @@ describe("Routerlicious", () => {
 											content: "BroadcastSignal",
 										};
 
-										const expectedTargetedSignals =
-											sendAndReturnExpectedSignals(clients[1], [
-												targetedSignal,
-											]);
-										const expectedBroadcastSignals =
-											sendAndReturnExpectedSignals(clients[1], [
-												broadcastSignal,
-											]);
+										const expectedTargetedSignals = sendAndReturnExpectedSignals(clients[1], [
+											targetedSignal,
+										]);
+										const expectedBroadcastSignals = sendAndReturnExpectedSignals(clients[1], [
+											broadcastSignal,
+										]);
 
 										verifyExpectedClientSignals(
 											[clients[0]],
-											expectedTargetedSignals.concat(
-												expectedBroadcastSignals,
-											),
+											expectedTargetedSignals.concat(expectedBroadcastSignals),
 										);
 										verifyExpectedClientSignals(
 											clients.filter((_, index) => index !== 0),
@@ -1132,9 +1079,7 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 					webSocketServer = new LocalWebSocketServer(pubsub);
 
 					const testConnectionThrottlerPerTenant = new TestThrottler(throttleLimitTenant);
-					const testConnectionThrottlerPerCluster = new TestThrottler(
-						throttleLimitConnectDoc,
-					);
+					const testConnectionThrottlerPerCluster = new TestThrottler(throttleLimitConnectDoc);
 					const testSubmitOpThrottler = new TestThrottler(throttleLimitTenant);
 					const throttlerHelper = new ThrottlerHelper(testThrottleAndUsageStorageManager);
 
@@ -1232,13 +1177,7 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 					it("Should not store the summarizer client connection time upon disconnect", async () => {
 						const clientConnectionTime = 100;
 						const socket = webSocketServer.createConnection();
-						await connectToServer(
-							testId,
-							testTenantId,
-							"summarizer",
-							testSecret,
-							socket,
-						);
+						await connectToServer(testId, testTenantId, "summarizer", testSecret, socket);
 						Sinon.clock.tick(clientConnectionTime);
 						socket.send("disconnect");
 						// Wait for disconnect handler to complete
@@ -1301,9 +1240,7 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 								await Sinon.clock.nextAsync();
 
 								const usageData =
-									await testThrottleAndUsageStorageManager.getUsageData(
-										signalUsageStorageId,
-									);
+									await testThrottleAndUsageStorageManager.getUsageData(signalUsageStorageId);
 								assert.equal(usageData.value, signalCount + 1);
 								assert.equal(usageData.clientId, connectMessage.clientId);
 								assert.equal(usageData.tenantId, testTenantId);

@@ -13,7 +13,10 @@ import {
 	type IQueuedMessage,
 	LambdaCloseType,
 } from "@fluidframework/server-services-core";
-import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import {
+	getLumberBaseProperties,
+	Lumberjack,
+} from "@fluidframework/server-services-telemetry";
 import { type QueueObject, queue } from "async";
 
 import type { DocumentContext } from "./documentContext";

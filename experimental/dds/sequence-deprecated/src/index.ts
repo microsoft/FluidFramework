@@ -21,7 +21,11 @@ export {
 	SparseMatrixItem,
 	SparseMatrixClass,
 } from "./sparsematrix.js";
-export { IJSONRunSegment, SubSequence, SharedSequence } from "./sharedSequence.js";
+export {
+	IJSONRunSegment,
+	SubSequence,
+	SharedSequence,
+} from "./sharedSequence.js";
 export {
 	SharedNumberSequenceFactory,
 	SharedObjectSequenceFactory,

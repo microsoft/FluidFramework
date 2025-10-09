@@ -13,7 +13,11 @@ import type {
 	RevisionTag,
 	SchemaAndPolicy,
 } from "../core/index.js";
-import { mapIterable, type JsonCompatibleReadOnly, type Mutable } from "../util/index.js";
+import {
+	mapIterable,
+	type JsonCompatibleReadOnly,
+	type Mutable,
+} from "../util/index.js";
 import type {
 	Commit,
 	EncodedCommit,
@@ -52,12 +56,18 @@ function encodeCommit<TChangeset, T extends Commit<TChangeset>>(
 			idCompressor: context.idCompressor,
 			revision: undefined,
 		}),
-		change: changeCodec.json.encode(commit.change, { ...context, revision: commit.revision }),
+		change: changeCodec.json.encode(commit.change, {
+			...context,
+			revision: commit.revision,
+		}),
 	};
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-function decodeCommit<TChangeset, T extends EncodedCommit<JsonCompatibleReadOnly>>(
+function decodeCommit<
+	TChangeset,
+	T extends EncodedCommit<JsonCompatibleReadOnly>,
+>(
 	changeCodec: IMultiFormatCodec<
 		TChangeset,
 		JsonCompatibleReadOnly,
@@ -112,24 +122,27 @@ export function encodeSharedBranch<TChangeset>(
 				revision: undefined,
 			}),
 		),
-		peers: Array.from(data.peerLocalBranches.entries(), ([sessionId, branch]) => [
-			sessionId,
-			{
-				base: revisionTagCodec.encode(branch.base, {
-					originatorId: sessionId,
-					idCompressor: context.idCompressor,
-					revision: undefined,
-				}),
-				commits: branch.commits.map((commit) =>
-					encodeCommit(changeCodec, revisionTagCodec, commit, {
-						originatorId: commit.sessionId,
+		peers: Array.from(
+			data.peerLocalBranches.entries(),
+			([sessionId, branch]) => [
+				sessionId,
+				{
+					base: revisionTagCodec.encode(branch.base, {
+						originatorId: sessionId,
 						idCompressor: context.idCompressor,
-						schema: context.schema,
 						revision: undefined,
 					}),
-				),
-			},
-		]),
+					commits: branch.commits.map((commit) =>
+						encodeCommit(changeCodec, revisionTagCodec, commit, {
+							originatorId: commit.sessionId,
+							idCompressor: context.idCompressor,
+							schema: context.schema,
+							revision: undefined,
+						}),
+					),
+				},
+			],
+		),
 	};
 	if (data.session !== undefined) {
 		json.session = data.session;

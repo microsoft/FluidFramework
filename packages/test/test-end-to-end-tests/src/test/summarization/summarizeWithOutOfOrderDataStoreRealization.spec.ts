@@ -5,8 +5,14 @@
 
 import { strict as assert } from "assert";
 
-import { describeCompat, type ITestDataObject } from "@fluid-private/test-version-utils";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
+import {
+	describeCompat,
+	type ITestDataObject,
+} from "@fluid-private/test-version-utils";
+import {
+	IContainer,
+	LoaderHeader,
+} from "@fluidframework/container-definitions/internal";
 import {
 	IContainerRuntimeOptions,
 	ISummarizer,
@@ -40,9 +46,11 @@ describeCompat(
 	"Summary where data store is loaded out of order",
 	"NoCompat",
 	(getTestObjectProvider, apis) => {
-		const { DataObject, DataObjectFactory, FluidDataStoreRuntime } = apis.dataRuntime;
+		const { DataObject, DataObjectFactory, FluidDataStoreRuntime } =
+			apis.dataRuntime;
 		const { mixinSummaryHandler } = apis.dataRuntime.packages.datastore;
-		const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
+		const { ContainerRuntimeFactoryWithDefaultDataStore } =
+			apis.containerRuntime;
 		const { SharedMap } = apis.dds;
 
 		function createDataStoreRuntime(
@@ -78,12 +86,15 @@ describeCompat(
 
 			protected async initializingFirstTime() {
 				const dataStore2 =
-					await this._context.containerRuntime.createDataStore(TestDataObjectType2);
+					await this._context.containerRuntime.createDataStore(
+						TestDataObjectType2,
+					);
 				this.root.set("ds2", dataStore2.entryPoint);
 			}
 
 			protected async hasInitialized() {
-				const dataStore2Handle = this.root.get<IFluidHandle<TestDataObject2>>("ds2");
+				const dataStore2Handle =
+					this.root.get<IFluidHandle<TestDataObject2>>("ds2");
 				await dataStore2Handle?.get();
 			}
 		}
@@ -97,7 +108,10 @@ describeCompat(
 			ctor: TestDataObject2,
 		});
 
-		const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
+		const registryStoreEntries = new Map<
+			string,
+			Promise<IFluidDataStoreFactory>
+		>([
 			[dataStoreFactory1.type, Promise.resolve(dataStoreFactory1)],
 			[dataStoreFactory2.type, Promise.resolve(dataStoreFactory2)],
 		]);
@@ -111,7 +125,9 @@ describeCompat(
 			},
 		);
 
-		async function createSummarizerWithVersion(summaryVersion?: string): Promise<ISummarizer> {
+		async function createSummarizerWithVersion(
+			summaryVersion?: string,
+		): Promise<ISummarizer> {
 			const createSummarizerResult = await createSummarizerFromFactory(
 				provider,
 				mainContainer,
@@ -147,7 +163,10 @@ describeCompat(
 		it("No Summary Upload Error when DS gets realized between summarize and completeSummary", async function () {
 			// Skip this test for standard r11s as its summarization timing is flaky and non-reproducible.
 			// This test is covering client logic and the coverage from other drivers/endpoints is sufficient.
-			if (provider.driver.type === "r11s" && provider.driver.endpointName !== "frs") {
+			if (
+				provider.driver.type === "r11s" &&
+				provider.driver.endpointName !== "frs"
+			) {
 				this.skip();
 			}
 
@@ -189,7 +208,8 @@ describeCompat(
 			summarizerClient.close();
 
 			// Just make sure new summarizer will be able to load and execute successfully.
-			const summarizerClient2 = await createSummarizerWithVersion(summaryVersion2);
+			const summarizerClient2 =
+				await createSummarizerWithVersion(summaryVersion2);
 
 			mainDataStore._root.set("4", "5");
 			const summaryVersion3 = await waitForSummary(summarizerClient2);
@@ -213,22 +233,26 @@ describeCompat(
 
 			// Generate the summary to load from
 			await provider.ensureSynchronized();
-			const { summaryVersion: summaryVersion1 } = await summarizeNow(summarizer1);
+			const { summaryVersion: summaryVersion1 } =
+				await summarizeNow(summarizer1);
 			summarizer1.close();
 
 			// Load a summarizer that hasn't realized the datastore yet
 			const summarizer2 = await createSummarizerWithVersion(summaryVersion1);
 
 			// Override the submit summary function to realize a datastore before receiving an ack
-			const summarizerRuntime = (summarizer2 as any).runtime as ContainerRuntime;
+			const summarizerRuntime = (summarizer2 as any)
+				.runtime as ContainerRuntime;
 			const submitSummaryFunc = summarizerRuntime.submitSummary;
 			const func = async (options: ISubmitSummaryOptions) => {
-				const submitSummaryFuncBound = submitSummaryFunc.bind(summarizerRuntime);
+				const submitSummaryFuncBound =
+					submitSummaryFunc.bind(summarizerRuntime);
 				const result = await submitSummaryFuncBound(options);
 
-				const entryPoint = (await summarizerRuntime.getAliasedDataStoreEntryPoint(
-					"default",
-				)) as IFluidHandle<ITestDataObject> | undefined;
+				const entryPoint =
+					(await summarizerRuntime.getAliasedDataStoreEntryPoint("default")) as
+						| IFluidHandle<ITestDataObject>
+						| undefined;
 				if (entryPoint === undefined) {
 					throw new Error("default dataStore must exist");
 				}
@@ -254,7 +278,8 @@ describeCompat(
 			await new Promise((resolve) => process.nextTick(resolve));
 
 			// In the regression, the summarizer node state was incorrect, but in order to cause issues it needed to submit another summary that generates the incorrect handle path
-			const { summaryVersion: summaryVersion3 } = await summarizeNow(summarizer2);
+			const { summaryVersion: summaryVersion3 } =
+				await summarizeNow(summarizer2);
 
 			// This verifies that we can correctly load the container in the right state
 			const container3 = await provider.loadContainer(
@@ -264,8 +289,10 @@ describeCompat(
 					[LoaderHeader.version]: summaryVersion3,
 				},
 			);
-			const defaultDatastore3 = (await container3.getEntryPoint()) as ITestDataObject;
-			const handle3 = defaultDatastore3._root.get<IFluidHandle<ITestDataObject>>("handle");
+			const defaultDatastore3 =
+				(await container3.getEntryPoint()) as ITestDataObject;
+			const handle3 =
+				defaultDatastore3._root.get<IFluidHandle<ITestDataObject>>("handle");
 			assert(
 				handle3 !== undefined,
 				"Should be able to retrieve stored datastore Fluid handle",
@@ -273,11 +300,18 @@ describeCompat(
 
 			// Realize the datastore and root dds
 			const dataObject3 = await handle3.get();
-			const ddsHandle3 = dataObject3._root.get<IFluidHandle<ISharedMap>>("handle");
-			assert(ddsHandle3 !== undefined, "Should be able to retrieve stored dds Fluid handle");
+			const ddsHandle3 =
+				dataObject3._root.get<IFluidHandle<ISharedMap>>("handle");
+			assert(
+				ddsHandle3 !== undefined,
+				"Should be able to retrieve stored dds Fluid handle",
+			);
 			// Realize the dds and verify it acts as expected
 			const dds3 = await ddsHandle3.get();
-			assert(dds3.get("a") === "op", "DDS state should be consistent across clients");
+			assert(
+				dds3.get("a") === "op",
+				"DDS state should be consistent across clients",
+			);
 		});
 	},
 );

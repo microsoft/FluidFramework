@@ -91,7 +91,11 @@ describe("SessionInfoManager", () => {
 		errorMessage?: string,
 	) {
 		// ! The deltaStreamUrl endpoint is hijacked by these tests to detect session info changes
-		assert.strictEqual(resolvedUrl.endpoints.deltaStreamUrl, expectedUrl, errorMessage);
+		assert.strictEqual(
+			resolvedUrl.endpoints.deltaStreamUrl,
+			expectedUrl,
+			errorMessage,
+		);
 	}
 
 	describe("initializeSessionInfo", () => {
@@ -118,7 +122,10 @@ describe("SessionInfoManager", () => {
 						const newUrl = "https://new.com";
 
 						let resolvedUrl = await manager.initializeSessionInfo(
-							createGetSessionInfoParams(documentIdA, createSession(originalUrl)),
+							createGetSessionInfoParams(
+								documentIdA,
+								createSession(originalUrl),
+							),
 						);
 
 						const getParams = createGetSessionInfoParams(documentIdA);
@@ -214,7 +221,9 @@ describe("SessionInfoManager", () => {
 
 			clock.tick(1000);
 
-			const response = await manager.getSessionInfo(createGetSessionInfoParams(documentIdA));
+			const response = await manager.getSessionInfo(
+				createGetSessionInfoParams(documentIdA),
+			);
 			assert.strictEqual(mockOrdererCalls, 0);
 			assert.strictEqual(response.refreshed, false);
 			assertResolvedUrlMatch(response.resolvedUrl, initialUrl);
@@ -225,17 +234,24 @@ describe("SessionInfoManager", () => {
 
 			clock.tick(RediscoverAfterTimeSinceDiscoveryMs);
 
-			let response = await manager.getSessionInfo(createGetSessionInfoParams(documentIdA));
+			let response = await manager.getSessionInfo(
+				createGetSessionInfoParams(documentIdA),
+			);
 			assert.strictEqual(mockOrdererCalls, 0);
 			assert.strictEqual(response.refreshed, false);
 			assertResolvedUrlMatch(response.resolvedUrl, initialUrl);
 
 			clock.tick(1);
 
-			response = await manager.getSessionInfo(createGetSessionInfoParams(documentIdA));
+			response = await manager.getSessionInfo(
+				createGetSessionInfoParams(documentIdA),
+			);
 			assert.strictEqual(mockOrdererCalls, 1);
 			assert.strictEqual(response.refreshed, true);
-			assertResolvedUrlMatch(response.resolvedUrl, numberToFakeUrl(mockOrdererCalls));
+			assertResolvedUrlMatch(
+				response.resolvedUrl,
+				numberToFakeUrl(mockOrdererCalls),
+			);
 		});
 
 		it("rediscovery needed, but discovery is disabled", async () => {
@@ -243,7 +259,9 @@ describe("SessionInfoManager", () => {
 
 			clock.tick(RediscoverAfterTimeSinceDiscoveryMs + 1);
 
-			const response = await manager.getSessionInfo(createGetSessionInfoParams(documentIdA));
+			const response = await manager.getSessionInfo(
+				createGetSessionInfoParams(documentIdA),
+			);
 			assert.strictEqual(mockOrdererCalls, 0);
 			assert.strictEqual(response.refreshed, false);
 			assertResolvedUrlMatch(response.resolvedUrl, initialUrl);

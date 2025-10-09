@@ -9,8 +9,14 @@ import {
 	stringToBuffer,
 } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
-import { getW3CData, promiseRaceWithWinner } from "@fluidframework/driver-base/internal";
-import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
+import {
+	getW3CData,
+	promiseRaceWithWinner,
+} from "@fluidframework/driver-base/internal";
+import {
+	ISummaryHandle,
+	ISummaryTree,
+} from "@fluidframework/driver-definitions";
 import {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
@@ -42,7 +48,9 @@ import { WholeSummaryUploadManager } from "./wholeSummaryUploadManager.js";
 
 const latestSnapshotId: string = "latest";
 
-export class WholeSummaryDocumentStorageService implements IDocumentStorageService {
+export class WholeSummaryDocumentStorageService
+	implements IDocumentStorageService
+{
 	private readonly mc: MonitoringContext;
 	private firstVersionsCall: boolean = true;
 
@@ -73,7 +81,10 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 	}
 
 	// eslint-disable-next-line @rushstack/no-new-null
-	public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
+	public async getVersions(
+		versionId: string | null,
+		count: number,
+	): Promise<IVersion[]> {
 		if (versionId !== this.id && versionId !== null) {
 			// Blobs/Trees in this scenario will never have multiple versions, so return versionId as is
 			return [
@@ -163,7 +174,9 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 	}
 
 	// eslint-disable-next-line @rushstack/no-new-null
-	public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
+	public async getSnapshotTree(
+		version?: IVersion,
+	): Promise<ISnapshotTree | null> {
 		let requestVersion = version;
 		if (!requestVersion) {
 			const versions = await this.getVersions(this.id, 1);
@@ -249,7 +262,9 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 		return summaryHandle;
 	}
 
-	public async downloadSummary(summaryHandle: ISummaryHandle): Promise<ISummaryTree> {
+	public async downloadSummary(
+		summaryHandle: ISummaryHandle,
+	): Promise<ISummaryTree> {
 		const wholeFlatSnapshot = await PerformanceEvent.timedExecAsync(
 			this.logger,
 			{
@@ -266,10 +281,8 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 			},
 		);
 
-		const { blobs, snapshotTree } = convertWholeFlatSnapshotToSnapshotTreeAndBlobs(
-			wholeFlatSnapshot,
-			"",
-		);
+		const { blobs, snapshotTree } =
+			convertWholeFlatSnapshotToSnapshotTreeAndBlobs(wholeFlatSnapshot, "");
 		return convertSnapshotAndBlobsToSummaryTree(snapshotTree, blobs);
 	}
 
@@ -315,7 +328,8 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 					convertWholeFlatSnapshotToSnapshotTreeAndBlobs(response.content);
 				const snapshotConversionTime = performanceNow() - start;
 				validateBlobsAndTrees(snapshot.snapshotTree);
-				const { trees, numBlobs, encodedBlobsSize } = evalBlobsAndTrees(snapshot);
+				const { trees, numBlobs, encodedBlobsSize } =
+					evalBlobsAndTrees(snapshot);
 
 				event.end({
 					size: response.content.trees[0]?.entries.length,
@@ -342,9 +356,15 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 		normalizedWholeSummary: INormalizedWholeSnapshot,
 	): Promise<string> {
 		const snapshotId = normalizedWholeSummary.id;
-		assert(snapshotId !== undefined, 0x275 /* "Root tree should contain the id" */);
+		assert(
+			snapshotId !== undefined,
+			0x275 /* "Root tree should contain the id" */,
+		);
 		const cachePs: Promise<any>[] = [
-			this.snapshotTreeCache.put(this.getCacheKey(snapshotId), normalizedWholeSummary),
+			this.snapshotTreeCache.put(
+				this.getCacheKey(snapshotId),
+				normalizedWholeSummary,
+			),
 			this.updateBlobsCache(normalizedWholeSummary.blobs),
 		];
 
@@ -353,7 +373,9 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 		return snapshotId;
 	}
 
-	private async updateBlobsCache(blobs: Map<string, ArrayBuffer>): Promise<void> {
+	private async updateBlobsCache(
+		blobs: Map<string, ArrayBuffer>,
+	): Promise<void> {
 		const blobCachePutPs: Promise<void>[] = [];
 		blobs.forEach((value, id) => {
 			const cacheKey = this.getCacheKey(id);

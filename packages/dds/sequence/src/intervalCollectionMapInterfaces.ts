@@ -22,13 +22,17 @@ import {
 export interface IntervalAddLocalMetadata {
 	type: typeof IntervalDeltaOpType.ADD;
 	localSeq: number;
-	endpointChangesNode?: ListNode<IntervalAddLocalMetadata | IntervalChangeLocalMetadata>;
+	endpointChangesNode?: ListNode<
+		IntervalAddLocalMetadata | IntervalChangeLocalMetadata
+	>;
 	interval: SequenceIntervalClass;
 }
 export interface IntervalChangeLocalMetadata {
 	type: typeof IntervalDeltaOpType.CHANGE;
 	localSeq: number;
-	endpointChangesNode?: ListNode<IntervalChangeLocalMetadata | IntervalChangeLocalMetadata>;
+	endpointChangesNode?: ListNode<
+		IntervalChangeLocalMetadata | IntervalChangeLocalMetadata
+	>;
 	interval: SequenceIntervalClass;
 }
 export interface IntervalDeleteLocalMetadata {

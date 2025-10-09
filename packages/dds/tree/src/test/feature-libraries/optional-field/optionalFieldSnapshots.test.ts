@@ -7,14 +7,20 @@ import path from "node:path";
 
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
-import { type ChangesetLocalId, RevisionTagCodec } from "../../../core/index.js";
+import {
+	type ChangesetLocalId,
+	RevisionTagCodec,
+} from "../../../core/index.js";
 import {
 	type OptionalChangeset,
 	makeOptionalFieldCodecFamily,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field/index.js";
 import { brand } from "../../../util/index.js";
-import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
+import {
+	takeJsonSnapshot,
+	useSnapshotDirectory,
+} from "../../snapshots/index.js";
 import { TestNodeId } from "../../testNodeId.js";
 import { Change } from "./optionalFieldUtils.js";
 import { TestChange } from "../../testChange.js";
@@ -25,7 +31,10 @@ function generateTestChangesets(
 ): { name: string; change: OptionalChangeset }[] {
 	const revision = idCompressor.generateCompressedId();
 	const localId: ChangesetLocalId = brand(42);
-	const childChange = TestNodeId.create({ localId: brand(5) }, TestChange.mint([], 1));
+	const childChange = TestNodeId.create(
+		{ localId: brand(5) },
+		TestChange.mint([], 1),
+	);
 	return [
 		{
 			name: "empty",
@@ -62,7 +71,9 @@ export function testSnapshots() {
 	describe("Snapshots", () => {
 		const snapshotCompressor = createSnapshotCompressor();
 		const changesets = generateTestChangesets(snapshotCompressor);
-		const family = makeOptionalFieldCodecFamily(new RevisionTagCodec(snapshotCompressor));
+		const family = makeOptionalFieldCodecFamily(
+			new RevisionTagCodec(snapshotCompressor),
+		);
 
 		const baseContext = {
 			originatorId: snapshotCompressor.localSessionId,

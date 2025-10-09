@@ -31,15 +31,27 @@ import { TestTreeProviderLite, validateUsageError } from "../../utils.js";
 
 const schemaFactory = new SchemaFactory("ArrayNodeTest");
 const PojoEmulationNumberArray = schemaFactory.array(schemaFactory.number);
-const CustomizableNumberArray = schemaFactory.array("Array", schemaFactory.number);
+const CustomizableNumberArray = schemaFactory.array(
+	"Array",
+	schemaFactory.number,
+);
 
 describe("ArrayNode", () => {
-	testArrayFromSchemaType("created in pojo-emulation mode", PojoEmulationNumberArray);
-	testArrayFromSchemaType("created in customizable mode", CustomizableNumberArray);
+	testArrayFromSchemaType(
+		"created in pojo-emulation mode",
+		PojoEmulationNumberArray,
+	);
+	testArrayFromSchemaType(
+		"created in customizable mode",
+		CustomizableNumberArray,
+	);
 
 	describeHydration("customizable", (init) => {
 		it("doesn't stringify extra properties", () => {
-			class ExtraArray extends schemaFactory.array("ArrayWithExtra", schemaFactory.number) {
+			class ExtraArray extends schemaFactory.array(
+				"ArrayWithExtra",
+				schemaFactory.number,
+			) {
 				public extra = "foo";
 			}
 
@@ -81,7 +93,9 @@ describe("ArrayNode", () => {
 
 			// leaf
 			{
-				type I1 = InsertableTreeFieldFromImplicitField<typeof schemaFactory.number>;
+				type I1 = InsertableTreeFieldFromImplicitField<
+					typeof schemaFactory.number
+				>;
 				type I2 = InsertableTypedNode<typeof schemaFactory.number>;
 				type I3 = NodeBuilderData<typeof schemaFactory.number>;
 
@@ -109,7 +123,9 @@ describe("ArrayNode", () => {
 				type N3 = TreeFieldFromImplicitField<typeof List>;
 
 				type _check1 = requireTrue<areSafelyAssignable<I1, I2>>;
-				type _check2 = requireTrue<areSafelyAssignable<I2, N1 | Iterable<number>>>;
+				type _check2 = requireTrue<
+					areSafelyAssignable<I2, N1 | Iterable<number>>
+				>;
 				type _check3 = requireTrue<areSafelyAssignable<I3, Iterable<number>>>;
 				type _check6 = requireTrue<areSafelyAssignable<I4, Iterable<number>>>;
 				type _check4 = requireTrue<areSafelyAssignable<N1, N2>>;
@@ -138,7 +154,9 @@ describe("ArrayNode", () => {
 	// Tests which should behave the same for both "structurally named" "POJO emulation mode" arrays and "customizable" arrays can be added in this function to avoid duplication.
 	function testArrayFromSchemaType(
 		title: string,
-		schemaType: typeof PojoEmulationNumberArray | typeof CustomizableNumberArray,
+		schemaType:
+			| typeof PojoEmulationNumberArray
+			| typeof CustomizableNumberArray,
 	): void {
 		describeHydration(title, (init) => {
 			it("fails at runtime if attempting to set content via index assignment", () => {
@@ -267,28 +285,53 @@ describe("ArrayNode", () => {
 				it("invalid", () => {
 					const list = init(schemaType, [0, 1, 2, 3]);
 					// Past end
-					assert.throws(() => list.removeRange(5, 6), validateUsageError(/Too large/));
+					assert.throws(
+						() => list.removeRange(5, 6),
+						validateUsageError(/Too large/),
+					);
 					// start after end
-					assert.throws(() => list.removeRange(3, 2), validateUsageError(/Too large/));
+					assert.throws(
+						() => list.removeRange(3, 2),
+						validateUsageError(/Too large/),
+					);
 					// negative index
-					assert.throws(() => list.removeRange(-1, 2), validateUsageError(/index/));
+					assert.throws(
+						() => list.removeRange(-1, 2),
+						validateUsageError(/index/),
+					);
 					// non-integer index
-					assert.throws(() => list.removeRange(1.5, 2), validateUsageError(/integer/));
+					assert.throws(
+						() => list.removeRange(1.5, 2),
+						validateUsageError(/integer/),
+					);
 				});
 
 				it("invalid empty range", () => {
 					// If someday someone optimized empty ranges to no op earlier, they still need to error in these cases:
 					const list = init(schemaType, [0, 1, 2, 3]);
 					// Past end
-					assert.throws(() => list.removeRange(5, 5), validateUsageError(/Too large/));
+					assert.throws(
+						() => list.removeRange(5, 5),
+						validateUsageError(/Too large/),
+					);
 					// negative index
-					assert.throws(() => list.removeRange(-1, -1), validateUsageError(/index/));
+					assert.throws(
+						() => list.removeRange(-1, -1),
+						validateUsageError(/index/),
+					);
 					// non-integer index
 					assert.throws(
-						() => list.removeRange(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY),
+						() =>
+							list.removeRange(
+								Number.POSITIVE_INFINITY,
+								Number.POSITIVE_INFINITY,
+							),
 						validateUsageError(/safe integer/),
 					);
-					assert.throws(() => list.removeRange(1.5, 1.5), validateUsageError(/integer/));
+					assert.throws(
+						() => list.removeRange(1.5, 1.5),
+						validateUsageError(/integer/),
+					);
 				});
 			});
 
@@ -298,7 +341,10 @@ describe("ArrayNode", () => {
 						array1: schemaFactory.array(schemaFactory.number),
 						array2: schemaFactory.array(schemaFactory.number),
 					});
-					const { array1, array2 } = init(schema, { array1: [], array2: [1, 2, 3] });
+					const { array1, array2 } = init(schema, {
+						array1: [],
+						array2: [1, 2, 3],
+					});
 					array1.moveToStart(1, array2);
 					assert.deepEqual([...array1], [2]);
 					assert.deepEqual([...array2], [1, 3]);
@@ -315,7 +361,10 @@ describe("ArrayNode", () => {
 						array1: schemaFactory.array(schemaFactory.number),
 						array2: schemaFactory.array(schemaFactory.number),
 					});
-					const { array1, array2 } = init(schema, { array1: [1, 2], array2: [1, 2] });
+					const { array1, array2 } = init(schema, {
+						array1: [1, 2],
+						array2: [1, 2],
+					});
 					array1.moveToStart(1, array2);
 					assert.deepEqual([...array1], [2, 1, 2]);
 				});
@@ -343,7 +392,10 @@ describe("ArrayNode", () => {
 						array1: schemaFactory.array(schemaFactory.number),
 						array2: schemaFactory.array(schemaFactory.number),
 					});
-					const { array1, array2 } = init(schema, { array1: [], array2: [1, 2, 3] });
+					const { array1, array2 } = init(schema, {
+						array1: [],
+						array2: [1, 2, 3],
+					});
 					array1.moveToEnd(1, array2);
 					assert.deepEqual([...array1], [2]);
 					assert.deepEqual([...array2], [1, 3]);
@@ -360,7 +412,10 @@ describe("ArrayNode", () => {
 						array1: schemaFactory.array(schemaFactory.number),
 						array2: schemaFactory.array(schemaFactory.number),
 					});
-					const { array1, array2 } = init(schema, { array1: [1, 2], array2: [1, 2] });
+					const { array1, array2 } = init(schema, {
+						array1: [1, 2],
+						array2: [1, 2],
+					});
 					array1.moveToEnd(1, array2);
 					assert.deepEqual([...array1], [1, 2, 2]);
 				});
@@ -388,7 +443,10 @@ describe("ArrayNode", () => {
 						array1: schemaFactory.array(schemaFactory.number),
 						array2: schemaFactory.array(schemaFactory.number),
 					});
-					const { array1, array2 } = init(schema, { array1: [], array2: [1, 2, 3] });
+					const { array1, array2 } = init(schema, {
+						array1: [],
+						array2: [1, 2, 3],
+					});
 					array1.moveToIndex(0, 1, array2);
 					assert.deepEqual([...array1], [2]);
 					assert.deepEqual([...array2], [1, 3]);
@@ -400,7 +458,11 @@ describe("ArrayNode", () => {
 					}`, () => {
 						it("moves node to the destination index when valid", () => {
 							const initialState = [0, 1, 2];
-							for (let sourceIndex = 0; sourceIndex < initialState.length; sourceIndex += 1) {
+							for (
+								let sourceIndex = 0;
+								sourceIndex < initialState.length;
+								sourceIndex += 1
+							) {
 								const movedValue = initialState[sourceIndex];
 								for (
 									let destinationIndex = 0;
@@ -418,7 +480,10 @@ describe("ArrayNode", () => {
 										sourceIndex < destinationIndex
 											? [
 													...initialState.slice(0, sourceIndex),
-													...initialState.slice(sourceIndex + 1, destinationIndex),
+													...initialState.slice(
+														sourceIndex + 1,
+														destinationIndex,
+													),
 													movedValue,
 													...initialState.slice(destinationIndex),
 												]
@@ -495,7 +560,11 @@ describe("ArrayNode", () => {
 										source: initialSourceState,
 										destination: initialDestinationState,
 									});
-									destination.moveToIndex(destinationIndex, sourceIndex, source);
+									destination.moveToIndex(
+										destinationIndex,
+										sourceIndex,
+										source,
+									);
 									const actualSource = [...source];
 									const actualDestination = [...destination];
 									const expectedSource = [
@@ -563,7 +632,10 @@ describe("ArrayNode", () => {
 						array1: schemaFactory.array(schemaFactory.number),
 						array2: schemaFactory.array(schemaFactory.number),
 					});
-					const { array1, array2 } = init(schema, { array1: [1, 2], array2: [1, 2] });
+					const { array1, array2 } = init(schema, {
+						array1: [1, 2],
+						array2: [1, 2],
+					});
 					array1.moveRangeToStart(0, 2, array2);
 					assert.deepEqual([...array1], [1, 2, 1, 2]);
 				});
@@ -610,7 +682,10 @@ describe("ArrayNode", () => {
 						array1: schemaFactory.array(schemaFactory.number),
 						array2: schemaFactory.array(schemaFactory.number),
 					});
-					const { array1, array2 } = init(schema, { array1: [1, 2], array2: [1, 2] });
+					const { array1, array2 } = init(schema, {
+						array1: [1, 2],
+						array2: [1, 2],
+					});
 					array1.moveRangeToEnd(0, 2, array2);
 					assert.deepEqual([...array1], [1, 2, 1, 2]);
 				});
@@ -657,7 +732,10 @@ describe("ArrayNode", () => {
 						array1: schemaFactory.array(schemaFactory.number),
 						array2: schemaFactory.array(schemaFactory.number),
 					});
-					const { array1, array2 } = init(schema, { array1: [1, 2], array2: [1, 2] });
+					const { array1, array2 } = init(schema, {
+						array1: [1, 2],
+						array2: [1, 2],
+					});
 					array1.moveRangeToIndex(0, 0, 2, array2);
 					assert.deepEqual([...array1], [1, 2, 1, 2]);
 				});
@@ -670,16 +748,31 @@ describe("ArrayNode", () => {
 
 				it("invalid content type", () => {
 					const schema = schemaFactory.object("parent", {
-						array1: schemaFactory.array([schemaFactory.number, schemaFactory.string]),
+						array1: schemaFactory.array([
+							schemaFactory.number,
+							schemaFactory.string,
+						]),
 						array2: schemaFactory.array(schemaFactory.number),
 					});
-					const { array1, array2 } = init(schema, { array1: [1, "bad", 2], array2: [] });
+					const { array1, array2 } = init(schema, {
+						array1: [1, "bad", 2],
+						array2: [],
+					});
 					const expected = validateUsageError(
 						"Type com.fluidframework.leaf.string in source sequence is not allowed in destination.",
 					);
-					assert.throws(() => array2.moveRangeToIndex(0, 1, 3, array1), expected);
-					assert.throws(() => array2.moveRangeToIndex(0, 0, 2, array1), expected);
-					assert.throws(() => array2.moveRangeToIndex(0, 0, 3, array1), expected);
+					assert.throws(
+						() => array2.moveRangeToIndex(0, 1, 3, array1),
+						expected,
+					);
+					assert.throws(
+						() => array2.moveRangeToIndex(0, 0, 2, array1),
+						expected,
+					);
+					assert.throws(
+						() => array2.moveRangeToIndex(0, 0, 3, array1),
+						expected,
+					);
 				});
 
 				it("invalid index", () => {
@@ -756,7 +849,10 @@ describe("ArrayNode", () => {
 				assert.throws(
 					() => init(Array, [0, 1, 2]),
 					(error: Error) =>
-						validateAssertionError(error, /Shadowing of array indices is not permitted/),
+						validateAssertionError(
+							error,
+							/Shadowing of array indices is not permitted/,
+						),
 				);
 			});
 
@@ -772,7 +868,10 @@ describe("ArrayNode", () => {
 				assert.throws(
 					() => init(Array, [0, 1, 2]),
 					(error: Error) =>
-						validateAssertionError(error, /Shadowing of array indices is not permitted/),
+						validateAssertionError(
+							error,
+							/Shadowing of array indices is not permitted/,
+						),
 				);
 			});
 
@@ -791,7 +890,10 @@ describe("ArrayNode", () => {
 				assert.throws(
 					() => init(Array, [0, 1, 2]),
 					(error: Error) =>
-						validateAssertionError(error, /Shadowing of array indices is not permitted/),
+						validateAssertionError(
+							error,
+							/Shadowing of array indices is not permitted/,
+						),
 				);
 			});
 		},
@@ -813,7 +915,10 @@ describe("ArrayNode", () => {
 					// eslint-disable-next-line @typescript-eslint/no-array-constructor
 					() => new Array([0, 1, 2], 42),
 					(error: Error) =>
-						validateAssertionError(error, /Shadowing of array indices is not permitted/),
+						validateAssertionError(
+							error,
+							/Shadowing of array indices is not permitted/,
+						),
 				);
 			});
 		},
@@ -856,14 +961,19 @@ describe("ArrayNode", () => {
 		},
 		() => {
 			it("Iterator of an unhydrated node works after it's been inserted, and throws during iteration once a concurrent edit is made.", () => {
-				class TestArray extends schemaFactory.array("Array", schemaFactory.number) {}
+				class TestArray extends schemaFactory.array(
+					"Array",
+					schemaFactory.number,
+				) {}
 
 				// Create unhydrated array node
 				const array = new TestArray([1, 2]);
 
 				const provider = new TestTreeProviderLite();
 				const tree = provider.trees[0];
-				const view = tree.viewWith(new TreeViewConfiguration({ schema: TestArray }));
+				const view = tree.viewWith(
+					new TreeViewConfiguration({ schema: TestArray }),
+				);
 				const values = array.values();
 
 				// Initialize the tree with unhydrated array node
@@ -880,7 +990,9 @@ describe("ArrayNode", () => {
 					() => {
 						values.next();
 					},
-					validateUsageError(/Concurrent editing and iteration is not allowed./),
+					validateUsageError(
+						/Concurrent editing and iteration is not allowed./,
+					),
 				);
 			});
 
@@ -893,7 +1005,9 @@ describe("ArrayNode", () => {
 					() => {
 						values.next();
 					},
-					validateUsageError(/Concurrent editing and iteration is not allowed./),
+					validateUsageError(
+						/Concurrent editing and iteration is not allowed./,
+					),
 				);
 				// Checks that new iterator still works
 				const values2 = array.values();
@@ -908,7 +1022,9 @@ describe("ArrayNode", () => {
 					() => {
 						values.next();
 					},
-					validateUsageError(/Concurrent editing and iteration is not allowed./),
+					validateUsageError(
+						/Concurrent editing and iteration is not allowed./,
+					),
 				);
 			});
 		},
@@ -993,8 +1109,12 @@ describe("ArrayNode", () => {
 // `error TS2310: Type 'RecursiveArray' recursively references itself as a base type.` in the d.ts file.
 
 // Example workaround, see experimental/framework/tree-react-api/src/testExports.ts for an actual test of this including an import.
-declare const _RecursiveArrayWorkaround: FixRecursiveArraySchema<typeof RecursiveArray>;
-class RecursiveArray extends schemaFactory.arrayRecursive("RA", [() => RecursiveArray]) {}
+declare const _RecursiveArrayWorkaround: FixRecursiveArraySchema<
+	typeof RecursiveArray
+>;
+class RecursiveArray extends schemaFactory.arrayRecursive("RA", [
+	() => RecursiveArray,
+]) {}
 {
 	type _check = ValidateRecursiveSchema<typeof RecursiveArray>;
 }
@@ -1005,6 +1125,8 @@ const Base = schemaFactory.arrayRecursive("RA", [() => RecursiveArray2]);
 class RecursiveArray2 extends Base {}
 
 // Invalid case similar to ones generated in d.ts, with workaround:
-declare const _RecursiveArrayWorkaround3: FixRecursiveArraySchema<typeof RecursiveArray3>;
+declare const _RecursiveArrayWorkaround3: FixRecursiveArraySchema<
+	typeof RecursiveArray3
+>;
 const Base3 = schemaFactory.arrayRecursive("RA", [() => RecursiveArray3]);
 class RecursiveArray3 extends Base3 {}

@@ -10,7 +10,10 @@ import { RevisionTagSchema, StableIdSchema } from "../rebase/index.js";
 
 export const version2 = 2.0;
 
-export const StableOrFinalRevisionTag = Type.Union([RevisionTagSchema, StableIdSchema]);
+export const StableOrFinalRevisionTag = Type.Union([
+	RevisionTagSchema,
+	StableIdSchema,
+]);
 
 export const FormatV2 = Format(version2, StableOrFinalRevisionTag);
 

@@ -98,8 +98,7 @@ export function supportParentProcess<
 			// of scope for now.
 			let inspectArgIndex: number = -1;
 			while (
-				(inspectArgIndex = childArgs.findIndex((x) => x.match(/^(--inspect|--debug).*/))) >=
-				0
+				(inspectArgIndex = childArgs.findIndex((x) => x.match(/^(--inspect|--debug).*/))) >= 0
 			) {
 				childArgs.splice(inspectArgIndex, 1);
 			}

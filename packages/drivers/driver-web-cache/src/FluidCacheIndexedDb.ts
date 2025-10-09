@@ -5,7 +5,13 @@
 
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
-import { DBSchema, DeleteDBCallbacks, IDBPDatabase, deleteDB, openDB } from "idb";
+import {
+	DBSchema,
+	DeleteDBCallbacks,
+	IDBPDatabase,
+	deleteDB,
+	openDB,
+} from "idb";
 
 import { FluidCacheErrorEvent } from "./fluidCacheTelemetry.js";
 
@@ -50,7 +56,9 @@ export function getFluidCacheIndexedDbInstance(
 					);
 				}
 
-				const cacheObjectStore = db.createObjectStore(FluidDriverObjectStoreName);
+				const cacheObjectStore = db.createObjectStore(
+					FluidDriverObjectStoreName,
+				);
 				cacheObjectStore.createIndex("createdTimeMs", "createdTimeMs");
 				cacheObjectStore.createIndex("lastAccessTimeMs", "lastAccessTimeMs");
 				cacheObjectStore.createIndex("partitionKey", "partitionKey");

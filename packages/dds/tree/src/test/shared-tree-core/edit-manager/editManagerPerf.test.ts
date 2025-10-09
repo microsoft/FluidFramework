@@ -55,7 +55,10 @@ export function testPerf() {
 					{ seq: 4, type: "Ack" },
 				],
 				new ConstrainedTestChangeRebaser(
-					(change: TaggedChange<TestChange>, over: TaggedChange<TestChange>): boolean => {
+					(
+						change: TaggedChange<TestChange>,
+						over: TaggedChange<TestChange>,
+					): boolean => {
 						// This is the only rebase that should happen
 						assert.deepEqual(change.change.intentions, [4]);
 						assert.deepEqual(over.change.intentions, [3]);
@@ -72,7 +75,10 @@ export function testPerf() {
 					{ seq: 4, type: "Pull", ref: 0, from: peer1 },
 				],
 				new ConstrainedTestChangeRebaser(
-					(change: TaggedChange<TestChange>, over: TaggedChange<TestChange>): boolean => {
+					(
+						change: TaggedChange<TestChange>,
+						over: TaggedChange<TestChange>,
+					): boolean => {
 						// This is the only rebase that should happen
 						assert.deepEqual(change.change.intentions, [4]);
 						assert.deepEqual(over.change.intentions, [3]);
@@ -357,7 +363,12 @@ export function testPerf() {
 					it(`For an existing peer branch with ${P} commits unaware of ${T} trunk commits`, () => {
 						const rebaser = new NoOpChangeRebaser();
 						const manager = testChangeEditManagerFactory({ rebaser }).manager;
-						rebasePeerEditsOverTrunkEdits(P, T, manager, () => TestChange.emptyChange);
+						rebasePeerEditsOverTrunkEdits(
+							P,
+							T,
+							manager,
+							() => TestChange.emptyChange,
+						);
 						rebaser.rebasedCount = 0;
 						rebaser.invertedCount = 0;
 						rebaser.composedCount = 0;
@@ -435,7 +446,12 @@ export function testPerf() {
 					it(`For an existing peer branch with ${P} commits unaware of ${T}+1 trunk commits`, () => {
 						const rebaser = new NoOpChangeRebaser();
 						const manager = testChangeEditManagerFactory({ rebaser }).manager;
-						rebasePeerEditsOverTrunkEdits(P, T + 1, manager, () => TestChange.emptyChange);
+						rebasePeerEditsOverTrunkEdits(
+							P,
+							T + 1,
+							manager,
+							() => TestChange.emptyChange,
+						);
 						rebaser.rebasedCount = 0;
 						rebaser.invertedCount = 0;
 						rebaser.composedCount = 0;

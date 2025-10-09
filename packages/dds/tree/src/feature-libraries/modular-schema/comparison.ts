@@ -41,8 +41,14 @@ export function allowsTreeSuperset(
 	if (isNeverTree(policy, originalData, superset)) {
 		return false;
 	}
-	assert(original !== undefined, 0x716 /* only never trees have undefined schema */);
-	assert(superset !== undefined, 0x717 /* only never trees have undefined schema */);
+	assert(
+		original !== undefined,
+		0x716 /* only never trees have undefined schema */,
+	);
+	assert(
+		superset !== undefined,
+		0x717 /* only never trees have undefined schema */,
+	);
 	if (original instanceof LeafNodeStoredSchema) {
 		if (superset instanceof LeafNodeStoredSchema) {
 			return allowsValueSuperset(original.leafValue, superset.leafValue);
@@ -55,31 +61,46 @@ export function allowsTreeSuperset(
 	}
 
 	assert(
-		original instanceof MapNodeStoredSchema || original instanceof ObjectNodeStoredSchema,
+		original instanceof MapNodeStoredSchema ||
+			original instanceof ObjectNodeStoredSchema,
 		0x893 /* unsupported node kind */,
 	);
 	assert(
-		superset instanceof MapNodeStoredSchema || superset instanceof ObjectNodeStoredSchema,
+		superset instanceof MapNodeStoredSchema ||
+			superset instanceof ObjectNodeStoredSchema,
 		0x894 /* unsupported node kind */,
 	);
 
 	if (original instanceof MapNodeStoredSchema) {
 		if (superset instanceof MapNodeStoredSchema) {
-			return allowsFieldSuperset(policy, originalData, original.mapFields, superset.mapFields);
+			return allowsFieldSuperset(
+				policy,
+				originalData,
+				original.mapFields,
+				superset.mapFields,
+			);
 		}
 		return false;
 	}
 
-	assert(original instanceof ObjectNodeStoredSchema, 0x895 /* unsupported node kind */);
+	assert(
+		original instanceof ObjectNodeStoredSchema,
+		0x895 /* unsupported node kind */,
+	);
 	if (superset instanceof MapNodeStoredSchema) {
 		for (const [_key, field] of original.objectNodeFields) {
-			if (!allowsFieldSuperset(policy, originalData, field, superset.mapFields)) {
+			if (
+				!allowsFieldSuperset(policy, originalData, field, superset.mapFields)
+			) {
 				return false;
 			}
 		}
 		return true;
 	}
-	assert(superset instanceof ObjectNodeStoredSchema, 0x896 /* unsupported node kind */);
+	assert(
+		superset instanceof ObjectNodeStoredSchema,
+		0x896 /* unsupported node kind */,
+	);
 
 	return compareSets({
 		a: original.objectNodeFields,
@@ -104,8 +125,10 @@ export function allowsTreeSuperset(
 			allowsFieldSuperset(
 				policy,
 				originalData,
-				original.objectNodeFields.get(sameField) ?? fail(0xb19 /* missing expected field */),
-				superset.objectNodeFields.get(sameField) ?? fail(0xb1a /* missing expected field */),
+				original.objectNodeFields.get(sameField) ??
+					fail(0xb19 /* missing expected field */),
+				superset.objectNodeFields.get(sameField) ??
+					fail(0xb1a /* missing expected field */),
 			),
 	});
 }
@@ -185,7 +208,14 @@ export function allowsRepoSuperset(
 	// Note that any schema from `original.nodeSchema` can be used as the schema for a node at the root of a detached field,
 	// so we must check all of them, even if they are not reachable from the root field schema.
 	for (const [key, schema] of original.nodeSchema) {
-		if (!allowsTreeSuperset(policy, original, schema, superset.nodeSchema.get(key))) {
+		if (
+			!allowsTreeSuperset(
+				policy,
+				original,
+				schema,
+				superset.nodeSchema.get(key),
+			)
+		) {
 			return false;
 		}
 	}

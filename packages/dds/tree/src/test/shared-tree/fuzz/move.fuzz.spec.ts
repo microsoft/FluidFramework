@@ -12,7 +12,10 @@ import {
 	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
 
-import { SharedTreeTestFactory, validateFuzzTreeConsistency } from "../../utils.js";
+import {
+	SharedTreeTestFactory,
+	validateFuzzTreeConsistency,
+} from "../../utils.js";
 
 import {
 	type EditGeneratorOpWeights,
@@ -46,7 +49,8 @@ describe("Fuzz - move", () => {
 		commit: 1,
 		abort: 1,
 	};
-	const generatorFactory = () => takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
+	const generatorFactory = () =>
+		takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
 
 	const model: DDSFuzzModel<
 		SharedTreeTestFactory,

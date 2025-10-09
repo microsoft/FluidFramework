@@ -53,7 +53,9 @@ export function create(
 		throttleIdPrefix: (req) => getParam(req.params, "tenantId") || appTenants[0].id,
 		throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
 	};
-	const generalTenantThrottler = tenantThrottlers.get(Constants.generalRestCallThrottleIdPrefix);
+	const generalTenantThrottler = tenantThrottlers.get(
+		Constants.generalRestCallThrottleIdPrefix,
+	);
 
 	const getDeltasTenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
 		throttleIdPrefix: (req) => getParam(req.params, "tenantId") || appTenants[0].id,

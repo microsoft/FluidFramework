@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IPartitionLambdaFactory, LambdaCloseType } from "@fluidframework/server-services-core";
+import {
+	IPartitionLambdaFactory,
+	LambdaCloseType,
+} from "@fluidframework/server-services-core";
 import { TestContext } from "@fluidframework/server-test-utils";
 import { strict as assert } from "assert";
 import nconf from "nconf";

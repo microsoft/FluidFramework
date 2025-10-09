@@ -11,7 +11,10 @@ import {
 	NetworkError,
 } from "@fluidframework/server-services-client";
 import { handleResponse } from "@fluidframework/server-services-shared";
-import { getGlobalTelemetryContext, Lumberjack } from "@fluidframework/server-services-telemetry";
+import {
+	getGlobalTelemetryContext,
+	Lumberjack,
+} from "@fluidframework/server-services-telemetry";
 import { Router } from "express";
 import type { Provider } from "nconf";
 
@@ -187,7 +190,7 @@ async function createSummary(
 							error,
 						);
 						return undefined;
-				  });
+					});
 		if (latestFullSummary) {
 			const enablePersistLatestFullSummary = repoManagerParams.isEphemeralContainer
 				? persistLatestFullEphemeralSummary
@@ -196,10 +199,7 @@ async function createSummary(
 				// Send latest full summary to storage for faster read access.
 				const persistP = persistLatestFullSummaryInStorage(
 					fileSystemManager,
-					getFullSummaryDirectory(
-						repoManager,
-						repoManagerParams.storageRoutingId.documentId,
-					),
+					getFullSummaryDirectory(repoManager, repoManagerParams.storageRoutingId.documentId),
 					latestFullSummary,
 					lumberjackProperties,
 				).catch((error) => {
@@ -332,8 +332,8 @@ export function create(
 			typeof request.query.initial === "undefined"
 				? undefined
 				: typeof request.query.initial === "boolean"
-				? request.query.initial
-				: request.query.initial === "true";
+					? request.query.initial
+					: request.query.initial === "true";
 
 		const lumberjackProperties = {
 			...getLumberjackBasePropertiesFromRepoManagerParams(repoManagerParams),
@@ -446,11 +446,8 @@ export function create(
 						if (error.code === 400 && error.message.startsWith("Repo does not exist")) {
 							// Document is already deleted, so there is nothing to do. This is a deletion success.
 							const lumberjackProperties = {
-								...getLumberjackBasePropertiesFromRepoManagerParams(
-									repoManagerParams,
-								),
-								[BaseGitRestTelemetryProperties.repoPerDocEnabled]:
-									repoPerDocEnabled,
+								...getLumberjackBasePropertiesFromRepoManagerParams(repoManagerParams),
+								[BaseGitRestTelemetryProperties.repoPerDocEnabled]: repoPerDocEnabled,
 								[BaseGitRestTelemetryProperties.softDelete]: softDelete,
 							};
 							Lumberjack.info(

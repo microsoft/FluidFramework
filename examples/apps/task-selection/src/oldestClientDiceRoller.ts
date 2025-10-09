@@ -47,7 +47,10 @@ export class OldestClientDiceRoller extends DataObject implements IDiceRoller {
 	}
 
 	private get oldestClientObserver() {
-		assert(this._oldestClientObserver !== undefined, "OldestClientObserver not initialized");
+		assert(
+			this._oldestClientObserver !== undefined,
+			"OldestClientObserver not initialized",
+		);
 		return this._oldestClientObserver;
 	}
 
@@ -106,7 +109,9 @@ export class OldestClientDiceRoller extends DataObject implements IDiceRoller {
  * The DataObjectFactory is used by Fluid Framework to instantiate our DataObject.  We provide it with a unique name
  * and the constructor it will call.  In this scenario, the third and fourth arguments are not used.
  */
-export const OldestClientDiceRollerInstantiationFactory = new DataObjectFactory({
-	type: "@fluid-example/oldest-client-dice-roller",
-	ctor: OldestClientDiceRoller,
-});
+export const OldestClientDiceRollerInstantiationFactory = new DataObjectFactory(
+	{
+		type: "@fluid-example/oldest-client-dice-roller",
+		ctor: OldestClientDiceRoller,
+	},
+);

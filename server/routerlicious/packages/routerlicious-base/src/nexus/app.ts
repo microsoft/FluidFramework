@@ -41,8 +41,7 @@ export function create(
 				res.locals.tenantId = tenantId;
 				return {
 					[BaseTelemetryProperties.tenantId]: tenantId,
-					[CommonProperties.callingServiceName]:
-						req.headers[CallingServiceHeaderName] ?? "",
+					[CommonProperties.callingServiceName]: req.headers[CallingServiceHeaderName] ?? "",
 				};
 			}),
 		);

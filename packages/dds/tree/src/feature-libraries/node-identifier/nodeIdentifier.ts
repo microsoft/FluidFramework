@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { SessionSpaceCompressedId, StableId } from "@fluidframework/id-compressor";
+import type {
+	SessionSpaceCompressedId,
+	StableId,
+} from "@fluidframework/id-compressor";
 
 import type { TreeNodeSchemaIdentifier } from "../../core/index.js";
 import { type Brand, type Opaque, brand } from "../../util/index.js";

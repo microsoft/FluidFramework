@@ -139,7 +139,9 @@ const expectedSummary: ISummaryTree = {
 };
 
 class MockGitManager {
-	public async getSnapshot(sha: string): Promise<IR11sResponse<IWholeFlatSnapshot>> {
+	public async getSnapshot(
+		sha: string,
+	): Promise<IR11sResponse<IWholeFlatSnapshot>> {
 		return {
 			content: flatSnapshot,
 			headers: new Map(),
@@ -163,6 +165,10 @@ describe("WholeSummaryDocumentStorageService", () => {
 			handleType: SummaryType.Tree,
 			handle: "testHandle",
 		});
-		assert.deepStrictEqual(res, expectedSummary, "Unexpected summary returned.");
+		assert.deepStrictEqual(
+			res,
+			expectedSummary,
+			"Unexpected summary returned.",
+		);
 	});
 });

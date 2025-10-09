@@ -20,7 +20,11 @@ import type {
 	RevisionTag,
 	SchemaAndPolicy,
 } from "../core/index.js";
-import { brand, type Brand, type JsonCompatibleReadOnly } from "../util/index.js";
+import {
+	brand,
+	type Brand,
+	type JsonCompatibleReadOnly,
+} from "../util/index.js";
 
 import type { DecodedMessage } from "./messageTypes.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
@@ -92,12 +96,22 @@ export function makeMessageCodecs<TChangeset>(
 			case 4:
 				return [
 					version,
-					makeV1ToV4CodecWithVersion(changeCodec, revisionTagCodec, options, version ?? 1),
+					makeV1ToV4CodecWithVersion(
+						changeCodec,
+						revisionTagCodec,
+						options,
+						version ?? 1,
+					),
 				];
 			case 5:
 				return [
 					version,
-					makeV5CodecWithVersion(changeCodec, revisionTagCodec, options, version),
+					makeV5CodecWithVersion(
+						changeCodec,
+						revisionTagCodec,
+						options,
+						version,
+					),
 				];
 			default:
 				unreachableCase(version);
@@ -110,14 +124,9 @@ export type MessageFormatVersion = Brand<
 	undefined | 1 | 2 | 3 | 4 | 5,
 	"MessageFormatVersion"
 >;
-export const messageFormatVersions: ReadonlySet<MessageFormatVersion> = new Set([
-	brand(undefined),
-	brand(1),
-	brand(2),
-	brand(3),
-	brand(4),
-	brand(5),
-]);
+export const messageFormatVersions: ReadonlySet<MessageFormatVersion> = new Set(
+	[brand(undefined), brand(1), brand(2), brand(3), brand(4), brand(5)],
+);
 
 export function getCodecTreeForMessageFormatWithChange(
 	version: MessageFormatVersion,

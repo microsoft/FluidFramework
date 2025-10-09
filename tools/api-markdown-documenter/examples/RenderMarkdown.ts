@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { loadModel, MarkdownRenderer } from "@fluid-tools/api-markdown-documenter";
+import {
+	loadModel,
+	MarkdownRenderer,
+} from "@fluid-tools/api-markdown-documenter";
 
 const modelDirectoryPath = "<PATH-TO-YOUR-DIRECTORY-CONTAINING-API-REPORTS>";
 const outputDirectoryPath = "<YOUR-OUTPUT-DIRECTORY-PATH>";

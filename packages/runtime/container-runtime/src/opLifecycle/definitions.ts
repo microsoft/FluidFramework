@@ -101,7 +101,9 @@ export type OutboundSingletonBatch = OutboundBatch<[OutboundBatchMessage]>;
  * Base batch interface used internally by the runtime.
  * See {@link LocalBatch} and {@link OutboundBatch} for the concrete types.
  */
-interface IBatch<TMessages extends LocalBatchMessage[] | OutboundBatchMessage[]> {
+interface IBatch<
+	TMessages extends LocalBatchMessage[] | OutboundBatchMessage[],
+> {
 	/**
 	 * All the messages in the batch
 	 */

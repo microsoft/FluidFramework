@@ -65,7 +65,10 @@ export class TaskSelectionContainerRuntimeFactory extends ModelContainerRuntimeF
 	/**
 	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
 	 */
-	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
+	protected async createModel(
+		runtime: IContainerRuntime,
+		container: IContainer,
+	) {
 		return new TaskSelectionAppModel(
 			await getDataStoreEntryPoint<IDiceRoller>(runtime, taskManagerDiceId),
 			await getDataStoreEntryPoint<IDiceRoller>(runtime, oldestClientDiceId),

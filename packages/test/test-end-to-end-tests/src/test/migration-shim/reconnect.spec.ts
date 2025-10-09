@@ -18,9 +18,15 @@ import {
 } from "@fluid-experimental/tree";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
-import { asLegacyAlpha, type ContainerAlpha } from "@fluidframework/container-loader/internal";
+import {
+	asLegacyAlpha,
+	type ContainerAlpha,
+} from "@fluidframework/container-loader/internal";
 import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
-import { type ConfigTypes, type IConfigProviderBase } from "@fluidframework/core-interfaces";
+import {
+	type ConfigTypes,
+	type IConfigProviderBase,
+} from "@fluidframework/core-interfaces";
 import { type IChannel } from "@fluidframework/datastore-definitions/internal";
 import {
 	type ITestObjectProvider,
@@ -29,10 +35,16 @@ import {
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import { ITree, SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
+import {
+	ITree,
+	SchemaFactory,
+	TreeViewConfiguration,
+} from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
 
-const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+const configProvider = (
+	settings: Record<string, ConfigTypes>,
+): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
 });
 
@@ -217,13 +229,18 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		updateQuantity(legacyTree1, 3);
 		updateQuantity(legacyTree1, 4);
 
-		const promise2 = new Promise<void>((resolve) => shim2.on("migrated", () => resolve()));
+		const promise2 = new Promise<void>((resolve) =>
+			shim2.on("migrated", () => resolve()),
+		);
 		shim2.submitMigrateOp();
 		await promise2;
 
 		container1.connect();
 		await provider.ensureSynchronized();
-		assert(getQuantity(legacyTree1) === 123, "expected quantity updates to have been dropped");
+		assert(
+			getQuantity(legacyTree1) === 123,
+			"expected quantity updates to have been dropped",
+		);
 
 		const newTree1 = shim1.currentTree as ITree;
 		const view1 = newTree1.viewWith(treeConfig);
@@ -249,9 +266,13 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 		await provider.ensureSynchronized();
 		const { summaryVersion } = await summarizeNow(summarizer);
-		const container3 = await provider.loadContainer(runtimeFactory2, undefined, {
-			[LoaderHeader.version]: summaryVersion,
-		});
+		const container3 = await provider.loadContainer(
+			runtimeFactory2,
+			undefined,
+			{
+				[LoaderHeader.version]: summaryVersion,
+			},
+		);
 		const testObj3 = (await container3.getEntryPoint()) as TestDataObject;
 		const shim3 = testObj3.getTree<SharedTreeShim>();
 		const newTree3 = shim3.currentTree;
@@ -292,13 +313,18 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		container1.close();
 		assert(pendingState !== undefined, "Pending state should be defined");
 
-		const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory2]]);
+		const loader = provider.createLoader([
+			[provider.defaultCodeDetails, runtimeFactory2],
+		]);
 		const container2 = await loader.resolve({ url }, pendingState);
 		await provider.ensureSynchronized();
 		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
 		const shim2 = testObj2.getTree<MigrationShim>();
 		const legacyTree2 = shim2.currentTree as LegacySharedTree;
-		assert(getQuantity(legacyTree2) === 5, "expected quantity updates to have been applied");
+		assert(
+			getQuantity(legacyTree2) === 5,
+			"expected quantity updates to have been applied",
+		);
 		assert(container2.closed !== true, "Container should not be closed");
 	});
 
@@ -330,14 +356,19 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		container1.close();
 		assert(pendingState !== undefined, "Pending state should be defined");
 
-		const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory2]]);
+		const loader = provider.createLoader([
+			[provider.defaultCodeDetails, runtimeFactory2],
+		]);
 		const container2 = await loader.resolve({ url }, pendingState);
 		await provider.ensureSynchronized();
 		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
 		const shim2 = testObj2.getTree<MigrationShim>();
 		const newTree2 = shim2.currentTree as ITree;
 		const node2 = newTree2.viewWith(treeConfig).root;
-		assert(node2.quantity === 5, "expected quantity updates to have been applied");
+		assert(
+			node2.quantity === 5,
+			"expected quantity updates to have been applied",
+		);
 	});
 
 	it("SharedTreeShim can apply stashed v2 ops to v2 state", async () => {
@@ -391,15 +422,23 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		container2.close();
 		assert(pendingState !== undefined, "Pending state should be defined");
 
-		const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory2]]);
+		const loader = provider.createLoader([
+			[provider.defaultCodeDetails, runtimeFactory2],
+		]);
 		const container3 = await loader.resolve({ url }, pendingState);
 		await provider.ensureSynchronized();
 		const testObj3 = (await container3.getEntryPoint()) as TestDataObject;
 		const shim3 = testObj3.getTree<SharedTreeShim>();
 		const newTree3 = shim3.currentTree;
 		const node3 = newTree3.viewWith(treeConfig).root;
-		assert(node3.quantity === 5, "expected quantity updates to have been applied");
-		assert(node1.quantity === 5, "expected quantity updates to have been synced");
+		assert(
+			node3.quantity === 5,
+			"expected quantity updates to have been applied",
+		);
+		assert(
+			node1.quantity === 5,
+			"expected quantity updates to have been synced",
+		);
 	});
 
 	it("Shims drop stashed v1 ops to v2 state", async () => {
@@ -416,7 +455,9 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const container2 = await provider.loadContainer(runtimeFactory2);
 		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
 		const shim2 = testObj2.getTree<MigrationShim>();
-		const promise2 = new Promise<void>((resolve) => shim2.on("migrated", () => resolve()));
+		const promise2 = new Promise<void>((resolve) =>
+			shim2.on("migrated", () => resolve()),
+		);
 
 		// generate stashed ops with a migration occurring
 		await provider.opProcessingController.pauseProcessing(container1);
@@ -442,9 +483,13 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 		await provider.ensureSynchronized();
 		const { summaryVersion } = await summarizeNow(summarizer);
-		const container4 = await provider.loadContainer(runtimeFactory2, undefined, {
-			[LoaderHeader.version]: summaryVersion,
-		});
+		const container4 = await provider.loadContainer(
+			runtimeFactory2,
+			undefined,
+			{
+				[LoaderHeader.version]: summaryVersion,
+			},
+		);
 		const testObj4 = (await container4.getEntryPoint()) as TestDataObject;
 		const shim4 = testObj4.getTree<SharedTreeShim>();
 		const newTree4 = shim4.currentTree;
@@ -452,7 +497,9 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const node4 = view4.root;
 
 		// Load a new container and apply stashed ops
-		const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory2]]);
+		const loader = provider.createLoader([
+			[provider.defaultCodeDetails, runtimeFactory2],
+		]);
 		const url = await container1.getAbsoluteUrl("");
 		assert(url !== undefined, "Container url should be defined");
 		const container3 = await loader.resolve({ url }, pendingState);
@@ -462,7 +509,10 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const tree3 = shim3.currentTree as ITree;
 		const view3 = tree3.viewWith(treeConfig);
 		const node3 = view3.root;
-		assert(node3.quantity === 123, "expected quantity updates to have been dropped");
+		assert(
+			node3.quantity === 123,
+			"expected quantity updates to have been dropped",
+		);
 		assert(
 			node4.quantity === 123,
 			"expected quantity updates to have been dropped after summary on new shim",
@@ -502,7 +552,9 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		await provider.ensureSynchronized();
 
 		// Load a new container and apply stashed ops
-		const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory2]]);
+		const loader = provider.createLoader([
+			[provider.defaultCodeDetails, runtimeFactory2],
+		]);
 		const url = await container1.getAbsoluteUrl("");
 		assert(url !== undefined, "Container url should be defined");
 		const container3 = await loader.resolve({ url }, pendingState);

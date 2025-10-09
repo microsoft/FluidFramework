@@ -218,7 +218,9 @@ function validateReadyToTrackSummary(
  * format is in a way that can easily be linked to, documented and inspected.
  */
 /* eslint-enable jsdoc/check-indentation */
-export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecoder {
+export class ForestIncrementalSummaryBuilder
+	implements IncrementalEncoderDecoder
+{
 	/**
 	 * The next reference ID to use for a chunk.
 	 */
@@ -255,11 +257,14 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 	 * A map of chunk reference IDs to their encoded contents. This is typically used during the loading of the
 	 * forest to retrieve the contents of the chunks that were summarized incrementally.
 	 */
-	private readonly encodedChunkContentsMap: Map<string, EncodedFieldBatch> = new Map();
+	private readonly encodedChunkContentsMap: Map<string, EncodedFieldBatch> =
+		new Map();
 
 	public constructor(
 		private readonly enableIncrementalSummary: boolean,
-		private readonly getChunkAtCursor: (cursor: ITreeCursorSynchronous) => TreeChunk,
+		private readonly getChunkAtCursor: (
+			cursor: ITreeCursorSynchronous,
+		) => TreeChunk,
 		public readonly shouldEncodeIncrementally: IncrementalEncodingPolicy,
 	) {}
 
@@ -271,7 +276,9 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 	 */
 	public async load(
 		services: IChannelStorageService,
-		readAndParseChunk: <T extends JsonCompatible<IFluidHandle>>(id: string) => Promise<T>,
+		readAndParseChunk: <T extends JsonCompatible<IFluidHandle>>(
+			id: string,
+		) => Promise<T>,
 	): Promise<void> {
 		const forestTree = services.getSnapshotTree?.();
 		// Snapshot tree should be available when loading forest's contents. However, it is an optional function
@@ -288,7 +295,9 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 		): Promise<void> => {
 			// All trees in the snapshot tree are for incremental chunks. The key is the chunk's reference ID
 			// and the value is the snapshot tree for the chunk.
-			for (const [chunkReferenceId, chunkSnapshotTree] of Object.entries(snapshotTree.trees)) {
+			for (const [chunkReferenceId, chunkSnapshotTree] of Object.entries(
+				snapshotTree.trees,
+			)) {
 				const chunkSubTreePath = `${parentTreeKey}${chunkReferenceId}`;
 				const chunkContentsPath = `${chunkSubTreePath}/${chunkContentsBlobKey}`;
 				if (!(await services.contains(chunkContentsPath))) {
@@ -296,11 +305,15 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 						`SharedTree: Cannot find contents for incremental chunk ${chunkContentsPath}`,
 					);
 				}
-				const chunkContents = await readAndParseChunk<EncodedFieldBatch>(chunkContentsPath);
+				const chunkContents =
+					await readAndParseChunk<EncodedFieldBatch>(chunkContentsPath);
 				this.encodedChunkContentsMap.set(chunkReferenceId, chunkContents);
 
 				// Recursively download the contents of chunks in this chunk's sub tree.
-				await downloadChunkContentsInTree(chunkSnapshotTree, `${chunkSubTreePath}/`);
+				await downloadChunkContentsInTree(
+					chunkSnapshotTree,
+					`${chunkSubTreePath}/`,
+				);
 			}
 		};
 		await downloadChunkContentsInTree(forestTree, "");
@@ -317,21 +330,30 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 	 */
 	public startSummary(args: {
 		fullTree: boolean;
-		incrementalSummaryContext: IExperimentalIncrementalSummaryContext | undefined;
+		incrementalSummaryContext:
+			| IExperimentalIncrementalSummaryContext
+			| undefined;
 		stringify: SummaryElementStringifier;
 	}): ForestIncrementalSummaryBehavior {
 		const { fullTree, incrementalSummaryContext, stringify } = args;
 		// If there is no incremental summary context, do not summarize incrementally. This happens in two scenarios:
 		// 1. When summarizing a detached container, i.e., the first ever summary.
 		// 2. When running GC, the default behavior is to call summarize on DDS without incrementalSummaryContext.
-		if (!this.enableIncrementalSummary || incrementalSummaryContext === undefined) {
+		if (
+			!this.enableIncrementalSummary ||
+			incrementalSummaryContext === undefined
+		) {
 			return ForestIncrementalSummaryBehavior.SingleBlob;
 		}
 
-		validateReadyToTrackSummary(this.forestSummaryState, this.trackedSummaryProperties);
+		validateReadyToTrackSummary(
+			this.forestSummaryState,
+			this.trackedSummaryProperties,
+		);
 
 		this.forestSummaryState = ForestSummaryTrackingState.Tracking;
-		this.latestSummarySequenceNumber = incrementalSummaryContext.latestSummarySequenceNumber;
+		this.latestSummarySequenceNumber =
+			incrementalSummaryContext.latestSummarySequenceNumber;
 		this.trackedSummaryProperties = {
 			summarySequenceNumber: incrementalSummaryContext.summarySequenceNumber,
 			latestSummaryBasePath: incrementalSummaryContext.summaryPath,
@@ -352,7 +374,10 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 		chunkEncoder: (chunk: TreeChunk) => EncodedFieldBatch,
 	): ChunkReferenceId[] {
 		// Validate that a summary is currently being tracked and that the tracked summary properties are defined.
-		validateTrackingSummary(this.forestSummaryState, this.trackedSummaryProperties);
+		validateTrackingSummary(
+			this.forestSummaryState,
+			this.trackedSummaryProperties,
+		);
 
 		if (cursor.getFieldLength() === 0) {
 			return [];
@@ -371,7 +396,10 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 			this.latestSummarySequenceNumber,
 			chunk,
 		);
-		if (previousChunkProperties !== undefined && !this.trackedSummaryProperties.fullTree) {
+		if (
+			previousChunkProperties !== undefined &&
+			!this.trackedSummaryProperties.fullTree
+		) {
 			chunkProperties = previousChunkProperties;
 			chunkReferenceId = previousChunkProperties.referenceId;
 			this.trackedSummaryProperties.parentSummaryBuilder.addHandle(
@@ -393,7 +421,8 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 				summaryPath: this.trackedSummaryProperties.chunkSummaryPath.join("/"),
 			};
 
-			const parentSummaryBuilder = this.trackedSummaryProperties.parentSummaryBuilder;
+			const parentSummaryBuilder =
+				this.trackedSummaryProperties.parentSummaryBuilder;
 			// Create a new summary builder for this chunk to build its summary tree which will be stored in the
 			// parent's summary tree under its reference ID.
 			// Before encoding the chunk, set the parent summary builder to this chunk's summary builder so that
@@ -436,17 +465,25 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 	 * @returns the Forest's summary tree.
 	 */
 	public completeSummary(args: {
-		incrementalSummaryContext: IExperimentalIncrementalSummaryContext | undefined;
+		incrementalSummaryContext:
+			| IExperimentalIncrementalSummaryContext
+			| undefined;
 		forestSummaryContent: string;
 	}): ISummaryTreeWithStats {
 		const { incrementalSummaryContext, forestSummaryContent } = args;
-		if (!this.enableIncrementalSummary || incrementalSummaryContext === undefined) {
+		if (
+			!this.enableIncrementalSummary ||
+			incrementalSummaryContext === undefined
+		) {
 			const summaryBuilder = new SummaryTreeBuilder();
 			summaryBuilder.addBlob(forestSummaryContentKey, forestSummaryContent);
 			return summaryBuilder.getSummaryTree();
 		}
 
-		validateTrackingSummary(this.forestSummaryState, this.trackedSummaryProperties);
+		validateTrackingSummary(
+			this.forestSummaryState,
+			this.trackedSummaryProperties,
+		);
 
 		this.trackedSummaryProperties.parentSummaryBuilder.addBlob(
 			forestSummaryContentKey,
@@ -463,8 +500,14 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 		const currentSummaryTrackingMap = this.chunkTrackingPropertiesMap.get(
 			this.trackedSummaryProperties.summarySequenceNumber,
 		);
-		if (latestSummaryTrackingMap !== undefined && currentSummaryTrackingMap !== undefined) {
-			for (const [chunk, chunkProperties] of latestSummaryTrackingMap.entries()) {
+		if (
+			latestSummaryTrackingMap !== undefined &&
+			currentSummaryTrackingMap !== undefined
+		) {
+			for (const [
+				chunk,
+				chunkProperties,
+			] of latestSummaryTrackingMap.entries()) {
 				if (!currentSummaryTrackingMap.has(chunk)) {
 					currentSummaryTrackingMap.set(chunk, chunkProperties);
 				}
@@ -480,7 +523,8 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 		}
 
 		this.forestSummaryState = ForestSummaryTrackingState.ReadyToTrack;
-		const summaryTree = this.trackedSummaryProperties.parentSummaryBuilder.getSummaryTree();
+		const summaryTree =
+			this.trackedSummaryProperties.parentSummaryBuilder.getSummaryTree();
 		this.trackedSummaryProperties = undefined;
 		return summaryTree;
 	}
@@ -491,8 +535,12 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 	 * @param referenceId - The reference ID of the chunk to retrieve.
 	 * @returns The encoded contents of the chunk.
 	 */
-	public getEncodedIncrementalChunk(referenceId: ChunkReferenceId): EncodedFieldBatch {
-		const chunkEncodedContents = this.encodedChunkContentsMap.get(`${referenceId}`);
+	public getEncodedIncrementalChunk(
+		referenceId: ChunkReferenceId,
+	): EncodedFieldBatch {
+		const chunkEncodedContents = this.encodedChunkContentsMap.get(
+			`${referenceId}`,
+		);
 		assert(
 			chunkEncodedContents !== undefined,
 			0xc26 /* Incremental chunk contents not found */,

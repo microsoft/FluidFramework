@@ -4,7 +4,13 @@
  */
 
 import { strict as assert } from "node:assert";
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+	existsSync,
+	mkdirSync,
+	readFileSync,
+	rmSync,
+	writeFileSync,
+} from "node:fs";
 import path from "node:path";
 
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
@@ -13,7 +19,10 @@ import { testSrcPath } from "../testSrcPath.cjs";
 // Use `pnpm run test:snapshots:regen` to set this flag.
 const regenerateSnapshots = process.argv.includes("--snapshot");
 
-export function takeJsonSnapshot(data: JsonCompatibleReadOnly, suffix: string = ""): void {
+export function takeJsonSnapshot(
+	data: JsonCompatibleReadOnly,
+	suffix: string = "",
+): void {
 	const dataStr = JSON.stringify(data, undefined, 2);
 	return takeSnapshot(dataStr, `${suffix}.json`, jsonCompare);
 }
@@ -47,14 +56,19 @@ export function takeSnapshot(
 	// Ensure test name doesn't accidentally navigate up directories or things like that.
 	// Done here instead of in beforeEach so errors surface better.
 	if (nameCheck.test(currentTestName) === false) {
-		assert.fail(`Expected test name to pass sanitization: "${currentTestName}"`);
+		assert.fail(
+			`Expected test name to pass sanitization: "${currentTestName}"`,
+		);
 	}
 
 	const fullFile = currentTestFile + suffix;
 
 	const exists = existsSync(fullFile);
 	if (regenerateSnapshots) {
-		assert(exists === false, "snapshot should not already exist: possible name collision.");
+		assert(
+			exists === false,
+			"snapshot should not already exist: possible name collision.",
+		);
 		// Ensure compare function does not error with this output.
 		compare?.(data, data, "invalid compare function");
 		writeFileSync(fullFile, data);
@@ -99,7 +113,10 @@ export function useSnapshotDirectory(dirPath: string = "files"): void {
 	beforeEach(function (): void {
 		currentTestName = this.currentTest?.title ?? assert.fail();
 		// .replace removes variant prefixes like "[CJS] ".
-		currentTestFile = path.join(normalizedDir, currentTestName.replace(/^\[.*?] /g, ""));
+		currentTestFile = path.join(
+			normalizedDir,
+			currentTestName.replace(/^\[.*?] /g, ""),
+		);
 	});
 
 	afterEach(() => {

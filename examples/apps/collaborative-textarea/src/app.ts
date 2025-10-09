@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
+import {
+	StaticCodeLoader,
+	TinyliciousModelLoader,
+} from "@fluid-example/example-utils";
 import React from "react";
 import ReactDOM from "react-dom";
 
@@ -18,9 +21,10 @@ import { CollaborativeTextView } from "./view.js";
  * requires making async calls.
  */
 async function start(): Promise<void> {
-	const tinyliciousModelLoader = new TinyliciousModelLoader<ICollaborativeTextAppModel>(
-		new StaticCodeLoader(new CollaborativeTextContainerRuntimeFactory()),
-	);
+	const tinyliciousModelLoader =
+		new TinyliciousModelLoader<ICollaborativeTextAppModel>(
+			new StaticCodeLoader(new CollaborativeTextContainerRuntimeFactory()),
+		);
 
 	let id: string;
 	let model: ICollaborativeTextAppModel;
@@ -46,7 +50,9 @@ async function start(): Promise<void> {
 	const contentDiv = document.querySelector("#content");
 	if (contentDiv !== null) {
 		ReactDOM.render(
-			React.createElement(CollaborativeTextView, { text: model.collaborativeText.text }),
+			React.createElement(CollaborativeTextView, {
+				text: model.collaborativeText.text,
+			}),
 			contentDiv,
 		);
 	}

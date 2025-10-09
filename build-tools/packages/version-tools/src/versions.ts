@@ -50,9 +50,16 @@ export function getSimpleVersion(
 		}
 	}
 
-	const { releaseVersion, prereleaseVersion } = parseFileVersion(version, buildId);
+	const { releaseVersion, prereleaseVersion } = parseFileVersion(
+		version,
+		buildId,
+	);
 	const build_suffix = buildId ? "" : argRelease ? "" : argBuildNum;
-	const fullVersion = generateSimpleVersion(releaseVersion, prereleaseVersion, build_suffix);
+	const fullVersion = generateSimpleVersion(
+		releaseVersion,
+		prereleaseVersion,
+		build_suffix,
+	);
 	return fullVersion;
 }
 
@@ -101,7 +108,9 @@ export function getIsLatest(
 	}
 
 	if (log) {
-		console.log(`Latest tagged: ${latestTaggedRelease}, current: ${current_version}`);
+		console.log(
+			`Latest tagged: ${latestTaggedRelease}, current: ${current_version}`,
+		);
 	}
 	const currentIsGreater = semver.gte(current_version, latestTaggedRelease);
 	const currentIsPrerelease = includeInternalVersions
@@ -151,7 +160,9 @@ function parseFileVersion(
 		// split the prerelease out
 		const r = releaseVersion.split(".");
 		if (r.length !== 3) {
-			console.error(`ERROR: Invalid format for release version ${releaseVersion}`);
+			console.error(
+				`ERROR: Invalid format for release version ${releaseVersion}`,
+			);
 			// eslint-disable-next-line unicorn/no-process-exit
 			process.exit(9);
 		}
@@ -182,7 +193,10 @@ function getVersions(prefix: TagPrefix): string[] {
  * @param tags - An array of tags as strings.
  * @returns An array of versions extracted from the provided tags.
  */
-export function getVersionsFromStrings(prefix: TagPrefix, tags: string[]): string[] {
+export function getVersionsFromStrings(
+	prefix: TagPrefix,
+	tags: string[],
+): string[] {
 	const versions = tags
 		.filter((v) => v.startsWith(`${prefix}_v`))
 		.map((tag) => tag.slice(`${prefix}_v`.length));

@@ -60,13 +60,15 @@ describe("validateAssertionError", () => {
 			() => {
 				assert(false, tag, () => "Extra");
 			},
-			(e: Error) => validateAssertionError(e, `${expanded}\nDebug Message: Extra`),
+			(e: Error) =>
+				validateAssertionError(e, `${expanded}\nDebug Message: Extra`),
 		);
 		strict.throws(
 			() => {
 				fail(tag, () => "Extra");
 			},
-			(e: Error) => validateAssertionError(e, `${expanded}\nDebug Message: Extra`),
+			(e: Error) =>
+				validateAssertionError(e, `${expanded}\nDebug Message: Extra`),
 		);
 	});
 });

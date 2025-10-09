@@ -6,8 +6,14 @@
 import { strict as assert } from "assert";
 
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { IContainer, IRuntime } from "@fluidframework/container-definitions/internal";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import {
+	IContainer,
+	IRuntime,
+} from "@fluidframework/container-definitions/internal";
+import {
+	ConfigTypes,
+	IConfigProviderBase,
+} from "@fluidframework/core-interfaces";
 import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
@@ -56,7 +62,9 @@ describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 	let dataObject1map: ISharedMap;
 	let dataObject2map: ISharedMap;
 
-	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => {
+	const configProvider = (
+		settings: Record<string, ConfigTypes>,
+	): IConfigProviderBase => {
 		return {
 			getRawConfig: (name: string): ConfigTypes => settings[name],
 		};
@@ -195,7 +203,9 @@ describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 	 *
 	 * @param containerConfig - the test container configuration
 	 */
-	const processOutOfOrderOp = async (featureGates: Record<string, ConfigTypes> = {}) => {
+	const processOutOfOrderOp = async (
+		featureGates: Record<string, ConfigTypes> = {},
+	) => {
 		await setupContainers(testContainerConfig, featureGates);
 
 		// Force the containers into write-mode
@@ -243,7 +253,10 @@ describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 		Promise.resolve()
 			.then(() => {
 				(localContainer.deltaManager as any).lastProcessedSequenceNumber += 1;
-				(dataObject1.context.containerRuntime as unknown as IRuntime).process(op, false);
+				(dataObject1.context.containerRuntime as unknown as IRuntime).process(
+					op,
+					false,
+				);
 				dataObject1map.set("key2", "value2");
 			})
 			.catch(() => {});

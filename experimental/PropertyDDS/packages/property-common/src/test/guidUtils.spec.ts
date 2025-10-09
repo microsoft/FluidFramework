@@ -167,7 +167,10 @@ const test16fromAndTo64 = function (base64, base16) {
 describe("Base16", function () {
 	testGuid(/^[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}$/i, false);
 	testInitialization("492b176c-bdc9-0dec-7c70-087a6a7bdac2", false);
-	testCorrectness("893fa0d4-c767-4133-829f-27434bf38cc8", "893fa0d4-c?767-4133-829f-27434b-8");
+	testCorrectness(
+		"893fa0d4-c767-4133-829f-27434bf38cc8",
+		"893fa0d4-c?767-4133-829f-27434b-8",
+	);
 	testConversion(
 		"8aecac9a-45d6-8009-0000-00002c033cfb",
 		[2330766490, 1171685385, 0, 738409723],
@@ -190,7 +193,11 @@ describe("Base64", function () {
 	testCorrectness("abcdffffffDEScvF9_-_-g", "abcdffffffDEScvF9_-_-0");
 	testCorrectness("--___---___---___0123Q", "--___---___---___0123a");
 	testCorrectness("AAAAAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAA%AAAAAAA");
-	testConversion("mqzsigmA1kUAAAAA-zwDLA", [2330766490, 1171685385, 0, 738409723], true);
+	testConversion(
+		"mqzsigmA1kUAAAAA-zwDLA",
+		[2330766490, 1171685385, 0, 738409723],
+		true,
+	);
 	testConversion(
 		"--___---___---___0123Q",
 		[4294963195, 4294950639, 4293917694, 3715517951],
@@ -299,7 +306,19 @@ describe("Base64", function () {
 	);
 });
 
-test16fromAndTo64("mqzsigmA1kUAAAAA-zwDLA", "8aecac9a-45d6-8009-0000-00002c033cfb");
-test16fromAndTo64("AAAAAAAAAAAAAAAAAAAAAA", "00000000-0000-0000-0000-000000000000");
-test16fromAndTo64("qtqv_f39u7sAq-7uq6urCg", "fdafdaaa-bbbb-fdfd-eeee-ab000aababab");
-test16fromAndTo64("_____5mZiIiqqgAAqqqqqg", "ffffffff-8888-9999-0000-aaaaaaaaaaaa");
+test16fromAndTo64(
+	"mqzsigmA1kUAAAAA-zwDLA",
+	"8aecac9a-45d6-8009-0000-00002c033cfb",
+);
+test16fromAndTo64(
+	"AAAAAAAAAAAAAAAAAAAAAA",
+	"00000000-0000-0000-0000-000000000000",
+);
+test16fromAndTo64(
+	"qtqv_f39u7sAq-7uq6urCg",
+	"fdafdaaa-bbbb-fdfd-eeee-ab000aababab",
+);
+test16fromAndTo64(
+	"_____5mZiIiqqgAAqqqqqg",
+	"ffffffff-8888-9999-0000-aaaaaaaaaaaa",
+);

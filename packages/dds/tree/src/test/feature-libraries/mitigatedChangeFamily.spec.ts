@@ -43,7 +43,10 @@ const throwingFamily: ChangeFamily<ChangeFamilyEditor, string> = {
 			assert.equal(isRollback, arg2);
 			throw new Error("invert");
 		},
-		rebase: (change: TaggedChange<string>, over: TaggedChange<string>): string => {
+		rebase: (
+			change: TaggedChange<string>,
+			over: TaggedChange<string>,
+		): string => {
 			assert.equal(change, arg1);
 			assert.equal(over, arg2);
 			throw new Error("rebase");
@@ -72,7 +75,10 @@ const returningFamily: ChangeFamily<ChangeFamilyEditor, string> = {
 			assert.equal(isRollback, arg2);
 			return "invert";
 		},
-		rebase: (change: TaggedChange<string>, over: TaggedChange<string>): string => {
+		rebase: (
+			change: TaggedChange<string>,
+			over: TaggedChange<string>,
+		): string => {
 			assert.equal(change, arg1);
 			assert.equal(over, arg2);
 			return "rebase";
@@ -83,11 +89,15 @@ const returningFamily: ChangeFamily<ChangeFamilyEditor, string> = {
 };
 
 const errorLog: unknown[] = [];
-const mitigatedThrowingFamily = makeMitigatedChangeFamily(throwingFamily, fallback, (error) =>
-	errorLog.push((error as Error).message),
+const mitigatedThrowingFamily = makeMitigatedChangeFamily(
+	throwingFamily,
+	fallback,
+	(error) => errorLog.push((error as Error).message),
 );
-const mitigatedReturningFamily = makeMitigatedChangeFamily(returningFamily, fallback, () =>
-	assert.fail("Unexpected onError call"),
+const mitigatedReturningFamily = makeMitigatedChangeFamily(
+	returningFamily,
+	fallback,
+	() => assert.fail("Unexpected onError call"),
 );
 const mitigatedReturningRebaser = mitigatedReturningFamily.rebaser;
 const mitigatedThrowingRebaser = mitigatedThrowingFamily.rebaser;
@@ -108,7 +118,10 @@ describe("makeMitigatedChangeFamily", () => {
 			mitigatedReturningRebaser.invert(arg1, arg2, revision),
 			returningRebaser.invert(arg1, arg2, revision),
 		);
-		assert.equal(mitigatedReturningRebaser.compose(arg1), returningRebaser.compose(arg1));
+		assert.equal(
+			mitigatedReturningRebaser.compose(arg1),
+			returningRebaser.compose(arg1),
+		);
 	});
 	describe("catches errors from", () => {
 		it("rebase", () => {
@@ -118,7 +131,10 @@ describe("makeMitigatedChangeFamily", () => {
 		});
 		it("invert", () => {
 			errorLog.length = 0;
-			assert.equal(mitigatedThrowingRebaser.invert(arg1, arg2, mintRevisionTag()), fallback);
+			assert.equal(
+				mitigatedThrowingRebaser.invert(arg1, arg2, mintRevisionTag()),
+				fallback,
+			);
 			assert.deepEqual(errorLog, ["invert"]);
 		});
 		it("compose", () => {

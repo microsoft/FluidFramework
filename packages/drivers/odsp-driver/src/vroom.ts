@@ -135,7 +135,8 @@ export const fetchJoinSession = mockify(
 					// pushV2 websocket urls will contain pushf
 					pushv2: socketUrl.includes("pushf"),
 					webSocketHostName,
-					refreshSessionDurationSeconds: response.content.refreshSessionDurationSeconds,
+					refreshSessionDurationSeconds:
+						response.content.refreshSessionDurationSeconds,
 				});
 
 				if (response.content.runtimeTenantId && !response.content.tenantId) {

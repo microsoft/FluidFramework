@@ -19,14 +19,20 @@ import {
 } from "@fluidframework/map/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
-import type { ISharedObject, IChannelView } from "@fluidframework/shared-object-base/internal";
+import type {
+	ISharedObject,
+	IChannelView,
+} from "@fluidframework/shared-object-base/internal";
 import type { ITreeInternal } from "@fluidframework/tree/internal";
 import { FieldKind, SharedTree } from "@fluidframework/tree/internal";
 
 import { EditType } from "../CommonInterfaces.js";
 import { getKeyForFluidObject } from "../FluidObjectKey.js";
 
-import type { VisualizeChildData, VisualizeSharedObject } from "./DataVisualization.js";
+import type {
+	VisualizeChildData,
+	VisualizeSharedObject,
+} from "./DataVisualization.js";
 import {
 	concatenateTypes,
 	determineNodeKind,
@@ -171,7 +177,10 @@ export const visualizeSharedDirectory: VisualizeSharedObject = async (
 	visualizeChildData: VisualizeChildData,
 ): Promise<FluidObjectTreeNode> => {
 	const sharedDirectory = sharedObject as ISharedDirectory;
-	const renderedChildData = await visualizeDirectory(sharedDirectory, visualizeChildData);
+	const renderedChildData = await visualizeDirectory(
+		sharedDirectory,
+		visualizeChildData,
+	);
 	return {
 		fluidObjectId: getKeyForFluidObject(sharedDirectory),
 		children: renderedChildData.children,
@@ -201,7 +210,10 @@ async function visualizeDirectory(
 	// Generate child entries for sub-directory
 	const subDirectories = directory.subdirectories();
 	for (const [path, subDirectory] of subDirectories) {
-		const renderedChild = await visualizeDirectory(subDirectory, visualizeChildData);
+		const renderedChild = await visualizeDirectory(
+			subDirectory,
+			visualizeChildData,
+		);
 		children[path] = renderedChild;
 	}
 
@@ -209,7 +221,7 @@ async function visualizeDirectory(
 		children,
 		metadata: {
 			"absolute-path": directory.absolutePath,
-			"values": directory.size,
+			values: directory.size,
 			"sub-directories": directory.countSubDirectory?.(),
 		},
 		typeMetadata: "IDirectory",
@@ -346,12 +358,13 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 	}
 
 	// Create a root field visualization that shows the allowed types at the root
-	const visualTreeRepresentation: VisualSharedTreeNode = await visualizeSharedTreeBySchema(
-		treeView,
-		treeDefinitions,
-		{ allowedTypes, isRequired },
-		visualizeChildData,
-	);
+	const visualTreeRepresentation: VisualSharedTreeNode =
+		await visualizeSharedTreeBySchema(
+			treeView,
+			treeDefinitions,
+			{ allowedTypes, isRequired },
+			visualizeChildData,
+		);
 
 	// Maps the `visualTreeRepresentation` in the format compatible to {@link visualizeChildData} function.
 	const visualTree = toVisualTree(visualTreeRepresentation);

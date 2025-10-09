@@ -27,7 +27,10 @@ export interface ISchemaEditor {
 	 * @param oldSchema - The schema being overwritten.
 	 * @param newSchema - The new schema to apply.
 	 */
-	setStoredSchema(oldSchema: TreeStoredSchema, newSchema: TreeStoredSchema): void;
+	setStoredSchema(
+		oldSchema: TreeStoredSchema,
+		newSchema: TreeStoredSchema,
+	): void;
 }
 
 /**
@@ -53,12 +56,16 @@ export class SharedTreeEditBuilder
 	public constructor(
 		modularChangeFamily: ModularChangeFamily,
 		mintRevisionTag: () => RevisionTag,
-		private readonly changeReceiver: (change: TaggedChange<SharedTreeChange>) => void,
+		private readonly changeReceiver: (
+			change: TaggedChange<SharedTreeChange>,
+		) => void,
 	) {
 		super(modularChangeFamily, mintRevisionTag, (taggedChange) =>
 			changeReceiver({
 				...taggedChange,
-				change: { changes: [{ type: "data", innerChange: taggedChange.change }] },
+				change: {
+					changes: [{ type: "data", innerChange: taggedChange.change }],
+				},
 			}),
 		);
 

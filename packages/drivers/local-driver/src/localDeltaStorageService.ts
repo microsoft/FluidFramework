@@ -40,8 +40,13 @@ export class LocalDeltaStorageService implements IDocumentDeltaStorageService {
 		// Need follow up
 		query["operation.sequenceNumber"].$lt = to ?? Number.MAX_SAFE_INTEGER;
 
-		const allDeltas = await this.databaseManager.getDeltaCollection(this.tenantId, this.id);
-		const dbDeltas = await allDeltas.find(query, { "operation.sequenceNumber": 1 });
+		const allDeltas = await this.databaseManager.getDeltaCollection(
+			this.tenantId,
+			this.id,
+		);
+		const dbDeltas = await allDeltas.find(query, {
+			"operation.sequenceNumber": 1,
+		});
 		const messages = dbDeltas.map((delta) => delta.operation);
 		return messages;
 	}

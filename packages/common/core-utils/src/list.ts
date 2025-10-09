@@ -57,10 +57,14 @@ class HeadNode<T> {
 		}
 	}
 	public get next(): DataNode<T> | undefined {
-		return this._next === this.headNode ? undefined : (this._next as DataNode<T>);
+		return this._next === this.headNode
+			? undefined
+			: (this._next as DataNode<T>);
 	}
 	public get prev(): DataNode<T> | undefined {
-		return this._prev === this.headNode ? undefined : (this._prev as DataNode<T>);
+		return this._prev === this.headNode
+			? undefined
+			: (this._prev as DataNode<T>);
 	}
 	public get list(): DoublyLinkedList<T> | undefined {
 		return this.headNode._list;
@@ -84,7 +88,10 @@ class DataNode<T> extends HeadNode<T> implements ListNode<T> {
 	}
 }
 
-function insertAfter<T>(node: DataNode<T> | HeadNode<T>, items: T[]): ListNodeRange<T> {
+function insertAfter<T>(
+	node: DataNode<T> | HeadNode<T>,
+	items: T[],
+): ListNodeRange<T> {
 	let previousNode = node;
 	const oldNext = previousNode._next;
 	let newRange: ListNodeRange<T> | undefined;
@@ -228,7 +235,10 @@ export class DoublyLinkedList<T>
 	 * @param countOrEnd - The number of nodes to remove or the end node.
 	 * @returns A new list containing the removed nodes.
 	 */
-	public splice(start: ListNode<T>, countOrEnd?: ListNode<T> | number): DoublyLinkedList<T> {
+	public splice(
+		start: ListNode<T>,
+		countOrEnd?: ListNode<T> | number,
+	): DoublyLinkedList<T> {
 		const newList = new DoublyLinkedList<T>();
 		walkList(
 			this,

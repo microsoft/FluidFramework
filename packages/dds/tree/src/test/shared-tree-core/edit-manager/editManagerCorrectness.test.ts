@@ -5,10 +5,17 @@
 
 import { strict as assert } from "node:assert";
 
-import { describeStress, StressMode } from "@fluid-private/stochastic-test-utils";
+import {
+	describeStress,
+	StressMode,
+} from "@fluid-private/stochastic-test-utils";
 import type { SessionId } from "@fluidframework/id-compressor";
 
-import type { ChangeFamily, ChangeFamilyEditor, RevisionTag } from "../../../core/index.js";
+import type {
+	ChangeFamily,
+	ChangeFamilyEditor,
+	RevisionTag,
+} from "../../../core/index.js";
 import type {
 	Commit,
 	EditManager,
@@ -19,7 +26,10 @@ import { NoOpChangeRebaser, TestChange } from "../../testChange.js";
 import { mintRevisionTag } from "../../utils.js";
 
 import { buildScenario, runUnitTestScenario } from "./editManagerScenario.js";
-import { checkChangeList, testChangeEditManagerFactory } from "./editManagerTestUtils.js";
+import {
+	checkChangeList,
+	testChangeEditManagerFactory,
+} from "./editManagerTestUtils.js";
 
 const localSessionId: SessionId = "0" as SessionId;
 const peer1: SessionId = "1" as SessionId;
@@ -40,14 +50,17 @@ export function testCorrectness() {
 				],
 			);
 
-			runUnitTestScenario("Can handle non-concurrent local changes being sequenced later", [
-				{ seq: 1, type: "Push" },
-				{ seq: 2, type: "Push" },
-				{ seq: 3, type: "Push" },
-				{ seq: 1, type: "Ack" },
-				{ seq: 2, type: "Ack" },
-				{ seq: 3, type: "Ack" },
-			]);
+			runUnitTestScenario(
+				"Can handle non-concurrent local changes being sequenced later",
+				[
+					{ seq: 1, type: "Push" },
+					{ seq: 2, type: "Push" },
+					{ seq: 3, type: "Push" },
+					{ seq: 1, type: "Ack" },
+					{ seq: 2, type: "Ack" },
+					{ seq: 3, type: "Ack" },
+				],
+			);
 
 			runUnitTestScenario(
 				"Can handle non-concurrent local changes partially sequenced later",
@@ -61,30 +74,42 @@ export function testCorrectness() {
 				],
 			);
 
-			runUnitTestScenario("Can handle non-concurrent peer changes sequenced immediately", [
-				{ seq: 1, type: "Pull", ref: 0, from: peer1 },
-				{ seq: 2, type: "Pull", ref: 1, from: peer1 },
-				{ seq: 3, type: "Pull", ref: 2, from: peer1 },
-			]);
+			runUnitTestScenario(
+				"Can handle non-concurrent peer changes sequenced immediately",
+				[
+					{ seq: 1, type: "Pull", ref: 0, from: peer1 },
+					{ seq: 2, type: "Pull", ref: 1, from: peer1 },
+					{ seq: 3, type: "Pull", ref: 2, from: peer1 },
+				],
+			);
 
-			runUnitTestScenario("Can handle non-concurrent peer changes sequenced later", [
-				{ seq: 1, type: "Pull", ref: 0, from: peer1 },
-				{ seq: 2, type: "Pull", ref: 0, from: peer1 },
-				{ seq: 3, type: "Pull", ref: 0, from: peer1 },
-			]);
+			runUnitTestScenario(
+				"Can handle non-concurrent peer changes sequenced later",
+				[
+					{ seq: 1, type: "Pull", ref: 0, from: peer1 },
+					{ seq: 2, type: "Pull", ref: 0, from: peer1 },
+					{ seq: 3, type: "Pull", ref: 0, from: peer1 },
+				],
+			);
 
-			runUnitTestScenario("Can handle non-concurrent peer changes partially sequenced later", [
-				{ seq: 1, type: "Pull", ref: 0, from: peer1 },
-				{ seq: 2, type: "Pull", ref: 0, from: peer1 },
-				{ seq: 3, type: "Pull", ref: 1, from: peer1 },
-			]);
+			runUnitTestScenario(
+				"Can handle non-concurrent peer changes partially sequenced later",
+				[
+					{ seq: 1, type: "Pull", ref: 0, from: peer1 },
+					{ seq: 2, type: "Pull", ref: 0, from: peer1 },
+					{ seq: 3, type: "Pull", ref: 1, from: peer1 },
+				],
+			);
 
-			runUnitTestScenario("Can rebase a single peer change over multiple peer changes", [
-				{ seq: 1, type: "Pull", ref: 0, from: peer1 },
-				{ seq: 2, type: "Pull", ref: 1, from: peer1 },
-				{ seq: 3, type: "Pull", ref: 2, from: peer1 },
-				{ seq: 4, type: "Pull", ref: 0, from: peer2 },
-			]);
+			runUnitTestScenario(
+				"Can rebase a single peer change over multiple peer changes",
+				[
+					{ seq: 1, type: "Pull", ref: 0, from: peer1 },
+					{ seq: 2, type: "Pull", ref: 1, from: peer1 },
+					{ seq: 3, type: "Pull", ref: 2, from: peer1 },
+					{ seq: 4, type: "Pull", ref: 0, from: peer2 },
+				],
+			);
 
 			runUnitTestScenario("Can rebase multiple non-interleaved peer changes", [
 				{ seq: 1, type: "Pull", ref: 0, from: peer1 },
@@ -135,29 +160,65 @@ export function testCorrectness() {
 				{ seq: 6, type: "Pull", ref: 2, from: peer1, expectedDelta: [6] },
 			]);
 
-			runUnitTestScenario("Can rebase multiple interleaved peer and local changes", [
-				{ seq: 3, type: "Push" },
-				{ seq: 1, type: "Pull", ref: 0, from: peer1, expectedDelta: [-3, 1, 3] },
-				{ seq: 2, type: "Pull", ref: 0, from: peer2, expectedDelta: [-3, 2, 3] },
-				{ seq: 6, type: "Push" },
-				{ seq: 8, type: "Push" },
-				{ seq: 3, type: "Ack" },
-				{ seq: 4, type: "Pull", ref: 1, from: peer1, expectedDelta: [-8, -6, 4, 6, 8] },
-				{ seq: 5, type: "Pull", ref: 2, from: peer1, expectedDelta: [-8, -6, 5, 6, 8] },
-				{ seq: 6, type: "Ack" },
-				{ seq: 7, type: "Pull", ref: 0, from: peer2, expectedDelta: [-8, 7, 8] },
-				{ seq: 8, type: "Ack" },
-				{ seq: 9, type: "Pull", ref: 0, from: peer2, expectedDelta: [9] },
-			]);
+			runUnitTestScenario(
+				"Can rebase multiple interleaved peer and local changes",
+				[
+					{ seq: 3, type: "Push" },
+					{
+						seq: 1,
+						type: "Pull",
+						ref: 0,
+						from: peer1,
+						expectedDelta: [-3, 1, 3],
+					},
+					{
+						seq: 2,
+						type: "Pull",
+						ref: 0,
+						from: peer2,
+						expectedDelta: [-3, 2, 3],
+					},
+					{ seq: 6, type: "Push" },
+					{ seq: 8, type: "Push" },
+					{ seq: 3, type: "Ack" },
+					{
+						seq: 4,
+						type: "Pull",
+						ref: 1,
+						from: peer1,
+						expectedDelta: [-8, -6, 4, 6, 8],
+					},
+					{
+						seq: 5,
+						type: "Pull",
+						ref: 2,
+						from: peer1,
+						expectedDelta: [-8, -6, 5, 6, 8],
+					},
+					{ seq: 6, type: "Ack" },
+					{
+						seq: 7,
+						type: "Pull",
+						ref: 0,
+						from: peer2,
+						expectedDelta: [-8, 7, 8],
+					},
+					{ seq: 8, type: "Ack" },
+					{ seq: 9, type: "Pull", ref: 0, from: peer2, expectedDelta: [9] },
+				],
+			);
 
-			runUnitTestScenario("Can handle ref numbers to operations that are not commits", [
-				{ seq: 2, type: "Pull", ref: 0, from: peer1 },
-				{ seq: 4, type: "Pull", ref: 1, from: peer2 },
-				{ seq: 6, type: "Pull", ref: 3, from: peer1 },
-				{ seq: 8, type: "Pull", ref: 3, from: peer1 },
-				{ seq: 10, type: "Pull", ref: 1, from: peer2 },
-				{ seq: 12, type: "Pull", ref: 1, from: peer2 },
-			]);
+			runUnitTestScenario(
+				"Can handle ref numbers to operations that are not commits",
+				[
+					{ seq: 2, type: "Pull", ref: 0, from: peer1 },
+					{ seq: 4, type: "Pull", ref: 1, from: peer2 },
+					{ seq: 6, type: "Pull", ref: 3, from: peer1 },
+					{ seq: 8, type: "Pull", ref: 3, from: peer1 },
+					{ seq: 10, type: "Pull", ref: 1, from: peer2 },
+					{ seq: 12, type: "Pull", ref: 1, from: peer2 },
+				],
+			);
 
 			runUnitTestScenario("Can rebase changes from a peer that catches up", [
 				{ seq: 1, type: "Push" },
@@ -179,19 +240,22 @@ export function testCorrectness() {
 				],
 			);
 
-			runUnitTestScenario("can handle changes that are bunched and have same seq", [
-				{ seq: 1, type: "Push" },
-				{ seq: 1, type: "Ack" },
-				{ seq: 2, type: "Push" },
-				{ seq: 2, type: "Ack" },
-				{ seq: 3, type: "Pull", ref: 1, from: peer1 },
-				{ seq: 4, type: "Push" },
-				{ seq: 4, type: "Push" },
-				{ seq: 4, type: "Ack" },
-				{ seq: 4, type: "Ack" },
-				{ seq: 6, type: "Pull", ref: 2, from: peer1 },
-				{ seq: 6, type: "Pull", ref: 2, from: peer1 },
-			]);
+			runUnitTestScenario(
+				"can handle changes that are bunched and have same seq",
+				[
+					{ seq: 1, type: "Push" },
+					{ seq: 1, type: "Ack" },
+					{ seq: 2, type: "Push" },
+					{ seq: 2, type: "Ack" },
+					{ seq: 3, type: "Pull", ref: 1, from: peer1 },
+					{ seq: 4, type: "Push" },
+					{ seq: 4, type: "Push" },
+					{ seq: 4, type: "Ack" },
+					{ seq: 4, type: "Ack" },
+					{ seq: 6, type: "Pull", ref: 2, from: peer1 },
+					{ seq: 6, type: "Pull", ref: 2, from: peer1 },
+				],
+			);
 
 			describe("Trunk eviction", () => {
 				it("Evicts trunk commits according to a provided minimum sequence number", () => {
@@ -380,7 +444,13 @@ export function testCorrectness() {
 					);
 					const local = applyLocalCommit(manager, [1], 2);
 					manager.advanceMinimumSequenceNumber(brand(2));
-					manager.addSequencedChanges([local], local.sessionId, brand(3), brand(2), "main");
+					manager.addSequencedChanges(
+						[local],
+						local.sessionId,
+						brand(3),
+						brand(2),
+						"main",
+					);
 					checkChangeList(manager, [2]);
 
 					assert.deepEqual(trimmedCommits, expectedTrimmedRevisions);
@@ -401,7 +471,13 @@ export function testCorrectness() {
 					);
 					const local = applyLocalCommit(manager, [1], 2);
 					const fork = manager.getLocalBranch("main").fork();
-					manager.addSequencedChanges([local], local.sessionId, brand(2), brand(1), "main");
+					manager.addSequencedChanges(
+						[local],
+						local.sessionId,
+						brand(2),
+						brand(1),
+						"main",
+					);
 					expectedTrimmedRevisions.add(local.revision);
 					checkChangeList(manager, [1, 2]);
 					manager.advanceMinimumSequenceNumber(brand(2));
@@ -419,10 +495,22 @@ export function testCorrectness() {
 					const local1 = applyLocalCommit(manager, [], 1);
 					const fork1 = manager.getLocalBranch("main").fork();
 					expectedTrimmedRevisions.add(local1.revision);
-					manager.addSequencedChanges([local1], local1.sessionId, brand(1), brand(0), "main");
+					manager.addSequencedChanges(
+						[local1],
+						local1.sessionId,
+						brand(1),
+						brand(0),
+						"main",
+					);
 					const local2 = applyLocalCommit(manager, [1], 2);
 					const fork2 = manager.getLocalBranch("main").fork();
-					manager.addSequencedChanges([local2], local2.sessionId, brand(2), brand(1), "main");
+					manager.addSequencedChanges(
+						[local2],
+						local2.sessionId,
+						brand(2),
+						brand(1),
+						"main",
+					);
 					checkChangeList(manager, [1, 2]);
 
 					// The code above defines the following relationships between commits:
@@ -473,7 +561,13 @@ export function testCorrectness() {
 						"main",
 					);
 					expectedTrimmedRevisions.add(local1.revision);
-					manager.addSequencedChanges([local1], local1.sessionId, brand(2), brand(0), "main");
+					manager.addSequencedChanges(
+						[local1],
+						local1.sessionId,
+						brand(2),
+						brand(0),
+						"main",
+					);
 					const local2 = applyLocalCommit(manager, [1, 2], 4);
 					const fork2 = manager.getLocalBranch("main").fork();
 					const peerCommit2 = peerCommit(peer1, [1, 2], 3);
@@ -485,7 +579,13 @@ export function testCorrectness() {
 						brand(2),
 						"main",
 					);
-					manager.addSequencedChanges([local2], local2.sessionId, brand(4), brand(2), "main");
+					manager.addSequencedChanges(
+						[local2],
+						local2.sessionId,
+						brand(4),
+						brand(2),
+						"main",
+					);
 					checkChangeList(manager, [1, 2, 3, 4]);
 
 					// The code above defines the following relationships between commits:
@@ -635,7 +735,10 @@ export function testCorrectness() {
 					brand(1),
 					"main",
 				);
-				assert.equal(manager.getLocalBranch("main").getHead(), manager.getTrunkHead("main"));
+				assert.equal(
+					manager.getLocalBranch("main").getHead(),
+					manager.getTrunkHead("main"),
+				);
 			});
 
 			describe("fast-forwarding", () => {
@@ -645,16 +748,37 @@ export function testCorrectness() {
 					const local2 = applyLocalCommit(manager, [1], 2);
 					const [commit1, commit2] = manager.getLocalCommits("main");
 
-					manager.addSequencedChanges([local1], local1.sessionId, brand(1), brand(0), "main");
+					manager.addSequencedChanges(
+						[local1],
+						local1.sessionId,
+						brand(1),
+						brand(0),
+						"main",
+					);
 					assert.deepEqual([commit1], manager.getTrunkCommits("main"));
 					assert.deepEqual([commit2], manager.getLocalCommits("main"));
 
 					const local3 = applyLocalCommit(manager, [1, 2], 3);
 					const [_, commit3] = manager.getLocalCommits("main");
 
-					manager.addSequencedChanges([local2], local2.sessionId, brand(2), brand(0), "main");
-					manager.addSequencedChanges([local3], local3.sessionId, brand(3), brand(1), "main");
-					assert.deepEqual([commit1, commit2, commit3], manager.getTrunkCommits("main"));
+					manager.addSequencedChanges(
+						[local2],
+						local2.sessionId,
+						brand(2),
+						brand(0),
+						"main",
+					);
+					manager.addSequencedChanges(
+						[local3],
+						local3.sessionId,
+						brand(3),
+						brand(1),
+						"main",
+					);
+					assert.deepEqual(
+						[commit1, commit2, commit3],
+						manager.getTrunkCommits("main"),
+					);
 					assert.deepEqual([], manager.getLocalCommits("main"));
 				});
 
@@ -675,9 +799,27 @@ export function testCorrectness() {
 					//         └─(2) <- forkC
 					//             └─(3) <- forkD & local
 
-					manager.addSequencedChanges([local1], local1.sessionId, brand(1), brand(0), "main");
-					manager.addSequencedChanges([local2], local2.sessionId, brand(2), brand(0), "main");
-					manager.addSequencedChanges([local3], local3.sessionId, brand(3), brand(0), "main");
+					manager.addSequencedChanges(
+						[local1],
+						local1.sessionId,
+						brand(1),
+						brand(0),
+						"main",
+					);
+					manager.addSequencedChanges(
+						[local2],
+						local2.sessionId,
+						brand(2),
+						brand(0),
+						"main",
+					);
+					manager.addSequencedChanges(
+						[local3],
+						local3.sessionId,
+						brand(3),
+						brand(0),
+						"main",
+					);
 
 					// Because of fast-forwarding, we should now be in the following state:
 					//   (r)─(1)─(2)─(3) <- local
@@ -686,7 +828,10 @@ export function testCorrectness() {
 					//     |   └─ <- forkB
 					//     └─ <- forkA
 
-					assert.deepEqual([commit1, commit2, commit3], manager.getTrunkCommits("main"));
+					assert.deepEqual(
+						[commit1, commit2, commit3],
+						manager.getTrunkCommits("main"),
+					);
 					assert.deepEqual([], manager.getLocalCommits("main"));
 
 					assert.equal(forkA.getHead(), commit1.parent);
@@ -735,7 +880,10 @@ export function testCorrectness() {
 					);
 					manager.advanceMinimumSequenceNumber(brand(2));
 					manager.getLocalBranch("main").merge(fork);
-					assert.equal(manager.getLocalBranch("main").getHead().revision, forkCommit.revision);
+					assert.equal(
+						manager.getLocalBranch("main").getHead().revision,
+						forkCommit.revision,
+					);
 				});
 			});
 
@@ -864,7 +1012,10 @@ export function testCorrectness() {
 				this.timeout(60_000);
 			}
 
-			const peers: SessionId[] = makeArray(NUM_PEERS, (i) => String(i + 1) as SessionId);
+			const peers: SessionId[] = makeArray(
+				NUM_PEERS,
+				(i) => String(i + 1) as SessionId,
+			);
 			const meta = {
 				peerRefs: makeArray(NUM_PEERS, () => 0),
 				seq: 0,
@@ -901,7 +1052,11 @@ function applyLocalCommit(
 	inputContext: readonly number[] = [],
 	intention: number | number[] = [],
 ): Commit<TestChange> {
-	return applyBranchCommit(manager.getLocalBranch("main"), inputContext, intention);
+	return applyBranchCommit(
+		manager.getLocalBranch("main"),
+		inputContext,
+		intention,
+	);
 }
 
 function applyBranchCommit(

@@ -37,7 +37,8 @@ describe("separate-container migration", () => {
 			// Validate the migration status shows "one"
 			await page.waitForSelector(".migration-status");
 			const containsOne = await page.evaluate(() => {
-				const migrationStatusElement = document.querySelector(".migration-status");
+				const migrationStatusElement =
+					document.querySelector(".migration-status");
 				return migrationStatusElement?.textContent?.includes("one") === true;
 			});
 			expect(containsOne).toEqual(true);
@@ -50,12 +51,18 @@ describe("separate-container migration", () => {
 				page.waitForSelector("#sbs-right .migration-status"),
 			]);
 			const leftContainsOne = await page.evaluate(() => {
-				const migrationStatusElements = document.querySelectorAll(".migration-status");
-				return migrationStatusElements[0]?.textContent?.includes("one") === true;
+				const migrationStatusElements =
+					document.querySelectorAll(".migration-status");
+				return (
+					migrationStatusElements[0]?.textContent?.includes("one") === true
+				);
 			});
 			const rightContainsOne = await page.evaluate(() => {
-				const migrationStatusElements = document.querySelectorAll(".migration-status");
-				return migrationStatusElements[1]?.textContent?.includes("one") === true;
+				const migrationStatusElements =
+					document.querySelectorAll(".migration-status");
+				return (
+					migrationStatusElements[1]?.textContent?.includes("one") === true
+				);
 			});
 			expect(leftContainsOne).toEqual(true);
 			expect(rightContainsOne).toEqual(true);
@@ -67,11 +74,13 @@ describe("separate-container migration", () => {
 
 			// Get a promise that will resolve when both sides have finished migration
 			const migrationP = page.evaluate(async () => {
-				const migrationPs = (window["migrators"] as IMigrator[]).map(async (migrator) => {
-					return new Promise<void>((resolve) => {
-						migrator.events.once("migrated", resolve);
-					});
-				});
+				const migrationPs = (window["migrators"] as IMigrator[]).map(
+					async (migrator) => {
+						return new Promise<void>((resolve) => {
+							migrator.events.once("migrated", resolve);
+						});
+					},
+				);
 				return Promise.all(migrationPs);
 			});
 
@@ -81,12 +90,18 @@ describe("separate-container migration", () => {
 
 			// After migration, the view should update.  Wait and confirm the migration status shows "two".
 			await page.waitForFunction(() => {
-				const migrationStatusElements = document.querySelectorAll(".migration-status");
-				return migrationStatusElements[0]?.textContent?.includes("two") === true;
+				const migrationStatusElements =
+					document.querySelectorAll(".migration-status");
+				return (
+					migrationStatusElements[0]?.textContent?.includes("two") === true
+				);
 			});
 			await page.waitForFunction(() => {
-				const migrationStatusElements = document.querySelectorAll(".migration-status");
-				return migrationStatusElements[1]?.textContent?.includes("two") === true;
+				const migrationStatusElements =
+					document.querySelectorAll(".migration-status");
+				return (
+					migrationStatusElements[1]?.textContent?.includes("two") === true
+				);
 			});
 		});
 	});
@@ -113,12 +128,18 @@ describe("separate-container migration", () => {
 			);
 
 			const leftContainsOne = await page.evaluate(() => {
-				const migrationStatusElements = document.querySelectorAll(".migration-status");
-				return migrationStatusElements[0]?.textContent?.includes("one") === true;
+				const migrationStatusElements =
+					document.querySelectorAll(".migration-status");
+				return (
+					migrationStatusElements[0]?.textContent?.includes("one") === true
+				);
 			});
 			const rightContainsOne = await page.evaluate(() => {
-				const migrationStatusElements = document.querySelectorAll(".migration-status");
-				return migrationStatusElements[1]?.textContent?.includes("one") === true;
+				const migrationStatusElements =
+					document.querySelectorAll(".migration-status");
+				return (
+					migrationStatusElements[1]?.textContent?.includes("one") === true
+				);
 			});
 			expect(leftContainsOne).toEqual(true);
 			expect(rightContainsOne).toEqual(true);
@@ -130,7 +151,8 @@ describe("separate-container migration", () => {
 					(window["containers"] as IContainer[])[0] as unknown as IContainer
 				).getQuorum();
 				const alreadyHasSummarizer = [...leftQuorum.getMembers().values()].some(
-					(sequencedClient) => sequencedClient.client.details.type === "summarizer",
+					(sequencedClient) =>
+						sequencedClient.client.details.type === "summarizer",
 				);
 				if (alreadyHasSummarizer) {
 					// This should be the path taken since demo mode should spawn the summarizer instantly.
@@ -138,7 +160,10 @@ describe("separate-container migration", () => {
 				}
 				// In case the summarizer isn't quite connected yet, return a Promise so we can await for it to join.
 				return new Promise<void>((resolve) => {
-					const watchForSummarizer = (clientId, sequencedClient: ISequencedClient): void => {
+					const watchForSummarizer = (
+						clientId,
+						sequencedClient: ISequencedClient,
+					): void => {
 						if (sequencedClient.client.details.type === "summarizer") {
 							resolve();
 							leftQuorum.off("addMember", watchForSummarizer);
@@ -164,11 +189,13 @@ describe("separate-container migration", () => {
 						throw new Error("Unexpected early migration!");
 					}
 				}
-				const migrationPs = (window["migrators"] as IMigrator[]).map(async (migrator) => {
-					return new Promise<void>((resolve) => {
-						migrator.events.once("migrated", resolve);
-					});
-				});
+				const migrationPs = (window["migrators"] as IMigrator[]).map(
+					async (migrator) => {
+						return new Promise<void>((resolve) => {
+							migrator.events.once("migrated", resolve);
+						});
+					},
+				);
 				return Promise.all(migrationPs);
 			});
 
@@ -178,12 +205,18 @@ describe("separate-container migration", () => {
 
 			// After migration, the view should update.  Wait and confirm the migration status shows "two".
 			await page.waitForFunction(() => {
-				const migrationStatusElements = document.querySelectorAll(".migration-status");
-				return migrationStatusElements[0]?.textContent?.includes("two") === true;
+				const migrationStatusElements =
+					document.querySelectorAll(".migration-status");
+				return (
+					migrationStatusElements[0]?.textContent?.includes("two") === true
+				);
 			});
 			await page.waitForFunction(() => {
-				const migrationStatusElements = document.querySelectorAll(".migration-status");
-				return migrationStatusElements[1]?.textContent?.includes("two") === true;
+				const migrationStatusElements =
+					document.querySelectorAll(".migration-status");
+				return (
+					migrationStatusElements[1]?.textContent?.includes("two") === true
+				);
 			});
 		});
 	});

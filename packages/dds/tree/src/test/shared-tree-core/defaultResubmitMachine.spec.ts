@@ -4,7 +4,11 @@
  */
 
 import { strict as assert } from "node:assert";
-import type { GraphCommit, RevisionTag, TaggedChange } from "../../core/index.js";
+import type {
+	GraphCommit,
+	RevisionTag,
+	TaggedChange,
+} from "../../core/index.js";
 import { testIdCompressor } from "../utils.js";
 import {
 	type ChangeEnricherMutableCheckout,
@@ -38,7 +42,10 @@ export class MockChangeEnricher
 		MockChangeEnricher.checkoutsCreated = 0;
 	}
 
-	public constructor(getContext: () => RevisionTag, isReadonly: boolean = true) {
+	public constructor(
+		getContext: () => RevisionTag,
+		isReadonly: boolean = true,
+	) {
 		this.getContext = getContext;
 		this.isReadonly = isReadonly;
 		MockChangeEnricher.checkoutsCreated += 1;
@@ -54,7 +61,9 @@ export class MockChangeEnricher
 		return new MockChangeEnricher(() => fixedContext, false);
 	}
 
-	public updateChangeEnrichments(change: MockEnrichableChange): MockEnrichableChange {
+	public updateChangeEnrichments(
+		change: MockEnrichableChange,
+	): MockEnrichableChange {
 		assert.equal(this.isDisposed, false);
 		assert.equal(change.inputContext, this.context);
 		MockChangeEnricher.commitsEnriched += 1;
@@ -64,7 +73,10 @@ export class MockChangeEnricher
 		};
 	}
 
-	public applyTipChange(change: MockEnrichableChange, revision?: RevisionTag): void {
+	public applyTipChange(
+		change: MockEnrichableChange,
+		revision?: RevisionTag,
+	): void {
 		assert.equal(this.isDisposed, false);
 		assert.equal(this.isReadonly, false);
 		assert.equal(change.inputContext, this.context);
@@ -166,7 +178,10 @@ describe("DefaultResubmitMachine", () => {
 			};
 
 			MockChangeEnricher.resetCounters();
-			const enriched2Resubmit = machine.getEnrichedCommit(rebased2.revision, () => [rebased2]);
+			const enriched2Resubmit = machine.getEnrichedCommit(
+				rebased2.revision,
+				() => [rebased2],
+			);
 			assert(enriched2Resubmit !== undefined);
 			machine.onCommitSubmitted(enriched2Resubmit);
 
@@ -271,10 +286,10 @@ describe("DefaultResubmitMachine", () => {
 					change: { ...commit2.change, rebased: true },
 				};
 				MockChangeEnricher.resetCounters();
-				const enriched1Resubmit = machine.getEnrichedCommit(rebased1.revision, () => [
-					rebased1,
-					rebased2,
-				]);
+				const enriched1Resubmit = machine.getEnrichedCommit(
+					rebased1.revision,
+					() => [rebased1, rebased2],
+				);
 
 				assert.deepEqual(enriched1Resubmit, {
 					change: {
@@ -287,8 +302,9 @@ describe("DefaultResubmitMachine", () => {
 				});
 
 				machine.onCommitSubmitted(enriched1Resubmit);
-				const enriched2Resubmit = machine.getEnrichedCommit(rebased2.revision, () =>
-					assert.fail(),
+				const enriched2Resubmit = machine.getEnrichedCommit(
+					rebased2.revision,
+					() => assert.fail(),
 				);
 
 				assert.deepEqual(enriched2Resubmit, {
@@ -310,7 +326,10 @@ describe("DefaultResubmitMachine", () => {
 
 				// Verify that the enricher can resubmit those commits again
 				assert.equal(
-					machine.getEnrichedCommit(rebased1.revision, () => [rebased1, rebased2]),
+					machine.getEnrichedCommit(rebased1.revision, () => [
+						rebased1,
+						rebased2,
+					]),
 					enriched1Resubmit,
 				);
 				machine.onCommitSubmitted(enriched1Resubmit);
@@ -349,11 +368,10 @@ describe("DefaultResubmitMachine", () => {
 			currentRevision = revision3;
 
 			MockChangeEnricher.resetCounters();
-			const enriched1Resubmit = machine.getEnrichedCommit(rebased1.revision, () => [
-				rebased1,
-				rebased2,
-				commit3,
-			]);
+			const enriched1Resubmit = machine.getEnrichedCommit(
+				rebased1.revision,
+				() => [rebased1, rebased2, commit3],
+			);
 
 			assert.deepEqual(enriched1Resubmit, {
 				change: {
@@ -366,8 +384,9 @@ describe("DefaultResubmitMachine", () => {
 			});
 
 			machine.onCommitSubmitted(enriched1Resubmit);
-			const enriched2Resubmit = machine.getEnrichedCommit(rebased2.revision, () =>
-				assert.fail(),
+			const enriched2Resubmit = machine.getEnrichedCommit(
+				rebased2.revision,
+				() => assert.fail(),
 			);
 
 			assert.deepEqual(enriched2Resubmit, {
@@ -382,8 +401,9 @@ describe("DefaultResubmitMachine", () => {
 			});
 
 			machine.onCommitSubmitted(enriched2Resubmit);
-			const enriched3Resubmit = machine.getEnrichedCommit(commit3.revision, () =>
-				assert.fail(),
+			const enriched3Resubmit = machine.getEnrichedCommit(
+				commit3.revision,
+				() => assert.fail(),
 			);
 
 			assert.equal(enriched3Resubmit, commit3);
@@ -399,7 +419,11 @@ describe("DefaultResubmitMachine", () => {
 
 			// Verify that the enricher can resubmit those commits again
 			assert.equal(
-				machine.getEnrichedCommit(rebased1.revision, () => [rebased1, rebased2, commit3]),
+				machine.getEnrichedCommit(rebased1.revision, () => [
+					rebased1,
+					rebased2,
+					commit3,
+				]),
 				enriched1Resubmit,
 			);
 			machine.onCommitSubmitted(enriched1Resubmit);
@@ -439,10 +463,10 @@ describe("DefaultResubmitMachine", () => {
 			MockChangeEnricher.resetCounters();
 
 			// The rebased commit2 should be enriched
-			const enriched2Resubmit = machine.getEnrichedCommit(rebased2.revision, () => [
-				rebased2,
-				commit3,
-			]);
+			const enriched2Resubmit = machine.getEnrichedCommit(
+				rebased2.revision,
+				() => [rebased2, commit3],
+			);
 
 			assert.deepEqual(enriched2Resubmit, {
 				change: {
@@ -458,8 +482,9 @@ describe("DefaultResubmitMachine", () => {
 			machine.onCommitSubmitted(enriched2Resubmit);
 
 			// commit3 should not be enriched
-			const enriched3Resubmit = machine.getEnrichedCommit(commit3.revision, () =>
-				assert.fail(),
+			const enriched3Resubmit = machine.getEnrichedCommit(
+				commit3.revision,
+				() => assert.fail(),
 			);
 			assert.deepEqual(enriched3Resubmit, commit3);
 			machine.onCommitSubmitted(enriched3Resubmit);

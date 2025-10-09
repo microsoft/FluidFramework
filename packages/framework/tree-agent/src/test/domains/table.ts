@@ -16,7 +16,8 @@ export class Cell extends sf.objectAlpha(
 		identifier: sf.identifier,
 		content: sf.optional([sf.string, sf.number, sf.boolean], {
 			metadata: {
-				description: "The content of the cell, or undefined if the cell is empty/blank",
+				description:
+					"The content of the cell, or undefined if the cell is empty/blank",
 			},
 		}),
 	},

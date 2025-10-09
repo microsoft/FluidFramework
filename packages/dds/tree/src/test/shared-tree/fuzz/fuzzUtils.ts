@@ -54,7 +54,12 @@ export class GUIDNode extends builder.object("GuidNode" as string, {
 	value: builder.optional(builder.string),
 }) {}
 
-export type InitialAllowedFuzzTypes = number | string | IFluidHandle | GUIDNode | FuzzNode;
+export type InitialAllowedFuzzTypes =
+	| number
+	| string
+	| IFluidHandle
+	| GUIDNode
+	| FuzzNode;
 
 const initialAllowedTypes = [
 	builder.string,
@@ -140,9 +145,12 @@ function createFuzzNodeSchema(
  * @param allowedTypes - additional allowedTypes outside of the {@link initialAllowedTypes} for the {@link FuzzNode}
  * @returns the tree's schema used for the fuzzView.
  */
-export function createTreeViewSchema(allowedTypes: TreeNodeSchema[]): typeof fuzzFieldSchema {
+export function createTreeViewSchema(
+	allowedTypes: TreeNodeSchema[],
+): typeof fuzzFieldSchema {
 	const schemaFactory = new SchemaFactory("treeFuzz");
-	const node = createFuzzNodeSchema(allowedTypes, schemaFactory).info.optionalChild;
+	const node = createFuzzNodeSchema(allowedTypes, schemaFactory).info
+		.optionalChild;
 	return node as unknown as typeof fuzzFieldSchema;
 }
 
@@ -172,7 +180,9 @@ export class SharedTreeFuzzTestFactory extends SharedTreeTestFactory {
 }
 
 export const FuzzTestOnCreate = (tree: ViewableTree) => {
-	const view = tree.viewWith(new TreeViewConfiguration({ schema: initialFuzzSchema }));
+	const view = tree.viewWith(
+		new TreeViewConfiguration({ schema: initialFuzzSchema }),
+	);
 	view.initialize(populatedInitialState);
 	view.dispose();
 };
@@ -181,7 +191,9 @@ export function createOnCreate(
 	initialState: NodeBuilderData<typeof FuzzNode> | undefined,
 ): (tree: ViewableTree) => void {
 	return (tree: ViewableTree) => {
-		const view = tree.viewWith(new TreeViewConfiguration({ schema: initialFuzzSchema }));
+		const view = tree.viewWith(
+			new TreeViewConfiguration({ schema: initialFuzzSchema }),
+		);
 		view.initialize(initialState);
 		view.dispose();
 	};
@@ -222,7 +234,9 @@ export function validateAnchors(
 	cursor.free();
 }
 
-export function createAnchors(tree: ITreeCheckout): Map<Anchor, [UpPath, Value]> {
+export function createAnchors(
+	tree: ITreeCheckout,
+): Map<Anchor, [UpPath, Value]> {
 	const anchors: Map<Anchor, [UpPath, Value]> = new Map();
 	const cursor = tree.forest.allocateCursor();
 	moveToDetachedField(tree.forest, cursor);
@@ -242,12 +256,20 @@ export type RevertibleSharedTreeView = TreeCheckout & {
 	unsubscribe: () => void;
 };
 
-export function isRevertibleSharedTreeView(s: ITreeCheckout): s is RevertibleSharedTreeView {
+export function isRevertibleSharedTreeView(
+	s: ITreeCheckout,
+): s is RevertibleSharedTreeView {
 	return (s as RevertibleSharedTreeView).undoStack !== undefined;
 }
 
-export const failureDirectory = pathJoin(testSrcPath, "shared-tree/fuzz/failures");
-export const successesDirectory = pathJoin(testSrcPath, "shared-tree/fuzz/successes");
+export const failureDirectory = pathJoin(
+	testSrcPath,
+	"shared-tree/fuzz/failures",
+);
+export const successesDirectory = pathJoin(
+	testSrcPath,
+	"shared-tree/fuzz/successes",
+);
 
 export const createOrDeserializeCompressor = (
 	sessionId: SessionId,
@@ -262,9 +284,9 @@ export const createOrDeserializeCompressor = (
 
 export const deterministicIdCompressorFactory: (
 	seed: number,
-) => (summary?: FuzzSerializedIdCompressor) => ReturnType<typeof createIdCompressor> = (
-	seed,
-) => {
+) => (
+	summary?: FuzzSerializedIdCompressor,
+) => ReturnType<typeof createIdCompressor> = (seed) => {
 	const random = makeRandom(seed);
 	return (summary?: FuzzSerializedIdCompressor) => {
 		const sessionId = random.uuid4() as SessionId;

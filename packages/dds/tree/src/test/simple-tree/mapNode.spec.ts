@@ -13,7 +13,9 @@ import { isTreeNode } from "../../simple-tree/core/index.js";
 
 const schemaFactory = new SchemaFactory("Test");
 
-const object = schemaFactory.object("object", { content: schemaFactory.number });
+const object = schemaFactory.object("object", {
+	content: schemaFactory.number,
+});
 
 const schema = schemaFactory.object("parent", {
 	map: schemaFactory.map(schemaFactory.string),

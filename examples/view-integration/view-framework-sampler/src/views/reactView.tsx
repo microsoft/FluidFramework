@@ -13,7 +13,10 @@ import { IDiceRoller } from "../dataObject.js";
  * @param diceRoller - The dice roller to be rendered
  * @param div - The HTMLElement to render into
  */
-export function reactRenderDiceRoller(diceRoller: IDiceRoller, div: HTMLDivElement) {
+export function reactRenderDiceRoller(
+	diceRoller: IDiceRoller,
+	div: HTMLDivElement,
+) {
 	ReactDOM.render(<DiceRollerView model={diceRoller} />, div);
 }
 

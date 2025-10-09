@@ -36,7 +36,10 @@ export class GitManager implements IGitManager {
 	/**
 	 * Reads the object with the given ID. We defer to the client implementation to do the actual read.
 	 */
-	public async getTree(root: string, recursive = true): Promise<IR11sResponse<IGitTree>> {
+	public async getTree(
+		root: string,
+		recursive = true,
+	): Promise<IR11sResponse<IGitTree>> {
 		return this.historian.getTree(root, recursive);
 	}
 
@@ -55,7 +58,9 @@ export class GitManager implements IGitManager {
 		return this.historian.createBlob(blob);
 	}
 
-	public async createGitTree(params: IGitCreateTreeParams): Promise<IR11sResponse<IGitTree>> {
+	public async createGitTree(
+		params: IGitCreateTreeParams,
+	): Promise<IR11sResponse<IGitTree>> {
 		const treeP = this.historian.createTree(params);
 		return treeP;
 	}
@@ -67,7 +72,9 @@ export class GitManager implements IGitManager {
 		return this.historian.createSummary(summary, initial);
 	}
 
-	public async getSnapshot(sha: string): Promise<IR11sResponse<IWholeFlatSnapshot>> {
+	public async getSnapshot(
+		sha: string,
+	): Promise<IR11sResponse<IWholeFlatSnapshot>> {
 		return this.historian.getSnapshot(sha);
 	}
 }

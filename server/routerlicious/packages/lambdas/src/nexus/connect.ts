@@ -175,17 +175,19 @@ async function connectOrderer(
 		LumberEventName.ConnectDocumentOrdererConnection,
 		lumberjackProperties,
 	);
-	const orderer = await ordererManager.getOrderer(tenantId, documentId).catch(async (error) => {
-		const errMsg = "Failed to get orderer manager.";
-		connectDocumentOrdererConnectionMetric.error("Failed to get orderer manager", error);
-		throw handleServerErrorAndConvertToNetworkError(
-			logger,
-			errMsg,
-			documentId,
-			tenantId,
-			error,
-		);
-	});
+	const orderer = await ordererManager
+		.getOrderer(tenantId, documentId)
+		.catch(async (error) => {
+			const errMsg = "Failed to get orderer manager.";
+			connectDocumentOrdererConnectionMetric.error("Failed to get orderer manager", error);
+			throw handleServerErrorAndConvertToNetworkError(
+				logger,
+				errMsg,
+				documentId,
+				tenantId,
+				error,
+			);
+		});
 
 	const connection = await orderer
 		.connect(socket, clientId, messageClient)
@@ -248,7 +250,9 @@ async function connectOrderer(
 		);
 	}
 
-	connectDocumentOrdererConnectionMetric.success("Successfully established orderer connection");
+	connectDocumentOrdererConnectionMetric.success(
+		"Successfully established orderer connection",
+	);
 
 	const connectedMessage = composeConnectedMessage(
 		connection.maxMessageSize,
@@ -315,7 +319,10 @@ function trackCollaborationSession(
 	}
 }
 
-function checkThrottle(tenantId: string, { throttlers, logger }: INexusLambdaDependencies): void {
+function checkThrottle(
+	tenantId: string,
+	{ throttlers, logger }: INexusLambdaDependencies,
+): void {
 	const throttleErrorPerCluster = checkThrottleAndUsage(
 		throttlers.connectionsPerCluster,
 		getSocketConnectThrottleId("connectDoc"),
@@ -590,7 +597,10 @@ export async function connectDocument(
 	);
 	const startTime = Date.now();
 
-	const connectMetric = Lumberjack.newLumberMetric(LumberEventName.ConnectDocument, properties);
+	const connectMetric = Lumberjack.newLumberMetric(
+		LumberEventName.ConnectDocument,
+		properties,
+	);
 
 	let tenantId = message.tenantId;
 	let documentId = message.id;
@@ -693,7 +703,7 @@ export async function connectDocument(
 					claims,
 					version,
 					clients,
-			  )
+				)
 			: {
 					connectedMessage: composeConnectedMessage(
 						1024 /* messageSize */,
@@ -706,7 +716,7 @@ export async function connectDocument(
 						clients,
 					),
 					disposeOrdererConnectionListener: (): void => {},
-			  };
+				};
 		// back-compat: remove cast to any once new definition of IConnected comes through.
 		(connectedMessage as any).timestamp = connectedTimestamp;
 		connectionTrace.stampStage(ConnectDocumentStage.MessageClientConnected);

@@ -53,9 +53,15 @@ export type {
 	UnknownObjectNode,
 } from "./data-visualization/index.js";
 export { VisualNodeKind } from "./data-visualization/index.js";
-export type { ContainerDevtoolsFeatureFlags, DevtoolsFeatureFlags } from "./Features.js";
+export type {
+	ContainerDevtoolsFeatureFlags,
+	DevtoolsFeatureFlags,
+} from "./Features.js";
 export type { IFluidDevtools } from "./IFluidDevtools.js";
-export { createDevtoolsLogger, type IDevtoolsLogger } from "./DevtoolsLogger.js";
+export {
+	createDevtoolsLogger,
+	type IDevtoolsLogger,
+} from "./DevtoolsLogger.js";
 export type { FluidDevtoolsProps } from "./FluidDevtools.js";
 export { initializeDevtools, tryGetFluidDevtools } from "./FluidDevtools.js";
 export type {

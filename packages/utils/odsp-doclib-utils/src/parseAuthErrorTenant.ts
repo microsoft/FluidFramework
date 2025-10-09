@@ -21,7 +21,9 @@ const oAuthBearerScheme = "Bearer";
  * authorization_uri="https://login.windows.net/common/oauth2/authorize"
  * ```
  */
-export function parseAuthErrorTenant(responseHeader: Headers): string | undefined {
+export function parseAuthErrorTenant(
+	responseHeader: Headers,
+): string | undefined {
 	const authHeaderData = responseHeader.get("www-authenticate");
 	if (!authHeaderData) {
 		return undefined;
@@ -41,7 +43,10 @@ export function parseAuthErrorTenant(responseHeader: Headers): string | undefine
 			if (!tenantId) {
 				const nameValuePair = section.split("=");
 				// values can be encoded and contain '=' symbol inside so it is possible to have more than one
-				if (nameValuePair.length >= 2 && nameValuePair[0].trim().toLowerCase() === "realm") {
+				if (
+					nameValuePair.length >= 2 &&
+					nameValuePair[0].trim().toLowerCase() === "realm"
+				) {
 					// TODO: this is assigning an object to a string.
 					// If this is intentional, we should document what's going on here.
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment

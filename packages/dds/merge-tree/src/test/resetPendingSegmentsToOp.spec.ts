@@ -20,7 +20,10 @@ import { clone } from "../properties.js";
 import { TextSegment } from "../textSegment.js";
 
 import { TestClient } from "./testClient.js";
-import { TestClientLogger, createClientsAtInitialState } from "./testClientLogger.js";
+import {
+	TestClientLogger,
+	createClientsAtInitialState,
+} from "./testClientLogger.js";
 
 describe("resetPendingSegmentsToOp", () => {
 	let client: TestClient;
@@ -75,7 +78,8 @@ describe("resetPendingSegmentsToOp", () => {
 				localPartialsComputed: boolean;
 				_localPartialsComputed: boolean;
 			};
-			spiedMergeTree._localPartialsComputed = spiedMergeTree.localPartialsComputed;
+			spiedMergeTree._localPartialsComputed =
+				spiedMergeTree.localPartialsComputed;
 			Object.defineProperty(
 				client.mergeTree as unknown as { localPartialsComputed: boolean },
 				"localPartialsComputed",
@@ -113,7 +117,10 @@ describe("resetPendingSegmentsToOp", () => {
 			// we expect a nack op per segment since our original ops split segments
 			// we should expect mores nack ops then original ops.
 			// only the first op didn't split a segment, all the others did
-			assert.equal(client.mergeTree.pendingSegments?.length, expectedSegmentCount);
+			assert.equal(
+				client.mergeTree.pendingSegments?.length,
+				expectedSegmentCount,
+			);
 			applyOpList(client);
 			assert(client.mergeTree.pendingSegments?.empty);
 		});
@@ -150,7 +157,10 @@ describe("resetPendingSegmentsToOp", () => {
 			// we expect a nack op per segment since our original ops split segments
 			// we should expect mores nack ops then original ops.
 			// only the first op didn't split a segment, all the others did
-			assert.equal(client.mergeTree.pendingSegments?.length, expectedSegmentCount);
+			assert.equal(
+				client.mergeTree.pendingSegments?.length,
+				expectedSegmentCount,
+			);
 			applyOpList(client);
 			assert(client.mergeTree.pendingSegments?.empty);
 		});
@@ -167,7 +177,10 @@ describe("resetPendingSegmentsToOp", () => {
 				refSeq: client.getCurrentSeq(),
 			}));
 
-			assert.equal(client.mergeTree.pendingSegments?.length, expectedSegmentCount * 2);
+			assert.equal(
+				client.mergeTree.pendingSegments?.length,
+				expectedSegmentCount * 2,
+			);
 
 			applyOpList(client);
 
@@ -206,7 +219,10 @@ describe("resetPendingSegmentsToOp", () => {
 			// we expect a nack op per segment since our original ops split segments
 			// we should expect mores nack ops then original ops.
 			// only the first op didn't split a segment, all the others did
-			assert.equal(client.mergeTree.pendingSegments?.length, expectedSegmentCount);
+			assert.equal(
+				client.mergeTree.pendingSegments?.length,
+				expectedSegmentCount,
+			);
 			applyOpList(client);
 			assert(client.mergeTree.pendingSegments?.empty);
 		});
@@ -225,7 +241,10 @@ describe("resetPendingSegmentsToOp", () => {
 			// we expect a nack op per segment since our original ops split segments
 			// we should expect mores nack ops then original ops.
 			// only the first op didn't split a segment, all the others did
-			assert.equal(client.mergeTree.pendingSegments?.length, expectedSegmentCount * 2);
+			assert.equal(
+				client.mergeTree.pendingSegments?.length,
+				expectedSegmentCount * 2,
+			);
 			applyOpList(client);
 			assert(client.mergeTree.pendingSegments?.empty);
 		});
@@ -308,25 +327,33 @@ describe("resetPendingSegmentsToOp", () => {
 
 describe("resetPendingSegmentsToOp.rebase", () => {
 	it("rebase with oustanding ops", () => {
-		const clients = createClientsAtInitialState({ initialState: "0123456789" }, "A", "B");
+		const clients = createClientsAtInitialState(
+			{ initialState: "0123456789" },
+			"A",
+			"B",
+		);
 
 		const logger = new TestClientLogger(clients.all);
-		const ops: [ISequencedDocumentMessage, SegmentGroup][] = Array.from({ length: 10 }).map(
-			(_, i) => [
-				clients.A.makeOpMessage(
-					clients.A.annotateRangeLocal(0, clients.A.getLength(), { prop: i }),
-					i + 1,
-				),
-				clients.A.peekPendingSegmentGroups()!,
-			],
-		);
+		const ops: [ISequencedDocumentMessage, SegmentGroup][] = Array.from({
+			length: 10,
+		}).map((_, i) => [
+			clients.A.makeOpMessage(
+				clients.A.annotateRangeLocal(0, clients.A.getLength(), { prop: i }),
+				i + 1,
+			),
+			clients.A.peekPendingSegmentGroups()!,
+		]);
 
 		ops.push(
 			...ops
 				.splice(Math.floor(ops.length / 2))
 				.map<[ISequencedDocumentMessage, SegmentGroup]>(([op, sg]) => [
 					clients.A.makeOpMessage(
-						clients.A.regeneratePendingOp(op.contents as IMergeTreeOp, sg, false),
+						clients.A.regeneratePendingOp(
+							op.contents as IMergeTreeOp,
+							sg,
+							false,
+						),
 						op.sequenceNumber,
 					),
 					clients.A.peekPendingSegmentGroups()!,

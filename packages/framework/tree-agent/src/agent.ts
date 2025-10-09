@@ -17,7 +17,12 @@ import type {
 } from "@fluidframework/tree/alpha";
 import { ObjectNodeSchema, Tree } from "@fluidframework/tree/alpha";
 
-import type { SharedTreeChatModel, EditResult, SemanticAgentOptions, Logger } from "./api.js";
+import type {
+	SharedTreeChatModel,
+	EditResult,
+	SemanticAgentOptions,
+	Logger,
+} from "./api.js";
 import { getPrompt, stringifyTree } from "./prompt.js";
 import { Subtree } from "./subtree.js";
 import {
@@ -107,7 +112,8 @@ export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
 		// Fork a branch that will live for the lifetime of this query (which can be multiple LLM calls if the there are errors or the LLM decides to take multiple steps to accomplish a task).
 		// The branch will be merged back into the outer branch if and only if the query succeeds.
 		const queryTree = this.outerTree.fork();
-		const maxEditCount = this.options?.maximumSequentialEdits ?? defaultMaxSequentialEdits;
+		const maxEditCount =
+			this.options?.maximumSequentialEdits ?? defaultMaxSequentialEdits;
 		let active = true;
 		let editCount = 0;
 		let editFailed = false;
@@ -166,7 +172,10 @@ export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
  * Creates an unhydrated node of the given schema with the given value.
  * @remarks If the schema is an object with {@link llmDefault | default values}, this function populates the node with those defaults.
  */
-function constructTreeNode(schema: TreeNodeSchema, value: FactoryContentObject): TreeNode {
+function constructTreeNode(
+	schema: TreeNodeSchema,
+	value: FactoryContentObject,
+): TreeNode {
 	if (schema instanceof ObjectNodeSchema) {
 		const inputWithDefaults: Record<string, InsertableContent | undefined> = {};
 		for (const [key, field] of schema.fields) {
@@ -204,7 +213,9 @@ async function applyTreeFunction<TSchema extends ImplicitFieldSchema>(
 	logger: Logger | undefined,
 ): Promise<EditResult> {
 	logger?.log(`### Editing Tool Invoked\n\n`);
-	logger?.log(`#### Generated Code\n\n\`\`\`javascript\n${editCode}\n\`\`\`\n\n`);
+	logger?.log(
+		`#### Generated Code\n\n\`\`\`javascript\n${editCode}\n\`\`\`\n\n`,
+	);
 
 	try {
 		await validateEdit(editCode);
@@ -221,7 +232,8 @@ async function applyTreeFunction<TSchema extends ImplicitFieldSchema>(
 	const create: Record<string, (input: FactoryContentObject) => TreeNode> = {};
 	for (const schema of findNamedSchemas(tree.schema)) {
 		const name = getFriendlyName(schema);
-		create[name] = (input: FactoryContentObject) => constructTreeNode(schema, input);
+		create[name] = (input: FactoryContentObject) =>
+			constructTreeNode(schema, input);
 	}
 
 	// Fork a branch to edit. If the edit fails or produces an error, we discard this branch, otherwise we merge it.
@@ -257,13 +269,12 @@ async function applyTreeFunction<TSchema extends ImplicitFieldSchema>(
 	};
 }
 
-const defaultValidateEdit: Required<SemanticAgentOptions>["validateEdit"] = () => {};
+const defaultValidateEdit: Required<SemanticAgentOptions>["validateEdit"] =
+	() => {};
 
-const defaultExecuteEdit: Required<SemanticAgentOptions>["executeEdit"] = async (
-	context,
-	code,
-) => {
-	// eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
-	const fn = new Function("context", code);
-	await fn(context);
-};
+const defaultExecuteEdit: Required<SemanticAgentOptions>["executeEdit"] =
+	async (context, code) => {
+		// eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
+		const fn = new Function("context", code);
+		await fn(context);
+	};

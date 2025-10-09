@@ -96,9 +96,7 @@ export class CheckpointManager {
 			.catch((error) => {
 				if (
 					error.name === "PendingCommitError" ||
-					this.consumer
-						.getIgnoreAndSkipCheckpointOnKafkaErrorCodes?.()
-						?.includes(error.code)
+					this.consumer.getIgnoreAndSkipCheckpointOnKafkaErrorCodes?.()?.includes(error.code)
 				) {
 					Lumberjack.info(`Skipping checkpoint for the error`, {
 						queuedMessageOffset: queuedMessage.offset,

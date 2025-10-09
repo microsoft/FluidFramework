@@ -144,7 +144,8 @@ describe("Int64ArrayProperty", function () {
 
 		it("Should support deserialization", function () {
 			var deserializedNode = PropertyFactory.create("Int64", "array");
-			var deserializedChanges1 = deserializedNode.deserialize(changeSetWithEntries);
+			var deserializedChanges1 =
+				deserializedNode.deserialize(changeSetWithEntries);
 			expect(deserializedChanges1).to.deep.equal(changeSetWithEntries);
 
 			var deserializedChanges3 = deserializedNode.deserialize({});
@@ -231,7 +232,9 @@ describe("Int64ArrayProperty", function () {
 				}
 				in_options.post(SC);
 			}
-			io_initialChangeset.applyChangeSet(squashedChangeset.getSerializedChangeSet());
+			io_initialChangeset.applyChangeSet(
+				squashedChangeset.getSerializedChangeSet(),
+			);
 		};
 
 		//
@@ -251,7 +254,9 @@ describe("Int64ArrayProperty", function () {
 				in_options.pre(testProperty._properties.int64Property);
 			}
 
-			var initialChangeset = new ChangeSet(testProperty.serialize({ dirtyOnly: false }));
+			var initialChangeset = new ChangeSet(
+				testProperty.serialize({ dirtyOnly: false }),
+			);
 			initialChangeset.setIsNormalized(true);
 
 			innerTestChangeSetSquashing(
@@ -268,7 +273,8 @@ describe("Int64ArrayProperty", function () {
 			} else {
 				// else they must be deep equal
 				expect(initialChangeset["array<Int64>"].int64Property).to.deep.equal(
-					testProperty.serialize({ dirtyOnly: false })["array<Int64>"].int64Property,
+					testProperty.serialize({ dirtyOnly: false })["array<Int64>"]
+						.int64Property,
 				);
 			}
 		};
@@ -295,7 +301,12 @@ describe("Int64ArrayProperty", function () {
 
 		it("should work for mixed modifies and inserts", function () {
 			testChangeSetSquashing({
-				callbacks: [insertInt64Value, modifyInt64Value, insertInt64Value, modifyInt64Value],
+				callbacks: [
+					insertInt64Value,
+					modifyInt64Value,
+					insertInt64Value,
+					modifyInt64Value,
+				],
 			});
 		});
 
@@ -318,7 +329,9 @@ describe("Int64ArrayProperty", function () {
 				pre: insertInt64Value,
 				callbacks: [modifyInt64Value, removeArrayElement],
 				post: function (changeset) {
-					expect(changeset["array<Int64>"].int64Property).to.have.all.keys("remove");
+					expect(changeset["array<Int64>"].int64Property).to.have.all.keys(
+						"remove",
+					);
 				},
 			});
 		});
@@ -326,7 +339,9 @@ describe("Int64ArrayProperty", function () {
 
 	describe("Rebasing", function () {
 		var createPropertyForRebaseTestByTemplate = function () {
-			return PropertyFactory.create("autodesk.tests:SimpleInt64TestProperty-1.0.0");
+			return PropertyFactory.create(
+				"autodesk.tests:SimpleInt64TestProperty-1.0.0",
+			);
 		};
 
 		var getint64PropertyFromNode = function (in_testProperty) {
@@ -375,7 +390,9 @@ describe("Int64ArrayProperty", function () {
 			}
 
 			// Get the ChangeSets
-			var changeSet1 = new ChangeSet(baseProperty1.serialize({ dirtyOnly: true }));
+			var changeSet1 = new ChangeSet(
+				baseProperty1.serialize({ dirtyOnly: true }),
+			);
 			var changeSet2 = baseProperty2.serialize({ dirtyOnly: true });
 
 			// Perform the actual rebase
@@ -405,9 +422,9 @@ describe("Int64ArrayProperty", function () {
 					expect(finalChangeSet).to.be.empty;
 				} else {
 					// else they must be deep equal
-					expect(combinedSerialized["array<Int64>"].int64Property).to.deep.equal(
-						finalChangeSet["array<Int64>"].int64Property,
-					);
+					expect(
+						combinedSerialized["array<Int64>"].int64Property,
+					).to.deep.equal(finalChangeSet["array<Int64>"].int64Property);
 				}
 			}
 
@@ -521,8 +538,12 @@ describe("Int64ArrayProperty", function () {
 				compareToSequential: true,
 				checkResult: function (conflicts, changeSet) {
 					expect(conflicts).to.have.length(1);
-					expect(changeSet["array<Int64>"].int64Property.modify[0][1]).to.deep.equal([[0, 2]]);
-					expect(conflicts[0].type).to.be.equal(ChangeSet.ConflictType.COLLIDING_SET);
+					expect(
+						changeSet["array<Int64>"].int64Property.modify[0][1],
+					).to.deep.equal([[0, 2]]);
+					expect(conflicts[0].type).to.be.equal(
+						ChangeSet.ConflictType.COLLIDING_SET,
+					);
 					expect(conflicts[0].path).to.be.equal("int64Property");
 				},
 			});
@@ -539,9 +560,14 @@ describe("Int64ArrayProperty", function () {
 				compareToSequential: true,
 				checkResult: function (conflicts, changeSet) {
 					expect(conflicts).to.have.length(1);
-					expect(conflicts[0].type).to.be.equal(ChangeSet.ConflictType.REMOVE_AFTER_MODIFY);
+					expect(conflicts[0].type).to.be.equal(
+						ChangeSet.ConflictType.REMOVE_AFTER_MODIFY,
+					);
 					expect(conflicts[0].path).to.be.equal("int64Property");
-					expect(changeSet["array<Int64>"].int64Property).to.have.all.keys("remove", "insert");
+					expect(changeSet["array<Int64>"].int64Property).to.have.all.keys(
+						"remove",
+						"insert",
+					);
 				},
 			});
 		});

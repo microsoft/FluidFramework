@@ -50,4 +50,9 @@ export {
 	throwOdspNetworkError,
 	tryParseErrorResponse,
 } from "./odspErrorUtils.js";
-export { getAsync, postAsync, putAsync, unauthPostAsync } from "./odspRequest.js";
+export {
+	getAsync,
+	postAsync,
+	putAsync,
+	unauthPostAsync,
+} from "./odspRequest.js";

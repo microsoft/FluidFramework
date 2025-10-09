@@ -15,11 +15,7 @@ describe("ConfigDumper", () => {
 			};
 
 			const secretNamesToRedactInConfigDump = ["key1"];
-			const configDumper = new ConfigDumper(
-				nconf,
-				undefined,
-				secretNamesToRedactInConfigDump,
-			);
+			const configDumper = new ConfigDumper(nconf, undefined, secretNamesToRedactInConfigDump);
 			configDumper.dumpConfig();
 			const redactedConfig = configDumper.getConfig();
 
@@ -34,11 +30,7 @@ describe("ConfigDumper", () => {
 			};
 
 			const secretNamesToRedactInConfigDump = ["key1"];
-			const configDumper = new ConfigDumper(
-				nconf,
-				undefined,
-				secretNamesToRedactInConfigDump,
-			);
+			const configDumper = new ConfigDumper(nconf, undefined, secretNamesToRedactInConfigDump);
 			configDumper.dumpConfig();
 			const redactedConfig = configDumper.getConfig();
 
@@ -52,11 +44,7 @@ describe("ConfigDumper", () => {
 			};
 
 			const secretNamesToRedactInConfigDump = [];
-			const configDumper = new ConfigDumper(
-				nconf,
-				undefined,
-				secretNamesToRedactInConfigDump,
-			);
+			const configDumper = new ConfigDumper(nconf, undefined, secretNamesToRedactInConfigDump);
 			configDumper.dumpConfig();
 			const redactedConfig = configDumper.getConfig();
 
@@ -71,11 +59,7 @@ describe("ConfigDumper", () => {
 			};
 
 			const secretNamesToRedactInConfigDump = ["key3"];
-			const configDumper = new ConfigDumper(
-				nconf,
-				undefined,
-				secretNamesToRedactInConfigDump,
-			);
+			const configDumper = new ConfigDumper(nconf, undefined, secretNamesToRedactInConfigDump);
 
 			assert.doesNotThrow(() => {
 				configDumper.dumpConfig();
@@ -89,11 +73,7 @@ describe("ConfigDumper", () => {
 			};
 
 			const secretNamesToRedactInConfigDump = ["key1", "key1"];
-			const configDumper = new ConfigDumper(
-				nconf,
-				undefined,
-				secretNamesToRedactInConfigDump,
-			);
+			const configDumper = new ConfigDumper(nconf, undefined, secretNamesToRedactInConfigDump);
 
 			assert.doesNotThrow(() => {
 				configDumper.dumpConfig();
@@ -111,11 +91,7 @@ describe("ConfigDumper", () => {
 			};
 
 			const secretNamesToRedactInConfigDump = ["nested.key3"];
-			const configDumper = new ConfigDumper(
-				nconf,
-				undefined,
-				secretNamesToRedactInConfigDump,
-			);
+			const configDumper = new ConfigDumper(nconf, undefined, secretNamesToRedactInConfigDump);
 			configDumper.dumpConfig();
 			const redactedConfig = configDumper.getConfig();
 

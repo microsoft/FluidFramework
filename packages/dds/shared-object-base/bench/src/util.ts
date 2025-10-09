@@ -44,7 +44,9 @@ export function runSuite(suite: Suite) {
 		})
 		.on("complete", (event: any) => {
 			console.groupEnd();
-			console.log(`Fastest is ${event.currentTarget.filter("fastest").map("name")}`);
+			console.log(
+				`Fastest is ${event.currentTarget.filter("fastest").map("name")}`,
+			);
 		})
 		.run();
 }

@@ -156,7 +156,9 @@ export function getPackagesWithCodeCoverageChanges(
 	const newPackagesIdentifiedByCodeCoverage = codeCoverageComparisonData.filter(
 		(codeCoverageReport) => codeCoverageReport.isNewPackage,
 	);
-	logger?.verbose(`Found ${newPackagesIdentifiedByCodeCoverage.length} new packages`);
+	logger?.verbose(
+		`Found ${newPackagesIdentifiedByCodeCoverage.length} new packages`,
+	);
 
 	// Find existing packages that have reported a change in coverage for the current PR
 	const existingPackagesWithCoverageChange = codeCoverageComparisonData.filter(
@@ -168,7 +170,8 @@ export function getPackagesWithCodeCoverageChanges(
 
 	return {
 		codeCoverageComparisonForNewPackages: newPackagesIdentifiedByCodeCoverage,
-		codeCoverageComparisonForExistingPackages: existingPackagesWithCoverageChange,
+		codeCoverageComparisonForExistingPackages:
+			existingPackagesWithCoverageChange,
 	};
 }
 
@@ -181,20 +184,25 @@ export function isCodeCoverageCriteriaPassed(
 	codeCoverageChangeForPackages: CodeCoverageChangeForPackages,
 	logger?: CommandLogger,
 ): boolean {
-	const { codeCoverageComparisonForNewPackages, codeCoverageComparisonForExistingPackages } =
-		codeCoverageChangeForPackages;
-	const packagesWithNotableRegressions = codeCoverageComparisonForExistingPackages.filter(
-		(codeCoverageReport: CodeCoverageComparison) => codeCoverageReport.branchCoverageDiff < -1,
-	);
+	const {
+		codeCoverageComparisonForNewPackages,
+		codeCoverageComparisonForExistingPackages,
+	} = codeCoverageChangeForPackages;
+	const packagesWithNotableRegressions =
+		codeCoverageComparisonForExistingPackages.filter(
+			(codeCoverageReport: CodeCoverageComparison) =>
+				codeCoverageReport.branchCoverageDiff < -1,
+		);
 
 	logger?.verbose(
 		`Found ${packagesWithNotableRegressions.length} existing packages with notable regressions`,
 	);
 
 	// Code coverage for the newly added package should be less than 50% to fail.
-	const newPackagesWithNotableRegressions = codeCoverageComparisonForNewPackages.filter(
-		(codeCoverageReport) => codeCoverageReport.branchCoverageInPr < 50,
-	);
+	const newPackagesWithNotableRegressions =
+		codeCoverageComparisonForNewPackages.filter(
+			(codeCoverageReport) => codeCoverageReport.branchCoverageInPr < 50,
+		);
 
 	logger?.verbose(
 		`Found ${newPackagesWithNotableRegressions.length} new packages with notable regressions`,

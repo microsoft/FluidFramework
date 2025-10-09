@@ -15,7 +15,12 @@ import {
 	type ITelemetryLoggerExt,
 	MockLogger,
 } from "@fluidframework/telemetry-utils/internal";
-import { type SinonFakeTimers, type SinonStub, stub, useFakeTimers } from "sinon";
+import {
+	type SinonFakeTimers,
+	type SinonStub,
+	stub,
+	useFakeTimers,
+} from "sinon";
 import type { Socket } from "socket.io-client";
 
 import type { OdspFluidDataStoreLocator } from "../../contractsPublic.js";
@@ -141,7 +146,10 @@ describe("DeltaConnectionMetadata update tests", () => {
 		)) as OdspDocumentService;
 	});
 
-	async function mockSocket<T>(_response: Socket, callback: () => Promise<T>): Promise<T> {
+	async function mockSocket<T>(
+		_response: Socket,
+		callback: () => Promise<T>,
+	): Promise<T> {
 		const getSocketCreationStub = stub(SocketIOClientStatic, mockify.key);
 		getSocketCreationStub.returns(_response);
 		try {
@@ -178,7 +186,9 @@ describe("DeltaConnectionMetadata update tests", () => {
 				"sensitivityLabelsInfo": ${exampleSensitivityLabelsInfo}
 			}`;
 
-		const parsedResponse = JSON.parse(joinSessionResponseString) as ISocketStorageDiscovery;
+		const parsedResponse = JSON.parse(
+			joinSessionResponseString,
+		) as ISocketStorageDiscovery;
 
 		const handler = (metadata: Record<string, string>): void => {
 			eventRaised = true;
@@ -194,8 +204,9 @@ describe("DeltaConnectionMetadata update tests", () => {
 		);
 
 		service.on("metadataUpdate", handler);
-		const connection = (await mockSocket(socket as unknown as Socket, async () =>
-			service.connectToDeltaStream(client),
+		const connection = (await mockSocket(
+			socket as unknown as Socket,
+			async () => service.connectToDeltaStream(client),
 		)) as OdspDocumentDeltaConnection;
 		assert(eventRaised, "event1 should have been raised");
 		service.off("metadataUpdate", handler);
@@ -225,8 +236,9 @@ describe("DeltaConnectionMetadata update tests", () => {
 
 		content = { labels: [label1Object] };
 		service.on("metadataUpdate", handler);
-		const connection = (await mockSocket(socket as unknown as Socket, async () =>
-			service.connectToDeltaStream(client),
+		const connection = (await mockSocket(
+			socket as unknown as Socket,
+			async () => service.connectToDeltaStream(client),
 		)) as OdspDocumentDeltaConnection;
 		assert(eventRaised, "event1 should have been raised");
 		service.off("metadataUpdate", handler);
@@ -243,7 +255,10 @@ describe("DeltaConnectionMetadata update tests", () => {
 		eventRaised = false;
 		const label2Object = testSensitivityLabelObjectWithId("label2");
 		content = { labels: [label2Object] };
-		const signalContent1 = { labels: [label2Object], timestamp: new Date().toISOString() };
+		const signalContent1 = {
+			labels: [label2Object],
+			timestamp: new Date().toISOString(),
+		};
 		const signalMessage1: ISignalMessage = {
 			clientId: null,
 			content: JSON.stringify({

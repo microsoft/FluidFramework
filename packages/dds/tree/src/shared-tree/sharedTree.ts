@@ -3,8 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import type { ErasedType, IFluidLoadable } from "@fluidframework/core-interfaces/internal";
-import { assert, fail, unreachableCase } from "@fluidframework/core-utils/internal";
+import type {
+	ErasedType,
+	IFluidLoadable,
+} from "@fluidframework/core-interfaces/internal";
+import {
+	assert,
+	fail,
+	unreachableCase,
+} from "@fluidframework/core-utils/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor, StableId } from "@fluidframework/id-compressor";
 import type {
@@ -105,7 +112,11 @@ import { SharedTreeReadonlyChangeEnricher } from "./sharedTreeChangeEnricher.js"
 import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
-import { type TreeCheckout, type BranchableTree, createTreeCheckout } from "./treeCheckout.js";
+import {
+	type TreeCheckout,
+	type BranchableTree,
+	createTreeCheckout,
+} from "./treeCheckout.js";
 import {
 	brand,
 	type Breakable,
@@ -187,7 +198,10 @@ interface ExplicitCodecVersions extends ExplicitCoreCodecVersions {
 	fieldBatch: FieldBatchFormatVersion;
 }
 
-const formatVersionToTopLevelCodecVersions = new Map<number, ExplicitCodecVersions>([
+const formatVersionToTopLevelCodecVersions = new Map<
+	number,
+	ExplicitCodecVersions
+>([
 	[
 		1,
 		{
@@ -265,7 +279,10 @@ function getCodecVersions(formatVersion: number): ExplicitCodecVersions {
 /**
  * The type SharedTree's kernel's view must implement so what when its merged with the underling SharedObject's API it fully implements the required tree API surface ({@link ITreePrivate }).
  */
-export type SharedTreeKernelView = Omit<ITreePrivate, keyof (IChannelView & IFluidLoadable)>;
+export type SharedTreeKernelView = Omit<
+	ITreePrivate,
+	keyof (IChannelView & IFluidLoadable)
+>;
 
 /**
  * SharedTreeCore, configured with a good set of indexes and field kinds which will maintain compatibility over time.
@@ -328,7 +345,10 @@ export class SharedTreeKernel
 			},
 			schemaCodec,
 		);
-		const fieldBatchCodec = makeFieldBatchCodec(options, codecVersions.fieldBatch);
+		const fieldBatchCodec = makeFieldBatchCodec(
+			options,
+			codecVersions.fieldBatch,
+		);
 
 		const encoderContext = {
 			schema: {
@@ -348,7 +368,9 @@ export class SharedTreeKernel
 			idCompressor,
 			options.shouldEncodeIncrementally,
 		);
-		const removedRootsSummarizer = new DetachedFieldIndexSummarizer(removedRoots);
+		const removedRootsSummarizer = new DetachedFieldIndexSummarizer(
+			removedRoots,
+		);
 		const innerChangeFamily = new SharedTreeChangeFamily(
 			revisionTagCodec,
 			fieldBatchCodec,
@@ -378,7 +400,11 @@ export class SharedTreeKernel
 				throw error;
 			},
 		);
-		const changeEnricher = new SharedTreeReadonlyChangeEnricher(forest, schema, removedRoots);
+		const changeEnricher = new SharedTreeReadonlyChangeEnricher(
+			forest,
+			schema,
+			removedRoots,
+		);
 		super(
 			breaker,
 			sharedObject,
@@ -398,18 +424,23 @@ export class SharedTreeKernel
 			changeEnricher,
 		);
 
-		this.checkout = createTreeCheckout(idCompressor, this.mintRevisionTag, revisionTagCodec, {
-			branch: this.getLocalBranch(),
-			changeFamily,
-			schema,
-			forest,
-			fieldBatchCodec,
-			removedRoots,
-			chunkCompressionStrategy: options.treeEncodeType,
-			logger,
-			breaker: this.breaker,
-			disposeForksAfterTransaction: options.disposeForksAfterTransaction,
-		});
+		this.checkout = createTreeCheckout(
+			idCompressor,
+			this.mintRevisionTag,
+			revisionTagCodec,
+			{
+				branch: this.getLocalBranch(),
+				changeFamily,
+				schema,
+				forest,
+				fieldBatchCodec,
+				removedRoots,
+				chunkCompressionStrategy: options.treeEncodeType,
+				logger,
+				breaker: this.breaker,
+				disposeForksAfterTransaction: options.disposeForksAfterTransaction,
+			},
+		);
 
 		this.registerCheckout("main", this.checkout);
 
@@ -501,7 +532,9 @@ export class SharedTreeKernel
 		config: TreeViewConfiguration<TRoot>,
 	): TreeView<TRoot>;
 
-	public viewBranchWith<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+	public viewBranchWith<
+		TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema,
+	>(
 		branchId: string,
 		config: TreeViewConfiguration<ReadSchema<TRoot>>,
 	): SchematizingSimpleTreeView<TRoot> & TreeView<ReadSchema<TRoot>> {
@@ -532,7 +565,9 @@ export class SharedTreeKernel
 		return checkout;
 	}
 
-	public override async loadCore(services: IChannelStorageService): Promise<void> {
+	public override async loadCore(
+		services: IChannelStorageService,
+	): Promise<void> {
 		await super.loadCore(services);
 		this.checkout.load();
 	}
@@ -590,7 +625,9 @@ export class SharedTreeKernel
 	public onDisconnect(): void {}
 }
 
-export function exportSimpleSchema(storedSchema: TreeStoredSchema): SimpleTreeSchema {
+export function exportSimpleSchema(
+	storedSchema: TreeStoredSchema,
+): SimpleTreeSchema {
 	return {
 		root: exportSimpleFieldSchemaStored(storedSchema.rootFieldSchema),
 		definitions: new Map(
@@ -711,13 +748,29 @@ export type SharedTreeFormatVersion = typeof SharedTreeFormatVersion;
  * Once an entry is defined and used in production, it cannot be changed.
  * This is because the format for SharedTree changes are not explicitly versioned.
  */
-export const changeFormatVersionForEditManager = DependentFormatVersion.fromPairs([
-	[brand<EditManagerFormatVersion>(1), brand<SharedTreeChangeFormatVersion>(1)],
-	[brand<EditManagerFormatVersion>(2), brand<SharedTreeChangeFormatVersion>(2)],
-	[brand<EditManagerFormatVersion>(3), brand<SharedTreeChangeFormatVersion>(3)],
-	[brand<EditManagerFormatVersion>(4), brand<SharedTreeChangeFormatVersion>(4)],
-	[brand<EditManagerFormatVersion>(5), brand<SharedTreeChangeFormatVersion>(4)],
-]);
+export const changeFormatVersionForEditManager =
+	DependentFormatVersion.fromPairs([
+		[
+			brand<EditManagerFormatVersion>(1),
+			brand<SharedTreeChangeFormatVersion>(1),
+		],
+		[
+			brand<EditManagerFormatVersion>(2),
+			brand<SharedTreeChangeFormatVersion>(2),
+		],
+		[
+			brand<EditManagerFormatVersion>(3),
+			brand<SharedTreeChangeFormatVersion>(3),
+		],
+		[
+			brand<EditManagerFormatVersion>(4),
+			brand<SharedTreeChangeFormatVersion>(4),
+		],
+		[
+			brand<EditManagerFormatVersion>(5),
+			brand<SharedTreeChangeFormatVersion>(4),
+		],
+	]);
 
 /**
  * Defines for each MessageFormatVersion the SharedTreeChangeFormatVersion to use.
@@ -726,7 +779,10 @@ export const changeFormatVersionForEditManager = DependentFormatVersion.fromPair
  * This is because the format for SharedTree changes are not explicitly versioned.
  */
 export const changeFormatVersionForMessage = DependentFormatVersion.fromPairs([
-	[brand<MessageFormatVersion>(undefined), brand<SharedTreeChangeFormatVersion>(1)],
+	[
+		brand<MessageFormatVersion>(undefined),
+		brand<SharedTreeChangeFormatVersion>(1),
+	],
 	[brand<MessageFormatVersion>(1), brand<SharedTreeChangeFormatVersion>(1)],
 	[brand<MessageFormatVersion>(2), brand<SharedTreeChangeFormatVersion>(2)],
 	[brand<MessageFormatVersion>(3), brand<SharedTreeChangeFormatVersion>(3)],
@@ -734,13 +790,17 @@ export const changeFormatVersionForMessage = DependentFormatVersion.fromPairs([
 	[brand<MessageFormatVersion>(5), brand<SharedTreeChangeFormatVersion>(4)],
 ]);
 
-function getCodecTreeForEditManagerFormat(version: EditManagerFormatVersion): CodecTree {
+function getCodecTreeForEditManagerFormat(
+	version: EditManagerFormatVersion,
+): CodecTree {
 	const change = changeFormatVersionForEditManager.lookup(version);
 	const changeCodecTree = getCodecTreeForChangeFormat(change);
 	return getCodecTreeForEditManagerFormatWithChange(version, changeCodecTree);
 }
 
-function getCodecTreeForMessageFormat(version: MessageFormatVersion): CodecTree {
+function getCodecTreeForMessageFormat(
+	version: MessageFormatVersion,
+): CodecTree {
 	const change = changeFormatVersionForMessage.lookup(version);
 	const changeCodecTree = getCodecTreeForChangeFormat(change);
 	return getCodecTreeForMessageFormatWithChange(version, changeCodecTree);
@@ -751,10 +811,14 @@ export function getCodecTreeForSharedTreeFormat(
 ): CodecTree {
 	const children: CodecTree[] = [];
 	const childCodecs = getCodecVersions(version);
-	for (const name of Object.keys(childCodecs) as (keyof ExplicitCodecVersions)[]) {
+	for (const name of Object.keys(
+		childCodecs,
+	) as (keyof ExplicitCodecVersions)[]) {
 		switch (name) {
 			case "editManager":
-				children.push(getCodecTreeForEditManagerFormat(childCodecs.editManager));
+				children.push(
+					getCodecTreeForEditManagerFormat(childCodecs.editManager),
+				);
 				break;
 			case "message":
 				children.push(getCodecTreeForMessageFormat(childCodecs.message));
@@ -766,7 +830,11 @@ export function getCodecTreeForSharedTreeFormat(
 				children.push(getCodecTreeForSchemaFormat(childCodecs.schema));
 				break;
 			case "detachedFieldIndex":
-				children.push(getCodecTreeForDetachedFieldIndexFormat(childCodecs.detachedFieldIndex));
+				children.push(
+					getCodecTreeForDetachedFieldIndexFormat(
+						childCodecs.detachedFieldIndex,
+					),
+				);
 				break;
 			case "fieldBatch":
 				children.push(getCodecTreeForFieldBatchFormat(childCodecs.fieldBatch));
@@ -870,8 +938,11 @@ export interface ForestType extends ErasedType<"ForestType"> {}
  * @beta
  */
 export const ForestTypeReference = toForestType(
-	(breaker: Breakable, schema: TreeStoredSchemaSubscription, idCompressor: IIdCompressor) =>
-		buildForest(breaker, schema),
+	(
+		breaker: Breakable,
+		schema: TreeStoredSchemaSubscription,
+		idCompressor: IIdCompressor,
+	) => buildForest(breaker, schema),
 );
 
 /**
@@ -950,7 +1021,9 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
 };
 
-function exportSimpleFieldSchemaStored(schema: TreeFieldStoredSchema): SimpleFieldSchema {
+function exportSimpleFieldSchemaStored(
+	schema: TreeFieldStoredSchema,
+): SimpleFieldSchema {
 	let kind: FieldKind;
 	switch (schema.kind) {
 		case FieldKinds.identifier.identifier:
@@ -982,7 +1055,9 @@ function exportSimpleFieldSchemaStored(schema: TreeFieldStoredSchema): SimpleFie
  * @privateRemarks
  * TODO: Persist node metadata once schema FormatV2 is supported.
  */
-function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeSchema {
+function exportSimpleNodeSchemaStored(
+	schema: TreeNodeStoredSchema,
+): SimpleNodeSchema {
 	const arrayTypes = tryStoredSchemaAsArray(schema);
 	if (arrayTypes !== undefined) {
 		return {
@@ -995,9 +1070,17 @@ function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeS
 	if (schema instanceof ObjectNodeStoredSchema) {
 		const fields = new Map<FieldKey, SimpleObjectFieldSchema>();
 		for (const [storedKey, field] of schema.objectNodeFields) {
-			fields.set(storedKey, { ...exportSimpleFieldSchemaStored(field), storedKey });
+			fields.set(storedKey, {
+				...exportSimpleFieldSchemaStored(field),
+				storedKey,
+			});
 		}
-		return { kind: NodeKind.Object, fields, metadata: {}, persistedMetadata: schema.metadata };
+		return {
+			kind: NodeKind.Object,
+			fields,
+			metadata: {},
+			persistedMetadata: schema.metadata,
+		};
 	}
 	if (schema instanceof MapNodeStoredSchema) {
 		assert(

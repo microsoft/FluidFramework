@@ -29,7 +29,9 @@ describe("Int64MapProperty", function () {
 
 		PropertyFactory._reregister(TestPropertyTemplate);
 
-		myNode = PropertyFactory.create("autodesk.tests:Int64MapTestPropertyID-1.0.0");
+		myNode = PropertyFactory.create(
+			"autodesk.tests:Int64MapTestPropertyID-1.0.0",
+		);
 		Int64Map = myNode._properties.Int64Map;
 	});
 
@@ -77,8 +79,12 @@ describe("Int64MapProperty", function () {
 		it("should be empty at the beginning", function () {
 			expect(Int64Map.getAsArray()).to.be.empty;
 			expect(Int64Map.getEntriesReadOnly()).to.be.empty;
-			expect(ChangeSet.isEmptyChangeSet(Int64Map.serialize({ dirtyOnly: false }))).to.be.ok;
-			expect(ChangeSet.isEmptyChangeSet(Int64Map.serialize({ dirtyOnly: true }))).to.be.ok;
+			expect(
+				ChangeSet.isEmptyChangeSet(Int64Map.serialize({ dirtyOnly: false })),
+			).to.be.ok;
+			expect(
+				ChangeSet.isEmptyChangeSet(Int64Map.serialize({ dirtyOnly: true })),
+			).to.be.ok;
 		});
 
 		it("should be possible to add entries", function () {
@@ -128,7 +134,9 @@ describe("Int64MapProperty", function () {
 			expect(Int64Map.has("value4")).to.be.not.ok;
 			Int64Map.remove("value5");
 			expect(Int64Map.has("value5")).to.be.not.ok;
-			expect(ChangeSet.isEmptyChangeSet(Int64Map.serialize({ dirtyOnly: false }))).to.be.ok;
+			expect(
+				ChangeSet.isEmptyChangeSet(Int64Map.serialize({ dirtyOnly: false })),
+			).to.be.ok;
 		});
 
 		it("a remove followed by an insert should become a modify", function () {
@@ -156,7 +164,9 @@ describe("Int64MapProperty", function () {
 					BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE,
 			);
 			Int64Map.set("value1", new Int64(1, 3));
-			expect(ChangeSet.isEmptyChangeSet(Int64Map.serialize({ dirtyOnly: true }))).to.be.ok;
+			expect(
+				ChangeSet.isEmptyChangeSet(Int64Map.serialize({ dirtyOnly: true })),
+			).to.be.ok;
 
 			// This should be tracked separately for dirtyness and pending changes
 			Int64Map.cleanDirty(
@@ -245,7 +255,9 @@ describe("Int64MapProperty", function () {
 		});
 
 		it("inserting the same key twice should throw an exception", function () {
-			var rootNode = PropertyFactory.create("autodesk.tests:Int64MapTestPropertyID-1.0.0");
+			var rootNode = PropertyFactory.create(
+				"autodesk.tests:Int64MapTestPropertyID-1.0.0",
+			);
 			rootNode._properties.Int64Map.insert("node1", new Int64(1, 1));
 			expect(function () {
 				rootNode._properties.Int64Map.insert("node1", new Int64(1, 2));
@@ -253,14 +265,16 @@ describe("Int64MapProperty", function () {
 		});
 
 		it("set should overwrite existing entry", function () {
-			var rootNode = PropertyFactory.create("autodesk.tests:Int64MapTestPropertyID-1.0.0");
+			var rootNode = PropertyFactory.create(
+				"autodesk.tests:Int64MapTestPropertyID-1.0.0",
+			);
 
 			rootNode._properties.Int64Map.set("node1", new Int64(1, 0));
 			rootNode._properties.Int64Map.set("node1", new Int64(1, 1));
 			// the set should overwrite the insert
-			expect(rootNode.serialize({ dirtyOnly: true })["map<Int64>"].Int64Map).to.have.all.keys(
-				"insert",
-			);
+			expect(
+				rootNode.serialize({ dirtyOnly: true })["map<Int64>"].Int64Map,
+			).to.have.all.keys("insert");
 
 			// Overwriting with the same property shouldn't dirty the node
 			rootNode.cleanDirty(
@@ -268,14 +282,16 @@ describe("Int64MapProperty", function () {
 					BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE,
 			);
 			rootNode._properties.Int64Map.set("node1", new Int64(1, 1));
-			expect(ChangeSet.isEmptyChangeSet(rootNode.serialize({ dirtyOnly: true }))).to.be.ok;
+			expect(
+				ChangeSet.isEmptyChangeSet(rootNode.serialize({ dirtyOnly: true })),
+			).to.be.ok;
 			expect(rootNode.isDirty()).to.be.false;
 
 			// Overwriting with a different value should result in a modify
 			rootNode._properties.Int64Map.set("node1", new Int64(1, 2));
-			expect(rootNode.serialize({ dirtyOnly: true })["map<Int64>"].Int64Map).to.have.all.keys(
-				"modify",
-			);
+			expect(
+				rootNode.serialize({ dirtyOnly: true })["map<Int64>"].Int64Map,
+			).to.have.all.keys("modify");
 		});
 	});
 
@@ -290,14 +306,18 @@ describe("Int64MapProperty", function () {
 		//
 		var testChangeSetSquashing = function (in_options) {
 			resetKeyCounter();
-			var testProperty = PropertyFactory.create("autodesk.tests:Int64MapTestPropertyID-1.0.0");
+			var testProperty = PropertyFactory.create(
+				"autodesk.tests:Int64MapTestPropertyID-1.0.0",
+			);
 
 			var callbacks = in_options.callbacks;
 			if (in_options.pre) {
 				in_options.pre(testProperty);
 			}
 
-			var initialChangeset = new ChangeSet(testProperty.serialize({ dirtyOnly: false }));
+			var initialChangeset = new ChangeSet(
+				testProperty.serialize({ dirtyOnly: false }),
+			);
 			initialChangeset.setIsNormalized(true);
 
 			var squashedChangeset = new ChangeSet();
@@ -320,7 +340,9 @@ describe("Int64MapProperty", function () {
 				in_options.post(squashedChangeset.getSerializedChangeSet());
 			}
 
-			initialChangeset.applyChangeSet(squashedChangeset.getSerializedChangeSet());
+			initialChangeset.applyChangeSet(
+				squashedChangeset.getSerializedChangeSet(),
+			);
 			expect(initialChangeset.getSerializedChangeSet()).to.deep.equal(
 				testProperty.serialize({ dirtyOnly: false }),
 			);
@@ -359,7 +381,12 @@ describe("Int64MapProperty", function () {
 		});
 		it("an insert, modify and a remove should give an empty changeset", function () {
 			testChangeSetSquashing({
-				callbacks: [insertNodeInRoot, modifyEntry, modifyEntry, removeFirstNodeInRoot],
+				callbacks: [
+					insertNodeInRoot,
+					modifyEntry,
+					modifyEntry,
+					removeFirstNodeInRoot,
+				],
 				post: function (changeset) {
 					expect(changeset).to.be.empty;
 				},
@@ -443,7 +470,9 @@ describe("Int64MapProperty", function () {
 			}
 
 			// Get the ChangeSets
-			var changeSet1 = new ChangeSet(baseProperty1.serialize({ dirtyOnly: true }));
+			var changeSet1 = new ChangeSet(
+				baseProperty1.serialize({ dirtyOnly: true }),
+			);
 			var changeSet2 = baseProperty2.serialize({ dirtyOnly: true });
 
 			// Perform the actual rebase
@@ -463,7 +492,9 @@ describe("Int64MapProperty", function () {
 					in_options.op2(baseProperty3);
 				}
 				var finalChangeSet = baseProperty3.serialize({ dirtyOnly: false });
-				expect(finalChangeSet).to.be.deep.equal(combinedChangeSet.getSerializedChangeSet());
+				expect(finalChangeSet).to.be.deep.equal(
+					combinedChangeSet.getSerializedChangeSet(),
+				);
 			}
 
 			if (in_options.checkResult) {
@@ -564,7 +595,9 @@ describe("Int64MapProperty", function () {
 				compareToSequential: true,
 				checkResult: function (conflicts, changeSet) {
 					expect(conflicts).to.have.length(1);
-					expect(conflicts[0].type).to.be.equal(ChangeSet.ConflictType.COLLIDING_SET);
+					expect(conflicts[0].type).to.be.equal(
+						ChangeSet.ConflictType.COLLIDING_SET,
+					);
 					expect(conflicts[0].path).to.be.equal("Int64Map[entry1]");
 				},
 			});
@@ -583,7 +616,9 @@ describe("Int64MapProperty", function () {
 				compareToSequential: true,
 				checkResult: function (conflicts, changeSet) {
 					expect(conflicts).to.have.length(1);
-					expect(conflicts[0].type).to.be.equal(ChangeSet.ConflictType.COLLIDING_SET);
+					expect(conflicts[0].type).to.be.equal(
+						ChangeSet.ConflictType.COLLIDING_SET,
+					);
 					expect(conflicts[0].path).to.be.equal("Int64Map[entry1]");
 				},
 			});
@@ -604,7 +639,9 @@ describe("Int64MapProperty", function () {
 				compareToSequential: true,
 				checkResult: function (conflicts, changeSet) {
 					expect(conflicts).to.have.length(1);
-					expect(conflicts[0].type).to.be.equal(ChangeSet.ConflictType.COLLIDING_SET);
+					expect(conflicts[0].type).to.be.equal(
+						ChangeSet.ConflictType.COLLIDING_SET,
+					);
 					expect(conflicts[0].path).to.be.equal("Int64Map[entry1]");
 				},
 			});
@@ -623,7 +660,9 @@ describe("Int64MapProperty", function () {
 				checkResult: function (conflicts, changeSet) {
 					expect(changeSet["map<Int64>"].Int64Map).to.have.all.keys("modify");
 					expect(conflicts).to.have.length(1);
-					expect(conflicts[0].type).to.be.equal(ChangeSet.ConflictType.COLLIDING_SET);
+					expect(conflicts[0].type).to.be.equal(
+						ChangeSet.ConflictType.COLLIDING_SET,
+					);
 					expect(conflicts[0].path).to.be.equal("Int64Map[entry1]");
 				},
 			});

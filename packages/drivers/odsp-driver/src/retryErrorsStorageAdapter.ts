@@ -4,7 +4,10 @@
  */
 
 import type { IDisposable } from "@fluidframework/core-interfaces";
-import type { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
+import type {
+	ISummaryHandle,
+	ISummaryTree,
+} from "@fluidframework/driver-definitions";
 import type {
 	FetchSource,
 	IDocumentStorageService,
@@ -24,7 +27,9 @@ import {
 
 import { runWithRetry } from "./retryUtils.js";
 
-export class RetryErrorsStorageAdapter implements IDocumentStorageService, IDisposable {
+export class RetryErrorsStorageAdapter
+	implements IDocumentStorageService, IDisposable
+{
 	private _disposed = false;
 	constructor(
 		private readonly internalStorageService: IDocumentStorageService,
@@ -42,19 +47,25 @@ export class RetryErrorsStorageAdapter implements IDocumentStorageService, IDisp
 	}
 
 	// eslint-disable-next-line @rushstack/no-new-null
-	public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
+	public async getSnapshotTree(
+		version?: IVersion,
+	): Promise<ISnapshotTree | null> {
 		return this.runWithRetry(
 			async () => this.internalStorageService.getSnapshotTree(version),
 			"storage_getSnapshotTree",
 		);
 	}
 
-	public async getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot> {
+	public async getSnapshot(
+		snapshotFetchOptions?: ISnapshotFetchOptions,
+	): Promise<ISnapshot> {
 		return this.runWithRetry(async () => {
 			if (this.internalStorageService.getSnapshot !== undefined) {
 				return this.internalStorageService.getSnapshot(snapshotFetchOptions);
 			}
-			throw new UsageError("getSnapshot should exist in storage adapter in ODSP driver");
+			throw new UsageError(
+				"getSnapshot should exist in storage adapter in ODSP driver",
+			);
 		}, "storage_getSnapshot");
 	}
 
@@ -74,7 +85,12 @@ export class RetryErrorsStorageAdapter implements IDocumentStorageService, IDisp
 	): Promise<IVersion[]> {
 		return this.runWithRetry(
 			async () =>
-				this.internalStorageService.getVersions(versionId, count, scenarioName, fetchSource),
+				this.internalStorageService.getVersions(
+					versionId,
+					count,
+					scenarioName,
+					fetchSource,
+				),
 			"storage_getVersions",
 		);
 	}
@@ -85,7 +101,8 @@ export class RetryErrorsStorageAdapter implements IDocumentStorageService, IDisp
 	): Promise<string> {
 		// Creation flow with attachment blobs - need to do retries!
 		return this.runWithRetry(
-			async () => this.internalStorageService.uploadSummaryWithContext(summary, context),
+			async () =>
+				this.internalStorageService.uploadSummaryWithContext(summary, context),
 			"storage_uploadSummaryWithContext",
 		);
 	}
@@ -113,7 +130,12 @@ export class RetryErrorsStorageAdapter implements IDocumentStorageService, IDisp
 		}
 	}
 
-	private async runWithRetry<T>(api: () => Promise<T>, callName: string): Promise<T> {
-		return runWithRetry(api, callName, this.logger, () => this.checkStorageDisposed());
+	private async runWithRetry<T>(
+		api: () => Promise<T>,
+		callName: string,
+	): Promise<T> {
+		return runWithRetry(api, callName, this.logger, () =>
+			this.checkStorageDisposed(),
+		);
 	}
 }

@@ -166,7 +166,11 @@ function createSummaryTable(
 
 		case ApiItemKind.Property:
 		case ApiItemKind.PropertySignature: {
-			return createPropertiesTable(apiItems as ApiPropertyItem[], config, options);
+			return createPropertiesTable(
+				apiItems as ApiPropertyItem[],
+				config,
+				options,
+			);
 		}
 
 		case ApiItemKind.Variable: {
@@ -217,12 +221,14 @@ export function createDefaultSummaryTable(
 			{
 				title: { type: "text", value: "Alerts" },
 				columnKind: "optional",
-				createCellContent: (item) => createAlertsCell(config.getAlertsForItem(item)),
+				createCellContent: (item) =>
+					createAlertsCell(config.getAlertsForItem(item)),
 			},
 			{
 				title: { type: "text", value: "Modifiers" },
 				columnKind: "optional",
-				createCellContent: (item) => createModifiersCell(item, options?.modifiersToOmit),
+				createCellContent: (item) =>
+					createModifiersCell(item, options?.modifiersToOmit),
 			},
 			{
 				title: { type: "text", value: "Description" },
@@ -251,10 +257,14 @@ export function createParametersSummaryTable(
 	}
 
 	function createModifierCell(apiParameter: Parameter): TableCell | undefined {
-		return apiParameter.isOptional ? createPlainTextTableCell("optional") : undefined;
+		return apiParameter.isOptional
+			? createPlainTextTableCell("optional")
+			: undefined;
 	}
 
-	function createParameterTypeCell(apiParameter: Parameter): TableCell | undefined {
+	function createParameterTypeCell(
+		apiParameter: Parameter,
+	): TableCell | undefined {
 		return createTypeExcerptCell(apiParameter.parameterTypeExcerpt, config);
 	}
 
@@ -278,7 +288,8 @@ export function createParametersSummaryTable(
 			{
 				title: { type: "text", value: "Description" },
 				columnKind: "required",
-				createCellContent: (item) => createParameterSummaryCell(item, contextApiItem, config),
+				createCellContent: (item) =>
+					createParameterSummaryCell(item, contextApiItem, config),
 			},
 		],
 	});
@@ -301,7 +312,9 @@ export function createTypeParametersSummaryTable(
 		return undefined;
 	}
 
-	function createTypeConstraintCell(apiParameter: TypeParameter): TableCell | undefined {
+	function createTypeConstraintCell(
+		apiParameter: TypeParameter,
+	): TableCell | undefined {
 		const constraintSpan = createExcerptSpanWithHyperlinks(
 			apiParameter.constraintExcerpt,
 			config,
@@ -314,7 +327,9 @@ export function createTypeParametersSummaryTable(
 				};
 	}
 
-	function createTypeDefaultCell(apiParameter: TypeParameter): TableCell | undefined {
+	function createTypeDefaultCell(
+		apiParameter: TypeParameter,
+	): TableCell | undefined {
 		const excerptSpan = createExcerptSpanWithHyperlinks(
 			apiParameter.defaultTypeExcerpt,
 			config,
@@ -373,7 +388,9 @@ export function createFunctionLikeSummaryTable(
 		return undefined;
 	}
 
-	function createReturnTypeCell(apiItem: ApiFunctionLike): TableCell | undefined {
+	function createReturnTypeCell(
+		apiItem: ApiFunctionLike,
+	): TableCell | undefined {
 		return ApiReturnTypeMixin.isBaseClassOf(apiItem)
 			? createTypeExcerptCell(apiItem.returnTypeExcerpt, config)
 			: undefined;
@@ -389,12 +406,14 @@ export function createFunctionLikeSummaryTable(
 			{
 				title: { type: "text", value: "Alerts" },
 				columnKind: "optional",
-				createCellContent: (item) => createAlertsCell(config.getAlertsForItem(item)),
+				createCellContent: (item) =>
+					createAlertsCell(config.getAlertsForItem(item)),
 			},
 			{
 				title: { type: "text", value: "Modifiers" },
 				columnKind: "optional",
-				createCellContent: (item) => createModifiersCell(item, options?.modifiersToOmit),
+				createCellContent: (item) =>
+					createModifiersCell(item, options?.modifiersToOmit),
 			},
 			{
 				title: { type: "text", value: "Return Type" },
@@ -444,12 +463,14 @@ export function createPropertiesTable(
 			{
 				title: { type: "text", value: "Alerts" },
 				columnKind: "optional",
-				createCellContent: (item) => createAlertsCell(config.getAlertsForItem(item)),
+				createCellContent: (item) =>
+					createAlertsCell(config.getAlertsForItem(item)),
 			},
 			{
 				title: { type: "text", value: "Modifiers" },
 				columnKind: "optional",
-				createCellContent: (item) => createModifiersCell(item, options?.modifiersToOmit),
+				createCellContent: (item) =>
+					createModifiersCell(item, options?.modifiersToOmit),
 			},
 			{
 				title: { type: "text", value: "Default Value" },
@@ -459,7 +480,8 @@ export function createPropertiesTable(
 			{
 				title: { type: "text", value: "Type" },
 				columnKind: "required",
-				createCellContent: (item) => createTypeExcerptCell(item.propertyTypeExcerpt, config),
+				createCellContent: (item) =>
+					createTypeExcerptCell(item.propertyTypeExcerpt, config),
 			},
 			{
 				title: { type: "text", value: "Description" },
@@ -497,17 +519,20 @@ export function createVariablesTable(
 			{
 				title: { type: "text", value: "Alerts" },
 				columnKind: "optional",
-				createCellContent: (item) => createAlertsCell(config.getAlertsForItem(item)),
+				createCellContent: (item) =>
+					createAlertsCell(config.getAlertsForItem(item)),
 			},
 			{
 				title: { type: "text", value: "Modifiers" },
 				columnKind: "optional",
-				createCellContent: (item) => createModifiersCell(item, options?.modifiersToOmit),
+				createCellContent: (item) =>
+					createModifiersCell(item, options?.modifiersToOmit),
 			},
 			{
 				title: { type: "text", value: "Type" },
 				columnKind: "required",
-				createCellContent: (item) => createTypeExcerptCell(item.variableTypeExcerpt, config),
+				createCellContent: (item) =>
+					createTypeExcerptCell(item.variableTypeExcerpt, config),
 			},
 			{
 				title: { type: "text", value: "Description" },
@@ -544,7 +569,8 @@ export function createPackagesTable(
 			{
 				title: { type: "text", value: "Alerts" },
 				columnKind: "optional",
-				createCellContent: (item) => createAlertsCell(config.getAlertsForItem(item)),
+				createCellContent: (item) =>
+					createAlertsCell(config.getAlertsForItem(item)),
 			},
 			{
 				title: { type: "text", value: "Description" },
@@ -566,7 +592,10 @@ function createDescriptionCell(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
 ): TableCell | undefined {
-	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
+	if (
+		apiItem instanceof ApiDocumentedItem &&
+		apiItem.tsdocComment !== undefined
+	) {
 		return createTableCellFromTsdocSection(
 			apiItem.tsdocComment.summarySection,
 			apiItem,
@@ -786,7 +815,10 @@ function createTableCellFromTsdocSection(
 	// `mdast` does not allow block content in table cells, but we want to be able to include things like fenced code blocks, etc. in our table cells.
 	// To accommodate this, we convert the contents to HTML and put that inside the table cell.
 	const htmlElements = transformed.map((node) => mdastToHtml(node));
-	const htmlString = htmlElements.join("").trim().replace(/\r?\n/g, "" /* omit newlines */);
+	const htmlString = htmlElements
+		.join("")
+		.trim()
+		.replace(/\r?\n/g, "" /* omit newlines */);
 
 	return {
 		type: "tableCell",

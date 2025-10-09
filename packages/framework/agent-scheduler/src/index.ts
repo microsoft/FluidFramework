@@ -9,4 +9,7 @@ export {
 	type IProvideAgentScheduler,
 } from "./agent.js";
 export { AgentSchedulerFactory } from "./scheduler.js";
-export { type ITaskSubscriptionEvents, TaskSubscription } from "./taskSubscription.js";
+export {
+	type ITaskSubscriptionEvents,
+	TaskSubscription,
+} from "./taskSubscription.js";

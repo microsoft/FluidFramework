@@ -10,7 +10,10 @@ import {
 } from "@fluidframework/server-services-client";
 import type * as core from "@fluidframework/server-services-core";
 import type { IDenyList } from "@fluidframework/server-services-core";
-import { closeRedisClientConnections, StartupCheck } from "@fluidframework/server-services-shared";
+import {
+	closeRedisClientConnections,
+	StartupCheck,
+} from "@fluidframework/server-services-shared";
 import * as utils from "@fluidframework/server-services-utils";
 import { DenyList, RedisClientConnectionManager } from "@fluidframework/server-services-utils";
 import type { Provider } from "nconf";
@@ -67,7 +70,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 					redisConfig.slotsRefreshTimeout,
 					undefined /* retryDelays */,
 					redisConfig.enableVerboseErrorLogging,
-			  );
+				);
 		redisClientConnectionManagers.push(redisClientConnectionManager);
 
 		const redisParams = {
@@ -85,7 +88,9 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 		const ephemeralDocumentTTLSec: number | undefined = config.get(
 			"restGitService:ephemeralDocumentTTLSec",
 		);
-		const disableGitCache = config.get("restGitService:disableGitCache") as boolean | undefined;
+		const disableGitCache = config.get("restGitService:disableGitCache") as
+			| boolean
+			| undefined;
 		const gitCache = disableGitCache
 			? undefined
 			: new historianServices.RedisCache(redisClientConnectionManager, redisParams);
@@ -108,7 +113,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 						redisConfig.slotsRefreshTimeout,
 						undefined /* retryDelays */,
 						redisConfig.enableVerboseErrorLogging,
-				  );
+					);
 		redisClientConnectionManagers.push(redisClientConnectionManagerForInvalidTokenCache);
 		const redisCacheForInvalidToken = new services.RedisCache(
 			redisClientConnectionManagerForInvalidTokenCache,
@@ -137,13 +142,11 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 						redisConfig.slotsRefreshTimeout,
 						undefined /* retryDelays */,
 						redisConfig.enableVerboseErrorLogging,
-				  );
+					);
 		redisClientConnectionManagers.push(redisClientConnectionManagerForThrottling);
 
 		const redisParamsForThrottling = {
-			expireAfterSeconds: redisConfigForThrottling.keyExpireAfterSeconds as
-				| number
-				| undefined,
+			expireAfterSeconds: redisConfigForThrottling.keyExpireAfterSeconds as number | undefined,
 		};
 
 		const redisThrottleAndUsageStorageManager =
@@ -230,7 +233,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 		);
 		const storagePerDocEnabled = (config.get("storage:perDocEnabled") as boolean) ?? false;
 		const storageNameRetriever = storagePerDocEnabled
-			? customizations?.storageNameRetriever ?? new services.StorageNameRetriever()
+			? (customizations?.storageNameRetriever ?? new services.StorageNameRetriever())
 			: undefined;
 
 		const port = normalizePort(process.env.PORT || "3000");

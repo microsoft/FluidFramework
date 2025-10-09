@@ -116,9 +116,8 @@ describe("Routerlicious Socket Error Handling", () => {
 	] as const satisfies IErrorScenario[];
 
 	beforeEach(async () => {
-		routerliciousDocumentServiceFactory = new RouterliciousDocumentServiceFactory(
-			new DefaultTokenProvider("jwt"),
-		);
+		routerliciousDocumentServiceFactory =
+			new RouterliciousDocumentServiceFactory(new DefaultTokenProvider("jwt"));
 		resolvedUrl = {
 			type: "fluid",
 			id: "id",
@@ -131,9 +130,10 @@ describe("Routerlicious Socket Error Handling", () => {
 			},
 			tokens: {},
 		};
-		documentService = (await routerliciousDocumentServiceFactory.createDocumentService(
-			resolvedUrl,
-		)) as DocumentService;
+		documentService =
+			(await routerliciousDocumentServiceFactory.createDocumentService(
+				resolvedUrl,
+			)) as DocumentService;
 	});
 
 	describe("on 'connect_document_error'", () => {
@@ -147,7 +147,9 @@ describe("Routerlicious Socket Error Handling", () => {
 				});
 
 				await assert.rejects(
-					mockSocket(socket, async () => documentService.connectToDeltaStream(client)),
+					mockSocket(socket, async () =>
+						documentService.connectToDeltaStream(client),
+					),
 					{
 						errorType: scenario.expectedErrorType,
 						scenarioName: "connect_document_error",
@@ -171,9 +173,11 @@ describe("Routerlicious Socket Error Handling", () => {
 				);
 
 				// Use a promise to deterministically wait for the "disconnect" event.
-				const disconnectPromise = new Promise<IAnyDriverError | undefined>((resolve) => {
-					connection.on("disconnect", resolve);
-				});
+				const disconnectPromise = new Promise<IAnyDriverError | undefined>(
+					(resolve) => {
+						connection.on("disconnect", resolve);
+					},
+				);
 
 				socket.sendErrorEvent(scenario.errorToThrow);
 				const error = await disconnectPromise;
@@ -184,9 +188,15 @@ describe("Routerlicious Socket Error Handling", () => {
 					scenario.expectedErrorType,
 					`Error type should be ${scenario.expectedErrorType}`,
 				);
-				assert.strictEqual(error.scenarioName, "error", "Scenario name should be 'error'");
+				assert.strictEqual(
+					error.scenarioName,
+					"error",
+					"Scenario name should be 'error'",
+				);
 
-				const telemetryProps = isFluidError(error) ? error.getTelemetryProperties() : {};
+				const telemetryProps = isFluidError(error)
+					? error.getTelemetryProperties()
+					: {};
 				assert.strictEqual(
 					telemetryProps.internalErrorCode,
 					scenario.expectedInternalErrorCode,

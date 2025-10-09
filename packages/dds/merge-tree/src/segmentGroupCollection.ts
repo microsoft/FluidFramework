@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { DoublyLinkedList, walkList } from "@fluidframework/core-utils/internal";
+import {
+	DoublyLinkedList,
+	walkList,
+} from "@fluidframework/core-utils/internal";
 
 import type { SegmentGroup, ISegmentLeaf } from "./mergeTreeNodes.js";
 
@@ -45,10 +48,15 @@ export class SegmentGroupCollection {
 	}
 
 	public copyTo(segmentGroups: SegmentGroupCollection): void {
-		walkList(this.segmentGroups, (sg) => segmentGroups.enqueueOnCopy(sg.data, this.segment));
+		walkList(this.segmentGroups, (sg) =>
+			segmentGroups.enqueueOnCopy(sg.data, this.segment),
+		);
 	}
 
-	private enqueueOnCopy(segmentGroup: SegmentGroup, sourceSegment: ISegmentLeaf): void {
+	private enqueueOnCopy(
+		segmentGroup: SegmentGroup,
+		sourceSegment: ISegmentLeaf,
+	): void {
 		this.enqueue(segmentGroup);
 		if (segmentGroup.previousProps) {
 			// duplicate the previousProps for this segment

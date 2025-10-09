@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
+import {
+	SessionStorageModelLoader,
+	StaticCodeLoader,
+} from "@fluid-example/example-utils";
 
 import React from "react";
 import ReactDOM from "react-dom";
@@ -24,7 +27,9 @@ const updateTabForId = (id: string) => {
  * This is a helper function for loading the page. It's required because getting the Fluid Container
  * requires making async calls.
  */
-export async function createContainerAndRenderInElement(element: HTMLDivElement) {
+export async function createContainerAndRenderInElement(
+	element: HTMLDivElement,
+) {
 	const modelLoader = new SessionStorageModelLoader<IInventoryListAppModel>(
 		new StaticCodeLoader(new InventoryListContainerRuntimeFactory()),
 	);
@@ -50,7 +55,10 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 
 	const render = (model: IInventoryListAppModel) => {
 		ReactDOM.unmountComponentAtNode(appDiv);
-		ReactDOM.render(React.createElement(InventoryListAppView, { model }), appDiv);
+		ReactDOM.render(
+			React.createElement(InventoryListAppView, { model }),
+			appDiv,
+		);
 
 		// The DebugView is just for demo purposes, to manually control code proposal and inspect the state.
 		ReactDOM.unmountComponentAtNode(debugDiv);

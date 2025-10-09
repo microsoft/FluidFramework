@@ -149,7 +149,10 @@ export class Integer64Property extends ValueProperty {
 	 * @return {boolean} true if the value was actually changed
 	 */
 	setValueHigh(in_high) {
-		ConsoleUtils.assert(_.isNumber(in_high), MSG.IN_HIGH_MUST_BE_NUMBER + in_high);
+		ConsoleUtils.assert(
+			_.isNumber(in_high),
+			MSG.IN_HIGH_MUST_BE_NUMBER + in_high,
+		);
 		var changed = this._data.getValueHigh() !== in_high;
 
 		if (changed) {
@@ -180,7 +183,12 @@ export class Integer64Property extends ValueProperty {
 	/**
 	 * @inheritdoc
 	 */
-	_deserialize(in_serializedObj, in_reportToView, in_filteringOptions, in_createChangeSet) {
+	_deserialize(
+		in_serializedObj,
+		in_reportToView,
+		in_filteringOptions,
+		in_createChangeSet,
+	) {
 		if (ChangeSet.isEmptyChangeSet(in_serializedObj)) {
 			return undefined;
 		} else {
@@ -188,7 +196,10 @@ export class Integer64Property extends ValueProperty {
 				_.isArray(in_serializedObj) && in_serializedObj.length === 2,
 				MSG.INVALID_INT64_CHANGESET,
 			);
-			var readValue = new this.DataConstructor(in_serializedObj[0], in_serializedObj[1]);
+			var readValue = new this.DataConstructor(
+				in_serializedObj[0],
+				in_serializedObj[1],
+			);
 			var changed = this._setValue(readValue, in_reportToView);
 			return changed ? this.serialize() : undefined;
 		}
@@ -264,7 +275,10 @@ export class Integer64Property extends ValueProperty {
 	 * @throws if in_string contains characters other than numbers
 	 */
 	fromString(in_string, in_radix) {
-		ConsoleUtils.assert(_.isString(in_string), MSG.IN_STRING_MUST_BE_STRING + in_string);
+		ConsoleUtils.assert(
+			_.isString(in_string),
+			MSG.IN_STRING_MUST_BE_STRING + in_string,
+		);
 		var int = this._castFunctor(in_string, in_radix);
 
 		this.setValueHigh(int.getValueHigh());

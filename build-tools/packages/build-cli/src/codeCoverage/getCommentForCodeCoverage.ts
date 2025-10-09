@@ -23,8 +23,10 @@ export function getCommentForCodeCoverageDiff(
 	baselineBuildInfo: IBuildMetrics,
 	success: boolean,
 ): string {
-	const { codeCoverageComparisonForNewPackages, codeCoverageComparisonForExistingPackages } =
-		packagesListWithCodeCoverageChanges;
+	const {
+		codeCoverageComparisonForNewPackages,
+		codeCoverageComparisonForExistingPackages,
+	} = packagesListWithCodeCoverageChanges;
 
 	let coverageSummaryForImpactedPackages = "";
 	let coverageSummaryForNewPackages = "";
@@ -82,7 +84,9 @@ const getCodeCoverageSummary = (
 	return summary;
 };
 
-const getCodeCoverageSummaryForPackages = (coverageReport: CodeCoverageComparison): string => {
+const getCodeCoverageSummaryForPackages = (
+	coverageReport: CodeCoverageComparison,
+): string => {
 	const metrics = codeCoverageDetailsHeader + getMetricRows(coverageReport);
 
 	return `<details><summary><b>${getGlyphForHtml(coverageReport.branchCoverageDiff)} ${
@@ -111,7 +115,9 @@ const formatDiff = (coverageDiff: number): string => {
 	return `${coverageDiff.toFixed(2)}%`;
 };
 
-const getMetricRows = (codeCoverageComparisonReport: CodeCoverageComparison): string => {
+const getMetricRows = (
+	codeCoverageComparisonReport: CodeCoverageComparison,
+): string => {
 	const glyphForBranchCoverage = getGlyphForHtml(
 		codeCoverageComparisonReport.branchCoverageDiff,
 	);

@@ -4,14 +4,22 @@
  */
 
 import { Users } from "../domains/index.js";
-import { scoreSymbol, type LLMIntegrationTest, type ScorableVerboseTree } from "../utils.js";
+import {
+	scoreSymbol,
+	type LLMIntegrationTest,
+	type ScorableVerboseTree,
+} from "../utils.js";
 
 // We start with two users (alpardes and mapardes) and add two more.
 // We only score on the presence of the four correct user IDs and their name fields; timestamps/emails are ignored.
 const expected: ScorableVerboseTree = {
 	type: "com.microsoft.fluid.tree-agent.users.Users",
 	[scoreSymbol]: (actual): number => {
-		if (typeof actual !== "object" || actual === null || Array.isArray(actual.fields)) {
+		if (
+			typeof actual !== "object" ||
+			actual === null ||
+			Array.isArray(actual.fields)
+		) {
 			return 0;
 		}
 		const required = new Map<string, { firstName: string; lastName: string }>([

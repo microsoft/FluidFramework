@@ -14,7 +14,10 @@ import {
 	type IContextErrorData,
 	MaxKafkaMessageSize,
 } from "@fluidframework/server-services-core";
-import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
+import {
+	Lumberjack,
+	getLumberBaseProperties,
+} from "@fluidframework/server-services-telemetry";
 import type * as kafkaTypes from "node-rdkafka";
 
 import { type IKafkaBaseOptions, type IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
@@ -392,13 +395,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 						});
 					} else {
 						boxcar.deferred.resolve();
-						this.emit(
-							"produced",
-							boxcarMessage,
-							offset,
-							message.length,
-							boxcar.partitionId,
-						);
+						this.emit("produced", boxcarMessage, offset, message.length, boxcar.partitionId);
 					}
 				},
 			);

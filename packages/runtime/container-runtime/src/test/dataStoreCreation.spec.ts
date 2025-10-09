@@ -103,7 +103,9 @@ describe("Data Store Creation Tests", () => {
 			]);
 
 			// Create the global registry for the container that can only create the default dataStore.
-			const globalRegistryEntries = new Map([[defaultName, Promise.resolve(entryDefault)]]);
+			const globalRegistryEntries = new Map([
+				[defaultName, Promise.resolve(entryDefault)],
+			]);
 			const globalRegistry: IFluidDataStoreRegistry = {
 				get IFluidDataStoreRegistry() {
 					return globalRegistry;
@@ -113,7 +115,8 @@ describe("Data Store Creation Tests", () => {
 			parentContext = {
 				IFluidDataStoreRegistry: globalRegistry,
 				baseLogger: createChildLogger(),
-				clientDetails: {} as unknown as IFluidParentContextPrivate["clientDetails"],
+				clientDetails:
+					{} as unknown as IFluidParentContextPrivate["clientDetails"],
 				deltaManager: new MockDeltaManager(),
 				isReadOnly: () => false,
 			} satisfies Partial<IFluidParentContextPrivate> as unknown as IFluidParentContextPrivate;
@@ -124,23 +127,26 @@ describe("Data Store Creation Tests", () => {
 				0,
 			);
 			getCreateSummarizerNodeFn = (id: string) => (si: SummarizeInternalFn) =>
-				summarizerNode.createChild(si, id, { type: CreateSummarizerNodeSource.Local });
+				summarizerNode.createChild(si, id, {
+					type: CreateSummarizerNodeSource.Local,
+				});
 		});
 
 		it("Valid global dataStore", async () => {
 			let success: boolean = true;
 			const dataStoreId = "default-Id";
 			// Create the default dataStore that is in the global registry.
-			const context: LocalFluidDataStoreContext = new LocalFluidDataStoreContext({
-				id: dataStoreId,
-				pkg: [defaultName],
-				parentContext,
-				storage,
-				scope,
-				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
-				makeLocallyVisibleFn,
-				snapshotTree: undefined,
-			});
+			const context: LocalFluidDataStoreContext =
+				new LocalFluidDataStoreContext({
+					id: dataStoreId,
+					pkg: [defaultName],
+					parentContext,
+					storage,
+					scope,
+					createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
+					makeLocallyVisibleFn,
+					snapshotTree: undefined,
+				});
 
 			try {
 				await context.realize();
@@ -155,16 +161,17 @@ describe("Data Store Creation Tests", () => {
 			let success: boolean = true;
 			const dataStoreId = "A-Id";
 			// Create dataStore A that is not in the global registry.
-			const context: LocalFluidDataStoreContext = new LocalFluidDataStoreContext({
-				id: dataStoreId,
-				pkg: [dataStoreAName],
-				parentContext,
-				storage,
-				scope,
-				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
-				makeLocallyVisibleFn,
-				snapshotTree: undefined,
-			});
+			const context: LocalFluidDataStoreContext =
+				new LocalFluidDataStoreContext({
+					id: dataStoreId,
+					pkg: [dataStoreAName],
+					parentContext,
+					storage,
+					scope,
+					createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
+					makeLocallyVisibleFn,
+					snapshotTree: undefined,
+				});
 
 			try {
 				await context.realize();
@@ -179,16 +186,17 @@ describe("Data Store Creation Tests", () => {
 			let success: boolean = true;
 			const dataStoreId = "A-Id";
 			// Create dataStore A that is in the registry of the default dataStore.
-			const contextA: LocalFluidDataStoreContext = new LocalFluidDataStoreContext({
-				id: dataStoreId,
-				pkg: [defaultName, dataStoreAName],
-				parentContext,
-				storage,
-				scope,
-				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
-				makeLocallyVisibleFn,
-				snapshotTree: undefined,
-			});
+			const contextA: LocalFluidDataStoreContext =
+				new LocalFluidDataStoreContext({
+					id: dataStoreId,
+					pkg: [defaultName, dataStoreAName],
+					parentContext,
+					storage,
+					scope,
+					createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
+					makeLocallyVisibleFn,
+					snapshotTree: undefined,
+				});
 
 			try {
 				await contextA.realize();
@@ -203,16 +211,17 @@ describe("Data Store Creation Tests", () => {
 			let success: boolean = true;
 			const dataStoreId = "B-Id";
 			// Create dataStore B that is in not the registry of the default dataStore.
-			const contextB: LocalFluidDataStoreContext = new LocalFluidDataStoreContext({
-				id: dataStoreId,
-				pkg: [defaultName, dataStoreBName],
-				parentContext,
-				storage,
-				scope,
-				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
-				makeLocallyVisibleFn,
-				snapshotTree: undefined,
-			});
+			const contextB: LocalFluidDataStoreContext =
+				new LocalFluidDataStoreContext({
+					id: dataStoreId,
+					pkg: [defaultName, dataStoreBName],
+					parentContext,
+					storage,
+					scope,
+					createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
+					makeLocallyVisibleFn,
+					snapshotTree: undefined,
+				});
 
 			try {
 				await contextB.realize();
@@ -227,16 +236,17 @@ describe("Data Store Creation Tests", () => {
 			let success: boolean = true;
 			const dataStoreBId = "B-Id";
 			// Create dataStore B that is in the registry of dataStore A (which is at depth 2).
-			const contextB: LocalFluidDataStoreContext = new LocalFluidDataStoreContext({
-				id: dataStoreBId,
-				pkg: [defaultName, dataStoreAName, dataStoreBName],
-				parentContext,
-				storage,
-				scope,
-				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreBId),
-				makeLocallyVisibleFn,
-				snapshotTree: undefined,
-			});
+			const contextB: LocalFluidDataStoreContext =
+				new LocalFluidDataStoreContext({
+					id: dataStoreBId,
+					pkg: [defaultName, dataStoreAName, dataStoreBName],
+					parentContext,
+					storage,
+					scope,
+					createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreBId),
+					makeLocallyVisibleFn,
+					snapshotTree: undefined,
+				});
 
 			try {
 				await contextB.realize();
@@ -248,16 +258,17 @@ describe("Data Store Creation Tests", () => {
 
 			const dataStoreCId = "C-Id";
 			// Create dataStore C that is in the registry of dataStore A (which is at depth 2).
-			const contextC: LocalFluidDataStoreContext = new LocalFluidDataStoreContext({
-				id: dataStoreCId,
-				pkg: [defaultName, dataStoreAName, dataStoreCName],
-				parentContext,
-				storage,
-				scope,
-				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreCId),
-				makeLocallyVisibleFn,
-				snapshotTree: undefined,
-			});
+			const contextC: LocalFluidDataStoreContext =
+				new LocalFluidDataStoreContext({
+					id: dataStoreCId,
+					pkg: [defaultName, dataStoreAName, dataStoreCName],
+					parentContext,
+					storage,
+					scope,
+					createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreCId),
+					makeLocallyVisibleFn,
+					snapshotTree: undefined,
+				});
 
 			try {
 				await contextC.realize();
@@ -272,16 +283,17 @@ describe("Data Store Creation Tests", () => {
 			let success: boolean = true;
 			const dataStoreId = "fake-Id";
 			// Create a fake dataStore that is not in the registry of dataStore A (which is at depth 2).
-			const contextFake: LocalFluidDataStoreContext = new LocalFluidDataStoreContext({
-				id: dataStoreId,
-				pkg: [defaultName, dataStoreAName, "fake"],
-				parentContext,
-				storage,
-				scope,
-				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
-				makeLocallyVisibleFn,
-				snapshotTree: undefined,
-			});
+			const contextFake: LocalFluidDataStoreContext =
+				new LocalFluidDataStoreContext({
+					id: dataStoreId,
+					pkg: [defaultName, dataStoreAName, "fake"],
+					parentContext,
+					storage,
+					scope,
+					createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
+					makeLocallyVisibleFn,
+					snapshotTree: undefined,
+				});
 
 			try {
 				await contextFake.realize();
@@ -296,16 +308,17 @@ describe("Data Store Creation Tests", () => {
 			let success: boolean = true;
 			const dataStoreId = "fake-Id";
 			// Create a fake dataStore that is not in the registry of dataStore B (which is at depth 3).
-			const contextFake: LocalFluidDataStoreContext = new LocalFluidDataStoreContext({
-				id: dataStoreId,
-				pkg: [defaultName, dataStoreAName, "fake"],
-				parentContext,
-				storage,
-				scope,
-				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
-				makeLocallyVisibleFn,
-				snapshotTree: undefined,
-			});
+			const contextFake: LocalFluidDataStoreContext =
+				new LocalFluidDataStoreContext({
+					id: dataStoreId,
+					pkg: [defaultName, dataStoreAName, "fake"],
+					parentContext,
+					storage,
+					scope,
+					createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
+					makeLocallyVisibleFn,
+					snapshotTree: undefined,
+				});
 
 			try {
 				await contextFake.realize();
@@ -320,16 +333,17 @@ describe("Data Store Creation Tests", () => {
 			let success: boolean = true;
 			const dataStoreId = "C-Id";
 			// Create dataStore C that is in parent's registry but not in the registry of dataStore B.
-			const contextC: LocalFluidDataStoreContext = new LocalFluidDataStoreContext({
-				id: dataStoreId,
-				pkg: [defaultName, dataStoreAName, dataStoreBName, dataStoreCName],
-				parentContext,
-				storage,
-				scope,
-				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
-				makeLocallyVisibleFn,
-				snapshotTree: undefined,
-			});
+			const contextC: LocalFluidDataStoreContext =
+				new LocalFluidDataStoreContext({
+					id: dataStoreId,
+					pkg: [defaultName, dataStoreAName, dataStoreBName, dataStoreCName],
+					parentContext,
+					storage,
+					scope,
+					createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
+					makeLocallyVisibleFn,
+					snapshotTree: undefined,
+				});
 
 			try {
 				await contextC.realize();

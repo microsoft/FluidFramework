@@ -28,13 +28,21 @@ describe("Local Driver Resolver", () => {
 				"Request should contain create new header",
 			);
 			const expectedUrl = `http://localhost:3000/${documentId}`;
-			assert.equal(request.url, expectedUrl, "The url in createNewRequest should match");
+			assert.equal(
+				request.url,
+				expectedUrl,
+				"The url in createNewRequest should match",
+			);
 		});
 
 		it("should successfully resolve a createNewRequest", async () => {
 			const resolvedUrl = await resolver.resolve(request);
 			const expectedUrl = `https://localhost:3000/tenantId/${documentId}`;
-			assert.equal(resolvedUrl.url, expectedUrl, "The resolved url should match");
+			assert.equal(
+				resolvedUrl.url,
+				expectedUrl,
+				"The resolved url should match",
+			);
 		});
 
 		it("should successfully create requestUrl for a data store from resolvedUrl", async () => {
@@ -55,7 +63,11 @@ describe("Local Driver Resolver", () => {
 			const url = `http://localhost/${documentId}`;
 			const resolvedUrl = await resolver.resolve({ url });
 			const expectedUrl = `https://localhost:3000/tenantId/${documentId}`;
-			assert.equal(resolvedUrl.url, expectedUrl, "The resolved container url should match");
+			assert.equal(
+				resolvedUrl.url,
+				expectedUrl,
+				"The resolved container url should match",
+			);
 		});
 	});
 });

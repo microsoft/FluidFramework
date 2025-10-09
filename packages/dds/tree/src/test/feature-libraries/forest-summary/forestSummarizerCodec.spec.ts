@@ -23,7 +23,10 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/forest-summary/codec.js";
 // eslint-disable-next-line import/no-internal-modules
-import { type Format, version } from "../../../feature-libraries/forest-summary/format.js";
+import {
+	type Format,
+	version,
+} from "../../../feature-libraries/forest-summary/format.js";
 import {
 	TreeCompressionStrategy,
 	cursorForJsonableTreeField,
@@ -104,7 +107,10 @@ describe("ForestSummarizerCodec", () => {
 	describe("throws on receiving malformed data during encode.", () => {
 		for (const [name, data] of malformedData) {
 			it(name, () => {
-				assert.throws(() => codec.encode(data as FieldSet, context), "malformed data");
+				assert.throws(
+					() => codec.encode(data as FieldSet, context),
+					"malformed data",
+				);
 			});
 		}
 	});
@@ -121,7 +127,9 @@ describe("ForestSummarizerCodec", () => {
 						},
 						context,
 					),
-				validateUsageError(/Unsupported version 2 encountered while decoding data/),
+				validateUsageError(
+					/Unsupported version 2 encountered while decoding data/,
+				),
 			);
 		});
 
@@ -136,7 +144,9 @@ describe("ForestSummarizerCodec", () => {
 						},
 						context,
 					),
-				validateUsageError(/Unsupported version 2 encountered while decoding data/),
+				validateUsageError(
+					/Unsupported version 2 encountered while decoding data/,
+				),
 			);
 		});
 
@@ -150,7 +160,8 @@ describe("ForestSummarizerCodec", () => {
 						} as unknown as Format,
 						context,
 					),
-				(e: Error) => validateAssertionError(e, "Encoded schema should validate"),
+				(e: Error) =>
+					validateAssertionError(e, "Encoded schema should validate"),
 			);
 		});
 
@@ -166,7 +177,8 @@ describe("ForestSummarizerCodec", () => {
 						} as unknown as Format,
 						context,
 					),
-				(e: Error) => validateAssertionError(e, "Encoded schema should validate"),
+				(e: Error) =>
+					validateAssertionError(e, "Encoded schema should validate"),
 			);
 		});
 	});

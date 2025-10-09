@@ -108,7 +108,9 @@ export interface ThemeContextValue {
 export const ThemeContext = React.createContext<ThemeContextValue>({
 	themeInfo: getFluentUIThemeToUse(),
 	setTheme: () => {
-		console.warn("Attempting to set context theme before context has been initialized.");
+		console.warn(
+			"Attempting to set context theme before context has been initialized.",
+		);
 	},
 });
 

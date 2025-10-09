@@ -42,7 +42,9 @@ export function assertValidTaskData(input: unknown): ITaskData {
 			);
 		}
 		if (typeof jsonValue.name !== "string") {
-			throw new TypeError(`Invalid ITaskData "name" value received: "${jsonValue.name}".`);
+			throw new TypeError(
+				`Invalid ITaskData "name" value received: "${jsonValue.name}".`,
+			);
 		}
 		if (!Object.prototype.hasOwnProperty.call(jsonValue, "priority")) {
 			throw new Error(

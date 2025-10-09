@@ -57,15 +57,20 @@ export function trackDirtyNodes(
 	view: TreeViewAlpha<ImplicitFieldSchema>,
 	dirty: DirtyTreeMap,
 ): () => void {
-	const forest = (view as SchematizingSimpleTreeView<ImplicitFieldSchema>).checkout.forest;
-	const announcedVisitor = (): AnnouncedVisitor => createDirtyVisitor(forest, dirty);
+	const forest = (view as SchematizingSimpleTreeView<ImplicitFieldSchema>)
+		.checkout.forest;
+	const announcedVisitor = (): AnnouncedVisitor =>
+		createDirtyVisitor(forest, dirty);
 	forest.registerAnnouncedVisitor(announcedVisitor);
 	return () => {
 		forest.deregisterAnnouncedVisitor(announcedVisitor);
 	};
 }
 
-function createDirtyVisitor(forest: IEditableForest, dirty: DirtyTreeMap): AnnouncedVisitor {
+function createDirtyVisitor(
+	forest: IEditableForest,
+	dirty: DirtyTreeMap,
+): AnnouncedVisitor {
 	// When cursor is in Fields mode, `parentField` is the field and `parent` is the parent node above that field (if any).
 	// When cursor is in Nodes mode, `parent` is the current node and `parentField` is undefined.
 	let parentField: FieldKey | undefined;
@@ -138,10 +143,16 @@ function createDirtyVisitor(forest: IEditableForest, dirty: DirtyTreeMap): Annou
 	});
 }
 
-function getNodeAtPath(forest: IEditableForest, path: UpPath): TreeNode | undefined {
+function getNodeAtPath(
+	forest: IEditableForest,
+	path: UpPath,
+): TreeNode | undefined {
 	const cursor = forest.allocateCursor();
 	forest.moveCursorToPath(path, cursor);
-	assert(cursor.mode === CursorLocationType.Nodes, 0xc4e /* attach should happen in a node */);
+	assert(
+		cursor.mode === CursorLocationType.Nodes,
+		0xc4e /* attach should happen in a node */,
+	);
 	const anchor = cursor.buildAnchor();
 	const anchorNode = forest.anchors.locate(anchor);
 	cursor.free();

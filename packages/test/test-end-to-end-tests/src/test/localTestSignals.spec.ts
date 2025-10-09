@@ -56,32 +56,45 @@ async function timeoutPromise<T = void>(
 		timeoutOptions,
 	);
 }
-async function waitForSignal(...signallers: { once(e: "signal", l: () => void): void }[]) {
+async function waitForSignal(
+	...signallers: { once(e: "signal", l: () => void): void }[]
+) {
 	return Promise.all(
 		signallers.map(async (signaller, index) =>
-			timeoutPromise(({ resolve }) => signaller.once("signal", () => resolve()), {
-				durationMs: 2000,
-				errorMsg: `Signaller[${index}] Timeout`,
-			}),
+			timeoutPromise(
+				({ resolve }) => signaller.once("signal", () => resolve()),
+				{
+					durationMs: 2000,
+					errorMsg: `Signaller[${index}] Timeout`,
+				},
+			),
 		),
 	);
 }
 
 async function waitForTargetedSignal(
 	targetedSignaller: { once(e: "signal", l: () => void): void },
-	otherSignallers: { runtime: { once(e: "signal", l: () => void): void }; index: number }[],
+	otherSignallers: {
+		runtime: { once(e: "signal", l: () => void): void };
+		index: number;
+	}[],
 ): Promise<[void, ..."No Signal Received"[]]> {
 	return Promise.all([
-		timeoutPromise(({ resolve }) => targetedSignaller.once("signal", () => resolve()), {
-			durationMs: 2000,
-			errorMsg: `Targeted Signaller Timeout`,
-		}),
+		timeoutPromise(
+			({ resolve }) => targetedSignaller.once("signal", () => resolve()),
+			{
+				durationMs: 2000,
+				errorMsg: `Targeted Signaller Timeout`,
+			},
+		),
 		...otherSignallers.map(async (signaller, index) =>
 			timeoutPromise(
 				({ reject }) =>
 					signaller.runtime.once("signal", () =>
 						reject(
-							new Error(`Signaller[${signaller.index}] should not have received a signal`),
+							new Error(
+								`Signaller[${signaller.index}] should not have received a signal`,
+							),
 						),
 					),
 				{
@@ -102,10 +115,12 @@ describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 	beforeEach("setup", async () => {
 		provider = getTestObjectProvider();
 		const container1 = await provider.makeTestContainer(testContainerConfig);
-		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
+		dataObject1 =
+			await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 
 		const container2 = await provider.loadTestContainer(testContainerConfig);
-		dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
+		dataObject2 =
+			await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 
 		// need to be connected to send signals
 		if (container1.connectionState !== ConnectionState.Connected) {
@@ -120,27 +135,49 @@ describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 			let user1SignalReceivedCount = 0;
 			let user2SignalReceivedCount = 0;
 
-			dataObject1.runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
-				if (message.type === "TestSignal") {
-					user1SignalReceivedCount += 1;
-				}
-			});
+			dataObject1.runtime.on(
+				"signal",
+				(message: IInboundSignalMessage, local: boolean) => {
+					if (message.type === "TestSignal") {
+						user1SignalReceivedCount += 1;
+					}
+				},
+			);
 
-			dataObject2.runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
-				if (message.type === "TestSignal") {
-					user2SignalReceivedCount += 1;
-				}
-			});
+			dataObject2.runtime.on(
+				"signal",
+				(message: IInboundSignalMessage, local: boolean) => {
+					if (message.type === "TestSignal") {
+						user2SignalReceivedCount += 1;
+					}
+				},
+			);
 
 			dataObject1.runtime.submitSignal("TestSignal", true);
 			await waitForSignal(dataObject1.runtime, dataObject2.runtime);
-			assert.equal(user1SignalReceivedCount, 1, "client 1 did not received signal");
-			assert.equal(user2SignalReceivedCount, 1, "client 2 did not received signal");
+			assert.equal(
+				user1SignalReceivedCount,
+				1,
+				"client 1 did not received signal",
+			);
+			assert.equal(
+				user2SignalReceivedCount,
+				1,
+				"client 2 did not received signal",
+			);
 
 			dataObject2.runtime.submitSignal("TestSignal", true);
 			await waitForSignal(dataObject1.runtime, dataObject2.runtime);
-			assert.equal(user1SignalReceivedCount, 2, "client 1 did not received signal");
-			assert.equal(user2SignalReceivedCount, 2, "client 2 did not received signal");
+			assert.equal(
+				user1SignalReceivedCount,
+				2,
+				"client 1 did not received signal",
+			);
+			assert.equal(
+				user2SignalReceivedCount,
+				2,
+				"client 2 did not received signal",
+			);
 		});
 
 		it("Validate host runtime signals", async () => {
@@ -149,27 +186,49 @@ describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 			const user1ContainerRuntime = dataObject1.context.containerRuntime;
 			const user2ContainerRuntime = dataObject2.context.containerRuntime;
 
-			user1ContainerRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
-				if (message.type === "TestSignal") {
-					user1SignalReceivedCount += 1;
-				}
-			});
+			user1ContainerRuntime.on(
+				"signal",
+				(message: IInboundSignalMessage, local: boolean) => {
+					if (message.type === "TestSignal") {
+						user1SignalReceivedCount += 1;
+					}
+				},
+			);
 
-			user2ContainerRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
-				if (message.type === "TestSignal") {
-					user2SignalReceivedCount += 1;
-				}
-			});
+			user2ContainerRuntime.on(
+				"signal",
+				(message: IInboundSignalMessage, local: boolean) => {
+					if (message.type === "TestSignal") {
+						user2SignalReceivedCount += 1;
+					}
+				},
+			);
 
 			user1ContainerRuntime.submitSignal("TestSignal", true);
 			await waitForSignal(user1ContainerRuntime, user2ContainerRuntime);
-			assert.equal(user1SignalReceivedCount, 1, "client 1 did not receive signal");
-			assert.equal(user2SignalReceivedCount, 1, "client 2 did not receive signal");
+			assert.equal(
+				user1SignalReceivedCount,
+				1,
+				"client 1 did not receive signal",
+			);
+			assert.equal(
+				user2SignalReceivedCount,
+				1,
+				"client 2 did not receive signal",
+			);
 
 			user2ContainerRuntime.submitSignal("TestSignal", true);
 			await waitForSignal(user1ContainerRuntime, user2ContainerRuntime);
-			assert.equal(user1SignalReceivedCount, 2, "client 1 did not receive signal");
-			assert.equal(user2SignalReceivedCount, 2, "client 2 did not receive signal");
+			assert.equal(
+				user1SignalReceivedCount,
+				2,
+				"client 1 did not receive signal",
+			);
+			assert.equal(
+				user2SignalReceivedCount,
+				2,
+				"client 2 did not receive signal",
+			);
 		});
 	});
 
@@ -183,29 +242,41 @@ describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 		const user1DtaStoreRuntime = dataObject1.runtime;
 		const user2DataStoreRuntime = dataObject2.runtime;
 
-		user1DtaStoreRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
-			if (message.type === "TestSignal") {
-				user1CompSignalReceivedCount += 1;
-			}
-		});
+		user1DtaStoreRuntime.on(
+			"signal",
+			(message: IInboundSignalMessage, local: boolean) => {
+				if (message.type === "TestSignal") {
+					user1CompSignalReceivedCount += 1;
+				}
+			},
+		);
 
-		user2DataStoreRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
-			if (message.type === "TestSignal") {
-				user2CompSignalReceivedCount += 1;
-			}
-		});
+		user2DataStoreRuntime.on(
+			"signal",
+			(message: IInboundSignalMessage, local: boolean) => {
+				if (message.type === "TestSignal") {
+					user2CompSignalReceivedCount += 1;
+				}
+			},
+		);
 
-		user1ContainerRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
-			if (message.type === "TestSignal") {
-				user1HostSignalReceivedCount += 1;
-			}
-		});
+		user1ContainerRuntime.on(
+			"signal",
+			(message: IInboundSignalMessage, local: boolean) => {
+				if (message.type === "TestSignal") {
+					user1HostSignalReceivedCount += 1;
+				}
+			},
+		);
 
-		user2ContainerRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
-			if (message.type === "TestSignal") {
-				user2HostSignalReceivedCount += 1;
-			}
-		});
+		user2ContainerRuntime.on(
+			"signal",
+			(message: IInboundSignalMessage, local: boolean) => {
+				if (message.type === "TestSignal") {
+					user2HostSignalReceivedCount += 1;
+				}
+			},
+		);
 
 		user1ContainerRuntime.submitSignal("TestSignal", true);
 		await waitForSignal(user1ContainerRuntime, user2ContainerRuntime);
@@ -280,7 +351,8 @@ describeCompat("Targeted Signals", "NoCompat", (getTestObjectProvider) => {
 			const container = await (i === 0
 				? provider.makeTestContainer(testContainerConfig)
 				: provider.loadTestContainer(testContainerConfig));
-			const dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+			const dataObject =
+				await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 
 			if (container.connectionState !== ConnectionState.Connected) {
 				await new Promise((resolve) => container.once("connected", resolve));
@@ -302,23 +374,26 @@ describeCompat("Targeted Signals", "NoCompat", (getTestObjectProvider) => {
 	) {
 		const accumulatedFailures: unknown[] = [];
 		clients.forEach((client) => {
-			client[runtime].on("signal", (message: IInboundSignalMessage, local: boolean) => {
-				client.signalReceivedCount += 1;
-				// If there are any errors during signal processing, they will be raised later.
-				// Errors thrown during signal processing will cause a connection to close.
-				// More importantly an error will be reported via telemetry and that would
-				// just be noise compared to the test results.
-				try {
-					if (targetOffset === 0) {
-						assert.equal(local, true, "Signal should be local");
-					} else {
-						assert.equal(local, false, "Signal should be remote");
+			client[runtime].on(
+				"signal",
+				(message: IInboundSignalMessage, local: boolean) => {
+					client.signalReceivedCount += 1;
+					// If there are any errors during signal processing, they will be raised later.
+					// Errors thrown during signal processing will cause a connection to close.
+					// More importantly an error will be reported via telemetry and that would
+					// just be noise compared to the test results.
+					try {
+						if (targetOffset === 0) {
+							assert.equal(local, true, "Signal should be local");
+						} else {
+							assert.equal(local, false, "Signal should be remote");
+						}
+						assertSignalProperties(message, client.clientId);
+					} catch (error) {
+						accumulatedFailures.push(error);
 					}
-					assertSignalProperties(message, client.clientId);
-				} catch (error) {
-					accumulatedFailures.push(error);
-				}
-			});
+				},
+			);
 		});
 
 		for (let i = 0; i < clients.length; i++) {
@@ -375,25 +450,34 @@ describeCompat("Targeted Signals", "NoCompat", (getTestObjectProvider) => {
 		clientId: string | undefined,
 	) {
 		assert.equal(message.type, "Test Signal Type", "signal type mismatch");
-		assert.equal(message.content, "Test Signal Content", "signal content mismatch");
-		assert.equal(message.targetClientId, clientId, "Signal should be targeted to this client");
+		assert.equal(
+			message.content,
+			"Test Signal Content",
+			"signal content mismatch",
+		);
+		assert.equal(
+			message.targetClientId,
+			clientId,
+			"Signal should be targeted to this client",
+		);
 	}
 
-	[RuntimeLayer.containerRuntime, RuntimeLayer.dataStoreRuntime].forEach((layer) =>
-		describe(`when sent from ${layer}`, () => {
-			it("should correctly deliver a targeted message to a specific remote client, identified by their client ID", async () => {
-				// This test verifies that when a signal is sent to a specific remote client using their client ID,
-				// only that client receives the signal. This is tested by sending a signal from each client to all other clients,
-				// and then verifying that each client received exactly one signal
-				await sendAndVerifySignalToRemoteClient(layer);
-			});
+	[RuntimeLayer.containerRuntime, RuntimeLayer.dataStoreRuntime].forEach(
+		(layer) =>
+			describe(`when sent from ${layer}`, () => {
+				it("should correctly deliver a targeted message to a specific remote client, identified by their client ID", async () => {
+					// This test verifies that when a signal is sent to a specific remote client using their client ID,
+					// only that client receives the signal. This is tested by sending a signal from each client to all other clients,
+					// and then verifying that each client received exactly one signal
+					await sendAndVerifySignalToRemoteClient(layer);
+				});
 
-			it("should correctly deliver a targeted message to itself, identified by their own client ID", async () => {
-				// This test verifies that when a client targets a signal to itself using its own client ID
-				// the signal is correctly received only by the local client. This is tested by sending a signal from each client to itself,
-				// and then verifying that each client received exactly one signal with matching type and content.
-				await sendAndVerifySignalToSelf(layer);
-			});
-		}),
+				it("should correctly deliver a targeted message to itself, identified by their own client ID", async () => {
+					// This test verifies that when a client targets a signal to itself using its own client ID
+					// the signal is correctly received only by the local client. This is tested by sending a signal from each client to itself,
+					// and then verifying that each client received exactly one signal with matching type and content.
+					await sendAndVerifySignalToSelf(layer);
+				});
+			}),
 	);
 });

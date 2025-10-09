@@ -15,7 +15,9 @@ describe("SharedTree Codec Tree", () => {
 	for (const formatVersionKey of Object.keys(SharedTreeFormatVersion)) {
 		it(`SharedTreeFormatVersion.${formatVersionKey}`, () => {
 			const version =
-				SharedTreeFormatVersion[formatVersionKey as keyof typeof SharedTreeFormatVersion];
+				SharedTreeFormatVersion[
+					formatVersionKey as keyof typeof SharedTreeFormatVersion
+				];
 			const tree = getCodecTreeForSharedTreeFormat(version);
 			const jsonable = jsonableCodecTree(tree);
 			takeJsonSnapshot(jsonable);

@@ -5,7 +5,11 @@
 
 import { strict as assert } from "node:assert";
 
-import { type FieldUpPath, type JsonableTree, rootFieldKey } from "../../../core/index.js";
+import {
+	type FieldUpPath,
+	type JsonableTree,
+	rootFieldKey,
+} from "../../../core/index.js";
 import {
 	jsonableTreeFromFieldCursor,
 	type TreeChunk,
@@ -22,7 +26,10 @@ export function numberSequenceField(length: number): JsonableTree[] {
 	return field;
 }
 
-export function assertChunkCursorEquals(chunk: TreeChunk, expected: JsonableTree[]): void {
+export function assertChunkCursorEquals(
+	chunk: TreeChunk,
+	expected: JsonableTree[],
+): void {
 	const result = jsonableTreeFromFieldCursor(chunk.cursor());
 	assert.deepEqual(result, expected);
 	assert.equal(chunk.topLevelLength, expected.length);

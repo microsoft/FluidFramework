@@ -22,7 +22,10 @@ export class SecretManager implements core.ISecretManager {
 		return encryptedSecret;
 	}
 
-	public encryptSecret(secret: string, encryptionKeyVersion?: core.EncryptionKeyVersion): string {
+	public encryptSecret(
+		secret: string,
+		encryptionKeyVersion?: core.EncryptionKeyVersion,
+	): string {
 		return secret;
 	}
 }

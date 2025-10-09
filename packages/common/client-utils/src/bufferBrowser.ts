@@ -117,17 +117,32 @@ export class IsoBuffer extends Uint8Array {
 	 * @privateRemarks TODO: Use actual types
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
-	public static from(value: any, encodingOrOffset?: any, length?: any): IsoBuffer {
+	public static from(
+		value: any,
+		encodingOrOffset?: any,
+		length?: any,
+	): IsoBuffer {
 		if (typeof value === "string") {
-			return IsoBuffer.fromString(value, encodingOrOffset as string | undefined);
+			return IsoBuffer.fromString(
+				value,
+				encodingOrOffset as string | undefined,
+			);
 			// Capture any typed arrays, including Uint8Array (and thus - IsoBuffer!)
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		} else if (value !== null && typeof value === "object" && isArrayBuffer(value.buffer)) {
+		} else if (
+			value !== null &&
+			typeof value === "object" &&
+			isArrayBuffer(value.buffer)
+		) {
 			// The version of the from function for the node buffer, which takes a buffer or typed array
 			// as first parameter, does not have any offset or length parameters. Those are just silently
 			// ignored and not taken into account
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
-			return IsoBuffer.fromArrayBuffer(value.buffer, value.byteOffset, value.byteLength);
+			return IsoBuffer.fromArrayBuffer(
+				value.buffer,
+				value.byteOffset,
+				value.byteLength,
+			);
 		} else if (isArrayBuffer(value)) {
 			return IsoBuffer.fromArrayBuffer(
 				value,
@@ -135,7 +150,9 @@ export class IsoBuffer extends Uint8Array {
 				length as number,
 			);
 		} else {
-			throw new TypeError("Input value was neither a string nor an ArrayBuffer.");
+			throw new TypeError(
+				"Input value was neither a string nor an ArrayBuffer.",
+			);
 		}
 	}
 

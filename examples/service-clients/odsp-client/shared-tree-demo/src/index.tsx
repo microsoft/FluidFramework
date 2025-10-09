@@ -57,10 +57,12 @@ async function start(): Promise<void> {
 		let id = 0;
 		[..."HELLOWORLD".repeat(500)].map((character) => {
 			const x = Math.round(
-				Math.floor((Math.random() * (canvasSize.x * cellSize.x)) / cellSize.x) * cellSize.x,
+				Math.floor((Math.random() * (canvasSize.x * cellSize.x)) / cellSize.x) *
+					cellSize.x,
 			);
 			const y = Math.round(
-				Math.floor((Math.random() * (canvasSize.y * cellSize.y)) / cellSize.y) * cellSize.y,
+				Math.floor((Math.random() * (canvasSize.y * cellSize.y)) / cellSize.y) *
+					cellSize.y,
 			);
 			if (!used.some((element) => element.x === x && element.y === y)) {
 				const pos = { x, y };
@@ -85,7 +87,10 @@ async function start(): Promise<void> {
 
 		// If the app is in a `createNew` state - no itemId, and the container is detached, we attach the container.
 		// This uploads the container to the service and connects to the collaboration session.
-		itemId = await container.attach({ filePath: "foo/bar", fileName: "shared-tree-demo" });
+		itemId = await container.attach({
+			filePath: "foo/bar",
+			fileName: "shared-tree-demo",
+		});
 
 		// The newly attached container is given a unique ID that can be used to access the container in another session
 		// eslint-disable-next-line require-atomic-updates

@@ -283,10 +283,14 @@ describe("getJsonSchema", () => {
 			"object",
 			{
 				foo: schemaFactory.optional(schemaFactory.number, {
-					metadata: { description: "A number representing the concept of Foo." },
+					metadata: {
+						description: "A number representing the concept of Foo.",
+					},
 				}),
 				bar: schemaFactory.required(schemaFactory.string, {
-					metadata: { description: "A string representing the concept of Bar." },
+					metadata: {
+						description: "A string representing the concept of Bar.",
+					},
 				}),
 			},
 			{ metadata: { description: "An object with Foo and Bar." } },
@@ -452,7 +456,10 @@ describe("getJsonSchema", () => {
 	it("Recursive object schema", () => {
 		const schemaFactory = new SchemaFactory("test");
 		class Schema extends schemaFactory.objectRecursive("recursive-object", {
-			foo: schemaFactory.optionalRecursive([schemaFactory.string, () => Schema]),
+			foo: schemaFactory.optionalRecursive([
+				schemaFactory.string,
+				() => Schema,
+			]),
 		}) {}
 
 		const actual = getJsonSchema(Schema, {
@@ -489,7 +496,10 @@ describe("getJsonSchema", () => {
 		const validator = getJsonValidator(actual);
 
 		// Verify expected data validation behavior.
-		validator(hydrate(Schema, new Schema({ foo: new Schema({ foo: "Hello" }) })), true);
+		validator(
+			hydrate(Schema, new Schema({ foo: new Schema({ foo: "Hello" }) })),
+			true,
+		);
 		validator({}, true);
 		validator({ foo: {} }, true);
 		validator({ foo: "Hello world" }, true);

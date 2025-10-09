@@ -37,7 +37,7 @@ const snapshotTree: ISnapshotTree = {
 						default: {
 							blobs: {
 								".component": "bARC6dCXlcrPxQHw3PeROtmKc",
-								"gc": "bARDNMoBed+nKrsf04id52iUA",
+								gc: "bARDNMoBed+nKrsf04id52iUA",
 							},
 							trees: {
 								".channels": {
@@ -62,14 +62,22 @@ const blobContents = new Map<string, ArrayBuffer>([
 	[
 		"bARADgIe4qmDjJl2l2zz12IM3",
 		stringToBuffer(
-			JSON.stringify({ branch: "", minimumSequenceNumber: 0, sequenceNumber: 0, term: 1 }),
+			JSON.stringify({
+				branch: "",
+				minimumSequenceNumber: 0,
+				sequenceNumber: 0,
+				term: 1,
+			}),
 			"utf8",
 		),
 	],
 	["bARBkx1nses1pHL1vKnmFUfIC", stringToBuffer(JSON.stringify([]), "utf8")],
 	[
 		"bARD4RKvW4LL1KmaUKp6hUMSp",
-		stringToBuffer(JSON.stringify({ summaryFormatVersion: 1, gcFeature: 0 }), "utf8"),
+		stringToBuffer(
+			JSON.stringify({ summaryFormatVersion: 1, gcFeature: 0 }),
+			"utf8",
+		),
 	],
 	[
 		"bARC6dCXlcrPxQHw3PeROtmKc",
@@ -89,9 +97,15 @@ const blobContents = new Map<string, ArrayBuffer>([
 				usedRoutes: [""],
 				gcData: {
 					gcNodes: {
-						"/root": ["/default/01b197a2-0432-413b-b2c9-83a992b804c4", "/default"],
+						"/root": [
+							"/default/01b197a2-0432-413b-b2c9-83a992b804c4",
+							"/default",
+						],
 						"/01b197a2-0432-413b-b2c9-83a992b804c4": ["/default"],
-						"/": ["/default/root", "/default/01b197a2-0432-413b-b2c9-83a992b804c4"],
+						"/": [
+							"/default/root",
+							"/default/01b197a2-0432-413b-b2c9-83a992b804c4",
+						],
 					},
 				},
 			}),
@@ -162,7 +176,10 @@ const snapshotTreeWithGroupId: ISnapshotTree = {
 const blobContents2 = new Map<string, ArrayBuffer>([
 	[
 		"bARD4RKvW4LL1KmaUKp6hUMSp",
-		stringToBuffer(JSON.stringify({ summaryFormatVersion: 1, gcFeature: 0 }), "utf8"),
+		stringToBuffer(
+			JSON.stringify({ summaryFormatVersion: 1, gcFeature: 0 }),
+			"utf8",
+		),
 	],
 ]);
 
@@ -178,12 +195,26 @@ describe("Snapshot Format Conversion Tests", () => {
 		};
 		const logger = new MockLogger();
 		const compactSnapshot = convertToCompactSnapshot(snapshotContents);
-		const result = parseCompactSnapshotResponse(compactSnapshot, logger.toTelemetryLogger());
-		assert.deepStrictEqual(result.snapshotTree, snapshotTree, "Tree structure should match");
-		assert.deepStrictEqual(result.blobContents, blobContents, "Blobs content should match");
+		const result = parseCompactSnapshotResponse(
+			compactSnapshot,
+			logger.toTelemetryLogger(),
+		);
+		assert.deepStrictEqual(
+			result.snapshotTree,
+			snapshotTree,
+			"Tree structure should match",
+		);
+		assert.deepStrictEqual(
+			result.blobContents,
+			blobContents,
+			"Blobs content should match",
+		);
 		assert.deepStrictEqual(result.ops, ops, "Ops should match");
 		assert(result.sequenceNumber === 0, "Seq number should match");
-		assert(result.latestSequenceNumber === 2, "Latest sequence number should match");
+		assert(
+			result.latestSequenceNumber === 2,
+			"Latest sequence number should match",
+		);
 		assert(
 			(result.snapshotTree.id = snapshotContents.snapshotTree.id),
 			"Snapshot id should match",
@@ -214,12 +245,26 @@ describe("Snapshot Format Conversion Tests", () => {
 		};
 		const logger = new MockLogger();
 		const compactSnapshot = convertToCompactSnapshot(snapshotContents);
-		const result = parseCompactSnapshotResponse(compactSnapshot, logger.toTelemetryLogger());
-		assert.deepStrictEqual(result.snapshotTree, snapshotTree, "Tree structure should match");
-		assert.deepStrictEqual(result.blobContents, blobContents, "Blobs content should match");
+		const result = parseCompactSnapshotResponse(
+			compactSnapshot,
+			logger.toTelemetryLogger(),
+		);
+		assert.deepStrictEqual(
+			result.snapshotTree,
+			snapshotTree,
+			"Tree structure should match",
+		);
+		assert.deepStrictEqual(
+			result.blobContents,
+			blobContents,
+			"Blobs content should match",
+		);
 		assert.deepStrictEqual(result.ops, [], "Ops should match");
 		assert(result.sequenceNumber === 0, "Seq number should match");
-		assert(result.latestSequenceNumber === 2, "Latest sequence number should match");
+		assert(
+			result.latestSequenceNumber === 2,
+			"Latest sequence number should match",
+		);
 		assert(
 			(result.snapshotTree.id = snapshotContents.snapshotTree.id),
 			"Snapshot id should match",
@@ -249,16 +294,26 @@ describe("Snapshot Format Conversion Tests", () => {
 		};
 		const logger = new MockLogger();
 		const compactSnapshot = convertToCompactSnapshot(snapshotContents);
-		const result = parseCompactSnapshotResponse(compactSnapshot, logger.toTelemetryLogger());
+		const result = parseCompactSnapshotResponse(
+			compactSnapshot,
+			logger.toTelemetryLogger(),
+		);
 		assert.deepStrictEqual(
 			result.snapshotTree,
 			snapshotTreeWithGroupId,
 			"Tree structure should match",
 		);
-		assert.deepStrictEqual(result.blobContents, blobContents2, "Blobs content should match");
+		assert.deepStrictEqual(
+			result.blobContents,
+			blobContents2,
+			"Blobs content should match",
+		);
 		assert.deepStrictEqual(result.ops, ops, "Ops should match");
 		assert(result.sequenceNumber === 0, "Seq number should match");
-		assert(result.latestSequenceNumber === 2, "Latest sequence number should match");
+		assert(
+			result.latestSequenceNumber === 2,
+			"Latest sequence number should match",
+		);
 		assert(
 			(result.snapshotTree.id = snapshotContents.snapshotTree.id),
 			"Snapshot id should match",

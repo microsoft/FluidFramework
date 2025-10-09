@@ -59,10 +59,12 @@ export class SnapshotLoader {
 	public async initialize(
 		services: IChannelStorageService,
 	): Promise<{ catchupOpsP: Promise<ISequencedDocumentMessage[]> }> {
-		const headerLoadedP = services.readBlob(SnapshotLegacy.header).then((header) => {
-			assert(!!header, 0x05f /* "Missing blob header on legacy snapshot!" */);
-			return this.loadHeader(bufferToString(header, "utf8"));
-		});
+		const headerLoadedP = services
+			.readBlob(SnapshotLegacy.header)
+			.then((header) => {
+				assert(!!header, 0x05f /* "Missing blob header on legacy snapshot!" */);
+				return this.loadHeader(bufferToString(header, "utf8"));
+			});
 
 		const catchupOpsP = this.loadBodyAndCatchupOps(headerLoadedP, services);
 
@@ -87,16 +89,24 @@ export class SnapshotLoader {
 		await this.loadBody(headerChunk, services);
 
 		const blobs = await blobsP;
-		if (blobs.length === headerChunk.headerMetadata!.orderedChunkMetadata.length + 1) {
+		if (
+			blobs.length ===
+			headerChunk.headerMetadata!.orderedChunkMetadata.length + 1
+		) {
 			for (const md of headerChunk.headerMetadata!.orderedChunkMetadata)
 				blobs.splice(blobs.indexOf(md.id), 1);
-			assert(blobs.length === 1, 0x060 /* There should be only one blob with catch up ops */);
+			assert(
+				blobs.length === 1,
+				0x060 /* There should be only one blob with catch up ops */,
+			);
 
 			// TODO: The 'Snapshot.catchupOps' tree entry is purely for backwards compatibility.
 			//       (See https://github.com/microsoft/FluidFramework/issues/84)
 
 			return this.loadCatchupOps(services.readBlob(blobs[0]), this.serializer);
-		} else if (blobs.length !== headerChunk.headerMetadata!.orderedChunkMetadata.length) {
+		} else if (
+			blobs.length !== headerChunk.headerMetadata!.orderedChunkMetadata.length
+		) {
 			throw new Error("Unexpected blobs in snapshot");
 		}
 		return [];
@@ -106,16 +116,19 @@ export class SnapshotLoader {
 		spec: IJSONSegment | IJSONSegmentWithMergeInfo,
 	): SegmentWithInfo<IHasInsertionInfo> => {
 		if (hasMergeInfo(spec)) {
-			const seg = overwriteInfo<IHasInsertionInfo>(this.client.specToSegment(spec.json), {
-				insert: {
-					type: "insert",
-					seq: spec.seq ?? UniversalSequenceNumber,
-					clientId:
-						spec.client === undefined
-							? NonCollabClient
-							: this.client.getOrAddShortClientId(spec.client),
+			const seg = overwriteInfo<IHasInsertionInfo>(
+				this.client.specToSegment(spec.json),
+				{
+					insert: {
+						type: "insert",
+						seq: spec.seq ?? UniversalSequenceNumber,
+						clientId:
+							spec.client === undefined
+								? NonCollabClient
+								: this.client.getOrAddShortClientId(spec.client),
+					},
 				},
-			});
+			);
 
 			const removes: RemoveOperationStamp[] = [];
 
@@ -124,11 +137,16 @@ export class SnapshotLoader {
 				// this is for back compat, so we change the singular id to an array
 				// this will only cause problems if there is an overlapping delete
 				// spanning the snapshot, which should be rare
-				const specAsBuggyFormat: IJSONSegmentWithMergeInfo & { removedClient?: string } = spec;
+				const specAsBuggyFormat: IJSONSegmentWithMergeInfo & {
+					removedClient?: string;
+				} = spec;
 				if (specAsBuggyFormat.removedClient !== undefined) {
 					spec.removedClientIds ??= [specAsBuggyFormat.removedClient];
 				}
-				assert(spec.removedClientIds !== undefined, 0xaac /* must have removedClient ids */);
+				assert(
+					spec.removedClientIds !== undefined,
+					0xaac /* must have removedClient ids */,
+				);
 				const firstRemovedSeq = spec.removedSeq;
 				// TODO:AB#32299: To correctly support perspectives from other clients which don't assume they have seen
 				// all ops, we need to actually record these in the summary. For now we use fake data, and it turns
@@ -227,7 +245,10 @@ export class SnapshotLoader {
 		services: IChannelStorageService,
 	): Promise<void> {
 		const headerMetadata = chunk1.headerMetadata!;
-		assert(chunk1.length <= headerMetadata.totalLength, 0x061 /* "Mismatch in totalLength" */);
+		assert(
+			chunk1.length <= headerMetadata.totalLength,
+			0x061 /* "Mismatch in totalLength" */,
+		);
 
 		assert(
 			chunk1.segmentCount <= headerMetadata.totalSegmentCount,
@@ -255,7 +276,9 @@ export class SnapshotLoader {
 			);
 			lengthSofar += chunk.length;
 			// Deserialize each chunk segment and append it to the end of the MergeTree.
-			const newSegs = chunk.segments.map((element) => this.specToSegment(element));
+			const newSegs = chunk.segments.map((element) =>
+				this.specToSegment(element),
+			);
 			this.extractAttribution(newSegs, chunk);
 			chunksWithAttribution += chunk.attribution === undefined ? 0 : 1;
 			segs.push(...newSegs);
@@ -267,7 +290,10 @@ export class SnapshotLoader {
 			0x4c0 /* all or no chunks should have attribution information */,
 		);
 
-		assert(lengthSofar === headerMetadata.totalLength, 0x063 /* "Mismatch in totalLength" */);
+		assert(
+			lengthSofar === headerMetadata.totalLength,
+			0x063 /* "Mismatch in totalLength" */,
+		);
 
 		assert(
 			chunk1.segmentCount + segs.length === headerMetadata.totalSegmentCount,
@@ -276,7 +302,11 @@ export class SnapshotLoader {
 
 		// Helper to insert segments at the end of the MergeTree.
 		const mergeTree = this.mergeTree;
-		const append = (segments: ISegmentPrivate[], clientId: number, seq: number): void => {
+		const append = (
+			segments: ISegmentPrivate[],
+			clientId: number,
+			seq: number,
+		): void => {
 			mergeTree.insertSegments(
 				mergeTree.root.cachedLength ?? 0,
 				segments,
@@ -309,7 +339,10 @@ export class SnapshotLoader {
 		flushBatch();
 	}
 
-	private extractAttribution(segments: ISegmentPrivate[], chunk: MergeTreeChunkV1): void {
+	private extractAttribution(
+		segments: ISegmentPrivate[],
+		chunk: MergeTreeChunkV1,
+	): void {
 		if (chunk.attribution) {
 			const { attributionPolicy } = this.mergeTree;
 			if (attributionPolicy === undefined) {

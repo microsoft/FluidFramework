@@ -94,7 +94,12 @@ export function createChannelServiceEndpoints(
 		dirtyFn,
 		isAttachedAndVisible,
 	);
-	const objectStorage = new ChannelStorageService(tree, storageService, logger, extraBlobs);
+	const objectStorage = new ChannelStorageService(
+		tree,
+		storageService,
+		logger,
+		extraBlobs,
+	);
 
 	return {
 		deltaConnection,
@@ -111,10 +116,18 @@ export function summarizeChannel(
 	trackState: boolean = false,
 	telemetryContext?: ITelemetryContext,
 ): ISummaryTreeWithStats {
-	const summarizeResult = channel.getAttachSummary(fullTree, trackState, telemetryContext);
+	const summarizeResult = channel.getAttachSummary(
+		fullTree,
+		trackState,
+		telemetryContext,
+	);
 
 	// Add the channel attributes to the returned result.
-	addBlobToSummary(summarizeResult, attributesBlobKey, JSON.stringify(channel.attributes));
+	addBlobToSummary(
+		summarizeResult,
+		attributesBlobKey,
+		JSON.stringify(channel.attributes),
+	);
 	return summarizeResult;
 }
 
@@ -133,7 +146,11 @@ export async function summarizeChannelAsync(
 	);
 
 	// Add the channel attributes to the returned result.
-	addBlobToSummary(summarizeResult, attributesBlobKey, JSON.stringify(channel.attributes));
+	addBlobToSummary(
+		summarizeResult,
+		attributesBlobKey,
+		JSON.stringify(channel.attributes),
+	);
 	return summarizeResult;
 }
 
@@ -197,7 +214,8 @@ export async function loadChannel(
 	// Compare snapshot version to collaborative object version
 	if (
 		attributes.snapshotFormatVersion !== undefined &&
-		attributes.snapshotFormatVersion !== factory.attributes.snapshotFormatVersion
+		attributes.snapshotFormatVersion !==
+			factory.attributes.snapshotFormatVersion
 	) {
 		logger.sendTelemetryEvent({
 			eventName: "ChannelAttributesVersionMismatch",

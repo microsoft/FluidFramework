@@ -65,7 +65,10 @@ interface IAddItemViewProps {
 	disabled?: boolean;
 }
 
-const AddItemView: FC<IAddItemViewProps> = ({ addItem, disabled }: IAddItemViewProps) => {
+const AddItemView: FC<IAddItemViewProps> = ({
+	addItem,
+	disabled,
+}: IAddItemViewProps) => {
 	const nameRef = useRef<HTMLInputElement>(null);
 	const quantityRef = useRef<HTMLInputElement>(null);
 
@@ -109,7 +112,11 @@ const AddItemView: FC<IAddItemViewProps> = ({ addItem, disabled }: IAddItemViewP
 			</tr>
 			<tr>
 				<td colSpan={2}>
-					<button style={{ width: "100%" }} onClick={onAddItemButtonClick} disabled={disabled}>
+					<button
+						style={{ width: "100%" }}
+						onClick={onAddItemButtonClick}
+						disabled={disabled}
+					>
 						Add new item
 					</button>
 				</td>
@@ -156,7 +163,13 @@ export const InventoryListView: FC<IInventoryListViewProps> = ({
 	});
 
 	return (
-		<table style={{ margin: "0 auto", textAlign: "left", borderCollapse: "collapse" }}>
+		<table
+			style={{
+				margin: "0 auto",
+				textAlign: "left",
+				borderCollapse: "collapse",
+			}}
+		>
 			<thead>
 				<tr>
 					<th>Inventory item</th>

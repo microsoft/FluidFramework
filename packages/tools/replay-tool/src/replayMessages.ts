@@ -32,7 +32,10 @@ import {
 	ReplayFileDeltaConnection,
 	type Replayer,
 } from "@fluidframework/file-driver/internal";
-import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix/internal";
+import {
+	SharedMatrix,
+	SharedMatrixFactory,
+} from "@fluidframework/matrix/internal";
 import {
 	FileSnapshotReader,
 	type IFileSnapshot,
@@ -161,7 +164,8 @@ class Logger implements ITelemetryBaseLogger {
 			// Stack is not output properly (with newlines), if done as part of event
 			const stack: string | undefined = event.stack as string | undefined;
 			delete event.stack;
-			const error = new Error(`An error has been logged from ${this.containerDescription}!\n
+			const error =
+				new Error(`An error has been logged from ${this.containerDescription}!\n
                         ${stringify(event)}`);
 			error.stack = stack;
 			// throw instead of printing an error to fail tests
@@ -216,7 +220,8 @@ class Document {
 		deltaStorageService: FileDeltaStorageService,
 		errorHandler: (event: ITelemetryBaseEvent) => boolean,
 	) {
-		const deltaConnection = await ReplayFileDeltaConnection.create(deltaStorageService);
+		const deltaConnection =
+			await ReplayFileDeltaConnection.create(deltaStorageService);
 		const documentServiceFactory = new FileDocumentServiceFactory(
 			this.storage,
 			deltaStorageService,
@@ -379,7 +384,9 @@ export class ReplayTool {
 		// So if we d not filter them out, we report them twice.
 		// Avoid that, but have a safety net - increase error count, so that tool
 		// still fails even if error is not propagated / reported properly.
-		if (event.eventName === "fluid:telemetry:Container:SnapshotExceptionError") {
+		if (
+			event.eventName === "fluid:telemetry:Container:SnapshotExceptionError"
+		) {
 			if (this.errors.length === 0) {
 				this.errors.push(errorString);
 			}
@@ -390,7 +397,9 @@ export class ReplayTool {
 	}
 
 	private async loadDoc(doc: Document) {
-		return doc.load(this.deltaStorageService, (event) => this.errorHandler(event));
+		return doc.load(this.deltaStorageService, (event) =>
+			this.errorHandler(event),
+		);
 	}
 
 	private async setup() {
@@ -438,7 +447,9 @@ export class ReplayTool {
 			this.args.inDirName,
 			this.args.fromVersion,
 		);
-		let description = this.args.fromVersion ? this.args.fromVersion : "main container";
+		let description = this.args.fromVersion
+			? this.args.fromVersion
+			: "main container";
 		this.mainDocument = new Document(this.args, this.storage, description);
 		await this.loadDoc(this.mainDocument);
 		this.documents.push(this.mainDocument);
@@ -453,7 +464,9 @@ export class ReplayTool {
 				);
 			}
 			if (this.mainDocument.currentOp > this.args.to) {
-				throw new Error("--to argument is below snapshot starting op. Nothing to do!");
+				throw new Error(
+					"--to argument is below snapshot starting op. Nothing to do!",
+				);
 			}
 		}
 
@@ -470,7 +483,9 @@ export class ReplayTool {
 
 					const file = `${this.args.initializeFromSnapshotsDir}/${node.name}/tree.json`;
 					if (!fs.existsSync(file)) {
-						console.error(`${file} does not exist, skipping ${node.name} snapshot`);
+						console.error(
+							`${file} does not exist, skipping ${node.name} snapshot`,
+						);
 						continue;
 					}
 					storage = new FluidFetchReaderFileSnapshotWriter(
@@ -496,28 +511,44 @@ export class ReplayTool {
 					doc.appendToFileName(`_storage_${node.name}`);
 
 					if (doc.fromOp < this.args.from || this.args.to < doc.fromOp) {
-						console.log(`Skipping snapshots ${node.name} generated at op = ${doc.fromOp}`);
+						console.log(
+							`Skipping snapshots ${node.name} generated at op = ${doc.fromOp}`,
+						);
 					} else {
 						if (this.args.verbose) {
-							console.log(`Loaded snapshots ${node.name} generated at op = ${doc.fromOp}`);
+							console.log(
+								`Loaded snapshots ${node.name} generated at op = ${doc.fromOp}`,
+							);
 						}
 						this.documents.push(doc);
 					}
 				} catch (error) {
-					doc.logger.sendErrorEvent({ eventName: "FailedToLoadSnapshot" }, error);
+					doc.logger.sendErrorEvent(
+						{ eventName: "FailedToLoadSnapshot" },
+						error,
+					);
 				}
 			}
 		}
 
 		// This does not seem to provide much value, we can disable it for per reasons
 		// It adds about 10% to the duration of the test.
-		if (this.args.snapFreq !== undefined || this.args.validateStorageSnapshots) {
+		if (
+			this.args.snapFreq !== undefined ||
+			this.args.validateStorageSnapshots
+		) {
 			const storage = new FluidFetchReaderFileSnapshotWriter(
 				this.args.inDirName,
 				this.args.fromVersion,
 			);
-			description = this.args.fromVersion ? this.args.fromVersion : "secondary container";
-			this.documentNeverSnapshot = new Document(this.args, storage, description);
+			description = this.args.fromVersion
+				? this.args.fromVersion
+				: "secondary container";
+			this.documentNeverSnapshot = new Document(
+				this.args,
+				storage,
+				description,
+			);
 			await this.loadDoc(this.documentNeverSnapshot);
 			this.documentNeverSnapshot.appendToFileName("_noSnapshots");
 			this.documents.push(this.documentNeverSnapshot);
@@ -525,7 +556,9 @@ export class ReplayTool {
 
 		// Load all snapshots from storage
 		if (this.args.validateStorageSnapshots) {
-			for (const node of fs.readdirSync(this.args.inDirName, { withFileTypes: true })) {
+			for (const node of fs.readdirSync(this.args.inDirName, {
+				withFileTypes: true,
+			})) {
 				if (!node.isDirectory()) {
 					continue;
 				}
@@ -536,24 +569,36 @@ export class ReplayTool {
 
 				const file = `${this.args.inDirName}/${node.name}/tree.json`;
 				if (!fs.existsSync(file)) {
-					console.error(`${file} does not exist, skipping ${node.name} snapshot`);
+					console.error(
+						`${file} does not exist, skipping ${node.name} snapshot`,
+					);
 					continue;
 				}
 
-				const storage = new FluidFetchReaderFileSnapshotWriter(this.args.inDirName, node.name);
+				const storage = new FluidFetchReaderFileSnapshotWriter(
+					this.args.inDirName,
+					node.name,
+				);
 				const doc = new Document(this.args, storage, node.name);
 				try {
 					await this.loadDoc(doc);
 					doc.appendToFileName(`_storage_${node.name}`);
 
 					if (doc.fromOp < this.args.from || this.args.to < doc.fromOp) {
-						console.log(`Skipping snapshots ${node.name} generated at op = ${doc.fromOp}`);
+						console.log(
+							`Skipping snapshots ${node.name} generated at op = ${doc.fromOp}`,
+						);
 					} else {
-						console.log(`Loaded snapshots ${node.name} generated at op = ${doc.fromOp}`);
+						console.log(
+							`Loaded snapshots ${node.name} generated at op = ${doc.fromOp}`,
+						);
 						this.documentsFromStorageSnapshots.push(doc);
 					}
 				} catch (error) {
-					doc.logger.sendErrorEvent({ eventName: "FailedToLoadSnapshot" }, error);
+					doc.logger.sendErrorEvent(
+						{ eventName: "FailedToLoadSnapshot" },
+						error,
+					);
 				}
 			}
 			this.documentsFromStorageSnapshots.sort((a: Document, b: Document) =>
@@ -564,7 +609,9 @@ export class ReplayTool {
 
 	private async mainCycle() {
 		const originalSummaries = this.args.testSummaries
-			? this.mainDocument.originalSummarySequenceNumbers.filter((s) => s >= this.args.from)
+			? this.mainDocument.originalSummarySequenceNumbers.filter(
+					(s) => s >= this.args.from,
+				)
 			: [];
 		let nextSnapPoint = -1;
 		// eslint-disable-next-line no-constant-condition
@@ -573,7 +620,9 @@ export class ReplayTool {
 			if (nextSnapPoint <= currentOp) {
 				nextSnapPoint =
 					originalSummaries.shift() ??
-					(this.args.snapFreq !== undefined ? currentOp + this.args.snapFreq : this.args.to);
+					(this.args.snapFreq !== undefined
+						? currentOp + this.args.snapFreq
+						: this.args.to);
 			}
 			let replayTo = Math.min(nextSnapPoint, this.args.to);
 
@@ -594,7 +643,8 @@ export class ReplayTool {
 			}
 
 			const final =
-				this.mainDocument.currentOp < replayTo || this.args.to <= this.mainDocument.currentOp;
+				this.mainDocument.currentOp < replayTo ||
+				this.args.to <= this.mainDocument.currentOp;
 			await this.generateSummary(final);
 			if (final) {
 				break;
@@ -602,7 +652,10 @@ export class ReplayTool {
 		}
 	}
 
-	private async generateMainSummary(dir: string, final: boolean): Promise<ContainerContent> {
+	private async generateMainSummary(
+		dir: string,
+		final: boolean,
+	): Promise<ContainerContent> {
 		const op = this.mainDocument.currentOp;
 
 		const content = this.mainDocument.extractContent();
@@ -613,7 +666,8 @@ export class ReplayTool {
 				compareWithReferenceSnapshot(
 					content.normalizedSnapshot,
 					`${dir}/${this.mainDocument.getFileName()}`,
-					(description: string, error?: any) => this.reportError(description, error),
+					(description: string, error?: any) =>
+						this.reportError(description, error),
 				);
 			} else if (this.args.write) {
 				fs.mkdirSync(dir, { recursive: true });
@@ -655,7 +709,11 @@ export class ReplayTool {
 		) {
 			const storageClass = FileSnapshotWriterClassFactory(FileSnapshotReader);
 			const storage = new storageClass(content.snapshot);
-			const document3 = new Document(this.args, storage, `Saved & loaded at seq# ${op}`);
+			const document3 = new Document(
+				this.args,
+				storage,
+				`Saved & loaded at seq# ${op}`,
+			);
 			await this.loadDoc(document3);
 			this.documentsWindow.push(document3);
 		}
@@ -666,7 +724,10 @@ export class ReplayTool {
 			(final || this.documentsWindow[0].fromOp <= startOp)
 		) {
 			const doc = this.documentsWindow.shift();
-			assert(doc.fromOp === startOp || final, 0x1cb /* "Bad window to verify snapshot" */);
+			assert(
+				doc.fromOp === startOp || final,
+				0x1cb /* "Bad window to verify snapshot" */,
+			);
 			await this.saveAndVerify(doc, dir, content, final);
 		}
 	}
@@ -692,15 +753,27 @@ export class ReplayTool {
 				this.documentPriorSnapshot.fromOp === op,
 				0x1cc /* "Unexpected previous snapshot op number" */,
 			);
-			await this.saveAndVerify(this.documentPriorSnapshot, dir, content, final).catch((e) => {
+			await this.saveAndVerify(
+				this.documentPriorSnapshot,
+				dir,
+				content,
+				final,
+			).catch((e) => {
 				const from = this.documentPriorSnapshot.containerDescription;
-				this.reportError(`Error logged from ${from} while generating snapshot`, e);
+				this.reportError(
+					`Error logged from ${from} while generating snapshot`,
+					e,
+				);
 				this.documentPriorSnapshot = undefined;
 			});
 		}
 	}
 
-	private async validateSaveAndLoad(content: ContainerContent, dir: string, final: boolean) {
+	private async validateSaveAndLoad(
+		content: ContainerContent,
+		dir: string,
+		final: boolean,
+	) {
 		const op = content.op;
 
 		// Keep doc from previous iteration and validate here - this gives us shortest
@@ -797,10 +870,17 @@ export class ReplayTool {
 		if (content.op === content2.op) {
 			// Deep compare the normalized snapshots. If they do not match, catch the error and display it.
 			try {
-				strict.deepStrictEqual(content.normalizedSnapshot, content2.normalizedSnapshot);
+				strict.deepStrictEqual(
+					content.normalizedSnapshot,
+					content2.normalizedSnapshot,
+				);
 				failed = false;
 			} catch (e) {
-				if (JSON.stringify(content.normalizedSnapshot).includes(SharedMatrixFactory.Type)) {
+				if (
+					JSON.stringify(content.normalizedSnapshot).includes(
+						SharedMatrixFactory.Type,
+					)
+				) {
 					const channels1 = content.normalizedSnapshot.tree.entries.find(
 						(entry) => entry.path === ".channels",
 					).value;
@@ -876,8 +956,13 @@ export class ReplayTool {
 		return true;
 	}
 
-	private expandForReadabilityAndWriteOut(content: ContainerContent, filename: string) {
-		fs.writeFileSync(`${filename}.json`, content.snapshotAsString, { encoding: "utf-8" });
+	private expandForReadabilityAndWriteOut(
+		content: ContainerContent,
+		filename: string,
+	) {
+		fs.writeFileSync(`${filename}.json`, content.snapshotAsString, {
+			encoding: "utf-8",
+		});
 
 		if (this.args.expandFiles) {
 			fs.writeFileSync(`${filename}_expanded.json`, content.snapshotExpanded, {
@@ -901,7 +986,9 @@ async function assertDdsEqual(
 	);
 
 	const parsed: { type?: string } =
-		attributes?.type === TreeEntry.Blob ? JSON.parse(attributes?.value.contents) : {};
+		attributes?.type === TreeEntry.Blob
+			? JSON.parse(attributes?.value.contents)
+			: {};
 
 	if (parsed.type !== SharedMatrixFactory.Type) {
 		assert(d1.value.entries.length === d2.value.entries.length, 0x3b5 /*  */);
@@ -932,8 +1019,12 @@ async function assertDdsEqual(
 		return matrix;
 	}
 
-	const matrix1 = await newMatrix(convertToSummaryTreeWithStats(d1.value).summary);
-	const matrix2 = await newMatrix(convertToSummaryTreeWithStats(d2.value).summary);
+	const matrix1 = await newMatrix(
+		convertToSummaryTreeWithStats(d1.value).summary,
+	);
+	const matrix2 = await newMatrix(
+		convertToSummaryTreeWithStats(d2.value).summary,
+	);
 
 	strict.deepStrictEqual(matrix1.rowCount, matrix2.rowCount);
 	strict.deepStrictEqual(matrix1.colCount, matrix2.colCount);

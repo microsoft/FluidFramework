@@ -49,8 +49,9 @@ http.globalAgent = new HttpAgent();
 /**
  * @internal
  */
-export type CreateFromEnvConfigParam<T extends (config: any, ...args: any) => any> =
-	T extends (config: infer P, ...args: any) => any ? P : never;
+export type CreateFromEnvConfigParam<
+	T extends (config: any, ...args: any) => any,
+> = T extends (config: infer P, ...args: any) => any ? P : never;
 
 /**
  * @internal
@@ -68,7 +69,10 @@ export async function createFluidTestDriver(
 	config?: FluidTestDriverConfig,
 	api: DriverApiType = DriverApi,
 ): Promise<
-	LocalServerTestDriver | TinyliciousTestDriver | RouterliciousTestDriver | OdspTestDriver
+	| LocalServerTestDriver
+	| TinyliciousTestDriver
+	| RouterliciousTestDriver
+	| OdspTestDriver
 > {
 	switch (fluidTestDriverType) {
 		case "local":
@@ -80,7 +84,10 @@ export async function createFluidTestDriver(
 
 		case "r11s":
 		case "routerlicious":
-			return RouterliciousTestDriver.createFromEnv(config?.r11s, api.RouterliciousDriverApi);
+			return RouterliciousTestDriver.createFromEnv(
+				config?.r11s,
+				api.RouterliciousDriverApi,
+			);
 
 		case "odsp":
 			return OdspTestDriver.createFromEnv(config?.odsp, api.OdspDriverApi);

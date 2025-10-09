@@ -21,7 +21,8 @@ export interface IProvideFluidLastEditedTracker {
 /**
  * @internal
  */
-export interface IFluidLastEditedTracker extends IProvideFluidLastEditedTracker {
+export interface IFluidLastEditedTracker
+	extends IProvideFluidLastEditedTracker {
 	/**
 	 * Returns the details of the last edit to the container.
 	 */

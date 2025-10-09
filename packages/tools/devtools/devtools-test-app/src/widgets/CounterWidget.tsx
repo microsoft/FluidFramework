@@ -3,8 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { Button, Text, Tooltip, makeStyles, shorthands } from "@fluentui/react-components";
-import { AddSquare24Regular, SubtractSquare24Regular } from "@fluentui/react-icons";
+import {
+	Button,
+	Text,
+	Tooltip,
+	makeStyles,
+	shorthands,
+} from "@fluentui/react-components";
+import {
+	AddSquare24Regular,
+	SubtractSquare24Regular,
+} from "@fluentui/react-icons";
 import type { SharedCounter } from "@fluidframework/counter/internal";
 import React from "react";
 
@@ -79,7 +88,10 @@ export function CounterWidget(props: CounterWidgetProps): React.ReactElement {
 
 	return (
 		<div className={styles.root}>
-			<Tooltip content="Decrement counter by 1 (min 0)." relationship="description">
+			<Tooltip
+				content="Decrement counter by 1 (min 0)."
+				relationship="description"
+			>
 				<Button
 					// size="small"
 					icon={<SubtractSquare24Regular />}

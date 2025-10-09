@@ -18,8 +18,12 @@ const { MSG } = require("@fluid-experimental/property-common").constants;
 
 const { BaseProperty } = require("../..");
 const { PropertyFactory } = require("../..");
-const { ReferenceArrayProperty } = require("../../properties/referenceArrayProperty");
-const { ReferenceMapProperty } = require("../../properties/referenceMapProperty");
+const {
+	ReferenceArrayProperty,
+} = require("../../properties/referenceArrayProperty");
+const {
+	ReferenceMapProperty,
+} = require("../../properties/referenceMapProperty");
 const { ReferenceProperty } = require("../../properties/referenceProperty");
 
 describe("Reference Properties", function () {
@@ -57,11 +61,17 @@ describe("Reference Properties", function () {
 			expect(reference.getReferenceTargetTypeId()).to.equal("NodeProperty");
 
 			// Test creation via a template
-			var prop = PropertyFactory.create("autodesk.test:referencePropertyTest-1.0.0");
+			var prop = PropertyFactory.create(
+				"autodesk.test:referencePropertyTest-1.0.0",
+			);
 			expect(prop._properties.ref_anon).to.be.instanceof(ReferenceProperty);
-			expect(prop._properties.ref_anon.getReferenceTargetTypeId()).to.equal("BaseProperty");
+			expect(prop._properties.ref_anon.getReferenceTargetTypeId()).to.equal(
+				"BaseProperty",
+			);
 			expect(prop._properties.ref).to.be.instanceof(ReferenceProperty);
-			expect(prop._properties.ref.getReferenceTargetTypeId()).to.equal("NodeProperty");
+			expect(prop._properties.ref.getReferenceTargetTypeId()).to.equal(
+				"NodeProperty",
+			);
 		});
 
 		it("empty reference should resolve to undefined", function () {
@@ -236,7 +246,12 @@ describe("Reference Properties", function () {
 		});
 
 		describe("Reference resolution", function () {
-			var root, target, reference, reference2, relativeReference, relativeReference2;
+			var root,
+				target,
+				reference,
+				reference2,
+				relativeReference,
+				relativeReference2;
 			var nodeTarget, nestedChild, nodeTarget2, nestedChild2;
 			var mapTarget, nestedMapChild;
 			var arrayTarget, nestedArrayChild;
@@ -414,10 +429,14 @@ describe("Reference Properties", function () {
 				expect(root.resolvePath("/reference.nested")).to.equal(nestedChild);
 				expect(root.get(["reference", "nested"])).to.equal(nestedChild);
 				expect(root.resolvePath("/reference*.nested")).to.equal(undefined);
-				expect(root.get(["reference", dereferenceToken, "nested"])).to.equal(undefined);
+				expect(root.get(["reference", dereferenceToken, "nested"])).to.equal(
+					undefined,
+				);
 
 				nestedChild.value = "test_value";
-				expect(root.resolvePath("/reference.nested").value).to.equal("test_value");
+				expect(root.resolvePath("/reference.nested").value).to.equal(
+					"test_value",
+				);
 			});
 
 			it("should allow accessing referenced maps", function () {
@@ -449,7 +468,9 @@ describe("Reference Properties", function () {
 
 				reference.set(nodeTarget2);
 				expect(root.resolvePath("/reference.nested*")).to.equal(nestedChild2);
-				expect(root.get(["reference", "nested", dereferenceToken])).to.equal(nestedChild2);
+				expect(root.get(["reference", "nested", dereferenceToken])).to.equal(
+					nestedChild2,
+				);
 
 				nodeTarget2.remove("nested");
 				var newChild = PropertyFactory.create("String");
@@ -472,13 +493,15 @@ describe("Reference Properties", function () {
 			it("should work with multiple jumps with relative references", function () {
 				relativeReference.setValue("../nodeTarget");
 				relativeReference2.setValue("../nodeTarget.relativeReference");
-				expect(root.resolvePath("/nodeTarget2.relativeReference2.nested")).to.equal(
-					nestedChild,
+				expect(
+					root.resolvePath("/nodeTarget2.relativeReference2.nested"),
+				).to.equal(nestedChild);
+				expect(
+					root.get(["nodeTarget2", "relativeReference2", "nested"]),
+				).to.equal(nestedChild);
+				expect(root.get(["nodeTarget2", "relativeReference2"])).to.equal(
+					nodeTarget,
 				);
-				expect(root.get(["nodeTarget2", "relativeReference2", "nested"])).to.equal(
-					nestedChild,
-				);
-				expect(root.get(["nodeTarget2", "relativeReference2"])).to.equal(nodeTarget);
 				expect(
 					root.get(["nodeTarget2", "relativeReference2"], {
 						referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NO_LEAFS,
@@ -492,7 +515,8 @@ describe("Reference Properties", function () {
 				expect(
 					root
 						.get(["nodeTarget2", "relativeReference2"], {
-							referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NO_LEAFS,
+							referenceResolutionMode:
+								BaseProperty.REFERENCE_RESOLUTION.NO_LEAFS,
 						})
 						.get(["nested"]),
 				).to.equal(nestedChild);
@@ -505,7 +529,9 @@ describe("Reference Properties", function () {
 
 			it("should clone", function () {
 				var clone = relativeReference.clone();
-				expect(relativeReference._serialize(false)).to.eql(clone._serialize(false));
+				expect(relativeReference._serialize(false)).to.eql(
+					clone._serialize(false),
+				);
 			});
 
 			it("get context should return single", function () {
@@ -541,11 +567,19 @@ describe("Reference Properties", function () {
 			expect(reference.getReferenceTargetTypeId()).to.equal("NodeProperty");
 
 			// Test creation via a template
-			var prop = PropertyFactory.create("autodesk.test:referencePropertyTest-1.0.0");
-			expect(prop._properties.refMap_anon).to.be.instanceof(ReferenceMapProperty);
-			expect(prop._properties.refMap_anon.getReferenceTargetTypeId()).to.equal("BaseProperty");
+			var prop = PropertyFactory.create(
+				"autodesk.test:referencePropertyTest-1.0.0",
+			);
+			expect(prop._properties.refMap_anon).to.be.instanceof(
+				ReferenceMapProperty,
+			);
+			expect(prop._properties.refMap_anon.getReferenceTargetTypeId()).to.equal(
+				"BaseProperty",
+			);
 			expect(prop._properties.refMap).to.be.instanceof(ReferenceMapProperty);
-			expect(prop._properties.refMap.getReferenceTargetTypeId()).to.equal("NodeProperty");
+			expect(prop._properties.refMap.getReferenceTargetTypeId()).to.equal(
+				"NodeProperty",
+			);
 		});
 
 		it("empty reference should resolve to undefined", function () {
@@ -586,7 +620,13 @@ describe("Reference Properties", function () {
 		});
 
 		describe("Reference resolution", function () {
-			var root, target, reference, reference2, reference3, reference4, relativeReference;
+			var root,
+				target,
+				reference,
+				reference2,
+				reference3,
+				reference4,
+				relativeReference;
 			var nodeTarget, nestedChild, nodeTarget2, nestedChild2;
 			var mapTarget, nestedMapChild;
 			var arrayTarget, nestedArrayChild;
@@ -751,19 +791,25 @@ describe("Reference Properties", function () {
 
 			it("should allow accessing nested paths", function () {
 				reference.insert("test", nodeTarget);
-				expect(root.resolvePath("/reference[test].nested")).to.equal(nestedChild);
+				expect(root.resolvePath("/reference[test].nested")).to.equal(
+					nestedChild,
+				);
 			});
 
 			it("should allow accessing referenced maps", function () {
 				reference.set("test", mapTarget);
 
-				expect(root.resolvePath("/reference[test][nested]")).to.equal(nestedMapChild);
+				expect(root.resolvePath("/reference[test][nested]")).to.equal(
+					nestedMapChild,
+				);
 			});
 
 			it("should allow accessing referenced arrays", function () {
 				reference.set("test", arrayTarget);
 
-				expect(root.resolvePath("/reference[test][0]")).to.equal(nestedArrayChild);
+				expect(root.resolvePath("/reference[test][0]")).to.equal(
+					nestedArrayChild,
+				);
 			});
 
 			it("double dereferencing a reference should work", function () {
@@ -779,7 +825,9 @@ describe("Reference Properties", function () {
 
 				expect(root.resolvePath("/reference3[test]")).to.equal(target);
 				expect(root.resolvePath("/reference3*[test]")).to.equal(undefined);
-				expect(root.get(["reference3", dereferenceToken, "test"])).to.equal(undefined);
+				expect(root.get(["reference3", dereferenceToken, "test"])).to.equal(
+					undefined,
+				);
 
 				reference.set("test", reference3);
 				reference3.set(target);
@@ -791,11 +839,15 @@ describe("Reference Properties", function () {
 
 			it("should continue to work when the reference or the referenced node changes", function () {
 				reference.insert("test", nodeTarget);
-				expect(root.resolvePath("/reference[test].nested")).to.equal(nestedChild);
+				expect(root.resolvePath("/reference[test].nested")).to.equal(
+					nestedChild,
+				);
 				expect(reference.resolvePath("[test].nested")).to.equal(nestedChild);
 
 				reference.set("test", nodeTarget2);
-				expect(root.resolvePath("/reference[test].nested")).to.equal(nestedChild2);
+				expect(root.resolvePath("/reference[test].nested")).to.equal(
+					nestedChild2,
+				);
 				expect(reference.resolvePath("[test].nested")).to.equal(nestedChild2);
 
 				nodeTarget2.remove("nested");
@@ -806,7 +858,9 @@ describe("Reference Properties", function () {
 
 			it("should allow dereferencing via the array syntax using relative paths", function () {
 				relativeReference.setValue("test", "../target");
-				expect(root.resolvePath("/nodeTarget.relativeReference[test]")).to.equal(target);
+				expect(
+					root.resolvePath("/nodeTarget.relativeReference[test]"),
+				).to.equal(target);
 			});
 
 			it("remove should work and return the string path", function () {
@@ -840,7 +894,10 @@ describe("Reference Properties", function () {
 			expect(reference.getReferenceTargetTypeId()).to.equal("BaseProperty");
 
 			// Test creation of a typed reference
-			var reference = PropertyFactory.create("Reference<NodeProperty>", "array");
+			var reference = PropertyFactory.create(
+				"Reference<NodeProperty>",
+				"array",
+			);
 			expect(reference).to.be.instanceof(ReferenceArrayProperty);
 			expect(reference.getReferenceTargetTypeId()).to.equal("NodeProperty");
 
@@ -850,13 +907,21 @@ describe("Reference Properties", function () {
 			expect(reference.getReferenceTargetTypeId()).to.equal("NodeProperty");
 
 			// Test creation via a template
-			var prop = PropertyFactory.create("autodesk.test:referencePropertyTest-1.0.0");
-			expect(prop._properties.refArray_anon).to.be.instanceof(ReferenceArrayProperty);
-			expect(prop._properties.refArray_anon.getReferenceTargetTypeId()).to.equal(
-				"BaseProperty",
+			var prop = PropertyFactory.create(
+				"autodesk.test:referencePropertyTest-1.0.0",
 			);
-			expect(prop._properties.refArray).to.be.instanceof(ReferenceArrayProperty);
-			expect(prop._properties.refArray.getReferenceTargetTypeId()).to.equal("NodeProperty");
+			expect(prop._properties.refArray_anon).to.be.instanceof(
+				ReferenceArrayProperty,
+			);
+			expect(
+				prop._properties.refArray_anon.getReferenceTargetTypeId(),
+			).to.equal("BaseProperty");
+			expect(prop._properties.refArray).to.be.instanceof(
+				ReferenceArrayProperty,
+			);
+			expect(prop._properties.refArray.getReferenceTargetTypeId()).to.equal(
+				"NodeProperty",
+			);
 		});
 
 		it("empty reference should resolve to undefined", function () {
@@ -911,7 +976,10 @@ describe("Reference Properties", function () {
 
 				nodeTarget = PropertyFactory.create("NodeProperty");
 				nestedChild = PropertyFactory.create("String");
-				relativeReference = PropertyFactory.create("Reference<String>", "array");
+				relativeReference = PropertyFactory.create(
+					"Reference<String>",
+					"array",
+				);
 				nodeTarget.insert("nested", nestedChild);
 				nodeTarget.insert("relativeReference", relativeReference);
 
@@ -1193,7 +1261,9 @@ describe("Reference Properties", function () {
 			it("should allow accessing referenced maps", function () {
 				reference.push(mapTarget);
 
-				expect(root.resolvePath("/reference[0][nested]")).to.equal(nestedMapChild);
+				expect(root.resolvePath("/reference[0][nested]")).to.equal(
+					nestedMapChild,
+				);
 			});
 
 			it("should allow accessing referenced arrays", function () {
@@ -1241,7 +1311,9 @@ describe("Reference Properties", function () {
 
 			it("should allow dereferencing via the array syntax using relative paths", function () {
 				relativeReference.push("../target");
-				expect(root.resolvePath("/nodeTarget.relativeReference[0]")).to.equal(target);
+				expect(root.resolvePath("/nodeTarget.relativeReference[0]")).to.equal(
+					target,
+				);
 			});
 
 			it("Should return references value when a reference points to a context simple property", function () {
@@ -1274,7 +1346,10 @@ describe("Reference Properties", function () {
 				expect(reference.remove(0)).to.equal("/target");
 				expect(reference.length).to.equal(1);
 				reference.insert(1, target);
-				expect(reference.removeRange(0, 2)).to.deep.equal(["/nodeTarget", "/target"]);
+				expect(reference.removeRange(0, 2)).to.deep.equal([
+					"/nodeTarget",
+					"/target",
+				]);
 				expect(reference.length).to.equal(0);
 			});
 			it(".getValues should work", function () {
@@ -1293,12 +1368,24 @@ describe("Reference Properties", function () {
 				PropertyFactory.create("autodesk.test:referencePropertyTest-1.0.0"),
 			);
 			root.insert("reference", PropertyFactory.create("Reference<String>"));
-			root.insert("referenceMap", PropertyFactory.create("Reference<String>", "map"));
-			root.insert("referenceArray", PropertyFactory.create("Reference<String>", "array"));
+			root.insert(
+				"referenceMap",
+				PropertyFactory.create("Reference<String>", "map"),
+			);
+			root.insert(
+				"referenceArray",
+				PropertyFactory.create("Reference<String>", "array"),
+			);
 
 			root.insert("reference_anon", PropertyFactory.create("Reference"));
-			root.insert("referenceMap_anon", PropertyFactory.create("Reference", "map"));
-			root.insert("referenceArray_anon", PropertyFactory.create("Reference", "array"));
+			root.insert(
+				"referenceMap_anon",
+				PropertyFactory.create("Reference", "map"),
+			);
+			root.insert(
+				"referenceArray_anon",
+				PropertyFactory.create("Reference", "array"),
+			);
 
 			root.insert("target", PropertyFactory.create("String"));
 
@@ -1330,20 +1417,36 @@ describe("Reference Properties", function () {
 
 			var root2Target = root2._properties.target;
 			expect(root2._properties.reference.get()).to.deep.equal(root2Target);
-			expect(root2._properties.referenceMap.get("entry")).to.deep.equal(root2Target);
+			expect(root2._properties.referenceMap.get("entry")).to.deep.equal(
+				root2Target,
+			);
 			expect(root2._properties.referenceArray.get()).to.deep.equal(root2Target);
 
 			expect(root2._properties.reference_anon.get()).to.deep.equal(root2Target);
-			expect(root2._properties.referenceMap_anon.get("entry")).to.deep.equal(root2Target);
-			expect(root2._properties.referenceArray_anon.get()).to.deep.equal(root2Target);
+			expect(root2._properties.referenceMap_anon.get("entry")).to.deep.equal(
+				root2Target,
+			);
+			expect(root2._properties.referenceArray_anon.get()).to.deep.equal(
+				root2Target,
+			);
 
 			expect(root2._properties.template.ref.get()).to.deep.equal(root2Target);
-			expect(root2._properties.template.refMap.get("entry")).to.deep.equal(root2Target);
-			expect(root2._properties.template.refArray.get()).to.deep.equal(root2Target);
+			expect(root2._properties.template.refMap.get("entry")).to.deep.equal(
+				root2Target,
+			);
+			expect(root2._properties.template.refArray.get()).to.deep.equal(
+				root2Target,
+			);
 
-			expect(root2._properties.template.ref_anon.get()).to.deep.equal(root2Target);
-			expect(root2._properties.template.refMap_anon.get("entry")).to.deep.equal(root2Target);
-			expect(root2._properties.template.refArray_anon.get()).to.deep.equal(root2Target);
+			expect(root2._properties.template.ref_anon.get()).to.deep.equal(
+				root2Target,
+			);
+			expect(root2._properties.template.refMap_anon.get("entry")).to.deep.equal(
+				root2Target,
+			);
+			expect(root2._properties.template.refArray_anon.get()).to.deep.equal(
+				root2Target,
+			);
 		});
 
 		it("squash should work", function () {
@@ -1414,7 +1517,9 @@ describe("Reference Properties", function () {
 			// each of the set commands should report a conflict
 			expect(conflicts.length).to.equal(8);
 			for (var i = 0; i < conflicts.length; i++) {
-				expect(conflicts[i].type).to.equal(ChangeSet.ConflictType.COLLIDING_SET);
+				expect(conflicts[i].type).to.equal(
+					ChangeSet.ConflictType.COLLIDING_SET,
+				);
 			}
 
 			root.cleanDirty();

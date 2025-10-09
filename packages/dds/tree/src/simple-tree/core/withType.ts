@@ -88,5 +88,12 @@ export interface WithType<
 	/**
 	 * Type symbol, marking a type in a way to increase type safety via strong type checking.
 	 */
-	get [typeSchemaSymbol](): TreeNodeSchemaClass<TName, TKind, TreeNode, never, boolean, TInfo>;
+	get [typeSchemaSymbol](): TreeNodeSchemaClass<
+		TName,
+		TKind,
+		TreeNode,
+		never,
+		boolean,
+		TInfo
+	>;
 }

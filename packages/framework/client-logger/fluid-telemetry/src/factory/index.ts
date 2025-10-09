@@ -41,6 +41,12 @@ export interface TelemetryConfig {
  * @beta
  */
 export const startTelemetry = (config: TelemetryConfig): void => {
-	const telemetryProducer = new ContainerEventTelemetryProducer(config.containerId);
-	new ContainerTelemetryManager(config.container, telemetryProducer, config.consumers);
+	const telemetryProducer = new ContainerEventTelemetryProducer(
+		config.containerId,
+	);
+	new ContainerTelemetryManager(
+		config.container,
+		telemetryProducer,
+		config.consumers,
+	);
 };

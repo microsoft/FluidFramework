@@ -16,7 +16,11 @@ import {
 	type DefaultChangeset,
 	type DefaultEditBuilder,
 } from "../../feature-libraries/index.js";
-import { chunkFromJsonableTrees, failCodecFamily, mintRevisionTag } from "../utils.js";
+import {
+	chunkFromJsonableTrees,
+	failCodecFamily,
+	mintRevisionTag,
+} from "../utils.js";
 import {
 	findAncestor,
 	rootFieldKey,
@@ -264,7 +268,11 @@ describe("SquashingTransactionStacks", () => {
 			revision: initialRevision,
 		};
 
-		return new SharedTreeBranch(initCommit, defaultChangeFamily, mintRevisionTag);
+		return new SharedTreeBranch(
+			initCommit,
+			defaultChangeFamily,
+			mintRevisionTag,
+		);
 	}
 
 	function editBranch(branch: DefaultBranch, value: string): RevisionTag {
@@ -273,12 +281,19 @@ describe("SquashingTransactionStacks", () => {
 	}
 
 	function edit(editor: DefaultEditBuilder, value: string): void {
-		const content = chunkFromJsonableTrees([{ type: brand("TestValue"), value }]);
+		const content = chunkFromJsonableTrees([
+			{ type: brand("TestValue"), value },
+		]);
 		editor.valueField({ parent: undefined, field: rootFieldKey }).set(content);
 	}
 
-	function squash(commits: GraphCommit<DefaultChangeset>[]): TaggedChange<DefaultChangeset> {
-		return tagChange(defaultChangeFamily.rebaser.compose(commits), mintRevisionTag());
+	function squash(
+		commits: GraphCommit<DefaultChangeset>[],
+	): TaggedChange<DefaultChangeset> {
+		return tagChange(
+			defaultChangeFamily.rebaser.compose(commits),
+			mintRevisionTag(),
+		);
 	}
 
 	/** The number of commits on the given branch, not including the initial commit */

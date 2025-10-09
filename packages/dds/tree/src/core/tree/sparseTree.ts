@@ -73,7 +73,11 @@ export class SparseNode<TData> implements UpPath {
 	 * Gets a child, adding a ref to it.
 	 * Creates child (with 1 ref) if needed.
 	 */
-	public getOrCreateChild(key: FieldKey, index: number, data: () => TData): SparseNode<TData> {
+	public getOrCreateChild(
+		key: FieldKey,
+		index: number,
+		data: () => TData,
+	): SparseNode<TData> {
 		let field = this.children.get(key);
 		if (field === undefined) {
 			field = [];
@@ -94,7 +98,10 @@ export class SparseNode<TData> implements UpPath {
 	 * Gets a child if it exists.
 	 * Does NOT add a ref.
 	 */
-	public tryGetChild(key: FieldKey, index: number): SparseNode<TData> | undefined {
+	public tryGetChild(
+		key: FieldKey,
+		index: number,
+	): SparseNode<TData> | undefined {
 		const field = this.children.get(key);
 		if (field === undefined) {
 			return undefined;
@@ -155,7 +162,10 @@ export function getDescendant<TData>(
 		assert(field !== undefined, 0x4a6 /* Field not present in sparse node */);
 		// TODO: should do more optimized search (ex: binary search).
 		const child = field.find((c) => c.parentIndex === hop.parentIndex);
-		assert(child !== undefined, 0x4a7 /* Child not present in sparse node field */);
+		assert(
+			child !== undefined,
+			0x4a7 /* Child not present in sparse node field */,
+		);
 		curr = child;
 	}
 	return curr;

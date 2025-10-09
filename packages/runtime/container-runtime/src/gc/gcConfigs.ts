@@ -27,7 +27,11 @@ import {
 	runSessionExpiryKey,
 	disableThrowOnTombstoneLoadKey,
 } from "./gcDefinitions.js";
-import { getGCVersion, getGCVersionInEffect, shouldAllowGcSweep } from "./gcHelpers.js";
+import {
+	getGCVersion,
+	getGCVersionInEffect,
+	shouldAllowGcSweep,
+} from "./gcHelpers.js";
 
 /**
  * Generates configurations for the Garbage Collector that it uses to determine what to run and how.
@@ -70,7 +74,8 @@ export function generateGCConfigs(
 		// disabled for these documents.
 		gcAllowed = gcVersionInBaseSnapshot !== 0;
 		sessionExpiryTimeoutMs = metadata?.sessionExpiryTimeoutMs;
-		const legacyPersistedSweepTimeoutMs = (metadata as IGCMetadata_Deprecated)?.sweepTimeoutMs;
+		const legacyPersistedSweepTimeoutMs = (metadata as IGCMetadata_Deprecated)
+			?.sweepTimeoutMs;
 		tombstoneTimeoutMs =
 			metadata?.tombstoneTimeoutMs ??
 			legacyPersistedSweepTimeoutMs ?? // Backfill old documents that have sweepTimeoutMs instead of tombstoneTimeoutMs
@@ -85,12 +90,16 @@ export function generateGCConfigs(
 		// Set the Session Expiry if session expiry flag isn't explicitly set to false.
 		if (mc.config.getBoolean(runSessionExpiryKey) !== false) {
 			sessionExpiryTimeoutMs =
-				createParams.gcOptions.sessionExpiryTimeoutMs ?? defaultSessionExpiryDurationMs;
+				createParams.gcOptions.sessionExpiryTimeoutMs ??
+				defaultSessionExpiryDurationMs;
 		}
 		tombstoneTimeoutMs =
-			testOverrideTombstoneTimeoutMs ?? computeTombstoneTimeout(sessionExpiryTimeoutMs);
+			testOverrideTombstoneTimeoutMs ??
+			computeTombstoneTimeout(sessionExpiryTimeoutMs);
 
-		const gcGeneration = createParams.gcOptions[gcGenerationOptionName] as number;
+		const gcGeneration = createParams.gcOptions[
+			gcGenerationOptionName
+		] as number;
 		if (gcGeneration !== undefined) {
 			persistedGcFeatureMatrix = { gcGeneration };
 		}
@@ -122,25 +131,37 @@ export function generateGCConfigs(
 
 	// Override inactive timeout if test config or gc options to override it is set.
 	const inactiveTimeoutMs: number =
-		mc.config.getNumber("Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs") ??
+		mc.config.getNumber(
+			"Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs",
+		) ??
 		(createParams.gcOptions.inactiveTimeoutMs as number) ??
 		defaultInactiveTimeoutMs;
 
 	// Inactive timeout must be greater than tombstone timeout since a node goes from active -> inactive -> sweep ready.
-	if (tombstoneTimeoutMs !== undefined && inactiveTimeoutMs > tombstoneTimeoutMs) {
-		throw new UsageError("inactive timeout should not be greater than the tombstone timeout");
+	if (
+		tombstoneTimeoutMs !== undefined &&
+		inactiveTimeoutMs > tombstoneTimeoutMs
+	) {
+		throw new UsageError(
+			"inactive timeout should not be greater than the tombstone timeout",
+		);
 	}
 
 	// Whether we are running in test mode. In this mode, unreferenced nodes are immediately deleted.
 	const testMode =
-		mc.config.getBoolean(gcTestModeKey) ?? createParams.gcOptions.runGCInTestMode === true;
+		mc.config.getBoolean(gcTestModeKey) ??
+		createParams.gcOptions.runGCInTestMode === true;
 	const runFullGC = createParams.gcOptions.runFullGC;
 
 	const sweepGracePeriodMs =
 		createParams.gcOptions.sweepGracePeriodMs ?? defaultSweepGracePeriodMs;
-	validatePrecondition(sweepGracePeriodMs >= 0, "sweepGracePeriodMs must be non-negative", {
-		sweepGracePeriodMs,
-	});
+	validatePrecondition(
+		sweepGracePeriodMs >= 0,
+		"sweepGracePeriodMs must be non-negative",
+		{
+			sweepGracePeriodMs,
+		},
+	);
 
 	const throwOnTombstoneLoad =
 		mc.config.getBoolean(disableThrowOnTombstoneLoadKey) !== true &&

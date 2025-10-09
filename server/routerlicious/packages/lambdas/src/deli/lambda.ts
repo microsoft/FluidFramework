@@ -115,7 +115,8 @@ interface IBaseTicketedMessage<T> {
 	instruction?: InstructionType;
 }
 
-interface ISequencedDocumentMessageOutput extends IBaseTicketedMessage<ISequencedDocumentMessage> {
+interface ISequencedDocumentMessageOutput
+	extends IBaseTicketedMessage<ISequencedDocumentMessage> {
 	ticketType: TicketType.Sequenced;
 	send: SendType;
 	type: string;
@@ -242,7 +243,10 @@ const isServiceMessageType = (type: string): boolean =>
 /**
  * @internal
  */
-export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements IPartitionLambda {
+export class DeliLambda
+	extends TypedEventEmitter<IDeliLambdaEvents>
+	implements IPartitionLambda
+{
 	private sequenceNumber: number;
 	private signalClientConnectionNumber: number;
 	private durableSequenceNumber: number;
@@ -437,8 +441,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 			reprocessOpsMetric.setProperties({
 				...getLumberBaseProperties(this.documentId, this.tenantId),
 				[CommonProperties.isEphemeralContainer]:
-					this.sessionMetric?.properties.get(CommonProperties.isEphemeralContainer) ??
-					false,
+					this.sessionMetric?.properties.get(CommonProperties.isEphemeralContainer) ?? false,
 				kafkaMessageOffset: rawMessage.offset,
 				databaseLastOffset: this.logOffset,
 			});
@@ -446,12 +449,8 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 			this.documentCheckpointManager.updateCheckpointMessages(rawMessage);
 			try {
 				const currentMessage =
-					this.documentCheckpointManager.getCheckpointInfo()
-						.currentKafkaCheckpointMessage;
-				if (
-					currentMessage &&
-					this.serviceConfiguration.deli.kafkaCheckpointOnReprocessingOp
-				) {
+					this.documentCheckpointManager.getCheckpointInfo().currentKafkaCheckpointMessage;
+				if (currentMessage && this.serviceConfiguration.deli.kafkaCheckpointOnReprocessingOp) {
 					this.context.checkpoint(
 						currentMessage,
 						this.serviceConfiguration.deli.restartOnCheckpointFailure,
@@ -596,9 +595,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 								typeof sequencedMessage.serverMetadata === "object" &&
 								(sequencedMessage.serverMetadata as IServerMetadata).createSignal))
 					) {
-						const dataContent = this.extractDataContent(
-							message as IRawOperationMessage,
-						);
+						const dataContent = this.extractDataContent(message as IRawOperationMessage);
 
 						const signalMessage = this.createSignalMessage(
 							message as IRawOperationMessage,
@@ -607,10 +604,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 						);
 
 						if (sequencedMessage.type === MessageType.ClientJoin) {
-							this.addSequencedSignalClient(
-								dataContent as IClientJoin,
-								signalMessage,
-							);
+							this.addSequencedSignalClient(dataContent as IClientJoin, signalMessage);
 						} else {
 							this.sequencedSignalClients.delete(dataContent);
 						}
@@ -692,9 +686,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 				!this.nackMessages.has(NackMessagesType.SummaryMaxOps)
 			) {
 				const opsSinceLastSummary = this.sequenceNumber - this.durableSequenceNumber;
-				if (
-					opsSinceLastSummary > this.serviceConfiguration.deli.summaryNackMessages.maxOps
-				) {
+				if (opsSinceLastSummary > this.serviceConfiguration.deli.summaryNackMessages.maxOps) {
 					// this op brings us over the limit
 					// start nacking non-system ops and ops that are submitted by non-summarizers
 					this.updateNackMessages(NackMessagesType.SummaryMaxOps, {
@@ -1214,15 +1206,12 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 									)
 									.catch((error) => {
 										const errorMsg = "Could not extend clients";
-										this.context.log?.error(
-											`${errorMsg}: ${JSON.stringify(error)}`,
-											{
-												messageMetaData: {
-													documentId: this.documentId,
-													tenantId: this.tenantId,
-												},
+										this.context.log?.error(`${errorMsg}: ${JSON.stringify(error)}`, {
+											messageMetaData: {
+												documentId: this.documentId,
+												tenantId: this.tenantId,
 											},
-										);
+										});
 										Lumberjack.error(
 											errorMsg,
 											getLumberBaseProperties(this.documentId, this.tenantId),

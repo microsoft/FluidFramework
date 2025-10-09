@@ -49,7 +49,17 @@ describe("FluidSerializer", () => {
 		// Start with the various JSON-serializable types.  A mix of "truthy" and "falsy" values
 		// are of particular interest.
 		// eslint-disable-next-line unicorn/no-null -- Explicitly testing null.
-		const simple = createNestedCases([false, true, 0, 1, "", "x", null, [], {}]);
+		const simple = createNestedCases([
+			false,
+			true,
+			0,
+			1,
+			"",
+			"x",
+			null,
+			[],
+			{},
+		]);
 
 		simple.push(
 			// Add an object where each field references one of the JSON serializable types.
@@ -191,10 +201,18 @@ describe("FluidSerializer", () => {
 					decodedForm,
 					"encode() must shallow-clone rather than mutate original object.",
 				);
-				assert.deepStrictEqual(replaced, encodedForm, "encode() must return expected output.");
+				assert.deepStrictEqual(
+					replaced,
+					encodedForm,
+					"encode() must return expected output.",
+				);
 
 				const replacedTwice = serializer.encode(replaced, dummyBind);
-				assert.deepStrictEqual(replacedTwice, replaced, "encode should be idempotent");
+				assert.deepStrictEqual(
+					replacedTwice,
+					replaced,
+					"encode should be idempotent",
+				);
 
 				const decodedRoundTrip = serializer.decode(replaced);
 				assert.notStrictEqual(
@@ -209,7 +227,11 @@ describe("FluidSerializer", () => {
 				);
 
 				const decodedTwice = serializer.decode(decodedRoundTrip);
-				assert.deepStrictEqual(decodedTwice, decodedRoundTrip, "decode should be idempotent");
+				assert.deepStrictEqual(
+					decodedTwice,
+					decodedRoundTrip,
+					"decode should be idempotent",
+				);
 
 				const stringified = serializer.stringify(decodedForm, dummyBind);
 
@@ -349,7 +371,11 @@ describe("FluidSerializer", () => {
 				false, // payloadPending
 			);
 			const input = { x: handle, y: 123 };
-			const serializedOnce = makeHandlesSerializable(input, serializer, dummyBind) as {
+			const serializedOnce = makeHandlesSerializable(
+				input,
+				serializer,
+				dummyBind,
+			) as {
 				x: { type: "__fluid_handle__" };
 			};
 			assert(
@@ -374,7 +400,9 @@ describe("FluidSerializer", () => {
 				url: "/root",
 			};
 			const input = { x: serializedHandle, y: 123 };
-			const parsedOnce = parseHandles(input, serializer) as { x: RemoteFluidObjectHandle };
+			const parsedOnce = parseHandles(input, serializer) as {
+				x: RemoteFluidObjectHandle;
+			};
 			assert(
 				parsedOnce.x instanceof RemoteFluidObjectHandle,
 				"Parsed handle should be an instance of RemoteFluidObjectHandle",

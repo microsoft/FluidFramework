@@ -61,9 +61,10 @@ export class SchemaFactoryBeta<
 	 * The main use-case for this is when creating a collection of related schema (for example using a function that creates multiple schema).
 	 * Creating such related schema using a sub-scope helps ensure they won't collide with other schema in the parent scope.
 	 */
-	public scopedFactory<const T extends TName, TNameInner extends number | string = string>(
-		name: T,
-	): SchemaFactoryBeta<ScopedSchemaName<TScope, T>, TNameInner> {
+	public scopedFactory<
+		const T extends TName,
+		TNameInner extends number | string = string,
+	>(name: T): SchemaFactoryBeta<ScopedSchemaName<TScope, T>, TNameInner> {
 		return new SchemaFactoryBeta(scoped<TScope, TName, T>(this, name));
 	}
 
@@ -102,7 +103,8 @@ export class SchemaFactoryBeta<
 
 	public override objectRecursive<
 		const Name extends TName,
-		const T extends RestrictiveStringRecord<System_Unsafe.ImplicitFieldSchemaUnsafe>,
+		const T extends
+			RestrictiveStringRecord<System_Unsafe.ImplicitFieldSchemaUnsafe>,
 		const TCustomMetadata = unknown,
 	>(
 		name: Name,
@@ -217,7 +219,8 @@ export class SchemaFactoryBeta<
 	): TreeNodeSchemaClass<
 		/* Name */ ScopedSchemaName<TScope, Name>,
 		/* Kind */ NodeKind.Record,
-		/* TNode */ TreeRecordNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Record>,
+		/* TNode */ TreeRecordNode<T> &
+			WithType<ScopedSchemaName<TScope, Name>, NodeKind.Record>,
 		/* TInsertable */ RecordNodeInsertableData<T>,
 		/* ImplicitlyConstructable */ true,
 		/* Info */ T,
@@ -231,7 +234,9 @@ export class SchemaFactoryBeta<
 	 * This should return {@link TreeNodeSchemaBoth}: see note on {@link SchemaFactory.map} implementation for details.
 	 */
 	public record<const T extends ImplicitAllowedTypes>(
-		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | readonly TreeNodeSchema[]),
+		nameOrAllowedTypes:
+			| TName
+			| ((T & TreeNodeSchema) | readonly TreeNodeSchema[]),
 		maybeAllowedTypes?: T,
 	): TreeNodeSchema<
 		/* Name */ ScopedSchemaName<TScope, string>,
@@ -242,7 +247,9 @@ export class SchemaFactoryBeta<
 		/* Info */ T
 	> {
 		if (maybeAllowedTypes === undefined) {
-			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
+			const types = nameOrAllowedTypes as
+				| (T & TreeNodeSchema)
+				| readonly TreeNodeSchema[];
 			const fullName = structuralName("Record", types);
 			return this.getStructuralType(fullName, types, () =>
 				this.namedRecord(

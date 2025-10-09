@@ -8,7 +8,10 @@ import { strict as assert } from "node:assert";
 import { UnassignedSequenceNumber } from "../constants.js";
 import type { ISegmentPrivate } from "../mergeTreeNodes.js";
 import { matchProperties } from "../properties.js";
-import { PropertiesManager, type PropsOrAdjust } from "../segmentPropertiesManager.js";
+import {
+	PropertiesManager,
+	type PropsOrAdjust,
+} from "../segmentPropertiesManager.js";
 
 describe("PropertiesManager", () => {
 	describe("handleProperties", () => {
@@ -47,7 +50,13 @@ describe("PropertiesManager", () => {
 			};
 			const op: PropsOrAdjust = { props: { key: "newValue" } };
 			// Simulate pending state for rollback
-			propertiesManager.handleProperties(op, seg, UnassignedSequenceNumber, 0, true);
+			propertiesManager.handleProperties(
+				op,
+				seg,
+				UnassignedSequenceNumber,
+				0,
+				true,
+			);
 			const deltas = propertiesManager.handleProperties(
 				op,
 				seg,
@@ -157,9 +166,17 @@ describe("PropertiesManager", () => {
 		it("should acknowledge property changes", () => {
 			const propertiesManager = new PropertiesManager();
 			const op: PropsOrAdjust = { props: { key: "value" } };
-			const seg: Pick<ISegmentPrivate, "properties" | "propertyManager"> = { properties: {} };
+			const seg: Pick<ISegmentPrivate, "properties" | "propertyManager"> = {
+				properties: {},
+			};
 
-			propertiesManager.handleProperties(op, seg, UnassignedSequenceNumber, 1, true);
+			propertiesManager.handleProperties(
+				op,
+				seg,
+				UnassignedSequenceNumber,
+				1,
+				true,
+			);
 			assert(propertiesManager.hasPendingProperties({ key: "value" }));
 			propertiesManager.ack(1, 0, op);
 		});
@@ -169,9 +186,17 @@ describe("PropertiesManager", () => {
 		it("should copy properties and manager state", () => {
 			const propertiesManager = new PropertiesManager();
 			const op: PropsOrAdjust = { props: { key: "value" } };
-			const seg: Pick<ISegmentPrivate, "properties" | "propertyManager"> = { properties: {} };
+			const seg: Pick<ISegmentPrivate, "properties" | "propertyManager"> = {
+				properties: {},
+			};
 
-			propertiesManager.handleProperties(op, seg, UnassignedSequenceNumber, 1, true);
+			propertiesManager.handleProperties(
+				op,
+				seg,
+				UnassignedSequenceNumber,
+				1,
+				true,
+			);
 			assert(propertiesManager.hasPendingProperties({ key: "value" }));
 			const dest: Pick<ISegmentPrivate, "properties" | "propertyManager"> = {};
 			propertiesManager.copyTo({ key: "value" }, dest);
@@ -184,7 +209,9 @@ describe("PropertiesManager", () => {
 		it("should retrieve properties at a specific sequence number", () => {
 			const propertiesManager = new PropertiesManager();
 			const op: PropsOrAdjust = { adjust: { key: { delta: 5 } } };
-			const seg: Pick<ISegmentPrivate, "properties" | "propertyManager"> = { properties: {} };
+			const seg: Pick<ISegmentPrivate, "properties" | "propertyManager"> = {
+				properties: {},
+			};
 
 			propertiesManager.handleProperties(op, seg, 1, 0, true);
 			const properties = propertiesManager.getAtSeq(seg.properties, 0);
@@ -196,11 +223,21 @@ describe("PropertiesManager", () => {
 		it("should check for pending properties", () => {
 			const propertiesManager = new PropertiesManager();
 			const op: PropsOrAdjust = { props: { key: "value" } };
-			const seg: Pick<ISegmentPrivate, "properties" | "propertyManager"> = { properties: {} };
+			const seg: Pick<ISegmentPrivate, "properties" | "propertyManager"> = {
+				properties: {},
+			};
 
-			propertiesManager.handleProperties(op, seg, UnassignedSequenceNumber, 1, true);
+			propertiesManager.handleProperties(
+				op,
+				seg,
+				UnassignedSequenceNumber,
+				1,
+				true,
+			);
 			assert(propertiesManager.hasPendingProperties({ key: "value" }));
-			assert(!propertiesManager.hasPendingProperties({ otherKey: "otherValue" }));
+			assert(
+				!propertiesManager.hasPendingProperties({ otherKey: "otherValue" }),
+			);
 		});
 	});
 });

@@ -351,8 +351,12 @@ describe("simpleSchemaToJsonSchema", () => {
 								"foo",
 								{
 									kind: FieldKind.Optional,
-									allowedTypesIdentifiers: new Set<string>([numberSchema.identifier]),
-									metadata: { description: "A number representing the concept of Foo." },
+									allowedTypesIdentifiers: new Set<string>([
+										numberSchema.identifier,
+									]),
+									metadata: {
+										description: "A number representing the concept of Foo.",
+									},
 									persistedMetadata: undefined,
 									storedKey: "foo",
 								},
@@ -361,8 +365,12 @@ describe("simpleSchemaToJsonSchema", () => {
 								"bar",
 								{
 									kind: FieldKind.Required,
-									allowedTypesIdentifiers: new Set<string>([stringSchema.identifier]),
-									metadata: { description: "A string representing the concept of Bar." },
+									allowedTypesIdentifiers: new Set<string>([
+										stringSchema.identifier,
+									]),
+									metadata: {
+										description: "A string representing the concept of Bar.",
+									},
 									persistedMetadata: undefined,
 									storedKey: "bar",
 								},
@@ -371,7 +379,9 @@ describe("simpleSchemaToJsonSchema", () => {
 								"id",
 								{
 									kind: FieldKind.Identifier,
-									allowedTypesIdentifiers: new Set<string>([stringSchema.identifier]),
+									allowedTypesIdentifiers: new Set<string>([
+										stringSchema.identifier,
+									]),
 									metadata: {
 										description: "Unique identifier for the test object.",
 									},
@@ -488,7 +498,9 @@ describe("simpleSchemaToJsonSchema", () => {
 								"id",
 								{
 									kind: FieldKind.Identifier,
-									allowedTypesIdentifiers: new Set<string>([stringSchema.identifier]),
+									allowedTypesIdentifiers: new Set<string>([
+										stringSchema.identifier,
+									]),
 									storedKey: "id",
 									metadata: {},
 								},
@@ -680,7 +692,10 @@ describe("simpleSchemaToJsonSchema", () => {
 
 			it(testTree.name, () => {
 				const data = testTree.root;
-				const tree = TreeAlpha.create<UnsafeUnknownSchema>(testTree.schema, data());
+				const tree = TreeAlpha.create<UnsafeUnknownSchema>(
+					testTree.schema,
+					data(),
+				);
 				const testSchema = normalizeFieldSchema(testTree.schema).allowedTypes;
 
 				{

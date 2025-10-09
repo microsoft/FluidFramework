@@ -140,7 +140,11 @@ const configName = "fluidBuild";
  * for performance. The cache is per-explorer, so re-using the same explorer is a minor perf improvement.
  */
 const configExplorer = cosmiconfigSync(configName, {
-	searchPlaces: [`${configName}.config.cjs`, `${configName}.config.js`, "package.json"],
+	searchPlaces: [
+		`${configName}.config.cjs`,
+		`${configName}.config.js`,
+		"package.json",
+	],
 	packageProp: [configName],
 });
 

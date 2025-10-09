@@ -84,7 +84,10 @@ export class MockDocumentDeltaConnection
 	}
 
 	// Mock methods for raising events
-	public emitOp(documentId: string, messages: Partial<ISequencedDocumentMessage>[]): void {
+	public emitOp(
+		documentId: string,
+		messages: Partial<ISequencedDocumentMessage>[],
+	): void {
 		this.emit("op", documentId, messages);
 	}
 	public emitSignal(signal: Partial<ISignalMessage>): void {

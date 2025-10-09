@@ -50,15 +50,24 @@ const generateImportInstructionsSection = (packageMetadata, headingOptions) => {
 	];
 
 	if (hasBetaExport) {
-		lines.push("", `To access the \`beta\` APIs, import via \`${packageName}/beta\`.`);
+		lines.push(
+			"",
+			`To access the \`beta\` APIs, import via \`${packageName}/beta\`.`,
+		);
 	}
 
 	if (hasAlphaExport) {
-		lines.push("", `To access the \`alpha\` APIs, import via \`${packageName}/alpha\`.`);
+		lines.push(
+			"",
+			`To access the \`alpha\` APIs, import via \`${packageName}/alpha\`.`,
+		);
 	}
 
 	if (hasLegacyExport) {
-		lines.push("", `To access the \`legacy\` APIs, import via \`${packageName}/legacy\`.`);
+		lines.push(
+			"",
+			`To access the \`legacy\` APIs, import via \`${packageName}/legacy\`.`,
+		);
 	}
 
 	const sectionBody = lines.join("\n");

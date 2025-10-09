@@ -9,7 +9,10 @@ import type {
 	ISequencedDocumentAugmentedMessage,
 	ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
-import type { IScribe, ISequencedOperationMessage } from "@fluidframework/server-services-core";
+import type {
+	IScribe,
+	ISequencedOperationMessage,
+} from "@fluidframework/server-services-core";
 
 /**
  * @internal

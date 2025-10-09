@@ -5,7 +5,10 @@
 
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { type Package, getResolvedFluidRoot } from "@fluidframework/build-tools";
+import {
+	type Package,
+	getResolvedFluidRoot,
+} from "@fluidframework/build-tools";
 import { expect } from "chai";
 import * as chai from "chai";
 import assertArrays from "chai-arrays";
@@ -152,7 +155,11 @@ describe("selectAndFilterPackages", () => {
 			skipScope: undefined,
 		};
 
-		const { selected } = await selectAndFilterPackages(context, selectionOptions, filters);
+		const { selected } = await selectAndFilterPackages(
+			context,
+			selectionOptions,
+			filters,
+		);
 		const names = selected.map((p) => p.name);
 
 		expect(names).to.be.containingAllOf([
@@ -179,7 +186,11 @@ describe("selectAndFilterPackages", () => {
 			skipScope: undefined,
 		};
 
-		const { selected } = await selectAndFilterPackages(context, selectionOptions, filters);
+		const { selected } = await selectAndFilterPackages(
+			context,
+			selectionOptions,
+			filters,
+		);
 		const names = selected.map((p) => p.name);
 		expect(names).to.be.containingAllOf([
 			"@fluidframework/build-common",
@@ -208,7 +219,11 @@ describe("selectAndFilterPackages", () => {
 			skipScope: undefined,
 		};
 
-		const { selected } = await selectAndFilterPackages(context, selectionOptions, filters);
+		const { selected } = await selectAndFilterPackages(
+			context,
+			selectionOptions,
+			filters,
+		);
 		const names = selected.map((p) => p.name);
 
 		expect(names).to.be.equalTo([
@@ -235,7 +250,11 @@ describe("selectAndFilterPackages", () => {
 			skipScope: undefined,
 		};
 
-		const { selected } = await selectAndFilterPackages(context, selectionOptions, filters);
+		const { selected } = await selectAndFilterPackages(
+			context,
+			selectionOptions,
+			filters,
+		);
 		const dirs = selected.map((p) => context.repo.relativeToRepo(p.directory));
 
 		expect(selected.length).to.equal(1);
@@ -288,10 +307,16 @@ describe("selectAndFilterPackages", () => {
 			skipScope: undefined,
 		};
 
-		const { filtered } = await selectAndFilterPackages(context, selectionOptions, filters);
+		const { filtered } = await selectAndFilterPackages(
+			context,
+			selectionOptions,
+			filters,
+		);
 		const names = filtered.map((p) => p.name);
 
-		expect(names).to.be.containingAllOf(["@fluid-private/changelog-generator-wrapper"]);
+		expect(names).to.be.containingAllOf([
+			"@fluid-private/changelog-generator-wrapper",
+		]);
 	});
 
 	it("select release group, filter non-private", async () => {
@@ -309,7 +334,11 @@ describe("selectAndFilterPackages", () => {
 			skipScope: undefined,
 		};
 
-		const { filtered } = await selectAndFilterPackages(context, selectionOptions, filters);
+		const { filtered } = await selectAndFilterPackages(
+			context,
+			selectionOptions,
+			filters,
+		);
 		const names = filtered.map((p) => p.name);
 
 		expect(names).to.be.equalTo([
@@ -336,7 +365,11 @@ describe("selectAndFilterPackages", () => {
 			skipScope: undefined,
 		};
 
-		const { filtered } = await selectAndFilterPackages(context, selectionOptions, filters);
+		const { filtered } = await selectAndFilterPackages(
+			context,
+			selectionOptions,
+			filters,
+		);
 		const names = filtered.map((p) => p.name);
 
 		expect(names).to.be.equalTo([
@@ -361,7 +394,11 @@ describe("selectAndFilterPackages", () => {
 			skipScope: ["@fluid-tools", "@fluid-private"],
 		};
 
-		const { filtered } = await selectAndFilterPackages(context, selectionOptions, filters);
+		const { filtered } = await selectAndFilterPackages(
+			context,
+			selectionOptions,
+			filters,
+		);
 		const names = filtered.map((p) => p.name);
 
 		expect(names).to.be.equalTo([

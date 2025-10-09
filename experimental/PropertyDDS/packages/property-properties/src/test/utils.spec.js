@@ -74,8 +74,14 @@ describe("Utils", function () {
 			inherits: ["NodeProperty"],
 			typeid: "autodesk.test:utils.spec.pan.sim-1.0.0",
 			properties: [
-				{ id: "costEstimated", typeid: "autodesk.test:utils.spec.task.subject-1.0.0" },
-				{ id: "costFinal", typeid: "autodesk.test:utils.spec.task.subject-1.0.0" },
+				{
+					id: "costEstimated",
+					typeid: "autodesk.test:utils.spec.task.subject-1.0.0",
+				},
+				{
+					id: "costFinal",
+					typeid: "autodesk.test:utils.spec.task.subject-1.0.0",
+				},
 
 				// set by client to start or cancel the simulation
 				{ id: "start", typeid: "Bool", default: false },
@@ -83,8 +89,14 @@ describe("Utils", function () {
 
 				// { id: 'inputs'   , typeid: 'autodesk.test:utils_spec_pan.input-1.0.0' },
 
-				{ id: "thermalResults", typeid: "autodesk.test:utils.spec.task.subject-1.0.0" },
-				{ id: "mechanicalResults", typeid: "autodesk.test:utils.spec.task.subject-1.0.0" },
+				{
+					id: "thermalResults",
+					typeid: "autodesk.test:utils.spec.task.subject-1.0.0",
+				},
+				{
+					id: "mechanicalResults",
+					typeid: "autodesk.test:utils.spec.task.subject-1.0.0",
+				},
 			],
 		};
 
@@ -194,7 +206,10 @@ describe("Utils", function () {
 			);
 			testRoot
 				.resolvePath('"test\\"Templated\\"Property".containedMap')
-				.insert("entry", PropertyFactory.create("autodesk.test:utilsTestContained-1.0.0"));
+				.insert(
+					"entry",
+					PropertyFactory.create("autodesk.test:utilsTestContained-1.0.0"),
+				);
 			testRoot.insert("reference", PropertyFactory.create("Reference<String>"));
 
 			// Test an array with a primitive
@@ -218,18 +233,31 @@ describe("Utils", function () {
 
 			// add members
 			// Simple string
-			testRoot._properties.map.insert("string", PropertyFactory.create("String"));
+			testRoot._properties.map.insert(
+				"string",
+				PropertyFactory.create("String"),
+			);
 
 			// String with name that has to be escaped
-			testRoot._properties.map.insert('s"tr"ing', PropertyFactory.create("String"));
+			testRoot._properties.map.insert(
+				's"tr"ing',
+				PropertyFactory.create("String"),
+			);
 
 			// A map in a map
 			testRoot._properties.map.insert("map", PropertyFactory.create("map<>"));
-			testRoot._properties.map.get("map").insert("string", PropertyFactory.create("String"));
+			testRoot._properties.map
+				.get("map")
+				.insert("string", PropertyFactory.create("String"));
 
 			// An array in a map
-			testRoot._properties.map.insert("array", PropertyFactory.create("array<>"));
-			testRoot._properties.map.get("array").insert(0, PropertyFactory.create("NodeProperty"));
+			testRoot._properties.map.insert(
+				"array",
+				PropertyFactory.create("array<>"),
+			);
+			testRoot._properties.map
+				.get("array")
+				.insert(0, PropertyFactory.create("NodeProperty"));
 			testRoot._properties.map
 				.get("array")
 				.get(0)
@@ -242,7 +270,10 @@ describe("Utils", function () {
 			);
 
 			// A NodeProperty
-			testRoot._properties.map.insert("nodeProperty", PropertyFactory.create("NodeProperty"));
+			testRoot._properties.map.insert(
+				"nodeProperty",
+				PropertyFactory.create("NodeProperty"),
+			);
 			testRoot._properties.map
 				.get("nodeProperty")
 				.insert("string", PropertyFactory.create("String"));
@@ -254,22 +285,25 @@ describe("Utils", function () {
 			namedNodePropForSet.insert("string", PropertyFactory.create("String"));
 
 			contexts = [];
-			Utils.traverseChangeSetRecursively(testRoot.serialize({ dirtyOnly: false }), {
-				preCallback: function (in_context) {
-					// Do some basic sanity checks
-					var node = testRoot.resolvePath(in_context.getFullPath() + "*");
-					expect(node).to.be.instanceof(BaseProperty);
-					expect(node.getTypeid()).to.equal(in_context._splitTypeId.typeid);
+			Utils.traverseChangeSetRecursively(
+				testRoot.serialize({ dirtyOnly: false }),
+				{
+					preCallback: function (in_context) {
+						// Do some basic sanity checks
+						var node = testRoot.resolvePath(in_context.getFullPath() + "*");
+						expect(node).to.be.instanceof(BaseProperty);
+						expect(node.getTypeid()).to.equal(in_context._splitTypeId.typeid);
 
-					if (in_context._fullPath !== "") {
-						expect(in_context.getOperationType()).to.equal("insert");
-					} else {
-						expect(in_context.getOperationType()).to.equal("modify");
-					}
+						if (in_context._fullPath !== "") {
+							expect(in_context.getOperationType()).to.equal("insert");
+						} else {
+							expect(in_context.getOperationType()).to.equal("modify");
+						}
 
-					contexts.push(in_context.clone());
+						contexts.push(in_context.clone());
+					},
 				},
-			});
+			);
 			expect(contexts.length).to.equal(38);
 		});
 
@@ -282,7 +316,10 @@ describe("Utils", function () {
 				var modifyNode = testRoot.resolvePath(contexts[i].getFullPath());
 
 				// modify strings
-				if (contexts[i].getTypeid() === "String" && modifyNode.getId() !== "guid") {
+				if (
+					contexts[i].getTypeid() === "String" &&
+					modifyNode.getId() !== "guid"
+				) {
 					modifyNode.setValue("modified");
 					modifiedStringCount++;
 				}
@@ -299,37 +336,40 @@ describe("Utils", function () {
 			testRoot._properties.floatMap.set("new_test", 7);
 
 			var reportedStringModifiedCount = 0;
-			Utils.traverseChangeSetRecursively(testRoot.serialize({ dirtyOnly: true }), {
-				preCallback: function (in_context) {
-					// Do some basic sanity checks
-					var node = testRoot.resolvePath(in_context.getFullPath());
-					expect(node).to.be.instanceof(BaseProperty);
-					expect(node.getTypeid()).to.equal(in_context._splitTypeId.typeid);
-					expect(in_context.getOperationType()).to.equal("modify");
+			Utils.traverseChangeSetRecursively(
+				testRoot.serialize({ dirtyOnly: true }),
+				{
+					preCallback: function (in_context) {
+						// Do some basic sanity checks
+						var node = testRoot.resolvePath(in_context.getFullPath());
+						expect(node).to.be.instanceof(BaseProperty);
+						expect(node.getTypeid()).to.equal(in_context._splitTypeId.typeid);
+						expect(in_context.getOperationType()).to.equal("modify");
 
-					if (node.getTypeid() === "String") {
-						reportedStringModifiedCount++;
-						expect(in_context.getNestedChangeSet()).to.equal("modified");
-					}
+						if (node.getTypeid() === "String") {
+							reportedStringModifiedCount++;
+							expect(in_context.getNestedChangeSet()).to.equal("modified");
+						}
 
-					if (in_context.getTypeid() === "array<Float32>") {
-						expect(in_context.getNestedChangeSet()).to.deep.equal({
-							insert: [[5, [15]]],
-						});
-					}
+						if (in_context.getTypeid() === "array<Float32>") {
+							expect(in_context.getNestedChangeSet()).to.deep.equal({
+								insert: [[5, [15]]],
+							});
+						}
 
-					if (in_context.getTypeid() === "map<Float32>") {
-						expect(in_context.getNestedChangeSet()).to.deep.equal({
-							insert: {
-								new_test: 7,
-							},
-							modify: {
-								test: 5,
-							},
-						});
-					}
+						if (in_context.getTypeid() === "map<Float32>") {
+							expect(in_context.getNestedChangeSet()).to.deep.equal({
+								insert: {
+									new_test: 7,
+								},
+								modify: {
+									test: 5,
+								},
+							});
+						}
+					},
 				},
-			});
+			);
 
 			// Make sure all modified strings have been reported
 			expect(reportedStringModifiedCount).to.equal(modifiedStringCount);
@@ -348,21 +388,24 @@ describe("Utils", function () {
 				}
 			}
 
-			Utils.traverseChangeSetRecursively(testRoot.serialize({ dirtyOnly: true }), {
-				preCallback: function (in_context) {
-					// Do some basic sanity checks
-					var node = testRoot.resolvePath(in_context.getFullPath());
-					expect(node).to.be.instanceof(BaseProperty);
-					expect(node.getTypeid()).to.equal(in_context._splitTypeId.typeid);
-					expect(in_context.getOperationType()).to.equal("modify");
+			Utils.traverseChangeSetRecursively(
+				testRoot.serialize({ dirtyOnly: true }),
+				{
+					preCallback: function (in_context) {
+						// Do some basic sanity checks
+						var node = testRoot.resolvePath(in_context.getFullPath());
+						expect(node).to.be.instanceof(BaseProperty);
+						expect(node.getTypeid()).to.equal(in_context._splitTypeId.typeid);
+						expect(in_context.getOperationType()).to.equal("modify");
 
-					if (node.getTypeid() === "String") {
-						expect(in_context.getNestedChangeSet()).to.deep.equal({
-							insert: [[3, "_inserted_"]],
-						});
-					}
+						if (node.getTypeid() === "String") {
+							expect(in_context.getNestedChangeSet()).to.deep.equal({
+								insert: [[3, "_inserted_"]],
+							});
+						}
+					},
 				},
-			});
+			);
 		});
 
 		it("should work for inserts in arrays", function () {
@@ -374,24 +417,30 @@ describe("Utils", function () {
 			newArrayNode.insert("string", PropertyFactory.create("String"));
 			newArrayNode._properties.string.value = "test";
 
-			Utils.traverseChangeSetRecursively(testRoot.serialize({ dirtyOnly: true }), {
-				preCallback: function (in_context) {
-					// Do some basic sanity checks
-					var node = testRoot.resolvePath(in_context.getFullPath());
-					expect(node).to.be.instanceof(BaseProperty);
-					expect(node.getTypeid()).to.equal(in_context._splitTypeId.typeid);
+			Utils.traverseChangeSetRecursively(
+				testRoot.serialize({ dirtyOnly: true }),
+				{
+					preCallback: function (in_context) {
+						// Do some basic sanity checks
+						var node = testRoot.resolvePath(in_context.getFullPath());
+						expect(node).to.be.instanceof(BaseProperty);
+						expect(node.getTypeid()).to.equal(in_context._splitTypeId.typeid);
 
-					if (in_context.getFullPath() !== "" && in_context.getFullPath() !== "array") {
-						expect(in_context.getOperationType()).to.equal("insert");
-					} else {
-						expect(in_context.getOperationType()).to.equal("modify");
-					}
+						if (
+							in_context.getFullPath() !== "" &&
+							in_context.getFullPath() !== "array"
+						) {
+							expect(in_context.getOperationType()).to.equal("insert");
+						} else {
+							expect(in_context.getOperationType()).to.equal("modify");
+						}
 
-					if (node.getTypeid() === "String") {
-						expect(in_context.getNestedChangeSet()).to.equal("test");
-					}
+						if (node.getTypeid() === "String") {
+							expect(in_context.getNestedChangeSet()).to.equal("test");
+						}
+					},
 				},
-			});
+			);
 		});
 
 		it("should work for inserts in sets", function () {
@@ -403,24 +452,30 @@ describe("Utils", function () {
 			newSetNode.insert("string", PropertyFactory.create("String"));
 			newSetNode._properties.string.setValue("test");
 
-			Utils.traverseChangeSetRecursively(testRoot.serialize({ dirtyOnly: true }), {
-				preCallback: function (in_context) {
-					// Do some basic sanity checks
-					var node = testRoot.resolvePath(in_context.getFullPath());
-					expect(node).to.be.instanceof(BaseProperty);
-					expect(node.getTypeid()).to.equal(in_context._splitTypeId.typeid);
+			Utils.traverseChangeSetRecursively(
+				testRoot.serialize({ dirtyOnly: true }),
+				{
+					preCallback: function (in_context) {
+						// Do some basic sanity checks
+						var node = testRoot.resolvePath(in_context.getFullPath());
+						expect(node).to.be.instanceof(BaseProperty);
+						expect(node.getTypeid()).to.equal(in_context._splitTypeId.typeid);
 
-					if (in_context.getFullPath() !== "" && in_context.getFullPath() !== "set") {
-						expect(in_context.getOperationType()).to.equal("insert");
-					} else {
-						expect(in_context.getOperationType()).to.equal("modify");
-					}
+						if (
+							in_context.getFullPath() !== "" &&
+							in_context.getFullPath() !== "set"
+						) {
+							expect(in_context.getOperationType()).to.equal("insert");
+						} else {
+							expect(in_context.getOperationType()).to.equal("modify");
+						}
 
-					if (node.getTypeid() === "String") {
-						expect(in_context.getNestedChangeSet()).to.equal(node.value);
-					}
+						if (node.getTypeid() === "String") {
+							expect(in_context.getNestedChangeSet()).to.equal(node.value);
+						}
+					},
 				},
-			});
+			);
 		});
 
 		it("should work for node property removals", function () {
@@ -438,18 +493,23 @@ describe("Utils", function () {
 			}
 
 			var actualStringRemoveCount = 0;
-			Utils.traverseChangeSetRecursively(testRoot.serialize({ dirtyOnly: true }), {
-				preCallback: function (in_context) {
-					var node = testRoot.resolvePath(in_context.getFullPath());
-					if (node) {
-						expect(in_context.getOperationType()).to.equal("modify");
-					} else {
-						expect(in_context.getOperationType()).to.equal("remove");
-						expect(removedStrings.indexOf("/" + in_context.getFullPath())).to.not.equal(-1);
-						actualStringRemoveCount++;
-					}
+			Utils.traverseChangeSetRecursively(
+				testRoot.serialize({ dirtyOnly: true }),
+				{
+					preCallback: function (in_context) {
+						var node = testRoot.resolvePath(in_context.getFullPath());
+						if (node) {
+							expect(in_context.getOperationType()).to.equal("modify");
+						} else {
+							expect(in_context.getOperationType()).to.equal("remove");
+							expect(
+								removedStrings.indexOf("/" + in_context.getFullPath()),
+							).to.not.equal(-1);
+							actualStringRemoveCount++;
+						}
+					},
 				},
-			});
+			);
 			expect(removedStrings.length).to.equal(actualStringRemoveCount);
 		});
 
@@ -459,16 +519,22 @@ describe("Utils", function () {
 
 			testRoot._properties.array.removeRange(0, 2);
 			var arrayRemovalCount = 0;
-			Utils.traverseChangeSetRecursively(testRoot.serialize({ dirtyOnly: true }), {
-				preCallback: function (in_context) {
-					if (in_context.getFullPath() === "" || in_context.getFullPath() === "array") {
-						expect(in_context.getOperationType()).to.equal("modify");
-					} else {
-						expect(in_context.getOperationType()).to.equal("remove");
-						arrayRemovalCount++;
-					}
+			Utils.traverseChangeSetRecursively(
+				testRoot.serialize({ dirtyOnly: true }),
+				{
+					preCallback: function (in_context) {
+						if (
+							in_context.getFullPath() === "" ||
+							in_context.getFullPath() === "array"
+						) {
+							expect(in_context.getOperationType()).to.equal("modify");
+						} else {
+							expect(in_context.getOperationType()).to.equal("remove");
+							arrayRemovalCount++;
+						}
+					},
 				},
-			});
+			);
 			expect(arrayRemovalCount).to.equal(2);
 		});
 
@@ -478,16 +544,22 @@ describe("Utils", function () {
 
 			testRoot._properties.map.remove("string");
 			var mapRemovalCount = 0;
-			Utils.traverseChangeSetRecursively(testRoot.serialize({ dirtyOnly: true }), {
-				preCallback: function (in_context) {
-					if (in_context.getFullPath() === "" || in_context.getFullPath() === "map") {
-						expect(in_context.getOperationType()).to.equal("modify");
-					} else {
-						expect(in_context.getOperationType()).to.equal("remove");
-						mapRemovalCount++;
-					}
+			Utils.traverseChangeSetRecursively(
+				testRoot.serialize({ dirtyOnly: true }),
+				{
+					preCallback: function (in_context) {
+						if (
+							in_context.getFullPath() === "" ||
+							in_context.getFullPath() === "map"
+						) {
+							expect(in_context.getOperationType()).to.equal("modify");
+						} else {
+							expect(in_context.getOperationType()).to.equal("remove");
+							mapRemovalCount++;
+						}
+					},
 				},
-			});
+			);
 			expect(mapRemovalCount).to.equal(1);
 		});
 
@@ -498,16 +570,22 @@ describe("Utils", function () {
 			testRoot._properties.set.remove(namedNodePropForSet);
 
 			var setRemovalCount = 0;
-			Utils.traverseChangeSetRecursively(testRoot.serialize({ dirtyOnly: true }), {
-				preCallback: function (in_context) {
-					if (in_context.getFullPath() === "" || in_context.getFullPath() === "set") {
-						expect(in_context.getOperationType()).to.equal("modify");
-					} else {
-						expect(in_context.getOperationType()).to.equal("remove");
-						setRemovalCount++;
-					}
+			Utils.traverseChangeSetRecursively(
+				testRoot.serialize({ dirtyOnly: true }),
+				{
+					preCallback: function (in_context) {
+						if (
+							in_context.getFullPath() === "" ||
+							in_context.getFullPath() === "set"
+						) {
+							expect(in_context.getOperationType()).to.equal("modify");
+						} else {
+							expect(in_context.getOperationType()).to.equal("remove");
+							setRemovalCount++;
+						}
+					},
 				},
-			});
+			);
 			expect(setRemovalCount).to.equal(1);
 		});
 
@@ -531,19 +609,25 @@ describe("Utils", function () {
 
 			var setRemovalCount = 0;
 			var contextCloneCount = 0;
-			Utils.traverseChangeSetRecursively(testRoot.serialize({ dirtyOnly: true }), {
-				preCallback: function (in_context) {
-					if (in_context.getFullPath() === "" || in_context.getFullPath() === "setClone") {
-						expect(in_context.getOperationType()).to.equal("modify");
-					} else {
-						expect(in_context.getOperationType()).to.equal("remove");
-						setRemovalCount++;
-					}
-					var cloneContext = in_context.clone();
-					expect(cloneContext).to.deep.equal(in_context);
-					contextCloneCount++;
+			Utils.traverseChangeSetRecursively(
+				testRoot.serialize({ dirtyOnly: true }),
+				{
+					preCallback: function (in_context) {
+						if (
+							in_context.getFullPath() === "" ||
+							in_context.getFullPath() === "setClone"
+						) {
+							expect(in_context.getOperationType()).to.equal("modify");
+						} else {
+							expect(in_context.getOperationType()).to.equal("remove");
+							setRemovalCount++;
+						}
+						var cloneContext = in_context.clone();
+						expect(cloneContext).to.deep.equal(in_context);
+						contextCloneCount++;
+					},
 				},
-			});
+			);
 			expect(setRemovalCount).to.equal(3);
 			expect(contextCloneCount >= 3).to.be.true; // we should clone at least 3 times (probably more)
 		});
@@ -556,14 +640,17 @@ describe("Utils", function () {
 				PropertyFactory.create("NamedNodeProperty"),
 			);
 			var operationtypes = [];
-			Utils.traverseChangeSetRecursively(testRoot.serialize({ dirtyOnly: true }), {
-				preCallback: function (in_context) {
-					// expect operations to be 'remove' and 'insert'
-					if (in_context.getFullPath() === "map[nodeProperty]") {
-						operationtypes.push(in_context.getOperationType());
-					}
+			Utils.traverseChangeSetRecursively(
+				testRoot.serialize({ dirtyOnly: true }),
+				{
+					preCallback: function (in_context) {
+						// expect operations to be 'remove' and 'insert'
+						if (in_context.getFullPath() === "map[nodeProperty]") {
+							operationtypes.push(in_context.getOperationType());
+						}
+					},
 				},
-			});
+			);
 			expect(operationtypes).to.deep.equal(["remove", "insert"]);
 		});
 	});
@@ -579,7 +666,10 @@ describe("Utils", function () {
 			);
 			testRoot
 				.resolvePath('"test\\"Templated\\"Property".containedMap')
-				.insert("entry", PropertyFactory.create("autodesk.test:utilsTestContained-1.0.0"));
+				.insert(
+					"entry",
+					PropertyFactory.create("autodesk.test:utilsTestContained-1.0.0"),
+				);
 			testRoot.insert("reference", PropertyFactory.create("Reference<String>"));
 
 			// Test an array with a primitive
@@ -603,18 +693,31 @@ describe("Utils", function () {
 
 			// add members
 			// Simple string
-			testRoot._properties.map.insert("string", PropertyFactory.create("String"));
+			testRoot._properties.map.insert(
+				"string",
+				PropertyFactory.create("String"),
+			);
 
 			// String with name that has to be escaped
-			testRoot._properties.map.insert('s"tr"ing', PropertyFactory.create("String"));
+			testRoot._properties.map.insert(
+				's"tr"ing',
+				PropertyFactory.create("String"),
+			);
 
 			// A map in a map
 			testRoot._properties.map.insert("map", PropertyFactory.create("map<>"));
-			testRoot._properties.map.get("map").insert("string", PropertyFactory.create("String"));
+			testRoot._properties.map
+				.get("map")
+				.insert("string", PropertyFactory.create("String"));
 
 			// An array in a map
-			testRoot._properties.map.insert("array", PropertyFactory.create("array<>"));
-			testRoot._properties.map.get("array").insert(0, PropertyFactory.create("NodeProperty"));
+			testRoot._properties.map.insert(
+				"array",
+				PropertyFactory.create("array<>"),
+			);
+			testRoot._properties.map
+				.get("array")
+				.insert(0, PropertyFactory.create("NodeProperty"));
 			testRoot._properties.map
 				.get("array")
 				.get(0)
@@ -627,7 +730,10 @@ describe("Utils", function () {
 			);
 
 			// A NodeProperty
-			testRoot._properties.map.insert("nodeProperty", PropertyFactory.create("NodeProperty"));
+			testRoot._properties.map.insert(
+				"nodeProperty",
+				PropertyFactory.create("NodeProperty"),
+			);
 			testRoot._properties.map
 				.get("nodeProperty")
 				.insert("string", PropertyFactory.create("String"));
@@ -674,7 +780,10 @@ describe("Utils", function () {
 				var modifyNode = testRoot.resolvePath(contexts[i].getFullPath());
 
 				// modify strings
-				if (contexts[i].getTypeid() === "String" && modifyNode.getId() !== "guid") {
+				if (
+					contexts[i].getTypeid() === "String" &&
+					modifyNode.getId() !== "guid"
+				) {
 					modifyNode.setValue("modified");
 					modifiedStringCount++;
 				}
@@ -788,7 +897,10 @@ describe("Utils", function () {
 						expect(node).to.be.instanceof(BaseProperty);
 						expect(node.getTypeid()).to.equal(in_context._splitTypeId.typeid);
 
-						if (in_context.getFullPath() !== "" && in_context.getFullPath() !== "array") {
+						if (
+							in_context.getFullPath() !== "" &&
+							in_context.getFullPath() !== "array"
+						) {
 							expect(in_context.getOperationType()).to.equal("insert");
 						} else {
 							expect(in_context.getOperationType()).to.equal("modify");
@@ -824,7 +936,10 @@ describe("Utils", function () {
 						expect(node).to.be.instanceof(BaseProperty);
 						expect(node.getTypeid()).to.equal(in_context._splitTypeId.typeid);
 
-						if (in_context.getFullPath() !== "" && in_context.getFullPath() !== "set") {
+						if (
+							in_context.getFullPath() !== "" &&
+							in_context.getFullPath() !== "set"
+						) {
 							expect(in_context.getOperationType()).to.equal("insert");
 						} else {
 							expect(in_context.getOperationType()).to.equal("modify");
@@ -864,7 +979,9 @@ describe("Utils", function () {
 							expect(in_context.getOperationType()).to.equal("modify");
 						} else {
 							expect(in_context.getOperationType()).to.equal("remove");
-							expect(removedStrings.indexOf("/" + in_context.getFullPath())).to.not.equal(-1);
+							expect(
+								removedStrings.indexOf("/" + in_context.getFullPath()),
+							).to.not.equal(-1);
 							actualStringRemoveCount++;
 						}
 						setImmediate(cb);
@@ -887,7 +1004,10 @@ describe("Utils", function () {
 				testRoot.serialize({ dirtyOnly: true }),
 				{
 					preCallback: function (in_context, cb) {
-						if (in_context.getFullPath() === "" || in_context.getFullPath() === "array") {
+						if (
+							in_context.getFullPath() === "" ||
+							in_context.getFullPath() === "array"
+						) {
 							expect(in_context.getOperationType()).to.equal("modify");
 						} else {
 							expect(in_context.getOperationType()).to.equal("remove");
@@ -913,7 +1033,10 @@ describe("Utils", function () {
 				testRoot.serialize({ dirtyOnly: true }),
 				{
 					preCallback: function (in_context, cb) {
-						if (in_context.getFullPath() === "" || in_context.getFullPath() === "map") {
+						if (
+							in_context.getFullPath() === "" ||
+							in_context.getFullPath() === "map"
+						) {
 							expect(in_context.getOperationType()).to.equal("modify");
 						} else {
 							expect(in_context.getOperationType()).to.equal("remove");
@@ -940,7 +1063,10 @@ describe("Utils", function () {
 				testRoot.serialize({ dirtyOnly: true }),
 				{
 					preCallback: function (in_context, cb) {
-						if (in_context.getFullPath() === "" || in_context.getFullPath() === "set") {
+						if (
+							in_context.getFullPath() === "" ||
+							in_context.getFullPath() === "set"
+						) {
 							expect(in_context.getOperationType()).to.equal("modify");
 						} else {
 							expect(in_context.getOperationType()).to.equal("remove");
@@ -980,7 +1106,10 @@ describe("Utils", function () {
 				testRoot.serialize({ dirtyOnly: true }),
 				{
 					preCallback: function (in_context, cb) {
-						if (in_context.getFullPath() === "" || in_context.getFullPath() === "setClone") {
+						if (
+							in_context.getFullPath() === "" ||
+							in_context.getFullPath() === "setClone"
+						) {
 							expect(in_context.getOperationType()).to.equal("modify");
 						} else {
 							expect(in_context.getOperationType()).to.equal("remove");
@@ -1004,8 +1133,14 @@ describe("Utils", function () {
 			// This test uses its own property sets tree
 			var ownRoot = PropertyFactory.create("NodeProperty");
 			var userInfo = PropertyFactory.create("NodeProperty");
-			userInfo.insert("name", PropertyFactory.create("String", "single", "John Doe"));
-			userInfo.insert("isResident", PropertyFactory.create("Bool", "single", true));
+			userInfo.insert(
+				"name",
+				PropertyFactory.create("String", "single", "John Doe"),
+			);
+			userInfo.insert(
+				"isResident",
+				PropertyFactory.create("Bool", "single", true),
+			);
 			ownRoot.insert("userInfo", userInfo);
 			var numberOfResidents = PropertyFactory.create("Int32", "single", 1);
 			ownRoot.insert("numberOfResidents", numberOfResidents);
@@ -1051,10 +1186,14 @@ describe("Utils", function () {
 
 			testRoot._properties.map.set(
 				"testParent",
-				PropertyFactory.create("autodesk.test:utilsTestParent-1.0.0", "single", {
-					errorMsg: "another element",
-					progress: 99,
-				}),
+				PropertyFactory.create(
+					"autodesk.test:utilsTestParent-1.0.0",
+					"single",
+					{
+						errorMsg: "another element",
+						progress: 99,
+					},
+				),
 			);
 
 			var operations = [];
@@ -1064,9 +1203,13 @@ describe("Utils", function () {
 					preCallback: function (in_context, cb) {
 						if (in_context.getFullPath() === "map[testParent]") {
 							operations.push(in_context.getOperationType());
-						} else if (in_context.getFullPath() === "map[testParent].errorMsg") {
+						} else if (
+							in_context.getFullPath() === "map[testParent].errorMsg"
+						) {
 							expect(in_context.getNestedChangeSet() === "another element");
-						} else if (in_context.getFullPath() === "map[testParent].progress") {
+						} else if (
+							in_context.getFullPath() === "map[testParent].progress"
+						) {
 							expect(in_context.getNestedChangeSet() === 99);
 						}
 						setImmediate(cb);
@@ -1134,7 +1277,9 @@ describe("Utils", function () {
 
 	describe("Utils.extractTypeids", function () {
 		it("Should work for a simple templated property", function () {
-			var property = PropertyFactory.create("autodesk.test:utilsTestParent-1.0.0");
+			var property = PropertyFactory.create(
+				"autodesk.test:utilsTestParent-1.0.0",
+			);
 
 			var typeids = Utils.extractTypeids(
 				property.serialize({ dirtyOnly: false, includeRootTypeid: true }),
@@ -1210,7 +1355,8 @@ describe("Utils", function () {
 			var child = PropertyFactory.create("autodesk.test:utilsTestParent-1.0.0");
 			property.insert("child", child);
 			property.cleanDirty();
-			property.resolvePath('child.contained."error\\"Msg\\""').value = "modified";
+			property.resolvePath('child.contained."error\\"Msg\\""').value =
+				"modified";
 
 			var typeids = Utils.extractTypeids(
 				property.serialize({ dirtyOnly: true, in_includeRootTypeid: true }),
@@ -1229,7 +1375,8 @@ describe("Utils", function () {
 			var child = PropertyFactory.create("autodesk.test:utilsTestParent-1.0.0");
 			property.insert("child", child);
 			property.cleanDirty();
-			property.resolvePath('[child].contained."error\\"Msg\\""').value = "modified";
+			property.resolvePath('[child].contained."error\\"Msg\\""').value =
+				"modified";
 
 			var typeids = Utils.extractTypeids(property._serialize(true, true));
 			typeids.sort();
@@ -1246,7 +1393,9 @@ describe("Utils", function () {
 			var child = PropertyFactory.create("autodesk.test:utilsTestParent-1.0.0");
 			property.push(child);
 			property.cleanDirty();
-			property.resolvePath('[0].contained."error\\"Msg\\""').setValue("modified");
+			property
+				.resolvePath('[0].contained."error\\"Msg\\""')
+				.setValue("modified");
 
 			var typeids = Utils.extractTypeids(property._serialize(true, true));
 			typeids.sort();
@@ -1272,8 +1421,12 @@ describe("Utils", function () {
 		before(function () {
 			root = PropertyFactory.create("NodeProperty");
 			sim = PropertyFactory.create("autodesk.test:utils.spec.pan.sim-1.0.0");
-			subject1 = PropertyFactory.create("autodesk.test:utils.spec.task.subject-1.0.0");
-			subject2 = PropertyFactory.create("autodesk.test:utils.spec.task.subject-1.0.0");
+			subject1 = PropertyFactory.create(
+				"autodesk.test:utils.spec.task.subject-1.0.0",
+			);
+			subject2 = PropertyFactory.create(
+				"autodesk.test:utils.spec.task.subject-1.0.0",
+			);
 
 			root.insert("simulation", sim);
 			sim.insert("subject1", subject1);
@@ -1281,8 +1434,12 @@ describe("Utils", function () {
 
 			var arrayProp = PropertyFactory.create("array<>");
 			root.insert("array", arrayProp);
-			arrayProp.push(PropertyFactory.create("autodesk.test:utils.spec.task.subject-1.0.0"));
-			arrayProp.push(PropertyFactory.create("autodesk.test:utils.spec.task.subject-1.0.0"));
+			arrayProp.push(
+				PropertyFactory.create("autodesk.test:utils.spec.task.subject-1.0.0"),
+			);
+			arrayProp.push(
+				PropertyFactory.create("autodesk.test:utils.spec.task.subject-1.0.0"),
+			);
 			arrayProp.get(1)._properties.progress.value = 1;
 
 			var mapProp = PropertyFactory.create("map<>");
@@ -1300,7 +1457,9 @@ describe("Utils", function () {
 			);
 			assert(_.keys(insertedResults.insert).length === 9);
 			for (var i = 0; i < 9; i++) {
-				assert(root.resolvePath(_.keys(insertedResults.insert)[i]) !== undefined);
+				assert(
+					root.resolvePath(_.keys(insertedResults.insert)[i]) !== undefined,
+				);
 				assert(
 					Utils.getChangesByPath(
 						_.keys(insertedResults.insert)[i],
@@ -1322,7 +1481,9 @@ describe("Utils", function () {
 			var prop = PropertyFactory.create("NodeProperty");
 			prop.insert(
 				"A",
-				PropertyFactory.create("autodesk.tests:AnonymousMapTestPropertyID-1.0.0"),
+				PropertyFactory.create(
+					"autodesk.tests:AnonymousMapTestPropertyID-1.0.0",
+				),
 			);
 			var result = Utils.getChangesByPath("", null, prop.serialize());
 			expect(result).to.deep.equal({
@@ -1410,7 +1571,9 @@ describe("Utils", function () {
 					BaseProperty.MODIFIED_STATE_FLAGS.DIRTY,
 			);
 
-			subject3 = PropertyFactory.create("autodesk.test:utils.spec.task.subject-1.0.0");
+			subject3 = PropertyFactory.create(
+				"autodesk.test:utils.spec.task.subject-1.0.0",
+			);
 			subject2.insert("subject3", subject3);
 
 			subject1._properties.errorMsg.value = "test";
@@ -1586,8 +1749,12 @@ describe("Utils", function () {
 				).removed === true,
 			);
 			assert(
-				Utils.getChangesByPath(sim.getId(), root, root.serialize({ dirtyOnly: true }), false)
-					.removed === true,
+				Utils.getChangesByPath(
+					sim.getId(),
+					root,
+					root.serialize({ dirtyOnly: true }),
+					false,
+				).removed === true,
 			);
 
 			root.resolvePath("map").remove("entry2");
@@ -1615,7 +1782,9 @@ describe("Utils", function () {
 		});
 
 		it("should work for nested templates", function () {
-			var nestedTemplate = PropertyFactory.create("autodesk.tests:nestedTemplate-1.0.0");
+			var nestedTemplate = PropertyFactory.create(
+				"autodesk.tests:nestedTemplate-1.0.0",
+			);
 			nestedTemplate._properties.c.myNestedProp.errorMsg.value = "testString";
 			var changeSet = nestedTemplate._serialize(true);
 
@@ -1623,7 +1792,12 @@ describe("Utils", function () {
 			expect(changes.modify["c.myNestedProp.errorMsg"]).to.equal("testString");
 
 			expect(
-				Utils.getChangesByPath("c.myNestedProp.errorMsg", nestedTemplate, changeSet, false),
+				Utils.getChangesByPath(
+					"c.myNestedProp.errorMsg",
+					nestedTemplate,
+					changeSet,
+					false,
+				),
 			).to.have.keys("modify");
 		});
 
@@ -1645,27 +1819,43 @@ describe("Utils", function () {
 				'"test[property]".".property.".test',
 			);
 
-			expect(Utils.getChangesByPath("simple_property", node, changeSet, false)).to.have.keys(
-				"modify",
-			);
-			expect(Utils.getChangesByPath('"test.property"', node, changeSet, false)).to.have.keys(
-				"modify",
-			);
+			expect(
+				Utils.getChangesByPath("simple_property", node, changeSet, false),
+			).to.have.keys("modify");
+			expect(
+				Utils.getChangesByPath('"test.property"', node, changeSet, false),
+			).to.have.keys("modify");
 			expect(
 				Utils.getChangesByPath('"test\\"property\\""', node, changeSet, false),
 			).to.have.keys("modify");
 			expect(
-				Utils.getChangesByPath('"test[property]".".property.".test', node, changeSet, false),
+				Utils.getChangesByPath(
+					'"test[property]".".property.".test',
+					node,
+					changeSet,
+					false,
+				),
 			).to.have.keys("modify");
 		});
 
 		it("should work for a node property with characters that have to be quoted", function () {
 			var node = PropertyFactory.create("NodeProperty");
-			node.insert("simple_property", PropertyFactory.create("String", undefined, "test"));
-			node.insert("test.property", PropertyFactory.create("String", undefined, "test"));
-			node.insert('test"property"', PropertyFactory.create("String", undefined, "test"));
+			node.insert(
+				"simple_property",
+				PropertyFactory.create("String", undefined, "test"),
+			);
+			node.insert(
+				"test.property",
+				PropertyFactory.create("String", undefined, "test"),
+			);
+			node.insert(
+				'test"property"',
+				PropertyFactory.create("String", undefined, "test"),
+			);
 			node.insert("test[property]", PropertyFactory.create("NodeProperty"));
-			node.get("test[property]").insert(".property.", PropertyFactory.create("NodeProperty"));
+			node
+				.get("test[property]")
+				.insert(".property.", PropertyFactory.create("NodeProperty"));
 			node
 				.get("test[property]")
 				.get(".property.")
@@ -1680,17 +1870,22 @@ describe("Utils", function () {
 				'"test[property]".".property.".test',
 			);
 
-			expect(Utils.getChangesByPath("simple_property", node, changeSet, false)).to.have.keys(
-				"insert",
-			);
-			expect(Utils.getChangesByPath('"test.property"', node, changeSet, false)).to.have.keys(
-				"insert",
-			);
+			expect(
+				Utils.getChangesByPath("simple_property", node, changeSet, false),
+			).to.have.keys("insert");
+			expect(
+				Utils.getChangesByPath('"test.property"', node, changeSet, false),
+			).to.have.keys("insert");
 			expect(
 				Utils.getChangesByPath('"test\\"property\\""', node, changeSet, false),
 			).to.have.keys("insert");
 			expect(
-				Utils.getChangesByPath('"test[property]".".property.".test', node, changeSet, false),
+				Utils.getChangesByPath(
+					'"test[property]".".property.".test',
+					node,
+					changeSet,
+					false,
+				),
 			).to.have.keys("insert");
 		});
 	});
@@ -1698,7 +1893,7 @@ describe("Utils", function () {
 	describe("Utils.getChangesToTokenizedPaths", function () {
 		var CS = {
 			insert: {
-				"NodeProperty": {
+				NodeProperty: {
 					nested1: {
 						insert: {
 							NodeProperty: {
@@ -1737,7 +1932,7 @@ describe("Utils", function () {
 						],
 					},
 				},
-				"String": {
+				String: {
 					string: "text",
 				},
 			},
@@ -1838,8 +2033,13 @@ describe("Utils", function () {
 					if (currentPath === "nested1.nested2.string") {
 						expect(in_nested).to.exist;
 						expect(in_nested).to.have.key("__hidden");
-						expect(in_nested.get("__hidden")).to.have.all.keys("myCallback", "myValue");
-						expect(in_nested.get("__hidden").get("myCallback")()).to.eql("hello");
+						expect(in_nested.get("__hidden")).to.have.all.keys(
+							"myCallback",
+							"myValue",
+						);
+						expect(in_nested.get("__hidden").get("myCallback")()).to.eql(
+							"hello",
+						);
 						expect(in_nested.get("__hidden").get("myValue")).to.eql(1);
 					}
 				},
@@ -2044,10 +2244,10 @@ describe("Utils", function () {
 	describe("Utils.getFilteredChangeSetByPaths", function () {
 		var changeSet = {
 			insert: {
-				"NodeProperty": {
+				NodeProperty: {
 					nested1: {
 						insert: {
-							"NodeProperty": {
+							NodeProperty: {
 								nested2: {
 									insert: {
 										String: {
@@ -2122,7 +2322,7 @@ describe("Utils", function () {
 				"Reference<String>": {
 					refProp: "/test.prop",
 				},
-				"RepositoryReferenceProperty": {
+				RepositoryReferenceProperty: {
 					refRepoProp: {
 						Bool: {
 							followBranch: false,
@@ -2134,14 +2334,14 @@ describe("Utils", function () {
 						},
 					},
 				},
-				"NamedProperty": {
+				NamedProperty: {
 					namedProp: {
 						String: {
 							guid: "e763527c-7f49-417c-8df3-9fb7f90a1932",
 						},
 					},
 				},
-				"NamedNodeProperty": {
+				NamedNodeProperty: {
 					namedNodeProp: {
 						String: {
 							guid: "efc68477-53b1-49ac-bd3f-e05a21f85a32",
@@ -2150,7 +2350,7 @@ describe("Utils", function () {
 							"enum<autodesk.core:UnitsEnum-1.0.0>": {
 								enumProp: 0,
 							},
-							"String": {
+							String: {
 								test: "blah",
 							},
 						},
@@ -2158,11 +2358,11 @@ describe("Utils", function () {
 				},
 				"autodesk.test:testProp-1.0.0": {
 					customTemplate: {
-						"Uint32": {
+						Uint32: {
 							a: 922337203685,
 						},
-						"String": {
-							"b": "hello",
+						String: {
+							b: "hello",
 							"nested.c.d.e": "world",
 							"nested.c.d.f": "hello",
 						},
@@ -2181,12 +2381,12 @@ describe("Utils", function () {
 						},
 					},
 				},
-				"String": {
+				String: {
 					emptyString: "",
 				},
 			},
 			modify: {
-				"NodeProperty": {
+				NodeProperty: {
 					nested4: {
 						insert: {
 							Uint32: {
@@ -2216,7 +2416,7 @@ describe("Utils", function () {
 					NodeProperty: {
 						nested1: {
 							insert: {
-								"NodeProperty": {
+								NodeProperty: {
 									nested2: {
 										insert: {
 											String: {
@@ -2321,7 +2521,7 @@ describe("Utils", function () {
 
 			expect(filteredCS).to.eql({
 				insert: {
-					"NodeProperty": {
+					NodeProperty: {
 						nested1: {
 							insert: {
 								"array<>": {
@@ -2408,10 +2608,10 @@ describe("Utils", function () {
 				insert: {
 					"autodesk.test:testProp-1.0.0": {
 						customTemplate: {
-							"Uint32": {
+							Uint32: {
 								a: 922337203685,
 							},
-							"String": {
+							String: {
 								"nested.c.d.e": "world",
 							},
 							"set<NamedProperty>": {
@@ -2439,7 +2639,10 @@ describe("Utils", function () {
 						"customTemplate",
 						new Map([
 							["a", new Map()],
-							["nested", new Map([["c", new Map([["d", new Map([["e", new Map()]])]])]])],
+							[
+								"nested",
+								new Map([["c", new Map([["d", new Map([["e", new Map()]])]])]]),
+							],
 							["nestedSet", new Map()],
 						]),
 					],
@@ -2450,10 +2653,10 @@ describe("Utils", function () {
 				insert: {
 					"autodesk.test:testProp-1.0.0": {
 						customTemplate: {
-							"Uint32": {
+							Uint32: {
 								a: 922337203685,
 							},
-							"String": {
+							String: {
 								"nested.c.d.e": "world",
 							},
 							"set<NamedProperty>": {
@@ -2519,7 +2722,7 @@ describe("Utils", function () {
 					"Reference<String>": {
 						refProp: "/test.prop",
 					},
-					"RepositoryReferenceProperty": {
+					RepositoryReferenceProperty: {
 						refRepoProp: {
 							Bool: {
 								followBranch: false,
@@ -2532,7 +2735,9 @@ describe("Utils", function () {
 				},
 			});
 
-			filteredCS = Utils.getFilteredChangeSetByPaths(changeSet, ["assetMap[1].name"]);
+			filteredCS = Utils.getFilteredChangeSetByPaths(changeSet, [
+				"assetMap[1].name",
+			]);
 			expect(filteredCS).to.eql({
 				insert: {
 					"map<mysample:asset-1.0.0>": {
@@ -2552,7 +2757,9 @@ describe("Utils", function () {
 			});
 
 			// For maps, using dots as separators, instead of brackets, is also supported.
-			filteredCS = Utils.getFilteredChangeSetByPaths(changeSet, ["assetMap.1.name"]);
+			filteredCS = Utils.getFilteredChangeSetByPaths(changeSet, [
+				"assetMap.1.name",
+			]);
 			expect(filteredCS).to.eql({
 				insert: {
 					"map<mysample:asset-1.0.0>": {
@@ -2584,11 +2791,11 @@ describe("Utils", function () {
 				insert: {
 					"autodesk.test:testProp-1.0.0": {
 						customTemplate: {
-							"Uint32": {
+							Uint32: {
 								a: 922337203685,
 							},
-							"String": {
-								"b": "hello",
+							String: {
+								b: "hello",
 								"nested.c.d.e": "world",
 								"nested.c.d.f": "hello",
 							},
@@ -2648,11 +2855,11 @@ describe("Utils", function () {
 				insert: {
 					"autodesk.test:testProp-1.0.0": {
 						customTemplate: {
-							"Uint32": {
+							Uint32: {
 								a: 922337203685,
 							},
-							"String": {
-								"b": "hello",
+							String: {
+								b: "hello",
 								"nested.c.d.e": "world",
 								"nested.c.d.f": "hello",
 							},
@@ -2687,11 +2894,11 @@ describe("Utils", function () {
 				insert: {
 					"autodesk.test:testProp-1.0.0": {
 						customTemplate: {
-							"Uint32": {
+							Uint32: {
 								a: 922337203685,
 							},
-							"String": {
-								"b": "hello",
+							String: {
+								b: "hello",
 								"nested.c.d.e": "world",
 								"nested.c.d.f": "hello",
 							},
@@ -2713,7 +2920,9 @@ describe("Utils", function () {
 				},
 			});
 
-			var filteredCS = Utils.getFilteredChangeSetByPaths(changeSet, ["emptyString"]);
+			var filteredCS = Utils.getFilteredChangeSetByPaths(changeSet, [
+				"emptyString",
+			]);
 
 			expect(filteredCS).to.eql({
 				insert: {
@@ -2801,7 +3010,9 @@ describe("Utils", function () {
 			});
 
 			// Partially matched paths are included
-			var filteredCS = Utils.getFilteredChangeSetByPaths(changeSet, ["assetMap[2]"]);
+			var filteredCS = Utils.getFilteredChangeSetByPaths(changeSet, [
+				"assetMap[2]",
+			]);
 			expect(filteredCS).to.eql({
 				insert: {
 					"map<mysample:asset-1.0.0>": {
@@ -2849,7 +3060,7 @@ describe("Utils", function () {
 				insert: {
 					"autodesk.test:testProp-1.0.0": {
 						customTemplate: {
-							"Uint32": {
+							Uint32: {
 								a: 922337203685,
 							},
 							"set<NamedProperty>": {
@@ -2861,24 +3072,29 @@ describe("Utils", function () {
 			});
 
 			// Make sure, nested removes are treated correctly
-			var filteredCS = Utils.getFilteredChangeSetByPaths(changeSet, ["nested7.abcd"]);
+			var filteredCS = Utils.getFilteredChangeSetByPaths(changeSet, [
+				"nested7.abcd",
+			]);
 			expect(filteredCS).to.eql({
 				remove: ["nested7"],
 			});
 		});
 
 		it("should fail filtering change sets with paths that resolve into arrays and sets", function () {
-			var failedFilteredFunc = Utils.getFilteredChangeSetByPaths.bind(null, changeSet, [
-				"nested1.nestedArray[0]",
-			]);
+			var failedFilteredFunc = Utils.getFilteredChangeSetByPaths.bind(
+				null,
+				changeSet,
+				["nested1.nestedArray[0]"],
+			);
 
 			expect(failedFilteredFunc).to.throw(Error, MSG.FILTER_PATH_WITHIN_ARRAY);
 
 			// With valid paths
-			failedFilteredFunc = Utils.getFilteredChangeSetByPaths.bind(null, changeSet, [
-				"customTemplate",
-				"nested1.nestedArray[0]",
-			]);
+			failedFilteredFunc = Utils.getFilteredChangeSetByPaths.bind(
+				null,
+				changeSet,
+				["customTemplate", "nested1.nestedArray[0]"],
+			);
 
 			expect(failedFilteredFunc).to.throw(Error, MSG.FILTER_PATH_WITHIN_ARRAY);
 		});
@@ -2891,7 +3107,9 @@ describe("Utils", function () {
 				.insert("[abcd]", PropertyFactory.create("String", undefined, "test"));
 
 			var CS = node.serialize();
-			var filteredCS = Utils.getFilteredChangeSetByPaths(CS, ['".\\"test\\"."."[abcd]"']);
+			var filteredCS = Utils.getFilteredChangeSetByPaths(CS, [
+				'".\\"test\\"."."[abcd]"',
+			]);
 			expect(filteredCS).to.deep.equal(CS);
 
 			node.cleanDirty();
@@ -2899,7 +3117,9 @@ describe("Utils", function () {
 
 			// Test a modification
 			CS = node.serialize({ dirtyOnly: true });
-			filteredCS = Utils.getFilteredChangeSetByPaths(CS, ['".\\"test\\"."."[abcd]"']);
+			filteredCS = Utils.getFilteredChangeSetByPaths(CS, [
+				'".\\"test\\"."."[abcd]"',
+			]);
 			expect(filteredCS).to.deep.equal(CS);
 
 			// Test a removal
@@ -2952,11 +3172,10 @@ describe("Utils", function () {
 			var cs = new ChangeSet(originalChangeSet);
 			cs._toReversibleChangeSet(parentChangeSet);
 
-			var filteredCS = Utils.getFilteredChangeSetByPaths(cs.getSerializedChangeSet(), [
-				"A",
-				"B",
-				"F",
-			]);
+			var filteredCS = Utils.getFilteredChangeSetByPaths(
+				cs.getSerializedChangeSet(),
+				["A", "B", "F"],
+			);
 
 			expect(filteredCS).to.eql({
 				insert: {
@@ -3066,7 +3285,10 @@ describe("Utils", function () {
 		});
 
 		it("should exclude every given path in array", () => {
-			let res = Utils.excludePathsFromChangeSet(changeset, ["assets[Prop3]", "assets[Prop2]"]);
+			let res = Utils.excludePathsFromChangeSet(changeset, [
+				"assets[Prop3]",
+				"assets[Prop2]",
+			]);
 			expect(res).to.be.deep.equal(multiExclusion);
 		});
 
@@ -3076,21 +3298,27 @@ describe("Utils", function () {
 		});
 
 		it("should not exclude if no paths are passed", () => {
-			expect(Utils.excludePathsFromChangeSet(changeset)).to.be.deep.equal(changeset);
-			expect(Utils.excludePathsFromChangeSet(changeset, "")).to.be.deep.equal(changeset);
-			expect(Utils.excludePathsFromChangeSet(changeset, [])).to.be.deep.equal(changeset);
+			expect(Utils.excludePathsFromChangeSet(changeset)).to.be.deep.equal(
+				changeset,
+			);
+			expect(Utils.excludePathsFromChangeSet(changeset, "")).to.be.deep.equal(
+				changeset,
+			);
+			expect(Utils.excludePathsFromChangeSet(changeset, [])).to.be.deep.equal(
+				changeset,
+			);
 		});
 
 		it("should not exclude if an invalid path is passed", () => {
-			expect(Utils.excludePathsFromChangeSet(changeset, ["a.b.c"])).to.be.deep.equal(
-				changeset,
-			);
+			expect(
+				Utils.excludePathsFromChangeSet(changeset, ["a.b.c"]),
+			).to.be.deep.equal(changeset);
 		});
 
 		it("should copy the changeset", () => {
-			expect(Utils.excludePathsFromChangeSet(changeset, ["assets[prop3]"])).to.not.be.equal(
-				changeset,
-			);
+			expect(
+				Utils.excludePathsFromChangeSet(changeset, ["assets[prop3]"]),
+			).to.not.be.equal(changeset);
 		});
 	});
 });

@@ -44,7 +44,10 @@ describe("simple-tree configuration", () => {
 		assert.throws(
 			() =>
 				new TreeViewConfiguration({
-					schema: schema.array([schema.array(schema.string), schema.array(schema.number)]),
+					schema: schema.array([
+						schema.array(schema.string),
+						schema.array(schema.number),
+					]),
 					preventAmbiguity: true,
 				}),
 			validateUsageError(/More than one kind of array/),
@@ -53,14 +56,20 @@ describe("simple-tree configuration", () => {
 
 	it("preventAmbiguity - example ambiguous", () => {
 		const schemaFactory = new SchemaFactory("com.example");
-		class Feet extends schemaFactory.object("Feet", { length: schemaFactory.number }) {}
-		class Meters extends schemaFactory.object("Meters", { length: schemaFactory.number }) {}
+		class Feet extends schemaFactory.object("Feet", {
+			length: schemaFactory.number,
+		}) {}
+		class Meters extends schemaFactory.object("Meters", {
+			length: schemaFactory.number,
+		}) {}
 		const config = new TreeViewConfiguration({
 			// This combination of schema is can lead to ambiguous cases, and would error if preventAmbiguity is true.
 			schema: [Feet, Meters],
 			preventAmbiguity: false,
 		});
-		const view = independentView(config, { idCompressor: createIdCompressor() });
+		const view = independentView(config, {
+			idCompressor: createIdCompressor(),
+		});
 		// This is invalid since it is ambiguous which type of node is being constructed:
 		// view.initialize({ length: 5 });
 		// To work, an explicit type can be provided by using an {@link Unhydrated} Node:
@@ -69,7 +78,9 @@ describe("simple-tree configuration", () => {
 
 	it("preventAmbiguity - example unambiguous", () => {
 		const schemaFactory = new SchemaFactory("com.example");
-		class Feet extends schemaFactory.object("Feet", { length: schemaFactory.number }) {}
+		class Feet extends schemaFactory.object("Feet", {
+			length: schemaFactory.number,
+		}) {}
 		class Meters extends schemaFactory.object("Meters", {
 			// To avoid ambiguity when parsing unions of Feet and Meters, this renames the length field to "meters".
 			// To preserve compatibility with existing data from the ambiguous case,
@@ -81,7 +92,9 @@ describe("simple-tree configuration", () => {
 			schema: [Feet, Meters],
 			preventAmbiguity: true,
 		});
-		const view = independentView(config, { idCompressor: createIdCompressor() });
+		const view = independentView(config, {
+			idCompressor: createIdCompressor(),
+		});
 		// This now works, since the field is sufficient to determine this is a `Meters` node.
 		view.initialize({ meters: 5 });
 	});
@@ -109,11 +122,13 @@ describe("simple-tree configuration", () => {
 		it("duplicates", () => {
 			checkUnion([schemaFactory.string], true, []);
 			assert.throws(
-				() => checkUnion([schemaFactory.string, schemaFactory.string], true, []),
+				() =>
+					checkUnion([schemaFactory.string, schemaFactory.string], true, []),
 				validateUsageError(/Duplicate schema/),
 			);
 			assert.throws(
-				() => checkUnion([schemaFactory.string, schemaFactory.string], false, []),
+				() =>
+					checkUnion([schemaFactory.string, schemaFactory.string], false, []),
 				validateUsageError(/Duplicate schema/),
 			);
 		});
@@ -232,9 +247,18 @@ describe("simple-tree configuration", () => {
 			// overlapping fields sets
 			assert.deepEqual(
 				getErrors([
-					schemaFactory.object("A", { a: schemaFactory.null, b: schemaFactory.null }),
-					schemaFactory.object("B", { b: schemaFactory.null, c: schemaFactory.null }),
-					schemaFactory.object("C", { c: schemaFactory.null, a: schemaFactory.null }),
+					schemaFactory.object("A", {
+						a: schemaFactory.null,
+						b: schemaFactory.null,
+					}),
+					schemaFactory.object("B", {
+						b: schemaFactory.null,
+						c: schemaFactory.null,
+					}),
+					schemaFactory.object("C", {
+						c: schemaFactory.null,
+						a: schemaFactory.null,
+					}),
 				]),
 				[],
 			);

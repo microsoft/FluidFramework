@@ -4,7 +4,10 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import { normalizeFieldSchema, type ImplicitFieldSchema } from "../fieldSchema.js";
+import {
+	normalizeFieldSchema,
+	type ImplicitFieldSchema,
+} from "../fieldSchema.js";
 import type {
 	SimpleArrayNodeSchema,
 	SimpleFieldSchema,
@@ -59,7 +62,9 @@ export function toSimpleTreeSchema(
 					nodeSchema instanceof RecordNodeSchema,
 				0xb60 /* Invalid schema */,
 			);
-			const outSchema = copySchemaObjects ? copySimpleNodeSchema(nodeSchema) : nodeSchema;
+			const outSchema = copySchemaObjects
+				? copySimpleNodeSchema(nodeSchema)
+				: nodeSchema;
 			definitions.set(nodeSchema.identifier, outSchema);
 		},
 	});
@@ -98,7 +103,9 @@ function copySimpleNodeSchema(schema: SimpleNodeSchema): SimpleNodeSchema {
 	}
 }
 
-function copySimpleLeafSchema(schema: SimpleLeafNodeSchema): SimpleLeafNodeSchema {
+function copySimpleLeafSchema(
+	schema: SimpleLeafNodeSchema,
+): SimpleLeafNodeSchema {
 	return {
 		kind: NodeKind.Leaf,
 		leafKind: schema.leafKind,
@@ -118,7 +125,9 @@ function copySimpleSchemaWithAllowedTypes(
 	};
 }
 
-function copySimpleObjectSchema(schema: SimpleObjectNodeSchema): SimpleObjectNodeSchema {
+function copySimpleObjectSchema(
+	schema: SimpleObjectNodeSchema,
+): SimpleObjectNodeSchema {
 	const fields: Map<string, SimpleObjectFieldSchema> = new Map();
 	for (const [propertyKey, field] of schema.fields) {
 		// field already is a SimpleObjectFieldSchema, but copy the subset of the properties needed by this interface to get a clean simple object.

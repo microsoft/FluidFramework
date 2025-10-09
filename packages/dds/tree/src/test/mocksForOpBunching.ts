@@ -39,7 +39,8 @@ function areMessagesFromSameBatch(
  * @internal
  */
 export class MockContainerRuntimeFactoryWithOpBunching extends MockContainerRuntimeFactoryForReconnection {
-	protected override readonly runtimes: Set<MockContainerRuntimeWithOpBunching> = new Set();
+	protected override readonly runtimes: Set<MockContainerRuntimeWithOpBunching> =
+		new Set();
 
 	public override createContainerRuntime(
 		dataStoreRuntime: MockFluidDataStoreRuntime,
@@ -88,7 +89,9 @@ export class MockContainerRuntimeFactoryWithOpBunching extends MockContainerRunt
  * @internal
  */
 export class MockContainerRuntimeWithOpBunching extends MockContainerRuntimeForReconnection {
-	protected override processPendingMessages(pendingMessages: ISequencedDocumentMessage[]) {
+	protected override processPendingMessages(
+		pendingMessages: ISequencedDocumentMessage[],
+	) {
 		this.processMessages(pendingMessages);
 	}
 
@@ -199,7 +202,13 @@ export class MockContainerRuntimeWithOpBunching extends MockContainerRuntimeForR
 
 			// If the messages are from different batches, send the previous bunch of messages to the
 			// data store for processing.
-			if (!areMessagesFromSameBatch(previousMessage, message, this.runtimeOptions.flushMode)) {
+			if (
+				!areMessagesFromSameBatch(
+					previousMessage,
+					message,
+					this.runtimeOptions.flushMode,
+				)
+			) {
 				sendBunchedMessages();
 			}
 

@@ -43,7 +43,9 @@ export async function listBlobsAtTreePath(
 	while (tree?.entries !== undefined && pathParts.length > 0) {
 		const part = pathParts.shift();
 		const treeEntry = tree.entries.find((value) => {
-			return value.type === TreeEntry.Tree && value.path === part ? true : false;
+			return value.type === TreeEntry.Tree && value.path === part
+				? true
+				: false;
 		});
 
 		// this check is largely superfluous due to the same check being done
@@ -54,5 +56,7 @@ export async function listBlobsAtTreePath(
 	if (tree?.entries === undefined || pathParts.length > 0) {
 		throw new Error("path does not exist");
 	}
-	return tree.entries.filter((e) => e.type === TreeEntry.Blob).map((e) => e.path);
+	return tree.entries
+		.filter((e) => e.type === TreeEntry.Blob)
+		.map((e) => e.path);
 }

@@ -203,7 +203,9 @@ export async function generateTreeEdits(
 			let shouldExitEarly = false;
 			const completionResponse: GenerateTreeEditsErrorResponse = {
 				status:
-					editCount > 0 && sequentialErrorCount < editCount ? "partial-failure" : "failure",
+					editCount > 0 && sequentialErrorCount < editCount
+						? "partial-failure"
+						: "failure",
 				errorMessage: "unexpectedError",
 				tokensUsed,
 				diffs,
@@ -219,7 +221,8 @@ export async function generateTreeEdits(
 				completionResponse.errorMessage = "tooManyErrors";
 				shouldExitEarly = true;
 			} else if (
-				++editCount >= (options.limiters?.maxModelCalls ?? Number.POSITIVE_INFINITY)
+				++editCount >=
+				(options.limiters?.maxModelCalls ?? Number.POSITIVE_INFINITY)
 			) {
 				completionResponse.errorMessage = "tooManyModelCalls";
 				shouldExitEarly = true;
@@ -246,14 +249,18 @@ export async function generateTreeEdits(
 			status: "failure",
 			eventFlowTraceId: coreEventFlowTraceId,
 			failureReason:
-				error instanceof TokenLimitExceededError ? "tokenLimitExceeded" : "unexpectedError",
+				error instanceof TokenLimitExceededError
+					? "tokenLimitExceeded"
+					: "unexpectedError",
 			errorMessage: (error as Error)?.message,
 		} satisfies CoreEventLoopCompleted);
 
 		if (error instanceof TokenLimitExceededError) {
 			return {
 				status:
-					editCount > 0 && sequentialErrorCount < editCount ? "partial-failure" : "failure",
+					editCount > 0 && sequentialErrorCount < editCount
+						? "partial-failure"
+						: "failure",
 				errorMessage: "tokenLimitExceeded",
 				tokensUsed,
 				diffs,
@@ -314,7 +321,10 @@ async function* generateEdits(
 
 		const generatePlanningPromptEventFlowId = uuidv4();
 		debugOptions?.eventLogHandler?.({
-			...generateDebugEvent("GENERATE_PLANNING_PROMPT_STARTED", debugOptions.traceId),
+			...generateDebugEvent(
+				"GENERATE_PLANNING_PROMPT_STARTED",
+				debugOptions.traceId,
+			),
 			eventFlowName: EventFlowDebugNames.GENERATE_PLANNING_PROMPT,
 			eventFlowTraceId: generatePlanningPromptEventFlowId,
 			eventFlowStatus: "STARTED",
@@ -332,7 +342,10 @@ async function* generateEdits(
 		);
 
 		debugOptions?.eventLogHandler?.({
-			...generateDebugEvent("GENERATE_PLANNING_PROMPT_COMPLETED", debugOptions.traceId),
+			...generateDebugEvent(
+				"GENERATE_PLANNING_PROMPT_COMPLETED",
+				debugOptions.traceId,
+			),
 			eventFlowName: EventFlowDebugNames.GENERATE_PLANNING_PROMPT,
 			eventFlowStatus: "COMPLETED",
 			eventFlowTraceId: generatePlanningPromptEventFlowId,
@@ -378,13 +391,17 @@ async function* generateEdits(
 			tokensUsed,
 			debugOptions && {
 				...debugOptions,
-				triggeringEventFlowName: EventFlowDebugNames.GENERATE_AND_APPLY_TREE_EDIT,
+				triggeringEventFlowName:
+					EventFlowDebugNames.GENERATE_AND_APPLY_TREE_EDIT,
 				eventFlowTraceId: generateTreeEditEventFlowId,
 			},
 		);
 
 		debugOptions?.eventLogHandler?.({
-			...generateDebugEvent("GENERATE_TREE_EDIT_COMPLETED", debugOptions.traceId),
+			...generateDebugEvent(
+				"GENERATE_TREE_EDIT_COMPLETED",
+				debugOptions.traceId,
+			),
 			eventFlowName: EventFlowDebugNames.GENERATE_AND_APPLY_TREE_EDIT,
 			eventFlowStatus: "COMPLETED",
 			eventFlowTraceId: generateTreeEditEventFlowId,
@@ -413,7 +430,10 @@ async function* generateEdits(
 				}
 			}
 		} else {
-			return { edit: wrapper.edit, eventFlowTraceId: generateTreeEditEventFlowId };
+			return {
+				edit: wrapper.edit,
+				eventFlowTraceId: generateTreeEditEventFlowId,
+			};
 		}
 	}
 
@@ -471,10 +491,16 @@ async function* generateEdits(
 	let edit = await getNextEdit();
 	while (edit !== undefined) {
 		yield edit;
-		if (tokensUsed.inputTokens > (tokenLimits?.inputTokens ?? Number.POSITIVE_INFINITY)) {
+		if (
+			tokensUsed.inputTokens >
+			(tokenLimits?.inputTokens ?? Number.POSITIVE_INFINITY)
+		) {
 			throw new TokenLimitExceededError("Input token limit exceeded.");
 		}
-		if (tokensUsed.outputTokens > (tokenLimits?.outputTokens ?? Number.POSITIVE_INFINITY)) {
+		if (
+			tokensUsed.outputTokens >
+			(tokenLimits?.outputTokens ?? Number.POSITIVE_INFINITY)
+		) {
 			throw new TokenLimitExceededError("Output token limit exceeded.");
 		}
 		edit = await getNextEdit();
@@ -497,9 +523,13 @@ async function getStructuredOutputFromLlm<T>(
 		eventFlowTraceId: string;
 	},
 ): Promise<T | undefined> {
-	const response_format = zodResponseFormat(structuredOutputSchema, "SharedTreeAI", {
-		description,
-	});
+	const response_format = zodResponseFormat(
+		structuredOutputSchema,
+		"SharedTreeAI",
+		{
+			description,
+		},
+	);
 
 	const body: ChatCompletionCreateParams = {
 		messages: [{ role: "system", content: prompt }],

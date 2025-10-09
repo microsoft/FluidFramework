@@ -14,7 +14,9 @@ import { OpenAI, AzureOpenAI } from "openai";
 /**
  * Validates that the error is a UsageError with the expected error message.
  */
-export function validateUsageError(expectedErrorMsg: string | RegExp): (error: Error) => true {
+export function validateUsageError(
+	expectedErrorMsg: string | RegExp,
+): (error: Error) => true {
 	return (error: Error) => {
 		assert(error instanceof UsageError);
 		if (
@@ -110,7 +112,8 @@ export class MochaSnapshotUnitTester {
 		const testName: string = snapshotFileName;
 		const snapshotFile: string = path.join(snapshotDir, `${testName}.snap`);
 
-		const shouldUpdateSnapshot: boolean = process.env.UPDATE_SNAPSHOTS === "true";
+		const shouldUpdateSnapshot: boolean =
+			process.env.UPDATE_SNAPSHOTS === "true";
 
 		const doesFileAlreadyExist = fs.existsSync(snapshotFile);
 		if (doesFileAlreadyExist && !shouldUpdateSnapshot) {
@@ -146,10 +149,12 @@ export class MochaSnapshotUnitTester {
 	/**
 	 * Generate metadata headers for the snapshot.
 	 */
-	private generateMetadata(additionalMetadata?: Record<string, string>): string {
+	private generateMetadata(
+		additionalMetadata?: Record<string, string>,
+	): string {
 		const metadataEntries = {
 			"Generated on": new Date().toISOString(),
-			"description": "This is a snapshot file utilized for testing purposes.",
+			description: "This is a snapshot file utilized for testing purposes.",
 			...additionalMetadata,
 		};
 

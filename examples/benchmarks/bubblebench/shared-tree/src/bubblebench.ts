@@ -39,7 +39,10 @@ export class Bubblebench extends DataObject {
 		// update the tree if it has.
 		setInterval(() => {
 			const clientId = this.runtime.clientId;
-			if (clientId !== undefined && clientId !== this.appState.localClient.clientId) {
+			if (
+				clientId !== undefined &&
+				clientId !== this.appState.localClient.clientId
+			) {
 				this.appState.localClient.clientId = clientId;
 			}
 		}, 1000);

@@ -44,9 +44,8 @@ export interface TreeRecordNode<
  * Content which can be used to construct a Record node, explicitly or implicitly.
  * @system @beta
  */
-export type RecordNodeInsertableData<T extends ImplicitAllowedTypes> = RestrictiveStringRecord<
-	InsertableTreeNodeFromImplicitAllowedTypes<T>
->;
+export type RecordNodeInsertableData<T extends ImplicitAllowedTypes> =
+	RestrictiveStringRecord<InsertableTreeNodeFromImplicitAllowedTypes<T>>;
 
 /**
  * A schema for customizable {@link (TreeMapNode:interface)}s.
@@ -104,8 +103,18 @@ export type RecordNodeSchema<
 	ImplicitlyConstructable extends boolean = true,
 	TCustomMetadata = unknown,
 > =
-	| RecordNodeCustomizableSchema<TName, T, ImplicitlyConstructable, TCustomMetadata>
-	| RecordNodePojoEmulationSchema<TName, T, ImplicitlyConstructable, TCustomMetadata>;
+	| RecordNodeCustomizableSchema<
+			TName,
+			T,
+			ImplicitlyConstructable,
+			TCustomMetadata
+	  >
+	| RecordNodePojoEmulationSchema<
+			TName,
+			T,
+			ImplicitlyConstructable,
+			TCustomMetadata
+	  >;
 
 /**
  * @alpha
@@ -125,6 +134,8 @@ export const RecordNodeSchema = {
  * If at some point we want to have internal only APIs for RecordNodeSchema (like done for objects),
  * this can include those since its not the public-facing API.
  */
-export function isRecordNodeSchema(schema: TreeNodeSchema): schema is RecordNodeSchema {
+export function isRecordNodeSchema(
+	schema: TreeNodeSchema,
+): schema is RecordNodeSchema {
 	return schema.kind === NodeKind.Record;
 }

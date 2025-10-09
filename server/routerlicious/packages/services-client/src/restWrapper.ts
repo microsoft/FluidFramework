@@ -374,23 +374,19 @@ export class BasicRestWrapper extends RestWrapper {
 				.finally(() => {
 					if (this.logHttpMetrics) {
 						const status: string | number = axiosError
-							? axiosError?.response?.status ?? "STATUS_UNAVAILABLE"
-							: axiosResponse?.status ?? "STATUS_UNAVAILABLE";
+							? (axiosError?.response?.status ?? "STATUS_UNAVAILABLE")
+							: (axiosResponse?.status ?? "STATUS_UNAVAILABLE");
 						const requestProps: IBasicRestWrapperMetricProps = {
 							axiosError,
 							status,
 							baseUrl:
-								options.baseURL ??
-								axiosError?.config?.baseURL ??
-								"BASE_URL_UNAVAILABLE",
+								options.baseURL ?? axiosError?.config?.baseURL ?? "BASE_URL_UNAVAILABLE",
 							method: options.method ?? "METHOD_UNAVAILABLE",
 							url: options.url ?? "URL_UNAVAILABLE",
 							correlationId,
 							durationInMs: performance.now() - startTime,
 							timeoutInMs:
-								options.timeout ??
-								this.axios.defaults.timeout ??
-								"TIMEOUT_UNAVAILABLE",
+								options.timeout ?? this.axios.defaults.timeout ?? "TIMEOUT_UNAVAILABLE",
 						};
 						this.logHttpMetrics(requestProps);
 					}

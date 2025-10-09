@@ -6,7 +6,10 @@
 import { strict as assert } from "assert";
 
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
-import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
+import {
+	IContainer,
+	IFluidCodeDetails,
+} from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { type ILoaderProps } from "@fluidframework/container-loader/internal";
 import {
@@ -56,13 +59,15 @@ describe("Logging Last Connection Mode ", () => {
 	const getConnectedEvents = () =>
 		logger.events.filter(
 			(event) =>
-				event.eventName === "fluid:telemetry:Container:ConnectionStateChange_Connected",
+				event.eventName ===
+				"fluid:telemetry:Container:ConnectionStateChange_Connected",
 		);
 
 	const getDisconnectedEvents = () =>
 		logger.events.filter(
 			(event) =>
-				event.eventName === "fluid:telemetry:Container:ConnectionStateChange_Disconnected",
+				event.eventName ===
+				"fluid:telemetry:Container:ConnectionStateChange_Disconnected",
 		);
 
 	async function createContainer(): Promise<IContainer> {
@@ -96,7 +101,9 @@ describe("Logging Last Connection Mode ", () => {
 
 	beforeEach(async () => {
 		deltaConnectionServer = LocalDeltaConnectionServer.create();
-		documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
+		documentServiceFactory = new LocalDocumentServiceFactory(
+			deltaConnectionServer,
+		);
 		loaderContainerTracker = new LoaderContainerTracker();
 
 		// Create the first container, component and DDSes.
@@ -118,7 +125,10 @@ describe("Logging Last Connection Mode ", () => {
 	it(`Logs the correct connection mode at disconnect`, async () => {
 		// Disconnect the client.
 		assert(container.clientId);
-		documentServiceFactory.disconnectClient(container.clientId, "Disconnected for testing");
+		documentServiceFactory.disconnectClient(
+			container.clientId,
+			"Disconnected for testing",
+		);
 
 		// Wait for the Container to get reconnected.
 		await waitForContainerReconnection(container);
@@ -127,12 +137,18 @@ describe("Logging Last Connection Mode ", () => {
 		await loaderContainerTracker.ensureSynchronized();
 
 		// disconnect the Container again
-		documentServiceFactory.disconnectClient(container.clientId, "Disconnected for testing");
+		documentServiceFactory.disconnectClient(
+			container.clientId,
+			"Disconnected for testing",
+		);
 
 		const connectedEvents = getConnectedEvents();
 		const disconnectedEvents = getDisconnectedEvents();
 		assert(connectedEvents !== undefined, "no connected events were logged");
-		assert(disconnectedEvents !== undefined, "no disconnected events were logged");
+		assert(
+			disconnectedEvents !== undefined,
+			"no disconnected events were logged",
+		);
 
 		// checking telemetry has the right connection mode
 		assert.strictEqual(

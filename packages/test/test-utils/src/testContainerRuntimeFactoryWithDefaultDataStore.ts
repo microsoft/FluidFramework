@@ -55,7 +55,9 @@ export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
 	 * Function that will initialize the entryPoint of the IContainerRuntime instances
 	 * created with this factory
 	 */
-	readonly provideEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>;
+	readonly provideEntryPoint?: (
+		runtime: IContainerRuntime,
+	) => Promise<FluidObject>;
 }
 
 /**

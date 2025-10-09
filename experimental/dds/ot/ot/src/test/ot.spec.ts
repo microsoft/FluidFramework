@@ -18,7 +18,10 @@ const createLocalOT = (id: string) => {
 	return factory.create(new MockFluidDataStoreRuntime(), id);
 };
 
-function createConnectedOT(id: string, runtimeFactory: MockContainerRuntimeFactory) {
+function createConnectedOT(
+	id: string,
+	runtimeFactory: MockContainerRuntimeFactory,
+) {
 	// Create and connect a second SharedCell.
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	runtimeFactory.createContainerRuntime(dataStoreRuntime);

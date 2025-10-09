@@ -30,7 +30,9 @@ import {
 /**
  * Container for a batch of messages being sent for a specific tenant/document id
  */
-type BroadcasterMessageBatch = IMessageBatch<ISequencedDocumentMessage | INack | ISignalMessage>;
+type BroadcasterMessageBatch = IMessageBatch<
+	ISequencedDocumentMessage | INack | ISignalMessage
+>;
 
 // Set immediate is not available in all environments, specifically it does not work in a browser.
 // Fallback to set timeout in those cases

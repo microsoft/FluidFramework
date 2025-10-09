@@ -29,7 +29,10 @@ describe("toStoredSchema", () => {
 		it("minimal", () => {
 			const schema = new SchemaFactory("com.example");
 			class A extends schema.object("A", {}) {}
-			const stored = toStoredSchema(A, restrictiveStoredSchemaGenerationOptions);
+			const stored = toStoredSchema(
+				A,
+				restrictiveStoredSchemaGenerationOptions,
+			);
 			assert.equal(stored.rootFieldSchema.kind, FieldKinds.required.identifier);
 			assert.deepEqual(stored.rootFieldSchema.types, new Set([A.identifier]));
 			const storedNodeSchema = stored.nodeSchema.get(brand(A.identifier));
@@ -56,8 +59,14 @@ describe("toStoredSchema", () => {
 
 		for (const testCase of testDocuments) {
 			it(testCase.name, () => {
-				toStoredSchema(testCase.schema, restrictiveStoredSchemaGenerationOptions);
-				toStoredSchema(testCase.schema, permissiveStoredSchemaGenerationOptions);
+				toStoredSchema(
+					testCase.schema,
+					restrictiveStoredSchemaGenerationOptions,
+				);
+				toStoredSchema(
+					testCase.schema,
+					permissiveStoredSchemaGenerationOptions,
+				);
 			});
 		}
 	});
@@ -85,7 +94,8 @@ describe("toStoredSchema", () => {
 			) {}
 
 			const converted = toInitialSchema(TestArray);
-			const node = converted.nodeSchema.get(brand(TestArray.identifier)) ?? assert.fail();
+			const node =
+				converted.nodeSchema.get(brand(TestArray.identifier)) ?? assert.fail();
 			const field = node.getFieldSchema(EmptyKey);
 			assert.equal(field.types.size, 1);
 		});
@@ -103,7 +113,8 @@ describe("toStoredSchema", () => {
 				foo: TestArray,
 			}) {}
 			const converted = toInitialSchema(Root);
-			const node = converted.nodeSchema.get(brand(TestArray.identifier)) ?? assert.fail();
+			const node =
+				converted.nodeSchema.get(brand(TestArray.identifier)) ?? assert.fail();
 			const field = node.getFieldSchema(EmptyKey);
 			assert.equal(field.types.size, 1);
 		});
@@ -116,26 +127,36 @@ describe("toStoredSchema", () => {
 				restrictiveStoredSchemaGenerationOptions,
 			);
 			assert.equal(stored.kind, FieldKinds.required.identifier);
-			assert.deepEqual(stored.types, new Set([SchemaFactory.number.identifier]));
+			assert.deepEqual(
+				stored.types,
+				new Set([SchemaFactory.number.identifier]),
+			);
 		});
 
 		it("staged", () => {
 			const storedRestrictive = convertField(
 				SchemaFactoryAlpha.required(
-					SchemaFactoryAlpha.types([SchemaFactoryAlpha.staged(SchemaFactory.number)]),
+					SchemaFactoryAlpha.types([
+						SchemaFactoryAlpha.staged(SchemaFactory.number),
+					]),
 				),
 				restrictiveStoredSchemaGenerationOptions,
 			);
 			const storedPermissive = convertField(
 				SchemaFactoryAlpha.required(
-					SchemaFactoryAlpha.types([SchemaFactoryAlpha.staged(SchemaFactory.number)]),
+					SchemaFactoryAlpha.types([
+						SchemaFactoryAlpha.staged(SchemaFactory.number),
+					]),
 				),
 				permissiveStoredSchemaGenerationOptions,
 			);
 			assert.equal(storedRestrictive.kind, FieldKinds.required.identifier);
 			assert.deepEqual(storedRestrictive.types, new Set([]));
 			assert.equal(storedPermissive.kind, FieldKinds.required.identifier);
-			assert.deepEqual(storedPermissive.types, new Set([SchemaFactory.number.identifier]));
+			assert.deepEqual(
+				storedPermissive.types,
+				new Set([SchemaFactory.number.identifier]),
+			);
 		});
 	});
 

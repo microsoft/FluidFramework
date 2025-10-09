@@ -25,7 +25,10 @@ export type {
 	IAzureAudience,
 } from "./interfaces.js";
 
-export type { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
+export type {
+	ITokenProvider,
+	ITokenResponse,
+} from "@fluidframework/routerlicious-driver";
 export type { IUser } from "@fluidframework/driver-definitions";
 
 // Re-export so developers can build loggers without pulling in core-interfaces

@@ -44,7 +44,10 @@ export default class CheckBuildVersionCommand extends PackageCommand<
 			if (this.flags.path === undefined) {
 				this.error("Either version or path must be specified.");
 			}
-			const pkg = new Package(path.join(this.flags.path, "package.json"), "none");
+			const pkg = new Package(
+				path.join(this.flags.path, "package.json"),
+				"none",
+			);
 			this.versionToCheck = pkg.version;
 		} else {
 			this.versionToCheck = this.flags.version.version;

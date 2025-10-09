@@ -4,7 +4,11 @@
  */
 
 import { IContextErrorData, LambdaCloseType } from "@fluidframework/server-services-core";
-import { KafkaMessageFactory, TestConsumer, TestKafka } from "@fluidframework/server-test-utils";
+import {
+	KafkaMessageFactory,
+	TestConsumer,
+	TestKafka,
+} from "@fluidframework/server-test-utils";
 import { strict as assert } from "assert";
 import { Partition } from "../../kafka-service/partition";
 import { TestPartitionLambdaFactory } from "./testPartitionLambdaFactory";

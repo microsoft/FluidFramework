@@ -26,7 +26,9 @@ class MockSharedObject extends TypedEventEmitter<ISharedObjectEvents> {
 		super();
 
 		this.id = id;
-		this.attributes = { type: "mock-shared-object-type" } as unknown as IChannelAttributes;
+		this.attributes = {
+			type: "mock-shared-object-type",
+		} as unknown as IChannelAttributes;
 	}
 
 	public get handle(): IFluidHandle {

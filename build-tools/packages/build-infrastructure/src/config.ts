@@ -114,7 +114,10 @@ export interface IFluidBuildDirs {
 /**
  * @deprecated Use buildProject and associated types instead.
  */
-export type IFluidBuildDirEntry = string | IFluidBuildDir | (string | IFluidBuildDir)[];
+export type IFluidBuildDirEntry =
+	| string
+	| IFluidBuildDir
+	| (string | IFluidBuildDir)[];
 
 /**
  * Configures a package or release group

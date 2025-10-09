@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
+import {
+	StaticCodeLoader,
+	TinyliciousModelLoader,
+} from "@fluid-example/example-utils";
 
 import {
 	ITaskSelectionAppModel,
@@ -17,9 +20,10 @@ import { renderDiceRoller } from "./view.js";
  * @remarks We wrap this in an async function so we can await Fluid's async calls.
  */
 async function start() {
-	const tinyliciousModelLoader = new TinyliciousModelLoader<ITaskSelectionAppModel>(
-		new StaticCodeLoader(new TaskSelectionContainerRuntimeFactory()),
-	);
+	const tinyliciousModelLoader =
+		new TinyliciousModelLoader<ITaskSelectionAppModel>(
+			new StaticCodeLoader(new TaskSelectionContainerRuntimeFactory()),
+		);
 
 	let id: string;
 	let model: ITaskSelectionAppModel;

@@ -213,7 +213,7 @@ export class Lumberjack {
 						? Object.fromEntries(properties.entries())
 						: properties),
 					...getGlobalTelemetryContext().getProperties(),
-			  }
+				}
 			: properties;
 		const lumber = new Lumber<string>(
 			Lumberjack.LogMessageEventName,

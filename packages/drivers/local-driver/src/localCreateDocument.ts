@@ -26,14 +26,16 @@ export async function createDocument(
 	// TODO Why are we non null asserting here
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const id = pathArr[pathArr.length - 1]!;
-	const documentStorage = (localDeltaConnectionServer as LocalDeltaConnectionServer)
-		.documentStorage;
+	const documentStorage = (
+		localDeltaConnectionServer as LocalDeltaConnectionServer
+	).documentStorage;
 	if (!isCombinedAppAndProtocolSummary(summary)) {
 		throw new Error("Protocol and App Summary required in the full summary");
 	}
 	const protocolSummary = summary.tree[".protocol"];
 	const appSummary = summary.tree[".app"];
-	const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
+	const documentAttributes =
+		getDocAttributesFromProtocolSummary(protocolSummary);
 	const quorumValues = getQuorumValuesFromProtocolSummary(protocolSummary);
 	const sequenceNumber = documentAttributes.sequenceNumber;
 	await documentStorage.createDocument(

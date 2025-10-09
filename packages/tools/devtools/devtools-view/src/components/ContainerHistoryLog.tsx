@@ -72,7 +72,9 @@ export interface ContainerHistoryLogProps {
 /**
  * Renders current state of the connected container.
  */
-export function ContainerHistoryLog(props: ContainerHistoryLogProps): React.ReactElement {
+export function ContainerHistoryLog(
+	props: ContainerHistoryLogProps,
+): React.ReactElement {
 	const { containerHistory } = props;
 	const { themeInfo } = React.useContext(ThemeContext);
 
@@ -120,10 +122,14 @@ export function ContainerHistoryLog(props: ContainerHistoryLogProps): React.Reac
 					{containerHistoryColumns.map((column, columnIndex) => (
 						<TableHeaderCell key={columnIndex}>
 							{column.columnKey === "state" && (
-								<LabelCellLayout icon={<AlertBadgeRegular />}>{column.label}</LabelCellLayout>
+								<LabelCellLayout icon={<AlertBadgeRegular />}>
+									{column.label}
+								</LabelCellLayout>
 							)}
 							{column.columnKey === "time" && (
-								<LabelCellLayout icon={<Clock12Regular />}>{column.label}</LabelCellLayout>
+								<LabelCellLayout icon={<Clock12Regular />}>
+									{column.label}
+								</LabelCellLayout>
 							)}
 						</TableHeaderCell>
 					))}
@@ -133,7 +139,8 @@ export function ContainerHistoryLog(props: ContainerHistoryLogProps): React.Reac
 				{containerHistory?.map((item, itemIndex) => {
 					const nowTimeStamp = new Date();
 					const changeTimeStamp = new Date(item.timestamp);
-					const wasChangeToday = nowTimeStamp.getDate() === changeTimeStamp.getDate();
+					const wasChangeToday =
+						nowTimeStamp.getDate() === changeTimeStamp.getDate();
 
 					const timestampDisplay = wasChangeToday
 						? changeTimeStamp.toTimeString()
@@ -170,7 +177,9 @@ export function ContainerHistoryLog(props: ContainerHistoryLogProps): React.Reac
 								backgroundColor: getBackgroundColorForState(item.newState),
 							}}
 						>
-							<TableCell style={{ color: setThemeStyle(themeInfo.name, item.newState) }}>
+							<TableCell
+								style={{ color: setThemeStyle(themeInfo.name, item.newState) }}
+							>
 								<LabelCellLayout icon={getStateIcon(item.newState)}>
 									<span
 										style={{
@@ -181,7 +190,9 @@ export function ContainerHistoryLog(props: ContainerHistoryLogProps): React.Reac
 									</span>
 								</LabelCellLayout>
 							</TableCell>
-							<TableCell style={{ color: setThemeStyle(themeInfo.name, item.newState) }}>
+							<TableCell
+								style={{ color: setThemeStyle(themeInfo.name, item.newState) }}
+							>
 								{timestampDisplay}
 							</TableCell>
 						</TableRow>

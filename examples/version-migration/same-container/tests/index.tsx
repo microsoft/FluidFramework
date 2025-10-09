@@ -26,7 +26,9 @@ const updateTabForId = (id: string) => {
 	document.title = id;
 };
 
-const isIInventoryListAppModel = (model: IVersionedModel): model is IInventoryListAppModel => {
+const isIInventoryListAppModel = (
+	model: IVersionedModel,
+): model is IInventoryListAppModel => {
 	return model.version === "one" || model.version === "two";
 };
 
@@ -40,7 +42,9 @@ window["migrators"] = [];
  * This is a helper function for loading the page. It's required because getting the Fluid Container
  * requires making async calls.
  */
-export async function createContainerAndRenderInElement(element: HTMLDivElement) {
+export async function createContainerAndRenderInElement(
+	element: HTMLDivElement,
+) {
 	const modelLoader = new SessionStorageModelLoader<IInventoryListAppModel>(
 		new DemoCodeLoader(),
 	);
@@ -70,7 +74,10 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 		// versions, we could check its version here and select the appropriate view.  Or we could even write ourselves a
 		// view code loader to pull in the view dynamically based on the version we discover.
 		if (isIInventoryListAppModel(model)) {
-			ReactDOM.render(React.createElement(InventoryListAppView, { model }), appDiv);
+			ReactDOM.render(
+				React.createElement(InventoryListAppView, { model }),
+				appDiv,
+			);
 
 			// The DebugView is just for demo purposes, to manually control code proposal and inspect the state.
 			ReactDOM.unmountComponentAtNode(debugDiv);

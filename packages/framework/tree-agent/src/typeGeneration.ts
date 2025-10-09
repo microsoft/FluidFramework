@@ -150,7 +150,8 @@ function getBoundMethods(
 	definition: string,
 	bindableSchemas: Map<string, BindableSchema>,
 ): [string, ZodTypeAny][] {
-	const bindableSchema = bindableSchemas.get(definition) ?? fail("Unknown definition");
+	const bindableSchema =
+		bindableSchemas.get(definition) ?? fail("Unknown definition");
 	return getBoundMethodsForBindable(bindableSchema).methods;
 }
 
@@ -176,7 +177,8 @@ function addBindingIntersectionIfNeeded(
 		}
 		zodType = z.intersection(zodType, z.object(methods));
 		const methodNote = `Note: this ${typeString} has custom user-defined methods directly on it.`;
-		description = description === "" ? methodNote : `${description} - ${methodNote}`;
+		description =
+			description === "" ? methodNote : `${description} - ${methodNote}`;
 	}
 	return zodType.describe(description);
 }
@@ -187,7 +189,8 @@ function getOrCreateType(
 	objectCache: MapGetSet<SimpleNodeSchema, ZodTypeAny>,
 	bindableSchemas: Map<string, BindableSchema>,
 ): ZodTypeAny {
-	const simpleNodeSchema = definitionMap.get(definition) ?? fail("Unexpected definition");
+	const simpleNodeSchema =
+		definitionMap.get(definition) ?? fail("Unexpected definition");
 	return getOrCreate(objectCache, simpleNodeSchema, () => {
 		// Handle recursive types: temporarily create a zod "lazy" type that can be referenced by a recursive call to getOrCreateType.
 		let type: ZodTypeAny | undefined;
@@ -203,14 +206,22 @@ function getOrCreateType(
 						.map(([key, field]) => {
 							return [
 								key,
-								getOrCreateTypeForField(definitionMap, field, objectCache, bindableSchemas),
+								getOrCreateTypeForField(
+									definitionMap,
+									field,
+									objectCache,
+									bindableSchemas,
+								),
 							];
 						})
 						.filter(([, value]) => value !== undefined),
 				);
 
 				// Unlike arrays/maps/records, object nodes include methods directly on them rather than using an intersection
-				for (const [name, zodFunction] of getBoundMethods(definition, bindableSchemas)) {
+				for (const [name, zodFunction] of getBoundMethods(
+					definition,
+					bindableSchemas,
+				)) {
 					if (properties[name] !== undefined) {
 						throw new UsageError(
 							`Method ${name} conflicts with field of the same name in schema ${definition}`,
@@ -290,7 +301,9 @@ function getOrCreateType(
 						return (type = z.null());
 					}
 					default: {
-						throw new Error(`Unsupported leaf kind ${NodeKind[simpleNodeSchema.leafKind]}.`);
+						throw new Error(
+							`Unsupported leaf kind ${NodeKind[simpleNodeSchema.leafKind]}.`,
+						);
 					}
 				}
 			}
@@ -366,7 +379,12 @@ function getTypeForAllowedTypes(
 	if (single === undefined) {
 		const types = [
 			...mapIterable(allowedTypes, (name) => {
-				return getOrCreateType(definitionMap, name, objectCache, bindableSchemas);
+				return getOrCreateType(
+					definitionMap,
+					name,
+					objectCache,
+					bindableSchemas,
+				);
 			}),
 		];
 		assert(hasAtLeastTwo(types), 0xa7e /* Expected at least two types */);

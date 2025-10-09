@@ -17,7 +17,10 @@ import type {
 	IDenyList,
 } from "@fluidframework/server-services-core";
 import { validateRequestParams } from "@fluidframework/server-services-shared";
-import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import {
+	BaseTelemetryProperties,
+	Lumberjack,
+} from "@fluidframework/server-services-telemetry";
 import {
 	denyListMiddleware,
 	type IThrottleMiddlewareOptions,
@@ -211,8 +214,8 @@ export function create(
 				typeof request.query.initial === "undefined"
 					? undefined
 					: typeof request.query.initial === "boolean"
-					? request.query.initial
-					: request.query.initial === "true";
+						? request.query.initial
+						: request.query.initial === "true";
 
 			const isEphemeralFromRequest = request.get(Constants.IsEphemeralContainer);
 

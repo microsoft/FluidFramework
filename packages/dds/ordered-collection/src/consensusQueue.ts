@@ -15,7 +15,10 @@ import { SnapshotableArray } from "./snapshotableArray.js";
 /**
  * An JS array based queue implementation that is the backing data structure for ConsensusQueue
  */
-class SnapshotableQueue<T> extends SnapshotableArray<T> implements IOrderedCollection<T> {
+class SnapshotableQueue<T>
+	extends SnapshotableArray<T>
+	implements IOrderedCollection<T>
+{
 	public add(value: T): void {
 		this.data.push(value);
 	}
@@ -36,7 +39,9 @@ class SnapshotableQueue<T> extends SnapshotableArray<T> implements IOrderedColle
  */
 // TODO: #22835 Use undefined instead of any (breaking change)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export class ConsensusQueueClass<T = any> extends ConsensusOrderedCollection<T> {
+export class ConsensusQueueClass<
+	T = any,
+> extends ConsensusOrderedCollection<T> {
 	/**
 	 * Constructs a new consensus queue. If the object is non-local an id and service interfaces will
 	 * be provided

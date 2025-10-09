@@ -44,7 +44,11 @@ for (const isSetCellPolicyFWW of [0, 2]) {
 			 */
 			const expect = async (): Promise<void> => {
 				// Reconnect any disconnected clients before processing pending ops.
-				for (let matrixIndex = 0; matrixIndex < runtimes.length; matrixIndex++) {
+				for (
+					let matrixIndex = 0;
+					matrixIndex < runtimes.length;
+					matrixIndex++
+				) {
 					const runtime = runtimes[matrixIndex];
 					if (!runtime.connected) {
 						trace?.push(`containerRuntime${matrixIndex + 1}.connected = true;`);
@@ -103,7 +107,8 @@ for (const isSetCellPolicyFWW of [0, 2]) {
 					const undoRedoStacks: UndoRedoStackManager[] | undefined =
 						undoProbability === 0 ? undefined : [];
 
-					containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+					containerRuntimeFactory =
+						new MockContainerRuntimeFactoryForReconnection();
 					let summarizer: SharedMatrix | undefined;
 
 					// Summarizes the given `SharedMatrix`, loads the summarize into a 2nd SharedMatrix, vets that the two are
@@ -118,10 +123,10 @@ for (const isSetCellPolicyFWW of [0, 2]) {
 
 						// Create a local DataStoreRuntime since we only want to load the summary for a local client.
 						const dataStoreRuntime = new MockFluidDataStoreRuntime();
-						const containerRuntimeN = containerRuntimeFactory.createContainerRuntime(
-							dataStoreRuntime,
-							{ minimumSequenceNumber: containerRuntimeFactory.sequenceNumber },
-						);
+						const containerRuntimeN =
+							containerRuntimeFactory.createContainerRuntime(dataStoreRuntime, {
+								minimumSequenceNumber: containerRuntimeFactory.sequenceNumber,
+							});
 						const servicesN: IChannelServices = {
 							deltaConnection: dataStoreRuntime.createDeltaConnection(),
 							objectStorage,
@@ -189,7 +194,8 @@ for (const isSetCellPolicyFWW of [0, 2]) {
 					const float64 = new Random(seed).float64;
 
 					// Returns a pseudorandom 32b integer in the range [0 .. max).
-					const int32 = (max = 0x7fffffff): number => Math.trunc(float64() * max);
+					const int32 = (max = 0x7fffffff): number =>
+						Math.trunc(float64() * max);
 
 					// Returns an array with 'n' random values, each in the range [0 .. 100).
 					const values = (n: number): number[] =>
@@ -284,7 +290,8 @@ for (const isSetCellPolicyFWW of [0, 2]) {
 								// remove 1 or more rows (if any exist)
 								if (rowCount > 0) {
 									// 10% probability of removing multiple rows.
-									const numRemoved = float64() < 0.1 ? int32(rowCount - row - 1) + 1 : 1;
+									const numRemoved =
+										float64() < 0.1 ? int32(rowCount - row - 1) + 1 : 1;
 
 									trace?.push(
 										`matrix${
@@ -304,7 +311,8 @@ for (const isSetCellPolicyFWW of [0, 2]) {
 								// remove 1 or more cols (if any exist)
 								if (colCount > 0) {
 									// 10% probability of removing multiple cols.
-									const numRemoved = float64() < 0.1 ? int32(colCount - col - 1) + 1 : 1;
+									const numRemoved =
+										float64() < 0.1 ? int32(colCount - col - 1) + 1 : 1;
 
 									trace?.push(
 										`matrix${
@@ -390,11 +398,15 @@ for (const isSetCellPolicyFWW of [0, 2]) {
 							// If the client is already disconnected, first reconnect it to cover the case where
 							// multiple reconnections are required.
 							if (!runtimes[matrixIndex].connected) {
-								trace?.push(`containerRuntime${matrixIndex + 1}.connected = true;`);
+								trace?.push(
+									`containerRuntime${matrixIndex + 1}.connected = true;`,
+								);
 								runtimes[matrixIndex].connected = true;
 							}
 
-							trace?.push(`containerRuntime${matrixIndex + 1}.connected = false;`);
+							trace?.push(
+								`containerRuntime${matrixIndex + 1}.connected = false;`,
+							);
 
 							runtimes[matrixIndex].connected = false;
 						}

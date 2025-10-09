@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
+import {
+	ISummaryHandle,
+	ISummaryTree,
+} from "@fluidframework/driver-definitions";
 import {
 	ICreateBlobResponse,
 	IDocumentService,
@@ -18,9 +21,16 @@ import {
  * Partial implementation of IDocumentStorageService
  * @internal
  */
-export abstract class ReadDocumentStorageServiceBase implements IDocumentStorageService {
-	public abstract getVersions(versionId: string | null, count: number): Promise<IVersion[]>;
-	public abstract getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null>;
+export abstract class ReadDocumentStorageServiceBase
+	implements IDocumentStorageService
+{
+	public abstract getVersions(
+		versionId: string | null,
+		count: number,
+	): Promise<IVersion[]>;
+	public abstract getSnapshotTree(
+		version?: IVersion,
+	): Promise<ISnapshotTree | null>;
 	public abstract readBlob(blobId: string): Promise<ArrayBufferLike>;
 
 	public async uploadSummaryWithContext(
@@ -52,7 +62,9 @@ export abstract class ReplayController extends ReadDocumentStorageServiceBase {
 	 * @returns Whether or not the controller should be used.
 	 * If `false` is returned, caller should fallback to original storage.
 	 */
-	public abstract initStorage(documentService: IDocumentService): Promise<boolean>;
+	public abstract initStorage(
+		documentService: IDocumentService,
+	): Promise<boolean>;
 
 	/**
 	 * Returns sequence number to start processing ops
@@ -76,7 +88,10 @@ export abstract class ReplayController extends ReadDocumentStorageServiceBase {
 	 * @param currentOp - current op
 	 * @param lastTimeStamp - timestamp of last op (if more ops are available). Undefined otherwise.
 	 */
-	public abstract isDoneFetch(currentOp: number, lastTimeStamp?: number): boolean;
+	public abstract isDoneFetch(
+		currentOp: number,
+		lastTimeStamp?: number,
+	): boolean;
 
 	/**
 	 * Replay batch of ops

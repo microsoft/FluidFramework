@@ -20,7 +20,10 @@ export const snapshotWithLoadingGroupIdKey = "snapshotWithLoadingGroupId";
 /**
  * @legacy @beta
  */
-export type CacheContentType = "snapshot" | "ops" | "snapshotWithLoadingGroupId";
+export type CacheContentType =
+	| "snapshot"
+	| "ops"
+	| "snapshotWithLoadingGroupId";
 
 /*
  * File / container identifier.

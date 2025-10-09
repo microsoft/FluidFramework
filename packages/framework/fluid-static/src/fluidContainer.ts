@@ -119,8 +119,9 @@ export interface IFluidContainerEvents extends IEvent {
  * @sealed
  * @public
  */
-export interface IFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
-	extends IEventProvider<IFluidContainerEvents> {
+export interface IFluidContainer<
+	TContainerSchema extends ContainerSchema = ContainerSchema,
+> extends IEventProvider<IFluidContainerEvents> {
 	/**
 	 * Provides the current connected state of the container
 	 */
@@ -235,7 +236,9 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 	 * existingDirectory.set("myMap", map.handle);
 	 * ```
 	 */
-	create<T extends IFluidLoadable>(objectClass: SharedObjectKind<T>): Promise<T>;
+	create<T extends IFluidLoadable>(
+		objectClass: SharedObjectKind<T>,
+	): Promise<T>;
 
 	/**
 	 * Dispose of the container instance, permanently disabling it.
@@ -277,7 +280,8 @@ export async function createFluidContainer<
 >(props: {
 	container: IContainer;
 }): Promise<IFluidContainer<TContainerSchema>> {
-	const entryPoint: FluidObject<IStaticEntryPoint> = await props.container.getEntryPoint();
+	const entryPoint: FluidObject<IStaticEntryPoint> =
+		await props.container.getEntryPoint();
 	assert(
 		entryPoint.IStaticEntryPoint !== undefined,
 		0xb9e /* entryPoint must be of type IStaticEntryPoint */,
@@ -294,7 +298,9 @@ export async function createFluidContainer<
  *
  * @internal
  */
-export function isInternalFluidContainer<TContainerSchema extends ContainerSchema>(
+export function isInternalFluidContainer<
+	TContainerSchema extends ContainerSchema,
+>(
 	container: IFluidContainer<TContainerSchema> | IFluidContainerInternal,
 ): container is IFluidContainerInternal {
 	// IFluidContainer is sealed; so we never expect an `IFluidContainer` not to be
@@ -317,9 +323,11 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 	implements IFluidContainer<TContainerSchema>, IFluidContainerInternal
 {
 	private readonly connectedHandler = (): boolean => this.emit("connected");
-	private readonly disconnectedHandler = (): boolean => this.emit("disconnected");
-	private readonly disposedHandler = (error?: ICriticalContainerError): boolean =>
-		this.emit("disposed", error);
+	private readonly disconnectedHandler = (): boolean =>
+		this.emit("disconnected");
+	private readonly disposedHandler = (
+		error?: ICriticalContainerError,
+	): boolean => this.emit("disposed", error);
 	private readonly savedHandler = (): boolean => this.emit("saved");
 	private readonly dirtyHandler = (): boolean => this.emit("dirty");
 	public readonly acquireExtension: ContainerExtensionStore["acquireExtension"];
@@ -330,7 +338,8 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 		extensionStore: ContainerExtensionStore,
 	) {
 		super();
-		this.acquireExtension = extensionStore.acquireExtension.bind(extensionStore);
+		this.acquireExtension =
+			extensionStore.acquireExtension.bind(extensionStore);
 		container.on("connected", this.connectedHandler);
 		container.on("closed", this.disposedHandler);
 		container.on("disconnected", this.disconnectedHandler);
@@ -355,7 +364,8 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 	}
 
 	public get initialObjects(): InitialObjects<TContainerSchema> {
-		return this.rootDataObject.initialObjects as InitialObjects<TContainerSchema>;
+		return this.rootDataObject
+			.initialObjects as InitialObjects<TContainerSchema>;
 	}
 
 	/**
@@ -372,7 +382,9 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 	 */
 	public async attach(props?: ContainerAttachProps): Promise<string> {
 		if (this.container.attachState !== AttachState.Detached) {
-			throw new Error("Cannot attach container. Container is not in detached state.");
+			throw new Error(
+				"Cannot attach container. Container is not in detached state.",
+			);
 		}
 		throw new Error("Cannot attach container. Attach method not provided.");
 	}
@@ -385,7 +397,9 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 		this.container.disconnect?.();
 	}
 
-	public async create<T extends IFluidLoadable>(objectClass: SharedObjectKind<T>): Promise<T> {
+	public async create<T extends IFluidLoadable>(
+		objectClass: SharedObjectKind<T>,
+	): Promise<T> {
 		return this.rootDataObject.create(objectClass);
 	}
 
@@ -398,7 +412,9 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 		this.container.off("dirty", this.dirtyHandler);
 	}
 
-	public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
+	public async uploadBlob(
+		blob: ArrayBufferLike,
+	): Promise<IFluidHandle<ArrayBufferLike>> {
 		return this.rootDataObject.uploadBlob(blob);
 	}
 }

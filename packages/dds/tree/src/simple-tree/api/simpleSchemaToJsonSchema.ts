@@ -105,7 +105,9 @@ function convertNodeSchema(
 	throw new TypeError(`Unknown node schema kind: ${schema.kind}`);
 }
 
-function convertArrayNodeSchema(schema: SimpleArrayNodeSchema): JsonArrayNodeSchema {
+function convertArrayNodeSchema(
+	schema: SimpleArrayNodeSchema,
+): JsonArrayNodeSchema {
 	const allowedTypes: JsonSchemaRef[] = [];
 	schema.allowedTypesIdentifiers.forEach((type) => {
 		allowedTypes.push(createSchemaRef(type));
@@ -126,7 +128,9 @@ function convertArrayNodeSchema(schema: SimpleArrayNodeSchema): JsonArrayNodeSch
 	return output;
 }
 
-function convertLeafNodeSchema(schema: SimpleLeafNodeSchema): JsonLeafNodeSchema {
+function convertLeafNodeSchema(
+	schema: SimpleLeafNodeSchema,
+): JsonLeafNodeSchema {
 	let type: JsonLeafSchemaType;
 	switch (schema.leafKind) {
 		case ValueSchema.String:
@@ -229,7 +233,7 @@ function convertRecordLikeNodeSchema(
 
 function createSchemaRef(schemaId: string): JsonSchemaRef {
 	return {
-		"$ref": createRefPath(schemaId),
+		$ref: createRefPath(schemaId),
 	};
 }
 

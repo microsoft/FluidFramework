@@ -121,7 +121,10 @@ describe("SharedString Summary Load", () => {
 
 	it("Validate New Format Load", async () => {
 		const containerRuntimeFactory = new MockContainerRuntimeFactory();
-		const options = { newMergeTreeSnapshotFormat: true, mergeTreeSnapshotChunkSize };
+		const options = {
+			newMergeTreeSnapshotFormat: true,
+			mergeTreeSnapshotChunkSize,
+		};
 		const [remoteSharedString, summaryTree] = generateSummaryTree(
 			containerRuntimeFactory,
 			options,

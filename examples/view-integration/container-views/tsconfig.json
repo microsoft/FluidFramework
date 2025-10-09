@@ -8,9 +8,9 @@
 			"jest",
 			"puppeteer",
 			"jest-environment-puppeteer",
-			"expect-puppeteer",
+			"expect-puppeteer"
 		],
-		"exactOptionalPropertyTypes": false,
+		"exactOptionalPropertyTypes": false
 	},
-	"include": ["src/**/*"],
+	"include": ["src/**/*"]
 }

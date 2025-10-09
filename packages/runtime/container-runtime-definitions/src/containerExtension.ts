@@ -58,8 +58,12 @@ export type ExtensionMessage<
  * @sealed
  * @internal
  */
-export type OutboundExtensionMessage<TMessage extends TypedMessage = TypedMessage> =
-	ExtensionMessage<{ type: TMessage["type"]; content: JsonSerializable<TMessage["content"]> }>;
+export type OutboundExtensionMessage<
+	TMessage extends TypedMessage = TypedMessage,
+> = ExtensionMessage<{
+	type: TMessage["type"];
+	content: JsonSerializable<TMessage["content"]>;
+}>;
 
 /**
  * Brand for value that has not been verified.
@@ -101,7 +105,9 @@ export type OutboundExtensionMessage<TMessage extends TypedMessage = TypedMessag
  * @sealed
  * @internal
  */
-export declare class UnverifiedBrand<T> extends BrandedType<UnverifiedBrand<unknown>> {
+export declare class UnverifiedBrand<T> extends BrandedType<
+	UnverifiedBrand<unknown>
+> {
 	protected readonly UnverifiedValue: T;
 	private constructor();
 }
@@ -112,7 +118,9 @@ export declare class UnverifiedBrand<T> extends BrandedType<UnverifiedBrand<unkn
  * @sealed
  * @internal
  */
-export type RawInboundExtensionMessage<TMessage extends TypedMessage = TypedMessage> =
+export type RawInboundExtensionMessage<
+	TMessage extends TypedMessage = TypedMessage,
+> =
 	// `TMessage extends TypedMessage` encourages processing union elements individually
 	TMessage extends TypedMessage
 		? InternalUtilityTypes.FlattenIntersection<
@@ -137,7 +145,9 @@ export type RawInboundExtensionMessage<TMessage extends TypedMessage = TypedMess
  * @sealed
  * @internal
  */
-export type VerifiedInboundExtensionMessage<TMessage extends TypedMessage = TypedMessage> =
+export type VerifiedInboundExtensionMessage<
+	TMessage extends TypedMessage = TypedMessage,
+> =
 	// `TMessage extends TypedMessage` encourages processing union elements individually
 	TMessage extends TypedMessage
 		? InternalUtilityTypes.FlattenIntersection<
@@ -163,7 +173,9 @@ export type VerifiedInboundExtensionMessage<TMessage extends TypedMessage = Type
  * @sealed
  * @internal
  */
-export type InboundExtensionMessage<TMessage extends TypedMessage = TypedMessage> =
+export type InboundExtensionMessage<
+	TMessage extends TypedMessage = TypedMessage,
+> =
 	| RawInboundExtensionMessage<TMessage>
 	| VerifiedInboundExtensionMessage<TMessage>;
 
@@ -211,7 +223,9 @@ export interface ContainerExtension<
 	 */
 	processSignal?: (
 		addressChain: string[],
-		signalMessage: InboundExtensionMessage<TRuntimeProperties["SignalMessages"]>,
+		signalMessage: InboundExtensionMessage<
+			TRuntimeProperties["SignalMessages"]
+		>,
 		local: boolean,
 	) => void;
 }
@@ -221,7 +235,10 @@ export interface ContainerExtension<
  *
  * @internal
  */
-export type JoinedStatus = "disconnected" | "joinedForReading" | "joinedForWriting";
+export type JoinedStatus =
+	| "disconnected"
+	| "joinedForReading"
+	| "joinedForWriting";
 
 /**
  * Events emitted by the {@link ExtensionHost}.
@@ -232,9 +249,9 @@ export type JoinedStatus = "disconnected" | "joinedForReading" | "joinedForWriti
  * @internal
  */
 export interface ExtensionHostEvents {
-	"disconnected": () => void;
-	"joined": (props: { clientId: ClientConnectionId; canWrite: boolean }) => void;
-	"connectionTypeChanged": (canWrite: boolean) => void;
+	disconnected: () => void;
+	joined: (props: { clientId: ClientConnectionId; canWrite: boolean }) => void;
+	connectionTypeChanged: (canWrite: boolean) => void;
 }
 
 /**
@@ -246,7 +263,9 @@ export interface ExtensionHostEvents {
  * @sealed
  * @internal
  */
-export interface ExtensionHost<TRuntimeProperties extends ExtensionRuntimeProperties> {
+export interface ExtensionHost<
+	TRuntimeProperties extends ExtensionRuntimeProperties,
+> {
 	/**
 	 * Gets the current joined status of the container.
 	 *

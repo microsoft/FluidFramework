@@ -17,7 +17,11 @@ import { inc } from "semver";
 import { CleanOptions } from "simple-git";
 
 import { checkFlags, releaseGroupFlag, semverFlag } from "../../flags.js";
-import { BaseCommand, DEFAULT_CHANGESET_PATH, loadChangesets } from "../../library/index.js";
+import {
+	BaseCommand,
+	DEFAULT_CHANGESET_PATH,
+	loadChangesets,
+} from "../../library/index.js";
 import { isReleaseGroup } from "../../releaseGroups.js";
 
 async function replaceInFile(
@@ -33,7 +37,8 @@ async function replaceInFile(
 export default class GenerateChangeLogCommand extends BaseCommand<
 	typeof GenerateChangeLogCommand
 > {
-	static readonly description = "Generate a changelog for packages based on changesets.";
+	static readonly description =
+		"Generate a changelog for packages based on changesets.";
 
 	static readonly flags = {
 		releaseGroup: releaseGroupFlag({
@@ -94,7 +99,9 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 	 * **Note that this is a lossy action!** The metadata is completely removed. Changesets are typically in source
 	 * control so changes can usually be reverted.
 	 */
-	private async canonicalizeChangesets(releaseGroupRootDir: string): Promise<void> {
+	private async canonicalizeChangesets(
+		releaseGroupRootDir: string,
+	): Promise<void> {
 		const changesetDir = path.join(releaseGroupRootDir, DEFAULT_CHANGESET_PATH);
 		const changesets = await loadChangesets(changesetDir, this.logger);
 
@@ -138,9 +145,13 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 		}
 
 		const monorepo =
-			releaseGroup === undefined ? undefined : context.repo.releaseGroups.get(releaseGroup);
+			releaseGroup === undefined
+				? undefined
+				: context.repo.releaseGroups.get(releaseGroup);
 		if (monorepo === undefined) {
-			this.error(`Release group ${releaseGroup} not found in repo config`, { exit: 1 });
+			this.error(`Release group ${releaseGroup} not found in repo config`, {
+				exit: 1,
+			});
 		}
 
 		const releaseGroupRoot = monorepo?.directory ?? gitRoot;

@@ -13,7 +13,11 @@ import {
 } from "@fluid-example/bubblebench-common";
 import type { Change, SharedTree } from "@fluid-experimental/tree";
 
-import { type TreeArrayProxy, TreeObjectProxy, fromJson } from "./proxy/index.js";
+import {
+	type TreeArrayProxy,
+	TreeObjectProxy,
+	fromJson,
+} from "./proxy/index.js";
 
 interface IApp {
 	readonly clients: SimpleClient[];
@@ -46,12 +50,20 @@ export class AppState implements IAppState {
 				}
 			: () => {};
 
-		this.root = TreeObjectProxy<IApp>(this.tree, this.tree.currentView.root, this.update);
+		this.root = TreeObjectProxy<IApp>(
+			this.tree,
+			this.tree.currentView.root,
+			this.update,
+		);
 
 		const json = makeClient(_width, _height, numBubbles);
 		const clientNode = fromJson(tree, json);
 		(this.clients as unknown as TreeArrayProxy<IClient>).pushNode(clientNode);
-		this.localClient = TreeObjectProxy(this.tree, clientNode.identifier, this.update);
+		this.localClient = TreeObjectProxy(
+			this.tree,
+			clientNode.identifier,
+			this.update,
+		);
 
 		this.applyEdits();
 	}

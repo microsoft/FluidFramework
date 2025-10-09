@@ -21,7 +21,10 @@ class SubSequenceTestClient extends TestClient {
 	constructor() {
 		super(undefined, (spec) => {
 			const subSequence = SubSequence.fromJSONObject(spec);
-			assert(subSequence !== undefined, "expected `spec` to be a valid `SubSequence`");
+			assert(
+				subSequence !== undefined,
+				"expected `spec` to be a valid `SubSequence`",
+			);
 			return subSequence;
 		});
 	}
@@ -36,7 +39,12 @@ class SubSequenceTestClient extends TestClient {
 	) {
 		const segment = new SubSequence(items, props);
 		this.applyMsg(
-			this.makeOpMessage(createInsertSegmentOp(pos, segment), seq, refSeq, longClientId),
+			this.makeOpMessage(
+				createInsertSegmentOp(pos, segment),
+				seq,
+				refSeq,
+				longClientId,
+			),
 		);
 	}
 

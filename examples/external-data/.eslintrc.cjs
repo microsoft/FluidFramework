@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-const { importInternalModulesAllowedForTest } = require("../.eslintrc.data.cjs");
+const {
+	importInternalModulesAllowedForTest,
+} = require("../.eslintrc.data.cjs");
 
 module.exports = {
 	plugins: ["react", "react-hooks"],
@@ -25,13 +27,18 @@ module.exports = {
 			files: ["tests/**"],
 			rules: {
 				// Fine for tests to import from dev dependencies
-				"import/no-extraneous-dependencies": ["error", { devDependencies: true }],
+				"import/no-extraneous-dependencies": [
+					"error",
+					{ devDependencies: true },
+				],
 
 				// Since the "tests" directory is adjacent to "src", and this package (intentionally) does not expose
 				// a single exports roll-up, reaching into "src" is required.
 				"import/no-internal-modules": [
 					"error",
-					{ allow: importInternalModulesAllowedForTest.concat(["*/src/*/*.js"]) },
+					{
+						allow: importInternalModulesAllowedForTest.concat(["*/src/*/*.js"]),
+					},
 				],
 
 				// Fine for tests to use node.js modules.

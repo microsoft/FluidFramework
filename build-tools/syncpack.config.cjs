@@ -65,7 +65,11 @@ module.exports = {
 		{
 			label: "Ignore unsupported pnpm override entries",
 			dependencyTypes: ["pnpmOverrides"],
-			dependencies: ["json5@<1.0.2", "json5@>=2.0.0 <2.2.2", "oclif>@aws-sdk/client*"],
+			dependencies: [
+				"json5@<1.0.2",
+				"json5@>=2.0.0 <2.2.2",
+				"oclif>@aws-sdk/client*",
+			],
 			packages: ["build-tools-release-group-root"],
 			isIgnored: true,
 		},
@@ -137,7 +141,8 @@ module.exports = {
 	 */
 	versionGroups: [
 		{
-			label: "chalk >2 is ESM only but build-tools and version-tools are still CJS only.",
+			label:
+				"chalk >2 is ESM only but build-tools and version-tools are still CJS only.",
 			dependencies: ["chalk"],
 			packages: ["@fluidframework/build-tools", "@fluid-tools/version-tools"],
 		},

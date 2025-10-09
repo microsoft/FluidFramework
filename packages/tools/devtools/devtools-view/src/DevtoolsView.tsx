@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { FluentProvider, makeStyles, shorthands, tokens } from "@fluentui/react-components";
+import {
+	FluentProvider,
+	makeStyles,
+	shorthands,
+	tokens,
+} from "@fluentui/react-components";
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
 	CloseContainer,
@@ -56,11 +61,11 @@ const getContainerListMessage = GetContainerList.createMessage();
 
 const useDevtoolsStyles = makeStyles({
 	root: {
-		"display": "flex",
-		"flexDirection": "row",
-		"width": "100%",
-		"height": "100%",
-		"overflowY": "auto",
+		display: "flex",
+		flexDirection: "row",
+		width: "100%",
+		height: "100%",
+		overflowY: "auto",
 		"> *": {
 			textOverflow: "ellipsis",
 		},
@@ -97,7 +102,9 @@ export function DevtoolsView(props: DevtoolsViewProps): React.ReactElement {
 		DevtoolsFeatureFlags | undefined
 	>();
 	const [queryTimedOut, setQueryTimedOut] = React.useState(false);
-	const [selectedTheme, setSelectedTheme] = React.useState(getFluentUIThemeToUse());
+	const [selectedTheme, setSelectedTheme] = React.useState(
+		getFluentUIThemeToUse(),
+	);
 
 	const [isMessageDismissed, setIsMessageDismissed] = React.useState(false);
 	const [modalVisible, setModalVisible] = React.useState(false);
@@ -194,7 +201,9 @@ export function DevtoolsView(props: DevtoolsViewProps): React.ReactElement {
 
 	return (
 		<LoggerContext.Provider value={topLevelLogger}>
-			<ThemeContext.Provider value={{ themeInfo: selectedTheme, setTheme: setSelectedTheme }}>
+			<ThemeContext.Provider
+				value={{ themeInfo: selectedTheme, setTheme: setSelectedTheme }}
+			>
 				<FluentProvider theme={selectedTheme.theme} style={{ height: "100%" }}>
 					{supportedFeatures === undefined ? (
 						<>
@@ -206,14 +215,18 @@ export function DevtoolsView(props: DevtoolsViewProps): React.ReactElement {
 								/>
 							)}
 							{modalVisible && (
-								<TelemetryConsentModal onClose={(): void => setModalVisible(false)} />
+								<TelemetryConsentModal
+									onClose={(): void => setModalVisible(false)}
+								/>
 							)}
 							<_DevtoolsView supportedFeatures={{}} />
 						</>
 					) : (
 						<>
 							{modalVisible && (
-								<TelemetryConsentModal onClose={(): void => setModalVisible(false)} />
+								<TelemetryConsentModal
+									onClose={(): void => setModalVisible(false)}
+								/>
 							)}
 							<_DevtoolsView supportedFeatures={supportedFeatures} />
 						</>
@@ -237,7 +250,9 @@ interface _DevtoolsViewProps {
 function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 	const { supportedFeatures } = props;
 
-	const [containers, setContainers] = React.useState<ContainerKey[] | undefined>();
+	const [containers, setContainers] = React.useState<
+		ContainerKey[] | undefined
+	>();
 	const [menuSelection, setMenuSelection] = React.useState<MenuSelection>({
 		type: "homeMenuSelection",
 	});
@@ -299,7 +314,12 @@ function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 				supportedFeatures={supportedFeatures}
 				onRemoveContainer={handleRemoveContainer}
 			/>
-			<div style={{ width: "1px", backgroundColor: tokens.colorNeutralForeground1 }}></div>
+			<div
+				style={{
+					width: "1px",
+					backgroundColor: tokens.colorNeutralForeground1,
+				}}
+			></div>
 			<View menuSelection={menuSelection} containers={containers} />
 		</div>
 	);

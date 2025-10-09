@@ -17,7 +17,10 @@ import {
 	type SummarizeInternalFn,
 	channelsTreeName,
 } from "@fluidframework/runtime-definitions/internal";
-import { GCDataBuilder, mergeStats } from "@fluidframework/runtime-utils/internal";
+import {
+	GCDataBuilder,
+	mergeStats,
+} from "@fluidframework/runtime-utils/internal";
 import {
 	MockLogger,
 	TelemetryDataTag,
@@ -56,8 +59,8 @@ describe("SummarizerNodeWithGC Tests", () => {
 	let childInternalGCData: IGarbageCollectionData;
 	let mockLogger: MockLogger;
 
-	const getRootBaseGCDetails = async (): Promise<IGarbageCollectionDetailsBase> =>
-		rootBaseGCDetails;
+	const getRootBaseGCDetails =
+		async (): Promise<IGarbageCollectionDetailsBase> => rootBaseGCDetails;
 	const getChildInternalGCData = async (): Promise<IGarbageCollectionData> =>
 		childInternalGCData;
 
@@ -115,7 +118,10 @@ describe("SummarizerNodeWithGC Tests", () => {
 	/**
 	 * Given the GC data of a child, build the GC data of the root (parent) node.
 	 */
-	function buildRootGCData(childGCData: IGarbageCollectionData, childId: string) {
+	function buildRootGCData(
+		childGCData: IGarbageCollectionData,
+		childId: string,
+	) {
 		const builder = new GCDataBuilder();
 		builder.prefixAndAddNodes(childId, childGCData.gcNodes);
 		return builder.getGCData();
@@ -326,14 +332,15 @@ describe("SummarizerNodeWithGC Tests", () => {
 		let leafNode: ISummarizerNodeWithGC | undefined;
 
 		const logger = createChildLogger();
-		const getSummarizeInternalFn = (id: string) => async (fullTree: boolean) => {
-			return {
-				id,
-				pathPartsForChildren: undefined, // extra path parts between nodes
-				stats: mergeStats(),
-				summary: { type: SummaryType.Tree, tree: {} } as const,
+		const getSummarizeInternalFn =
+			(id: string) => async (fullTree: boolean) => {
+				return {
+					id,
+					pathPartsForChildren: undefined, // extra path parts between nodes
+					stats: mergeStats(),
+					summary: { type: SummaryType.Tree, tree: {} } as const,
+				};
 			};
-		};
 
 		function createRoot({
 			changeSeq = 1,
@@ -471,7 +478,10 @@ describe("SummarizerNodeWithGC Tests", () => {
 			await midNode?.summarize(false);
 			rootNode.completeSummary("test-handle1");
 
-			let result = await rootNode.refreshLatestSummary("test-handle1", summaryRefSeq);
+			let result = await rootNode.refreshLatestSummary(
+				"test-handle1",
+				summaryRefSeq,
+			);
 			assert(result.isSummaryTracked, "should be tracked");
 			assert(result.isSummaryNewer === true, "should be newer");
 
@@ -490,11 +500,15 @@ describe("SummarizerNodeWithGC Tests", () => {
 			// Create a new child node for which we will need to create a pending summary for.
 			createLeaf({ type: CreateSummarizerNodeSource.Local });
 
-			result = await rootNode.refreshLatestSummary("test-handle2", summaryRefSeq);
+			result = await rootNode.refreshLatestSummary(
+				"test-handle2",
+				summaryRefSeq,
+			);
 			assert(result.isSummaryTracked, "should be tracked");
 			assert(result.isSummaryNewer === true, "should be newer");
 			const leafNodePath = `${nodeIds.rootId}/${channelsTreeName}/${nodeIds.midId}/${channelsTreeName}/${nodeIds.leafId}`;
-			const leafNodeLatestSummaryHandle = (leafNode as SummarizerNodeWithGC).summaryHandleId;
+			const leafNodeLatestSummaryHandle = (leafNode as SummarizerNodeWithGC)
+				.summaryHandleId;
 			assert.strictEqual(
 				leafNodeLatestSummaryHandle,
 				leafNodePath,
@@ -514,7 +528,10 @@ describe("SummarizerNodeWithGC Tests", () => {
 			await midNode?.summarize(false);
 			rootNode.completeSummary("test-handle1");
 
-			let result = await rootNode.refreshLatestSummary("test-handle1", summaryRefSeq);
+			let result = await rootNode.refreshLatestSummary(
+				"test-handle1",
+				summaryRefSeq,
+			);
 			assert(result.isSummaryTracked, "should be tracked");
 			assert(result.isSummaryNewer === true, "should be newer");
 
@@ -529,11 +546,15 @@ describe("SummarizerNodeWithGC Tests", () => {
 			// Create a new child node for which we will need to create a pending summary for.
 			createLeaf({ type: CreateSummarizerNodeSource.Local });
 
-			result = await rootNode.refreshLatestSummary("test-handle2", summaryRefSeq);
+			result = await rootNode.refreshLatestSummary(
+				"test-handle2",
+				summaryRefSeq,
+			);
 			assert(result.isSummaryTracked, "should be tracked");
 			assert(result.isSummaryNewer === true, "should be newer");
 			const leafNodePath = `${nodeIds.rootId}/${channelsTreeName}/${nodeIds.midId}/${channelsTreeName}/${nodeIds.leafId}`;
-			const leafNodeLatestSummaryHandle = (leafNode as SummarizerNodeWithGC).summaryHandleId;
+			const leafNodeLatestSummaryHandle = (leafNode as SummarizerNodeWithGC)
+				.summaryHandleId;
 			assert.strictEqual(
 				leafNodeLatestSummaryHandle,
 				leafNodePath,

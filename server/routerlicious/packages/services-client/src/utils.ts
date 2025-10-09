@@ -24,15 +24,15 @@ export async function getOrCreateRepository(
 ): Promise<void> {
 	console.log(`Get Repo: ${endpoint}/${owner}/${repository}`);
 
-	const details = await Axios.get(`${endpoint}/repos/${owner}/${repository}`, { headers }).catch(
-		(error) => {
-			if (error.response && error.response.status === 400) {
-				return null;
-			} else {
-				throw error;
-			}
-		},
-	);
+	const details = await Axios.get(`${endpoint}/repos/${owner}/${repository}`, {
+		headers,
+	}).catch((error) => {
+		if (error.response && error.response.status === 400) {
+			return null;
+		} else {
+			throw error;
+		}
+	});
 
 	if (!details || details.status === 400) {
 		console.log(`Create Repo: ${endpoint}/${owner}/${repository}`);

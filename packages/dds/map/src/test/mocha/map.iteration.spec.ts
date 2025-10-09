@@ -26,9 +26,12 @@ interface TestParts {
 const mapFactory = new MapFactory();
 
 function setupTest(): TestParts {
-	const containerRuntimeFactory = new MockContainerRuntimeFactory({ flushMode: 1 }); // TurnBased
+	const containerRuntimeFactory = new MockContainerRuntimeFactory({
+		flushMode: 1,
+	}); // TurnBased
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId: "1" });
-	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+	const containerRuntime =
+		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 	const sharedMap = mapFactory.create(dataStoreRuntime, "shared-map-1");
 	dataStoreRuntime.setAttachState(AttachState.Attached);
 	sharedMap.connect({
@@ -53,7 +56,8 @@ function createAdditionalClient(
 	containerRuntime: MockContainerRuntime;
 } {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId: id });
-	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+	const containerRuntime =
+		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 	const sharedMap = mapFactory.create(dataStoreRuntime, `shared-map-${id}`);
 	dataStoreRuntime.setAttachState(AttachState.Attached);
 	sharedMap.connect({
@@ -65,7 +69,8 @@ function createAdditionalClient(
 
 describe("SharedMap iteration", () => {
 	it("should have eventually consistent iteration order between clients when simultaneous set", () => {
-		const { sharedMap, containerRuntimeFactory, containerRuntime } = setupTest();
+		const { sharedMap, containerRuntimeFactory, containerRuntime } =
+			setupTest();
 		// Create a second client
 		const { sharedMap: sharedMap2, containerRuntime: containerRuntime2 } =
 			createAdditionalClient(containerRuntimeFactory);
@@ -93,7 +98,8 @@ describe("SharedMap iteration", () => {
 	});
 
 	it("should have eventually consistent iteration order between clients when suppressed delete", () => {
-		const { sharedMap, containerRuntimeFactory, containerRuntime } = setupTest();
+		const { sharedMap, containerRuntimeFactory, containerRuntime } =
+			setupTest();
 		// Create a second client
 		const { sharedMap: sharedMap2, containerRuntime: containerRuntime2 } =
 			createAdditionalClient(containerRuntimeFactory);
@@ -115,12 +121,17 @@ describe("SharedMap iteration", () => {
 		const keys1 = [...sharedMap.keys()];
 		const keys2 = [...sharedMap2.keys()];
 
-		assert.deepStrictEqual(keys1, ["key2", "key1"], "Keys should match expected");
+		assert.deepStrictEqual(
+			keys1,
+			["key2", "key1"],
+			"Keys should match expected",
+		);
 		assert.deepStrictEqual(keys1, keys2, "Keys should match between clients");
 	});
 
 	it("should have eventually consistent iteration order between clients when clear", () => {
-		const { sharedMap, containerRuntimeFactory, containerRuntime } = setupTest();
+		const { sharedMap, containerRuntimeFactory, containerRuntime } =
+			setupTest();
 		// Create a second client
 		const { sharedMap: sharedMap2, containerRuntime: containerRuntime2 } =
 			createAdditionalClient(containerRuntimeFactory);
@@ -144,7 +155,11 @@ describe("SharedMap iteration", () => {
 		const keys1 = [...sharedMap.keys()];
 		const keys2 = [...sharedMap2.keys()];
 
-		assert.deepStrictEqual(keys1, ["key3", "key1", "key4"], "Keys should match expected");
+		assert.deepStrictEqual(
+			keys1,
+			["key3", "key1", "key4"],
+			"Keys should match expected",
+		);
 		assert.deepStrictEqual(keys1, keys2, "Keys should match between clients");
 	});
 });

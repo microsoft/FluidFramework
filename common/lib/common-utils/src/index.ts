@@ -27,7 +27,11 @@ export { Heap, type IComparer, type IHeapNode, NumberComparer } from "./heap";
 export * from "./indexNode";
 export { Lazy } from "./lazy";
 export type { IsomorphicPerformance } from "./performanceIsomorphic";
-export { PromiseCache, type PromiseCacheExpiry, type PromiseCacheOptions } from "./promiseCache";
+export {
+	PromiseCache,
+	type PromiseCacheExpiry,
+	type PromiseCacheOptions,
+} from "./promiseCache";
 export { Deferred, LazyPromise } from "./promises";
 export { type IRange, type IRangeTrackerSnapshot, RangeTracker } from "./rangeTracker";
 export { RateLimiter } from "./rateLimiter";

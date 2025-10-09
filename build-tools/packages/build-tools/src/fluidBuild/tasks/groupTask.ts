@@ -86,7 +86,9 @@ export class GroupTask extends Task {
 		return true;
 	}
 
-	protected async runTask(q: AsyncPriorityQueue<TaskExec>): Promise<BuildResult> {
+	protected async runTask(
+		q: AsyncPriorityQueue<TaskExec>,
+	): Promise<BuildResult> {
 		this.traceExec(`Begin Group Task`);
 		const taskP = new Array<Promise<BuildResult>>();
 		for (const task of this.subTasks) {

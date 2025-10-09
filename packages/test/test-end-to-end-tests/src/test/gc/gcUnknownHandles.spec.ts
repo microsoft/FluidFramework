@@ -5,7 +5,10 @@
 
 import { strict as assert } from "assert";
 
-import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
+import {
+	ITestDataObject,
+	describeCompat,
+} from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { IRequest, IResponse } from "@fluidframework/core-interfaces";
@@ -93,13 +96,18 @@ describeCompat("GC unknown handles", "FullCompat", (getTestObjectProvider) => {
 		}
 
 		mainContainer = await provider.makeTestContainer(defaultGCConfig);
-		dataStoreA = await getContainerEntryPointBackCompat<ITestDataObject>(mainContainer);
+		dataStoreA =
+			await getContainerEntryPointBackCompat<ITestDataObject>(mainContainer);
 		await waitForContainerConnection(mainContainer);
 
-		const summarizerContainer = await provider.loadTestContainer(defaultGCConfig);
+		const summarizerContainer =
+			await provider.loadTestContainer(defaultGCConfig);
 		const summarizerDataStoreA =
-			await getContainerEntryPointBackCompat<ITestDataObject>(summarizerContainer);
-		summarizerRuntime = summarizerDataStoreA._context.containerRuntime as ContainerRuntime;
+			await getContainerEntryPointBackCompat<ITestDataObject>(
+				summarizerContainer,
+			);
+		summarizerRuntime = summarizerDataStoreA._context
+			.containerRuntime as ContainerRuntime;
 		await waitForContainerConnection(summarizerContainer);
 	});
 

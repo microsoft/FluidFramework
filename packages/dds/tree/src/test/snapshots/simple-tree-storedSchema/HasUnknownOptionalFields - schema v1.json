@@ -1,14 +1,12 @@
 {
-  "version": 1,
-  "nodes": {
-    "test.hasUnknownOptionalFields": {
-      "object": {}
-    }
-  },
-  "root": {
-    "kind": "Value",
-    "types": [
-      "test.hasUnknownOptionalFields"
-    ]
-  }
+	"version": 1,
+	"nodes": {
+		"test.hasUnknownOptionalFields": {
+			"object": {}
+		}
+	},
+	"root": {
+		"kind": "Value",
+		"types": ["test.hasUnknownOptionalFields"]
+	}
 }

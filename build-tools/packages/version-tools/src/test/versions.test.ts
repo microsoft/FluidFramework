@@ -7,7 +7,11 @@ import { assert, expect } from "chai";
 import * as semver from "semver";
 
 import { getVersionRange } from "../internalVersionScheme";
-import { getIsLatest, getSimpleVersion, getVersionsFromStrings } from "../versions";
+import {
+	getIsLatest,
+	getSimpleVersion,
+	getVersionsFromStrings,
+} from "../versions";
 
 // Deliberately not sorted here; highest version is 0.59.3000
 const test_tags = [
@@ -25,12 +29,21 @@ const test_tags = [
 
 describe("getSimpleVersion", () => {
 	it("version with id, no prerelease", () => {
-		assert.equal(getSimpleVersion("0.15.0", "12345.0", false, true), "0.15.12345");
-		assert.equal(getSimpleVersion("0.15.0", "12345.0", true, true), "0.15.12345");
+		assert.equal(
+			getSimpleVersion("0.15.0", "12345.0", false, true),
+			"0.15.12345",
+		);
+		assert.equal(
+			getSimpleVersion("0.15.0", "12345.0", true, true),
+			"0.15.12345",
+		);
 	});
 
 	it("version with id, with prerelease", () => {
-		assert.equal(getSimpleVersion("0.15.0-rc", "12345.0", false, true), "0.15.12345-rc");
+		assert.equal(
+			getSimpleVersion("0.15.0-rc", "12345.0", false, true),
+			"0.15.12345-rc",
+		);
 		assert.equal(
 			getSimpleVersion("0.15.0-alpha.1", "12345.0", false, true),
 			"0.15.12345-alpha.1",
@@ -39,16 +52,25 @@ describe("getSimpleVersion", () => {
 			getSimpleVersion("0.15.0-beta.2.1", "12345.0", false, true),
 			"0.15.12345-beta.2.1",
 		);
-		assert.equal(getSimpleVersion("0.15.0-beta", "12345.0", true, true), "0.15.12345-beta");
+		assert.equal(
+			getSimpleVersion("0.15.0-beta", "12345.0", true, true),
+			"0.15.12345-beta",
+		);
 	});
 
 	it("version no id, no prerelease", () => {
-		assert.equal(getSimpleVersion("0.16.0", "12345.0", false, false), "0.16.0-12345.0");
+		assert.equal(
+			getSimpleVersion("0.16.0", "12345.0", false, false),
+			"0.16.0-12345.0",
+		);
 		assert.equal(getSimpleVersion("0.16.0", "12345.0", true, false), "0.16.0");
 	});
 
 	it("version no id, with prerelease", () => {
-		assert.equal(getSimpleVersion("0.16.0-rc", "12345.0", false, false), "0.16.0-rc.12345.0");
+		assert.equal(
+			getSimpleVersion("0.16.0-rc", "12345.0", false, false),
+			"0.16.0-rc.12345.0",
+		);
 		assert.equal(
 			getSimpleVersion("0.16.0-alpha.1", "12345.0", false, false),
 			"0.16.0-alpha.1.12345.0",
@@ -57,7 +79,10 @@ describe("getSimpleVersion", () => {
 			getSimpleVersion("0.16.0-beta.2.1", "12345.0", false, false),
 			"0.16.0-beta.2.1.12345.0",
 		);
-		assert.equal(getSimpleVersion("0.16.0-beta", "12345.0", true, false), "0.16.0-beta");
+		assert.equal(
+			getSimpleVersion("0.16.0-beta", "12345.0", true, false),
+			"0.16.0-beta",
+		);
 	});
 
 	describe("Fluid internal versions", () => {
@@ -140,7 +165,9 @@ describe("getIsLatest", () => {
 		// By default, getIsLatest filters out Fluid internal versions. This can be changed with an argument, so these
 		// tests check that isLatest returns
 		it("2.0.0-internal.1.0.0 is latest", () => {
-			assert.isTrue(getIsLatest("client", "2.0.0-internal.1.0.0", post1_tags, true));
+			assert.isTrue(
+				getIsLatest("client", "2.0.0-internal.1.0.0", post1_tags, true),
+			);
 		});
 
 		it("1.2.3 is not latest", () => {
@@ -148,7 +175,9 @@ describe("getIsLatest", () => {
 		});
 
 		it("2.0.0-internal.1.0.1.12345 is not latest", () => {
-			assert.isTrue(getIsLatest("client", "2.0.0-internal.1.0.1.12345", post1_tags, true));
+			assert.isTrue(
+				getIsLatest("client", "2.0.0-internal.1.0.1.12345", post1_tags, true),
+			);
 		});
 
 		it("pre 1.0 builds are not latest", () => {
@@ -204,7 +233,11 @@ describe("getVersionsFromStrings", () => {
 	});
 
 	it("should return an empty array if no tags match the prefix", () => {
-		const tags = ["server_v0.59.1001", "server_v0.59.2000", "server_v0.59.3000"];
+		const tags = [
+			"server_v0.59.1001",
+			"server_v0.59.2000",
+			"server_v0.59.3000",
+		];
 		const result = getVersionsFromStrings("client", tags);
 		expect(result).to.deep.equal([]);
 	});

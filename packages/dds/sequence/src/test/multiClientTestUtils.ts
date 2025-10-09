@@ -28,7 +28,8 @@ export function constructClient(
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	dataStoreRuntime.options = dataStoreRuntimeOptions;
 	const sharedString: ISharedString = factory.create(dataStoreRuntime, id);
-	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+	const containerRuntime =
+		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services: IChannelServices = {
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
@@ -57,12 +58,18 @@ export async function loadClient(
 
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	dataStoreRuntime.options = dataStoreRuntimeOptions;
-	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+	const containerRuntime =
+		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services: IChannelServices = {
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: MockStorage.createFromSummary(summary),
 	};
-	const sharedString = await factory.load(dataStoreRuntime, id, services, factory.attributes);
+	const sharedString = await factory.load(
+		dataStoreRuntime,
+		id,
+		services,
+		factory.attributes,
+	);
 
 	return {
 		sharedString,

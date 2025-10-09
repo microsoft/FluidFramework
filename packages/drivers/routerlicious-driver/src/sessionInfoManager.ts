@@ -68,7 +68,10 @@ export class SessionInfoManager {
 		);
 
 		if (session !== undefined) {
-			this.sessionInfoMap.set(url, getDiscoveredFluidResolvedUrl(resolvedUrl, session));
+			this.sessionInfoMap.set(
+				url,
+				getDiscoveredFluidResolvedUrl(resolvedUrl, session),
+			);
 			this.sessionLastDiscoveredMap.set(url, Date.now());
 		} else if (!this.sessionInfoMap.has(url)) {
 			this.sessionInfoMap.set(url, resolvedUrl);
@@ -110,7 +113,9 @@ export class SessionInfoManager {
 		};
 	}
 
-	private async fetchAndUpdateSessionInfo(params: IGetSessionInfoParams): Promise<void> {
+	private async fetchAndUpdateSessionInfo(
+		params: IGetSessionInfoParams,
+	): Promise<void> {
 		const { documentId, ordererRestWrapper, logger, resolvedUrl } = params;
 
 		const url = getDiscoverSessionUrl(params);

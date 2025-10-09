@@ -17,4 +17,10 @@ const configPath = path.join(__dirname, "../../config/config.json");
 
 configureLogging(configPath);
 
-runService(new NexusResourcesFactory(), new NexusRunnerFactory(), winston, "nexus", configPath);
+runService(
+	new NexusResourcesFactory(),
+	new NexusRunnerFactory(),
+	winston,
+	"nexus",
+	configPath,
+);

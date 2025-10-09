@@ -69,7 +69,10 @@ const migrationShimFactory = new MigrationShimFactory(
 );
 const newTreeShimFactory = new SharedTreeShimFactory(newTreeFactory);
 
-export class InventoryList extends DataObject implements IInventoryList, IMigrateBackingData {
+export class InventoryList
+	extends DataObject
+	implements IInventoryList, IMigrateBackingData
+{
 	private _model: IInventoryList | undefined;
 	private _writeOk: boolean | undefined;
 	private _shim: MigrationShim | SharedTreeShim | undefined;

@@ -41,7 +41,10 @@ export interface IAudienceEvents extends IEvent {
 	 *
 	 * @eventProperty
 	 */
-	(event: "addMember", listener: (clientId: string, client: IClient) => void): void;
+	(
+		event: "addMember",
+		listener: (clientId: string, client: IClient) => void,
+	): void;
 
 	/**
 	 * Raised when a user leaves collaborative session.
@@ -51,7 +54,10 @@ export interface IAudienceEvents extends IEvent {
 	 *
 	 * @eventProperty
 	 */
-	(event: "removeMember", listener: (clientId: string, client: IClient) => void): void;
+	(
+		event: "removeMember",
+		listener: (clientId: string, client: IClient) => void,
+	): void;
 	/**
 	 * Notifies that client established new connection and caught-up on ops.
 	 * @param oldValue - represents old connection. Please note that oldValue.client in almost all cases will be undefined,

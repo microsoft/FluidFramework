@@ -104,8 +104,12 @@ async function* loadAllSequencedMessages(
 		await teststream.read();
 	} catch (error: any) {
 		const statusCode = error.getTelemetryProperties().statusCode;
-		const innerMostErrorCode = error.getTelemetryProperties().innerMostErrorCode;
-		if (statusCode !== 410 || innerMostErrorCode !== "fluidDeltaDataNotAvailable") {
+		const innerMostErrorCode =
+			error.getTelemetryProperties().innerMostErrorCode;
+		if (
+			statusCode !== 410 ||
+			innerMostErrorCode !== "fluidDeltaDataNotAvailable"
+		) {
 			throw error;
 		}
 
@@ -149,7 +153,10 @@ async function* loadAllSequencedMessages(
 		const messages = result.value;
 
 		// Empty buckets should never be returned
-		assert(messages.length !== 0, 0x1ba /* "should not return empty buckets" */);
+		assert(
+			messages.length !== 0,
+			0x1ba /* "should not return empty buckets" */,
+		);
 		// console.log(`Loaded ops at ${messages[0].sequenceNumber}`);
 
 		// This parsing of message contents happens in delta manager. But when we analyze messages
@@ -197,8 +204,12 @@ async function* loadAllSequencedMessages(
 
 		if (initialMessages !== undefined) {
 			const lastSequenceNumber = lastSeq;
-			const filtered = initialMessages.filter((a) => a.sequenceNumber > lastSequenceNumber);
-			const sorted = filtered.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
+			const filtered = initialMessages.filter(
+				(a) => a.sequenceNumber > lastSequenceNumber,
+			);
+			const sorted = filtered.sort(
+				(a, b) => a.sequenceNumber - b.sequenceNumber,
+			);
 			lastSeq = sorted[sorted.length - 1].sequenceNumber;
 			logMsg = ` (${opsStorage} delta storage, ${
 				initialMessages.length
@@ -225,13 +236,16 @@ async function* saveOps(
 	if (files.length !== 0) {
 		index = files.length - 1;
 		const name = filenameFromIndex(index);
-		const fileContent = fs.readFileSync(`${dir}/messages${name}.json`, { encoding: "utf-8" });
+		const fileContent = fs.readFileSync(`${dir}/messages${name}.json`, {
+			encoding: "utf-8",
+		});
 		const messages: ISequencedDocumentMessage[] = JSON.parse(fileContent);
 		curr = messages[0].sequenceNumber;
 	}
 
 	while (true) {
-		const result: IteratorResult<ISequencedDocumentMessage[]> = await gen.next();
+		const result: IteratorResult<ISequencedDocumentMessage[]> =
+			await gen.next();
 		if (files.length === 0) {
 			curr = firstAvailableDelta;
 		}
@@ -272,7 +286,8 @@ async function* saveOps(
 			// increment curr by chunk
 			curr += chunk;
 			assert(
-				sequencedMessages.length === 0 || sequencedMessages[0].sequenceNumber === curr,
+				sequencedMessages.length === 0 ||
+					sequencedMessages[0].sequenceNumber === curr,
 				0x1bd /* "Stopped writing at unexpected sequence number" */,
 			);
 			index++;
@@ -289,7 +304,10 @@ export async function fluidFetchMessages(
 	saveDir?: string,
 ) {
 	const messageStats = dumpMessageStats || dumpMessages;
-	if (!messageStats && (saveDir === undefined || documentService === undefined)) {
+	if (
+		!messageStats &&
+		(saveDir === undefined || documentService === undefined)
+	) {
 		return;
 	}
 
@@ -313,7 +331,12 @@ export async function fluidFetchMessages(
 	}
 
 	if (messageStats) {
-		return printMessageStats(generator, dumpMessageStats, dumpMessages, messageTypeFilter);
+		return printMessageStats(
+			generator,
+			dumpMessageStats,
+			dumpMessages,
+			messageTypeFilter,
+		);
 	} else {
 		let item;
 		for await (item of generator) {

@@ -7,7 +7,10 @@ import path from "node:path";
 
 import { RevisionTagCodec } from "../../../core/index.js";
 import { SequenceField } from "../../../feature-libraries/index.js";
-import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
+import {
+	takeJsonSnapshot,
+	useSnapshotDirectory,
+} from "../../snapshots/index.js";
 import { TestNodeId } from "../../testNodeId.js";
 import { createSnapshotCompressor, testIdCompressor } from "../../utils.js";
 import { generatePopulatedMarks } from "./populatedMarks.js";

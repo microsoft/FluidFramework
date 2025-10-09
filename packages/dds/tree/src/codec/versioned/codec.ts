@@ -88,7 +88,12 @@ export function makeVersionedValidatedCodec<
 export function makeVersionDispatchingCodec<TDecoded, TContext>(
 	family: ICodecFamily<TDecoded, TContext>,
 	options: ICodecOptions & { writeVersion: number },
-): IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext> {
+): IJsonCodec<
+	TDecoded,
+	JsonCompatibleReadOnly,
+	JsonCompatibleReadOnly,
+	TContext
+> {
 	const writeCodec = family.resolve(options.writeVersion).json;
 	const supportedVersions = new Set(family.getSupportedFormats());
 	return makeVersionedCodec(supportedVersions, options, {
@@ -119,13 +124,23 @@ export class ClientVersionDispatchingCodecBuilder<TDecoded, TContext> {
 		 * This can (and typically does) pick the newest version of the codec which is known to be compatible with the client version so that
 		 * any improvements in newer versions of the codec can be used when allowed.
 		 */
-		private readonly versionMapping: (oldestCompatibleClient: FluidClientVersion) => number,
+		private readonly versionMapping: (
+			oldestCompatibleClient: FluidClientVersion,
+		) => number,
 	) {}
 
 	public build(
 		options: CodecWriteOptions,
-	): IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext> {
+	): IJsonCodec<
+		TDecoded,
+		JsonCompatibleReadOnly,
+		JsonCompatibleReadOnly,
+		TContext
+	> {
 		const writeVersion = this.versionMapping(options.oldestCompatibleClient);
-		return makeVersionDispatchingCodec(this.family, { ...options, writeVersion });
+		return makeVersionDispatchingCodec(this.family, {
+			...options,
+			writeVersion,
+		});
 	}
 }

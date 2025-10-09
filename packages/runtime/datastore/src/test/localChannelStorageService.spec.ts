@@ -6,7 +6,11 @@
 import { strict as assert } from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { FileMode, type ITree, TreeEntry } from "@fluidframework/driver-definitions/internal";
+import {
+	FileMode,
+	type ITree,
+	TreeEntry,
+} from "@fluidframework/driver-definitions/internal";
 
 import { LocalChannelStorageService } from "../localChannelStorageService.js";
 
@@ -47,7 +51,10 @@ describe("LocalChannelStorageService", () => {
 
 		assert.strictEqual(await ss.contains("foo"), true);
 		assert.deepStrictEqual(await ss.list(""), ["foo"]);
-		assert.deepStrictEqual(await ss.readBlob("foo"), stringToBuffer("bar", "utf8"));
+		assert.deepStrictEqual(
+			await ss.readBlob("foo"),
+			stringToBuffer("bar", "utf8"),
+		);
 	});
 
 	it("Nested Blob", async () => {
@@ -78,6 +85,9 @@ describe("LocalChannelStorageService", () => {
 
 		assert.strictEqual(await ss.contains("nested/foo"), true);
 		assert.deepStrictEqual(await ss.list("nested/"), ["foo"]);
-		assert.deepStrictEqual(await ss.readBlob("nested/foo"), stringToBuffer("bar", "utf8"));
+		assert.deepStrictEqual(
+			await ss.readBlob("nested/foo"),
+			stringToBuffer("bar", "utf8"),
+		);
 	});
 });

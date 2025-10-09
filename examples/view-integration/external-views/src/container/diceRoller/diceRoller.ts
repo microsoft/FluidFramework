@@ -11,7 +11,11 @@ import type {
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/legacy";
-import { MapFactory, type ISharedMap, type IValueChanged } from "@fluidframework/map/legacy";
+import {
+	MapFactory,
+	type ISharedMap,
+	type IValueChanged,
+} from "@fluidframework/map/legacy";
 import type {
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
@@ -71,7 +75,9 @@ export class DiceRollerFactory implements IFluidDataStoreFactory {
 		context: IFluidDataStoreContext,
 		existing: boolean,
 	): Promise<IFluidDataStoreChannel> {
-		const provideEntryPoint = async (entryPointRuntime: IFluidDataStoreRuntime) => {
+		const provideEntryPoint = async (
+			entryPointRuntime: IFluidDataStoreRuntime,
+		) => {
 			const map = (await entryPointRuntime.getChannel(mapId)) as ISharedMap;
 			return new DiceRoller(map);
 		};

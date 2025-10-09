@@ -39,7 +39,10 @@ describe.skip("SES edit evaluator", () => {
 	});
 
 	it("passes globals to the compartment", async () => {
-		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
+		const view = independentView(
+			new TreeViewConfiguration({ schema: sf.string }),
+			{},
+		);
 		view.initialize("Initial");
 		const executeEdit = await createSesEditEvaluator({
 			lockdownOptions,
@@ -62,7 +65,10 @@ describe.skip("SES edit evaluator", () => {
 	});
 
 	it("returns a code error when SES blocks the generated code", async () => {
-		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
+		const view = independentView(
+			new TreeViewConfiguration({ schema: sf.string }),
+			{},
+		);
 		view.initialize("Initial");
 		const executeEdit = await createSesEditEvaluator({
 			lockdownOptions,
@@ -79,7 +85,11 @@ describe.skip("SES edit evaluator", () => {
 		const agent = new SharedTreeSemanticAgent(model, view, { executeEdit });
 		const response = await agent.query("Attempt forbidden edit");
 		assert.match(response, /is not extensible/i);
-		assert.equal(view.root, "Initial", "Tree should not change after SES rejection");
+		assert.equal(
+			view.root,
+			"Initial",
+			"Tree should not change after SES rejection",
+		);
 	});
 });
 

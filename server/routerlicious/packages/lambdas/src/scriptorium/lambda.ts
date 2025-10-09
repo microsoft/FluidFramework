@@ -279,13 +279,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
 					status = ScriptoriumStatus.CheckpointFailed;
 					metric?.setProperty("timestampCheckpointFailed", new Date().toISOString());
 					const errorMessage = "Scriptorium failed to checkpoint batch";
-					this.logErrorTelemetry(
-						errorMessage,
-						error,
-						status,
-						batchOffset?.offset,
-						metric,
-					);
+					this.logErrorTelemetry(errorMessage, error, status, batchOffset?.offset, metric);
 					throw error;
 				}
 
@@ -303,26 +297,14 @@ export class ScriptoriumLambda implements IPartitionLambda {
 				if (error.circuitBreakerOpen === true && this.lastSuccessfulOffset !== undefined) {
 					const errorMessage =
 						"Scriptorium failed to process batch, circuit breaker is opened and pausing lambda";
-					this.logErrorTelemetry(
-						errorMessage,
-						error,
-						status,
-						batchOffset?.offset,
-						metric,
-					);
+					this.logErrorTelemetry(errorMessage, error, status, batchOffset?.offset, metric);
 
 					// Circuit breaker is open, pause lambda. It will be resumed when circuit breaker closes after some time.
 					this.context.pause(this.lastSuccessfulOffset + 1, error);
 					return;
 				} else {
 					const errorMessage = "Scriptorium failed to process batch, going to restart";
-					this.logErrorTelemetry(
-						errorMessage,
-						error,
-						status,
-						batchOffset?.offset,
-						metric,
-					);
+					this.logErrorTelemetry(errorMessage, error, status, batchOffset?.offset, metric);
 
 					// Restart scriptorium
 					this.context.error(error, { restart: true });

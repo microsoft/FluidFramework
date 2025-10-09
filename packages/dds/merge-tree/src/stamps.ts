@@ -82,7 +82,9 @@ export interface SliceRemoveOperationStamp extends OperationStamp {
 	readonly type: "sliceRemove";
 }
 
-export type RemoveOperationStamp = SetRemoveOperationStamp | SliceRemoveOperationStamp;
+export type RemoveOperationStamp =
+	| SetRemoveOperationStamp
+	| SliceRemoveOperationStamp;
 
 export function lessThan(a: OperationStamp, b: OperationStamp): boolean {
 	if (a.seq === UnassignedSequenceNumber) {
@@ -119,7 +121,9 @@ export function lte(a: OperationStamp, b: OperationStamp): boolean {
 }
 
 export function equal(a: OperationStamp, b: OperationStamp): boolean {
-	return a.seq === b.seq && a.clientId === b.clientId && a.localSeq === b.localSeq;
+	return (
+		a.seq === b.seq && a.clientId === b.clientId && a.localSeq === b.localSeq
+	);
 }
 
 export function isLocal(a: OperationStamp): boolean {
@@ -141,7 +145,10 @@ export function isAcked(a: OperationStamp): boolean {
  * If inserting a variable number of timestamps, consider just pushing them and sorting the list
  * after using {@link compare} instead.
  */
-export function spliceIntoList(list: OperationStamp[], stamp: OperationStamp): void {
+export function spliceIntoList(
+	list: OperationStamp[],
+	stamp: OperationStamp,
+): void {
 	if (isLocal(stamp) || list.length === 0) {
 		list.push(stamp);
 	} else {

@@ -16,7 +16,11 @@ import {
 } from "@fluidframework/tree/internal";
 import { z } from "zod";
 
-import { buildFunc, exposeMethodsSymbol, type ExposedMethods } from "../methodBinding.js";
+import {
+	buildFunc,
+	exposeMethodsSymbol,
+	type ExposedMethods,
+} from "../methodBinding.js";
 import { getPrompt } from "../prompt.js";
 import { Subtree } from "../subtree.js";
 import type { TreeView } from "../utils.js";
@@ -78,7 +82,9 @@ describe("Prompt generation", () => {
 				subtree: new Subtree(view),
 				editToolName: "EditTreeTool",
 			});
-			assert.ok(!prompt.includes("ALWAYS prefer to use any application helper methods"));
+			assert.ok(
+				!prompt.includes("ALWAYS prefer to use any application helper methods"),
+			);
 		}
 
 		// If there are methods, then the prompt should mention them
@@ -102,7 +108,9 @@ describe("Prompt generation", () => {
 				subtree: new Subtree(view),
 				editToolName: "EditTreeTool",
 			});
-			assert.ok(prompt.includes("ALWAYS prefer to use any application helper methods"));
+			assert.ok(
+				prompt.includes("ALWAYS prefer to use any application helper methods"),
+			);
 		}
 	});
 

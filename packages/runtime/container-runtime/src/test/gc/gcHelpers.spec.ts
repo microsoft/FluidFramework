@@ -53,7 +53,10 @@ describe("Garbage Collection Helpers Tests", () => {
 		];
 		for (const { persisted, current, expectedShouldAllowValue } of testCases) {
 			it(`persisted=${persisted}, current=${current}`, () => {
-				const shouldAllow = shouldAllowGcSweep({ tombstoneGeneration: persisted }, current);
+				const shouldAllow = shouldAllowGcSweep(
+					{ tombstoneGeneration: persisted },
+					current,
+				);
 				assert.equal(shouldAllow, expectedShouldAllowValue);
 			});
 		}

@@ -3,7 +3,7 @@
 	"include": ["bin/*"],
 	"references": [
 		{
-			"path": "./tsconfig.json",
-		},
-	],
+			"path": "./tsconfig.json"
+		}
+	]
 }

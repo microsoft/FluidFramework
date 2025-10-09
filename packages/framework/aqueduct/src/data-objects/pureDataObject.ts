@@ -33,7 +33,9 @@ import type { DataObjectTypes, IDataObjectProps } from "./types.js";
  * @typeParam I - The optional input types used to strongly type the data object
  * @legacy @beta
  */
-export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes>
+export abstract class PureDataObject<
+		I extends DataObjectTypes = DataObjectTypes,
+	>
 	extends TypedEventEmitter<I["Events"] & IEvent>
 	// eslint-disable-next-line import/no-deprecated
 	implements IFluidLoadable, IProvideFluidHandle
@@ -55,7 +57,9 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	 *
 	 * To define providers set FluidObject interfaces in the OptionalProviders generic type for your data store
 	 */
-	protected readonly providers: AsyncFluidObjectProvider<I["OptionalProviders"]>;
+	protected readonly providers: AsyncFluidObjectProvider<
+		I["OptionalProviders"]
+	>;
 
 	protected initProps?: I["InitialState"];
 
@@ -93,11 +97,16 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 		// PureDataObjectFactory already provides an entryPoint initialization function to the data store runtime,
 		// so this object should always have access to a non-null entryPoint. Need to cast because PureDataObject
 		// tried to be too smart with its typing for handles :).
-		assert(this.runtime.entryPoint !== undefined, 0x46b /* EntryPoint was undefined */);
+		assert(
+			this.runtime.entryPoint !== undefined,
+			0x46b /* EntryPoint was undefined */,
+		);
 		return this.runtime.entryPoint as IFluidHandleInternal<this>;
 	}
 
-	public static async getDataObject(runtime: IFluidDataStoreRuntime): Promise<PureDataObject> {
+	public static async getDataObject(
+		runtime: IFluidDataStoreRuntime,
+	): Promise<PureDataObject> {
 		const obj = await runtime.entryPoint.get();
 		return obj as PureDataObject;
 	}
@@ -171,7 +180,9 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	 *
 	 * @param props - Optional props to be passed in on create
 	 */
-	protected async initializingFirstTime(props?: I["InitialState"]): Promise<void> {}
+	protected async initializingFirstTime(
+		props?: I["InitialState"],
+	): Promise<void> {}
 
 	/**
 	 * Called every time but the first time the data store is initialized (creations

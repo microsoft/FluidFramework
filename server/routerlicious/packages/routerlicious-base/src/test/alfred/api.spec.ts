@@ -141,10 +141,7 @@ describe("Routerlicious", () => {
 				scopes,
 			)}`;
 			const defaultProducer = new TestProducer(new TestKafka());
-			const deltasCollection = await defaultDbManager.getDeltaCollection(
-				undefined,
-				undefined,
-			);
+			const deltasCollection = await defaultDbManager.getDeltaCollection(undefined, undefined);
 			const defaultDeltaService = new DeltaService(deltasCollection, defaultTenantManager);
 			const defaultDocumentRepository = new TestNotImplementedDocumentRepository();
 			const defaultDocumentDeleteService = new DocumentDeleteService();
@@ -543,9 +540,7 @@ describe("Routerlicious", () => {
 							.expect(404);
 					});
 					it("/:tenantId/:id-invalidToken", async () => {
-						await supertest
-							.get(`/documents/${appTenant1.id}/${document1._id}`)
-							.expect(403);
+						await supertest.get(`/documents/${appTenant1.id}/${document1._id}`).expect(403);
 					});
 					it("/:tenantId", async () => {
 						await supertest
@@ -567,24 +562,16 @@ describe("Routerlicious", () => {
 
 				describe("/deltas-invalidToken", () => {
 					it("/raw/:tenantId/:id", async () => {
-						await supertest
-							.get(`/deltas/raw/${appTenant2.id}/${document1._id}`)
-							.expect(403);
+						await supertest.get(`/deltas/raw/${appTenant2.id}/${document1._id}`).expect(403);
 					});
 					it("/:tenantId/:id", async () => {
-						await supertest
-							.get(`/deltas/${appTenant2.id}/${document1._id}`)
-							.expect(403);
+						await supertest.get(`/deltas/${appTenant2.id}/${document1._id}`).expect(403);
 					});
 					it("/v1/:tenantId/:id", async () => {
-						await supertest
-							.get(`/deltas/v1/${appTenant2.id}/${document1._id}`)
-							.expect(403);
+						await supertest.get(`/deltas/v1/${appTenant2.id}/${document1._id}`).expect(403);
 					});
 					it("/:tenantId/:id/v1", async () => {
-						await supertest
-							.get(`/deltas/${appTenant2.id}/${document1._id}/v1`)
-							.expect(403);
+						await supertest.get(`/deltas/${appTenant2.id}/${document1._id}/v1`).expect(403);
 					});
 				});
 			});
@@ -667,10 +654,7 @@ describe("Routerlicious", () => {
 					await supertest[method](url)
 						.set(correlationIdHeaderName, testCorrelationId)
 						.then((res) => {
-							assert.strictEqual(
-								res.header?.[correlationIdHeaderName],
-								testCorrelationId,
-							);
+							assert.strictEqual(res.header?.[correlationIdHeaderName], testCorrelationId);
 						});
 				};
 
@@ -679,10 +663,7 @@ describe("Routerlicious", () => {
 						await assertCorrelationId("/api/v1/ping");
 					});
 					it("/tenants/:tenantid/accesstoken", async () => {
-						await assertCorrelationId(
-							`/api/v1/tenants/${appTenant1.id}/accesstoken`,
-							"post",
-						);
+						await assertCorrelationId(`/api/v1/tenants/${appTenant1.id}/accesstoken`, "post");
 					});
 					it("/:tenantId/:id/root", async () => {
 						await assertCorrelationId(
@@ -896,9 +877,7 @@ describe("Routerlicious", () => {
 				describe("documents", () => {
 					it("/:tenantId/session/:id", async () => {
 						// Create a new session
-						Sinon.stub(defaultDocumentRepository, "updateOne").returns(
-							Promise.resolve(),
-						);
+						Sinon.stub(defaultDocumentRepository, "updateOne").returns(Promise.resolve());
 						Sinon.stub(defaultDocumentRepository, "readOne")
 							.onFirstCall()
 							.returns(Promise.resolve({} as IDocument))
@@ -907,8 +886,7 @@ describe("Routerlicious", () => {
 								Promise.resolve({
 									session: {
 										ordererUrl: defaultProvider.get("worker:serverUrl"),
-										deltaStreamUrl:
-											defaultProvider.get("worker:deltaStreamUrl"),
+										deltaStreamUrl: defaultProvider.get("worker:deltaStreamUrl"),
 										historianUrl: defaultProvider.get("worker:blobStorageUrl"),
 										isSessionAlive: false,
 										isSessionActive: true,
@@ -1227,18 +1205,14 @@ describe("Routerlicious", () => {
 							.returns(Promise.resolve(documentNotFound));
 
 						await supertest
-							.post(
-								`/api/v1/${appTenant1.id}/${documentNotFound._id}/broadcast-signal`,
-							)
+							.post(`/api/v1/${appTenant1.id}/${documentNotFound._id}/broadcast-signal`)
 							.send(body)
 							.set("Authorization", tenantToken1)
 							.set("Content-Type", "application/json")
 							.expect(404);
 
 						await supertest
-							.post(
-								`/api/v1/${appTenant1.id}/${documentNotFound._id}/broadcast-signal`,
-							)
+							.post(`/api/v1/${appTenant1.id}/${documentNotFound._id}/broadcast-signal`)
 							.send(body)
 							.set("Authorization", tenantToken1)
 							.set("Content-Type", "application/json")

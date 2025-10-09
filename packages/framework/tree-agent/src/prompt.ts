@@ -173,7 +173,9 @@ ${stringified}
  * Serializes tree data e.g. to include in a prompt or message.
  * @remarks This includes some extra metadata to make it easier to understand the structure of the tree.
  */
-export function stringifyTree(tree: ReadableField<ImplicitFieldSchema>): string {
+export function stringifyTree(
+	tree: ReadableField<ImplicitFieldSchema>,
+): string {
 	const typeReplacementKey = "_e944da5a5fd04ea2b8b2eb6109e089ed";
 	const indexReplacementKey = "_27bb216b474d45e6aaee14d1ec267b96";
 	const mapReplacementKey = "_a0d98d22a1c644539f07828d3f064d71";

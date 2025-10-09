@@ -129,7 +129,9 @@ describe("getSimpleSchema", () => {
 					"test.array",
 					{
 						kind: NodeKind.Array,
-						allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+						allowedTypesIdentifiers: new Set([
+							"com.fluidframework.leaf.string",
+						]),
 						metadata: {},
 						persistedMetadata: undefined,
 					},
@@ -159,7 +161,9 @@ describe("getSimpleSchema", () => {
 						kind: NodeKind.Map,
 						metadata: {},
 						persistedMetadata: undefined,
-						allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+						allowedTypesIdentifiers: new Set([
+							"com.fluidframework.leaf.string",
+						]),
 					},
 				],
 				["com.fluidframework.leaf.string", simpleString],
@@ -187,7 +191,9 @@ describe("getSimpleSchema", () => {
 						kind: NodeKind.Record,
 						metadata: {},
 						persistedMetadata: undefined,
-						allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+						allowedTypesIdentifiers: new Set([
+							"com.fluidframework.leaf.string",
+						]),
 					},
 				],
 				["com.fluidframework.leaf.string", simpleString],
@@ -226,7 +232,9 @@ describe("getSimpleSchema", () => {
 									kind: FieldKind.Optional,
 									metadata: {},
 									persistedMetadata: undefined,
-									allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.number"]),
+									allowedTypesIdentifiers: new Set([
+										"com.fluidframework.leaf.number",
+									]),
 									storedKey: "foo",
 								},
 							],
@@ -236,7 +244,9 @@ describe("getSimpleSchema", () => {
 									kind: FieldKind.Required,
 									metadata: {},
 									persistedMetadata: undefined,
-									allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+									allowedTypesIdentifiers: new Set([
+										"com.fluidframework.leaf.string",
+									]),
 									storedKey: "bar",
 								},
 							],
@@ -279,7 +289,9 @@ describe("getSimpleSchema", () => {
 									kind: FieldKind.Identifier,
 									metadata: {},
 									persistedMetadata: undefined,
-									allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+									allowedTypesIdentifiers: new Set([
+										"com.fluidframework.leaf.string",
+									]),
 									storedKey: "id",
 								},
 							],
@@ -342,7 +354,10 @@ describe("getSimpleSchema", () => {
 	it("Recursive object schema", () => {
 		const schemaFactory = new SchemaFactory("test");
 		class Schema extends schemaFactory.objectRecursive("recursive-object", {
-			foo: schemaFactory.optionalRecursive([schemaFactory.string, () => Schema]),
+			foo: schemaFactory.optionalRecursive([
+				schemaFactory.string,
+				() => Schema,
+			]),
 		}) {}
 
 		const actual = toSimpleTreeSchema(Schema, true);

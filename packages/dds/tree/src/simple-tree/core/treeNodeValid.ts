@@ -6,7 +6,10 @@
 import { assert, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { type FlexTreeNode, isFlexTreeNode } from "../../feature-libraries/index.js";
+import {
+	type FlexTreeNode,
+	isFlexTreeNode,
+} from "../../feature-libraries/index.js";
 
 import { inPrototypeChain, privateToken, TreeNode } from "./treeNode.js";
 import { UnhydratedFlexTreeNode } from "./unhydratedFlexTree.js";
@@ -94,13 +97,19 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 	 * Ways to enforce this immutability prevent it from being overridden,
 	 * so code modifying constructorCached should be extra careful to avoid accidentally modifying the base/inherited value.
 	 */
-	protected static constructorCached: MostDerivedData | "default" | undefined = "default";
+	protected static constructorCached: MostDerivedData | "default" | undefined =
+		"default";
 
 	/**
 	 * Indicate that `this` is the most derived version of a schema, and thus the only one allowed to be used (other than by being subclassed a single time).
 	 */
-	public static markMostDerived(this: typeof TreeNodeValid & TreeNodeSchema): MostDerivedData {
-		assert(this.constructorCached !== "default", 0x95f /* invalid schema class */);
+	public static markMostDerived(
+		this: typeof TreeNodeValid & TreeNodeSchema,
+	): MostDerivedData {
+		assert(
+			this.constructorCached !== "default",
+			0x95f /* invalid schema class */,
+		);
 
 		if (this.constructorCached === undefined) {
 			// Set the constructorCached on the layer of the prototype chain that declared it.
@@ -112,11 +121,19 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 			// This is not just an alias of `this`, but a reference to the item in the prototype chain being walked, which happens to start at `this`.
 			// eslint-disable-next-line @typescript-eslint/no-this-alias, unicorn/no-this-assignment
 			let schemaBase: typeof TreeNodeValid = this;
-			while (!Object.prototype.hasOwnProperty.call(schemaBase, "constructorCached")) {
+			while (
+				!Object.prototype.hasOwnProperty.call(schemaBase, "constructorCached")
+			) {
 				schemaBase = Reflect.getPrototypeOf(schemaBase) as typeof TreeNodeValid;
 			}
-			assert(schemaBase.constructorCached === undefined, 0x962 /* overwriting wrong cache */);
-			schemaBase.constructorCached = { constructor: this, oneTimeInitialized: undefined };
+			assert(
+				schemaBase.constructorCached === undefined,
+				0x962 /* overwriting wrong cache */,
+			);
+			schemaBase.constructorCached = {
+				constructor: this,
+				oneTimeInitialized: undefined,
+			};
 			assert(
 				this.constructorCached === schemaBase.constructorCached,
 				0x9b5 /* Inheritance should work */,
@@ -155,10 +172,13 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 	/**
 	 * See {@link TreeNodeSchemaCore.createFromInsertable}.
 	 */
-	public static createFromInsertable<TInput, TOut, TThis extends new (args: TInput) => TOut>(
-		this: TThis,
-		input: TInput,
-	): TOut {
+	public static createFromInsertable<
+		TInput,
+		TOut,
+		TThis extends new (
+			args: TInput,
+		) => TOut,
+	>(this: TThis, input: TInput): TOut {
 		return new this(input);
 	}
 
@@ -171,7 +191,9 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 		const cache = this.markMostDerived();
 		cache.oneTimeInitialized ??= this.oneTimeSetup();
 		// TypeScript fails to narrow the type of `oneTimeInitialized` to `Context` here, so use a cast:
-		return cache as MostDerivedData & { oneTimeInitialized: TreeNodeSchemaInitializedData };
+		return cache as MostDerivedData & {
+			oneTimeInitialized: TreeNodeSchemaInitializedData;
+		};
 	}
 
 	public constructor(input: TInput | InternalTreeNode) {
@@ -186,7 +208,9 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 			);
 		}
 
-		const node: InnerNode = isFlexTreeNode(input) ? input : schema.buildRawNode(this, input);
+		const node: InnerNode = isFlexTreeNode(input)
+			? input
+			: schema.buildRawNode(this, input);
 		assert(
 			getSimpleNodeSchemaFromInnerNode(node) === schema,
 			0x83b /* building node with wrong schema */,
@@ -268,7 +292,8 @@ export function createTreeNodeSchemaPrivateData(
 	schemaValid.markMostDerived();
 
 	return {
-		idempotentInitialize: () => schemaValid.oneTimeInitialize().oneTimeInitialized,
+		idempotentInitialize: () =>
+			schemaValid.oneTimeInitialize().oneTimeInitialized,
 		childAnnotatedAllowedTypes,
 		toStored,
 	};

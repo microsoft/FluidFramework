@@ -34,7 +34,12 @@ import {
 	getLumberBaseProperties,
 } from "@fluidframework/server-services-telemetry";
 
-import { NoOpLambda, createSessionMetric, isDocumentValid, isDocumentSessionValid } from "../utils";
+import {
+	NoOpLambda,
+	createSessionMetric,
+	isDocumentValid,
+	isDocumentSessionValid,
+} from "../utils";
 
 import { createDeliCheckpointManagerFromCollection } from "./checkpointManager";
 import { DeliLambda } from "./lambda";
@@ -176,9 +181,7 @@ export class DeliLambdaFactory
 					// is okay. Conceptually this is similar to default checkpoint where logOffset is -1. In this case,
 					// the sequence number is 'n' rather than '0'.
 					lastCheckpoint.logOffset = -1;
-					const message = `Deli checkpoint from summary: ${JSON.stringify(
-						lastCheckpoint,
-					)}`;
+					const message = `Deli checkpoint from summary: ${JSON.stringify(lastCheckpoint)}`;
 					context.log?.info(message, { messageMetaData });
 					Lumberjack.info(message, getLumberBaseProperties(documentId, tenantId));
 				}
@@ -247,8 +250,7 @@ export class DeliLambdaFactory
 										...baseLumberjackProperties,
 										documentCreationTime: document.createTime,
 										documentExpirationTime:
-											document.createTime +
-											(this.ephemeralDocumentTTLSec ?? 0) * 1000,
+											document.createTime + (this.ephemeralDocumentTTLSec ?? 0) * 1000,
 									},
 								);
 							}
@@ -259,26 +261,20 @@ export class DeliLambdaFactory
 							documentId,
 							tenantId,
 						};
-						if (
-							this.serviceConfiguration.deli.ephemeralContainerSoftDeleteTimeInMs >= 0
-						) {
+						if (this.serviceConfiguration.deli.ephemeralContainerSoftDeleteTimeInMs >= 0) {
 							const scheduledDeletionTimeStr = new Date(
 								Date.now() +
-									this.serviceConfiguration.deli
-										.ephemeralContainerSoftDeleteTimeInMs,
+									this.serviceConfiguration.deli.ephemeralContainerSoftDeleteTimeInMs,
 							).toJSON();
 							await this.documentRepository.updateOne(
 								deletionFilter,
 								{ scheduledDeletionTime: scheduledDeletionTimeStr },
 								null,
 							);
-							Lumberjack.info(
-								`Successfully scheduled to clean up ephemeral container`,
-								{
-									...baseLumberjackProperties,
-									scheduledDeletionTime: scheduledDeletionTimeStr,
-								},
-							);
+							Lumberjack.info(`Successfully scheduled to clean up ephemeral container`, {
+								...baseLumberjackProperties,
+								scheduledDeletionTime: scheduledDeletionTimeStr,
+							});
 						} else {
 							await this.documentRepository.deleteOne(deletionFilter);
 
@@ -300,10 +296,9 @@ export class DeliLambdaFactory
 					// Set skip session stickiness to be true if cluster is in draining
 					if (this.clusterDrainingChecker) {
 						try {
-							const isClusterDraining =
-								await this.clusterDrainingChecker.isClusterDraining({
-									tenantId,
-								});
+							const isClusterDraining = await this.clusterDrainingChecker.isClusterDraining({
+								tenantId,
+							});
 							if (isClusterDraining) {
 								Lumberjack.info(
 									"Cluster is in draining, set skip session stickiness to be true",
@@ -357,11 +352,7 @@ export class DeliLambdaFactory
 				}
 			};
 			handler().catch((error) => {
-				Lumberjack.error(
-					"Failed to handle NoClient event.",
-					baseLumberjackProperties,
-					error,
-				);
+				Lumberjack.error("Failed to handle NoClient event.", baseLumberjackProperties, error);
 			});
 		});
 
@@ -448,11 +439,7 @@ export class DeliLambdaFactory
 				const errorMessage = `Error fetching deli state from summary`;
 				logger?.error(errorMessage, { messageMetaData });
 				logger?.error(JSON.stringify(error), { messageMetaData });
-				Lumberjack.error(
-					errorMessage,
-					getLumberBaseProperties(documentId, tenantId),
-					error,
-				);
+				Lumberjack.error(errorMessage, getLumberBaseProperties(documentId, tenantId), error);
 				return undefined;
 			}
 		}

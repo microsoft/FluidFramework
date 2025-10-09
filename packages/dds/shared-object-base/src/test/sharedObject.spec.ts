@@ -78,17 +78,24 @@ class MySharedObjectCore extends SharedObjectCore {
 
 		this.attached = attached;
 		// See call site in SharedObjectCore.submitLocalMessage
-		Object.assign(this, { services: { deltaConnection: { submit: submitFnOverride } } });
+		Object.assign(this, {
+			services: { deltaConnection: { submit: submitFnOverride } },
+		});
 	}
 
 	// Make submitLocalMessage public for testing
-	public submitLocalMessage(content: unknown, localOpMetadata: unknown = undefined): void {
+	public submitLocalMessage(
+		content: unknown,
+		localOpMetadata: unknown = undefined,
+	): void {
 		super.submitLocalMessage(content, localOpMetadata);
 	}
 
 	public stubSubmitFn(submitFn: sinon.SinonSpy): void {
 		// See call site in SharedObjectCore.submitLocalMessage
-		Object.assign(this, { services: { deltaConnection: { submit: submitFn } } });
+		Object.assign(this, {
+			services: { deltaConnection: { submit: submitFn } },
+		});
 	}
 
 	public override isAttached(): boolean {
@@ -96,7 +103,9 @@ class MySharedObjectCore extends SharedObjectCore {
 	}
 	private readonly attached: boolean;
 
-	protected readonly serializer = new FluidSerializer({} as unknown as IFluidHandleContext);
+	protected readonly serializer = new FluidSerializer(
+		{} as unknown as IFluidHandleContext,
+	);
 
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
 		throw new Error("Method not implemented.");
@@ -117,7 +126,10 @@ class MySharedObjectCore extends SharedObjectCore {
 	protected applyStashedOp(content: unknown): void {
 		throw new Error("Method not implemented.");
 	}
-	public getAttachSummary(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats {
+	public getAttachSummary(
+		fullTree?: boolean,
+		trackState?: boolean,
+	): ISummaryTreeWithStats {
 		throw new Error("Method not implemented.");
 	}
 	public async summarize(
@@ -144,7 +156,8 @@ describe("SharedObject", () => {
 describe("SharedObjectCore", () => {
 	it("rejects slashes in id", () => {
 		const invalidId = "beforeSlash/afterSlash";
-		const codeBlock = (): SharedObjectCore => new MySharedObjectCore({ id: invalidId });
+		const codeBlock = (): SharedObjectCore =>
+			new MySharedObjectCore({ id: invalidId });
 		assert.throws(codeBlock, (e: Error) =>
 			validateAssertionError(e, "Id cannot contain slashes"),
 		);
@@ -165,11 +178,14 @@ describe("SharedObjectCore", () => {
 		};
 
 		const serializedMockHandleMatcher = sinon.match(
-			(value: unknown) => isSerializedHandle(value) && value.url === mockHandle.absolutePath,
+			(value: unknown) =>
+				isSerializedHandle(value) && value.url === mockHandle.absolutePath,
 			"serialized handle string",
 		);
 
-		function set_submitMessagesWithoutEncodingHandles(value: boolean | undefined): void {
+		function set_submitMessagesWithoutEncodingHandles(
+			value: boolean | undefined,
+		): void {
 			(
 				dataStoreRuntime as unknown as {
 					submitMessagesWithoutEncodingHandles?: boolean;

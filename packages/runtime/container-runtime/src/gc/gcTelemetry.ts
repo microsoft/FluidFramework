@@ -42,7 +42,9 @@ interface ICommonProps {
  * The event that is logged when unreferenced node is used after a certain time.
  */
 
-interface IUnreferencedEventProps extends ICreateContainerMetadata, ICommonProps {
+interface IUnreferencedEventProps
+	extends ICreateContainerMetadata,
+		ICommonProps {
 	/**
 	 * The id that GC uses to track the node. May or may not match id
 	 */
@@ -227,7 +229,8 @@ export class GCTelemetryTracker {
 			age:
 				nodeStateTracker === undefined
 					? -1
-					: currentReferenceTimestampMs - nodeStateTracker.unreferencedTimestampMs,
+					: currentReferenceTimestampMs -
+						nodeStateTracker.unreferencedTimestampMs,
 			timeout,
 			isTombstoned,
 			...tagCodeArtifacts({ id: untaggedId, fromId: untaggedFromId }),
@@ -239,7 +242,12 @@ export class GCTelemetryTracker {
 
 		// If the node that is used is tombstoned, log a tombstone telemetry.
 		if (isTombstoned) {
-			this.logTombstoneUsageTelemetry(unrefEventProps, nodeType, usageType, packagePath);
+			this.logTombstoneUsageTelemetry(
+				unrefEventProps,
+				nodeType,
+				usageType,
+				packagePath,
+			);
 		}
 
 		// After logging tombstone telemetry, if the node's unreferenced state is not tracked, there is nothing
@@ -251,7 +259,14 @@ export class GCTelemetryTracker {
 		const state = nodeStateTracker.state;
 		const uniqueEventId = `${state}-${untaggedId}-${usageType}`;
 
-		if (!this.shouldLogNonActiveEvent(nodeType, usageType, nodeStateTracker, uniqueEventId)) {
+		if (
+			!this.shouldLogNonActiveEvent(
+				nodeType,
+				usageType,
+				nodeStateTracker,
+				uniqueEventId,
+			)
+		) {
 			return;
 		}
 
@@ -275,8 +290,14 @@ export class GCTelemetryTracker {
 			// Events generated:
 			// InactiveObject_Loaded, SweepReadyObject_Loaded
 			if (usageType === "Loaded") {
-				const { id, fromId, headers, gcConfigs, additionalProps, ...detailedProps } =
-					unrefEventProps;
+				const {
+					id,
+					fromId,
+					headers,
+					gcConfigs,
+					additionalProps,
+					...detailedProps
+				} = unrefEventProps;
 				const event = {
 					eventName: `${state}Object_${usageType}`,
 					...tagCodeArtifacts({ pkg: packagePath?.join("/") }),
@@ -309,8 +330,14 @@ export class GCTelemetryTracker {
 		// GC_Tombstone_DataStore_Requested, GC_Tombstone_DataStore_Changed, GC_Tombstone_DataStore_Revived
 		// GC_Tombstone_SubDataStore_Requested, GC_Tombstone_SubDataStore_Changed, GC_Tombstone_SubDataStore_Revived
 		// GC_Tombstone_Blob_Requested, GC_Tombstone_Blob_Changed, GC_Tombstone_Blob_Revived
-		const { id, fromId, headers, gcConfigs, additionalProps, ...detailedProps } =
-			unrefEventProps;
+		const {
+			id,
+			fromId,
+			headers,
+			gcConfigs,
+			additionalProps,
+			...detailedProps
+		} = unrefEventProps;
 		const eventUsageName = usageType === "Loaded" ? "Requested" : usageType;
 		const event = {
 			eventName: `GC_Tombstone_${nodeType}_${eventUsageName}`,
@@ -352,7 +379,9 @@ export class GCTelemetryTracker {
 		explicitReferences: Map<string, string[]>,
 		logger: ITelemetryLoggerExt,
 	): void {
-		for (const [nodeId, currentOutboundRoutes] of Object.entries(currentGCData.gcNodes)) {
+		for (const [nodeId, currentOutboundRoutes] of Object.entries(
+			currentGCData.gcNodes,
+		)) {
 			const previousRoutes = previousGCData.gcNodes[nodeId] ?? [];
 			const explicitRoutes = explicitReferences.get(nodeId) ?? [];
 
@@ -418,12 +447,17 @@ export class GCTelemetryTracker {
 			 * Loaded and Changed events are logged only if the node is not active. If the node is active, it was
 			 * revived and a Revived event will be logged for it.
 			 */
-			const nodeStateTracker = this.getNodeStateTracker(detailedProps.trackedId); // Note: This is never SubDataStore path
+			const nodeStateTracker = this.getNodeStateTracker(
+				detailedProps.trackedId,
+			); // Note: This is never SubDataStore path
 			const active =
-				nodeStateTracker === undefined || nodeStateTracker.state === UnreferencedState.Active;
+				nodeStateTracker === undefined ||
+				nodeStateTracker.state === UnreferencedState.Active;
 			if ((usageType === "Revived") === active) {
 				const pkg = await this.getNodePackagePath(id.value);
-				const fromPkg = fromId ? await this.getNodePackagePath(fromId.value) : undefined;
+				const fromPkg = fromId
+					? await this.getNodePackagePath(fromId.value)
+					: undefined;
 				const event = {
 					eventName: `${state}Object_${usageType}`,
 					id,

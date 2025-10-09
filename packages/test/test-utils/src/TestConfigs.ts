@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import {
+	ConfigTypes,
+	IConfigProviderBase,
+} from "@fluidframework/core-interfaces";
 
 /**
  * Extension of IConfigProviderBase that supports setting a config value and clearing all

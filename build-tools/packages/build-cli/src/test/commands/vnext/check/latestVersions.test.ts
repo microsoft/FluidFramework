@@ -22,7 +22,11 @@ const test_tags = ["group2_v1.0.0", "group3_v1.2.3"];
  * @param testValue - the value to test against
  * @returns An assertion that will fail if the line doesn't match the value and pass if it does.
  */
-function stdoutLineEquals(stdout: string, lineIndex: number, testValue: string): void {
+function stdoutLineEquals(
+	stdout: string,
+	lineIndex: number,
+	testValue: string,
+): void {
 	const lines = stdout.split(EOL);
 	if (lineIndex > lines.length) {
 		console.error(lines);

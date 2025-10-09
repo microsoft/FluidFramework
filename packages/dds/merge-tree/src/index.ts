@@ -31,7 +31,10 @@ export {
 	RedBlackTree,
 	type SortedDictionary,
 } from "./collections/index.js";
-export { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants.js";
+export {
+	UnassignedSequenceNumber,
+	UniversalSequenceNumber,
+} from "./constants.js";
 export {
 	createDetachedLocalReferencePosition,
 	LocalReferenceCollection,
@@ -130,7 +133,10 @@ export {
 	endpointPosAndSide,
 } from "./sequencePlace.js";
 export { SortedSet } from "./sortedSet.js";
-export { SortedSegmentSet, type SortedSegmentSetItem } from "./sortedSegmentSet.js";
+export {
+	SortedSegmentSet,
+	type SortedSegmentSetItem,
+} from "./sortedSegmentSet.js";
 export { type IJSONTextSegment, TextSegment } from "./textSegment.js";
 export {
 	appendToMergeTreeDeltaRevertibles,
@@ -141,5 +147,8 @@ export {
 	revertMergeTreeDeltaRevertibles,
 } from "./revertibles.js";
 export type { OperationStamp } from "./stamps.js";
-export { createLocalReconnectingPerspective, type Perspective } from "./perspective.js";
+export {
+	createLocalReconnectingPerspective,
+	type Perspective,
+} from "./perspective.js";
 export type { IMergeTreeTextHelper } from "./MergeTreeTextHelper.js";

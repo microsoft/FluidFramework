@@ -4,7 +4,10 @@
  */
 
 import { ModelContainerRuntimeFactory } from "@fluid-example/example-utils";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import {
+	DataObject,
+	DataObjectFactory,
+} from "@fluidframework/aqueduct/internal";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
@@ -46,7 +49,10 @@ export class CollaborativeTextContainerRuntimeFactory extends ModelContainerRunt
 	/**
 	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
 	 */
-	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
+	protected async createModel(
+		runtime: IContainerRuntime,
+		container: IContainer,
+	) {
 		const entryPointHandle = (await runtime.getAliasedDataStoreEntryPoint(
 			collaborativeTextId,
 		)) as IFluidHandle<CollaborativeText> | undefined;
@@ -55,7 +61,11 @@ export class CollaborativeTextContainerRuntimeFactory extends ModelContainerRunt
 			throw new Error(`Default dataStore [${collaborativeTextId}] must exist`);
 		}
 
-		return new CollaborativeTextAppModel(await entryPointHandle.get(), container, runtime);
+		return new CollaborativeTextAppModel(
+			await entryPointHandle.get(),
+			container,
+			runtime,
+		);
 	}
 }
 
@@ -101,6 +111,8 @@ class CollaborativeText extends DataObject {
 
 	protected async hasInitialized() {
 		// Store the text if we are loading the first time or loading from existing
-		this._text = await this.root.get<IFluidHandle<SharedString>>(this.textKey)?.get();
+		this._text = await this.root
+			.get<IFluidHandle<SharedString>>(this.textKey)
+			?.get();
 	}
 }

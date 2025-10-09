@@ -26,7 +26,11 @@ export class Bubblebench extends DataObject {
 	protected async initializingFirstTime(): Promise<void> {
 		const tree = (this.maybeTree = SharedTree.create(this.runtime));
 
-		const p = TreeObjectProxy<IApp>(tree, tree.currentView.root, tree.applyEdit.bind(tree));
+		const p = TreeObjectProxy<IApp>(
+			tree,
+			tree.currentView.root,
+			tree.applyEdit.bind(tree),
+		);
 		p.clients = [];
 
 		this.root.set("tree", this.maybeTree.handle);
@@ -34,7 +38,9 @@ export class Bubblebench extends DataObject {
 
 	protected async initializingFromExisting(): Promise<void> {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		this.maybeTree = await this.root.get<IFluidHandle<SharedTree>>("tree")!.get();
+		this.maybeTree = await this.root
+			.get<IFluidHandle<SharedTree>>("tree")!
+			.get();
 	}
 
 	protected async hasInitialized(): Promise<void> {
@@ -50,7 +56,10 @@ export class Bubblebench extends DataObject {
 			// update the tree if it has.
 			setInterval(() => {
 				const clientId = this.runtime.clientId;
-				if (clientId !== undefined && clientId !== this.appState.localClient.clientId) {
+				if (
+					clientId !== undefined &&
+					clientId !== this.appState.localClient.clientId
+				) {
 					this.appState.localClient.clientId = clientId;
 				}
 			}, 1000);

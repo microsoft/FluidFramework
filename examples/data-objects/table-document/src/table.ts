@@ -22,7 +22,12 @@ export interface ITable {
 	readonly numCols: number;
 
 	getCellValue(row: number, col: number): TableDocumentItem;
-	setCellValue(row: number, col: number, value: TableDocumentItem, properties?: PropertySet);
+	setCellValue(
+		row: number,
+		col: number,
+		value: TableDocumentItem,
+		properties?: PropertySet,
+	);
 	annotateRows(startRow: number, endRow: number, properties: PropertySet);
 	getRowProperties(row: number): PropertySet;
 	annotateCols(startCol: number, endCol: number, properties: PropertySet);

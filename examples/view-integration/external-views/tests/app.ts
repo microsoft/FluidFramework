@@ -33,9 +33,13 @@ import {
 import { DiceRollerView } from "../src/view.js";
 
 const urlResolver = new LocalResolver();
-const localServer = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory());
+const localServer = LocalDeltaConnectionServer.create(
+	new LocalSessionStorageDbFactory(),
+);
 const codeLoader: ICodeDetailsLoader = {
-	load: async (details: IFluidCodeDetails): Promise<IFluidModuleWithDetails> => {
+	load: async (
+		details: IFluidCodeDetails,
+	): Promise<IFluidModuleWithDetails> => {
 		return {
 			module: { fluidExport: new DiceRollerContainerRuntimeFactory() },
 			details,
@@ -47,7 +51,9 @@ const codeLoader: ICodeDetailsLoader = {
  * This is a helper function for loading the page. It's required because getting the Fluid Container
  * requires making async calls.
  */
-async function createContainerAndRenderInElement(element: HTMLDivElement): Promise<void> {
+async function createContainerAndRenderInElement(
+	element: HTMLDivElement,
+): Promise<void> {
 	let id: string;
 	let container: IContainer;
 

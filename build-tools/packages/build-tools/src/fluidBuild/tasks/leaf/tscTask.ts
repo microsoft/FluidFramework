@@ -65,7 +65,9 @@ export class TscTask extends LeafTask {
 		const parsedCommandLine = this.parsedCommandLine;
 		if (parsedCommandLine?.options.build) {
 			return this.checkReferencesIsUpToDate(
-				parsedCommandLine.fileNames.length === 0 ? ["."] : parsedCommandLine.fileNames,
+				parsedCommandLine.fileNames.length === 0
+					? ["."]
+					: parsedCommandLine.fileNames,
 				new Set(),
 			);
 		}
@@ -73,7 +75,10 @@ export class TscTask extends LeafTask {
 		return this.checkTscIsUpToDate();
 	}
 
-	private async checkReferencesIsUpToDate(checkDir: string[], checkedProjects: Set<string>) {
+	private async checkReferencesIsUpToDate(
+		checkDir: string[],
+		checkedProjects: Set<string>,
+	) {
 		for (const dir of checkDir) {
 			if (checkedProjects.has(dir)) {
 				continue;
@@ -104,7 +109,9 @@ export class TscTask extends LeafTask {
 		// Only check project reference if we are in build mode
 		if (checkedProjects && config.projectReferences) {
 			const referencePaths = config.projectReferences.map((p) => p.path);
-			if (!(await this.checkReferencesIsUpToDate(referencePaths, checkedProjects))) {
+			if (
+				!(await this.checkReferencesIsUpToDate(referencePaths, checkedProjects))
+			) {
 				return false;
 			}
 		}
@@ -136,7 +143,8 @@ export class TscTask extends LeafTask {
 			(program.affectedFilesPendingEmit?.length ?? 0) > 0 ||
 			(program.emitDiagnosticsPerFile?.length ?? 0) > 0;
 		const hasSemanticErrors =
-			program.semanticDiagnosticsPerFile?.some((item) => Array.isArray(item)) ?? false;
+			program.semanticDiagnosticsPerFile?.some((item) => Array.isArray(item)) ??
+			false;
 
 		const previousBuildError = noEmit
 			? hasChangedFiles || hasSemanticErrors
@@ -154,7 +162,9 @@ export class TscTask extends LeafTask {
 		// remove the files that we sees from the tsBuildInfo.  The remaining files are
 		// new files that need to be rebuilt.
 		const configFileNames = new Set(
-			config.fileNames.map((p) => tscUtils.getCanonicalFileName(path.normalize(p))),
+			config.fileNames.map((p) =>
+				tscUtils.getCanonicalFileName(path.normalize(p)),
+			),
 		);
 
 		// Check dependencies file hashes
@@ -179,23 +189,32 @@ export class TscTask extends LeafTask {
 					fullPath,
 					tscUtils.getSourceFileVersion,
 				);
-				const version = typeof fileInfo === "string" ? fileInfo : fileInfo.version;
+				const version =
+					typeof fileInfo === "string" ? fileInfo : fileInfo.version;
 				if (hash !== version) {
-					this.traceTrigger(`version mismatch for ${fileName}, ${hash}, ${version}`);
+					this.traceTrigger(
+						`version mismatch for ${fileName}, ${hash}, ${version}`,
+					);
 					return false;
 				}
 
 				// Remove files that we have built before
-				configFileNames.delete(tscUtils.getCanonicalFileName(path.normalize(fullPath)));
+				configFileNames.delete(
+					tscUtils.getCanonicalFileName(path.normalize(fullPath)),
+				);
 			} catch (e: any) {
-				this.traceTrigger(`exception generating hash for ${fileName}\n\t${e.stack}`);
+				this.traceTrigger(
+					`exception generating hash for ${fileName}\n\t${e.stack}`,
+				);
 				return false;
 			}
 		}
 
 		if (configFileNames.size !== 0) {
 			// New files that are not in the previous build, we are not up to date.
-			this.traceTrigger(`new file detected ${[...configFileNames.values()].join(",")}`);
+			this.traceTrigger(
+				`new file detected ${[...configFileNames.values()].join(",")}`,
+			);
 			return false;
 		}
 		try {
@@ -219,9 +238,14 @@ export class TscTask extends LeafTask {
 		return this.checkTsConfig(tsBuildInfoFileDirectory, tsBuildInfo, config);
 	}
 
-	private remapSrcDeclFile(fullPath: string, config: tsTypes.ParsedCommandLine) {
+	private remapSrcDeclFile(
+		fullPath: string,
+		config: tsTypes.ParsedCommandLine,
+	) {
 		if (!this._sourceStats) {
-			this._sourceStats = config ? config.fileNames.map((v) => lstatSync(v)) : [];
+			this._sourceStats = config
+				? config.fileNames.map((v) => lstatSync(v))
+				: [];
 		}
 
 		const stat = lstatSync(fullPath);
@@ -365,7 +389,9 @@ export class TscTask extends LeafTask {
 			return options.options.tsBuildInfoFile;
 		}
 
-		const outFile = options.options.out ? options.options.out : options.options.outFile;
+		const outFile = options.options.out
+			? options.options.out
+			: options.options.outFile;
 		if (outFile) {
 			return `${outFile}.tsbuildinfo`;
 		}
@@ -380,7 +406,11 @@ export class TscTask extends LeafTask {
 			return undefined;
 		}
 
-		return this.remapOutFile(options, path.parse(configFileFullPath).dir, tsBuildInfoFileName);
+		return this.remapOutFile(
+			options,
+			path.parse(configFileFullPath).dir,
+			tsBuildInfoFileName,
+		);
 	}
 
 	private remapOutFile(
@@ -428,7 +458,9 @@ export class TscTask extends LeafTask {
 			const tsBuildInfoFileFullPath = this.tsBuildInfoFileFullPath;
 			if (tsBuildInfoFileFullPath && existsSync(tsBuildInfoFileFullPath)) {
 				try {
-					const tsBuildInfo = JSON.parse(await readFile(tsBuildInfoFileFullPath, "utf8"));
+					const tsBuildInfo = JSON.parse(
+						await readFile(tsBuildInfoFileFullPath, "utf8"),
+					);
 					if (
 						tsBuildInfo.program &&
 						tsBuildInfo.program.fileNames &&
@@ -477,12 +509,14 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 			const tscTasks = [...this.getDependentLeafTasks()].filter(
 				(task) => task instanceof TscTask,
 			) as TscTask[];
-			const ownTscTasks = tscTasks.filter((task) => task.package == this.package);
+			const ownTscTasks = tscTasks.filter(
+				(task) => task.package == this.package,
+			);
 
 			// Take only the tsc task in the same package if possible.
 			// Sort by task name to provide some stability
-			const tasks = (ownTscTasks.length === 0 ? tscTasks : ownTscTasks).sort((a, b) =>
-				a.name.localeCompare(b.name),
+			const tasks = (ownTscTasks.length === 0 ? tscTasks : ownTscTasks).sort(
+				(a, b) => a.name.localeCompare(b.name),
 			);
 
 			for (const dep of tasks) {

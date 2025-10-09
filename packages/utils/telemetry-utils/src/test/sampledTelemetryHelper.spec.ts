@@ -36,14 +36,20 @@ interface TestTelemetryProperties {
 class TestLogger implements ITelemetryLoggerExt {
 	public events: ITelemetryPerformanceEventExt[] = [];
 
-	public sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: unknown): void {
+	public sendPerformanceEvent(
+		event: ITelemetryPerformanceEventExt,
+		error?: unknown,
+	): void {
 		this.events.push(event);
 	}
 
 	public send(event: ITelemetryBaseEvent): void {
 		throw new Error("Method not implemented.");
 	}
-	public sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: unknown): void {
+	public sendTelemetryEvent(
+		event: ITelemetryGenericEventExt,
+		error?: unknown,
+	): void {
 		throw new Error("Method not implemented.");
 	}
 	public sendErrorEvent(event: ITelemetryErrorEventExt, error?: unknown): void {
@@ -53,7 +59,12 @@ class TestLogger implements ITelemetryLoggerExt {
 }
 
 const standardEventProperties = ["eventName", "duration", "count"];
-const aggregateProperties = ["totalDuration", "minDuration", "maxDuration", "averageDuration"];
+const aggregateProperties = [
+	"totalDuration",
+	"minDuration",
+	"maxDuration",
+	"averageDuration",
+];
 
 describe("SampledTelemetryHelper", () => {
 	let logger: TestLogger;
@@ -64,7 +75,11 @@ describe("SampledTelemetryHelper", () => {
 
 	it("only writes event after correct number of samples", () => {
 		const sampling = 10;
-		const helper = new SampledTelemetryHelper({ eventName: "testEvent" }, logger, sampling);
+		const helper = new SampledTelemetryHelper(
+			{ eventName: "testEvent" },
+			logger,
+			sampling,
+		);
 
 		for (let i = 0; i < sampling - 1; i++) {
 			helper.measure(() => {});
@@ -83,7 +98,12 @@ describe("SampledTelemetryHelper", () => {
 	});
 
 	it("does not include aggregate properties when it shouldn't", () => {
-		const helper = new SampledTelemetryHelper({ eventName: "testEvent" }, logger, 1, false);
+		const helper = new SampledTelemetryHelper(
+			{ eventName: "testEvent" },
+			logger,
+			1,
+			false,
+		);
 		helper.measure(() => {});
 		assert.strictEqual(logger.events.length, 1);
 		const event = logger.events[0];
@@ -92,11 +112,20 @@ describe("SampledTelemetryHelper", () => {
 	});
 
 	it("includes aggregate properties when it should", () => {
-		const helper = new SampledTelemetryHelper({ eventName: "testEvent" }, logger, 1, true);
+		const helper = new SampledTelemetryHelper(
+			{ eventName: "testEvent" },
+			logger,
+			1,
+			true,
+		);
 		helper.measure(() => {});
 		assert.strictEqual(logger.events.length, 1);
 		const event = logger.events[0];
-		ensurePropertiesExist(event, [...standardEventProperties, ...aggregateProperties], true);
+		ensurePropertiesExist(
+			event,
+			[...standardEventProperties, ...aggregateProperties],
+			true,
+		);
 		assert.strictEqual(event.count, 1);
 	});
 
@@ -160,8 +189,14 @@ describe("SampledTelemetryHelper", () => {
 			helper.measure(() => ({ customData: {} }), bucket2);
 		}
 
-		assert.strictEqual(logger.events.filter((x) => x.prop1 === "value1").length, 3);
-		assert.strictEqual(logger.events.filter((x) => x.prop2 === "value2").length, 2);
+		assert.strictEqual(
+			logger.events.filter((x) => x.prop1 === "value1").length,
+			3,
+		);
+		assert.strictEqual(
+			logger.events.filter((x) => x.prop2 === "value2").length,
+			2,
+		);
 	});
 
 	it("bucket properties do not override measurement properties", () => {
@@ -226,12 +261,22 @@ describe("SampledTelemetryHelper", () => {
 
 		// After disposing, there should be one event for each bucket
 		helper.dispose();
-		assert.strictEqual(logger.events.filter((x) => x.prop1 === "value1").length, 1);
-		assert.strictEqual(logger.events.filter((x) => x.prop2 === "value2").length, 1);
+		assert.strictEqual(
+			logger.events.filter((x) => x.prop1 === "value1").length,
+			1,
+		);
+		assert.strictEqual(
+			logger.events.filter((x) => x.prop2 === "value2").length,
+			1,
+		);
 	});
 
 	it("no event is generated on dispose if there's no pending 'buffered' data", () => {
-		const helper = new SampledTelemetryHelper({ eventName: "testEvent" }, logger, 2);
+		const helper = new SampledTelemetryHelper(
+			{ eventName: "testEvent" },
+			logger,
+			2,
+		);
 
 		// Nothing should have been logged after the first call
 		helper.measure(() => {});
@@ -276,7 +321,10 @@ describe("SampledTelemetryHelper", () => {
 
 		assert.strictEqual(logger.events.length, 1);
 		assert.strictEqual(logger.events[0].totalDuration, totalDuration);
-		assert.strictEqual(logger.events[0].averageDuration, totalDuration / sampling);
+		assert.strictEqual(
+			logger.events[0].averageDuration,
+			totalDuration / sampling,
+		);
 		assert.strictEqual(logger.events[0].maxDuration, maxDuration);
 		assert.strictEqual(logger.events[0].minDuration, minDuration);
 	});
@@ -312,11 +360,10 @@ describe("SampledTelemetryHelper", () => {
 	});
 
 	it("explicit return type and custom data type", () => {
-		const helperTypeNumber = new SampledTelemetryHelper<number, TestTelemetryProperties>(
-			{ eventName: "testEvent" },
-			logger,
-			10,
-		);
+		const helperTypeNumber = new SampledTelemetryHelper<
+			number,
+			TestTelemetryProperties
+		>({ eventName: "testEvent" }, logger, 10);
 
 		// Measure should be able to return a value of the type specified during helper creation and custom data.
 		helperTypeNumber.measure(() => ({
@@ -329,11 +376,10 @@ describe("SampledTelemetryHelper", () => {
 			customData: { propertyOne: 1, propertyTwo: 2, propertyThree: 3 },
 		}));
 
-		const helperTypeBoolean = new SampledTelemetryHelper<boolean, TestTelemetryProperties>(
-			{ eventName: "testEvent" },
-			logger,
-			10,
-		);
+		const helperTypeBoolean = new SampledTelemetryHelper<
+			boolean,
+			TestTelemetryProperties
+		>({ eventName: "testEvent" }, logger, 10);
 
 		helperTypeBoolean.measure(() => ({
 			returnValue: true,
@@ -447,11 +493,10 @@ describe("SampledTelemetryHelper", () => {
 		});
 
 		it("explicit return type and custom data type", () => {
-			const helper = new SampledTelemetryHelper<boolean, TestTelemetryProperties>(
-				{ eventName: "testEvent" },
-				logger,
-				10,
-			);
+			const helper = new SampledTelemetryHelper<
+				boolean,
+				TestTelemetryProperties
+			>({ eventName: "testEvent" }, logger, 10);
 
 			// Measure should be able to return a value of the type specified during helper creation and custom data.
 			helper.measure(() => ({

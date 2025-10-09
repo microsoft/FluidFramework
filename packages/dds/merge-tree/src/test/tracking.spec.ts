@@ -43,11 +43,20 @@ describe("MergeTree.tracking", () => {
 
 		const segmentInfo = testClient.getContainingSegment<ISegmentPrivate>(0);
 
-		assert.equal(segmentInfo?.segment?.trackingCollection.trackingGroups.size, 1);
+		assert.equal(
+			segmentInfo?.segment?.trackingCollection.trackingGroups.size,
+			1,
+		);
 
-		assert(trackingGroup.unlink(segmentInfo?.segment), "unlink segment should be true");
+		assert(
+			trackingGroup.unlink(segmentInfo?.segment),
+			"unlink segment should be true",
+		);
 
-		assert.equal(segmentInfo?.segment?.trackingCollection.trackingGroups.size, 0);
+		assert.equal(
+			segmentInfo?.segment?.trackingCollection.trackingGroups.size,
+			0,
+		);
 	});
 
 	it("Splitting segment should split tracking group", () => {
@@ -68,7 +77,10 @@ describe("MergeTree.tracking", () => {
 
 		assert.equal(trackingGroup.size, 2);
 		const segmentInfo = testClient.getContainingSegment<ISegmentPrivate>(0);
-		assert.equal(segmentInfo?.segment?.trackingCollection.trackingGroups.size, 1);
+		assert.equal(
+			segmentInfo?.segment?.trackingCollection.trackingGroups.size,
+			1,
+		);
 	});
 
 	it("Zamboni should merge matching tracking groups", () => {
@@ -88,20 +100,30 @@ describe("MergeTree.tracking", () => {
 
 		assert.equal(trackingGroup.size, 3);
 		let segmentInfo = testClient.getContainingSegment<ISegmentPrivate>(0);
-		assert.equal(segmentInfo?.segment?.trackingCollection.trackingGroups.size, 1);
+		assert.equal(
+			segmentInfo?.segment?.trackingCollection.trackingGroups.size,
+			1,
+		);
 
 		let seq = 1;
-		for (const op of ops) testClient.applyMsg(testClient.makeOpMessage(op, ++seq));
+		for (const op of ops)
+			testClient.applyMsg(testClient.makeOpMessage(op, ++seq));
 
 		assert.equal(trackingGroup.size, 3);
 		segmentInfo = testClient.getContainingSegment<ISegmentPrivate>(0);
-		assert.equal(segmentInfo?.segment?.trackingCollection.trackingGroups.size, 1);
+		assert.equal(
+			segmentInfo?.segment?.trackingCollection.trackingGroups.size,
+			1,
+		);
 
 		testClient.updateMinSeq(seq);
 
 		assert.equal(trackingGroup.size, 1);
 		segmentInfo = testClient.getContainingSegment<ISegmentPrivate>(0);
-		assert.equal(segmentInfo?.segment?.trackingCollection.trackingGroups.size, 1);
+		assert.equal(
+			segmentInfo?.segment?.trackingCollection.trackingGroups.size,
+			1,
+		);
 	});
 
 	it("Newly created local reference should have empty tracking group", () => {
@@ -157,7 +179,8 @@ describe("MergeTree.tracking", () => {
 
 		testClient.insertTextLocal(0, "abc");
 
-		const { segment } = testClient.getContainingSegment<ISegmentPrivate>(0) ?? {};
+		const { segment } =
+			testClient.getContainingSegment<ISegmentPrivate>(0) ?? {};
 		segment?.trackingCollection.link(trackingGroup);
 
 		assert.equal(segment?.trackingCollection.trackingGroups.size, 1);
@@ -183,7 +206,8 @@ describe("MergeTree.tracking", () => {
 
 		testClient.insertTextLocal(0, "abc");
 
-		const { segment } = testClient.getContainingSegment<ISegmentPrivate>(0) ?? {};
+		const { segment } =
+			testClient.getContainingSegment<ISegmentPrivate>(0) ?? {};
 		segment?.trackingCollection.link(trackingGroup);
 
 		assert.equal(segment?.trackingCollection.trackingGroups.size, 1);

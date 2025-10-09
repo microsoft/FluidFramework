@@ -75,11 +75,17 @@ export class MyCompositionClassTree implements Listenable_Tree<MyEvents> {
 		this.load();
 	}
 
-	public on<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): () => void {
+	public on<K extends keyof MyEvents>(
+		eventName: K,
+		listener: MyEvents[K],
+	): () => void {
 		return this.events.on(eventName, listener);
 	}
 
-	public off<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): void {
+	public off<K extends keyof MyEvents>(
+		eventName: K,
+		listener: MyEvents[K],
+	): void {
 		return this.events.off(eventName, listener);
 	}
 }
@@ -87,7 +93,9 @@ export class MyCompositionClassTree implements Listenable_Tree<MyEvents> {
 /**
  * Example of composing over {@link CustomEventEmitter}.
  */
-export class MyCompositionClassFramework implements Listenable_Framework<MyEvents> {
+export class MyCompositionClassFramework
+	implements Listenable_Framework<MyEvents>
+{
 	private readonly events = createEmitter<MyEvents>();
 
 	private load(): number[] {
@@ -100,11 +108,17 @@ export class MyCompositionClassFramework implements Listenable_Framework<MyEvent
 		this.load();
 	}
 
-	public on<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): () => void {
+	public on<K extends keyof MyEvents>(
+		eventName: K,
+		listener: MyEvents[K],
+	): () => void {
 		return this.events.on(eventName, listener);
 	}
 
-	public off<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): void {
+	public off<K extends keyof MyEvents>(
+		eventName: K,
+		listener: MyEvents[K],
+	): void {
 		return this.events.off(eventName, listener);
 	}
 }
@@ -112,7 +126,9 @@ export class MyCompositionClassFramework implements Listenable_Framework<MyEvent
 /**
  * Example of composing over {@link CustomEventEmitter}.
  */
-export class MyCompositionClassInterfaces implements Listenable_Interfaces<MyEvents> {
+export class MyCompositionClassInterfaces
+	implements Listenable_Interfaces<MyEvents>
+{
 	private readonly events = createEmitter<MyEvents>();
 
 	private load(): number[] {
@@ -125,11 +141,17 @@ export class MyCompositionClassInterfaces implements Listenable_Interfaces<MyEve
 		this.load();
 	}
 
-	public on<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): () => void {
+	public on<K extends keyof MyEvents>(
+		eventName: K,
+		listener: MyEvents[K],
+	): () => void {
 		return this.events.on(eventName, listener);
 	}
 
-	public off<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): void {
+	public off<K extends keyof MyEvents>(
+		eventName: K,
+		listener: MyEvents[K],
+	): void {
 		return this.events.off(eventName, listener);
 	}
 }

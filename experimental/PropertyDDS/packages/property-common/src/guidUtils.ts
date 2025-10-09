@@ -41,7 +41,10 @@ const guidRNG = {
 	 *
 	 * @alias property-common.initializeGUIDGenerator
 	 */
-	initialize(in_seed?: number, in_enforceReInitialization: boolean = false): number {
+	initialize(
+		in_seed?: number,
+		in_enforceReInitialization: boolean = false,
+	): number {
 		// Quit if the RNG has already been initialized and we do not
 		// want to enforce a re-initialization with a new seed
 		if (this.isInitialized && !in_enforceReInitialization) {
@@ -194,8 +197,14 @@ const guidToUint32x4 = function (
 		result.set(intArray);
 	} else {
 		result[0] = parseInt(`0x${in_guid.substr(0, 8)}`, 16);
-		result[1] = parseInt(`0x${in_guid.substr(9, 4)}${in_guid.substr(14, 4)}`, 16);
-		result[2] = parseInt(`0x${in_guid.substr(19, 4)}${in_guid.substr(24, 4)}`, 16);
+		result[1] = parseInt(
+			`0x${in_guid.substr(9, 4)}${in_guid.substr(14, 4)}`,
+			16,
+		);
+		result[2] = parseInt(
+			`0x${in_guid.substr(19, 4)}${in_guid.substr(24, 4)}`,
+			16,
+		);
 		result[3] = parseInt(`0x${in_guid.substr(28, 8)}`, 16);
 	}
 	return result;
@@ -208,7 +217,8 @@ const guidToUint32x4 = function (
  * @returns Base16 GUID
  *
  */
-const base64Tobase16 = (in_guid: string) => uint32x4ToGUID(guidToUint32x4(in_guid));
+const base64Tobase16 = (in_guid: string) =>
+	uint32x4ToGUID(guidToUint32x4(in_guid));
 
 /**
  * Convert base16 into base64 GUID.
@@ -217,7 +227,8 @@ const base64Tobase16 = (in_guid: string) => uint32x4ToGUID(guidToUint32x4(in_gui
  * @returns Base64 GUID
  *
  */
-const base16ToBase64 = (in_guid: string) => uint32x4ToGUID(guidToUint32x4(in_guid), true);
+const base16ToBase64 = (in_guid: string) =>
+	uint32x4ToGUID(guidToUint32x4(in_guid), true);
 
 /**
  * Based on the boolean parameter generate either
@@ -254,7 +265,8 @@ const reBase16 = /^[\dA-Fa-f]{8}(?:-[\dA-Fa-f]{4}){3}-[\dA-Fa-f]{12}$/;
  * @param in_guid - The GUID to test.
  * @returns True if the parameter is a valid GUID, false otherwise.
  */
-const isGUID = (in_guid: string) => reBase16.test(in_guid) || reBase64.test(in_guid);
+const isGUID = (in_guid: string) =>
+	reBase16.test(in_guid) || reBase64.test(in_guid);
 
 /**
  * Performs a hash combination operation on the two supplied Uint32 arrays of length 4 (using
@@ -313,7 +325,11 @@ const hashCombine4xUint32 = function (
  * @param base64 - Use base64 encoding instead of standart GUIDs
  * @returns Combined GUID
  */
-const combineGuids = function (in_guid1: string, in_guid2: string, base64 = false): string {
+const combineGuids = function (
+	in_guid1: string,
+	in_guid2: string,
+	base64 = false,
+): string {
 	const firstArray = guidToUint32x4(in_guid1);
 	const secondArray = guidToUint32x4(in_guid2);
 	const combined = hashCombine4xUint32(firstArray, secondArray);

@@ -79,21 +79,30 @@ describe("mergeArrays", () => {
 		const arr1 = [1, 3, 5, 7, 9];
 		const arr2 = [2, 4, 6, 8, 10];
 		const result = mergeSortedArrays(arr1, arr2, (a, b) => a - b);
-		assert.strictEqual(JSON.stringify(result), JSON.stringify([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]));
+		assert.strictEqual(
+			JSON.stringify(result),
+			JSON.stringify([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
+		);
 	});
 
 	it("Should return an merged sorted ascending array from two ascending sorted arrays with duplicates", () => {
 		const arr1 = [1, 1, 7, 7, 9];
 		const arr2 = [4, 4, 8, 8, 10];
 		const result = mergeSortedArrays(arr1, arr2, (a, b) => a - b);
-		assert.strictEqual(JSON.stringify(result), JSON.stringify([1, 1, 4, 4, 7, 7, 8, 8, 9, 10]));
+		assert.strictEqual(
+			JSON.stringify(result),
+			JSON.stringify([1, 1, 4, 4, 7, 7, 8, 8, 9, 10]),
+		);
 	});
 
 	it("Should return an merged sorted descending array from two descending sorted arrays based on selector", () => {
 		const arr1 = [9, 7, 5, 3, 1];
 		const arr2 = [10, 8, 6, 4, 2];
 		const result = mergeSortedArrays(arr1, arr2, (a, b) => b - a);
-		assert.strictEqual(JSON.stringify(result), JSON.stringify([10, 9, 8, 7, 6, 5, 4, 3, 2, 1]));
+		assert.strictEqual(
+			JSON.stringify(result),
+			JSON.stringify([10, 9, 8, 7, 6, 5, 4, 3, 2, 1]),
+		);
 	});
 
 	it("Should return an merged sorted descending array from two descending sorted arrays based on selector with duplicates", () => {

@@ -60,7 +60,9 @@ function isValidClientDetails(details: unknown): details is IClientDetails {
 }
 
 function isValidUser(user: unknown): user is IUser {
-	return typeof user === "object" && user !== null && "id" in user && typeof user.id === "string";
+	return (
+		typeof user === "object" && user !== null && "id" in user && typeof user.id === "string"
+	);
 }
 
 function isValidClient(client: unknown): client is IClient {

@@ -65,7 +65,10 @@ interface RebasableChangeset {
  * A segment describing the changes made, if any, to a trait or its descendants.
  */
 type Segment = UnchangedSegment | ChangeSegment;
-type RebasableSegment = UnchangedSegment | RebasableChangeSegment | RebasableConstraint;
+type RebasableSegment =
+	| UnchangedSegment
+	| RebasableChangeSegment
+	| RebasableConstraint;
 
 /**
  * A segment describing the changes made to a trait or its descendants.
@@ -115,7 +118,14 @@ interface DeletedModify {
 	/**
 	 * Changes performed on traits of the subtree root, and below.
 	 */
-	[key: TraitLabel]: (UnchangedSegment | DeletedModify | Insert | MoveIn | MoveOut | Delete)[];
+	[key: TraitLabel]: (
+		| UnchangedSegment
+		| DeletedModify
+		| Insert
+		| MoveIn
+		| MoveOut
+		| Delete
+	)[];
 }
 interface RebasableDeletedModify {
 	/**
@@ -569,8 +579,13 @@ interface RebasableProtoTraits {
  * - deleted nodes are replaced by a Delete segment in the relevant ProtoTrait
  * - other modifications (Insert, MoveIn, MoveOut) are represented by adding a segment in the relevant ProtoTrait.
  */
-type ProtoTrait<TSegments = Exclude<ChangeSegment, Modify>> = (ProtoNode | TSegments)[];
-type RebasableProtoTrait = ProtoTrait<Exclude<RebasableChangeSegment, RebasableModify>>;
+type ProtoTrait<TSegments = Exclude<ChangeSegment, Modify>> = (
+	| ProtoNode
+	| TSegments
+)[];
+type RebasableProtoTrait = ProtoTrait<
+	Exclude<RebasableChangeSegment, RebasableModify>
+>;
 
 /**
  * The starting and ending bounds of a slice-like range.

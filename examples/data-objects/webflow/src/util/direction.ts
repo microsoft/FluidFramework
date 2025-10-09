@@ -31,7 +31,9 @@ export const enum TabDirection {
 }
 
 export function getDeltaX(direction: Direction) {
-	return (direction << DirectionFlag.horizontalLsh) >> DirectionFlag.horizontalRsh;
+	return (
+		(direction << DirectionFlag.horizontalLsh) >> DirectionFlag.horizontalRsh
+	);
 }
 
 export function getDeltaY(direction: Direction) {

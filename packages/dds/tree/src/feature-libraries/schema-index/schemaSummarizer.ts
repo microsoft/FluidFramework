@@ -65,7 +65,8 @@ export class SchemaSummarizer implements Summarizable {
 			!fullTree &&
 			incrementalSummaryContext !== undefined &&
 			this.schemaIndexLastChangedSeq !== undefined &&
-			incrementalSummaryContext.latestSummarySequenceNumber >= this.schemaIndexLastChangedSeq
+			incrementalSummaryContext.latestSummarySequenceNumber >=
+				this.schemaIndexLastChangedSeq
 		) {
 			builder.addHandle(
 				schemaStringKey,
@@ -83,7 +84,8 @@ export class SchemaSummarizer implements Summarizable {
 		services: IChannelStorageService,
 		parse: SummaryElementParser,
 	): Promise<void> {
-		const schemaBuffer: ArrayBufferLike = await services.readBlob(schemaStringKey);
+		const schemaBuffer: ArrayBufferLike =
+			await services.readBlob(schemaStringKey);
 		// After the awaits, validate that the schema is in a clean state.
 		// This detects any schema that could have been accidentally added through
 		// invalid means and are about to be overwritten.

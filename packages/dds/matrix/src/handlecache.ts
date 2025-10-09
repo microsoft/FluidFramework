@@ -9,7 +9,10 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { IVectorConsumer } from "@tiny-calc/nano";
 
 import { type Handle, isHandleValid } from "./handletable.js";
-import type { PermutationSegment, PermutationVector } from "./permutationvector.js";
+import type {
+	PermutationSegment,
+	PermutationVector,
+} from "./permutationvector.js";
 import { ensureRange } from "./range.js";
 
 /**
@@ -50,7 +53,9 @@ export class HandleCache implements IVectorConsumer<Handle> {
 		//       checking that 'position' is in bounds until 'cacheMiss(..)'.  This yields an
 		//       ~40% speedup when the position is in the cache (node v12 x64).
 
-		return index < this.handles.length ? this.handles[index] : this.cacheMiss(position);
+		return index < this.handles.length
+			? this.handles[index]
+			: this.cacheMiss(position);
 	}
 
 	/**
@@ -110,14 +115,22 @@ export class HandleCache implements IVectorConsumer<Handle> {
 			return this.handles[0];
 		} else {
 			ensureRange(_position, this.vector.getLength());
-			this.getHandles(this.start + this.handles.length, _position + 1, this.handles);
+			this.getHandles(
+				this.start + this.handles.length,
+				_position + 1,
+				this.handles,
+			);
 			return this.handles[this.handles.length - 1];
 		}
 	}
 
 	// #region IVectorConsumer
 
-	itemsChanged(start: number, removedCount: number, insertedCount: number): void {
+	itemsChanged(
+		start: number,
+		removedCount: number,
+		insertedCount: number,
+	): void {
 		// If positions were inserted/removed, our current policy is to trim the array
 		// at the beginning of the invalidate range and lazily repopulate the handles
 		// on demand.

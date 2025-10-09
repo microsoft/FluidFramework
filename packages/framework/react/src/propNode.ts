@@ -17,7 +17,8 @@ import type { TreeNode, TreeLeafValue } from "@fluidframework/tree";
  * @alpha
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface PropTreeNode<T extends TreeNode> extends ErasedType<[T, "PropTreeNode"]> {}
+export interface PropTreeNode<T extends TreeNode>
+	extends ErasedType<[T, "PropTreeNode"]> {}
 
 /**
  * Type TreeNodes in T as {@link PropTreeNode}s.
@@ -105,8 +106,9 @@ export function unwrapPropTreeRecord<T extends PropTreeNodeRecord>(
  * {@inheritdoc unwrapPropTreeNode}
  * @alpha
  */
-export type UnwrapPropTreeNode<T extends TreeLeafValue | PropTreeNode<TreeNode> | undefined> =
-	T extends PropTreeNode<infer Node> ? Node : T;
+export type UnwrapPropTreeNode<
+	T extends TreeLeafValue | PropTreeNode<TreeNode> | undefined,
+> = T extends PropTreeNode<infer Node> ? Node : T;
 
 /**
  * Record that can contain TreeNodes.
@@ -143,15 +145,16 @@ export type PropTreeNodeRecord = Record<
  * Type erase a `TreeNode` from a `TreeNode | TreeLeafValue` as a {@link PropTreeNode}.
  * @alpha
  */
-export type PropTreeValue<T extends TreeNode | TreeLeafValue | undefined> = T extends TreeNode
-	? PropTreeNode<T>
-	: T;
+export type PropTreeValue<T extends TreeNode | TreeLeafValue | undefined> =
+	T extends TreeNode ? PropTreeNode<T> : T;
 
 /**
  * Type erase a TreeNode as a {@link PropTreeNode}.
  * @alpha
  */
-export function toPropTreeNode<T extends TreeNode | TreeLeafValue>(node: T): PropTreeValue<T> {
+export function toPropTreeNode<T extends TreeNode | TreeLeafValue>(
+	node: T,
+): PropTreeValue<T> {
 	return node as unknown as PropTreeValue<T>;
 }
 
@@ -159,6 +162,8 @@ export function toPropTreeNode<T extends TreeNode | TreeLeafValue>(node: T): Pro
  * Type erase a {@link NodeRecord} as a {@link PropTreeNodeRecord}.
  * @alpha
  */
-export function toPropTreeRecord<T extends NodeRecord>(node: T): WrapPropTreeNodeRecord<T> {
+export function toPropTreeRecord<T extends NodeRecord>(
+	node: T,
+): WrapPropTreeNodeRecord<T> {
 	return node as unknown as WrapPropTreeNodeRecord<T>;
 }

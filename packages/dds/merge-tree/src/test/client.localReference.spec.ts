@@ -83,7 +83,11 @@ describe("MergeTree.Client", () => {
 			undefined,
 		);
 
-		assert.equal(client1.localReferencePositionToPosition(c1LocalRef), 2, "create position");
+		assert.equal(
+			client1.localReferencePositionToPosition(c1LocalRef),
+			2,
+			"create position",
+		);
 
 		const remove = client2.makeOpMessage(client2.removeRangeLocal(2, 3), ++seq);
 		remove.minimumSequenceNumber = seq - 1;
@@ -283,7 +287,10 @@ describe("MergeTree.Client", () => {
 
 		client1.startOrUpdateCollaboration("1");
 		let seq = 0;
-		const insert = client1.makeOpMessage(client1.insertTextLocal(0, "ABCD"), ++seq);
+		const insert = client1.makeOpMessage(
+			client1.insertTextLocal(0, "ABCD"),
+			++seq,
+		);
 		insert.minimumSequenceNumber = seq - 1;
 		client1.applyMsg(insert);
 
@@ -296,13 +303,27 @@ describe("MergeTree.Client", () => {
 			undefined,
 		);
 
-		assert.equal(client1.localReferencePositionToPosition(c1LocalRef), 3, "ref created");
+		assert.equal(
+			client1.localReferencePositionToPosition(c1LocalRef),
+			3,
+			"ref created",
+		);
 
-		const remove1 = client1.makeOpMessage(client1.removeRangeLocal(3, 4), ++seq);
+		const remove1 = client1.makeOpMessage(
+			client1.removeRangeLocal(3, 4),
+			++seq,
+		);
 		remove1.minimumSequenceNumber = seq - 1;
-		assert.equal(client1.localReferencePositionToPosition(c1LocalRef), 3, "after remove");
+		assert.equal(
+			client1.localReferencePositionToPosition(c1LocalRef),
+			3,
+			"after remove",
+		);
 
-		const remove2 = client1.makeOpMessage(client1.removeRangeLocal(1, 3), ++seq);
+		const remove2 = client1.makeOpMessage(
+			client1.removeRangeLocal(1, 3),
+			++seq,
+		);
 		remove2.minimumSequenceNumber = seq - 1;
 		assert.equal(
 			client1.localReferencePositionToPosition(c1LocalRef),
@@ -313,7 +334,11 @@ describe("MergeTree.Client", () => {
 		client1.applyMsg(remove1);
 		client1.applyMsg(remove2);
 
-		assert.equal(client1.localReferencePositionToPosition(c1LocalRef), 0, "ops applied");
+		assert.equal(
+			client1.localReferencePositionToPosition(c1LocalRef),
+			0,
+			"ops applied",
+		);
 	});
 
 	it("getSlideOnRemoveReferencePosition", () => {
@@ -323,10 +348,16 @@ describe("MergeTree.Client", () => {
 		client2.startOrUpdateCollaboration("2");
 
 		let seq = 0;
-		const insert1 = client1.makeOpMessage(client1.insertTextLocal(0, "XYZ"), ++seq);
+		const insert1 = client1.makeOpMessage(
+			client1.insertTextLocal(0, "XYZ"),
+			++seq,
+		);
 		client1.applyMsg(insert1);
 
-		const insert2 = client1.makeOpMessage(client1.insertTextLocal(0, "ABC"), ++seq);
+		const insert2 = client1.makeOpMessage(
+			client1.insertTextLocal(0, "ABC"),
+			++seq,
+		);
 		client1.applyMsg(insert2);
 
 		// Position depends on op
@@ -335,7 +366,11 @@ describe("MergeTree.Client", () => {
 			++seq,
 			insert1.sequenceNumber,
 		);
-		let segoff = getSlideOnRemoveReferencePosition(client1, 1, createReference1);
+		let segoff = getSlideOnRemoveReferencePosition(
+			client1,
+			1,
+			createReference1,
+		);
 		assert(segoff?.segment);
 		assert.equal(client1.getPosition(segoff?.segment), 3);
 		assert.equal(segoff.offset, 1);
@@ -434,7 +469,10 @@ describe("MergeTree.Client", () => {
 		client2.startOrUpdateCollaboration("2");
 
 		let seq = 0;
-		const insert1 = client1.makeOpMessage(client1.insertTextLocal(0, "ABCD"), ++seq);
+		const insert1 = client1.makeOpMessage(
+			client1.insertTextLocal(0, "ABCD"),
+			++seq,
+		);
 		client1.applyMsg(insert1);
 		client2.applyMsg(insert1);
 
@@ -455,7 +493,10 @@ describe("MergeTree.Client", () => {
 			undefined,
 		);
 
-		const insert2 = client1.makeOpMessage(client1.insertTextLocal(2, "XY"), ++seq);
+		const insert2 = client1.makeOpMessage(
+			client1.insertTextLocal(2, "XY"),
+			++seq,
+		);
 
 		assert.equal(client1.localReferencePositionToPosition(LocalRef1), 1);
 		assert.equal(client1.localReferencePositionToPosition(LocalRef2), 5);
@@ -510,7 +551,10 @@ describe("MergeTree.Client", () => {
 		client1.startOrUpdateCollaboration("1");
 		client2.startOrUpdateCollaboration("2");
 		let seq = 0;
-		const insertOp = client1.makeOpMessage(client1.insertTextLocal(0, "ABCD"), ++seq);
+		const insertOp = client1.makeOpMessage(
+			client1.insertTextLocal(0, "ABCD"),
+			++seq,
+		);
 		client1.applyMsg(insertOp);
 		client2.applyMsg(insertOp);
 		client1.removeRangeLocal(0, 2);
@@ -520,7 +564,8 @@ describe("MergeTree.Client", () => {
 		);
 		const { segment, offset } =
 			client1.getContainingSegment<ISegmentPrivate>(0, {
-				referenceSequenceNumber: opFromBeforeRemovePerspective.referenceSequenceNumber,
+				referenceSequenceNumber:
+					opFromBeforeRemovePerspective.referenceSequenceNumber,
 				clientId: opFromBeforeRemovePerspective.clientId,
 			}) ?? {};
 		assert(segment && toRemovalInfo(segment) !== undefined);
@@ -542,7 +587,10 @@ describe("MergeTree.Client", () => {
 		client2.startOrUpdateCollaboration("2");
 
 		let seq = 0;
-		const insert1 = client1.makeOpMessage(client1.insertTextLocal(0, "ABCDE"), ++seq);
+		const insert1 = client1.makeOpMessage(
+			client1.insertTextLocal(0, "ABCDE"),
+			++seq,
+		);
 		client1.applyMsg(insert1);
 		client2.applyMsg(insert1);
 
@@ -560,13 +608,26 @@ describe("MergeTree.Client", () => {
 			insert1.sequenceNumber,
 		);
 
-		const remove1 = client2.makeOpMessage(client2.removeRangeLocal(4, 5), ++seq);
+		const remove1 = client2.makeOpMessage(
+			client2.removeRangeLocal(4, 5),
+			++seq,
+		);
 
-		const insert2 = client1.makeOpMessage(client1.insertTextLocal(2, "XY"), ++seq);
+		const insert2 = client1.makeOpMessage(
+			client1.insertTextLocal(2, "XY"),
+			++seq,
+		);
 
-		const remove2 = client2.makeOpMessage(client2.removeRangeLocal(1, 4), ++seq);
+		const remove2 = client2.makeOpMessage(
+			client2.removeRangeLocal(1, 4),
+			++seq,
+		);
 
-		const segoff = getSlideOnRemoveReferencePosition(client2, 4, createReference1);
+		const segoff = getSlideOnRemoveReferencePosition(
+			client2,
+			4,
+			createReference1,
+		);
 		assert(segoff);
 		const c2LocalRef = client2.createLocalReferencePosition(
 			segoff?.segment,
@@ -602,7 +663,12 @@ describe("MergeTree.Client", () => {
 
 		const messages: ISequencedDocumentMessage[] = [];
 		let seq = 0;
-		messages.push(clients.A.makeOpMessage(clients.A.insertTextLocal(0, "0123456789"), ++seq));
+		messages.push(
+			clients.A.makeOpMessage(
+				clients.A.insertTextLocal(0, "0123456789"),
+				++seq,
+			),
+		);
 		// initialize the local reference collection on the segment, but keep it empty
 		{
 			const segInfo = clients.A.getContainingSegment<ISegmentPrivate>(9);
@@ -619,7 +685,9 @@ describe("MergeTree.Client", () => {
 			clients.A.removeLocalReferencePosition(localRef);
 		}
 		// split the segment
-		messages.push(clients.A.makeOpMessage(clients.A.insertTextLocal(5, "ABCD"), ++seq));
+		messages.push(
+			clients.A.makeOpMessage(clients.A.insertTextLocal(5, "ABCD"), ++seq),
+		);
 
 		// add a local reference to the newly inserted segment that caused the split
 		{
@@ -654,8 +722,12 @@ describe("MergeTree.Client", () => {
 			seq = 0;
 			client = new TestClient();
 			client.startOrUpdateCollaboration("1");
-			client.enqueueMsg(client.makeOpMessage(client.insertTextLocal(0, "B"), ++seq));
-			client.enqueueMsg(client.makeOpMessage(client.insertTextLocal(0, "A"), ++seq));
+			client.enqueueMsg(
+				client.makeOpMessage(client.insertTextLocal(0, "B"), ++seq),
+			);
+			client.enqueueMsg(
+				client.makeOpMessage(client.insertTextLocal(0, "A"), ++seq),
+			);
 			client.applyMessages(2);
 			assert.equal(client.getText(), "AB");
 			localRefA = client.createLocalReferencePosition(
@@ -708,7 +780,10 @@ describe("MergeTree.Client", () => {
 		client2.startOrUpdateCollaboration("2");
 
 		let seq = 0;
-		const insert1 = client1.makeOpMessage(client1.insertTextLocal(0, "abcXdef"), ++seq);
+		const insert1 = client1.makeOpMessage(
+			client1.insertTextLocal(0, "abcXdef"),
+			++seq,
+		);
 		client1.applyMsg(insert1);
 		client2.applyMsg(insert1);
 
@@ -724,13 +799,19 @@ describe("MergeTree.Client", () => {
 
 		assert.equal(client1.localReferencePositionToPosition(localRef), 3);
 
-		const insert2 = client1.makeOpMessage(client1.insertTextLocal(4, "ghi"), ++seq);
+		const insert2 = client1.makeOpMessage(
+			client1.insertTextLocal(4, "ghi"),
+			++seq,
+		);
 		client1.applyMsg(insert2);
 		client2.applyMsg(insert2);
 
 		assert.equal(client1.localReferencePositionToPosition(localRef), 3);
 
-		const remove1 = client1.makeOpMessage(client1.removeRangeLocal(1, 4), ++seq);
+		const remove1 = client1.makeOpMessage(
+			client1.removeRangeLocal(1, 4),
+			++seq,
+		);
 		client1.applyMsg(remove1);
 		client2.applyMsg(remove1);
 
@@ -771,7 +852,10 @@ describe("MergeTree.Client", () => {
 				client2.startOrUpdateCollaboration("2");
 
 				let seq = 0;
-				const insert1 = client1.makeOpMessage(client1.insertTextLocal(0, "abcdef"), ++seq);
+				const insert1 = client1.makeOpMessage(
+					client1.insertTextLocal(0, "abcdef"),
+					++seq,
+				);
 				client1.applyMsg(insert1);
 				client2.applyMsg(insert1);
 
@@ -817,7 +901,10 @@ describe("MergeTree.Client", () => {
 				client2.startOrUpdateCollaboration("2");
 
 				let seq = 0;
-				const insert1 = client1.makeOpMessage(client1.insertTextLocal(0, "abcdef"), ++seq);
+				const insert1 = client1.makeOpMessage(
+					client1.insertTextLocal(0, "abcdef"),
+					++seq,
+				);
 				client1.applyMsg(insert1);
 				client2.applyMsg(insert1);
 

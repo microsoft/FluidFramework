@@ -53,11 +53,18 @@ describe("MergeTree.Client", () => {
 			const clients: TestClient[] = Array.from({ length: 3 })
 				.fill(0)
 				.map(() => new TestClient());
-			for (const [i, c] of clients.entries()) c.startOrUpdateCollaboration(clientNames[i]);
+			for (const [i, c] of clients.entries())
+				c.startOrUpdateCollaboration(clientNames[i]);
 
 			let seq = 0;
 			// init with random values
-			seq = runMergeTreeOperationRunner(random, seq, clients, initLen, defaultOptions);
+			seq = runMergeTreeOperationRunner(
+				random,
+				seq,
+				clients,
+				initLen,
+				defaultOptions,
+			);
 			// add local references
 			const refs: ReferencePosition[][] = [];
 
@@ -66,8 +73,12 @@ describe("MergeTree.Client", () => {
 				workload();
 				for (let c = 1; c < clients.length; c++) {
 					for (let r = 0; r < refs[c].length; r++) {
-						const pos0 = clients[0].localReferencePositionToPosition(refs[0][r]);
-						const posC = clients[c].localReferencePositionToPosition(refs[c][r]);
+						const pos0 = clients[0].localReferencePositionToPosition(
+							refs[0][r],
+						);
+						const posC = clients[c].localReferencePositionToPosition(
+							refs[c][r],
+						);
 						if (pos0 !== posC) {
 							assert.equal(
 								pos0,
@@ -114,7 +125,13 @@ describe("MergeTree.Client", () => {
 
 			validateRefs("After More Ops", () => {
 				// init with random values
-				seq = runMergeTreeOperationRunner(random, seq, clients, modLen, defaultOptions);
+				seq = runMergeTreeOperationRunner(
+					random,
+					seq,
+					clients,
+					modLen,
+					defaultOptions,
+				);
 			});
 
 			validateRefs("After Final Zamboni", () => {

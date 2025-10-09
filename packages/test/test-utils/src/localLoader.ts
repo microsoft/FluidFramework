@@ -16,7 +16,10 @@ import {
 	type ICreateDetachedContainerProps,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
-import { IRequest, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import {
+	IRequest,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 import {
 	IDocumentServiceFactory,
 	IUrlResolver,

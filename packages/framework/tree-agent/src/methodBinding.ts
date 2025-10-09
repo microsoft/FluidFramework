@@ -4,7 +4,11 @@
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { NodeKind, TreeNodeSchema, TreeNodeSchemaClass } from "@fluidframework/tree";
+import type {
+	NodeKind,
+	TreeNodeSchema,
+	TreeNodeSchemaClass,
+} from "@fluidframework/tree";
 import type { z } from "zod";
 
 import { instanceOf } from "./utils.js";
@@ -49,7 +53,10 @@ export function getExposedMethods(schemaClass: BindableSchema): {
  * A type that represents a function argument.
  * @alpha
  */
-export type Arg<T extends z.ZodTypeAny = z.ZodTypeAny> = readonly [name: string, type: T];
+export type Arg<T extends z.ZodTypeAny = z.ZodTypeAny> = readonly [
+	name: string,
+	type: T,
+];
 
 /**
  * A function definition interface that describes the structure of a function.
@@ -86,9 +93,14 @@ export class FunctionWrapper
  * A utility type that extracts the argument types from a function definition.
  * @alpha
  */
-export type ArgsTuple<T extends readonly Arg[]> = T extends readonly [infer Single extends Arg]
+export type ArgsTuple<T extends readonly Arg[]> = T extends readonly [
+	infer Single extends Arg,
+]
 	? [Single[1]]
-	: T extends readonly [infer Head extends Arg, ...infer Tail extends readonly Arg[]]
+	: T extends readonly [
+				infer Head extends Arg,
+				...infer Tail extends readonly Arg[],
+			]
 		? [Head[1], ...ArgsTuple<Tail>]
 		: never;
 
@@ -116,7 +128,11 @@ export function buildFunc<
  * A utility type that infers the return type of a function definition.
  * @alpha
  */
-export type Infer<T> = T extends FunctionDef<infer Args, infer Return, infer Rest>
+export type Infer<T> = T extends FunctionDef<
+	infer Args,
+	infer Return,
+	infer Rest
+>
 	? z.infer<z.ZodFunction<z.ZodTuple<ArgsTuple<Args>, Rest>, Return>>
 	: never;
 

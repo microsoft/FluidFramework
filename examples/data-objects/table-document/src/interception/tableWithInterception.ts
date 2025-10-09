@@ -63,14 +63,23 @@ export function createTableWithInterception<T extends ITable>(
 		context.containerRuntime.orderSequentially(() => {
 			executingCallback = true;
 			try {
-				table.setCellValue(row, col, value, propertyInterceptionCallback(properties));
+				table.setCellValue(
+					row,
+					col,
+					value,
+					propertyInterceptionCallback(properties),
+				);
 			} finally {
 				executingCallback = false;
 			}
 		});
 	};
 
-	tableWithInterception.annotateCell = (row: number, col: number, properties: PropertySet) => {
+	tableWithInterception.annotateCell = (
+		row: number,
+		col: number,
+		properties: PropertySet,
+	) => {
 		// Wrapper methods should not be called from the interception callback as this will lead to
 		// infinite recursion.
 		assert(
@@ -106,7 +115,11 @@ export function createTableWithInterception<T extends ITable>(
 				maxRow,
 				maxCol,
 			);
-			return createTableWithInterception(tableSlice, context, propertyInterceptionCallback);
+			return createTableWithInterception(
+				tableSlice,
+				context,
+				propertyInterceptionCallback,
+			);
 		};
 	}
 

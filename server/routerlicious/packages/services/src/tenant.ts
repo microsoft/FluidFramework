@@ -38,7 +38,9 @@ export function getRefreshTokenIfNeededCallback(
 	tenantId: string,
 	scopes: ScopeType[],
 	serviceName: string,
-): (authorizationHeader: RawAxiosRequestHeaders) => Promise<RawAxiosRequestHeaders | undefined> {
+): (
+	authorizationHeader: RawAxiosRequestHeaders,
+) => Promise<RawAxiosRequestHeaders | undefined> {
 	const refreshTokenIfNeeded = async (authorizationHeader: RawAxiosRequestHeaders) => {
 		if (typeof authorizationHeader.Authorization === "string") {
 			const currentAccessToken = extractTokenFromHeader(authorizationHeader.Authorization);
@@ -212,10 +214,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 						serviceName: "historian",
 						scopes,
 					};
-					const tenantManager = new TenantManager(
-						this.endpoint,
-						this.internalHistorianUrl,
-					);
+					const tenantManager = new TenantManager(this.endpoint, this.internalHistorianUrl);
 					const newAccessToken = await getValidAccessToken(
 						currentAccessToken,
 						tenantManager,
@@ -321,15 +320,9 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 					};
 					// Cache the token in the invalid token cache
 					// to avoid hitting the endpoint again with the same token.
-					this.invalidTokenCache
-						?.set(token, JSON.stringify(errorToCache))
-						.catch((err) => {
-							Lumberjack.error(
-								"Failed to set token in invalid token cache",
-								{ tenantId },
-								err,
-							);
-						});
+					this.invalidTokenCache?.set(token, JSON.stringify(errorToCache)).catch((err) => {
+						Lumberjack.error("Failed to set token in invalid token cache", { tenantId }, err);
+					});
 				}
 			}
 			throw error;

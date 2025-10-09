@@ -46,5 +46,10 @@ export const InventoryListAppView: React.FC<IInventoryListAppViewProps> = (
 		};
 	}, [migrator]);
 
-	return <InventoryListView inventoryList={model.inventoryList} disabled={disableInput} />;
+	return (
+		<InventoryListView
+			inventoryList={model.inventoryList}
+			disabled={disableInput}
+		/>
+	);
 };

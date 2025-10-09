@@ -23,7 +23,9 @@ import {
 
 describe("DataVisualizerGraph unit tests", () => {
 	it("Single root DDS (SharedCounter)", async () => {
-		const runtime = new MockFluidDataStoreRuntime({ registry: [SharedCounter.getFactory()] });
+		const runtime = new MockFluidDataStoreRuntime({
+			registry: [SharedCounter.getFactory()],
+		});
 		const sharedCounter = SharedCounter.create(runtime, "test-counter");
 		const counterId = getKeyForFluidObject(sharedCounter);
 
@@ -156,7 +158,10 @@ describe("DataVisualizerGraph unit tests", () => {
 		const sharedCounter = SharedCounter.create(runtime, "test-counter");
 		const counterId = getKeyForFluidObject(sharedCounter);
 		sharedCounter.increment(42);
-		const sharedCell = SharedCell.create(runtime, "test-cell") as ISharedCell<string>;
+		const sharedCell = SharedCell.create(
+			runtime,
+			"test-cell",
+		) as ISharedCell<string>;
 		const cellId = getKeyForFluidObject(sharedCell);
 		sharedCell.set("Hello world");
 

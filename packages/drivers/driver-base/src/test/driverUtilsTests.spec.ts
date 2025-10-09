@@ -16,7 +16,9 @@ describe("driver utils tests", () => {
 			const ops: ISequencedDocumentMessage[] = [];
 			let i = 0;
 			while (i < count) {
-				ops.push({ sequenceNumber: start + i } as any as ISequencedDocumentMessage);
+				ops.push({
+					sequenceNumber: start + i,
+				} as any as ISequencedDocumentMessage);
 				i++;
 			}
 			return ops;

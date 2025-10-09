@@ -7,11 +7,18 @@ import { strict as assert } from "node:assert";
 
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
-import type { IMergeTreeOp, IMergeTreeOptions, InteriorSequencePlace } from "../index.js";
+import type {
+	IMergeTreeOp,
+	IMergeTreeOptions,
+	InteriorSequencePlace,
+} from "../index.js";
 import type { SegmentGroup } from "../mergeTreeNodes.js";
 
 import type { TestClient } from "./testClient.js";
-import { TestClientLogger, createClientsAtInitialState } from "./testClientLogger.js";
+import {
+	TestClientLogger,
+	createClientsAtInitialState,
+} from "./testClientLogger.js";
 
 const ClientIds = ["A", "B", "C", "D"] as const;
 type ClientName = (typeof ClientIds)[number];
@@ -84,7 +91,9 @@ export class ClientTestHelper {
 	}
 
 	private addMessage(client: TestClient, op: IMergeTreeOp): void {
-		const disconnectedQueue = this.disconnectedClientOps.get(clientNameOf(client));
+		const disconnectedQueue = this.disconnectedClientOps.get(
+			clientNameOf(client),
+		);
 		if (disconnectedQueue === undefined) {
 			const message = client.makeOpMessage(op, ++this.seq);
 			this.ops.push(message);
@@ -97,7 +106,10 @@ export class ClientTestHelper {
 		} else {
 			// Client is not currently connected.
 			const segmentGroup = client.peekPendingSegmentGroups();
-			assert(segmentGroup !== undefined, "Client should have a pending segment group");
+			assert(
+				segmentGroup !== undefined,
+				"Client should have a pending segment group",
+			);
 			disconnectedQueue.push({ op, segmentGroup });
 		}
 	}

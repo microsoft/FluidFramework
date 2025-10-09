@@ -21,7 +21,10 @@ import type {
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type { Serializable } from "@fluidframework/datastore-definitions/internal";
 
-import type { ISharedArray, SerializableTypeForSharedArray } from "../../index.js";
+import type {
+	ISharedArray,
+	SerializableTypeForSharedArray,
+} from "../../index.js";
 import { OperationType, SharedArrayFactory } from "../../index.js";
 
 /**
@@ -105,7 +108,8 @@ export type SharedArrayOperation<T> =
 /**
  * Event emitter for the fuzz harness.
  */
-export const eventEmitterForFuzzHarness = new TypedEventEmitter<DDSFuzzHarnessEvents>();
+export const eventEmitterForFuzzHarness =
+	new TypedEventEmitter<DDSFuzzHarnessEvents>();
 
 type TrackableSharedArray = ISharedArray<SerializableTypeForSharedArray> & {
 	// This is used to track the entry IDs for insert and move operations.
@@ -136,7 +140,10 @@ eventEmitterForFuzzHarness.on("clientCreate", (client) => {
 			}
 			case OperationType.moveEntry: {
 				if (channel.insertIds.has(op.entryId)) {
-					channel.insertIds.set(op.changedToEntryId, channel.insertIds.get(op.entryId));
+					channel.insertIds.set(
+						op.changedToEntryId,
+						channel.insertIds.get(op.entryId),
+					);
 					channel.insertIds.delete(op.entryId);
 					channel.moveIds.set(op.entryId, op.changedToEntryId);
 				}
@@ -154,7 +161,10 @@ eventEmitterForFuzzHarness.on("clientCreate", (client) => {
 				break;
 			}
 			case OperationType.toggleMove: {
-				channel.insertIds.set(op.entryId, channel.insertIds.get(op.changedToEntryId));
+				channel.insertIds.set(
+					op.entryId,
+					channel.insertIds.get(op.changedToEntryId),
+				);
 				channel.insertIds.delete(op.changedToEntryId);
 				channel.moveIds.delete(op.changedToEntryId);
 				channel.moveIds.set(op.changedToEntryId, op.entryId);
@@ -169,10 +179,9 @@ eventEmitterForFuzzHarness.on("clientCreate", (client) => {
 /**
  * Creates a reducer for SharedArray operations.
  */
-export function makeSharedArrayReducer<T extends SerializableTypeForSharedArray>(): Reducer<
-	SharedArrayOperation<T>,
-	DDSFuzzTestState<SharedArrayFactory<T>>
-> {
+export function makeSharedArrayReducer<
+	T extends SerializableTypeForSharedArray,
+>(): Reducer<SharedArrayOperation<T>, DDSFuzzTestState<SharedArrayFactory<T>>> {
 	return combineReducers({
 		insert: ({ client }, { index, value }) => {
 			client.channel.insert(index, value as Serializable<typeof value> & T);
@@ -215,7 +224,9 @@ export function makeSharedArrayOperationGenerator(weights: {
 	const insertOp = ({
 		random,
 		client,
-	}: DDSFuzzTestState<SharedArrayFactory<string>>): SharedArrayInsert<string> => ({
+	}: DDSFuzzTestState<
+		SharedArrayFactory<string>
+	>): SharedArrayInsert<string> => ({
 		type: "insert",
 		index: random.integer(0, Math.max(0, client.channel.get().length)),
 		value: random.string(random.integer(1, 5)),
@@ -225,7 +236,10 @@ export function makeSharedArrayOperationGenerator(weights: {
 		random,
 		client,
 	}: DDSFuzzTestState<SharedArrayFactory<string>>): SharedArrayDelete => {
-		const index = random.integer(0, Math.max(0, client.channel.get().length - 1));
+		const index = random.integer(
+			0,
+			Math.max(0, client.channel.get().length - 1),
+		);
 		return {
 			type: "delete",
 			index,
@@ -237,8 +251,14 @@ export function makeSharedArrayOperationGenerator(weights: {
 		random,
 		client,
 	}: DDSFuzzTestState<SharedArrayFactory<string>>): SharedArrayMove => {
-		const oldIndex = random.integer(0, Math.max(0, client.channel.get().length - 1));
-		const newIndex = random.integer(0, Math.max(0, client.channel.get().length));
+		const oldIndex = random.integer(
+			0,
+			Math.max(0, client.channel.get().length - 1),
+		);
+		const newIndex = random.integer(
+			0,
+			Math.max(0, client.channel.get().length),
+		);
 		return {
 			type: "move",
 			oldIndex,
@@ -250,7 +270,9 @@ export function makeSharedArrayOperationGenerator(weights: {
 	const insertBulkAfterOp = ({
 		random,
 		client,
-	}: DDSFuzzTestState<SharedArrayFactory<string>>): SharedArrayInsertBulkAfter<string> => {
+	}: DDSFuzzTestState<
+		SharedArrayFactory<string>
+	>): SharedArrayInsertBulkAfter<string> => {
 		const ref = random.integer(0, Math.max(0, client.channel.get().length - 1));
 		const values = Array.from({ length: random.integer(1, 5) }, () =>
 			random.string(random.integer(1, 5)),
@@ -271,7 +293,8 @@ export function makeSharedArrayOperationGenerator(weights: {
 		if (entryIds.length === 0) {
 			throw new Error("No entryIds found for toggle operation");
 		}
-		const entryId = entryIds[random.integer(0, Math.max(0, entryIds.length - 1))];
+		const entryId =
+			entryIds[random.integer(0, Math.max(0, entryIds.length - 1))];
 		if (entryId === undefined) {
 			throw new Error("No entryId found for toggle operation");
 		}
@@ -349,7 +372,9 @@ export function makeSharedArrayOperationGenerator(weights: {
 		const op = syncGenerator(state);
 		// Work around
 		if (typeof op === "symbol") {
-			throw new TypeError("Operation generator returned done symbol unexpectedly.");
+			throw new TypeError(
+				"Operation generator returned done symbol unexpectedly.",
+			);
 		}
 		return op;
 	};

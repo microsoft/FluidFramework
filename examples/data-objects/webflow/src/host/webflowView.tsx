@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import React, { KeyboardEventHandler, useEffect, useRef, useState } from "react";
+import React, {
+	KeyboardEventHandler,
+	useEffect,
+	useRef,
+	useState,
+} from "react";
 
 import { FlowDocument } from "../document/index.js";
 import { Editor } from "../editor/index.js";
@@ -24,10 +29,14 @@ interface IWebflowViewProps {
 	docP: Promise<FlowDocument>;
 }
 
-export const WebflowView: React.FC<IWebflowViewProps> = (props: IWebflowViewProps) => {
+export const WebflowView: React.FC<IWebflowViewProps> = (
+	props: IWebflowViewProps,
+) => {
 	const { docP } = props;
 
-	const [flowDocument, setFlowDocument] = useState<FlowDocument | undefined>(undefined);
+	const [flowDocument, setFlowDocument] = useState<FlowDocument | undefined>(
+		undefined,
+	);
 	const previouslyFocused = useRef<HTMLOrSVGElement | undefined>(undefined);
 	const slotElementRef = useRef<HTMLParagraphElement>(null);
 	const searchElementRef = useRef<HTMLDivElement>(null);
@@ -48,7 +57,11 @@ export const WebflowView: React.FC<IWebflowViewProps> = (props: IWebflowViewProp
 			throw new Error("Null slot element");
 		}
 
-		let editor = new Editor(flowDocument, slotElementRef.current, htmlFormatter);
+		let editor = new Editor(
+			flowDocument,
+			slotElementRef.current,
+			htmlFormatter,
+		);
 		const hasSelection = () => {
 			const { start, end } = editor.selection;
 			return start < end;
@@ -65,7 +78,9 @@ export const WebflowView: React.FC<IWebflowViewProps> = (props: IWebflowViewProp
 			const { start, end } = editor.selection;
 			flowDocument.toggleCssClass(start, end, className);
 		};
-		const switchFormatter = (formatter: Readonly<RootFormatter<IFormatterState>>) => {
+		const switchFormatter = (
+			formatter: Readonly<RootFormatter<IFormatterState>>,
+		) => {
 			editor.remove();
 			if (slotElementRef.current === null) {
 				throw new Error("Null slot element");
@@ -96,7 +111,11 @@ export const WebflowView: React.FC<IWebflowViewProps> = (props: IWebflowViewProp
 						setFormat(TagName.blockquote);
 					},
 				},
-				{ name: "bold", enabled: hasSelection, exec: () => toggleSelection("bold") },
+				{
+					name: "bold",
+					enabled: hasSelection,
+					exec: () => toggleSelection("bold"),
+				},
 				{
 					name: "debug",
 					enabled: always,
@@ -177,12 +196,15 @@ export const WebflowView: React.FC<IWebflowViewProps> = (props: IWebflowViewProp
 		};
 	}, [flowDocument]);
 
-	const onKeyDown: KeyboardEventHandler<HTMLDivElement> = (e: React.KeyboardEvent) => {
+	const onKeyDown: KeyboardEventHandler<HTMLDivElement> = (
+		e: React.KeyboardEvent,
+	) => {
 		if (e.ctrlKey && e.key === "m") {
 			if (searchMenuRef.current === undefined) {
 				throw new Error("Undefined search menu view");
 			}
-			previouslyFocused.current = document.activeElement as unknown as HTMLOrSVGElement;
+			previouslyFocused.current =
+				document.activeElement as unknown as HTMLOrSVGElement;
 			searchMenuRef.current.show();
 		}
 	};

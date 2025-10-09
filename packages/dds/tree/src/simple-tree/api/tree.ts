@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { IFluidLoadable, IDisposable, Listenable } from "@fluidframework/core-interfaces";
+import type {
+	IFluidLoadable,
+	IDisposable,
+	Listenable,
+} from "@fluidframework/core-interfaces";
 
 import type {
 	CommitMetadata,
@@ -297,7 +301,8 @@ export interface TreeBranch extends IDisposable {
  *
  * @sealed @public
  */
-export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends IDisposable {
+export interface TreeView<in out TSchema extends ImplicitFieldSchema>
+	extends IDisposable {
 	/**
 	 * The current root of the tree.
 	 *
@@ -479,7 +484,8 @@ export interface SchemaCompatibilityStatus {
  * Events for {@link TreeBranch}.
  * @sealed @alpha
  */
-export interface TreeBranchEvents extends Omit<TreeViewEvents, "commitApplied"> {
+export interface TreeBranchEvents
+	extends Omit<TreeViewEvents, "commitApplied"> {
 	/**
 	 * Fired when a change is made to the branch. Includes data about the change that is made which listeners
 	 * can use to filter on changes they care about (e.g. local vs. remote changes).
@@ -507,7 +513,10 @@ export interface TreeBranchEvents extends Omit<TreeViewEvents, "commitApplied"> 
 	 * @param getRevertible - a function provided that allows users to get a revertible for the commit that was applied. If not provided,
 	 * this commit is not revertible.
 	 */
-	commitApplied(data: CommitMetadata, getRevertible?: RevertibleAlphaFactory): void;
+	commitApplied(
+		data: CommitMetadata,
+		getRevertible?: RevertibleAlphaFactory,
+	): void;
 }
 
 /**

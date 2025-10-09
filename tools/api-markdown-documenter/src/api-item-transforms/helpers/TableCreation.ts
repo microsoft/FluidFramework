@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import type { AlignType, PhrasingContent, Table, TableCell, TableRow } from "mdast";
+import type {
+	AlignType,
+	PhrasingContent,
+	Table,
+	TableCell,
+	TableRow,
+} from "mdast";
 
 /**
  * Options for table creation, given a list of API items.
@@ -112,7 +118,9 @@ export function createTableFromItems<TItem>(
 	for (const rowCells of tableCells) {
 		const row: TableRow = {
 			type: "tableRow",
-			children: includedColumnIndices.map((iColumn) => rowCells[iColumn] ?? emptyCell),
+			children: includedColumnIndices.map(
+				(iColumn) => rowCells[iColumn] ?? emptyCell,
+			),
 		};
 		rows.push(row);
 	}
@@ -123,7 +131,10 @@ export function createTableFromItems<TItem>(
 	};
 
 	// Set alignment, but only if any was specified
-	if (alignment !== undefined || columnOptions.some((col) => col.alignment !== undefined)) {
+	if (
+		alignment !== undefined ||
+		columnOptions.some((col) => col.alignment !== undefined)
+	) {
 		table.align = includedColumnIndices.map(
 			(iColumn) =>
 				// eslint-disable-next-line unicorn/no-null -- mdast uses null to not specify alignment

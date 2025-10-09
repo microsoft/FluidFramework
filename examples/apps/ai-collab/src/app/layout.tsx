@@ -48,7 +48,9 @@ export default function RootLayout({
 						}}
 					/>
 
-					<SnackbarProvider anchorOrigin={{ horizontal: "right", vertical: "top" }}>
+					<SnackbarProvider
+						anchorOrigin={{ horizontal: "right", vertical: "top" }}
+					>
 						{children}
 					</SnackbarProvider>
 				</Box>

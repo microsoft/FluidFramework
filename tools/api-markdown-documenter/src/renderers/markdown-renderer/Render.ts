@@ -55,7 +55,10 @@ export function renderDocument(
  * @param document - The document to transform.
  * @param config - Markdown transformation configuration.
  */
-function renderMarkdown(tree: MdastTree, config: RenderMarkdownConfiguration): string {
+function renderMarkdown(
+	tree: MdastTree,
+	config: RenderMarkdownConfiguration,
+): string {
 	const extensions = [
 		gfmToMarkdown({
 			tablePipeAlign: false,

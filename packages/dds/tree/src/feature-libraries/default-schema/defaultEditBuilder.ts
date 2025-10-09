@@ -58,7 +58,9 @@ export class DefaultChangeFamily
 {
 	private readonly modularFamily: ModularChangeFamily;
 
-	public constructor(codecs: ICodecFamily<ModularChangeset, ChangeEncodingContext>) {
+	public constructor(
+		codecs: ICodecFamily<ModularChangeset, ChangeEncodingContext>,
+	) {
 		this.modularFamily = new ModularChangeFamily(fieldKinds, codecs);
 	}
 
@@ -81,7 +83,9 @@ export class DefaultChangeFamily
 /**
  * @param change - The change to convert into a delta.
  */
-export function intoDelta(taggedChange: TaggedChange<ModularChangeset>): DeltaRoot {
+export function intoDelta(
+	taggedChange: TaggedChange<ModularChangeset>,
+): DeltaRoot {
 	return intoModularDelta(taggedChange, fieldKinds);
 }
 
@@ -99,7 +103,9 @@ export function intoDelta(taggedChange: TaggedChange<ModularChangeset>): DeltaRo
  *
  * @param change - The change to be applied.
  */
-export function relevantRemovedRoots(change: ModularChangeset): Iterable<DeltaDetachedNodeId> {
+export function relevantRemovedRoots(
+	change: ModularChangeset,
+): Iterable<DeltaDetachedNodeId> {
 	return relevantModularRemovedRoots(change, fieldKinds);
 }
 
@@ -135,7 +141,9 @@ export interface IDefaultEditBuilder<TContent = TreeChunk> {
 	 * The returned object can be used (i.e., have its methods called) multiple times but its lifetime
 	 * is bounded by the lifetime of this edit builder.
 	 */
-	optionalField(field: NormalizedFieldUpPath): OptionalFieldEditBuilder<TContent>;
+	optionalField(
+		field: NormalizedFieldUpPath,
+	): OptionalFieldEditBuilder<TContent>;
 
 	/**
 	 * @param field - the sequence field which is being edited under the parent node
@@ -144,7 +152,9 @@ export interface IDefaultEditBuilder<TContent = TreeChunk> {
 	 * The returned object can be used (i.e., have its methods called) multiple times but its lifetime
 	 * is bounded by the lifetime of this edit builder.
 	 */
-	sequenceField(field: NormalizedFieldUpPath): SequenceFieldEditBuilder<TContent>;
+	sequenceField(
+		field: NormalizedFieldUpPath,
+	): SequenceFieldEditBuilder<TContent>;
 
 	/**
 	 * Moves a subsequence from one sequence field to another sequence field.
@@ -177,7 +187,9 @@ export interface IDefaultEditBuilder<TContent = TreeChunk> {
  * Implementation of {@link IDefaultEditBuilder} based on the default set of supported field kinds.
  * @sealed
  */
-export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuilder {
+export class DefaultEditBuilder
+	implements ChangeFamilyEditor, IDefaultEditBuilder
+{
 	private readonly modularBuilder: ModularEditBuilder;
 
 	public constructor(
@@ -185,7 +197,11 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		private readonly mintRevisionTag: () => RevisionTag,
 		changeReceiver: (change: TaggedChange<DefaultChangeset>) => void,
 	) {
-		this.modularBuilder = new ModularEditBuilder(family, fieldKinds, changeReceiver);
+		this.modularBuilder = new ModularEditBuilder(
+			family,
+			fieldKinds,
+			changeReceiver,
+		);
 	}
 
 	public enterTransaction(): void {
@@ -200,7 +216,10 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 	}
 
 	public addNodeExistsConstraintOnRevert(path: UpPath): void {
-		this.modularBuilder.addNodeExistsConstraintOnRevert(path, this.mintRevisionTag());
+		this.modularBuilder.addNodeExistsConstraintOnRevert(
+			path,
+			this.mintRevisionTag(),
+		);
 	}
 
 	public valueField(field: FieldUpPath): ValueFieldEditBuilder<TreeChunk> {
@@ -211,9 +230,19 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 					0xc12 /* Value fields should have a single top level node */,
 				);
 				const revision = this.mintRevisionTag();
-				const fill: ChangeAtomId = { localId: this.modularBuilder.generateId(), revision };
-				const detach: ChangeAtomId = { localId: this.modularBuilder.generateId(), revision };
-				const build = this.modularBuilder.buildTrees(fill.localId, newContent, revision);
+				const fill: ChangeAtomId = {
+					localId: this.modularBuilder.generateId(),
+					revision,
+				};
+				const detach: ChangeAtomId = {
+					localId: this.modularBuilder.generateId(),
+					revision,
+				};
+				const build = this.modularBuilder.buildTrees(
+					fill.localId,
+					newContent,
+					revision,
+				);
 				const change: FieldChangeset = brand(
 					valueFieldKind.changeHandler.editor.set({
 						fill,
@@ -233,7 +262,9 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		};
 	}
 
-	public optionalField(field: FieldUpPath): OptionalFieldEditBuilder<TreeChunk> {
+	public optionalField(
+		field: FieldUpPath,
+	): OptionalFieldEditBuilder<TreeChunk> {
 		return {
 			set: (newContent: TreeChunk | undefined, wasEmpty: boolean): void => {
 				// The choice to ban empty chunks here instead of treating them as a clear is a subjective choice made to err of the side of more explicitness and stricter validation.
@@ -244,10 +275,20 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				const edits: EditDescription[] = [];
 				let optionalChange: OptionalChangeset;
 				const revision = this.mintRevisionTag();
-				const detach: ChangeAtomId = { localId: this.modularBuilder.generateId(), revision };
+				const detach: ChangeAtomId = {
+					localId: this.modularBuilder.generateId(),
+					revision,
+				};
 				if (newContent !== undefined) {
-					const fill: ChangeAtomId = { localId: this.modularBuilder.generateId(), revision };
-					const build = this.modularBuilder.buildTrees(fill.localId, newContent, revision);
+					const fill: ChangeAtomId = {
+						localId: this.modularBuilder.generateId(),
+						revision,
+					};
+					const build = this.modularBuilder.buildTrees(
+						fill.localId,
+						newContent,
+						revision,
+					);
 					edits.push(build);
 
 					optionalChange = optional.changeHandler.editor.set(wasEmpty, {
@@ -255,7 +296,10 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 						detach,
 					});
 				} else {
-					optionalChange = optional.changeHandler.editor.clear(wasEmpty, detach);
+					optionalChange = optional.changeHandler.editor.clear(
+						wasEmpty,
+						detach,
+					);
 				}
 
 				const change: FieldChangeset = brand(optionalChange);
@@ -283,11 +327,16 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		if (count === 0) {
 			return;
 		} else if (count < 0 || !Number.isSafeInteger(count)) {
-			throw new UsageError(`Expected non-negative integer count, got ${count}.`);
+			throw new UsageError(
+				`Expected non-negative integer count, got ${count}.`,
+			);
 		}
 		const revision = this.mintRevisionTag();
 		const detachCellId = this.modularBuilder.generateId(count);
-		const attachCellId: CellId = { localId: this.modularBuilder.generateId(count), revision };
+		const attachCellId: CellId = {
+			localId: this.modularBuilder.generateId(count),
+			revision,
+		};
 		if (compareFieldUpPaths(sourceField, destinationField)) {
 			const change = sequence.changeHandler.editor.move(
 				sourceIndex,
@@ -311,10 +360,12 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 			// After the above loop, `sharedDepth` is the number of elements, starting from the root,
 			// that both paths have in common.
 			if (sharedDepth === detachPath.length) {
-				const attachField = attachPath[sharedDepth]?.parentField ?? destinationField.field;
+				const attachField =
+					attachPath[sharedDepth]?.parentField ?? destinationField.field;
 				if (attachField === sourceField.field) {
 					// The detach occurs in an ancestor field of the field where the attach occurs.
-					let attachAncestorIndex = attachPath[sharedDepth]?.parentIndex ?? sourceIndex;
+					let attachAncestorIndex =
+						attachPath[sharedDepth]?.parentIndex ?? sourceIndex;
 					if (attachAncestorIndex < sourceIndex) {
 						// The attach path runs through a node located before the detached nodes.
 						// No need to adjust the attach path.
@@ -379,7 +430,9 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		}
 	}
 
-	public sequenceField(field: FieldUpPath): SequenceFieldEditBuilder<TreeChunk> {
+	public sequenceField(
+		field: FieldUpPath,
+	): SequenceFieldEditBuilder<TreeChunk> {
 		return {
 			insert: (index: number, content: TreeChunk): void => {
 				const length = content.topLevelLength;
@@ -388,10 +441,22 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				}
 
 				const revision = this.mintRevisionTag();
-				const firstId: CellId = { localId: this.modularBuilder.generateId(length), revision };
-				const build = this.modularBuilder.buildTrees(firstId.localId, content, revision);
+				const firstId: CellId = {
+					localId: this.modularBuilder.generateId(length),
+					revision,
+				};
+				const build = this.modularBuilder.buildTrees(
+					firstId.localId,
+					content,
+					revision,
+				);
 				const change: FieldChangeset = brand(
-					sequence.changeHandler.editor.insert(index, length, firstId, revision),
+					sequence.changeHandler.editor.insert(
+						index,
+						length,
+						firstId,
+						revision,
+					),
 				);
 				const attach: FieldEditDescription = {
 					type: "field",
@@ -413,7 +478,12 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				const change: FieldChangeset = brand(
 					sequence.changeHandler.editor.remove(index, count, id, revision),
 				);
-				this.modularBuilder.submitChange(field, sequence.identifier, change, revision);
+				this.modularBuilder.submitChange(
+					field,
+					sequence.identifier,
+					change,
+					revision,
+				);
 			},
 		};
 	}
@@ -458,7 +528,10 @@ export interface SequenceFieldEditBuilder<TContent, TRemoved = void> {
 /**
  * Gets the number of path elements that both paths share, starting at index 0.
  */
-function getSharedPrefixLength(pathA: readonly UpPath[], pathB: readonly UpPath[]): number {
+function getSharedPrefixLength(
+	pathA: readonly UpPath[],
+	pathB: readonly UpPath[],
+): number {
 	const minDepth = Math.min(pathA.length, pathB.length);
 	let sharedDepth = 0;
 	while (sharedDepth < minDepth) {

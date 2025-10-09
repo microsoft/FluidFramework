@@ -44,7 +44,9 @@ export class NpmDepChecker {
 		"style-loader",
 	];
 	private readonly records: DepCheckRecord[] = [];
-	private readonly altTyping = new Map<string, string>([["ws", "isomorphic-ws"]]);
+	private readonly altTyping = new Map<string, string>([
+		["ws", "isomorphic-ws"],
+	]);
 	private readonly peerDependencies = new Map<string, string>([
 		["ws", "socket.io-client"],
 		["@angular/compiler", "@angular/platform-browser-dynamic"],
@@ -65,7 +67,9 @@ export class NpmDepChecker {
 					packageName = name.substring("@types/".length);
 				}
 				const peerPackage = this.peerDependencies.get(name);
-				const packageMatch = peerPackage ? `(${packageName}|${peerPackage})` : packageName;
+				const packageMatch = peerPackage
+					? `(${packageName}|${peerPackage})`
+					: packageName;
 				// These regexp doesn't aim to be totally accurate, but try to avoid false positives.
 				// These can definitely be improved
 				this.records.push({
@@ -74,7 +78,10 @@ export class NpmDepChecker {
 						`(import|require)[^;]+[\`'"](blob-url-loader.*)?${packageMatch}.*[\`'"]`,
 						"m",
 					),
-					declare: new RegExp(`declare[\\s]+module[\\s]+['"]${packageMatch}['"]`, "m"),
+					declare: new RegExp(
+						`declare[\\s]+module[\\s]+['"]${packageMatch}['"]`,
+						"m",
+					),
 					found: false,
 				});
 			}
@@ -95,7 +102,9 @@ export class NpmDepChecker {
 					continue;
 				}
 				if (!record.import.test(content) && !record.declare.test(content)) {
-					traceDepCheck(`${this.pkg.nameColored}: ${record.name} found in ${tsFile}`);
+					traceDepCheck(
+						`${this.pkg.nameColored}: ${record.name} found in ${tsFile}`,
+					);
 					continue;
 				}
 				record.found = true;
@@ -116,7 +125,9 @@ export class NpmDepChecker {
 				}
 			} else if (!depCheckRecord.found) {
 				if (this.dev.indexOf(name) != -1) {
-					console.warn(`${this.pkg.nameColored}: warning: misplaced dependency ${name}`);
+					console.warn(
+						`${this.pkg.nameColored}: warning: misplaced dependency ${name}`,
+					);
 					if (apply) {
 						if (!this.pkg.packageJson.devDependencies) {
 							this.pkg.packageJson.devDependencies = {};
@@ -125,7 +136,9 @@ export class NpmDepChecker {
 							this.pkg.packageJson.dependencies?.[name];
 					}
 				} else {
-					console.warn(`${this.pkg.nameColored}: warning: unused dependency ${name}`);
+					console.warn(
+						`${this.pkg.nameColored}: warning: unused dependency ${name}`,
+					);
 				}
 				if (apply) {
 					changed = true;
@@ -153,9 +166,14 @@ export class NpmDepChecker {
 				const typePkgName = dep.substring("@types/".length);
 				const altName = this.altTyping.get(typePkgName);
 				if (
-					!(this.isInDependencies(typePkgName) || (altName && this.isInDependencies(altName)))
+					!(
+						this.isInDependencies(typePkgName) ||
+						(altName && this.isInDependencies(altName))
+					)
 				) {
-					console.warn(`${this.pkg.nameColored}: warning: unused type dependency ${dep}`);
+					console.warn(
+						`${this.pkg.nameColored}: warning: unused type dependency ${dep}`,
+					);
 					if (apply) {
 						if (this.pkg.packageJson.devDependencies) {
 							delete this.pkg.packageJson.devDependencies[dep];
@@ -172,7 +190,10 @@ export class NpmDepChecker {
 	}
 
 	private dupCheck(apply: boolean) {
-		if (!this.pkg.packageJson.devDependencies || !this.pkg.packageJson.dependencies) {
+		if (
+			!this.pkg.packageJson.devDependencies ||
+			!this.pkg.packageJson.dependencies
+		) {
 			return false;
 		}
 		let changed = false;

@@ -33,7 +33,9 @@ export const SessionIdSchema = brandedStringType<SessionId>();
  * possible on readonly clients. These clients generally don't need ids, but  must be done at tree initialization time.
  */
 export type RevisionTag = SessionSpaceCompressedId | "root";
-export type EncodedRevisionTag = Brand<OpSpaceCompressedId, "EncodedRevisionTag"> | "root";
+export type EncodedRevisionTag =
+	| Brand<OpSpaceCompressedId, "EncodedRevisionTag">
+	| "root";
 export const RevisionTagSchema = Type.Union([
 	Type.Literal("root"),
 	brandedNumberType<Exclude<EncodedRevisionTag, string>>(),
@@ -67,14 +69,23 @@ export interface ChangeAtomId {
 	readonly localId: ChangesetLocalId;
 }
 
-export type EncodedChangeAtomId = [ChangesetLocalId, EncodedRevisionTag] | ChangesetLocalId;
+export type EncodedChangeAtomId =
+	| [ChangesetLocalId, EncodedRevisionTag]
+	| ChangesetLocalId;
 
-export type ChangeAtomIdMap<T> = NestedMap<RevisionTag | undefined, ChangesetLocalId, T>;
+export type ChangeAtomIdMap<T> = NestedMap<
+	RevisionTag | undefined,
+	ChangesetLocalId,
+	T
+>;
 
 /**
  * Returns true iff `a` and `b` are the same.
  */
-export function areEqualChangeAtomIds(a: ChangeAtomId, b: ChangeAtomId): boolean {
+export function areEqualChangeAtomIds(
+	a: ChangeAtomId,
+	b: ChangeAtomId,
+): boolean {
 	return a.localId === b.localId && a.revision === b.revision;
 }
 
@@ -99,7 +110,9 @@ export function makeChangeAtomId(
 	return revision === undefined ? { localId } : { localId, revision };
 }
 
-export function asChangeAtomId(id: ChangesetLocalId | ChangeAtomId): ChangeAtomId {
+export function asChangeAtomId(
+	id: ChangesetLocalId | ChangeAtomId,
+): ChangeAtomId {
 	return typeof id === "object" ? id : { localId: id };
 }
 
@@ -120,7 +133,10 @@ export function taggedOptAtomId(
 	return taggedAtomId(id, revision);
 }
 
-export function offsetChangeAtomId(id: ChangeAtomId, offset: number): ChangeAtomId {
+export function offsetChangeAtomId(
+	id: ChangeAtomId,
+	offset: number,
+): ChangeAtomId {
 	return { ...id, localId: brand(id.localId + offset) };
 }
 
@@ -132,7 +148,10 @@ export function replaceAtomRevisions(
 	return oldRevisions.has(id.revision) ? atomWithRevision(id, newRevision) : id;
 }
 
-function atomWithRevision(id: ChangeAtomId, revision: RevisionTag | undefined): ChangeAtomId {
+function atomWithRevision(
+	id: ChangeAtomId,
+	revision: RevisionTag | undefined,
+): ChangeAtomId {
 	const updated = { ...id, revision };
 	if (revision === undefined) {
 		delete updated.revision;
@@ -209,7 +228,10 @@ export function newChangeAtomIdRangeMap<V>(): ChangeAtomIdRangeMap<V> {
 	return new RangeMap(offsetChangeAtomId, subtractChangeAtomIds);
 }
 
-export function subtractChangeAtomIds(a: ChangeAtomId, b: ChangeAtomId): number {
+export function subtractChangeAtomIds(
+	a: ChangeAtomId,
+	b: ChangeAtomId,
+): number {
 	const cmp = compareRevisions(a.revision, b.revision);
 	if (cmp !== 0) {
 		return cmp * Number.POSITIVE_INFINITY;

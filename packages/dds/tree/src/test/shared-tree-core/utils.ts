@@ -13,7 +13,10 @@ import {
 	MockHandle,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { DependentFormatVersion, type ICodecOptions } from "../../codec/index.js";
+import {
+	DependentFormatVersion,
+	type ICodecOptions,
+} from "../../codec/index.js";
 import {
 	RevisionTagCodec,
 	tagChange,
@@ -88,13 +91,18 @@ import {
 const codecOptions: ICodecOptions = {
 	jsonValidator: FormatValidatorBasic,
 };
-const formatVersions: ExplicitCoreCodecVersions & { fieldBatch: FieldBatchFormatVersion } = {
+const formatVersions: ExplicitCoreCodecVersions & {
+	fieldBatch: FieldBatchFormatVersion;
+} = {
 	editManager: brand(1),
 	message: brand(1),
 	fieldBatch: brand(1),
 };
 
-class MockSharedObjectHandle extends MockHandle<ISharedObject> implements ISharedObjectHandle {
+class MockSharedObjectHandle
+	extends MockHandle<ISharedObject>
+	implements ISharedObjectHandle
+{
 	public bind(): never {
 		throw new Error("MockSharedObjectHandle.bind() unimplemented.");
 	}
@@ -141,7 +149,9 @@ export function createTree<TIndexes extends readonly Summarizable[]>(
  * @remarks
  * TODO: See note on {@link TestSharedTreeCore}.
  */
-export function createTreeSharedObject<TIndexes extends readonly Summarizable[]>(
+export function createTreeSharedObject<
+	TIndexes extends readonly Summarizable[],
+>(
 	indexes: TIndexes,
 	resubmitMachine?: ResubmitMachine<DefaultChangeset>,
 	enricher?: ChangeEnricherReadonlyCheckout<DefaultChangeset>,
@@ -197,8 +207,8 @@ const modularChangeFormatVersionForMessage: DependentFormatVersion<
 > = DependentFormatVersion.fromPairs(
 	Array.from(messageFormatVersions, (m) => [
 		m,
-		dependenciesForChangeFormat.get(changeFormatVersionForMessage.lookup(m))?.modularChange ??
-			fail("Unknown change format"),
+		dependenciesForChangeFormat.get(changeFormatVersionForMessage.lookup(m))
+			?.modularChange ?? fail("Unknown change format"),
 	]),
 );
 
@@ -215,7 +225,10 @@ function createTreeInner(
 	enricher?: ChangeEnricherReadonlyCheckout<DefaultChangeset>,
 	editor?: () => DefaultEditBuilder,
 ): [SharedTreeCore<DefaultEditBuilder, DefaultChangeset>, DefaultChangeFamily] {
-	const changeFamily = makeTestDefaultChangeFamily({ idCompressor, chunkCompressionStrategy });
+	const changeFamily = makeTestDefaultChangeFamily({
+		idCompressor,
+		chunkCompressionStrategy,
+	});
 	return [
 		new SharedTreeCore(
 			new Breakable("createTreeInner"),
@@ -266,7 +279,10 @@ export class TestSharedTreeCore extends SharedObject {
 		packageVersion: "0.0.0",
 	};
 
-	public readonly transaction: SquashingTransactionStack<DefaultEditBuilder, DefaultChangeset>;
+	public readonly transaction: SquashingTransactionStack<
+		DefaultEditBuilder,
+		DefaultChangeset
+	>;
 	private readonly changeFamily: DefaultChangeFamily;
 
 	public constructor(
@@ -281,11 +297,15 @@ export class TestSharedTreeCore extends SharedObject {
 		enricher?: ChangeEnricherReadonlyCheckout<DefaultChangeset>,
 	) {
 		super(id, runtime, TestSharedTreeCore.attributes, id);
-		assert(runtime.idCompressor !== undefined, "The runtime must provide an ID compressor");
+		assert(
+			runtime.idCompressor !== undefined,
+			"The runtime must provide an ID compressor",
+		);
 		[this.kernel, this.changeFamily] = createTreeInner(
 			this,
 			this.serializer,
-			(content, localOpMetadata) => this.submitLocalMessage(content, localOpMetadata),
+			(content, localOpMetadata) =>
+				this.submitLocalMessage(content, localOpMetadata),
 			this.logger,
 			summarizables,
 			chunkCompressionStrategy,
@@ -327,7 +347,11 @@ export class TestSharedTreeCore extends SharedObject {
 			}
 		});
 		this.transaction.activeBranchEvents.on("afterChange", (event) => {
-			if (event.type === "append" && this.isAttached() && this.transaction.isInProgress()) {
+			if (
+				event.type === "append" &&
+				this.isAttached() &&
+				this.transaction.isInProgress()
+			) {
 				commitEnricher.addTransactionCommits(event.newCommits);
 			}
 		});
@@ -338,7 +362,11 @@ export class TestSharedTreeCore extends SharedObject {
 		telemetryContext?: ITelemetryContext,
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 	): ISummaryTreeWithStats {
-		return this.kernel.summarizeCore(serializer, telemetryContext, incrementalSummaryContext);
+		return this.kernel.summarizeCore(
+			serializer,
+			telemetryContext,
+			incrementalSummaryContext,
+		);
 	}
 
 	protected processCore(
@@ -349,12 +377,16 @@ export class TestSharedTreeCore extends SharedObject {
 		fail("processCore should not be called on SharedTree");
 	}
 
-	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+	protected override processMessagesCore(
+		messagesCollection: IRuntimeMessageCollection,
+	): void {
 		this.kernel.processMessagesCore(messagesCollection);
 	}
 	protected onDisconnect(): void {}
 
-	protected override async loadCore(services: IChannelStorageService): Promise<void> {
+	protected override async loadCore(
+		services: IChannelStorageService,
+	): Promise<void> {
 		await this.kernel.loadCore(services);
 	}
 
@@ -363,17 +395,24 @@ export class TestSharedTreeCore extends SharedObject {
 	}
 
 	protected override applyStashedOp(
-		...args: Parameters<SharedTreeCore<DefaultEditBuilder, DefaultChangeset>["applyStashedOp"]>
+		...args: Parameters<
+			SharedTreeCore<DefaultEditBuilder, DefaultChangeset>["applyStashedOp"]
+		>
 	): void {
 		this.kernel.applyStashedOp(...args);
 	}
 
-	public getLocalBranch(): SharedTreeBranch<DefaultEditBuilder, DefaultChangeset> {
+	public getLocalBranch(): SharedTreeBranch<
+		DefaultEditBuilder,
+		DefaultChangeset
+	> {
 		return this.kernel.getLocalBranch();
 	}
 
 	protected override reSubmitCore(
-		...args: Parameters<SharedTreeCore<DefaultEditBuilder, DefaultChangeset>["reSubmitCore"]>
+		...args: Parameters<
+			SharedTreeCore<DefaultEditBuilder, DefaultChangeset>["reSubmitCore"]
+		>
 	): void {
 		this.kernel.reSubmitCore(...args);
 	}
@@ -383,8 +422,13 @@ export class TestSharedTreeCore extends SharedObject {
 	}
 }
 
-export class TestChangeEnricher implements ChangeEnricherReadonlyCheckout<TestChange> {
-	public updateChangeEnrichments(change: TestChange, revision: RevisionTag): TestChange {
+export class TestChangeEnricher
+	implements ChangeEnricherReadonlyCheckout<TestChange>
+{
+	public updateChangeEnrichments(
+		change: TestChange,
+		revision: RevisionTag,
+	): TestChange {
 		if (TestChange.isNonEmptyChange(change)) {
 			return {
 				inputContext: change.inputContext.map((i) => i * 1000),

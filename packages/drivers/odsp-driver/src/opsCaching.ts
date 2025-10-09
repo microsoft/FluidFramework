@@ -204,7 +204,10 @@ export class OpsCache {
 		// Errors are caught and logged by PersistedCacheWithErrorHandling that sits
 		// in the adapter chain of cache adapters
 		this.cache
-			.write(`${this.batchSize}_${batchNumber}`, JSON.stringify(payload.batchData))
+			.write(
+				`${this.batchSize}_${batchNumber}`,
+				JSON.stringify(payload.batchData),
+			)
 			.catch(() => {
 				this.totalOpsToCache = 0;
 			});

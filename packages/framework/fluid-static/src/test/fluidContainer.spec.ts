@@ -48,7 +48,9 @@ export type requireAssignableTo<_A extends B, B> = true;
 
 	// SharedObject case
 	{
-		type _a = InitialObjects<ContainerSchemaWith<TestSharedObjectFactory>>["item"];
+		type _a = InitialObjects<
+			ContainerSchemaWith<TestSharedObjectFactory>
+		>["item"];
 		type _b = requireAssignableTo<_a, TestSharedObject>;
 		type _c = requireAssignableTo<TestSharedObject, _a>;
 	}

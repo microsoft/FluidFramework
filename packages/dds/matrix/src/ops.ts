@@ -42,6 +42,7 @@ export interface ISetOp<T> {
 	fwwMode?: boolean;
 }
 
-export type VectorOp = IMergeTreeOp & Record<"target", SnapshotPath.rows | SnapshotPath.cols>;
+export type VectorOp = IMergeTreeOp &
+	Record<"target", SnapshotPath.rows | SnapshotPath.cols>;
 
 export type MatrixSetOrVectorOp<T> = VectorOp | ISetOp<T>;

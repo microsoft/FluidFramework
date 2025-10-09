@@ -87,7 +87,8 @@ export interface IProvideSessionAwareDriverFactory {
  * function if it session aware.
  * @legacy @beta
  */
-export interface IRelaySessionAwareDriverFactory extends IProvideSessionAwareDriverFactory {
+export interface IRelaySessionAwareDriverFactory
+	extends IProvideSessionAwareDriverFactory {
 	getRelayServiceSessionInfo(
 		resolvedUrl: IResolvedUrl,
 	): Promise<ISocketStorageDiscovery | undefined>;

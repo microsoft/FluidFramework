@@ -6,14 +6,21 @@
 /**
  * @fileoverview Definition of the map property class
  */
-const { PathHelper, TypeIdHelper } = require("@fluid-experimental/property-changeset");
+const {
+	PathHelper,
+	TypeIdHelper,
+} = require("@fluid-experimental/property-changeset");
 const { MSG } = require("@fluid-experimental/property-common").constants;
 const { ConsoleUtils } = require("@fluid-experimental/property-common");
 const _ = require("lodash");
 
-const { AbstractStaticCollectionProperty } = require("./abstractStaticCollectionProperty");
+const {
+	AbstractStaticCollectionProperty,
+} = require("./abstractStaticCollectionProperty");
 const { BaseProperty } = require("./baseProperty");
-const { IndexedCollectionBaseProperty } = require("./indexedCollectionBaseProperty");
+const {
+	IndexedCollectionBaseProperty,
+} = require("./indexedCollectionBaseProperty");
 const { LazyLoadedProperties: Property } = require("./lazyLoadedProperties");
 
 const PATH_TOKENS = BaseProperty.PATH_TOKENS;
@@ -295,7 +302,10 @@ export class MapProperty extends IndexedCollectionBaseProperty {
 	set(in_key, in_property) {
 		this._checkIsNotReadOnly(true);
 		if (this._dynamicChildren[in_key] !== in_property) {
-			if (this._containsPrimitiveTypes === false && in_property.getParent() !== undefined) {
+			if (
+				this._containsPrimitiveTypes === false &&
+				in_property.getParent() !== undefined
+			) {
 				throw new Error(MSG.INSERTED_ENTRY_WITH_PARENT);
 			}
 			if (this._dynamicChildren[in_key] !== undefined) {
@@ -343,7 +353,11 @@ export class MapProperty extends IndexedCollectionBaseProperty {
 	get(in_ids, in_options) {
 		if (_.isArray(in_ids)) {
 			// Forward handling of arrays to the BaseProperty function
-			return AbstractStaticCollectionProperty.prototype.get.call(this, in_ids, in_options);
+			return AbstractStaticCollectionProperty.prototype.get.call(
+				this,
+				in_ids,
+				in_options,
+			);
 		} else {
 			in_options = in_options || {};
 			in_options.referenceResolutionMode =
@@ -371,7 +385,10 @@ export class MapProperty extends IndexedCollectionBaseProperty {
 			}
 
 			// Handle automatic reference resolution
-			if (in_options.referenceResolutionMode === BaseProperty.REFERENCE_RESOLUTION.ALWAYS) {
+			if (
+				in_options.referenceResolutionMode ===
+				BaseProperty.REFERENCE_RESOLUTION.ALWAYS
+			) {
 				if (prop instanceof Property.ReferenceProperty) {
 					prop = prop.ref;
 				}

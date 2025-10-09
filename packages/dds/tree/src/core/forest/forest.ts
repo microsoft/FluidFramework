@@ -6,7 +6,10 @@
 import type { Listenable } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 
-import type { FieldKey, TreeStoredSchemaSubscription } from "../schema-stored/index.js";
+import type {
+	FieldKey,
+	TreeStoredSchemaSubscription,
+} from "../schema-stored/index.js";
 import {
 	type Anchor,
 	type AnchorSet,
@@ -81,7 +84,10 @@ export interface IForestSubscription {
 	 *
 	 * The new copy will not invalidate observers (dependents) of the old one.
 	 */
-	clone(schema: TreeStoredSchemaSubscription, anchors: AnchorSet): IEditableForest;
+	clone(
+		schema: TreeStoredSchemaSubscription,
+		anchors: AnchorSet,
+	): IEditableForest;
 
 	/**
 	 * Generate a TreeChunk for the content in the given field cursor.
@@ -128,7 +134,10 @@ export interface IForestSubscription {
 	 * This is NOT a relative move: current position is discarded.
 	 * Path must point to existing node.
 	 */
-	moveCursorToPath(destination: UpPath, cursorToMove: ITreeSubscriptionCursor): void;
+	moveCursorToPath(
+		destination: UpPath,
+		cursorToMove: ITreeSubscriptionCursor,
+	): void;
 
 	/**
 	 * The cursor is moved to a special dummy node above the detached fields.

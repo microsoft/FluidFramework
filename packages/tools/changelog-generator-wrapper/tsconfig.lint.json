@@ -3,8 +3,8 @@
  */
 {
 	"compilerOptions": {
-		"strictNullChecks": true,
+		"strictNullChecks": true
 	},
 	"include": ["**/*.js"],
-	"exclude": ["node_modules"],
+	"exclude": ["node_modules"]
 }

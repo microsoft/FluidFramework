@@ -34,7 +34,11 @@ export {
 	nestedMapFromFlatList,
 	getOrCreateInNestedMap,
 } from "./nestedMap.js";
-export { addToNestedSet, type NestedSet, nestedSetContains } from "./nestedSet.js";
+export {
+	addToNestedSet,
+	type NestedSet,
+	nestedSetContains,
+} from "./nestedSet.js";
 export { type OffsetList, OffsetListFactory } from "./offsetList.js";
 export type {
 	areSafelyAssignable,
@@ -97,7 +101,10 @@ export {
 	getOrAddInMap,
 	iterableHasSome,
 } from "./utils.js";
-export { ReferenceCountedBase, type ReferenceCounted } from "./referenceCounting.js";
+export {
+	ReferenceCountedBase,
+	type ReferenceCounted,
+} from "./referenceCounting.js";
 
 export type {
 	_RecursiveTrick,
@@ -143,6 +150,10 @@ export {
 	breakingClass,
 } from "./breakable.js";
 
-export { type TupleBTree, newTupleBTree, mergeTupleBTrees } from "./bTreeUtils.js";
+export {
+	type TupleBTree,
+	newTupleBTree,
+	mergeTupleBTrees,
+} from "./bTreeUtils.js";
 
 export { cloneWithReplacements } from "./cloneWithReplacements.js";

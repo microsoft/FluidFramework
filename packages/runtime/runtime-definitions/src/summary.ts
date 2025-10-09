@@ -336,7 +336,11 @@ export interface ITelemetryContextExt {
 	 * @param property - property name of the telemetry data being tracked (ex: "DirectoryCount")
 	 * @param value - value to attribute to this summary telemetry data
 	 */
-	set(prefix: string, property: string, value: TelemetryEventPropertyTypeExt): void;
+	set(
+		prefix: string,
+		property: string,
+		value: TelemetryEventPropertyTypeExt,
+	): void;
 
 	/**
 	 * Sets multiple values for telemetry data being tracked.
@@ -363,7 +367,11 @@ export interface ITelemetryContext {
 	 * @param property - property name of the telemetry data being tracked (ex: "DirectoryCount")
 	 * @param value - value to attribute to this summary telemetry data
 	 */
-	set(prefix: string, property: string, value: TelemetryBaseEventPropertyType): void;
+	set(
+		prefix: string,
+		property: string,
+		value: TelemetryBaseEventPropertyType,
+	): void;
 
 	/**
 	 * Sets multiple values for telemetry data being tracked.

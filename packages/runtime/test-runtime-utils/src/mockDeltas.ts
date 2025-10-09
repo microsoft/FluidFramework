@@ -50,7 +50,10 @@ export class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 		void Promise.resolve().then(() => {
 			while (this.pauseCount === 0 && this.length > 0) {
 				const el = this.pop();
-				assert(el !== undefined, "this is impossible due to the above length check");
+				assert(
+					el !== undefined,
+					"this is impossible due to the above length check",
+				);
 				this.processCallback(el);
 			}
 		});
@@ -86,7 +89,10 @@ export class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 
 	public dispose() {}
 
-	public async waitTillProcessingDone(): Promise<{ count: number; duration: number }> {
+	public async waitTillProcessingDone(): Promise<{
+		count: number;
+		duration: number;
+	}> {
 		throw new Error("NYI");
 	}
 
@@ -114,9 +120,12 @@ export class MockDeltaManager
 		return this;
 	}
 
-	private readonly _inbound: MockDeltaQueue<ISequencedDocumentMessage> = undefined as any;
-	private readonly _inboundSignal: MockDeltaQueue<ISignalMessage> = undefined as any;
-	private readonly _outbound: MockDeltaQueue<IDocumentMessage[]> = undefined as any;
+	private readonly _inbound: MockDeltaQueue<ISequencedDocumentMessage> =
+		undefined as any;
+	private readonly _inboundSignal: MockDeltaQueue<ISignalMessage> =
+		undefined as any;
+	private readonly _outbound: MockDeltaQueue<IDocumentMessage[]> =
+		undefined as any;
 
 	public get inbound(): MockDeltaQueue<ISequencedDocumentMessage> {
 		return this._inbound;
@@ -173,7 +182,10 @@ export class MockDeltaManager
 	public clientSequenceNumber = 0;
 
 	public process(message: ISequencedDocumentMessage): void {
-		assert(message.sequenceNumber !== undefined, "message missing sequenceNumber");
+		assert(
+			message.sequenceNumber !== undefined,
+			"message missing sequenceNumber",
+		);
 		assert(
 			message.minimumSequenceNumber !== undefined,
 			"message missing minimumSequenceNumber",

@@ -4,7 +4,11 @@
  */
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import type { ImplicitFieldSchema, ReadableField, TreeNode } from "@fluidframework/tree/alpha";
+import type {
+	ImplicitFieldSchema,
+	ReadableField,
+	TreeNode,
+} from "@fluidframework/tree/alpha";
 // eslint-disable-next-line import/no-internal-modules
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
 // eslint-disable-next-line import/no-internal-modules
@@ -65,29 +69,41 @@ export class LangchainChatModel implements SharedTreeChatModel {
 				}),
 			},
 		);
-		const runnable = this.model.bindTools?.([editingTool], { tool_choice: "auto" });
+		const runnable = this.model.bindTools?.([editingTool], {
+			tool_choice: "auto",
+		});
 		if (runnable === undefined) {
-			throw new UsageError("LLM client must support function calling or tool use.");
+			throw new UsageError(
+				"LLM client must support function calling or tool use.",
+			);
 		}
 
 		const responseMessage = await runnable.invoke(this.messages);
 		this.messages.push(responseMessage);
 
-		if (responseMessage.tool_calls !== undefined && responseMessage.tool_calls.length > 0) {
+		if (
+			responseMessage.tool_calls !== undefined &&
+			responseMessage.tool_calls.length > 0
+		) {
 			for (const toolCall of responseMessage.tool_calls) {
 				switch (toolCall.name) {
 					case editingTool.name: {
 						const toolResult = await editingTool.invoke(toolCall);
 						this.messages.push(toolResult);
 						const editResult: unknown = JSON.parse(toolResult.text);
-						if (isEditResult(editResult) && editResult.type === "tooManyEditsError") {
+						if (
+							isEditResult(editResult) &&
+							editResult.type === "tooManyEditsError"
+						) {
 							return editResult.message;
 						}
 						// This call will either terminate the edit chain (if the LLM decides not to edit further) or continue it if more edits are required.
 						return this.queryEdit(edit);
 					}
 					default: {
-						this.messages.push(new HumanMessage(`Unrecognized tool call: ${toolCall.name}`));
+						this.messages.push(
+							new HumanMessage(`Unrecognized tool call: ${toolCall.name}`),
+						);
 					}
 				}
 			}
@@ -139,7 +155,11 @@ export function createSemanticAgent<TSchema extends ImplicitFieldSchema>(
 	treeView: TreeView<TSchema> | (ReadableField<TSchema> & TreeNode),
 	options?: Readonly<SemanticAgentOptions>,
 ): SharedTreeSemanticAgent<TSchema> {
-	return new SharedTreeSemanticAgent(new LangchainChatModel(client), treeView, options);
+	return new SharedTreeSemanticAgent(
+		new LangchainChatModel(client),
+		treeView,
+		options,
+	);
 }
 
 // #endregion Legacy APIs

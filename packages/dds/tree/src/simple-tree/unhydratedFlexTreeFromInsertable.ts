@@ -9,7 +9,11 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import { hasSingle } from "../util/index.js";
 
-import { normalizeFieldSchema, FieldKind, type ImplicitFieldSchema } from "./fieldSchema.js";
+import {
+	normalizeFieldSchema,
+	FieldKind,
+	type ImplicitFieldSchema,
+} from "./fieldSchema.js";
 import {
 	CompatibilityLevel,
 	getKernel,
@@ -48,7 +52,9 @@ import { getUnhydratedContext } from "./createContext.js";
  * Output should comply with the provided view schema, but this is not explicitly validated:
  * validation against stored schema (to guard against document corruption) is done elsewhere.
  */
-export function unhydratedFlexTreeFromInsertable<TIn extends InsertableContent | undefined>(
+export function unhydratedFlexTreeFromInsertable<
+	TIn extends InsertableContent | undefined,
+>(
 	data: TIn,
 	allowedTypes: ImplicitFieldSchema,
 ): TIn extends undefined ? undefined : UnhydratedFlexTreeNode {
@@ -59,7 +65,9 @@ export function unhydratedFlexTreeFromInsertable<TIn extends InsertableContent |
 		if (normalizedFieldSchema.kind !== FieldKind.Optional) {
 			throw new UsageError("Got undefined for non-optional field.");
 		}
-		return undefined as TIn extends undefined ? undefined : UnhydratedFlexTreeNode;
+		return undefined as TIn extends undefined
+			? undefined
+			: UnhydratedFlexTreeNode;
 	}
 
 	const flexTree: UnhydratedFlexTreeNode = unhydratedFlexTreeFromInsertableNode(
@@ -82,7 +90,9 @@ export function unhydratedFlexTreeFromInsertableNode(
 		const inner = kernel.getInnerNodeIfUnhydrated();
 		if (inner === undefined) {
 			// The node is already hydrated, meaning that it already got inserted into the tree previously
-			throw new UsageError("A node may not be inserted into the tree more than once");
+			throw new UsageError(
+				"A node may not be inserted into the tree more than once",
+			);
 		} else {
 			if (!allowedTypes.has(kernel.schema)) {
 				throw new UsageError("Invalid schema for this context.");
@@ -130,7 +140,10 @@ export function getPossibleTypes(
 	allowedTypes: ReadonlySet<TreeNodeSchema>,
 	data: FactoryContent,
 ): TreeNodeSchema[] {
-	assert(data !== undefined, 0x889 /* undefined cannot be used as FactoryContent. */);
+	assert(
+		data !== undefined,
+		0x889 /* undefined cannot be used as FactoryContent. */,
+	);
 
 	let best = CompatibilityLevel.None;
 	const possibleTypes: TreeNodeSchema[] = [];

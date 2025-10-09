@@ -14,7 +14,10 @@ import {
 	buildSnapshotTree,
 	convertSummaryTreeToSnapshotITree,
 } from "@fluidframework/driver-utils/internal";
-import { FileSnapshotReader, IFileSnapshot } from "@fluidframework/replay-driver/internal";
+import {
+	FileSnapshotReader,
+	IFileSnapshot,
+} from "@fluidframework/replay-driver/internal";
 
 /**
  * This storage service provides the following functionalities:

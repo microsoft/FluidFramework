@@ -84,7 +84,10 @@ export namespace JsonAsTree {
 	 * Do not use. Exists only as a workaround for {@link https://github.com/microsoft/TypeScript/issues/59550} and {@link https://github.com/microsoft/rushstack/issues/4429}.
 	 * @system @alpha
 	 */
-	export const _APIExtractorWorkaroundObjectBase = sf.recordRecursive("object", Tree);
+	export const _APIExtractorWorkaroundObjectBase = sf.recordRecursive(
+		"object",
+		Tree,
+	);
 
 	/**
 	 * Arbitrary JSON object as a {@link TreeNode}.
@@ -115,15 +118,17 @@ export namespace JsonAsTree {
 	 * Testing for this in examples/utils/import-testing now shows it has to reference JsonAsTree.Array instead.
 	 * @system @alpha
 	 */
-	export declare type _RecursiveArrayWorkaroundJsonArray = FixRecursiveArraySchema<
-		typeof Array
-	>;
+	export declare type _RecursiveArrayWorkaroundJsonArray =
+		FixRecursiveArraySchema<typeof Array>;
 
 	/**
 	 * Do not use. Exists only as a workaround for {@link https://github.com/microsoft/TypeScript/issues/59550} and {@link https://github.com/microsoft/rushstack/issues/4429}.
 	 * @system @alpha
 	 */
-	export const _APIExtractorWorkaroundArrayBase = sf.arrayRecursive("array", Tree);
+	export const _APIExtractorWorkaroundArrayBase = sf.arrayRecursive(
+		"array",
+		Tree,
+	);
 
 	/**
 	 * Arbitrary JSON array as a {@link TreeNode}.

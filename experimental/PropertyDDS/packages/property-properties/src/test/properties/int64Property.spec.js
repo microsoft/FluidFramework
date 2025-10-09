@@ -180,7 +180,9 @@ describe("Test Int64Property", function () {
 		expect(directInt64Prop.getValueLow()).to.be.equal(11);
 		expect(directInt64Prop.getValueHigh()).to.be.equal(12);
 
-		var otherNodeProp = PropertyFactory.create("autodesk.tests:Int64TestID-1.0.0");
+		var otherNodeProp = PropertyFactory.create(
+			"autodesk.tests:Int64TestID-1.0.0",
+		);
 		otherNodeProp.deserialize(nodeProp.serialize({ dirtyOnly: false }));
 		expect(otherNodeProp._properties.myInt64.getValueLow()).to.be.equal(11);
 		expect(otherNodeProp._properties.myInt64.getValueHigh()).to.be.equal(12);
@@ -253,7 +255,9 @@ describe("Test Int64Property", function () {
 				}
 			}
 
-			io_initialChangeset.applyChangeSet(squashedChangeset.getSerializedChangeSet());
+			io_initialChangeset.applyChangeSet(
+				squashedChangeset.getSerializedChangeSet(),
+			);
 		};
 
 		//
@@ -265,7 +269,9 @@ describe("Test Int64Property", function () {
 		// be given as first parameter
 		//
 		var testChangeSetSquashing = function (in_options) {
-			var testProperty = PropertyFactory.create("autodesk.tests:Int64TestID-1.0.0");
+			var testProperty = PropertyFactory.create(
+				"autodesk.tests:Int64TestID-1.0.0",
+			);
 			var nodeTestProperty = PropertyFactory.create("NodeProperty");
 			var int64InNodeProperty = PropertyFactory.create("Int64");
 			nodeTestProperty.insert("intProperty", int64InNodeProperty);
@@ -279,13 +285,17 @@ describe("Test Int64Property", function () {
 				in_options.pre(int64InMapProperty);
 			}
 
-			var initialChangeset = new ChangeSet(testProperty.serialize({ dirtyOnly: false }));
+			var initialChangeset = new ChangeSet(
+				testProperty.serialize({ dirtyOnly: false }),
+			);
 			initialChangeset.setIsNormalized(true);
 			var initialChangesetNode = new ChangeSet(
 				nodeTestProperty.serialize({ dirtyOnly: false }),
 			);
 			initialChangesetNode.setIsNormalized(true);
-			var initialChangesetMap = new ChangeSet(mapTestProperty.serialize({ dirtyOnly: false }));
+			var initialChangesetMap = new ChangeSet(
+				mapTestProperty.serialize({ dirtyOnly: false }),
+			);
 			initialChangesetMap.setIsNormalized(true);
 
 			innerTestChangeSetSquashing(
@@ -309,7 +319,8 @@ describe("Test Int64Property", function () {
 				true,
 			);
 
-			var initialChangeset = initialChangeset.getSerializedChangeSet().Int64.intProperty;
+			var initialChangeset =
+				initialChangeset.getSerializedChangeSet().Int64.intProperty;
 			expect(initialChangeset).to.deep.equal(
 				testProperty.serialize({ dirtyOnly: false }).Int64.intProperty,
 			);
@@ -317,13 +328,15 @@ describe("Test Int64Property", function () {
 			var nodeInitialChangeset =
 				initialChangesetNode.getSerializedChangeSet().insert.Int64.intProperty;
 			expect(nodeInitialChangeset).to.deep.equal(
-				nodeTestProperty.serialize({ dirtyOnly: false }).insert.Int64.intProperty,
+				nodeTestProperty.serialize({ dirtyOnly: false }).insert.Int64
+					.intProperty,
 			);
 
 			var mapInitialChangeset =
 				initialChangesetMap.getSerializedChangeSet().insert.Int64.intProperty;
 			expect(mapInitialChangeset).to.deep.equal(
-				mapTestProperty.serialize({ dirtyOnly: false }).insert.Int64.intProperty,
+				mapTestProperty.serialize({ dirtyOnly: false }).insert.Int64
+					.intProperty,
 			);
 		};
 
@@ -358,11 +371,15 @@ describe("Test Int64Property", function () {
 			var int64Property = PropertyFactory.create("Int64");
 			nodeTestProperty.insert("myProp", int64Property);
 
-			var changeSet1 = new ChangeSet(nodeTestProperty.serialize({ dirtyOnly: true }));
+			var changeSet1 = new ChangeSet(
+				nodeTestProperty.serialize({ dirtyOnly: true }),
+			);
 
 			nodeTestProperty.cleanDirty();
 			nodeTestProperty.resolvePath("myProp").setValueHigh(100);
-			var changeSet2 = new ChangeSet(nodeTestProperty.serialize({ dirtyOnly: true }));
+			var changeSet2 = new ChangeSet(
+				nodeTestProperty.serialize({ dirtyOnly: true }),
+			);
 
 			var nodeTestProperty = PropertyFactory.create("NodeProperty");
 			var int64Property = PropertyFactory.create("Int64");
@@ -384,11 +401,15 @@ describe("Test Int64Property", function () {
 			var Uint64Property = PropertyFactory.create("Uint64");
 			nodeTestProperty.insert("myProp", Uint64Property);
 
-			var changeSet1 = new ChangeSet(nodeTestProperty.serialize({ dirtyOnly: true }));
+			var changeSet1 = new ChangeSet(
+				nodeTestProperty.serialize({ dirtyOnly: true }),
+			);
 
 			nodeTestProperty.cleanDirty();
 			nodeTestProperty.resolvePath("myProp").setValueHigh(100);
-			var changeSet2 = new ChangeSet(nodeTestProperty.serialize({ dirtyOnly: true }));
+			var changeSet2 = new ChangeSet(
+				nodeTestProperty.serialize({ dirtyOnly: true }),
+			);
 
 			var nodeTestProperty = PropertyFactory.create("NodeProperty");
 			var Uint64Property = PropertyFactory.create("Uint64");
@@ -475,7 +496,9 @@ describe("Test Int64Property", function () {
 			}
 
 			// Get the ChangeSets
-			var changeSet1 = new ChangeSet(baseProperty1.serialize({ dirtyOnly: true }));
+			var changeSet1 = new ChangeSet(
+				baseProperty1.serialize({ dirtyOnly: true }),
+			);
 			var changeSet2 = baseProperty2.serialize({ dirtyOnly: true });
 
 			// Perform the actual rebase
@@ -522,8 +545,18 @@ describe("Test Int64Property", function () {
 				getIntPropertyFromNode,
 				in_options,
 			);
-			testRebasingInner(createNodePropertyForRebase, getIntPropertyFromNode, in_options, true);
-			testRebasingInner(createMapPropertyForRebase, getIntPropertyFromMap, in_options, true);
+			testRebasingInner(
+				createNodePropertyForRebase,
+				getIntPropertyFromNode,
+				in_options,
+				true,
+			);
+			testRebasingInner(
+				createMapPropertyForRebase,
+				getIntPropertyFromMap,
+				in_options,
+				true,
+			);
 		};
 
 		it("with two modifies should be possible and report a conflict", function () {
@@ -538,7 +571,9 @@ describe("Test Int64Property", function () {
 				checkResult: function (conflicts, changeSet) {
 					expect(conflicts).to.have.length(1);
 					expect(changeSet.Int64.myInt64).to.deep.equal([0, 2]);
-					expect(conflicts[0].type).to.be.equal(ChangeSet.ConflictType.COLLIDING_SET);
+					expect(conflicts[0].type).to.be.equal(
+						ChangeSet.ConflictType.COLLIDING_SET,
+					);
 				},
 			});
 		});
@@ -555,7 +590,9 @@ describe("Test Int64Property", function () {
 				checkResult: function (conflicts, changeSet) {
 					expect(conflicts).to.have.length(1);
 					expect(changeSet.Int64.myInt64).to.deep.equal([2, 0]);
-					expect(conflicts[0].type).to.be.equal(ChangeSet.ConflictType.COLLIDING_SET);
+					expect(conflicts[0].type).to.be.equal(
+						ChangeSet.ConflictType.COLLIDING_SET,
+					);
 				},
 			});
 		});

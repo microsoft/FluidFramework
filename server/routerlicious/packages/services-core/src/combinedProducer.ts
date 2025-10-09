@@ -56,7 +56,10 @@ export class CombinedProducer<T = ITicketedMessage> implements IProducer<T> {
 		await Promise.all(closeP);
 	}
 
-	public on(event: "connected" | "produced" | "error", listener: (...args: any[]) => void): this {
+	public on(
+		event: "connected" | "produced" | "error",
+		listener: (...args: any[]) => void,
+	): this {
 		return this;
 	}
 

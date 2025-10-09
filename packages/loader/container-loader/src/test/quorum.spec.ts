@@ -82,7 +82,13 @@ describe("Quorum", () => {
 			);
 			// Client sequence number will be 1 for this first proposal.
 			// The info must match the proposal we sent above.
-			quorum.addProposal(proposalKey, proposalValue, proposalSequenceNumber, true, 1);
+			quorum.addProposal(
+				proposalKey,
+				proposalValue,
+				proposalSequenceNumber,
+				true,
+				1,
+			);
 			assert.strictEqual(
 				quorum.get(proposalKey),
 				undefined,
@@ -174,7 +180,13 @@ describe("Quorum", () => {
 			);
 
 			// Client sequence number shouldn't matter for remote proposals.
-			quorum.addProposal(proposalKey, proposalValue, proposalSequenceNumber, false, -5);
+			quorum.addProposal(
+				proposalKey,
+				proposalValue,
+				proposalSequenceNumber,
+				false,
+				-5,
+			);
 
 			assert.strictEqual(
 				quorum.get(proposalKey),
@@ -278,7 +290,11 @@ describe("Quorum", () => {
 
 			assert.strictEqual(resolved, true, "Stage 2, Resolved");
 			assert.strictEqual(rejected, false, "Stage 2, Rejected");
-			assert.strictEqual(quorum.get(proposalKey), localProposalValue, "Stage 2, Value");
+			assert.strictEqual(
+				quorum.get(proposalKey),
+				localProposalValue,
+				"Stage 2, Value",
+			);
 
 			quorum.updateMinimumSequenceNumber(approveRemoteProposalMessage);
 
@@ -289,7 +305,11 @@ describe("Quorum", () => {
 
 			assert.strictEqual(resolved, true, "Stage 3, Resolved");
 			assert.strictEqual(rejected, false, "Stage 3, Rejected");
-			assert.strictEqual(quorum.get(proposalKey), remoteProposalValue, "Stage 3, Value");
+			assert.strictEqual(
+				quorum.get(proposalKey),
+				remoteProposalValue,
+				"Stage 3, Value",
+			);
 
 			// Backstop to ensure the promise is settled.
 			await proposalP;
@@ -369,18 +389,54 @@ describe("Quorum", () => {
 				// Due to the composition of Quorum -> QuorumProposals,
 				// we require one more microtask deferral to resolve.
 				await Promise.resolve().then(() => {});
-				assert.strictEqual(proposal1.resolved, false, "Stage 1, Prop 1, Resolved");
-				assert.strictEqual(proposal1.rejected, false, "Stage 1, Prop 1, Rejected");
-				assert.strictEqual(proposal2.resolved, false, "Stage 1, Prop 2, Resolved");
-				assert.strictEqual(proposal2.rejected, false, "Stage 1, Prop 2, Rejected");
-				assert.strictEqual(proposal3.resolved, false, "Stage 1, Prop 3, Resolved");
-				assert.strictEqual(proposal3.rejected, false, "Stage 1, Prop 3, Rejected");
+				assert.strictEqual(
+					proposal1.resolved,
+					false,
+					"Stage 1, Prop 1, Resolved",
+				);
+				assert.strictEqual(
+					proposal1.rejected,
+					false,
+					"Stage 1, Prop 1, Rejected",
+				);
+				assert.strictEqual(
+					proposal2.resolved,
+					false,
+					"Stage 1, Prop 2, Resolved",
+				);
+				assert.strictEqual(
+					proposal2.rejected,
+					false,
+					"Stage 1, Prop 2, Rejected",
+				);
+				assert.strictEqual(
+					proposal3.resolved,
+					false,
+					"Stage 1, Prop 3, Resolved",
+				);
+				assert.strictEqual(
+					proposal3.rejected,
+					false,
+					"Stage 1, Prop 3, Rejected",
+				);
 
 				// Now we're simulating "connecting" state, where we will see the ack's for proposals 1 and 2
 				// And also we'll advance the MSN past proposal 1
-				quorum.addProposal(proposal1.key, proposal1.value, proposal1.sequenceNumber, true, 1);
+				quorum.addProposal(
+					proposal1.key,
+					proposal1.value,
+					proposal1.sequenceNumber,
+					true,
+					1,
+				);
 				quorum.updateMinimumSequenceNumber(messageApproving1);
-				quorum.addProposal(proposal2.key, proposal2.value, proposal2.sequenceNumber, true, 2);
+				quorum.addProposal(
+					proposal2.key,
+					proposal2.value,
+					proposal2.sequenceNumber,
+					true,
+					2,
+				);
 
 				// Now we'll simulate the transition to connected state
 				quorum.setConnectionState(true);
@@ -390,17 +446,53 @@ describe("Quorum", () => {
 				// Due to the composition of Quorum -> QuorumProposals,
 				// we require one more microtask deferral to resolve.
 				await Promise.resolve().then(() => {});
-				assert.strictEqual(proposal1.resolved, true, "Stage 2, Prop 1, Resolved");
-				assert.strictEqual(proposal1.rejected, false, "Stage 2, Prop 1, Rejected");
-				assert.strictEqual(proposal2.resolved, false, "Stage 2, Prop 2, Resolved");
-				assert.strictEqual(proposal2.rejected, false, "Stage 2, Prop 2, Rejected");
-				assert.strictEqual(proposal3.resolved, false, "Stage 2, Prop 3, Resolved");
-				assert.strictEqual(proposal3.rejected, true, "Stage 2, Prop 3, Rejected");
+				assert.strictEqual(
+					proposal1.resolved,
+					true,
+					"Stage 2, Prop 1, Resolved",
+				);
+				assert.strictEqual(
+					proposal1.rejected,
+					false,
+					"Stage 2, Prop 1, Rejected",
+				);
+				assert.strictEqual(
+					proposal2.resolved,
+					false,
+					"Stage 2, Prop 2, Resolved",
+				);
+				assert.strictEqual(
+					proposal2.rejected,
+					false,
+					"Stage 2, Prop 2, Rejected",
+				);
+				assert.strictEqual(
+					proposal3.resolved,
+					false,
+					"Stage 2, Prop 3, Resolved",
+				);
+				assert.strictEqual(
+					proposal3.rejected,
+					true,
+					"Stage 2, Prop 3, Rejected",
+				);
 
 				// Verify the quorum holds the data we expect.
-				assert.strictEqual(quorum.get(proposal1.key), proposal1.value, "Value 1 missing");
-				assert.strictEqual(quorum.get(proposal2.key), undefined, "Unexpected value 2");
-				assert.strictEqual(quorum.get(proposal3.key), undefined, "Unexpected value 3");
+				assert.strictEqual(
+					quorum.get(proposal1.key),
+					proposal1.value,
+					"Value 1 missing",
+				);
+				assert.strictEqual(
+					quorum.get(proposal2.key),
+					undefined,
+					"Unexpected value 2",
+				);
+				assert.strictEqual(
+					quorum.get(proposal3.key),
+					undefined,
+					"Unexpected value 3",
+				);
 
 				// Now advance the MSN past proposal 2
 				quorum.updateMinimumSequenceNumber(messageApproving2);
@@ -410,17 +502,53 @@ describe("Quorum", () => {
 				// Due to the composition of Quorum -> QuorumProposals,
 				// we require one more microtask deferral to resolve.
 				await Promise.resolve().then(() => {});
-				assert.strictEqual(proposal1.resolved, true, "Stage 3, Prop 1, Resolved");
-				assert.strictEqual(proposal1.rejected, false, "Stage 3, Prop 1, Rejected");
-				assert.strictEqual(proposal2.resolved, true, "Stage 3, Prop 2, Resolved");
-				assert.strictEqual(proposal2.rejected, false, "Stage 3, Prop 2, Rejected");
-				assert.strictEqual(proposal3.resolved, false, "Stage 3, Prop 3, Resolved");
-				assert.strictEqual(proposal3.rejected, true, "Stage 3, Prop 3, Rejected");
+				assert.strictEqual(
+					proposal1.resolved,
+					true,
+					"Stage 3, Prop 1, Resolved",
+				);
+				assert.strictEqual(
+					proposal1.rejected,
+					false,
+					"Stage 3, Prop 1, Rejected",
+				);
+				assert.strictEqual(
+					proposal2.resolved,
+					true,
+					"Stage 3, Prop 2, Resolved",
+				);
+				assert.strictEqual(
+					proposal2.rejected,
+					false,
+					"Stage 3, Prop 2, Rejected",
+				);
+				assert.strictEqual(
+					proposal3.resolved,
+					false,
+					"Stage 3, Prop 3, Resolved",
+				);
+				assert.strictEqual(
+					proposal3.rejected,
+					true,
+					"Stage 3, Prop 3, Rejected",
+				);
 
 				// Verify the quorum holds the data we expect.
-				assert.strictEqual(quorum.get(proposal1.key), proposal1.value, "Value 1 missing");
-				assert.strictEqual(quorum.get(proposal2.key), proposal2.value, "Value 2 missing");
-				assert.strictEqual(quorum.get(proposal3.key), undefined, "Unexpected value 3");
+				assert.strictEqual(
+					quorum.get(proposal1.key),
+					proposal1.value,
+					"Value 1 missing",
+				);
+				assert.strictEqual(
+					quorum.get(proposal2.key),
+					proposal2.value,
+					"Value 2 missing",
+				);
+				assert.strictEqual(
+					quorum.get(proposal3.key),
+					undefined,
+					"Unexpected value 3",
+				);
 
 				// Now advance the MSN past proposal 3 (this should have no real effect)
 				quorum.updateMinimumSequenceNumber(messageApproving3);
@@ -430,17 +558,53 @@ describe("Quorum", () => {
 				// Due to the composition of Quorum -> QuorumProposals,
 				// we require one more microtask deferral to resolve.
 				await Promise.resolve().then(() => {});
-				assert.strictEqual(proposal1.resolved, true, "Stage 4, Prop 1, Resolved");
-				assert.strictEqual(proposal1.rejected, false, "Stage 4, Prop 1, Rejected");
-				assert.strictEqual(proposal2.resolved, true, "Stage 4, Prop 2, Resolved");
-				assert.strictEqual(proposal2.rejected, false, "Stage 4, Prop 2, Rejected");
-				assert.strictEqual(proposal3.resolved, false, "Stage 4, Prop 3, Resolved");
-				assert.strictEqual(proposal3.rejected, true, "Stage 4, Prop 3, Rejected");
+				assert.strictEqual(
+					proposal1.resolved,
+					true,
+					"Stage 4, Prop 1, Resolved",
+				);
+				assert.strictEqual(
+					proposal1.rejected,
+					false,
+					"Stage 4, Prop 1, Rejected",
+				);
+				assert.strictEqual(
+					proposal2.resolved,
+					true,
+					"Stage 4, Prop 2, Resolved",
+				);
+				assert.strictEqual(
+					proposal2.rejected,
+					false,
+					"Stage 4, Prop 2, Rejected",
+				);
+				assert.strictEqual(
+					proposal3.resolved,
+					false,
+					"Stage 4, Prop 3, Resolved",
+				);
+				assert.strictEqual(
+					proposal3.rejected,
+					true,
+					"Stage 4, Prop 3, Rejected",
+				);
 
 				// Verify the quorum holds the data we expect.
-				assert.strictEqual(quorum.get(proposal1.key), proposal1.value, "Value 1 missing");
-				assert.strictEqual(quorum.get(proposal2.key), proposal2.value, "Value 2 missing");
-				assert.strictEqual(quorum.get(proposal3.key), undefined, "Unexpected value 3");
+				assert.strictEqual(
+					quorum.get(proposal1.key),
+					proposal1.value,
+					"Value 1 missing",
+				);
+				assert.strictEqual(
+					quorum.get(proposal2.key),
+					proposal2.value,
+					"Value 2 missing",
+				);
+				assert.strictEqual(
+					quorum.get(proposal3.key),
+					undefined,
+					"Unexpected value 3",
+				);
 
 				// Backstop to ensure the promises are settled.
 				await Promise.all([proposal1P, proposal2P, proposal3P]);
@@ -510,8 +674,20 @@ describe("Quorum", () => {
 						proposal3.rejected = true;
 					});
 
-				quorum.addProposal(proposal1.key, proposal1.value, proposal1.sequenceNumber, true, 1);
-				quorum.addProposal(proposal2.key, proposal2.value, proposal2.sequenceNumber, true, 2);
+				quorum.addProposal(
+					proposal1.key,
+					proposal1.value,
+					proposal1.sequenceNumber,
+					true,
+					1,
+				);
+				quorum.addProposal(
+					proposal2.key,
+					proposal2.value,
+					proposal2.sequenceNumber,
+					true,
+					2,
+				);
 				quorum.updateMinimumSequenceNumber(messageApproving1);
 
 				const snapshot = quorum.snapshot();
@@ -545,7 +721,13 @@ describe("Quorum", () => {
 				// The snapshot we took should never change after we take it
 				quorum.updateMinimumSequenceNumber(messageApproving2);
 				verifyExpectedSnapshot();
-				quorum.addProposal(proposal3.key, proposal3.value, proposal3.sequenceNumber, true, 3);
+				quorum.addProposal(
+					proposal3.key,
+					proposal3.value,
+					proposal3.sequenceNumber,
+					true,
+					3,
+				);
 				verifyExpectedSnapshot();
 				quorum.updateMinimumSequenceNumber(messageApproving3);
 				verifyExpectedSnapshot();
@@ -576,8 +758,16 @@ describe("Quorum", () => {
 			let addCount = 0;
 			let removeCount = 0;
 			quorum.on("addMember", (clientId: string, details: ISequencedClient) => {
-				assert.strictEqual(clientId, expectedAdd.clientId, "Unexpected client id added");
-				assert.strictEqual(details, expectedAdd.details, "Unexpected client details added");
+				assert.strictEqual(
+					clientId,
+					expectedAdd.clientId,
+					"Unexpected client id added",
+				);
+				assert.strictEqual(
+					details,
+					expectedAdd.details,
+					"Unexpected client details added",
+				);
 				addCount++;
 			});
 			quorum.on("removeMember", (clientId: string) => {
@@ -585,12 +775,20 @@ describe("Quorum", () => {
 				removeCount++;
 			});
 
-			assert.strictEqual(quorum.getMembers().size, 0, "Should have no members to start");
+			assert.strictEqual(
+				quorum.getMembers().size,
+				0,
+				"Should have no members to start",
+			);
 
 			expectedAdd = client1Info;
 			quorum.addMember(client1Info.clientId, client1Info.details);
 			assert.strictEqual(addCount, 1, "Failed to event for add");
-			assert.strictEqual(quorum.getMembers().size, 1, "Should have 1 member after add");
+			assert.strictEqual(
+				quorum.getMembers().size,
+				1,
+				"Should have 1 member after add",
+			);
 			assert.strictEqual(
 				quorum.getMember(client1Info.clientId),
 				client1Info.details,
@@ -625,7 +823,11 @@ describe("Quorum", () => {
 			expectedRemove = client1Info;
 			quorum.removeMember(client1Info.clientId);
 			assert.strictEqual(removeCount, 1, "Failed to event for remove");
-			assert.strictEqual(quorum.getMembers().size, 1, "Should have 1 member after remove");
+			assert.strictEqual(
+				quorum.getMembers().size,
+				1,
+				"Should have 1 member after remove",
+			);
 			assert.strictEqual(
 				quorum.getMember(client1Info.clientId),
 				undefined,
@@ -661,7 +863,11 @@ describe("Quorum", () => {
 					1,
 					"Should be exactly 1 member in the snapshot",
 				);
-				assert.strictEqual(snapshot.members[0][0], client1Info.clientId, "Expecting client 1");
+				assert.strictEqual(
+					snapshot.members[0][0],
+					client1Info.clientId,
+					"Expecting client 1",
+				);
 			};
 
 			// Verify initial state of snapshot

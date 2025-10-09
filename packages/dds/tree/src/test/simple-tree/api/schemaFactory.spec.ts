@@ -62,7 +62,11 @@ import {
 } from "../../../util/index.js";
 
 import { hydrate } from "../utils.js";
-import { getView, TestTreeProviderLite, validateUsageError } from "../../utils.js";
+import {
+	getView,
+	TestTreeProviderLite,
+	validateUsageError,
+} from "../../utils.js";
 import type { SchematizingSimpleTreeView } from "../../../shared-tree/index.js";
 import { EmptyKey } from "../../../core/index.js";
 
@@ -99,10 +103,15 @@ import { EmptyKey } from "../../../core/index.js";
 			areSafelyAssignable<TreeNodeFromImplicitAllowedTypes<[typeof Note]>, Note>
 		>;
 		type _check4 = requireTrue<
-			areSafelyAssignable<TreeNodeFromImplicitAllowedTypes<[() => typeof Note]>, Note>
+			areSafelyAssignable<
+				TreeNodeFromImplicitAllowedTypes<[() => typeof Note]>,
+				Note
+			>
 		>;
 
-		type FromArray = TreeNodeFromImplicitAllowedTypes<[typeof Note, typeof Note]>;
+		type FromArray = TreeNodeFromImplicitAllowedTypes<
+			[typeof Note, typeof Note]
+		>;
 		type _check5 = requireTrue<areSafelyAssignable<FromArray, Note>>;
 	}
 
@@ -176,7 +185,9 @@ describe("schemaFactory", () => {
 		const factory = new SchemaFactory("test-scope");
 		// We specified a scope in the factory, so it should be part of the type signature of the created object
 		const foo = factory.object("foo", {}).identifier;
-		type _check = requireTrue<areSafelyAssignable<"test-scope.foo", typeof foo>>;
+		type _check = requireTrue<
+			areSafelyAssignable<"test-scope.foo", typeof foo>
+		>;
 		assert.equal(foo, "test-scope.foo");
 	});
 
@@ -201,7 +212,9 @@ describe("schemaFactory", () => {
 
 	it("empty field", () => {
 		// A field with no allowed types and thus must always be empty.
-		const config = new TreeViewConfiguration({ schema: SchemaFactory.optional([]) });
+		const config = new TreeViewConfiguration({
+			schema: SchemaFactory.optional([]),
+		});
 		const view = getView(config);
 		view.initialize(undefined);
 		assert.equal(view.root, undefined);
@@ -254,7 +267,9 @@ describe("schemaFactory", () => {
 		type _check1 = requireTrue<
 			requireAssignableTo<SchemaFactory<"Foo", "Bar">, SchemaFactory>
 		>;
-		type _check2 = requireTrue<requireAssignableTo<SchemaFactory<"Foo", 42>, SchemaFactory>>;
+		type _check2 = requireTrue<
+			requireAssignableTo<SchemaFactory<"Foo", 42>, SchemaFactory>
+		>;
 		type _check3 = requireTrue<
 			requireAssignableTo<SchemaFactory<undefined, "Bar">, SchemaFactory>
 		>;
@@ -343,7 +358,9 @@ describe("schemaFactory", () => {
 						x: schema.required(schema.number, { key: "foo" }),
 						y: schema.required(schema.number, { key: "foo" }),
 					}),
-				validateUsageError(/Duplicate stored key "foo" in schema "com.example.Point"/),
+				validateUsageError(
+					/Duplicate stored key "foo" in schema "com.example.Point"/,
+				),
 			);
 		});
 
@@ -404,7 +421,9 @@ describe("schemaFactory", () => {
 			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
 			const description = Foo.metadata.description;
 			const baz = Foo.metadata.custom.baz;
-			type _check1 = requireTrue<areSafelyAssignable<typeof description, string>>;
+			type _check1 = requireTrue<
+				areSafelyAssignable<typeof description, string>
+			>;
 			type _check2 = requireTrue<areSafelyAssignable<typeof baz, boolean>>;
 		});
 
@@ -416,7 +435,9 @@ describe("schemaFactory", () => {
 			};
 
 			class Foo extends schemaFactory.object("Foo", {
-				bar: schemaFactory.required(schemaFactory.number, { metadata: barMetadata }),
+				bar: schemaFactory.required(schemaFactory.number, {
+					metadata: barMetadata,
+				}),
 			}) {}
 
 			const foo = hydrate(Foo, { bar: 37 });
@@ -429,7 +450,7 @@ describe("schemaFactory", () => {
 		it("Node schema persisted metadata", () => {
 			const factory = new SchemaFactoryAlpha("com.example");
 
-			const fooMetadata = { "a": 2 };
+			const fooMetadata = { a: 2 };
 
 			class Foo extends factory.objectAlpha(
 				"Foo",
@@ -442,7 +463,7 @@ describe("schemaFactory", () => {
 
 		it("Field schema persisted metadata", () => {
 			const schemaFactory = new SchemaFactoryAlpha("com.example");
-			const fooMetadata = { "a": 2 };
+			const fooMetadata = { a: 2 };
 
 			class Foo extends schemaFactory.objectAlpha(
 				"Foo",
@@ -469,11 +490,20 @@ describe("schemaFactory", () => {
 
 			const schema = Tree.schema(foo) as ObjectNodeSchema;
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			assert.deepEqual(schema.fields.get("bar")!.persistedMetadata, fooMetadata);
+			assert.deepEqual(
+				schema.fields.get("bar")!.persistedMetadata,
+				fooMetadata,
+			);
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			assert.deepEqual(schema.fields.get("baz")!.persistedMetadata, fooMetadata);
+			assert.deepEqual(
+				schema.fields.get("baz")!.persistedMetadata,
+				fooMetadata,
+			);
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			assert.deepEqual(schema.fields.get("qux")!.persistedMetadata, fooMetadata);
+			assert.deepEqual(
+				schema.fields.get("qux")!.persistedMetadata,
+				fooMetadata,
+			);
 		});
 
 		describe("deep equality", () => {
@@ -488,15 +518,24 @@ describe("schemaFactory", () => {
 				y: schema.number,
 			}) {}
 			it("hydrated", () => {
-				assert.deepEqual(hydrate(Point, { x: 1, y: 2 }), hydrate(Point, { x: 1, y: 2 }));
+				assert.deepEqual(
+					hydrate(Point, { x: 1, y: 2 }),
+					hydrate(Point, { x: 1, y: 2 }),
+				);
 				// It should not matter if the object was unhydrated or just builder data:
 				assert.deepEqual(
 					hydrate(Point, new Point({ x: 1, y: 2 })),
 					hydrate(Point, { x: 1, y: 2 }),
 				);
-				assert.notDeepEqual(hydrate(Point, { x: 1, y: 2 }), hydrate(Point, { x: 1, y: 3 }));
+				assert.notDeepEqual(
+					hydrate(Point, { x: 1, y: 2 }),
+					hydrate(Point, { x: 1, y: 3 }),
+				);
 				assert.notDeepEqual(hydrate(Point, { x: 1, y: 2 }), { x: 1, y: 2 });
-				assert.notDeepEqual(hydrate(Point, { x: 1, y: 2 }), hydrate(Item, { x: 1, y: 2 }));
+				assert.notDeepEqual(
+					hydrate(Point, { x: 1, y: 2 }),
+					hydrate(Item, { x: 1, y: 2 }),
+				);
 			});
 
 			it("local fields", () => {
@@ -515,9 +554,15 @@ describe("schemaFactory", () => {
 
 			it("unhydrated", () => {
 				assert.deepEqual(new Point({ x: 1, y: 2 }), new Point({ x: 1, y: 2 }));
-				assert.notDeepEqual(new Point({ x: 1, y: 2 }), new Point({ x: 1, y: 3 }));
+				assert.notDeepEqual(
+					new Point({ x: 1, y: 2 }),
+					new Point({ x: 1, y: 3 }),
+				);
 				assert.notDeepEqual(new Point({ x: 1, y: 2 }), { x: 1, y: 2 });
-				assert.notDeepEqual(new Point({ x: 1, y: 2 }), hydrate(Item, { x: 1, y: 2 }));
+				assert.notDeepEqual(
+					new Point({ x: 1, y: 2 }),
+					hydrate(Item, { x: 1, y: 2 }),
+				);
 			});
 		});
 	});
@@ -538,7 +583,9 @@ describe("schemaFactory", () => {
 		class NodeMap extends schema.map("NoteMap", Note) {}
 		class NodeList extends schema.array("NoteList", Note) {}
 
-		class Canvas extends schema.object("Canvas", { stuff: [NodeMap, NodeList] }) {}
+		class Canvas extends schema.object("Canvas", {
+			stuff: [NodeMap, NodeList],
+		}) {}
 
 		const config = new TreeViewConfiguration({ schema: Canvas });
 
@@ -563,7 +610,9 @@ describe("schemaFactory", () => {
 				parts: builder.array(builder.number),
 			}) {}
 
-			const treeConfiguration = new TreeViewConfiguration({ schema: Inventory });
+			const treeConfiguration = new TreeViewConfiguration({
+				schema: Inventory,
+			});
 
 			const view = getView(treeConfiguration);
 			view.initialize(
@@ -588,7 +637,10 @@ describe("schemaFactory", () => {
 				class NotAClass extends factory.array(factory.number) {}
 			}
 
-			assert.equal(MyList.identifier, `test.Array<["${factory.number.identifier}"]>`);
+			assert.equal(
+				MyList.identifier,
+				`test.Array<["${factory.number.identifier}"]>`,
+			);
 		});
 
 		it("Named", () => {
@@ -633,14 +685,18 @@ describe("schemaFactory", () => {
 				},
 			};
 
-			class Foo extends factory.arrayAlpha("Foo", factory.number, { metadata: fooMetadata }) {}
+			class Foo extends factory.arrayAlpha("Foo", factory.number, {
+				metadata: fooMetadata,
+			}) {}
 
 			assert.deepEqual(Foo.metadata, fooMetadata);
 
 			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
 			const description = Foo.metadata.description;
 			const baz = Foo.metadata.custom.baz;
-			type _check1 = requireTrue<areSafelyAssignable<typeof description, string>>;
+			type _check1 = requireTrue<
+				areSafelyAssignable<typeof description, string>
+			>;
 			type _check2 = requireTrue<areSafelyAssignable<typeof baz, boolean>>;
 		});
 	});
@@ -704,14 +760,18 @@ describe("schemaFactory", () => {
 				},
 			};
 
-			class Foo extends factory.mapAlpha("Foo", factory.number, { metadata: fooMetadata }) {}
+			class Foo extends factory.mapAlpha("Foo", factory.number, {
+				metadata: fooMetadata,
+			}) {}
 
 			assert.deepEqual(Foo.metadata, fooMetadata);
 
 			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
 			const description = Foo.metadata.description;
 			const baz = Foo.metadata.custom.baz;
-			type _check1 = requireTrue<areSafelyAssignable<typeof description, string>>;
+			type _check1 = requireTrue<
+				areSafelyAssignable<typeof description, string>
+			>;
 			type _check2 = requireTrue<areSafelyAssignable<typeof baz, boolean>>;
 		});
 	});
@@ -784,7 +844,9 @@ describe("schemaFactory", () => {
 			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
 			const description = Foo.metadata.description;
 			const baz = Foo.metadata.custom.baz;
-			type _check1 = requireTrue<areSafelyAssignable<typeof description, string>>;
+			type _check1 = requireTrue<
+				areSafelyAssignable<typeof description, string>
+			>;
 			type _check2 = requireTrue<areSafelyAssignable<typeof baz, boolean>>;
 		});
 	});
@@ -797,7 +859,10 @@ describe("schemaFactory", () => {
 		// For example, "objects with lists", "lists of maps", "maps of lists", "lists of lists", etc.
 		// It will be used below to generate test cases of the various combinations.
 		const comboSchemaFactory = new SchemaFactory("combo");
-		class ComboChildObject extends comboSchemaFactory.object("comboObjectChild", {}) {}
+		class ComboChildObject extends comboSchemaFactory.object(
+			"comboObjectChild",
+			{},
+		) {}
 		class ComboChildList extends comboSchemaFactory.array(
 			"comboListChild",
 			comboSchemaFactory.null,
@@ -806,10 +871,13 @@ describe("schemaFactory", () => {
 			"comboMapChild",
 			comboSchemaFactory.null,
 		) {}
-		class ComboParentObject extends comboSchemaFactory.object("comboObjectParent", {
-			childA: [ComboChildObject, ComboChildList, ComboChildMap],
-			childB: [ComboChildObject, ComboChildList, ComboChildMap],
-		}) {}
+		class ComboParentObject extends comboSchemaFactory.object(
+			"comboObjectParent",
+			{
+				childA: [ComboChildObject, ComboChildList, ComboChildMap],
+				childB: [ComboChildObject, ComboChildList, ComboChildMap],
+			},
+		) {}
 		class ComboParentList extends comboSchemaFactory.array("comboListParent", [
 			ComboChildObject,
 			ComboChildList,
@@ -843,7 +911,9 @@ describe("schemaFactory", () => {
 		type ComboNode = ComboParent | ComboChild;
 
 		/** Iterates through all the nodes in a combo tree */
-		function* walkComboObjectTree(combo: ComboNode): IterableIterator<ComboNode> {
+		function* walkComboObjectTree(
+			combo: ComboNode,
+		): IterableIterator<ComboNode> {
 			yield combo;
 
 			if (combo instanceof ComboParentObject) {
@@ -1000,11 +1070,20 @@ describe("schemaFactory", () => {
 						nodes.sort(compareComboNodes);
 						for (let i = nodes.length - 1; i >= 0; i--) {
 							const node = nodes[i];
-							if (node instanceof ComboChildObject || node instanceof ComboParentObject) {
+							if (
+								node instanceof ComboChildObject ||
+								node instanceof ComboParentObject
+							) {
 								Object.entries(node);
-							} else if (node instanceof ComboChildList || node instanceof ComboParentList) {
+							} else if (
+								node instanceof ComboChildList ||
+								node instanceof ComboParentList
+							) {
 								for (const __ of node.entries());
-							} else if (node instanceof ComboChildMap || node instanceof ComboParentMap) {
+							} else if (
+								node instanceof ComboChildMap ||
+								node instanceof ComboParentMap
+							) {
 								for (const __ of node.entries());
 							}
 							assert.equal(Tree.status(node), TreeStatus.InDocument);
@@ -1026,7 +1105,10 @@ describe("schemaFactory", () => {
 	it("statics", () => {
 		const f = new SchemaFactory("");
 		for (const [key, value] of Object.entries(schemaStaticsStable)) {
-			assert.equal((SchemaFactory as unknown as Record<string, unknown>)[key], value);
+			assert.equal(
+				(SchemaFactory as unknown as Record<string, unknown>)[key],
+				value,
+			);
 			assert.equal((f as unknown as Record<string, unknown>)[key], value);
 		}
 
@@ -1263,21 +1345,42 @@ describe("schemaFactory", () => {
 
 	it("variance with respect to scope and alpha", () => {
 		// Covariant over scope
-		type _check1 = requireAssignableTo<SchemaFactory<"x">, SchemaFactory<string>>;
-		type _check2 = requireAssignableTo<SchemaFactoryAlpha<"x">, SchemaFactoryAlpha<string>>;
+		type _check1 = requireAssignableTo<
+			SchemaFactory<"x">,
+			SchemaFactory<string>
+		>;
+		type _check2 = requireAssignableTo<
+			SchemaFactoryAlpha<"x">,
+			SchemaFactoryAlpha<string>
+		>;
 
 		// Still covariant when there is a "." in the scope.
-		type _check3 = requireAssignableTo<SchemaFactory<"x.y">, SchemaFactory<string>>;
-		type _check4 = requireAssignableTo<SchemaFactoryAlpha<"x.y">, SchemaFactoryAlpha<string>>;
+		type _check3 = requireAssignableTo<
+			SchemaFactory<"x.y">,
+			SchemaFactory<string>
+		>;
+		type _check4 = requireAssignableTo<
+			SchemaFactoryAlpha<"x.y">,
+			SchemaFactoryAlpha<string>
+		>;
 
 		// Alpha assignable to non-alpha
-		type _check5 = requireAssignableTo<SchemaFactoryAlpha<"x">, SchemaFactory<string>>;
-		type _check7 = requireAssignableTo<SchemaFactoryAlpha<"x.y">, SchemaFactory<"x.y">>;
+		type _check5 = requireAssignableTo<
+			SchemaFactoryAlpha<"x">,
+			SchemaFactory<string>
+		>;
+		type _check7 = requireAssignableTo<
+			SchemaFactoryAlpha<"x.y">,
+			SchemaFactory<"x.y">
+		>;
 
 		// TODO: For some reason, alpha can not be assigned to non alpha with "." in the scope.
 		// This is a known issue, and there is a note about it in the docs for `adaptEnum`.
 		// @ts-expect-error Known issue
-		type _check6 = requireAssignableTo<SchemaFactoryAlpha<"x.y">, SchemaFactory<string>>;
+		type _check6 = requireAssignableTo<
+			SchemaFactoryAlpha<"x.y">,
+			SchemaFactory<string>
+		>;
 
 		// TODO: AB#43345
 		// This error seems to be related to `objectRecursive` and:
@@ -1298,7 +1401,9 @@ describe("schemaFactory", () => {
 			areSafelyAssignable<typeof scopedFactory.scope, "test.blah.scoped">
 		>;
 
-		type Scope = typeof scopedFactory extends SchemaFactoryBeta<infer S> ? S : never;
+		type Scope = typeof scopedFactory extends SchemaFactoryBeta<infer S>
+			? S
+			: never;
 
 		function inferScope<TScope extends string>(f: SchemaFactory<TScope>) {
 			return f.scope;
@@ -1307,7 +1412,9 @@ describe("schemaFactory", () => {
 		const inferred = inferScope(scopedFactory);
 		// TODO: AB#43345
 		// @ts-expect-error Known issue: see "variance with respect to scope and alpha" test.
-		type _check2 = requireTrue<areSafelyAssignable<typeof inferred, "test.blah.scoped">>;
+		type _check2 = requireTrue<
+			areSafelyAssignable<typeof inferred, "test.blah.scoped">
+		>;
 
 		function inferScope2<TScope extends string>(
 			f: SchemaFactory<TScope> | SchemaFactoryBeta<TScope>,
@@ -1315,7 +1422,9 @@ describe("schemaFactory", () => {
 			return f.scope;
 		}
 		const inferred2 = inferScope2(scopedFactory);
-		type _check3 = requireTrue<areSafelyAssignable<typeof inferred2, "test.blah.scoped">>;
+		type _check3 = requireTrue<
+			areSafelyAssignable<typeof inferred2, "test.blah.scoped">
+		>;
 	});
 
 	it("scopedFactoryAlpha", () => {
@@ -1328,7 +1437,9 @@ describe("schemaFactory", () => {
 			areSafelyAssignable<typeof scopedFactory.scope, "test.blah.scoped">
 		>;
 
-		type Scope = typeof scopedFactory extends SchemaFactoryAlpha<infer S> ? S : never;
+		type Scope = typeof scopedFactory extends SchemaFactoryAlpha<infer S>
+			? S
+			: never;
 
 		function inferScope<TScope extends string>(f: SchemaFactory<TScope>) {
 			return f.scope;
@@ -1337,7 +1448,9 @@ describe("schemaFactory", () => {
 		const inferred = inferScope(scopedFactory);
 		// TODO: AB#43345
 		// @ts-expect-error Known issue: see "variance with respect to scope and alpha" test.
-		type _check2 = requireTrue<areSafelyAssignable<typeof inferred, "test.blah.scoped">>;
+		type _check2 = requireTrue<
+			areSafelyAssignable<typeof inferred, "test.blah.scoped">
+		>;
 
 		function inferScope2<TScope extends string>(
 			f: SchemaFactory<TScope> | SchemaFactoryAlpha<TScope>,
@@ -1345,7 +1458,9 @@ describe("schemaFactory", () => {
 			return f.scope;
 		}
 		const inferred2 = inferScope2(scopedFactory);
-		type _check3 = requireTrue<areSafelyAssignable<typeof inferred2, "test.blah.scoped">>;
+		type _check3 = requireTrue<
+			areSafelyAssignable<typeof inferred2, "test.blah.scoped">
+		>;
 	});
 
 	// TODO: AB#44317: The error messages for rejecting insertions which would put a document out of schema due to staged types are poor, and should be improved.
@@ -1418,7 +1533,9 @@ describe("schemaFactory", () => {
 				view.initialize({ foo: 3 });
 				assert.throws(() => {
 					view.root = testObject;
-				}, validateUsageError("Tree does not conform to schema: Field_NodeTypeNotAllowed"));
+				}, validateUsageError(
+					"Tree does not conform to schema: Field_NodeTypeNotAllowed",
+				));
 			});
 
 			it("can't be set", () => {
@@ -1432,7 +1549,9 @@ describe("schemaFactory", () => {
 				provider.synchronizeMessages();
 				assert.throws(() => {
 					view.root.foo = "test";
-				}, validateUsageError("Tree does not conform to schema: Field_NodeTypeNotAllowed"));
+				}, validateUsageError(
+					"Tree does not conform to schema: Field_NodeTypeNotAllowed",
+				));
 			});
 		});
 
@@ -1447,16 +1566,24 @@ describe("schemaFactory", () => {
 				allowUnused<
 					requireAssignableTo<
 						typeof allowedTypes,
-						readonly [typeof SchemaFactoryAlpha.number, typeof SchemaFactoryAlpha.string]
+						readonly [
+							typeof SchemaFactoryAlpha.number,
+							typeof SchemaFactoryAlpha.string,
+						]
 					>
 				>();
 
-				allowUnused<requireAssignableTo<typeof allowedTypes, AnnotatedAllowedTypes>>();
+				allowUnused<
+					requireAssignableTo<typeof allowedTypes, AnnotatedAllowedTypes>
+				>();
 				allowUnused<
 					requireAssignableTo<
 						typeof allowedTypes,
 						UnannotateAllowedTypesList<
-							readonly [typeof SchemaFactoryAlpha.number, typeof SchemaFactoryAlpha.string]
+							readonly [
+								typeof SchemaFactoryAlpha.number,
+								typeof SchemaFactoryAlpha.string,
+							]
 						>
 					>
 				>();
@@ -1485,7 +1612,9 @@ describe("schemaFactory", () => {
 				>();
 
 				{
-					type InField = InsertableTreeFieldFromImplicitField<typeof allowedTypes>;
+					type InField = InsertableTreeFieldFromImplicitField<
+						typeof allowedTypes
+					>;
 					allowUnused<requireAssignableTo<InField, number | string>>();
 					allowUnused<requireAssignableTo<number | string, InField>>();
 				}
@@ -1499,7 +1628,9 @@ describe("schemaFactory", () => {
 				}
 
 				{
-					type InAllowedTypes = InsertableTreeNodeFromAllowedTypes<typeof allowedTypes>;
+					type InAllowedTypes = InsertableTreeNodeFromAllowedTypes<
+						typeof allowedTypes
+					>;
 					allowUnused<requireAssignableTo<InAllowedTypes, number | string>>();
 					allowUnused<requireAssignableTo<number | string, InAllowedTypes>>();
 				}
@@ -1535,7 +1666,9 @@ describe("schemaFactory", () => {
 				view.initialize({ foo: 3 });
 				assert.throws(() => {
 					view.root = testMap;
-				}, validateUsageError("Tree does not conform to schema: Field_NodeTypeNotAllowed"));
+				}, validateUsageError(
+					"Tree does not conform to schema: Field_NodeTypeNotAllowed",
+				));
 			});
 
 			it("can't be set", () => {
@@ -1549,7 +1682,9 @@ describe("schemaFactory", () => {
 				provider.synchronizeMessages();
 				assert.throws(() => {
 					view.root.set("foo", "test");
-				}, validateUsageError("Tree does not conform to schema: Field_NodeTypeNotAllowed"));
+				}, validateUsageError(
+					"Tree does not conform to schema: Field_NodeTypeNotAllowed",
+				));
 			});
 		});
 
@@ -1582,7 +1717,9 @@ describe("schemaFactory", () => {
 				view.initialize({ foo: 3 });
 				assert.throws(() => {
 					view.root = testRecord;
-				}, validateUsageError("Tree does not conform to schema: Field_NodeTypeNotAllowed"));
+				}, validateUsageError(
+					"Tree does not conform to schema: Field_NodeTypeNotAllowed",
+				));
 			});
 
 			it("can't be set", () => {
@@ -1596,7 +1733,9 @@ describe("schemaFactory", () => {
 				provider.synchronizeMessages();
 				assert.throws(() => {
 					view.root.foo = "test";
-				}, validateUsageError("Tree does not conform to schema: Field_NodeTypeNotAllowed"));
+				}, validateUsageError(
+					"Tree does not conform to schema: Field_NodeTypeNotAllowed",
+				));
 			});
 		});
 
@@ -1744,7 +1883,9 @@ describe("schemaFactory", () => {
 
 // kind based narrowing example
 function getKeys(node: TreeNode & WithType<string, NodeKind.Array>): number[];
-function getKeys(node: TreeNode & WithType<string, NodeKind.Map | NodeKind.Object>): string[];
+function getKeys(
+	node: TreeNode & WithType<string, NodeKind.Map | NodeKind.Object>,
+): string[];
 function getKeys(node: TreeNode): string[] | number[];
 function getKeys(node: TreeNode): string[] | number[] {
 	const schema = Tree.schema(node);

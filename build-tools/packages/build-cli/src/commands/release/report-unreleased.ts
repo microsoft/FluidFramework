@@ -11,9 +11,15 @@ import { Flags } from "@oclif/core";
 import { formatISO } from "date-fns";
 
 import { semverFlag } from "../../flags.js";
-import { BaseCommand, type ReleaseReport, toReportKind } from "../../library/index.js";
+import {
+	BaseCommand,
+	type ReleaseReport,
+	toReportKind,
+} from "../../library/index.js";
 
-export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReportCommand> {
+export class UnreleasedReportCommand extends BaseCommand<
+	typeof UnreleasedReportCommand
+> {
 	static readonly summary =
 		`Creates a release report for an unreleased build (one that is not published to npm), using an existing report in the "full" format as input.`;
 
@@ -81,7 +87,12 @@ async function generateReleaseReport(
 ): Promise<void> {
 	const ignorePackageList = new Set(["@types/jest-environment-puppeteer"]);
 
-	await updateReportVersions(fullReleaseReport, ignorePackageList, version, log);
+	await updateReportVersions(
+		fullReleaseReport,
+		ignorePackageList,
+		version,
+		log,
+	);
 
 	const caretReportOutput = toReportKind(fullReleaseReport, "caret");
 	const simpleReportOutput = toReportKind(fullReleaseReport, "simple");
@@ -130,15 +141,25 @@ async function writeReport(
 
 	log.log(`Build Number: ${buildNumber}`);
 
-	const outDirByBuildNumber = path.join(outDir, `${revisedFileName}-${buildNumber}.json`);
+	const outDirByBuildNumber = path.join(
+		outDir,
+		`${revisedFileName}-${buildNumber}.json`,
+	);
 
 	// Generate the build-number manifest unconditionally
-	const promises = [fs.writeFile(outDirByBuildNumber, JSON.stringify(report, undefined, 2))];
+	const promises = [
+		fs.writeFile(outDirByBuildNumber, JSON.stringify(report, undefined, 2)),
+	];
 
 	// Generate the date-based manifest only if the branch is main
 	if (branchName === "refs/heads/main") {
-		const outDirByCurrentDate = path.join(outDir, `${revisedFileName}-${currentDate}.json`);
-		promises.push(fs.writeFile(outDirByCurrentDate, JSON.stringify(report, undefined, 2)));
+		const outDirByCurrentDate = path.join(
+			outDir,
+			`${revisedFileName}-${currentDate}.json`,
+		);
+		promises.push(
+			fs.writeFile(outDirByCurrentDate, JSON.stringify(report, undefined, 2)),
+		);
 	}
 
 	await Promise.all(promises);
@@ -161,15 +182,21 @@ async function updateReportVersions(
 	const packageReleaseDetails = report[clientPackageName];
 
 	if (packageReleaseDetails === undefined) {
-		throw new Error(`Client package ${clientPackageName} is not defined in the report.`);
+		throw new Error(
+			`Client package ${clientPackageName} is not defined in the report.`,
+		);
 	}
 
 	if (packageReleaseDetails.ranges?.caret === undefined) {
-		throw new Error(`Caret version for ${clientPackageName} is not defined in the report.`);
+		throw new Error(
+			`Caret version for ${clientPackageName} is not defined in the report.`,
+		);
 	}
 
 	if (packageReleaseDetails.version === undefined) {
-		throw new Error(`Simple version for ${clientPackageName} is not defined in the report.`);
+		throw new Error(
+			`Simple version for ${clientPackageName} is not defined in the report.`,
+		);
 	}
 
 	const clientVersionCaret = report[clientPackageName].ranges.caret;
@@ -186,7 +213,10 @@ async function updateReportVersions(
 		const packageInfo = report[packageName];
 
 		// todo: add better checks
-		if (packageInfo.ranges.caret && packageInfo.ranges.caret === clientVersionCaret) {
+		if (
+			packageInfo.ranges.caret &&
+			packageInfo.ranges.caret === clientVersionCaret
+		) {
 			report[packageName].ranges.caret = version;
 		}
 

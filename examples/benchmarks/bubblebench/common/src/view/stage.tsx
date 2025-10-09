@@ -38,7 +38,12 @@ export const StageView: React.FC<IStageProps> = ({ app }: IStageProps) => {
 			id="stage"
 			xmlns="http://www.w3.org/2000/svg"
 			version="1.1"
-			style={{ position: "absolute", width: "100%", height: "100%", top: "0px" }}
+			style={{
+				position: "absolute",
+				width: "100%",
+				height: "100%",
+				top: "0px",
+			}}
 		>
 			{groups}
 		</svg>

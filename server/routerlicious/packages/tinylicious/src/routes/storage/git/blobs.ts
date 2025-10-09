@@ -6,7 +6,11 @@
 import fs from "fs";
 
 import { Uint8ArrayToString } from "@fluidframework/common-utils";
-import type { IBlob, ICreateBlobParams, ICreateBlobResponse } from "@fluidframework/gitresources";
+import type {
+	IBlob,
+	ICreateBlobParams,
+	ICreateBlobResponse,
+} from "@fluidframework/gitresources";
 // eslint-disable-next-line import/no-deprecated
 import { Router } from "express";
 import * as git from "isomorphic-git";
@@ -109,9 +113,7 @@ export function create(store: nconf.Provider): Router {
 				if (useCache) {
 					response.setHeader("Cache-Control", "public, max-age=31536000");
 				}
-				response
-					.status(200)
-					.write(Buffer.from(blob.content, "base64"), () => response.end());
+				response.status(200).write(Buffer.from(blob.content, "base64"), () => response.end());
 			},
 			(error) => {
 				response.status(400).json(error);

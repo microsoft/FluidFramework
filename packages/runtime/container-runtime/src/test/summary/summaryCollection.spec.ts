@@ -14,7 +14,10 @@ import {
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils/internal";
 
-import { type ISummaryOpMessage, SummaryCollection } from "../../summary/index.js";
+import {
+	type ISummaryOpMessage,
+	SummaryCollection,
+} from "../../summary/index.js";
 
 const summaryOp: ISummaryOpMessage = {
 	clientId: "cliendId",
@@ -68,7 +71,10 @@ describe("Summary Collection", () => {
 	describe("latestAck", () => {
 		it("Ack with op", () => {
 			const dm = new MockDeltaManager();
-			const sc = new SummaryCollection(dm, new MockLogger().toTelemetryLogger());
+			const sc = new SummaryCollection(
+				dm,
+				new MockLogger().toTelemetryLogger(),
+			);
 			assert.equal(sc.latestAck, undefined, "last ack undefined");
 			dm.emit("op", summaryOp);
 			dm.emit("op", summaryAck);
@@ -86,7 +92,10 @@ describe("Summary Collection", () => {
 
 		it("Ack without op", () => {
 			const dm = new MockDeltaManager();
-			const sc = new SummaryCollection(dm, new MockLogger().toTelemetryLogger());
+			const sc = new SummaryCollection(
+				dm,
+				new MockLogger().toTelemetryLogger(),
+			);
 			assert.equal(sc.latestAck, undefined, "last ack undefined");
 			dm.emit("op", summaryAck);
 			assert.equal(sc.latestAck, undefined, "last ack undefined");
@@ -94,7 +103,10 @@ describe("Summary Collection", () => {
 
 		it("Nack with op", () => {
 			const dm = new MockDeltaManager();
-			const sc = new SummaryCollection(dm, new MockLogger().toTelemetryLogger());
+			const sc = new SummaryCollection(
+				dm,
+				new MockLogger().toTelemetryLogger(),
+			);
 			assert.equal(sc.latestAck, undefined, "last ack undefined");
 			dm.emit("op", summaryAck);
 			dm.emit("op", summaryNack);
@@ -108,7 +120,10 @@ describe("Summary Collection", () => {
 				dm.lastSequenceNumber = op.sequenceNumber;
 			});
 
-			const sc = new SummaryCollection(dm, new MockLogger().toTelemetryLogger());
+			const sc = new SummaryCollection(
+				dm,
+				new MockLogger().toTelemetryLogger(),
+			);
 			assert.equal(sc.opsSinceLastAck, 0);
 			dm.emit("op", summaryOp);
 			assert.equal(sc.opsSinceLastAck, summaryOp.sequenceNumber);
@@ -121,7 +136,10 @@ describe("Summary Collection", () => {
 				dm.lastSequenceNumber = op.sequenceNumber;
 			});
 
-			const sc = new SummaryCollection(dm, new MockLogger().toTelemetryLogger());
+			const sc = new SummaryCollection(
+				dm,
+				new MockLogger().toTelemetryLogger(),
+			);
 			assert.equal(sc.opsSinceLastAck, 0);
 			dm.emit("op", summaryOp);
 			assert.equal(sc.opsSinceLastAck, summaryOp.sequenceNumber);
@@ -134,7 +152,10 @@ describe("Summary Collection", () => {
 				dm.lastSequenceNumber = op.sequenceNumber;
 			});
 
-			const sc = new SummaryCollection(dm, new MockLogger().toTelemetryLogger());
+			const sc = new SummaryCollection(
+				dm,
+				new MockLogger().toTelemetryLogger(),
+			);
 			assert.equal(sc.opsSinceLastAck, 0);
 			dm.emit("op", summaryOp);
 			dm.emit("op", summaryNack);
@@ -168,8 +189,14 @@ describe("Summary Collection", () => {
 			};
 			summaryCollection.on("default", () => callCounts.default++);
 			summaryCollection.on(MessageType.Summarize, () => callCounts.summarize++);
-			summaryCollection.on(MessageType.SummaryAck, () => callCounts.summaryAck++);
-			summaryCollection.on(MessageType.SummaryNack, () => callCounts.summaryNack++);
+			summaryCollection.on(
+				MessageType.SummaryAck,
+				() => callCounts.summaryAck++,
+			);
+			summaryCollection.on(
+				MessageType.SummaryNack,
+				() => callCounts.summaryNack++,
+			);
 			return { summaryCollection, callCounts };
 		}
 		it("Summary op", () => {

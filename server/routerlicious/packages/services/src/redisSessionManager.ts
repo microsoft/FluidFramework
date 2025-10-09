@@ -72,9 +72,10 @@ export interface IRedisCollaborationSessionManagerOptions {
 	maxScanBatchSize: number;
 }
 
-const defaultRedisCollaborationSessionManagerOptions: IRedisCollaborationSessionManagerOptions = {
-	maxScanBatchSize: 800,
-};
+const defaultRedisCollaborationSessionManagerOptions: IRedisCollaborationSessionManagerOptions =
+	{
+		maxScanBatchSize: 800,
+	};
 
 /**
  * Manages the set of collaboration sessions in a Redis hashmap.
@@ -213,7 +214,9 @@ export class RedisCollaborationSessionManager implements ICollaborationSessionMa
 		};
 	}
 
-	private getFieldKey(session: Pick<ICollaborationSession, "tenantId" | "documentId">): string {
+	private getFieldKey(
+		session: Pick<ICollaborationSession, "tenantId" | "documentId">,
+	): string {
 		return `${session.tenantId}:${session.documentId}`;
 	}
 

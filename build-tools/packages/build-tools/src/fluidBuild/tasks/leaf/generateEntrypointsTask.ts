@@ -13,6 +13,9 @@ export class GenerateEntrypointsTask extends TscDependentTask {
 	}
 
 	protected async getToolVersion() {
-		return getInstalledPackageVersion("@fluid-tools/build-cli", this.node.pkg.directory);
+		return getInstalledPackageVersion(
+			"@fluid-tools/build-cli",
+			this.node.pkg.directory,
+		);
 	}
 }

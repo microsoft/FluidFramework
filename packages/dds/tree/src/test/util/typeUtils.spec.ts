@@ -26,8 +26,14 @@ import type {
 	const one = { a: 1 } as const;
 	const constOne = { a: 1 } as const;
 
-	type check1_ = requireAssignableTo<typeof empty, RestrictiveReadonlyRecord<string, number>>;
-	type check2_ = requireAssignableTo<typeof one, RestrictiveReadonlyRecord<string, number>>;
+	type check1_ = requireAssignableTo<
+		typeof empty,
+		RestrictiveReadonlyRecord<string, number>
+	>;
+	type check2_ = requireAssignableTo<
+		typeof one,
+		RestrictiveReadonlyRecord<string, number>
+	>;
 	type check3_ = requireAssignableTo<
 		typeof constOne,
 		RestrictiveReadonlyRecord<string, number>
@@ -35,10 +41,16 @@ import type {
 
 	const sym = { [Symbol.iterator]: 1 };
 	// @ts-expect-error reject symbols
-	type check4_ = requireAssignableTo<typeof sym, RestrictiveReadonlyRecord<string, number>>;
+	type check4_ = requireAssignableTo<
+		typeof sym,
+		RestrictiveReadonlyRecord<string, number>
+	>;
 
 	// @ts-expect-error Known bug: stricter key types fail
-	type check5_ = requireAssignableTo<typeof constOne, RestrictiveReadonlyRecord<"a", number>>;
+	type check5_ = requireAssignableTo<
+		typeof constOne,
+		RestrictiveReadonlyRecord<"a", number>
+	>;
 }
 
 // Test RestrictiveStringRecord
@@ -47,13 +59,25 @@ import type {
 	const one = { a: 1 } as const;
 	const constOne = { a: 1 } as const;
 
-	type check1_ = requireAssignableTo<typeof empty, RestrictiveStringRecord<number>>;
-	type check2_ = requireAssignableTo<typeof one, RestrictiveStringRecord<number>>;
-	type check3_ = requireAssignableTo<typeof constOne, RestrictiveStringRecord<number>>;
+	type check1_ = requireAssignableTo<
+		typeof empty,
+		RestrictiveStringRecord<number>
+	>;
+	type check2_ = requireAssignableTo<
+		typeof one,
+		RestrictiveStringRecord<number>
+	>;
+	type check3_ = requireAssignableTo<
+		typeof constOne,
+		RestrictiveStringRecord<number>
+	>;
 
 	const sym = { [Symbol.iterator]: 1 };
 	// @ts-expect-error reject symbols
-	type check4_ = requireAssignableTo<typeof sym, RestrictiveStringRecord<number>>;
+	type check4_ = requireAssignableTo<
+		typeof sym,
+		RestrictiveStringRecord<number>
+	>;
 
 	// Record does not work as desired for this!
 	type check5_ = requireAssignableTo<typeof sym, Record<string, number>>;
@@ -84,9 +108,14 @@ import type {
 // Test UnionToIntersection
 {
 	type _check1 = requireTrue<areSafelyAssignable<UnionToIntersection<1>, 1>>;
-	type _check2 = requireTrue<areSafelyAssignable<UnionToIntersection<1 | 2>, never>>;
+	type _check2 = requireTrue<
+		areSafelyAssignable<UnionToIntersection<1 | 2>, never>
+	>;
 	type _check3 = requireTrue<
-		areSafelyAssignable<UnionToIntersection<{ x: 1 | 2 } | { x: 2 | 3 }>, { x: 2 }>
+		areSafelyAssignable<
+			UnionToIntersection<{ x: 1 | 2 } | { x: 2 | 3 }>,
+			{ x: 2 }
+		>
 	>;
 	type _check4 = requireTrue<areSafelyAssignable<UnionToIntersection<1>, 1>>;
 }

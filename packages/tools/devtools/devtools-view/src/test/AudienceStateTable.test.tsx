@@ -14,7 +14,9 @@ import { assertNoAccessibilityViolations } from "./utils/index.js";
 
 describe("AudienceStateTable Accessibility Check", () => {
 	it("AudienceStateTable is accessible", async () => {
-		const { container } = render(<AudienceStateTable audienceStateItems={[]} />);
+		const { container } = render(
+			<AudienceStateTable audienceStateItems={[]} />,
+		);
 		await assertNoAccessibilityViolations(container);
 	});
 

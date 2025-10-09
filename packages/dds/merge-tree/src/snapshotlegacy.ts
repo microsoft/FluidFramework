@@ -68,7 +68,8 @@ export class SnapshotLegacy {
 	) {
 		this.logger = createChildLogger({ logger, namespace: "Snapshot" });
 		this.chunkSize =
-			mergeTree?.options?.mergeTreeSnapshotChunkSize ?? SnapshotLegacy.sizeOfFirstChunk;
+			mergeTree?.options?.mergeTreeSnapshotChunkSize ??
+			SnapshotLegacy.sizeOfFirstChunk;
 	}
 
 	private getSeqLengthSegs(
@@ -185,7 +186,9 @@ export class SnapshotLegacy {
 			}
 			builder.addBlob(
 				this.mergeTree.options?.catchUpBlobName ?? SnapshotLegacy.catchupOps,
-				serializer ? serializer.stringify(catchUpMsgs, bind) : JSON.stringify(catchUpMsgs),
+				serializer
+					? serializer.stringify(catchUpMsgs, bind)
+					: JSON.stringify(catchUpMsgs),
 			);
 		}
 
@@ -206,11 +209,18 @@ export class SnapshotLegacy {
 		const segs: ISegmentPrivate[] = [];
 		let prev: ISegmentPrivate | undefined;
 		const extractSegment = (segment: ISegmentPrivate): boolean => {
-			if (isSegmentLeaf(segment) && minSeqPerspective.isSegmentPresent(segment)) {
+			if (
+				isSegmentLeaf(segment) &&
+				minSeqPerspective.isSegmentPresent(segment)
+			) {
 				originalSegments += 1;
 				const properties =
-					segment.propertyManager?.getAtSeq(segment.properties, seq) ?? segment.properties;
-				if (prev?.canAppend(segment) && matchProperties(prev.properties, properties)) {
+					segment.propertyManager?.getAtSeq(segment.properties, seq) ??
+					segment.properties;
+				if (
+					prev?.canAppend(segment) &&
+					matchProperties(prev.properties, properties)
+				) {
 					prev.append(segment.clone());
 				} else {
 					prev = segment.clone();
@@ -227,7 +237,10 @@ export class SnapshotLegacy {
 		let totalLength: number = 0;
 		segs.map((segment) => {
 			totalLength += segment.cachedLength;
-			if (segment.properties !== undefined && Object.keys(segment.properties).length === 0) {
+			if (
+				segment.properties !== undefined &&
+				Object.keys(segment.properties).length === 0
+			) {
 				segment.properties = undefined;
 			}
 			this.segments!.push(segment);
@@ -235,7 +248,10 @@ export class SnapshotLegacy {
 
 		// To reduce potential spam from this telemetry, we sample only a small
 		// percentage of summaries
-		if (Math.abs(originalSegments - segs.length) > 500 && Math.random() < 0.005) {
+		if (
+			Math.abs(originalSegments - segs.length) > 500 &&
+			Math.random() < 0.005
+		) {
 			this.logger.sendTelemetryEvent({
 				eventName: "MergeTreeLegacySummarizeSegmentCount",
 				originalSegments,

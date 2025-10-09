@@ -122,7 +122,10 @@ describe("List", () => {
 		// as invoking 'fn' on a true JS array.
 		//
 		// The optional 'init' parameter provides an initial state, otherwise both are empty.
-		function test1<U>(fn: (subject: readonly string[]) => U, init?: readonly string[]) {
+		function test1<U>(
+			fn: (subject: readonly string[]) => U,
+			init?: readonly string[],
+		) {
 			const array = init ?? [];
 			const expected = fn(array);
 			it(`${pretty(array)} -> ${pretty(expected)}`, () => {
@@ -231,11 +234,18 @@ describe("List", () => {
 				init = noInit,
 				...args: unknown[]
 			) {
-				const expectedFn = Reflect.get(array, fnName) as (...args: unknown[]) => unknown;
+				const expectedFn = Reflect.get(array, fnName) as (
+					...args: unknown[]
+				) => unknown;
 				const expected = expectedFn.call(init(array.slice()), ...args);
 
-				function innerTest(subject: readonly string[], fnSource: readonly string[]) {
-					const fn = Reflect.get(fnSource, fnName) as (...args: unknown[]) => unknown;
+				function innerTest(
+					subject: readonly string[],
+					fnSource: readonly string[],
+				) {
+					const fn = Reflect.get(fnSource, fnName) as (
+						...args: unknown[]
+					) => unknown;
 					const actual = fn.call(subject, ...args);
 					assert.deepEqual(actual, expected);
 				}
@@ -290,11 +300,22 @@ describe("List", () => {
 					others: readonly string[][],
 					spreadable: boolean,
 				) => {
-					test2("concat", left, (array) => setSpreadable(array, spreadable), others);
+					test2(
+						"concat",
+						left,
+						(array) => setSpreadable(array, spreadable),
+						others,
+					);
 				};
 
-				const checkRhs = (left: string[], others: string[][], spreadable: boolean) => {
-					const clones = others.map((other) => setSpreadable(other.slice(), spreadable));
+				const checkRhs = (
+					left: string[],
+					others: string[][],
+					spreadable: boolean,
+				) => {
+					const clones = others.map((other) =>
+						setSpreadable(other.slice(), spreadable),
+					);
 					const expected = left.concat(...clones);
 					it(`${prettyCall("concat", left, others, expected)}`, () => {
 						const proxies = others.map((other) =>
@@ -339,7 +360,11 @@ describe("List", () => {
 			});
 
 			describe("slice()", () => {
-				const check = (array: readonly string[], start?: number, end?: number) => {
+				const check = (
+					array: readonly string[],
+					start?: number,
+					end?: number,
+				) => {
 					test2("slice", array, noInit, start, end);
 				};
 
@@ -367,7 +392,10 @@ describe("List", () => {
 
 				const tests = [[], ["a"], ["a", "b"], ["c", "b"], ["a", "c"]];
 
-				type IterativeFn = (callback: (...args: any[]) => unknown, ...args: any[]) => unknown;
+				type IterativeFn = (
+					callback: (...args: any[]) => unknown,
+					...args: any[]
+				) => unknown;
 
 				// Ensure that invoking 'fnName' on an array-like subject returns the same result
 				// as invoking the same function on a true JS array.  This test helper also logs
@@ -382,10 +410,16 @@ describe("List", () => {
 				// The results of both are compared to the result of invoking the same function on a true JS array.
 				//
 				// The optional 'init' parameter provides an initial state, otherwise both are empty.
-				function test3(fnName: string, callback: (...args: any[]) => unknown = predicate) {
+				function test3(
+					fnName: string,
+					callback: (...args: any[]) => unknown = predicate,
+				) {
 					// Wraps the callback function to log the values of 'this', 'value', and 'index',
 					// which are expected to be identical between a true JS array and our array-like subject.
-					const logCalls = (expectedArrayParam: readonly string[], log: unknown[][]) => {
+					const logCalls = (
+						expectedArrayParam: readonly string[],
+						log: unknown[][],
+					) => {
 						return function (...args: any[]) {
 							const result = callback(...args);
 
@@ -415,7 +449,10 @@ describe("List", () => {
 						]);
 
 						// Check the actual result and compare the actual arguments to the callback.
-						function innerTest(subject: readonly string[], fnSource: readonly string[]) {
+						function innerTest(
+							subject: readonly string[],
+							fnSource: readonly string[],
+						) {
 							const actualFn = Reflect.get(fnSource, fnName) as (
 								callback: (...args: any[]) => unknown,
 								...args: any[]
@@ -492,16 +529,23 @@ describe("List", () => {
 				});
 
 				describe("reduceRight()", () => {
-					const check = test3("reduceRight", (previous: unknown[], value, index) => {
-						return previous.concat(value, index);
-					});
+					const check = test3(
+						"reduceRight",
+						(previous: unknown[], value, index) => {
+							return previous.concat(value, index);
+						},
+					);
 
 					[[], ["a"], ["a", "b"]].forEach((init) => check(init, []));
 				});
 			});
 
 			describe("includes()", () => {
-				const check = (array: readonly string[], item: unknown, start?: number) => {
+				const check = (
+					array: readonly string[],
+					item: unknown,
+					start?: number,
+				) => {
 					test2("includes", array, noInit, item, start);
 				};
 
@@ -517,7 +561,11 @@ describe("List", () => {
 			});
 
 			describe("indexOf()", () => {
-				const check = (array: readonly string[], item: unknown, start?: number) => {
+				const check = (
+					array: readonly string[],
+					item: unknown,
+					start?: number,
+				) => {
 					test2("indexOf", array, noInit, item, start);
 				};
 
@@ -614,7 +662,11 @@ describe("List", () => {
 			});
 
 			describe("lastIndexOf()", () => {
-				const check = (array: readonly string[], item: unknown, start?: number) => {
+				const check = (
+					array: readonly string[],
+					item: unknown,
+					start?: number,
+				) => {
 					test2("lastIndexOf", array, noInit, item, start);
 				};
 

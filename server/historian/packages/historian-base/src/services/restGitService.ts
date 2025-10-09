@@ -76,15 +76,13 @@ export class RestGitService {
 						"User-Agent": userAgent,
 						"Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
 						"Storage-Name": this.storageName,
-				  }
+					}
 				: {
 						"User-Agent": userAgent,
 						"Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
-				  };
+					};
 		if (storage.credentials) {
-			const token = Buffer.from(
-				`${storage.credentials.user}:${storage.credentials.password}`,
-			);
+			const token = Buffer.from(`${storage.credentials.user}:${storage.credentials.password}`);
 			defaultHeaders.Authorization = `Basic ${token.toString("base64")}`;
 		}
 		if (this.simplifiedCustomData) {
@@ -369,7 +367,11 @@ export class RestGitService {
 		return tree;
 	}
 
-	public async getTree(sha: string, recursive: boolean, useCache: boolean): Promise<git.ITree> {
+	public async getTree(
+		sha: string,
+		recursive: boolean,
+		useCache: boolean,
+	): Promise<git.ITree> {
 		const key = recursive ? `${sha}:recursive` : sha;
 		return this.resolve(
 			key,
@@ -439,11 +441,7 @@ export class RestGitService {
 				const submodulesP = Promise.all(
 					submoduleCommits.map(async (submoduleCommitSha) => {
 						const submoduleCommit = await this.getCommit(submoduleCommitSha, useCache);
-						const submoduleTree = await this.getTree(
-							submoduleCommit.tree.sha,
-							true,
-							useCache,
-						);
+						const submoduleTree = await this.getTree(submoduleCommit.tree.sha, true, useCache);
 						trees.set(submoduleCommit.tree.sha, submoduleTree);
 						commits.set(submoduleCommit.sha, submoduleCommit);
 					}),
@@ -600,7 +598,11 @@ export class RestGitService {
 		}
 	}
 
-	private async resolve<T>(key: string, fetch: () => Promise<T>, useCache: boolean): Promise<T> {
+	private async resolve<T>(
+		key: string,
+		fetch: () => Promise<T>,
+		useCache: boolean,
+	): Promise<T> {
 		if (useCache) {
 			// Attempt to grab the value from the cache. Log any errors but don't fail the request
 			const cachedValue: T | undefined = await this.getCache<T>(key);
@@ -618,7 +620,10 @@ export class RestGitService {
 		return fetch();
 	}
 
-	private getSummaryCacheKey(type: IWholeSummaryPayloadType, extraIdentifier?: string): string {
+	private getSummaryCacheKey(
+		type: IWholeSummaryPayloadType,
+		extraIdentifier?: string,
+	): string {
 		const key: string[] = [this.tenantId, this.documentId, "summary", type];
 		if (extraIdentifier) {
 			key.push(extraIdentifier);

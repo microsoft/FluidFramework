@@ -41,7 +41,9 @@ export function PopupView(props: PopupViewProps): React.ReactElement {
 
 	// Indicates if Fluid Devtools is running in the current page (i.e. the application is using it and initialized it correctly).
 	// Undefined means still looking or that the message which is sent to discover this has not been sent yet.
-	const [foundDevtools, setFoundDevtools] = React.useState<boolean | undefined>(undefined);
+	const [foundDevtools, setFoundDevtools] = React.useState<boolean | undefined>(
+		undefined,
+	);
 
 	React.useEffect(() => {
 		/**
@@ -90,14 +92,14 @@ export function PopupView(props: PopupViewProps): React.ReactElement {
 			)}
 			{foundDevtools === true && (
 				<div>
-					Fluid Devtools found! Open the browser`s devtools panel to view the Fluid Devtools
-					extension.
+					Fluid Devtools found! Open the browser`s devtools panel to view the
+					Fluid Devtools extension.
 				</div>
 			)}
 			{foundDevtools === false && (
 				<div>
-					Fluid Devtools library not found running in the current tab. For details on how to
-					enable it, please refer to our documentation{" "}
+					Fluid Devtools library not found running in the current tab. For
+					details on how to enable it, please refer to our documentation{" "}
 					<a
 						href="https://github.com/microsoft/FluidFramework/blob/main/packages/tools/devtools/devtools/README.md"
 						target="_blank"

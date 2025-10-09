@@ -59,7 +59,9 @@ export interface FieldMapObject<TChild> {
  * Json comparable tree node, generic over child type.
  * Json compatibility assumes `TChild` is also json compatible.
  */
-export interface GenericTreeNode<TChild> extends GenericFieldsNode<TChild>, NodeData {}
+export interface GenericTreeNode<TChild>
+	extends GenericFieldsNode<TChild>,
+		NodeData {}
 
 /**
  * Json comparable field collection, generic over child type.
@@ -91,7 +93,10 @@ export function getGenericTreeField<T>(
 
 	// Do not just read field and check for undefined: see warning on FieldMapObject.
 	if (Object.prototype.hasOwnProperty.call(children, key)) {
-		return children[key] ?? fail(0xaed /* This wont be undefined due to the check above */);
+		return (
+			children[key] ??
+			fail(0xaed /* This wont be undefined due to the check above */)
+		);
 	}
 	// Handle missing field:
 	if (createIfMissing === false) {
@@ -142,7 +147,9 @@ export function setGenericTreeField<T>(
 /**
  * Returns keys for fields of `tree`.
  */
-export function genericTreeKeys<T>(tree: GenericFieldsNode<T>): readonly FieldKey[] {
+export function genericTreeKeys<T>(
+	tree: GenericFieldsNode<T>,
+): readonly FieldKey[] {
 	const fields = tree.fields;
 	// This function is used when iterating through a tree.
 	// This means that this is often called on nodes with no keys

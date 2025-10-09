@@ -9,7 +9,10 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import type { ImplicitFieldSchema, TreeNodeSchemaClass } from "@fluidframework/tree";
+import type {
+	ImplicitFieldSchema,
+	TreeNodeSchemaClass,
+} from "@fluidframework/tree";
 import type {
 	InsertableContent,
 	TreeBranch,
@@ -91,11 +94,12 @@ export function getOrCreate<K, V>(
  * @alpha
  * @privateRemarks This is a subset of the TreeViewAlpha functionality because if take it wholesale, it causes problems with invariance of the generic parameters.
  */
-export type TreeView<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema> = Pick<
-	TreeViewAlpha<TRoot>,
-	"root" | "fork" | "merge" | "rebaseOnto" | "schema" | "events"
-> &
-	TreeBranch;
+export type TreeView<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema> =
+	Pick<
+		TreeViewAlpha<TRoot>,
+		"root" | "fork" | "merge" | "rebaseOnto" | "schema" | "events"
+	> &
+		TreeBranch;
 
 /**
  * TODO
@@ -144,10 +148,16 @@ export function failUsage(message: string): never {
 /**
  * Construct an object node from a schema and value.
  */
-export function constructNode(schema: TreeNodeSchema, value: InsertableContent): TreeNode {
+export function constructNode(
+	schema: TreeNodeSchema,
+	value: InsertableContent,
+): TreeNode {
 	const node = TreeAlpha.create<UnsafeUnknownSchema>(schema, value);
 	assert(
-		node !== undefined && node !== null && typeof node === "object" && !isFluidHandle(node),
+		node !== undefined &&
+			node !== null &&
+			typeof node === "object" &&
+			!isFluidHandle(node),
 		0xc1e /* Expected a constructed node to be an object */,
 	);
 	return node;
@@ -164,7 +174,9 @@ export function getFriendlyName(schema: TreeNodeSchema): string {
 
 	const childNames = Array.from(schema.childTypes, (t) => getFriendlyName(t));
 	if (schema instanceof ArrayNodeSchema) {
-		return childNames.length > 1 ? `(${childNames.join(" | ")})[]` : `${childNames[0]}[]`;
+		return childNames.length > 1
+			? `(${childNames.join(" | ")})[]`
+			: `${childNames[0]}[]`;
 	}
 	if (schema instanceof MapNodeSchema) {
 		return childNames.length > 1
@@ -328,7 +340,11 @@ export function getZodSchemaAsTypeScript(
 			}
 			case z.ZodFirstPartyTypeKind.ZodDiscriminatedUnion: {
 				return appendUnionOrIntersectionTypes(
-					[...(type._def as z.ZodDiscriminatedUnionDef<string>).options.values()],
+					[
+						...(
+							type._def as z.ZodDiscriminatedUnionDef<string>
+						).options.values(),
+					],
 					TypePrecedence.Union,
 				);
 			}
@@ -355,7 +371,9 @@ export function getZodSchemaAsTypeScript(
 			}
 			case z.ZodFirstPartyTypeKind.ZodEnum: {
 				return append(
-					(type._def as z.ZodEnumDef).values.map((value) => JSON.stringify(value)).join(" | "),
+					(type._def as z.ZodEnumDef).values
+						.map((value) => JSON.stringify(value))
+						.join(" | "),
 				);
 			}
 			case z.ZodFirstPartyTypeKind.ZodOptional: {
@@ -398,7 +416,9 @@ export function getZodSchemaAsTypeScript(
 
 	function appendBoundMethods(boundType: z.ZodType): void {
 		// eslint-disable-next-line prefer-const
-		for (let [name, type] of Object.entries((boundType._def as z.ZodObjectDef).shape())) {
+		for (let [name, type] of Object.entries(
+			(boundType._def as z.ZodObjectDef).shape(),
+		)) {
 			// Special handling of methods on objects
 			const method = (type as unknown as { method: object | undefined }).method;
 			if (method !== undefined && method instanceof FunctionWrapper) {
@@ -410,7 +430,10 @@ export function getZodSchemaAsTypeScript(
 					if (!first) append(", ");
 					if (getTypeKind(argType) === z.ZodFirstPartyTypeKind.ZodOptional) {
 						append(`${argName}?: `);
-						appendType((argType._def as z.ZodOptionalDef).innerType, TypePrecedence.Object);
+						appendType(
+							(argType._def as z.ZodOptionalDef).innerType,
+							TypePrecedence.Object,
+						);
 					} else {
 						append(`${argName}: `);
 						appendType(argType);
@@ -444,7 +467,9 @@ export function getZodSchemaAsTypeScript(
 		appendNewLine();
 		indent++;
 		// eslint-disable-next-line prefer-const
-		for (let [name, type] of Object.entries((objectType._def as z.ZodObjectDef).shape())) {
+		for (let [name, type] of Object.entries(
+			(objectType._def as z.ZodObjectDef).shape(),
+		)) {
 			const method = (type as unknown as { method: object | undefined }).method;
 			if (method === undefined || !(method instanceof FunctionWrapper)) {
 				append(name);
@@ -471,7 +496,8 @@ export function getZodSchemaAsTypeScript(
 	) {
 		let first = true;
 		for (const type of types) {
-			if (!first) append(minPrecedence === TypePrecedence.Intersection ? " & " : " | ");
+			if (!first)
+				append(minPrecedence === TypePrecedence.Intersection ? " & " : " | ");
 			appendType(type, minPrecedence);
 			first = false;
 		}
@@ -480,17 +506,24 @@ export function getZodSchemaAsTypeScript(
 	function appendTupleType(tupleType: z.ZodType) {
 		append("[");
 		let first = true;
-		for (const type of (tupleType._def as z.ZodTupleDef<z.ZodTupleItems, z.ZodType>).items) {
+		for (const type of (
+			tupleType._def as z.ZodTupleDef<z.ZodTupleItems, z.ZodType>
+		).items) {
 			if (!first) append(", ");
 			if (getTypeKind(type) === z.ZodFirstPartyTypeKind.ZodOptional) {
-				appendType((type._def as z.ZodOptionalDef).innerType, TypePrecedence.Object);
+				appendType(
+					(type._def as z.ZodOptionalDef).innerType,
+					TypePrecedence.Object,
+				);
 				append("?");
 			} else {
 				appendType(type);
 			}
 			first = false;
 		}
-		const rest = (tupleType._def as z.ZodTupleDef<z.ZodTupleItems, z.ZodType | null>).rest;
+		const rest = (
+			tupleType._def as z.ZodTupleDef<z.ZodTupleItems, z.ZodType | null>
+		).rest;
 		if (rest !== null) {
 			if (!first) append(", ");
 			append("...");
@@ -518,7 +551,9 @@ export function getZodSchemaAsTypeScript(
 
 	function appendLiteral(value: unknown) {
 		append(
-			typeof value === "string" || typeof value === "number" || typeof value === "boolean"
+			typeof value === "string" ||
+				typeof value === "number" ||
+				typeof value === "boolean"
 				? JSON.stringify(value)
 				: "any",
 		);
@@ -532,7 +567,8 @@ export function getZodSchemaAsTypeScript(
 }
 
 function getTypeKind(type: z.ZodType): z.ZodFirstPartyTypeKind {
-	return (type._def as z.ZodTypeDef & { typeName: z.ZodFirstPartyTypeKind }).typeName;
+	return (type._def as z.ZodTypeDef & { typeName: z.ZodFirstPartyTypeKind })
+		.typeName;
 }
 
 function getTypeIdentity(type: z.ZodType): object {
@@ -582,7 +618,9 @@ export function instanceOf<T extends TreeNodeSchemaClass>(
 	schema: T,
 ): z.ZodType<InstanceType<T>, z.ZodTypeDef, InstanceType<T>> {
 	if (!(schema instanceof ObjectNodeSchema)) {
-		throw new UsageError(`${schema.identifier} must be an instance of ObjectNodeSchema.`);
+		throw new UsageError(
+			`${schema.identifier} must be an instance of ObjectNodeSchema.`,
+		);
 	}
 	const effect = z.instanceof(schema);
 	instanceOfs.set(effect, schema);

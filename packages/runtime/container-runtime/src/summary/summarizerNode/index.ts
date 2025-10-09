@@ -9,7 +9,10 @@ export type {
 	ValidateSummaryResult,
 } from "./summarizerNodeUtils.js";
 
-export { type IRootSummarizerNode, createRootSummarizerNode } from "./summarizerNode.js";
+export {
+	type IRootSummarizerNode,
+	createRootSummarizerNode,
+} from "./summarizerNode.js";
 export {
 	type IRootSummarizerNodeWithGC,
 	createRootSummarizerNodeWithGC,

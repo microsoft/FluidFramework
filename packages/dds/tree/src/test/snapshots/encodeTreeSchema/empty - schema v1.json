@@ -1,8 +1,8 @@
 {
-  "version": 1,
-  "nodes": {},
-  "root": {
-    "kind": "Forbidden",
-    "types": []
-  }
+	"version": 1,
+	"nodes": {},
+	"root": {
+		"kind": "Forbidden",
+		"types": []
+	}
 }

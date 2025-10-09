@@ -138,7 +138,11 @@ describe("selectAndFilterPackages", () => {
 		const selectionOptions = AllPackagesSelectionCriteria;
 		const filter = EmptyFilter;
 
-		const { selected } = await selectAndFilterPackages(fluidRepo, selectionOptions, filter);
+		const { selected } = await selectAndFilterPackages(
+			fluidRepo,
+			selectionOptions,
+			filter,
+		);
 		const names = selected.map((p) => p.name).sort();
 
 		expect(names).to.be.equalTo([
@@ -185,7 +189,9 @@ describe("selectAndFilterPackages", () => {
 		const pkg = filtered[0]!;
 
 		expect(pkg.name).to.equal("other-pkg-a");
-		expect(fluidRepo.relativeToRepo(pkg.directory)).to.equal("second/packages/other-pkg-a");
+		expect(fluidRepo.relativeToRepo(pkg.directory)).to.equal(
+			"second/packages/other-pkg-a",
+		);
 	});
 
 	describe("select release group", () => {
@@ -197,10 +203,19 @@ describe("selectAndFilterPackages", () => {
 			};
 			const filters: PackageFilterOptions = EmptyFilter;
 
-			const { selected } = await selectAndFilterPackages(fluidRepo, selectionOptions, filters);
+			const { selected } = await selectAndFilterPackages(
+				fluidRepo,
+				selectionOptions,
+				filters,
+			);
 			const names = selected.map((p) => p.name);
 
-			expect(names).to.be.equalTo(["pkg-a", "pkg-b", "@private/pkg-c", "@shared/shared"]);
+			expect(names).to.be.equalTo([
+				"pkg-a",
+				"pkg-b",
+				"@private/pkg-c",
+				"@shared/shared",
+			]);
 		});
 
 		it("select release group root", async () => {
@@ -211,7 +226,11 @@ describe("selectAndFilterPackages", () => {
 			};
 			const filters: PackageFilterOptions = EmptyFilter;
 
-			const { selected } = await selectAndFilterPackages(fluidRepo, selectionOptions, filters);
+			const { selected } = await selectAndFilterPackages(
+				fluidRepo,
+				selectionOptions,
+				filters,
+			);
 			const dirs = selected.map((p) => fluidRepo.relativeToRepo(p.directory));
 
 			expect(selected.length).to.equal(1);
@@ -229,7 +248,11 @@ describe("selectAndFilterPackages", () => {
 				private: true,
 			};
 
-			const { filtered } = await selectAndFilterPackages(fluidRepo, selectionOptions, filters);
+			const { filtered } = await selectAndFilterPackages(
+				fluidRepo,
+				selectionOptions,
+				filters,
+			);
 			const names = filtered.map((p) => p.name);
 
 			expect(names).to.be.containingAllOf(["@private/pkg-c"]);
@@ -246,7 +269,11 @@ describe("selectAndFilterPackages", () => {
 				private: false,
 			};
 
-			const { filtered } = await selectAndFilterPackages(fluidRepo, selectionOptions, filters);
+			const { filtered } = await selectAndFilterPackages(
+				fluidRepo,
+				selectionOptions,
+				filters,
+			);
 			const names = filtered.map((p) => p.name);
 
 			expect(names).to.be.equalTo(["pkg-a", "pkg-b", "@shared/shared"]);
@@ -263,7 +290,11 @@ describe("selectAndFilterPackages", () => {
 				scope: ["@shared"],
 			};
 
-			const { filtered } = await selectAndFilterPackages(fluidRepo, selectionOptions, filters);
+			const { filtered } = await selectAndFilterPackages(
+				fluidRepo,
+				selectionOptions,
+				filters,
+			);
 			const names = filtered.map((p) => p.name);
 
 			expect(names).to.be.equalTo(["@shared/shared"]);
@@ -280,7 +311,11 @@ describe("selectAndFilterPackages", () => {
 				skipScope: ["@shared", "@private"],
 			};
 
-			const { filtered } = await selectAndFilterPackages(fluidRepo, selectionOptions, filters);
+			const { filtered } = await selectAndFilterPackages(
+				fluidRepo,
+				selectionOptions,
+				filters,
+			);
 			const names = filtered.map((p) => p.name);
 
 			expect(names).to.be.equalTo(["pkg-a", "pkg-b"]);
@@ -296,7 +331,11 @@ describe("selectAndFilterPackages", () => {
 			};
 			const filters: PackageFilterOptions = EmptyFilter;
 
-			const { selected } = await selectAndFilterPackages(fluidRepo, selectionOptions, filters);
+			const { selected } = await selectAndFilterPackages(
+				fluidRepo,
+				selectionOptions,
+				filters,
+			);
 			const names = selected.map((p) => p.name);
 
 			expect(names).to.be.equalTo([
@@ -319,7 +358,11 @@ describe("selectAndFilterPackages", () => {
 			};
 			const filters: PackageFilterOptions = EmptyFilter;
 
-			const { selected } = await selectAndFilterPackages(fluidRepo, selectionOptions, filters);
+			const { selected } = await selectAndFilterPackages(
+				fluidRepo,
+				selectionOptions,
+				filters,
+			);
 			const dirs = selected.map((p) => fluidRepo.relativeToRepo(p.directory));
 
 			expect(selected.length).to.equal(1);
@@ -334,7 +377,11 @@ describe("selectAndFilterPackages", () => {
 			};
 			const filters: PackageFilterOptions = EmptyFilter;
 
-			const { selected } = await selectAndFilterPackages(fluidRepo, selectionOptions, filters);
+			const { selected } = await selectAndFilterPackages(
+				fluidRepo,
+				selectionOptions,
+				filters,
+			);
 			const dirs = selected.map((p) => fluidRepo.relativeToRepo(p.directory));
 
 			expect(selected.length).to.equal(1);
@@ -353,7 +400,11 @@ describe("selectAndFilterPackages", () => {
 				skipScope: undefined,
 			};
 
-			const { filtered } = await selectAndFilterPackages(fluidRepo, selectionOptions, filters);
+			const { filtered } = await selectAndFilterPackages(
+				fluidRepo,
+				selectionOptions,
+				filters,
+			);
 			const names = filtered.map((p) => p.name);
 
 			expect(names).to.be.containingAllOf(["@private/pkg-c"]);
@@ -371,7 +422,11 @@ describe("selectAndFilterPackages", () => {
 				skipScope: undefined,
 			};
 
-			const { filtered } = await selectAndFilterPackages(fluidRepo, selectionOptions, filters);
+			const { filtered } = await selectAndFilterPackages(
+				fluidRepo,
+				selectionOptions,
+				filters,
+			);
 			const names = filtered.map((p) => p.name);
 
 			expect(names).to.be.equalTo([
@@ -397,7 +452,11 @@ describe("selectAndFilterPackages", () => {
 				skipScope: undefined,
 			};
 
-			const { filtered } = await selectAndFilterPackages(fluidRepo, selectionOptions, filters);
+			const { filtered } = await selectAndFilterPackages(
+				fluidRepo,
+				selectionOptions,
+				filters,
+			);
 			const names = filtered.map((p) => p.name);
 
 			expect(names).to.be.equalTo(["@shared/shared"]);
@@ -415,10 +474,19 @@ describe("selectAndFilterPackages", () => {
 				skipScope: ["@shared", "@private", "@group3"],
 			};
 
-			const { filtered } = await selectAndFilterPackages(fluidRepo, selectionOptions, filters);
+			const { filtered } = await selectAndFilterPackages(
+				fluidRepo,
+				selectionOptions,
+				filters,
+			);
 			const names = filtered.map((p) => p.name);
 
-			expect(names).to.be.equalTo(["@group2/pkg-d", "@group2/pkg-e", "pkg-a", "pkg-b"]);
+			expect(names).to.be.equalTo([
+				"@group2/pkg-d",
+				"@group2/pkg-e",
+				"pkg-a",
+				"pkg-b",
+			]);
 		});
 	});
 
@@ -433,7 +501,11 @@ describe("selectAndFilterPackages", () => {
 				releaseGroups: ["group2"],
 			};
 
-			const { filtered } = await selectAndFilterPackages(fluidRepo, selectionOptions, filters);
+			const { filtered } = await selectAndFilterPackages(
+				fluidRepo,
+				selectionOptions,
+				filters,
+			);
 			const names = filtered.map((p) => p.name);
 
 			expect(names).to.be.equalTo([

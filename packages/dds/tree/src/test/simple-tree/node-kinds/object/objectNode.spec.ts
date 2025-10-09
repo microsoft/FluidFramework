@@ -132,7 +132,10 @@ const schemaFactory = new SchemaFactory("Test");
 
 	// Identifier field
 	{
-		type IdentifierField = FieldSchema<FieldKind.Identifier, typeof SchemaFactory.string>;
+		type IdentifierField = FieldSchema<
+			FieldKind.Identifier,
+			typeof SchemaFactory.string
+		>;
 
 		// Identifier fields have default.
 		type _check = requireTrue<FieldHasDefault<IdentifierField>>;
@@ -151,7 +154,10 @@ const schemaFactory = new SchemaFactory("Test");
 	// Union of optional fields
 	{
 		type OptionalNoteField = FieldSchema<FieldKind.Optional, typeof Note>;
-		type IdentifierField = FieldSchema<FieldKind.Identifier, typeof SchemaFactory.string>;
+		type IdentifierField = FieldSchema<
+			FieldKind.Identifier,
+			typeof SchemaFactory.string
+		>;
 		type Union = OptionalNoteField | IdentifierField;
 
 		// Field definitively has a default value.
@@ -161,7 +167,10 @@ const schemaFactory = new SchemaFactory("Test");
 	// Union of required and optional fields
 	{
 		type RequiredNoteField = FieldSchema<FieldKind.Required, typeof Note>;
-		type IdentifierField = FieldSchema<FieldKind.Identifier, typeof SchemaFactory.string>;
+		type IdentifierField = FieldSchema<
+			FieldKind.Identifier,
+			typeof SchemaFactory.string
+		>;
 		type Union = RequiredNoteField | IdentifierField;
 
 		// Field may or may not have a default value.
@@ -173,7 +182,9 @@ const schemaFactory = new SchemaFactory("Test");
 {
 	// Generic case
 	{
-		type result = ObjectFromSchemaRecord<RestrictiveStringRecord<ImplicitFieldSchema>>;
+		type result = ObjectFromSchemaRecord<
+			RestrictiveStringRecord<ImplicitFieldSchema>
+		>;
 		// eslint-disable-next-line @typescript-eslint/ban-types
 		type _check = requireTrue<areSafelyAssignable<{}, result>>;
 
@@ -268,7 +279,10 @@ describeHydration(
 				const b = hydrate([Schema, Other], { other: 6 });
 
 				// eslint-disable-next-line @typescript-eslint/ban-types
-				type check_ = requireAssignableTo<typeof a.constructor, number | Function>;
+				type check_ = requireAssignableTo<
+					typeof a.constructor,
+					number | Function
+				>;
 				assert.equal(a.constructor, 5);
 				assert.equal(b.constructor, Other);
 				assert(Tree.is(b, Other));
@@ -330,7 +344,8 @@ describeHydration(
 				}) {}
 				const n = init(Schema, { foo: undefined });
 				assert.deepEqual({ ...n }, {});
-				const descriptor = Reflect.getOwnPropertyDescriptor(n, "foo") ?? assert.fail();
+				const descriptor =
+					Reflect.getOwnPropertyDescriptor(n, "foo") ?? assert.fail();
 				assert.equal(descriptor.enumerable, false);
 				assert.equal(descriptor.value, undefined);
 				const keys = Object.keys(n);
@@ -343,7 +358,8 @@ describeHydration(
 				}) {}
 				const n = init(Schema, { foo: 0 });
 				assert.deepEqual({ ...n }, { foo: 0 });
-				const descriptor = Reflect.getOwnPropertyDescriptor(n, "foo") ?? assert.fail();
+				const descriptor =
+					Reflect.getOwnPropertyDescriptor(n, "foo") ?? assert.fail();
 				assert.equal(descriptor.enumerable, true);
 				assert.equal(descriptor.value, 0);
 				const keys = Object.keys(n);
@@ -632,7 +648,10 @@ describeHydration(
 
 			// Explicit field POJO mode typing unit tests
 			{
-				type SchemaType = ObjectNodeSchema<string, { readonly f: LeafSchema<"null", null> }>;
+				type SchemaType = ObjectNodeSchema<
+					string,
+					{ readonly f: LeafSchema<"null", null> }
+				>;
 				// @ts-expect-error Missing workaround for https://github.com/microsoft/TypeScript/issues/59049#issuecomment-2773459693 so this fails.
 				type _check4 = requireAssignableTo<SchemaType, ObjectNodeSchema>;
 				// It does work for the different types that make up ObjectNodeSchema however:
@@ -644,7 +663,9 @@ describeHydration(
 				type RecordX = Record<string, unknown>;
 
 				// A type with complicated variance.
-				type Create<T extends RecordX> = (data: RecordX extends T ? never : T) => unknown;
+				type Create<T extends RecordX> = (
+					data: RecordX extends T ? never : T,
+				) => unknown;
 
 				// Two identical interfaces
 				interface X1<T extends RecordX = RecordX> extends Create<T> {}
@@ -721,7 +742,8 @@ describeHydration(
 
 				assert.throws(
 					() => new Schema({ foo: undefined }),
-					(e: Error) => validateAssertionError(e, /this shadowing will not work/),
+					(e: Error) =>
+						validateAssertionError(e, /this shadowing will not work/),
 				);
 			});
 		});
@@ -828,7 +850,9 @@ describeHydration(
 		});
 
 		it("unhydrated default identifier access works", () => {
-			class HasId extends schemaFactory.object("hasID", { id: schemaFactory.identifier }) {}
+			class HasId extends schemaFactory.object("hasID", {
+				id: schemaFactory.identifier,
+			}) {}
 			const newNode = new HasId({});
 			const id = newNode.id;
 			const id2 = new HasId({}).id;
@@ -836,7 +860,9 @@ describeHydration(
 		});
 
 		it("unhydrated default identifier access via shortId returns UUID", () => {
-			class HasId extends schemaFactory.object("hasID", { id: schemaFactory.identifier }) {}
+			class HasId extends schemaFactory.object("hasID", {
+				id: schemaFactory.identifier,
+			}) {}
 			const newNode = new HasId({});
 			const id = Tree.shortId(newNode);
 			assert(typeof id === "string");
@@ -844,14 +870,18 @@ describeHydration(
 		});
 
 		it("unhydrated custom identifier access works", () => {
-			class HasId extends schemaFactory.object("hasID", { id: schemaFactory.identifier }) {}
+			class HasId extends schemaFactory.object("hasID", {
+				id: schemaFactory.identifier,
+			}) {}
 			const newNode = new HasId({ id: "x" });
 			assert.equal(newNode.id, "x");
 			assert.equal(Tree.shortId(newNode), "x");
 		});
 
 		it("custom identifier access works on POJO mode object", () => {
-			const HasId = schemaFactory.object("hasID", { id: schemaFactory.identifier });
+			const HasId = schemaFactory.object("hasID", {
+				id: schemaFactory.identifier,
+			});
 			const newNode = new HasId({ id: "x" });
 			assert.equal(newNode.id, "x");
 			assert.equal(Tree.shortId(newNode), "x");

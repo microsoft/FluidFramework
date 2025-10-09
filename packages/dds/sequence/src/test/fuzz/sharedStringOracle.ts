@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { MergeTreeDeltaType, TextSegment } from "@fluidframework/merge-tree/internal";
+import {
+	MergeTreeDeltaType,
+	TextSegment,
+} from "@fluidframework/merge-tree/internal";
 
 import type { SequenceDeltaEvent } from "../../sequenceDeltaEvent.js";
 import type { SharedString } from "../../sequenceFactory.js";
@@ -15,7 +18,8 @@ import type { SharedString } from "../../sequenceFactory.js";
  */
 export class SharedStringOracle {
 	private readonly model: string[] = [];
-	private readonly onDelta = (event: SequenceDeltaEvent) => this.applyDelta(event);
+	private readonly onDelta = (event: SequenceDeltaEvent) =>
+		this.applyDelta(event);
 
 	constructor(private readonly shared: SharedString) {
 		this.model = shared.getText().split("");
@@ -62,7 +66,9 @@ export class SharedStringOracle {
 		const actual = this.shared.getText();
 		const mirror = this.model.join("");
 		if (actual !== mirror) {
-			throw new Error(`SharedStringOracle mismatch: expected="${mirror}", actual="${actual}"`);
+			throw new Error(
+				`SharedStringOracle mismatch: expected="${mirror}", actual="${actual}"`,
+			);
 		}
 	}
 

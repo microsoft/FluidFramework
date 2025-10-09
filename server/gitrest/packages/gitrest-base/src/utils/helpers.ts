@@ -75,7 +75,9 @@ export function getExternalWriterParams(
 
 export function getRepoManagerParamsFromRequest(request: Request): IRepoManagerParams {
 	const storageName: string | undefined = request.get(Constants.StorageNameHeader);
-	const storageRoutingId = parseStorageRoutingId(request.get(Constants.StorageRoutingIdHeader));
+	const storageRoutingId = parseStorageRoutingId(
+		request.get(Constants.StorageRoutingIdHeader),
+	);
 	const simplifiedCustomData = request.get(Constants.SimplifiedCustomDataHeader);
 
 	const isEphemeralFromRequest = request.get(Constants.IsEphemeralContainer);
@@ -217,11 +219,17 @@ export function getRepoPath(tenantId: string, documentId?: string, owner?: strin
 	return [owner, tenantId, documentId].filter((x) => x !== undefined).join("/");
 }
 
-export function getGitDirectory(repoPath: string, baseDir?: string, suffixPath?: string): string {
+export function getGitDirectory(
+	repoPath: string,
+	baseDir?: string,
+	suffixPath?: string,
+): string {
 	return [baseDir, repoPath, suffixPath].filter((x) => x !== undefined).join("/");
 }
 
-export function parseStorageRoutingId(storageRoutingId?: string): IStorageRoutingId | undefined {
+export function parseStorageRoutingId(
+	storageRoutingId?: string,
+): IStorageRoutingId | undefined {
 	if (!storageRoutingId) {
 		return undefined;
 	}

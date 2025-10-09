@@ -4,7 +4,10 @@
  */
 
 // eslint-disable-next-line import/no-internal-modules -- #26904: `sequence` internals used in examples
-import { getTextAndMarkers, reservedTileLabelsKey } from "@fluidframework/sequence/internal";
+import {
+	getTextAndMarkers,
+	reservedTileLabelsKey,
+} from "@fluidframework/sequence/internal";
 import {
 	Marker,
 	MergeTreeDeltaType,
@@ -191,7 +194,9 @@ export const CodeMirrorReactView: React.FC<ICodeMirrorReactViewProps> = (
 	props: ICodeMirrorReactViewProps,
 ) => {
 	const { text, presenceManager } = props;
-	const htmlView = useRef<CodeMirrorView>(new CodeMirrorView(text, presenceManager));
+	const htmlView = useRef<CodeMirrorView>(
+		new CodeMirrorView(text, presenceManager),
+	);
 	const divRef = useRef<HTMLDivElement>(null);
 	useEffect(() => {
 		if (divRef.current !== null) {

@@ -199,7 +199,11 @@ function makeOperationGenerator(
 	}
 
 	function removeRange(state: ClientOpState): RemoveRange {
-		return { type: "removeRange", ...exclusiveRange(state), stringId: state.sharedString.id };
+		return {
+			type: "removeRange",
+			...exclusiveRange(state),
+			stringId: state.sharedString.id,
+		};
 	}
 
 	function annotateRange(state: ClientOpState): AnnotateRange {
@@ -212,19 +216,28 @@ function makeOperationGenerator(
 	}
 
 	const lengthSatisfies =
-		(criteria: (length: number) => boolean): AcceptanceCondition<ClientOpState> =>
+		(
+			criteria: (length: number) => boolean,
+		): AcceptanceCondition<ClientOpState> =>
 		({ sharedString }) =>
 			criteria(sharedString.getLength());
 	const hasNonzeroLength = lengthSatisfies((length) => length > 0);
-	const isShorterThanMaxLength = lengthSatisfies((length) => length < options.maxStringLength);
+	const isShorterThanMaxLength = lengthSatisfies(
+		(length) => length < options.maxStringLength,
+	);
 
-	const clientBaseOperationGenerator = createWeightedGenerator<Operation, ClientOpState>([
+	const clientBaseOperationGenerator = createWeightedGenerator<
+		Operation,
+		ClientOpState
+	>([
 		[addText, 6, isShorterThanMaxLength],
 		[removeRange, 2, hasNonzeroLength],
 		[annotateRange, 1, hasNonzeroLength],
 	]);
 
-	const clientOperationGenerator = (state: FuzzTestState): Operation | typeof done =>
+	const clientOperationGenerator = (
+		state: FuzzTestState,
+	): Operation | typeof done =>
 		clientBaseOperationGenerator({
 			...state,
 			sharedString: state.random.pick(state.clients).sharedString,
@@ -240,12 +253,15 @@ function makeOperationGenerator(
 function createSharedString(
 	random: IRandom,
 	generator: Generator<Operation, FuzzTestState>,
-	makeSerializer?: (runtime: IFluidDataStoreRuntime) => Encoder<IAttributor, string>,
+	makeSerializer?: (
+		runtime: IFluidDataStoreRuntime,
+	) => Encoder<IAttributor, string>,
 ): FuzzTestState {
 	const numClients = 3;
 	const clientIds = Array.from({ length: numClients }, () => random.uuid4());
 	const quorum = makeMockQuorum(clientIds);
-	const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+	const containerRuntimeFactory =
+		new MockContainerRuntimeFactoryForReconnection();
 	let attributor: IAttributor | undefined;
 	let serializer: Encoder<IAttributor, string> | undefined;
 	const initialState: FuzzTestState = {
@@ -311,21 +327,28 @@ function createSharedString(
 	return performFuzzActions(
 		generator,
 		{
-			addText: statefully(({ clients }, { stringId, index, content, props }) => {
-				const { sharedString } = clients.find((c) => c.sharedString.id === stringId) ?? {};
-				assert(sharedString);
-				sharedString.insertText(index, content, props);
-			}),
+			addText: statefully(
+				({ clients }, { stringId, index, content, props }) => {
+					const { sharedString } =
+						clients.find((c) => c.sharedString.id === stringId) ?? {};
+					assert(sharedString);
+					sharedString.insertText(index, content, props);
+				},
+			),
 			removeRange: statefully(({ clients }, { stringId, start, end }) => {
-				const { sharedString } = clients.find((c) => c.sharedString.id === stringId) ?? {};
+				const { sharedString } =
+					clients.find((c) => c.sharedString.id === stringId) ?? {};
 				assert(sharedString);
 				sharedString.removeRange(start, end);
 			}),
-			annotateRange: statefully(({ clients }, { stringId, properties, start, end }) => {
-				const { sharedString } = clients.find((c) => c.sharedString.id === stringId) ?? {};
-				assert(sharedString);
-				sharedString.annotateRange(start, end, properties);
-			}),
+			annotateRange: statefully(
+				({ clients }, { stringId, properties, start, end }) => {
+					const { sharedString } =
+						clients.find((c) => c.sharedString.id === stringId) ?? {};
+					assert(sharedString);
+					sharedString.annotateRange(start, end, properties);
+				},
+			),
 			synchronize: statefully((state) => {
 				state.containerRuntimeFactory.processAllMessages();
 			}),
@@ -334,7 +357,10 @@ function createSharedString(
 	);
 }
 
-const directory = path.join(_dirname, "../../../src/test/attribution/documents");
+const directory = path.join(
+	_dirname,
+	"../../../src/test/attribution/documents",
+);
 
 interface TestPaths {
 	directory: string;
@@ -389,14 +415,22 @@ type JsonDeserializedTypeWith<T> =
 type NonSymbolWithDefinedNonFunctionPropertyOf<T extends object> = Exclude<
 	{
 		// eslint-disable-next-line @typescript-eslint/ban-types
-		[K in keyof T]: undefined extends T[K] ? never : T[K] extends Function ? never : K;
+		[K in keyof T]: undefined extends T[K]
+			? never
+			: T[K] extends Function
+				? never
+				: K;
 	}[keyof T],
 	undefined | symbol
 >;
 type NonSymbolWithUndefinedNonFunctionPropertyOf<T extends object> = Exclude<
 	{
 		// eslint-disable-next-line @typescript-eslint/ban-types
-		[K in keyof T]: undefined extends T[K] ? (T[K] extends Function ? never : K) : never;
+		[K in keyof T]: undefined extends T[K]
+			? T[K] extends Function
+				? never
+				: K
+			: never;
 	}[keyof T],
 	undefined | symbol
 >;
@@ -416,11 +450,10 @@ type NonSymbolWithUndefinedNonFunctionPropertyOf<T extends object> = Exclude<
  *
  * Similarly, function valued properties are removed.
  */
-type JsonDeserialized<T, TReplaced = never> = /* test for 'any' */ boolean extends (
-	T extends never
-		? true
-		: false
-)
+type JsonDeserialized<
+	T,
+	TReplaced = never,
+> = /* test for 'any' */ boolean extends (T extends never ? true : false)
 	? /* 'any' => */ JsonDeserializedTypeWith<TReplaced>
 	: /* test for 'unknown' */ unknown extends T
 		? /* 'unknown' => */ JsonDeserializedTypeWith<TReplaced>
@@ -455,11 +488,15 @@ type JsonDeserialized<T, TReplaced = never> = /* test for 'any' */ boolean exten
 /* eslint-enable @rushstack/no-new-null, @typescript-eslint/ban-types */
 
 function readJson<T>(filepath: string): JsonDeserialized<T> {
-	return JSON.parse(readFileSync(filepath, { encoding: "utf8" })) as JsonDeserialized<T>;
+	return JSON.parse(
+		readFileSync(filepath, { encoding: "utf8" }),
+	) as JsonDeserialized<T>;
 }
 
 function writeJson<T>(filepath: string, content: Jsonable<T>): void {
-	writeFileSync(filepath, JSON.stringify(content, undefined, 4), { encoding: "utf8" });
+	writeFileSync(filepath, JSON.stringify(content, undefined, 4), {
+		encoding: "utf8",
+	});
 }
 
 const validateInterval = 10;
@@ -499,7 +536,11 @@ function embedAttributionInProps(operations: Operation[]): Operation[] {
 // SerializableISummaryTree is a version of ISummaryTree with Uint8Array content removed.
 type SerializableISummaryTree = ExcludeDeeply<ISummaryTree, Uint8Array>;
 
-type ExcludeDeeply<T, Exclusion, TBase = Exclude<T, Exclusion>> = TBase extends object
+type ExcludeDeeply<
+	T,
+	Exclusion,
+	TBase = Exclude<T, Exclusion>,
+> = TBase extends object
 	? { [K in keyof TBase]: ExcludeDeeply<TBase[K], Exclusion> }
 	: TBase;
 
@@ -540,7 +581,9 @@ interface ISummaryTreeWithCatchupOps {
 	};
 }
 
-const summaryFromState = async (state: FuzzTestState): Promise<SerializableISummaryTree> => {
+const summaryFromState = async (
+	state: FuzzTestState,
+): Promise<SerializableISummaryTree> => {
 	state.containerRuntimeFactory.processAllMessages();
 	const { sharedString } = state.clients[0];
 	const { summary } = await sharedString.summarize();
@@ -571,7 +614,8 @@ class DataTable<T> {
 
 	public log(dataToString: (t: T) => string = (t): string => `${t}`): void {
 		const namePaddingLength =
-			1 + Math.max(...Array.from(this.rows.keys(), (docName) => docName.length));
+			1 +
+			Math.max(...Array.from(this.rows.keys(), (docName) => docName.length));
 		const rowStrings = new Map<string, string[]>();
 		const paddingByColumn = this.columnNames.map((name) => name.length);
 		for (const [name, data] of this.rows.entries()) {
@@ -588,7 +632,9 @@ class DataTable<T> {
 		console.log(
 			[
 				`${"Name".padEnd(namePaddingLength)}`,
-				...this.columnNames.map((name, i) => `${name.padStart(paddingByColumn[i])} `),
+				...this.columnNames.map(
+					(name, i) => `${name.padStart(paddingByColumn[i])} `,
+				),
 			].join("|"),
 		);
 
@@ -638,57 +684,66 @@ describe("SharedString Attribution", () => {
 			{
 				name: "OpStreamAttributor without any compression",
 				factory: (operations: Operation[]) =>
-					createSharedString(makeRandom(0), generatorFromArray(operations), (runtime) =>
-						chainEncoders(
-							new AttributorSerializer(
-								(entries) =>
-									new OpStreamAttributor(
-										toDeltaManagerInternal(runtime.deltaManager),
-										runtime.getQuorum(),
-										entries,
-									),
+					createSharedString(
+						makeRandom(0),
+						generatorFromArray(operations),
+						(runtime) =>
+							chainEncoders(
+								new AttributorSerializer(
+									(entries) =>
+										new OpStreamAttributor(
+											toDeltaManagerInternal(runtime.deltaManager),
+											runtime.getQuorum(),
+											entries,
+										),
+									noopEncoder,
+								),
 								noopEncoder,
 							),
-							noopEncoder,
-						),
 					),
 				filename: "attributor-no-compression-snap.json",
 			},
 			{
 				name: "OpStreamAttributor without delta encoding",
 				factory: (operations: Operation[]) =>
-					createSharedString(makeRandom(0), generatorFromArray(operations), (runtime) =>
-						chainEncoders(
-							new AttributorSerializer(
-								(entries) =>
-									new OpStreamAttributor(
-										toDeltaManagerInternal(runtime.deltaManager),
-										runtime.getQuorum(),
-										entries,
-									),
-								noopEncoder,
+					createSharedString(
+						makeRandom(0),
+						generatorFromArray(operations),
+						(runtime) =>
+							chainEncoders(
+								new AttributorSerializer(
+									(entries) =>
+										new OpStreamAttributor(
+											toDeltaManagerInternal(runtime.deltaManager),
+											runtime.getQuorum(),
+											entries,
+										),
+									noopEncoder,
+								),
+								makeLZ4Encoder(),
 							),
-							makeLZ4Encoder(),
-						),
 					),
 				filename: "attributor-lz4-compression-snap.json",
 			},
 			{
 				name: "OpStreamAttributor",
 				factory: (operations: Operation[]) =>
-					createSharedString(makeRandom(0), generatorFromArray(operations), (runtime) =>
-						chainEncoders(
-							new AttributorSerializer(
-								(entries) =>
-									new OpStreamAttributor(
-										toDeltaManagerInternal(runtime.deltaManager),
-										runtime.getQuorum(),
-										entries,
-									),
-								deltaEncoder,
+					createSharedString(
+						makeRandom(0),
+						generatorFromArray(operations),
+						(runtime) =>
+							chainEncoders(
+								new AttributorSerializer(
+									(entries) =>
+										new OpStreamAttributor(
+											toDeltaManagerInternal(runtime.deltaManager),
+											runtime.getQuorum(),
+											entries,
+										),
+									deltaEncoder,
+								),
+								makeLZ4Encoder(),
 							),
-							makeLZ4Encoder(),
-						),
 					),
 				filename: "attributor-lz4-and-delta-snap.json",
 			},
@@ -701,7 +756,9 @@ describe("SharedString Attribution", () => {
 				generatorFromArray<Operation, FuzzTestState>([{ type: "synchronize" }]),
 			);
 
-			const { generator, operations } = spyOnOperations(attributionlessGenerator);
+			const { generator, operations } = spyOnOperations(
+				attributionlessGenerator,
+			);
 			createSharedString(makeRandom(0), generator);
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
 			writeJson(paths.operations, operations as any);
@@ -756,12 +813,16 @@ describe("SharedString Attribution", () => {
 		// Note: to see output, FLUID_TEST_VERBOSE needs to be enabled. Using the `test:mocha:verbose` script is
 		// sufficient to do so.
 		it("generate snapshot size impact report", async () => {
-			const table = new DataTable<ISummaryTree>(dataGenerators.map(({ name }) => name));
+			const table = new DataTable<ISummaryTree>(
+				dataGenerators.map(({ name }) => name),
+			);
 			for (const docName of documents) {
 				const paths = getDocumentPaths(docName);
 				const operations: Operation[] = readJson(paths.operations);
 				const data = await Promise.all(
-					dataGenerators.map(async ({ factory }) => summaryFromState(factory(operations))),
+					dataGenerators.map(async ({ factory }) =>
+						summaryFromState(factory(operations)),
+					),
 				);
 				table.addRow(docName, data);
 			}

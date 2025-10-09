@@ -7,7 +7,10 @@
 
 import { strict as assert } from "node:assert";
 
-import { booleanCases, generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
+import {
+	booleanCases,
+	generatePairwiseOptions,
+} from "@fluid-private/test-pairwise-generator";
 import {
 	ContainerErrorTypes,
 	type IErrorBase,
@@ -17,7 +20,10 @@ import {
 	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import type { IEnvelope } from "@fluidframework/runtime-definitions/internal";
-import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	MockLogger,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils/internal";
 import type Deque from "double-ended-queue";
 import Sinon from "sinon";
 
@@ -65,7 +71,8 @@ function withBatchMetadata(
 	messages: LocalBatchMessage[],
 	batchId?: string,
 ): LocalBatchMessage[] {
-	return addBatchMetadata({ messages, referenceSequenceNumber: -1 }, batchId).messages;
+	return addBatchMetadata({ messages, referenceSequenceNumber: -1 }, batchId)
+		.messages;
 }
 
 type StubbedRuntimeStateHandler = {
@@ -95,7 +102,10 @@ describe("Pending State Manager", () => {
 	}
 	const mockLogger = new MockLogger();
 	const logger = createChildLogger({ logger: mockLogger });
-	const opGroupingManager = new OpGroupingManager({ groupedBatchingEnabled: true }, logger);
+	const opGroupingManager = new OpGroupingManager(
+		{ groupedBatchingEnabled: true },
+		logger,
+	);
 
 	function newPendingStateManager(
 		stubs: IRuntimeStateHandler,
@@ -296,7 +306,11 @@ describe("Pending State Manager", () => {
 			];
 
 			submitBatch(messages);
-			processFullBatch(messages, 0 /* batchStartCsn */, true /* groupedBatch */);
+			processFullBatch(
+				messages,
+				0 /* batchStartCsn */,
+				true /* groupedBatch */,
+			);
 		});
 
 		it("Ungrouped batch is processed correctly", () => {
@@ -355,7 +369,10 @@ describe("Pending State Manager", () => {
 		});
 
 		it("empty batch is processed correctly", () => {
-			const { placeholderMessage } = opGroupingManager.createEmptyGroupedBatch("batchId", 0);
+			const { placeholderMessage } = opGroupingManager.createEmptyGroupedBatch(
+				"batchId",
+				0,
+			);
 			pendingStateManager.onFlushEmptyBatch(
 				placeholderMessage,
 				1 /* clientSequenceNumber */,
@@ -447,7 +464,10 @@ describe("Pending State Manager", () => {
 					[
 						{
 							eventName: "unexpectedAckReceived",
-							pendingContentScrubbed: JSON.stringify({ type: "op", contents: {} }),
+							pendingContentScrubbed: JSON.stringify({
+								type: "op",
+								contents: {},
+							}),
 							incomingContentScrubbed: JSON.stringify({ type: "op" }),
 							contentsMatch: false,
 							pendingLength: 27,
@@ -491,7 +511,10 @@ describe("Pending State Manager", () => {
 					[
 						{
 							eventName: "unexpectedAckReceived",
-							pendingContentScrubbed: JSON.stringify({ type: "op", contents: {} }),
+							pendingContentScrubbed: JSON.stringify({
+								type: "op",
+								contents: {},
+							}),
 							incomingContentScrubbed: JSON.stringify({
 								type: "op",
 								contents: { prop1: "boolean" },
@@ -534,7 +557,12 @@ describe("Pending State Manager", () => {
 				);
 
 				assert.throws(
-					() => processFullBatch([message], 0 /* batchStartCsn */, false /* groupedBatch */),
+					() =>
+						processFullBatch(
+							[message],
+							0 /* batchStartCsn */,
+							false /* groupedBatch */,
+						),
 					(closeError: IErrorBase) =>
 						closeError.errorType === ContainerErrorTypes.dataProcessingError,
 				);
@@ -542,8 +570,14 @@ describe("Pending State Manager", () => {
 					[
 						{
 							eventName: "unexpectedAckReceived",
-							pendingContentScrubbed: JSON.stringify({ contents: {}, type: "op" }),
-							incomingContentScrubbed: JSON.stringify({ type: "op", contents: {} }),
+							pendingContentScrubbed: JSON.stringify({
+								contents: {},
+								type: "op",
+							}),
+							incomingContentScrubbed: JSON.stringify({
+								type: "op",
+								contents: {},
+							}),
 							contentsMatch: true,
 							pendingLength: 27,
 							incomingLength: 27,
@@ -583,7 +617,12 @@ describe("Pending State Manager", () => {
 				);
 
 				assert.throws(
-					() => processFullBatch([message], 0 /* batchStartCsn */, false /* groupedBatch */),
+					() =>
+						processFullBatch(
+							[message],
+							0 /* batchStartCsn */,
+							false /* groupedBatch */,
+						),
 					(closeError: IErrorBase) =>
 						closeError.errorType === ContainerErrorTypes.dataProcessingError,
 				);
@@ -596,7 +635,10 @@ describe("Pending State Manager", () => {
 								contents: {},
 								somethingElse: "number",
 							}),
-							incomingContentScrubbed: JSON.stringify({ type: "op", contents: {} }),
+							incomingContentScrubbed: JSON.stringify({
+								type: "op",
+								contents: {},
+							}),
 							contentsMatch: true,
 							pendingLength: 47,
 							incomingLength: 27,
@@ -642,7 +684,10 @@ describe("Pending State Manager", () => {
 					{ input: ["xyz", "xy"], expected: [2, "z", undefined] },
 					{ input: ["xy", "xxx"], expected: [1, "y", "x"] },
 					{ input: ["xyz", "xyz"], expected: [-1] },
-					{ input: ["QQ", `Q${nonAsciiChar}`], expected: [1, "Q", "[non-ASCII]"] },
+					{
+						input: ["QQ", `Q${nonAsciiChar}`],
+						expected: [1, "Q", "[non-ASCII]"],
+					},
 				];
 				for (const {
 					input: [a, b],
@@ -672,7 +717,11 @@ describe("Pending State Manager", () => {
 					sequenceNumber: i + 1, // starting with sequence number 1 so first assert does not filter any op
 				}));
 				submitBatch(messages);
-				processFullBatch(messages, 0 /* batchStartCsn */, false /* groupedBatch */);
+				processFullBatch(
+					messages,
+					0 /* batchStartCsn */,
+					false /* groupedBatch */,
+				);
 				let pendingState = pendingStateManager.getLocalState(0).pendingStates;
 				assert.strictEqual(pendingState.length, 10);
 				pendingState = pendingStateManager.getLocalState(5).pendingStates;
@@ -721,11 +770,17 @@ describe("Pending State Manager", () => {
 					const pendingStateManager = createPendingStateManager(
 						undefined as unknown as IPendingMessage[],
 					);
-					assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), []);
+					assert.deepStrictEqual(
+						pendingStateManager.initialMessages.toArray(),
+						[],
+					);
 				}
 				{
 					const pendingStateManager = createPendingStateManager([]);
-					assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), []);
+					assert.deepStrictEqual(
+						pendingStateManager.initialMessages.toArray(),
+						[],
+					);
 				}
 			});
 
@@ -743,7 +798,10 @@ describe("Pending State Manager", () => {
 					},
 				] as unknown as IPendingMessage[];
 				const pendingStateManager = createPendingStateManager(messages);
-				assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), messages);
+				assert.deepStrictEqual(
+					pendingStateManager.initialMessages.toArray(),
+					messages,
+				);
 			});
 		});
 	});
@@ -758,7 +816,12 @@ describe("Pending State Manager", () => {
 					referenceSequenceNumber: 10,
 					localOpMetadata: undefined,
 					opMetadata: undefined,
-					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 1, staged: false },
+					batchInfo: {
+						clientId: "CLIENT_ID",
+						batchStartCsn: 1,
+						length: 1,
+						staged: false,
+					},
 					runtimeOp: undefined,
 				},
 				{
@@ -767,7 +830,12 @@ describe("Pending State Manager", () => {
 					referenceSequenceNumber: 11,
 					localOpMetadata: undefined,
 					opMetadata: undefined,
-					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 2, length: 1, staged: false },
+					batchInfo: {
+						clientId: "CLIENT_ID",
+						batchStartCsn: 2,
+						length: 1,
+						staged: false,
+					},
 					runtimeOp: undefined,
 				},
 			];
@@ -802,7 +870,10 @@ describe("Pending State Manager", () => {
 				undefined /* initialLocalState */,
 				logger,
 			);
-			const { placeholderMessage } = opGroupingManager.createEmptyGroupedBatch("batchId", 0);
+			const { placeholderMessage } = opGroupingManager.createEmptyGroupedBatch(
+				"batchId",
+				0,
+			);
 			oldPsm.onFlushEmptyBatch(placeholderMessage, 0, false /* staged */);
 			const localStateWithEmptyBatch = oldPsm.getLocalState(0);
 
@@ -827,7 +898,11 @@ describe("Pending State Manager", () => {
 
 	describe("Pending messages state", () => {
 		const forInitialMessages = [
-			{ type: "message", content: '{"type":"component"}', referenceSequenceNumber: 10 },
+			{
+				type: "message",
+				content: '{"type":"component"}',
+				referenceSequenceNumber: 10,
+			},
 			{
 				type: "message",
 				content: '{"type": "component", "contents": {"prop1": "value"}}',
@@ -953,7 +1028,12 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 10,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
-				batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 1, staged: false },
+				batchInfo: {
+					clientId: "CLIENT_ID",
+					batchStartCsn: 1,
+					length: 1,
+					staged: false,
+				},
 				runtimeOp: undefined,
 			},
 			{
@@ -962,7 +1042,12 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 11,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
-				batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 2, length: 1, staged: false },
+				batchInfo: {
+					clientId: "CLIENT_ID",
+					batchStartCsn: 2,
+					length: 1,
+					staged: false,
+				},
 				runtimeOp: undefined,
 			},
 			{
@@ -971,7 +1056,12 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 12,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
-				batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 3, length: 1, staged: false },
+				batchInfo: {
+					clientId: "CLIENT_ID",
+					batchStartCsn: 3,
+					length: 1,
+					staged: false,
+				},
 				runtimeOp: undefined,
 			},
 			{
@@ -980,7 +1070,12 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 12,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
-				batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 4, length: 1, staged: false },
+				batchInfo: {
+					clientId: "CLIENT_ID",
+					batchStartCsn: 4,
+					length: 1,
+					staged: false,
+				},
 				runtimeOp: undefined,
 			},
 		];
@@ -1106,7 +1201,9 @@ describe("Pending State Manager", () => {
 					runtimeOp: dirtyableOp,
 				},
 			];
-			const psm = createPendingStateManager(pendingMessages as IPendingMessage[]);
+			const psm = createPendingStateManager(
+				pendingMessages as IPendingMessage[],
+			);
 			assert.strictEqual(
 				psm.hasPendingUserChanges(),
 				true,
@@ -1120,7 +1217,9 @@ describe("Pending State Manager", () => {
 					runtimeOp: nonDirtyableOp,
 				},
 			];
-			const psm = createPendingStateManager(pendingMessages as IPendingMessage[]);
+			const psm = createPendingStateManager(
+				pendingMessages as IPendingMessage[],
+			);
 			assert.strictEqual(
 				psm.hasPendingUserChanges(),
 				false,
@@ -1130,7 +1229,10 @@ describe("Pending State Manager", () => {
 
 		it("returns false if all pending messages are empty batches (runtimeOp undefined)", () => {
 			const psm = createPendingStateManager();
-			const { placeholderMessage } = opGroupingManager.createEmptyGroupedBatch("batchId", 0);
+			const { placeholderMessage } = opGroupingManager.createEmptyGroupedBatch(
+				"batchId",
+				0,
+			);
 			psm.onFlushEmptyBatch(placeholderMessage, 0, false);
 			assert.strictEqual(
 				psm.hasPendingUserChanges(),
@@ -1145,7 +1247,10 @@ describe("Pending State Manager", () => {
 					runtimeOp: nonDirtyableOp,
 				},
 			];
-			const psm = createPendingStateManager([], initialMessages as IPendingMessage[]);
+			const psm = createPendingStateManager(
+				[],
+				initialMessages as IPendingMessage[],
+			);
 			assert.strictEqual(
 				psm.hasPendingUserChanges(),
 				true,
@@ -1179,10 +1284,11 @@ describe("Pending State Manager", () => {
 							metadata.batchId !== undefined,
 							"PRECONDITION: Expected batchId for empty batch",
 						);
-						const { placeholderMessage } = opGroupingManager.createEmptyGroupedBatch(
-							metadata.batchId,
-							refSeqResubmit_15,
-						);
+						const { placeholderMessage } =
+							opGroupingManager.createEmptyGroupedBatch(
+								metadata.batchId,
+								refSeqResubmit_15,
+							);
 						pendingStateManager.onFlushEmptyBatch(
 							placeholderMessage,
 							/* clientSequenceNumber: */ 1,
@@ -1227,14 +1333,17 @@ describe("Pending State Manager", () => {
 				if (secondBatchSize !== undefined) {
 					pendingStateManager.onFlushBatch(
 						withBatchMetadata(
-							Array.from<unknown, LocalBatchMessage>({ length: secondBatchSize }, (_, i) => ({
-								runtimeOp: {
-									type: ContainerMessageType.FluidDataStoreOp,
-									contents: {} as IEnvelope,
-								},
-								referenceSequenceNumber: RefSeqInitial_10,
-								localOpMetadata: `SECOND_BATCH_MSG${i + 1}`,
-							})),
+							Array.from<unknown, LocalBatchMessage>(
+								{ length: secondBatchSize },
+								(_, i) => ({
+									runtimeOp: {
+										type: ContainerMessageType.FluidDataStoreOp,
+										contents: {} as IEnvelope,
+									},
+									referenceSequenceNumber: RefSeqInitial_10,
+									localOpMetadata: `SECOND_BATCH_MSG${i + 1}`,
+								}),
+							),
 						),
 						/* clientSequenceNumber: */ secondBatchStaged ? undefined : 2,
 						/* staged: */ secondBatchStaged,
@@ -1242,7 +1351,8 @@ describe("Pending State Manager", () => {
 				}
 				pendingStateManager.replayPendingStates();
 
-				const resubmittedMessages = pendingStateManager.pendingMessages.toArray();
+				const resubmittedMessages =
+					pendingStateManager.pendingMessages.toArray();
 				assert.equal(
 					resubmittedMessages.length,
 					1 + (secondBatchSize ?? 0), // Even if firstBatchSize is 0, we still have the empty batch placeholder
@@ -1250,7 +1360,8 @@ describe("Pending State Manager", () => {
 				);
 
 				// First batch expectations - Should be 1 pending message, either the empty batch placeholder or the first message
-				const [firstResubmittedBatchPendingMessage] = resubmittedMessages.splice(0, 1);
+				const [firstResubmittedBatchPendingMessage] =
+					resubmittedMessages.splice(0, 1);
 				(({
 					batchInfo: { length, staged },
 					opMetadata,
@@ -1267,20 +1378,32 @@ describe("Pending State Manager", () => {
 					assert(resubmittedMessages.length === 0, "No second batch expected");
 					return;
 				}
-				const secondResubmittedBatchPendingMessages = resubmittedMessages.splice(
-					0,
-					secondBatchSize,
-				);
+				const secondResubmittedBatchPendingMessages =
+					resubmittedMessages.splice(0, secondBatchSize);
 				// The first messages should have batchInfo and batchId on it
 				(({ batchInfo: { length, staged }, opMetadata }: IPendingMessage) => {
 					assert.strictEqual(length, secondBatchSize, "Wrong batch size (2nd)");
 					if (secondBatchStaged) {
-						assert((opMetadata?.batchId as string)?.length === 41, "Wrong clientId (2nd)");
-						assert((opMetadata?.batchId as string)?.includes("-1"), "Wrong clientId (2nd)");
+						assert(
+							(opMetadata?.batchId as string)?.length === 41,
+							"Wrong clientId (2nd)",
+						);
+						assert(
+							(opMetadata?.batchId as string)?.includes("-1"),
+							"Wrong clientId (2nd)",
+						);
 					} else {
-						assert.strictEqual(opMetadata?.batchId, `${clientId}_[2]`, "Wrong clientId (2nd)");
+						assert.strictEqual(
+							opMetadata?.batchId,
+							`${clientId}_[2]`,
+							"Wrong clientId (2nd)",
+						);
 					}
-					assert.strictEqual(staged, secondBatchStaged, "Wrong staged flag (2nd)");
+					assert.strictEqual(
+						staged,
+						secondBatchStaged,
+						"Wrong staged flag (2nd)",
+					);
 				})(secondResubmittedBatchPendingMessages[0]);
 				// Every message should have the same reference sequence number
 				assert(
@@ -1487,7 +1610,11 @@ describe("Pending State Manager", () => {
 			psm.popStagedBatches((msg) => {
 				popped.push(msg.runtimeOp.contents as string);
 			});
-			assert.deepStrictEqual(popped, ["foo2", "foo1"], "Should pop in LIFO order");
+			assert.deepStrictEqual(
+				popped,
+				["foo2", "foo1"],
+				"Should pop in LIFO order",
+			);
 			assert.strictEqual(
 				psm.hasPendingMessages(),
 				false,
@@ -1529,8 +1656,16 @@ describe("Pending State Manager", () => {
 			psm.popStagedBatches((msg) => {
 				popped.push(msg.runtimeOp.contents as string);
 			});
-			assert.deepStrictEqual(popped, ["foo2"], "Should only pop staged messages");
-			assert.strictEqual(psm.hasPendingMessages(), true, "Unstaged message should remain");
+			assert.deepStrictEqual(
+				popped,
+				["foo2"],
+				"Should only pop staged messages",
+			);
+			assert.strictEqual(
+				psm.hasPendingMessages(),
+				true,
+				"Unstaged message should remain",
+			);
 			assert.strictEqual(
 				psm.pendingMessages.length,
 				1,
@@ -1543,7 +1678,10 @@ describe("Pending State Manager", () => {
 			const psm = newPendingStateManager(stubs);
 
 			// Add staged empty batch
-			const { placeholderMessage } = opGroupingManager.createEmptyGroupedBatch("batchId", 3);
+			const { placeholderMessage } = opGroupingManager.createEmptyGroupedBatch(
+				"batchId",
+				3,
+			);
 			psm.onFlushEmptyBatch(
 				placeholderMessage,
 				/* clientSequenceNumber: */ undefined,

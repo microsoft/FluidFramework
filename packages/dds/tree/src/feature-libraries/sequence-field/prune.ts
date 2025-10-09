@@ -9,7 +9,10 @@ import { MarkListFactory } from "./markListFactory.js";
 import type { Changeset } from "./types.js";
 import { withNodeChange } from "./utils.js";
 
-export function prune(changeset: Changeset, pruneNode: NodeChangePruner): Changeset {
+export function prune(
+	changeset: Changeset,
+	pruneNode: NodeChangePruner,
+): Changeset {
 	const pruned = new MarkListFactory();
 	for (let mark of changeset) {
 		if (mark.changes !== undefined) {

@@ -52,7 +52,8 @@ const compressionSuite = (getProvider, apis?) => {
 			// If the runtime version for the local or remote container runtime is 1.4.0, then we need to skip the tests as a lot of the options being tested fail in this version.
 			if (provider.type === "TestObjectProviderWithVersionedLoad") {
 				compatLocalVersionIsOld = apis.containerRuntime.version === "1.4.0";
-				compatOldRemoteVersionIsOld = apis.containerRuntimeForLoading.version === "1.4.0";
+				compatOldRemoteVersionIsOld =
+					apis.containerRuntimeForLoading.version === "1.4.0";
 			}
 		});
 
@@ -68,12 +69,16 @@ const compressionSuite = (getProvider, apis?) => {
 			};
 			const localContainer = await provider.makeTestContainer(containerConfig);
 			localDataObject =
-				await getContainerEntryPointBackCompat<ITestFluidObject>(localContainer);
+				await getContainerEntryPointBackCompat<ITestFluidObject>(
+					localContainer,
+				);
 			localMap = await localDataObject.getSharedObject<ISharedMap>("mapKey");
 
 			const remoteContainer = await provider.loadTestContainer(containerConfig);
 			const remoteDataObject =
-				await getContainerEntryPointBackCompat<ITestFluidObject>(remoteContainer);
+				await getContainerEntryPointBackCompat<ITestFluidObject>(
+					remoteContainer,
+				);
 			remoteMap = await remoteDataObject.getSharedObject<ISharedMap>("mapKey");
 		}
 
@@ -138,7 +143,9 @@ const compressionSuite = (getProvider, apis?) => {
 				await setupContainers(
 					{
 						compressionOptions: {
-							minimumBatchSizeInBytes: option.compression ? 10 : Number.POSITIVE_INFINITY,
+							minimumBatchSizeInBytes: option.compression
+								? 10
+								: Number.POSITIVE_INFINITY,
 							compressionAlgorithm: CompressionAlgorithms.lz4,
 						},
 						chunkSizeInBytes: option.chunking ? 100 : Number.POSITIVE_INFINITY,

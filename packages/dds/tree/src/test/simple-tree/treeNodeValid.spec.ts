@@ -68,7 +68,12 @@ describe("TreeNodeValid", () => {
 				flexNode: FlexTreeNode,
 			): TreeNodeValid<T2> {
 				log.push("prepareInstance");
-				assert(inPrototypeChain(Reflect.getPrototypeOf(instance), Subclass.prototype));
+				assert(
+					inPrototypeChain(
+						Reflect.getPrototypeOf(instance),
+						Subclass.prototype,
+					),
+				);
 				assert(flexNode instanceof MockFlexNode);
 				assert.equal(this, Subclass);
 				return customThis as TreeNodeValid<T2>;
@@ -80,19 +85,26 @@ describe("TreeNodeValid", () => {
 				input: T2,
 			): UnhydratedFlexTreeNode {
 				assert.equal(this, Subclass);
-				assert(inPrototypeChain(Reflect.getPrototypeOf(instance), Subclass.prototype));
+				assert(
+					inPrototypeChain(
+						Reflect.getPrototypeOf(instance),
+						Subclass.prototype,
+					),
+				);
 				log.push(`buildRawNode ${input}`);
 				return new MockFlexNode(Subclass);
 			}
 
-			protected static override constructorCached: MostDerivedData | undefined = undefined;
+			protected static override constructorCached: MostDerivedData | undefined =
+				undefined;
 
 			protected static override oneTimeSetup(): TreeNodeSchemaInitializedData {
 				log.push("oneTimeSetup");
 				return getTreeNodeSchemaInitializedData(this, handler);
 			}
 
-			public static readonly childTypes: ReadonlySet<TreeNodeSchema> = new Set();
+			public static readonly childTypes: ReadonlySet<TreeNodeSchema> =
+				new Set();
 			public static readonly childAnnotatedAllowedTypes = [];
 
 			public override get [typeNameSymbol](): string {
@@ -173,7 +185,8 @@ describe("TreeNodeValid", () => {
 			public static readonly metadata = {};
 			public static readonly info = numberSchema;
 			public static readonly implicitlyConstructable: false;
-			public static readonly childTypes: ReadonlySet<TreeNodeSchema> = new Set();
+			public static readonly childTypes: ReadonlySet<TreeNodeSchema> =
+				new Set();
 			public static readonly childAnnotatedAllowedTypes = [];
 
 			public static override buildRawNode<T2>(
@@ -204,7 +217,8 @@ describe("TreeNodeValid", () => {
 		}
 
 		class A extends Subclass {
-			protected static override constructorCached: MostDerivedData | undefined = undefined;
+			protected static override constructorCached: MostDerivedData | undefined =
+				undefined;
 
 			protected static override oneTimeSetup(): TreeNodeSchemaInitializedData {
 				log.push("A");
@@ -213,7 +227,8 @@ describe("TreeNodeValid", () => {
 		}
 
 		class B extends Subclass {
-			protected static override constructorCached: MostDerivedData | undefined = undefined;
+			protected static override constructorCached: MostDerivedData | undefined =
+				undefined;
 
 			protected static override oneTimeSetup<T2>(
 				this: typeof TreeNodeValid<T2>,
@@ -239,7 +254,8 @@ describe("TreeNodeValid", () => {
 			public static readonly metadata = {};
 			public static readonly info = numberSchema;
 			public static readonly implicitlyConstructable: false;
-			public static readonly childTypes: ReadonlySet<TreeNodeSchema> = new Set();
+			public static readonly childTypes: ReadonlySet<TreeNodeSchema> =
+				new Set();
 			public static readonly childAnnotatedAllowedTypes = [];
 
 			public static override buildRawNode<T2>(
@@ -262,7 +278,8 @@ describe("TreeNodeValid", () => {
 		}
 
 		class A extends Subclass {
-			protected static override constructorCached: MostDerivedData | undefined = undefined;
+			protected static override constructorCached: MostDerivedData | undefined =
+				undefined;
 
 			protected static override oneTimeSetup(): TreeNodeSchemaInitializedData {
 				log.push(this.name);

@@ -86,7 +86,8 @@ export interface IFluidErrorBase extends Error {
 }
 
 const hasTelemetryPropFunctions = (x: unknown): boolean =>
-	typeof (x as Partial<IFluidErrorBase>)?.getTelemetryProperties === "function" &&
+	typeof (x as Partial<IFluidErrorBase>)?.getTelemetryProperties ===
+		"function" &&
 	typeof (x as Partial<IFluidErrorBase>)?.addTelemetryProperties === "function";
 
 /**
@@ -94,8 +95,11 @@ const hasTelemetryPropFunctions = (x: unknown): boolean =>
  *
  * @internal
  */
-export const hasErrorInstanceId = (x: unknown): x is { errorInstanceId: string } =>
-	typeof (x as Partial<{ errorInstanceId: string }>)?.errorInstanceId === "string";
+export const hasErrorInstanceId = (
+	x: unknown,
+): x is { errorInstanceId: string } =>
+	typeof (x as Partial<{ errorInstanceId: string }>)?.errorInstanceId ===
+	"string";
 
 /**
  * Type guard for {@link IFluidErrorBase}.

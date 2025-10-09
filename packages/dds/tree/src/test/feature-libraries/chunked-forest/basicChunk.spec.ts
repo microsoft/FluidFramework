@@ -37,7 +37,10 @@ import {
 	testGeneralPurposeTreeCursor,
 	testSpecializedFieldCursor,
 } from "../../cursorTestSuite.js";
-import { numberSequenceField, validateChunkCursor } from "./fieldCursorTestUtilities.js";
+import {
+	numberSequenceField,
+	validateChunkCursor,
+} from "./fieldCursorTestUtilities.js";
 import { emptyShape, testData } from "./uniformChunkTestData.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import { numberSchema } from "../../../simple-tree/index.js";
@@ -52,7 +55,10 @@ describe("basic chunk", () => {
 		const data: JsonableTree = { type: brand("Foo"), value: "test" };
 		const inputCursor = cursorForJsonableTreeNode(data);
 		const chunk = chunkTree(inputCursor, basicOnlyChunkCompressor);
-		assert(!chunk.isShared(), "newly created chunk should not have more than one reference");
+		assert(
+			!chunk.isShared(),
+			"newly created chunk should not have more than one reference",
+		);
 
 		const chunkCursor = chunk.cursor();
 		chunkCursor.firstNode();
@@ -67,7 +73,10 @@ describe("basic chunk", () => {
 		const data: JsonableTree = { type: brand("Foo"), value: "test" };
 		const inputCursor = cursorForJsonableTreeNode(data);
 		const chunk = chunkTree(inputCursor, basicOnlyChunkCompressor);
-		assert(!chunk.isShared(), "newly created chunk should not have more than one reference");
+		assert(
+			!chunk.isShared(),
+			"newly created chunk should not have more than one reference",
+		);
 
 		const chunkCursor = chunk.cursor();
 		const newChunk = chunkField(chunkCursor, basicOnlyChunkCompressor);
@@ -116,7 +125,10 @@ describe("basic chunk", () => {
 				const withKeysShape = new BasicChunk(
 					brand(JsonAsTree.JsonObject.identifier),
 					new Map(
-						keys.map((key) => [key, [uniformChunk(emptyShape.withTopLevelLength(1), [])]]),
+						keys.map((key) => [
+							key,
+							[uniformChunk(emptyShape.withTopLevelLength(1), [])],
+						]),
 					),
 				);
 				return withKeysShape;
@@ -156,13 +168,20 @@ describe("basic chunk", () => {
 
 	describe("SequenceChunk", () => {
 		it("root", () => {
-			validateChunkCursor(new SequenceChunk([numericBasicChunk(0)]), numberSequenceField(1));
+			validateChunkCursor(
+				new SequenceChunk([numericBasicChunk(0)]),
+				numberSequenceField(1),
+			);
 			validateChunkCursor(
 				new SequenceChunk([numericBasicChunk(0), numericBasicChunk(1)]),
 				numberSequenceField(2),
 			);
 			validateChunkCursor(
-				new SequenceChunk([numericBasicChunk(0), numericBasicChunk(1), numericBasicChunk(2)]),
+				new SequenceChunk([
+					numericBasicChunk(0),
+					numericBasicChunk(1),
+					numericBasicChunk(2),
+				]),
 				numberSequenceField(3),
 			);
 		});
@@ -173,7 +192,10 @@ describe("basic chunk", () => {
 				numberSequenceField(1),
 			);
 			validateChunkCursor(
-				new SequenceChunk([numericBasicChunk(0), new SequenceChunk([numericBasicChunk(1)])]),
+				new SequenceChunk([
+					numericBasicChunk(0),
+					new SequenceChunk([numericBasicChunk(1)]),
+				]),
 				numberSequenceField(2),
 			);
 			validateChunkCursor(
@@ -186,7 +208,9 @@ describe("basic chunk", () => {
 			validateChunkCursor(
 				new SequenceChunk([
 					numericBasicChunk(0),
-					new SequenceChunk([new SequenceChunk([numericBasicChunk(1), numericBasicChunk(2)])]),
+					new SequenceChunk([
+						new SequenceChunk([numericBasicChunk(1), numericBasicChunk(2)]),
+					]),
 				]),
 				numberSequenceField(3),
 			);
@@ -194,7 +218,10 @@ describe("basic chunk", () => {
 
 		it("nested at offset", () => {
 			validateChunkCursor(
-				new SequenceChunk([numericBasicChunk(0), new SequenceChunk([numericBasicChunk(1)])]),
+				new SequenceChunk([
+					numericBasicChunk(0),
+					new SequenceChunk([numericBasicChunk(1)]),
+				]),
 				numberSequenceField(2),
 			);
 		});

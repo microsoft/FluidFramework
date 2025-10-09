@@ -201,9 +201,7 @@ describe("AsyncContext", function () {
 			};
 			const main = async (correlationId: string) => {
 				return new Promise<void>((resolve) => {
-					telemetryContext.bindProperties({ correlationId }, () =>
-						helper().then(resolve),
-					);
+					telemetryContext.bindProperties({ correlationId }, () => helper().then(resolve));
 				});
 			};
 			const id1 = uuid();

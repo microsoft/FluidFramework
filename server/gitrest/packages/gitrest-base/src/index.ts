@@ -7,7 +7,11 @@ export { ExternalStorageManager, IExternalStorageManager } from "./externalStora
 export { configureGitRestLogging } from "./logger";
 export { create, IRoutes } from "./routes";
 export { GitrestRunner } from "./runner";
-export { GitrestResources, GitrestResourcesFactory, GitrestRunnerFactory } from "./runnerFactory";
+export {
+	GitrestResources,
+	GitrestResourcesFactory,
+	GitrestRunnerFactory,
+} from "./runnerFactory";
 export {
 	BaseGitRestTelemetryProperties,
 	checkSoftDeleted,

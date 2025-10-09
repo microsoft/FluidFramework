@@ -11,7 +11,10 @@ import { readJsonSync, writeJsonSync } from "fs-extra";
 import chalk from "picocolors";
 import sortPackageJson from "sort-package-json";
 
-import type { SetRequired, PackageJson as StandardPackageJson } from "type-fest";
+import type {
+	SetRequired,
+	PackageJson as StandardPackageJson,
+} from "type-fest";
 
 import type { IFluidBuildConfig } from "../fluidBuild/fluidBuildConfig";
 import { options } from "../fluidBuild/options";
@@ -119,7 +122,8 @@ export class Package {
 		public readonly monoRepo?: MonoRepo,
 		additionalProperties: any = {},
 	) {
-		[this._packageJson, this._indent] = readPackageJsonAndIndent(packageJsonFileName);
+		[this._packageJson, this._indent] =
+			readPackageJsonAndIndent(packageJsonFileName);
 		const pnpmWorkspacePath = path.join(this.directory, "pnpm-workspace.yaml");
 		const yarnLockPath = path.join(this.directory, "yarn.lock");
 		this.packageManager = monoRepo
@@ -167,7 +171,9 @@ export class Package {
 	 * Returns true if the package is a release group root package based on its directory path.
 	 */
 	public get isReleaseGroupRoot(): boolean {
-		return this.monoRepo !== undefined && this.directory === this.monoRepo.repoPath;
+		return (
+			this.monoRepo !== undefined && this.directory === this.monoRepo.repoPath
+		);
 	}
 
 	public get matched() {
@@ -245,11 +251,16 @@ export class Package {
 	}
 
 	public getScript(name: string): string | undefined {
-		return this.packageJson.scripts ? this.packageJson.scripts[name] : undefined;
+		return this.packageJson.scripts
+			? this.packageJson.scripts[name]
+			: undefined;
 	}
 
 	public async cleanNodeModules() {
-		return rimrafWithErrorAsync(path.join(this.directory, "node_modules"), this.nameColored);
+		return rimrafWithErrorAsync(
+			path.join(this.directory, "node_modules"),
+			this.nameColored,
+		);
 	}
 
 	public async savePackageJson() {
@@ -268,7 +279,9 @@ export class Package {
 
 		if (!existsSync(path.join(this.directory, "node_modules"))) {
 			if (print) {
-				error(`${this.nameColored}: node_modules not installed in ${this.directory}`);
+				error(
+					`${this.nameColored}: node_modules not installed in ${this.directory}`,
+				);
 			}
 			return false;
 		}
@@ -295,7 +308,11 @@ export class Package {
 		}
 
 		log(`${this.nameColored}: Installing - ${this.installCommand}`);
-		return execWithErrorAsync(this.installCommand, { cwd: this.directory }, this.directory);
+		return execWithErrorAsync(
+			this.installCommand,
+			{ cwd: this.directory },
+			this.directory,
+		);
 	}
 
 	/**
@@ -381,7 +398,11 @@ async function queueExec<TItem, TResult>(
 	}, options.concurrency);
 	const p: Promise<TResult>[] = [];
 	for (const item of items) {
-		p.push(new Promise<TResult>((resolve, reject) => q.push({ item, resolve, reject })));
+		p.push(
+			new Promise<TResult>((resolve, reject) =>
+				q.push({ item, resolve, reject }),
+			),
+		);
 	}
 	return Promise.all(p);
 }
@@ -409,7 +430,9 @@ export class Packages {
 					ignoredDirFullPaths === undefined ||
 					!ignoredDirFullPaths.some((name) => isSameFileOrDir(name, fullPath))
 				) {
-					packages.push(...Packages.loadDir(fullPath, group, ignoredDirFullPaths, monoRepo));
+					packages.push(
+						...Packages.loadDir(fullPath, group, ignoredDirFullPaths, monoRepo),
+					);
 				}
 			}
 		});
@@ -417,7 +440,10 @@ export class Packages {
 	}
 
 	public async cleanNodeModules() {
-		return this.queueExecOnAllPackage((pkg) => pkg.cleanNodeModules(), "rimraf node_modules");
+		return this.queueExecOnAllPackage(
+			(pkg) => pkg.cleanNodeModules(),
+			"rimraf node_modules",
+		);
 	}
 
 	public async forEachAsync<TResult>(
@@ -515,6 +541,12 @@ export function readPackageJsonAndIndent(
 /**
  * Writes a PackageJson object to a file using the provided indentation.
  */
-function writePackageJson(packagePath: string, pkgJson: PackageJson, indent: string) {
-	return writeJsonSync(packagePath, sortPackageJson(pkgJson), { spaces: indent });
+function writePackageJson(
+	packagePath: string,
+	pkgJson: PackageJson,
+	indent: string,
+) {
+	return writeJsonSync(packagePath, sortPackageJson(pkgJson), {
+		spaces: indent,
+	});
 }

@@ -5,6 +5,6 @@
 	"compilerOptions": {
 		"rootDir": "./src",
 		"outDir": "./lib",
-		"noUncheckedIndexedAccess": false,
-	},
+		"noUncheckedIndexedAccess": false
+	}
 }

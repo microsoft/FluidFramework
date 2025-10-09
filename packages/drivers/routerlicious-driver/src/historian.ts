@@ -28,7 +28,9 @@ export interface ICredentials {
 	password: string;
 }
 
-export const getAuthorizationTokenFromCredentials = (credentials: ICredentials): string =>
+export const getAuthorizationTokenFromCredentials = (
+	credentials: ICredentials,
+): string =>
 	`Basic ${fromUtf8ToBase64(`${credentials.user}:${credentials.password}`)}`;
 
 /**
@@ -86,11 +88,20 @@ export class Historian implements IHistorian {
 			);
 	}
 
-	public async createTree(tree: IGitCreateTreeParams): Promise<IR11sResponse<IGitTree>> {
-		return this.restWrapper.post<IGitTree>(`/git/trees`, tree, this.getQueryString());
+	public async createTree(
+		tree: IGitCreateTreeParams,
+	): Promise<IR11sResponse<IGitTree>> {
+		return this.restWrapper.post<IGitTree>(
+			`/git/trees`,
+			tree,
+			this.getQueryString(),
+		);
 	}
 
-	public async getTree(sha: string, recursive: boolean): Promise<IR11sResponse<IGitTree>> {
+	public async getTree(
+		sha: string,
+		recursive: boolean,
+	): Promise<IR11sResponse<IGitTree>> {
 		return this.restWrapper.get<IGitTree>(
 			`/git/trees/${encodeURIComponent(sha)}`,
 			this.getQueryString({ recursive: recursive ? 1 : 0 }),
@@ -107,7 +118,9 @@ export class Historian implements IHistorian {
 		);
 	}
 
-	public async getSnapshot(sha: string): Promise<IR11sResponse<IWholeFlatSnapshot>> {
+	public async getSnapshot(
+		sha: string,
+	): Promise<IR11sResponse<IWholeFlatSnapshot>> {
 		return this.restWrapper.get<IWholeFlatSnapshot>(
 			`/git/summaries/${sha}`,
 			this.getQueryString(),

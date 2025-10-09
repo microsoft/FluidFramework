@@ -72,8 +72,13 @@ async function createContainerOutOfBand(
 ) {
 	// this actually creates the container
 	const { summary, resolvedUrl } = createContainerParams;
-	const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
-	const documentService = await documentServiceFactory.createContainer(summary, resolvedUrl);
+	const documentServiceFactory = new LocalDocumentServiceFactory(
+		deltaConnectionServer,
+	);
+	const documentService = await documentServiceFactory.createContainer(
+		summary,
+		resolvedUrl,
+	);
 	const resolver = new LocalResolver();
 	return resolver.getAbsoluteUrl(documentService.resolvedUrl, "");
 }
@@ -104,11 +109,15 @@ describe("Scenario Test", () => {
 			documentServiceFactory,
 		});
 
-		const container = await createDetachedContainer({ ...loaderProps, codeDetails });
+		const container = await createDetachedContainer({
+			...loaderProps,
+			codeDetails,
+		});
 
 		{
 			// put a bit of data in the detached container so we can validate later
-			const entryPoint: FluidObject<ITestFluidObject> = await container.getEntryPoint();
+			const entryPoint: FluidObject<ITestFluidObject> =
+				await container.getEntryPoint();
 			entryPoint.ITestFluidObject?.root.set("someKey", "someValue");
 		}
 
@@ -118,15 +127,24 @@ describe("Scenario Test", () => {
 
 		{
 			// just reuse the same server, nothing else from the initial create
-			const { loaderProps: loaderProps2 } = createLoader({ deltaConnectionServer });
+			const { loaderProps: loaderProps2 } = createLoader({
+				deltaConnectionServer,
+			});
 
 			// ensure and use the url we got from out of band create to load the container
 			assert(request !== undefined);
-			const container2 = await loadExistingContainer({ ...loaderProps2, request });
+			const container2 = await loadExistingContainer({
+				...loaderProps2,
+				request,
+			});
 
 			// ensure the newly loaded container has the data we expect.
-			const entryPoint: FluidObject<ITestFluidObject> = await container2.getEntryPoint();
-			assert.strictEqual(entryPoint.ITestFluidObject?.root.get("someKey"), "someValue");
+			const entryPoint: FluidObject<ITestFluidObject> =
+				await container2.getEntryPoint();
+			assert.strictEqual(
+				entryPoint.ITestFluidObject?.root.get("someKey"),
+				"someValue",
+			);
 		}
 	});
 });

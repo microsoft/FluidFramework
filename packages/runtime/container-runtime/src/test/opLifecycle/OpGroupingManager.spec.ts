@@ -27,10 +27,14 @@ describe("OpGroupingManager", () => {
 		opHasMetadata: boolean = false,
 		batchId?: string,
 	): OutboundBatch => ({
-		...messagesToBatch(Array.from({ length }, () => createMessage(opHasMetadata, batchId))),
+		...messagesToBatch(
+			Array.from({ length }, () => createMessage(opHasMetadata, batchId)),
+		),
 		hasReentrantOps,
 	});
-	const messagesToBatch = (messages: OutboundBatchMessage[]): OutboundBatch => ({
+	const messagesToBatch = (
+		messages: OutboundBatchMessage[],
+	): OutboundBatch => ({
 		messages,
 		contentSizeInBytes: messages
 			.map((message) => JSON.stringify(message).length)
@@ -38,9 +42,8 @@ describe("OpGroupingManager", () => {
 		referenceSequenceNumber: messages[0].referenceSequenceNumber,
 	});
 	const createMessage = (opHasMetadata: boolean, batchId?: string) => {
-		let metadata: { flag?: boolean; batchId?: string } | undefined = opHasMetadata
-			? { flag: true }
-			: undefined;
+		let metadata: { flag?: boolean; batchId?: string } | undefined =
+			opHasMetadata ? { flag: true } : undefined;
 		metadata = batchId === undefined ? metadata : { ...metadata, batchId };
 		return {
 			metadata,
@@ -124,7 +127,9 @@ describe("OpGroupingManager", () => {
 				mockLogger,
 			).createEmptyGroupedBatch(batchId, 0);
 
-			assert.deepStrictEqual(result.outboundBatch.messages, [expectedOutboundMessage]);
+			assert.deepStrictEqual(result.outboundBatch.messages, [
+				expectedOutboundMessage,
+			]);
 
 			const expectedPlaceholderMessage: LocalEmptyBatchPlaceholder = {
 				runtimeOp: emptyGroupedBatch,
@@ -132,7 +137,10 @@ describe("OpGroupingManager", () => {
 				localOpMetadata: { emptyBatch: true },
 				referenceSequenceNumber: 0,
 			};
-			assert.deepStrictEqual(result.placeholderMessage, expectedPlaceholderMessage);
+			assert.deepStrictEqual(
+				result.placeholderMessage,
+				expectedPlaceholderMessage,
+			);
 		});
 
 		it("should throw for an empty batch", () => {
@@ -150,7 +158,11 @@ describe("OpGroupingManager", () => {
 						mockLogger,
 					).groupBatch(emptyBatch);
 				},
-				(e: Error) => validateAssertionError(e, "Unexpected attempt to group an empty batch"),
+				(e: Error) =>
+					validateAssertionError(
+						e,
+						"Unexpected attempt to group an empty batch",
+					),
 			);
 		});
 
@@ -162,7 +174,11 @@ describe("OpGroupingManager", () => {
 				},
 				mockLogger,
 			).groupBatch(original);
-			assert.equal(result, original, "Expected the original batch to be returned");
+			assert.equal(
+				result,
+				original,
+				"Expected the original batch to be returned",
+			);
 		});
 
 		it("grouped batching enabled, op metadata not allowed", () => {

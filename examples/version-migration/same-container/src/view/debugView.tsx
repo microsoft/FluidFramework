@@ -17,13 +17,18 @@ export interface IDebugViewProps {
 	readonly getUrlForContainerId?: (containerId: string) => string;
 }
 
-export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => {
+export const DebugView: React.FC<IDebugViewProps> = (
+	props: IDebugViewProps,
+) => {
 	const { model, summarizeOnDemand, getUrlForContainerId } = props;
 
 	return (
 		<div>
 			<h2 style={{ textDecoration: "underline" }}>Debug info</h2>
-			<MigrationStatusView model={model} getUrlForContainerId={getUrlForContainerId} />
+			<MigrationStatusView
+				model={model}
+				getUrlForContainerId={getUrlForContainerId}
+			/>
 			<ControlsView
 				proposeVersion={model.migrationTool.proposeVersion}
 				summarizeOnDemand={summarizeOnDemand}
@@ -43,31 +48,54 @@ const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (
 ) => {
 	const { model } = props;
 
-	const [migrationState, setMigrationState] = useState<SameContainerMigrationState>(
-		model.migrationTool.migrationState,
-	);
+	const [migrationState, setMigrationState] =
+		useState<SameContainerMigrationState>(model.migrationTool.migrationState);
 
 	useEffect(() => {
 		const migrationStateChangedHandler = () => {
 			setMigrationState(model.migrationTool.migrationState);
 		};
 		model.migrationTool.on("proposingMigration", migrationStateChangedHandler);
-		model.migrationTool.on("stoppingCollaboration", migrationStateChangedHandler);
+		model.migrationTool.on(
+			"stoppingCollaboration",
+			migrationStateChangedHandler,
+		);
 		model.migrationTool.on("proposingV2Code", migrationStateChangedHandler);
-		model.migrationTool.on("waitingForV2ProposalCompletion", migrationStateChangedHandler);
+		model.migrationTool.on(
+			"waitingForV2ProposalCompletion",
+			migrationStateChangedHandler,
+		);
 		model.migrationTool.on("readyForMigration", migrationStateChangedHandler);
 		model.migrationTool.on("uploadingV2Summary", migrationStateChangedHandler);
 		model.migrationTool.on("submittingV2Summary", migrationStateChangedHandler);
 		model.migrationTool.on("migrated", migrationStateChangedHandler);
 		migrationStateChangedHandler();
 		return () => {
-			model.migrationTool.off("proposingMigration", migrationStateChangedHandler);
-			model.migrationTool.off("stoppingCollaboration", migrationStateChangedHandler);
+			model.migrationTool.off(
+				"proposingMigration",
+				migrationStateChangedHandler,
+			);
+			model.migrationTool.off(
+				"stoppingCollaboration",
+				migrationStateChangedHandler,
+			);
 			model.migrationTool.off("proposingV2Code", migrationStateChangedHandler);
-			model.migrationTool.off("waitingForV2ProposalCompletion", migrationStateChangedHandler);
-			model.migrationTool.off("readyForMigration", migrationStateChangedHandler);
-			model.migrationTool.off("uploadingV2Summary", migrationStateChangedHandler);
-			model.migrationTool.off("submittingV2Summary", migrationStateChangedHandler);
+			model.migrationTool.off(
+				"waitingForV2ProposalCompletion",
+				migrationStateChangedHandler,
+			);
+			model.migrationTool.off(
+				"readyForMigration",
+				migrationStateChangedHandler,
+			);
+			model.migrationTool.off(
+				"uploadingV2Summary",
+				migrationStateChangedHandler,
+			);
+			model.migrationTool.off(
+				"submittingV2Summary",
+				migrationStateChangedHandler,
+			);
 			model.migrationTool.off("migrated", migrationStateChangedHandler);
 		};
 	}, [model]);
@@ -89,7 +117,8 @@ const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (
 				Status:
 				{migrationState === "collaborating" && " Normal collaboration"}
 				{migrationState === "proposingMigration" && " Proposing to migrate"}
-				{migrationState === "stoppingCollaboration" && " Stopping collaboration"}
+				{migrationState === "stoppingCollaboration" &&
+					" Stopping collaboration"}
 				{migrationState === "proposingV2Code" && " Proposing v2 code"}
 				{migrationState === "waitingForV2ProposalCompletion" &&
 					" Waiting for v2 code proposal completion"}
@@ -110,7 +139,9 @@ interface IControlsViewProps {
 	readonly addItem: (name: string, quantity: number) => void;
 }
 
-const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) => {
+const ControlsView: React.FC<IControlsViewProps> = (
+	props: IControlsViewProps,
+) => {
 	const { proposeVersion, summarizeOnDemand, addItem } = props;
 
 	const addSampleItems = () => {
@@ -141,8 +172,9 @@ const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) =
 				</button>
 			</div>
 			<div style={{ margin: "10px 0" }}>
-				The demo in its current state disables summary heuristics, so it won&apos;t
-				automatically summarize. Use this button to force a summary immediately.
+				The demo in its current state disables summary heuristics, so it
+				won&apos;t automatically summarize. Use this button to force a summary
+				immediately.
 				<br />
 				<button
 					onClick={() => {

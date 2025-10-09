@@ -5,9 +5,16 @@
 
 import { expect } from "chai";
 
-import { ContainerDevtools, type ContainerDevtoolsProps } from "../ContainerDevtools.js";
+import {
+	ContainerDevtools,
+	type ContainerDevtoolsProps,
+} from "../ContainerDevtools.js";
 
-import { addAudienceMember, createMockContainer, removeAudienceMember } from "./Utilities.js";
+import {
+	addAudienceMember,
+	createMockContainer,
+	removeAudienceMember,
+} from "./Utilities.js";
 
 // TODOs:
 // - Test window messaging
@@ -49,22 +56,32 @@ describe("ContainerDevtools unit tests", () => {
 		container.connect();
 
 		expect(devtools.getContainerConnectionLog().length).to.equal(1);
-		expect(devtools.getContainerConnectionLog()[0]?.newState).to.equal("connected");
+		expect(devtools.getContainerConnectionLog()[0]?.newState).to.equal(
+			"connected",
+		);
 
 		await container.attach({ url: "test-url" });
 		expect(devtools.getContainerConnectionLog().length).to.equal(2);
-		expect(devtools.getContainerConnectionLog()[1]?.newState).to.equal("attached");
+		expect(devtools.getContainerConnectionLog()[1]?.newState).to.equal(
+			"attached",
+		);
 
 		container.disconnect();
 		expect(devtools.getContainerConnectionLog().length).to.equal(3);
-		expect(devtools.getContainerConnectionLog()[2]?.newState).to.equal("disconnected");
+		expect(devtools.getContainerConnectionLog()[2]?.newState).to.equal(
+			"disconnected",
+		);
 
 		container.close();
 		expect(devtools.getContainerConnectionLog().length).to.equal(4);
-		expect(devtools.getContainerConnectionLog()[3]?.newState).to.equal("closed");
+		expect(devtools.getContainerConnectionLog()[3]?.newState).to.equal(
+			"closed",
+		);
 
 		container.dispose?.();
 		expect(devtools.getContainerConnectionLog().length).to.equal(5);
-		expect(devtools.getContainerConnectionLog()[4]?.newState).to.equal("disposed");
+		expect(devtools.getContainerConnectionLog()[4]?.newState).to.equal(
+			"disposed",
+		);
 	});
 });

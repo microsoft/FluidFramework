@@ -8,7 +8,10 @@ import type {
 	IContext,
 	IDeliState,
 } from "@fluidframework/server-services-core";
-import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import {
+	getLumberBaseProperties,
+	Lumberjack,
+} from "@fluidframework/server-services-telemetry";
 
 import { CheckpointReason } from "../utils";
 
@@ -109,11 +112,7 @@ export class CheckpointContext {
 						},
 					},
 				);
-				Lumberjack.error(
-					`Error writing checkpoint to the kafka`,
-					lumberjackProperties,
-					error,
-				);
+				Lumberjack.error(`Error writing checkpoint to the kafka`, lumberjackProperties, error);
 			}
 		}
 		this.pendingUpdateP = undefined;
@@ -149,8 +148,7 @@ export class CheckpointContext {
 		const isLocal =
 			globalCheckpointOnly === true
 				? false
-				: localCheckpointEnabled === true &&
-				  checkpoint.reason !== CheckpointReason.NoClients;
+				: localCheckpointEnabled === true && checkpoint.reason !== CheckpointReason.NoClients;
 
 		if (checkpoint.clear) {
 			updateP = this.checkpointManager.deleteCheckpoint(checkpoint, isLocal);

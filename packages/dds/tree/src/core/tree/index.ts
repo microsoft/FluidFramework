@@ -42,7 +42,11 @@ export type {
 	DetachedNodeRename as DeltaDetachedNodeRename,
 	FieldChanges as DeltaFieldChanges,
 } from "./delta.js";
-export { type MapTree, type ExclusiveMapTree, deepCopyMapTree } from "./mapTree.js";
+export {
+	type MapTree,
+	type ExclusiveMapTree,
+	deepCopyMapTree,
+} from "./mapTree.js";
 export {
 	clonePath,
 	topDownPath,

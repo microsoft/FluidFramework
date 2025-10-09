@@ -132,7 +132,7 @@ export function jsonMorganLoggerMiddleware(
 							reject(error);
 						}
 					});
-			  })
+				})
 			: undefined;
 		// HTTP Metric durationInMs should only track internal server time, so manually set it before waiting for response close.
 		const startTime = performance.now();
@@ -157,8 +157,7 @@ export function jsonMorganLoggerMiddleware(
 				if (res.locals.serverTimeout) {
 					statusCode = "Server Timeout";
 				} else if (res.locals.clientDisconnected) {
-					statusCode =
-						durationInMs > 20_000 ? "Server Timeout - Client Disconnect" : "499";
+					statusCode = durationInMs > 20_000 ? "Server Timeout - Client Disconnect" : "499";
 				} else {
 					statusCode = "STATUS_UNAVAILABLE";
 				}

@@ -85,7 +85,9 @@ export function cursorForMapTreeNode<T extends MapTreeNodeViewGeneric<T>>(
 ): CursorWithNode<T> {
 	// There doesn't seem to be a clean way to get TypeScript to type check this without casting
 	// without declaring the adapter inside this generic function and needlessly recreating it on every call.
-	const adapterTyped = adapter as CursorAdapter<MapTreeNodeViewGeneric<T>> as CursorAdapter<T>;
+	const adapterTyped = adapter as CursorAdapter<
+		MapTreeNodeViewGeneric<T>
+	> as CursorAdapter<T>;
 	return stackTreeNodeCursor(adapterTyped, root);
 }
 
@@ -157,9 +159,16 @@ const adapter: CursorAdapter<MinimalMapTreeNodeView> = {
  * Extract a MapTree from the contents of the given ITreeCursor's current node.
  */
 export function mapTreeFromCursor(cursor: ITreeCursor): ExclusiveMapTree {
-	assert(cursor.mode === CursorLocationType.Nodes, 0x3b7 /* must start at node */);
+	assert(
+		cursor.mode === CursorLocationType.Nodes,
+		0x3b7 /* must start at node */,
+	);
 	const fields: Map<FieldKey, ExclusiveMapTree[]> = new Map();
-	for (let inField = cursor.firstField(); inField; inField = cursor.nextField()) {
+	for (
+		let inField = cursor.firstField();
+		inField;
+		inField = cursor.nextField()
+	) {
 		const field: ExclusiveMapTree[] = mapCursorField(cursor, mapTreeFromCursor);
 		fields.set(cursor.getFieldKey(), field);
 	}
@@ -176,7 +185,12 @@ export function mapTreeFromCursor(cursor: ITreeCursor): ExclusiveMapTree {
 /**
  * Extract an array of MapTrees (a field) from the contents of the given ITreeCursor's current field.
  */
-export function mapTreeFieldFromCursor(cursor: ITreeCursor): ExclusiveMapTree[] {
-	assert(cursor.mode === CursorLocationType.Fields, 0xa03 /* must start at field */);
+export function mapTreeFieldFromCursor(
+	cursor: ITreeCursor,
+): ExclusiveMapTree[] {
+	assert(
+		cursor.mode === CursorLocationType.Fields,
+		0xa03 /* must start at field */,
+	);
 	return mapCursorField(cursor, mapTreeFromCursor);
 }

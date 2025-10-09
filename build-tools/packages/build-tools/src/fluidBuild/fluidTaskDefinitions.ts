@@ -4,7 +4,10 @@
  */
 
 import type { PackageJson } from "../common/npmPackage";
-import { isConcurrentlyCommand, parseConcurrentlyCommand } from "./parseCommands";
+import {
+	isConcurrentlyCommand,
+	parseConcurrentlyCommand,
+} from "./parseCommands";
 
 /**
  * Task definitions (type `TaskDefinitions`) is an object describing build tasks for fluid-build.
@@ -158,12 +161,16 @@ interface MutableTaskDefinitions {
 }
 
 // On file versions that allow fields to be omitted
-export type TaskConfigOnDisk = TaskDependencies | Omit<Partial<TaskConfig>, "children">;
+export type TaskConfigOnDisk =
+	| TaskDependencies
+	| Omit<Partial<TaskConfig>, "children">;
 export interface TaskDefinitionsOnDisk {
 	readonly [name: TaskName]: TaskConfigOnDisk;
 }
 
-const isTaskDependencies = (value: TaskConfigOnDisk): value is TaskDependencies => {
+const isTaskDependencies = (
+	value: TaskConfigOnDisk,
+): value is TaskDependencies => {
 	return Array.isArray(value);
 };
 
@@ -276,12 +283,18 @@ export function normalizeGlobalTaskDefinitions(
 					);
 				}
 				if (full.files !== undefined) {
-					throw new Error(`Non-script global task definition '${name}' cannot have 'files'`);
+					throw new Error(
+						`Non-script global task definition '${name}' cannot have 'files'`,
+					);
 				}
 			}
 			detectInvalid(
 				full.dependsOn,
-				(value) => value === "..." || value.includes("#") || value === "*" || value === "^*",
+				(value) =>
+					value === "..." ||
+					value.includes("#") ||
+					value === "*" ||
+					value === "^*",
 				name,
 				"dependsOn",
 				true,
@@ -323,7 +336,10 @@ export function normalizeGlobalTaskDefinitions(
 	return taskDefinitions;
 }
 
-function expandDotDotDot(config: readonly string[], inherited?: readonly string[]) {
+function expandDotDotDot(
+	config: readonly string[],
+	inherited?: readonly string[],
+) {
 	const expanded = config.filter((value) => value !== "...");
 	if (inherited !== undefined && expanded.length !== config.length) {
 		return expanded.concat(inherited);
@@ -337,7 +353,10 @@ function expandDotDotDot(config: readonly string[], inherited?: readonly string[
  * @param allScriptNames - all the script names in the package.json
  * @returns elements of script that are other scripts
  */
-function getDirectlyCalledScripts(script: string, allScriptNames: string[]): string[] {
+function getDirectlyCalledScripts(
+	script: string,
+	allScriptNames: string[],
+): string[] {
 	const directlyCalledScripts: string[] = [];
 	const commands = script.split("&&");
 	for (const step of commands) {
@@ -389,9 +408,11 @@ export function getTaskDefinitions(
 
 	const globalAllow = (value) =>
 		value.startsWith("^") ||
-		(globalTaskDefinitions[value] !== undefined && !globalTaskDefinitions[value].script) ||
+		(globalTaskDefinitions[value] !== undefined &&
+			!globalTaskDefinitions[value].script) ||
 		packageScripts[value] !== undefined;
-	const globalAllowExpansionsStar = (value) => value === "*" || globalAllow(value);
+	const globalAllowExpansionsStar = (value) =>
+		value === "*" || globalAllow(value);
 
 	// Initialize from global TaskDefinition, and filter out script tasks if the package doesn't have the script
 	for (const name in globalTaskDefinitions) {
@@ -433,12 +454,17 @@ export function getTaskDefinitions(
 						`Non-script task definition '${name}' cannot have 'before' or 'after'`,
 					);
 				} else if (full.files !== undefined) {
-					throw new Error(`Non-script task definition '${name}' cannot have 'files'`);
+					throw new Error(
+						`Non-script task definition '${name}' cannot have 'files'`,
+					);
 				}
 			}
 
 			const currentTaskConfig = taskDefinitions[name];
-			full.dependsOn = expandDotDotDot(full.dependsOn, currentTaskConfig?.dependsOn);
+			full.dependsOn = expandDotDotDot(
+				full.dependsOn,
+				currentTaskConfig?.dependsOn,
+			);
 			full.before = expandDotDotDot(full.before, currentTaskConfig?.before);
 			full.after = expandDotDotDot(full.after, currentTaskConfig?.after);
 			const currentFiles = currentTaskConfig?.files;
@@ -472,8 +498,20 @@ export function getTaskDefinitions(
 		for (const name in taskDefinitions) {
 			const taskDefinition = taskDefinitions[name];
 			// Find any non-existent tasks or scripts in the dependencies
-			detectInvalid(taskDefinition.dependsOn, invalidDependOn, name, "dependsOn", false);
-			detectInvalid(taskDefinition.before, invalidBefore, name, "before", false);
+			detectInvalid(
+				taskDefinition.dependsOn,
+				invalidDependOn,
+				name,
+				"dependsOn",
+				false,
+			);
+			detectInvalid(
+				taskDefinition.before,
+				invalidBefore,
+				name,
+				"before",
+				false,
+			);
 			detectInvalid(taskDefinition.after, invalidAfter, name, "after", false);
 		}
 	}

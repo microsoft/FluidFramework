@@ -41,7 +41,11 @@ export function testGetNestedChanges() {
 		});
 		it("includes changes to removed nodes", () => {
 			const change = [
-				Mark.revive(1, { revision: tag1, localId: brand(42) }, { changes: nodeId1 }),
+				Mark.revive(
+					1,
+					{ revision: tag1, localId: brand(42) },
+					{ changes: nodeId1 },
+				),
 				Mark.modify(nodeId2, { revision: tag1, localId: brand(43) }),
 			];
 			const actual = sequenceFieldChangeHandler.getNestedChanges(change);

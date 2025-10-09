@@ -37,7 +37,10 @@ import type { ICancellableSummarizerController } from "./runWhileConnectedCoordi
 import { RunningSummarizer } from "./runningSummarizer.js";
 import { SummarizeHeuristicData } from "./summarizerHeuristics.js";
 import { SummarizeResultBuilder } from "./summaryResultBuilder.js";
-import type { EnqueueSummarizeResult, ISummarizeResults } from "./summaryResultTypes.js";
+import type {
+	EnqueueSummarizeResult,
+	ISummarizeResults,
+} from "./summaryResultTypes.js";
 
 /**
  * The maximum number of summarization attempts that will be done by default in case of failures
@@ -86,7 +89,10 @@ export const createSummarizingWarning = (
  * It is created only by summarizing container (i.e. one with clientType === "summarizer")
  * @internal
  */
-export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements ISummarizer {
+export class Summarizer
+	extends TypedEventEmitter<ISummarizerEvents>
+	implements ISummarizer
+{
 	public get ISummarizer(): this {
 		return this;
 	}
@@ -165,12 +171,14 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 	}
 
 	private async runCore(onBehalfOf: string): Promise<SummarizerStopReason> {
-		const runCoordinator: ICancellableSummarizerController = await this.runCoordinatorCreateFn(
-			this.runtime,
-		);
+		const runCoordinator: ICancellableSummarizerController =
+			await this.runCoordinatorCreateFn(this.runtime);
 
 		// Wait for either external signal to cancel, or loss of connectivity.
-		const stopP = Promise.race([runCoordinator.waitCancelled, this.stopDeferred.promise]);
+		const stopP = Promise.race([
+			runCoordinator.waitCancelled,
+			this.stopDeferred.promise,
+		]);
 		// eslint-disable-next-line no-void
 		void stopP.then((reason) => {
 			this.logger.sendTelemetryEvent({
@@ -218,7 +226,8 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 
 		// Cleanup after running
 		await runningSummarizer.waitStop(
-			!runCoordinator.cancelled && Summarizer.stopReasonCanRunLastSummary(stopReason),
+			!runCoordinator.cancelled &&
+				Summarizer.stopReasonCanRunLastSummary(stopReason),
 		);
 
 		// Propagate reason and ensure that if someone is waiting for cancellation token, they are moving to exit
@@ -233,7 +242,9 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 	 * @param stopReason - SummarizerStopReason
 	 * @returns `true` if the stop reason can run a last summary, otherwise `false`.
 	 */
-	public static stopReasonCanRunLastSummary(stopReason: SummarizerStopReason): boolean {
+	public static stopReasonCanRunLastSummary(
+		stopReason: SummarizerStopReason,
+	): boolean {
 		return stopReason === "parentNotConnected";
 	}
 
@@ -260,7 +271,9 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 			return this.runningSummarizer;
 		}
 		if (this.starting) {
-			throw new UsageError("Attempting to start a summarizer that is already starting");
+			throw new UsageError(
+				"Attempting to start a summarizer that is already starting",
+			);
 		}
 		this.starting = true;
 		// Initialize values and first ack (time is not exact)
@@ -293,7 +306,8 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 			this.summaryCollection.createWatcher(clientId),
 			this.configurationGetter(),
 			async (...args) => this.internalsProvider.submitSummary(...args), // submitSummaryCallback
-			async (...args) => this.internalsProvider.refreshLatestSummaryAck(...args), // refreshLatestSummaryAckCallback
+			async (...args) =>
+				this.internalsProvider.refreshLatestSummaryAck(...args), // refreshLatestSummaryAckCallback
 			this._heuristicData,
 			this.summaryCollection,
 			runCoordinator /* cancellationToken */,
@@ -324,7 +338,9 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 		}
 	}
 
-	public summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults {
+	public summarizeOnDemand(
+		options: IOnDemandSummarizeOptions,
+	): ISummarizeResults {
 		try {
 			if (this._disposed || this.runningSummarizer?.disposed === true) {
 				throw new UsageError("Summarizer is already disposed.");
@@ -384,7 +400,9 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 		}
 	}
 
-	public enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult {
+	public enqueueSummarize(
+		options: IEnqueueSummarizeOptions,
+	): EnqueueSummarizeResult {
 		if (
 			this._disposed ||
 			this.runningSummarizer === undefined ||

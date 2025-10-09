@@ -3,8 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { Uint8ArrayToString, stringToBuffer } from "@fluid-internal/client-utils";
-import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
+import {
+	Uint8ArrayToString,
+	stringToBuffer,
+} from "@fluid-internal/client-utils";
+import {
+	ISummaryHandle,
+	ISummaryTree,
+} from "@fluidframework/driver-definitions";
 import {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
@@ -36,7 +42,9 @@ const isNode = typeof window === "undefined";
  * Uploads summaries piece-by-piece traversing the tree recursively.
  * Downloads summaries piece-by-piece on-demand, or up-front when prefetch is enabled.
  */
-export class ShreddedSummaryDocumentStorageService implements IDocumentStorageService {
+export class ShreddedSummaryDocumentStorageService
+	implements IDocumentStorageService
+{
 	private readonly mc: MonitoringContext;
 	// The values of this cache is useless. We only need the keys. So we are always putting
 	// empty strings as values.
@@ -75,7 +83,10 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
 		});
 	}
 
-	public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
+	public async getVersions(
+		versionId: string | null,
+		count: number,
+	): Promise<IVersion[]> {
 		const id = versionId ? versionId : this.id;
 		const commits = await PerformanceEvent.timedExecAsync(
 			this.logger,
@@ -96,7 +107,9 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
 		}));
 	}
 
-	public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTreeEx | null> {
+	public async getSnapshotTree(
+		version?: IVersion,
+	): Promise<ISnapshotTreeEx | null> {
 		let requestVersion = version;
 		if (!requestVersion) {
 			const versions = await this.getVersions(this.id, 1);

@@ -7,7 +7,9 @@
  * `true` iff the given type is an acceptable shape for a {@link Listeners | event} listener
  * @public
  */
-export type IsListener<TListener> = TListener extends (...args: any[]) => void ? true : false;
+export type IsListener<TListener> = TListener extends (...args: any[]) => void
+	? true
+	: false;
 
 /**
  * Used to specify the kinds of events emitted by a {@link Listenable}.
@@ -27,7 +29,9 @@ export type IsListener<TListener> = TListener extends (...args: any[]) => void ?
  * @public
  */
 export type Listeners<T extends object> = {
-	[P in (string | symbol) & keyof T as IsListener<T[P]> extends true ? P : never]: T[P];
+	[P in (string | symbol) & keyof T as IsListener<T[P]> extends true
+		? P
+		: never]: T[P];
 };
 
 /**
@@ -58,7 +62,10 @@ export interface Listenable<TListeners extends object> {
 	 * @remarks Registering the exact same `listener` object for the same event more than once will throw an error.
 	 * If registering the same listener for the same event multiple times is desired, consider using a wrapper function for the second subscription.
 	 */
-	on<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off;
+	on<K extends keyof Listeners<TListeners>>(
+		eventName: K,
+		listener: TListeners[K],
+	): Off;
 
 	/**
 	 * Deregister an event listener.
@@ -68,7 +75,10 @@ export interface Listenable<TListeners extends object> {
 	 *
 	 * Listeners may also be deregistered by calling the {@link Off | deregistration function} returned when they are {@link Listenable.on | registered}.
 	 */
-	off<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): void;
+	off<K extends keyof Listeners<TListeners>>(
+		eventName: K,
+		listener: TListeners[K],
+	): void;
 }
 
 /**

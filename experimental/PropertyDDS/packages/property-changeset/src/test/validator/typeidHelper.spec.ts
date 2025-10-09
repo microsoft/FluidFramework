@@ -54,7 +54,10 @@ import { TypeIdHelper } from "../../helpers/typeidHelper.js";
 		describe("nativeInheritsFrom() method", function () {
 			it("should throw an error if the input is undefine", () => {
 				expect(() => {
-					TypeIdHelper.nativeInheritsFrom(undefined as unknown as string, "BaseProperty");
+					TypeIdHelper.nativeInheritsFrom(
+						undefined as unknown as string,
+						"BaseProperty",
+					);
 				}).to.throw(MSG.TYPEID_NOT_DEFINED);
 				expect(() => {
 					// @ts-ignore
@@ -76,32 +79,62 @@ import { TypeIdHelper } from "../../helpers/typeidHelper.js";
 			});
 
 			it("should recognize that all the native type inherit from BaseProperty", () => {
-				expect(TypeIdHelper.nativeInheritsFrom("Int8", "BaseProperty")).to.be.true;
-				expect(TypeIdHelper.nativeInheritsFrom("Uint8", "BaseProperty")).to.be.true;
-				expect(TypeIdHelper.nativeInheritsFrom("Int16", "BaseProperty")).to.be.true;
-				expect(TypeIdHelper.nativeInheritsFrom("Uint16", "BaseProperty")).to.be.true;
-				expect(TypeIdHelper.nativeInheritsFrom("Int32", "BaseProperty")).to.be.true;
-				expect(TypeIdHelper.nativeInheritsFrom("Uint32", "BaseProperty")).to.be.true;
-				expect(TypeIdHelper.nativeInheritsFrom("Float32", "BaseProperty")).to.be.true;
-				expect(TypeIdHelper.nativeInheritsFrom("Int64", "BaseProperty")).to.be.true;
-				expect(TypeIdHelper.nativeInheritsFrom("Uint64", "BaseProperty")).to.be.true;
-				expect(TypeIdHelper.nativeInheritsFrom("Float64", "BaseProperty")).to.be.true;
-				expect(TypeIdHelper.nativeInheritsFrom("Bool", "BaseProperty")).to.be.true;
-				expect(TypeIdHelper.nativeInheritsFrom("Reference", "BaseProperty")).to.be.true;
-				expect(TypeIdHelper.nativeInheritsFrom("Enum", "BaseProperty")).to.be.true;
-				expect(TypeIdHelper.nativeInheritsFrom("String", "BaseProperty")).to.be.true;
-				expect(TypeIdHelper.nativeInheritsFrom("NodeProperty", "BaseProperty")).to.be.true;
-				expect(TypeIdHelper.nativeInheritsFrom("ContainerProperty", "BaseProperty")).to.be
+				expect(TypeIdHelper.nativeInheritsFrom("Int8", "BaseProperty")).to.be
 					.true;
-				expect(TypeIdHelper.nativeInheritsFrom("NamedProperty", "BaseProperty")).to.be.true;
-				expect(TypeIdHelper.nativeInheritsFrom("NamedNodeProperty", "BaseProperty")).to.be
+				expect(TypeIdHelper.nativeInheritsFrom("Uint8", "BaseProperty")).to.be
 					.true;
-				expect(TypeIdHelper.nativeInheritsFrom("RelationshipProperty", "BaseProperty")).to.be
+				expect(TypeIdHelper.nativeInheritsFrom("Int16", "BaseProperty")).to.be
 					.true;
-				expect(TypeIdHelper.nativeInheritsFrom("Reference<NodeProperty>", "Reference")).to.be
+				expect(TypeIdHelper.nativeInheritsFrom("Uint16", "BaseProperty")).to.be
 					.true;
-				expect(TypeIdHelper.nativeInheritsFrom("NodeProperty", "Reference<NodeProperty>")).to
-					.be.false;
+				expect(TypeIdHelper.nativeInheritsFrom("Int32", "BaseProperty")).to.be
+					.true;
+				expect(TypeIdHelper.nativeInheritsFrom("Uint32", "BaseProperty")).to.be
+					.true;
+				expect(TypeIdHelper.nativeInheritsFrom("Float32", "BaseProperty")).to.be
+					.true;
+				expect(TypeIdHelper.nativeInheritsFrom("Int64", "BaseProperty")).to.be
+					.true;
+				expect(TypeIdHelper.nativeInheritsFrom("Uint64", "BaseProperty")).to.be
+					.true;
+				expect(TypeIdHelper.nativeInheritsFrom("Float64", "BaseProperty")).to.be
+					.true;
+				expect(TypeIdHelper.nativeInheritsFrom("Bool", "BaseProperty")).to.be
+					.true;
+				expect(TypeIdHelper.nativeInheritsFrom("Reference", "BaseProperty")).to
+					.be.true;
+				expect(TypeIdHelper.nativeInheritsFrom("Enum", "BaseProperty")).to.be
+					.true;
+				expect(TypeIdHelper.nativeInheritsFrom("String", "BaseProperty")).to.be
+					.true;
+				expect(TypeIdHelper.nativeInheritsFrom("NodeProperty", "BaseProperty"))
+					.to.be.true;
+				expect(
+					TypeIdHelper.nativeInheritsFrom("ContainerProperty", "BaseProperty"),
+				).to.be.true;
+				expect(TypeIdHelper.nativeInheritsFrom("NamedProperty", "BaseProperty"))
+					.to.be.true;
+				expect(
+					TypeIdHelper.nativeInheritsFrom("NamedNodeProperty", "BaseProperty"),
+				).to.be.true;
+				expect(
+					TypeIdHelper.nativeInheritsFrom(
+						"RelationshipProperty",
+						"BaseProperty",
+					),
+				).to.be.true;
+				expect(
+					TypeIdHelper.nativeInheritsFrom(
+						"Reference<NodeProperty>",
+						"Reference",
+					),
+				).to.be.true;
+				expect(
+					TypeIdHelper.nativeInheritsFrom(
+						"NodeProperty",
+						"Reference<NodeProperty>",
+					),
+				).to.be.false;
 			});
 
 			it("should recognize that the Reference<NodeProperty> inherits from BaseProperty", () => {
@@ -132,40 +165,63 @@ import { TypeIdHelper } from "../../helpers/typeidHelper.js";
 			});
 
 			it("should recognize that the NodeProperty inherits from ContainerProperty", () => {
-				const result = TypeIdHelper.nativeInheritsFrom("NodeProperty", "ContainerProperty");
+				const result = TypeIdHelper.nativeInheritsFrom(
+					"NodeProperty",
+					"ContainerProperty",
+				);
 
 				expect(result).to.be.true;
 			});
 
 			it("should recognize that the NamedProperty inherits from ContainerProperty", () => {
-				const result = TypeIdHelper.nativeInheritsFrom("NamedProperty", "ContainerProperty");
+				const result = TypeIdHelper.nativeInheritsFrom(
+					"NamedProperty",
+					"ContainerProperty",
+				);
 
 				expect(result).to.be.true;
 			});
 
 			it("should recognize that the String inherits from ContainerProperty", () => {
-				const result = TypeIdHelper.nativeInheritsFrom("String", "ContainerProperty");
+				const result = TypeIdHelper.nativeInheritsFrom(
+					"String",
+					"ContainerProperty",
+				);
 
 				expect(result).to.be.true;
 			});
 
 			it("should recognize that the NamedNodeProperty inherits from NamedProperty", () => {
-				const result = TypeIdHelper.nativeInheritsFrom("NamedNodeProperty", "NamedProperty");
+				const result = TypeIdHelper.nativeInheritsFrom(
+					"NamedNodeProperty",
+					"NamedProperty",
+				);
 
 				expect(result).to.be.true;
 			});
 
 			it("should recognize that the NamedNodeProperty inherits from NodeProperty", () => {
-				const result = TypeIdHelper.nativeInheritsFrom("NamedNodeProperty", "NodeProperty");
+				const result = TypeIdHelper.nativeInheritsFrom(
+					"NamedNodeProperty",
+					"NodeProperty",
+				);
 
 				expect(result).to.be.true;
 			});
 
 			it("should recognize that the RelationshipProperty inherits from NodeProperty and NamedProperty", () => {
-				expect(TypeIdHelper.nativeInheritsFrom("RelationshipProperty", "NodeProperty")).to.be
-					.true;
-				expect(TypeIdHelper.nativeInheritsFrom("RelationshipProperty", "NamedProperty")).to.be
-					.true;
+				expect(
+					TypeIdHelper.nativeInheritsFrom(
+						"RelationshipProperty",
+						"NodeProperty",
+					),
+				).to.be.true;
+				expect(
+					TypeIdHelper.nativeInheritsFrom(
+						"RelationshipProperty",
+						"NamedProperty",
+					),
+				).to.be.true;
 			});
 		});
 	});

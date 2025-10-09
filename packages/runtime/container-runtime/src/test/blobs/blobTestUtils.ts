@@ -63,7 +63,8 @@ export class MockBlobStorage
 	public readonly blobs: Map<string, ArrayBufferLike> = new Map();
 	public readonly unprocessedBlobs: [string, ArrayBufferLike][] = [];
 
-	private readonly internalEvents = createEmitter<MockBlobStorageInternalEvents>();
+	private readonly internalEvents =
+		createEmitter<MockBlobStorageInternalEvents>();
 	private _blobsProcessed = 0;
 	public get blobsProcessed(): number {
 		return this._blobsProcessed;
@@ -95,7 +96,10 @@ export class MockBlobStorage
 
 		const blobCreatedP = new Promise<{ minTTLOverride?: number | undefined }>(
 			(resolve, reject) => {
-				const onBlobCreated = (_id: string, _minTTLOverride?: number | undefined) => {
+				const onBlobCreated = (
+					_id: string,
+					_minTTLOverride?: number | undefined,
+				) => {
 					if (_id === id) {
 						this.internalEvents.off("blobCreated", onBlobCreated);
 						this.internalEvents.off("blobCreateFailed", onBlobCreateFailed);
@@ -206,9 +210,11 @@ export class MockStorageAdapter
 		// IDs to their respective real storage IDs.
 		const detachedToAttachedMappings = await Promise.all(
 			[...this.detachedStorage.blobs].map(async ([detachedStorageId, blob]) => {
-				return this.attachedStorage.createBlob(blob).then(({ id: attachedStorageId }) => {
-					return [detachedStorageId, attachedStorageId] as const;
-				});
+				return this.attachedStorage
+					.createBlob(blob)
+					.then(({ id: attachedStorageId }) => {
+						return [detachedStorageId, attachedStorageId] as const;
+					});
 			}),
 		);
 		const redirectTable = new Map(detachedToAttachedMappings);
@@ -220,7 +226,8 @@ export class MockStorageAdapter
 		this.attached ? this.attachedStorage : this.detachedStorage;
 	public readonly createBlob = async (
 		blob: ArrayBufferLike,
-	): Promise<ICreateBlobResponseWithTTL> => this.getCurrentStorage().createBlob(blob);
+	): Promise<ICreateBlobResponseWithTTL> =>
+		this.getCurrentStorage().createBlob(blob);
 
 	public readBlob = async (id: string): Promise<ArrayBufferLike> =>
 		this.getCurrentStorage().readBlob(id);
@@ -322,7 +329,11 @@ class MockOrderingService {
 		}
 	};
 
-	public readonly sendBlobAttachOp = (clientId: string, localId: string, remoteId: string) => {
+	public readonly sendBlobAttachOp = (
+		clientId: string,
+		localId: string,
+		remoteId: string,
+	) => {
 		const op: UnprocessedOp = {
 			clientId,
 			metadata: { localId, blobId: remoteId },
@@ -394,11 +405,15 @@ export const createTestMaterial = (
 ): TestMaterial => {
 	const clientId = overrides?.clientId ?? uuid();
 	const attached = overrides?.attached ?? true;
-	const mockBlobStorage = overrides?.mockBlobStorage ?? new MockStorageAdapter(attached);
-	const mockOrderingService = overrides?.mockOrderingService ?? new MockOrderingService();
-	const mockGarbageCollector = overrides?.mockGarbageCollector ?? new MockGarbageCollector();
+	const mockBlobStorage =
+		overrides?.mockBlobStorage ?? new MockStorageAdapter(attached);
+	const mockOrderingService =
+		overrides?.mockOrderingService ?? new MockOrderingService();
+	const mockGarbageCollector =
+		overrides?.mockGarbageCollector ?? new MockGarbageCollector();
 	const mockLogger = overrides?.mockLogger ?? new MockLogger();
-	const mockRuntime = overrides?.mockRuntime ?? new MockRuntime(mockLogger, attached);
+	const mockRuntime =
+		overrides?.mockRuntime ?? new MockRuntime(mockLogger, attached);
 	const blobManagerLoadInfo = overrides?.blobManagerLoadInfo ?? {};
 	const pendingBlobs = overrides?.pendingBlobs ?? undefined;
 	const createBlobPayloadPending = overrides?.createBlobPayloadPending ?? false;
@@ -418,9 +433,12 @@ export const createTestMaterial = (
 		createBlobPayloadPending,
 	});
 
-	mockOrderingService.events.on("opSequenced", (op: ISequencedMessageEnvelope) => {
-		blobManager.processBlobAttachMessage(op, op.clientId === clientId);
-	});
+	mockOrderingService.events.on(
+		"opSequenced",
+		(op: ISequencedMessageEnvelope) => {
+			blobManager.processBlobAttachMessage(op, op.clientId === clientId);
+		},
+	);
 
 	mockOrderingService.events.on("opDropped", (op: UnprocessedOp) => {
 		if (op.clientId === clientId) {
@@ -448,9 +466,15 @@ export const simulateAttach = async (
 	runtime: MockRuntime,
 	blobManager: BlobManager,
 ): Promise<void> => {
-	assert(runtime.attachState === AttachState.Detached, "Container must be detached");
+	assert(
+		runtime.attachState === AttachState.Detached,
+		"Container must be detached",
+	);
 	await storage.simulateAttach(blobManager.patchRedirectTable);
-	assert(runtime.attachState === AttachState.Detached, "Container must be detached");
+	assert(
+		runtime.attachState === AttachState.Detached,
+		"Container must be detached",
+	);
 	// Blob storage transfer and redirect table set happens before the runtime transitions to Attaching.
 	runtime.attachState = AttachState.Attaching;
 	// TODO: Probably want to test stuff between these states
@@ -507,7 +531,9 @@ export const unpackHandle = (
 	};
 };
 
-export const waitHandlePayloadShared = async (handle: IFluidHandle): Promise<void> => {
+export const waitHandlePayloadShared = async (
+	handle: IFluidHandle,
+): Promise<void> => {
 	if (isLocalFluidHandle(handle) && handle.payloadState !== "shared") {
 		return new Promise<void>((resolve, reject) => {
 			const onPayloadShared = () => {
@@ -533,7 +559,9 @@ export const attachHandle = (handle: IFluidHandle): void => {
 	}
 };
 
-export const ensureBlobsShared = async (handles: IFluidHandle[]): Promise<void[]> => {
+export const ensureBlobsShared = async (
+	handles: IFluidHandle[],
+): Promise<void[]> => {
 	return Promise.all(
 		handles.map(async (handle) => {
 			attachHandle(handle);

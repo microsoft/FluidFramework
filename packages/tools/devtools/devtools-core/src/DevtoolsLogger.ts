@@ -163,6 +163,8 @@ class DevtoolsLogger implements IDevtoolsLogger {
  *
  * @beta
  */
-export function createDevtoolsLogger(baseLogger?: ITelemetryBaseLogger): IDevtoolsLogger {
+export function createDevtoolsLogger(
+	baseLogger?: ITelemetryBaseLogger,
+): IDevtoolsLogger {
 	return new DevtoolsLogger(baseLogger);
 }

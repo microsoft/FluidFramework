@@ -189,5 +189,8 @@ export type { IServiceMessageResourceManager } from "./serviceMessage";
 export { type IClusterDrainingChecker, clusterDrainingRetryTimeInMs } from "./clusterDraining";
 export type { IWebSocketTracker } from "./webSocketTracker";
 export type { IReadinessCheck, IReadinessStatus, ICheck } from "./readinessCheck";
-export type { IFluidAccessToken, IFluidAccessTokenGenerator } from "./fluidAccessTokenGenerator";
+export type {
+	IFluidAccessToken,
+	IFluidAccessTokenGenerator,
+} from "./fluidAccessTokenGenerator";
 export type { IDenyList } from "./denyList";

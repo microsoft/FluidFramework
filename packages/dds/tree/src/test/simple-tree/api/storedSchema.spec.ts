@@ -11,10 +11,16 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/api/storedSchema.js";
 import { testDocuments } from "../../testTrees.js";
-import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
+import {
+	takeJsonSnapshot,
+	useSnapshotDirectory,
+} from "../../snapshots/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import { FluidClientVersion } from "../../../codec/index.js";
-import { TreeViewConfigurationAlpha, type SchemaUpgrade } from "../../../simple-tree/index.js";
+import {
+	TreeViewConfigurationAlpha,
+	type SchemaUpgrade,
+} from "../../../simple-tree/index.js";
 
 describe("simple-tree storedSchema", () => {
 	describe("test-schema", () => {
@@ -55,8 +61,10 @@ describe("simple-tree storedSchema", () => {
 				// comparePersistedSchema is a trivial wrapper around functionality that is tested elsewhere,
 				// but might as will give it a simple smoke test for the various test schema.
 				it(`comparePersistedSchema to self ${test.name} - schema v1`, () => {
-					const persistedA = extractPersistedSchema(test.schema, FluidClientVersion.v2_0, () =>
-						assert.fail("Should not have staged schema"),
+					const persistedA = extractPersistedSchema(
+						test.schema,
+						FluidClientVersion.v2_0,
+						() => assert.fail("Should not have staged schema"),
 					);
 
 					const status = comparePersistedSchema(persistedA, test.schema, {

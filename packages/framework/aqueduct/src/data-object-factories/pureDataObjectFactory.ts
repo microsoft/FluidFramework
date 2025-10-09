@@ -41,7 +41,10 @@ import type {
 	PureDataObject,
 } from "../data-objects/index.js";
 
-interface CreateDataObjectProps<TObj extends PureDataObject, I extends DataObjectTypes> {
+interface CreateDataObjectProps<
+	TObj extends PureDataObject,
+	I extends DataObjectTypes,
+> {
 	ctor: new (props: IDataObjectProps<I>) => TObj;
 	context: IFluidDataStoreContext;
 	sharedObjectRegistry: ISharedObjectRegistry;
@@ -171,7 +174,9 @@ export interface DataObjectFactoryProps<
 	/**
 	 * Optional providers for dependency injection.
 	 */
-	readonly optionalProviders?: FluidObjectSymbolProvider<I["OptionalProviders"]>;
+	readonly optionalProviders?: FluidObjectSymbolProvider<
+		I["OptionalProviders"]
+	>;
 
 	/**
 	 * Registry entries for named data stores.
@@ -205,7 +210,10 @@ export class PureDataObjectFactory<
 > implements IFluidDataStoreFactory, Partial<IProvideFluidDataStoreRegistry>
 {
 	private readonly registry: IFluidDataStoreRegistry | undefined;
-	private readonly createProps: Omit<CreateDataObjectProps<TObj, I>, "existing" | "context">;
+	private readonly createProps: Omit<
+		CreateDataObjectProps<TObj, I>,
+		"existing" | "context"
+	>;
 
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#IFluidDataStoreFactory."type"}
@@ -256,7 +264,9 @@ export class PureDataObjectFactory<
 		this.createProps = {
 			ctor: newProps.ctor,
 			optionalProviders: newProps.optionalProviders ?? {},
-			sharedObjectRegistry: new Map(newProps.sharedObjects?.map((ext) => [ext.type, ext])),
+			sharedObjectRegistry: new Map(
+				newProps.sharedObjects?.map((ext) => [ext.type, ext]),
+			),
 			runtimeClassArg: newProps.runtimeClass ?? FluidDataStoreRuntime,
 			policies: newProps.policies,
 		};
@@ -297,7 +307,11 @@ export class PureDataObjectFactory<
 		context: IFluidDataStoreContext,
 		existing: boolean,
 	): Promise<IFluidDataStoreChannel> {
-		const { runtime } = await createDataObject({ ...this.createProps, context, existing });
+		const { runtime } = await createDataObject({
+			...this.createProps,
+			context,
+			existing,
+		});
 
 		return runtime;
 	}
@@ -367,7 +381,12 @@ export class PureDataObjectFactory<
 		initialState?: I["InitialState"],
 		loadingGroupId?: string,
 	): Promise<TObj> {
-		return this.createNonRootInstanceCore(runtime, [this.type], initialState, loadingGroupId);
+		return this.createNonRootInstanceCore(
+			runtime,
+			[this.type],
+			initialState,
+			loadingGroupId,
+		);
 	}
 
 	/**
@@ -431,8 +450,12 @@ export class PureDataObjectFactory<
 		const dataStore = await context.attachRuntime(this, dataStoreRuntime);
 		const result = await dataStore.trySetAlias(rootDataStoreId);
 		if (result !== "Success") {
-			const handle = await runtime.getAliasedDataStoreEntryPoint(rootDataStoreId);
-			assert(handle !== undefined, 0x8e1 /* Should have retrieved aliased handle */);
+			const handle =
+				await runtime.getAliasedDataStoreEntryPoint(rootDataStoreId);
+			assert(
+				handle !== undefined,
+				0x8e1 /* Should have retrieved aliased handle */,
+			);
 			return (await handle.get()) as TObj;
 		}
 		return instance;
@@ -444,7 +467,10 @@ export class PureDataObjectFactory<
 		initialState?: I["InitialState"],
 		loadingGroupId?: string,
 	): Promise<TObj> {
-		const context = containerRuntime.createDetachedDataStore(packagePath, loadingGroupId);
+		const context = containerRuntime.createDetachedDataStore(
+			packagePath,
+			loadingGroupId,
+		);
 		return this.createInstanceCore(context, initialState);
 	}
 

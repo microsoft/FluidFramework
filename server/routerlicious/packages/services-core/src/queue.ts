@@ -127,7 +127,12 @@ export interface IProducer<T = ITicketedMessage> {
 	 * @param partitionId - Specify this to send the messages to a specific partition. Only RdkafkaProducer supports
 	 * this.
 	 */
-	send(messages: T[], tenantId: string, documentId: string, partitionId?: number): Promise<void>;
+	send(
+		messages: T[],
+		tenantId: string,
+		documentId: string,
+		partitionId?: number,
+	): Promise<void>;
 
 	/**
 	 * Closes the underlying connection
@@ -138,15 +143,36 @@ export interface IProducer<T = ITicketedMessage> {
 	 * Event handlers
 	 */
 	on(
-		event: "connected" | "disconnected" | "closed" | "produced" | "throttled" | "log" | "error",
+		event:
+			| "connected"
+			| "disconnected"
+			| "closed"
+			| "produced"
+			| "throttled"
+			| "log"
+			| "error",
 		listener: (...args: any[]) => void,
 	): this;
 	once(
-		event: "connected" | "disconnected" | "closed" | "produced" | "throttled" | "log" | "error",
+		event:
+			| "connected"
+			| "disconnected"
+			| "closed"
+			| "produced"
+			| "throttled"
+			| "log"
+			| "error",
 		listener: (...args: any[]) => void,
 	): this;
 	off(
-		event: "connected" | "disconnected" | "closed" | "produced" | "throttled" | "log" | "error",
+		event:
+			| "connected"
+			| "disconnected"
+			| "closed"
+			| "produced"
+			| "throttled"
+			| "log"
+			| "error",
 		listener: (...args: any[]) => void,
 	): this;
 }

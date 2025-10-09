@@ -31,7 +31,11 @@ import type {
 	IDenyList,
 } from "@fluidframework/server-services-core";
 import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
-import { LumberEventName, Lumberjack, LogLevel } from "@fluidframework/server-services-telemetry";
+import {
+	LumberEventName,
+	Lumberjack,
+	LogLevel,
+} from "@fluidframework/server-services-telemetry";
 import type { Provider } from "nconf";
 import * as winston from "winston";
 
@@ -96,9 +100,7 @@ export class NexusRunner implements IRunner {
 			const isClientConnectivityCountingEnabled = this.config.get(
 				"usage:clientConnectivityCountingEnabled",
 			);
-			const isSignalUsageCountingEnabled = this.config.get(
-				"usage:signalUsageCountingEnabled",
-			);
+			const isSignalUsageCountingEnabled = this.config.get("usage:signalUsageCountingEnabled");
 
 			if (!this.server.webSocketServer) {
 				throw new Error("WebSocket server is not initialized");

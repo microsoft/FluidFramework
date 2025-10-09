@@ -33,7 +33,9 @@ describe("RuntimeFactoryHelper", () => {
 	let unit: Sinon.SinonMock;
 
 	beforeEach(() => {
-		helper = new TestRuntimeFactoryHelper(runtime as IRuntime & IContainerRuntime);
+		helper = new TestRuntimeFactoryHelper(
+			runtime as IRuntime & IContainerRuntime,
+		);
 		unit = sandbox.mock(helper);
 		unit.expects("preInitialize").once();
 		unit.expects("hasInitialized").once();
@@ -46,7 +48,10 @@ describe("RuntimeFactoryHelper", () => {
 	it("Instantiate when existing flag is `true`", async () => {
 		unit.expects("instantiateFirstTime").never();
 		unit.expects("instantiateFromExisting").once();
-		await helper.instantiateRuntime(context as IContainerContext, /* existing */ true);
+		await helper.instantiateRuntime(
+			context as IContainerContext,
+			/* existing */ true,
+		);
 
 		unit.verify();
 	});
@@ -54,7 +59,10 @@ describe("RuntimeFactoryHelper", () => {
 	it("Instantiate when existing flag is `false`", async () => {
 		unit.expects("instantiateFirstTime").once();
 		unit.expects("instantiateFromExisting").never();
-		await helper.instantiateRuntime(context as IContainerContext, /* existing */ false);
+		await helper.instantiateRuntime(
+			context as IContainerContext,
+			/* existing */ false,
+		);
 
 		unit.verify();
 	});

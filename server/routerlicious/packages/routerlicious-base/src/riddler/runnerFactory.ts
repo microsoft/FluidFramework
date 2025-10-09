@@ -17,8 +17,14 @@ import {
 	type IWebServerFactory,
 	type IReadinessCheck,
 } from "@fluidframework/server-services-core";
-import { closeRedisClientConnections, StartupCheck } from "@fluidframework/server-services-shared";
-import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import {
+	closeRedisClientConnections,
+	StartupCheck,
+} from "@fluidframework/server-services-shared";
+import {
+	BaseTelemetryProperties,
+	Lumberjack,
+} from "@fluidframework/server-services-telemetry";
 import * as utils from "@fluidframework/server-services-utils";
 import type { Provider } from "nconf";
 import * as winston from "winston";
@@ -108,7 +114,7 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 							redisConfig.slotsRefreshTimeout,
 							retryDelays,
 							redisConfig.enableVerboseErrorLogging,
-					  );
+						);
 			redisClientConnectionManagers.push(redisClientConnectionManagerForTenantCache);
 			cache = new RedisCache(redisClientConnectionManagerForTenantCache, redisParams);
 		}

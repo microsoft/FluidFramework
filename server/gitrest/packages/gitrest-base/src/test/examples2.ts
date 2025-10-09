@@ -147,8 +147,7 @@ export const ElaborateInitialPayload: IWholeSummaryPayload =
 																		{
 																			value: {
 																				type: "blob",
-																				content:
-																					'{"blobs":[],"content":{}}',
+																				content: '{"blobs":[],"content":{}}',
 																				encoding: "utf-8",
 																			},
 																			path: "header",
@@ -367,307 +366,308 @@ export const ElaborateInitialPayload: IWholeSummaryPayload =
 		type: "container",
 	});
 
-export const ElaborateInitialResult: IWholeFlatSummary = convertAllUtf8ToBase64<IWholeFlatSummary>({
-	id: "c88b2573fdd22c6861d5f39bce4f58e61a451a21",
-	trees: [
-		{
-			id: "53a848178c085363e44dfd1be7b2b172a8268f42",
-			entries: [
-				{ type: "tree", path: ".app" },
-				{ type: "tree", path: ".app/.channels" },
-				{ type: "tree", path: ".app/.channels/9b18059d-449f-4d7a-9b60-ecbb4f2cb8ac" },
-				{
-					type: "tree",
-					path: ".app/.channels/9b18059d-449f-4d7a-9b60-ecbb4f2cb8ac/.channels",
-				},
-				{
-					type: "tree",
-					path: ".app/.channels/9b18059d-449f-4d7a-9b60-ecbb4f2cb8ac/.channels/root",
-				},
-				{
-					type: "blob",
-					id: "faf720750d1bfe4304b808733b97f7495f6beedc",
-					path: ".app/.channels/9b18059d-449f-4d7a-9b60-ecbb4f2cb8ac/.channels/root/.attributes",
-				},
-				{
-					type: "blob",
-					id: "a8f0e0d709d42b998767dcc4a82a4e96bec819a2",
-					path: ".app/.channels/9b18059d-449f-4d7a-9b60-ecbb4f2cb8ac/.channels/root/header",
-				},
-				{
-					type: "blob",
-					id: "c0e6e1c73bfd42e2a47071489ad8a41a3b62af1c",
-					path: ".app/.channels/9b18059d-449f-4d7a-9b60-ecbb4f2cb8ac/.component",
-				},
-				{ type: "tree", path: ".app/.channels/rootDOId" },
-				{ type: "tree", path: ".app/.channels/rootDOId/.channels" },
-				{
-					type: "tree",
-					path: ".app/.channels/rootDOId/.channels/1a188ef5-ca16-416d-8cf1-4f7b08dfab5e",
-				},
-				{
-					type: "blob",
-					id: "8387d21005fb3ba204cb6b6855f08ac1d58947c4",
-					path: ".app/.channels/rootDOId/.channels/1a188ef5-ca16-416d-8cf1-4f7b08dfab5e/.attributes",
-				},
-				{
-					type: "blob",
-					id: "f39311cc21cd0c2ebf40677800a8033b1fd02404",
-					path: ".app/.channels/rootDOId/.channels/1a188ef5-ca16-416d-8cf1-4f7b08dfab5e/header",
-				},
-				{
-					type: "tree",
-					path: ".app/.channels/rootDOId/.channels/33d190c4-fa6a-4d6e-b62d-e6ad44fa3839",
-				},
-				{
-					type: "blob",
-					id: "8387d21005fb3ba204cb6b6855f08ac1d58947c4",
-					path: ".app/.channels/rootDOId/.channels/33d190c4-fa6a-4d6e-b62d-e6ad44fa3839/.attributes",
-				},
-				{
-					type: "blob",
-					id: "948d9ce9db24abbfd53a11c871a94fd850974cbf",
-					path: ".app/.channels/rootDOId/.channels/33d190c4-fa6a-4d6e-b62d-e6ad44fa3839/header",
-				},
-				{
-					type: "tree",
-					path: ".app/.channels/rootDOId/.channels/4d6f49a2-2afd-44a8-9dc6-f3829a62512a",
-				},
-				{
-					type: "blob",
-					id: "8387d21005fb3ba204cb6b6855f08ac1d58947c4",
-					path: ".app/.channels/rootDOId/.channels/4d6f49a2-2afd-44a8-9dc6-f3829a62512a/.attributes",
-				},
-				{
-					type: "blob",
-					id: "948d9ce9db24abbfd53a11c871a94fd850974cbf",
-					path: ".app/.channels/rootDOId/.channels/4d6f49a2-2afd-44a8-9dc6-f3829a62512a/header",
-				},
-				{
-					type: "tree",
-					path: ".app/.channels/rootDOId/.channels/9f9a7c44-516d-4e1d-836f-76a4c60c439d",
-				},
-				{
-					type: "blob",
-					id: "8387d21005fb3ba204cb6b6855f08ac1d58947c4",
-					path: ".app/.channels/rootDOId/.channels/9f9a7c44-516d-4e1d-836f-76a4c60c439d/.attributes",
-				},
-				{
-					type: "blob",
-					id: "212351c1a6eebf8d35f0d6dac87310437e1c9ae9",
-					path: ".app/.channels/rootDOId/.channels/9f9a7c44-516d-4e1d-836f-76a4c60c439d/header",
-				},
-				{
-					type: "tree",
-					path: ".app/.channels/rootDOId/.channels/ca2b5993-2de2-4c70-8ab4-03951ab31dfa",
-				},
-				{
-					type: "blob",
-					id: "8387d21005fb3ba204cb6b6855f08ac1d58947c4",
-					path: ".app/.channels/rootDOId/.channels/ca2b5993-2de2-4c70-8ab4-03951ab31dfa/.attributes",
-				},
-				{
-					type: "blob",
-					id: "948d9ce9db24abbfd53a11c871a94fd850974cbf",
-					path: ".app/.channels/rootDOId/.channels/ca2b5993-2de2-4c70-8ab4-03951ab31dfa/header",
-				},
-				{ type: "tree", path: ".app/.channels/rootDOId/.channels/root" },
-				{
-					type: "blob",
-					id: "faf720750d1bfe4304b808733b97f7495f6beedc",
-					path: ".app/.channels/rootDOId/.channels/root/.attributes",
-				},
-				{
-					type: "blob",
-					id: "9a1f74bd4b0748c2311d3d60866369c769810c26",
-					path: ".app/.channels/rootDOId/.channels/root/header",
-				},
-				{
-					type: "blob",
-					id: "c35bbe00f9cb9ee99c8af3d4757411abdda3d8f3",
-					path: ".app/.channels/rootDOId/.component",
-				},
-				{
-					type: "blob",
-					id: "281a05982b6d4d03bc3df509ecdbc22a196cc69a",
-					path: ".app/.electedSummarizer",
-				},
-				{
-					type: "blob",
-					id: "70df906273b84d16d9a2dbb5eda5553f649042d2",
-					path: ".app/.metadata",
-				},
-				{ type: "tree", path: ".protocol" },
-				{
-					type: "blob",
-					id: "0050eb3b8e41f9ecdf14c2aa21706018474c3b78",
-					path: ".protocol/attributes",
-				},
-				{
-					type: "blob",
-					id: "0637a088a01e8ddab3bf3fa98dbe804cbde1a0dc",
-					path: ".protocol/quorumMembers",
-				},
-				{
-					type: "blob",
-					id: "0637a088a01e8ddab3bf3fa98dbe804cbde1a0dc",
-					path: ".protocol/quorumProposals",
-				},
-				{
-					type: "blob",
-					id: "c730f7a6ff8c606cc2b7d083e5a9705bff0d7029",
-					path: ".protocol/quorumValues",
-				},
-			],
-		},
-	],
-	blobs: [
-		{
-			content:
-				'{"type":"https://graph.microsoft.com/types/directory","snapshotFormatVersion":"0.1","packageVersion":"2.0.0-internal.7.1.0"}',
-			encoding: "utf-8",
-			id: "faf720750d1bfe4304b808733b97f7495f6beedc",
-			size: 124,
-		},
-		{
-			content: '{"blobs":[],"content":{"ci":{"csn":0,"ccIds":[]}}}',
-			encoding: "utf-8",
-			id: "a8f0e0d709d42b998767dcc4a82a4e96bec819a2",
-			size: 50,
-		},
-		{
-			content:
-				'{"pkg":"[\\"rootDO\\",\\"@fluid-example/signaler\\"]","summaryFormatVersion":2,"isRootDataStore":false}',
-			encoding: "utf-8",
-			id: "c0e6e1c73bfd42e2a47071489ad8a41a3b62af1c",
-			size: 99,
-		},
-		{
-			content:
-				'{"type":"https://graph.microsoft.com/types/map","snapshotFormatVersion":"0.2","packageVersion":"2.0.0-internal.7.1.0"}',
-			encoding: "utf-8",
-			id: "8387d21005fb3ba204cb6b6855f08ac1d58947c4",
-			size: 118,
-		},
-		{
-			content: '{"blobs":[],"content":{}}',
-			encoding: "utf-8",
-			id: "f39311cc21cd0c2ebf40677800a8033b1fd02404",
-			size: 25,
-		},
-		{
-			content:
-				'{"type":"https://graph.microsoft.com/types/map","snapshotFormatVersion":"0.2","packageVersion":"2.0.0-internal.7.1.0"}',
-			encoding: "utf-8",
-			id: "8387d21005fb3ba204cb6b6855f08ac1d58947c4",
-			size: 118,
-		},
-		{
-			content: '{"blobs":[],"content":{"content":{"type":"Plain","value":"test message"}}}',
-			encoding: "utf-8",
-			id: "948d9ce9db24abbfd53a11c871a94fd850974cbf",
-			size: 74,
-		},
-		{
-			content:
-				'{"type":"https://graph.microsoft.com/types/map","snapshotFormatVersion":"0.2","packageVersion":"2.0.0-internal.7.1.0"}',
-			encoding: "utf-8",
-			id: "8387d21005fb3ba204cb6b6855f08ac1d58947c4",
-			size: 118,
-		},
-		{
-			content: '{"blobs":[],"content":{"content":{"type":"Plain","value":"test message"}}}',
-			encoding: "utf-8",
-			id: "948d9ce9db24abbfd53a11c871a94fd850974cbf",
-			size: 74,
-		},
-		{
-			content:
-				'{"type":"https://graph.microsoft.com/types/map","snapshotFormatVersion":"0.2","packageVersion":"2.0.0-internal.7.1.0"}',
-			encoding: "utf-8",
-			id: "8387d21005fb3ba204cb6b6855f08ac1d58947c4",
-			size: 118,
-		},
-		{
-			content:
-				'{"blobs":[],"content":{"messages":{"type":"Plain","value":[{"id":"fdbf9e75-c481-4dce-bffc-09df275fef66","handle":{"type":"__fluid_handle__","url":"/rootDOId/4d6f49a2-2afd-44a8-9dc6-f3829a62512a"},"sender":"test-user","type":"plain-large"},{"id":"be4347b9-2a9f-4cc5-a0fb-742508115ad2","handle":{"type":"__fluid_handle__","url":"/rootDOId/ca2b5993-2de2-4c70-8ab4-03951ab31dfa"},"sender":"test-user","type":"plain-large"},{"id":"61049e1d-276d-40a6-ba45-ea0b98333454","handle":{"type":"__fluid_handle__","url":"/rootDOId/33d190c4-fa6a-4d6e-b62d-e6ad44fa3839"},"sender":"test-user","type":"plain-large"}]}}}',
-			encoding: "utf-8",
-			id: "212351c1a6eebf8d35f0d6dac87310437e1c9ae9",
-			size: 602,
-		},
-		{
-			content:
-				'{"type":"https://graph.microsoft.com/types/map","snapshotFormatVersion":"0.2","packageVersion":"2.0.0-internal.7.1.0"}',
-			encoding: "utf-8",
-			id: "8387d21005fb3ba204cb6b6855f08ac1d58947c4",
-			size: 118,
-		},
-		{
-			content: '{"blobs":[],"content":{"content":{"type":"Plain","value":"test message"}}}',
-			encoding: "utf-8",
-			id: "948d9ce9db24abbfd53a11c871a94fd850974cbf",
-			size: 74,
-		},
-		{
-			content:
-				'{"type":"https://graph.microsoft.com/types/directory","snapshotFormatVersion":"0.1","packageVersion":"2.0.0-internal.7.1.0"}',
-			encoding: "utf-8",
-			id: "faf720750d1bfe4304b808733b97f7495f6beedc",
-			size: 124,
-		},
-		{
-			content:
-				'{"blobs":[],"content":{"ci":{"csn":0,"ccIds":[]},"subdirectories":{"initial-objects-key":{"ci":{"csn":0,"ccIds":["detached"]},"storage":{"map":{"type":"Plain","value":{"type":"__fluid_handle__","url":"/rootDOId/9f9a7c44-516d-4e1d-836f-76a4c60c439d"}},"hiddenData":{"type":"Plain","value":{"type":"__fluid_handle__","url":"/rootDOId/1a188ef5-ca16-416d-8cf1-4f7b08dfab5e"}},"signaler":{"type":"Plain","value":{"type":"__fluid_handle__","url":"/9b18059d-449f-4d7a-9b60-ecbb4f2cb8ac"}}}}}}}',
-			encoding: "utf-8",
-			id: "9a1f74bd4b0748c2311d3d60866369c769810c26",
-			size: 486,
-		},
-		{
-			content: '{"pkg":"[\\"rootDO\\"]","summaryFormatVersion":2,"isRootDataStore":true}',
-			encoding: "utf-8",
-			id: "c35bbe00f9cb9ee99c8af3d4757411abdda3d8f3",
-			size: 70,
-		},
-		{
-			content: '{"electionSequenceNumber":0}',
-			encoding: "utf-8",
-			id: "281a05982b6d4d03bc3df509ecdbc22a196cc69a",
-			size: 28,
-		},
-		{
-			content:
-				'{"createContainerRuntimeVersion":"2.0.0-internal.7.1.0","createContainerTimestamp":1704316414678,"summaryNumber":1,"summaryFormatVersion":1,"gcFeature":3,"sessionExpiryTimeoutMs":2592000000,"sweepEnabled":false,"sweepTimeoutMs":3110400000,"telemetryDocumentId":"2c6fdb36-6b4a-4cba-afc4-cccd51e018dd"}',
-			encoding: "utf-8",
-			id: "70df906273b84d16d9a2dbb5eda5553f649042d2",
-			size: 300,
-		},
-		{
-			content: '{"minimumSequenceNumber":0,"sequenceNumber":0}',
-			encoding: "utf-8",
-			id: "0050eb3b8e41f9ecdf14c2aa21706018474c3b78",
-			size: 46,
-		},
-		{
-			content: "[]",
-			encoding: "utf-8",
-			id: "0637a088a01e8ddab3bf3fa98dbe804cbde1a0dc",
-			size: 2,
-		},
-		{
-			content: "[]",
-			encoding: "utf-8",
-			id: "0637a088a01e8ddab3bf3fa98dbe804cbde1a0dc",
-			size: 2,
-		},
-		{
-			content:
-				'[["code",{"key":"code","value":{"package":"no-dynamic-package","config":{}},"approvalSequenceNumber":0,"commitSequenceNumber":0,"sequenceNumber":0}]]',
-			encoding: "utf-8",
-			id: "c730f7a6ff8c606cc2b7d083e5a9705bff0d7029",
-			size: 149,
-		},
-	],
-});
+export const ElaborateInitialResult: IWholeFlatSummary =
+	convertAllUtf8ToBase64<IWholeFlatSummary>({
+		id: "c88b2573fdd22c6861d5f39bce4f58e61a451a21",
+		trees: [
+			{
+				id: "53a848178c085363e44dfd1be7b2b172a8268f42",
+				entries: [
+					{ type: "tree", path: ".app" },
+					{ type: "tree", path: ".app/.channels" },
+					{ type: "tree", path: ".app/.channels/9b18059d-449f-4d7a-9b60-ecbb4f2cb8ac" },
+					{
+						type: "tree",
+						path: ".app/.channels/9b18059d-449f-4d7a-9b60-ecbb4f2cb8ac/.channels",
+					},
+					{
+						type: "tree",
+						path: ".app/.channels/9b18059d-449f-4d7a-9b60-ecbb4f2cb8ac/.channels/root",
+					},
+					{
+						type: "blob",
+						id: "faf720750d1bfe4304b808733b97f7495f6beedc",
+						path: ".app/.channels/9b18059d-449f-4d7a-9b60-ecbb4f2cb8ac/.channels/root/.attributes",
+					},
+					{
+						type: "blob",
+						id: "a8f0e0d709d42b998767dcc4a82a4e96bec819a2",
+						path: ".app/.channels/9b18059d-449f-4d7a-9b60-ecbb4f2cb8ac/.channels/root/header",
+					},
+					{
+						type: "blob",
+						id: "c0e6e1c73bfd42e2a47071489ad8a41a3b62af1c",
+						path: ".app/.channels/9b18059d-449f-4d7a-9b60-ecbb4f2cb8ac/.component",
+					},
+					{ type: "tree", path: ".app/.channels/rootDOId" },
+					{ type: "tree", path: ".app/.channels/rootDOId/.channels" },
+					{
+						type: "tree",
+						path: ".app/.channels/rootDOId/.channels/1a188ef5-ca16-416d-8cf1-4f7b08dfab5e",
+					},
+					{
+						type: "blob",
+						id: "8387d21005fb3ba204cb6b6855f08ac1d58947c4",
+						path: ".app/.channels/rootDOId/.channels/1a188ef5-ca16-416d-8cf1-4f7b08dfab5e/.attributes",
+					},
+					{
+						type: "blob",
+						id: "f39311cc21cd0c2ebf40677800a8033b1fd02404",
+						path: ".app/.channels/rootDOId/.channels/1a188ef5-ca16-416d-8cf1-4f7b08dfab5e/header",
+					},
+					{
+						type: "tree",
+						path: ".app/.channels/rootDOId/.channels/33d190c4-fa6a-4d6e-b62d-e6ad44fa3839",
+					},
+					{
+						type: "blob",
+						id: "8387d21005fb3ba204cb6b6855f08ac1d58947c4",
+						path: ".app/.channels/rootDOId/.channels/33d190c4-fa6a-4d6e-b62d-e6ad44fa3839/.attributes",
+					},
+					{
+						type: "blob",
+						id: "948d9ce9db24abbfd53a11c871a94fd850974cbf",
+						path: ".app/.channels/rootDOId/.channels/33d190c4-fa6a-4d6e-b62d-e6ad44fa3839/header",
+					},
+					{
+						type: "tree",
+						path: ".app/.channels/rootDOId/.channels/4d6f49a2-2afd-44a8-9dc6-f3829a62512a",
+					},
+					{
+						type: "blob",
+						id: "8387d21005fb3ba204cb6b6855f08ac1d58947c4",
+						path: ".app/.channels/rootDOId/.channels/4d6f49a2-2afd-44a8-9dc6-f3829a62512a/.attributes",
+					},
+					{
+						type: "blob",
+						id: "948d9ce9db24abbfd53a11c871a94fd850974cbf",
+						path: ".app/.channels/rootDOId/.channels/4d6f49a2-2afd-44a8-9dc6-f3829a62512a/header",
+					},
+					{
+						type: "tree",
+						path: ".app/.channels/rootDOId/.channels/9f9a7c44-516d-4e1d-836f-76a4c60c439d",
+					},
+					{
+						type: "blob",
+						id: "8387d21005fb3ba204cb6b6855f08ac1d58947c4",
+						path: ".app/.channels/rootDOId/.channels/9f9a7c44-516d-4e1d-836f-76a4c60c439d/.attributes",
+					},
+					{
+						type: "blob",
+						id: "212351c1a6eebf8d35f0d6dac87310437e1c9ae9",
+						path: ".app/.channels/rootDOId/.channels/9f9a7c44-516d-4e1d-836f-76a4c60c439d/header",
+					},
+					{
+						type: "tree",
+						path: ".app/.channels/rootDOId/.channels/ca2b5993-2de2-4c70-8ab4-03951ab31dfa",
+					},
+					{
+						type: "blob",
+						id: "8387d21005fb3ba204cb6b6855f08ac1d58947c4",
+						path: ".app/.channels/rootDOId/.channels/ca2b5993-2de2-4c70-8ab4-03951ab31dfa/.attributes",
+					},
+					{
+						type: "blob",
+						id: "948d9ce9db24abbfd53a11c871a94fd850974cbf",
+						path: ".app/.channels/rootDOId/.channels/ca2b5993-2de2-4c70-8ab4-03951ab31dfa/header",
+					},
+					{ type: "tree", path: ".app/.channels/rootDOId/.channels/root" },
+					{
+						type: "blob",
+						id: "faf720750d1bfe4304b808733b97f7495f6beedc",
+						path: ".app/.channels/rootDOId/.channels/root/.attributes",
+					},
+					{
+						type: "blob",
+						id: "9a1f74bd4b0748c2311d3d60866369c769810c26",
+						path: ".app/.channels/rootDOId/.channels/root/header",
+					},
+					{
+						type: "blob",
+						id: "c35bbe00f9cb9ee99c8af3d4757411abdda3d8f3",
+						path: ".app/.channels/rootDOId/.component",
+					},
+					{
+						type: "blob",
+						id: "281a05982b6d4d03bc3df509ecdbc22a196cc69a",
+						path: ".app/.electedSummarizer",
+					},
+					{
+						type: "blob",
+						id: "70df906273b84d16d9a2dbb5eda5553f649042d2",
+						path: ".app/.metadata",
+					},
+					{ type: "tree", path: ".protocol" },
+					{
+						type: "blob",
+						id: "0050eb3b8e41f9ecdf14c2aa21706018474c3b78",
+						path: ".protocol/attributes",
+					},
+					{
+						type: "blob",
+						id: "0637a088a01e8ddab3bf3fa98dbe804cbde1a0dc",
+						path: ".protocol/quorumMembers",
+					},
+					{
+						type: "blob",
+						id: "0637a088a01e8ddab3bf3fa98dbe804cbde1a0dc",
+						path: ".protocol/quorumProposals",
+					},
+					{
+						type: "blob",
+						id: "c730f7a6ff8c606cc2b7d083e5a9705bff0d7029",
+						path: ".protocol/quorumValues",
+					},
+				],
+			},
+		],
+		blobs: [
+			{
+				content:
+					'{"type":"https://graph.microsoft.com/types/directory","snapshotFormatVersion":"0.1","packageVersion":"2.0.0-internal.7.1.0"}',
+				encoding: "utf-8",
+				id: "faf720750d1bfe4304b808733b97f7495f6beedc",
+				size: 124,
+			},
+			{
+				content: '{"blobs":[],"content":{"ci":{"csn":0,"ccIds":[]}}}',
+				encoding: "utf-8",
+				id: "a8f0e0d709d42b998767dcc4a82a4e96bec819a2",
+				size: 50,
+			},
+			{
+				content:
+					'{"pkg":"[\\"rootDO\\",\\"@fluid-example/signaler\\"]","summaryFormatVersion":2,"isRootDataStore":false}',
+				encoding: "utf-8",
+				id: "c0e6e1c73bfd42e2a47071489ad8a41a3b62af1c",
+				size: 99,
+			},
+			{
+				content:
+					'{"type":"https://graph.microsoft.com/types/map","snapshotFormatVersion":"0.2","packageVersion":"2.0.0-internal.7.1.0"}',
+				encoding: "utf-8",
+				id: "8387d21005fb3ba204cb6b6855f08ac1d58947c4",
+				size: 118,
+			},
+			{
+				content: '{"blobs":[],"content":{}}',
+				encoding: "utf-8",
+				id: "f39311cc21cd0c2ebf40677800a8033b1fd02404",
+				size: 25,
+			},
+			{
+				content:
+					'{"type":"https://graph.microsoft.com/types/map","snapshotFormatVersion":"0.2","packageVersion":"2.0.0-internal.7.1.0"}',
+				encoding: "utf-8",
+				id: "8387d21005fb3ba204cb6b6855f08ac1d58947c4",
+				size: 118,
+			},
+			{
+				content: '{"blobs":[],"content":{"content":{"type":"Plain","value":"test message"}}}',
+				encoding: "utf-8",
+				id: "948d9ce9db24abbfd53a11c871a94fd850974cbf",
+				size: 74,
+			},
+			{
+				content:
+					'{"type":"https://graph.microsoft.com/types/map","snapshotFormatVersion":"0.2","packageVersion":"2.0.0-internal.7.1.0"}',
+				encoding: "utf-8",
+				id: "8387d21005fb3ba204cb6b6855f08ac1d58947c4",
+				size: 118,
+			},
+			{
+				content: '{"blobs":[],"content":{"content":{"type":"Plain","value":"test message"}}}',
+				encoding: "utf-8",
+				id: "948d9ce9db24abbfd53a11c871a94fd850974cbf",
+				size: 74,
+			},
+			{
+				content:
+					'{"type":"https://graph.microsoft.com/types/map","snapshotFormatVersion":"0.2","packageVersion":"2.0.0-internal.7.1.0"}',
+				encoding: "utf-8",
+				id: "8387d21005fb3ba204cb6b6855f08ac1d58947c4",
+				size: 118,
+			},
+			{
+				content:
+					'{"blobs":[],"content":{"messages":{"type":"Plain","value":[{"id":"fdbf9e75-c481-4dce-bffc-09df275fef66","handle":{"type":"__fluid_handle__","url":"/rootDOId/4d6f49a2-2afd-44a8-9dc6-f3829a62512a"},"sender":"test-user","type":"plain-large"},{"id":"be4347b9-2a9f-4cc5-a0fb-742508115ad2","handle":{"type":"__fluid_handle__","url":"/rootDOId/ca2b5993-2de2-4c70-8ab4-03951ab31dfa"},"sender":"test-user","type":"plain-large"},{"id":"61049e1d-276d-40a6-ba45-ea0b98333454","handle":{"type":"__fluid_handle__","url":"/rootDOId/33d190c4-fa6a-4d6e-b62d-e6ad44fa3839"},"sender":"test-user","type":"plain-large"}]}}}',
+				encoding: "utf-8",
+				id: "212351c1a6eebf8d35f0d6dac87310437e1c9ae9",
+				size: 602,
+			},
+			{
+				content:
+					'{"type":"https://graph.microsoft.com/types/map","snapshotFormatVersion":"0.2","packageVersion":"2.0.0-internal.7.1.0"}',
+				encoding: "utf-8",
+				id: "8387d21005fb3ba204cb6b6855f08ac1d58947c4",
+				size: 118,
+			},
+			{
+				content: '{"blobs":[],"content":{"content":{"type":"Plain","value":"test message"}}}',
+				encoding: "utf-8",
+				id: "948d9ce9db24abbfd53a11c871a94fd850974cbf",
+				size: 74,
+			},
+			{
+				content:
+					'{"type":"https://graph.microsoft.com/types/directory","snapshotFormatVersion":"0.1","packageVersion":"2.0.0-internal.7.1.0"}',
+				encoding: "utf-8",
+				id: "faf720750d1bfe4304b808733b97f7495f6beedc",
+				size: 124,
+			},
+			{
+				content:
+					'{"blobs":[],"content":{"ci":{"csn":0,"ccIds":[]},"subdirectories":{"initial-objects-key":{"ci":{"csn":0,"ccIds":["detached"]},"storage":{"map":{"type":"Plain","value":{"type":"__fluid_handle__","url":"/rootDOId/9f9a7c44-516d-4e1d-836f-76a4c60c439d"}},"hiddenData":{"type":"Plain","value":{"type":"__fluid_handle__","url":"/rootDOId/1a188ef5-ca16-416d-8cf1-4f7b08dfab5e"}},"signaler":{"type":"Plain","value":{"type":"__fluid_handle__","url":"/9b18059d-449f-4d7a-9b60-ecbb4f2cb8ac"}}}}}}}',
+				encoding: "utf-8",
+				id: "9a1f74bd4b0748c2311d3d60866369c769810c26",
+				size: 486,
+			},
+			{
+				content: '{"pkg":"[\\"rootDO\\"]","summaryFormatVersion":2,"isRootDataStore":true}',
+				encoding: "utf-8",
+				id: "c35bbe00f9cb9ee99c8af3d4757411abdda3d8f3",
+				size: 70,
+			},
+			{
+				content: '{"electionSequenceNumber":0}',
+				encoding: "utf-8",
+				id: "281a05982b6d4d03bc3df509ecdbc22a196cc69a",
+				size: 28,
+			},
+			{
+				content:
+					'{"createContainerRuntimeVersion":"2.0.0-internal.7.1.0","createContainerTimestamp":1704316414678,"summaryNumber":1,"summaryFormatVersion":1,"gcFeature":3,"sessionExpiryTimeoutMs":2592000000,"sweepEnabled":false,"sweepTimeoutMs":3110400000,"telemetryDocumentId":"2c6fdb36-6b4a-4cba-afc4-cccd51e018dd"}',
+				encoding: "utf-8",
+				id: "70df906273b84d16d9a2dbb5eda5553f649042d2",
+				size: 300,
+			},
+			{
+				content: '{"minimumSequenceNumber":0,"sequenceNumber":0}',
+				encoding: "utf-8",
+				id: "0050eb3b8e41f9ecdf14c2aa21706018474c3b78",
+				size: 46,
+			},
+			{
+				content: "[]",
+				encoding: "utf-8",
+				id: "0637a088a01e8ddab3bf3fa98dbe804cbde1a0dc",
+				size: 2,
+			},
+			{
+				content: "[]",
+				encoding: "utf-8",
+				id: "0637a088a01e8ddab3bf3fa98dbe804cbde1a0dc",
+				size: 2,
+			},
+			{
+				content:
+					'[["code",{"key":"code","value":{"package":"no-dynamic-package","config":{}},"approvalSequenceNumber":0,"commitSequenceNumber":0,"sequenceNumber":0}]]',
+				encoding: "utf-8",
+				id: "c730f7a6ff8c606cc2b7d083e5a9705bff0d7029",
+				size: 149,
+			},
+		],
+	});
 
 export const ElaborateFirstChannelPayload: IWholeSummaryPayload =
 	convertAllUtf8ToBase64<IWholeSummaryPayload>({
@@ -748,8 +748,7 @@ export const ElaborateFirstChannelPayload: IWholeSummaryPayload =
 															{
 																value: {
 																	type: "blob",
-																	content:
-																		'{"blobs":[],"content":{}}',
+																	content: '{"blobs":[],"content":{}}',
 																	encoding: "utf-8",
 																},
 																path: "header",

@@ -25,7 +25,8 @@ import { endResponse, serverListenAndHandle } from "./httpHelpers.js";
 
 const odspAuthRedirectPort = 7000;
 const odspAuthRedirectOrigin = `http://localhost:${odspAuthRedirectPort}`;
-const odspAuthRedirectUri = new URL("/auth/callback", odspAuthRedirectOrigin).href;
+const odspAuthRedirectUri = new URL("/auth/callback", odspAuthRedirectOrigin)
+	.href;
 
 // TODO: Add documentation
 // eslint-disable-next-line jsdoc/require-description
@@ -36,7 +37,9 @@ export const getMicrosoftConfiguration = (): IPublicClientConfig => ({
 	get clientId(): string {
 		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 		if (!process.env.login__microsoft__clientId) {
-			throw new Error("Client ID environment variable not set: login__microsoft__clientId.");
+			throw new Error(
+				"Client ID environment variable not set: login__microsoft__clientId.",
+			);
 		}
 		return process.env.login__microsoft__clientId;
 	},
@@ -93,7 +96,10 @@ export class OdspTokenManager {
 	private readonly pushCache = new Map<string, IOdspTokens>();
 	private readonly cacheMutex = new Mutex();
 	public constructor(
-		private readonly tokenCache?: IAsyncCache<IOdspTokenManagerCacheKey, IOdspTokens>,
+		private readonly tokenCache?: IAsyncCache<
+			IOdspTokenManagerCacheKey,
+			IOdspTokens
+		>,
 	) {}
 
 	public async updateTokensCache(
@@ -123,7 +129,14 @@ export class OdspTokenManager {
 		forceReauth = false,
 	): Promise<IOdspTokens> {
 		debug("Getting odsp tokens");
-		return this.getTokens(false, server, clientConfig, tokenConfig, forceRefresh, forceReauth);
+		return this.getTokens(
+			false,
+			server,
+			clientConfig,
+			tokenConfig,
+			forceRefresh,
+			forceReauth,
+		);
 	}
 
 	public async getPushTokens(
@@ -134,7 +147,14 @@ export class OdspTokenManager {
 		forceReauth = false,
 	): Promise<IOdspTokens> {
 		debug("Getting push tokens");
-		return this.getTokens(true, server, clientConfig, tokenConfig, forceRefresh, forceReauth);
+		return this.getTokens(
+			true,
+			server,
+			clientConfig,
+			tokenConfig,
+			forceRefresh,
+			forceReauth,
+		);
 	}
 
 	private async getTokenFromCache(
@@ -162,7 +182,8 @@ export class OdspTokenManager {
 		// If we are using password, we should cache the token per user instead of per server
 		return {
 			isPush,
-			userOrServer: tokenConfig.type === "password" ? tokenConfig.username : server,
+			userOrServer:
+				tokenConfig.type === "password" ? tokenConfig.username : server,
 		};
 	}
 
@@ -190,7 +211,11 @@ export class OdspTokenManager {
 		};
 		if (!forceReauth && !forceRefresh) {
 			// check and return if it exists without lock
-			const cacheKey = OdspTokenManager.getCacheKey(isPush, tokenConfig, server);
+			const cacheKey = OdspTokenManager.getCacheKey(
+				isPush,
+				tokenConfig,
+				server,
+			);
 			const tokensFromCache = await this.getTokenFromCache(cacheKey);
 			if (tokensFromCache) {
 				if (isValidAndNotExpiredToken(tokensFromCache)) {
@@ -226,14 +251,23 @@ export class OdspTokenManager {
 				if (forceRefresh || !isValidAndNotExpiredToken(tokensFromCache)) {
 					try {
 						// This updates the tokens in tokensFromCache
-						tokens = await refreshTokens(server, scope, clientConfig, tokensFromCache);
+						tokens = await refreshTokens(
+							server,
+							scope,
+							clientConfig,
+							tokensFromCache,
+						);
 						await this.updateTokensCacheWithoutLock(cacheKey, tokens);
 					} catch (error) {
-						debug(`${cacheKeyToString(cacheKey)}: Error in refreshing token. ${error}`);
+						debug(
+							`${cacheKeyToString(cacheKey)}: Error in refreshing token. ${error}`,
+						);
 					}
 				} else {
 					tokens = tokensFromCache;
-					debug(`${cacheKeyToString(cacheKey)}: Token reused from locked cache `);
+					debug(
+						`${cacheKeyToString(cacheKey)}: Token reused from locked cache `,
+					);
 				}
 			}
 		}
@@ -305,26 +339,34 @@ export class OdspTokenManager {
 		redirectUriCallback?: (tokens: IOdspTokens) => Promise<string>,
 	): Promise<IOdspTokens> {
 		// Start up a local auth redirect handler service to receive the tokens after login
-		const tokenGetter = await serverListenAndHandle(odspAuthRedirectPort, async (req, res) => {
-			// extract code from request URL and fetch the tokens
-			const credentials: TokenRequestCredentials = {
-				grant_type: "authorization_code",
-				code: this.extractAuthorizationCode(req.url),
-				redirect_uri: odspAuthRedirectUri,
-			};
-			const tokens = await fetchTokens(server, scope, clientConfig, credentials);
+		const tokenGetter = await serverListenAndHandle(
+			odspAuthRedirectPort,
+			async (req, res) => {
+				// extract code from request URL and fetch the tokens
+				const credentials: TokenRequestCredentials = {
+					grant_type: "authorization_code",
+					code: this.extractAuthorizationCode(req.url),
+					redirect_uri: odspAuthRedirectUri,
+				};
+				const tokens = await fetchTokens(
+					server,
+					scope,
+					clientConfig,
+					credentials,
+				);
 
-			// redirect now that the browser is done with auth
-			if (redirectUriCallback) {
-				res.writeHead(301, { Location: await redirectUriCallback(tokens) });
-				await endResponse(res);
-			} else {
-				res.write("Please close the window");
-				await endResponse(res);
-			}
+				// redirect now that the browser is done with auth
+				if (redirectUriCallback) {
+					res.writeHead(301, { Location: await redirectUriCallback(tokens) });
+					await endResponse(res);
+				} else {
+					res.write("Please close the window");
+					await endResponse(res);
+				}
 
-			return tokens;
-		});
+				return tokens;
+			},
+		);
 
 		// Now that our local redirect handler is up, navigate the browser to the login page
 		navigator(loginPageUrl);
@@ -371,12 +413,18 @@ async function loadAndPatchRC(): Promise<IResources> {
 /**
  * @internal
  */
-export const odspTokensCache: IAsyncCache<IOdspTokenManagerCacheKey, IOdspTokens> = {
+export const odspTokensCache: IAsyncCache<
+	IOdspTokenManagerCacheKey,
+	IOdspTokens
+> = {
 	async get(key: IOdspTokenManagerCacheKey): Promise<IOdspTokens | undefined> {
 		const rc = await loadAndPatchRC();
 		return rc.tokens?.data[key.userOrServer]?.[key.isPush ? "push" : "storage"];
 	},
-	async save(key: IOdspTokenManagerCacheKey, tokens: IOdspTokens): Promise<void> {
+	async save(
+		key: IOdspTokenManagerCacheKey,
+		tokens: IOdspTokens,
+	): Promise<void> {
 		const rc = await loadAndPatchRC();
 		if (!rc.tokens) {
 			rc.tokens = {

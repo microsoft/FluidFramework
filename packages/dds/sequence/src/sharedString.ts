@@ -19,14 +19,18 @@ import {
 	refHasTileLabel,
 } from "@fluidframework/merge-tree/internal";
 
-import { SharedSegmentSequence, type ISharedSegmentSequence } from "./sequence.js";
+import {
+	SharedSegmentSequence,
+	type ISharedSegmentSequence,
+} from "./sequence.js";
 import { SharedStringFactory } from "./sequenceFactory.js";
 
 /**
  * Fluid object interface describing access methods on a SharedString
  * @legacy @beta
  */
-export interface ISharedString extends ISharedSegmentSequence<SharedStringSegment> {
+export interface ISharedString
+	extends ISharedSegmentSequence<SharedStringSegment> {
 	/**
 	 * Inserts the text at the position.
 	 * @param pos - The position to insert the text at
@@ -61,7 +65,11 @@ export interface ISharedString extends ISharedSegmentSequence<SharedStringSegmen
 	 * @param text - The text to insert
 	 * @param props - The properties of text
 	 */
-	insertTextRelative(relativePos1: IRelativePosition, text: string, props?: PropertySet): void;
+	insertTextRelative(
+		relativePos1: IRelativePosition,
+		text: string,
+		props?: PropertySet,
+	): void;
 
 	/**
 	 * Replaces a range with the provided text.
@@ -70,7 +78,12 @@ export interface ISharedString extends ISharedSegmentSequence<SharedStringSegmen
 	 * @param text - The text to replace the range with
 	 * @param props - Optional. The properties of the replacement text
 	 */
-	replaceText(start: number, end: number, text: string, props?: PropertySet): void;
+	replaceText(
+		start: number,
+		end: number,
+		text: string,
+		props?: PropertySet,
+	): void;
 
 	/**
 	 * Removes the text in the given range.
@@ -174,7 +187,11 @@ export class SharedStringClass
 	/**
 	 * {@inheritDoc ISharedString.insertMarker}
 	 */
-	public insertMarker(pos: number, refType: ReferenceType, props?: PropertySet): void {
+	public insertMarker(
+		pos: number,
+		refType: ReferenceType,
+		props?: PropertySet,
+	): void {
 		this.guardReentrancy(() =>
 			this.client.insertSegmentLocal(pos, Marker.make(refType, props)),
 		);
@@ -206,7 +223,12 @@ export class SharedStringClass
 	/**
 	 * {@inheritDoc ISharedString.replaceText}
 	 */
-	public replaceText(start: number, end: number, text: string, props?: PropertySet): void {
+	public replaceText(
+		start: number,
+		end: number,
+		text: string,
+		props?: PropertySet,
+	): void {
 		this.replaceRange(start, end, TextSegment.make(text, props));
 	}
 
@@ -240,7 +262,12 @@ export class SharedStringClass
 	 */
 	public getText(start?: number, end?: number) {
 		const collabWindow = this.client.getCollabWindow();
-		return this.mergeTreeTextHelper.getText(collabWindow.localPerspective, "", start, end);
+		return this.mergeTreeTextHelper.getText(
+			collabWindow.localPerspective,
+			"",
+			start,
+			end,
+		);
 	}
 
 	/**
@@ -248,7 +275,12 @@ export class SharedStringClass
 	 */
 	public getTextWithPlaceholders(start?: number, end?: number) {
 		const collabWindow = this.client.getCollabWindow();
-		return this.mergeTreeTextHelper.getText(collabWindow.localPerspective, " ", start, end);
+		return this.mergeTreeTextHelper.getText(
+			collabWindow.localPerspective,
+			" ",
+			start,
+			end,
+		);
 	}
 
 	/**
@@ -256,7 +288,12 @@ export class SharedStringClass
 	 */
 	public getTextRangeWithMarkers(start: number, end: number) {
 		const collabWindow = this.client.getCollabWindow();
-		return this.mergeTreeTextHelper.getText(collabWindow.localPerspective, "*", start, end);
+		return this.mergeTreeTextHelper.getText(
+			collabWindow.localPerspective,
+			"*",
+			start,
+			end,
+		);
 	}
 
 	/**
@@ -309,7 +346,10 @@ export function getTextAndMarkers(
 	};
 
 	sharedString.walkSegments(gatherTextAndMarkers, start, end, accum);
-	return { parallelText: accum.parallelText, parallelMarkers: accum.parallelMarkers };
+	return {
+		parallelText: accum.parallelText,
+		parallelMarkers: accum.parallelMarkers,
+	};
 }
 
 const gatherTextAndMarkers: ISegmentAction<ITextAndMarkerAccumulator> = (
@@ -378,7 +418,9 @@ const gatherTextAndMarkers: ISegmentAction<ITextAndMarkerAccumulator> = (
 		if (placeholder && placeholder.length > 0) {
 			const placeholderText =
 				// eslint-disable-next-line @typescript-eslint/no-base-to-string
-				placeholder === "*" ? `\n${segment}` : placeholder.repeat(segment.cachedLength);
+				placeholder === "*"
+					? `\n${segment}`
+					: placeholder.repeat(segment.cachedLength);
 			textSegment.text += placeholderText;
 		} else {
 			const marker = segment as Marker;

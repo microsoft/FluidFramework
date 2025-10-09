@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IConstellation, ICoordinate } from "@fluid-example/multiview-coordinate-interface";
+import {
+	IConstellation,
+	ICoordinate,
+} from "@fluid-example/multiview-coordinate-interface";
 import { SliderCoordinateView } from "@fluid-example/multiview-slider-coordinate-view";
 import React from "react";
 
@@ -60,7 +63,9 @@ interface IConstellationViewProps {
 export const ConstellationView: React.FC<IConstellationViewProps> = (
 	props: IConstellationViewProps,
 ) => {
-	const [starList, setStarList] = React.useState<ICoordinate[]>(props.model.stars);
+	const [starList, setStarList] = React.useState<ICoordinate[]>(
+		props.model.stars,
+	);
 	React.useEffect(() => {
 		const onConstellationChanged = () => {
 			setStarList(props.model.stars);

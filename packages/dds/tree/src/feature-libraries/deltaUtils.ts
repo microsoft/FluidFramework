@@ -11,7 +11,9 @@ import {
 } from "../core/index.js";
 import type { Mutable } from "../util/index.js";
 
-export function nodeIdFromChangeAtom(changeAtom: ChangeAtomId): DeltaDetachedNodeId {
+export function nodeIdFromChangeAtom(
+	changeAtom: ChangeAtomId,
+): DeltaDetachedNodeId {
 	return makeDetachedNodeId(changeAtom.revision, changeAtom.localId);
 }
 

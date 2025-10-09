@@ -12,9 +12,9 @@ baseConfig["node-option"].push("gc-global");
 
 const extendedConfig = {
 	...baseConfig,
-	"fgrep": ["@Benchmark", "@MemoryUsage"],
-	"reporter": "@fluid-tools/benchmark/dist/MochaReporter.js",
-	"reporterOptions": ["reportDir=.memoryTestsOutput/"],
+	fgrep: ["@Benchmark", "@MemoryUsage"],
+	reporter: "@fluid-tools/benchmark/dist/MochaReporter.js",
+	reporterOptions: ["reportDir=.memoryTestsOutput/"],
 };
 
 module.exports = extendedConfig;

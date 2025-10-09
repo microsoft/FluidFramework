@@ -41,12 +41,18 @@ const codecOptions: ICodecOptions = { jsonValidator: ajvValidator };
 describe("sharedTreeChangeCodec", () => {
 	it("passes down the context's schema to the fieldBatchCodec", () => {
 		const dummyFieldBatchCodec = {
-			encode: (data: FieldBatch, context: FieldBatchEncodingContext): EncodedFieldBatch => {
+			encode: (
+				data: FieldBatch,
+				context: FieldBatchEncodingContext,
+			): EncodedFieldBatch => {
 				// Checks that the context's schema matches the schema passed into the sharedTreeChangeCodec.
 				assert.equal(context.schema?.schema, dummyTestSchema);
 				return uncompressedEncode(data);
 			},
-			decode: (data: EncodedFieldBatch, context: FieldBatchEncodingContext): FieldBatch => {
+			decode: (
+				data: EncodedFieldBatch,
+				context: FieldBatchEncodingContext,
+			): FieldBatch => {
 				return decode(data, {
 					idCompressor: context.idCompressor,
 					originatorId: context.originatorId,
@@ -75,7 +81,10 @@ describe("sharedTreeChangeCodec", () => {
 		const dummyModularChangeSet: ModularChangeset = {
 			nodeChanges: newTupleBTree(),
 			fieldChanges: new Map([
-				[brand("fA"), { fieldKind: sequence.identifier, change: brand(changeA) }],
+				[
+					brand("fA"),
+					{ fieldKind: sequence.identifier, change: brand(changeA) },
+				],
 			]),
 			nodeToParent: newTupleBTree(),
 			nodeAliases: newTupleBTree(),

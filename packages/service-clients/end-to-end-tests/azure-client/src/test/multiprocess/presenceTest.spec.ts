@@ -8,7 +8,10 @@ import type { ChildProcess } from "node:child_process";
 import inspector from "node:inspector";
 
 import type { AttendeeId } from "@fluidframework/presence/beta";
-import { timeoutAwait, timeoutPromise } from "@fluidframework/test-utils/internal";
+import {
+	timeoutAwait,
+	timeoutPromise,
+} from "@fluidframework/test-utils/internal";
 
 import type { MessageFromChild } from "./messageTypes.js";
 import {
@@ -114,7 +117,8 @@ describe(`Presence with AzureClient`, () => {
 		/**
 		 * Timeout for presence attendees to connect {@link AttendeeConnectedEvent}
 		 */
-		const allAttendeesJoinedTimeoutMs = (1000 + 200 * numClients) * timeoutMultiplier;
+		const allAttendeesJoinedTimeoutMs =
+			(1000 + 200 * numClients) * timeoutMultiplier;
 
 		for (const writeClients of [numClients, 1]) {
 			it(`announces 'attendeeConnected' when remote client joins session [${numClients} clients, ${writeClients} writers]`, async function () {
@@ -123,7 +127,10 @@ describe(`Presence with AzureClient`, () => {
 					this.skip();
 				}
 
-				setTimeout(this, childConnectTimeoutMs + allAttendeesJoinedTimeoutMs + 1000);
+				setTimeout(
+					this,
+					childConnectTimeoutMs + allAttendeesJoinedTimeoutMs + 1000,
+				);
 
 				// Setup
 				const { children, childErrorPromise } = await forkChildProcesses(
@@ -183,8 +190,9 @@ describe(`Presence with AzureClient`, () => {
 				let childrenFullyJoined = 0;
 				const allAttendeesFullyJoined = Promise.all(
 					// eslint-disable-next-line @typescript-eslint/promise-function-async
-					connectResult.attendeeCountRequiredPromises.map((attendeeFullyJoinedPromise) =>
-						attendeeFullyJoinedPromise.then(() => childrenFullyJoined++),
+					connectResult.attendeeCountRequiredPromises.map(
+						(attendeeFullyJoinedPromise) =>
+							attendeeFullyJoinedPromise.then(() => childrenFullyJoined++),
 					),
 				);
 				await timeoutAwait(allAttendeesFullyJoined, {
@@ -193,7 +201,9 @@ describe(`Presence with AzureClient`, () => {
 				}).catch((error) => {
 					// Ideally this information would just be in the timeout error message, but that
 					// must be a resolved string (not dynamic). So, just log it separately.
-					testConsole.log(`${childrenFullyJoined} attendees fully joined before error...`);
+					testConsole.log(
+						`${childrenFullyJoined} attendees fully joined before error...`,
+					);
 					throw error;
 				});
 
@@ -205,7 +215,8 @@ describe(`Presence with AzureClient`, () => {
 									child.on("message", (msg: MessageFromChild) => {
 										if (
 											msg.event === "attendeeDisconnected" &&
-											msg.attendeeId === connectResult.containerCreatorAttendeeId
+											msg.attendeeId ===
+												connectResult.containerCreatorAttendeeId
 										) {
 											console.log(`Child[${index}] saw creator disconnect`);
 											resolve();
@@ -223,7 +234,10 @@ describe(`Presence with AzureClient`, () => {
 				children[0].send({ command: "disconnectSelf" });
 
 				// Verify - wait for all 'attendeeDisconnected' events
-				await Promise.race([Promise.all(waitForDisconnected), childErrorPromise]);
+				await Promise.race([
+					Promise.all(waitForDisconnected),
+					childErrorPromise,
+				]);
 			});
 		}
 	}
@@ -265,10 +279,11 @@ describe(`Presence with AzureClient`, () => {
 						numClients,
 						afterCleanUp,
 					));
-					({ containerCreatorAttendeeId, attendeeIdPromises } = await connectChildProcesses(
-						children,
-						{ writeClients: numClients, readyTimeoutMs: childConnectTimeoutMs },
-					));
+					({ containerCreatorAttendeeId, attendeeIdPromises } =
+						await connectChildProcesses(children, {
+							writeClients: numClients,
+							readyTimeoutMs: childConnectTimeoutMs,
+						}));
 					await Promise.all(attendeeIdPromises);
 					remoteClients = children.filter((_, index) => index !== 0);
 					// NOTE: For testing purposes child clients will expect a Latest value of type string (StateFactory.latest<{ value: string }>).
@@ -289,7 +304,10 @@ describe(`Presence with AzureClient`, () => {
 						workspaceId,
 						childErrorPromise,
 						stateUpdateTimeoutMs,
-						{ fromAttendeeId: containerCreatorAttendeeId, expectedValue: testValue },
+						{
+							fromAttendeeId: containerCreatorAttendeeId,
+							expectedValue: testValue,
+						},
 					);
 
 					// Act - Trigger the update
@@ -302,7 +320,10 @@ describe(`Presence with AzureClient`, () => {
 
 					// Verify all events are from the expected attendee
 					for (const updateEvent of updateEvents) {
-						assert.strictEqual(updateEvent.attendeeId, containerCreatorAttendeeId);
+						assert.strictEqual(
+							updateEvent.attendeeId,
+							containerCreatorAttendeeId,
+						);
 						assert.deepStrictEqual(updateEvent.value, testValue);
 					}
 
@@ -356,10 +377,11 @@ describe(`Presence with AzureClient`, () => {
 						numClients,
 						afterCleanUp,
 					));
-					({ containerCreatorAttendeeId, attendeeIdPromises } = await connectChildProcesses(
-						children,
-						{ writeClients: numClients, readyTimeoutMs: childConnectTimeoutMs },
-					));
+					({ containerCreatorAttendeeId, attendeeIdPromises } =
+						await connectChildProcesses(children, {
+							writeClients: numClients,
+							readyTimeoutMs: childConnectTimeoutMs,
+						}));
 					await Promise.all(attendeeIdPromises);
 					remoteClients = children.filter((_, index) => index !== 0);
 					// NOTE: For testing purposes child clients will expect a LatestMap value of type Record<string, string | number> (StateFactory.latestMap<{ value: Record<string, string | number> }, string>).
@@ -379,7 +401,10 @@ describe(`Presence with AzureClient`, () => {
 						testKey,
 						childErrorPromise,
 						stateUpdateTimeoutMs,
-						{ fromAttendeeId: containerCreatorAttendeeId, expectedValue: testValue },
+						{
+							fromAttendeeId: containerCreatorAttendeeId,
+							expectedValue: testValue,
+						},
 					);
 
 					// Act
@@ -393,7 +418,10 @@ describe(`Presence with AzureClient`, () => {
 
 					// Check all events are from the expected attendee
 					for (const updateEvent of updateEvents) {
-						assert.strictEqual(updateEvent.attendeeId, containerCreatorAttendeeId);
+						assert.strictEqual(
+							updateEvent.attendeeId,
+							containerCreatorAttendeeId,
+						);
 						assert.strictEqual(updateEvent.key, testKey);
 						assert.deepStrictEqual(updateEvent.value, testValue);
 					}
@@ -524,10 +552,18 @@ describe(`Presence with AzureClient`, () => {
 					);
 
 					for (const response of key1Responses) {
-						assert.deepStrictEqual(response.value, value1, "Key1 value should match");
+						assert.deepStrictEqual(
+							response.value,
+							value1,
+							"Key1 value should match",
+						);
 					}
 					for (const response of key2Responses) {
-						assert.deepStrictEqual(response.value, value2, "Key2 value should match");
+						assert.deepStrictEqual(
+							response.value,
+							value2,
+							"Key2 value should match",
+						);
 					}
 				});
 			}

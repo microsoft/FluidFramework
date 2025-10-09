@@ -7,20 +7,29 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
-import type { FluidObject, FluidObjectKeys, IProvideFluidLoadable } from "../../index.js";
+import type {
+	FluidObject,
+	FluidObjectKeys,
+	IProvideFluidLoadable,
+} from "../../index.js";
 import { IFluidLoadable } from "../../index.js";
 
 declare function getFluidObject(): FluidObject;
 
 declare function useFluidObject(params: FluidObject | undefined): void;
 
-declare function useProvider<T extends FluidObject>(params: FluidObject<T> | undefined): void;
-
-declare function useProviderKey<T, TKey extends FluidObjectKeys<T> = FluidObjectKeys<T>>(
-	key: TKey,
+declare function useProvider<T extends FluidObject>(
+	params: FluidObject<T> | undefined,
 ): void;
 
-declare function useLoadable(params: FluidObject<IFluidLoadable> | undefined): void;
+declare function useProviderKey<
+	T,
+	TKey extends FluidObjectKeys<T> = FluidObjectKeys<T>,
+>(key: TKey): void;
+
+declare function useLoadable(
+	params: FluidObject<IFluidLoadable> | undefined,
+): void;
 declare function getLoadable(): IFluidLoadable;
 
 declare function use(obj: unknown);

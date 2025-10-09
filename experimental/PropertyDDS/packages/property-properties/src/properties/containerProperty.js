@@ -12,9 +12,13 @@ const _ = require("underscore");
 
 const { validationsEnabled } = require("../enableValidations");
 
-const { AbstractStaticCollectionProperty } = require("./abstractStaticCollectionProperty");
+const {
+	AbstractStaticCollectionProperty,
+} = require("./abstractStaticCollectionProperty");
 const { BaseProperty } = require("./baseProperty");
-const { IndexedCollectionBaseProperty } = require("./indexedCollectionBaseProperty");
+const {
+	IndexedCollectionBaseProperty,
+} = require("./indexedCollectionBaseProperty");
 
 /**
  * A property object that allows to add child properties dynamically.
@@ -65,7 +69,9 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
 	 * @private
 	 */
 	_addOptionalChild(in_id, in_typeid) {
-		if (this._optionalChildren === ContainerProperty.prototype._optionalChildren) {
+		if (
+			this._optionalChildren === ContainerProperty.prototype._optionalChildren
+		) {
 			this._optionalChildren = {};
 			this._dynamicChildren = {};
 		}
@@ -96,7 +102,10 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
 				"insert error: " + MSG.NOT_A_PROPERTY,
 			);
 		} else {
-			ConsoleUtils.assert(_.isString(in_id) || _.isNumber(in_id), MSG.ID_STRING_OR_NUMBER);
+			ConsoleUtils.assert(
+				_.isString(in_id) || _.isNumber(in_id),
+				MSG.ID_STRING_OR_NUMBER,
+			);
 			ConsoleUtils.assert(
 				!_.isString(in_id) || !_.isEmpty(in_id),
 				MSG.ID_SHOULD_NOT_BE_EMPTY_STRING,
@@ -138,7 +147,8 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
 		}
 
 		if (
-			this._optionalChildren[in_id].toUpperCase() !== in_property.getTypeid().toUpperCase()
+			this._optionalChildren[in_id].toUpperCase() !==
+			in_property.getTypeid().toUpperCase()
 		) {
 			throw new Error(
 				MSG.MISMATCHING_PROPERTY_TYPEID +
@@ -229,7 +239,12 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
 		}
 
 		// Add the child property to the dynamic properties
-		IndexedCollectionBaseProperty.prototype._insert.call(this, in_key, in_property, false);
+		IndexedCollectionBaseProperty.prototype._insert.call(
+			this,
+			in_key,
+			in_property,
+			false,
+		);
 
 		// We postponed the report above, to make sure the child property has actually been appended to this
 		// node, before the report is forwarded to the view
@@ -250,7 +265,11 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
 
 		if (this._dynamicChildren[in_key]) {
 			// Remove from the indexed collection
-			IndexedCollectionBaseProperty.prototype._removeByKey.call(this, in_key, in_reportToView);
+			IndexedCollectionBaseProperty.prototype._removeByKey.call(
+				this,
+				in_key,
+				in_reportToView,
+			);
 		} else {
 			console.error(MSG.REMOVING_NON_EXISTING_KEY + in_key);
 		}
@@ -338,10 +357,20 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
 		var checkoutView = this._getCheckoutView();
 		if (checkoutView !== undefined) {
 			checkoutView.pushNotificationDelayScope();
-			ContainerProperty.prototype._setValues.call(this, in_properties, false, false);
+			ContainerProperty.prototype._setValues.call(
+				this,
+				in_properties,
+				false,
+				false,
+			);
 			checkoutView.popNotificationDelayScope();
 		} else {
-			ContainerProperty.prototype._setValues.call(this, in_properties, false, false);
+			ContainerProperty.prototype._setValues.call(
+				this,
+				in_properties,
+				false,
+				false,
+			);
 		}
 	}
 }

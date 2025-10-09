@@ -67,7 +67,10 @@ export async function createSesEditEvaluator(options?: {
 			},
 		};
 
-		const compartment = new Compartment({ ...compartmentOptions, __options__: true });
+		const compartment = new Compartment({
+			...compartmentOptions,
+			__options__: true,
+		});
 		await compartment.evaluate(code);
 	};
 }

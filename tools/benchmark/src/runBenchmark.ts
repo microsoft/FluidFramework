@@ -235,7 +235,9 @@ class BenchmarkState<T> implements BenchmarkTimer<T> {
 export function runBenchmarkSync(args: BenchmarkRunningOptionsSync): BenchmarkData {
 	const state = new BenchmarkState(timer, args);
 	while (
-		state.recordBatch(doBatch(state.iterationsPerBatch, args.benchmarkFn, args.beforeEachBatch))
+		state.recordBatch(
+			doBatch(state.iterationsPerBatch, args.benchmarkFn, args.beforeEachBatch),
+		)
 	) {
 		// No-op
 	}

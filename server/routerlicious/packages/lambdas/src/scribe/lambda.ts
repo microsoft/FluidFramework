@@ -203,8 +203,10 @@ export class ScribeLambda implements IPartitionLambda {
 					} else {
 						const from = lastProtocolHandlerSequenceNumber + 1;
 						const to = value.operation.sequenceNumber - 1;
-						const additionalPendingMessages =
-							await this.pendingMessageReader.readMessages(from, to);
+						const additionalPendingMessages = await this.pendingMessageReader.readMessages(
+							from,
+							to,
+						);
 						for (const additionalPendingMessage of additionalPendingMessages) {
 							this.pendingMessages.push(additionalPendingMessage);
 						}
@@ -240,8 +242,7 @@ export class ScribeLambda implements IPartitionLambda {
 					// the clients summary state (ref seq num) must be at least as high as scribes (protocolHandler.sequenceNumber)
 					if (
 						!this.summaryWriter.isExternal ||
-						value.operation.referenceSequenceNumber >=
-							this.protocolHandler.sequenceNumber
+						value.operation.referenceSequenceNumber >= this.protocolHandler.sequenceNumber
 					) {
 						// Process up to the summary op ref seq to get the protocol state at the summary op.
 						// Capture state first in case the summary is nacked.
@@ -260,8 +261,7 @@ export class ScribeLambda implements IPartitionLambda {
 									this.lastOffset,
 									this.serviceConfiguration.scribe.scrubUserDataInSummaries,
 								);
-								const operation =
-									value.operation as ISequencedDocumentAugmentedMessage;
+								const operation = value.operation as ISequencedDocumentAugmentedMessage;
 								const summaryResponse = await this.summaryWriter.writeClientSummary(
 									operation,
 									this.lastClientSummaryHead,
@@ -277,20 +277,14 @@ export class ScribeLambda implements IPartitionLambda {
 									// On a successful write, send an ack message to clients and a control message to deli.
 									// Otherwise send a nack and revert the protocol state back to pre summary state.
 									if (summaryResponse.status) {
-										await this.sendSummaryAck(
-											summaryResponse.message as ISummaryAck,
-										);
+										await this.sendSummaryAck(summaryResponse.message as ISummaryAck);
 										await this.sendSummaryConfirmationMessage(
 											operation.sequenceNumber,
 											true,
 											false,
 										);
-										this.updateProtocolHead(
-											this.protocolHandler.sequenceNumber,
-										);
-										this.updateLastSummarySequenceNumber(
-											this.protocolHandler.sequenceNumber,
-										);
+										this.updateProtocolHead(this.protocolHandler.sequenceNumber);
+										this.updateLastSummarySequenceNumber(this.protocolHandler.sequenceNumber);
 										const summaryResult = `Client summary success @${value.operation.sequenceNumber}`;
 										this.context.log?.info(summaryResult, {
 											messageMetaData: {
@@ -318,10 +312,7 @@ export class ScribeLambda implements IPartitionLambda {
 											errorMsg,
 											getLumberBaseProperties(this.documentId, this.tenantId),
 										);
-										this.revertProtocolState(
-											prevState.protocolState,
-											prevState.pendingOps,
-										);
+										this.revertProtocolState(prevState.protocolState, prevState.pendingOps);
 									}
 								}
 							} catch (error) {
@@ -332,10 +323,7 @@ export class ScribeLambda implements IPartitionLambda {
 									getLumberBaseProperties(this.documentId, this.tenantId),
 									error,
 								);
-								this.revertProtocolState(
-									prevState.protocolState,
-									prevState.pendingOps,
-								);
+								this.revertProtocolState(prevState.protocolState, prevState.pendingOps);
 								// If this flag is set, we should ignore any storage specific error and move forward
 								// to process the next message.
 								if (this.serviceConfiguration.scribe.ignoreStorageException) {
@@ -364,8 +352,7 @@ export class ScribeLambda implements IPartitionLambda {
 					this.documentCheckpointManager.setNoActiveClients(true);
 					this.globalCheckpointOnly = true;
 					const enableServiceSummaryForTenant =
-						this.disableTransientTenantFiltering ||
-						!this.transientTenants.has(this.tenantId);
+						this.disableTransientTenantFiltering || !this.transientTenants.has(this.tenantId);
 
 					if (
 						this.serviceConfiguration.scribe.generateServiceSummary &&
@@ -386,9 +373,7 @@ export class ScribeLambda implements IPartitionLambda {
 							);
 
 							if (summaryResponse) {
-								if (
-									this.serviceConfiguration.scribe.clearCacheAfterServiceSummary
-								) {
+								if (this.serviceConfiguration.scribe.clearCacheAfterServiceSummary) {
 									this.clearCache = true;
 								}
 								await this.sendSummaryConfirmationMessage(
@@ -675,7 +660,7 @@ export class ScribeLambda implements IPartitionLambda {
 							getLumberBaseProperties(this.documentId, this.tenantId),
 							error,
 						);
-				  })
+					})
 		)
 			.then(() => {
 				this.pendingP = undefined;
@@ -723,8 +708,7 @@ export class ScribeLambda implements IPartitionLambda {
 			// 1. For client summary, we can cap these pending ops to the last protocol head
 			// 2. For service summary, given the logtail is appended and protocol head not advance, we should still keep these
 			//    pending ops to reduce db/alfred call to fetch ops, but should cap to a maxtlogtail limit to avoid memory leak.;
-			this.lastCheckpointInsertedNumber =
-				inserts[inserts.length - 1].operation.sequenceNumber;
+			this.lastCheckpointInsertedNumber = inserts[inserts.length - 1].operation.sequenceNumber;
 			const cappedNumber = Math.max(
 				this.protocolHead,
 				this.lastCheckpointInsertedNumber - this.maxPendingCheckpointMessagesLength,

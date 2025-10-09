@@ -121,7 +121,10 @@ describe("dirty indexes", () => {
 		{
 			const { root, index } = init(
 				Roots,
-				new Roots({ a: [new Parent({ child: new Child({ value: 3 }) })], b: [] }),
+				new Roots({
+					a: [new Parent({ child: new Child({ value: 3 }) })],
+					b: [],
+				}),
 			);
 			root.a[0].child = new Child({ value: 4 });
 			root.b.moveToEnd(0, root.a);
@@ -130,7 +133,10 @@ describe("dirty indexes", () => {
 		{
 			const { root, index } = init(
 				Roots,
-				new Roots({ a: [new Parent({ child: new Child({ value: 3 }) })], b: [] }),
+				new Roots({
+					a: [new Parent({ child: new Child({ value: 3 }) })],
+					b: [],
+				}),
 			);
 			root.b.moveToEnd(0, root.a);
 			root.b[0].child = new Child({ value: 4 });

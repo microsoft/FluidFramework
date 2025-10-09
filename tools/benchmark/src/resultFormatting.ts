@@ -19,7 +19,11 @@ export interface ExpectedCell {
 	cell(table: Table, data: Record<string, unknown>): void;
 }
 
-export function numberCell(key: string, title: string, f: (v: number) => string): ExpectedCell {
+export function numberCell(
+	key: string,
+	title: string,
+	f: (v: number) => string,
+): ExpectedCell {
 	return {
 		key,
 		cell: (table, data): void => {
@@ -31,7 +35,11 @@ export function numberCell(key: string, title: string, f: (v: number) => string)
 	};
 }
 
-export function stringCell(key: string, title: string, f: (s: string) => string): ExpectedCell {
+export function stringCell(
+	key: string,
+	title: string,
+	f: (s: string) => string,
+): ExpectedCell {
 	return {
 		key,
 		cell: (table, data): void => {
@@ -43,7 +51,11 @@ export function stringCell(key: string, title: string, f: (s: string) => string)
 	};
 }
 
-export function arrayCell(key: string, title: string, f: (a: unknown[]) => string): ExpectedCell {
+export function arrayCell(
+	key: string,
+	title: string,
+	f: (a: unknown[]) => string,
+): ExpectedCell {
 	return {
 		key,
 		cell: (table, data): void => {
@@ -56,7 +68,11 @@ export function arrayCell(key: string, title: string, f: (a: unknown[]) => strin
 	};
 }
 
-export function objectCell(key: string, title: string, f: (a: object) => string): ExpectedCell {
+export function objectCell(
+	key: string,
+	title: string,
+	f: (a: object) => string,
+): ExpectedCell {
 	return {
 		key,
 		cell: (table, data): void => {

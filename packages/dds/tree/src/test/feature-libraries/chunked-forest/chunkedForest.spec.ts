@@ -26,92 +26,114 @@ import {
 } from "../../../feature-libraries/index.js";
 import { testForest } from "../../forestTestSuite.js";
 
-const chunkers: [string, (schema: TreeStoredSchemaSubscription) => IChunker][] = [
+const chunkers: [string, (schema: TreeStoredSchemaSubscription) => IChunker][] =
 	[
-		"basic",
-		(schema): IChunker =>
-			new Chunker(
-				schema,
-				defaultSchemaPolicy,
-				Number.POSITIVE_INFINITY,
-				Number.POSITIVE_INFINITY,
-				0,
-				() => polymorphic,
-			),
-	],
-	[
-		"default",
-		(schema) => makeTreeChunker(schema, defaultSchemaPolicy, defaultIncrementalEncodingPolicy),
-	],
-	[
-		"sequences",
-		(schema): IChunker =>
-			new Chunker(schema, defaultSchemaPolicy, 2, 1, 0, (): ShapeInfo => polymorphic),
-	],
-	[
-		"minimal-uniform",
-		(schema): IChunker =>
-			new Chunker(
-				schema,
-				defaultSchemaPolicy,
-				Number.POSITIVE_INFINITY,
-				Number.POSITIVE_INFINITY,
-				1,
-				(type: TreeNodeSchemaIdentifier, shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>) =>
-					tryShapeFromNodeSchema(
-						{
-							schema,
-							policy: defaultSchemaPolicy,
-							shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
-							shapes,
-						},
-						type,
-					),
-			),
-	],
-	[
-		"uniform",
-		(schema): IChunker =>
-			new Chunker(
-				schema,
-				defaultSchemaPolicy,
-				Number.POSITIVE_INFINITY,
-				Number.POSITIVE_INFINITY,
-				defaultChunkPolicy.uniformChunkNodeCount,
-				(type: TreeNodeSchemaIdentifier, shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>) =>
-					tryShapeFromNodeSchema(
-						{
-							schema,
-							policy: defaultSchemaPolicy,
-							shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
-							shapes,
-						},
-						type,
-					),
-			),
-	],
-	[
-		"mixed",
-		(schema): IChunker =>
-			new Chunker(
-				schema,
-				defaultSchemaPolicy,
-				2,
-				1,
-				defaultChunkPolicy.uniformChunkNodeCount,
-				(type: TreeNodeSchemaIdentifier, shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>) =>
-					tryShapeFromNodeSchema(
-						{
-							schema,
-							policy: defaultSchemaPolicy,
-							shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
-							shapes,
-						},
-						type,
-					),
-			),
-	],
-];
+		[
+			"basic",
+			(schema): IChunker =>
+				new Chunker(
+					schema,
+					defaultSchemaPolicy,
+					Number.POSITIVE_INFINITY,
+					Number.POSITIVE_INFINITY,
+					0,
+					() => polymorphic,
+				),
+		],
+		[
+			"default",
+			(schema) =>
+				makeTreeChunker(
+					schema,
+					defaultSchemaPolicy,
+					defaultIncrementalEncodingPolicy,
+				),
+		],
+		[
+			"sequences",
+			(schema): IChunker =>
+				new Chunker(
+					schema,
+					defaultSchemaPolicy,
+					2,
+					1,
+					0,
+					(): ShapeInfo => polymorphic,
+				),
+		],
+		[
+			"minimal-uniform",
+			(schema): IChunker =>
+				new Chunker(
+					schema,
+					defaultSchemaPolicy,
+					Number.POSITIVE_INFINITY,
+					Number.POSITIVE_INFINITY,
+					1,
+					(
+						type: TreeNodeSchemaIdentifier,
+						shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
+					) =>
+						tryShapeFromNodeSchema(
+							{
+								schema,
+								policy: defaultSchemaPolicy,
+								shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
+								shapes,
+							},
+							type,
+						),
+				),
+		],
+		[
+			"uniform",
+			(schema): IChunker =>
+				new Chunker(
+					schema,
+					defaultSchemaPolicy,
+					Number.POSITIVE_INFINITY,
+					Number.POSITIVE_INFINITY,
+					defaultChunkPolicy.uniformChunkNodeCount,
+					(
+						type: TreeNodeSchemaIdentifier,
+						shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
+					) =>
+						tryShapeFromNodeSchema(
+							{
+								schema,
+								policy: defaultSchemaPolicy,
+								shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
+								shapes,
+							},
+							type,
+						),
+				),
+		],
+		[
+			"mixed",
+			(schema): IChunker =>
+				new Chunker(
+					schema,
+					defaultSchemaPolicy,
+					2,
+					1,
+					defaultChunkPolicy.uniformChunkNodeCount,
+					(
+						type: TreeNodeSchemaIdentifier,
+						shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
+					) =>
+						tryShapeFromNodeSchema(
+							{
+								schema,
+								policy: defaultSchemaPolicy,
+								shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
+								shapes,
+							},
+							type,
+						),
+				),
+		],
+	];
 
 describe("ChunkedForest", () => {
 	for (const [name, chunker] of chunkers) {

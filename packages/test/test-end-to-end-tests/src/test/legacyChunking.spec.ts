@@ -58,8 +58,12 @@ describeInstallVersions(
 		);
 
 		const ContainerRuntimeFactoryWithDefaultDataStore_Old =
-			getContainerRuntimeApi(versionWithChunking).ContainerRuntimeFactoryWithDefaultDataStore;
-		const oldRuntimeFactory = new (ContainerRuntimeFactoryWithDefaultDataStore_Old as any)(
+			getContainerRuntimeApi(
+				versionWithChunking,
+			).ContainerRuntimeFactoryWithDefaultDataStore;
+		const oldRuntimeFactory = new (
+			ContainerRuntimeFactoryWithDefaultDataStore_Old as any
+		)(
 			oldDataObjectFactory,
 			[[oldDataObjectFactory.type, Promise.resolve(oldDataObjectFactory)]],
 			undefined,
@@ -81,8 +85,10 @@ describeInstallVersions(
 			await getContainerEntryPointBackCompat<ITestFluidObject>(oldContainer);
 		oldMap = await oldDataObject.getSharedObject<ISharedMap>(mapId);
 
-		const containerOnLatest = await provider.loadTestContainer(testContainerConfig);
-		const newDataObject = (await containerOnLatest.getEntryPoint()) as ITestFluidObject;
+		const containerOnLatest =
+			await provider.loadTestContainer(testContainerConfig);
+		const newDataObject =
+			(await containerOnLatest.getEntryPoint()) as ITestFluidObject;
 		newMap = await newDataObject.getSharedObject<ISharedMap>(mapId);
 
 		await provider.ensureSynchronized();
@@ -106,10 +112,30 @@ describeInstallVersions(
 		oldMap.set("key4", regularValue);
 
 		await provider.ensureSynchronized();
-		assert.strictEqual(newMap.get("key0"), regularValue, "Wrong value found in the new map");
-		assert.strictEqual(newMap.get("key1"), chunkableValue, "Wrong value found in the new map");
-		assert.strictEqual(newMap.get("key2"), chunkableValue, "Wrong value found in the new map");
-		assert.strictEqual(newMap.get("key3"), regularValue, "Wrong value found in the new map");
-		assert.strictEqual(newMap.get("key4"), regularValue, "Wrong value found in the new map");
+		assert.strictEqual(
+			newMap.get("key0"),
+			regularValue,
+			"Wrong value found in the new map",
+		);
+		assert.strictEqual(
+			newMap.get("key1"),
+			chunkableValue,
+			"Wrong value found in the new map",
+		);
+		assert.strictEqual(
+			newMap.get("key2"),
+			chunkableValue,
+			"Wrong value found in the new map",
+		);
+		assert.strictEqual(
+			newMap.get("key3"),
+			regularValue,
+			"Wrong value found in the new map",
+		);
+		assert.strictEqual(
+			newMap.get("key4"),
+			regularValue,
+			"Wrong value found in the new map",
+		);
 	});
 });

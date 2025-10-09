@@ -22,8 +22,18 @@ import type {
 import { splitMark } from "./utils.js";
 
 export interface SequenceFieldEditor extends FieldEditor<Changeset> {
-	insert(index: number, count: number, firstId: CellId, revision: RevisionTag): Changeset;
-	remove(index: number, count: number, id: ChangesetLocalId, revision: RevisionTag): Changeset;
+	insert(
+		index: number,
+		count: number,
+		firstId: CellId,
+		revision: RevisionTag,
+	): Changeset;
+	remove(
+		index: number,
+		count: number,
+		id: ChangesetLocalId,
+		revision: RevisionTag,
+	): Changeset;
 	revive(
 		index: number,
 		count: number,
@@ -79,7 +89,10 @@ export const sequenceFieldEditor = {
 		const changeset: Changeset = [];
 		let currentIndex = 0;
 		for (const [index, change] of changes) {
-			assert(index >= currentIndex, 0xabe /* Child changes must be in order. */);
+			assert(
+				index >= currentIndex,
+				0xabe /* Child changes must be in order. */,
+			);
 			if (index > currentIndex) {
 				changeset.push({ count: index - currentIndex });
 			}
@@ -109,7 +122,9 @@ export const sequenceFieldEditor = {
 		id: ChangesetLocalId,
 		revision: RevisionTag | undefined,
 	): Changeset =>
-		count === 0 ? [] : markAtIndex(index, { type: "Remove", count, id, revision }),
+		count === 0
+			? []
+			: markAtIndex(index, { type: "Remove", count, id, revision }),
 
 	revive: (
 		index: number,
@@ -117,7 +132,10 @@ export const sequenceFieldEditor = {
 		detachEvent: CellId,
 		revision: RevisionTag | undefined,
 	): Changeset => {
-		assert(detachEvent.revision !== undefined, 0x724 /* Detach event must have a revision */);
+		assert(
+			detachEvent.revision !== undefined,
+			0x724 /* Detach event must have a revision */,
+		);
 		const mark: CellMark<Insert> = {
 			type: "Insert",
 			id: detachEvent.localId,
@@ -208,7 +226,13 @@ export const sequenceFieldEditor = {
 			revision,
 		};
 
-		return moveMarksToMarkList(sourceIndex, count, destIndex, moveOut, returnTo);
+		return moveMarksToMarkList(
+			sourceIndex,
+			count,
+			destIndex,
+			moveOut,
+			returnTo,
+		);
 	},
 } satisfies SequenceFieldEditor;
 

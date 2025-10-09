@@ -105,18 +105,26 @@ describe("ValueProperty", function () {
 		expect(PropertyFactory.create("Uint16", undefined, 10).value).to.equal(10);
 		expect(PropertyFactory.create("Int32", undefined, 10).value).to.equal(10);
 		expect(PropertyFactory.create("Uint32", undefined, 10).value).to.equal(10);
-		expect(PropertyFactory.create("Int64", undefined, new Int64(10, 10)).value).to.deep.equal(
-			new Int64(10, 10),
-		);
+		expect(
+			PropertyFactory.create("Int64", undefined, new Int64(10, 10)).value,
+		).to.deep.equal(new Int64(10, 10));
 		expect(
 			PropertyFactory.create("Uint64", undefined, new Uint64(10, 10)).value,
 		).to.deep.equal(new Uint64(10, 10));
 		expect(PropertyFactory.create("Float32", undefined, 10).value).to.equal(10);
 		expect(PropertyFactory.create("Float64", undefined, 10).value).to.equal(10);
-		expect(PropertyFactory.create("Bool", undefined, false).value).to.equal(false);
-		expect(PropertyFactory.create("Bool", undefined, true).value).to.equal(true);
-		expect(PropertyFactory.create("String", undefined, "test").value).to.equal("test");
-		expect(PropertyFactory.create("Reference", undefined, "/").value).to.equal("/");
+		expect(PropertyFactory.create("Bool", undefined, false).value).to.equal(
+			false,
+		);
+		expect(PropertyFactory.create("Bool", undefined, true).value).to.equal(
+			true,
+		);
+		expect(PropertyFactory.create("String", undefined, "test").value).to.equal(
+			"test",
+		);
+		expect(PropertyFactory.create("Reference", undefined, "/").value).to.equal(
+			"/",
+		);
 	});
 
 	describe("ValueProperty serialize/deserialize tests", function () {
@@ -135,7 +143,9 @@ describe("ValueProperty", function () {
 				int32Prop.serialize({ dirtyOnly: false }),
 			);
 			expect(deserializeResult).to.equal(11);
-			deserializeResult = anotherInt32Prop.deserialize(int32Prop._serialize(false));
+			deserializeResult = anotherInt32Prop.deserialize(
+				int32Prop._serialize(false),
+			);
 			assert.deepEqual(deserializeResult, undefined);
 			expect(anotherInt32Prop.value).to.be.equal(11);
 		});

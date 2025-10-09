@@ -63,7 +63,9 @@ const errorResponseKeysAllowList = new Set([
 /**
  * @internal
  */
-export class MongoCollection<T extends Document> implements core.ICollection<T>, core.IRetryable {
+export class MongoCollection<T extends Document>
+	implements core.ICollection<T>, core.IRetryable
+{
 	private readonly apiCounter = new InMemoryApiCounters();
 	private readonly failedApiCounterSuffix = ".Failed";
 	private consecutiveFailedCount = 0;
@@ -101,7 +103,12 @@ export class MongoCollection<T extends Document> implements core.ICollection<T>,
 		return this.requestWithRetry(req, "MongoCollection.aggregate");
 	}
 
-	public async find(query: object, sort: any, limit = MaxFetchSize, skip?: number): Promise<T[]> {
+	public async find(
+		query: object,
+		sort: any,
+		limit = MaxFetchSize,
+		skip?: number,
+	): Promise<T[]> {
 		const req: () => Promise<T[]> = async () => {
 			let queryCursor = this.collection.find<T>(query).sort(sort).limit(limit);
 
@@ -115,7 +122,8 @@ export class MongoCollection<T extends Document> implements core.ICollection<T>,
 
 	// eslint-disable-next-line @rushstack/no-new-null
 	public async findOne(query: object, options?: FindOptions): Promise<T | null> {
-		const req: () => Promise<T | null> = async () => this.collection.findOne<T>(query, options);
+		const req: () => Promise<T | null> = async () =>
+			this.collection.findOne<T>(query, options);
 		return this.requestWithRetry(
 			req, // request
 			"MongoCollection.findOne", // callerName
@@ -230,9 +238,7 @@ export class MongoCollection<T extends Document> implements core.ICollection<T>,
 	public async insertOne(value: T): Promise<any> {
 		const req = async () => {
 			try {
-				const result = await this.collection.insertOne(
-					value as OptionalUnlessRequiredId<T>,
-				);
+				const result = await this.collection.insertOne(value as OptionalUnlessRequiredId<T>);
 				// Older mongo driver bug, this insertedId was objectId or 3.2 but changed to any ID type consumer provided.
 				return result.insertedId;
 			} catch (sdkError) {
@@ -339,11 +345,7 @@ export class MongoCollection<T extends Document> implements core.ICollection<T>,
 	): Promise<{ value: T; existing: boolean }> {
 		const req = async () => {
 			try {
-				const result = await this.collection.findOneAndUpdate(
-					query,
-					{ $set: value },
-					options,
-				);
+				const result = await this.collection.findOneAndUpdate(query, { $set: value }, options);
 
 				return result.value
 					? { value: result.value, existing: true }
@@ -374,7 +376,12 @@ export class MongoCollection<T extends Document> implements core.ICollection<T>,
 		return this.collection.updateOne(filter, update, options);
 	}
 
-	private async updateManyCore(filter: any, set: any, addToSet: any, options: any): Promise<any> {
+	private async updateManyCore(
+		filter: any,
+		set: any,
+		addToSet: any,
+		options: any,
+	): Promise<any> {
 		const update: any = {};
 		if (set) {
 			update.$set = set;
@@ -476,11 +483,7 @@ export class MongoCollection<T extends Document> implements core.ICollection<T>,
 		try {
 			return cloneDeep(error);
 		} catch (errCloning) {
-			Lumberjack.warning(
-				`Error cloning error object using cloneDeep.`,
-				undefined,
-				errCloning,
-			);
+			Lumberjack.warning(`Error cloning error object using cloneDeep.`, undefined, errCloning);
 		}
 
 		try {
@@ -493,7 +496,11 @@ export class MongoCollection<T extends Document> implements core.ICollection<T>,
 			);
 		}
 
-		Lumberjack.error("Failed to clone error object. Using the shallow copy.", undefined, error);
+		Lumberjack.error(
+			"Failed to clone error object. Using the shallow copy.",
+			undefined,
+			error,
+		);
 		return { ...error };
 	}
 
@@ -747,7 +754,8 @@ export class MongoDbFactory implements core.IDbFactory {
 			apiFailureRateTerminationThreshold ?? DefaultApiFailureRateTerminationThreshold;
 		this.apiMinimumCountToEnableTermination =
 			apiMinimumCountToEnableTermination ?? DefaultApiMinimumCountToEnableTermination;
-		this.serverSelectionTimeoutMS = serverSelectionTimeoutMS ?? DefaultServerSelectionTimeoutMS;
+		this.serverSelectionTimeoutMS =
+			serverSelectionTimeoutMS ?? DefaultServerSelectionTimeoutMS;
 		this.consecutiveFailedThresholdForLowerTotalRequests =
 			consecutiveFailedThresholdForLowerTotalRequests ??
 			DefaultConsecutiveFailedThresholdForLowerTotalRequests;

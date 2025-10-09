@@ -50,7 +50,8 @@ const nameToColumnInfo: Record<string, ColumnInfo<unknown>> = {
 		style: { alignment: "center" },
 	},
 	version: {
-		getValue: (pkg: Package) => (pkg.monoRepo ? pkg.monoRepo.version : pkg.version),
+		getValue: (pkg: Package) =>
+			pkg.monoRepo ? pkg.monoRepo.version : pkg.version,
 		style: { alignment: "left" },
 	},
 	path: {
@@ -63,7 +64,8 @@ const nameToColumnInfo: Record<string, ColumnInfo<unknown>> = {
  * The root `info` command.
  */
 export default class InfoCommand extends BaseCommand<typeof InfoCommand> {
-	static readonly description = "Get info about the repo, release groups, and packages.";
+	static readonly description =
+		"Get info about the repo, release groups, and packages.";
 
 	static readonly flags = {
 		releaseGroup: releaseGroupFlag({
@@ -104,7 +106,8 @@ export default class InfoCommand extends BaseCommand<typeof InfoCommand> {
 		// Sort by packages by name (invariant sort by codepoints).
 		// (See https://stackoverflow.com/a/40355107)
 		packages.sort(
-			(left, right) => Number(left.name > right.name) || -(left.name < right.name),
+			(left, right) =>
+				Number(left.name > right.name) || -(left.name < right.name),
 		);
 
 		// Filter out private packages

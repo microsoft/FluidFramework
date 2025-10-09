@@ -26,8 +26,13 @@ import { IR11sResponse } from "./restWrapper.js";
  */
 export interface IHistorian {
 	getBlob(sha: string): Promise<IR11sResponse<IGitBlob>>;
-	createBlob(blob: IGitCreateBlobParams): Promise<IR11sResponse<IGitCreateBlobResponse>>;
-	getCommits(sha: string, count: number): Promise<IR11sResponse<IGitCommitDetails[]>>;
+	createBlob(
+		blob: IGitCreateBlobParams,
+	): Promise<IR11sResponse<IGitCreateBlobResponse>>;
+	getCommits(
+		sha: string,
+		count: number,
+	): Promise<IR11sResponse<IGitCommitDetails[]>>;
 	createTree(tree: IGitCreateTreeParams): Promise<IR11sResponse<IGitTree>>;
 	getTree(sha: string, recursive: boolean): Promise<IR11sResponse<IGitTree>>;
 	createSummary(
@@ -38,7 +43,10 @@ export interface IHistorian {
 }
 
 export interface IGitManager {
-	getCommits(sha: string, count: number): Promise<IR11sResponse<IGitCommitDetails[]>>;
+	getCommits(
+		sha: string,
+		count: number,
+	): Promise<IR11sResponse<IGitCommitDetails[]>>;
 	getTree(root: string, recursive: boolean): Promise<IR11sResponse<IGitTree>>;
 	getBlob(sha: string): Promise<IR11sResponse<IGitBlob>>;
 	createBlob(

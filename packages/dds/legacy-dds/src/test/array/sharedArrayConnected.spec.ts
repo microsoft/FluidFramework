@@ -70,7 +70,10 @@ describe("SharedArray", () => {
 				objectStorage: new MockStorage(),
 			};
 
-			remoteSharedArray = factory.create(dataStoreRuntime2, "remoteSharedArray");
+			remoteSharedArray = factory.create(
+				dataStoreRuntime2,
+				"remoteSharedArray",
+			);
 			remoteSharedArray.connect(services2);
 		});
 
@@ -569,12 +572,16 @@ describe("SharedArray in connected state with a remote SharedArray with IFluidHa
 
 		// Connect the first SharedArray.
 		dataStoreRuntime.local = false;
-		const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+		const containerRuntime1 =
+			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 		const services1 = {
 			deltaConnection: containerRuntime1.createDeltaConnection(),
 			objectStorage: new MockStorage(),
 		};
-		localSharedArray = factory.create(dataStoreRuntime, "sharedArrayIFluidHandle");
+		localSharedArray = factory.create(
+			dataStoreRuntime,
+			"sharedArrayIFluidHandle",
+		);
 		localSharedArray.connect(services1);
 
 		// Create and connect a second SharedArray.
@@ -586,7 +593,10 @@ describe("SharedArray in connected state with a remote SharedArray with IFluidHa
 			objectStorage: new MockStorage(),
 		};
 
-		remoteSharedArray = factory.create(dataStoreRuntime2, "remoteSharedArrayId");
+		remoteSharedArray = factory.create(
+			dataStoreRuntime2,
+			"remoteSharedArrayId",
+		);
 		remoteSharedArray.connect(services2);
 	});
 

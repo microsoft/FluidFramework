@@ -40,6 +40,18 @@ export {
 	sortVersions,
 	type VersionScheme,
 } from "./schemes";
-export { bumpRange, detectBumpType, isPrereleaseVersion, getPreviousVersions } from "./semver";
-export { getIsLatest, getSimpleVersion, getVersionsFromStrings } from "./versions";
-export { fromVirtualPatchScheme, toVirtualPatchScheme } from "./virtualPatchScheme";
+export {
+	bumpRange,
+	detectBumpType,
+	isPrereleaseVersion,
+	getPreviousVersions,
+} from "./semver";
+export {
+	getIsLatest,
+	getSimpleVersion,
+	getVersionsFromStrings,
+} from "./versions";
+export {
+	fromVirtualPatchScheme,
+	toVirtualPatchScheme,
+} from "./virtualPatchScheme";

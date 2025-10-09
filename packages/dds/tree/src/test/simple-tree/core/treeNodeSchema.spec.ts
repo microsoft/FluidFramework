@@ -36,7 +36,15 @@ import type { TreeValue } from "../../../core/index.js";
 
 // TreeNodeSchemaCore constructor variance
 {
-	type S1 = TreeNodeSchemaClass<string, NodeKind, TreeNode, 0, false, unknown, 1 | 2>;
+	type S1 = TreeNodeSchemaClass<
+		string,
+		NodeKind,
+		TreeNode,
+		0,
+		false,
+		unknown,
+		1 | 2
+	>;
 	type S2 = TreeNodeSchemaClass<
 		string,
 		NodeKind,
@@ -87,7 +95,12 @@ const schema = new SchemaFactory("com.example");
 	}
 
 	// Class that implements both TreeNodeSchemaNonClass and TreeNodeSchemaNonClass
-	class CustomizedBoth extends objectSchema("B", { x: [schema.number] }, true, false) {
+	class CustomizedBoth extends objectSchema(
+		"B",
+		{ x: [schema.number] },
+		true,
+		false,
+	) {
 		public customized = true;
 	}
 
@@ -140,4 +153,6 @@ class B extends schema.object("B", { x: [schema.number, schema.null] }) {}
 }
 
 // TreeLeafValue
-type _checkTreeLeafValue = requireTrue<areSafelyAssignable<TreeLeafValue, TreeValue>>;
+type _checkTreeLeafValue = requireTrue<
+	areSafelyAssignable<TreeLeafValue, TreeValue>
+>;

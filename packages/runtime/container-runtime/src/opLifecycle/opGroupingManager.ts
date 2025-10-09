@@ -31,7 +31,9 @@ interface IGroupedMessage {
 	compression?: string;
 }
 
-function isGroupContents(opContents: unknown): opContents is IGroupedBatchMessageContents {
+function isGroupContents(
+	opContents: unknown,
+): opContents is IGroupedBatchMessageContents {
 	return (
 		(opContents as Partial<IGroupedBatchMessageContents>)?.type ===
 		OpGroupingManager.groupedBatchOp
@@ -100,7 +102,9 @@ export class OpGroupingManager {
 		};
 		const outboundBatch: OutboundSingletonBatch = {
 			contentSizeInBytes: 0,
-			messages: [{ ...placeholderMessage, runtimeOp: undefined, contents: serializedOp }],
+			messages: [
+				{ ...placeholderMessage, runtimeOp: undefined, contents: serializedOp },
+			],
 			referenceSequenceNumber,
 		};
 		return { outboundBatch, placeholderMessage };
@@ -117,7 +121,10 @@ export class OpGroupingManager {
 	 */
 	public groupBatch(batch: OutboundBatch): OutboundSingletonBatch {
 		assert(this.groupedBatchingEnabled(), 0xb79 /* grouping disabled! */);
-		assert(batch.messages.length > 0, 0xb7a /* Unexpected attempt to group an empty batch */);
+		assert(
+			batch.messages.length > 0,
+			0xb7a /* Unexpected attempt to group an empty batch */,
+		);
 
 		if (batch.messages.length === 1) {
 			return batch as OutboundSingletonBatch;
@@ -139,14 +146,20 @@ export class OpGroupingManager {
 				if (batchId !== undefined) {
 					groupedBatchId = batchId;
 				}
-				assert(Object.keys(rest).length === 0, 0x5dd /* cannot group ops with metadata */);
+				assert(
+					Object.keys(rest).length === 0,
+					0x5dd /* cannot group ops with metadata */,
+				);
 			}
 		}
 
 		const serializedContent = JSON.stringify({
 			type: OpGroupingManager.groupedBatchOp,
 			contents: batch.messages.map<IGroupedMessage>((message) => ({
-				contents: message.contents === undefined ? undefined : JSON.parse(message.contents),
+				contents:
+					message.contents === undefined
+						? undefined
+						: JSON.parse(message.contents),
 				metadata: message.metadata,
 				compression: message.compression,
 			})),
@@ -166,7 +179,10 @@ export class OpGroupingManager {
 	}
 
 	public ungroupOp(op: ISequencedDocumentMessage): ISequencedDocumentMessage[] {
-		assert(isGroupContents(op.contents), 0x947 /* can only ungroup a grouped batch */);
+		assert(
+			isGroupContents(op.contents),
+			0x947 /* can only ungroup a grouped batch */,
+		);
 		const contents: IGroupedBatchMessageContents = op.contents;
 
 		let fakeCsn = 1;

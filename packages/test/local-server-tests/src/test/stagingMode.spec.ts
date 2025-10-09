@@ -6,7 +6,10 @@
 import { strict as assert } from "assert";
 
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import {
+	DataObject,
+	DataObjectFactory,
+} from "@fluidframework/aqueduct/internal";
 import {
 	type IContainer,
 	type IRuntimeFactory,
@@ -42,7 +45,10 @@ import {
 	type ILocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 import type { SharedObject } from "@fluidframework/shared-object-base/internal";
-import { LoggingError, wrapError } from "@fluidframework/telemetry-utils/internal";
+import {
+	LoggingError,
+	wrapError,
+} from "@fluidframework/telemetry-utils/internal";
 import sinon from "sinon";
 
 import { createLoader } from "../utils.js";
@@ -54,11 +60,14 @@ import { createLoader } from "../utils.js";
 class DataObjectWithStagingMode extends DataObject {
 	private static instanceCount: number = 0;
 	private readonly instanceNumber =
-		this.context.containerRuntime.clientDetails.capabilities.interactive === false
+		this.context.containerRuntime.clientDetails.capabilities.interactive ===
+		false
 			? -1
 			: DataObjectWithStagingMode.instanceCount++;
 
-	private readonly containerRuntimeExp = asLegacyAlpha(this.context.containerRuntime);
+	private readonly containerRuntimeExp = asLegacyAlpha(
+		this.context.containerRuntime,
+	);
 	get DataObjectWithStagingMode() {
 		return this;
 	}
@@ -68,7 +77,10 @@ class DataObjectWithStagingMode extends DataObject {
 
 	private generateCompressedId(): SessionSpaceCompressedId {
 		const idCompressor = this.runtime.idCompressor;
-		assert(idCompressor !== undefined, "IdCompressor must be enabled for these tests.");
+		assert(
+			idCompressor !== undefined,
+			"IdCompressor must be enabled for these tests.",
+		);
 		return idCompressor.generateCompressedId();
 	}
 
@@ -102,7 +114,9 @@ class DataObjectWithStagingMode extends DataObject {
 	/**
 	 * Enumerate the data store's data, traversing handles to other DDSes and including their data as nested keys.
 	 */
-	public async enumerateDataWithHandlesResolved(): Promise<Record<string, unknown>> {
+	public async enumerateDataWithHandlesResolved(): Promise<
+		Record<string, unknown>
+	> {
 		const state: Record<string, unknown> = {};
 		const loadStateInt = async (map) => {
 			for (const key of map.keys()) {
@@ -146,7 +160,9 @@ const runtimeFactory: IRuntimeFactory = {
 		return loadContainerRuntime({
 			context,
 			existing,
-			registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
+			registryEntries: [
+				[dataObjectFactory.type, Promise.resolve(dataObjectFactory)],
+			],
 			runtimeOptions,
 			provideEntryPoint: async (rt) => {
 				const maybeRoot = await rt.getAliasedDataStoreEntryPoint("default");
@@ -162,8 +178,11 @@ const runtimeFactory: IRuntimeFactory = {
 	},
 };
 
-async function getDataObject(container: IContainer): Promise<DataObjectWithStagingMode> {
-	const entrypoint: FluidObject<DataObjectWithStagingMode> = await container.getEntryPoint();
+async function getDataObject(
+	container: IContainer,
+): Promise<DataObjectWithStagingMode> {
+	const entrypoint: FluidObject<DataObjectWithStagingMode> =
+		await container.getEntryPoint();
 	const dataObject = entrypoint.DataObjectWithStagingMode;
 	assert(dataObject !== undefined, "dataObject must be defined");
 	return dataObject;
@@ -175,7 +194,9 @@ interface Client {
 }
 
 /** Returns the max sequence number from the clients once each has had its local state saved */
-const waitForSave = async (clients: Client[] | Record<string, Client>): Promise<number> =>
+const waitForSave = async (
+	clients: Client[] | Record<string, Client>,
+): Promise<number> =>
 	Promise.all(
 		Object.entries(clients).map(
 			async ([key, { container }]) =>
@@ -199,7 +220,9 @@ const waitForSave = async (clients: Client[] | Record<string, Client>): Promise<
 							wrapError(
 								error,
 								(message) =>
-									new LoggingError(`Container "${key}" closed or disposed: ${message}`),
+									new LoggingError(
+										`Container "${key}" closed or disposed: ${message}`,
+									),
 							),
 						);
 						off();
@@ -224,7 +247,10 @@ const waitForSave = async (clients: Client[] | Record<string, Client>): Promise<
 	).then((sequenceNumbers) => Math.max(...sequenceNumbers));
 
 /** Wait for all clients to process the given sequenceNumber */
-const catchUp = async (clients: Client[] | Record<string, Client>, sequenceNumber: number) => {
+const catchUp = async (
+	clients: Client[] | Record<string, Client>,
+	sequenceNumber: number,
+) => {
 	return Promise.all(
 		Object.entries(clients).map(
 			async ([key, { container }]) =>
@@ -248,7 +274,9 @@ const catchUp = async (clients: Client[] | Record<string, Client>, sequenceNumbe
 							wrapError(
 								error,
 								(message) =>
-									new LoggingError(`Container "${key}" closed or disposed: ${message}`),
+									new LoggingError(
+										`Container "${key}" closed or disposed: ${message}`,
+									),
 							),
 						);
 						off();
@@ -275,7 +303,9 @@ const catchUp = async (clients: Client[] | Record<string, Client>, sequenceNumbe
 	);
 };
 
-const createClients = async (deltaConnectionServer: ILocalDeltaConnectionServer) => {
+const createClients = async (
+	deltaConnectionServer: ILocalDeltaConnectionServer,
+) => {
 	const {
 		loaderProps: baseLoaderProps,
 		codeDetails,
@@ -285,7 +315,9 @@ const createClients = async (deltaConnectionServer: ILocalDeltaConnectionServer)
 		runtimeFactory,
 	});
 
-	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+	const configProvider = (
+		settings: Record<string, ConfigTypes>,
+	): IConfigProviderBase => ({
 		getRawConfig: (name: string): ConfigTypes =>
 			settings[name] ?? baseLoaderProps.configProvider?.getRawConfig(name),
 	});
@@ -615,9 +647,17 @@ describe("Staging Mode", () => {
 
 			// Use Sinon to spy on the methods
 			// eslint-disable-next-line @typescript-eslint/dot-notation
-			const rootMap = clients.original.dataObject["root"] as unknown as SharedObject;
-			const reSubmitSquashedSpy = sinon.spy(rootMap, "reSubmitSquashed" as keyof SharedObject);
-			const reSubmitCoreSpy = sinon.spy(rootMap, "reSubmitCore" as keyof SharedObject);
+			const rootMap = clients.original.dataObject[
+				"root"
+			] as unknown as SharedObject;
+			const reSubmitSquashedSpy = sinon.spy(
+				rootMap,
+				"reSubmitSquashed" as keyof SharedObject,
+			);
+			const reSubmitCoreSpy = sinon.spy(
+				rootMap,
+				"reSubmitCore" as keyof SharedObject,
+			);
 
 			const stagingControls =
 				clients.original.dataObject.enterStagingMode() as StageControlsExperimental;
@@ -641,7 +681,9 @@ describe("Staging Mode", () => {
 			);
 			if (squash === true) {
 				assert(
-					JSON.stringify(reSubmitSquashedSpy.args[0][0]).includes("branch-only"),
+					JSON.stringify(reSubmitSquashedSpy.args[0][0]).includes(
+						"branch-only",
+					),
 					"Squashed op should contain the edit prefix.",
 				);
 			} else {
@@ -671,9 +713,10 @@ describe("Staging Mode", () => {
 		clients.original.dataObject.enterStagingMode();
 
 		// Create and alias a new datastore in staging mode
-		const newDataStore = await clients.original.dataObject.containerRuntime.createDataStore(
-			dataObjectFactory.type,
-		);
+		const newDataStore =
+			await clients.original.dataObject.containerRuntime.createDataStore(
+				dataObjectFactory.type,
+			);
 
 		await assert.rejects(
 			async () => newDataStore.trySetAlias("staged-alias"),

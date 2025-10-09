@@ -5,7 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
-import { ApplicationInsights, type IEventTelemetry } from "@microsoft/applicationinsights-web";
+import {
+	ApplicationInsights,
+	type IEventTelemetry,
+} from "@microsoft/applicationinsights-web";
 import type Sinon from "sinon";
 import { assert as sinonAssert, spy } from "sinon";
 

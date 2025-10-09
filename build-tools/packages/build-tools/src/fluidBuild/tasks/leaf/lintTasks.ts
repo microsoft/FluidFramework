@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { getEsLintConfigFilePath, getInstalledPackageVersion } from "../taskUtils";
+import {
+	getEsLintConfigFilePath,
+	getInstalledPackageVersion,
+} from "../taskUtils";
 import { TscDependentTask } from "./tscTask";
 
 export class TsLintTask extends TscDependentTask {
@@ -20,9 +23,13 @@ export class EsLintTask extends TscDependentTask {
 	private _configFileFullPath: string | undefined;
 	protected get configFileFullPaths() {
 		if (!this._configFileFullPath) {
-			this._configFileFullPath = getEsLintConfigFilePath(this.package.directory);
+			this._configFileFullPath = getEsLintConfigFilePath(
+				this.package.directory,
+			);
 			if (!this._configFileFullPath) {
-				throw new Error(`Unable to find config file for eslint ${this.command}`);
+				throw new Error(
+					`Unable to find config file for eslint ${this.command}`,
+				);
 			}
 		}
 		return [this._configFileFullPath];

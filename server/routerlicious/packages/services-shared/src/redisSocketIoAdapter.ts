@@ -4,7 +4,10 @@
  */
 
 import { promiseTimeout } from "@fluidframework/server-services-client";
-import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import {
+	BaseTelemetryProperties,
+	Lumberjack,
+} from "@fluidframework/server-services-telemetry";
 import * as msgpack from "notepack.io";
 import type * as socketio from "socket.io";
 import { Adapter, type BroadcastOptions, type Room, type SocketId } from "socket.io-adapter";
@@ -102,7 +105,10 @@ export class RedisSocketIoAdapter extends Adapter {
 	/**
 	 * Set the Redis connections to use
 	 */
-	public static setup(options: ISocketIoRedisOptions, shouldDisableDefaultNamespace?: boolean) {
+	public static setup(
+		options: ISocketIoRedisOptions,
+		shouldDisableDefaultNamespace?: boolean,
+	) {
 		this.options = options;
 		this.shouldDisableDefaultNamespace = shouldDisableDefaultNamespace ?? false;
 	}
@@ -506,10 +512,7 @@ export class RedisSocketIoAdapter extends Adapter {
 				this.pendingHealthChecks.set(healthCheckId, resolve);
 			});
 
-			await RedisSocketIoAdapter.options.pubConnection.publish(
-				`${this.channel}${room}#`,
-				msg,
-			);
+			await RedisSocketIoAdapter.options.pubConnection.publish(`${this.channel}${room}#`, msg);
 
 			await promiseTimeout(
 				RedisSocketIoAdapter.options.healthChecks.timeout,

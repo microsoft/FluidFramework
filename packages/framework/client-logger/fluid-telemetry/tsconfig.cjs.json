@@ -3,6 +3,6 @@
 	"extends": "./tsconfig.json",
 	"compilerOptions": {
 		"outDir": "./dist",
-		"types": ["mocha"],
-	},
+		"types": ["mocha"]
+	}
 }

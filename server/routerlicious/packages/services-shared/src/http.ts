@@ -5,7 +5,10 @@
 
 import { parse } from "path";
 
-import { NetworkError, getNetworkInformationFromIP } from "@fluidframework/server-services-client";
+import {
+	NetworkError,
+	getNetworkInformationFromIP,
+} from "@fluidframework/server-services-client";
 import { ITenantManager, type ITenantConfig } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import type { RequestHandler, Response } from "express";
@@ -60,24 +63,21 @@ export function validatePrivateLink(
 				tenantInfo?.customData?.privateEndpoints &&
 				Array.isArray(tenantInfo.customData.privateEndpoints) &&
 				tenantInfo.customData.privateEndpoints?.length > 0 &&
-				tenantInfo.customData.privateEndpoints[0]?.privateEndpointConnectionProxy
-					?.properties?.remotePrivateEndpoint?.connectionDetails &&
+				tenantInfo.customData.privateEndpoints[0]?.privateEndpointConnectionProxy?.properties
+					?.remotePrivateEndpoint?.connectionDetails &&
 				Array.isArray(
-					tenantInfo.customData.privateEndpoints[0]?.privateEndpointConnectionProxy
-						?.properties?.remotePrivateEndpoint?.connectionDetails,
+					tenantInfo.customData.privateEndpoints[0]?.privateEndpointConnectionProxy?.properties
+						?.remotePrivateEndpoint?.connectionDetails,
 				) &&
-				tenantInfo.customData.privateEndpoints[0]?.privateEndpointConnectionProxy
-					?.properties?.remotePrivateEndpoint?.connectionDetails[0]
+				tenantInfo.customData.privateEndpoints[0]?.privateEndpointConnectionProxy?.properties
+					?.remotePrivateEndpoint?.connectionDetails[0]
 					? true
 					: false;
 			const clientIPAddress = req.ip ?? "";
 			if (privateLinkEnable && (!clientIPAddress || clientIPAddress.trim() === "")) {
 				return handleResponse(
 					Promise.reject(
-						new NetworkError(
-							400,
-							`Client ip address is required for private link in req.ip`,
-						),
+						new NetworkError(400, `Client ip address is required for private link in req.ip`),
 					),
 					res,
 				);

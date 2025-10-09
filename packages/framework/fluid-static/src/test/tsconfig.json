@@ -4,12 +4,12 @@
 		"noUnusedLocals": false,
 		"rootDir": "./",
 		"outDir": "../../lib/test",
-		"types": ["mocha", "node"],
+		"types": ["mocha", "node"]
 	},
 	"include": ["./**/*"],
 	"references": [
 		{
-			"path": "../..",
-		},
-	],
+			"path": "../.."
+		}
+	]
 }

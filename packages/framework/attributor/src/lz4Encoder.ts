@@ -24,10 +24,14 @@ export function makeLZ4Encoder<T>(): Encoder<Jsonable<T>, string> {
 			return bufferToString(compressed, "base64");
 		},
 		decode: (serializedSummary: string): Jsonable<T> => {
-			const compressed = new Uint8Array(stringToBuffer(serializedSummary, "base64"));
+			const compressed = new Uint8Array(
+				stringToBuffer(serializedSummary, "base64"),
+			);
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 			const uncompressed = decompress(compressed) as BufferSource;
-			const decoded = JSON.parse(new TextDecoder().decode(uncompressed)) as Jsonable<T>;
+			const decoded = JSON.parse(
+				new TextDecoder().decode(uncompressed),
+			) as Jsonable<T>;
 			return decoded;
 		},
 	};

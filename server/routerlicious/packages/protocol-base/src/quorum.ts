@@ -259,10 +259,7 @@ export class QuorumProposals
 			// A proposal goes through two phases before this promise resolves:
 			// 1. Sequencing - waiting for the proposal to be ack'd by the server.
 			// 2. Approval - waiting for the proposal to be approved by connected clients.
-			const localProposalSequencedHandler = (
-				sequencedCSN: number,
-				sequenceNumber: number,
-			) => {
+			const localProposalSequencedHandler = (sequencedCSN: number, sequenceNumber: number) => {
 				if (sequencedCSN === clientSequenceNumber) {
 					thisProposalSequenceNumber = sequenceNumber;
 					this.stateEvents.off("localProposalSequenced", localProposalSequencedHandler);
@@ -290,11 +287,7 @@ export class QuorumProposals
 					this.stateEvents.once("connected", () => {
 						// If we don't see the ack by the time reconnection finishes, it failed to send.
 						if (thisProposalSequenceNumber === undefined) {
-							reject(
-								new Error(
-									"Client disconnected without successfully sending proposal",
-								),
-							);
+							reject(new Error("Client disconnected without successfully sending proposal"));
 							removeListeners();
 						}
 					});

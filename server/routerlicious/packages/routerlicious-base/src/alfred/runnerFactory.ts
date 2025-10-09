@@ -11,7 +11,10 @@ import {
 } from "@fluidframework/server-services-client";
 import * as core from "@fluidframework/server-services-core";
 import type { IReadinessCheck } from "@fluidframework/server-services-core";
-import { closeRedisClientConnections, StartupCheck } from "@fluidframework/server-services-shared";
+import {
+	closeRedisClientConnections,
+	StartupCheck,
+} from "@fluidframework/server-services-shared";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as utils from "@fluidframework/server-services-utils";
 import { RedisClientConnectionManager } from "@fluidframework/server-services-utils";
@@ -170,7 +173,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 						redisConfig2.slotsRefreshTimeout,
 						retryDelays,
 						redisConfig2.enableVerboseErrorLogging,
-				  );
+					);
 		redisClientConnectionManagers.push(redisClientConnectionManagerForJwtCache);
 		const redisJwtCache = new services.RedisCache(redisClientConnectionManagerForJwtCache);
 
@@ -184,7 +187,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 						redisConfig2.slotsRefreshTimeout,
 						retryDelays,
 						redisConfig2.enableVerboseErrorLogging,
-				  );
+					);
 		redisClientConnectionManagers.push(redisClientConnectionManagerForGetSessionCache);
 		const redisGetSessionCache = new services.RedisCache(
 			redisClientConnectionManagerForGetSessionCache,
@@ -229,8 +232,9 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		// Setup for checkpoint collection
 
 		const operationsDb = await operationsDbMongoManager.getDatabase();
-		const checkpointsCollection =
-			operationsDb.collection<core.ICheckpoint>(checkpointsCollectionName);
+		const checkpointsCollection = operationsDb.collection<core.ICheckpoint>(
+			checkpointsCollectionName,
+		);
 		await checkpointsCollection.createIndex(
 			{
 				documentId: 1,
@@ -266,7 +270,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 						redisConfig2.slotsRefreshTimeout,
 						undefined /* retryDelays */,
 						redisConfig2.enableVerboseErrorLogging,
-				  );
+					);
 		redisClientConnectionManagers.push(redisClientConnectionManagerForInvalidTokenCache);
 		const redisCacheForInvalidToken = new services.RedisCache(
 			redisClientConnectionManagerForInvalidTokenCache,
@@ -284,9 +288,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		// Redis connection for throttling.
 		const redisConfigForThrottling = config.get("redisForThrottling");
 		const redisParamsForThrottling = {
-			expireAfterSeconds: redisConfigForThrottling.keyExpireAfterSeconds as
-				| number
-				| undefined,
+			expireAfterSeconds: redisConfigForThrottling.keyExpireAfterSeconds as number | undefined,
 		};
 
 		const redisClientConnectionManagerForThrottling =
@@ -299,7 +301,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 						redisConfigForThrottling.slotsRefreshTimeout,
 						retryDelays,
 						redisConfigForThrottling.enableVerboseErrorLogging,
-				  );
+					);
 		redisClientConnectionManagers.push(redisClientConnectionManagerForThrottling);
 
 		const redisThrottleAndUsageStorageManager =
@@ -355,8 +357,14 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		);
 
 		const restTenantThrottlers = new Map<string, core.IThrottler>();
-		restTenantThrottlers.set(Constants.createDocThrottleIdPrefix, restTenantCreateDocThrottler);
-		restTenantThrottlers.set(Constants.getDeltasThrottleIdPrefix, restTenantGetDeltasThrottler);
+		restTenantThrottlers.set(
+			Constants.createDocThrottleIdPrefix,
+			restTenantCreateDocThrottler,
+		);
+		restTenantThrottlers.set(
+			Constants.getDeltasThrottleIdPrefix,
+			restTenantGetDeltasThrottler,
+		);
 		restTenantThrottlers.set(
 			Constants.getSessionThrottleIdPrefix,
 			restTenantGetSessionThrottler,
@@ -406,7 +414,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		const opsCollection = await databaseManager.getDeltaCollection(undefined, undefined);
 		const storagePerDocEnabled = (config.get("storage:perDocEnabled") as boolean) ?? false;
 		const storageNameAllocator = storagePerDocEnabled
-			? customizations?.storageNameAllocator ?? new StorageNameAllocator(tenantManager)
+			? (customizations?.storageNameAllocator ?? new StorageNameAllocator(tenantManager))
 			: undefined;
 		const storage = new services.DocumentStorage(
 			documentRepository,

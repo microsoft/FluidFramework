@@ -98,7 +98,9 @@ describe("chunkEncodingGeneric", () => {
 		});
 		it("identifier: inline", () => {
 			assert.deepEqual(
-				updateShapesAndIdentifiersEncoding(version, [[new IdentifierToken("x")]]),
+				updateShapesAndIdentifiersEncoding(version, [
+					[new IdentifierToken("x")],
+				]),
 				{
 					version,
 					identifiers: [],
@@ -110,7 +112,10 @@ describe("chunkEncodingGeneric", () => {
 		it("identifier: deduplicated", () => {
 			assert.deepEqual(
 				updateShapesAndIdentifiersEncoding(version, [
-					[new IdentifierToken("long string"), new IdentifierToken("long string")],
+					[
+						new IdentifierToken("long string"),
+						new IdentifierToken("long string"),
+					],
 				]),
 				{ version, identifiers: ["long string"], shapes: [], data: [[0, 0]] },
 			);
@@ -136,7 +141,9 @@ describe("chunkEncodingGeneric", () => {
 		});
 		it("shape: minimal", () => {
 			assert.deepEqual(
-				updateShapesAndIdentifiersEncoding(version, [[new TestShape("shape data")]]),
+				updateShapesAndIdentifiersEncoding(version, [
+					[new TestShape("shape data")],
+				]),
 				{
 					version,
 					identifiers: [],
@@ -174,21 +181,36 @@ describe("chunkEncodingGeneric", () => {
 				countShape(shape2);
 				countShape(shape3); // cycle
 			});
-			assert.deepEqual(updateShapesAndIdentifiersEncoding(version, [[shape3, shape3]]), {
-				version,
-				identifiers: ["deduplicated-id"],
-				// Ensure shapes are sorted by most frequent first
-				shapes: [{ b: "3" }, { b: "2" }, { b: "1" }],
-				data: [[0, 0]],
-			});
+			assert.deepEqual(
+				updateShapesAndIdentifiersEncoding(version, [[shape3, shape3]]),
+				{
+					version,
+					identifiers: ["deduplicated-id"],
+					// Ensure shapes are sorted by most frequent first
+					shapes: [{ b: "3" }, { b: "2" }, { b: "1" }],
+					data: [[0, 0]],
+				},
+			);
 		});
 
 		it("nested arrays", () => {
 			assert.deepEqual(
 				updateShapesAndIdentifiersEncoding(version, [
-					[[[new IdentifierToken("long string"), new IdentifierToken("long string")]]],
+					[
+						[
+							[
+								new IdentifierToken("long string"),
+								new IdentifierToken("long string"),
+							],
+						],
+					],
 				]),
-				{ version, identifiers: ["long string"], shapes: [], data: [[[[0, 0]]]] },
+				{
+					version,
+					identifiers: ["long string"],
+					shapes: [],
+					data: [[[[0, 0]]]],
+				},
 			);
 		});
 	});

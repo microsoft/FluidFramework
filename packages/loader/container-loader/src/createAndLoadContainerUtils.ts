@@ -91,7 +91,8 @@ export interface ICreateAndLoadContainerProps {
  * Props used to load a container.
  * @legacy @beta
  */
-export interface ILoadExistingContainerProps extends ICreateAndLoadContainerProps {
+export interface ILoadExistingContainerProps
+	extends ICreateAndLoadContainerProps {
 	/**
 	 * The request to resolve the container.
 	 */
@@ -107,7 +108,8 @@ export interface ILoadExistingContainerProps extends ICreateAndLoadContainerProp
  * Props used to create a detached container.
  * @legacy @beta
  */
-export interface ICreateDetachedContainerProps extends ICreateAndLoadContainerProps {
+export interface ICreateDetachedContainerProps
+	extends ICreateAndLoadContainerProps {
 	/**
 	 * The code details for the container to be created.
 	 */
@@ -118,7 +120,8 @@ export interface ICreateDetachedContainerProps extends ICreateAndLoadContainerPr
  * Props used to rehydrate a detached container.
  * @legacy @beta
  */
-export interface IRehydrateDetachedContainerProps extends ICreateAndLoadContainerProps {
+export interface IRehydrateDetachedContainerProps
+	extends ICreateAndLoadContainerProps {
 	/**
 	 * The serialized state returned by calling serialize on another container
 	 */
@@ -135,10 +138,13 @@ export async function createDetachedContainer(
 	createDetachedContainerProps: ICreateDetachedContainerProps,
 ): Promise<IContainer> {
 	const loader = new Loader(createDetachedContainerProps);
-	return loader.createDetachedContainer(createDetachedContainerProps.codeDetails, {
-		canReconnect: createDetachedContainerProps.allowReconnect,
-		clientDetailsOverride: createDetachedContainerProps.clientDetailsOverride,
-	});
+	return loader.createDetachedContainer(
+		createDetachedContainerProps.codeDetails,
+		{
+			canReconnect: createDetachedContainerProps.allowReconnect,
+			clientDetailsOverride: createDetachedContainerProps.clientDetailsOverride,
+		},
+	);
 }
 
 /**
@@ -155,7 +161,8 @@ export async function rehydrateDetachedContainer(
 		rehydrateDetachedContainerProps.serializedState,
 		{
 			canReconnect: rehydrateDetachedContainerProps.allowReconnect,
-			clientDetailsOverride: rehydrateDetachedContainerProps.clientDetailsOverride,
+			clientDetailsOverride:
+				rehydrateDetachedContainerProps.clientDetailsOverride,
 		},
 	);
 }
@@ -197,6 +204,8 @@ export async function loadFrozenContainerFromPendingState(
 ): Promise<IContainer> {
 	return loadExistingContainer({
 		...props,
-		documentServiceFactory: createFrozenDocumentServiceFactory(props.documentServiceFactory),
+		documentServiceFactory: createFrozenDocumentServiceFactory(
+			props.documentServiceFactory,
+		),
 	});
 }

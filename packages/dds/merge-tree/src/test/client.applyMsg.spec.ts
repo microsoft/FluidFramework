@@ -26,7 +26,10 @@ import { Side } from "../sequencePlace.js";
 import type { TextSegment } from "../textSegment.js";
 
 import { TestClient } from "./testClient.js";
-import { TestClientLogger, createClientsAtInitialState } from "./testClientLogger.js";
+import {
+	TestClientLogger,
+	createClientsAtInitialState,
+} from "./testClientLogger.js";
 
 describe("client.applyMsg", () => {
 	const localUserLongId = "localUser";
@@ -42,7 +45,10 @@ describe("client.applyMsg", () => {
 	it("Interleaved inserts, annotates, and deletes", () => {
 		const changes = new Map<
 			number,
-			{ msg: ISequencedDocumentMessage; segmentGroup?: SegmentGroup | SegmentGroup[] }
+			{
+				msg: ISequencedDocumentMessage;
+				segmentGroup?: SegmentGroup | SegmentGroup[];
+			}
 		>();
 		assert.equal(client.mergeTree.pendingSegments?.length, 0);
 		for (let i = 0; i < 100; i++) {
@@ -52,28 +58,49 @@ describe("client.applyMsg", () => {
 			switch (imod6) {
 				case 0:
 				case 5: {
-					const pos2 = Math.max(Math.floor((len - pos1) / 4) - imod6 + pos1, pos1 + 1);
-					const msg = client.makeOpMessage(client.removeRangeLocal(pos1, pos2), i + 1);
-					changes.set(i, { msg, segmentGroup: client.peekPendingSegmentGroups() });
+					const pos2 = Math.max(
+						Math.floor((len - pos1) / 4) - imod6 + pos1,
+						pos1 + 1,
+					);
+					const msg = client.makeOpMessage(
+						client.removeRangeLocal(pos1, pos2),
+						i + 1,
+					);
+					changes.set(i, {
+						msg,
+						segmentGroup: client.peekPendingSegmentGroups(),
+					});
 					break;
 				}
 
 				case 1:
 				case 4: {
 					const str = `${i}`.repeat(imod6 + 5);
-					const msg = client.makeOpMessage(client.insertTextLocal(pos1, str), i + 1);
-					changes.set(i, { msg, segmentGroup: client.peekPendingSegmentGroups() });
+					const msg = client.makeOpMessage(
+						client.insertTextLocal(pos1, str),
+						i + 1,
+					);
+					changes.set(i, {
+						msg,
+						segmentGroup: client.peekPendingSegmentGroups(),
+					});
 					break;
 				}
 
 				case 2:
 				case 3: {
-					const pos2 = Math.max(Math.floor((len - pos1) / 3) - imod6 + pos1, pos1 + 1);
+					const pos2 = Math.max(
+						Math.floor((len - pos1) / 3) - imod6 + pos1,
+						pos1 + 1,
+					);
 					const op = client.annotateRangeLocal(pos1, pos2, {
 						foo: `${i}`,
 					});
 					const msg = client.makeOpMessage(op, i + 1);
-					changes.set(i, { msg, segmentGroup: client.peekPendingSegmentGroups() });
+					changes.set(i, {
+						msg,
+						segmentGroup: client.peekPendingSegmentGroups(),
+					});
 					break;
 				}
 				default: {
@@ -138,7 +165,10 @@ describe("client.applyMsg", () => {
 
 		const segmentInfo = client.getContainingSegment<ISegmentPrivate>(0);
 
-		assert.equal(toInsertionInfo(segmentInfo?.segment)?.insert.seq, UnassignedSequenceNumber);
+		assert.equal(
+			toInsertionInfo(segmentInfo?.segment)?.insert.seq,
+			UnassignedSequenceNumber,
+		);
 
 		client.applyMsg(client.makeOpMessage(op, 17));
 
@@ -271,7 +301,8 @@ describe("client.applyMsg", () => {
 		assert.equal(client.getLength(), initialLength - (end - start));
 		assert.equal(
 			client.getText(),
-			initialText.slice(0, Math.max(0, start)) + initialText.slice(Math.max(0, end)),
+			initialText.slice(0, Math.max(0, start)) +
+				initialText.slice(Math.max(0, end)),
 		);
 	});
 
@@ -282,7 +313,10 @@ describe("client.applyMsg", () => {
 		const clients = [client, remoteClient];
 		const logger = new TestClientLogger(clients);
 		let seq = 0;
-		const initialMsg = client.makeOpMessage(client.insertTextLocal(0, "-"), ++seq);
+		const initialMsg = client.makeOpMessage(
+			client.insertTextLocal(0, "-"),
+			++seq,
+		);
 
 		for (const c of clients) c.applyMsg(initialMsg);
 		logger.validate({ baseText: "-hello world" });
@@ -303,7 +337,12 @@ describe("client.applyMsg", () => {
 	});
 
 	it("intersecting insert after local delete", () => {
-		const clients = createClientsAtInitialState({ initialState: "" }, "A", "B", "C");
+		const clients = createClientsAtInitialState(
+			{ initialState: "" },
+			"A",
+			"B",
+			"C",
+		);
 		let seq = 0;
 		const logger = new TestClientLogger(clients.all);
 		const messages = [
@@ -322,13 +361,21 @@ describe("client.applyMsg", () => {
 	});
 
 	it("conflicting insert after shared delete", () => {
-		const clients = createClientsAtInitialState({ initialState: "Z" }, "A", "B", "C");
+		const clients = createClientsAtInitialState(
+			{ initialState: "Z" },
+			"A",
+			"B",
+			"C",
+		);
 		let seq = 0;
 
 		const logger = new TestClientLogger(clients.all);
 		const messages = [
 			clients.B.makeOpMessage(clients.B.insertTextLocal(0, "B"), ++seq),
-			clients.C.makeOpMessage(clients.C.removeRangeLocal(0, clients.C.getLength()), ++seq),
+			clients.C.makeOpMessage(
+				clients.C.removeRangeLocal(0, clients.C.getLength()),
+				++seq,
+			),
 			clients.C.makeOpMessage(clients.C.insertTextLocal(0, "C"), ++seq),
 		];
 
@@ -341,7 +388,12 @@ describe("client.applyMsg", () => {
 	});
 
 	it("local remove followed by conflicting insert", () => {
-		const clients = createClientsAtInitialState({ initialState: "" }, "A", "B", "C");
+		const clients = createClientsAtInitialState(
+			{ initialState: "" },
+			"A",
+			"B",
+			"C",
+		);
 
 		let seq = 0;
 
@@ -362,7 +414,12 @@ describe("client.applyMsg", () => {
 	});
 
 	it("intersecting insert with un-acked insert and delete", () => {
-		const clients = createClientsAtInitialState({ initialState: "" }, "A", "B", "C");
+		const clients = createClientsAtInitialState(
+			{ initialState: "" },
+			"A",
+			"B",
+			"C",
+		);
 
 		let seq = 0;
 		const messages = [
@@ -381,7 +438,12 @@ describe("client.applyMsg", () => {
 	});
 
 	it("conflicting insert over local delete", () => {
-		const clients = createClientsAtInitialState({ initialState: "" }, "A", "B", "C");
+		const clients = createClientsAtInitialState(
+			{ initialState: "" },
+			"A",
+			"B",
+			"C",
+		);
 
 		let seq = 0;
 		const messages = [
@@ -410,20 +472,37 @@ describe("client.applyMsg", () => {
 	});
 
 	it("Local insert after acked local delete", () => {
-		const clients = createClientsAtInitialState({ initialState: "ZZ" }, "A", "B", "C");
+		const clients = createClientsAtInitialState(
+			{ initialState: "ZZ" },
+			"A",
+			"B",
+			"C",
+		);
 
 		const logger = new TestClientLogger(clients.all);
 
 		let seq = 0;
 
-		const op1 = clients.C.makeOpMessage(clients.C.removeRangeLocal(0, 1), ++seq);
+		const op1 = clients.C.makeOpMessage(
+			clients.C.removeRangeLocal(0, 1),
+			++seq,
+		);
 		clients.C.applyMsg(op1);
 
-		const op2 = clients.B.makeOpMessage(clients.B.removeRangeLocal(1, 2), ++seq);
+		const op2 = clients.B.makeOpMessage(
+			clients.B.removeRangeLocal(1, 2),
+			++seq,
+		);
 
-		const op3 = clients.C.makeOpMessage(clients.C.insertTextLocal(0, "C"), ++seq);
+		const op3 = clients.C.makeOpMessage(
+			clients.C.insertTextLocal(0, "C"),
+			++seq,
+		);
 
-		const op4 = clients.B.makeOpMessage(clients.B.insertTextLocal(1, "B"), ++seq);
+		const op4 = clients.B.makeOpMessage(
+			clients.B.insertTextLocal(1, "B"),
+			++seq,
+		);
 
 		clients.A.applyMsg(op1);
 		clients.B.applyMsg(op1);
@@ -438,18 +517,32 @@ describe("client.applyMsg", () => {
 	});
 
 	it("Remote Remove before conflicting insert", () => {
-		const clients = createClientsAtInitialState({ initialState: "Z" }, "A", "B", "C");
+		const clients = createClientsAtInitialState(
+			{ initialState: "Z" },
+			"A",
+			"B",
+			"C",
+		);
 
 		const logger = new TestClientLogger(clients.all);
 
 		let seq = 0;
 
-		const op1 = clients.B.makeOpMessage(clients.B.removeRangeLocal(0, 1), ++seq);
-		const op2 = clients.B.makeOpMessage(clients.B.insertTextLocal(0, "B"), ++seq);
+		const op1 = clients.B.makeOpMessage(
+			clients.B.removeRangeLocal(0, 1),
+			++seq,
+		);
+		const op2 = clients.B.makeOpMessage(
+			clients.B.insertTextLocal(0, "B"),
+			++seq,
+		);
 
 		clients.C.applyMsg(op1);
 
-		const op3 = clients.C.makeOpMessage(clients.C.insertTextLocal(0, "C"), ++seq);
+		const op3 = clients.C.makeOpMessage(
+			clients.C.insertTextLocal(0, "C"),
+			++seq,
+		);
 		clients.A.applyMsg(op1);
 		clients.B.applyMsg(op1);
 
@@ -494,7 +587,12 @@ describe("client.applyMsg", () => {
 	});
 
 	it("Inconsistent shared string after pausing connection #9703", () => {
-		const clients = createClientsAtInitialState({ initialState: "abcd" }, "A", "B", "C");
+		const clients = createClientsAtInitialState(
+			{ initialState: "abcd" },
+			"A",
+			"B",
+			"C",
+		);
 
 		const logger = new TestClientLogger(clients.all);
 
@@ -502,7 +600,9 @@ describe("client.applyMsg", () => {
 		const ops: ISequencedDocumentMessage[] = [];
 		ops.push(clients.B.makeOpMessage(clients.B.removeRangeLocal(1, 3), ++seq));
 		clients.B.applyMsg(ops[0]);
-		ops.push(clients.B.makeOpMessage(clients.B.insertTextLocal(1, "yz"), ++seq));
+		ops.push(
+			clients.B.makeOpMessage(clients.B.insertTextLocal(1, "yz"), ++seq),
+		);
 		clients.B.applyMsg(ops[1]);
 
 		// it's like this connection is paused, as it doesn't see the other clients' ops
@@ -526,10 +626,15 @@ describe("client.applyMsg", () => {
 		clientB.startOrUpdateCollaboration("B");
 
 		let seq = 0;
-		const insertOp = clientA.makeOpMessage(clientA.insertTextLocal(0, "AAA"), ++seq);
+		const insertOp = clientA.makeOpMessage(
+			clientA.insertTextLocal(0, "AAA"),
+			++seq,
+		);
 		[clientA, clientB].map((c) => c.applyMsg(insertOp));
 
-		const annotateOp = clientA.annotateRangeLocal(0, clientA.getLength(), { client: "A" })!;
+		const annotateOp = clientA.annotateRangeLocal(0, clientA.getLength(), {
+			client: "A",
+		})!;
 		const seg = clientA.peekPendingSegmentGroups()!;
 
 		const removeOp = clientB.makeOpMessage(
@@ -550,7 +655,10 @@ describe("client.applyMsg", () => {
 		clientB.startOrUpdateCollaboration("B");
 
 		let seq = 0;
-		const insertOp1 = clientA.makeOpMessage(clientA.insertTextLocal(0, "ABC"), ++seq);
+		const insertOp1 = clientA.makeOpMessage(
+			clientA.insertTextLocal(0, "ABC"),
+			++seq,
+		);
 		[clientA, clientB].map((c) => c.applyMsg(insertOp1));
 
 		const removeOp = clientA.removeRangeLocal(0, 2);
@@ -569,7 +677,11 @@ describe("client.applyMsg", () => {
 		assert.strictEqual((seg?.segment as TextSegment).text, "C");
 
 		// op with reference sequence >= remove op sequence should not count removed segment
-		const insertMessage3 = clientB.makeOpMessage(insertOp2, seq, removeSequence);
+		const insertMessage3 = clientB.makeOpMessage(
+			insertOp2,
+			seq,
+			removeSequence,
+		);
 		seg = clientA.getContainingSegment<ISegmentPrivate>(2, {
 			referenceSequenceNumber: insertMessage3.referenceSequenceNumber,
 			clientId: insertMessage3.clientId,
@@ -617,12 +729,20 @@ describe("client.applyMsg", () => {
 	 * ```
 	 */
 	it("Concurrent insert into removed segment across block boundary", () => {
-		const clients = createClientsAtInitialState({ initialState: "" }, "A", "B", "C", "D");
+		const clients = createClientsAtInitialState(
+			{ initialState: "" },
+			"A",
+			"B",
+			"C",
+			"D",
+		);
 
 		const logger = new TestClientLogger([clients.A, clients.C]);
 		let seq = 0;
 		const ops: ISequencedDocumentMessage[] = [];
-		const perClientOps: ISequencedDocumentMessage[][] = clients.all.map(() => []);
+		const perClientOps: ISequencedDocumentMessage[][] = clients.all.map(
+			() => [],
+		);
 
 		ops.push(
 			clients.D.makeOpMessage(clients.D.insertTextLocal(0, "DD"), ++seq),
@@ -669,7 +789,8 @@ describe("client.applyMsg", () => {
 		};
 
 		// TODO: tracking group
-		const { segment, offset } = clients.C.getContainingSegment<ISegmentPrivate>(5) ?? {};
+		const { segment, offset } =
+			clients.C.getContainingSegment<ISegmentPrivate>(5) ?? {};
 		assert(segment !== undefined, "expected segment");
 		const ref = clients.C.createLocalReferencePosition(
 			segment,
@@ -697,7 +818,10 @@ describe("client.applyMsg", () => {
 
 		// rebase and resubmit disconnected client ops
 		ops.push(
-			clients.B.makeOpMessage(clients.B.regeneratePendingOp(bOp.op, bOp.sg, false), ++seq),
+			clients.B.makeOpMessage(
+				clients.B.regeneratePendingOp(bOp.op, bOp.sg, false),
+				++seq,
+			),
 		);
 
 		const trackingGroup = new TrackingGroup();
@@ -710,13 +834,19 @@ describe("client.applyMsg", () => {
 		assert.equal(beforeSlides, 0, "should be no slides");
 		assert.equal(afterSlides, 0, "should be no slides");
 		ops.push(
-			clients.C.makeOpMessage(clients.C.regeneratePendingOp(cOp.op, cOp.sg, false), ++seq),
+			clients.C.makeOpMessage(
+				clients.C.regeneratePendingOp(cOp.op, cOp.sg, false),
+				++seq,
+			),
 		);
 		assert.equal(beforeSlides, 1, "should be 1 slide");
 		assert.equal(afterSlides, 1, "should be 1 slide");
 
 		for (const seg of trackedSegs) {
-			assert(trackingGroup.has(seg), "Tracking group should still have segment.");
+			assert(
+				trackingGroup.has(seg),
+				"Tracking group should still have segment.",
+			);
 		}
 		// process the resubmitted ops
 		for (const op of ops.splice(0))
@@ -764,8 +894,14 @@ describe("client.applyMsg", () => {
 				for (const c of clients.all) {
 					c.applyMsg(op);
 				}
-			assert.deepStrictEqual({ ...clients.A.getPropertiesAtPosition(2) }, { key: 2 });
-			assert.deepStrictEqual({ ...clients.B.getPropertiesAtPosition(2) }, { key: 2 });
+			assert.deepStrictEqual(
+				{ ...clients.A.getPropertiesAtPosition(2) },
+				{ key: 2 },
+			);
+			assert.deepStrictEqual(
+				{ ...clients.B.getPropertiesAtPosition(2) },
+				{ key: 2 },
+			);
 			logger.validate({ baseText: "0123456789" });
 		});
 
@@ -806,8 +942,14 @@ describe("client.applyMsg", () => {
 				for (const c of clients.all) {
 					c.applyMsg(op);
 				}
-			assert.deepStrictEqual({ ...clients.A.getPropertiesAtPosition(2) }, { key: 0 });
-			assert.deepStrictEqual({ ...clients.B.getPropertiesAtPosition(2) }, { key: 0 });
+			assert.deepStrictEqual(
+				{ ...clients.A.getPropertiesAtPosition(2) },
+				{ key: 0 },
+			);
+			assert.deepStrictEqual(
+				{ ...clients.B.getPropertiesAtPosition(2) },
+				{ key: 0 },
+			);
 			logger.validate({ baseText: "0123456789" });
 		});
 
@@ -848,8 +990,14 @@ describe("client.applyMsg", () => {
 				for (const c of clients.all) {
 					c.applyMsg(op);
 				}
-			assert.deepStrictEqual({ ...clients.A.getPropertiesAtPosition(2) }, { key: 1 });
-			assert.deepStrictEqual({ ...clients.B.getPropertiesAtPosition(2) }, { key: 1 });
+			assert.deepStrictEqual(
+				{ ...clients.A.getPropertiesAtPosition(2) },
+				{ key: 1 },
+			);
+			assert.deepStrictEqual(
+				{ ...clients.B.getPropertiesAtPosition(2) },
+				{ key: 1 },
+			);
 			logger.validate({ baseText: "0123456789" });
 		});
 
@@ -891,8 +1039,14 @@ describe("client.applyMsg", () => {
 				for (const c of clients.all) {
 					c.applyMsg(op);
 				}
-			assert.deepStrictEqual({ ...clients.A.getPropertiesAtPosition(2) }, { key: 0 });
-			assert.deepStrictEqual({ ...clients.B.getPropertiesAtPosition(2) }, { key: 0 });
+			assert.deepStrictEqual(
+				{ ...clients.A.getPropertiesAtPosition(2) },
+				{ key: 0 },
+			);
+			assert.deepStrictEqual(
+				{ ...clients.B.getPropertiesAtPosition(2) },
+				{ key: 0 },
+			);
 			logger.validate({ baseText: "0123456789" });
 		});
 
@@ -941,7 +1095,10 @@ describe("client.applyMsg", () => {
 			const clients = createClientsAtInitialState(
 				{
 					initialState: "0123",
-					options: { mergeTreeEnableObliterate: true, mergeTreeEnableSidedObliterate: true },
+					options: {
+						mergeTreeEnableObliterate: true,
+						mergeTreeEnableSidedObliterate: true,
+					},
 				},
 				"A",
 				"B",
@@ -952,11 +1109,15 @@ describe("client.applyMsg", () => {
 			const ops: ISequencedDocumentMessage[] = [];
 
 			ops.push(
-				clients.B.makeOpMessage(clients.B.removeRangeLocal(0, clients.B.getLength()), ++seq),
+				clients.B.makeOpMessage(
+					clients.B.removeRangeLocal(0, clients.B.getLength()),
+					++seq,
+				),
 				clients.B.makeOpMessage(clients.B.insertTextLocal(0, "BBB"), ++seq),
 				clients.C.makeOpMessage(clients.C.insertTextLocal(2, "C"), ++seq),
 			);
-			for (const op of ops.splice(0)) for (const c of clients.all) c.applyMsg(op);
+			for (const op of ops.splice(0))
+				for (const c of clients.all) c.applyMsg(op);
 
 			ops.push(
 				clients.B.makeOpMessage(clients.B.insertTextLocal(3, "BB"), ++seq),
@@ -1011,7 +1172,10 @@ describe("client.applyMsg", () => {
 			const clients = createClientsAtInitialState(
 				{
 					initialState: "BBBBB BBB",
-					options: { mergeTreeEnableObliterate: true, mergeTreeEnableSidedObliterate: true },
+					options: {
+						mergeTreeEnableObliterate: true,
+						mergeTreeEnableSidedObliterate: true,
+					},
 				},
 				"A",
 				"B",
@@ -1024,7 +1188,10 @@ describe("client.applyMsg", () => {
 			ops.push(
 				b.makeOpMessage(b.annotateRangeLocal(1, 7, { foo: 1 }), ++seq),
 				b.makeOpMessage(
-					b.obliterateRangeLocal({ pos: 6, side: Side.Before }, { pos: 8, side: Side.Before }),
+					b.obliterateRangeLocal(
+						{ pos: 6, side: Side.Before },
+						{ pos: 8, side: Side.Before },
+					),
 					++seq,
 				),
 				b.makeOpMessage(b.insertTextLocal(5, "B"), ++seq),
@@ -1062,13 +1229,19 @@ describe("client.applyMsg", () => {
 
 			ops.push(
 				b.makeOpMessage(
-					b.obliterateRangeLocal({ pos: 1, side: Side.After }, { pos: 9, side: Side.Before }),
+					b.obliterateRangeLocal(
+						{ pos: 1, side: Side.After },
+						{ pos: 9, side: Side.Before },
+					),
 					++seq,
 				),
 				b.makeOpMessage(b.insertTextLocal(2, "xx"), ++seq),
 				b.makeOpMessage(b.insertTextLocal(8, "BB"), ++seq),
 				b.makeOpMessage(
-					b.obliterateRangeLocal({ pos: 1, side: Side.After }, { pos: 4, side: Side.Before }),
+					b.obliterateRangeLocal(
+						{ pos: 1, side: Side.After },
+						{ pos: 4, side: Side.Before },
+					),
 					++seq,
 				),
 				b.makeOpMessage(b.insertTextLocal(2, "6666666666"), ++seq),
@@ -1129,7 +1302,11 @@ describe("client.applyMsg", () => {
 
 		it("to the minimum of in-flight messages and the acked message's minSeq", () => {
 			let localInFlightRefSeq: number | undefined;
-			const localClient = new TestClient(undefined, undefined, () => localInFlightRefSeq);
+			const localClient = new TestClient(
+				undefined,
+				undefined,
+				() => localInFlightRefSeq,
+			);
 			const remoteClient = new TestClient();
 			const ops: ISequencedDocumentMessage[] = [];
 			localClient.startOrUpdateCollaboration(localUserLongId);
@@ -1141,7 +1318,13 @@ describe("client.applyMsg", () => {
 			// behind the minSeq of an acked op, the in-flight op must eventually be nacked.
 			// This call to make a message is unnecessary for the test purposes, but would happen in a production scenario
 			// (it's the message that would be sent to the server and nacked).
-			localClient.makeOpMessage(resubmittedOp, 1, localInFlightRefSeq, localUserLongId, 0);
+			localClient.makeOpMessage(
+				resubmittedOp,
+				1,
+				localInFlightRefSeq,
+				localUserLongId,
+				0,
+			);
 
 			ops.push(
 				remoteClient.makeOpMessage(

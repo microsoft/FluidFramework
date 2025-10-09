@@ -16,7 +16,10 @@ import {
 	toInitialSchema,
 	TreeViewConfigurationAlpha,
 } from "../../simple-tree/index.js";
-import { ForestTypeExpensiveDebug, TreeAlpha } from "../../shared-tree/index.js";
+import {
+	ForestTypeExpensiveDebug,
+	TreeAlpha,
+} from "../../shared-tree/index.js";
 import { ajvValidator } from "../codec/index.js";
 import { FluidClientVersion } from "../../codec/index.js";
 import { fieldCursorFromInsertable, testIdCompressor } from "../utils.js";
@@ -25,7 +28,9 @@ describe("independentView", () => {
 	describe("independentInitializedView", () => {
 		// Regression test for debug forest erroring during initialization due to being out of schema.
 		it("debug forest", () => {
-			const config = new TreeViewConfigurationAlpha({ schema: SchemaFactory.number });
+			const config = new TreeViewConfigurationAlpha({
+				schema: SchemaFactory.number,
+			});
 			const view = independentInitializedView(
 				config,
 				{
@@ -33,7 +38,11 @@ describe("independentView", () => {
 					jsonValidator: ajvValidator,
 				},
 				{
-					schema: extractPersistedSchema(config.schema, FluidClientVersion.v2_0, () => true),
+					schema: extractPersistedSchema(
+						config.schema,
+						FluidClientVersion.v2_0,
+						() => true,
+					),
 					tree: TreeAlpha.exportCompressed(1, {
 						oldestCompatibleClient: FluidClientVersion.v2_0,
 					}),
@@ -47,7 +56,9 @@ describe("independentView", () => {
 	describe("independentInitializedViewInternal", () => {
 		// Regression test for debug forest erroring during initialization due to being out of schema.
 		it("debug forest", () => {
-			const config = new TreeViewConfigurationAlpha({ schema: SchemaFactory.number });
+			const config = new TreeViewConfigurationAlpha({
+				schema: SchemaFactory.number,
+			});
 			const view = independentInitializedViewInternal(
 				config,
 				{

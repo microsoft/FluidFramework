@@ -69,7 +69,10 @@ describe("TransactionEnricher", () => {
 			assert.throws(() => transactionEnricher.commitTransaction());
 		});
 		it("returns undefined when committing an inner transaction", () => {
-			const transactionEnricher = new TransactionEnricher<TestChange>(rebaser, enricher);
+			const transactionEnricher = new TransactionEnricher<TestChange>(
+				rebaser,
+				enricher,
+			);
 			transactionEnricher.startTransaction();
 			transactionEnricher.startTransaction();
 			transactionEnricher.startTransaction();
@@ -78,13 +81,19 @@ describe("TransactionEnricher", () => {
 		});
 		describe("when committing an outer transaction", () => {
 			it("returns undefined for a transaction with no change steps", () => {
-				const transactionEnricher = new TransactionEnricher<TestChange>(rebaser, enricher);
+				const transactionEnricher = new TransactionEnricher<TestChange>(
+					rebaser,
+					enricher,
+				);
 				transactionEnricher.startTransaction();
 				const getter = transactionEnricher.commitTransaction();
 				assert.equal(getter, undefined);
 			});
 			it("returns undefined for a transaction with aborted change steps", () => {
-				const transactionEnricher = new TransactionEnricher<TestChange>(rebaser, enricher);
+				const transactionEnricher = new TransactionEnricher<TestChange>(
+					rebaser,
+					enricher,
+				);
 				transactionEnricher.startTransaction();
 				{
 					transactionEnricher.startTransaction();
@@ -100,7 +109,10 @@ describe("TransactionEnricher", () => {
 				assert.equal(getter, undefined);
 			});
 			it("returns a getter that returns the composition of transaction steps for a transaction with change steps", () => {
-				const transactionEnricher = new TransactionEnricher<TestChange>(rebaser, enricher);
+				const transactionEnricher = new TransactionEnricher<TestChange>(
+					rebaser,
+					enricher,
+				);
 				transactionEnricher.startTransaction();
 				{
 					transactionEnricher.addTransactionStep({

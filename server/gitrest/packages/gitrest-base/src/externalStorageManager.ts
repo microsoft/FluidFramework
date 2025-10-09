@@ -60,7 +60,12 @@ export class ExternalStorageManager implements IExternalStorageManager {
 		return result;
 	}
 
-	public async write(tenantId: string, ref: string, sha: string, update: boolean): Promise<void> {
+	public async write(
+		tenantId: string,
+		ref: string,
+		sha: string,
+		update: boolean,
+	): Promise<void> {
 		const lumberjackProperties = {
 			[BaseTelemetryProperties.tenantId]: tenantId,
 			[BaseGitRestTelemetryProperties.ref]: ref,

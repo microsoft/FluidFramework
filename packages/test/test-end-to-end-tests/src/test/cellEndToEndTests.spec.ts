@@ -51,17 +51,20 @@ describeCompat("SharedCell", "FullCompat", (getTestObjectProvider, apis) => {
 	beforeEach("setup", async () => {
 		// Create a Container for the first client.
 		const container1 = await provider.makeTestContainer(testContainerConfig);
-		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
+		dataObject1 =
+			await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 		sharedCell1 = await dataObject1.getSharedObject<ISharedCell>(cellId);
 
 		// Load the Container that was created by the first client.
 		const container2 = await provider.loadTestContainer(testContainerConfig);
-		const dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
+		const dataObject2 =
+			await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 		sharedCell2 = await dataObject2.getSharedObject<ISharedCell>(cellId);
 
 		// Load the Container that was created by the first client.
 		const container3 = await provider.loadTestContainer(testContainerConfig);
-		const dataObject3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
+		const dataObject3 =
+			await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
 		sharedCell3 = await dataObject3.getSharedObject<ISharedCell>(cellId);
 
 		// Set a starting value in the cell
@@ -109,11 +112,20 @@ describeCompat("SharedCell", "FullCompat", (getTestObjectProvider, apis) => {
 	it("can create the cell in 3 containers correctly", async () => {
 		// Cell was created and populated in beforeEach
 		// eslint-disable-next-line @typescript-eslint/no-base-to-string
-		assert.ok(sharedCell1, `Couldn't find the cell in container1, instead got ${sharedCell1}`);
+		assert.ok(
+			sharedCell1,
+			`Couldn't find the cell in container1, instead got ${sharedCell1}`,
+		);
 		// eslint-disable-next-line @typescript-eslint/no-base-to-string
-		assert.ok(sharedCell2, `Couldn't find the cell in container2, instead got ${sharedCell2}`);
+		assert.ok(
+			sharedCell2,
+			`Couldn't find the cell in container2, instead got ${sharedCell2}`,
+		);
 		// eslint-disable-next-line @typescript-eslint/no-base-to-string
-		assert.ok(sharedCell3, `Couldn't find the cell in container3, instead got ${sharedCell3}`);
+		assert.ok(
+			sharedCell3,
+			`Couldn't find the cell in container3, instead got ${sharedCell3}`,
+		);
 	});
 
 	it("can get cell data in 3 containers correctly", async () => {
@@ -271,7 +283,9 @@ describeCompat("SharedCell", "FullCompat", (getTestObjectProvider, apis) => {
 
 		await provider.ensureSynchronized();
 
-		async function getCellDataStore(cellP: Promise<ISharedCell>): Promise<ISharedCell> {
+		async function getCellDataStore(
+			cellP: Promise<ISharedCell>,
+		): Promise<ISharedCell> {
 			const cell = await cellP;
 			const handle = cell.get() as IFluidHandle<ISharedCell>;
 			return handle.get();
@@ -295,118 +309,149 @@ describeCompat("SharedCell", "FullCompat", (getTestObjectProvider, apis) => {
 
 		// When an unattached cell refers to another unattached cell, both remain unattached
 		detachedCell1.set(detachedCell2.handle);
-		assert.equal(sharedCell1.isAttached(), true, "sharedCell1 should be attached");
-		assert.equal(detachedCell1.isAttached(), false, "detachedCell1 should not be attached");
-		assert.equal(detachedCell2.isAttached(), false, "detachedCell2 should not be attached");
+		assert.equal(
+			sharedCell1.isAttached(),
+			true,
+			"sharedCell1 should be attached",
+		);
+		assert.equal(
+			detachedCell1.isAttached(),
+			false,
+			"detachedCell1 should not be attached",
+		);
+		assert.equal(
+			detachedCell2.isAttached(),
+			false,
+			"detachedCell2 should not be attached",
+		);
 
 		// When referring cell becomes attached, the referred cell becomes attached
 		// and the attachment transitively passes to a second referred cell
 		sharedCell1.set(detachedCell1.handle);
-		assert.equal(sharedCell1.isAttached(), true, "sharedCell1 should be attached");
-		assert.equal(detachedCell1.isAttached(), true, "detachedCell1 should be attached");
-		assert.equal(detachedCell2.isAttached(), true, "detachedCell2 should be attached");
+		assert.equal(
+			sharedCell1.isAttached(),
+			true,
+			"sharedCell1 should be attached",
+		);
+		assert.equal(
+			detachedCell1.isAttached(),
+			true,
+			"detachedCell1 should be attached",
+		);
+		assert.equal(
+			detachedCell2.isAttached(),
+			true,
+			"detachedCell2 should be attached",
+		);
 	});
 });
 
-describeCompat("SharedCell orderSequentially", "NoCompat", (getTestObjectProvider, apis) => {
-	const { SharedCell } = apis.dds;
+describeCompat(
+	"SharedCell orderSequentially",
+	"NoCompat",
+	(getTestObjectProvider, apis) => {
+		const { SharedCell } = apis.dds;
 
-	let provider: ITestObjectProvider;
-	beforeEach("getTestObjectProvider", () => {
-		provider = getTestObjectProvider();
-	});
-
-	let container: IContainer;
-	let dataObject: ITestFluidObject;
-	let sharedCell: ISharedCell;
-	let containerRuntime: IContainerRuntime;
-	let changedEventData: Serializable<unknown>[];
-
-	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
-		getRawConfig: (name: string): ConfigTypes => settings[name],
-	});
-	const errorMessage = "callback failure";
-
-	beforeEach("setup", async () => {
-		const configWithFeatureGates: ITestContainerConfig = {
-			fluidDataObjectType: DataObjectFactoryType.Test,
-			registry: [[cellId, SharedCell.getFactory()]],
-			loaderProps: {
-				configProvider: configProvider({
-					"Fluid.ContainerRuntime.EnableRollback": true,
-				}),
-			},
-		};
-		container = await provider.makeTestContainer(configWithFeatureGates);
-		dataObject = (await container.getEntryPoint()) as ITestFluidObject;
-		sharedCell = await dataObject.getSharedObject<ISharedCell>(cellId);
-		containerRuntime = dataObject.context.containerRuntime as IContainerRuntime;
-		changedEventData = [];
-		sharedCell.on("valueChanged", (value) => {
-			changedEventData.push(value);
+		let provider: ITestObjectProvider;
+		beforeEach("getTestObjectProvider", () => {
+			provider = getTestObjectProvider();
 		});
-	});
 
-	it("Should rollback set", async () => {
-		let error: Error | undefined;
-		try {
-			containerRuntime.orderSequentially(() => {
-				sharedCell.set(0);
-				throw new Error(errorMessage);
+		let container: IContainer;
+		let dataObject: ITestFluidObject;
+		let sharedCell: ISharedCell;
+		let containerRuntime: IContainerRuntime;
+		let changedEventData: Serializable<unknown>[];
+
+		const configProvider = (
+			settings: Record<string, ConfigTypes>,
+		): IConfigProviderBase => ({
+			getRawConfig: (name: string): ConfigTypes => settings[name],
+		});
+		const errorMessage = "callback failure";
+
+		beforeEach("setup", async () => {
+			const configWithFeatureGates: ITestContainerConfig = {
+				fluidDataObjectType: DataObjectFactoryType.Test,
+				registry: [[cellId, SharedCell.getFactory()]],
+				loaderProps: {
+					configProvider: configProvider({
+						"Fluid.ContainerRuntime.EnableRollback": true,
+					}),
+				},
+			};
+			container = await provider.makeTestContainer(configWithFeatureGates);
+			dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+			sharedCell = await dataObject.getSharedObject<ISharedCell>(cellId);
+			containerRuntime = dataObject.context
+				.containerRuntime as IContainerRuntime;
+			changedEventData = [];
+			sharedCell.on("valueChanged", (value) => {
+				changedEventData.push(value);
 			});
-		} catch (err) {
-			error = err as Error;
-		}
+		});
 
-		assert.notEqual(error, undefined, "No error");
-		assert.equal(error?.message, errorMessage, "Unexpected error message");
-		assert.equal(containerRuntime.disposed, false);
-		assert.equal(sharedCell.get(), undefined);
-		assert.equal(changedEventData[0], 0);
-		// rollback
-		assert.equal(changedEventData[1], undefined);
-	});
+		it("Should rollback set", async () => {
+			let error: Error | undefined;
+			try {
+				containerRuntime.orderSequentially(() => {
+					sharedCell.set(0);
+					throw new Error(errorMessage);
+				});
+			} catch (err) {
+				error = err as Error;
+			}
 
-	it("Should rollback set to prior value", async () => {
-		sharedCell.set("old");
-		let error: Error | undefined;
-		try {
-			containerRuntime.orderSequentially(() => {
-				sharedCell.set("new");
-				sharedCell.set("last");
-				throw new Error("callback failure");
-			});
-		} catch (err) {
-			error = err as Error;
-		}
+			assert.notEqual(error, undefined, "No error");
+			assert.equal(error?.message, errorMessage, "Unexpected error message");
+			assert.equal(containerRuntime.disposed, false);
+			assert.equal(sharedCell.get(), undefined);
+			assert.equal(changedEventData[0], 0);
+			// rollback
+			assert.equal(changedEventData[1], undefined);
+		});
 
-		assert.notEqual(error, undefined, "No error");
-		assert.equal(error?.message, errorMessage, "Unexpected error message");
-		assert.equal(containerRuntime.disposed, false);
-		assert.equal(sharedCell.get(), "old");
-		assert.equal(changedEventData[0], "old");
-		assert.equal(changedEventData[1], "new");
-		assert.equal(changedEventData[2], "last");
-		// rollback
-		assert.equal(changedEventData[3], "new");
-		assert.equal(changedEventData[4], "old");
-	});
+		it("Should rollback set to prior value", async () => {
+			sharedCell.set("old");
+			let error: Error | undefined;
+			try {
+				containerRuntime.orderSequentially(() => {
+					sharedCell.set("new");
+					sharedCell.set("last");
+					throw new Error("callback failure");
+				});
+			} catch (err) {
+				error = err as Error;
+			}
 
-	it("Should rollback delete", async () => {
-		sharedCell.set("old");
-		let error: Error | undefined;
-		try {
-			containerRuntime.orderSequentially(() => {
-				sharedCell.delete();
-				throw new Error(errorMessage);
-			});
-		} catch (err) {
-			error = err as Error;
-		}
+			assert.notEqual(error, undefined, "No error");
+			assert.equal(error?.message, errorMessage, "Unexpected error message");
+			assert.equal(containerRuntime.disposed, false);
+			assert.equal(sharedCell.get(), "old");
+			assert.equal(changedEventData[0], "old");
+			assert.equal(changedEventData[1], "new");
+			assert.equal(changedEventData[2], "last");
+			// rollback
+			assert.equal(changedEventData[3], "new");
+			assert.equal(changedEventData[4], "old");
+		});
 
-		assert.notEqual(error, undefined, "No error");
-		assert.equal(error?.message, errorMessage, "Unexpected error message");
-		assert.equal(containerRuntime.disposed, false);
-		assert.equal(sharedCell.get(), "old");
-	});
-});
+		it("Should rollback delete", async () => {
+			sharedCell.set("old");
+			let error: Error | undefined;
+			try {
+				containerRuntime.orderSequentially(() => {
+					sharedCell.delete();
+					throw new Error(errorMessage);
+				});
+			} catch (err) {
+				error = err as Error;
+			}
+
+			assert.notEqual(error, undefined, "No error");
+			assert.equal(error?.message, errorMessage, "Unexpected error message");
+			assert.equal(containerRuntime.disposed, false);
+			assert.equal(sharedCell.get(), "old");
+		});
+	},
+);

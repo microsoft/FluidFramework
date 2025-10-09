@@ -56,7 +56,10 @@ export class Context {
 		 * @privateRemarks
 		 * This design mirrors how {@link FlexTreeSchema} are accessed off the {@link FlexTreeContext}, making the migration away from them simpler.
 		 */
-		public readonly schema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeSchema>,
+		public readonly schema: ReadonlyMap<
+			TreeNodeSchemaIdentifier,
+			TreeNodeSchema
+		>,
 	) {}
 }
 

@@ -19,7 +19,9 @@ export interface ITelemetryContextProperties {
 /**
  * @internal
  */
-export function isTelemetryContextProperties(props: unknown): props is ITelemetryContextProperties {
+export function isTelemetryContextProperties(
+	props: unknown,
+): props is ITelemetryContextProperties {
 	return (
 		typeof props === "object" &&
 		props !== null &&
@@ -56,7 +58,10 @@ export class NullTelemetryContext implements ITelemetryContext {
 		return {};
 	}
 
-	public bindProperties(props: Partial<ITelemetryContextProperties>, callback: () => void): void {
+	public bindProperties(
+		props: Partial<ITelemetryContextProperties>,
+		callback: () => void,
+	): void {
 		callback();
 	}
 

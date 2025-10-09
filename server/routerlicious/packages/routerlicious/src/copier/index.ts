@@ -5,7 +5,10 @@
 
 import { CopierLambdaFactory } from "@fluidframework/server-lambdas";
 import * as services from "@fluidframework/server-services";
-import { type IPartitionLambdaFactory, MongoManager } from "@fluidframework/server-services-core";
+import {
+	type IPartitionLambdaFactory,
+	MongoManager,
+} from "@fluidframework/server-services-core";
 import type { Provider } from "nconf";
 
 // Establish a connection to Mongo, get the 'rawdeltas' collection and invoke

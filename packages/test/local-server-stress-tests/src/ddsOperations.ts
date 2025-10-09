@@ -3,10 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { type AsyncGenerator, type AsyncReducer } from "@fluid-private/stochastic-test-utils";
-import { DDSFuzzTestState, Client as DDSClient } from "@fluid-private/test-dds-utils";
+import {
+	type AsyncGenerator,
+	type AsyncReducer,
+} from "@fluid-private/stochastic-test-utils";
+import {
+	DDSFuzzTestState,
+	Client as DDSClient,
+} from "@fluid-private/test-dds-utils";
 import { AttachState } from "@fluidframework/container-definitions/internal";
-import { fluidHandleSymbol, type IFluidHandle } from "@fluidframework/core-interfaces";
+import {
+	fluidHandleSymbol,
+	type IFluidHandle,
+} from "@fluidframework/core-interfaces";
 import { assert, isObject } from "@fluidframework/core-utils/internal";
 import type {
 	IChannel,
@@ -44,7 +53,10 @@ const createDDSClient = (channel: IChannel): DDSClient<IChannelFactory> => {
  * we use a weak map here, so the lifetime of the DDS state is bound to the channel
  * itself, so after the channel is no longer needed the state can also be garbage collected.
  */
-const channelToDdsState = new WeakMap<IChannel, DDSFuzzTestState<IChannelFactory>>();
+const channelToDdsState = new WeakMap<
+	IChannel,
+	DDSFuzzTestState<IChannelFactory>
+>();
 
 export const covertLocalServerStateToDdsState = async (
 	state: LocalServerStressState,
@@ -87,7 +99,9 @@ export const covertLocalServerStateToDdsState = async (
 		...(channelToDdsState.get(state.channel) ?? {
 			clients: makeUnreachableCodePathProxy("clients"),
 			client: createDDSClient(state.channel),
-			containerRuntimeFactory: makeUnreachableCodePathProxy("containerRuntimeFactory"),
+			containerRuntimeFactory: makeUnreachableCodePathProxy(
+				"containerRuntimeFactory",
+			),
 			isDetached: state.client.container.attachState === AttachState.Detached,
 			summarizerClient: makeUnreachableCodePathProxy("containerRuntimeFactory"),
 		}),
@@ -97,9 +111,10 @@ export const covertLocalServerStateToDdsState = async (
 	return baseState;
 };
 
-export const DDSModelOpGenerator: AsyncGenerator<DDSModelOp, LocalServerStressState> = async (
-	state,
-) => {
+export const DDSModelOpGenerator: AsyncGenerator<
+	DDSModelOp,
+	LocalServerStressState
+> = async (state) => {
 	const channel = state.channel;
 	const channelType = channel.attributes.type;
 	const model = ddsModelMap.get(channelType);
@@ -119,10 +134,10 @@ export const DDSModelOpGenerator: AsyncGenerator<DDSModelOp, LocalServerStressSt
 	} satisfies DDSModelOp;
 };
 
-export const DDSModelOpReducer: AsyncReducer<DDSModelOp, LocalServerStressState> = async (
-	state,
-	op,
-) => {
+export const DDSModelOpReducer: AsyncReducer<
+	DDSModelOp,
+	LocalServerStressState
+> = async (state, op) => {
 	const { baseModel, taggedHandles } = await loadAllHandles(state);
 	const subOp = convertToRealHandles(op, taggedHandles);
 	baseModel.reducer(await covertLocalServerStateToDdsState(state), subOp);
@@ -161,7 +176,10 @@ export const convertToRealHandles = (
 	});
 };
 
-export const validateConsistencyOfAllDDS = async (clientA: Client, clientB: Client) => {
+export const validateConsistencyOfAllDDS = async (
+	clientA: Client,
+	clientB: Client,
+) => {
 	const buildChannelMap = async (client: Client) => {
 		/**
 		 * here we build a map of all the channels in the container based on their absolute path,
@@ -192,11 +210,17 @@ export const validateConsistencyOfAllDDS = async (clientA: Client, clientB: Clie
 		const aChannel = aMap.get(key);
 		const bChannel = bMap.get(key);
 		assert(aChannel !== undefined, "channel must exist");
-		assert(aChannel.attributes.type === bChannel?.attributes.type, "channel types must match");
+		assert(
+			aChannel.attributes.type === bChannel?.attributes.type,
+			"channel types must match",
+		);
 		const model = ddsModelMap.get(aChannel.attributes.type);
 		assert(model !== undefined, "model must exist");
 		try {
-			await model.validateConsistency(createDDSClient(aChannel), createDDSClient(bChannel));
+			await model.validateConsistency(
+				createDDSClient(aChannel),
+				createDDSClient(bChannel),
+			);
 		} catch (error) {
 			if (error instanceof Error) {
 				error.message = `comparing ${clientA.tag} and ${clientB.tag}: ${error.message}`;

@@ -70,15 +70,10 @@ export function create(
 					const tenantId = getTenantIdForGitRestRequest(params, req);
 					const documentId = params.storageRoutingId?.documentId;
 					const additionalProperties: Record<string, any> = {
-						[HttpProperties.driverVersion]: tokens.req(
-							req,
-							res,
-							DriverVersionHeaderName,
-						),
+						[HttpProperties.driverVersion]: tokens.req(req, res, DriverVersionHeaderName),
 						[BaseTelemetryProperties.tenantId]: tenantId,
 						[BaseTelemetryProperties.documentId]: documentId,
-						[CommonProperties.callingServiceName]:
-							req.headers[CallingServiceHeaderName] ?? "",
+						[CommonProperties.callingServiceName]: req.headers[CallingServiceHeaderName] ?? "",
 					};
 					res.locals.tenantId = tenantId;
 					res.locals.documentId = documentId;

@@ -19,19 +19,25 @@ function parameterAcceptedAs<T>(_t: T): void {
 	// Do nothing.  Used to verify type compatibility.
 }
 
-declare class BivariantBrand<const T> extends BrandedType<BivariantBrand<unknown>> {
+declare class BivariantBrand<const T> extends BrandedType<
+	BivariantBrand<unknown>
+> {
 	// This "abuses" function parameter bivariance to make the brand bivariant
 	// over T while respecting unrelated types are not compatible.
 	protected BivariantBrand(_: T): void;
 	private constructor();
 }
 
-declare class CovariantBrand<const out T> extends BrandedType<CovariantBrand<unknown>> {
+declare class CovariantBrand<const out T> extends BrandedType<
+	CovariantBrand<unknown>
+> {
 	protected readonly CovariantBrand: T;
 	private constructor();
 }
 
-declare class ContravariantBrand<const in T> extends BrandedType<ContravariantBrand<unknown>> {
+declare class ContravariantBrand<const in T> extends BrandedType<
+	ContravariantBrand<unknown>
+> {
 	protected readonly ContravariantBrand: (_: T) => void;
 	private constructor();
 }
@@ -40,7 +46,9 @@ declare class ContravariantBrand<const in T> extends BrandedType<ContravariantBr
  * This invariant brand is unrelated to the other example brands and thus should
  * not be compatible with them even when generic parameter T is the same.
  */
-declare class InvariantBrand<const in out T> extends BrandedType<InvariantBrand<unknown>> {
+declare class InvariantBrand<const in out T> extends BrandedType<
+	InvariantBrand<unknown>
+> {
 	protected readonly InvariantBrand: (_: T) => T;
 	private constructor();
 }
@@ -52,13 +60,16 @@ declare class InvariantBrand<const in out T> extends BrandedType<InvariantBrand<
  * parameter T is the same or a subtype (for CovariantBrand) or supertype
  * (for ContravariantBrand).
  */
-type InvariantBrandFromCoAndContraVariants<T> = CovariantBrand<T> & ContravariantBrand<T>;
+type InvariantBrandFromCoAndContraVariants<T> = CovariantBrand<T> &
+	ContravariantBrand<T>;
 
 /**
  * This looks just like {@link BivariantBrand} but is actually unique and
  * they are not interchangeable.
  */
-declare class RedeclaredBivariantBrand<const T> extends BrandedType<BivariantBrand<unknown>> {
+declare class RedeclaredBivariantBrand<const T> extends BrandedType<
+	BivariantBrand<unknown>
+> {
 	protected BivariantBrand(_: T): void;
 	private constructor();
 }
@@ -99,16 +110,24 @@ describe("BrandedType", () => {
 			parameterAcceptedAs<BivariantBrand<string>>(
 				createInstanceOf<BivariantBrand<"literal">>(),
 			);
-			parameterAcceptedAs<BivariantBrand<number>>(createInstanceOf<BivariantBrand<5>>());
-			parameterAcceptedAs<BivariantBrand<boolean>>(createInstanceOf<BivariantBrand<false>>());
+			parameterAcceptedAs<BivariantBrand<number>>(
+				createInstanceOf<BivariantBrand<5>>(),
+			);
+			parameterAcceptedAs<BivariantBrand<boolean>>(
+				createInstanceOf<BivariantBrand<false>>(),
+			);
 		});
 
 		it("`BivariantBrand<B>` is assignable to `BivariantBrand<A>` when `A` is a subtype of `B`", () => {
 			parameterAcceptedAs<BivariantBrand<"literal">>(
 				createInstanceOf<BivariantBrand<string>>(),
 			);
-			parameterAcceptedAs<BivariantBrand<5>>(createInstanceOf<BivariantBrand<number>>());
-			parameterAcceptedAs<BivariantBrand<false>>(createInstanceOf<BivariantBrand<boolean>>());
+			parameterAcceptedAs<BivariantBrand<5>>(
+				createInstanceOf<BivariantBrand<number>>(),
+			);
+			parameterAcceptedAs<BivariantBrand<false>>(
+				createInstanceOf<BivariantBrand<boolean>>(),
+			);
 		});
 
 		it("`BivariantBrand<B>` is NOT assignable to `BivariantBrand<A>` when `B` is unrelated to `A`", () => {
@@ -130,8 +149,12 @@ describe("BrandedType", () => {
 			parameterAcceptedAs<CovariantBrand<string>>(
 				createInstanceOf<CovariantBrand<"literal">>(),
 			);
-			parameterAcceptedAs<CovariantBrand<number>>(createInstanceOf<CovariantBrand<5>>());
-			parameterAcceptedAs<CovariantBrand<boolean>>(createInstanceOf<CovariantBrand<false>>());
+			parameterAcceptedAs<CovariantBrand<number>>(
+				createInstanceOf<CovariantBrand<5>>(),
+			);
+			parameterAcceptedAs<CovariantBrand<boolean>>(
+				createInstanceOf<CovariantBrand<false>>(),
+			);
 		});
 
 		it("`CovariantBrand<B>` is NOT assignable to `CovariantBrand<A>` when `A` is a subtype of `B`", () => {
@@ -356,8 +379,12 @@ describe("BrandedType", () => {
 
 	describe("simple brands can define their own compatibility", () => {
 		it("`B & BrandedType<X>` is assignable to `A & BrandedType<X>` when `B` is a subtype of `A`", () => {
-			parameterAcceptedAs<BrandedString>(createInstanceOf<"B" & BrandedType<"encoded">>());
-			parameterAcceptedAs<typeof brandedNumber>(createInstanceOf<0 & BrandedType<"zero">>());
+			parameterAcceptedAs<BrandedString>(
+				createInstanceOf<"B" & BrandedType<"encoded">>(),
+			);
+			parameterAcceptedAs<typeof brandedNumber>(
+				createInstanceOf<0 & BrandedType<"zero">>(),
+			);
 			parameterAcceptedAs<typeof brandedObject>(
 				createInstanceOf<(() => void) & BrandedType<"its a secret">>(),
 			);
@@ -368,9 +395,9 @@ describe("BrandedType", () => {
 					} & BrandedType<"metadata">
 				>(),
 			);
-			parameterAcceptedAs<((a: string) => void) & BrandedType<"function brand">>(
-				createInstanceOf<(() => object) & BrandedType<"function brand">>(),
-			);
+			parameterAcceptedAs<
+				((a: string) => void) & BrandedType<"function brand">
+			>(createInstanceOf<(() => object) & BrandedType<"function brand">>());
 		});
 
 		it("`B & BrandedType<X>` is NOT assignable to `A & BrandedType<X>` when `A` is a subtype of `B`", () => {
@@ -396,11 +423,17 @@ describe("BrandedType", () => {
 			);
 			parameterAcceptedAs<(() => void) & BrandedType<"function brand">>(
 				// @ts-expect-error Type '((a: string) => void) & BrandedType<"function brand">' is not assignable to type '(() => void) & BrandedType<"function brand">'
-				createInstanceOf<((a: string) => void) & BrandedType<"function brand">>(),
+				createInstanceOf<
+					((a: string) => void) & BrandedType<"function brand">
+				>(),
 			);
-			parameterAcceptedAs<((a: string) => object) & BrandedType<"function brand">>(
+			parameterAcceptedAs<
+				((a: string) => object) & BrandedType<"function brand">
+			>(
 				// @ts-expect-error Type '((a: string) => void) & BrandedType<"function brand">' is not assignable to parameter of type '((a: string) => object) & BrandedType<"function brand">'
-				createInstanceOf<((a: string) => void) & BrandedType<"function brand">>(),
+				createInstanceOf<
+					((a: string) => void) & BrandedType<"function brand">
+				>(),
 			);
 		});
 	});

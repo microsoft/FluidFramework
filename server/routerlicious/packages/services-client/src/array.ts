@@ -119,7 +119,10 @@ export function mergeKArrays<T>(arrays: T[][], comparator: (a: T, b: T) => numbe
  * @returns deduped sorted array based on the selector
  * @internal
  */
-export function dedupeSortedArray<T, TSelector>(array: T[], selector: (item: T) => TSelector): T[] {
+export function dedupeSortedArray<T, TSelector>(
+	array: T[],
+	selector: (item: T) => TSelector,
+): T[] {
 	const result: T[] = [];
 	let pre: any;
 	for (const item of array) {

@@ -125,7 +125,11 @@ describe("EnumArrayProperty", function () {
 
 	it("Should be able to overide default values on creation with initialValues", function () {
 		let initialValues = { enumArray: [3, 2, 3] };
-		let property = PropertyFactory.create("autodesk.enum:enums-1.0.0", null, initialValues);
+		let property = PropertyFactory.create(
+			"autodesk.enum:enums-1.0.0",
+			null,
+			initialValues,
+		);
 
 		expect(property.get("enumArray").getValues()).to.deep.equal([3, 2, 3]);
 		expect(property.get("enumArray").getEnumStrings(0, 3)).to.deep.equal([

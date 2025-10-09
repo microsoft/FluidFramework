@@ -63,7 +63,9 @@ export interface NoDevtoolsErrorBarProps {
 /**
  * TODO
  */
-export function NoDevtoolsErrorBar(props: NoDevtoolsErrorBarProps): React.ReactElement {
+export function NoDevtoolsErrorBar(
+	props: NoDevtoolsErrorBarProps,
+): React.ReactElement {
 	const { dismiss, retrySearch } = props;
 
 	const styles = useStyles();

@@ -6,13 +6,19 @@
 import { strict as assert } from "node:assert";
 
 import type { IRequest } from "@fluidframework/core-interfaces";
-import { type ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
+import {
+	type ISummaryTree,
+	SummaryType,
+} from "@fluidframework/driver-definitions";
 import type { IDocumentService } from "@fluidframework/driver-definitions/internal";
 import {
 	type IOdspResolvedUrl,
 	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { MockLogger, isFluidError } from "@fluidframework/telemetry-utils/internal";
+import {
+	MockLogger,
+	isFluidError,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRequest.js";
 import { LocalPersistentCache } from "../odspCache.js";
@@ -50,7 +56,10 @@ describe("Odsp Create Container Test", () => {
 		{ snapshotOptions: { timeout: 2000 } },
 	);
 
-	const createSummary = (putAppTree: boolean, putProtocolTree: boolean): ISummaryTree => {
+	const createSummary = (
+		putAppTree: boolean,
+		putProtocolTree: boolean,
+	): ISummaryTree => {
 		const summary: ISummaryTree = {
 			type: SummaryType.Tree,
 			tree: {},
@@ -87,7 +96,12 @@ describe("Odsp Create Container Test", () => {
 
 	beforeEach(() => {
 		resolver = new OdspDriverUrlResolver();
-		request = createOdspCreateContainerRequest(siteUrl, driveId, filePath, fileName);
+		request = createOdspCreateContainerRequest(
+			siteUrl,
+			driveId,
+			filePath,
+			fileName,
+		);
 	});
 	afterEach(() => {
 		logger.assertMatchNone([{ category: "error" }]);
@@ -98,15 +112,28 @@ describe("Odsp Create Container Test", () => {
 		const docID = await getHashedDocumentId(driveId, itemId);
 		const summary = createSummary(true, true);
 		const docService = await mockFetchOk(
-			async () => odspDocumentServiceFactory.createContainer(summary, resolved, logger),
+			async () =>
+				odspDocumentServiceFactory.createContainer(summary, resolved, logger),
 			expectedResponse,
 			{ "x-fluid-epoch": "epoch1" },
 		);
 		const finalResolverUrl = getOdspResolvedUrl(docService.resolvedUrl);
-		assert.strictEqual(finalResolverUrl.driveId, driveId, "Drive Id should match");
+		assert.strictEqual(
+			finalResolverUrl.driveId,
+			driveId,
+			"Drive Id should match",
+		);
 		assert.strictEqual(finalResolverUrl.itemId, itemId, "ItemId should match");
-		assert.strictEqual(finalResolverUrl.siteUrl, siteUrl, "SiteUrl should match");
-		assert.strictEqual(finalResolverUrl.hashedDocumentId, docID, "DocId should match");
+		assert.strictEqual(
+			finalResolverUrl.siteUrl,
+			siteUrl,
+			"SiteUrl should match",
+		);
+		assert.strictEqual(
+			finalResolverUrl.hashedDocumentId,
+			docID,
+			"DocId should match",
+		);
 
 		const url = `https://placeholder/placeholder/${docID}/`;
 		const snapshotUrl = `${siteUrl}/_api/v2.1/drives/${driveId}/items/${itemId}/opStream/snapshots`;
@@ -153,7 +180,11 @@ describe("Odsp Create Container Test", () => {
 		} catch (error: unknown) {
 			assert(isFluidError(error), "Error should be IFluidError");
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-			assert.strictEqual((error as any).statusCode, undefined, "Wrong error code");
+			assert.strictEqual(
+				(error as any).statusCode,
+				undefined,
+				"Wrong error code",
+			);
 			assert.strictEqual(
 				error.errorType,
 				OdspErrorTypes.incorrectServerResponse,

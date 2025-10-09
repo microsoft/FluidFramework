@@ -25,11 +25,17 @@ export function clearCacheIfOdsp(
 export function isSupportedLoaderVersion(loaderVersion: string): boolean {
 	const loaderComparisonVersion = versionToComparisonNumber(loaderVersion);
 	const oldestSupportedVersion = versionToComparisonNumber("2.0.0-internal.3");
-	return loaderVersion === pkgVersion || loaderComparisonVersion >= oldestSupportedVersion;
+	return (
+		loaderVersion === pkgVersion ||
+		loaderComparisonVersion >= oldestSupportedVersion
+	);
 }
 
 export function isGroupIdLoaderVersion(loaderVersion: string): boolean {
 	const loaderComparisonVersion = versionToComparisonNumber(loaderVersion);
 	const oldestSupportedVersion = versionToComparisonNumber("2.0.0-rc.5");
-	return loaderVersion === pkgVersion || loaderComparisonVersion >= oldestSupportedVersion;
+	return (
+		loaderVersion === pkgVersion ||
+		loaderComparisonVersion >= oldestSupportedVersion
+	);
 }

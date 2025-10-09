@@ -19,7 +19,10 @@ import {
 	createSummarySection,
 	createThrowsSection,
 } from "../helpers/index.js";
-import { doesItemRequireOwnDocument, getHeadingForApiItem } from "../utilities/index.js";
+import {
+	doesItemRequireOwnDocument,
+	getHeadingForApiItem,
+} from "../utilities/index.js";
 
 /**
  * Default {@link ApiItemTransformationConfiguration.defaultSectionLayout} implementation.

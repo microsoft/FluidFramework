@@ -26,7 +26,10 @@ import {
 
 import type { SharedBranchSummaryData, SummaryData } from "./editManager.js";
 import { EncodedEditManager } from "./editManagerFormatV5.js";
-import { decodeSharedBranch, encodeSharedBranch } from "./editManagerCodecsCommons.js";
+import {
+	decodeSharedBranch,
+	encodeSharedBranch,
+} from "./editManagerCodecsCommons.js";
 import type { EncodedSharedBranch } from "./editManagerFormatCommons.js";
 import type { BranchId } from "./branch.js";
 
@@ -68,7 +71,10 @@ export function makeV5CodecWithVersion<TChangeset>(
 	> = withSchemaValidation(
 		format,
 		{
-			encode: (data: SummaryData<TChangeset>, context: EditManagerEncodingContext) => {
+			encode: (
+				data: SummaryData<TChangeset>,
+				context: EditManagerEncodingContext,
+			) => {
 				const mainBranch = encodeSharedBranch(
 					changeCodec,
 					revisionTagCodec,
@@ -120,7 +126,10 @@ export function makeV5CodecWithVersion<TChangeset>(
 				};
 
 				if (json.branches !== undefined) {
-					const branches = new Map<BranchId, SharedBranchSummaryData<TChangeset>>();
+					const branches = new Map<
+						BranchId,
+						SharedBranchSummaryData<TChangeset>
+					>();
 					for (const branch of json.branches) {
 						const decodedBranch = decodeSharedBranch(
 							changeCodec,
@@ -133,7 +142,10 @@ export function makeV5CodecWithVersion<TChangeset>(
 							decodedBranch.id !== undefined,
 							0xc66 /* Shared branches must have an id */,
 						);
-						assert(!branches.has(decodedBranch.id), 0xc67 /* Duplicate shared branch id */);
+						assert(
+							!branches.has(decodedBranch.id),
+							0xc67 /* Duplicate shared branch id */,
+						);
 						branches.set(decodedBranch.id, decodedBranch);
 					}
 

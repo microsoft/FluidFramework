@@ -221,9 +221,7 @@ describe("Historian", () => {
 			url: `${endpoint}/blobs/${sha}`,
 		};
 		it("succeeds on 200", async () => {
-			axiosMock
-				.onPost(url, blobParams)
-				.reply(mockReplyWithAuth(initialCredentials, response));
+			axiosMock.onPost(url, blobParams).reply(mockReplyWithAuth(initialCredentials, response));
 			const received = await historian.createBlob(blobParams);
 			assert.deepStrictEqual(received, response);
 		});
@@ -298,9 +296,7 @@ describe("Historian", () => {
 			assert.deepStrictEqual(received, response);
 		});
 		it("retries once with new credentials on 401", async () => {
-			axiosMock
-				.onPost(url, commitParams)
-				.reply(mockReplyWithAuth(freshCredentials, response));
+			axiosMock.onPost(url, commitParams).reply(mockReplyWithAuth(freshCredentials, response));
 			const received = await historian.createCommit(commitParams);
 			assert.deepStrictEqual(received, response);
 		});
@@ -435,9 +431,7 @@ describe("Historian", () => {
 		const url = getUrlWithToken(`/git/trees`, initialCredentials);
 		const response = mockTree;
 		it("succeeds on 200", async () => {
-			axiosMock
-				.onPost(url, treeParams)
-				.reply(mockReplyWithAuth(initialCredentials, response));
+			axiosMock.onPost(url, treeParams).reply(mockReplyWithAuth(initialCredentials, response));
 			const received = await historian.createTree(treeParams);
 			assert.deepStrictEqual(received, response);
 		});

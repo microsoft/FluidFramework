@@ -104,7 +104,11 @@ describe("BatchRunCounter", () => {
 						{ batchId: "foo", staged: true },
 					);
 				},
-				(e) => validateAssertionError(e as Error, "Reentrancy not allowed in BatchRunCounter"),
+				(e) =>
+					validateAssertionError(
+						e as Error,
+						"Reentrancy not allowed in BatchRunCounter",
+					),
 			);
 		});
 	});

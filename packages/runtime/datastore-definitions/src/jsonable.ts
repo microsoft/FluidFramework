@@ -84,11 +84,10 @@ export interface Internal_InterfaceOfJsonableTypesWith<T> {
  * ```
  * @legacy @beta
  */
-export type Jsonable<T, TReplaced = never> = /* test for 'any' */ boolean extends (
-	T extends never
-		? true
-		: false
-)
+export type Jsonable<
+	T,
+	TReplaced = never,
+> = /* test for 'any' */ boolean extends (T extends never ? true : false)
 	? /* 'any' => */ JsonableTypeWith<TReplaced>
 	: /* test for 'unknown' */ unknown extends T
 		? /* 'unknown' => */ JsonableTypeWith<TReplaced>

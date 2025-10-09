@@ -13,7 +13,10 @@ import type { Handler } from "./common.js";
 const lockFilePattern = /.*?package-lock\.json$/i;
 let _knownPaths: string[] | undefined;
 
-const getKnownPaths = (config: FlubConfig, repoConfig: IFluidBuildConfig): string[] => {
+const getKnownPaths = (
+	config: FlubConfig,
+	repoConfig: IFluidBuildConfig,
+): string[] => {
 	if (_knownPaths === undefined) {
 		// Add the root path (.) because a lockfile is expected there
 		_knownPaths = ["."];
@@ -47,7 +50,10 @@ export const handlers: Handler[] = [
 	{
 		name: "extraneous-lockfiles",
 		match: lockFilePattern,
-		handler: async (file: string, root: string): Promise<string | undefined> => {
+		handler: async (
+			file: string,
+			root: string,
+		): Promise<string | undefined> => {
 			const flubConfig = getFlubConfig(root);
 			const repoConfig = getFluidBuildConfig(root);
 			const knownPaths: string[] = getKnownPaths(flubConfig, repoConfig);
@@ -61,7 +67,10 @@ export const handlers: Handler[] = [
 
 			return undefined;
 		},
-		resolver: (file: string, root: string): { resolved: boolean; message?: string } => {
+		resolver: (
+			file: string,
+			root: string,
+		): { resolved: boolean; message?: string } => {
 			const flubConfig = getFlubConfig(root);
 			const repoConfig = getFluidBuildConfig(root);
 			const knownPaths: string[] = getKnownPaths(flubConfig, repoConfig);

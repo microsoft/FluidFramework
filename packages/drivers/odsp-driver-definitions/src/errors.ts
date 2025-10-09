@@ -67,7 +67,8 @@ export const OdspErrorTypes = {
  * @legacy
  * @beta
  */
-export type OdspErrorTypes = (typeof OdspErrorTypes)[keyof typeof OdspErrorTypes];
+export type OdspErrorTypes =
+	(typeof OdspErrorTypes)[keyof typeof OdspErrorTypes];
 
 /**
  * @legacy
