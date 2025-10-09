@@ -168,7 +168,6 @@ module.exports = {
 		],
 
 		// ENABLED INTENTIONALLY
-		"@typescript-eslint/ban-types": "error",
 		"@typescript-eslint/dot-notation": "error",
 		"@typescript-eslint/no-non-null-assertion": "error",
 		"@typescript-eslint/no-unnecessary-type-assertion": "error",

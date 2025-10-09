@@ -232,14 +232,7 @@ export const TestChange = {
 	isEmpty,
 	isNonEmptyChange,
 	codec,
-	codecs: makeCodecFamily([
-		[1, codec],
-		[2, codec],
-		[3, codec],
-		[4, codec],
-		[5, codec],
-		[101, codec],
-	]),
+	codecs: makeCodecFamily([[1, codec]]),
 };
 deepFreeze(TestChange);
 

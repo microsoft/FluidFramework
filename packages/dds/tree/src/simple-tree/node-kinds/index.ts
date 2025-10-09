@@ -27,7 +27,6 @@ export {
 
 export {
 	type FieldHasDefault,
-	type InsertableObjectFromAnnotatedSchemaRecord,
 	type InsertableObjectFromSchemaRecord,
 	isObjectNodeSchema,
 	type ObjectFromSchemaRecord,
@@ -37,7 +36,6 @@ export {
 	setField,
 	type TreeObjectNode,
 	type SimpleKeyMap,
-	type UnannotateSchemaRecord,
 } from "./object/index.js";
 
 export {

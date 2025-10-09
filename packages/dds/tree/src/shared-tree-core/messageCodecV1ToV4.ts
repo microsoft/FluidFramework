@@ -45,8 +45,11 @@ export function makeV1ToV4CodecWithVersion<TChangeset>(
 		Message(changeCodec.encodedSchema ?? Type.Any()),
 		{
 			encode: (decoded: DecodedMessage<TChangeset>, context: MessageEncodingContext) => {
-				assert(decoded.type === "commit", "Only commit messages are supported");
-				assert(decoded.branchId === "main", "Only commit messages to main are supported");
+				assert(decoded.type === "commit", 0xc68 /* Only commit messages are supported */);
+				assert(
+					decoded.branchId === "main",
+					0xc69 /* Only commit messages to main are supported */,
+				);
 				const { commit, sessionId: originatorId } = decoded;
 				const message: Message = {
 					revision: revisionTagCodec.encode(commit.revision, {

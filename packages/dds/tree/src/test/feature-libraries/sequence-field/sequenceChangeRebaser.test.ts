@@ -73,7 +73,10 @@ import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 import type { ICodecOptions } from "../../../index.js";
 import { ajvValidator } from "../../codec/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { sequence } from "../../../feature-libraries/default-schema/defaultFieldKinds.js";
+import {
+	sequence,
+	type ModularChangeFormatVersion,
+} from "../../../feature-libraries/default-schema/defaultFieldKinds.js";
 // eslint-disable-next-line import/no-internal-modules
 import { defaultFieldRebaser } from "../default-field-kinds/defaultChangesetUtil.js";
 
@@ -553,9 +556,9 @@ const codecOptions: ICodecOptions = {
 };
 
 const fieldKindConfiguration: FieldKindConfiguration =
-	fieldKindConfigurations.get(4) ?? strict.fail("Field kind configuration not found");
+	fieldKindConfigurations.get(brand(4)) ?? strict.fail("Field kind configuration not found");
 assert(
-	fieldKindConfigurations.get(5) === undefined,
+	fieldKindConfigurations.get(5 as ModularChangeFormatVersion) === undefined,
 	"There's a newer configuration. It probably should be used.",
 );
 

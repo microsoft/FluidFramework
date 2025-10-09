@@ -7,20 +7,15 @@ import { strict as assert } from "node:assert";
 import { appendFileSync, closeSync, mkdirSync, openSync } from "node:fs";
 
 import { oob, unreachableCase } from "@fluidframework/core-utils/internal";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import { type ImplicitFieldSchema, TreeViewConfiguration } from "@fluidframework/tree";
 import {
-	SharedTree,
 	TreeAlpha,
-	asAlpha,
+	independentView,
 	type InsertableField,
-	type InsertableTreeFieldFromImplicitField,
 	type ReadableField,
 	type TreeNode,
-	type TreeView,
 	type UnsafeUnknownSchema,
 	type VerboseTree,
 	type VerboseTreeNode,
@@ -30,8 +25,9 @@ import type { BaseChatModel } from "@langchain/core/language_models/chat_models"
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { ChatOpenAI } from "@langchain/openai";
 
-import { createSemanticAgent, type Log } from "../agent.js";
-import { fail, failUsage, getOrCreate } from "../utils.js";
+import { SharedTreeSemanticAgent } from "../agent.js";
+import { LangchainChatModel } from "../langchain.js";
+import { fail, failUsage, getOrCreate, type TreeView } from "../utils.js";
 
 /**
  * Validates that the error is a UsageError with the expected error message.
@@ -113,37 +109,34 @@ export function createLlmClient(provider: LlmProvider): BaseChatModel {
  * - `ANTHROPIC_API_KEY` for Anthropic
  * - `GEMINI_API_KEY` for Gemini
  */
-async function queryDomain<TSchema extends ImplicitFieldSchema, T = ReadableField<TSchema>>(
+async function queryDomain<TSchema extends ImplicitFieldSchema>(
 	schema: TSchema,
-	initialTree: InsertableTreeFieldFromImplicitField<TSchema>,
+	initialTree: InsertableField<TSchema>,
 	provider: LlmProvider,
 	prompt: string,
 	options?: {
-		subtree?: (root: ReadableField<TSchema>) => T & TreeNode;
+		subtree?: (root: ReadableField<TSchema>) => TreeNode;
 		domainHints?: string;
-		treeToString?: (root: T) => string;
-		readonly log?: Log;
+		readonly log?: (text: string) => void;
 	},
 ): Promise<TreeView<TSchema>> {
-	const tree = SharedTree.getFactory().create(
-		new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-		"tree",
-	);
-	const view = tree.viewWith(new TreeViewConfiguration({ schema }));
+	const view = independentView(new TreeViewConfiguration({ schema }), {});
 	view.initialize(initialTree);
-	const client = createLlmClient(provider);
-	await (options?.subtree === undefined
-		? createSemanticAgent(client, asAlpha(view), {
-				log: options?.log,
-				domainHints: options?.domainHints,
-				treeToString: options?.treeToString as (root: ReadableField<TSchema>) => string,
-			}).query(prompt)
-		: createSemanticAgent(client, options.subtree(view.root as ReadableField<TSchema>), {
-				log: options?.log,
-				domainHints: options?.domainHints,
-				treeToString: options?.treeToString,
-			}).query(prompt));
+	const client = new LangchainChatModel(createLlmClient(provider));
+	const logger = options?.log === undefined ? undefined : { log: options.log };
+	const subtree = options?.subtree?.(view.root);
+	const agent =
+		subtree === undefined
+			? new SharedTreeSemanticAgent(client, view, {
+					logger,
+					domainHints: options?.domainHints,
+				})
+			: new SharedTreeSemanticAgent(client, subtree, {
+					logger,
+					domainHints: options?.domainHints,
+				});
 
+	await agent.query(prompt);
 	return view;
 }
 
@@ -159,8 +152,7 @@ export interface LLMIntegrationTest<TRoot extends ImplicitFieldSchema | UnsafeUn
 	readonly options?: {
 		readonly subtree?: (root: ReadableField<TRoot>) => TreeNode;
 		readonly domainHints?: string;
-		readonly treeToString?: (root: ReadableField<TRoot>) => string;
-		readonly log?: Log;
+		readonly log?: (text: string) => void;
 	};
 }
 
@@ -365,7 +357,6 @@ export function describeIntegrationTests(
 				{
 					subtree: options?.subtree,
 					domainHints: options?.domainHints,
-					treeToString: options?.treeToString,
 					log: (text) => {
 						appendFileSync(fd, text, { encoding: "utf8" });
 					},

@@ -7,6 +7,7 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 
 import {
+	type CodecTree,
 	type FluidClientVersion,
 	type ICodecOptions,
 	type IJsonCodec,
@@ -33,7 +34,7 @@ import {
 
 import { decode } from "./chunkDecoding.js";
 import type { FieldBatch } from "./fieldBatch.js";
-import { EncodedFieldBatch, validVersions } from "./format.js";
+import { EncodedFieldBatch, validVersions, type FieldBatchFormatVersion } from "./format.js";
 import { schemaCompressedEncode } from "./schemaBasedEncode.js";
 import { uncompressedEncode } from "./uncompressedEncode.js";
 
@@ -196,4 +197,8 @@ export function makeFieldBatchCodec(
 			).map((chunk) => chunk.cursor());
 		},
 	});
+}
+
+export function getCodecTreeForFieldBatchFormat(version: FieldBatchFormatVersion): CodecTree {
+	return { name: "FieldBatch", version };
 }

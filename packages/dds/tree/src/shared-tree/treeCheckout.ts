@@ -789,7 +789,10 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
 	): void {
 		// TODO: Dispose old branch, if necessary
-		assert(!this.#transaction.isInProgress(), "Cannot switch branches during a transaction");
+		assert(
+			!this.#transaction.isInProgress(),
+			0xc55 /* Cannot switch branches during a transaction */,
+		);
 		const diff = diffHistories(
 			this.changeFamily.rebaser,
 			this.#transaction.branch.getHead(),
@@ -1021,7 +1024,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	// #region Commit Validation
 
 	/** Used to maintain the contract of {@link onCommitValid}(). */
-	#validatedCommits = new WeakMap<
+	readonly #validatedCommits = new WeakMap<
 		GraphCommit<SharedTreeChange>,
 		((commit: GraphCommit<SharedTreeChange>) => void)[] | true
 	>();

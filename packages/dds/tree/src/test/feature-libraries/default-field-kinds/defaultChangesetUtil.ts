@@ -18,6 +18,7 @@ import {
 	ModularChangeFamily,
 	type DefaultChangeset,
 	type FieldKindConfiguration,
+	type ModularChangeFormatVersion,
 	type ModularChangeset,
 } from "../../../feature-libraries/index.js";
 import {
@@ -39,15 +40,16 @@ import {
 } from "../modular-schema/modularChangesetUtil.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/index.js";
+import { brand } from "../../../util/index.js";
 
 const codecOptions: ICodecOptions = {
 	jsonValidator: ajvValidator,
 };
 
 const fieldKindConfiguration: FieldKindConfiguration =
-	fieldKindConfigurations.get(4) ?? assert.fail("Field kind configuration not found");
+	fieldKindConfigurations.get(brand(4)) ?? assert.fail("Field kind configuration not found");
 assert(
-	fieldKindConfigurations.get(5) === undefined,
+	fieldKindConfigurations.get(5 as ModularChangeFormatVersion) === undefined,
 	"There's a newer configuration. It probably should be used.",
 );
 

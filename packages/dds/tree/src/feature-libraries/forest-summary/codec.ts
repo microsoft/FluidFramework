@@ -6,6 +6,7 @@
 import { assert, oob } from "@fluidframework/core-utils/internal";
 
 import {
+	type CodecTree,
 	type ICodecOptions,
 	type IJsonCodec,
 	makeVersionedValidatedCodec,
@@ -14,6 +15,7 @@ import type { FieldKey, ITreeCursorSynchronous } from "../../core/index.js";
 import type { FieldBatchCodec, FieldBatchEncodingContext } from "../chunked-forest/index.js";
 
 import { Format } from "./format.js";
+import type { Brand } from "../../util/index.js";
 
 /**
  * Uses field cursors
@@ -49,4 +51,9 @@ export function makeForestSummarizerCodec(
 			return out;
 		},
 	});
+}
+
+export type ForestFormatVersion = Brand<1, "ForestFormatVersion">;
+export function getCodecTreeForForestFormat(version: ForestFormatVersion): CodecTree {
+	return { name: "Forest", version };
 }
