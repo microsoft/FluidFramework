@@ -9,7 +9,7 @@ import type {
 	IEmitter,
 	Listenable,
 } from "@fluidframework/core-interfaces/internal";
-import { assert, oob, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { anchorSlot, rootFieldKey } from "../core/index.js";
@@ -202,9 +202,9 @@ export class SchematizingSimpleTreeView<
 				(batches, doHydration) => {
 					assert(this.pendingHydration === undefined, "pendingHydration already set");
 					this.pendingHydration = () => {
-						assert(batches.length <= 1, "initialize should have a single batch");
-						if (batches.length !== 0) {
-							doHydration(batches[0] ?? oob(), {
+						assert(batches.length <= 1, "initialize should at most one hydration batch");
+						for (const batch of batches) {
+							doHydration(batch, {
 								parent: undefined,
 								parentField: rootFieldKey,
 								parentIndex: 0,
