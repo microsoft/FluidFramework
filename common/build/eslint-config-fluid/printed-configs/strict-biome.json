@@ -22,7 +22,7 @@
     },
     "plugins": [
         "import",
-        "eslint-comments",
+        "@eslint-community/eslint-comments",
         "import-x",
         "@fluid-internal/fluid",
         "unused-imports",
@@ -41,6 +41,24 @@
         ],
         "@babel/semi": [
             "off"
+        ],
+        "@eslint-community/eslint-comments/disable-enable-pair": [
+            "error",
+            {
+                "allowWholeFile": true
+            }
+        ],
+        "@eslint-community/eslint-comments/no-aggregating-enable": [
+            "error"
+        ],
+        "@eslint-community/eslint-comments/no-duplicate-disable": [
+            "error"
+        ],
+        "@eslint-community/eslint-comments/no-unlimited-disable": [
+            "error"
+        ],
+        "@eslint-community/eslint-comments/no-unused-enable": [
+            "error"
         ],
         "@eslint-community/eslint-plugin-mysticatea/no-this-in-static": [
             "off"
@@ -1172,18 +1190,6 @@
             {
                 "allowWholeFile": true
             }
-        ],
-        "eslint-comments/no-aggregating-enable": [
-            "error"
-        ],
-        "eslint-comments/no-duplicate-disable": [
-            "error"
-        ],
-        "eslint-comments/no-unlimited-disable": [
-            "error"
-        ],
-        "eslint-comments/no-unused-enable": [
-            "error"
         ],
         "eslint-plugin-mysticatea/no-this-in-static": [
             "off"
