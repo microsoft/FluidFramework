@@ -19,7 +19,7 @@ import {
 	type TreeNodeSchemaIdentifier,
 	TreeStoredSchemaRepository,
 } from "../../../core/index.js";
-import { typeboxValidator } from "../../../external-utilities/index.js";
+import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import {
 	Chunker,
 	defaultChunkPolicy,
@@ -90,11 +90,11 @@ import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index.js";
 
 const options: CodecWriteOptions = {
-	jsonValidator: typeboxValidator,
+	jsonValidator: FormatValidatorBasic,
 	oldestCompatibleClient: FluidClientVersion.v2_0,
 };
 
-const fieldBatchCodec = makeFieldBatchCodec({ jsonValidator: typeboxValidator }, 1);
+const fieldBatchCodec = makeFieldBatchCodec({ jsonValidator: FormatValidatorBasic }, 1);
 const sessionId = "beefbeef-beef-4000-8000-000000000001" as SessionId;
 const idCompressor = createIdCompressor(sessionId);
 const revisionTagCodec = new RevisionTagCodec(idCompressor);
@@ -163,7 +163,7 @@ describe("End to end chunked encoding", () => {
 			fieldKindConfigurations,
 			revisionTagCodec,
 			fieldBatchCodec,
-			{ jsonValidator: typeboxValidator },
+			{ jsonValidator: FormatValidatorBasic },
 		);
 		const dummyEditor = new DefaultEditBuilder(
 			new DefaultChangeFamily(codec),
@@ -391,7 +391,7 @@ describe("End to end chunked encoding", () => {
 
 		it("Initializing tree creates uniform chunks with encoded identifiers", async () => {
 			const factory = configuredSharedTree({
-				jsonValidator: typeboxValidator,
+				jsonValidator: FormatValidatorBasic,
 				forest: ForestTypeOptimized,
 			}).getFactory();
 

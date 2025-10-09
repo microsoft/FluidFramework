@@ -7,6 +7,9 @@
 // @beta @legacy
 export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
 
+// @alpha @sealed @legacy
+export function asLegacyAlpha(base: IContainerRuntimeBase): ContainerRuntimeBaseAlpha;
+
 // @beta @legacy
 export interface AttributionInfo {
     timestamp: number;
@@ -16,9 +19,15 @@ export interface AttributionInfo {
 // @beta @legacy
 export type AttributionKey = OpAttributionKey | DetachedAttributionKey | LocalAttributionKey;
 
-// @beta @sealed @deprecated @legacy (undocumented)
+// @beta @sealed @deprecated @legacy
 export interface CommitStagedChangesOptionsExperimental {
     squash?: boolean;
+}
+
+// @alpha @sealed @legacy
+export interface ContainerRuntimeBaseAlpha extends IContainerRuntimeBase {
+    enterStagingMode(): StageControlsAlpha;
+    readonly inStagingMode: boolean;
 }
 
 // @beta @legacy (undocumented)
@@ -77,7 +86,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
     // (undocumented)
     readonly clientDetails: IClientDetails;
     createDataStore(pkg: string | PackagePath, loadingGroupId?: string): Promise<IDataStore>;
-    createDetachedDataStore(pkg: Readonly<string[]>, loadingGroupId?: string): IFluidDataStoreContextDetached;
+    createDetachedDataStore(pkg: readonly string[], loadingGroupId?: string): IFluidDataStoreContextDetached;
     // (undocumented)
     readonly disposed: boolean;
     generateDocumentUniqueId(): number | string;
@@ -106,11 +115,9 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
     (event: "dispose", listener: () => void): any;
 }
 
-// @beta @sealed @deprecated @legacy (undocumented)
+// @beta @sealed @deprecated @legacy
 export interface IContainerRuntimeBaseExperimental extends IContainerRuntimeBase {
-    // (undocumented)
     enterStagingMode?(): StageControlsExperimental;
-    // (undocumented)
     readonly inStagingMode?: boolean;
 }
 
@@ -237,6 +244,7 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     readonly isReadOnly?: () => boolean;
     readonly loadingGroupId?: string;
     makeLocallyVisible(): void;
+    readonly minVersionForCollab?: MinimumVersionForCollab;
     // (undocumented)
     readonly options: Record<string | number, any>;
     readonly scope: FluidObject;
@@ -442,7 +450,13 @@ export interface OpAttributionKey {
 // @beta @legacy
 export type PackagePath = readonly string[];
 
-// @beta @sealed @deprecated @legacy (undocumented)
+// @alpha @sealed @legacy
+export interface StageControlsAlpha {
+    readonly commitChanges: () => void;
+    readonly discardChanges: () => void;
+}
+
+// @beta @sealed @deprecated @legacy
 export interface StageControlsExperimental {
     readonly commitChanges: (options?: Partial<CommitStagedChangesOptionsExperimental>) => void;
     readonly discardChanges: () => void;

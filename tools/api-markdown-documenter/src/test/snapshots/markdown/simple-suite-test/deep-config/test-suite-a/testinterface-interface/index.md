@@ -2,7 +2,9 @@
 
 [Packages](/) > [test-suite-a](/test-suite-a/) > [TestInterface](/test-suite-a/testinterface-interface/)
 
-Test interface
+Test \[interface]\(https\://www\.typescriptlang.org/docs/handbook/interfaces.html).
+
+Cheers!
 
 <h2 id="testinterface-signature">Signature</h2>
 
@@ -44,10 +46,10 @@ Here are some remarks about the interface
 
 ## Call Signatures
 
-| CallSignature | Description |
-| - | - |
-| [(event: 'testCallSignature', listener: (input: unknown) => void): any](/test-suite-a/testinterface-interface/_call_-callsignature) | Test interface event call signature |
-| [(event: 'anotherTestCallSignature', listener: (input: number) => string): number](/test-suite-a/testinterface-interface/_call__1-callsignature) | Another example call signature |
+| Call Signature | Return Type | Description |
+| - | - | - |
+| [(event: 'testCallSignature', listener: (input: unknown) => void): any](/test-suite-a/testinterface-interface/_call_-callsignature) | any | Test interface event call signature |
+| [(event: 'anotherTestCallSignature', listener: (input: number) => string): number](/test-suite-a/testinterface-interface/_call__1-callsignature) | number | Another example call signature |
 
 <h2 id="testinterface-see-also">See Also</h2>
 

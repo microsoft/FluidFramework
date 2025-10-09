@@ -37,10 +37,12 @@ import {
 	type IFluidCodeDetails,
 } from "@fluidframework/container-definitions/internal";
 import {
+	asLegacyAlpha,
 	ConnectionState,
 	createDetachedContainer,
 	loadExistingContainer,
-	type IContainerExperimental,
+	loadFrozenContainerFromPendingState,
+	type ContainerAlpha,
 } from "@fluidframework/container-loader/internal";
 import type { ConfigTypes, FluidObject, IErrorBase } from "@fluidframework/core-interfaces";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
@@ -65,6 +67,7 @@ import {
 } from "@fluidframework/test-utils/internal";
 
 import { saveFluidOps } from "./baseModel.js";
+import { validateConsistencyOfAllDDS } from "./ddsOperations.js";
 import {
 	createRuntimeFactory,
 	StressDataObject,
@@ -73,7 +76,7 @@ import {
 import { makeUnreachableCodePathProxy } from "./utils.js";
 
 export interface Client {
-	container: IContainerExperimental;
+	container: ContainerAlpha;
 	tag: `client-${number}`;
 	entryPoint: DefaultStressDataObject;
 }
@@ -764,16 +767,18 @@ async function createDetachedClient(
 	seed: number,
 	options: LocalServerStressOptions,
 ): Promise<Client> {
-	const container = await createDetachedContainer({
-		codeLoader,
-		documentServiceFactory: new LocalDocumentServiceFactory(localDeltaConnectionServer),
-		urlResolver: new LocalResolver(),
-		codeDetails,
-		logger: createStressLogger(seed),
-		configProvider: {
-			getRawConfig: (name) => options.configurations?.[name],
-		},
-	});
+	const container = asLegacyAlpha(
+		await createDetachedContainer({
+			codeLoader,
+			documentServiceFactory: new LocalDocumentServiceFactory(localDeltaConnectionServer),
+			urlResolver: new LocalResolver(),
+			codeDetails,
+			logger: createStressLogger(seed),
+			configProvider: {
+				getRawConfig: (name) => options.configurations?.[name],
+			},
+		}),
+	);
 
 	const maybe: FluidObject<DefaultStressDataObject> | undefined =
 		await container.getEntryPoint();
@@ -796,21 +801,23 @@ async function loadClient(
 	options: LocalServerStressOptions,
 	pendingLocalState?: string,
 ): Promise<Client> {
-	const container = await timeoutAwait(
-		loadExistingContainer({
-			documentServiceFactory: new LocalDocumentServiceFactory(localDeltaConnectionServer),
-			request: { url },
-			urlResolver: new LocalResolver(),
-			codeLoader,
-			logger: createStressLogger(seed),
-			configProvider: {
-				getRawConfig: (name) => options.configurations?.[name],
+	const container = asLegacyAlpha(
+		await timeoutAwait(
+			loadExistingContainer({
+				documentServiceFactory: new LocalDocumentServiceFactory(localDeltaConnectionServer),
+				request: { url },
+				urlResolver: new LocalResolver(),
+				codeLoader,
+				logger: createStressLogger(seed),
+				configProvider: {
+					getRawConfig: (name) => options.configurations?.[name],
+				},
+				pendingLocalState,
+			}),
+			{
+				errorMsg: `Timed out waiting for client to load ${tag}`,
 			},
-			pendingLocalState,
-		}),
-		{
-			errorMsg: `Timed out waiting for client to load ${tag}`,
-		},
+		),
 	);
 
 	const maybe: FluidObject<DefaultStressDataObject> | undefined = await timeoutAwait(
@@ -1424,42 +1431,63 @@ function mixinRestartClientFromPendingState<TOperation extends BaseOperation>(
 		LocalServerStressState
 	> = async (state, op) => {
 		if (isOperationType<RestartClientFromPendingState>("restartClientFromPendingState", op)) {
-			const sourceClientIndex = state.clients.findIndex((c) => c.tag === op.sourceClientTag);
+			const { clients, codeLoader, localDeltaConnectionServer, seed } = state;
+			const sourceClientIndex = clients.findIndex((c) => c.tag === op.sourceClientTag);
 			assert(sourceClientIndex !== -1, `Client ${op.sourceClientTag} not found`);
-			const sourceClient = state.clients[sourceClientIndex];
+			const sourceClient = clients[sourceClientIndex];
 
 			// AB#46464: Add support for serializing pending state while in staging mode
 			if (sourceClient.entryPoint.inStagingMode()) {
 				sourceClient.entryPoint.exitStagingMode(true);
 			}
 
-			assert(
-				typeof sourceClient.container.getPendingLocalState === "function",
-				`Client ${op.sourceClientTag} does not support getPendingLocalState`,
-			);
+			// in order to validate we need to disconnect to ensure
+			// no changes arrive between capturing the state and validating
+			// the state against the source container
+			sourceClient.container.disconnect();
 
 			const pendingLocalState = await sourceClient.container.getPendingLocalState();
-
-			const removed = state.clients.splice(
-				state.clients.findIndex((c) => c.tag === op.sourceClientTag),
-				1,
-			);
-			removed[0].container.dispose();
 
 			const url = await sourceClient.container.getAbsoluteUrl("");
 			assert(url !== undefined, "url of container must be available");
 
+			const frozenContainer = asLegacyAlpha(
+				await loadFrozenContainerFromPendingState({
+					codeLoader,
+					pendingLocalState,
+					request: { url },
+					urlResolver: new LocalResolver(),
+					documentServiceFactory: new LocalDocumentServiceFactory(localDeltaConnectionServer),
+				}),
+			);
+
+			const { DefaultStressDataObject }: FluidObject<DefaultStressDataObject> | undefined =
+				(await frozenContainer.getEntryPoint()) ?? {};
+			assert(DefaultStressDataObject !== undefined, "must have entrypoint");
+
+			await validateConsistencyOfAllDDS(sourceClient, {
+				container: frozenContainer,
+				entryPoint: DefaultStressDataObject,
+				tag: `client-${Number.NaN}`,
+			});
+			frozenContainer.dispose();
+			sourceClient.container.dispose();
+
+			clients.splice(
+				clients.findIndex((c) => c.tag === op.sourceClientTag),
+				1,
+			);
 			const newClient = await loadClient(
-				state.localDeltaConnectionServer,
-				state.codeLoader,
+				localDeltaConnectionServer,
+				codeLoader,
 				op.newClientTag,
 				url,
-				state.seed,
+				seed,
 				options,
 				pendingLocalState,
 			);
 
-			state.clients.push(newClient);
+			clients.push(newClient);
 			return state;
 		}
 
