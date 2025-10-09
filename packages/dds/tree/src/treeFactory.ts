@@ -61,7 +61,6 @@ function treeKernelFactory(
 			// - treeKernelFactory is invoked in a fuzz test with a specific minVersionForCollab
 			// B. Otherwise, we use args.minVersionForCollab, which is propagated from the ContainerRuntime.
 			// C. If neither specifies it, we fall back to a default value default of 2.0 since that is the oldest version that supports SharedTree.
-			// TODO: get default from runtime once something like runtime.minVersionForCollab exists.
 			minVersionForCollab:
 				minVersionForCollab ?? args.minVersionForCollab ?? FluidClientVersion.v2_0,
 		};
