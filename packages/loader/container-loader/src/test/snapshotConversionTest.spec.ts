@@ -67,7 +67,6 @@ describe("Dehydrate Container", () => {
 		const baseSnapshot = snapshot.snapshotTree;
 		const snapshotBlobs = snapshot.blobContents;
 		assert.strictEqual(Object.keys(baseSnapshot.trees).length, 2, "2 trees should be there");
-		assert.strictEqual(Object.keys(baseSnapshot.trees).length, 2, "2 trees should be there");
 		assert.strictEqual(
 			Object.keys(baseSnapshot.trees[".protocol"].blobs).length,
 			2,
