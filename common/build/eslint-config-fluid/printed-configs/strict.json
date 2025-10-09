@@ -22,7 +22,6 @@
     },
     "plugins": [
         "@typescript-eslint",
-        "import",
         "@eslint-community/eslint-comments",
         "import-x",
         "@fluid-internal/fluid",
@@ -1190,39 +1189,66 @@
             "off"
         ],
         "import-x/default": [
-            2
+            "error"
         ],
         "import-x/export": [
-            2
+            "error"
         ],
         "import-x/named": [
             "off"
         ],
         "import-x/namespace": [
-            2
+            "error"
+        ],
+        "import-x/no-default-export": [
+            "error"
+        ],
+        "import-x/no-deprecated": [
+            "off"
         ],
         "import-x/no-duplicates": [
-            1
+            "warn"
+        ],
+        "import-x/no-extraneous-dependencies": [
+            "error"
+        ],
+        "import-x/no-internal-modules": [
+            "error"
         ],
         "import-x/no-named-as-default": [
-            1
+            "warn"
         ],
         "import-x/no-named-as-default-member": [
-            1
+            "warn"
         ],
-        "import-x/no-rename-default": [
-            1
+        "import-x/no-unassigned-import": [
+            "error"
         ],
         "import-x/no-unresolved": [
-            2
+            "error",
+            {
+                "caseSensitive": true
+            }
         ],
-        "import/no-default-export": [
+        "import-x/no-unused-modules": [
             "error"
+        ],
+        "import-x/order": [
+            "error",
+            {
+                "newlines-between": "always",
+                "alphabetize": {
+                    "order": "asc",
+                    "caseInsensitive": false,
+                    "orderImportKind": "ignore"
+                },
+                "distinctGroup": true,
+                "sortTypesGroup": false,
+                "named": false,
+                "warnOnUnassignedImports": false
+            }
         ],
         "import/no-deprecated": [
-            "error"
-        ],
-        "import/no-extraneous-dependencies": [
             "error"
         ],
         "import/no-internal-modules": [
@@ -1242,33 +1268,6 @@
         ],
         "import/no-nodejs-modules": [
             "error"
-        ],
-        "import/no-unassigned-import": [
-            "error"
-        ],
-        "import/no-unresolved": [
-            "error",
-            {
-                "caseSensitive": true
-            }
-        ],
-        "import/no-unused-modules": [
-            "error"
-        ],
-        "import/order": [
-            "error",
-            {
-                "newlines-between": "always",
-                "alphabetize": {
-                    "order": "asc",
-                    "caseInsensitive": false,
-                    "orderImportKind": "ignore"
-                },
-                "distinctGroup": true,
-                "sortTypesGroup": false,
-                "named": false,
-                "warnOnUnassignedImports": false
-            }
         ],
         "indent": [
             "off"
@@ -2439,7 +2438,16 @@
             ]
         },
         "import-x/resolver": {
-            "typescript": true
+            "typescript": true,
+            "node": {
+                "extensions": [
+                    ".ts",
+                    ".tsx",
+                    ".d.ts",
+                    ".js",
+                    ".jsx"
+                ]
+            }
         },
         "import/extensions": [
             ".ts",
@@ -2476,15 +2484,6 @@
                     "node-addons",
                     "browser",
                     "default"
-                ]
-            },
-            "node": {
-                "extensions": [
-                    ".ts",
-                    ".tsx",
-                    ".d.ts",
-                    ".js",
-                    ".jsx"
                 ]
             }
         },

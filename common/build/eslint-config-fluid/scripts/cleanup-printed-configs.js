@@ -14,6 +14,13 @@ const sortJson = require("sort-json");
 
 	for (const file of files) {
 		const filePath = path.join(sourcePath, file);
+
+		// Skip directories
+		const stats = await fs.promises.stat(filePath);
+		if (!stats.isFile()) {
+			continue;
+		}
+
 		const content = fs.readFileSync(filePath);
 		const json = JSON.parse(content);
 

@@ -72,9 +72,8 @@ module.exports = {
 	extends: [
 		"./base",
 		"plugin:@eslint-community/eslint-comments/recommended",
-		"plugin:import/errors",
-		"plugin:import/warnings",
-		"plugin:import/typescript",
+		"plugin:import-x/recommended",
+		"plugin:import-x/typescript",
 		"prettier",
 	],
 	globals: {
@@ -104,6 +103,11 @@ module.exports = {
 		// Custom ESLint rules
 		"@fluid-internal/eslint-plugin-fluid",
 	],
+	settings: {
+		"import-x/resolver": {
+			typescript: true,
+		}
+	},
 	reportUnusedDisableDirectives: true,
 	ignorePatterns: [
 		// Don't lint generated packageVersion files.
