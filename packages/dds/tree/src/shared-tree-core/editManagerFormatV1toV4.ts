@@ -21,7 +21,7 @@ const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 export interface EncodedEditManager<TChangeset> {
 	readonly trunk: readonly Readonly<SequencedCommit<TChangeset>>[];
 	readonly branches: readonly [SessionId, Readonly<EncodedSummarySessionBranch<TChangeset>>][];
-	readonly version: 1 | 2 | 3 | 4;
+	readonly version: 1 | 2 | 3 | 4 | 101;
 }
 
 export const EncodedEditManager = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
@@ -32,6 +32,7 @@ export const EncodedEditManager = <ChangeSchema extends TSchema>(tChange: Change
 				Type.Literal(2),
 				Type.Literal(3),
 				Type.Literal(4),
+				Type.Literal(101),
 			]),
 			trunk: Type.Array(SequencedCommit(tChange)),
 			branches: Type.Array(Type.Tuple([SessionIdSchema, SummarySessionBranch(tChange)])),

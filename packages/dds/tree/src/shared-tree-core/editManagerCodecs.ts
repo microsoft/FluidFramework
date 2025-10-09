@@ -88,13 +88,7 @@ export function makeEditManagerCodecs<TChangeset>(
 			case 101:
 				return [
 					version,
-					makeV1CodecWithVersion(
-						changeCodec,
-						revisionTagCodec,
-						options,
-						// TODO: Use 101 when it exists
-						version === 101 ? 4 : version,
-					),
+					makeV1CodecWithVersion(changeCodec, revisionTagCodec, options, version),
 				];
 			case 5:
 				return [
