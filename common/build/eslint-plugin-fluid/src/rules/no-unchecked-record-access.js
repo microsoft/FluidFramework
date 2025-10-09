@@ -23,8 +23,7 @@ module.exports = {
 		schema: [],
 	},
 	create(context) {
-		// ESLint 9+ uses context.sourceCode.parserServices, earlier versions use context.parserServices
-		const parserServices = context.sourceCode?.parserServices ?? context.parserServices;
+		const parserServices = context.parserServices;
 
 		// Check if we have the necessary TypeScript services
 		if (!parserServices || !parserServices.program || !parserServices.esTreeNodeToTSNodeMap) {
@@ -37,15 +36,6 @@ module.exports = {
 		if (compilerOptions.noUncheckedIndexedAccess) {
 			return {};
 		}
-
-		// Helper to get scope in both ESLint 8 and 9
-		// In ESLint 9, getScope requires a node argument
-		const getScope = (node) => {
-			if (context.sourceCode?.getScope) {
-				return context.sourceCode.getScope(node);
-			}
-			return context.getScope();
-		};
 
 		// Main function to run on every member access (e.g., obj.a or obj["a"])
 		function checkPropertyAccess(node) {
@@ -103,7 +93,7 @@ module.exports = {
 					});
 				}
 
-				if (isStrictlyTypedVariable(getVariableType(parentNode.left, getScope(parentNode.left)))) {
+				if (isStrictlyTypedVariable(getVariableType(parentNode.left, context.getScope()))) {
 					// This defect occurs when an index signature type is assigned to a strictly typed variable after its declaration
 					return context.report({
 						node,
@@ -142,7 +132,7 @@ module.exports = {
 				}
 				const functionDeclaration = findFunctionDeclaration(
 					parentNode.callee.name,
-					getScope(parentNode.callee),
+					context.getScope(),
 				);
 				if (!functionDeclaration || !functionDeclaration.params) {
 					return;
@@ -639,8 +629,7 @@ function findContainingBlock(node) {
 function getKeyValue(node, context) {
 	if (node.type === "Literal") return node.value;
 	if (node.type === "Identifier") {
-		// ESLint 9 requires node argument for getScope
-		let scope = context.sourceCode?.getScope ? context.sourceCode.getScope(node) : context.getScope();
+		let scope = context.getScope();
 		while (scope) {
 			const variable = scope.variables.find((v) => v.name === node.name);
 			if (variable) {

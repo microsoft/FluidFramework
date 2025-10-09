@@ -23,14 +23,13 @@
 	},
 	"dependencies": {
 		"@microsoft/tsdoc": "^0.15.1",
-		"@typescript-eslint/parser": "~8.46.0",
-		"@typescript-eslint/utils": "~8.46.0",
+		"@typescript-eslint/parser": "~7.18.0",
 		"ts-morph": "^22.0.0"
 	},
 	"devDependencies": {
 		"@fluid-tools/markdown-magic": "file:../../../tools/markdown-magic",
 		"@fluidframework/build-common": "^2.0.3",
-		"eslint": "~9.37.0",
+		"eslint": "^8.57.0",
 		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
 		"prettier": "~3.6.2",

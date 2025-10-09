@@ -6,31 +6,20 @@
 const assert = require("assert");
 const path = require("path");
 const { ESLint } = require("eslint");
-const plugin = require("../../../index.js");
 
 describe("ESLint Rule Tests", function () {
 	function createESLintInstance(config) {
 		return new ESLint({
-			overrideConfigFile: true,
-			overrideConfig: [{
-				files: ["**/*.ts"],
-				languageOptions: {
-					parser: require("@typescript-eslint/parser"),
-					parserOptions: config.parserOptions,
-				},
-				plugins: {
-					"@fluid-internal/fluid": plugin,
-					...config.plugins,
-				},
-				rules: config.rules,
-			}],
+			useEslintrc: false,
+			overrideConfig: config,
+			rulePaths: [path.join(__dirname, "../../rules")],
 		});
 	}
 
 	it("Should report an error for restricted tag imports", async function () {
 		const eslint = createESLintInstance({
 			rules: {
-				"@fluid-internal/fluid/no-restricted-tags-imports": [
+				"no-restricted-tags-imports": [
 					"error",
 					{
 						tags: ["@internal", "@alpha"],
@@ -38,6 +27,7 @@ describe("ESLint Rule Tests", function () {
 					},
 				],
 			},
+			parser: "@typescript-eslint/parser",
 			parserOptions: {
 				project: path.join(__dirname, "../example/tsconfig.json"),
 			},
@@ -61,7 +51,7 @@ describe("ESLint Rule Tests", function () {
 	it("Should not report an error for restricted tag imports for exceptions", async function () {
 		const eslint = createESLintInstance({
 			rules: {
-				"@fluid-internal/fluid/no-restricted-tags-imports": [
+				"no-restricted-tags-imports": [
 					"error",
 					{
 						tags: ["@internal", "@alpha"],
@@ -72,6 +62,7 @@ describe("ESLint Rule Tests", function () {
 					},
 				],
 			},
+			parser: "@typescript-eslint/parser",
 			parserOptions: {
 				project: path.join(__dirname, "../example/tsconfig.json"),
 			},
@@ -88,7 +79,7 @@ describe("ESLint Rule Tests", function () {
 	it("Should report an error for tsconfig provided config", async function () {
 		const eslint = createESLintInstance({
 			rules: {
-				"@fluid-internal/fluid/no-restricted-tags-imports": [
+				"no-restricted-tags-imports": [
 					"error",
 					{
 						tags: ["@internal", "@alpha"],
@@ -99,6 +90,7 @@ describe("ESLint Rule Tests", function () {
 					},
 				],
 			},
+			parser: "@typescript-eslint/parser",
 			parserOptions: {
 				project: path.join(__dirname, "../example/tsconfig.json"),
 			},
