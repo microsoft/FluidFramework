@@ -209,7 +209,7 @@ function updateBaseMarkId(moveEffects: ComposeNodeManager, baseMark: Mark): Mark
 				...baseMark,
 				revision: updatedDetachId.revision,
 				id: updatedDetachId.localId,
-				cellRename: baseMark.cellRename ?? getDetachedRootId(baseMark),
+				detachCellId: baseMark.detachCellId ?? getDetachedRootId(baseMark),
 			};
 		}
 	}

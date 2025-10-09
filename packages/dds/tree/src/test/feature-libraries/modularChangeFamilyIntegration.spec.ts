@@ -1005,8 +1005,8 @@ describe("ModularChangeFamily integration", () => {
 
 			const fieldAPath = { parent: undefined, field: fieldA };
 			editor.move(fieldAPath, 0, 1, fieldAPath, 3);
-			editor.move(fieldAPath, 0, 1, fieldAPath, 1);
-			editor.move(fieldAPath, 1, 1, fieldAPath, 2);
+			editor.move(fieldAPath, 0, 1, fieldAPath, 2);
+			editor.move(fieldAPath, 1, 1, fieldAPath, 4);
 
 			const [move1Untagged, move2a, move2b] = getChanges();
 			const move1 = tagChangeInline(move1Untagged, tag1);
@@ -1022,16 +1022,23 @@ describe("ModularChangeFamily integration", () => {
 			);
 
 			const expected = Change.build(
-				{ family },
+				{ family, maxId: 5, revisions: [{ revision: tag2 }] },
 				Change.field(fieldA, sequence.identifier, [
-					MarkMaker.tomb(tag1, brand(8)),
+					MarkMaker.tomb(tag1, brand(0)),
 					MarkMaker.skip(1),
-					MarkMaker.insert(1, { revision: tag2, localId: brand(9) }),
+					MarkMaker.rename(
+						1,
+						{ revision: tag2, localId: brand(3) },
+						{ revision: tag2, localId: brand(4) },
+					),
+					MarkMaker.skip(1),
 					MarkMaker.remove(
 						1,
-						{ revision: tag2, localId: brand(10) },
-						{ cellRename: { revision: tag2, localId: brand(11) } },
+						{ revision: tag2, localId: brand(4) },
+						{ detachCellId: { revision: tag2, localId: brand(2) } },
 					),
+					MarkMaker.skip(1),
+					MarkMaker.insert(1, { revision: tag2, localId: brand(5) }, { id: brand(4) }),
 				]),
 			);
 
@@ -1268,7 +1275,7 @@ describe("ModularChangeFamily integration", () => {
 					revisions: [{ revision: tag1 }, { revision: tag2 }],
 				},
 				Change.field(fieldA, sequence.identifier, [
-					MarkMaker.remove(1, id2, { cellRename: id1 }),
+					MarkMaker.remove(1, id2, { detachCellId: id1 }),
 				]),
 				Change.field(fieldB, sequence.identifier, [
 					MarkMaker.rename(
@@ -1752,6 +1759,11 @@ describe("ModularChangeFamily integration", () => {
 			Change.field(fieldA, optional.identifier, {}),
 		);
 
+		const compositeMove = buildTransaction((editor) => {
+			editor.move(fieldAPath, 1, 1, fieldAPath, 0);
+			editor.move(fieldAPath, 0, 1, fieldAPath, 2);
+		}, tag1).change;
+
 		const moveAndRemove = buildTransaction((editor) => {
 			editor.move(fieldAPath, 1, 1, fieldAPath, 0);
 			editor.sequenceField(fieldAPath).remove(0, 1);
@@ -1866,6 +1878,7 @@ describe("ModularChangeFamily integration", () => {
 			successes: [
 				["revive", revive, context],
 				["move", move, context],
+				["composite move", compositeMove, context],
 				["move and remove", moveAndRemove, context],
 				["revive and move (separate IDs)", reviveAndMoveWithSeparateIds, context],
 				["revive and move (same ID)", reviveAndMoveWithSameId, context],

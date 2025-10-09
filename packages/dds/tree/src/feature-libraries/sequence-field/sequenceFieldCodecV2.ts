@@ -183,7 +183,7 @@ function makeMarkEffectDecoder(
 		): Detach | Rename {
 			const { id, revision, idOverride } = encoded;
 
-			const decodedIdOverride =
+			const cellRename =
 				idOverride !== undefined
 					? changeAtomIdCodec.decode(idOverride, context.baseContext)
 					: undefined;
@@ -193,7 +193,8 @@ function makeMarkEffectDecoder(
 				count,
 				decodeRevision(revision, context.baseContext),
 				id,
-				decodedIdOverride,
+				cellRename,
+				undefined,
 				context,
 			);
 		},
@@ -203,20 +204,27 @@ function makeMarkEffectDecoder(
 			cellId: ChangeAtomId | undefined,
 			context: FieldChangeEncodingContext,
 		): Detach | Rename {
-			const { id, idOverride, revision } = encoded;
-			const decodedIdOverride =
+			const { id, idOverride, revision, finalEndpoint } = encoded;
+			const cellRename =
 				idOverride !== undefined
 					? changeAtomIdCodec.decode(idOverride, context.baseContext)
 					: undefined;
 
-			return decodeDetach(
-				cellId,
-				count,
-				decodeRevision(revision, context.baseContext),
-				id,
-				decodedIdOverride,
-				context,
-			);
+			const decodedRevision = decodeRevision(revision, context.baseContext);
+			if (finalEndpoint !== undefined) {
+				const decodedEndpoint = changeAtomIdCodec.decode(finalEndpoint, context.baseContext);
+				return decodeDetach(
+					cellId,
+					count,
+					decodedEndpoint.revision ?? fail("Revision should be defined"),
+					decodedEndpoint.localId,
+					cellRename,
+					{ revision: decodedRevision, localId: id },
+					context,
+				);
+			}
+
+			return decodeDetach(cellId, count, decodedRevision, id, cellRename, undefined, context);
 		},
 		attachAndDetach(
 			encoded: Encoded.AttachAndDetach,
@@ -275,15 +283,17 @@ function decodeDetach(
 	count: number,
 	revision: RevisionTag,
 	localId: ChangesetLocalId,
-	idOverride: ChangeAtomId | undefined,
+	cellRename: ChangeAtomId | undefined,
+	detachCellId: ChangeAtomId | undefined,
 	context: FieldChangeEncodingContext,
 ): Detach | Rename {
 	const detachId: ChangeAtomId = { revision, localId };
 	if (cellId !== undefined) {
 		context.decodeRootRename(cellId, detachId, count);
+		// XXX: detachCellId
 		return {
 			type: "Rename",
-			idOverride: idOverride ?? detachId,
+			idOverride: cellRename ?? detachId,
 		};
 	}
 
@@ -293,8 +303,12 @@ function decodeDetach(
 		id: localId,
 	};
 
-	if (idOverride !== undefined) {
-		mark.cellRename = idOverride;
+	if (cellRename !== undefined) {
+		mark.cellRename = cellRename;
+	}
+
+	if (detachCellId !== undefined) {
+		mark.detachCellId = detachCellId;
 	}
 
 	return mark;
@@ -576,30 +590,53 @@ function encodeMarkEffect(
 		}
 		case "Remove": {
 			const encodedIdOverride =
-				mark.cellRename === undefined
-					? undefined
-					: changeAtomIdCodec.encode(mark.cellRename, context.baseContext);
+				mark.cellRename !== undefined
+					? changeAtomIdCodec.encode(mark.cellRename, context.baseContext)
+					: undefined;
 
 			const detachId = getDetachedRootId(mark);
 			const isMove = context.isAttachId(detachId, 1).value;
 
-			// If the final detach location for the nodes were here,
-			// then the output cell ID (defined by idOverride) would be the same as the detach ID.
-			// So if the cell ID is different from the detach ID, the nodes must have been moved.
-			const isFinalDetachLocation =
-				mark.cellRename === undefined || areEqualChangeAtomIds(detachId, mark.cellRename);
+			const outputCellId = mark.cellRename ?? mark.detachCellId ?? detachId;
 
-			return isMove || !isFinalDetachLocation
+			// If the final detach location for the nodes were here,
+			// then the output cell ID would be the same as the detach ID.
+			// So if the cell ID is different from the detach ID, the nodes must have been moved.
+			const isFinalDetachLocation = areEqualChangeAtomIds(detachId, outputCellId);
+
+			const isMoveOrDetachedMove = isMove || !isFinalDetachLocation;
+			if (mark.detachCellId !== undefined) {
+				assert(
+					isMoveOrDetachedMove,
+					"Only detaches representing a move out should specify a detach cell ID",
+				);
+
+				// XXX: Set final endpoint on the move in.
+				return {
+					moveOut: {
+						revision: encodeRevision(mark.detachCellId.revision),
+						id: mark.detachCellId.localId,
+						idOverride: encodedIdOverride,
+						finalEndpoint: changeAtomIdCodec.encode(
+							{ revision: mark.revision, localId: mark.id },
+							context.baseContext,
+						),
+					},
+				};
+			}
+
+			const encodedRevision = encodeRevision(mark.revision);
+			return isMoveOrDetachedMove
 				? {
 						moveOut: {
-							revision: encodeRevision(mark.revision),
+							revision: encodedRevision,
 							id: mark.id,
 							idOverride: encodedIdOverride,
 						},
 					}
 				: {
 						remove: {
-							revision: encodeRevision(mark.revision),
+							revision: encodedRevision,
 							idOverride: encodedIdOverride,
 							id: mark.id,
 						},
