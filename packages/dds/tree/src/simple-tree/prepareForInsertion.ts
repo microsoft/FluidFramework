@@ -289,8 +289,15 @@ function walkMapTree(
 	}
 }
 
+/**
+ * A function which can schedule hydration of batches of nodes to occur at a later time (which must be after they have been inserted into the tree).
+ */
 type HydrationScheduler = (
 	locatedNodes: readonly LocatedNodesBatch[],
+	/**
+	 * Does the actual hydration. Should be called for each index in `locatedNodes` once the corresponding content has been inserted into the tree.
+	 * The provided `fieldKey` is the key under the batch's `rootPath` in which the content is contained.
+	 */
 	doHydration: (index: number, fieldKey: FieldKey) => void,
 ) => void;
 
@@ -329,7 +336,8 @@ function doHydrationDefault(
 		// Indexing is safe here because of the length check above. This assumes the array has not been modified which should be the case.
 		const batch = locatedNodes[index] ?? oob();
 		debugAssert(() => batch.rootPath.parentField === placeholderKey);
-		batch.rootPath.parentField = brand(fieldKey);
+		// To hydrate a TreeNode, it must be associated with a HydratedFlexTreeNode.
+		// Find or create one as necessary.
 		for (const { path, node } of batch.paths) {
 			const anchor = forest.anchors.track(path);
 			const anchorNode = forest.anchors.locate(anchor) ?? fail("missing anchor");
