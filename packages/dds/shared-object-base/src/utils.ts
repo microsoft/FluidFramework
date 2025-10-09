@@ -102,12 +102,14 @@ export function bindHandles<T = unknown>(
 		bind.bind(toFluidHandleInternal(value));
 		return value;
 	}
-
-	for (const key of Object.keys(value as object)) {
-		const val: unknown = value[key];
-		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-		if (!!val && typeof val === "object") {
-			bindHandles(val, serializer, bind);
+	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+	if (!!value && typeof value === "object") {
+		for (const key of Object.keys(value)) {
+			const val: unknown = value[key];
+			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+			if (!!val && typeof val === "object") {
+				bindHandles(val, serializer, bind);
+			}
 		}
 	}
 
