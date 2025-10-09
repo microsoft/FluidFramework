@@ -9,7 +9,7 @@
     "Atomics": "readonly",
     "SharedArrayBuffer": "readonly"
   },
-  "parser": "/home/runner/work/FluidFramework/FluidFramework/common/build/eslint-config-fluid/node_modules/.pnpm/@typescript-eslint+parser@8.46.0_eslint@9.37.0_typescript@5.4.5/node_modules/@typescript-eslint/parser/dist/index.js",
+  "parser": "/home/tylerbu/code/FluidFramework/scratch1/common/build/eslint-config-fluid/node_modules/.pnpm/@typescript-eslint+parser@8.46.0_eslint@9.37.0_typescript@5.4.5/node_modules/@typescript-eslint/parser/dist/index.js",
   "parserOptions": {
     "ecmaVersion": "latest",
     "sourceType": "module",
@@ -33,6 +33,60 @@
   ],
   "reportUnusedDisableDirectives": true,
   "rules": {
+    "@typescript-eslint/explicit-member-accessibility": [
+      "error",
+      {
+        "accessibility": "explicit",
+        "overrides": {
+          "accessors": "explicit",
+          "constructors": "explicit",
+          "methods": "explicit",
+          "properties": "explicit",
+          "parameterProperties": "explicit"
+        }
+      }
+    ],
+    "@typescript-eslint/consistent-indexed-object-style": [
+      "error"
+    ],
+    "@typescript-eslint/no-unsafe-enum-comparison": [
+      "error"
+    ],
+    "@typescript-eslint/consistent-generic-constructors": [
+      "error"
+    ],
+    "@typescript-eslint/no-redundant-type-constituents": [
+      "error"
+    ],
+    "jsdoc/require-jsdoc": [
+      "error",
+      {
+        "publicOnly": true,
+        "enableFixer": false,
+        "require": {
+          "ArrowFunctionExpression": true,
+          "ClassDeclaration": true,
+          "ClassExpression": true,
+          "FunctionDeclaration": true,
+          "FunctionExpression": true,
+          "MethodDefinition": false
+        },
+        "contexts": [
+          "TSEnumDeclaration",
+          "TSInterfaceDeclaration",
+          "TSTypeAliasDeclaration",
+          "ExportNamedDeclaration > VariableDeclaration"
+        ],
+        "skipInterveningOverloadedDeclarations": false,
+        "exemptOverloadedImplementations": true,
+        "checkConstructors": true,
+        "checkGetters": true,
+        "checkSetters": true,
+        "exemptEmptyConstructors": false,
+        "exemptEmptyFunctions": false,
+        "fixerMessage": ""
+      }
+    ],
     "@rushstack/no-new-null": [
       "error"
     ],
@@ -251,9 +305,6 @@
     ],
     "unicorn/no-keyword-prefix": [
       "off"
-    ],
-    "unicorn/no-length-as-slice-end": [
-      "error"
     ],
     "unicorn/no-lonely-if": [
       "error"
@@ -592,9 +643,6 @@
     "@rushstack/typedef-var": [
       "off"
     ],
-    "@typescript-eslint/explicit-member-accessibility": [
-      "off"
-    ],
     "@typescript-eslint/indent": [
       "off"
     ],
@@ -617,18 +665,6 @@
       "off"
     ],
     "@typescript-eslint/non-nullable-type-assertion-style": [
-      "off"
-    ],
-    "@typescript-eslint/consistent-indexed-object-style": [
-      "off"
-    ],
-    "@typescript-eslint/no-unsafe-enum-comparison": [
-      "off"
-    ],
-    "@typescript-eslint/no-redundant-type-constituents": [
-      "off"
-    ],
-    "@typescript-eslint/consistent-generic-constructors": [
       "off"
     ],
     "func-call-spacing": [
