@@ -5,6 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
+import { bufferToString } from "@fluid-internal/client-utils";
+
 import {
 	attachHandle,
 	blobToText,
@@ -12,6 +14,7 @@ import {
 	getSummaryContentsWithFormatValidation,
 	textToBlob,
 	unpackHandle,
+	waitHandlePayloadShared,
 } from "./blobTestUtils.js";
 
 // ADO#44999: Update for placeholder pending blob creation and getPendingLocalState
@@ -40,8 +43,9 @@ for (const createBlobPayloadPending of [false, true]) {
 			const { localId } = unpackHandle(handle);
 			attachHandle(handle);
 			const pendingBlobs = blobManager1.getPendingBlobs();
-			// TODO: Assert expected pending blob structure and remove this return
-			return;
+			assert.deepStrictEqual(pendingBlobs, {
+				[localId]: { state: "localOnly", blob: bufferToString(textToBlob("hello"), "base64") },
+			});
 
 			const { ids: ids1, redirectTable: redirectTable1 } =
 				getSummaryContentsWithFormatValidation(blobManager1);
@@ -50,7 +54,7 @@ for (const createBlobPayloadPending of [false, true]) {
 
 			// Error the original upload, so we can be sure that the created blob came from the load with pending blobs.
 			await mockBlobStorage.waitProcessOne({ error: new Error("Upload failed") });
-			await assert.rejects(handleP, { message: "Upload failed" });
+			await assert.rejects(waitHandlePayloadShared(handle), { message: "Upload failed" });
 
 			const { blobManager: blobManager2 } = createTestMaterial({
 				mockBlobStorage,
@@ -58,10 +62,15 @@ for (const createBlobPayloadPending of [false, true]) {
 				pendingBlobs,
 				createBlobPayloadPending,
 			});
+			const blobBeforeSharing = await blobManager2.getBlob(localId, createBlobPayloadPending);
+			assert.strictEqual(blobToText(blobBeforeSharing), "hello");
+
+			const sharePendingBlobsP = blobManager2.sharePendingBlobs();
 			// Let the upload from pending state succeed
 			await mockBlobStorage.waitProcessOne();
-			const blob = await blobManager2.getBlob(localId, createBlobPayloadPending);
-			assert.strictEqual(blobToText(blob), "hello");
+			await sharePendingBlobsP;
+			const blobAfterSharing = await blobManager2.getBlob(localId, createBlobPayloadPending);
+			assert.strictEqual(blobToText(blobAfterSharing), "hello");
 
 			const { ids: ids2, redirectTable: redirectTable2 } =
 				getSummaryContentsWithFormatValidation(blobManager2);
