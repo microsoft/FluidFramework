@@ -20,13 +20,10 @@ import type {
 	ChunkReferenceId,
 	EncodedFieldBatch,
 	IncrementalEncoderDecoder,
+	IncrementalEncodingPolicy,
 	TreeChunk,
 } from "../chunked-forest/index.js";
-import type {
-	FieldKey,
-	ITreeCursorSynchronous,
-	TreeNodeSchemaIdentifier,
-} from "../../core/index.js";
+import type { ITreeCursorSynchronous } from "../../core/index.js";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
@@ -262,14 +259,8 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 
 	public constructor(
 		private readonly enableIncrementalSummary: boolean,
-		private readonly getChunkAtCursor: (cursor: ITreeCursorSynchronous) => TreeChunk[],
-		/**
-		 * {@link IncrementalEncoder.shouldEncodeFieldIncrementally}
-		 */
-		public readonly shouldEncodeFieldIncrementally: (
-			nodeIdentifier: TreeNodeSchemaIdentifier,
-			fieldKey: FieldKey,
-		) => boolean,
+		private readonly getChunkAtCursor: (cursor: ITreeCursorSynchronous) => TreeChunk,
+		public readonly shouldEncodeIncrementally: IncrementalEncodingPolicy,
 	) {}
 
 	/**

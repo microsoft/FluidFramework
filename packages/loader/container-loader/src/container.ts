@@ -1023,7 +1023,7 @@ export class Container
 			this.isInteractiveClient &&
 			(this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ??
 				this.mc.config.getBoolean("Fluid.Container.enableOfflineFull") ??
-				options.enableOfflineLoad === true);
+				options.enableOfflineLoad !== false);
 		this.serializedStateManager = new SerializedStateManager(
 			this.subLogger,
 			this.storageAdapter,
@@ -1668,8 +1668,11 @@ export class Container
 		timings.phase2 = performanceNow();
 
 		// Fetch specified snapshot.
-		const { baseSnapshot, version, attributes } =
-			await this.serializedStateManager.fetchSnapshot(specifiedVersion, pendingLocalState);
+		const {
+			snapshot: baseSnapshot,
+			version,
+			attributes,
+		} = await this.serializedStateManager.fetchSnapshot(specifiedVersion, pendingLocalState);
 		const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(baseSnapshot);
 		this._loadedFromVersion = version;
 

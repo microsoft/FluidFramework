@@ -21,7 +21,7 @@ export {
 	tryDisposeTreeNode,
 	HydratedContext,
 	SimpleContextSlot,
-	getOrCreateInnerNode,
+	getInnerNode,
 	getOrCreateNodeFromInnerNode,
 	getOrCreateNodeFromInnerUnboxedNode,
 	getKernel,

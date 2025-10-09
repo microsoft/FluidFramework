@@ -7,7 +7,7 @@ import { strict as assert, fail } from "node:assert";
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { MockNodeIdentifierManager } from "../../feature-libraries/index.js";
+import { MockNodeIdentifierManager, TreeStatus } from "../../feature-libraries/index.js";
 import {
 	SchematizingSimpleTreeView,
 	// eslint-disable-next-line import/no-internal-modules
@@ -41,6 +41,7 @@ import { insert, makeTreeFromJsonSequence } from "../sequenceRootUtils.js";
 import {
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
+	Tree,
 	type TreeCheckout,
 } from "../../shared-tree/index.js";
 import type { Mutable } from "../../util/index.js";
@@ -104,6 +105,51 @@ describe("SchematizingSimpleTreeView", () => {
 				validateUsageError(/initialized more than once/),
 			);
 		});
+		{
+			const emptyContent = {
+				schema: emptySchema,
+				initialTree: undefined,
+			};
+			class SimpleTestObject extends schema.object("TestObject", {
+				content: schema.number,
+			}) {}
+			const configNode = new TreeViewConfiguration({ schema: SimpleTestObject });
+			it("Initialize node", () => {
+				const checkout = checkoutWithContent(emptyContent);
+				const view = new SchematizingSimpleTreeView(
+					checkout,
+					configNode,
+					new MockNodeIdentifierManager(),
+				);
+
+				const { compatibility } = view;
+				assert.equal(compatibility.canView, false);
+				assert.equal(compatibility.canUpgrade, false);
+				assert.equal(compatibility.canInitialize, true);
+
+				view.initialize({ content: 5 });
+				assert.equal(view.root.content, 5);
+			});
+			it("Initialize node with hydration", () => {
+				const checkout = checkoutWithContent(emptyContent);
+				const view = new SchematizingSimpleTreeView(
+					checkout,
+					configNode,
+					new MockNodeIdentifierManager(),
+				);
+
+				const { compatibility } = view;
+				assert.equal(compatibility.canView, false);
+				assert.equal(compatibility.canUpgrade, false);
+				assert.equal(compatibility.canInitialize, true);
+
+				const node = new SimpleTestObject({ content: 5 });
+				assert.equal(Tree.status(node), TreeStatus.New);
+				view.initialize(node);
+				assert.equal(view.root, node);
+				assert.equal(Tree.status(node), TreeStatus.InDocument);
+			});
+		}
 
 		for (const additionalAsserts of [true, false]) {
 			for (const enableSchemaValidation of [true, false]) {
@@ -123,7 +169,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 					const root = new Root({ content: 5 });
 
-					const inner = getKernel(root).getOrCreateInnerNode();
+					const inner = getKernel(root).getInnerNode();
 					const field = inner.getBoxed(brand("content"));
 					const child = field.boxedAt(0) ?? assert.fail("Expected child");
 					assert(child instanceof UnhydratedFlexTreeNode);
