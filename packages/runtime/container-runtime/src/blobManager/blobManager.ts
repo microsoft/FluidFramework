@@ -125,7 +125,7 @@ export class BlobHandle
 	}
 }
 
-// Restrict the IContainerRuntime interface to the subset required by BlobManager.  This helps to make
+// Restrict the IContainerRuntime interface to the subset required by BlobManager. This helps to make
 // the contract explicit and reduces the amount of mocking required for tests.
 export type IBlobManagerRuntime = Pick<
 	IContainerRuntime,
@@ -136,16 +136,28 @@ export type IBlobManagerRuntime = Pick<
 export type ICreateBlobResponseWithTTL = ICreateBlobResponse &
 	Partial<Record<"minTTLInSeconds", number>>;
 
+/**
+ * A blob tracked by BlobManager that is only available on the local client. It is not currently
+ * attempting an upload.
+ */
 interface LocalOnlyBlob {
 	state: "localOnly";
 	blob: ArrayBufferLike;
 }
 
+/**
+ * A blob tracked by BlobManager that is only known to be available on the local client, but is in
+ * the process of being uploaded to storage.
+ */
 interface UploadingBlob {
 	state: "uploading";
 	blob: ArrayBufferLike;
 }
 
+/**
+ * A blob tracked by BlobManager that has been uploaded to storage. If the TTL has not expired, it
+ * should still be available in storage. It is not currently attempting to send a BlobAttach op.
+ */
 interface UploadedBlob {
 	state: "uploaded";
 	blob: ArrayBufferLike;
@@ -154,6 +166,10 @@ interface UploadedBlob {
 	minTTLInSeconds: number | undefined;
 }
 
+/**
+ * A blob tracked by BlobManager that has been uploaded to storage and is in the process of sending
+ * a BlobAttach op and waiting for the ack.
+ */
 interface AttachingBlob {
 	state: "attaching";
 	blob: ArrayBufferLike;
@@ -162,6 +178,10 @@ interface AttachingBlob {
 	minTTLInSeconds: number | undefined;
 }
 
+/**
+ * A blob tracked by BlobManager that has been uploaded to storage and its BlobAttach op has been
+ * ack'd. It is fully shared and available to all clients, and is no longer considered pending.
+ */
 interface AttachedBlob {
 	state: "attached";
 	blob: ArrayBufferLike;
@@ -169,9 +189,9 @@ interface AttachedBlob {
 
 /**
  * Blobs that were created locally are tracked, and may be in one of these states. When first
- * created, they are in localOnly state. The process of sharing has two steps, upload and attach.
- * Progress through the stages may regress back to localOnly if we determine the storage may have
- * deleted the blob before we could finish attaching it.
+ * created, they are in localOnly state. The process of sharing has two steps, blob upload and
+ * sending a BlobAttach op. Progress through the stages may regress back to localOnly if we
+ * determine the storage may have deleted the blob before we could finish attaching it.
  */
 type LocalBlobRecord =
 	| LocalOnlyBlob
@@ -704,7 +724,7 @@ export class BlobManager {
 	 */
 	public reSubmit(metadata: Record<string, unknown> | undefined): void {
 		assert(isBlobMetadata(metadata), 0xc01 /* Expected blob metadata for a BlobAttach op */);
-		const { localId, blobId: remoteId } = metadata;
+		const { localId, blobId: storageId } = metadata;
 		// Any blob that we're actively trying to advance to attached state must be in attaching state.
 		// Decline to resubmit for anything else.
 		// For example, we might be asked to resubmit stashed ops for blobs that never had their handle
@@ -719,7 +739,7 @@ export class BlobManager {
 				this.localBlobCache.set(localId, { state: "localOnly", blob: localBlobRecord.blob });
 				this.internalEvents.emit("blobExpired", localId);
 			} else {
-				this.sendBlobAttachOp(localId, remoteId);
+				this.sendBlobAttachOp(localId, storageId);
 			}
 		}
 	}
