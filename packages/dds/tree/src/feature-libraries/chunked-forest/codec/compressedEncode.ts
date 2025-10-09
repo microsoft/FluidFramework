@@ -350,7 +350,7 @@ export class InlineArrayEncoder
 }
 
 /**
- * Encodes the shape for a nested array as {@link EncodedNestedArray} shape.
+ * Encodes the shape for a nested array as {@link EncodedNestedArrayShape} shape.
  */
 export class NestedArrayShape extends ShapeGeneric<EncodedChunkShape> {
 	/**
@@ -420,9 +420,7 @@ export class NestedArrayEncoder implements FieldEncoder {
 }
 
 /**
- * Encodes a chunk with the {@link EncodedIncrementalChunkShape} shape.
- * This chunks will be encoded separately, i.e., the contents of the chunk will not be part of the main buffer.
- * A reference to the chunk will be stored in the main buffer as an {@link ChunkReferenceId}.
+ * Encodes the shape for an incremental chunk as {@link EncodedIncrementalChunkShape} shape.
  */
 export class IncrementalChunkShape extends ShapeGeneric<EncodedChunkShape> {
 	public encodeShape(
@@ -446,8 +444,9 @@ export class IncrementalChunkShape extends ShapeGeneric<EncodedChunkShape> {
 
 /**
  * Encodes an incremental field whose tree chunks are encoded separately and referenced by their {@link ChunkReferenceId}.
- * The shape of the content of this field is {@link NestedShape} where the items in the array are
- * the {@link ChunkReferenceId}s of the encoded chunks.
+ * The shape of the content of this field is {@link NestedArrayShape}.
+ * The inner items of the array have shape {@link IncrementalChunkShape} and are {@link ChunkReferenceId}s
+ * of the encoded chunks.
  */
 export const incrementalFieldEncoder: FieldEncoder = {
 	encodeField(

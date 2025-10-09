@@ -39,11 +39,11 @@ import {
 	type TreeCheckout,
 } from "../../../shared-tree/index.js";
 import {
+	getShouldIncrementallySummarizeAllowedTypes,
 	incrementalAllowedTypesMetadata,
 	permissiveStoredSchemaGenerationOptions,
 	SchemaFactory,
 	SchemaFactoryAlpha,
-	shouldIncrementallySummarizeAllowedTypes,
 	toStoredSchema,
 	TreeViewConfiguration,
 } from "../../../simple-tree/index.js";
@@ -331,22 +331,18 @@ describe("ForestSummarizer", () => {
 			// The property bar in FooItem will be incrementally summarized.
 			class FooItem extends sf.objectAlpha("fooItem", {
 				id: sf.number,
-				bar: {
-					types: [
-						{
-							type: sf.string,
-							metadata: {},
-						},
-					],
-					metadata: { custom: incrementalAllowedTypesMetadata },
-				},
+				bar: sf.types([{ type: sf.string, metadata: {} }], {
+					custom: incrementalAllowedTypesMetadata,
+				}),
 			}) {}
 
 			// Every entry in this array will be incrementally summarized.
-			class MyFooArray extends sf.arrayAlpha("myFooArray", {
-				types: [{ type: FooItem, metadata: {} }],
-				metadata: { custom: incrementalAllowedTypesMetadata },
-			}) {}
+			class MyFooArray extends sf.arrayAlpha(
+				"myFooArray",
+				sf.types([{ type: FooItem, metadata: {} }], {
+					custom: incrementalAllowedTypesMetadata,
+				}),
+			) {}
 
 			class Root extends sf.objectAlpha("root", {
 				rootId: sf.number,
@@ -373,12 +369,7 @@ describe("ForestSummarizer", () => {
 					initialContent,
 					encodeType: TreeCompressionStrategyExtended.CompressedIncremental,
 					forestType: ForestTypeOptimized,
-					shouldEncodeIncrementally: (
-						nodeIdentifier: TreeNodeSchemaIdentifier,
-						fieldKey: FieldKey,
-					) => {
-						return shouldIncrementallySummarizeAllowedTypes(nodeIdentifier, fieldKey, Root);
-					},
+					shouldEncodeIncrementally: getShouldIncrementallySummarizeAllowedTypes(Root),
 				});
 			}
 

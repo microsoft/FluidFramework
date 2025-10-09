@@ -181,7 +181,8 @@ export {
 	KeyEncodingOptions,
 	type TreeParsingOptions,
 	incrementalAllowedTypesMetadata,
-	shouldIncrementallySummarizeAllowedTypes,
+	getShouldIncrementallySummarizeAllowedTypes,
+	type SchemaFactory_base,
 } from "./api/index.js";
 export type {
 	SimpleTreeSchema,
