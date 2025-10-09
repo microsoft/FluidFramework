@@ -29,8 +29,10 @@ import {
 import type { IConnectionStateChangeReason } from "./contracts.js";
 
 /**
- * A connection to a delta stream which does not support submitting or receiving ops.
- * Used in storage-only mode and in frozen loads.
+ * Creation of a FrozenDocumentServiceFactory which wraps an existing
+ * DocumentServiceFactory to provide a storage-only document service.
+ *
+ * @param documentServiceFactory - The underlying DocumentServiceFactory to wrap.
  * @returns A FrozenDocumentServiceFactory
  * @legacy @alpha
  */
