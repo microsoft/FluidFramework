@@ -4,7 +4,7 @@
  */
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, isObject } from "@fluidframework/core-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -97,18 +97,30 @@ export function bindHandles<T = unknown>(
 	serializer: IFluidSerializer,
 	bind: IFluidHandle,
 ): T {
-	if (isFluidHandle(value)) {
-		assert(isISharedObjectHandle(bind), "bind must be an ISharedObjectHandle");
-		bind.bind(toFluidHandleInternal(value));
-		return value;
-	}
-	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-	if (!!value && typeof value === "object") {
-		for (const key of Object.keys(value)) {
-			const val: unknown = value[key];
-			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-			if (!!val && typeof val === "object") {
-				bindHandles(val, serializer, bind);
+	const nodesToProcess: unknown[] = [value];
+	const visitedNodes = new Set<unknown>();
+
+	assert(isISharedObjectHandle(bind), "bind must be an ISharedObjectHandle");
+
+	while (nodesToProcess.length > 0) {
+		const node = nodesToProcess.pop();
+
+		if (isFluidHandle(node)) {
+			bind.bind(toFluidHandleInternal(node));
+		} else if (isObject(node) && !visitedNodes.has(node)) {
+			visitedNodes.add(node);
+			for (const key of Object.keys(node)) {
+				const val: unknown = node[key];
+				if (isObject(val) || isFluidHandle(val)) {
+					nodesToProcess.push(val);
+				}
+			}
+		} else if (Array.isArray(node) && !visitedNodes.has(node)) {
+			visitedNodes.add(node);
+			for (const item of node) {
+				if (isObject(item) || isFluidHandle(item)) {
+					nodesToProcess.push(item);
+				}
 			}
 		}
 	}
