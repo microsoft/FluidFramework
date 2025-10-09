@@ -10,7 +10,7 @@ const sidebars: SidebarsConfig = {
 	 * Sidebar associated with `/docs`
 	 */
 	docsSidebar: [
-		{ type: "doc", id: "home", label: "Welcome~~~", },
+		{ type: "doc", id: "home" },
 		{
 			type: "category",
 			label: "Getting Started",
