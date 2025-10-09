@@ -131,19 +131,14 @@ for (const createBlobPayloadPending of [false, true]) {
 					const handle = await blobManager.createBlob(textToBlob("hello"));
 					const { localId } = unpackHandle(handle);
 
-					// TODO: For now, the blob manager can't find pending blobs in unattached handles,
-					// like the ones we will have just created if createBlobPayloadPending. Once the
-					// internal bookkeeping has been updated to include these, we don't need to
-					// ensureBlobsShared() here anymore and these checks can be applied to both the
-					// legacy and payloadPending flows.
-					if (!createBlobPayloadPending) {
-						assert(blobManager.hasBlob(localId));
-						const _blobFromManager = await blobManager.getBlob(
-							localId,
-							createBlobPayloadPending,
-						);
-						assert.strictEqual(blobToText(_blobFromManager), "hello", "Blob content mismatch");
-					}
+					// Even though in the payloadPending case we haven't actually uploaded the blob yet, we
+					// should still be able to check for it and retrieve it using the locally-cached copy.
+					assert(blobManager.hasBlob(localId));
+					const _blobFromManager = await blobManager.getBlob(
+						localId,
+						createBlobPayloadPending,
+					);
+					assert.strictEqual(blobToText(_blobFromManager), "hello", "Blob content mismatch");
 
 					assert.strictEqual(
 						handle.payloadPending,
@@ -205,6 +200,29 @@ for (const createBlobPayloadPending of [false, true]) {
 						createBlobPayloadPending,
 					);
 					assert.strictEqual(blobToText(blobFromManager), "hello", "Blob content mismatch");
+				});
+
+				it("Retrieves locally-created blobs without making a storage call", async () => {
+					const mockBlobStorage = new MockStorageAdapter(true);
+					mockBlobStorage.readBlob = async () => {
+						throw new Error("BOOM!");
+					};
+					const { blobManager } = createTestMaterial({
+						mockBlobStorage,
+						createBlobPayloadPending,
+					});
+					const handle = await blobManager.createBlob(textToBlob("hello"));
+					const { localId } = unpackHandle(handle);
+					if (createBlobPayloadPending) {
+						await ensureBlobsShared([handle]);
+					}
+
+					// If this tries to make a storage request it will throw.
+					assert(blobManager.hasBlob(localId));
+					const blobFromManager = await blobManager.getBlob(localId, createBlobPayloadPending);
+					assert.strictEqual(blobToText(blobFromManager), "hello", "Blob content mismatch");
+					const blobFromHandle = await handle.get();
+					assert.strictEqual(blobToText(blobFromHandle), "hello", "Blob content mismatch");
 				});
 
 				it("Does not log an error if runtime is disposed during readBlob error", async () => {
