@@ -215,6 +215,14 @@ For example, a format change in `SchemaChangeCodec` could be implemented by addi
 This new version would use the same code for all bits of `MessageCodec`, `EditManagerCodec`, and `SharedTreeChangeFamilyCodec`, but pass enough context down to `SchemaChangeCodec` to resolve to the newer format.
 In this manner, the mapping between explicitly versioned data and implicitly versioned data for composed codecs is managed in code.
 
+## Auditing Codec Resolution
+
+Because the dependencies between different codec versions are distributed over the various codec layers,
+it can be hard to understand the relationship between top-level `SharedTreeFormatVersion` values from [sharedTree.ts](../../src/shared-tree/sharedTree.ts)
+and the myriad of codec versions available.
+To help audit such relationships, the `getCodecTreeForSharedTreeFormat` function in [sharedTree.ts](../../src/shared-tree/sharedTree.ts) can be used.
+Snapshots of the dependencies are captured in the ["SharedTree Codecs"](../../src/test/shared-tree/sharedTreeCodecs.spec.ts) test suite and can be inspected [on disc](../../src/test/snapshots/codec-tree/SharedTreeFormatVersion.v1.json).
+
 ## Current code guidelines
 
 Codecs which explicitly version their data should export a codec which takes in a write version and supports reading all supported versions.

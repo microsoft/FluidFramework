@@ -21,11 +21,38 @@ import {
 } from "./protocol/index.js";
 
 // ADO: #1986: Start using enum from protocol-base.
-export enum SignalType {
-	ClientJoin = "join", // same value as MessageType.ClientJoin,
-	ClientLeave = "leave", // same value as MessageType.ClientLeave,
-	Clear = "clear", // used only by client for synthetic signals
+export const SignalType = {
+	ClientJoin: "join", // same value as MessageType.ClientJoin,
+	ClientLeave: "leave", // same value as MessageType.ClientLeave,
+	Clear: "clear", // used only by client for synthetic signals
+} as const;
+
+interface SystemSignalContent {
+	type: (typeof SignalType)[keyof typeof SignalType];
+	content?: unknown;
 }
+
+interface InboundSystemSignal<TSignalContent extends SystemSignalContent>
+	extends ISignalMessage<{ type: never; content: TSignalContent }> {
+	// eslint-disable-next-line @rushstack/no-new-null -- `null` is used in JSON protocol to indicate system message
+	readonly clientId: null;
+}
+
+type ClientJoinSignal = InboundSystemSignal<{
+	type: typeof SignalType.ClientJoin;
+	content: ISignalClient;
+}>;
+
+type ClientLeaveSignal = InboundSystemSignal<{
+	type: typeof SignalType.ClientLeave;
+	content: string; // clientId of leaving client
+}>;
+
+type ClearClientsSignal = InboundSystemSignal<{
+	type: typeof SignalType.Clear;
+}>;
+
+type AudienceSignal = ClientJoinSignal | ClientLeaveSignal | ClearClientsSignal;
 
 /**
  * Function to be used for creating a protocol handler.
@@ -47,7 +74,35 @@ export interface IProtocolHandler extends IBaseProtocolHandler {
 	processSignal(message: ISignalMessage);
 }
 
-export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandler {
+/**
+ * More specific version of {@link IProtocolHandler} with narrower call
+ * constraints for {@link IProtocolHandler.processSignal}.
+ */
+export interface ProtocolHandlerInternal extends IProtocolHandler {
+	/**
+	 * Process the audience related signal.
+	 * @privateRemarks
+	 * Internally, only {@link AudienceSignal} messages need handling.
+	 */
+	processSignal(message: AudienceSignal): void;
+}
+
+/**
+ * Function to be used for creating a protocol handler.
+ *
+ * @remarks This is the same are {@link ProtocolHandlerBuilder} but
+ * returns the {@link ProtocolHandlerInternal} which has narrower
+ * expectations for `processSignal`.
+ */
+export type InternalProtocolHandlerBuilder = (
+	attributes: IDocumentAttributes,
+	snapshot: IQuorumSnapshot,
+	// TODO: use a real type (breaking change)
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	sendProposal: (key: string, value: any) => number,
+) => ProtocolHandlerInternal;
+
+export class ProtocolHandler extends ProtocolOpHandler implements ProtocolHandlerInternal {
 	constructor(
 		attributes: IDocumentAttributes,
 		quorumSnapshot: IQuorumSnapshot,
@@ -104,8 +159,8 @@ export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandl
 		return super.processMessage(message, local);
 	}
 
-	public processSignal(message: ISignalMessage): void {
-		const innerContent = message.content as { content: unknown; type: string };
+	public processSignal(message: AudienceSignal): void {
+		const innerContent = message.content;
 		switch (innerContent.type) {
 			case SignalType.Clear: {
 				const members = this.audience.getMembers();
@@ -117,7 +172,7 @@ export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandl
 				break;
 			}
 			case SignalType.ClientJoin: {
-				const newClient = innerContent.content as ISignalClient;
+				const newClient = innerContent.content;
 				// Ignore write clients - quorum will control such clients.
 				if (newClient.client.mode === "read") {
 					this.audience.addMember(newClient.clientId, newClient.client);
@@ -125,7 +180,7 @@ export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandl
 				break;
 			}
 			case SignalType.ClientLeave: {
-				const leftClientId = innerContent.content as string;
+				const leftClientId = innerContent.content;
 				// Ignore write clients - quorum will control such clients.
 				if (this.audience.getMember(leftClientId)?.mode === "read") {
 					this.audience.removeMember(leftClientId);
@@ -144,7 +199,9 @@ export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandl
  * The protocol handler should strictly handle only ClientJoin, ClientLeave
  * and Clear signal types.
  */
-export function protocolHandlerShouldProcessSignal(message: ISignalMessage): boolean {
+export function protocolHandlerShouldProcessSignal(
+	message: ISignalMessage,
+): message is AudienceSignal {
 	// Signal originates from server
 	if (message.clientId === null) {
 		const innerContent = message.content as { content: unknown; type: string };

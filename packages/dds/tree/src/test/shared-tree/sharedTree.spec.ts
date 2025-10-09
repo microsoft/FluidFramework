@@ -18,7 +18,6 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
-import { configureDebugAsserts } from "@fluidframework/core-utils/internal";
 
 import {
 	CommitKind,
@@ -54,7 +53,6 @@ import {
 	type ITreePrivate,
 	SharedTreeFormatVersion,
 	Tree,
-	TreeAlpha,
 	type TreeCheckout,
 } from "../../shared-tree/index.js";
 import {
@@ -110,6 +108,7 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { JsonAsTree } from "../../jsonDomainSchema.js";
 import {
 	toSimpleTreeSchema,
+	TreeBeta,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/api/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -154,15 +153,6 @@ function treeTestFactory(): ISharedTree {
 }
 
 describe("SharedTree", () => {
-	let debugAssertsDefault: boolean;
-	beforeEach(() => {
-		debugAssertsDefault = configureDebugAsserts(true);
-	});
-
-	afterEach(() => {
-		configureDebugAsserts(debugAssertsDefault);
-	});
-
 	describe("viewWith", () => {
 		it("@Smoke initialize tree", () => {
 			const tree = treeTestFactory();
@@ -1642,6 +1632,41 @@ describe("SharedTree", () => {
 				resubmitter.assertOuterListEquals(finalState);
 				submitter.assertOuterListEquals(finalState);
 			});
+
+			// This tests a client resubmitting two commits,
+			// the first of which is a merge of a commit which has concurrently been merged by another client.
+			it("over merge of commit to be resubmitted", () => {
+				const provider = new TestTreeProviderLite(
+					2,
+					configuredSharedTree({
+						jsonValidator: FormatValidatorBasic,
+						formatVersion: SharedTreeFormatVersion.vSharedBranches,
+					}).getFactory(),
+				);
+
+				const config = new TreeViewConfiguration({ schema, enableSchemaValidation });
+				const [tree1, tree2] = provider.trees;
+				const mainView1 = asAlpha(tree1.viewWith(config));
+				mainView1.initialize([["A"]]);
+				const branchId = tree1.createSharedBranch();
+				const branchView1 = asAlpha(tree1.viewSharedBranchWith(branchId, config));
+				branchView1.root[0].insertAtEnd("B");
+				provider.synchronizeMessages();
+
+				tree1.containerRuntime.connected = false;
+				mainView1.merge(branchView1, false);
+				const mainView2 = asAlpha(tree2.viewWith(config));
+				const branchView2 = asAlpha(tree2.viewSharedBranchWith(branchId, config));
+				branchView2.root[0].insertAtEnd("C");
+				mainView2.merge(branchView2, false);
+				provider.synchronizeMessages();
+
+				tree1.containerRuntime.connected = true;
+				provider.synchronizeMessages();
+
+				assert.deepEqual(mainView1.root[0], ["A", "B", "C"]);
+				assert.deepEqual(mainView2.root[0], ["A", "B", "C"]);
+			});
 		});
 
 		it("revert constraint", () => {
@@ -1668,8 +1693,8 @@ describe("SharedTree", () => {
 			});
 			provider.synchronizeMessages();
 
-			assert.deepEqual(TreeAlpha.exportConcise(viewA.root), { child: { id: "B" } });
-			assert.deepEqual(TreeAlpha.exportConcise(viewB.root), { child: { id: "B" } });
+			assert.deepEqual(TreeBeta.exportConcise(viewA.root), { child: { id: "B" } });
+			assert.deepEqual(TreeBeta.exportConcise(viewB.root), { child: { id: "B" } });
 
 			const restoreChildA = stack.undoStack[0] ?? assert.fail("Missing undo");
 
@@ -1678,14 +1703,14 @@ describe("SharedTree", () => {
 			viewB.root.child = new JsonAsTree.JsonObject({ id: "C" });
 			provider.synchronizeMessages();
 
-			assert.deepEqual(TreeAlpha.exportConcise(viewA.root), { child: { id: "C" } });
-			assert.deepEqual(TreeAlpha.exportConcise(viewB.root), { child: { id: "C" } });
+			assert.deepEqual(TreeBeta.exportConcise(viewA.root), { child: { id: "C" } });
+			assert.deepEqual(TreeBeta.exportConcise(viewB.root), { child: { id: "C" } });
 
 			// This revert should do nothing since its constraint on the undo has been violated.
 			restoreChildA.revert();
 
-			assert.deepEqual(TreeAlpha.exportConcise(viewA.root), { child: { id: "C" } });
-			assert.deepEqual(TreeAlpha.exportConcise(viewB.root), { child: { id: "C" } });
+			assert.deepEqual(TreeBeta.exportConcise(viewA.root), { child: { id: "C" } });
+			assert.deepEqual(TreeBeta.exportConcise(viewB.root), { child: { id: "C" } });
 
 			stack.unsubscribe();
 		});

@@ -34,7 +34,7 @@ import {
 import { v4 as uuid } from "uuid";
 
 import { DebugLogger } from "./debugLogger.js";
-import { FrozenDocumentServiceFactory } from "./frozenServices.js";
+import { createFrozenDocumentServiceFactory } from "./frozenServices.js";
 import { Loader } from "./loader.js";
 import { pkgVersion } from "./packageVersion.js";
 import type { ProtocolHandlerBuilder } from "./protocol.js";
@@ -223,51 +223,12 @@ export async function loadExistingContainer(
  * Properties required to load a frozen container from pending state.
  * @legacy @alpha
  */
-export interface ILoadFrozenContainerFromPendingStateProps {
-	/**
-	 * The code loader handles loading the necessary code for running a container once it is loaded.
-	 */
-	readonly codeLoader: ICodeDetailsLoader;
-
-	/**
-	 * The url resolver used by the loader for resolving external urls into Fluid urls.
-	 */
-	readonly urlResolver: IUrlResolver;
-
-	/**
-	 * The request to resolve the container.
-	 */
-	readonly request: IRequest;
-
+export interface ILoadFrozenContainerFromPendingStateProps
+	extends ILoadExistingContainerProps {
 	/**
 	 * Pending local state to be applied to the container.
 	 */
 	readonly pendingLocalState: string;
-
-	/**
-	 * A property bag of options/policies used by various layers to control features.
-	 */
-	readonly options?: IContainerPolicies | undefined;
-
-	/**
-	 * Scope is provided to all container and is a set of shared services for container's to integrate with their host environment.
-	 */
-	readonly scope?: FluidObject | undefined;
-
-	/**
-	 * The logger that all telemetry should be pushed to.
-	 */
-	readonly logger?: ITelemetryBaseLogger | undefined;
-
-	/**
-	 * The configuration provider which may be used to control features.
-	 */
-	readonly configProvider?: IConfigProviderBase | undefined;
-
-	/**
-	 * Client details provided in the override will be merged over the default client.
-	 */
-	readonly clientDetailsOverride?: IClientDetails | undefined;
 }
 
 /**
@@ -280,7 +241,7 @@ export async function loadFrozenContainerFromPendingState(
 ): Promise<IContainer> {
 	return loadExistingContainer({
 		...props,
-		documentServiceFactory: new FrozenDocumentServiceFactory(),
+		documentServiceFactory: createFrozenDocumentServiceFactory(props.documentServiceFactory),
 	});
 }
 

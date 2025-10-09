@@ -23,6 +23,9 @@ export interface ContainerAlpha extends IContainer {
 // @beta @legacy
 export function createDetachedContainer(createDetachedContainerProps: ICreateDetachedContainerProps): Promise<IContainer>;
 
+// @alpha @legacy
+export function createFrozenDocumentServiceFactory(factory?: IDocumentServiceFactory | Promise<IDocumentServiceFactory>): IDocumentServiceFactory;
+
 // @beta @legacy (undocumented)
 export interface IBaseProtocolHandler {
     // (undocumented)
@@ -101,16 +104,8 @@ export interface ILoadExistingContainerProps extends ICreateAndLoadContainerProp
 }
 
 // @alpha @legacy
-export interface ILoadFrozenContainerFromPendingStateProps {
-    readonly clientDetailsOverride?: IClientDetails | undefined;
-    readonly codeLoader: ICodeDetailsLoader_2;
-    readonly configProvider?: IConfigProviderBase | undefined;
-    readonly logger?: ITelemetryBaseLogger | undefined;
-    readonly options?: IContainerPolicies | undefined;
+export interface ILoadFrozenContainerFromPendingStateProps extends ILoadExistingContainerProps {
     readonly pendingLocalState: string;
-    readonly request: IRequest;
-    readonly scope?: FluidObject | undefined;
-    readonly urlResolver: IUrlResolver;
 }
 
 // @alpha @legacy

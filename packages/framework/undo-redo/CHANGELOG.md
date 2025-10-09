@@ -1,5 +1,9 @@
 # @fluidframework/undo-redo
 
+## 2.62.0
+
+Dependency updates only.
+
 ## 2.61.0
 
 Dependency updates only.

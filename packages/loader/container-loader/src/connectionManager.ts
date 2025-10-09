@@ -10,6 +10,8 @@ import type {
 	ReadOnlyInfo,
 } from "@fluidframework/container-definitions/internal";
 import { type ITelemetryBaseProperties, LogLevel } from "@fluidframework/core-interfaces";
+import type { JsonString } from "@fluidframework/core-interfaces/internal";
+import { JsonStringify } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	ConnectionMode,
@@ -111,6 +113,19 @@ interface IPendingConnection {
 	 * Desired ConnectionMode of this in-progress connection attempt.
 	 */
 	connectionMode: ConnectionMode;
+}
+
+function assertExpectedSignals(
+	signals: ISignalMessage[],
+): asserts signals is ISignalMessage<{ type: never; content: JsonString<unknown> }>[] {
+	for (const signal of signals) {
+		if ("type" in signal) {
+			throw new Error("Unexpected type in ISignalMessage");
+		}
+		if (typeof signal.content !== "string") {
+			throw new TypeError("Non-string content in ISignalMessage");
+		}
+	}
 }
 
 /**
@@ -921,29 +936,29 @@ export class ConnectionManager implements IConnectionManager {
 		// Synthesize clear & join signals out of initialClients state.
 		// This allows us to have single way to process signals, and makes it simpler to initialize
 		// protocol in Container.
-		const clearSignal: ISignalMessage = {
+		const clearSignal = {
 			// API uses null
 			// eslint-disable-next-line unicorn/no-null
 			clientId: null, // system message
-			content: JSON.stringify({
+			content: JsonStringify({
 				type: SignalType.Clear,
 			}),
 		};
 
 		// list of signals to process due to this new connection
-		let signalsToProcess: ISignalMessage[] = [clearSignal];
+		let signalsToProcess: ISignalMessage<{ type: never; content: JsonString<unknown> }>[] = [
+			clearSignal,
+		];
 
-		const clientJoinSignals: ISignalMessage[] = (connection.initialClients ?? []).map(
-			(priorClient) => ({
-				// API uses null
-				// eslint-disable-next-line unicorn/no-null
-				clientId: null, // system signal
-				content: JSON.stringify({
-					type: SignalType.ClientJoin,
-					content: priorClient, // ISignalClient
-				}),
+		const clientJoinSignals = (connection.initialClients ?? []).map((priorClient) => ({
+			// API uses null
+			// eslint-disable-next-line unicorn/no-null
+			clientId: null, // system signal
+			content: JsonStringify({
+				type: SignalType.ClientJoin,
+				content: priorClient, // ISignalClient
 			}),
-		);
+		}));
 		if (clientJoinSignals.length > 0) {
 			signalsToProcess = [...signalsToProcess, ...clientJoinSignals];
 		}
@@ -953,6 +968,7 @@ export class ConnectionManager implements IConnectionManager {
 		// for "self" and connection.initialClients does not contain "self", so we have to process them after
 		// "clear" signal above.
 		if (connection.initialSignals !== undefined && connection.initialSignals.length > 0) {
+			assertExpectedSignals(connection.initialSignals);
 			signalsToProcess = [...signalsToProcess, ...connection.initialSignals];
 		}
 
@@ -1179,6 +1195,7 @@ export class ConnectionManager implements IConnectionManager {
 
 	private readonly signalHandler = (signalsArg: ISignalMessage | ISignalMessage[]): void => {
 		const signals = Array.isArray(signalsArg) ? signalsArg : [signalsArg];
+		assertExpectedSignals(signals);
 		this.props.signalHandler(signals);
 	};
 

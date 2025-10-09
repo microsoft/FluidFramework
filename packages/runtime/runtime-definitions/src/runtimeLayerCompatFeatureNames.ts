@@ -9,11 +9,11 @@
  *
  * @internal
  */
-export const encodeHandlesInContainerRuntime = "encodeHandlesInContainerRuntime" as const;
+export const encodeHandlesInContainerRuntime = "encodeHandlesInContainerRuntime";
 
 /**
  * This feature indicates that the datastore context will call notifyReadOnlyState on the
  * datastore runtime.
  * @internal
  */
-export const notifiesReadOnlyState = "notifiesReadOnlyState" as const;
+export const notifiesReadOnlyState = "notifiesReadOnlyState";

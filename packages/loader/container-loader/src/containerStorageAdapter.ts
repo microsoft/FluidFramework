@@ -31,7 +31,7 @@ import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService
 import { RetriableDocumentStorageService } from "./retriableDocumentStorageService.js";
 import type {
 	ISerializedStateManagerDocumentStorageService,
-	ISnapshotInfo,
+	SerializedSnapshotInfo,
 } from "./serializedStateManager.js";
 import { convertSnapshotInfoToSnapshot } from "./utils.js";
 
@@ -88,7 +88,9 @@ export class ContainerStorageAdapter
 		 * ArrayBufferLikes or utf8 encoded strings, containing blobs from a snapshot
 		 */
 		private readonly blobContents: { [id: string]: ArrayBufferLike | string } = {},
-		private loadingGroupIdSnapshotsFromPendingState: Record<string, ISnapshotInfo> | undefined,
+		private loadingGroupIdSnapshotsFromPendingState:
+			| Record<string, SerializedSnapshotInfo>
+			| undefined,
 		private readonly addProtocolSummaryIfMissing: (summaryTree: ISummaryTree) => ISummaryTree,
 		private readonly enableSummarizeProtocolTree: boolean | undefined,
 	) {
@@ -184,10 +186,7 @@ export class ContainerStorageAdapter
 			const localSnapshot =
 				this.loadingGroupIdSnapshotsFromPendingState[snapshotFetchOptions.loadingGroupIds[0]];
 			assert(localSnapshot !== undefined, 0x970 /* Local snapshot must be present */);
-			snapshot = convertSnapshotInfoToSnapshot(
-				localSnapshot,
-				localSnapshot.snapshotSequenceNumber,
-			);
+			snapshot = convertSnapshotInfoToSnapshot(localSnapshot);
 		} else {
 			if (this._storageService.getSnapshot === undefined) {
 				throw new UsageError(
