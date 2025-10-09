@@ -1679,7 +1679,8 @@ const tree7 = {
 																					{
 																						value: {
 																							type: "blob",
-																							content: '{"version":1,"data":[],"maxId":0}',
+																							content:
+																								'{"version":1,"data":[],"maxId":0}',
 																							encoding: "utf8",
 																						},
 																						unreferenced: undefined,
@@ -1936,7 +1937,8 @@ const tree8 = {
 																					{
 																						value: {
 																							type: "blob",
-																							content: '{"version":1,"data":[],"maxId":0}',
+																							content:
+																								'{"version":1,"data":[],"maxId":0}',
 																							encoding: "utf8",
 																						},
 																						unreferenced: undefined,

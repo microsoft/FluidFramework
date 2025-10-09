@@ -32,7 +32,10 @@ export function useSharedTreeRerender(props: {
 			setForceReRender((prevReRender) => prevReRender + 1);
 		});
 
-		treeNodeListenerStopFunctions.push(listenerStopFunction, listenerStopFunction2);
+		treeNodeListenerStopFunctions.push(
+			listenerStopFunction,
+			listenerStopFunction2,
+		);
 
 		// Clean up tree node listeners.
 		return () => {

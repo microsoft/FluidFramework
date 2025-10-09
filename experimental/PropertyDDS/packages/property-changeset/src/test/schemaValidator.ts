@@ -8,7 +8,10 @@
  */
 
 import { TypeIdHelper } from "../helpers/typeidHelper.js";
-import { type PropertySchema, TemplateValidator } from "../templateValidator.js";
+import {
+	type PropertySchema,
+	TemplateValidator,
+} from "../templateValidator.js";
 import type { SchemaValidationResult } from "../validationResultBuilder.js";
 
 export class SchemaValidator {
@@ -65,7 +68,11 @@ export class SchemaValidator {
 			}, 5);
 		});
 
-	getAllParentsForTemplate(in_typeid: string, out_parents, in_includeBaseProperty) {
+	getAllParentsForTemplate(
+		in_typeid: string,
+		out_parents,
+		in_includeBaseProperty,
+	) {
 		if (TypeIdHelper.isPrimitiveType(in_typeid)) {
 			// Everything inherits from BaseProperty.
 			if (in_includeBaseProperty) {

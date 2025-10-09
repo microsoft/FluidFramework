@@ -121,16 +121,24 @@ class MigrationTool implements IMigrationTool {
 
 	public async finalizeMigration(migrationResult: unknown): Promise<void> {
 		// Only permit a single container to be set as a migration destination.
-		assert(this.migrationResult === undefined, "Migration was already finalized");
+		assert(
+			this.migrationResult === undefined,
+			"Migration was already finalized",
+		);
 
 		// Using a consensus data structure is important here, because other clients might race us to set the new
 		// value.  All clients must agree on the final value even in these race conditions so everyone ends up in the
 		// same final container.
-		await this.consensusRegisterCollection.write(migrationResultKey, migrationResult);
+		await this.consensusRegisterCollection.write(
+			migrationResultKey,
+			migrationResult,
+		);
 	}
 
 	public get proposedVersion(): string | undefined {
-		return this.pactMap.getPending(newVersionKey) ?? this.pactMap.get(newVersionKey);
+		return (
+			this.pactMap.getPending(newVersionKey) ?? this.pactMap.get(newVersionKey)
+		);
 	}
 
 	public get acceptedMigration(): IAcceptedMigrationDetails | undefined {
@@ -167,7 +175,8 @@ class MigrationTool implements IMigrationTool {
 	};
 }
 
-const consensusRegisterCollectionFactory = ConsensusRegisterCollection.getFactory();
+const consensusRegisterCollectionFactory =
+	ConsensusRegisterCollection.getFactory();
 const pactMapFactory = PactMap.getFactory();
 
 const migrationToolSharedObjectRegistry = new Map<string, IChannelFactory>([
@@ -213,13 +222,20 @@ export class MigrationToolFactory implements IFluidDataStoreFactory {
 				consensusRegisterCollectionFactory.type,
 			) as IConsensusRegisterCollection<string>;
 			consensusRegisterCollection.bindToContext();
-			pactMap = runtime.createChannel(pactMapId, pactMapFactory.type) as IPactMap<string>;
+			pactMap = runtime.createChannel(
+				pactMapId,
+				pactMapFactory.type,
+			) as IPactMap<string>;
 			pactMap.bindToContext();
 		}
 
 		// By this point, we've performed any async work required to get the dependencies of the MigrationTool,
 		// so just a normal sync constructor will work fine (no followup async initialize()).
-		const instance = new MigrationTool(runtime, consensusRegisterCollection, pactMap);
+		const instance = new MigrationTool(
+			runtime,
+			consensusRegisterCollection,
+			pactMap,
+		);
 
 		return runtime;
 	}

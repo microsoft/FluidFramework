@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import type { Brand, BrandedType, NameFromBranded, ValueFromBranded } from "./brand.js";
+import type {
+	Brand,
+	BrandedType,
+	NameFromBranded,
+	ValueFromBranded,
+} from "./brand.js";
 import type { isAny } from "./typeCheck.js";
 
 /**

@@ -4,14 +4,19 @@
  */
 
 import { ContainerMessageType } from "../messageTypes.js";
-import type { LocalBatchMessage, OutboundBatchMessage } from "../opLifecycle/index.js";
+import type {
+	LocalBatchMessage,
+	OutboundBatchMessage,
+} from "../opLifecycle/index.js";
 
 // //////////////////////////////////////////////////
 // NOTE: THESE TESTS ARE NOT TO BE RUN, ONLY COMPILED
 // //////////////////////////////////////////////////
 
 // TYPE TEST CASE: Try converting from LocalBatchMessage to OutboundBatchMessage.  Make sure runtimeOp must be erased.
-export function testLocalToOutbound(localBatchMessage: LocalBatchMessage): unknown {
+export function testLocalToOutbound(
+	localBatchMessage: LocalBatchMessage,
+): unknown {
 	const goodOutboundBatchMessage: OutboundBatchMessage = {
 		...localBatchMessage,
 		runtimeOp: undefined,
@@ -28,7 +33,9 @@ export function testLocalToOutbound(localBatchMessage: LocalBatchMessage): unkno
 }
 
 // TYPE TEST CASE: Try converting from OutboundBatchMessage to LocalBatchMessage.  Make sure contents must be erased.
-export function testOutboundToLocal(outboundBatchMessage: OutboundBatchMessage): unknown {
+export function testOutboundToLocal(
+	outboundBatchMessage: OutboundBatchMessage,
+): unknown {
 	const goodLocalBatchMessage: LocalBatchMessage = {
 		...outboundBatchMessage,
 		contents: undefined,

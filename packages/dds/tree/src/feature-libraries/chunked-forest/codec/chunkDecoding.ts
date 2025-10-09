@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase, oob } from "@fluidframework/core-utils/internal";
+import {
+	assert,
+	unreachableCase,
+	oob,
+} from "@fluidframework/core-utils/internal";
 import type {
 	IIdCompressor,
 	OpSpaceCompressedId,
@@ -67,7 +71,12 @@ export function decode(
 ): TreeChunk[] {
 	return genericDecode(
 		decoderLibrary,
-		new DecoderContext(chunk.identifiers, chunk.shapes, idDecodingContext, incrementalDecoder),
+		new DecoderContext(
+			chunk.identifiers,
+			chunk.shapes,
+			idDecodingContext,
+			incrementalDecoder,
+		),
 		chunk,
 		anyDecoder,
 	);
@@ -111,7 +120,10 @@ export function readValue(
 		} else if (shape === false) {
 			return undefined;
 		} else if (Array.isArray(shape)) {
-			assert(shape.length === 1, 0x734 /* expected a single constant for value */);
+			assert(
+				shape.length === 1,
+				0x734 /* expected a single constant for value */,
+			);
 			return shape[0] as Value;
 		} else if (shape === SpecialField.Identifier) {
 			// This case is a special case handling the decoding of identifier fields.
@@ -151,11 +163,17 @@ export function deaggregateChunks(chunk: TreeChunk): TreeChunk[] {
 		// Could return [] here, however the logic in this file is designed to never produce an empty SequenceChunk, so its better to throw an error here to detect bugs.
 		assert(chunk.subChunks.length > 0, 0x735 /* Unexpected empty sequence */);
 		// Logic in this file is designed to never produce an unneeded (single item) SequenceChunks, so its better to throw an error here to detect bugs.
-		assert(chunk.subChunks.length > 1, 0x736 /* Unexpected single item sequence */);
+		assert(
+			chunk.subChunks.length > 1,
+			0x736 /* Unexpected single item sequence */,
+		);
 
 		for (const sub of chunk.subChunks) {
 			// The logic in this file is designed to never produce an nested SequenceChunks or emptyChunk, so its better to throw an error here to detect bugs.
-			assert(!(sub instanceof SequenceChunk), 0x737 /* unexpected nested sequence */);
+			assert(
+				!(sub instanceof SequenceChunk),
+				0x737 /* unexpected nested sequence */,
+			);
 			assert(sub !== emptyChunk, 0x738 /* unexpected empty chunk */);
 
 			sub.referenceAdded();
@@ -190,7 +208,10 @@ export function aggregateChunks(input: TreeChunk[]): TreeChunk {
  */
 export class NestedArrayDecoder implements ChunkDecoder {
 	public constructor(private readonly shape: EncodedNestedArrayShape) {}
-	public decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
+	public decode(
+		decoders: readonly ChunkDecoder[],
+		stream: StreamCursor,
+	): TreeChunk {
 		const decoder = decoders[this.shape] ?? oob();
 
 		// TODO: uniform chunk fast path
@@ -223,7 +244,10 @@ export class NestedArrayDecoder implements ChunkDecoder {
  */
 export class InlineArrayDecoder implements ChunkDecoder {
 	public constructor(private readonly shape: EncodedInlineArrayShape) {}
-	public decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
+	public decode(
+		decoders: readonly ChunkDecoder[],
+		stream: StreamCursor,
+	): TreeChunk {
 		const length = this.shape.length;
 		const decoder = decoders[this.shape.shape] ?? oob();
 		const chunks: TreeChunk[] = [];
@@ -238,7 +262,9 @@ export class InlineArrayDecoder implements ChunkDecoder {
  * Decoder for {@link EncodedIncrementalChunkShape}s.
  */
 export class IncrementalChunkDecoder implements ChunkDecoder {
-	public constructor(private readonly cache: DecoderContext<EncodedChunkShape>) {}
+	public constructor(
+		private readonly cache: DecoderContext<EncodedChunkShape>,
+	) {}
 	public decode(_: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
 		assert(
 			this.cache.incrementalDecoder !== undefined,
@@ -306,7 +332,8 @@ export class NodeDecoder implements ChunkDecoder {
 		private readonly shape: EncodedNodeShape,
 		private readonly context: DecoderContext<EncodedChunkShape>,
 	) {
-		this.type = shape.type === undefined ? undefined : context.identifier(shape.type);
+		this.type =
+			shape.type === undefined ? undefined : context.identifier(shape.type);
 
 		const fieldDecoders: BasicFieldDecoder[] = [];
 		for (const [fieldKey, fieldShape] of shape.fields ?? []) {
@@ -315,12 +342,19 @@ export class NodeDecoder implements ChunkDecoder {
 		}
 		this.fieldDecoders = fieldDecoders;
 	}
-	public decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
+	public decode(
+		decoders: readonly ChunkDecoder[],
+		stream: StreamCursor,
+	): TreeChunk {
 		const type: TreeNodeSchemaIdentifier =
 			this.type ?? readStreamIdentifier(stream, this.context);
 		// TODO: Consider typechecking against stored schema in here somewhere.
 
-		const value = readValue(stream, this.shape.value, this.context.idDecodingContext);
+		const value = readValue(
+			stream,
+			this.shape.value,
+			this.context.idDecodingContext,
+		);
 		const fields: Map<FieldKey, TreeChunk[]> = new Map();
 
 		// Helper to add fields, but with unneeded array chunks removed.

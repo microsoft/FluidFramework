@@ -34,7 +34,9 @@ const loop = (
 ) =>
 	promise
 		.then(fn)
-		.then((result) => (result === null ? result : loop(makePromise(result), fn, makePromise)));
+		.then((result) =>
+			result === null ? result : loop(makePromise(result), fn, makePromise),
+		);
 
 /**
  * @internal
@@ -45,7 +47,9 @@ export function rebaseToRemoteChanges(
 	getRebasedChanges: any,
 	isAsync: boolean = false,
 ) {
-	const makePromise = isAsync ? Promise.resolve.bind(Promise) : (x) => new SyncPromise(x);
+	const makePromise = isAsync
+		? Promise.resolve.bind(Promise)
+		: (x) => new SyncPromise(x);
 	let mainPromise = makePromise();
 
 	const commitsOnOtherLocalBranch = {};
@@ -58,7 +62,9 @@ export function rebaseToRemoteChanges(
 			makePromise(getUnrebasedChange(currentGuid)),
 			(currentChange) => {
 				if (currentChange === undefined) {
-					throw new Error("Received change that references a non-existing parent change");
+					throw new Error(
+						"Received change that references a non-existing parent change",
+					);
 				}
 				changesOnOtherLocalBranch.unshift(currentChange);
 				commitsOnOtherLocalBranch[currentGuid] = currentChange;
@@ -78,20 +84,23 @@ export function rebaseToRemoteChanges(
 			loop(
 				makePromise(getUnrebasedChange(change.localBranchStart)),
 				(currentRebasedChange) => {
-					if (currentRebasedChange.remoteHeadGuid === currentRebasedChange.referenceGuid) {
+					if (
+						currentRebasedChange.remoteHeadGuid ===
+						currentRebasedChange.referenceGuid
+					) {
 						return null;
 					}
-					return makePromise(getUnrebasedChange(currentRebasedChange.referenceGuid)).then(
-						(rebaseChange) => {
-							alreadyRebasedChanges.unshift(rebaseChange);
-							if (rebaseChange === undefined) {
-								throw new Error(
-									"Received change that references a non-existing parent change",
-								);
-							}
-							return rebaseChange;
-						},
-					);
+					return makePromise(
+						getUnrebasedChange(currentRebasedChange.referenceGuid),
+					).then((rebaseChange) => {
+						alreadyRebasedChanges.unshift(rebaseChange);
+						if (rebaseChange === undefined) {
+							throw new Error(
+								"Received change that references a non-existing parent change",
+							);
+						}
+						return rebaseChange;
+					});
 				},
 				makePromise,
 			),
@@ -128,7 +137,9 @@ export function rebaseToRemoteChanges(
 								cloneDeep(alreadyRebasedChanges[0].changeSet),
 							);
 							invertedChange.toInverseChangeSet();
-							invertedChange.applyChangeSet(rebaseBaseChangeSetForAlreadyRebasedChanges);
+							invertedChange.applyChangeSet(
+								rebaseBaseChangeSetForAlreadyRebasedChanges,
+							);
 							applyAfterMetaInformation = new Map();
 							const conflicts2 = [];
 							changeset = cloneDeep(alreadyRebasedChanges[0].changeSet);
@@ -143,9 +154,12 @@ export function rebaseToRemoteChanges(
 							rebaseBaseChangeSetForAlreadyRebasedChanges = invertedChange;
 							alreadyRebasedChanges.shift();
 						}
-						rebaseBaseChangeSetForAlreadyRebasedChanges.applyChangeSet(changeset, {
-							applyAfterMetaInformation,
-						});
+						rebaseBaseChangeSetForAlreadyRebasedChanges.applyChangeSet(
+							changeset,
+							{
+								applyAfterMetaInformation,
+							},
+						);
 					}
 
 					// Now we have to rebase all changes from the remote local branch with respect to this base changeset

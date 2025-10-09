@@ -171,7 +171,10 @@ export interface IStaticEntryPoint extends IProvideStaticEntryPoint {
  * @see See {@link IServiceAudienceEvents} for usage details.
  * @public
  */
-export type MemberChangedListener<M extends IMember> = (clientId: string, member: M) => void;
+export type MemberChangedListener<M extends IMember> = (
+	clientId: string,
+	member: M,
+) => void;
 
 /**
  * Events that trigger when the roster of members in the Fluid session change.
@@ -273,4 +276,6 @@ export interface IMember {
  * An extended member object that includes currentConnection
  * @public
  */
-export type Myself<M extends IMember = IMember> = M & { readonly currentConnection: string };
+export type Myself<M extends IMember = IMember> = M & {
+	readonly currentConnection: string;
+};

@@ -161,7 +161,10 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 		for (const target of this.withCursors) {
 			target.prepareForEdit();
 		}
-		assert(this.withCursors.size === 0, 0x773 /* prepareForEdit should remove all cursors */);
+		assert(
+			this.withCursors.size === 0,
+			0x773 /* prepareForEdit should remove all cursors */,
+		);
 	}
 
 	public [disposeSymbol](): void {
@@ -189,8 +192,14 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 			target[disposeSymbol]();
 		}
 		this.lazyRootCache = undefined;
-		assert(this.withCursors.size === 0, 0x774 /* free should remove all cursors */);
-		assert(this.withAnchors.size === 0, 0x775 /* free should remove all anchors */);
+		assert(
+			this.withCursors.size === 0,
+			0x774 /* free should remove all cursors */,
+		);
+		assert(
+			this.withAnchors.size === 0,
+			0x775 /* free should remove all anchors */,
+		);
 	}
 
 	/**
@@ -202,7 +211,10 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 	public get root(): FlexTreeField {
 		assert(this.disposed === false, 0x804 /* use after dispose */);
 
-		this.lazyRootCache ??= this.detachedField(rootField, this.schema.rootFieldSchema.kind);
+		this.lazyRootCache ??= this.detachedField(
+			rootField,
+			this.schema.rootFieldSchema.kind,
+		);
 		return this.lazyRootCache;
 	}
 
@@ -212,7 +224,10 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 	 * Due to limited support for detached fields, not all operations are supported.
 	 * Additionally if the detached field's content is deleted, the field will become out of schema if it is required: it must not be used after that point.
 	 */
-	public detachedField(key: DetachedField, schema: FieldKindIdentifier): FlexTreeField {
+	public detachedField(
+		key: DetachedField,
+		schema: FieldKindIdentifier,
+	): FlexTreeField {
 		assert(this.disposed === false, 0xb9c /* use after dispose */);
 
 		const cursor = this.checkout.forest.allocateCursor("root");

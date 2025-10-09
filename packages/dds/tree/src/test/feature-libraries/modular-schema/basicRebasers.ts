@@ -83,9 +83,16 @@ export const valueHandler = {
 	rebaser: replaceRebaser(),
 	codecsFactory: () =>
 		makeCodecFamily([
-			[1, makeValueCodec<TUnsafe<ValueChangeset>, FieldChangeEncodingContext>(Type.Any())],
+			[
+				1,
+				makeValueCodec<TUnsafe<ValueChangeset>, FieldChangeEncodingContext>(
+					Type.Any(),
+				),
+			],
 		]),
-	editor: { buildChildChanges: () => assert.fail("Child changes not supported") },
+	editor: {
+		buildChildChanges: () => assert.fail("Child changes not supported"),
+	},
 
 	intoDelta: (change): FieldChangeDelta => {
 		const delta: Mutable<FieldChangeDelta> = {};

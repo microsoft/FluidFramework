@@ -5,7 +5,11 @@
 
 import { strict as assert } from "assert";
 
-import { ITestDataObject, describeCompat, itExpects } from "@fluid-private/test-version-utils";
+import {
+	ITestDataObject,
+	describeCompat,
+	itExpects,
+} from "@fluid-private/test-version-utils";
 import { DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
@@ -49,7 +53,10 @@ describeCompat(
 
 			const defaultFactory = new DataObjectFactory({
 				type: "test",
-				ctor: class extends apis.dataRuntime.DataObject implements ITestDataObject {
+				ctor: class
+					extends apis.dataRuntime.DataObject
+					implements ITestDataObject
+				{
 					get _context(): IFluidDataStoreContext {
 						return this.context;
 					}
@@ -78,7 +85,8 @@ describeCompat(
 			return {
 				container,
 				containerRuntime,
-				dsRuntime: _runtime as unknown as IFluidDataStoreChannel & IFluidDataStoreRuntime,
+				dsRuntime: _runtime as unknown as IFluidDataStoreChannel &
+					IFluidDataStoreRuntime,
 				shareDir: _root,
 			};
 		};
@@ -226,15 +234,18 @@ describeCompat(
 			"should log on changes when readonlyInStagingMode: true",
 			[
 				{
-					eventName: "fluid:telemetry:FluidDataStoreContext:DataStoreMessageWhileReadonly",
+					eventName:
+						"fluid:telemetry:FluidDataStoreContext:DataStoreMessageWhileReadonly",
 					category: "generic",
 				},
 			],
 			async function () {
-				const { container, containerRuntime, shareDir } = await createContainer({
-					test: this,
-					readonlyInStagingMode: true,
-				});
+				const { container, containerRuntime, shareDir } = await createContainer(
+					{
+						test: this,
+						readonlyInStagingMode: true,
+					},
+				);
 
 				const controls = containerRuntime.enterStagingMode?.();
 

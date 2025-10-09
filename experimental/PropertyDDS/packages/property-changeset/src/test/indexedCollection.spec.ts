@@ -67,7 +67,9 @@ describe("Indexed Collection Operations", function () {
 			insert: {
 				"test:test-1.0.0": {
 					test: {
-						"map<Bool>": { entries: { insert: { "1": true, "2": false, "3": false } } },
+						"map<Bool>": {
+							entries: { insert: { "1": true, "2": false, "3": false } },
+						},
 					},
 				},
 			},

@@ -17,9 +17,15 @@ import {
 
 import type { Section } from "../../mdast/index.js";
 import type { ApiModuleLike } from "../../utilities/index.js";
-import { getApiItemKind, getScopedMemberNameForDiagnostics } from "../../utilities/index.js";
+import {
+	getApiItemKind,
+	getScopedMemberNameForDiagnostics,
+} from "../../utilities/index.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
-import { createChildDetailsSection, createMemberTables } from "../helpers/index.js";
+import {
+	createChildDetailsSection,
+	createMemberTables,
+} from "../helpers/index.js";
 import { filterItems } from "../utilities/index.js";
 
 /**

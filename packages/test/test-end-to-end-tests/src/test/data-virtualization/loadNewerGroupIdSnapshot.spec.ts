@@ -22,7 +22,10 @@ import type {
 	IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import { Deferred, delay } from "@fluidframework/core-utils/internal";
-import type { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import type {
+	ISnapshot,
+	ISnapshotTree,
+} from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	type ITestObjectProvider,
@@ -55,14 +58,20 @@ const interceptResult = <T>(
 	return fn;
 };
 
-const overrideResult = <T>(parent: any, fn: (...args: any[]) => Promise<T>, result: T) => {
+const overrideResult = <T>(
+	parent: any,
+	fn: (...args: any[]) => Promise<T>,
+	result: T,
+) => {
 	const overrideFn = async () => {
 		return result;
 	};
 	parent[fn.name] = overrideFn;
 };
 
-const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+const configProvider = (
+	settings: Record<string, ConfigTypes>,
+): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
 });
 
@@ -71,7 +80,8 @@ describeCompat(
 	"LoaderCompat",
 	(getTestObjectProvider, apis) => {
 		const { DataObjectFactory, DataObject } = apis.dataRuntime;
-		const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
+		const { ContainerRuntimeFactoryWithDefaultDataStore } =
+			apis.containerRuntime;
 
 		// A Test Data Object that exposes some basic functionality.
 		class TestDataObject extends DataObject {
@@ -120,7 +130,12 @@ describeCompat(
 			message: string,
 		) => {
 			assert(snapshotTree.groupId === loadingGroupId, message);
-			assertPopulatedTreeCore(snapshotTree, loadingGroupId, blobContents, message);
+			assertPopulatedTreeCore(
+				snapshotTree,
+				loadingGroupId,
+				blobContents,
+				message,
+			);
 		};
 
 		const assertPopulatedTreeCore = (
@@ -211,7 +226,8 @@ describeCompat(
 			const runtime2 = mainObject2.containerRuntime;
 
 			// Try to load the data stores with groupIds
-			const handleA2 = mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectA");
+			const handleA2 =
+				mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectA");
 			assert(handleA2 !== undefined, "handleA2 should not be undefined");
 
 			const snapshotADeferred: Deferred<ISnapshot> = new Deferred();
@@ -220,9 +236,13 @@ describeCompat(
 					runtime2.storage.getSnapshot !== undefined,
 					"getSnapshot not defined for runtime2",
 				);
-				interceptResult(runtime2.storage, runtime2.storage.getSnapshot, (snapshot) => {
-					snapshotADeferred.resolve(snapshot);
-				});
+				interceptResult(
+					runtime2.storage,
+					runtime2.storage.getSnapshot,
+					(snapshot) => {
+						snapshotADeferred.resolve(snapshot);
+					},
+				);
 			}
 
 			// loading group call
@@ -290,13 +310,15 @@ describeCompat(
 				);
 			const { summaryVersion } = await summarizeNow(summarizer);
 			// Work around getEntryPoint returning the summarizer instead of a datastore
-			const runtimeS = (summarizingContainer as any).runtime as ContainerRuntime;
+			const runtimeS = (summarizingContainer as any)
+				.runtime as ContainerRuntime;
 			const handleS = await runtimeS.getAliasedDataStoreEntryPoint("default");
 			assert(handleS !== undefined, "handleS should not be undefined");
 			const mainObjectS = (await handleS.get()) as TestDataObject;
 
 			await provider.ensureSynchronized();
-			const handleAS = mainObjectS._root.get<IFluidHandle<TestDataObject>>("dataObjectA");
+			const handleAS =
+				mainObjectS._root.get<IFluidHandle<TestDataObject>>("dataObjectA");
 			assert(handleAS !== undefined, "handleA2 should not be undefined");
 			const dataObjectAS = await handleAS.get();
 
@@ -313,7 +335,8 @@ describeCompat(
 			);
 			// Testing the get snapshot call
 			const mainObject2 = (await container2.getEntryPoint()) as TestDataObject;
-			const handleA2 = mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectA");
+			const handleA2 =
+				mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectA");
 			assert(handleA2 !== undefined, "handleA2 should not be undefined");
 
 			container2.disconnect();
@@ -360,7 +383,8 @@ describeCompat(
 			[
 				{
 					eventName: "fluid:telemetry:FluidDataStoreContext:RealizeError",
-					error: "Summarizer client behind, loaded newer snapshot with loadingGroupId",
+					error:
+						"Summarizer client behind, loaded newer snapshot with loadingGroupId",
 				},
 			],
 			async function () {
@@ -386,7 +410,8 @@ describeCompat(
 				);
 
 				// Attach the data stores
-				const dataObjectA = (await dataStoreA.entryPoint.get()) as TestDataObject;
+				const dataObjectA =
+					(await dataStoreA.entryPoint.get()) as TestDataObject;
 				mainObject._root.set("dataObjectA", dataObjectA.handle);
 				dataObjectA._root.set("A", "A");
 
@@ -445,11 +470,19 @@ describeCompat(
 
 				// All this casting is to get the the dataObject from the summarizer2 container to wait for the op we just sent
 				const runtime1 = (summarizer1 as any).runtime as ContainerRuntime;
-				const mainObjectHandle1 = await runtime1.getAliasedDataStoreEntryPoint("default");
-				assert(mainObjectHandle1 !== undefined, "mainObject1 should not be undefined");
+				const mainObjectHandle1 =
+					await runtime1.getAliasedDataStoreEntryPoint("default");
+				assert(
+					mainObjectHandle1 !== undefined,
+					"mainObject1 should not be undefined",
+				);
 				const mainObject1 = (await mainObjectHandle1.get()) as TestDataObject;
-				const dataObjectA1Handle = mainObject1._root.get<IFluidHandle>("dataObjectA");
-				assert(dataObjectA1Handle !== undefined, "dataObjectA1Handle should not be undefined");
+				const dataObjectA1Handle =
+					mainObject1._root.get<IFluidHandle>("dataObjectA");
+				assert(
+					dataObjectA1Handle !== undefined,
+					"dataObjectA1Handle should not be undefined",
+				);
 				const dataObjectA1 = (await dataObjectA1Handle.get()) as TestDataObject;
 
 				// Make sure that summarizer1 gets the op
@@ -481,7 +514,10 @@ describeCompat(
 				});
 
 				if (isGroupIdLoaderVersion(apis.loader.version)) {
-					assert(result.stage === "base", "submitSummary should fail in base stage");
+					assert(
+						result.stage === "base",
+						"submitSummary should fail in base stage",
+					);
 					assert.equal(
 						result.error?.message,
 						"Summarizer client behind, loaded newer snapshot with loadingGroupId",
@@ -491,7 +527,8 @@ describeCompat(
 					dataObjectA1.logger.send({
 						category: "error",
 						eventName: "FluidDataStoreContext:RealizeError",
-						error: "Summarizer client behind, loaded newer snapshot with loadingGroupId",
+						error:
+							"Summarizer client behind, loaded newer snapshot with loadingGroupId",
 					});
 				}
 			},
@@ -533,7 +570,8 @@ describeCompat(
 
 			// Summarize
 			await provider.ensureSynchronized();
-			const { summaryVersion: summaryVersion1 } = await summarizeNow(summarizer);
+			const { summaryVersion: summaryVersion1 } =
+				await summarizeNow(summarizer);
 			clearCacheIfOdsp(provider, persistedCache);
 			const olderSnapshot = await containerRuntime.storage.getSnapshot?.({
 				versionId: summaryVersion1,
@@ -542,7 +580,8 @@ describeCompat(
 			dataObjectA._root.set("B", "B");
 
 			await provider.ensureSynchronized();
-			const { summaryVersion: summaryVersion2 } = await summarizeNow(summarizer);
+			const { summaryVersion: summaryVersion2 } =
+				await summarizeNow(summarizer);
 
 			clearCacheIfOdsp(provider, persistedCache);
 			// Load the container with the second summary
@@ -559,7 +598,10 @@ describeCompat(
 			const runtime2 = mainObject2.containerRuntime;
 			const dataObjectA2Handle =
 				mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectA");
-			assert(dataObjectA2Handle !== undefined, "dataObjectA2Handle should not be undefined");
+			assert(
+				dataObjectA2Handle !== undefined,
+				"dataObjectA2Handle should not be undefined",
+			);
 
 			// TODO: update when this assert changes to a hex.
 			if (isGroupIdLoaderVersion(apis.loader.version)) {
@@ -567,7 +609,11 @@ describeCompat(
 					runtime2.storage.getSnapshot !== undefined,
 					"getSnapshot not defined for runtime2",
 				);
-				overrideResult(runtime2.storage, runtime2.storage.getSnapshot, olderSnapshot);
+				overrideResult(
+					runtime2.storage,
+					runtime2.storage.getSnapshot,
+					olderSnapshot,
+				);
 				await assert.rejects(
 					dataObjectA2Handle.get(),
 					(error: Error & any) => {
@@ -575,7 +621,9 @@ describeCompat(
 							error.errorFromRequestFluidObject === true &&
 							error.code === 500 &&
 							error.message !== undefined &&
-							error.message.includes("Downloaded snapshot older than snapshot we loaded from");
+							error.message.includes(
+								"Downloaded snapshot older than snapshot we loaded from",
+							);
 
 						return correctError;
 					},

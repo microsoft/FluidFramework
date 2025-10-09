@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { performanceNow, type TypedEventEmitter } from "@fluid-internal/client-utils";
+import {
+	performanceNow,
+	type TypedEventEmitter,
+} from "@fluid-internal/client-utils";
 import type { IDeltaManagerFull } from "@fluidframework/container-definitions/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type { IContainerRuntimeBaseEvents } from "@fluidframework/runtime-definitions/internal";
@@ -33,7 +36,8 @@ export class DeltaScheduler {
 	private readonly processingTimeIncrement = 10;
 
 	private processingStartTime: number | undefined;
-	private currentAllowedProcessingTimeForTurn: number = DeltaScheduler.processingTime;
+	private currentAllowedProcessingTimeForTurn: number =
+		DeltaScheduler.processingTime;
 
 	// This keeps track of the number of times inbound queue has been scheduled. After a particular
 	// count, we log telemetry for the number of ops processed, the time and number of turns it took
@@ -87,11 +91,15 @@ export class DeltaScheduler {
 		}
 	};
 
-	private readonly batchEnd = (error: unknown, message: ISequencedDocumentMessage): void => {
+	private readonly batchEnd = (
+		error: unknown,
+		message: ISequencedDocumentMessage,
+	): void => {
 		if (this.schedulingLog) {
 			this.schedulingLog.numberOfBatchesProcessed++;
 			this.schedulingLog.lastSequenceNumber = message.sequenceNumber;
-			this.schedulingLog.opsRemainingToProcess = this.deltaManager.inbound.length;
+			this.schedulingLog.opsRemainingToProcess =
+				this.deltaManager.inbound.length;
 		}
 
 		if (this.shouldRunScheduler()) {
@@ -108,7 +116,8 @@ export class DeltaScheduler {
 				// Increase the total processing time. Keep doing this after each turn until all the ops have
 				// been processed. This way we keep the responsiveness at the beginning while also making sure
 				// that all the ops process fairly quickly.
-				this.currentAllowedProcessingTimeForTurn += this.processingTimeIncrement;
+				this.currentAllowedProcessingTimeForTurn +=
+					this.processingTimeIncrement;
 
 				// If we are logging the telemetry this time, update the telemetry log object.
 				if (this.schedulingLog) {
@@ -126,7 +135,9 @@ export class DeltaScheduler {
 								this.schedulingLog.firstSequenceNumber +
 								1,
 							opsRemainingToProcess: this.deltaManager.inbound.length,
-							processingTime: formatTick(this.schedulingLog.totalProcessingTime),
+							processingTime: formatTick(
+								this.schedulingLog.totalProcessingTime,
+							),
 							numberOfTurns: this.schedulingLog.numberOfTurns,
 							batchesProcessed: this.schedulingLog.numberOfBatchesProcessed,
 							timeToResume: formatTick(performanceNow() - currentTime),
@@ -146,7 +157,8 @@ export class DeltaScheduler {
 			// telemetry log object.
 			const currentTime = performanceNow();
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			this.schedulingLog.totalProcessingTime += currentTime - this.processingStartTime!;
+			this.schedulingLog.totalProcessingTime +=
+				currentTime - this.processingStartTime!;
 
 			this.logger.sendTelemetryEvent({
 				eventName: "InboundOpsProcessingTime",
@@ -154,7 +166,9 @@ export class DeltaScheduler {
 				numberOfTurns: this.schedulingLog.numberOfTurns,
 				processingTime: formatTick(this.schedulingLog.totalProcessingTime),
 				opsProcessed:
-					this.schedulingLog.lastSequenceNumber - this.schedulingLog.firstSequenceNumber + 1,
+					this.schedulingLog.lastSequenceNumber -
+					this.schedulingLog.firstSequenceNumber +
+					1,
 				batchesProcessed: this.schedulingLog.numberOfBatchesProcessed,
 				duration: formatTick(currentTime - this.schedulingLog.startTime),
 				schedulingCount: this.schedulingCount,

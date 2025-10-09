@@ -25,14 +25,22 @@ describe("createInsertOnlyAttributionPolicy", () => {
 
 	it("Attributes content on insert", () => {
 		client.startOrUpdateCollaboration(localUserLongId);
-		client.applyMsg(client.makeOpMessage(client.insertTextLocal(0, "ABC"), ++seq, seq - 1));
+		client.applyMsg(
+			client.makeOpMessage(client.insertTextLocal(0, "ABC"), ++seq, seq - 1),
+		);
 		assert.deepEqual(client.getAllAttributionSeqs(), [1, 1, 1]);
 	});
 
 	it("Attributes content inserted before starting collaboration with a detached key", () => {
 		client.insertTextLocal(0, "C");
 		client.startOrUpdateCollaboration(localUserLongId);
-		client.applyMsg(client.makeOpMessage(client.insertTextLocal(0, "AB"), ++seq, seq - 1));
-		assert.deepEqual(client.getAllAttributionSeqs(), [1, 1, { type: "detached", id: 0 }]);
+		client.applyMsg(
+			client.makeOpMessage(client.insertTextLocal(0, "AB"), ++seq, seq - 1),
+		);
+		assert.deepEqual(client.getAllAttributionSeqs(), [
+			1,
+			1,
+			{ type: "detached", id: 0 },
+		]);
 	});
 });

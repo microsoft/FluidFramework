@@ -71,16 +71,20 @@ describeCompat(
 					}
 				}
 			}
-			const documentSerivce = await provider.documentServiceFactory.createDocumentService(
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				mainContainer.resolvedUrl!,
-				provider.logger,
-			);
+			const documentSerivce =
+				await provider.documentServiceFactory.createDocumentService(
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					mainContainer.resolvedUrl!,
+					provider.logger,
+				);
 			const documentStorage: IDocumentStorageService =
 				await documentSerivce.connectToStorage();
 			// Validate the snapshot downloaded from the server.
 			// Download the snapshot corresponding to the above summary from the server.
-			const versions = await documentStorage.getVersions(summaryResult.summaryVersion, 1);
+			const versions = await documentStorage.getVersions(
+				summaryResult.summaryVersion,
+				1,
+			);
 			const snapshot = await documentStorage.getSnapshotTree(versions[0]);
 			assert(snapshot !== null, "Snapshot could not be downloaded from server");
 			const dataStoreTreesDownloaded =
@@ -115,7 +119,9 @@ describeCompat(
 
 		async function createNewDataStore() {
 			const newDataStore =
-				await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType);
+				await mainDataStore._context.containerRuntime.createDataStore(
+					TestDataObjectType,
+				);
 			return (await newDataStore.entryPoint.get()) as ITestDataObject;
 		}
 
@@ -133,7 +139,10 @@ describeCompat(
 
 			// Wait for the summary that contains the above. Also, get this summary's version so that we can download
 			// it from the server.
-			await summarizeAndValidateUnreferencedFlag(summarizer, deletedDataStoreIds);
+			await summarizeAndValidateUnreferencedFlag(
+				summarizer,
+				deletedDataStoreIds,
+			);
 
 			// Remove one of the data store handle to mark it as unreferenced.
 			mainDataStore._root.delete("dataStore2");
@@ -141,7 +150,10 @@ describeCompat(
 
 			// Wait for the summary that contains the above. Also, get this summary's version so that we can download
 			// it from the server.
-			await summarizeAndValidateUnreferencedFlag(summarizer, deletedDataStoreIds);
+			await summarizeAndValidateUnreferencedFlag(
+				summarizer,
+				deletedDataStoreIds,
+			);
 
 			// Remove the other data store handle so that both data stores are marked as unreferenced.
 			mainDataStore._root.delete("dataStore3");
@@ -149,7 +161,10 @@ describeCompat(
 
 			// Wait for the summary that contains the above. Also, get this summary's version so that we can load
 			// a new container with it.
-			await summarizeAndValidateUnreferencedFlag(summarizer, deletedDataStoreIds);
+			await summarizeAndValidateUnreferencedFlag(
+				summarizer,
+				deletedDataStoreIds,
+			);
 		});
 
 		it("should return the unreferenced flag correctly in snapshot for revived data stores", async () => {
@@ -166,7 +181,10 @@ describeCompat(
 
 			// Wait for the summary that contains the above. Also, get this summary's version so that we can download
 			// it from the server.
-			await summarizeAndValidateUnreferencedFlag(summarizer, deletedDataStoreIds);
+			await summarizeAndValidateUnreferencedFlag(
+				summarizer,
+				deletedDataStoreIds,
+			);
 
 			// Remove the handles of the data stores to mark them as unreferenced.
 			mainDataStore._root.delete("dataStore2");
@@ -176,7 +194,10 @@ describeCompat(
 
 			// Wait for the summary that contains the above. Also, get this summary's version so that we can download
 			// it from the server.
-			await summarizeAndValidateUnreferencedFlag(summarizer, deletedDataStoreIds);
+			await summarizeAndValidateUnreferencedFlag(
+				summarizer,
+				deletedDataStoreIds,
+			);
 
 			// Add the handles of the data stores back to mark them as referenced again.
 			mainDataStore._root.set("dataStore2", dataStore2.handle);
@@ -185,7 +206,10 @@ describeCompat(
 
 			// Wait for the summary that contains the above. Also, get this summary's version so that we can load
 			// a new container with it.
-			await summarizeAndValidateUnreferencedFlag(summarizer, deletedDataStoreIds);
+			await summarizeAndValidateUnreferencedFlag(
+				summarizer,
+				deletedDataStoreIds,
+			);
 		});
 	},
 );

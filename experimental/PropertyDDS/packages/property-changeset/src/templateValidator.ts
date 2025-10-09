@@ -34,7 +34,10 @@ import traverse from "traverse";
 import { ajvFactory } from "./ajvFactory.cjs";
 import { TypeIdHelper } from "./helpers/typeidHelper.js";
 import { TemplateSchema } from "./templateSchema.js";
-import { SchemaValidationResult, ValidationResultBuilder } from "./validationResultBuilder.js";
+import {
+	SchemaValidationResult,
+	ValidationResultBuilder,
+} from "./validationResultBuilder.js";
 
 const { MSG } = constants;
 
@@ -92,7 +95,10 @@ const _extractTypeid = function (typeidOrReference: string) {
 	let result = typeidOrReference || "";
 	const isReference = result.startsWith(reference);
 	if (isReference) {
-		result = typeidOrReference.substring(reference.length, typeidOrReference.length - 1);
+		result = typeidOrReference.substring(
+			reference.length,
+			typeidOrReference.length - 1,
+		);
 	}
 	return result;
 };
@@ -113,7 +119,8 @@ const _getSemverFromTypeId = function (in_typeid: string): string | null {
  * @param in_obj - A javascript entity.
  * @returns The type name for in_obj.
  */
-const _getType = (in_obj: any): string => Object.prototype.toString.call(in_obj).slice(8, -1);
+const _getType = (in_obj: any): string =>
+	Object.prototype.toString.call(in_obj).slice(8, -1);
 
 type PathEqualityInfo = {
 	isEqual: boolean;
@@ -121,7 +128,10 @@ type PathEqualityInfo = {
 };
 
 function isPropertyArray(source: SchemaEntityType): source is PropertiesType {
-	return every(source, (entry: PropertyType) => isObject(entry) && entry.id !== undefined);
+	return every(
+		source,
+		(entry: PropertyType) => isObject(entry) && entry.id !== undefined,
+	);
 }
 
 // function isSchemaTemplate(source: SchemaEntityType): source is PropertySchema {
@@ -208,7 +218,12 @@ const _psetDeepEquals = function (
 
 				for (let i = 0; i < source.length && result.isEqual; i++) {
 					const sourceId = source[i].id;
-					result = _depthFirstDeepEquals.call(this, source[i], targetMap[sourceId], sourceId);
+					result = _depthFirstDeepEquals.call(
+						this,
+						source[i],
+						targetMap[sourceId],
+						sourceId,
+					);
 					idPath.pop();
 				}
 			} else {
@@ -244,14 +259,20 @@ const _psetDeepEquals = function (
 			for (let i = 0; i < keysSource.length && result.isEqual; i++) {
 				const keyName = keysSource[i];
 				let id = keyName === "properties" ? undefined : keyName;
-				result = _depthFirstDeepEquals.call(this, source[keyName], target[keyName], id);
+				result = _depthFirstDeepEquals.call(
+					this,
+					source[keyName],
+					target[keyName],
+					id,
+				);
 				if (id) {
 					idPath.pop();
 				}
 			}
 		} else {
 			result = _getPSetDeepEqualsResult(
-				_getType.call(this, source) === _getType.call(this, target) && source === target,
+				_getType.call(this, source) === _getType.call(this, target) &&
+					source === target,
 			);
 		}
 
@@ -304,7 +325,9 @@ const _validateBasic = function (in_template: PropertySchema) {
 	if (!in_template) {
 		this._resultBuilder.addError(new Error(MSG.NO_TEMPLATE));
 	} else if (!in_template.typeid) {
-		this._resultBuilder.addError(new Error(MSG.MISSING_TYPE_ID + JSON.stringify(in_template)));
+		this._resultBuilder.addError(
+			new Error(MSG.MISSING_TYPE_ID + JSON.stringify(in_template)),
+		);
 	}
 };
 
@@ -428,7 +451,12 @@ const _validatePositiveIncrement = function (
 
 				for (let i = 0; i < sourceObj.length; i++) {
 					const element = sourceObj[i] as any;
-					_depthFirstCompare.call(this, element.id, element, targetMap[element.id]);
+					_depthFirstCompare.call(
+						this,
+						element.id,
+						element,
+						targetMap[element.id],
+					);
 					delete targetMap[element.id];
 				}
 
@@ -625,9 +653,13 @@ const _validateSemanticAndSyntaxAsync = async function (
 const _validateSemverFormat = function (in_template) {
 	const templateVersion = _getSemverFromTypeId.call(this, in_template.typeid);
 	if (!templateVersion) {
-		this._resultBuilder.addError(new Error(MSG.MISSING_VERSION + in_template.typeid));
+		this._resultBuilder.addError(
+			new Error(MSG.MISSING_VERSION + in_template.typeid),
+		);
 	} else if (valid(templateVersion) !== templateVersion) {
-		this._resultBuilder.addError(new Error(MSG.INVALID_VERSION_1 + templateVersion));
+		this._resultBuilder.addError(
+			new Error(MSG.INVALID_VERSION_1 + templateVersion),
+		);
 	}
 
 	return templateVersion;
@@ -646,7 +678,9 @@ const _validateSkipSemver = function (in_template, in_templatePrevious) {
 	const result = _psetDeepEquals.call(this, in_template, in_templatePrevious);
 	if (!result.isEqual) {
 		// Violates rule 3a.
-		this._resultBuilder.addError(new Error(MSG.MODIFIED_TEMPLATE_1 + result.path));
+		this._resultBuilder.addError(
+			new Error(MSG.MODIFIED_TEMPLATE_1 + result.path),
+		);
 	}
 };
 
@@ -786,7 +820,9 @@ let _validateConstants = function (in_template) {
 			if (context === "map" && constant.contextKeyType === "typeid") {
 				each(constant.value, function (value, key) {
 					if (!TypeIdHelper.isTemplateTypeid(key)) {
-						that._resultBuilder.addError(new Error(MSG.KEY_MUST_BE_TYPEID + key));
+						that._resultBuilder.addError(
+							new Error(MSG.KEY_MUST_BE_TYPEID + key),
+						);
 					}
 				});
 			}
@@ -821,7 +857,8 @@ const _processValidationResults = function (in_template: PropertySchema) {
 						error.message = `typeid should have a pattern like: my.example:point-1.0.0 ${error.data} does not match that pattern`;
 					} else if ("pattern" && regexTypeId.test(error.instancePath)) {
 						error.message =
-							error.schemaPath === "#/definitions/typed-reference-typeid/pattern"
+							error.schemaPath ===
+							"#/definitions/typed-reference-typeid/pattern"
 								? ""
 								: `${error.instancePath} should follow this pattern: <namespace>:<typeid>-<version> ` +
 									`(for example: Sample:Rectangle-1.0.0) or match one of the Primitive Types (Float32, Float64, ` +
@@ -845,14 +882,17 @@ const _processValidationResults = function (in_template: PropertySchema) {
 					break;
 
 				case "not":
-					if (error.schemaPath === "#/switch/1/then/anyOf/0/properties/typeid/not") {
+					if (
+						error.schemaPath === "#/switch/1/then/anyOf/0/properties/typeid/not"
+					) {
 						// remove .typeid at the end of the instancePath
 						error.message = `For ${error.instancePath.slice(
 							0,
 							-7,
 						)}: Properties should have either a typeid or an array of child properties, but not both.`;
 					} else if (
-						error.schemaPath === "#/switch/1/then/anyOf/1/properties/properties/not"
+						error.schemaPath ===
+						"#/switch/1/then/anyOf/1/properties/properties/not"
 					) {
 						// remove .properties at the end of the instancePath
 						error.message = `For ${error.instancePath.slice(
@@ -1000,7 +1040,10 @@ export interface TemplateValidatorOptions {
 	/**
 	 * Function that checks if a template inherits from another asynchronously.
 	 */
-	inheritsFromAsync?: (source: PropertySchema, target: PropertySchema) => Promise<boolean>;
+	inheritsFromAsync?: (
+		source: PropertySchema,
+		target: PropertySchema,
+	) => Promise<boolean>;
 	/**
 	 * Function that checks if we have a template matching a typeid asynchronously.
 	 */
@@ -1021,16 +1064,27 @@ const Utils = {
 export class TemplateValidator {
 	static Utils = Utils;
 	private _resultBuilder: ValidationResultBuilder;
-	public _inheritsFrom: (source: PropertySchema, target: PropertySchema) => boolean;
+	public _inheritsFrom: (
+		source: PropertySchema,
+		target: PropertySchema,
+	) => boolean;
 	public _hasSchema: (schema: PropertySchema, typeid: string) => boolean;
 	public _inheritsFromAsync: (
 		source: PropertySchema,
 		target: PropertySchema,
 	) => Promise<boolean>;
-	public _hasSchemaAsync: (schema: PropertySchema, typeid: string) => Promise<boolean>;
+	public _hasSchemaAsync: (
+		schema: PropertySchema,
+		typeid: string,
+	) => Promise<boolean>;
 	private readonly _allowDraft: boolean;
 	private readonly _skipSemver: boolean;
-	constructor(in_params: TemplateValidatorOptions = { skipSemver: false, allowDraft: false }) {
+	constructor(
+		in_params: TemplateValidatorOptions = {
+			skipSemver: false,
+			allowDraft: false,
+		},
+	) {
 		this._skipSemver = in_params ? !!in_params.skipSemver : false;
 		this._allowDraft = in_params ? !!in_params.allowDraft : false;
 		// Used by validate()
@@ -1095,7 +1149,9 @@ export class TemplateValidator {
 		in_template: PropertySchema,
 		in_templatePrevious?: PropertySchema,
 	): SchemaValidationResult {
-		this._resultBuilder = new ValidationResultBuilder(in_template ? in_template.typeid : "");
+		this._resultBuilder = new ValidationResultBuilder(
+			in_template ? in_template.typeid : "",
+		);
 
 		let isDraft = false;
 		if (
@@ -1228,7 +1284,9 @@ export class TemplateValidator {
 		in_template: PropertySchema,
 		in_templatePrevious?: PropertySchema,
 	): Promise<SchemaValidationResult> {
-		this._resultBuilder = new ValidationResultBuilder(in_template ? in_template.typeid : "");
+		this._resultBuilder = new ValidationResultBuilder(
+			in_template ? in_template.typeid : "",
+		);
 		_validateBasic.call(this, in_template);
 		if (in_templatePrevious) {
 			_validateBasic.call(this, in_templatePrevious);
@@ -1257,7 +1315,9 @@ export class TemplateValidator {
 		const that = this;
 		return _validateSemanticAndSyntaxAsync
 			.call(that, in_template)
-			.then(() => _validateSemanticAndSyntaxAsync.call(that, in_templatePrevious))
+			.then(() =>
+				_validateSemanticAndSyntaxAsync.call(that, in_templatePrevious),
+			)
 			.then(function () {
 				if (!that._resultBuilder.isValid()) {
 					// Here the previous template is not valid. Make sure the typeid in the returned info is

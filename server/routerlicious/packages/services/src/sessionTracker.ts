@@ -196,10 +196,7 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 					Lumberjack.error(
 						"Failed to cleanup session on timeout",
 						{
-							...getLumberBaseProperties(
-								existingSession.documentId,
-								existingSession.tenantId,
-							),
+							...getLumberBaseProperties(existingSession.documentId, existingSession.tenantId),
 							...existingSession.telemetryProperties,
 						},
 						error,

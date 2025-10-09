@@ -54,8 +54,24 @@ module.exports = {
 	// 	// Remove explicit .(c)js from local paths to allow jest to find the .ts* files
 	// 	"^(\\.{1,2}/.*)\\.c?js$": "$1",
 	// },
-	moduleFileExtensions: ["ts", "tsx", "cts", "mts", "js", "cjs", "mjs", "jsx", "json", "node"],
-	coveragePathIgnorePatterns: ["/node_modules/", "/src/test/", "/dist/test/", "/lib/test/"],
+	moduleFileExtensions: [
+		"ts",
+		"tsx",
+		"cts",
+		"mts",
+		"js",
+		"cjs",
+		"mjs",
+		"jsx",
+		"json",
+		"node",
+	],
+	coveragePathIgnorePatterns: [
+		"/node_modules/",
+		"/src/test/",
+		"/dist/test/",
+		"/lib/test/",
+	],
 	testEnvironment: "jsdom",
 	setupFilesAfterEnv: ["<rootDir>/jest.setup.cjs"],
 };

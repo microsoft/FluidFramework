@@ -16,7 +16,10 @@ export function newTupleBTree<K extends readonly unknown[], V>(
 }
 
 // This assumes that the arrays are the same length.
-function compareTuples(arrayA: readonly unknown[], arrayB: readonly unknown[]): number {
+function compareTuples(
+	arrayA: readonly unknown[],
+	arrayB: readonly unknown[],
+): number {
 	for (let i = 0; i < arrayA.length; i++) {
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const a = arrayA[i] as any;

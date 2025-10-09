@@ -65,7 +65,8 @@ export class DocumentDeltaConnection
 	/**
 	 * Error message used when client is closing the delta connection cleanly.
 	 */
-	static readonly errorMessageForClientDisposeWithoutError = "Client closing delta connection";
+	static readonly errorMessageForClientDisposeWithoutError =
+		"Client closing delta connection";
 
 	/**
 	 * Last known sequence number to ordering service at the time of connection
@@ -93,9 +94,11 @@ export class DocumentDeltaConnection
 	private trackLatencyTimeout: ReturnType<typeof setTimeout> | undefined;
 
 	// Listeners only needed while the connection is in progress
-	private readonly connectionListeners: Map<string, (...args: any[]) => void> = new Map();
+	private readonly connectionListeners: Map<string, (...args: any[]) => void> =
+		new Map();
 	// Listeners used throughout the lifetime of the DocumentDeltaConnection
-	private readonly trackedListeners: Map<string, (...args: any[]) => void> = new Map();
+	private readonly trackedListeners: Map<string, (...args: any[]) => void> =
+		new Map();
 
 	protected get hasDetails(): boolean {
 		return !!this._details;
@@ -125,7 +128,9 @@ export class DocumentDeltaConnection
 
 	public get details(): IConnected {
 		if (!this._details) {
-			throw new Error("Internal error: calling method before _details is initialized!");
+			throw new Error(
+				"Internal error: calling method before _details is initialized!",
+			);
 		}
 		return this._details;
 	}
@@ -156,19 +161,30 @@ export class DocumentDeltaConnection
 			);
 		});
 
-		this.mc = createChildMonitoringContext({ logger, namespace: "DeltaConnection" });
+		this.mc = createChildMonitoringContext({
+			logger,
+			namespace: "DeltaConnection",
+		});
 
 		this.on("newListener", (event, _listener) => {
-			assert(!this.disposed, 0x20a /* "register for event on disposed object" */);
+			assert(
+				!this.disposed,
+				0x20a /* "register for event on disposed object" */,
+			);
 
 			// Some events are already forwarded - see this.addTrackedListener() calls in initialize().
 			if (DocumentDeltaConnection.eventsAlwaysForwarded.includes(event)) {
-				assert(this.trackedListeners.has(event), 0x245 /* "tracked listener" */);
+				assert(
+					this.trackedListeners.has(event),
+					0x245 /* "tracked listener" */,
+				);
 				return;
 			}
 
 			if (!DocumentDeltaConnection.eventsToForward.includes(event)) {
-				throw new Error(`DocumentDeltaConnection: Registering for unknown event: ${event}`);
+				throw new Error(
+					`DocumentDeltaConnection: Registering for unknown event: ${event}`,
+				);
 			}
 
 			// Whenever listener is added, we should subscribe on same event on socket, so these two things
@@ -177,7 +193,8 @@ export class DocumentDeltaConnection
 			// Better flow might be to always unconditionally register all handlers on successful connection,
 			// though some logic (naming assert in initialMessages getter) might need to be adjusted (it becomes noop)
 			assert(
-				(this.listeners(event).length !== 0) === this.trackedListeners.has(event),
+				(this.listeners(event).length !== 0) ===
+					this.trackedListeners.has(event),
 				0x20b /* "mismatch" */,
 			);
 			if (!this.trackedListeners.has(event)) {
@@ -281,9 +298,15 @@ export class DocumentDeltaConnection
 
 		// If we call this when the earlyOpHandler is not attached, then the queuedMessages may not include the
 		// latest ops.  This could possibly indicate that initialMessages was called twice.
-		assert(this.earlyOpHandlerAttached, 0x08e /* "Potentially missed initial messages" */);
+		assert(
+			this.earlyOpHandlerAttached,
+			0x08e /* "Potentially missed initial messages" */,
+		);
 		// We will lose ops and perf will tank as we need to go to storage to become current!
-		assert(this.listeners("op").length !== 0, 0x08f /* "No op handler is setup!" */);
+		assert(
+			this.listeners("op").length !== 0,
+			0x08f /* "No op handler is setup!" */,
+		);
 
 		this.removeEarlyOpHandler();
 
@@ -291,7 +314,9 @@ export class DocumentDeltaConnection
 			// Some messages were queued.
 			// add them to the list of initialMessages to be processed
 			this.details.initialMessages.push(...this.queuedMessages);
-			this.details.initialMessages.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
+			this.details.initialMessages.sort(
+				(a, b) => a.sequenceNumber - b.sequenceNumber,
+			);
 			this.queuedMessages.length = 0;
 		}
 		return this.details.initialMessages;
@@ -304,7 +329,10 @@ export class DocumentDeltaConnection
 	 */
 	public get initialSignals(): ISignalMessage[] {
 		this.checkNotDisposed();
-		assert(this.listeners("signal").length !== 0, 0x090 /* "No signal handler is setup!" */);
+		assert(
+			this.listeners("signal").length !== 0,
+			0x090 /* "No signal handler is setup!" */,
+		);
 
 		this.removeEarlySignalHandler();
 
@@ -331,7 +359,10 @@ export class DocumentDeltaConnection
 	 * @param type - Must be 'submitOp'.
 	 * @param messages - An array of document messages to submit.
 	 */
-	protected emitMessages(type: "submitOp", messages: IDocumentMessage[][]): void;
+	protected emitMessages(
+		type: "submitOp",
+		messages: IDocumentMessage[][],
+	): void;
 
 	/**
 	 * Emits 'submitSignal' messages.
@@ -430,7 +461,8 @@ export class DocumentDeltaConnection
 			this.disconnect(
 				createGenericNetworkError(
 					// pre-0.58 error message: clientClosingConnection
-					error?.message ?? DocumentDeltaConnection.errorMessageForClientDisposeWithoutError,
+					error?.message ??
+						DocumentDeltaConnection.errorMessageForClientDisposeWithoutError,
 					{ canRetry: error === undefined },
 					{ driverVersion },
 				),
@@ -490,9 +522,12 @@ export class DocumentDeltaConnection
 
 		// Socket.io's reconnect_attempt event is unreliable, so we track connect_error count instead.
 		let internalSocketConnectionFailureCount: number = 0;
-		const isInternalSocketReconnectionEnabled = (): boolean => this.socket.io.reconnection();
+		const isInternalSocketReconnectionEnabled = (): boolean =>
+			this.socket.io.reconnection();
 		const getMaxInternalSocketReconnectionAttempts = (): number =>
-			isInternalSocketReconnectionEnabled() ? this.socket.io.reconnectionAttempts() : 0;
+			isInternalSocketReconnectionEnabled()
+				? this.socket.io.reconnectionAttempts()
+				: 0;
 		const getMaxAllowedInternalSocketConnectionFailures = (): number =>
 			getMaxInternalSocketReconnectionAttempts() + 1;
 
@@ -502,7 +537,10 @@ export class DocumentDeltaConnection
 					this.closeSocket(err);
 				} catch (failError) {
 					const normalizedError = this.addPropsToError(failError);
-					this.logger.sendErrorEvent({ eventName: "CloseSocketError" }, normalizedError);
+					this.logger.sendErrorEvent(
+						{ eventName: "CloseSocketError" },
+						normalizedError,
+					);
 				}
 				reject(err);
 			};
@@ -512,7 +550,10 @@ export class DocumentDeltaConnection
 					this.disconnect(err);
 				} catch (failError) {
 					const normalizedError = this.addPropsToError(failError);
-					this.logger.sendErrorEvent({ eventName: "FailConnectionError" }, normalizedError);
+					this.logger.sendErrorEvent(
+						{ eventName: "FailConnectionError" },
+						normalizedError,
+					);
 				}
 				reject(err);
 			};
@@ -520,7 +561,9 @@ export class DocumentDeltaConnection
 			// Immediately set the connection timeout.
 			// Give extra 2 seconds for handshake on top of socket connection timeout.
 			this.socketConnectionTimeout = setTimeout(() => {
-				failConnection(this.createErrorObject("orderingServiceHandshakeTimeout"));
+				failConnection(
+					this.createErrorObject("orderingServiceHandshakeTimeout"),
+				);
 			}, timeout + 2000);
 
 			// Listen for connection issues
@@ -536,7 +579,9 @@ export class DocumentDeltaConnection
 
 						// Self-Signed Certificate ErrorCode Found in error.context
 						if (statusText === "DEPTH_ZERO_SELF_SIGNED_CERT") {
-							failAndCloseSocket(this.createErrorObject("connect_error", error, false));
+							failAndCloseSocket(
+								this.createErrorObject("connect_error", error, false),
+							);
 							return;
 						}
 					} else if (description && typeof description === "object") {
@@ -544,7 +589,9 @@ export class DocumentDeltaConnection
 
 						// Self-Signed Certificate ErrorCode Found in error.description
 						if (errorCode === "DEPTH_ZERO_SELF_SIGNED_CERT") {
-							failAndCloseSocket(this.createErrorObject("connect_error", error, false));
+							failAndCloseSocket(
+								this.createErrorObject("connect_error", error, false),
+							);
 							return;
 						}
 
@@ -591,60 +638,65 @@ export class DocumentDeltaConnection
 				failAndCloseSocket(this.createErrorObject("connect_timeout"));
 			});
 
-			this.addConnectionListener("connect_document_success", (response: IConnected) => {
-				// If we sent a nonce and the server supports nonces, check that the nonces match
-				if (
-					connectMessage.nonce !== undefined &&
-					response.nonce !== undefined &&
-					response.nonce !== connectMessage.nonce
-				) {
-					return;
-				}
-
-				const requestedMode = connectMessage.mode;
-				const actualMode = response.mode;
-				const writingPermitted = response.claims.scopes.includes(ScopeType.DocWrite);
-
-				if (writingPermitted) {
-					// The only time we expect a mismatch in requested/actual is if we lack write permissions
-					// In this case we will get "read", even if we requested "write"
-					if (actualMode !== requestedMode) {
-						failConnection(
-							this.createErrorObject(
-								"connect_document_success",
-								"Connected in a different mode than was requested",
-								false,
-							),
-						);
+			this.addConnectionListener(
+				"connect_document_success",
+				(response: IConnected) => {
+					// If we sent a nonce and the server supports nonces, check that the nonces match
+					if (
+						connectMessage.nonce !== undefined &&
+						response.nonce !== undefined &&
+						response.nonce !== connectMessage.nonce
+					) {
 						return;
 					}
-				} else {
-					if (actualMode === "write") {
-						failConnection(
-							this.createErrorObject(
-								"connect_document_success",
-								"Connected in write mode without write permissions",
-								false,
-							),
-						);
-						return;
+
+					const requestedMode = connectMessage.mode;
+					const actualMode = response.mode;
+					const writingPermitted = response.claims.scopes.includes(
+						ScopeType.DocWrite,
+					);
+
+					if (writingPermitted) {
+						// The only time we expect a mismatch in requested/actual is if we lack write permissions
+						// In this case we will get "read", even if we requested "write"
+						if (actualMode !== requestedMode) {
+							failConnection(
+								this.createErrorObject(
+									"connect_document_success",
+									"Connected in a different mode than was requested",
+									false,
+								),
+							);
+							return;
+						}
+					} else {
+						if (actualMode === "write") {
+							failConnection(
+								this.createErrorObject(
+									"connect_document_success",
+									"Connected in write mode without write permissions",
+									false,
+								),
+							);
+							return;
+						}
 					}
-				}
 
-				this.logger.sendTelemetryEvent(
-					{
-						eventName: "ConnectDocumentSuccess",
-						pendingClientId: response.clientId,
-					},
-					undefined,
-					LogLevel.verbose,
-				);
+					this.logger.sendTelemetryEvent(
+						{
+							eventName: "ConnectDocumentSuccess",
+							pendingClientId: response.clientId,
+						},
+						undefined,
+						LogLevel.verbose,
+					);
 
-				this.checkpointSequenceNumber = response.checkpointSequenceNumber;
+					this.checkpointSequenceNumber = response.checkpointSequenceNumber;
 
-				this.removeConnectionListeners();
-				resolve(response);
-			});
+					this.removeConnectionListeners();
+					resolve(response);
+				},
+			);
 
 			// Socket can be disconnected while waiting for Fluid protocol messages
 			// (connect_document_error / connect_document_success), as well as before DeltaManager
@@ -661,7 +713,11 @@ export class DocumentDeltaConnection
 
 			this.addTrackedListener("error", (error) => {
 				// This includes "Invalid namespace" error, which we consider critical (reconnecting will not help)
-				const err = this.createErrorObject("error", error, error !== "Invalid namespace");
+				const err = this.createErrorObject(
+					"error",
+					error,
+					error !== "Invalid namespace",
+				);
 				// Disconnect socket - required if happened before initial handshake
 				failAndCloseSocket(err);
 			});
@@ -684,7 +740,10 @@ export class DocumentDeltaConnection
 			this.socket.emit("connect_document", connectMessage);
 		});
 
-		assert(!this.disposed, 0x246 /* "checking consistency of socket & _disposed flags" */);
+		assert(
+			!this.disposed,
+			0x246 /* "checking consistency of socket & _disposed flags" */,
+		);
 	}
 
 	private addPropsToError(errorToBeNormalized: unknown) {
@@ -707,7 +766,10 @@ export class DocumentDeltaConnection
 		};
 	}
 
-	protected earlyOpHandler = (documentId: string, msgs: ISequencedDocumentMessage[]) => {
+	protected earlyOpHandler = (
+		documentId: string,
+		msgs: ISequencedDocumentMessage[],
+	) => {
 		this.queuedMessages.push(...msgs);
 	};
 
@@ -728,7 +790,10 @@ export class DocumentDeltaConnection
 		this.socket.removeListener("signal", this.earlySignalHandler);
 	}
 
-	private addConnectionListener(event: string, listener: (...args: any[]) => void) {
+	private addConnectionListener(
+		event: string,
+		listener: (...args: any[]) => void,
+	) {
 		assert(
 			!DocumentDeltaConnection.eventsAlwaysForwarded.includes(event),
 			0x247 /* "Use addTrackedListener instead" */,
@@ -738,13 +803,22 @@ export class DocumentDeltaConnection
 			0x248 /* "should not subscribe to forwarded events" */,
 		);
 		this.socket.on(event, listener);
-		assert(!this.connectionListeners.has(event), 0x20d /* "double connection listener" */);
+		assert(
+			!this.connectionListeners.has(event),
+			0x20d /* "double connection listener" */,
+		);
 		this.connectionListeners.set(event, listener);
 	}
 
-	protected addTrackedListener(event: string, listener: (...args: any[]) => void) {
+	protected addTrackedListener(
+		event: string,
+		listener: (...args: any[]) => void,
+	) {
 		this.socket.on(event, listener);
-		assert(!this.trackedListeners.has(event), 0x20e /* "double tracked listener" */);
+		assert(
+			!this.trackedListeners.has(event),
+			0x20e /* "double tracked listener" */,
+		);
 		this.trackedListeners.set(event, listener);
 	}
 
@@ -777,7 +851,8 @@ export class DocumentDeltaConnection
 			return extractLogSafeErrorProperties(error, true).message;
 		}
 		// JSON.stringify drops Error.message
-		const messagePrefix = error?.message !== undefined ? `${error.message}: ` : "";
+		const messagePrefix =
+			error?.message !== undefined ? `${error.message}: ` : "";
 
 		// Websocket errors reported by engine.io-client.
 		// They are Error objects with description containing WS error and description = "TransportError"
@@ -808,7 +883,11 @@ export class DocumentDeltaConnection
 	/**
 	 * Error raising for socket.io issues
 	 */
-	protected createErrorObject(handler: string, error?: any, canRetry = true): IAnyDriverError {
+	protected createErrorObject(
+		handler: string,
+		error?: any,
+		canRetry = true,
+	): IAnyDriverError {
 		return createGenericNetworkError(
 			`socket.io (${handler}): ${this.getErrorMessage(error)}`,
 			{ canRetry },
@@ -816,7 +895,9 @@ export class DocumentDeltaConnection
 		);
 	}
 
-	protected getAdditionalErrorProps(handler: string): DriverErrorTelemetryProps {
+	protected getAdditionalErrorProps(
+		handler: string,
+	): DriverErrorTelemetryProps {
 		return {
 			driverVersion,
 			details: JSON.stringify({

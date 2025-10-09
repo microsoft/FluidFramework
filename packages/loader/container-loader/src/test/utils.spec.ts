@@ -25,13 +25,17 @@ import {
 describe("container-loader utils", () => {
 	describe("runSingle", () => {
 		it("correctly calls internal func", async () => {
-			const wrappedFunc = runSingle(async (base: number, plus: number) => base + plus);
+			const wrappedFunc = runSingle(
+				async (base: number, plus: number) => base + plus,
+			);
 
 			assert.strictEqual(await wrappedFunc(4, 1), 5);
 		});
 
 		it("returns same promise for same args", async () => {
-			const wrappedFunc = runSingle(async (base: number, plus: number) => base + plus);
+			const wrappedFunc = runSingle(
+				async (base: number, plus: number) => base + plus,
+			);
 
 			const [p1, p2] = [wrappedFunc(4, 1), wrappedFunc(4, 1)];
 
@@ -41,7 +45,9 @@ describe("container-loader utils", () => {
 		});
 
 		it("fails for different args", async () => {
-			const wrappedFunc = runSingle(async (base: number, plus: number) => base + plus);
+			const wrappedFunc = runSingle(
+				async (base: number, plus: number) => base + plus,
+			);
 
 			const [p1, p2] = [wrappedFunc(4, 1), wrappedFunc(4, 2)];
 
@@ -154,7 +160,10 @@ describe("container-loader utils", () => {
 		};
 
 		const blobContents: Map<string, ArrayBuffer> = new Map([
-			["someKey", stringToBuffer(JSON.stringify({ some: 10, data: 20 }), "utf8")],
+			[
+				"someKey",
+				stringToBuffer(JSON.stringify({ some: 10, data: 20 }), "utf8"),
+			],
 		]);
 
 		const snapshot: ISnapshot = {

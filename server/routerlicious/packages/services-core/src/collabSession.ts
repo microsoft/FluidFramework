@@ -125,7 +125,9 @@ export interface ICollaborationSessionManager {
 	 *
 	 * @param session - Information about the session to remove, specifically the document and tenant IDs.
 	 */
-	removeSession(sessionId: Pick<ICollaborationSession, "tenantId" | "documentId">): Promise<void>;
+	removeSession(
+		sessionId: Pick<ICollaborationSession, "tenantId" | "documentId">,
+	): Promise<void>;
 	/**
 	 * Get current information about a session.
 	 *
@@ -149,7 +151,9 @@ export interface ICollaborationSessionManager {
 	 *
 	 * @param callback - Function to call for each session.
 	 */
-	iterateAllSessions<T>(callback: (session: ICollaborationSession) => Promise<T>): Promise<T[]>;
+	iterateAllSessions<T>(
+		callback: (session: ICollaborationSession) => Promise<T>,
+	): Promise<T[]>;
 }
 
 /**

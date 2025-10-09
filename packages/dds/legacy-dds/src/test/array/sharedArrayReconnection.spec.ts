@@ -43,11 +43,13 @@ describe("SharedArray", () => {
 		let remoteSharedArray: ISharedArray<number>;
 
 		beforeEach(() => {
-			containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+			containerRuntimeFactory =
+				new MockContainerRuntimeFactoryForReconnection();
 
 			// Connect the first SharedArray.
 			dataStoreRuntime.local = false;
-			containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+			containerRuntime1 =
+				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 			const services1 = {
 				deltaConnection: containerRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
@@ -56,13 +58,17 @@ describe("SharedArray", () => {
 
 			// Create and connect a second SharedArray.
 			const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-			containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+			containerRuntime2 =
+				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 			const services2 = {
 				deltaConnection: containerRuntime2.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 
-			remoteSharedArray = factory.create(dataStoreRuntime2, "remoteSharedArray");
+			remoteSharedArray = factory.create(
+				dataStoreRuntime2,
+				"remoteSharedArray",
+			);
 			remoteSharedArray.connect(services2);
 		});
 
@@ -94,7 +100,10 @@ describe("SharedArray", () => {
 			// Verify that the first and second client have the correct values and length and that they have converged.
 			actualRemoteSharedArray = [...remoteSharedArray.get()];
 			actualSharedArray = [...sharedArray.get()];
-			verifyEntries(actualRemoteSharedArray, expectedSharedArrayAfterSecondConverge);
+			verifyEntries(
+				actualRemoteSharedArray,
+				expectedSharedArrayAfterSecondConverge,
+			);
 			verifyEntries(actualSharedArray, actualRemoteSharedArray);
 		});
 
@@ -130,7 +139,10 @@ describe("SharedArray", () => {
 			// Verify that the first and second client have the correct values and length and that they have converged.
 			actualRemoteSharedArray = [...remoteSharedArray.get()];
 			actualSharedArray = [...sharedArray.get()];
-			verifyEntries(actualRemoteSharedArray, expectedSharedArrayAfterSecondConverge);
+			verifyEntries(
+				actualRemoteSharedArray,
+				expectedSharedArrayAfterSecondConverge,
+			);
 			verifyEntries(actualSharedArray, actualRemoteSharedArray);
 		});
 
@@ -367,11 +379,21 @@ describe("SharedArray", () => {
 				const secondOldIndex = sharedArray.get().length - 1;
 
 				// Prepare the expected output after we reconnect both clients.
-				const firstDeletedElement = expectedSharedArray.splice(firstOldIndex, 1);
-				const secondDeletedElement = expectedSharedArray.splice(secondOldIndex - 1, 1);
+				const firstDeletedElement = expectedSharedArray.splice(
+					firstOldIndex,
+					1,
+				);
+				const secondDeletedElement = expectedSharedArray.splice(
+					secondOldIndex - 1,
+					1,
+				);
 				assert.ok(firstDeletedElement[0]);
 				assert.ok(secondDeletedElement[0]);
-				expectedSharedArray.splice(firstNewIndex - 2, 0, firstDeletedElement[0]); // [2,3] -> [2,3,1]
+				expectedSharedArray.splice(
+					firstNewIndex - 2,
+					0,
+					firstDeletedElement[0],
+				); // [2,3] -> [2,3,1]
 				expectedSharedArray.splice(secondNewIndex, 0, secondDeletedElement[0]); // [2,3,1] -> [4,2,3,1]
 
 				// Perform the actual operation in both clients.

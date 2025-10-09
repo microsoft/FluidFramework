@@ -11,7 +11,9 @@ import { copySync, readJson } from "fs-extra/esm";
 import { BaseCommand } from "../../library/index.js";
 import { type PnpmListEntry, pnpmList } from "../../pnpm.js";
 
-export default class GenerateBundlestats extends BaseCommand<typeof GenerateBundlestats> {
+export default class GenerateBundlestats extends BaseCommand<
+	typeof GenerateBundlestats
+> {
 	static readonly description =
 		`Find all bundle analysis artifacts and copy them into a central location to upload as build artifacts for later consumption`;
 
@@ -43,11 +45,16 @@ export default class GenerateBundlestats extends BaseCommand<typeof GenerateBund
 		// Check each package location for a bundleAnalysis folder
 		// and copy it to a central location
 		let hasSmallAssetError = false;
-		const analysesDestPath = path.join(process.cwd(), "artifacts/bundleAnalysis");
+		const analysesDestPath = path.join(
+			process.cwd(),
+			"artifacts/bundleAnalysis",
+		);
 
 		for (const pkg of pkgList) {
 			if (pkg.path === undefined) {
-				this.error(`Missing path in pnpm list results for ${pkg.name}`, { exit: -1 });
+				this.error(`Missing path in pnpm list results for ${pkg.name}`, {
+					exit: -1,
+				});
 			}
 
 			const packageAnalysisPath = path.join(pkg.path, "bundleAnalysis");
@@ -57,13 +64,18 @@ export default class GenerateBundlestats extends BaseCommand<typeof GenerateBund
 				// Check if we successfully generated any assets
 				const reportPath = path.join(packageAnalysisPath, "report.json");
 				if (!existsSync(reportPath)) {
-					this.error(`${reportPath} is missing; bundle analysis may not be accurate.`);
+					this.error(
+						`${reportPath} is missing; bundle analysis may not be accurate.`,
+					);
 				}
 
 				/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 				// eslint-disable-next-line no-await-in-loop, @typescript-eslint/no-unsafe-assignment
 				const report = await readJson(reportPath);
-				if (report.assets?.length === undefined || report.assets?.length === 0) {
+				if (
+					report.assets?.length === undefined ||
+					report.assets?.length === 0
+				) {
 					this.error(`${reportPath} doesn't have any assets info`);
 				}
 
@@ -74,7 +86,9 @@ export default class GenerateBundlestats extends BaseCommand<typeof GenerateBund
 					}
 
 					if (asset.size < flags.smallestAssetSize) {
-						this.warning(`${pkg.name}: asset ${asset.name} (${asset.size}) is too small`);
+						this.warning(
+							`${pkg.name}: asset ${asset.name} (${asset.size}) is too small`,
+						);
 						hasSmallAssetError = true;
 					}
 				}

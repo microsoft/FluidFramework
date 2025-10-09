@@ -16,7 +16,8 @@ export const rnd = new Random(Math.trunc(Math.random() * 0x1_00_00_00_00));
  */
 export function randomColor(): string {
 	// eslint-disable-next-line no-bitwise, unicorn/consistent-function-scoping, unicorn/prefer-math-trunc
-	const channel = (): string => ((32 + rnd.float64() * 196) | 0).toString(16).padStart(2, "0");
+	const channel = (): string =>
+		((32 + rnd.float64() * 196) | 0).toString(16).padStart(2, "0");
 	return `#${channel()}${channel()}${channel()}`;
 }
 

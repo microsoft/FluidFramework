@@ -26,14 +26,17 @@ import type {
 // The final schema object will later be used as an argument to the schematize call.  AB#5967
 const builder = new SchemaFactory("inventory app");
 
-export class InventoryItem extends builder.object("Contoso:InventoryItem-1.0.0", {
-	// Some unique identifier appropriate for the inventory scenario (e.g. a UPC or model number)
-	id: builder.string,
-	// A user-friendly name
-	name: builder.string,
-	// The number in stock
-	quantity: builder.number,
-}) {}
+export class InventoryItem extends builder.object(
+	"Contoso:InventoryItem-1.0.0",
+	{
+		// Some unique identifier appropriate for the inventory scenario (e.g. a UPC or model number)
+		id: builder.string,
+		// A user-friendly name
+		name: builder.string,
+		// The number in stock
+		quantity: builder.number,
+	},
+) {}
 const InventoryItemList = builder.array(InventoryItem);
 type InventoryItemList = NodeFromSchema<typeof InventoryItemList>;
 
@@ -41,7 +44,9 @@ export class InventorySchema extends builder.object("Contoso:Inventory-1.0.0", {
 	inventoryItemList: InventoryItemList,
 }) {}
 
-export const treeConfiguration = new TreeViewConfiguration({ schema: InventorySchema });
+export const treeConfiguration = new TreeViewConfiguration({
+	schema: InventorySchema,
+});
 
 const sharedTreeKey = "sharedTree";
 
@@ -76,9 +81,13 @@ class NewTreeInventoryItem
 		// Note that this is not a normal Node EventEmitter and functions differently.  There is no "off" method,
 		// but instead "on" returns a callback to unregister the event.  AB#5973
 		// Tree.on() is the way to register events on the inventory item (the first argument).  AB#6051
-		this._unregisterChangingEvent = Tree.on(this._inventoryItemNode, "nodeChanged", () => {
-			this.emit("quantityChanged");
-		});
+		this._unregisterChangingEvent = Tree.on(
+			this._inventoryItemNode,
+			"nodeChanged",
+			() => {
+				this.emit("quantityChanged");
+			},
+		);
 	}
 	public readonly deleteItem = () => {
 		// TODO: Maybe expose a public dispose() method for disposing the NewTreeInventoryItem without
@@ -144,7 +153,9 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 
 	protected async hasInitialized(): Promise<void> {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		this._sharedTree = await this.root.get<IFluidHandle<ITree>>(sharedTreeKey)!.get();
+		this._sharedTree = await this.root
+			.get<IFluidHandle<ITree>>(sharedTreeKey)!
+			.get();
 		const view = this.sharedTree.viewWith(treeConfiguration);
 		this._inventoryItemList = view.root.inventoryItemList;
 		// "treeChanged" will fire for any change of any type anywhere in the subtree. In this application we expect
@@ -166,9 +177,11 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 			}
 
 			// Search for deleted inventory items to update our collection
-			const currentInventoryIds = this.inventoryItemList.map((inventoryItemNode) => {
-				return inventoryItemNode.id;
-			});
+			const currentInventoryIds = this.inventoryItemList.map(
+				(inventoryItemNode) => {
+					return inventoryItemNode.id;
+				},
+			);
 			for (const trackedItemId of this._inventoryItems.keys()) {
 				// If the tree doesn't contain the id of an item we're tracking, then it must have
 				// been deleted in this change.
@@ -181,7 +194,8 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 
 		// Last step of initializing is to populate our map of InventoryItems.
 		for (const inventoryItemNode of this.inventoryItemList) {
-			const inventoryItem = this.makeInventoryItemFromInventoryItemNode(inventoryItemNode);
+			const inventoryItem =
+				this.makeInventoryItemFromInventoryItemNode(inventoryItemNode);
 			this._inventoryItems.set(inventoryItemNode.id, inventoryItem);
 		}
 	}
@@ -192,9 +206,14 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 		const removeItemFromTree = () => {
 			// We pass in the delete capability as a callback to withold this.inventory access from the
 			// inventory items.  AB#6015
-			this.inventoryItemList.removeAt(this.inventoryItemList.indexOf(inventoryItemNode));
+			this.inventoryItemList.removeAt(
+				this.inventoryItemList.indexOf(inventoryItemNode),
+			);
 		};
-		const inventoryItem = new NewTreeInventoryItem(inventoryItemNode, removeItemFromTree);
+		const inventoryItem = new NewTreeInventoryItem(
+			inventoryItemNode,
+			removeItemFromTree,
+		);
 		return inventoryItem;
 	}
 }
@@ -204,9 +223,10 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
  * and the constructor it will call.  The third argument lists the other data structures it will utilize.  In this
  * scenario, the fourth argument is not used.
  */
-export const NewTreeInventoryListFactory = new DataObjectFactory<NewTreeInventoryList>(
-	"new-tree-inventory-list",
-	NewTreeInventoryList,
-	[SharedTree.getFactory()],
-	{},
-);
+export const NewTreeInventoryListFactory =
+	new DataObjectFactory<NewTreeInventoryList>(
+		"new-tree-inventory-list",
+		NewTreeInventoryList,
+		[SharedTree.getFactory()],
+		{},
+	);

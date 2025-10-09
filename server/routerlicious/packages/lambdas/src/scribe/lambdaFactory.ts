@@ -33,7 +33,12 @@ import {
 	type Lumber,
 } from "@fluidframework/server-services-telemetry";
 
-import { NoOpLambda, createSessionMetric, isDocumentValid, isDocumentSessionValid } from "../utils";
+import {
+	NoOpLambda,
+	createSessionMetric,
+	isDocumentValid,
+	isDocumentSessionValid,
+} from "../utils";
 
 import { CheckpointManager } from "./checkpointManager";
 import type { ILatestSummaryState } from "./interfaces";
@@ -237,17 +242,12 @@ export class ScribeLambdaFactory
 			Lumberjack.info(message, lumberProperties);
 			if (latestSummary.fromSummary) {
 				if (!latestSummaryCheckpoint) {
-					const error = new Error(
-						"Attempted to load from non-existent summary checkpoint.",
-					);
+					const error = new Error("Attempted to load from non-existent summary checkpoint.");
 					await failCreation(error);
 					throw error;
 				}
 				if (isScribeCheckpointQuorumScrubbed(latestSummaryCheckpoint)) {
-					Lumberjack.error(
-						"Quorum from summary is scrubbed. Continuing.",
-						lumberProperties,
-					);
+					Lumberjack.error("Quorum from summary is scrubbed. Continuing.", lumberProperties);
 				}
 				lastCheckpoint = latestSummaryCheckpoint;
 				opMessages = latestSummary.messages;
@@ -301,10 +301,7 @@ export class ScribeLambdaFactory
 						`Current message @${message.sequenceNumber}.` +
 						`Expected message @${expectedSequenceNumber}`,
 				);
-				scribeSessionMetric?.error(
-					"Invalid message sequence from checkpoint/summary",
-					error,
-				);
+				scribeSessionMetric?.error("Invalid message sequence from checkpoint/summary", error);
 
 				throw error;
 			}

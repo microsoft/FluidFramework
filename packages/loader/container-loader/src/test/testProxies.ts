@@ -28,7 +28,9 @@ export function createTestDocumentServiceFactoryProxy(
 	resolvedUrl: IResolvedUrl,
 	compatibilityDetails?: ILayerCompatDetails,
 ): IDocumentServiceFactory {
-	return failSometimeProxy<IDocumentServiceFactory & IProvideLayerCompatDetails>({
+	return failSometimeProxy<
+		IDocumentServiceFactory & IProvideLayerCompatDetails
+	>({
 		createContainer: async () =>
 			failSometimeProxy<IDocumentService>({
 				policies: {},
@@ -60,22 +62,26 @@ export function createTestCodeLoaderProxy(props?: {
 							},
 							async instantiateRuntime(context, existing): Promise<IRuntime> {
 								if (existing === false && props?.createDetachedBlob === true) {
-									await context.storage.createBlob(stringToBuffer("whatever", "utf8"));
+									await context.storage.createBlob(
+										stringToBuffer("whatever", "utf8"),
+									);
 								}
 
-								return failSometimeProxy<IRuntime & IProvideLayerCompatDetails>({
-									createSummary: () => ({
-										tree: {},
-										type: SummaryType.Tree,
-									}),
-									setAttachState: () => {},
-									getPendingLocalState: () => ({
-										pending: [],
-									}),
-									disposed: false,
-									setConnectionState: () => {},
-									ILayerCompatDetails: props?.layerCompatDetails,
-								});
+								return failSometimeProxy<IRuntime & IProvideLayerCompatDetails>(
+									{
+										createSummary: () => ({
+											tree: {},
+											type: SummaryType.Tree,
+										}),
+										setAttachState: () => {},
+										getPendingLocalState: () => ({
+											pending: [],
+										}),
+										disposed: false,
+										setConnectionState: () => {},
+										ILayerCompatDetails: props?.layerCompatDetails,
+									},
+								);
 							},
 						},
 					},

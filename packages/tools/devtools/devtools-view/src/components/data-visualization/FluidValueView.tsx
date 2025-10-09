@@ -16,9 +16,10 @@ import { TreeItem } from "./TreeItem.js";
 /**
  * {@link ValueView} input props.
  */
-export type FluidValueViewProps = DataVisualizationTreeProps<FluidObjectValueNode> &
-	HasContainerKey &
-	HasContainerKey;
+export type FluidValueViewProps =
+	DataVisualizationTreeProps<FluidObjectValueNode> &
+		HasContainerKey &
+		HasContainerKey;
 
 /**
  * Render data with type VisualNodeKind.FluidValueNode and render its children.

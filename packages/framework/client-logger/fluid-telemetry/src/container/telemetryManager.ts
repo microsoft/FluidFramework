@@ -38,17 +38,24 @@ export class ContainerTelemetryManager {
 	 */
 	private setupEventHandlers(): void {
 		this.container.on(IFluidContainerSystemEventNames.CONNECTED, () =>
-			this.handleContainerSystemEvent(IFluidContainerSystemEventNames.CONNECTED),
+			this.handleContainerSystemEvent(
+				IFluidContainerSystemEventNames.CONNECTED,
+			),
 		);
 		this.container.on(IFluidContainerSystemEventNames.DISCONNECTED, () =>
-			this.handleContainerSystemEvent(IFluidContainerSystemEventNames.DISCONNECTED),
+			this.handleContainerSystemEvent(
+				IFluidContainerSystemEventNames.DISCONNECTED,
+			),
 		);
 		this.container.on(
 			IFluidContainerSystemEventNames.DISPOSED,
 			(error?: ICriticalContainerError) =>
-				this.handleContainerSystemEvent(IFluidContainerSystemEventNames.DISPOSED, {
-					error,
-				}),
+				this.handleContainerSystemEvent(
+					IFluidContainerSystemEventNames.DISPOSED,
+					{
+						error,
+					},
+				),
 		);
 	}
 

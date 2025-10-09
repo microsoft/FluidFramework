@@ -36,7 +36,9 @@ describe("Pong", () => {
 				logger: provider.logger,
 				urlResolver: provider.urlResolver,
 				documentServiceFactory: provider.documentServiceFactory,
-				codeLoader: new LocalCodeLoader([[codeDetails, new TestFluidObjectFactory([])]]),
+				codeLoader: new LocalCodeLoader([
+					[codeDetails, new TestFluidObjectFactory([])],
+				]),
 			});
 			loaderContainerTracker.add(loader);
 		});

@@ -19,7 +19,10 @@ const createLocalOT = (id: string) => {
 	return factory.create(new MockFluidDataStoreRuntime(), id) as SharedJson1;
 };
 
-function createConnectedOT(id: string, runtimeFactory: MockContainerRuntimeFactory) {
+function createConnectedOT(
+	id: string,
+	runtimeFactory: MockContainerRuntimeFactory,
+) {
 	// Create and connect a second SharedCell.
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	runtimeFactory.createContainerRuntime(dataStoreRuntime);
@@ -28,7 +31,11 @@ function createConnectedOT(id: string, runtimeFactory: MockContainerRuntimeFacto
 		objectStorage: new MockStorage(),
 	};
 
-	const ot = new SharedJson1(id, dataStoreRuntime, (Json1Factory as any).Attributes);
+	const ot = new SharedJson1(
+		id,
+		dataStoreRuntime,
+		(Json1Factory as any).Attributes,
+	);
 	ot.connect(services);
 	return ot;
 }

@@ -36,7 +36,8 @@ function validateDataStoreStateInSummary(
 	dataStoreId: string,
 	expectHandle: boolean,
 ) {
-	const channelsTree = (summaryTree.tree[channelsTreeName] as ISummaryTree).tree;
+	const channelsTree = (summaryTree.tree[channelsTreeName] as ISummaryTree)
+		.tree;
 	const dataStoreSummaryObject = channelsTree[dataStoreId];
 
 	if (!expectHandle) {
@@ -74,7 +75,9 @@ function validateDDSStateInSummary(
 	ddsId: string,
 	expectHandle: boolean,
 ) {
-	const dataStoreChannelsTree = (summaryTree.tree[channelsTreeName] as ISummaryTree).tree;
+	const dataStoreChannelsTree = (
+		summaryTree.tree[channelsTreeName] as ISummaryTree
+	).tree;
 	const dataStoreSummaryTree = dataStoreChannelsTree[dataStoreId];
 	assert.strictEqual(
 		dataStoreSummaryTree.type,
@@ -82,7 +85,9 @@ function validateDDSStateInSummary(
 		"Data store summary should be a tree",
 	);
 
-	const ddsChannelsTree = (dataStoreSummaryTree.tree[channelsTreeName] as ISummaryTree).tree;
+	const ddsChannelsTree = (
+		dataStoreSummaryTree.tree[channelsTreeName] as ISummaryTree
+	).tree;
 	const ddsSummaryObject = ddsChannelsTree[ddsId];
 
 	if (!expectHandle) {
@@ -102,7 +107,11 @@ function validateDDSStateInSummary(
 		SummaryType.Handle,
 		"DDS summary should be a handle",
 	);
-	assert.strictEqual(ddsSummaryObject.handle, expectedHandleId, "DDS handle is incorrect");
+	assert.strictEqual(
+		ddsSummaryObject.handle,
+		expectedHandleId,
+		"DDS handle is incorrect",
+	);
 }
 
 /**
@@ -134,8 +143,10 @@ describeCompat(
 		});
 
 		it("can do incremental data store summary", async function () {
-			const dataStore2 = await containerRuntime.createDataStore(TestDataObjectType);
-			const dataObject2 = await getDataStoreEntryPointBackCompat<ITestDataObject>(dataStore2);
+			const dataStore2 =
+				await containerRuntime.createDataStore(TestDataObjectType);
+			const dataObject2 =
+				await getDataStoreEntryPointBackCompat<ITestDataObject>(dataStore2);
 			dataObject1._root.set("dataObject2", dataObject2.handle);
 
 			await provider.ensureSynchronized();

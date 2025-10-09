@@ -12,7 +12,10 @@ import React from "react";
 import { MessageRelayContext } from "../MessageRelayContext.js";
 import { OpLatencyView } from "../components/index.js";
 
-import { assertNoAccessibilityViolations, MockMessageRelay } from "./utils/index.js";
+import {
+	assertNoAccessibilityViolations,
+	MockMessageRelay,
+} from "./utils/index.js";
 
 // ResizeObserver is a hook used by Recharts that needs to be mocked for unit tests to function.
 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
@@ -60,7 +63,9 @@ describe("OpLatencyView component tests", () => {
 		);
 
 		// Check that outermost component container exists
-		const opLatencyMainContainerElement = await screen.findByTestId("test-op-latency-view");
+		const opLatencyMainContainerElement = await screen.findByTestId(
+			"test-op-latency-view",
+		);
 		expect(opLatencyMainContainerElement).not.toBeNull();
 		expect(opLatencyMainContainerElement).toBeDefined();
 
@@ -71,9 +76,9 @@ describe("OpLatencyView component tests", () => {
 		expect(opLatencyHeaderElement.tagName).toMatch(/h[1-6]/i);
 
 		// Confirm the rechart graph was rendered
-		const dynamicComposedChartElement = within(opLatencyMainContainerElement).findByTestId(
-			"test-dynamic-composed-chart",
-		);
+		const dynamicComposedChartElement = within(
+			opLatencyMainContainerElement,
+		).findByTestId("test-dynamic-composed-chart");
 		expect(dynamicComposedChartElement).not.toBeNull();
 		expect(dynamicComposedChartElement).toBeDefined();
 
@@ -96,7 +101,9 @@ describe("OpLatencyView component tests", () => {
 		expect(opLatencyHeaderElement).toBeDefined();
 
 		// Confirm helper text header exists
-		const instructionsText = await screen.findByText(`Enable Unsampled Telemetry`);
+		const instructionsText = await screen.findByText(
+			`Enable Unsampled Telemetry`,
+		);
 		expect(instructionsText).not.toBeNull();
 		expect(instructionsText).toBeDefined();
 	});
@@ -122,11 +129,15 @@ describe("OpLatencyView Accessibility Check", () => {
 		const user = userEvent.setup();
 
 		await user.tab();
-		const opsLink = screen.getByRole("link", { name: /Fluid Framework Ops Documentation/ });
+		const opsLink = screen.getByRole("link", {
+			name: /Fluid Framework Ops Documentation/,
+		});
 		expect(opsLink).toHaveFocus();
 
 		await user.tab();
-		const disableTelemetryButton = screen.getByText("Disable Unsampled Telemetry");
+		const disableTelemetryButton = screen.getByText(
+			"Disable Unsampled Telemetry",
+		);
 		expect(disableTelemetryButton).toHaveFocus();
 	});
 	it("Can tab/arrow navigate through OpLatencyView with telemetry disabled", async () => {

@@ -41,8 +41,9 @@ export interface IEnvelope {
  * Represents ISignalMessage with its type.
  * @legacy @beta
  */
-export interface IInboundSignalMessage<TMessage extends TypedMessage = TypedMessage>
-	extends ISignalMessage<TMessage> {
+export interface IInboundSignalMessage<
+	TMessage extends TypedMessage = TypedMessage,
+> extends ISignalMessage<TMessage> {
 	readonly type: TMessage["type"];
 }
 
@@ -173,13 +174,18 @@ export interface IRuntimeStorageService {
 	 * it is unused in the DataStore layer.
 	 */
 	// eslint-disable-next-line @rushstack/no-new-null
-	getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
+	getSnapshotTree(
+		version?: IVersion,
+		scenarioName?: string,
+	): Promise<ISnapshotTree | null>;
 
 	/**
 	 * @deprecated - This will be removed in a future release. No replacement is planned as
 	 * it is unused in the DataStore layer.
 	 */
-	getSnapshot?(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot>;
+	getSnapshot?(
+		snapshotFetchOptions?: ISnapshotFetchOptions,
+	): Promise<ISnapshot>;
 
 	/**
 	 * @deprecated - This will be removed in a future release. No replacement is planned as
@@ -204,7 +210,10 @@ export interface IRuntimeStorageService {
 	 * @deprecated - This will be removed in a future release. No replacement is planned as
 	 * it is unused in the DataStore layer.
 	 */
-	uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
+	uploadSummaryWithContext(
+		summary: ISummaryTree,
+		context: ISummaryContext,
+	): Promise<string>;
 
 	/**
 	 * @deprecated - This will be removed in a future release. No replacement is planned as

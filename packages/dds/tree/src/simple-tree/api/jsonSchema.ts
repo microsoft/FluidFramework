@@ -75,7 +75,8 @@ export interface JsonNodeSchemaBase<
  * @sealed
  * @alpha
  */
-export interface JsonObjectNodeSchema extends JsonNodeSchemaBase<NodeKind.Object, "object"> {
+export interface JsonObjectNodeSchema
+	extends JsonNodeSchemaBase<NodeKind.Object, "object"> {
 	/**
 	 * Object fields.
 	 * @remarks Required fields should have a corresponding entry in {@link JsonObjectNodeSchema.required}.
@@ -107,7 +108,8 @@ export interface JsonObjectNodeSchema extends JsonNodeSchemaBase<NodeKind.Object
  * @sealed
  * @alpha
  */
-export interface JsonArrayNodeSchema extends JsonNodeSchemaBase<NodeKind.Array, "array"> {
+export interface JsonArrayNodeSchema
+	extends JsonNodeSchemaBase<NodeKind.Array, "array"> {
 	/**
 	 * The kinds of items allowed under the array.
 	 *
@@ -142,7 +144,8 @@ export interface JsonStringKeyPatternProperties {
  * @sealed
  * @alpha
  */
-export interface JsonMapNodeSchema extends JsonNodeSchemaBase<NodeKind.Map, "object"> {
+export interface JsonMapNodeSchema
+	extends JsonNodeSchemaBase<NodeKind.Map, "object"> {
 	/**
 	 * Used to control the types of properties that can appear in the "object" representation of the map.
 	 * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-patternproperties}.
@@ -158,7 +161,8 @@ export interface JsonMapNodeSchema extends JsonNodeSchemaBase<NodeKind.Map, "obj
  * @sealed
  * @alpha
  */
-export interface JsonRecordNodeSchema extends JsonNodeSchemaBase<NodeKind.Record, "object"> {
+export interface JsonRecordNodeSchema
+	extends JsonNodeSchemaBase<NodeKind.Record, "object"> {
 	/**
 	 * Used to control the types of properties that can appear in the "object" representation of the record.
 	 * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-patternproperties}.

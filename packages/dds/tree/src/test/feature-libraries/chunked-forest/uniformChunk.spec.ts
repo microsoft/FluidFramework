@@ -26,10 +26,19 @@ import { testSpecializedFieldCursor } from "../../cursorTestSuite.js";
 // eslint-disable-next-line import/no-internal-modules
 import { sum } from "../../domains/json/benchmarks.js";
 
-import { emptyShape, polygonTree, testData, xField, yField } from "./uniformChunkTestData.js";
+import {
+	emptyShape,
+	polygonTree,
+	testData,
+	xField,
+	yField,
+} from "./uniformChunkTestData.js";
 import { brand } from "../../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { numberSchema, stringSchema } from "../../../simple-tree/leafNodeSchema.js";
+import {
+	numberSchema,
+	stringSchema,
+} from "../../../simple-tree/leafNodeSchema.js";
 import { validateUsageError } from "../../utils.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
 
@@ -67,7 +76,12 @@ describe("uniformChunk", () => {
 			});
 		}
 		it("shape with maybeCompressedStringAsNumber flag set to true fails if it is not a string leaf node.", () => {
-			const validShapeWithFlag = new TreeShape(brand(stringSchema.identifier), true, [], true);
+			const validShapeWithFlag = new TreeShape(
+				brand(stringSchema.identifier),
+				true,
+				[],
+				true,
+			);
 			// Test that a non string leaf node shape with maybeCompressedStringAsNumber set to true fails.
 			assert.throws(
 				() => new TreeShape(brand(numberSchema.identifier), true, [], true),
@@ -156,7 +170,11 @@ describe("uniformChunk", () => {
 					let x = 0;
 					let y = 0;
 					cursor.enterField(EmptyKey);
-					for (let inNodes = cursor.firstNode(); inNodes; inNodes = cursor.nextNode()) {
+					for (
+						let inNodes = cursor.firstNode();
+						inNodes;
+						inNodes = cursor.nextNode()
+					) {
 						cursor.enterField(xField);
 						cursor.enterNode(0);
 						x += cursor.value as number;

@@ -5,6 +5,6 @@
 	"compilerOptions": {
 		"outDir": "../../dist/test",
 		"module": "CommonJS",
-		"moduleResolution": "Bundler",
-	},
+		"moduleResolution": "Bundler"
+	}
 }

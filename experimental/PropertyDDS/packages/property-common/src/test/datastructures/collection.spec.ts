@@ -452,7 +452,9 @@ describe("collection", function () {
 		// when we bulkAdd
 		collection.onAdd = function (key, item) {
 			callbackCounter++;
-			expect(Object.prototype.hasOwnProperty.call(objectToAdd, key)).to.equal(true);
+			expect(Object.prototype.hasOwnProperty.call(objectToAdd, key)).to.equal(
+				true,
+			);
 		};
 
 		collection.bulkAdd(objectToAdd);
@@ -489,7 +491,9 @@ describe("collection", function () {
 		// when we bulkRemove
 		collection.onRemove = function (key, item) {
 			callbackCounter++;
-			expect(Object.prototype.hasOwnProperty.call(objectToAdd, key)).to.equal(true);
+			expect(Object.prototype.hasOwnProperty.call(objectToAdd, key)).to.equal(
+				true,
+			);
 		};
 
 		collection.bulkAdd(objectToAdd);

@@ -66,10 +66,16 @@ function testObjectLike(testCases: TestCaseErased[]) {
 		describe("satisfies 'deepEqual'", () => {
 			unsafeMapErased(
 				testCases,
-				<const TSchema extends ImplicitFieldSchema>(item: TestCase<TSchema>) => {
+				<const TSchema extends ImplicitFieldSchema>(
+					item: TestCase<TSchema>,
+				) => {
 					it(item.name ?? pretty(item.initialTree).toString(), () => {
 						const proxy = hydrate(item.schema, item.initialTree);
-						assert.deepEqual(proxy, item.initialTree, "Proxy must satisfy 'deepEqual'.");
+						assert.deepEqual(
+							proxy,
+							item.initialTree,
+							"Proxy must satisfy 'deepEqual'.",
+						);
 					});
 				},
 			);
@@ -93,7 +99,10 @@ function testObjectLike(testCases: TestCaseErased[]) {
 					describe("instanceof Object", () => {
 						it(`${pretty(initialTree)} -> true`, () => {
 							const root = hydrate(schema, initialTree);
-							assert(root instanceof Object, "object must be instanceof Object");
+							assert(
+								root instanceof Object,
+								"object must be instanceof Object",
+							);
 						});
 					});
 
@@ -106,7 +115,10 @@ function testObjectLike(testCases: TestCaseErased[]) {
 							)}`, () => {
 								const root = hydrate(schema, initialTree);
 								assert.deepEqual(
-									Object.getOwnPropertyDescriptor(findObjectPrototype(root), key),
+									Object.getOwnPropertyDescriptor(
+										findObjectPrototype(root),
+										key,
+									),
 									descriptor,
 									`Proxy must expose Object.prototype.${key}`,
 								);
@@ -119,7 +131,10 @@ function testObjectLike(testCases: TestCaseErased[]) {
 							const root = hydrate(schema, initialTree);
 							const asObject = root as object;
 							// eslint-disable-next-line no-prototype-builtins -- compatibility test
-							assert.equal(asObject.isPrototypeOf(Object.create(asObject)), true);
+							assert.equal(
+								asObject.isPrototypeOf(Object.create(asObject)),
+								true,
+							);
 						});
 
 						it(`${pretty(initialTree)}.isPrototypeOf(root) -> false`, () => {
@@ -132,7 +147,10 @@ function testObjectLike(testCases: TestCaseErased[]) {
 
 					describe(`${pretty(initialTree)}.propertyIsEnumerable`, () => {
 						for (const key of Object.getOwnPropertyNames(initialTree)) {
-							const expected = Object.prototype.propertyIsEnumerable.call(initialTree, key);
+							const expected = Object.prototype.propertyIsEnumerable.call(
+								initialTree,
+								key,
+							);
 
 							it(`${key} -> ${expected}`, () => {
 								const root = hydrate(schema, initialTree);
@@ -211,7 +229,9 @@ function testObjectLike(testCases: TestCaseErased[]) {
 			test1((subject) => {
 				const all = Object.getOwnPropertyDescriptors(subject);
 				return Object.fromEntries(
-					Object.entries(all).filter(([key, descriptor]) => descriptor.enumerable),
+					Object.entries(all).filter(
+						([key, descriptor]) => descriptor.enumerable,
+					),
 				);
 			});
 		});
@@ -331,7 +351,9 @@ const tcs: TestCaseErased[] = [
 			const schemaFactoryInner = new SchemaFactory("testE");
 			return schemaFactoryInner.object("object", {
 				foo: schemaFactoryInner.optional(schemaFactoryInner.number),
-				bar: schemaFactoryInner.optional(schemaFactoryInner.string, { key: "stable-bar" }),
+				bar: schemaFactoryInner.optional(schemaFactoryInner.string, {
+					key: "stable-bar",
+				}),
 				baz: schemaFactoryInner.required(
 					[schemaFactoryInner.boolean, schemaFactoryInner.null],
 					{ key: "stable-baz" },

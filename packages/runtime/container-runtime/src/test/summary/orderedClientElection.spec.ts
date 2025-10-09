@@ -31,11 +31,17 @@ describe("Ordered Client Collection", () => {
 		},
 	};
 
-	function addClient(clientId: string, sequenceNumber: number, interactive = true) {
+	function addClient(
+		clientId: string,
+		sequenceNumber: number,
+		interactive = true,
+	) {
 		if (sequenceNumber > currentSequenceNumber) {
 			currentSequenceNumber = sequenceNumber;
 		}
-		const details: ISequencedClient["client"]["details"] = { capabilities: { interactive } };
+		const details: ISequencedClient["client"]["details"] = {
+			capabilities: { interactive },
+		};
 		const c: Partial<ISequencedClient["client"]> = { details };
 		const client: ISequencedClient = {
 			client: c as ISequencedClient["client"],
@@ -53,7 +59,11 @@ describe("Ordered Client Collection", () => {
 		for (const [id, seq, int] of initialClients) {
 			addClient(id, seq, int);
 		}
-		orderedClients = new OrderedClientCollection(mockLogger, testDeltaManager, testQuorum);
+		orderedClients = new OrderedClientCollection(
+			mockLogger,
+			testDeltaManager,
+			testQuorum,
+		);
 		return orderedClients;
 	}
 	function assertCollectionState(expectedCount: number, message = "") {
@@ -238,7 +248,9 @@ describe("Ordered Client Collection", () => {
 				const clientId = "x";
 				createOrderedClientElection(undefined, emptySerializedElection);
 				assertElectionState(0, 0, undefined, 101);
-				mockLogger.matchEvents([{ eventName: "InitialElectedClientNotFound", clientId }]);
+				mockLogger.matchEvents([
+					{ eventName: "InitialElectedClientNotFound", clientId },
+				]);
 				assertOrderedEligibleClientIds();
 			});
 
@@ -250,7 +262,11 @@ describe("Ordered Client Collection", () => {
 						["s", 5, false],
 						["c", 9, true],
 					],
-					{ electedClientId: "b", electedParentId: "b", electionSequenceNumber: 4321 },
+					{
+						electedClientId: "b",
+						electedParentId: "b",
+						electionSequenceNumber: 4321,
+					},
 				);
 				assertElectionState(4, 3, "b", 4321);
 				assertOrderedEligibleClientIds("a", "b", "c");
@@ -265,7 +281,11 @@ describe("Ordered Client Collection", () => {
 						["s2", 7, false],
 						["c", 9, true],
 					],
-					{ electedClientId: "s", electedParentId: "s", electionSequenceNumber: 4321 },
+					{
+						electedClientId: "s",
+						electedParentId: "s",
+						electionSequenceNumber: 4321,
+					},
 				);
 				assertElectionState(5, 3, "c", 4321);
 				mockLogger.matchEvents([
@@ -286,7 +306,11 @@ describe("Ordered Client Collection", () => {
 						["s", 5, false],
 						["s2", 7, false],
 					],
-					{ electedClientId: "s", electedParentId: "s", electionSequenceNumber: 4321 },
+					{
+						electedClientId: "s",
+						electedParentId: "s",
+						electionSequenceNumber: 4321,
+					},
 				);
 				assertElectionState(4, 2, undefined, 4321);
 				mockLogger.matchEvents([
@@ -307,10 +331,16 @@ describe("Ordered Client Collection", () => {
 						["s", 5, false],
 						["c", 9, true],
 					],
-					{ electedClientId: "x", electedParentId: "x", electionSequenceNumber: 4321 },
+					{
+						electedClientId: "x",
+						electedParentId: "x",
+						electionSequenceNumber: 4321,
+					},
 				);
 				assertElectionState(4, 3, undefined, 4321);
-				mockLogger.matchEvents([{ eventName: "InitialElectedClientNotFound", clientId: "x" }]);
+				mockLogger.matchEvents([
+					{ eventName: "InitialElectedClientNotFound", clientId: "x" },
+				]);
 				assertOrderedEligibleClientIds("a", "b", "c");
 			});
 		});
@@ -473,7 +503,11 @@ describe("Ordered Client Collection", () => {
 						["s", 5, false],
 						["c", 9, true],
 					],
-					{ electedClientId: "s", electedParentId: "s", electionSequenceNumber: 4321 },
+					{
+						electedClientId: "s",
+						electedParentId: "s",
+						electionSequenceNumber: 4321,
+					},
 				);
 				removeClient("s", 1111);
 				assertElectionState(3, 3, "c", 4321);
@@ -492,7 +526,11 @@ describe("Ordered Client Collection", () => {
 						["b", 5, true],
 						["c", 9, true],
 					],
-					{ electedClientId: "s", electedParentId: "s", electionSequenceNumber: 4321 },
+					{
+						electedClientId: "s",
+						electedParentId: "s",
+						electionSequenceNumber: 4321,
+					},
 				);
 				assertElectionState(4, 3, "b", 4321);
 				resetElectedClient(7777);

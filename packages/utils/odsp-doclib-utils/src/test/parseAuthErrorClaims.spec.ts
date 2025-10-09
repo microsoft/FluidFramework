@@ -59,7 +59,9 @@ describe("parseAuthErrorClaims", () => {
 	it("returns decoded claims value", () => {
 		const headers = {
 			get: (name: string) =>
-				name.toLowerCase() === "www-authenticate" ? validWwwAuthenticateHeader : undefined,
+				name.toLowerCase() === "www-authenticate"
+					? validWwwAuthenticateHeader
+					: undefined,
 		} as unknown as Headers;
 		const result = parseAuthErrorClaims(headers);
 		assert.strictEqual(

@@ -3,7 +3,7 @@
 	"compilerOptions": {
 		"outDir": "./lib",
 		"types": ["react", "react-dom"],
-		"exactOptionalPropertyTypes": false,
+		"exactOptionalPropertyTypes": false
 	},
-	"include": ["src/**/*", "tests/**/*"],
+	"include": ["src/**/*", "tests/**/*"]
 }

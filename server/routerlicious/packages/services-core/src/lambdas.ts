@@ -217,7 +217,7 @@ export function extractBoxcar(message: IQueuedMessage): IBoxcarMessage {
 		const contents =
 			boxcarMessage.contents.length > 0 && typeof boxcarMessage.contents[0] === "string"
 				? // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-				  boxcarMessage.contents.map((content: any) => JSON.parse(content))
+					boxcarMessage.contents.map((content: any) => JSON.parse(content))
 				: boxcarMessage.contents;
 
 		return {

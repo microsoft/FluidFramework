@@ -40,5 +40,8 @@ export async function createDocumentRouter<TConfig>(
 	// Factory used to create document lambda processors
 	const factory = await plugin.create(config, customizations);
 
-	return new DocumentLambdaFactory<TConfig>(factory, DefaultServiceConfiguration.documentLambda);
+	return new DocumentLambdaFactory<TConfig>(
+		factory,
+		DefaultServiceConfiguration.documentLambda,
+	);
 }

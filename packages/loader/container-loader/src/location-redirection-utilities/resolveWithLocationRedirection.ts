@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { IRequest, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type {
+	IRequest,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 import {
 	type ILocationRedirectionError,
 	type IUrlResolver,
@@ -45,7 +48,10 @@ export async function resolveWithLocationRedirectionHandling<T>(
 	logger?: ITelemetryBaseLogger,
 ): Promise<T> {
 	let req: IRequest = request;
-	const childLogger = createChildLogger({ logger, namespace: "LocationRedirection" });
+	const childLogger = createChildLogger({
+		logger,
+		namespace: "LocationRedirection",
+	});
 	for (;;) {
 		try {
 			return await api(req);
@@ -58,7 +64,11 @@ export async function resolveWithLocationRedirectionHandling<T>(
 			// Generate the new request with new location details from the resolved url. For datastore/relative path,
 			// we don't need to pass "/" as host could have asked for a specific data store. So driver need to
 			// extract it from the resolved url.
-			const absoluteUrl = await urlResolver.getAbsoluteUrl(resolvedUrl, "", undefined);
+			const absoluteUrl = await urlResolver.getAbsoluteUrl(
+				resolvedUrl,
+				"",
+				undefined,
+			);
 			req = { url: absoluteUrl, headers: req.headers };
 		}
 	}

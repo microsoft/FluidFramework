@@ -171,7 +171,10 @@ describe("Property Template Wrapper", function () {
 
 			var badTemplate = {
 				typeid: "SimpleTest:IndirectBadTemplate-1.0.0",
-				inherits: ["SimpleTest:BadParent1-1.0.0", "SimpleTest:BadParent2-1.0.0"],
+				inherits: [
+					"SimpleTest:BadParent1-1.0.0",
+					"SimpleTest:BadParent2-1.0.0",
+				],
 				properties: [
 					{
 						id: "props",

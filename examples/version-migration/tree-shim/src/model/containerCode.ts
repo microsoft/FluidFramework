@@ -32,14 +32,19 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
 	 */
 	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-		const inventoryList = await runtime.createDataStore(InventoryListFactory.type);
+		const inventoryList = await runtime.createDataStore(
+			InventoryListFactory.type,
+		);
 		await inventoryList.trySetAlias(inventoryListId);
 	}
 
 	/**
 	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
 	 */
-	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
+	protected async createModel(
+		runtime: IContainerRuntime,
+		container: IContainer,
+	) {
 		const inventoryList = await getDataStoreEntryPoint<InventoryList>(
 			runtime,
 			inventoryListId,

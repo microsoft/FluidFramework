@@ -8,7 +8,10 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import { ValueType, IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+import {
+	ValueType,
+	IFluidSerializer,
+} from "@fluidframework/shared-object-base/internal";
 
 import { makeSerializable } from "./IntervalCollectionValues.js";
 import {
@@ -23,7 +26,9 @@ import {
 } from "./intervalCollectionMapInterfaces.js";
 
 function isMapOperation(op: unknown): op is IMapOperation {
-	return typeof op === "object" && op !== null && "type" in op && op.type === "act";
+	return (
+		typeof op === "object" && op !== null && "type" in op && op.type === "act"
+	);
 }
 
 /**
@@ -54,7 +59,10 @@ export interface IMapDataObjectSerializable {
 }
 
 export interface IntervalCollectionMapEvents extends IEvent {
-	(event: "createIntervalCollection", listener: (key: string, local: boolean) => void): void;
+	(
+		event: "createIntervalCollection",
+		listener: (key: string, local: boolean) => void,
+	): void;
 }
 
 /**
@@ -77,7 +85,8 @@ export class IntervalCollectionMap {
 	 */
 	private readonly data = new Map<string, IntervalCollection>();
 
-	private readonly eventEmitter = new TypedEventEmitter<IntervalCollectionMapEvents>();
+	private readonly eventEmitter =
+		new TypedEventEmitter<IntervalCollectionMapEvents>();
 	public get events(): IEventProvider<IntervalCollectionMapEvents> {
 		return this.eventEmitter;
 	}
@@ -93,7 +102,10 @@ export class IntervalCollectionMap {
 	constructor(
 		private readonly serializer: IFluidSerializer,
 		private readonly handle: IFluidHandle,
-		private readonly submitMessage: (op: IMapOperation, localOpMetadata: unknown) => void,
+		private readonly submitMessage: (
+			op: IMapOperation,
+			localOpMetadata: unknown,
+		) => void,
 		private readonly options?: Partial<SequenceOptions>,
 	) {}
 
@@ -152,7 +164,9 @@ export class IntervalCollectionMap {
 	 * @param serialized - A JSON string containing serialized map data
 	 */
 	public populate(serialized: string): void {
-		const parsed = this.serializer.parse(serialized) as IMapDataObjectSerializable;
+		const parsed = this.serializer.parse(
+			serialized,
+		) as IMapDataObjectSerializable;
 
 		for (const [key, serializable] of Object.entries(parsed)) {
 			// Back-compat: legacy documents may have handles to an intervalCollection map kernel.
@@ -168,7 +182,9 @@ export class IntervalCollectionMap {
 			// "intervalCollections/". This would burden users trying to iterate the collection and
 			// access its value, as well as those trying to match a create message to its underlying
 			// collection. See https://github.com/microsoft/FluidFramework/issues/10557 for more context.
-			const normalizedKey = key.startsWith("intervalCollections/") ? key.substring(20) : key;
+			const normalizedKey = key.startsWith("intervalCollections/")
+				? key.substring(20)
+				: key;
 
 			assert(
 				serializable.type !== ValueType[ValueType.Plain] &&
@@ -196,7 +212,10 @@ export class IntervalCollectionMap {
 		if (isMapOperation(content)) {
 			const { value, key } = content;
 			const localValue = this.data.get(key);
-			assert(localValue !== undefined, 0x3f8 /* Local value expected on resubmission */);
+			assert(
+				localValue !== undefined,
+				0x3f8 /* Local value expected on resubmission */,
+			);
 			localValue.resubmitMessage(value, localOpMetadata, squash);
 			return true;
 		}
@@ -207,7 +226,10 @@ export class IntervalCollectionMap {
 		if (isMapOperation(content)) {
 			const localValue = this.data.get(content.key);
 
-			assert(localValue !== undefined, 0xb7e /* Local value expected on rollback */);
+			assert(
+				localValue !== undefined,
+				0xb7e /* Local value expected on rollback */,
+			);
 
 			localValue.rollback(content.value, localOpMetadata);
 
@@ -265,7 +287,9 @@ export class IntervalCollectionMap {
 	private createCore(
 		key: string,
 		local: boolean,
-		serializedIntervals?: ISerializedIntervalCollectionV1 | ISerializedIntervalCollectionV2,
+		serializedIntervals?:
+			| ISerializedIntervalCollectionV1
+			| ISerializedIntervalCollectionV2,
 	): IntervalCollection {
 		const localValue = new IntervalCollection(
 			(op, md) => {
@@ -284,7 +308,12 @@ export class IntervalCollectionMap {
 			this.options,
 		);
 		this.data.set(key, localValue);
-		this.eventEmitter.emit("createIntervalCollection", key, local, this.eventEmitter);
+		this.eventEmitter.emit(
+			"createIntervalCollection",
+			key,
+			local,
+			this.eventEmitter,
+		);
 		return localValue;
 	}
 }

@@ -33,7 +33,9 @@ export class CompositeEntryPoint {
 	/**
 	 * Add a piece that will appear on the entry point.
 	 */
-	public readonly addEntryPointPiece = (entryPointPiece: IEntryPointPiece): void => {
+	public readonly addEntryPointPiece = (
+		entryPointPiece: IEntryPointPiece,
+	): void => {
 		// TODO: Consider validating no conflicts (e.g. name already exists, registry entry collision)
 		this._entryPointPieces.push(entryPointPiece);
 	};
@@ -52,7 +54,9 @@ export class CompositeEntryPoint {
 	/**
 	 * Run all of the onCreate scripts of all pieces.
 	 */
-	public readonly onCreate = async (runtime: IContainerRuntime): Promise<void> => {
+	public readonly onCreate = async (
+		runtime: IContainerRuntime,
+	): Promise<void> => {
 		for (const entryPointPiece of this._entryPointPieces) {
 			await entryPointPiece.onCreate(runtime);
 		}
@@ -61,7 +65,9 @@ export class CompositeEntryPoint {
 	/**
 	 * Run all of the onLoad scripts of all pieces.
 	 */
-	public readonly onLoad = async (runtime: IContainerRuntime): Promise<void> => {
+	public readonly onLoad = async (
+		runtime: IContainerRuntime,
+	): Promise<void> => {
 		for (const entryPointPiece of this._entryPointPieces) {
 			await entryPointPiece.onLoad(runtime);
 		}
@@ -75,7 +81,8 @@ export class CompositeEntryPoint {
 	): Promise<Record<string, FluidObject>> => {
 		const entryPoint: Record<string, FluidObject> = {};
 		for (const entryPointPiece of this._entryPointPieces) {
-			entryPoint[entryPointPiece.name] = await entryPointPiece.createPiece(runtime);
+			entryPoint[entryPointPiece.name] =
+				await entryPointPiece.createPiece(runtime);
 		}
 		return entryPoint;
 	};

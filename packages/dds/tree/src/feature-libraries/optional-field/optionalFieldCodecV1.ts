@@ -19,8 +19,15 @@ import {
 	type FieldChangeEncodingContext,
 } from "../modular-schema/index.js";
 
-import { EncodedOptionalChangeset, EncodedRegisterId } from "./optionalFieldChangeFormatV1.js";
-import type { Move, OptionalChangeset, RegisterId } from "./optionalFieldChangeTypes.js";
+import {
+	EncodedOptionalChangeset,
+	EncodedRegisterId,
+} from "./optionalFieldChangeFormatV1.js";
+import type {
+	Move,
+	OptionalChangeset,
+	RegisterId,
+} from "./optionalFieldChangeTypes.js";
 
 function makeRegisterIdCodec(
 	revisionTagCodec: IJsonCodec<
@@ -29,7 +36,12 @@ function makeRegisterIdCodec(
 		EncodedRevisionTag,
 		ChangeEncodingContext
 	>,
-): IJsonCodec<RegisterId, EncodedRegisterId, EncodedRegisterId, ChangeEncodingContext> {
+): IJsonCodec<
+	RegisterId,
+	EncodedRegisterId,
+	EncodedRegisterId,
+	ChangeEncodingContext
+> {
 	const changeAtomIdCodec = makeChangeAtomIdCodec(revisionTagCodec);
 	return {
 		encode: (registerId: RegisterId, context: ChangeEncodingContext) => {
@@ -64,14 +76,20 @@ export function makeOptionalFieldCodec(
 	const registerIdCodec = makeRegisterIdCodec(revisionTagCodec);
 
 	return {
-		encode: (change: OptionalChangeset, context: FieldChangeEncodingContext) => {
+		encode: (
+			change: OptionalChangeset,
+			context: FieldChangeEncodingContext,
+		) => {
 			const encoded: EncodedOptionalChangeset<TAnySchema> = {};
 			encoded.m = [];
 
 			if (change.valueReplace !== undefined) {
 				if (change.valueReplace.src !== undefined) {
 					encoded.m.push([
-						registerIdCodec.encode(change.valueReplace.src, context.baseContext),
+						registerIdCodec.encode(
+							change.valueReplace.src,
+							context.baseContext,
+						),
 						registerIdCodec.encode("self", context.baseContext),
 						true,
 					]);
@@ -80,11 +98,17 @@ export function makeOptionalFieldCodec(
 				// When the source of the replace is "self", the destination is a reserved ID that will only be used if
 				// the tree in the field is concurrently replaced.
 				if (change.valueReplace.isEmpty || change.valueReplace.src === "self") {
-					encoded.d = registerIdCodec.encode(change.valueReplace.dst, context.baseContext);
+					encoded.d = registerIdCodec.encode(
+						change.valueReplace.dst,
+						context.baseContext,
+					);
 				} else {
 					encoded.m.push([
 						registerIdCodec.encode("self", context.baseContext),
-						registerIdCodec.encode(change.valueReplace.dst, context.baseContext),
+						registerIdCodec.encode(
+							change.valueReplace.dst,
+							context.baseContext,
+						),
 						false,
 					]);
 				}
@@ -130,11 +154,17 @@ export function makeOptionalFieldCodec(
 					const dst = registerIdCodec.decode(encodedDst, context.baseContext);
 					if (src === "self" || dst === "self") {
 						if (src === "self") {
-							assert(detached === undefined, 0x8d0 /* Multiple detached nodes */);
+							assert(
+								detached === undefined,
+								0x8d0 /* Multiple detached nodes */,
+							);
 							detached = dst;
 						}
 						if (dst === "self") {
-							assert(attached === undefined, 0x8d1 /* Multiple attached nodes */);
+							assert(
+								attached === undefined,
+								0x8d1 /* Multiple attached nodes */,
+							);
 							attached = src;
 						}
 					} else {
@@ -157,7 +187,10 @@ export function makeOptionalFieldCodec(
 						encoded.d !== undefined,
 						0x8d2 /* Invalid change: pin must have a reserved detach ID */,
 					);
-					const reserved = registerIdCodec.decode(encoded.d, context.baseContext);
+					const reserved = registerIdCodec.decode(
+						encoded.d,
+						context.baseContext,
+					);
 					assert(reserved !== "self", 0x8d3 /* Invalid reserved detach ID */);
 					decoded.valueReplace = { isEmpty: false, dst: reserved, src: "self" };
 				} else {

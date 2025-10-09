@@ -7,7 +7,10 @@ import { fork, type ChildProcess } from "node:child_process";
 
 import { ScopeType } from "@fluidframework/driver-definitions/legacy";
 import type { AttendeeId } from "@fluidframework/presence/beta";
-import { timeoutAwait, timeoutPromise } from "@fluidframework/test-utils/internal";
+import {
+	timeoutAwait,
+	timeoutPromise,
+} from "@fluidframework/test-utils/internal";
 
 import type {
 	ConnectCommand,
@@ -78,7 +81,9 @@ export async function forkChildProcesses(
 					resolve();
 				} else {
 					reject(
-						new Error(`Unexpected (non-"ack") message from child${i}: ${JSON.stringify(msg)}`),
+						new Error(
+							`Unexpected (non-"ack") message from child${i}: ${JSON.stringify(msg)}`,
+						),
 					);
 				}
 			});
@@ -131,7 +136,10 @@ interface CreatorAttendeeIdAndAttendeePromises {
  */
 export async function connectChildProcesses(
 	childProcesses: ChildProcess[],
-	{ writeClients, readyTimeoutMs }: { writeClients: number; readyTimeoutMs: number },
+	{
+		writeClients,
+		readyTimeoutMs,
+	}: { writeClients: number; readyTimeoutMs: number },
 ): Promise<CreatorAttendeeIdAndAttendeePromises> {
 	if (childProcesses.length === 0) {
 		throw new Error("No child processes provided for connection.");
@@ -148,7 +156,11 @@ export async function connectChildProcesses(
 					containerId: msg.containerId,
 				});
 			} else {
-				reject(new Error(`Non-connected message from child0: ${JSON.stringify(msg)}`));
+				reject(
+					new Error(
+						`Non-connected message from child0: ${JSON.stringify(msg)}`,
+					),
+				);
 			}
 		});
 	});
@@ -158,7 +170,9 @@ export async function connectChildProcesses(
 		// is no document id (container id).
 		const connectContainerCreator = composeConnectMessage(
 			0,
-			writeClients > 0 ? [ScopeType.DocWrite, ScopeType.DocRead] : [ScopeType.DocRead],
+			writeClients > 0
+				? [ScopeType.DocWrite, ScopeType.DocRead]
+				: [ScopeType.DocRead],
 		);
 		firstChild.send(connectContainerCreator);
 	}
@@ -178,7 +192,9 @@ export async function connectChildProcesses(
 		}
 		const message = composeConnectMessage(
 			index,
-			index < writeClients ? [ScopeType.DocWrite, ScopeType.DocRead] : [ScopeType.DocRead],
+			index < writeClients
+				? [ScopeType.DocWrite, ScopeType.DocRead]
+				: [ScopeType.DocRead],
 		);
 		message.containerId = containerId;
 		attendeeIdPromises.push(
@@ -197,7 +213,8 @@ export async function connectChildProcesses(
 	return { containerCreatorAttendeeId, attendeeIdPromises };
 }
 
-interface ConnectAndListenForAttendees extends CreatorAttendeeIdAndAttendeePromises {
+interface ConnectAndListenForAttendees
+	extends CreatorAttendeeIdAndAttendeePromises {
 	attendeeCountRequiredPromises: Promise<void>[];
 }
 
@@ -300,12 +317,16 @@ export async function connectAndWaitForAttendees(
 		childConnectTimeoutMs,
 	});
 
-	const attendeeConnectedPromise = connectAndListenResult.attendeeCountRequiredPromises[0];
+	const attendeeConnectedPromise =
+		connectAndListenResult.attendeeCountRequiredPromises[0];
 
-	await timeoutAwait(Promise.race([attendeeConnectedPromise, earlyExitPromise]), {
-		durationMs: allAttendeesJoinedTimeoutMs,
-		errorMsg: "child 0 did not receive all 'attendeeConnected' events",
-	});
+	await timeoutAwait(
+		Promise.race([attendeeConnectedPromise, earlyExitPromise]),
+		{
+			durationMs: allAttendeesJoinedTimeoutMs,
+			errorMsg: "child 0 did not receive all 'attendeeConnected' events",
+		},
+	);
 	return connectAndListenResult;
 }
 
@@ -349,7 +370,9 @@ export async function registerWorkspaceOnChildren(
 }
 
 // Basic command type guards
-function isLatestValueGetResponse(msg: MessageFromChild): msg is LatestValueGetResponseEvent {
+function isLatestValueGetResponse(
+	msg: MessageFromChild,
+): msg is LatestValueGetResponseEvent {
 	return msg.event === "latestValueGetResponse";
 }
 function isLatestMapValueGetResponse(
@@ -357,10 +380,14 @@ function isLatestMapValueGetResponse(
 ): msg is LatestMapValueGetResponseEvent {
 	return msg.event === "latestMapValueGetResponse";
 }
-function isLatestValueUpdated(msg: MessageFromChild): msg is LatestValueUpdatedEvent {
+function isLatestValueUpdated(
+	msg: MessageFromChild,
+): msg is LatestValueUpdatedEvent {
 	return msg.event === "latestValueUpdated";
 }
-function isLatestMapValueUpdated(msg: MessageFromChild): msg is LatestMapValueUpdatedEvent {
+function isLatestMapValueUpdated(
+	msg: MessageFromChild,
+): msg is LatestMapValueUpdatedEvent {
 	return msg.event === "latestMapValueUpdated";
 }
 
@@ -373,7 +400,8 @@ export async function waitForEvent(
 	options: { timeoutMs: number; errorMsg?: string },
 	predicate?: (msg: MessageFromChild) => boolean,
 ): Promise<MessageFromChild> {
-	const { timeoutMs, errorMsg = `did not receive '${eventType}' event` } = options;
+	const { timeoutMs, errorMsg = `did not receive '${eventType}' event` } =
+		options;
 
 	let handler: ((msg: MessageFromChild) => void) | undefined;
 
@@ -445,13 +473,18 @@ export async function waitForLatestValueUpdates(
 			filterMsg,
 		),
 	);
-	const responses = await Promise.race([Promise.all(updatePromises), earlyExitPromise]);
+	const responses = await Promise.race([
+		Promise.all(updatePromises),
+		earlyExitPromise,
+	]);
 	const latestValueUpdatedEvents: LatestValueUpdatedEvent[] = [];
 	for (const response of responses) {
 		if (isLatestValueUpdated(response)) {
 			latestValueUpdatedEvents.push(response);
 		} else {
-			throw new TypeError(`Expected LatestValueUpdated but got ${response.event}`);
+			throw new TypeError(
+				`Expected LatestValueUpdated but got ${response.event}`,
+			);
 		}
 	}
 	return latestValueUpdatedEvents;
@@ -478,7 +511,11 @@ export async function waitForLatestMapValueUpdates(
 	const { fromAttendeeId, expectedValue } = options;
 
 	const filterMsg = (msg: MessageFromChild): boolean => {
-		if (!isLatestMapValueUpdated(msg) || msg.workspaceId !== workspaceId || msg.key !== key) {
+		if (
+			!isLatestMapValueUpdated(msg) ||
+			msg.workspaceId !== workspaceId ||
+			msg.key !== key
+		) {
 			return false;
 		}
 		if (fromAttendeeId !== undefined && msg.attendeeId !== fromAttendeeId) {
@@ -505,13 +542,18 @@ export async function waitForLatestMapValueUpdates(
 			filterMsg,
 		),
 	);
-	const responses = await Promise.race([Promise.all(updatePromises), earlyExitPromise]);
+	const responses = await Promise.race([
+		Promise.all(updatePromises),
+		earlyExitPromise,
+	]);
 	const latestMapValueUpdatedEvents: LatestMapValueUpdatedEvent[] = [];
 	for (const response of responses) {
 		if (isLatestMapValueUpdated(response)) {
 			latestMapValueUpdatedEvents.push(response);
 		} else {
-			throw new TypeError(`Expected LatestMapValueUpdated but got ${response.event}`);
+			throw new TypeError(
+				`Expected LatestMapValueUpdated but got ${response.event}`,
+			);
 		}
 	}
 	return latestMapValueUpdatedEvents;
@@ -530,15 +572,23 @@ export async function getLatestValueResponses(
 		waitForEvent(
 			child,
 			"latestValueGetResponse",
-			{ timeoutMs, errorMsg: `Client ${index} did not respond with latest value` },
+			{
+				timeoutMs,
+				errorMsg: `Client ${index} did not respond with latest value`,
+			},
 			(msg: MessageFromChild) =>
 				isLatestValueGetResponse(msg) && msg.workspaceId === workspaceId,
 		),
 	);
-	const responses = await Promise.race([Promise.all(responsePromises), earlyExitPromise]);
+	const responses = await Promise.race([
+		Promise.all(responsePromises),
+		earlyExitPromise,
+	]);
 	return responses.map((response) => {
 		if (!isLatestValueGetResponse(response)) {
-			throw new TypeError(`Expected LatestValueGetResponse but got ${response.event}`);
+			throw new TypeError(
+				`Expected LatestValueGetResponse but got ${response.event}`,
+			);
 		}
 		return response;
 	});
@@ -558,15 +608,25 @@ export async function getLatestMapValueResponses(
 		waitForEvent(
 			child,
 			"latestMapValueGetResponse",
-			{ timeoutMs, errorMsg: `Client ${index} did not respond with latest map value` },
+			{
+				timeoutMs,
+				errorMsg: `Client ${index} did not respond with latest map value`,
+			},
 			(msg: MessageFromChild) =>
-				isLatestMapValueGetResponse(msg) && msg.workspaceId === workspaceId && msg.key === key,
+				isLatestMapValueGetResponse(msg) &&
+				msg.workspaceId === workspaceId &&
+				msg.key === key,
 		),
 	);
-	const responses = await Promise.race([Promise.all(responsePromises), earlyExitPromise]);
+	const responses = await Promise.race([
+		Promise.all(responsePromises),
+		earlyExitPromise,
+	]);
 	return responses.map((response) => {
 		if (!isLatestMapValueGetResponse(response)) {
-			throw new TypeError(`Expected LatestMapValueGetResponse but got ${response.event}`);
+			throw new TypeError(
+				`Expected LatestMapValueGetResponse but got ${response.event}`,
+			);
 		}
 		return response;
 	});

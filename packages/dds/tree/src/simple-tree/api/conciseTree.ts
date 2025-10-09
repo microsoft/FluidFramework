@@ -63,7 +63,13 @@ function conciseFromCursorInner(
 	storedSchema: ReadonlyMap<string, TreeNodeStoredSchema>,
 	schema: ReadonlyMap<string, TreeNodeSchema>,
 ): ConciseTree {
-	return customFromCursor(reader, options, storedSchema, schema, conciseFromCursorInner);
+	return customFromCursor(
+		reader,
+		options,
+		storedSchema,
+		schema,
+		conciseFromCursorInner,
+	);
 }
 
 /**

@@ -8,7 +8,10 @@
  * https://microsoft.sharepoint-df.com/:w:/t/ODSPFileStore/ER06b64K_XdDjEyAKl-UT60BJiId39SCVkYSyo_2pvH9gQ?e=KYQ0c5
  */
 
-import { Uint8ArrayToArrayBuffer, Uint8ArrayToString } from "@fluid-internal/client-utils";
+import {
+	Uint8ArrayToArrayBuffer,
+	Uint8ArrayToString,
+} from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import { NonRetryableError } from "@fluidframework/driver-utils/internal";
 import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
@@ -59,16 +62,16 @@ export enum MarkerCodes {
  * Control codes used by tree serialization / decentralization code. They mark the start of sections.
  */
 export enum MarkerCodesStart {
-	"list" = 49,
-	"set" = 51,
+	list = 49,
+	set = 51,
 }
 
 /**
  * Control codes used by tree serialization / decentralization code. They mark the end of sections.
  */
 export enum MarkerCodesEnd {
-	"list" = 50,
-	"set" = 52,
+	list = 50,
+	set = 52,
 }
 
 /**
@@ -108,7 +111,10 @@ export const codeToBytesMap = {
 	36: 8,
 };
 
-export function getValueSafely(map: { [index: number]: number }, key: number): number {
+export function getValueSafely(
+	map: { [index: number]: number },
+	key: number,
+): number {
 	const val = map[key];
 	assert(val !== undefined, 0x287 /* key must exist in the map */);
 	return val;
@@ -123,7 +129,9 @@ export function getNodeProps(node: NodeCore): Record<string, NodeTypes> {
 	return res;
 }
 
-export function iteratePairs<T>(it: IterableIterator<T>): IterableIterator<[T, T]> {
+export function iteratePairs<T>(
+	it: IterableIterator<T>,
+): IterableIterator<[T, T]> {
 	const res: IterableIterator<[T, T]> = {
 		next: () => {
 			const a = it.next();
@@ -235,19 +243,35 @@ export class BlobShallowCopy extends BlobCore {
 	}
 }
 
-export const addStringProperty = (node: NodeCore, a: string, b: string): void => {
+export const addStringProperty = (
+	node: NodeCore,
+	a: string,
+	b: string,
+): void => {
 	node.addDictionaryString(a);
 	node.addString(b);
 };
-export const addDictionaryStringProperty = (node: NodeCore, a: string, b: string): void => {
+export const addDictionaryStringProperty = (
+	node: NodeCore,
+	a: string,
+	b: string,
+): void => {
 	node.addDictionaryString(a);
 	node.addString(b);
 };
-export const addNumberProperty = (node: NodeCore, a: string, b: number): void => {
+export const addNumberProperty = (
+	node: NodeCore,
+	a: string,
+	b: number,
+): void => {
 	node.addDictionaryString(a);
 	node.addNumber(b);
 };
-export const addBoolProperty = (node: NodeCore, a: string, b: boolean): void => {
+export const addBoolProperty = (
+	node: NodeCore,
+	a: string,
+	b: boolean,
+): void => {
 	node.addDictionaryString(a);
 	node.addBool(b);
 };
@@ -258,7 +282,8 @@ export interface IStringElement {
 	_stringElement: true;
 }
 
-export interface IStringElementInternal extends Omit<IStringElement, "content"> {
+export interface IStringElementInternal
+	extends Omit<IStringElement, "content"> {
 	content?: string;
 	startPos: number;
 	endPos: number;
@@ -365,7 +390,10 @@ export class NodeCore {
 	}
 
 	public addNumber(payload: number | undefined): void {
-		assert(Number.isInteger(payload), 0x231 /* "Number should be an integer" */);
+		assert(
+			Number.isInteger(payload),
+			0x231 /* "Number should be an integer" */,
+		);
 		assert(
 			payload !== undefined && payload >= 0,
 			0x232 /* "Payload should not be negative" */,
@@ -440,7 +468,9 @@ export class NodeCore {
 			switch (code) {
 				case MarkerCodesStart.list:
 				case MarkerCodesStart.set: {
-					const childValue = new NodeCore(code === MarkerCodesStart.set ? "set" : "list");
+					const childValue = new NodeCore(
+						code === MarkerCodesStart.set ? "set" : "list",
+					);
 					children.push(childValue);
 					stack.push(children);
 					children = childValue.children;
@@ -449,7 +479,11 @@ export class NodeCore {
 				case MarkerCodes.ConstStringDeclare:
 				case MarkerCodes.ConstStringDeclareBig: {
 					const stringId = buffer.read(getValueSafely(codeToBytesMap, code));
-					const constString = NodeCore.readString(buffer, code, true /* dictionary */);
+					const constString = NodeCore.readString(
+						buffer,
+						code,
+						true /* dictionary */,
+					);
 					stringsToResolve.push(constString);
 					dictionary[stringId] = constString;
 					continue;
@@ -477,7 +511,9 @@ export class NodeCore {
 				case MarkerCodes.BinarySingle16:
 				case MarkerCodes.BinarySingle32:
 				case MarkerCodes.BinarySingle64: {
-					children.push(BlobShallowCopy.read(buffer, getValueSafely(codeToBytesMap, code)));
+					children.push(
+						BlobShallowCopy.read(buffer, getValueSafely(codeToBytesMap, code)),
+					);
 					continue;
 				}
 				// If integer is 0.
@@ -524,7 +560,10 @@ export class NodeCore {
 		}
 
 		// This also ensures that stack.length === 0.
-		assert(children === this.children, 0x3e7 /* Unpaired start/end list/set markers! */);
+		assert(
+			children === this.children,
+			0x3e7 /* Unpaired start/end list/set markers! */,
+		);
 
 		return stringsToResolve;
 	}
@@ -557,7 +596,9 @@ export class NodeCore {
 		}
 		assert(length === stringBuffer.length, 0x418 /* properly encoded */);
 
-		const result = Uint8ArrayToString(stringBuffer, "utf8").split(String.fromCodePoint(0));
+		const result = Uint8ArrayToString(stringBuffer, "utf8").split(
+			String.fromCodePoint(0),
+		);
 		if (result.length === stringsToResolve.length + 1) {
 			// All is good, we expect all the cases to get here
 			for (let i = 0; i < stringsToResolve.length; i++) {
@@ -569,7 +610,8 @@ export class NodeCore {
 			logger.sendErrorEvent({ eventName: "StringParsingError" });
 			for (const el of stringsToResolve) {
 				assert(
-					el.content === Uint8ArrayToString(input.subarray(el.startPos, el.endPos), "utf8"),
+					el.content ===
+						Uint8ArrayToString(input.subarray(el.startPos, el.endPos), "utf8"),
 					0x3ea /* test */,
 				);
 			}
@@ -644,7 +686,10 @@ export function assertNumberInstance(
 	throwBufferParseException(node, "Number", message);
 }
 
-export function assertBoolInstance(node: NodeTypes, message: string): asserts node is boolean {
+export function assertBoolInstance(
+	node: NodeTypes,
+	message: string,
+): asserts node is boolean {
 	if (typeof node === "boolean") {
 		return;
 	}
@@ -682,4 +727,10 @@ function getNodeType(value: NodeTypes): NodeType {
 	return "UnknownType";
 }
 
-type NodeType = "Number" | "BlobCore" | "NodeCore" | "Boolean" | "UnknownType" | "String";
+type NodeType =
+	| "Number"
+	| "BlobCore"
+	| "NodeCore"
+	| "Boolean"
+	| "UnknownType"
+	| "String";

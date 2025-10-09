@@ -66,7 +66,10 @@ import {
  */
 const currentWrittenVersion = 2;
 
-function rangeFinalizationError(expectedStart: number, actualStart: number): LoggingError {
+function rangeFinalizationError(
+	expectedStart: number,
+	actualStart: number,
+): LoggingError {
 	return new LoggingError("Ranges finalized out of order", {
 		expectedStart,
 		actualStart,
@@ -117,7 +120,9 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	// The number of eager final IDs generated since the last telemetry was sent.
 	private telemetryEagerFinalIdCount = 0;
 	// The ongoing ghost session, if one exists.
-	private ongoingGhostSession?: { cluster?: IdCluster; ghostSessionId: SessionId } | undefined;
+	private ongoingGhostSession?:
+		| { cluster?: IdCluster; ghostSessionId: SessionId }
+		| undefined;
 
 	// #endregion
 
@@ -127,7 +132,9 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	) {
 		if (typeof localSessionIdOrDeserialized === "string") {
 			this.localSessionId = localSessionIdOrDeserialized;
-			this.localSession = this.sessions.getOrCreate(localSessionIdOrDeserialized);
+			this.localSession = this.sessions.getOrCreate(
+				localSessionIdOrDeserialized,
+			);
 		} else {
 			// Deserialize case
 			this.sessions = localSessionIdOrDeserialized;
@@ -170,7 +177,8 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			// In this case, it is safe to return the final ID immediately. This is guaranteed to be safe because
 			// any op that the local session sends that contains one of those final IDs are guaranteed to arrive to
 			// collaborators *after* the one containing the creation range.
-			const clusterOffset = this.localGenCount - genCountFromLocalId(lastCluster.baseLocalId);
+			const clusterOffset =
+				this.localGenCount - genCountFromLocalId(lastCluster.baseLocalId);
 			if (lastCluster.capacity > clusterOffset) {
 				this.telemetryEagerFinalIdCount++;
 				// Space in the cluster: eager final
@@ -195,14 +203,20 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	 * @param ghostSessionId - The session ID to start the ghost session with.
 	 */
 	public startGhostSession(ghostSessionId: SessionId): void {
-		assert(!this.ongoingGhostSession, 0x8fe /* Ghost session already in progress. */);
+		assert(
+			!this.ongoingGhostSession,
+			0x8fe /* Ghost session already in progress. */,
+		);
 		this.ongoingGhostSession = { ghostSessionId };
 	}
 
 	/**
 	 * {@inheritdoc IIdCompressorCore.beginGhostSession}
 	 */
-	public beginGhostSession(ghostSessionId: SessionId, ghostSessionCallback: () => void): void {
+	public beginGhostSession(
+		ghostSessionId: SessionId,
+		ghostSessionCallback: () => void,
+	): void {
 		this.startGhostSession(ghostSessionId);
 		try {
 			ghostSessionCallback();
@@ -252,7 +266,8 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			count = this.localGenCount;
 		} else {
 			firstGenCount = genCountFromLocalId(
-				(lastLocalCluster.baseLocalId - lastLocalCluster.count) as LocalCompressedId,
+				(lastLocalCluster.baseLocalId -
+					lastLocalCluster.count) as LocalCompressedId,
 			);
 			count = this.localGenCount - firstGenCount + 1;
 		}
@@ -267,7 +282,10 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			ids: {
 				count,
 				firstGenCount,
-				localIdRanges: this.normalizer.getRangesBetween(firstGenCount, this.localGenCount),
+				localIdRanges: this.normalizer.getRangesBetween(
+					firstGenCount,
+					this.localGenCount,
+				),
 				requestedClusterSize: this.nextRequestedClusterSize,
 			},
 			sessionId: this.localSessionId,
@@ -286,7 +304,10 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		}
 		const { count, requestedClusterSize } = range.ids;
 		assert(count > 0, 0x755 /* Malformed ID Range. */);
-		assert(requestedClusterSize > 0, 0x876 /* Clusters must have a positive capacity. */);
+		assert(
+			requestedClusterSize > 0,
+			0x876 /* Clusters must have a positive capacity. */,
+		);
 		assert(
 			requestedClusterSize <= IdCompressor.maxClusterSize,
 			0x877 /* Clusters must not exceed max cluster size. */,
@@ -381,7 +402,10 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			this.telemetryLocalIdCount = 0;
 		}
 
-		assert(!session.isEmpty(), 0x757 /* Empty sessions should not be created. */);
+		assert(
+			!session.isEmpty(),
+			0x757 /* Empty sessions should not be created. */,
+		);
 	}
 
 	private addEmptyCluster(session: Session, capacity: number): IdCluster {
@@ -422,7 +446,8 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		originSessionId: SessionId,
 	): SessionSpaceCompressedId {
 		if (isFinalId(id)) {
-			const containingCluster = this.localSession.getClusterByAllocatedFinal(id);
+			const containingCluster =
+				this.localSession.getClusterByAllocatedFinal(id);
 			if (containingCluster === undefined) {
 				// Does not exist in local cluster chain
 				if (id >= this.finalSpace.getFinalizedIdLimit()) {
@@ -453,9 +478,14 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 				// LocalId from a remote session
 				const remoteSession = this.sessions.get(originSessionId);
 				if (remoteSession === undefined) {
-					throw new Error("No IDs have ever been finalized by the supplied session.");
+					throw new Error(
+						"No IDs have ever been finalized by the supplied session.",
+					);
 				}
-				const correspondingFinal = remoteSession.tryConvertToFinal(localToNormalize, false);
+				const correspondingFinal = remoteSession.tryConvertToFinal(
+					localToNormalize,
+					false,
+				);
 				if (correspondingFinal === undefined) {
 					throw new Error("Unknown op space ID.");
 				}
@@ -466,24 +496,35 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 
 	public decompress(id: SessionSpaceCompressedId): StableId {
 		if (isFinalId(id)) {
-			const containingCluster = Session.getContainingCluster(id, this.finalSpace.clusters);
+			const containingCluster = Session.getContainingCluster(
+				id,
+				this.finalSpace.clusters,
+			);
 			if (containingCluster === undefined) {
 				throw new Error("Unknown ID");
 			}
 			const alignedLocal = getAlignedLocal(containingCluster, id);
 			const alignedGenCount = genCountFromLocalId(alignedLocal);
-			const lastFinalizedGenCount = genCountFromLocalId(lastFinalizedLocal(containingCluster));
+			const lastFinalizedGenCount = genCountFromLocalId(
+				lastFinalizedLocal(containingCluster),
+			);
 			if (alignedGenCount > lastFinalizedGenCount) {
 				// should be an eager final id generated by the local session
 				if (containingCluster.session === this.localSession) {
-					assert(!this.normalizer.contains(alignedLocal), 0x759 /* Normalizer out of sync. */);
+					assert(
+						!this.normalizer.contains(alignedLocal),
+						0x759 /* Normalizer out of sync. */,
+					);
 				} else {
 					throw new Error("Unknown ID");
 				}
 			}
 
 			return stableIdFromNumericUuid(
-				offsetNumericUuid(containingCluster.session.sessionUuid, alignedGenCount - 1),
+				offsetNumericUuid(
+					containingCluster.session.sessionUuid,
+					alignedGenCount - 1,
+				),
 			);
 		} else {
 			const localToDecompress = id as unknown as LocalCompressedId;
@@ -507,11 +548,16 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		return recompressed;
 	}
 
-	public tryRecompress(uncompressed: StableId): SessionSpaceCompressedId | undefined {
+	public tryRecompress(
+		uncompressed: StableId,
+	): SessionSpaceCompressedId | undefined {
 		const match = this.sessions.getContainingCluster(uncompressed);
 		if (match === undefined) {
 			const numericUncompressed = numericUuidFromStableId(uncompressed);
-			const offset = subtractNumericUuids(numericUncompressed, this.localSession.sessionUuid);
+			const offset = subtractNumericUuids(
+				numericUncompressed,
+				this.localSession.sessionUuid,
+			);
 			if (offset < Number.MAX_SAFE_INTEGER) {
 				const genCountEquivalent = Number(offset) + 1;
 				const localEquivalent = localIdFromGenCount(genCountEquivalent);
@@ -538,7 +584,8 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 				}
 			} else {
 				// Not the local session
-				return genCountFromLocalId(alignedLocal) >= lastFinalizedLocal(containingCluster)
+				return genCountFromLocalId(alignedLocal) >=
+					lastFinalizedLocal(containingCluster)
 					? (getAlignedFinal(containingCluster, alignedLocal) as
 							| SessionSpaceCompressedId
 							| undefined)
@@ -554,8 +601,14 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			!this.ongoingGhostSession,
 			0x8a9 /* IdCompressor should not be operated normally when in a ghost session */,
 		);
-		const { normalizer, finalSpace, sessions, localGenCount, logger, nextRangeBaseGenCount } =
-			this;
+		const {
+			normalizer,
+			finalSpace,
+			sessions,
+			localGenCount,
+			logger,
+			nextRangeBaseGenCount,
+		} = this;
 		const sessionIndexMap = new Map<Session, number>();
 		let sessionIndex = 0;
 		for (const session of sessions.sessions()) {
@@ -613,7 +666,10 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			}
 		}
 
-		assert(index === totalSize, 0x75b /* Serialized size was incorrectly calculated. */);
+		assert(
+			index === totalSize,
+			0x75b /* Serialized size was incorrectly calculated. */,
+		);
 		logger?.sendTelemetryEvent({
 			eventName: "RuntimeIdCompressor:SerializedIdCompressorSize",
 			size: serializedFloat.byteLength,
@@ -621,7 +677,10 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			sessionCount: sessionIndexMap.size,
 		});
 
-		return bufferToString(serializedFloat.buffer, "base64") as SerializedIdCompressor;
+		return bufferToString(
+			serializedFloat.buffer,
+			"base64",
+		) as SerializedIdCompressor;
 	}
 
 	public static deserialize(
@@ -677,7 +736,10 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			);
 		} else {
 			// If !hasLocalState, there won't be a serialized local session ID so insert one at the beginning
-			assert(sessionId !== undefined, 0x75d /* Local session ID is undefined. */);
+			assert(
+				sessionId !== undefined,
+				0x75d /* Local session ID is undefined. */,
+			);
 			const localSessionNumeric = numericUuidFromStableId(sessionId);
 			sessions.push([localSessionNumeric, new Session(localSessionNumeric)]);
 			sessionOffset = 1;
@@ -702,7 +764,11 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			const session = sessionArray[1];
 			const capacity = readNumber(index);
 			const count = readNumber(index);
-			const cluster = session.addNewCluster(baseFinalId as FinalCompressedId, capacity, count);
+			const cluster = session.addNewCluster(
+				baseFinalId as FinalCompressedId,
+				capacity,
+				count,
+			);
 			compressor.finalSpace.addCluster(cluster);
 			baseFinalId += capacity;
 		}
@@ -713,7 +779,10 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			compressor.nextRangeBaseGenCount = readNumber(index);
 			const normalizerCount = readNumber(index);
 			for (let i = 0; i < normalizerCount; i++) {
-				compressor.normalizer.addLocalRange(readNumber(index), readNumber(index));
+				compressor.normalizer.addLocalRange(
+					readNumber(index),
+					readNumber(index),
+				);
 			}
 		}
 

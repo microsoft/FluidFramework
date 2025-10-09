@@ -24,7 +24,9 @@ function assertEnumEqual<TEnum extends { [key: number]: string }>(
 	b: number,
 ): void {
 	if (a !== b) {
-		assert.fail(`expected ${a} (${enumObject[a]}) to equal ${b} (${enumObject[b]})`);
+		assert.fail(
+			`expected ${a} (${enumObject[a]}) to equal ${b} (${enumObject[b]})`,
+		);
 	}
 }
 
@@ -82,7 +84,11 @@ describe("Schema Evolution Examples", () => {
 			// nor did we provide an adapter capable of handling empty roots.
 			// This means our application is unable to view this document.
 			// And since the view schema currently excludes empty roots, its also incompatible for upgrading:
-			assert.deepEqual(compat, { canView: false, canUpgrade: false, isEquivalent: false });
+			assert.deepEqual(compat, {
+				canView: false,
+				canUpgrade: false,
+				isEquivalent: false,
+			});
 
 			// This is where the app would inform the user that the document
 			// is not compatible with their version of the application.
@@ -133,7 +139,11 @@ describe("Schema Evolution Examples", () => {
 			assert(stored.tryUpdateTreeSchema(positionedCanvasItem));
 			assert(stored.tryUpdateTreeSchema(text));
 			assert(stored.tryUpdateTreeSchema(codePoint));
-			assert(stored.tryUpdateRootFieldSchema(toUpgradeSchema(tolerantRoot).rootFieldSchema));
+			assert(
+				stored.tryUpdateRootFieldSchema(
+					toUpgradeSchema(tolerantRoot).rootFieldSchema,
+				),
+			);
 			// That will cause the document stored schema to change,
 			// which will notify and applications with the document open.
 			// They can recheck their compatibility:
@@ -146,7 +156,11 @@ describe("Schema Evolution Examples", () => {
 			);
 			assert.deepEqual(report, []);
 			// It is now possible to write our date into the document.
-			assert.deepEqual(compatNew, { canView: true, canUpgrade: true, isEquivalent: true });
+			assert.deepEqual(compatNew, {
+				canView: true,
+				canUpgrade: true,
+				isEquivalent: true,
+			});
 
 			// Now lets imagine some time passes, and the developers want to add a second content type:
 
@@ -154,10 +168,13 @@ describe("Schema Evolution Examples", () => {
 				count: builder.number,
 			});
 			// Lets allow counters inside positionedCanvasItem, instead of just text:
-			const positionedCanvasItem2 = builder.objectAlpha("PositionedCanvasItem", {
-				position: point,
-				content: [text, counter],
-			});
+			const positionedCanvasItem2 = builder.objectAlpha(
+				"PositionedCanvasItem",
+				{
+					position: point,
+					content: [text, counter],
+				},
+			);
 			// And canvas is still the same storage wise, but its view schema references the updated positionedCanvasItem2:
 			const canvas2 = builder.array("Canvas", positionedCanvasItem2);
 			// Once again we will simulate reloading the app with different schema by modifying the view schema.
@@ -167,7 +184,11 @@ describe("Schema Evolution Examples", () => {
 
 			// With this new schema, we can load the document just like before:
 			const compat2 = view3.checkCompatibility(stored);
-			assert.deepEqual(compat2, { canView: false, canUpgrade: true, isEquivalent: false });
+			assert.deepEqual(compat2, {
+				canView: false,
+				canUpgrade: true,
+				isEquivalent: false,
+			});
 
 			// This is the same case as above where we can choose to do a schema update if we want:
 			assert(stored.tryUpdateTreeSchema(positionedCanvasItem2));
@@ -175,7 +196,11 @@ describe("Schema Evolution Examples", () => {
 
 			// And recheck compat:
 			const compat3 = view3.checkCompatibility(stored);
-			assert.deepEqual(compat3, { canView: true, canUpgrade: true, isEquivalent: true });
+			assert.deepEqual(compat3, {
+				canView: true,
+				canUpgrade: true,
+				isEquivalent: true,
+			});
 		}
 	});
 

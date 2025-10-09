@@ -7,7 +7,12 @@ export type { BrandedType } from "./brandedType.js";
 
 export type { IDisposable } from "./disposable.js";
 
-export type { IErrorBase, IGenericError, IUsageError, IThrottlingWarning } from "./error.js";
+export type {
+	IErrorBase,
+	IGenericError,
+	IUsageError,
+	IThrottlingWarning,
+} from "./error.js";
 export { FluidErrorTypes } from "./error.js";
 
 export type {
@@ -21,7 +26,10 @@ export type {
 	TransformedEvent,
 } from "./events.js";
 
-export type { IProvideFluidLoadable, IProvideFluidRunnable } from "./fluidLoadable.js";
+export type {
+	IProvideFluidLoadable,
+	IProvideFluidRunnable,
+} from "./fluidLoadable.js";
 export { IFluidLoadable, IFluidRunnable } from "./fluidLoadable.js";
 
 // TypeScript forgets the index signature when customers augment IRequestHeader if we export *.
@@ -41,7 +49,11 @@ export type {
 	IProvideFluidHandleContext,
 	PayloadState,
 } from "./handles.js";
-export { IFluidHandleContext, IFluidHandle, fluidHandleSymbol } from "./handles.js";
+export {
+	IFluidHandleContext,
+	IFluidHandle,
+	fluidHandleSymbol,
+} from "./handles.js";
 
 export type {
 	ILoggingError,
@@ -52,7 +64,11 @@ export type {
 	TelemetryBaseEventPropertyType,
 } from "./logger.js";
 export { LogLevel } from "./logger.js";
-export type { FluidObjectProviderKeys, FluidObject, FluidObjectKeys } from "./provider.js";
+export type {
+	FluidObjectProviderKeys,
+	FluidObject,
+	FluidObjectKeys,
+} from "./provider.js";
 export type { ConfigTypes, IConfigProviderBase } from "./config.js";
 export type { ISignalEnvelope, TypedMessage } from "./messages.js";
 export type { ErasedType, ErasedBaseType } from "./erasedType.js";

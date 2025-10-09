@@ -16,7 +16,12 @@ const COMPILATION_METADATA = Symbol("COMPILATION_METADATA");
 module.exports.COMPILATION_METADATA = COMPILATION_METADATA;
 
 module.exports.pitch = function pitch(remainingRequest) {
-	const { target, plugins = [], output, emit } = loaderUtils.getOptions(this) || {};
+	const {
+		target,
+		plugins = [],
+		output,
+		emit,
+	} = loaderUtils.getOptions(this) || {};
 
 	if (target !== "worker") {
 		throw new Error(`Unsupported compile target: ${JSON.stringify(target)}`);
@@ -41,19 +46,27 @@ module.exports.pitch = function pitch(remainingRequest) {
 	};
 
 	const compilerOptions = currentCompilation.compiler.options;
-	const childCompiler = currentCompilation.createChildCompiler("worker", outputOptions, [
-		// https://github.com/webpack/webpack/blob/master/lib/WebpackOptionsApply.js
-		new WebWorkerTemplatePlugin(outputOptions),
-		new LoaderTargetPlugin("webworker"),
-		...(this.target === "web" || this.target === "webworker" ? [] : [new NodeTargetPlugin()]),
+	const childCompiler = currentCompilation.createChildCompiler(
+		"worker",
+		outputOptions,
+		[
+			// https://github.com/webpack/webpack/blob/master/lib/WebpackOptionsApply.js
+			new WebWorkerTemplatePlugin(outputOptions),
+			new LoaderTargetPlugin("webworker"),
+			...(this.target === "web" || this.target === "webworker"
+				? []
+				: [new NodeTargetPlugin()]),
 
-		// https://github.com/webpack-contrib/worker-loader/issues/95#issuecomment-352856617
-		...(compilerOptions.externals ? [new ExternalsPlugin(compilerOptions.externals)] : []),
+			// https://github.com/webpack-contrib/worker-loader/issues/95#issuecomment-352856617
+			...(compilerOptions.externals
+				? [new ExternalsPlugin(compilerOptions.externals)]
+				: []),
 
-		...plugins,
+			...plugins,
 
-		new SingleEntryPlugin(this.context, `!!${remainingRequest}`, "main"),
-	]);
+			new SingleEntryPlugin(this.context, `!!${remainingRequest}`, "main"),
+		],
+	);
 
 	const subCache = `subcache ${__dirname} ${remainingRequest}`;
 

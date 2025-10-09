@@ -15,7 +15,10 @@ export class ClickerAgent implements IFluidRunnable {
 		return this;
 	}
 
-	private readonly logIncrement = (incrementValue: number, currentValue: number) => {
+	private readonly logIncrement = (
+		incrementValue: number,
+		currentValue: number,
+	) => {
 		console.log(`Incremented by ${incrementValue}. New value ${currentValue}`);
 	};
 

@@ -55,7 +55,8 @@ function getTelemetryContextPropertiesFromRequest(
 	 * If TelemetryContextHeaderName is present in the request headers,
 	 * the source is considered as "server". Otherwise, it is considered as "client".
 	 */
-	const requestSource = req.get(TelemetryContextHeaderName) !== undefined ? "server" : "client";
+	const requestSource =
+		req.get(TelemetryContextHeaderName) !== undefined ? "server" : "client";
 	return {
 		[BaseTelemetryProperties.correlationId]:
 			telemetryContextProperties?.correlationId ?? correlationIdHeader,

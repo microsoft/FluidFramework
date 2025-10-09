@@ -13,7 +13,10 @@ import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitio
 import { createGroupOp } from "../opBuilder.js";
 import { type IMergeTreeOp, MergeTreeDeltaType } from "../ops.js";
 
-import { type ReplayGroup, replayResultsPath } from "./mergeTreeOperationRunner.js";
+import {
+	type ReplayGroup,
+	replayResultsPath,
+} from "./mergeTreeOperationRunner.js";
 import { TestClient } from "./testClient.js";
 import { TestClientLogger } from "./testClientLogger.js";
 
@@ -27,7 +30,9 @@ describe("MergeTree.Client", () => {
 				string,
 				{ client: TestClient; msgs: ISequencedDocumentMessage[] }
 			>();
-			const originalClient = new TestClient({ mergeTreeEnableObliterate: true });
+			const originalClient = new TestClient({
+				mergeTreeEnableObliterate: true,
+			});
 			msgClients.set("A", { client: originalClient, msgs: [] });
 			originalClient.insertTextLocal(0, file[0].initialText);
 			originalClient.startOrUpdateCollaboration("A");
@@ -44,9 +49,15 @@ describe("MergeTree.Client", () => {
 				}
 			}
 			for (const group of file) {
-				const logger = new TestClientLogger([...msgClients.values()].map((mc) => mc.client));
+				const logger = new TestClientLogger(
+					[...msgClients.values()].map((mc) => mc.client),
+				);
 				const initialText = logger.validate();
-				assert.strictEqual(initialText, group.initialText, "Initial text not as expected");
+				assert.strictEqual(
+					initialText,
+					group.initialText,
+					"Initial text not as expected",
+				);
 				for (const msg of group.msgs) {
 					const msgClient = msgClients.get(msg.clientId!)!;
 					while (
@@ -68,7 +79,11 @@ describe("MergeTree.Client", () => {
 					}
 				}
 				const result = logger.validate();
-				assert.strictEqual(result, group.resultText, "Result text not as expected");
+				assert.strictEqual(
+					result,
+					group.resultText,
+					"Result text not as expected",
+				);
 				logger.dispose();
 			}
 		}).timeout(30 * 10000);

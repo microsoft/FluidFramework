@@ -57,7 +57,7 @@ export class KafkaMessageFactory {
 						documentId: this.documentId,
 						tenantId: this.tenantId,
 						type: BoxcarType,
-				  } as IBoxcarMessage),
+					} as IBoxcarMessage),
 		};
 
 		return message;
@@ -227,7 +227,10 @@ export class MessageFactory {
 	}
 
 	public createNoClient(referenceSequenceNumber = 0): ISequencedOperationMessage {
-		const operation = this.createDocumentMessage(MessageType.NoClient, referenceSequenceNumber);
+		const operation = this.createDocumentMessage(
+			MessageType.NoClient,
+			referenceSequenceNumber,
+		);
 		const sequencedOperation: ISequencedDocumentAugmentedMessage = {
 			clientId: this.clientId,
 			clientSequenceNumber: operation.clientSequenceNumber,

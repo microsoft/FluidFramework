@@ -73,7 +73,8 @@ export const MergeTreeDeltaType = {
 /**
  * @legacy @beta
  */
-export type MergeTreeDeltaType = (typeof MergeTreeDeltaType)[keyof typeof MergeTreeDeltaType];
+export type MergeTreeDeltaType =
+	(typeof MergeTreeDeltaType)[keyof typeof MergeTreeDeltaType];
 
 /**
  * @legacy @beta

@@ -51,9 +51,17 @@ export interface ChangeEnricherMutableCheckout<TChange>
 	[disposeSymbol](): void;
 }
 
-export class NoOpChangeEnricher<TChange> implements ChangeEnricherMutableCheckout<TChange> {
-	public applyTipChange(change: TChange, revision?: RevisionTag | undefined): void {}
-	public updateChangeEnrichments(change: TChange, revision: RevisionTag): TChange {
+export class NoOpChangeEnricher<TChange>
+	implements ChangeEnricherMutableCheckout<TChange>
+{
+	public applyTipChange(
+		change: TChange,
+		revision?: RevisionTag | undefined,
+	): void {}
+	public updateChangeEnrichments(
+		change: TChange,
+		revision: RevisionTag,
+	): TChange {
 		return change;
 	}
 	public fork(): ChangeEnricherMutableCheckout<TChange> {

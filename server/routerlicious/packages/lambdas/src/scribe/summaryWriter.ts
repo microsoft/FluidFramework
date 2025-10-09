@@ -265,16 +265,14 @@ export class SummaryWriter implements ISummaryWriter {
 							this.maxRetriesOnError,
 						),
 						requestWithRetry(
-							async () =>
-								this.summaryStorage.createTree({ entries: protocolEntries }),
+							async () => this.summaryStorage.createTree({ entries: protocolEntries }),
 							"writeClientSummary_createProtocolTree",
 							this.lumberProperties,
 							shouldRetryNetworkError,
 							this.maxRetriesOnError,
 						),
 						requestWithRetry(
-							async () =>
-								this.summaryStorage.createTree({ entries: serviceProtocolEntries }),
+							async () => this.summaryStorage.createTree({ entries: serviceProtocolEntries }),
 							"writeClientSummary_createServiceProtocolTree",
 							this.lumberProperties,
 							shouldRetryNetworkError,
@@ -339,21 +337,19 @@ export class SummaryWriter implements ISummaryWriter {
 
 				await (existingRef
 					? requestWithRetry(
-							async () =>
-								this.summaryStorage.upsertRef(this.documentId, uploadHandle),
+							async () => this.summaryStorage.upsertRef(this.documentId, uploadHandle),
 							"writeClientSummary_upsertRef",
 							this.lumberProperties,
 							shouldRetryNetworkError,
 							this.maxRetriesOnError,
-					  )
+						)
 					: requestWithRetry(
-							async () =>
-								this.summaryStorage.createRef(this.documentId, uploadHandle),
+							async () => this.summaryStorage.createRef(this.documentId, uploadHandle),
 							"writeClientSummary_createRef",
 							this.lumberProperties,
 							shouldRetryNetworkError,
 							this.maxRetriesOnError,
-					  ));
+						));
 			}
 			clientSummaryMetric.success(`Client summary success`);
 			return {
@@ -435,11 +431,7 @@ export class SummaryWriter implements ISummaryWriter {
 			// Generate a tree of logTail starting from the last protocol state.
 			const logTailEntries = await requestWithRetry(
 				async () =>
-					this.generateLogtailEntries(
-						currentProtocolHead,
-						op.sequenceNumber + 1,
-						pendingOps,
-					),
+					this.generateLogtailEntries(currentProtocolHead, op.sequenceNumber + 1, pendingOps),
 				"writeServiceSummary_generateLogtailEntries",
 				this.lumberProperties,
 				shouldRetryNetworkError,
@@ -485,8 +477,7 @@ export class SummaryWriter implements ISummaryWriter {
 						this.maxRetriesOnError,
 					),
 					requestWithRetry(
-						async () =>
-							this.summaryStorage.createTree({ entries: serviceProtocolEntries }),
+						async () => this.summaryStorage.createTree({ entries: serviceProtocolEntries }),
 						"writeServiceSummary_createServiceProtocolTree",
 						this.lumberProperties,
 						shouldRetryNetworkError,
@@ -647,9 +638,7 @@ export class SummaryWriter implements ISummaryWriter {
 				) ?? [];
 
 			logTailFromPending = pending
-				.filter(
-					(op) => op.operation.sequenceNumber > gt && op.operation.sequenceNumber < lt,
-				)
+				.filter((op) => op.operation.sequenceNumber > gt && op.operation.sequenceNumber < lt)
 				.map((op) => op.operation);
 
 			logtailFromMemory = dedupeSortedArray(
@@ -734,14 +723,7 @@ export class SummaryWriter implements ISummaryWriter {
 
 	private async retrieveOps(gt: number, lt: number): Promise<ISequencedDocumentMessage[]> {
 		if (this.getDeltasViaAlfred && this.deltaService !== undefined) {
-			return this.deltaService.getDeltas(
-				"",
-				this.tenantId,
-				this.documentId,
-				gt,
-				lt,
-				"scribe",
-			);
+			return this.deltaService.getDeltas("", this.tenantId, this.documentId, gt, lt, "scribe");
 		}
 
 		if (this.opStorage === undefined) {

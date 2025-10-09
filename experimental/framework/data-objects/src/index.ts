@@ -13,4 +13,9 @@
  * more visible. Import specs do not need qualified with `/alpha`, etc.
  */
 
-export { IRuntimeSignaler, ISignaler, Signaler, SignalListener } from "./signaler/index.js";
+export {
+	IRuntimeSignaler,
+	ISignaler,
+	Signaler,
+	SignalListener,
+} from "./signaler/index.js";

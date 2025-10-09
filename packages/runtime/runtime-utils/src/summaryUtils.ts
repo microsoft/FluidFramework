@@ -17,7 +17,10 @@ import type {
 	SummaryObject,
 } from "@fluidframework/driver-definitions";
 import { SummaryType } from "@fluidframework/driver-definitions";
-import type { ITree, ITreeEntry } from "@fluidframework/driver-definitions/internal";
+import type {
+	ITree,
+	ITreeEntry,
+} from "@fluidframework/driver-definitions/internal";
 import { TreeEntry } from "@fluidframework/driver-definitions/internal";
 import {
 	AttachmentTreeEntry,
@@ -91,10 +94,15 @@ export function utf8ByteLength(str: string): number {
  * @internal
  */
 export function getBlobSize(content: ISummaryBlob["content"]): number {
-	return typeof content === "string" ? utf8ByteLength(content) : content.byteLength;
+	return typeof content === "string"
+		? utf8ByteLength(content)
+		: content.byteLength;
 }
 
-function calculateStatsCore(summaryObject: SummaryObject, stats: ISummaryStats): void {
+function calculateStatsCore(
+	summaryObject: SummaryObject,
+	stats: ISummaryStats,
+): void {
 	switch (summaryObject.type) {
 		case SummaryType.Tree: {
 			stats.treeNodeCount++;
@@ -267,7 +275,10 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
 	 * @param id - The id of the uploaded attachment to be added to the summary tree.
 	 */
 	public addAttachment(id: string): void {
-		this.summaryTree[this.attachmentCounter++] = { id, type: SummaryType.Attachment };
+		this.summaryTree[this.attachmentCounter++] = {
+			id,
+			type: SummaryType.Attachment,
+		};
 	}
 
 	/**
@@ -298,7 +309,9 @@ export function convertToSummaryTreeWithStats(
 			case TreeEntry.Blob: {
 				const blob = entry.value;
 				const content =
-					blob.encoding === "base64" ? IsoBuffer.from(blob.contents, "base64") : blob.contents;
+					blob.encoding === "base64"
+						? IsoBuffer.from(blob.contents, "base64")
+						: blob.contents;
 				builder.addBlob(entry.path, content);
 				break;
 			}
@@ -478,12 +491,15 @@ export function processAttachMessageGCData(
 	assert(
 		// Cannot change "utf-8" to "utf8" as this encoding value is stored in summaries and would be a breaking change which needs to be done first before changing to utf8.
 		// eslint-disable-next-line unicorn/text-encoding-identifier-case  -- external contract uses 'utf-8'.
-		gcDataEntry.type === TreeEntry.Blob && gcDataEntry.value.encoding === "utf-8",
+		gcDataEntry.type === TreeEntry.Blob &&
+			gcDataEntry.value.encoding === "utf-8",
 		0x8ff /* GC data should be a utf-8-encoded blob */,
 	);
 
 	// Type assertion is safe as we expect the GC data to conform to IGarbageCollectionData schema
-	const gcData = JSON.parse(gcDataEntry.value.contents) as IGarbageCollectionData;
+	const gcData = JSON.parse(
+		gcDataEntry.value.contents,
+	) as IGarbageCollectionData;
 	for (const [nodeId, outboundRoutes] of Object.entries(gcData.gcNodes)) {
 		for (const toPath of outboundRoutes) {
 			addedGCOutboundRoute(nodeId, toPath);
@@ -495,13 +511,19 @@ export function processAttachMessageGCData(
 /**
  * @internal
  */
-export class TelemetryContext implements ITelemetryContext, ITelemetryContextExt {
+export class TelemetryContext
+	implements ITelemetryContext, ITelemetryContextExt
+{
 	private readonly telemetry = new Map<string, TelemetryEventPropertyTypeExt>();
 
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.set}
 	 */
-	public set(prefix: string, property: string, value: TelemetryEventPropertyTypeExt): void {
+	public set(
+		prefix: string,
+		property: string,
+		value: TelemetryEventPropertyTypeExt,
+	): void {
 		this.telemetry.set(`${prefix}${property}`, value);
 	}
 
@@ -580,7 +602,10 @@ export class GCDataBuilder implements IGarbageCollectionData {
 	 * - Prefixes the given `prefixId` to the given nodes' ids.
 	 * - Adds the outbound routes of the nodes against the normalized and prefixed id.
 	 */
-	public prefixAndAddNodes(prefixId: string, gcNodes: Record<string, string[]>): void {
+	public prefixAndAddNodes(
+		prefixId: string,
+		gcNodes: Record<string, string[]>,
+	): void {
 		for (const [id, outboundRoutes] of Object.entries(gcNodes)) {
 			// Remove any leading slashes from the id.
 			let normalizedId = trimLeadingSlashes(id);

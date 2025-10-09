@@ -207,7 +207,12 @@ export type EncodedNestedArrayShape = Static<typeof EncodedNestedArrayShape>;
 export type EncodedInlineArrayShape = Static<typeof EncodedInlineArrayShape>;
 export type EncodedNodeShape = Static<typeof EncodedNodeShape>;
 export type EncodedAnyShape = Static<typeof EncodedAnyShape>;
-export type EncodedIncrementalChunkShape = Static<typeof EncodedIncrementalChunkShape>;
+export type EncodedIncrementalChunkShape = Static<
+	typeof EncodedIncrementalChunkShape
+>;
 
-export const EncodedFieldBatch = EncodedFieldBatchGeneric(version, EncodedChunkShape);
+export const EncodedFieldBatch = EncodedFieldBatchGeneric(
+	version,
+	EncodedChunkShape,
+);
 export type EncodedFieldBatch = Static<typeof EncodedFieldBatch>;

@@ -15,7 +15,10 @@ import {
 	createGenericNetworkError,
 	type DriverErrorTelemetryProps,
 } from "@fluidframework/driver-utils/internal";
-import { IFluidErrorBase, LoggingError } from "@fluidframework/telemetry-utils/internal";
+import {
+	IFluidErrorBase,
+	LoggingError,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { R11sServiceClusterDrainingErrorCode } from "./contracts.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
@@ -81,7 +84,10 @@ export interface IR11sSocketError {
 	internalErrorCode?: string | number;
 }
 
-export class ClusterDrainingError extends LoggingError implements IFluidErrorBase {
+export class ClusterDrainingError
+	extends LoggingError
+	implements IFluidErrorBase
+{
 	readonly errorType = RouterliciousErrorTypes.clusterDrainingError;
 	readonly canRetry = true;
 
@@ -121,7 +127,11 @@ export function createR11sNetworkError(
 			error = new NonRetryableError(errorMessage, errorType, props);
 			break;
 		case 429:
-			error = createGenericNetworkError(errorMessage, { canRetry: true, retryAfterMs }, props);
+			error = createGenericNetworkError(
+				errorMessage,
+				{ canRetry: true, retryAfterMs },
+				props,
+			);
 			break;
 		case 500:
 		case 502:
@@ -151,7 +161,12 @@ export function throwR11sNetworkError(
 	retryAfterMs?: number,
 	additionalProps?: DriverErrorTelemetryProps,
 ): never {
-	throw createR11sNetworkError(errorMessage, statusCode, retryAfterMs, additionalProps);
+	throw createR11sNetworkError(
+		errorMessage,
+		statusCode,
+		retryAfterMs,
+		additionalProps,
+	);
 }
 
 /**
@@ -186,7 +201,10 @@ export const socketIoPath = "socket.io";
  * Get a stripped version of a URL safe for r11s telemetry
  * @returns undefined if no appropriate hostName is provided
  */
-export function getUrlForTelemetry(hostName: string, path: string = ""): string | undefined {
+export function getUrlForTelemetry(
+	hostName: string,
+	path: string = "",
+): string | undefined {
 	// Strip off "http://" or "https://"
 	const hostNameMatch = hostName.match(/^(?:https?:\/\/)?([^/]+)/);
 	if (!hostNameMatch) {

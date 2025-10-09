@@ -69,7 +69,9 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		messageRelay.on("message", messageHandler);
 
 		// Request the current Audience State of the Container
-		messageRelay.postMessage(GetAudienceSummary.createMessage({ containerKey }));
+		messageRelay.postMessage(
+			GetAudienceSummary.createMessage({ containerKey }),
+		);
 
 		return (): void => {
 			messageRelay.off("message", messageHandler);
@@ -84,8 +86,8 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		(audience) => audience.clientId === audienceData.clientId,
 	)?.client;
 
-	const audienceStateItems: TransformedAudienceStateData[] = audienceData.audienceState.map(
-		(entry) => {
+	const audienceStateItems: TransformedAudienceStateData[] =
+		audienceData.audienceState.map((entry) => {
 			return {
 				clientId: entry.clientId,
 				userId: entry.client.user.id,
@@ -93,22 +95,25 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 				scopes: entry.client.scopes,
 				myClientConnection: myClientMetadata,
 			};
-		},
-	);
+		});
 
 	const nowTimeStamp = new Date();
-	const audienceHistoryItems: TransformedAudienceHistoryData[] = audienceData.audienceHistory
-		.map((entry) => {
-			const changeTimeStamp = new Date(entry.timestamp);
-			const wasChangeToday = nowTimeStamp.getDate() === changeTimeStamp.getDate();
+	const audienceHistoryItems: TransformedAudienceHistoryData[] =
+		audienceData.audienceHistory
+			.map((entry) => {
+				const changeTimeStamp = new Date(entry.timestamp);
+				const wasChangeToday =
+					nowTimeStamp.getDate() === changeTimeStamp.getDate();
 
-			return {
-				clientId: entry.clientId,
-				time: wasChangeToday ? changeTimeStamp.toTimeString() : changeTimeStamp.toDateString(),
-				changeKind: entry.changeKind,
-			};
-		})
-		.reverse();
+				return {
+					clientId: entry.clientId,
+					time: wasChangeToday
+						? changeTimeStamp.toTimeString()
+						: changeTimeStamp.toDateString(),
+					changeKind: entry.changeKind,
+				};
+			})
+			.reverse();
 
 	return (
 		<>

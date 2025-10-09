@@ -6,7 +6,11 @@
 import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
 import React from "react";
 
-import { DiceRoller, DiceRollerInstantiationFactory, DiceRollerView } from "./main.js";
+import {
+	DiceRoller,
+	DiceRollerInstantiationFactory,
+	DiceRollerView,
+} from "./main.js";
 
 export { DiceRoller, DiceRollerInstantiationFactory } from "./main.js";
 

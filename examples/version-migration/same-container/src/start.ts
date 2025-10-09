@@ -7,7 +7,10 @@ import type {
 	ISameContainerMigratableModel,
 	IVersionedModel,
 } from "@fluid-example/example-utils";
-import { ModelLoader, SameContainerMigrator } from "@fluid-example/example-utils";
+import {
+	ModelLoader,
+	SameContainerMigrator,
+} from "@fluid-example/example-utils";
 import { createRouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/legacy";
 import {
 	createInsecureTinyliciousTestTokenProvider,
@@ -30,7 +33,9 @@ const updateTabForId = (id: string) => {
 	document.title = id;
 };
 
-const isIInventoryListAppModel = (model: IVersionedModel): model is IInventoryListAppModel => {
+const isIInventoryListAppModel = (
+	model: IVersionedModel,
+): model is IInventoryListAppModel => {
 	return model.version === "one" || model.version === "two";
 };
 
@@ -43,7 +48,10 @@ const render = (model: IVersionedModel) => {
 	// versions, we could check its version here and select the appropriate view.  Or we could even write ourselves a
 	// view code loader to pull in the view dynamically based on the version we discover.
 	if (isIInventoryListAppModel(model)) {
-		ReactDOM.render(React.createElement(InventoryListAppView, { model }), appDiv);
+		ReactDOM.render(
+			React.createElement(InventoryListAppView, { model }),
+			appDiv,
+		);
 
 		// The DebugView is just for demo purposes, to manually control code proposal and inspect the state.
 		const debugDiv = document.getElementById("debug") as HTMLDivElement;

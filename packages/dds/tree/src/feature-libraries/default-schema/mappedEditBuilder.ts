@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { NormalizedFieldUpPath, NormalizedUpPath } from "../../core/index.js";
+import type {
+	NormalizedFieldUpPath,
+	NormalizedUpPath,
+} from "../../core/index.js";
 
 import type {
 	IDefaultEditBuilder,
@@ -15,12 +18,16 @@ import type {
 /**
  * An IDefaultEditBuilder implementation based on another IDefaultEditBuilder that uses a different content type for insertions.
  */
-export class MappedEditBuilder<TBase, TAdapted> implements IDefaultEditBuilder<TAdapted> {
+export class MappedEditBuilder<TBase, TAdapted>
+	implements IDefaultEditBuilder<TAdapted>
+{
 	public constructor(
 		private readonly baseBuilder: IDefaultEditBuilder<TBase>,
 		private readonly mapDelegate: (input: TAdapted) => TBase,
 	) {}
-	public valueField(field: NormalizedFieldUpPath): ValueFieldEditBuilder<TAdapted> {
+	public valueField(
+		field: NormalizedFieldUpPath,
+	): ValueFieldEditBuilder<TAdapted> {
 		const baseField = this.baseBuilder.valueField(field);
 		return {
 			set: (newContent: TAdapted): void => {
@@ -29,7 +36,9 @@ export class MappedEditBuilder<TBase, TAdapted> implements IDefaultEditBuilder<T
 			},
 		};
 	}
-	public optionalField(field: NormalizedFieldUpPath): OptionalFieldEditBuilder<TAdapted> {
+	public optionalField(
+		field: NormalizedFieldUpPath,
+	): OptionalFieldEditBuilder<TAdapted> {
 		const baseField = this.baseBuilder.optionalField(field);
 		return {
 			set: (newContent: TAdapted | undefined, wasEmpty: boolean): void => {
@@ -39,7 +48,9 @@ export class MappedEditBuilder<TBase, TAdapted> implements IDefaultEditBuilder<T
 			},
 		};
 	}
-	public sequenceField(field: NormalizedFieldUpPath): SequenceFieldEditBuilder<TAdapted> {
+	public sequenceField(
+		field: NormalizedFieldUpPath,
+	): SequenceFieldEditBuilder<TAdapted> {
 		const baseField = this.baseBuilder.sequenceField(field);
 		return {
 			insert: (index: number, content: TAdapted): void => {
@@ -58,7 +69,13 @@ export class MappedEditBuilder<TBase, TAdapted> implements IDefaultEditBuilder<T
 		destinationField: NormalizedFieldUpPath,
 		destinationIndex: number,
 	): void {
-		this.baseBuilder.move(sourceField, sourceIndex, count, destinationField, destinationIndex);
+		this.baseBuilder.move(
+			sourceField,
+			sourceIndex,
+			count,
+			destinationField,
+			destinationIndex,
+		);
 	}
 	public addNodeExistsConstraint(path: NormalizedUpPath): void {
 		this.baseBuilder.addNodeExistsConstraint(path);

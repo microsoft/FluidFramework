@@ -16,7 +16,11 @@
 export const templateSchema = {
 	typeid: "Adsk.Library:Colors.ColorPalette-1.0.0",
 	properties: [
-		{ id: "colorsRef", typeid: "Reference<Adsk.Core:Math.Color-1.0.0>", context: "map" },
+		{
+			id: "colorsRef",
+			typeid: "Reference<Adsk.Core:Math.Color-1.0.0>",
+			context: "map",
+		},
 		{ id: "colors", typeid: "Adsk.Core:Math.Color-1.0.0" },
 		{ id: "testref", typeid: "Reference", context: "map" },
 	],

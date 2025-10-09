@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import {
+	DataObject,
+	DataObjectFactory,
+} from "@fluidframework/aqueduct/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { SharedCounter } from "@fluidframework/counter/internal";
 import type {

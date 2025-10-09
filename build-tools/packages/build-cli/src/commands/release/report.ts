@@ -101,7 +101,10 @@ export abstract class ReleaseReportBaseCommand<
 	/**
 	 * The release group or package that is being reported on.
 	 */
-	protected abstract releaseGroupName: ReleaseGroup | ReleasePackage | undefined;
+	protected abstract releaseGroupName:
+		| ReleaseGroup
+		| ReleasePackage
+		| undefined;
 
 	/**
 	 * Returns true if the `date` is within `days` days of the current date.
@@ -111,7 +114,8 @@ export abstract class ReleaseReportBaseCommand<
 			? false
 			: this.numberBusinessDaysToConsiderRecent === undefined
 				? true
-				: differenceInBusinessDays(Date.now(), date) < this.numberBusinessDaysToConsiderRecent;
+				: differenceInBusinessDays(Date.now(), date) <
+					this.numberBusinessDaysToConsiderRecent;
 	}
 
 	/**
@@ -147,7 +151,10 @@ export abstract class ReleaseReportBaseCommand<
 			// Get the release group versions and dependency versions from the repo
 			if (isReleaseGroup(releaseGroupOrPackage)) {
 				if (includeDependencies) {
-					[rgVerMap, pkgVerMap] = getFluidDependencies(context, releaseGroupOrPackage);
+					[rgVerMap, pkgVerMap] = getFluidDependencies(
+						context,
+						releaseGroupOrPackage,
+					);
 					rgs.push(...(Object.keys(rgVerMap) as ReleaseGroup[]));
 					pkgs.push(...Object.keys(pkgVerMap));
 				} else {
@@ -187,12 +194,18 @@ export abstract class ReleaseReportBaseCommand<
 		}
 
 		for (const pkg of pkgs) {
-			const repoVersion = pkgVerMap?.[pkg] ?? context.fullPackageMap.get(pkg)?.version;
+			const repoVersion =
+				pkgVerMap?.[pkg] ?? context.fullPackageMap.get(pkg)?.version;
 			assert(repoVersion !== undefined, `version of ${pkg} is undefined.`);
 
 			ux.action.status = `${pkg} (package)`;
 			// eslint-disable-next-line no-await-in-loop
-			const data = await this.collectRawReleaseData(gitRepo, pkg, repoVersion, mode);
+			const data = await this.collectRawReleaseData(
+				gitRepo,
+				pkg,
+				repoVersion,
+				mode,
+			);
 			if (data !== undefined) {
 				versionData[pkg] = data;
 			}
@@ -239,7 +252,10 @@ export abstract class ReleaseReportBaseCommand<
 				const recentReleases =
 					this.numberBusinessDaysToConsiderRecent === undefined
 						? sortedByDate
-						: filterVersionsOlderThan(sortedByDate, this.numberBusinessDaysToConsiderRecent);
+						: filterVersionsOlderThan(
+								sortedByDate,
+								this.numberBusinessDaysToConsiderRecent,
+							);
 
 				// No recent releases, so set the latest to the highest semver
 				if (recentReleases.length === 0) {
@@ -264,14 +280,18 @@ export abstract class ReleaseReportBaseCommand<
 						}),
 					});
 					const selectedVersion = answer ?? recentReleases[0].version;
-					latestReleasedVersion = recentReleases.find((v) => v.version === selectedVersion);
+					latestReleasedVersion = recentReleases.find(
+						(v) => v.version === selectedVersion,
+					);
 				}
 
 				break;
 			}
 
 			case "inRepo": {
-				latestReleasedVersion = sortedByVersion.find((v) => v.version === repoVersion);
+				latestReleasedVersion = sortedByVersion.find(
+					(v) => v.version === repoVersion,
+				);
 				if (latestReleasedVersion === undefined) {
 					const [, previousMinor] = getPreviousVersions(repoVersion);
 					this.info(
@@ -301,11 +321,15 @@ export abstract class ReleaseReportBaseCommand<
 			}
 		}
 
-		assert(latestReleasedVersion !== undefined, "latestReleasedVersion is undefined");
+		assert(
+			latestReleasedVersion !== undefined,
+			"latestReleasedVersion is undefined",
+		);
 
 		const vIndex = sortedByVersion.findIndex(
 			(v) =>
-				v.version === latestReleasedVersion?.version && v.date === latestReleasedVersion?.date,
+				v.version === latestReleasedVersion?.version &&
+				v.date === latestReleasedVersion?.date,
 		);
 		const previousReleasedVersion =
 			vIndex + 1 <= versionCount
@@ -361,7 +385,8 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 		}),
 		highest: Flags.boolean({
 			char: "s",
-			description: "Always pick the greatest semver version as the latest (ignore dates).",
+			description:
+				"Always pick the greatest semver version as the latest (ignore dates).",
 			exclusive: ["mostRecent", "interactive"],
 		}),
 		mostRecent: Flags.boolean({
@@ -549,7 +574,9 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 		}
 	}
 
-	private async generateReleaseReport(reportData: PackageReleaseData): Promise<ReleaseReport> {
+	private async generateReleaseReport(
+		reportData: PackageReleaseData,
+	): Promise<ReleaseReport> {
 		const context = await this.getContext();
 		const report: ReleaseReport = {};
 
@@ -558,7 +585,8 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 				this.warning(`No previous version for ${pkgName}.`);
 			}
 
-			const { version: latestVer, date: latestDate } = verDetails.latestReleasedVersion;
+			const { version: latestVer, date: latestDate } =
+				verDetails.latestReleasedVersion;
 			const { version: prevVer } = verDetails.previousReleasedVersion ?? {
 				version: DEFAULT_MIN_VERSION,
 			};
@@ -577,7 +605,11 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 				throw new Error(`releaseReport not found in config.`);
 			}
 
-			const ranges = getRanges(latestVer, context.flubConfig.releaseReport, pkgName);
+			const ranges = getRanges(
+				latestVer,
+				context.flubConfig.releaseReport,
+				pkgName,
+			);
 
 			// Expand the release group to its constituent packages.
 			if (isReleaseGroup(pkgName)) {
@@ -585,7 +617,8 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 					report[pkg.name] = {
 						version: latestVer,
 						versionScheme: scheme,
-						previousVersion: prevVer === DEFAULT_MIN_VERSION ? undefined : prevVer,
+						previousVersion:
+							prevVer === DEFAULT_MIN_VERSION ? undefined : prevVer,
 						date: latestDate,
 						releaseType: bumpType,
 						releaseGroup: pkg.monoRepo?.releaseGroup,
@@ -597,7 +630,8 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 				report[pkgName] = {
 					version: latestVer,
 					versionScheme: scheme,
-					previousVersion: prevVer === DEFAULT_MIN_VERSION ? undefined : prevVer,
+					previousVersion:
+						prevVer === DEFAULT_MIN_VERSION ? undefined : prevVer,
 					date: latestDate,
 					releaseType: bumpType,
 					isNewRelease,
@@ -633,12 +667,17 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 			}
 
 			const displayDate = getDisplayDate(latestDate);
-			const highlight = this.isRecentReleaseByDate(latestDate) ? chalk.green : chalk.white;
+			const highlight = this.isRecentReleaseByDate(latestDate)
+				? chalk.green
+				: chalk.white;
 			const displayRelDate = highlight(getDisplayDateRelative(latestDate));
 
 			const displayPreviousVersion = prevVer ?? DEFAULT_MIN_VERSION;
 
-			const bumpType = detectBumpType(prevVer ?? DEFAULT_MIN_VERSION, latestVer);
+			const bumpType = detectBumpType(
+				prevVer ?? DEFAULT_MIN_VERSION,
+				latestVer,
+			);
 			const displayBumpType = highlight(`${bumpType}`);
 
 			const displayVersionSection = chalk.gray(
@@ -728,7 +767,12 @@ async function writeReport(
 				report["@fluidframework/container-runtime"].version
 			: context.getVersion(releaseGroup);
 
-	const reportName = generateReportFileName(kind, version, releaseGroup, baseFileName);
+	const reportName = generateReportFileName(
+		kind,
+		version,
+		releaseGroup,
+		baseFileName,
+	);
 	const reportPath = path.join(dir, reportName);
 	log?.info(`${kind} report written to ${reportPath}`);
 	const reportOutput = toReportKind(report, kind);

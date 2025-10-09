@@ -11,8 +11,14 @@ import {
 	IContainer,
 } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
-import type { ISharedCounter, SharedCounter } from "@fluidframework/counter/internal";
+import {
+	ConfigTypes,
+	IConfigProviderBase,
+} from "@fluidframework/core-interfaces";
+import type {
+	ISharedCounter,
+	SharedCounter,
+} from "@fluidframework/counter/internal";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -27,7 +33,9 @@ const counterId = "counterKey";
 describeCompat("SharedCounter", "FullCompat", (getTestObjectProvider, apis) => {
 	const { SharedCounter } = apis.dds;
 
-	const registry: ChannelFactoryRegistry = [[counterId, SharedCounter.getFactory()]];
+	const registry: ChannelFactoryRegistry = [
+		[counterId, SharedCounter.getFactory()],
+	];
 	const testContainerConfig: ITestContainerConfig = {
 		fluidDataObjectType: DataObjectFactoryType.Test,
 		registry,
@@ -65,9 +73,12 @@ describeCompat("SharedCounter", "FullCompat", (getTestObjectProvider, apis) => {
 
 	// Get all three data stores
 	beforeEach("Get data stores", async () => {
-		dataStore1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
-		dataStore2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
-		dataStore3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
+		dataStore1 =
+			await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
+		dataStore2 =
+			await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
+		dataStore3 =
+			await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
 	});
 
 	// Get all three counters
@@ -82,7 +93,11 @@ describeCompat("SharedCounter", "FullCompat", (getTestObjectProvider, apis) => {
 		await provider.ensureSynchronized();
 	});
 
-	function verifyCounterValue(counter: ISharedCounter, expectedValue, index: number) {
+	function verifyCounterValue(
+		counter: ISharedCounter,
+		expectedValue,
+		index: number,
+	) {
 		const userValue = counter.value;
 		assert.equal(
 			userValue,
@@ -134,7 +149,10 @@ describeCompat("SharedCounter", "FullCompat", (getTestObjectProvider, apis) => {
 		});
 
 		it("fires incremented events in 3 containers correctly", async function () {
-			const incrementSteps: { incrementer: ISharedCounter; incrementAmount: number }[] = [
+			const incrementSteps: {
+				incrementer: ISharedCounter;
+				incrementAmount: number;
+			}[] = [
 				{ incrementer: sharedCounter3, incrementAmount: -1 },
 				{ incrementer: sharedCounter1, incrementAmount: 3 },
 				{ incrementer: sharedCounter2, incrementAmount: 10 },
@@ -149,21 +167,30 @@ describeCompat("SharedCounter", "FullCompat", (getTestObjectProvider, apis) => {
 			let eventCount2 = 0;
 			let eventCount3 = 0;
 
-			sharedCounter1.on("incremented", (incrementAmount: number, newValue: number) => {
-				assert.equal(incrementAmount, incrementSteps[0].incrementAmount);
-				assert.equal(newValue, expectedValue);
-				eventCount1++;
-			});
-			sharedCounter2.on("incremented", (incrementAmount: number, newValue: number) => {
-				assert.equal(incrementAmount, incrementSteps[0].incrementAmount);
-				assert.equal(newValue, expectedValue);
-				eventCount2++;
-			});
-			sharedCounter3.on("incremented", (incrementAmount: number, newValue: number) => {
-				assert.equal(incrementAmount, incrementSteps[0].incrementAmount);
-				assert.equal(newValue, expectedValue);
-				eventCount3++;
-			});
+			sharedCounter1.on(
+				"incremented",
+				(incrementAmount: number, newValue: number) => {
+					assert.equal(incrementAmount, incrementSteps[0].incrementAmount);
+					assert.equal(newValue, expectedValue);
+					eventCount1++;
+				},
+			);
+			sharedCounter2.on(
+				"incremented",
+				(incrementAmount: number, newValue: number) => {
+					assert.equal(incrementAmount, incrementSteps[0].incrementAmount);
+					assert.equal(newValue, expectedValue);
+					eventCount2++;
+				},
+			);
+			sharedCounter3.on(
+				"incremented",
+				(incrementAmount: number, newValue: number) => {
+					assert.equal(incrementAmount, incrementSteps[0].incrementAmount);
+					assert.equal(newValue, expectedValue);
+					eventCount3++;
+				},
+			);
 
 			while (incrementSteps.length > 0) {
 				// set up for next increment, incrementSteps[0] holds the in-progress step
@@ -196,7 +223,9 @@ describeCompat(
 	(getTestObjectProvider, apis) => {
 		const { SharedCounter } = apis.dds;
 
-		const registry: ChannelFactoryRegistry = [[counterId, SharedCounter.getFactory()]];
+		const registry: ChannelFactoryRegistry = [
+			[counterId, SharedCounter.getFactory()],
+		];
 		const testContainerConfig: ITestContainerConfig = {
 			fluidDataObjectType: DataObjectFactoryType.Test,
 			registry,
@@ -213,7 +242,9 @@ describeCompat(
 		let sharedCounter: SharedCounter;
 		let containerRuntime: IContainerRuntime;
 
-		const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+		const configProvider = (
+			settings: Record<string, ConfigTypes>,
+		): IConfigProviderBase => ({
 			getRawConfig: (name: string): ConfigTypes => settings[name],
 		});
 		const errorMessage = "callback failure";
@@ -228,10 +259,13 @@ describeCompat(
 				},
 			};
 			container = await provider.makeTestContainer(configWithFeatureGates);
-			dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
-			dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+			dataObject =
+				await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+			dataStore =
+				await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 			sharedCounter = await dataStore.getSharedObject<SharedCounter>(counterId);
-			containerRuntime = dataObject.context.containerRuntime as IContainerRuntime;
+			containerRuntime = dataObject.context
+				.containerRuntime as IContainerRuntime;
 		});
 
 		itExpects(
@@ -256,7 +290,10 @@ describeCompat(
 				}
 
 				assert.notEqual(error, undefined, "No error");
-				assert.ok(error?.message.startsWith("RollbackError:"), "Unexpected error message");
+				assert.ok(
+					error?.message.startsWith("RollbackError:"),
+					"Unexpected error message",
+				);
 				assert.equal(container.closed, true);
 			},
 		);

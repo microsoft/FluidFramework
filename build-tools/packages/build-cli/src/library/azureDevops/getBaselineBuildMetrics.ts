@@ -39,7 +39,8 @@ export async function getBaselineBuildMetrics(
 			azureDevopsBuildCoverageConstants.branch === undefined
 				? undefined
 				: `refs/heads/${azureDevopsBuildCoverageConstants.branch}`,
-		maxBuildsPerDefinition: azureDevopsBuildCoverageConstants.buildsToSearch ?? 50,
+		maxBuildsPerDefinition:
+			azureDevopsBuildCoverageConstants.buildsToSearch ?? 50,
 	});
 
 	let baselineBuild: Build | undefined;
@@ -58,7 +59,9 @@ export async function getBaselineBuildMetrics(
 
 		// Baseline build succeeded
 		logger?.verbose(`Found baseline build with id: ${build.id}`);
-		logger?.verbose(`projectName: ${azureDevopsBuildCoverageConstants.projectName}`);
+		logger?.verbose(
+			`projectName: ${azureDevopsBuildCoverageConstants.projectName}`,
+		);
 		logger?.verbose(
 			`codeCoverageAnalysisArtifactName: ${azureDevopsBuildCoverageConstants.artifactName}`,
 		);
@@ -80,7 +83,9 @@ export async function getBaselineBuildMetrics(
 
 		// For reasons that I don't understand, the "undefined" string is omitted in the log output, which makes the
 		// output very confusing. The string is capitalized here and elsewhere in this file as a workaround.
-		logger?.verbose(`Baseline Zip === UNDEFINED: ${baselineArtifactZip === undefined}`);
+		logger?.verbose(
+			`Baseline Zip === UNDEFINED: ${baselineArtifactZip === undefined}`,
+		);
 
 		// Successful baseline build does not have the needed build artifacts
 		if (baselineArtifactZip === undefined) {
@@ -133,15 +138,21 @@ export async function getBuildArtifactForSpecificBuild(
 	adoConnection: WebApi,
 	logger?: CommandLogger,
 ): Promise<IBuildMetrics> {
-	assert(azureDevopsBuildCoverageConstants.buildId !== undefined, "buildId is required");
-	logger?.verbose(`The buildId id ${azureDevopsBuildCoverageConstants.buildId}`);
+	assert(
+		azureDevopsBuildCoverageConstants.buildId !== undefined,
+		"buildId is required",
+	);
+	logger?.verbose(
+		`The buildId id ${azureDevopsBuildCoverageConstants.buildId}`,
+	);
 
 	const build: Build = await getBuild(
 		adoConnection,
 		{
 			project: azureDevopsBuildCoverageConstants.projectName,
 			definitions: [azureDevopsBuildCoverageConstants.ciBuildDefinitionId],
-			maxBuildsPerDefinition: azureDevopsBuildCoverageConstants.buildsToSearch ?? 20,
+			maxBuildsPerDefinition:
+				azureDevopsBuildCoverageConstants.buildsToSearch ?? 20,
 		},
 		azureDevopsBuildCoverageConstants.buildId,
 	);
@@ -154,7 +165,9 @@ export async function getBuildArtifactForSpecificBuild(
 	}
 
 	logger?.verbose(`Found build with id: ${build.id}`);
-	logger?.verbose(`projectName: ${azureDevopsBuildCoverageConstants.projectName}`);
+	logger?.verbose(
+		`projectName: ${azureDevopsBuildCoverageConstants.projectName}`,
+	);
 	logger?.verbose(
 		`codeCoverageAnalysisArtifactName: ${azureDevopsBuildCoverageConstants.artifactName}`,
 	);

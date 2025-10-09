@@ -21,7 +21,9 @@ export class AzureUrlResolver implements IUrlResolver {
 	public constructor() {}
 
 	public async resolve(request: IRequest): Promise<IResolvedUrl> {
-		const { ordererUrl, storageUrl, tenantId, containerId } = decodeAzureUrl(request.url);
+		const { ordererUrl, storageUrl, tenantId, containerId } = decodeAzureUrl(
+			request.url,
+		);
 		// determine whether the request is for creating of a new container.
 		// such request has the `createNew` header set to true and doesn't have a container ID.
 		if (request.headers && request.headers[DriverHeader.createNew] === true) {

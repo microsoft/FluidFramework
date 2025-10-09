@@ -18,7 +18,11 @@ export interface IParsedInventoryItemData {
 export function readVersion(stringData: string): string {
 	const lines = stringData.split("\n");
 	const [versionTag, version] = lines[0].split(":");
-	if (versionTag !== "version" || typeof version !== "string" || version === "") {
+	if (
+		versionTag !== "version" ||
+		typeof version !== "string" ||
+		version === ""
+	) {
 		throw new Error("Can't read version");
 	}
 	return version;
@@ -30,7 +34,9 @@ export function readVersion(stringData: string): string {
  * @param stringData - version:one formatted string data
  * @returns An array of objects, each representing a single inventory item
  */
-export function parseStringDataVersionOne(stringData: string): IParsedInventoryItemData[] {
+export function parseStringDataVersionOne(
+	stringData: string,
+): IParsedInventoryItemData[] {
 	const version = readVersion(stringData);
 	if (version !== "one") {
 		throw new Error(`Expected to parse version one, got version ${version}`);
@@ -45,7 +51,10 @@ export function parseStringDataVersionOne(stringData: string): IParsedInventoryI
 
 	return itemStrings.map((itemString) => {
 		const [itemNameString, itemQuantityString] = itemString.split(":");
-		return { name: itemNameString, quantity: Number.parseInt(itemQuantityString, 10) };
+		return {
+			name: itemNameString,
+			quantity: Number.parseInt(itemQuantityString, 10),
+		};
 	});
 }
 
@@ -55,7 +64,9 @@ export function parseStringDataVersionOne(stringData: string): IParsedInventoryI
  * @param stringData - version:two formatted string data
  * @returns An array of objects, each representing a single inventory item
  */
-export function parseStringDataVersionTwo(stringData: string): IParsedInventoryItemData[] {
+export function parseStringDataVersionTwo(
+	stringData: string,
+): IParsedInventoryItemData[] {
 	const version = readVersion(stringData);
 	if (version !== "two") {
 		throw new Error(`Expected to parse version two, got version ${version}`);
@@ -70,7 +81,10 @@ export function parseStringDataVersionTwo(stringData: string): IParsedInventoryI
 
 	return itemStrings.map((itemString) => {
 		const [itemNameString, itemQuantityString] = itemString.split("\t");
-		return { name: itemNameString, quantity: Number.parseInt(itemQuantityString, 10) };
+		return {
+			name: itemNameString,
+			quantity: Number.parseInt(itemQuantityString, 10),
+		};
 	});
 }
 
@@ -121,6 +135,8 @@ export const inventoryListDataTransformationCallback = async (
 	} else if (modelVersion === "two") {
 		return transformToTwo(exportedData);
 	} else {
-		throw new Error(`Don't know how to transform for target version ${modelVersion}`);
+		throw new Error(
+			`Don't know how to transform for target version ${modelVersion}`,
+		);
 	}
 };

@@ -9,6 +9,6 @@
 
 		// TODO: this should be updated to use strict mode ASAP
 		"strict": false,
-		"exactOptionalPropertyTypes": false,
-	},
+		"exactOptionalPropertyTypes": false
+	}
 }

@@ -18,13 +18,17 @@ import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 describe("Test utils", () => {
 	describe("prepareTreeForCompare", () => {
 		it("normalizing", () => {
-			assert.deepEqual(prepareTreeForCompare([{ type: brand("foo") }]), [{ type: "foo" }]);
-			assert.deepEqual(prepareTreeForCompare([{ type: brand("foo"), fields: {} }]), [
+			assert.deepEqual(prepareTreeForCompare([{ type: brand("foo") }]), [
 				{ type: "foo" },
 			]);
-			assert.deepEqual(prepareTreeForCompare([{ type: brand("foo"), value: undefined }]), [
-				{ type: "foo" },
-			]);
+			assert.deepEqual(
+				prepareTreeForCompare([{ type: brand("foo"), fields: {} }]),
+				[{ type: "foo" }],
+			);
+			assert.deepEqual(
+				prepareTreeForCompare([{ type: brand("foo"), value: undefined }]),
+				[{ type: "foo" }],
+			);
 		});
 
 		it("without handles", () => {

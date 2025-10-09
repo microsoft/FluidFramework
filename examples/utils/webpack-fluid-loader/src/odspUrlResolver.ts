@@ -4,7 +4,10 @@
  */
 
 import { IRequest } from "@fluidframework/core-interfaces";
-import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions/internal";
+import {
+	IResolvedUrl,
+	IUrlResolver,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	IOdspAuthRequestInfo,
 	getDriveItemByRootFileName,
@@ -51,7 +54,10 @@ export class OdspUrlResolver implements IUrlResolver {
 			dataStorePath,
 		});
 
-		return this.driverUrlResolver.resolve({ url: odspUrl, headers: request.headers });
+		return this.driverUrlResolver.resolve({
+			url: odspUrl,
+			headers: request.headers,
+		});
 	}
 
 	private formFilePath(documentId: string): string {

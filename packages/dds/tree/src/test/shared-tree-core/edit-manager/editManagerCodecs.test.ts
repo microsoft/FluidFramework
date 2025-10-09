@@ -9,7 +9,10 @@ import type { ChangeEncodingContext } from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeEditManagerCodecs } from "../../../shared-tree-core/editManagerCodecs.js";
-import type { SharedBranchSummaryData, SummaryData } from "../../../shared-tree-core/index.js";
+import type {
+	SharedBranchSummaryData,
+	SummaryData,
+} from "../../../shared-tree-core/index.js";
 import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import {
@@ -51,7 +54,11 @@ const dummyContext = {
 	revision: undefined,
 	idCompressor: testIdCompressor,
 };
-const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodingContext> = {
+const testCases: EncodingTestData<
+	SummaryData<TestChange>,
+	unknown,
+	ChangeEncodingContext
+> = {
 	successes: [
 		[
 			"empty",
@@ -176,7 +183,9 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodi
 				"missing sessionId",
 				{
 					base: tags[0],
-					commits: [{ change: TestChange.mint([0], 1), revision: mintRevisionTag() }],
+					commits: [
+						{ change: TestChange.mint([0], 1), revision: mintRevisionTag() },
+					],
 				},
 				dummyContext,
 			],
@@ -185,7 +194,9 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodi
 				"commit with parent field",
 				{
 					main: {
-						trunk: trunkCommits.slice(0, 1).map((commit) => ({ ...commit, parent: 0 })),
+						trunk: trunkCommits
+							.slice(0, 1)
+							.map((commit) => ({ ...commit, parent: 0 })),
 						peerLocalBranches: [],
 					},
 				},

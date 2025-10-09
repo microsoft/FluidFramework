@@ -17,7 +17,9 @@ import { fromBase64ToUtf8 } from "@fluid-internal/client-utils";
  *
  * Note that claims value is base64 encoded inside header but this method will return unencoded value.
  */
-export function parseAuthErrorClaims(responseHeader: Headers): string | undefined {
+export function parseAuthErrorClaims(
+	responseHeader: Headers,
+): string | undefined {
 	const authHeaderData = responseHeader.get("www-authenticate");
 	if (!authHeaderData) {
 		return undefined;
@@ -29,15 +31,24 @@ export function parseAuthErrorClaims(responseHeader: Headers): string | undefine
 		const nameValuePair = section.split("=");
 		// Values can be encoded and contain '=' symbol inside so it is possible to have more than one
 		if (nameValuePair.length >= 2) {
-			if (!detectedErrorIndicator && nameValuePair[0].trim().toLowerCase() === "error") {
+			if (
+				!detectedErrorIndicator &&
+				nameValuePair[0].trim().toLowerCase() === "error"
+			) {
 				detectedErrorIndicator =
-					JSON.parse(nameValuePair[1].trim().toLowerCase()) === "insufficient_claims";
-			} else if (!claims && nameValuePair[0].trim().toLowerCase() === "claims") {
+					JSON.parse(nameValuePair[1].trim().toLowerCase()) ===
+					"insufficient_claims";
+			} else if (
+				!claims &&
+				nameValuePair[0].trim().toLowerCase() === "claims"
+			) {
 				claims = fromBase64ToUtf8(
 					// TODO: this is assigning an object to a string.
 					// If this is intentional, we should document what's going on here.
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-					JSON.parse(section.slice(Math.max(0, section.indexOf("=") + 1)).trim()),
+					JSON.parse(
+						section.slice(Math.max(0, section.indexOf("=") + 1)).trim(),
+					),
 				);
 			}
 		}

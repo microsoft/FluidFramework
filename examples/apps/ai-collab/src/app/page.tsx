@@ -35,13 +35,19 @@ import { useSharedTreeRerender } from "@/useSharedTreeRerender";
 
 // Uncomment the import line that corresponds to the server you want to use
 // import { createContainer, loadContainer, postAttach, containerIdFromUrl } from "./spe"; // eslint-disable-line import/order
-import { createContainer, loadContainer, postAttach, containerIdFromUrl } from "./tinylicious"; // eslint-disable-line import/order
+import {
+	createContainer,
+	loadContainer,
+	postAttach,
+	containerIdFromUrl,
+} from "./tinylicious"; // eslint-disable-line import/order
 
 export async function createAndInitializeContainer(): Promise<
 	IFluidContainer<typeof CONTAINER_SCHEMA>
 > {
 	const container = await createContainer(CONTAINER_SCHEMA);
-	const treeView = container.initialObjects.appState.viewWith(TREE_CONFIGURATION);
+	const treeView =
+		container.initialObjects.appState.viewWith(TREE_CONFIGURATION);
 	treeView.initialize(new SharedTreeAppState(INITIAL_APP_STATE));
 	treeView.dispose(); // After initializing, dispose the tree view so later loading of the data can work correctly
 	return container;
@@ -49,9 +55,12 @@ export async function createAndInitializeContainer(): Promise<
 
 // eslint-disable-next-line import/no-default-export -- NextJS uses default exports
 export default function TasksListPage(): JSX.Element {
-	const [selectedTaskGroup, setSelectedTaskGroup] = useState<SharedTreeTaskGroup>();
-	const [treeView, setTreeView] = useState<TreeView<typeof SharedTreeAppState>>();
-	const [presenceManagerContext, setPresenceManagerContext] = useState<PresenceManager>();
+	const [selectedTaskGroup, setSelectedTaskGroup] =
+		useState<SharedTreeTaskGroup>();
+	const [treeView, setTreeView] =
+		useState<TreeView<typeof SharedTreeAppState>>();
+	const [presenceManagerContext, setPresenceManagerContext] =
+		useState<PresenceManager>();
 
 	const { container, isFluidInitialized, data } = useFluidContainerNextJs(
 		containerIdFromUrl(),
@@ -60,7 +69,8 @@ export default function TasksListPage(): JSX.Element {
 		async (id) => loadContainer(CONTAINER_SCHEMA, id),
 		// Get data from existing container
 		(fluidContainer) => {
-			const _treeView = fluidContainer.initialObjects.appState.viewWith(TREE_CONFIGURATION);
+			const _treeView =
+				fluidContainer.initialObjects.appState.viewWith(TREE_CONFIGURATION);
 			setTreeView(_treeView);
 
 			const presence = getPresence(fluidContainer);
@@ -115,7 +125,11 @@ export default function TasksListPage(): JSX.Element {
 									}}
 								>
 									{taskGroups?.map((taskGroup) => (
-										<Tab label={taskGroup.title} value={taskGroup.id} key={taskGroup.id} />
+										<Tab
+											label={taskGroup.title}
+											value={taskGroup.id}
+											key={taskGroup.id}
+										/>
 									))}
 								</Tabs>
 							</Box>
@@ -124,13 +138,18 @@ export default function TasksListPage(): JSX.Element {
 								variant="contained"
 								size="small"
 								color="success"
-								onClick={() => taskGroups.insertAtEnd(getNewTaskGroup(taskGroups.length))}
+								onClick={() =>
+									taskGroups.insertAtEnd(getNewTaskGroup(taskGroups.length))
+								}
 							>
 								New Group
 							</Button>
 						</Stack>
 
-						<TaskGroup treeView={treeView} sharedTreeTaskGroup={selectedTaskGroup} />
+						<TaskGroup
+							treeView={treeView}
+							sharedTreeTaskGroup={selectedTaskGroup}
+						/>
 					</React.Fragment>
 				)}
 		</Container>
@@ -175,7 +194,8 @@ const getNewTaskGroup = (groupLength: number) => {
 			{
 				name: "Alice",
 				maxCapacity: 15,
-				skills: "Senior engineer capable of handling complex tasks. Versed in most languages",
+				skills:
+					"Senior engineer capable of handling complex tasks. Versed in most languages",
 			},
 			{
 				name: "Bob",
@@ -186,7 +206,8 @@ const getNewTaskGroup = (groupLength: number) => {
 			{
 				name: "Charlie",
 				maxCapacity: 7,
-				skills: "Junior engineer capable of handling simple tasks. Versed in Node.JS",
+				skills:
+					"Junior engineer capable of handling simple tasks. Versed in Node.JS",
 			},
 		],
 	};

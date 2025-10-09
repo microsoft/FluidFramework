@@ -4,7 +4,11 @@
  */
 
 import { CallingServiceHeaderName } from "@fluidframework/server-services-client";
-import type { ISecretManager, ICache, IReadinessCheck } from "@fluidframework/server-services-core";
+import type {
+	ISecretManager,
+	ICache,
+	IReadinessCheck,
+} from "@fluidframework/server-services-core";
 import { createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
 import {
 	BaseTelemetryProperties,
@@ -53,8 +57,7 @@ export function create(
 				res.locals.tenantId = tenantId;
 				return {
 					[BaseTelemetryProperties.tenantId]: tenantId,
-					[CommonProperties.callingServiceName]:
-						req.headers[CallingServiceHeaderName] ?? "",
+					[CommonProperties.callingServiceName]: req.headers[CallingServiceHeaderName] ?? "",
 				};
 			}),
 		);

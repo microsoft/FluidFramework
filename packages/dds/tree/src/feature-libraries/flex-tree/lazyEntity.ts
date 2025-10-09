@@ -34,7 +34,9 @@ export function assertFlexTreeEntityNotFreed(entity: FlexTreeEntity): void {
 /**
  * This is a base class for lazy (cursor based) UntypedEntity implementations, which uniformly handles cursors and anchors.
  */
-export abstract class LazyEntity<TAnchor = unknown> implements FlexTreeEntity, IDisposable {
+export abstract class LazyEntity<TAnchor = unknown>
+	implements FlexTreeEntity, IDisposable
+{
 	readonly #lazyCursor: ITreeSubscriptionCursor;
 	public readonly anchor: TAnchor;
 

@@ -39,7 +39,9 @@ export function renderDiceRoller(diceRoller: IDiceRoller, div: HTMLDivElement) {
 
 	// Just showing visually whether we're the task owner or not.
 	const updateTaskOwner = () => {
-		taskOwnerDiv.textContent = diceRoller.hasTask() ? "Task owner" : "Not task owner";
+		taskOwnerDiv.textContent = diceRoller.hasTask()
+			? "Task owner"
+			: "Not task owner";
 	};
 	updateTaskOwner();
 

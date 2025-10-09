@@ -29,7 +29,10 @@
  * to FluidObject pattern.
  * @public
  */
-export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp
+export type FluidObjectProviderKeys<
+	T,
+	TProp extends keyof T = keyof T,
+> = string extends TProp
 	? never
 	: number extends TProp
 		? never // exclude indexers [key:string |number]: any

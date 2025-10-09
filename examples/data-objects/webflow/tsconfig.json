@@ -7,7 +7,7 @@
 		"outDir": "./lib",
 		"types": ["react", "react-dom"],
 		"resolveJsonModule": true,
-		"exactOptionalPropertyTypes": false,
+		"exactOptionalPropertyTypes": false
 	},
-	"include": ["src/**/*"],
+	"include": ["src/**/*"]
 }

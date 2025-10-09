@@ -98,7 +98,10 @@ export function createAdjustRangeOp(
  *
  * @internal
  */
-export function createRemoveRangeOp(start: number, end: number): IMergeTreeRemoveMsg {
+export function createRemoveRangeOp(
+	start: number,
+	end: number,
+): IMergeTreeRemoveMsg {
 	return {
 		pos1: start,
 		pos2: end,
@@ -115,7 +118,10 @@ export function createRemoveRangeOp(start: number, end: number): IMergeTreeRemov
  * @internal
  */
 // eslint-disable-next-line import/no-deprecated
-export function createObliterateRangeOp(start: number, end: number): IMergeTreeObliterateMsg {
+export function createObliterateRangeOp(
+	start: number,
+	end: number,
+): IMergeTreeObliterateMsg {
 	return {
 		pos1: start,
 		pos2: end,
@@ -161,7 +167,10 @@ export function createObliterateRangeOpSided(
  *
  * @internal
  */
-export function createInsertSegmentOp(pos: number, segment: ISegment): IMergeTreeInsertMsg {
+export function createInsertSegmentOp(
+	pos: number,
+	segment: ISegment,
+): IMergeTreeInsertMsg {
 	return createInsertOp(pos, segment.toJSONObject());
 }
 
@@ -171,7 +180,10 @@ export function createInsertSegmentOp(pos: number, segment: ISegment): IMergeTre
  *
  * @internal
  */
-export function createInsertOp(pos: number, segSpec: unknown): IMergeTreeInsertMsg {
+export function createInsertOp(
+	pos: number,
+	segSpec: unknown,
+): IMergeTreeInsertMsg {
 	return {
 		pos1: pos,
 		seg: segSpec,

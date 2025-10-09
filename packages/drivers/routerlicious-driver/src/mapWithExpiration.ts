@@ -9,7 +9,10 @@ import { assert } from "@fluidframework/core-utils/internal";
  * An extension of Map that expires (deletes) entries after a period of inactivity.
  * The policy is based on the last time a key was written to.
  */
-export class MapWithExpiration<TKey = any, TValue = any> extends Map<TKey, TValue> {
+export class MapWithExpiration<TKey = any, TValue = any> extends Map<
+	TKey,
+	TValue
+> {
 	/** Timestamps (as epoch ms numbers) of when each key was last refreshed */
 	private readonly lastRefreshedTimes = new Map<TKey, number>();
 
@@ -25,7 +28,10 @@ export class MapWithExpiration<TKey = any, TValue = any> extends Map<TKey, TValu
 	 * Returns true if the key is present and expired, false if it's not expired, and undefined if it's not found
 	 * If cleanUp is passed as true, then delete any expired entry before returning.
 	 */
-	private checkExpiry(key: TKey, cleanUp: boolean = false): boolean | undefined {
+	private checkExpiry(
+		key: TKey,
+		cleanUp: boolean = false,
+	): boolean | undefined {
 		const refreshTime = this.lastRefreshedTimes.get(key);
 		assert(
 			(refreshTime !== undefined) === super.has(key),

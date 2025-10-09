@@ -10,7 +10,10 @@ import {
 	type ImplicitAllowedTypes,
 	type SchemaUpgrade,
 } from "./allowedTypes.js";
-import type { TreeNodeSchemaIdentifier, TreeTypeSet } from "../../core/index.js";
+import type {
+	TreeNodeSchemaIdentifier,
+	TreeTypeSet,
+} from "../../core/index.js";
 
 /**
  * Options for generating a {@link TreeStoredSchema} from view schema.
@@ -51,10 +54,9 @@ export function convertAllowedTypes(
 	schema: ImplicitAllowedTypes,
 	options: StoredSchemaGenerationOptions,
 ): TreeTypeSet {
-	const filtered: TreeNodeSchemaIdentifier[] = normalizeAndEvaluateAnnotatedAllowedTypes(
-		schema,
-	)
-		.types.filter((allowedType) => allowedTypeFilter(allowedType, options))
-		.map((a) => brand(a.type.identifier));
+	const filtered: TreeNodeSchemaIdentifier[] =
+		normalizeAndEvaluateAnnotatedAllowedTypes(schema)
+			.types.filter((allowedType) => allowedTypeFilter(allowedType, options))
+			.map((a) => brand(a.type.identifier));
 	return new Set(filtered);
 }

@@ -46,7 +46,9 @@ export class IdGenerator {
 		return this.nodeToIdMap.get(node);
 	}
 
-	public assignIds(node: TreeFieldFromImplicitField<ImplicitFieldSchema>): string | undefined {
+	public assignIds(
+		node: TreeFieldFromImplicitField<ImplicitFieldSchema>,
+	): string | undefined {
 		if (typeof node === "object" && node !== null) {
 			const schema = Tree.schema(node as unknown as TreeNode);
 			if (schema.kind === NodeKind.Array) {
@@ -77,7 +79,8 @@ export class IdGenerator {
 
 		// Check if the last segment already exists with a different prefix
 		assert(
-			!this.prefixMap.has(lastSegment) || this.prefixMap.get(lastSegment) === prefix,
+			!this.prefixMap.has(lastSegment) ||
+				this.prefixMap.get(lastSegment) === prefix,
 			0xa7a /* Different scopes not supported yet. */,
 		);
 

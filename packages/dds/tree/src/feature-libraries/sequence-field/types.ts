@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { ChangeAtomId, ChangesetLocalId, RevisionTag } from "../../core/index.js";
+import type {
+	ChangeAtomId,
+	ChangesetLocalId,
+	RevisionTag,
+} from "../../core/index.js";
 import type { NodeId } from "../modular-schema/index.js";
 
 export type CellCount = number;

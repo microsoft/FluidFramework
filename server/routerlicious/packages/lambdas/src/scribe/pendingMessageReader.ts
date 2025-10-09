@@ -5,7 +5,10 @@
 
 import type { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import type { IDeltaService } from "@fluidframework/server-services-core";
-import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import {
+	getLumberBaseProperties,
+	Lumberjack,
+} from "@fluidframework/server-services-telemetry";
 
 import type { IPendingMessageReader } from "./interfaces";
 

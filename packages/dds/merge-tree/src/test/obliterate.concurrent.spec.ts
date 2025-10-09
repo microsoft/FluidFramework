@@ -44,7 +44,10 @@ import { useStrictPartialLengthChecks } from "./testUtils.js";
  * removed by two clients.
  */
 
-for (const { incremental, mergeTreeEnableSidedObliterate } of generatePairwiseOptions({
+for (const {
+	incremental,
+	mergeTreeEnableSidedObliterate,
+} of generatePairwiseOptions({
 	incremental: [true, false],
 	mergeTreeEnableSidedObliterate: [true, false],
 })) {
@@ -282,9 +285,18 @@ for (const { incremental, mergeTreeEnableSidedObliterate } of generatePairwiseOp
 			helper.insertText("B", 1, "A");
 			helper.processAllOps();
 
-			assert.equal(helper.clients.A.getText().length, helper.clients.A.getLength());
-			assert.equal(helper.clients.B.getText().length, helper.clients.B.getLength());
-			assert.equal(helper.clients.C.getText().length, helper.clients.C.getLength());
+			assert.equal(
+				helper.clients.A.getText().length,
+				helper.clients.A.getLength(),
+			);
+			assert.equal(
+				helper.clients.B.getText().length,
+				helper.clients.B.getLength(),
+			);
+			assert.equal(
+				helper.clients.C.getText().length,
+				helper.clients.C.getLength(),
+			);
 
 			assert.equal(helper.clients.A.getText(), "GG30");
 
@@ -1853,7 +1865,9 @@ for (const { incremental, mergeTreeEnableSidedObliterate } of generatePairwiseOp
 				// obliterateRange op for the length of the string at refSeq 4.
 				// With strict partial lengths disabled, this manifested in 0x4bc on the subsequent op application.
 
-				const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate: true });
+				const helper = new ClientTestHelper({
+					mergeTreeEnableSidedObliterate: true,
+				});
 
 				helper.insertText("D", 0, "ABCDEFGH");
 				helper.processAllOps();
@@ -1881,7 +1895,9 @@ for (const { incremental, mergeTreeEnableSidedObliterate } of generatePairwiseOp
 			});
 
 			it("Avoids adding entries for insert with subsequent removal", () => {
-				const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate: true });
+				const helper = new ClientTestHelper({
+					mergeTreeEnableSidedObliterate: true,
+				});
 				helper.insertText("D", 0, "bZL4aQd");
 				helper.processAllOps();
 				helper.insertText("A", 0, "8mvaLcEa4nwhELu");
@@ -1920,7 +1936,9 @@ for (const { incremental, mergeTreeEnableSidedObliterate } of generatePairwiseOp
 			// Once fuzz testing more meaninfully leverages ops being sent to different clients at different types (partial
 			// synchronization), it's probably fine to remove this.
 			it("fuzz regression: Local obliterate wins post-insertion of segment previously thought to have won", () => {
-				const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate: true });
+				const helper = new ClientTestHelper({
+					mergeTreeEnableSidedObliterate: true,
+				});
 
 				helper.insertText("A", 0, "Hx15J");
 				helper.processAllOps();
@@ -1957,7 +1975,9 @@ for (const { incremental, mergeTreeEnableSidedObliterate } of generatePairwiseOp
 
 			// Simpler version of the above test which has the same root cause but reproduces a slightly different failure mode.
 			it("Local obliterate wins post-insertion of segment previously thought to have won", () => {
-				const helper = new ClientTestHelper({ mergeTreeEnableSidedObliterate: true });
+				const helper = new ClientTestHelper({
+					mergeTreeEnableSidedObliterate: true,
+				});
 				helper.insertText("A", 0, "1xx2");
 				helper.processAllOps();
 				// A and B both obliterate the 'xx' segment with an expanding obliterate, then try to insert

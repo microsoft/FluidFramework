@@ -32,7 +32,10 @@ import {
 	UnassignedSequenceNumber,
 	UniversalSequenceNumber,
 } from "@fluidframework/merge-tree/internal";
-import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/internal";
+import {
+	LoggingError,
+	UsageError,
+} from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import {
@@ -94,7 +97,8 @@ export function getSerializedProperties(
 	// Create a non-unique ID based on start and end to be used on intervals that come from legacy clients
 	// without ID's.
 	const id =
-		maybeId ?? `${legacyIdPrefix}${serializedInterval.start}-${serializedInterval.end}`;
+		maybeId ??
+		`${legacyIdPrefix}${serializedInterval.start}-${serializedInterval.end}`;
 
 	return { id, labels, properties };
 }
@@ -276,7 +280,10 @@ export class SequenceIntervalClass
 		}
 	}
 
-	private callbacks?: Record<"beforePositionChange" | "afterPositionChange", () => void>;
+	private callbacks?: Record<
+		"beforePositionChange" | "afterPositionChange",
+		() => void
+	>;
 
 	/**
 	 * Subscribes to position change events on this interval if there are no current listeners.
@@ -338,7 +345,8 @@ export class SequenceIntervalClass
 				this.client.localReferencePositionToPosition(this.start))
 			: undefined;
 		const endPosition = includeEndpoints
-			? (endSegment?.endpointType ?? this.client.localReferencePositionToPosition(this.end))
+			? (endSegment?.endpointType ??
+				this.client.localReferencePositionToPosition(this.end))
 			: undefined;
 		return {
 			end: endPosition,
@@ -541,7 +549,10 @@ export class SequenceIntervalClass
 	) {
 		this.verifyNotDispose();
 
-		const { startSide, endSide, startPos, endPos } = endpointPosAndSide(start, end);
+		const { startSide, endSide, startPos, endPos } = endpointPosAndSide(
+			start,
+			end,
+		);
 		const getRefType = (baseType: ReferenceType): ReferenceType => {
 			let refType = baseType;
 			if (op === undefined) {
@@ -570,7 +581,8 @@ export class SequenceIntervalClass
 				localSeq,
 				slidingPreference,
 				canSlideToEndpoint:
-					canSlideToEndpoint && slidingPreference === SlidingPreference.BACKWARD,
+					canSlideToEndpoint &&
+					slidingPreference === SlidingPreference.BACKWARD,
 			});
 			if (this.start.properties) {
 				startRef.addProperties(this.start.properties);
@@ -617,7 +629,10 @@ export class SequenceIntervalClass
 		return newInterval;
 	}
 
-	public ackPropertiesChange(newProps: PropertySet, op: ISequencedDocumentMessage) {
+	public ackPropertiesChange(
+		newProps: PropertySet,
+		op: ISequencedDocumentMessage,
+	) {
 		this.verifyNotDispose();
 
 		if (Object.keys(newProps).length === 0) {
@@ -629,9 +644,13 @@ export class SequenceIntervalClass
 			0xbd5 /* must have property manager to ack */,
 		);
 		// Let the propertyManager prune its pending change-properties set.
-		this.#props.propertyManager.ack(op.sequenceNumber, op.minimumSequenceNumber, {
-			props: newProps,
-		});
+		this.#props.propertyManager.ack(
+			op.sequenceNumber,
+			op.minimumSequenceNumber,
+			{
+				props: newProps,
+			},
+		);
 	}
 }
 
@@ -732,7 +751,12 @@ function createPositionReference({
 				referenceSequenceNumber: op.referenceSequenceNumber,
 				clientId: op.clientId,
 			});
-			segoff = getSlideToSegoff(segoff, slidingPreference, undefined, canSlideToEndpoint);
+			segoff = getSlideToSegoff(
+				segoff,
+				slidingPreference,
+				undefined,
+				canSlideToEndpoint,
+			);
 		}
 	} else {
 		assert(
@@ -815,7 +839,12 @@ export function createSequenceInterval(
 		}
 	}
 
-	const stickiness = computeStickinessFromSide(startPos, startSide, endPos, endSide);
+	const stickiness = computeStickinessFromSide(
+		startPos,
+		startSide,
+		endPos,
+		endSide,
+	);
 
 	const startSlidingPreference = startReferenceSlidingPreference(
 		startPos,
@@ -831,7 +860,8 @@ export function createSequenceInterval(
 		op,
 		fromSnapshot,
 		slidingPreference: startSlidingPreference,
-		canSlideToEndpoint: canSlideToEndpoint && stickiness !== IntervalStickiness.NONE,
+		canSlideToEndpoint:
+			canSlideToEndpoint && stickiness !== IntervalStickiness.NONE,
 		rollback,
 	});
 
@@ -849,7 +879,8 @@ export function createSequenceInterval(
 		op,
 		fromSnapshot,
 		slidingPreference: endSlidingPreference,
-		canSlideToEndpoint: canSlideToEndpoint && stickiness !== IntervalStickiness.NONE,
+		canSlideToEndpoint:
+			canSlideToEndpoint && stickiness !== IntervalStickiness.NONE,
 		rollback,
 	});
 
@@ -868,7 +899,11 @@ export function createSequenceInterval(
 		intervalType,
 		props === undefined
 			? undefined
-			: { ...props, [reservedIntervalIdKey]: undefined, [reservedRangeLabelsKey]: undefined },
+			: {
+					...props,
+					[reservedIntervalIdKey]: undefined,
+					[reservedRangeLabelsKey]: undefined,
+				},
 		startSide,
 		endSide,
 	);

@@ -14,7 +14,9 @@ export function encodeBranchId(
 	idCompressor: IIdCompressor,
 	branchId: BranchId,
 ): OpSpaceCompressedId | undefined {
-	return branchId === "main" ? undefined : idCompressor.normalizeToOpSpace(branchId);
+	return branchId === "main"
+		? undefined
+		: idCompressor.normalizeToOpSpace(branchId);
 }
 
 export function decodeBranchId(

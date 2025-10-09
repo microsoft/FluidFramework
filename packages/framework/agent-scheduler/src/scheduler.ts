@@ -22,7 +22,11 @@ import type {
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import { type ISharedMap, type IValueChanged, SharedMap } from "@fluidframework/map/internal";
+import {
+	type ISharedMap,
+	type IValueChanged,
+	SharedMap,
+} from "@fluidframework/map/internal";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
 import type {
 	IFluidDataStoreContext,
@@ -42,7 +46,10 @@ import type { IAgentScheduler, IAgentSchedulerEvents } from "./agent.js";
 // Note: making sure this ID is unique and does not collide with storage provided clientID
 const UnattachedClientId = `${uuid()}_unattached`;
 
-const mapWait = async <T = unknown>(map: ISharedMap, key: string): Promise<T> => {
+const mapWait = async <T = unknown>(
+	map: ISharedMap,
+	key: string,
+): Promise<T> => {
 	const maybeValue = map.get<T>(key);
 	if (maybeValue !== undefined) {
 		return maybeValue;
@@ -78,11 +85,13 @@ export class AgentScheduler
 		let consensusRegisterCollection: ConsensusRegisterCollection<string | null>;
 		if (existing) {
 			root = (await runtime.getChannel("root")) as ISharedMap;
-			const handle = await mapWait<IFluidHandle<ConsensusRegisterCollection<string | null>>>(
-				root,
-				schedulerId,
+			const handle = await mapWait<
+				IFluidHandle<ConsensusRegisterCollection<string | null>>
+			>(root, schedulerId);
+			assert(
+				handle !== undefined,
+				0x116 /* "Missing handle on scheduler load" */,
 			);
-			assert(handle !== undefined, 0x116 /* "Missing handle on scheduler load" */);
 			consensusRegisterCollection = await handle.get();
 		} else {
 			root = SharedMap.create(runtime, "root");
@@ -92,7 +101,11 @@ export class AgentScheduler
 			consensusRegisterCollection.bindToContext();
 			root.set(schedulerId, consensusRegisterCollection.handle);
 		}
-		const agentScheduler = new AgentScheduler(runtime, context, consensusRegisterCollection);
+		const agentScheduler = new AgentScheduler(
+			runtime,
+			context,
+			consensusRegisterCollection,
+		);
 		agentScheduler.initialize();
 
 		return agentScheduler;
@@ -125,7 +138,10 @@ export class AgentScheduler
 	// List of all tasks client is capable of running (essentially expressed desire to run)
 	// Client will proactively attempt to pick them up these tasks if they are not assigned to other clients.
 	// This is a strict superset of tasks running in the client.
-	private readonly locallyRunnableTasks = new Map<string, () => Promise<void>>();
+	private readonly locallyRunnableTasks = new Map<
+		string,
+		() => Promise<void>
+	>();
 
 	// Set of registered tasks client is currently running.
 	// It's subset of this.locallyRunnableTasks
@@ -136,13 +152,19 @@ export class AgentScheduler
 	constructor(
 		private readonly runtime: IFluidDataStoreRuntime,
 		private readonly context: IFluidDataStoreContext,
-		private readonly consensusRegisterCollection: ConsensusRegisterCollection<string | null>,
+		private readonly consensusRegisterCollection: ConsensusRegisterCollection<
+			string | null
+		>,
 	) {
 		super();
 		this.logger = createChildLogger({ logger: runtime.logger });
 		// We are expecting this class to have many listeners, so we suppress noisy "MaxListenersExceededWarning" logging.
 		super.setMaxListeners(0);
-		this._handle = new FluidObjectHandle(this, "", this.runtime.objectsRoutingContext);
+		this._handle = new FluidObjectHandle(
+			this,
+			"",
+			this.runtime.objectsRoutingContext,
+		);
 	}
 
 	public get handle(): IFluidHandle<this> {
@@ -152,7 +174,10 @@ export class AgentScheduler
 	public async register(...taskUrls: string[]): Promise<void> {
 		for (const taskUrl of taskUrls) {
 			if (this.registeredTasks.has(taskUrl)) {
-				throw new UsageError(`Task is already registered`, tagCodeArtifacts({ taskUrl }));
+				throw new UsageError(
+					`Task is already registered`,
+					tagCodeArtifacts({ taskUrl }),
+				);
 			}
 		}
 		const unregisteredTasks: string[] = [];
@@ -167,9 +192,15 @@ export class AgentScheduler
 		return this.registerCore(unregisteredTasks);
 	}
 
-	public async pick(taskUrl: string, worker: () => Promise<void>): Promise<void> {
+	public async pick(
+		taskUrl: string,
+		worker: () => Promise<void>,
+	): Promise<void> {
 		if (this.locallyRunnableTasks.has(taskUrl)) {
-			throw new UsageError(`Task is already attempted`, tagCodeArtifacts({ taskUrl }));
+			throw new UsageError(
+				`Task is already attempted`,
+				tagCodeArtifacts({ taskUrl }),
+			);
 		}
 		this.locallyRunnableTasks.set(taskUrl, worker);
 
@@ -194,7 +225,10 @@ export class AgentScheduler
 		const active = this.isActive();
 		for (const taskUrl of taskUrls) {
 			if (!this.locallyRunnableTasks.has(taskUrl)) {
-				throw new UsageError(`Task was never registered`, tagCodeArtifacts({ taskUrl }));
+				throw new UsageError(
+					`Task was never registered`,
+					tagCodeArtifacts({ taskUrl }),
+				);
 			}
 			if (!this.runningTasks.has(taskUrl)) {
 				// If we got disconnected (and are attached), tasks that we WERE picked for at the time of disconnect
@@ -203,14 +237,20 @@ export class AgentScheduler
 				// ourselves clearing the task upon reconnect.
 				// This UsageError is to enforce that the caller should check AgentScheduler.pickedTasks before trying
 				// to release a task.
-				throw new UsageError(`Task is not currently picked`, tagCodeArtifacts({ taskUrl }));
+				throw new UsageError(
+					`Task is not currently picked`,
+					tagCodeArtifacts({ taskUrl }),
+				);
 			}
 			// We may only release tasks that we KNOW we hold (detached state or connected and own the CRC).  If we're
 			// attached+disconnected then we'll lose the task automatically, and so may not release manually (someone
 			// else might hold it by the time we reconnect)
 			assert(active, 0x119 /* "This agent became inactive while releasing" */);
 			if (this.getTaskClientId(taskUrl) !== this.clientId) {
-				throw new UsageError(`Task was never picked`, tagCodeArtifacts({ taskUrl }));
+				throw new UsageError(
+					`Task was never picked`,
+					tagCodeArtifacts({ taskUrl }),
+				);
 			}
 		}
 		return this.releaseCore([...taskUrls]);
@@ -233,7 +273,10 @@ export class AgentScheduler
 				const taskStatus = this.getTaskClientId(taskUrl);
 
 				// Task should be either registered (null) or picked up.
-				assert(taskStatus !== undefined, 0x11a /* `Unsuccessful registration` */);
+				assert(
+					taskStatus !== undefined,
+					0x11a /* `Unsuccessful registration` */,
+				);
 			}
 		}
 	}
@@ -251,7 +294,10 @@ export class AgentScheduler
 	}
 
 	private async clearTasks(taskUrls: string[]): Promise<void> {
-		assert(this.isActive(), 0x11b /* "Trying to clear tasks on inactive agent" */);
+		assert(
+			this.isActive(),
+			0x11b /* "Trying to clear tasks on inactive agent" */,
+		);
 		const clearP: Promise<void>[] = [];
 		for (const taskUrl of taskUrls) {
 			clearP.push(this.writeCore(taskUrl, null));
@@ -360,7 +406,10 @@ export class AgentScheduler
 		}
 	}
 
-	private async onTaskReassigned(key: string, currentClient: string | null): Promise<void> {
+	private async onTaskReassigned(
+		key: string,
+		currentClient: string | null,
+	): Promise<void> {
 		if (this.runningTasks.has(key)) {
 			this.runningTasks.delete(key);
 			this.emit("released", key);
@@ -377,7 +426,9 @@ export class AgentScheduler
 			// Check if the op came from dropped client
 			// This could happen when "old" ops are submitted on reconnection.
 			// They carry "old" ref seq number, but if write is not contested, it will get accepted
-			else if (this.runtime.getQuorum().getMember(currentClient) === undefined) {
+			else if (
+				this.runtime.getQuorum().getMember(currentClient) === undefined
+			) {
 				await this.writeCore(key, null);
 			}
 		}
@@ -413,7 +464,10 @@ export class AgentScheduler
 
 		for (const taskUrl of this.consensusRegisterCollection.keys()) {
 			const currentClient = this.getTaskClientId(taskUrl);
-			if (currentClient && this.runtime.getQuorum().getMember(currentClient) === undefined) {
+			if (
+				currentClient &&
+				this.runtime.getQuorum().getMember(currentClient) === undefined
+			) {
 				clearCandidates.push(taskUrl);
 			}
 		}
@@ -440,7 +494,11 @@ export class AgentScheduler
 		}
 	}
 
-	private sendErrorEvent(eventName: string, error: unknown, key?: string): void {
+	private sendErrorEvent(
+		eventName: string,
+		error: unknown,
+		key?: string,
+	): void {
 		this.logger.sendErrorEvent({ eventName, key }, error);
 	}
 }
@@ -457,7 +515,10 @@ class AgentSchedulerRuntime extends FluidDataStoreRuntime {
 	}
 	public async request(request: IRequest): Promise<IResponse> {
 		const response = await super.request(request);
-		if (response.status === 404 && (request.url === "" || request.url === "/")) {
+		if (
+			response.status === 404 &&
+			(request.url === "" || request.url === "/")
+		) {
 			const agentScheduler = await this.entryPoint.get();
 			assert(
 				agentScheduler !== undefined,
@@ -489,9 +550,14 @@ export class AgentSchedulerFactory implements IFluidDataStoreFactory {
 	public static async createChildInstance(
 		parentContext: IFluidDataStoreContext,
 	): Promise<IAgentScheduler> {
-		const packagePath = [...parentContext.packagePath, AgentSchedulerFactory.type];
-		const dataStore = await parentContext.containerRuntime.createDataStore(packagePath);
-		const entryPoint: FluidObject<IAgentScheduler> = await dataStore.entryPoint.get();
+		const packagePath = [
+			...parentContext.packagePath,
+			AgentSchedulerFactory.type,
+		];
+		const dataStore =
+			await parentContext.containerRuntime.createDataStore(packagePath);
+		const entryPoint: FluidObject<IAgentScheduler> =
+			await dataStore.entryPoint.get();
 
 		// AgentSchedulerRuntime always puts an AgentScheduler object in the data store's entryPoint, but double-check
 		// while we plumb entryPoints correctly everywhere, so we can be sure the cast below is fine.
@@ -507,10 +573,14 @@ export class AgentSchedulerFactory implements IFluidDataStoreFactory {
 		existing: boolean,
 	): Promise<FluidDataStoreRuntime> {
 		const mapFactory = SharedMap.getFactory();
-		const consensusRegisterCollectionFactory = ConsensusRegisterCollection.getFactory();
+		const consensusRegisterCollectionFactory =
+			ConsensusRegisterCollection.getFactory();
 		const dataTypes = new Map<string, IChannelFactory>();
 		dataTypes.set(mapFactory.type, mapFactory);
-		dataTypes.set(consensusRegisterCollectionFactory.type, consensusRegisterCollectionFactory);
+		dataTypes.set(
+			consensusRegisterCollectionFactory.type,
+			consensusRegisterCollectionFactory,
+		);
 
 		return new AgentSchedulerRuntime(context, dataTypes, existing);
 	}

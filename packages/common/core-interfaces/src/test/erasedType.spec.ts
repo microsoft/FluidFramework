@@ -5,7 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
-import { ErasedTypeImplementation, type ErasedBaseType } from "../erasedType.js";
+import {
+	ErasedTypeImplementation,
+	type ErasedBaseType,
+} from "../erasedType.js";
 
 describe("erasedType", () => {
 	it("ErasedBaseType", () => {

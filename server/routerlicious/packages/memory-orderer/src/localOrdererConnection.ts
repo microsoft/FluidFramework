@@ -21,7 +21,10 @@ import {
 	type IServiceConfiguration,
 	RawOperationType,
 } from "@fluidframework/server-services-core";
-import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
+import {
+	Lumberjack,
+	getLumberBaseProperties,
+} from "@fluidframework/server-services-telemetry";
 
 import type { ISubscriber } from "./pubsub";
 

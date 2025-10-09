@@ -43,7 +43,10 @@ describe("OpStreamAttributor", () => {
 
 	it("can retrieve user information from ops submitted during the current session", () => {
 		const deltaManager = new MockDeltaManager();
-		const attributor = new OpStreamAttributor(deltaManager, defaultQuorumClients);
+		const attributor = new OpStreamAttributor(
+			deltaManager,
+			defaultQuorumClients,
+		);
 		const clientId = clientIds[1];
 		const timestamp = 50;
 		const op = opFactory.makeOp({ timestamp, clientId });

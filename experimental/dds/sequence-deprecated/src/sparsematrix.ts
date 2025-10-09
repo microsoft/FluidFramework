@@ -69,7 +69,10 @@ export class PaddingSegment extends BaseSegment {
 	}
 
 	public append(segment: ISegment) {
-		assert(PaddingSegment.is(segment), 0x5f7 /* can only append padding segment */);
+		assert(
+			PaddingSegment.is(segment),
+			0x5f7 /* can only append padding segment */,
+		);
 		super.append(segment);
 	}
 
@@ -223,7 +226,8 @@ export const maxCellPosition = maxCol * maxRow;
  * Use {@link @fluidframework/matrix#SharedMatrix} instead.
  * @internal
  */
-export const rowColToPosition = (row: number, col: number) => row * maxCols + col;
+export const rowColToPosition = (row: number, col: number) =>
+	row * maxCols + col;
 
 /**
  * @deprecated `positionToRowCol` is part of an abandoned prototype.
@@ -253,7 +257,12 @@ export class SparseMatrixClass extends SharedSegmentSequence<MatrixSegment> {
 		return positionToRowCol(this.getLength()).row;
 	}
 
-	public setItems(row: number, col: number, values: SparseMatrixItem[], props?: PropertySet) {
+	public setItems(
+		row: number,
+		col: number,
+		values: SparseMatrixItem[],
+		props?: PropertySet,
+	) {
 		const start = rowColToPosition(row, col);
 		const end = start + values.length;
 		const segment = new RunSegment(values, props);
@@ -292,7 +301,9 @@ export class SparseMatrixClass extends SharedSegmentSequence<MatrixSegment> {
 		if (segment && RunSegment.is(segment)) {
 			segment.setTag(offset ?? 0, tag);
 		} else if (tag !== undefined) {
-			throw new Error(`Must not attempt to set tags on '${segment?.constructor.name}'.`);
+			throw new Error(
+				`Must not attempt to set tags on '${segment?.constructor.name}'.`,
+			);
 		}
 	}
 
@@ -335,7 +346,10 @@ export class SparseMatrixClass extends SharedSegmentSequence<MatrixSegment> {
 		const removeColEnd = srcCol + numCols;
 
 		for (let r = 0, rowStart = 0; r < this.numRows; r++, rowStart += maxCols) {
-			this.client.removeRangeLocal(rowStart + removeColStart, rowStart + removeColEnd);
+			this.client.removeRangeLocal(
+				rowStart + removeColStart,
+				rowStart + removeColEnd,
+			);
 			const insertPos = rowStart + destCol;
 			const segment = new PaddingSegment(numCols);
 			this.client.insertSegmentLocal(insertPos, segment);
@@ -354,7 +368,8 @@ export class SparseMatrixClass extends SharedSegmentSequence<MatrixSegment> {
  * @internal
  */
 export class SparseMatrixFactory implements IChannelFactory<SparseMatrix> {
-	public static Type = "https://graph.microsoft.com/types/mergeTree/sparse-matrix";
+	public static Type =
+		"https://graph.microsoft.com/types/mergeTree/sparse-matrix";
 
 	public static Attributes: IChannelAttributes = {
 		type: SparseMatrixFactory.Type,

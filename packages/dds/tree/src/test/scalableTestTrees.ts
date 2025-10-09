@@ -32,7 +32,10 @@ import type {
 	TreeSimpleContent,
 	// eslint-disable-next-line import/no-internal-modules
 } from "./feature-libraries/flex-tree/utils.js";
-import { fieldCursorFromInsertable, type TreeStoredContentStrict } from "./utils.js";
+import {
+	fieldCursorFromInsertable,
+	type TreeStoredContentStrict,
+} from "./utils.js";
 
 /**
  * Test trees which can be parametrically scaled to any size.
@@ -70,8 +73,13 @@ export interface JSDeepTree {
 
 export type JSWideTree = number[];
 
-export function makeJsDeepTree(depth: number, leafValue: number): JSDeepTree | number {
-	return depth === 0 ? leafValue : { foo: makeJsDeepTree(depth - 1, leafValue) };
+export function makeJsDeepTree(
+	depth: number,
+	leafValue: number,
+): JSDeepTree | number {
+	return depth === 0
+		? leafValue
+		: { foo: makeJsDeepTree(depth - 1, leafValue) };
 }
 
 export function makeDeepContentSimple(
@@ -125,7 +133,10 @@ export function makeWideStoredContentWithEndValue(
 	numberOfNodes: number,
 	endLeafValue?: number,
 ): TreeStoredContentStrict {
-	const content = makeWideContentWithEndValueSimple(numberOfNodes, endLeafValue);
+	const content = makeWideContentWithEndValueSimple(
+		numberOfNodes,
+		endLeafValue,
+	);
 	return {
 		initialTree: fieldCursorFromInsertable<UnsafeUnknownSchema>(
 			content.schema,
@@ -152,7 +163,10 @@ export function makeJsWideTreeWithEndValue(
 	return numbers;
 }
 
-export function readDeepTreeAsJSObject(tree: JSDeepTree): { depth: number; value: number } {
+export function readDeepTreeAsJSObject(tree: JSDeepTree): {
+	depth: number;
+	value: number;
+} {
 	let currentNode = tree.foo;
 	let depth = 1;
 	let value = 0;
@@ -189,7 +203,11 @@ export function readWideCursorTree(tree: Context): {
 	moveToDetachedField(tree.checkout.forest, readCursor);
 	assert(readCursor.firstNode());
 	readCursor.firstField();
-	for (let inNode = readCursor.firstNode(); inNode; inNode = readCursor.nextNode()) {
+	for (
+		let inNode = readCursor.firstNode();
+		inNode;
+		inNode = readCursor.nextNode()
+	) {
 		sum += readCursor.value as number;
 		nodesCount += 1;
 	}

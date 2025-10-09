@@ -47,10 +47,11 @@ export type UnsafeUnknownSchema = typeof UnsafeUnknownSchema;
  * Extended version of {@link InsertableTreeNodeFromImplicitAllowedTypes} that also allows {@link (UnsafeUnknownSchema:type)}.
  * @alpha
  */
-export type Insertable<TSchema extends ImplicitAllowedTypes | UnsafeUnknownSchema> =
-	TSchema extends ImplicitAllowedTypes
-		? InsertableTreeNodeFromImplicitAllowedTypes<TSchema>
-		: InsertableContent;
+export type Insertable<
+	TSchema extends ImplicitAllowedTypes | UnsafeUnknownSchema,
+> = TSchema extends ImplicitAllowedTypes
+	? InsertableTreeNodeFromImplicitAllowedTypes<TSchema>
+	: InsertableContent;
 
 /**
  * Content which could be inserted into a field within a tree.
@@ -60,9 +61,9 @@ export type Insertable<TSchema extends ImplicitAllowedTypes | UnsafeUnknownSchem
  * Extended version of {@link InsertableTreeFieldFromImplicitField} that also allows {@link (UnsafeUnknownSchema:type)}.
  * @alpha
  */
-export type InsertableField<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> = [
-	TSchema,
-] extends [ImplicitFieldSchema]
+export type InsertableField<
+	TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema,
+> = [TSchema] extends [ImplicitFieldSchema]
 	? InsertableTreeFieldFromImplicitField<TSchema>
 	: [TSchema] extends [UnsafeUnknownSchema]
 		? InsertableContent | undefined

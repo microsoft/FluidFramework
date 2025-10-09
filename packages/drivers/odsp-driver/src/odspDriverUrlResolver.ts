@@ -17,7 +17,10 @@ import {
 	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions/internal";
 
-import { ClpCompliantAppHeader, FileMetadataHeader } from "./contractsPublic.js";
+import {
+	ClpCompliantAppHeader,
+	FileMetadataHeader,
+} from "./contractsPublic.js";
 import { createOdspUrl } from "./createOdspUrl.js";
 import { getHashedDocumentId } from "./odspPublicUtils.js";
 import { getApiRoot } from "./odspUrlHelper.js";
@@ -88,7 +91,9 @@ function removeBeginningSlash(str: string): string {
 
 // back-compat: GitHub #9653
 const isFluidPackage = (pkg: Record<string, unknown>): boolean =>
-	typeof pkg === "object" && typeof pkg?.name === "string" && typeof pkg?.fluid === "object";
+	typeof pkg === "object" &&
+	typeof pkg?.name === "string" &&
+	typeof pkg?.fluid === "object";
 
 /**
  * Resolver to resolve urls like the ones created by createOdspUrl which is driver inner
@@ -113,7 +118,15 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 			const filePath = searchParams.get("path");
 			const packageName = searchParams.get("containerPackageName");
 			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- false positive
-			if (!(fileName && siteURL && driveID && filePath !== null && filePath !== undefined)) {
+			if (
+				!(
+					fileName &&
+					siteURL &&
+					driveID &&
+					filePath !== null &&
+					filePath !== undefined
+				)
+			) {
 				throw new NonRetryableError(
 					"Proper new file params should be there",
 					OdspErrorTypes.genericError,
@@ -143,13 +156,23 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 				},
 				fileVersion: undefined,
 				shareLinkInfo: undefined,
-				isClpCompliantApp: request.headers?.[ClpCompliantAppHeader.isClpCompliantApp],
+				isClpCompliantApp:
+					request.headers?.[ClpCompliantAppHeader.isClpCompliantApp],
 			};
 		}
-		const { siteUrl, driveId, itemId, path, containerPackageName, fileVersion } =
-			decodeOdspUrl(request.url);
+		const {
+			siteUrl,
+			driveId,
+			itemId,
+			path,
+			containerPackageName,
+			fileVersion,
+		} = decodeOdspUrl(request.url);
 		const hashedDocumentId = await getHashedDocumentId(driveId, itemId);
-		assert(!hashedDocumentId.includes("/"), 0x0a8 /* "Docid should not contain slashes!!" */);
+		assert(
+			!hashedDocumentId.includes("/"),
+			0x0a8 /* "Docid should not contain slashes!!" */,
+		);
 
 		const documentUrl = `https://placeholder/placeholder/${hashedDocumentId}/${removeBeginningSlash(
 			path,
@@ -160,10 +183,30 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 			type: "fluid",
 			odspResolvedUrl: true,
 			endpoints: {
-				snapshotStorageUrl: getSnapshotUrl(siteUrl, driveId, itemId, fileVersion),
-				attachmentPOSTStorageUrl: getAttachmentPOSTUrl(siteUrl, driveId, itemId, fileVersion),
-				attachmentGETStorageUrl: getAttachmentGETUrl(siteUrl, driveId, itemId, fileVersion),
-				deltaStorageUrl: getDeltaStorageUrl(siteUrl, driveId, itemId, fileVersion),
+				snapshotStorageUrl: getSnapshotUrl(
+					siteUrl,
+					driveId,
+					itemId,
+					fileVersion,
+				),
+				attachmentPOSTStorageUrl: getAttachmentPOSTUrl(
+					siteUrl,
+					driveId,
+					itemId,
+					fileVersion,
+				),
+				attachmentGETStorageUrl: getAttachmentGETUrl(
+					siteUrl,
+					driveId,
+					itemId,
+					fileVersion,
+				),
+				deltaStorageUrl: getDeltaStorageUrl(
+					siteUrl,
+					driveId,
+					itemId,
+					fileVersion,
+				),
 			},
 			id: hashedDocumentId,
 			tokens: {},
@@ -179,7 +222,8 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 				containerPackageName,
 			},
 			fileVersion,
-			isClpCompliantApp: request.headers?.[ClpCompliantAppHeader.isClpCompliantApp],
+			isClpCompliantApp:
+				request.headers?.[ClpCompliantAppHeader.isClpCompliantApp],
 			fileMetadata: {
 				eTag: request.headers?.[FileMetadataHeader.eTag],
 			},

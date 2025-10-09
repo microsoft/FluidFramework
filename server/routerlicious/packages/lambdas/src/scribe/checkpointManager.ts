@@ -15,7 +15,10 @@ import {
 	type IDocumentRepository,
 	type ICheckpointService,
 } from "@fluidframework/server-services-core";
-import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import {
+	getLumberBaseProperties,
+	Lumberjack,
+} from "@fluidframework/server-services-telemetry";
 
 import type { ICheckpointManager } from "./interfaces";
 import { isLocalCheckpoint } from "./utils";
@@ -67,10 +70,7 @@ export class CheckpointManager implements ICheckpointManager {
 				);
 
 				// If we don't get the expected delta, retry after a delay
-				if (
-					lastDelta.length === 0 ||
-					lastDelta[0].sequenceNumber < expectedSequenceNumber
-				) {
+				if (lastDelta.length === 0 || lastDelta[0].sequenceNumber < expectedSequenceNumber) {
 					const lumberjackProperties = {
 						...getLumberBaseProperties(this.documentId, this.tenantId),
 						expectedSequenceNumber,

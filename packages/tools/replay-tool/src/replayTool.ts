@@ -22,7 +22,10 @@ const optionsArray = [
 		"--write",
 		"Write out snapshots. Behavior is controlled by --snapfreq & --storageSnapshots",
 	],
-	["--compare", "Compares snapshots to snapshots previously saved on disk. Used in testing"],
+	[
+		"--compare",
+		"Compares snapshots to snapshots previously saved on disk. Used in testing",
+	],
 	"Processing:",
 	["--snapfreq <N>", "A snapshot will be taken after every <N>th op"],
 	[

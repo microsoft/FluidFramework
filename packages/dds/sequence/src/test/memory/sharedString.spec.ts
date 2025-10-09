@@ -150,11 +150,15 @@ describe("SharedString memory usage", () => {
 				title = `Annotate marker ${x} times with same options`;
 				private markerId = "myMarkerId";
 				private sharedString = createLocalSharedString("testSharedString");
-				private simpleMarker = this.sharedString.getMarkerFromId(this.markerId) as Marker;
+				private simpleMarker = this.sharedString.getMarkerFromId(
+					this.markerId,
+				) as Marker;
 
 				async run() {
 					for (let i = 0; i < x; i++) {
-						this.sharedString.annotateMarker(this.simpleMarker, { color: "blue" });
+						this.sharedString.annotateMarker(this.simpleMarker, {
+							color: "blue",
+						});
 					}
 				}
 
@@ -165,7 +169,9 @@ describe("SharedString memory usage", () => {
 					this.sharedString.insertMarker(0, ReferenceType.Simple, {
 						[reservedMarkerIdKey]: this.markerId,
 					});
-					this.simpleMarker = this.sharedString.getMarkerFromId(this.markerId) as Marker;
+					this.simpleMarker = this.sharedString.getMarkerFromId(
+						this.markerId,
+					) as Marker;
 				}
 			})(),
 		);

@@ -103,7 +103,10 @@ export function loadDocument(source: string | undefined): List {
  * If `undefined` data will logged to the console.
  * Otherwise see {@link exportContent}.
  */
-export function saveDocument(destination: string | undefined, tree: List): void {
+export function saveDocument(
+	destination: string | undefined,
+	tree: List,
+): void {
 	if (destination === undefined || destination === "default") {
 		console.log("Tree Content:");
 		console.log(tree);
@@ -171,7 +174,11 @@ export function exportContent(destination: string, tree: List): JsonCompatible {
 					idCompressor,
 				}),
 
-				schema: extractPersistedSchema(config.schema, compatVersion, () => true),
+				schema: extractPersistedSchema(
+					config.schema,
+					compatVersion,
+					() => true,
+				),
 				idCompressor: idCompressor.serialize(true),
 			};
 			return file as JsonCompatible;
@@ -252,7 +259,9 @@ export function rejectHandles(key: string, value: unknown): unknown {
 	return value;
 }
 
-const options: ForestOptions & ICodecOptions = { jsonValidator: FormatValidatorBasic };
+const options: ForestOptions & ICodecOptions = {
+	jsonValidator: FormatValidatorBasic,
+};
 
 const File = Type.Object({
 	tree: Type.Unsafe<JsonCompatible<IFluidHandle>>(),

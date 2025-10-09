@@ -27,13 +27,19 @@ function getOrAddLocalMap(key: string, getter: () => Buffer): Buffer {
 export const handler: Handler = {
 	name: "dockerfile-packages",
 	match: /^(server\/routerlicious\/packages)\/.*\/package\.json/i,
-	handler: async (file: string, gitRoot: string): Promise<string | undefined> => {
+	handler: async (
+		file: string,
+		gitRoot: string,
+	): Promise<string | undefined> => {
 		// strip server path since all paths are relative to server directory
 		// Additionally, we normalize slashes here to ensure that the path is consistent across different OSes.
 		// This matters because the Dockerfile is checked in with POSIX-style slashes, and the Node path APIs return
 		// OS-specific file separators.
 		const dockerfileCopyText = getDockerfileCopyText(
-			TscUtils.normalizeSlashes(path.relative(gitRoot, file)).replace(serverPath, ""),
+			TscUtils.normalizeSlashes(path.relative(gitRoot, file)).replace(
+				serverPath,
+				"",
+			),
 		);
 		const dockerFilePath = path.join(
 			path.relative(process.cwd(), path.join(gitRoot, serverPath)),
@@ -67,7 +73,8 @@ export const handler: Handler = {
 			const regexMatch = endOfCopyLinesRegex.exec(dockerfileContents)!;
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const localNewline = regexMatch.groups!.newline;
-			const insertIndex = regexMatch.index + regexMatch[0].length - localNewline.length;
+			const insertIndex =
+				regexMatch.index + regexMatch[0].length - localNewline.length;
 
 			dockerfileContents =
 				dockerfileContents.slice(0, Math.max(0, insertIndex)) +

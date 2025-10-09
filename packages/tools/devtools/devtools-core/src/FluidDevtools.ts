@@ -9,7 +9,10 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { BaseDevtools } from "./BaseDevtools.js";
 import type { ContainerKey } from "./CommonInterfaces.js";
-import { ContainerDevtools, type ContainerDevtoolsProps } from "./ContainerDevtools.js";
+import {
+	ContainerDevtools,
+	type ContainerDevtoolsProps,
+} from "./ContainerDevtools.js";
 import {
 	ContainerRuntimeDevtools,
 	type ContainerRuntimeProps,
@@ -55,7 +58,8 @@ export const useAfterDisposeErrorText =
  *
  * @privateRemarks Exported for test purposes only.
  */
-export const accessBeforeInitializeErrorText = "Devtools have not yet been initialized.";
+export const accessBeforeInitializeErrorText =
+	"Devtools have not yet been initialized.";
 
 /**
  * Key for sessionStorage that's used to toggle unsampled telemetry.
@@ -68,7 +72,9 @@ const unsampledTelemetryKey = "Fluid.Telemetry.DisableSampling";
  *
  * @privateRemarks Exported for test purposes only.
  */
-export function getContainerAlreadyRegisteredErrorText(containerKey: ContainerKey): string {
+export function getContainerAlreadyRegisteredErrorText(
+	containerKey: ContainerKey,
+): string {
 	return (
 		`A ContainerDevtools instance has already been registered for specified key: "${containerKey}".` +
 		"Existing instance must be closed before a replacement may be registered."
@@ -141,7 +147,10 @@ export class FluidDevtools implements IFluidDevtools {
 	 * Stores Container-level devtools instances registered with this object.
 	 * Maps from a {@link ContainerKey} to the corresponding {@link ContainerDevtools} instance.
 	 */
-	private readonly containers: Map<ContainerKey, BaseDevtools<DecomposedContainer>>;
+	private readonly containers: Map<
+		ContainerKey,
+		BaseDevtools<DecomposedContainer>
+	>;
 
 	/**
 	 * Private {@link FluidDevtools.disposed} tracking.
@@ -163,8 +172,12 @@ export class FluidDevtools implements IFluidDevtools {
 			return true;
 		},
 		[SetUnsampledTelemetry.MessageType]: async (message) => {
-			const newValue = (message as SetUnsampledTelemetry.Message).data.unsampledTelemetry;
-			globalThis.sessionStorage?.setItem(unsampledTelemetryKey, String(newValue));
+			const newValue = (message as SetUnsampledTelemetry.Message).data
+				.unsampledTelemetry;
+			globalThis.sessionStorage?.setItem(
+				unsampledTelemetryKey,
+				String(newValue),
+			);
 			this.postSupportedFeatures();
 			window.location.reload();
 			return true;
@@ -235,7 +248,10 @@ export class FluidDevtools implements IFluidDevtools {
 
 	private constructor(props?: FluidDevtoolsProps) {
 		// Populate initial Container-level devtools
-		this.containers = new Map<ContainerKey, BaseDevtools<DecomposedContainer>>();
+		this.containers = new Map<
+			ContainerKey,
+			BaseDevtools<DecomposedContainer>
+		>();
 		if (props?.initialContainers !== undefined) {
 			for (const containerConfig of props.initialContainers) {
 				this.containers.set(
@@ -251,7 +267,10 @@ export class FluidDevtools implements IFluidDevtools {
 		globalThis.addEventListener?.("message", this.windowMessageHandler);
 
 		// Register the devtools instance to be disposed on Window unload
-		globalThis.addEventListener?.("beforeunload", this.windowBeforeUnloadHandler);
+		globalThis.addEventListener?.(
+			"beforeunload",
+			this.windowBeforeUnloadHandler,
+		);
 
 		// Post message for supported features
 		this.postSupportedFeatures();
@@ -309,7 +328,9 @@ export class FluidDevtools implements IFluidDevtools {
 		const { containerKey } = props;
 
 		if (this.containers.has(containerKey)) {
-			throw new UsageError(getContainerAlreadyRegisteredErrorText(containerKey));
+			throw new UsageError(
+				getContainerAlreadyRegisteredErrorText(containerKey),
+			);
 		}
 
 		const containerDevtools = new ContainerDevtools(props);
@@ -319,18 +340,26 @@ export class FluidDevtools implements IFluidDevtools {
 		this.postContainerList();
 	}
 
-	public async registerContainerRuntime(props: ContainerRuntimeProps): Promise<void> {
+	public async registerContainerRuntime(
+		props: ContainerRuntimeProps,
+	): Promise<void> {
 		const { runtime, label } = props;
 
-		const containerRuntimeKey = this.generateReadableKey(label ?? "Container-Runtime");
+		const containerRuntimeKey = this.generateReadableKey(
+			label ?? "Container-Runtime",
+		);
 		const extractedContainerRuntimeData =
 			await FluidDevtools.extractContainerDataFromRuntime(runtime);
 
-		const decomposedContainer = new DecomposedContainerForContainerRuntime(runtime);
+		const decomposedContainer = new DecomposedContainerForContainerRuntime(
+			runtime,
+		);
 
 		// Check if the container runtime is already registered.
 		if (this.containers.has(containerRuntimeKey)) {
-			throw new UsageError(getContainerAlreadyRegisteredErrorText(containerRuntimeKey));
+			throw new UsageError(
+				getContainerAlreadyRegisteredErrorText(containerRuntimeKey),
+			);
 		}
 
 		const containerRuntimeDevtools = new ContainerRuntimeDevtools({
@@ -399,7 +428,9 @@ export class FluidDevtools implements IFluidDevtools {
 	 * Gets the registered Container Devtools or Container Runtime Devtools associated with the provided {@link ContainerKey}, if one exists.
 	 * Otherwise returns `undefined`.
 	 */
-	public getContainerDevtools(containerKey: ContainerKey): IContainerDevtools | undefined {
+	public getContainerDevtools(
+		containerKey: ContainerKey,
+	): IContainerDevtools | undefined {
 		if (this.disposed) {
 			throw new UsageError(useAfterDisposeErrorText);
 		}
@@ -434,7 +465,10 @@ export class FluidDevtools implements IFluidDevtools {
 		}
 
 		// Send close devtool message
-		postMessagesToWindow(devtoolsMessageLoggingOptions, DevtoolsDisposed.createMessage());
+		postMessagesToWindow(
+			devtoolsMessageLoggingOptions,
+			DevtoolsDisposed.createMessage(),
+		);
 
 		// Dispose of container-level devtools
 		for (const [, containerDevtools] of this.containers) {
@@ -450,7 +484,10 @@ export class FluidDevtools implements IFluidDevtools {
 
 		// Clean up event listeners
 		globalThis.removeEventListener?.("message", this.windowMessageHandler);
-		globalThis.removeEventListener?.("beforeunload", this.windowBeforeUnloadHandler);
+		globalThis.removeEventListener?.(
+			"beforeunload",
+			this.windowBeforeUnloadHandler,
+		);
 
 		this._disposed = true;
 	}
@@ -477,7 +514,9 @@ export class FluidDevtools implements IFluidDevtools {
 
 		const containerDevtools = this.containers.get(containerKey);
 		if (containerDevtools === undefined) {
-			console.warn(`No ContainerDevtools associated with key "${containerKey}" was found.`);
+			console.warn(
+				`No ContainerDevtools associated with key "${containerKey}" was found.`,
+			);
 			return;
 		}
 
@@ -501,7 +540,8 @@ export class FluidDevtools implements IFluidDevtools {
 	 */
 	private generateReadableKey(baseKey: string): string {
 		// Get the next number for this base key
-		const nextNumber = (this.containerRuntimesInstanceCounts.get(baseKey) ?? 0) + 1;
+		const nextNumber =
+			(this.containerRuntimesInstanceCounts.get(baseKey) ?? 0) + 1;
 		this.containerRuntimesInstanceCounts.set(baseKey, nextNumber);
 
 		return `${baseKey}-${nextNumber}`;

@@ -18,7 +18,10 @@ export type ErrorLoggingFunction = (
 /**
  * A function that logs an error message.
  */
-export type LoggingFunction = (message: string, ...args: any[]) => string | void;
+export type LoggingFunction = (
+	message: string,
+	...args: any[]
+) => string | void;
 
 /**
  * A general-purpose logger object.

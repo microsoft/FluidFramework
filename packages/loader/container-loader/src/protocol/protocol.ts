@@ -41,7 +41,10 @@ export interface IProtocolHandler {
 	snapshot(): IQuorumSnapshot;
 
 	close(): void;
-	processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult;
+	processMessage(
+		message: ISequencedDocumentMessage,
+		local: boolean,
+	): IProcessMessageResult;
 	getProtocolState(): IScribeProtocolState;
 }
 

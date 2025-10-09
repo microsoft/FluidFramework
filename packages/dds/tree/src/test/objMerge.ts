@@ -57,7 +57,9 @@ export function merge<T>(
 	transform: ObjectTransform = identityTransform,
 ): Conflicted | Conflict | ConflictedMap | T {
 	if (hasConflict(lhs) || hasConflict(rhs)) {
-		assert.fail("This function does not accept its output type as an input type");
+		assert.fail(
+			"This function does not accept its output type as an input type",
+		);
 	}
 
 	// === is not reflective because of how NaN is handled, so use Object.is instead.
@@ -87,13 +89,21 @@ export function merge<T>(
 	// Detect them using JavaScript feature detection pattern: they have a `IFluidHandle`
 	// field that is set to the parent object.
 	{
-		const aHandle = lhsT as unknown as { IFluidHandle?: unknown; absolutePath?: string };
-		const bHandle = rhsT as unknown as { IFluidHandle?: unknown; absolutePath?: string };
+		const aHandle = lhsT as unknown as {
+			IFluidHandle?: unknown;
+			absolutePath?: string;
+		};
+		const bHandle = rhsT as unknown as {
+			IFluidHandle?: unknown;
+			absolutePath?: string;
+		};
 		if (aHandle.IFluidHandle === aHandle) {
 			if (bHandle.IFluidHandle !== bHandle) {
 				return new Conflict(lhsT, rhsT);
 			}
-			return aHandle.absolutePath === bHandle.absolutePath ? lhsT : new Conflict(lhsT, rhsT);
+			return aHandle.absolutePath === bHandle.absolutePath
+				? lhsT
+				: new Conflict(lhsT, rhsT);
 		}
 	}
 

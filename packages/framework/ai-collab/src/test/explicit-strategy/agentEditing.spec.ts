@@ -73,8 +73,14 @@ describe("toDecoratedJson", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view = tree.viewWith(new TreeViewConfiguration({ schema: RootObject }));
-		view.initialize({ str: "hello", vectors: [{ x: 1, y: 2, z: 3 }], bools: [true] });
+		const view = tree.viewWith(
+			new TreeViewConfiguration({ schema: RootObject }),
+		);
+		view.initialize({
+			str: "hello",
+			vectors: [{ x: 1, y: 2, z: 3 }],
+			bools: [true],
+		});
 
 		assert.equal(
 			toDecoratedJson(idGenerator, view.root),

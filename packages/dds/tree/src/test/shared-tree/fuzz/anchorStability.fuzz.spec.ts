@@ -14,8 +14,17 @@ import {
 	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
 
-import type { Anchor, JsonableTree, UpPath, Value } from "../../../core/index.js";
-import { SharedTreeTestFactory, createTestUndoRedoStacks, validateTree } from "../../utils.js";
+import type {
+	Anchor,
+	JsonableTree,
+	UpPath,
+	Value,
+} from "../../../core/index.js";
+import {
+	SharedTreeTestFactory,
+	createTestUndoRedoStacks,
+	validateTree,
+} from "../../utils.js";
 
 import {
 	type EditGeneratorOpWeights,
@@ -97,7 +106,10 @@ describe("Fuzz - anchor stability", () => {
 
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (initialState: AnchorFuzzTestState) => {
-			const tree = viewFromState(initialState, initialState.clients[0]).checkout;
+			const tree = viewFromState(
+				initialState,
+				initialState.clients[0],
+			).checkout;
 			tree.transaction.start();
 			const initialJsonableTree = jsonableTreeFromForest(tree.forest);
 			initialState.initialJsonableTree = initialJsonableTree;
@@ -106,7 +118,8 @@ describe("Fuzz - anchor stability", () => {
 		});
 
 		emitter.on("testEnd", (finalState: AnchorFuzzTestState) => {
-			const anchors = finalState.anchors ?? assert.fail("Anchors should be defined");
+			const anchors =
+				finalState.anchors ?? assert.fail("Anchors should be defined");
 
 			// aborts any transactions that may still be in progress
 			const tree = viewFromState(finalState, finalState.clients[0]).checkout;
@@ -183,8 +196,11 @@ describe("Fuzz - anchor stability", () => {
 			}
 			initialState.anchors = [];
 			for (const client of initialState.clients) {
-				const view = viewFromState(initialState, client).checkout as RevertibleSharedTreeView;
-				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+				const view = viewFromState(initialState, client)
+					.checkout as RevertibleSharedTreeView;
+				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
+					view.events,
+				);
 				view.undoStack = undoStack;
 				view.redoStack = redoStack;
 				view.unsubscribe = unsubscribe;
@@ -193,9 +209,14 @@ describe("Fuzz - anchor stability", () => {
 		});
 
 		emitter.on("testEnd", (finalState: AnchorFuzzTestState) => {
-			const anchors = finalState.anchors ?? assert.fail("Anchors should be defined");
+			const anchors =
+				finalState.anchors ?? assert.fail("Anchors should be defined");
 			for (const [i, client] of finalState.clients.entries()) {
-				validateAnchors(viewFromState(finalState, client).checkout, anchors[i], false);
+				validateAnchors(
+					viewFromState(finalState, client).checkout,
+					anchors[i],
+					false,
+				);
 			}
 		});
 

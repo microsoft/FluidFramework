@@ -50,7 +50,9 @@ export interface StageControlsExperimental {
 	 * made by this container will additionally flow freely to the ordering service.
 	 * @param options - Options when committing changes.
 	 */
-	readonly commitChanges: (options?: Partial<CommitStagedChangesOptionsExperimental>) => void;
+	readonly commitChanges: (
+		options?: Partial<CommitStagedChangesOptionsExperimental>,
+	) => void;
 	/**
 	 * Exit staging mode and discard any changes made while in staging mode.
 	 */
@@ -87,7 +89,8 @@ export interface StageControlsAlpha {
  * @sealed
  * @privateRemarks After partners move to the alpha interfaces this interface should be renamed and tagged to be internal.
  */
-export interface IContainerRuntimeBaseExperimental extends IContainerRuntimeBase {
+export interface IContainerRuntimeBaseExperimental
+	extends IContainerRuntimeBase {
 	/**
 	 * Enters staging mode, allowing changes to be staged before being committed or discarded.
 	 * @returns Controls for committing or discarding staged changes.
@@ -122,6 +125,8 @@ export interface ContainerRuntimeBaseAlpha extends IContainerRuntimeBase {
  * @legacy @alpha
  * @sealed
  */
-export function asLegacyAlpha(base: IContainerRuntimeBase): ContainerRuntimeBaseAlpha {
+export function asLegacyAlpha(
+	base: IContainerRuntimeBase,
+): ContainerRuntimeBaseAlpha {
 	return base as ContainerRuntimeBaseAlpha;
 }

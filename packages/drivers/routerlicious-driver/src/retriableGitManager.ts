@@ -37,7 +37,10 @@ export class RetriableGitManager implements IGitManager {
 		);
 	}
 
-	public async getTree(root: string, recursive: boolean): Promise<IR11sResponse<IGitTree>> {
+	public async getTree(
+		root: string,
+		recursive: boolean,
+	): Promise<IR11sResponse<IGitTree>> {
 		return this.runWithRetry(
 			async () => this.internalGitManager.getTree(root, recursive),
 			"gitManager_getTree",
@@ -61,7 +64,9 @@ export class RetriableGitManager implements IGitManager {
 		);
 	}
 
-	public async createGitTree(params: IGitCreateTreeParams): Promise<IR11sResponse<IGitTree>> {
+	public async createGitTree(
+		params: IGitCreateTreeParams,
+	): Promise<IR11sResponse<IGitTree>> {
 		return this.runWithRetry(
 			async () => this.internalGitManager.createGitTree(params),
 			"gitManager_createGitTree",
@@ -77,14 +82,19 @@ export class RetriableGitManager implements IGitManager {
 		);
 	}
 
-	public async getSnapshot(sha: string): Promise<IR11sResponse<IWholeFlatSnapshot>> {
+	public async getSnapshot(
+		sha: string,
+	): Promise<IR11sResponse<IWholeFlatSnapshot>> {
 		return this.runWithRetry(
 			async () => this.internalGitManager.getSnapshot(sha),
 			"gitManager_getSummary",
 		);
 	}
 
-	private async runWithRetry<T>(api: () => Promise<T>, callName: string): Promise<T> {
+	private async runWithRetry<T>(
+		api: () => Promise<T>,
+		callName: string,
+	): Promise<T> {
 		return runWithRetry(
 			api,
 			callName,

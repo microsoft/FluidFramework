@@ -40,7 +40,10 @@ import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicio
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 
 import { createAzureAudienceMember } from "./AzureAudience.js";
-import { AzureUrlResolver, createAzureCreateNewRequest } from "./AzureUrlResolver.js";
+import {
+	AzureUrlResolver,
+	createAzureCreateNewRequest,
+} from "./AzureUrlResolver.js";
 import type {
 	AzureClientProps,
 	AzureClientPropsInternal,
@@ -79,8 +82,13 @@ const azureClientFeatureGates = {
  * @param baseConfigProvider - The base config provider to wrap
  * @returns A new config provider with the appropriate defaults applied underneath the given provider
  */
-function wrapConfigProvider(baseConfigProvider?: IConfigProviderBase): IConfigProviderBase {
-	return wrapConfigProviderWithDefaults(baseConfigProvider, azureClientFeatureGates);
+function wrapConfigProvider(
+	baseConfigProvider?: IConfigProviderBase,
+): IConfigProviderBase {
+	return wrapConfigProviderWithDefaults(
+		baseConfigProvider,
+		azureClientFeatureGates,
+	);
 }
 
 /**
@@ -92,7 +100,9 @@ export class AzureClient {
 	private readonly documentServiceFactory: IDocumentServiceFactory;
 	private readonly urlResolver: IUrlResolver;
 	private readonly configProvider: IConfigProviderBase | undefined;
-	private readonly connectionConfig: AzureRemoteConnectionConfig | AzureLocalConnectionConfig;
+	private readonly connectionConfig:
+		| AzureRemoteConnectionConfig
+		| AzureLocalConnectionConfig;
 	private readonly logger: ITelemetryBaseLogger | undefined;
 
 	private readonly createContainerRuntimeFactory?: ({
@@ -111,16 +121,24 @@ export class AzureClient {
 		this.connectionConfig = properties.connection;
 		this.logger = properties.logger;
 		// remove trailing slash from URL if any
-		this.connectionConfig.endpoint = this.connectionConfig.endpoint.replace(/\/$/, "");
+		this.connectionConfig.endpoint = this.connectionConfig.endpoint.replace(
+			/\/$/,
+			"",
+		);
 		this.urlResolver = new AzureUrlResolver();
 		// The local service implementation differs from the Azure Fluid Relay in blob
 		// storage format. Azure Fluid Relay supports whole summary upload. Local currently does not.
-		const isRemoteConnection = isAzureRemoteConnectionConfig(this.connectionConfig);
+		const isRemoteConnection = isAzureRemoteConnectionConfig(
+			this.connectionConfig,
+		);
 		const origDocumentServiceFactory: IDocumentServiceFactory =
-			new RouterliciousDocumentServiceFactory(this.connectionConfig.tokenProvider, {
-				enableWholeSummaryUpload: isRemoteConnection,
-				enableDiscovery: isRemoteConnection,
-			});
+			new RouterliciousDocumentServiceFactory(
+				this.connectionConfig.tokenProvider,
+				{
+					enableWholeSummaryUpload: isRemoteConnection,
+					enableDiscovery: isRemoteConnection,
+				},
+			);
 
 		this.documentServiceFactory = applyStorageCompression(
 			origDocumentServiceFactory,
@@ -185,7 +203,10 @@ export class AzureClient {
 	}> {
 		const loaderProps = this.getLoaderProps(containerSchema, compatibilityMode);
 		const url = new URL(this.connectionConfig.endpoint);
-		url.searchParams.append("storage", encodeURIComponent(this.connectionConfig.endpoint));
+		url.searchParams.append(
+			"storage",
+			encodeURIComponent(this.connectionConfig.endpoint),
+		);
 		url.searchParams.append(
 			"tenantId",
 			encodeURIComponent(getTenantId(this.connectionConfig)),
@@ -223,7 +244,10 @@ export class AzureClient {
 	}> {
 		const loaderProps = this.getLoaderProps(containerSchema, compatibilityMode);
 		const url = new URL(this.connectionConfig.endpoint);
-		url.searchParams.append("storage", encodeURIComponent(this.connectionConfig.endpoint));
+		url.searchParams.append(
+			"storage",
+			encodeURIComponent(this.connectionConfig.endpoint),
+		);
 		url.searchParams.append(
 			"tenantId",
 			encodeURIComponent(getTenantId(this.connectionConfig)),
@@ -251,7 +275,10 @@ export class AzureClient {
 		options?: AzureGetVersionsOptions,
 	): Promise<AzureContainerVersion[]> {
 		const url = new URL(this.connectionConfig.endpoint);
-		url.searchParams.append("storage", encodeURIComponent(this.connectionConfig.endpoint));
+		url.searchParams.append(
+			"storage",
+			encodeURIComponent(this.connectionConfig.endpoint),
+		);
 		url.searchParams.append(
 			"tenantId",
 			encodeURIComponent(getTenantId(this.connectionConfig)),
@@ -268,7 +295,10 @@ export class AzureClient {
 
 		// External API uses null
 		// eslint-disable-next-line unicorn/no-null
-		const versions = await storage.getVersions(null, options?.maxCount ?? MAX_VERSION_COUNT);
+		const versions = await storage.getVersions(
+			null,
+			options?.maxCount ?? MAX_VERSION_COUNT,
+		);
 
 		return versions.map((item) => {
 			return { id: item.id, date: item.date };
@@ -340,7 +370,9 @@ export class AzureClient {
 		 */
 		const attach = async (): Promise<string> => {
 			if (container.attachState !== AttachState.Detached) {
-				throw new Error("Cannot attach container. Container is not in detached state");
+				throw new Error(
+					"Cannot attach container. Container is not in detached state",
+				);
 			}
 			await container.attach(createNewRequest);
 			if (container.resolvedUrl === undefined) {

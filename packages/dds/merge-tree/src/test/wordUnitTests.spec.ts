@@ -130,7 +130,10 @@ export function propertyCopy(): void {
 	);
 }
 
-function makeBookmarks(client: TestClient, bookmarkCount: number): ReferencePosition[] {
+function makeBookmarks(
+	client: TestClient,
+	bookmarkCount: number,
+): ReferencePosition[] {
 	const random = makeRandom(0xdeadbeef, 0xfeedbed);
 	const bookmarks: ReferencePosition[] = [];
 	const len = client.getLength();

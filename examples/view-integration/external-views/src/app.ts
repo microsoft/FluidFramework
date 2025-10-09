@@ -21,7 +21,10 @@ import { createElement } from "react";
 // eslint-disable-next-line import/no-internal-modules
 import { createRoot } from "react-dom/client";
 
-import { DiceRollerContainerRuntimeFactory, type IDiceRoller } from "./container/index.js";
+import {
+	DiceRollerContainerRuntimeFactory,
+	type IDiceRoller,
+} from "./container/index.js";
 import { DiceRollerView } from "./view.js";
 
 const service = getSpecifiedServiceFromWebpack();
@@ -33,7 +36,9 @@ const {
 } = await createExampleDriver(service);
 
 const codeLoader: ICodeDetailsLoader = {
-	load: async (details: IFluidCodeDetails): Promise<IFluidModuleWithDetails> => {
+	load: async (
+		details: IFluidCodeDetails,
+	): Promise<IFluidModuleWithDetails> => {
 		return {
 			module: { fluidExport: new DiceRollerContainerRuntimeFactory() },
 			details,

@@ -69,7 +69,10 @@ import {
 import Deque from "double-ended-queue";
 
 import { type ISequenceIntervalCollection } from "./intervalCollection.js";
-import { IMapOperation, IntervalCollectionMap } from "./intervalCollectionMap.js";
+import {
+	IMapOperation,
+	IntervalCollectionMap,
+} from "./intervalCollectionMap.js";
 import { type SequenceOptions } from "./intervalCollectionMapInterfaces.js";
 import {
 	SequenceDeltaEvent,
@@ -118,15 +121,25 @@ const contentPath = "content";
 export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 	(
 		event: "createIntervalCollection",
-		listener: (label: string, local: boolean, target: IEventThisPlaceHolder) => void,
+		listener: (
+			label: string,
+			local: boolean,
+			target: IEventThisPlaceHolder,
+		) => void,
 	): void;
 	(
 		event: "sequenceDelta",
-		listener: (event: SequenceDeltaEvent, target: IEventThisPlaceHolder) => void,
+		listener: (
+			event: SequenceDeltaEvent,
+			target: IEventThisPlaceHolder,
+		) => void,
 	): void;
 	(
 		event: "maintenance",
-		listener: (event: SequenceMaintenanceEvent, target: IEventThisPlaceHolder) => void,
+		listener: (
+			event: SequenceMaintenanceEvent,
+			target: IEventThisPlaceHolder,
+		) => void,
 	): void;
 }
 
@@ -299,7 +312,11 @@ export interface ISharedSegmentSequence<T extends ISegment>
 	 * The properties provided in the adjust parameter will be applied to the specified range. Each adjustment modifies the current value of the property by adding the specified `value`.
 	 * If the current value is not a number, the `delta` will be summed with 0 to compute the new value. The optional `min` and `max` constraints are applied after the adjustment to ensure the final value falls within the specified bounds.
 	 */
-	annotateAdjustRange(start: number, end: number, adjust: MapLike<AdjustParams>): void;
+	annotateAdjustRange(
+		start: number,
+		end: number,
+		adjust: MapLike<AdjustParams>,
+	): void;
 
 	/**
 	 * @param start - The inclusive start of the range to remove
@@ -388,7 +405,9 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 */
 	protected guardReentrancy: <TRet>(callback: () => TRet) => TRet;
 
-	private static createOpsFromDelta(event: SequenceDeltaEvent): IMergeTreeDeltaOp[] {
+	private static createOpsFromDelta(
+		event: SequenceDeltaEvent,
+	): IMergeTreeDeltaOp[] {
 		const ops: IMergeTreeDeltaOp[] = [];
 		for (const r of event.ranges) {
 			switch (event.deltaOperation) {
@@ -406,23 +425,37 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 						lastAnnotate.pos2 += r.segment.cachedLength;
 					} else {
 						ops.push(
-							createAnnotateRangeOp(r.position, r.position + r.segment.cachedLength, props),
+							createAnnotateRangeOp(
+								r.position,
+								r.position + r.segment.cachedLength,
+								props,
+							),
 						);
 					}
 					break;
 				}
 
 				case MergeTreeDeltaType.INSERT:
-					ops.push(createInsertOp(r.position, r.segment.clone().toJSONObject()));
+					ops.push(
+						createInsertOp(r.position, r.segment.clone().toJSONObject()),
+					);
 					break;
 
 				case MergeTreeDeltaType.REMOVE: {
 					const lastRem = ops[ops.length - 1] as IMergeTreeRemoveMsg;
 					if (lastRem?.pos1 === r.position) {
-						assert(lastRem.pos2 !== undefined, 0x3ff /* pos2 should not be undefined here */);
+						assert(
+							lastRem.pos2 !== undefined,
+							0x3ff /* pos2 should not be undefined here */,
+						);
 						lastRem.pos2 += r.segment.cachedLength;
 					} else {
-						ops.push(createRemoveRangeOp(r.position, r.position + r.segment.cachedLength));
+						ops.push(
+							createRemoveRangeOp(
+								r.position,
+								r.position + r.segment.cachedLength,
+							),
+						);
 					}
 					break;
 				}
@@ -431,10 +464,18 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 					// eslint-disable-next-line import/no-deprecated
 					const lastRem = ops[ops.length - 1] as IMergeTreeObliterateMsg;
 					if (lastRem?.pos1 === r.position) {
-						assert(lastRem.pos2 !== undefined, 0x874 /* pos2 should not be undefined here */);
+						assert(
+							lastRem.pos2 !== undefined,
+							0x874 /* pos2 should not be undefined here */,
+						);
 						lastRem.pos2 += r.segment.cachedLength;
 					} else {
-						ops.push(createObliterateRangeOp(r.position, r.position + r.segment.cachedLength));
+						ops.push(
+							createObliterateRangeOp(
+								r.position,
+								r.position + r.segment.cachedLength,
+							),
+						);
 					}
 					break;
 				}
@@ -581,7 +622,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		offset: number | undefined;
 	} {
 		return (
-			this.client.getContainingSegment<T>(pos) ?? { segment: undefined, offset: undefined }
+			this.client.getContainingSegment<T>(pos) ?? {
+				segment: undefined,
+				offset: undefined,
+			}
 		);
 	}
 
@@ -594,11 +638,19 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	}
 
 	public annotateRange(start: number, end: number, props: PropertySet): void {
-		this.guardReentrancy(() => this.client.annotateRangeLocal(start, end, props));
+		this.guardReentrancy(() =>
+			this.client.annotateRangeLocal(start, end, props),
+		);
 	}
 
-	public annotateAdjustRange(start: number, end: number, adjust: MapLike<AdjustParams>): void {
-		this.guardReentrancy(() => this.client.annotateAdjustRangeLocal(start, end, adjust));
+	public annotateAdjustRange(
+		start: number,
+		end: number,
+		adjust: MapLike<AdjustParams>,
+	): void {
+		this.guardReentrancy(() =>
+			this.client.annotateAdjustRangeLocal(start, end, adjust),
+		);
 	}
 
 	public getPropertiesAtPosition(pos: number): PropertySet | undefined {
@@ -677,7 +729,13 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		accum?: TClientData,
 		splitRange: boolean = false,
 	): void {
-		this.client.walkSegments(handler, start, end, accum as TClientData, splitRange);
+		this.client.walkSegments(
+			handler,
+			start,
+			end,
+			accum as TClientData,
+			splitRange,
+		);
 	}
 
 	public getCurrentSeq(): number {
@@ -685,7 +743,9 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	}
 
 	public insertAtReferencePosition(pos: ReferencePosition, segment: T): void {
-		this.guardReentrancy(() => this.client.insertAtReferencePositionLocal(pos, segment));
+		this.guardReentrancy(() =>
+			this.client.insertAtReferencePositionLocal(pos, segment),
+		);
 	}
 
 	public insertFromSpec(pos: number, spec: IJSONSegment): void {
@@ -713,7 +773,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		// conditionally write the interval collection blob
 		// only if it has entries
 		if (this.intervalCollections.size > 0) {
-			builder.addBlob(snapshotFileName, this.intervalCollections.serialize(serializer));
+			builder.addBlob(
+				snapshotFileName,
+				this.intervalCollections.serialize(serializer),
+			);
 		}
 
 		builder.addWithStats(contentPath, this.summarizeMergeTree(serializer));
@@ -772,16 +835,30 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
 	 */
-	protected reSubmitCore(content: any, localOpMetadata: unknown, squash: boolean = false) {
+	protected reSubmitCore(
+		content: any,
+		localOpMetadata: unknown,
+		squash: boolean = false,
+	) {
 		const originalRefSeq = this.inFlightRefSeqs.shift();
 		assert(
 			originalRefSeq !== undefined,
 			0x8bb /* Expected a recorded refSeq when resubmitting an op */,
 		);
 		this.useResubmitRefSeq(originalRefSeq, () => {
-			if (!this.intervalCollections.tryResubmitMessage(content, localOpMetadata, squash)) {
+			if (
+				!this.intervalCollections.tryResubmitMessage(
+					content,
+					localOpMetadata,
+					squash,
+				)
+			) {
 				this.submitSequenceMessage(
-					this.client.regeneratePendingOp(content as IMergeTreeOp, localOpMetadata, squash),
+					this.client.regeneratePendingOp(
+						content as IMergeTreeOp,
+						localOpMetadata,
+						squash,
+					),
 				);
 			}
 		});
@@ -871,7 +948,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	) {
 		if (local) {
 			const recordedRefSeq = this.inFlightRefSeqs.shift();
-			assert(recordedRefSeq !== undefined, 0x8bc /* No pending recorded refSeq found */);
+			assert(
+				recordedRefSeq !== undefined,
+				0x8bc /* No pending recorded refSeq found */,
+			);
 			// TODO: AB#7076: Some equivalent assert should be enabled. This fails some e2e stashed op tests because
 			// the deltaManager may have seen more messages than the runtime has processed while amidst the stashed op
 			// flow, so e.g. when `applyStashedOp` is called and the DDS is put in a state where it expects an ack for
@@ -905,7 +985,9 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		// If we are not local, and we've attached we need to start generating and sending ops
 		// so start collaboration and provide a default client id incase we are not connected
 		if (this.isAttached()) {
-			this.client.startOrUpdateCollaboration(this.runtime.clientId ?? "attached");
+			this.client.startOrUpdateCollaboration(
+				this.runtime.clientId ?? "attached",
+			);
 		}
 	}
 
@@ -926,7 +1008,9 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		}
 	}
 
-	private summarizeMergeTree(serializer: IFluidSerializer): ISummaryTreeWithStats {
+	private summarizeMergeTree(
+		serializer: IFluidSerializer,
+	): ISummaryTreeWithStats {
 		const minSeq = this.deltaManager.minimumSequenceNumber;
 
 		this.processMinSequenceNumberChanged(minSeq);
@@ -947,12 +1031,16 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 *
 	 * @param message - Message with decoded and hydrated handles
 	 */
-	private processMergeTreeMsg(message: ISequencedDocumentMessage, local?: boolean) {
+	private processMergeTreeMsg(
+		message: ISequencedDocumentMessage,
+		local?: boolean,
+	) {
 		const ops: IMergeTreeDeltaOp[] = [];
 		function transformOps(event: SequenceDeltaEvent) {
 			ops.push(...SharedSegmentSequence.createOpsFromDelta(event));
 		}
-		const needsTransformation = message.referenceSequenceNumber !== message.sequenceNumber - 1;
+		const needsTransformation =
+			message.referenceSequenceNumber !== message.sequenceNumber - 1;
 		let stashMessage: Readonly<ISequencedDocumentMessage> = message;
 		if (this.runtime.options.newMergeTreeSnapshotFormat !== true) {
 			if (needsTransformation) {
@@ -979,7 +1067,8 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			// Do GC every once in a while...
 			if (
 				this.messagesSinceMSNChange.length > 20 &&
-				this.messagesSinceMSNChange[20].sequenceNumber < message.minimumSequenceNumber
+				this.messagesSinceMSNChange[20].sequenceNumber <
+					message.minimumSequenceNumber
 			) {
 				this.processMinSequenceNumberChanged(message.minimumSequenceNumber);
 			}

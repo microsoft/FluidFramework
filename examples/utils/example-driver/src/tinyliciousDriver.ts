@@ -18,7 +18,9 @@ export const createTinyliciousDriver = async (): Promise<ExampleDriver> => {
 	const tokenProvider = new InsecureTinyliciousTokenProvider();
 	return {
 		urlResolver: new InsecureTinyliciousUrlResolver(),
-		documentServiceFactory: new RouterliciousDocumentServiceFactory(tokenProvider),
+		documentServiceFactory: new RouterliciousDocumentServiceFactory(
+			tokenProvider,
+		),
 		createCreateNewRequest: (id: string) => createTinyliciousCreateNewRequest(),
 		createLoadExistingRequest: async (id: string) => {
 			return { url: id };

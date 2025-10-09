@@ -7,9 +7,16 @@ import { strict as assert } from "node:assert";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
-import { getBranch, type SharedTreeOptions, Tree } from "../../shared-tree/index.js";
+import {
+	getBranch,
+	type SharedTreeOptions,
+	Tree,
+} from "../../shared-tree/index.js";
 import { createSnapshotCompressor, TestTreeProviderLite } from "../utils.js";
-import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
+import {
+	SchemaFactory,
+	TreeViewConfiguration,
+} from "../../simple-tree/index.js";
 import { configuredSharedTree, type ISharedTree } from "../../treeFactory.js";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 
@@ -70,7 +77,9 @@ export function generateTestTrees(options: SharedTreeOptions) {
 						enableSchemaValidation,
 					}),
 				);
-				view.initialize(new NodeSchema({ foo: ["a", "b", "c"], bar: ["d", "e", "f"] }));
+				view.initialize(
+					new NodeSchema({ foo: ["a", "b", "c"], bar: ["d", "e", "f"] }),
+				);
 				view.root.bar.moveRangeToIndex(1, 1, 3, view.root.foo);
 				provider.synchronizeMessages();
 				await takeSnapshot(provider.trees[0], "tree-0-final");
@@ -246,10 +255,10 @@ export function generateTestTrees(options: SharedTreeOptions) {
 					class StringArray extends schemaFactory.array("String Array", [
 						schemaFactory.string,
 					]) {}
-					class RecursiveMap extends schemaFactory.mapRecursive("Recursive Map", [
-						() => RecursiveMap,
-						StringArray,
-					]) {}
+					class RecursiveMap extends schemaFactory.mapRecursive(
+						"Recursive Map",
+						[() => RecursiveMap, StringArray],
+					) {}
 
 					const provider = new TestTreeProviderLite(
 						1,
@@ -280,14 +289,19 @@ export function generateTestTrees(options: SharedTreeOptions) {
 							const map = new Map<string, RecursiveMap | StringArray>();
 							if (height > 1) {
 								for (const key of keys) {
-									map.set(key, generateTreeRecursively(keys, height - 1, currentValue));
+									map.set(
+										key,
+										generateTreeRecursively(keys, height - 1, currentValue),
+									);
 								}
 							}
 							return new RecursiveMap(map);
 						}
 					}
 
-					view.initialize(generateTreeRecursively(mapKeys, startingHeight, { value: 1 }));
+					view.initialize(
+						generateTreeRecursively(mapKeys, startingHeight, { value: 1 }),
+					);
 					provider.synchronizeMessages();
 					return tree;
 				}
@@ -306,7 +320,11 @@ export function generateTestTrees(options: SharedTreeOptions) {
 				const tree = provider.trees[0];
 				const view = tree.viewWith(
 					new TreeViewConfiguration({
-						schema: [sf.object("HandleObject", { handleField: sf.optional(sf.handle) })],
+						schema: [
+							sf.object("HandleObject", {
+								handleField: sf.optional(sf.handle),
+							}),
+						],
 						enableSchemaValidation,
 					}),
 				);
@@ -323,10 +341,13 @@ export function generateTestTrees(options: SharedTreeOptions) {
 			name: "nested-sequence-change",
 			runScenario: async (takeSnapshot) => {
 				const sf = new SchemaFactory("test trees");
-				class Array extends sf.arrayRecursive('Array<["test trees.Recursive Map"]>', [
-					() => SequenceMap,
+				class Array extends sf.arrayRecursive(
+					'Array<["test trees.Recursive Map"]>',
+					[() => SequenceMap],
+				) {}
+				class SequenceMap extends sf.mapRecursive("Recursive Map", [
+					() => Array,
 				]) {}
-				class SequenceMap extends sf.mapRecursive("Recursive Map", [() => Array]) {}
 
 				const provider = new TestTreeProviderLite(1, factory, true);
 				const tree = provider.trees[0];
@@ -345,7 +366,10 @@ export function generateTestTrees(options: SharedTreeOptions) {
 					view.root.insertAtStart(new SequenceMap([]));
 					const map = view.root[0];
 					const innerArray: SequenceMap[] = [];
-					map.set("foo", new Array([new SequenceMap([["bar", new Array(innerArray)]])]));
+					map.set(
+						"foo",
+						new Array([new SequenceMap([["bar", new Array(innerArray)]])]),
+					);
 					// Since innerArray is an array, not an actual node, this does nothing (other than ensure innerArray was copied and thus the tree was not modified by this change)
 					innerArray.push(new SequenceMap([]));
 				});

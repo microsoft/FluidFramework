@@ -6,8 +6,15 @@
 import { strict as assert } from "node:assert";
 
 import type { SessionId } from "@fluidframework/id-compressor";
-import type { GenericChangeset, CrossFieldManager } from "../../../feature-libraries/index.js";
-import { fakeIdAllocator, brand, idAllocatorFromMaxId } from "../../../util/index.js";
+import type {
+	GenericChangeset,
+	CrossFieldManager,
+} from "../../../feature-libraries/index.js";
+import {
+	fakeIdAllocator,
+	brand,
+	idAllocatorFromMaxId,
+} from "../../../util/index.js";
 import {
 	type EncodingTestData,
 	defaultRevisionMetadataFromChanges,
@@ -193,7 +200,10 @@ describe("GenericField", () => {
 			],
 		};
 
-		const actual = genericChangeHandler.intoDelta(input, TestNodeId.deltaFromChild);
+		const actual = genericChangeHandler.intoDelta(
+			input,
+			TestNodeId.deltaFromChild,
+		);
 		assert.deepEqual(actual, expected);
 	});
 

@@ -106,7 +106,9 @@ describe("Routerlicious Url Resolver", () => {
 			hostUrl,
 		);
 
-		const { endpoints, url } = (await urlResolver.resolve(request)) as IResolvedUrl;
+		const { endpoints, url } = (await urlResolver.resolve(
+			request,
+		)) as IResolvedUrl;
 
 		assert.equal(
 			endpoints.storageUrl,
@@ -157,7 +159,9 @@ describe("Routerlicious Url Resolver", () => {
 			async () => Promise.resolve(token),
 			hostUrl,
 		);
-		const { endpoints, url } = (await urlResolver.resolve(request)) as IResolvedUrl;
+		const { endpoints, url } = (await urlResolver.resolve(
+			request,
+		)) as IResolvedUrl;
 
 		assert.equal(
 			endpoints.storageUrl,
@@ -169,7 +173,11 @@ describe("Routerlicious Url Resolver", () => {
 			"http://alfred:3000/deltas/fluid/damp-competition",
 			"Improperly Formed deltaStorageUrl",
 		);
-		assert.equal(endpoints.ordererUrl, "http://alfred:3000", "Improperly Formed OrdererUrl");
+		assert.equal(
+			endpoints.ordererUrl,
+			"http://alfred:3000",
+			"Improperly Formed OrdererUrl",
+		);
 		assert.equal(
 			url,
 			"https://localhost:3003/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0",
@@ -203,7 +211,9 @@ describe("Routerlicious Url Resolver", () => {
 			async () => Promise.resolve(token),
 			hostUrl,
 		);
-		const { endpoints, url } = (await urlResolver.resolve(request)) as IResolvedUrl;
+		const { endpoints, url } = (await urlResolver.resolve(
+			request,
+		)) as IResolvedUrl;
 
 		assert.equal(
 			endpoints.storageUrl,
@@ -254,7 +264,9 @@ describe("Routerlicious Url Resolver", () => {
 			async () => Promise.resolve(token),
 			hostUrl,
 		);
-		const { endpoints, url } = (await urlResolver.resolve(request)) as IResolvedUrl;
+		const { endpoints, url } = (await urlResolver.resolve(
+			request,
+		)) as IResolvedUrl;
 
 		assert.equal(
 			endpoints.storageUrl,

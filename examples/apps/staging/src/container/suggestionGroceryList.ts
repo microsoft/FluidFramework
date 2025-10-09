@@ -38,7 +38,10 @@ export class SuggestionGroceryList implements ISuggestionGroceryList {
 	 * as a buffer between the user and this.groceryList when _inStagingMode.  Its items can
 	 * be inspected to understand their suggestion status for the purpose of diff UI rendering.
 	 */
-	private readonly _suggestionGroceryItems = new Map<string, SuggestionGroceryItem>();
+	private readonly _suggestionGroceryItems = new Map<
+		string,
+		SuggestionGroceryItem
+	>();
 	private _inStagingMode = false;
 	public get inStagingMode() {
 		return this._inStagingMode;
@@ -50,7 +53,8 @@ export class SuggestionGroceryList implements ISuggestionGroceryList {
 		return this._disposed;
 	}
 
-	private readonly _events = new TypedEventEmitter<ISuggestionGroceryListEvents>();
+	private readonly _events =
+		new TypedEventEmitter<ISuggestionGroceryListEvents>();
 	public get events(): IEventProvider<ISuggestionGroceryListEvents> {
 		return this._events;
 	}
@@ -74,7 +78,10 @@ export class SuggestionGroceryList implements ISuggestionGroceryList {
 					() => {
 						if (preExistingSuggestionGroceryItem.suggestion === "remove") {
 							preExistingSuggestionGroceryItem.suggestion = "none";
-							this._events.emit("itemSuggestionChanged", preExistingSuggestionGroceryItem);
+							this._events.emit(
+								"itemSuggestionChanged",
+								preExistingSuggestionGroceryItem,
+							);
 						}
 					},
 				);
@@ -135,7 +142,9 @@ export class SuggestionGroceryList implements ISuggestionGroceryList {
 
 	public readonly getSuggestions = () => {
 		const asyncGetSuggestions = async () => {
-			const { adds, removals } = await getChangesFromHealthBot(this.groceryList);
+			const { adds, removals } = await getChangesFromHealthBot(
+				this.groceryList,
+			);
 			// Check to make sure we are still in staging mode after we get the results - if not, then just
 			// discard the suggestions.  Alternatively, we could wait for the network call to return before
 			// entering staging mode and emitting the event, depending on the desired UX.

@@ -5,7 +5,11 @@
 
 import { type TAnySchema, Type } from "@sinclair/typebox";
 
-import { type ICodecOptions, type IJsonCodec, withSchemaValidation } from "../codec/index.js";
+import {
+	type ICodecOptions,
+	type IJsonCodec,
+	withSchemaValidation,
+} from "../codec/index.js";
 import type {
 	ChangeEncodingContext,
 	ChangeFamilyCodec,
@@ -66,7 +70,10 @@ export function makeV5CodecWithVersion<TChangeset>(
 								revision: undefined,
 							}),
 							originatorId: message.sessionId,
-							changeset: changeCodec.encode(message.commit.change, changeContext),
+							changeset: changeCodec.encode(
+								message.commit.change,
+								changeContext,
+							),
 							branchId: encodeBranchId(context.idCompressor, message.branchId),
 							version,
 						} satisfies Message & JsonCompatibleReadOnly;
@@ -99,7 +106,11 @@ export function makeV5CodecWithVersion<TChangeset>(
 					idCompressor: context.idCompressor,
 				};
 
-				const branchId = decodeBranchId(context.idCompressor, encodedBranchId, changeContext);
+				const branchId = decodeBranchId(
+					context.idCompressor,
+					encodedBranchId,
+					changeContext,
+				);
 
 				if (changeset === undefined) {
 					return { type: "branch", sessionId: originatorId, branchId };
@@ -109,7 +120,10 @@ export function makeV5CodecWithVersion<TChangeset>(
 					encodedRevision !== undefined,
 					0xc6a /* Commit messages must have a revision */,
 				);
-				const revision = revisionTagCodec.decode(encodedRevision, changeContext);
+				const revision = revisionTagCodec.decode(
+					encodedRevision,
+					changeContext,
+				);
 
 				return {
 					type: "commit",

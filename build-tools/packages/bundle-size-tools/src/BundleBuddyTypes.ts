@@ -29,7 +29,9 @@ export interface BundleMetric {
 export interface BundleComparison {
 	bundleName: string;
 
-	commonBundleMetrics: { [key: string]: { baseline: BundleMetric; compare: BundleMetric } };
+	commonBundleMetrics: {
+		[key: string]: { baseline: BundleMetric; compare: BundleMetric };
+	};
 }
 
 /**

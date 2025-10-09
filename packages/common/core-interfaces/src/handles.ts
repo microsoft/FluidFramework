@@ -10,7 +10,8 @@ import type { Listenable } from "./internal.js";
 /**
  * @legacy @beta
  */
-export const IFluidHandleContext: keyof IProvideFluidHandleContext = "IFluidHandleContext";
+export const IFluidHandleContext: keyof IProvideFluidHandleContext =
+	"IFluidHandleContext";
 
 /**
  * @legacy @beta
@@ -224,4 +225,5 @@ export interface IFluidHandle<out T = unknown> {
  * @sealed @public
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface IFluidHandleErased<T> extends ErasedType<readonly ["IFluidHandle", T]> {}
+export interface IFluidHandleErased<T>
+	extends ErasedType<readonly ["IFluidHandle", T]> {}

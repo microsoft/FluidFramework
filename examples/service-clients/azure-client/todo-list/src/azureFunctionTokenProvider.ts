@@ -4,7 +4,10 @@
  */
 
 import type { AzureMember } from "@fluidframework/azure-client";
-import type { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
+import type {
+	ITokenProvider,
+	ITokenResponse,
+} from "@fluidframework/routerlicious-driver";
 import axios from "axios";
 
 /**
@@ -21,7 +24,10 @@ export class AzureFunctionTokenProvider implements ITokenProvider {
 	 */
 	public constructor(
 		private readonly azFunctionUrl: string,
-		private readonly user?: Pick<AzureMember, "id" | "name" | "additionalDetails">,
+		private readonly user?: Pick<
+			AzureMember,
+			"id" | "name" | "additionalDetails"
+		>,
 	) {}
 
 	public async fetchOrdererToken(
@@ -46,7 +52,10 @@ export class AzureFunctionTokenProvider implements ITokenProvider {
 		};
 	}
 
-	private async getToken(tenantId: string, documentId?: string): Promise<string> {
+	private async getToken(
+		tenantId: string,
+		documentId?: string,
+	): Promise<string> {
 		const response = await axios.get(this.azFunctionUrl, {
 			params: {
 				tenantId,

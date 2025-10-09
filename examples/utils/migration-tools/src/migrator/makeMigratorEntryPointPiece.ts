@@ -7,7 +7,10 @@ import type { IContainerRuntime } from "@fluidframework/container-runtime-defini
 import type { FluidObject } from "@fluidframework/core-interfaces";
 
 import type { IEntryPointPiece } from "../compositeRuntime/index.js";
-import { MigrationToolFactory, type IMigrationTool } from "../migrationTool/index.js";
+import {
+	MigrationToolFactory,
+	type IMigrationTool,
+} from "../migrationTool/index.js";
 
 import type {
 	ExportDataCallback,
@@ -26,7 +29,8 @@ async function getDataStoreEntryPoint(
 	containerRuntime: IContainerRuntime,
 	alias: string,
 ): Promise<FluidObject> {
-	const entryPointHandle = await containerRuntime.getAliasedDataStoreEntryPoint(alias);
+	const entryPointHandle =
+		await containerRuntime.getAliasedDataStoreEntryPoint(alias);
 
 	if (entryPointHandle === undefined) {
 		throw new Error(`Default dataStore [${alias}] must exist`);
@@ -45,9 +49,13 @@ export const makeMigratorEntryPointPiece = (
 ): IEntryPointPiece => {
 	return {
 		name: migratorEntryPointPieceName,
-		registryEntries: [[migrationToolRegistryKey, Promise.resolve(migrationToolFactory)]],
+		registryEntries: [
+			[migrationToolRegistryKey, Promise.resolve(migrationToolFactory)],
+		],
 		onCreate: async (runtime: IContainerRuntime): Promise<void> => {
-			const migrationTool = await runtime.createDataStore(migrationToolRegistryKey);
+			const migrationTool = await runtime.createDataStore(
+				migrationToolRegistryKey,
+			);
 			await migrationTool.trySetAlias(migrationToolId);
 		},
 		onLoad: async (runtime: IContainerRuntime): Promise<void> => {

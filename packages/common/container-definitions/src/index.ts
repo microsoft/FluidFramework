@@ -9,7 +9,12 @@
  * @packageDocumentation
  */
 
-export type { IAudience, IAudienceOwner, IAudienceEvents, ISelf } from "./audience.js";
+export type {
+	IAudience,
+	IAudienceOwner,
+	IAudienceEvents,
+	ISelf,
+} from "./audience.js";
 export type {
 	IFluidBrowserPackage,
 	IFluidBrowserPackageEnvironment,
@@ -65,7 +70,11 @@ export type {
 	IRuntime,
 	IGetPendingLocalStateProps,
 } from "./runtime.js";
-export { AttachState, IRuntimeFactory, type IContainerStorageService } from "./runtime.js";
+export {
+	AttachState,
+	IRuntimeFactory,
+	type IContainerStorageService,
+} from "./runtime.js";
 
 export type {
 	/**

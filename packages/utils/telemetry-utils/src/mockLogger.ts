@@ -85,7 +85,8 @@ export class MockLogger implements ITelemetryBaseLogger {
 			clearEventsAfterCheck,
 		);
 		// How many expected events were left over? Hopefully none.
-		const unmatchedExpectedEventCount = expectedEvents.length - matchedExpectedEventCount;
+		const unmatchedExpectedEventCount =
+			expectedEvents.length - matchedExpectedEventCount;
 		return unmatchedExpectedEventCount === 0;
 	}
 
@@ -109,7 +110,13 @@ export class MockLogger implements ITelemetryBaseLogger {
 		// Use copy to ensure events aren't cleared out from under us before we (potentially) throw
 		const actualEvents = this.events;
 
-		if (!this.matchEvents(expectedEvents, inlineDetailsProp, clearEventsAfterCheck)) {
+		if (
+			!this.matchEvents(
+				expectedEvents,
+				inlineDetailsProp,
+				clearEventsAfterCheck,
+			)
+		) {
 			throw new Error(`${message ?? "Logs don't match"}
 expected:
 ${JSON.stringify(expectedEvents)}
@@ -161,7 +168,13 @@ ${JSON.stringify(actualEvents)}`);
 		// Use copy to ensure events aren't cleared out from under us before we (potentially) throw
 		const actualEvents = this.events;
 
-		if (!this.matchAnyEvent(expectedEvents, inlineDetailsProp, clearEventsAfterCheck)) {
+		if (
+			!this.matchAnyEvent(
+				expectedEvents,
+				inlineDetailsProp,
+				clearEventsAfterCheck,
+			)
+		) {
 			throw new Error(`${message ?? "Logs don't match"}
 expected:
 ${JSON.stringify(expectedEvents)}
@@ -194,7 +207,11 @@ ${JSON.stringify(actualEvents)}`);
 		}
 
 		// `events` will be cleared by the below check if requested.
-		return this.matchEvents(expectedEvents, inlineDetailsProp, clearEventsAfterCheck);
+		return this.matchEvents(
+			expectedEvents,
+			inlineDetailsProp,
+			clearEventsAfterCheck,
+		);
 	}
 
 	/**
@@ -217,7 +234,13 @@ ${JSON.stringify(actualEvents)}`);
 		// Use copy to ensure events aren't cleared out from under us before we (potentially) throw
 		const actualEvents = this.events;
 
-		if (!this.matchEventStrict(expectedEvents, inlineDetailsProp, clearEventsAfterCheck)) {
+		if (
+			!this.matchEventStrict(
+				expectedEvents,
+				inlineDetailsProp,
+				clearEventsAfterCheck,
+			)
+		) {
 			throw new Error(`${message ?? "Logs don't match"}
 expected:
 ${JSON.stringify(expectedEvents)}
@@ -247,7 +270,13 @@ ${JSON.stringify(actualEvents)}`);
 		// Use copy to ensure events aren't cleared out from under us before we (potentially) throw
 		const actualEvents = this.events;
 
-		if (this.matchAnyEvent(disallowedEvents, inlineDetailsProp, clearEventsAfterCheck)) {
+		if (
+			this.matchAnyEvent(
+				disallowedEvents,
+				inlineDetailsProp,
+				clearEventsAfterCheck,
+			)
+		) {
 			throw new Error(`${message ?? "Logs don't match"}
 disallowed events:
 ${JSON.stringify(disallowedEvents)}
@@ -304,7 +333,10 @@ ${JSON.stringify(actualEvents)}`);
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const detailsExpanded = JSON.parse(details);
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-			return matchObjects({ ...actualForMatching, ...detailsExpanded }, expected);
+			return matchObjects(
+				{ ...actualForMatching, ...detailsExpanded },
+				expected,
+			);
 		}
 		return matchObjects(actual, expected);
 	}
@@ -312,7 +344,10 @@ ${JSON.stringify(actualEvents)}`);
 	/**
 	 * Throws if any errors were logged
 	 */
-	public assertNoErrors(message?: string, clearEventsAfterCheck: boolean = true): void {
+	public assertNoErrors(
+		message?: string,
+		clearEventsAfterCheck: boolean = true,
+	): void {
 		const actualEvents = this.events;
 		const errors = actualEvents.filter((event) => event.category === "error");
 		if (clearEventsAfterCheck) {

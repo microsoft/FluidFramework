@@ -6,7 +6,10 @@
 import type { IWholeFlatSummary } from "@fluidframework/server-services-client";
 
 import { Constants } from "./constants";
-import { buildFullGitTreeFromGitTree, convertFullGitTreeToFullSummaryTree } from "./conversions";
+import {
+	buildFullGitTreeFromGitTree,
+	convertFullGitTreeToFullSummaryTree,
+} from "./conversions";
 import type { ISummaryVersion, IWholeSummaryOptions } from "./definitions";
 
 /**

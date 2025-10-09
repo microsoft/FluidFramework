@@ -77,7 +77,10 @@ export const charSetForEncodingIds =
  * @returns A string - representation of an input
  * @internal
  */
-export function encodeCompactIdToString(idArg: number | string, prefix = ""): string {
+export function encodeCompactIdToString(
+	idArg: number | string,
+	prefix = "",
+): string {
 	if (typeof idArg === "string") {
 		return idArg;
 	}

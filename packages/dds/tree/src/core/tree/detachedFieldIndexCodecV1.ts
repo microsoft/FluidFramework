@@ -15,7 +15,10 @@ import {
 } from "../rebase/index.js";
 
 import { type FormatV1, version1 } from "./detachedFieldIndexFormatV1.js";
-import type { DetachedFieldSummaryData, Major } from "./detachedFieldIndexTypes.js";
+import type {
+	DetachedFieldSummaryData,
+	Major,
+} from "./detachedFieldIndexTypes.js";
 import { makeDetachedFieldIndexCodecFromMajorCodec } from "./detachedFieldIndexCodecCommon.js";
 
 class MajorCodec implements IJsonCodec<Major, EncodedRevisionTag> {

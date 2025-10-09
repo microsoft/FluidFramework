@@ -9,7 +9,10 @@ import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 import { MockHandle } from "../mockHandle.js";
-import { MockContainerRuntimeFactory, MockFluidDataStoreRuntime } from "../mocks.js";
+import {
+	MockContainerRuntimeFactory,
+	MockFluidDataStoreRuntime,
+} from "../mocks.js";
 
 describe("MockContainerRuntime", () => {
 	it("inherits its id from the datastore when set", () => {
@@ -31,8 +34,12 @@ describe("MockContainerRuntime", () => {
 			idCompressor: secondIdCompressor,
 		});
 
-		const firstContainerRuntime = factory.createContainerRuntime(firstDataStoreRuntime);
-		const secondContainerRuntime = factory.createContainerRuntime(secondDataStoreRuntime);
+		const firstContainerRuntime = factory.createContainerRuntime(
+			firstDataStoreRuntime,
+		);
+		const secondContainerRuntime = factory.createContainerRuntime(
+			secondDataStoreRuntime,
+		);
 		// Generate an ID in the first client
 		const id = firstIdCompressor.generateCompressedId();
 		const opSpaceId = firstIdCompressor.normalizeToOpSpace(id);
@@ -47,17 +54,23 @@ describe("MockContainerRuntime", () => {
 
 		factory.processAllMessages();
 
-		const normalizedId = secondDataStoreRuntime.idCompressor?.normalizeToSessionSpace(
-			opSpaceId,
-			firstIdCompressor.localSessionId,
-		);
+		const normalizedId =
+			secondDataStoreRuntime.idCompressor?.normalizeToSessionSpace(
+				opSpaceId,
+				firstIdCompressor.localSessionId,
+			);
 
-		const secondNormalizedId = firstDataStoreRuntime.idCompressor?.normalizeToSessionSpace(
-			secondOpSpaceId,
-			secondIdCompressor.localSessionId,
-		);
+		const secondNormalizedId =
+			firstDataStoreRuntime.idCompressor?.normalizeToSessionSpace(
+				secondOpSpaceId,
+				secondIdCompressor.localSessionId,
+			);
 
-		assert.strictEqual(normalizedId, 0, "Should have finalized the ID in both containers.");
+		assert.strictEqual(
+			normalizedId,
+			0,
+			"Should have finalized the ID in both containers.",
+		);
 		assert.strictEqual(
 			secondNormalizedId,
 			513,

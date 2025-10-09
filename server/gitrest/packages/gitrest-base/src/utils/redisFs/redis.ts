@@ -122,7 +122,9 @@ export class Redis implements IRedis {
 		// If 'appendPrefixToKey' is false, we assume that the 'key' parameter with prefix is already passed in by the caller,
 		// and no additional prefix needs to be added.
 		const keyToDelete = appendPrefixToKey ? this.getKey(key) : key;
-		const result = await this.redisClientConnectionManager.getRedisClient().unlink(keyToDelete);
+		const result = await this.redisClientConnectionManager
+			.getRedisClient()
+			.unlink(keyToDelete);
 		// The UNLINK API in Redis returns the number of keys that were removed.
 		// We always call Redis DEL with one key only, so we expect a result equal to 1
 		// to indicate that the key was removed. 0 would indicate that the key does not exist.
@@ -143,9 +145,7 @@ export class Redis implements IRedis {
 	public async keysByPrefix(keyPrefix: string): Promise<string[]> {
 		const result = await executeRedisFsApiWithMetric(
 			async () =>
-				this.redisClientConnectionManager
-					.getRedisClient()
-					.keys(`${this.getKey(keyPrefix)}*`),
+				this.redisClientConnectionManager.getRedisClient().keys(`${this.getKey(keyPrefix)}*`),
 			RedisFsApis.KeysByPrefix,
 			this.parameters?.enableRedisMetrics ?? false,
 			this.parameters?.redisApiMetricsSamplingPeriod,

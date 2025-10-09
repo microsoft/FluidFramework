@@ -55,7 +55,9 @@ function apiDocsTransform(content, options, config) {
 	const packageMetadata = getPackageMetadata(resolvedPackageJsonPath);
 	const packageName = packageMetadata.name;
 
-	return formattedGeneratedContentBody(generateApiDocsSection(packageName, headingOptions));
+	return formattedGeneratedContentBody(
+		generateApiDocsSection(packageName, headingOptions),
+	);
 }
 
 module.exports = {

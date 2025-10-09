@@ -39,7 +39,8 @@ export const defaultMinVersionForCollab =
  * all minor versions of N. Though LTS starts at 1.4.0, we should stay consistent
  * with our policy and allow all 1.x versions to be compatible with 2.x.
  */
-const lowestMinVersionForCollab = "1.0.0" as const satisfies MinimumVersionForCollab;
+const lowestMinVersionForCollab =
+	"1.0.0" as const satisfies MinimumVersionForCollab;
 
 /**
  * String in a valid semver format specifying bottom of a minor version
@@ -49,7 +50,9 @@ const lowestMinVersionForCollab = "1.0.0" as const satisfies MinimumVersionForCo
  *
  * @internal
  */
-export type MinimumMinorSemanticVersion = `${bigint}.${bigint}.0` | `${bigint}.0.0-defaults`;
+export type MinimumMinorSemanticVersion =
+	| `${bigint}.${bigint}.0`
+	| `${bigint}.0.0-defaults`;
 
 /**
  * String in a valid semver format of a specific version at least specifying minor.
@@ -85,10 +88,9 @@ export type ConfigValidationMap<T extends Record<string, unknown>> = {
  *
  * @internal
  */
-export function getConfigsForMinVersionForCollab<T extends Record<SemanticVersion, unknown>>(
-	minVersionForCollab: SemanticVersion,
-	configMap: ConfigMap<T>,
-): Partial<T> {
+export function getConfigsForMinVersionForCollab<
+	T extends Record<SemanticVersion, unknown>,
+>(minVersionForCollab: SemanticVersion, configMap: ConfigMap<T>): Partial<T> {
 	const defaultConfigs: Partial<T> = {};
 	// Iterate over configMap to get default values for each option.
 	for (const key of Object.keys(configMap)) {
@@ -155,7 +157,9 @@ export function semanticVersionToMinimumVersionForCollab(
  *
  * @internal
  */
-export function getValidationForRuntimeOptions<T extends Record<string, unknown>>(
+export function getValidationForRuntimeOptions<
+	T extends Record<string, unknown>,
+>(
 	minVersionForCollab: SemanticVersion,
 	runtimeOptions: Partial<T>,
 	validationMap: ConfigValidationMap<T>,
@@ -175,8 +179,13 @@ export function getValidationForRuntimeOptions<T extends Record<string, unknown>
 			continue;
 		}
 
-		const requiredVersion = validationMap[passedRuntimeOption](passedRuntimeOptionValue);
-		if (requiredVersion !== undefined && gt(requiredVersion, minVersionForCollab)) {
+		const requiredVersion = validationMap[passedRuntimeOption](
+			passedRuntimeOptionValue,
+		);
+		if (
+			requiredVersion !== undefined &&
+			gt(requiredVersion, minVersionForCollab)
+		) {
 			throw new UsageError(
 				`Runtime option ${passedRuntimeOption}:${JSON.stringify(passedRuntimeOptionValue)} requires ` +
 					`runtime version ${requiredVersion}. Please update minVersionForCollab ` +
@@ -219,7 +228,11 @@ export function configValueToMinVersionForCollab<
 			// Check if `possibleConfigValue` and the input `configValue` share at least one
 			// common key-value pair. If they do, the `versionRequired` for this `possibleConfigValue`
 			// is added to `matchingVersions`.
-			if (Object.entries(possibleConfigValue).some(([k, v]) => configValue[k] === v)) {
+			if (
+				Object.entries(possibleConfigValue).some(
+					([k, v]) => configValue[k] === v,
+				)
+			) {
 				matchingVersions.push(versionRequired);
 			}
 		}

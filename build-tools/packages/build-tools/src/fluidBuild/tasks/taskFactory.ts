@@ -7,12 +7,19 @@ import { getExecutableFromCommand } from "../../common/utils";
 import type { BuildContext } from "../buildContext";
 import type { BuildPackage } from "../buildGraph";
 import type { TaskFileDependencies } from "../fluidTaskDefinitions";
-import { isConcurrentlyCommand, parseConcurrentlyCommand } from "../parseCommands";
+import {
+	isConcurrentlyCommand,
+	parseConcurrentlyCommand,
+} from "../parseCommands";
 import { GroupTask } from "./groupTask";
 import { ApiExtractorTask } from "./leaf/apiExtractorTask";
 import { BiomeTask } from "./leaf/biomeTasks";
 import { DeclarativeLeafTask } from "./leaf/declarativeTask";
-import { FlubCheckLayerTask, FlubCheckPolicyTask, FlubListTask } from "./leaf/flubTasks";
+import {
+	FlubCheckLayerTask,
+	FlubCheckPolicyTask,
+	FlubListTask,
+} from "./leaf/flubTasks";
 import { GenerateEntrypointsTask } from "./leaf/generateEntrypointsTask.js";
 import { type LeafTask, UnknownLeafTask } from "./leaf/leafTask";
 import { EsLintTask, TsLintTask } from "./leaf/lintTasks";
@@ -36,26 +43,26 @@ import type { TaskHandler } from "./taskHandlers";
 const executableToLeafTask: {
 	[key: string]: TaskHandler;
 } = {
-	"ts2esm": Ts2EsmTask,
-	"tsc": TscTask,
+	ts2esm: Ts2EsmTask,
+	tsc: TscTask,
 	"fluid-tsc": TscTask,
-	"tslint": TsLintTask,
-	"eslint": EsLintTask,
-	"webpack": WebpackTask,
+	tslint: TsLintTask,
+	eslint: EsLintTask,
+	webpack: WebpackTask,
 	"parallel-webpack": WebpackTask,
-	"lessc": LesscTask,
-	"copyfiles": CopyfilesTask,
-	"echo": EchoTask,
-	"prettier": PrettierTask,
+	lessc: LesscTask,
+	copyfiles: CopyfilesTask,
+	echo: EchoTask,
+	prettier: PrettierTask,
 	"gen-version": GenVerTask,
-	"gf": GoodFence,
+	gf: GoodFence,
 	"api-extractor": ApiExtractorTask,
 	"flub check layers": FlubCheckLayerTask,
 	"flub check policy": FlubCheckPolicyTask,
 	"flub generate entrypoints": GenerateEntrypointsTask,
 	"flub generate typetests": TypeValidationTask,
 	"fluid-type-test-generator": TypeValidationTask,
-	"depcruise": DepCruiseTask,
+	depcruise: DepCruiseTask,
 	"biome check": BiomeTask,
 	"biome format": BiomeTask,
 
@@ -113,7 +120,10 @@ function getLeafTaskForCommand(
 	return new handler(node, command, context, taskName);
 }
 
-function getRunScriptName(command: string, packageManager: string): string | undefined {
+function getRunScriptName(
+	command: string,
+	packageManager: string,
+): string | undefined {
 	// Remove the package manager name from the command
 	if (command.startsWith("npm run ")) {
 		return command.substring("npm run ".length);
@@ -143,7 +153,9 @@ export class TaskFactory {
 		const steps = command.split("&&");
 		if (steps.length > 1) {
 			for (const step of steps) {
-				subTasks.push(TaskFactory.Create(node, step.trim(), context, pendingInitDep));
+				subTasks.push(
+					TaskFactory.Create(node, step.trim(), context, pendingInitDep),
+				);
 			}
 
 			if (files !== undefined) {
@@ -184,7 +196,9 @@ export class TaskFactory {
 					subTasks.push(task);
 				},
 				(step) => {
-					subTasks.push(TaskFactory.Create(node, step, context, pendingInitDep));
+					subTasks.push(
+						TaskFactory.Create(node, step, context, pendingInitDep),
+					);
 				},
 			);
 			if (subTasks.length === 0) {
@@ -229,7 +243,13 @@ export class TaskFactory {
 		context: BuildContext,
 		taskName: string | undefined,
 	) {
-		return new GroupTask(node, `fluid-build -t ${taskName}`, context, [], taskName);
+		return new GroupTask(
+			node,
+			`fluid-build -t ${taskName}`,
+			context,
+			[],
+			taskName,
+		);
 	}
 
 	public static CreateTaskWithLifeCycle(

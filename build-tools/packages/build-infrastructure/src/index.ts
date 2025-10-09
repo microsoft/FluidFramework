@@ -37,7 +37,10 @@ export {
 	getChangedSinceRef,
 } from "./git.js";
 export { PackageBase } from "./package.js";
-export { updatePackageJsonFile, updatePackageJsonFileAsync } from "./packageJsonUtils.js";
+export {
+	updatePackageJsonFile,
+	updatePackageJsonFileAsync,
+} from "./packageJsonUtils.js";
 export { createPackageManager } from "./packageManagers.js";
 export type {
 	AdditionalPackageProps,

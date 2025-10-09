@@ -10,8 +10,14 @@
 // index.ts and retagged export from internal.ts may be removed.
 
 export type { DeepReadonly } from "./deepReadonly.js";
-export type { JsonDeserialized, JsonDeserializedOptions } from "./jsonDeserialized.js";
-export type { JsonSerializable, JsonSerializableOptions } from "./jsonSerializable.js";
+export type {
+	JsonDeserialized,
+	JsonDeserializedOptions,
+} from "./jsonDeserialized.js";
+export type {
+	JsonSerializable,
+	JsonSerializableOptions,
+} from "./jsonSerializable.js";
 export type {
 	SerializationErrorPerNonPublicProperties,
 	SerializationErrorPerUndefinedArrayElement,
@@ -21,7 +27,10 @@ export type {
 	NonNullJsonObjectWith,
 	ReadonlyJsonTypeWith,
 } from "./jsonType.js";
-export type { OpaqueJsonDeserialized, OpaqueJsonSerializable } from "./opaqueJson.js";
+export type {
+	OpaqueJsonDeserialized,
+	OpaqueJsonSerializable,
+} from "./opaqueJson.js";
 export type { ShallowReadonly } from "./shallowReadonly.js";
 
 export type {

@@ -6,12 +6,12 @@
 		"types": ["mocha", "node"],
 		"noImplicitAny": true,
 		"noImplicitOverride": true,
-		"noUncheckedIndexedAccess": false,
+		"noUncheckedIndexedAccess": false
 	},
 	"include": ["./**/*"],
 	"references": [
 		{
-			"path": "../..",
-		},
-	],
+			"path": "../.."
+		}
+	]
 }

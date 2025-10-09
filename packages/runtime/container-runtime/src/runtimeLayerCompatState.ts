@@ -48,17 +48,18 @@ export const runtimeCompatDetailsForLoader: ILayerCompatDetails = {
  * The requirements that the Loader layer must meet to be compatible with this Runtime.
  * @internal
  */
-export const loaderSupportRequirementsForRuntime: ILayerCompatSupportRequirements = {
-	/**
-	 * Minimum generation that Loader must be at to be compatible with Runtime. Note that 0 is used here so
-	 * that Loader layers before the introduction of the layer compatibility enforcement are compatible.
-	 */
-	minSupportedGeneration: 0,
-	/**
-	 * The features that the Loader must support to be compatible with Runtime.
-	 */
-	requiredFeatures: [],
-};
+export const loaderSupportRequirementsForRuntime: ILayerCompatSupportRequirements =
+	{
+		/**
+		 * Minimum generation that Loader must be at to be compatible with Runtime. Note that 0 is used here so
+		 * that Loader layers before the introduction of the layer compatibility enforcement are compatible.
+		 */
+		minSupportedGeneration: 0,
+		/**
+		 * The features that the Loader must support to be compatible with Runtime.
+		 */
+		requiredFeatures: [],
+	};
 
 /**
  * Runtime's compatibility details that is exposed to the DataStore layer.
@@ -69,24 +70,28 @@ export const runtimeCompatDetailsForDataStore: ILayerCompatDetails = {
 	/**
 	 * The features supported by the Runtime layer across the Runtime / DataStore boundary.
 	 */
-	supportedFeatures: new Set<string>([encodeHandlesInContainerRuntime, notifiesReadOnlyState]),
+	supportedFeatures: new Set<string>([
+		encodeHandlesInContainerRuntime,
+		notifiesReadOnlyState,
+	]),
 };
 
 /**
  * The requirements that the DataStore layer must meet to be compatible with this Runtime.
  * @internal
  */
-export const dataStoreSupportRequirementsForRuntime: ILayerCompatSupportRequirements = {
-	/**
-	 * Minimum generation that DataStore must be at to be compatible with Runtime. Note that 0 is used here so
-	 * that DataStore layers before the introduction of the layer compatibility enforcement are compatible.
-	 */
-	minSupportedGeneration: 0,
-	/**
-	 * The features that the DataStore must support to be compatible with Runtime.
-	 */
-	requiredFeatures: [],
-};
+export const dataStoreSupportRequirementsForRuntime: ILayerCompatSupportRequirements =
+	{
+		/**
+		 * Minimum generation that DataStore must be at to be compatible with Runtime. Note that 0 is used here so
+		 * that DataStore layers before the introduction of the layer compatibility enforcement are compatible.
+		 */
+		minSupportedGeneration: 0,
+		/**
+		 * The features that the DataStore must support to be compatible with Runtime.
+		 */
+		requiredFeatures: [],
+	};
 
 /**
  * Validates that the Loader layer is compatible with this Runtime.
@@ -107,7 +112,8 @@ export function validateLoaderCompatibility(
 				loaderVersion: maybeLoaderCompatDetailsForRuntime?.pkgVersion,
 				runtimeGeneration: runtimeCoreCompatDetails.generation,
 				loaderGeneration: maybeLoaderCompatDetailsForRuntime?.generation,
-				minSupportedGeneration: loaderSupportRequirementsForRuntime.minSupportedGeneration,
+				minSupportedGeneration:
+					loaderSupportRequirementsForRuntime.minSupportedGeneration,
 				isGenerationCompatible: layerCheckResult.isGenerationCompatible,
 				unsupportedFeatures: layerCheckResult.unsupportedFeatures,
 			}),
@@ -136,7 +142,8 @@ export function validateDatastoreCompatibility(
 				dataStoreVersion: maybeDataStoreCompatDetails?.pkgVersion,
 				runtimeGeneration: runtimeCoreCompatDetails.generation,
 				dataStoreGeneration: maybeDataStoreCompatDetails?.generation,
-				minSupportedGeneration: dataStoreSupportRequirementsForRuntime.minSupportedGeneration,
+				minSupportedGeneration:
+					dataStoreSupportRequirementsForRuntime.minSupportedGeneration,
 				isGenerationCompatible: layerCheckResult.isGenerationCompatible,
 				unsupportedFeatures: layerCheckResult.unsupportedFeatures,
 			}),

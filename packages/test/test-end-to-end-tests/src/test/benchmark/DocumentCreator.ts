@@ -66,7 +66,9 @@ export interface IDocumentLoaderAndSummarizer extends IDocumentLoader {
  * Creates a new {@link DocumentMap} using configuration parameters.
  * @param props - Properties for initializing the Document Creator.
  */
-export function createDocument(props: IDocumentCreatorProps): IDocumentLoaderAndSummarizer {
+export function createDocument(
+	props: IDocumentCreatorProps,
+): IDocumentLoaderAndSummarizer {
 	const logger = createChildLogger({
 		logger: getTestLogger?.(),
 		properties: {
@@ -113,7 +115,10 @@ export interface IBenchmarkParameters {
  * @param obj - The test object that will be persisted across runs (mainly used on Memory runs).
  * @param params - The {@link IBenchmarkParameters} parameters for the test.
  */
-export function benchmarkAll<T extends IBenchmarkParameters>(title: string, obj: T) {
+export function benchmarkAll<T extends IBenchmarkParameters>(
+	title: string,
+	obj: T,
+) {
 	if (isMemoryTest()) {
 		const t: IMemoryTestObject = {
 			title,

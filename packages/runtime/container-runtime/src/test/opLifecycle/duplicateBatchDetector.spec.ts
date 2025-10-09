@@ -72,7 +72,9 @@ describe("DuplicateBatchDetector", () => {
 			[1, "batch1"],
 			[2, "batch2"],
 		];
-		detector = new DuplicateBatchDetector(input) as unknown as PatchedDuplicateBatchDetector;
+		detector = new DuplicateBatchDetector(
+			input,
+		) as unknown as PatchedDuplicateBatchDetector;
 		assert.deepEqual(detector.getRecentBatchInfoForSummary(), input);
 	});
 
@@ -145,7 +147,9 @@ describe("DuplicateBatchDetector", () => {
 		});
 		detector.processInboundBatch(inboundBatch1);
 
-		const summaryPayload = JSON.stringify(detector.getRecentBatchInfoForSummary());
+		const summaryPayload = JSON.stringify(
+			detector.getRecentBatchInfoForSummary(),
+		);
 		const detector2 = new DuplicateBatchDetector(
 			JSON.parse(summaryPayload) as [number, string][] | undefined,
 		);
@@ -227,7 +231,8 @@ describe("DuplicateBatchDetector", () => {
 				},
 			} satisfies Partial<ITelemetryContext> as ITelemetryContext;
 
-			const recentBatchInfo = detector.getRecentBatchInfoForSummary(telemetryContext);
+			const recentBatchInfo =
+				detector.getRecentBatchInfoForSummary(telemetryContext);
 
 			assert.deepEqual(
 				recentBatchInfo,
@@ -237,7 +242,11 @@ describe("DuplicateBatchDetector", () => {
 				],
 				"Incorrect recentBatchInfo",
 			);
-			assert.equal(setCalled, 1, "Expected telemetryContext.set to be called once");
+			assert.equal(
+				setCalled,
+				1,
+				"Expected telemetryContext.set to be called once",
+			);
 		});
 	});
 });

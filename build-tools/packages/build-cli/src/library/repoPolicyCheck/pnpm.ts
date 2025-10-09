@@ -15,7 +15,10 @@ export const handlers: Handler[] = [
 		// A workspace that uses pnpm must also have a preinstall script that tells the user to use pnpm.
 		name: "pnpm-npm-package-json-preinstall",
 		match,
-		handler: async (file: string, root: string): Promise<string | undefined> => {
+		handler: async (
+			file: string,
+			root: string,
+		): Promise<string | undefined> => {
 			const dirname = path.dirname(file);
 			const packageJsonFile = path.join(dirname, "package.json");
 			const manifest = getFlubConfig(root);
@@ -36,7 +39,9 @@ export const handlers: Handler[] = [
 			const script: string | undefined = json.scripts?.preinstall;
 			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 			if (script) {
-				const matchResult = script.match(/^node ((?:\.\.\/)*)scripts\/only-pnpm.cjs/);
+				const matchResult = script.match(
+					/^node ((?:\.\.\/)*)scripts\/only-pnpm.cjs/,
+				);
 				if (matchResult) {
 					const onlyPnpmPath = path.join(
 						dirname,

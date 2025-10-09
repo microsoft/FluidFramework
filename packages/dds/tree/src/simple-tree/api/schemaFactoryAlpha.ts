@@ -112,7 +112,10 @@ export interface SchemaStaticsAlpha {
 	 * This can take in {@link AnnotatedAllowedType} to preserve their annotations.
 	 */
 	readonly types: <
-		const T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[],
+		const T extends readonly (
+			| AnnotatedAllowedType
+			| LazyItem<TreeNodeSchema>
+		)[],
 	>(
 		t: T,
 		metadata?: AllowedTypesMetadata,
@@ -142,7 +145,9 @@ export interface SchemaStaticsAlpha {
 	 * In that case it could use `T extends readonly (AnnotatedAllowedTypeUnsafe | LazyItem<System_Unsafe.TreeNodeSchemaUnsafe>)[]`.
 	 */
 	readonly typesRecursive: <
-		const T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[],
+		const T extends readonly Unenforced<
+			AnnotatedAllowedType | LazyItem<TreeNodeSchema>
+		>[],
 	>(
 		t: T,
 		metadata?: AllowedTypesMetadata,
@@ -162,7 +167,9 @@ const staged = <const T extends LazyItem<TreeNodeSchema>>(
 	};
 };
 
-const types = <const T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]>(
+const types = <
+	const T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[],
+>(
 	t: T,
 	metadata: AllowedTypesMetadata = {},
 ): AllowedTypesFullFromMixed<T> => {
@@ -205,7 +212,12 @@ export class SchemaFactoryAlpha<
 		name: Name,
 		fields: T,
 		options?: ObjectSchemaOptionsAlpha<TCustomMetadata>,
-	): ObjectNodeSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> & {
+	): ObjectNodeSchema<
+		ScopedSchemaName<TScope, Name>,
+		T,
+		true,
+		TCustomMetadata
+	> & {
 		/**
 		 * Typing checking workaround: not for for actual use.
 		 * @remarks
@@ -234,7 +246,8 @@ export class SchemaFactoryAlpha<
 	 */
 	public override objectRecursive<
 		const Name extends TName,
-		const T extends RestrictiveStringRecord<System_Unsafe.ImplicitFieldSchemaUnsafe>,
+		const T extends
+			RestrictiveStringRecord<System_Unsafe.ImplicitFieldSchemaUnsafe>,
 		const TCustomMetadata = unknown,
 	>(
 		name: Name,
@@ -303,12 +316,14 @@ export class SchemaFactoryAlpha<
 	/**
 	 * {@inheritDoc SchemaStatics.optionalRecursive}
 	 */
-	public static override readonly optionalRecursive = schemaStatics.optionalRecursive;
+	public static override readonly optionalRecursive =
+		schemaStatics.optionalRecursive;
 
 	/**
 	 * {@inheritDoc SchemaStatics.requiredRecursive}
 	 */
-	public static override readonly requiredRecursive = schemaStatics.requiredRecursive;
+	public static override readonly requiredRecursive =
+		schemaStatics.requiredRecursive;
 
 	/**
 	 * Like {@link SchemaFactory.identifier} but static and a factory function that can be provided {@link FieldProps}.
@@ -402,7 +417,12 @@ export class SchemaFactoryAlpha<
 		name: Name,
 		allowedTypes: T,
 		options?: NodeSchemaOptionsAlpha<TCustomMetadata>,
-	): MapNodeCustomizableSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> {
+	): MapNodeCustomizableSchema<
+		ScopedSchemaName<TScope, Name>,
+		T,
+		true,
+		TCustomMetadata
+	> {
 		return mapSchema(
 			scoped<TScope, TName, Name>(this, name),
 			allowedTypes,
@@ -421,7 +441,11 @@ export class SchemaFactoryAlpha<
 		Name extends TName,
 		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
 		const TCustomMetadata = unknown,
-	>(name: Name, allowedTypes: T, options?: NodeSchemaOptionsAlpha<TCustomMetadata>) {
+	>(
+		name: Name,
+		allowedTypes: T,
+		options?: NodeSchemaOptionsAlpha<TCustomMetadata>,
+	) {
 		return this.mapAlpha(
 			name,
 			allowedTypes as T & ImplicitAllowedTypes,
@@ -453,7 +477,12 @@ export class SchemaFactoryAlpha<
 		name: Name,
 		allowedTypes: T,
 		options?: NodeSchemaOptionsAlpha<TCustomMetadata>,
-	): ArrayNodeCustomizableSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> {
+	): ArrayNodeCustomizableSchema<
+		ScopedSchemaName<TScope, Name>,
+		T,
+		true,
+		TCustomMetadata
+	> {
 		return arraySchema(
 			scoped<TScope, TName, Name>(this, name),
 			allowedTypes,
@@ -472,7 +501,11 @@ export class SchemaFactoryAlpha<
 		const Name extends TName,
 		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
 		const TCustomMetadata = unknown,
-	>(name: Name, allowedTypes: T, options?: NodeSchemaOptionsAlpha<TCustomMetadata>) {
+	>(
+		name: Name,
+		allowedTypes: T,
+		options?: NodeSchemaOptionsAlpha<TCustomMetadata>,
+	) {
 		return this.arrayAlpha(
 			name,
 			allowedTypes as T & ImplicitAllowedTypes,
@@ -504,7 +537,12 @@ export class SchemaFactoryAlpha<
 		name: Name,
 		allowedTypes: T,
 		options?: NodeSchemaOptionsAlpha<TCustomMetadata>,
-	): RecordNodeCustomizableSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> {
+	): RecordNodeCustomizableSchema<
+		ScopedSchemaName<TScope, Name>,
+		T,
+		true,
+		TCustomMetadata
+	> {
 		return recordSchema({
 			identifier: scoped<TScope, TName, Name>(this, name),
 			info: allowedTypes,
@@ -527,7 +565,11 @@ export class SchemaFactoryAlpha<
 		Name extends TName,
 		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
 		const TCustomMetadata = unknown,
-	>(name: Name, allowedTypes: T, options?: NodeSchemaOptionsAlpha<TCustomMetadata>) {
+	>(
+		name: Name,
+		allowedTypes: T,
+		options?: NodeSchemaOptionsAlpha<TCustomMetadata>,
+	) {
 		const RecordSchema = recordSchema({
 			identifier: scoped<TScope, TName, Name>(this, name),
 			info: allowedTypes as T & ImplicitAllowedTypes,

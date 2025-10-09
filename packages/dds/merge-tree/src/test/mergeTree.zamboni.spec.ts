@@ -22,7 +22,10 @@ describe("Zamboni Logic", () => {
 	});
 	it("packParent with no children segments", () => {
 		client.applyMsg(
-			client.makeOpMessage(client.removeRangeLocal(0, client.getLength() - 1), 1),
+			client.makeOpMessage(
+				client.removeRangeLocal(0, client.getLength() - 1),
+				1,
+			),
 		);
 		packParent(client.mergeTree.root, client.mergeTree);
 		assert.equal(client.mergeTree.root.cachedLength, 1);
@@ -52,7 +55,8 @@ describe("Zamboni Logic", () => {
 		assert.equal(childCount, client.mergeTree.root.childCount);
 	});
 	it("zamboni with one segment to scour", () => {
-		const initialChildCount = (client.mergeTree.root.children[0] as MergeBlock).childCount;
+		const initialChildCount = (client.mergeTree.root.children[0] as MergeBlock)
+			.childCount;
 		const initialCachedLength = client.mergeTree.root.cachedLength ?? 0;
 		client.removeRangeLocal(0, 1);
 		zamboniSegments(client.mergeTree);

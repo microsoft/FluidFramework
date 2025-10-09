@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
+import {
+	assert,
+	unreachableCase,
+	fail,
+} from "@fluidframework/core-utils/internal";
 
 import type { RevisionTag } from "../../core/index.js";
 import { type IdAllocator, type Mutable, hasSingle } from "../../util/index.js";
@@ -79,7 +83,12 @@ function invertMarkList(
 	const inverseMarkList = new MarkListFactory();
 
 	for (const mark of markList) {
-		const inverseMarks = invertMark(mark, isRollback, crossFieldManager, revision);
+		const inverseMarks = invertMark(
+			mark,
+			isRollback,
+			crossFieldManager,
+			revision,
+		);
 		inverseMarkList.push(...inverseMarks);
 	}
 
@@ -117,7 +126,10 @@ function invertMark(
 			return [withNodeChange(inverse, mark.changes)];
 		}
 		case "Remove": {
-			assert(mark.revision !== undefined, 0x5a1 /* Unable to revert to undefined revision */);
+			assert(
+				mark.revision !== undefined,
+				0x5a1 /* Unable to revert to undefined revision */,
+			);
 			const outputId = getOutputCellId(mark);
 			const inputId = getInputCellId(mark);
 			let inverse: Mutable<Mark>;
@@ -145,7 +157,10 @@ function invertMark(
 		}
 		case "Insert": {
 			const inputId = getInputCellId(mark);
-			assert(inputId !== undefined, 0x80c /* Active inserts should target empty cells */);
+			assert(
+				inputId !== undefined,
+				0x80c /* Active inserts should target empty cells */,
+			);
 			const removeMark: Mutable<CellMark<Remove>> = {
 				type: "Remove",
 				count: mark.count,
@@ -162,7 +177,10 @@ function invertMark(
 		}
 		case "MoveOut": {
 			if (mark.changes !== undefined) {
-				assert(mark.count === 1, 0x6ed /* Mark with changes can only target a single cell */);
+				assert(
+					mark.count === 1,
+					0x6ed /* Mark with changes can only target a single cell */,
+				);
 
 				const endpoint = getEndpoint(mark);
 				crossFieldManager.set(
@@ -213,7 +231,10 @@ function invertMark(
 		}
 		case "MoveIn": {
 			const inputId = getInputCellId(mark);
-			assert(inputId !== undefined, 0x89e /* Active move-ins should target empty cells */);
+			assert(
+				inputId !== undefined,
+				0x89e /* Active move-ins should target empty cells */,
+			);
 			const invertedMark: Mutable<CellMark<MoveOut>> = {
 				type: "MoveOut",
 				id: mark.id,
@@ -249,8 +270,18 @@ function invertMark(
 				changes: mark.changes,
 				...mark.detach,
 			};
-			const attachInverses = invertMark(attach, isRollback, crossFieldManager, revision);
-			const detachInverses = invertMark(detach, isRollback, crossFieldManager, revision);
+			const attachInverses = invertMark(
+				attach,
+				isRollback,
+				crossFieldManager,
+				revision,
+			);
+			const detachInverses = invertMark(
+				detach,
+				isRollback,
+				crossFieldManager,
+				revision,
+			);
 
 			if (detachInverses.length === 0) {
 				return attachInverses;
@@ -262,13 +293,19 @@ function invertMark(
 			);
 
 			let detachInverse = detachInverses[0];
-			assert(isAttach(detachInverse), 0x80e /* Inverse of a detach should be an attach */);
+			assert(
+				isAttach(detachInverse),
+				0x80e /* Inverse of a detach should be an attach */,
+			);
 
 			const inverses: Mark[] = [];
 			for (const attachInverse of attachInverses) {
 				let detachInverseCurr: Mark = detachInverse;
 				if (attachInverse.count !== detachInverse.count) {
-					[detachInverseCurr, detachInverse] = splitMark(detachInverse, attachInverse.count);
+					[detachInverseCurr, detachInverse] = splitMark(
+						detachInverse,
+						attachInverse.count,
+					);
 				}
 
 				if (attachInverse.type === NoopMarkType) {
@@ -282,8 +319,14 @@ function invertMark(
 					inverses.push(detachInverseCurr);
 					continue;
 				}
-				assert(isDetach(attachInverse), 0x810 /* Inverse of an attach should be a detach */);
-				assert(detachInverseCurr.cellId !== undefined, 0x9f6 /* Expected empty cell */);
+				assert(
+					isDetach(attachInverse),
+					0x810 /* Inverse of an attach should be a detach */,
+				);
+				assert(
+					detachInverseCurr.cellId !== undefined,
+					0x9f6 /* Expected empty cell */,
+				);
 				const inverted = normalizeCellRename(
 					detachInverseCurr.cellId,
 					attachInverse.count,
@@ -295,7 +338,10 @@ function invertMark(
 				}
 
 				if (attachInverse.changes !== undefined) {
-					assert(inverted.changes === undefined, 0x811 /* Unexpected node changes */);
+					assert(
+						inverted.changes === undefined,
+						0x811 /* Unexpected node changes */,
+					);
 					inverted.changes = attachInverse.changes;
 				}
 				inverses.push(inverted);
@@ -314,7 +360,13 @@ function applyMovedChanges(
 	manager: CrossFieldManager<NodeId>,
 ): Mark[] {
 	// Although this is a source mark, we query the destination because this was a destination mark during the original invert pass.
-	const entry = manager.get(CrossFieldTarget.Destination, revision, mark.id, mark.count, true);
+	const entry = manager.get(
+		CrossFieldTarget.Destination,
+		revision,
+		mark.id,
+		mark.count,
+		true,
+	);
 
 	if (entry.length < mark.count) {
 		const [mark1, mark2] = splitMark(mark, entry.length);
@@ -340,7 +392,10 @@ function invertNodeChangeOrSkip(
 	cellId?: CellId,
 ): Mark {
 	if (changes !== undefined) {
-		assert(count === 1, 0x66c /* A modify mark must have length equal to one */);
+		assert(
+			count === 1,
+			0x66c /* A modify mark must have length equal to one */,
+		);
 		const noop: CellMark<NoopMark> = {
 			count,
 			changes,

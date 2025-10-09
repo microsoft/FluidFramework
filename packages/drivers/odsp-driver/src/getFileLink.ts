@@ -5,7 +5,10 @@
 
 import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { NonRetryableError, runWithRetry } from "@fluidframework/driver-utils/internal";
+import {
+	NonRetryableError,
+	runWithRetry,
+} from "@fluidframework/driver-utils/internal";
 import {
 	type IOdspUrlParts,
 	OdspErrorTypes,
@@ -63,7 +66,11 @@ export const getFileLink = mockify(
 					async () =>
 						runWithRetryForCoherencyAndServiceReadOnlyErrors(
 							async () =>
-								getFileLinkWithLocationRedirectionHandling(getToken, resolvedUrl, logger),
+								getFileLinkWithLocationRedirectionHandling(
+									getToken,
+									resolvedUrl,
+									logger,
+								),
 							"getFileLinkCore",
 							logger,
 						),
@@ -204,7 +211,7 @@ async function getFileLinkCore(
 					method,
 					headers: {
 						"Content-Type": "application/json;odata=verbose",
-						"Accept": "application/json;odata=verbose",
+						Accept: "application/json;odata=verbose",
 						...headers,
 					},
 				};
@@ -253,11 +260,14 @@ interface FileItemLite {
 	sharepointIds: IGraphSharepointIds;
 }
 
-const isFileItemLite = (maybeFileItemLite: unknown): maybeFileItemLite is FileItemLite =>
+const isFileItemLite = (
+	maybeFileItemLite: unknown,
+): maybeFileItemLite is FileItemLite =>
 	typeof (maybeFileItemLite as Partial<FileItemLite>).webUrl === "string" &&
 	typeof (maybeFileItemLite as Partial<FileItemLite>).webDavUrl === "string" &&
 	// TODO: stronger check
-	typeof (maybeFileItemLite as Partial<FileItemLite>).sharepointIds === "object";
+	typeof (maybeFileItemLite as Partial<FileItemLite>).sharepointIds ===
+		"object";
 
 async function getFileItemLite(
 	getToken: TokenFetcher<OdspResourceTokenFetchOptions>,

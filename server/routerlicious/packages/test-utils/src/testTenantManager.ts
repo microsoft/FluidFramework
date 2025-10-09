@@ -66,7 +66,11 @@ export class TestTenant implements ITenant {
 export class TestTenantManager implements ITenantManager {
 	private readonly tenant: TestTenant;
 
-	constructor(url = "http://test", historian = "http://historian", testDb: IDb = new TestDb({})) {
+	constructor(
+		url = "http://test",
+		historian = "http://historian",
+		testDb: IDb = new TestDb({}),
+	) {
 		this.tenant = new TestTenant(url, historian, testDb);
 	}
 

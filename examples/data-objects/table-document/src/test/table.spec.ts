@@ -26,8 +26,11 @@ describeCompat("TableDocument", "LoaderCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(async () => {
 		provider = getTestObjectProvider();
-		const container = await provider.createContainer(TableDocument.getFactory());
-		tableDocument = await getContainerEntryPointBackCompat<TableDocument>(container);
+		const container = await provider.createContainer(
+			TableDocument.getFactory(),
+		);
+		tableDocument =
+			await getContainerEntryPointBackCompat<TableDocument>(container);
 	});
 
 	const extract = (table: TableDocument) => {
@@ -97,7 +100,10 @@ describeCompat("TableDocument", "LoaderCompat", (getTestObjectProvider) => {
 
 			for (let row = 0; row < tableDocument.numRows; row++) {
 				for (let col = 0; col < tableDocument.numCols; col++) {
-					assert.strictEqual(tableDocument.getCellValue(row, col), `${row},${col}`);
+					assert.strictEqual(
+						tableDocument.getCellValue(row, col),
+						`${row},${col}`,
+					);
 				}
 			}
 		});
@@ -108,7 +114,10 @@ describeCompat("TableDocument", "LoaderCompat", (getTestObjectProvider) => {
 			tableDocument.insertRows(0, 2);
 			tableDocument.insertCols(0, 1);
 			tableDocument.annotateRows(0, 1, { id: "row0" });
-			assert.deepEqual({ ...tableDocument.getRowProperties(0) }, { id: "row0" });
+			assert.deepEqual(
+				{ ...tableDocument.getRowProperties(0) },
+				{ id: "row0" },
+			);
 			assert.strictEqual(tableDocument.getRowProperties(1), undefined);
 		});
 
@@ -116,7 +125,10 @@ describeCompat("TableDocument", "LoaderCompat", (getTestObjectProvider) => {
 			tableDocument.insertRows(0, 1);
 			tableDocument.insertCols(0, 2);
 			tableDocument.annotateCols(0, 1, { id: "col0" });
-			assert.deepEqual({ ...tableDocument.getColProperties(0) }, { id: "col0" });
+			assert.deepEqual(
+				{ ...tableDocument.getColProperties(0) },
+				{ id: "col0" },
+			);
 			assert.strictEqual(tableDocument.getColProperties(1), undefined);
 		});
 	});

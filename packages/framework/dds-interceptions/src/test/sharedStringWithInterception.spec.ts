@@ -42,7 +42,11 @@ describe("Shared String with Interception", () => {
 			props: PropertySet,
 			position: number,
 		): void {
-			assert.equal(ss.getText(), text, "The retrieved text should match the inserted text");
+			assert.equal(
+				ss.getText(),
+				text,
+				"The retrieved text should match the inserted text",
+			);
 			assert.deepEqual(
 				{ ...ss.getPropertiesAtPosition(position) },
 				{ ...props },
@@ -73,7 +77,12 @@ describe("Shared String with Interception", () => {
 			let text: string = "123";
 			let syleProps: PropertySet = { style: "bold" };
 			sharedStringWithInterception.insertText(0, text, syleProps);
-			verifyString(sharedStringWithInterception, text, { ...syleProps, ...userAttributes }, 2);
+			verifyString(
+				sharedStringWithInterception,
+				text,
+				{ ...syleProps, ...userAttributes },
+				2,
+			);
 
 			// Replace text in the shared string.
 			text = "aaa";
@@ -116,7 +125,12 @@ describe("Shared String with Interception", () => {
 			syleProps = { style: "italics " };
 			sharedStringWithInterception.replaceText(2, 3, "aaa", syleProps);
 			// Verify the text and properties via the underlying shared string.
-			verifyString(sharedString, "12aaa", { ...syleProps, ...userAttributes }, 2);
+			verifyString(
+				sharedString,
+				"12aaa",
+				{ ...syleProps, ...userAttributes },
+				2,
+			);
 
 			// Annotate the shared string.
 			const colorProps = { color: "green" };
@@ -155,7 +169,12 @@ describe("Shared String with Interception", () => {
 			const colorProps = { color: "green" };
 			sharedString.annotateRange(0, 5, colorProps);
 			// Verify the text and properties via the interception wrapper. It should not have the user attributes.
-			verifyString(sharedStringWithInterception, "12aaa", { ...syleProps, ...colorProps }, 2);
+			verifyString(
+				sharedStringWithInterception,
+				"12aaa",
+				{ ...syleProps, ...colorProps },
+				2,
+			);
 		});
 
 		/**
@@ -216,7 +235,12 @@ describe("Shared String with Interception", () => {
 			useWrapper = false;
 			text = "test";
 			sharedStringWithInterception.replaceText(2, 3, text, props);
-			verifyString(sharedStringWithInterception, "12test", { ...props, ...userAttributes }, 2);
+			verifyString(
+				sharedStringWithInterception,
+				"12test",
+				{ ...props, ...userAttributes },
+				2,
+			);
 
 			// Verify that the annotate on position 0 in the recursiveInterceptionCb annotated the attributes.
 			verifyString(

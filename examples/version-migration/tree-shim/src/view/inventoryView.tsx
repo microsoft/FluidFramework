@@ -5,7 +5,11 @@
 
 import React, { FC, useEffect, useRef, useState } from "react";
 
-import { IInventoryItem, IInventoryList, IMigrateBackingData } from "../modelInterfaces.js";
+import {
+	IInventoryItem,
+	IInventoryList,
+	IMigrateBackingData,
+} from "../modelInterfaces.js";
 
 export interface IInventoryItemViewProps {
 	inventoryItem: IInventoryItem;
@@ -65,7 +69,10 @@ interface IAddItemViewProps {
 	disabled?: boolean;
 }
 
-const AddItemView: FC<IAddItemViewProps> = ({ addItem, disabled }: IAddItemViewProps) => {
+const AddItemView: FC<IAddItemViewProps> = ({
+	addItem,
+	disabled,
+}: IAddItemViewProps) => {
 	const nameRef = useRef<HTMLInputElement>(null);
 	const quantityRef = useRef<HTMLInputElement>(null);
 
@@ -109,7 +116,11 @@ const AddItemView: FC<IAddItemViewProps> = ({ addItem, disabled }: IAddItemViewP
 			</tr>
 			<tr>
 				<td colSpan={2}>
-					<button style={{ width: "100%" }} onClick={onAddItemButtonClick} disabled={disabled}>
+					<button
+						style={{ width: "100%" }}
+						onClick={onAddItemButtonClick}
+						disabled={disabled}
+					>
 						Add new item
 					</button>
 				</td>
@@ -128,7 +139,9 @@ export const InventoryListView: FC<IInventoryListViewProps> = ({
 	const [inventoryItems, setInventoryItems] = useState<IInventoryItem[]>(
 		migratingInventoryList.getItems(),
 	);
-	const [disabled, setDisabled] = useState<boolean>(!migratingInventoryList.writeOk);
+	const [disabled, setDisabled] = useState<boolean>(
+		!migratingInventoryList.writeOk,
+	);
 	useEffect(() => {
 		const updateItems = () => {
 			// TODO: This blows away all the inventory items, making the granular add/delete events
@@ -162,7 +175,13 @@ export const InventoryListView: FC<IInventoryListViewProps> = ({
 	});
 
 	return (
-		<table style={{ margin: "0 auto", textAlign: "left", borderCollapse: "collapse" }}>
+		<table
+			style={{
+				margin: "0 auto",
+				textAlign: "left",
+				borderCollapse: "collapse",
+			}}
+		>
 			<thead>
 				<tr>
 					<th>Inventory item</th>
@@ -177,7 +196,10 @@ export const InventoryListView: FC<IInventoryListViewProps> = ({
 						<td colSpan={2}>No items in inventory</td>
 					</tr>
 				)}
-				<AddItemView addItem={migratingInventoryList.addItem} disabled={disabled} />
+				<AddItemView
+					addItem={migratingInventoryList.addItem}
+					disabled={disabled}
+				/>
 			</tbody>
 		</table>
 	);

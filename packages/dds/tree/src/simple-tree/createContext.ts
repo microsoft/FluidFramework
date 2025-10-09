@@ -14,7 +14,10 @@ import {
 	type TreeNodeSchema,
 	type TreeNodeSchemaInitializedData,
 } from "./core/index.js";
-import { normalizeFieldSchema, type ImplicitFieldSchema } from "./fieldSchema.js";
+import {
+	normalizeFieldSchema,
+	type ImplicitFieldSchema,
+} from "./fieldSchema.js";
 import { toStoredSchema, toUnhydratedSchema } from "./toStoredSchema.js";
 
 const contextCache: WeakMap<ImplicitFieldSchema, Context> = new WeakMap();
@@ -44,7 +47,10 @@ export function getUnhydratedContext(schema: ImplicitFieldSchema): Context {
  */
 export function getTreeNodeSchemaInitializedData(
 	schema: TreeNodeSchema,
-	handler: Pick<TreeNodeSchemaInitializedData, "toFlexContent" | "shallowCompatibilityTest">,
+	handler: Pick<
+		TreeNodeSchemaInitializedData,
+		"toFlexContent" | "shallowCompatibilityTest"
+	>,
 ): TreeNodeSchemaInitializedData {
 	const data = getTreeNodeSchemaPrivateData(schema);
 	return {

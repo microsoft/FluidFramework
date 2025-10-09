@@ -65,13 +65,16 @@ describeCompat(
 		let loader: Loader;
 		const loaderContainerTracker = new LoaderContainerTracker();
 
-		const createTestStatementForAttachedDetached = (name: string, attached: boolean) =>
-			`${name} should be ${attached ? "Attached" : "Detached"}`;
+		const createTestStatementForAttachedDetached = (
+			name: string,
+			attached: boolean,
+		) => `${name} should be ${attached ? "Attached" : "Detached"}`;
 
 		async function createDetachedContainerAndGetEntryPoint() {
 			const container = await loader.createDetachedContainer(codeDetails);
 			// Get the root dataStore from the detached container.
-			const defaultDataStore = (await container.getEntryPoint()) as ITestFluidObject;
+			const defaultDataStore =
+				(await container.getEntryPoint()) as ITestFluidObject;
 			return {
 				container,
 				defaultDataStore,
@@ -81,9 +84,12 @@ describeCompat(
 		/**
 		 * Creates a new DataStore and returns its entry point
 		 */
-		const createPeerDataStore = async (containerRuntime: IContainerRuntimeBase) => {
+		const createPeerDataStore = async (
+			containerRuntime: IContainerRuntimeBase,
+		) => {
 			const dataStore = await containerRuntime.createDataStore(["default"]);
-			const peerDataStore = (await dataStore.entryPoint.get()) as ITestFluidObject;
+			const peerDataStore =
+				(await dataStore.entryPoint.get()) as ITestFluidObject;
 			return {
 				peerDataStore, // aka entryPoint
 			};
@@ -121,7 +127,8 @@ describeCompat(
 		});
 
 		it("Attaching dataStore should not attach unregistered DDS", async () => {
-			const { container, defaultDataStore } = await createDetachedContainerAndGetEntryPoint();
+			const { container, defaultDataStore } =
+				await createDetachedContainerAndGetEntryPoint();
 			await container.attach(request);
 
 			// Create another dataStore which returns the runtime channel.
@@ -139,7 +146,11 @@ describeCompat(
 				"test1",
 				"https://graph.microsoft.com/types/map",
 			);
-			assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
+			assert.strictEqual(
+				channel.handle.isAttached,
+				false,
+				"Channel should be detached",
+			);
 
 			defaultDataStore.root.set("dataStore2", dataStore2.handle);
 			await provider.ensureSynchronized();
@@ -157,7 +168,8 @@ describeCompat(
 		});
 
 		it("Attaching dataStore should attach registered DDS", async () => {
-			const { container, defaultDataStore } = await createDetachedContainerAndGetEntryPoint();
+			const { container, defaultDataStore } =
+				await createDetachedContainerAndGetEntryPoint();
 			await container.attach(request);
 
 			// Create another dataStore which returns the runtime channel.
@@ -174,7 +186,11 @@ describeCompat(
 				"test1",
 				"https://graph.microsoft.com/types/map",
 			);
-			assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
+			assert.strictEqual(
+				channel.handle.isAttached,
+				false,
+				"Channel should be detached",
+			);
 
 			// Now register the channel
 			((await channel.handle.get()) as SharedObject).bindToContext();
@@ -195,7 +211,8 @@ describeCompat(
 		});
 
 		it("Attaching DDS should attach dataStore", async () => {
-			const { container, defaultDataStore } = await createDetachedContainerAndGetEntryPoint();
+			const { container, defaultDataStore } =
+				await createDetachedContainerAndGetEntryPoint();
 			await container.attach(request);
 
 			// Create another dataStore which returns the runtime channel.
@@ -212,7 +229,11 @@ describeCompat(
 				"test1",
 				"https://graph.microsoft.com/types/map",
 			);
-			assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
+			assert.strictEqual(
+				channel.handle.isAttached,
+				false,
+				"Channel should be detached",
+			);
 
 			toFluidHandleInternal(channel.handle).attachGraph();
 
@@ -230,7 +251,8 @@ describeCompat(
 		});
 
 		it("Sticking handle in attached dds should attach the DDS in attached container", async () => {
-			const { container, defaultDataStore } = await createDetachedContainerAndGetEntryPoint();
+			const { container, defaultDataStore } =
+				await createDetachedContainerAndGetEntryPoint();
 			await container.attach(request);
 
 			// Create another dataStore which returns the runtime channel.
@@ -247,13 +269,20 @@ describeCompat(
 				"test1",
 				"https://graph.microsoft.com/types/map",
 			);
-			assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
+			assert.strictEqual(
+				channel.handle.isAttached,
+				false,
+				"Channel should be detached",
+			);
 
 			defaultDataStore.root.set("dataStore2", dataStore2.handle);
 			await provider.ensureSynchronized();
 
-			const rootOfDataStore2 = (await dataStore2.runtime.getChannel("root")) as ISharedMap;
-			const testChannelOfDataStore2 = await dataStore2.runtime.getChannel("test1");
+			const rootOfDataStore2 = (await dataStore2.runtime.getChannel(
+				"root",
+			)) as ISharedMap;
+			const testChannelOfDataStore2 =
+				await dataStore2.runtime.getChannel("test1");
 
 			assert.strictEqual(
 				rootOfDataStore2.isAttached(),
@@ -275,7 +304,8 @@ describeCompat(
 		});
 
 		it("Registering DDS in attached dataStore should attach it", async () => {
-			const { container, defaultDataStore } = await createDetachedContainerAndGetEntryPoint();
+			const { container, defaultDataStore } =
+				await createDetachedContainerAndGetEntryPoint();
 			await container.attach(request);
 
 			// Create another dataStore which returns the runtime channel.
@@ -293,7 +323,11 @@ describeCompat(
 				"test1",
 				"https://graph.microsoft.com/types/map",
 			);
-			assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
+			assert.strictEqual(
+				channel.handle.isAttached,
+				false,
+				"Channel should be detached",
+			);
 
 			defaultDataStore.root.set("dataStore2", dataStore2.handle);
 			await provider.ensureSynchronized();
@@ -307,7 +341,8 @@ describeCompat(
 		});
 
 		it("Registering DDS in detached dataStore should not attach it", async () => {
-			const { container, defaultDataStore } = await createDetachedContainerAndGetEntryPoint();
+			const { container, defaultDataStore } =
+				await createDetachedContainerAndGetEntryPoint();
 			await container.attach(request);
 
 			// Create another dataStore which returns the runtime channel.
@@ -325,7 +360,11 @@ describeCompat(
 				"test1",
 				"https://graph.microsoft.com/types/map",
 			);
-			assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
+			assert.strictEqual(
+				channel.handle.isAttached,
+				false,
+				"Channel should be detached",
+			);
 
 			((await channel.handle.get()) as SharedObject).bindToContext();
 			assert.strictEqual(
@@ -336,7 +375,8 @@ describeCompat(
 		});
 
 		it("Stick handle of 2 dds in each other and then attaching dataStore should attach both DDS", async () => {
-			const { container, defaultDataStore } = await createDetachedContainerAndGetEntryPoint();
+			const { container, defaultDataStore } =
+				await createDetachedContainerAndGetEntryPoint();
 			await container.attach(request);
 
 			// Create another dataStore which returns the runtime channel.
@@ -354,14 +394,22 @@ describeCompat(
 				"test1",
 				"https://graph.microsoft.com/types/map",
 			);
-			assert.strictEqual(channel1.handle.isAttached, false, "Channel should be detached");
+			assert.strictEqual(
+				channel1.handle.isAttached,
+				false,
+				"Channel should be detached",
+			);
 
 			// Create second channel
 			const channel2 = dataStore2.runtime.createChannel(
 				"test2",
 				"https://graph.microsoft.com/types/map",
 			);
-			assert.strictEqual(channel2.handle.isAttached, false, "Channel should be detached");
+			assert.strictEqual(
+				channel2.handle.isAttached,
+				false,
+				"Channel should be detached",
+			);
 
 			// Now register both dds to parent dataStore
 			((await channel1.handle.get()) as SharedObject).bindToContext();
@@ -394,7 +442,8 @@ describeCompat(
 		});
 
 		it("Stick handle of 2 dds in each other and then attaching 1 DDS should attach other DDS", async () => {
-			const { container, defaultDataStore } = await createDetachedContainerAndGetEntryPoint();
+			const { container, defaultDataStore } =
+				await createDetachedContainerAndGetEntryPoint();
 			await container.attach(request);
 
 			// Create another dataStore which returns the runtime channel.
@@ -413,14 +462,22 @@ describeCompat(
 				"test1",
 				"https://graph.microsoft.com/types/map",
 			);
-			assert.strictEqual(channel1.handle.isAttached, false, "Channel should be detached");
+			assert.strictEqual(
+				channel1.handle.isAttached,
+				false,
+				"Channel should be detached",
+			);
 
 			// Create second channel
 			const channel2 = dataStore2.runtime.createChannel(
 				"test2",
 				"https://graph.microsoft.com/types/map",
 			);
-			assert.strictEqual(channel2.handle.isAttached, false, "Channel should be detached");
+			assert.strictEqual(
+				channel2.handle.isAttached,
+				false,
+				"Channel should be detached",
+			);
 
 			// Now register both dds to parent dataStore
 			((await channel1.handle.get()) as SharedObject).bindToContext();
@@ -726,7 +783,11 @@ describeCompat(
 			const { container } = await createDetachedContainerAndGetEntryPoint();
 			let attachEvent = false;
 			container.on("attached", () => {
-				assert.strictEqual(attachEvent, false, "Should be only one attach event");
+				assert.strictEqual(
+					attachEvent,
+					false,
+					"Should be only one attach event",
+				);
 				assert.strictEqual(
 					container.attachState,
 					AttachState.Attached,
@@ -743,7 +804,8 @@ describeCompat(
 		});
 
 		it("Attach events on dataStores", async () => {
-			const { container, defaultDataStore } = await createDetachedContainerAndGetEntryPoint();
+			const { container, defaultDataStore } =
+				await createDetachedContainerAndGetEntryPoint();
 			let dataStoreContextAttachState = AttachState.Detached;
 			let dataStoreRuntimeAttachState = AttachState.Detached;
 			onAttachChange(defaultDataStore.context, AttachState.Attaching, () => {
@@ -815,7 +877,8 @@ describeCompat(
 		});
 
 		it("Attach events on referenced/unreferenced dataStores", async () => {
-			const { container, defaultDataStore } = await createDetachedContainerAndGetEntryPoint();
+			const { container, defaultDataStore } =
+				await createDetachedContainerAndGetEntryPoint();
 
 			// Create first dataStore and store a reference
 			const { peerDataStore: dataStore1 } = await createPeerDataStore(
@@ -858,11 +921,15 @@ describeCompat(
 			});
 
 			onAttachChange(dataStore2.context, AttachState.Attaching, () => {
-				assert.fail("Attaching event should not be fired for unreferenced context");
+				assert.fail(
+					"Attaching event should not be fired for unreferenced context",
+				);
 			});
 
 			onAttachChange(dataStore2.context, AttachState.Attached, () => {
-				assert.fail("Attached event should not be fired for unreferenced context");
+				assert.fail(
+					"Attached event should not be fired for unreferenced context",
+				);
 			});
 			await container.attach(request);
 			assert.strictEqual(
@@ -878,7 +945,8 @@ describeCompat(
 		});
 
 		it("Attach events on referenced dataStores", async () => {
-			const { container, defaultDataStore } = await createDetachedContainerAndGetEntryPoint();
+			const { container, defaultDataStore } =
+				await createDetachedContainerAndGetEntryPoint();
 
 			// Create first dataStore and store a reference in the root
 			const { peerDataStore: dataStore1 } = await createPeerDataStore(
@@ -890,7 +958,8 @@ describeCompat(
 			const { peerDataStore: dataStore2 } = await createPeerDataStore(
 				defaultDataStore.context.containerRuntime,
 			);
-			const rootMapOfDataStore1 = await dataStore1.getSharedObject<ISharedMap>(mapId1);
+			const rootMapOfDataStore1 =
+				await dataStore1.getSharedObject<ISharedMap>(mapId1);
 			rootMapOfDataStore1.set("dataStore2", dataStore2.handle);
 
 			let dataStore1AttachState = AttachState.Detached;

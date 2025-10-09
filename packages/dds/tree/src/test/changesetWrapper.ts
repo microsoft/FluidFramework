@@ -47,7 +47,10 @@ export const ChangesetWrapper = {
 	assertEqual,
 };
 
-function create<T>(fieldChange: T, ...nodes: [NodeId, TestChange][]): ChangesetWrapper<T> {
+function create<T>(
+	fieldChange: T,
+	...nodes: [NodeId, TestChange][]
+): ChangesetWrapper<T> {
 	const nodeChanges = nestedMapFromFlatList(
 		nodes.map(([id, change]) => [id.revision, id.localId, change]),
 	);
@@ -70,11 +73,19 @@ function rebase<T>(
 		id2: NodeId | undefined,
 	): NodeId | undefined => {
 		if (id1 !== undefined) {
-			const nodeChange = tryGetFromNestedMap(change.change.nodes, id1.revision, id1.localId);
+			const nodeChange = tryGetFromNestedMap(
+				change.change.nodes,
+				id1.revision,
+				id1.localId,
+			);
 			assert(nodeChange !== undefined, "Unknown node ID");
 			let rebasedNode: TestChange | undefined = nodeChange;
 			if (id2 !== undefined) {
-				const baseNode = tryGetFromNestedMap(base.change.nodes, id2.revision, id2.localId);
+				const baseNode = tryGetFromNestedMap(
+					base.change.nodes,
+					id2.revision,
+					id2.localId,
+				);
 				assert(baseNode !== undefined, "Unknown node ID");
 				rebasedNode = TestChange.rebase(nodeChange, baseNode);
 			}
@@ -105,14 +116,25 @@ function compose<T>(
 	) => T,
 ): ChangesetWrapper<T> {
 	const composedNodes: ChangeAtomIdMap<TestChange> = new Map();
-	const composeChild = (id1: NodeId | undefined, id2: NodeId | undefined): NodeId => {
+	const composeChild = (
+		id1: NodeId | undefined,
+		id2: NodeId | undefined,
+	): NodeId => {
 		let composedNode: TestChange;
 		if (id1 !== undefined) {
-			const node1 = tryGetFromNestedMap(change1.change.nodes, id1.revision, id1.localId);
+			const node1 = tryGetFromNestedMap(
+				change1.change.nodes,
+				id1.revision,
+				id1.localId,
+			);
 			assert(node1 !== undefined, "Unknown node ID");
 
 			if (id2 !== undefined) {
-				const node2 = tryGetFromNestedMap(change2.change.nodes, id2.revision, id2.localId);
+				const node2 = tryGetFromNestedMap(
+					change2.change.nodes,
+					id2.revision,
+					id2.localId,
+				);
 				assert(node2 !== undefined, "Unknown node ID");
 				composedNode = TestChange.compose(node1, node2);
 			} else {
@@ -120,7 +142,11 @@ function compose<T>(
 			}
 		} else {
 			assert(id2 !== undefined, "Should not compose two undefined nodes");
-			const node2 = tryGetFromNestedMap(change2.change.nodes, id2.revision, id2.localId);
+			const node2 = tryGetFromNestedMap(
+				change2.change.nodes,
+				id2.revision,
+				id2.localId,
+			);
 			assert(node2 !== undefined, "Unknown node ID");
 			composedNode = node2;
 		}
@@ -160,7 +186,12 @@ function invert<T>(
 	);
 	const invertedNodes: ChangeAtomIdMap<TestChange> = new Map();
 	forEachInNestedMap(change.change.nodes, (testChange, revision2, localId) => {
-		setInNestedMap(invertedNodes, revision2, localId, TestChange.invert(testChange));
+		setInNestedMap(
+			invertedNodes,
+			revision2,
+			localId,
+			TestChange.invert(testChange),
+		);
 	});
 
 	return { fieldChange: invertedField, nodes: invertedNodes };
@@ -199,7 +230,10 @@ function prune<T>(
 		}
 	};
 
-	return { nodes: prunedNodes, fieldChange: pruneField(change.fieldChange, pruneChild) };
+	return {
+		nodes: prunedNodes,
+		fieldChange: pruneField(change.fieldChange, pruneChild),
+	};
 }
 
 function toDelta<T>(

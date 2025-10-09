@@ -71,7 +71,11 @@ function createTestDocument(tenantId: string, documentId: string): ITestDocument
 /**
  * Helper function to create a test delta to store in the DB
  */
-function createTestDelta(tenantId: string, documentId: string, sequenceNumber: number): ITestDelta {
+function createTestDelta(
+	tenantId: string,
+	documentId: string,
+	sequenceNumber: number,
+): ITestDelta {
 	return {
 		tenantId,
 		documentId,

@@ -4,7 +4,10 @@
  */
 
 module.exports = {
-	extends: [require.resolve("@fluidframework/eslint-config-fluid/strict"), "prettier"],
+	extends: [
+		require.resolve("@fluidframework/eslint-config-fluid/strict"),
+		"prettier",
+	],
 	parserOptions: {
 		project: ["./tsconfig.json"],
 	},
@@ -41,7 +44,10 @@ module.exports = {
 			// Overrides for test files
 			files: ["src/**/test/**"],
 			plugins: ["chai-expect", "chai-friendly"],
-			extends: ["plugin:chai-expect/recommended", "plugin:chai-friendly/recommended"],
+			extends: [
+				"plugin:chai-expect/recommended",
+				"plugin:chai-friendly/recommended",
+			],
 			rules: {
 				"import/no-extraneous-dependencies": [
 					"error",

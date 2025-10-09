@@ -67,7 +67,10 @@ export enum ContainerMessageType {
  * IMPORTANT: when creating one to be serialized, set the properties in the order they appear here.
  * This way stringified values can be compared.
  */
-interface TypedContainerRuntimeMessage<TType extends ContainerMessageType, TContents> {
+interface TypedContainerRuntimeMessage<
+	TType extends ContainerMessageType,
+	TContents,
+> {
 	/**
 	 * Type of the op, within the ContainerRuntime's domain
 	 */
@@ -86,10 +89,8 @@ export type InboundContainerRuntimeAttachMessage = TypedContainerRuntimeMessage<
 	ContainerMessageType.Attach,
 	InboundAttachMessage
 >;
-export type OutboundContainerRuntimeAttachMessage = TypedContainerRuntimeMessage<
-	ContainerMessageType.Attach,
-	IAttachMessage
->;
+export type OutboundContainerRuntimeAttachMessage =
+	TypedContainerRuntimeMessage<ContainerMessageType.Attach, IAttachMessage>;
 export type ContainerRuntimeChunkedOpMessage = TypedContainerRuntimeMessage<
 	ContainerMessageType.ChunkedOp,
 	IChunkedOp
@@ -114,14 +115,16 @@ export type ContainerRuntimeGCMessage = TypedContainerRuntimeMessage<
 	ContainerMessageType.GC,
 	GarbageCollectionMessage
 >;
-export type InboundContainerRuntimeDocumentSchemaMessage = TypedContainerRuntimeMessage<
-	ContainerMessageType.DocumentSchemaChange,
-	IDocumentSchemaChangeMessageIncoming
->;
-export type OutboundContainerRuntimeDocumentSchemaMessage = TypedContainerRuntimeMessage<
-	ContainerMessageType.DocumentSchemaChange,
-	IDocumentSchemaChangeMessageOutgoing
->;
+export type InboundContainerRuntimeDocumentSchemaMessage =
+	TypedContainerRuntimeMessage<
+		ContainerMessageType.DocumentSchemaChange,
+		IDocumentSchemaChangeMessageIncoming
+	>;
+export type OutboundContainerRuntimeDocumentSchemaMessage =
+	TypedContainerRuntimeMessage<
+		ContainerMessageType.DocumentSchemaChange,
+		IDocumentSchemaChangeMessageOutgoing
+	>;
 
 /**
  * Represents an unrecognized TypedContainerRuntimeMessage, e.g. a message from a future version of the container runtime.

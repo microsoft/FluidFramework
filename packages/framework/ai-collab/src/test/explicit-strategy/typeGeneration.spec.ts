@@ -54,7 +54,9 @@ describe("Type Generation", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view = tree.viewWith(new TreeViewConfiguration({ schema: TestTodoAppSchema }));
+		const view = tree.viewWith(
+			new TreeViewConfiguration({ schema: TestTodoAppSchema }),
+		);
 		view.initialize(initialAppState);
 
 		assert.equal(doesNodeContainArraySchema(view.root), true);
@@ -65,7 +67,9 @@ describe("Type Generation", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view = tree.viewWith(new TreeViewConfiguration({ schema: TestTodoAppSchema }));
+		const view = tree.viewWith(
+			new TreeViewConfiguration({ schema: TestTodoAppSchema }),
+		);
 		view.initialize(initialAppState);
 
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -77,7 +81,9 @@ describe("Type Generation", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view = tree.viewWith(new TreeViewConfiguration({ schema: TestTodoAppSchema }));
+		const view = tree.viewWith(
+			new TreeViewConfiguration({ schema: TestTodoAppSchema }),
+		);
 		view.initialize(initialAppState);
 
 		assert.equal(doesNodeContainArraySchema(view.root.todos), true);
@@ -93,7 +99,9 @@ describe("Type Generation", () => {
 			childNodeProperty: TestTodoAppSchema,
 		}) {}
 
-		const view = tree.viewWith(new TreeViewConfiguration({ schema: TestWrapperNode }));
+		const view = tree.viewWith(
+			new TreeViewConfiguration({ schema: TestWrapperNode }),
+		);
 		view.initialize({ childNodeProperty: initialAppState });
 
 		assert.equal(doesNodeContainArraySchema(view.root), true);

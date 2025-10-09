@@ -41,13 +41,9 @@ describe("Routerlicious", () => {
 					const numMessages = 10;
 					for (let i = 0; i < numMessages; i++) {
 						const message = messageFactory.createSequencedOperation();
-						lambda.handler(
-							kafkaMessageFactory.sequenceMessage(message, testDocumentId),
-						);
+						lambda.handler(kafkaMessageFactory.sequenceMessage(message, testDocumentId));
 					}
-					await testContext.waitForOffset(
-						kafkaMessageFactory.getHeadOffset(testDocumentId),
-					);
+					await testContext.waitForOffset(kafkaMessageFactory.getHeadOffset(testDocumentId));
 
 					assert.equal(numMessages, testCollection.collection.length);
 				});

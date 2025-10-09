@@ -77,7 +77,9 @@ const schema = new SchemaFactory("com.example");
 	type I6 = InsertableTreeNodeFromImplicitAllowedTypes<
 		typeof numberSchema & typeof stringSchema
 	>;
-	type I7 = InsertableTreeNodeFromImplicitAllowedTypes<AllowedTypes & TreeNodeSchema>;
+	type I7 = InsertableTreeNodeFromImplicitAllowedTypes<
+		AllowedTypes & TreeNodeSchema
+	>;
 
 	type I9 = InsertableTreeNodeFromImplicitAllowedTypes<typeof A | typeof B>;
 
@@ -115,7 +117,9 @@ const schema = new SchemaFactory("com.example");
 	}
 
 	{
-		type T = InsertableTreeNodeFromAllowedTypes<[typeof numberSchema, typeof stringSchema]>;
+		type T = InsertableTreeNodeFromAllowedTypes<
+			[typeof numberSchema, typeof stringSchema]
+		>;
 		type _check = requireTrue<areSafelyAssignable<T, number | string>>;
 	}
 
@@ -130,17 +134,23 @@ const schema = new SchemaFactory("com.example");
 	}
 
 	{
-		type T = InsertableTreeNodeFromAllowedTypes<[typeof A, typeof B] | [typeof A]>;
+		type T = InsertableTreeNodeFromAllowedTypes<
+			[typeof A, typeof B] | [typeof A]
+		>;
 		type _check = requireAssignableTo<T, never>;
 	}
 
 	{
-		type T = InsertableTreeNodeFromAllowedTypes<[typeof B, typeof A] | [typeof A]>;
+		type T = InsertableTreeNodeFromAllowedTypes<
+			[typeof B, typeof A] | [typeof A]
+		>;
 		type _check = requireAssignableTo<T, never>;
 	}
 
 	{
-		type T = InsertableTreeNodeFromAllowedTypes<[typeof A, typeof B | typeof A]>;
+		type T = InsertableTreeNodeFromAllowedTypes<
+			[typeof A, typeof B | typeof A]
+		>;
 		type _check = requireAssignableTo<A, T>;
 		type _check2 = requireFalse<isAssignableTo<B, T>>;
 	}
@@ -175,13 +185,17 @@ const schema = new SchemaFactory("com.example");
 	}
 
 	{
-		type T = InsertableTreeNodeFromAllowedTypes<AnnotatedAllowedTypes & [typeof A, typeof B]>;
+		type T = InsertableTreeNodeFromAllowedTypes<
+			AnnotatedAllowedTypes & [typeof A, typeof B]
+		>;
 		type _check = requireAssignableTo<A | B, T>;
 	}
 
 	{
 		// Must ignore irrelevant fields
-		type T = InsertableTreeNodeFromAllowedTypes<{ x: 5 } & [typeof A, typeof B]>;
+		type T = InsertableTreeNodeFromAllowedTypes<
+			{ x: 5 } & [typeof A, typeof B]
+		>;
 		type _check = requireAssignableTo<A | B, T>;
 	}
 }
@@ -197,7 +211,9 @@ const schema = new SchemaFactory("com.example");
 
 // AllowedTypesFullEvaluated
 {
-	allowUnused<requireAssignableTo<AllowedTypesFullEvaluated, readonly TreeNodeSchema[]>>();
+	allowUnused<
+		requireAssignableTo<AllowedTypesFullEvaluated, readonly TreeNodeSchema[]>
+	>();
 }
 
 // Type tests for unannotate utilities
@@ -210,8 +226,14 @@ const schema = new SchemaFactory("com.example");
 
 		type Empty = readonly [];
 		{
-			type _check1 = requireAssignableTo<Empty, UnannotateAllowedTypesList<Empty>>;
-			type _check2 = requireAssignableTo<UnannotateAllowedTypesList<Mixed>, readonly A2[]>;
+			type _check1 = requireAssignableTo<
+				Empty,
+				UnannotateAllowedTypesList<Empty>
+			>;
+			type _check2 = requireAssignableTo<
+				UnannotateAllowedTypesList<Mixed>,
+				readonly A2[]
+			>;
 		}
 
 		// Generic cases
@@ -231,7 +253,9 @@ const schema = new SchemaFactory("com.example");
 		{
 			type A = typeof SchemaFactory.number;
 
-			type _check1 = requireTrue<areSafelyAssignable<UnannotateAllowedTypesList<[A]>, [A]>>;
+			type _check1 = requireTrue<
+				areSafelyAssignable<UnannotateAllowedTypesList<[A]>, [A]>
+			>;
 			type _check2 = requireTrue<
 				areSafelyAssignable<
 					UnannotateAllowedTypesList<[{ type: A; metadata: { custom: "x" } }]>,
@@ -248,7 +272,9 @@ describe("allowedTypes", () => {
 	describe("isAnnotatedAllowedType", () => {
 		it("returns true for AnnotatedAllowedType", () => {
 			assert(isAnnotatedAllowedType({ metadata: {}, type: schema.string }));
-			assert(isAnnotatedAllowedType({ metadata: {}, type: () => schema.string }));
+			assert(
+				isAnnotatedAllowedType({ metadata: {}, type: () => schema.string }),
+			);
 		});
 
 		it("returns false for LazyItem", () => {
@@ -338,9 +364,15 @@ describe("allowedTypes", () => {
 
 		it("Normalizes multiple types", () => {
 			const schemaFactory = new SchemaFactory("test");
-			const result = normalizeAllowedTypes([schemaFactory.number, schemaFactory.boolean]);
+			const result = normalizeAllowedTypes([
+				schemaFactory.number,
+				schemaFactory.boolean,
+			]);
 			assert(result instanceof AnnotatedAllowedTypesInternal);
-			assert.deepEqual([...result], [schemaFactory.number, schemaFactory.boolean]);
+			assert.deepEqual(
+				[...result],
+				[schemaFactory.number, schemaFactory.boolean],
+			);
 		});
 
 		it("Normalizes recursive schemas", () => {
@@ -375,14 +407,16 @@ describe("allowedTypes", () => {
 		it("in an array", () => {
 			assert.throws(
 				() => normalizeAllowedTypes([Foo, Bar]),
-				(error: Error) => validateAssertionError(error, /Encountered an undefined schema/),
+				(error: Error) =>
+					validateAssertionError(error, /Encountered an undefined schema/),
 			);
 		});
 
 		it("directly", () => {
 			assert.throws(
 				() => normalizeAllowedTypes(Bar),
-				(error: Error) => validateAssertionError(error, /Encountered an undefined schema/),
+				(error: Error) =>
+					validateAssertionError(error, /Encountered an undefined schema/),
 			);
 		});
 
@@ -390,7 +424,8 @@ describe("allowedTypes", () => {
 			const normalized = normalizeAllowedTypes([() => Bar]);
 			assert.throws(
 				() => normalized.evaluate(),
-				(error: Error) => validateAssertionError(error, /Encountered an undefined schema/),
+				(error: Error) =>
+					validateAssertionError(error, /Encountered an undefined schema/),
 			);
 		});
 	});
@@ -443,7 +478,9 @@ describe("allowedTypes", () => {
 			const result = normalizeAndEvaluateAnnotatedAllowedTypes(stringSchema);
 			assert.deepEqual(
 				result,
-				AnnotatedAllowedTypesInternal.create([{ metadata: {}, type: stringSchema }]),
+				AnnotatedAllowedTypesInternal.create([
+					{ metadata: {}, type: stringSchema },
+				]),
 			);
 		});
 
@@ -495,7 +532,10 @@ describe("allowedTypes", () => {
 				node.value = v;
 			}
 
-			assert.throws(() => setValue(new A({ value: 5 }), "x"), validateUsageError(/number/));
+			assert.throws(
+				() => setValue(new A({ value: 5 }), "x"),
+				validateUsageError(/number/),
+			);
 		});
 
 		it("Mixed Regression test", () => {
@@ -506,7 +546,9 @@ describe("allowedTypes", () => {
 			class NodeMap extends schema.map("NoteMap", Note) {}
 			class NodeList extends schema.array("NoteList", Note) {}
 
-			class Canvas extends schema.object("Canvas", { stuff: [NodeMap, NodeList] }) {}
+			class Canvas extends schema.object("Canvas", {
+				stuff: [NodeMap, NodeList],
+			}) {}
 
 			const y = new NodeList([{}]);
 

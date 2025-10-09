@@ -7,6 +7,6 @@
 		"outDir": "./lib",
 		"exactOptionalPropertyTypes": false,
 		// TODO: AB#34167 Enable noUncheckedIndexedAccess for packages/loader/driver-utils
-		"noUncheckedIndexedAccess": false,
-	},
+		"noUncheckedIndexedAccess": false
+	}
 }

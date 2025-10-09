@@ -90,12 +90,12 @@ export function convertSummaryTreeToWholeSummaryTree(
 								type: "blob",
 								content: summaryObject.content,
 								encoding: "utf-8",
-						  }
+							}
 						: {
 								type: "blob",
 								content: Uint8ArrayToString(summaryObject.content, "base64"),
 								encoding: "base64",
-						  };
+							};
 				break;
 			}
 			case SummaryType.Handle: {
@@ -299,9 +299,9 @@ export function convertFirstSummaryWholeSummaryTreeToSummaryTree(
 				type: SummaryType.Tree,
 				tree,
 				unreferenced,
-		  }
+			}
 		: {
 				type: SummaryType.Tree,
 				tree,
-		  };
+			};
 }

@@ -8,7 +8,10 @@ import {
 	MountableView,
 	getDataStoreEntryPoint,
 } from "@fluid-example/example-utils";
-import { IContainerContext, IRuntime } from "@fluidframework/container-definitions/legacy";
+import {
+	IContainerContext,
+	IRuntime,
+} from "@fluidframework/container-definitions/legacy";
 import { loadContainerRuntime } from "@fluidframework/container-runtime/legacy";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
 import { FluidObject } from "@fluidframework/core-interfaces";

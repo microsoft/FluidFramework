@@ -12,7 +12,10 @@ import {
 	DriverErrorTypes,
 	IDriverErrorBase,
 } from "@fluidframework/driver-definitions/internal";
-import { IFluidErrorBase, LoggingError } from "@fluidframework/telemetry-utils/internal";
+import {
+	IFluidErrorBase,
+	LoggingError,
+} from "@fluidframework/telemetry-utils/internal";
 
 /**
  * @internal
@@ -98,7 +101,11 @@ export class DeltaStreamConnectionForbiddenError
 	readonly canRetry = false;
 	readonly storageOnlyReason: string | undefined;
 
-	constructor(message: string, props: DriverErrorTelemetryProps, storageOnlyReason?: string) {
+	constructor(
+		message: string,
+		props: DriverErrorTelemetryProps,
+		storageOnlyReason?: string,
+	) {
 		super(message, { ...props, statusCode: 400 });
 		this.storageOnlyReason = storageOnlyReason;
 	}
@@ -228,8 +235,10 @@ export class ThrottlingError
 /**
  * @internal
  */
-export const createWriteError = (message: string, props: DriverErrorTelemetryProps) =>
-	new NonRetryableError(message, DriverErrorTypes.writeError, props);
+export const createWriteError = (
+	message: string,
+	props: DriverErrorTelemetryProps,
+) => new NonRetryableError(message, DriverErrorTypes.writeError, props);
 
 /**
  * @internal
@@ -251,7 +260,8 @@ export function createGenericNetworkError(
  * @param error - The error to inspect for ability to retry
  * @internal
  */
-export const canRetryOnError = (error: any): boolean => error?.canRetry === true;
+export const canRetryOnError = (error: any): boolean =>
+	error?.canRetry === true;
 
 /**
  * Check retryAfterSeconds property on error
@@ -265,4 +275,6 @@ export const getRetryDelaySecondsFromError = (error: any): number | undefined =>
  * @internal
  */
 export const getRetryDelayFromError = (error: any): number | undefined =>
-	error?.retryAfterSeconds !== undefined ? error.retryAfterSeconds * 1000 : undefined;
+	error?.retryAfterSeconds !== undefined
+		? error.retryAfterSeconds * 1000
+		: undefined;

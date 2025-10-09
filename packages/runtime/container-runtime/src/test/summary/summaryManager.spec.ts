@@ -11,7 +11,10 @@ import type {
 	ISummarizerEvents,
 	SummarizerStopReason,
 } from "@fluidframework/container-runtime-definitions/internal";
-import type { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
+import type {
+	IFluidHandle,
+	IFluidLoadable,
+} from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import {
 	type IDocumentMessage,
@@ -43,18 +46,27 @@ import {
 
 class MockRuntime {
 	constructor(
-		public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+		public readonly deltaManager: IDeltaManager<
+			ISequencedDocumentMessage,
+			IDocumentMessage
+		>,
 	) {}
 	public on(
 		_event: "op",
-		_listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void,
+		_listener: (
+			op: ISequencedDocumentMessage,
+			runtimeMessage?: boolean,
+		) => void,
 	) {
 		return this;
 	}
 
 	public off(
 		_event: "op",
-		_listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void,
+		_listener: (
+			op: ISequencedDocumentMessage,
+			runtimeMessage?: boolean,
+		) => void,
 	) {
 		return this;
 	}
@@ -66,7 +78,8 @@ describe("Summary Manager", () => {
 		clock = sinon.useFakeTimers();
 	});
 	after(() => clock.restore());
-	const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));
+	const flushPromises = async () =>
+		new Promise((resolve) => process.nextTick(resolve));
 	const thisClientId = "this";
 	const mockLogger = new MockLogger();
 	const mockDeltaManager = new MockDeltaManager();
@@ -127,7 +140,10 @@ describe("Summary Manager", () => {
 		}
 	}
 
-	class TestSummarizer extends TypedEventEmitter<ISummarizerEvents> implements ISummarizer {
+	class TestSummarizer
+		extends TypedEventEmitter<ISummarizerEvents>
+		implements ISummarizer
+	{
 		private notImplemented(): never {
 			throw new Error("not implemented");
 		}
@@ -172,7 +188,10 @@ describe("Summary Manager", () => {
 					} as const;
 				},
 				async (options) => {},
-				new SummarizeHeuristicData(0, { refSequenceNumber: 0, summaryTime: Date.now() }),
+				new SummarizeHeuristicData(0, {
+					refSequenceNumber: 0,
+					summaryTime: Date.now(),
+				}),
 				summaryCollection,
 				neverCancelledSummaryToken,
 				// stopSummarizerCallback
@@ -265,7 +284,11 @@ describe("Summary Manager", () => {
 
 	function assertRequests(count: number, message?: string) {
 		const prefix = message === undefined ? "" : `${message} - `;
-		assert.strictEqual(requestCalls, count, `${prefix}Unexpected request count`);
+		assert.strictEqual(
+			requestCalls,
+			count,
+			`${prefix}Unexpected request count`,
+		);
 	}
 
 	afterEach(() => {
@@ -299,10 +322,16 @@ describe("Summary Manager", () => {
 		assertState(SummaryManagerState.Running, "summarizer should be running");
 		connectedState.disconnect();
 		await flushPromises();
-		assertState(SummaryManagerState.Stopping, "should be stopping after disconnect");
+		assertState(
+			SummaryManagerState.Stopping,
+			"should be stopping after disconnect",
+		);
 		summarizer.runDeferred.resolve();
 		await flushPromises();
-		assertState(SummaryManagerState.Off, "should be off after summarizer finishes running");
+		assertState(
+			SummaryManagerState.Off,
+			"should be off after summarizer finishes running",
+		);
 		assertRequests(1, "should not have requested summarizer again");
 	});
 
@@ -321,10 +350,16 @@ describe("Summary Manager", () => {
 		assertState(SummaryManagerState.Running, "summarizer should be running");
 		clientElection.electClient("other");
 		await flushPromises();
-		assertState(SummaryManagerState.Stopping, "should be stopping after other client elected");
+		assertState(
+			SummaryManagerState.Stopping,
+			"should be stopping after other client elected",
+		);
 		summarizer.runDeferred.resolve();
 		await flushPromises();
-		assertState(SummaryManagerState.Off, "should be off after summarizer finishes running");
+		assertState(
+			SummaryManagerState.Off,
+			"should be off after summarizer finishes running",
+		);
 		assertRequests(1, "should not have requested summarizer again");
 	});
 
@@ -348,7 +383,10 @@ describe("Summary Manager", () => {
 		assertRequests(2, "should have requested a new summarizer");
 		completeSummarizerRequest();
 		await flushPromises();
-		assertState(SummaryManagerState.Running, "should be running new summarizer");
+		assertState(
+			SummaryManagerState.Running,
+			"should be running new summarizer",
+		);
 	});
 
 	describe("Start Summarizer Delay", () => {
@@ -361,7 +399,10 @@ describe("Summary Manager", () => {
 			});
 			clientElection.electClient(thisClientId);
 			await flushPromises();
-			assertState(SummaryManagerState.Starting, "should enter starting state immediately");
+			assertState(
+				SummaryManagerState.Starting,
+				"should enter starting state immediately",
+			);
 			clock.tick(1999);
 			await flushPromises();
 			assertRequests(0, "should not have requested summarizer yet");
@@ -382,8 +423,14 @@ describe("Summary Manager", () => {
 			});
 			clientElection.electClient(thisClientId);
 			await flushPromises();
-			assertState(SummaryManagerState.Running, "should enter starting state immediately");
-			assertRequests(1, "should request summarizer immediately, bypassing initial delay");
+			assertState(
+				SummaryManagerState.Running,
+				"should enter starting state immediately",
+			);
+			assertRequests(
+				1,
+				"should request summarizer immediately, bypassing initial delay",
+			);
 			completeSummarizerRequest();
 			await flushPromises();
 			assertState(SummaryManagerState.Running, "summarizer should be running");
@@ -401,9 +448,13 @@ describe("Summary Manager", () => {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const summaryManager_delayBeforeCreatingSummarizer =
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-				(summaryManager as any).delayBeforeCreatingSummarizer.bind(summaryManager);
+				(summaryManager as any).delayBeforeCreatingSummarizer.bind(
+					summaryManager,
+				);
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-			(summaryManager as any).delayBeforeCreatingSummarizer = async (...args) => {
+			(summaryManager as any).delayBeforeCreatingSummarizer = async (
+				...args
+			) => {
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
 				const result = await summaryManager_delayBeforeCreatingSummarizer(args);
 				summaryManager.dispose();
@@ -441,7 +492,10 @@ describe("Summary Manager", () => {
 			});
 			clientElection.electClient(thisClientId);
 			await flushPromises();
-			assertState(SummaryManagerState.Starting, "should enter starting state immediately");
+			assertState(
+				SummaryManagerState.Starting,
+				"should enter starting state immediately",
+			);
 			clock.tick(1999);
 			await flushPromises();
 			assertRequests(0, "should not have requested summarizer yet");
@@ -510,7 +564,10 @@ describe("Summary Manager", () => {
 			});
 			clientElection.electClient(thisClientId);
 			await flushPromises();
-			assertState(SummaryManagerState.Starting, "should enter starting state immediately");
+			assertState(
+				SummaryManagerState.Starting,
+				"should enter starting state immediately",
+			);
 			clock.tick(99);
 			await flushPromises();
 			assertRequests(0, "should not have requested summarizer yet");
@@ -531,7 +588,10 @@ describe("Summary Manager", () => {
 			});
 			clientElection.electClient(thisClientId);
 			await flushPromises();
-			assertState(SummaryManagerState.Starting, "should enter starting state immediately");
+			assertState(
+				SummaryManagerState.Starting,
+				"should enter starting state immediately",
+			);
 			clock.tick(1999);
 			await flushPromises();
 			assertRequests(0, "should not have requested summarizer yet");
@@ -552,7 +612,10 @@ describe("Summary Manager", () => {
 			});
 			clientElection.electClient(thisClientId);
 			await flushPromises();
-			assertState(SummaryManagerState.Starting, "should enter starting state immediately");
+			assertState(
+				SummaryManagerState.Starting,
+				"should enter starting state immediately",
+			);
 			clock.tick(99);
 			await flushPromises();
 			assertRequests(0, "should not have requested summarizer yet");

@@ -63,7 +63,9 @@ export class StorageServiceWithAttachBlobs implements IRuntimeStorageService {
 	 * {@link IRuntimeStorageService.getSnapshot}.
 	 * @deprecated - This will be removed in a future release. The DataStore layer does not need this.
 	 */
-	public async getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot> {
+	public async getSnapshot(
+		snapshotFetchOptions?: ISnapshotFetchOptions,
+	): Promise<ISnapshot> {
 		if (this.internalStorageService.getSnapshot !== undefined) {
 			return this.internalStorageService.getSnapshot(snapshotFetchOptions);
 		}
@@ -99,7 +101,10 @@ export class StorageServiceWithAttachBlobs implements IRuntimeStorageService {
 		summary: ISummaryTree,
 		context: ISummaryContext,
 	): Promise<string> {
-		return this.internalStorageService.uploadSummaryWithContext(summary, context);
+		return this.internalStorageService.uploadSummaryWithContext(
+			summary,
+			context,
+		);
 	}
 
 	/**

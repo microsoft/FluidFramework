@@ -55,7 +55,7 @@ export class KafkaResourcesFactory implements IResourcesFactory<KafkaResources> 
 		const plugin: IPartitionLambdaPlugin =
 			typeof this.lambdaModule === "string"
 				? // eslint-disable-next-line @typescript-eslint/no-require-imports
-				  require(this.lambdaModule)
+					require(this.lambdaModule)
 				: this.lambdaModule;
 
 		const customizations = await (plugin.customize ? plugin.customize(config) : undefined);

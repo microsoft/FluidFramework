@@ -36,7 +36,12 @@ export {
 	BaseCommandWithBuildProject,
 	GenerateEntrypointsCommand,
 } from "./commands/index.js";
-export { Context, type VersionDetails, isMonoRepoKind, MonoRepoKind } from "./context.js";
+export {
+	Context,
+	type VersionDetails,
+	isMonoRepoKind,
+	MonoRepoKind,
+} from "./context.js";
 export { Repository, getVersionsFromTags } from "./git.js";
 export {
 	ensureDevDependencyExists,
@@ -55,7 +60,11 @@ export {
 export { difference } from "./sets.js";
 export { getIndent, indentString, readLines } from "./text.js";
 export { getApiExports } from "./typescriptApi.js";
-export { createPullRequest, getCommitInfo, pullRequestExists } from "./github.js";
+export {
+	createPullRequest,
+	getCommitInfo,
+	pullRequestExists,
+} from "./github.js";
 export {
 	getRanges,
 	type ReleaseRanges,

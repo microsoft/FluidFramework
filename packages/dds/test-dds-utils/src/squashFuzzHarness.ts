@@ -78,7 +78,8 @@ export interface SquashClient<TChannelFactory extends IChannelFactory>
 export interface SquashFuzzModel<
 	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
-	TState extends SquashFuzzTestState<TChannelFactory> = SquashFuzzTestState<TChannelFactory>,
+	TState extends
+		SquashFuzzTestState<TChannelFactory> = SquashFuzzTestState<TChannelFactory>,
 > extends DDSFuzzModel<TChannelFactory, TOperation, TState> {
 	/**
 	 * This generator will be invoked when the selected client is exiting staging mode.
@@ -102,7 +103,9 @@ export interface SquashFuzzModel<
 	 * that are not necessary to reproduce the error. When doing so, without this piece of validation, it could transform what was originally a
 	 * valid test case demonstrating a squashing bug into an invalid test case.
 	 */
-	validatePoisonedContentRemoved: (client: SquashClient<TChannelFactory>) => void;
+	validatePoisonedContentRemoved: (
+		client: SquashClient<TChannelFactory>,
+	) => void;
 }
 
 /**
@@ -117,7 +120,8 @@ export interface SquashFuzzModel<
 export interface SquashFuzzHarnessModel<
 	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
-	TState extends SquashFuzzTestState<TChannelFactory> = SquashFuzzTestState<TChannelFactory>,
+	TState extends
+		SquashFuzzTestState<TChannelFactory> = SquashFuzzTestState<TChannelFactory>,
 > extends Omit<
 		SquashFuzzModel<TChannelFactory, TOperation, TState>,
 		"reducer" | "exitingStagingModeGeneratorFactory"
@@ -161,34 +165,44 @@ export function mixinStagingMode<
 >(
 	model: SquashFuzzModel<TChannelFactory, TOperation, TState>,
 	options: SquashFuzzSuiteOptions,
-): SquashFuzzHarnessModel<TChannelFactory, TOperation | ChangeStagingMode, TState> {
-	const generatorFactory: () => AsyncGenerator<TOperation | ChangeStagingMode, TState> =
-		() => {
-			const baseGenerator = model.generatorFactory();
-			const exitingStagingModeGenerator = model.exitingStagingModeGeneratorFactory();
-			return async (state): Promise<TOperation | ChangeStagingMode | typeof done> => {
-				if (state.client.stagingModeStatus === "exiting") {
-					const op = exitingStagingModeGenerator(state);
-					return op === done
-						? {
-								type: "changeStagingMode",
-								newStatus: "off",
-							}
-						: op;
-				}
-				if (
-					!state.isDetached &&
-					state.random.bool(options.stagingMode.changeStagingModeProbability)
-				) {
-					return {
-						type: "changeStagingMode",
-						newStatus: state.client.stagingModeStatus === "off" ? "staging" : "exiting",
-					};
-				}
+): SquashFuzzHarnessModel<
+	TChannelFactory,
+	TOperation | ChangeStagingMode,
+	TState
+> {
+	const generatorFactory: () => AsyncGenerator<
+		TOperation | ChangeStagingMode,
+		TState
+	> = () => {
+		const baseGenerator = model.generatorFactory();
+		const exitingStagingModeGenerator =
+			model.exitingStagingModeGeneratorFactory();
+		return async (
+			state,
+		): Promise<TOperation | ChangeStagingMode | typeof done> => {
+			if (state.client.stagingModeStatus === "exiting") {
+				const op = exitingStagingModeGenerator(state);
+				return op === done
+					? {
+							type: "changeStagingMode",
+							newStatus: "off",
+						}
+					: op;
+			}
+			if (
+				!state.isDetached &&
+				state.random.bool(options.stagingMode.changeStagingModeProbability)
+			) {
+				return {
+					type: "changeStagingMode",
+					newStatus:
+						state.client.stagingModeStatus === "off" ? "staging" : "exiting",
+				};
+			}
 
-				return baseGenerator(state);
-			};
+			return baseGenerator(state);
 		};
+	};
 
 	const minimizationTransforms = model.minimizationTransforms as
 		| MinimizationTransform<TOperation | ChangeStagingMode>[]
@@ -219,7 +233,10 @@ export function mixinStagingMode<
 			}
 			if (newStatus === "off") {
 				model.validatePoisonedContentRemoved(state.client);
-				reconnectAndSquash(state.client.containerRuntime, state.client.dataStoreRuntime);
+				reconnectAndSquash(
+					state.client.containerRuntime,
+					state.client.dataStoreRuntime,
+				);
 			} else if (newStatus === "staging") {
 				state.client.containerRuntime.connected = false;
 			}
@@ -272,8 +289,13 @@ const getFullModel = <
 >(
 	ddsModel: SquashFuzzModel<TChannelFactory, TOperation>,
 	options: SquashFuzzSuiteOptions,
-): SquashFuzzHarnessModel<TChannelFactory, TOperation | SquashHarnessOperation> => {
-	const isReconnectAllowed = (state: SquashFuzzTestState<TChannelFactory>): boolean =>
+): SquashFuzzHarnessModel<
+	TChannelFactory,
+	TOperation | SquashHarnessOperation
+> => {
+	const isReconnectAllowed = (
+		state: SquashFuzzTestState<TChannelFactory>,
+	): boolean =>
 		// When staging mode is active, we don't want to generate any reconnect ops as they could result in poisoned handles being sent to other clients
 		// without the DDS model having a chance to remove their content.
 		state.client.stagingModeStatus === "off" && !state.isDetached;
@@ -287,7 +309,11 @@ const getFullModel = <
 		mixinSynchronization(
 			mixinNewClient(
 				mixinStashedClient(
-					mixinClientSelection(modelPartsRequiringClientSelection, options, setupClientState),
+					mixinClientSelection(
+						modelPartsRequiringClientSelection,
+						options,
+						setupClientState,
+					),
 					options,
 				),
 				options,
@@ -300,12 +326,19 @@ const getFullModel = <
 	// Sanity check that using base mixins didn't remove squash-specific properties--this also helps validate
 	// the cast on return is ok.
 	assert(
-		(model as SquashFuzzHarnessModel<TChannelFactory, TOperation | SquashHarnessOperation>)
-			.validatePoisonedContentRemoved !== undefined,
+		(
+			model as SquashFuzzHarnessModel<
+				TChannelFactory,
+				TOperation | SquashHarnessOperation
+			>
+		).validatePoisonedContentRemoved !== undefined,
 		"model should still have validatePoisonedContentRemoved",
 	);
 
-	return model as SquashFuzzHarnessModel<TChannelFactory, TOperation | SquashHarnessOperation>;
+	return model as SquashFuzzHarnessModel<
+		TChannelFactory,
+		TOperation | SquashHarnessOperation
+	>;
 };
 
 const defaultSquashFuzzOptions: SquashFuzzSuiteOptions = {
@@ -347,7 +380,10 @@ export function createSquashFuzzSuite<
 	ddsModel: SquashFuzzModel<TChannelFactory, TOperation>,
 	providedOptions?: Partial<SquashFuzzSuiteOptions>,
 ): void {
-	const options = convertOnlyAndSkip({ ...defaultSquashFuzzOptions, ...providedOptions });
+	const options = convertOnlyAndSkip({
+		...defaultSquashFuzzOptions,
+		...providedOptions,
+	});
 	options.emitter.on("testStart", (state) => {
 		(state.random as SquashRandom).poisonedHandle =
 			makeUnreachableCodePathProxy("random.poisonedHandle");
@@ -356,7 +392,10 @@ export function createSquashFuzzSuite<
 		(client as SquashClient<TChannelFactory>).stagingModeStatus = "off";
 	});
 	const model = getFullModel(ddsModel, options);
-	createSuite(model as unknown as DDSFuzzHarnessModel<TChannelFactory, TOperation>, options);
+	createSuite(
+		model as unknown as DDSFuzzHarnessModel<TChannelFactory, TOperation>,
+		options,
+	);
 }
 
 /**

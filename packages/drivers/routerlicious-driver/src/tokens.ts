@@ -93,5 +93,8 @@ export interface ITokenProvider {
 	 * @param creationToken - A special token that doesn't provide any kind of access, but it has the user's payload
 	 * and document id. It can be used to validate the identity of the document creator.
 	 */
-	documentPostCreateCallback?(documentId: string, creationToken: string): Promise<void>;
+	documentPostCreateCallback?(
+		documentId: string,
+		creationToken: string,
+	): Promise<void>;
 }

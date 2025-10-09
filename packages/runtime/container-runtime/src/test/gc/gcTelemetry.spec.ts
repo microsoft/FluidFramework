@@ -41,7 +41,10 @@ describe("GC Telemetry Tracker", () => {
 
 	const testPkgPath = ["testPkg"];
 	// The package data is tagged in the telemetry event.
-	const eventPkg = { value: testPkgPath.join("/"), tag: TelemetryDataTag.CodeArtifact };
+	const eventPkg = {
+		value: testPkgPath.join("/"),
+		tag: TelemetryDataTag.CodeArtifact,
+	};
 
 	let mockLogger: MockLogger;
 	let mc: MonitoringContext;
@@ -215,11 +218,18 @@ describe("GC Telemetry Tracker", () => {
 				true /* inlineDetailsProp */,
 				false /* clearEventsAfterCheck */, // Don't clear events so we can run another check.
 			);
-			mockLogger.assertMatchNone(unexpectedEvents, message, true /* inlineDetailsProp */);
+			mockLogger.assertMatchNone(
+				unexpectedEvents,
+				message,
+				true /* inlineDetailsProp */,
+			);
 		}
 
 		it("generates inactive, tombstone ready, and sweep ready events when nodes are used after time out", async () => {
-			telemetryTracker = createTelemetryTracker(true /* enable Sweep */, isSummarizerClient);
+			telemetryTracker = createTelemetryTracker(
+				true /* enable Sweep */,
+				isSummarizerClient,
+			);
 			// Mark nodes 2 and 3 as unreferenced.
 			markNodesUnreferenced([nodes[2], nodes[3]]);
 
@@ -315,7 +325,10 @@ describe("GC Telemetry Tracker", () => {
 		});
 
 		it("generates tombstone revived events when nodes are used after they are tombstoned", async () => {
-			telemetryTracker = createTelemetryTracker(true /* enable Sweep */, isSummarizerClient);
+			telemetryTracker = createTelemetryTracker(
+				true /* enable Sweep */,
+				isSummarizerClient,
+			);
 			// Mark node 2 as unreferenced.
 			markNodesUnreferenced([nodes[2]]);
 
@@ -469,7 +482,10 @@ describe("GC Telemetry Tracker", () => {
 				expectedEvents.push({
 					eventName: loadedEventName,
 					timeout,
-					...tagCodeArtifacts({ id: subDataStorePath, pkg: testPkgPath.join("/") }),
+					...tagCodeArtifacts({
+						id: subDataStorePath,
+						pkg: testPkgPath.join("/"),
+					}),
 					createContainerRuntimeVersion: pkgVersion,
 					isTombstoned: false,
 					trackedId: nodes[1],
@@ -616,7 +632,8 @@ describe("GC Telemetry Tracker", () => {
 	});
 
 	describe("gcUnknownOutboundReferences telemetry", () => {
-		const unknownReferenceEventName = "GarbageCollector:gcUnknownOutboundReferences";
+		const unknownReferenceEventName =
+			"GarbageCollector:gcUnknownOutboundReferences";
 		const currentGCData: IGarbageCollectionData = { gcNodes: {} };
 		let previousGCData: IGarbageCollectionData;
 		let explicitReferences: Map<string, string[]>;

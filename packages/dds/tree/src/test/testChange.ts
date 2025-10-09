@@ -20,7 +20,11 @@ import {
 	type TaggedChange,
 	emptyDelta,
 } from "../core/index.js";
-import { type JsonCompatibleReadOnly, type RecursiveReadonly, brand } from "../util/index.js";
+import {
+	type JsonCompatibleReadOnly,
+	type RecursiveReadonly,
+	brand,
+} from "../util/index.js";
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 export interface NonEmptyTestChange {
@@ -67,7 +71,10 @@ function mint(
 	};
 }
 
-function composeIntentions(base: readonly number[], extras: readonly number[]): number[] {
+function composeIntentions(
+	base: readonly number[],
+	extras: readonly number[],
+): number[] {
 	const composed = [...base];
 	let last: number | undefined = composed[composed.length - 1];
 	for (const extra of extras) {
@@ -93,7 +100,10 @@ function compose(
 	return composeList(getArrayWithoutUndefined([change1, change2]), verify);
 }
 
-function composeList(changes: TestChange[], verify: boolean = true): TestChange {
+function composeList(
+	changes: TestChange[],
+	verify: boolean = true,
+): TestChange {
 	let inputContext: number[] | undefined;
 	let outputContext: number[] | undefined;
 	let intentions: number[] = [];
@@ -104,7 +114,10 @@ function composeList(changes: TestChange[], verify: boolean = true): TestChange 
 				// The input context should match the output context of the previous change.
 				assert.deepEqual(change.inputContext, outputContext);
 			}
-			outputContext = composeIntentions(outputContext ?? inputContext, change.intentions);
+			outputContext = composeIntentions(
+				outputContext ?? inputContext,
+				change.intentions,
+			);
 			intentions = composeIntentions(intentions, change.intentions);
 		}
 	}
@@ -245,7 +258,10 @@ export class TestChangeRebaser implements ChangeRebaser<TestChange> {
 		return invert(change.change);
 	}
 
-	public rebase(change: TaggedChange<TestChange>, over: TaggedChange<TestChange>): TestChange {
+	public rebase(
+		change: TaggedChange<TestChange>,
+		over: TaggedChange<TestChange>,
+	): TestChange {
 		return (
 			rebase(change.change, over.change) ?? {
 				intentions: [],

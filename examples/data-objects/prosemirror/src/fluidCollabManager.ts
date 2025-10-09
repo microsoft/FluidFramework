@@ -56,7 +56,10 @@ export interface IRichTextEditor extends IProvideRichTextEditor {
 	initializeValue(value: string): void;
 }
 
-export class FluidCollabManager extends EventEmitter implements IRichTextEditor {
+export class FluidCollabManager
+	extends EventEmitter
+	implements IRichTextEditor
+{
 	public get IRichTextEditor() {
 		return this;
 	}
@@ -123,7 +126,10 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 							nodeStack.push(newNode);
 						} else if (stackType === stackTypeEnd) {
 							const popped = nodeStack.pop();
-							assert(popped!.type === nodeType, "NestEnd top-node type has wrong type");
+							assert(
+								popped!.type === nodeType,
+								"NestEnd top-node type has wrong type",
+							);
 						} else {
 							// TODO consolidate the text segment and simple references
 							const nodeJson: IProseMirrorNode = {
@@ -177,7 +183,11 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 			}
 
 			const startState = this.getCurrentState();
-			sliceBuilder = new ProseMirrorTransactionBuilder(startState, this.schema, this.text);
+			sliceBuilder = new ProseMirrorTransactionBuilder(
+				startState,
+				this.schema,
+				this.text,
+			);
 		});
 
 		this.text.on("sequenceDelta", (ev) => {
@@ -277,7 +287,11 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 					}
 
 					if (stepAsJson.slice) {
-						const sliceOperations = sliceToGroupOps(from, stepAsJson.slice, this.schema);
+						const sliceOperations = sliceToGroupOps(
+							from,
+							stepAsJson.slice,
+							this.schema,
+						);
 						operations = operations.concat(sliceOperations);
 					}
 

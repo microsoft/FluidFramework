@@ -22,7 +22,10 @@ import type {
 import { BaseGitRestTelemetryProperties } from "./gitrestTelemetryDefinitions";
 import * as helpers from "./helpers";
 import * as conversions from "./isomorphicgitConversions";
-import { type IRepositoryManagerBaseOptions, RepositoryManagerBase } from "./repositoryManagerBase";
+import {
+	type IRepositoryManagerBaseOptions,
+	RepositoryManagerBase,
+} from "./repositoryManagerBase";
 import { RepositoryManagerFactoryBase } from "./repositoryManagerFactoryBase";
 
 export class IsomorphicGitRepositoryManager extends RepositoryManagerBase {
@@ -167,7 +170,10 @@ export class IsomorphicGitRepositoryManager extends RepositoryManagerBase {
 		return conversions.blobToIBlob(blob, this.repoOwner, this.repoName);
 	}
 
-	protected async getContentCore(commit: string, contentPath: string): Promise<resources.IBlob> {
+	protected async getContentCore(
+		commit: string,
+		contentPath: string,
+	): Promise<resources.IBlob> {
 		const blob = await isomorphicGit.readBlob({
 			fs: this.fileSystemManager,
 			gitdir: this.directory,
@@ -198,7 +204,9 @@ export class IsomorphicGitRepositoryManager extends RepositoryManagerBase {
 		};
 	}
 
-	protected async createTreeCore(params: resources.ICreateTreeParams): Promise<resources.ITree> {
+	protected async createTreeCore(
+		params: resources.ICreateTreeParams,
+	): Promise<resources.ITree> {
 		const isoGitTreeObject: isomorphicGit.TreeObject = [];
 
 		// build up the tree
@@ -368,7 +376,9 @@ export class IsomorphicGitRepositoryManager extends RepositoryManagerBase {
 		return conversions.tagToITag(readTagResult);
 	}
 
-	protected async createTagCore(tagParams: resources.ICreateTagParams): Promise<resources.ITag> {
+	protected async createTagCore(
+		tagParams: resources.ICreateTagParams,
+	): Promise<resources.ITag> {
 		const tagObject = conversions.iCreateTagParamsToTagObject(tagParams);
 		const tagOid = await isomorphicGit.writeTag({
 			fs: this.fileSystemManager,
@@ -413,7 +423,7 @@ export class IsomorphicGitManagerFactory extends RepositoryManagerFactoryBase<vo
 					fs,
 					gitdir,
 					bare: true,
-			  });
+				});
 	}
 
 	protected async openGitRepo(gitdir: string): Promise<void> {

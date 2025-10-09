@@ -65,7 +65,10 @@ export function matchProperties(
  *
  * @internal
  */
-export function extend<T>(base: MapLike<T>, extension: MapLike<T> | undefined): MapLike<T> {
+export function extend<T>(
+	base: MapLike<T>,
+	extension: MapLike<T> | undefined,
+): MapLike<T> {
 	if (extension !== undefined) {
 		for (const [key, v] of Object.entries(extension)) {
 			if (v === undefined) {
@@ -86,7 +89,9 @@ export function extend<T>(base: MapLike<T>, extension: MapLike<T> | undefined): 
  *
  * @internal
  */
-export function clone<T>(extension: MapLike<T> | undefined): MapLike<T> | undefined {
+export function clone<T>(
+	extension: MapLike<T> | undefined,
+): MapLike<T> | undefined {
 	if (extension === undefined) {
 		return undefined;
 	}

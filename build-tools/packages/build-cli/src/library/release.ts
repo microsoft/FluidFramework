@@ -134,7 +134,12 @@ interface PackageVersion {
  * "tilde": tilde-equivalent version ranges.
  * "legacy-compat": legacy compat equivalent version ranges.
  */
-export type ReportKind = "full" | "caret" | "tilde" | "simple" | "legacy-compat";
+export type ReportKind =
+	| "full"
+	| "caret"
+	| "tilde"
+	| "simple"
+	| "legacy-compat";
 
 /**
  * Converts a {@link ReleaseReport} into different formats based on the kind.
@@ -221,7 +226,10 @@ function getLegacyCompatVersionRange(
  *
  * @returns A string representing the next version in the legacy compatibility range.
  */
-export function getLegacyCompatRange(version: string, interval: number): string {
+export function getLegacyCompatRange(
+	version: string,
+	interval: number,
+): string {
 	const semVersion = semver.parse(version);
 	if (!semVersion) {
 		throw new Error("Invalid version string");

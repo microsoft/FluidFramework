@@ -17,7 +17,9 @@ export class ConsoleUtils {
 	static assert(condition: any, message: string | number): asserts condition {
 		if (!(condition as boolean)) {
 			throw new Error(
-				typeof message === "number" ? `0x${message.toString(16).padStart(3, "0")}` : message,
+				typeof message === "number"
+					? `0x${message.toString(16).padStart(3, "0")}`
+					: message,
 			);
 		}
 	}

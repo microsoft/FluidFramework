@@ -27,12 +27,17 @@ import type { OdspDocumentStorageService } from "../odspDocumentStorageManager.j
 
 import { mockFetchOk } from "./mockFetch.js";
 
-const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache(2000);
+const createUtLocalCache = (): LocalPersistentCache =>
+	new LocalPersistentCache(2000);
 const createUtEpochTracker = (
 	fileEntry: IFileEntry,
 	logger: ITelemetryBaseLogger,
 ): EpochTracker =>
-	new EpochTracker(createUtLocalCache(), fileEntry, logger as ITelemetryLoggerExt);
+	new EpochTracker(
+		createUtLocalCache(),
+		fileEntry,
+		logger as ITelemetryLoggerExt,
+	);
 
 describe("DeltaStorageService", () => {
 	/*
@@ -63,7 +68,11 @@ describe("DeltaStorageService", () => {
 		);
 		const actualDeltaUrl = deltaStorageService.buildUrl(3, 8);
 		const expectedDeltaUrl = `${deltaStorageBasePath}/drives/testdrive/items/testitem/opStream?ump=1&filter=sequenceNumber%20ge%203%20and%20sequenceNumber%20le%207`;
-		assert.equal(actualDeltaUrl, expectedDeltaUrl, "The constructed delta url is invalid");
+		assert.equal(
+			actualDeltaUrl,
+			expectedDeltaUrl,
+			"The constructed delta url is invalid",
+		);
 		logger.assertMatchNone([{ category: "error" }]);
 	});
 
@@ -123,7 +132,11 @@ describe("DeltaStorageService", () => {
 				expectedDeltaFeedResponse,
 			);
 			assert(!partialResult, "partialResult === false");
-			assert.equal(messages.length, 2, "Deserialized feed response is not of expected length");
+			assert.equal(
+				messages.length,
+				2,
+				"Deserialized feed response is not of expected length",
+			);
 			assert.equal(
 				messages[0].sequenceNumber,
 				1,
@@ -192,7 +205,11 @@ describe("DeltaStorageService", () => {
 				expectedDeltaFeedResponse,
 			);
 			assert(!partialResult, "partialResult === false");
-			assert.equal(messages.length, 2, "Deserialized feed response is not of expected length");
+			assert.equal(
+				messages.length,
+				2,
+				"Deserialized feed response is not of expected length",
+			);
 			assert.equal(
 				messages[0].sequenceNumber,
 				1,
@@ -218,7 +235,10 @@ describe("DeltaStorageService", () => {
 		});
 
 		it("FirstCacheMiss should update to first miss op seq number correctly", async () => {
-			const deltasFetchResult: IDeltasFetchResult = { messages: [], partialResult: false };
+			const deltasFetchResult: IDeltasFetchResult = {
+				messages: [],
+				partialResult: false,
+			};
 			let count = 0;
 			const getCached = async (
 				from: number,
@@ -257,7 +277,10 @@ describe("DeltaStorageService", () => {
 					}) as unknown as OdspDocumentStorageService,
 			);
 
-			const messages = odspDeltaStorageServiceWithCache.fetchMessages(1, undefined);
+			const messages = odspDeltaStorageServiceWithCache.fetchMessages(
+				1,
+				undefined,
+			);
 			const batch1 = await messages.read();
 			const batch2 = await messages.read();
 			assert(count === 1, "There should be only 1 cache access");

@@ -32,7 +32,9 @@ export class TestServer extends TestClient {
 	seq = 1;
 	clients: TestClient[] = [];
 	clientSeqNumbers: Heap<ClientSeq> = new Heap<ClientSeq>(clientSeqComparer);
-	upstreamMap: RedBlackTree<number, number> = new RedBlackTree<number, number>(compareNumbers);
+	upstreamMap: RedBlackTree<number, number> = new RedBlackTree<number, number>(
+		compareNumbers,
+	);
 	constructor(options?: PropertySet) {
 		super(options);
 	}
@@ -52,7 +54,10 @@ export class TestServer extends TestClient {
 		super.applyMsg(msg);
 		if (TestClient.useCheckQ) {
 			const clientId = this.getShortClientId(msg.clientId as string);
-			const perspective = new PriorPerspective(msg.referenceSequenceNumber, clientId);
+			const perspective = new PriorPerspective(
+				msg.referenceSequenceNumber,
+				clientId,
+			);
 			return checkTextMatchRelative(perspective, this, msg);
 		} else {
 			return false;
@@ -142,7 +147,9 @@ export function checkTextMatchRelative(
 	msg: ISequencedDocumentMessage,
 ): boolean {
 	const client = server.clients[perspective.clientId];
-	const serverText = new MergeTreeTextHelper(server.mergeTree).getText(perspective);
+	const serverText = new MergeTreeTextHelper(server.mergeTree).getText(
+		perspective,
+	);
 	const cliText = client.checkQ.shift()?.data;
 	if (cliText === undefined || cliText !== serverText) {
 		console.log(`mismatch `);

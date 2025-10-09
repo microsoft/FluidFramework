@@ -57,7 +57,10 @@ export async function loadContainerPaused(
 			headers: {
 				...request.headers,
 				// ensure we do not process any ops, such that we can examine container before ops starts to flow.
-				[LoaderHeader.loadMode]: { opsBeforeReturn: undefined, deltaConnection: "none" },
+				[LoaderHeader.loadMode]: {
+					opsBeforeReturn: undefined,
+					deltaConnection: "none",
+				},
 			},
 		},
 	});
@@ -103,7 +106,8 @@ export async function loadContainerPaused(
 	let onClose: (error?: IErrorBase) => void;
 
 	const promise = new Promise<void>((resolve, reject) => {
-		onAbort = (): void => reject(new GenericError("Canceled due to cancellation request."));
+		onAbort = (): void =>
+			reject(new GenericError("Canceled due to cancellation request."));
 		onClose = (error?: IErrorBase): void => reject(error);
 
 		// We need to setup a listener to stop op processing once we reach the desired sequence number (if specified).

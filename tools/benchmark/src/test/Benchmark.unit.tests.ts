@@ -45,11 +45,7 @@ describe("`benchmark` function", () => {
 			if (!isParentProcess) {
 				// If running with separate processes,
 				// this check must only be done in the child process (it will fail in the parent process)
-				assert.equal(
-					afterHasBeenCalled,
-					true,
-					"after should be called after test execution",
-				);
+				assert.equal(afterHasBeenCalled, true, "after should be called after test execution");
 			}
 		});
 	});

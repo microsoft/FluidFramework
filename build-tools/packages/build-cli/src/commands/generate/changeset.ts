@@ -35,7 +35,11 @@ Enter: Done`;
  * Package scopes that will be excluded by default. The default list contains scopes that are not typically published to
  * a public registry, and thus are the least likely to have a changeset-relevant change.
  */
-const excludedScopes = new Set(["@fluid-example", "@fluid-internal", "@fluid-test"]);
+const excludedScopes = new Set([
+	"@fluid-example",
+	"@fluid-internal",
+	"@fluid-test",
+]);
 
 /**
  * Represents a choice in the CLI prompt UX.
@@ -117,9 +121,13 @@ export default class GenerateChangesetCommand extends BaseCommand<
 		let { branch } = this.flags;
 
 		const monorepo =
-			releaseGroup === undefined ? undefined : context.repo.releaseGroups.get(releaseGroup);
+			releaseGroup === undefined
+				? undefined
+				: context.repo.releaseGroups.get(releaseGroup);
 		if (monorepo === undefined) {
-			this.error(`Release group ${releaseGroup} not found in repo config`, { exit: 1 });
+			this.error(`Release group ${releaseGroup} not found in repo config`, {
+				exit: 1,
+			});
 		}
 
 		if (empty) {
@@ -146,7 +154,9 @@ export default class GenerateChangesetCommand extends BaseCommand<
 				exit: 1,
 			});
 		}
-		this.log(`Remote for ${repo.upstreamRemotePartialUrl} is: ${chalk.bold(remote)}`);
+		this.log(
+			`Remote for ${repo.upstreamRemotePartialUrl} is: ${chalk.bold(remote)}`,
+		);
 
 		ux.action.start(`Comparing local changes to remote for branch ${branch}`);
 		let {
@@ -162,8 +172,12 @@ export default class GenerateChangesetCommand extends BaseCommand<
 
 		// If the branch flag was passed explicitly, we don't want to prompt the user to select one. We can't check for
 		// undefined because there's a default value for the flag.
-		const usedBranchFlag = this.argv.includes("--branch") || this.argv.includes("-b");
-		if (!usedBranchFlag && initialBranchChangedPackages.length > BRANCH_PROMPT_LIMIT) {
+		const usedBranchFlag =
+			this.argv.includes("--branch") || this.argv.includes("-b");
+		if (
+			!usedBranchFlag &&
+			initialBranchChangedPackages.length > BRANCH_PROMPT_LIMIT
+		) {
 			const answer = await prompts({
 				type: "select",
 				name: "selectedBranch",
@@ -184,7 +198,11 @@ export default class GenerateChangesetCommand extends BaseCommand<
 				ux.action.start(
 					`Branch changed. Comparing local changes to remote for branch ${branch}`,
 				);
-				const newChanges = await repo.getChangedSinceRef(branch, remote, context);
+				const newChanges = await repo.getChangedSinceRef(
+					branch,
+					remote,
+					context,
+				);
 				ux.action.stop();
 
 				changedPackages = newChanges.packages;
@@ -236,13 +254,19 @@ export default class GenerateChangesetCommand extends BaseCommand<
 				.map((pkg) => {
 					const changed = changedPackages.some((cp) => cp.name === pkg.name);
 					return {
-						title: changed ? `${pkg.name} ${chalk.red(chalk.bold("(changed)"))}` : pkg.name,
+						title: changed
+							? `${pkg.name} ${chalk.red(chalk.bold("(changed)"))}`
+							: pkg.name,
 						value: pkg,
 						selected: changed,
 					};
 				}),
 			// Next list independent packages in a group
-			{ title: chalk.bold("Independent Packages"), heading: true, disabled: true },
+			{
+				title: chalk.bold("Independent Packages"),
+				heading: true,
+				disabled: true,
+			},
 		);
 
 		for (const pkg of context.independentPackages) {
@@ -251,7 +275,9 @@ export default class GenerateChangesetCommand extends BaseCommand<
 			}
 			const changed = changedPackages.some((cp) => cp.name === pkg.name);
 			packageChoices.push({
-				title: changed ? `${pkg.name} ${chalk.red(chalk.bold("(changed)"))}` : pkg.name,
+				title: changed
+					? `${pkg.name} ${chalk.red(chalk.bold("(changed)"))}`
+					: pkg.name,
 				value: pkg,
 				selected: changed,
 			});
@@ -331,9 +357,13 @@ export default class GenerateChangesetCommand extends BaseCommand<
 						: uiMode === "default"
 							? "autocompleteMultiselect"
 							: "multiselect",
-				choices: [...packageChoices, { title: " ", heading: true, disabled: true }],
+				choices: [
+					...packageChoices,
+					{ title: " ", heading: true, disabled: true },
+				],
 				instructions: INSTRUCTIONS,
-				message: "Choose which packages to include in the changeset. Type to filter the list.",
+				message:
+					"Choose which packages to include in the changeset. Type to filter the list.",
 				optionsPerPage: 5,
 				onState: (state: PromptState): void => {
 					if (state.aborted) {
@@ -381,8 +411,10 @@ export default class GenerateChangesetCommand extends BaseCommand<
 		const response = await prompts(questions);
 		// The response.selectedPackages value will be undefined if the question was skipped, so default to an empty array
 		// in that case.
-		const selectedPackages: Package[] = (response.selectedPackages ?? []) as Package[];
-		const bumpType = getDefaultBumpTypeForBranch(branch, releaseGroup) ?? "minor";
+		const selectedPackages: Package[] = (response.selectedPackages ??
+			[]) as Package[];
+		const bumpType =
+			getDefaultBumpTypeForBranch(branch, releaseGroup) ?? "minor";
 
 		const newFile = await createChangesetFile(
 			monorepo.directory ?? context.root,
@@ -410,7 +442,11 @@ async function createChangesetFile(
 ): Promise<string> {
 	const changesetID = humanId({ separator: "-", capitalize: false });
 	const changesetPath = path.join(rootPath, ".changeset", `${changesetID}.md`);
-	const changesetContent = createChangesetContent(packages, body, additionalMetadata);
+	const changesetContent = createChangesetContent(
+		packages,
+		body,
+		additionalMetadata,
+	);
 	await writeFile(changesetPath, changesetContent);
 	return changesetPath;
 }
@@ -444,7 +480,10 @@ function createChangesetContent(
 }
 
 function isIncludedByDefault(pkg: Package): boolean {
-	if (pkg.packageJson.private === true || excludedScopes.has(PackageName.getScope(pkg.name))) {
+	if (
+		pkg.packageJson.private === true ||
+		excludedScopes.has(PackageName.getScope(pkg.name))
+	) {
 		return false;
 	}
 
@@ -458,7 +497,11 @@ function isIncludedByDefault(pkg: Package): boolean {
  * @param b - The second package to compare.
  * @param changedPackages - An array of changed packages.
  */
-function packageComparer(a: Package, b: Package, changedPackages: Package[]): number {
+function packageComparer(
+	a: Package,
+	b: Package,
+	changedPackages: Package[],
+): number {
 	const aChanged = changedPackages.some((cp) => cp.name === a.name);
 	const bChanged = changedPackages.some((cp) => cp.name === b.name);
 
@@ -473,7 +516,8 @@ function packageComparer(a: Package, b: Package, changedPackages: Package[]): nu
 	}
 
 	// Otherwise, compare by name.
-	return PackageName.getUnscopedName(a.name) < PackageName.getUnscopedName(b.name)
+	return PackageName.getUnscopedName(a.name) <
+		PackageName.getUnscopedName(b.name)
 		? -1
 		: a.name === b.name
 			? 0

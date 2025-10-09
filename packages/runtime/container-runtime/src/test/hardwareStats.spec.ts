@@ -75,14 +75,22 @@ describe("Hardware Stats", () => {
 		// testing function
 		const { deviceMemory, hardwareConcurrency } = getDeviceSpec();
 		assert.strictEqual(deviceMemory, 10, "incorrect deviceMemory value");
-		assert.strictEqual(hardwareConcurrency, 8, "incorrect hardwareConcurrency value");
+		assert.strictEqual(
+			hardwareConcurrency,
+			8,
+			"incorrect hardwareConcurrency value",
+		);
 
 		await loadContainer();
 
 		// checking telemetry
 		const events = getDeviceSpecEvents();
 		assert(events !== undefined, "No deviceSpec event found");
-		assert.strictEqual(events[0].deviceMemory, 10, "incorrect deviceMemory logged");
+		assert.strictEqual(
+			events[0].deviceMemory,
+			10,
+			"incorrect deviceMemory logged",
+		);
 		assert.strictEqual(
 			events[0].hardwareConcurrency,
 			8,
@@ -97,14 +105,22 @@ describe("Hardware Stats", () => {
 		// testing function
 		const { deviceMemory, hardwareConcurrency } = getDeviceSpec();
 		assert.strictEqual(deviceMemory, undefined, "incorrect deviceMemory value");
-		assert.strictEqual(hardwareConcurrency, undefined, "incorrect hardwareConcurrency value");
+		assert.strictEqual(
+			hardwareConcurrency,
+			undefined,
+			"incorrect hardwareConcurrency value",
+		);
 
 		await loadContainer();
 
 		// checking telemetry
 		const events = getDeviceSpecEvents();
 		assert(events !== undefined, "No deviceSpec event found");
-		assert.strictEqual(events[0].deviceMemory, undefined, "incorrect deviceMemory logged");
+		assert.strictEqual(
+			events[0].deviceMemory,
+			undefined,
+			"incorrect deviceMemory logged",
+		);
 		assert.strictEqual(
 			events[0].hardwareConcurrency,
 			undefined,
@@ -118,14 +134,22 @@ describe("Hardware Stats", () => {
 		// testing function
 		const { deviceMemory, hardwareConcurrency } = getDeviceSpec();
 		assert.strictEqual(deviceMemory, undefined, "incorrect deviceMemory value");
-		assert.strictEqual(hardwareConcurrency, undefined, "incorrect hardwareConcurrency value");
+		assert.strictEqual(
+			hardwareConcurrency,
+			undefined,
+			"incorrect hardwareConcurrency value",
+		);
 
 		await loadContainer();
 
 		// checking telemetry
 		const events = getDeviceSpecEvents();
 		assert(events !== undefined, "No deviceSpec event found");
-		assert.strictEqual(events[0].deviceMemory, undefined, "incorrect deviceMemory logged");
+		assert.strictEqual(
+			events[0].deviceMemory,
+			undefined,
+			"incorrect deviceMemory logged",
+		);
 		assert.strictEqual(
 			events[0].hardwareConcurrency,
 			undefined,

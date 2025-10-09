@@ -13,7 +13,10 @@ import { OperationType } from "./sharedArrayOperations.js";
 export class SharedArrayRevertible implements IRevertible {
 	private readonly sharedArray: ISharedArrayRevertible;
 	private readonly op: ISharedArrayOperation;
-	public constructor(sharedArray: ISharedArrayRevertible, op: ISharedArrayOperation) {
+	public constructor(
+		sharedArray: ISharedArrayRevertible,
+		op: ISharedArrayOperation,
+	) {
 		this.sharedArray = sharedArray;
 		this.op = op;
 	}

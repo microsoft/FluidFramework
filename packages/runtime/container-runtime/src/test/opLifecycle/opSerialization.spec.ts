@@ -13,7 +13,10 @@ import {
 	ContainerMessageType,
 	type LocalContainerRuntimeMessage,
 } from "../../messageTypes.js";
-import { ensureContentsDeserialized, serializeOp } from "../../opLifecycle/index.js";
+import {
+	ensureContentsDeserialized,
+	serializeOp,
+} from "../../opLifecycle/index.js";
 
 describe("opSerialization", () => {
 	describe("ensureContentsDeserialized", () => {
@@ -89,7 +92,9 @@ describe("opSerialization", () => {
 				contents: {
 					address: "123",
 					contents: {
-						alreadyEncodedHandle: encodeHandleForSerialization(new MockHandle({})),
+						alreadyEncodedHandle: encodeHandleForSerialization(
+							new MockHandle({}),
+						),
 					},
 				},
 			};

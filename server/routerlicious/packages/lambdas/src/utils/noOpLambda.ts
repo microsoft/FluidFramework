@@ -75,25 +75,19 @@ export class NoOpLambda implements IPartitionLambda {
 
 	private resetMaxTimer(): void {
 		console.log(`Resetting max timer`);
-		this.maxTimer = setInterval(
-			() => {
-				console.log(`MaxTime checkpoint`);
-				this.configurableCheckpoint(this.currentMessage);
-			},
-			this.checkpointConfiguration?.maxTime,
-		);
+		this.maxTimer = setInterval(() => {
+			console.log(`MaxTime checkpoint`);
+			this.configurableCheckpoint(this.currentMessage);
+		}, this.checkpointConfiguration?.maxTime);
 	}
 
 	private resetIdleTimer(): void {
 		if (this.idleTimer) {
 			clearTimeout(this.idleTimer);
 		}
-		this.idleTimer = setInterval(
-			() => {
-				this.configurableCheckpoint(this.currentMessage);
-			},
-			this.checkpointConfiguration?.idleTime,
-		);
+		this.idleTimer = setInterval(() => {
+			this.configurableCheckpoint(this.currentMessage);
+		}, this.checkpointConfiguration?.idleTime);
 	}
 }
 

@@ -65,7 +65,9 @@ export interface IFileSystemPromises {
 	writeFile: (
 		...args: Parameters<typeof fsPromises.writeFile>
 	) => ReturnType<typeof fsPromises.writeFile>;
-	unlink: (...args: Parameters<typeof fsPromises.unlink>) => ReturnType<typeof fsPromises.unlink>;
+	unlink: (
+		...args: Parameters<typeof fsPromises.unlink>
+	) => ReturnType<typeof fsPromises.unlink>;
 	readdir: (
 		...args: Parameters<typeof fsPromises.readdir>
 	) => ReturnType<typeof fsPromises.readdir>;

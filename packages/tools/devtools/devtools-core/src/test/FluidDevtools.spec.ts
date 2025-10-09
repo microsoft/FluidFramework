@@ -112,7 +112,9 @@ describe("FluidDevtools unit tests", () => {
 	});
 
 	it("getOrThrow", () => {
-		expect(() => FluidDevtools.getOrThrow()).to.throw(accessBeforeInitializeErrorText);
+		expect(() => FluidDevtools.getOrThrow()).to.throw(
+			accessBeforeInitializeErrorText,
+		);
 
 		const devtools = initializeDevtools({});
 
@@ -120,6 +122,8 @@ describe("FluidDevtools unit tests", () => {
 
 		devtools.dispose();
 
-		expect(() => FluidDevtools.getOrThrow()).to.throw(accessBeforeInitializeErrorText);
+		expect(() => FluidDevtools.getOrThrow()).to.throw(
+			accessBeforeInitializeErrorText,
+		);
 	});
 });

@@ -21,7 +21,9 @@ interface PackagePromotionErrorResponse {
 /**
  * Promotes a package to the Release view in Azure DevOps Artifacts.
  */
-export default class PromotePackageCommand extends BaseCommand<typeof PromotePackageCommand> {
+export default class PromotePackageCommand extends BaseCommand<
+	typeof PromotePackageCommand
+> {
 	static readonly summary =
 		"Promotes a package to the Release view in Azure DevOps Artifacts.";
 
@@ -52,7 +54,9 @@ export default class PromotePackageCommand extends BaseCommand<typeof PromotePac
 
 		try {
 			const results = await Promise.all(
-				packageOrder.map(async (packageName) => this.promotePackage(packageName)),
+				packageOrder.map(async (packageName) =>
+					this.promotePackage(packageName),
+				),
 			);
 
 			const successfulPackages = results.filter((result) => result.success);
@@ -70,15 +74,19 @@ export default class PromotePackageCommand extends BaseCommand<typeof PromotePac
 
 			if (failedPackages.length > 0) {
 				this.log("\nFailed to promote the following packages:");
-				for (const pkg of failedPackages) this.log(`- ${pkg.packageName}: ${pkg.error}`);
+				for (const pkg of failedPackages)
+					this.log(`- ${pkg.packageName}: ${pkg.error}`);
 				this.error("Some packages failed to promote.", { exit: 1 });
 			} else {
 				this.log("\nAll packages promoted successfully.");
 			}
 		} catch (error) {
-			this.error(`An unexpected error occurred during package promotion: ${error}`, {
-				exit: 2,
-			});
+			this.error(
+				`An unexpected error occurred during package promotion: ${error}`,
+				{
+					exit: 2,
+				},
+			);
 		}
 	}
 
@@ -89,14 +97,17 @@ export default class PromotePackageCommand extends BaseCommand<typeof PromotePac
 	private async promotePackage(
 		packageName: string,
 	): Promise<{ packageName: string; success: boolean; error?: string }> {
-		const url = this.getFeedPromotionUrl(packageName, this.flags.version.version);
+		const url = this.getFeedPromotionUrl(
+			packageName,
+			this.flags.version.version,
+		);
 		try {
 			const response = await fetch(url, {
 				method: "PATCH",
 				headers: {
 					"Content-Type": "application/json",
-					"Accept": "application/json",
-					"Authorization": `Basic ${Buffer.from(`:${this.flags.token}`).toString("base64")}`,
+					Accept: "application/json",
+					Authorization: `Basic ${Buffer.from(`:${this.flags.token}`).toString("base64")}`,
 				},
 				body: JSON.stringify({
 					views: {
@@ -108,7 +119,9 @@ export default class PromotePackageCommand extends BaseCommand<typeof PromotePac
 			});
 
 			if (!response.ok) {
-				const errorData = (await response.json()) as PackagePromotionErrorResponse | undefined;
+				const errorData = (await response.json()) as
+					| PackagePromotionErrorResponse
+					| undefined;
 				return {
 					packageName,
 					success: false,

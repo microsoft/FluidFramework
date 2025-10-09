@@ -25,11 +25,13 @@ describe("SharedMatrix reconnect", () => {
 	 * make sure positions are rebased appropriately).
 	 */
 	it("rebase setCell in inserted column with overlapping remove", () => {
-		const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+		const containerRuntimeFactory =
+			new MockContainerRuntimeFactoryForReconnection();
 		const dataRuntime1 = new MockFluidDataStoreRuntime();
 		containerRuntimeFactory.createContainerRuntime(dataRuntime1);
 		const dataRuntime2 = new MockFluidDataStoreRuntime();
-		const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataRuntime2);
+		const containerRuntime2 =
+			containerRuntimeFactory.createContainerRuntime(dataRuntime2);
 
 		const matrix1 = matrixFactory.create(dataRuntime1, "A");
 		matrix1.connect({
@@ -77,11 +79,13 @@ describe("SharedMatrix reconnect", () => {
 	});
 
 	it("discards setCell in removed column", () => {
-		const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+		const containerRuntimeFactory =
+			new MockContainerRuntimeFactoryForReconnection();
 		const dataRuntime1 = new MockFluidDataStoreRuntime();
 		containerRuntimeFactory.createContainerRuntime(dataRuntime1);
 		const dataRuntime2 = new MockFluidDataStoreRuntime();
-		const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataRuntime2);
+		const containerRuntime2 =
+			containerRuntimeFactory.createContainerRuntime(dataRuntime2);
 
 		const matrix1 = matrixFactory.create(dataRuntime1, "A");
 		matrix1.connect({
@@ -133,11 +137,14 @@ describe("SharedMatrix reconnect", () => {
 	// and only used for resubmitting ops, disconnecting twice is necessary to reproduce the issue.
 	it("resolves insert+set against concurrent insert after disconnecting twice", () => {
 		const factory = SharedMatrix.getFactory();
-		const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+		const containerRuntimeFactory =
+			new MockContainerRuntimeFactoryForReconnection();
 		const dataRuntime1 = new MockFluidDataStoreRuntime();
-		const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataRuntime1);
+		const containerRuntime1 =
+			containerRuntimeFactory.createContainerRuntime(dataRuntime1);
 		const dataRuntime2 = new MockFluidDataStoreRuntime();
-		const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataRuntime2);
+		const containerRuntime2 =
+			containerRuntimeFactory.createContainerRuntime(dataRuntime2);
 		const matrix1 = matrixFactory.create(dataRuntime1, "A");
 		matrix1.connect({
 			deltaConnection: dataRuntime1.createDeltaConnection(),
@@ -178,13 +185,17 @@ describe("SharedMatrix reconnect", () => {
 	// account in-flight ops.
 	// See "client.applyMsg updates minSeq" in merge-tree's test suite for a lower-level unit test of some relevant behavior.
 	it("avoids zamboni of information required to resubmit", async () => {
-		const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+		const containerRuntimeFactory =
+			new MockContainerRuntimeFactoryForReconnection();
 		const dataRuntime1 = new MockFluidDataStoreRuntime();
-		const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataRuntime1);
+		const containerRuntime1 =
+			containerRuntimeFactory.createContainerRuntime(dataRuntime1);
 		const dataRuntime2 = new MockFluidDataStoreRuntime();
-		const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataRuntime2);
+		const containerRuntime2 =
+			containerRuntimeFactory.createContainerRuntime(dataRuntime2);
 		const dataRuntime3 = new MockFluidDataStoreRuntime();
-		const containerRuntime3 = containerRuntimeFactory.createContainerRuntime(dataRuntime3);
+		const containerRuntime3 =
+			containerRuntimeFactory.createContainerRuntime(dataRuntime3);
 		const matrix1 = matrixFactory.create(dataRuntime1, "A");
 
 		matrix1.insertCols(0, 2);

@@ -24,7 +24,8 @@ describe("ErrorUtils", () => {
 	function isIThrottlingWarning(input: unknown): input is IThrottlingWarning {
 		return (
 			input !== undefined &&
-			(input as Partial<IThrottlingWarning>).errorType === FluidErrorTypes.throttlingError &&
+			(input as Partial<IThrottlingWarning>).errorType ===
+				FluidErrorTypes.throttlingError &&
 			(input as Partial<IThrottlingWarning>).retryAfterSeconds !== undefined
 		);
 	}
@@ -33,13 +34,19 @@ describe("ErrorUtils", () => {
 		it("creates non-retriable authorization error on 401", () => {
 			const message = "test error";
 			const error = createR11sNetworkError(message, 401);
-			assert.strictEqual(error.errorType, RouterliciousErrorTypes.authorizationError);
+			assert.strictEqual(
+				error.errorType,
+				RouterliciousErrorTypes.authorizationError,
+			);
 			assert.strictEqual(error.canRetry, false);
 		});
 		it("creates non-retriable authorization error on 403", () => {
 			const message = "test error";
 			const error = createR11sNetworkError(message, 403);
-			assert.strictEqual(error.errorType, RouterliciousErrorTypes.authorizationError);
+			assert.strictEqual(
+				error.errorType,
+				RouterliciousErrorTypes.authorizationError,
+			);
 			assert.strictEqual(error.canRetry, false);
 		});
 		it("creates non-retriable not-found error on 404", () => {
@@ -54,33 +61,48 @@ describe("ErrorUtils", () => {
 		it("creates retriable error on 429 with retry-after", () => {
 			const message = "test error";
 			const error = createR11sNetworkError(message, 429, 5000);
-			assert.strictEqual(error.errorType, RouterliciousErrorTypes.throttlingError);
+			assert.strictEqual(
+				error.errorType,
+				RouterliciousErrorTypes.throttlingError,
+			);
 			assert.strictEqual(error.canRetry, true);
 			assert.strictEqual((error as IThrottlingWarning).retryAfterSeconds, 5);
 		});
 		it("creates retriable error on 429 without retry-after", () => {
 			const message = "test error";
 			const error = createR11sNetworkError(message, 429);
-			assert.strictEqual(error.errorType, RouterliciousErrorTypes.genericNetworkError);
+			assert.strictEqual(
+				error.errorType,
+				RouterliciousErrorTypes.genericNetworkError,
+			);
 			assert.strictEqual(error.canRetry, true);
 		});
 		it("creates retriable error on 500", () => {
 			const message = "test error";
 			const error = createR11sNetworkError(message, 500);
-			assert.strictEqual(error.errorType, RouterliciousErrorTypes.genericNetworkError);
+			assert.strictEqual(
+				error.errorType,
+				RouterliciousErrorTypes.genericNetworkError,
+			);
 			assert.strictEqual(error.canRetry, true);
 		});
 		it("creates retriable error on anything else with retryAfter", () => {
 			const message = "test error";
 			const error = createR11sNetworkError(message, 400, 100000);
-			assert.strictEqual(error.errorType, RouterliciousErrorTypes.throttlingError);
+			assert.strictEqual(
+				error.errorType,
+				RouterliciousErrorTypes.throttlingError,
+			);
 			assert.strictEqual(error.canRetry, true);
 			assert.strictEqual((error as any).retryAfterSeconds, 100);
 		});
 		it("creates non-retriable error on anything else", () => {
 			const message = "test error";
 			const error2 = createR11sNetworkError(message, 400);
-			assert.strictEqual(error2.errorType, RouterliciousErrorTypes.genericNetworkError);
+			assert.strictEqual(
+				error2.errorType,
+				RouterliciousErrorTypes.genericNetworkError,
+			);
 			assert.strictEqual(error2.canRetry, false);
 		});
 	});
@@ -192,7 +214,10 @@ describe("ErrorUtils", () => {
 				actualMessage.includes(message),
 				"R11s error should include socket error message",
 			);
-			assert(actualMessage.includes(handler), "R11s error should include handler name");
+			assert(
+				actualMessage.includes(handler),
+				"R11s error should include handler name",
+			);
 		};
 		it("creates non-retriable authorization error on 401", () => {
 			const error = errorObjectFromSocketError(
@@ -203,7 +228,10 @@ describe("ErrorUtils", () => {
 				handler,
 			);
 			assertExpectedMessage(error.message);
-			assert.strictEqual(error.errorType, RouterliciousErrorTypes.authorizationError);
+			assert.strictEqual(
+				error.errorType,
+				RouterliciousErrorTypes.authorizationError,
+			);
 			assert.strictEqual(error.canRetry, false);
 			assert.strictEqual((error as any).statusCode, 401);
 		});
@@ -216,7 +244,10 @@ describe("ErrorUtils", () => {
 				handler,
 			);
 			assertExpectedMessage(error.message);
-			assert.strictEqual(error.errorType, RouterliciousErrorTypes.authorizationError);
+			assert.strictEqual(
+				error.errorType,
+				RouterliciousErrorTypes.authorizationError,
+			);
 			assert.strictEqual(error.canRetry, false);
 			assert.strictEqual((error as any).statusCode, 403);
 		});
@@ -261,7 +292,10 @@ describe("ErrorUtils", () => {
 				handler,
 			);
 			assertExpectedMessage(error.message);
-			assert.strictEqual(error.errorType, RouterliciousErrorTypes.genericNetworkError);
+			assert.strictEqual(
+				error.errorType,
+				RouterliciousErrorTypes.genericNetworkError,
+			);
 			assert.strictEqual(error.canRetry, true);
 		});
 		it("creates retriable error on 500", () => {
@@ -273,7 +307,10 @@ describe("ErrorUtils", () => {
 				handler,
 			);
 			assertExpectedMessage(error.message);
-			assert.strictEqual(error.errorType, RouterliciousErrorTypes.genericNetworkError);
+			assert.strictEqual(
+				error.errorType,
+				RouterliciousErrorTypes.genericNetworkError,
+			);
 			assert.strictEqual(error.canRetry, true);
 			assert.strictEqual((error as any).statusCode, 500);
 		});
@@ -287,7 +324,10 @@ describe("ErrorUtils", () => {
 				handler,
 			);
 			assertExpectedMessage(error.message);
-			assert.strictEqual(error.errorType, RouterliciousErrorTypes.throttlingError);
+			assert.strictEqual(
+				error.errorType,
+				RouterliciousErrorTypes.throttlingError,
+			);
 			assert.strictEqual(error.canRetry, true);
 			assert.strictEqual((error as any).retryAfterSeconds, 300);
 			assert.strictEqual((error as any).statusCode, 400);
@@ -310,7 +350,11 @@ describe("ErrorUtils", () => {
 			["some.url.com/", "deltas", "some.url.com/deltas"],
 			["https://some.url.com", "documents", "some.url.com/documents"],
 			["https://some.url.com/", "/documents/", "some.url.com/documents"],
-			["https://some.url.com/", "documents/morePath", "some.url.com/documents/REDACTED"],
+			[
+				"https://some.url.com/",
+				"documents/morePath",
+				"some.url.com/documents/REDACTED",
+			],
 			[
 				"https://some.url.com",
 				"documents/morePath/documents/latest/abc-123/",

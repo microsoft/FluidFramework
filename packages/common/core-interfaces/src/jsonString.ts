@@ -7,7 +7,10 @@
 import type { BrandedType } from "./brandedType.js";
 import type { InternalUtilityTypes } from "./exposedInternalUtilityTypes.js";
 import type { JsonDeserialized } from "./jsonDeserialized.js";
-import type { JsonSerializable, JsonSerializableOptions } from "./jsonSerializable.js";
+import type {
+	JsonSerializable,
+	JsonSerializableOptions,
+} from "./jsonSerializable.js";
 
 /**
  * Brand for JSON that has been stringified.
@@ -32,7 +35,9 @@ declare class JsonStringBrand<T> extends BrandedType<JsonString<unknown>> {
  * reconstituted exactly (even if IntelliSense shows the original enum type). This
  * can be removed if exact enum preservation is found to be more important.
  */
-type DistributeJsonStringBrand<T> = T extends unknown ? JsonStringBrand<T> : never;
+type DistributeJsonStringBrand<T> = T extends unknown
+	? JsonStringBrand<T>
+	: never;
 
 /**
  * Distributes branding over union elements of T unless result could prevent T
@@ -88,7 +93,10 @@ export type JsonString<T> = string & BrandForJsonString<T>;
  *
  * @internal
  */
-export type JsonStringifyOptions = Pick<JsonSerializableOptions, "IgnoreInaccessibleMembers">;
+export type JsonStringifyOptions = Pick<
+	JsonSerializableOptions,
+	"IgnoreInaccessibleMembers"
+>;
 
 /**
  * Performs basic JSON serialization using `JSON.stringify` and brands the result as {@link JsonString}`<T>`.

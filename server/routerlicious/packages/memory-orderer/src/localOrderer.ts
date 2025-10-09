@@ -37,7 +37,10 @@ import {
 	type ICheckpointRepository,
 	CheckpointService,
 } from "@fluidframework/server-services-core";
-import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import {
+	getLumberBaseProperties,
+	Lumberjack,
+} from "@fluidframework/server-services-telemetry";
 import { merge } from "lodash";
 
 import type { ILocalOrdererSetup } from "./interfaces";
@@ -312,12 +315,7 @@ export class LocalOrderer implements IOrderer {
 				this.setup,
 				this.moiraContext,
 				async (_, context) =>
-					new MoiraLambda(
-						context,
-						this.serviceConfiguration,
-						this.tenantId,
-						this.documentId,
-					),
+					new MoiraLambda(context, this.serviceConfiguration, this.tenantId, this.documentId),
 			);
 		}
 	}
@@ -519,8 +517,8 @@ export class LocalOrderer implements IOrderer {
 			dbObject.scribe === undefined || dbObject.scribe === null
 				? DefaultScribe
 				: typeof this.details.value.scribe === "string"
-				? JSON.parse(this.details.value.scribe)
-				: this.details.value.scribe;
+					? JSON.parse(this.details.value.scribe)
+					: this.details.value.scribe;
 		return scribe;
 	}
 }

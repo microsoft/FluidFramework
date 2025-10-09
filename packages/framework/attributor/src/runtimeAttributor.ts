@@ -21,7 +21,12 @@ import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 
 import { OpStreamAttributor, type IAttributor } from "./attributor.js";
 import { opBlobName, type IRuntimeAttributor } from "./attributorContracts.js";
-import { AttributorSerializer, chain, deltaEncoder, type Encoder } from "./encoders.js";
+import {
+	AttributorSerializer,
+	chain,
+	deltaEncoder,
+	type Encoder,
+} from "./encoders.js";
 import { makeLZ4Encoder } from "./lz4Encoder.js";
 
 export class RuntimeAttributor implements IRuntimeAttributor {
@@ -88,7 +93,8 @@ export class RuntimeAttributor implements IRuntimeAttributor {
 		if (baseSnapshotForAttributorTree === undefined) {
 			this.opAttributor = new OpStreamAttributor(deltaManager, quorum);
 		} else {
-			const id: string | undefined = baseSnapshotForAttributorTree.blobs[opBlobName];
+			const id: string | undefined =
+				baseSnapshotForAttributorTree.blobs[opBlobName];
 			assert(
 				id !== undefined,
 				0x50a /* Attributor tree should have op attributor summary blob. */,

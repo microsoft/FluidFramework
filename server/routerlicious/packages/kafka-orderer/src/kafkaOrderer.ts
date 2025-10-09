@@ -76,7 +76,7 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
 								service: "nexus",
 								timestamp: Date.now(),
 							},
-					  ]
+						]
 					: undefined,
 			type: MessageType.ClientJoin,
 			serverMetadata: clientJoinMessageServerMetadata,

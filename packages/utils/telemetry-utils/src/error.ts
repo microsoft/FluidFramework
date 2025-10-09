@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { IErrorBase, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import type {
+	IErrorBase,
+	ITelemetryBaseProperties,
+} from "@fluidframework/core-interfaces";
 import {
 	FluidErrorTypes,
 	type IGenericError,
@@ -45,7 +48,10 @@ export function validatePrecondition(
  *
  * @internal
  */
-export class GenericError extends LoggingError implements IGenericError, IFluidErrorBase {
+export class GenericError
+	extends LoggingError
+	implements IGenericError, IFluidErrorBase
+{
 	public readonly errorType = FluidErrorTypes.genericError;
 
 	/**
@@ -71,7 +77,10 @@ export class GenericError extends LoggingError implements IGenericError, IFluidE
  *
  * @internal
  */
-export class UsageError extends LoggingError implements IUsageError, IFluidErrorBase {
+export class UsageError
+	extends LoggingError
+	implements IUsageError, IFluidErrorBase
+{
 	public readonly errorType = FluidErrorTypes.usageError;
 
 	public constructor(message: string, props?: ITelemetryBaseProperties) {
@@ -85,7 +94,10 @@ export class UsageError extends LoggingError implements IUsageError, IFluidError
  *
  * @internal
  */
-export class DataCorruptionError extends LoggingError implements IErrorBase, IFluidErrorBase {
+export class DataCorruptionError
+	extends LoggingError
+	implements IErrorBase, IFluidErrorBase
+{
 	public readonly errorType = FluidErrorTypes.dataCorruptionError;
 	public readonly canRetry = false;
 
@@ -105,7 +117,10 @@ export class DataCorruptionError extends LoggingError implements IErrorBase, IFl
  *
  * @internal
  */
-export class DataProcessingError extends LoggingError implements IErrorBase, IFluidErrorBase {
+export class DataProcessingError
+	extends LoggingError
+	implements IErrorBase, IFluidErrorBase
+{
 	/**
 	 * {@inheritDoc IFluidErrorBase.errorType}
 	 */
@@ -205,7 +220,9 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
 			);
 
 			// Copy over the props above and any others added to this error since first being normalized
-			dataProcessingError.addTelemetryProperties(normalizedError.getTelemetryProperties());
+			dataProcessingError.addTelemetryProperties(
+				normalizedError.getTelemetryProperties(),
+			);
 
 			return dataProcessingError;
 		}
@@ -240,7 +257,8 @@ export const extractSafePropertiesFromMessage = (
 	messageMinimumSequenceNumber: number | undefined;
 	messageTimestamp: number | undefined;
 } => ({
-	messageClientId: messageLike.clientId === null ? "null" : messageLike.clientId,
+	messageClientId:
+		messageLike.clientId === null ? "null" : messageLike.clientId,
 	messageSequenceNumber: messageLike.sequenceNumber,
 	messageClientSequenceNumber: messageLike.clientSequenceNumber,
 	messageReferenceSequenceNumber: messageLike.referenceSequenceNumber,

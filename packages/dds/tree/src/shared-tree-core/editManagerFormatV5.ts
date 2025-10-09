@@ -21,7 +21,9 @@ export interface EncodedEditManager<TChangeset> {
 	readonly branches?: readonly EncodedSharedBranch<TChangeset>[];
 }
 
-export const EncodedEditManager = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
+export const EncodedEditManager = <ChangeSchema extends TSchema>(
+	tChange: ChangeSchema,
+) =>
 	Type.Object(
 		{
 			version: Type.Union([Type.Literal(5)]),

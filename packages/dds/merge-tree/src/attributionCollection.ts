@@ -174,7 +174,9 @@ export function areEqualAttributionKeys(
 	}
 }
 
-export class AttributionCollection implements IAttributionCollection<AttributionKey> {
+export class AttributionCollection
+	implements IAttributionCollection<AttributionKey>
+{
 	private offsets: number[] = [];
 	private keys: (AttributionKey | null)[] = [];
 
@@ -200,13 +202,22 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 	}
 
 	public getAtOffset(offset: number): AttributionKey;
-	public getAtOffset(offset: number, channel: string): AttributionKey | undefined;
-	public getAtOffset(offset: number, channel?: string): AttributionKey | undefined {
+	public getAtOffset(
+		offset: number,
+		channel: string,
+	): AttributionKey | undefined;
+	public getAtOffset(
+		offset: number,
+		channel?: string,
+	): AttributionKey | undefined {
 		if (channel !== undefined) {
 			const subCollection = this.channels?.[channel];
 			return subCollection?.getAtOffset(offset);
 		}
-		assert(offset >= 0 && offset < this._length, 0x443 /* Requested offset should be valid */);
+		assert(
+			offset >= 0 && offset < this._length,
+			0x443 /* Requested offset should be valid */,
+		);
 		return this.get(this.findIndex(offset));
 	}
 
@@ -294,7 +305,8 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 			}
 		}
 
-		const spliceIndex = this.offsets[splitIndex] === pos ? splitIndex : splitIndex + 1;
+		const spliceIndex =
+			this.offsets[splitIndex] === pos ? splitIndex : splitIndex + 1;
 		this.keys.splice(spliceIndex);
 		this.offsets.splice(spliceIndex);
 		this._length = pos;
@@ -313,12 +325,13 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		if (other.channels !== undefined || this.channels !== undefined) {
 			this.channels ??= {};
 			for (const [key, collection] of other.channelEntries) {
-				const thisCollection = (this.channels[key] ??= new AttributionCollection(
-					this.length,
-					// Null is needed as null and undefined have different meanings in the context of attribution collections.
-					// eslint-disable-next-line unicorn/no-null
-					null,
-				));
+				const thisCollection = (this.channels[key] ??=
+					new AttributionCollection(
+						this.length,
+						// Null is needed as null and undefined have different meanings in the context of attribution collections.
+						// eslint-disable-next-line unicorn/no-null
+						null,
+					));
 				thisCollection.append(collection);
 			}
 			for (const [key, collection] of this.channelEntries) {
@@ -333,8 +346,9 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 
 	public getAll(): IAttributionCollectionSpec<AttributionKey> {
 		type ExtractGeneric<T> = T extends Iterable<infer Q> ? Q : unknown;
-		const root: ExtractGeneric<IAttributionCollectionSpec<AttributionKey>["root"]>[] =
-			Array.from({ length: this.keys.length });
+		const root: ExtractGeneric<
+			IAttributionCollectionSpec<AttributionKey>["root"]
+		>[] = Array.from({ length: this.keys.length });
 		for (let i = 0; i < this.keys.length; i++) {
 			root[i] = { offset: this.offsets[i], key: this.keys[i] };
 		}
@@ -365,7 +379,10 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		return copy;
 	}
 
-	public update(name: string | undefined, channel: AttributionCollection): void {
+	public update(
+		name: string | undefined,
+		channel: AttributionCollection,
+	): void {
 		assert(
 			channel.length === this.length,
 			0x5c0 /* AttributionCollection channel update should have consistent segment length */,
@@ -400,7 +417,10 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 
 		const extractOntoSegments = (
 			{ seqs, posBreakpoints }: SequenceOffsets,
-			assignToSegment: (collection: AttributionCollection, segment: ISegment) => void,
+			assignToSegment: (
+				collection: AttributionCollection,
+				segment: ISegment,
+			) => void,
 		): void => {
 			if (seqs.length === 0) {
 				assert(
@@ -416,19 +436,32 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 				const attribution = new AttributionCollection(segment.cachedLength);
 				// This function is defined here to allow for the creation of a new collection for each segment.
 				// eslint-disable-next-line unicorn/consistent-function-scoping
-				const pushEntry = (offset: number, seq: AttributionKey | number | null): void => {
+				const pushEntry = (
+					offset: number,
+					seq: AttributionKey | number | null,
+				): void => {
 					attribution.offsets.push(offset);
 					attribution.keys.push(
 						// eslint-disable-next-line unicorn/no-null
-						seq === null ? null : typeof seq === "object" ? seq : { type: "op", seq },
+						seq === null
+							? null
+							: typeof seq === "object"
+								? seq
+								: { type: "op", seq },
 					);
 				};
 				if (posBreakpoints[curIndex] > cumulativeSegPos) {
 					curIndex--;
 				}
 
-				while (posBreakpoints[curIndex] < cumulativeSegPos + segment.cachedLength) {
-					const nextOffset = Math.max(posBreakpoints[curIndex] - cumulativeSegPos, 0);
+				while (
+					posBreakpoints[curIndex] <
+					cumulativeSegPos + segment.cachedLength
+				) {
+					const nextOffset = Math.max(
+						posBreakpoints[curIndex] - cumulativeSegPos,
+						0,
+					);
 					pushEntry(nextOffset, seqs[curIndex]);
 					curIndex++;
 				}
@@ -450,8 +483,9 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 				extractOntoSegments(collectionSpec, (collection, segment) => {
 					if (segment.attribution !== undefined) {
 						// Cast is valid as we just assigned this field above
-						((segment.attribution as AttributionCollection).channels ??= {})[name] =
-							collection;
+						((segment.attribution as AttributionCollection).channels ??= {})[
+							name
+						] = collection;
 					}
 				});
 			}
@@ -476,7 +510,8 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		for (const segment of segments) {
 			const collection =
 				// eslint-disable-next-line unicorn/no-null
-				segment.attribution ?? new AttributionCollection(segment.cachedLength, null);
+				segment.attribution ??
+				new AttributionCollection(segment.cachedLength, null);
 			const spec = collection.getAll();
 			allCollectionSpecs.push(spec);
 			if (spec.channels) {

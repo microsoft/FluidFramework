@@ -20,7 +20,9 @@ describe("schemaStatics", () => {
 	it("optional", () => {
 		const field = schemaStatics.optional(schemaStatics.number);
 
-		const fieldRecursive = schemaStatics.optionalRecursive(schemaStatics.number);
+		const fieldRecursive = schemaStatics.optionalRecursive(
+			schemaStatics.number,
+		);
 
 		const fieldArray = schemaStatics.optional([() => schemaStatics.number]);
 
@@ -34,11 +36,17 @@ describe("schemaStatics", () => {
 		);
 
 		const arrayOfAnnotated = schemaStatics.optionalRecursive(
-			SchemaFactoryAlpha.types([{ type: () => schemaStatics.number, metadata: {} }]),
+			SchemaFactoryAlpha.types([
+				{ type: () => schemaStatics.number, metadata: {} },
+			]),
 		);
 
-		allowUnused<requireTrue<areSafelyAssignable<typeof field, typeof fieldRecursive>>>();
-		allowUnused<requireAssignableTo<typeof fieldRecursiveAnnotated, typeof fieldArray>>();
+		allowUnused<
+			requireTrue<areSafelyAssignable<typeof field, typeof fieldRecursive>>
+		>();
+		allowUnused<
+			requireAssignableTo<typeof fieldRecursiveAnnotated, typeof fieldArray>
+		>();
 
 		assert.deepEqual(field.allowedTypeSet, arrayOfAnnotated.allowedTypeSet);
 	});

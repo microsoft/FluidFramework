@@ -92,7 +92,10 @@ export function addAudienceMember(container: IContainer): string {
 /**
  * Remove a member for mock audience from mock container for use in tests.
  */
-export function removeAudienceMember(container: IContainer, clientId: string): void {
+export function removeAudienceMember(
+	container: IContainer,
+	clientId: string,
+): void {
 	const audience = container.audience as MockAudience;
 	audience.removeMember(clientId);
 }

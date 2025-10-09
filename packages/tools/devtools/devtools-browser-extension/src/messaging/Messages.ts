@@ -37,7 +37,8 @@ export interface DevToolsInitMessage extends ISourcedDevtoolsMessage {
  * {@link DevToolsInitAcknowledgement} {@link @fluidframework/devtools-core#ISourcedDevtoolsMessage."type"}
  * @internal
  */
-export const devToolsInitAcknowledgementType = "acknowledge-initialize-devtools";
+export const devToolsInitAcknowledgementType =
+	"acknowledge-initialize-devtools";
 
 /**
  * Devtools initialization acknowledgement.

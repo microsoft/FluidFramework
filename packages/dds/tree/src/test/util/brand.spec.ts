@@ -10,7 +10,11 @@ import {
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../util/brand.js";
-import type { isAssignableTo, requireFalse, requireTrue } from "../../util/index.js";
+import type {
+	isAssignableTo,
+	requireFalse,
+	requireTrue,
+} from "../../util/index.js";
 
 // These tests currently just cover the type checking, so its all compile time.
 
@@ -45,4 +49,6 @@ export type T4 = Brand<{ test: number }, E4>;
 export type T5 = Brand<{ test: number }, E5>;
 
 // Check strong typing
-type _check1 = requireFalse<isAssignableTo<E4, E5>> | requireFalse<isAssignableTo<T4, T5>>;
+type _check1 =
+	| requireFalse<isAssignableTo<E4, E5>>
+	| requireFalse<isAssignableTo<T4, T5>>;

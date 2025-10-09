@@ -44,7 +44,10 @@ for (const createBlobPayloadPending of [false, true]) {
 			attachHandle(handle);
 			const pendingBlobs = blobManager1.getPendingBlobs();
 			assert.deepStrictEqual(pendingBlobs, {
-				[localId]: { state: "localOnly", blob: bufferToString(textToBlob("hello"), "base64") },
+				[localId]: {
+					state: "localOnly",
+					blob: bufferToString(textToBlob("hello"), "base64"),
+				},
 			});
 
 			const { ids: ids1, redirectTable: redirectTable1 } =
@@ -53,8 +56,12 @@ for (const createBlobPayloadPending of [false, true]) {
 			assert.strictEqual(redirectTable1, undefined);
 
 			// Error the original upload, so we can be sure that the created blob came from the load with pending blobs.
-			await mockBlobStorage.waitProcessOne({ error: new Error("Upload failed") });
-			await assert.rejects(waitHandlePayloadShared(handle), { message: "Upload failed" });
+			await mockBlobStorage.waitProcessOne({
+				error: new Error("Upload failed"),
+			});
+			await assert.rejects(waitHandlePayloadShared(handle), {
+				message: "Upload failed",
+			});
 
 			const { blobManager: blobManager2 } = createTestMaterial({
 				mockBlobStorage,
@@ -62,14 +69,20 @@ for (const createBlobPayloadPending of [false, true]) {
 				pendingBlobs,
 				createBlobPayloadPending,
 			});
-			const blobBeforeSharing = await blobManager2.getBlob(localId, createBlobPayloadPending);
+			const blobBeforeSharing = await blobManager2.getBlob(
+				localId,
+				createBlobPayloadPending,
+			);
 			assert.strictEqual(blobToText(blobBeforeSharing), "hello");
 
 			const sharePendingBlobsP = blobManager2.sharePendingBlobs();
 			// Let the upload from pending state succeed
 			await mockBlobStorage.waitProcessOne();
 			await sharePendingBlobsP;
-			const blobAfterSharing = await blobManager2.getBlob(localId, createBlobPayloadPending);
+			const blobAfterSharing = await blobManager2.getBlob(
+				localId,
+				createBlobPayloadPending,
+			);
 			assert.strictEqual(blobToText(blobAfterSharing), "hello");
 
 			const { ids: ids2, redirectTable: redirectTable2 } =

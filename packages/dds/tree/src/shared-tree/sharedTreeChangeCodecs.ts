@@ -36,10 +36,16 @@ import {
 	EncodedSharedTreeChange,
 	type EncodedSharedTreeInnerChange,
 } from "./sharedTreeChangeFormat.js";
-import type { SharedTreeChange, SharedTreeInnerChange } from "./sharedTreeChangeTypes.js";
+import type {
+	SharedTreeChange,
+	SharedTreeInnerChange,
+} from "./sharedTreeChangeTypes.js";
 
 export function makeSharedTreeChangeCodecFamily(
-	modularChangeCodecFamily: ICodecFamily<ModularChangeset, ChangeEncodingContext>,
+	modularChangeCodecFamily: ICodecFamily<
+		ModularChangeset,
+		ChangeEncodingContext
+	>,
 	options: ICodecOptions,
 ): ICodecFamily<SharedTreeChange, ChangeEncodingContext> {
 	const schemaChangeCodecs = makeSchemaChangeCodecs(options);

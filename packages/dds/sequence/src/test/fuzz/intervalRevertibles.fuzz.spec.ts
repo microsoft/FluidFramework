@@ -58,19 +58,26 @@ emitter.on("clientCreate", (client) => {
 		});
 		collection.on("deleteInterval", (interval, local, op) => {
 			if (local && !channel.isCurrentRevert) {
-				appendDeleteIntervalToRevertibles(channel, interval, channel.revertibles);
-			}
-		});
-		collection.on("changeInterval", (interval, previousInterval, local, op, slide) => {
-			if (local && !channel.isCurrentRevert && !slide) {
-				appendChangeIntervalToRevertibles(
+				appendDeleteIntervalToRevertibles(
 					channel,
 					interval,
-					previousInterval,
 					channel.revertibles,
 				);
 			}
 		});
+		collection.on(
+			"changeInterval",
+			(interval, previousInterval, local, op, slide) => {
+				if (local && !channel.isCurrentRevert && !slide) {
+					appendChangeIntervalToRevertibles(
+						channel,
+						interval,
+						previousInterval,
+						channel.revertibles,
+					);
+				}
+			},
+		);
 		collection.on("propertyChanged", (interval, propertyDeltas, local, op) => {
 			if (local && !channel.isCurrentRevert) {
 				appendIntervalPropertyChangedToRevertibles(
@@ -113,7 +120,10 @@ function operationGenerator(
 		return {
 			type: "revertSharedStringRevertibles",
 			// grab a random number of edits to revert
-			editsToRevert: state.random.integer(1, state.client.channel.revertibles.length),
+			editsToRevert: state.random.integer(
+				1,
+				state.client.channel.revertibles.length,
+			),
 		};
 	}
 
@@ -125,13 +135,21 @@ function operationGenerator(
 	assert(optionsParam.weights !== undefined);
 	const baseGenerator = makeIntervalOperationGenerator(optionsParam, true);
 	return createWeightedGenerator<RevertOperation, ClientOpState>([
-		[revertSharedStringRevertibles, optionsParam.weights.revertWeight, hasRevertibles],
+		[
+			revertSharedStringRevertibles,
+			optionsParam.weights.revertWeight,
+			hasRevertibles,
+		],
 		[baseGenerator, 1],
 	]);
 }
 
 describe("IntervalCollection fuzz testing", () => {
-	const model: DDSFuzzModel<SharedStringFuzzFactory, RevertOperation, FuzzTestState> = {
+	const model: DDSFuzzModel<
+		SharedStringFuzzFactory,
+		RevertOperation,
+		FuzzTestState
+	> = {
 		...baseModel,
 		workloadName: "interval collection with revertibles",
 		generatorFactory: () =>
@@ -162,7 +180,11 @@ describe("IntervalCollection fuzz testing", () => {
 });
 
 describe("IntervalCollection fuzz testing with rebasing", () => {
-	const model: DDSFuzzModel<SharedStringFuzzFactory, RevertOperation, FuzzTestState> = {
+	const model: DDSFuzzModel<
+		SharedStringFuzzFactory,
+		RevertOperation,
+		FuzzTestState
+	> = {
 		...baseModel,
 		workloadName: "interval collection with revertibles and rebasing",
 		generatorFactory: () =>

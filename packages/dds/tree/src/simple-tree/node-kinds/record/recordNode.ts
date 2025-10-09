@@ -6,7 +6,10 @@
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { type JsonCompatibleReadOnlyObject, brand } from "../../../util/index.js";
+import {
+	type JsonCompatibleReadOnlyObject,
+	brand,
+} from "../../../util/index.js";
 
 import {
 	type TreeNodeSchema,
@@ -69,125 +72,142 @@ function createRecordNodeProxy(
 	customizable: boolean,
 	schema: RecordNodeSchema,
 ): TreeRecordNode {
-	const proxy: TreeRecordNode = new Proxy<TreeRecordNode>(proxyTarget as TreeRecordNode, {
-		get: (target, key, receiver): unknown => {
-			if (typeof key === "symbol") {
-				switch (key) {
-					// POJO mode records don't have TreeNode's build in members on their targets, so special case them:
-					case typeSchemaSymbol: {
-						return schema;
-					}
-					// eslint-disable-next-line import/no-deprecated
-					case typeNameSymbol: {
-						return schema.identifier;
-					}
-					case Symbol.iterator: {
-						return () => recordIterator(proxy);
-					}
-					case Symbol.toPrimitive: {
-						// Handle string interpolation and coercion to string
-						return () => Object.prototype.toString.call(proxy);
-					}
-					case Symbol.toStringTag: {
-						// In order to satisfy deep equality checks in POJO (non-customizable) mode,
-						// we cannot override the behavior of this.
-						if (customizable) {
-							// Generates nicer toString behavior for customizable records.
-							// E.g. `[object My.Record]` instead of `[object Object]`.
+	const proxy: TreeRecordNode = new Proxy<TreeRecordNode>(
+		proxyTarget as TreeRecordNode,
+		{
+			get: (target, key, receiver): unknown => {
+				if (typeof key === "symbol") {
+					switch (key) {
+						// POJO mode records don't have TreeNode's build in members on their targets, so special case them:
+						case typeSchemaSymbol: {
+							return schema;
+						}
+						// eslint-disable-next-line import/no-deprecated
+						case typeNameSymbol: {
 							return schema.identifier;
 						}
-						break;
-					}
-					default: {
-						// No-op
+						case Symbol.iterator: {
+							return () => recordIterator(proxy);
+						}
+						case Symbol.toPrimitive: {
+							// Handle string interpolation and coercion to string
+							return () => Object.prototype.toString.call(proxy);
+						}
+						case Symbol.toStringTag: {
+							// In order to satisfy deep equality checks in POJO (non-customizable) mode,
+							// we cannot override the behavior of this.
+							if (customizable) {
+								// Generates nicer toString behavior for customizable records.
+								// E.g. `[object My.Record]` instead of `[object Object]`.
+								return schema.identifier;
+							}
+							break;
+						}
+						default: {
+							// No-op
+						}
 					}
 				}
-			}
 
-			if (typeof key === "string") {
+				if (typeof key === "string") {
+					const innerNode = getInnerNode(receiver);
+					const field = innerNode.tryGetField(brand(key));
+					if (field !== undefined) {
+						return tryGetTreeNodeForField(field);
+					}
+				}
+
+				return undefined;
+			},
+			set: (
+				target,
+				key,
+				value: InsertableContent | undefined,
+				receiver,
+			): boolean => {
+				if (typeof key === "symbol") {
+					return false;
+				}
+
 				const innerNode = getInnerNode(receiver);
-				const field = innerNode.tryGetField(brand(key));
-				if (field !== undefined) {
-					return tryGetTreeNodeForField(field);
+				const field = innerNode.getBoxed(brand(key)) as FlexTreeOptionalField;
+				const kernel = getKernel(receiver);
+				const innerSchema = innerNode.context.schema.nodeSchema.get(
+					brand(schema.identifier),
+				);
+				assert(
+					innerSchema instanceof MapNodeStoredSchema,
+					0xc1a /* Expected MapNodeStoredSchema */,
+				);
+
+				const mapTree = prepareForInsertion(
+					value,
+					createFieldSchema(
+						FieldKind.Optional,
+						kernel.schema.info as ImplicitAllowedTypes,
+					),
+					innerNode.context,
+					innerSchema.mapFields,
+				);
+
+				field.editor.set(mapTree, field.length === 0);
+				return true;
+			},
+			has: (target, key): boolean => {
+				if (typeof key === "symbol") {
+					return false;
 				}
-			}
 
-			return undefined;
+				const innerNode = getInnerNode(proxy);
+				const childField = innerNode.tryGetField(brand(key));
+
+				return childField !== undefined;
+			},
+			ownKeys: (target) => {
+				const innerNode = getInnerNode(proxy);
+				return [...innerNode.keys()];
+			},
+			getOwnPropertyDescriptor: (target, key) => {
+				if (typeof key === "symbol") {
+					return undefined;
+				}
+
+				const innerNode = getInnerNode(proxy);
+				const field = innerNode.tryGetField(brand(key));
+
+				if (field === undefined) {
+					return undefined;
+				}
+
+				return {
+					value: tryGetTreeNodeForField(field),
+					writable: true,
+					enumerable: true,
+					configurable: true, // Must be 'configurable' if property is absent from proxy target.
+				};
+			},
+			defineProperty(target, key, attributes) {
+				throw new UsageError(
+					"Shadowing properties of record nodes is not permitted.",
+				);
+			},
+			deleteProperty(target, key) {
+				if (typeof key === "symbol") {
+					return false;
+				}
+
+				const innerNode = getInnerNode(proxy);
+				const field = innerNode.tryGetField(brand(key)) as
+					| FlexTreeOptionalField
+					| undefined;
+				if (field !== undefined) {
+					field.editor.set(undefined, field.length === 0);
+				}
+
+				return true;
+			},
 		},
-		set: (target, key, value: InsertableContent | undefined, receiver): boolean => {
-			if (typeof key === "symbol") {
-				return false;
-			}
-
-			const innerNode = getInnerNode(receiver);
-			const field = innerNode.getBoxed(brand(key)) as FlexTreeOptionalField;
-			const kernel = getKernel(receiver);
-			const innerSchema = innerNode.context.schema.nodeSchema.get(brand(schema.identifier));
-			assert(
-				innerSchema instanceof MapNodeStoredSchema,
-				0xc1a /* Expected MapNodeStoredSchema */,
-			);
-
-			const mapTree = prepareForInsertion(
-				value,
-				createFieldSchema(FieldKind.Optional, kernel.schema.info as ImplicitAllowedTypes),
-				innerNode.context,
-				innerSchema.mapFields,
-			);
-
-			field.editor.set(mapTree, field.length === 0);
-			return true;
-		},
-		has: (target, key): boolean => {
-			if (typeof key === "symbol") {
-				return false;
-			}
-
-			const innerNode = getInnerNode(proxy);
-			const childField = innerNode.tryGetField(brand(key));
-
-			return childField !== undefined;
-		},
-		ownKeys: (target) => {
-			const innerNode = getInnerNode(proxy);
-			return [...innerNode.keys()];
-		},
-		getOwnPropertyDescriptor: (target, key) => {
-			if (typeof key === "symbol") {
-				return undefined;
-			}
-
-			const innerNode = getInnerNode(proxy);
-			const field = innerNode.tryGetField(brand(key));
-
-			if (field === undefined) {
-				return undefined;
-			}
-
-			return {
-				value: tryGetTreeNodeForField(field),
-				writable: true,
-				enumerable: true,
-				configurable: true, // Must be 'configurable' if property is absent from proxy target.
-			};
-		},
-		defineProperty(target, key, attributes) {
-			throw new UsageError("Shadowing properties of record nodes is not permitted.");
-		},
-		deleteProperty(target, key) {
-			if (typeof key === "symbol") {
-				return false;
-			}
-
-			const innerNode = getInnerNode(proxy);
-			const field = innerNode.tryGetField(brand(key)) as FlexTreeOptionalField | undefined;
-			if (field !== undefined) {
-				field.editor.set(undefined, field.length === 0);
-			}
-
-			return true;
-		},
-	});
+	);
 	return proxy;
 }
 
@@ -197,7 +217,10 @@ abstract class CustomRecordNodeBase<
 	public static readonly kind = NodeKind.Record;
 
 	public constructor(
-		input?: InternalTreeNode | RecordNodeInsertableData<TAllowedTypes> | undefined,
+		input?:
+			| InternalTreeNode
+			| RecordNodeInsertableData<TAllowedTypes>
+			| undefined,
 	) {
 		super(input ?? {});
 	}
@@ -319,7 +342,10 @@ export function recordSchema<
 			instance: TreeNodeValid<T2>,
 			input: T2,
 		): UnhydratedFlexTreeNode {
-			return unhydratedFlexTreeFromInsertable(input as object, this as typeof Schema);
+			return unhydratedFlexTreeFromInsertable(
+				input as object,
+				this as typeof Schema,
+			);
 		}
 
 		protected static override oneTimeSetup(): TreeNodeSchemaInitializedData {
@@ -360,7 +386,8 @@ export function recordSchema<
 			return lazyAllowedTypesIdentifiers.value;
 		}
 
-		protected static override constructorCached: MostDerivedData | undefined = undefined;
+		protected static override constructorCached: MostDerivedData | undefined =
+			undefined;
 
 		public static readonly identifier = identifier;
 		public static readonly info = info;
@@ -369,9 +396,11 @@ export function recordSchema<
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return normalizedTypes.evaluateSet();
 		}
-		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
-		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
-			persistedMetadata;
+		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> =
+			metadata ?? {};
+		public static readonly persistedMetadata:
+			| JsonCompatibleReadOnlyObject
+			| undefined = persistedMetadata;
 
 		// eslint-disable-next-line import/no-deprecated
 		public get [typeNameSymbol](): TName {
@@ -455,11 +484,17 @@ function shallowCompatibilityTest(data: FactoryContent): CompatibilityLevel {
  * @param data - The tree data to be transformed. Must be a Record-like object.
  * @param schema - The schema to comply with.
  */
-function recordToFlexContent(data: FactoryContent, schema: RecordNodeSchema): FlexContent {
+function recordToFlexContent(
+	data: FactoryContent,
+	schema: RecordNodeSchema,
+): FlexContent {
 	if (!(typeof data === "object" && data !== null)) {
-		throw new UsageError(`Input data is incompatible with Record schema: ${data}`);
+		throw new UsageError(
+			`Input data is incompatible with Record schema: ${data}`,
+		);
 	}
 
-	const fieldsIterator: Iterable<readonly [string, InsertableContent]> = Object.entries(data);
+	const fieldsIterator: Iterable<readonly [string, InsertableContent]> =
+		Object.entries(data);
 	return recordLikeDataToFlexContent(fieldsIterator, schema);
 }

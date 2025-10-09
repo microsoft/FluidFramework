@@ -50,8 +50,10 @@ export type AsyncOptionalFluidObjectProvider<T> = T extends undefined
  * Combined type for Optional and Required Async Fluid object Providers
  * @legacy @beta
  */
-export type AsyncFluidObjectProvider<O, R = undefined> = AsyncOptionalFluidObjectProvider<O> &
-	AsyncRequiredFluidObjectProvider<R>;
+export type AsyncFluidObjectProvider<
+	O,
+	R = undefined,
+> = AsyncOptionalFluidObjectProvider<O> & AsyncRequiredFluidObjectProvider<R>;
 
 /**
  * Multiple ways to provide a Fluid object.
@@ -61,4 +63,6 @@ export type FluidObjectProvider<T> =
 	| NonNullable<T>
 	| Promise<NonNullable<T>>
 	| ((dependencyContainer: IFluidDependencySynthesizer) => NonNullable<T>)
-	| ((dependencyContainer: IFluidDependencySynthesizer) => Promise<NonNullable<T>>);
+	| ((
+			dependencyContainer: IFluidDependencySynthesizer,
+	  ) => Promise<NonNullable<T>>);

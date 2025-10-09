@@ -4,7 +4,10 @@
  */
 
 import { Mode, processContent } from "../replayMultipleFiles.js";
-import { getTestContent, skipOrFailIfTestContentMissing } from "../testContent.js";
+import {
+	getTestContent,
+	skipOrFailIfTestContentMissing,
+} from "../testContent.js";
 
 describe("Snapshots", function () {
 	this.timeout(300000);

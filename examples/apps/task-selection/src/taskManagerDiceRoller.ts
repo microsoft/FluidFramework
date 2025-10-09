@@ -46,7 +46,8 @@ export class TaskManagerDiceRoller extends DataObject implements IDiceRoller {
 			}
 		});
 
-		const taskManagerHandle = this.root.get<IFluidHandle<TaskManager>>(taskManagerKey);
+		const taskManagerHandle =
+			this.root.get<IFluidHandle<TaskManager>>(taskManagerKey);
 		this._taskManager = await taskManagerHandle?.get();
 
 		this.subscribeToAutoRoll();

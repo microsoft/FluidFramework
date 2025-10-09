@@ -175,7 +175,10 @@ async function getShaFromTreeHandleEntry(
 		await writeFullGitTreeAsSummaryTree(gitTree, options);
 	}
 	for (const treeEntry of gitTree.tree.tree) {
-		options.entryHandleToObjectShaCache.set(`${parentHandle}/${treeEntry.path}`, treeEntry.sha);
+		options.entryHandleToObjectShaCache.set(
+			`${parentHandle}/${treeEntry.path}`,
+			treeEntry.sha,
+		);
 	}
 	const sha = options.entryHandleToObjectShaCache.get(entry.id);
 	if (!sha) {

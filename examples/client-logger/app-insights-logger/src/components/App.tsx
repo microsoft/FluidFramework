@@ -3,10 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { CollaborativeTextArea, SharedStringHelper } from "@fluid-example/example-utils";
+import {
+	CollaborativeTextArea,
+	SharedStringHelper,
+} from "@fluid-example/example-utils";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/legacy";
-import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
+import type {
+	ContainerSchema,
+	IFluidContainer,
+} from "@fluidframework/fluid-static";
 import { type ISharedMap, SharedMap } from "@fluidframework/map/legacy";
 import { SharedString } from "@fluidframework/sequence/legacy";
 import React from "react";
@@ -80,7 +86,9 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
  * @internal
  */
 export function App(): React.ReactElement {
-	const [containerInfo, setContainerInfo] = React.useState<ContainerInfo | undefined>();
+	const [containerInfo, setContainerInfo] = React.useState<
+		ContainerInfo | undefined
+	>();
 
 	const getSharedFluidData = async (): Promise<ContainerInfo> => {
 		const containerId = getContainerIdFromLocation(window.location);
@@ -138,12 +146,16 @@ function AppView(props: AppViewProps): React.ReactElement {
 		throw new Error('"rootMap" not found in initialObjects tree.');
 	}
 
-	const sharedTextHandle = rootMap.get(sharedTextKey) as IFluidHandle<SharedString>;
+	const sharedTextHandle = rootMap.get(
+		sharedTextKey,
+	) as IFluidHandle<SharedString>;
 	if (sharedTextHandle === undefined) {
 		throw new Error(`"${sharedTextKey}" entry not found in rootMap.`);
 	}
 
-	const sharedCounterHandle = rootMap.get(sharedCounterKey) as IFluidHandle<SharedCounter>;
+	const sharedCounterHandle = rootMap.get(
+		sharedCounterKey,
+	) as IFluidHandle<SharedCounter>;
 	if (sharedCounterHandle === undefined) {
 		throw new Error(`"${sharedCounterKey}" entry not found in rootMap.`);
 	}
@@ -171,7 +183,9 @@ interface TextViewProps {
 function TextView(props: TextViewProps): React.ReactElement {
 	const { sharedTextHandle } = props;
 
-	const [sharedText, setSharedText] = React.useState<SharedString | undefined>();
+	const [sharedText, setSharedText] = React.useState<
+		SharedString | undefined
+	>();
 
 	React.useEffect(() => {
 		sharedTextHandle.get().then(setSharedText, (error) => {
@@ -184,7 +198,9 @@ function TextView(props: TextViewProps): React.ReactElement {
 		<h4> Loading...</h4>
 	) : (
 		<div data-testid="collaborative-text-area-widget">
-			<CollaborativeTextArea sharedStringHelper={new SharedStringHelper(sharedText)} />
+			<CollaborativeTextArea
+				sharedStringHelper={new SharedStringHelper(sharedText)}
+			/>
 		</div>
 	);
 }
@@ -196,7 +212,9 @@ interface CounterViewProps {
 function CounterView(props: CounterViewProps): React.ReactElement {
 	const { sharedCounterHandle } = props;
 
-	const [sharedCounter, setSharedCounter] = React.useState<SharedCounter | undefined>();
+	const [sharedCounter, setSharedCounter] = React.useState<
+		SharedCounter | undefined
+	>();
 
 	React.useEffect(() => {
 		sharedCounterHandle.get().then(setSharedCounter, (error) => {

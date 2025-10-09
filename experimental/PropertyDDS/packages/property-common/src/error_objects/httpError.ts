@@ -27,7 +27,13 @@ export class HTTPError extends Error {
 		super();
 		Object.setPrototypeOf(this, HTTPError.prototype);
 		this.name = "HTTPError";
-		this.message = this._generateMessage(title, statusCode, statusMessage, method, url);
+		this.message = this._generateMessage(
+			title,
+			statusCode,
+			statusMessage,
+			method,
+			url,
+		);
 		this.stack = new Error(this.message).stack;
 	}
 
@@ -44,7 +50,8 @@ export class HTTPError extends Error {
 	private _generateMessage(title, statusCode, statusMessage, method, url) {
 		const titleStr = title === undefined ? "" : String(title);
 		const statusCodeStr = statusCode === undefined ? "" : String(statusCode);
-		const statusMessageStr = statusMessage === undefined ? "" : String(statusMessage);
+		const statusMessageStr =
+			statusMessage === undefined ? "" : String(statusMessage);
 		const methodStr = method === undefined ? "" : String(method);
 		const urlStr = url === undefined ? "" : String(url);
 

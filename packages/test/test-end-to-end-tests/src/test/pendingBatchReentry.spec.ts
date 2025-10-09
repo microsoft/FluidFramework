@@ -63,16 +63,23 @@ describeCompat(
 		const setupContainers = async () => {
 			const configWithFeatureGates = {
 				...testContainerConfig,
-				runtimeOptions: { enableGroupedBatching: true, flushMode: FlushMode.Immediate },
+				runtimeOptions: {
+					enableGroupedBatching: true,
+					flushMode: FlushMode.Immediate,
+				},
 			};
 			container = await provider.makeTestContainer(configWithFeatureGates);
 			dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 			sharedMap = await dataObject.getSharedObject<ISharedMap>("map");
-			sharedString = await dataObject.getSharedObject<SharedString>("sharedString");
-			sharedDirectory = await dataObject.getSharedObject<SharedDirectory>("sharedDirectory");
+			sharedString =
+				await dataObject.getSharedObject<SharedString>("sharedString");
+			sharedDirectory =
+				await dataObject.getSharedObject<SharedDirectory>("sharedDirectory");
 			sharedCell = await dataObject.getSharedObject<ISharedCell>("sharedCell");
-			sharedCounter = await dataObject.getSharedObject<SharedCounter>("sharedCounter");
-			sharedMatrix = await dataObject.getSharedObject<SharedMatrix>("sharedMatrix");
+			sharedCounter =
+				await dataObject.getSharedObject<SharedCounter>("sharedCounter");
+			sharedMatrix =
+				await dataObject.getSharedObject<SharedMatrix>("sharedMatrix");
 
 			await provider.ensureSynchronized();
 		};
@@ -166,7 +173,8 @@ describeCompat(
 			 */
 			it(`Pending batches with reentry - ${test.name}`, async function () {
 				await setupContainers();
-				const containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;
+				const containerRuntime = dataObject.context
+					.containerRuntime as ContainerRuntime;
 
 				test.initial();
 				containerRuntime.orderSequentially(() => {

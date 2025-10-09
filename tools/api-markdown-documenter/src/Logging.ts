@@ -10,7 +10,10 @@ import chalk from "chalk";
  *
  * @public
  */
-export type LoggingFunction = (message: string | Error, ...parameters: unknown[]) => void;
+export type LoggingFunction = (
+	message: string | Error,
+	...parameters: unknown[]
+) => void;
 
 /**
  * A logger for use with the system.
@@ -73,20 +76,29 @@ export const verboseConsoleLogger: Logger = {
 /**
  * Logs a warning message to the console in yellow, prefixed with "WARNING: ".
  */
-function logWarningToConsole(message: string | Error, ...parameters: unknown[]): void {
+function logWarningToConsole(
+	message: string | Error,
+	...parameters: unknown[]
+): void {
 	console.log(`${chalk.yellow(`WARNING`)}: ${message}`, ...parameters);
 }
 
 /**
  * Logs an error message to the console in red, prefixed with "ERROR: ".
  */
-function logErrorToConsole(message: string | Error, ...parameters: unknown[]): void {
+function logErrorToConsole(
+	message: string | Error,
+	...parameters: unknown[]
+): void {
 	console.log(`${chalk.red(`ERROR`)}: ${message}`, ...parameters);
 }
 
 /**
  * Logs a "success" message to the console in green, prefixed with "SUCCESS: ".
  */
-function logSuccessToConsole(message: string | Error, ...parameters: unknown[]): void {
+function logSuccessToConsole(
+	message: string | Error,
+	...parameters: unknown[]
+): void {
 	console.log(`${chalk.green(`SUCCESS`)}: ${message}`, ...parameters);
 }

@@ -182,7 +182,11 @@ export class AppendOnlySortedMap<K, V> {
 	 * @returns the value if it exists, or undefined otherwise.
 	 */
 	public get(key: K): V | undefined {
-		const index = AppendOnlySortedMap.keyIndexOf(this.elements, key, this.comparator);
+		const index = AppendOnlySortedMap.keyIndexOf(
+			this.elements,
+			key,
+			this.comparator,
+		);
 		if (index < 0) {
 			return undefined;
 		}
@@ -246,7 +250,10 @@ export class AppendOnlySortedMap<K, V> {
 		let prev: readonly [K, unknown] | undefined;
 		for (const kv of this.entries()) {
 			if (prev !== undefined) {
-				assert(this.comparator(kv[0], prev[0]) > 0, 0x752 /* Keys in map must be sorted. */);
+				assert(
+					this.comparator(kv[0], prev[0]) > 0,
+					0x752 /* Keys in map must be sorted. */,
+				);
 			}
 			prev = kv;
 		}
@@ -364,7 +371,11 @@ export class AppendOnlySortedMap<K, V> {
 		let mid = high >> 1;
 		while (low < high) {
 			const keyIndex = mid * 2;
-			const c = comparator(search, elements[keyIndex] as K, elements[keyIndex + 1] as V);
+			const c = comparator(
+				search,
+				elements[keyIndex] as K,
+				elements[keyIndex + 1] as V,
+			);
 			if (c > 0) {
 				low = mid + 1;
 			} else if (c < 0) {

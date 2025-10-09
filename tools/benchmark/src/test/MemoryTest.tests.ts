@@ -19,10 +19,7 @@ describe("`benchmarkMemory` function", () => {
 					beforeHasBeenCalled = true;
 				}),
 			run: async () => {
-				expect(beforeHasBeenCalled).to.equal(
-					true,
-					"before should be called before test body",
-				);
+				expect(beforeHasBeenCalled).to.equal(true, "before should be called before test body");
 				expect(afterHasBeenCalled).to.equal(
 					false,
 					"after should not be called during test execution",

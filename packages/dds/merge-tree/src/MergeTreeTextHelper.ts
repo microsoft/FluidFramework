@@ -19,7 +19,12 @@ interface ITextAccumulator {
  * @internal
  */
 export interface IMergeTreeTextHelper {
-	getText(perspective: Perspective, placeholder: string, start?: number, end?: number): string;
+	getText(
+		perspective: Perspective,
+		placeholder: string,
+		start?: number,
+		end?: number,
+	): string;
 }
 
 export class MergeTreeTextHelper implements IMergeTreeTextHelper {
@@ -33,7 +38,10 @@ export class MergeTreeTextHelper implements IMergeTreeTextHelper {
 	): string {
 		const range = this.getValidRange(start, end, perspective);
 
-		const accum: ITextAccumulator = { textSegment: new TextSegment(""), placeholder };
+		const accum: ITextAccumulator = {
+			textSegment: new TextSegment(""),
+			placeholder,
+		};
 
 		this.mergeTree.mapRange<ITextAccumulator>(
 			gatherText,
@@ -79,7 +87,9 @@ function gatherText(
 	} else if (placeholder && placeholder.length > 0) {
 		const placeholderText =
 			// eslint-disable-next-line @typescript-eslint/no-base-to-string
-			placeholder === "*" ? `\n${segment}` : placeholder.repeat(segment.cachedLength);
+			placeholder === "*"
+				? `\n${segment}`
+				: placeholder.repeat(segment.cachedLength);
 		textSegment.text += placeholderText;
 	}
 

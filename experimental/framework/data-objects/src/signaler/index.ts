@@ -3,4 +3,9 @@
  * Licensed under the MIT License.
  */
 
-export { IRuntimeSignaler, ISignaler, Signaler, SignalListener } from "./signaler.js";
+export {
+	IRuntimeSignaler,
+	ISignaler,
+	Signaler,
+	SignalListener,
+} from "./signaler.js";

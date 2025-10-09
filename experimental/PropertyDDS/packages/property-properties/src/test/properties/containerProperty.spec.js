@@ -35,7 +35,9 @@ describe("ContainerProperty", function () {
 			};
 
 			PropertyFactory._reregister(DefaultPrimitive);
-			const instance = PropertyFactory.create("SimpleTest:OptionalPrimitive-1.0.0");
+			const instance = PropertyFactory.create(
+				"SimpleTest:OptionalPrimitive-1.0.0",
+			);
 
 			expect(instance._serialize(false, false)).to.deep.equal(changeset);
 			expect(instance._serialize(true, false)).to.be.empty;
@@ -60,7 +62,9 @@ describe("ContainerProperty", function () {
 			};
 
 			PropertyFactory._reregister(DefaultPrimitive);
-			const instance = PropertyFactory.create("SimpleTest:OptionalPrimitive-1.0.0");
+			const instance = PropertyFactory.create(
+				"SimpleTest:OptionalPrimitive-1.0.0",
+			);
 
 			expect(instance._serialize(true, false)).to.deep.equal(changeset);
 		});
@@ -76,7 +80,9 @@ describe("ContainerProperty", function () {
 			};
 
 			PropertyFactory._reregister(DefaultPrimitive);
-			const instance = PropertyFactory.create("SimpleTest:OptionalPrimitive-1.0.0");
+			const instance = PropertyFactory.create(
+				"SimpleTest:OptionalPrimitive-1.0.0",
+			);
 
 			expect(instance._serialize(true, false)).to.be.empty;
 		});
@@ -95,7 +101,9 @@ describe("ContainerProperty", function () {
 
 			PropertyFactory._reregister(DefaultPrimitive);
 
-			const instance = PropertyFactory.create("SimpleTest:OptionalPrimitive-1.0.0");
+			const instance = PropertyFactory.create(
+				"SimpleTest:OptionalPrimitive-1.0.0",
+			);
 			expect(instance.get("num")).to.be.undefined;
 			expect(instance.get("bool")).to.be.undefined;
 			expect(instance.get("string")).to.be.undefined;
@@ -113,7 +121,9 @@ describe("ContainerProperty", function () {
 
 			PropertyFactory._reregister(DefaultPrimitive);
 
-			const instance = PropertyFactory.create("SimpleTest:OptionalPrimitive-1.0.0");
+			const instance = PropertyFactory.create(
+				"SimpleTest:OptionalPrimitive-1.0.0",
+			);
 			expect(instance.get("num").getValue()).to.equal(111);
 			expect(instance.get("bool").getValue()).to.equal(true);
 			expect(instance.get("string").getValue()).to.equal("basic");
@@ -131,7 +141,9 @@ describe("ContainerProperty", function () {
 
 			PropertyFactory._reregister(DefaultPrimitive);
 
-			const instance = PropertyFactory.create("SimpleTest:OptionalPrimitive-1.0.0");
+			const instance = PropertyFactory.create(
+				"SimpleTest:OptionalPrimitive-1.0.0",
+			);
 
 			const num = PropertyFactory.create("Uint32");
 			num.setValue(111);
@@ -163,7 +175,9 @@ describe("ContainerProperty", function () {
 
 			PropertyFactory._reregister(DefaultPrimitive);
 
-			const instance = PropertyFactory.create("SimpleTest:OptionalPrimitive-1.0.0");
+			const instance = PropertyFactory.create(
+				"SimpleTest:OptionalPrimitive-1.0.0",
+			);
 
 			instance.remove("num");
 			instance.remove("bool");
@@ -186,7 +200,9 @@ describe("ContainerProperty", function () {
 
 			PropertyFactory._reregister(DefaultPrimitive);
 
-			const instance = PropertyFactory.create("SimpleTest:OptionalPrimitive-1.0.0");
+			const instance = PropertyFactory.create(
+				"SimpleTest:OptionalPrimitive-1.0.0",
+			);
 			const prop = PropertyFactory.create("String");
 
 			expect(() => {
@@ -206,7 +222,9 @@ describe("ContainerProperty", function () {
 
 			PropertyFactory._reregister(DefaultPrimitive);
 
-			const instance = PropertyFactory.create("SimpleTest:OptionalPrimitive-1.0.0");
+			const instance = PropertyFactory.create(
+				"SimpleTest:OptionalPrimitive-1.0.0",
+			);
 			const prop = PropertyFactory.create("String");
 
 			expect(() => {
@@ -226,7 +244,9 @@ describe("ContainerProperty", function () {
 
 			PropertyFactory._reregister(DefaultPrimitive);
 
-			const instance = PropertyFactory.create("SimpleTest:OptionalPrimitive-1.0.0");
+			const instance = PropertyFactory.create(
+				"SimpleTest:OptionalPrimitive-1.0.0",
+			);
 
 			expect(() => {
 				instance.remove("num");

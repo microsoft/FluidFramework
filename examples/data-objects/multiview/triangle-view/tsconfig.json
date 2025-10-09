@@ -4,7 +4,7 @@
 		"outDir": "./lib",
 		"rootDir": "./src", // "rootDir" is a TypeScript compiler option that specifies the root directory of input files
 		"types": ["react"],
-		"exactOptionalPropertyTypes": false,
+		"exactOptionalPropertyTypes": false
 	},
-	"include": ["src/**/*"],
+	"include": ["src/**/*"]
 }

@@ -40,7 +40,10 @@ class SharedTreeEngineer extends sf.object("Engineer", {
 	maxCapacity: sf.number,
 }) {}
 
-class SharedTreeEngineerList extends sf.array("EngineerList", SharedTreeEngineer) {}
+class SharedTreeEngineerList extends sf.array(
+	"EngineerList",
+	SharedTreeEngineer,
+) {}
 
 class SharedTreeTaskGroup extends sf.object("TaskGroup", {
 	description: sf.string,
@@ -50,7 +53,10 @@ class SharedTreeTaskGroup extends sf.object("TaskGroup", {
 	engineers: SharedTreeEngineerList,
 }) {}
 
-class SharedTreeTaskGroupList extends sf.array("TaskGroupList", SharedTreeTaskGroup) {}
+class SharedTreeTaskGroupList extends sf.array(
+	"TaskGroupList",
+	SharedTreeTaskGroup,
+) {}
 
 class SharedTreeAppState extends sf.object("AppState", {
 	taskGroups: SharedTreeTaskGroupList,
@@ -106,7 +112,8 @@ const INITIAL_APP_STATE = {
 				{
 					name: "Charlie",
 					maxCapacity: 7,
-					skills: "Junior engineer capable of handling simple tasks. Versed in Node.JS",
+					skills:
+						"Junior engineer capable of handling simple tasks. Versed in Node.JS",
 				},
 			],
 		},
@@ -158,7 +165,8 @@ const INITIAL_APP_STATE = {
 				{
 					name: "Charlie",
 					maxCapacity: 7,
-					skills: "Junior engineer capable of handling simple tasks. Versed in Node.JS",
+					skills:
+						"Junior engineer capable of handling simple tasks. Versed in Node.JS",
 				},
 			],
 		},
@@ -175,7 +183,9 @@ describe.skip("Ai Planner App", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view = tree.viewWith(new TreeViewConfiguration({ schema: SharedTreeAppState }));
+		const view = tree.viewWith(
+			new TreeViewConfiguration({ schema: SharedTreeAppState }),
+		);
 		view.initialize(INITIAL_APP_STATE);
 
 		await aiCollab({
@@ -208,7 +218,9 @@ describe.skip("Ai Planner App", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view = tree.viewWith(new TreeViewConfiguration({ schema: TestAppSchema }));
+		const view = tree.viewWith(
+			new TreeViewConfiguration({ schema: TestAppSchema }),
+		);
 		view.initialize({ priority: "low" });
 
 		await aiCollab({
@@ -247,7 +259,9 @@ describe.skip("Ai Planner App", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view = tree.viewWith(new TreeViewConfiguration({ schema: TestAppSchema }));
+		const view = tree.viewWith(
+			new TreeViewConfiguration({ schema: TestAppSchema }),
+		);
 		view.initialize({
 			title: "Sample Title",
 			taskList: [],
@@ -265,7 +279,8 @@ describe.skip("Ai Planner App", () => {
 				treeNode: view.root,
 				prompt: {
 					systemRoleContext: "You are a managing json objects",
-					userAsk: "Change the `title` field of the outer object to 'Hello World'",
+					userAsk:
+						"Change the `title` field of the outer object to 'Hello World'",
 				},
 				planningStep: true,
 				finalReviewStep: true,
@@ -284,11 +299,14 @@ describe.skip("Ai Planner App", () => {
 	it.skip("BUG: OpenAI structured output fails when json schema with psuedo optional field is used in response format", async () => {
 		class TaskList extends sf.array("taskList", sf.string) {}
 
-		class TestAppSchemaWithOptionalProp extends sf.object("TestAppSchemaWithOptionalProp", {
-			nonOptionalProp: sf.string,
-			taskList: TaskList,
-			optionalProp: sf.optional(sf.string),
-		}) {}
+		class TestAppSchemaWithOptionalProp extends sf.object(
+			"TestAppSchemaWithOptionalProp",
+			{
+				nonOptionalProp: sf.string,
+				taskList: TaskList,
+				optionalProp: sf.optional(sf.string),
+			},
+		) {}
 
 		const tree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),

@@ -138,7 +138,8 @@ export const isWriter = (scopes: string[], mode: ConnectionMode): boolean =>
 	hasWriteAccess(scopes) && mode === "write";
 export const SummarizerClientType = "summarizer";
 export const isSummarizer = (clientDetails: IClientDetails): boolean =>
-	clientDetails.type === SummarizerClientType || clientDetails.capabilities.interactive === false;
+	clientDetails.type === SummarizerClientType ||
+	clientDetails.capabilities.interactive === false;
 
 export const getRoomId = (room: IRoom): string => `${room.tenantId}/${room.documentId}`;
 export const getClientSpecificRoomId = (clientId: string): string => `client#${clientId}`;

@@ -7,11 +7,17 @@ import {
 	ModelContainerRuntimeFactory,
 	getDataStoreEntryPoint,
 } from "@fluid-example/example-utils";
-import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/legacy";
+import {
+	IContainer,
+	IFluidCodeDetails,
+} from "@fluidframework/container-definitions/legacy";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
 
-import { DiceCounterInstantiationFactory, IDiceCounter } from "./diceCounter.js";
+import {
+	DiceCounterInstantiationFactory,
+	IDiceCounter,
+} from "./diceCounter.js";
 import { DiceRollerInstantiationFactory, IDiceRoller } from "./diceRoller.js";
 
 const diceRollerId = "dice-roller";
@@ -77,7 +83,10 @@ class DiceRollerAppModel implements IDiceRollerAppModel {
 			.proposeCodeDetails(proposal)
 			.then(async (accepted: boolean) => {
 				console.log(`Upgrade accepted: ${accepted}`);
-				if (!accepted && this.container.connectionState !== ConnectionState.Connected) {
+				if (
+					!accepted &&
+					this.container.connectionState !== ConnectionState.Connected
+				) {
 					// If the upgrade was rejected and we are disconnected, we should try again once we reconnect.
 					await new Promise((resolve) => {
 						this.container.once("connected", resolve);
@@ -108,29 +117,45 @@ export class DiceRollerContainerRuntimeFactory extends ModelContainerRuntimeFact
 	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
 	 */
 	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-		const diceRoller = await runtime.createDataStore(DiceRollerInstantiationFactory.type);
+		const diceRoller = await runtime.createDataStore(
+			DiceRollerInstantiationFactory.type,
+		);
 		await diceRoller.trySetAlias(diceRollerId);
-		const diceCounter = await runtime.createDataStore(DiceCounterInstantiationFactory.type);
+		const diceCounter = await runtime.createDataStore(
+			DiceCounterInstantiationFactory.type,
+		);
 		await diceCounter.trySetAlias(diceCounterId);
 	}
 
 	/**
 	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
 	 */
-	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
-		const diceRoller = await getDataStoreEntryPoint<IDiceRoller>(runtime, diceRollerId);
+	protected async createModel(
+		runtime: IContainerRuntime,
+		container: IContainer,
+	) {
+		const diceRoller = await getDataStoreEntryPoint<IDiceRoller>(
+			runtime,
+			diceRollerId,
+		);
 
 		// Note: Since at this point is unclear whether or not this is the first time the app is being loaded with the
 		// new model, we should try to get the DiceCounter object and if it doesn't exist, create it.
 		let diceCounter: IDiceCounter;
 		try {
-			diceCounter = await getDataStoreEntryPoint<IDiceCounter>(runtime, diceCounterId);
+			diceCounter = await getDataStoreEntryPoint<IDiceCounter>(
+				runtime,
+				diceCounterId,
+			);
 		} catch {
 			const diceCounterDataStore = await runtime.createDataStore(
 				DiceCounterInstantiationFactory.type,
 			);
 			await diceCounterDataStore.trySetAlias(diceCounterId);
-			diceCounter = await getDataStoreEntryPoint<IDiceCounter>(runtime, diceCounterId);
+			diceCounter = await getDataStoreEntryPoint<IDiceCounter>(
+				runtime,
+				diceCounterId,
+			);
 		}
 
 		return new DiceRollerAppModel(diceRoller, diceCounter, container);

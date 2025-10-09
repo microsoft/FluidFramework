@@ -6,7 +6,10 @@
 import { IRequest } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { IUser } from "@fluidframework/driver-definitions";
-import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions/internal";
+import {
+	IResolvedUrl,
+	IUrlResolver,
+} from "@fluidframework/driver-definitions/internal";
 
 import { Provider } from "./nconf.cjs";
 
@@ -79,7 +82,9 @@ export class RouterliciousUrlResolver implements IUrlResolver {
 		let fluidUrl =
 			"https://" +
 			`${
-				this.config ? new URL(this.config.provider.get("worker:serverUrl")).host : serverSuffix
+				this.config
+					? new URL(this.config.provider.get("worker:serverUrl")).host
+					: serverSuffix
 			}/` +
 			`${encodeURIComponent(tenantId)}/` +
 			`${encodeURIComponent(documentId)}`;

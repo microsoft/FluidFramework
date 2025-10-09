@@ -13,7 +13,11 @@ import {
 } from "@fluid-tools/benchmark";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
-import { EmptyKey, rootFieldKey, type NormalizedUpPath } from "../../core/index.js";
+import {
+	EmptyKey,
+	rootFieldKey,
+	type NormalizedUpPath,
+} from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import {
 	TreeCompressionStrategy,
@@ -223,7 +227,9 @@ describe("SharedTree benchmarks", () => {
 				title: `Wide Tree with Flex Tree: reads with ${numberOfNodes} nodes`,
 				before: () => {
 					expected = ((numberOfNodes - 1) * numberOfNodes) / 2; // Arithmetic sum of [0, numberOfNodes)
-					tree = flexTreeViewWithContent(makeWideContentWithEndValueSimple(numberOfNodes));
+					tree = flexTreeViewWithContent(
+						makeWideContentWithEndValueSimple(numberOfNodes),
+					);
 				},
 				benchmarkFn: () => {
 					const { nodesCount, sum } = readWideFlexTree(tree);
@@ -247,7 +253,9 @@ describe("SharedTree benchmarks", () => {
 						assert.equal(state.iterationsPerBatch, 1);
 
 						// Setup
-						const tree = checkoutWithContent(makeDeepStoredContent(numberOfNodes));
+						const tree = checkoutWithContent(
+							makeDeepStoredContent(numberOfNodes),
+						);
 						const path = deepPath(numberOfNodes);
 
 						// Measure
@@ -288,7 +296,9 @@ describe("SharedTree benchmarks", () => {
 						assert.equal(state.iterationsPerBatch, 1);
 
 						// Setup
-						const tree = checkoutWithContent(makeWideStoredContentWithEndValue(numberOfNodes));
+						const tree = checkoutWithContent(
+							makeWideStoredContentWithEndValue(numberOfNodes),
+						);
 
 						const rootPath: NormalizedUpPath = {
 							detachedNodeId: undefined,

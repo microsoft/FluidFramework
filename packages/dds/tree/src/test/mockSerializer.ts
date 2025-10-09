@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { IFluidHandleContext, IRequest } from "@fluidframework/core-interfaces/internal";
+import type {
+	IFluidHandleContext,
+	IRequest,
+} from "@fluidframework/core-interfaces/internal";
 import { create404Response } from "@fluidframework/runtime-utils/internal";
 import { FluidSerializer } from "@fluidframework/shared-object-base/internal";
 

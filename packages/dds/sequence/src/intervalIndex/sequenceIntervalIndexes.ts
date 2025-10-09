@@ -29,7 +29,10 @@ export namespace SequenceIntervalIndexes {
 		 * @returns an array of all intervals that overlap with the specified SegOff range (includes both ends)
 		 */
 		findOverlappingIntervalsBySegoff(
-			startSegoff: { segment: ISegment | undefined; offset: number | undefined },
+			startSegoff: {
+				segment: ISegment | undefined;
+				offset: number | undefined;
+			},
 			endSegoff: { segment: ISegment | undefined; offset: number | undefined },
 		): Iterable<SequenceInterval>;
 	}

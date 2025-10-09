@@ -28,7 +28,11 @@ describe("Shared Map with Interception", () => {
 			callback();
 		}
 
-		function interceptionCb(map: ISharedMap, key: string, value: unknown): void {
+		function interceptionCb(
+			map: ISharedMap,
+			key: string,
+			value: unknown,
+		): void {
 			map.set(attributionKey(key), userAttributes);
 		}
 
@@ -82,7 +86,12 @@ describe("Shared Map with Interception", () => {
 			const key: string = "color";
 			const value: string = "green";
 			sharedMapWithInterception.set(key, value);
-			verifyMapAttribution(sharedMapWithInterception, key, value, userAttributes);
+			verifyMapAttribution(
+				sharedMapWithInterception,
+				key,
+				value,
+				userAttributes,
+			);
 		});
 
 		it("should be able to see changes made by the wrapper from the underlying shared map", async () => {
@@ -122,7 +131,11 @@ describe("Shared Map with Interception", () => {
 			// If useWrapper above is true, this interception callback that calls a set on the wrapped object
 			// causing an infinite recursion.
 			// If useWrapper is false, it uses the passed sharedMap which does not cause recursion.
-			function recursiveInterceptionCb(map: ISharedMap, key: string, value: unknown): void {
+			function recursiveInterceptionCb(
+				map: ISharedMap,
+				key: string,
+				value: unknown,
+			): void {
 				const localMap = useWrapper ? sharedMapWithInterception : sharedMap;
 				localMap.set(attributionKey(key), userAttributes);
 			}
@@ -157,7 +170,12 @@ describe("Shared Map with Interception", () => {
 			const colorKey: string = "color";
 			const colorValue: string = "red";
 			sharedMapWithInterception.set(colorKey, colorValue);
-			verifyMapAttribution(sharedMapWithInterception, colorKey, colorValue, userAttributes);
+			verifyMapAttribution(
+				sharedMapWithInterception,
+				colorKey,
+				colorValue,
+				userAttributes,
+			);
 		});
 	});
 });

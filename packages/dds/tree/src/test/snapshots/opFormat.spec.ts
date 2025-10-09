@@ -13,7 +13,11 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshotTools.js";
-import { SchemaFactory, TreeViewConfiguration, type ITree } from "../../simple-tree/index.js";
+import {
+	SchemaFactory,
+	TreeViewConfiguration,
+	type ITree,
+} from "../../simple-tree/index.js";
 import { SharedTreeFormatVersion } from "../../shared-tree/index.js";
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
 import { configuredSharedTree } from "../../treeFactory.js";
@@ -24,7 +28,9 @@ import type { IChannel } from "@fluidframework/datastore-definitions/internal";
  * Prefer to put exhaustive aspects of the op format in more specific snapshot tests.
  */
 describe("SharedTree op format snapshots", () => {
-	function spyOnFutureMessages(runtime: MockContainerRuntime): JsonCompatibleReadOnly[] {
+	function spyOnFutureMessages(
+		runtime: MockContainerRuntime,
+	): JsonCompatibleReadOnly[] {
 		const messages: JsonCompatibleReadOnly[] = [];
 		const originalSubmit = runtime.submit.bind(runtime);
 		runtime.submit = (content, localOpMetadata) => {
@@ -49,7 +55,9 @@ describe("SharedTree op format snapshots", () => {
 			beforeEach(() => {
 				const factory = configuredSharedTree({
 					formatVersion:
-						SharedTreeFormatVersion[versionKey as keyof typeof SharedTreeFormatVersion],
+						SharedTreeFormatVersion[
+							versionKey as keyof typeof SharedTreeFormatVersion
+						],
 				}).getFactory();
 				const containerRuntimeFactory = new MockContainerRuntimeFactory();
 				const sessionId = "00000000-0000-4000-b000-000000000000" as SessionId;
@@ -57,7 +65,8 @@ describe("SharedTree op format snapshots", () => {
 					idCompressor: createIdCompressor(sessionId),
 					attachState: AttachState.Attached,
 				});
-				containerRuntime = containerRuntimeFactory.createContainerRuntime(runtime);
+				containerRuntime =
+					containerRuntimeFactory.createContainerRuntime(runtime);
 				tree = factory.create(runtime, "1");
 				tree.connect({
 					deltaConnection: runtime.createDeltaConnection(),
@@ -67,14 +76,18 @@ describe("SharedTree op format snapshots", () => {
 
 			it("schema change", () => {
 				const messages = spyOnFutureMessages(containerRuntime);
-				const view = tree.viewWith(new TreeViewConfiguration({ schema: Point }));
+				const view = tree.viewWith(
+					new TreeViewConfiguration({ schema: Point }),
+				);
 				view.initialize(new Point({ x: 0, y: 0 }));
 
 				takeJsonSnapshot(messages);
 			});
 
 			it("field change", () => {
-				const view = tree.viewWith(new TreeViewConfiguration({ schema: Point }));
+				const view = tree.viewWith(
+					new TreeViewConfiguration({ schema: Point }),
+				);
 				view.initialize(new Point({ x: 0, y: 2 }));
 
 				const messages = spyOnFutureMessages(containerRuntime);

@@ -4,13 +4,19 @@
  */
 
 import { assert, fail } from "@fluidframework/core-utils/internal";
-import type { SessionSpaceCompressedId, StableId } from "@fluidframework/id-compressor";
+import type {
+	SessionSpaceCompressedId,
+	StableId,
+} from "@fluidframework/id-compressor";
 import { assertIsStableId } from "@fluidframework/id-compressor/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { brand, extractFromOpaque } from "../../util/index.js";
 
-import type { LocalNodeIdentifier, StableNodeIdentifier } from "./nodeIdentifier.js";
+import type {
+	LocalNodeIdentifier,
+	StableNodeIdentifier,
+} from "./nodeIdentifier.js";
 import {
 	isStableNodeIdentifier,
 	type NodeIdentifierManager,
@@ -32,18 +38,28 @@ export class MockNodeIdentifierManager implements NodeIdentifierManager {
 		return this.localizeNodeIdentifier(this.generateStableNodeIdentifier());
 	}
 
-	public localizeNodeIdentifier(key: StableNodeIdentifier): LocalNodeIdentifier {
+	public localizeNodeIdentifier(
+		key: StableNodeIdentifier,
+	): LocalNodeIdentifier {
 		return (
-			this.tryLocalizeNodeIdentifier(key) ?? fail(0xb26 /* Identifier is not compressible */)
+			this.tryLocalizeNodeIdentifier(key) ??
+			fail(0xb26 /* Identifier is not compressible */)
 		);
 	}
 
-	public stabilizeNodeIdentifier(key: LocalNodeIdentifier): StableNodeIdentifier {
+	public stabilizeNodeIdentifier(
+		key: LocalNodeIdentifier,
+	): StableNodeIdentifier {
 		return brand(this.getId(extractFromOpaque(key)));
 	}
 
-	public tryLocalizeNodeIdentifier(key: string): LocalNodeIdentifier | undefined {
-		if (!isStableNodeIdentifier(key) || !key.startsWith("a110ca7e-add1-4000-8000-")) {
+	public tryLocalizeNodeIdentifier(
+		key: string,
+	): LocalNodeIdentifier | undefined {
+		if (
+			!isStableNodeIdentifier(key) ||
+			!key.startsWith("a110ca7e-add1-4000-8000-")
+		) {
 			return undefined;
 		}
 		const localNodeIdentifier = Number.parseInt(key.substring(24), 16);
@@ -53,7 +69,10 @@ export class MockNodeIdentifierManager implements NodeIdentifierManager {
 	}
 
 	public getId(offset: number): StableId {
-		assert(offset < 281_474_976_710_656, 0x6e8 /* UUID offset must be at most 16^12 */);
+		assert(
+			offset < 281_474_976_710_656,
+			0x6e8 /* UUID offset must be at most 16^12 */,
+		);
 		if (offset >= 0 && offset < this.count) {
 			return assertIsStableId(
 				`a110ca7e-add1-4000-8000-${Math.round(offset).toString(16).padStart(12, "0")}`,

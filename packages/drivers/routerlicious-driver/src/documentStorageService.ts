@@ -103,11 +103,15 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
 		);
 	}
 
-	public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
+	public async getSnapshotTree(
+		version?: IVersion,
+	): Promise<ISnapshotTree | null> {
 		const tree = await this.internalStorageService.getSnapshotTree(version);
 		if (tree !== null) {
 			this._logTailSha =
-				".logTail" in tree.trees ? tree.trees[".logTail"].blobs.logTail : undefined;
+				".logTail" in tree.trees
+					? tree.trees[".logTail"].blobs.logTail
+					: undefined;
 		}
 		return tree;
 	}

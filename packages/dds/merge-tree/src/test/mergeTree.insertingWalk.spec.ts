@@ -11,7 +11,11 @@ import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
 import { UniversalSequenceNumber } from "../constants.js";
 import { MergeTree } from "../mergeTree.js";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
-import { type MergeBlock, MaxNodesInBlock, segmentIsRemoved } from "../mergeTreeNodes.js";
+import {
+	type MergeBlock,
+	MaxNodesInBlock,
+	segmentIsRemoved,
+} from "../mergeTreeNodes.js";
 import { TextSegment } from "../textSegment.js";
 
 import { makeRemoteClient, nodeOrdinalsHaveIntegrity } from "./testUtils.js";
@@ -151,7 +155,10 @@ const treeFactories: ITestTreeFactory[] = [
 				{ clientId: localClientId, seq: UniversalSequenceNumber },
 				undefined as never,
 			);
-			initialText = initialText.slice(0, Math.max(0, initialText.length - remove));
+			initialText = initialText.slice(
+				0,
+				Math.max(0, initialText.length - remove),
+			);
 
 			mergeTree.startCollaboration(
 				localClientId,
@@ -314,7 +321,17 @@ describe("MergeTree.insertingWalk", () => {
 			return true;
 		});
 
-		assert.deepStrictEqual(segments, ["G", "F", "E", "(D)", "(C)", "(B)", "(A)", "x", "0"]);
+		assert.deepStrictEqual(segments, [
+			"G",
+			"F",
+			"E",
+			"(D)",
+			"(C)",
+			"(B)",
+			"(A)",
+			"x",
+			"0",
+		]);
 	});
 
 	// Inserting walk previously unnecessarily called `blockUpdate` for blocks even when no segment changes happened (e.g.
@@ -375,6 +392,10 @@ describe("MergeTree.insertingWalk", () => {
 		);
 
 		// The log ignores presence of segments. The important thing is that we only have one entry per block here.
-		assert.deepEqual(blockUpdateCallLog, ["Othell", "o world", "Othello world"]);
+		assert.deepEqual(blockUpdateCallLog, [
+			"Othell",
+			"o world",
+			"Othello world",
+		]);
 	});
 });

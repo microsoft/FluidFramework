@@ -19,13 +19,18 @@ describe("fileLogger", () => {
 	const folderRoot = path.join(_dirname, "../../src/test");
 	const outputFolder = path.join(folderRoot, "outputFolder");
 	const telemetryFile = path.join(outputFolder, "telemetryFile.txt");
-	const expectedOutputFolder = path.join(folderRoot, "telemetryExpectedOutputs");
+	const expectedOutputFolder = path.join(
+		folderRoot,
+		"telemetryExpectedOutputs",
+	);
 
 	function verifyOutput(expectedOutputFilePath: string) {
 		const actualOutput = `${fs
 			.readFileSync(telemetryFile, { encoding: "utf-8" })
 			.replace(/\r\n/g, "\n")}\n`;
-		const expectedOutput = fs.readFileSync(expectedOutputFilePath, { encoding: "utf-8" });
+		const expectedOutput = fs.readFileSync(expectedOutputFilePath, {
+			encoding: "utf-8",
+		});
 		assert.strictEqual(
 			actualOutput,
 			expectedOutput,
@@ -34,10 +39,26 @@ describe("fileLogger", () => {
 	}
 
 	function sendTelemetry(logger: IFileLogger) {
-		logger.send({ eventName: "event1", category: "category1", prop1: "value1" });
-		logger.send({ eventName: "event2", category: "category1", prop2: "value2" });
-		logger.send({ eventName: "event3", category: "category2", prop1: "value3" });
-		logger.send({ eventName: "event4", category: "category2", prop2: "value4" });
+		logger.send({
+			eventName: "event1",
+			category: "category1",
+			prop1: "value1",
+		});
+		logger.send({
+			eventName: "event2",
+			category: "category1",
+			prop2: "value2",
+		});
+		logger.send({
+			eventName: "event3",
+			category: "category2",
+			prop1: "value3",
+		});
+		logger.send({
+			eventName: "event4",
+			category: "category2",
+			prop2: "value4",
+		});
 	}
 
 	afterEach(() => {
@@ -69,7 +90,9 @@ describe("fileLogger", () => {
 			sendTelemetry(logger);
 
 			await logger.close();
-			const result = JSON.parse(fs.readFileSync(telemetryFile, { encoding: "utf-8" }));
+			const result = JSON.parse(
+				fs.readFileSync(telemetryFile, { encoding: "utf-8" }),
+			);
 			assert.strictEqual(result.length, 4, "Expected an array of length 4");
 		});
 	});

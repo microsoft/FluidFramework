@@ -33,7 +33,9 @@ describe("OpCompressor", () => {
 		);
 		return messagesToBatch(messages);
 	};
-	const messagesToBatch = (messages: OutboundBatchMessage[]): OutboundBatch => ({
+	const messagesToBatch = (
+		messages: OutboundBatchMessage[],
+	): OutboundBatch => ({
 		messages,
 		contentSizeInBytes: messages
 			.map((message) => JSON.stringify(message).length)
@@ -46,7 +48,8 @@ describe("OpCompressor", () => {
 		contents,
 		referenceSequenceNumber: 0,
 	});
-	const generateStringOfSize = (sizeInBytes: number): string => "0".repeat(sizeInBytes);
+	const generateStringOfSize = (sizeInBytes: number): string =>
+		"0".repeat(sizeInBytes);
 	const toMB = (bytes: number) => (bytes / (1024 * 1024)).toFixed(2);
 
 	describe("Compressing batches", () => {
@@ -60,7 +63,10 @@ describe("OpCompressor", () => {
 				batch.contentSizeInBytes,
 			)} MB`, () => {
 				const compressedBatch = compressor.compressBatch(batch);
-				assert.strictEqual(compressedBatch.messages.length, batch.messages.length);
+				assert.strictEqual(
+					compressedBatch.messages.length,
+					batch.messages.length,
+				);
 				assert.strictEqual(compressedBatch.messages[0].compression, "lz4");
 				assert.strictEqual(compressedBatch.messages[0].metadata?.flag, true);
 			}).timeout(3000);

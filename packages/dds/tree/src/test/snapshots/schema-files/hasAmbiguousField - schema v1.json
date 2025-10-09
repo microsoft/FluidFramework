@@ -1,28 +1,23 @@
 {
-  "version": 1,
-  "nodes": {
-    "test.hasAmbiguousField": {
-      "object": {
-        "field": {
-          "kind": "Value",
-          "types": [
-            "test.minimal",
-            "test.minimal2"
-          ]
-        }
-      }
-    },
-    "test.minimal": {
-      "object": {}
-    },
-    "test.minimal2": {
-      "object": {}
-    }
-  },
-  "root": {
-    "kind": "Value",
-    "types": [
-      "test.hasAmbiguousField"
-    ]
-  }
+	"version": 1,
+	"nodes": {
+		"test.hasAmbiguousField": {
+			"object": {
+				"field": {
+					"kind": "Value",
+					"types": ["test.minimal", "test.minimal2"]
+				}
+			}
+		},
+		"test.minimal": {
+			"object": {}
+		},
+		"test.minimal2": {
+			"object": {}
+		}
+	},
+	"root": {
+		"kind": "Value",
+		"types": ["test.hasAmbiguousField"]
+	}
 }

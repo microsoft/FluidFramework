@@ -171,7 +171,9 @@ export abstract class FsPromisesBase implements IFileSystemPromises {
 		}
 		return this.chmodCore(...args);
 	}
-	public async rm(...args: Parameters<typeof fsPromises.rm>): ReturnType<typeof fsPromises.rm> {
+	public async rm(
+		...args: Parameters<typeof fsPromises.rm>
+	): ReturnType<typeof fsPromises.rm> {
 		if (args[0] === undefined) {
 			throw new FilesystemError(SystemErrors.EINVAL, "File path is required.");
 		}

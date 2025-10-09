@@ -23,11 +23,14 @@ import type { ExampleDriver } from "./interfaces.js";
 let localServer: ILocalDeltaConnectionServer | undefined;
 
 export const createLocalDriver = async (): Promise<ExampleDriver> => {
-	localServer ??= LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory());
+	localServer ??= LocalDeltaConnectionServer.create(
+		new LocalSessionStorageDbFactory(),
+	);
 	return {
 		urlResolver: new LocalResolver(),
 		documentServiceFactory: new LocalDocumentServiceFactory(localServer),
-		createCreateNewRequest: (id: string) => createLocalResolverCreateNewRequest(id),
+		createCreateNewRequest: (id: string) =>
+			createLocalResolverCreateNewRequest(id),
 		createLoadExistingRequest: async (id: string) => {
 			return { url: `${window.location.origin}/${id}` };
 		},

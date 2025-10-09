@@ -130,7 +130,10 @@ export const Change = {
 	 * That register must be full in the input context of the changeset.
 	 * @param change - A change to apply to a child node.
 	 */
-	childAt: (location: RegisterId | ChangesetLocalId, change: NodeId): OptionalChangeset => ({
+	childAt: (
+		location: RegisterId | ChangesetLocalId,
+		change: NodeId,
+	): OptionalChangeset => ({
 		moves: [],
 		childChanges: [[asRegister(location), change]],
 	}),
@@ -145,7 +148,9 @@ export const Change = {
 	 * @param changes - The change to apply as part of the changeset. Interpreted as applying to the same input context.
 	 * @returns A single changeset that applies all of the given changes.
 	 */
-	atOnce: (...changes: (ProtoChange | OptionalChangeset)[]): OptionalChangeset => {
+	atOnce: (
+		...changes: (ProtoChange | OptionalChangeset)[]
+	): OptionalChangeset => {
 		const moves: Move[] = [];
 		const childChanges: ChildChange[] = [];
 		let replace: Mutable<Replace> | undefined;
@@ -207,8 +212,14 @@ export function assertTaggedEqual(
 
 			// Detach IDs are only relevant if the field was not empty, so we tolerate compose
 			// assigning them arbitrarily in this case.
-			aCopy.change.valueReplace = { ...aCopy.change.valueReplace, dst: dummyDetachId };
-			bCopy.change.valueReplace = { ...bCopy.change.valueReplace, dst: dummyDetachId };
+			aCopy.change.valueReplace = {
+				...aCopy.change.valueReplace,
+				dst: dummyDetachId,
+			};
+			bCopy.change.valueReplace = {
+				...bCopy.change.valueReplace,
+				dst: dummyDetachId,
+			};
 		}
 	}
 
@@ -228,7 +239,10 @@ export function assertEqual(
 	assertTaggedEqual(makeAnonChange(a), makeAnonChange(b));
 }
 
-export function taggedRegister(id: RegisterId, revision: RevisionTag | undefined): RegisterId {
+export function taggedRegister(
+	id: RegisterId,
+	revision: RevisionTag | undefined,
+): RegisterId {
 	if (id === "self") {
 		return id;
 	}
@@ -236,7 +250,10 @@ export function taggedRegister(id: RegisterId, revision: RevisionTag | undefined
 	return taggedAtomId(id, revision);
 }
 
-function getTouchedRegisters({ change, revision }: TaggedChange<OptionalChangeset>): {
+function getTouchedRegisters({
+	change,
+	revision,
+}: TaggedChange<OptionalChangeset>): {
 	src: RegisterMap<true>;
 	dst: RegisterMap<true>;
 } {
@@ -326,5 +343,9 @@ export function inlineRevision(
 	change: OptionalChangeset,
 	revision: RevisionTag,
 ): OptionalChangeset {
-	return optionalChangeRebaser.replaceRevisions(change, new Set([undefined]), revision);
+	return optionalChangeRebaser.replaceRevisions(
+		change,
+		new Set([undefined]),
+		revision,
+	);
 }

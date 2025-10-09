@@ -45,7 +45,10 @@ describe("useObservation", () => {
 					 * @remarks When in StrictMode, React may double render, so that case is not checked for an exact match.
 					 */
 					// eslint-disable-next-line no-inner-declarations
-					function checkRenderLog(log: string[], expected: readonly string[]): void {
+					function checkRenderLog(
+						log: string[],
+						expected: readonly string[],
+					): void {
 						if (reactStrictMode) {
 							assert.deepEqual(new Set(log), new Set(expected));
 						} else {
@@ -105,7 +108,8 @@ describe("useObservation", () => {
 
 							checkRenderLog(log, [
 								"render",
-								...(reactStrictMode && useObservationHook !== useObservationWithEffects
+								...(reactStrictMode &&
+								useObservationHook !== useObservationWithEffects
 									? ["unsubscribe"]
 									: []),
 								"useObservation",

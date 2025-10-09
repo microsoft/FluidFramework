@@ -86,7 +86,10 @@ function readOpsSection(node: NodeTypes): ISequencedDocumentMessage[] {
 	assertNodeCoreInstance(node, "Deltas should be of type NodeCore");
 	const ops: ISequencedDocumentMessage[] = [];
 	const records = getNodeProps(node);
-	assertNumberInstance(records.firstSequenceNumber, "Seq number should be a number");
+	assertNumberInstance(
+		records.firstSequenceNumber,
+		"Seq number should be a number",
+	);
 	assertNodeCoreInstance(records.deltas, "Deltas should be a Node");
 	for (let i = 0; i < records.deltas.length; ++i) {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
@@ -96,7 +99,8 @@ function readOpsSection(node: NodeTypes): ISequencedDocumentMessage[] {
 	// when there are no ops. So just make the code resilient to that bug. Service has also
 	// fixed that bug.
 	assert(
-		ops.length === 0 || records.firstSequenceNumber.valueOf() === ops[0].sequenceNumber,
+		ops.length === 0 ||
+			records.firstSequenceNumber.valueOf() === ops[0].sequenceNumber,
 		0x280 /* "Validate first op seq number" */,
 	);
 	return ops;
@@ -143,7 +147,8 @@ function readTreeSection(node: NodeCore): {
 						const result = readTreeSection(treeNode.getNode(3));
 						trees[treeNode.getString(1)] = result.snapshotTree;
 						slowTreeStructureCount += result.slowTreeStructureCount;
-						treeStructureCountWithGroupId += result.treeStructureCountWithGroupId;
+						treeStructureCountWithGroupId +=
+							result.treeStructureCountWithGroupId;
 						continue;
 					}
 					// "name": <node name>
@@ -176,8 +181,12 @@ function readTreeSection(node: NodeCore): {
 						const result = readTreeSection(treeNode.getNode(5));
 						trees[treeNode.getString(1)] = result.snapshotTree;
 						slowTreeStructureCount += result.slowTreeStructureCount;
-						treeStructureCountWithGroupId += result.treeStructureCountWithGroupId;
-						assert(treeNode.getBool(3), 0x3db /* Unreferenced if present should be true */);
+						treeStructureCountWithGroupId +=
+							result.treeStructureCountWithGroupId;
+						assert(
+							treeNode.getBool(3),
+							0x3db /* Unreferenced if present should be true */,
+						);
 						snapshotTree.unreferenced = true;
 						continue;
 					}
@@ -196,8 +205,14 @@ function readTreeSection(node: NodeCore): {
 		const records = getNodeProps(treeNode);
 
 		if (records.unreferenced !== undefined) {
-			assertBoolInstance(records.unreferenced, "Unreferenced flag should be bool");
-			assert(records.unreferenced, 0x281 /* "Unreferenced if present should be true" */);
+			assertBoolInstance(
+				records.unreferenced,
+				"Unreferenced flag should be bool",
+			);
+			assert(
+				records.unreferenced,
+				0x281 /* "Unreferenced if present should be true" */,
+			);
 			snapshotTree.unreferenced = true;
 		}
 
@@ -209,11 +224,17 @@ function readTreeSection(node: NodeCore): {
 			);
 			// eslint-disable-next-line unicorn/no-negated-condition
 		} else if (records.children !== undefined) {
-			assertNodeCoreInstance(records.children, "Trees should be of type NodeCore");
+			assertNodeCoreInstance(
+				records.children,
+				"Trees should be of type NodeCore",
+			);
 			const result = readTreeSection(records.children);
 			trees[path] = result.snapshotTree;
 			if (records.groupId !== undefined) {
-				const groupId = getStringInstance(records.groupId, "groupId should be a string");
+				const groupId = getStringInstance(
+					records.groupId,
+					"groupId should be a string",
+				);
 				trees[path].groupId = groupId;
 				treeStructureCountWithGroupId++;
 			}
@@ -223,7 +244,11 @@ function readTreeSection(node: NodeCore): {
 			trees[path] = { blobs: {}, trees: {} };
 		}
 	}
-	return { snapshotTree, slowTreeStructureCount, treeStructureCountWithGroupId };
+	return {
+		snapshotTree,
+		slowTreeStructureCount,
+		treeStructureCountWithGroupId,
+	};
 }
 
 /**
@@ -239,11 +264,23 @@ function readSnapshotSection(node: NodeTypes): {
 	assertNodeCoreInstance(node, "Snapshot should be of type NodeCore");
 	const records = getNodeProps(node);
 
-	assertNodeCoreInstance(records.treeNodes, "TreeNodes should be of type NodeCore");
-	assertNumberInstance(records.sequenceNumber, "sequenceNumber should be of type number");
-	const { snapshotTree, slowTreeStructureCount, treeStructureCountWithGroupId } =
-		readTreeSection(records.treeNodes);
-	snapshotTree.id = getStringInstance(records.id, "snapshotId should be string");
+	assertNodeCoreInstance(
+		records.treeNodes,
+		"TreeNodes should be of type NodeCore",
+	);
+	assertNumberInstance(
+		records.sequenceNumber,
+		"sequenceNumber should be of type number",
+	);
+	const {
+		snapshotTree,
+		slowTreeStructureCount,
+		treeStructureCountWithGroupId,
+	} = readTreeSection(records.treeNodes);
+	snapshotTree.id = getStringInstance(
+		records.id,
+		"snapshotId should be string",
+	);
 	const sequenceNumber = records.sequenceNumber.valueOf();
 	return {
 		sequenceNumber,
@@ -263,7 +300,10 @@ export function parseCompactSnapshotResponse(
 	buffer: Uint8Array,
 	logger: ITelemetryLoggerExt,
 ): ISnapshotContentsWithProps {
-	const { builder, telemetryProps } = TreeBuilder.load(new ReadBuffer(buffer), logger);
+	const { builder, telemetryProps } = TreeBuilder.load(
+		new ReadBuffer(buffer),
+		logger,
+	);
 	assert(builder.length === 1, 0x219 /* "1 root should be there" */);
 	const root = builder.getNode(0);
 
@@ -291,7 +331,9 @@ export function parseCompactSnapshotResponse(
 	const [snapshot, durationSnapshotTree] = measure(() =>
 		readSnapshotSection(records.snapshot),
 	);
-	const [blobContents, durationBlobs] = measure(() => readBlobSection(records.blobs));
+	const [blobContents, durationBlobs] = measure(() =>
+		readBlobSection(records.blobs),
+	);
 
 	return {
 		...snapshot,

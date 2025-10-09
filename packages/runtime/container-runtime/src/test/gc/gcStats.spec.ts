@@ -33,7 +33,14 @@ import { pkgVersion } from "../../packageVersion.js";
 
 describe("Garbage Collection Stats", () => {
 	// Nodes in the reference graph.
-	const nodes: string[] = ["/node1", "/node2", "/node3", "/node4", "/node5", "/node6"];
+	const nodes: string[] = [
+		"/node1",
+		"/node2",
+		"/node3",
+		"/node4",
+		"/node5",
+		"/node6",
+	];
 	const testPkgPath = ["testPkg"];
 
 	let mockLogger: MockLogger;
@@ -179,7 +186,11 @@ describe("Garbage Collection Stats", () => {
 		if (lastGCMessage === undefined) {
 			return;
 		}
-		garbageCollector.processMessages([lastGCMessage.contents], Date.now(), true /* local */);
+		garbageCollector.processMessages(
+			[lastGCMessage.contents],
+			Date.now(),
+			true /* local */,
+		);
 	}
 
 	describe("Mark phase stats", () => {

@@ -108,8 +108,14 @@ describe("prepareForInsertion", () => {
 		 * Creates a schema and policy and indicates stored schema validation should be performed.
 		 */
 		function createSchemaAndPolicy(
-			nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> = new Map(),
-		): [SchemaAndPolicy, Pick<FlexTreeHydratedContext, "checkout" | "nodeKeyManager">] {
+			nodeSchema: Map<
+				TreeNodeSchemaIdentifier,
+				TreeNodeStoredSchema
+			> = new Map(),
+		): [
+			SchemaAndPolicy,
+			Pick<FlexTreeHydratedContext, "checkout" | "nodeKeyManager">,
+		] {
 			const schemaAndPolicy = {
 				schema: {
 					nodeSchema,
@@ -138,7 +144,9 @@ describe("prepareForInsertion", () => {
 			] as const;
 		}
 
-		const outOfSchemaExpectedError = validateUsageError(/Tree does not conform to schema/);
+		const outOfSchemaExpectedError = validateUsageError(
+			/Tree does not conform to schema/,
+		);
 
 		const schemaFactory = new SchemaFactory("test");
 
@@ -179,7 +187,9 @@ describe("prepareForInsertion", () => {
 						content,
 						schemaFactory.string,
 						...schemaValidationPolicy,
-						createFieldSchema(FieldKinds.required, [brand(stringSchema.identifier)]),
+						createFieldSchema(FieldKinds.required, [
+							brand(stringSchema.identifier),
+						]),
 					);
 				});
 
@@ -192,7 +202,9 @@ describe("prepareForInsertion", () => {
 								content,
 								[schemaFactory.string],
 								...schemaValidationPolicy,
-								createFieldSchema(FieldKinds.required, [brand(stringSchema.identifier)]),
+								createFieldSchema(FieldKinds.required, [
+									brand(stringSchema.identifier),
+								]),
 							),
 						validateUsageError(/LeafNode_InvalidValue/),
 					);
@@ -221,7 +233,9 @@ describe("prepareForInsertion", () => {
 							[
 								brand(myObjectSchema.identifier),
 								new ObjectNodeStoredSchema(
-									new Map<FieldKey, TreeFieldStoredSchema>([[brand("foo"), fieldSchema]]),
+									new Map<FieldKey, TreeFieldStoredSchema>([
+										[brand("foo"), fieldSchema],
+									]),
 								),
 							],
 						]),
@@ -241,7 +255,8 @@ describe("prepareForInsertion", () => {
 				});
 
 				it("Failure", () => {
-					const schemaValidationPolicy = createSchemaAndPolicyForObjectNode(true);
+					const schemaValidationPolicy =
+						createSchemaAndPolicyForObjectNode(true);
 					assert.throws(
 						() =>
 							prepareForInsertionContextless(
@@ -264,7 +279,11 @@ describe("prepareForInsertion", () => {
 					// collaborate with other clients that have newer schema without erasing auxiliary data), they
 					// can use import/export tree APIs as noted in `ObjectSchemaOptions.allowUnknownOptionalFields`.
 					prepareForInsertionContextless(
-						{ foo: "Hello world", notInSchemaKey: 5, anotherNotInSchemaKey: false },
+						{
+							foo: "Hello world",
+							notInSchemaKey: 5,
+							anotherNotInSchemaKey: false,
+						},
 						[myObjectSchema, schemaFactory.string],
 						...schemaValidationPolicy,
 						convertField(
@@ -292,7 +311,10 @@ describe("prepareForInsertion", () => {
 									? new LeafNodeStoredSchema(ValueSchema.Number)
 									: new LeafNodeStoredSchema(ValueSchema.String),
 							],
-							[brand(myMapSchema.identifier), new MapNodeStoredSchema(fieldSchema)],
+							[
+								brand(myMapSchema.identifier),
+								new MapNodeStoredSchema(fieldSchema),
+							],
 						]),
 					);
 				}
@@ -332,7 +354,9 @@ describe("prepareForInsertion", () => {
 				const fieldSchema = getFieldSchema(FieldKinds.required, [
 					brand(schemaFactory.string.identifier),
 				]);
-				const myArrayNodeSchema = schemaFactory.array("myArrayNode", [schemaFactory.string]);
+				const myArrayNodeSchema = schemaFactory.array("myArrayNode", [
+					schemaFactory.string,
+				]);
 
 				function createSchemaAndPolicyForMapNode(invalid: boolean = false) {
 					return createSchemaAndPolicy(
@@ -344,7 +368,10 @@ describe("prepareForInsertion", () => {
 									? new LeafNodeStoredSchema(ValueSchema.Number)
 									: new LeafNodeStoredSchema(ValueSchema.String),
 							],
-							[brand(myArrayNodeSchema.identifier), new MapNodeStoredSchema(fieldSchema)],
+							[
+								brand(myArrayNodeSchema.identifier),
+								new MapNodeStoredSchema(fieldSchema),
+							],
 						]),
 					);
 				}
@@ -370,7 +397,10 @@ describe("prepareForInsertion", () => {
 								[myArrayNodeSchema, schemaFactory.string],
 								...schemaValidationPolicy,
 								convertField(
-									normalizeFieldSchema([myArrayNodeSchema, schemaFactory.string]),
+									normalizeFieldSchema([
+										myArrayNodeSchema,
+										schemaFactory.string,
+									]),
 									restrictiveStoredSchemaGenerationOptions,
 								),
 							),

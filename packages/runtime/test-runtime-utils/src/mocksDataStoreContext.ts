@@ -10,7 +10,10 @@ import {
 	IFluidHandleContext,
 	type IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
-import { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
+import {
+	IClientDetails,
+	IQuorumClients,
+} from "@fluidframework/driver-definitions";
 import {
 	IDocumentMessage,
 	ISnapshotTree,
@@ -50,8 +53,10 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	public connected: boolean = true;
 	public readonly: boolean = false;
 	public baseSnapshot: ISnapshotTree | undefined;
-	public deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> =
-		new MockDeltaManager(() => this.clientId);
+	public deltaManager: IDeltaManager<
+		ISequencedDocumentMessage,
+		IDocumentMessage
+	> = new MockDeltaManager(() => this.clientId);
 
 	public containerRuntime: IContainerRuntimeBase = undefined as any;
 	public storage: IRuntimeStorageService = undefined as any;
@@ -80,7 +85,8 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	/**
 	 * {@inheritdoc @fluidframework/runtime-definitions#IFluidDataStoreContext.minVersionForCollab}
 	 */
-	public minVersionForCollab: MinimumVersionForCollab = defaultMinVersionForCollab;
+	public minVersionForCollab: MinimumVersionForCollab =
+		defaultMinVersionForCollab;
 
 	constructor(
 		public readonly id: string = uuid(),
@@ -119,7 +125,11 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 		return undefined as any as IAudience;
 	}
 
-	public submitMessage(type: string, content: any, localOpMetadata: unknown): void {
+	public submitMessage(
+		type: string,
+		content: any,
+		localOpMetadata: unknown,
+	): void {
 		// No-op for mock context
 	}
 
@@ -135,7 +145,9 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 		throw new Error("Method not implemented.");
 	}
 
-	public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {
+	public async getAbsoluteUrl(
+		relativeUrl: string,
+	): Promise<string | undefined> {
 		throw new Error("Method not implemented.");
 	}
 
@@ -160,7 +172,11 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 		throw new Error("Method not implemented.");
 	}
 
-	public addedGCOutboundRoute(fromPath: string, toPath: string, messageTimestampMs?: number) {
+	public addedGCOutboundRoute(
+		fromPath: string,
+		toPath: string,
+		messageTimestampMs?: number,
+	) {
 		throw new Error("Method not implemented.");
 	}
 }

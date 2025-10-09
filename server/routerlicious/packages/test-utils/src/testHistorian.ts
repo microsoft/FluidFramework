@@ -123,7 +123,7 @@ export class TestHistorian implements IHistorian {
 			encoding: "base64",
 			sha: blob._id,
 			size:
-				blob.content !== undefined ? blob.content.length : blob.value?.content.length ?? -1,
+				blob.content !== undefined ? blob.content.length : (blob.value?.content.length ?? -1),
 			url: "",
 		};
 	}
@@ -169,7 +169,7 @@ export class TestHistorian implements IHistorian {
 						sha: commit.sha,
 						url: commit.url,
 					},
-			  ]
+				]
 			: [];
 	}
 
@@ -288,7 +288,11 @@ export class TestHistorian implements IHistorian {
 		return this.getTreeHelper(sha, recursive);
 	}
 
-	public async getTreeHelper(sha: string, recursive: boolean, path: string = ""): Promise<ITree> {
+	public async getTreeHelper(
+		sha: string,
+		recursive: boolean,
+		path: string = "",
+	): Promise<ITree> {
 		const tree = await this.trees.findOne({ _id: sha });
 		if (!tree) {
 			throw new NetworkError(404, "Tree not found");

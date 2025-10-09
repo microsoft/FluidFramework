@@ -23,10 +23,7 @@ describe("Routerlicious", () => {
 			let testCheckpointService: testUtils.TestNotImplementedCheckpointService;
 			let testContext: testUtils.TestContext;
 
-			function createCheckpoint(
-				logOffset: number,
-				sequenceNumber: number,
-			): ICheckpointParams {
+			function createCheckpoint(logOffset: number, sequenceNumber: number): ICheckpointParams {
 				const queuedMessage = {
 					offset: logOffset,
 					partition: 1,

@@ -32,7 +32,9 @@ import { RuntimeAttributorFactory } from "./runtimeAttributorDataStoreFactory.js
 export async function getRuntimeAttributor(
 	runtime: IContainerRuntimeBase,
 ): Promise<IRuntimeAttributor | undefined> {
-	const entryPoint = await runtime.getAliasedDataStoreEntryPoint(attributorDataStoreAlias);
+	const entryPoint = await runtime.getAliasedDataStoreEntryPoint(
+		attributorDataStoreAlias,
+	);
 	const runtimeAttributor = (await entryPoint?.get()) as
 		| FluidObject<IProvideRuntimeAttributor>
 		| undefined;
@@ -58,7 +60,9 @@ export const mixinAttributor = (
 			runtimeOptions?: IContainerRuntimeOptions;
 			containerScope?: FluidObject;
 			containerRuntimeCtor?: typeof ContainerRuntime;
-			provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
+			provideEntryPoint: (
+				containerRuntime: IContainerRuntime,
+			) => Promise<FluidObject>;
 		}): Promise<ContainerRuntime> {
 			const {
 				context,
@@ -76,7 +80,8 @@ export const mixinAttributor = (
 				...registryEntries,
 				[RuntimeAttributorFactory.type, Promise.resolve(factory)],
 			];
-			const shouldTrackAttribution = mc.config.getBoolean(enableOnNewFileKey) ?? false;
+			const shouldTrackAttribution =
+				mc.config.getBoolean(enableOnNewFileKey) ?? false;
 			if (shouldTrackAttribution) {
 				const { options } = context;
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -100,14 +105,20 @@ export const mixinAttributor = (
 				if (existing) {
 					runtimeAttributor = await getRuntimeAttributor(runtime);
 				} else {
-					const datastore = await runtime.createDataStore(RuntimeAttributorFactory.type);
+					const datastore = await runtime.createDataStore(
+						RuntimeAttributorFactory.type,
+					);
 					const result = await datastore.trySetAlias(attributorDataStoreAlias);
 					assert(
 						result === "Success",
 						0xa1b /* Failed to set alias for attributor data store */,
 					);
-					runtimeAttributor = (await datastore.entryPoint.get()) as IRuntimeAttributor;
-					assert(runtimeAttributor !== undefined, 0xa1c /* Attributor should be defined */);
+					runtimeAttributor =
+						(await datastore.entryPoint.get()) as IRuntimeAttributor;
+					assert(
+						runtimeAttributor !== undefined,
+						0xa1c /* Attributor should be defined */,
+					);
 				}
 			}
 

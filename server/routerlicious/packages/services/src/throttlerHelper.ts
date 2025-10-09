@@ -79,7 +79,12 @@ export class ThrottlerHelper implements IThrottlerHelper {
 			throttlingMetric.retryAfterInMs = 0;
 		}
 
-		await this.setThrottlingMetricAndUsageData(id, throttlingMetric, usageStorageId, usageData);
+		await this.setThrottlingMetricAndUsageData(
+			id,
+			throttlingMetric,
+			usageStorageId,
+			usageData,
+		);
 
 		return this.getThrottlerResponseFromThrottlingMetrics(throttlingMetric);
 	}
@@ -104,7 +109,7 @@ export class ThrottlerHelper implements IThrottlerHelper {
 					throttlingMetric,
 					usageStorageId,
 					usageData,
-			  )
+				)
 			: this.throttleAndUsageStorageManager.setThrottlingMetric(id, throttlingMetric));
 	}
 

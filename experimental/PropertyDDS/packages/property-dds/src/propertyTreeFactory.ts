@@ -11,7 +11,10 @@ import {
 } from "@fluidframework/datastore-definitions/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
-import { SharedPropertyTree, SharedPropertyTreeOptions } from "./propertyTree.js";
+import {
+	SharedPropertyTree,
+	SharedPropertyTreeOptions,
+} from "./propertyTree.js";
 
 /**
  * The factory for SharedPropertyTree.
@@ -21,7 +24,9 @@ import { SharedPropertyTree, SharedPropertyTreeOptions } from "./propertyTree.js
  * For now its being kept exported for compatibility, which is helpful since its actual users are not internal despite how it's tagged.
  * @internal
  */
-export class PropertyTreeFactory implements IChannelFactory<SharedPropertyTree> {
+export class PropertyTreeFactory
+	implements IChannelFactory<SharedPropertyTree>
+{
 	public static readonly Type = "PropertyTree:01EP5J4Y6C284JR6ATVPPHRJ4E";
 
 	public static readonly Attributes: IChannelAttributes = {
@@ -82,4 +87,5 @@ export class PropertyTreeFactory implements IChannelFactory<SharedPropertyTree> 
  * TODO: as PropertyDDS is published for use outside the Fluid Framework repo, it should not be `@internal`.
  * @internal
  */
-export const SharedPropertyTreeKind = createSharedObjectKind(PropertyTreeFactory);
+export const SharedPropertyTreeKind =
+	createSharedObjectKind(PropertyTreeFactory);

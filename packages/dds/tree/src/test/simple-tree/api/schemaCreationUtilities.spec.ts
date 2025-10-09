@@ -72,13 +72,19 @@ describe("schemaCreationUtilities", () => {
 		// Schema nodes have a strongly typed `.value` property.
 		const nameFromNode: "Fun" | "Cool" = nodeFromSchema.value;
 
-		class Parent extends schemaFactory.object("Parent", { mode: Mode.schema }) {}
+		class Parent extends schemaFactory.object("Parent", {
+			mode: Mode.schema,
+		}) {}
 	});
 
 	it("enumFromStrings - construction tests", () => {
 		const schemaFactory = new SchemaFactoryBeta("com.myApp");
 
-		const ModeNodes = enumFromStrings(schemaFactory.scopedFactory("Mode"), ["A", "B", "C"]);
+		const ModeNodes = enumFromStrings(schemaFactory.scopedFactory("Mode"), [
+			"A",
+			"B",
+			"C",
+		]);
 		type ModeNodes = TreeNodeFromImplicitAllowedTypes<typeof ModeNodes.schema>;
 
 		type I0 = NodeFromSchema<(typeof ModeNodes.schema)[0]>;
@@ -157,7 +163,10 @@ describe("schemaCreationUtilities", () => {
 
 		const fromEnumValue = ModeNodes(Mode.a);
 		type _check1 = requireTrue<
-			areSafelyAssignable<typeof fromEnumValue, NodeFromSchema<typeof ModeNodes.a>>
+			areSafelyAssignable<
+				typeof fromEnumValue,
+				NodeFromSchema<typeof ModeNodes.a>
+			>
 		>;
 		const fromEnumUnion = ModeNodes(Mode.a as Mode.a | Mode.b);
 		type _check2 = requireTrue<
@@ -215,7 +224,9 @@ describe("schemaCreationUtilities", () => {
 		// TODO: AB#43345
 		// This should be just "com.myApp.Mode.0", but due to known issue.
 		// See comments on adaptEnum and "variance with respect to scope and alpha" test.
-		type _check = requireTrue<areSafelyAssignable<AType, "com.myApp.Mode.0" | "com.0">>;
+		type _check = requireTrue<
+			areSafelyAssignable<AType, "com.myApp.Mode.0" | "com.0">
+		>;
 	});
 
 	it("adaptEnum - construction tests", () => {
@@ -231,7 +242,10 @@ describe("schemaCreationUtilities", () => {
 
 		const fromEnumValue = ModeNodes(Mode.a);
 		type _check1 = requireTrue<
-			areSafelyAssignable<typeof fromEnumValue, NodeFromSchema<typeof ModeNodes.a>>
+			areSafelyAssignable<
+				typeof fromEnumValue,
+				NodeFromSchema<typeof ModeNodes.a>
+			>
 		>;
 		const fromEnumUnion = ModeNodes(Mode.a as Mode.a | Mode.b);
 		type _check2 = requireTrue<
@@ -353,11 +367,16 @@ describe("schemaCreationUtilities", () => {
 			Tomorrow = "Tomorrow",
 		}
 
-		const DayNodes = enumFromStrings(schema, unsafeArrayToTuple(Object.values(Day)));
+		const DayNodes = enumFromStrings(
+			schema,
+			unsafeArrayToTuple(Object.values(Day)),
+		);
 
 		const day = Day.Today;
 
-		const view = getView(new TreeViewConfiguration({ schema: DayNodes.schema }));
+		const view = getView(
+			new TreeViewConfiguration({ schema: DayNodes.schema }),
+		);
 		view.initialize(DayNodes(day));
 
 		switch (view.root.value) {
@@ -387,7 +406,9 @@ describe("schemaCreationUtilities", () => {
 		const y = new DayNodes.Today();
 		const z: Day.Today = y.value;
 
-		const view = getView(new TreeViewConfiguration({ schema: DayNodes.schema }));
+		const view = getView(
+			new TreeViewConfiguration({ schema: DayNodes.schema }),
+		);
 		view.initialize(DayNodes(Day.Today));
 
 		switch (view.root.value) {
@@ -404,7 +425,9 @@ describe("schemaCreationUtilities", () => {
 		//  InsertableTreeFieldFromImplicitField<TRootSchema>
 		{
 			// Regression test for adapted schema working with InsertableTreeFieldFromImplicitField
-			type InsertableImplicit = InsertableTreeFieldFromImplicitField<typeof DayNodes.schema>;
+			type InsertableImplicit = InsertableTreeFieldFromImplicitField<
+				typeof DayNodes.schema
+			>;
 
 			const _a: InsertableImplicit = new DayNodes.Today();
 			const _b: InsertableImplicit = new DayNodes.Tomorrow();
@@ -425,7 +448,9 @@ describe("schemaCreationUtilities", () => {
 		const y = new DayNodes.Today();
 		const z: Day.Today = y.value;
 
-		const view = getView(new TreeViewConfiguration({ schema: DayNodes.schema }));
+		const view = getView(
+			new TreeViewConfiguration({ schema: DayNodes.schema }),
+		);
 		view.initialize(DayNodes(Day.Today));
 
 		switch (view.root.value) {
@@ -442,7 +467,9 @@ describe("schemaCreationUtilities", () => {
 		//  InsertableTreeFieldFromImplicitField<TRootSchema>
 		{
 			// Regression test for adapted schema working with InsertableTreeFieldFromImplicitField
-			type InsertableImplicit = InsertableTreeFieldFromImplicitField<typeof DayNodes.schema>;
+			type InsertableImplicit = InsertableTreeFieldFromImplicitField<
+				typeof DayNodes.schema
+			>;
 
 			const _a: InsertableImplicit = new DayNodes.Today();
 			const _b: InsertableImplicit = new DayNodes.Tomorrow();

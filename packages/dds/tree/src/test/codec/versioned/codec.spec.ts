@@ -42,7 +42,8 @@ describe("versioned Codecs", () => {
 		]);
 		const builder = new ClientVersionDispatchingCodecBuilder(
 			family,
-			(oldestCompatibleClient: FluidClientVersion) => (oldestCompatibleClient > 5 ? 2 : 1),
+			(oldestCompatibleClient: FluidClientVersion) =>
+				oldestCompatibleClient > 5 ? 2 : 1,
 		);
 
 		it("round trip", () => {

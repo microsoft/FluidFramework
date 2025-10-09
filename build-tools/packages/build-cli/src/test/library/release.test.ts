@@ -131,13 +131,17 @@ describe("Legacy compatibility ranges", () => {
 			if (upperBound instanceof Error) {
 				it(`should throw error for input version '${inputVersion}' and interval '${interval}'`, () => {
 					assert.throws(
-						() => getLegacyCompatRange(inputVersion, Number.parseInt(interval, 10)),
+						() =>
+							getLegacyCompatRange(inputVersion, Number.parseInt(interval, 10)),
 						Error,
 					);
 				});
 			} else {
 				it(`legacy compat: ${inputVersion} and compat version interval ${interval} yields ${expected}`, () => {
-					const range = getLegacyCompatRange(inputVersion, Number.parseInt(interval, 10));
+					const range = getLegacyCompatRange(
+						inputVersion,
+						Number.parseInt(interval, 10),
+					);
 					assert.strictEqual(range, expected);
 				});
 			}

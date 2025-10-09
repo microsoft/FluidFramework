@@ -5,7 +5,10 @@
 
 import { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
-import { TestObjectProvider, timeoutAwait } from "@fluidframework/test-utils/internal";
+import {
+	TestObjectProvider,
+	timeoutAwait,
+} from "@fluidframework/test-utils/internal";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { Context } from "mocha";
 
@@ -118,19 +121,20 @@ export type SkippedErrorExpectingTestWithDriverType =
 	};
 
 function createSkippedErrorExpectingTestWithDriver(): SkippedErrorExpectingTestWithDriverType {
-	const skippedErrorExpectingTestWithDriver: SkippedErrorExpectingTestWithDriverType = (
-		name: string,
-		orderedExpectedEvents: ExpectedEvents,
-		skippedDrivers: TestDriverTypes[],
-		test: Mocha.AsyncFunc,
-	) =>
-		it(
-			name,
-			createSkippedTestsWithDriverType(
-				skippedDrivers,
-				createExpectsTest(orderedExpectedEvents, test),
-			),
-		);
+	const skippedErrorExpectingTestWithDriver: SkippedErrorExpectingTestWithDriverType =
+		(
+			name: string,
+			orderedExpectedEvents: ExpectedEvents,
+			skippedDrivers: TestDriverTypes[],
+			test: Mocha.AsyncFunc,
+		) =>
+			it(
+				name,
+				createSkippedTestsWithDriverType(
+					skippedDrivers,
+					createExpectsTest(orderedExpectedEvents, test),
+				),
+			);
 
 	skippedErrorExpectingTestWithDriver.only = (
 		name: string,

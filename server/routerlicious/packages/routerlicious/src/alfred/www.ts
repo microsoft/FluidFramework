@@ -21,4 +21,10 @@ const configPath = path.join(__dirname, "../../config/config.json");
 configureLogging(configPath);
 configureGlobalAbortControllerContext();
 
-runService(new AlfredResourcesFactory(), new AlfredRunnerFactory(), winston, "alfred", configPath);
+runService(
+	new AlfredResourcesFactory(),
+	new AlfredRunnerFactory(),
+	winston,
+	"alfred",
+	configPath,
+);

@@ -32,7 +32,11 @@ import {
 
 import { decode } from "./chunkDecoding.js";
 import type { FieldBatch } from "./fieldBatch.js";
-import { EncodedFieldBatch, validVersions, type FieldBatchFormatVersion } from "./format.js";
+import {
+	EncodedFieldBatch,
+	validVersions,
+	type FieldBatchFormatVersion,
+} from "./format.js";
 import { schemaCompressedEncode } from "./schemaBasedEncode.js";
 import { uncompressedEncode } from "./uncompressedEncode.js";
 import type { IncrementalEncodingPolicy } from "./incrementalEncodingPolicy.js";
@@ -41,7 +45,10 @@ import type { IncrementalEncodingPolicy } from "./incrementalEncodingPolicy.js";
  * Reference ID for a chunk that is incrementally encoded.
  */
 export type ChunkReferenceId = Brand<number, "forest.ChunkReferenceId">;
-const ChunkReferenceId = brandedNumberType<ChunkReferenceId>({ multipleOf: 1, minimum: 0 });
+const ChunkReferenceId = brandedNumberType<ChunkReferenceId>({
+	multipleOf: 1,
+	minimum: 0,
+});
 
 /**
  * Properties for incremental encoding.
@@ -85,12 +92,16 @@ export interface IncrementalDecoder {
 	 * @param referenceId - The reference ID of the chunk to retrieve.
 	 * @returns The encoded contents of the chunk.
 	 */
-	getEncodedIncrementalChunk: (referenceId: ChunkReferenceId) => EncodedFieldBatch;
+	getEncodedIncrementalChunk: (
+		referenceId: ChunkReferenceId,
+	) => EncodedFieldBatch;
 }
 /**
  * Combines the properties of {@link IncrementalEncoder} and {@link IncrementalDecoder}.
  */
-export interface IncrementalEncoderDecoder extends IncrementalEncoder, IncrementalDecoder {}
+export interface IncrementalEncoderDecoder
+	extends IncrementalEncoder,
+		IncrementalDecoder {}
 
 export interface FieldBatchEncodingContext {
 	readonly encodeType: TreeCompressionStrategyPrivate;
@@ -140,60 +151,74 @@ export function makeFieldBatchCodec(
 	);
 
 	// TODO: use makeVersionDispatchingCodec to support adding more versions in the future.
-	return makeVersionedValidatedCodec(options, validVersions, EncodedFieldBatch, {
-		encode: (data: FieldBatch, context: FieldBatchEncodingContext): EncodedFieldBatch => {
-			for (const cursor of data) {
-				assert(
-					cursor.mode === CursorLocationType.Fields,
-					0x8a3 /* FieldBatch expects fields cursors */,
-				);
-			}
-			let encoded: EncodedFieldBatch;
-			switch (context.encodeType) {
-				case TreeCompressionStrategy.Uncompressed:
-					encoded = uncompressedEncode(data);
-					break;
-				case TreeCompressionStrategyExtended.CompressedIncremental:
-				case TreeCompressionStrategy.Compressed:
-					// eslint-disable-next-line unicorn/prefer-ternary
-					if (context.schema !== undefined) {
-						encoded = schemaCompressedEncode(
-							context.schema.schema,
-							context.schema.policy,
-							data,
-							context.idCompressor,
-							// Incremental encoding is only supported for CompressedIncremental.
-							context.encodeType === TreeCompressionStrategyExtended.CompressedIncremental
-								? context.incrementalEncoderDecoder
-								: undefined,
-						);
-					} else {
-						// TODO: consider enabling a somewhat compressed but not schema accelerated encode.
+	return makeVersionedValidatedCodec(
+		options,
+		validVersions,
+		EncodedFieldBatch,
+		{
+			encode: (
+				data: FieldBatch,
+				context: FieldBatchEncodingContext,
+			): EncodedFieldBatch => {
+				for (const cursor of data) {
+					assert(
+						cursor.mode === CursorLocationType.Fields,
+						0x8a3 /* FieldBatch expects fields cursors */,
+					);
+				}
+				let encoded: EncodedFieldBatch;
+				switch (context.encodeType) {
+					case TreeCompressionStrategy.Uncompressed:
 						encoded = uncompressedEncode(data);
-					}
+						break;
+					case TreeCompressionStrategyExtended.CompressedIncremental:
+					case TreeCompressionStrategy.Compressed:
+						// eslint-disable-next-line unicorn/prefer-ternary
+						if (context.schema !== undefined) {
+							encoded = schemaCompressedEncode(
+								context.schema.schema,
+								context.schema.policy,
+								data,
+								context.idCompressor,
+								// Incremental encoding is only supported for CompressedIncremental.
+								context.encodeType ===
+									TreeCompressionStrategyExtended.CompressedIncremental
+									? context.incrementalEncoderDecoder
+									: undefined,
+							);
+						} else {
+							// TODO: consider enabling a somewhat compressed but not schema accelerated encode.
+							encoded = uncompressedEncode(data);
+						}
 
-					break;
-				default:
-					unreachableCase(context.encodeType);
-			}
+						break;
+					default:
+						unreachableCase(context.encodeType);
+				}
 
-			// TODO: consider checking input data was in schema.
-			return encoded;
+				// TODO: consider checking input data was in schema.
+				return encoded;
+			},
+			decode: (
+				data: EncodedFieldBatch,
+				context: FieldBatchEncodingContext,
+			): FieldBatch => {
+				// TODO: consider checking data is in schema.
+				return decode(
+					data,
+					{
+						idCompressor: context.idCompressor,
+						originatorId: context.originatorId,
+					},
+					context.incrementalEncoderDecoder,
+				).map((chunk) => chunk.cursor());
+			},
 		},
-		decode: (data: EncodedFieldBatch, context: FieldBatchEncodingContext): FieldBatch => {
-			// TODO: consider checking data is in schema.
-			return decode(
-				data,
-				{
-					idCompressor: context.idCompressor,
-					originatorId: context.originatorId,
-				},
-				context.incrementalEncoderDecoder,
-			).map((chunk) => chunk.cursor());
-		},
-	});
+	);
 }
 
-export function getCodecTreeForFieldBatchFormat(version: FieldBatchFormatVersion): CodecTree {
+export function getCodecTreeForFieldBatchFormat(
+	version: FieldBatchFormatVersion,
+): CodecTree {
 	return { name: "FieldBatch", version };
 }

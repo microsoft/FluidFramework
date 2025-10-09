@@ -67,7 +67,10 @@ export {
 	getThrottleConfig,
 } from "./throttlerConfigs";
 export { type IThrottleMiddlewareOptions, throttle } from "./throttlerMiddleware";
-export { DummyTokenRevocationManager, DummyRevokedTokenChecker } from "./tokenRevocationManager";
+export {
+	DummyTokenRevocationManager,
+	DummyRevokedTokenChecker,
+} from "./tokenRevocationManager";
 export { WinstonLumberjackEngine } from "./winstonLumberjackEngine";
 export { WebSocketTracker } from "./webSocketTracker";
 export {

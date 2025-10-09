@@ -139,7 +139,10 @@ describe("pathTree", () => {
 			),
 		);
 		assert(
-			!compareFieldUpPaths({ field: fooKey, parent: root }, { field: fooKey, parent: child }),
+			!compareFieldUpPaths(
+				{ field: fooKey, parent: root },
+				{ field: fooKey, parent: child },
+			),
 		);
 	});
 

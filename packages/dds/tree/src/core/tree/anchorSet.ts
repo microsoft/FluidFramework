@@ -6,7 +6,10 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { createEmitter } from "@fluid-internal/client-utils";
-import type { HasListeners, Listenable } from "@fluidframework/core-interfaces/internal";
+import type {
+	HasListeners,
+	Listenable,
+} from "@fluidframework/core-interfaces/internal";
 import { assert, fail } from "@fluidframework/core-utils/internal";
 
 import {
@@ -67,7 +70,10 @@ export interface AnchorLocator {
  * This data is preserved over the course of that anchor's lifetime.
  * @see {@link anchorSlot} for creation and an example use case.
  */
-export type AnchorSlot<TContent> = BrandedKey<Opaque<Brand<number, "AnchorSlot">>, TContent>;
+export type AnchorSlot<TContent> = BrandedKey<
+	Opaque<Brand<number, "AnchorSlot">>,
+	TContent
+>;
 
 /**
  * Events for {@link AnchorNode}.
@@ -410,7 +416,10 @@ export class AnchorSet implements AnchorLocator {
 		const parent = path.parent ?? this.root;
 		const parentPath = this.trackInner(parent);
 
-		const child = parentPath.getOrCreateChild(path.parentField, path.parentIndex);
+		const child = parentPath.getOrCreateChild(
+			path.parentField,
+			path.parentIndex,
+		);
 
 		// Now that child is added (if needed), remove the extra ref that we added in the recursive call.
 		parentPath.removeRef();
@@ -567,7 +576,10 @@ export class AnchorSet implements AnchorLocator {
 		count: number,
 		coupleInfo: { startParentIndex: number; nodes: PathNode[] },
 	): void {
-		assert(coupleInfo.nodes.length > 0, 0x682 /* coupleInfo must have nodes to couple */);
+		assert(
+			coupleInfo.nodes.length > 0,
+			0x682 /* coupleInfo must have nodes to couple */,
+		);
 
 		// The destination needs to be created if it does not exist yet.
 		const destinationPath = this.trackInner(destination.parent ?? this.root);
@@ -622,7 +634,10 @@ export class AnchorSet implements AnchorLocator {
 		count: number,
 	): number {
 		let index = 0;
-		while (index < field.length && field[index]!.parentIndex < fromParentIndex) {
+		while (
+			index < field.length &&
+			field[index]!.parentIndex < fromParentIndex
+		) {
 			index++;
 		}
 		const numberBeforeIncrease = index;
@@ -651,7 +666,11 @@ export class AnchorSet implements AnchorLocator {
 	 *
 	 * TODO: tests
 	 */
-	private moveChildren(sourceStart: UpPath, destination: UpPath, count: number): void {
+	private moveChildren(
+		sourceStart: UpPath,
+		destination: UpPath,
+		count: number,
+	): void {
 		const nodes = this.decoupleNodes(sourceStart, count);
 		if (nodes.length > 0) {
 			this.coupleNodes(destination, count, {
@@ -680,7 +699,11 @@ export class AnchorSet implements AnchorLocator {
 		const nodePath = this.find(firstSiblingToOffset.parent ?? this.root);
 		const field = nodePath?.children.get(firstSiblingToOffset.parentField);
 		if (field !== undefined) {
-			this.increaseParentIndexes(field, firstSiblingToOffset.parentIndex, offset);
+			this.increaseParentIndexes(
+				field,
+				firstSiblingToOffset.parentIndex,
+				offset,
+			);
 		}
 	}
 
@@ -706,7 +729,10 @@ export class AnchorSet implements AnchorLocator {
 			anchorSet: this,
 			// Run `withNode` on anchorNode for parent if there is such an anchorNode.
 			// If at root, run `withRoot` instead.
-			maybeWithNode(withNode: (anchorNode: PathNode) => void, withRoot?: () => void) {
+			maybeWithNode(
+				withNode: (anchorNode: PathNode) => void,
+				withRoot?: () => void,
+			) {
 				if (this.parent === undefined && withRoot !== undefined) {
 					withRoot();
 				} else {
@@ -775,7 +801,9 @@ export class AnchorSet implements AnchorLocator {
 						const keys = getOrCreate(eventsByNode, node, () => new Set());
 						keys.add(
 							changedField ??
-								fail(0xb57 /* childrenChangedAfterBatch events should have a changedField */),
+								fail(
+									0xb57 /* childrenChangedAfterBatch events should have a changedField */,
+								),
 						);
 					}
 				}
@@ -790,7 +818,9 @@ export class AnchorSet implements AnchorLocator {
 					if (event === "childrenChangedAfterBatch") {
 						const changedFields =
 							eventsByNode.get(node) ??
-							fail(0xaeb /* childrenChangedAfterBatch events should have changedFields */);
+							fail(
+								0xaeb /* childrenChangedAfterBatch events should have changedFields */,
+							);
 						node.events.emit(event, { changedFields });
 					} else {
 						node.events.emit(event);
@@ -825,7 +855,11 @@ export class AnchorSet implements AnchorLocator {
 				this.attachEdit(source, count, destination);
 				this.notifyChildrenChanged();
 			},
-			attachEdit(source: FieldKey, count: number, destination: PlaceIndex): void {
+			attachEdit(
+				source: FieldKey,
+				count: number,
+				destination: PlaceIndex,
+			): void {
 				assert(
 					this.parentField !== undefined,
 					0x7a2 /* Must be in a field in order to attach */,
@@ -872,7 +906,11 @@ export class AnchorSet implements AnchorLocator {
 					parentIndex: 0,
 					detachedNodeId,
 				};
-				this.anchorSet.moveChildren(sourcePath, destinationPath, source.end - source.start);
+				this.anchorSet.moveChildren(
+					sourcePath,
+					destinationPath,
+					source.end - source.start,
+				);
 				this.depthThresholdForSubtreeChanged = this.currentDepth;
 			},
 			replace(
@@ -882,7 +920,11 @@ export class AnchorSet implements AnchorLocator {
 				destinationDetachedNodeId: Delta.DetachedNodeId,
 			): void {
 				this.notifyChildrenChanging();
-				this.detachEdit(range, oldContentDestination, destinationDetachedNodeId);
+				this.detachEdit(
+					range,
+					oldContentDestination,
+					destinationDetachedNodeId,
+				);
 				this.attachEdit(newContentSource, range.end - range.start, range.start);
 				this.notifyChildrenChanged();
 			},
@@ -901,7 +943,10 @@ export class AnchorSet implements AnchorLocator {
 				// which cannot contain any anchors.
 			},
 			enterNode(index: number): void {
-				assert(this.parentField !== undefined, 0x3ab /* Must be in a field to enter node */);
+				assert(
+					this.parentField !== undefined,
+					0x3ab /* Must be in a field to enter node */,
+				);
 
 				this.parent = {
 					parent: this.parent,
@@ -1007,7 +1052,9 @@ class PathNode extends ReferenceCountedBase implements AnchorNode {
 	/**
 	 * Event emitter for this anchor.
 	 */
-	public readonly events = createEmitter<AnchorEvents>(() => this.considerDispose());
+	public readonly events = createEmitter<AnchorEvents>(() =>
+		this.considerDispose(),
+	);
 
 	/**
 	 * PathNode arrays are kept sorted the PathNode's parentIndex for efficient search.
@@ -1066,7 +1113,10 @@ class PathNode extends ReferenceCountedBase implements AnchorNode {
 		);
 	}
 
-	public getOrCreateChildRef(key: FieldKey, index: number): [Anchor, AnchorNode] {
+	public getOrCreateChildRef(
+		key: FieldKey,
+		index: number,
+	): [Anchor, AnchorNode] {
 		const anchor = this.anchorSet.track(this.child(key, index));
 		const node =
 			this.anchorSet.locate(anchor) ??
@@ -1086,7 +1136,10 @@ class PathNode extends ReferenceCountedBase implements AnchorNode {
 	}
 
 	public get parent(): PathNode | undefined {
-		assert(this.status !== Status.Disposed, 0x409 /* PathNode must not be disposed */);
+		assert(
+			this.status !== Status.Disposed,
+			0x409 /* PathNode must not be disposed */,
+		);
 		assert(
 			this.parentPath !== undefined,
 			0x355 /* PathNode.parent is an UpPath API and thus should never be called on the root PathNode. */,
@@ -1104,7 +1157,10 @@ class PathNode extends ReferenceCountedBase implements AnchorNode {
 	}
 
 	public removeRef(count = 1): void {
-		assert(this.status !== Status.Disposed, 0x40b /* PathNode must not be disposed */);
+		assert(
+			this.status !== Status.Disposed,
+			0x40b /* PathNode must not be disposed */,
+		);
 		this.referenceRemoved(count);
 	}
 
@@ -1182,8 +1238,15 @@ class PathNode extends ReferenceCountedBase implements AnchorNode {
 	 * Allowed when dangling (but not when disposed).
 	 */
 	private considerDispose(): void {
-		assert(this.status !== Status.Disposed, 0x41d /* PathNode must not be disposed */);
-		if (this.isUnreferenced() && this.children.size === 0 && !this.events.hasListeners()) {
+		assert(
+			this.status !== Status.Disposed,
+			0x41d /* PathNode must not be disposed */,
+		);
+		if (
+			this.isUnreferenced() &&
+			this.children.size === 0 &&
+			!this.events.hasListeners()
+		) {
 			if (this.status === Status.Alive) {
 				this.parentPath?.removeChild(this);
 			}
@@ -1208,7 +1271,10 @@ class PathNode extends ReferenceCountedBase implements AnchorNode {
  * replacing it with a standard binary search is likely fine.
  * Until then, care and benchmarking should be used when messing with this function.
  */
-function binaryFind(sorted: readonly PathNode[], index: number): PathNode | undefined {
+function binaryFind(
+	sorted: readonly PathNode[],
+	index: number,
+): PathNode | undefined {
 	// Try guessing the list is not sparse as a starter:
 	const guess = sorted[index];
 	if (guess !== undefined && guess.parentIndex === index) {

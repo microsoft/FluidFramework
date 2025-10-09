@@ -21,10 +21,15 @@ import type { EmptyGroupedBatch } from "./opGroupingManager.js";
  * @remarks - Serialization during submit happens via {@link serializeOp}
  * @param mutableMessage - op message received
  */
-export function ensureContentsDeserialized(mutableMessage: ISequencedDocumentMessage): void {
+export function ensureContentsDeserialized(
+	mutableMessage: ISequencedDocumentMessage,
+): void {
 	// This should become unconditional once Loader LTS reaches 2.4 or later.
 	// There will be a long time of needing both cases, until LTS advances to that point.
-	if (typeof mutableMessage.contents === "string" && mutableMessage.contents !== "") {
+	if (
+		typeof mutableMessage.contents === "string" &&
+		mutableMessage.contents !== ""
+	) {
 		mutableMessage.contents = JSON.parse(mutableMessage.contents);
 	}
 }

@@ -6,7 +6,11 @@
 import { type TAnySchema, Type } from "@sinclair/typebox";
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { type ICodecOptions, type IJsonCodec, withSchemaValidation } from "../codec/index.js";
+import {
+	type ICodecOptions,
+	type IJsonCodec,
+	withSchemaValidation,
+} from "../codec/index.js";
 import type {
 	ChangeEncodingContext,
 	ChangeFamilyCodec,
@@ -44,8 +48,14 @@ export function makeV1ToV4CodecWithVersion<TChangeset>(
 	>(
 		Message(changeCodec.encodedSchema ?? Type.Any()),
 		{
-			encode: (decoded: DecodedMessage<TChangeset>, context: MessageEncodingContext) => {
-				assert(decoded.type === "commit", 0xc68 /* Only commit messages are supported */);
+			encode: (
+				decoded: DecodedMessage<TChangeset>,
+				context: MessageEncodingContext,
+			) => {
+				assert(
+					decoded.type === "commit",
+					0xc68 /* Only commit messages are supported */,
+				);
 				assert(
 					decoded.branchId === "main",
 					0xc69 /* Only commit messages to main are supported */,

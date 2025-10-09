@@ -37,7 +37,9 @@ export type XSaddCtor = new (
  */
 export const XSadd: XSaddCtor = function (...seed: number[]): Random {
 	// eslint-disable-next-line no-param-reassign
-	seed = seed.length ? seed : [...new Array(4)].map(() => (Math.random() * 0x100000000) | 0);
+	seed = seed.length
+		? seed
+		: [...new Array(4)].map(() => (Math.random() * 0x100000000) | 0);
 
 	// Scramble the seeds using an LCG w/Borosh-Niederreiter multiplier.  This reduces correlation
 	// between similar initial seeds.  This also helps to avoid unintentionally encountering low bit

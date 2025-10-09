@@ -28,7 +28,12 @@ export abstract class RestWrapper {
 		additionalOptions?: Partial<
 			Omit<
 				AxiosRequestConfig,
-				"baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url"
+				| "baseURL"
+				| "headers"
+				| "maxBodyLength"
+				| "maxContentLength"
+				| "method"
+				| "url"
 			>
 		>,
 	): Promise<IR11sResponse<T>> {
@@ -60,7 +65,12 @@ export abstract class RestWrapper {
 		additionalOptions?: Partial<
 			Omit<
 				AxiosRequestConfig,
-				"baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url"
+				| "baseURL"
+				| "headers"
+				| "maxBodyLength"
+				| "maxContentLength"
+				| "method"
+				| "url"
 			>
 		>,
 	): Promise<IR11sResponse<T>> {
@@ -91,7 +101,12 @@ export abstract class RestWrapper {
 		additionalOptions?: Partial<
 			Omit<
 				AxiosRequestConfig,
-				"baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url"
+				| "baseURL"
+				| "headers"
+				| "maxBodyLength"
+				| "maxContentLength"
+				| "method"
+				| "url"
 			>
 		>,
 	): Promise<IR11sResponse<T>> {
@@ -123,7 +138,12 @@ export abstract class RestWrapper {
 		additionalOptions?: Partial<
 			Omit<
 				AxiosRequestConfig,
-				"baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url"
+				| "baseURL"
+				| "headers"
+				| "maxBodyLength"
+				| "maxContentLength"
+				| "method"
+				| "url"
 			>
 		>,
 	): Promise<IR11sResponse<T>> {

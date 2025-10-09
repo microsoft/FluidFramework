@@ -13,7 +13,10 @@ import {
 	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import {
+	ConfigTypes,
+	IConfigProviderBase,
+} from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
@@ -30,7 +33,9 @@ import {
 const map1Id = "map1Key";
 const map2Id = "map2Key";
 
-const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+const configProvider = (
+	settings: Record<string, ConfigTypes>,
+): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
 });
 
@@ -59,8 +64,9 @@ function verifyBatchMetadata(batchMessages: ISequencedDocumentMessage[]) {
 	const batchCount = batchMessages.length;
 	assert(batchCount !== 0, "No messages in the batch");
 
-	const batchBeginMetadata = (batchMessages[0].metadata as { batch?: unknown } | undefined)
-		?.batch;
+	const batchBeginMetadata = (
+		batchMessages[0].metadata as { batch?: unknown } | undefined
+	)?.batch;
 	const batchEndMetadata = (
 		batchMessages[batchCount - 1].metadata as { batch?: unknown } | undefined
 	)?.batch;
@@ -78,7 +84,9 @@ function verifyBatchMetadata(batchMessages: ISequencedDocumentMessage[]) {
 }
 
 const filterDatastoreOps = (messages: ISequencedDocumentMessage[]) => {
-	return messages.filter((m) => m.type === ContainerMessageType.FluidDataStoreOp);
+	return messages.filter(
+		(m) => m.type === ContainerMessageType.FluidDataStoreOp,
+	);
 };
 
 async function waitForCleanContainers(...dataStores: ITestFluidObject[]) {
@@ -136,13 +144,15 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// Create a Container for the first client.
 		container1 = await provider.makeTestContainer(configCopy);
-		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
+		dataObject1 =
+			await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 		dataObject1map1 = await dataObject1.getSharedObject<ISharedMap>(map1Id);
 		dataObject1map2 = await dataObject1.getSharedObject<ISharedMap>(map2Id);
 
 		// Load the Container that was created by the first client.
 		container2 = await provider.loadTestContainer(configCopy);
-		dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
+		dataObject2 =
+			await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 		dataObject2map1 = await dataObject2.getSharedObject<ISharedMap>(map1Id);
 		dataObject2map2 = await dataObject2.getSharedObject<ISharedMap>(map2Id);
 
@@ -330,11 +340,17 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		}
 
 		describe("Flushing of batches via orderSequentially [TurnBased]", () => {
-			testFlushingUsingOrderSequentially({ flushMode: FlushMode.TurnBased }, false);
+			testFlushingUsingOrderSequentially(
+				{ flushMode: FlushMode.TurnBased },
+				false,
+			);
 		});
 
 		describe("Flushing of batches via orderSequentially [Immediate]", () => {
-			testFlushingUsingOrderSequentially({ flushMode: FlushMode.Immediate }, true);
+			testFlushingUsingOrderSequentially(
+				{ flushMode: FlushMode.Immediate },
+				true,
+			);
 		});
 
 		function testFlushingOfBatches(compressionEnabled: boolean) {
@@ -349,7 +365,9 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 						compressionAlgorithm: CompressionAlgorithms.lz4,
 					},
 				};
-				await setupContainers(compressionEnabled ? compressionConfig : noCompressionConfig);
+				await setupContainers(
+					compressionEnabled ? compressionConfig : noCompressionConfig,
+				);
 				setupBatchMessageListener(dataObject1, dataObject1BatchMessages);
 				setupBatchMessageListener(dataObject2, dataObject2BatchMessages);
 			});
@@ -544,9 +562,17 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 	describe("Document Dirty State when batches are flushed", () => {
 		// Verifies that the document dirty state for the given document is as expected.
-		function verifyDocumentDirtyState(dataStore: ITestFluidObject, expectedState: boolean) {
-			const dirty = (dataStore.context.containerRuntime as IContainerRuntime).isDirty;
-			assert.equal(dirty, expectedState, "The document dirty state is not as expected");
+		function verifyDocumentDirtyState(
+			dataStore: ITestFluidObject,
+			expectedState: boolean,
+		) {
+			const dirty = (dataStore.context.containerRuntime as IContainerRuntime)
+				.isDirty;
+			assert.equal(
+				dirty,
+				expectedState,
+				"The document dirty state is not as expected",
+			);
 		}
 
 		function testAutomaticFlushingUsingOrderSequentially(
@@ -644,11 +670,17 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		}
 
 		describe("Automatic flushing of batches via orderSequentially [TurnBased]", () => {
-			testAutomaticFlushingUsingOrderSequentially({ flushMode: FlushMode.TurnBased }, false);
+			testAutomaticFlushingUsingOrderSequentially(
+				{ flushMode: FlushMode.TurnBased },
+				false,
+			);
 		});
 
 		describe("Automatic flushing of batches via orderSequentially [Immediate]", () => {
-			testAutomaticFlushingUsingOrderSequentially({ flushMode: FlushMode.Immediate }, true);
+			testAutomaticFlushingUsingOrderSequentially(
+				{ flushMode: FlushMode.Immediate },
+				true,
+			);
 		});
 
 		describe("TurnBased flushing of batches", () => {

@@ -7,7 +7,10 @@ import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
-import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import type {
+	ConfigTypes,
+	IConfigProviderBase,
+} from "@fluidframework/core-interfaces";
 import type { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map/internal";
 import type { OdspClient } from "@fluidframework/odsp-client/internal";
@@ -16,7 +19,9 @@ import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import { createOdspClient, getCredentials } from "./OdspClientFactory.js";
 import { waitForMember } from "./utils.js";
 
-const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+const configProvider = (
+	settings: Record<string, ConfigTypes>,
+): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
 });
 
@@ -49,13 +54,20 @@ describe("Fluid audience", () => {
 		const itemId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
-			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
-				durationMs: connectTimeoutMs,
-				errorMsg: "container connect() timeout",
-			});
+			await timeoutPromise(
+				(resolve) => container.once("connected", () => resolve()),
+				{
+					durationMs: connectTimeoutMs,
+					errorMsg: "container connect() timeout",
+				},
+			);
 		}
 
-		assert.strictEqual(typeof itemId, "string", "Attach did not return a string ID");
+		assert.strictEqual(
+			typeof itemId,
+			"string",
+			"Attach did not return a string ID",
+		);
 		assert.strictEqual(
 			container.attachState,
 			AttachState.Attached,
@@ -64,10 +76,18 @@ describe("Fluid audience", () => {
 
 		/* This is a workaround for a known bug, we should have one member (self) upon container connection */
 		const myself = await waitForMember(services.audience, client1Creds.email);
-		assert.notStrictEqual(myself, undefined, "We should have myself at this point.");
+		assert.notStrictEqual(
+			myself,
+			undefined,
+			"We should have myself at this point.",
+		);
 
 		const members = services.audience.getMembers();
-		assert.strictEqual(members.size, 1, "We should have only one member at this point.");
+		assert.strictEqual(
+			members.size,
+			1,
+			"We should have only one member at this point.",
+		);
 	});
 
 	/**
@@ -83,13 +103,20 @@ describe("Fluid audience", () => {
 		const itemId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
-			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
-				durationMs: connectTimeoutMs,
-				errorMsg: "container connect() timeout",
-			});
+			await timeoutPromise(
+				(resolve) => container.once("connected", () => resolve()),
+				{
+					durationMs: connectTimeoutMs,
+					errorMsg: "container connect() timeout",
+				},
+			);
 		}
 
-		assert.strictEqual(typeof itemId, "string", "Attach did not return a string ID");
+		assert.strictEqual(
+			typeof itemId,
+			"string",
+			"Attach did not return a string ID",
+		);
 		assert.strictEqual(
 			container.attachState,
 			AttachState.Attached,
@@ -97,8 +124,15 @@ describe("Fluid audience", () => {
 		);
 
 		/* This is a workaround for a known bug, we should have one member (self) upon container connection */
-		const originalSelf = await waitForMember(services.audience, client1Creds.email);
-		assert.notStrictEqual(originalSelf, undefined, "We should have myself at this point.");
+		const originalSelf = await waitForMember(
+			services.audience,
+			client1Creds.email,
+		);
+		assert.notStrictEqual(
+			originalSelf,
+			undefined,
+			"We should have myself at this point.",
+		);
 
 		// pass client2 credentials
 		const client2 = createOdspClient(
@@ -108,14 +142,28 @@ describe("Fluid audience", () => {
 				"Fluid.Container.ForceWriteConnection": true,
 			}),
 		);
-		const { services: servicesGet } = await client2.getContainer(itemId, schema);
+		const { services: servicesGet } = await client2.getContainer(
+			itemId,
+			schema,
+		);
 
 		/* This is a workaround for a known bug, we should have one member (self) upon container connection */
-		const partner = await waitForMember(servicesGet.audience, client2Creds.email);
-		assert.notStrictEqual(partner, undefined, "We should have partner at this point.");
+		const partner = await waitForMember(
+			servicesGet.audience,
+			client2Creds.email,
+		);
+		assert.notStrictEqual(
+			partner,
+			undefined,
+			"We should have partner at this point.",
+		);
 
 		const members = servicesGet.audience.getMembers();
-		assert.strictEqual(members.size, 2, "We should have two members at this point.");
+		assert.strictEqual(
+			members.size,
+			2,
+			"We should have two members at this point.",
+		);
 
 		assert.notStrictEqual(
 			partner?.id,
@@ -137,10 +185,13 @@ describe("Fluid audience", () => {
 		const itemId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
-			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
-				durationMs: connectTimeoutMs,
-				errorMsg: "container connect() timeout",
-			});
+			await timeoutPromise(
+				(resolve) => container.once("connected", () => resolve()),
+				{
+					durationMs: connectTimeoutMs,
+					errorMsg: "container connect() timeout",
+				},
+			);
 		}
 
 		// pass client2 siteUrl and driveId
@@ -151,14 +202,28 @@ describe("Fluid audience", () => {
 				"Fluid.Container.ForceWriteConnection": true,
 			}),
 		);
-		const { services: servicesGet } = await client2.getContainer(itemId, schema);
+		const { services: servicesGet } = await client2.getContainer(
+			itemId,
+			schema,
+		);
 
 		/* This is a workaround for a known bug, we should have one member (self) upon container connection */
-		const partner = await waitForMember(servicesGet.audience, client2Creds.email);
-		assert.notStrictEqual(partner, undefined, "We should have partner at this point.");
+		const partner = await waitForMember(
+			servicesGet.audience,
+			client2Creds.email,
+		);
+		assert.notStrictEqual(
+			partner,
+			undefined,
+			"We should have partner at this point.",
+		);
 
 		let members = servicesGet.audience.getMembers();
-		assert.strictEqual(members.size, 2, "We should have two members at this point.");
+		assert.strictEqual(
+			members.size,
+			2,
+			"We should have two members at this point.",
+		);
 
 		container.disconnect();
 
@@ -169,6 +234,10 @@ describe("Fluid audience", () => {
 		});
 
 		members = servicesGet.audience.getMembers();
-		assert.strictEqual(members.size, 1, "We should have one member left at this point.");
+		assert.strictEqual(
+			members.size,
+			1,
+			"We should have one member left at this point.",
+		);
 	});
 });

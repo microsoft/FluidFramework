@@ -6,7 +6,10 @@
 /**
  * @fileoverview Definition of the reference map property class
  */
-const { PathHelper, TypeIdHelper } = require("@fluid-experimental/property-changeset");
+const {
+	PathHelper,
+	TypeIdHelper,
+} = require("@fluid-experimental/property-changeset");
 const { MSG } = require("@fluid-experimental/property-common").constants;
 const _ = require("lodash");
 
@@ -42,7 +45,9 @@ export class ReferenceMapProperty extends StringMapProperty {
 	 * @returns {string} The typeid of the nodes this reference may point to
 	 */
 	getReferenceTargetTypeId() {
-		return TypeIdHelper.extractReferenceTargetTypeIdFromReference(this.getTypeid());
+		return TypeIdHelper.extractReferenceTargetTypeIdFromReference(
+			this.getTypeid(),
+		);
 	}
 
 	/**
@@ -69,7 +74,11 @@ export class ReferenceMapProperty extends StringMapProperty {
 
 		if (_.isArray(in_ids)) {
 			// Forward handling of arrays to the BaseProperty function
-			return AbstractStaticCollectionProperty.prototype.get.call(this, in_ids, in_options);
+			return AbstractStaticCollectionProperty.prototype.get.call(
+				this,
+				in_ids,
+				in_options,
+			);
 		} else {
 			var value = this._dynamicChildren[in_ids];
 			if (value === undefined || value === "") {
@@ -171,7 +180,8 @@ export class ReferenceMapProperty extends StringMapProperty {
 	 */
 	isReferenceValid(in_key) {
 		return (
-			this.has(in_key) && (this.getValue(in_key) === "" || this.get(in_key) !== undefined)
+			this.has(in_key) &&
+			(this.getValue(in_key) === "" || this.get(in_key) !== undefined)
 		);
 	}
 

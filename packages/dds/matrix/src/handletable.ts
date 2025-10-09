@@ -21,7 +21,8 @@ export const enum Handle {
 	unallocated = -0x80000000,
 }
 
-export const isHandleValid = (handle: Handle): boolean => handle >= Handle.valid;
+export const isHandleValid = (handle: Handle): boolean =>
+	handle >= Handle.valid;
 
 /**
  * A handle table provides a fast mapping from an integer `handle` to a value `T`.

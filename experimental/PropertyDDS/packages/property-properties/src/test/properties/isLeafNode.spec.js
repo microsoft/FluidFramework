@@ -43,7 +43,12 @@ const AllProperties = {
 	],
 };
 
-var createPropertyInsertAndCommit = function (workspace, typeid, context, propId) {
+var createPropertyInsertAndCommit = function (
+	workspace,
+	typeid,
+	context,
+	propId,
+) {
 	const prop = PropertyFactory.create(typeid, context);
 	workspace.insert(propId, prop);
 };
@@ -108,7 +113,8 @@ describe("property-properties.Utils isLeafNode", function () {
 		});
 
 		PsetUtils = require("@fluid-experimental/property-changeset").Utils;
-		DeferredPromise = require("@fluid-experimental/property-common").DeferredPromise;
+		DeferredPromise =
+			require("@fluid-experimental/property-common").DeferredPromise;
 	});
 
 	beforeEach(async function () {
@@ -117,7 +123,12 @@ describe("property-properties.Utils isLeafNode", function () {
 
 	it.skip("should match leaf for primitives properties", async function () {
 		let leafNodesCount = 0;
-		createPropertyInsertAndCommit(root, "mysample:all-1.0.0", "single", "singleProp");
+		createPropertyInsertAndCommit(
+			root,
+			"mysample:all-1.0.0",
+			"single",
+			"singleProp",
+		);
 
 		const changeSet = root.getRoot().serialize();
 
@@ -141,7 +152,12 @@ describe("property-properties.Utils isLeafNode", function () {
 
 	it("should see an empty array as a leaf", async function () {
 		let leafNodesCount = 0;
-		createPropertyInsertAndCommit(root, "mysample:all-1.0.0", "array", "arrayProp");
+		createPropertyInsertAndCommit(
+			root,
+			"mysample:all-1.0.0",
+			"array",
+			"arrayProp",
+		);
 
 		const changeSet = root.getRoot().serialize();
 

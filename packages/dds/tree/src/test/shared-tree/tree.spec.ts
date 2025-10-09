@@ -46,7 +46,9 @@ describe("treeApi", () => {
 			child: schemaFactory.optional(ChildObject),
 		}) {}
 
-		function getTestObjectView(child?: InsertableTypedNode<typeof ChildObject>) {
+		function getTestObjectView(
+			child?: InsertableTypedNode<typeof ChildObject>,
+		) {
 			const view = getView(new TreeViewConfiguration({ schema: TestObject }));
 			view.initialize({
 				content: 42,
@@ -114,7 +116,9 @@ describe("treeApi", () => {
 				it("undoes and redoes entire transaction", () => {
 					const view = getTestObjectView();
 
-					const { undoStack, redoStack } = createTestUndoRedoStacks(view.checkout.events);
+					const { undoStack, redoStack } = createTestUndoRedoStacks(
+						view.checkout.events,
+					);
 
 					run(view, (root) => {
 						root.content = 43;
@@ -195,7 +199,10 @@ describe("treeApi", () => {
 					}
 					{
 						// Returns the special rollback value
-						const result = Tree.runTransaction(view, () => Tree.runTransaction.rollback);
+						const result = Tree.runTransaction(
+							view,
+							() => Tree.runTransaction.rollback,
+						);
 						type _ = requireAssignableTo<typeof result, symbol>;
 						assert.equal(result, Tree.runTransaction.rollback);
 					}
@@ -205,7 +212,10 @@ describe("treeApi", () => {
 							Math.random() >= 0.5 ? Tree.runTransaction.rollback : 43,
 						);
 						if (result === Tree.runTransaction.rollback) {
-							type _ = requireAssignableTo<typeof result, typeof Tree.runTransaction.rollback>;
+							type _ = requireAssignableTo<
+								typeof result,
+								typeof Tree.runTransaction.rollback
+							>;
 						} else {
 							type _ = requireAssignableTo<typeof result, number>;
 						}
@@ -217,7 +227,10 @@ describe("treeApi", () => {
 							Math.random() >= 0.5 ? Tree.runTransaction.rollback : otherSymbol,
 						);
 						if (result === Tree.runTransaction.rollback) {
-							type _ = requireAssignableTo<typeof result, typeof Tree.runTransaction.rollback>;
+							type _ = requireAssignableTo<
+								typeof result,
+								typeof Tree.runTransaction.rollback
+							>;
 						} else {
 							type _ = requireAssignableTo<typeof result, typeof otherSymbol>;
 						}
@@ -255,7 +268,9 @@ describe("treeApi", () => {
 							() => {
 								Tree.runTransaction(new ChildObject({}), (r) => {});
 							},
-							validateUsageError(/Transactions cannot be run on Unhydrated nodes/),
+							validateUsageError(
+								/Transactions cannot be run on Unhydrated nodes/,
+							),
 						);
 					});
 
@@ -307,7 +322,10 @@ describe("treeApi", () => {
 					}
 					{
 						// Returns the special rollback value
-						const result = Tree.runTransaction(root, () => Tree.runTransaction.rollback);
+						const result = Tree.runTransaction(
+							root,
+							() => Tree.runTransaction.rollback,
+						);
 						type _ = requireAssignableTo<typeof result, symbol>;
 						assert.equal(result, Tree.runTransaction.rollback);
 					}
@@ -317,7 +335,10 @@ describe("treeApi", () => {
 							Math.random() >= 0.5 ? Tree.runTransaction.rollback : 43,
 						);
 						if (result === Tree.runTransaction.rollback) {
-							type _ = requireAssignableTo<typeof result, typeof Tree.runTransaction.rollback>;
+							type _ = requireAssignableTo<
+								typeof result,
+								typeof Tree.runTransaction.rollback
+							>;
 						} else {
 							type _ = requireAssignableTo<typeof result, number>;
 						}
@@ -329,7 +350,10 @@ describe("treeApi", () => {
 							Math.random() >= 0.5 ? Tree.runTransaction.rollback : otherSymbol,
 						);
 						if (result === Tree.runTransaction.rollback) {
-							type _ = requireAssignableTo<typeof result, typeof Tree.runTransaction.rollback>;
+							type _ = requireAssignableTo<
+								typeof result,
+								typeof Tree.runTransaction.rollback
+							>;
 						} else {
 							type _ = requireAssignableTo<typeof result, typeof otherSymbol>;
 						}
@@ -407,7 +431,10 @@ describe("treeApi", () => {
 		const schemaFactory = new SchemaFactory(undefined);
 		class Array extends schemaFactory.array("array", schemaFactory.number) {}
 		const view = getView(
-			new TreeViewConfiguration({ schema: Array, enableSchemaValidation: true }),
+			new TreeViewConfiguration({
+				schema: Array,
+				enableSchemaValidation: true,
+			}),
 		);
 		view.initialize([1, 2, 3]);
 
@@ -423,9 +450,15 @@ describe("treeApi", () => {
 	it("can cast to alpha", () => {
 		const schemaFactory = new SchemaFactory(undefined);
 		const view = getView(
-			new TreeViewConfiguration({ schema: schemaFactory.null, enableSchemaValidation: true }),
+			new TreeViewConfiguration({
+				schema: schemaFactory.null,
+				enableSchemaValidation: true,
+			}),
 		);
 		view.initialize(null);
-		assert.equal(asAlpha(view) satisfies TreeViewAlpha<typeof schemaFactory.null>, view);
+		assert.equal(
+			asAlpha(view) satisfies TreeViewAlpha<typeof schemaFactory.null>,
+			view,
+		);
 	});
 });

@@ -144,11 +144,15 @@ export type CompatKind = keyof typeof CompatKind;
 /**
  * @internal
  */
-export const compatKind = nconf.get("fluid:test:compatKind") as CompatKind[] | undefined;
+export const compatKind = nconf.get("fluid:test:compatKind") as
+	| CompatKind[]
+	| undefined;
 /**
  * @internal
  */
-export const compatVersions = nconf.get("fluid:test:compatVersion") as string[] | undefined;
+export const compatVersions = nconf.get("fluid:test:compatVersion") as
+	| string[]
+	| undefined;
 /**
  * @internal
  */
@@ -156,7 +160,9 @@ export const driver = nconf.get("fluid:test:driver") as TestDriverTypes;
 /**
  * @internal
  */
-export const odspEndpointName = nconf.get("fluid:test:odspEndpointName") as OdspEndpoint;
+export const odspEndpointName = nconf.get(
+	"fluid:test:odspEndpointName",
+) as OdspEndpoint;
 /**
  * @internal
  */

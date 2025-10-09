@@ -25,9 +25,10 @@ export type SerializedIdCompressorWithNoSession = SerializedIdCompressor & {
  * The serialized contents of an IdCompressor, suitable for persistence in a summary.
  * @legacy @beta
  */
-export type SerializedIdCompressorWithOngoingSession = SerializedIdCompressor & {
-	readonly _hasLocalState: "1281acae-6d14-47e7-bc92-71c8ee0819cb";
-};
+export type SerializedIdCompressorWithOngoingSession =
+	SerializedIdCompressor & {
+		readonly _hasLocalState: "1281acae-6d14-47e7-bc92-71c8ee0819cb";
+	};
 
 /**
  * Data describing a range of session-local IDs (from a remote or local session).

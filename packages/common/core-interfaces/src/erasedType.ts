@@ -134,7 +134,9 @@ export abstract class ErasedBaseType<out Name = unknown> {
  */
 export abstract class ErasedTypeImplementation<
 	TInterface extends ErasedBaseType,
-> extends ErasedBaseType<TInterface extends ErasedBaseType<infer Name> ? Name : never> {
+> extends ErasedBaseType<
+	TInterface extends ErasedBaseType<infer Name> ? Name : never
+> {
 	protected readonly brand!: (
 		dummy: never,
 	) => TInterface extends ErasedBaseType<infer Name> ? Name : never;
@@ -150,14 +152,21 @@ export abstract class ErasedTypeImplementation<
 		TThis extends abstract new (
 			...args: unknown[]
 		) => object,
-	>(this: TThis, value: ErasedBaseType | InstanceType<TThis>): value is InstanceType<TThis> {
+	>(
+		this: TThis,
+		value: ErasedBaseType | InstanceType<TThis>,
+	): value is InstanceType<TThis> {
 		return Object.prototype.isPrototypeOf.call(this.prototype, value);
 	}
 
 	/**
 	 * Narrows from TInterface to the internal implementation type, throwing if the value is not of the correct type.
 	 */
-	public static narrow<TThis extends abstract new (...args: unknown[]) => object>(
+	public static narrow<
+		TThis extends abstract new (
+			...args: unknown[]
+		) => object,
+	>(
 		this: TThis,
 		value: ErasedBaseType | InstanceType<TThis>,
 	): asserts value is InstanceType<TThis> {

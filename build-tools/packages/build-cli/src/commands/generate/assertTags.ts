@@ -68,7 +68,9 @@ interface PackageData {
 const configName = "assertTagging";
 const searchPlaces = [`${configName}.config.mjs`];
 
-export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> {
+export class TagAssertsCommand extends PackageCommand<
+	typeof TagAssertsCommand
+> {
 	static readonly summary =
 		"Tags asserts by replacing their message with a unique numerical value.";
 
@@ -140,11 +142,15 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 			);
 
 			if (!fs.existsSync(tsconfigPath)) {
-				this.verbose(`Skipping '${pkg.name}' because '${tsconfigPath}' doesn't exist.`);
+				this.verbose(
+					`Skipping '${pkg.name}' because '${tsconfigPath}' doesn't exist.`,
+				);
 				return false;
 			}
 			if (assertTaggingEnabledPaths !== undefined) {
-				if (assertTaggingEnabledPaths.some((regex) => regex.test(tsconfigPath))) {
+				if (
+					assertTaggingEnabledPaths.some((regex) => regex.test(tsconfigPath))
+				) {
 					return true;
 				}
 				this.verbose(
@@ -173,7 +179,9 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 		throw new Error("Method not implemented.");
 	}
 
-	protected override async processPackages(packages: PackageWithKind[]): Promise<string[]> {
+	protected override async processPackages(
+		packages: PackageWithKind[],
+	): Promise<string[]> {
 		const errors: string[] = [];
 
 		const collected: CollectedData = {
@@ -249,7 +257,10 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 		// walk all the files in the project
 		for (const sourceFile of project.getSourceFiles()) {
 			// walk the assert message params in the file
-			for (const msg of getAssertMessageParams(sourceFile, assertionFunctions)) {
+			for (const msg of getAssertMessageParams(
+				sourceFile,
+				assertionFunctions,
+			)) {
 				const nodeKind = msg.getKind();
 				switch (nodeKind) {
 					// If it's a number, validate it's a shortcode
@@ -278,7 +289,10 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 						}
 						collected.shortCodes.set(numLitValue, numLit);
 						// calculate the maximun short code to ensure we don't duplicate
-						collected.maxShortCode = Math.max(numLitValue, collected.maxShortCode);
+						collected.maxShortCode = Math.max(
+							numLitValue,
+							collected.maxShortCode,
+						);
 
 						// If comment already exists, extract it for the mapping file
 						const comments = msg.getTrailingCommentRanges();
@@ -293,10 +307,14 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 							// Only do it if the initial and final characters in the string are the only occurrences of
 							// the double quotes / backticks, to avoid messing up comments that use them in a different
 							// way. If we clean up the assert comments that have them, this code could go away.
-							const shouldRemoveSurroundingQuotes = (input: string): boolean => {
+							const shouldRemoveSurroundingQuotes = (
+								input: string,
+							): boolean => {
 								return (
-									(input.startsWith('"') && input.indexOf('"', 1) === input.length - 1) ||
-									(input.startsWith("`") && input.indexOf("`", 1) === input.length - 1)
+									(input.startsWith('"') &&
+										input.indexOf('"', 1) === input.length - 1) ||
+									(input.startsWith("`") &&
+										input.indexOf("`", 1) === input.length - 1)
 								);
 							};
 
@@ -349,7 +367,9 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 		if (otherErrors.length > 0) {
 			errorMessages.push(
 				`Unsupported argument kind:\n${otherErrors
-					.map((msg) => `${SyntaxKind[msg.getKind()]}: ${getCallsiteString(msg)}`)
+					.map(
+						(msg) => `${SyntaxKind[msg.getKind()]}: ${getCallsiteString(msg)}`,
+					)
 					.join("\n")}`,
 			);
 		}
@@ -365,11 +385,16 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 	 *
 	 * @returns array of error strings.
 	 */
-	private tagAsserts(collected: CollectedData, packageData: PackageData): string[] {
+	private tagAsserts(
+		collected: CollectedData,
+		packageData: PackageData,
+	): string[] {
 		const errors: string[] = [];
 
 		// eslint-disable-next-line unicorn/consistent-function-scoping
-		function isStringLiteral(msg: Node): msg is StringLiteral | NoSubstitutionTemplateLiteral {
+		function isStringLiteral(
+			msg: Node,
+		): msg is StringLiteral | NoSubstitutionTemplateLiteral {
 			const kind = msg.getKind();
 			return (
 				kind === SyntaxKind.StringLiteral ||
@@ -382,7 +407,10 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 		for (const s of packageData.newAssertFiles) {
 			// another policy may have changed the file, so reload it
 			s.refreshFromFileSystemSync();
-			for (const msg of getAssertMessageParams(s, packageData.assertionFunctions)) {
+			for (const msg of getAssertMessageParams(
+				s,
+				packageData.assertionFunctions,
+			)) {
 				// here we only want to look at those messages that are strings,
 				// as we validated existing short codes above
 				if (isStringLiteral(msg)) {
@@ -473,7 +501,11 @@ function writeShortCodeMappingFile(codeToMsgMap: Map<string, string>): void {
 
 export const shortCodeMap = ${JSON.stringify(mapContents, undefined, "\t")};
 `;
-	fs.writeFileSync(path.join(targetFolder, "assertionShortCodesMap.ts"), fileContents, {
-		encoding: "utf8",
-	});
+	fs.writeFileSync(
+		path.join(targetFolder, "assertionShortCodesMap.ts"),
+		fileContents,
+		{
+			encoding: "utf8",
+		},
+	);
 }

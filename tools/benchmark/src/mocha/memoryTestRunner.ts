@@ -90,7 +90,10 @@ export interface IMemoryTestObject extends MemoryTestObjectProps {
 /**
  * @public
  */
-export interface MemoryTestObjectProps extends MochaExclusiveOptions, Titled, BenchmarkDescription {
+export interface MemoryTestObjectProps
+	extends MochaExclusiveOptions,
+		Titled,
+		BenchmarkDescription {
 	/**
 	 * The max time in seconds to run the benchmark.
 	 * This is not a guaranteed immediate stop time.
@@ -254,7 +257,10 @@ function reportMemoryIssue(message: string): void {
  */
 export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 	// Setting to -1 to indicate that baselineMemoryUsage or allowedDeviationBytes variables are not set.
-	validateMemoryBaselineValues(testObject.baselineMemoryUsage, testObject.allowedDeviationBytes);
+	validateMemoryBaselineValues(
+		testObject.baselineMemoryUsage,
+		testObject.allowedDeviationBytes,
+	);
 	const baselineMemoryUsage = testObject.baselineMemoryUsage ?? -1;
 	const allowedDeviationBytes = testObject.allowedDeviationBytes ?? -1;
 
@@ -342,20 +348,15 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 						const heapUsedArray: number[] = [];
 						for (let i = 0; i < sample.before.memoryUsage.length; i++) {
 							heapUsedArray.push(
-								sample.after.memoryUsage[i].heapUsed -
-									sample.before.memoryUsage[i].heapUsed,
+								sample.after.memoryUsage[i].heapUsed - sample.before.memoryUsage[i].heapUsed,
 							);
 						}
-						heapUsedStats = getArrayStatistics(
-							heapUsedArray,
-							args.samplePercentageToUse,
-						);
+						heapUsedStats = getArrayStatistics(heapUsedArray, args.samplePercentageToUse);
 
 						// Break if max elapsed time passed, only if we've reached the min sample count
 						if (
 							runs >= args.minSampleCount &&
-							timer.toSeconds(startTime, timer.now()) >
-								args.maxBenchmarkDurationSeconds
+							timer.toSeconds(startTime, timer.now()) > args.maxBenchmarkDurationSeconds
 						) {
 							break;
 						}

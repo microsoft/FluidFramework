@@ -29,7 +29,11 @@ describe("JsonDomainSchema", () => {
 
 		{
 			// Due to TypeScript restrictions on recursive types, the constructor and be somewhat limiting.
-			const usingConstructor = new JsonAsTree.Array(["a", 0, new JsonAsTree.Array([1])]);
+			const usingConstructor = new JsonAsTree.Array([
+				"a",
+				0,
+				new JsonAsTree.Array([1]),
+			]);
 			// Using `importConcise` can work better for JSON data:
 			const imported = TreeBeta.importConcise(JsonAsTree.Array, ["a", 0, [1]]);
 			assert(Tree.is(imported, JsonAsTree.Array));
@@ -51,11 +55,23 @@ describe("JsonDomainSchema", () => {
 	it("generated TypeScript type validation", () => {
 		// Intellisense shows the JsonObject iterator type like this, which is the desired behavior:
 		type ExpectedJsonObjectIterator = IterableIterator<
-			[string, string | number | boolean | JsonAsTree.JsonObject | JsonAsTree.Array | null]
+			[
+				string,
+				(
+					| string
+					| number
+					| boolean
+					| JsonAsTree.JsonObject
+					| JsonAsTree.Array
+					| null
+				),
+			]
 		>;
 		// Unfortunately the type shows up in a more complicated way in the .d.ts file and API reports.
 		// This test ensures that the type is actually working as expected despite this:
-		type JsonObjectIterator = ReturnType<JsonAsTree.JsonObject[typeof Symbol.iterator]>;
+		type JsonObjectIterator = ReturnType<
+			JsonAsTree.JsonObject[typeof Symbol.iterator]
+		>;
 
 		type _checkObjectIterator = requireTrue<
 			areSafelyAssignable<JsonObjectIterator, ExpectedJsonObjectIterator>

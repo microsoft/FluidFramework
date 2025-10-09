@@ -3,8 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { type ILoader, LoaderHeader } from "@fluidframework/container-definitions/internal";
-import type { FluidObject, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import {
+	type ILoader,
+	LoaderHeader,
+} from "@fluidframework/container-definitions/internal";
+import type {
+	FluidObject,
+	IRequest,
+	IResponse,
+} from "@fluidframework/core-interfaces";
 import { DriverHeader } from "@fluidframework/driver-definitions/internal";
 import { responseToException } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
@@ -57,7 +64,9 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration = {
 /**
  * Returns a function that will create and retrieve a Summarizer.
  */
-export function formCreateSummarizerFn(loader: ILoader): () => Promise<ISummarizer> {
+export function formCreateSummarizerFn(
+	loader: ILoader,
+): () => Promise<ISummarizer> {
 	return async () => {
 		const request: IRequest = {
 			headers: {

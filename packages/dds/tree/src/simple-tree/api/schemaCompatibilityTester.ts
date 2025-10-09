@@ -4,7 +4,10 @@
  */
 
 import type { TreeStoredSchema } from "../../core/index.js";
-import { allowsRepoSuperset, defaultSchemaPolicy } from "../../feature-libraries/index.js";
+import {
+	allowsRepoSuperset,
+	defaultSchemaPolicy,
+} from "../../feature-libraries/index.js";
 
 import type { SchemaCompatibilityStatus } from "./tree.js";
 import { getDiscrepanciesInAllowedContent } from "./discrepancies.js";
@@ -46,7 +49,10 @@ export class SchemaCompatibilityTester {
 		// - fields with more allowed types in the stored schema than in the view schema have out-of-schema "unknown content" adapters
 		let canView = true;
 
-		for (const _discrepancy of getDiscrepanciesInAllowedContent(this.viewSchema, stored)) {
+		for (const _discrepancy of getDiscrepanciesInAllowedContent(
+			this.viewSchema,
+			stored,
+		)) {
 			canView = false;
 			break;
 		}
@@ -58,7 +64,9 @@ export class SchemaCompatibilityTester {
 		// If true, then upgrading has no effect on what can be stored in the document.
 		// TODO: This should likely be changed to indicate up a schema upgrade would be a no-op, including stored schema metadata.
 		const isEquivalent =
-			canView && canUpgrade && allowsRepoSuperset(policy, wouldUpgradeTo, stored);
+			canView &&
+			canUpgrade &&
+			allowsRepoSuperset(policy, wouldUpgradeTo, stored);
 
 		return {
 			canView,

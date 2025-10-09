@@ -17,7 +17,10 @@ import { findPackageOrReleaseGroup } from "../../args.js";
 // eslint-disable-next-line import/no-deprecated
 import { MonoRepoKind, sortVersions } from "../../library/index.js";
 import type { ReleaseGroup, ReleasePackage } from "../../releaseGroups.js";
-import { ReleaseReportBaseCommand, type ReleaseSelectionMode } from "./report.js";
+import {
+	ReleaseReportBaseCommand,
+	type ReleaseSelectionMode,
+} from "./report.js";
 
 const tagRefPrefix = "refs/tags/";
 
@@ -26,8 +29,11 @@ const tagRefPrefix = "refs/tags/";
  *
  * This command is used in CI to determine release information when a new release tag is pushed.
  */
-export default class FromTagCommand extends ReleaseReportBaseCommand<typeof FromTagCommand> {
-	static readonly summary = "Determines release information based on a git tag argument.";
+export default class FromTagCommand extends ReleaseReportBaseCommand<
+	typeof FromTagCommand
+> {
+	static readonly summary =
+		"Determines release information based on a git tag argument.";
 
 	static readonly description =
 		"This command is used in CI to determine release information when a new release tag is pushed.";
@@ -37,7 +43,8 @@ export default class FromTagCommand extends ReleaseReportBaseCommand<typeof From
 	static readonly args = {
 		tag: Args.string({
 			required: true,
-			description: "A git tag that represents a release. May begin with 'refs/tags/'.",
+			description:
+				"A git tag that represents a release. May begin with 'refs/tags/'.",
 		}),
 	} as const;
 
@@ -51,7 +58,8 @@ export default class FromTagCommand extends ReleaseReportBaseCommand<typeof From
 		},
 		{
 			description: "You can include the refs/tags/ part of a tag ref.",
-			command: "<%= config.bin %> <%= command.id %> refs/tags/2.0.0-internal.2.0.2",
+			command:
+				"<%= config.bin %> <%= command.id %> refs/tags/2.0.0-internal.2.0.2",
 		},
 	];
 
@@ -80,7 +88,9 @@ export default class FromTagCommand extends ReleaseReportBaseCommand<typeof From
 
 		const release = this.releaseData[this.releaseGroupName];
 		const versions = sortVersions([...release.versions], "version");
-		const taggedReleaseIndex = versions.findIndex((v) => v.version === version.version);
+		const taggedReleaseIndex = versions.findIndex(
+			(v) => v.version === version.version,
+		);
 		if (taggedReleaseIndex === -1) {
 			this.error(`Release matching version '${version.version}' not found`);
 		}
@@ -123,8 +133,12 @@ export default class FromTagCommand extends ReleaseReportBaseCommand<typeof From
 	 * @param input - A git tag as a string.
 	 * @returns A 3-tuple of the release group, the semver version, and the original tag.
 	 */
-	private async parseTag(input: string): Promise<[MonoRepo | Package, semver.SemVer, string]> {
-		const tag = input.startsWith(tagRefPrefix) ? input.slice(tagRefPrefix.length) : input;
+	private async parseTag(
+		input: string,
+	): Promise<[MonoRepo | Package, semver.SemVer, string]> {
+		const tag = input.startsWith(tagRefPrefix)
+			? input.slice(tagRefPrefix.length)
+			: input;
 		const [rg, ver] = tag.split("_v");
 
 		const version = semver.parse(ver);
@@ -159,7 +173,8 @@ const getReleaseTitle = (
 	releaseType: VersionBumpType,
 ): string => {
 	// eslint-disable-next-line import/no-deprecated
-	const name = releaseGroup === MonoRepoKind.Client ? "Fluid Framework" : releaseGroup;
+	const name =
+		releaseGroup === MonoRepoKind.Client ? "Fluid Framework" : releaseGroup;
 	// e.g. Fluid Framework v2.0.0-internal.4.1.0 (minor)
 	return `${name} v${version.version} (${releaseType})`;
 };

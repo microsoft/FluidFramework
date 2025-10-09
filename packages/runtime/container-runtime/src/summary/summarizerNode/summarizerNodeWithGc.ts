@@ -53,7 +53,10 @@ interface PendingSummaryInfoWithGC extends PendingSummaryInfo {
  *- Adds trackState param to summarize. If trackState is false, it bypasses the SummarizerNode and calls
  * directly into summarizeInternal method.
  */
-export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNodeWithGC {
+export class SummarizerNodeWithGC
+	extends SummarizerNode
+	implements IRootSummarizerNodeWithGC
+{
 	// Tracks the work-in-progress used routes during summary.
 	private wipSerializedUsedRoutes: string | undefined;
 
@@ -99,7 +102,9 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		 */
 		lastSummaryReferenceSequenceNumber?: number,
 		wipSummaryLogger?: ITelemetryBaseLogger,
-		private readonly getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
+		private readonly getGCDataFn?: (
+			fullGC?: boolean,
+		) => Promise<IGarbageCollectionData>,
 		getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
 		/**
 		 * A unique id of this node to be logged when sending telemetry.
@@ -125,7 +130,10 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 
 		this.childNodesBaseGCDetailsP = new LazyPromise(async () => {
 			await this.loadBaseGCDetails();
-			return unpackChildNodesGCDetails({ gcData: this.gcData, usedRoutes: this.usedRoutes });
+			return unpackChildNodesGCDetails({
+				gcData: this.gcData,
+				usedRoutes: this.usedRoutes,
+			});
 		});
 	}
 
@@ -165,7 +173,9 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	 * the previous summary. Else, it gets new GC data from the underlying Fluid object.
 	 * @param fullGC - true to bypass optimizations and force full generation of GC data.
 	 */
-	public async getGCData(fullGC: boolean = false): Promise<IGarbageCollectionData> {
+	public async getGCData(
+		fullGC: boolean = false,
+	): Promise<IGarbageCollectionData> {
 		assert(
 			!this.gcDisabled,
 			0x1b2 /* "Getting GC data should not be called when GC is disabled!" */,
@@ -212,7 +222,11 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 				0x1b4 /* "We should not already be tracking used routes when to track a new summary" */,
 			);
 		}
-		return super.startSummary(referenceSequenceNumber, summaryLogger, latestSummaryRefSeqNum);
+		return super.startSummary(
+			referenceSequenceNumber,
+			summaryLogger,
+			latestSummaryRefSeqNum,
+		);
 	}
 
 	/**
@@ -223,7 +237,9 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	 * @returns ValidateSummaryResult which contains a boolean success indicating whether the validation was successful.
 	 * In case of failure, additional information is returned indicating type of failure and where it was.
 	 */
-	protected validateSummaryCore(parentSkipRecursion: boolean): ValidateSummaryResult {
+	protected validateSummaryCore(
+		parentSkipRecursion: boolean,
+	): ValidateSummaryResult {
 		if (this.wasGCMissed()) {
 			return {
 				success: false,
@@ -266,7 +282,10 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	 * @param parentSkipRecursion - true if the parent of this node skipped recursing the child nodes when summarizing.
 	 * In that case, the children will not have work-in-progress state.
 	 */
-	protected completeSummaryCore(proposalHandle: string, parentSkipRecursion: boolean): void {
+	protected completeSummaryCore(
+		proposalHandle: string,
+		parentSkipRecursion: boolean,
+	): void {
 		let wipSerializedUsedRoutes: string | undefined;
 		// If GC is disabled, don't set wip used routes.
 		if (!this.gcDisabled) {
@@ -310,7 +329,8 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 			const pendingSummaryInfo = this.pendingSummaries.get(proposalHandle);
 			if (pendingSummaryInfo !== undefined) {
 				// If a pending summary exists, it must have used routes since GC is enabled.
-				const summaryNodeWithGC = pendingSummaryInfo as PendingSummaryInfoWithGC;
+				const summaryNodeWithGC =
+					pendingSummaryInfo as PendingSummaryInfoWithGC;
 				if (summaryNodeWithGC.serializedUsedRoutes === undefined) {
 					const error = new LoggingError("MissingGCStateInPendingSummary", {
 						proposalHandle,
@@ -333,7 +353,10 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 			}
 		}
 
-		return super.refreshLatestSummaryFromPending(proposalHandle, referenceSequenceNumber);
+		return super.refreshLatestSummaryFromPending(
+			proposalHandle,
+			referenceSequenceNumber,
+		);
 	}
 
 	/**
@@ -357,19 +380,26 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		config: ISummarizerNodeConfigWithGC = {},
 		getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
 	): ISummarizerNodeWithGC {
-		assert(!this.children.has(id), 0x1b6 /* "Create SummarizerNode child already exists" */);
+		assert(
+			!this.children.has(id),
+			0x1b6 /* "Create SummarizerNode child already exists" */,
+		);
 		/**
 		 * Update the child node's base GC details from this node's current GC details instead of updating from the base
 		 * GC details of this node. This will handle scenarios where the GC details was updated during refresh from
 		 * snapshot and the child node wasn't created then. If a child is created after that, its GC details should be
 		 * the one from the downloaded snapshot and not the base GC details.
 		 */
-		const getChildBaseGCDetailsFn = async (): Promise<IGarbageCollectionDetailsBase> => {
-			const childNodesBaseGCDetails = await this.childNodesBaseGCDetailsP;
-			return childNodesBaseGCDetails.get(id) ?? {};
-		};
+		const getChildBaseGCDetailsFn =
+			async (): Promise<IGarbageCollectionDetailsBase> => {
+				const childNodesBaseGCDetails = await this.childNodesBaseGCDetailsP;
+				return childNodesBaseGCDetails.get(id) ?? {};
+			};
 
-		const createDetails: ICreateChildDetails = this.getCreateDetailsForChild(id, createParam);
+		const createDetails: ICreateChildDetails = this.getCreateDetailsForChild(
+			id,
+			createParam,
+		);
 		const child = new SummarizerNodeWithGC(
 			this.logger,
 			summarizeInternalFn,
@@ -404,7 +434,10 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	 * @param child - The child node whose state is to be updated.
 	 * @param id - Initial id or path part of this node
 	 */
-	protected maybeUpdateChildState(child: SummarizerNodeWithGC, id: string): void {
+	protected maybeUpdateChildState(
+		child: SummarizerNodeWithGC,
+		id: string,
+	): void {
 		super.maybeUpdateChildState(child, id);
 
 		// If GC has run on this node and summarization isn't complete, this.wipSerializedUsedRoutes will be defined.
@@ -416,7 +449,9 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 			// created until this summarization process is completed. This is an optimization to unpack the used routes
 			// only when needed.
 			if (this.wipChildNodesUsedRoutes === undefined) {
-				this.wipChildNodesUsedRoutes = unpackChildNodesUsedRoutes(this.usedRoutes);
+				this.wipChildNodesUsedRoutes = unpackChildNodesUsedRoutes(
+					this.usedRoutes,
+				);
 			}
 			child.updateUsedRoutes(this.wipChildNodesUsedRoutes.get(id) ?? [""]);
 		}
@@ -495,7 +530,8 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 
 		return (
 			this.referenceUsedRoutes === undefined ||
-			JSON.stringify(this.usedRoutes) !== JSON.stringify(this.referenceUsedRoutes)
+			JSON.stringify(this.usedRoutes) !==
+				JSON.stringify(this.referenceUsedRoutes)
 		);
 	}
 }

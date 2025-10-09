@@ -374,9 +374,7 @@ class SocketIoServer implements core.IWebSocketServer {
 				lastPingStartTime = undefined;
 				pingPongDurationsMs.push(latency);
 				// Output telemetry when threshold is reached
-				if (
-					pingPongDurationsMs.length >= this.pingPongLatencyTrackingAggregationThreshold
-				) {
+				if (pingPongDurationsMs.length >= this.pingPongLatencyTrackingAggregationThreshold) {
 					outputPingPongLatencyEvent();
 				}
 			}

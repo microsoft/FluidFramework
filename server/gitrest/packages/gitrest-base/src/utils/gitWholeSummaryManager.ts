@@ -141,10 +141,7 @@ export class GitWholeSummaryManager {
 					this.summaryWriteFeatureFlags,
 				);
 				writeSummaryMetric.setProperty("newDocument", writeSummaryInfo.isNew);
-				writeSummaryMetric.setProperty(
-					"commitSha",
-					writeSummaryInfo.writeSummaryResponse.id,
-				);
+				writeSummaryMetric.setProperty("commitSha", writeSummaryInfo.writeSummaryResponse.id);
 				writeSummaryMetric.success(
 					"GitWholeSummaryManager succeeded in writing container summary",
 				);
@@ -205,15 +202,10 @@ export class GitWholeSummaryManager {
 					lumberjackProperties,
 					error,
 				);
-				deleteSummaryMetric.success(
-					"GitWholeSummaryManager could not find summary to delete",
-				);
+				deleteSummaryMetric.success("GitWholeSummaryManager could not find summary to delete");
 				return;
 			}
-			deleteSummaryMetric.error(
-				"GitWholeSummaryManager failed to delete summary data",
-				error,
-			);
+			deleteSummaryMetric.error("GitWholeSummaryManager failed to delete summary data", error);
 			throw error;
 		}
 	}

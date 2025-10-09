@@ -133,15 +133,23 @@ export async function stressTest(
 	await Promise.all(
 		runnerArgs.map(async (childArgs, index) => {
 			const testUser =
-				testUsers !== undefined ? testUsers[index % testUsers.length] : undefined;
+				testUsers !== undefined
+					? testUsers[index % testUsers.length]
+					: undefined;
 			const username = testUser !== undefined ? testUser.username : undefined;
 			const password = testUser !== undefined ? testUser.password : undefined;
 			const envVar = { ...process.env };
 			if (username !== undefined && password !== undefined) {
 				if (testDriver.endpointName === "odsp") {
-					envVar.login__odsp__test__accounts = createLoginEnv(username, password);
+					envVar.login__odsp__test__accounts = createLoginEnv(
+						username,
+						password,
+					);
 				} else if (testDriver.endpointName === "odsp-df") {
-					envVar.login__odspdf__test__accounts = createLoginEnv(username, password);
+					envVar.login__odspdf__test__accounts = createLoginEnv(
+						username,
+						password,
+					);
 				}
 			}
 			const runnerProcess = child_process.spawn("node", childArgs, {

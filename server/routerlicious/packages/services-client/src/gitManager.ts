@@ -60,7 +60,10 @@ export class GitManager implements IGitManager {
 	/**
 	 * Reads the object with the given ID. We defer to the client implementation to do the actual read.
 	 */
-	public async getCommits(shaOrRef: string, count: number): Promise<resources.ICommitDetails[]> {
+	public async getCommits(
+		shaOrRef: string,
+		count: number,
+	): Promise<resources.ICommitDetails[]> {
 		let sha = shaOrRef;
 
 		// See if the sha is really a ref and convert
@@ -159,7 +162,9 @@ export class GitManager implements IGitManager {
 		return this.createTreeCore(files, 0);
 	}
 
-	public async createCommit(commit: resources.ICreateCommitParams): Promise<resources.ICommit> {
+	public async createCommit(
+		commit: resources.ICreateCommitParams,
+	): Promise<resources.ICommit> {
 		return this.historian.createCommit(commit);
 	}
 
@@ -309,8 +314,8 @@ export class GitManager implements IGitManager {
 				files.entries[i].type === api.TreeEntry.Tree
 					? "tree"
 					: files.entries[i].type === api.TreeEntry.Blob
-					? "blob"
-					: "commit";
+						? "blob"
+						: "commit";
 
 			tree.push({
 				mode: files.entries[i].mode,

@@ -5,7 +5,10 @@
 
 import type { FluidClientVersion, ICodecOptions } from "../../codec/index.js";
 import { SchemaVersion } from "../../core/index.js";
-import { encodeTreeSchema, makeSchemaCodec } from "../../feature-libraries/index.js";
+import {
+	encodeTreeSchema,
+	makeSchemaCodec,
+} from "../../feature-libraries/index.js";
 import {
 	clientVersionToSchemaVersion,
 	type FormatV1,
@@ -13,7 +16,10 @@ import {
 } from "../../feature-libraries/schema-index/index.js";
 import type { JsonCompatible } from "../../util/index.js";
 import type { SchemaUpgrade } from "../core/index.js";
-import { normalizeFieldSchema, type ImplicitFieldSchema } from "../fieldSchema.js";
+import {
+	normalizeFieldSchema,
+	type ImplicitFieldSchema,
+} from "../fieldSchema.js";
 import { toStoredSchema } from "../toStoredSchema.js";
 import { TreeViewConfigurationAlpha } from "./configuration.js";
 
@@ -58,7 +64,9 @@ export function extractPersistedSchema(
 	includeStaged: (upgrade: SchemaUpgrade) => boolean,
 ): JsonCompatible {
 	const stored = toStoredSchema(schema, { includeStaged });
-	const schemaWriteVersion = clientVersionToSchemaVersion(oldestCompatibleClient);
+	const schemaWriteVersion = clientVersionToSchemaVersion(
+		oldestCompatibleClient,
+	);
 	return encodeTreeSchema(stored, schemaWriteVersion);
 }
 

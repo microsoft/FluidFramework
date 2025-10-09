@@ -4,7 +4,10 @@
  */
 
 module.exports = {
-	extends: [require.resolve("@fluidframework/eslint-config-fluid/strict"), "prettier"],
+	extends: [
+		require.resolve("@fluidframework/eslint-config-fluid/strict"),
+		"prettier",
+	],
 
 	parserOptions: {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
@@ -20,7 +23,10 @@ module.exports = {
 			files: ["*.spec.ts", "*.test.ts", "src/test/**"],
 			rules: {
 				// Test files are run in node only so additional node libraries can be used.
-				"import/no-nodejs-modules": ["error", { allow: ["node:assert", "node:process"] }],
+				"import/no-nodejs-modules": [
+					"error",
+					{ allow: ["node:assert", "node:process"] },
+				],
 
 				// Does not work well with describe/it block scoping
 				"unicorn/consistent-function-scoping": "off",

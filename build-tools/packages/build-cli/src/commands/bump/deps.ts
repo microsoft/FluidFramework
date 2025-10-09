@@ -10,7 +10,10 @@ import stripAnsi from "strip-ansi";
 
 import { FluidRepo, MonoRepo } from "@fluidframework/build-tools";
 
-import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../../args.js";
+import {
+	findPackageOrReleaseGroup,
+	packageOrReleaseGroupArg,
+} from "../../args.js";
 import {
 	checkFlags,
 	dependencyUpdateTypeFlag,
@@ -54,7 +57,8 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 		updateType: dependencyUpdateTypeFlag({
 			char: "t",
 			default: "minor",
-			description: "Bump the current version of the dependency according to this bump type.",
+			description:
+				"Bump the current version of the dependency according to this bump type.",
 		}),
 		prerelease: Flags.boolean({
 			dependsOn: ["updateType"],
@@ -89,7 +93,8 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 		{
 			description:
 				"Bump dependencies on @fluidframework/build-common to the latest release version across all release groups.",
-			command: "<%= config.bin %> <%= command.id %> @fluidframework/build-common -t latest",
+			command:
+				"<%= config.bin %> <%= command.id %> @fluidframework/build-common -t latest",
 		},
 		{
 			description:
@@ -100,7 +105,8 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 		{
 			description:
 				"Bump dependencies on packages in the server release group to the greatest released version in the client release group. Include pre-release versions.",
-			command: "<%= config.bin %> <%= command.id %> server -g client -t greatest --prerelease",
+			command:
+				"<%= config.bin %> <%= command.id %> server -g client -t greatest --prerelease",
 		},
 		{
 			description:
@@ -129,10 +135,15 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 		}
 
 		if (flags.testMode) {
-			this.log(chalk.yellowBright(`Running in test mode. No changes will be made.`));
+			this.log(
+				chalk.yellowBright(`Running in test mode. No changes will be made.`),
+			);
 		}
 
-		const rgOrPackage = findPackageOrReleaseGroup(args.package_or_release_group, context);
+		const rgOrPackage = findPackageOrReleaseGroup(
+			args.package_or_release_group,
+			context,
+		);
 		if (rgOrPackage === undefined) {
 			this.error(`Package not found: ${args.package_or_release_group}`);
 		}
@@ -141,7 +152,10 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 		const branchName = await gitRepo.getCurrentBranchName();
 
 		// eslint-disable-next-line import/no-deprecated
-		if (args.package_or_release_group === MonoRepoKind.Server && branchName !== "next") {
+		if (
+			args.package_or_release_group === MonoRepoKind.Server &&
+			branchName !== "next"
+		) {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const { confirmed } = await prompts({
 				type: "confirm",
@@ -178,7 +192,9 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 			);
 		} else {
 			if (rgOrPackage.packageJson.private === true) {
-				this.error(`${rgOrPackage.name} is a private package; ignoring.`, { exit: 1 });
+				this.error(`${rgOrPackage.name} is a private package; ignoring.`, {
+					exit: 1,
+				});
 			}
 			depsToUpdate.push(rgOrPackage.name);
 
@@ -210,7 +226,10 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 		this.logHr();
 		this.log("");
 
-		if (!isDependencyUpdateType(flags.updateType) || flags.updateType === undefined) {
+		if (
+			!isDependencyUpdateType(flags.updateType) ||
+			flags.updateType === undefined
+		) {
 			this.error(`Unknown dependency update type: ${flags.updateType}`);
 		}
 
@@ -220,7 +239,9 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 						context,
 						flags.releaseGroup ?? flags.package, // if undefined the whole repo will be checked
 						depsToUpdate,
-						rgOrPackage instanceof MonoRepo ? rgOrPackage.releaseGroup : undefined,
+						rgOrPackage instanceof MonoRepo
+							? rgOrPackage.releaseGroup
+							: undefined,
 						/* prerelease */ flags.prerelease,
 						/* writeChanges */ !flags.testMode,
 						this.logger,
@@ -229,7 +250,9 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 						context,
 						flags.releaseGroup ?? flags.package, // if undefined the whole repo will be checked
 						depsToUpdate,
-						rgOrPackage instanceof MonoRepo ? rgOrPackage.releaseGroup : undefined,
+						rgOrPackage instanceof MonoRepo
+							? rgOrPackage.releaseGroup
+							: undefined,
 						flags.updateType,
 						/* prerelease */ flags.prerelease,
 						/* writeChanges */ !flags.testMode,
@@ -273,7 +296,9 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 			);
 
 			for (const [pkgName, ver] of Object.entries(updatedDependencies)) {
-				changedVersionsString.push(indentString(`${pkgName}: ${chalk.bold(ver)}`));
+				changedVersionsString.push(
+					indentString(`${pkgName}: ${chalk.bold(ver)}`),
+				);
 			}
 
 			const changedVersionMessage = changedVersionsString.join("\n");
@@ -298,7 +323,9 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 					`You can now create a PR for branch ${bumpBranch} targeting ${gitRepo.originalBranchName}`,
 				);
 			} else {
-				this.warning(`Skipping commit. You'll need to manually commit changes.`);
+				this.warning(
+					`Skipping commit. You'll need to manually commit changes.`,
+				);
 			}
 
 			this.finalMessages.push(

@@ -81,7 +81,7 @@ export class Throttler implements IThrottler {
 								lumberjackProperties,
 							);
 						}
-				  }
+					}
 				: undefined,
 		});
 		this.countDeltaMap = new LRUCache(cacheOptions);

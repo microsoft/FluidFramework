@@ -36,14 +36,20 @@ const updateTabForId = (id: string) => {
 };
 
 const urlResolver = new LocalResolver();
-const localServer = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory());
-const codeLoader = new StaticCodeLoader(new GroceryListContainerRuntimeFactory());
+const localServer = LocalDeltaConnectionServer.create(
+	new LocalSessionStorageDbFactory(),
+);
+const codeLoader = new StaticCodeLoader(
+	new GroceryListContainerRuntimeFactory(),
+);
 
 /**
  * This is a helper function for loading the page. It's required because getting the Fluid Container
  * requires making async calls.
  */
-export async function createContainerAndRenderInElement(element: HTMLDivElement) {
+export async function createContainerAndRenderInElement(
+	element: HTMLDivElement,
+) {
 	let id: string;
 	let groceryList: ISuggestionGroceryList;
 

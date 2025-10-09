@@ -84,4 +84,7 @@ export {
 	SharedSegmentSequenceRevertible,
 	SharedSegmentSequenceUndoRedoHandler,
 } from "./sequenceHandler.js";
-export { type IRevertible, UndoRedoStackManager } from "./undoRedoStackManager.js";
+export {
+	type IRevertible,
+	UndoRedoStackManager,
+} from "./undoRedoStackManager.js";

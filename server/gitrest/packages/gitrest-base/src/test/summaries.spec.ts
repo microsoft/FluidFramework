@@ -72,7 +72,10 @@ function permuteFlags(obj: Record<string, boolean>): Record<string, boolean>[] {
 	return permutations;
 }
 
-function replaceTestShas<T>(obj: T, shasToReplacements: { sha: string; replacement: string }[]): T {
+function replaceTestShas<T>(
+	obj: T,
+	shasToReplacements: { sha: string; replacement: string }[],
+): T {
 	let result: string = JSON.stringify(obj);
 	for (const { sha, replacement } of shasToReplacements) {
 		result = result.replaceAll(sha, replacement);
@@ -163,7 +166,9 @@ const getFsManagerFactory = (
 			enableAutoPipelining: false,
 			enableOfflineQueue: true,
 		};
-		const testRedisClientConnectionManager = new TestRedisClientConnectionManager(redisOptions);
+		const testRedisClientConnectionManager = new TestRedisClientConnectionManager(
+			redisOptions,
+		);
 		const redisfsManagerFactory = new RedisFsManagerFactory(
 			redisConfig,
 			testRedisClientConnectionManager,
@@ -462,18 +467,17 @@ testFileSystems.forEach((fileSystem) => {
 					"Later initial summary read response should match expected initial summary response.",
 				);
 
-				const firstServiceContainerWriteResponse =
-					await getWholeSummaryManager().writeSummary(
-						// Replace the referenced channel summary with the one we just wrote.
-						// This matters when low-io write is enabled, because it alters how the tree is stored.
-						replaceTestShas(ElaborateFirstServiceContainerPayload, [
-							{
-								sha: ElaborateFirstContainerResult.id,
-								replacement: firstContainerWriteResponse.writeSummaryResponse.id,
-							},
-						]),
-						false,
-					);
+				const firstServiceContainerWriteResponse = await getWholeSummaryManager().writeSummary(
+					// Replace the referenced channel summary with the one we just wrote.
+					// This matters when low-io write is enabled, because it alters how the tree is stored.
+					replaceTestShas(ElaborateFirstServiceContainerPayload, [
+						{
+							sha: ElaborateFirstContainerResult.id,
+							replacement: firstContainerWriteResponse.writeSummaryResponse.id,
+						},
+					]),
+					false,
+				);
 				assert.strictEqual(
 					firstServiceContainerWriteResponse.isNew,
 					false,
@@ -595,10 +599,7 @@ testFileSystems.forEach((fileSystem) => {
 					// Validate that we can delete the summary again.
 					assert.doesNotReject(
 						async () =>
-							getWholeSummaryManager().deleteSummary(
-								fsManager,
-								false /* softDelete */,
-							),
+							getWholeSummaryManager().deleteSummary(fsManager, false /* softDelete */),
 						"Deleting a deleted summary should not throw an error.",
 					);
 				});
@@ -652,10 +653,7 @@ testFileSystems.forEach((fileSystem) => {
 					// Validate that we can hard-delete the soft-deleted summary.
 					assert.doesNotReject(
 						async () =>
-							getWholeSummaryManager().deleteSummary(
-								fsManager,
-								false /* softDelete */,
-							),
+							getWholeSummaryManager().deleteSummary(fsManager, false /* softDelete */),
 						"Deleting a deleted summary should not throw an error.",
 					);
 					await assert.rejects(

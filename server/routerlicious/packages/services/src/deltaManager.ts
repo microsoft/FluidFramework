@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { type ISequencedDocumentMessage, ScopeType } from "@fluidframework/protocol-definitions";
+import {
+	type ISequencedDocumentMessage,
+	ScopeType,
+} from "@fluidframework/protocol-definitions";
 import { BasicRestWrapper } from "@fluidframework/server-services-client";
 import type { IDeltaService, ITenantManager } from "@fluidframework/server-services-core";
 import { getGlobalTelemetryContext } from "@fluidframework/server-services-telemetry";

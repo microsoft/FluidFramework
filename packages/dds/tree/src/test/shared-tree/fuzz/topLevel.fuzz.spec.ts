@@ -18,7 +18,11 @@ import {
 	SharedTreeFuzzTestFactory,
 } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
-import { baseTreeModel, optimizedForestTreeModel, runsPerBatch } from "./baseModel.js";
+import {
+	baseTreeModel,
+	optimizedForestTreeModel,
+	runsPerBatch,
+} from "./baseModel.js";
 
 const baseOptions: Partial<DDSFuzzSuiteOptions> = {
 	numberOfClients: 3,

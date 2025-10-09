@@ -62,7 +62,9 @@ import { SharedStringClass } from "../sharedString.js";
 		};
 
 		beforeEach(async () => {
-			containerRuntimeFactory = new MockContainerRuntimeFactory(testConfig.options);
+			containerRuntimeFactory = new MockContainerRuntimeFactory(
+				testConfig.options,
+			);
 			[sharedString1, containerRuntime1] = await createSharedString(
 				"shared-string-1",
 				containerRuntimeFactory,

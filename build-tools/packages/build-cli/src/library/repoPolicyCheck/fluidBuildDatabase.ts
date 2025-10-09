@@ -74,7 +74,9 @@ function flubOutput(
 			if (type === undefined) {
 				type = fileType;
 			} else if (type !== fileType) {
-				throw new Error(`${pkg.name} "${commandLine}" produces both CommonJS and ESM output`);
+				throw new Error(
+					`${pkg.name} "${commandLine}" produces both CommonJS and ESM output`,
+				);
 			}
 		}
 	}
@@ -106,7 +108,9 @@ function tscModuleType(
 			if (commandLine.startsWith("fluid-tsc module")) {
 				return "ESM";
 			}
-			throw new Error(`fluid-tsc package type not recognized in "${commandLine}"`);
+			throw new Error(
+				`fluid-tsc package type not recognized in "${commandLine}"`,
+			);
 		}
 
 		return pkg.packageJson.type === "module" ? "ESM" : "CommonJS";
@@ -140,7 +144,9 @@ function tscOutput(
 
 	const parsedCommand = tscUtils.parseCommandLine(commandLine);
 	if (!parsedCommand) {
-		throw new Error(`Error parsing ${pkg.name} tsc command line: ${commandLine}`);
+		throw new Error(
+			`Error parsing ${pkg.name} tsc command line: ${commandLine}`,
+		);
 	}
 	const configFile = tscUtils.findConfigFile(packageDir, parsedCommand);
 	const configJson = tscUtils.readConfigFile(configFile) as TsConfigJson;
@@ -168,7 +174,9 @@ function tscOutput(
 
 	const { module } = options;
 	if (module === undefined) {
-		throw new Error(`${pkg.name} "${commandLine}" tsc compilerOptions.module not specified`);
+		throw new Error(
+			`${pkg.name} "${commandLine}" tsc compilerOptions.module not specified`,
+		);
 	}
 	const type = tscModuleType(pkg, commandLine, ts.ModuleKind[module]);
 
@@ -180,7 +188,10 @@ function tscOutput(
 	const outDir = options.outDir ?? ".";
 	const inputRegex = /(?:\.d)?(\.[cm]?ts)$/;
 	const files = fileNames.map((relSrcPath) => {
-		const relOutPath = path.relative(rootDir, relSrcPath.replace(inputRegex, `.d$1`));
+		const relOutPath = path.relative(
+			rootDir,
+			relSrcPath.replace(inputRegex, `.d$1`),
+		);
 		return path.resolve(packageDir, outDir, relOutPath);
 	});
 
@@ -201,9 +212,9 @@ const generationCommands: Partial<
 			| undefined
 	>
 > = {
-	"flub": flubOutput,
+	flub: flubOutput,
 	"fluid-tsc": tscOutput,
-	"tsc": tscOutput,
+	tsc: tscOutput,
 };
 
 /**
@@ -237,10 +248,7 @@ export class FluidBuildDatabase {
 		packageGroup: ReadonlyMap<PackageName, Package>,
 		packageName: PackageName,
 		script: Script,
-		ignorePackage?: (packageInfo: {
-			name: string;
-			version: string;
-		}) => boolean,
+		ignorePackage?: (packageInfo: { name: string; version: string }) => boolean,
 	): BuildScript[][] {
 		const pkg = packageGroup.get(packageName);
 		if (pkg === undefined) {
@@ -249,9 +257,13 @@ export class FluidBuildDatabase {
 
 		this.loadPackageAndDependencies(packageGroup, packageName);
 
-		const localBuildScript = this.packageBuildScripts.get(packageName)?.get(script);
+		const localBuildScript = this.packageBuildScripts
+			.get(packageName)
+			?.get(script);
 		if (localBuildScript === undefined) {
-			throw new Error(`${packageName}#${script} is not a recognized build script`);
+			throw new Error(
+				`${packageName}#${script} is not a recognized build script`,
+			);
 		}
 
 		const predecessors: BuildScript[][] = [];
@@ -265,7 +277,10 @@ export class FluidBuildDatabase {
 			if (depBuildScripts !== undefined) {
 				const possibleScriptPredecessors: BuildScript[] = [];
 				for (const [depScript, { moduleType }] of depBuildScripts.entries()) {
-					if (moduleType === undefined || moduleType === localBuildScript.moduleType) {
+					if (
+						moduleType === undefined ||
+						moduleType === localBuildScript.moduleType
+					) {
 						possibleScriptPredecessors.push({
 							packageName: depPackageName,
 							script: depScript,
@@ -330,11 +345,18 @@ export class FluidBuildDatabase {
 			if (commands === undefined) {
 				continue;
 			}
-			const source: BuildScript = { packageName, script, moduleType: undefined };
+			const source: BuildScript = {
+				packageName,
+				script,
+				moduleType: undefined,
+			};
 			const scriptCommandLines = commands.split("&&");
 			for (const scriptCommandLine of scriptCommandLines) {
 				const scriptCommand = scriptCommandLine.split(" ")[0];
-				const outputs = generationCommands[scriptCommand]?.(pkg, scriptCommandLine);
+				const outputs = generationCommands[scriptCommand]?.(
+					pkg,
+					scriptCommandLine,
+				);
 				if (outputs === undefined) {
 					// command not known or ignored
 					continue;
@@ -344,7 +366,10 @@ export class FluidBuildDatabase {
 
 				// Update source moduleType
 				if (outputs.type !== undefined) {
-					if (source.moduleType !== undefined && outputs.type !== source.moduleType) {
+					if (
+						source.moduleType !== undefined &&
+						outputs.type !== source.moduleType
+					) {
 						throw new Error(
 							`${packageName} ${script} cumulatively produces both CommonJS and ESM output`,
 						);

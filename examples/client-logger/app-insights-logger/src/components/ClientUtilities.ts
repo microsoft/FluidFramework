@@ -5,7 +5,10 @@
 
 import { createLogger } from "@fluidframework/app-insights-logger/beta";
 import { ConnectionState } from "@fluidframework/container-loader";
-import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
+import type {
+	ContainerSchema,
+	IFluidContainer,
+} from "@fluidframework/fluid-static";
 import {
 	TinyliciousClient,
 	type TinyliciousContainerServices,
@@ -126,7 +129,11 @@ export async function loadExistingFluidContainer(
 	console.log("Loading existing container...");
 	let loadContainerResult: ContainerLoadResult;
 	try {
-		loadContainerResult = await client.getContainer(containerId, containerSchema, "2");
+		loadContainerResult = await client.getContainer(
+			containerId,
+			containerSchema,
+			"2",
+		);
 	} catch (error) {
 		console.error(`Encountered error loading Fluid container: "${error}".`);
 		throw error;

@@ -7,9 +7,15 @@ import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IHostLoader } from "@fluidframework/container-definitions/internal";
-import { asLegacyAlpha, ContainerAlpha } from "@fluidframework/container-loader/internal";
+import {
+	asLegacyAlpha,
+	ContainerAlpha,
+} from "@fluidframework/container-loader/internal";
 import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime/internal";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import {
+	ConfigTypes,
+	IConfigProviderBase,
+} from "@fluidframework/core-interfaces";
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import type {
 	ISequenceIntervalCollection,
@@ -41,7 +47,11 @@ const assertIntervals = (
 			0,
 			sharedString.getLength() - 1,
 		);
-		assert.deepEqual(actual, overlapping, "Interval search returned inconsistent results");
+		assert.deepEqual(
+			actual,
+			overlapping,
+			"Interval search returned inconsistent results",
+		);
 	}
 	assert.strictEqual(
 		actual.length,
@@ -64,8 +74,12 @@ describeCompat(
 	(getTestObjectProvider, apis) => {
 		const { SharedString } = apis.dds;
 
-		const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
-		const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+		const registry: ChannelFactoryRegistry = [
+			[stringId, SharedString.getFactory()],
+		];
+		const configProvider = (
+			settings: Record<string, ConfigTypes>,
+		): IConfigProviderBase => ({
 			getRawConfig: (name: string): ConfigTypes => settings[name],
 		});
 
@@ -101,8 +115,11 @@ describeCompat(
 
 		beforeEach(async () => {
 			provider = getTestObjectProvider();
-			container1 = asLegacyAlpha(await provider.makeTestContainer(testContainerConfig));
-			dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
+			container1 = asLegacyAlpha(
+				await provider.makeTestContainer(testContainerConfig),
+			);
+			dataObject1 =
+				await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 			sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
 			sharedString1.insertText(0, "hello world");
 			collection1 = sharedString1.getIntervalCollection(collectionId);
@@ -123,7 +140,10 @@ describeCompat(
 			const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
 
 			[...Array(30).keys()].map((i) =>
-				dataStore.root.set(`make sure csn is > 1 so it doesn't hide bugs ${i}`, i),
+				dataStore.root.set(
+					`make sure csn is > 1 so it doesn't hide bugs ${i}`,
+					i,
+				),
 			);
 
 			await provider.ensureSynchronized();
@@ -134,18 +154,23 @@ describeCompat(
 			assert(deltaManagerFull.outbound.paused);
 
 			// the "callback" portion of the original e2e test
-			const sharedString = await dataStore.getSharedObject<SharedString>(stringId);
+			const sharedString =
+				await dataStore.getSharedObject<SharedString>(stringId);
 			const collection = sharedString.getIntervalCollection(collectionId);
 			collection.change(id, { start: 3, end: 8 });
 
-			const pendingState: string | undefined = await container.getPendingLocalState();
+			const pendingState: string | undefined =
+				await container.getPendingLocalState();
 			container.close();
 			provider.opProcessingController.resumeProcessing();
 			assert.ok(pendingState);
 
-			container1 = asLegacyAlpha(await provider.loadTestContainer(testContainerConfig));
+			container1 = asLegacyAlpha(
+				await provider.loadTestContainer(testContainerConfig),
+			);
 			await waitForContainerConnection(container1);
-			dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
+			dataObject1 =
+				await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 			sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
 			collection1 = sharedString1.getIntervalCollection(collectionId);
 			await provider.ensureSynchronized();
@@ -153,7 +178,8 @@ describeCompat(
 
 			let container2 = await loader.resolve({ url }, pendingState);
 			await waitForContainerConnection(container1);
-			dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
+			dataObject2 =
+				await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 			sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
 			collection2 = sharedString2.getIntervalCollection(collectionId);
 			await provider.ensureSynchronized();
@@ -164,7 +190,8 @@ describeCompat(
 
 			// reload the container and verify that the above change takes effect
 			container2 = await provider.loadTestContainer(testContainerConfig);
-			dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
+			dataObject2 =
+				await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 			sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
 			collection2 = sharedString2.getIntervalCollection(collectionId);
 

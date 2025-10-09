@@ -8,7 +8,10 @@ import type {
 	IPublicClientConfig,
 	TokenRequestCredentials,
 } from "@fluidframework/odsp-doclib-utils/internal";
-import { getFetchTokenUrl, unauthPostAsync } from "@fluidframework/odsp-doclib-utils/internal";
+import {
+	getFetchTokenUrl,
+	unauthPostAsync,
+} from "@fluidframework/odsp-doclib-utils/internal";
 
 import type { TokenResponse } from "../interfaces.js";
 import type { IOdspTokenProvider } from "../token.js";
@@ -25,8 +28,12 @@ export class OdspTestTokenProvider implements IOdspTokenProvider {
 		this.creds = credentials;
 	}
 
-	public async fetchWebsocketToken(siteUrl: string, refresh: boolean): Promise<TokenResponse> {
-		const pushScope = "offline_access https://pushchannel.1drv.ms/PushChannel.ReadWrite.All";
+	public async fetchWebsocketToken(
+		siteUrl: string,
+		refresh: boolean,
+	): Promise<TokenResponse> {
+		const pushScope =
+			"offline_access https://pushchannel.1drv.ms/PushChannel.ReadWrite.All";
 		const tokens = await this.fetchTokens(siteUrl, pushScope);
 		return {
 			fromCache: false,
@@ -34,7 +41,10 @@ export class OdspTestTokenProvider implements IOdspTokenProvider {
 		};
 	}
 
-	public async fetchStorageToken(siteUrl: string, refresh: boolean): Promise<TokenResponse> {
+	public async fetchStorageToken(
+		siteUrl: string,
+		refresh: boolean,
+	): Promise<TokenResponse> {
 		const sharePointScopes = `${siteUrl}/Container.Selected`;
 		const tokens = await this.fetchTokens(siteUrl, sharePointScopes);
 		return {
@@ -72,7 +82,10 @@ export class OdspTestTokenProvider implements IOdspTokenProvider {
 		const parsedResponse = (await response.json()) as Record<string, unknown>;
 
 		const accessToken = parsedResponse.access_token;
-		assert(accessToken !== undefined, 'Response did not include "access_token".');
+		assert(
+			accessToken !== undefined,
+			'Response did not include "access_token".',
+		);
 		assert(
 			typeof accessToken === "string",
 			'"access_token" was malformed. Expected a string.',

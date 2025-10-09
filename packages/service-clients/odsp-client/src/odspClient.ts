@@ -85,8 +85,13 @@ const odspClientFeatureGates = {
  * @param baseConfigProvider - The base config provider to wrap
  * @returns A new config provider with the appropriate defaults applied underneath the given provider
  */
-function wrapConfigProvider(baseConfigProvider?: IConfigProviderBase): IConfigProviderBase {
-	return wrapConfigProviderWithDefaults(baseConfigProvider, odspClientFeatureGates);
+function wrapConfigProvider(
+	baseConfigProvider?: IConfigProviderBase,
+): IConfigProviderBase {
+	return wrapConfigProviderWithDefaults(
+		baseConfigProvider,
+		odspClientFeatureGates,
+	);
 }
 
 /**
@@ -105,8 +110,10 @@ export class OdspClient {
 		this.connectionConfig = properties.connection;
 		this.logger = properties.logger;
 		this.documentServiceFactory = new OdspDocumentServiceFactory(
-			async (options) => getStorageToken(options, this.connectionConfig.tokenProvider),
-			async (options) => getWebsocketToken(options, this.connectionConfig.tokenProvider),
+			async (options) =>
+				getStorageToken(options, this.connectionConfig.tokenProvider),
+			async (options) =>
+				getWebsocketToken(options, this.connectionConfig.tokenProvider),
 		);
 
 		this.urlResolver = new OdspDriverUrlResolver();
@@ -129,7 +136,10 @@ export class OdspClient {
 			},
 		});
 
-		const fluidContainer = await this.createFluidContainer(container, this.connectionConfig);
+		const fluidContainer = await this.createFluidContainer(
+			container,
+			this.connectionConfig,
+		);
 
 		const services = await this.getContainerServices(container);
 
@@ -150,7 +160,10 @@ export class OdspClient {
 			itemId: id,
 			dataStorePath: "",
 		});
-		const container = await loadExistingContainer({ ...loaderProps, request: { url } });
+		const container = await loadExistingContainer({
+			...loaderProps,
+			request: { url },
+		});
 
 		const fluidContainer = await createFluidContainer({
 			container,
@@ -209,7 +222,9 @@ export class OdspClient {
 				odspProps?.fileName ?? uuid(),
 			);
 			if (container.attachState !== AttachState.Detached) {
-				throw new Error("Cannot attach container. Container is not in detached state");
+				throw new Error(
+					"Cannot attach container. Container is not in detached state",
+				);
 			}
 			await container.attach(createNewRequest);
 
@@ -231,7 +246,9 @@ export class OdspClient {
 		return fluidContainer;
 	}
 
-	private async getContainerServices(container: IContainer): Promise<IOdspContainerServices> {
+	private async getContainerServices(
+		container: IContainer,
+	): Promise<IOdspContainerServices> {
 		return new OdspContainerServices(container);
 	}
 }

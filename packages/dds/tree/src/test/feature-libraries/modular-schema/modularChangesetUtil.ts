@@ -110,7 +110,10 @@ interface BuildArgs {
 	revisions?: RevisionInfo[];
 }
 
-function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): ModularChangeset {
+function build(
+	args: BuildArgs,
+	...fields: FieldChangesetDescription[]
+): ModularChangeset {
 	const nodeChanges: ChangeAtomIdBTree<NodeChangeset> = newTupleBTree();
 	const nodeToParent: ChangeAtomIdBTree<FieldId> = newTupleBTree();
 	const crossFieldKeys: CrossFieldKeyTable = newCrossFieldKeyTable();
@@ -177,7 +180,9 @@ function fieldChangeMapFromDescription(
 			field.changeset,
 		);
 
-		for (const { key, count } of changeHandler.getCrossFieldKeys(fieldChangeset)) {
+		for (const { key, count } of changeHandler.getCrossFieldKeys(
+			fieldChangeset,
+		)) {
 			crossFieldKeys.set(key, count, fieldId);
 		}
 
@@ -228,7 +233,8 @@ function addNodeToField(
 	return changeHandler.rebaser.compose(
 		fieldWithChange,
 		fieldChangeset,
-		(node1, node2) => node1 ?? node2 ?? assert.fail("Should not compose two undefined nodes"),
+		(node1, node2) =>
+			node1 ?? node2 ?? assert.fail("Should not compose two undefined nodes"),
 		idAllocator,
 		dummyCrossFieldManager,
 		dummyRevisionMetadata,
@@ -253,8 +259,9 @@ const dummyRevisionMetadata: RevisionMetadataSource = {
 };
 
 export function removeAliases(changeset: ModularChangeset): ModularChangeset {
-	const updatedNodeToParent = changeset.nodeToParent.mapValues((_field, [revision, localId]) =>
-		getParentFieldId(changeset, { revision, localId }),
+	const updatedNodeToParent = changeset.nodeToParent.mapValues(
+		(_field, [revision, localId]) =>
+			getParentFieldId(changeset, { revision, localId }),
 	);
 
 	const updatedCrossFieldKeys: CrossFieldKeyTable = newCrossFieldKeyTable();

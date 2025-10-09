@@ -47,7 +47,8 @@ export function getW3CData(url: string, initiatorType: string) {
 	let w3cStartTime: number | undefined; // W3C Start time = fetchStart time
 
 	// getEntriesByType is only available in browser performance object
-	const resources1 = globalThis.performance.getEntriesByType?.("resource") ?? [];
+	const resources1 =
+		globalThis.performance.getEntriesByType?.("resource") ?? [];
 	// Usually the latest fetch call is to the end of resources, so we start from the end.
 	for (let i = resources1.length - 1; i > 0; i--) {
 		const indResTime = resources1[i] as PerformanceResourceTiming;
@@ -70,7 +71,9 @@ export function getW3CData(url: string, initiatorType: string) {
 					? indResTime.responseEnd - indResTime.responseStart
 					: undefined;
 			fetchStartToResponseEndTime =
-				indResTime.fetchStart > 0 ? indResTime.responseEnd - indResTime.fetchStart : undefined;
+				indResTime.fetchStart > 0
+					? indResTime.responseEnd - indResTime.fetchStart
+					: undefined;
 			reqStartToResponseEndTime =
 				indResTime.requestStart > 0
 					? indResTime.responseEnd - indResTime.requestStart
@@ -145,7 +148,9 @@ export function validateMessages(
 				details: JSON.stringify({
 					validLength: messages.length,
 					lastValidOpSeqNumber:
-						messages.length > 0 ? messages[messages.length - 1].sequenceNumber : undefined,
+						messages.length > 0
+							? messages[messages.length - 1].sequenceNumber
+							: undefined,
 					strict,
 				}),
 			});

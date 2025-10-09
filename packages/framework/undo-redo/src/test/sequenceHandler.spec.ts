@@ -18,9 +18,15 @@ import { UndoRedoStackManager } from "../undoRedoStackManager.js";
 const text =
 	"The SharedSegmentSequenceRevertible does the heavy lifting of tracking and reverting changes on the underlying SharedSegmentSequence. This is accomplished via TrackingGroup objects.";
 
-function insertTextAsChunks(sharedString: SharedString, targetLength = text.length): number {
+function insertTextAsChunks(
+	sharedString: SharedString,
+	targetLength = text.length,
+): number {
 	let chunks = 0;
-	while (sharedString.getLength() < targetLength && sharedString.getLength() < text.length) {
+	while (
+		sharedString.getLength() < targetLength &&
+		sharedString.getLength() < text.length
+	) {
 		const len = (sharedString.getLength() % 13) + 1;
 		sharedString.insertText(
 			sharedString.getLength(),
@@ -30,9 +36,15 @@ function insertTextAsChunks(sharedString: SharedString, targetLength = text.leng
 	}
 	return chunks;
 }
-function deleteTextByChunk(sharedString: SharedString, targetLength = 0): number {
+function deleteTextByChunk(
+	sharedString: SharedString,
+	targetLength = 0,
+): number {
 	let chunks = 0;
-	while (sharedString.getLength() > targetLength && sharedString.getLength() > 0) {
+	while (
+		sharedString.getLength() > targetLength &&
+		sharedString.getLength() > 0
+	) {
 		const len = (sharedString.getLength() % 17) + 1;
 		sharedString.removeText(
 			Math.max(sharedString.getLength() - len, 0),

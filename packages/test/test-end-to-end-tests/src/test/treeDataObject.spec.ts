@@ -81,7 +81,9 @@ describeCompat("TreeDataObject", "NoCompat", (getTestObjectProvider) => {
 		ContainerRuntimeFactoryWithDefaultDataStore,
 		{
 			defaultFactory: TestTreeDataObject.getFactory(),
-			registryEntries: [[TestTreeDataObject.type, TestTreeDataObject.getFactory()]],
+			registryEntries: [
+				[TestTreeDataObject.type, TestTreeDataObject.getFactory()],
+			],
 			runtimeOptions,
 		},
 	);
@@ -90,7 +92,8 @@ describeCompat("TreeDataObject", "NoCompat", (getTestObjectProvider) => {
 		const provider = getTestObjectProvider();
 		const container = await provider.createContainer(runtimeFactory);
 
-		const dataObject = await getContainerEntryPointBackCompat<TestTreeDataObject>(container);
+		const dataObject =
+			await getContainerEntryPointBackCompat<TestTreeDataObject>(container);
 		assert.deepEqual(dataObject.treeView.root.foo, "Hello world");
 	});
 

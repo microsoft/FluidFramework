@@ -23,7 +23,10 @@ import type { ConsensusRegisterCollection } from "../consensusRegisterCollection
 import { ConsensusRegisterCollectionFactory } from "../consensusRegisterCollectionFactory.js";
 import { IConsensusRegisterCollection } from "../interfaces.js";
 
-function createConnectedCollection(id: string, runtimeFactory: MockContainerRuntimeFactory) {
+function createConnectedCollection(
+	id: string,
+	runtimeFactory: MockContainerRuntimeFactory,
+) {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
@@ -53,7 +56,8 @@ function createCollectionForReconnection(
 	runtimeFactory: MockContainerRuntimeFactoryForReconnection,
 ) {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
+	const containerRuntime =
+		runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
@@ -108,12 +112,28 @@ describe("ConsensusRegisterCollection", () => {
 
 			it("Change events emit the right key/value", async () => {
 				crc.on("atomicChanged", (key: string, value: any, local: boolean) => {
-					assert.strictEqual(key, "key1", "atomicChanged event emitted the wrong key");
-					assert.strictEqual(value, "val1", "atomicChanged event emitted the wrong value");
+					assert.strictEqual(
+						key,
+						"key1",
+						"atomicChanged event emitted the wrong key",
+					);
+					assert.strictEqual(
+						value,
+						"val1",
+						"atomicChanged event emitted the wrong value",
+					);
 				});
 				crc.on("versionChanged", (key: string, value: any, local: boolean) => {
-					assert.strictEqual(key, "key1", "versionChanged event emitted the wrong key");
-					assert.strictEqual(value, "val1", "versionChanged event emitted the wrong value");
+					assert.strictEqual(
+						key,
+						"key1",
+						"versionChanged event emitted the wrong key",
+					);
+					assert.strictEqual(
+						value,
+						"val1",
+						"versionChanged event emitted the wrong value",
+					);
 				});
 				await writeAndProcessMsg("key1", "val1");
 			});
@@ -123,14 +143,27 @@ describe("ConsensusRegisterCollection", () => {
 			const snapshotFileName = "header";
 			const expectedSerialization = JSON.stringify({
 				key1: {
-					atomic: { sequenceNumber: 1, value: { type: "Plain", value: "val1.1" } },
-					versions: [{ sequenceNumber: 1, value: { type: "Plain", value: "val1.1" } }],
+					atomic: {
+						sequenceNumber: 1,
+						value: { type: "Plain", value: "val1.1" },
+					},
+					versions: [
+						{ sequenceNumber: 1, value: { type: "Plain", value: "val1.1" } },
+					],
 				},
 			});
 			const legacySharedObjectSerialization = JSON.stringify({
 				key1: {
-					atomic: { sequenceNumber: 1, value: { type: "Shared", value: "sharedObjId" } },
-					versions: [{ sequenceNumber: 1, value: { type: "Shared", value: "sharedObjId" } }],
+					atomic: {
+						sequenceNumber: 1,
+						value: { type: "Shared", value: "sharedObjId" },
+					},
+					versions: [
+						{
+							sequenceNumber: 1,
+							value: { type: "Shared", value: "sharedObjId" },
+						},
+					],
 				},
 			});
 			const buildTree = (serialized: string) => ({
@@ -144,8 +177,12 @@ describe("ConsensusRegisterCollection", () => {
 					Object.keys(summaryTree.tree).length === 1,
 					"summarize should return a tree with single blob",
 				);
-				const serialized = (summaryTree.tree.header as ISummaryBlob)?.content as string;
-				assert(serialized, "summarize should return a tree with blob with contents");
+				const serialized = (summaryTree.tree.header as ISummaryBlob)
+					?.content as string;
+				assert(
+					serialized,
+					"summarize should return a tree with blob with contents",
+				);
 				assert.strictEqual(serialized, expectedSerialization);
 			});
 
@@ -192,7 +229,8 @@ describe("ConsensusRegisterCollection", () => {
 			let testCollection2: IConsensusRegisterCollection;
 
 			beforeEach(() => {
-				containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+				containerRuntimeFactory =
+					new MockContainerRuntimeFactoryForReconnection();
 				testCollection1 = createLocalCollection("collection1");
 				testCollection2 = createLocalCollection("collection2");
 			});
@@ -238,7 +276,8 @@ describe("ConsensusRegisterCollection", () => {
 			let testCollection2: IConsensusRegisterCollection;
 
 			beforeEach(() => {
-				containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+				containerRuntimeFactory =
+					new MockContainerRuntimeFactoryForReconnection();
 				const response1 = createCollectionForReconnection(
 					"collection1",
 					containerRuntimeFactory,
@@ -254,11 +293,14 @@ describe("ConsensusRegisterCollection", () => {
 
 				// Add a listener to the second collection. This is used to verify that the written value reaches
 				// the remote client.
-				testCollection2.on("atomicChanged", (key: string, value: string, local: boolean) => {
-					receivedKey = key;
-					receivedValue = value;
-					receivedLocalStatus = local;
-				});
+				testCollection2.on(
+					"atomicChanged",
+					(key: string, value: string, local: boolean) => {
+						receivedKey = key;
+						receivedValue = value;
+						receivedLocalStatus = local;
+					},
+				);
 			});
 
 			it("can resend unacked ops on reconnection", async () => {
@@ -277,8 +319,16 @@ describe("ConsensusRegisterCollection", () => {
 				assert.equal(winner, true, "Write was not successful");
 
 				// Verify that the remote register collection received the write.
-				assert.equal(receivedKey, testKey, "The remote client did not receive the key");
-				assert.equal(receivedValue, testValue, "The remote client did not receive the value");
+				assert.equal(
+					receivedKey,
+					testKey,
+					"The remote client did not receive the key",
+				);
+				assert.equal(
+					receivedValue,
+					testValue,
+					"The remote client did not receive the value",
+				);
 				assert.equal(
 					receivedLocalStatus,
 					false,
@@ -304,8 +354,16 @@ describe("ConsensusRegisterCollection", () => {
 				assert.equal(winner, true, "Write was not successful");
 
 				// Verify that the remote register collection received the write.
-				assert.equal(receivedKey, testKey, "The remote client did not receive the key");
-				assert.equal(receivedValue, testValue, "The remote client did not receive the value");
+				assert.equal(
+					receivedKey,
+					testKey,
+					"The remote client did not receive the key",
+				);
+				assert.equal(
+					receivedValue,
+					testValue,
+					"The remote client did not receive the value",
+				);
 				assert.equal(
 					receivedLocalStatus,
 					false,
@@ -359,14 +417,22 @@ describe("ConsensusRegisterCollection", () => {
 			public async addOutboundRoutes() {
 				const subCollectionId = `subCollection-${++this.subCollectionCount}`;
 				const subTestCollection = createLocalCollection(subCollectionId);
-				await this.writeAndProcessMsg(subCollectionId, subTestCollection.handle);
+				await this.writeAndProcessMsg(
+					subCollectionId,
+					subTestCollection.handle,
+				);
 				this._expectedRoutes.push(subTestCollection.handle.absolutePath);
 			}
 
 			public async deleteOutboundRoutes() {
 				const subCollectionId = `subCollection-${this.subCollectionCount}`;
-				const deletedHandle = this.collection1.read(subCollectionId) as IFluidHandleInternal;
-				assert(deletedHandle !== undefined, "Route must be added before deleting");
+				const deletedHandle = this.collection1.read(
+					subCollectionId,
+				) as IFluidHandleInternal;
+				assert(
+					deletedHandle !== undefined,
+					"Route must be added before deleting",
+				);
 
 				// Delete the last handle that was added.
 				await this.writeAndProcessMsg(subCollectionId, "nonHandleValue");

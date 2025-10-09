@@ -57,7 +57,8 @@ export interface IFluidModuleWithDetails {
  * a package name and package version range.
  * @legacy @beta
  */
-export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
+export interface ICodeDetailsLoader
+	extends Partial<IProvideFluidCodeDetailsComparer> {
 	/**
 	 * Load the code module (package) that can interact with the document.
 	 *
@@ -98,7 +99,9 @@ export interface IFluidCodeResolver {
 	 * @returns A IResolvedFluidCodeDetails where the resolvedPackage's Fluid file entries are absolute urls, and
 	 * an optional resolvedPackageCacheId if the loaded package should be cached.
 	 */
-	resolveCodeDetails(details: IFluidCodeDetails): Promise<IResolvedFluidCodeDetails>;
+	resolveCodeDetails(
+		details: IFluidCodeDetails,
+	): Promise<IResolvedFluidCodeDetails>;
 }
 
 /**
@@ -143,7 +146,10 @@ export interface IContainerEvents extends IEvent {
 	 */
 	(
 		event: "codeDetailsProposed",
-		listener: (codeDetails: IFluidCodeDetails, proposal: ISequencedProposal) => void,
+		listener: (
+			codeDetails: IFluidCodeDetails,
+			proposal: ISequencedProposal,
+		) => void,
 	);
 
 	/**
@@ -264,7 +270,10 @@ export interface IContainerEvents extends IEvent {
 	 * This emitted metadata will the props which are updated. If consumer wants to read full set of
 	 * metadata then they can read it off the container from {@link IContainer.containerMetadata} prop.
 	 */
-	(event: "metadataUpdate", listener: (metadata: Record<string, string>) => void);
+	(
+		event: "metadataUpdate",
+		listener: (metadata: Record<string, string>) => void,
+	);
 }
 
 /**

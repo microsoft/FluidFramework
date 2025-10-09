@@ -31,7 +31,9 @@ export abstract class Formatter<TState extends IFormatterState> {
 	}
 }
 
-export abstract class RootFormatter<TState extends IFormatterState> extends Formatter<TState> {
+export abstract class RootFormatter<
+	TState extends IFormatterState,
+> extends Formatter<TState> {
 	public abstract onChange(layout: Layout, e: SequenceEvent);
 
 	public prepare(layout: Layout, start: number, end: number) {

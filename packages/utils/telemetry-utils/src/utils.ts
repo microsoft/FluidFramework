@@ -6,7 +6,10 @@
 import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 
 import { loggerToMonitoringContext } from "./config.js";
-import type { ITelemetryGenericEventExt, ITelemetryLoggerExt } from "./telemetryTypes.js";
+import type {
+	ITelemetryGenericEventExt,
+	ITelemetryLoggerExt,
+} from "./telemetryTypes.js";
 
 /**
  * An object that contains a callback used in conjunction with the {@link createSampledLogger} utility function to provide custom logic for sampling events.
@@ -60,7 +63,8 @@ export function createSampledLogger(
 ): ISampledTelemetryLogger {
 	const monitoringContext = loggerToMonitoringContext(logger);
 	const isSamplingDisabled =
-		monitoringContext.config.getBoolean("Fluid.Telemetry.DisableSampling") ?? false;
+		monitoringContext.config.getBoolean("Fluid.Telemetry.DisableSampling") ??
+		false;
 
 	const sampledLogger = {
 		send: (event: ITelemetryBaseEvent): void => {
@@ -68,32 +72,60 @@ export function createSampledLogger(
 			// 1. If isSamplingDisabled is true, then this means events should be unsampled. Therefore we send the event without any checks.
 			// 2. If isSamplingDisabled is false, then event should be sampled using the event sampler, if the sampler is not defined just send all events, other use the eventSampler.sample() method.
 			// 3. If skipLoggingWhenSamplingIsDisabled is true, then no event is sent.
-			if (isSamplingDisabled || eventSampler === undefined || eventSampler.sample()) {
-				if (isSamplingDisabled && (skipLoggingWhenSamplingIsDisabled ?? false)) {
+			if (
+				isSamplingDisabled ||
+				eventSampler === undefined ||
+				eventSampler.sample()
+			) {
+				if (
+					isSamplingDisabled &&
+					(skipLoggingWhenSamplingIsDisabled ?? false)
+				) {
 					return;
 				}
 				logger.send(event);
 			}
 		},
 		sendTelemetryEvent: (event: ITelemetryGenericEventExt): void => {
-			if (isSamplingDisabled || eventSampler === undefined || eventSampler.sample()) {
-				if (isSamplingDisabled && (skipLoggingWhenSamplingIsDisabled ?? false)) {
+			if (
+				isSamplingDisabled ||
+				eventSampler === undefined ||
+				eventSampler.sample()
+			) {
+				if (
+					isSamplingDisabled &&
+					(skipLoggingWhenSamplingIsDisabled ?? false)
+				) {
 					return;
 				}
 				logger.sendTelemetryEvent(event);
 			}
 		},
 		sendErrorEvent: (event: ITelemetryGenericEventExt): void => {
-			if (isSamplingDisabled || eventSampler === undefined || eventSampler.sample()) {
-				if (isSamplingDisabled && (skipLoggingWhenSamplingIsDisabled ?? false)) {
+			if (
+				isSamplingDisabled ||
+				eventSampler === undefined ||
+				eventSampler.sample()
+			) {
+				if (
+					isSamplingDisabled &&
+					(skipLoggingWhenSamplingIsDisabled ?? false)
+				) {
 					return;
 				}
 				logger.sendErrorEvent(event);
 			}
 		},
 		sendPerformanceEvent: (event: ITelemetryGenericEventExt): void => {
-			if (isSamplingDisabled || eventSampler === undefined || eventSampler.sample()) {
-				if (isSamplingDisabled && (skipLoggingWhenSamplingIsDisabled ?? false)) {
+			if (
+				isSamplingDisabled ||
+				eventSampler === undefined ||
+				eventSampler.sample()
+			) {
+				if (
+					isSamplingDisabled &&
+					(skipLoggingWhenSamplingIsDisabled ?? false)
+				) {
 					return;
 				}
 				logger.sendPerformanceEvent(event);
@@ -113,7 +145,10 @@ export function createSampledLogger(
  * @returns The total duration of the code execution and whatever the passed-in code block returns.
  * @internal
  */
-export function measure<T>(codeToMeasure: () => T): { duration: number; output: T } {
+export function measure<T>(codeToMeasure: () => T): {
+	duration: number;
+	output: T;
+} {
 	const start = performance.now();
 	const output = codeToMeasure();
 	const duration = performance.now() - start;

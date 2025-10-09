@@ -154,7 +154,10 @@ export type isAssignableTo<Source, Destination> = [Source] extends [Destination]
 /**
  * Returns a type parameter that is true iff Subset is a strict subset of Superset.
  */
-export type isStrictSubset<Subset, Superset> = isAssignableTo<Subset, Superset> extends false
+export type isStrictSubset<Subset, Superset> = isAssignableTo<
+	Subset,
+	Superset
+> extends false
 	? false
 	: isAssignableTo<Superset, Subset> extends true
 		? false
@@ -186,7 +189,9 @@ export type eitherIsAny<A, B> = true extends isAny<A> | isAny<B> ? true : false;
  * This can be used to detect `any`.
  * @internal
  */
-export type isAny<T> = boolean extends (T extends never ? true : false) ? true : false;
+export type isAny<T> = boolean extends (T extends never ? true : false)
+	? true
+	: false;
 
 /**
  * Compile time assert that A is assignable to (extends) B.

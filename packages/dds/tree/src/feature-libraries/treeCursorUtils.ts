@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob, debugAssert, fail } from "@fluidframework/core-utils/internal";
+import {
+	assert,
+	oob,
+	debugAssert,
+	fail,
+} from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -75,7 +80,10 @@ export function stackTreeFieldCursor<TNode>(
 /**
  * The representation of a field used by {@link CursorAdapter}.
  */
-export type Field<TNode> = Pick<readonly TNode[], typeof Symbol.iterator | "length" | number>;
+export type Field<TNode> = Pick<
+	readonly TNode[],
+	typeof Symbol.iterator | "length" | number
+>;
 
 /**
  * Provides functionality to allow a {@link stackTreeNodeCursor} and {@link stackTreeFieldCursor} to implement cursors.
@@ -126,7 +134,10 @@ export abstract class SynchronousCursor {
  * 1. Unit tests for this.
  * 2. Support for cursors which are field cursors at the root.
  */
-class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNode> {
+class StackCursor<TNode>
+	extends SynchronousCursor
+	implements CursorWithNode<TNode>
+{
 	public override readonly [CursorMarker] = true;
 	/**
 	 * Might start at special root where fields are detached sequences.
@@ -151,7 +162,9 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 	}
 
 	public getFieldKey(): FieldKey {
-		debugAssert(() => this.mode === CursorLocationType.Fields || "must be in fields mode");
+		debugAssert(
+			() => this.mode === CursorLocationType.Fields || "must be in fields mode",
+		);
 		// index is kept inbounds as an invariant of the class.
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		return (this.siblings as readonly FieldKey[])[this.index]!;
@@ -180,12 +193,16 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 	}
 
 	public getFieldLength(): number {
-		debugAssert(() => this.mode === CursorLocationType.Fields || "must be in fields mode");
+		debugAssert(
+			() => this.mode === CursorLocationType.Fields || "must be in fields mode",
+		);
 		return this.getField().length;
 	}
 
 	public enterNode(index: number): void {
-		debugAssert(() => this.mode === CursorLocationType.Fields || "must be in fields mode");
+		debugAssert(
+			() => this.mode === CursorLocationType.Fields || "must be in fields mode",
+		);
 		const siblings = this.getField();
 		if (!(index in siblings)) {
 			throw new UsageError(
@@ -199,12 +216,18 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 	}
 
 	public getPath(prefix?: PathRootPrefix): UpPath | undefined {
-		assert(this.mode === CursorLocationType.Nodes, 0x3b9 /* must be in nodes mode */);
+		assert(
+			this.mode === CursorLocationType.Nodes,
+			0x3b9 /* must be in nodes mode */,
+		);
 		return this.getOffsetPath(0, prefix);
 	}
 
 	public getFieldPath(prefix?: PathRootPrefix): FieldUpPath {
-		assert(this.mode === CursorLocationType.Fields, 0x449 /* must be in fields mode */);
+		assert(
+			this.mode === CursorLocationType.Fields,
+			0x449 /* must be in fields mode */,
+		);
 		return {
 			field:
 				this.indexStack.length === 1
@@ -226,11 +249,16 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 		}
 
 		assert(length > 0, 0x44a /* invalid offset to above root */);
-		assert(length % 2 === 0, 0x44b /* offset path must point to node not field */);
+		assert(
+			length % 2 === 0,
+			0x44b /* offset path must point to node not field */,
+		);
 
 		const getIndex = (height: number): number => {
 			let parentIndex: number =
-				height === this.indexStack.length ? this.index : this.getStackedNodeIndex(height);
+				height === this.indexStack.length
+					? this.index
+					: this.getStackedNodeIndex(height);
 			if (prefix !== undefined && height === 2) {
 				parentIndex += prefix.indexOffset ?? 0;
 			}
@@ -248,7 +276,8 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 		let path: UpPath | undefined = prefix?.parent;
 		// Skip top level, since root node in path is "undefined" and does not have a parent or index.
 		for (let height = 2; height <= length; height += 2) {
-			const fieldOverride = height === 2 ? prefix?.rootFieldOverride : undefined;
+			const fieldOverride =
+				height === 2 ? prefix?.rootFieldOverride : undefined;
 			path = {
 				parent: path,
 				parentIndex: getIndex(height),
@@ -272,7 +301,9 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 	}
 
 	public enterField(key: FieldKey): void {
-		debugAssert(() => this.mode === CursorLocationType.Nodes || "must be in nodes mode");
+		debugAssert(
+			() => this.mode === CursorLocationType.Nodes || "must be in nodes mode",
+		);
 		this.siblingStack.push(this.siblings);
 		this.indexStack.push(this.index);
 
@@ -301,7 +332,9 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 	}
 
 	public firstField(): boolean {
-		debugAssert(() => this.mode === CursorLocationType.Nodes || "must be in nodes mode");
+		debugAssert(
+			() => this.mode === CursorLocationType.Nodes || "must be in nodes mode",
+		);
 		const fields = this.adapter.keysFromNode(this.getNode());
 		if (fields.length === 0) {
 			return false;
@@ -316,7 +349,9 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 
 	public seekNodes(offset: number): boolean {
 		debugAssert(
-			() => this.mode === CursorLocationType.Nodes || "can only seekNodes when in Nodes",
+			() =>
+				this.mode === CursorLocationType.Nodes ||
+				"can only seekNodes when in Nodes",
 		);
 		this.index += offset;
 		if (this.index in this.siblings) {
@@ -328,7 +363,9 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 
 	public firstNode(): boolean {
 		debugAssert(
-			() => this.mode === CursorLocationType.Fields || "firstNode only allowed in fields mode",
+			() =>
+				this.mode === CursorLocationType.Fields ||
+				"firstNode only allowed in fields mode",
 		);
 		const nodes = this.getField();
 		if (nodes.length === 0) {
@@ -343,7 +380,9 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 
 	public nextNode(): boolean {
 		debugAssert(
-			() => this.mode === CursorLocationType.Nodes || "can only nextNode when in Nodes",
+			() =>
+				this.mode === CursorLocationType.Nodes ||
+				"can only nextNode when in Nodes",
 		);
 		this.index++;
 		if (this.index < (this.siblings as []).length) {
@@ -360,8 +399,10 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 				"can only navigate up from field when in field",
 		);
 		this.siblings =
-			this.siblingStack.pop() ?? fail(0xac3 /* Unexpected siblingStack.length */);
-		this.index = this.indexStack.pop() ?? fail(0xac4 /* Unexpected indexStack.length */);
+			this.siblingStack.pop() ??
+			fail(0xac3 /* Unexpected siblingStack.length */);
+		this.index =
+			this.indexStack.pop() ?? fail(0xac4 /* Unexpected indexStack.length */);
 	}
 
 	public exitNode(): void {
@@ -371,13 +412,17 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 				"can only navigate up from node when in node",
 		);
 		this.siblings =
-			this.siblingStack.pop() ?? fail(0xac5 /* Unexpected siblingStack.length */);
-		this.index = this.indexStack.pop() ?? fail(0xac6 /* Unexpected indexStack.length */);
+			this.siblingStack.pop() ??
+			fail(0xac5 /* Unexpected siblingStack.length */);
+		this.index =
+			this.indexStack.pop() ?? fail(0xac6 /* Unexpected indexStack.length */);
 	}
 
 	public getNode(): TNode {
 		debugAssert(
-			() => this.mode === CursorLocationType.Nodes || "can only get node when in node",
+			() =>
+				this.mode === CursorLocationType.Nodes ||
+				"can only get node when in node",
 		);
 		// Can not use `?? oob()` since null and undefined are valid values.
 		// index is kept inbounds as an invariant of the class.
@@ -387,7 +432,9 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 
 	private getField(): Field<TNode> {
 		debugAssert(
-			() => this.mode === CursorLocationType.Fields || "can only get field when in fields",
+			() =>
+				this.mode === CursorLocationType.Fields ||
+				"can only get field when in fields",
 		);
 		const parent = this.getStackedNode(this.indexStack.length - 1);
 		const key: FieldKey = this.getFieldKey();
@@ -411,7 +458,9 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 
 	public get fieldIndex(): number {
 		debugAssert(
-			() => this.mode === CursorLocationType.Nodes || "can only node's index when in node",
+			() =>
+				this.mode === CursorLocationType.Nodes ||
+				"can only node's index when in node",
 		);
 		return this.index;
 	}
@@ -461,7 +510,10 @@ export function prefixFieldPath(
 		return path;
 	}
 	return {
-		field: path.parent === undefined ? (prefix.rootFieldOverride ?? path.field) : path.field,
+		field:
+			path.parent === undefined
+				? (prefix.rootFieldOverride ?? path.field)
+				: path.field,
 		parent: prefixPath(prefix, path.parent),
 	};
 }
@@ -472,7 +524,10 @@ export function prefixFieldPath(
  *
  * TODO: tests for this.
  */
-export function prefixPathPrefix(root: PathRootPrefix, inner: PathRootPrefix): PathRootPrefix {
+export function prefixPathPrefix(
+	root: PathRootPrefix,
+	inner: PathRootPrefix,
+): PathRootPrefix {
 	if (inner.parent !== undefined) {
 		const composedPrefix: PathRootPrefix = {
 			parent: new PrefixedPath(root, inner.parent),
@@ -490,13 +545,19 @@ export function prefixPathPrefix(root: PathRootPrefix, inner: PathRootPrefix): P
 	}
 }
 
-function applyPrefix(prefix: PathRootPrefix, path: UpPath | undefined): UpPath | undefined {
+function applyPrefix(
+	prefix: PathRootPrefix,
+	path: UpPath | undefined,
+): UpPath | undefined {
 	if (path === undefined) {
 		return prefix.parent;
 	} else {
 		// As an optimization, avoid double wrapping paths with multiple prefixes
 		if (path instanceof PrefixedPath) {
-			const composedPrefix: PathRootPrefix = prefixPathPrefix(prefix, path.prefix);
+			const composedPrefix: PathRootPrefix = prefixPathPrefix(
+				prefix,
+				path.prefix,
+			);
 			return new PrefixedPath(composedPrefix, path.path);
 		} else {
 			return new PrefixedPath(prefix, path);

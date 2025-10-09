@@ -5,12 +5,19 @@
 
 import { strict as assert } from "assert";
 
-import { assert as coreAssert, fail } from "@fluidframework/core-utils/internal";
+import {
+	assert as coreAssert,
+	fail,
+} from "@fluidframework/core-utils/internal";
 
 import { extractMessage } from "../minification.js";
 
 function requireLines(s: string, count = 1): void {
-	assert.equal(s.split("\n").length, count, `Expected ${count} lines in:\n${s}`);
+	assert.equal(
+		s.split("\n").length,
+		count,
+		`Expected ${count} lines in:\n${s}`,
+	);
 }
 
 describe("Minification", () => {

@@ -280,7 +280,8 @@ describe("SparseMatrix", () => {
 			let containerRuntime2: MockContainerRuntimeForReconnection;
 
 			beforeEach(async () => {
-				containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+				containerRuntimeFactory =
+					new MockContainerRuntimeFactoryForReconnection();
 
 				// Create and connect the first SharedMatrix.
 				const dataStoreRuntime1 = new MockFluidDataStoreRuntime();

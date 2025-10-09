@@ -20,7 +20,10 @@ import {
 	type ICheckpointRepository,
 	type CheckpointService,
 } from "@fluidframework/server-services-core";
-import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
+import {
+	Lumberjack,
+	getLumberBaseProperties,
+} from "@fluidframework/server-services-telemetry";
 import * as _ from "lodash";
 import sillyname from "sillyname";
 import { v4 as uuid } from "uuid";

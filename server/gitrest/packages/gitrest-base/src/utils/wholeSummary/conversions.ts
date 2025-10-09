@@ -63,7 +63,7 @@ export async function buildFullGitTreeFromGitTree(
 				const fullTree = JSON.parse(
 					fullTreeBlob.encoding === "base64"
 						? // Convert base64 to utf-8 for JSON parsing
-						  Buffer.from(fullTreeBlob.content, fullTreeBlob.encoding).toString("utf-8")
+							Buffer.from(fullTreeBlob.content, fullTreeBlob.encoding).toString("utf-8")
 						: fullTreeBlob.content,
 				) as IFullGitTree;
 				const builtFullGitTree = await buildFullGitTreeFromGitTree(
@@ -130,7 +130,9 @@ function convertGitBlobToSummaryBlob(blob: IBlob): IWholeFlatSummaryBlob {
  * @param fullGitTree - Full Git tree to convert
  * @returns summary tree
  */
-export function convertFullGitTreeToFullSummaryTree(fullGitTree: IFullGitTree): IFullSummaryTree {
+export function convertFullGitTreeToFullSummaryTree(
+	fullGitTree: IFullGitTree,
+): IFullSummaryTree {
 	const wholeFlatSummaryTreeEntries: IWholeFlatSummaryTreeEntry[] = [];
 	const wholeFlatSummaryBlobs: IWholeFlatSummaryBlob[] = [];
 	fullGitTree.tree.tree.forEach((treeEntry) => {
@@ -176,8 +178,9 @@ export function convertFullSummaryToWholeSummaryEntries(
 	});
 
 	// Inspired by `buildSummaryTreeHierarchy` from services-client
-	const lookup: { [path: string]: IWholeSummaryTreeValueEntry & { value: IWholeSummaryTree } } =
-		{};
+	const lookup: {
+		[path: string]: IWholeSummaryTreeValueEntry & { value: IWholeSummaryTree };
+	} = {};
 	const rootPath = ""; // This would normally be parentHandle, but only important when there are handles
 	const root: IWholeSummaryTreeValueEntry & { value: IWholeSummaryTree } = {
 		type: "tree",

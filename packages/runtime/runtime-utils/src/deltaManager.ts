@@ -19,7 +19,10 @@ export function toDeltaManagerInternal(
 	deltaManager: IDeltaManagerErased,
 ): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
 	// Type assertion is safe as IDeltaManagerErased is specifically designed to be a type-erased version of IDeltaManager
-	return deltaManager as unknown as IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+	return deltaManager as unknown as IDeltaManager<
+		ISequencedDocumentMessage,
+		IDocumentMessage
+	>;
 }
 
 /**

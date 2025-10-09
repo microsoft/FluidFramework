@@ -51,7 +51,11 @@ describe("Container create scenarios", () => {
 
 		// Make sure we can attach.
 		const itemId = await container.attach();
-		assert.strictEqual(typeof itemId, "string", "Attach did not return a string ID");
+		assert.strictEqual(
+			typeof itemId,
+			"string",
+			"Attach did not return a string ID",
+		);
 	});
 
 	/**
@@ -65,13 +69,20 @@ describe("Container create scenarios", () => {
 		const itemId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
-			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
-				durationMs: connectTimeoutMs,
-				errorMsg: "container connect() timeout",
-			});
+			await timeoutPromise(
+				(resolve) => container.once("connected", () => resolve()),
+				{
+					durationMs: connectTimeoutMs,
+					errorMsg: "container connect() timeout",
+				},
+			);
 		}
 
-		assert.strictEqual(typeof itemId, "string", "Attach did not return a string ID");
+		assert.strictEqual(
+			typeof itemId,
+			"string",
+			"Attach did not return a string ID",
+		);
 		assert.strictEqual(
 			container.attachState,
 			AttachState.Attached,
@@ -90,19 +101,30 @@ describe("Container create scenarios", () => {
 		const itemId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
-			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
-				durationMs: connectTimeoutMs,
-				errorMsg: "container connect() timeout",
-			});
+			await timeoutPromise(
+				(resolve) => container.once("connected", () => resolve()),
+				{
+					durationMs: connectTimeoutMs,
+					errorMsg: "container connect() timeout",
+				},
+			);
 		}
 
-		assert.strictEqual(typeof itemId, "string", "Attach did not return a string ID");
+		assert.strictEqual(
+			typeof itemId,
+			"string",
+			"Attach did not return a string ID",
+		);
 		assert.strictEqual(
 			container.attachState,
 			AttachState.Attached,
 			"Container is attached after attach is called",
 		);
-		await assert.rejects(container.attach(), () => true, "Container should not attach twice");
+		await assert.rejects(
+			container.attach(),
+			() => true,
+			"Container should not attach twice",
+		);
 	});
 
 	/**
@@ -116,10 +138,13 @@ describe("Container create scenarios", () => {
 		const itemId = await newContainer.attach();
 
 		if (newContainer.connectionState !== ConnectionState.Connected) {
-			await timeoutPromise((resolve) => newContainer.once("connected", () => resolve()), {
-				durationMs: connectTimeoutMs,
-				errorMsg: "container connect() timeout",
-			});
+			await timeoutPromise(
+				(resolve) => newContainer.once("connected", () => resolve()),
+				{
+					durationMs: connectTimeoutMs,
+					errorMsg: "container connect() timeout",
+				},
+			);
 		}
 
 		const resources = client.getContainer(itemId, schema);
@@ -136,10 +161,17 @@ describe("Container create scenarios", () => {
 	 * Expected behavior: an error should be thrown when trying to get a non-existent container.
 	 */
 	it("cannot load improperly created container (cannot load a non-existent container)", async () => {
-		const containerAndServicesP = client.getContainer("containerConfig", schema);
+		const containerAndServicesP = client.getContainer(
+			"containerConfig",
+			schema,
+		);
 
 		const errorFn = (error: Error): boolean => {
-			assert.notStrictEqual(error.message, undefined, "Odsp Client error is undefined");
+			assert.notStrictEqual(
+				error.message,
+				undefined,
+				"Odsp Client error is undefined",
+			);
 			assert.strict(
 				error.message.startsWith("ODSP fetch error [400]"),
 				`Unexpected error: ${error.message}`,

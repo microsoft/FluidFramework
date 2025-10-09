@@ -3,8 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { type ITokenClaims, ScopeType } from "@fluidframework/driver-definitions/internal";
-import type { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
+import {
+	type ITokenClaims,
+	ScopeType,
+} from "@fluidframework/driver-definitions/internal";
+import type {
+	ITokenProvider,
+	ITokenResponse,
+} from "@fluidframework/routerlicious-driver";
 import { KJUR as jsrsasign } from "jsrsasign";
 import { v4 as uuid } from "uuid";
 
@@ -62,7 +68,11 @@ export class InsecureTinyliciousTokenProvider implements ITokenProvider {
 
 		const claims: ITokenClaims = {
 			documentId: documentId ?? "",
-			scopes: this.scopes ?? [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
+			scopes: this.scopes ?? [
+				ScopeType.DocRead,
+				ScopeType.DocWrite,
+				ScopeType.SummaryWrite,
+			],
 			tenantId,
 			user,
 			iat: now,

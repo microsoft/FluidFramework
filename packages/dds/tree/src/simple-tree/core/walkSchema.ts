@@ -8,7 +8,10 @@ import {
 	type AnnotatedAllowedType,
 	type AllowedTypesFullEvaluated,
 } from "./allowedTypes.js";
-import { getTreeNodeSchemaPrivateData, type TreeNodeSchema } from "./treeNodeSchema.js";
+import {
+	getTreeNodeSchemaPrivateData,
+	type TreeNodeSchema,
+} from "./treeNodeSchema.js";
 
 /**
  * Traverses all {@link TreeNodeSchema} schema reachable from `schema`, applying the visitor pattern.
@@ -92,5 +95,7 @@ export interface SchemaVisitor {
 	 * @privateRemarks
 	 * It would be possible to combine this with `allowedTypes` into a single callback, but for the current usage this separation is more convenient.
 	 */
-	allowedTypeFilter?: (allowedType: AnnotatedAllowedType<TreeNodeSchema>) => boolean;
+	allowedTypeFilter?: (
+		allowedType: AnnotatedAllowedType<TreeNodeSchema>,
+	) => boolean;
 }

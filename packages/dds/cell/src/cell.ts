@@ -99,7 +99,11 @@ export class SharedCell<T = any>
 	 * @param id - Unique identifier for the `SharedCell`.
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
-	constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
+	constructor(
+		id: string,
+		runtime: IFluidDataStoreRuntime,
+		attributes: IChannelAttributes,
+	) {
 		super(id, runtime, attributes, "fluid_cell_");
 
 		this.options = runtime.options as ICellOptions;
@@ -261,7 +265,8 @@ export class SharedCell<T = any>
 			if (local) {
 				const messageIdReceived = cellOpMetadata.pendingMessageId;
 				assert(
-					messageIdReceived !== undefined && messageIdReceived <= this.messageId,
+					messageIdReceived !== undefined &&
+						messageIdReceived <= this.messageId,
 					0x00c /* "messageId is incorrect from from the local client's ACK" */,
 				);
 				assert(
@@ -367,7 +372,10 @@ export class SharedCell<T = any>
 	 * @param op - The cell message.
 	 * @param previousValue - The value of the cell before this op.
 	 */
-	private submitCellMessage(op: ICellOperation, previousValue?: Serializable<T>): void {
+	private submitCellMessage(
+		op: ICellOperation,
+		previousValue?: Serializable<T>,
+	): void {
 		const localMetadata = this.createLocalOpMetadata(op, previousValue);
 		this.submitLocalMessage(op, localMetadata);
 	}

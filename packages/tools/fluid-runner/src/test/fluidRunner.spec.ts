@@ -14,9 +14,17 @@ describe("fluid-runner from command line", () => {
 	const command = path.join(_dirname, "../../bin/fluid-runner.mjs");
 
 	describe("exportFile", () => {
-		const codeLoader = path.join(_dirname, "sampleCodeLoaders", "sampleCodeLoader.js");
+		const codeLoader = path.join(
+			_dirname,
+			"sampleCodeLoaders",
+			"sampleCodeLoader.js",
+		);
 		const folderRoot = path.join(_dirname, "../../src/test");
-		const snapshot = path.join(folderRoot, "localOdspSnapshots", "odspSnapshot2.json");
+		const snapshot = path.join(
+			folderRoot,
+			"localOdspSnapshots",
+			"odspSnapshot2.json",
+		);
 		const outputFolder = path.join(folderRoot, "outputFolder");
 		const outputFilePath = path.join(outputFolder, "result.txt");
 		const telemetryFile = path.join(outputFolder, "telemetryFile.txt");
@@ -75,7 +83,10 @@ describe("fluid-runner from command line", () => {
 		});
 
 		it("Process writes to telemetry file", () => {
-			assert(!fs.existsSync(telemetryFile), "Telemetry file should not yet exist");
+			assert(
+				!fs.existsSync(telemetryFile),
+				"Telemetry file should not yet exist",
+			);
 
 			spawnSync("node", [
 				command,
@@ -94,7 +105,10 @@ describe("fluid-runner from command line", () => {
 		});
 
 		it("Produces some output result file", () => {
-			assert(!fs.existsSync(outputFilePath), "Result file should not yet exist");
+			assert(
+				!fs.existsSync(outputFilePath),
+				"Result file should not yet exist",
+			);
 
 			spawnSync("node", [
 				command,
@@ -105,7 +119,11 @@ describe("fluid-runner from command line", () => {
 				`--telemetryFile=${telemetryFile}`,
 			]);
 
-			assert.notStrictEqual(fs.statSync(outputFilePath).size, 0, "Expect some result file");
+			assert.notStrictEqual(
+				fs.statSync(outputFilePath).size,
+				0,
+				"Expect some result file",
+			);
 		});
 
 		it("Process exits with code 1 when timeout occurs", () => {
@@ -199,13 +217,23 @@ describe(`custom fluidFileConverter provided (${
 	const command = path.join(
 		_dirname,
 		"sampleCodeLoaders",
-		_dirname.includes("dist") ? "sample-executable.cjs.js" : "sample-executable.esm.js",
+		_dirname.includes("dist")
+			? "sample-executable.cjs.js"
+			: "sample-executable.esm.js",
 	);
 
 	describe("exportFile", () => {
 		const folderRoot = path.join(_dirname, "../../src/test");
-		const codeLoader = path.join(_dirname, "sampleCodeLoaders", "sampleCodeLoader.js");
-		const snapshot = path.join(folderRoot, "localOdspSnapshots", "odspSnapshot2.json");
+		const codeLoader = path.join(
+			_dirname,
+			"sampleCodeLoaders",
+			"sampleCodeLoader.js",
+		);
+		const snapshot = path.join(
+			folderRoot,
+			"localOdspSnapshots",
+			"odspSnapshot2.json",
+		);
 		const outputFolder = path.join(folderRoot, "outputFolder");
 		const outputFilePath = path.join(outputFolder, "result.txt");
 		const telemetryFile = path.join(outputFolder, "telemetryFile.txt");

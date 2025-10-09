@@ -12,7 +12,11 @@ describe("API Extractor Task", () => {
 		assert(useWorker("api-extractor run --local"));
 		assert(useWorker("api-extractor run --config the/File.extension"));
 		assert(useWorker("api-extractor run --local --config the/File.extension"));
-		assert(!useWorker("api-extractor run --local --config the/File.extension --unsupported"));
+		assert(
+			!useWorker(
+				"api-extractor run --local --config the/File.extension --unsupported",
+			),
+		);
 		assert(!useWorker("api-extractor run unsupported"));
 		assert(!useWorker("api-extractor run --local --config"));
 	});

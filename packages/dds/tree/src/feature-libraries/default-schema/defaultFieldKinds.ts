@@ -46,7 +46,9 @@ export const noChangeHandler: FieldChangeHandler<0> = {
 		mute: (changes: 0) => 0,
 	}),
 	codecsFactory: () => noChangeCodecFamily,
-	editor: { buildChildChanges: () => fail(0xb0d /* Child changes not supported */) },
+	editor: {
+		buildChildChanges: () => fail(0xb0d /* Child changes not supported */),
+	},
 	intoDelta: (change, deltaFromChild: ToDelta): FieldChangeDelta => ({}),
 	relevantRemovedRoots: (change): Iterable<DeltaDetachedNodeId> => [],
 	isEmpty: (change: 0) => true,
@@ -79,13 +81,14 @@ export const optional = new FieldKindWithEditor(
 
 export const valueFieldEditor: ValueFieldEditor = {
 	...optionalFieldEditor,
-	set: (ids: {
-		fill: ChangeAtomId;
-		detach: ChangeAtomId;
-	}): OptionalChangeset => optionalFieldEditor.set(false, ids),
+	set: (ids: { fill: ChangeAtomId; detach: ChangeAtomId }): OptionalChangeset =>
+		optionalFieldEditor.set(false, ids),
 };
 
-export const valueChangeHandler: FieldChangeHandler<OptionalChangeset, ValueFieldEditor> = {
+export const valueChangeHandler: FieldChangeHandler<
+	OptionalChangeset,
+	ValueFieldEditor
+> = {
 	...optional.changeHandler,
 	editor: valueFieldEditor,
 };
@@ -203,7 +206,8 @@ export const forbidden = new FieldKindWithEditor(
 	Multiplicity.Forbidden,
 	noChangeHandler,
 	// All multiplicities other than Value support empty.
-	(types, other) => fieldKinds.get(other.kind)?.multiplicity !== Multiplicity.Single,
+	(types, other) =>
+		fieldKinds.get(other.kind)?.multiplicity !== Multiplicity.Single,
 	new Set(),
 );
 
@@ -257,12 +261,16 @@ export const fieldKindConfigurations: ReadonlyMap<
 	],
 ]);
 
-export type ModularChangeFormatVersion = Brand<1 | 2 | 3 | 4, "ModularChangeFormatVersion">;
+export type ModularChangeFormatVersion = Brand<
+	1 | 2 | 3 | 4,
+	"ModularChangeFormatVersion"
+>;
 export function getCodecTreeForModularChangeFormat(
 	version: ModularChangeFormatVersion,
 ): CodecTree {
 	const dependencies =
-		fieldKindConfigurations.get(version) ?? fail("Unknown modular change format");
+		fieldKindConfigurations.get(version) ??
+		fail("Unknown modular change format");
 	const children: CodecTree[] = Array.from(dependencies.entries()).map(
 		([key, { formatVersion }]) => ({
 			name: `FieldKind:${key}`,
@@ -283,9 +291,13 @@ export function getCodecTreeForModularChangeFormat(
  * Before making a SharedTree format change which impacts which set of field kinds are allowed,
  * code which uses this should be audited for compatibility considerations.
  */
-export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map(
-	[required, optional, sequence, nodeKey, identifier, forbidden].map((s) => [s.identifier, s]),
-);
+export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> =
+	new Map(
+		[required, optional, sequence, nodeKey, identifier, forbidden].map((s) => [
+			s.identifier,
+			s,
+		]),
+	);
 
 // Create named Aliases for nicer intellisense.
 
@@ -293,11 +305,17 @@ export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> =
 // TODO: ensure thy work in generated docs.
 // TODO: add these comments to the rest of the cases below.
 export interface Required extends FlexFieldKind<"Value", Multiplicity.Single> {}
-export interface Optional extends FlexFieldKind<"Optional", Multiplicity.Optional> {}
-export interface Sequence extends FlexFieldKind<"Sequence", Multiplicity.Sequence> {}
-export interface Identifier extends FlexFieldKind<"Identifier", Multiplicity.Single> {}
+export interface Optional
+	extends FlexFieldKind<"Optional", Multiplicity.Optional> {}
+export interface Sequence
+	extends FlexFieldKind<"Sequence", Multiplicity.Sequence> {}
+export interface Identifier
+	extends FlexFieldKind<"Identifier", Multiplicity.Single> {}
 export interface Forbidden
-	extends FlexFieldKind<typeof forbiddenFieldKindIdentifier, Multiplicity.Forbidden> {}
+	extends FlexFieldKind<
+		typeof forbiddenFieldKindIdentifier,
+		Multiplicity.Forbidden
+	> {}
 
 /**
  * Default FieldKinds with their editor types erased.

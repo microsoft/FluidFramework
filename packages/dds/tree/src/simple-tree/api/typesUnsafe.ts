@@ -33,7 +33,10 @@ import type {
 	AnnotatedAllowedTypes,
 } from "../core/index.js";
 import type { TreeArrayNode } from "../node-kinds/index.js";
-import type { SimpleArrayNodeSchema, SimpleMapNodeSchema } from "../simpleSchema.js";
+import type {
+	SimpleArrayNodeSchema,
+	SimpleMapNodeSchema,
+} from "../simpleSchema.js";
 
 /*
  * TODO:
@@ -96,8 +99,22 @@ export namespace System_Unsafe {
 		ImplicitlyConstructable extends boolean = boolean,
 		Info = unknown,
 	> =
-		| TreeNodeSchemaClassUnsafe<Name, Kind, TNode, TBuild, ImplicitlyConstructable, Info>
-		| TreeNodeSchemaNonClassUnsafe<Name, Kind, TNode, TBuild, ImplicitlyConstructable, Info>;
+		| TreeNodeSchemaClassUnsafe<
+				Name,
+				Kind,
+				TNode,
+				TBuild,
+				ImplicitlyConstructable,
+				Info
+		  >
+		| TreeNodeSchemaNonClassUnsafe<
+				Name,
+				Kind,
+				TNode,
+				TBuild,
+				ImplicitlyConstructable,
+				Info
+		  >;
 
 	/**
 	 * {@link Unenforced} version of {@link TreeNodeSchemaClass}.
@@ -157,7 +174,9 @@ export namespace System_Unsafe {
 	export type TreeObjectNodeUnsafe<
 		T extends RestrictiveStringRecord<ImplicitFieldSchemaUnsafe>,
 		TypeName extends string = string,
-	> = TreeNode & ObjectFromSchemaRecordUnsafe<T> & WithType<TypeName, NodeKind.Object, T>;
+	> = TreeNode &
+		ObjectFromSchemaRecordUnsafe<T> &
+		WithType<TypeName, NodeKind.Object, T>;
 
 	/**
 	 * {@link Unenforced} version of {@link TreeFieldFromImplicitField}.
@@ -165,12 +184,13 @@ export namespace System_Unsafe {
 	 * Do not use this type directly: it's only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
 	 * @system @public
 	 */
-	export type TreeFieldFromImplicitFieldUnsafe<TSchema extends ImplicitFieldSchemaUnsafe> =
-		TSchema extends FieldSchemaUnsafe<infer Kind, infer Types>
-			? ApplyKind<TreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind>
-			: TSchema extends ImplicitAllowedTypesUnsafe
-				? TreeNodeFromImplicitAllowedTypesUnsafe<TSchema>
-				: unknown;
+	export type TreeFieldFromImplicitFieldUnsafe<
+		TSchema extends ImplicitFieldSchemaUnsafe,
+	> = TSchema extends FieldSchemaUnsafe<infer Kind, infer Types>
+		? ApplyKind<TreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind>
+		: TSchema extends ImplicitAllowedTypesUnsafe
+			? TreeNodeFromImplicitAllowedTypesUnsafe<TSchema>
+			: unknown;
 
 	/**
 	 * {@link Unenforced} version of {@link AllowedTypes}.
@@ -246,16 +266,17 @@ export namespace System_Unsafe {
 	 * of the JsonAsTree schema.
 	 * @system @public
 	 */
-	export type InsertableTreeNodeFromAllowedTypesUnsafe<TList extends AllowedTypesUnsafe> =
-		IsUnion<TList> extends true
-			? never
-			: {
-					readonly [Property in keyof TList]: TList[Property] extends LazyItem<
-						infer TSchema extends TreeNodeSchemaUnsafe
-					>
-						? InsertableTypedNodeUnsafe<TSchema>
-						: never;
-				}[number];
+	export type InsertableTreeNodeFromAllowedTypesUnsafe<
+		TList extends AllowedTypesUnsafe,
+	> = IsUnion<TList> extends true
+		? never
+		: {
+				readonly [Property in keyof TList]: TList[Property] extends LazyItem<
+					infer TSchema extends TreeNodeSchemaUnsafe
+				>
+					? InsertableTypedNodeUnsafe<TSchema>
+					: never;
+			}[number];
 
 	/**
 	 * {@link Unenforced} version of {@link InsertableTypedNode}.
@@ -272,7 +293,13 @@ export namespace System_Unsafe {
 		TSchema extends TreeNodeSchemaUnsafe,
 		T = UnionToIntersection<TSchema>,
 	> =
-		| (T extends TreeNodeSchemaUnsafe<string, NodeKind, TreeNode | TreeLeafValue, never, true>
+		| (T extends TreeNodeSchemaUnsafe<
+				string,
+				NodeKind,
+				TreeNode | TreeLeafValue,
+				never,
+				true
+		  >
 				? NodeBuilderDataUnsafe<T>
 				: never)
 		| (T extends TreeNodeSchemaUnsafe ? NodeFromSchemaUnsafe<T> : never);
@@ -284,7 +311,9 @@ export namespace System_Unsafe {
 	 * @system @public
 	 */
 	export type NodeFromSchemaUnsafe<T extends Unenforced<TreeNodeSchema>> =
-		T extends TreeNodeSchemaUnsafe<string, NodeKind, infer TNode> ? TNode : never;
+		T extends TreeNodeSchemaUnsafe<string, NodeKind, infer TNode>
+			? TNode
+			: never;
 
 	/**
 	 * {@link Unenforced} version of {@link InsertableTreeNodeFromImplicitAllowedTypes}.
@@ -293,7 +322,9 @@ export namespace System_Unsafe {
 	 * @system @public
 	 */
 	export type NodeBuilderDataUnsafe<T extends Unenforced<TreeNodeSchema>> =
-		T extends TreeNodeSchemaUnsafe<string, NodeKind, unknown, infer TBuild> ? TBuild : never;
+		T extends TreeNodeSchemaUnsafe<string, NodeKind, unknown, infer TBuild>
+			? TBuild
+			: never;
 
 	/**
 	 * {@link Unenforced} version of {@link (TreeArrayNode:interface)}.
@@ -301,8 +332,9 @@ export namespace System_Unsafe {
 	 * Do not use this type directly: it's only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
 	 * @system @sealed @public
 	 */
-	export interface TreeArrayNodeUnsafe<TAllowedTypes extends ImplicitAllowedTypesUnsafe>
-		extends TreeArrayNode<
+	export interface TreeArrayNodeUnsafe<
+		TAllowedTypes extends ImplicitAllowedTypesUnsafe,
+	> extends TreeArrayNode<
 			TAllowedTypes,
 			TreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>,
 			InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>
@@ -344,7 +376,9 @@ export namespace System_Unsafe {
 	 */
 	export interface ReadonlyMapInlined<K, T extends ImplicitAllowedTypesUnsafe> {
 		/** Returns an iterable of entries in the map. */
-		[Symbol.iterator](): IterableIterator<[K, TreeNodeFromImplicitAllowedTypesUnsafe<T>]>;
+		[Symbol.iterator](): IterableIterator<
+			[K, TreeNodeFromImplicitAllowedTypesUnsafe<T>]
+		>;
 
 		/**
 		 * Returns an iterable of key, value pairs for every entry in the map.
@@ -399,15 +433,23 @@ export namespace System_Unsafe {
 		T extends RestrictiveStringRecord<ImplicitFieldSchemaUnsafe>,
 	> = {
 		// Field might not have a default, so make it required:
-		readonly [Property in keyof T as FieldHasDefaultUnsafe<T[Property & string]> extends false
+		readonly [Property in keyof T as FieldHasDefaultUnsafe<
+			T[Property & string]
+		> extends false
 			? Property
-			: never]: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property & string]>;
+			: never]: InsertableTreeFieldFromImplicitFieldUnsafe<
+			T[Property & string]
+		>;
 	} & {
 		// Field might have a default, so allow optional.
 		// Note that if the field could be either, this returns boolean, causing both fields to exist, resulting in required.
-		readonly [Property in keyof T as FieldHasDefaultUnsafe<T[Property & string]> extends true
+		readonly [Property in keyof T as FieldHasDefaultUnsafe<
+			T[Property & string]
+		> extends true
 			? Property
-			: never]?: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property & string]>;
+			: never]?: InsertableTreeFieldFromImplicitFieldUnsafe<
+			T[Property & string]
+		>;
 	};
 
 	/**
@@ -421,7 +463,11 @@ export namespace System_Unsafe {
 		TSchemaInput extends ImplicitFieldSchemaUnsafe,
 		TSchema = UnionToIntersection<TSchemaInput>,
 	> = [TSchema] extends [FieldSchemaUnsafe<infer Kind, infer Types>]
-		? ApplyKindInput<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind, true>
+		? ApplyKindInput<
+				InsertableTreeNodeFromImplicitAllowedTypesUnsafe<Types>,
+				Kind,
+				true
+			>
 		: [TSchema] extends [ImplicitAllowedTypes]
 			? InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TSchema>
 			: never;
@@ -518,7 +564,10 @@ export interface MapNodeCustomizableSchemaUnsafe<
 			System_Unsafe.TreeMapNodeUnsafe<T> & WithType<TName, NodeKind.Map, T>,
 			| {
 					[Symbol.iterator](): Iterator<
-						[string, System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>]
+						[
+							string,
+							System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>,
+						]
 					>;
 			  }
 			| {
@@ -539,10 +588,16 @@ export interface MapNodeCustomizableSchemaUnsafe<
  */
 export interface TreeRecordNodeUnsafe<
 	TAllowedTypes extends System_Unsafe.ImplicitAllowedTypesUnsafe,
-> extends Record<string, System_Unsafe.TreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>>,
+> extends Record<
+			string,
+			System_Unsafe.TreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>
+		>,
 		TreeNode {
 	[Symbol.iterator](): IterableIterator<
-		[string, System_Unsafe.TreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>]
+		[
+			string,
+			System_Unsafe.TreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>,
+		]
 	>;
 }
 
@@ -566,8 +621,9 @@ export type UnannotateAllowedTypeUnsafe<
  * Do not use this type directly: it's only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
  * @system @sealed @alpha
  */
-export interface AnnotatedAllowedTypeUnsafe<T = Unenforced<LazyItem<TreeNodeSchema>>>
-	extends AnnotatedAllowedType<T> {}
+export interface AnnotatedAllowedTypeUnsafe<
+	T = Unenforced<LazyItem<TreeNodeSchema>>,
+> extends AnnotatedAllowedType<T> {}
 
 /**
  * {@link Unenforced} version of {@link AnnotatedAllowedTypes}.
@@ -585,7 +641,8 @@ export interface AnnotatedAllowedTypesUnsafe
  * @system @sealed @alpha
  */
 export type AllowedTypesFullUnsafe<
-	T extends readonly AnnotatedAllowedTypeUnsafe[] = readonly AnnotatedAllowedTypeUnsafe[],
+	T extends
+		readonly AnnotatedAllowedTypeUnsafe[] = readonly AnnotatedAllowedTypeUnsafe[],
 > = AnnotatedAllowedTypes<T> & UnannotateAllowedTypesListUnsafe<T>;
 
 /**
@@ -595,7 +652,9 @@ export type AllowedTypesFullUnsafe<
  * @system @sealed @alpha
  */
 export type AllowedTypesFullFromMixedUnsafe<
-	T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[],
+	T extends readonly Unenforced<
+		AnnotatedAllowedType | LazyItem<TreeNodeSchema>
+	>[],
 > = UnannotateAllowedTypesListUnsafe<T> &
 	AnnotatedAllowedTypes<AnnotateAllowedTypesListUnsafe<T>>;
 
@@ -606,7 +665,9 @@ export type AllowedTypesFullFromMixedUnsafe<
  * @system @sealed @alpha
  */
 export type UnannotateAllowedTypesListUnsafe<
-	T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[],
+	T extends readonly Unenforced<
+		AnnotatedAllowedType | LazyItem<TreeNodeSchema>
+	>[],
 > = {
 	readonly [I in keyof T]: T[I] extends { type: infer X } ? X : T[I];
 };
@@ -618,7 +679,9 @@ export type UnannotateAllowedTypesListUnsafe<
  * @system @sealed @alpha
  */
 export type AnnotateAllowedTypesListUnsafe<
-	T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[],
+	T extends readonly Unenforced<
+		AnnotatedAllowedType | LazyItem<TreeNodeSchema>
+	>[],
 > = {
 	[I in keyof T]: T[I] extends AnnotatedAllowedTypeUnsafe
 		? T[I]

@@ -72,7 +72,8 @@ export function shouldAllowGcSweep(
 	}
 
 	// tombstoneGeneration is the predecessor and needs to be supported for back-compat reasons
-	const targetGeneration = featureMatrix.tombstoneGeneration ?? featureMatrix.gcGeneration;
+	const targetGeneration =
+		featureMatrix.tombstoneGeneration ?? featureMatrix.gcGeneration;
 
 	return currentGeneration === targetGeneration;
 }
@@ -124,16 +125,21 @@ export function concatGarbageCollectionStates(
 				combineNodeData.unreferencedTimestampMs !== undefined
 			) {
 				assert(
-					nodeData.unreferencedTimestampMs === combineNodeData.unreferencedTimestampMs,
+					nodeData.unreferencedTimestampMs ===
+						combineNodeData.unreferencedTimestampMs,
 					0x5d7 /* Two entries for the same GC node with different unreferenced timestamp */,
 				);
 			}
 			combineNodeData = {
 				outboundRoutes: [
-					...new Set([...nodeData.outboundRoutes, ...combineNodeData.outboundRoutes]),
+					...new Set([
+						...nodeData.outboundRoutes,
+						...combineNodeData.outboundRoutes,
+					]),
 				],
 				unreferencedTimestampMs:
-					nodeData.unreferencedTimestampMs ?? combineNodeData.unreferencedTimestampMs,
+					nodeData.unreferencedTimestampMs ??
+					combineNodeData.unreferencedTimestampMs,
 			};
 		}
 		combinedGCNodes[nodeId] = combineNodeData;
@@ -146,7 +152,9 @@ export function concatGarbageCollectionStates(
  * @param gcData - The GC data to clone.
  * @returns a clone of the given GC data.
  */
-export function cloneGCData(gcData: IGarbageCollectionData): IGarbageCollectionData {
+export function cloneGCData(
+	gcData: IGarbageCollectionData,
+): IGarbageCollectionData {
 	const clonedGCNodes: { [id: string]: string[] } = {};
 	for (const [id, outboundRoutes] of Object.entries(gcData.gcNodes)) {
 		clonedGCNodes[id] = [...outboundRoutes];
@@ -189,7 +197,9 @@ export async function getGCDataFromSnapshot(
 	for (const key of Object.keys(gcSnapshotTree.blobs)) {
 		// Update deleted nodes blob.
 		if (key === gcDeletedBlobKey) {
-			deletedNodes = await readAndParseBlob<string[]>(gcSnapshotTree.blobs[key]);
+			deletedNodes = await readAndParseBlob<string[]>(
+				gcSnapshotTree.blobs[key],
+			);
 			continue;
 		}
 
@@ -224,7 +234,8 @@ export async function getGCDataFromSnapshot(
 export function unpackChildNodesGCDetails(
 	gcDetails: IGarbageCollectionDetailsBase,
 ): Map<string, IGarbageCollectionDetailsBase> {
-	const childGCDetailsMap: Map<string, IGarbageCollectionDetailsBase> = new Map();
+	const childGCDetailsMap: Map<string, IGarbageCollectionDetailsBase> =
+		new Map();
 
 	// If GC data is not available, bail out.
 	if (gcDetails.gcData === undefined) {
@@ -268,7 +279,9 @@ export function unpackChildNodesGCDetails(
 	}
 
 	// Remove the node's self used route, if any, and generate the children used routes.
-	const usedRoutes = gcDetails.usedRoutes.filter((route) => route !== "" && route !== "/");
+	const usedRoutes = gcDetails.usedRoutes.filter(
+		(route) => route !== "" && route !== "/",
+	);
 	for (const route of usedRoutes) {
 		const childId = route.split("/")[1];
 		assert(

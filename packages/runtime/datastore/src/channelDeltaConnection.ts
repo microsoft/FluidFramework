@@ -43,7 +43,8 @@ function processWithStashedOpMetadataHandling(
 	func: (contents: unknown, metadata: unknown) => void,
 ): void {
 	if (isStashedOpMetadata(localOpMetaData)) {
-		for (const { contents, metadata } of localOpMetaData) func(contents, metadata);
+		for (const { contents, metadata } of localOpMetaData)
+			func(contents, metadata);
 	} else {
 		func(content, localOpMetaData);
 	}
@@ -83,13 +84,19 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 
 	constructor(
 		private _connected: boolean,
-		private readonly submitFn: (content: unknown, localOpMetadata: unknown) => void,
+		private readonly submitFn: (
+			content: unknown,
+			localOpMetadata: unknown,
+		) => void,
 		public readonly dirty: () => void,
 		private readonly isAttachedAndVisible: () => boolean,
 	) {}
 
 	public attach(handler: IDeltaHandler): void {
-		assert(this._handler === undefined, 0x178 /* "Missing delta handler on attach" */);
+		assert(
+			this._handler === undefined,
+			0x178 /* "Missing delta handler on attach" */,
+		);
 		this._handler = handler;
 	}
 
@@ -117,9 +124,15 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 		}
 	}
 
-	public reSubmit(content: unknown, localOpMetadata: unknown, squash: boolean): void {
-		processWithStashedOpMetadataHandling(content, localOpMetadata, (contents, metadata) =>
-			this.handler.reSubmit(contents, metadata, squash),
+	public reSubmit(
+		content: unknown,
+		localOpMetadata: unknown,
+		squash: boolean,
+	): void {
+		processWithStashedOpMetadataHandling(
+			content,
+			localOpMetadata,
+			(contents, metadata) => this.handler.reSubmit(contents, metadata, squash),
 		);
 	}
 
@@ -136,7 +149,9 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 
 	public applyStashedOp(content: unknown): unknown {
 		try {
-			this.stashedOpMd = this.isAttachedAndVisible() ? createStashedOpMetadata() : undefined;
+			this.stashedOpMd = this.isAttachedAndVisible()
+				? createStashedOpMetadata()
+				: undefined;
 			this.handler.applyStashedOp(content);
 			return this.stashedOpMd;
 		} finally {

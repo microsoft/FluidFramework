@@ -28,9 +28,15 @@ export function makeDetachedFieldIndexCodec(
 	options: CodecWriteOptions,
 	idCompressor: IIdCompressor,
 ): IJsonCodec<DetachedFieldSummaryData> {
-	const family = makeDetachedFieldIndexCodecFamily(revisionTagCodec, options, idCompressor);
+	const family = makeDetachedFieldIndexCodecFamily(
+		revisionTagCodec,
+		options,
+		idCompressor,
+	);
 	const writeVersion =
-		options.oldestCompatibleClient < FluidClientVersion.v2_52 ? version1 : version2;
+		options.oldestCompatibleClient < FluidClientVersion.v2_52
+			? version1
+			: version2;
 	return makeVersionDispatchingCodec(family, { ...options, writeVersion });
 }
 
@@ -40,12 +46,21 @@ export function makeDetachedFieldIndexCodecFamily(
 	idCompressor: IIdCompressor,
 ): ICodecFamily<DetachedFieldSummaryData> {
 	return makeCodecFamily([
-		[version1, makeDetachedNodeToFieldCodecV1(revisionTagCodec, options, idCompressor)],
-		[version2, makeDetachedNodeToFieldCodecV2(revisionTagCodec, options, idCompressor)],
+		[
+			version1,
+			makeDetachedNodeToFieldCodecV1(revisionTagCodec, options, idCompressor),
+		],
+		[
+			version2,
+			makeDetachedNodeToFieldCodecV2(revisionTagCodec, options, idCompressor),
+		],
 	]);
 }
 
-export type DetachedFieldIndexFormatVersion = Brand<1 | 2, "DetachedFieldIndexFormatVersion">;
+export type DetachedFieldIndexFormatVersion = Brand<
+	1 | 2,
+	"DetachedFieldIndexFormatVersion"
+>;
 export function getCodecTreeForDetachedFieldIndexFormat(
 	version: DetachedFieldIndexFormatVersion,
 ): CodecTree {

@@ -87,7 +87,7 @@ export class RedisFs extends FsPromisesBase {
 						fsManagerParams.rootDir,
 						this.redisClientConnectionManager,
 						redisParams,
-				  )
+					)
 				: new Redis(this.redisClientConnectionManager, redisParams);
 	}
 
@@ -124,7 +124,10 @@ export class RedisFs extends FsPromisesBase {
 	public async readFileCore(
 		filepath: PathLike | FileHandle,
 		// eslint-disable-next-line @rushstack/no-new-null
-		options?: (ObjectEncodingOptions & { flag?: OpenMode | undefined }) | BufferEncoding | null,
+		options?:
+			| (ObjectEncodingOptions & { flag?: OpenMode | undefined })
+			| BufferEncoding
+			| null,
 	): Promise<Buffer | string>;
 	public async readFileCore(
 		filepath: PathLike | FileHandle,
@@ -372,7 +375,10 @@ export class RedisFs extends FsPromisesBase {
 		filepath: PathLike,
 		options: StatOptions & { bigint: true },
 	): Promise<BigIntStats>;
-	public async statCore(filepath: PathLike, options?: StatOptions): Promise<Stats | BigIntStats>;
+	public async statCore(
+		filepath: PathLike,
+		options?: StatOptions,
+	): Promise<Stats | BigIntStats>;
 	public async statCore(filepath: PathLike, options?: any): Promise<Stats | BigIntStats> {
 		const filepathString = filepath.toString();
 		const dataLength = await executeRedisFsApiWithMetric(
@@ -467,7 +473,10 @@ export class RedisFs extends FsPromisesBase {
 		// eslint-disable-next-line @rushstack/no-new-null
 		options?: ObjectEncodingOptions | BufferEncoding | null,
 	): Promise<string>;
-	public async readlinkCore(filepath: PathLike, options: BufferEncodingOption): Promise<Buffer>;
+	public async readlinkCore(
+		filepath: PathLike,
+		options: BufferEncodingOption,
+	): Promise<Buffer>;
 	public async readlinkCore(
 		filepath: PathLike,
 		// eslint-disable-next-line @rushstack/no-new-null

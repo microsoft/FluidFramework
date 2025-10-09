@@ -434,10 +434,7 @@ export function validateTokenScopeClaims(expectedScopes: string): RequestHandler
 			if (error instanceof NetworkError) {
 				return respondWithNetworkError(response, error);
 			}
-			return respondWithNetworkError(
-				response,
-				new NetworkError(403, "Missing access token."),
-			);
+			return respondWithNetworkError(response, new NetworkError(403, "Missing access token."));
 		}
 
 		let claims: ITokenClaims;
@@ -448,10 +445,7 @@ export function validateTokenScopeClaims(expectedScopes: string): RequestHandler
 		}
 
 		if (!claims) {
-			return respondWithNetworkError(
-				response,
-				new NetworkError(403, "Missing token claims."),
-			);
+			return respondWithNetworkError(response, new NetworkError(403, "Missing token claims."));
 		}
 
 		if (claims.scopes === undefined || claims.scopes === null || claims.scopes.length === 0) {

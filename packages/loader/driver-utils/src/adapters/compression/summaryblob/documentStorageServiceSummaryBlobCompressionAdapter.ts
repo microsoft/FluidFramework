@@ -113,7 +113,9 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * @param blob - The blob to remove the prefix from.
 	 * @returns The blob without the prefix.
 	 */
-	private static removePrefixFromBlobIfPresent(blob: ArrayBufferLike): ArrayBufferLike {
+	private static removePrefixFromBlobIfPresent(
+		blob: ArrayBufferLike,
+	): ArrayBufferLike {
 		const blobView = new Uint8Array(blob);
 		return this.hasPrefix(blob) ? IsoBuffer.from(blobView.subarray(1)) : blob;
 	}
@@ -142,13 +144,12 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	): SummaryObject => {
 		if (input.type === SummaryType.Blob) {
 			const summaryBlob: ISummaryBlob = input;
-			const original: ArrayBufferLike = DocumentStorageServiceCompressionAdapter.toBinaryArray(
-				summaryBlob.content,
-			);
-			const processed: ArrayBufferLike = DocumentStorageServiceCompressionAdapter.encodeBlob(
-				original,
-				config,
-			);
+			const original: ArrayBufferLike =
+				DocumentStorageServiceCompressionAdapter.toBinaryArray(
+					summaryBlob.content,
+				);
+			const processed: ArrayBufferLike =
+				DocumentStorageServiceCompressionAdapter.encodeBlob(original, config);
 			const newSummaryBlob = {
 				type: SummaryType.Blob,
 				content: IsoBuffer.from(processed),
@@ -164,12 +165,15 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * @param input - The summary object to decode.
 	 * @returns The summary object with the decoded blob.
 	 */
-	private static readonly blobDecoder = (input: SummaryObject): SummaryObject => {
+	private static readonly blobDecoder = (
+		input: SummaryObject,
+	): SummaryObject => {
 		if (input.type === SummaryType.Blob) {
 			const summaryBlob: ISummaryBlob = input;
-			const original: Uint8Array = DocumentStorageServiceCompressionAdapter.toBinaryArray(
-				summaryBlob.content,
-			);
+			const original: Uint8Array =
+				DocumentStorageServiceCompressionAdapter.toBinaryArray(
+					summaryBlob.content,
+				);
 			const processed: ArrayBufferLike =
 				DocumentStorageServiceCompressionAdapter.decodeBlob(original);
 			const newSummaryBlob = {
@@ -205,10 +209,11 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 		} else {
 			throw new Error(`Unknown Algorithm ${config.algorithm}`);
 		}
-		maybeCompressed = DocumentStorageServiceCompressionAdapter.writeAlgorithmToBlob(
-			maybeCompressed,
-			algorithm,
-		);
+		maybeCompressed =
+			DocumentStorageServiceCompressionAdapter.writeAlgorithmToBlob(
+				maybeCompressed,
+				algorithm,
+			);
 		return maybeCompressed;
 	}
 
@@ -222,7 +227,8 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 		let originalBlob;
 		let algorithm;
 		if (this.hasPrefix(file)) {
-			algorithm = DocumentStorageServiceCompressionAdapter.readAlgorithmFromBlob(file);
+			algorithm =
+				DocumentStorageServiceCompressionAdapter.readAlgorithmFromBlob(file);
 			originalBlob = this.removePrefixFromBlobIfPresent(file);
 		} else {
 			algorithm = SummaryCompressionAlgorithm.None;
@@ -252,12 +258,18 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	private static recursivelyReplace(
 		isEncode: boolean,
 		input: SummaryObject,
-		encoder: (input: SummaryObject, config: ICompressionStorageConfig) => SummaryObject,
+		encoder: (
+			input: SummaryObject,
+			config: ICompressionStorageConfig,
+		) => SummaryObject,
 		decoder: (input: SummaryObject) => SummaryObject,
 		config: ICompressionStorageConfig,
 		context?: ISummaryContext,
 	): SummaryObject {
-		assert(typeof input === "object", 0x6f6 /* input must be a non-null object */);
+		assert(
+			typeof input === "object",
+			0x6f6 /* input must be a non-null object */,
+		);
 		const maybeReplaced = isEncode ? encoder(input, config) : decoder(input);
 
 		if (maybeReplaced !== input) {
@@ -292,8 +304,13 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * @param summary - The summary tree to traverse.
 	 * @returns The summary tree containing the metadata blob.
 	 */
-	private static findMetadataHolderSummary(summary: ISummaryTree): ISummaryTree | undefined {
-		assert(typeof summary === "object", 0x6f7 /* summary must be a non-null object */);
+	private static findMetadataHolderSummary(
+		summary: ISummaryTree,
+	): ISummaryTree | undefined {
+		assert(
+			typeof summary === "object",
+			0x6f7 /* summary must be a non-null object */,
+		);
 		for (const [key, value] of Object.entries(summary.tree)) {
 			if (Boolean(value) && value.type === SummaryType.Tree) {
 				const found = this.findMetadataHolderSummary(value);
@@ -301,7 +318,11 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 					return found;
 				}
 			}
-			if (Boolean(value) && key === metadataBlobName && value.type === SummaryType.Blob) {
+			if (
+				Boolean(value) &&
+				key === metadataBlobName &&
+				value.type === SummaryType.Blob
+			) {
 				return summary;
 			}
 		}
@@ -316,7 +337,10 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 */
 	private static getMetadataHolderTree(summary: ISummaryTree) {
 		const metadataHolder = this.findMetadataHolderSummary(summary);
-		assert(metadataHolder !== undefined, 0x6f8 /* metadataHolder must be a non-null object */);
+		assert(
+			metadataHolder !== undefined,
+			0x6f8 /* metadataHolder must be a non-null object */,
+		);
 		const metadataHolderTree = metadataHolder.tree;
 		return metadataHolderTree;
 	}
@@ -342,7 +366,10 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * @returns True if the compression markup blob is found, otherwise false.
 	 */
 	private static hasCompressionMarkup(snapshot: ISnapshotTree): boolean {
-		assert(typeof snapshot === "object", 0x6f9 /* snapshot must be a non-null object */);
+		assert(
+			typeof snapshot === "object",
+			0x6f9 /* snapshot must be a non-null object */,
+		);
 		for (const key of Object.keys(snapshot.blobs)) {
 			if (key === metadataBlobName) {
 				const value = snapshot.blobs[blobHeadersBlobName];
@@ -419,7 +446,9 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 		this._isCompressionEnabled =
 			snapshotTree !== undefined &&
 			snapshotTree !== null &&
-			DocumentStorageServiceCompressionAdapter.hasCompressionMarkup(snapshotTree);
+			DocumentStorageServiceCompressionAdapter.hasCompressionMarkup(
+				snapshotTree,
+			);
 		return snapshotTree;
 	}
 
@@ -445,7 +474,9 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * @param id - The ID of the summary to be downloaded
 	 * @returns The summary with decompressed blobs
 	 */
-	public override async downloadSummary(id: ISummaryHandle): Promise<ISummaryTree> {
+	public override async downloadSummary(
+		id: ISummaryHandle,
+	): Promise<ISummaryTree> {
 		const summary = await super.downloadSummary(id);
 		return !this._isCompressionEnabled
 			? summary

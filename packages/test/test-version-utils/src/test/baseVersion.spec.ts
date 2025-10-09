@@ -14,7 +14,11 @@ describe("testBaseVersion", () => {
 			"0.0.0-110039-test",
 		);
 		assert.strictEqual(
-			testBaseVersion(undefined, "0.0.0-110039-test", "2.0.0-dev.2.1.0.110039-test"),
+			testBaseVersion(
+				undefined,
+				"0.0.0-110039-test",
+				"2.0.0-dev.2.1.0.110039-test",
+			),
 			"0.0.0-110039-test",
 		);
 		assert.strictEqual(

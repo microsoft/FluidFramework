@@ -69,9 +69,7 @@ export class RestLessServer {
 					extended: true,
 					// urlencoded does not recognize content-type: application/x-www-form-urlencoded;restless
 					type: (req) =>
-						req.headers["content-type"]?.startsWith(
-							"application/x-www-form-urlencoded",
-						),
+						req.headers["content-type"]?.startsWith("application/x-www-form-urlencoded"),
 				})(request, response, () => resolve()),
 			);
 		}
@@ -83,7 +81,10 @@ export class RestLessServer {
 		return request;
 	}
 
-	private translateRequestFields(request: IncomingMessageEx, fields: Record<string, any>): void {
+	private translateRequestFields(
+		request: IncomingMessageEx,
+		fields: Record<string, any>,
+	): void {
 		// Parse and override HTTP Method
 		const methodOverrideField: RequestField = fields[RestLessFieldNames.Method];
 		if (!methodOverrideField) {

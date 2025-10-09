@@ -5,7 +5,10 @@
 
 import type { ISharedMap, IValueChanged } from "@fluidframework/map/internal";
 
-import type { IRevertible, UndoRedoStackManager } from "./undoRedoStackManager.js";
+import type {
+	IRevertible,
+	UndoRedoStackManager,
+} from "./undoRedoStackManager.js";
 
 /**
  * A shared map undo redo handler that will add all local map changes to the provided
@@ -28,7 +31,9 @@ export class SharedMapUndoRedoHandler {
 		target: ISharedMap,
 	): void => {
 		if (local) {
-			this.stackManager.pushToCurrentOperation(new SharedMapRevertible(changed, target));
+			this.stackManager.pushToCurrentOperation(
+				new SharedMapRevertible(changed, target),
+			);
 		}
 	};
 }

@@ -25,7 +25,11 @@ export interface PackageLinkProps {
 /**
  * A convenient mechanism for linking to a package's API documentation.
  */
-export function PackageLink({ headingId, packageName, children }: PackageLinkProps): JSX.Element {
+export function PackageLink({
+	headingId,
+	packageName,
+	children,
+}: PackageLinkProps): JSX.Element {
 	const root = useLinkPathBase();
 	const headingPostfix = headingId === undefined ? "" : `#${headingId}`;
 	return <a href={`${root}${packageName}${headingPostfix}`}>{children ?? packageName}</a>;

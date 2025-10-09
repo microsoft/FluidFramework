@@ -103,7 +103,9 @@ export async function getDriveItemByServerRelativePath(
 	}
 	if (
 		pathParts.length >= 2 &&
-		(pathParts[0] === "personal" || pathParts[0] === "teams" || pathParts[0] === "sites")
+		(pathParts[0] === "personal" ||
+			pathParts[0] === "teams" ||
+			pathParts[0] === "sites")
 	) {
 		account = `${pathParts.shift()}/${pathParts.shift()}`;
 	}
@@ -111,7 +113,13 @@ export async function getDriveItemByServerRelativePath(
 	const library = pathParts.shift();
 	if (!library) {
 		// Default drive/library
-		return getDriveItemByRootFileName(server, account, "/", authRequestInfo, create);
+		return getDriveItemByRootFileName(
+			server,
+			account,
+			"/",
+			authRequestInfo,
+			create,
+		);
 	}
 	const path = `/${pathParts.join("/")}`;
 	const driveId = await getDriveId(server, account, library, authRequestInfo);
@@ -153,7 +161,11 @@ export async function getChildrenByDriveItem(
 		const response = await getAsync(url, authRequestInfo);
 		if (response.status !== 200) {
 			// pre-0.58 error message: unableToGetChildren
-			throwOdspNetworkError("Unable to get driveItem children", response.status, response);
+			throwOdspNetworkError(
+				"Unable to get driveItem children",
+				response.status,
+				response,
+			);
 		}
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- TODO: use stronger typing here.
 		const getChildrenResult = await response.json();
@@ -238,7 +250,12 @@ async function getDefaultDrive(
 	account: string,
 	authRequestInfo: IOdspAuthRequestInfo,
 ): Promise<IOdspDriveInfo> {
-	const response = await getDriveResponse("drive", server, account, authRequestInfo);
+	const response = await getDriveResponse(
+		"drive",
+		server,
+		account,
+		authRequestInfo,
+	);
 	const getDriveResult = (await response.json()) as IOdspDriveInfo;
 	return getDriveResult;
 }
@@ -248,7 +265,12 @@ async function getDrives(
 	account: string,
 	authRequestInfo: IOdspAuthRequestInfo,
 ): Promise<IOdspDriveInfo[]> {
-	const response = await getDriveResponse("drives", server, account, authRequestInfo);
+	const response = await getDriveResponse(
+		"drives",
+		server,
+		account,
+		authRequestInfo,
+	);
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- TODO: use stronger typing here.
 	const getDriveResult = await response.json();
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access

@@ -21,7 +21,10 @@ export interface ISharedCounterEvents extends ISharedObjectEvents {
 	 *
 	 * @eventProperty
 	 */
-	(event: "incremented", listener: (incrementAmount: number, newValue: number) => void);
+	(
+		event: "incremented",
+		listener: (incrementAmount: number, newValue: number) => void,
+	);
 }
 
 /**

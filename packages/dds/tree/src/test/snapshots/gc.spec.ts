@@ -5,7 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
-import { type IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
+import {
+	type IGCTestProvider,
+	runGCTests,
+} from "@fluid-private/test-dds-utils";
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
@@ -39,7 +42,10 @@ function createConnectedTree(
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({
 		idCompressor: createIdCompressor(),
 	});
-	const tree = DefaultTestSharedTreeKind.getFactory().create(dataStoreRuntime, id);
+	const tree = DefaultTestSharedTreeKind.getFactory().create(
+		dataStoreRuntime,
+		id,
+	);
 	runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
@@ -73,7 +79,9 @@ describe("Garbage Collection", () => {
 			this.containerRuntimeFactory = new MockContainerRuntimeFactory();
 			this.tree1 = createConnectedTree("tree1", this.containerRuntimeFactory);
 			this.tree2 = createConnectedTree("tree2", this.containerRuntimeFactory);
-			this.view1 = this.tree1.viewWith(new TreeViewConfiguration({ schema: SomeType }));
+			this.view1 = this.tree1.viewWith(
+				new TreeViewConfiguration({ schema: SomeType }),
+			);
 			this.view1.initialize({
 				handles: [],
 				nested: undefined,

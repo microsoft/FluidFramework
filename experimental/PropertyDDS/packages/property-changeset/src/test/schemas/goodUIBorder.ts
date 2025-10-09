@@ -21,8 +21,16 @@ export const templateSchema = {
 			typeid: "Enum",
 			properties: [
 				{ id: "solid", value: 200, annotation: { description: "solid line" } },
-				{ id: "dashed", value: 100, annotation: { description: "dashed line" } },
-				{ id: "dotted", value: 300, annotation: { description: "dotted line" } },
+				{
+					id: "dashed",
+					value: 100,
+					annotation: { description: "dashed line" },
+				},
+				{
+					id: "dotted",
+					value: 300,
+					annotation: { description: "dotted line" },
+				},
 			],
 		},
 		{

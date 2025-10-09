@@ -48,7 +48,10 @@ describe("SharedString Snapshot Version - Empty Props", () => {
 
 	it("loads a snapshot that contains an empty PropertySet", async () => {
 		const filename = `${filebase}emptyPropsAtEnd.json`;
-		assert(fs.existsSync(filename), `test snapshot file does not exist: ${filename}`);
+		assert(
+			fs.existsSync(filename),
+			`test snapshot file does not exist: ${filename}`,
+		);
 		const data = fs.readFileSync(filename, "utf8");
 		const sharedString = await loadSharedString("fakeId", data);
 		const expectedProps = Object.entries({});
@@ -56,7 +59,10 @@ describe("SharedString Snapshot Version - Empty Props", () => {
 
 		for (let i = 0; i < sharedString.getLength(); i++) {
 			const actualProps = sharedString.getPropertiesAtPosition(i);
-			assert(actualProps !== undefined, "Properties are undefined when they should be empty");
+			assert(
+				actualProps !== undefined,
+				"Properties are undefined when they should be empty",
+			);
 			assert(
 				Object.entries(actualProps).toString() === expectedProps.toString(),
 				`Properties are not empty at position ${i}`,

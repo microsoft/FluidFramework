@@ -4,7 +4,12 @@
  */
 
 import type { SessionId } from "@fluidframework/id-compressor";
-import { type ObjectOptions, type Static, type TSchema, Type } from "@sinclair/typebox";
+import {
+	type ObjectOptions,
+	type Static,
+	type TSchema,
+	Type,
+} from "@sinclair/typebox";
 
 import {
 	type EncodedRevisionTag,
@@ -66,10 +71,13 @@ export type SequenceId = Static<typeof SequenceId>;
 /**
  * A commit with a sequence number but no parentage; used for serializing the `EditManager` into a summary
  */
-export interface SequencedCommit<TChangeset> extends Commit<TChangeset>, SequenceId {}
+export interface SequencedCommit<TChangeset>
+	extends Commit<TChangeset>,
+		SequenceId {}
 
-export const SequencedCommit = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
-	Type.Composite([CommitBase(tChange), SequenceId], noAdditionalProps);
+export const SequencedCommit = <ChangeSchema extends TSchema>(
+	tChange: ChangeSchema,
+) => Type.Composite([CommitBase(tChange), SequenceId], noAdditionalProps);
 
 /**
  * A branch off of the trunk for use in summaries.
@@ -87,7 +95,9 @@ export interface EncodedSummarySessionBranch<TChangeset> {
 	readonly commits: Commit<TChangeset>[];
 }
 
-export const SummarySessionBranch = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
+export const SummarySessionBranch = <ChangeSchema extends TSchema>(
+	tChange: ChangeSchema,
+) =>
 	Type.Object(
 		{
 			base: RevisionTagSchema,
@@ -103,10 +113,15 @@ export interface EncodedSharedBranch<TChangeset> {
 	readonly session?: SessionId;
 	readonly base?: EncodedRevisionTag;
 	readonly trunk: readonly Readonly<SequencedCommit<TChangeset>>[];
-	readonly peers: readonly [SessionId, Readonly<EncodedSummarySessionBranch<TChangeset>>][];
+	readonly peers: readonly [
+		SessionId,
+		Readonly<EncodedSummarySessionBranch<TChangeset>>,
+	][];
 }
 
-export const EncodedSharedBranch = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
+export const EncodedSharedBranch = <ChangeSchema extends TSchema>(
+	tChange: ChangeSchema,
+) =>
 	Type.Object(
 		{
 			id: Type.Optional(Type.Number()),
@@ -115,7 +130,9 @@ export const EncodedSharedBranch = <ChangeSchema extends TSchema>(tChange: Chang
 			author: Type.Optional(Type.String()),
 			base: Type.Optional(RevisionTagSchema),
 			trunk: Type.Array(SequencedCommit(tChange)),
-			peers: Type.Array(Type.Tuple([SessionIdSchema, SummarySessionBranch(tChange)])),
+			peers: Type.Array(
+				Type.Tuple([SessionIdSchema, SummarySessionBranch(tChange)]),
+			),
 		},
 		noAdditionalProps,
 	);

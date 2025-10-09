@@ -5,11 +5,11 @@
 		"rootDir": "./",
 		// Contains 'type tests' only -- emit is not useful.
 		"noEmit": true,
-		"types": [],
+		"types": []
 	},
 	"references": [
 		{
-			"path": "../..",
-		},
-	],
+			"path": "../.."
+		}
+	]
 }

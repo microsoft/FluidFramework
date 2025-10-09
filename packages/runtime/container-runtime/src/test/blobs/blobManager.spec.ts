@@ -58,9 +58,17 @@ for (const createBlobPayloadPending of [false, true]) {
 				// Handles for detached blobs are never payload pending, even if the flag is set.
 				assert(!handle.payloadPending);
 				const blobFromManager = await blobManager.getBlob(localId, false);
-				assert.strictEqual(blobToText(blobFromManager), "hello", "Blob content mismatch");
+				assert.strictEqual(
+					blobToText(blobFromManager),
+					"hello",
+					"Blob content mismatch",
+				);
 				const blobFromHandle = await handle.get();
-				assert.strictEqual(blobToText(blobFromHandle), "hello", "Blob content mismatch");
+				assert.strictEqual(
+					blobToText(blobFromHandle),
+					"hello",
+					"Blob content mismatch",
+				);
 				assert.strictEqual(
 					mockOrderingService.messagesReceived,
 					0,
@@ -71,18 +79,20 @@ for (const createBlobPayloadPending of [false, true]) {
 
 		describe("Attaching", () => {
 			it("Can attach when empty", async () => {
-				const { mockBlobStorage, mockRuntime, blobManager } = createTestMaterial({
-					attached: false,
-					createBlobPayloadPending,
-				});
+				const { mockBlobStorage, mockRuntime, blobManager } =
+					createTestMaterial({
+						attached: false,
+						createBlobPayloadPending,
+					});
 				await simulateAttach(mockBlobStorage, mockRuntime, blobManager);
 			});
 
 			it("Can get a detached blob after attaching", async () => {
-				const { mockBlobStorage, mockRuntime, blobManager } = createTestMaterial({
-					attached: false,
-					createBlobPayloadPending,
-				});
+				const { mockBlobStorage, mockRuntime, blobManager } =
+					createTestMaterial({
+						attached: false,
+						createBlobPayloadPending,
+					});
 				const handle = await blobManager.createBlob(textToBlob("hello"));
 				const { localId } = unpackHandle(handle);
 
@@ -91,9 +101,17 @@ for (const createBlobPayloadPending of [false, true]) {
 				assert(blobManager.hasBlob(localId));
 				// Handles for detached blobs are never payload pending, even if the flag is set.
 				const blobFromManager = await blobManager.getBlob(localId, false);
-				assert.strictEqual(blobToText(blobFromManager), "hello", "Blob content mismatch");
+				assert.strictEqual(
+					blobToText(blobFromManager),
+					"hello",
+					"Blob content mismatch",
+				);
 				const blobFromHandle = await handle.get();
-				assert.strictEqual(blobToText(blobFromHandle), "hello", "Blob content mismatch");
+				assert.strictEqual(
+					blobToText(blobFromHandle),
+					"hello",
+					"Blob content mismatch",
+				);
 			});
 		});
 
@@ -114,20 +132,30 @@ for (const createBlobPayloadPending of [false, true]) {
 					// for the blob to later arrive)
 					const getBlobP = blobManager.getBlob("blobId", true);
 					// Simulate the blob being created by some remote client
-					const { id: remoteId } = await mockBlobStorage.createBlob(textToBlob("hello"));
+					const { id: remoteId } = await mockBlobStorage.createBlob(
+						textToBlob("hello"),
+					);
 					blobManager.processBlobAttachMessage(
 						// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-						{ metadata: { localId: "blobId", blobId: remoteId } } as ISequencedMessageEnvelope,
+						{
+							metadata: { localId: "blobId", blobId: remoteId },
+						} as ISequencedMessageEnvelope,
 						false,
 					);
 
 					const blob = await getBlobP;
-					assert.strictEqual(blobToText(blob), "hello", "Blob content mismatch");
+					assert.strictEqual(
+						blobToText(blob),
+						"hello",
+						"Blob content mismatch",
+					);
 				});
 
 				// TODO: Separate test for the network-visible effects of blob creation?
 				it("Can create a blob and retrieve it", async () => {
-					const { blobManager } = createTestMaterial({ createBlobPayloadPending });
+					const { blobManager } = createTestMaterial({
+						createBlobPayloadPending,
+					});
 					const handle = await blobManager.createBlob(textToBlob("hello"));
 					const { localId } = unpackHandle(handle);
 
@@ -142,7 +170,11 @@ for (const createBlobPayloadPending of [false, true]) {
 							localId,
 							createBlobPayloadPending,
 						);
-						assert.strictEqual(blobToText(_blobFromManager), "hello", "Blob content mismatch");
+						assert.strictEqual(
+							blobToText(_blobFromManager),
+							"hello",
+							"Blob content mismatch",
+						);
 					}
 
 					assert.strictEqual(
@@ -151,7 +183,11 @@ for (const createBlobPayloadPending of [false, true]) {
 						"Wrong handle type created",
 					);
 					const blobFromHandle = await handle.get();
-					assert.strictEqual(blobToText(blobFromHandle), "hello", "Blob content mismatch");
+					assert.strictEqual(
+						blobToText(blobFromHandle),
+						"hello",
+						"Blob content mismatch",
+					);
 
 					assert(isFluidHandlePayloadPending(handle));
 					// With payloadPending handles, we won't actually upload and send the attach op until the
@@ -169,7 +205,10 @@ for (const createBlobPayloadPending of [false, true]) {
 						};
 						handle.events.on("payloadShared", onPayloadShared);
 						await ensureBlobsShared([handle]);
-						assert(eventRaised, "payloadShared event was not raised when expected");
+						assert(
+							eventRaised,
+							"payloadShared event was not raised when expected",
+						);
 					}
 					assert.strictEqual(
 						handle.payloadState,
@@ -178,8 +217,15 @@ for (const createBlobPayloadPending of [false, true]) {
 					);
 
 					assert(blobManager.hasBlob(localId));
-					const blobFromManager = await blobManager.getBlob(localId, createBlobPayloadPending);
-					assert.strictEqual(blobToText(blobFromManager), "hello", "Blob content mismatch");
+					const blobFromManager = await blobManager.getBlob(
+						localId,
+						createBlobPayloadPending,
+					);
+					assert.strictEqual(
+						blobToText(blobFromManager),
+						"hello",
+						"Blob content mismatch",
+					);
 				});
 
 				it("Can retrieve a blob using its storageId", async () => {
@@ -197,14 +243,21 @@ for (const createBlobPayloadPending of [false, true]) {
 						await ensureBlobsShared([handle]);
 					}
 
-					assert(storageId !== undefined, "Should have been able to sniff out the storageId");
+					assert(
+						storageId !== undefined,
+						"Should have been able to sniff out the storageId",
+					);
 					assert(blobManager.hasBlob(storageId));
 
 					const blobFromManager = await blobManager.getBlob(
 						storageId,
 						createBlobPayloadPending,
 					);
-					assert.strictEqual(blobToText(blobFromManager), "hello", "Blob content mismatch");
+					assert.strictEqual(
+						blobToText(blobFromManager),
+						"hello",
+						"Blob content mismatch",
+					);
 				});
 
 				it("Does not log an error if runtime is disposed during readBlob error", async () => {
@@ -224,7 +277,10 @@ for (const createBlobPayloadPending of [false, true]) {
 					});
 
 					mockRuntime.disposed = true;
-					const getBlobP = blobManager.getBlob(localId, createBlobPayloadPending);
+					const getBlobP = blobManager.getBlob(
+						localId,
+						createBlobPayloadPending,
+					);
 					await assert.rejects(
 						getBlobP,
 						{ message: "BOOM!" },
@@ -237,7 +293,12 @@ for (const createBlobPayloadPending of [false, true]) {
 						false /* clearEventsAfterCheck */,
 					);
 					mockLogger.assertMatch(
-						[{ category: "generic", eventName: "BlobManager:AttachmentReadBlob_cancel" }],
+						[
+							{
+								category: "generic",
+								eventName: "BlobManager:AttachmentReadBlob_cancel",
+							},
+						],
 						"Expected the _cancel event to be logged with 'generic' category",
 					);
 				});
@@ -306,7 +367,8 @@ for (const createBlobPayloadPending of [false, true]) {
 						await assert.rejects(createBlobP, { message: "fake driver error" });
 					}
 
-					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+					const { ids, redirectTable } =
+						getSummaryContentsWithFormatValidation(blobManager);
 					assert.strictEqual(ids, undefined);
 					assert.strictEqual(redirectTable, undefined);
 				});
@@ -335,7 +397,8 @@ for (const createBlobPayloadPending of [false, true]) {
 						"Blob should have been reuploaded once",
 					);
 
-					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+					const { ids, redirectTable } =
+						getSummaryContentsWithFormatValidation(blobManager);
 					assert.strictEqual(ids?.length, 1);
 					assert.strictEqual(redirectTable?.length, 1);
 				});
@@ -343,9 +406,10 @@ for (const createBlobPayloadPending of [false, true]) {
 
 			describe("Blobs from remote clients", () => {
 				it("Can retrieve blobs uploaded by a remote client", async () => {
-					const { mockBlobStorage, mockOrderingService, blobManager } = createTestMaterial({
-						createBlobPayloadPending,
-					});
+					const { mockBlobStorage, mockOrderingService, blobManager } =
+						createTestMaterial({
+							createBlobPayloadPending,
+						});
 					const { blobManager: blobManager2 } = createTestMaterial({
 						mockBlobStorage,
 						mockOrderingService,
@@ -359,21 +423,31 @@ for (const createBlobPayloadPending of [false, true]) {
 					}
 
 					assert(blobManager.hasBlob(localId));
-					const blobFromManager = await blobManager.getBlob(localId, createBlobPayloadPending);
-					assert.strictEqual(blobToText(blobFromManager), "hello", "Blob content mismatch");
+					const blobFromManager = await blobManager.getBlob(
+						localId,
+						createBlobPayloadPending,
+					);
+					assert.strictEqual(
+						blobToText(blobFromManager),
+						"hello",
+						"Blob content mismatch",
+					);
 				});
 
 				it("Handles deduping against a remote blob", async () => {
-					const { mockBlobStorage, mockOrderingService, blobManager } = createTestMaterial({
-						createBlobPayloadPending,
-					});
+					const { mockBlobStorage, mockOrderingService, blobManager } =
+						createTestMaterial({
+							createBlobPayloadPending,
+						});
 					const { blobManager: blobManager2 } = createTestMaterial({
 						mockBlobStorage,
 						mockOrderingService,
 						createBlobPayloadPending,
 					});
 
-					const remoteHandle = await blobManager2.createBlob(textToBlob("hello"));
+					const remoteHandle = await blobManager2.createBlob(
+						textToBlob("hello"),
+					);
 					if (createBlobPayloadPending) {
 						await ensureBlobsShared([remoteHandle]);
 					}
@@ -383,15 +457,17 @@ for (const createBlobPayloadPending of [false, true]) {
 						await ensureBlobsShared([localHandle]);
 					}
 
-					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+					const { ids, redirectTable } =
+						getSummaryContentsWithFormatValidation(blobManager);
 					assert.strictEqual(ids?.length, 1);
 					assert.strictEqual(redirectTable?.length, 2);
 				});
 
 				it("Handles deduping against a remote blob between upload and BlobAttach", async () => {
-					const { mockBlobStorage, mockOrderingService, blobManager } = createTestMaterial({
-						createBlobPayloadPending,
-					});
+					const { mockBlobStorage, mockOrderingService, blobManager } =
+						createTestMaterial({
+							createBlobPayloadPending,
+						});
 					const { blobManager: blobManager2 } = createTestMaterial({
 						mockBlobStorage,
 						mockOrderingService,
@@ -426,7 +502,8 @@ for (const createBlobPayloadPending of [false, true]) {
 					mockOrderingService.unpause();
 					// Await the handle promises here for the legacy createBlob flow
 					await Promise.all([remoteHandleP, localHandleP]);
-					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+					const { ids, redirectTable } =
+						getSummaryContentsWithFormatValidation(blobManager);
 					assert.strictEqual(ids?.length, 1);
 					assert.strictEqual(redirectTable?.length, 2);
 				});
@@ -455,9 +532,14 @@ for (const createBlobPayloadPending of [false, true]) {
 						await ensureBlobsShared([handle]);
 					}
 					assert(isFluidHandlePayloadPending(handle));
-					assert.strictEqual(handle.payloadState, "shared", "Payload should be shared");
+					assert.strictEqual(
+						handle.payloadState,
+						"shared",
+						"Payload should be shared",
+					);
 
-					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+					const { ids, redirectTable } =
+						getSummaryContentsWithFormatValidation(blobManager);
 					assert.strictEqual(ids?.length, 1);
 					assert.strictEqual(redirectTable?.length, 1);
 				});
@@ -499,10 +581,19 @@ for (const createBlobPayloadPending of [false, true]) {
 					}
 					assert(isFluidHandlePayloadPending(handle1));
 					assert(isFluidHandlePayloadPending(handle2));
-					assert.strictEqual(handle1.payloadState, "shared", "Payload should be shared");
-					assert.strictEqual(handle2.payloadState, "shared", "Payload should be shared");
+					assert.strictEqual(
+						handle1.payloadState,
+						"shared",
+						"Payload should be shared",
+					);
+					assert.strictEqual(
+						handle2.payloadState,
+						"shared",
+						"Payload should be shared",
+					);
 
-					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+					const { ids, redirectTable } =
+						getSummaryContentsWithFormatValidation(blobManager);
 					assert.strictEqual(ids?.length, 2);
 					assert.strictEqual(redirectTable?.length, 2);
 				});
@@ -510,17 +601,25 @@ for (const createBlobPayloadPending of [false, true]) {
 
 			describe("Abort", () => {
 				it("Can abort before blob upload", async () => {
-					const { blobManager } = createTestMaterial({ createBlobPayloadPending });
+					const { blobManager } = createTestMaterial({
+						createBlobPayloadPending,
+					});
 					const ac = new AbortController();
 					ac.abort("abort test");
-					const createP = blobManager.createBlob(textToBlob("hello"), ac.signal);
+					const createP = blobManager.createBlob(
+						textToBlob("hello"),
+						ac.signal,
+					);
 					await assert.rejects(
-						createBlobPayloadPending ? ensureBlobsShared([await createP]) : createP,
+						createBlobPayloadPending
+							? ensureBlobsShared([await createP])
+							: createP,
 						{
 							message: "uploadBlob aborted",
 						},
 					);
-					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+					const { ids, redirectTable } =
+						getSummaryContentsWithFormatValidation(blobManager);
 					assert.strictEqual(ids, undefined);
 					assert.strictEqual(redirectTable, undefined);
 				});
@@ -531,19 +630,25 @@ for (const createBlobPayloadPending of [false, true]) {
 					});
 					mockBlobStorage.pause();
 					const ac = new AbortController();
-					const createP = blobManager.createBlob(textToBlob("hello"), ac.signal);
+					const createP = blobManager.createBlob(
+						textToBlob("hello"),
+						ac.signal,
+					);
 					if (createBlobPayloadPending) {
 						const handle = await createP;
 						attachHandle(handle);
 					}
 					ac.abort("abort test");
 					await assert.rejects(
-						createBlobPayloadPending ? ensureBlobsShared([await createP]) : createP,
+						createBlobPayloadPending
+							? ensureBlobsShared([await createP])
+							: createP,
 						{
 							message: "uploadBlob aborted",
 						},
 					);
-					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+					const { ids, redirectTable } =
+						getSummaryContentsWithFormatValidation(blobManager);
 					assert.strictEqual(ids, undefined);
 					assert.strictEqual(redirectTable, undefined);
 				});
@@ -554,7 +659,10 @@ for (const createBlobPayloadPending of [false, true]) {
 					});
 					mockBlobStorage.pause();
 					const ac = new AbortController();
-					const createP1 = blobManager.createBlob(textToBlob("hello"), ac.signal);
+					const createP1 = blobManager.createBlob(
+						textToBlob("hello"),
+						ac.signal,
+					);
 					const createP2 = blobManager.createBlob(textToBlob("world"));
 					if (createBlobPayloadPending) {
 						const handle1 = await createP1;
@@ -564,20 +672,29 @@ for (const createBlobPayloadPending of [false, true]) {
 					}
 					ac.abort("abort test");
 					await assert.rejects(
-						createBlobPayloadPending ? ensureBlobsShared([await createP1]) : createP1,
+						createBlobPayloadPending
+							? ensureBlobsShared([await createP1])
+							: createP1,
 						{
 							message: "uploadBlob aborted",
 						},
 					);
-					await mockBlobStorage.waitProcessOne({ error: new Error("fake driver error") });
-					await mockBlobStorage.waitProcessOne({ error: new Error("fake driver error") });
+					await mockBlobStorage.waitProcessOne({
+						error: new Error("fake driver error"),
+					});
+					await mockBlobStorage.waitProcessOne({
+						error: new Error("fake driver error"),
+					});
 					await assert.rejects(
-						createBlobPayloadPending ? ensureBlobsShared([await createP2]) : createP2,
+						createBlobPayloadPending
+							? ensureBlobsShared([await createP2])
+							: createP2,
 						{
 							message: "fake driver error",
 						},
 					);
-					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+					const { ids, redirectTable } =
+						getSummaryContentsWithFormatValidation(blobManager);
 					assert.strictEqual(ids, undefined);
 					assert.strictEqual(redirectTable, undefined);
 				});
@@ -588,7 +705,10 @@ for (const createBlobPayloadPending of [false, true]) {
 					});
 					mockOrderingService.pause();
 					const ac = new AbortController();
-					const createP = blobManager.createBlob(textToBlob("hello"), ac.signal);
+					const createP = blobManager.createBlob(
+						textToBlob("hello"),
+						ac.signal,
+					);
 					if (createBlobPayloadPending) {
 						const handle = await createP;
 						attachHandle(handle);
@@ -607,7 +727,9 @@ for (const createBlobPayloadPending of [false, true]) {
 					});
 					ac.abort("abort test");
 					await assert.rejects(
-						createBlobPayloadPending ? ensureBlobsShared([await createP]) : createP,
+						createBlobPayloadPending
+							? ensureBlobsShared([await createP])
+							: createP,
 						{
 							message: "uploadBlob aborted",
 						},
@@ -621,20 +743,27 @@ for (const createBlobPayloadPending of [false, true]) {
 						"Shouldn't have sent more ops",
 					);
 
-					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+					const { ids, redirectTable } =
+						getSummaryContentsWithFormatValidation(blobManager);
 					assert.strictEqual(ids, undefined);
 					assert.strictEqual(redirectTable, undefined);
 				});
 
 				it("Abort does nothing after blob creation succeeds", async () => {
-					const { blobManager } = createTestMaterial({ createBlobPayloadPending });
+					const { blobManager } = createTestMaterial({
+						createBlobPayloadPending,
+					});
 					const ac = new AbortController();
-					const handle = await blobManager.createBlob(textToBlob("hello"), ac.signal);
+					const handle = await blobManager.createBlob(
+						textToBlob("hello"),
+						ac.signal,
+					);
 					if (createBlobPayloadPending) {
 						await ensureBlobsShared([handle]);
 					}
 					ac.abort("abort test");
-					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+					const { ids, redirectTable } =
+						getSummaryContentsWithFormatValidation(blobManager);
 					assert.strictEqual(ids?.length, 1);
 					assert.strictEqual(redirectTable?.length, 1);
 				});
@@ -647,10 +776,17 @@ for (const createBlobPayloadPending of [false, true]) {
 		describe("Summaries", () => {
 			describe("Generating summaries", () => {
 				it("Empty summary", () => {
-					const { blobManager } = createTestMaterial({ createBlobPayloadPending });
+					const { blobManager } = createTestMaterial({
+						createBlobPayloadPending,
+					});
 
-					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
-					assert.strictEqual(ids, undefined, "Shouldn't have ids for empty summary");
+					const { ids, redirectTable } =
+						getSummaryContentsWithFormatValidation(blobManager);
+					assert.strictEqual(
+						ids,
+						undefined,
+						"Shouldn't have ids for empty summary",
+					);
 					assert.strictEqual(
 						redirectTable,
 						undefined,
@@ -670,7 +806,8 @@ for (const createBlobPayloadPending of [false, true]) {
 					// Note that this summary is not generated in normal usage, it's just a means to
 					// validate what is being put into the detached storage. In normal use we'd see
 					// a BlobManager.patchRedirectTable() call before being asked to produce a summary.
-					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+					const { ids, redirectTable } =
+						getSummaryContentsWithFormatValidation(blobManager);
 					assert.strictEqual(ids?.length, 3);
 					assert.strictEqual(redirectTable?.length, 3);
 				});
@@ -687,16 +824,18 @@ for (const createBlobPayloadPending of [false, true]) {
 					if (createBlobPayloadPending) {
 						await ensureBlobsShared([handle1, handle2, handle3]);
 					}
-					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+					const { ids, redirectTable } =
+						getSummaryContentsWithFormatValidation(blobManager);
 					assert.strictEqual(ids?.length, 2);
 					assert.strictEqual(redirectTable?.length, 3);
 				});
 
 				it("Detached -> attached, deduping after attach", async () => {
-					const { mockBlobStorage, mockRuntime, blobManager } = createTestMaterial({
-						attached: false,
-						createBlobPayloadPending,
-					});
+					const { mockBlobStorage, mockRuntime, blobManager } =
+						createTestMaterial({
+							attached: false,
+							createBlobPayloadPending,
+						});
 
 					await blobManager.createBlob(textToBlob("hello"));
 					await blobManager.createBlob(textToBlob("world"));
@@ -727,9 +866,10 @@ for (const createBlobPayloadPending of [false, true]) {
 
 			describe("Loading from summaries", () => {
 				it("Can load from a summary and retrieve its blobs", async () => {
-					const { mockBlobStorage, mockOrderingService, blobManager } = createTestMaterial({
-						createBlobPayloadPending,
-					});
+					const { mockBlobStorage, mockOrderingService, blobManager } =
+						createTestMaterial({
+							createBlobPayloadPending,
+						});
 					const handle1 = await blobManager.createBlob(textToBlob("hello"));
 					const handle2 = await blobManager.createBlob(textToBlob("world"));
 					const { localId: localId1 } = unpackHandle(handle1);
@@ -739,7 +879,8 @@ for (const createBlobPayloadPending of [false, true]) {
 					}
 					const blobManagerLoadInfo: IBlobManagerLoadInfo =
 						getSummaryContentsWithFormatValidation(blobManager);
-					const { ids: ids1, redirectTable: redirectTable1 } = blobManagerLoadInfo;
+					const { ids: ids1, redirectTable: redirectTable1 } =
+						blobManagerLoadInfo;
 
 					const { blobManager: blobManager2 } = createTestMaterial({
 						mockBlobStorage,
@@ -754,24 +895,37 @@ for (const createBlobPayloadPending of [false, true]) {
 						localId1,
 						createBlobPayloadPending,
 					);
-					assert.strictEqual(blobToText(blob1FromManager2), "hello", "Blob content mismatch");
+					assert.strictEqual(
+						blobToText(blob1FromManager2),
+						"hello",
+						"Blob content mismatch",
+					);
 					const blob2FromManager2 = await blobManager2.getBlob(
 						localId2,
 						createBlobPayloadPending,
 					);
-					assert.strictEqual(blobToText(blob2FromManager2), "world", "Blob content mismatch");
+					assert.strictEqual(
+						blobToText(blob2FromManager2),
+						"world",
+						"Blob content mismatch",
+					);
 
 					// Verify that resummarizing gives the same results
 					const { ids: ids2, redirectTable: redirectTable2 } =
 						getSummaryContentsWithFormatValidation(blobManager2);
 					assert.deepStrictEqual(ids2, ids1, "IDs mismatch");
-					assert.deepStrictEqual(redirectTable2, redirectTable1, "Redirect table mismatch");
+					assert.deepStrictEqual(
+						redirectTable2,
+						redirectTable1,
+						"Redirect table mismatch",
+					);
 				});
 
 				it("Can load from a summary with only ids and retrieve blobs using remoteId", async () => {
-					const { mockBlobStorage, mockOrderingService, blobManager } = createTestMaterial({
-						createBlobPayloadPending,
-					});
+					const { mockBlobStorage, mockOrderingService, blobManager } =
+						createTestMaterial({
+							createBlobPayloadPending,
+						});
 					const handle = await blobManager.createBlob(textToBlob("hello"));
 					if (createBlobPayloadPending) {
 						await ensureBlobsShared([handle]);
@@ -798,7 +952,11 @@ for (const createBlobPayloadPending of [false, true]) {
 						remoteId,
 						createBlobPayloadPending,
 					);
-					assert.strictEqual(blobToText(blobFromManager2), "hello", "Blob content mismatch");
+					assert.strictEqual(
+						blobToText(blobFromManager2),
+						"hello",
+						"Blob content mismatch",
+					);
 
 					// The identity redirectTable entry should be stripped out of the summary, but the
 					// attachment should remain.
@@ -821,11 +979,16 @@ for (const createBlobPayloadPending of [false, true]) {
 					await ensureBlobsShared([handle]);
 				}
 				const { localId } = unpackHandle(handle);
-				mockGarbageCollector.simulateBlobDeletion(getGCNodePathFromLocalId(localId));
-				await assert.rejects(blobManager.getBlob(localId, createBlobPayloadPending), {
-					message: `Blob was deleted: ${localId}`,
-					code: 404,
-				});
+				mockGarbageCollector.simulateBlobDeletion(
+					getGCNodePathFromLocalId(localId),
+				);
+				await assert.rejects(
+					blobManager.getBlob(localId, createBlobPayloadPending),
+					{
+						message: `Blob was deleted: ${localId}`,
+						code: 404,
+					},
+				);
 			});
 
 			it("Deletes unused blobs", async () => {
@@ -893,8 +1056,12 @@ for (const createBlobPayloadPending of [false, true]) {
 				const { localId } = unpackHandle(handle);
 				const { ids } = getSummaryContentsWithFormatValidation(blobManager);
 				const expectedStorageId = ids?.[0];
-				assert(expectedStorageId !== undefined, "Storage id not found in summary");
-				const foundStorageId = blobManager.lookupTemporaryBlobStorageId(localId);
+				assert(
+					expectedStorageId !== undefined,
+					"Storage id not found in summary",
+				);
+				const foundStorageId =
+					blobManager.lookupTemporaryBlobStorageId(localId);
 				assert.strictEqual(
 					foundStorageId,
 					expectedStorageId,
@@ -907,9 +1074,10 @@ for (const createBlobPayloadPending of [false, true]) {
 					// This test only applies when payload pending is enabled
 					this.skip();
 				}
-				const { mockBlobStorage, mockOrderingService, blobManager } = createTestMaterial({
-					createBlobPayloadPending,
-				});
+				const { mockBlobStorage, mockOrderingService, blobManager } =
+					createTestMaterial({
+						createBlobPayloadPending,
+					});
 				// Pause blob storage and ordering service so the upload will remain pending
 				mockBlobStorage.pause();
 				mockOrderingService.pause();
@@ -940,7 +1108,8 @@ for (const createBlobPayloadPending of [false, true]) {
 				// Now allow the attach op to be sequenced
 				await mockOrderingService.waitSequenceOne();
 				await ensureBlobsShared([handle]);
-				const storageIdAfterProcessing = blobManager.lookupTemporaryBlobStorageId(localId);
+				const storageIdAfterProcessing =
+					blobManager.lookupTemporaryBlobStorageId(localId);
 				assert(
 					storageIdAfterProcessing !== undefined,
 					"Storage ID should be found after processing",

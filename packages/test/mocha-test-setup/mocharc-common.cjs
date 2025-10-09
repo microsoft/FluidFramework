@@ -19,7 +19,11 @@ const path = require("path");
  *
  * Users desiring exact control over the `spec` from the CLI should delete or replace the spec from the returned config, since mocha's behavior is to extend it, not override it.
  */
-function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testReportPrefix) {
+function getFluidTestMochaConfig(
+	packageDir,
+	additionalRequiredModules,
+	testReportPrefix,
+) {
 	const moduleDir = `${packageDir}/node_modules`;
 
 	const requiredModules = [
@@ -53,7 +57,10 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 	});
 
 	if (process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER) {
-		const modulePath = path.join(moduleDir, process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER);
+		const modulePath = path.join(
+			moduleDir,
+			process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER,
+		);
 		// Inject implementation of createTestLogger, put it first before mocha-test-setup
 		if (existsSync(modulePath)) {
 			requiredModulePaths.unshift(modulePath);
@@ -64,13 +71,15 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 	if (process.env.FLUID_TEST_MODULE_SYSTEM === "CJS") {
 		defaultSpec = "dist/test";
 		const testVariant = process.env.FLUID_TEST_VARIANT;
-		process.env.FLUID_TEST_VARIANT = testVariant !== undefined ? `CJS,${testVariant}` : "CJS";
-		testReportPrefix = testReportPrefix !== undefined ? `${testReportPrefix}-CJS` : "CJS";
+		process.env.FLUID_TEST_VARIANT =
+			testVariant !== undefined ? `CJS,${testVariant}` : "CJS";
+		testReportPrefix =
+			testReportPrefix !== undefined ? `${testReportPrefix}-CJS` : "CJS";
 	}
 
 	const config = {
-		"recursive": true,
-		"require": requiredModulePaths,
+		recursive: true,
+		require: requiredModulePaths,
 		"unhandled-rejections": "strict",
 		ignore: [
 			// Ignore "tools" which are scripts intended to be run, not part of the test suite.
@@ -95,7 +104,8 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 	const packageJson = require(`${packageDir}/package.json`);
 	config["reporter"] = `mocha-multi-reporters`;
 	// See https://www.npmjs.com/package/mocha-multi-reporters#cmroutput-option
-	const outputFilePrefix = testReportPrefix !== undefined ? `${testReportPrefix}-` : "";
+	const outputFilePrefix =
+		testReportPrefix !== undefined ? `${testReportPrefix}-` : "";
 	if (!process.env.SILENT_TEST_OUTPUT) {
 		console.log(
 			`Writing test results relative to package to nyc/${outputFilePrefix}junit-report.xml`,

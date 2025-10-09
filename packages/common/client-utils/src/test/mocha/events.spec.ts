@@ -330,11 +330,17 @@ export class MyCompositionClass implements Listenable<MyEvents> {
 		this.load();
 	}
 
-	public on<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): () => void {
+	public on<K extends keyof MyEvents>(
+		eventName: K,
+		listener: MyEvents[K],
+	): () => void {
 		return this.events.on(eventName, listener);
 	}
 
-	public off<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): void {
+	public off<K extends keyof MyEvents>(
+		eventName: K,
+		listener: MyEvents[K],
+	): void {
 		return this.events.off(eventName, listener);
 	}
 }
@@ -370,7 +376,10 @@ export class MyExposingClass {
  *
  * @internal
  */
-function validateAssertionError(error: Error, expectedErrorMsg: string | RegExp): boolean {
+function validateAssertionError(
+	error: Error,
+	expectedErrorMsg: string | RegExp,
+): boolean {
 	const actualMsg = error.message;
 	if (
 		typeof expectedErrorMsg === "string"

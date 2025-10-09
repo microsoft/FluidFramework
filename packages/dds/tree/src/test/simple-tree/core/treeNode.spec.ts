@@ -56,7 +56,9 @@ describe("simple-tree core types", () => {
 			// Instances are rejected
 			assert.throws(
 				() => new Subclass(),
-				validateUsageError("TreeNodes must extend schema classes created by SchemaFactory"),
+				validateUsageError(
+					"TreeNodes must extend schema classes created by SchemaFactory",
+				),
 			);
 
 			// Use as schema is rejected
@@ -94,7 +96,9 @@ describe("simple-tree core types", () => {
 
 			// Static inheritance
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			assert(inPrototypeChain(Reflect.getPrototypeOf(B), Reflect.getPrototypeOf(A)!));
+			assert(
+				inPrototypeChain(Reflect.getPrototypeOf(B), Reflect.getPrototypeOf(A)!),
+			);
 			assert.equal(
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				inPrototypeChain(Reflect.getPrototypeOf(A), Reflect.getPrototypeOf(B)!),

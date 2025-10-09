@@ -5,22 +5,40 @@
 
 import { fail } from "../../utils.js";
 import { Users } from "../domains/index.js";
-import { scoreSymbol, type LLMIntegrationTest, type ScorableVerboseTree } from "../utils.js";
+import {
+	scoreSymbol,
+	type LLMIntegrationTest,
+	type ScorableVerboseTree,
+} from "../utils.js";
 
 // We start with two users (alpardes and mapardes) and edit the alpardes user.
 // We only score on the presence of the two correct user IDs and their name fields; timestamps/emails are ignored.
 const expected: ScorableVerboseTree = {
 	type: "com.microsoft.fluid.tree-agent.users.Users",
 	[scoreSymbol]: (actual): number => {
-		if (typeof actual !== "object" || actual === null || Array.isArray(actual.fields)) {
+		if (
+			typeof actual !== "object" ||
+			actual === null ||
+			Array.isArray(actual.fields)
+		) {
 			return 0;
 		}
-		const required = new Map<string, { firstName: string; lastName: string; email?: string }>([
+		const required = new Map<
+			string,
+			{ firstName: string; lastName: string; email?: string }
+		>([
 			[
 				"alpardes",
-				{ firstName: "Alexander", lastName: "Pardes", email: "pardesio@gmail.com" },
+				{
+					firstName: "Alexander",
+					lastName: "Pardes",
+					email: "pardesio@gmail.com",
+				},
 			],
-			["rymagani", { firstName: "Ryan", lastName: "Magani", email: "ringom@gmail.com" }],
+			[
+				"rymagani",
+				{ firstName: "Ryan", lastName: "Magani", email: "ringom@gmail.com" },
+			],
 		]);
 		let score = 1;
 		for (const [id, { firstName, lastName }] of required) {

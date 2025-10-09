@@ -114,9 +114,20 @@ describe("chunkEncodingUtilities", () => {
 
 	describe("jsonMinimizingFilter", () => {
 		// Produce actual JSON and confirm jsonMinimizingFilter minimizes for the provided value.
-		function check(s: string, value: number, count: number, require?: boolean): void {
-			const notReplacedObject = { table: ["default"], data: makeArray(count, () => s) };
-			const replacedObject = { table: ["default", s], data: makeArray(count, () => value) };
+		function check(
+			s: string,
+			value: number,
+			count: number,
+			require?: boolean,
+		): void {
+			const notReplacedObject = {
+				table: ["default"],
+				data: makeArray(count, () => s),
+			};
+			const replacedObject = {
+				table: ["default", s],
+				data: makeArray(count, () => value),
+			};
 			const notReplaced = JSON.stringify(notReplacedObject);
 			const replaced = JSON.stringify(replacedObject);
 			const shouldReplace = replaced.length < notReplaced.length;
@@ -190,7 +201,11 @@ describe("chunkEncodingUtilities", () => {
 				c?: 3;
 			}
 			const log: [number, number, number][] = [];
-			const dispatcher = new DiscriminatedUnionDispatcher<TestUnion, [number], number>({
+			const dispatcher = new DiscriminatedUnionDispatcher<
+				TestUnion,
+				[number],
+				number
+			>({
 				a(v: 1, n: number): number {
 					log.push([1, v, n]);
 					return n;

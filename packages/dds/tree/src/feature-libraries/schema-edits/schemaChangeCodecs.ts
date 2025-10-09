@@ -14,7 +14,10 @@ import {
 	makeVersionDispatchingCodec,
 	withSchemaValidation,
 } from "../../codec/index.js";
-import { getCodecTreeForSchemaFormat, makeSchemaCodec } from "../schema-index/index.js";
+import {
+	getCodecTreeForSchemaFormat,
+	makeSchemaCodec,
+} from "../schema-index/index.js";
 
 import { EncodedSchemaChange } from "./schemaChangeFormat.js";
 import type { SchemaChange } from "./schemaChangeTypes.js";
@@ -26,7 +29,9 @@ import type { Brand } from "../../util/index.js";
  * @param options - Specifies common codec options, including which `validator` to use.
  * @returns The composed codec family.
  */
-export function makeSchemaChangeCodecs(options: ICodecOptions): ICodecFamily<SchemaChange> {
+export function makeSchemaChangeCodecs(
+	options: ICodecOptions,
+): ICodecFamily<SchemaChange> {
 	return makeCodecFamily([
 		[SchemaVersion.v1, makeSchemaChangeCodecV1(options, SchemaVersion.v1)],
 		[SchemaVersion.v2, makeSchemaChangeCodecV1(options, SchemaVersion.v2)],
@@ -95,5 +100,9 @@ function makeSchemaChangeCodecV1(
 		encodedSchema: EncodedSchemaChange,
 	};
 
-	return withSchemaValidation(EncodedSchemaChange, schemaChangeCodec, options.jsonValidator);
+	return withSchemaValidation(
+		EncodedSchemaChange,
+		schemaChangeCodec,
+		options.jsonValidator,
+	);
 }

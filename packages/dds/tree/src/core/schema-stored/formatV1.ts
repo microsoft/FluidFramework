@@ -38,12 +38,14 @@ export type TreeNodeSchemaIdentifier<TName extends string = string> = Brand<
  * Persisted in documents as part of stored schema.
  */
 export type FieldKindIdentifier = Brand<string, "tree.FieldKindIdentifier">;
-export const FieldKindIdentifierSchema = brandedStringType<FieldKindIdentifier>();
+export const FieldKindIdentifierSchema =
+	brandedStringType<FieldKindIdentifier>();
 
 /**
  * TypeBox Schema for encoding {@link TreeNodeSchemaIdentifiers} in persisted data.
  */
-export const TreeNodeSchemaIdentifierSchema = brandedStringType<TreeNodeSchemaIdentifier>();
+export const TreeNodeSchemaIdentifierSchema =
+	brandedStringType<TreeNodeSchemaIdentifier>();
 
 const FieldSchemaFormatBase = Type.Object({
 	kind: FieldKindIdentifierSchema,
@@ -52,7 +54,10 @@ const FieldSchemaFormatBase = Type.Object({
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
-export const FieldSchemaFormat = Type.Composite([FieldSchemaFormatBase], noAdditionalProps);
+export const FieldSchemaFormat = Type.Composite(
+	[FieldSchemaFormatBase],
+	noAdditionalProps,
+);
 
 /**
  * Persisted version of {@link ValueSchema}.

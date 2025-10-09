@@ -357,14 +357,24 @@ export namespace PathHelper {
 	 * @return unquoted path string
 	 * @internal
 	 */
-	export const unquotePathSegment = function (in_quotedPathSegment: string): string {
+	export const unquotePathSegment = function (
+		in_quotedPathSegment: string,
+	): string {
 		if (typeof in_quotedPathSegment !== "string") {
-			throw new TypeError(`Expecting a string as a path: ${in_quotedPathSegment}`);
+			throw new TypeError(
+				`Expecting a string as a path: ${in_quotedPathSegment}`,
+			);
 		}
 
-		if (in_quotedPathSegment.startsWith('"') && in_quotedPathSegment.endsWith('"')) {
+		if (
+			in_quotedPathSegment.startsWith('"') &&
+			in_quotedPathSegment.endsWith('"')
+		) {
 			// We remove double quotes
-			in_quotedPathSegment = in_quotedPathSegment.substr(1, in_quotedPathSegment.length - 2);
+			in_quotedPathSegment = in_quotedPathSegment.substr(
+				1,
+				in_quotedPathSegment.length - 2,
+			);
 
 			// Then we unescape escape symbols
 			in_quotedPathSegment = in_quotedPathSegment.replace(/\\\\/g, "\\");
@@ -384,7 +394,9 @@ export namespace PathHelper {
 	 * @returns quoted path string
 	 * @internal
 	 */
-	export const quotePathSegmentIfNeeded = function (in_pathSegment: string): string {
+	export const quotePathSegmentIfNeeded = function (
+		in_pathSegment: string,
+	): string {
 		return in_pathSegment.indexOf(PROPERTY_PATH_DELIMITER) !== -1 ||
 			in_pathSegment.indexOf('"') !== -1 ||
 			in_pathSegment.indexOf("\\") !== -1 ||
@@ -424,7 +436,9 @@ export namespace PathHelper {
 	 * @return Absolute path in canonical form
 	 * @internal
 	 */
-	export const convertAbsolutePathToCanonical = function (in_absolutePath: string): string {
+	export const convertAbsolutePathToCanonical = function (
+		in_absolutePath: string,
+	): string {
 		const tokenTypes = [];
 		const tokens = tokenizePathString(in_absolutePath, tokenTypes);
 		let path = "";

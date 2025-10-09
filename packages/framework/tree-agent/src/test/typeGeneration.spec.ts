@@ -15,9 +15,17 @@ import {
 } from "@fluidframework/tree/internal";
 import { z } from "zod";
 
-import { buildFunc, exposeMethodsSymbol, type ExposedMethods } from "../methodBinding.js";
+import {
+	buildFunc,
+	exposeMethodsSymbol,
+	type ExposedMethods,
+} from "../methodBinding.js";
 import { generateEditTypesForPrompt } from "../typeGeneration.js";
-import { unqualifySchema, getZodSchemaAsTypeScript, isNamedSchema } from "../utils.js";
+import {
+	unqualifySchema,
+	getZodSchemaAsTypeScript,
+	isNamedSchema,
+} from "../utils.js";
 
 const sf = new SchemaFactory("test");
 
@@ -30,7 +38,11 @@ class Todo extends sf.object("Todo", {
 	}
 
 	public static [exposeMethodsSymbol](methods: ExposedMethods): void {
-		methods.expose(Todo, "method", buildFunc({ returns: z.boolean() }, ["n", z.string()]));
+		methods.expose(
+			Todo,
+			"method",
+			buildFunc({ returns: z.boolean() }, ["n", z.string()]),
+		);
 	}
 }
 
@@ -43,7 +55,10 @@ class TestTodoAppSchema extends sf.object("TestTodoAppSchema", {
 		methods.expose(
 			TestTodoAppSchema,
 			"addTodo",
-			buildFunc({ returns: methods.instanceOf(Todo) }, ["todo", methods.instanceOf(Todo)]),
+			buildFunc({ returns: methods.instanceOf(Todo) }, [
+				"todo",
+				methods.instanceOf(Todo),
+			]),
 		);
 	}
 
@@ -110,7 +125,9 @@ describe("Type generation", () => {
 				}
 			}
 
-			const arrayDomainSchemaString = getDomainSchemaString(ArrayWithMethod, ["test"]);
+			const arrayDomainSchemaString = getDomainSchemaString(ArrayWithMethod, [
+				"test",
+			]);
 			assert.deepEqual(
 				arrayDomainSchemaString,
 				`// Note: this array has custom user-defined methods directly on it.
@@ -136,7 +153,10 @@ type ArrayWithMethod = string[] & {
 				}
 			}
 
-			const mapDomainSchemaString = getDomainSchemaString(MapWithMethod, new Map());
+			const mapDomainSchemaString = getDomainSchemaString(
+				MapWithMethod,
+				new Map(),
+			);
 			assert.deepEqual(
 				mapDomainSchemaString,
 				`// Note: this map has custom user-defined methods directly on it.
@@ -164,7 +184,10 @@ type MapWithMethod = Map<string, string> & {
 				}
 			}
 
-			const mapDomainSchemaString = getDomainSchemaString(MapWithMethod, new Map());
+			const mapDomainSchemaString = getDomainSchemaString(
+				MapWithMethod,
+				new Map(),
+			);
 			assert.deepEqual(
 				mapDomainSchemaString,
 				`// Note: this map has custom user-defined methods directly on it.
@@ -180,7 +203,10 @@ interface Obj {
 	});
 
 	it("includes TypeScript types for node schema", () => {
-		const view = independentView(new TreeViewConfiguration({ schema: TestTodoAppSchema }), {});
+		const view = independentView(
+			new TreeViewConfiguration({ schema: TestTodoAppSchema }),
+			{},
+		);
 		view.initialize(initialAppState);
 
 		const schema = getSimpleSchema(view.schema);
@@ -219,7 +245,10 @@ function getDomainSchemaString<TSchema extends ImplicitFieldSchema>(
 	schemaClass: TSchema,
 	initialValue: InsertableField<TSchema>,
 ): string {
-	const view = independentView(new TreeViewConfiguration({ schema: schemaClass }), {});
+	const view = independentView(
+		new TreeViewConfiguration({ schema: schemaClass }),
+		{},
+	);
 	view.initialize(initialValue);
 	const schema = getSimpleSchema(view.schema);
 	const { domainTypes } = generateEditTypesForPrompt(view.schema, schema);

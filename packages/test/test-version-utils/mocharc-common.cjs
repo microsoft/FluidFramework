@@ -19,7 +19,10 @@ function getFluidTestVariant() {
 	return testVariant;
 }
 
-function getFluidTestMochaConfigWithCompat(packageDir, additionalRequiredModules = []) {
+function getFluidTestMochaConfigWithCompat(
+	packageDir,
+	additionalRequiredModules = [],
+) {
 	const testVariant = getFluidTestVariant();
 	process.env.FLUID_TEST_VARIANT = testVariant;
 
@@ -31,7 +34,11 @@ function getFluidTestMochaConfigWithCompat(packageDir, additionalRequiredModules
 		testReportPrefix += `_${options.compatKind.join("_")}`;
 	}
 
-	return getFluidTestMochaConfig(packageDir, additionalRequiredModules, testReportPrefix);
+	return getFluidTestMochaConfig(
+		packageDir,
+		additionalRequiredModules,
+		testReportPrefix,
+	);
 }
 
 module.exports = getFluidTestMochaConfigWithCompat;

@@ -8,7 +8,10 @@ import type {
 	IContainerRuntimeInternal,
 } from "@fluidframework/container-runtime-definitions/internal";
 import type { IFluidHandleErased } from "@fluidframework/core-interfaces";
-import { IFluidHandle, fluidHandleSymbol } from "@fluidframework/core-interfaces";
+import {
+	IFluidHandle,
+	fluidHandleSymbol,
+} from "@fluidframework/core-interfaces";
 import type {
 	IFluidHandleInternal,
 	IFluidHandleInternalPayloadPending,
@@ -43,7 +46,9 @@ export interface ISerializedHandle {
  * Narrow a value to {@link ISerializedHandle} by checking its type property.
  * @internal
  */
-export const isSerializedHandle = (value: unknown): value is ISerializedHandle =>
+export const isSerializedHandle = (
+	value: unknown,
+): value is ISerializedHandle =>
 	// Type assertion is safe as we're only checking for the existence of the type property
 	(value as { type?: string } | undefined)?.type === "__fluid_handle__";
 
@@ -54,7 +59,8 @@ export const isSerializedHandle = (value: unknown): value is ISerializedHandle =
 export const isFluidHandleInternalPayloadPending = (
 	fluidHandleInternal: IFluidHandleInternal,
 ): fluidHandleInternal is IFluidHandleInternalPayloadPending =>
-	"payloadPending" in fluidHandleInternal && fluidHandleInternal.payloadPending === true;
+	"payloadPending" in fluidHandleInternal &&
+	fluidHandleInternal.payloadPending === true;
 
 /**
  * Check if the handle is an IFluidHandlePayloadPending.
@@ -84,7 +90,9 @@ export const isLocalFluidHandle = <T>(
  *
  * @internal
  */
-export function encodeHandleForSerialization(handle: IFluidHandleInternal): ISerializedHandle {
+export function encodeHandleForSerialization(
+	handle: IFluidHandleInternal,
+): ISerializedHandle {
 	return isFluidHandleInternalPayloadPending(handle)
 		? {
 				type: "__fluid_handle__",
@@ -152,8 +160,13 @@ export function compareFluidHandles(a: IFluidHandle, b: IFluidHandle): boolean {
  * Downcast an IFluidHandle to an IFluidHandleInternal.
  * @legacy @beta
  */
-export function toFluidHandleInternal<T>(handle: IFluidHandle<T>): IFluidHandleInternal<T> {
-	if (!(fluidHandleSymbol in handle) || !(fluidHandleSymbol in handle[fluidHandleSymbol])) {
+export function toFluidHandleInternal<T>(
+	handle: IFluidHandle<T>,
+): IFluidHandleInternal<T> {
+	if (
+		!(fluidHandleSymbol in handle) ||
+		!(fluidHandleSymbol in handle[fluidHandleSymbol])
+	) {
 		if (enableBackwardsCompatibility && IFluidHandle in handle) {
 			// Type assertion needed for backward compatibility with old handle format
 			return handle[IFluidHandle] as IFluidHandleInternal<T>;
@@ -222,7 +235,8 @@ export function lookupTemporaryBlobStorageId(
 	handle: IFluidHandle,
 ): string | undefined {
 	// Verify that the handle points to a blob by checking its path format
-	const absolutePath: string | undefined = toFluidHandleInternal(handle).absolutePath;
+	const absolutePath: string | undefined =
+		toFluidHandleInternal(handle).absolutePath;
 
 	// Blob handles have paths in the format "/_blobs/{localId}"
 	if (!absolutePath?.startsWith("/_blobs/")) {

@@ -33,7 +33,7 @@ export async function run<T extends IResources>(
 		? resourceFactory.customize(config).catch((error) => {
 				prefixErrorLabel(error, "resourceFactory:customize");
 				throw error;
-		  })
+			})
 		: undefined);
 	const resources = await resourceFactory.create(config, customizations).catch((error) => {
 		prefixErrorLabel(error, "resourceFactory:create");

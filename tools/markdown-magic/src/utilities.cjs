@@ -28,7 +28,9 @@ const readTemplate = (templateFileName, headingOffset = 0) => {
 		);
 	}
 
-	const unmodifiedContents = readFile(path.resolve(templatesDirectoryPath, templateFileName));
+	const unmodifiedContents = readFile(
+		path.resolve(templatesDirectoryPath, templateFileName),
+	);
 
 	if (headingOffset === 0) {
 		return unmodifiedContents;
@@ -67,7 +69,10 @@ function readFile(filePath, startLine, endLine) {
  * @param {string} relativePath - A path, relative to `documentPath`, to resolve.
  */
 function resolveRelativePath(documentPath, relativePath) {
-	const resolvedFilePath = path.resolve(path.dirname(documentPath), relativePath);
+	const resolvedFilePath = path.resolve(
+		path.dirname(documentPath),
+		relativePath,
+	);
 
 	if (!fs.existsSync(resolvedFilePath)) {
 		throw new Error(
@@ -101,7 +106,9 @@ function resolveRelativePackageJsonPath(documentFilePath, packageJsonFilePath) {
  */
 function getPackageMetadata(packageJsonFilePath) {
 	try {
-		const packageJson = JSON.parse(fs.readFileSync(packageJsonFilePath, "utf8"));
+		const packageJson = JSON.parse(
+			fs.readFileSync(packageJsonFilePath, "utf8"),
+		);
 		return packageJson;
 	} catch (error) {
 		console.error(error);
@@ -184,7 +191,9 @@ function formattedSectionText(sectionBody, headingOptions) {
 	if (headingOptions?.includeHeading) {
 		const { headingLevel, headingText } = headingOptions;
 		if (!Number.isInteger(headingLevel) || headingLevel < 1) {
-			throw new TypeError(`"headingLevel" must be a positive integer. Got "${headingLevel}".`);
+			throw new TypeError(
+				`"headingLevel" must be a positive integer. Got "${headingLevel}".`,
+			);
 		}
 		heading = `${"#".repeat(headingLevel)} ${headingText}\n\n`;
 	}
@@ -197,9 +206,11 @@ function formattedSectionText(sectionBody, headingOptions) {
  * @param {string} contents - The Markdown contents to be wrapped.
  */
 function bundlePrettierPragmas(contents) {
-	return ["\n<!-- prettier-ignore-start -->", contents, "<!-- prettier-ignore-end -->\n"].join(
-		"\n",
-	);
+	return [
+		"\n<!-- prettier-ignore-start -->",
+		contents,
+		"<!-- prettier-ignore-end -->\n",
+	].join("\n");
 }
 
 /**
@@ -246,7 +257,8 @@ function parseHeadingOptions(transformationOptions, headingText) {
 	return {
 		includeHeading: transformationOptions.includeHeading !== "FALSE",
 		headingLevel: transformationOptions.headingLevel
-			? (Number.parseInt(transformationOptions.headingLevel) ?? defaultSectionHeadingLevel)
+			? (Number.parseInt(transformationOptions.headingLevel) ??
+				defaultSectionHeadingLevel)
 			: defaultSectionHeadingLevel,
 		headingText: headingText,
 	};

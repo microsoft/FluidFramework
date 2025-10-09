@@ -16,7 +16,10 @@ export type {
 } from "./interfaces";
 export { LocalContext } from "./localContext";
 export { LocalKafka } from "./localKafka";
-export { LocalLambdaController, type LocalLambdaControllerState } from "./localLambdaController";
+export {
+	LocalLambdaController,
+	type LocalLambdaControllerState,
+} from "./localLambdaController";
 export { LocalNodeFactory } from "./localNodeFactory";
 export { LocalOrderer } from "./localOrderer";
 export { LocalOrderManager } from "./localOrderManager";

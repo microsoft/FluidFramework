@@ -15,7 +15,10 @@ import {
 
 import { SharedTreeTestFactory } from "../utils.js";
 
-import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
+import {
+	SchemaFactory,
+	TreeViewConfiguration,
+} from "../../simple-tree/index.js";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 const sf = new SchemaFactory("Test");
@@ -33,7 +36,8 @@ function setupTree() {
 
 	const factory = new SharedTreeTestFactory(() => {});
 
-	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+	const containerRuntime =
+		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 	const tree1 = factory.create(dataStoreRuntime1, "A");
 	tree1.connect({
 		deltaConnection: dataStoreRuntime1.createDeltaConnection(),
@@ -59,7 +63,11 @@ describe("SharedTreeCore rollback", () => {
 		// Process messages to ensure no-op
 		containerRuntime.flush();
 		containerRuntimeFactory.processAllMessages();
-		assert.deepEqual(view.root.child, undefined, "after processAllMessages post-rollback");
+		assert.deepEqual(
+			view.root.child,
+			undefined,
+			"after processAllMessages post-rollback",
+		);
 	});
 
 	it("should rollback a local update operation", async () => {
@@ -156,7 +164,9 @@ describe("SharedTreeCore rollback", () => {
 			deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 			objectStorage: new MockStorage(),
 		});
-		const view1 = tree1.viewWith(new TreeViewConfiguration({ schema: TestNode }));
+		const view1 = tree1.viewWith(
+			new TreeViewConfiguration({ schema: TestNode }),
+		);
 		view1.initialize(new TestNode({}));
 		containerRuntime1.flush();
 
@@ -172,7 +182,9 @@ describe("SharedTreeCore rollback", () => {
 			deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 			objectStorage: new MockStorage(),
 		});
-		const view2 = tree2.viewWith(new TreeViewConfiguration({ schema: TestNode }));
+		const view2 = tree2.viewWith(
+			new TreeViewConfiguration({ schema: TestNode }),
+		);
 		view2.initialize(new TestNode({}));
 		containerRuntime2.flush();
 
@@ -193,6 +205,10 @@ describe("SharedTreeCore rollback", () => {
 		containerRuntimeFactory.processAllMessages();
 
 		// Should reflect remote change from client 2
-		assert.deepEqual(view1.root.child, 2, "client 1 after rollback and remote change");
+		assert.deepEqual(
+			view1.root.child,
+			2,
+			"client 1 after rollback and remote change",
+		);
 	});
 });

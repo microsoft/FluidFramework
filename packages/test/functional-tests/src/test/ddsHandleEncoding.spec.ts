@@ -33,7 +33,11 @@ import {
 	MockHandle,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
-import { ITree, SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
+import {
+	ITree,
+	SchemaFactory,
+	TreeViewConfiguration,
+} from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
 
 /**
@@ -81,7 +85,9 @@ describe("DDS Handle Encoding", () => {
 		const name = nameOverride ?? factory.type.split("/").pop()!;
 
 		const dataStoreRuntime = new MockFluidDataStoreRuntime({
-			idCompressor: createIdCompressor("173cb232-53a2-4327-b690-afa954397989" as SessionId),
+			idCompressor: createIdCompressor(
+				"173cb232-53a2-4327-b690-afa954397989" as SessionId,
+			),
 		});
 		const deltaConnection = new MockDeltaConnection(
 			/* submitFn: */ (message) => {
@@ -251,7 +257,8 @@ describe("DDS Handle Encoding", () => {
 	];
 
 	testCases.forEach((testCase) => {
-		const shouldOrShouldNot = testCase.expectedHandles.length > 0 ? "should not" : "should";
+		const shouldOrShouldNot =
+			testCase.expectedHandles.length > 0 ? "should not" : "should";
 		it(`${shouldOrShouldNot} obscure handles in ${testCase.name} message contents`, async () => {
 			testCase.addHandleToDDS();
 

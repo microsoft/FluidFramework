@@ -6,7 +6,10 @@
 import { strict as assert } from "node:assert";
 
 import { bufferToString, fromBase64ToUtf8 } from "@fluid-internal/client-utils";
-import { type ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
+import {
+	type ISummaryTree,
+	SummaryType,
+} from "@fluidframework/driver-definitions";
 import type {
 	ISnapshot,
 	IDocumentAttributes,
@@ -18,7 +21,10 @@ import {
 	SharingLinkRole,
 	SharingLinkScope,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { createChildLogger, MockLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	createChildLogger,
+	MockLogger,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { useCreateNewModule } from "../createFile/index.js";
 import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRequest.js";
@@ -40,7 +46,8 @@ import {
 
 import { mockFetchOk, mockFetchOKIf } from "./mockFetch.js";
 
-const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
+const createUtLocalCache = (): LocalPersistentCache =>
+	new LocalPersistentCache();
 
 describe("Create New Utils Tests", () => {
 	const documentAttributes: IDocumentAttributes = {
@@ -154,7 +161,11 @@ describe("Create New Utils Tests", () => {
 			2,
 			"app and protocol should be there",
 		);
-		assert.strictEqual(snapshot.blobContents.size, 2, "2 blobs should be there");
+		assert.strictEqual(
+			snapshot.blobContents.size,
+			2,
+			"2 blobs should be there",
+		);
 
 		const appTree = snapshotTree.trees[".app"];
 		const protocolTree = snapshotTree.trees[".protocol"];
@@ -169,7 +180,10 @@ describe("Create New Utils Tests", () => {
 
 		const docAttributesBlobId = protocolTree.blobs.attributes;
 		const docAttributesBuffer = snapshot.blobContents.get(docAttributesBlobId);
-		assert(docAttributesBuffer !== undefined, "protocol attributes blob value should exist");
+		assert(
+			docAttributesBuffer !== undefined,
+			"protocol attributes blob value should exist",
+		);
 		const docAttributesBlobValue = bufferToString(docAttributesBuffer, "utf8");
 		assert(
 			docAttributesBlobValue === JSON.stringify(documentAttributes),
@@ -182,82 +196,93 @@ describe("Create New Utils Tests", () => {
 
 	it("Should convert as expected and check contents", async () => {
 		await useCreateNewModule(createChildLogger(), async (module) => {
-			const snapshot: ISnapshot = module.convertCreateNewSummaryTreeToTreeAndBlobs(
-				createSummary(),
-				"",
-			);
+			const snapshot: ISnapshot =
+				module.convertCreateNewSummaryTreeToTreeAndBlobs(createSummary(), "");
 			test(snapshot);
 		});
 	});
 
 	it("Should cache converted summary during createNewFluidFile", async () => {
-		const odspResolvedUrl = await useCreateNewModule(createChildLogger(), async (module) =>
-			mockFetchOk(
-				async () =>
-					module.createNewFluidFile(
-						async (_options) => "token",
-						newFileParams,
-						createChildLogger(),
-						createSummary(),
-						epochTracker,
-						fileEntry,
-						true /* createNewCaching */,
-						false /* forceAccessTokenViaAuthorizationHeader */,
-					),
-				{ itemId: "itemId1", id: "Summary handle" },
-				{ "x-fluid-epoch": "epoch1" },
-			),
+		const odspResolvedUrl = await useCreateNewModule(
+			createChildLogger(),
+			async (module) =>
+				mockFetchOk(
+					async () =>
+						module.createNewFluidFile(
+							async (_options) => "token",
+							newFileParams,
+							createChildLogger(),
+							createSummary(),
+							epochTracker,
+							fileEntry,
+							true /* createNewCaching */,
+							false /* forceAccessTokenViaAuthorizationHeader */,
+						),
+					{ itemId: "itemId1", id: "Summary handle" },
+					{ "x-fluid-epoch": "epoch1" },
+				),
 		);
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const snapshot = await epochTracker.get(createCacheSnapshotKey(odspResolvedUrl, false));
+		const snapshot = await epochTracker.get(
+			createCacheSnapshotKey(odspResolvedUrl, false),
+		);
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const snapshotWithLoadingGroupId = await epochTracker.get(
 			createCacheSnapshotKey(odspResolvedUrl, true),
 		);
-		assert(snapshotWithLoadingGroupId === undefined, "snapshot should not exist");
+		assert(
+			snapshotWithLoadingGroupId === undefined,
+			"snapshot should not exist",
+		);
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		test(snapshot);
 		await epochTracker.removeEntries().catch(() => {});
 	});
 
 	it("createNewFluidFile with undefined summary and rename it", async () => {
-		const odspResolvedUrl = await useCreateNewModule(createChildLogger(), async (module) =>
-			mockFetchOk(
-				async () =>
-					module.createNewFluidFile(
-						async (_options) => "token",
-						newFileParams,
-						createChildLogger(),
-						undefined,
-						epochTracker,
-						fileEntry,
-						true /* createNewCaching */,
-						false /* forceAccessTokenViaAuthorizationHeader */,
-					),
-				{ itemId: "itemId1", id: "Summary handle" },
-				{ "x-fluid-epoch": "epoch1" },
-			),
+		const odspResolvedUrl = await useCreateNewModule(
+			createChildLogger(),
+			async (module) =>
+				mockFetchOk(
+					async () =>
+						module.createNewFluidFile(
+							async (_options) => "token",
+							newFileParams,
+							createChildLogger(),
+							undefined,
+							epochTracker,
+							fileEntry,
+							true /* createNewCaching */,
+							false /* forceAccessTokenViaAuthorizationHeader */,
+						),
+					{ itemId: "itemId1", id: "Summary handle" },
+					{ "x-fluid-epoch": "epoch1" },
+				),
 		);
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const snapshot = await epochTracker.get(createCacheSnapshotKey(odspResolvedUrl, false));
+		const snapshot = await epochTracker.get(
+			createCacheSnapshotKey(odspResolvedUrl, false),
+		);
 		assert(snapshot === undefined);
 
 		assert(odspResolvedUrl.pendingRename === "filename");
 
-		const renameResponse = await useCreateNewModule(createChildLogger(), async (module) =>
-			mockFetchOk(
-				async () =>
-					module.renameEmptyFluidFile(
-						async (_options) => "token",
-						odspResolvedUrl,
-						odspResolvedUrl.pendingRename!,
-						createChildLogger(),
-						epochTracker,
-					),
-				{ id: "Summary handle", name: "filename" },
-				{ "x-fluid-epoch": "epoch1" },
-			),
+		const renameResponse = await useCreateNewModule(
+			createChildLogger(),
+			async (module) =>
+				mockFetchOk(
+					async () =>
+						module.renameEmptyFluidFile(
+							async (_options) => "token",
+							odspResolvedUrl,
+							odspResolvedUrl.pendingRename!,
+							createChildLogger(),
+							epochTracker,
+						),
+					{ id: "Summary handle", name: "filename" },
+					{ "x-fluid-epoch": "epoch1" },
+				),
 		);
 
 		assert(renameResponse.name === "filename");
@@ -270,30 +295,37 @@ describe("Create New Utils Tests", () => {
 			siteUrl,
 			driveId,
 		};
-		const odspResolvedUrl = await useCreateNewModule(createChildLogger(), async (module) =>
-			mockFetchOk(
-				async () =>
-					module.createNewContainerOnExistingFile(
-						async (_options) => "token",
-						existingFileParams,
-						createChildLogger(),
-						createSummary(),
-						epochTracker,
-						fileEntry,
-						true /* createNewCaching */,
-						false /* forceAccessTokenViaAuthorizationHeader */,
-					),
-				{ itemId: "itemId1", id: "Summary handle" },
-				{ "x-fluid-epoch": "epoch1" },
-			),
+		const odspResolvedUrl = await useCreateNewModule(
+			createChildLogger(),
+			async (module) =>
+				mockFetchOk(
+					async () =>
+						module.createNewContainerOnExistingFile(
+							async (_options) => "token",
+							existingFileParams,
+							createChildLogger(),
+							createSummary(),
+							epochTracker,
+							fileEntry,
+							true /* createNewCaching */,
+							false /* forceAccessTokenViaAuthorizationHeader */,
+						),
+					{ itemId: "itemId1", id: "Summary handle" },
+					{ "x-fluid-epoch": "epoch1" },
+				),
 		);
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const snapshot = await epochTracker.get(createCacheSnapshotKey(odspResolvedUrl, false));
+		const snapshot = await epochTracker.get(
+			createCacheSnapshotKey(odspResolvedUrl, false),
+		);
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const snapshotWithLoadingGroupId = await epochTracker.get(
 			createCacheSnapshotKey(odspResolvedUrl, true),
 		);
-		assert(snapshotWithLoadingGroupId === undefined, "snapshot should not exist");
+		assert(
+			snapshotWithLoadingGroupId === undefined,
+			"snapshot should not exist",
+		);
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		test(snapshot);
 		await epochTracker.removeEntries().catch(() => {});
@@ -302,29 +334,31 @@ describe("Create New Utils Tests", () => {
 	it("Should save 'sharing' information received during createNewFluidFile", async () => {
 		newFileParams.createLinkType = createLinkType;
 
-		let odspResolvedUrl = await useCreateNewModule(createChildLogger(), async (module) =>
-			mockFetchOk(
-				async () =>
-					module.createNewFluidFile(
-						async (_options) => "token",
-						newFileParams,
-						createChildLogger(),
-						createSummary(),
-						epochTracker,
-						fileEntry,
-						false /* createNewCaching */,
-						false /* forceAccessTokenViaAuthorizationHeader */,
-						undefined /* isClpCompliantApp */,
-						true /* enableSingleRequestForShareLinkWithCreate */,
-					),
-				{
-					itemId: "mockItemId",
-					id: "mockId",
-					sharing: mockSharingData,
-					sharingLinkErrorReason: undefined,
-				},
-				{ "x-fluid-epoch": "epoch1" },
-			),
+		let odspResolvedUrl = await useCreateNewModule(
+			createChildLogger(),
+			async (module) =>
+				mockFetchOk(
+					async () =>
+						module.createNewFluidFile(
+							async (_options) => "token",
+							newFileParams,
+							createChildLogger(),
+							createSummary(),
+							epochTracker,
+							fileEntry,
+							false /* createNewCaching */,
+							false /* forceAccessTokenViaAuthorizationHeader */,
+							undefined /* isClpCompliantApp */,
+							true /* enableSingleRequestForShareLinkWithCreate */,
+						),
+					{
+						itemId: "mockItemId",
+						id: "mockId",
+						sharing: mockSharingData,
+						sharingLinkErrorReason: undefined,
+					},
+					{ "x-fluid-epoch": "epoch1" },
+				),
 		);
 
 		// Update the webUrl to the version that has the nav parameter that was supposed to be added
@@ -345,14 +379,18 @@ describe("Create New Utils Tests", () => {
 		);
 
 		// Extract the Base64 encoded value of `nav`
-		const base64Value = odspResolvedUrl.shareLinkInfo.createLink.link.webUrl.match(
-			/nav=([^&]*)/,
-		)?.[1] as string;
+		const base64Value =
+			odspResolvedUrl.shareLinkInfo.createLink.link.webUrl.match(
+				/nav=([^&]*)/,
+			)?.[1] as string;
 		// Decode the Base64 value to UTF-8, \r�� is being stored at the end of the string so we slice it off
 		const decodedValue = fromBase64ToUtf8(base64Value).slice(0, -3);
 
 		// Compare the values to make sure that the nav parameter was added correctly
-		assert.equal(decodedValue, "s=%2FsiteUrl&d=driveId&f=mockItemId&c=%2F&fluid=1");
+		assert.equal(
+			decodedValue,
+			"s=%2FsiteUrl&d=driveId&f=mockItemId&c=%2F&fluid=1",
+		);
 
 		// Reset the webUrl to the original value
 		mockSharingLinkData.webUrl = "https://mock.url";
@@ -371,29 +409,31 @@ describe("Create New Utils Tests", () => {
 				},
 			},
 		};
-		odspResolvedUrl = await useCreateNewModule(createChildLogger(), async (module) =>
-			mockFetchOk(
-				async () =>
-					module.createNewFluidFile(
-						async (_options) => "token",
-						newFileParams,
-						createChildLogger(),
-						createSummary(),
-						epochTracker,
-						fileEntry,
-						false /* createNewCaching */,
-						false /* forceAccessTokenViaAuthorizationHeader */,
-						undefined /* isClpCompliantApp */,
-						true /* enableSingleRequestForShareLinkWithCreate */,
-					),
-				{
-					itemId: "mockItemId",
-					id: "mockId",
-					sharingLinkErrorReason: "mockError",
-					sharing: mockSharingError,
-				},
-				{ "x-fluid-epoch": "epoch1" },
-			),
+		odspResolvedUrl = await useCreateNewModule(
+			createChildLogger(),
+			async (module) =>
+				mockFetchOk(
+					async () =>
+						module.createNewFluidFile(
+							async (_options) => "token",
+							newFileParams,
+							createChildLogger(),
+							createSummary(),
+							epochTracker,
+							fileEntry,
+							false /* createNewCaching */,
+							false /* forceAccessTokenViaAuthorizationHeader */,
+							undefined /* isClpCompliantApp */,
+							true /* enableSingleRequestForShareLinkWithCreate */,
+						),
+					{
+						itemId: "mockItemId",
+						id: "mockId",
+						sharingLinkErrorReason: "mockError",
+						sharing: mockSharingError,
+					},
+					{ "x-fluid-epoch": "epoch1" },
+				),
 		);
 		assert.deepStrictEqual(odspResolvedUrl.shareLinkInfo?.createLink, {
 			shareId: undefined,
@@ -404,45 +444,55 @@ describe("Create New Utils Tests", () => {
 	});
 
 	it("Should set the isClpCompliantApp prop on resolved url if already present when createNewFluidFile", async () => {
-		const odspResolvedUrl1 = await useCreateNewModule(createChildLogger(), async (module) =>
-			mockFetchOk(
-				async () =>
-					module.createNewFluidFile(
-						async (_options) => "token",
-						newFileParams,
-						createChildLogger(),
-						createSummary(),
-						epochTracker,
-						fileEntry,
-						true /* createNewCaching */,
-						false /* forceAccessTokenViaAuthorizationHeader */,
-						true /* isClpCompliantApp */,
-					),
-				{ itemId: "itemId1", id: "Summary handle" },
-				{ "x-fluid-epoch": "epoch1" },
-			),
+		const odspResolvedUrl1 = await useCreateNewModule(
+			createChildLogger(),
+			async (module) =>
+				mockFetchOk(
+					async () =>
+						module.createNewFluidFile(
+							async (_options) => "token",
+							newFileParams,
+							createChildLogger(),
+							createSummary(),
+							epochTracker,
+							fileEntry,
+							true /* createNewCaching */,
+							false /* forceAccessTokenViaAuthorizationHeader */,
+							true /* isClpCompliantApp */,
+						),
+					{ itemId: "itemId1", id: "Summary handle" },
+					{ "x-fluid-epoch": "epoch1" },
+				),
 		);
-		assert(odspResolvedUrl1.isClpCompliantApp, "isClpCompliantApp should be set");
+		assert(
+			odspResolvedUrl1.isClpCompliantApp,
+			"isClpCompliantApp should be set",
+		);
 
-		const odspResolvedUrl2 = await useCreateNewModule(createChildLogger(), async (module) =>
-			mockFetchOk(
-				async () =>
-					module.createNewFluidFile(
-						async (_options) => "token",
-						newFileParams,
-						createChildLogger(),
-						createSummary(),
-						epochTracker,
-						fileEntry,
-						true /* createNewCaching */,
-						false /* forceAccessTokenViaAuthorizationHeader */,
-						undefined /* isClpCompliantApp */,
-					),
-				{ itemId: "itemId1", id: "Summary handle" },
-				{ "x-fluid-epoch": "epoch1" },
-			),
+		const odspResolvedUrl2 = await useCreateNewModule(
+			createChildLogger(),
+			async (module) =>
+				mockFetchOk(
+					async () =>
+						module.createNewFluidFile(
+							async (_options) => "token",
+							newFileParams,
+							createChildLogger(),
+							createSummary(),
+							epochTracker,
+							fileEntry,
+							true /* createNewCaching */,
+							false /* forceAccessTokenViaAuthorizationHeader */,
+							undefined /* isClpCompliantApp */,
+						),
+					{ itemId: "itemId1", id: "Summary handle" },
+					{ "x-fluid-epoch": "epoch1" },
+				),
 		);
-		assert(!odspResolvedUrl2.isClpCompliantApp, "isClpCompliantApp should be falsy");
+		assert(
+			!odspResolvedUrl2.isClpCompliantApp,
+			"isClpCompliantApp should be falsy",
+		);
 		await epochTracker.removeEntries().catch(() => {});
 	});
 
@@ -453,45 +503,55 @@ describe("Create New Utils Tests", () => {
 			siteUrl,
 			driveId,
 		};
-		const odspResolvedUrl1 = await useCreateNewModule(createChildLogger(), async (module) =>
-			mockFetchOk(
-				async () =>
-					module.createNewContainerOnExistingFile(
-						async (_options) => "token",
-						existingFileParams,
-						createChildLogger(),
-						createSummary(),
-						epochTracker,
-						fileEntry,
-						true /* createNewCaching */,
-						false /* forceAccessTokenViaAuthorizationHeader */,
-						true /* isClpCompliantApp */,
-					),
-				{ itemId: "itemId1", id: "Summary handle" },
-				{ "x-fluid-epoch": "epoch1" },
-			),
+		const odspResolvedUrl1 = await useCreateNewModule(
+			createChildLogger(),
+			async (module) =>
+				mockFetchOk(
+					async () =>
+						module.createNewContainerOnExistingFile(
+							async (_options) => "token",
+							existingFileParams,
+							createChildLogger(),
+							createSummary(),
+							epochTracker,
+							fileEntry,
+							true /* createNewCaching */,
+							false /* forceAccessTokenViaAuthorizationHeader */,
+							true /* isClpCompliantApp */,
+						),
+					{ itemId: "itemId1", id: "Summary handle" },
+					{ "x-fluid-epoch": "epoch1" },
+				),
 		);
-		assert(odspResolvedUrl1.isClpCompliantApp, "isClpCompliantApp should be set");
+		assert(
+			odspResolvedUrl1.isClpCompliantApp,
+			"isClpCompliantApp should be set",
+		);
 
-		const odspResolvedUrl2 = await useCreateNewModule(createChildLogger(), async (module) =>
-			mockFetchOk(
-				async () =>
-					module.createNewFluidFile(
-						async (_options) => "token",
-						newFileParams,
-						createChildLogger(),
-						createSummary(),
-						epochTracker,
-						fileEntry,
-						true /* createNewCaching */,
-						false /* forceAccessTokenViaAuthorizationHeader */,
-						undefined /* isClpCompliantApp */,
-					),
-				{ itemId: "itemId1", id: "Summary handle" },
-				{ "x-fluid-epoch": "epoch1" },
-			),
+		const odspResolvedUrl2 = await useCreateNewModule(
+			createChildLogger(),
+			async (module) =>
+				mockFetchOk(
+					async () =>
+						module.createNewFluidFile(
+							async (_options) => "token",
+							newFileParams,
+							createChildLogger(),
+							createSummary(),
+							epochTracker,
+							fileEntry,
+							true /* createNewCaching */,
+							false /* forceAccessTokenViaAuthorizationHeader */,
+							undefined /* isClpCompliantApp */,
+						),
+					{ itemId: "itemId1", id: "Summary handle" },
+					{ "x-fluid-epoch": "epoch1" },
+				),
 		);
-		assert(!odspResolvedUrl2.isClpCompliantApp, "isClpCompliantApp should be falsy");
+		assert(
+			!odspResolvedUrl2.isClpCompliantApp,
+			"isClpCompliantApp should be falsy",
+		);
 		await epochTracker.removeEntries().catch(() => {});
 	});
 
@@ -502,45 +562,49 @@ describe("Create New Utils Tests", () => {
 			siteUrl,
 			driveId,
 		};
-		const odspResolvedUrl1 = await useCreateNewModule(createChildLogger(), async (module) =>
-			mockFetchOk(
-				async () =>
-					module.createNewContainerOnExistingFile(
-						async (_options) => "token",
-						existingFileParams,
-						createChildLogger(),
-						createSummary(),
-						epochTracker,
-						fileEntry,
-						true /* createNewCaching */,
-						false /* forceAccessTokenViaAuthorizationHeader */,
-						undefined /* isClpCompliantApp */,
-						"eTag1" /* eTag */,
-					),
-				{ itemId: "itemId1", id: "Summary handle" },
-				{ "x-fluid-epoch": "epoch1" },
-			),
+		const odspResolvedUrl1 = await useCreateNewModule(
+			createChildLogger(),
+			async (module) =>
+				mockFetchOk(
+					async () =>
+						module.createNewContainerOnExistingFile(
+							async (_options) => "token",
+							existingFileParams,
+							createChildLogger(),
+							createSummary(),
+							epochTracker,
+							fileEntry,
+							true /* createNewCaching */,
+							false /* forceAccessTokenViaAuthorizationHeader */,
+							undefined /* isClpCompliantApp */,
+							"eTag1" /* eTag */,
+						),
+					{ itemId: "itemId1", id: "Summary handle" },
+					{ "x-fluid-epoch": "epoch1" },
+				),
 		);
 		assert(odspResolvedUrl1.fileMetadata?.eTag, "eTag should be set");
 
-		const odspResolvedUrl2 = await useCreateNewModule(createChildLogger(), async (module) =>
-			mockFetchOk(
-				async () =>
-					module.createNewFluidFile(
-						async (_options) => "token",
-						newFileParams,
-						createChildLogger(),
-						createSummary(),
-						epochTracker,
-						fileEntry,
-						true /* createNewCaching */,
-						false /* forceAccessTokenViaAuthorizationHeader */,
-						undefined /* isClpCompliantApp */,
-						undefined /* eTag */,
-					),
-				{ itemId: "itemId1", id: "Summary handle" },
-				{ "x-fluid-epoch": "epoch1" },
-			),
+		const odspResolvedUrl2 = await useCreateNewModule(
+			createChildLogger(),
+			async (module) =>
+				mockFetchOk(
+					async () =>
+						module.createNewFluidFile(
+							async (_options) => "token",
+							newFileParams,
+							createChildLogger(),
+							createSummary(),
+							epochTracker,
+							fileEntry,
+							true /* createNewCaching */,
+							false /* forceAccessTokenViaAuthorizationHeader */,
+							undefined /* isClpCompliantApp */,
+							undefined /* eTag */,
+						),
+					{ itemId: "itemId1", id: "Summary handle" },
+					{ "x-fluid-epoch": "epoch1" },
+				),
 		);
 		assert(!odspResolvedUrl2.fileMetadata?.eTag, "eTag should be falsy");
 		await epochTracker.removeEntries().catch(() => {});
@@ -554,32 +618,34 @@ describe("Create New Utils Tests", () => {
 			driveId,
 		};
 		const eTag = "eTag1";
-		const odspResolvedUrl1 = await useCreateNewModule(createChildLogger(), async (module) =>
-			mockFetchOKIf(
-				async () =>
-					module.createNewContainerOnExistingFile(
-						async (_options) => "token",
-						existingFileParams,
-						createChildLogger(),
-						createSummary(),
-						epochTracker,
-						fileEntry,
-						true /* createNewCaching */,
-						false /* forceAccessTokenViaAuthorizationHeader */,
-						undefined /* isClpCompliantApp */,
-						eTag,
-					),
-				(headers) => {
-					// Check that the If-Match header is set correctly
-					assert(
-						headers?.["If-Match"] === eTag || headers?.["if-match"] === eTag,
-						"If-Match header should be set to eTag",
-					);
-					return true;
-				},
-				{ itemId: "itemId1", id: "Summary handle" },
-				{ "x-fluid-epoch": "epoch1" },
-			),
+		const odspResolvedUrl1 = await useCreateNewModule(
+			createChildLogger(),
+			async (module) =>
+				mockFetchOKIf(
+					async () =>
+						module.createNewContainerOnExistingFile(
+							async (_options) => "token",
+							existingFileParams,
+							createChildLogger(),
+							createSummary(),
+							epochTracker,
+							fileEntry,
+							true /* createNewCaching */,
+							false /* forceAccessTokenViaAuthorizationHeader */,
+							undefined /* isClpCompliantApp */,
+							eTag,
+						),
+					(headers) => {
+						// Check that the If-Match header is set correctly
+						assert(
+							headers?.["If-Match"] === eTag || headers?.["if-match"] === eTag,
+							"If-Match header should be set to eTag",
+						);
+						return true;
+					},
+					{ itemId: "itemId1", id: "Summary handle" },
+					{ "x-fluid-epoch": "epoch1" },
+				),
 		);
 		assert(odspResolvedUrl1.fileMetadata?.eTag, "eTag should be set");
 
@@ -610,7 +676,12 @@ describe("Create New Utils Tests", () => {
 		};
 
 		const fileName = "fileName";
-		const request = createOdspCreateContainerRequest(siteUrl, driveId, filePath, fileName);
+		const request = createOdspCreateContainerRequest(
+			siteUrl,
+			driveId,
+			filePath,
+			fileName,
+		);
 		const logger = new MockLogger();
 
 		const sharingLinkFetcherProps: ShareLinkFetcherProps = {
@@ -641,7 +712,8 @@ describe("Create New Utils Tests", () => {
 			const resolved = await shareLinkResolver.resolve(request);
 			const summary = createSummary();
 			const docService = await mockFetchOk(
-				async () => odspDocumentServiceFactory.createContainer(summary, resolved, logger),
+				async () =>
+					odspDocumentServiceFactory.createContainer(summary, resolved, logger),
 				expectedResponse,
 				{ "x-fluid-epoch": "epoch1" },
 			);
@@ -683,7 +755,8 @@ describe("Create New Utils Tests", () => {
 			const resolved = await shareLinkResolver.resolve(request);
 			const summary = createSummary();
 			const docService = await mockFetchOk(
-				async () => odspDocumentServiceFactory.createContainer(summary, resolved, logger),
+				async () =>
+					odspDocumentServiceFactory.createContainer(summary, resolved, logger),
 				expectedResponse,
 				{ "x-fluid-epoch": "epoch1" },
 			);

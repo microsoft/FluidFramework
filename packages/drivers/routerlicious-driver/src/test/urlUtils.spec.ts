@@ -8,7 +8,10 @@ import { strict as assert } from "assert";
 import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import { ISession } from "@fluidframework/server-services-client";
 
-import { getDiscoveredFluidResolvedUrl, replaceDocumentIdInPath } from "../urlUtils.js";
+import {
+	getDiscoveredFluidResolvedUrl,
+	replaceDocumentIdInPath,
+} from "../urlUtils.js";
 
 describe("UrlUtils", () => {
 	const exampleFluidUrl1 =
@@ -32,7 +35,10 @@ describe("UrlUtils", () => {
 		});
 		it("replaced pathname is altered in full URL", () => {
 			const parsedUrl = new URL(exampleFluidUrl1);
-			parsedUrl.pathname = replaceDocumentIdInPath(parsedUrl.pathname, "otherdoc");
+			parsedUrl.pathname = replaceDocumentIdInPath(
+				parsedUrl.pathname,
+				"otherdoc",
+			);
 			assert.strictEqual(
 				parsedUrl.toString(),
 				exampleFluidUrl1.replace("some-document", "otherdoc"),
@@ -72,12 +78,24 @@ describe("UrlUtils", () => {
 		});
 
 		it("overrides resolvedURL endpoints with session endpoints", () => {
-			const result = getDiscoveredFluidResolvedUrl(testResolvedURL, testSession);
+			const result = getDiscoveredFluidResolvedUrl(
+				testResolvedURL,
+				testSession,
+			);
 
-			assert.strictEqual("https://ordererurl.test/", result.endpoints.deltaStorageUrl);
-			assert.strictEqual("https://historianurl.test/", result.endpoints.storageUrl);
+			assert.strictEqual(
+				"https://ordererurl.test/",
+				result.endpoints.deltaStorageUrl,
+			);
+			assert.strictEqual(
+				"https://historianurl.test/",
+				result.endpoints.storageUrl,
+			);
 			assert.strictEqual(testSession.ordererUrl, result.endpoints.ordererUrl);
-			assert.strictEqual(testSession.deltaStreamUrl, result.endpoints.deltaStreamUrl);
+			assert.strictEqual(
+				testSession.deltaStreamUrl,
+				result.endpoints.deltaStreamUrl,
+			);
 		});
 	});
 });

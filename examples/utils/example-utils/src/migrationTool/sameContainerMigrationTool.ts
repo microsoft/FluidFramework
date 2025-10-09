@@ -139,7 +139,9 @@ export class SameContainerMigrationTool
 
 		// Don't allow premature calls.
 		if (!this._quorumApprovalComplete) {
-			throw new Error("Not ready to finalize until quorum approval has completed");
+			throw new Error(
+				"Not ready to finalize until quorum approval has completed",
+			);
 		}
 		// TODO: Also guard against repeat calls
 		const uploadV2Summary = async (_v2Summary) => {
@@ -159,7 +161,10 @@ export class SameContainerMigrationTool
 		if (this._v2SummaryDone) {
 			return;
 		}
-		const v2SummaryHandle = await Promise.race([uploadV2Summary(v2Summary), this._v2SummaryP]);
+		const v2SummaryHandle = await Promise.race([
+			uploadV2Summary(v2Summary),
+			this._v2SummaryP,
+		]);
 		if (this._v2SummaryDone) {
 			return;
 		}
@@ -167,7 +172,9 @@ export class SameContainerMigrationTool
 	}
 
 	public get proposedVersion() {
-		return this.pactMap.getPending(newVersionKey) ?? this.pactMap.get(newVersionKey);
+		return (
+			this.pactMap.getPending(newVersionKey) ?? this.pactMap.get(newVersionKey)
+		);
 	}
 
 	public get acceptedVersion() {
@@ -209,7 +216,9 @@ export class SameContainerMigrationTool
 		// Or at least a callback for it.
 		const version = this.pactMap.get(newVersionKey);
 		if (version === undefined) {
-			throw new Error("PactMap proposal not defined before proposing on the Quorum");
+			throw new Error(
+				"PactMap proposal not defined before proposing on the Quorum",
+			);
 		}
 		const quorumProposal = { package: version };
 		console.log(`Want to propose: ${JSON.stringify(quorumProposal)}`);
@@ -236,7 +245,8 @@ export class SameContainerMigrationTool
 	}
 
 	protected async hasInitialized() {
-		const pactMapHandle = this.root.get<IFluidHandle<IPactMap<string>>>(pactMapKey);
+		const pactMapHandle =
+			this.root.get<IFluidHandle<IPactMap<string>>>(pactMapKey);
 		this._pactMap = await pactMapHandle?.get();
 
 		// TODO real error handling
@@ -261,7 +271,9 @@ export class SameContainerMigrationTool
 				this.pactMap.get(newVersionKey) !== undefined ||
 				this.pactMap.getPending(newVersionKey) !== undefined
 			) {
-				console.log("Resolving this._pendingP: Pending proposal already exists at load time");
+				console.log(
+					"Resolving this._pendingP: Pending proposal already exists at load time",
+				);
 				resolve();
 				return;
 			}
@@ -271,7 +283,9 @@ export class SameContainerMigrationTool
 			const watchForPending = (key: string) => {
 				if (key === newVersionKey) {
 					this.pactMap.off("pending", watchForPending);
-					console.log("Resolving this._pendingP: Saw pending proposal during run time");
+					console.log(
+						"Resolving this._pendingP: Saw pending proposal during run time",
+					);
 					resolve();
 				}
 			};
@@ -380,7 +394,10 @@ export class SameContainerMigrationTool
 				// Would be good if we can verify the contents somehow too.
 				// TODO: Not appropriate to be watching _seenV1SummaryAck here, I'm just doing this to simulate second ack after acceptance
 				if (op.type === MessageType.SummaryAck) {
-					assert(this.acceptedSeqNum !== undefined, "this.acceptedSeqNum should be defined");
+					assert(
+						this.acceptedSeqNum !== undefined,
+						"this.acceptedSeqNum should be defined",
+					);
 					acksSeen++;
 					// TODO Is this also where I want to emit an internal state event of the ack coming in to help with abort flows?
 					// Or maybe set that up in ensureV1Summary().  Note as mentioned above, waiting for 2 acks here is a hack.
@@ -430,8 +447,9 @@ export class SameContainerMigrationTool
  * scenario, the fourth argument is not used.
  * @internal
  */
-export const SameContainerMigrationToolInstantiationFactory = new DataObjectFactory({
-	type: "migration-tool",
-	ctor: SameContainerMigrationTool,
-	sharedObjects: [PactMap.getFactory()],
-});
+export const SameContainerMigrationToolInstantiationFactory =
+	new DataObjectFactory({
+		type: "migration-tool",
+		ctor: SameContainerMigrationTool,
+		sharedObjects: [PactMap.getFactory()],
+	});

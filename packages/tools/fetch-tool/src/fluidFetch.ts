@@ -14,7 +14,10 @@ import {
 import { paramSaveDir, paramURL, parseArguments } from "./fluidFetchArgs.js";
 import { connectionInfo, fluidFetchInit } from "./fluidFetchInit.js";
 import { fluidFetchMessages } from "./fluidFetchMessages.js";
-import { getSharepointFiles, getSingleSharePointFile } from "./fluidFetchSharePoint.js";
+import {
+	getSharepointFiles,
+	getSingleSharePointFile,
+} from "./fluidFetchSharePoint.js";
 import { fluidFetchSnapshot } from "./fluidFetchSnapshot.js";
 
 async function fluidFetchOneFile(urlStr: string, name?: string) {
@@ -41,7 +44,10 @@ async function fluidFetchOneFile(urlStr: string, name?: string) {
 	await fluidFetchMessages(documentService, saveDir);
 }
 
-async function tryFluidFetchOneSharePointFile(server: string, driveItem: IOdspDriveItem) {
+async function tryFluidFetchOneSharePointFile(
+	server: string,
+	driveItem: IOdspDriveItem,
+) {
 	const { path, name, driveId, itemId } = driveItem;
 	console.log(`File: ${path}/${name}`);
 	await fluidFetchOneFile(
@@ -94,7 +100,11 @@ async function fluidFetchMain() {
 		// See if the url already has the specific item
 		const driveItem = getSharePointSpecificDriveItem(url);
 		if (driveItem) {
-			const file = await getSingleSharePointFile(server, driveItem.driveId, driveItem.itemId);
+			const file = await getSingleSharePointFile(
+				server,
+				driveItem.driveId,
+				driveItem.itemId,
+			);
 			await tryFluidFetchOneSharePointFile(server, file);
 			return;
 		}
@@ -132,7 +142,9 @@ fluidFetchMain()
 			}
 			console.error(`ERROR: ${error.stack}${extraMsg}`);
 		} else if (typeof error === "object") {
-			console.error(`ERROR: Unknown exception object\n${JSON.stringify(error, undefined, 2)}`);
+			console.error(
+				`ERROR: Unknown exception object\n${JSON.stringify(error, undefined, 2)}`,
+			);
 		} else {
 			console.error(`ERROR: ${error}`);
 		}

@@ -51,11 +51,7 @@ export function create(
 			trees: trees.create(store, fileSystemManagerFactories, repoManagerFactory),
 		},
 		repository: {
-			commits: repositoryCommits.create(
-				store,
-				fileSystemManagerFactories,
-				repoManagerFactory,
-			),
+			commits: repositoryCommits.create(store, fileSystemManagerFactories, repoManagerFactory),
 			contents: contents.create(store, fileSystemManagerFactories, repoManagerFactory),
 		},
 		summaries: summaries.create(store, fileSystemManagerFactories, repoManagerFactory),

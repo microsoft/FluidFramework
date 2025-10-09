@@ -34,7 +34,8 @@ import type { ContainerExtensionStore } from "./containerExtension.js";
  * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
  * @legacy @beta
  */
-export interface IContainerRuntimeWithResolveHandle_Deprecated extends IContainerRuntime {
+export interface IContainerRuntimeWithResolveHandle_Deprecated
+	extends IContainerRuntime {
 	readonly IFluidHandleContext: IFluidHandleContext;
 	resolveHandle(request: IRequest): Promise<IResponse>;
 }
@@ -47,7 +48,10 @@ export interface IContainerRuntimeWithResolveHandle_Deprecated extends IContaine
 export interface IContainerRuntimeEvents
 	extends IContainerRuntimeBaseEvents,
 		ISummarizerEvents {
-	(event: "dirty" | "disconnected" | "saved" | "attached", listener: () => void);
+	(
+		event: "dirty" | "disconnected" | "saved" | "attached",
+		listener: () => void,
+	);
 	(event: "connected", listener: (clientId: string) => void);
 }
 
@@ -125,24 +129,32 @@ export interface ISummarizerObservabilityProps {
 export interface ISummarizerEvents extends IEvent {
 	(
 		event: "summarize",
-		listener: (props: ISummarizeEventProps & ISummarizerObservabilityProps) => void,
+		listener: (
+			props: ISummarizeEventProps & ISummarizerObservabilityProps,
+		) => void,
 	);
 	(
 		event: "summarizeAllAttemptsFailed",
 		listener: (
-			props: Omit<ISummarizeEventProps, "result"> & ISummarizerObservabilityProps,
+			props: Omit<ISummarizeEventProps, "result"> &
+				ISummarizerObservabilityProps,
 		) => void,
 	);
 	(
 		event: "summarizerStop",
 		listener: (
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			props: { stopReason: SummarizerStopReason; error?: any } & ISummarizerObservabilityProps,
+			props: {
+				stopReason: SummarizerStopReason;
+				error?: any;
+			} & ISummarizerObservabilityProps,
 		) => void,
 	);
 	(
 		event: "summarizerStart",
-		listener: (props: { onBehalfOf: string } & ISummarizerObservabilityProps) => void,
+		listener: (
+			props: { onBehalfOf: string } & ISummarizerObservabilityProps,
+		) => void,
 	);
 	(
 		event: "summarizerStartupFailed",
@@ -172,7 +184,10 @@ export interface IContainerRuntime
 	readonly clientId: string | undefined;
 	readonly clientDetails: IClientDetails;
 	readonly connected: boolean;
-	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+	readonly deltaManager: IDeltaManager<
+		ISequencedDocumentMessage,
+		IDocumentMessage
+	>;
 	readonly storage: IContainerStorageService;
 	readonly flushMode: FlushMode;
 	readonly scope: FluidObject;
@@ -200,7 +215,9 @@ export interface IContainerRuntime
  *
  * @internal
  */
-export interface IContainerRuntimeInternal extends IContainerRuntime, ContainerExtensionStore {
+export interface IContainerRuntimeInternal
+	extends IContainerRuntime,
+		ContainerExtensionStore {
 	/**
 	 * Lookup the blob storage ID for a given local blob id.
 	 * @param localId - The local blob id. Likely coming from a handle.

@@ -110,7 +110,8 @@ class NoConnectionAvailableRule extends BaseMongoExceptionRetryRule {
 // This handles the no primary found in replicaset or invalid replica set name from client
 // Should not retry but relays on reconnect.
 class NoPrimaryInReplicasetRule extends BaseMongoExceptionRetryRule {
-	private static readonly message = "no primary found in replicaset or invalid replica set name";
+	private static readonly message =
+		"no primary found in replicaset or invalid replica set name";
 	protected defaultRetryDecision: boolean = false;
 
 	constructor(retryRuleOverride: Map<string, boolean>) {

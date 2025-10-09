@@ -19,7 +19,9 @@ initializeCustomerService({
 	fluidServiceUrl: `http://localhost:${fluidServicePort}`,
 	// eslint-disable-next-line unicorn/prefer-top-level-await
 }).catch((error) => {
-	console.error(`There was an error initializing the mock customer service:\n${error}`);
+	console.error(
+		`There was an error initializing the mock customer service:\n${error}`,
+	);
 
 	// eslint-disable-next-line unicorn/no-process-exit
 	process.exit(1);

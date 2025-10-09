@@ -48,9 +48,10 @@ export const isDataStoreAliasMessage = (
 	maybeDataStoreAliasMessage: unknown,
 ): maybeDataStoreAliasMessage is IDataStoreAliasMessage => {
 	return (
-		typeof (maybeDataStoreAliasMessage as Partial<IDataStoreAliasMessage>)?.internalId ===
-			"string" &&
-		typeof (maybeDataStoreAliasMessage as Partial<IDataStoreAliasMessage>)?.alias === "string"
+		typeof (maybeDataStoreAliasMessage as Partial<IDataStoreAliasMessage>)
+			?.internalId === "string" &&
+		typeof (maybeDataStoreAliasMessage as Partial<IDataStoreAliasMessage>)
+			?.alias === "string"
 	);
 };
 
@@ -59,7 +60,8 @@ export const channelToDataStore = (
 	internalId: string,
 	channelCollection: ChannelCollection,
 	logger: ITelemetryLoggerExt,
-): IDataStore => new DataStore(fluidDataStoreChannel, internalId, channelCollection, logger);
+): IDataStore =>
+	new DataStore(fluidDataStoreChannel, internalId, channelCollection, logger);
 
 enum AliasState {
 	Aliased = "Aliased",
@@ -81,7 +83,8 @@ class DataStore implements IDataStore {
 			throw new UsageError(`The alias cannot contain slashes: '${alias}'`);
 		}
 		// eslint-disable-next-line import/no-deprecated
-		const runtime = this.parentContext.containerRuntime as IContainerRuntimeBaseExperimental;
+		const runtime = this.parentContext
+			.containerRuntime as IContainerRuntimeBaseExperimental;
 		if (runtime.inStagingMode === true) {
 			throw new UsageError("Cannot set aliases while in staging mode");
 		}
@@ -147,7 +150,11 @@ class DataStore implements IDataStore {
 		}
 
 		const aliased = await this.ackBasedPromise<boolean>((resolve) => {
-			this.parentContext.submitMessage(ContainerMessageType.Alias, message, resolve);
+			this.parentContext.submitMessage(
+				ContainerMessageType.Alias,
+				message,
+				resolve,
+			);
 		})
 			.catch((error) => {
 				this.logger.sendErrorEvent(
@@ -209,7 +216,9 @@ class DataStore implements IDataStore {
 		return new Promise<T>((resolve, reject) => {
 			rejectBecauseDispose = () =>
 				reject(
-					new Error("ContainerRuntime disposed while this ack-based Promise was pending"),
+					new Error(
+						"ContainerRuntime disposed while this ack-based Promise was pending",
+					),
 				);
 
 			if (this.parentContext.containerRuntime.disposed) {

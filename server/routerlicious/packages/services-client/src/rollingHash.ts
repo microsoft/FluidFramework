@@ -19,7 +19,8 @@ const clientIdProperty: keyof ISequencedDocumentSystemMessage = "clientId";
 const sequenceNumberProperty: keyof ISequencedDocumentSystemMessage = "sequenceNumber";
 const minimumSequenceNumberProperty: keyof ISequencedDocumentSystemMessage =
 	"minimumSequenceNumber";
-const clientSequenceNumberProperty: keyof ISequencedDocumentSystemMessage = "clientSequenceNumber";
+const clientSequenceNumberProperty: keyof ISequencedDocumentSystemMessage =
+	"clientSequenceNumber";
 const referenceSequenceNumberProperty: keyof ISequencedDocumentSystemMessage =
 	"referenceSequenceNumber";
 const typeProperty: keyof ISequencedDocumentSystemMessage = "type";

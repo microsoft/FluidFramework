@@ -19,7 +19,10 @@ import {
 import { type Handle, isHandleValid } from "./handletable.js";
 import type { SharedMatrix } from "./matrix.js";
 import type { MatrixItem } from "./ops.js";
-import type { PermutationSegment, PermutationVector } from "./permutationvector.js";
+import type {
+	PermutationSegment,
+	PermutationVector,
+} from "./permutationvector.js";
 import type { IUndoConsumer } from "./types.js";
 
 export class VectorUndoProvider {

@@ -21,7 +21,9 @@ import {
 } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
-function getSummaryObjectFromWholeSummaryTreeEntry(entry: WholeSummaryTreeEntry): SummaryObject {
+function getSummaryObjectFromWholeSummaryTreeEntry(
+	entry: WholeSummaryTreeEntry,
+): SummaryObject {
 	if ((entry as IWholeSummaryTreeHandleEntry).id !== undefined) {
 		return {
 			type: SummaryType.Handle,
@@ -94,15 +96,12 @@ export class WholeSummaryWriteGitManager {
 		switch (summaryObject.type) {
 			case SummaryType.Blob:
 				return this.writeSummaryBlob(
-					(wholeSummaryTreeEntry as IWholeSummaryTreeValueEntry)
-						.value as IWholeSummaryBlob,
+					(wholeSummaryTreeEntry as IWholeSummaryTreeValueEntry).value as IWholeSummaryBlob,
 				);
 			case SummaryType.Tree:
 				return this.writeSummaryTreeCore(
-					(
-						(wholeSummaryTreeEntry as IWholeSummaryTreeValueEntry)
-							.value as IWholeSummaryTree
-					).entries ?? [],
+					((wholeSummaryTreeEntry as IWholeSummaryTreeValueEntry).value as IWholeSummaryTree)
+						.entries ?? [],
 				);
 			case SummaryType.Handle:
 				return (wholeSummaryTreeEntry as IWholeSummaryTreeHandleEntry).id;

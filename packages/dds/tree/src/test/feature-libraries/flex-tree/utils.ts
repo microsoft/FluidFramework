@@ -52,7 +52,9 @@ export function getReadonlyContext(
  *
  * @returns The created context.
  */
-export function contextWithContentReadonly(content: TreeSimpleContent): Context {
+export function contextWithContentReadonly(
+	content: TreeSimpleContent,
+): Context {
 	const cursor = fieldCursorFromInsertable<UnsafeUnknownSchema>(
 		content.schema,
 		content.initialTree,
@@ -102,7 +104,10 @@ export function initializeCursor(
 	return cursor;
 }
 
-export const rootFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: rootFieldKey };
+export const rootFieldAnchor: FieldAnchor = {
+	parent: undefined,
+	fieldKey: rootFieldKey,
+};
 
 /**
  * Initializes a readonly test tree, context, and cursor, and moves the cursor to the tree's root.

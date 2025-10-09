@@ -150,7 +150,7 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 			? new Redis.Cluster(
 					[{ port: this.redisOptions.port, host: this.redisOptions.host }],
 					redisClusteringOptions,
-			  )
+				)
 			: new Redis.default(this.redisOptions);
 		Lumberjack.info("Redis client created", {
 			["constructorOptions"]: stringifiedOptions,
@@ -193,8 +193,7 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 			if (this.enableVerboseErrorLogging) {
 				const commandName: string | undefined =
 					error.command?.name ?? error.lastNodeError?.command?.name;
-				const args: string[] =
-					error.command?.args ?? error.lastNodeError?.command?.args ?? [];
+				const args: string[] = error.command?.args ?? error.lastNodeError?.command?.args ?? [];
 
 				if (error.previousErrors) {
 					// Internally redact the previous errors of an exec command

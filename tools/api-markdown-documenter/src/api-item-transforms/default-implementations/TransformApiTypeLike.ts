@@ -22,7 +22,10 @@ import {
 	type ApiTypeLike,
 } from "../../utilities/index.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
-import { createChildDetailsSection, createMemberTables } from "../helpers/index.js";
+import {
+	createChildDetailsSection,
+	createMemberTables,
+} from "../helpers/index.js";
 import { filterItems } from "../utilities/index.js";
 
 /**
@@ -122,7 +125,9 @@ export function transformApiTypeLike(
 		const standardProperties = allProperties.filter(
 			(apiProperty) => !apiProperty.isEventProperty,
 		);
-		const eventProperties = allProperties.filter((apiProperty) => apiProperty.isEventProperty);
+		const eventProperties = allProperties.filter(
+			(apiProperty) => apiProperty.isEventProperty,
+		);
 
 		// Further split event/standard properties into static and non-static
 		const staticStandardProperties = standardProperties.filter((apiProperty) =>
@@ -140,7 +145,9 @@ export function transformApiTypeLike(
 
 		// Split methods into static and non-static methods
 		const staticMethods = allMethods.filter((apiMethod) => isStatic(apiMethod));
-		const nonStaticMethods = allMethods.filter((apiMethod) => !isStatic(apiMethod));
+		const nonStaticMethods = allMethods.filter(
+			(apiMethod) => !isStatic(apiMethod),
+		);
 
 		// Render summary tables
 		const memberTableSections = createMemberTables(

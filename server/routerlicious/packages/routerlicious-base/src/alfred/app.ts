@@ -117,15 +117,10 @@ export function create(
 					const tenantId = getTenantIdFromRequest(req.params);
 					const documentId = getIdFromRequest(req.params);
 					const additionalProperties: Record<string, any> = {
-						[HttpProperties.driverVersion]: tokens.req(
-							req,
-							res,
-							DriverVersionHeaderName,
-						),
+						[HttpProperties.driverVersion]: tokens.req(req, res, DriverVersionHeaderName),
 						[BaseTelemetryProperties.tenantId]: tenantId,
 						[BaseTelemetryProperties.documentId]: documentId,
-						[CommonProperties.callingServiceName]:
-							req.headers[CallingServiceHeaderName] ?? "",
+						[CommonProperties.callingServiceName]: req.headers[CallingServiceHeaderName] ?? "",
 					};
 
 					res.locals.tenantId = tenantId;
@@ -165,8 +160,7 @@ export function create(
 						customHeadersToLog.forEach((header) => {
 							const lowerCaseHeader = header.toLowerCase();
 							if (req.headers[lowerCaseHeader]) {
-								additionalProperties[lowerCaseHeader] =
-									req.headers[lowerCaseHeader];
+								additionalProperties[lowerCaseHeader] = req.headers[lowerCaseHeader];
 							}
 						});
 					}

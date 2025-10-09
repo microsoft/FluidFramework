@@ -47,10 +47,13 @@ describe("Fluid data updates", () => {
 		const itemId = await newContainer.attach();
 
 		if (newContainer.connectionState !== ConnectionState.Connected) {
-			await timeoutPromise((resolve) => newContainer.once("connected", () => resolve()), {
-				durationMs: connectTimeoutMs,
-				errorMsg: "container connect() timeout",
-			});
+			await timeoutPromise(
+				(resolve) => newContainer.once("connected", () => resolve()),
+				{
+					durationMs: connectTimeoutMs,
+					errorMsg: "container connect() timeout",
+				},
+			);
 		}
 
 		const resources = client.getContainer(itemId, schema);
@@ -78,10 +81,13 @@ describe("Fluid data updates", () => {
 		const itemId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
-			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
-				durationMs: connectTimeoutMs,
-				errorMsg: "container connect() timeout",
-			});
+			await timeoutPromise(
+				(resolve) => container.once("connected", () => resolve()),
+				{
+					durationMs: connectTimeoutMs,
+					errorMsg: "container connect() timeout",
+				},
+			);
 		}
 
 		const initialObjectsCreate = container.initialObjects;
@@ -89,10 +95,17 @@ describe("Fluid data updates", () => {
 		map1Create.set("new-key", "new-value");
 		const valueCreate: string | undefined = map1Create.get("new-key");
 
-		const { container: containerGet } = await client.getContainer(itemId, schema);
+		const { container: containerGet } = await client.getContainer(
+			itemId,
+			schema,
+		);
 		const map1Get = containerGet.initialObjects.map1;
 		const valueGet: string | undefined = await mapWait(map1Get, "new-key");
-		assert.strictEqual(valueGet, valueCreate, "container can't change initial objects");
+		assert.strictEqual(
+			valueGet,
+			valueCreate,
+			"container can't change initial objects",
+		);
 	});
 
 	/**
@@ -111,10 +124,13 @@ describe("Fluid data updates", () => {
 		const itemId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
-			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
-				durationMs: connectTimeoutMs,
-				errorMsg: "container connect() timeout",
-			});
+			await timeoutPromise(
+				(resolve) => container.once("connected", () => resolve()),
+				{
+					durationMs: connectTimeoutMs,
+					errorMsg: "container connect() timeout",
+				},
+			);
 		}
 
 		const initialObjectsCreate = container.initialObjects;
@@ -127,7 +143,10 @@ describe("Fluid data updates", () => {
 			"container returns the wrong type for mdo2",
 		);
 
-		const { container: containerGet } = await client.getContainer(itemId, doSchema);
+		const { container: containerGet } = await client.getContainer(
+			itemId,
+			doSchema,
+		);
 		const initialObjectsGet = containerGet.initialObjects;
 		assert(
 			initialObjectsGet.mdo1 instanceof TestDataObject,
@@ -158,10 +177,13 @@ describe("Fluid data updates", () => {
 		const itemId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
-			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
-				durationMs: connectTimeoutMs,
-				errorMsg: "container connect() timeout",
-			});
+			await timeoutPromise(
+				(resolve) => container.once("connected", () => resolve()),
+				{
+					durationMs: connectTimeoutMs,
+					errorMsg: "container connect() timeout",
+				},
+			);
 		}
 
 		const initialObjectsCreate = container.initialObjects;
@@ -178,7 +200,10 @@ describe("Fluid data updates", () => {
 			"container returns the wrong type for mdo3",
 		);
 
-		const { container: containerGet } = await client.getContainer(itemId, doSchema);
+		const { container: containerGet } = await client.getContainer(
+			itemId,
+			doSchema,
+		);
 		const initialObjectsGet = containerGet.initialObjects;
 		assert(
 			initialObjectsGet.mdo1 instanceof TestDataObject,
@@ -218,13 +243,19 @@ describe("Fluid data updates", () => {
 		const itemId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
-			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
-				durationMs: connectTimeoutMs,
-				errorMsg: "container connect() timeout",
-			});
+			await timeoutPromise(
+				(resolve) => container.once("connected", () => resolve()),
+				{
+					durationMs: connectTimeoutMs,
+					errorMsg: "container connect() timeout",
+				},
+			);
 		}
 
-		const { container: containerGet } = await client.getContainer(itemId, doSchema);
+		const { container: containerGet } = await client.getContainer(
+			itemId,
+			doSchema,
+		);
 		const initialObjectsGet = containerGet.initialObjects;
 		const mdo2get: CounterTestDataObject = initialObjectsGet.mdo2;
 

@@ -45,7 +45,11 @@ export {
 	raiseConnectedEvent,
 	safeRaiseEvent,
 } from "./events.js";
-export { hasErrorInstanceId, type IFluidErrorBase, isFluidError } from "./fluidErrorBase.js";
+export {
+	hasErrorInstanceId,
+	type IFluidErrorBase,
+	isFluidError,
+} from "./fluidErrorBase.js";
 export {
 	eventNamespaceSeparator,
 	createChildLogger,

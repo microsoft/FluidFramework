@@ -21,6 +21,11 @@ export interface IChannelWithOracles extends ISharedString {
  * Returns true if the given ISharedString has an oracle attached
  * @internal
  */
-export function hasSharedStringOracle(s: ISharedString): s is IChannelWithOracles {
-	return "sharedStringOracle" in s && s.sharedStringOracle instanceof SharedStringOracle;
+export function hasSharedStringOracle(
+	s: ISharedString,
+): s is IChannelWithOracles {
+	return (
+		"sharedStringOracle" in s &&
+		s.sharedStringOracle instanceof SharedStringOracle
+	);
 }

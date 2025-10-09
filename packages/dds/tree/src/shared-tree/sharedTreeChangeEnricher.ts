@@ -65,7 +65,9 @@ export class SharedTreeReadonlyChangeEnricher
 		);
 	}
 
-	private readonly getDetachedRoot = (id: DeltaDetachedNodeId): TreeChunk | undefined => {
+	private readonly getDetachedRoot = (
+		id: DeltaDetachedNodeId,
+	): TreeChunk | undefined => {
 		const root = this.removedRoots.tryGetEntry(id);
 		if (root !== undefined) {
 			const cursor = this.forest.getCursorAboveDetachedFields();
@@ -85,12 +87,17 @@ export class SharedTreeMutableChangeEnricher
 	extends SharedTreeReadonlyChangeEnricher
 	implements ChangeEnricherMutableCheckout<SharedTreeChange>
 {
-	public applyTipChange(change: SharedTreeChange, revision?: RevisionTag): void {
+	public applyTipChange(
+		change: SharedTreeChange,
+		revision?: RevisionTag,
+	): void {
 		for (const dataOrSchemaChange of change.changes) {
 			const type = dataOrSchemaChange.type;
 			switch (type) {
 				case "data": {
-					const delta = intoDelta(tagChange(dataOrSchemaChange.innerChange, revision));
+					const delta = intoDelta(
+						tagChange(dataOrSchemaChange.innerChange, revision),
+					);
 					const visitor = this.forest.acquireVisitor();
 					visitDelta(delta, visitor, this.removedRoots, revision);
 					visitor.free();

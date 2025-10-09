@@ -3,7 +3,7 @@
 	"extends": "./tsconfig.json",
 	"references": [
 		{
-			"path": "../../tsconfig.cjs.json",
-		},
-	],
+			"path": "../../tsconfig.cjs.json"
+		}
+	]
 }

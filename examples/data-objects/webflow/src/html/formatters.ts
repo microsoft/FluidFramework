@@ -6,10 +6,18 @@
 import { assert } from "@fluidframework/core-utils/legacy";
 import { Marker, TextSegment } from "@fluidframework/sequence/legacy";
 
-import { DocSegmentKind, getCss, getDocSegmentKind } from "../document/index.js";
+import {
+	DocSegmentKind,
+	getCss,
+	getDocSegmentKind,
+} from "../document/index.js";
 import { getAttrs, syncAttrs } from "../util/attr.js";
 import { TagName, emptyObject } from "../util/index.js";
-import { Formatter, IFormatterState, RootFormatter } from "../view/formatter.js";
+import {
+	Formatter,
+	IFormatterState,
+	RootFormatter,
+} from "../view/formatter.js";
 import { Layout } from "../view/layout.js";
 
 import { ICssProps, sameCss, syncCss } from "./css.js";
@@ -56,7 +64,9 @@ class HtmlFormatter extends RootFormatter<IFormatterState> {
 			}
 
 			default:
-				throw new Error(`Unhandled DocSegmentKind '${kind}' @${layout.position}`);
+				throw new Error(
+					`Unhandled DocSegmentKind '${kind}' @${layout.position}`,
+				);
 		}
 	}
 
@@ -125,7 +135,12 @@ class TagsFormatter extends Formatter<ITagsState> {
 			}
 
 			default:
-				debug("%s@%d: Unhanded DocSegmentKind '%s'.", this, layout.position, kind);
+				debug(
+					"%s@%d: Unhanded DocSegmentKind '%s'.",
+					this,
+					layout.position,
+					kind,
+				);
 				layout.popFormat();
 				return { state, consumed: false };
 		}
@@ -147,7 +162,11 @@ class ParagraphFormatter extends Formatter<IParagraphState> {
 		super();
 	}
 
-	public begin(layout: Layout, init: IParagraphState, prevState: IParagraphState) {
+	public begin(
+		layout: Layout,
+		init: IParagraphState,
+		prevState: IParagraphState,
+	) {
 		const state: Partial<IParagraphState> = prevState ? { ...prevState } : {};
 
 		const segment = layout.segment;
@@ -180,7 +199,12 @@ class ParagraphFormatter extends Formatter<IParagraphState> {
 			}
 
 			default:
-				debug("%s@%d: Unhanded DocSegmentKind '%s'.", this, layout.position, kind);
+				debug(
+					"%s@%d: Unhanded DocSegmentKind '%s'.",
+					this,
+					layout.position,
+					kind,
+				);
 				layout.popFormat();
 				return { state, consumed: false };
 		}
@@ -225,7 +249,12 @@ class TextFormatter extends Formatter<ITextState> {
 			}
 
 			default:
-				debug("%s@%d: Unhanded DocSegmentKind '%s'.", this, layout.position, kind);
+				debug(
+					"%s@%d: Unhanded DocSegmentKind '%s'.",
+					this,
+					layout.position,
+					kind,
+				);
 				layout.popFormat();
 				return { state, consumed: false };
 		}

@@ -267,11 +267,9 @@ export function configureWebSocketServices(
 						? getLumberBaseProperties(
 								(connectionMessage as IConnect).id,
 								(connectionMessage as IConnect).tenantId,
-						  )
+							)
 						: {};
-				if (
-					typeof (connectionMessage as IConnect | undefined)?.driverVersion === "string"
-				) {
+				if (typeof (connectionMessage as IConnect | undefined)?.driverVersion === "string") {
 					safeTelemetryProperties.driverVersion = (
 						connectionMessage as IConnect
 					).driverVersion;
@@ -352,9 +350,7 @@ export function configureWebSocketServices(
 						.finally(() => {
 							connectDocumentComplete = true;
 							if (disconnectDocumentP) {
-								Lumberjack.warning(
-									`ConnectDocument completed after disconnect was handled.`,
-								);
+								Lumberjack.warning(`ConnectDocument completed after disconnect was handled.`);
 								// We have already received disconnect for this connection.
 								disconnectDocumentP
 									.catch((error) => {
@@ -371,14 +367,10 @@ export function configureWebSocketServices(
 										// The primary need for this retry is when we receive "disconnect" in the narrow window after
 										// "connect_document" but before "connectDocumentP" is defined.
 										const alreadyDisconnectedAllConnections: boolean =
-											connectionsMap.size ===
-											disconnectedOrdererConnections.size;
+											connectionsMap.size === disconnectedOrdererConnections.size;
 										const alreadyDisconnectedAllClients: boolean =
 											roomMap.size === disconnectedClients.size;
-										if (
-											alreadyDisconnectedAllConnections &&
-											alreadyDisconnectedAllClients
-										) {
+										if (alreadyDisconnectedAllConnections && alreadyDisconnectedAllClients) {
 											// Don't retry disconnect if all connections and clients are already handled.
 											return;
 										}
@@ -392,9 +384,7 @@ export function configureWebSocketServices(
 											[CommonProperties.connectionClients]: JSON.stringify([
 												...connectionsMap.keys(),
 											]),
-											[CommonProperties.roomClients]: JSON.stringify([
-												...roomMap.keys(),
-											]),
+											[CommonProperties.roomClients]: JSON.stringify([...roomMap.keys()]),
 										});
 
 										disconnectDocument(
@@ -404,15 +394,10 @@ export function configureWebSocketServices(
 											lambdaConnectionStateTrackers,
 										)
 											.then(() => {
-												disconnectRetryMetric.success(
-													`Successfully retried disconnect.`,
-												);
+												disconnectRetryMetric.success(`Successfully retried disconnect.`);
 											})
 											.catch((error) => {
-												disconnectRetryMetric.error(
-													`Disconnect retry failed.`,
-													error,
-												);
+												disconnectRetryMetric.error(`Disconnect retry failed.`, error);
 											});
 									});
 							}
@@ -461,29 +446,16 @@ export function configureWebSocketServices(
 					};
 					const handleMessageBatchProcessingError = (error: any): void => {
 						if (isNetworkError(error) && error.code === 413) {
-							Lumberjack.info(
-								"Rejected too large operation(s)",
-								lumberjackProperties,
-							);
+							Lumberjack.info("Rejected too large operation(s)", lumberjackProperties);
 							socket.emit("nack", "", [
-								createNackMessage(
-									error.code,
-									NackErrorType.BadRequestError,
-									error.message,
-								),
+								createNackMessage(error.code, NackErrorType.BadRequestError, error.message),
 							]);
 							return;
 						}
-						Lumberjack.error(
-							"Error processing submitted op(s)",
-							lumberjackProperties,
-							error,
-						);
+						Lumberjack.error("Error processing submitted op(s)", lumberjackProperties, error);
 					};
 					for (const messageBatch of messageBatches) {
-						const messages = Array.isArray(messageBatch)
-							? messageBatch
-							: [messageBatch];
+						const messages = Array.isArray(messageBatch) ? messageBatch : [messageBatch];
 						try {
 							const sanitized = messages.map((message) => {
 								if (verifyMaxMessageSize === true) {
@@ -495,8 +467,7 @@ export function configureWebSocketServices(
 									// - ~344ms for JSONs ~100mb
 									// maxMessageSize is currently 16kb, so this check should be <1ms
 									const messageSize = JSON.stringify(message.contents).length;
-									const maxMessageSize =
-										connection.serviceConfiguration.maxMessageSize;
+									const maxMessageSize = connection.serviceConfiguration.maxMessageSize;
 									if (messageSize > maxMessageSize) {
 										Lumberjack.error("Op size too large", {
 											...lumberjackProperties,
@@ -525,9 +496,7 @@ export function configureWebSocketServices(
 								sessionOpCountMap.set(clientId, currentOpCount + sanitized.length);
 
 								// Cannot await this order call without delaying other message batches in this submitOp.
-								connection
-									.order(sanitized)
-									.catch(handleMessageBatchProcessingError);
+								connection.order(sanitized).catch(handleMessageBatchProcessingError);
 							}
 						} catch (error) {
 							handleMessageBatchProcessingError(error);
@@ -653,9 +622,7 @@ export function configureWebSocketServices(
 						}
 					} else {
 						for (const contentBatch of contentBatches) {
-							const contents = Array.isArray(contentBatch)
-								? contentBatch
-								: [contentBatch];
+							const contents = Array.isArray(contentBatch) ? contentBatch : [contentBatch];
 							for (const content of contents) {
 								const signalMessage: ISignalMessage = {
 									clientId,
@@ -681,9 +648,7 @@ export function configureWebSocketServices(
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		socket.on("disconnect", async (reason: unknown) => {
 			if (!connectDocumentComplete && connectDocumentP) {
-				Lumberjack.warning(
-					`Socket connection disconnected before ConnectDocument completed.`,
-				);
+				Lumberjack.warning(`Socket connection disconnected before ConnectDocument completed.`);
 				// Wait for document connection to finish before disconnecting.
 				// If disconnect fires before roomMap or connectionsMap are updated, we can be left with
 				// hanging connections and clients.
@@ -696,8 +661,7 @@ export function configureWebSocketServices(
 				[CommonProperties.roomClients]: JSON.stringify([...roomMap.keys()]),
 				// Socket.io provides disconnect reason as a string. If it is not a string, it might not be a socket.io socket, so don't log anything.
 				// A list of possible reasons can be found here: https://socket.io/docs/v4/server-socket-instance/#disconnect
-				[CommonProperties.disconnectReason]:
-					typeof reason === "string" ? reason : undefined,
+				[CommonProperties.disconnectReason]: typeof reason === "string" ? reason : undefined,
 			});
 
 			if (roomMap.size > 0) {

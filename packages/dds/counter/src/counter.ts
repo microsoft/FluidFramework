@@ -111,7 +111,10 @@ export class SharedCounter
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
 	 */
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
-		const content = await readAndParse<ICounterSnapshotFormat>(storage, snapshotFileName);
+		const content = await readAndParse<ICounterSnapshotFormat>(
+			storage,
+			snapshotFileName,
+		);
 
 		this._value = content.value;
 	}
@@ -159,7 +162,10 @@ export class SharedCounter
 
 		// TODO: Clean up error code linter violations repo-wide.
 
-		assert(counterOp.type === "increment", 0x3ec /* Op type is not increment */);
+		assert(
+			counterOp.type === "increment",
+			0x3ec /* Op type is not increment */,
+		);
 
 		this.increment(counterOp.incrementAmount);
 	}

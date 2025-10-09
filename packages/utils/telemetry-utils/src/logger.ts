@@ -87,7 +87,9 @@ export interface ITelemetryLoggerPropertyBags {
  * @internal
  */
 // eslint-disable-next-line @rushstack/no-new-null
-export function numberFromString(str: string | null | undefined): string | number | undefined {
+export function numberFromString(
+	str: string | null | undefined,
+): string | number | undefined {
 	if (str === undefined || str === null) {
 		return undefined;
 	}
@@ -187,7 +189,9 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	public sendTelemetryEvent(
 		event: ITelemetryGenericEventExt,
 		error?: unknown,
-		logLevel: typeof LogLevel.verbose | typeof LogLevel.default = LogLevel.default,
+		logLevel:
+			| typeof LogLevel.verbose
+			| typeof LogLevel.default = LogLevel.default,
 	): void {
 		this.sendTelemetryEventCore(
 			{ ...event, category: event.category ?? "generic" },
@@ -252,7 +256,9 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	public sendPerformanceEvent(
 		event: ITelemetryPerformanceEventExt,
 		error?: unknown,
-		logLevel: typeof LogLevel.verbose | typeof LogLevel.default = LogLevel.default,
+		logLevel:
+			| typeof LogLevel.verbose
+			| typeof LogLevel.default = LogLevel.default,
 	): void {
 		const perfEvent = {
 			...event,
@@ -267,7 +273,8 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	}
 
 	protected prepareEvent(event: ITelemetryBaseEvent): ITelemetryBaseEvent {
-		const includeErrorProps = event.category === "error" || event.error !== undefined;
+		const includeErrorProps =
+			event.category === "error" || event.error !== undefined;
 		const newEvent: ITelemetryBaseEvent = {
 			...event,
 		};
@@ -295,7 +302,9 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 						}
 						// If this throws, hopefully it is handled elsewhere
 						const value =
-							typeof getterOrValue === "function" ? getterOrValue() : getterOrValue;
+							typeof getterOrValue === "function"
+								? getterOrValue()
+								: getterOrValue;
 						if (value !== undefined) {
 							eventLike[key] = value;
 						}
@@ -432,13 +441,20 @@ export class ChildLogger extends TelemetryLogger {
 				combinedProperties,
 			);
 
-			if (!loggerIsMonitoringContext(child) && loggerIsMonitoringContext(baseLogger)) {
+			if (
+				!loggerIsMonitoringContext(child) &&
+				loggerIsMonitoringContext(baseLogger)
+			) {
 				mixinMonitoringContext(child, baseLogger.config);
 			}
 			return child;
 		}
 
-		return new ChildLogger(baseLogger ?? { send(): void {} }, namespace, properties);
+		return new ChildLogger(
+			baseLogger ?? { send(): void {} },
+			namespace,
+			properties,
+		);
 	}
 
 	private constructor(
@@ -450,7 +466,10 @@ export class ChildLogger extends TelemetryLogger {
 
 		// propagate the monitoring context
 		if (loggerIsMonitoringContext(baseLogger)) {
-			mixinMonitoringContext(this, new CachedConfigProvider(this, baseLogger.config));
+			mixinMonitoringContext(
+				this,
+				new CachedConfigProvider(this, baseLogger.config),
+			);
 		}
 	}
 
@@ -458,7 +477,10 @@ export class ChildLogger extends TelemetryLogger {
 		return this.baseLogger.minLogLevel;
 	}
 
-	private shouldFilterOutEvent(event: ITelemetryBaseEvent, logLevel?: LogLevel): boolean {
+	private shouldFilterOutEvent(
+		event: ITelemetryBaseEvent,
+		logLevel?: LogLevel,
+	): boolean {
 		const eventLogLevel = logLevel ?? LogLevel.default;
 		const configLogLevel = this.baseLogger.minLogLevel ?? LogLevel.default;
 		// Filter out in case event log level is below what is wanted in config.
@@ -510,7 +532,9 @@ export interface MultiSinkLoggerProperties {
  *
  * @internal
  */
-export function createMultiSinkLogger(props: MultiSinkLoggerProperties): ITelemetryLoggerExt {
+export function createMultiSinkLogger(
+	props: MultiSinkLoggerProperties,
+): ITelemetryLoggerExt {
 	return new MultiSinkLogger(
 		props.namespace,
 		props.properties,
@@ -541,7 +565,8 @@ export class MultiSinkLogger extends TelemetryLogger {
 		loggers: ITelemetryBaseLogger[] = [],
 		tryInheritProperties?: true,
 	) {
-		let realProperties = properties === undefined ? undefined : { ...properties };
+		let realProperties =
+			properties === undefined ? undefined : { ...properties };
 		if (tryInheritProperties === true) {
 			const merge = (realProperties ??= {});
 			loggers
@@ -732,7 +757,10 @@ export class PerformanceEvent {
 	protected constructor(
 		private readonly logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEventExt,
-		private readonly markers: IPerformanceEventMarkers = { end: true, cancel: "generic" },
+		private readonly markers: IPerformanceEventMarkers = {
+			end: true,
+			cancel: "generic",
+		},
 		private readonly emitLogs: boolean = true,
 	) {
 		this.event = { ...event };
@@ -780,14 +808,22 @@ export class PerformanceEvent {
 		if (this.startMark !== undefined && this.event) {
 			const endMark = `${this.event.eventName}-end`;
 			window.performance.mark(endMark);
-			window.performance.measure(`${this.event.eventName}`, this.startMark, endMark);
+			window.performance.measure(
+				`${this.event.eventName}`,
+				this.startMark,
+				endMark,
+			);
 			this.startMark = undefined;
 		}
 	}
 
 	public cancel(props?: ITelemetryPropertiesExt, error?: unknown): void {
 		if (this.markers.cancel !== undefined) {
-			this.reportEvent("cancel", { category: this.markers.cancel, ...props }, error);
+			this.reportEvent(
+				"cancel",
+				{ category: this.markers.cancel, ...props },
+				error,
+			);
 		}
 
 		// To prevent the event from being reported again later
@@ -828,7 +864,10 @@ export class PerformanceEvent {
 	): boolean {
 		const eventKey = `.${event.category}.${event.eventName}`;
 		const hitCount = PerformanceEvent.eventHits.get(eventKey) ?? 0;
-		PerformanceEvent.eventHits.set(eventKey, hitCount >= sampleThreshold ? 1 : hitCount + 1);
+		PerformanceEvent.eventHits.set(
+			eventKey,
+			hitCount >= sampleThreshold ? 1 : hitCount + 1,
+		);
 		return hitCount % sampleThreshold === 0;
 	}
 }
@@ -998,4 +1037,8 @@ export const tagCodeArtifacts = <
 						tag: TelemetryDataTag.CodeArtifact;
 					})
 		| (T[P] extends undefined ? undefined : never);
-} => tagData<TelemetryDataTag.CodeArtifact, T>(TelemetryDataTag.CodeArtifact, values);
+} =>
+	tagData<TelemetryDataTag.CodeArtifact, T>(
+		TelemetryDataTag.CodeArtifact,
+		values,
+	);

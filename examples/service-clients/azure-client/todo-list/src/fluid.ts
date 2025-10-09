@@ -41,19 +41,20 @@ const azureUser = {
 /**
  * Azure Fluid Relay connection configuration.
  */
-export const connectionConfig: AzureRemoteConnectionConfig | AzureLocalConnectionConfig =
-	useAzure
-		? {
-				type: "remote",
-				tenantId: "",
-				tokenProvider: new AzureFunctionTokenProvider("", azureUser),
-				endpoint: "",
-			}
-		: {
-				type: "local",
-				tokenProvider: new InsecureTokenProvider("fooBar", user),
-				endpoint: "http://localhost:7070",
-			};
+export const connectionConfig:
+	| AzureRemoteConnectionConfig
+	| AzureLocalConnectionConfig = useAzure
+	? {
+			type: "remote",
+			tenantId: "",
+			tokenProvider: new AzureFunctionTokenProvider("", azureUser),
+			endpoint: "",
+		}
+	: {
+			type: "local",
+			tokenProvider: new InsecureTokenProvider("fooBar", user),
+			endpoint: "http://localhost:7070",
+		};
 
 /**
  * Schema for the TODO list application.
@@ -104,7 +105,9 @@ export async function initializeAppForNewContainer(
 	const tree = container.initialObjects.tree;
 	const treeView = tree.viewWith(treeViewConfig);
 	if (!treeView.compatibility.canInitialize) {
-		throw new Error("Expected container data to be compatible with TodoList schema");
+		throw new Error(
+			"Expected container data to be compatible with TodoList schema",
+		);
 	}
 
 	const initialTodoList = await createInitialTodoList(container);
@@ -116,7 +119,9 @@ export async function initializeAppForNewContainer(
 /**
  * Create the initial `TodoList` tree for the application.
  */
-async function createInitialTodoList(container: IFluidContainer): Promise<TodoList> {
+async function createInitialTodoList(
+	container: IFluidContainer,
+): Promise<TodoList> {
 	// Leverage the provided container to generate a new `SharedString` for the `TodoList` title.
 	// We will insert a handle to it into the `TodoList` below.
 	const listTitle = await container.create(SharedString);

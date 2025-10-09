@@ -15,7 +15,10 @@ import { getSnapshotFileContent } from "../utils.js";
 
 import { _dirname } from "./dirname.cjs";
 import { fluidExport as networkFetchFluidExport } from "./sampleCodeLoaders/networkFetchCodeLoader.js";
-import { executeResult, fluidExport } from "./sampleCodeLoaders/sampleCodeLoader.js";
+import {
+	executeResult,
+	fluidExport,
+} from "./sampleCodeLoaders/sampleCodeLoader.js";
 import { fluidExport as timeoutFluidExport } from "./sampleCodeLoaders/timeoutCodeLoader.js";
 /* eslint-enable import/no-internal-modules */
 
@@ -51,8 +54,14 @@ describe("exportFile", () => {
 
 				assert(fs.existsSync(outputFilePath), "result file does not exist");
 
-				const resultFileContent = fs.readFileSync(outputFilePath, { encoding: "utf-8" });
-				assert.strictEqual(resultFileContent, executeResult, "result output is not correct");
+				const resultFileContent = fs.readFileSync(outputFilePath, {
+					encoding: "utf-8",
+				});
+				assert.strictEqual(
+					resultFileContent,
+					executeResult,
+					"result output is not correct",
+				);
 			});
 
 			it("Execution result is correct", async () => {
@@ -61,7 +70,11 @@ describe("exportFile", () => {
 					fluidExport,
 					new MockLogger().toTelemetryLogger(),
 				);
-				assert.deepStrictEqual(result, executeResult, "result objects do not match");
+				assert.deepStrictEqual(
+					result,
+					executeResult,
+					"result objects do not match",
+				);
 			});
 		});
 	});

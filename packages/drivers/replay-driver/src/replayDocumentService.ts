@@ -80,7 +80,9 @@ export class ReplayDocumentService
 	 * @param client - Client that connects to socket.
 	 * @returns returns the delta stream service which replay ops from --from to --to arguments.
 	 */
-	public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
+	public async connectToDeltaStream(
+		client: IClient,
+	): Promise<IDocumentDeltaConnection> {
 		return this.deltaStorage;
 	}
 }

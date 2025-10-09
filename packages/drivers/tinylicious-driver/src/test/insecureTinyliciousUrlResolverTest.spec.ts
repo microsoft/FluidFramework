@@ -29,14 +29,21 @@ describe("Insecure Url Resolver Test", () => {
 		const resolvedUrl = await resolver.resolve(testRequest);
 
 		const expectedResolvedUrl = `${hostUrl}/tinylicious/${documentId}`;
-		assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
+		assert.strictEqual(
+			resolvedUrl.url,
+			expectedResolvedUrl,
+			"resolved url is wrong",
+		);
 	});
 
 	it("Should resolve url with custom domain and port", async () => {
 		const customEndpoint = "http://custom-endpoint.io";
 		const customFluidEndpoint = "http://custom-endpoint.io";
 		const customPort = 1234;
-		const customResolver = new InsecureTinyliciousUrlResolver(customPort, customEndpoint);
+		const customResolver = new InsecureTinyliciousUrlResolver(
+			customPort,
+			customEndpoint,
+		);
 		const testRequest: IRequest = {
 			url: `${documentId}`,
 			headers: {},
@@ -45,7 +52,11 @@ describe("Insecure Url Resolver Test", () => {
 		const resolvedUrl = await customResolver.resolve(testRequest);
 
 		const expectedResolvedUrl = `${customFluidEndpoint}:${customPort}/tinylicious/${documentId}`;
-		assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
+		assert.strictEqual(
+			resolvedUrl.url,
+			expectedResolvedUrl,
+			"resolved url is wrong",
+		);
 	});
 
 	it("Should resolve url with data object ids", async () => {
@@ -57,7 +68,11 @@ describe("Insecure Url Resolver Test", () => {
 		const resolvedUrl = await resolver.resolve(testRequest);
 
 		const expectedResolvedUrl = `${hostUrl}/tinylicious/${documentId}/${path}`;
-		assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
+		assert.strictEqual(
+			resolvedUrl.url,
+			expectedResolvedUrl,
+			"resolved url is wrong",
+		);
 	});
 
 	it("Should resolve url with a slash at the end", async () => {
@@ -68,7 +83,11 @@ describe("Insecure Url Resolver Test", () => {
 		const resolvedUrl = await resolver.resolve(testRequest);
 
 		const expectedResolvedUrl = `${hostUrl}/tinylicious/${documentId}/`;
-		assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
+		assert.strictEqual(
+			resolvedUrl.url,
+			expectedResolvedUrl,
+			"resolved url is wrong",
+		);
 	});
 
 	it("Should resolve url with 2 slashes at the end", async () => {
@@ -79,7 +98,11 @@ describe("Insecure Url Resolver Test", () => {
 		const resolvedUrl = await resolver.resolve(testRequest);
 
 		const expectedResolvedUrl = `${hostUrl}/tinylicious/${documentId}//`;
-		assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
+		assert.strictEqual(
+			resolvedUrl.url,
+			expectedResolvedUrl,
+			"resolved url is wrong",
+		);
 	});
 
 	it("Should resolve url with special characters", async () => {
@@ -94,7 +117,11 @@ describe("Insecure Url Resolver Test", () => {
 		const expectedResolvedUrl = `${hostUrl}/tinylicious/${encodeURIComponent(
 			testDocumentId,
 		)}/${path}`;
-		assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
+		assert.strictEqual(
+			resolvedUrl.url,
+			expectedResolvedUrl,
+			"resolved url is wrong",
+		);
 	});
 
 	it("Should correctly resolve url for a create-new request with a non-empty URL", async () => {

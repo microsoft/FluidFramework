@@ -9,8 +9,8 @@ const _ = new SchemaFactory("com.fluidframework.benchmarks.table");
 
 export const Row = _.object("Row", {
 	"Order ID": _.number,
-	"Region": _.string,
-	"Country": _.string,
+	Region: _.string,
+	Country: _.string,
 	"Item Type": _.string,
 	"Sales Channel": _.string,
 	"Order Priority": _.string,

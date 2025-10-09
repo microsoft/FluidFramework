@@ -40,7 +40,10 @@ describe("reactSharedTreeView", () => {
 		// TODO: Ideally we would use a local-server service-client, but one does not appear to exist.
 		const tinyliciousClient = new TinyliciousClient();
 
-		const { container } = await tinyliciousClient.createContainer(containerSchema, "2");
+		const { container } = await tinyliciousClient.createContainer(
+			containerSchema,
+			"2",
+		);
 		const dataObject = container.initialObjects.tree;
 		assert.equal(dataObject.treeView.root.nuts, 5);
 		dataObject.treeView.root.nuts += 1;
@@ -68,17 +71,27 @@ describe("reactSharedTreeView", () => {
 
 				class Item extends builder.object("Item", {}) {}
 
-				const View = ({ root }: { root: PropTreeNode<Item> }): React.JSX.Element => (
-					<span>View</span>
-				);
+				const View = ({
+					root,
+				}: {
+					root: PropTreeNode<Item>;
+				}): React.JSX.Element => <span>View</span>;
 
 				it("TreeViewComponent", () => {
-					const view = independentView(new TreeViewConfiguration({ schema: Item }), {});
-					const content = <TreeViewComponent viewComponent={View} tree={{ treeView: view }} />;
+					const view = independentView(
+						new TreeViewConfiguration({ schema: Item }),
+						{},
+					);
+					const content = (
+						<TreeViewComponent viewComponent={View} tree={{ treeView: view }} />
+					);
 					const rendered = render(content, { reactStrictMode });
 
 					// Ensure that viewing an incompatible document displays an error.
-					assert.match(rendered.baseElement.textContent ?? "", /Document is incompatible/);
+					assert.match(
+						rendered.baseElement.textContent ?? "",
+						/Document is incompatible/,
+					);
 					// Ensure that changes in compatibility are detected and invalidate the view,
 					// and that compatible documents show the content from `viewComponent`
 					view.initialize(new Item({}));

@@ -100,7 +100,10 @@ export class KafkaNodeProducer implements IProducer {
 		await util.promisify(((callback) => this.client.close(callback)) as any)();
 	}
 
-	public on(event: "connected" | "produced" | "error", listener: (...args: any[]) => void): this {
+	public on(
+		event: "connected" | "produced" | "error",
+		listener: (...args: any[]) => void,
+	): this {
 		this.events.on(event, listener);
 		return this;
 	}

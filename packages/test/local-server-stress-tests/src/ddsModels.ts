@@ -4,7 +4,10 @@
  */
 
 /* eslint-disable import/no-internal-modules */
-import { done, type AsyncGenerator } from "@fluid-private/stochastic-test-utils";
+import {
+	done,
+	type AsyncGenerator,
+} from "@fluid-private/stochastic-test-utils";
 import { DDSFuzzModel, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import { baseSharedArrayModel } from "@fluidframework/legacy-dds/internal/test";
@@ -40,13 +43,24 @@ const generateSubModelMap = (
 			factory: IChannelFactory;
 			generator: AsyncGenerator<any, DDSFuzzTestState<IChannelFactory>>;
 			reducer: DDSFuzzModel<IChannelFactory, any>["reducer"];
-			validateConsistency: DDSFuzzModel<IChannelFactory, any>["validateConsistency"];
-			minimizationTransforms?: DDSFuzzModel<IChannelFactory, any>["minimizationTransforms"];
+			validateConsistency: DDSFuzzModel<
+				IChannelFactory,
+				any
+			>["validateConsistency"];
+			minimizationTransforms?: DDSFuzzModel<
+				IChannelFactory,
+				any
+			>["minimizationTransforms"];
 		}
 	>();
 	for (const model of models) {
-		const { reducer, generatorFactory, factory, validateConsistency, minimizationTransforms } =
-			model;
+		const {
+			reducer,
+			generatorFactory,
+			factory,
+			validateConsistency,
+			minimizationTransforms,
+		} = model;
 		const generator = repeatFactoryAsync(generatorFactory);
 		modelMap.set(factory.attributes.type, {
 			generator,

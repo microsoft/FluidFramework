@@ -37,7 +37,10 @@ export const PlotCoordinateView: React.FC<IPlotCoordinateViewProps> = (
 
 	return (
 		<div className="plot-view">
-			<div className="coordinate-dot" style={{ left: x - 2.5, top: y - 2.5 }}></div>
+			<div
+				className="coordinate-dot"
+				style={{ left: x - 2.5, top: y - 2.5 }}
+			></div>
 		</div>
 	);
 };

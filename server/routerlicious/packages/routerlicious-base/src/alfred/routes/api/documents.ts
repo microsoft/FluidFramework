@@ -215,7 +215,9 @@ export function create(
 		throttleIdPrefix: (req) => getParam(req.params, "tenantId") || appTenants[0].id,
 		throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
 	};
-	const generalTenantThrottler = tenantThrottlers.get(Constants.generalRestCallThrottleIdPrefix);
+	const generalTenantThrottler = tenantThrottlers.get(
+		Constants.generalRestCallThrottleIdPrefix,
+	);
 
 	const createDocTenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
 		throttleIdPrefix: (req) => getParam(req.params, "tenantId") || appTenants[0].id,
@@ -588,11 +590,7 @@ export function create(
 					.delete(generateCacheKey(tenantId, documentId))
 					.catch((error) => {
 						// Log error but don't fail the request
-						Lumberjack.error(
-							"Failed to delete getSession cache",
-							lumberjackProperties,
-							error,
-						);
+						Lumberjack.error("Failed to delete getSession cache", lumberjackProperties, error);
 						return true;
 					});
 			}
@@ -634,9 +632,7 @@ export function create(
 			const tokenId = request.body.jti;
 			if (!tokenId || typeof tokenId !== "string") {
 				return handleResponse(
-					Promise.reject(
-						new NetworkError(400, `Missing or invalid jti in request body.`),
-					),
+					Promise.reject(new NetworkError(400, `Missing or invalid jti in request body.`)),
 					response,
 				);
 			}
@@ -647,9 +643,7 @@ export function create(
 				).correlationId;
 				if (!correlationId) {
 					return handleResponse(
-						Promise.reject(
-							new NetworkError(400, `Missing correlationId in request headers.`),
-						),
+						Promise.reject(new NetworkError(400, `Missing correlationId in request headers.`)),
 						response,
 					);
 				}

@@ -53,7 +53,10 @@ export class Contact implements IContact {
 /**
  * The ContactCollection is our data object that implements the IContactCollection interface.
  */
-export class ContactCollection extends DataObject implements IContactCollection {
+export class ContactCollection
+	extends DataObject
+	implements IContactCollection
+{
 	/**
 	 * initializingFirstTime is run only once by the first client to create the DataObject.  Here we use it to
 	 * initialize the state of the DataObject.
@@ -94,7 +97,11 @@ export class ContactCollection extends DataObject implements IContactCollection 
 		const contactList: IContact[] = [];
 		for (const [id, contactData] of this.root) {
 			contactList.push(
-				new Contact(id, (contactData as IContact).name, (contactData as IContact).phone),
+				new Contact(
+					id,
+					(contactData as IContact).name,
+					(contactData as IContact).phone,
+				),
 			);
 		}
 		return contactList;

@@ -76,7 +76,11 @@ export class SanitizationLumberFormatter extends BaseSanitizationLumberFormatter
 		}
 	}
 
-	private redactException(exception: Error, sensitiveKeys: Set<string>, keyPath: string): void {
+	private redactException(
+		exception: Error,
+		sensitiveKeys: Set<string>,
+		keyPath: string,
+	): void {
 		Object.keys(exception).forEach((keyStr) => {
 			if (typeof exception[keyStr] === "object" && exception[keyStr] !== null) {
 				this.redactException(exception[keyStr], sensitiveKeys, `${keyPath}.${keyStr}`);

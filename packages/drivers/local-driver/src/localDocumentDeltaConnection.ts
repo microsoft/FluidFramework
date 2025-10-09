@@ -48,7 +48,11 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
 		// but should be fine because this delta connection is for local use only.
 		const socketWithListener = socket as unknown as Socket;
 
-		const deltaConnection = new LocalDocumentDeltaConnection(socketWithListener, id, logger);
+		const deltaConnection = new LocalDocumentDeltaConnection(
+			socketWithListener,
+			id,
+			logger,
+		);
 
 		const connectMessage: IConnect = {
 			client,
@@ -62,7 +66,11 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
 		return deltaConnection;
 	}
 
-	constructor(socket: Socket, documentId: string, logger?: ITelemetryBaseLogger) {
+	constructor(
+		socket: Socket,
+		documentId: string,
+		logger?: ITelemetryBaseLogger,
+	) {
 		super(socket, documentId, createChildLogger({ logger }));
 	}
 

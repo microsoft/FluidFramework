@@ -12,7 +12,10 @@
  */
 export const mochaHooks = {
 	beforeEach(this: Mocha.Context): void {
-		if (this.currentTest !== undefined && process.env.FLUID_TEST_MODULE_SYSTEM === "CJS") {
+		if (
+			this.currentTest !== undefined &&
+			process.env.FLUID_TEST_MODULE_SYSTEM === "CJS"
+		) {
 			this.currentTest.title = `[CJS] ${this.currentTest.title}`;
 		}
 	},

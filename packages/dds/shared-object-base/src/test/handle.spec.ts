@@ -51,7 +51,11 @@ describe("isISharedObjectHandle", () => {
 
 	it("should return false for null", () => {
 		// eslint-disable-next-line unicorn/no-null
-		assert.strictEqual(isISharedObjectHandle(null), false, "Null should return false.");
+		assert.strictEqual(
+			isISharedObjectHandle(null),
+			false,
+			"Null should return false.",
+		);
 	});
 
 	it("should return false for undefined", () => {
@@ -71,18 +75,34 @@ describe("isISharedObjectHandle", () => {
 	});
 
 	it("should return false for a number", () => {
-		assert.strictEqual(isISharedObjectHandle(123), false, "Number should return false.");
+		assert.strictEqual(
+			isISharedObjectHandle(123),
+			false,
+			"Number should return false.",
+		);
 	});
 
 	it("should return false for a boolean", () => {
-		assert.strictEqual(isISharedObjectHandle(true), false, "Boolean should return false.");
+		assert.strictEqual(
+			isISharedObjectHandle(true),
+			false,
+			"Boolean should return false.",
+		);
 	});
 
 	it("should return false for an empty object", () => {
-		assert.strictEqual(isISharedObjectHandle({}), false, "Empty object should return false.");
+		assert.strictEqual(
+			isISharedObjectHandle({}),
+			false,
+			"Empty object should return false.",
+		);
 	});
 
 	it("should return false for an array", () => {
-		assert.strictEqual(isISharedObjectHandle([]), false, "Array should return false.");
+		assert.strictEqual(
+			isISharedObjectHandle([]),
+			false,
+			"Array should return false.",
+		);
 	});
 });

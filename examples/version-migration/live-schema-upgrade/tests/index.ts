@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
+import {
+	SessionStorageModelLoader,
+	StaticCodeLoader,
+} from "@fluid-example/example-utils";
 
 import {
 	DiceRollerContainerRuntimeFactory,
@@ -16,9 +19,10 @@ import { renderDiceRoller } from "../src/view.js";
  * requires making async calls.
  */
 async function createContainerAndRenderInElement(element: HTMLDivElement) {
-	const sessionStorageModelLoader = new SessionStorageModelLoader<IDiceRollerAppModel>(
-		new StaticCodeLoader(new DiceRollerContainerRuntimeFactory()),
-	);
+	const sessionStorageModelLoader =
+		new SessionStorageModelLoader<IDiceRollerAppModel>(
+			new StaticCodeLoader(new DiceRollerContainerRuntimeFactory()),
+		);
 
 	let id: string;
 	let model: IDiceRollerAppModel;
@@ -27,7 +31,8 @@ async function createContainerAndRenderInElement(element: HTMLDivElement) {
 		// Normally our code loader is expected to match up with the version passed here.
 		// But since we're using a StaticCodeLoader that always loads the same runtime factory regardless,
 		// the version doesn't actually matter.
-		const createResponse = await sessionStorageModelLoader.createDetached("1.0");
+		const createResponse =
+			await sessionStorageModelLoader.createDetached("1.0");
 		model = createResponse.model;
 		id = await createResponse.attach();
 	} else {

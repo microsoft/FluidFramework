@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { DiscriminatedUnionLibrary, IJsonCodec } from "../../codec/index.js";
+import type {
+	DiscriminatedUnionLibrary,
+	IJsonCodec,
+} from "../../codec/index.js";
 import type {
 	ChangeAtomId,
 	ChangeEncodingContext,
@@ -35,7 +38,10 @@ export type MoveMarkEffect = MoveOut | MoveIn;
 export type DetachOfRemovedNodes = Detach & { cellId: CellId };
 export type CellRename = AttachAndDetach | DetachOfRemovedNodes;
 
-export interface SequenceCodecHelpers<TDecodedMarkEffect, TEncodedMarkEffect extends object> {
+export interface SequenceCodecHelpers<
+	TDecodedMarkEffect,
+	TEncodedMarkEffect extends object,
+> {
 	readonly changeAtomIdCodec: IJsonCodec<
 		ChangeAtomId,
 		EncodedChangeAtomId,

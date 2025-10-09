@@ -6,7 +6,10 @@
 import { strict as assert } from "node:assert";
 
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
-import { isPromiseLike, LazyPromise } from "@fluidframework/core-utils/internal";
+import {
+	isPromiseLike,
+	LazyPromise,
+} from "@fluidframework/core-utils/internal";
 import type {
 	IFluidDataStoreChannel,
 	IFluidDataStoreFactory,
@@ -44,7 +47,9 @@ describe("createChildDataStore", () => {
 		public setAttachState = throwNYI;
 		public getAttachSummary = throwNYI;
 		public getAttachGCData = throwNYI;
-		protected channel = new Proxy({} as unknown as IFluidDataStoreChannel, { get: throwNYI });
+		protected channel = new Proxy({} as unknown as IFluidDataStoreChannel, {
+			get: throwNYI,
+		});
 		protected channelP = new LazyPromise(async () => this.channel);
 	};
 
@@ -67,7 +72,9 @@ describe("createChildDataStore", () => {
 		const registry = createRegistry(namedEntries);
 		const createSummarizerNodeFn = () =>
 			new Proxy({} as unknown as ISummarizerNodeWithGC, { get: throwNYI });
-		const storage = new Proxy({} as unknown as IRuntimeStorageService, { get: throwNYI });
+		const storage = new Proxy({} as unknown as IRuntimeStorageService, {
+			get: throwNYI,
+		});
 
 		const parentContext = {
 			clientDetails: {
@@ -164,7 +171,9 @@ describe("createChildDataStore", () => {
 	});
 
 	it("createChildDataStore", async () => {
-		const factory = createFactory(() => ({ runtime: new MockFluidDataStoreRuntime() }));
+		const factory = createFactory(() => ({
+			runtime: new MockFluidDataStoreRuntime(),
+		}));
 		const context = createContext([[factory.type, factory]]);
 		context.createChildDataStore(factory);
 	});

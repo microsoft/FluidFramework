@@ -43,11 +43,19 @@ export class CheckLayers extends BaseCommand<typeof CheckLayers> {
 
 		this.verbose("Package scan completed");
 
-		const layerGraph = LayerGraph.load(resolvedRoot, packages.packages, flags.info);
+		const layerGraph = LayerGraph.load(
+			resolvedRoot,
+			packages.packages,
+			flags.info,
+		);
 
 		// Write human-readable package list organized by layer
 		if (flags.md !== undefined) {
-			const packagesMdFilePath: string = path.join(resolvedRoot, flags.md, packagesMdFileName);
+			const packagesMdFilePath: string = path.join(
+				resolvedRoot,
+				flags.md,
+				packagesMdFileName,
+			);
 			await writeFileWithLineFeeds(
 				packagesMdFilePath,
 				layerGraph.generatePackageLayersMarkdown(resolvedRoot),

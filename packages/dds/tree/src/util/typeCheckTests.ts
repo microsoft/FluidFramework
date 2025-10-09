@@ -80,7 +80,8 @@ interface GenericInvariantInterface<in out T> {
 }
 
 // Check that interface can be implemented without needing extra members
-declare class GenericInvariantImplementation<T> implements GenericInvariantInterface<T> {}
+declare class GenericInvariantImplementation<T>
+	implements GenericInvariantInterface<T> {}
 
 /**
  * Import this into a context where you want to be sure the TypeCheck library is functioning properly.
@@ -92,7 +93,10 @@ declare class GenericInvariantImplementation<T> implements GenericInvariantInter
 export type EnforceTypeCheckTests =
 	// Add dummy use of type checking types above
 	| requireTrue<
-			isAssignableTo<GenericInvariantImplementation<number>, GenericInvariantInterface<number>>
+			isAssignableTo<
+				GenericInvariantImplementation<number>,
+				GenericInvariantInterface<number>
+			>
 	  >
 
 	// Positive tests
@@ -121,42 +125,85 @@ export type EnforceTypeCheckTests =
 	| requireFalse<isAssignableTo<Nominal1, never>>
 
 	// test Covariant
-	| requireFalse<isAssignableTo<GenericCovariant<Nominal1>, GenericCovariant<Nominal2>>>
-	| requireTrue<isAssignableTo<GenericCovariant<Derived1>, GenericCovariant<Nominal1>>>
-	| requireFalse<isAssignableTo<GenericCovariant<Nominal1>, GenericCovariant<Derived1>>>
+	| requireFalse<
+			isAssignableTo<GenericCovariant<Nominal1>, GenericCovariant<Nominal2>>
+	  >
+	| requireTrue<
+			isAssignableTo<GenericCovariant<Derived1>, GenericCovariant<Nominal1>>
+	  >
+	| requireFalse<
+			isAssignableTo<GenericCovariant<Nominal1>, GenericCovariant<Derived1>>
+	  >
 
 	// test Contravariant
 	| requireFalse<
-			isAssignableTo<GenericContravariant<Nominal1>, GenericContravariant<Nominal2>>
+			isAssignableTo<
+				GenericContravariant<Nominal1>,
+				GenericContravariant<Nominal2>
+			>
 	  >
 	| requireFalse<
-			isAssignableTo<GenericContravariant<Derived1>, GenericContravariant<Nominal1>>
+			isAssignableTo<
+				GenericContravariant<Derived1>,
+				GenericContravariant<Nominal1>
+			>
 	  >
-	| requireTrue<isAssignableTo<GenericContravariant<Nominal1>, GenericContravariant<Derived1>>>
+	| requireTrue<
+			isAssignableTo<
+				GenericContravariant<Nominal1>,
+				GenericContravariant<Derived1>
+			>
+	  >
 
 	// test Invariant
-	| requireFalse<isAssignableTo<GenericInvariant<Nominal1>, GenericInvariant<Nominal2>>>
-	| requireFalse<isAssignableTo<GenericInvariant<Derived1>, GenericInvariant<Nominal1>>>
-	| requireFalse<isAssignableTo<GenericInvariant<Nominal1>, GenericInvariant<Derived1>>>
+	| requireFalse<
+			isAssignableTo<GenericInvariant<Nominal1>, GenericInvariant<Nominal2>>
+	  >
+	| requireFalse<
+			isAssignableTo<GenericInvariant<Derived1>, GenericInvariant<Nominal1>>
+	  >
+	| requireFalse<
+			isAssignableTo<GenericInvariant<Nominal1>, GenericInvariant<Derived1>>
+	  >
 
 	// test Multiple parameters
 	| requireFalse<
-			isAssignableTo<GenericMulti<Nominal1, number>, GenericMulti<Derived1, number>>
+			isAssignableTo<
+				GenericMulti<Nominal1, number>,
+				GenericMulti<Derived1, number>
+			>
 	  >
 	| requireFalse<
-			isAssignableTo<GenericMulti<number, Nominal1>, GenericMulti<number, Derived1>>
+			isAssignableTo<
+				GenericMulti<number, Nominal1>,
+				GenericMulti<number, Derived1>
+			>
 	  >
-	| requireTrue<isAssignableTo<GenericMulti<number, Derived1>, GenericMulti<number, Nominal1>>>
+	| requireTrue<
+			isAssignableTo<
+				GenericMulti<number, Derived1>,
+				GenericMulti<number, Nominal1>
+			>
+	  >
 
 	// test Covariant Interface
 	| requireFalse<
-			isAssignableTo<GenericCovariantInterface<Nominal1>, GenericCovariantInterface<Nominal2>>
+			isAssignableTo<
+				GenericCovariantInterface<Nominal1>,
+				GenericCovariantInterface<Nominal2>
+			>
 	  >
 	| requireTrue<
-			isAssignableTo<GenericCovariantInterface<Derived1>, GenericCovariantInterface<Nominal1>>
+			isAssignableTo<
+				GenericCovariantInterface<Derived1>,
+				GenericCovariantInterface<Nominal1>
+			>
 	  >
 	| requireFalse<
-			isAssignableTo<GenericCovariantInterface<Nominal1>, GenericCovariantInterface<Derived1>>
+			isAssignableTo<
+				GenericCovariantInterface<Nominal1>,
+				GenericCovariantInterface<Derived1>
+			>
 	  >
 
 	// test Contravariant Interface
@@ -181,13 +228,22 @@ export type EnforceTypeCheckTests =
 
 	// test Invariant Interface
 	| requireFalse<
-			isAssignableTo<GenericInvariantInterface<Nominal1>, GenericInvariantInterface<Nominal2>>
+			isAssignableTo<
+				GenericInvariantInterface<Nominal1>,
+				GenericInvariantInterface<Nominal2>
+			>
 	  >
 	| requireFalse<
-			isAssignableTo<GenericInvariantInterface<Derived1>, GenericInvariantInterface<Nominal1>>
+			isAssignableTo<
+				GenericInvariantInterface<Derived1>,
+				GenericInvariantInterface<Nominal1>
+			>
 	  >
 	| requireFalse<
-			isAssignableTo<GenericInvariantInterface<Nominal1>, GenericInvariantInterface<Derived1>>
+			isAssignableTo<
+				GenericInvariantInterface<Nominal1>,
+				GenericInvariantInterface<Derived1>
+			>
 	  >
 
 	// test eitherIsAny

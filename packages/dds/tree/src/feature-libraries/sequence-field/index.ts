@@ -35,7 +35,10 @@ export {
 } from "./sequenceFieldChangeRebaser.js";
 export { sequenceFieldChangeCodecFactory } from "./sequenceFieldCodecs.js";
 export { sequenceFieldToDelta } from "./sequenceFieldToDelta.js";
-export { type SequenceFieldEditor, sequenceFieldEditor } from "./sequenceFieldEditor.js";
+export {
+	type SequenceFieldEditor,
+	sequenceFieldEditor,
+} from "./sequenceFieldEditor.js";
 export { MarkListFactory } from "./markListFactory.js";
 export { rebase } from "./rebase.js";
 export { invert } from "./invert.js";

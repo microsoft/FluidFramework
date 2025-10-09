@@ -12,7 +12,10 @@ import {
 import type { IContainer } from "@fluidframework/container-definitions/legacy";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
 
-import type { IInventoryList, IInventoryListAppModel } from "../modelInterfaces.js";
+import type {
+	IInventoryList,
+	IInventoryListAppModel,
+} from "../modelInterfaces.js";
 
 import { InventoryListAppModel } from "./appModel.js";
 import { InventoryListInstantiationFactory } from "./inventoryList.js";
@@ -72,14 +75,20 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 	/**
 	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
 	 */
-	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
+	protected async createModel(
+		runtime: IContainerRuntime,
+		container: IContainer,
+	) {
 		// TODO: remove, just for debugging purposes
 		// eslint-disable-next-line @typescript-eslint/dot-notation
 		window["interactiveContainer"] ??= container;
 
 		return new InventoryListAppModel(
 			await getDataStoreEntryPoint<IInventoryList>(runtime, inventoryListId),
-			await getDataStoreEntryPoint<ISameContainerMigrationTool>(runtime, migrationToolId),
+			await getDataStoreEntryPoint<ISameContainerMigrationTool>(
+				runtime,
+				migrationToolId,
+			),
 			container,
 			runtime,
 		);

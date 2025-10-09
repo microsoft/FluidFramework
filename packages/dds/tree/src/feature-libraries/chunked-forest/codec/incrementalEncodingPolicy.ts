@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { FieldKey, TreeNodeSchemaIdentifier } from "../../../core/index.js";
+import type {
+	FieldKey,
+	TreeNodeSchemaIdentifier,
+} from "../../../core/index.js";
 
 /**
  * Policy to determine whether a node / field should be incrementally encoded.

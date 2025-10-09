@@ -17,7 +17,9 @@ import { generateToken } from "./auth.js";
 /**
  * @legacy @beta
  */
-export function createLocalResolverCreateNewRequest(documentId: string): IRequest {
+export function createLocalResolverCreateNewRequest(
+	documentId: string,
+): IRequest {
 	const createNewRequest: IRequest = {
 		url: `http://localhost:3000/${documentId}`,
 		headers: {
@@ -50,7 +52,11 @@ export class LocalResolver implements IUrlResolver {
 		// TODO Why are we non null asserting here
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const documentId = fullPath.split("/")[0]!;
-		const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
+		const scopes = [
+			ScopeType.DocRead,
+			ScopeType.DocWrite,
+			ScopeType.SummaryWrite,
+		];
 		const resolved: IResolvedUrl = {
 			endpoints: {
 				deltaStorageUrl: `http://localhost:3000/deltas/${this.tenantId}/${documentId}`,
@@ -58,7 +64,9 @@ export class LocalResolver implements IUrlResolver {
 				storageUrl: `http://localhost:3000/repos/${this.tenantId}`,
 			},
 			id: documentId,
-			tokens: { jwt: generateToken(this.tenantId, documentId, this.tokenKey, scopes) },
+			tokens: {
+				jwt: generateToken(this.tenantId, documentId, this.tokenKey, scopes),
+			},
 			type: "fluid",
 			url: `https://localhost:3000/${this.tenantId}/${fullPath}`,
 		};

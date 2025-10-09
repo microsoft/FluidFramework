@@ -27,7 +27,11 @@ export {
 	throwFileSystemErrorAsNetworkError,
 	filepathToString,
 } from "./fileSystemHelper";
-export { MemFsManagerFactory, NodeFsManagerFactory, RedisFsManagerFactory } from "./filesystems";
+export {
+	MemFsManagerFactory,
+	NodeFsManagerFactory,
+	RedisFsManagerFactory,
+} from "./filesystems";
 export {
 	BaseGitRestTelemetryProperties,
 	GitRestLumberEventName,

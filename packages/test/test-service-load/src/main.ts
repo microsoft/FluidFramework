@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { DriverEndpoint, TestDriverTypes } from "@fluid-internal/test-driver-definitions";
+import {
+	DriverEndpoint,
+	TestDriverTypes,
+} from "@fluid-internal/test-driver-definitions";
 import commander from "commander";
 
 import { createLogger } from "./FileLogger.js";
@@ -15,15 +18,28 @@ import { createTestDriver } from "./utils.js";
 const readRunOptions = () => {
 	commander
 		.version("0.0.1")
-		.requiredOption("-d, --driver <driver>", "Which test driver info to use", "odsp")
+		.requiredOption(
+			"-d, --driver <driver>",
+			"Which test driver info to use",
+			"odsp",
+		)
 		.requiredOption(
 			"-p, --profile <profile>",
 			"Which test profile to use from testConfig.json",
 			"ci",
 		)
-		.option("-e, --driverEndpoint <endpoint>", "Which endpoint should the driver target?")
-		.option("-id, --testId <testId>", "Load an existing data store rather than creating new")
-		.option("-c, --credFile <filePath>", "Filename containing user credentials for test")
+		.option(
+			"-e, --driverEndpoint <endpoint>",
+			"Which endpoint should the driver target?",
+		)
+		.option(
+			"-id, --testId <testId>",
+			"Load an existing data store rather than creating new",
+		)
+		.option(
+			"-c, --credFile <filePath>",
+			"Filename containing user credentials for test",
+		)
 		.option("-s, --seed <number>", "Seed for this run")
 		.option("-dbg, --debug", "Debug child processes via --inspect-brk")
 		.option(
@@ -113,7 +129,8 @@ const main = async () => {
 	try {
 		const profile = getProfile(profileName);
 
-		const testUsers = credFilePath !== undefined ? getTestUsers(credFilePath) : undefined;
+		const testUsers =
+			credFilePath !== undefined ? getTestUsers(credFilePath) : undefined;
 
 		await stressTest(testDriver, profile, {
 			testId,

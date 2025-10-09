@@ -4,7 +4,10 @@
  */
 
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
-import { isFluidError, type IFluidErrorBase } from "@fluidframework/telemetry-utils/internal";
+import {
+	isFluidError,
+	type IFluidErrorBase,
+} from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Helper that returns whether the provided error is a usage error. There are more than one implementations of

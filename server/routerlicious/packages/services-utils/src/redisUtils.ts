@@ -49,9 +49,7 @@ export const executeRedisMultiWithHmsetExpire = async (
 
 				// EXPIRE should return the number 1 indicating success. Otherwise, we had an error.
 				if (results[1][1] !== 1) {
-					reject(
-						new Error(`Redis EXPIRE returned unexpected response: ${results[0][1]}`),
-					);
+					reject(new Error(`Redis EXPIRE returned unexpected response: ${results[0][1]}`));
 					return;
 				}
 
@@ -101,9 +99,7 @@ export const executeRedisMultiWithHmsetExpireAndLpush = async (
 
 				// EXPIRE should return the number 1 indicating success. Otherwise, we had an error.
 				if (results[1][1] !== 1) {
-					reject(
-						new Error(`Redis EXPIRE returned unexpected response: ${results[1][1]}`),
-					);
+					reject(new Error(`Redis EXPIRE returned unexpected response: ${results[1][1]}`));
 					return;
 				}
 

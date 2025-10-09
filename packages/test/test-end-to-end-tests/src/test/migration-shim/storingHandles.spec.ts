@@ -30,12 +30,19 @@ import {
 	createSummarizerFromFactory,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
-import { type ITree, SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
+import {
+	type ITree,
+	SchemaFactory,
+	TreeViewConfiguration,
+} from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
 
 const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
 
-function updateHandle(tree: LegacySharedTree, handle: IFluidHandle | undefined): void {
+function updateHandle(
+	tree: LegacySharedTree,
+	handle: IFluidHandle | undefined,
+): void {
 	const rootNode = tree.currentView.getViewNode(tree.currentView.root);
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const nodeId = rootNode.traits.get(legacyNodeId)![0];
@@ -91,7 +98,9 @@ describeCompat("Storing handles", "NoCompat", (getTestObjectProvider, apis) => {
 			return this.context.containerRuntime as ContainerRuntime;
 		}
 
-		public async createBlob(content: string): Promise<IFluidHandle<ArrayBufferLike>> {
+		public async createBlob(
+			content: string,
+		): Promise<IFluidHandle<ArrayBufferLike>> {
 			const buffer = stringToBuffer(content, "utf8");
 			return this.runtime.uploadBlob(buffer);
 		}
@@ -197,7 +206,10 @@ describeCompat("Storing handles", "NoCompat", (getTestObjectProvider, apis) => {
 	// The 2nd runtime factory, V2 of the code
 	const runtimeFactory2 = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: dataObjectFactory2,
-		registryEntries: [dataObjectFactory2.registryEntry, childObjectFactory.registryEntry],
+		registryEntries: [
+			dataObjectFactory2.registryEntry,
+			childObjectFactory.registryEntry,
+		],
 		runtimeOptions,
 	});
 
@@ -227,7 +239,9 @@ describeCompat("Storing handles", "NoCompat", (getTestObjectProvider, apis) => {
 		const shim2 = testObj2.getTree<MigrationShim>();
 		const legacyTree2 = shim2.currentTree as LegacySharedTree;
 
-		const aObj2 = await childObjectFactory.createInstance(testObj2.containerRuntime);
+		const aObj2 = await childObjectFactory.createInstance(
+			testObj2.containerRuntime,
+		);
 		updateHandle(legacyTree2, aObj2.handle);
 		await provider.ensureSynchronized();
 		const handle1 = getHandle(legacyTree1);
@@ -235,9 +249,14 @@ describeCompat("Storing handles", "NoCompat", (getTestObjectProvider, apis) => {
 		const aObj1 = (await handle1.get()) as TestDataObject;
 		aObj1._root.set("quantity", 123);
 		await provider.ensureSynchronized();
-		assert(aObj2._root.get("quantity") === 123, "expected aObj2 to be live and sync");
+		assert(
+			aObj2._root.get("quantity") === 123,
+			"expected aObj2 to be live and sync",
+		);
 
-		const bObj1 = await childObjectFactory.createInstance(testObj1.containerRuntime);
+		const bObj1 = await childObjectFactory.createInstance(
+			testObj1.containerRuntime,
+		);
 		updateHandle(legacyTree1, bObj1.handle);
 		await provider.ensureSynchronized();
 		const handle2 = getHandle(legacyTree2);
@@ -245,9 +264,14 @@ describeCompat("Storing handles", "NoCompat", (getTestObjectProvider, apis) => {
 		const bObj2 = (await handle2.get()) as TestDataObject;
 		bObj2._root.set("quantity", 456);
 		await provider.ensureSynchronized();
-		assert(bObj1._root.get("quantity") === 456, "expected bObj1 to be live and sync");
+		assert(
+			bObj1._root.get("quantity") === 456,
+			"expected bObj1 to be live and sync",
+		);
 
-		const promise1 = new Promise<void>((resolve) => shim1.on("migrated", () => resolve()));
+		const promise1 = new Promise<void>((resolve) =>
+			shim1.on("migrated", () => resolve()),
+		);
 		shim1.submitMigrateOp();
 		await provider.ensureSynchronized();
 		await promise1;
@@ -262,8 +286,14 @@ describeCompat("Storing handles", "NoCompat", (getTestObjectProvider, apis) => {
 		assert(node2.handle !== undefined, "expected to migrate handle");
 		const cObj1 = (await node1.handle.get()) as ChildDataObject;
 		const cObj2 = (await node2.handle.get()) as ChildDataObject;
-		assert(cObj1._root.get("quantity") === 456, "expected cObj1 to be live and sync");
-		assert(cObj2._root.get("quantity") === 456, "expected cObj2 to be live and sync");
+		assert(
+			cObj1._root.get("quantity") === 456,
+			"expected cObj1 to be live and sync",
+		);
+		assert(
+			cObj2._root.get("quantity") === 456,
+			"expected cObj2 to be live and sync",
+		);
 	});
 
 	it("SharedTreeShim can make handles live", async () => {
@@ -271,7 +301,9 @@ describeCompat("Storing handles", "NoCompat", (getTestObjectProvider, apis) => {
 		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;
 		const shim1 = testObj1.getTree<MigrationShim>();
 
-		const promise1 = new Promise<void>((resolve) => shim1.on("migrated", () => resolve()));
+		const promise1 = new Promise<void>((resolve) =>
+			shim1.on("migrated", () => resolve()),
+		);
 		shim1.submitMigrateOp();
 		await promise1;
 		await provider.ensureSynchronized();
@@ -284,9 +316,13 @@ describeCompat("Storing handles", "NoCompat", (getTestObjectProvider, apis) => {
 		await provider.ensureSynchronized();
 		const { summaryVersion } = await summarizeNow(summarizer);
 
-		const container2 = await provider.loadContainer(runtimeFactory2, undefined, {
-			[LoaderHeader.version]: summaryVersion,
-		});
+		const container2 = await provider.loadContainer(
+			runtimeFactory2,
+			undefined,
+			{
+				[LoaderHeader.version]: summaryVersion,
+			},
+		);
 		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
 		const shim2 = testObj2.getTree<SharedTreeShim>();
 
@@ -296,21 +332,43 @@ describeCompat("Storing handles", "NoCompat", (getTestObjectProvider, apis) => {
 		const view2 = newTree2.viewWith(treeConfig);
 		const node1 = view1.root;
 		const node2 = view2.root;
-		assert.equal(node1.handle, undefined, "expected no handle to be stored in node1");
-		assert.equal(node2.handle, undefined, "expected no handle to be stored in node2");
+		assert.equal(
+			node1.handle,
+			undefined,
+			"expected no handle to be stored in node1",
+		);
+		assert.equal(
+			node2.handle,
+			undefined,
+			"expected no handle to be stored in node2",
+		);
 
 		// Send a v2 op and check to see that they are processed.
-		const bObj1 = await childObjectFactory.createInstance(testObj1.containerRuntime);
+		const bObj1 = await childObjectFactory.createInstance(
+			testObj1.containerRuntime,
+		);
 		node1.handle = bObj1.handle;
 		await provider.ensureSynchronized();
-		assert(node1.handle !== undefined, "expected a handle to be stored in node1");
-		assert(node2.handle !== undefined, "expected a handle to be stored in node2");
+		assert(
+			node1.handle !== undefined,
+			"expected a handle to be stored in node1",
+		);
+		assert(
+			node2.handle !== undefined,
+			"expected a handle to be stored in node2",
+		);
 		const bObj2Handle = node2.handle as IFluidHandle;
 		const bObj2 = (await bObj2Handle.get()) as ChildDataObject;
 		bObj1._root.set("quantity", 18);
 		await provider.ensureSynchronized();
-		assert(bObj2._root.get("quantity") === 18, "expected bObj2 to be live and sync");
-		assert(bObj1._root.get("quantity") === 18, "expected bObj1 to be live and sync");
+		assert(
+			bObj2._root.get("quantity") === 18,
+			"expected bObj2 to be live and sync",
+		);
+		assert(
+			bObj1._root.get("quantity") === 18,
+			"expected bObj1 to be live and sync",
+		);
 	});
 
 	it("Blob handles", async () => {

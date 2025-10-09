@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { type IKafkaResources, KafkaRunnerFactory } from "@fluidframework/server-lambdas-driver";
+import {
+	type IKafkaResources,
+	KafkaRunnerFactory,
+} from "@fluidframework/server-lambdas-driver";
 import type * as core from "@fluidframework/server-services-core";
 import { runService } from "@fluidframework/server-services-shared";
 import { configureLogging } from "@fluidframework/server-services-utils";

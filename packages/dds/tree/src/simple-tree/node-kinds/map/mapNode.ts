@@ -74,8 +74,9 @@ import { MapNodeStoredSchema } from "../../../core/index.js";
  *
  * @sealed @public
  */
-export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTypes>
-	extends ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>,
+export interface TreeMapNode<
+	T extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+> extends ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>,
 		TreeNode {
 	/**
 	 * Adds or updates an entry in the map with a specified `key` and a `value`.
@@ -86,7 +87,10 @@ export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTyp
 	 * @remarks
 	 * Setting the value at a key to `undefined` is equivalent to calling {@link TreeMapNode.delete} with that key.
 	 */
-	set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypes<T> | undefined): void;
+	set(
+		key: string,
+		value: InsertableTreeNodeFromImplicitAllowedTypes<T> | undefined,
+	): void;
 
 	/**
 	 * Removes the specified element from this map by its `key`.
@@ -159,16 +163,20 @@ const handler: ProxyHandler<TreeMapNode<any>> = {
 	},
 };
 
-abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends TreeNodeValid<
-	MapNodeInsertableData<T>
-> {
+abstract class CustomMapNodeBase<
+	const T extends ImplicitAllowedTypes,
+> extends TreeNodeValid<MapNodeInsertableData<T>> {
 	public static readonly kind = NodeKind.Map;
 
-	public constructor(input?: InternalTreeNode | MapNodeInsertableData<T> | undefined) {
+	public constructor(
+		input?: InternalTreeNode | MapNodeInsertableData<T> | undefined,
+	) {
 		super(input ?? []);
 	}
 
-	public [Symbol.iterator](): IterableIterator<[string, TreeNodeFromImplicitAllowedTypes<T>]> {
+	public [Symbol.iterator](): IterableIterator<
+		[string, TreeNodeFromImplicitAllowedTypes<T>]
+	> {
 		return this.entries();
 	}
 
@@ -185,12 +193,16 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		const field = this.innerNode.getBoxed(brand(key));
 		this.editor(key).set(undefined, field.length === 0);
 	}
-	public *entries(): IterableIterator<[string, TreeNodeFromImplicitAllowedTypes<T>]> {
+	public *entries(): IterableIterator<
+		[string, TreeNodeFromImplicitAllowedTypes<T>]
+	> {
 		const node = this.innerNode;
 		for (const key of node.keys()) {
 			yield [
 				key,
-				tryGetTreeNodeForField(node.getBoxed(key)) as TreeNodeFromImplicitAllowedTypes<T>,
+				tryGetTreeNodeForField(
+					node.getBoxed(key),
+				) as TreeNodeFromImplicitAllowedTypes<T>,
 			];
 		}
 	}
@@ -206,7 +218,10 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		const node = this.innerNode;
 		return node.keys();
 	}
-	public set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypes<T>): this {
+	public set(
+		key: string,
+		value: InsertableTreeNodeFromImplicitAllowedTypes<T>,
+	): this {
 		const kernel = getKernel(this);
 		const node = this.innerNode;
 		const innerSchema = this.innerNode.context.schema.nodeSchema.get(
@@ -219,7 +234,10 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 
 		const mapTree = prepareForInsertion(
 			value as InsertableContent | undefined,
-			createFieldSchema(FieldKind.Optional, kernel.schema.info as ImplicitAllowedTypes),
+			createFieldSchema(
+				FieldKind.Optional,
+				kernel.schema.info as ImplicitAllowedTypes,
+			),
 			node.context,
 			innerSchema.mapFields,
 		);
@@ -239,11 +257,17 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 	}
 	public forEach<TThis extends TreeMapNode<T>>(
 		this: TThis,
-		callbackFn: (value: TreeNodeFromImplicitAllowedTypes<T>, key: string, map: TThis) => void,
+		callbackFn: (
+			value: TreeNodeFromImplicitAllowedTypes<T>,
+			key: string,
+			map: TThis,
+		) => void,
 		thisArg?: unknown,
 	): void {
 		for (const field of getInnerNode(this)) {
-			const node = tryGetTreeNodeForField(field) as TreeNodeFromImplicitAllowedTypes<T>;
+			const node = tryGetTreeNodeForField(
+				field,
+			) as TreeNodeFromImplicitAllowedTypes<T>;
 			callbackFn.call(thisArg, node, field.key, this);
 		}
 	}
@@ -285,7 +309,10 @@ export function mapSchema<
 			flexNode: FlexTreeNode,
 		): TreeNodeValid<T2> {
 			if (useMapPrototype) {
-				return new Proxy<Schema>(instance as Schema, handler as ProxyHandler<Schema>);
+				return new Proxy<Schema>(
+					instance as Schema,
+					handler as ProxyHandler<Schema>,
+				);
 			}
 			return instance;
 		}
@@ -295,20 +322,25 @@ export function mapSchema<
 			instance: TreeNodeValid<T2>,
 			input: T2,
 		): UnhydratedFlexTreeNode {
-			return unhydratedFlexTreeFromInsertable(input as FactoryContent, this as typeof Schema);
+			return unhydratedFlexTreeFromInsertable(
+				input as FactoryContent,
+				this as typeof Schema,
+			);
 		}
 
 		public static get allowedTypesIdentifiers(): ReadonlySet<string> {
 			return lazyAllowedTypesIdentifiers.value;
 		}
 
-		protected static override constructorCached: MostDerivedData | undefined = undefined;
+		protected static override constructorCached: MostDerivedData | undefined =
+			undefined;
 
 		protected static override oneTimeSetup(): TreeNodeSchemaInitializedData {
 			const schema = this as MapNodeSchema;
 			return getTreeNodeSchemaInitializedData(this, {
 				shallowCompatibilityTest,
-				toFlexContent: (data: FactoryContent): FlexContent => mapToFlexContent(data, schema),
+				toFlexContent: (data: FactoryContent): FlexContent =>
+					mapToFlexContent(data, schema),
 			});
 		}
 
@@ -319,16 +351,19 @@ export function mapSchema<
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return normalizedTypes.evaluateSet();
 		}
-		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
-		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
-			persistedMetadata;
+		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> =
+			metadata ?? {};
+		public static readonly persistedMetadata:
+			| JsonCompatibleReadOnlyObject
+			| undefined = persistedMetadata;
 
 		// eslint-disable-next-line import/no-deprecated
 		public get [typeNameSymbol](): TName {
 			return identifier;
 		}
 		public get [typeSchemaSymbol](): typeof schemaErased {
-			return Schema.constructorCached?.constructor as unknown as typeof schemaErased;
+			return Schema.constructorCached
+				?.constructor as unknown as typeof schemaErased;
 		}
 
 		public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
@@ -353,7 +388,12 @@ export function mapSchema<
 		ImplicitlyConstructable,
 		TCustomMetadata
 	> &
-		MapNodePojoEmulationSchema<TName, T, ImplicitlyConstructable, TCustomMetadata> &
+		MapNodePojoEmulationSchema<
+			TName,
+			T,
+			ImplicitlyConstructable,
+			TCustomMetadata
+		> &
 		TreeNodeSchemaCorePrivate = Schema;
 	return schemaErased;
 }
@@ -394,7 +434,10 @@ function shallowCompatibilityTest(data: FactoryContent): CompatibilityLevel {
  * @param data - The tree data to be transformed. Must be an iterable or Record like object.
  * @param schema - The schema to comply with.
  */
-function mapToFlexContent(data: FactoryContent, schema: MapNodeSchema): FlexContent {
+function mapToFlexContent(
+	data: FactoryContent,
+	schema: MapNodeSchema,
+): FlexContent {
 	if (!(typeof data === "object" && data !== null)) {
 		throw new UsageError(`Input data is incompatible with Map schema: ${data}`);
 	}

@@ -15,7 +15,10 @@ import type {
 	IReadinessCheck,
 	IDenyList,
 } from "@fluidframework/server-services-core";
-import { RestLessServer, createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
+import {
+	RestLessServer,
+	createHealthCheckEndpoints,
+} from "@fluidframework/server-services-shared";
 import {
 	BaseTelemetryProperties,
 	CommonProperties,
@@ -86,15 +89,10 @@ export function create(
 					const authHeader = req.get("Authorization");
 					const documentId = getDocumentIdFromRequest(tenantId, authHeader);
 					const additionalProperties: Record<string, any> = {
-						[HttpProperties.driverVersion]: tokens.req(
-							req,
-							res,
-							DriverVersionHeaderName,
-						),
+						[HttpProperties.driverVersion]: tokens.req(req, res, DriverVersionHeaderName),
 						[BaseTelemetryProperties.tenantId]: tenantId,
 						[BaseTelemetryProperties.documentId]: documentId,
-						[CommonProperties.callingServiceName]:
-							req.headers[CallingServiceHeaderName] ?? "",
+						[CommonProperties.callingServiceName]: req.headers[CallingServiceHeaderName] ?? "",
 					};
 					res.locals.tenantId = tenantId;
 					res.locals.documentId = documentId;

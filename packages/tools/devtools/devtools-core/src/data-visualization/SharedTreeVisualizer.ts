@@ -15,7 +15,10 @@ import type {
 import { NodeKind, SchemaFactory, Tree } from "@fluidframework/tree/internal";
 
 import type { VisualizeChildData } from "./DataVisualization.js";
-import type { VisualSharedTreeNode, SharedTreeSchemaNode } from "./VisualSharedTreeTypes.js";
+import type {
+	VisualSharedTreeNode,
+	SharedTreeSchemaNode,
+} from "./VisualSharedTreeTypes.js";
 import { VisualSharedTreeNodeKind } from "./VisualSharedTreeTypes.js";
 import {
 	type VisualChildNode,
@@ -224,7 +227,8 @@ async function visualizeObjectNode(
 	for (const [fieldKey, treeFieldSimpleSchema] of schema.fields) {
 		objectNodeSchemaProperties[fieldKey] = {
 			allowedTypes: treeFieldSimpleSchema.allowedTypesIdentifiers,
-			isRequired: treeFieldSimpleSchema.kind === FieldKind.Required ? true : false,
+			isRequired:
+				treeFieldSimpleSchema.kind === FieldKind.Required ? true : false,
 		};
 	}
 

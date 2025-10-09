@@ -62,10 +62,14 @@ export class LocalOdspDocumentServiceFactory extends OdspDocumentServiceFactoryC
 		_clientIsSummarizer?: boolean,
 	): Promise<IDocumentService> {
 		if (_cacheAndTrackerArg !== undefined) {
-			throw new UsageError('Invalid usage. "_cacheAndTrackerArg" should not be provided');
+			throw new UsageError(
+				'Invalid usage. "_cacheAndTrackerArg" should not be provided',
+			);
 		}
 		if (_clientIsSummarizer) {
-			throw new UsageError('Invalid usage. "_clientIsSummarizer" should not be provided');
+			throw new UsageError(
+				'Invalid usage. "_clientIsSummarizer" should not be provided',
+			);
 		}
 		return new LocalOdspDocumentService(
 			getOdspResolvedUrl(resolvedUrl),

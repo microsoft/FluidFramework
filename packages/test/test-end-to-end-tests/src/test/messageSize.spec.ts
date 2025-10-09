@@ -14,7 +14,11 @@ import {
 	ContainerMessageType,
 	disabledCompressionConfig,
 } from "@fluidframework/container-runtime/internal";
-import { ConfigTypes, IConfigProviderBase, IErrorBase } from "@fluidframework/core-interfaces";
+import {
+	ConfigTypes,
+	IConfigProviderBase,
+	IErrorBase,
+} from "@fluidframework/core-interfaces";
 import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
@@ -56,7 +60,9 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 	let localMap: ISharedMap;
 	let remoteMap: ISharedMap;
 
-	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => {
+	const configProvider = (
+		settings: Record<string, ConfigTypes>,
+	): IConfigProviderBase => {
 		return {
 			getRawConfig: (name: string): ConfigTypes => settings[name],
 		};
@@ -73,12 +79,14 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// Create a Container for the first client.
 		localContainer = await provider.makeTestContainer(configWithFeatureGates);
-		localDataObject = (await localContainer.getEntryPoint()) as ITestFluidObject;
+		localDataObject =
+			(await localContainer.getEntryPoint()) as ITestFluidObject;
 		localMap = await localDataObject.getSharedObject<ISharedMap>(mapId);
 
 		// Load the Container that was created by the first client.
 		remoteContainer = await provider.loadTestContainer(configWithFeatureGates);
-		remoteDataObject = (await remoteContainer.getEntryPoint()) as ITestFluidObject;
+		remoteDataObject =
+			(await remoteContainer.getEntryPoint()) as ITestFluidObject;
 		remoteMap = await remoteDataObject.getSharedObject<ISharedMap>(mapId);
 
 		await waitForContainerConnection(localContainer, true);
@@ -99,7 +107,11 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 		}
 	};
 
-	const assertMapValues = (map: ISharedMap, count: number, expected: string): void => {
+	const assertMapValues = (
+		map: ISharedMap,
+		count: number,
+		expected: string,
+	): void => {
 		for (let i = 0; i < count; i++) {
 			const value = map.get(`key${i}`);
 			assert.strictEqual(value, expected, `Wrong value for key${i}`);
@@ -122,7 +134,12 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 
 	itExpects(
 		"A large op will close the container when compression is disabled",
-		[{ eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" }],
+		[
+			{
+				eventName: "fluid:telemetry:Container:ContainerClose",
+				error: "BatchTooLarge",
+			},
+		],
 		async () => {
 			const maxMessageSizeInBytes = 1024 * 1024; // 1Mb
 			await setupContainers(configWithCompressionDisabled);
@@ -260,7 +277,12 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 
 	itExpects(
 		"Large ops fail when compression is disabled and the content is over max op size",
-		[{ eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" }],
+		[
+			{
+				eventName: "fluid:telemetry:Container:ContainerClose",
+				error: "BatchTooLarge",
+			},
+		],
 		async function () {
 			const maxMessageSizeInBytes = 5 * 1024 * 1024; // 5MB
 			await setupContainers(configWithCompressionDisabled);
@@ -273,7 +295,10 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 			const errorP = captureContainerCloseError(localContainer);
 			await provider.ensureSynchronized();
 
-			assert(localContainer.closed, "Local Container should be closed during flush");
+			assert(
+				localContainer.closed,
+				"Local Container should be closed during flush",
+			);
 			const {
 				errorType,
 				dataProcessingCodepath,
@@ -306,7 +331,10 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 
 			// Confirm the remote map didn't receive any of the large ops
 			remoteMap.delete("test"); // So we can just check for empty on the next line
-			assert(remoteMap.size === 0, "Remote map should not have received any of the large ops");
+			assert(
+				remoteMap.size === 0,
+				"Remote map should not have received any of the large ops",
+			);
 		},
 	);
 
@@ -327,7 +355,10 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 			await setupContainers(containerConfigGroupedBatching);
 			// This is currently not supported by the local server. Nacks will occur because too many messages without summary (see localServerTestDriver.ts).
 			// This is not supported by tinylicious. For some reason, the socket is accepting more than 1 MB.
-			if (provider.driver.type === "local" || provider.driver.type === "tinylicious") {
+			if (
+				provider.driver.type === "local" ||
+				provider.driver.type === "tinylicious"
+			) {
 				this.skip();
 			}
 
@@ -427,7 +458,12 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 
 		itExpects(
 			"Large ops fail when compression enabled and compressed content is over max op size",
-			[{ eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" }],
+			[
+				{
+					eventName: "fluid:telemetry:Container:ContainerClose",
+					error: "BatchTooLarge",
+				},
+			],
 			async function () {
 				const maxMessageSizeInBytes = 50 * bytesPerKB; // 50 KB
 				await setupContainers({
@@ -481,10 +517,13 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 			});
 			totalPayloadSizeInBytes = 0;
 			totalOps = 0;
-			toIDeltaManagerFull(localContainer.deltaManager).outbound.on("push", (messages) => {
-				totalPayloadSizeInBytes += JSON.stringify(messages).length;
-				totalOps += messages.length;
-			});
+			toIDeltaManagerFull(localContainer.deltaManager).outbound.on(
+				"push",
+				(messages) => {
+					totalPayloadSizeInBytes += JSON.stringify(messages).length;
+					totalOps += messages.length;
+				},
+			);
 		};
 
 		const compressionRatio = 0.1;
@@ -518,7 +557,8 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 				{
 					messagesInBatch: 10,
 					messageSize: compressionSizeThreshold + 1,
-					expectedSize: badCompressionRatio * 10 * (compressionSizeThreshold + 1),
+					expectedSize:
+						badCompressionRatio * 10 * (compressionSizeThreshold + 1),
 					// In order for chunking to kick in, we need to force compression to output
 					// a payload larger than the payload size limit, which is done by compressing
 					// random data.
@@ -629,7 +669,9 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 					remoteContainer,
 					(op) => {
 						const contents =
-							typeof op.contents === "string" ? JSON.parse(op.contents) : undefined;
+							typeof op.contents === "string"
+								? JSON.parse(op.contents)
+								: undefined;
 						return (
 							contents?.type === ContainerMessageType.ChunkedOp &&
 							contents?.contents?.chunkId === contents?.contents?.totalChunks
@@ -655,13 +697,19 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 							container.disconnect();
 							container.once("connected", () => {
 								resolve();
-								toIDeltaManagerFull(container.deltaManager).outbound.off("op", handler);
+								toIDeltaManagerFull(container.deltaManager).outbound.off(
+									"op",
+									handler,
+								);
 							});
 							container.connect();
 						}
 					};
 
-					toIDeltaManagerFull(container.deltaManager).outbound.on("op", handler);
+					toIDeltaManagerFull(container.deltaManager).outbound.on(
+						"op",
+						handler,
+					);
 				});
 			};
 
@@ -678,7 +726,8 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 					localContainer,
 					(batch) =>
 						batch.length === 1 &&
-						JSON.parse(batch[0].contents as string)?.type === ContainerMessageType.ChunkedOp,
+						JSON.parse(batch[0].contents as string)?.type ===
+							ContainerMessageType.ChunkedOp,
 					2,
 				);
 
@@ -694,7 +743,8 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 						const parsedContent = JSON.parse(batch[0].contents as string);
 						return (
 							parsedContent?.type === ContainerMessageType.ChunkedOp &&
-							parsedContent.contents.chunkId === parsedContent.contents.totalChunks
+							parsedContent.contents.chunkId ===
+								parsedContent.contents.totalChunks
 						);
 					},
 					1,

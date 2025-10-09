@@ -101,10 +101,7 @@ describe("Routerlicious", () => {
 				// Create a second client and have it join
 				start += MinSequenceNumberWindow;
 				await lambda.handler(
-					kafkaMessageFactory.sequenceMessage(
-						nackClientFactory.createJoin(start),
-						testId,
-					),
+					kafkaMessageFactory.sequenceMessage(nackClientFactory.createJoin(start), testId),
 				);
 				await lambda.handler(
 					kafkaMessageFactory.sequenceMessage(
@@ -139,11 +136,7 @@ describe("Routerlicious", () => {
 					"getCheckpoint",
 					Sinon.fake.resolves(_.cloneDeep(testData[0])),
 				);
-				Sinon.replace(
-					checkpointRepository,
-					"writeCheckpoint",
-					Sinon.fake.resolves(undefined),
-				);
+				Sinon.replace(checkpointRepository, "writeCheckpoint", Sinon.fake.resolves(undefined));
 				Sinon.replace(checkpointService, "writeCheckpoint", Sinon.fake.resolves(undefined));
 
 				testKafka = new TestKafka();
@@ -261,14 +254,7 @@ describe("Routerlicious", () => {
 
 				it("Should nack a client that sends a no-op under the min sequence number", async () => {
 					const nackClientFactory = new MessageFactory(testId, "test2");
-					await testNack(
-						0,
-						MessageType.Operation,
-						10,
-						MessageType.NoOp,
-						5,
-						nackClientFactory,
-					);
+					await testNack(0, MessageType.Operation, 10, MessageType.NoOp, 5, nackClientFactory);
 					const lastMessage = testKafka.getLastMessage();
 					assert.equal(lastMessage.type, NackOperationType);
 				});
@@ -357,9 +343,7 @@ describe("Routerlicious", () => {
 				it("Should be able to ticket an incoming message and queue signals", async () => {
 					const join = messageFactory.createJoin();
 					const message = messageFactory.create();
-					await lambdaWithSignals.handler(
-						kafkaMessageFactory.sequenceMessage(join, testId),
-					);
+					await lambdaWithSignals.handler(kafkaMessageFactory.sequenceMessage(join, testId));
 					await lambdaWithSignals.handler(
 						kafkaMessageFactory.sequenceMessage(message, testId),
 					);
@@ -389,10 +373,7 @@ describe("Routerlicious", () => {
 
 					// process a leave message and expect a leave op and leave signal
 					await lambdaWithSignals.handler(
-						kafkaMessageFactory.sequenceMessage(
-							messageFactory.createLeave(123),
-							testId,
-						),
+						kafkaMessageFactory.sequenceMessage(messageFactory.createLeave(123), testId),
 					);
 					await quiesceWithNoClientsConnected();
 
@@ -450,10 +431,7 @@ describe("Routerlicious", () => {
 
 					// And then have a new client go under the latest working set msn but above the published msn
 					await lambda.handler(
-						kafkaMessageFactory.sequenceMessage(
-							secondMessageFactory.createJoin(2200),
-							testId,
-						),
+						kafkaMessageFactory.sequenceMessage(secondMessageFactory.createJoin(2200), testId),
 					);
 					await lambda.handler(
 						kafkaMessageFactory.sequenceMessage(
@@ -531,10 +509,7 @@ describe("Routerlicious", () => {
 						),
 					);
 					await lambda.handler(
-						kafkaMessageFactory.sequenceMessage(
-							secondMessageFactory.createJoin(2),
-							testId,
-						),
+						kafkaMessageFactory.sequenceMessage(secondMessageFactory.createJoin(2), testId),
 					);
 					await lambda.handler(
 						kafkaMessageFactory.sequenceMessage(
@@ -560,8 +535,7 @@ describe("Routerlicious", () => {
 							secondMessageFactory.create(
 								MessageType.Operation,
 								20,
-								DefaultServiceConfiguration.deli.clientTimeout +
-									2 * MinSequenceNumberWindow,
+								DefaultServiceConfiguration.deli.clientTimeout + 2 * MinSequenceNumberWindow,
 							),
 							testId,
 						),
@@ -604,8 +578,7 @@ describe("Routerlicious", () => {
 							secondMessageFactory.create(
 								MessageType.Operation,
 								20,
-								DefaultServiceConfiguration.deli.clientTimeout +
-									2 * MinSequenceNumberWindow,
+								DefaultServiceConfiguration.deli.clientTimeout + 2 * MinSequenceNumberWindow,
 							),
 							testId,
 						),
@@ -620,10 +593,7 @@ describe("Routerlicious", () => {
 
 					// Create some starter messages
 					await lambda.handler(
-						kafkaMessageFactory.sequenceMessage(
-							messageFactory.createJoin(timeOffset),
-							testId,
-						),
+						kafkaMessageFactory.sequenceMessage(messageFactory.createJoin(timeOffset), testId),
 					);
 					await quiesceWithClientsConnected();
 					assert.equal(testKafka.getLastMessage().operation.minimumSequenceNumber, 0);

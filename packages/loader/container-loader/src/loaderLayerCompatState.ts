@@ -44,33 +44,35 @@ export const loaderCompatDetailsForRuntime: ILayerCompatDetails = {
  * The requirements that the Runtime layer must meet to be compatible with this Loader.
  * @internal
  */
-export const runtimeSupportRequirementsForLoader: ILayerCompatSupportRequirements = {
-	/**
-	 * Minimum generation that Runtime must be at to be compatible with Loader. Note that 0 is used here for
-	 * Runtime layers before the introduction of the layer compatibility enforcement.
-	 */
-	minSupportedGeneration: 0,
-	/**
-	 * The features that the Runtime must support to be compatible with Loader.
-	 */
-	requiredFeatures: [],
-};
+export const runtimeSupportRequirementsForLoader: ILayerCompatSupportRequirements =
+	{
+		/**
+		 * Minimum generation that Runtime must be at to be compatible with Loader. Note that 0 is used here for
+		 * Runtime layers before the introduction of the layer compatibility enforcement.
+		 */
+		minSupportedGeneration: 0,
+		/**
+		 * The features that the Runtime must support to be compatible with Loader.
+		 */
+		requiredFeatures: [],
+	};
 
 /**
  * The requirements that the Driver layer must meet to be compatible with this Loader.
  * @internal
  */
-export const driverSupportRequirementsForLoader: ILayerCompatSupportRequirements = {
-	/**
-	 * Minimum generation that Driver must be at to be compatible with Loader. Note that 0 is used here for
-	 * Driver layers before the introduction of the layer compatibility enforcement.
-	 */
-	minSupportedGeneration: 0,
-	/**
-	 * The features that the Driver must support to be compatible with Loader.
-	 */
-	requiredFeatures: [],
-};
+export const driverSupportRequirementsForLoader: ILayerCompatSupportRequirements =
+	{
+		/**
+		 * Minimum generation that Driver must be at to be compatible with Loader. Note that 0 is used here for
+		 * Driver layers before the introduction of the layer compatibility enforcement.
+		 */
+		minSupportedGeneration: 0,
+		/**
+		 * The features that the Driver must support to be compatible with Loader.
+		 */
+		requiredFeatures: [],
+	};
 
 /**
  * Validates that the Runtime layer is compatible with the Loader. *
@@ -90,7 +92,8 @@ export function validateRuntimeCompatibility(
 				runtimeVersion: maybeRuntimeCompatDetails?.pkgVersion,
 				loaderGeneration: loaderCompatDetailsForRuntime.generation,
 				runtimeGeneration: maybeRuntimeCompatDetails?.generation,
-				minSupportedGeneration: runtimeSupportRequirementsForLoader.minSupportedGeneration,
+				minSupportedGeneration:
+					runtimeSupportRequirementsForLoader.minSupportedGeneration,
 				isGenerationCompatible: layerCheckResult.isGenerationCompatible,
 				unsupportedFeatures: layerCheckResult.unsupportedFeatures,
 			}),
@@ -118,7 +121,8 @@ export function validateDriverCompatibility(
 				driverVersion: maybeDriverCompatDetails?.pkgVersion,
 				loaderGeneration: loaderCoreCompatDetails.generation,
 				driverGeneration: maybeDriverCompatDetails?.generation,
-				minSupportedGeneration: driverSupportRequirementsForLoader.minSupportedGeneration,
+				minSupportedGeneration:
+					driverSupportRequirementsForLoader.minSupportedGeneration,
 				isGenerationCompatible: layerCheckResult.isGenerationCompatible,
 				unsupportedFeatures: layerCheckResult.unsupportedFeatures,
 			}),

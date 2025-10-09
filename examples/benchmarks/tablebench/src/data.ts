@@ -223,8 +223,8 @@ export function generateRow(random: IRandom): InsertableTypedNode<typeof Row> {
 
 	return {
 		"Order ID": random.integer(100000000, 999999999),
-		"Region": region,
-		"Country": country,
+		Region: region,
+		Country: country,
 		"Item Type": itemType,
 		"Sales Channel": random.pick(["Online", "Offline"]),
 		"Order Priority": random.pick(["H", "M", "L", "C"]),

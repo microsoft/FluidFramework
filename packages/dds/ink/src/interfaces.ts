@@ -191,7 +191,10 @@ export interface IStylusOperation {
  * Ink operations are one of several types.
  * @internal
  */
-export type IInkOperation = IClearOperation | ICreateStrokeOperation | IStylusOperation;
+export type IInkOperation =
+	| IClearOperation
+	| ICreateStrokeOperation
+	| IStylusOperation;
 
 /**
  * Represents a single ink stroke.

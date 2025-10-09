@@ -57,7 +57,9 @@ describe("simple tree indexes", () => {
 			schema.identifier === IndexableParent.identifier ||
 			schema.identifier === IndexableChild.identifier
 		) {
-			return schema.identifier === IndexableParent.identifier ? parentKey : childKey;
+			return schema.identifier === IndexableParent.identifier
+				? parentKey
+				: childKey;
 		}
 		return;
 	}
@@ -100,7 +102,8 @@ describe("simple tree indexes", () => {
 		};
 		const anchor = forest.anchors.track(path);
 		const anchorNode =
-			forest.anchors.locate(anchor) ?? assert.fail("should be able to find anchor to child");
+			forest.anchors.locate(anchor) ??
+			assert.fail("should be able to find anchor to child");
 		assert.equal(anchorNode.slots.has(flexTreeSlot), false);
 
 		const children = index.get(childId);
@@ -110,7 +113,9 @@ describe("simple tree indexes", () => {
 	});
 
 	it("filters out removed nodes", () => {
-		const { view, parent } = createView(new IndexableChild({ childKey: childId }));
+		const { view, parent } = createView(
+			new IndexableChild({ childKey: childId }),
+		);
 		const index = createSimpleTreeIndex<
 			typeof IndexableParent,
 			string,
@@ -143,7 +148,10 @@ describe("simple tree indexes", () => {
 		}) {}
 		const config = new TreeViewConfiguration({ schema: OtherIndexableParent });
 		const view = getView(config);
-		view.initialize({ other: parentId, child: new OtherIndexableChild({ other: childId }) });
+		view.initialize({
+			other: parentId,
+			child: new OtherIndexableChild({ other: childId }),
+		});
 		const parent = view.root;
 		const index = createSimpleTreeIndex(
 			view,

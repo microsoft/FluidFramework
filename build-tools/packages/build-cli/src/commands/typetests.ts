@@ -75,12 +75,14 @@ If targeting prerelease versions, skipping versions, or using skipping some alte
 		{
 			description:
 				"Update type test configuration in package.json for all packages in the client. This is what would be run for client minor releases on both the release branch and the main branch after the version bump and publishing of the first point release of that minor.",
-			command: "<%= config.bin %> <%= command.id %> -g client --reset --previous",
+			command:
+				"<%= config.bin %> <%= command.id %> -g client --reset --previous",
 		},
 		{
 			description:
 				"Disable type tests and cleanup anything left related to them in the package.json other than the disable flag.",
-			command: "<%= config.bin %> <%= command.id %> --reset --normalize --disable",
+			command:
+				"<%= config.bin %> <%= command.id %> --reset --normalize --disable",
 		},
 	];
 
@@ -177,7 +179,9 @@ export function previousVersion(version: string): string {
 		if (element !== "0") {
 			const numeric = Number(element);
 			if (String(numeric) !== element) {
-				throw new Error(`Unable to lower non-numeric version "${element}" of "${version}"`);
+				throw new Error(
+					`Unable to lower non-numeric version "${element}" of "${version}"`,
+				);
 			}
 			parts[index] = String(numeric - 1);
 			return parts.join(".");
@@ -221,7 +225,9 @@ export function updateTypeTestDependency(
 /**
  * Removes any `typeValidation.broken` entries from package.json.
  */
-export function resetBrokenTests(pkgJson: { typeValidation?: ITypeValidationConfig }): void {
+export function resetBrokenTests(pkgJson: {
+	typeValidation?: ITypeValidationConfig;
+}): void {
 	if (pkgJson.typeValidation !== undefined) {
 		pkgJson.typeValidation.broken = {};
 	}

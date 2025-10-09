@@ -7,7 +7,10 @@
 
 import { EventEmitter } from "@fluid-example/example-utils";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
-import { FluidDataStoreRuntime, FluidObjectHandle } from "@fluidframework/datastore/legacy";
+import {
+	FluidDataStoreRuntime,
+	FluidObjectHandle,
+} from "@fluidframework/datastore/legacy";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/legacy";
 import { ISharedMap, SharedMap } from "@fluidframework/map/legacy";
 import {
@@ -20,8 +23,16 @@ import { ReferenceType, SharedString } from "@fluidframework/sequence/legacy";
 import { EditorView } from "prosemirror-view";
 import React, { useEffect, useRef } from "react";
 
-import { nodeTypeKey, stackTypeBegin, stackTypeEnd, stackTypeKey } from "./fluidBridge.js";
-import { FluidCollabManager, IProvideRichTextEditor } from "./fluidCollabManager.js";
+import {
+	nodeTypeKey,
+	stackTypeBegin,
+	stackTypeEnd,
+	stackTypeKey,
+} from "./fluidBridge.js";
+import {
+	FluidCollabManager,
+	IProvideRichTextEditor,
+} from "./fluidCollabManager.js";
 
 function insertMarkers(
 	text: SharedString,
@@ -86,7 +97,11 @@ export class ProseMirror
 	constructor(private readonly runtime: IFluidDataStoreRuntime) {
 		super();
 
-		this.innerHandle = new FluidObjectHandle(this, "", runtime.objectsRoutingContext);
+		this.innerHandle = new FluidObjectHandle(
+			this,
+			"",
+			runtime.objectsRoutingContext,
+		);
 	}
 
 	private async initialize(existing: boolean) {
@@ -123,7 +138,10 @@ export class ProseMirrorFactory implements IFluidDataStoreFactory {
 		return this;
 	}
 
-	public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {
+	public async instantiateDataStore(
+		context: IFluidDataStoreContext,
+		existing: boolean,
+	) {
 		return new FluidDataStoreRuntime(
 			context,
 			new Map(
@@ -133,7 +151,8 @@ export class ProseMirrorFactory implements IFluidDataStoreFactory {
 				]),
 			),
 			existing,
-			async (runtime: IFluidDataStoreRuntime) => ProseMirror.load(runtime, existing),
+			async (runtime: IFluidDataStoreRuntime) =>
+				ProseMirror.load(runtime, existing),
 		);
 	}
 }

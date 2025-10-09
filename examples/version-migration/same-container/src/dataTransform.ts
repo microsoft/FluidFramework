@@ -15,7 +15,11 @@ import type { DataTransformationCallback } from "@fluid-example/example-utils";
 export function readVersion(stringData: string) {
 	const lines = stringData.split("\n");
 	const [versionTag, version] = lines[0].split(":");
-	if (versionTag !== "version" || typeof version !== "string" || version === "") {
+	if (
+		versionTag !== "version" ||
+		typeof version !== "string" ||
+		version === ""
+	) {
 		throw new Error("Can't read version");
 	}
 	return version;
@@ -105,19 +109,19 @@ function transformToTwo(stringData: string) {
  * (1-\>2, 2-\>3, 3-\>4, etc.).  This way only one new transform function needs to be produced and tested for each new
  * format used.
  */
-export const inventoryListDataTransformationCallback: DataTransformationCallback = async (
-	exportedData: unknown,
-	modelVersion: string,
-) => {
-	if (typeof exportedData !== "string") {
-		throw new TypeError("Unexpected data format");
-	}
+export const inventoryListDataTransformationCallback: DataTransformationCallback =
+	async (exportedData: unknown, modelVersion: string) => {
+		if (typeof exportedData !== "string") {
+			throw new TypeError("Unexpected data format");
+		}
 
-	if (modelVersion === "one") {
-		return transformToOne(exportedData);
-	} else if (modelVersion === "two") {
-		return transformToTwo(exportedData);
-	} else {
-		throw new Error(`Don't know how to transform for target version ${modelVersion}`);
-	}
-};
+		if (modelVersion === "one") {
+			return transformToOne(exportedData);
+		} else if (modelVersion === "two") {
+			return transformToTwo(exportedData);
+		} else {
+			throw new Error(
+				`Don't know how to transform for target version ${modelVersion}`,
+			);
+		}
+	};

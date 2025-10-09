@@ -49,8 +49,16 @@ import {
 	validateUsageError,
 	type TreeStoredContentStrict,
 } from "../../utils.js";
-import { describeHydration, getViewForForkedBranch, hydrate } from "../utils.js";
-import { brand, type areSafelyAssignable, type requireTrue } from "../../../util/index.js";
+import {
+	describeHydration,
+	getViewForForkedBranch,
+	hydrate,
+} from "../utils.js";
+import {
+	brand,
+	type areSafelyAssignable,
+	type requireTrue,
+} from "../../../util/index.js";
 
 import {
 	booleanSchema,
@@ -442,7 +450,9 @@ describe("treeNodeApi", () => {
 
 	describe("is", () => {
 		it("is", () => {
-			const config = new TreeViewConfiguration({ schema: [Point, schema.number] });
+			const config = new TreeViewConfiguration({
+				schema: [Point, schema.number],
+			});
 			const view = getView(config);
 			view.initialize({});
 			const { root } = view;
@@ -459,7 +469,9 @@ describe("treeNodeApi", () => {
 		});
 
 		it("`is` can narrow polymorphic leaf field content", () => {
-			const config = new TreeViewConfiguration({ schema: [schema.number, schema.string] });
+			const config = new TreeViewConfiguration({
+				schema: [schema.number, schema.string],
+			});
 			const view = getView(config);
 			view.initialize("x");
 			const { root } = view;
@@ -473,7 +485,9 @@ describe("treeNodeApi", () => {
 		});
 
 		it("`is` can narrow polymorphic combinations of value and objects", () => {
-			const config = new TreeViewConfiguration({ schema: [Point, schema.string] });
+			const config = new TreeViewConfiguration({
+				schema: [Point, schema.string],
+			});
 			const view = getView(config);
 			view.initialize("x");
 			const { root } = view;
@@ -643,7 +657,10 @@ describe("treeNodeApi", () => {
 			assert.equal(Tree.key(added), rootFieldKey);
 
 			view.dispose();
-			assert.throws(() => Tree.key(root), validateUsageError(/Cannot access a deleted node/));
+			assert.throws(
+				() => Tree.key(root),
+				validateUsageError(/Cannot access a deleted node/),
+			);
 		});
 	});
 
@@ -1011,7 +1028,10 @@ describe("treeNodeApi", () => {
 				const config = new TreeViewConfiguration({ schema: TestArray });
 				const view = getView(config);
 				view.initialize(
-					new TestArray(["Hello", new TestArray(["World", new TestArray(["!"])])]),
+					new TestArray([
+						"Hello",
+						new TestArray(["World", new TestArray(["!"])]),
+					]),
 				);
 				const tree = view.root;
 
@@ -1085,7 +1105,9 @@ describe("treeNodeApi", () => {
 			}
 
 			function initializeObjectTree(
-				input: InsertableTreeNodeFromImplicitAllowedTypes<ReturnType<typeof getObjectSchema>>,
+				input: InsertableTreeNodeFromImplicitAllowedTypes<
+					ReturnType<typeof getObjectSchema>
+				>,
 			) {
 				class TestObject extends getObjectSchema() {}
 				const config = new TreeViewConfiguration({ schema: TestObject });
@@ -1269,7 +1291,9 @@ describe("treeNodeApi", () => {
 			}
 
 			function initializeMapTree(
-				input: InsertableTreeNodeFromImplicitAllowedTypes<ReturnType<typeof getMapSchema>>,
+				input: InsertableTreeNodeFromImplicitAllowedTypes<
+					ReturnType<typeof getMapSchema>
+				>,
 			) {
 				class TestMap extends getMapSchema() {}
 				const config = new TreeViewConfiguration({ schema: TestMap });
@@ -1319,7 +1343,10 @@ describe("treeNodeApi", () => {
 			});
 
 			it("Recursive", () => {
-				class TestMap extends schema.mapRecursive("TestMap", [schema.string, () => TestMap]) {}
+				class TestMap extends schema.mapRecursive("TestMap", [
+					schema.string,
+					() => TestMap,
+				]) {}
 				const config = new TreeViewConfiguration({ schema: TestMap });
 				const view = getView(config);
 				view.initialize(
@@ -1361,7 +1388,9 @@ describe("treeNodeApi", () => {
 			}
 
 			function initializeArrayTree(
-				input: InsertableTreeNodeFromImplicitAllowedTypes<ReturnType<typeof getArraySchema>>,
+				input: InsertableTreeNodeFromImplicitAllowedTypes<
+					ReturnType<typeof getArraySchema>
+				>,
 			) {
 				class TestArray extends getArraySchema() {}
 				const config = new TreeViewConfiguration({ schema: TestArray });
@@ -1413,7 +1442,10 @@ describe("treeNodeApi", () => {
 				const config = new TreeViewConfiguration({ schema: TestArray });
 				const view = getView(config);
 				view.initialize(
-					new TestArray(["Hello", new TestArray(["World", new TestArray(["!"])])]),
+					new TestArray([
+						"Hello",
+						new TestArray(["World", new TestArray(["!"])]),
+					]),
 				);
 				const tree = view.root;
 
@@ -1489,7 +1521,9 @@ describe("treeNodeApi", () => {
 			const schemaWithIdentifier = schema.object("parent", {
 				identifier: schema.identifier,
 			});
-			const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+			const config = new TreeViewConfiguration({
+				schema: schemaWithIdentifier,
+			});
 			const view = getView(config);
 			const nodeKeyManager = view.nodeKeyManager;
 			const id = nodeKeyManager.stabilizeNodeIdentifier(
@@ -1497,13 +1531,18 @@ describe("treeNodeApi", () => {
 			);
 			view.initialize({ identifier: id });
 
-			assert.equal(Tree.shortId(view.root), nodeKeyManager.localizeNodeIdentifier(id));
+			assert.equal(
+				Tree.shortId(view.root),
+				nodeKeyManager.localizeNodeIdentifier(id),
+			);
 		});
 		it("returns undefined when an identifier fieldkind does not exist.", () => {
 			const schemaWithIdentifier = schema.object("parent", {
 				identifier: schema.string,
 			});
-			const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+			const config = new TreeViewConfiguration({
+				schema: schemaWithIdentifier,
+			});
 			const view = getView(config);
 			view.initialize({ identifier: "testID" });
 
@@ -1513,7 +1552,9 @@ describe("treeNodeApi", () => {
 			const schemaWithIdentifier = schema.object("parent", {
 				identifier: schema.identifier,
 			});
-			const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+			const config = new TreeViewConfiguration({
+				schema: schemaWithIdentifier,
+			});
 			const view = getView(config);
 			view.initialize({ identifier: "invalidUUID" });
 
@@ -1529,7 +1570,9 @@ describe("treeNodeApi", () => {
 				nodeKeyManager.generateLocalNodeIdentifier(),
 			);
 
-			const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+			const config = new TreeViewConfiguration({
+				schema: schemaWithIdentifier,
+			});
 			const view = getView(config);
 			view.initialize({ identifier: stableNodeKey });
 
@@ -1590,7 +1633,9 @@ describe("treeNodeApi", () => {
 				const shortId = Tree.shortId(view.root);
 				assert.equal(
 					shortId,
-					nodeKeyManager.localizeNodeIdentifier(identifier as StableNodeIdentifier),
+					nodeKeyManager.localizeNodeIdentifier(
+						identifier as StableNodeIdentifier,
+					),
 				);
 
 				const node = new HasIdentifier({ identifier });
@@ -1607,7 +1652,9 @@ describe("treeNodeApi", () => {
 				identifier: schema.identifier,
 			});
 
-			const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+			const config = new TreeViewConfiguration({
+				schema: schemaWithIdentifier,
+			});
 			const view = getView(config);
 			const nodeKeyManager = view.nodeKeyManager;
 			const id = nodeKeyManager.stabilizeNodeIdentifier(
@@ -1622,7 +1669,9 @@ describe("treeNodeApi", () => {
 			const schemaWithIdentifier = schema.object("parent", {
 				identifier: schema.string,
 			});
-			const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+			const config = new TreeViewConfiguration({
+				schema: schemaWithIdentifier,
+			});
 			const view = getView(config);
 			view.initialize({ identifier: "testID" });
 
@@ -1639,7 +1688,9 @@ describe("treeNodeApi", () => {
 				nodeKeyManager.generateLocalNodeIdentifier(),
 			);
 
-			const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+			const config = new TreeViewConfiguration({
+				schema: schemaWithIdentifier,
+			});
 			const view = getView(config);
 			view.initialize({ identifier: stableNodeKey });
 
@@ -1694,7 +1745,9 @@ describe("treeNodeApi", () => {
 					identifier: schema.identifier,
 				});
 
-				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+				const config = new TreeViewConfiguration({
+					schema: schemaWithIdentifier,
+				});
 				const view = getView(config);
 				const nodeKeyManager = view.nodeKeyManager;
 				const id = nodeKeyManager.stabilizeNodeIdentifier(
@@ -1712,7 +1765,9 @@ describe("treeNodeApi", () => {
 				const schemaWithIdentifier = schema.object("parent", {
 					identifier: schema.string,
 				});
-				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+				const config = new TreeViewConfiguration({
+					schema: schemaWithIdentifier,
+				});
 				const view = getView(config);
 				view.initialize({ identifier: "testID" });
 
@@ -1723,7 +1778,9 @@ describe("treeNodeApi", () => {
 				const schemaWithIdentifier = schema.object("parent", {
 					identifier: schema.identifier,
 				});
-				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+				const config = new TreeViewConfiguration({
+					schema: schemaWithIdentifier,
+				});
 				const view = getView(config);
 				view.initialize({ identifier: "invalidUUID" });
 
@@ -1740,7 +1797,9 @@ describe("treeNodeApi", () => {
 					nodeKeyManager.generateLocalNodeIdentifier(),
 				);
 
-				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+				const config = new TreeViewConfiguration({
+					schema: schemaWithIdentifier,
+				});
 				const view = getView(config);
 				view.initialize({ identifier: stableNodeKey });
 
@@ -1802,7 +1861,9 @@ describe("treeNodeApi", () => {
 					const shortId = TreeAlpha.identifier.getShort(view.root);
 					assert.equal(
 						shortId,
-						nodeKeyManager.localizeNodeIdentifier(identifier as StableNodeIdentifier),
+						nodeKeyManager.localizeNodeIdentifier(
+							identifier as StableNodeIdentifier,
+						),
 					);
 
 					const node = new HasIdentifier({ identifier });
@@ -1819,7 +1880,9 @@ describe("treeNodeApi", () => {
 					identifier: schema.identifier,
 				});
 
-				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+				const config = new TreeViewConfiguration({
+					schema: schemaWithIdentifier,
+				});
 				const view = getView(config);
 				const nodeKeyManager = view.nodeKeyManager;
 				const id = nodeKeyManager.stabilizeNodeIdentifier(
@@ -1837,7 +1900,9 @@ describe("treeNodeApi", () => {
 				const schemaWithIdentifier = schema.object("parent", {
 					identifier: schema.string,
 				});
-				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+				const config = new TreeViewConfiguration({
+					schema: schemaWithIdentifier,
+				});
 				const view = getView(config);
 				view.initialize({ identifier: "testID" });
 
@@ -1856,7 +1921,9 @@ describe("treeNodeApi", () => {
 				});
 
 				const invalidId = "invalidUUID";
-				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+				const config = new TreeViewConfiguration({
+					schema: schemaWithIdentifier,
+				});
 				const view = getView(config);
 				view.initialize({ identifier: invalidId });
 
@@ -1868,7 +1935,9 @@ describe("treeNodeApi", () => {
 					identifier: schema.identifier,
 				});
 
-				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+				const config = new TreeViewConfiguration({
+					schema: schemaWithIdentifier,
+				});
 				const view = getView(config);
 				const nodeKeyManager = view.nodeKeyManager;
 				const id = nodeKeyManager.stabilizeNodeIdentifier(
@@ -1888,7 +1957,9 @@ describe("treeNodeApi", () => {
 					identifier: schema.identifier,
 				});
 
-				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+				const config = new TreeViewConfiguration({
+					schema: schemaWithIdentifier,
+				});
 				const view = getView(config);
 
 				const nodeKeyManager = view.nodeKeyManager;
@@ -1896,14 +1967,19 @@ describe("treeNodeApi", () => {
 				const id = nodeKeyManager.stabilizeNodeIdentifier(localId);
 				view.initialize({ identifier: id });
 
-				assert.equal(TreeAlpha.identifier.lengthen(view, localId as unknown as number), id);
+				assert.equal(
+					TreeAlpha.identifier.lengthen(view, localId as unknown as number),
+					id,
+				);
 			});
 
 			it("unknown local identifier, throws usage error", () => {
 				const schemaWithIdentifier = schema.object("parent", {
 					identifier: schema.string,
 				});
-				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+				const config = new TreeViewConfiguration({
+					schema: schemaWithIdentifier,
+				});
 				const view = getView(config);
 				view.initialize({ identifier: "testID" });
 				assert.throws(() => TreeAlpha.identifier.lengthen(view, 98));
@@ -1914,7 +1990,9 @@ describe("treeNodeApi", () => {
 					identifier: schema.identifier,
 				});
 
-				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+				const config = new TreeViewConfiguration({
+					schema: schemaWithIdentifier,
+				});
 				const view = getView(config);
 				const nodeKeyManager = view.nodeKeyManager;
 				const id = nodeKeyManager.generateLocalNodeIdentifier();
@@ -1933,11 +2011,16 @@ describe("treeNodeApi", () => {
 					identifier: schema.identifier,
 				});
 
-				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+				const config = new TreeViewConfiguration({
+					schema: schemaWithIdentifier,
+				});
 				const view = getView(config);
 
 				const generatedIdentifier = TreeAlpha.identifier.create(view);
-				const shortIdentifier = TreeAlpha.identifier.shorten(view, generatedIdentifier);
+				const shortIdentifier = TreeAlpha.identifier.shorten(
+					view,
+					generatedIdentifier,
+				);
 				assert(typeof shortIdentifier === "number");
 			});
 		});
@@ -2010,18 +2093,30 @@ describe("treeNodeApi", () => {
 						});
 						const log: unknown[][] = [];
 
-						const unsubscribe = Tree.on(root, eventName, (...args: unknown[]) => {
-							log.push(args);
-						});
+						const unsubscribe = Tree.on(
+							root,
+							eventName,
+							(...args: unknown[]) => {
+								log.push(args);
+							},
+						);
 
 						mutate(root);
 
-						assert.equal(log.length, expectedFirings, `'${eventName}' should fire.`);
+						assert.equal(
+							log.length,
+							expectedFirings,
+							`'${eventName}' should fire.`,
+						);
 
 						unsubscribe();
 						mutate(root);
 
-						assert.equal(log.length, expectedFirings, `'${eventName}' should NOT fire.`);
+						assert.equal(
+							log.length,
+							expectedFirings,
+							`'${eventName}' should NOT fire.`,
+						);
 					});
 				}
 
@@ -2083,7 +2178,9 @@ describe("treeNodeApi", () => {
 				const log: string[] = [];
 
 				TreeBeta.on(testNode, "nodeChanged", (changed) => {
-					log.push(`nodeChanged: ${JSON.stringify([...changed.changedProperties])}`);
+					log.push(
+						`nodeChanged: ${JSON.stringify([...changed.changedProperties])}`,
+					);
 				});
 
 				TreeBeta.on(testNode, "treeChanged", () => {
@@ -2158,12 +2255,20 @@ describe("treeNodeApi", () => {
 
 					mutate(root);
 
-					assert.equal(log.length, expectedFirings, `'${eventName}' should fire.`);
+					assert.equal(
+						log.length,
+						expectedFirings,
+						`'${eventName}' should fire.`,
+					);
 
 					unsubscribe();
 					mutate(root);
 
-					assert.equal(log.length, expectedFirings, `'${eventName}' should NOT fire.`);
+					assert.equal(
+						log.length,
+						expectedFirings,
+						`'${eventName}' should NOT fire.`,
+					);
 				});
 			}
 
@@ -2294,12 +2399,20 @@ describe("treeNodeApi", () => {
 
 					mutate(root);
 
-					assert.equal(log.length, expectedFirings, `'${eventName}' should fire.`);
+					assert.equal(
+						log.length,
+						expectedFirings,
+						`'${eventName}' should fire.`,
+					);
 
 					unsubscribe();
 					mutate(root);
 
-					assert.equal(log.length, expectedFirings, `'${eventName}' should NOT fire.`);
+					assert.equal(
+						log.length,
+						expectedFirings,
+						`'${eventName}' should NOT fire.`,
+					);
 				});
 			}
 
@@ -2445,9 +2558,17 @@ describe("treeNodeApi", () => {
 			actAndVerify(() => (root.rootObject.objectProp = undefined), 1, 1);
 
 			// Attach map node
-			actAndVerify(() => (root.rootObject.mapProp = new map(new Map([["a", 1]]))), 1, 1);
+			actAndVerify(
+				() => (root.rootObject.mapProp = new map(new Map([["a", 1]]))),
+				1,
+				1,
+			);
 			// Replace map node
-			actAndVerify(() => (root.rootObject.mapProp = new map(new Map([["b", 2]]))), 1, 1);
+			actAndVerify(
+				() => (root.rootObject.mapProp = new map(new Map([["b", 2]]))),
+				1,
+				1,
+			);
 			// Set key on map node (we set it above, we know it's good even if it's optional)
 			actAndVerify(() => root.rootObject.mapProp?.set("c", 3), 1, 0); // The node at mapProp isn't changing so no shallow change on rootObject
 			// Delete key on map node (we set it above, we know it's good even if it's optional)
@@ -2495,10 +2616,18 @@ describe("treeNodeApi", () => {
 			const branch = checkout.branch();
 			branch.editor
 				.valueField({ parent: rootNode, field: brand("prop1") })
-				.set(chunkFromJsonableTrees([{ type: brand(numberSchema.identifier), value: 2 }]));
+				.set(
+					chunkFromJsonableTrees([
+						{ type: brand(numberSchema.identifier), value: 2 },
+					]),
+				);
 			branch.editor
 				.valueField({ parent: rootNode, field: brand("prop2") })
-				.set(chunkFromJsonableTrees([{ type: brand(numberSchema.identifier), value: 2 }]));
+				.set(
+					chunkFromJsonableTrees([
+						{ type: brand(numberSchema.identifier), value: 2 },
+					]),
+				);
 
 			checkout.merge(branch);
 
@@ -2532,7 +2661,10 @@ describe("treeNodeApi", () => {
 				nodeChanged = true;
 			});
 			Tree.on(view.root.prop1, "treeChanged", () => {
-				assert(nodeChanged === true, "nodeChanged should have fired before treeChanged");
+				assert(
+					nodeChanged === true,
+					"nodeChanged should have fired before treeChanged",
+				);
 				assert(treeChanged === false, "treeChanged should not have fired yet");
 				treeChanged = true;
 			});
@@ -2540,7 +2672,11 @@ describe("treeNodeApi", () => {
 			view.root.prop1.value = 2;
 
 			// Validate changes actually took place and all listeners fired
-			assert.equal(view.root.prop1.value, 2, "'prop1' value did not change as expected");
+			assert.equal(
+				view.root.prop1.value,
+				2,
+				"'prop1' value did not change as expected",
+			);
 			assert.equal(nodeChanged, true, "'nodeChanged' should have fired");
 			assert.equal(treeChanged, true, "'treeChanged' should have fired");
 		});
@@ -2601,13 +2737,19 @@ describe("treeNodeApi", () => {
 
 			TreeBeta.on(ab, "nodeChanged", (data) => {
 				const x = data.changedProperties;
-				type _check = requireTrue<areSafelyAssignable<typeof x, ReadonlySet<"A" | "B">>>;
+				type _check = requireTrue<
+					areSafelyAssignable<typeof x, ReadonlySet<"A" | "B">>
+				>;
 			});
 
 			// @ts-expect-error Incorrect variance (using method syntax for "nodeChanged" makes this build when it shouldn't: this is a regression test for that issue)
-			TreeBeta.on(ab, "nodeChanged", (data: { changedProperties: ReadonlySet<"A"> }) => {
-				const x = data.changedProperties;
-			});
+			TreeBeta.on(
+				ab,
+				"nodeChanged",
+				(data: { changedProperties: ReadonlySet<"A"> }) => {
+					const x = data.changedProperties;
+				},
+			);
 
 			function oneOf<T extends readonly unknown[]>(...items: T): T[number] {
 				return items[0];
@@ -2711,7 +2853,9 @@ describe("treeNodeApi", () => {
 			const root = view.root;
 
 			const eventLog: (ReadonlySet<string> | undefined)[] = [];
-			TreeBeta.on(root, "nodeChanged", (data) => eventLog.push(data.changedProperties));
+			TreeBeta.on(root, "nodeChanged", (data) =>
+				eventLog.push(data.changedProperties),
+			);
 
 			const { forkView, forkCheckout } = getViewForForkedBranch(view);
 
@@ -2767,11 +2911,19 @@ describe("treeNodeApi", () => {
 		it("clones unhydrated nodes", () => {
 			const topLeft = new TestPoint({ x: 1, y: 1 });
 			const bottomRight = new TestPoint({ x: 10, y: 10 });
-			const rectangle = new TestRectangle({ topLeft, bottomRight, innerPoints: [] });
+			const rectangle = new TestRectangle({
+				topLeft,
+				bottomRight,
+				innerPoints: [],
+			});
 
 			// Clone the root rectangle node.
 			const clonedRectangle = TreeBeta.clone<typeof TestRectangle>(rectangle);
-			assert.deepEqual(rectangle, clonedRectangle, "Root node not cloned properly");
+			assert.deepEqual(
+				rectangle,
+				clonedRectangle,
+				"Root node not cloned properly",
+			);
 			assert.notEqual(
 				rectangle,
 				clonedRectangle,
@@ -2780,8 +2932,16 @@ describe("treeNodeApi", () => {
 
 			// Clone a node inside the rectangle.
 			const clonedTopLeft = TreeBeta.clone<typeof TestPoint>(topLeft);
-			assert.deepEqual(topLeft, clonedTopLeft, "Inner node not cloned properly");
-			assert.notEqual(topLeft, clonedTopLeft, "Cloned inner node object should be different");
+			assert.deepEqual(
+				topLeft,
+				clonedTopLeft,
+				"Inner node not cloned properly",
+			);
+			assert.notEqual(
+				topLeft,
+				clonedTopLeft,
+				"Cloned inner node object should be different",
+			);
 
 			// Modify the original rectangle and validate that the clone is not modified.
 			rectangle.topLeft = new TestPoint({ x: 2, y: 2 });
@@ -2793,7 +2953,9 @@ describe("treeNodeApi", () => {
 		});
 
 		it("clones hydrated nodes", () => {
-			const view = getView(new TreeViewConfiguration({ schema: TestRectangle }));
+			const view = getView(
+				new TreeViewConfiguration({ schema: TestRectangle }),
+			);
 
 			const topLeft = new TestPoint({ x: 1, y: 1 });
 			const bottomRight = new TestPoint({ x: 10, y: 10 });
@@ -2802,7 +2964,11 @@ describe("treeNodeApi", () => {
 
 			// Clone the hydrated root rectangle node.
 			const clonedRectangle = TreeBeta.clone<typeof TestRectangle>(rectangle);
-			assert.deepEqual(rectangle, clonedRectangle, "Root node not cloned properly");
+			assert.deepEqual(
+				rectangle,
+				clonedRectangle,
+				"Root node not cloned properly",
+			);
 			assert.notEqual(
 				rectangle,
 				clonedRectangle,
@@ -2813,7 +2979,11 @@ describe("treeNodeApi", () => {
 			const innerPoint1 = new TestPoint({ x: 2, y: 2 });
 			{
 				const clonedPoint1 = TreeBeta.clone<typeof TestPoint>(innerPoint1);
-				assert.deepEqual(innerPoint1, clonedPoint1, "Inner node not cloned properly");
+				assert.deepEqual(
+					innerPoint1,
+					clonedPoint1,
+					"Inner node not cloned properly",
+				);
 				assert.notEqual(
 					innerPoint1,
 					clonedPoint1,
@@ -2828,8 +2998,16 @@ describe("treeNodeApi", () => {
 			assert(point1 === innerPoint1, "Point not inserted correctly");
 			{
 				const clonedPoint1 = TreeBeta.clone<typeof TestPoint>(point1);
-				assert.deepEqual(point1, clonedPoint1, "Inner node not cloned properly");
-				assert.notEqual(point1, clonedPoint1, "Cloned inner node object should be different");
+				assert.deepEqual(
+					point1,
+					clonedPoint1,
+					"Inner node not cloned properly",
+				);
+				assert.notEqual(
+					point1,
+					clonedPoint1,
+					"Cloned inner node object should be different",
+				);
 			}
 
 			// Modify the original rectangle and validate that the clone is not modified.
@@ -2847,12 +3025,20 @@ describe("treeNodeApi", () => {
 			assert.equal(clonedX, point.x, "Number not cloned properly");
 
 			assert(point.metadata !== undefined, "Metadata not set correctly");
-			const clonedMetadata = TreeBeta.clone<typeof schema.string>(point.metadata);
-			assert.equal(clonedMetadata, point.metadata, "String not cloned properly");
+			const clonedMetadata = TreeBeta.clone<typeof schema.string>(
+				point.metadata,
+			);
+			assert.equal(
+				clonedMetadata,
+				point.metadata,
+				"String not cloned properly",
+			);
 		});
 
 		it("clones hydrated primitive types", () => {
-			const view = getView(new TreeViewConfiguration({ schema: TestRectangle }));
+			const view = getView(
+				new TreeViewConfiguration({ schema: TestRectangle }),
+			);
 
 			const topLeft = new TestPoint({ x: 1, y: 1 });
 			const bottomRight = new TestPoint({ x: 10, y: 10 });
@@ -2864,8 +3050,14 @@ describe("treeNodeApi", () => {
 
 			topLeftPoint.metadata = "hydratedPoint";
 			assert(topLeftPoint.metadata !== undefined, "Metadata not set correctly");
-			const clonedMetadata = TreeBeta.clone<typeof schema.string>(topLeftPoint.metadata);
-			assert.equal(clonedMetadata, topLeftPoint.metadata, "String not cloned properly");
+			const clonedMetadata = TreeBeta.clone<typeof schema.string>(
+				topLeftPoint.metadata,
+			);
+			assert.equal(
+				clonedMetadata,
+				topLeftPoint.metadata,
+				"String not cloned properly",
+			);
 		});
 
 		it("can clone staged types", () => {
@@ -2904,7 +3096,9 @@ describe("treeNodeApi", () => {
 					schema: StagedSchema,
 					schemaData: toInitialSchema(StagedSchema),
 					treeFactory: () =>
-						jsonableTreeFromFieldCursor(fieldCursorFromInsertable(StagedSchema, { foo: 5 })),
+						jsonableTreeFromFieldCursor(
+							fieldCursorFromInsertable(StagedSchema, { foo: 5 }),
+						),
 				});
 				const original = view.root;
 				assert(Tree.is(original, StagedSchema));
@@ -2919,7 +3113,8 @@ describe("treeNodeApi", () => {
 
 				const context = getInnerNode(clone).context;
 				const flexSchema =
-					context.schema.nodeSchema.get(brand(StagedSchema.identifier)) ?? assert.fail();
+					context.schema.nodeSchema.get(brand(StagedSchema.identifier)) ??
+					assert.fail();
 
 				const field = flexSchema.getFieldSchema(brand("foo"));
 				assert.deepEqual(field.types, new Set([numberSchema.identifier]));
@@ -2964,9 +3159,14 @@ describe("treeNodeApi", () => {
 				const view = testDocumentIndependentView({
 					ambiguous: false,
 					schema: StagedSchema,
-					schemaData: toStoredSchema(StagedSchema, permissiveStoredSchemaGenerationOptions),
+					schemaData: toStoredSchema(
+						StagedSchema,
+						permissiveStoredSchemaGenerationOptions,
+					),
 					treeFactory: () =>
-						jsonableTreeFromFieldCursor(fieldCursorFromInsertable(StagedSchema, { foo: 5 })),
+						jsonableTreeFromFieldCursor(
+							fieldCursorFromInsertable(StagedSchema, { foo: 5 }),
+						),
 				});
 				const original = view.root;
 				assert(Tree.is(original, StagedSchema));
@@ -2980,7 +3180,10 @@ describe("treeNodeApi", () => {
 		describe("test-trees", () => {
 			for (const testCase of testSimpleTrees) {
 				it(testCase.name, () => {
-					const tree = TreeAlpha.create<UnsafeUnknownSchema>(testCase.schema, testCase.root());
+					const tree = TreeAlpha.create<UnsafeUnknownSchema>(
+						testCase.schema,
+						testCase.root(),
+					);
 					const exported = TreeBeta.clone(tree);
 					if (isTreeNode(tree)) {
 						// New instance
@@ -3028,7 +3231,11 @@ describe("treeNodeApi", () => {
 			assert.equal(TreeAlpha.create([schema.null, schema.number], null), null);
 			// invalid
 			assert.throws(
-				() => TreeAlpha.create([schema.null, schema.number], "x" as unknown as number),
+				() =>
+					TreeAlpha.create(
+						[schema.null, schema.number],
+						"x" as unknown as number,
+					),
 				validateUsageError(/incompatible/),
 			);
 		});
@@ -3100,7 +3307,10 @@ describe("treeNodeApi", () => {
 						testCase.root(),
 					);
 					// We don't have a lot of ways to check the created tree is correct, so just do some sanity checks. Other more specific tests can cover the details.
-					const tree2 = TreeAlpha.create<UnsafeUnknownSchema>(testCase.schema, tree1);
+					const tree2 = TreeAlpha.create<UnsafeUnknownSchema>(
+						testCase.schema,
+						tree1,
+					);
 					assert.equal(
 						tree1,
 						tree2,
@@ -3120,7 +3330,10 @@ describe("treeNodeApi", () => {
 		describe("importConcise", () => {
 			it("undefined", () => {
 				// Valid
-				assert.equal(TreeBeta.importConcise(schema.optional([]), undefined), undefined);
+				assert.equal(
+					TreeBeta.importConcise(schema.optional([]), undefined),
+					undefined,
+				);
 				// Undefined where not allowed
 				assert.throws(
 					() => TreeBeta.importConcise(schema.required([]), undefined),
@@ -3135,7 +3348,10 @@ describe("treeNodeApi", () => {
 
 			it("union", () => {
 				// Valid
-				assert.equal(TreeBeta.importConcise([schema.null, schema.number], null), null);
+				assert.equal(
+					TreeBeta.importConcise([schema.null, schema.number], null),
+					null,
+				);
 				// invalid
 				assert.throws(
 					() => TreeBeta.importConcise([schema.null, schema.number], "x"),
@@ -3157,7 +3373,11 @@ describe("treeNodeApi", () => {
 					const exported = TreeBeta.exportConcise(view.root);
 					if (testCase.ambiguous) {
 						assert.throws(
-							() => TreeAlpha.importConcise<UnsafeUnknownSchema>(testCase.schema, exported),
+							() =>
+								TreeAlpha.importConcise<UnsafeUnknownSchema>(
+									testCase.schema,
+									exported,
+								),
 							validateUsageError(/compatible with more than one type/),
 						);
 					} else {
@@ -3243,7 +3463,11 @@ describe("treeNodeApi", () => {
 				const factory = new SchemaFactory("Test");
 				class A extends factory.object("A", { a: SchemaFactory.string }) {}
 				assert.throws(
-					() => TreeAlpha.importVerbose(A, { type: A.identifier, fields: { wrong: "x" } }),
+					() =>
+						TreeAlpha.importVerbose(A, {
+							type: A.identifier,
+							fields: { wrong: "x" },
+						}),
 					validateUsageError(
 						`Failed to parse VerboseTree due to unexpected key "wrong" on type "Test.A".`,
 					),
@@ -3261,7 +3485,10 @@ describe("treeNodeApi", () => {
 
 			it("undefined", () => {
 				// Valid
-				assert.equal(TreeAlpha.importVerbose(schema.optional([]), undefined), undefined);
+				assert.equal(
+					TreeAlpha.importVerbose(schema.optional([]), undefined),
+					undefined,
+				);
 				// Undefined where not allowed
 				assert.throws(
 					() => TreeAlpha.importVerbose(schema.required([]), undefined),
@@ -3276,7 +3503,10 @@ describe("treeNodeApi", () => {
 
 			it("union", () => {
 				// Valid
-				assert.equal(TreeAlpha.importVerbose([schema.null, schema.number], null), null);
+				assert.equal(
+					TreeAlpha.importVerbose([schema.null, schema.number], null),
+					null,
+				);
 				// invalid
 				assert.throws(
 					() => TreeAlpha.importVerbose([schema.null, schema.number], "x"),
@@ -3286,7 +3516,10 @@ describe("treeNodeApi", () => {
 
 			it("object", () => {
 				const A = schema.object("A", { x: schema.number });
-				const a = TreeAlpha.importVerbose(A, { type: A.identifier, fields: { x: 1 } });
+				const a = TreeAlpha.importVerbose(A, {
+					type: A.identifier,
+					fields: { x: 1 },
+				});
 				assert.deepEqual(a, { x: 1 });
 			});
 
@@ -3301,7 +3534,9 @@ describe("treeNodeApi", () => {
 						TreeAlpha.importVerbose(Point, exported, {
 							keys: KeyEncodingOptions.knownStoredKeys,
 						}),
-					validateUsageError('Field "x" is not defined in the schema "com.example.Point".'),
+					validateUsageError(
+						'Field "x" is not defined in the schema "com.example.Point".',
+					),
 				);
 				assert.throws(
 					() => TreeAlpha.importVerbose(Point, exported),
@@ -3328,19 +3563,28 @@ describe("treeNodeApi", () => {
 				const dummyContextLimited = getUnhydratedContext(PointUnknown);
 
 				// Context that does know about the unknown field's type
-				const dummyContextFull = getUnhydratedContext([PointUnknown, SchemaFactory.number]);
+				const dummyContextFull = getUnhydratedContext([
+					PointUnknown,
+					SchemaFactory.number,
+				]);
 
 				// Use limited context for view part and full context for flex-tree parts, so that unknown optional fields are unknown in the view schema, but allowed in the flex tree.
 				const flexContext = new UnhydratedContext(
 					defaultSchemaPolicy,
 					dummyContextFull.flexContext.schema,
 				);
-				const context: Context = new Context(flexContext, dummyContextLimited.schema);
+				const context: Context = new Context(
+					flexContext,
+					dummyContextLimited.schema,
+				);
 
 				// Construct an A node from a flex node which has an extra unknown optional field.
-				const field = createField(flexContext, FieldKinds.optional.identifier, brand("x"), [
-					unhydratedFlexTreeFromInsertable(1, SchemaFactory.number),
-				]);
+				const field = createField(
+					flexContext,
+					FieldKinds.optional.identifier,
+					brand("x"),
+					[unhydratedFlexTreeFromInsertable(1, SchemaFactory.number)],
+				);
 
 				const flex = new UnhydratedFlexTreeNode(
 					{ type: brand(PointUnknown.identifier) },
@@ -3350,7 +3594,9 @@ describe("treeNodeApi", () => {
 				const node = createTreeNodeFromInner(flex);
 
 				assert.deepEqual(
-					TreeAlpha.exportVerbose(node, { keys: KeyEncodingOptions.allStoredKeys }),
+					TreeAlpha.exportVerbose(node, {
+						keys: KeyEncodingOptions.allStoredKeys,
+					}),
 					{
 						type: PointUnknown.identifier,
 						fields: { x: 1 },
@@ -3358,7 +3604,9 @@ describe("treeNodeApi", () => {
 				);
 
 				assert.deepEqual(
-					TreeAlpha.exportVerbose(node, { keys: KeyEncodingOptions.knownStoredKeys }),
+					TreeAlpha.exportVerbose(node, {
+						keys: KeyEncodingOptions.knownStoredKeys,
+					}),
 					{
 						type: PointUnknown.identifier,
 						fields: {},
@@ -3366,7 +3614,9 @@ describe("treeNodeApi", () => {
 				);
 
 				assert.deepEqual(
-					TreeAlpha.exportVerbose(node, { keys: KeyEncodingOptions.usePropertyKeys }),
+					TreeAlpha.exportVerbose(node, {
+						keys: KeyEncodingOptions.usePropertyKeys,
+					}),
 					{
 						type: PointUnknown.identifier,
 						fields: {},
@@ -3389,7 +3639,10 @@ describe("treeNodeApi", () => {
 						assert.deepEqual(exported, fromView);
 
 						const jsonable = jsonableTreeFromFieldCursor(
-							fieldCursorFromVerbose(exported === undefined ? [] : [exported], {}),
+							fieldCursorFromVerbose(
+								exported === undefined ? [] : [exported],
+								{},
+							),
 						);
 						assert.deepEqual(testCase.treeFactory(testIdCompressor), jsonable);
 					});
@@ -3412,15 +3665,22 @@ describe("treeNodeApi", () => {
 							assert(tree !== undefined);
 
 							const exported = TreeAlpha.exportVerbose(tree);
-							const imported = TreeAlpha.importVerbose(testCase.schema, exported);
+							const imported = TreeAlpha.importVerbose(
+								testCase.schema,
+								exported,
+							);
 							expectTreesEqual(tree, imported);
 
 							const exportedStored = TreeAlpha.exportVerbose(tree, {
 								keys: KeyEncodingOptions.knownStoredKeys,
 							});
-							const importedStored = TreeAlpha.importVerbose(testCase.schema, exportedStored, {
-								keys: KeyEncodingOptions.knownStoredKeys,
-							});
+							const importedStored = TreeAlpha.importVerbose(
+								testCase.schema,
+								exportedStored,
+								{
+									keys: KeyEncodingOptions.knownStoredKeys,
+								},
+							);
 							expectTreesEqual(tree, importedStored);
 							expectTreesEqual(imported, importedStored);
 						});
@@ -3434,7 +3694,10 @@ describe("treeNodeApi", () => {
 						for (const testCase of testDocuments) {
 							it(testCase.name, () => {
 								const view = testDocumentIndependentView(testCase);
-								const root = testKind === "hydrated" ? view.root : TreeBeta.clone(view.root);
+								const root =
+									testKind === "hydrated"
+										? view.root
+										: TreeBeta.clone(view.root);
 								expectTreesEqual(view.root, root);
 								if (root !== undefined) {
 									// Stored keys
@@ -3452,18 +3715,26 @@ describe("treeNodeApi", () => {
 												validateUsageError(/is not defined in the schema/),
 											);
 										} else {
-											const imported = TreeAlpha.importVerbose(view.schema, exported, {
-												keys: KeyEncodingOptions.knownStoredKeys,
-											});
+											const imported = TreeAlpha.importVerbose(
+												view.schema,
+												exported,
+												{
+													keys: KeyEncodingOptions.knownStoredKeys,
+												},
+											);
 											expectTreesEqual(root, imported);
 										}
 
 										const exportedKnown = TreeAlpha.exportVerbose(root, {
 											keys: KeyEncodingOptions.knownStoredKeys,
 										});
-										const importedKnown = TreeAlpha.importVerbose(view.schema, exportedKnown, {
-											keys: KeyEncodingOptions.knownStoredKeys,
-										});
+										const importedKnown = TreeAlpha.importVerbose(
+											view.schema,
+											exportedKnown,
+											{
+												keys: KeyEncodingOptions.knownStoredKeys,
+											},
+										);
 										if (!testCase.hasUnknownOptionalFields) {
 											expectTreesEqual(root, importedKnown);
 										}
@@ -3472,7 +3743,10 @@ describe("treeNodeApi", () => {
 									// property keys
 									{
 										const exported = TreeAlpha.exportVerbose(root);
-										const imported = TreeAlpha.importVerbose(view.schema, exported);
+										const imported = TreeAlpha.importVerbose(
+											view.schema,
+											exported,
+										);
 										if (!testCase.hasUnknownOptionalFields) {
 											expectTreesEqual(root, imported);
 										}
@@ -3535,9 +3809,13 @@ describe("treeNodeApi", () => {
 						const exported = TreeAlpha.exportCompressed(tree, {
 							oldestCompatibleClient: FluidClientVersion.v2_0,
 						});
-						const imported = TreeAlpha.importCompressed(testCase.schema, exported, {
-							jsonValidator: ajvValidator,
-						});
+						const imported = TreeAlpha.importCompressed(
+							testCase.schema,
+							exported,
+							{
+								jsonValidator: ajvValidator,
+							},
+						);
 						expectTreesEqual(tree, imported);
 					});
 				}

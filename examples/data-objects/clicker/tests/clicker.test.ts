@@ -12,7 +12,9 @@ describe("clicker", () => {
 		retryWithEventualValue(
 			() =>
 				page.evaluate((i: number) => {
-					const clickerElements = document.getElementsByClassName("clicker-value-class");
+					const clickerElements = document.getElementsByClassName(
+						"clicker-value-class",
+					);
 					const clicker = clickerElements[i] as HTMLDivElement;
 					if (clicker) {
 						return clicker.innerText;
@@ -51,9 +53,9 @@ describe("clicker", () => {
 		await expect(page).toClick("button", { text: "+" });
 		await page.waitForFunction(
 			() =>
-				(document.querySelector(".clicker-value-class") as HTMLDivElement).innerText.includes(
-					"1",
-				),
+				(
+					document.querySelector(".clicker-value-class") as HTMLDivElement
+				).innerText.includes("1"),
 			{ timeout: 1000 },
 		);
 
@@ -78,9 +80,9 @@ describe("clicker", () => {
 		await expect(page).toClick("button", { text: "+" });
 		await page.waitForFunction(
 			() =>
-				(document.querySelector(".clicker-value-class") as HTMLDivElement).innerText.includes(
-					"1",
-				),
+				(
+					document.querySelector(".clicker-value-class") as HTMLDivElement
+				).innerText.includes("1"),
 			{ timeout: 1000 },
 		);
 

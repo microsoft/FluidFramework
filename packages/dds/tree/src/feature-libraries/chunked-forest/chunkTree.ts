@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { assert, debugAssert, oob, fail } from "@fluidframework/core-utils/internal";
+import {
+	assert,
+	debugAssert,
+	oob,
+	fail,
+} from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import {
@@ -53,7 +58,10 @@ export function makeTreeChunker(
 		defaultChunkPolicy.sequenceChunkInlineThreshold,
 		defaultChunkPolicy.sequenceChunkInlineThreshold,
 		defaultChunkPolicy.uniformChunkNodeCount,
-		(type: TreeNodeSchemaIdentifier, shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>) =>
+		(
+			type: TreeNodeSchemaIdentifier,
+			shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
+		) =>
 			tryShapeFromNodeSchema(
 				{
 					schema,
@@ -107,7 +115,8 @@ export class Chunker implements IChunker {
 	 * Corresponds to the version of the schema in `schema`.
 	 * Cleared when `schema` changes.
 	 */
-	private readonly typeShapes: Map<TreeNodeSchemaIdentifier, ShapeInfo> = new Map();
+	private readonly typeShapes: Map<TreeNodeSchemaIdentifier, ShapeInfo> =
+		new Map();
 
 	private unregisterSchemaCallback: (() => void) | undefined;
 
@@ -142,8 +151,9 @@ export class Chunker implements IChunker {
 		if (cached !== undefined) {
 			return cached;
 		}
-		this.unregisterSchemaCallback = this.schema.events.on("afterSchemaChange", () =>
-			this.schemaChanged(),
+		this.unregisterSchemaCallback = this.schema.events.on(
+			"afterSchemaChange",
+			() => this.schemaChanged(),
 		);
 		return this.tryShapeFromNodeSchema(schema, this.typeShapes);
 	}
@@ -168,7 +178,10 @@ export class Chunker implements IChunker {
  *
  * @param cursor - cursor in nodes mode
  */
-export function chunkTree(cursor: ITreeCursorSynchronous, policy: ChunkCompressor): TreeChunk {
+export function chunkTree(
+	cursor: ITreeCursorSynchronous,
+	policy: ChunkCompressor,
+): TreeChunk {
 	return chunkRange(cursor, policy, 1, true)[0] ?? oob();
 }
 
@@ -183,7 +196,9 @@ export function chunkField(
 	const length = cursor.getFieldLength();
 	const started = cursor.firstNode();
 	debugAssert(
-		() => started === (length !== 0) || "only 0 length fields should not have nodes",
+		() =>
+			started === (length !== 0) ||
+			"only 0 length fields should not have nodes",
 	);
 	return chunkRange(cursor, policy, length, false);
 }
@@ -289,7 +304,8 @@ export function tryShapeFromNodeSchema(
 ): ShapeInfo {
 	const { schema, shapes } = context;
 	return getOrCreate(shapes, nodeSchema, () => {
-		const treeSchema = schema.nodeSchema.get(nodeSchema) ?? fail(0xaf9 /* missing schema */);
+		const treeSchema =
+			schema.nodeSchema.get(nodeSchema) ?? fail(0xaf9 /* missing schema */);
 		if (treeSchema instanceof LeafNodeStoredSchema) {
 			// Allow all string values (but only string values) to be compressed by the id compressor.
 			// This allows compressing all compressible identifiers without requiring additional context to know which values could be identifiers.
@@ -336,7 +352,9 @@ export function tryShapeFromFieldSchema(
 	if (shouldEncodeIncrementally(parentNodeSchema, key)) {
 		return undefined;
 	}
-	const kind = policy.fieldKinds.get(fieldSchema.kind) ?? fail(0xafa /* missing FieldKind */);
+	const kind =
+		policy.fieldKinds.get(fieldSchema.kind) ??
+		fail(0xafa /* missing FieldKind */);
 	if (kind.multiplicity !== Multiplicity.Single) {
 		return undefined;
 	}
@@ -427,7 +445,12 @@ function newBasicChunkTree(
 ): BasicChunk {
 	return new BasicChunk(
 		cursor.type,
-		new Map(mapCursorFields(cursor, () => [cursor.getFieldKey(), chunkField(cursor, policy)])),
+		new Map(
+			mapCursorFields(cursor, () => [
+				cursor.getFieldKey(),
+				chunkField(cursor, policy),
+			]),
+		),
 		cursor.value,
 	);
 }
@@ -457,7 +480,10 @@ export function chunkRange(
 	let output: TreeChunk[] = [];
 	let remaining = length;
 	while (remaining > 0) {
-		assert(cursor.mode === CursorLocationType.Nodes, 0x57f /* should be in nodes */);
+		assert(
+			cursor.mode === CursorLocationType.Nodes,
+			0x57f /* should be in nodes */,
+		);
 		const start = cursor.chunkStart;
 		let reusedChunk = false;
 		// symbol based fast path to check for chunk:
@@ -469,7 +495,8 @@ export function chunkRange(
 				if (chunk !== undefined) {
 					if (
 						chunk instanceof SequenceChunk &&
-						chunk.subChunks.length <= chunkCompressor.policy.sequenceChunkInlineThreshold
+						chunk.subChunks.length <=
+							chunkCompressor.policy.sequenceChunkInlineThreshold
 					) {
 						// If sequence chunk, and its very short, inline it.
 						// Note that this is not recursive: there may be short sequences nested below this which are not inlined.
@@ -492,7 +519,10 @@ export function chunkRange(
 		}
 
 		if (!reusedChunk) {
-			assert(cursor.mode === CursorLocationType.Nodes, 0x580 /* should be in nodes */);
+			assert(
+				cursor.mode === CursorLocationType.Nodes,
+				0x580 /* should be in nodes */,
+			);
 			// TODO: if provided, use schema to consider using UniformChunks
 			const type = cursor.type;
 			const shape = chunkCompressor.policy.shapeFromSchema(type);
@@ -541,7 +571,10 @@ export function chunkRange(
 			newOutput.push(new SequenceChunk(output.slice(previousEnd, end)));
 			previousEnd = end;
 		}
-		assert(previousEnd === output.length, 0x581 /* chunks should add up to total */);
+		assert(
+			previousEnd === output.length,
+			0x581 /* chunks should add up to total */,
+		);
 		output = newOutput;
 	}
 
@@ -586,7 +619,11 @@ export function insertValues(
 	for (const [key, childShape, length] of shape.fieldsArray) {
 		cursor.enterField(key);
 		let count = 0;
-		for (let inNodes = cursor.firstNode(); inNodes; inNodes = cursor.nextNode()) {
+		for (
+			let inNodes = cursor.firstNode();
+			inNodes;
+			inNodes = cursor.nextNode()
+		) {
 			insertValues(cursor, childShape, values, idCompressor);
 			count++;
 		}
@@ -634,5 +671,9 @@ export function uniformChunkFromCursor(
 		}
 		topLevelLength += 1;
 	}
-	return new UniformChunk(shape.withTopLevelLength(topLevelLength), values, idCompressor);
+	return new UniformChunk(
+		shape.withTopLevelLength(topLevelLength),
+		values,
+		idCompressor,
+	);
 }

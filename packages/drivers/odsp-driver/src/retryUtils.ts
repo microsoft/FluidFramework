@@ -51,7 +51,8 @@ export async function runWithRetry<T>(
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			const coherencyError = error?.[Odsp409Error] === true;
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-			const serviceReadonlyError = error?.errorType === OdspErrorTypes.serviceReadOnly;
+			const serviceReadonlyError =
+				error?.errorType === OdspErrorTypes.serviceReadOnly;
 
 			// logging the first failed retry instead of every attempt. We want to avoid filling telemetry
 			// when we have tight loop of retrying in offline mode, but we also want to know what caused

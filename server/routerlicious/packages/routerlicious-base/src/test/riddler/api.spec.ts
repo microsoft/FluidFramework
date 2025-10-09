@@ -55,8 +55,9 @@ describe("Routerlicious", () => {
 			});
 			const defaultMongoManager = new MongoManager(defaultDbFactory);
 			const defaultDb = await defaultMongoManager.getDatabase();
-			const defaultTenantsCollection =
-				defaultDb.collection<ITenantDocument>(testTenantsCollectionName);
+			const defaultTenantsCollection = defaultDb.collection<ITenantDocument>(
+				testTenantsCollectionName,
+			);
 			const testTenantId = "test-tenant-id";
 
 			let app: express.Application;
@@ -73,10 +74,7 @@ describe("Routerlicious", () => {
 					await supertest[method](url)
 						.set(correlationIdHeaderName, testCorrelationId)
 						.then((res) => {
-							assert.strictEqual(
-								res.header?.[correlationIdHeaderName],
-								testCorrelationId,
-							);
+							assert.strictEqual(res.header?.[correlationIdHeaderName], testCorrelationId);
 						});
 				};
 

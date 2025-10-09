@@ -43,7 +43,11 @@ export {
 export { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService.js";
 export { RateLimiter } from "./rateLimiter.js";
 export { readAndParse } from "./readAndParse.js";
-export { calculateMaxWaitTime, IProgress, runWithRetry } from "./runWithRetry.js";
+export {
+	calculateMaxWaitTime,
+	IProgress,
+	runWithRetry,
+} from "./runWithRetry.js";
 export {
 	CombinedAppAndProtocolSummary,
 	getDocAttributesFromProtocolSummary,
@@ -58,5 +62,9 @@ export {
 	blobHeadersBlobName,
 } from "./adapters/index.js";
 export { getSnapshotTree, isInstanceOfISnapshot } from "./storageUtils.js";
-export { buildGitTreeHierarchy, getGitMode, getGitType } from "./protocol/index.js";
+export {
+	buildGitTreeHierarchy,
+	getGitMode,
+	getGitType,
+} from "./protocol/index.js";
 export { getKeyForCacheEntry, maximumCacheDurationMs } from "./cacheUtils.js";

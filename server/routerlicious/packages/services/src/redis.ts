@@ -71,11 +71,7 @@ export class RedisCache implements ICache {
 			}
 		} catch (error: any) {
 			const newError: Error = { name: error?.name, message: error?.message };
-			Lumberjack.error(
-				`Error setting ${key.substring(0, 20)} in cache.`,
-				undefined,
-				newError,
-			);
+			Lumberjack.error(`Error setting ${key.substring(0, 20)} in cache.`, undefined, newError);
 			throw newError;
 		}
 	}

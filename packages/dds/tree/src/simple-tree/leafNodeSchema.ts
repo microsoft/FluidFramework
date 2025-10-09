@@ -7,7 +7,11 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
-import { LeafNodeStoredSchema, type TreeValue, ValueSchema } from "../core/index.js";
+import {
+	LeafNodeStoredSchema,
+	type TreeValue,
+	ValueSchema,
+} from "../core/index.js";
 import {
 	type FlexTreeNode,
 	isFlexTreeNode,
@@ -143,7 +147,9 @@ function shallowCompatibilityTest(
 	data: FactoryContent,
 ): CompatibilityLevel {
 	if (isTreeValue(data)) {
-		return allowsValue(schema, data) ? CompatibilityLevel.Normal : CompatibilityLevel.None;
+		return allowsValue(schema, data)
+			? CompatibilityLevel.Normal
+			: CompatibilityLevel.None;
 	}
 
 	return CompatibilityLevel.None;
@@ -173,13 +179,20 @@ export function leafToFlexContent(
 		// This rule exists to protect against useless `toString` output like `[object Object]`.
 		// In this case, that's actually reasonable behavior, since object input is not compatible with Leaf schemas.
 		// eslint-disable-next-line @typescript-eslint/no-base-to-string
-		throw new UsageError(`Input data is incompatible with leaf schema: ${data}`);
+		throw new UsageError(
+			`Input data is incompatible with leaf schema: ${data}`,
+		);
 	}
 
 	const mappedValue = mapValueWithFallbacks(data, allowedTypes);
-	const mappedSchema = [...allowedTypes].find((type) => allowsValue(type, mappedValue));
+	const mappedSchema = [...allowedTypes].find((type) =>
+		allowsValue(type, mappedValue),
+	);
 
-	assert(mappedSchema !== undefined, 0x84a /* Unsupported schema for provided primitive. */);
+	assert(
+		mappedSchema !== undefined,
+		0x84a /* Unsupported schema for provided primitive. */,
+	);
 
 	const result: FlexContent = [
 		{

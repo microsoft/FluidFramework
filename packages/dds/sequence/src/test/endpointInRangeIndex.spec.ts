@@ -9,7 +9,10 @@ import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { Lazy } from "@fluidframework/core-utils/internal";
 import { TestClient } from "@fluidframework/merge-tree/internal/test";
 
-import { EndpointInRangeIndex, IEndpointInRangeIndex } from "../intervalIndex/index.js";
+import {
+	EndpointInRangeIndex,
+	IEndpointInRangeIndex,
+} from "../intervalIndex/index.js";
 import { type SequenceInterval } from "../intervals/index.js";
 
 import {
@@ -31,8 +34,12 @@ class TestEndpointInRangeIndex implements IEndpointInRangeIndex {
 
 	add(interval: SequenceInterval) {
 		this.intervals.push({
-			start: new Lazy(() => this.client.localReferencePositionToPosition(interval.start)),
-			end: new Lazy(() => this.client.localReferencePositionToPosition(interval.end)),
+			start: new Lazy(() =>
+				this.client.localReferencePositionToPosition(interval.start),
+			),
+			end: new Lazy(() =>
+				this.client.localReferencePositionToPosition(interval.end),
+			),
 			interval,
 		});
 	}
@@ -44,9 +51,14 @@ class TestEndpointInRangeIndex implements IEndpointInRangeIndex {
 		}
 	}
 
-	findIntervalsWithEndpointInRange(start: number, end: number): SequenceInterval[] {
+	findIntervalsWithEndpointInRange(
+		start: number,
+		end: number,
+	): SequenceInterval[] {
 		return this.intervals
-			.filter((interval) => interval.end.value >= start && interval.end.value <= end)
+			.filter(
+				(interval) => interval.end.value >= start && interval.end.value <= end,
+			)
 			.map((i) => i.interval);
 	}
 }
@@ -72,14 +84,19 @@ describe("findIntervalsWithEndpointInRange", () => {
 
 	beforeEach(() => {
 		client = new TestClient();
-		Array.from({ length: 100 }).forEach(() => client.insertTextLocal(0, "0123456789"));
+		Array.from({ length: 100 }).forEach(() =>
+			client.insertTextLocal(0, "0123456789"),
+		);
 		endpointInRangeIndex = new EndpointInRangeIndex(client);
 		createTestInterval = (p1, p2) => createTestSequenceInterval(client, p1, p2);
 	});
 
 	describe("finds no intervals", () => {
 		it("when the index is empty", () => {
-			const results = endpointInRangeIndex.findIntervalsWithEndpointInRange(1, 1);
+			const results = endpointInRangeIndex.findIntervalsWithEndpointInRange(
+				1,
+				1,
+			);
 			assert.equal(results.length, 0);
 		});
 
@@ -90,29 +107,47 @@ describe("findIntervalsWithEndpointInRange", () => {
 			});
 
 			it("when start > end for the query range", () => {
-				const results = endpointInRangeIndex.findIntervalsWithEndpointInRange(2, 1);
+				const results = endpointInRangeIndex.findIntervalsWithEndpointInRange(
+					2,
+					1,
+				);
 				assert.equal(results.length, 0);
 			});
 
 			it("when start is 0 for the query range", () => {
-				const results = endpointInRangeIndex.findIntervalsWithEndpointInRange(0, 1);
+				const results = endpointInRangeIndex.findIntervalsWithEndpointInRange(
+					0,
+					1,
+				);
 				assert.equal(results.length, 0);
 			});
 
 			it("when endpoint(s) of the query range are negative", () => {
-				const results = endpointInRangeIndex.findIntervalsWithEndpointInRange(-2, -1);
+				const results = endpointInRangeIndex.findIntervalsWithEndpointInRange(
+					-2,
+					-1,
+				);
 				assert.equal(results.length, 0);
-				const results2 = endpointInRangeIndex.findIntervalsWithEndpointInRange(-1, 1);
+				const results2 = endpointInRangeIndex.findIntervalsWithEndpointInRange(
+					-1,
+					1,
+				);
 				assert.equal(results2.length, 0);
 			});
 
 			it("when all intervals are above the query range", () => {
-				const results = endpointInRangeIndex.findIntervalsWithEndpointInRange(1, 1);
+				const results = endpointInRangeIndex.findIntervalsWithEndpointInRange(
+					1,
+					1,
+				);
 				assert.equal(results.length, 0);
 			});
 
 			it("when all intervals are below the query range", () => {
-				const results = endpointInRangeIndex.findIntervalsWithEndpointInRange(4, 5);
+				const results = endpointInRangeIndex.findIntervalsWithEndpointInRange(
+					4,
+					5,
+				);
 				assert.equal(results.length, 0);
 			});
 		});
@@ -125,10 +160,16 @@ describe("findIntervalsWithEndpointInRange", () => {
 		});
 
 		it("when quering the intervals which the startpoints exactly fall on the range boundary", () => {
-			const results = endpointInRangeIndex.findIntervalsWithEndpointInRange(1, 1);
+			const results = endpointInRangeIndex.findIntervalsWithEndpointInRange(
+				1,
+				1,
+			);
 			assertOrderedSequenceIntervals(client, results, [{ start: 1, end: 1 }]);
 
-			const results2 = endpointInRangeIndex.findIntervalsWithEndpointInRange(1, 3);
+			const results2 = endpointInRangeIndex.findIntervalsWithEndpointInRange(
+				1,
+				3,
+			);
 			assertOrderedSequenceIntervals(client, results2, [
 				{ start: 1, end: 1 },
 				{ start: 1, end: 3 },
@@ -141,7 +182,10 @@ describe("findIntervalsWithEndpointInRange", () => {
 			endpointInRangeIndex.add(createTestInterval(3, 4));
 			endpointInRangeIndex.add(createTestInterval(3, 4)); // duplicate interval
 
-			const results = endpointInRangeIndex.findIntervalsWithEndpointInRange(3, 6);
+			const results = endpointInRangeIndex.findIntervalsWithEndpointInRange(
+				3,
+				6,
+			);
 			results.sort(compareFn);
 			assertOrderedSequenceIntervals(client, results, [
 				{ start: 1, end: 3 },
@@ -169,7 +213,10 @@ describe("findIntervalsWithEndpointInRange", () => {
 			endpointInRangeIndex.add(interval3);
 			endpointInRangeIndex.remove(interval1);
 
-			const results = endpointInRangeIndex.findIntervalsWithEndpointInRange(1, 3);
+			const results = endpointInRangeIndex.findIntervalsWithEndpointInRange(
+				1,
+				3,
+			);
 			results.sort(compareFn);
 			assertOrderedSequenceIntervals(client, results, [
 				{ start: 1, end: 1 },
@@ -177,7 +224,10 @@ describe("findIntervalsWithEndpointInRange", () => {
 			]);
 
 			endpointInRangeIndex.remove(interval3);
-			const results2 = endpointInRangeIndex.findIntervalsWithEndpointInRange(1, 3);
+			const results2 = endpointInRangeIndex.findIntervalsWithEndpointInRange(
+				1,
+				3,
+			);
 			assertOrderedSequenceIntervals(client, results2, [{ start: 1, end: 3 }]);
 		});
 
@@ -185,7 +235,10 @@ describe("findIntervalsWithEndpointInRange", () => {
 			const interval3 = createTestInterval(1, 1);
 			endpointInRangeIndex.remove(interval3);
 
-			const results = endpointInRangeIndex.findIntervalsWithEndpointInRange(1, 3);
+			const results = endpointInRangeIndex.findIntervalsWithEndpointInRange(
+				1,
+				3,
+			);
 			results.sort(compareFn);
 			assertOrderedSequenceIntervals(client, results, [
 				{ start: 1, end: 1 },
@@ -196,7 +249,10 @@ describe("findIntervalsWithEndpointInRange", () => {
 		it("when removing the interval within the target range", () => {
 			endpointInRangeIndex.remove(interval2);
 
-			const results = endpointInRangeIndex.findIntervalsWithEndpointInRange(1, 3);
+			const results = endpointInRangeIndex.findIntervalsWithEndpointInRange(
+				1,
+				3,
+			);
 			assertOrderedSequenceIntervals(client, results, [{ start: 1, end: 1 }]);
 
 			const interval3 = createTestInterval(2, 4);
@@ -207,7 +263,10 @@ describe("findIntervalsWithEndpointInRange", () => {
 
 			endpointInRangeIndex.remove(interval3);
 
-			const results2 = endpointInRangeIndex.findIntervalsWithEndpointInRange(1, 5);
+			const results2 = endpointInRangeIndex.findIntervalsWithEndpointInRange(
+				1,
+				5,
+			);
 			results.sort(compareFn);
 			assertOrderedSequenceIntervals(client, results2, [
 				{ start: 1, end: 1 },
@@ -225,7 +284,12 @@ describe("findIntervalsWithEndpointInRange", () => {
 			const max = client.getLength() - 1;
 
 			// Generate intervals randomly and add them to both index
-			const intervals = generateRandomIntervals(client, { random, count, min, max });
+			const intervals = generateRandomIntervals(client, {
+				random,
+				count,
+				min,
+				max,
+			});
 			for (const interval of intervals) {
 				testIndex.add(interval);
 				endpointInRangeIndex.add(interval);
@@ -236,7 +300,10 @@ describe("findIntervalsWithEndpointInRange", () => {
 				const start = random.integer(min, max);
 				const end = random.integer(start, max);
 				// Query intervals using both index
-				const results = endpointInRangeIndex.findIntervalsWithEndpointInRange(start, end);
+				const results = endpointInRangeIndex.findIntervalsWithEndpointInRange(
+					start,
+					end,
+				);
 				const expected = testIndex.findIntervalsWithEndpointInRange(start, end);
 				results.sort(compareFn);
 				expected.sort(compareFn);

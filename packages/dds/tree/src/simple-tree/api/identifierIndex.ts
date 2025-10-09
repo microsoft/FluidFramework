@@ -10,7 +10,10 @@ import type { TreeNode } from "../core/index.js";
 import { ObjectNodeSchema } from "../node-kinds/index.js";
 import type { TreeView } from "./tree.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
-import { createSimpleTreeIndex, type SimpleTreeIndex } from "./simpleTreeIndex.js";
+import {
+	createSimpleTreeIndex,
+	type SimpleTreeIndex,
+} from "./simpleTreeIndex.js";
 
 /**
  * An index that returns tree nodes given their associated identifiers.

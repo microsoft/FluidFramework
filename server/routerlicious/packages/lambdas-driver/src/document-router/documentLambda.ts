@@ -24,7 +24,10 @@ import {
 	type IRawOperationMessage,
 	isCompleteBoxcarMessage,
 } from "@fluidframework/server-services-core";
-import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import {
+	getLumberBaseProperties,
+	Lumberjack,
+} from "@fluidframework/server-services-telemetry";
 
 import { DocumentContextManager } from "./contextManager";
 import { DocumentPartition } from "./documentPartition";
@@ -42,9 +45,7 @@ export class DocumentLambda implements IPartitionLambda {
 	) {
 		this.contextManager = new DocumentContextManager(context);
 		this.contextManager.on("error", (error, errorData: IContextErrorData) => {
-			Lumberjack.verbose(
-				"Listening for errors in documentLambda, contextManager error event",
-			);
+			Lumberjack.verbose("Listening for errors in documentLambda, contextManager error event");
 			context.error(error, errorData);
 		});
 		this.contextManager.on("pause", (lowestOffset: number, reason?: any) => {

@@ -56,13 +56,20 @@ describe("Local Odsp driver", () => {
 		{ encoding: "utf8" },
 	);
 
-	async function assertThrowsUsageError(fn: () => Promise<unknown>): Promise<void> {
-		await assert.rejects(fn, (e: DriverError) => e.errorType === OdspErrorTypes.usageError);
+	async function assertThrowsUsageError(
+		fn: () => Promise<unknown>,
+	): Promise<void> {
+		await assert.rejects(
+			fn,
+			(e: DriverError) => e.errorType === OdspErrorTypes.usageError,
+		);
 	}
 
 	describe("Local Odsp document service factory", () => {
 		it("Can use a real snapshot", () => {
-			assert.doesNotThrow(() => new LocalOdspDocumentServiceFactory(localSnapshot));
+			assert.doesNotThrow(
+				() => new LocalOdspDocumentServiceFactory(localSnapshot),
+			);
 		});
 
 		it("createContainer throws error", async () => {
@@ -81,11 +88,23 @@ describe("Local Odsp driver", () => {
 					await factory.createDocumentService(fakeOdspResolvedUrl);
 				});
 				await assert.doesNotReject(async () => {
-					await factory.createDocumentService(fakeOdspResolvedUrl, undefined, undefined);
+					await factory.createDocumentService(
+						fakeOdspResolvedUrl,
+						undefined,
+						undefined,
+					);
 				});
-				await factory.createDocumentService(fakeOdspResolvedUrl, undefined, false);
+				await factory.createDocumentService(
+					fakeOdspResolvedUrl,
+					undefined,
+					false,
+				);
 				await assert.rejects(async () => {
-					await factory.createDocumentService(fakeOdspResolvedUrl, undefined, true);
+					await factory.createDocumentService(
+						fakeOdspResolvedUrl,
+						undefined,
+						true,
+					);
 				});
 			});
 
@@ -148,7 +167,9 @@ describe("Local Odsp driver", () => {
 
 			const deltaStorageService = await service.connectToDeltaStorage();
 
-			const allOps = await readAll(deltaStorageService.fetchMessages(0, undefined));
+			const allOps = await readAll(
+				deltaStorageService.fetchMessages(0, undefined),
+			);
 			assert.strictEqual(allOps.length, 0, "There should be no messages");
 		});
 
@@ -169,7 +190,9 @@ describe("Local Odsp driver", () => {
 
 			const deltaStorageService = await service.connectToDeltaStorage();
 
-			const allOps = await readAll(deltaStorageService.fetchMessages(179, undefined));
+			const allOps = await readAll(
+				deltaStorageService.fetchMessages(179, undefined),
+			);
 			assert.strictEqual(allOps.length, 13, "There should be 13 messages");
 		});
 
@@ -189,8 +212,13 @@ describe("Local Odsp driver", () => {
 				scopes: [],
 			};
 
-			await assertThrowsUsageError(async () => service.connectToDeltaStream(client));
-			mockLogger.assertMatch([{ eventName: "UnsupportedUsage" }], "Expected log not present");
+			await assertThrowsUsageError(async () =>
+				service.connectToDeltaStream(client),
+			);
+			mockLogger.assertMatch(
+				[{ eventName: "UnsupportedUsage" }],
+				"Expected log not present",
+			);
 		});
 
 		it("Dispose does not throw", () => {
@@ -236,7 +264,10 @@ describe("Local Odsp driver", () => {
 					},
 				),
 			);
-			mockLogger.assertMatch([{ eventName: "UnsupportedUsage" }], "Expected log not present");
+			mockLogger.assertMatch(
+				[{ eventName: "UnsupportedUsage" }],
+				"Expected log not present",
+			);
 		});
 
 		it("createBlob throws error", async () => {
@@ -246,8 +277,13 @@ describe("Local Odsp driver", () => {
 				"sample data",
 			);
 
-			await assertThrowsUsageError(async () => storageService.createBlob(new ArrayBuffer(0)));
-			mockLogger.assertMatch([{ eventName: "UnsupportedUsage" }], "Expected log not present");
+			await assertThrowsUsageError(async () =>
+				storageService.createBlob(new ArrayBuffer(0)),
+			);
+			mockLogger.assertMatch(
+				[{ eventName: "UnsupportedUsage" }],
+				"Expected log not present",
+			);
 		});
 
 		describe("getVersions", () => {
@@ -277,7 +313,10 @@ describe("Local Odsp driver", () => {
 					new MockLogger().toTelemetryLogger(),
 					localSnapshot,
 				);
-				assert.deepStrictEqual(await storageService.getVersions(null, 1), snapshotVersion);
+				assert.deepStrictEqual(
+					await storageService.getVersions(null, 1),
+					snapshotVersion,
+				);
 			});
 
 			it("Calling multiple times", async () => {
@@ -286,7 +325,10 @@ describe("Local Odsp driver", () => {
 					localSnapshot,
 				);
 				for (let i = 0; i < 3; i++) {
-					assert.deepStrictEqual(await storageService.getVersions(null, 1), snapshotVersion);
+					assert.deepStrictEqual(
+						await storageService.getVersions(null, 1),
+						snapshotVersion,
+					);
 				}
 			});
 		});

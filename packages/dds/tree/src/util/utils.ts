@@ -53,7 +53,9 @@ export const clone = structuredClone;
  * Note that this does NOT indicate if a given array should be treated as readonly.
  * This instead indicates if an object is an Array, and is typed to tolerate the readonly case.
  */
-export function isReadonlyArray<T>(x: readonly T[] | unknown): x is readonly T[] {
+export function isReadonlyArray<T>(
+	x: readonly T[] | unknown,
+): x is readonly T[] {
 	// `Array.isArray()` does not properly narrow `readonly` array types by itself,
 	// so we wrap it in this type guard. This may become unnecessary if/when
 	// https://github.com/microsoft/TypeScript/issues/17002 is resolved.
@@ -80,8 +82,14 @@ export function makeArray<T>(size: number, filler: (index: number) => T): T[] {
  * If the type of the array has been narrowed by e.g. {@link hasSome | hasSome(array)} or {@link hasSingle | hasOne(array)} then the return type will be `T` rather than `T | undefined`.
  */
 export function getLast<T>(array: readonly [T, ...T[]]): T;
-export function getLast<T>(array: { [index: number]: T; length: number }): T | undefined;
-export function getLast<T>(array: { [index: number]: T; length: number }): T | undefined {
+export function getLast<T>(array: {
+	[index: number]: T;
+	length: number;
+}): T | undefined;
+export function getLast<T>(array: {
+	[index: number]: T;
+	length: number;
+}): T | undefined {
 	return array[array.length - 1];
 }
 
@@ -261,7 +269,10 @@ export function* filterIterable<T>(
  * @param predicate - The predicate to run against each element
  * @returns The first element in the iterable that satisfies the predicate, or undefined if the iterable contains no such element
  */
-export function find<T>(iterable: Iterable<T>, predicate: (t: T) => boolean): T | undefined {
+export function find<T>(
+	iterable: Iterable<T>,
+	predicate: (t: T) => boolean,
+): T | undefined {
 	for (const t of iterable) {
 		if (predicate(t)) {
 			return t;
@@ -310,7 +321,9 @@ export type JsonCompatible<TExtra = never> =
  * but instead mostly restricts access to it.
  * @alpha
  */
-export type JsonCompatibleObject<TExtra = never> = { [P in string]?: JsonCompatible<TExtra> };
+export type JsonCompatibleObject<TExtra = never> = {
+	[P in string]?: JsonCompatible<TExtra>;
+};
 
 /**
  * Use for readonly view of Json compatible data.
@@ -335,7 +348,9 @@ export type JsonCompatibleReadOnly =
  * but instead mostly restricts access to it.
  * @alpha
  */
-export type JsonCompatibleReadOnlyObject = { readonly [P in string]?: JsonCompatibleReadOnly };
+export type JsonCompatibleReadOnlyObject = {
+	readonly [P in string]?: JsonCompatibleReadOnly;
+};
 
 /**
  * @remarks TODO: Audit usage of this type in schemas, evaluating whether it is necessary and performance
@@ -380,7 +395,10 @@ export function assertValidIndex(
 ): void {
 	assertNonNegativeSafeInteger(index);
 	if (allowOnePastEnd) {
-		assert(index <= array.length, 0x378 /* index must be less than or equal to length */);
+		assert(
+			index <= array.length,
+			0x378 /* index must be less than or equal to length */,
+		);
 	} else {
 		assert(index < array.length, 0x379 /* index must be less than length */);
 	}
@@ -392,8 +410,14 @@ export function assertValidRange(
 ): void {
 	assertNonNegativeSafeInteger(start);
 	assertNonNegativeSafeInteger(end);
-	assert(end <= array.length, 0x79d /* Range end must be less than or equal to length */);
-	assert(start <= end, 0x79e /* Range start must be less than or equal to range start */);
+	assert(
+		end <= array.length,
+		0x79d /* Range end must be less than or equal to length */,
+	);
+	assert(
+		start <= end,
+		0x79e /* Range start must be less than or equal to range start */,
+	);
 }
 
 export function assertNonNegativeSafeInteger(index: number): void {
@@ -460,7 +484,9 @@ export function transformObjectMap<
  * @returns a map which can look up the keys from the values of the original map.
  */
 export function invertMap<Key, Value>(input: Map<Key, Value>): Map<Value, Key> {
-	const result = new Map<Value, Key>(mapIterable(input, ([key, value]) => [value, key]));
+	const result = new Map<Value, Key>(
+		mapIterable(input, ([key, value]) => [value, key]),
+	);
 	assert(
 		result.size === input.size,
 		0x88a /* all values in a map must be unique to invert it */,
@@ -509,7 +535,9 @@ export function compareNamed(a: Named<string>, b: Named<string>): -1 | 0 | 1 {
  * @privateRemarks
  * TODO: replace this with `Symbol.dispose` when it is available or make it a valid polyfill.
  */
-export const disposeSymbol: unique symbol = Symbol("Symbol.dispose placeholder");
+export const disposeSymbol: unique symbol = Symbol(
+	"Symbol.dispose placeholder",
+);
 
 /**
  * An object with an explicit lifetime that can be ended.
@@ -549,7 +577,8 @@ export function capitalize<S extends string>(s: S): Capitalize<S> {
 		return "" as Capitalize<S>;
 	}
 
-	return (iterated.value.toUpperCase() + s.slice(iterated.value.length)) as Capitalize<S>;
+	return (iterated.value.toUpperCase() +
+		s.slice(iterated.value.length)) as Capitalize<S>;
 }
 
 /**
@@ -600,7 +629,11 @@ export function defineLazyCachedProperty<
  * This function first reads the property value (if present) from `source` and then sets it on `destination`, as opposed to e.g. directly copying the property descriptor.
  * @privateRemarks The first overload of this function allows auto-complete to suggest property names from `source`, but by having the second overload we still allow for arbitrary property names.
  */
-export function copyPropertyIfDefined<S extends object, K extends keyof S, D extends object>(
+export function copyPropertyIfDefined<
+	S extends object,
+	K extends keyof S,
+	D extends object,
+>(
 	source: S | undefined,
 	property: K,
 	destination: D,

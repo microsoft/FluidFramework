@@ -4,7 +4,11 @@
  */
 
 export { RiddlerRunner } from "./runner";
-export { RiddlerResources, RiddlerResourcesFactory, RiddlerRunnerFactory } from "./runnerFactory";
+export {
+	RiddlerResources,
+	RiddlerResourcesFactory,
+	RiddlerRunnerFactory,
+} from "./runnerFactory";
 export { type ITenantDocument, TenantManager } from "./tenantManager";
 export { type ITenantRepository, MongoTenantRepository } from "./mongoTenantRepository";
 export type { IRiddlerResourcesCustomizations } from "./customizations";

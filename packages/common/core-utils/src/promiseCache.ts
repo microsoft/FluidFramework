@@ -142,7 +142,10 @@ export class PromiseCache<TKey, TResult> {
 	 * @param key - key name where to store the async work
 	 * @param asyncFn - the async work to do and store, if not already in progress under the given key
 	 */
-	public async addOrGet(key: TKey, asyncFn: () => Promise<TResult>): Promise<TResult> {
+	public async addOrGet(
+		key: TKey,
+		asyncFn: () => Promise<TResult>,
+	): Promise<TResult> {
 		// NOTE: Do not await the Promise returned by asyncFn!
 		// Let the caller do so once we return or after a subsequent call to get
 		let promise = this.get(key);

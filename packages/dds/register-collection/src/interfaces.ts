@@ -24,7 +24,8 @@ export type IConsensusRegisterCollectionFactory =
  * Events emitted by {@link IConsensusRegisterCollection}.
  * @legacy @beta
  */
-export interface IConsensusRegisterCollectionEvents extends ISharedObjectEvents {
+export interface IConsensusRegisterCollectionEvents
+	extends ISharedObjectEvents {
 	(
 		event: "atomicChanged" | "versionChanged",
 		listener: (key: string, value: any, local: boolean) => void,

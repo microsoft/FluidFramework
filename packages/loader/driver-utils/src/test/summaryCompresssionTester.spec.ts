@@ -65,15 +65,19 @@ function generateSummaryWithContent(contentSize: number) {
 	const summary = cloneSummary();
 	const header = (
 		(
-			((summary.tree[".channels"] as ISummaryTree).tree.rootDOId as ISummaryTree).tree[
-				".channels"
-			] as ISummaryTree
+			(
+				(summary.tree[".channels"] as ISummaryTree).tree
+					.rootDOId as ISummaryTree
+			).tree[".channels"] as ISummaryTree
 		).tree["7a99532d-94ec-43ac-8a53-d9f978ad4ae9"] as ISummaryTree
 	).tree.header;
 	let contentString = "";
 	while (contentString.length < contentSize) {
 		if (contentString.length + 10 > contentSize) {
-			contentString += "0123456789".substring(0, contentSize - contentString.length);
+			contentString += "0123456789".substring(
+				0,
+				contentSize - contentString.length,
+			);
 			break;
 		} else {
 			contentString += "0123456789";
@@ -83,13 +87,17 @@ function generateSummaryWithContent(contentSize: number) {
 	return summary;
 }
 
-function generateSummaryWithBinaryContent(startsWith: number, contentSize: number) {
+function generateSummaryWithBinaryContent(
+	startsWith: number,
+	contentSize: number,
+) {
 	const summary = cloneSummary();
 	const header = (
 		(
-			((summary.tree[".channels"] as ISummaryTree).tree.rootDOId as ISummaryTree).tree[
-				".channels"
-			] as ISummaryTree
+			(
+				(summary.tree[".channels"] as ISummaryTree).tree
+					.rootDOId as ISummaryTree
+			).tree[".channels"] as ISummaryTree
 		).tree["7a99532d-94ec-43ac-8a53-d9f978ad4ae9"] as ISummaryTree
 	).tree.header;
 	const content = new Uint8Array(contentSize);
@@ -176,7 +184,9 @@ class InternalTestDocumentService
 	async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
 		throw new Error("Method not implemented.");
 	}
-	async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
+	async connectToDeltaStream(
+		client: IClient,
+	): Promise<IDocumentDeltaConnection> {
 		throw new Error("Method not implemented.");
 	}
 	dispose(error?: any): void {
@@ -240,13 +250,19 @@ describe("Summary Compression Test", () => {
 		const storage = await buildCompressionStorage(false);
 		const config = (storage as any)._config;
 		assert(config === undefined, "The storage has compression");
-		assert(isOriginalStorage(storage), "The storage is not the original storage");
+		assert(
+			isOriginalStorage(storage),
+			"The storage is not the original storage",
+		);
 	});
 	it("Verify Config Empty", async () => {
 		const storage = await buildCompressionStorage();
 		const config = (storage as any)._config;
 		assert(config === undefined, "The storage has compression");
-		assert(isOriginalStorage(storage), "The storage is not the original storage");
+		assert(
+			isOriginalStorage(storage),
+			"The storage is not the original storage",
+		);
 	});
 	it("Verify Config Object (summary-blob markup)", async () => {
 		const config: ICompressionStorageConfig = {
@@ -262,14 +278,17 @@ describe("Summary Compression Test", () => {
 			algorithm: SummaryCompressionAlgorithm.LZ4,
 			minSizeToCompress: 500,
 		};
-		const storage = (await buildCompressionStorage(config)) as DocumentStorageServiceProxy;
+		const storage = (await buildCompressionStorage(
+			config,
+		)) as DocumentStorageServiceProxy;
 		const summary = generateSummaryWithContent(1000);
 		await storage.uploadSummaryWithContext(summary, {
 			referenceSequenceNumber: 0,
 			proposalHandle: "test",
 			ackHandle: "test",
 		});
-		const uploadedSummary = ((storage as any).service as InternalTestStorage).uploadedSummary;
+		const uploadedSummary = ((storage as any).service as InternalTestStorage)
+			.uploadedSummary;
 		assert(
 			uploadedSummary?.tree[blobHeadersBlobName] !== undefined,
 			"The summary-blob markup is not added",
@@ -313,7 +332,9 @@ describe("Summary Compression Test", () => {
 			algorithm: SummaryCompressionAlgorithm.LZ4,
 			minSizeToCompress: 500,
 		};
-		const storage = (await buildCompressionStorage(config)) as DocumentStorageServiceProxy;
+		const storage = (await buildCompressionStorage(
+			config,
+		)) as DocumentStorageServiceProxy;
 		const summary = generateSummaryWithContent(300);
 		await storage.uploadSummaryWithContext(summary, {
 			referenceSequenceNumber: 0,
@@ -335,11 +356,12 @@ describe("Summary Compression Test", () => {
 		};
 		const firstOriginalByte = 0xb3;
 		const contentSize = 30;
-		const uploadedContent: ArrayBufferLike = await uploadSummaryWithBinaryContent(
-			firstOriginalByte,
-			contentSize,
-			config,
-		);
+		const uploadedContent: ArrayBufferLike =
+			await uploadSummaryWithBinaryContent(
+				firstOriginalByte,
+				contentSize,
+				config,
+			);
 		const firstByte = uploadedContent[0];
 		const secondByte = uploadedContent[1];
 		assert(
@@ -359,11 +381,12 @@ describe("Summary Compression Test", () => {
 		};
 		const firstOriginalByte = 0xb3;
 		const contentSize = 800;
-		const uploadedContent: ArrayBufferLike = await uploadSummaryWithBinaryContent(
-			firstOriginalByte,
-			contentSize,
-			config,
-		);
+		const uploadedContent: ArrayBufferLike =
+			await uploadSummaryWithBinaryContent(
+				firstOriginalByte,
+				contentSize,
+				config,
+			);
 		const firstByte = uploadedContent[0];
 		assert(
 			firstByte === prefixForLZ4,
@@ -443,18 +466,22 @@ describe("Summary Compression Test", () => {
 		await testEncDecBinaryLoop(contentSize, config);
 	});
 });
-async function testNoPrefix(contentSize: number, config: ICompressionStorageConfig) {
+async function testNoPrefix(
+	contentSize: number,
+	config: ICompressionStorageConfig,
+) {
 	for (let i = 0; i < 256; i++) {
 		if (i >= 0xb0 && i <= 0xbf) {
 			continue;
 		}
 		const firstOriginalByte = i;
 
-		const uploadedContent: ArrayBufferLike = await uploadSummaryWithBinaryContent(
-			firstOriginalByte,
-			contentSize,
-			config,
-		);
+		const uploadedContent: ArrayBufferLike =
+			await uploadSummaryWithBinaryContent(
+				firstOriginalByte,
+				contentSize,
+				config,
+			);
 		const firstByte = uploadedContent[0];
 		assert(
 			firstByte === firstOriginalByte,
@@ -472,13 +499,17 @@ async function testPrefix(
 ) {
 	for (let i = from; i < to; i++) {
 		const firstOriginalByte = i;
-		const uploadedContent: ArrayBufferLike = await uploadSummaryWithBinaryContent(
-			firstOriginalByte,
-			contentSize,
-			config,
-		);
+		const uploadedContent: ArrayBufferLike =
+			await uploadSummaryWithBinaryContent(
+				firstOriginalByte,
+				contentSize,
+				config,
+			);
 		const firstByte = uploadedContent[0];
-		assert(firstByte === prefix, `The first byte should be ${prefix} but is  ${firstByte}`);
+		assert(
+			firstByte === prefix,
+			`The first byte should be ${prefix} but is  ${firstByte}`,
+		);
 	}
 }
 
@@ -487,14 +518,20 @@ async function uploadSummaryWithBinaryContent(
 	contentSize: number,
 	config: ICompressionStorageConfig,
 ) {
-	const storage = (await buildCompressionStorage(config)) as DocumentStorageServiceProxy;
-	const summary = generateSummaryWithBinaryContent(firstOriginalByte, contentSize);
+	const storage = (await buildCompressionStorage(
+		config,
+	)) as DocumentStorageServiceProxy;
+	const summary = generateSummaryWithBinaryContent(
+		firstOriginalByte,
+		contentSize,
+	);
 	await storage.uploadSummaryWithContext(summary, {
 		referenceSequenceNumber: 0,
 		proposalHandle: "test",
 		ackHandle: "test",
 	});
-	const uploadedSummary = ((storage as any).service as InternalTestStorage).uploadedSummary;
+	const uploadedSummary = ((storage as any).service as InternalTestStorage)
+		.uploadedSummary;
 	const uploadedContent: ArrayBufferLike = getHeaderContent(uploadedSummary!);
 	return uploadedContent;
 }
@@ -502,7 +539,9 @@ async function uploadSummaryWithBinaryContent(
 async function checkUploadDownloadSummary(
 	config: ICompressionStorageConfig,
 ): Promise<ISummaryTree> {
-	const storage = (await buildCompressionStorage(config)) as DocumentStorageServiceProxy;
+	const storage = (await buildCompressionStorage(
+		config,
+	)) as DocumentStorageServiceProxy;
 	const summary = generateSummaryWithContent(1000);
 	const originBlobContent = getHeaderContent(summary);
 	await storage.uploadSummaryWithContext(summary, {
@@ -516,10 +555,13 @@ async function checkUploadDownloadSummary(
 		handleType: SummaryType.Tree,
 		handle: "test",
 	};
-	const downloadedSummary: ISummaryTree = await storage.downloadSummary(summaryHandle);
+	const downloadedSummary: ISummaryTree =
+		await storage.downloadSummary(summaryHandle);
 	const downloadedBlobContentBin = getHeaderContent(downloadedSummary);
 	// const blobStr = new TextDecoder().decode(blob);
-	const downloadedBlobContent = new TextDecoder().decode(downloadedBlobContentBin);
+	const downloadedBlobContent = new TextDecoder().decode(
+		downloadedBlobContentBin,
+	);
 	assert(
 		originBlobContent === downloadedBlobContent,
 		`The origin and the downloaded blob are not the same
@@ -555,7 +597,10 @@ async function testEncDecBinaryLoop(
 	}
 }
 
-function compareTwoBlobs(blob1: ArrayBufferLike, blob2: ArrayBufferLike): boolean {
+function compareTwoBlobs(
+	blob1: ArrayBufferLike,
+	blob2: ArrayBufferLike,
+): boolean {
 	const blob1View = new Uint8Array(blob1);
 	const blob2View = new Uint8Array(blob2);
 	if (blob1View.length !== blob2View.length) {
@@ -574,7 +619,9 @@ async function checkEncDecConfigurable(
 	config: ICompressionStorageConfig,
 	startsWith = -1,
 ) {
-	const storage = (await buildCompressionStorage(config)) as DocumentStorageServiceProxy;
+	const storage = (await buildCompressionStorage(
+		config,
+	)) as DocumentStorageServiceProxy;
 	const originHeaderHolder: ISummaryTree = getHeaderHolder(summary);
 	const originBlob = (originHeaderHolder.tree.header as ISummaryBlob).content;
 	await storage.uploadSummaryWithContext(summary, {
@@ -626,8 +673,7 @@ function getHeader(summary: ISummaryTree) {
 
 function getHeaderHolder(summary: ISummaryTree) {
 	return (
-		((summary.tree[".channels"] as ISummaryTree).tree.rootDOId as ISummaryTree).tree[
-			".channels"
-		] as ISummaryTree
+		((summary.tree[".channels"] as ISummaryTree).tree.rootDOId as ISummaryTree)
+			.tree[".channels"] as ISummaryTree
 	).tree["7a99532d-94ec-43ac-8a53-d9f978ad4ae9"] as ISummaryTree;
 }

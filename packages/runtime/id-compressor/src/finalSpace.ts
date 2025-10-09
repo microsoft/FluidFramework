@@ -33,7 +33,8 @@ export class FinalSpace {
 		const lastCluster = this.getLastCluster();
 		assert(
 			lastCluster === undefined ||
-				newCluster.baseFinalId === lastCluster.baseFinalId + lastCluster.capacity,
+				newCluster.baseFinalId ===
+					lastCluster.baseFinalId + lastCluster.capacity,
 			0x753 /* Cluster insert to final_space is out of order. */,
 		);
 		this.clusterList.push(newCluster);
@@ -47,7 +48,8 @@ export class FinalSpace {
 		const lastCluster = this.getLastCluster();
 		return lastCluster === undefined
 			? (0 as FinalCompressedId)
-			: (((lastFinalizedFinal(lastCluster) as number) + 1) as FinalCompressedId);
+			: (((lastFinalizedFinal(lastCluster) as number) +
+					1) as FinalCompressedId);
 	}
 
 	/**
@@ -58,7 +60,8 @@ export class FinalSpace {
 		const lastCluster = this.getLastCluster();
 		return lastCluster === undefined
 			? (0 as FinalCompressedId)
-			: (((lastAllocatedFinal(lastCluster) as number) + 1) as FinalCompressedId);
+			: (((lastAllocatedFinal(lastCluster) as number) +
+					1) as FinalCompressedId);
 	}
 
 	public equals(other: FinalSpace): boolean {

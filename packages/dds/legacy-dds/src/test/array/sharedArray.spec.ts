@@ -27,7 +27,10 @@ describe("SharedArray", () => {
 	let dataStoreRuntime: MockFluidDataStoreRuntime;
 	let testData: number[];
 	let expectedSharedArray: number[];
-	const sharedArrayEventNames: readonly string[] = ["valueChanged", "revertible"];
+	const sharedArrayEventNames: readonly string[] = [
+		"valueChanged",
+		"revertible",
+	];
 
 	beforeEach(async () => {
 		dataStoreRuntime = new MockFluidDataStoreRuntime();
@@ -186,7 +189,10 @@ describe("SharedArray", () => {
 			it("Can insert new data and get sharedArray data", async () => {
 				// Verify that the SharedArray has the correct values and length.
 				const actualSharedArray = sharedArrayIFluidHandle.get();
-				verifyIFluidHandleEntries(actualSharedArray, expectedSharedArrayIFluidHandle);
+				verifyIFluidHandleEntries(
+					actualSharedArray,
+					expectedSharedArrayIFluidHandle,
+				);
 			});
 
 			it("Can load a SharedArray from snapshot", async () => {
@@ -208,7 +214,10 @@ describe("SharedArray", () => {
 
 				// Verify that the new SharedArray has the correct values and length.
 				const actualSharedArray = sharedArrayTwo.get();
-				verifyIFluidHandleEntries(actualSharedArray, expectedSharedArrayIFluidHandle);
+				verifyIFluidHandleEntries(
+					actualSharedArray,
+					expectedSharedArrayIFluidHandle,
+				);
 			});
 		});
 	});

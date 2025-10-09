@@ -16,7 +16,10 @@ import {
 	type IClusterDrainingChecker,
 	type ICache,
 } from "@fluidframework/server-services-core";
-import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import {
+	getLumberBaseProperties,
+	Lumberjack,
+} from "@fluidframework/server-services-telemetry";
 
 import type { StageTrace } from "./trace";
 
@@ -110,22 +113,25 @@ async function updateExistingSession(
 	const isSessionSticky =
 		document.lastAccessTime !== undefined
 			? sessionStickyCalculationTimestamp - document.lastAccessTime <
-			  sessionStickinessDurationMs
+				sessionStickinessDurationMs
 			: false; // If no session end has been recorded, allow session to move.
 	// Allow session stickiness to be overridden by manually deleting a session's orderer/historian urls.
 	const sessionHasLocation: boolean =
 		!!existingSession.ordererUrl &&
 		!!existingSession.historianUrl &&
 		!!existingSession.deltaStreamUrl;
-	Lumberjack.info("Calculated isSessionSticky, sessionHasLocation and ignoreSessionStickiness", {
-		...lumberjackProperties,
-		isSessionSticky,
-		sessionHasLocation,
-		documentLastAccessTime: document.lastAccessTime,
-		sessionStickyCalculationTimestamp,
-		sessionStickinessDurationMs,
-		ignoreSessionStickiness,
-	});
+	Lumberjack.info(
+		"Calculated isSessionSticky, sessionHasLocation and ignoreSessionStickiness",
+		{
+			...lumberjackProperties,
+			isSessionSticky,
+			sessionHasLocation,
+			documentLastAccessTime: document.lastAccessTime,
+			sessionStickyCalculationTimestamp,
+			sessionStickinessDurationMs,
+			ignoreSessionStickiness,
+		},
+	);
 	if (!isSessionSticky || ignoreSessionStickiness || !sessionHasLocation) {
 		// Allow session location to be moved.
 		if (

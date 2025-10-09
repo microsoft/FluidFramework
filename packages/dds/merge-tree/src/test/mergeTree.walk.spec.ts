@@ -55,7 +55,10 @@ describe("MergeTree walks", () => {
 					while (current !== block && current !== undefined) {
 						current = current.parent;
 					}
-					assert(current === block, "Expected all visited segments to be descendants");
+					assert(
+						current === block,
+						"Expected all visited segments to be descendants",
+					);
 					return true;
 				});
 				assert(walkedAnySegments, "Walk should have hit segments");

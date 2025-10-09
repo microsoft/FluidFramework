@@ -4,7 +4,10 @@
  */
 
 import { assert } from "@fluidframework/core-utils/legacy";
-import { ReferencePosition, SequenceInterval } from "@fluidframework/sequence/legacy";
+import {
+	ReferencePosition,
+	SequenceInterval,
+} from "@fluidframework/sequence/legacy";
 
 const rangeExpr = /([A-Za-z]+)(\d+):([A-Za-z]+)(\d+)/;
 
@@ -49,7 +52,10 @@ export function parseRange(range: string) {
 export class CellRange {
 	constructor(
 		private readonly interval: SequenceInterval,
-		private readonly resolve: (localRef: ReferencePosition) => { row: number; col: number },
+		private readonly resolve: (localRef: ReferencePosition) => {
+			row: number;
+			col: number;
+		},
 	) {
 		// Ensure CellInterval was not created with a null/undefined interval.
 		assert(!!interval, "CellInterval created with bad interval!");
@@ -68,7 +74,11 @@ export class CellRange {
 	public forEachRowMajor(callback: (row: number, col: number) => boolean) {
 		const r = this.getRange();
 		for (let row = r.row, numRows = r.numRows; numRows > 0; row++, numRows--) {
-			for (let col = r.col, numCols = r.numCols; numCols > 0; col++, numCols--) {
+			for (
+				let col = r.col, numCols = r.numCols;
+				numCols > 0;
+				col++, numCols--
+			) {
 				if (!callback(row, col)) {
 					return;
 				}
@@ -79,7 +89,11 @@ export class CellRange {
 	public forEachColMajor(callback: (row: number, col: number) => boolean) {
 		const r = this.getRange();
 		for (let col = r.col, numCols = r.numCols; numCols > 0; col++, numCols--) {
-			for (let row = r.row, numRows = r.numRows; numRows > 0; row++, numRows--) {
+			for (
+				let row = r.row, numRows = r.numRows;
+				numRows > 0;
+				row++, numRows--
+			) {
 				if (!callback(row, col)) {
 					return;
 				}

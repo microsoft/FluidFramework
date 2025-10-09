@@ -16,7 +16,8 @@ import { assert } from "./assert.js";
  * @param num - Number of characters to pad
  * @param chr - Character to use for padding (space by default)
  */
-export const pad = (num: number, chr = " "): string => Array.from({ length: num + 1 }).join(chr);
+export const pad = (num: number, chr = " "): string =>
+	Array.from({ length: num + 1 }).join(chr);
 
 /**
  * Nicely format a decimal number to make it human-readable.
@@ -102,7 +103,10 @@ const tTable = {
  * @remarks
  * This outputs the same object that the Benchmark.js library does.
  */
-export function getArrayStatistics(array: number[], fractionOfSamplesToUse: number = 1): Stats {
+export function getArrayStatistics(
+	array: number[],
+	fractionOfSamplesToUse: number = 1,
+): Stats {
 	if (fractionOfSamplesToUse < 0.1 || fractionOfSamplesToUse > 1) {
 		throw new Error("percentageOfSamplesToUse must be between 0.1 and 1 (inclusive)");
 	}

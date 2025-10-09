@@ -5,7 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
-import type { ITelemetryBaseEvent, Tagged } from "@fluidframework/core-interfaces";
+import type {
+	ITelemetryBaseEvent,
+	Tagged,
+} from "@fluidframework/core-interfaces";
 
 import {
 	type ITelemetryLoggerPropertyBag,
@@ -36,12 +39,11 @@ const errorCases: ITelemetryLoggerPropertyBag[] = [
 ];
 
 // eslint-disable-next-line unicorn/no-array-reduce
-const propertyCases: (ITelemetryLoggerPropertyBags | undefined)[] = allCases.reduce<
-	ITelemetryLoggerPropertyBags[]
->((pv, all) => {
-	pv.push(...errorCases.map((error) => ({ all, error })));
-	return pv;
-}, []);
+const propertyCases: (ITelemetryLoggerPropertyBags | undefined)[] =
+	allCases.reduce<ITelemetryLoggerPropertyBags[]>((pv, all) => {
+		pv.push(...errorCases.map((error) => ({ all, error })));
+		return pv;
+	}, []);
 propertyCases.push(
 	...allCases.map((all) => ({ all, error: all })),
 	...allCases,
@@ -86,7 +88,8 @@ describe("TelemetryLogger", () => {
 				const propsKeys = Object.keys(expected);
 				for (const k of propsKeys) {
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-					const e = typeof expected[k] === "function" ? expected[k]() : expected[k];
+					const e =
+						typeof expected[k] === "function" ? expected[k]() : expected[k];
 					assert.strictEqual(
 						event[k],
 						e,
@@ -119,7 +122,8 @@ describe("TelemetryLogger", () => {
 				const propsKeys = Object.keys(expected);
 				for (const k of propsKeys) {
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-					const e = typeof expected[k] === "function" ? expected[k]() : expected[k];
+					const e =
+						typeof expected[k] === "function" ? expected[k]() : expected[k];
 					assert.strictEqual(
 						event[k],
 						e,
@@ -157,7 +161,8 @@ describe("TelemetryLogger", () => {
 				const propsKeys = Object.keys(expected);
 				for (const k of propsKeys) {
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-					const e = typeof expected[k] === "function" ? expected[k]() : expected[k];
+					const e =
+						typeof expected[k] === "function" ? expected[k]() : expected[k];
 					assert.strictEqual(
 						event[k],
 						e,
@@ -296,7 +301,10 @@ describe("convertToBasePropertyType", () => {
 		it("array", () => {
 			const property: TelemetryEventPropertyTypeExt = [true, "test"];
 			const converted = convertToBasePropertyType(property);
-			const expected: TelemetryEventPropertyTypeExt = JSON.stringify([true, "test"]);
+			const expected: TelemetryEventPropertyTypeExt = JSON.stringify([
+				true,
+				"test",
+			]);
 			assert.deepStrictEqual(converted, expected);
 		});
 		it("flat object", () => {
@@ -340,7 +348,10 @@ describe("convertToBasePropertyType", () => {
 		it("nested non Tagged<TelemetryEventPropertyTypeExt>", () => {
 			const taggedProperty: Tagged<TelemetryEventPropertyTypeExt> = {
 				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-				value: { foo: 3, bar: { x: 5 } as unknown } as TelemetryEventPropertyTypeExt,
+				value: {
+					foo: 3,
+					bar: { x: 5 } as unknown,
+				} as TelemetryEventPropertyTypeExt,
 				tag: "tag",
 			};
 			const converted = convertToBasePropertyType(taggedProperty);
@@ -405,7 +416,9 @@ describe("convertToBasePropertyType", () => {
 		it("function", () => {
 			const converted = convertToBasePropertyType(function x() {
 				return 54;
-			} as unknown as TelemetryEventPropertyTypeExt | Tagged<TelemetryEventPropertyTypeExt>);
+			} as unknown as
+				| TelemetryEventPropertyTypeExt
+				| Tagged<TelemetryEventPropertyTypeExt>);
 			const expected = "INVALID PROPERTY (typed as function)";
 			assert.deepStrictEqual(converted, expected);
 		});

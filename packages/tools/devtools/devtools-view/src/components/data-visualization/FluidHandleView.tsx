@@ -28,16 +28,23 @@ const loggingContext = "EXTENSION(HandleView)";
 /**
  * {@link FluidHandleView} input props.
  */
-export interface FluidHandleViewProps extends HasContainerKey, HasFluidObjectId, HasLabel {}
+export interface FluidHandleViewProps
+	extends HasContainerKey,
+		HasFluidObjectId,
+		HasLabel {}
 
 /**
  * Render data with type VisualNodeKind.FluidHandleNode and render its children.
  */
-export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement {
+export function FluidHandleView(
+	props: FluidHandleViewProps,
+): React.ReactElement {
 	const { containerKey, fluidObjectId, label } = props;
 	const messageRelay = useMessageRelay();
 
-	const [visualTree, setVisualTree] = React.useState<FluidObjectNode | undefined>();
+	const [visualTree, setVisualTree] = React.useState<
+		FluidObjectNode | undefined
+	>();
 
 	React.useEffect(() => {
 		/**
@@ -84,9 +91,17 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 	}, [containerKey, fluidObjectId, messageRelay]);
 
 	if (visualTree === undefined) {
-		const header = <TreeHeader label={label} inlineValue={<Spinner size="tiny" />} />;
+		const header = (
+			<TreeHeader label={label} inlineValue={<Spinner size="tiny" />} />
+		);
 		return <TreeItem header={header} />;
 	} else {
-		return <TreeDataView containerKey={containerKey} label={label} node={visualTree} />;
+		return (
+			<TreeDataView
+				containerKey={containerKey}
+				label={label}
+				node={visualTree}
+			/>
+		);
 	}
 }

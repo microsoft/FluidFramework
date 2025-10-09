@@ -3,13 +3,13 @@
 	"compilerOptions": {
 		"rootDir": "./",
 		"outDir": "../../lib/test",
-		"types": ["mocha", "node"],
+		"types": ["mocha", "node"]
 	},
 	"include": ["./**/*"],
 	"exclude": ["./jsonSerializable.exactOptionalPropertyTypes.false.spec.ts"],
 	"references": [
 		{
-			"path": "../..",
-		},
-	],
+			"path": "../.."
+		}
+	]
 }

@@ -12,4 +12,7 @@ const { row, col, rowCount, colCount } = getTestArgs();
 const rowSize = row + rowCount;
 const colSize = col + colCount;
 
-pointwise(`Contiguous Matrix ${rowSize}x${colSize}`, createContiguousMatrix(rowSize, colSize));
+pointwise(
+	`Contiguous Matrix ${rowSize}x${colSize}`,
+	createContiguousMatrix(rowSize, colSize),
+);

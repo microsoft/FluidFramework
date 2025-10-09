@@ -70,7 +70,11 @@ export class TestFluidObject implements ITestFluidObject {
 			IChannelFactory<ISharedObject>
 		>,
 	) {
-		this.handle = new FluidObjectHandle(this, "", runtime.objectsRoutingContext);
+		this.handle = new FluidObjectHandle(
+			this,
+			"",
+			runtime.objectsRoutingContext,
+		);
 	}
 
 	/**
@@ -96,7 +100,9 @@ export class TestFluidObject implements ITestFluidObject {
 	}
 
 	public async request(request: IRequest): Promise<IResponse> {
-		return request.url === "" || request.url === "/" || request.url.startsWith("/?")
+		return request.url === "" ||
+			request.url === "/" ||
+			request.url.startsWith("/?")
 			? { mimeType: "fluid/object", status: 200, value: this }
 			: create404Response(request);
 	}
@@ -108,7 +114,10 @@ export class TestFluidObject implements ITestFluidObject {
 
 				this.initialSharedObjectsFactories.forEach(
 					(sharedObjectFactory: IChannelFactory, key: string) => {
-						const sharedObject = this.runtime.createChannel(key, sharedObjectFactory.type);
+						const sharedObject = this.runtime.createChannel(
+							key,
+							sharedObjectFactory.type,
+						);
 						this.root.set(key, sharedObject.handle);
 					},
 				);
@@ -128,7 +137,9 @@ export class TestFluidObject implements ITestFluidObject {
  * Iterable\<[ChannelId, IChannelFactory]\>.
  * @internal
  */
-export type ChannelFactoryRegistry = Iterable<[string | undefined, IChannelFactory]>;
+export type ChannelFactoryRegistry = Iterable<
+	[string | undefined, IChannelFactory]
+>;
 
 /**
  * Kind of test data object which {@link TestFluidObjectFactory} can create.
@@ -138,7 +149,10 @@ export type TestDataObjectKind = new (
 	runtime: IFluidDataStoreRuntime,
 	channel: IFluidDataStoreChannel,
 	context: IFluidDataStoreContext,
-	initialSharedObjectsFactories: ReadonlyMap<string, IChannelFactory<ISharedObject>>,
+	initialSharedObjectsFactories: ReadonlyMap<
+		string,
+		IChannelFactory<ISharedObject>
+	>,
 ) => IFluidLoadable & {
 	request(request: IRequest): Promise<IResponse>;
 	initialize(existing: boolean): Promise<void>;
@@ -209,11 +223,17 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
 
 		// Create a map from the factory entries with entries that don't have the id as undefined. This will be
 		// passed to the Fluid object.
-		const factoryEntriesMapForObject = new Map<string, IChannelFactory<ISharedObject>>();
+		const factoryEntriesMapForObject = new Map<
+			string,
+			IChannelFactory<ISharedObject>
+		>();
 		for (const [id, factory] of this.initialSharedObjectsFactories) {
 			if (id !== undefined) {
 				// Here we assume the factory produces an ISharedObject.
-				factoryEntriesMapForObject.set(id, factory as IChannelFactory<ISharedObject>);
+				factoryEntriesMapForObject.set(
+					id,
+					factory as IChannelFactory<ISharedObject>,
+				);
 			}
 		}
 

@@ -123,7 +123,12 @@ describe("property-common.OperationError", function () {
 
 	describe("flags", function () {
 		it("default at 0", function (done) {
-			const actual = new OperationError(errorMsg, operation, undefined, undefined);
+			const actual = new OperationError(
+				errorMsg,
+				operation,
+				undefined,
+				undefined,
+			);
 			expect(actual.flags).to.equal(0);
 			done();
 		});

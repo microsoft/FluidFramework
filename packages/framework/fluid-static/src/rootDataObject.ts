@@ -94,7 +94,9 @@ class RootDataObject
 	 *
 	 * @see {@link @fluidframework/aqueduct#PureDataObject.initializingFirstTime}
 	 */
-	protected async initializingFirstTime(props: RootDataObjectProps): Promise<void> {
+	protected async initializingFirstTime(
+		props: RootDataObjectProps,
+	): Promise<void> {
 		this.root.createSubDirectory(this.initialObjectsDirKey);
 
 		// Create initial objects provided by the developer
@@ -141,16 +143,22 @@ class RootDataObject
 	}
 
 	public async create<T>(objectClass: SharedObjectKind<T>): Promise<T> {
-		const internal = objectClass as unknown as LoadableObjectKind<T & IFluidLoadable>;
+		const internal = objectClass as unknown as LoadableObjectKind<
+			T & IFluidLoadable
+		>;
 		if (isDataObjectKind(internal)) {
 			return createDataObject(internal, this.context);
 		} else if (isSharedObjectKind(internal)) {
 			return createSharedObject(internal, this.runtime);
 		}
-		throw new Error("Could not create new Fluid object because an unknown object was passed");
+		throw new Error(
+			"Could not create new Fluid object because an unknown object was passed",
+		);
 	}
 
-	public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
+	public async uploadBlob(
+		blob: ArrayBufferLike,
+	): Promise<IFluidHandle<ArrayBufferLike>> {
 		return this.runtime.uploadBlob(blob);
 	}
 }
@@ -161,13 +169,18 @@ const rootDataObjectType = "rootDO";
 async function provideEntryPoint(
 	containerRuntime: IContainerRuntime,
 ): Promise<IStaticEntryPoint> {
-	const entryPoint = await containerRuntime.getAliasedDataStoreEntryPoint(rootDataStoreId);
+	const entryPoint =
+		await containerRuntime.getAliasedDataStoreEntryPoint(rootDataStoreId);
 	if (entryPoint === undefined) {
 		throw new Error(`default dataStore [${rootDataStoreId}] must exist`);
 	}
-	const rootDataObject = ((await entryPoint.get()) as FluidObject<RootDataObject>)
-		.RootDataObject;
-	assert(rootDataObject !== undefined, 0xb9f /* entryPoint must be of type RootDataObject */);
+	const rootDataObject = (
+		(await entryPoint.get()) as FluidObject<RootDataObject>
+	).RootDataObject;
+	assert(
+		rootDataObject !== undefined,
+		0xb9f /* entryPoint must be of type RootDataObject */,
+	);
 	return makeFluidObject<IStaticEntryPoint>(
 		{
 			rootDataObject,
@@ -222,8 +235,10 @@ export function createDOProviderContainerRuntimeFactory(props: {
 		runtimeOptionOverrides,
 		schema,
 	} = props;
-	const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
-	const registry = rootDataStoreRegistry ?? new FluidDataStoreRegistry(registryEntries);
+	const [registryEntries, sharedObjects] =
+		parseDataObjectsFromSharedObjects(schema);
+	const registry =
+		rootDataStoreRegistry ?? new FluidDataStoreRegistry(registryEntries);
 
 	return new DOProviderContainerRuntimeFactory(
 		schema,
@@ -291,11 +306,17 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 		this.initialObjects = schema.initialObjects;
 	}
 
-	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
+	protected async containerInitializingFirstTime(
+		runtime: IContainerRuntime,
+	): Promise<void> {
 		// The first time we create the container we create the RootDataObject
-		await this.rootDataObjectFactory.createRootInstance(rootDataStoreId, runtime, {
-			initialObjects: this.initialObjects,
-		});
+		await this.rootDataObjectFactory.createRootInstance(
+			rootDataStoreId,
+			runtime,
+			{
+				initialObjects: this.initialObjects,
+			},
+		);
 	}
 }
 

@@ -24,9 +24,15 @@ describe("property-common.Chronometer", function () {
 			const chrono = new Chronometer();
 			setTimeout(function () {
 				chrono.stop();
-				expect(chrono.elapsedSec()).to.be.at.most((expectedResultMilliSec + 500) / 1000);
-				expect(chrono.elapsedMilliSec()).to.be.at.least(expectedResultMilliSec - 25);
-				expect(chrono.elapsedMilliSec()).to.be.at.most(expectedResultMilliSec + 500);
+				expect(chrono.elapsedSec()).to.be.at.most(
+					(expectedResultMilliSec + 500) / 1000,
+				);
+				expect(chrono.elapsedMilliSec()).to.be.at.least(
+					expectedResultMilliSec - 25,
+				);
+				expect(chrono.elapsedMilliSec()).to.be.at.most(
+					expectedResultMilliSec + 500,
+				);
 				done();
 			}, expectedResultMilliSec);
 		});
@@ -36,9 +42,15 @@ describe("property-common.Chronometer", function () {
 			const chrono = new Chronometer();
 			setTimeout(function () {
 				chrono.stop();
-				expect(chrono.elapsedSec()).to.be.at.most((expectedResultMilliSec + 500) / 1000);
-				expect(chrono.elapsedMicroSec()).to.be.at.least((expectedResultMilliSec - 25) * 1000);
-				expect(chrono.elapsedMicroSec()).to.be.at.most((expectedResultMilliSec + 500) * 1000);
+				expect(chrono.elapsedSec()).to.be.at.most(
+					(expectedResultMilliSec + 500) / 1000,
+				);
+				expect(chrono.elapsedMicroSec()).to.be.at.least(
+					(expectedResultMilliSec - 25) * 1000,
+				);
+				expect(chrono.elapsedMicroSec()).to.be.at.most(
+					(expectedResultMilliSec + 500) * 1000,
+				);
 				done();
 			}, expectedResultMilliSec);
 		});
@@ -48,8 +60,12 @@ describe("property-common.Chronometer", function () {
 			const chrono = new Chronometer();
 			setTimeout(function () {
 				chrono.stop();
-				expect(chrono.elapsedSec()).to.be.at.most(expectedResultMilliSec / 1000 + 50);
-				expect(chrono.elapsedMilliSec()).to.be.at.most(expectedResultMilliSec + 50);
+				expect(chrono.elapsedSec()).to.be.at.most(
+					expectedResultMilliSec / 1000 + 50,
+				);
+				expect(chrono.elapsedMilliSec()).to.be.at.most(
+					expectedResultMilliSec + 50,
+				);
 				done();
 			}, 10);
 		});
@@ -67,7 +83,9 @@ describe("property-common.Chronometer", function () {
 				resolve(expectedResult);
 			}, expectedElapsedMilliSec);
 
-			const expectations: Promise<void> = Chronometer.timePromise(async () => promise)
+			const expectations: Promise<void> = Chronometer.timePromise(
+				async () => promise,
+			)
 				.then(function (timedResult) {
 					expect(timedResult.chrono.elapsedMilliSec()).to.be.at.least(
 						expectedElapsedMilliSec - 5,

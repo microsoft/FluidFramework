@@ -13,7 +13,9 @@ const {
 	exampleGettingStartedTransform,
 } = require("./exampleGettingStartedTransform.cjs");
 
-const { generateSectionFromTemplate } = require("./generateSectionFromTemplate.cjs");
+const {
+	generateSectionFromTemplate,
+} = require("./generateSectionFromTemplate.cjs");
 
 const { includeTransform } = require("./includeTransform.cjs");
 

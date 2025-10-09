@@ -60,7 +60,9 @@ export class Attributor implements IAttributor {
 	public getAttributionInfo(key: number): AttributionInfo {
 		const result = this.tryGetAttributionInfo(key);
 		if (!result) {
-			throw new UsageError(`Requested attribution information for unstored key: ${key}.`);
+			throw new UsageError(
+				`Requested attribution information for unstored key: ${key}.`,
+			);
 		}
 		return result;
 	}

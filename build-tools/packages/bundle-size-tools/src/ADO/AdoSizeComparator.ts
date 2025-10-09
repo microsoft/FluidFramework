@@ -5,10 +5,16 @@
 
 import { join } from "path";
 import type { WebApi } from "azure-devops-node-api";
-import { BuildResult, BuildStatus } from "azure-devops-node-api/interfaces/BuildInterfaces";
+import {
+	BuildResult,
+	BuildStatus,
+} from "azure-devops-node-api/interfaces/BuildInterfaces";
 import type JSZip from "jszip";
 
-import type { BundleComparison, BundleComparisonResult } from "../BundleBuddyTypes";
+import type {
+	BundleComparison,
+	BundleComparisonResult,
+} from "../BundleBuddyTypes";
 import { compareBundles } from "../compareBundles";
 import { getBaselineCommit, getBuilds, getPriorCommit } from "../utilities";
 import {
@@ -26,7 +32,10 @@ import {
 import { getBuildTagForCommit } from "./getBuildTagForCommit";
 import { getBundleBuddyConfigMap } from "./getBundleBuddyConfigMap";
 import { getBundleSummaries } from "./getBundleSummaries";
-import { getCommentForBundleDiff, getSimpleComment } from "./getCommentForBundleDiff";
+import {
+	getCommentForBundleDiff,
+	getSimpleComment,
+} from "./getCommentForBundleDiff";
 
 export class ADOSizeComparator {
 	/**
@@ -71,7 +80,9 @@ export class ADOSizeComparator {
 	 * Naive fallback generator provided for convenience.  It yields the commit directly
 	 * prior to the previous commit.
 	 */
-	public static *naiveFallbackCommitGenerator(startingCommit: string): Generator<string> {
+	public static *naiveFallbackCommitGenerator(
+		startingCommit: string,
+	): Generator<string> {
 		let currentCommit = startingCommit;
 		for (let i = 0; i < ADOSizeComparator.defaultBuildsToSearch; i++) {
 			currentCommit = getPriorCommit(currentCommit);
@@ -100,7 +111,8 @@ export class ADOSizeComparator {
 			project: this.adoConstants.projectName,
 			definitions: [this.adoConstants.ciBuildDefinitionId],
 			maxBuildsPerDefinition:
-				this.adoConstants.buildsToSearch ?? ADOSizeComparator.defaultBuildsToSearch,
+				this.adoConstants.buildsToSearch ??
+				ADOSizeComparator.defaultBuildsToSearch,
 		});
 		while (baselineCommit !== undefined) {
 			const baselineBuild = recentBuilds.find(
@@ -191,7 +203,8 @@ export class ADOSizeComparator {
 			return { message, comparison: undefined };
 		}
 
-		const comparison: BundleComparison[] = await this.createComparisonFromZip(baselineZip);
+		const comparison: BundleComparison[] =
+			await this.createComparisonFromZip(baselineZip);
 		console.log(JSON.stringify(comparison));
 
 		const message = getCommentForBundleDiff(comparison, baselineCommit);
@@ -216,20 +229,27 @@ export class ADOSizeComparator {
 		}
 	}
 
-	private async createComparisonFromZip(baselineZip: JSZip): Promise<BundleComparison[]> {
+	private async createComparisonFromZip(
+		baselineZip: JSZip,
+	): Promise<BundleComparison[]> {
 		const baselineZipBundlePaths = getBundlePathsFromZipObject(baselineZip);
 
-		const prBundleFileSystemPaths = await getBundlePathsFromFileSystem(this.localReportPath);
+		const prBundleFileSystemPaths = await getBundlePathsFromFileSystem(
+			this.localReportPath,
+		);
 
 		const configFileMap = await getBundleBuddyConfigMap({
 			bundleFileData: prBundleFileSystemPaths,
 			getBundleBuddyConfig: (relativePath) =>
-				getBundleBuddyConfigFromFileSystem(join(this.localReportPath, relativePath)),
+				getBundleBuddyConfigFromFileSystem(
+					join(this.localReportPath, relativePath),
+				),
 		});
 
 		const baselineSummaries = await getBundleSummaries({
 			bundlePaths: baselineZipBundlePaths,
-			getStatsFile: (relativePath) => getStatsFileFromZip(baselineZip, relativePath),
+			getStatsFile: (relativePath) =>
+				getStatsFileFromZip(baselineZip, relativePath),
 			getBundleBuddyConfigFile: (bundleName) => configFileMap.get(bundleName),
 			statsProcessors: DefaultStatsProcessors,
 		});

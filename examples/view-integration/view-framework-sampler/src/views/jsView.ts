@@ -10,7 +10,10 @@ import { IDiceRoller } from "../dataObject.js";
  * @param diceRoller - The Data Object to be rendered
  * @param div - The div to render into
  */
-export function jsRenderDiceRoller(diceRoller: IDiceRoller, div: HTMLDivElement) {
+export function jsRenderDiceRoller(
+	diceRoller: IDiceRoller,
+	div: HTMLDivElement,
+) {
 	const wrapperDiv = document.createElement("div");
 	wrapperDiv.style.textAlign = "center";
 	div.append(wrapperDiv);

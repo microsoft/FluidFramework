@@ -115,7 +115,10 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 
 	async run(): Promise<void> {
 		let handlersToRun: Handler[] = policyHandlers.filter((h) => {
-			if (this.flags.excludeHandler === undefined || this.flags.excludeHandler.length === 0) {
+			if (
+				this.flags.excludeHandler === undefined ||
+				this.flags.excludeHandler.length === 0
+			) {
 				return true;
 			}
 			const shouldRun = this.flags.excludeHandler?.includes(h.name) === false;
@@ -171,7 +174,9 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 		const handlerExclusions: HandlerExclusions = {};
 		if (rawHandlerExclusions) {
 			for (const rule of Object.keys(rawHandlerExclusions)) {
-				handlerExclusions[rule] = rawHandlerExclusions[rule].map((e) => new RegExp(e, "i"));
+				handlerExclusions[rule] = rawHandlerExclusions[rule].map(
+					(e) => new RegExp(e, "i"),
+				);
 			}
 		}
 
@@ -184,7 +189,10 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 				filePathsToCheck.push(...stdInput.split("\n"));
 			}
 		} else {
-			const repo = new Repository({ baseDir: gitRoot }, "microsoft/FluidFramework");
+			const repo = new Repository(
+				{ baseDir: gitRoot },
+				"microsoft/FluidFramework",
+			);
 			const gitFiles = await repo.getFiles(".");
 			filePathsToCheck.push(...gitFiles);
 		}
@@ -239,19 +247,30 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 				.filter((handler) => {
 					// doing exclusion per handler
 					const exclusions = handlerExclusions[handler.name];
-					if (exclusions !== undefined && !exclusions.every((regex) => !regex.test(relPath))) {
+					if (
+						exclusions !== undefined &&
+						!exclusions.every((regex) => !regex.test(relPath))
+					) {
 						this.verbose(`Excluded ${handler.name} handler: ${relPath}`);
 						return false;
 					}
 					return true;
 				})
-				.map(async (handler): Promise<{ handler: Handler; result: string | undefined }> => {
-					const result = await runWithPerf(handler.name, "handle", async () => {
-						// Pass the handler the absolute file path and the absolute path to the git root
-						return handler.handler(file, gitRoot);
-					});
-					return { handler, result };
-				}),
+				.map(
+					async (
+						handler,
+					): Promise<{ handler: Handler; result: string | undefined }> => {
+						const result = await runWithPerf(
+							handler.name,
+							"handle",
+							async () => {
+								// Pass the handler the absolute file path and the absolute path to the git root
+								return handler.handler(file, gitRoot);
+							},
+						);
+						return { handler, result };
+					},
+				),
 		);
 
 		// Now that all handlers have completed, we can react to results which might include running resolvers
@@ -264,9 +283,12 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 					output += `${newline}attempting to resolve: ${relPath}`;
 					// Resolvers are expected to be run serially to avoid any conflicts.
 					// eslint-disable-next-line no-await-in-loop
-					const resolveResult = await runWithPerf(handler.name, "resolve", async () =>
-						// Pass the resolver the absolute file path and the absolute path to the git root
-						resolver(file, gitRoot),
+					const resolveResult = await runWithPerf(
+						handler.name,
+						"resolve",
+						async () =>
+							// Pass the resolver the absolute file path and the absolute path to the git root
+							resolver(file, gitRoot),
 					);
 
 					if (resolveResult?.message !== undefined) {
@@ -343,7 +365,8 @@ async function runWithPerf<T>(
 	action: policyAction,
 	run: () => Promise<T>,
 ): Promise<T> {
-	const actionMap = handlerPerformanceData.get(action) ?? new Map<string, number>();
+	const actionMap =
+		handlerPerformanceData.get(action) ?? new Map<string, number>();
 	let dur = actionMap.get(name) ?? 0;
 
 	const start = Date.now();
@@ -368,7 +391,9 @@ async function runFinalHandlers(
 		const { final } = h;
 		if (final) {
 			// eslint-disable-next-line no-await-in-loop
-			const result = await runWithPerf(h.name, "final", async () => final(gitRoot, fix));
+			const result = await runWithPerf(h.name, "final", async () =>
+				final(gitRoot, fix),
+			);
 			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 			if (result?.error) {
 				throw new Error(result.error);

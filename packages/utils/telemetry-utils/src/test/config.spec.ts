@@ -5,7 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
-import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import type {
+	ConfigTypes,
+	IConfigProviderBase,
+} from "@fluidframework/core-interfaces";
 import { compareArrays } from "@fluidframework/core-utils/internal";
 
 import {
@@ -35,7 +38,9 @@ const getMockStore = (settings: Record<string, string>): Storage => {
 	};
 };
 
-const untypedProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => {
+const untypedProvider = (
+	settings: Record<string, ConfigTypes>,
+): IConfigProviderBase => {
 	return {
 		getRawConfig: (name: string): ConfigTypes => settings[name],
 	};
@@ -61,7 +66,10 @@ describe("Config", () => {
 
 		const mockStore = getMockStore(settings);
 		const logger = new MockLogger();
-		const config = new CachedConfigProvider(logger, inMemoryConfigProvider(mockStore));
+		const config = new CachedConfigProvider(
+			logger,
+			inMemoryConfigProvider(mockStore),
+		);
 
 		assert.equal(config.getNumber("number"), 1);
 		logger.assertMatch([
@@ -92,7 +100,11 @@ describe("Config", () => {
 		assert.deepEqual(config.getStringArray("stringArray"), ["1", "2", "3"]);
 		assert.equal(config.getStringArray("badStringArray"), undefined);
 
-		assert.deepEqual(config.getBooleanArray("booleanArray"), [true, false, true]);
+		assert.deepEqual(config.getBooleanArray("booleanArray"), [
+			true,
+			false,
+			true,
+		]);
 		assert.equal(config.getBooleanArray("BadBooleanArray"), undefined);
 	});
 
@@ -137,13 +149,20 @@ describe("Config", () => {
 		assert.deepEqual(config.getStringArray("stringArray"), ["1", "2", "3"]);
 		assert.equal(config.getStringArray("badStringArray"), undefined);
 
-		assert.deepEqual(config.getBooleanArray("booleanArray"), [true, false, true]);
+		assert.deepEqual(config.getBooleanArray("booleanArray"), [
+			true,
+			false,
+			true,
+		]);
 		assert.equal(config.getBooleanArray("badBooleanArray"), undefined);
 		assert.equal(config.getBooleanArray("badBooleanArray2"), undefined);
 	});
 
 	it("Void provider", () => {
-		const config = new CachedConfigProvider(undefined, inMemoryConfigProvider(undefined));
+		const config = new CachedConfigProvider(
+			undefined,
+			inMemoryConfigProvider(undefined),
+		);
 		assert.equal(config.getNumber("number"), undefined);
 		assert.equal(config.getString("does not exist"), undefined);
 		assert.equal(config.getBoolean("boolean"), undefined);
@@ -202,7 +221,12 @@ describe("Config", () => {
 
 	// #region SettingsProvider
 
-	type SettingType = string | boolean | number | (string | boolean | number)[] | null;
+	type SettingType =
+		| string
+		| boolean
+		| number
+		| (string | boolean | number)[]
+		| null;
 
 	interface ProvideSettingsProvider {
 		readonly SettingsProvider: SettingsProvider;
@@ -220,8 +244,12 @@ describe("Config", () => {
 		): T;
 	}
 
-	class HybridSettingsProvider implements SettingsProvider, IConfigProviderBase {
-		public constructor(private readonly store: Record<string, SettingType | ConfigTypes>) {}
+	class HybridSettingsProvider
+		implements SettingsProvider, IConfigProviderBase
+	{
+		public constructor(
+			private readonly store: Record<string, SettingType | ConfigTypes>,
+		) {}
 
 		public getRawConfig(name: string): ConfigTypes {
 			// The point here is to use `getSetting`
@@ -235,7 +263,8 @@ describe("Config", () => {
 			defaultValue: T,
 			namespace?: string,
 		): T {
-			const key = namespace === undefined ? settingName : `${namespace}.${settingName}`;
+			const key =
+				namespace === undefined ? settingName : `${namespace}.${settingName}`;
 			return (this.store[key] as T) ?? defaultValue;
 		}
 
@@ -262,7 +291,10 @@ describe("Config", () => {
 			badBooleanArray2: ["true", "false", "true"],
 		};
 
-		const config = new CachedConfigProvider(undefined, new HybridSettingsProvider(settings));
+		const config = new CachedConfigProvider(
+			undefined,
+			new HybridSettingsProvider(settings),
+		);
 
 		assert.equal(config.getNumber("number"), 1);
 		assert.equal(config.getNumber("sortOfNumber"), 1);
@@ -282,7 +314,11 @@ describe("Config", () => {
 		assert.deepEqual(config.getStringArray("stringArray"), ["1", "2", "3"]);
 		assert.equal(config.getStringArray("badStringArray"), undefined);
 
-		assert.deepEqual(config.getBooleanArray("booleanArray"), [true, false, true]);
+		assert.deepEqual(config.getBooleanArray("booleanArray"), [
+			true,
+			false,
+			true,
+		]);
 		assert.equal(config.getBooleanArray("badBooleanArray"), undefined);
 		assert.equal(config.getBooleanArray("badBooleanArray2"), undefined);
 	});
@@ -291,12 +327,16 @@ describe("Config", () => {
 });
 
 describe("wrappedConfigProvider", () => {
-	const configProvider = (featureGates: Record<string, ConfigTypes>): IConfigProviderBase => ({
+	const configProvider = (
+		featureGates: Record<string, ConfigTypes>,
+	): IConfigProviderBase => ({
 		getRawConfig: (name: string): ConfigTypes => featureGates[name],
 	});
 
 	it("When there is no original config provider", () => {
-		const config = wrapConfigProviderWithDefaults(undefined, { "Fluid.Feature.Gate": true });
+		const config = wrapConfigProviderWithDefaults(undefined, {
+			"Fluid.Feature.Gate": true,
+		});
 		assert.strictEqual(config.getRawConfig("Fluid.Feature.Gate"), true);
 	});
 
@@ -339,7 +379,9 @@ describe("createConfigBasedOptionsProxy", () => {
 
 	it("config overrides default option", () => {
 		const options = createConfigBasedOptionsProxy<IFeatureOptions>(
-			untypedProvider({ [`${featureOptionsNamespace}.stringFeature`]: "fromConfig" }),
+			untypedProvider({
+				[`${featureOptionsNamespace}.stringFeature`]: "fromConfig",
+			}),
 			featureOptionsNamespace,
 			{
 				stringFeature: (c, n) => c.getString(n),
@@ -359,7 +401,9 @@ describe("createConfigBasedOptionsProxy", () => {
 
 	it("config not in typeMap is ignored", () => {
 		const options = createConfigBasedOptionsProxy<IFeatureOptions>(
-			untypedProvider({ [`${featureOptionsNamespace}.stringFeature`]: "fromConfig" }),
+			untypedProvider({
+				[`${featureOptionsNamespace}.stringFeature`]: "fromConfig",
+			}),
 			featureOptionsNamespace,
 			{},
 			{
@@ -430,7 +474,9 @@ describe("createConfigBasedOptionsProxy", () => {
 	// Handling of invalid JSON for complex types
 	it("handles invalid JSON for complex types gracefully", () => {
 		const options = createConfigBasedOptionsProxy<IFeatureOptions>(
-			untypedProvider({ [`${featureOptionsNamespace}.arrayFeature`]: "notAnArray" }),
+			untypedProvider({
+				[`${featureOptionsNamespace}.arrayFeature`]: "notAnArray",
+			}),
 			featureOptionsNamespace,
 			{
 				arrayFeature: (c, n) => c.getNumberArray(n),
@@ -444,7 +490,9 @@ describe("createConfigBasedOptionsProxy", () => {
 	// Handling of missing default options
 	it("behaves correctly when no default options are provided", () => {
 		const options = createConfigBasedOptionsProxy<IFeatureOptions>(
-			untypedProvider({ [`${featureOptionsNamespace}.booleanFeature`]: "true" }),
+			untypedProvider({
+				[`${featureOptionsNamespace}.booleanFeature`]: "true",
+			}),
 			featureOptionsNamespace,
 			{
 				booleanFeature: (c, n) => c.getBoolean(n),
@@ -458,7 +506,9 @@ describe("createConfigBasedOptionsProxy", () => {
 	// Type coercion failure
 	it("handles type coercion failure gracefully", () => {
 		const options = createConfigBasedOptionsProxy<IFeatureOptions>(
-			untypedProvider({ [`${featureOptionsNamespace}.numberFeature`]: "notANumber" }),
+			untypedProvider({
+				[`${featureOptionsNamespace}.numberFeature`]: "notANumber",
+			}),
 			featureOptionsNamespace,
 			{
 				numberFeature: (c, n) => c.getNumber(n),
@@ -490,7 +540,9 @@ describe("createConfigBasedOptionsProxy", () => {
 
 	it("in can be used to determine if an options has a value", () => {
 		const options = createConfigBasedOptionsProxy<IFeatureOptions>(
-			untypedProvider({ [`${featureOptionsNamespace}.stringFeature`]: "fromConfig" }),
+			untypedProvider({
+				[`${featureOptionsNamespace}.stringFeature`]: "fromConfig",
+			}),
 			featureOptionsNamespace,
 			{
 				stringFeature: (c, n) => c.getString(n),
@@ -507,7 +559,9 @@ describe("createConfigBasedOptionsProxy", () => {
 
 	it("cannot spread options proxy as values must be lazy loaded from config", () => {
 		const options = createConfigBasedOptionsProxy<IFeatureOptions>(
-			untypedProvider({ [`${featureOptionsNamespace}.stringFeature`]: "fromConfig" }),
+			untypedProvider({
+				[`${featureOptionsNamespace}.stringFeature`]: "fromConfig",
+			}),
 			featureOptionsNamespace,
 			{
 				stringFeature: (c, n) => c.getString(n),

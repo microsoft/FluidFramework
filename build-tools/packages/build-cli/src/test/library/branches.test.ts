@@ -36,19 +36,31 @@ describe("generateBumpVersionBranchName", () => {
 
 	describe("Fluid internal versions", () => {
 		it("patch", () => {
-			const actual = generateBumpVersionBranchName("client", "patch", "2.0.0-internal.1.0.0");
+			const actual = generateBumpVersionBranchName(
+				"client",
+				"patch",
+				"2.0.0-internal.1.0.0",
+			);
 			const expected = "bump_client_patch_2.0.0-internal.1.0.1";
 			assert.equal(actual, expected);
 		});
 
 		it("minor", () => {
-			const actual = generateBumpVersionBranchName("client", "minor", "2.0.0-internal.1.0.0");
+			const actual = generateBumpVersionBranchName(
+				"client",
+				"minor",
+				"2.0.0-internal.1.0.0",
+			);
 			const expected = "bump_client_minor_2.0.0-internal.1.1.0";
 			assert.equal(actual, expected);
 		});
 
 		it("major", () => {
-			const actual = generateBumpVersionBranchName("client", "major", "2.0.0-internal.1.0.0");
+			const actual = generateBumpVersionBranchName(
+				"client",
+				"major",
+				"2.0.0-internal.1.0.0",
+			);
 			const expected = "bump_client_major_2.0.0-internal.2.0.0";
 			assert.equal(actual, expected);
 		});
@@ -78,19 +90,31 @@ describe("generateBumpDepsBranchName", () => {
 
 	describe("Fluid internal versions", () => {
 		it("patch", () => {
-			const actual = generateBumpVersionBranchName("client", "patch", "2.0.0-internal.1.0.0");
+			const actual = generateBumpVersionBranchName(
+				"client",
+				"patch",
+				"2.0.0-internal.1.0.0",
+			);
 			const expected = "bump_client_patch_2.0.0-internal.1.0.1";
 			assert.equal(actual, expected);
 		});
 
 		it("minor", () => {
-			const actual = generateBumpVersionBranchName("client", "minor", "2.0.0-internal.1.0.0");
+			const actual = generateBumpVersionBranchName(
+				"client",
+				"minor",
+				"2.0.0-internal.1.0.0",
+			);
 			const expected = "bump_client_minor_2.0.0-internal.1.1.0";
 			assert.equal(actual, expected);
 		});
 
 		it("major", () => {
-			const actual = generateBumpVersionBranchName("client", "major", "2.0.0-internal.1.0.0");
+			const actual = generateBumpVersionBranchName(
+				"client",
+				"major",
+				"2.0.0-internal.1.0.0",
+			);
 			const expected = "bump_client_major_2.0.0-internal.2.0.0";
 			assert.equal(actual, expected);
 		});
@@ -141,7 +165,10 @@ describe("generateReleaseBranchName", () => {
 	});
 
 	it("Independent package with standard semver", () => {
-		const actual = generateReleaseBranchName("@fluidframework/build-common", "1.2.1");
+		const actual = generateReleaseBranchName(
+			"@fluidframework/build-common",
+			"1.2.1",
+		);
 		const expected = "release/build-common/1.2";
 		assert.equal(actual, expected);
 	});

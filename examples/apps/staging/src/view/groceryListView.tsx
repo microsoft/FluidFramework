@@ -5,7 +5,10 @@
 
 import React, { FC, useEffect, useRef, useState } from "react";
 
-import type { ISuggestionGroceryList, ISuggestionGroceryItem } from "../container/index.js";
+import type {
+	ISuggestionGroceryList,
+	ISuggestionGroceryItem,
+} from "../container/index.js";
 
 interface IGroceryItemViewProps {
 	groceryItem: ISuggestionGroceryItem;
@@ -30,7 +33,10 @@ const GroceryItemView: FC<IGroceryItemViewProps> = ({
 				↩️
 			</button>
 		) : (
-			<button onClick={groceryItem.removeItem} style={{ border: "none", background: "none" }}>
+			<button
+				onClick={groceryItem.removeItem}
+				style={{ border: "none", background: "none" }}
+			>
 				❌
 			</button>
 		);
@@ -66,7 +72,12 @@ const AddItemView: FC<IAddItemViewProps> = ({ addItem }: IAddItemViewProps) => {
 		<>
 			<tr style={{ borderTop: "3px solid black" }}>
 				<td>
-					<input ref={nameRef} type="text" placeholder="New item" style={{ width: "200px" }} />
+					<input
+						ref={nameRef}
+						type="text"
+						placeholder="New item"
+						style={{ width: "200px" }}
+					/>
 				</td>
 			</tr>
 			<tr>
@@ -111,10 +122,18 @@ export const GroceryListView: FC<IGroceryListViewProps> = ({
 	// regarding more granular updates as noted in the above TODO.
 	const groceryItemViews = groceryItems
 		.sort((a, b) => a.id.localeCompare(b.id, "en", { sensitivity: "base" }))
-		.map((groceryItem) => <GroceryItemView key={groceryItem.id} groceryItem={groceryItem} />);
+		.map((groceryItem) => (
+			<GroceryItemView key={groceryItem.id} groceryItem={groceryItem} />
+		));
 
 	return (
-		<table style={{ margin: "0 auto", textAlign: "left", borderCollapse: "collapse" }}>
+		<table
+			style={{
+				margin: "0 auto",
+				textAlign: "left",
+				borderCollapse: "collapse",
+			}}
+		>
 			<tbody>
 				{groceryItemViews}
 				{groceryItemViews.length === 0 && (

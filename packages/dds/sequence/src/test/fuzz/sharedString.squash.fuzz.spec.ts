@@ -39,7 +39,9 @@ export type PoisonedSharedString = ISharedString & {
 	poisonedHandleLocations: LocalReferencePosition[];
 };
 
-export function isPoisonedSharedString(s: ISharedString): s is PoisonedSharedString {
+export function isPoisonedSharedString(
+	s: ISharedString,
+): s is PoisonedSharedString {
 	return (
 		(s as PoisonedSharedString).poisonedHandleLocations !== undefined &&
 		Array.isArray((s as PoisonedSharedString).poisonedHandleLocations)
@@ -50,19 +52,21 @@ type FuzzTestState = SquashFuzzTestState<SharedStringFactory>;
 
 type SquashOperation = AddPoisonedText | Operation;
 
-interface SquashOperationGenerationConfig extends SharedStringOperationGenerationConfig {
+interface SquashOperationGenerationConfig
+	extends SharedStringOperationGenerationConfig {
 	weights: SharedStringOperationGenerationConfig["weights"] & {
 		addPoisonedHandleText: number;
 	};
 }
 
-const defaultSquashOperationGenerationConfig: SquashOperationGenerationConfig = {
-	...defaultIntervalOperationGenerationConfig,
-	weights: {
-		...defaultIntervalOperationGenerationConfig.weights,
-		addPoisonedHandleText: 1,
-	},
-};
+const defaultSquashOperationGenerationConfig: SquashOperationGenerationConfig =
+	{
+		...defaultIntervalOperationGenerationConfig,
+		weights: {
+			...defaultIntervalOperationGenerationConfig.weights,
+			addPoisonedHandleText: 1,
+		},
+	};
 
 function makeExitingStagingModeGenerator() {
 	return (state: FuzzTestState): Operation | typeof done => {
@@ -91,10 +95,14 @@ function makeExitingStagingModeGenerator() {
 	};
 }
 
-function makeSquashOperationGenerator(optionsParam?: SquashOperationGenerationConfig) {
+function makeSquashOperationGenerator(
+	optionsParam?: SquashOperationGenerationConfig,
+) {
 	const baseGenerator = makeSharedStringOperationGenerator(optionsParam);
 
-	async function addPoisonedHandleText(state: FuzzTestState): Promise<AddPoisonedText> {
+	async function addPoisonedHandleText(
+		state: FuzzTestState,
+	): Promise<AddPoisonedText> {
 		const { random, client } = state;
 		return {
 			type: "addPoisonedText",
@@ -117,7 +125,11 @@ function makeSquashOperationGenerator(optionsParam?: SquashOperationGenerationCo
 				usableWeights.obliterateRange +
 				usableWeights.annotateRange,
 		],
-		[addPoisonedHandleText, usableWeights.addPoisonedHandleText, isInStagingMode],
+		[
+			addPoisonedHandleText,
+			usableWeights.addPoisonedHandleText,
+			isInStagingMode,
+		],
 	]);
 }
 
@@ -163,9 +175,10 @@ function makeSquashReducer() {
 			}
 
 			if (removedPoisonedHandles.size > 0) {
-				sharedString.poisonedHandleLocations = sharedString.poisonedHandleLocations.filter(
-					(ref) => !removedPoisonedHandles.has(ref),
-				);
+				sharedString.poisonedHandleLocations =
+					sharedString.poisonedHandleLocations.filter(
+						(ref) => !removedPoisonedHandles.has(ref),
+					);
 			}
 		}
 	};

@@ -3,9 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
+import {
+	StaticCodeLoader,
+	TinyliciousModelLoader,
+} from "@fluid-example/example-utils";
 
-import { DiceRollerContainerRuntimeFactory, IDiceRollerAppModel } from "./containerCode.js";
+import {
+	DiceRollerContainerRuntimeFactory,
+	IDiceRollerAppModel,
+} from "./containerCode.js";
 import { renderSampler } from "./view.js";
 
 /**
@@ -14,9 +20,10 @@ import { renderSampler } from "./view.js";
  * @remarks We wrap this in an async function so we can await Fluid's async calls.
  */
 async function start() {
-	const tinyliciousModelLoader = new TinyliciousModelLoader<IDiceRollerAppModel>(
-		new StaticCodeLoader(new DiceRollerContainerRuntimeFactory()),
-	);
+	const tinyliciousModelLoader =
+		new TinyliciousModelLoader<IDiceRollerAppModel>(
+			new StaticCodeLoader(new DiceRollerContainerRuntimeFactory()),
+		);
 
 	let id: string;
 	let model: IDiceRollerAppModel;

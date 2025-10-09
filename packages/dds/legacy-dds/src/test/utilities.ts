@@ -13,10 +13,18 @@ import type { ISharedArray } from "../index.js";
 /**
  * Verifies that two arrays contain the same entries.
  */
-export function verifyEntries<T>(actual: readonly T[], expected: T[], msg?: string): void {
+export function verifyEntries<T>(
+	actual: readonly T[],
+	expected: T[],
+	msg?: string,
+): void {
 	assert.equal(actual.length, expected.length, `Length mismatch. ${msg ?? ""}`);
 	for (let i = 0; i < expected.length; i++) {
-		assert.deepEqual(actual[i], expected[i], `Mismatch at index ${i}. ${msg ?? ""}`);
+		assert.deepEqual(
+			actual[i],
+			expected[i],
+			`Mismatch at index ${i}. ${msg ?? ""}`,
+		);
 	}
 }
 
@@ -28,7 +36,11 @@ export function verifyEventsEmitted(
 	expected: boolean[],
 	eventNames: readonly string[],
 ): void {
-	assert.equal(actual.length, expected.length, "Event array lengths don't match.");
+	assert.equal(
+		actual.length,
+		expected.length,
+		"Event array lengths don't match.",
+	);
 	for (let i = 0; i < actual.length; i++) {
 		assert.equal(
 			actual[i],
@@ -42,13 +54,19 @@ export function verifyEventsEmitted(
  * Returns a random integer between min (inclusive) and max (exclusive).
  */
 export function getRandomInt(min: number, max: number): number {
-	return Math.floor(Math.random() * (Math.floor(max) - Math.ceil(min))) + Math.ceil(min);
+	return (
+		Math.floor(Math.random() * (Math.floor(max) - Math.ceil(min))) +
+		Math.ceil(min)
+	);
 }
 
 /**
  * Inserts all elements of `entries` into the `SharedArray`.
  */
-export function fillEntries(sharedArray: ISharedArray<number>, entries: number[]): void {
+export function fillEntries(
+	sharedArray: ISharedArray<number>,
+	entries: number[],
+): void {
 	let index = 0;
 	for (const entry of entries) {
 		sharedArray.insert(index, entry);

@@ -9,7 +9,11 @@ import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils/interna
 
 import { LocationBase, generateStrings } from "./generateSharedStrings.js";
 
-for (const { snapshotPath, expected, snapshotIsNormalized } of generateStrings()) {
+for (const {
+	snapshotPath,
+	expected,
+	snapshotIsNormalized,
+} of generateStrings()) {
 	const summaryTree = expected.getAttachSummary().summary;
 	const snapshotTree = convertSummaryTreeToITree(summaryTree);
 	if (snapshotIsNormalized || snapshotPath === "v1Intervals/withV1Intervals") {

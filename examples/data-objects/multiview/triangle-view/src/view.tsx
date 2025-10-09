@@ -35,13 +35,20 @@ interface ITriangleViewProps {
  * For now, it only renders out the triangle, but we could enhance it to allow manipulating the coordinates.
  * @internal
  */
-export const TriangleView: React.FC<ITriangleViewProps> = (props: ITriangleViewProps) => {
+export const TriangleView: React.FC<ITriangleViewProps> = (
+	props: ITriangleViewProps,
+) => {
 	const canvasRef = React.createRef<HTMLCanvasElement>();
 	const rerenderCanvas = (): void => {
 		if (canvasRef.current !== null) {
 			const ctx = canvasRef.current.getContext("2d");
 			if (ctx !== null) {
-				renderTriangleToCanvas(ctx, props.coordinate1, props.coordinate2, props.coordinate3);
+				renderTriangleToCanvas(
+					ctx,
+					props.coordinate1,
+					props.coordinate2,
+					props.coordinate3,
+				);
 			}
 		}
 	};

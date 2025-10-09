@@ -19,14 +19,19 @@ import Axios from "axios";
 import express from "express";
 import nconf from "nconf";
 import type Server from "webpack-dev-server";
-import type { Configuration, ExpressRequestHandler, Middleware } from "webpack-dev-server";
+import type {
+	Configuration,
+	ExpressRequestHandler,
+	Middleware,
+} from "webpack-dev-server";
 
 import { tinyliciousUrls } from "./getUrlResolver.js";
 import { RouteOptions } from "./loader.js";
 
 const tokenManager = new OdspTokenManager(odspTokensCache);
 
-const getThisOrigin = (options: RouteOptions): string => `http://localhost:${options.port}`;
+const getThisOrigin = (options: RouteOptions): string =>
+	`http://localhost:${options.port}`;
 
 function getPublicClientConfig(): IPublicClientConfig {
 	const clientId = process.env.local__testing__clientId;
@@ -46,7 +51,10 @@ function getTestTenantCredentials(mode: "spo" | "spo-df"): {
 	siteUrl: string;
 	server: string;
 } {
-	const credentials = getOdspCredentials(mode === "spo" ? "odsp" : "odsp-df", 0);
+	const credentials = getOdspCredentials(
+		mode === "spo" ? "odsp" : "odsp-df",
+		0,
+	);
 	// If we wanted to allow some mechanism for user selection, we could add it here.
 	const { username, password } = credentials[0];
 
@@ -128,17 +136,24 @@ const makeAfterMiddlewares = (
 		}
 	}
 
-	if (options.mode === "docker" || options.mode === "r11s" || options.mode === "tinylicious") {
-		options.bearerSecret = options.bearerSecret ?? config.get("fluid:webpack:bearerSecret");
+	if (
+		options.mode === "docker" ||
+		options.mode === "r11s" ||
+		options.mode === "tinylicious"
+	) {
+		options.bearerSecret =
+			options.bearerSecret ?? config.get("fluid:webpack:bearerSecret");
 		if (options.mode !== "tinylicious") {
-			options.tenantId = options.tenantId ?? config.get("fluid:webpack:tenantId") ?? "fluid";
+			options.tenantId =
+				options.tenantId ?? config.get("fluid:webpack:tenantId") ?? "fluid";
 
 			options.enableWholeSummaryUpload =
 				options.enableWholeSummaryUpload ??
 				config.get("fluid:webpack:enableWholeSummaryUpload") ??
 				false;
 			if (typeof options.enableWholeSummaryUpload === "string") {
-				options.enableWholeSummaryUpload = options.enableWholeSummaryUpload === "true";
+				options.enableWholeSummaryUpload =
+					options.enableWholeSummaryUpload === "true";
 			}
 
 			options.tenantSecret =
@@ -150,8 +165,10 @@ const makeAfterMiddlewares = (
 
 			if (options.mode === "r11s") {
 				options.discoveryEndpoint =
-					options.discoveryEndpoint ?? config.get("fluid:webpack:discoveryEndpoint");
-				options.fluidHost = options.fluidHost ?? config.get("fluid:webpack:fluidHost");
+					options.discoveryEndpoint ??
+					config.get("fluid:webpack:discoveryEndpoint");
+				options.fluidHost =
+					options.fluidHost ?? config.get("fluid:webpack:fluidHost");
 			}
 		}
 	}
@@ -166,7 +183,9 @@ const makeAfterMiddlewares = (
 		);
 	}
 
-	let readyP: ((req: express.Request, res: express.Response) => Promise<boolean>) | undefined;
+	let readyP:
+		| ((req: express.Request, res: express.Response) => Promise<boolean>)
+		| undefined;
 	if (options.mode === "spo-df" || options.mode === "spo") {
 		const { tokenConfig, server } = getTestTenantCredentials(options.mode);
 		options.server = server;
@@ -293,7 +312,8 @@ const makeAfterMiddlewares = (
 		{
 			// Ignore favicon.ico urls.
 			path: "/favicon.ico",
-			middleware: ((req: express.Request, res) => res.end()) as ExpressRequestHandler,
+			middleware: ((req: express.Request, res) =>
+				res.end()) as ExpressRequestHandler,
 		},
 		{
 			/**
@@ -379,7 +399,9 @@ const fluid = (
 ) => {
 	const documentId = req.params.id;
 	// eslint-disable-next-line @typescript-eslint/no-require-imports,@typescript-eslint/no-var-requires
-	const packageJson = require(path.join(baseDir, "./package.json")) as IFluidPackage;
+	const packageJson = require(
+		path.join(baseDir, "./package.json"),
+	) as IFluidPackage;
 
 	const umd = packageJson.fluid.browser?.umd;
 	assert(umd !== undefined, 0x329 /* browser.umd property is undefined */);

@@ -50,8 +50,10 @@ const fieldBatchCodec = {
 };
 
 const modularFamily = new ModularChangeFamily(fieldKinds, failCodecFamily);
-const defaultEditor = new DefaultEditBuilder(modularFamily, mintRevisionTag, (taggedChange) =>
-	dataChanges.push(taggedChange.change),
+const defaultEditor = new DefaultEditBuilder(
+	modularFamily,
+	mintRevisionTag,
+	(taggedChange) => dataChanges.push(taggedChange.change),
 );
 
 // Side effects results in `dataChanges` being populated
@@ -82,7 +84,10 @@ const stSchemaChange: SharedTreeChange = {
 	changes: [
 		{
 			type: "schema",
-			innerChange: { schema: { new: emptySchema, old: emptySchema }, isInverse: false },
+			innerChange: {
+				schema: { new: emptySchema, old: emptySchema },
+				isInverse: false,
+			},
 		},
 	],
 };
@@ -241,7 +246,11 @@ describe("SharedTreeChangeFamily", () => {
 					changes: [
 						{
 							type: "data",
-							innerChange: modularFamily.invert(makeAnonChange(dataChange1), isRollback, tag),
+							innerChange: modularFamily.invert(
+								makeAnonChange(dataChange1),
+								isRollback,
+								tag,
+							),
 						},
 					],
 				};
@@ -315,9 +324,15 @@ describe("SharedTreeChangeFamily", () => {
 		it("updates all data changes", () => {
 			const input: SharedTreeChange = {
 				changes: [
-					{ innerChange: [idInForest1] as unknown as ModularChangeset, type: "data" },
+					{
+						innerChange: [idInForest1] as unknown as ModularChangeset,
+						type: "data",
+					},
 					schemaChange,
-					{ innerChange: [idInForest2] as unknown as ModularChangeset, type: "data" },
+					{
+						innerChange: [idInForest2] as unknown as ModularChangeset,
+						type: "data",
+					},
 				],
 			};
 			const updated = testUpdateRefreshers(input);
@@ -332,15 +347,24 @@ describe("SharedTreeChangeFamily", () => {
 		it("excludes refreshers from later changes if they are included in earlier changes", () => {
 			const input: SharedTreeChange = {
 				changes: [
-					{ innerChange: [idInForest1] as unknown as ModularChangeset, type: "data" },
-					schemaChange,
 					{
-						innerChange: [idInForest1, idInForest2] as unknown as ModularChangeset,
+						innerChange: [idInForest1] as unknown as ModularChangeset,
 						type: "data",
 					},
 					schemaChange,
 					{
-						innerChange: [idInForest1, idInForest2] as unknown as ModularChangeset,
+						innerChange: [
+							idInForest1,
+							idInForest2,
+						] as unknown as ModularChangeset,
+						type: "data",
+					},
+					schemaChange,
+					{
+						innerChange: [
+							idInForest1,
+							idInForest2,
+						] as unknown as ModularChangeset,
 						type: "data",
 					},
 				],
@@ -359,7 +383,10 @@ describe("SharedTreeChangeFamily", () => {
 		it("throws for missing refreshers in first data change", () => {
 			const input: SharedTreeChange = {
 				changes: [
-					{ innerChange: [idNotInForest] as unknown as ModularChangeset, type: "data" },
+					{
+						innerChange: [idNotInForest] as unknown as ModularChangeset,
+						type: "data",
+					},
 				],
 			};
 			assert.throws(() => testUpdateRefreshers(input));
@@ -367,10 +394,16 @@ describe("SharedTreeChangeFamily", () => {
 		it("tolerates missing refreshers in later data changes", () => {
 			const input: SharedTreeChange = {
 				changes: [
-					{ innerChange: [idInForest1] as unknown as ModularChangeset, type: "data" },
+					{
+						innerChange: [idInForest1] as unknown as ModularChangeset,
+						type: "data",
+					},
 					schemaChange,
 					{
-						innerChange: [idNotInForest, idInForest2] as unknown as ModularChangeset,
+						innerChange: [
+							idNotInForest,
+							idInForest2,
+						] as unknown as ModularChangeset,
 						type: "data",
 					},
 				],

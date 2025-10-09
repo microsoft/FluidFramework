@@ -20,5 +20,7 @@ export interface IInventoryListAppViewProps {
 export const InventoryListAppView: React.FC<IInventoryListAppViewProps> = ({
 	model,
 }: IInventoryListAppViewProps) => {
-	return <InventoryListView migratingInventoryList={model.migratingInventoryList} />;
+	return (
+		<InventoryListView migratingInventoryList={model.migratingInventoryList} />
+	);
 };

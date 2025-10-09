@@ -36,7 +36,8 @@ describe("same-container migration", () => {
 			// Validate the migration status shows "one"
 			await page.waitForSelector(".migration-status");
 			const containsOne = await page.evaluate(() => {
-				const migrationStatusElement = document.querySelector(".migration-status");
+				const migrationStatusElement =
+					document.querySelector(".migration-status");
 				return migrationStatusElement?.textContent?.includes("one") === true;
 			});
 			await expect(containsOne).toEqual(true);
@@ -50,12 +51,18 @@ describe("same-container migration", () => {
 				page.waitForSelector("#sbs-right .migration-status"),
 			]);
 			const leftContainsOne = await page.evaluate(() => {
-				const migrationStatusElements = document.querySelectorAll(".migration-status");
-				return migrationStatusElements[0]?.textContent?.includes("one") === true;
+				const migrationStatusElements =
+					document.querySelectorAll(".migration-status");
+				return (
+					migrationStatusElements[0]?.textContent?.includes("one") === true
+				);
 			});
 			const rightContainsOne = await page.evaluate(() => {
-				const migrationStatusElements = document.querySelectorAll(".migration-status");
-				return migrationStatusElements[1]?.textContent?.includes("one") === true;
+				const migrationStatusElements =
+					document.querySelectorAll(".migration-status");
+				return (
+					migrationStatusElements[1]?.textContent?.includes("one") === true
+				);
 			});
 			await expect(leftContainsOne).toEqual(true);
 			await expect(rightContainsOne).toEqual(true);
@@ -67,13 +74,13 @@ describe("same-container migration", () => {
 
 			// Get a promise that will resolve when both sides have finished migration
 			const migrationP = page.evaluate(() => {
-				const migrationPs = (window["migrators"] as ISameContainerMigrator[]).map(
-					(migrator) => {
-						return new Promise<void>((resolve) => {
-							migrator.once("migrated", resolve);
-						});
-					},
-				);
+				const migrationPs = (
+					window["migrators"] as ISameContainerMigrator[]
+				).map((migrator) => {
+					return new Promise<void>((resolve) => {
+						migrator.once("migrated", resolve);
+					});
+				});
 				return Promise.all(migrationPs);
 			});
 
@@ -83,12 +90,18 @@ describe("same-container migration", () => {
 
 			// Validate the migration status shows "two" after the migration
 			const leftContainsTwo = await page.evaluate(() => {
-				const migrationStatusElements = document.querySelectorAll(".migration-status");
-				return migrationStatusElements[0]?.textContent?.includes("two") === true;
+				const migrationStatusElements =
+					document.querySelectorAll(".migration-status");
+				return (
+					migrationStatusElements[0]?.textContent?.includes("two") === true
+				);
 			});
 			const rightContainsTwo = await page.evaluate(() => {
-				const migrationStatusElements = document.querySelectorAll(".migration-status");
-				return migrationStatusElements[1]?.textContent?.includes("two") === true;
+				const migrationStatusElements =
+					document.querySelectorAll(".migration-status");
+				return (
+					migrationStatusElements[1]?.textContent?.includes("two") === true
+				);
 			});
 			await expect(leftContainsTwo).toEqual(true);
 			await expect(rightContainsTwo).toEqual(true);
@@ -109,12 +122,18 @@ describe("same-container migration", () => {
 				page.waitForSelector("#sbs-right .migration-status"),
 			]);
 			const leftContainsOne = await page.evaluate(() => {
-				const migrationStatusElements = document.querySelectorAll(".migration-status");
-				return migrationStatusElements[0]?.textContent?.includes("one") === true;
+				const migrationStatusElements =
+					document.querySelectorAll(".migration-status");
+				return (
+					migrationStatusElements[0]?.textContent?.includes("one") === true
+				);
 			});
 			const rightContainsOne = await page.evaluate(() => {
-				const migrationStatusElements = document.querySelectorAll(".migration-status");
-				return migrationStatusElements[1]?.textContent?.includes("one") === true;
+				const migrationStatusElements =
+					document.querySelectorAll(".migration-status");
+				return (
+					migrationStatusElements[1]?.textContent?.includes("one") === true
+				);
 			});
 			await expect(leftContainsOne).toEqual(true);
 			await expect(rightContainsOne).toEqual(true);
@@ -152,13 +171,13 @@ describe("same-container migration", () => {
 
 			// Get a promise that will resolve when both sides have finished migration
 			const migrationP = page.evaluate(() => {
-				const migrationPs = (window["migrators"] as ISameContainerMigrator[]).map(
-					(migrator) => {
-						return new Promise<void>((resolve) => {
-							migrator.once("migrated", resolve);
-						});
-					},
-				);
+				const migrationPs = (
+					window["migrators"] as ISameContainerMigrator[]
+				).map((migrator) => {
+					return new Promise<void>((resolve) => {
+						migrator.once("migrated", resolve);
+					});
+				});
 				return Promise.all(migrationPs);
 			});
 
@@ -168,12 +187,18 @@ describe("same-container migration", () => {
 
 			// Validate the migration status shows "two" after the migration
 			const leftContainsTwo = await page.evaluate(() => {
-				const migrationStatusElements = document.querySelectorAll(".migration-status");
-				return migrationStatusElements[0]?.textContent?.includes("two") === true;
+				const migrationStatusElements =
+					document.querySelectorAll(".migration-status");
+				return (
+					migrationStatusElements[0]?.textContent?.includes("two") === true
+				);
 			});
 			const rightContainsTwo = await page.evaluate(() => {
-				const migrationStatusElements = document.querySelectorAll(".migration-status");
-				return migrationStatusElements[1]?.textContent?.includes("two") === true;
+				const migrationStatusElements =
+					document.querySelectorAll(".migration-status");
+				return (
+					migrationStatusElements[1]?.textContent?.includes("two") === true
+				);
 			});
 			await expect(leftContainsTwo).toEqual(true);
 			await expect(rightContainsTwo).toEqual(true);

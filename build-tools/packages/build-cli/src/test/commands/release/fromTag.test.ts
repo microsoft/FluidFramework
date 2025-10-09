@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { ReleaseVersion, VersionBumpType } from "@fluid-tools/version-tools";
+import type {
+	ReleaseVersion,
+	VersionBumpType,
+} from "@fluid-tools/version-tools";
 import { runCommand } from "@oclif/test";
 import { expect } from "chai";
 import * as chai from "chai";
@@ -38,9 +41,12 @@ describe("flub release fromTag", () => {
 	};
 
 	it("--json", async () => {
-		const { stdout } = await runCommand(["release:fromTag", "build-tools_v0.26.1", "--json"], {
-			root: import.meta.url,
-		});
+		const { stdout } = await runCommand(
+			["release:fromTag", "build-tools_v0.26.1", "--json"],
+			{
+				root: import.meta.url,
+			},
+		);
 		const output: jsonOutput = JSON.parse(stdout) as jsonOutput;
 		expect(output).to.deep.equal(expected);
 	});

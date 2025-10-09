@@ -55,7 +55,10 @@ class LoggingVisitor implements DeltaVisitor {
 	}
 }
 
-class LoggingAnnouncedVisitor extends LoggingVisitor implements AnnouncedVisitor {
+class LoggingAnnouncedVisitor
+	extends LoggingVisitor
+	implements AnnouncedVisitor
+{
 	public readonly type = "Announced";
 	public afterCreate(): void {
 		this.log("afterCreate");

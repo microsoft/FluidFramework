@@ -62,7 +62,10 @@ abstract class PerspectiveBase {
 			return false;
 		}
 
-		if (isRemoved(seg) && seg.removes.some((remove) => this.hasOccurred(remove))) {
+		if (
+			isRemoved(seg) &&
+			seg.removes.some((remove) => this.hasOccurred(remove))
+		) {
 			return false;
 		}
 
@@ -100,7 +103,10 @@ export class PriorPerspective extends PerspectiveBase implements Perspective {
  * This is a useful perspective when the local client is in the process of reconnecting, since it must
  * rederive positions for unacked ops while only considering a portion of its own edits as having been applied.
  */
-export class LocalReconnectingPerspective extends PerspectiveBase implements Perspective {
+export class LocalReconnectingPerspective
+	extends PerspectiveBase
+	implements Perspective
+{
 	public constructor(
 		public readonly refSeq: number,
 		public readonly clientId: number,
@@ -171,7 +177,10 @@ export function createLocalReconnectingPerspective(
  * This can be represented using {@link PriorPerspective} with a refSeq of `Number.MAX_SAFE_INTEGER`, but having an explicit
  * variant of this perspective renders extra refSeq checks unnecessary and is a bit easier to read.
  */
-export class LocalDefaultPerspective extends PerspectiveBase implements Perspective {
+export class LocalDefaultPerspective
+	extends PerspectiveBase
+	implements Perspective
+{
 	public readonly refSeq = Number.MAX_SAFE_INTEGER;
 
 	public constructor(public readonly clientId: number) {
@@ -191,7 +200,10 @@ export class LocalDefaultPerspective extends PerspectiveBase implements Perspect
  * This ends up not affecting the current obliterate implementation (which has some special casing in the mapRange calls it uses),
  * but use with caution.
  */
-export class RemoteObliteratePerspective extends PerspectiveBase implements Perspective {
+export class RemoteObliteratePerspective
+	extends PerspectiveBase
+	implements Perspective
+{
 	public readonly refSeq = Number.MAX_SAFE_INTEGER;
 
 	constructor(public readonly clientId: number) {
@@ -212,7 +224,9 @@ export class RemoteObliteratePerspective extends PerspectiveBase implements Pers
 	}
 }
 
-function isRemoveOperationStamp(stamp: OperationStamp): stamp is RemoveOperationStamp {
+function isRemoveOperationStamp(
+	stamp: OperationStamp,
+): stamp is RemoveOperationStamp {
 	const { type } = stamp as unknown as RemoveOperationStamp;
 	return type === "setRemove" || type === "sliceRemove";
 }

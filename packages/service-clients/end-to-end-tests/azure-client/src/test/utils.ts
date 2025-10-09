@@ -4,7 +4,10 @@
  */
 
 import type { AzureMember, IAzureAudience } from "@fluidframework/azure-client";
-import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import type {
+	ConfigTypes,
+	IConfigProviderBase,
+} from "@fluidframework/core-interfaces";
 import type { IMember } from "@fluidframework/fluid-static";
 import type { ISharedMap, IValueChanged } from "@fluidframework/map/legacy";
 
@@ -61,7 +64,10 @@ export const configProvider = (
  *
  * @returns - The test matrix
  */
-export function getTestMatrix(): { variant: string; options: { isEphemeral: boolean } }[] {
+export function getTestMatrix(): {
+	variant: string;
+	options: { isEphemeral: boolean };
+}[] {
 	const testMatrix = [
 		{
 			variant: "Durable Container",

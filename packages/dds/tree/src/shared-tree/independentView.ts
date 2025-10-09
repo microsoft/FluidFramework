@@ -35,7 +35,11 @@ import type {
 	ImplicitFieldSchema,
 	TreeViewAlpha,
 } from "../simple-tree/index.js";
-import { type JsonCompatibleReadOnly, type JsonCompatible, Breakable } from "../util/index.js";
+import {
+	type JsonCompatibleReadOnly,
+	type JsonCompatible,
+	Breakable,
+} from "../util/index.js";
 import {
 	buildConfiguredForest,
 	defaultSharedTreeOptions,
@@ -59,8 +63,10 @@ export function independentView<const TSchema extends ImplicitFieldSchema>(
 	options: ForestOptions & { idCompressor?: IIdCompressor | undefined },
 ): TreeViewAlpha<TSchema> {
 	const breaker = new Breakable("independentView");
-	const idCompressor: IIdCompressor = options.idCompressor ?? createIdCompressor();
-	const mintRevisionTag = (): RevisionTag => idCompressor.generateCompressedId();
+	const idCompressor: IIdCompressor =
+		options.idCompressor ?? createIdCompressor();
+	const mintRevisionTag = (): RevisionTag =>
+		idCompressor.generateCompressedId();
 	const revisionTagCodec = new RevisionTagCodec(idCompressor);
 	const schema = new TreeStoredSchemaRepository();
 	const forest = buildConfiguredForest(
@@ -70,11 +76,16 @@ export function independentView<const TSchema extends ImplicitFieldSchema>(
 		idCompressor,
 		defaultIncrementalEncodingPolicy,
 	);
-	const checkout = createTreeCheckout(idCompressor, mintRevisionTag, revisionTagCodec, {
-		forest,
-		schema,
-		breaker,
-	});
+	const checkout = createTreeCheckout(
+		idCompressor,
+		mintRevisionTag,
+		revisionTagCodec,
+		{
+			forest,
+			schema,
+			breaker,
+		},
+	);
 	const out: TreeViewAlpha<TSchema> = new SchematizingSimpleTreeView<TSchema>(
 		checkout,
 		config,
@@ -93,7 +104,9 @@ export function independentView<const TSchema extends ImplicitFieldSchema>(
  * TODO: Providing an API which generates a {@link ViewableTree} extended with export options from {@link ITreeAlpha} and maybe even branching APIs would likely be better that just exposing a {@link TreeViewAlpha}.
  * @alpha
  */
-export function independentInitializedView<const TSchema extends ImplicitFieldSchema>(
+export function independentInitializedView<
+	const TSchema extends ImplicitFieldSchema,
+>(
 	config: TreeViewConfiguration<TSchema>,
 	options: ForestOptions & ICodecOptions,
 	content: ViewContent,
@@ -110,8 +123,14 @@ export function independentInitializedView<const TSchema extends ImplicitFieldSc
 		schema: { schema, policy: defaultSchemaPolicy },
 	};
 
-	const fieldCursors = fieldBatchCodec.decode(content.tree as JsonCompatibleReadOnly, context);
-	assert(fieldCursors.length === 1, 0xa5b /* must have exactly 1 field in batch */);
+	const fieldCursors = fieldBatchCodec.decode(
+		content.tree as JsonCompatibleReadOnly,
+		context,
+	);
+	assert(
+		fieldCursors.length === 1,
+		0xa5b /* must have exactly 1 field in batch */,
+	);
 
 	return independentInitializedViewInternal(
 		config,
@@ -127,7 +146,9 @@ export function independentInitializedView<const TSchema extends ImplicitFieldSc
 /**
  * {@link independentInitializedView} but using internal types instead of persisted data formats.
  */
-export function independentInitializedViewInternal<const TSchema extends ImplicitFieldSchema>(
+export function independentInitializedViewInternal<
+	const TSchema extends ImplicitFieldSchema,
+>(
 	config: TreeViewConfiguration<TSchema>,
 	options: ForestOptions & ICodecOptions,
 	schema: TreeStoredSchema,
@@ -136,7 +157,8 @@ export function independentInitializedViewInternal<const TSchema extends Implici
 ): SchematizingSimpleTreeView<TSchema> {
 	const breaker = new Breakable("independentInitializedView");
 	const revisionTagCodec = new RevisionTagCodec(idCompressor);
-	const mintRevisionTag = (): RevisionTag => idCompressor.generateCompressedId();
+	const mintRevisionTag = (): RevisionTag =>
+		idCompressor.generateCompressedId();
 
 	// To ensure the forest is in schema when constructed, start it with an empty schema and set the schema repository content later.
 	const schemaRepository = new TreeStoredSchemaRepository();
@@ -149,16 +171,23 @@ export function independentInitializedViewInternal<const TSchema extends Implici
 		defaultIncrementalEncodingPolicy,
 	);
 
-	const checkout = createTreeCheckout(idCompressor, mintRevisionTag, revisionTagCodec, {
-		forest,
-		schema: schemaRepository,
-		breaker,
-	});
+	const checkout = createTreeCheckout(
+		idCompressor,
+		mintRevisionTag,
+		revisionTagCodec,
+		{
+			forest,
+			schema: schemaRepository,
+			breaker,
+		},
+	);
 
 	initialize(
 		checkout,
 		schema,
-		initializerFromChunk(checkout, () => checkout.forest.chunkField(rootFieldCursor)),
+		initializerFromChunk(checkout, () =>
+			checkout.forest.chunkField(rootFieldCursor),
+		),
 	);
 	return new SchematizingSimpleTreeView<TSchema>(
 		checkout,

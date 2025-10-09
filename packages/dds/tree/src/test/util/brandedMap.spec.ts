@@ -39,7 +39,10 @@ describe("BrandedMap", () => {
 
 	// Example from BrandedMapSubset docs.
 	it("example", () => {
-		type FooSlot<TContent> = BrandedKey<Opaque<Brand<number, "FooSlot">>, TContent>;
+		type FooSlot<TContent> = BrandedKey<
+			Opaque<Brand<number, "FooSlot">>,
+			TContent
+		>;
 		const counterSlot = brandedSlot<FooSlot<number>>();
 		// See note on BrandedKey
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any

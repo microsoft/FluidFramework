@@ -101,7 +101,10 @@ export function typeToString(typeChecker: TypeChecker, type: Type): string {
  * @param node - The type node to decompose
  * @returns DecompositionResult for the type
  */
-export function decomposeType(checker: TypeChecker, node: Type): DecompositionResult {
+export function decomposeType(
+	checker: TypeChecker,
+	node: Type,
+): DecompositionResult {
 	const result = {
 		typeAsString: typeToString(checker, node),
 		replacedTypes: new Set<string>(),

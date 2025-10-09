@@ -1,24 +1,20 @@
 {
-  "version": 1,
-  "nodes": {
-    "test.hasRenamedField": {
-      "object": {
-        "stored-name": {
-          "kind": "Value",
-          "types": [
-            "test.minimal"
-          ]
-        }
-      }
-    },
-    "test.minimal": {
-      "object": {}
-    }
-  },
-  "root": {
-    "kind": "Value",
-    "types": [
-      "test.hasRenamedField"
-    ]
-  }
+	"version": 1,
+	"nodes": {
+		"test.hasRenamedField": {
+			"object": {
+				"stored-name": {
+					"kind": "Value",
+					"types": ["test.minimal"]
+				}
+			}
+		},
+		"test.minimal": {
+			"object": {}
+		}
+	},
+	"root": {
+		"kind": "Value",
+		"types": ["test.hasRenamedField"]
+	}
 }

@@ -71,7 +71,8 @@ export interface IWriteSummaryInfo {
 /**
  * Check if the given payload is a container summary.
  */
-export const isContainerSummary = (payload: IWholeSummaryPayload) => payload.type === "container";
+export const isContainerSummary = (payload: IWholeSummaryPayload) =>
+	payload.type === "container";
 /**
  * Check if the given payload is a channel summary.
  */
@@ -199,8 +200,8 @@ async function createNewSummaryVersion(
 	const commitMessage = isNewDocument
 		? "New document"
 		: // Checking client vs. service summary involves checking whether .protocol payload entry
-		  // is a handle or value. At the moment, there is no real need for this message to distinguish the two.
-		  `Summary @${sequenceNumber}`;
+			// is a handle or value. At the moment, there is no real need for this message to distinguish the two.
+			`Summary @${sequenceNumber}`;
 	const commitParams: ICreateCommitParams = {
 		author: {
 			date: new Date().toISOString(),

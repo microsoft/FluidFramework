@@ -10,7 +10,7 @@
 			"name": "Mocha Tests",
 			"program": "/usr/local/bin/mocha",
 			"args": ["--recursive", "dist/test", "--grep Checked"],
-			"internalConsoleOptions": "openOnSessionStart"
+			"internalConsoleOptions": "openOnSessionStart",
 		},
 		{
 			"name": "Chrome",
@@ -20,8 +20,8 @@
 			"sourceMaps": true,
 			"url": "localhost:3000/sharedText/oct18-3",
 			"pathMapping": {
-				"/public/scripts/dist/src/": "${workspaceRoot}/dist"
-			}
+				"/public/scripts/dist/src/": "${workspaceRoot}/dist",
+			},
 		},
 		{
 			"type": "node",
@@ -29,7 +29,7 @@
 			"sourceMaps": true,
 			"protocol": "inspector",
 			"name": "Mocha attach",
-			"port": 9229
+			"port": 9229,
 		},
 		{
 			"type": "node",
@@ -38,7 +38,7 @@
 			"sourceMaps": true,
 			"outFiles": ["${workspaceRoot}/dist/**/*.js"],
 			"protocol": "inspector",
-			"program": "${workspaceRoot}/dist/test/merge-tree/beastTest.js"
+			"program": "${workspaceRoot}/dist/test/merge-tree/beastTest.js",
 		},
 		{
 			"type": "node",
@@ -52,7 +52,7 @@
 			"remoteRoot": "/usr/src/server",
 			"outFiles": ["${workspaceRoot}/dist/**/*.js"],
 			"protocol": "inspector",
-			"trace": "sm"
+			"trace": "sm",
 		},
 		{
 			"type": "node",
@@ -66,7 +66,7 @@
 			"remoteRoot": "/usr/src/server",
 			"outFiles": ["${workspaceRoot}/dist/**/*.js"],
 			"protocol": "inspector",
-			"trace": "sm"
+			"trace": "sm",
 		},
 		{
 			"type": "node",
@@ -80,7 +80,7 @@
 			"remoteRoot": "/usr/src/server",
 			"outFiles": ["${workspaceRoot}/dist/**/*.js"],
 			"protocol": "inspector",
-			"trace": "sm"
+			"trace": "sm",
 		},
 		{
 			"type": "node",
@@ -94,7 +94,7 @@
 			"remoteRoot": "/usr/src/server",
 			"outFiles": ["${workspaceRoot}/dist/**/*.js"],
 			"protocol": "inspector",
-			"trace": "sm"
+			"trace": "sm",
 		},
 		{
 			"type": "node",
@@ -108,7 +108,7 @@
 			"remoteRoot": "/usr/src/server",
 			"outFiles": ["${workspaceRoot}/dist/**/*.js"],
 			"protocol": "inspector",
-			"trace": "sm"
-		}
-	]
+			"trace": "sm",
+		},
+	],
 }

@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { DevtoolsPanel, WindowMessageRelay } from "@fluid-internal/devtools-view";
+import {
+	DevtoolsPanel,
+	WindowMessageRelay,
+} from "@fluid-internal/devtools-view";
 import { Resizable } from "re-resizable";
 import React from "react";
 import ReactDOM from "react-dom";
@@ -45,7 +48,9 @@ function DevtoolsView(): React.ReactElement {
 			enable={{ left: true }} // Only allow re-sizing from the left.
 			defaultSize={{ width: 500, height: "100%" }}
 		>
-			<DevtoolsPanel messageRelay={new WindowMessageRelay("fluid-framwork-devtools-inline")} />
+			<DevtoolsPanel
+				messageRelay={new WindowMessageRelay("fluid-framwork-devtools-inline")}
+			/>
 		</Resizable>
 	);
 }

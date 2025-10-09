@@ -47,7 +47,9 @@ export function runBackgroundScript(browser: typeof chrome): void {
 	 * see {@link https://developer.chrome.com/docs/extensions/mv3/devtools/#content-script-to-devtools | here}.
 	 */
 
-	console.log(formatBackgroundScriptMessageForLogging("Initializing Background Worker."));
+	console.log(
+		formatBackgroundScriptMessageForLogging("Initializing Background Worker."),
+	);
 
 	// Only establish messaging when activated by the Devtools Script.
 	browser.runtime.onConnect.addListener((devtoolsPort: Port): void => {
@@ -62,7 +64,9 @@ export function runBackgroundScript(browser: typeof chrome): void {
 		 * Listen for init messages from the Devtools Script, and instantiate tab (Content Script)
 		 * connections as needed.
 		 */
-		const devtoolsMessageListener = (message: Partial<ISourcedDevtoolsMessage>): void => {
+		const devtoolsMessageListener = (
+			message: Partial<ISourcedDevtoolsMessage>,
+		): void => {
 			if (!isDevtoolsMessage(message)) {
 				// Since this handler is attached strictly to our Devtools Script port,
 				// we should *only* see our own messages.
@@ -86,7 +90,11 @@ export function runBackgroundScript(browser: typeof chrome): void {
 
 				const { tabId } = (message as DevToolsInitMessage).data;
 
-				console.log(formatBackgroundScriptMessageForLogging(`Connecting to tab: ${tabId}...`));
+				console.log(
+					formatBackgroundScriptMessageForLogging(
+						`Connecting to tab: ${tabId}...`,
+					),
+				);
 
 				// Wait until the tab is loaded.
 				browser.tabs.get(tabId).then(
@@ -102,7 +110,9 @@ export function runBackgroundScript(browser: typeof chrome): void {
 						});
 
 						console.log(
-							formatBackgroundScriptMessageForLogging(`Connected to tab: ${tabId}.`),
+							formatBackgroundScriptMessageForLogging(
+								`Connected to tab: ${tabId}.`,
+							),
 						);
 
 						// Forward incoming messages from the tab (Content script) to the Devtools script
@@ -147,7 +157,11 @@ export function runBackgroundScript(browser: typeof chrome): void {
 							type: devToolsInitAcknowledgementType,
 							data: undefined,
 						};
-						postMessageToPort(ackMessage, devtoolsPort, backgroundScriptMessageLoggingOptions);
+						postMessageToPort(
+							ackMessage,
+							devtoolsPort,
+							backgroundScriptMessageLoggingOptions,
+						);
 					},
 					(error) => {
 						console.error(
@@ -162,7 +176,9 @@ export function runBackgroundScript(browser: typeof chrome): void {
 				// Bind disconnect listener so we can clean up our mapping appropriately
 				devtoolsPort.onDisconnect.addListener(() => {
 					console.log(
-						formatBackgroundScriptMessageForLogging("Devtools Script has disconnected."),
+						formatBackgroundScriptMessageForLogging(
+							"Devtools Script has disconnected.",
+						),
 					);
 					tabConnection?.disconnect();
 				});

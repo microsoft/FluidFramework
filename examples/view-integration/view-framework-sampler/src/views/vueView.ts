@@ -12,7 +12,10 @@ import { IDiceRoller } from "../dataObject.js";
  * @param diceRoller - The Data Object to be rendered
  * @param div - The HTMLElement to render into
  */
-export function vueRenderDiceRoller(diceRoller: IDiceRoller, div: HTMLDivElement) {
+export function vueRenderDiceRoller(
+	diceRoller: IDiceRoller,
+	div: HTMLDivElement,
+) {
 	const app = createApp({
 		template: `
         <div style="font-size: 50px; text-align: center" >

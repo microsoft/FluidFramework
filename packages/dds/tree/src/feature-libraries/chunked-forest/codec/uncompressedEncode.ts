@@ -54,7 +54,9 @@ const anyArray: EncodedNestedArrayShape = treeIndex;
  * Since this shape contains no information about the actual schema, all schema/shape information is inline in the data:
  * that is why this encoding is called "uncompressed".
  */
-function encodeSequence(cursor: ITreeCursorSynchronous): FluidSerializableReadOnly[] {
+function encodeSequence(
+	cursor: ITreeCursorSynchronous,
+): FluidSerializableReadOnly[] {
 	const data: FluidSerializableReadOnly[] = [];
 	forEachNode(cursor, () => {
 		data.push(cursor.type);

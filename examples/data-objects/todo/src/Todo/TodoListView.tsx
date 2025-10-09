@@ -4,7 +4,10 @@
  */
 
 import { CollaborativeInput } from "@fluid-example/example-utils";
-import { SharedString, type ISharedString } from "@fluidframework/sequence/legacy";
+import {
+	SharedString,
+	type ISharedString,
+} from "@fluidframework/sequence/legacy";
 import React, { useEffect, useRef, useState } from "react";
 
 // eslint-disable-next-line import/no-unassigned-import

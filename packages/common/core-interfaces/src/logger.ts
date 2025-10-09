@@ -11,7 +11,11 @@
  * General best practice is to explicitly log the fields you care about from objects.
  * @public
  */
-export type TelemetryBaseEventPropertyType = string | number | boolean | undefined;
+export type TelemetryBaseEventPropertyType =
+	| string
+	| number
+	| boolean
+	| undefined;
 
 /**
  * A property to be logged to telemetry may require a tag indicating the value may contain sensitive data.
@@ -35,7 +39,9 @@ export interface ITelemetryBaseProperties {
 	 * Properties of a telemetry event. They are string-indexed, and their values restricted to a known set of
 	 * types (optionally "wrapped" with {@link Tagged}).
 	 */
-	[index: string]: TelemetryBaseEventPropertyType | Tagged<TelemetryBaseEventPropertyType>;
+	[index: string]:
+		| TelemetryBaseEventPropertyType
+		| Tagged<TelemetryBaseEventPropertyType>;
 }
 
 /**

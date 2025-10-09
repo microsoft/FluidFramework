@@ -11,7 +11,8 @@ const COMMIT_INFO = "GET /repos/{owner}/{repo}/commits/{ref}";
 const PULL_REQUEST = "POST /repos/{owner}/{repo}/pulls";
 const ASSIGNEE = "POST /repos/{owner}/{repo}/issues/{issue_number}/assignees";
 const LABEL = "POST /repos/{owner}/{repo}/issues/{issue_number}/labels";
-const REVIEWER = "POST /repos/{owner}/{repo}/pulls/{pull_number}/requested_reviewers";
+const REVIEWER =
+	"POST /repos/{owner}/{repo}/pulls/{pull_number}/requested_reviewers";
 
 /**
  * Check if a pull request exists.
@@ -26,7 +27,9 @@ export async function pullRequestExists(
 	repo: string,
 	log: CommandLogger,
 ): Promise<{ found: boolean; url?: string; number?: number }> {
-	log.verbose(`Checking if pull request with title="${title}" exists----------------`);
+	log.verbose(
+		`Checking if pull request with title="${title}" exists----------------`,
+	);
 	const octokit = new Octokit({ auth: token });
 	const response = await octokit.request(PULL_REQUEST_EXISTS, { owner, repo });
 

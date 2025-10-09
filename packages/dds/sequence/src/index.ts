@@ -67,7 +67,11 @@ export {
 	SharedStringSegment,
 	SharedStringClass,
 } from "./sharedString.js";
-export { IJSONRunSegment, SharedSequence, SubSequence } from "./sharedSequence.js";
+export {
+	IJSONRunSegment,
+	SharedSequence,
+	SubSequence,
+} from "./sharedSequence.js";
 
 export {
 	ISegment,

@@ -51,6 +51,7 @@ export interface IOldestClientObserverEvents extends IEvent {
  * @legacy
  * @beta
  */
-export interface IOldestClientObserver extends IEventProvider<IOldestClientObserverEvents> {
+export interface IOldestClientObserver
+	extends IEventProvider<IOldestClientObserverEvents> {
 	isOldest(): boolean;
 }

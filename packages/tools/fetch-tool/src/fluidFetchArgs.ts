@@ -43,7 +43,10 @@ const optionsArray = [
 	["--saveDir <outdir>", "Save data of the snapshots and messages"],
 	["--snapshotVersionIndex <number>", "Index of the version to dump"],
 	["--websocket", "Connect to web socket to download initial messages"],
-	["--local", "Do not connect to storage, use earlier downloaded data. Requires --saveDir."],
+	[
+		"--local",
+		"Do not connect to storage, use earlier downloaded data. Requires --saveDir.",
+	],
 	["--loginHint", "login hint for the user with document access."],
 ];
 
@@ -95,7 +98,9 @@ export function parseArguments() {
 				dumpSnapshotStats = true;
 				break;
 			case "--filter:messageType":
-				messageTypeFilter.add(parseStrArg(i++, "type name for messageType filter"));
+				messageTypeFilter.add(
+					parseStrArg(i++, "type name for messageType filter"),
+				);
 				break;
 			case "--stat:snapshot":
 				dumpSnapshotStats = true;
@@ -116,7 +121,11 @@ export function parseArguments() {
 				paramSnapshotVersionIndex = parseIntArg(i++, "version index", true);
 				break;
 			case "--numSnapshotVersions":
-				paramNumSnapshotVersions = parseIntArg(i++, "number of versions", false);
+				paramNumSnapshotVersions = parseIntArg(
+					i++,
+					"number of versions",
+					false,
+				);
 				break;
 			case "--actualPayload":
 				paramActualFormatting = true;

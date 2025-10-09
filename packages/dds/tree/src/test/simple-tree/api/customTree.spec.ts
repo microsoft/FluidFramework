@@ -75,7 +75,9 @@ describe("simple-tree customTree", () => {
 			) {}
 
 			const contextA = getUnhydratedContext(A);
-			const contextUnknownOptionalFieldA = getUnhydratedContext(UnknownOptionalFieldA);
+			const contextUnknownOptionalFieldA = getUnhydratedContext(
+				UnknownOptionalFieldA,
+			);
 			const contentCursor = fieldCursorFromInsertable(A, { a: 1, b: 2 });
 			contentCursor.enterNode(0);
 
@@ -177,12 +179,18 @@ describe("simple-tree customTree", () => {
 			[""]: schemaFactory.number,
 		});
 		const objectEmptyKeyCase = tryStoredSchemaAsArray(
-			getStoredSchema(objectSchemaEmptyKey, restrictiveStoredSchemaGenerationOptions),
+			getStoredSchema(
+				objectSchemaEmptyKey,
+				restrictiveStoredSchemaGenerationOptions,
+			),
 		);
 		assert.deepEqual(objectEmptyKeyCase, undefined);
 
 		const nonObjectCase = tryStoredSchemaAsArray(
-			getStoredSchema(schemaStatics.number, restrictiveStoredSchemaGenerationOptions),
+			getStoredSchema(
+				schemaStatics.number,
+				restrictiveStoredSchemaGenerationOptions,
+			),
 		);
 		assert.deepEqual(nonObjectCase, undefined);
 	});

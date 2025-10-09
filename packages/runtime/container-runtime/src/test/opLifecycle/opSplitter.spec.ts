@@ -30,8 +30,10 @@ function typeFromBatchedOp(op: IBatchMessage) {
 }
 
 describe("OpSplitter", () => {
-	const batchesSubmitted: { messages: IBatchMessage[]; referenceSequenceNumber?: number }[] =
-		[];
+	const batchesSubmitted: {
+		messages: IBatchMessage[];
+		referenceSequenceNumber?: number;
+	}[] = [];
 
 	const mockSubmitBatchFn = (
 		batch: IBatchMessage[],
@@ -53,8 +55,14 @@ describe("OpSplitter", () => {
 	it("Reconstruct original chunked op", () => {
 		const op1 = generateChunkableOp(chunkSizeInBytes * 2);
 		const op2 = generateChunkableOp(chunkSizeInBytes * 3);
-		const chunks1 = wrapChunkedOps(splitOp(op1, chunkSizeInBytes), "testClient1");
-		const chunks2 = wrapChunkedOps(splitOp(op2, chunkSizeInBytes), "testClient2");
+		const chunks1 = wrapChunkedOps(
+			splitOp(op1, chunkSizeInBytes),
+			"testClient1",
+		);
+		const chunks2 = wrapChunkedOps(
+			splitOp(op2, chunkSizeInBytes),
+			"testClient2",
+		);
 		const opSplitter = new OpSplitter(
 			[],
 			mockSubmitBatchFn,
@@ -88,8 +96,14 @@ describe("OpSplitter", () => {
 	it("Reconstruct original chunked op with extra empty op", () => {
 		const op1 = generateChunkableOp(chunkSizeInBytes * 2);
 		const op2 = generateChunkableOp(chunkSizeInBytes * 3);
-		const chunks1 = wrapChunkedOps(splitOp(op1, chunkSizeInBytes, true), "testClient1");
-		const chunks2 = wrapChunkedOps(splitOp(op2, chunkSizeInBytes, true), "testClient2");
+		const chunks1 = wrapChunkedOps(
+			splitOp(op1, chunkSizeInBytes, true),
+			"testClient1",
+		);
+		const chunks2 = wrapChunkedOps(
+			splitOp(op2, chunkSizeInBytes, true),
+			"testClient2",
+		);
 		const opSplitter = new OpSplitter(
 			[],
 			mockSubmitBatchFn,
@@ -218,7 +232,8 @@ describe("OpSplitter", () => {
 				.slice(0, -1)
 				.every(
 					(chunk) =>
-						chunk.originalCompression === undefined && chunk.originalMetadata === undefined,
+						chunk.originalCompression === undefined &&
+						chunk.originalMetadata === undefined,
 				),
 			true,
 		);
@@ -237,7 +252,10 @@ describe("OpSplitter", () => {
 			mockLogger,
 		);
 		const regularMessage = generateChunkableOp(20);
-		const compressedMessage = { ...regularMessage, metadata: { compressed: true } };
+		const compressedMessage = {
+			...regularMessage,
+			metadata: { compressed: true },
+		};
 
 		// Empty batch
 		assert.throws(() =>
@@ -307,7 +325,13 @@ describe("OpSplitter", () => {
 
 		// Misconfigured op splitter
 		assert.throws(() =>
-			new OpSplitter([], mockSubmitBatchFn, 2, 1, mockLogger).splitSingletonBatchMessage({
+			new OpSplitter(
+				[],
+				mockSubmitBatchFn,
+				2,
+				1,
+				mockLogger,
+			).splitSingletonBatchMessage({
 				messages: [compressedMessage],
 				contentSizeInBytes: 3,
 				referenceSequenceNumber: 0,
@@ -354,23 +378,37 @@ describe("OpSplitter", () => {
 				assert.equal(batchesSubmitted.length, 5 + (extraOp ? 1 : 0));
 				for (const batch of batchesSubmitted) {
 					assert.equal(batch.messages.length, 1);
-					assert.equal(typeFromBatchedOp(batch.messages[0]), ContainerMessageType.ChunkedOp);
+					assert.equal(
+						typeFromBatchedOp(batch.messages[0]),
+						ContainerMessageType.ChunkedOp,
+					);
 					assert.equal(batch.referenceSequenceNumber, 0);
 				}
 
 				assert.equal(result.messages.length, 1);
-				assert.notEqual(result.contentSizeInBytes, largeMessage.contents?.length ?? 0);
+				assert.notEqual(
+					result.contentSizeInBytes,
+					largeMessage.contents?.length ?? 0,
+				);
 				const lastChunk = (
-					JSON.parse(result.messages[0].contents!) as ContainerRuntimeChunkedOpMessage
+					JSON.parse(
+						result.messages[0].contents!,
+					) as ContainerRuntimeChunkedOpMessage
 				).contents;
 				assert.equal(lastChunk.chunkId, lastChunk.totalChunks);
 				assert.equal(
 					!extraOp ||
-						(JSON.parse(result.messages[0].contents!) as ContainerRuntimeChunkedOpMessage)
-							.contents?.contents?.length === 0,
+						(
+							JSON.parse(
+								result.messages[0].contents!,
+							) as ContainerRuntimeChunkedOpMessage
+						).contents?.contents?.length === 0,
 					true,
 				);
-				assert.notEqual(result.contentSizeInBytes, largeMessage.contents?.length ?? 0);
+				assert.notEqual(
+					result.contentSizeInBytes,
+					largeMessage.contents?.length ?? 0,
+				);
 				const contentSentSeparately = batchesSubmitted.map(
 					(x) =>
 						(
@@ -381,9 +419,10 @@ describe("OpSplitter", () => {
 				);
 				// TODO: Fix this violation and remove the disable
 				// eslint-disable-next-line unicorn/no-array-reduce
-				const sentContent = [...contentSentSeparately, lastChunk.contents].reduce(
-					(accumulator, current) => `${accumulator}${current}`,
-				);
+				const sentContent = [
+					...contentSentSeparately,
+					lastChunk.contents,
+				].reduce((accumulator, current) => `${accumulator}${current}`);
 				assert.equal(sentContent, largeMessage.contents);
 
 				assert(
@@ -412,7 +451,9 @@ describe("OpSplitter", () => {
 		assert.strictEqual(result.compression, original.compression);
 	};
 
-	const generateChunkableOp = (contentSizeInBytes: number): OutboundBatchMessage => {
+	const generateChunkableOp = (
+		contentSizeInBytes: number,
+	): OutboundBatchMessage => {
 		const contents = {
 			// There should be a type here, but there is no validation for that,
 			// and tests would need to be adjusted (sizing and assumptions) if we add it here.
@@ -427,7 +468,10 @@ describe("OpSplitter", () => {
 		};
 	};
 
-	const wrapChunkedOps = (ops: IChunkedOp[], clientId: string): ISequencedDocumentMessage[] =>
+	const wrapChunkedOps = (
+		ops: IChunkedOp[],
+		clientId: string,
+	): ISequencedDocumentMessage[] =>
 		ops.map((op) => {
 			const result = {
 				contents: {

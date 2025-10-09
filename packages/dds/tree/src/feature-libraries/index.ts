@@ -7,7 +7,11 @@ export {
 	type DownPath,
 	toDownPath,
 } from "./editableTreeBinder.js";
-export { allowsValue, assertAllowedValue, isTreeValue } from "./valueUtilities.js";
+export {
+	allowsValue,
+	assertAllowedValue,
+	isTreeValue,
+} from "./valueUtilities.js";
 
 export {
 	ForestSummarizer,

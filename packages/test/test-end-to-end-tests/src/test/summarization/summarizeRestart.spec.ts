@@ -50,7 +50,10 @@ describeCompat(
 			if (!["local", "odsp"].includes(provider.driver.type)) {
 				this.skip();
 			}
-			configProvider.set("Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs", 0);
+			configProvider.set(
+				"Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs",
+				0,
+			);
 		});
 
 		afterEach(() => {
@@ -70,14 +73,19 @@ describeCompat(
 			],
 			async () => {
 				const container = await createContainer();
-				const { container: summarizingContainer, summarizer } = await createSummarizer(
-					provider,
-					container,
-					summarizerContainerConfig,
-				);
+				const { container: summarizingContainer, summarizer } =
+					await createSummarizer(
+						provider,
+						container,
+						summarizerContainerConfig,
+					);
 
 				const { container: summarizingContainer2, summarizer: summarizer2 } =
-					await createSummarizer(provider, container, summarizerContainerConfig);
+					await createSummarizer(
+						provider,
+						container,
+						summarizerContainerConfig,
+					);
 
 				await summarizeNow(summarizer);
 				await provider.ensureSynchronized();
@@ -87,8 +95,14 @@ describeCompat(
 				// tell the summarizer to process acks.
 				await summarizer2.run("test");
 
-				assert(summarizingContainer2.closed, "Unknown acks should close the summarizer");
-				assert(!summarizingContainer.closed, "summarizer1 should not be closed");
+				assert(
+					summarizingContainer2.closed,
+					"Unknown acks should close the summarizer",
+				);
+				assert(
+					!summarizingContainer.closed,
+					"summarizer1 should not be closed",
+				);
 				assert(!container.closed, "Original container should not be closed");
 			},
 		);
@@ -104,10 +118,15 @@ describeCompat(
 			async () => {
 				const container = await createContainer();
 				const { container: summarizingContainer1, summarizer: summarizer1 } =
-					await createSummarizer(provider, container, summarizerContainerConfig);
+					await createSummarizer(
+						provider,
+						container,
+						summarizerContainerConfig,
+					);
 
 				// summary1
-				const { summaryVersion: summaryVersion1 } = await summarizeNow(summarizer1);
+				const { summaryVersion: summaryVersion1 } =
+					await summarizeNow(summarizer1);
 
 				// Create a second summarizer. Note that this is done before posting a summary because the server may
 				// delete this summary when a new one is posted.

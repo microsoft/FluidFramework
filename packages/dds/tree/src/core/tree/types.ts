@@ -76,7 +76,8 @@ export type ChildCollection = FieldKey | RootField;
  * In some APIs DetachedFields are used as FieldKeys on a special implicit root node
  * to simplify the APIs and implementation.
  */
-export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField">> {}
+export interface DetachedField
+	extends Opaque<Brand<string, "tree.DetachedField">> {}
 
 /**
  * Some code abstracts the root as a node with detached fields as its fields.

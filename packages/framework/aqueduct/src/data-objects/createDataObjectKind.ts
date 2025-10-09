@@ -15,5 +15,6 @@ import type { DataObjectKind } from "./types.js";
 export function createDataObjectKind<T extends DataObjectKind>(
 	factory: T,
 ): T & SharedObjectKind<T extends DataObjectKind<infer I> ? I : unknown> {
-	return factory as T & SharedObjectKind<T extends DataObjectKind<infer I> ? I : unknown>;
+	return factory as T &
+		SharedObjectKind<T extends DataObjectKind<infer I> ? I : unknown>;
 }

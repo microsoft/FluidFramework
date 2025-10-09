@@ -172,7 +172,10 @@ async function signedInStart(
 		try {
 			return await graphHelper.getFileStorageContainerId();
 		} catch (error) {
-			console.error("Error while fetching file storage container ID:", error as string);
+			console.error(
+				"Error while fetching file storage container ID:",
+				error as string,
+			);
 			return "";
 		}
 	};

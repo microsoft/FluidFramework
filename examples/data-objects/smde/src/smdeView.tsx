@@ -4,7 +4,10 @@
  */
 
 // eslint-disable-next-line import/no-internal-modules -- #26904: `sequence` internals used in examples
-import { getTextAndMarkers, reservedTileLabelsKey } from "@fluidframework/sequence/internal";
+import {
+	getTextAndMarkers,
+	reservedTileLabelsKey,
+} from "@fluidframework/sequence/internal";
 import {
 	Marker,
 	MergeTreeDeltaType,
@@ -70,7 +73,10 @@ class SmdeView {
 							smde.codemirror.posFromIndex(range.position),
 						);
 					} else if (Marker.is(segment)) {
-						smde.codemirror.replaceRange("\n", smde.codemirror.posFromIndex(range.position));
+						smde.codemirror.replaceRange(
+							"\n",
+							smde.codemirror.posFromIndex(range.position),
+						);
 					}
 				} else if (range.operation === MergeTreeDeltaType.REMOVE) {
 					if (TextSegment.is(segment)) {
@@ -78,7 +84,9 @@ class SmdeView {
 						smde.codemirror.replaceRange(
 							"",
 							smde.codemirror.posFromIndex(range.position),
-							smde.codemirror.posFromIndex(range.position + textSegment.text.length),
+							smde.codemirror.posFromIndex(
+								range.position + textSegment.text.length,
+							),
 						);
 					} else if (Marker.is(segment)) {
 						smde.codemirror.replaceRange(
@@ -135,7 +143,9 @@ export interface ISmdeReactViewProps {
 /**
  * A React view that may be applied to an SmdeDataObject to render it and allow editing.
  */
-export const SmdeReactView: React.FC<ISmdeReactViewProps> = (props: ISmdeReactViewProps) => {
+export const SmdeReactView: React.FC<ISmdeReactViewProps> = (
+	props: ISmdeReactViewProps,
+) => {
 	const { smdeDataObject } = props;
 	const htmlView = useRef<SmdeView>(new SmdeView(smdeDataObject));
 	const divRef = useRef<HTMLDivElement>(null);

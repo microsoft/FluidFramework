@@ -83,7 +83,9 @@ function checkDecode(
  * Clones anything updateShapesAndIdentifiersEncoding might modify in-place.
  */
 function cloneArrays<T>(data: readonly T[]): T[] {
-	return data.map((item) => (Array.isArray(item) ? cloneArrays(item) : item)) as T[];
+	return data.map((item) =>
+		Array.isArray(item) ? cloneArrays(item) : item,
+	) as T[];
 }
 
 function testDecode(

@@ -76,7 +76,10 @@ export function withMemoizedTreeObservations<TIn>(
 		readonly propsAreEqual?: Parameters<typeof React.memo>[1];
 	},
 ): React.MemoExoticComponent<ReturnType<typeof withTreeObservations<TIn>>> {
-	return React.memo(withTreeObservations(component, options), options?.propsAreEqual);
+	return React.memo(
+		withTreeObservations(component, options),
+		options?.propsAreEqual,
+	);
 }
 
 /**

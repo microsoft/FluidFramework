@@ -7,12 +7,12 @@
 		"rootDir": "./",
 		"outDir": "../../lib/test",
 		"types": ["node", "mocha", "chai"],
-		"skipLibCheck": true,
+		"skipLibCheck": true
 	},
 	"include": ["./**/*"],
 	"references": [
 		{
-			"path": "../..",
-		},
-	],
+			"path": "../.."
+		}
+	]
 }

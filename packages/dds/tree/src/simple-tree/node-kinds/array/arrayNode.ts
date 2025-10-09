@@ -65,7 +65,10 @@ import type {
 	ArrayNodePojoEmulationSchema,
 	ArrayNodeSchema,
 } from "./arrayNodeTypes.js";
-import { brand, type JsonCompatibleReadOnlyObject } from "../../../util/index.js";
+import {
+	brand,
+	type JsonCompatibleReadOnlyObject,
+} from "../../../util/index.js";
 import { nullSchema } from "../../leafNodeSchema.js";
 import { arrayNodeStoredSchema } from "../../toStoredSchema.js";
 
@@ -93,7 +96,8 @@ export interface ReadonlyArrayNode<out T = TreeNode | TreeLeafValue>
  * @sealed @public
  */
 export interface TreeArrayNode<
-	TAllowedTypes extends System_Unsafe.ImplicitAllowedTypesUnsafe = ImplicitAllowedTypes,
+	TAllowedTypes extends
+		System_Unsafe.ImplicitAllowedTypesUnsafe = ImplicitAllowedTypes,
 	out T = [TAllowedTypes] extends [ImplicitAllowedTypes]
 		? TreeNodeFromImplicitAllowedTypes<TAllowedTypes>
 		: TreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>,
@@ -108,19 +112,26 @@ export interface TreeArrayNode<
 	 * @param value - The content to insert.
 	 * @throws Throws if `index` is not in the range [0, `array.length`).
 	 */
-	insertAt(index: number, ...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
+	insertAt(
+		index: number,
+		...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]
+	): void;
 
 	/**
 	 * Inserts new item(s) at the start of the array.
 	 * @param value - The content to insert.
 	 */
-	insertAtStart(...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
+	insertAtStart(
+		...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]
+	): void;
 
 	/**
 	 * Inserts new item(s) at the end of the array.
 	 * @param value - The content to insert.
 	 */
-	insertAtEnd(...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
+	insertAtEnd(
+		...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]
+	): void;
 
 	/**
 	 * Removes the item at the specified location.
@@ -273,7 +284,11 @@ export interface TreeArrayNode<
 	 * @throws Throws if any of the source index is not in the range [0, `array.length`),
 	 * or if the index is not in the range [0, `array.length`].
 	 */
-	moveToIndex(destinationGap: number, sourceIndex: number, source: TMoveFrom): void;
+	moveToIndex(
+		destinationGap: number,
+		sourceIndex: number,
+		source: TMoveFrom,
+	): void;
 
 	/**
 	 * Moves the specified items to the start of the array.
@@ -293,7 +308,11 @@ export interface TreeArrayNode<
 	 * if either of the input indices are not in the range [0, `array.length`) or if `sourceStart` is greater than `sourceEnd`.
 	 * if any of the input indices are not in the range [0, `array.length`], or if `sourceStart` is greater than `sourceEnd`.
 	 */
-	moveRangeToStart(sourceStart: number, sourceEnd: number, source: TMoveFrom): void;
+	moveRangeToStart(
+		sourceStart: number,
+		sourceEnd: number,
+		source: TMoveFrom,
+	): void;
 
 	/**
 	 * Moves the specified items to the end of the array.
@@ -313,7 +332,11 @@ export interface TreeArrayNode<
 	 * if either of the input indices are not in the range [0, `array.length`) or if `sourceStart` is greater than `sourceEnd`.
 	 * if any of the input indices are not in the range [0, `array.length`], or if `sourceStart` is greater than `sourceEnd`.
 	 */
-	moveRangeToEnd(sourceStart: number, sourceEnd: number, source: TMoveFrom): void;
+	moveRangeToEnd(
+		sourceStart: number,
+		sourceEnd: number,
+		source: TMoveFrom,
+	): void;
 
 	/**
 	 * Moves the specified items to the desired location within the array.
@@ -364,7 +387,11 @@ export interface TreeArrayNode<
 	 * @throws Throws if any of the input indices are not in the range [0, `array.length`) or if `sourceStart` is greater than `sourceEnd`.
 	 * if any of the input indices are not in the range [0, `array.length`], or if `sourceStart` is greater than `sourceEnd`.
 	 */
-	moveRangeToIndex(destinationGap: number, sourceStart: number, sourceEnd: number): void;
+	moveRangeToIndex(
+		destinationGap: number,
+		sourceStart: number,
+		sourceEnd: number,
+	): void;
 
 	/**
 	 * Moves the specified items to the desired location within the array.
@@ -460,7 +487,8 @@ let create: <T>(content: Iterable<T>) => IterableTreeArrayContent<T>;
  */
 export class IterableTreeArrayContent<T> implements Iterable<T> {
 	static {
-		create = <T2>(content: Iterable<T2>) => new IterableTreeArrayContent(content);
+		create = <T2>(content: Iterable<T2>) =>
+			new IterableTreeArrayContent(content);
 	}
 
 	private constructor(private readonly content: Iterable<T>) {}
@@ -535,7 +563,9 @@ const TreeNodeWithArrayFeatures = (() => {
 	 */
 	abstract class TreeNodeWithArrayFeaturesUntyped<
 		const T extends ImplicitAllowedTypes,
-	> extends TreeNodeValid<Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>> {}
+	> extends TreeNodeValid<
+		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>
+	> {}
 
 	// Modify TreeNodeWithArrayFeaturesUntyped to add the members from Array.prototype
 	arrayPrototypeKeys.forEach((key) => {
@@ -608,9 +638,17 @@ declare abstract class NodeWithArrayFeatures<Input, T>
 		predicate: (value: T, index: number, obj: readonly T[]) => unknown,
 		thisArg?: any,
 	): number;
-	flat<A, D extends number = 1>(this: A, depth?: D | undefined): FlatArray<A, D>[];
+	flat<A, D extends number = 1>(
+		this: A,
+		depth?: D | undefined,
+	): FlatArray<A, D>[];
 	flatMap<U, This = undefined>(
-		callback: (this: This, value: T, index: number, array: T[]) => U | readonly U[],
+		callback: (
+			this: This,
+			value: T,
+			index: number,
+			array: T[],
+		) => U | readonly U[],
 		thisArg?: This | undefined,
 	): U[];
 	forEach(
@@ -622,7 +660,10 @@ declare abstract class NodeWithArrayFeatures<Input, T>
 	join(separator?: string | undefined): string;
 	keys(): IterableIterator<number>;
 	lastIndexOf(searchElement: T, fromIndex?: number | undefined): number;
-	map<U>(callbackfn: (value: T, index: number, array: readonly T[]) => U, thisArg?: any): U[];
+	map<U>(
+		callbackfn: (value: T, index: number, array: readonly T[]) => U,
+		thisArg?: any,
+	): U[];
 	reduce(
 		callbackfn: (
 			previousValue: T,
@@ -692,7 +733,10 @@ declare abstract class NodeWithArrayFeatures<Input, T>
  * The coerced index of `key` must be less than `exclusiveMax` or else this function will return `undefined`.
  * This is useful for reading an array within the bounds of its length, e.g. `asIndex(key, array.length)`.
  */
-export function asIndex(key: string | symbol, exclusiveMax: number): number | undefined {
+export function asIndex(
+	key: string | symbol,
+	exclusiveMax: number,
+): number | undefined {
 	if (typeof key !== "string") {
 		return undefined;
 	}
@@ -732,114 +776,122 @@ function createArrayNodeProxy(
 	// To satisfy 'deepEquals' level scrutiny, the target of the proxy must be an array literal in order
 	// to pass 'Object.getPrototypeOf'.  It also satisfies 'Array.isArray' and 'Object.prototype.toString'
 	// requirements without use of Array[Symbol.species], which is potentially on a path to deprecation.
-	const proxy: TreeArrayNode = new Proxy<TreeArrayNode>(proxyTarget as TreeArrayNode, {
-		get: (target, key, receiver) => {
-			const field = getSequenceField(receiver);
-			const maybeIndex = asIndex(key, field.length);
+	const proxy: TreeArrayNode = new Proxy<TreeArrayNode>(
+		proxyTarget as TreeArrayNode,
+		{
+			get: (target, key, receiver) => {
+				const field = getSequenceField(receiver);
+				const maybeIndex = asIndex(key, field.length);
 
-			if (maybeIndex === undefined) {
+				if (maybeIndex === undefined) {
+					if (key === "length") {
+						return field.length;
+					}
+
+					// In NodeJS 22, assert.strict.deepEqual started special casing well known constructors like Array.
+					// That made this necessary, ensuring that in POJO mode, TreeArrayNode are still deepEqual to arrays.
+					if (key === "constructor") {
+						return proxyTarget.constructor;
+					}
+
+					// Pass the proxy as the receiver here, so that any methods on
+					// the prototype receive `proxy` as `this`.
+					return Reflect.get(dispatchTarget, key, receiver) as unknown;
+				}
+
+				const maybeContent = field.at(maybeIndex);
+				return maybeContent === undefined
+					? undefined
+					: getOrCreateNodeFromInnerUnboxedNode(maybeContent);
+			},
+			set: (target, key, newValue, receiver) => {
 				if (key === "length") {
-					return field.length;
+					// To allow "length" to look like "length" on an array, getOwnPropertyDescriptor has to report it as a writable value.
+					// This means the proxy target must provide a length value, but since it can't use getters and setters, it can't be correct.
+					// Therefor length has to be handled in this proxy.
+					// Since it's not actually mutable, return false so setting it will produce a type error.
+					return false;
 				}
 
-				// In NodeJS 22, assert.strict.deepEqual started special casing well known constructors like Array.
-				// That made this necessary, ensuring that in POJO mode, TreeArrayNode are still deepEqual to arrays.
-				if (key === "constructor") {
-					return proxyTarget.constructor;
+				// 'Symbol.isConcatSpreadable' may be set on an Array instance to modify the behavior of
+				// the concat method.  We allow this property to be added to the dispatch object.
+				if (key === Symbol.isConcatSpreadable) {
+					return Reflect.set(dispatchTarget, key, newValue, receiver);
 				}
 
-				// Pass the proxy as the receiver here, so that any methods on
-				// the prototype receive `proxy` as `this`.
-				return Reflect.get(dispatchTarget, key, receiver) as unknown;
-			}
+				// Array nodes treat all non-negative integer indexes as array access.
+				// Using Infinity here (rather than length) ensures that indexing past the end doesn't create additional session local properties.
+				const maybeIndex = asIndex(key, Number.POSITIVE_INFINITY);
+				if (maybeIndex !== undefined) {
+					// For MVP, we otherwise disallow setting properties (mutation is only available via the array node mutation APIs).
+					// To ensure a clear and actionable error experience, we will throw explicitly here, rather than just returning false.
+					throw new UsageError(
+						"Cannot set indexed properties on array nodes. Use array node mutation APIs to alter the array.",
+					);
+				}
+				return allowAdditionalProperties
+					? Reflect.set(target, key, newValue, receiver)
+					: false;
+			},
+			has: (target, key) => {
+				const field = getSequenceField(proxy);
+				const maybeIndex = asIndex(key, field.length);
+				return maybeIndex !== undefined || Reflect.has(dispatchTarget, key);
+			},
+			ownKeys: (target) => {
+				const field = getSequenceField(proxy);
 
-			const maybeContent = field.at(maybeIndex);
-			return maybeContent === undefined
-				? undefined
-				: getOrCreateNodeFromInnerUnboxedNode(maybeContent);
-		},
-		set: (target, key, newValue, receiver) => {
-			if (key === "length") {
-				// To allow "length" to look like "length" on an array, getOwnPropertyDescriptor has to report it as a writable value.
-				// This means the proxy target must provide a length value, but since it can't use getters and setters, it can't be correct.
-				// Therefor length has to be handled in this proxy.
-				// Since it's not actually mutable, return false so setting it will produce a type error.
-				return false;
-			}
-
-			// 'Symbol.isConcatSpreadable' may be set on an Array instance to modify the behavior of
-			// the concat method.  We allow this property to be added to the dispatch object.
-			if (key === Symbol.isConcatSpreadable) {
-				return Reflect.set(dispatchTarget, key, newValue, receiver);
-			}
-
-			// Array nodes treat all non-negative integer indexes as array access.
-			// Using Infinity here (rather than length) ensures that indexing past the end doesn't create additional session local properties.
-			const maybeIndex = asIndex(key, Number.POSITIVE_INFINITY);
-			if (maybeIndex !== undefined) {
-				// For MVP, we otherwise disallow setting properties (mutation is only available via the array node mutation APIs).
-				// To ensure a clear and actionable error experience, we will throw explicitly here, rather than just returning false.
-				throw new UsageError(
-					"Cannot set indexed properties on array nodes. Use array node mutation APIs to alter the array.",
+				// TODO: Would a lazy iterator to produce the indexes work / be more efficient?
+				// TODO: Need to surface 'Symbol.isConcatSpreadable' as an own key.
+				const keys: (string | symbol)[] = Array.from(
+					{ length: field.length },
+					(_, index) => `${index}`,
 				);
-			}
-			return allowAdditionalProperties ? Reflect.set(target, key, newValue, receiver) : false;
-		},
-		has: (target, key) => {
-			const field = getSequenceField(proxy);
-			const maybeIndex = asIndex(key, field.length);
-			return maybeIndex !== undefined || Reflect.has(dispatchTarget, key);
-		},
-		ownKeys: (target) => {
-			const field = getSequenceField(proxy);
 
-			// TODO: Would a lazy iterator to produce the indexes work / be more efficient?
-			// TODO: Need to surface 'Symbol.isConcatSpreadable' as an own key.
-			const keys: (string | symbol)[] = Array.from(
-				{ length: field.length },
-				(_, index) => `${index}`,
-			);
-
-			if (allowAdditionalProperties) {
-				keys.push(...Reflect.ownKeys(target));
-			} else {
-				keys.push("length");
-			}
-			return keys;
+				if (allowAdditionalProperties) {
+					keys.push(...Reflect.ownKeys(target));
+				} else {
+					keys.push("length");
+				}
+				return keys;
+			},
+			getOwnPropertyDescriptor: (target, key) => {
+				const field = getSequenceField(proxy);
+				const maybeIndex = asIndex(key, field.length);
+				if (maybeIndex !== undefined) {
+					const val = field.at(maybeIndex);
+					// To satisfy 'deepEquals' level scrutiny, the property descriptor for indexed properties must
+					// be a simple value property (as opposed to using getter) and declared writable/enumerable/configurable.
+					return {
+						value:
+							val === undefined
+								? undefined
+								: getOrCreateNodeFromInnerUnboxedNode(val),
+						writable: true, // For MVP, setting indexed properties is reported as allowed here (for deep equals compatibility noted above), but not actually supported.
+						enumerable: true,
+						configurable: true,
+					};
+				} else if (key === "length") {
+					// To satisfy 'deepEquals' level scrutiny, the property descriptor for 'length' must be a simple
+					// value property (as opposed to using getter) and be declared writable / non-configurable.
+					return {
+						value: field.length,
+						writable: true,
+						enumerable: false,
+						configurable: false,
+					};
+				}
+				return Reflect.getOwnPropertyDescriptor(dispatchTarget, key);
+			},
+			defineProperty(target, key, attributes) {
+				const maybeIndex = asIndex(key, Number.POSITIVE_INFINITY);
+				if (maybeIndex !== undefined) {
+					throw new UsageError("Shadowing of array indices is not permitted.");
+				}
+				return Reflect.defineProperty(dispatchTarget, key, attributes);
+			},
 		},
-		getOwnPropertyDescriptor: (target, key) => {
-			const field = getSequenceField(proxy);
-			const maybeIndex = asIndex(key, field.length);
-			if (maybeIndex !== undefined) {
-				const val = field.at(maybeIndex);
-				// To satisfy 'deepEquals' level scrutiny, the property descriptor for indexed properties must
-				// be a simple value property (as opposed to using getter) and declared writable/enumerable/configurable.
-				return {
-					value: val === undefined ? undefined : getOrCreateNodeFromInnerUnboxedNode(val),
-					writable: true, // For MVP, setting indexed properties is reported as allowed here (for deep equals compatibility noted above), but not actually supported.
-					enumerable: true,
-					configurable: true,
-				};
-			} else if (key === "length") {
-				// To satisfy 'deepEquals' level scrutiny, the property descriptor for 'length' must be a simple
-				// value property (as opposed to using getter) and be declared writable / non-configurable.
-				return {
-					value: field.length,
-					writable: true,
-					enumerable: false,
-					configurable: false,
-				};
-			}
-			return Reflect.getOwnPropertyDescriptor(dispatchTarget, key);
-		},
-		defineProperty(target, key, attributes) {
-			const maybeIndex = asIndex(key, Number.POSITIVE_INFINITY);
-			if (maybeIndex !== undefined) {
-				throw new UsageError("Shadowing of array indices is not permitted.");
-			}
-			return Reflect.defineProperty(dispatchTarget, key, attributes);
-		},
-	});
+	);
 	return proxy;
 }
 
@@ -869,7 +921,9 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	>;
 
 	public constructor(
-		input?: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>> | InternalTreeNode,
+		input?:
+			| Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>
+			| InternalTreeNode,
 	) {
 		super(input ?? []);
 	}
@@ -923,7 +977,9 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		return fail(0xadb /* Proxy should intercept length */);
 	}
 
-	public [Symbol.iterator](): IterableIterator<TreeNodeFromImplicitAllowedTypes<T>> {
+	public [Symbol.iterator](): IterableIterator<
+		TreeNodeFromImplicitAllowedTypes<T>
+	> {
 		return this.values();
 	}
 
@@ -945,7 +1001,9 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 			return val;
 		}
 
-		return getOrCreateNodeFromInnerNode(val) as TreeNodeFromImplicitAllowedTypes<T>;
+		return getOrCreateNodeFromInnerNode(
+			val,
+		) as TreeNodeFromImplicitAllowedTypes<T>;
 	}
 	public insertAt(index: number, ...value: Insertable<T>): void {
 		const field = getSequenceField(this);
@@ -973,7 +1031,9 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		validatePositiveIndex(removeEnd);
 		if (removeEnd < removeStart) {
 			// This catches both the case where start is > array.length and when start is > end.
-			throw new UsageError('Too large of "start" value passed to TreeArrayNode.removeRange.');
+			throw new UsageError(
+				'Too large of "start" value passed to TreeArrayNode.removeRange.',
+			);
 		}
 		field.editor.remove(removeStart, removeEnd - removeStart);
 	}
@@ -1037,13 +1097,20 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		const destinationSchema = this.allowedTypes;
 		const kernel = getKernel(this);
 		const destinationStored = (
-			kernel.context.flexContext.schema.nodeSchema.get(brand(kernel.schema.identifier)) ??
-			fail(0xc16 /* missing schema for array node */)
+			kernel.context.flexContext.schema.nodeSchema.get(
+				brand(kernel.schema.identifier),
+			) ?? fail(0xc16 /* missing schema for array node */)
 		).getFieldSchema(EmptyKey).types;
-		const sourceField = source !== undefined ? getSequenceField(source) : destinationField;
+		const sourceField =
+			source !== undefined ? getSequenceField(source) : destinationField;
 
 		validateIndex(destinationGap, destinationField, "moveRangeToIndex", true);
-		validateIndexRange(sourceStart, sourceEnd, source ?? destinationField, "moveRangeToIndex");
+		validateIndexRange(
+			sourceStart,
+			sourceEnd,
+			source ?? destinationField,
+			"moveRangeToIndex",
+		);
 
 		// TODO: determine support for move across different sequence types
 		if (sourceField !== destinationField) {
@@ -1103,7 +1170,9 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 				);
 			}
 			if (sourceField.context !== destinationField.context) {
-				throw new UsageError("Cannot move elements between two different TreeViews.");
+				throw new UsageError(
+					"Cannot move elements between two different TreeViews.",
+				);
 			}
 
 			destinationField.context.checkout.editor.move(
@@ -1129,7 +1198,9 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		for (let i = 0; i < this.length; i++) {
 			yield this.at(i) ?? fail(0xadc /* Index is out of bounds */);
 			if (initialLastUpdatedStamp !== kernel.generationNumber) {
-				throw new UsageError(`Concurrent editing and iteration is not allowed.`);
+				throw new UsageError(
+					`Concurrent editing and iteration is not allowed.`,
+				);
 			}
 		}
 	}
@@ -1161,7 +1232,12 @@ export function arraySchema<
 		ImplicitlyConstructable,
 		TCustomMetadata
 	> &
-		ArrayNodePojoEmulationSchema<TName, T, ImplicitlyConstructable, TCustomMetadata> &
+		ArrayNodePojoEmulationSchema<
+			TName,
+			T,
+			ImplicitlyConstructable,
+			TCustomMetadata
+		> &
 		TreeNodeSchemaCorePrivate;
 
 	const normalizedTypes = normalizeAllowedTypes(info);
@@ -1191,7 +1267,11 @@ export function arraySchema<
 					configurable: false,
 				});
 			}
-			return createArrayNodeProxy(customizable, proxyTarget, instance) as unknown as Schema;
+			return createArrayNodeProxy(
+				customizable,
+				proxyTarget,
+				instance,
+			) as unknown as Schema;
 		}
 
 		public static override buildRawNode<T2>(
@@ -1199,14 +1279,18 @@ export function arraySchema<
 			instance: TreeNodeValid<T2>,
 			input: T2,
 		): UnhydratedFlexTreeNode {
-			return unhydratedFlexTreeFromInsertable(input as object, this as typeof Schema);
+			return unhydratedFlexTreeFromInsertable(
+				input as object,
+				this as typeof Schema,
+			);
 		}
 
 		public static get allowedTypesIdentifiers(): ReadonlySet<string> {
 			return lazyAllowedTypesIdentifiers.value;
 		}
 
-		protected static override constructorCached: MostDerivedData | undefined = undefined;
+		protected static override constructorCached: MostDerivedData | undefined =
+			undefined;
 
 		protected static override oneTimeSetup(): TreeNodeSchemaInitializedData {
 			// First run, do extra validation.
@@ -1252,9 +1336,11 @@ export function arraySchema<
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return normalizedTypes.evaluateSet();
 		}
-		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
-		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
-			persistedMetadata;
+		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> =
+			metadata ?? {};
+		public static readonly persistedMetadata:
+			| JsonCompatibleReadOnlyObject
+			| undefined = persistedMetadata;
 
 		// eslint-disable-next-line import/no-deprecated
 		public get [typeNameSymbol](): TName {
@@ -1272,8 +1358,14 @@ export function arraySchema<
 		}
 
 		public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
-			return (privateData ??= createTreeNodeSchemaPrivateData(this, [info], (storedOptions) =>
-				arrayNodeStoredSchema(convertAllowedTypes(info, storedOptions), persistedMetadata),
+			return (privateData ??= createTreeNodeSchemaPrivateData(
+				this,
+				[info],
+				(storedOptions) =>
+					arrayNodeStoredSchema(
+						convertAllowedTypes(info, storedOptions),
+						persistedMetadata,
+					),
 			));
 		}
 	}
@@ -1360,9 +1452,14 @@ function arrayChildToFlexTree(
  * @param data - The tree data to be transformed. Must be an iterable.
  * @param schema - The schema to comply with.
  */
-function arrayToFlexContent(data: FactoryContent, schema: ArrayNodeSchema): FlexContent {
+function arrayToFlexContent(
+	data: FactoryContent,
+	schema: ArrayNodeSchema,
+): FlexContent {
 	if (!(typeof data === "object" && data !== null && Symbol.iterator in data)) {
-		throw new UsageError(`Input data is incompatible with Array schema: ${data}`);
+		throw new UsageError(
+			`Input data is incompatible with Array schema: ${data}`,
+		);
 	}
 
 	const allowedChildTypes = normalizeAllowedTypes(schema.info);

@@ -1,16 +1,14 @@
 {
-  "version": 2,
-  "nodes": {
-    "com.fluidframework.leaf.boolean": {
-      "kind": {
-        "leaf": 2
-      }
-    }
-  },
-  "root": {
-    "kind": "Value",
-    "types": [
-      "com.fluidframework.leaf.boolean"
-    ]
-  }
+	"version": 2,
+	"nodes": {
+		"com.fluidframework.leaf.boolean": {
+			"kind": {
+				"leaf": 2
+			}
+		}
+	},
+	"root": {
+		"kind": "Value",
+		"types": ["com.fluidframework.leaf.boolean"]
+	}
 }

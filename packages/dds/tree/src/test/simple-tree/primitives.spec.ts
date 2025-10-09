@@ -41,7 +41,11 @@ describe("Primitives", () => {
 			);
 
 			const actual = hydrate(schema, value);
-			assert.deepEqual(actual, value, "Readback of initialTree must match expected value.");
+			assert.deepEqual(
+				actual,
+				value,
+				"Readback of initialTree must match expected value.",
+			);
 		});
 
 		// TODO: Consider improving coverage with more variations:
@@ -63,7 +67,11 @@ describe("Primitives", () => {
 		const coercedValue = JSON.parse(JSON.stringify(value));
 
 		// Paranoid check that the given value is in fact coerced.
-		assert.notDeepEqual(value, coercedValue, "Expected JSON stringify/parse to coerce value.");
+		assert.notDeepEqual(
+			value,
+			coercedValue,
+			"Expected JSON stringify/parse to coerce value.",
+		);
 
 		return coercedValue;
 	}
@@ -157,9 +165,11 @@ describe("Primitives", () => {
 
 			// JSON coerces non-finite numbers to 'null'.  If 'null' violates schema,
 			// this must throw a TypeError.
-			[Number.NEGATIVE_INFINITY, Number.NaN, Number.POSITIVE_INFINITY].forEach((value) => {
-				checkThrows(schema, value);
-			});
+			[Number.NEGATIVE_INFINITY, Number.NaN, Number.POSITIVE_INFINITY].forEach(
+				(value) => {
+					checkThrows(schema, value);
+				},
+			);
 
 			// JSON coerces -0 to 0.  This succeeds because it does not change the type.
 			[-0].forEach((value) => {
@@ -171,8 +181,8 @@ describe("Primitives", () => {
 			// JSON coerces non-finite numbers to 'null'.  This succeeds when 'null' is
 			// permitted by schema.
 			const schema = [schemaFactory.number, schemaFactory.null] as const;
-			[Number.NEGATIVE_INFINITY, Number.NaN, Number.POSITIVE_INFINITY].forEach((value) =>
-				checkCoerced(schema, value),
+			[Number.NEGATIVE_INFINITY, Number.NaN, Number.POSITIVE_INFINITY].forEach(
+				(value) => checkCoerced(schema, value),
 			);
 		});
 	});

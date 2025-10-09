@@ -58,6 +58,9 @@ export class ReadBuffer {
 	public skip(length: number): void {
 		assert(length >= 0, 0x224 /* "Skip length should be positive" */);
 		this.index += length;
-		assert(this.index <= this.data.length, 0x3dc /* skipping past size of buffer */);
+		assert(
+			this.index <= this.data.length,
+			0x3dc /* skipping past size of buffer */,
+		);
 	}
 }

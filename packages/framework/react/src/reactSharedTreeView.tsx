@@ -19,7 +19,10 @@ import type {
 	ImplicitFieldSchema,
 	InsertableTreeFieldFromImplicitField,
 } from "@fluidframework/tree";
-import { configuredSharedTree, FormatValidatorBasic } from "@fluidframework/tree/internal";
+import {
+	configuredSharedTree,
+	FormatValidatorBasic,
+} from "@fluidframework/tree/internal";
 import * as React from "react";
 
 import { toPropTreeNode, type PropTreeValue } from "./propNode.js";
@@ -56,13 +59,17 @@ export function treeDataObject<TSchema extends ImplicitFieldSchema>(
 export function treeDataObjectInternal<TSchema extends ImplicitFieldSchema>(
 	treeConfiguration: TreeViewConfiguration<TSchema>,
 	createInitialTree: () => InsertableTreeFieldFromImplicitField<TSchema>,
-): SharedObjectKind<IReactTreeDataObject<TSchema> & IFluidLoadable & TreeDataObject> & {
+): SharedObjectKind<
+	IReactTreeDataObject<TSchema> & IFluidLoadable & TreeDataObject
+> & {
 	readonly factory: IFluidDataStoreFactory;
 } {
 	class SchemaAwareTreeDataObject extends ReactTreeDataObject<TSchema> {
 		public override readonly config = treeConfiguration;
 
-		public static readonly factory = new PureDataObjectFactory<ReactTreeDataObject<TSchema>>(
+		public static readonly factory = new PureDataObjectFactory<
+			ReactTreeDataObject<TSchema>
+		>(
 			`TreeDataObject`,
 			SchemaAwareTreeDataObject,
 			[SharedTree.getFactory()],
@@ -138,7 +145,9 @@ export interface IReactTreeDataObject<TSchema extends ImplicitFieldSchema> {
 	 * and thus making it a member avoids the user of this from having to explicitly provide the type parameter.
 	 * This is an arrow function not a method so it gets the correct this when not called as a member.
 	 */
-	readonly TreeViewComponent: (props: TreeViewProps<TSchema>) => React.JSX.Element;
+	readonly TreeViewComponent: (
+		props: TreeViewProps<TSchema>,
+	) => React.JSX.Element;
 }
 
 /**
@@ -203,9 +212,8 @@ export abstract class ReactTreeDataObject<
 function useViewCompatibility<TSchema extends ImplicitFieldSchema>(
 	view: TreeView<TSchema>,
 ): SchemaCompatibilityStatus {
-	const [compatibility, setCompatibility] = React.useState<SchemaCompatibilityStatus>(
-		view.compatibility,
-	);
+	const [compatibility, setCompatibility] =
+		React.useState<SchemaCompatibilityStatus>(view.compatibility);
 
 	React.useEffect(() => {
 		const updateCompatibility = (): void => {
@@ -222,9 +230,9 @@ function useViewCompatibility<TSchema extends ImplicitFieldSchema>(
 function useViewRoot<TSchema extends ImplicitFieldSchema>(
 	view: TreeView<TSchema>,
 ): TreeFieldFromImplicitField<TSchema> | undefined {
-	const [root, setRoot] = React.useState<TreeFieldFromImplicitField<TSchema> | undefined>(
-		undefined,
-	);
+	const [root, setRoot] = React.useState<
+		TreeFieldFromImplicitField<TSchema> | undefined
+	>(undefined);
 
 	React.useEffect(() => {
 		const updateRoot = (): void => {
@@ -258,7 +266,10 @@ export function TreeViewComponent<TSchema extends ImplicitFieldSchema>({
 
 	const compatibility = useViewCompatibility(view);
 	const root = useViewRoot(view);
-	const upgradeSchema = React.useCallback((): void => view.upgradeSchema(), [view]);
+	const upgradeSchema = React.useCallback(
+		(): void => view.upgradeSchema(),
+		[view],
+	);
 
 	// Note: this policy is on the stricter side and ensures that clients will only be able to submit edits when their view schema
 	// supports exactly the same documents as the stored schema.
@@ -268,7 +279,9 @@ export function TreeViewComponent<TSchema extends ImplicitFieldSchema>({
 	// Alternative policies can be implemented, see "Schema Evolvability" in SharedTree's README for more information.
 	if (!compatibility.isEquivalent) {
 		const Error = errorComponent ?? TreeErrorComponent;
-		return <Error compatibility={compatibility} upgradeSchema={upgradeSchema} />;
+		return (
+			<Error compatibility={compatibility} upgradeSchema={upgradeSchema} />
+		);
 	}
 
 	if (root === undefined) {
@@ -308,9 +321,9 @@ function TreeErrorComponent({
 		return (
 			<div>
 				<div>
-					Document is incompatible with current version of the application, but the document
-					format can be updated. This may prevent other versions of the application from
-					opening this document.
+					Document is incompatible with current version of the application, but
+					the document format can be updated. This may prevent other versions of
+					the application from opening this document.
 				</div>
 				<button onClick={upgradeSchema}>Upgrade</button>;
 			</div>
@@ -318,9 +331,10 @@ function TreeErrorComponent({
 	} else {
 		return (
 			<div>
-				Document is incompatible with current version of the application, and the document
-				format cannot be updated. The document is likely from a newer or otherwise incompatible
-				version of the application, or a different application.
+				Document is incompatible with current version of the application, and
+				the document format cannot be updated. The document is likely from a
+				newer or otherwise incompatible version of the application, or a
+				different application.
 			</div>
 		);
 	}

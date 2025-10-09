@@ -13,7 +13,9 @@ import { IDiceRollerAppModel as IDiceRollerAppModel2 } from "./modelVersion2/ind
  * model loader to load different versions of app, but this is unlikely in a production app.
  */
 export interface IDiceRollerAppModel {
-	readonly diceRoller: IDiceRollerAppModel1["diceRoller"] | IDiceRollerAppModel2["diceRoller"];
+	readonly diceRoller:
+		| IDiceRollerAppModel1["diceRoller"]
+		| IDiceRollerAppModel2["diceRoller"];
 	readonly diceCounter?: IDiceRollerAppModel2["diceCounter"];
 	readonly getCurrentVersion?: IDiceRollerAppModel2["getCurrentVersion"];
 	readonly upgrade?: IDiceRollerAppModel2["upgrade"];

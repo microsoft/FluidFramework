@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import {
+	getLumberBaseProperties,
+	Lumberjack,
+} from "@fluidframework/server-services-telemetry";
 
 import type { ICollection, ICheckpointRepository } from "./database";
 import type { ICheckpoint, IDeliState, IScribe } from "./document";

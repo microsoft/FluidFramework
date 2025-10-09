@@ -93,7 +93,10 @@ const EncodedGenericTreeNode = <Schema extends TSchema>(tChild: Schema) =>
  *
  * JsonableTrees must not store empty fields.
  */
-export interface EncodedJsonableTree extends EncodedGenericTreeNode<EncodedJsonableTree> {}
-export const EncodedJsonableTree = Type.Recursive((Self) => EncodedGenericTreeNode(Self));
+export interface EncodedJsonableTree
+	extends EncodedGenericTreeNode<EncodedJsonableTree> {}
+export const EncodedJsonableTree = Type.Recursive((Self) =>
+	EncodedGenericTreeNode(Self),
+);
 
 /* eslint-enable @typescript-eslint/explicit-function-return-type */

@@ -46,8 +46,14 @@ describe("parseBundleAndExportFile", () => {
 
 				assert(fs.existsSync(outputFilePath), "result file does not exist");
 
-				const resultFileContent = fs.readFileSync(outputFilePath, { encoding: "utf-8" });
-				assert.strictEqual(resultFileContent, executeResult, "result output is not correct");
+				const resultFileContent = fs.readFileSync(outputFilePath, {
+					encoding: "utf-8",
+				});
+				assert.strictEqual(
+					resultFileContent,
+					executeResult,
+					"result output is not correct",
+				);
 			});
 		});
 	});

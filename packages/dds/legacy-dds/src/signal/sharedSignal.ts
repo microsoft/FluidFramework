@@ -11,7 +11,11 @@ import type {
 	IChannelStorageService,
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions/internal";
-import { FileMode, MessageType, TreeEntry } from "@fluidframework/driver-definitions/internal";
+import {
+	FileMode,
+	MessageType,
+	TreeEntry,
+} from "@fluidframework/driver-definitions/internal";
 import type {
 	ISequencedDocumentMessage,
 	ITree,
@@ -47,8 +51,14 @@ export class SharedSignalClass<T extends SerializableTypeForSharedSignal = any>
 	 * @param id - optional name of the shared signal
 	 * @returns newly create shared signal (but not attached yet)
 	 */
-	public static create(runtime: IFluidDataStoreRuntime, id?: string): SharedSignalClass {
-		return runtime.createChannel(id, SharedSignalFactory.Type) as SharedSignalClass;
+	public static create(
+		runtime: IFluidDataStoreRuntime,
+		id?: string,
+	): SharedSignalClass {
+		return runtime.createChannel(
+			id,
+			SharedSignalFactory.Type,
+		) as SharedSignalClass;
 	}
 
 	/**
@@ -72,7 +82,12 @@ export class SharedSignalClass<T extends SerializableTypeForSharedSignal = any>
 		runtime: IFluidDataStoreRuntime,
 		attributes: IChannelAttributes,
 	) {
-		super(id, runtime, attributes, "loop_sharedSignal_" /* telemetryContextPrefix */);
+		super(
+			id,
+			runtime,
+			attributes,
+			"loop_sharedSignal_" /* telemetryContextPrefix */,
+		);
 	}
 
 	/**
@@ -94,7 +109,9 @@ export class SharedSignalClass<T extends SerializableTypeForSharedSignal = any>
 		this.submitLocalMessage(op);
 	}
 
-	protected summarizeCore(_serializer: IFluidSerializer): ISummaryTreeWithStats {
+	protected summarizeCore(
+		_serializer: IFluidSerializer,
+	): ISummaryTreeWithStats {
 		const tree: ITree = {
 			entries: [
 				{

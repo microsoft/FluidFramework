@@ -10,7 +10,10 @@ import { MergeTreeDeltaType } from "../ops.js";
 import { TextSegment } from "../textSegment.js";
 
 import { TestClient } from "./testClient.js";
-import { useStrictPartialLengthChecks, validatePartialLengths } from "./testUtils.js";
+import {
+	useStrictPartialLengthChecks,
+	validatePartialLengths,
+} from "./testUtils.js";
 
 describe("obliterate partial lengths", () => {
 	let client: TestClient;
@@ -45,7 +48,10 @@ describe("obliterate partial lengths", () => {
 
 	it("removes text", () => {
 		assert.equal(client.getText(), "hello world");
-		const localObliterateOp = client.obliterateRangeLocal(0, "hello world".length);
+		const localObliterateOp = client.obliterateRangeLocal(
+			0,
+			"hello world".length,
+		);
 		assert.equal(client.getText(), "");
 		const minRefSeqForLocalSeq = new Map<number, number>([
 			[initialLocalSeq, refSeq],
@@ -114,8 +120,12 @@ describe("obliterate partial lengths", () => {
 				{ op: { type: MergeTreeDeltaType.INSERT } },
 			);
 
-			validatePartialLengths(localClientId, client.mergeTree, [{ seq: i + 1, len: i + 1 }]);
-			validatePartialLengths(remoteClientId, client.mergeTree, [{ seq: i + 1, len: i + 1 }]);
+			validatePartialLengths(localClientId, client.mergeTree, [
+				{ seq: i + 1, len: i + 1 },
+			]);
+			validatePartialLengths(remoteClientId, client.mergeTree, [
+				{ seq: i + 1, len: i + 1 },
+			]);
 
 			refSeq += 1;
 		}
@@ -151,7 +161,11 @@ describe("obliterate partial lengths", () => {
 					{ seq: refSeq, len: "hello world".length, localSeq: initialLocalSeq },
 					{ seq: refSeq, len: "world".length, localSeq: initialLocalSeq + 1 },
 					{ seq: refSeq + 1, len: "world".length, localSeq: initialLocalSeq },
-					{ seq: refSeq + 1, len: "world".length, localSeq: initialLocalSeq + 1 },
+					{
+						seq: refSeq + 1,
+						len: "world".length,
+						localSeq: initialLocalSeq + 1,
+					},
 				],
 				minRefSeqForLocalSeq,
 			);
@@ -192,7 +206,11 @@ describe("obliterate partial lengths", () => {
 					{ seq: refSeq, len: "hello world".length, localSeq: initialLocalSeq },
 					{ seq: refSeq, len: "world".length, localSeq: initialLocalSeq + 1 },
 					{ seq: refSeq + 1, len: "world".length, localSeq: initialLocalSeq },
-					{ seq: refSeq + 1, len: "world".length, localSeq: initialLocalSeq + 1 },
+					{
+						seq: refSeq + 1,
+						len: "world".length,
+						localSeq: initialLocalSeq + 1,
+					},
 				],
 				minRefSeqForLocalSeq,
 			);
@@ -267,7 +285,11 @@ describe("obliterate partial lengths", () => {
 					{ seq: refSeq, len: "hello world".length, localSeq: initialLocalSeq },
 					{ seq: refSeq, len: "world".length, localSeq: initialLocalSeq + 1 },
 					{ seq: refSeq + 1, len: "world".length, localSeq: initialLocalSeq },
-					{ seq: refSeq + 1, len: "world".length, localSeq: initialLocalSeq + 1 },
+					{
+						seq: refSeq + 1,
+						len: "world".length,
+						localSeq: initialLocalSeq + 1,
+					},
 				],
 				minRefSeqForLocalSeq,
 			);
@@ -289,7 +311,10 @@ describe("obliterate partial lengths", () => {
 
 	describe("obliterate with concurrent inserts", () => {
 		it("obliterates when concurrent insert in middle of string", () => {
-			const localObliterateOp = client.obliterateRangeLocal(0, client.getLength());
+			const localObliterateOp = client.obliterateRangeLocal(
+				0,
+				client.getLength(),
+			);
 
 			client.insertTextRemote(
 				"hello".length,
@@ -311,7 +336,11 @@ describe("obliterate partial lengths", () => {
 				[
 					{ seq: refSeq, len: "hello world".length, localSeq: initialLocalSeq },
 					{ seq: refSeq, len: "".length, localSeq: initialLocalSeq + 1 },
-					{ seq: refSeq + 1, len: "hellomore  world".length, localSeq: initialLocalSeq },
+					{
+						seq: refSeq + 1,
+						len: "hellomore  world".length,
+						localSeq: initialLocalSeq,
+					},
 					{ seq: refSeq + 1, len: "".length, localSeq: initialLocalSeq + 1 },
 				],
 				minRefSeqForLocalSeq,
@@ -332,7 +361,10 @@ describe("obliterate partial lengths", () => {
 		});
 
 		it("obliterate does not affect concurrent insert at start of string", () => {
-			const localObliterateOp = client.obliterateRangeLocal(0, client.getLength());
+			const localObliterateOp = client.obliterateRangeLocal(
+				0,
+				client.getLength(),
+			);
 			client.insertTextRemote(
 				0,
 				"more ",
@@ -353,8 +385,16 @@ describe("obliterate partial lengths", () => {
 				[
 					{ seq: refSeq, len: "hello world".length, localSeq: initialLocalSeq },
 					{ seq: refSeq, len: "".length, localSeq: initialLocalSeq + 1 },
-					{ seq: refSeq + 1, len: "more hello world".length, localSeq: initialLocalSeq },
-					{ seq: refSeq + 1, len: "more ".length, localSeq: initialLocalSeq + 1 },
+					{
+						seq: refSeq + 1,
+						len: "more hello world".length,
+						localSeq: initialLocalSeq,
+					},
+					{
+						seq: refSeq + 1,
+						len: "more ".length,
+						localSeq: initialLocalSeq + 1,
+					},
 				],
 				minRefSeqForLocalSeq,
 			);
@@ -374,7 +414,10 @@ describe("obliterate partial lengths", () => {
 		});
 
 		it("obliterate does not affect concurrent insert at end of string", () => {
-			const localObliterateOp = client.obliterateRangeLocal(0, client.getLength());
+			const localObliterateOp = client.obliterateRangeLocal(
+				0,
+				client.getLength(),
+			);
 			client.insertTextRemote(
 				"hello world".length,
 				"more ",
@@ -388,7 +431,11 @@ describe("obliterate partial lengths", () => {
 			validatePartialLengths(localClientId, client.mergeTree, [
 				{ seq: refSeq, len: "hello world".length, localSeq: initialLocalSeq },
 				{ seq: refSeq, len: "".length, localSeq: initialLocalSeq + 1 },
-				{ seq: refSeq + 1, len: "hello worldmore ".length, localSeq: initialLocalSeq },
+				{
+					seq: refSeq + 1,
+					len: "hello worldmore ".length,
+					localSeq: initialLocalSeq,
+				},
 				{ seq: refSeq + 1, len: "more ".length, localSeq: initialLocalSeq + 1 },
 			]);
 
@@ -432,12 +479,36 @@ describe("obliterate partial lengths", () => {
 			);
 			const obliterateSeq = seq;
 			validatePartialLengths(localClientId, client.mergeTree, [
-				{ seq: initialSeq, localSeq: initialLocalSeq, len: "hello world".length },
-				{ seq: insertSeq, localSeq: initialLocalSeq, len: "more hello world".length },
-				{ seq: obliterateSeq, localSeq: initialLocalSeq, len: "hello world".length },
-				{ seq: initialSeq, localSeq: localRemoveLocalSeq, len: "hello world".length },
-				{ seq: insertSeq, localSeq: localRemoveLocalSeq, len: "hello world".length },
-				{ seq: obliterateSeq, localSeq: localRemoveLocalSeq, len: "hello world".length },
+				{
+					seq: initialSeq,
+					localSeq: initialLocalSeq,
+					len: "hello world".length,
+				},
+				{
+					seq: insertSeq,
+					localSeq: initialLocalSeq,
+					len: "more hello world".length,
+				},
+				{
+					seq: obliterateSeq,
+					localSeq: initialLocalSeq,
+					len: "hello world".length,
+				},
+				{
+					seq: initialSeq,
+					localSeq: localRemoveLocalSeq,
+					len: "hello world".length,
+				},
+				{
+					seq: insertSeq,
+					localSeq: localRemoveLocalSeq,
+					len: "hello world".length,
+				},
+				{
+					seq: obliterateSeq,
+					localSeq: localRemoveLocalSeq,
+					len: "hello world".length,
+				},
 			]);
 		});
 
@@ -458,9 +529,21 @@ describe("obliterate partial lengths", () => {
 			);
 			const obliterateSeq = seq;
 			validatePartialLengths(localClientId, client.mergeTree, [
-				{ seq: initialSeq, localSeq: initialLocalSeq, len: "hello world".length },
-				{ seq: initialSeq, localSeq: insertLocalSeq, len: "hello more world".length },
-				{ seq: initialSeq, localSeq: localRemoveLocalSeq, len: "hello world".length },
+				{
+					seq: initialSeq,
+					localSeq: initialLocalSeq,
+					len: "hello world".length,
+				},
+				{
+					seq: initialSeq,
+					localSeq: insertLocalSeq,
+					len: "hello more world".length,
+				},
+				{
+					seq: initialSeq,
+					localSeq: localRemoveLocalSeq,
+					len: "hello world".length,
+				},
 				{ seq: obliterateSeq, localSeq: initialLocalSeq, len: "".length },
 				{ seq: obliterateSeq, localSeq: insertLocalSeq, len: "".length },
 				{ seq: obliterateSeq, localSeq: localRemoveLocalSeq, len: "".length },

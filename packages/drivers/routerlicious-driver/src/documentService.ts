@@ -30,7 +30,10 @@ import {
 import { ICache } from "./cache.js";
 import { INormalizedWholeSnapshot } from "./contracts.js";
 import { ISnapshotTreeVersion } from "./definitions.js";
-import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService.js";
+import {
+	DeltaStorageService,
+	DocumentDeltaStorageService,
+} from "./deltaStorageService.js";
 import { R11sDocumentDeltaConnection } from "./documentDeltaConnection.js";
 import { DocumentStorageService } from "./documentStorageService.js";
 import { RouterliciousErrorTypes, type IR11sError } from "./errorUtils.js";
@@ -112,7 +115,9 @@ export class DocumentService
 			return new NullBlobStorageService();
 		}
 
-		const getStorageManager = async (disableCache?: boolean): Promise<GitManager> => {
+		const getStorageManager = async (
+			disableCache?: boolean,
+		): Promise<GitManager> => {
 			const refreshed = await this.refreshSessionInfoIfNeeded();
 			if (!this.storageManager || !this.noCacheStorageManager || refreshed) {
 				if (refreshed) {
@@ -130,7 +135,11 @@ export class DocumentService
 				}
 				const historian = new Historian(true, false, this.storageRestWrapper);
 				this.storageManager = new GitManager(historian);
-				const noCacheHistorian = new Historian(true, true, this.storageRestWrapper);
+				const noCacheHistorian = new Historian(
+					true,
+					true,
+					this.storageRestWrapper,
+				);
 				this.noCacheStorageManager = new GitManager(noCacheHistorian);
 			}
 
@@ -161,13 +170,18 @@ export class DocumentService
 	 */
 	public async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
 		await this.connectToStorage();
-		assert(!!this.documentStorageService, 0x0b1 /* "Storage service not initialized" */);
+		assert(
+			!!this.documentStorageService,
+			0x0b1 /* "Storage service not initialized" */,
+		);
 
 		const getRestWrapper = async (): Promise<RestWrapper> => {
 			const refreshed = await this.refreshSessionInfoIfNeeded();
 
 			if (refreshed) {
-				const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
+				const rateLimiter = new RateLimiter(
+					this.driverPolicies.maxConcurrentOrdererRequests,
+				);
 				this.ordererRestWrapper = RouterliciousOrdererRestWrapper.load(
 					this.ordererTokenFetcher,
 					this.logger,
@@ -199,7 +213,9 @@ export class DocumentService
 	 *
 	 * @returns returns the document delta stream service for routerlicious driver.
 	 */
-	public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
+	public async connectToDeltaStream(
+		client: IClient,
+	): Promise<IDocumentDeltaConnection> {
 		const connect = async (refreshToken?: boolean) => {
 			let ordererToken = await this.ordererRestWrapper.getToken();
 			await this.refreshSessionInfoIfNeeded();
@@ -267,8 +283,9 @@ export class DocumentService
 			const connection = await connect();
 			// Enable single-commit summaries via driver policy based on the enable_single_commit_summary flag which maybe provided by the service during connection.
 			// summarizeProtocolTree flag is used by the loader layer to attach protocol tree along with the summary required in the single-commit summaries.
-			const shouldSummarizeProtocolTree = (connection as R11sDocumentDeltaConnection).details
-				?.supportedFeatures?.enable_single_commit_summary
+			const shouldSummarizeProtocolTree = (
+				connection as R11sDocumentDeltaConnection
+			).details?.supportedFeatures?.enable_single_commit_summary
 				? true
 				: false;
 			this._policies = {
@@ -281,7 +298,8 @@ export class DocumentService
 			if (
 				typeof error === "object" &&
 				error !== null &&
-				(error as Partial<IR11sError>).errorType === RouterliciousErrorTypes.authorizationError
+				(error as Partial<IR11sError>).errorType ===
+					RouterliciousErrorTypes.authorizationError
 			) {
 				// Fetch new token and retry once,
 				// otherwise 401/403 will be bubbled up as non-retriable AuthorizationError.
@@ -305,7 +323,8 @@ export class DocumentService
 		this.storageUrl = fluidResolvedUrl.endpoints.storageUrl;
 		this.ordererUrl = fluidResolvedUrl.endpoints.ordererUrl;
 		this.deltaStorageUrl = fluidResolvedUrl.endpoints.deltaStorageUrl;
-		this.deltaStreamUrl = fluidResolvedUrl.endpoints.deltaStreamUrl ?? this.ordererUrl;
+		this.deltaStreamUrl =
+			fluidResolvedUrl.endpoints.deltaStreamUrl ?? this.ordererUrl;
 		return true;
 	}
 }

@@ -47,11 +47,17 @@ describe("build tests", () => {
 
 		describe("can build with esnext.disposable", () => {
 			it("typescript-5.5", async () => {
-				await compileTest("typescript-5.5", ["--lib", "ES2022,DOM,esnext.disposable"]);
+				await compileTest("typescript-5.5", [
+					"--lib",
+					"ES2022,DOM,esnext.disposable",
+				]);
 			});
 			// Currently fails for typescript 5.6 and newer:
 			it.skip("typescript-5.6", async () => {
-				await compileTest("typescript-5.6", ["--lib", "ES2022,DOM,esnext.disposable"]);
+				await compileTest("typescript-5.6", [
+					"--lib",
+					"ES2022,DOM,esnext.disposable",
+				]);
 			});
 		});
 

@@ -17,8 +17,13 @@ export interface HasWorkloadName {
 /**
  * @internal
  */
-export function getSaveDirectory(directory: string, model: HasWorkloadName): string {
-	const workloadFriendly = model.workloadName.replace(/[\s_]+/g, "-").toLowerCase();
+export function getSaveDirectory(
+	directory: string,
+	model: HasWorkloadName,
+): string {
+	const workloadFriendly = model.workloadName
+		.replace(/[\s_]+/g, "-")
+		.toLowerCase();
 	return path.join(directory, workloadFriendly);
 }
 
@@ -59,7 +64,14 @@ export function getSaveInfo(
 				: false,
 		saveFluidOps:
 			options.saveFluidOps !== undefined && options.saveFluidOps !== false
-				? { path: getSavePath(options.saveFluidOps.directory, model, seed, "-fluid-ops") }
+				? {
+						path: getSavePath(
+							options.saveFluidOps.directory,
+							model,
+							seed,
+							"-fluid-ops",
+						),
+					}
 				: false,
 	};
 }

@@ -18,7 +18,9 @@ function getBundleNameFromPath(relativePath: string): string {
 	const pathParts = relativePath.replace(/\\/g, "/").split("/");
 
 	if (pathParts.length < 3) {
-		throw Error(`Could not derive a bundle name from this path: ${relativePath}`);
+		throw Error(
+			`Could not derive a bundle name from this path: ${relativePath}`,
+		);
 	}
 	pathParts.pop(); // Remove the filename
 

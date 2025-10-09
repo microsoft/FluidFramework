@@ -81,7 +81,11 @@ export type {
 	AllowedTypesFullFromMixed,
 	NumberKeys,
 } from "./allowedTypes.js";
-export { walkAllowedTypes, walkNodeSchema, type SchemaVisitor } from "./walkSchema.js";
+export {
+	walkAllowedTypes,
+	walkNodeSchema,
+	type SchemaVisitor,
+} from "./walkSchema.js";
 export { Context, HydratedContext } from "./context.js";
 export {
 	getOrCreateNodeFromInnerNode,

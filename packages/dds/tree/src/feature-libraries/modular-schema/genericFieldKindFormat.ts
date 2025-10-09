@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { type Static, type TAnySchema, type TSchema, Type } from "@sinclair/typebox";
+import {
+	type Static,
+	type TAnySchema,
+	type TSchema,
+	Type,
+} from "@sinclair/typebox";
 
 // Many of the return types in this module are intentionally derived, rather than explicitly specified.
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
@@ -36,8 +41,7 @@ export const EncodedGenericChangeset = <NodeChangesetSchema extends TSchema>(
 	tNodeChangeset: NodeChangesetSchema,
 ) => Type.Array(EncodedGenericChange(tNodeChangeset));
 
-export type EncodedGenericChangeset<Schema extends TSchema = TAnySchema> = Static<
-	ReturnType<Wrapper<Schema>["encodedGenericChangeset"]>
->;
+export type EncodedGenericChangeset<Schema extends TSchema = TAnySchema> =
+	Static<ReturnType<Wrapper<Schema>["encodedGenericChangeset"]>>;
 
 /* eslint-enable @typescript-eslint/explicit-function-return-type */

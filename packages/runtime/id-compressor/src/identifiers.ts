@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { OpSpaceCompressedId, SessionSpaceCompressedId } from "./types/index.js";
+import type {
+	OpSpaceCompressedId,
+	SessionSpaceCompressedId,
+} from "./types/index.js";
 
 /**
  * A compressed ID that is stable and unique within the scope of network of compressors (i.e. a document).

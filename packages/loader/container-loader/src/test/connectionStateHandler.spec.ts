@@ -39,7 +39,11 @@ import { ProtocolHandler } from "../protocol.js";
 
 class MockDeltaManagerForCatchingUp
 	extends TypedEventEmitter<IDeltaManagerEvents>
-	implements Pick<IDeltaManager<unknown, unknown>, "lastSequenceNumber" | "lastKnownSeqNumber">
+	implements
+		Pick<
+			IDeltaManager<unknown, unknown>,
+			"lastSequenceNumber" | "lastKnownSeqNumber"
+		>
 {
 	lastSequenceNumber: number = 5;
 	lastKnownSeqNumber: number = 10;
@@ -162,7 +166,9 @@ describe("ConnectionStateHandler Tests", () => {
 				category: TelemetryEventCategory,
 				details?: ITelemetryBaseProperties,
 			): void => {
-				throw new Error(`logConnectionIssue: ${eventName} ${JSON.stringify(details)}`);
+				throw new Error(
+					`logConnectionIssue: ${eventName} ${JSON.stringify(details)}`,
+				);
 			},
 			connectionStateChanged: (): void => {},
 			logger,
@@ -181,7 +187,9 @@ describe("ConnectionStateHandler Tests", () => {
 		); // readClientsWaitForJoinSignal
 
 		connectionStateHandler_receivedAddMemberEvent = (id: string): void => {
-			protocolHandler.quorum.addMember(id, { client: {} } as unknown as ISequencedClient);
+			protocolHandler.quorum.addMember(id, {
+				client: {},
+			} as unknown as ISequencedClient);
 		};
 		connectionStateHandler_receivedRemoveMemberEvent = (id: string): void => {
 			protocolHandler.quorum.removeMember(id);

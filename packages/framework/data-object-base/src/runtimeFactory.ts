@@ -35,7 +35,9 @@ export class RuntimeFactory extends RuntimeFactoryHelper {
 	private readonly registry: NamedFluidDataStoreRegistryEntries;
 
 	private readonly defaultStoreFactory: IFluidDataStoreFactory;
-	private readonly provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+	private readonly provideEntryPoint: (
+		runtime: IContainerRuntime,
+	) => Promise<FluidObject>;
 
 	public constructor(props: RuntimeFactoryProps) {
 		super();
@@ -48,11 +50,16 @@ export class RuntimeFactory extends RuntimeFactoryHelper {
 			storeFactories.includes(this.defaultStoreFactory)
 				? storeFactories
 				: [...storeFactories, this.defaultStoreFactory]
-		).map((factory) => [factory.type, factory]) as NamedFluidDataStoreRegistryEntries;
+		).map((factory) => [
+			factory.type,
+			factory,
+		]) as NamedFluidDataStoreRegistryEntries;
 	}
 
 	public async instantiateFirstTime(runtime: IContainerRuntime): Promise<void> {
-		const dataStore = await runtime.createDataStore(this.defaultStoreFactory.type);
+		const dataStore = await runtime.createDataStore(
+			this.defaultStoreFactory.type,
+		);
 		await dataStore.trySetAlias(defaultStoreId);
 	}
 

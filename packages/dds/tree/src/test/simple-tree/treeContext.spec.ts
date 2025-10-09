@@ -23,7 +23,10 @@ describe("TreeBranch", () => {
 
 	function init(content: string[]): TreeViewAlpha<typeof Array> {
 		const view = getView(
-			new TreeViewConfiguration({ schema: Array, enableSchemaValidation: true }),
+			new TreeViewConfiguration({
+				schema: Array,
+				enableSchemaValidation: true,
+			}),
 		);
 		view.initialize(content);
 		return view;
@@ -115,7 +118,8 @@ describe("TreeBranch", () => {
 			assert.deepEqual([...branchBranch.root], ["y"]);
 			assert.throws(
 				() => view.rebaseOnto(branch),
-				(e: Error) => validateAssertionError(e, /cannot be rebased onto another branch./),
+				(e: Error) =>
+					validateAssertionError(e, /cannot be rebased onto another branch./),
 			);
 		});
 

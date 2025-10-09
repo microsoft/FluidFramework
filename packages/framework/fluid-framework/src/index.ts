@@ -128,7 +128,9 @@ export const SharedTree: SharedObjectKind<ITree> = OriginalSharedTree;
  * ```
  * @alpha
  */
-export function configuredSharedTree(options: SharedTreeOptions): SharedObjectKind<ITree> {
+export function configuredSharedTree(
+	options: SharedTreeOptions,
+): SharedObjectKind<ITree> {
 	return originalConfiguredSharedTree(options);
 }
 

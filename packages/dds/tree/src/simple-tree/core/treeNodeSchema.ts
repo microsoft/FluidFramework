@@ -10,9 +10,16 @@ import type { SimpleNodeSchemaBase } from "./simpleNodeSchemaBase.js";
 import type { TreeNode } from "./treeNode.js";
 import type { InternalTreeNode, Unhydrated } from "./types.js";
 import type { UnionToIntersection } from "../../util/index.js";
-import type { ImplicitAllowedTypes, AllowedTypesFullEvaluated } from "./allowedTypes.js";
+import type {
+	ImplicitAllowedTypes,
+	AllowedTypesFullEvaluated,
+} from "./allowedTypes.js";
 import type { Context } from "./context.js";
-import type { FieldKey, NodeData, TreeNodeStoredSchema } from "../../core/index.js";
+import type {
+	FieldKey,
+	NodeData,
+	TreeNodeStoredSchema,
+} from "../../core/index.js";
 import type { UnhydratedFlexTreeField } from "./unhydratedFlexTree.js";
 import type { FactoryContent } from "../unhydratedFlexTreeFromInsertable.js";
 import type { StoredSchemaGenerationOptions } from "./toStored.js";
@@ -189,7 +196,9 @@ export type TreeNodeSchemaClass<
 				 */
 				// The approach suggested by the linter here is more concise, but ir break intellisense for the constructor.
 				// eslint-disable-next-line @typescript-eslint/prefer-function-type
-				new (data?: TInsertable | InternalTreeNode | TConstructorExtra): Unhydrated<TNode>;
+				new (
+					data?: TInsertable | InternalTreeNode | TConstructorExtra,
+				): Unhydrated<TNode>;
 			}
 		: {
 				/**
@@ -201,7 +210,9 @@ export type TreeNodeSchemaClass<
 				 */
 				// The approach suggested by the linter here is more concise, but ir break intellisense for the constructor.
 				// eslint-disable-next-line @typescript-eslint/prefer-function-type
-				new (data: TInsertable | InternalTreeNode | TConstructorExtra): Unhydrated<TNode>;
+				new (
+					data: TInsertable | InternalTreeNode | TConstructorExtra,
+				): Unhydrated<TNode>;
 			});
 
 /**
@@ -446,7 +457,10 @@ export interface TreeNodeSchemaInitializedData {
 	 * TODO: use of `allowedTypes` is for fallbacks (for example NaN -\> null).
 	 * This behavior should be moved to shallowCompatibilityTest instead.
 	 */
-	toFlexContent(data: FactoryContent, allowedTypes: ReadonlySet<TreeNodeSchema>): FlexContent;
+	toFlexContent(
+		data: FactoryContent,
+		allowedTypes: ReadonlySet<TreeNodeSchema>,
+	): FlexContent;
 }
 
 export type FlexContent = [NodeData, Map<FieldKey, UnhydratedFlexTreeField>];
@@ -567,7 +581,14 @@ export function isTreeNodeSchemaClass<
 >(
 	schema:
 		| TreeNodeSchema<Name, Kind, TNode, TBuild, ImplicitlyConstructable, Info>
-		| TreeNodeSchemaClass<Name, Kind, TNode & TreeNode, TBuild, ImplicitlyConstructable, Info>,
+		| TreeNodeSchemaClass<
+				Name,
+				Kind,
+				TNode & TreeNode,
+				TBuild,
+				ImplicitlyConstructable,
+				Info
+		  >,
 ): schema is TreeNodeSchemaClass<
 	Name,
 	Kind,
@@ -585,15 +606,12 @@ export function isTreeNodeSchemaClass<
  * If a schema is both TreeNodeSchemaClass and TreeNodeSchemaNonClass, prefer TreeNodeSchemaClass since that includes subclasses properly.
  * @public
  */
-export type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchemaClass<
-	string,
-	NodeKind,
-	infer TNode
->
-	? TNode
-	: T extends TreeNodeSchemaNonClass<string, NodeKind, infer TNode>
+export type NodeFromSchema<T extends TreeNodeSchema> =
+	T extends TreeNodeSchemaClass<string, NodeKind, infer TNode>
 		? TNode
-		: never;
+		: T extends TreeNodeSchemaNonClass<string, NodeKind, infer TNode>
+			? TNode
+			: never;
 
 /**
  * Data which can be used as a node to be inserted.
@@ -617,11 +635,19 @@ export type InsertableTypedNode<
 	TSchema extends TreeNodeSchema,
 	T = UnionToIntersection<TSchema>,
 > =
-	| (T extends TreeNodeSchema<string, NodeKind, TreeNode | TreeLeafValue, never, true>
+	| (T extends TreeNodeSchema<
+			string,
+			NodeKind,
+			TreeNode | TreeLeafValue,
+			never,
+			true
+	  >
 			? NodeBuilderData<T>
 			: never)
 	| (T extends TreeNodeSchema
-			? Unhydrated<TreeNode extends NodeFromSchema<T> ? never : NodeFromSchema<T>>
+			? Unhydrated<
+					TreeNode extends NodeFromSchema<T> ? never : NodeFromSchema<T>
+				>
 			: never);
 
 /**
@@ -632,10 +658,17 @@ export type InsertableTypedNode<
  * except that the more complex typing in TreeNodeSchema case breaks for non-class schema and leaks in `undefined` from optional crete parameters.
  * @system @public
  */
-export type NodeBuilderData<T extends TreeNodeSchemaCore<string, NodeKind, boolean>> =
-	T extends TreeNodeSchemaCore<string, NodeKind, boolean, unknown, infer TBuild>
-		? TBuild
-		: never;
+export type NodeBuilderData<
+	T extends TreeNodeSchemaCore<string, NodeKind, boolean>,
+> = T extends TreeNodeSchemaCore<
+	string,
+	NodeKind,
+	boolean,
+	unknown,
+	infer TBuild
+>
+	? TBuild
+	: never;
 
 /**
  * Value that may be stored as a leaf node.

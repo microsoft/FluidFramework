@@ -5,12 +5,12 @@
 		"declarationMap": false,
 		"rootDir": "./",
 		"outDir": "../../dist/test",
-		"types": ["node", "mocha"],
+		"types": ["node", "mocha"]
 	},
 	"include": ["./**/*"],
 	"references": [
 		{
-			"path": "../..",
-		},
-	],
+			"path": "../.."
+		}
+	]
 }

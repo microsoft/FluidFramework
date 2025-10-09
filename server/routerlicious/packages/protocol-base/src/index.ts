@@ -4,7 +4,11 @@
  */
 
 export { buildGitTreeHierarchy, getGitMode, getGitType } from "./gitHelper";
-export { type IProtocolHandler, type IScribeProtocolState, ProtocolOpHandler } from "./protocol";
+export {
+	type IProtocolHandler,
+	type IScribeProtocolState,
+	ProtocolOpHandler,
+} from "./protocol";
 export {
 	type IQuorumSnapshot,
 	Quorum,

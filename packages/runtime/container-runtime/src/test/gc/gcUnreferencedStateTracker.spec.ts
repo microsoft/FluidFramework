@@ -98,7 +98,11 @@ describe("Garbage Collection Tests", () => {
 					tracker.updateTracking(updateWith);
 				}
 
-				assert.equal(tracker.state, expectedState, `Wrong state at step ${index + 1}`); // 0-indexed including start
+				assert.equal(
+					tracker.state,
+					expectedState,
+					`Wrong state at step ${index + 1}`,
+				); // 0-indexed including start
 			}
 		}
 
@@ -219,7 +223,11 @@ describe("Garbage Collection Tests", () => {
 				7 /* tombstoneTimeoutMs */,
 				15 /* sweepGracePeriodMs */,
 			);
-			assert.equal(tracker.state, UnreferencedState.Active, "Should start as Active");
+			assert.equal(
+				tracker.state,
+				UnreferencedState.Active,
+				"Should start as Active",
+			);
 			clock.tick(2);
 			assert.equal(
 				tracker.state,
@@ -247,7 +255,11 @@ describe("Garbage Collection Tests", () => {
 				12 /* tombstoneTimeoutMs */,
 				0 /* sweepGracePeriodMs */,
 			);
-			assert.equal(tracker.state, UnreferencedState.Active, "Should start as Active");
+			assert.equal(
+				tracker.state,
+				UnreferencedState.Active,
+				"Should start as Active",
+			);
 			tracker.updateTracking(10);
 			// Would be 10ms left on Inactive timer, but it was just cleared. 2ms left on Sweep timer
 			assert.equal(
@@ -271,9 +283,16 @@ describe("Garbage Collection Tests", () => {
 				undefined /* tombstoneTimeoutMs */,
 				0 /* sweepGracePeriodMs */,
 			);
-			assert.equal(tracker.state, UnreferencedState.Active, "Should start as Active");
+			assert.equal(
+				tracker.state,
+				UnreferencedState.Active,
+				"Should start as Active",
+			);
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- Accessing private property
-			const timerClearSpy: SinonSpy = spy((tracker as any).inactiveTimer, "clear");
+			const timerClearSpy: SinonSpy = spy(
+				(tracker as any).inactiveTimer,
+				"clear",
+			);
 			// At T10 we had 15 to go based on server timestamps, so Timer is set to 25
 			clock.tick(6); // at T16 (9 to go)
 			tracker.updateTracking(15); // Simulate processing a more-recent Summary (reference time 15 at T16). Pulls in timer to 21 (5 to go)
@@ -282,7 +301,11 @@ describe("Garbage Collection Tests", () => {
 				"Expected underlying Timer to clear and reset to support shorter timeout",
 			);
 			clock.tick(5);
-			assert.equal(tracker.state, UnreferencedState.Inactive, "Should be Inactive at T21");
+			assert.equal(
+				tracker.state,
+				UnreferencedState.Inactive,
+				"Should be Inactive at T21",
+			);
 		});
 		it("Timers can loosen up over time", () => {
 			tracker = new UnreferencedStateTracker(
@@ -292,7 +315,11 @@ describe("Garbage Collection Tests", () => {
 				undefined /* tombstoneTimeoutMs */,
 				0 /* sweepGracePeriodMs */,
 			);
-			assert.equal(tracker.state, UnreferencedState.Active, "Should start as Active");
+			assert.equal(
+				tracker.state,
+				UnreferencedState.Active,
+				"Should start as Active",
+			);
 			clock.tick(5); // at T5, 5 to go
 			tracker.updateTracking(1); // Simulate processing an older Summary (reference time 1 at T5). Pushes out timer to 14 (9 to go)
 			clock.tick(5);

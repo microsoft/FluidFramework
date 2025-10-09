@@ -18,7 +18,7 @@ export const summaryTemplate = {
 								"7a99532d-94ec-43ac-8a53-d9f978ad4ae9": {
 									type: 1,
 									tree: {
-										"header": {
+										header: {
 											type: 2,
 											content: '{"value":"123"}',
 										},
@@ -29,10 +29,10 @@ export const summaryTemplate = {
 										},
 									},
 								},
-								"root": {
+								root: {
 									type: 1,
 									tree: {
-										"header": {
+										header: {
 											type: 2,
 											content:
 												'{"blobs":[],"content":{"ci":{"csn":0,"ccIds":[]},"subdirectories":{"initial-objects-key":{"ci":{"csn":-1,"ccIds":["detached"]},"storage":{"tree":{"type":"Plain","value":{"type":"__fluid_handle__","url":"/rootDOId/de68ca53-be31-479e-8d34-a267958997e4"}}}}}}}',
@@ -74,7 +74,7 @@ export const summaryTemplate = {
 			content:
 				'{"electedClientId":"f3bda689-ca40-4b68-b2ea-4c02dac76206","electedParentId":"af12d248-f040-413c-a6d1-8e5bd6619313","electionSequenceNumber":7}',
 		},
-		"gc": {
+		gc: {
 			type: 1,
 			tree: {
 				__gc_root: {
@@ -116,16 +116,17 @@ export const snapshotTree = {
 									id: "353aab1f600b0dd527073e286b4d6dd853c0d212",
 									blobs: {
 										".attributes": "d67e9b02c97d8b2d13b1ea88c4198ea6cdae3c06",
-										"compressed_2_header": "ee84b67e86708c9dd7fc79ff8f3380b78f000b79",
+										compressed_2_header:
+											"ee84b67e86708c9dd7fc79ff8f3380b78f000b79",
 									},
 									commits: {},
 									trees: {},
 								},
-								"root": {
+								root: {
 									id: "771be006709c44442dbcd69424b8f89e14a05de8",
 									blobs: {
 										".attributes": "3ec4a65a74f0e2fab11aaac9b31f284a8c931850",
-										"header": "c2de09aa55c92d79b9292d6efb469592915f0b1f",
+										header: "c2de09aa55c92d79b9292d6efb469592915f0b1f",
 									},
 									commits: {},
 									trees: {},
@@ -165,7 +166,7 @@ export const snapshotTree = {
 			commits: {},
 			trees: {},
 		},
-		"gc": {
+		gc: {
 			id: "e8ed0760ac37fd8042020559779ce80b1d88f266",
 			blobs: {
 				__gc_root: "018d97818f8b519f99c418cb3c33ce5cc4e38e3f",

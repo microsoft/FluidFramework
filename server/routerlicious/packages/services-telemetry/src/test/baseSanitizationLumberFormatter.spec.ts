@@ -48,6 +48,9 @@ describe("BaseSanitizationLumberFormatter", () => {
 
 		assert.strictEqual(baseLumberException.command.args[0], redactedStr);
 		assert.strictEqual(baseLumberException.request.headers.authorization, redactedStr);
-		assert.strictEqual(baseLumberException.response.request.headers.authorization, redactedStr);
+		assert.strictEqual(
+			baseLumberException.response.request.headers.authorization,
+			redactedStr,
+		);
 	});
 });

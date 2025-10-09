@@ -5,7 +5,10 @@
 
 import { strict as assert } from "assert";
 
-import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
+import {
+	IContainer,
+	IFluidCodeDetails,
+} from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { loadExistingContainer } from "@fluidframework/container-loader/internal";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
@@ -62,8 +65,13 @@ describe("No Delta Stream", () => {
 		return container;
 	}
 
-	async function loadContainer(storageOnly: boolean, track = true): Promise<IContainer> {
-		const service = new LocalDocumentServiceFactory(deltaConnectionServer, { storageOnly });
+	async function loadContainer(
+		storageOnly: boolean,
+		track = true,
+	): Promise<IContainer> {
+		const service = new LocalDocumentServiceFactory(deltaConnectionServer, {
+			storageOnly,
+		});
 		const loaderProps = createLoaderProps(
 			[[codeDetails, factory]],
 			service,
@@ -105,7 +113,11 @@ describe("No Delta Stream", () => {
 		const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 
 		assert.strictEqual(container.deltaManager.active, false, "active");
-		assert.strictEqual(container.deltaManager.readOnlyInfo.readonly, false, "readonly");
+		assert.strictEqual(
+			container.deltaManager.readOnlyInfo.readonly,
+			false,
+			"readonly",
+		);
 
 		assert.strictEqual(dataObject.runtime.connected, true, "connected");
 		assert.notStrictEqual(dataObject.runtime.clientId, undefined, "clientId");
@@ -127,7 +139,11 @@ describe("No Delta Stream", () => {
 			ConnectionState.Connected,
 			"container.connected",
 		);
-		assert.strictEqual(container.clientId, "storage-only client", "container.clientId");
+		assert.strictEqual(
+			container.clientId,
+			"storage-only client",
+			"container.clientId",
+		);
 		assert.strictEqual(
 			container.readOnlyInfo.readonly,
 			true,
@@ -136,12 +152,25 @@ describe("No Delta Stream", () => {
 
 		const deltaManager = container.deltaManager;
 		assert.strictEqual(deltaManager.active, false, "deltaManager.active");
-		assert.ok(deltaManager.readOnlyInfo.readonly, "deltaManager.readOnlyInfo.readonly");
-		assert.ok(deltaManager.readOnlyInfo.permissions, "deltaManager.readOnlyInfo.permissions");
-		assert.ok(deltaManager.readOnlyInfo.storageOnly, "deltaManager.readOnlyInfo.storageOnly");
+		assert.ok(
+			deltaManager.readOnlyInfo.readonly,
+			"deltaManager.readOnlyInfo.readonly",
+		);
+		assert.ok(
+			deltaManager.readOnlyInfo.permissions,
+			"deltaManager.readOnlyInfo.permissions",
+		);
+		assert.ok(
+			deltaManager.readOnlyInfo.storageOnly,
+			"deltaManager.readOnlyInfo.storageOnly",
+		);
 
 		const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
-		assert.strictEqual(dataObject.runtime.connected, false, "dataObject.runtime.connected");
+		assert.strictEqual(
+			dataObject.runtime.connected,
+			false,
+			"dataObject.runtime.connected",
+		);
 		assert.strictEqual(
 			dataObject.runtime.clientId,
 			"storage-only client",
@@ -157,25 +186,36 @@ describe("No Delta Stream", () => {
 		await loadContainer(true);
 		const normalContainer1 = await loadContainer(false);
 		const normalContainer2 = await loadContainer(false);
-		const normalDataObject1 = (await normalContainer1.getEntryPoint()) as ITestFluidObject;
-		const normalDataObject2 = (await normalContainer2.getEntryPoint()) as ITestFluidObject;
+		const normalDataObject1 =
+			(await normalContainer1.getEntryPoint()) as ITestFluidObject;
+		const normalDataObject2 =
+			(await normalContainer2.getEntryPoint()) as ITestFluidObject;
 		normalDataObject1.root.set("fluid", "great");
 		normalDataObject2.root.set("prague", "a city in europe");
 		await loaderContainerTracker.ensureSynchronized();
-		assert.strictEqual(normalDataObject1.root.get("prague"), "a city in europe");
+		assert.strictEqual(
+			normalDataObject1.root.get("prague"),
+			"a city in europe",
+		);
 		assert.strictEqual(normalDataObject2.root.get("fluid"), "great");
 
 		const storageOnlyContainer = await loadContainer(true);
 		const storageOnlyDataObject =
 			(await storageOnlyContainer.getEntryPoint()) as ITestFluidObject;
-		assert.strictEqual(storageOnlyDataObject.root.get("prague"), "a city in europe");
+		assert.strictEqual(
+			storageOnlyDataObject.root.get("prague"),
+			"a city in europe",
+		);
 		assert.strictEqual(storageOnlyDataObject.root.get("fluid"), "great");
 	});
 
 	it("loads in storage-only mode on error thrown from connectToDeltaStream()", async () => {
-		const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
-		const createDocServ =
-			documentServiceFactory.createDocumentService.bind(documentServiceFactory);
+		const documentServiceFactory = new LocalDocumentServiceFactory(
+			deltaConnectionServer,
+		);
+		const createDocServ = documentServiceFactory.createDocumentService.bind(
+			documentServiceFactory,
+		);
 		documentServiceFactory.createDocumentService = async (...args) => {
 			return createDocServ(...args).then((docService) => {
 				docService.connectToDeltaStream = () => {
@@ -186,14 +226,20 @@ describe("No Delta Stream", () => {
 				return docService;
 			});
 		};
-		const container = await loadContainerWithDocServiceFactory(documentServiceFactory);
+		const container = await loadContainerWithDocServiceFactory(
+			documentServiceFactory,
+		);
 
 		assert.strictEqual(
 			container.connectionState,
 			ConnectionState.Connected,
 			"container.connected",
 		);
-		assert.strictEqual(container.clientId, "storage-only client", "container.clientId");
+		assert.strictEqual(
+			container.clientId,
+			"storage-only client",
+			"container.clientId",
+		);
 		assert.strictEqual(
 			container.readOnlyInfo.readonly,
 			true,
@@ -203,12 +249,25 @@ describe("No Delta Stream", () => {
 
 		const deltaManager = container.deltaManager;
 		assert.strictEqual(deltaManager.active, false, "deltaManager.active");
-		assert.ok(deltaManager.readOnlyInfo.readonly, "deltaManager.readOnlyInfo.readonly");
-		assert.ok(deltaManager.readOnlyInfo.permissions, "deltaManager.readOnlyInfo.permissions");
-		assert.ok(deltaManager.readOnlyInfo.storageOnly, "deltaManager.readOnlyInfo.storageOnly");
+		assert.ok(
+			deltaManager.readOnlyInfo.readonly,
+			"deltaManager.readOnlyInfo.readonly",
+		);
+		assert.ok(
+			deltaManager.readOnlyInfo.permissions,
+			"deltaManager.readOnlyInfo.permissions",
+		);
+		assert.ok(
+			deltaManager.readOnlyInfo.storageOnly,
+			"deltaManager.readOnlyInfo.storageOnly",
+		);
 
 		const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
-		assert.strictEqual(dataObject.runtime.connected, false, "dataObject.runtime.connected");
+		assert.strictEqual(
+			dataObject.runtime.connected,
+			false,
+			"dataObject.runtime.connected",
+		);
 		assert.strictEqual(
 			dataObject.runtime.clientId,
 			"storage-only client",

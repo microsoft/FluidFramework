@@ -11,7 +11,11 @@ import type { NumericUuid } from "./identifiers.js";
 const halfNumeric = BigInt("0xFFFFFFFFFFFFFFFF");
 const sixtyFour = BigInt(64);
 
-export function writeNumber(buffer: Float64Array, index: number, value: number): number {
+export function writeNumber(
+	buffer: Float64Array,
+	index: number,
+	value: number,
+): number {
 	buffer[index] = value;
 	return index + 1;
 }
@@ -26,7 +30,11 @@ export function writeNumericUuid(
 	return index + 2; // UUID values are 16 bytes.
 }
 
-export function writeBoolean(buffer: Float64Array, index: number, value: boolean): number {
+export function writeBoolean(
+	buffer: Float64Array,
+	index: number,
+	value: boolean,
+): number {
 	return writeNumber(buffer, index, value ? 1 : 0);
 }
 
@@ -50,9 +58,15 @@ export function readNumber(index: Index): number {
 
 export function readNumericUuid(index: Index): NumericUuid {
 	const lowerHalf = index.bufferUint[index.index];
-	assert(lowerHalf !== undefined, 0x9da /* lowerHalf is undefined in readNumericUuid */);
+	assert(
+		lowerHalf !== undefined,
+		0x9da /* lowerHalf is undefined in readNumericUuid */,
+	);
 	const upperHalf = index.bufferUint[index.index + 1];
-	assert(upperHalf !== undefined, 0x9db /* upperHalf is undefined in readNumericUuid */);
+	assert(
+		upperHalf !== undefined,
+		0x9db /* upperHalf is undefined in readNumericUuid */,
+	);
 	const value = (upperHalf << sixtyFour) | lowerHalf;
 	index.index += 2;
 	return value as NumericUuid;

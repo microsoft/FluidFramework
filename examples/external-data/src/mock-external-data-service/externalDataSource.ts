@@ -48,7 +48,10 @@ export interface IExternalDataSourceEvents extends IEvent {
 	 * @remarks Debug API for demo purposes - the real scenario will need to learn about the data changing via the
 	 * webhook path.
 	 */
-	(event: "debugDataWritten", listener: (data: ITaskData, externalTaskListId: string) => void);
+	(
+		event: "debugDataWritten",
+		listener: (data: ITaskData, externalTaskListId: string) => void,
+	);
 }
 
 /**
@@ -102,7 +105,10 @@ export class ExternalDataSource extends TypedEventEmitter<IExternalDataSourceEve
 	 *
 	 * @returns A promise that resolves when the write completes.
 	 */
-	public async writeData(data: ITaskData, externalTaskListId: string): Promise<Response> {
+	public async writeData(
+		data: ITaskData,
+		externalTaskListId: string,
+	): Promise<Response> {
 		this.data[externalTaskListId] = data;
 
 		// Emit for debug views to update

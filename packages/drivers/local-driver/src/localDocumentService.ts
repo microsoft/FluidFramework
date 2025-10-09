@@ -44,8 +44,13 @@ export class LocalDocumentService
 		private readonly tokenProvider: ITokenProvider,
 		private readonly tenantId: string,
 		private readonly documentId: string,
-		private readonly documentDeltaConnectionsMap: Map<string, LocalDocumentDeltaConnection>,
-		public readonly policies: IDocumentServicePolicies = { supportGetSnapshotApi: true },
+		private readonly documentDeltaConnectionsMap: Map<
+			string,
+			LocalDocumentDeltaConnection
+		>,
+		public readonly policies: IDocumentServicePolicies = {
+			supportGetSnapshotApi: true,
+		},
 		private readonly innerDocumentService?: IDocumentService,
 		private readonly logger?: ITelemetryBaseLogger,
 	) {
@@ -61,7 +66,9 @@ export class LocalDocumentService
 		return new LocalDocumentStorageService(
 			this.documentId,
 			new GitManager(
-				new TestHistorian(this.localDeltaConnectionServer.testDbFactory.testDatabase),
+				new TestHistorian(
+					this.localDeltaConnectionServer.testDbFactory.testDatabase,
+				),
 			),
 			{
 				maximumCacheDurationMs: 432_000_000, // 5 days in ms. Not actually enforced but shouldn't matter for any local driver scenario
@@ -89,7 +96,9 @@ export class LocalDocumentService
 	 * Creates and returns a delta stream for local use.
 	 * @param client - client data
 	 */
-	public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
+	public async connectToDeltaStream(
+		client: IClient,
+	): Promise<IDocumentDeltaConnection> {
 		if (this.policies.storageOnly === true) {
 			throw new Error("can't connect to delta stream in storage-only mode");
 		}

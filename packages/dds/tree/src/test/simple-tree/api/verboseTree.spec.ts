@@ -49,9 +49,18 @@ describe("simple-tree verboseTree", () => {
 				assert.equal(options.keyConverter.parse(A.identifier, "a"), "a");
 				assert.equal(options.keyConverter.parse(A.identifier, "b"), "stored");
 				assert.equal(options.keyConverter.parse(B.identifier, "b"), "b");
-				assert.equal(options.keyConverter.encode(A.identifier, brand("a")), "a");
-				assert.equal(options.keyConverter.encode(A.identifier, brand("stored")), "b");
-				assert.equal(options.keyConverter.encode(B.identifier, brand("b")), "b");
+				assert.equal(
+					options.keyConverter.encode(A.identifier, brand("a")),
+					"a",
+				);
+				assert.equal(
+					options.keyConverter.encode(A.identifier, brand("stored")),
+					"b",
+				);
+				assert.equal(
+					options.keyConverter.encode(B.identifier, brand("b")),
+					"b",
+				);
 			}
 			{
 				const options = applySchemaToParserOptions([A, B], {
@@ -62,7 +71,10 @@ describe("simple-tree verboseTree", () => {
 			{
 				const options = applySchemaToParserOptions([A, B], {});
 				assert(options.keyConverter !== undefined);
-				assert.equal(options.keyConverter.encode(A.identifier, brand("stored")), "b");
+				assert.equal(
+					options.keyConverter.encode(A.identifier, brand("stored")),
+					"b",
+				);
 				assert.equal(options.keyConverter.parse(A.identifier, "b"), "stored");
 			}
 		});
@@ -122,7 +134,12 @@ describe("simple-tree verboseTree", () => {
 			},
 		];
 
-		const RootSchema = [TestMap, TestObject, schema.string, schema.null] as const;
+		const RootSchema = [
+			TestMap,
+			TestObject,
+			schema.string,
+			schema.null,
+		] as const;
 
 		for (const keysSetting of [
 			KeyEncodingOptions.usePropertyKeys,
@@ -132,7 +149,8 @@ describe("simple-tree verboseTree", () => {
 			describe(keysSetting, () => {
 				const testTrees: TestTree<VerboseTree>[] = [];
 
-				for (const testCase of keysSetting === KeyEncodingOptions.usePropertyKeys
+				for (const testCase of keysSetting ===
+				KeyEncodingOptions.usePropertyKeys
 					? propertyKeyCases
 					: storedKeyCases) {
 					testTrees.push({
@@ -154,7 +172,11 @@ describe("simple-tree verboseTree", () => {
 					cursorName: "verboseTree",
 					cursorFactory: (data) => cursorFromVerbose(data, finalOptions),
 					dataFromCursor: (cursor) =>
-						verboseFromCursor(cursor, getUnhydratedContext(RootSchema), encodeOptions),
+						verboseFromCursor(
+							cursor,
+							getUnhydratedContext(RootSchema),
+							encodeOptions,
+						),
 					testData: testTrees,
 					builders: {
 						withKeys: (keys) => {

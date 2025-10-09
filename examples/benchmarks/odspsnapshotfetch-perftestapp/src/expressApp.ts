@@ -73,7 +73,10 @@ const clientConfig: IPublicClientConfig = {
 	},
 };
 
-async function getOdspToken(res: Response, originalUrl: string): Promise<boolean> {
+async function getOdspToken(
+	res: Response,
+	originalUrl: string,
+): Promise<boolean> {
 	const buildTokenConfig = (
 		response: Response,
 		redirectUriCallback?: (tokens: IOdspTokens) => Promise<string>,
@@ -97,7 +100,11 @@ async function getOdspToken(res: Response, originalUrl: string): Promise<boolean
 	return false;
 }
 
-const prepareResponse = (req: express.Request, res: express.Response, token: string): void => {
+const prepareResponse = (
+	req: express.Request,
+	res: express.Response,
+	token: string,
+): void => {
 	const documentId = req.params.id;
 	const html = `<!DOCTYPE html>
         <html style="height: 100%;" lang="en">

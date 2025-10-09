@@ -4,8 +4,14 @@
  */
 
 import type { JsonDeserialized } from "./jsonDeserialized.js";
-import type { JsonSerializable, JsonSerializableOptions } from "./jsonSerializable.js";
-import type { OpaqueJsonDeserialized, OpaqueJsonSerializable } from "./opaqueJson.js";
+import type {
+	JsonSerializable,
+	JsonSerializableOptions,
+} from "./jsonSerializable.js";
+import type {
+	OpaqueJsonDeserialized,
+	OpaqueJsonSerializable,
+} from "./opaqueJson.js";
 
 /**
  * Helper to return an Opaque Json type version of Json type
@@ -34,25 +40,41 @@ export type JsonTypeToOpaqueJson<
 > = T extends JsonSerializable<T, Options> & JsonDeserialized<T, Options>
 	? OpaqueJsonSerializable<
 			T,
-			Options extends { AllowExactly: unknown[] } ? Options["AllowExactly"] : [],
-			Options extends { AllowExtensionOf: unknown } ? Options["AllowExtensionOf"] : never
+			Options extends { AllowExactly: unknown[] }
+				? Options["AllowExactly"]
+				: [],
+			Options extends { AllowExtensionOf: unknown }
+				? Options["AllowExtensionOf"]
+				: never
 		> &
 			OpaqueJsonDeserialized<
 				T,
-				Options extends { AllowExactly: unknown[] } ? Options["AllowExactly"] : [],
-				Options extends { AllowExtensionOf: unknown } ? Options["AllowExtensionOf"] : never
+				Options extends { AllowExactly: unknown[] }
+					? Options["AllowExactly"]
+					: [],
+				Options extends { AllowExtensionOf: unknown }
+					? Options["AllowExtensionOf"]
+					: never
 			>
 	: T extends JsonDeserialized<T, Options>
 		? OpaqueJsonDeserialized<
 				T,
-				Options extends { AllowExactly: unknown[] } ? Options["AllowExactly"] : [],
-				Options extends { AllowExtensionOf: unknown } ? Options["AllowExtensionOf"] : never
+				Options extends { AllowExactly: unknown[] }
+					? Options["AllowExactly"]
+					: [],
+				Options extends { AllowExtensionOf: unknown }
+					? Options["AllowExtensionOf"]
+					: never
 			>
 		: T extends JsonSerializable<T, Options>
 			? OpaqueJsonSerializable<
 					T,
-					Options extends { AllowExactly: unknown[] } ? Options["AllowExactly"] : [],
-					Options extends { AllowExtensionOf: unknown } ? Options["AllowExtensionOf"] : never
+					Options extends { AllowExactly: unknown[] }
+						? Options["AllowExactly"]
+						: [],
+					Options extends { AllowExtensionOf: unknown }
+						? Options["AllowExtensionOf"]
+						: never
 				>
 			: never;
 
@@ -80,8 +102,11 @@ export type JsonTypeToOpaqueJson<
  * @internal
  */
 export type OpaqueJsonToJsonType<
-	TOpaque extends OpaqueJsonSerializable<unknown> | OpaqueJsonDeserialized<unknown>,
-> = TOpaque extends OpaqueJsonSerializable<infer TJson> & OpaqueJsonDeserialized<infer TJson>
+	TOpaque extends
+		| OpaqueJsonSerializable<unknown>
+		| OpaqueJsonDeserialized<unknown>,
+> = TOpaque extends OpaqueJsonSerializable<infer TJson> &
+	OpaqueJsonDeserialized<infer TJson>
 	? JsonSerializable<TJson> & JsonDeserialized<TJson>
 	: TOpaque extends OpaqueJsonDeserialized<infer TJson>
 		? JsonDeserialized<TJson>

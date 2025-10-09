@@ -42,12 +42,18 @@ export class LocalOdspDocumentService
 	}
 
 	public async connectToStorage(): Promise<IDocumentStorageService> {
-		this.storageManager = new LocalOdspDocumentStorageService(this.logger, this.localSnapshot);
+		this.storageManager = new LocalOdspDocumentStorageService(
+			this.logger,
+			this.localSnapshot,
+		);
 		return this.storageManager;
 	}
 
 	public async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
-		return new LocalOdspDeltaStorageService(this.logger, this.storageManager?.ops ?? []);
+		return new LocalOdspDeltaStorageService(
+			this.logger,
+			this.storageManager?.ops ?? [],
+		);
 	}
 
 	public connectToDeltaStream(_client: IClient): never {

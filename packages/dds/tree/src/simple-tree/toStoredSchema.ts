@@ -20,7 +20,11 @@ import {
 	type TreeTypeSet,
 } from "../core/index.js";
 import { FieldKinds, type FlexFieldKind } from "../feature-libraries/index.js";
-import { brand, getOrCreate, type JsonCompatibleReadOnlyObject } from "../util/index.js";
+import {
+	brand,
+	getOrCreate,
+	type JsonCompatibleReadOnlyObject,
+} from "../util/index.js";
 
 import {
 	allowedTypeFilter,
@@ -45,13 +49,15 @@ const viewToStoredCache = new WeakMap<
 	WeakMap<ImplicitFieldSchema, TreeStoredSchema>
 >();
 
-export const restrictiveStoredSchemaGenerationOptions: StoredSchemaGenerationOptions = {
-	includeStaged: () => false,
-};
+export const restrictiveStoredSchemaGenerationOptions: StoredSchemaGenerationOptions =
+	{
+		includeStaged: () => false,
+	};
 
-export const permissiveStoredSchemaGenerationOptions: StoredSchemaGenerationOptions = {
-	includeStaged: () => true,
-};
+export const permissiveStoredSchemaGenerationOptions: StoredSchemaGenerationOptions =
+	{
+		includeStaged: () => true,
+	};
 
 /**
  * Converts a {@link ImplicitFieldSchema} into a {@link TreeStoredSchema} for use in schema upgrades.
@@ -95,7 +101,8 @@ export function toStoredSchema(
 	const cache = getOrCreate(viewToStoredCache, options, () => new WeakMap());
 	return getOrCreate(cache, root, () => {
 		const normalized = normalizeFieldSchema(root);
-		const nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> = new Map();
+		const nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> =
+			new Map();
 		walkFieldSchema(normalized, {
 			node(schema) {
 				if (nodeSchema.has(brand(schema.identifier))) {
@@ -114,7 +121,8 @@ export function toStoredSchema(
 					),
 				);
 			},
-			allowedTypeFilter: (allowedType) => allowedTypeFilter(allowedType, options),
+			allowedTypeFilter: (allowedType) =>
+				allowedTypeFilter(allowedType, options),
 		});
 
 		const result: TreeStoredSchema = {
@@ -133,7 +141,8 @@ export function convertField(
 	options: StoredSchemaGenerationOptions,
 ): TreeFieldStoredSchema {
 	const kind: FieldKindIdentifier =
-		convertFieldKind.get(schema.kind)?.identifier ?? fail(0xae3 /* Invalid field kind */);
+		convertFieldKind.get(schema.kind)?.identifier ??
+		fail(0xae3 /* Invalid field kind */);
 	let types: TreeTypeSet;
 	// eslint-disable-next-line unicorn/prefer-ternary
 	if (schema instanceof FieldSchemaAlpha) {
@@ -193,7 +202,10 @@ export function getStoredSchema(
 		case NodeKind.Object: {
 			const fields: Map<FieldKey, TreeFieldStoredSchema> = new Map();
 			for (const fieldSchema of schema.fields.values()) {
-				fields.set(brand(fieldSchema.storedKey), convertField(fieldSchema, options));
+				fields.set(
+					brand(fieldSchema.storedKey),
+					convertField(fieldSchema, options),
+				);
 			}
 			return new ObjectNodeStoredSchema(fields, schema.persistedMetadata);
 		}

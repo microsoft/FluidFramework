@@ -8,10 +8,10 @@
 			"jest",
 			"puppeteer",
 			"jest-environment-puppeteer",
-			"expect-puppeteer",
+			"expect-puppeteer"
 		],
 		"noUncheckedIndexedAccess": false,
-		"exactOptionalPropertyTypes": false,
+		"exactOptionalPropertyTypes": false
 	},
-	"include": ["src/**/*"],
+	"include": ["src/**/*"]
 }

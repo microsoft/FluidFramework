@@ -4,7 +4,13 @@
  */
 
 import { strict as assert } from "node:assert";
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+	existsSync,
+	mkdirSync,
+	readFileSync,
+	rmSync,
+	writeFileSync,
+} from "node:fs";
 import path from "node:path";
 
 // Simple filter to avoid tests with a name that would accidentally be parsed as directory traversal or other confusing things.
@@ -41,10 +47,15 @@ export interface ISnapshotSuite {
  * @returns An object containing functions for managing snapshots.
  * @internal
  */
-export function createSnapshotSuite(snapshotFolderPath: string): ISnapshotSuite {
+export function createSnapshotSuite(
+	snapshotFolderPath: string,
+): ISnapshotSuite {
 	let currentTestName: string | undefined;
 	let currentTestFile: string | undefined;
-	assert(path.isAbsolute(snapshotFolderPath), "snapshotFolderPath must be absolute.");
+	assert(
+		path.isAbsolute(snapshotFolderPath),
+		"snapshotFolderPath must be absolute.",
+	);
 	assert(existsSync(snapshotFolderPath));
 
 	function useSnapshotSubdirectory(dirPath: string = "/"): void {
@@ -84,7 +95,9 @@ export function createSnapshotSuite(snapshotFolderPath: string): ISnapshotSuite 
 		// Ensure test name doesn't accidentally navigate up directories or things like that.
 		// Done here instead of in beforeEach so errors surface better.
 		if (nameCheck.test(currentTestName) === false) {
-			assert.fail(`Expected test name to pass sanitization: "${currentTestName}"`);
+			assert.fail(
+				`Expected test name to pass sanitization: "${currentTestName}"`,
+			);
 		}
 	}
 
@@ -94,12 +107,19 @@ export function createSnapshotSuite(snapshotFolderPath: string): ISnapshotSuite 
 		const exists = existsSync(currentTestFile);
 
 		if (regenerateSnapshots) {
-			assert(exists === false, "snapshot should not already exist: possible name collision.");
+			assert(
+				exists === false,
+				"snapshot should not already exist: possible name collision.",
+			);
 			writeFileSync(currentTestFile, data);
 		} else {
 			assert(exists, `test snapshot file does not exist: "${currentTestFile}"`);
 			const pastData = readFileSync(currentTestFile, "utf8");
-			assert.equal(data, pastData, `snapshot different for "${currentTestName}"`);
+			assert.equal(
+				data,
+				pastData,
+				`snapshot different for "${currentTestName}"`,
+			);
 		}
 
 		return data;

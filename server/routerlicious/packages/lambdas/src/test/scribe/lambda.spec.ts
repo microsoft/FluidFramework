@@ -56,9 +56,7 @@ describe("Routerlicious", () => {
 			async function sendOps(num: number): Promise<void> {
 				for (let i = 0; i < num; i++) {
 					const message = messageFactory.createSequencedOperation();
-					await lambda.handler(
-						kafkaMessageFactory.sequenceMessage(message, testDocumentId),
-					);
+					await lambda.handler(kafkaMessageFactory.sequenceMessage(message, testDocumentId));
 				}
 			}
 
@@ -74,9 +72,7 @@ describe("Routerlicious", () => {
 				await testContext.waitForOffset(kafkaMessageFactory.getHeadOffset(testDocumentId));
 
 				const ackMessage = messageFactory.createSummaryAck(tree.sha);
-				await lambda.handler(
-					kafkaMessageFactory.sequenceMessage(ackMessage, testDocumentId),
-				);
+				await lambda.handler(kafkaMessageFactory.sequenceMessage(ackMessage, testDocumentId));
 			}
 
 			beforeEach(async () => {
@@ -175,9 +171,7 @@ describe("Routerlicious", () => {
 				it("Ops should be stored in mongodb", async () => {
 					const numMessages = 10;
 					await sendOps(numMessages);
-					await testContext.waitForOffset(
-						kafkaMessageFactory.getHeadOffset(testDocumentId),
-					);
+					await testContext.waitForOffset(kafkaMessageFactory.getHeadOffset(testDocumentId));
 
 					assert.equal(testMessageCollection.collection.length, numMessages);
 				});
@@ -186,15 +180,11 @@ describe("Routerlicious", () => {
 					const numMessages = 10;
 					await sendOps(numMessages);
 
-					await testContext.waitForOffset(
-						kafkaMessageFactory.getHeadOffset(testDocumentId),
-					);
+					await testContext.waitForOffset(kafkaMessageFactory.getHeadOffset(testDocumentId));
 
 					await sendSummarize(numMessages);
 
-					await testContext.waitForOffset(
-						kafkaMessageFactory.getHeadOffset(testDocumentId),
-					);
+					await testContext.waitForOffset(kafkaMessageFactory.getHeadOffset(testDocumentId));
 
 					assert.equal(testMessageCollection.collection.length, 2);
 				});
@@ -203,30 +193,20 @@ describe("Routerlicious", () => {
 					const numMessages = 5;
 					await sendOps(numMessages);
 
-					await testContext.waitForOffset(
-						kafkaMessageFactory.getHeadOffset(testDocumentId),
-					);
+					await testContext.waitForOffset(kafkaMessageFactory.getHeadOffset(testDocumentId));
 
 					await sendSummarize(numMessages);
 
-					await testContext.waitForOffset(
-						kafkaMessageFactory.getHeadOffset(testDocumentId),
-					);
+					await testContext.waitForOffset(kafkaMessageFactory.getHeadOffset(testDocumentId));
 
 					await sendOps(numMessages);
 
-					await testContext.waitForOffset(
-						kafkaMessageFactory.getHeadOffset(testDocumentId),
-					);
+					await testContext.waitForOffset(kafkaMessageFactory.getHeadOffset(testDocumentId));
 
 					const message = messageFactory.createNoClient();
-					await lambda.handler(
-						kafkaMessageFactory.sequenceMessage(message, testDocumentId),
-					);
+					await lambda.handler(kafkaMessageFactory.sequenceMessage(message, testDocumentId));
 
-					await testContext.waitForOffset(
-						kafkaMessageFactory.getHeadOffset(testDocumentId),
-					);
+					await testContext.waitForOffset(kafkaMessageFactory.getHeadOffset(testDocumentId));
 
 					assert.equal(testMessageCollection.collection.length, 8);
 				});

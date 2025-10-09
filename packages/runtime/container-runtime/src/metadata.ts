@@ -8,7 +8,9 @@ import type { BatchId } from "./opLifecycle/index.js";
 /**
  * Syntactic sugar for casting
  */
-export function asBatchMetadata(metadata: unknown): Partial<IBatchMetadata> | undefined {
+export function asBatchMetadata(
+	metadata: unknown,
+): Partial<IBatchMetadata> | undefined {
 	return metadata as Partial<IBatchMetadata> | undefined;
 }
 
@@ -50,7 +52,9 @@ export interface IBlobMetadata {
 	localId: string;
 }
 
-export const isBlobMetadata = (metadata: unknown): metadata is IBlobMetadata => {
+export const isBlobMetadata = (
+	metadata: unknown,
+): metadata is IBlobMetadata => {
 	return (
 		typeof metadata === "object" &&
 		metadata !== null &&

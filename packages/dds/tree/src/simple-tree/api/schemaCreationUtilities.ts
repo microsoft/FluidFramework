@@ -36,10 +36,10 @@ import type { UnionToTuple } from "../../util/index.js";
  */
 // Return type is intentionally derived.
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-export function singletonSchema<TScope extends string, TName extends string | number>(
-	factory: SchemaFactory<TScope, TName>,
-	name: TName,
-) {
+export function singletonSchema<
+	TScope extends string,
+	TName extends string | number,
+>(factory: SchemaFactory<TScope, TName>, name: TName) {
 	class SingletonSchema extends factory.object(name, {}) {
 		public constructor(data?: InternalTreeNode | Record<string, never>) {
 			super(data ?? {});
@@ -129,10 +129,9 @@ export function adaptEnum<
 >(factory: SchemaFactory<TScope>, members: TEnum) {
 	type Values = TEnum[keyof TEnum];
 	const values = Object.values(members) as Values[];
-	const inverse = new Map(Object.entries(members).map(([key, value]) => [value, key])) as Map<
-		Values,
-		keyof TEnum
-	>;
+	const inverse = new Map(
+		Object.entries(members).map(([key, value]) => [value, key]),
+	) as Map<Values, keyof TEnum>;
 
 	if (inverse.size !== values.length) {
 		throw new UsageError("All members of enums must have distinct values.");
@@ -156,7 +155,8 @@ export function adaptEnum<
 			? NodeFromSchema<ReturnType<typeof singletonSchema<TScope, TValue>>>
 			: never;
 	};
-	const out = factoryOut as typeof factoryOut & TOut & { readonly schema: SchemaArray };
+	const out = factoryOut as typeof factoryOut &
+		TOut & { readonly schema: SchemaArray };
 	for (const [key, value] of enumEntries(members)) {
 		const schema = singletonSchema(factory, value);
 		schemaArray.push(schema);
@@ -246,7 +246,10 @@ export function enumFromStrings<
 	type MembersUnion = Members[number];
 
 	// Get all keys of the Members tuple which are numeric strings as union of numbers:
-	type Indexes = Extract<keyof Members, `${number}`> extends `${infer N extends number}`
+	type Indexes = Extract<
+		keyof Members,
+		`${number}`
+	> extends `${infer N extends number}`
 		? N
 		: never;
 
@@ -264,10 +267,13 @@ export function enumFromStrings<
 			: never;
 	};
 
-	type SchemaArray = UnionToTuple<MembersUnion extends unknown ? TOut[MembersUnion] : never>;
+	type SchemaArray = UnionToTuple<
+		MembersUnion extends unknown ? TOut[MembersUnion] : never
+	>;
 	const schemaArray: TreeNodeSchema[] = [];
 
-	const out = factoryOut as typeof factoryOut & TOut & { readonly schema: SchemaArray };
+	const out = factoryOut as typeof factoryOut &
+		TOut & { readonly schema: SchemaArray };
 	const recordOut = out as Record<MembersUnion, new () => unknown>;
 	for (const name of members) {
 		const schema = singletonSchema(factory, name);
@@ -293,10 +299,10 @@ export function enumFromStrings<
 // TODO: This generates an invalid d.ts file if exported due to a bug https://github.com/microsoft/TypeScript/issues/58688.
 // TODO: replace enumFromStrings above with this simpler implementation when the TypeScript bug is resolved.
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-function _enumFromStrings2<TScope extends string, const Members extends readonly string[]>(
-	factory: SchemaFactory<TScope>,
-	members: Members,
-) {
+function _enumFromStrings2<
+	TScope extends string,
+	const Members extends readonly string[],
+>(factory: SchemaFactory<TScope>, members: Members) {
 	const enumObject: {
 		[key in keyof Members as Members[key] extends string
 			? Members[key]

@@ -6,7 +6,8 @@
 /* globals sinon */
 
 const { MSG } = require("@fluid-experimental/property-common").constants;
-const { generateGUID } = require("@fluid-experimental/property-common").GuidUtils;
+const { generateGUID } =
+	require("@fluid-experimental/property-common").GuidUtils;
 
 const { PropertyFactory } = require("..");
 const { StringProperty } = require("../properties/stringProperty");
@@ -68,7 +69,9 @@ describe("PropertyFactory", function () {
 	it("should create and initialize a property set", function () {
 		PropertyFactory.register(SimplePoint);
 		var goodPointTest = PropertyFactory.create("SimpleTest:PointID-1.0.0");
-		expect(goodPointTest.resolvePath("normal")._dataArrayRef._buffer.length).to.equal(3);
+		expect(
+			goodPointTest.resolvePath("normal")._dataArrayRef._buffer.length,
+		).to.equal(3);
 
 		var goodPoint = PropertyFactory.create("SimpleTest:PointID-1.0.0", null, {
 			position: {
@@ -104,7 +107,9 @@ describe("PropertyFactory", function () {
 		var creationFunction = function () {
 			PropertyFactory.create(undefined);
 		};
-		expect(creationFunction).to.throw(MSG.UNKNOWN_TYPEID_SPECIFIED + "undefined");
+		expect(creationFunction).to.throw(
+			MSG.UNKNOWN_TYPEID_SPECIFIED + "undefined",
+		);
 	});
 
 	it("should throw when trying to create with a number as typeid", function () {
@@ -125,7 +130,11 @@ describe("PropertyFactory", function () {
 			typeid: "autodesk.examples:polymorphic.collection.test-1.0.0",
 			properties: [
 				{ id: "testMap", context: "map" },
-				{ id: "testSet", typeid: "autodesk.examples:test.set-1.0.0", context: "set" },
+				{
+					id: "testSet",
+					typeid: "autodesk.examples:test.set-1.0.0",
+					context: "set",
+				},
 				// TODO: add array as soon as polymorphic arrays are supported: {id: 'testArray', context:'array' }
 			],
 		};
@@ -142,7 +151,10 @@ describe("PropertyFactory", function () {
 		expect(instance._properties.testSet).to.exist;
 		expect(instance._properties.testSet.getContext()).to.equal("set");
 		expect(
-			PropertyFactory.inheritsFrom(instance._properties.testSet.getTypeid(), "NamedProperty"),
+			PropertyFactory.inheritsFrom(
+				instance._properties.testSet.getTypeid(),
+				"NamedProperty",
+			),
 		).to.equal(true);
 	});
 
@@ -160,8 +172,9 @@ describe("PropertyFactory", function () {
 		delete returnedTemplate._serializedParams;
 
 		expect(returnedTemplate).to.deep.equal(SimplePoint);
-		expect(PropertyFactory.getTemplate("Adsk.Library:Colors.ColorPalette-1.0.0")).to.be
-			.undefined;
+		expect(
+			PropertyFactory.getTemplate("Adsk.Library:Colors.ColorPalette-1.0.0"),
+		).to.be.undefined;
 	});
 
 	describe("Inheritance", function () {
@@ -265,7 +278,9 @@ describe("PropertyFactory", function () {
 			PropertyFactory.register(SquareWithConstant);
 
 			var square = PropertyFactory.create("SimpleTest:ShapeWithConstant-1.0.0");
-			var square = PropertyFactory.create("SimpleTest:SquareWithConstant-1.0.0");
+			var square = PropertyFactory.create(
+				"SimpleTest:SquareWithConstant-1.0.0",
+			);
 
 			expect(square._getChildrenCount()).to.equal(3);
 			expect(square.get("props")).to.exist;
@@ -454,7 +469,10 @@ describe("PropertyFactory", function () {
 			PropertyFactory.register(template2);
 
 			expect(
-				PropertyFactory.create.bind(PropertyFactory, "consttest4:template-3.0.0"),
+				PropertyFactory.create.bind(
+					PropertyFactory,
+					"consttest4:template-3.0.0",
+				),
 			).to.throw(MSG.OVERWRITING_ID + "const1");
 		});
 
@@ -580,7 +598,10 @@ describe("PropertyFactory", function () {
 
 			var SquareAbstract = {
 				typeid: "SimpleTest:SquareAbstract-1.0.0",
-				inherits: ["SimpleTest:ShapeAbstract1-1.0.0", "SimpleTest:ShapeAbstract2-1.0.0"],
+				inherits: [
+					"SimpleTest:ShapeAbstract1-1.0.0",
+					"SimpleTest:ShapeAbstract2-1.0.0",
+				],
 				properties: [
 					{ id: "originX", properties: [] },
 					{ id: "originY" },
@@ -702,7 +723,9 @@ describe("PropertyFactory", function () {
 
 			PropertyFactory.register(SquareWithOverrides);
 
-			var square = PropertyFactory.create("SimpleTest:SquareWithOverrides-1.0.0");
+			var square = PropertyFactory.create(
+				"SimpleTest:SquareWithOverrides-1.0.0",
+			);
 
 			expect(square._getChildrenCount()).to.equal(4);
 			expect(square.get("normal")).to.exist;
@@ -722,7 +745,9 @@ describe("PropertyFactory", function () {
 			expect(square.get(["props", "size", "width"])).to.exist;
 			expect(square.get(["props", "size", "height"])).to.exist;
 
-			expect(square.get(["props", "size", "border"])._getChildrenCount()).to.equal(2);
+			expect(
+				square.get(["props", "size", "border"])._getChildrenCount(),
+			).to.equal(2);
 			expect(square.get(["props", "size", "border", "color"])).to.exist;
 			expect(square.get(["props", "size", "border", "weight"])).to.exist;
 
@@ -981,7 +1006,10 @@ describe("PropertyFactory", function () {
 							id: "set_poly",
 							typeid: "SimpleTest:EntryWithOverriddenDefaults-1.0.0",
 							context: "set",
-							value: [{ string: "set_poly_string_1" }, { string: "set_poly_string_1" }],
+							value: [
+								{ string: "set_poly_string_1" },
+								{ string: "set_poly_string_1" },
+							],
 						},
 						{
 							id: "set_nest",
@@ -1152,7 +1180,9 @@ describe("PropertyFactory", function () {
 				PropertyFactory.register(ShapeWithOverriddenDefaults);
 				PropertyFactory.register(SquareWithOverriddenDefaults);
 
-				var instance = PropertyFactory.create("SimpleTest:SquareWithOverriddenDefaults-1.0.0");
+				var instance = PropertyFactory.create(
+					"SimpleTest:SquareWithOverriddenDefaults-1.0.0",
+				);
 
 				expect(instance._getChildrenCount()).to.equal(13);
 				expect(instance.resolvePath("num").getValue()).and.eql(2);
@@ -1173,30 +1203,55 @@ describe("PropertyFactory", function () {
 					"untyped_string_inherited",
 				);
 				expect(instance.resolvePath("template.num").getValue()).and.eql(2);
-				expect(instance.resolvePath("template.dynamic.dynamic_string").getValue()).and.eql(
-					"dynamic_string_inherited",
+				expect(
+					instance.resolvePath("template.dynamic.dynamic_string").getValue(),
+				).and.eql("dynamic_string_inherited");
+				expect(instance.resolvePath("map_primitive").getIds().length).to.equal(
+					2,
 				);
-				expect(instance.resolvePath("map_primitive").getIds().length).to.equal(2);
-				expect(instance.resolvePath("map_primitive").getEntriesReadOnly().key2).to.equal(2);
-				expect(instance.resolvePath("map_primitive").getEntriesReadOnly().key3).to.equal(3);
+				expect(
+					instance.resolvePath("map_primitive").getEntriesReadOnly().key2,
+				).to.equal(2);
+				expect(
+					instance.resolvePath("map_primitive").getEntriesReadOnly().key3,
+				).to.equal(3);
 				expect(instance.resolvePath("map").getIds().length).to.equal(2);
 				expect(
-					instance.resolvePath("map").getEntriesReadOnly().key2.get("string").getValue(),
+					instance
+						.resolvePath("map")
+						.getEntriesReadOnly()
+						.key2.get("string")
+						.getValue(),
 				).to.equal("map_string_2_inherited");
 				expect(
-					instance.resolvePath("map").getEntriesReadOnly().key3.get("string").getValue(),
+					instance
+						.resolvePath("map")
+						.getEntriesReadOnly()
+						.key3.get("string")
+						.getValue(),
 				).to.equal("map_string_3_inherited");
 				expect(instance.resolvePath("map_poly").getIds().length).to.equal(2);
 				expect(
-					instance.resolvePath("map_poly").getEntriesReadOnly().key2.get("string").getValue(),
+					instance
+						.resolvePath("map_poly")
+						.getEntriesReadOnly()
+						.key2.get("string")
+						.getValue(),
 				).to.equal("map_poly_string_2_inherited");
 				expect(
-					instance.resolvePath("map_poly").getEntriesReadOnly().key3.get("string").getValue(),
+					instance
+						.resolvePath("map_poly")
+						.getEntriesReadOnly()
+						.key3.get("string")
+						.getValue(),
 				).to.equal("map_poly_string_3_inherited");
 				expect(instance.resolvePath("map_nest").getIds().length).to.equal(2);
 				expect(
-					instance.resolvePath("map_nest").getEntriesReadOnly().key2.get("map_nested").getIds()
-						.length,
+					instance
+						.resolvePath("map_nest")
+						.getEntriesReadOnly()
+						.key2.get("map_nested")
+						.getIds().length,
 				).to.equal(2);
 				expect(
 					instance
@@ -1224,8 +1279,11 @@ describe("PropertyFactory", function () {
 						.getValue(),
 				).to.equal("map_nested_2_string_3_inherited");
 				expect(
-					instance.resolvePath("map_nest").getEntriesReadOnly().key3.get("map_nested").getIds()
-						.length,
+					instance
+						.resolvePath("map_nest")
+						.getEntriesReadOnly()
+						.key3.get("map_nested")
+						.getIds().length,
 				).to.equal(1);
 				expect(
 					instance
@@ -1237,22 +1295,34 @@ describe("PropertyFactory", function () {
 						.getValue(),
 				).to.equal("map_nested_3_string_1_inherited");
 				expect(instance.resolvePath("set").getIds().length).to.equal(2);
-				expect(instance.resolvePath("set").getAsArray()[0].get("string").getValue()).to.equal(
-					"set_string_2_inherited",
-				);
-				expect(instance.resolvePath("set").getAsArray()[1].get("string").getValue()).to.equal(
-					"set_string_3_inherited",
-				);
+				expect(
+					instance.resolvePath("set").getAsArray()[0].get("string").getValue(),
+				).to.equal("set_string_2_inherited");
+				expect(
+					instance.resolvePath("set").getAsArray()[1].get("string").getValue(),
+				).to.equal("set_string_3_inherited");
 				expect(instance.resolvePath("set_poly").getIds().length).to.equal(2);
 				expect(
-					instance.resolvePath("set_poly").getAsArray()[0].get("string").getValue(),
+					instance
+						.resolvePath("set_poly")
+						.getAsArray()[0]
+						.get("string")
+						.getValue(),
 				).to.equal("set_poly_string_2_inherited");
 				expect(
-					instance.resolvePath("set_poly").getAsArray()[1].get("string").getValue(),
+					instance
+						.resolvePath("set_poly")
+						.getAsArray()[1]
+						.get("string")
+						.getValue(),
 				).to.equal("set_poly_string_3_inherited");
 				expect(instance.resolvePath("set_nest").getIds().length).to.equal(1);
 				expect(
-					instance.resolvePath("set_nest").getAsArray()[0].get("set_nested").getIds().length,
+					instance
+						.resolvePath("set_nest")
+						.getAsArray()[0]
+						.get("set_nested")
+						.getIds().length,
 				).to.equal(2);
 				expect(
 					instance
@@ -1306,7 +1376,9 @@ describe("PropertyFactory", function () {
 				var SquareWithDiffContextDefaults = {
 					typeid: "SimpleTest:SquareWithDiffContextDefaults-1.0.0",
 					inherits: ["SimpleTest:ShapeWithDiffContextDefaults-1.0.0"],
-					properties: [{ id: "num", typeid: "Int8", value: [1, 2], context: "array" }],
+					properties: [
+						{ id: "num", typeid: "Int8", value: [1, 2], context: "array" },
+					],
 				};
 
 				PropertyFactory.register(ShapeWithDiffContextDefaults);
@@ -1326,13 +1398,17 @@ describe("PropertyFactory", function () {
 				var EntryWithOverriddenConstants = {
 					typeid: "SimpleTest:EntryWithOverriddenConstants-1.0.0",
 					inherits: ["NamedProperty"],
-					constants: [{ id: "string", typeid: "String", value: "entry_string" }],
+					constants: [
+						{ id: "string", typeid: "String", value: "entry_string" },
+					],
 				};
 
 				var EntryWithOverriddenPolyConstants = {
 					typeid: "SimpleTest:EntryWithOverriddenPolyConstants-1.0.0",
 					inherits: ["SimpleTest:EntryWithOverriddenConstants-1.0.0"],
-					constants: [{ id: "string", typeid: "String", value: "entry_string" }],
+					constants: [
+						{ id: "string", typeid: "String", value: "entry_string" },
+					],
 				};
 
 				var DynamicWithOverriddenConstants = {
@@ -1451,7 +1527,10 @@ describe("PropertyFactory", function () {
 							id: "set_poly",
 							typeid: "SimpleTest:EntryWithOverriddenConstants-1.0.0",
 							context: "set",
-							value: [{ string: "set_poly_string_1" }, { string: "set_poly_string_1" }],
+							value: [
+								{ string: "set_poly_string_1" },
+								{ string: "set_poly_string_1" },
+							],
 						},
 						{
 							id: "set_nest",
@@ -1626,30 +1705,55 @@ describe("PropertyFactory", function () {
 					"entry_string_poly_2_inherited",
 				);
 				expect(instance.resolvePath("template.num").getValue()).and.eql(2);
-				expect(instance.resolvePath("template.dynamic.dynamic_string").getValue()).and.eql(
-					"dynamic_string_inherited",
+				expect(
+					instance.resolvePath("template.dynamic.dynamic_string").getValue(),
+				).and.eql("dynamic_string_inherited");
+				expect(instance.resolvePath("map_primitive").getIds().length).to.equal(
+					2,
 				);
-				expect(instance.resolvePath("map_primitive").getIds().length).to.equal(2);
-				expect(instance.resolvePath("map_primitive").getEntriesReadOnly().key2).to.equal(2);
-				expect(instance.resolvePath("map_primitive").getEntriesReadOnly().key3).to.equal(3);
+				expect(
+					instance.resolvePath("map_primitive").getEntriesReadOnly().key2,
+				).to.equal(2);
+				expect(
+					instance.resolvePath("map_primitive").getEntriesReadOnly().key3,
+				).to.equal(3);
 				expect(instance.resolvePath("map").getIds().length).to.equal(2);
 				expect(
-					instance.resolvePath("map").getEntriesReadOnly().key2.get("string").getValue(),
+					instance
+						.resolvePath("map")
+						.getEntriesReadOnly()
+						.key2.get("string")
+						.getValue(),
 				).to.equal("map_string_2_inherited");
 				expect(
-					instance.resolvePath("map").getEntriesReadOnly().key3.get("string").getValue(),
+					instance
+						.resolvePath("map")
+						.getEntriesReadOnly()
+						.key3.get("string")
+						.getValue(),
 				).to.equal("map_string_3_inherited");
 				expect(instance.resolvePath("map_poly").getIds().length).to.equal(2);
 				expect(
-					instance.resolvePath("map_poly").getEntriesReadOnly().key2.get("string").getValue(),
+					instance
+						.resolvePath("map_poly")
+						.getEntriesReadOnly()
+						.key2.get("string")
+						.getValue(),
 				).to.equal("map_poly_string_2_inherited");
 				expect(
-					instance.resolvePath("map_poly").getEntriesReadOnly().key3.get("string").getValue(),
+					instance
+						.resolvePath("map_poly")
+						.getEntriesReadOnly()
+						.key3.get("string")
+						.getValue(),
 				).to.equal("map_poly_string_3_inherited");
 				expect(instance.resolvePath("map_nest").getIds().length).to.equal(2);
 				expect(
-					instance.resolvePath("map_nest").getEntriesReadOnly().key2.get("map_nested").getIds()
-						.length,
+					instance
+						.resolvePath("map_nest")
+						.getEntriesReadOnly()
+						.key2.get("map_nested")
+						.getIds().length,
 				).to.equal(2);
 				expect(
 					instance
@@ -1677,8 +1781,11 @@ describe("PropertyFactory", function () {
 						.getValue(),
 				).to.equal("map_nested_2_string_3_inherited");
 				expect(
-					instance.resolvePath("map_nest").getEntriesReadOnly().key3.get("map_nested").getIds()
-						.length,
+					instance
+						.resolvePath("map_nest")
+						.getEntriesReadOnly()
+						.key3.get("map_nested")
+						.getIds().length,
 				).to.equal(1);
 				expect(
 					instance
@@ -1690,22 +1797,34 @@ describe("PropertyFactory", function () {
 						.getValue(),
 				).to.equal("map_nested_3_string_1_inherited");
 				expect(instance.resolvePath("set").getIds().length).to.equal(2);
-				expect(instance.resolvePath("set").getAsArray()[0].get("string").getValue()).to.equal(
-					"set_string_2_inherited",
-				);
-				expect(instance.resolvePath("set").getAsArray()[1].get("string").getValue()).to.equal(
-					"set_string_3_inherited",
-				);
+				expect(
+					instance.resolvePath("set").getAsArray()[0].get("string").getValue(),
+				).to.equal("set_string_2_inherited");
+				expect(
+					instance.resolvePath("set").getAsArray()[1].get("string").getValue(),
+				).to.equal("set_string_3_inherited");
 				expect(instance.resolvePath("set_poly").getIds().length).to.equal(2);
 				expect(
-					instance.resolvePath("set_poly").getAsArray()[0].get("string").getValue(),
+					instance
+						.resolvePath("set_poly")
+						.getAsArray()[0]
+						.get("string")
+						.getValue(),
 				).to.equal("set_poly_string_2_inherited");
 				expect(
-					instance.resolvePath("set_poly").getAsArray()[1].get("string").getValue(),
+					instance
+						.resolvePath("set_poly")
+						.getAsArray()[1]
+						.get("string")
+						.getValue(),
 				).to.equal("set_poly_string_3_inherited");
 				expect(instance.resolvePath("set_nest").getIds().length).to.equal(1);
 				expect(
-					instance.resolvePath("set_nest").getAsArray()[0].get("set_nested").getIds().length,
+					instance
+						.resolvePath("set_nest")
+						.getAsArray()[0]
+						.get("set_nested")
+						.getIds().length,
 				).to.equal(2);
 				expect(
 					instance
@@ -1731,7 +1850,9 @@ describe("PropertyFactory", function () {
 				var EntryWithTypedOverriddenConstants = {
 					typeid: "SimpleTest:EntryWithTypedOverriddenConstants-1.0.0",
 					inherits: ["NamedProperty"],
-					constants: [{ id: "string", typeid: "String", value: "entry_string" }],
+					constants: [
+						{ id: "string", typeid: "String", value: "entry_string" },
+					],
 				};
 
 				var EntryWithTypedOverriddenPolyConstants = {
@@ -1792,7 +1913,8 @@ describe("PropertyFactory", function () {
 						{
 							id: "entry2",
 							typedValue: {
-								typeid: "SimpleTest:EntryWithTypedOverriddenPolyConstants-1.0.0",
+								typeid:
+									"SimpleTest:EntryWithTypedOverriddenPolyConstants-1.0.0",
 								value: { string: "entry_string_2", name: "entry2" },
 							},
 						},
@@ -1801,14 +1923,16 @@ describe("PropertyFactory", function () {
 							context: "array",
 							typedValue: [
 								{
-									typeid: "SimpleTest:EntryWithTypedOverriddenPolyConstants-1.0.0",
+									typeid:
+										"SimpleTest:EntryWithTypedOverriddenPolyConstants-1.0.0",
 									value: {
 										string: "entry_string_1_inherited",
 										name: "entry_string_1",
 									},
 								},
 								{
-									typeid: "SimpleTest:EntryWithTypedOverriddenPolyConstants-1.0.0",
+									typeid:
+										"SimpleTest:EntryWithTypedOverriddenPolyConstants-1.0.0",
 									value: {
 										string: "entry_string_2_inherited",
 										name: "entry_string_2",
@@ -1822,14 +1946,16 @@ describe("PropertyFactory", function () {
 							context: "map",
 							typedValue: {
 								key2: {
-									typeid: "SimpleTest:EntryWithTypedOverriddenPolyConstants-1.0.0",
+									typeid:
+										"SimpleTest:EntryWithTypedOverriddenPolyConstants-1.0.0",
 									value: {
 										string: "map_string_2_inherited",
 										name: "map_string_2",
 									},
 								},
 								key3: {
-									typeid: "SimpleTest:EntryWithTypedOverriddenPolyConstants-1.0.0",
+									typeid:
+										"SimpleTest:EntryWithTypedOverriddenPolyConstants-1.0.0",
 									value: {
 										string: "map_string_3_inherited",
 										name: "map_string_3",
@@ -1843,14 +1969,16 @@ describe("PropertyFactory", function () {
 							context: "set",
 							typedValue: [
 								{
-									typeid: "SimpleTest:EntryWithTypedOverriddenPolyConstants-1.0.0",
+									typeid:
+										"SimpleTest:EntryWithTypedOverriddenPolyConstants-1.0.0",
 									value: {
 										string: "set_string_2_inherited",
 										name: "set_string_2",
 									},
 								},
 								{
-									typeid: "SimpleTest:EntryWithTypedOverriddenPolyConstants-1.0.0",
+									typeid:
+										"SimpleTest:EntryWithTypedOverriddenPolyConstants-1.0.0",
 									value: {
 										string: "set_string_3_inherited",
 										name: "set_string_3",
@@ -1874,47 +2002,71 @@ describe("PropertyFactory", function () {
 				expect(instance.resolvePath("entry1").getTypeid()).to.eql(
 					"SimpleTest:EntryWithTypedOverriddenConstants-1.0.0",
 				);
-				expect(instance.resolvePath("entry1.string").getValue()).to.eql("entry_string_1");
+				expect(instance.resolvePath("entry1.string").getValue()).to.eql(
+					"entry_string_1",
+				);
 				expect(instance.resolvePath("entry2").getTypeid()).to.eql(
 					"SimpleTest:EntryWithTypedOverriddenPolyConstants-1.0.0",
 				);
 				expect(instance.resolvePath("entry2.name").getValue()).to.eql("entry2");
-				expect(instance.resolvePath("entry2.string").getValue()).to.eql("entry_string_2");
+				expect(instance.resolvePath("entry2.string").getValue()).to.eql(
+					"entry_string_2",
+				);
 				expect(instance.resolvePath("array").getValues().length).to.eql(2);
-				expect(instance.resolvePath("array").getValues()[0].name).to.eql("entry_string_1");
+				expect(instance.resolvePath("array").getValues()[0].name).to.eql(
+					"entry_string_1",
+				);
 				expect(instance.resolvePath("array").getValues()[0].string).to.eql(
 					"entry_string_1_inherited",
 				);
-				expect(instance.resolvePath("array").getValues()[1].name).to.eql("entry_string_2");
+				expect(instance.resolvePath("array").getValues()[1].name).to.eql(
+					"entry_string_2",
+				);
 				expect(instance.resolvePath("array").getValues()[1].string).to.eql(
 					"entry_string_2_inherited",
 				);
 				expect(instance.resolvePath("map").getIds().length).to.equal(2);
 				expect(
-					instance.resolvePath("map").getEntriesReadOnly().key2.get("name").getValue(),
+					instance
+						.resolvePath("map")
+						.getEntriesReadOnly()
+						.key2.get("name")
+						.getValue(),
 				).to.equal("map_string_2");
 				expect(
-					instance.resolvePath("map").getEntriesReadOnly().key2.get("string").getValue(),
+					instance
+						.resolvePath("map")
+						.getEntriesReadOnly()
+						.key2.get("string")
+						.getValue(),
 				).to.equal("map_string_2_inherited");
 				expect(
-					instance.resolvePath("map").getEntriesReadOnly().key3.get("name").getValue(),
+					instance
+						.resolvePath("map")
+						.getEntriesReadOnly()
+						.key3.get("name")
+						.getValue(),
 				).to.equal("map_string_3");
 				expect(
-					instance.resolvePath("map").getEntriesReadOnly().key3.get("string").getValue(),
+					instance
+						.resolvePath("map")
+						.getEntriesReadOnly()
+						.key3.get("string")
+						.getValue(),
 				).to.equal("map_string_3_inherited");
 				expect(instance.resolvePath("set").getIds().length).to.equal(2);
-				expect(instance.resolvePath("set").getAsArray()[0].get("name").getValue()).to.equal(
-					"set_string_2",
-				);
-				expect(instance.resolvePath("set").getAsArray()[0].get("string").getValue()).to.equal(
-					"set_string_2_inherited",
-				);
-				expect(instance.resolvePath("set").getAsArray()[1].get("name").getValue()).to.equal(
-					"set_string_3",
-				);
-				expect(instance.resolvePath("set").getAsArray()[1].get("string").getValue()).to.equal(
-					"set_string_3_inherited",
-				);
+				expect(
+					instance.resolvePath("set").getAsArray()[0].get("name").getValue(),
+				).to.equal("set_string_2");
+				expect(
+					instance.resolvePath("set").getAsArray()[0].get("string").getValue(),
+				).to.equal("set_string_2_inherited");
+				expect(
+					instance.resolvePath("set").getAsArray()[1].get("name").getValue(),
+				).to.equal("set_string_3");
+				expect(
+					instance.resolvePath("set").getAsArray()[1].get("string").getValue(),
+				).to.equal("set_string_3_inherited");
 			});
 
 			it("should not allow overriding constants when typeid is different", function () {
@@ -1949,7 +2101,9 @@ describe("PropertyFactory", function () {
 				var SquareWithDiffContextConstants = {
 					typeid: "SimpleTest:SquareWithDiffContextConstants-1.0.0",
 					inherits: ["SimpleTest:ShapeWithDiffContextConstants-1.0.0"],
-					constants: [{ id: "num", typeid: "Int8", value: [1, 2], context: "array" }],
+					constants: [
+						{ id: "num", typeid: "Int8", value: [1, 2], context: "array" },
+					],
 				};
 
 				PropertyFactory.register(ShapeWithDiffContextConstants);
@@ -1982,7 +2136,9 @@ describe("PropertyFactory", function () {
 				var SquareWithDiffTypedTypeidConstants = {
 					typeid: "SimpleTest:SquareWithDiffTypeidConstants-1.0.0",
 					inherits: ["SimpleTest:ShapeWithDiffTypeidConstants-1.0.0"],
-					constants: [{ id: "type", typedValue: { typeid: "SimpleTest:Type2-1.0.0" } }],
+					constants: [
+						{ id: "type", typedValue: { typeid: "SimpleTest:Type2-1.0.0" } },
+					],
 				};
 
 				PropertyFactory.register(Type1);
@@ -2015,7 +2171,9 @@ describe("PropertyFactory", function () {
 
 			PropertyFactory.register(DefaultPrimitive);
 
-			var instance = PropertyFactory.create("SimpleTest:DefaultPrimitive-1.0.0");
+			var instance = PropertyFactory.create(
+				"SimpleTest:DefaultPrimitive-1.0.0",
+			);
 			expect(instance.get("num").getValue()).to.equal(111);
 			expect(instance.get("bool").getValue()).to.equal(true);
 		});
@@ -2023,7 +2181,9 @@ describe("PropertyFactory", function () {
 		it("should set a default value for a string property", function () {
 			var DefaultString = {
 				typeid: "SimpleTest:DefaultString-1.0.0",
-				properties: [{ id: "string", typeid: "String", value: "I am a string" }],
+				properties: [
+					{ id: "string", typeid: "String", value: "I am a string" },
+				],
 			};
 
 			PropertyFactory.register(DefaultString);
@@ -2035,7 +2195,9 @@ describe("PropertyFactory", function () {
 		it("should set a default value for a primitive array property", function () {
 			var DefaultArray = {
 				typeid: "SimpleTest:DefaultArray-1.0.0",
-				properties: [{ id: "array", typeid: "Int32", value: [111, 222], context: "array" }],
+				properties: [
+					{ id: "array", typeid: "Int32", value: [111, 222], context: "array" },
+				],
 			};
 
 			PropertyFactory.register(DefaultArray);
@@ -2066,9 +2228,15 @@ describe("PropertyFactory", function () {
 			PropertyFactory.register(DefaultTypedArrayEntry);
 			PropertyFactory.register(DefaultTypedArray);
 
-			var instance = PropertyFactory.create("SimpleTest:DefaultTypedArray-1.0.0");
-			expect(instance.get("array").get(0).get("string").value).to.equal("I am string 1");
-			expect(instance.get("array").get(1).get("string").value).to.equal("I am string 2");
+			var instance = PropertyFactory.create(
+				"SimpleTest:DefaultTypedArray-1.0.0",
+			);
+			expect(instance.get("array").get(0).get("string").value).to.equal(
+				"I am string 1",
+			);
+			expect(instance.get("array").get(1).get("string").value).to.equal(
+				"I am string 2",
+			);
 		});
 
 		it("should set a default value for an enum property", function () {
@@ -2113,7 +2281,9 @@ describe("PropertyFactory", function () {
 
 			var instance = PropertyFactory.create("SimpleTest:DefaultUntyped-1.0.0");
 
-			expect(instance.get("untyped").get("string").getValue()).to.equal("I am a string");
+			expect(instance.get("untyped").get("string").getValue()).to.equal(
+				"I am a string",
+			);
 			expect(instance.get("untyped").get("num").getValue()).to.equal(111);
 		});
 
@@ -2151,7 +2321,11 @@ describe("PropertyFactory", function () {
 
 			expect(instance.get("template").get("num").getValue()).to.equal(111);
 			expect(
-				instance.get("template").get("dynamic").get("dynamic_string").getValue(),
+				instance
+					.get("template")
+					.get("dynamic")
+					.get("dynamic_string")
+					.getValue(),
 			).to.equal("I am a string");
 		});
 
@@ -2169,7 +2343,10 @@ describe("PropertyFactory", function () {
 						id: "set",
 						typeid: "SimpleTest:DefaultSetEntry-1.0.0",
 						context: "set",
-						value: [{ string: "I am a string 1" }, { string: "I am a string 2" }],
+						value: [
+							{ string: "I am a string 1" },
+							{ string: "I am a string 2" },
+						],
 					},
 				],
 			};
@@ -2180,12 +2357,12 @@ describe("PropertyFactory", function () {
 			var instance = PropertyFactory.create("SimpleTest:DefaultSet-1.0.0");
 
 			expect(instance.get("set").getAsArray().length).to.equal(2);
-			expect(instance.get("set").getAsArray()[0].get("string").getValue()).to.equal(
-				"I am a string 1",
-			);
-			expect(instance.get("set").getAsArray()[1].get("string").getValue()).to.equal(
-				"I am a string 2",
-			);
+			expect(
+				instance.get("set").getAsArray()[0].get("string").getValue(),
+			).to.equal("I am a string 1");
+			expect(
+				instance.get("set").getAsArray()[1].get("string").getValue(),
+			).to.equal("I am a string 2");
 		});
 
 		it("should set a default value for a primitive map", function () {
@@ -2206,7 +2383,9 @@ describe("PropertyFactory", function () {
 
 			PropertyFactory.register(DefaultPrimitiveMap);
 
-			var instance = PropertyFactory.create("SimpleTest:DefaultPrimitiveMap-1.0.0");
+			var instance = PropertyFactory.create(
+				"SimpleTest:DefaultPrimitiveMap-1.0.0",
+			);
 
 			expect(instance.get("map").getEntriesReadOnly().key1).to.equal(111);
 			expect(instance.get("map").getEntriesReadOnly().key2).to.equal(222);
@@ -2239,25 +2418,31 @@ describe("PropertyFactory", function () {
 
 			var instance = PropertyFactory.create("SimpleTest:DefaultTypedMap-1.0.0");
 
-			expect(instance.get("map").getEntriesReadOnly().key1.get("string").getValue()).to.equal(
-				"I am a string 1",
-			);
-			expect(instance.get("map").getEntriesReadOnly().key2.get("string").getValue()).to.equal(
-				"I am a string 2",
-			);
+			expect(
+				instance.get("map").getEntriesReadOnly().key1.get("string").getValue(),
+			).to.equal("I am a string 1");
+			expect(
+				instance.get("map").getEntriesReadOnly().key2.get("string").getValue(),
+			).to.equal("I am a string 2");
 		});
 
 		it("initial values should override default values", function () {
 			var DefaultInitialValue = {
 				typeid: "SimpleTest:DefaultInitialValue-1.0.0",
-				properties: [{ id: "string", typeid: "String", value: "I should not be set" }],
+				properties: [
+					{ id: "string", typeid: "String", value: "I should not be set" },
+				],
 			};
 
 			PropertyFactory.register(DefaultInitialValue);
 
-			var instance = PropertyFactory.create("SimpleTest:DefaultInitialValue-1.0.0", null, {
-				string: "I am a string",
-			});
+			var instance = PropertyFactory.create(
+				"SimpleTest:DefaultInitialValue-1.0.0",
+				null,
+				{
+					string: "I am a string",
+				},
+			);
 
 			expect(instance.get("string").getValue()).to.equal("I am a string");
 		});
@@ -2320,12 +2505,18 @@ describe("PropertyFactory", function () {
 
 				PropertyFactory.register(DefaultPolyContainer);
 
-				var instance = PropertyFactory.create("SimpleTest:DefaultPolyContainer-1.0.0");
+				var instance = PropertyFactory.create(
+					"SimpleTest:DefaultPolyContainer-1.0.0",
+				);
 				expect(instance.get("polySub").get("num").getValue()).to.equal(333);
-				expect(instance.get("polySub").get("str").getValue()).to.equal("PolySub");
+				expect(instance.get("polySub").get("str").getValue()).to.equal(
+					"PolySub",
+				);
 
 				expect(instance.get("polySubSub").get("num").getValue()).to.equal(444);
-				expect(instance.get("polySubSub").get("str").getValue()).to.equal("PolySubSub");
+				expect(instance.get("polySubSub").get("str").getValue()).to.equal(
+					"PolySubSub",
+				);
 				expect(instance.get("polySubSub").get("num2").getValue()).to.equal(111);
 			});
 
@@ -2349,7 +2540,8 @@ describe("PropertyFactory", function () {
 						"SimpleTest:DefaultPolyNoTypeIdContainer-1.0.0",
 					),
 				).to.throw(
-					MSG.FIELD_TYPEID_IS_REQUIRED + "typedValue SimpleTest:DefaultPolyBase-1.0.0",
+					MSG.FIELD_TYPEID_IS_REQUIRED +
+						"typedValue SimpleTest:DefaultPolyBase-1.0.0",
 				);
 			});
 
@@ -2378,13 +2570,19 @@ describe("PropertyFactory", function () {
 
 				PropertyFactory.register(DefaultPolyArrayContainer);
 
-				var instance = PropertyFactory.create("SimpleTest:DefaultPolyArrayContainer-1.0.0");
+				var instance = PropertyFactory.create(
+					"SimpleTest:DefaultPolyArrayContainer-1.0.0",
+				);
 				expect(instance.get("array").get(0).get("num").value).to.equal(222);
 				expect(instance.get("array").get(0).get("str").value).to.equal("Sub");
 				expect(instance.get("array").get(1).get("num").value).to.equal(222);
-				expect(instance.get("array").get(1).get("str").value).to.equal("ArrSub");
+				expect(instance.get("array").get(1).get("str").value).to.equal(
+					"ArrSub",
+				);
 				expect(instance.get("array").get(2).get("num").value).to.equal(333);
-				expect(instance.get("array").get(2).get("str").value).to.equal("ArrSubSub");
+				expect(instance.get("array").get(2).get("str").value).to.equal(
+					"ArrSubSub",
+				);
 				expect(instance.get("array").get(2).get("num2").value).to.equal(111);
 			});
 
@@ -2413,18 +2611,32 @@ describe("PropertyFactory", function () {
 
 				PropertyFactory.register(DefaultPolySetContainer);
 
-				var instance = PropertyFactory.create("SimpleTest:DefaultPolySetContainer-1.0.0");
+				var instance = PropertyFactory.create(
+					"SimpleTest:DefaultPolySetContainer-1.0.0",
+				);
 
 				expect(instance.get("set").getAsArray().length).to.equal(3);
-				expect(instance.get("set").getAsArray()[0].get("num").getValue()).to.equal(222);
-				expect(instance.get("set").getAsArray()[0].get("str").getValue()).to.equal("Sub");
-				expect(instance.get("set").getAsArray()[1].get("num").getValue()).to.equal(222);
-				expect(instance.get("set").getAsArray()[1].get("str").getValue()).to.equal("ArrSub");
-				expect(instance.get("set").getAsArray()[2].get("num").getValue()).to.equal(333);
-				expect(instance.get("set").getAsArray()[2].get("str").getValue()).to.equal(
-					"ArrSubSub",
-				);
-				expect(instance.get("set").getAsArray()[2].get("num2").getValue()).to.equal(111);
+				expect(
+					instance.get("set").getAsArray()[0].get("num").getValue(),
+				).to.equal(222);
+				expect(
+					instance.get("set").getAsArray()[0].get("str").getValue(),
+				).to.equal("Sub");
+				expect(
+					instance.get("set").getAsArray()[1].get("num").getValue(),
+				).to.equal(222);
+				expect(
+					instance.get("set").getAsArray()[1].get("str").getValue(),
+				).to.equal("ArrSub");
+				expect(
+					instance.get("set").getAsArray()[2].get("num").getValue(),
+				).to.equal(333);
+				expect(
+					instance.get("set").getAsArray()[2].get("str").getValue(),
+				).to.equal("ArrSubSub");
+				expect(
+					instance.get("set").getAsArray()[2].get("num2").getValue(),
+				).to.equal(111);
 			});
 
 			it("should set a default polymorphic value for a non-primitive map", function () {
@@ -2452,29 +2664,31 @@ describe("PropertyFactory", function () {
 
 				PropertyFactory.register(DefaultPolyMapContainer);
 
-				var instance = PropertyFactory.create("SimpleTest:DefaultPolyMapContainer-1.0.0");
+				var instance = PropertyFactory.create(
+					"SimpleTest:DefaultPolyMapContainer-1.0.0",
+				);
 
-				expect(instance.get("map").getEntriesReadOnly().key1.get("num").getValue()).to.equal(
-					222,
-				);
-				expect(instance.get("map").getEntriesReadOnly().key1.get("str").getValue()).to.equal(
-					"Sub",
-				);
-				expect(instance.get("map").getEntriesReadOnly().key2.get("num").getValue()).to.equal(
-					222,
-				);
-				expect(instance.get("map").getEntriesReadOnly().key2.get("str").getValue()).to.equal(
-					"ArrSub",
-				);
-				expect(instance.get("map").getEntriesReadOnly().key3.get("num").getValue()).to.equal(
-					333,
-				);
-				expect(instance.get("map").getEntriesReadOnly().key3.get("str").getValue()).to.equal(
-					"ArrSubSub",
-				);
-				expect(instance.get("map").getEntriesReadOnly().key3.get("num2").getValue()).to.equal(
-					111,
-				);
+				expect(
+					instance.get("map").getEntriesReadOnly().key1.get("num").getValue(),
+				).to.equal(222);
+				expect(
+					instance.get("map").getEntriesReadOnly().key1.get("str").getValue(),
+				).to.equal("Sub");
+				expect(
+					instance.get("map").getEntriesReadOnly().key2.get("num").getValue(),
+				).to.equal(222);
+				expect(
+					instance.get("map").getEntriesReadOnly().key2.get("str").getValue(),
+				).to.equal("ArrSub");
+				expect(
+					instance.get("map").getEntriesReadOnly().key3.get("num").getValue(),
+				).to.equal(333);
+				expect(
+					instance.get("map").getEntriesReadOnly().key3.get("str").getValue(),
+				).to.equal("ArrSubSub");
+				expect(
+					instance.get("map").getEntriesReadOnly().key3.get("num2").getValue(),
+				).to.equal(111);
 			});
 
 			it("should fail when setting default polymorphic values not derived from base type", function () {
@@ -2506,7 +2720,8 @@ describe("PropertyFactory", function () {
 						"SimpleTest:DefaultPolyUnderivedContainer-1.0.0",
 					),
 				).to.throw(
-					MSG.TYPED_VALUES_MUST_DERIVE_FROM_BASE_TYPE + "SimpleTest:DefaultPoly-1.0.0",
+					MSG.TYPED_VALUES_MUST_DERIVE_FROM_BASE_TYPE +
+						"SimpleTest:DefaultPoly-1.0.0",
 				);
 			});
 
@@ -2611,16 +2826,18 @@ describe("PropertyFactory", function () {
 
 			PropertyFactory.register(ConstantReadonly);
 
-			var instance = PropertyFactory.create("SimpleTest:ConstantReadonly-1.0.0");
+			var instance = PropertyFactory.create(
+				"SimpleTest:ConstantReadonly-1.0.0",
+			);
 
 			expect(instance.get("num").getValue()).to.equal(111);
 			expect(instance.get("num")._isConstant).to.equal(true);
-			expect(instance.get("num")._checkIsNotReadOnly.bind(instance.get("num"), true)).to.throw(
-				MSG.MODIFICATION_OF_CONSTANT_PROPERTY,
-			);
-			expect(instance.get("num").setValue.bind(instance.get("num"), 1111)).to.throw(
-				MSG.MODIFICATION_OF_CONSTANT_PROPERTY,
-			);
+			expect(
+				instance.get("num")._checkIsNotReadOnly.bind(instance.get("num"), true),
+			).to.throw(MSG.MODIFICATION_OF_CONSTANT_PROPERTY);
+			expect(
+				instance.get("num").setValue.bind(instance.get("num"), 1111),
+			).to.throw(MSG.MODIFICATION_OF_CONSTANT_PROPERTY);
 		});
 
 		it("should set constant child properties as readonly", function () {
@@ -2653,12 +2870,17 @@ describe("PropertyFactory", function () {
 			PropertyFactory.register(ConstantChildReadonlyEntry);
 			PropertyFactory.register(ConstantChildReadonly);
 
-			var instance = PropertyFactory.create("SimpleTest:ConstantChildReadonly-1.0.0");
+			var instance = PropertyFactory.create(
+				"SimpleTest:ConstantChildReadonly-1.0.0",
+			);
 
 			expect(instance.get("template").get("num")._isConstant).to.equal(true);
-			expect(instance.get("template").get("dynamic")._isConstant).to.equal(true);
+			expect(instance.get("template").get("dynamic")._isConstant).to.equal(
+				true,
+			);
 			expect(
-				instance.get("template").get("dynamic").get("dynamic_string")._isConstant,
+				instance.get("template").get("dynamic").get("dynamic_string")
+					._isConstant,
 			).to.equal(true);
 			expect(
 				instance
@@ -2706,7 +2928,9 @@ describe("PropertyFactory", function () {
 
 			PropertyFactory.register(ConstantPrimitive);
 
-			var instance = PropertyFactory.create("SimpleTest:ConstantPrimitive-1.0.0");
+			var instance = PropertyFactory.create(
+				"SimpleTest:ConstantPrimitive-1.0.0",
+			);
 
 			expect(instance.get("num").getValue()).to.equal(111);
 			expect(instance.get("bool").getValue()).to.equal(true);
@@ -2760,7 +2984,9 @@ describe("PropertyFactory", function () {
 		it("should support primitive array constants", function () {
 			var ConstantArray = {
 				typeid: "SimpleTest:ConstantArray-1.0.0",
-				constants: [{ id: "array", typeid: "Int32", value: [111, 222], context: "array" }],
+				constants: [
+					{ id: "array", typeid: "Int32", value: [111, 222], context: "array" },
+				],
 				properties: [{ id: "default", typeid: "Uint32" }],
 			};
 
@@ -2792,9 +3018,15 @@ describe("PropertyFactory", function () {
 			PropertyFactory.register(ConstantTypedArrayEntry);
 			PropertyFactory.register(ConstantTypedArray);
 
-			var instance = PropertyFactory.create("SimpleTest:ConstantTypedArray-1.0.0");
-			expect(instance.get("array").get(0).get("string").value).to.equal("I am string 1");
-			expect(instance.get("array").get(1).get("string").value).to.equal("I am string 2");
+			var instance = PropertyFactory.create(
+				"SimpleTest:ConstantTypedArray-1.0.0",
+			);
+			expect(instance.get("array").get(0).get("string").value).to.equal(
+				"I am string 1",
+			);
+			expect(instance.get("array").get(1).get("string").value).to.equal(
+				"I am string 2",
+			);
 		});
 
 		it("should support template constants", function () {
@@ -2827,11 +3059,17 @@ describe("PropertyFactory", function () {
 			PropertyFactory.register(ConstantTemplateEntry);
 			PropertyFactory._reregister(ConstantTemplate);
 
-			var instance = PropertyFactory.create("SimpleTest:ConstantTemplate-1.0.0");
+			var instance = PropertyFactory.create(
+				"SimpleTest:ConstantTemplate-1.0.0",
+			);
 
 			expect(instance.get("template").get("num").getValue()).to.equal(111);
 			expect(
-				instance.get("template").get("dynamic").get("dynamic_string").getValue(),
+				instance
+					.get("template")
+					.get("dynamic")
+					.get("dynamic_string")
+					.getValue(),
 			).to.equal("I am a string");
 		});
 
@@ -2849,7 +3087,10 @@ describe("PropertyFactory", function () {
 						id: "set",
 						typeid: "SimpleTest:ConstantSetEntry-1.0.0",
 						context: "set",
-						value: [{ string: "I am a string 1" }, { string: "I am a string 2" }],
+						value: [
+							{ string: "I am a string 1" },
+							{ string: "I am a string 2" },
+						],
 					},
 				],
 				properties: [{ id: "default", typeid: "Uint32" }],
@@ -2861,12 +3102,12 @@ describe("PropertyFactory", function () {
 			var instance = PropertyFactory.create("SimpleTest:ConstantSet-1.0.0");
 
 			expect(instance.get("set").getAsArray().length).to.equal(2);
-			expect(instance.get("set").getAsArray()[0].get("string").getValue()).to.equal(
-				"I am a string 1",
-			);
-			expect(instance.get("set").getAsArray()[1].get("string").getValue()).to.equal(
-				"I am a string 2",
-			);
+			expect(
+				instance.get("set").getAsArray()[0].get("string").getValue(),
+			).to.equal("I am a string 1");
+			expect(
+				instance.get("set").getAsArray()[1].get("string").getValue(),
+			).to.equal("I am a string 2");
 
 			// All instances should share the same constant objects
 			var instance2 = PropertyFactory.create("SimpleTest:ConstantSet-1.0.0");
@@ -2892,7 +3133,9 @@ describe("PropertyFactory", function () {
 
 			PropertyFactory.register(ConstantPrimitiveMap);
 
-			var instance = PropertyFactory.create("SimpleTest:ConstantPrimitiveMap-1.0.0");
+			var instance = PropertyFactory.create(
+				"SimpleTest:ConstantPrimitiveMap-1.0.0",
+			);
 
 			expect(instance.get("map").getEntriesReadOnly().key1).to.equal(111);
 			expect(instance.get("map").getEntriesReadOnly().key2).to.equal(222);
@@ -2924,15 +3167,17 @@ describe("PropertyFactory", function () {
 			PropertyFactory.register(ConstantTypedMapEntry);
 			PropertyFactory.register(ConstantTypedMap);
 
-			var instance = PropertyFactory.create("SimpleTest:ConstantTypedMap-1.0.0");
+			var instance = PropertyFactory.create(
+				"SimpleTest:ConstantTypedMap-1.0.0",
+			);
 
 			expect(instance.get("map")._contextKeyType).to.equal("string");
-			expect(instance.get("map").getEntriesReadOnly().key1.get("string").getValue()).to.equal(
-				"I am a string 1",
-			);
-			expect(instance.get("map").getEntriesReadOnly().key2.get("string").getValue()).to.equal(
-				"I am a string 2",
-			);
+			expect(
+				instance.get("map").getEntriesReadOnly().key1.get("string").getValue(),
+			).to.equal("I am a string 1");
+			expect(
+				instance.get("map").getEntriesReadOnly().key2.get("string").getValue(),
+			).to.equal("I am a string 2");
 		});
 
 		it("should support map constants with templateid keys", function () {
@@ -2953,11 +3198,17 @@ describe("PropertyFactory", function () {
 				properties: [{ id: "default", typeid: "Uint32" }],
 			};
 			PropertyFactory._reregister(ConstantTemplate);
-			var instance = PropertyFactory.create("SimpleTest:ConstantTemplate-1.0.0");
+			var instance = PropertyFactory.create(
+				"SimpleTest:ConstantTemplate-1.0.0",
+			);
 
 			expect(instance.get("map")._contextKeyType).to.equal("typeid");
-			expect(instance.get("map").get("SimpleTest:ConstantTemplate1-1.0.0")).to.equal(1);
-			expect(instance.get("map").get("SimpleTest:ConstantTemplate2-1.0.0")).to.equal(-1);
+			expect(
+				instance.get("map").get("SimpleTest:ConstantTemplate1-1.0.0"),
+			).to.equal(1);
+			expect(
+				instance.get("map").get("SimpleTest:ConstantTemplate2-1.0.0"),
+			).to.equal(-1);
 		});
 
 		it("should support constants with no value defined", function () {
@@ -2983,8 +3234,16 @@ describe("PropertyFactory", function () {
 						typeid: "SimpleTest:ConstantNoValueEntry-1.0.0",
 						context: "array",
 					},
-					{ id: "set", typeid: "SimpleTest:ConstantNoValueEntry-1.0.0", context: "set" },
-					{ id: "map", typeid: "SimpleTest:ConstantNoValueEntry-1.0.0", context: "map" },
+					{
+						id: "set",
+						typeid: "SimpleTest:ConstantNoValueEntry-1.0.0",
+						context: "set",
+					},
+					{
+						id: "map",
+						typeid: "SimpleTest:ConstantNoValueEntry-1.0.0",
+						context: "map",
+					},
 				],
 			};
 
@@ -3000,13 +3259,19 @@ describe("PropertyFactory", function () {
 						id: "array_typed",
 						typeid: "SimpleTest:ConstantNoValueEntry-1.0.0",
 						context: "array",
-						value: [{ num: 100 }, { num: 200, string: "I am a string 2", bool: true }],
+						value: [
+							{ num: 100 },
+							{ num: 200, string: "I am a string 2", bool: true },
+						],
 					},
 					{
 						id: "set",
 						typeid: "SimpleTest:ConstantNoValueEntry-1.0.0",
 						context: "set",
-						value: [{ num: 100 }, { num: 200, string: "I am a string 2", bool: true }],
+						value: [
+							{ num: 100 },
+							{ num: 200, string: "I am a string 2", bool: true },
+						],
 					},
 					{
 						id: "map",
@@ -3039,8 +3304,12 @@ describe("PropertyFactory", function () {
 
 			expect(instanceInherited.get("int").getValue()).to.equal(100);
 			expect(instanceInherited.get("bool").getValue()).to.equal(true);
-			expect(instanceInherited.get("string").getValue()).to.equal("I am a string");
-			expect(instanceInherited.get("array").getValues()).to.deep.equal([100, 200]);
+			expect(instanceInherited.get("string").getValue()).to.equal(
+				"I am a string",
+			);
+			expect(instanceInherited.get("array").getValues()).to.deep.equal([
+				100, 200,
+			]);
 
 			let arr = instanceInherited.get("array_typed").getValues();
 			expect(arr[0]["num"]).to.equal(100);
@@ -3126,12 +3395,18 @@ describe("PropertyFactory", function () {
 
 				PropertyFactory.register(ConstantPolyContainer);
 
-				var instance = PropertyFactory.create("SimpleTest:ConstantPolyContainer-1.0.0");
+				var instance = PropertyFactory.create(
+					"SimpleTest:ConstantPolyContainer-1.0.0",
+				);
 				expect(instance.get("polySub").get("num").getValue()).to.equal(333);
-				expect(instance.get("polySub").get("str").getValue()).to.equal("PolySub");
+				expect(instance.get("polySub").get("str").getValue()).to.equal(
+					"PolySub",
+				);
 
 				expect(instance.get("polySubSub").get("num").getValue()).to.equal(444);
-				expect(instance.get("polySubSub").get("str").getValue()).to.equal("PolySubSub");
+				expect(instance.get("polySubSub").get("str").getValue()).to.equal(
+					"PolySubSub",
+				);
 				expect(instance.get("polySubSub").get("num2").getValue()).to.equal(111);
 			});
 
@@ -3148,7 +3423,9 @@ describe("PropertyFactory", function () {
 				};
 
 				PropertyFactory.register(ConstantPolyNoValueContainer);
-				var prop = PropertyFactory.create("SimpleTest:ConstantPolyNoValueContainer-1.0.0");
+				var prop = PropertyFactory.create(
+					"SimpleTest:ConstantPolyNoValueContainer-1.0.0",
+				);
 
 				expect(prop.get("polySub").get("str").value).to.equal("Sub");
 			});
@@ -3173,7 +3450,8 @@ describe("PropertyFactory", function () {
 						"SimpleTest:ConstantPolyNoTypeIdContainer-1.0.0",
 					),
 				).to.throw(
-					MSG.FIELD_TYPEID_IS_REQUIRED + "typedValue SimpleTest:ConstantPolyBase-1.0.0",
+					MSG.FIELD_TYPEID_IS_REQUIRED +
+						"typedValue SimpleTest:ConstantPolyBase-1.0.0",
 				);
 			});
 
@@ -3202,13 +3480,19 @@ describe("PropertyFactory", function () {
 
 				PropertyFactory.register(ConstantPolyArrayContainer);
 
-				var instance = PropertyFactory.create("SimpleTest:ConstantPolyArrayContainer-1.0.0");
+				var instance = PropertyFactory.create(
+					"SimpleTest:ConstantPolyArrayContainer-1.0.0",
+				);
 				expect(instance.get("array").get(0).get("num").value).to.equal(222);
 				expect(instance.get("array").get(0).get("str").value).to.equal("Sub");
 				expect(instance.get("array").get(1).get("num").value).to.equal(222);
-				expect(instance.get("array").get(1).get("str").value).to.equal("ArrSub");
+				expect(instance.get("array").get(1).get("str").value).to.equal(
+					"ArrSub",
+				);
 				expect(instance.get("array").get(2).get("num").value).to.equal(333);
-				expect(instance.get("array").get(2).get("str").value).to.equal("ArrSubSub");
+				expect(instance.get("array").get(2).get("str").value).to.equal(
+					"ArrSubSub",
+				);
 				expect(instance.get("array").get(2).get("num2").value).to.equal(111);
 			});
 
@@ -3237,18 +3521,32 @@ describe("PropertyFactory", function () {
 
 				PropertyFactory.register(ConstantPolySetContainer);
 
-				var instance = PropertyFactory.create("SimpleTest:ConstantPolySetContainer-1.0.0");
+				var instance = PropertyFactory.create(
+					"SimpleTest:ConstantPolySetContainer-1.0.0",
+				);
 
 				expect(instance.get("set").getAsArray().length).to.equal(3);
-				expect(instance.get("set").getAsArray()[0].get("num").getValue()).to.equal(222);
-				expect(instance.get("set").getAsArray()[0].get("str").getValue()).to.equal("Sub");
-				expect(instance.get("set").getAsArray()[1].get("num").getValue()).to.equal(222);
-				expect(instance.get("set").getAsArray()[1].get("str").getValue()).to.equal("ArrSub");
-				expect(instance.get("set").getAsArray()[2].get("num").getValue()).to.equal(333);
-				expect(instance.get("set").getAsArray()[2].get("str").getValue()).to.equal(
-					"ArrSubSub",
-				);
-				expect(instance.get("set").getAsArray()[2].get("num2").getValue()).to.equal(111);
+				expect(
+					instance.get("set").getAsArray()[0].get("num").getValue(),
+				).to.equal(222);
+				expect(
+					instance.get("set").getAsArray()[0].get("str").getValue(),
+				).to.equal("Sub");
+				expect(
+					instance.get("set").getAsArray()[1].get("num").getValue(),
+				).to.equal(222);
+				expect(
+					instance.get("set").getAsArray()[1].get("str").getValue(),
+				).to.equal("ArrSub");
+				expect(
+					instance.get("set").getAsArray()[2].get("num").getValue(),
+				).to.equal(333);
+				expect(
+					instance.get("set").getAsArray()[2].get("str").getValue(),
+				).to.equal("ArrSubSub");
+				expect(
+					instance.get("set").getAsArray()[2].get("num2").getValue(),
+				).to.equal(111);
 			});
 
 			it("should set a constant polymorphic value for a non-primitive map", function () {
@@ -3276,29 +3574,31 @@ describe("PropertyFactory", function () {
 
 				PropertyFactory.register(ConstantPolyMapContainer);
 
-				var instance = PropertyFactory.create("SimpleTest:ConstantPolyMapContainer-1.0.0");
+				var instance = PropertyFactory.create(
+					"SimpleTest:ConstantPolyMapContainer-1.0.0",
+				);
 
-				expect(instance.get("map").getEntriesReadOnly().key1.get("num").getValue()).to.equal(
-					222,
-				);
-				expect(instance.get("map").getEntriesReadOnly().key1.get("str").getValue()).to.equal(
-					"Sub",
-				);
-				expect(instance.get("map").getEntriesReadOnly().key2.get("num").getValue()).to.equal(
-					222,
-				);
-				expect(instance.get("map").getEntriesReadOnly().key2.get("str").getValue()).to.equal(
-					"ArrSub",
-				);
-				expect(instance.get("map").getEntriesReadOnly().key3.get("num").getValue()).to.equal(
-					333,
-				);
-				expect(instance.get("map").getEntriesReadOnly().key3.get("str").getValue()).to.equal(
-					"ArrSubSub",
-				);
-				expect(instance.get("map").getEntriesReadOnly().key3.get("num2").getValue()).to.equal(
-					111,
-				);
+				expect(
+					instance.get("map").getEntriesReadOnly().key1.get("num").getValue(),
+				).to.equal(222);
+				expect(
+					instance.get("map").getEntriesReadOnly().key1.get("str").getValue(),
+				).to.equal("Sub");
+				expect(
+					instance.get("map").getEntriesReadOnly().key2.get("num").getValue(),
+				).to.equal(222);
+				expect(
+					instance.get("map").getEntriesReadOnly().key2.get("str").getValue(),
+				).to.equal("ArrSub");
+				expect(
+					instance.get("map").getEntriesReadOnly().key3.get("num").getValue(),
+				).to.equal(333);
+				expect(
+					instance.get("map").getEntriesReadOnly().key3.get("str").getValue(),
+				).to.equal("ArrSubSub");
+				expect(
+					instance.get("map").getEntriesReadOnly().key3.get("num2").getValue(),
+				).to.equal(111);
 			});
 
 			it("should fail when setting constant polymorphic values not derived from base type", function () {
@@ -3330,7 +3630,8 @@ describe("PropertyFactory", function () {
 						"SimpleTest:ConstantPolyUnderivedContainer-1.0.0",
 					),
 				).to.throw(
-					MSG.TYPED_VALUES_MUST_DERIVE_FROM_BASE_TYPE + "SimpleTest:ConstantPoly-1.0.0",
+					MSG.TYPED_VALUES_MUST_DERIVE_FROM_BASE_TYPE +
+						"SimpleTest:ConstantPoly-1.0.0",
 				);
 			});
 
@@ -3429,14 +3730,22 @@ describe("PropertyFactory", function () {
 			var contextSingleTypes = propTypes.concat(["NodeProperty", "Enum"]);
 			for (var i = 0; i < contextSingleTypes.length; ++i) {
 				var propType = contextSingleTypes[i];
-				expect(PropertyFactory.instanceOf(PropertyFactory.create(propType), propType)).to.be
-					.true;
+				expect(
+					PropertyFactory.instanceOf(
+						PropertyFactory.create(propType),
+						propType,
+					),
+				).to.be.true;
 			}
 
 			for (var j = 0; j < propTypes.length; ++j) {
 				var propType = propTypes[j];
 				expect(
-					PropertyFactory.instanceOf(PropertyFactory.create(propType, "map"), propType, "map"),
+					PropertyFactory.instanceOf(
+						PropertyFactory.create(propType, "map"),
+						propType,
+						"map",
+					),
 				).to.be.true;
 			}
 
@@ -3456,7 +3765,10 @@ describe("PropertyFactory", function () {
 		it("instanceOf check succeeds for schema based properties and native typeids", function () {
 			PropertyFactory.register(SimplePoint);
 			expect(
-				PropertyFactory.instanceOf(PropertyFactory.create(SimplePoint.typeid), "BaseProperty"),
+				PropertyFactory.instanceOf(
+					PropertyFactory.create(SimplePoint.typeid),
+					"BaseProperty",
+				),
 			).to.be.true;
 
 			const testEnum = {
@@ -3541,13 +3853,18 @@ describe("Template registration", function () {
 		};
 
 		myPropertyFactory.register(ValuesTemplate1);
-		expect(myPropertyFactory.register.bind(myPropertyFactory, ValuesTemplate2)).to.not.throw();
+		expect(
+			myPropertyFactory.register.bind(myPropertyFactory, ValuesTemplate2),
+		).to.not.throw();
 	});
 
 	it("should throw when registering an existing template version that is different from what is in the registry", function () {
 		myPropertyFactory.register(ColorID["1-0-0"].original);
 		expect(
-			myPropertyFactory.register.bind(myPropertyFactory, ColorID["1-0-0"].modified),
+			myPropertyFactory.register.bind(
+				myPropertyFactory,
+				ColorID["1-0-0"].modified,
+			),
 		).to.throw(Error);
 	});
 
@@ -3571,7 +3888,11 @@ describe("Template registration", function () {
 
 	it("should throw when registering a primitive property through the public API", function () {
 		expect(
-			myPropertyFactory.register.bind(myPropertyFactory, "String", StringProperty),
+			myPropertyFactory.register.bind(
+				myPropertyFactory,
+				"String",
+				StringProperty,
+			),
 		).to.throw(Error);
 	});
 
@@ -3611,11 +3932,17 @@ describe("Template registration", function () {
 
 		myPropertyFactory = new PropertyFactory.constructor();
 		myPropertyFactory.register(ColorID["1-0-0"].original);
-		myPropertyFactory._registerRemoteTemplate(ColorID["1-1-0"].badSemver1, generateGUID());
+		myPropertyFactory._registerRemoteTemplate(
+			ColorID["1-1-0"].badSemver1,
+			generateGUID(),
+		);
 
 		myPropertyFactory = new PropertyFactory.constructor();
 		myPropertyFactory.register(ColorID["1-1-0"].badSemver2);
-		myPropertyFactory._registerRemoteTemplate(ColorID["1-0-0"].original, generateGUID());
+		myPropertyFactory._registerRemoteTemplate(
+			ColorID["1-0-0"].original,
+			generateGUID(),
+		);
 
 		expect(console.warn.callCount).to.equal(4);
 	});
@@ -3627,7 +3954,10 @@ describe("Template registration", function () {
 	});
 
 	it("should register a versioned remote template", function () {
-		myPropertyFactory._registerRemoteTemplate(ColorID["1-0-0"].original, generateGUID());
+		myPropertyFactory._registerRemoteTemplate(
+			ColorID["1-0-0"].original,
+			generateGUID(),
+		);
 	});
 
 	// biome-ignore format: https://github.com/biomejs/biome/issues/4202
@@ -3677,17 +4007,32 @@ describe("Template registration", function () {
 		myPropertyFactory.register(ColorID["1-0-0"].original);
 		myPropertyFactory.register(ColorID["2-0-0"]);
 
-		myPropertyFactory._registerRemoteTemplate(ColorID["1-1-0"].goodSemver, scope);
-		myPropertyFactory._registerRemoteTemplate(ColorID["1-0-1"].goodSemver, scope);
+		myPropertyFactory._registerRemoteTemplate(
+			ColorID["1-1-0"].goodSemver,
+			scope,
+		);
+		myPropertyFactory._registerRemoteTemplate(
+			ColorID["1-0-1"].goodSemver,
+			scope,
+		);
 		expect(console.warn.callCount).to.equal(0);
 	});
 
 	it("should register a local template even when there are other versions of the same template in the remote registry", function () {
 		var scope = generateGUID();
 		var scope2 = generateGUID();
-		myPropertyFactory._registerRemoteTemplate(ColorID["1-1-0"].goodSemver, scope);
-		myPropertyFactory._registerRemoteTemplate(ColorID["1-0-1"].goodSemver, scope);
-		myPropertyFactory._registerRemoteTemplate(require("./validation/goodPointId"), scope2);
+		myPropertyFactory._registerRemoteTemplate(
+			ColorID["1-1-0"].goodSemver,
+			scope,
+		);
+		myPropertyFactory._registerRemoteTemplate(
+			ColorID["1-0-1"].goodSemver,
+			scope,
+		);
+		myPropertyFactory._registerRemoteTemplate(
+			require("./validation/goodPointId"),
+			scope2,
+		);
 		myPropertyFactory._registerRemoteTemplate(
 			require("./validation/goodColorPalette"),
 			scope2,
@@ -3850,7 +4195,8 @@ describe('Only properties and constants that inherit from NamedProperty can have
 			});
 			var unit = {
 				annotation: {
-					description: "A definite magnitude used as a standard of measurement.",
+					description:
+						"A definite magnitude used as a standard of measurement.",
 					doc: "http://docs.adskunits.apiary.io/#introduction/definitions/measurement-units",
 				},
 				typeid: "autodesk.unit:unit-1.0.0",
@@ -3892,7 +4238,9 @@ describe('Only properties and constants that inherit from NamedProperty can have
 					{ id: "name", value: "Area" },
 					{
 						id: "units",
-						typedValue: [{ typeid: "autodesk.unit.unit:squareCentimeters-1.0.0" }],
+						typedValue: [
+							{ typeid: "autodesk.unit.unit:squareCentimeters-1.0.0" },
+						],
 					},
 				],
 			};
@@ -3942,7 +4290,8 @@ describe("Async validation", function () {
 	};
 
 	before(function () {
-		TemplateValidator = require("@fluid-experimental/property-changeset").TemplateValidator;
+		TemplateValidator =
+			require("@fluid-experimental/property-changeset").TemplateValidator;
 	});
 
 	it("can validate asynchronously", function () {
@@ -3951,14 +4300,20 @@ describe("Async validation", function () {
 			hasSchemaAsync: hasSchemaAsync,
 		});
 
-		var templatePrevious = JSON.parse(JSON.stringify(require("./validation/goodPointId")));
+		var templatePrevious = JSON.parse(
+			JSON.stringify(require("./validation/goodPointId")),
+		);
 		var template = JSON.parse(JSON.stringify(templatePrevious));
 		template.typeid = "TeamLeoValidation2:PointID-0.9.9";
-		return templateValidator.validateAsync(template, templatePrevious).then(function (result) {
-			expect(result).property("isValid", false);
-			expect(result.errors.length).to.be.at.least(1);
-			expect(result.errors[0].message).to.have.string(MSG.VERSION_REGRESSION_1);
-		});
+		return templateValidator
+			.validateAsync(template, templatePrevious)
+			.then(function (result) {
+				expect(result).property("isValid", false);
+				expect(result.errors.length).to.be.at.least(1);
+				expect(result.errors[0].message).to.have.string(
+					MSG.VERSION_REGRESSION_1,
+				);
+			});
 	});
 
 	it("can perform context validation asynchronously", function (done) {
@@ -4105,31 +4460,46 @@ describe("inheritsFrom() method", () => {
 	});
 
 	it("should recognize that the ContainerProperty inherits from BaseProperty", () => {
-		const result = PropertyFactory.inheritsFrom("ContainerProperty", "BaseProperty");
+		const result = PropertyFactory.inheritsFrom(
+			"ContainerProperty",
+			"BaseProperty",
+		);
 
 		expect(result).to.be.true;
 	});
 
 	it("should recognize that the NamedProperty inherits from BaseProperty", () => {
-		const result = PropertyFactory.inheritsFrom("NamedProperty", "BaseProperty");
+		const result = PropertyFactory.inheritsFrom(
+			"NamedProperty",
+			"BaseProperty",
+		);
 
 		expect(result).to.be.true;
 	});
 
 	it("should recognize that the NamedNodeProperty inherits from BaseProperty", () => {
-		const result = PropertyFactory.inheritsFrom("NamedNodeProperty", "BaseProperty");
+		const result = PropertyFactory.inheritsFrom(
+			"NamedNodeProperty",
+			"BaseProperty",
+		);
 
 		expect(result).to.be.true;
 	});
 
 	it("should recognize that the NodeProperty inherits from ContainerProperty", () => {
-		const result = PropertyFactory.inheritsFrom("NodeProperty", "ContainerProperty");
+		const result = PropertyFactory.inheritsFrom(
+			"NodeProperty",
+			"ContainerProperty",
+		);
 
 		expect(result).to.be.true;
 	});
 
 	it("should recognize that the NamedProperty inherits from ContainerProperty", () => {
-		const result = PropertyFactory.inheritsFrom("NamedProperty", "ContainerProperty");
+		const result = PropertyFactory.inheritsFrom(
+			"NamedProperty",
+			"ContainerProperty",
+		);
 
 		expect(result).to.be.true;
 	});
@@ -4141,13 +4511,19 @@ describe("inheritsFrom() method", () => {
 	});
 
 	it("should recognize that the NamedNodeProperty inherits from NamedProperty", () => {
-		const result = PropertyFactory.inheritsFrom("NamedNodeProperty", "NamedProperty");
+		const result = PropertyFactory.inheritsFrom(
+			"NamedNodeProperty",
+			"NamedProperty",
+		);
 
 		expect(result).to.be.true;
 	});
 
 	it("should recognize that the NamedNodeProperty inherits from NodeProperty", () => {
-		const result = PropertyFactory.inheritsFrom("NamedNodeProperty", "NodeProperty");
+		const result = PropertyFactory.inheritsFrom(
+			"NamedNodeProperty",
+			"NodeProperty",
+		);
 
 		expect(result).to.be.true;
 	});
@@ -4210,7 +4586,10 @@ describe("inheritsFrom() method", () => {
 	});
 
 	it("should recognize that the testSet doesn't inherits from foe", () => {
-		const result = PropertyFactory.inheritsFrom("autodesk.examples:test.set-1.0.0", "foe");
+		const result = PropertyFactory.inheritsFrom(
+			"autodesk.examples:test.set-1.0.0",
+			"foe",
+		);
 
 		expect(result).to.be.false;
 	});
@@ -4244,8 +4623,14 @@ describe("inheritsFrom() method", () => {
 		});
 
 		it("should cache results", () => {
-			PropertyFactory.inheritsFrom("autodesk.examples:test.set-1.0.0", "NamedProperty");
-			PropertyFactory.inheritsFrom("autodesk.examples:test.set-2.0.0", "NamedProperty");
+			PropertyFactory.inheritsFrom(
+				"autodesk.examples:test.set-1.0.0",
+				"NamedProperty",
+			);
+			PropertyFactory.inheritsFrom(
+				"autodesk.examples:test.set-2.0.0",
+				"NamedProperty",
+			);
 
 			const expectedResults = {
 				"autodesk.examples:test.set-1.0.0": {
@@ -4264,21 +4649,32 @@ describe("inheritsFrom() method", () => {
 		});
 
 		it("should refresh the cache when _reregister() is called", () => {
-			PropertyFactory.inheritsFrom("autodesk.examples:test.set-1.0.0", "NamedProperty");
+			PropertyFactory.inheritsFrom(
+				"autodesk.examples:test.set-1.0.0",
+				"NamedProperty",
+			);
 
 			PropertyFactory._reregister({
 				typeid: "autodesk.examples:test.set-1.0.0",
 				inherits: "NodeProperty",
 			});
-			expect(PropertyFactory.inheritsFrom("autodesk.examples:test.set-1.0.0", "NodeProperty"))
-				.to.be.true;
+			expect(
+				PropertyFactory.inheritsFrom(
+					"autodesk.examples:test.set-1.0.0",
+					"NodeProperty",
+				),
+			).to.be.true;
 
 			PropertyFactory._reregister({
 				typeid: "autodesk.examples:test.set-2.0.0",
 				inherits: "NodeProperty",
 			});
-			expect(PropertyFactory.inheritsFrom("autodesk.examples:test.set-2.0.0", "NodeProperty"))
-				.to.be.true;
+			expect(
+				PropertyFactory.inheritsFrom(
+					"autodesk.examples:test.set-2.0.0",
+					"NodeProperty",
+				),
+			).to.be.true;
 
 			const expectedResults = {
 				"autodesk.examples:test.set-1.0.0": {
@@ -4297,10 +4693,18 @@ describe("inheritsFrom() method", () => {
 		});
 
 		it("should flush the cache when _clear() is called", () => {
-			expect(PropertyFactory.inheritsFrom("autodesk.examples:test.set-1.0.0", "NamedProperty"))
-				.to.be.true;
-			expect(PropertyFactory.inheritsFrom("autodesk.examples:test.set-2.0.0", "NamedProperty"))
-				.to.be.true;
+			expect(
+				PropertyFactory.inheritsFrom(
+					"autodesk.examples:test.set-1.0.0",
+					"NamedProperty",
+				),
+			).to.be.true;
+			expect(
+				PropertyFactory.inheritsFrom(
+					"autodesk.examples:test.set-2.0.0",
+					"NamedProperty",
+				),
+			).to.be.true;
 
 			PropertyFactory._clear();
 			expect(PropertyFactory._inheritanceCache).to.be.empty;
@@ -4337,10 +4741,14 @@ describe("Remote template scope collection", () => {
 		expect(scope().item(scopeGuid).getCount()).to.be.equal(2);
 
 		expect(scope().item(scopeGuid).has("testA:ColorID")).to.be.true;
-		expect(scope().item(scopeGuid).item("testA:ColorID").getKeys()).to.have.members(["1.0.0"]);
+		expect(
+			scope().item(scopeGuid).item("testA:ColorID").getKeys(),
+		).to.have.members(["1.0.0"]);
 
 		expect(scope().item(scopeGuid).has("testB:ColorID")).to.be.true;
-		expect(scope().item(scopeGuid).item("testB:ColorID").getKeys()).to.have.members(["1.0.0"]);
+		expect(
+			scope().item(scopeGuid).item("testB:ColorID").getKeys(),
+		).to.have.members(["1.0.0"]);
 	});
 
 	it("should remove a specific scope from the scope collection when _removeScope is called.", () => {

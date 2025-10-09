@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
+import {
+	assert,
+	unreachableCase,
+	fail,
+} from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import {
@@ -31,7 +35,11 @@ import {
 	incrementalFieldEncoder,
 } from "./compressedEncode.js";
 import type { FieldBatch } from "./fieldBatch.js";
-import { type EncodedFieldBatch, type EncodedValueShape, SpecialField } from "./format.js";
+import {
+	type EncodedFieldBatch,
+	type EncodedValueShape,
+	SpecialField,
+} from "./format.js";
 import type { IncrementalEncoder } from "./codecs.js";
 import { NodeShapeBasedEncoder } from "./nodeEncoder.js";
 import { defaultIncrementalEncodingPolicy } from "./incrementalEncodingPolicy.js";
@@ -67,7 +75,12 @@ export function buildContext(
 ): EncoderContext {
 	const context: EncoderContext = new EncoderContext(
 		(fieldBuilder: FieldEncodeBuilder, schemaName: TreeNodeSchemaIdentifier) =>
-			getNodeEncoder(fieldBuilder, storedSchema, schemaName, incrementalEncoder),
+			getNodeEncoder(
+				fieldBuilder,
+				storedSchema,
+				schemaName,
+				incrementalEncoder,
+			),
 		(nodeBuilder: NodeEncodeBuilder, fieldSchema: TreeFieldStoredSchema) =>
 			getFieldEncoder(nodeBuilder, fieldSchema, context, storedSchema),
 		policy.fieldKinds,
@@ -86,13 +99,19 @@ export function getFieldEncoder(
 	context: EncoderContext,
 	storedSchema: StoredSchemaCollection,
 ): FieldEncoder {
-	const kind = context.fieldShapes.get(field.kind) ?? fail(0xb52 /* missing FieldKind */);
+	const kind =
+		context.fieldShapes.get(field.kind) ?? fail(0xb52 /* missing FieldKind */);
 	const type = oneFromSet(field.types);
 	const nodeEncoder =
-		type !== undefined ? nodeBuilder.nodeEncoderFromSchema(type) : anyNodeEncoder;
+		type !== undefined
+			? nodeBuilder.nodeEncoderFromSchema(type)
+			: anyNodeEncoder;
 	if (kind.multiplicity === Multiplicity.Single) {
 		if (field.kind === identifierFieldKindIdentifier) {
-			assert(type !== undefined, 0x999 /* field type must be defined in identifier field */);
+			assert(
+				type !== undefined,
+				0x999 /* field type must be defined in identifier field */,
+			);
 			const nodeSchema = storedSchema.nodeSchema.get(type);
 			assert(nodeSchema !== undefined, 0x99a /* nodeSchema must be defined */);
 			assert(
@@ -127,7 +146,8 @@ export function getNodeEncoder(
 	incrementalEncoder?: IncrementalEncoder,
 ): NodeShapeBasedEncoder {
 	const schema =
-		storedSchema.nodeSchema.get(schemaName) ?? fail(0xb53 /* missing node schema */);
+		storedSchema.nodeSchema.get(schemaName) ??
+		fail(0xb53 /* missing node schema */);
 
 	if (schema instanceof ObjectNodeStoredSchema) {
 		// TODO:Performance:
@@ -135,7 +155,8 @@ export function getNodeEncoder(
 		// to reduce encoded size.
 
 		const shouldEncodeIncrementally =
-			incrementalEncoder?.shouldEncodeIncrementally ?? defaultIncrementalEncodingPolicy;
+			incrementalEncoder?.shouldEncodeIncrementally ??
+			defaultIncrementalEncodingPolicy;
 		const objectNodeFields: KeyedFieldEncoder[] = [];
 		for (const [key, field] of schema.objectNodeFields ?? []) {
 			const fieldEncoder = shouldEncodeIncrementally(schemaName, key)
@@ -147,7 +168,12 @@ export function getNodeEncoder(
 			});
 		}
 
-		const shape = new NodeShapeBasedEncoder(schemaName, false, objectNodeFields, undefined);
+		const shape = new NodeShapeBasedEncoder(
+			schemaName,
+			false,
+			objectNodeFields,
+			undefined,
+		);
 		return shape;
 	}
 	if (schema instanceof LeafNodeStoredSchema) {
@@ -183,7 +209,9 @@ export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined {
 	}
 }
 
-function valueShapeFromSchema(schema: ValueSchema | undefined): undefined | EncodedValueShape {
+function valueShapeFromSchema(
+	schema: ValueSchema | undefined,
+): undefined | EncodedValueShape {
 	switch (schema) {
 		case undefined:
 			return false;

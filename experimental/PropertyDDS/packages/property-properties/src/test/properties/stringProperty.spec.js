@@ -69,7 +69,8 @@ describe("StringProperty", function () {
 			changeSetWithEntries = myStringProp.serialize({ dirtyOnly: true });
 			expect(myStringProp.serialize({ dirtyOnly: false })).to.equal("abcdef");
 			var CS = myStringProp.serialize({ dirtyOnly: true });
-			expect(CS.insert && CS.insert[0] && CS.insert[0][1] === "abcdef").to.be.ok;
+			expect(CS.insert && CS.insert[0] && CS.insert[0][1] === "abcdef").to.be
+				.ok;
 		});
 
 		it("Should handle removals correctly", function () {
@@ -89,10 +90,12 @@ describe("StringProperty", function () {
 
 		it("Should support deserialization", function () {
 			var deserializedNode = PropertyFactory.create("String");
-			var deserializedChanges1 = deserializedNode.deserialize(changeSetWithEntries);
+			var deserializedChanges1 =
+				deserializedNode.deserialize(changeSetWithEntries);
 			expect(deserializedChanges1).to.deep.equal(changeSetWithEntries);
 
-			var deserializedChanges2 = deserializedNode.deserialize(changeSetWithEntries);
+			var deserializedChanges2 =
+				deserializedNode.deserialize(changeSetWithEntries);
 			expect(ChangeSet.isEmptyChangeSet(deserializedChanges2)).to.be.ok;
 
 			var deserializedChanges3 = deserializedNode.deserialize({});
@@ -409,7 +412,9 @@ describe("StringProperty", function () {
 				}
 				in_options.post(SC);
 			}
-			io_initialChangeset.applyChangeSet(squashedChangeset.getSerializedChangeSet());
+			io_initialChangeset.applyChangeSet(
+				squashedChangeset.getSerializedChangeSet(),
+			);
 		};
 
 		//
@@ -482,11 +487,14 @@ describe("StringProperty", function () {
 
 			if (!initialChangesetNode.getSerializedChangeSet().insert) {
 				// empty changeset
-				expect(nodeTestProperty.serialize().insert.String.stringProperty).to.equal("");
+				expect(
+					nodeTestProperty.serialize().insert.String.stringProperty,
+				).to.equal("");
 			} else {
 				// according to the spec, the String changeset can either be a string or (insert|modify|remove) style
 				var nodeInitialChangesetString =
-					initialChangesetNode.getSerializedChangeSet().insert.String.stringProperty;
+					initialChangesetNode.getSerializedChangeSet().insert.String
+						.stringProperty;
 				if (!_.isString(nodeInitialChangesetString)) {
 					nodeInitialChangesetString = nodeInitialChangesetString.insert[0][1];
 				}
@@ -497,11 +505,14 @@ describe("StringProperty", function () {
 
 			if (!initialChangesetMap.getSerializedChangeSet().insert) {
 				// empty changeset
-				expect(mapTestProperty.serialize().insert.String.stringProperty).to.equal("");
+				expect(
+					mapTestProperty.serialize().insert.String.stringProperty,
+				).to.equal("");
 			} else {
 				// according to the spec, the String changeset can either be a string or (insert|modify|remove) style
 				var mapInitialChangesetString =
-					initialChangesetMap.getSerializedChangeSet().insert.String.stringProperty;
+					initialChangesetMap.getSerializedChangeSet().insert.String
+						.stringProperty;
 				if (!_.isString(mapInitialChangesetString)) {
 					mapInitialChangesetString = mapInitialChangesetString.insert[0][1];
 				}
@@ -512,7 +523,9 @@ describe("StringProperty", function () {
 		};
 
 		it("should work for multiple independent inserts", function () {
-			testChangeSetSquashing({ callbacks: [insertText, insertText, insertText] });
+			testChangeSetSquashing({
+				callbacks: [insertText, insertText, insertText],
+			});
 		});
 
 		it("should work for inserts followed by removes", function () {
@@ -603,7 +616,9 @@ describe("StringProperty", function () {
 
 	describe("Rebasing", function () {
 		var createPropertyForRebaseTestByTemplate = function () {
-			return PropertyFactory.create("autodesk.tests:SimpleStringTestProperty-1.0.0");
+			return PropertyFactory.create(
+				"autodesk.tests:SimpleStringTestProperty-1.0.0",
+			);
 		};
 
 		var createNodePropertyForRebase = function () {
@@ -704,11 +719,14 @@ describe("StringProperty", function () {
 					expect(finalChangeSet.String.stringProperty).to.equal("");
 				} else {
 					// according to the spec, the String changeset can either be a string or (insert|modify|remove) style
-					var combinedChangeSetString = combinedSerialized.String.stringProperty;
+					var combinedChangeSetString =
+						combinedSerialized.String.stringProperty;
 					if (!_.isString(combinedChangeSetString)) {
 						combinedChangeSetString = combinedChangeSetString.insert[0][1];
 					}
-					expect(combinedChangeSetString).to.deep.equal(finalChangeSet.String.stringProperty);
+					expect(combinedChangeSetString).to.deep.equal(
+						finalChangeSet.String.stringProperty,
+					);
 				}
 			}
 
@@ -839,7 +857,9 @@ describe("StringProperty", function () {
 				checkResult: function (conflicts, changeSet) {
 					expect(conflicts).to.have.length(1);
 					expect(changeSet.String.stringProperty.modify[0][1]).to.equal("y");
-					expect(conflicts[0].type).to.be.equal(ChangeSet.ConflictType.COLLIDING_SET);
+					expect(conflicts[0].type).to.be.equal(
+						ChangeSet.ConflictType.COLLIDING_SET,
+					);
 					expect(conflicts[0].path).to.be.equal("stringProperty");
 				},
 			});
@@ -856,9 +876,14 @@ describe("StringProperty", function () {
 				compareToSequential: true,
 				checkResult: function (conflicts, changeSet) {
 					expect(conflicts).to.have.length(1);
-					expect(conflicts[0].type).to.be.equal(ChangeSet.ConflictType.REMOVE_AFTER_MODIFY);
+					expect(conflicts[0].type).to.be.equal(
+						ChangeSet.ConflictType.REMOVE_AFTER_MODIFY,
+					);
 					expect(conflicts[0].path).to.be.equal("stringProperty");
-					expect(changeSet.String.stringProperty).to.have.all.keys("remove", "insert");
+					expect(changeSet.String.stringProperty).to.have.all.keys(
+						"remove",
+						"insert",
+					);
 				},
 			});
 		});
@@ -952,7 +977,9 @@ describe("StringProperty", function () {
 				compareToSequential: false,
 				checkResult: function (conflicts, changeSet) {
 					expect(conflicts).to.have.length(1);
-					expect(conflicts[0].type).to.be.equal(ChangeSet.ConflictType.COLLIDING_SET);
+					expect(conflicts[0].type).to.be.equal(
+						ChangeSet.ConflictType.COLLIDING_SET,
+					);
 					expect(conflicts[0].path).to.be.equal("stringProperty");
 					expect(changeSet.String.stringProperty).to.be.equal("s");
 				},
@@ -967,7 +994,9 @@ describe("StringProperty", function () {
 				compareToSequential: false,
 				checkResult: function (conflicts, changeSet) {
 					expect(conflicts).to.have.length(1);
-					expect(conflicts[0].type).to.be.equal(ChangeSet.ConflictType.COLLIDING_SET);
+					expect(conflicts[0].type).to.be.equal(
+						ChangeSet.ConflictType.COLLIDING_SET,
+					);
 					expect(conflicts[0].path).to.be.equal("stringProperty");
 					expect(changeSet.String.stringProperty).to.be.equal("s");
 				},
@@ -987,7 +1016,9 @@ describe("StringProperty", function () {
 				return initialString.value;
 			};
 
-			var CS1 = new ChangeSet({ modify: { String: { str: { remove: [[2, 2]] } } } });
+			var CS1 = new ChangeSet({
+				modify: { String: { str: { remove: [[2, 2]] } } },
+			});
 			var CS2 = new ChangeSet({
 				modify: {
 					String: {
@@ -1005,12 +1036,22 @@ describe("StringProperty", function () {
 			expect(testChangeSet(CS2.getSerializedChangeSet())).to.equal("AA-AA-AA");
 
 			var conflicts = [];
-			var rebasedCS1 = CS2._rebaseChangeSet(deepCopy(CS1.getSerializedChangeSet()), conflicts);
-			var rebasedCS2 = CS1._rebaseChangeSet(deepCopy(CS2.getSerializedChangeSet()), conflicts);
+			var rebasedCS1 = CS2._rebaseChangeSet(
+				deepCopy(CS1.getSerializedChangeSet()),
+				conflicts,
+			);
+			var rebasedCS2 = CS1._rebaseChangeSet(
+				deepCopy(CS2.getSerializedChangeSet()),
+				conflicts,
+			);
 
 			expect(rebasedCS1.modify.String.str.remove.length).to.equal(1);
-			expect(testChangeSet(CS2.getSerializedChangeSet(), rebasedCS1)).to.equal("AA--AA");
-			expect(testChangeSet(CS1.getSerializedChangeSet(), rebasedCS2)).to.equal("AA--AA");
+			expect(testChangeSet(CS2.getSerializedChangeSet(), rebasedCS1)).to.equal(
+				"AA--AA",
+			);
+			expect(testChangeSet(CS1.getSerializedChangeSet(), rebasedCS2)).to.equal(
+				"AA--AA",
+			);
 		});
 	});
 

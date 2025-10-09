@@ -41,7 +41,9 @@ export async function getBundleBuddyConfigFromFileSystem(
  * Gets a decompressed webpack stats file from the filesystem
  * @param path - the full path to the file in the filesystem
  */
-export async function getStatsFileFromFileSystem(path: string): Promise<StatsCompilation> {
+export async function getStatsFileFromFileSystem(
+	path: string,
+): Promise<StatsCompilation> {
 	const file = await fsPromises.readFile(path);
 
 	return decompressStatsFile(file);

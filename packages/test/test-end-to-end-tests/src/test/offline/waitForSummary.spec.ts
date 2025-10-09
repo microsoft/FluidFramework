@@ -15,7 +15,10 @@ import {
 	type IContainer,
 	type IHostLoader,
 } from "@fluidframework/container-definitions/internal";
-import { asLegacyAlpha, type ContainerAlpha } from "@fluidframework/container-loader/internal";
+import {
+	asLegacyAlpha,
+	type ContainerAlpha,
+} from "@fluidframework/container-loader/internal";
 import type {
 	ConfigTypes,
 	IConfigProviderBase,
@@ -35,10 +38,17 @@ import {
 	waitForContainerConnection,
 	timeoutAwait,
 } from "@fluidframework/test-utils/internal";
-import { SchemaFactory, ITree, TreeViewConfiguration } from "@fluidframework/tree";
+import {
+	SchemaFactory,
+	ITree,
+	TreeViewConfiguration,
+} from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
 
-import { loadContainerOffline, generatePendingState } from "./offlineTestsUtils.js";
+import {
+	loadContainerOffline,
+	generatePendingState,
+} from "./offlineTestsUtils.js";
 
 const loadSummarizerAndSummarize = async (
 	provider: ITestObjectProvider,
@@ -46,19 +56,22 @@ const loadSummarizerAndSummarize = async (
 	testContainerConfig: ITestContainerConfig,
 	summaryVersion?: string,
 ) => {
-	const { summarizer, container: summarizingContainer } = await createSummarizer(
-		provider,
-		container,
-		testContainerConfig,
-		summaryVersion,
-	);
+	const { summarizer, container: summarizingContainer } =
+		await createSummarizer(
+			provider,
+			container,
+			testContainerConfig,
+			summaryVersion,
+		);
 	await provider.ensureSynchronized();
 	const result = await summarizeNow(summarizer);
 	summarizingContainer.close();
 	return result.summaryVersion;
 };
 
-const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+const configProvider = (
+	settings: Record<string, ConfigTypes>,
+): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
 });
 
@@ -118,7 +131,9 @@ describeCompat(
 			return d.getSharedObject<ISharedMap>(mapId);
 		}
 
-		async function initializeTreeBackedMap(d: ITestFluidObject): Promise<MinimalMap> {
+		async function initializeTreeBackedMap(
+			d: ITestFluidObject,
+		): Promise<MinimalMap> {
 			const tree = await d.getSharedObject<ITree>(treeId);
 			const view = tree.viewWith(treeConfig);
 			if (view.compatibility.canInitialize) {
@@ -133,7 +148,9 @@ describeCompat(
 			return view.root.map;
 		}
 
-		async function initialize(initializeMap: (d: ITestFluidObject) => Promise<MinimalMap>) {
+		async function initialize(
+			initializeMap: (d: ITestFluidObject) => Promise<MinimalMap>,
+		) {
 			provider = getTestObjectProvider({ syncSummarizer: true });
 			loader = provider.makeTestLoader(mainContainerConfig);
 			container = asLegacyAlpha(
@@ -153,7 +170,11 @@ describeCompat(
 		}
 
 		[
-			{ name: "tree map", initializeMap: initializeTreeBackedMap, getMap: getTreeBackedMap },
+			{
+				name: "tree map",
+				initializeMap: initializeTreeBackedMap,
+				getMap: getTreeBackedMap,
+			},
 			{ name: "map", initializeMap: getMapBackedMap, getMap: getMapBackedMap },
 		].forEach(({ name, initializeMap, getMap }) => {
 			it(`works with summary while offline (${name})`, async function () {
@@ -183,14 +204,19 @@ describeCompat(
 				);
 				// intentionally not loading from new summary
 				const container2 = await loader.resolve({ url }, pendingOps);
-				const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+				const dataStore2 =
+					(await container2.getEntryPoint()) as ITestFluidObject;
 				const map2 = await getMap(dataStore2);
 				await waitForContainerConnection(container2);
 				await provider.ensureSynchronized();
 
 				assert.strictEqual(map2.get("1"), "1", "failed to get key 1");
 				assert.strictEqual(map2.get("2"), "2", "failed to get key 2");
-				assert.strictEqual(map2.get("stashed"), "stashed", "failed to get stashed key");
+				assert.strictEqual(
+					map2.get("stashed"),
+					"stashed",
+					"failed to get stashed key",
+				);
 			});
 
 			itSkipsFailureOnSpecificDrivers(
@@ -211,14 +237,21 @@ describeCompat(
 					const handleGet = await timeoutAwait(handle.get(), {
 						errorMsg: "Timeout on waiting for handleGet",
 					});
-					assert.strictEqual(bufferToString(handleGet, "utf8"), "blob contents");
+					assert.strictEqual(
+						bufferToString(handleGet, "utf8"),
+						"blob contents",
+					);
 
 					// wait for summary with redirect table
 					await timeoutAwait(provider.ensureSynchronized(), {
 						errorMsg: "Timeout on waiting for ensureSynchronized",
 					});
 					await timeoutAwait(
-						loadSummarizerAndSummarize(provider, container, testContainerConfig),
+						loadSummarizerAndSummarize(
+							provider,
+							container,
+							testContainerConfig,
+						),
 						{
 							errorMsg: "Timeout on waiting for summary",
 						},
@@ -232,7 +265,12 @@ describeCompat(
 						},
 					);
 					await timeoutAwait(
-						loadContainerOffline(testContainerConfig, provider, { url }, stashBlob),
+						loadContainerOffline(
+							testContainerConfig,
+							provider,
+							{ url },
+							stashBlob,
+						),
 						{
 							errorMsg: "Timeout on waiting for loadOffline",
 						},
@@ -259,7 +297,8 @@ describeCompat(
 				const container2: ContainerAlpha = asLegacyAlpha(
 					await loader.resolve({ url, headers }),
 				);
-				const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+				const dataStore2 =
+					(await container2.getEntryPoint()) as ITestFluidObject;
 				const map2 = await getMap(dataStore2);
 				// generate ops with RSN === summary SN
 				map2.set("2", "2");
@@ -269,16 +308,21 @@ describeCompat(
 				const pendingState = JSON.parse(stashBlob);
 
 				// make sure the container loaded from summary and we have no saved ops
-				assert.strictEqual(pendingState.savedOps.length, 0, "Expected no saved ops");
+				assert.strictEqual(
+					pendingState.savedOps.length,
+					0,
+					"Expected no saved ops",
+				);
 				assert(
-					pendingState.pendingRuntimeState.pending.pendingStates[0].referenceSequenceNumber >
-						0,
+					pendingState.pendingRuntimeState.pending.pendingStates[0]
+						.referenceSequenceNumber > 0,
 					"Expected the pending state to have some ops with non-zero ref seq (should match the snapshot sequence number)",
 				);
 
 				// load container with pending ops, which should resend the op not sent by previous container
 				const container3 = await loader.resolve({ url }, stashBlob);
-				const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
+				const dataStore3 =
+					(await container3.getEntryPoint()) as ITestFluidObject;
 				const map3 = await getMap(dataStore3);
 				await waitForContainerConnection(container3);
 				await provider.ensureSynchronized();

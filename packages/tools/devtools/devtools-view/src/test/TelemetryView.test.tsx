@@ -15,7 +15,10 @@ import React from "react";
 import { MessageRelayContext } from "../MessageRelayContext.js";
 import { TelemetryView } from "../components/index.js";
 
-import { assertNoAccessibilityViolations, MockMessageRelay } from "./utils/index.js";
+import {
+	assertNoAccessibilityViolations,
+	MockMessageRelay,
+} from "./utils/index.js";
 
 describe("TelemetryView Accessibility Check", () => {
 	const supportedFeatures: DevtoolsFeatureFlags = {
@@ -70,7 +73,9 @@ describe("TelemetryView Accessibility Check", () => {
 		});
 		expect(maxEventsDropdown).toHaveFocus();
 		await user.tab();
-		const refreshButton = screen.getByRole("button", { name: /Refresh Telemetry/ });
+		const refreshButton = screen.getByRole("button", {
+			name: /Refresh Telemetry/,
+		});
 		expect(refreshButton).toHaveFocus();
 
 		await user.click(refreshButton);
@@ -80,7 +85,9 @@ describe("TelemetryView Accessibility Check", () => {
 		await user.tab();
 		expect(filterCategory).toHaveFocus();
 		await user.tab();
-		const eventNameFilter = screen.getByRole("combobox", { name: /Event Name Filter/ });
+		const eventNameFilter = screen.getByRole("combobox", {
+			name: /Event Name Filter/,
+		});
 		expect(eventNameFilter).toHaveFocus();
 	});
 });

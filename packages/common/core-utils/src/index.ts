@@ -24,7 +24,10 @@ export {
 	iterateListValuesWhile,
 	walkList,
 } from "./list.js";
-export type { PromiseCacheExpiry, PromiseCacheOptions } from "./promiseCache.js";
+export type {
+	PromiseCacheExpiry,
+	PromiseCacheOptions,
+} from "./promiseCache.js";
 export { PromiseCache } from "./promiseCache.js";
 export { Deferred } from "./promises.js";
 export { shallowCloneObject } from "./shallowClone.js";

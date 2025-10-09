@@ -21,7 +21,9 @@ export interface IProvideTestFluidObject {
 /**
  * @legacy @beta
  */
-export interface ITestFluidObject extends IProvideTestFluidObject, IFluidLoadable {
+export interface ITestFluidObject
+	extends IProvideTestFluidObject,
+		IFluidLoadable {
 	root: ISharedMap;
 	readonly runtime: IFluidDataStoreRuntime;
 	readonly channel: IFluidDataStoreChannel;

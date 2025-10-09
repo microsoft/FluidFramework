@@ -9,7 +9,10 @@ import type {
 	SimpleKeyMap,
 	InsertableObjectFromSchemaRecord,
 } from "./objectNode.js";
-import type { FieldSchemaAlpha, ImplicitFieldSchema } from "../../fieldSchema.js";
+import type {
+	FieldSchemaAlpha,
+	ImplicitFieldSchema,
+} from "../../fieldSchema.js";
 import {
 	NodeKind,
 	type TreeNodeSchemaClass,
@@ -17,7 +20,10 @@ import {
 	type TreeNodeSchemaCorePrivate,
 } from "../../core/index.js";
 import type { FieldKey } from "../../../core/index.js";
-import type { SimpleObjectFieldSchema, SimpleObjectNodeSchema } from "../../simpleSchema.js";
+import type {
+	SimpleObjectFieldSchema,
+	SimpleObjectNodeSchema,
+} from "../../simpleSchema.js";
 
 /**
  * A schema for {@link TreeObjectNode}s.
@@ -44,13 +50,17 @@ export interface ObjectNodeSchema<
 	/**
 	 * From property keys to the associated schema.
 	 */
-	readonly fields: ReadonlyMap<string, FieldSchemaAlpha & SimpleObjectFieldSchema>;
+	readonly fields: ReadonlyMap<
+		string,
+		FieldSchemaAlpha & SimpleObjectFieldSchema
+	>;
 }
 
 /**
  * Extra data provided on all {@link ObjectNodeSchema} that is not included in the (soon possibly public) ObjectNodeSchema type.
  */
-export interface ObjectNodeSchemaInternalData extends TreeNodeSchemaCorePrivate {
+export interface ObjectNodeSchemaInternalData
+	extends TreeNodeSchemaCorePrivate {
 	/**
 	 * {@inheritdoc SimpleKeyMap}
 	 */
@@ -91,6 +101,8 @@ export type ObjectNodeSchemaPrivate = ObjectNodeSchema &
 	ObjectNodeSchemaInternalData &
 	TreeNodeSchemaCorePrivate;
 
-export function isObjectNodeSchema(schema: TreeNodeSchema): schema is ObjectNodeSchemaPrivate {
+export function isObjectNodeSchema(
+	schema: TreeNodeSchema,
+): schema is ObjectNodeSchemaPrivate {
 	return schema.kind === NodeKind.Object;
 }

@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-export { IOdspError, IOdspErrorAugmentations, OdspError, OdspErrorTypes } from "./errors.js";
+export {
+	IOdspError,
+	IOdspErrorAugmentations,
+	OdspError,
+	OdspErrorTypes,
+} from "./errors.js";
 export {
 	HostStoragePolicy,
 	ICollabSessionOptions,

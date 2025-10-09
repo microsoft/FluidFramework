@@ -3,14 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import type { ChangeConnectionState, DDSFuzzModel } from "../../ddsFuzzHarness.js";
+import type {
+	ChangeConnectionState,
+	DDSFuzzModel,
+} from "../../ddsFuzzHarness.js";
 import { createDDSFuzzSuite } from "../../ddsFuzzHarness.js";
 import type { Operation, SharedNothingFactory } from "../sharedNothing.js";
 import { baseModel } from "../sharedNothing.js";
 
 import { _dirname } from "./dirname.cjs";
 
-const model: DDSFuzzModel<SharedNothingFactory, Operation | ChangeConnectionState> = {
+const model: DDSFuzzModel<
+	SharedNothingFactory,
+	Operation | ChangeConnectionState
+> = {
 	...baseModel,
 	workloadName: "failing configuration",
 	// note: overriding the infinite generator isn't necessary here as the test

@@ -30,9 +30,14 @@ import type { TreeView } from "./utils.js";
  */
 export class Subtree<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema> {
 	public constructor(
-		private readonly viewOrNode: TreeView<TRoot> | (ReadableField<TRoot> & TreeNode),
+		private readonly viewOrNode:
+			| TreeView<TRoot>
+			| (ReadableField<TRoot> & TreeNode),
 	) {
-		if (viewOrNode instanceof TreeNode && TreeAlpha.branch(viewOrNode) === undefined) {
+		if (
+			viewOrNode instanceof TreeNode &&
+			TreeAlpha.branch(viewOrNode) === undefined
+		) {
 			throw new UsageError("The provided node must belong to a branch.");
 		}
 	}
@@ -44,7 +49,9 @@ export class Subtree<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema> {
 	}
 
 	public get field(): ReadableField<TRoot> {
-		return this.viewOrNode instanceof TreeNode ? this.viewOrNode : this.viewOrNode.root;
+		return this.viewOrNode instanceof TreeNode
+			? this.viewOrNode
+			: this.viewOrNode.root;
 	}
 
 	public set field(value: TreeFieldFromImplicitField<ReadSchema<TRoot>>) {
@@ -111,7 +118,8 @@ export class Subtree<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema> {
 
 	public fork(): Subtree<TRoot> {
 		if (this.viewOrNode instanceof TreeNode) {
-			const branch = TreeAlpha.branch(this.viewOrNode) ?? fail("Node cannot be raw.");
+			const branch =
+				TreeAlpha.branch(this.viewOrNode) ?? fail("Node cannot be raw.");
 			const node =
 				getNodeOnBranch(this.viewOrNode, branch.fork()) ??
 				fail("Expected node to be on new fork.");

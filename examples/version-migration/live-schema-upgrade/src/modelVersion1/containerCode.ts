@@ -52,14 +52,19 @@ export class DiceRollerContainerRuntimeFactory extends ModelContainerRuntimeFact
 	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
 	 */
 	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-		const diceRoller = await runtime.createDataStore(DiceRollerInstantiationFactory.type);
+		const diceRoller = await runtime.createDataStore(
+			DiceRollerInstantiationFactory.type,
+		);
 		await diceRoller.trySetAlias(diceRollerId);
 	}
 
 	/**
 	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
 	 */
-	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
+	protected async createModel(
+		runtime: IContainerRuntime,
+		container: IContainer,
+	) {
 		return new DiceRollerAppModel(
 			await getDataStoreEntryPoint<IDiceRoller>(runtime, diceRollerId),
 			container,

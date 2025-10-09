@@ -4,7 +4,10 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import type { IAudienceEvents, ISelf } from "@fluidframework/container-definitions";
+import type {
+	IAudienceEvents,
+	ISelf,
+} from "@fluidframework/container-definitions";
 import type { IAudienceOwner } from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IClient } from "@fluidframework/driver-definitions";
@@ -12,7 +15,10 @@ import type { IClient } from "@fluidframework/driver-definitions";
 /**
  * Audience represents all clients connected to the op stream.
  */
-export class Audience extends TypedEventEmitter<IAudienceEvents> implements IAudienceOwner {
+export class Audience
+	extends TypedEventEmitter<IAudienceEvents>
+	implements IAudienceOwner
+{
 	private readonly members = new Map<string, IClient>();
 	private _currentClientId: string | undefined;
 

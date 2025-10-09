@@ -35,7 +35,8 @@ export class MongoErrorRetryAnalyzer {
 		retryRuleOverride: Map<string, boolean>,
 		connectionNotAvailableMode: ConnectionNotAvailableMode,
 	) {
-		this.mongoNetworkErrorRetryRuleset = createMongoNetworkErrorRetryRuleset(retryRuleOverride);
+		this.mongoNetworkErrorRetryRuleset =
+			createMongoNetworkErrorRetryRuleset(retryRuleOverride);
 		this.mongoErrorRetryRuleset = createMongoErrorRetryRuleset(
 			retryRuleOverride,
 			connectionNotAvailableMode,

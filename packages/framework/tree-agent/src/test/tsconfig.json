@@ -6,12 +6,12 @@
 		"types": ["node", "mocha"],
 		"exactOptionalPropertyTypes": false,
 		"declaration": true,
-		"declarationMap": true,
+		"declarationMap": true
 	},
 	"include": ["./**/*"],
 	"references": [
 		{
-			"path": "../../tsconfig.json",
-		},
-	],
+			"path": "../../tsconfig.json"
+		}
+	]
 }

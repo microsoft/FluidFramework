@@ -40,7 +40,9 @@ export class DiceRollerContainerRuntimeFactory implements IRuntimeFactory {
 
 		const runtime = await loadContainerRuntime({
 			context,
-			registryEntries: new Map([[diceRollerRegistryKey, Promise.resolve(diceRollerFactory)]]),
+			registryEntries: new Map([
+				[diceRollerRegistryKey, Promise.resolve(diceRollerFactory)],
+			]),
 			provideEntryPoint,
 			existing,
 		});

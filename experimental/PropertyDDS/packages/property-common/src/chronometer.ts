@@ -32,7 +32,10 @@ const implementations = {
 				this.stop();
 			}
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			return (this._stopTime![0] as number) + (this._stopTime![1] as number) / 1000000000;
+			return (
+				(this._stopTime![0] as number) +
+				(this._stopTime![1] as number) / 1000000000
+			);
 		},
 		_elapsedMilliSec(): number {
 			if (this._stopTime === undefined) {

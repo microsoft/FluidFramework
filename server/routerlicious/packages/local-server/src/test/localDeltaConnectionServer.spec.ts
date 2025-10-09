@@ -87,7 +87,9 @@ describe("LocalDeltaConnectionServer", () => {
 			}
 		};
 
-		socket.on("op", (id: string, msgs: ISequencedDocumentSystemMessage[]) => joinHandler(msgs));
+		socket.on("op", (id: string, msgs: ISequencedDocumentSystemMessage[]) =>
+			joinHandler(msgs),
+		);
 
 		return joinP.promise;
 	}
@@ -236,7 +238,11 @@ describe("LocalDeltaConnectionServer", () => {
 
 		// Verify that the second client receives the message with the right content.
 		const content2 = await message2P;
-		assert.equal(content2, content, "The content received on second client is not as expected");
+		assert.equal(
+			content2,
+			content,
+			"The content received on second client is not as expected",
+		);
 
 		socket1.disconnect();
 		socket2.disconnect();
@@ -264,7 +270,11 @@ describe("LocalDeltaConnectionServer", () => {
 
 		// Wait for the second client to be connected. It won't join because it is read-only.
 		const connected2 = await connected2P;
-		assert.equal(connected2.mode, "read", "The second client should be connected in read mode");
+		assert.equal(
+			connected2.mode,
+			"read",
+			"The second client should be connected in read mode",
+		);
 
 		// Send a message of type "MessageType.Operation" on the first client's socket.
 		const content = "readModeClient";
@@ -288,7 +298,11 @@ describe("LocalDeltaConnectionServer", () => {
 
 		// Verify that the second client receives the message with the right content.
 		const content2 = await message2P;
-		assert.equal(content2, content, "The content received on second client is not as expected");
+		assert.equal(
+			content2,
+			content,
+			"The content received on second client is not as expected",
+		);
 
 		socket1.disconnect();
 		socket2.disconnect();

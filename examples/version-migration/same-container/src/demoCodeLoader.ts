@@ -27,7 +27,9 @@ export class DemoCodeLoader implements ICodeDetailsLoader {
 		return this;
 	}
 
-	public async load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails> {
+	public async load(
+		source: IFluidCodeDetails,
+	): Promise<IFluidModuleWithDetails> {
 		const version = source.package;
 		if (typeof version !== "string") {
 			throw new TypeError("Unexpected code detail format");

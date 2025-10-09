@@ -192,7 +192,10 @@ export const DataRuntimeApi = {
 
 // #endregion
 
-async function loadLoader(baseVersion: string, requested?: number | string): Promise<void> {
+async function loadLoader(
+	baseVersion: string,
+	requested?: number | string,
+): Promise<void> {
 	const requestedStr = getRequestedVersion(baseVersion, requested);
 	if (semver.satisfies(pkgVersion, requestedStr)) {
 		return;
@@ -202,7 +205,9 @@ async function loadLoader(baseVersion: string, requested?: number | string): Pro
 	if (!loaderCache.has(version)) {
 		const loader = {
 			version,
-			Loader: (await loadPackage(modulePath, "@fluidframework/container-loader")).Loader,
+			Loader: (
+				await loadPackage(modulePath, "@fluidframework/container-loader")
+			).Loader,
 		};
 		loaderCache.set(version, loader);
 	}
@@ -226,8 +231,10 @@ async function loadContainerRuntime(
 
 		/* eslint-disable @typescript-eslint/no-shadow */
 		const { ContainerRuntime } = containerRuntimePkg;
-		const { BaseContainerRuntimeFactory, ContainerRuntimeFactoryWithDefaultDataStore } =
-			aqueductPkg;
+		const {
+			BaseContainerRuntimeFactory,
+			ContainerRuntimeFactoryWithDefaultDataStore,
+		} = aqueductPkg;
 		/* eslint-enable @typescript-eslint/no-shadow */
 
 		const containerRuntime = {
@@ -330,7 +337,10 @@ async function loadDataRuntime(
 	}
 }
 
-async function loadDriver(baseVersion: string, requested?: number | string): Promise<void> {
+async function loadDriver(
+	baseVersion: string,
+	requested?: number | string,
+): Promise<void> {
 	const requestedStr = getRequestedVersion(baseVersion, requested);
 	if (semver.satisfies(pkgVersion, requestedStr)) {
 		return;
@@ -339,7 +349,11 @@ async function loadDriver(baseVersion: string, requested?: number | string): Pro
 	const { version, modulePath } = checkInstalled(requestedStr);
 	if (!driverCache.has(version)) {
 		const [
-			{ LocalDocumentServiceFactory, LocalResolver, createLocalResolverCreateNewRequest },
+			{
+				LocalDocumentServiceFactory,
+				LocalResolver,
+				createLocalResolverCreateNewRequest,
+			},
 			{ LocalDeltaConnectionServer },
 			{
 				OdspDocumentServiceFactory,
@@ -422,12 +436,17 @@ export function getLoaderApi(requestedStr: string): typeof LoaderApi {
  *
  * @internal
  */
-export function getContainerRuntimeApi(requestedStr: string): typeof ContainerRuntimeApi {
+export function getContainerRuntimeApi(
+	requestedStr: string,
+): typeof ContainerRuntimeApi {
 	if (semver.satisfies(pkgVersion, requestedStr)) {
 		return ContainerRuntimeApi;
 	}
 	const { version } = checkInstalled(requestedStr);
-	return containerRuntimeCache.get(version) ?? throwNotFound("ContainerRuntime", version);
+	return (
+		containerRuntimeCache.get(version) ??
+		throwNotFound("ContainerRuntime", version)
+	);
 }
 
 /**

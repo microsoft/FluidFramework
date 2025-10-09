@@ -1,11 +1,5 @@
 {
-  "version": 2,
-  "data": [
-    [
-      0,
-      0,
-      1
-    ]
-  ],
-  "maxId": 42
+	"version": 2,
+	"data": [[0, 0, 1]],
+	"maxId": 42
 }

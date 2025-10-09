@@ -51,9 +51,15 @@ import {
 	ReferenceType,
 	type IMergeTreeInsertMsg,
 } from "../ops.js";
-import { LocalReconnectingPerspective, PriorPerspective } from "../perspective.js";
+import {
+	LocalReconnectingPerspective,
+	PriorPerspective,
+} from "../perspective.js";
 import type { PropertySet } from "../properties.js";
-import { DetachedReferencePosition, refHasTileLabel } from "../referencePositions.js";
+import {
+	DetachedReferencePosition,
+	refHasTileLabel,
+} from "../referencePositions.js";
 import type { MergeTreeRevertibleDriver } from "../revertibles.js";
 import { assertInserted, assertMergeNode, isRemoved } from "../segmentInfos.js";
 import { SnapshotLegacy } from "../snapshotlegacy.js";
@@ -80,7 +86,9 @@ export function specToSegment(spec: IJSONSegment): ISegmentPrivate {
 const random = makeRandom(0xdeadbeef, 0xfeedbed);
 
 function opStampToString(stamp: OperationStamp): string {
-	return stamp.seq === UnassignedSequenceNumber ? `L${stamp.localSeq}` : `${stamp.seq}`;
+	return stamp.seq === UnassignedSequenceNumber
+		? `L${stamp.localSeq}`
+		: `${stamp.seq}`;
 }
 
 export class TestClient extends Client {
@@ -108,7 +116,11 @@ export class TestClient extends Client {
 		);
 		snapshot.extractSync();
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const summaryTree = snapshot.emit([], TestClient.serializer, undefined!).summary;
+		const summaryTree = snapshot.emit(
+			[],
+			TestClient.serializer,
+			undefined!,
+		).summary;
 		return TestClient.createFromSummary(
 			summaryTree,
 			newLongClientId,
@@ -166,7 +178,8 @@ export class TestClient extends Client {
 
 	public readonly mergeTree: MergeTree;
 
-	public readonly checkQ: DoublyLinkedList<string> = new DoublyLinkedList<string>();
+	public readonly checkQ: DoublyLinkedList<string> =
+		new DoublyLinkedList<string>();
 	protected readonly q: DoublyLinkedList<ISequencedDocumentMessage> =
 		new DoublyLinkedList<ISequencedDocumentMessage>();
 
@@ -197,7 +210,12 @@ export class TestClient extends Client {
 	}
 
 	public getText(start?: number, end?: number): string {
-		return this.textHelper.getText(this.mergeTree.localPerspective, "", start, end);
+		return this.textHelper.getText(
+			this.mergeTree.localPerspective,
+			"",
+			start,
+			end,
+		);
 	}
 
 	public enqueueTestString(): void {
@@ -246,7 +264,12 @@ export class TestClient extends Client {
 	): void {
 		const segment = TextSegment.make(text, props);
 		this.applyMsg(
-			this.makeOpMessage(createInsertSegmentOp(pos, segment), seq, refSeq, longClientId),
+			this.makeOpMessage(
+				createInsertSegmentOp(pos, segment),
+				seq,
+				refSeq,
+				longClientId,
+			),
 		);
 	}
 
@@ -258,7 +281,12 @@ export class TestClient extends Client {
 		longClientId: string,
 	): void {
 		this.applyMsg(
-			this.makeOpMessage(createRemoveRangeOp(start, end), seq, refSeq, longClientId),
+			this.makeOpMessage(
+				createRemoveRangeOp(start, end),
+				seq,
+				refSeq,
+				longClientId,
+			),
 		);
 	}
 
@@ -270,7 +298,12 @@ export class TestClient extends Client {
 		longClientId: string,
 	): void {
 		this.applyMsg(
-			this.makeOpMessage(createObliterateRangeOp(start, end), seq, refSeq, longClientId),
+			this.makeOpMessage(
+				createObliterateRangeOp(start, end),
+				seq,
+				refSeq,
+				longClientId,
+			),
 		);
 	}
 
@@ -283,7 +316,12 @@ export class TestClient extends Client {
 		longClientId: string,
 	): void {
 		this.applyMsg(
-			this.makeOpMessage(createAnnotateRangeOp(start, end, props), seq, refSeq, longClientId),
+			this.makeOpMessage(
+				createAnnotateRangeOp(start, end, props),
+				seq,
+				refSeq,
+				longClientId,
+			),
 		);
 	}
 
@@ -308,7 +346,12 @@ export class TestClient extends Client {
 		const segment = Marker.make(markerDef.refType ?? ReferenceType.Tile, props);
 
 		this.applyMsg(
-			this.makeOpMessage(createInsertSegmentOp(pos, segment), seq, refSeq, longClientId),
+			this.makeOpMessage(
+				createInsertSegmentOp(pos, segment),
+				seq,
+				refSeq,
+				longClientId,
+			),
 		);
 	}
 
@@ -392,7 +435,11 @@ export class TestClient extends Client {
 	 * of the current sequence number. This is desirable when rebasing operations for reconnection. Perform
 	 * slow-path computations in this function without leveraging the merge-tree's structure
 	 */
-	public rebasePosition(pos: number, seqNumberFrom: number, localSeq: number): number {
+	public rebasePosition(
+		pos: number,
+		seqNumberFrom: number,
+		localSeq: number,
+	): number {
 		let segment: ISegmentPrivate | undefined;
 		let posAccumulated = 0;
 		let offset = pos;
@@ -419,16 +466,28 @@ export class TestClient extends Client {
 		});
 
 		assert(segment !== undefined, "No segment found");
-		const segoff = getSlideToSegoff({ segment, offset }, undefined, perspective);
+		const segoff = getSlideToSegoff(
+			{ segment, offset },
+			undefined,
+			perspective,
+		);
 		if (segoff === undefined) {
 			return DetachedReferencePosition;
 		}
 
-		return this.findReconnectionPosition(segoff.segment, localSeq) + segoff.offset;
+		return (
+			this.findReconnectionPosition(segoff.segment, localSeq) + segoff.offset
+		);
 	}
 
-	public findReconnectionPosition(segment: ISegmentPrivate, localSeq: number): number {
-		const fasterComputedPosition = super.findReconnectionPosition(segment, localSeq);
+	public findReconnectionPosition(
+		segment: ISegmentPrivate,
+		localSeq: number,
+	): number {
+		const fasterComputedPosition = super.findReconnectionPosition(
+			segment,
+			localSeq,
+		);
 
 		const perspective = new LocalReconnectingPerspective(
 			Number.MAX_SAFE_INTEGER,
@@ -472,7 +531,9 @@ export class TestClient extends Client {
 	 * @returns an array of all attribution seq#s from the current perspective.
 	 * The `i`th entry of the array is the attribution key for the character at position `i`.
 	 */
-	public getAllAttributionSeqs(channel?: string): (number | AttributionKey | undefined)[] {
+	public getAllAttributionSeqs(
+		channel?: string,
+	): (number | AttributionKey | undefined)[] {
 		const seqs: (number | AttributionKey | undefined)[] = [];
 		this.walkAllSegments((segment) => {
 			for (let i = 0; i < segment.cachedLength; i++) {
@@ -486,17 +547,25 @@ export class TestClient extends Client {
 	}
 
 	public peekPendingSegmentGroups(): SegmentGroup | undefined;
-	public peekPendingSegmentGroups(count: number): SegmentGroup | SegmentGroup[] | undefined;
+	public peekPendingSegmentGroups(
+		count: number,
+	): SegmentGroup | SegmentGroup[] | undefined;
 	public peekPendingSegmentGroups(
 		count: number = 1,
 	): SegmentGroup | SegmentGroup[] | undefined {
-		return super.peekPendingSegmentGroups(count) as SegmentGroup | SegmentGroup[] | undefined;
+		return super.peekPendingSegmentGroups(count) as
+			| SegmentGroup
+			| SegmentGroup[]
+			| undefined;
 	}
 
 	/**
 	 * Override and add some test only metrics
 	 */
-	public applyMsg(msg: ISequencedDocumentMessage, local: boolean = false): void {
+	public applyMsg(
+		msg: ISequencedDocumentMessage,
+		local: boolean = false,
+	): void {
 		let traceStart: Trace | undefined;
 		if (this.measureOps) {
 			traceStart = Trace.start();
@@ -537,7 +606,8 @@ export class TestClient extends Client {
 	): ReferencePosition | undefined {
 		let foundMarker: Marker | undefined;
 
-		const { segment } = this.getContainingSegment<ISegmentPrivate>(startPos) ?? {};
+		const { segment } =
+			this.getContainingSegment<ISegmentPrivate>(startPos) ?? {};
 		assertSegmentLeaf(segment);
 		if (Marker.is(segment)) {
 			if (refHasTileLabel(segment, markerLabel)) {
@@ -573,7 +643,9 @@ function elapsedMicroseconds(trace: Trace): number {
 export type TestClientRevertibleDriver = MergeTreeRevertibleDriver &
 	Partial<{ submitOpCallback?: (op: IMergeTreeOp | undefined) => void }>;
 
-export const createRevertDriver = (client: TestClient): TestClientRevertibleDriver => {
+export const createRevertDriver = (
+	client: TestClient,
+): TestClientRevertibleDriver => {
 	return {
 		removeRange(start: number, end: number): void {
 			const op = client.removeRangeLocal(start, end);

@@ -240,7 +240,11 @@ export function createOdspNetworkError(
 		case 308: {
 			redirectLocation = response?.headers.get("Location") ?? undefined;
 			if (redirectLocation !== undefined) {
-				error = new OdspRedirectError(errorMessage, redirectLocation, driverProps);
+				error = new OdspRedirectError(
+					errorMessage,
+					redirectLocation,
+					driverProps,
+				);
 				break;
 			}
 		}
@@ -262,7 +266,11 @@ export function createOdspNetworkError(
 			// The server throws 403 status code with innerMostError code as "serviceReadOnly" for cases where the
 			// database on server becomes readonly. The driver retries for such cases with exponential backup logic.
 			if (innerMostErrorCode === OdspServiceReadOnlyErrorCode) {
-				error = new RetryableError(errorMessage, OdspErrorTypes.serviceReadOnly, driverProps);
+				error = new RetryableError(
+					errorMessage,
+					OdspErrorTypes.serviceReadOnly,
+					driverProps,
+				);
 			} else if (
 				innerMostErrorCode === "blockedIPAddress" ||
 				innerMostErrorCode === "conditionalAccessPolicyEnforced"
@@ -273,11 +281,18 @@ export function createOdspNetworkError(
 					driverProps,
 				);
 			} else {
-				const claims = response?.headers ? parseAuthErrorClaims(response.headers) : undefined;
+				const claims = response?.headers
+					? parseAuthErrorClaims(response.headers)
+					: undefined;
 				const tenantId = response?.headers
 					? parseAuthErrorTenant(response.headers)
 					: undefined;
-				error = new AuthorizationError(errorMessage, claims, tenantId, driverProps);
+				error = new AuthorizationError(
+					errorMessage,
+					claims,
+					tenantId,
+					driverProps,
+				);
 			}
 			break;
 		}
@@ -290,7 +305,11 @@ export function createOdspNetworkError(
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- TODO: use stronger typing here.
 				redirectLocation = responseError?.["@error.redirectLocation"];
 				if (redirectLocation !== undefined) {
-					error = new OdspRedirectError(errorMessage, redirectLocation, driverProps);
+					error = new OdspRedirectError(
+						errorMessage,
+						redirectLocation,
+						driverProps,
+					);
 					break;
 				}
 			}
@@ -310,7 +329,11 @@ export function createOdspNetworkError(
 			break;
 		}
 		case 410: {
-			error = new NonRetryableError(errorMessage, OdspErrorTypes.cannotCatchUp, driverProps);
+			error = new NonRetryableError(
+				errorMessage,
+				OdspErrorTypes.cannotCatchUp,
+				driverProps,
+			);
 			break;
 		}
 		case 409: {
@@ -336,7 +359,11 @@ export function createOdspNetworkError(
 			break;
 		}
 		case 413: {
-			error = new NonRetryableError(errorMessage, OdspErrorTypes.snapshotTooBig, driverProps);
+			error = new NonRetryableError(
+				errorMessage,
+				OdspErrorTypes.snapshotTooBig,
+				driverProps,
+			);
 			break;
 		}
 		case 414: {
@@ -370,7 +397,11 @@ export function createOdspNetworkError(
 			break;
 		}
 		case 501: {
-			error = new NonRetryableError(errorMessage, OdspErrorTypes.fluidNotEnabled, driverProps);
+			error = new NonRetryableError(
+				errorMessage,
+				OdspErrorTypes.fluidNotEnabled,
+				driverProps,
+			);
 			break;
 		}
 		case 507: {
@@ -451,13 +482,18 @@ export function throwOdspNetworkError(
 	const networkError = createOdspNetworkError(
 		errorMessage,
 		statusCode,
-		numberFromHeader(response.headers.get("retry-after")) /* retryAfterSeconds */,
+		numberFromHeader(
+			response.headers.get("retry-after"),
+		) /* retryAfterSeconds */,
 		response,
 		responseText,
 		props,
 	);
 
-	networkError.addTelemetryProperties({ odspError: true, storageServiceError: true });
+	networkError.addTelemetryProperties({
+		odspError: true,
+		storageServiceError: true,
+	});
 
 	throw networkError;
 }
@@ -478,7 +514,9 @@ function numberFromHeader(header: string | null): number | undefined {
 /**
  * @internal
  */
-export function hasFacetCodes(x: unknown): x is Pick<IOdspErrorAugmentations, "facetCodes"> {
+export function hasFacetCodes(
+	x: unknown,
+): x is Pick<IOdspErrorAugmentations, "facetCodes"> {
 	return Array.isArray((x as Partial<IOdspErrorAugmentations>)?.facetCodes);
 }
 
@@ -493,6 +531,7 @@ export function hasRedirectionLocation(
 		x !== null &&
 		typeof x === "object" &&
 		"redirectLocation" in x &&
-		typeof (x as Partial<IOdspErrorAugmentations>)?.redirectLocation === "string"
+		typeof (x as Partial<IOdspErrorAugmentations>)?.redirectLocation ===
+			"string"
 	);
 }

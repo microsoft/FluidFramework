@@ -8,7 +8,10 @@ import type { StatsCompilation } from "webpack";
 /**
  * This gets the size of a chunk after minification, which is what the browser will parse.
  */
-export function getChunkParsedSize(stats: StatsCompilation, chunkId: string | number): number {
+export function getChunkParsedSize(
+	stats: StatsCompilation,
+	chunkId: string | number,
+): number {
 	if (stats.assets === undefined) {
 		throw new Error(
 			`No assets property in the stats file, can't compute parsed sizes of chunks`,

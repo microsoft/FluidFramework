@@ -37,7 +37,8 @@ describe("NamedNodeProperty", function () {
 			var property = PropertyFactory.create(typeid);
 			expect(property).to.be.an.instanceof(ContainerProperty);
 
-			expect(PropertyFactory.inheritsFrom(typeid, "NamedNodeProperty")).to.be.true;
+			expect(PropertyFactory.inheritsFrom(typeid, "NamedNodeProperty")).to.be
+				.true;
 			expect(PropertyFactory.inheritsFrom(typeid, "NamedProperty")).to.be.true;
 			expect(PropertyFactory.inheritsFrom(typeid, "NodeProperty")).to.be.true;
 		});
@@ -47,7 +48,8 @@ describe("NamedNodeProperty", function () {
 			var property = PropertyFactory.create(typeid);
 			expect(property).to.be.an.instanceof(ContainerProperty);
 
-			expect(PropertyFactory.inheritsFrom(typeid, "NamedNodeProperty")).to.be.true;
+			expect(PropertyFactory.inheritsFrom(typeid, "NamedNodeProperty")).to.be
+				.true;
 			expect(PropertyFactory.inheritsFrom(typeid, "NamedProperty")).to.be.true;
 			expect(PropertyFactory.inheritsFrom(typeid, "NodeProperty")).to.be.true;
 		});
@@ -57,13 +59,16 @@ describe("NamedNodeProperty", function () {
 			const property = PropertyFactory.create(typeid);
 			expect(property).to.be.an.instanceof(ContainerProperty);
 
-			expect(PropertyFactory.inheritsFrom(typeid, "NamedNodeProperty")).to.be.false;
+			expect(PropertyFactory.inheritsFrom(typeid, "NamedNodeProperty")).to.be
+				.false;
 			expect(PropertyFactory.inheritsFrom(typeid, "NamedProperty")).to.be.true;
 			expect(PropertyFactory.inheritsFrom(typeid, "NodeProperty")).to.be.true;
 		});
 
 		it("a GUID should be assigned on creation", function () {
-			var property = PropertyFactory.create("autodesk.tests:InheritingDirectly-1.0.0");
+			var property = PropertyFactory.create(
+				"autodesk.tests:InheritingDirectly-1.0.0",
+			);
 			expect(property.getGuid()).not.to.be.not.empty;
 			assert(isGUID(property.getGuid()));
 
@@ -71,7 +76,9 @@ describe("NamedNodeProperty", function () {
 		});
 
 		it("the ID sould be overwritable", function () {
-			var property = PropertyFactory.create("autodesk.tests:InheritingDirectly-1.0.0");
+			var property = PropertyFactory.create(
+				"autodesk.tests:InheritingDirectly-1.0.0",
+			);
 			property._setId("test");
 			expect(property.getId()).to.equal("test");
 		});

@@ -4,7 +4,11 @@
  */
 
 import { toUtf8 } from "@fluidframework/common-utils";
-import type { ICommit, ICommitDetails, ICreateCommitParams } from "@fluidframework/gitresources";
+import type {
+	ICommit,
+	ICommitDetails,
+	ICreateCommitParams,
+} from "@fluidframework/gitresources";
 import {
 	type IDocumentAttributes,
 	type ICommittedProposal,
@@ -113,14 +117,14 @@ export class DocumentStorage implements IDocumentStorage {
 						".protocol": protocolTree,
 						".app": appTree,
 					},
-			  }
+				}
 			: {
 					type: SummaryType.Tree,
 					tree: {
 						".protocol": protocolTree,
 						...appTree.tree,
 					},
-			  };
+				};
 	}
 
 	public async createDocument(
@@ -156,10 +160,7 @@ export class DocumentStorage implements IDocumentStorage {
 		};
 		if (storageNameAssignerEnabled && !storageName) {
 			// Using a warning instead of an error just in case there are some outliers that we don't know about.
-			Lumberjack.warning(
-				"Failed to get storage name for new document.",
-				lumberjackProperties,
-			);
+			Lumberjack.warning("Failed to get storage name for new document.", lumberjackProperties);
 		}
 
 		const protocolTree = this.createInitialProtocolTree(sequenceNumber, values);
@@ -200,9 +201,7 @@ export class DocumentStorage implements IDocumentStorage {
 
 				const commit = await gitManager.createCommit(commitParams);
 				await gitManager.createRef(documentId, commit.sha);
-				initialSummaryUploadSuccessMessage += ` - Commit sha: ${JSON.stringify(
-					commit.sha,
-				)}`;
+				initialSummaryUploadSuccessMessage += ` - Commit sha: ${JSON.stringify(commit.sha)}`;
 				// In the case of ShreddedSummary Upload, summary version is always the commit sha.
 				initialSummaryVersionId = commit.sha;
 			} else {
@@ -315,7 +314,10 @@ export class DocumentStorage implements IDocumentStorage {
 		}
 	}
 
-	public async getLatestVersion(tenantId: string, documentId: string): Promise<ICommit | null> {
+	public async getLatestVersion(
+		tenantId: string,
+		documentId: string,
+	): Promise<ICommit | null> {
 		const versions = await this.getVersions(tenantId, documentId, 1);
 		if (!versions.length) {
 			return null;
@@ -343,7 +345,11 @@ export class DocumentStorage implements IDocumentStorage {
 		return gitManager.getCommits(documentId, count);
 	}
 
-	public async getVersion(tenantId: string, documentId: string, sha: string): Promise<ICommit> {
+	public async getVersion(
+		tenantId: string,
+		documentId: string,
+		sha: string,
+	): Promise<ICommit> {
 		const gitManager = await this.tenantManager.getTenantGitManager(tenantId, documentId);
 
 		return gitManager.getCommit(sha);

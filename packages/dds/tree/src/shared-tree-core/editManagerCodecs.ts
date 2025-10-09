@@ -22,7 +22,11 @@ import type {
 	RevisionTag,
 	SchemaAndPolicy,
 } from "../core/index.js";
-import { brand, type Brand, type JsonCompatibleReadOnly } from "../util/index.js";
+import {
+	brand,
+	type Brand,
+	type JsonCompatibleReadOnly,
+} from "../util/index.js";
 
 import type { SummaryData } from "./editManager.js";
 import { makeV1CodecWithVersion } from "./editManagerCodecsV1toV4.js";
@@ -79,7 +83,9 @@ export function makeEditManagerCodecs<TChangeset>(
 			EditManagerEncodingContext
 		>,
 	][] = Array.from(editManagerFormatVersions, (version) => {
-		const changeCodec = changeCodecs.resolve(dependentChangeFormatVersion.lookup(version));
+		const changeCodec = changeCodecs.resolve(
+			dependentChangeFormatVersion.lookup(version),
+		);
 		switch (version) {
 			case 1:
 			case 2:
@@ -87,12 +93,22 @@ export function makeEditManagerCodecs<TChangeset>(
 			case 4:
 				return [
 					version,
-					makeV1CodecWithVersion(changeCodec, revisionTagCodec, options, version),
+					makeV1CodecWithVersion(
+						changeCodec,
+						revisionTagCodec,
+						options,
+						version,
+					),
 				];
 			case 5:
 				return [
 					version,
-					makeV5CodecWithVersion(changeCodec, revisionTagCodec, options, version),
+					makeV5CodecWithVersion(
+						changeCodec,
+						revisionTagCodec,
+						options,
+						version,
+					),
 				];
 			default:
 				unreachableCase(version);
@@ -101,14 +117,12 @@ export function makeEditManagerCodecs<TChangeset>(
 	return makeCodecFamily(registry);
 }
 
-export type EditManagerFormatVersion = Brand<1 | 2 | 3 | 4 | 5, "EditManagerFormatVersion">;
-export const editManagerFormatVersions: ReadonlySet<EditManagerFormatVersion> = new Set([
-	brand(1),
-	brand(2),
-	brand(3),
-	brand(4),
-	brand(5),
-]);
+export type EditManagerFormatVersion = Brand<
+	1 | 2 | 3 | 4 | 5,
+	"EditManagerFormatVersion"
+>;
+export const editManagerFormatVersions: ReadonlySet<EditManagerFormatVersion> =
+	new Set([brand(1), brand(2), brand(3), brand(4), brand(5)]);
 
 export function getCodecTreeForEditManagerFormatWithChange(
 	version: EditManagerFormatVersion,

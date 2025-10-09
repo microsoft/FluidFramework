@@ -9,7 +9,10 @@ import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 import { type TreeValue, type Value, ValueSchema } from "../core/index.js";
 
-export function allowsValue(schema: ValueSchema | undefined, nodeValue: Value): boolean {
+export function allowsValue(
+	schema: ValueSchema | undefined,
+	nodeValue: Value,
+): boolean {
 	if (schema === undefined) {
 		return nodeValue === undefined;
 	}

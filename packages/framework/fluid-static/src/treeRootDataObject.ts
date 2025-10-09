@@ -80,16 +80,22 @@ class TreeRootDataObject extends TreeDataObject implements IRootDataObject {
 	}
 
 	public async create<T>(objectClass: SharedObjectKind<T>): Promise<T> {
-		const internal = objectClass as unknown as LoadableObjectKind<T & IFluidLoadable>;
+		const internal = objectClass as unknown as LoadableObjectKind<
+			T & IFluidLoadable
+		>;
 		if (isDataObjectKind(internal)) {
 			return createDataObject(internal, this.context);
 		} else if (isSharedObjectKind(internal)) {
 			return createSharedObject(internal, this.runtime);
 		}
-		throw new Error("Could not create new Fluid object because an unknown object was passed");
+		throw new Error(
+			"Could not create new Fluid object because an unknown object was passed",
+		);
 	}
 
-	public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
+	public async uploadBlob(
+		blob: ArrayBufferLike,
+	): Promise<IFluidHandle<ArrayBufferLike>> {
 		return this.runtime.uploadBlob(blob);
 	}
 }
@@ -105,12 +111,14 @@ const treeRootDataObjectType = "treeRootDO";
 async function provideEntryPoint(
 	containerRuntime: IContainerRuntime,
 ): Promise<IStaticEntryPoint> {
-	const entryPoint = await containerRuntime.getAliasedDataStoreEntryPoint(treeRootDataStoreId);
+	const entryPoint =
+		await containerRuntime.getAliasedDataStoreEntryPoint(treeRootDataStoreId);
 	if (entryPoint === undefined) {
 		throw new Error(`default dataStore [${treeRootDataStoreId}] must exist`);
 	}
-	const treeRootDataObject = ((await entryPoint.get()) as FluidObject<TreeRootDataObject>)
-		.TreeRootDataObject;
+	const treeRootDataObject = (
+		(await entryPoint.get()) as FluidObject<TreeRootDataObject>
+	).TreeRootDataObject;
 	assert(
 		treeRootDataObject !== undefined,
 		0xbe7 /* entryPoint must be of type TreeRootDataObject */,
@@ -154,9 +162,14 @@ class TreeContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 		this.#treeRootDataObjectFactory = treeRootDataObjectFactory;
 	}
 
-	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
+	protected async containerInitializingFirstTime(
+		runtime: IContainerRuntime,
+	): Promise<void> {
 		// The first time we create the container we create the RootDataObject
-		await this.#treeRootDataObjectFactory.createRootInstance(treeRootDataStoreId, runtime);
+		await this.#treeRootDataObjectFactory.createRootInstance(
+			treeRootDataStoreId,
+			runtime,
+		);
 	}
 }
 
@@ -238,8 +251,10 @@ export function createTreeContainerRuntimeFactory(props: {
 		schema,
 	} = props;
 
-	const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
-	const registry = rootDataStoreRegistry ?? new FluidDataStoreRegistry(registryEntries);
+	const [registryEntries, sharedObjects] =
+		parseDataObjectsFromSharedObjects(schema);
+	const registry =
+		rootDataStoreRegistry ?? new FluidDataStoreRegistry(registryEntries);
 
 	return new TreeContainerRuntimeFactory(
 		compatibilityMode,

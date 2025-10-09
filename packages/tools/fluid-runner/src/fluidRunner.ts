@@ -18,7 +18,9 @@ import { validateCommandLineArgs } from "./utils.js";
  * @param fluidFileConverter - needs to be provided if "codeLoaderBundle" is not and vice versa
  * @internal
  */
-export async function fluidRunner(fluidFileConverter?: IFluidFileConverter): Promise<void> {
+export async function fluidRunner(
+	fluidFileConverter?: IFluidFileConverter,
+): Promise<void> {
 	await yargs(hideBin(process.argv))
 		.command(
 			"exportFile",
@@ -54,7 +56,8 @@ export async function fluidRunner(fluidFileConverter?: IFluidFileConverter): Pro
 						demandOption: false,
 					})
 					.option("telemetryFormat", {
-						describe: 'Output format for telemetry. Current options are: ["JSON", "CSV"]',
+						describe:
+							'Output format for telemetry. Current options are: ["JSON", "CSV"]',
 						type: "string",
 						demandOption: false,
 						default: "JSON",
@@ -72,7 +75,8 @@ export async function fluidRunner(fluidFileConverter?: IFluidFileConverter): Pro
 						demandOption: false,
 					})
 					.option("timeout", {
-						describe: "Allowed timeout in ms before process is automatically cancelled",
+						describe:
+							"Allowed timeout in ms before process is automatically cancelled",
 						type: "number",
 						demandOption: false,
 					})
@@ -84,7 +88,10 @@ export async function fluidRunner(fluidFileConverter?: IFluidFileConverter): Pro
 					}),
 
 			async (argv) => {
-				const argsError = validateCommandLineArgs(argv.codeLoader, fluidFileConverter);
+				const argsError = validateCommandLineArgs(
+					argv.codeLoader,
+					fluidFileConverter,
+				);
 				if (argsError) {
 					console.error(argsError);
 					process.exit(1);

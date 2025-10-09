@@ -29,7 +29,10 @@ async function getIIDCompressor(tree?: ITreePrivate): Promise<IIdCompressor> {
 			runtime: IFluidDataStoreRuntime;
 		}
 	).runtime;
-	return runtime.idCompressor ?? fail("Expected IIdCompressor to be present in runtime");
+	return (
+		runtime.idCompressor ??
+		fail("Expected IIdCompressor to be present in runtime")
+	);
 }
 
 describe("Node Identifier", () => {
@@ -55,14 +58,18 @@ describe("Node Identifier", () => {
 
 		const stableKeys = new Set<StableNodeIdentifier>();
 		for (let i = 0; i < 50000; i++) {
-			const id = manager.stabilizeNodeIdentifier(manager.generateLocalNodeIdentifier());
+			const id = manager.stabilizeNodeIdentifier(
+				manager.generateLocalNodeIdentifier(),
+			);
 			assert(!stableKeys.has(id));
 			stableKeys.add(id);
 		}
 	});
 
 	itNodeKeyManager("can be compressed and decompressed", (manager) => {
-		const id = manager.stabilizeNodeIdentifier(manager.generateLocalNodeIdentifier());
+		const id = manager.stabilizeNodeIdentifier(
+			manager.generateLocalNodeIdentifier(),
+		);
 		const compressedId = manager.localizeNodeIdentifier(id);
 		const decompressedId = manager.stabilizeNodeIdentifier(compressedId);
 		assert.equal(id, decompressedId);

@@ -82,7 +82,7 @@ export class CheckpointService implements ICheckpointService {
 					checkpoint,
 					this.localCheckpointEnabled,
 					true /* writeToLocalOnFailure */,
-			  ));
+				));
 	}
 
 	private async writeLocalCheckpoint(
@@ -197,7 +197,7 @@ export class CheckpointService implements ICheckpointService {
 					})
 			: this.documentRepository.updateOne(checkpointFilter, {
 					[service]: "",
-			  }));
+				}));
 	}
 
 	public async restoreFromCheckpoint(

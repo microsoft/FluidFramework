@@ -13,7 +13,10 @@ interface ExtendedIndexSignatureType extends IndexSignatureType {
 	a: string;
 }
 const indexedRecordOfStrings: IndexSignatureType = { a: "hello", b: "goodbye" };
-const extendedIndexedRecordOfStrings: ExtendedIndexSignatureType = { a: "hello", b: "goodbye" };
+const extendedIndexedRecordOfStrings: ExtendedIndexSignatureType = {
+	a: "hello",
+	b: "goodbye",
+};
 const a = "a";
 const b = "b";
 

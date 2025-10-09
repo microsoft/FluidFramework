@@ -4,13 +4,20 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import type { IEventProvider, IFluidHandle } from "@fluidframework/core-interfaces";
+import type {
+	IEventProvider,
+	IFluidHandle,
+} from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore/legacy";
 import type {
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/legacy";
-import { MapFactory, type ISharedMap, type IValueChanged } from "@fluidframework/map/legacy";
+import {
+	MapFactory,
+	type ISharedMap,
+	type IValueChanged,
+} from "@fluidframework/map/legacy";
 import type {
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
@@ -18,9 +25,15 @@ import type {
 } from "@fluidframework/runtime-definitions/legacy";
 import { v4 as uuid } from "uuid";
 
-import type { IBlobCollection, IBlobCollectionEvents, IBlobRecord } from "./interface.js";
+import type {
+	IBlobCollection,
+	IBlobCollectionEvents,
+	IBlobRecord,
+} from "./interface.js";
 
-type UploadArrayBufferFn = (blob: ArrayBufferLike) => Promise<IFluidHandle<ArrayBufferLike>>;
+type UploadArrayBufferFn = (
+	blob: ArrayBufferLike,
+) => Promise<IFluidHandle<ArrayBufferLike>>;
 
 /**
  * The BlobCollection is our data object that implements the IBlobCollection interface.
@@ -49,7 +62,9 @@ class BlobCollection implements IBlobCollection {
 				};
 				this.blobs.push(newBlob);
 				// Sort in case timestamps disagree with map insertion order
-				this.blobs.sort((a, b) => a.id.localeCompare(b.id, "en", { sensitivity: "base" }));
+				this.blobs.sort((a, b) =>
+					a.id.localeCompare(b.id, "en", { sensitivity: "base" }),
+				);
 				this._events.emit("blobAdded", newBlob);
 			})
 			.catch(console.error);
@@ -91,7 +106,9 @@ class BlobCollection implements IBlobCollection {
 
 const mapId = "blob-map";
 const mapFactory = new MapFactory();
-const sharedObjectRegistry = new Map<string, IChannelFactory>([[mapFactory.type, mapFactory]]);
+const sharedObjectRegistry = new Map<string, IChannelFactory>([
+	[mapFactory.type, mapFactory],
+]);
 
 export class BlobCollectionFactory implements IFluidDataStoreFactory {
 	public get type(): string {

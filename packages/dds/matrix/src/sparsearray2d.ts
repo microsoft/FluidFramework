@@ -5,7 +5,11 @@
 
 /* eslint-disable no-bitwise */
 
-import type { IMatrixReader, IMatrixWriter, IMatrixProducer } from "@tiny-calc/nano";
+import type {
+	IMatrixReader,
+	IMatrixWriter,
+	IMatrixProducer,
+} from "@tiny-calc/nano";
 
 // Build a lookup table that maps a uint8 to the corresponding uint16 where 0s
 // are interleaved between the original bits. (e.g., 1111... -> 01010101...).
@@ -34,7 +38,8 @@ const byte3 = (x32: number): number => (x32 << 24) >>> 24;
 const interlaceBitsX16 = (x16: number): number =>
 	(x8ToInterlacedX16[byte2(x16)] << 16) | x8ToInterlacedX16[byte3(x16)];
 
-const r0ToMorton16 = (row: number): number => (interlaceBitsX16(row) << 1) >>> 0;
+const r0ToMorton16 = (row: number): number =>
+	(interlaceBitsX16(row) << 1) >>> 0;
 const c0ToMorton16 = (col: number): number => interlaceBitsX16(col) >>> 0;
 
 // Given a 2D uint16 coordinate returns the corresponding unt32 Morton coded
@@ -49,9 +54,15 @@ export type RecurArray<T> = RecurArrayHelper<T>[];
  * Undo JSON serialization's coercion of 'undefined' to null.
  */
 // eslint-disable-next-line @rushstack/no-new-null -- Private use of 'null' to preserve 'undefined'
-const nullToUndefined = <T>(array: RecurArray<T | null>): RecurArray<T | undefined> =>
+const nullToUndefined = <T>(
+	array: RecurArray<T | null>,
+): RecurArray<T | undefined> =>
 	array.map((value) => {
-		return value === null ? undefined : Array.isArray(value) ? nullToUndefined(value) : value;
+		return value === null
+			? undefined
+			: Array.isArray(value)
+				? nullToUndefined(value)
+				: value;
 	});
 
 type UA<T> = (T | undefined)[];
@@ -110,7 +121,10 @@ export class SparseArray2D<T>
 	 * (Note that 'rowBits' is the appropriate byte from 'r0ToMorton16' for the current
 	 * level being traversed.)
 	 */
-	private forEachKeyInRow(rowBits: number, callback: (key: number) => void): void {
+	private forEachKeyInRow(
+		rowBits: number,
+		callback: (key: number) => void,
+	): void {
 		for (let col = 0; col < 16; col++) {
 			// Perf: Potentially faster to replace 'c0ToMorton16()' with a short look up table?
 			callback((rowBits | c0ToMorton16(col)) >>> 0);
@@ -239,7 +253,9 @@ export class SparseArray2D<T>
 		// Using new Array is needed because the array created with Array.from does not
 		// satisfy (T|undefined)[].
 		// eslint-disable-next-line unicorn/no-new-array
-		return level ?? (parent[subKey] = new Array<T | undefined>(256).fill(undefined));
+		return (
+			level ?? (parent[subKey] = new Array<T | undefined>(256).fill(undefined))
+		);
 	}
 
 	public snapshot(): UA<UA<UA<UA<UA<T>>>>> {
@@ -247,6 +263,8 @@ export class SparseArray2D<T>
 	}
 
 	public static load<T>(data: RecurArray<T>): SparseArray2D<T> {
-		return new SparseArray2D<T>(nullToUndefined<T>(data) as SparseArray2D<T>["root"]);
+		return new SparseArray2D<T>(
+			nullToUndefined<T>(data) as SparseArray2D<T>["root"],
+		);
 	}
 }

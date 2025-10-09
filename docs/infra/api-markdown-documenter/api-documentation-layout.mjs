@@ -262,7 +262,9 @@ export function layoutContent(apiItem, itemSpecificContent, config) {
 	addSection(LayoutUtilities.createRemarksSection(apiItem, config));
 
 	// Add examples (if any)
-	addSection(LayoutUtilities.createExamplesSection(apiItem, config, customExamplesSectionTitle));
+	addSection(
+		LayoutUtilities.createExamplesSection(apiItem, config, customExamplesSectionTitle),
+	);
 
 	// Add provided contents
 	// Flatten contents into this section

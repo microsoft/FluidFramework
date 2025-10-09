@@ -75,9 +75,11 @@ export function create(
 	// Basic Help Message
 	app.use(
 		Router().get("/", (req, res) => {
-			res.status(200).send(
-				"This is Tinylicious. Learn more at https://github.com/microsoft/FluidFramework/tree/main/server/routerlicious/packages/tinylicious",
-			);
+			res
+				.status(200)
+				.send(
+					"This is Tinylicious. Learn more at https://github.com/microsoft/FluidFramework/tree/main/server/routerlicious/packages/tinylicious",
+				);
 		}),
 	);
 

@@ -35,7 +35,9 @@ export const findPackageOrReleaseGroup = (
 
 	return (
 		context.fullPackageMap.get(name) ??
-		context.independentPackages.find((pkg) => PackageName.getUnscopedName(pkg.name) === name)
+		context.independentPackages.find(
+			(pkg) => PackageName.getUnscopedName(pkg.name) === name,
+		)
 	);
 };
 

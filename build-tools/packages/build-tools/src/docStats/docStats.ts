@@ -67,7 +67,9 @@ async function main() {
 			};
 
 			try {
-				const content = JSON.parse(fs.readFileSync(path.join(dir, file.name), "utf-8"));
+				const content = JSON.parse(
+					fs.readFileSync(path.join(dir, file.name), "utf-8"),
+				);
 				processMembers(content);
 				record.push({
 					name: file.name,

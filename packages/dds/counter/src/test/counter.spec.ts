@@ -48,36 +48,55 @@ describe("SharedCounter", () => {
 		describe("increment", () => {
 			it("Can increment a counter with positive and negative values", () => {
 				testCounter.increment(20);
-				assert.equal(testCounter.value, 20, "Could not increment with positive value");
+				assert.equal(
+					testCounter.value,
+					20,
+					"Could not increment with positive value",
+				);
 				testCounter.increment(-30);
-				assert.equal(testCounter.value, -10, "Could not increment with negative value");
+				assert.equal(
+					testCounter.value,
+					-10,
+					"Could not increment with negative value",
+				);
 			});
 
 			it("Fires a listener callback after increment", () => {
 				let fired1 = false;
 				let fired2 = false;
 
-				testCounter.on("incremented", (incrementAmount: number, newValue: number) => {
-					if (!fired1) {
-						fired1 = true;
-						assert.equal(
-							incrementAmount,
-							10,
-							"The increment amount in the first event is incorrect",
-						);
-						assert.equal(newValue, 10, "The new value in the first event is incorrect");
-					} else if (fired2) {
-						assert.fail("incremented event fired too many times");
-					} else {
-						fired2 = true;
-						assert.equal(
-							incrementAmount,
-							-3,
-							"The increment amount in the second event is incorrect",
-						);
-						assert.equal(newValue, 7, "The new value in the second event is incorrect");
-					}
-				});
+				testCounter.on(
+					"incremented",
+					(incrementAmount: number, newValue: number) => {
+						if (!fired1) {
+							fired1 = true;
+							assert.equal(
+								incrementAmount,
+								10,
+								"The increment amount in the first event is incorrect",
+							);
+							assert.equal(
+								newValue,
+								10,
+								"The new value in the first event is incorrect",
+							);
+						} else if (fired2) {
+							assert.fail("incremented event fired too many times");
+						} else {
+							fired2 = true;
+							assert.equal(
+								incrementAmount,
+								-3,
+								"The increment amount in the second event is incorrect",
+							);
+							assert.equal(
+								newValue,
+								7,
+								"The new value in the second event is incorrect",
+							);
+						}
+					},
+				);
 
 				testCounter.increment(10);
 				testCounter.increment(-3);
@@ -152,7 +171,10 @@ describe("SharedCounter", () => {
 				objectStorage: new MockStorage(),
 			};
 
-			testCounter2 = factory.create(dataStoreRuntime, "counter2") as SharedCounter;
+			testCounter2 = factory.create(
+				dataStoreRuntime,
+				"counter2",
+			) as SharedCounter;
 			testCounter2.connect(services2);
 		});
 
@@ -162,42 +184,69 @@ describe("SharedCounter", () => {
 
 				containerRuntimeFactory.processAllMessages();
 
-				assert.equal(testCounter.value, 20, "Could not increment with positive value");
-				assert.equal(testCounter2.value, 20, "Could not increment with positive value");
+				assert.equal(
+					testCounter.value,
+					20,
+					"Could not increment with positive value",
+				);
+				assert.equal(
+					testCounter2.value,
+					20,
+					"Could not increment with positive value",
+				);
 
 				testCounter.increment(-30);
 
 				containerRuntimeFactory.processAllMessages();
 
-				assert.equal(testCounter.value, -10, "Could not increment with negative value");
-				assert.equal(testCounter2.value, -10, "Could not increment with negative value");
+				assert.equal(
+					testCounter.value,
+					-10,
+					"Could not increment with negative value",
+				);
+				assert.equal(
+					testCounter2.value,
+					-10,
+					"Could not increment with negative value",
+				);
 			});
 
 			it("Fires a listener callback after increment", () => {
 				let fired1 = false;
 				let fired2 = false;
 
-				testCounter2.on("incremented", (incrementAmount: number, newValue: number) => {
-					if (!fired1) {
-						fired1 = true;
-						assert.equal(
-							incrementAmount,
-							10,
-							"The increment amount in the first event is incorrect",
-						);
-						assert.equal(newValue, 10, "The new value in the first event is incorrect");
-					} else if (fired2) {
-						assert.fail("incremented event fired too many times");
-					} else {
-						fired2 = true;
-						assert.equal(
-							incrementAmount,
-							-3,
-							"The increment amount in the second event is incorrect",
-						);
-						assert.equal(newValue, 7, "The new value in the second event is incorrect");
-					}
-				});
+				testCounter2.on(
+					"incremented",
+					(incrementAmount: number, newValue: number) => {
+						if (!fired1) {
+							fired1 = true;
+							assert.equal(
+								incrementAmount,
+								10,
+								"The increment amount in the first event is incorrect",
+							);
+							assert.equal(
+								newValue,
+								10,
+								"The new value in the first event is incorrect",
+							);
+						} else if (fired2) {
+							assert.fail("incremented event fired too many times");
+						} else {
+							fired2 = true;
+							assert.equal(
+								incrementAmount,
+								-3,
+								"The increment amount in the second event is incorrect",
+							);
+							assert.equal(
+								newValue,
+								7,
+								"The new value in the second event is incorrect",
+							);
+						}
+					},
+				);
 
 				testCounter.increment(10);
 				testCounter.increment(-3);
@@ -217,11 +266,13 @@ describe("SharedCounter", () => {
 		let testCounter2: ISharedCounter;
 
 		beforeEach("createTestCounters", () => {
-			containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+			containerRuntimeFactory =
+				new MockContainerRuntimeFactoryForReconnection();
 
 			// Connect the first SharedCounter.
 			dataStoreRuntime.setAttachState(AttachState.Attached);
-			containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+			containerRuntime1 =
+				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 			const services1 = {
 				deltaConnection: dataStoreRuntime.createDeltaConnection(),
 				objectStorage: new MockStorage(),
@@ -230,13 +281,17 @@ describe("SharedCounter", () => {
 
 			// Create and connect a second SharedCounter.
 			const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-			containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+			containerRuntime2 =
+				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 			const services2 = {
 				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 
-			testCounter2 = factory.create(dataStoreRuntime, "counter2") as SharedCounter;
+			testCounter2 = factory.create(
+				dataStoreRuntime,
+				"counter2",
+			) as SharedCounter;
 			testCounter2.connect(services2);
 		});
 
@@ -252,8 +307,16 @@ describe("SharedCounter", () => {
 			containerRuntimeFactory.processAllMessages();
 
 			// Verify that the value is incremented in both the clients.
-			assert.equal(testCounter.value, 20, "Value not incremented in first client");
-			assert.equal(testCounter2.value, 20, "Value not incremented in second client");
+			assert.equal(
+				testCounter.value,
+				20,
+				"Value not incremented in first client",
+			);
+			assert.equal(
+				testCounter2.value,
+				20,
+				"Value not incremented in second client",
+			);
 
 			// Increment the second SharedCounter.
 			testCounter.increment(-40);
@@ -266,8 +329,16 @@ describe("SharedCounter", () => {
 			containerRuntimeFactory.processAllMessages();
 
 			// Verify that the value is incremented in both the clients.
-			assert.equal(testCounter.value, -20, "Value not incremented in first client");
-			assert.equal(testCounter2.value, -20, "Value not incremented in second client");
+			assert.equal(
+				testCounter.value,
+				-20,
+				"Value not incremented in first client",
+			);
+			assert.equal(
+				testCounter2.value,
+				-20,
+				"Value not incremented in second client",
+			);
 		});
 
 		it("can store ops in disconnected state and resend them on reconnection", async () => {
@@ -284,8 +355,16 @@ describe("SharedCounter", () => {
 			containerRuntimeFactory.processAllMessages();
 
 			// Verify that the value is incremented in both the clients.
-			assert.equal(testCounter.value, 20, "Value not incremented in first client");
-			assert.equal(testCounter2.value, 20, "Value not incremented in second client");
+			assert.equal(
+				testCounter.value,
+				20,
+				"Value not incremented in first client",
+			);
+			assert.equal(
+				testCounter2.value,
+				20,
+				"Value not incremented in second client",
+			);
 
 			// Disconnect the second client.
 			containerRuntime2.connected = false;
@@ -300,8 +379,16 @@ describe("SharedCounter", () => {
 			containerRuntimeFactory.processAllMessages();
 
 			// Verify that the value is incremented in both the clients.
-			assert.equal(testCounter.value, -20, "Value not incremented in first client");
-			assert.equal(testCounter2.value, -20, "Value not incremented in second client");
+			assert.equal(
+				testCounter.value,
+				-20,
+				"Value not incremented in first client",
+			);
+			assert.equal(
+				testCounter2.value,
+				-20,
+				"Value not incremented in second client",
+			);
 		});
 	});
 });

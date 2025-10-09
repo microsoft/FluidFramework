@@ -8,4 +8,7 @@ export {
 	inventoryListId,
 	migrationToolId,
 } from "./containerCode.js";
-export { InventoryList, InventoryListInstantiationFactory } from "./inventoryList.js";
+export {
+	InventoryList,
+	InventoryListInstantiationFactory,
+} from "./inventoryList.js";

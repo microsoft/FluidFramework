@@ -42,7 +42,8 @@ function recordWalkAllowedTypes(
 		node: (schema) => visitedNodes.push(schema),
 		allowedTypes: (types) => visitedAllowedTypes.push(types),
 		allowedTypeFilter: (type) =>
-			type.metadata.stagedSchemaUpgrade === undefined || (walkStagedAllowedTypes ?? false),
+			type.metadata.stagedSchemaUpgrade === undefined ||
+			(walkStagedAllowedTypes ?? false),
 	};
 
 	walkAllowedTypes(annotatedAllowedTypes, visitor);
@@ -57,16 +58,21 @@ describe("walk schema", () => {
 		const annotated = makeAnnotated(sf.string);
 		const annotatedTypes = AnnotatedAllowedTypesInternal.create([annotated]);
 
-		const [visitedNodes, visitedAllowedTypes] = recordWalkAllowedTypes(annotatedTypes);
+		const [visitedNodes, visitedAllowedTypes] =
+			recordWalkAllowedTypes(annotatedTypes);
 
 		assert.deepEqual(visitedNodes, [annotated.type]);
 		assert.deepEqual(visitedAllowedTypes, [annotatedTypes]);
 	});
 
 	it("calls visitor on nested allowed types", () => {
-		const annotatedString = SchemaFactoryAlpha.types([makeAnnotated(sf.string)]);
+		const annotatedString = SchemaFactoryAlpha.types([
+			makeAnnotated(sf.string),
+		]);
 		const annotatedObject = SchemaFactoryAlpha.types([
-			makeAnnotated(sf.objectAlpha("annotatedObject", { name: annotatedString })),
+			makeAnnotated(
+				sf.objectAlpha("annotatedObject", { name: annotatedString }),
+			),
 		]);
 		const schema = sf.arrayAlpha("schema", annotatedObject);
 
@@ -74,15 +80,24 @@ describe("walk schema", () => {
 			normalizeFieldSchema(schema).allowedTypesFull.evaluate(),
 		);
 
-		assert.deepEqual(visitedNodes, [annotatedString[0], annotatedObject[0], schema]);
+		assert.deepEqual(visitedNodes, [
+			annotatedString[0],
+			annotatedObject[0],
+			schema,
+		]);
 		assert.equal(visitedAllowedTypes.length, 3);
 		assert.equal(visitedAllowedTypes[0], annotatedString);
 		assert.equal(visitedAllowedTypes[1], annotatedObject);
-		assert.deepEqual(visitedAllowedTypes[2], SchemaFactoryAlpha.types([schema]));
+		assert.deepEqual(
+			visitedAllowedTypes[2],
+			SchemaFactoryAlpha.types([schema]),
+		);
 	});
 
 	it("calls visitor on nested objects", () => {
-		const annotatedString = SchemaFactoryAlpha.types([makeAnnotated(sf.string)]);
+		const annotatedString = SchemaFactoryAlpha.types([
+			makeAnnotated(sf.string),
+		]);
 		const annotatedObject3 = SchemaFactoryAlpha.types([
 			makeAnnotated(
 				sf.objectAlpha("annotatedObject3", {
@@ -98,7 +113,9 @@ describe("walk schema", () => {
 			),
 		]);
 		const annotatedObject = SchemaFactoryAlpha.types([
-			makeAnnotated(sf.objectAlpha("annotatedObject", { foo: annotatedObject2 })),
+			makeAnnotated(
+				sf.objectAlpha("annotatedObject", { foo: annotatedObject2 }),
+			),
 		]);
 		const schema = sf.arrayAlpha("schema", annotatedObject);
 
@@ -125,14 +142,21 @@ describe("walk schema", () => {
 	it("calls visitor on all child allowed types", () => {
 		const annotatedString = makeAnnotated(sf.string);
 		const annotatedNumber = makeAnnotated(sf.number);
-		const annotatedUnion = SchemaFactoryAlpha.types([annotatedNumber, annotatedString]);
+		const annotatedUnion = SchemaFactoryAlpha.types([
+			annotatedNumber,
+			annotatedString,
+		]);
 		const schema = sf.arrayAlpha("schema", annotatedUnion);
 
 		const [visitedNodes, visitedAllowedTypes] = recordWalkAllowedTypes(
 			normalizeFieldSchema(schema).allowedTypesFull.evaluate(),
 		);
 
-		assert.deepEqual(visitedNodes, [annotatedNumber.type, annotatedString.type, schema]);
+		assert.deepEqual(visitedNodes, [
+			annotatedNumber.type,
+			annotatedString.type,
+			schema,
+		]);
 		assert.deepEqual(visitedAllowedTypes, [
 			annotatedUnion,
 			SchemaFactoryAlpha.types([schema]),
@@ -140,8 +164,12 @@ describe("walk schema", () => {
 	});
 
 	it("calls visitor on different fields with the same allowed types", () => {
-		const annotatedString = SchemaFactoryAlpha.types([makeAnnotated(sf.string)]);
-		const otherAnnotatedString = SchemaFactoryAlpha.types([makeAnnotated(sf.string, "other")]);
+		const annotatedString = SchemaFactoryAlpha.types([
+			makeAnnotated(sf.string),
+		]);
+		const otherAnnotatedString = SchemaFactoryAlpha.types([
+			makeAnnotated(sf.string, "other"),
+		]);
 		const annotatedObject = SchemaFactoryAlpha.types([
 			makeAnnotated(
 				sf.objectAlpha("annotatedObject", {
@@ -176,7 +204,10 @@ describe("walk schema", () => {
 		const annotatedString = makeAnnotated(sf.string);
 
 		assert.doesNotThrow(() =>
-			walkAllowedTypes(AnnotatedAllowedTypesInternal.create([annotatedString]), {}),
+			walkAllowedTypes(
+				AnnotatedAllowedTypesInternal.create([annotatedString]),
+				{},
+			),
 		);
 	});
 

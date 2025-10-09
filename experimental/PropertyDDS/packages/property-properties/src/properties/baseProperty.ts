@@ -286,7 +286,8 @@ export abstract class BaseProperty {
 			MODIFIED_STATE_FLAGS.PENDING_CHANGE,
 	) {
 		if (in_flags === undefined) {
-			in_flags = MODIFIED_STATE_FLAGS.DIRTY | MODIFIED_STATE_FLAGS.PENDING_CHANGE;
+			in_flags =
+				MODIFIED_STATE_FLAGS.DIRTY | MODIFIED_STATE_FLAGS.PENDING_CHANGE;
 		}
 		var reportToView = in_reportToView;
 		if (reportToView === undefined) {
@@ -420,12 +421,15 @@ export abstract class BaseProperty {
 		this._checkIsNotReadOnly(false);
 		// Here we must walk both changesets in parallel. Sometimes there will be only an entry in one
 		// changeset, sometimes only one in the other changeset, sometimes one in both.
-		const typeids = _.keys(in_pendingChangeSet).concat(_.keys(in_dirtyChangeSet));
+		const typeids = _.keys(in_pendingChangeSet).concat(
+			_.keys(in_dirtyChangeSet),
+		);
 		for (const typeid of typeids) {
 			if (ChangeSet.isReservedKeyword(typeid)) {
 				continue; // Ignore the special keys
 			}
-			const pendingChangeSet = in_pendingChangeSet && in_pendingChangeSet[typeid];
+			const pendingChangeSet =
+				in_pendingChangeSet && in_pendingChangeSet[typeid];
 			const dirtyChangeSet = in_dirtyChangeSet && in_dirtyChangeSet[typeid];
 
 			const paths = _.keys(pendingChangeSet).concat(_.keys(dirtyChangeSet));
@@ -455,7 +459,9 @@ export abstract class BaseProperty {
 	 */
 	_cleanDirty(in_flags) {
 		this._setDirtyFlags(
-			in_flags === undefined ? MODIFIED_STATE_FLAGS.CLEAN : this._getDirtyFlags() & ~in_flags,
+			in_flags === undefined
+				? MODIFIED_STATE_FLAGS.CLEAN
+				: this._getDirtyFlags() & ~in_flags,
 		);
 	}
 
@@ -485,7 +491,9 @@ export abstract class BaseProperty {
 	 * @param in_dirtinessType - The type of dirtiness to check for. By default this is DIRTY
 	 * @returns Is the property dirty?
 	 */
-	_isDirty(in_dirtinessType: MODIFIED_STATE_FLAGS = MODIFIED_STATE_FLAGS.DIRTY): boolean {
+	_isDirty(
+		in_dirtinessType: MODIFIED_STATE_FLAGS = MODIFIED_STATE_FLAGS.DIRTY,
+	): boolean {
 		return !!(this._getDirtyFlags() & in_dirtinessType);
 	}
 
@@ -545,7 +553,9 @@ export abstract class BaseProperty {
 	 */
 	_getCheckoutView() {
 		let checkedOutRepositoryInfo = this._getCheckedOutRepositoryInfo();
-		return checkedOutRepositoryInfo ? checkedOutRepositoryInfo.getCheckoutView() : undefined;
+		return checkedOutRepositoryInfo
+			? checkedOutRepositoryInfo.getCheckoutView()
+			: undefined;
 	}
 
 	/**
@@ -557,7 +567,9 @@ export abstract class BaseProperty {
 		if (!this._parent) {
 			return this._checkedOutRepositoryInfo;
 		} else {
-			return this.getRoot() ? this.getRoot()._getCheckedOutRepositoryInfo() : undefined;
+			return this.getRoot()
+				? this.getRoot()._getCheckedOutRepositoryInfo()
+				: undefined;
 		}
 	}
 
@@ -578,7 +590,10 @@ export abstract class BaseProperty {
 	 * @returns The path segment to resolve the child property under this property
 	 */
 	protected _getPathSegmentForChildNode(in_childNode: BaseProperty): string {
-		return PROPERTY_PATH_DELIMITER + PathHelper.quotePathSegmentIfNeeded(in_childNode.getId());
+		return (
+			PROPERTY_PATH_DELIMITER +
+			PathHelper.quotePathSegmentIfNeeded(in_childNode.getId())
+		);
 	}
 
 	/**
@@ -589,7 +604,10 @@ export abstract class BaseProperty {
 	 *
 	 * @return {property-properties.BaseProperty|undefined} The child property that has been resolved
 	 */
-	protected _resolvePathSegment(in_segment: string, in_segmentType: PathHelper.TOKEN_TYPES) {
+	protected _resolvePathSegment(
+		in_segment: string,
+		in_segmentType: PathHelper.TOKEN_TYPES,
+	) {
 		// Base Properties only support paths separated via dots
 		if (in_segmentType !== PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN) {
 			throw new Error(MSG.INVALID_PATH_TOKEN + in_segment);
@@ -614,7 +632,9 @@ export abstract class BaseProperty {
 		}
 
 		if (this._parent !== undefined) {
-			throw new Error(MSG.ID_CHANGE_FOR_PROPERTY_WITH_PARENT + this._id + " to id: " + in_id);
+			throw new Error(
+				MSG.ID_CHANGE_FOR_PROPERTY_WITH_PARENT + this._id + " to id: " + in_id,
+			);
 		}
 
 		this._id = String(in_id);
@@ -739,7 +759,15 @@ export abstract class BaseProperty {
 			default:
 				break;
 		}
-		printFct(indent + externalId + this.getId() + " (" + context + this.getTypeid() + "):");
+		printFct(
+			indent +
+				externalId +
+				this.getId() +
+				" (" +
+				context +
+				this.getTypeid() +
+				"):",
+		);
 		this._prettyPrintChildren(indent, printFct);
 	}
 
@@ -778,9 +806,8 @@ export abstract class BaseProperty {
 			for (const key of keys) {
 				if (key) {
 					var repoRef =
-						repoInfo._referencedByPropertyInstanceGUIDs[key]._repositoryReferenceProperties[
-							key
-						].property;
+						repoInfo._referencedByPropertyInstanceGUIDs[key]
+							._repositoryReferenceProperties[key].property;
 					if (that.getRoot() === repoRef.getReferencedRepositoryRoot()) {
 						referenceProps.push(repoRef);
 					}
@@ -976,7 +1003,9 @@ export abstract class BaseProperty {
 
 						let refRoot;
 						try {
-							refRoot = refProperty ? refProperty.getReferencedRepositoryRoot() : undefined;
+							refRoot = refProperty
+								? refProperty.getReferencedRepositoryRoot()
+								: undefined;
 						} catch (e) {
 							console.warn(e.message);
 						}
@@ -990,13 +1019,19 @@ export abstract class BaseProperty {
 			});
 		}
 
-		var path = this.isRoot() ? [] : [this.getParent()._getPathSegmentForChildNode(this)];
+		var path = this.isRoot()
+			? []
+			: [this.getParent()._getPathSegmentForChildNode(this)];
 		this.traverseUp(function (in_node) {
 			if (in_node.getParent()) {
 				path.push(in_node.getParent()._getPathSegmentForChildNode(in_node));
 			} else if (referenceProps.length > 0) {
 				// recursively call getAbsolutePath, removing the '/' at the beginning of the path
-				path.push(referenceProps[0].getAbsolutePath(referenceProps[0].getRoot()).slice(1));
+				path.push(
+					referenceProps[0]
+						.getAbsolutePath(referenceProps[0].getRoot())
+						.slice(1),
+				);
 			}
 		});
 		var absolutePath = path.reverse().join("");
@@ -1063,7 +1098,10 @@ export abstract class BaseProperty {
 	 * @returns Returns BaseProperty.BREAK_TRAVERSAL if the traversal has been interrupted, otherwise `undefined`.
 	 * @private
 	 */
-	_traverse(in_callback: Function, in_pathFromTraversalStart: string): string | undefined {
+	_traverse(
+		in_callback: Function,
+		in_pathFromTraversalStart: string,
+	): string | undefined {
 		return undefined;
 	}
 
@@ -1297,16 +1335,21 @@ export abstract class BaseProperty {
 
 		if (coverage.coverageExtent === PathHelper.CoverageExtent.FULLY_COVERED) {
 			return true;
-		} else if (coverage.coverageExtent === PathHelper.CoverageExtent.PARTLY_COVERED) {
+		} else if (
+			coverage.coverageExtent === PathHelper.CoverageExtent.PARTLY_COVERED
+		) {
 			// We know that part of the property is covered, if we don't find any actual children not covered
 			// by the paths it's because we're fully covered.
 			if (this.isPrimitiveType()) {
 				const childrenIds = this.getContext() === "single" ? [] : this.getIds();
 				for (const childId of childrenIds) {
-					const childPath = PathHelper.getChildAbsolutePathCanonical(in_basePath, childId);
+					const childPath = PathHelper.getChildAbsolutePathCanonical(
+						in_basePath,
+						childId,
+					);
 					if (
-						PathHelper.getPathCoverage(childPath, coverage.pathList).coverageExtent ===
-						PathHelper.CoverageExtent.UNCOVERED
+						PathHelper.getPathCoverage(childPath, coverage.pathList)
+							.coverageExtent === PathHelper.CoverageExtent.UNCOVERED
 					) {
 						// this children is outside the list of paths
 						return false;
@@ -1316,7 +1359,10 @@ export abstract class BaseProperty {
 				const childrenIds = this.getIds();
 				for (const childId of childrenIds) {
 					const child = this.get(childId);
-					const childPath = PathHelper.getChildAbsolutePathCanonical(in_basePath, childId);
+					const childPath = PathHelper.getChildAbsolutePathCanonical(
+						in_basePath,
+						childId,
+					);
 					if (!child._coveredByPaths(childPath, coverage.pathList)) {
 						return false;
 					}

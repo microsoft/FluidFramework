@@ -38,9 +38,13 @@ describe("Buffer isomorphism", () => {
 		{
 			const nodeBuffer = BufferNode.IsoBuffer.from(testArray[1]);
 			const browserBuffer = BufferBrowser.IsoBuffer.from(testArray[1]);
-			expect(nodeBuffer.toString("utf8")).toEqual(browserBuffer.toString("utf8"));
+			expect(nodeBuffer.toString("utf8")).toEqual(
+				browserBuffer.toString("utf8"),
+			);
 			// eslint-disable-next-line unicorn/text-encoding-identifier-case
-			expect(nodeBuffer.toString("utf-8")).toEqual(browserBuffer.toString("utf-8"));
+			expect(nodeBuffer.toString("utf-8")).toEqual(
+				browserBuffer.toString("utf-8"),
+			);
 		}
 	});
 
@@ -61,7 +65,9 @@ describe("Buffer isomorphism", () => {
 			const nodeBuffer = BufferNode.IsoBuffer.from(item, "base64");
 			const browserBuffer = BufferBrowser.IsoBuffer.from(item, "base64");
 
-			expect(nodeBuffer.toString("base64")).toEqual(browserBuffer.toString("base64"));
+			expect(nodeBuffer.toString("base64")).toEqual(
+				browserBuffer.toString("base64"),
+			);
 		}
 	});
 
@@ -101,7 +107,10 @@ describe("Buffer isomorphism", () => {
 			const nodeBuffer1 = BufferNode.IsoBuffer.from(testArrayUtf8[i]);
 			expect(nodeBuffer1.toString("base64")).toEqual(testArrayBase64[i]);
 
-			const nodeBuffer2 = BufferNode.IsoBuffer.from(nodeBuffer1.toString("base64"), "base64");
+			const nodeBuffer2 = BufferNode.IsoBuffer.from(
+				nodeBuffer1.toString("base64"),
+				"base64",
+			);
 			expect(nodeBuffer2.toString()).toEqual(testArrayUtf8[i]);
 
 			const browserBuffer1 = BufferBrowser.IsoBuffer.from(testArrayUtf8[i]);
@@ -116,14 +125,18 @@ describe("Buffer isomorphism", () => {
 	});
 
 	test("bytelength is compatible", () => {
-		const testString = "8J+YgvCfkoHwn4+84oCN4pmC77iP8J+SgfCfj7zigI3wn5KB4oCN4pmC";
+		const testString =
+			"8J+YgvCfkoHwn4+84oCN4pmC77iP8J+SgfCfj7zigI3wn5KB4oCN4pmC";
 
 		const nodeBufferUtf8 = BufferNode.IsoBuffer.from(testString);
 		const browserBufferUtf8 = BufferBrowser.IsoBuffer.from(testString);
 		expect(nodeBufferUtf8.byteLength).toEqual(browserBufferUtf8.byteLength);
 
 		const nodeBufferBase64 = BufferNode.IsoBuffer.from(testString, "base64");
-		const browserBufferBase64 = BufferBrowser.IsoBuffer.from(testString, "base64");
+		const browserBufferBase64 = BufferBrowser.IsoBuffer.from(
+			testString,
+			"base64",
+		);
 		expect(nodeBufferBase64.byteLength).toEqual(browserBufferBase64.byteLength);
 	});
 
@@ -144,35 +157,43 @@ describe("Buffer isomorphism", () => {
 			expect(nodeBuffer.toString()).toEqual(browserBuffer.toString());
 
 			const encodedWithoutView = new TextEncoder().encode(item).buffer;
-			const nodeBufferWithoutView = BufferNode.IsoBuffer.from(encodedWithoutView);
-			const browserBufferWithoutView = BufferBrowser.IsoBuffer.from(encodedWithoutView);
+			const nodeBufferWithoutView =
+				BufferNode.IsoBuffer.from(encodedWithoutView);
+			const browserBufferWithoutView =
+				BufferBrowser.IsoBuffer.from(encodedWithoutView);
 
-			expect(nodeBufferWithoutView.toString("base64")).toEqual(nodeBuffer.toString("base64"));
+			expect(nodeBufferWithoutView.toString("base64")).toEqual(
+				nodeBuffer.toString("base64"),
+			);
 			expect(browserBufferWithoutView.toString("base64")).toEqual(
 				browserBuffer.toString("base64"),
 			);
 
-			expect(nodeBufferWithoutView.toString("utf8")).toEqual(nodeBuffer.toString("utf8"));
+			expect(nodeBufferWithoutView.toString("utf8")).toEqual(
+				nodeBuffer.toString("utf8"),
+			);
 			expect(browserBufferWithoutView.toString("utf8")).toEqual(
 				browserBuffer.toString("utf8"),
 			);
 
 			expect(nodeBufferWithoutView.byteLength).toEqual(nodeBuffer.byteLength);
-			expect(browserBufferWithoutView.byteLength).toEqual(browserBuffer.byteLength);
+			expect(browserBufferWithoutView.byteLength).toEqual(
+				browserBuffer.byteLength,
+			);
 
-			expect(BufferNode.bufferToString(nodeBufferWithoutView, "base64")).toEqual(
-				BufferNode.bufferToString(nodeBuffer, "base64"),
-			);
-			expect(BufferBrowser.bufferToString(browserBufferWithoutView, "base64")).toEqual(
-				BufferBrowser.bufferToString(browserBuffer, "base64"),
-			);
+			expect(
+				BufferNode.bufferToString(nodeBufferWithoutView, "base64"),
+			).toEqual(BufferNode.bufferToString(nodeBuffer, "base64"));
+			expect(
+				BufferBrowser.bufferToString(browserBufferWithoutView, "base64"),
+			).toEqual(BufferBrowser.bufferToString(browserBuffer, "base64"));
 
 			expect(BufferNode.bufferToString(nodeBufferWithoutView, "utf8")).toEqual(
 				BufferNode.bufferToString(nodeBuffer, "utf8"),
 			);
-			expect(BufferBrowser.bufferToString(browserBufferWithoutView, "utf8")).toEqual(
-				BufferBrowser.bufferToString(browserBuffer, "utf8"),
-			);
+			expect(
+				BufferBrowser.bufferToString(browserBufferWithoutView, "utf8"),
+			).toEqual(BufferBrowser.bufferToString(browserBuffer, "utf8"));
 		}
 	});
 
@@ -194,22 +215,38 @@ describe("Buffer isomorphism", () => {
 			expect(fullBuffer.toString()).toEqual(subsetUInt8ViewNode.toString());
 			expect(fullBuffer.toString()).toEqual(subsetFullBufferNode.toString());
 
-			const subsetUInt8ViewBrowser = BufferBrowser.IsoBuffer.from(uint8View, 2, 4);
-			const subsetFullBufferBrowser = BufferBrowser.IsoBuffer.from(fullBuffer, 2, 4);
+			const subsetUInt8ViewBrowser = BufferBrowser.IsoBuffer.from(
+				uint8View,
+				2,
+				4,
+			);
+			const subsetFullBufferBrowser = BufferBrowser.IsoBuffer.from(
+				fullBuffer,
+				2,
+				4,
+			);
 			expect(fullBuffer.toString()).toEqual(subsetUInt8ViewBrowser.toString());
 			expect(fullBuffer.toString()).toEqual(subsetFullBufferBrowser.toString());
 		}
 	});
 
 	test("Uint8ArrayToString is compatible", () => {
-		const testArray = new Uint8Array([1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377]);
+		const testArray = new Uint8Array([
+			1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377,
+		]);
 
 		const nodeStringUtf8 = BufferNode.Uint8ArrayToString(testArray, "utf8");
-		const browserStringUtf8 = BufferBrowser.Uint8ArrayToString(testArray, "utf8");
+		const browserStringUtf8 = BufferBrowser.Uint8ArrayToString(
+			testArray,
+			"utf8",
+		);
 		expect(nodeStringUtf8).toEqual(browserStringUtf8);
 
 		const nodeStringBase64 = BufferNode.Uint8ArrayToString(testArray, "base64");
-		const browserStringBase64 = BufferBrowser.Uint8ArrayToString(testArray, "base64");
+		const browserStringBase64 = BufferBrowser.Uint8ArrayToString(
+			testArray,
+			"base64",
+		);
 		expect(nodeStringBase64).toEqual(browserStringBase64);
 	});
 
@@ -230,13 +267,22 @@ describe("Buffer isomorphism", () => {
 		const browserBufferUtf8 = BufferBrowser.stringToBuffer(test, "utf8");
 
 		const nodeStringUtf8 = BufferNode.bufferToString(nodeBufferUtf8, "utf8");
-		const browserStringUtf8 = BufferBrowser.bufferToString(browserBufferUtf8, "utf8");
+		const browserStringUtf8 = BufferBrowser.bufferToString(
+			browserBufferUtf8,
+			"utf8",
+		);
 		expect(nodeStringUtf8).toEqual(browserStringUtf8);
 		expect(nodeStringUtf8).toEqual(test);
 		expect(browserStringUtf8).toEqual(test);
 
-		const nodeStringBase64 = BufferNode.bufferToString(nodeBufferUtf8, "base64");
-		const browserStringBase64 = BufferBrowser.bufferToString(browserBufferUtf8, "base64");
+		const nodeStringBase64 = BufferNode.bufferToString(
+			nodeBufferUtf8,
+			"base64",
+		);
+		const browserStringBase64 = BufferBrowser.bufferToString(
+			browserBufferUtf8,
+			"base64",
+		);
 		expect(nodeStringBase64).toEqual(browserStringBase64);
 		expect(nodeStringBase64).toEqual("aGVsbG8=");
 		expect(browserStringBase64).toEqual("aGVsbG8=");
@@ -247,14 +293,23 @@ describe("Buffer isomorphism", () => {
 		const nodeBufferBase64 = BufferNode.stringToBuffer(test, "base64");
 		const browserBufferBase64 = BufferBrowser.stringToBuffer(test, "base64");
 
-		const nodeStringBase64 = BufferNode.bufferToString(nodeBufferBase64, "base64");
-		const browserStringBase64 = BufferBrowser.bufferToString(browserBufferBase64, "base64");
+		const nodeStringBase64 = BufferNode.bufferToString(
+			nodeBufferBase64,
+			"base64",
+		);
+		const browserStringBase64 = BufferBrowser.bufferToString(
+			browserBufferBase64,
+			"base64",
+		);
 		expect(nodeStringBase64).toEqual(browserStringBase64);
 		expect(nodeStringBase64).toEqual(test);
 		expect(browserStringBase64).toEqual(test);
 
 		const nodeStringUtf8 = BufferNode.bufferToString(nodeBufferBase64, "utf8");
-		const browserStringUtf8 = BufferBrowser.bufferToString(browserBufferBase64, "utf8");
+		const browserStringUtf8 = BufferBrowser.bufferToString(
+			browserBufferBase64,
+			"utf8",
+		);
 		expect(nodeStringUtf8).toEqual(browserStringUtf8);
 		expect(nodeStringUtf8).toEqual("hellothere");
 		expect(browserStringUtf8).toEqual("hellothere");
@@ -266,11 +321,15 @@ describe("Buffer isomorphism", () => {
 		const browserBuffer = BufferBrowser.IsoBuffer.from(test, "base64");
 		expect(BufferBrowser.bufferToString(browserBuffer, "base64")).toEqual(test);
 		// eslint-disable-next-line unicorn/text-encoding-identifier-case -- this value is supported, just discouraged
-		expect(BufferBrowser.bufferToString(browserBuffer, "utf-8")).toEqual("hellothere");
+		expect(BufferBrowser.bufferToString(browserBuffer, "utf-8")).toEqual(
+			"hellothere",
+		);
 
 		const nodeBuffer = BufferNode.IsoBuffer.from(test, "base64");
 		expect(BufferNode.bufferToString(nodeBuffer, "base64")).toEqual(test);
 		// eslint-disable-next-line unicorn/text-encoding-identifier-case -- this value is supported, just discouraged
-		expect(BufferNode.bufferToString(nodeBuffer, "utf-8")).toEqual("hellothere");
+		expect(BufferNode.bufferToString(nodeBuffer, "utf-8")).toEqual(
+			"hellothere",
+		);
 	});
 });

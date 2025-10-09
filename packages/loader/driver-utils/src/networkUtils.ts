@@ -20,11 +20,14 @@ export function logNetworkFailure(
 
 	const errorOnlineProp = error?.online;
 	newEvent.online =
-		typeof errorOnlineProp === "string" ? errorOnlineProp : OnlineStatus[isOnline()];
+		typeof errorOnlineProp === "string"
+			? errorOnlineProp
+			: OnlineStatus[isOnline()];
 
 	if (typeof navigator === "object" && navigator !== null) {
 		const nav = navigator as any;
-		const connection = nav.connection ?? nav.mozConnection ?? nav.webkitConnection;
+		const connection =
+			nav.connection ?? nav.mozConnection ?? nav.webkitConnection;
 		if (connection !== null && typeof connection === "object") {
 			newEvent.connectionType = connection.type;
 		}

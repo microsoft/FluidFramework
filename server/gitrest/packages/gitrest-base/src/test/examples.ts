@@ -140,8 +140,7 @@ export const sampleInitialSummaryUpload: IWholeSummaryPayload =
 																		{
 																			value: {
 																				type: "blob",
-																				content:
-																					'{"blobs":[],"content":{}}',
+																				content: '{"blobs":[],"content":{}}',
 																				encoding: "utf-8",
 																			},
 																			path: "header",
@@ -545,8 +544,7 @@ export const sampleInitialSummaryResponse: IWholeFlatSummary =
 				size: 118,
 			},
 			{
-				content:
-					'{"blobs":[],"content":{"content":{"type":"Plain","value":"test message"}}}',
+				content: '{"blobs":[],"content":{"content":{"type":"Plain","value":"test message"}}}',
 				encoding: "utf-8",
 				id: "948d9ce9db24abbfd53a11c871a94fd850974cbf",
 				size: 74,
@@ -559,8 +557,7 @@ export const sampleInitialSummaryResponse: IWholeFlatSummary =
 				size: 118,
 			},
 			{
-				content:
-					'{"blobs":[],"content":{"content":{"type":"Plain","value":"test message"}}}',
+				content: '{"blobs":[],"content":{"content":{"type":"Plain","value":"test message"}}}',
 				encoding: "utf-8",
 				id: "948d9ce9db24abbfd53a11c871a94fd850974cbf",
 				size: 74,
@@ -600,8 +597,7 @@ export const sampleInitialSummaryResponse: IWholeFlatSummary =
 				size: 118,
 			},
 			{
-				content:
-					'{"blobs":[],"content":{"content":{"type":"Plain","value":"test message"}}}',
+				content: '{"blobs":[],"content":{"content":{"type":"Plain","value":"test message"}}}',
 				encoding: "utf-8",
 				id: "948d9ce9db24abbfd53a11c871a94fd850974cbf",
 				size: 74,
@@ -833,8 +829,7 @@ export const sampleChannelSummaryUpload: IWholeSummaryPayload =
 															{
 																value: {
 																	type: "blob",
-																	content:
-																		'{"blobs":[],"content":{}}',
+																	content: '{"blobs":[],"content":{}}',
 																	encoding: "utf-8",
 																},
 																path: "header",

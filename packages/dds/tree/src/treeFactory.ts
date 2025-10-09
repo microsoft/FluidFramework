@@ -24,7 +24,10 @@ import {
 	type SharedTreeOptionsInternal,
 	type SharedTreeKernelView,
 } from "./shared-tree/index.js";
-import { SharedTreeFactoryType, SharedTreeAttributes } from "./sharedTreeAttributes.js";
+import {
+	SharedTreeFactoryType,
+	SharedTreeAttributes,
+} from "./sharedTreeAttributes.js";
 import type { ITree } from "./simple-tree/index.js";
 import { Breakable } from "./util/index.js";
 import { FluidClientVersion } from "./codec/index.js";

@@ -73,7 +73,10 @@ export enum FieldKind {
  * If an explicit stored key was specified in the schema, it will be used.
  * Otherwise, the stored key is the same as the property key.
  */
-export function getStoredKey(propertyKey: string, fieldSchema: ImplicitFieldSchema): FieldKey {
+export function getStoredKey(
+	propertyKey: string,
+	fieldSchema: ImplicitFieldSchema,
+): FieldKey {
 	return brand(getExplicitStoredKey(fieldSchema) ?? propertyKey);
 }
 
@@ -81,8 +84,12 @@ export function getStoredKey(propertyKey: string, fieldSchema: ImplicitFieldSche
  * Gets the {@link FieldProps.key | stored key} specified by the schema, if one was explicitly specified.
  * Otherwise, returns undefined.
  */
-export function getExplicitStoredKey(fieldSchema: ImplicitFieldSchema): string | undefined {
-	return fieldSchema instanceof FieldSchema ? fieldSchema.props?.key : undefined;
+export function getExplicitStoredKey(
+	fieldSchema: ImplicitFieldSchema,
+): string | undefined {
+	return fieldSchema instanceof FieldSchema
+		? fieldSchema.props?.key
+		: undefined;
 }
 
 /**
@@ -210,7 +217,8 @@ export function isConstant(
  * If present in a `FieldSchema`, when constructing new tree content that field can be omitted, and a default will be provided.
  * @system @sealed @public
  */
-export interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider"> {}
+export interface DefaultProvider
+	extends ErasedType<"@fluidframework/tree.FieldProvider"> {}
 
 export function extractFieldProvider(input: DefaultProvider): FieldProvider {
 	return input as unknown as FieldProvider;
@@ -361,13 +369,18 @@ export class FieldSchema<
 		public readonly props?: FieldProps<TCustomMetadata>,
 	) {
 		if (!(this instanceof FieldSchemaAlpha)) {
-			throw new UsageError("FieldSchema is @sealed: sub-classing is not allowed.");
+			throw new UsageError(
+				"FieldSchema is @sealed: sub-classing is not allowed.",
+			);
 		}
 
-		this.lazyTypes = new Lazy(() => normalizeAllowedTypes(this.allowedTypes).evaluateSet());
+		this.lazyTypes = new Lazy(() =>
+			normalizeAllowedTypes(this.allowedTypes).evaluateSet(),
+		);
 		// TODO: optional fields should (by default) get a default provider that returns undefined, removing the need to special case them here:
 		this.requiresValue =
-			this.props?.defaultProvider === undefined && this.kind !== FieldKind.Optional;
+			this.props?.defaultProvider === undefined &&
+			this.kind !== FieldKind.Optional;
 	}
 }
 
@@ -482,9 +495,14 @@ export function areFieldSchemaEqual(a: FieldSchema, b: FieldSchema): boolean {
  * Returns true if the given {@link FieldProps} are equivalent, otherwise false.
  * @remarks FieldProps are considered equivalent if their keys and default providers are reference equal, and their metadata are {@link areMetadataEqual | equivalent}.
  */
-function areFieldPropsEqual(a: FieldProps | undefined, b: FieldProps | undefined): boolean {
+function areFieldPropsEqual(
+	a: FieldProps | undefined,
+	b: FieldProps | undefined,
+): boolean {
 	// If any new fields are added to FieldProps, this check will stop compiling as a reminder that this function needs to be updated.
-	type _keys = requireTrue<areOnlyKeys<FieldProps, "key" | "defaultProvider" | "metadata">>;
+	type _keys = requireTrue<
+		areOnlyKeys<FieldProps, "key" | "defaultProvider" | "metadata">
+	>;
 
 	if (a === b) {
 		return true;
@@ -511,7 +529,10 @@ function areMetadataEqual(
 ): boolean {
 	// If any new fields are added to FieldSchemaMetadata, this check will stop compiling as a reminder that this function needs to be updated.
 	type _keys = requireTrue<
-		areOnlyKeys<FieldSchemaMetadataAlpha, "custom" | "description" | "persistedMetadata">
+		areOnlyKeys<
+			FieldSchemaMetadataAlpha,
+			"custom" | "description" | "persistedMetadata"
+		>
 	>;
 
 	if (a === b) {
@@ -566,12 +587,13 @@ export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
  * Examples of such "non-exact" schema include `ImplicitFieldSchema`, `ImplicitAllowedTypes`, and  TypeScript unions of schema types.
  * @public
  */
-export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = FieldSchema> =
-	TSchema extends FieldSchema<infer Kind, infer Types>
-		? ApplyKind<TreeNodeFromImplicitAllowedTypes<Types>, Kind>
-		: TSchema extends ImplicitAllowedTypes
-			? TreeNodeFromImplicitAllowedTypes<TSchema>
-			: TreeNode | TreeLeafValue | undefined;
+export type TreeFieldFromImplicitField<
+	TSchema extends ImplicitFieldSchema = FieldSchema,
+> = TSchema extends FieldSchema<infer Kind, infer Types>
+	? ApplyKind<TreeNodeFromImplicitAllowedTypes<Types>, Kind>
+	: TSchema extends ImplicitAllowedTypes
+		? TreeNodeFromImplicitAllowedTypes<TSchema>
+		: TreeNode | TreeLeafValue | undefined;
 
 /**
  * Type of content that can be inserted into the tree for a field of the given schema.
@@ -586,7 +608,11 @@ export type InsertableTreeFieldFromImplicitField<
 	TSchemaInput extends ImplicitFieldSchema,
 	TSchema = UnionToIntersection<TSchemaInput>,
 > = [TSchema] extends [FieldSchema<infer Kind, infer Types>]
-	? ApplyKindInput<InsertableTreeNodeFromImplicitAllowedTypes<Types>, Kind, true>
+	? ApplyKindInput<
+			InsertableTreeNodeFromImplicitAllowedTypes<Types>,
+			Kind,
+			true
+		>
 	: [TSchema] extends [ImplicitAllowedTypes]
 		? InsertableTreeNodeFromImplicitAllowedTypes<TSchema>
 		: never;
@@ -599,9 +625,9 @@ export type InsertableTreeFieldFromImplicitField<
  * Extended version of {@link InsertableTreeFieldFromImplicitField} that also allows {@link (UnsafeUnknownSchema:type)}.
  * @alpha
  */
-export type InsertableField<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> = [
-	TSchema,
-] extends [ImplicitFieldSchema]
+export type InsertableField<
+	TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema,
+> = [TSchema] extends [ImplicitFieldSchema]
 	? InsertableTreeFieldFromImplicitField<TSchema>
 	: [TSchema] extends [UnsafeUnknownSchema]
 		? InsertableContent | undefined
@@ -616,8 +642,9 @@ export type InsertableField<TSchema extends ImplicitFieldSchema | UnsafeUnknownS
  * for use
  * @system @alpha
  */
-export type ReadableField<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> =
-	TreeFieldFromImplicitField<ReadSchema<TSchema>>;
+export type ReadableField<
+	TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema,
+> = TreeFieldFromImplicitField<ReadSchema<TSchema>>;
 
 /**
  * Adapter to remove {@link (UnsafeUnknownSchema:type)} from a schema type so it can be used with types for generating APIs for reading data.
@@ -626,11 +653,9 @@ export type ReadableField<TSchema extends ImplicitFieldSchema | UnsafeUnknownSch
  * Since reading with non-exact schema is still safe, this is mainly useful when the schema is also used as input and thus allows {@link (UnsafeUnknownSchema:type)}.
  * @system @alpha
  */
-export type ReadSchema<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> = [
-	TSchema,
-] extends [ImplicitFieldSchema]
-	? TSchema
-	: ImplicitFieldSchema;
+export type ReadSchema<
+	TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema,
+> = [TSchema] extends [ImplicitFieldSchema] ? TSchema : ImplicitFieldSchema;
 
 /**
  * Suitable for output.
@@ -649,9 +674,11 @@ export type ApplyKind<T, Kind extends FieldKind> = {
  * @see {@link Input}
  * @system @public
  */
-export type ApplyKindInput<T, Kind extends FieldKind, DefaultsAreOptional extends boolean> = [
-	Kind,
-] extends [FieldKind.Required]
+export type ApplyKindInput<
+	T,
+	Kind extends FieldKind,
+	DefaultsAreOptional extends boolean,
+> = [Kind] extends [FieldKind.Required]
 	? T
 	: [Kind] extends [FieldKind.Optional]
 		? T | undefined

@@ -45,7 +45,9 @@ function setObserver(newObserver: Observer | undefined): void {
 }
 
 function clearObserver(): void {
-	debugAssert(() => observerStack.length > 0 || "Empty Observer stack on clear");
+	debugAssert(
+		() => observerStack.length > 0 || "Empty Observer stack on clear",
+	);
 	const popped = observerStack.pop();
 	debugAssert(() => popped === currentObserver || "Mismatched observer stack");
 	currentObserver = observerStack[observerStack.length - 1];
@@ -54,7 +56,10 @@ function clearObserver(): void {
 /**
  * For the duration of `f`, pushes `newObserver` onto the observer stack, making it the {@link currentObserver}.
  */
-export function withObservation<T>(newObserver: Observer | undefined, f: () => T): T {
+export function withObservation<T>(
+	newObserver: Observer | undefined,
+	f: () => T,
+): T {
 	setObserver(newObserver);
 	try {
 		return f();

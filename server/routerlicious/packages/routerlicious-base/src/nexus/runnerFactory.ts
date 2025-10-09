@@ -18,7 +18,10 @@ import {
 import * as services from "@fluidframework/server-services";
 import * as core from "@fluidframework/server-services-core";
 import type { IReadinessCheck } from "@fluidframework/server-services-core";
-import { closeRedisClientConnections, StartupCheck } from "@fluidframework/server-services-shared";
+import {
+	closeRedisClientConnections,
+	StartupCheck,
+} from "@fluidframework/server-services-shared";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as utils from "@fluidframework/server-services-utils";
 import { RedisClientConnectionManager } from "@fluidframework/server-services-utils";
@@ -176,7 +179,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 					redisConfig2.slotsRefreshTimeout,
 					retryDelays,
 					redisConfig2.enableVerboseErrorLogging,
-			  );
+				);
 		redisClientConnectionManagers.push(redisClientConnectionManager);
 
 		const clientManager = new services.ClientManager(
@@ -204,7 +207,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 						redisClientConnectionManager,
 						redisParams2,
 						redisCollaborationSessionManagerOptions,
-				  )
+					)
 				: undefined;
 		const collaborationSessionTracker =
 			enableCollaborationSessionTracking === true && collaborationSessionManager !== undefined
@@ -213,7 +216,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 						collaborationSessionManager,
 						// Same as Deli close on inactivity, which signals session end.
 						core.DefaultServiceConfiguration.documentLambda.partitionActivityTimeout,
-				  )
+					)
 				: undefined;
 		if (
 			enableCollaborationSessionPruning === true &&
@@ -242,7 +245,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 						redisConfig2.slotsRefreshTimeout,
 						undefined /* retryDelays */,
 						redisConfig2.enableVerboseErrorLogging,
-				  );
+					);
 		redisClientConnectionManagers.push(redisClientConnectionManagerForJwtCache);
 		const redisJwtCache = new services.RedisCache(redisClientConnectionManagerForJwtCache);
 
@@ -281,8 +284,9 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 		// Setup for checkpoint collection
 		const localCheckpointEnabled = config.get("checkpoints:localCheckpointEnabled");
 		const operationsDb = await operationsDbMongoManager.getDatabase();
-		const checkpointsCollection =
-			operationsDb.collection<core.ICheckpoint>(checkpointsCollectionName);
+		const checkpointsCollection = operationsDb.collection<core.ICheckpoint>(
+			checkpointsCollectionName,
+		);
 		await checkpointsCollection.createIndex(
 			{
 				documentId: 1,
@@ -324,7 +328,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 						redisConfig2.slotsRefreshTimeout,
 						undefined /* retryDelays */,
 						redisConfig2.enableVerboseErrorLogging,
-				  );
+					);
 		redisClientConnectionManagers.push(redisClientConnectionManagerForInvalidTokenCache);
 		const redisCacheForInvalidToken = new services.RedisCache(
 			redisClientConnectionManagerForInvalidTokenCache,
@@ -342,9 +346,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 		// Redis connection for throttling.
 		const redisConfigForThrottling = config.get("redisForThrottling");
 		const redisParamsForThrottling = {
-			expireAfterSeconds: redisConfigForThrottling.keyExpireAfterSeconds as
-				| number
-				| undefined,
+			expireAfterSeconds: redisConfigForThrottling.keyExpireAfterSeconds as number | undefined,
 		};
 
 		const redisClientConnectionManagerForThrottling =
@@ -357,7 +359,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 						redisConfigForThrottling.slotsRefreshTimeout,
 						retryDelays,
 						redisConfigForThrottling.enableVerboseErrorLogging,
-				  );
+					);
 		redisClientConnectionManagers.push(redisClientConnectionManagerForThrottling);
 
 		const redisThrottleAndUsageStorageManager =
@@ -452,7 +454,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 		const opsCollection = await databaseManager.getDeltaCollection(undefined, undefined);
 		const storagePerDocEnabled = (config.get("storage:perDocEnabled") as boolean) ?? false;
 		const storageNameAllocator = storagePerDocEnabled
-			? customizations?.storageNameAllocator ?? new StorageNameAllocator(tenantManager)
+			? (customizations?.storageNameAllocator ?? new StorageNameAllocator(tenantManager))
 			: undefined;
 		const storage = new services.DocumentStorage(
 			documentRepository,
@@ -481,7 +483,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 							redisConfig.slotsRefreshTimeout,
 							undefined /* retryDelays */,
 							redisConfig.enableVerboseErrorLogging,
-					  );
+						);
 			redisClientConnectionManagers.push(redisClientConnectionManagerForLogging);
 
 			redisCache = new services.RedisCache(redisClientConnectionManagerForLogging);
@@ -568,7 +570,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 						redisConfig.slotsRefreshTimeout,
 						undefined /* retryDelays */,
 						redisConfig.enableVerboseErrorLogging,
-				  );
+					);
 
 		const redisClientConnectionManagerForSub =
 			customizations?.redisClientConnectionManagerForSub
@@ -580,13 +582,14 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 						redisConfig.slotsRefreshTimeout,
 						undefined /* retryDelays */,
 						redisConfig.enableVerboseErrorLogging,
-				  );
+					);
 
 		const socketIoAdapterConfig = config.get("nexus:socketIoAdapter");
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
 		const socketIoConfig = config.get("nexus:socketIo");
-		const nodeClusterConfig: Partial<services.INodeClusterConfig> | undefined =
-			config.get("nexus:nodeClusterConfig");
+		const nodeClusterConfig: Partial<services.INodeClusterConfig> | undefined = config.get(
+			"nexus:nodeClusterConfig",
+		);
 		const useNodeCluster = config.get("nexus:useNodeCluster");
 		const webServerFactory = useNodeCluster
 			? new services.SocketIoNodeClusterWebServerFactory(
@@ -597,7 +600,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 					socketIoConfig,
 					nodeClusterConfig,
 					customizations?.customCreateSocketIoAdapter,
-			  )
+				)
 			: new services.SocketIoWebServerFactory(
 					redisClientConnectionManagerForPub,
 					redisClientConnectionManagerForSub,
@@ -605,7 +608,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 					httpServerConfig,
 					socketIoConfig,
 					customizations?.customCreateSocketIoAdapter,
-			  );
+				);
 
 		const startupCheck = new StartupCheck();
 		const documentsDenyListConfig = config.get("documentDenyList");

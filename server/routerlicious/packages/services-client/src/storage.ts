@@ -82,7 +82,10 @@ export interface IGitService {
 	getTag(tag: string): Promise<git.ITag>;
 	createTree(tree: git.ICreateTreeParams): Promise<git.ITree>;
 	getTree(sha: string, recursive: boolean): Promise<git.ITree>;
-	createSummary(summary: IWholeSummaryPayload, initial?: boolean): Promise<IWriteSummaryResponse>;
+	createSummary(
+		summary: IWholeSummaryPayload,
+		initial?: boolean,
+	): Promise<IWriteSummaryResponse>;
 	deleteSummary(softDelete: boolean): Promise<void>;
 	getSummary(sha: string): Promise<IWholeFlatSummary>;
 }
@@ -128,7 +131,10 @@ export interface IGitManager {
 		parents: string[],
 		message: string,
 	): Promise<git.ICommit>;
-	createSummary(summary: IWholeSummaryPayload, initial?: boolean): Promise<IWriteSummaryResponse>;
+	createSummary(
+		summary: IWholeSummaryPayload,
+		initial?: boolean,
+	): Promise<IWriteSummaryResponse>;
 	deleteSummary(softDelete: boolean): Promise<void>;
 	getSummary(sha: string): Promise<IWholeFlatSummary>;
 }

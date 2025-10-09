@@ -22,7 +22,10 @@ import {
 	type IVersion,
 	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { getSnapshotTree, isInstanceOfISnapshot } from "@fluidframework/driver-utils/internal";
+import {
+	getSnapshotTree,
+	isInstanceOfISnapshot,
+} from "@fluidframework/driver-utils/internal";
 import {
 	type MonitoringContext,
 	PerformanceEvent,
@@ -213,15 +216,20 @@ export class SerializedStateManager implements IDisposable {
 			namespace: "serializedStateManager",
 		});
 
-		this.snapshotRefreshTimeoutMs = snapshotRefreshTimeoutMs ?? this.snapshotRefreshTimeoutMs;
+		this.snapshotRefreshTimeoutMs =
+			snapshotRefreshTimeoutMs ?? this.snapshotRefreshTimeoutMs;
 
 		this.#snapshotRefreshEnabled =
 			_offlineLoadEnabled &&
-			(this.mc.config.getBoolean("Fluid.Container.enableOfflineSnapshotRefresh") ??
-				this.mc.config.getBoolean("Fluid.Container.enableOfflineFull")) === true;
+			(this.mc.config.getBoolean(
+				"Fluid.Container.enableOfflineSnapshotRefresh",
+			) ?? this.mc.config.getBoolean("Fluid.Container.enableOfflineFull")) ===
+				true;
 
 		this.refreshTimer = this.#snapshotRefreshEnabled
-			? new Timer(this.snapshotRefreshTimeoutMs, () => this.tryRefreshSnapshot())
+			? new Timer(this.snapshotRefreshTimeoutMs, () =>
+					this.tryRefreshSnapshot(),
+				)
 			: undefined;
 		containerEvent.on("saved", () => this.updateSnapshotAndProcessedOpsMaybe());
 	}
@@ -288,8 +296,12 @@ export class SerializedStateManager implements IDisposable {
 				this.supportGetSnapshotApi(),
 				specifiedVersion,
 			);
-			const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(snapshot);
-			const attributes = await getDocumentAttributes(this.storageAdapter, baseSnapshotTree);
+			const baseSnapshotTree: ISnapshotTree | undefined =
+				getSnapshotTree(snapshot);
+			const attributes = await getDocumentAttributes(
+				this.storageAdapter,
+				baseSnapshotTree,
+			);
 			if (this.offlineLoadEnabled) {
 				this.refreshTimer?.start();
 				this.snapshotInfo = {
@@ -300,7 +312,10 @@ export class SerializedStateManager implements IDisposable {
 			return { snapshot, version, attributes };
 		} else {
 			const { baseSnapshot, snapshotBlobs, savedOps } = pendingLocalState;
-			const attributes = await getDocumentAttributes(this.storageAdapter, baseSnapshot);
+			const attributes = await getDocumentAttributes(
+				this.storageAdapter,
+				baseSnapshot,
+			);
 			const blobContents = new Map<string, ArrayBuffer>();
 			for (const [id, value] of Object.entries(snapshotBlobs)) {
 				blobContents.set(id, stringToBuffer(value, "utf8"));
@@ -320,7 +335,8 @@ export class SerializedStateManager implements IDisposable {
 				// a subsequent stashing to have a newer snapshot than allowed.
 				if (savedOps.length > 0) {
 					const savedOpsSize = savedOps.length;
-					this.lastSavedOpSequenceNumber = savedOps[savedOpsSize - 1].sequenceNumber;
+					this.lastSavedOpSequenceNumber =
+						savedOps[savedOpsSize - 1].sequenceNumber;
 				}
 
 				this.snapshotInfo = {
@@ -341,7 +357,9 @@ export class SerializedStateManager implements IDisposable {
 			this.latestSnapshot === undefined
 		) {
 			// Don't block on the refresh snapshot call - it is for the next time we serialize, not booting this incarnation
-			this.refreshTracker.setPromise(this.refreshLatestSnapshot(this.supportGetSnapshotApi()));
+			this.refreshTracker.setPromise(
+				this.refreshLatestSnapshot(this.supportGetSnapshotApi()),
+			);
 		}
 	}
 
@@ -351,7 +369,9 @@ export class SerializedStateManager implements IDisposable {
 	 *
 	 * @param supportGetSnapshotApi - a boolean indicating whether to use the fetchISnapshot or fetchISnapshotTree (must be true to fetch by groupIds)
 	 */
-	private async refreshLatestSnapshot(supportGetSnapshotApi: boolean): Promise<number> {
+	private async refreshLatestSnapshot(
+		supportGetSnapshotApi: boolean,
+	): Promise<number> {
 		this.latestSnapshot = await getLatestSnapshotInfo(
 			this.mc,
 			this.storageAdapter,
@@ -364,7 +384,9 @@ export class SerializedStateManager implements IDisposable {
 
 		// These are loading groupIds that the containerRuntime has requested over its lifetime.
 		// We will fetch the latest snapshot for the groupIds, which will update storageAdapter.loadedGroupIdSnapshots's cache
-		const downloadedGroupIds = Object.keys(this.storageAdapter.loadedGroupIdSnapshots);
+		const downloadedGroupIds = Object.keys(
+			this.storageAdapter.loadedGroupIdSnapshots,
+		);
 		if (supportGetSnapshotApi && downloadedGroupIds.length > 0) {
 			assert(
 				this.storageAdapter.getSnapshot !== undefined,
@@ -413,14 +435,18 @@ export class SerializedStateManager implements IDisposable {
 				snapshotSequenceNumber,
 				firstProcessedOpSequenceNumber,
 				lastProcessedOpSequenceNumber,
-				stashedSnapshotSequenceNumber: this.snapshotInfo?.snapshotSequenceNumber,
+				stashedSnapshotSequenceNumber:
+					this.snapshotInfo?.snapshotSequenceNumber,
 			});
 			this.latestSnapshot = undefined;
 			this.refreshTimer?.restart();
 		} else if (snapshotSequenceNumber <= lastProcessedOpSequenceNumber) {
 			// Snapshot seq num is between the first and last processed op.
 			// Remove the ops that are already part of the snapshot
-			this.processedOps.splice(0, snapshotSequenceNumber - firstProcessedOpSequenceNumber + 1);
+			this.processedOps.splice(
+				0,
+				snapshotSequenceNumber - firstProcessedOpSequenceNumber + 1,
+			);
 			this.snapshotInfo = this.latestSnapshot;
 			this.latestSnapshot = undefined;
 			this.refreshTimer?.restart();
@@ -429,7 +455,9 @@ export class SerializedStateManager implements IDisposable {
 				snapshotSequenceNumber,
 				firstProcessedOpSequenceNumber,
 				newFirstProcessedOpSequenceNumber:
-					this.processedOps.length === 0 ? undefined : this.processedOps[0].sequenceNumber,
+					this.processedOps.length === 0
+						? undefined
+						: this.processedOps[0].sequenceNumber,
 			});
 		}
 		return snapshotSequenceNumber;
@@ -464,7 +492,9 @@ export class SerializedStateManager implements IDisposable {
 	): Promise<string> {
 		this.verifyNotDisposed();
 		if (!this.offlineLoadEnabled) {
-			throw new UsageError("Can't get pending local state unless offline load is enabled");
+			throw new UsageError(
+				"Can't get pending local state unless offline load is enabled",
+			);
 		}
 
 		return PerformanceEvent.timedExecAsync(
@@ -487,13 +517,17 @@ export class SerializedStateManager implements IDisposable {
 					sessionExpiryTimerStarted: this.snapshotInfo.snapshotFetchedTime,
 				});
 				// This conversion is required because ArrayBufferLike doesn't survive JSON.stringify
-				const loadedGroupIdSnapshots: Record<string, SerializedSnapshotInfo> = {};
+				const loadedGroupIdSnapshots: Record<string, SerializedSnapshotInfo> =
+					{};
 				let hasGroupIdSnapshots = false;
-				const groupIdSnapshots = Object.entries(this.storageAdapter.loadedGroupIdSnapshots);
+				const groupIdSnapshots = Object.entries(
+					this.storageAdapter.loadedGroupIdSnapshots,
+				);
 				if (groupIdSnapshots.length > 0) {
 					for (const [groupId, snapshot] of groupIdSnapshots) {
 						hasGroupIdSnapshots = true;
-						loadedGroupIdSnapshots[groupId] = convertSnapshotToSnapshotInfo(snapshot);
+						loadedGroupIdSnapshots[groupId] =
+							convertSnapshotToSnapshotInfo(snapshot);
 					}
 				}
 
@@ -510,7 +544,9 @@ export class SerializedStateManager implements IDisposable {
 					attached: true,
 					pendingRuntimeState,
 					...snapshotWithBlobs,
-					loadedGroupIdSnapshots: hasGroupIdSnapshots ? loadedGroupIdSnapshots : undefined,
+					loadedGroupIdSnapshots: hasGroupIdSnapshots
+						? loadedGroupIdSnapshots
+						: undefined,
 					savedOps: this.processedOps,
 					url: resolvedUrl.url,
 					clientId,
@@ -566,7 +602,9 @@ export async function getLatestSnapshotInfo(
 					specifiedVersion[0]?.id,
 				);
 
-				const { sequenceNumber, snapshotTree } = isInstanceOfISnapshot(baseSnapshot)
+				const { sequenceNumber, snapshotTree } = isInstanceOfISnapshot(
+					baseSnapshot,
+				)
 					? baseSnapshot
 					: { snapshotTree: baseSnapshot, sequenceNumber: undefined };
 
@@ -626,7 +664,9 @@ export async function fetchISnapshot(
 	storageAdapter: Pick<IDocumentStorageService, "getSnapshot">,
 	specifiedVersion: string | undefined,
 ): Promise<{ snapshot?: ISnapshot; version?: IVersion }> {
-	const snapshot = await storageAdapter.getSnapshot?.({ versionId: specifiedVersion });
+	const snapshot = await storageAdapter.getSnapshot?.({
+		versionId: specifiedVersion,
+	});
 	const version: IVersion | undefined =
 		snapshot?.snapshotTree.id === undefined
 			? undefined
@@ -659,12 +699,18 @@ export async function fetchISnapshot(
  */
 export async function fetchISnapshotTree(
 	mc: MonitoringContext,
-	storageAdapter: Pick<IDocumentStorageService, "getSnapshotTree" | "getVersions">,
+	storageAdapter: Pick<
+		IDocumentStorageService,
+		"getSnapshotTree" | "getVersions"
+	>,
 	specifiedVersion: string | undefined,
 ): Promise<{ snapshot?: ISnapshotTree; version?: IVersion | undefined }> {
 	// API uses null
 	// eslint-disable-next-line unicorn/no-null
-	const versions = await storageAdapter.getVersions(specifiedVersion ?? null, 1);
+	const versions = await storageAdapter.getVersions(
+		specifiedVersion ?? null,
+		1,
+	);
 	const version = versions[0];
 
 	if (version === undefined && specifiedVersion !== undefined) {
@@ -677,7 +723,10 @@ export async function fetchISnapshotTree(
 	const snapshot = (await storageAdapter.getSnapshotTree(version)) ?? undefined;
 
 	if (snapshot === undefined && version !== undefined) {
-		mc.logger.sendErrorEvent({ eventName: "getSnapshotTreeFailed", id: version.id });
+		mc.logger.sendErrorEvent({
+			eventName: "getSnapshotTreeFailed",
+			id: version.id,
+		});
 	} else if (snapshot !== undefined && version?.id === undefined) {
 		mc.logger.sendErrorEvent({
 			eventName: "getSnapshotFetchedTreeWithoutVersionId",

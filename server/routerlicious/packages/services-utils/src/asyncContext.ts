@@ -61,7 +61,10 @@ export class AsyncLocalStorageTelemetryContext implements ITelemetryContext {
 		return this.contextProvider.getContext() ?? {};
 	}
 
-	public bindProperties(props: Partial<ITelemetryContextProperties>, callback: () => void): void {
+	public bindProperties(
+		props: Partial<ITelemetryContextProperties>,
+		callback: () => void,
+	): void {
 		this.contextProvider.bindContext(props, () => callback());
 	}
 

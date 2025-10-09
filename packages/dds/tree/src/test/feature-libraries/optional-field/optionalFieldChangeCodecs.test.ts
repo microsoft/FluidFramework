@@ -31,7 +31,10 @@ const nodeChange1: TestNodeId = TestNodeId.create(
 const tag1 = mintRevisionTag();
 
 const change1 = inlineRevision(
-	Change.atOnce(Change.reserve("self", brand(1)), Change.move(brand(41), "self")),
+	Change.atOnce(
+		Change.reserve("self", brand(1)),
+		Change.move(brand(41), "self"),
+	),
 	tag1,
 );
 

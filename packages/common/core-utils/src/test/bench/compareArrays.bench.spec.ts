@@ -34,11 +34,15 @@ function compareWithFor<T>(left: readonly T[], right: readonly T[]): boolean {
 
 function compareWithEvery<T>(left: readonly T[], right: readonly T[]): boolean {
 	return (
-		left.length === right.length && left.every((leftItem, index) => leftItem === right[index])
+		left.length === right.length &&
+		left.every((leftItem, index) => leftItem === right[index])
 	);
 }
 
-function compareWithObjectIs<T>(left: readonly T[], right: readonly T[]): boolean {
+function compareWithObjectIs<T>(
+	left: readonly T[],
+	right: readonly T[],
+): boolean {
 	return (
 		left.length === right.length &&
 		left.every((leftItem, index) => Object.is(leftItem, right[index]))

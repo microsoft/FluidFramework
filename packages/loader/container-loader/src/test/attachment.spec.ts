@@ -33,7 +33,9 @@ const emptySummary = combineAppAndProtocolSummary(
 type ObjectWithCallCounts<T extends Record<string, unknown>> = T &
 	Record<"calls", Record<keyof T, number>>;
 
-const addCallCounts = <T extends Record<string, unknown>>(obj: T): ObjectWithCallCounts<T> => {
+const addCallCounts = <T extends Record<string, unknown>>(
+	obj: T,
+): ObjectWithCallCounts<T> => {
 	// eslint-disable-next-line unicorn/no-array-reduce
 	const calls = Object.keys(obj).reduce((pv, cv) => {
 		pv[cv] = 0;
@@ -54,7 +56,9 @@ const addCallCounts = <T extends Record<string, unknown>>(obj: T): ObjectWithCal
 
 const createDetachStorage = (
 	blobCount: number,
-): ObjectWithCallCounts<Exclude<AttachProcessProps["detachedBlobStorage"], undefined>> => {
+): ObjectWithCallCounts<
+	Exclude<AttachProcessProps["detachedBlobStorage"], undefined>
+> => {
 	const blobs = new Map<string, ArrayBufferLike>(
 		Array.from({ length: blobCount }).map((_, i) => [
 			i.toString(),
@@ -115,7 +119,11 @@ describe("runRetriableAttachProcess", () => {
 					createProxyWithFailDefault<IDocumentStorageService>(),
 			});
 
-			assert.strictEqual(attachmentData?.state, AttachState.Attached, "should be attached");
+			assert.strictEqual(
+				attachmentData?.state,
+				AttachState.Attached,
+				"should be attached",
+			);
 		});
 
 		it("From DetachedDefaultData with offline and without blobs", async () => {
@@ -138,7 +146,11 @@ describe("runRetriableAttachProcess", () => {
 				}),
 			});
 
-			assert.strictEqual(attachmentData?.state, AttachState.Attached, "should be attached");
+			assert.strictEqual(
+				attachmentData?.state,
+				AttachState.Attached,
+				"should be attached",
+			);
 			assert.notStrictEqual(snapshot, undefined, "should have snapshot");
 		});
 
@@ -157,7 +169,11 @@ describe("runRetriableAttachProcess", () => {
 				initialAttachmentData: initial,
 				setAttachmentData: (data) => (attachmentData = data),
 				createAttachmentSummary: (redirectTable) => {
-					assert.strictEqual(redirectTable?.size, blobCount, "redirectTable?.size");
+					assert.strictEqual(
+						redirectTable?.size,
+						blobCount,
+						"redirectTable?.size",
+					);
 					return emptySummary;
 				},
 				createOrGetStorageService: async () => storageAdapter,
@@ -183,7 +199,11 @@ describe("runRetriableAttachProcess", () => {
 				"storageAdapter.calls.uploadSummaryWithContext",
 			);
 
-			assert.strictEqual(attachmentData?.state, AttachState.Attached, "should be attached");
+			assert.strictEqual(
+				attachmentData?.state,
+				AttachState.Attached,
+				"should be attached",
+			);
 		});
 
 		it("From DetachedDefaultData with zero blobs and without offline", async () => {
@@ -206,7 +226,11 @@ describe("runRetriableAttachProcess", () => {
 				>({ size: 0 }),
 			});
 
-			assert.strictEqual(attachmentData?.state, AttachState.Attached, "should be attached");
+			assert.strictEqual(
+				attachmentData?.state,
+				AttachState.Attached,
+				"should be attached",
+			);
 		});
 	});
 
@@ -341,7 +365,9 @@ describe("runRetriableAttachProcess", () => {
 				{
 					...attachmentData,
 					redirectTable:
-						attachmentData && "redirectTable" in attachmentData ? new Map() : undefined,
+						attachmentData && "redirectTable" in attachmentData
+							? new Map()
+							: undefined,
 				},
 				{
 					state: AttachState.Detached,
@@ -369,7 +395,9 @@ describe("runRetriableAttachProcess", () => {
 						return emptySummary;
 					},
 					createOrGetStorageService: async () => ({
-						createBlob: async (): Promise<ICreateBlobResponse> => ({ id: uuid() }),
+						createBlob: async (): Promise<ICreateBlobResponse> => ({
+							id: uuid(),
+						}),
 						uploadSummaryWithContext: async (): Promise<string> => {
 							throw error;
 						},
@@ -411,7 +439,11 @@ describe("runRetriableAttachProcess", () => {
 				initialAttachmentData: initial,
 				setAttachmentData: (data) => (attachmentData = data),
 				createAttachmentSummary: (redirectTable) => {
-					assert.strictEqual(redirectTable?.size, blobCount, "redirectTable?.size");
+					assert.strictEqual(
+						redirectTable?.size,
+						blobCount,
+						"redirectTable?.size",
+					);
 					return emptySummary;
 				},
 				createOrGetStorageService: async () => storageAdapter,
@@ -419,7 +451,11 @@ describe("runRetriableAttachProcess", () => {
 			});
 
 			// expect every blob to read, and uploaded
-			assert.strictEqual(initial.redirectTable.size, blobCount, "initial.redirectTable.size");
+			assert.strictEqual(
+				initial.redirectTable.size,
+				blobCount,
+				"initial.redirectTable.size",
+			);
 
 			assert.strictEqual(
 				detachedBlobStorage.calls.readBlob,
@@ -439,7 +475,11 @@ describe("runRetriableAttachProcess", () => {
 				"storageAdapter.calls.uploadSummaryWithContext",
 			);
 
-			assert.strictEqual(attachmentData?.state, AttachState.Attached, "should be attached");
+			assert.strictEqual(
+				attachmentData?.state,
+				AttachState.Attached,
+				"should be attached",
+			);
 		});
 
 		it("From AttachingDataWithBlobs", async () => {
@@ -461,7 +501,11 @@ describe("runRetriableAttachProcess", () => {
 				}),
 			);
 
-			assert.strictEqual(attachmentData?.state, AttachState.Attached, "should be attached");
+			assert.strictEqual(
+				attachmentData?.state,
+				AttachState.Attached,
+				"should be attached",
+			);
 			assert.notStrictEqual(snapshot, undefined, "should have snapshot");
 		});
 
@@ -483,7 +527,11 @@ describe("runRetriableAttachProcess", () => {
 				}),
 			);
 
-			assert.strictEqual(attachmentData?.state, AttachState.Attached, "should be attached");
+			assert.strictEqual(
+				attachmentData?.state,
+				AttachState.Attached,
+				"should be attached",
+			);
 			assert.notStrictEqual(snapshot, undefined, "should have snapshot");
 		});
 	});

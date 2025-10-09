@@ -39,7 +39,10 @@ export class SharedTreeBranchManager {
 	private readonly objectSchema?: z.Schema | undefined;
 	private readonly nodeIdAttributeName?: string | undefined;
 
-	public constructor(params?: { objectSchema?: z.Schema; nodeIdAttributeName?: string }) {
+	public constructor(params?: {
+		objectSchema?: z.Schema;
+		nodeIdAttributeName?: string;
+	}) {
 		this.objectSchema = params?.objectSchema;
 		this.nodeIdAttributeName = params?.nodeIdAttributeName;
 	}
@@ -61,16 +64,24 @@ export class SharedTreeBranchManager {
 			}
 		}
 
-		const diffTotality = sharedTreeDiff(obj as Record<string, unknown> | unknown[], newObj, {
-			useObjectIds:
-				this.nodeIdAttributeName === undefined
-					? undefined
-					: { idAttributeName: this.nodeIdAttributeName },
-			cyclesFix: true,
-		});
+		const diffTotality = sharedTreeDiff(
+			obj as Record<string, unknown> | unknown[],
+			newObj,
+			{
+				useObjectIds:
+					this.nodeIdAttributeName === undefined
+						? undefined
+						: { idAttributeName: this.nodeIdAttributeName },
+				cyclesFix: true,
+			},
+		);
 
 		if (this.nodeIdAttributeName !== undefined) {
-			return createMergableIdDiffSeries(obj, diffTotality, this.nodeIdAttributeName);
+			return createMergableIdDiffSeries(
+				obj,
+				diffTotality,
+				this.nodeIdAttributeName,
+			);
 		}
 
 		return createMergableDiffSeries(diffTotality);
@@ -107,11 +118,19 @@ export class SharedTreeBranchManager {
 		// eslint-disable-next-line import/no-deprecated
 		const originalBranch = getBranch(treeView);
 		const forkBranch = originalBranch.branch();
-		const forkView = forkBranch.viewWith(treeViewConfiguration) as TreeViewAlpha<T>;
+		const forkView = forkBranch.viewWith(
+			treeViewConfiguration,
+		) as TreeViewAlpha<T>;
 
-		console.log("traveling to absolute path from root:", absolutePathToObjectNode);
+		console.log(
+			"traveling to absolute path from root:",
+			absolutePathToObjectNode,
+		);
 		const newBranchTargetNode = sharedTreeTraverse(
-			forkView.root as unknown as TreeMapNode | TreeArrayNode | Record<string, unknown>,
+			forkView.root as unknown as
+				| TreeMapNode
+				| TreeArrayNode
+				| Record<string, unknown>,
 			absolutePathToObjectNode,
 		) as Record<string, unknown> | TreeArrayNode;
 
@@ -127,7 +146,13 @@ export class SharedTreeBranchManager {
 		// const differences = [];
 		this.mergeDiffs(differences, newBranchTargetNode);
 
-		return { differences, originalBranch, forkBranch, forkView, newBranchTargetNode };
+		return {
+			differences,
+			originalBranch,
+			forkBranch,
+			forkView,
+			newBranchTargetNode,
+		};
 	}
 
 	/**
@@ -147,7 +172,9 @@ export class SharedTreeBranchManager {
 		// eslint-disable-next-line import/no-deprecated
 		const originalBranch = getBranch(treeView);
 		const forkBranch = originalBranch.branch();
-		const forkView = forkBranch.viewWith(treeViewConfiguration) as TreeViewAlpha<T>;
+		const forkView = forkBranch.viewWith(
+			treeViewConfiguration,
+		) as TreeViewAlpha<T>;
 		const newBranchTargetNode = sharedTreeTraverse(
 			forkView.root as TreeMapNode | TreeArrayNode | Record<string, unknown>,
 			absolutePathToObjectNode,
@@ -186,7 +213,10 @@ export class SharedTreeBranchManager {
 		diff: Difference,
 		objectToUpdate: Record<string, unknown> | TreeArrayNode,
 	): boolean {
-		const targetObject: unknown = getTargetObjectFromPath(diff.path, objectToUpdate);
+		const targetObject: unknown = getTargetObjectFromPath(
+			diff.path,
+			objectToUpdate,
+		);
 
 		if (isTreeMapNode(targetObject)) {
 			switch (diff.type) {
@@ -195,7 +225,10 @@ export class SharedTreeBranchManager {
 					// This code is doing non-schema aware editing, which is not a supported feature of this API.
 					// Casting to any is a way to get this unsupported and rather unsafe operation to compile.
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
-					targetObject.set(diff.path[diff.path.length - 1] as string, diff.value as any);
+					targetObject.set(
+						diff.path[diff.path.length - 1] as string,
+						diff.value as any,
+					);
 					return true;
 				}
 				case "REMOVE": {
@@ -208,7 +241,8 @@ export class SharedTreeBranchManager {
 			}
 		} else if (isTreeArrayNode(targetObject)) {
 			const targetIndex = diff.path[diff.path.length - 1] as number;
-			const isTargetIndexValid = targetIndex >= 0 && targetIndex <= targetObject.length - 1;
+			const isTargetIndexValid =
+				targetIndex >= 0 && targetIndex <= targetObject.length - 1;
 			switch (diff.type) {
 				case "CHANGE":
 				case "CREATE": {

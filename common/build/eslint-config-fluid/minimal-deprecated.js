@@ -485,9 +485,7 @@ module.exports = {
 				"import/no-internal-modules": [
 					"error",
 					{
-						allow: ["@fluid*/*/test*", "@fluid*/*/internal/test*"].concat(
-							permittedImports,
-						),
+						allow: ["@fluid*/*/test*", "@fluid*/*/internal/test*"].concat(permittedImports),
 					},
 				],
 

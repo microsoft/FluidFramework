@@ -114,7 +114,10 @@ export class Migrator implements IMigrator {
 		const migrationState = this.migrationTool.migrationState;
 		if (migrationState === "migrating") {
 			this.performMigration();
-		} else if (migrationState === "collaborating" || migrationState === "stopping") {
+		} else if (
+			migrationState === "collaborating" ||
+			migrationState === "stopping"
+		) {
 			this.migrationTool.events.once("migrating", this.performMigration);
 		}
 		// Do nothing if already migrated

@@ -43,7 +43,10 @@ export class DDSFuzzHandle extends FluidHandleBase<string> {
 	}
 }
 
-export class PoisonedDDSFuzzHandle extends FluidHandleBase<string> implements IPoisonedHandle {
+export class PoisonedDDSFuzzHandle
+	extends FluidHandleBase<string>
+	implements IPoisonedHandle
+{
 	private attached: boolean = false;
 
 	public get isAttached(): boolean {

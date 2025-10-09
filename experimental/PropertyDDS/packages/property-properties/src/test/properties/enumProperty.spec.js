@@ -53,9 +53,21 @@ describe("Test EnumProperty", function () {
 					id: "lineType",
 					typeid: "Enum",
 					properties: [
-						{ id: "solid", value: 100, annotation: { description: "solid line" } },
-						{ id: "dashed", value: 200, annotation: { description: "dashed line" } },
-						{ id: "dotted", value: 300, annotation: { description: "dotted line" } },
+						{
+							id: "solid",
+							value: 100,
+							annotation: { description: "solid line" },
+						},
+						{
+							id: "dashed",
+							value: 200,
+							annotation: { description: "dashed line" },
+						},
+						{
+							id: "dotted",
+							value: 300,
+							annotation: { description: "dotted line" },
+						},
 					],
 				},
 				{
@@ -73,7 +85,11 @@ describe("Test EnumProperty", function () {
 							id: "secondLevelInlineEnum",
 							typeid: "Enum",
 							properties: [
-								{ id: "A", value: 0, annotation: { description: "The Letter A." } },
+								{
+									id: "A",
+									value: 0,
+									annotation: { description: "The Letter A." },
+								},
 								{
 									id: "B",
 									value: 76596785,
@@ -136,9 +152,9 @@ describe("Test EnumProperty", function () {
 		let copyOfTemplate = deepCopy(enumTemplate);
 		PropertyFactory._reregister(enumTemplate);
 		expect(copyOfTemplate).to.deep.equal(enumTemplate);
-		expect(PropertyFactory.getTemplate(copyOfTemplate.typeid).serialize()).to.deep.equal(
-			copyOfTemplate,
-		);
+		expect(
+			PropertyFactory.getTemplate(copyOfTemplate.typeid).serialize(),
+		).to.deep.equal(copyOfTemplate);
 	});
 
 	it("should correctly set/get the Enum values", function () {
@@ -158,7 +174,8 @@ describe("Test EnumProperty", function () {
 		expect(inlinedEnum.getValue()).to.equal(100);
 		expect(inlinedEnum.getEnumString()).to.equal("solid");
 
-		var secondLevelInlineProperty = enumInlineProp._properties.style.secondLevelInlineEnum;
+		var secondLevelInlineProperty =
+			enumInlineProp._properties.style.secondLevelInlineEnum;
 		secondLevelInlineProperty.setEnumByString("B");
 		expect(secondLevelInlineProperty.getValue()).to.equal(76596785);
 		expect(secondLevelInlineProperty.getEnumString()).to.equal("B");
@@ -166,7 +183,9 @@ describe("Test EnumProperty", function () {
 		enumInlineProp._properties.style.thickness.value = 5;
 
 		var firstOne = enumInlineProp.serialize();
-		var anotherEnumInlineProp = PropertyFactory.create("Adsk.Core:UI.Border-1.0.0");
+		var anotherEnumInlineProp = PropertyFactory.create(
+			"Adsk.Core:UI.Border-1.0.0",
+		);
 		anotherEnumInlineProp.deserialize(firstOne);
 		var anotherOne = anotherEnumInlineProp.serialize();
 		expect(firstOne).to.deep.equal(anotherOne);
@@ -189,24 +208,32 @@ describe("Test EnumProperty", function () {
 	it("should correctly squash Enums", function () {
 		var enum1 = PropertyFactory.create("autodesk.core:CustomWithEnumID-1.0.0");
 		enum1._properties.MyEnum.value = 1;
-		var squashedChangeset = new ChangeSet(enum1.serialize({ dirtyOnly: false }));
+		var squashedChangeset = new ChangeSet(
+			enum1.serialize({ dirtyOnly: false }),
+		);
 
 		enum1._properties.MyEnum.value = 2;
 		var changes = enum1.serialize({ dirtyOnly: true });
 		squashedChangeset.applyChangeSet(changes);
 
 		var serializedChangeset = enum1.serialize({ dirtyOnly: false });
-		expect(serializedChangeset).to.deep.equal(squashedChangeset.getSerializedChangeSet());
+		expect(serializedChangeset).to.deep.equal(
+			squashedChangeset.getSerializedChangeSet(),
+		);
 	});
 
 	it("should have a default value that is the lowest valid value", function () {
-		var enumProp = PropertyFactory.create("autodesk.core:CustomWithEnumID-1.0.0");
+		var enumProp = PropertyFactory.create(
+			"autodesk.core:CustomWithEnumID-1.0.0",
+		);
 		expect(enumProp.get("MyEnum").value).to.equal(1);
 	});
 
 	it("should have a default value of 0 if 0 is a valid value", function () {
 		var enumProp = PropertyFactory.create("Adsk.Core:UI.Border-1.0.0");
-		expect(enumProp.get("style").get("secondLevelInlineEnum").value).to.equal(0);
+		expect(enumProp.get("style").get("secondLevelInlineEnum").value).to.equal(
+			0,
+		);
 	});
 
 	it("should be possible to dynamically add an Enum to a NodeProperty", function () {
@@ -226,12 +253,18 @@ describe("Test EnumProperty", function () {
 	});
 
 	it("should correctly rebase Properties containing Enum values and correctly show conflicts", function () {
-		var baseProperty1 = PropertyFactory.create("autodesk.core:CustomWithEnumID-1.0.0");
+		var baseProperty1 = PropertyFactory.create(
+			"autodesk.core:CustomWithEnumID-1.0.0",
+		);
 
 		// Create two copies of this state
-		var baseProperty2 = PropertyFactory.create("autodesk.core:CustomWithEnumID-1.0.0");
+		var baseProperty2 = PropertyFactory.create(
+			"autodesk.core:CustomWithEnumID-1.0.0",
+		);
 		baseProperty2.deserialize(baseProperty1.serialize({ dirtyOnly: false }));
-		var baseProperty3 = PropertyFactory.create("autodesk.core:CustomWithEnumID-1.0.0");
+		var baseProperty3 = PropertyFactory.create(
+			"autodesk.core:CustomWithEnumID-1.0.0",
+		);
 		baseProperty3.deserialize(baseProperty1.serialize({ dirtyOnly: false }));
 
 		// Make sure the states are clear
@@ -249,7 +282,9 @@ describe("Test EnumProperty", function () {
 		baseProperty2._properties.MyEnum.value = 3;
 
 		// Get the ChangeSets
-		var changeSet1 = new ChangeSet(baseProperty1.serialize({ dirtyOnly: true }));
+		var changeSet1 = new ChangeSet(
+			baseProperty1.serialize({ dirtyOnly: true }),
+		);
 		var changeSet2 = baseProperty2.serialize({ dirtyOnly: true });
 
 		// Perform the actual rebase
@@ -266,7 +301,8 @@ describe("Test EnumProperty", function () {
 		expect(conflicts[0].type).to.be.equal(ChangeSet.ConflictType.COLLIDING_SET);
 		expect(conflicts[0].path).to.be.equal("");
 		expect(
-			conflicts[0].conflictingChange["enum<autodesk.core:UnitsEnum-1.0.0>"].MyEnum,
+			conflicts[0].conflictingChange["enum<autodesk.core:UnitsEnum-1.0.0>"]
+				.MyEnum,
 		).to.be.equal(2);
 	});
 

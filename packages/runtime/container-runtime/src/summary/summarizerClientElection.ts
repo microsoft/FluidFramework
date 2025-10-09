@@ -80,7 +80,8 @@ export class SummarizerClientElection
 			}
 			const electionSequenceNumber = this.clientElection.electionSequenceNumber;
 			const opsWithoutSummary =
-				sequenceNumber - (this.lastSummaryAckSeqForClient ?? electionSequenceNumber);
+				sequenceNumber -
+				(this.lastSummaryAckSeqForClient ?? electionSequenceNumber);
 			if (opsWithoutSummary > this.maxOpsSinceLastSummary) {
 				// Log and elect a new summarizer client.
 				const opsSinceLastReport = sequenceNumber - this.lastReportedSeq;
@@ -90,7 +91,8 @@ export class SummarizerClientElection
 						electedClientId,
 						lastSummaryAckSeqForClient: this.lastSummaryAckSeqForClient,
 						electionSequenceNumber,
-						nextElectedClientId: this.clientElection.peekNextElectedClient()?.clientId,
+						nextElectedClientId:
+							this.clientElection.peekNextElectedClient()?.clientId,
 					});
 					this.lastReportedSeq = sequenceNumber;
 				}
@@ -124,7 +126,8 @@ export class SummarizerClientElection
 		return {
 			electedClientId,
 			electedParentId,
-			electionSequenceNumber: this.lastSummaryAckSeqForClient ?? electionSequenceNumber,
+			electionSequenceNumber:
+				this.lastSummaryAckSeqForClient ?? electionSequenceNumber,
 		};
 	}
 
@@ -137,6 +140,8 @@ export class SummarizerClientElection
 		return SummarizerClientElection.clientDetailsPermitElection(details);
 	}
 
-	public static readonly clientDetailsPermitElection = (details: IClientDetails): boolean =>
+	public static readonly clientDetailsPermitElection = (
+		details: IClientDetails,
+	): boolean =>
 		details.capabilities.interactive || details.type === summarizerClientType;
 }

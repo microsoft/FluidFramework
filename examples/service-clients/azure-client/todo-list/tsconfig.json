@@ -3,8 +3,13 @@
 	"exclude": ["lib", "node_modules"],
 	"compilerOptions": {
 		"outDir": "./lib",
-		"types": ["jest", "puppeteer", "jest-environment-puppeteer", "expect-puppeteer"],
-		"exactOptionalPropertyTypes": false,
+		"types": [
+			"jest",
+			"puppeteer",
+			"jest-environment-puppeteer",
+			"expect-puppeteer"
+		],
+		"exactOptionalPropertyTypes": false
 	},
-	"include": ["src/**/*", "tests/**/*"],
+	"include": ["src/**/*", "tests/**/*"]
 }

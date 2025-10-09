@@ -8,7 +8,10 @@ import { Flags } from "@oclif/core";
 import * as semver from "semver";
 
 import { releaseGroupNameFlag, semverFlag } from "../../../flags.js";
-import { BaseCommandWithBuildProject, getVersionsFromTags } from "../../../library/index.js";
+import {
+	BaseCommandWithBuildProject,
+	getVersionsFromTags,
+} from "../../../library/index.js";
 
 type MajorVersion = number;
 
@@ -66,7 +69,9 @@ export default class LatestVersionsCommand extends BaseCommandWithBuildProject<
 		});
 
 		// Sort the semver versions ordered from highest to lowest
-		const sortedByVersion = stableVersions.sort((a, b) => semver.rcompare(a, b));
+		const sortedByVersion = stableVersions.sort((a, b) =>
+			semver.rcompare(a, b),
+		);
 
 		const inputMajorVersion: MajorVersion = semver.major(versionInput.version);
 
@@ -80,7 +85,9 @@ export default class LatestVersionsCommand extends BaseCommandWithBuildProject<
 					this.log(
 						`Version ${versionInput.version} is the latest version for major version ${majorVersion}`,
 					);
-					this.log(`##vso[task.setvariable variable=shouldDeploy;isoutput=true]true`);
+					this.log(
+						`##vso[task.setvariable variable=shouldDeploy;isoutput=true]true`,
+					);
 					this.log(
 						`##vso[task.setvariable variable=majorVersion;isoutput=true]${majorVersion}`,
 					);
@@ -91,8 +98,12 @@ export default class LatestVersionsCommand extends BaseCommandWithBuildProject<
 				this.log(
 					`##[warning]skipping deployment stage. input version ${versionInput.version} does not match the latest version ${v}`,
 				);
-				this.log(`##vso[task.setvariable variable=shouldDeploy;isoutput=true]false`);
-				this.log(`##vso[task.setvariable variable=majorVersion;isoutput=true]${majorVersion}`);
+				this.log(
+					`##vso[task.setvariable variable=shouldDeploy;isoutput=true]false`,
+				);
+				this.log(
+					`##vso[task.setvariable variable=majorVersion;isoutput=true]${majorVersion}`,
+				);
 				return;
 			}
 		}
@@ -101,7 +112,9 @@ export default class LatestVersionsCommand extends BaseCommandWithBuildProject<
 		this.log(
 			`##[warning]No major version found corresponding to input version ${versionInput.version}`,
 		);
-		this.log(`##vso[task.setvariable variable=shouldDeploy;isoutput=true]false`);
+		this.log(
+			`##vso[task.setvariable variable=shouldDeploy;isoutput=true]false`,
+		);
 		this.log(
 			`##vso[task.setvariable variable=majorVersion;isoutput=true]${inputMajorVersion}`,
 		);

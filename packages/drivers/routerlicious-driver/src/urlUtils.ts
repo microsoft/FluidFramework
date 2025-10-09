@@ -12,8 +12,10 @@ import { ISession } from "@fluidframework/server-services-client";
  * Routerlicious and Tinylicious do not use documentId in storageUrl nor ordererUrl.
  * TODO: Ideally we would be able to regenerate the resolvedUrl, rather than patching the current one.
  */
-export const replaceDocumentIdInPath = (urlPath: string, documentId: string): string =>
-	urlPath.split("/").slice(0, -1).concat([documentId]).join("/");
+export const replaceDocumentIdInPath = (
+	urlPath: string,
+	documentId: string,
+): string => urlPath.split("/").slice(0, -1).concat([documentId]).join("/");
 
 export const getDiscoveredFluidResolvedUrl = (
 	resolvedUrl: IResolvedUrl,
@@ -38,7 +40,9 @@ export const getDiscoveredFluidResolvedUrl = (
 		id: resolvedUrl.id,
 		tokens: resolvedUrl.tokens,
 		type: resolvedUrl.type,
-		url: new URL(`https://${discoveredOrdererUrl.host}${parsedUrl.pathname}`).toString(),
+		url: new URL(
+			`https://${discoveredOrdererUrl.host}${parsedUrl.pathname}`,
+		).toString(),
 	};
 	return discoveredResolvedUrl;
 };

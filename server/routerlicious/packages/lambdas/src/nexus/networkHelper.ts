@@ -47,8 +47,8 @@ export async function checkNetworkInformation(
 	if (networkInfo.isPrivateLink) {
 		if (privateLinkEnable) {
 			const connectionDetail =
-				tenantInfo.customData.privateEndpoints[0]?.privateEndpointConnectionProxy
-					?.properties?.remotePrivateEndpoint?.connectionDetails[0];
+				tenantInfo.customData.privateEndpoints[0]?.privateEndpointConnectionProxy?.properties
+					?.remotePrivateEndpoint?.connectionDetails[0];
 			const accountLinkId = connectionDetail?.linkIdentifier;
 			return networkInfo.privateLinkId === accountLinkId
 				? { message: "This is a private link socket connection", shouldConnect: true }
@@ -56,7 +56,7 @@ export async function checkNetworkInformation(
 						message:
 							"This private link should not be connected since the link id does not match",
 						shouldConnect: false,
-				  };
+					};
 		} else {
 			return {
 				message:
@@ -80,7 +80,7 @@ export async function checkNetworkInformation(
 					message:
 						"This is a failed private link tenant socket connection from public network",
 					shouldConnect: false,
-			  }
+				}
 			: { message: "This public network should be connected", shouldConnect: true };
 	}
 }
