@@ -6,12 +6,17 @@ The eslint-plugin-fluid changes have been prepared on branch `copilot/eslint-plu
 
 ## What's Ready
 
-Branch: `copilot/eslint-plugin-fluid-eslint-9-compat`
+Branch: `copilot/eslint-plugin-fluid-eslint-9-compat` (LOCAL ONLY - needs push)
 Base commit: 0afd5eb (Improve Assert APIs)
 
 Commits:
-1. bccb947 - fix(eslint-plugin): update no-unchecked-record-access for ESLint 9 API (by Tyler)
-2. 06b1bca - Update eslint-plugin-fluid for ESLint 8 and 9 compatibility
+1. 1a88550 - fix(eslint-plugin): update no-unchecked-record-access for ESLint 9 API (by Tyler)
+2. e6fd28a - Update eslint-plugin-fluid for ESLint 8 and 9 compatibility
+
+**Note:** This branch exists locally but has not been pushed to origin yet. To push it:
+```bash
+git push -u origin copilot/eslint-plugin-fluid-eslint-9-compat
+```
 
 ## Changes Included
 
@@ -27,13 +32,18 @@ Commits:
 - All test files migrated to ESLint 9's flat config API
 - All 19 tests passing
 
-## To Create the PR
+## To Push and Create the PR
 
+First, push the local branch:
 ```bash
-git checkout copilot/eslint-plugin-fluid-eslint-9-compat
+git push -u origin copilot/eslint-plugin-fluid-eslint-9-compat
+```
+
+Then create the PR:
+```bash
 gh pr create --base main --head copilot/eslint-plugin-fluid-eslint-9-compat \
   --title "Update eslint-plugin-fluid for ESLint 8 and 9 compatibility" \
-  --body "See commit 06b1bca for full details"
+  --body "See commit e6fd28a for full details. All 19 tests passing."
 ```
 
 ## Current State
