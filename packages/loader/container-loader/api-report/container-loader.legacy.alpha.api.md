@@ -23,6 +23,9 @@ export interface ContainerAlpha extends IContainer {
 // @beta @legacy
 export function createDetachedContainer(createDetachedContainerProps: ICreateDetachedContainerProps): Promise<IContainer>;
 
+// @alpha @legacy
+export function createFrozenDocumentServiceFactory(factory?: IDocumentServiceFactory | Promise<IDocumentServiceFactory>): IDocumentServiceFactory;
+
 // @beta @legacy (undocumented)
 export interface IBaseProtocolHandler {
     // (undocumented)
