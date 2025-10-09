@@ -88,7 +88,7 @@ import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index
 
 const options: CodecWriteOptions = {
 	jsonValidator: typeboxValidator,
-	oldestCompatibleClient: FluidClientVersion.v2_0,
+	minVersionForCollab: FluidClientVersion.v2_0,
 };
 
 const fieldBatchCodec = makeFieldBatchCodec({ jsonValidator: typeboxValidator }, 1);

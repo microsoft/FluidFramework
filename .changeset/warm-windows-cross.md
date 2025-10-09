@@ -5,18 +5,38 @@
 ---
 MinimumVersionForCollab is now used in place of tree's alpha FluidClientVersion
 
-`FluidClientVersion` is no longer used as the type for Fluid Client versions in APIs/codecs (for example, `oldestCompatibleClient`).
+`FluidClientVersion`: No longer used as the type for Fluid Client versions in APIs/codecs (for example, `oldestCompatibleClient`).
 Additionally, `FluidClientVersion` is now a const object with members that declare specific [`MinimumVersionForCollab`](https://fluidframework.com/docs/api/runtime-definitions/minimumversionforcollab-typealias) versions.
 These are intended to be used with APIs that require a version (such as `TreeAlpha.exportCompressed`).
 
-`SharedTreeOptions.oldestCompatibleClient` has been removed in favor of `LoadContainerRuntimeParams.minVersionForCollab`.
-If an application previously specified the minimum client version when initialization Shared Tree like:
+`CodecWriteOptions` and `SharedTreeOptions`: `oldestCompatibleClient` has been replaced by `minVersionForCollab`. See migration guide below.
+
+`TreeAlpha.exportCompressed`: The `options` parameter previously had `oldestCompatibleClient` and now has `minVersionForCollab`.
+Migrating requires a rename. Existing `FluidClientVersion.*` values are now `MinimumClientVersion`s.
+
+#### Migrating
+
+If an application is calling `loadContainerRuntime` directly and previously specified the minimum client version when
+initializing Shared Tree like:
 
 ```ts
     const factory = configuredSharedTree({ ..., oldestCompatibleClient: FluidClientVersion.v2_52 });
 ```
 
-The application should now specify the version when initializing the Container Runtime:
+Then the new implementation depends on how the application initializes Fluid.
+
+##### Migrating: applications using `AzureClient`/`OdspClient`
+
+If an application is using the declarative model (e.g., `AzureClient`/`OdspClient`), it should continue to call `configuredSharedTree`
+but specify `minVersionForCollab` instead:
+
+```ts
+    const factory = configuredSharedTree({ ..., minVersionForCollab: "2.52.0" });
+```
+
+##### Migrating: applications calling `loadContainerRuntime`
+
+If an application is initializing the `ContainerRuntime` directly, it should now specify the `minVersionForCollab` there:
 
 ```ts
     const runtime = await loadContainerRuntime({ ..., minVersionForCollab: "2.52.0" });

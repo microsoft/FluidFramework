@@ -39,19 +39,19 @@ describe("versioned Codecs", () => {
 		]);
 		const builder = new ClientVersionDispatchingCodecBuilder(
 			family,
-			(oldestCompatibleClient: MinimumVersionForCollab) =>
+			(minVersionForCollab: MinimumVersionForCollab) =>
 				// Arbitrary version selection logic for test purposes. Versions greater than 5.0.0 get v2 codec.
-				gt(oldestCompatibleClient, "5.0.0") ? 2 : 1,
+				gt(minVersionForCollab, "5.0.0") ? 2 : 1,
 		);
 
 		it("round trip", () => {
 			const codec1 = builder.build({
-				oldestCompatibleClient: "2.0.0",
+				minVersionForCollab: "2.0.0",
 				jsonValidator: typeboxValidator,
 			});
 			const codec2 = builder.build({
 				// We have to cast to a `MinimumVersionForCollab` because "6.0.0" is not a valid value for that type.
-				oldestCompatibleClient: "6.0.0" as MinimumVersionForCollab,
+				minVersionForCollab: "6.0.0" as MinimumVersionForCollab,
 				jsonValidator: typeboxValidator,
 			});
 			const v1 = codec1.encode(42);
@@ -66,7 +66,7 @@ describe("versioned Codecs", () => {
 			assert.throws(
 				() => codec1.decode({ version: 3, value2: 42 }),
 				validateUsageError(`Unsupported version 3 encountered while decoding data. Supported versions for this data are: 1, 2.
-The client which encoded this data likely specified an "oldestCompatibleClient" value which corresponds to a version newer than the version of this client ("${pkgVersion}").`),
+The client which encoded this data likely specified an "minVersionForCollab" value which corresponds to a version newer than the version of this client ("${pkgVersion}").`),
 			);
 		});
 	});

@@ -581,14 +581,13 @@ export type SharedTreeFormatVersion = typeof SharedTreeFormatVersion;
  * Configuration options for SharedTree.
  * @alpha @input
  */
-export type SharedTreeOptions = Partial<ICodecOptions> &
+export type SharedTreeOptions = Partial<CodecWriteOptions> &
 	Partial<SharedTreeFormatOptions> &
 	ForestOptions;
 
 export interface SharedTreeOptionsInternal
 	extends Omit<SharedTreeOptions, "treeEncodeType">,
-		Partial<SharedTreeFormatOptionsInternal>,
-		Partial<CodecWriteOptions> {
+		Partial<SharedTreeFormatOptionsInternal> {
 	disposeForksAfterTransaction?: boolean;
 	/**
 	 * Returns whether a field should be incrementally encoded.
@@ -721,7 +720,7 @@ export function buildConfiguredForest(
 
 export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	jsonValidator: noopValidator,
-	oldestCompatibleClient: FluidClientVersion.v2_0,
+	minVersionForCollab: FluidClientVersion.v2_0,
 	forest: ForestTypeReference,
 	treeEncodeType: TreeCompressionStrategy.Compressed,
 	formatVersion: SharedTreeFormatVersion.v3,

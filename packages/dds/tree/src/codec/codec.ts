@@ -146,7 +146,7 @@ export interface CodecWriteOptions extends ICodecOptions {
 	 * Note that versions older than this should not result in data corruption if they access the data:
 	 * the data's format should be versioned and if they can't handle the format they should error.
 	 */
-	readonly oldestCompatibleClient: MinimumVersionForCollab;
+	readonly minVersionForCollab: MinimumVersionForCollab;
 }
 
 /**

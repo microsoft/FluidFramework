@@ -119,12 +119,12 @@ export type FieldBatchCodec = IJsonCodec<
 >;
 
 /**
- * Get the write version for {@link makeFieldBatchCodec} based on the `oldestCompatibleClient` version.
+ * Get the write version for {@link makeFieldBatchCodec} based on the `minVersionForCollab` version.
  * @privateRemarks
  * TODO: makeFieldBatchCodec (and makeVersionDispatchingCodec transitively) should bake in this versionToFormat logic and the resulting codec can then support use with FluidClientVersion directly.
  */
 export function fluidVersionToFieldBatchCodecWriteVersion(
-	oldestCompatibleClient: MinimumVersionForCollab,
+	minVersionForCollab: MinimumVersionForCollab,
 ): number {
 	// There is currently on only 1 version.
 	return 1;

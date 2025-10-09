@@ -78,7 +78,7 @@ function createForestSummarizer(args: {
 	const fieldBatchCodec = makeFieldBatchCodec({ jsonValidator: typeboxValidator }, 1);
 	const options: CodecWriteOptions = {
 		jsonValidator: typeboxValidator,
-		oldestCompatibleClient: FluidClientVersion.v2_0,
+		minVersionForCollab: FluidClientVersion.v2_0,
 	};
 	const checkout = checkoutWithContent(initialContent, {
 		forestType,
