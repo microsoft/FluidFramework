@@ -3,9 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { fail } from "../../utils.js";
 import { Users } from "../domains/index.js";
-import { scoreSymbol, type LLMIntegrationTest, type ScorableVerboseTree } from "../utils.js";
+import {
+	fail,
+	scoreSymbol,
+	type LLMIntegrationTest,
+	type ScorableVerboseTree,
+} from "../utils.js";
 
 // We start with two users (alpardes and mapardes) and edit the alpardes user.
 // We only score on the presence of the two correct user IDs and their name fields; timestamps/emails are ignored.

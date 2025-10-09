@@ -4,8 +4,7 @@
  */
 
 import { SchemaFactoryAlpha } from "@fluidframework/tree/internal";
-
-import { llmDefault } from "../../utils.js";
+import { llmDefault } from "@fluidframework/tree-agent/alpha";
 
 // eslint-disable-next-line eslint-comments/disable-enable-pair
 /* eslint-disable jsdoc/require-jsdoc */

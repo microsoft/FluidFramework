@@ -10,38 +10,36 @@ import {
 	TreeViewConfiguration,
 	independentView,
 } from "@fluidframework/tree/alpha";
+import { SharedTreeSemanticAgent } from "@fluidframework/tree-agent/alpha";
+import type { SharedTreeChatModel } from "@fluidframework/tree-agent/alpha";
 
-import { SharedTreeSemanticAgent } from "../agent.js";
-import type { SharedTreeChatModel } from "../api.js";
-import { createSesEditEvaluator } from "../ses.js";
+import { createSesEditExecutor } from "../executor.js";
 
 const sf = new SchemaFactory(undefined);
 
-// This test is skipped in order to avoid the SES import and lockdown side effects of `createSesEditEvaluator` from impacting other tests (e.g. when all tests are run during CI).
-// Enable it manually to verify the SES-based evaluator works as expected, then re-skip it before checking in.
-describe.skip("SES edit evaluator", () => {
-	it("prevents collision with reserved globals", async () => {
-		await assert.rejects(
-			createSesEditEvaluator({
-				compartmentOptions: {
-					globals: new Map([["context", {}]]),
-				},
-			}),
-			{
-				message: /context.*reserved/,
-			},
+// This test is skipped to avoid SES lockdown side effects in global CI runs. Enable locally to validate.
+describe.skip("SES edit executor", () => {
+	it("prevents collision with reserved globals", () => {
+		assert.throws(
+			() =>
+				createSesEditExecutor({
+					compartmentOptions: {
+						globals: new Map([["context", {}]]),
+					},
+				}),
+			/context.*reserved/,
 		);
 	});
 
-	it("can be generated multiple times without error", async () => {
-		await createSesEditEvaluator({ lockdownOptions });
-		await createSesEditEvaluator({ lockdownOptions });
+	it("can be generated multiple times without error", () => {
+		createSesEditExecutor({ lockdownOptions });
+		createSesEditExecutor({ lockdownOptions });
 	});
 
 	it("passes globals to the compartment", async () => {
 		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
 		view.initialize("Initial");
-		const executeEdit = await createSesEditEvaluator({
+		const executeEdit = createSesEditExecutor({
 			lockdownOptions,
 			compartmentOptions: {
 				globals: new Map([["extraGlobal", "globalValue"]]),
@@ -64,9 +62,7 @@ describe.skip("SES edit evaluator", () => {
 	it("returns a code error when SES blocks the generated code", async () => {
 		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
 		view.initialize("Initial");
-		const executeEdit = await createSesEditEvaluator({
-			lockdownOptions,
-		});
+		const executeEdit = createSesEditExecutor({ lockdownOptions });
 		const model: SharedTreeChatModel = {
 			editToolName: "EditTreeTool",
 			async query({ edit }) {
@@ -83,12 +79,8 @@ describe.skip("SES edit evaluator", () => {
 	});
 });
 
-/**
- * Used to configure SES lockdown for tests.
- * @remarks This e.g. prevents mocha from failing during test cleanup as it messes with the console.
- */
 const lockdownOptions = {
-	consoleTaming: "unsafe", // Allow test framework to patch console
-	errorTaming: "unsafe", // Keep full stacks for debugging
-	stackFiltering: "verbose", // Richer stacks
+	consoleTaming: "unsafe",
+	errorTaming: "unsafe",
+	stackFiltering: "verbose",
 } as const;

@@ -3,15 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { SchemaFactoryAlpha } from "@fluidframework/tree/internal";
-import z from "zod";
-
+import { SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
 import {
 	buildFunc,
 	exposeMethodsSymbol,
 	type ExposedMethods,
 	type IExposedMethods,
-} from "../../methodBinding.js";
+} from "@fluidframework/tree-agent/alpha";
+import z from "zod";
 
 // eslint-disable-next-line eslint-comments/disable-enable-pair
 /* eslint-disable jsdoc/require-jsdoc */

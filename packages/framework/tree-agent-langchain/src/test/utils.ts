@@ -20,14 +20,27 @@ import {
 	type VerboseTree,
 	type VerboseTreeNode,
 } from "@fluidframework/tree/internal";
+import { SharedTreeSemanticAgent, type TreeView } from "@fluidframework/tree-agent/alpha";
 import { ChatAnthropic } from "@langchain/anthropic";
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models"; // eslint-disable-line import/no-internal-modules
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { ChatOpenAI } from "@langchain/openai";
 
-import { SharedTreeSemanticAgent } from "../agent.js";
-import { LangchainChatModel } from "../langchain.js";
-import { fail, failUsage, getOrCreate, type TreeView } from "../utils.js";
+import { createLangchainChatModel } from "../chatModel.js";
+
+/**
+ * Throw an error with the given message
+ */
+export function fail(message: string): never {
+	throw new Error(message);
+}
+
+/**
+ * Throw a usage error with the given message
+ */
+export function failUsage(message: string): never {
+	throw new UsageError(message);
+}
 
 /**
  * Validates that the error is a UsageError with the expected error message.
@@ -122,7 +135,7 @@ async function queryDomain<TSchema extends ImplicitFieldSchema>(
 ): Promise<TreeView<TSchema>> {
 	const view = independentView(new TreeViewConfiguration({ schema }), {});
 	view.initialize(initialTree);
-	const client = new LangchainChatModel(createLlmClient(provider));
+	const client = createLangchainChatModel(createLlmClient(provider));
 	const logger = options?.log === undefined ? undefined : { log: options.log };
 	const subtree = options?.subtree?.(view.root);
 	const agent =
@@ -219,7 +232,12 @@ export function describeIntegrationTests(
 		// Group tests by domain, in case they were not already ordered that way in the test list.
 		const groups = new Map<unknown, LLMIntegrationTest<UnsafeUnknownSchema>[]>();
 		for (const test of tests) {
-			getOrCreate(groups, test.schema, () => []).push(test);
+			let t = groups.get(test.schema);
+			if (t === undefined) {
+				t = [];
+				groups.set(test.schema, t);
+			}
+			t.push(test);
 		}
 		const grouped = [...groups.values()].flat();
 

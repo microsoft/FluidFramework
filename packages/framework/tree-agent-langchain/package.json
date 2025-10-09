@@ -1,12 +1,12 @@
 {
-	"name": "@fluidframework/tree-agent",
+	"name": "@fluidframework/tree-agent-langchain",
 	"version": "2.63.0",
-	"description": "Experimental package to simplify integrating AI into Fluid-based applications",
+	"description": "LangChain integration helpers for @fluidframework/tree-agent",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "packages/framework/tree-agent"
+		"directory": "packages/framework/tree-agent-langchain"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
@@ -110,12 +110,9 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@anthropic-ai/sdk": "^0.39.0",
-		"@fluidframework/core-utils": "workspace:~",
-		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"@fluidframework/tree": "workspace:~",
-		"uuid": "^11.1.0",
+		"@fluidframework/tree-agent": "workspace:~",
+		"@langchain/core": "^0.3.78",
 		"zod": "^3.25.32"
 	},
 	"devDependencies": {
@@ -125,18 +122,16 @@
 		"@fluid-tools/build-cli": "^0.58.3",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.58.3",
+		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^6.0.0",
-		"@fluidframework/id-compressor": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
-		"@fluidframework/test-runtime-utils": "workspace:~",
+		"@fluidframework/tree": "workspace:~",
 		"@langchain/anthropic": "^0.3.24",
-		"@langchain/core": "^0.3.78",
 		"@langchain/google-genai": "^0.2.16",
 		"@langchain/openai": "^0.6.12",
 		"@microsoft/api-extractor": "7.52.11",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
-		"@types/uuid": "^9.0.2",
 		"c8": "^10.1.3",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
@@ -147,7 +142,6 @@
 		"mocha-multi-reporters": "^1.5.1",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"ses": "^1.14.0",
 		"typescript": "~5.4.5"
 	},
 	"fluidBuild": {

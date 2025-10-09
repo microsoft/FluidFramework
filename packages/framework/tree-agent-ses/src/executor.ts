@@ -3,37 +3,36 @@
  * Licensed under the MIT License.
  */
 
-import type { CompartmentOptions, LockdownOptions } from "ses";
+// eslint-disable-next-line import/no-unassigned-import
+import "ses";
 
-import type { SemanticAgentOptions } from "./api.js";
-import { toErrorString } from "./utils.js";
+import type { SemanticAgentOptions } from "@fluidframework/tree-agent/alpha";
 
+/**
+ * Used to track whether the SES `lockdown` function has already been called by this module.
+ */
 const lockdownSymbol = Symbol.for("tree-agent.ses.locked");
 
 /**
- * Create an implementation of {@link SemanticAgentOptions.executeEdit} that uses the SES library to run the provided code in a secure environment.
- * @param createCompartment - This function can be used to optionally configure the SES Compartment used to execute the code.
- * The provided globals must be included in the compartment's globals and must not conflict with any additional globals passed in.
- * @param lockdownOptions - Optional configuration passed to the SES `lockdown` function.
- * @returns A function that can be used as the {@link SemanticAgentOptions.executeEdit | executeEdit} callback.
- * @remarks This function will both import the SES library and call its `lockdown` function the first time it is called.
- * Therefore, this function should be called only once, early in an application's lifetime.
+ * Create an implementation of {@link @fluidframework/tree-agent#SemanticAgentOptions.executeEdit} that uses the SES library
+ * to run the provided code in a secure environment.
+ * @param options - Optional configuration for the underlying SES compartment and lockdown invocation.
+ * @returns A function that can be used as the {@link @fluidframework/tree-agent#SemanticAgentOptions.executeEdit | executeEdit} callback.
+ * @remarks This function will call the SES `lockdown` API the first time it is invoked. For best performance, create the executor once during application initialization.
  * @alpha
  */
-export async function createSesEditEvaluator(options?: {
-	compartmentOptions?: CompartmentOptions;
-	lockdownOptions?: LockdownOptions;
-}): Promise<SemanticAgentOptions["executeEdit"]> {
+export function createSesEditExecutor(options?: {
+	compartmentOptions?: { globals?: Map<string, unknown>; [key: string]: unknown };
+	lockdownOptions?: Record<string, unknown>;
+}): SemanticAgentOptions["executeEdit"] {
 	const optionsGlobals: Map<string, unknown> =
 		options?.compartmentOptions?.globals ?? new Map<string, unknown>();
+
 	if (optionsGlobals.has("context") === true) {
 		throw new Error(
 			"The 'context' global is reserved and cannot be overridden in the compartment options.",
 		);
 	}
-
-	// Importing 'ses' has side effects, so we do it lazily to avoid impacting environments that don't use this evaluator.
-	await import("ses");
 
 	if (!(lockdownSymbol in globalThis)) {
 		try {
@@ -70,4 +69,18 @@ export async function createSesEditEvaluator(options?: {
 		const compartment = new Compartment({ ...compartmentOptions, __options__: true });
 		await compartment.evaluate(code);
 	};
+}
+
+/**
+ * Stringify an unknown error value.
+ */
+function toErrorString(error: unknown): string {
+	if (error instanceof Error) {
+		return error.message;
+	}
+	try {
+		return JSON.stringify(error);
+	} catch {
+		return String(error);
+	}
 }

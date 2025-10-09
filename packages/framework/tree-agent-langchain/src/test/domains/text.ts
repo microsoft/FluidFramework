@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SchemaFactoryAlpha } from "@fluidframework/tree/internal";
+import { SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
 
 // eslint-disable-next-line eslint-comments/disable-enable-pair
 /* eslint-disable jsdoc/require-jsdoc */
