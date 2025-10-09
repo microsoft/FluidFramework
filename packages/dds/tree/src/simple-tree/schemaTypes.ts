@@ -237,17 +237,6 @@ export type GetTypes<TSchema extends ImplicitAllowedTypes> = [TSchema] extends [
 	: StrictTypes<TSchema>;
 
 /**
- * Content which could be inserted into a tree.
- *
- * @see {@link Input}
- * @remarks
- * Alias of {@link InsertableTreeNodeFromImplicitAllowedTypes} with a shorter name.
- * @alpha
- */
-export type Insertable<TSchema extends ImplicitAllowedTypes> =
-	InsertableTreeNodeFromImplicitAllowedTypes<TSchema>;
-
-/**
  * Default type of tree node for a field of the given schema.
  * @system @public
  */
@@ -258,17 +247,6 @@ export type DefaultTreeNodeFromImplicitAllowedTypes<
 	: TSchema extends AllowedTypes
 		? NodeFromSchema<FlexListToUnion<TSchema>>
 		: unknown;
-
-/**
- * Type of content that can be inserted into the tree for a node of the given schema.
- *
- * @typeparam TSchema - Schema to process.
- * @remarks
- * Defaults to {@link DefaultInsertableTreeNodeFromImplicitAllowedTypes}.
- * @public
- */
-export type InsertableTreeNodeFromImplicitAllowedTypes<TSchema extends ImplicitAllowedTypes> =
-	GetTypes<TSchema>["input"];
 
 /**
  * Type of content that can be inserted into the tree for a node of the given schema.

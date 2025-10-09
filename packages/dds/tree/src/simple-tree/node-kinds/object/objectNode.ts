@@ -50,6 +50,7 @@ import {
 	createField,
 	type TreeNodeSchemaCorePrivate,
 	type TreeNodeSchemaPrivateData,
+	getInnerNode,
 } from "../../core/index.js";
 import {
 	getTreeNodeSchemaInitializedData,

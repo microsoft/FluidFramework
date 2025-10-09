@@ -36,6 +36,8 @@ export {
 	setField,
 	type TreeObjectNode,
 	type SimpleKeyMap,
+	type AssignableTreeFieldFromImplicitField,
+	type ApplyKindAssignment,
 } from "./object/index.js";
 
 export {

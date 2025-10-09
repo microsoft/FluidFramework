@@ -15,7 +15,6 @@ import type {
 	FieldKind,
 	FieldSchema,
 	FieldSchemaAlpha,
-	ImplicitFieldSchema,
 } from "../fieldSchema.js";
 import type {
 	NodeKind,
@@ -33,9 +32,8 @@ import type {
 	AnnotatedAllowedType,
 	AnnotatedAllowedTypes,
 } from "../core/index.js";
-import type { TreeArrayNode } from "../node-kinds/index.js";
+import type { ApplyKindAssignment, TreeArrayNode } from "../node-kinds/index.js";
 import type { SimpleArrayNodeSchema, SimpleMapNodeSchema } from "../simpleSchema.js";
-import type { ApplyKindAssignment } from "../objectNode.js";
 import type { CustomizedSchemaTyping, CustomTypes } from "../schemaTypes.js";
 
 /*
@@ -79,9 +77,9 @@ export namespace System_Unsafe {
 	 * should use the normal (not unsafe/recursive) APIs.
 	 * @alpha
 	 */
-	export function customizeSchemaTypingUnsafe<
-		TSchema extends Unenforced<ImplicitAllowedTypes>,
-	>(schema: TSchema): CustomizerUnsafe<TSchema> {
+	export function customizeSchemaTypingUnsafe<TSchema extends ImplicitAllowedTypesUnsafe>(
+		schema: TSchema,
+	): CustomizerUnsafe<TSchema> {
 		// This function just does type branding, and duplicating the typing here to avoid any would just make it harder to maintain not easier:
 		const f = (): any => schema;
 		return { simplified: f, simplifiedUnrestricted: f, custom: f };
@@ -93,7 +91,7 @@ export namespace System_Unsafe {
 	 * This has fewer options than the safe version, but all options can still be expressed using the "custom" method.
 	 * @sealed @public
 	 */
-	export interface CustomizerUnsafe<TSchema extends Unenforced<ImplicitAllowedTypes>> {
+	export interface CustomizerUnsafe<TSchema extends ImplicitAllowedTypesUnsafe> {
 		/**
 		 * Replace typing with a single substitute type which allowed types must implement.
 		 * @remarks
@@ -155,10 +153,13 @@ export namespace System_Unsafe {
 	 * @system @public
 	 */
 	export type AssignableTreeFieldFromImplicitFieldUnsafe<
-		TSchema extends Unenforced<ImplicitFieldSchema>,
+		TSchema extends ImplicitFieldSchemaUnsafe,
 	> = TSchema extends FieldSchemaUnsafe<infer Kind, infer Types>
 		? ApplyKindAssignment<GetTypesUnsafe<Types>["readWrite"], Kind>
-		: GetTypesUnsafe<TSchema>["readWrite"];
+		: // TODO: why is this extends check needed? Should already narrow to ImplicitAllowedTypesUnsafe from above.
+			TSchema extends ImplicitAllowedTypesUnsafe
+			? GetTypesUnsafe<TSchema>["readWrite"]
+			: never;
 
 	/**
 	 * {@link Unenforced} version of `TypesUnsafe`.
@@ -166,9 +167,9 @@ export namespace System_Unsafe {
 	 * Do not use this type directly: its only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
 	 * @system @public
 	 */
-	export type GetTypesUnsafe<TSchema extends Unenforced<ImplicitAllowedTypes>> = [
-		TSchema,
-	] extends [CustomizedSchemaTyping<unknown, infer TCustom>]
+	export type GetTypesUnsafe<TSchema extends ImplicitAllowedTypesUnsafe> = [TSchema] extends [
+		CustomizedSchemaTyping<unknown, infer TCustom>,
+	]
 		? TCustom
 		: StrictTypesUnsafe<TSchema>;
 
@@ -179,7 +180,7 @@ export namespace System_Unsafe {
 	 * @system @public
 	 */
 	export interface StrictTypesUnsafe<
-		TSchema extends Unenforced<ImplicitAllowedTypes>,
+		TSchema extends ImplicitAllowedTypesUnsafe,
 		TInput = DefaultInsertableTreeNodeFromImplicitAllowedTypesUnsafe<TSchema>,
 		TOutput = DefaultTreeNodeFromImplicitAllowedTypesUnsafe<TSchema>,
 	> {
@@ -200,7 +201,7 @@ export namespace System_Unsafe {
 	 * @system @public
 	 */
 	export type ObjectFromSchemaRecordUnsafe<
-		T extends Unenforced<RestrictiveStringRecord<ImplicitFieldSchema>>,
+		T extends RestrictiveStringRecord<ImplicitFieldSchemaUnsafe>,
 	> =
 		// Due to https://github.com/microsoft/TypeScript/issues/43826 we can not set the desired setter type.
 		// Attempts to implement this in the cleaner way ObjectFromSchemaRecord uses cause recursive types to fail to compile.
@@ -217,7 +218,10 @@ export namespace System_Unsafe {
 				>,
 			]
 				? never // Remove readWrite version for cases using CustomizedSchemaTyping to set readWrite to never.
-				: Property]: AssignableTreeFieldFromImplicitFieldUnsafe<T[Property]>;
+				: // TODO : maybe filter out non string in logic above?
+					Property]: Property extends string
+				? AssignableTreeFieldFromImplicitFieldUnsafe<T[Property]>
+				: unknown;
 		} & {
 			readonly [Property in keyof T as [T[Property]] extends [
 				CustomizedSchemaTyping<
@@ -231,7 +235,9 @@ export namespace System_Unsafe {
 			]
 				? // Inverse of the conditional above: only include readonly fields when not including the readWrite one. This is required to make recursive types compile.
 					Property
-				: never]: TreeFieldFromImplicitFieldUnsafe<T[Property]>;
+				: never]: Property extends string
+				? TreeFieldFromImplicitFieldUnsafe<T[Property]>
+				: unknown;
 		};
 
 	/**
@@ -378,7 +384,7 @@ export namespace System_Unsafe {
 	 * @system @public
 	 */
 	export type DefaultTreeNodeFromImplicitAllowedTypesUnsafe<
-		TSchema extends Unenforced<ImplicitAllowedTypes>,
+		TSchema extends ImplicitAllowedTypesUnsafe,
 	> = TSchema extends TreeNodeSchemaUnsafe
 		? NodeFromSchemaUnsafe<TSchema>
 		: TSchema extends AllowedTypesUnsafe
@@ -404,7 +410,7 @@ export namespace System_Unsafe {
 	 * @system @public
 	 */
 	export type DefaultInsertableTreeNodeFromImplicitAllowedTypesUnsafe<
-		TSchema extends Unenforced<ImplicitAllowedTypes>,
+		TSchema extends ImplicitAllowedTypesUnsafe,
 	> = [TSchema] extends [TreeNodeSchemaUnsafe]
 		? InsertableTypedNodeUnsafe<TSchema>
 		: [TSchema] extends [AllowedTypesUnsafe]

@@ -11,6 +11,8 @@ export {
 	setField,
 	type TreeObjectNode,
 	type SimpleKeyMap,
+	type AssignableTreeFieldFromImplicitField,
+	type ApplyKindAssignment,
 } from "./objectNode.js";
 export {
 	isObjectNodeSchema,

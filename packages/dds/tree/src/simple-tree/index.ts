@@ -150,11 +150,6 @@ export {
 	type CustomTreeNode,
 	type CustomTreeValue,
 	tryStoredSchemaAsArray,
-	type GetTypesUnsafe,
-	type DefaultInsertableTreeNodeFromImplicitAllowedTypesUnsafe,
-	type DefaultTreeNodeFromImplicitAllowedTypesUnsafe,
-	type StrictTypesUnsafe,
-	type AssignableTreeFieldFromImplicitFieldUnsafe,
 	type SchemaStatics,
 	type ITreeAlpha,
 	type TransactionConstraint,
@@ -188,6 +183,18 @@ export {
 	type TreeParsingOptions,
 	type SchemaFactory_base,
 } from "./api/index.js";
+
+export type {
+	SchemaUnionToIntersection,
+	CustomTypes,
+	CustomizedSchemaTyping,
+	StrictTypes,
+	Customizer,
+	GetTypes,
+	DefaultInsertableTreeNodeFromImplicitAllowedTypes,
+} from "./schemaTypes.js";
+export { CustomizedTyping, customizeSchemaTyping } from "./schemaTypes.js";
+
 export type {
 	SimpleTreeSchema,
 	SimpleNodeSchema,

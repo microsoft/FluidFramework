@@ -33,7 +33,7 @@ export interface ObjectNodeSchema<
 > extends TreeNodeSchemaClass<
 			TName,
 			NodeKind.Object,
-			TreeObcjectNode<T, TName>,
+			TreeObjectNode<T, TName>,
 			InsertableObjectFromSchemaRecord<T>,
 			ImplicitlyConstructable,
 			T,
