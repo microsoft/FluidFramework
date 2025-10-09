@@ -62,17 +62,25 @@ export type ForestSummaryTrackingState =
  * The properties of a chunk tracked during the loading process.
  * These are used to identify a chunk when it is decoded and recreate the tracking state
  * as it was when the summary that the client is loading from was generated.
+ *
+ * An encoded chunk, paired with a location it can be reused / reloaded from.
+ * @remarks
+ * This identifies a location in a specific summary where `encodedContents` was loaded from.
+ *
+ * When summarizing, Fluid always ensures the summary that the summary client is allowed to reuse content from
+ * is the one it loaded from, so tracking this on load is sufficient for now:
+ * there is no need to track the equivalent data when summarizing.
  */
 interface ChunkLoadProperties {
 	/**
 	 * The encoded contents of the chunk.
 	 */
-	contents: EncodedFieldBatch;
+	readonly encodedContents: EncodedFieldBatch;
 	/**
-	 * The path for this chunk's summary in the summary tree relative to the forest's summary tree.
+	 * The path for this chunk's contents in the summary tree relative to the forest's summary tree.
 	 * This path is used to generate a summary handle for the chunk if it doesn't change between summaries.
 	 */
-	summaryPath: string;
+	readonly summaryPath: string;
 }
 
 /**
@@ -320,7 +328,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 				}
 				const chunkContents = await readAndParseChunk<EncodedFieldBatch>(chunkContentsPath);
 				this.loadedChunksMap.set(chunkReferenceId, {
-					contents: chunkContents,
+					encodedContents: chunkContents,
 					summaryPath: chunkSubTreePath,
 				});
 
@@ -528,8 +536,12 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 	): TreeChunk {
 		const ChunkLoadProperties = this.loadedChunksMap.get(`${referenceId}`);
 		assert(ChunkLoadProperties !== undefined, "Encoded incremental chunk not found");
-		const chunk = chunkDecoder(ChunkLoadProperties.contents);
+		const chunk = chunkDecoder(ChunkLoadProperties.encodedContents);
 
+		// Account for the reference about to be added in `chunkTrackingPropertiesMap`
+		// to ensure that no other users of this chunk think they have unique ownership.
+		// This prevents prevent whoever this chunk is returned to from modifying it in-place.
+		chunk.referenceAdded();
 		// Track the decoded chunk. This will recreate the tracking state when the summary that this client
 		// is loaded from was generated. This is needed to ensure that incremental summaries work correctly
 		// when a new client starts to summarize.
@@ -537,9 +549,6 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 			referenceId,
 			summaryPath: ChunkLoadProperties.summaryPath,
 		});
-
-		// Add a ref-count to this chunk similar to the one added when "encodeIncrementalField" is called.
-		chunk.referenceAdded();
 		return chunk;
 	}
 }
