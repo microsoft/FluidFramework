@@ -18,7 +18,7 @@ import {
 	type GetTypes,
 	type Customizer,
 } from "../../../simple-tree/index.js";
-import { TreeFactory } from "../../../treeFactory.js";
+import { DefaultTestSharedTreeKind, getView } from "../../utils.js";
 import {
 	brand,
 	type areSafelyAssignable,
@@ -110,7 +110,7 @@ function setup(tree: ITree): Note[] {
 
 describe("Class based end to end example", () => {
 	it("run example", () => {
-		const factory = new TreeFactory({});
+		const factory = DefaultTestSharedTreeKind.getFactory();
 		const theTree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
@@ -119,13 +119,8 @@ describe("Class based end to end example", () => {
 	});
 
 	// Confirm that the alternative syntax for initialTree from the example above actually works.
-	it("using a mix of insertible content and nodes", () => {
-		const factory = new TreeFactory({});
-		const theTree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-		const view: TreeView<typeof Canvas> = theTree.viewWith(config);
+	it("using a mix of insertable content and nodes", () => {
+		const view: TreeView<typeof Canvas> = getView(config);
 		view.initialize(
 			new Canvas({
 				stuff: [

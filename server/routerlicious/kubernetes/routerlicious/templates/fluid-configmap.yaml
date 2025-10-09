@@ -19,6 +19,7 @@ data:
             "timestamp": false,
             "label": "winston"
         },
+        "privateServiceHost": "us.fluidrelay.azure.com",
         "config": {
             "configDumpEnabled": {{ .Values.config.configDumpEnabled }},
             "secretNamesToRedactInConfigDump": [
@@ -109,8 +110,12 @@ data:
             "kafkaClientId": "{{ template "alfred.fullname" . }}",
             "maxMessageSize": "16KB",
             "numberOfMessagesPerTrace": {{ .Values.alfred.numberOfMessagesPerTrace }},
+            "enablePrivateLinkNetworkCheck": {{ .Values.alfred.enablePrivateLinkNetworkCheck }},
             "sessionStickinessDurationMs": {{ .Values.alfred.sessionStickinessDurationMs }},
             "ignoreEphemeralFlag": {{ .Values.alfred.ignoreEphemeralFlag }},
+            "api": {
+                "patchRoot": {{ .Values.alfred.api.patchRoot | default true }}
+            },
             "throttling": {
                 "restCallsPerTenant": {
                     "generalRestCall": {{ toJson .Values.alfred.throttling.restCallsPerTenant.generalRestCall }},
@@ -142,6 +147,7 @@ data:
             "maxMessageSize": "16KB",
             "maxNumberOfClientsPerDocument": {{ .Values.nexus.maxNumberOfClientsPerDocument }},
             "numberOfMessagesPerTrace": {{ .Values.nexus.numberOfMessagesPerTrace }},
+            "enablePrivateLinkNetworkCheck": {{ .Values.nexus.enablePrivateLinkNetworkCheck }},
             "throttling": {
                 "socketConnectionsPerTenant": {{ toJson .Values.nexus.throttling.socketConnectionsPerTenant }},
                 "socketConnectionsPerCluster": {{ toJson .Values.nexus.throttling.socketConnectionsPerCluster }},
@@ -259,18 +265,20 @@ data:
             "opsCountTelemetryEnabled": {{ .Values.scriptorium.opsCountTelemetryEnabled }},
             "circuitBreakerEnabled": {{ .Values.scriptorium.circuitBreakerEnabled }},
             "circuitBreakerOptions": {
-                "errorThresholdPercentage": {{ .Values.scriptorium.circuitBreakerOptions.errorThresholdPercentage }},
-                "resetTimeout": {{ .Values.scriptorium.circuitBreakerOptions.resetTimeout }},
-                "timeout": {{ .Values.scriptorium.circuitBreakerOptions.timeout }},
-                "rollingCountTimeout": {{ .Values.scriptorium.circuitBreakerOptions.rollingCountTimeout }},
-                "rollingCountBuckets": {{ .Values.scriptorium.circuitBreakerOptions.rollingCountBuckets }},
-                "fallbackToRestartTimeoutMs": {{ .Values.scriptorium.circuitBreakerOptions.fallbackToRestartTimeoutMs }},
-                "filterOnErrors": [
-                    {{- $lastIndex := sub (len .Values.scriptorium.circuitBreakerOptions.filterOnErrors) 1}}
-                    {{- range $i, $error := .Values.scriptorium.circuitBreakerOptions.filterOnErrors }}
-                    {{ toJson . }}{{- if ne $i $lastIndex -}}, {{ end }}
-                    {{- end }}
-                ]
+                "database": {
+                    "errorThresholdPercentage": {{ .Values.scriptorium.circuitBreakerOptions.database.errorThresholdPercentage }},
+                    "resetTimeout": {{ .Values.scriptorium.circuitBreakerOptions.database.resetTimeout }},
+                    "timeout": {{ .Values.scriptorium.circuitBreakerOptions.database.timeout }},
+                    "rollingCountTimeout": {{ .Values.scriptorium.circuitBreakerOptions.database.rollingCountTimeout }},
+                    "rollingCountBuckets": {{ .Values.scriptorium.circuitBreakerOptions.database.rollingCountBuckets }},
+                    "fallbackToRestartTimeoutMs": {{ .Values.scriptorium.circuitBreakerOptions.database.fallbackToRestartTimeoutMs }},
+                    "filterOnErrors": [
+                        {{- $lastIndex := sub (len .Values.scriptorium.circuitBreakerOptions.database.filterOnErrors) 1}}
+                        {{- range $i, $error := .Values.scriptorium.circuitBreakerOptions.database.filterOnErrors }}
+                        {{ toJson . }}{{- if ne $i $lastIndex -}}, {{ end }}
+                        {{- end }}
+                    ]
+                }
             }
         },
         "riddler": {

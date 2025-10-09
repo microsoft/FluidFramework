@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IChannelAttributes,
 	IChannelFactory,
 	IFluidDataStoreRuntime,
@@ -36,14 +36,14 @@ export class SharedSummaryBlockFactory implements IChannelFactory<ISharedSummary
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
 	 */
-	public get type() {
+	public get type(): string {
 		return SharedSummaryBlockFactory.Type;
 	}
 
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
 	 */
-	public get attributes() {
+	public get attributes(): IChannelAttributes {
 		return SharedSummaryBlockFactory.Attributes;
 	}
 
@@ -79,14 +79,12 @@ export class SharedSummaryBlockFactory implements IChannelFactory<ISharedSummary
 
 /**
  * {@inheritDoc ISharedSummaryBlock}
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const SharedSummaryBlock = createSharedObjectKind(SharedSummaryBlockFactory);
 
 /**
  * {@inheritDoc ISharedSummaryBlock}
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type SharedSummaryBlock = ISharedSummaryBlock;

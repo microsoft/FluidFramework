@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import type { IContainerExperimental } from "@fluidframework/container-loader/internal";
+import { asLegacyAlpha, type ContainerAlpha } from "@fluidframework/container-loader/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import {
@@ -14,9 +14,10 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 import {
-	type ITestFluidObject,
+	type TestFluidObjectInternal,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 
 import {
 	CommitKind,
@@ -29,12 +30,13 @@ import {
 	type ChangeFamilyEditor,
 	EmptyKey,
 } from "../../core/index.js";
-import { typeboxValidator } from "../../external-utilities/index.js";
+import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import {
 	ChunkedForest,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/chunked-forest/chunkedForest.js";
 import {
+	flexTreeSlot,
 	MockNodeIdentifierManager,
 	TreeCompressionStrategy,
 	TreeStatus,
@@ -49,7 +51,7 @@ import {
 	ForestTypeReference,
 	getBranch,
 	type ITreePrivate,
-	type SharedTree,
+	SharedTreeFormatVersion,
 	Tree,
 	type TreeCheckout,
 } from "../../shared-tree/index.js";
@@ -59,26 +61,24 @@ import {
 } from "../../shared-tree/schematizingTreeView.js";
 import type { EditManager } from "../../shared-tree-core/index.js";
 import {
-	cursorFromInsertable,
-	getSimpleSchema,
 	SchemaFactory,
-	toStoredSchema,
 	type TreeFieldFromImplicitField,
 	type TreeViewAlpha,
 	TreeViewConfiguration,
+	type ValidateRecursiveSchema,
+	SchemaFactoryAlpha,
+	type ITree,
+	toInitialSchema,
 } from "../../simple-tree/index.js";
-import { brand, fail } from "../../util/index.js";
+import { brand } from "../../util/index.js";
 import {
-	type ConnectionSetter,
 	type ITestTreeProvider,
 	SharedTreeTestFactory,
-	type SharedTreeWithConnectionStateSetter,
 	SummarizeType,
 	TestTreeProvider,
 	TestTreeProviderLite,
 	createTestUndoRedoStacks,
 	expectSchemaEqual,
-	treeTestFactory,
 	validateTreeConsistency,
 	validateTreeContent,
 	validateUsageError,
@@ -87,22 +87,43 @@ import {
 	validateViewConsistency,
 	chunkFromJsonableTrees,
 	expectEqualPaths,
+	type TreeMockContainerRuntime,
+	type SharedTreeWithContainerRuntime,
+	DefaultTestSharedTreeKind,
+	getView,
+	createSnapshotCompressor,
 } from "../utils.js";
-import { configuredSharedTree, TreeFactory } from "../../treeFactory.js";
-import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
+import {
+	configuredSharedTree,
+	SharedTree as SharedTreeKind,
+	type ISharedTree,
+} from "../../treeFactory.js";
+import type {
+	ISharedObjectKind,
+	SharedObjectKind,
+} from "@fluidframework/shared-object-base/internal";
 import { TestAnchor } from "../testAnchor.js";
-// eslint-disable-next-line import/no-internal-modules
-import { handleSchema, numberSchema, stringSchema } from "../../simple-tree/leafNodeSchema.js";
-import { singleJsonCursor } from "../json/index.js";
+import { handleSchema, numberSchema, stringSchema } from "../../simple-tree/index.js";
 import { AttachState } from "@fluidframework/container-definitions";
 import { JsonAsTree } from "../../jsonDomainSchema.js";
+import {
+	toSimpleTreeSchema,
+	TreeBeta,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../simple-tree/api/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { simpleTreeNodeSlot } from "../../simple-tree/core/treeNodeKernel.js";
+// eslint-disable-next-line import/no-internal-modules
+import type { TreeSimpleContent } from "../feature-libraries/flex-tree/utils.js";
+import { FluidClientVersion } from "../../codec/index.js";
+import { asAlpha } from "../../api.js";
 
 const enableSchemaValidation = true;
 
 const DebugSharedTree = configuredSharedTree({
-	jsonValidator: typeboxValidator,
-	forest: ForestTypeReference,
-}) as ISharedObjectKind<unknown> as ISharedObjectKind<SharedTree>;
+	jsonValidator: FormatValidatorBasic,
+	forest: ForestTypeExpensiveDebug,
+}) as SharedObjectKind<ISharedTree> & ISharedObjectKind<ISharedTree>;
 
 class MockSharedTreeRuntime extends MockFluidDataStoreRuntime {
 	public constructor() {
@@ -113,9 +134,27 @@ class MockSharedTreeRuntime extends MockFluidDataStoreRuntime {
 	}
 }
 
+/**
+ * Simple non-factory based wrapper around `new SharedTree` with test appropriate defaults.
+ *
+ * See TestTreeProvider, TestTreeProviderLite and TreeFactory for other ways to build trees.
+ *
+ * If what is needed is a view, see {@link getView}.
+ */
+function treeTestFactory(): ISharedTree {
+	return DebugSharedTree.getFactory().create(
+		new MockFluidDataStoreRuntime({
+			idCompressor: createSnapshotCompressor(),
+			clientId: "test-client",
+			id: "test",
+		}),
+		"test",
+	);
+}
+
 describe("SharedTree", () => {
 	describe("viewWith", () => {
-		it("initialize tree", () => {
+		it("@Smoke initialize tree", () => {
 			const tree = treeTestFactory();
 			assert.deepEqual(tree.contentSnapshot().schema.rootFieldSchema, storedEmptyFieldSchema);
 
@@ -145,9 +184,31 @@ describe("SharedTree", () => {
 			assert.deepEqual(view2.root, 10);
 		});
 
-		// TODO (AB#31456): Enable this test once the bug is fixed.
-		it.skip("initialize-dispose-view with object schema", () => {
+		it("re-view after view disposal with TreeNodes", () => {
 			const tree = treeTestFactory();
+
+			/**
+			 * Scan AnchorSet and check its slots for cached invalid data.
+			 * @param allowNodes - if false, errors if there are any TreeNodes cached in the AnchorSet.
+			 */
+			function checkAnchors(allowNodes: boolean) {
+				const anchors = tree.kernel.checkout.forest.anchors;
+				for (const anchor of anchors) {
+					const node = anchor.slots.get(flexTreeSlot);
+					if (node !== undefined) {
+						assert(node.context.isDisposed() === false);
+						assert(allowNodes);
+					}
+					const treeNode = anchor.slots.get(simpleTreeNodeSlot);
+					if (treeNode !== undefined) {
+						assert.equal(Tree.status(treeNode), TreeStatus.InDocument);
+						assert(allowNodes);
+					}
+				}
+			}
+
+			checkAnchors(false);
+
 			assert.deepEqual(tree.contentSnapshot().schema.rootFieldSchema, storedEmptyFieldSchema);
 
 			const factory = new SchemaFactory("my-factory");
@@ -167,10 +228,27 @@ describe("SharedTree", () => {
 			view1.initialize(new MySchema({ number: 10 }));
 			assert.deepEqual(view1.root, expectedContents);
 
+			const root1 = view1.root;
+
+			assert(Tree.status(root1) === TreeStatus.InDocument);
+
+			checkAnchors(true);
+
 			view1.dispose();
 
+			assert(Tree.status(root1) === TreeStatus.Deleted);
+			assert.throws(() => root1.number, validateUsageError(/deleted/));
+
+			checkAnchors(false);
+
 			const view2 = tree.viewWith(config);
-			assert.deepEqual(view2.root, expectedContents); // <-- This throws with assert 0x778
+
+			checkAnchors(true);
+
+			const root2 = view2.root;
+			assert.notEqual(root1, root2);
+			assert.equal(view2.root.number, 10);
+			assert.deepEqual(view2.root, expectedContents);
 		});
 
 		it("concurrent initialize", () => {
@@ -183,7 +261,7 @@ describe("SharedTree", () => {
 			view1.initialize("x");
 			view2.initialize("x");
 
-			provider.processMessages();
+			provider.synchronizeMessages();
 			assert.equal(view1.root, "x");
 		});
 
@@ -204,7 +282,25 @@ describe("SharedTree", () => {
 			view2.upgradeSchema();
 		});
 
-		it("unhydrated tree input", () => {
+		it("unhydrated optional tree input", () => {
+			const tree = DebugSharedTree.create(new MockSharedTreeRuntime());
+			const sb = new SchemaFactory("test-factory");
+			class Foo extends sb.object("Foo", {}) {}
+
+			const view = tree.viewWith(
+				new TreeViewConfiguration({ schema: SchemaFactory.optional(Foo) }),
+			);
+			const unhydratedInitialTree = new Foo({});
+			view.initialize(unhydratedInitialTree);
+
+			assert(view.root === unhydratedInitialTree);
+		});
+
+		it("unhydrated required tree input", () => {
+			// Initializing to a schema with a required root goes through a three-phase initialization.
+			// First an optional version of the schema is set, then the content is set, and finally the required schema is set.
+			// This is more likely to break hydration than the optional case above.
+
 			const tree = DebugSharedTree.create(new MockSharedTreeRuntime());
 			const sb = new SchemaFactory("test-factory");
 			class Foo extends sb.object("Foo", {}) {}
@@ -222,10 +318,10 @@ describe("SharedTree", () => {
 		const provider = await TestTreeProvider.create(
 			2,
 			SummarizeType.disabled,
-			new TreeFactory({
-				jsonValidator: typeboxValidator,
+			configuredSharedTree({
+				jsonValidator: FormatValidatorBasic,
 				treeEncodeType: TreeCompressionStrategy.Uncompressed,
-			}),
+			}).getFactory(),
 		);
 		assert(provider.trees[0].isAttached());
 		assert(provider.trees[1].isAttached());
@@ -284,7 +380,7 @@ describe("SharedTree", () => {
 					},
 				},
 			]);
-			expectSchemaEqual(snapshot.schema, toStoredSchema(StringArray));
+			expectSchemaEqual(snapshot.schema, toInitialSchema(StringArray));
 		}
 	});
 
@@ -306,7 +402,7 @@ describe("SharedTree", () => {
 
 		// Ensure that the first tree has the state we expect
 		assert.deepEqual([...view.root], [value]);
-		expectSchemaEqual(provider.trees[0].kernel.storedSchema, toStoredSchema(StringArray));
+		expectSchemaEqual(provider.trees[0].kernel.storedSchema, toInitialSchema(StringArray));
 		// Ensure that the second tree receives the expected state from the first tree
 		await provider.ensureSynchronized();
 		validateTreeConsistency(provider.trees[0], provider.trees[1]);
@@ -332,41 +428,47 @@ describe("SharedTree", () => {
 		const loadingTree = await provider.createTree();
 		validateTreeContent(loadingTree.kernel.checkout, {
 			schema: JsonAsTree.Array,
-			initialTree: singleJsonCursor([value]),
+			initialTree: [value],
 		});
 	});
 
+	/**
+	 * Create a new summary, and assert that the SummaryType of the SchemaString is `summaryType`.
+	 */
 	async function validateSchemaStringType(
 		provider: ITestTreeProvider,
 		treeId: string,
 		summaryType: SummaryType,
 	) {
-		const a = (await provider.containers[0].getEntryPoint()) as ITestFluidObject;
+		const a = (await provider.containers[0].getEntryPoint()) as TestFluidObjectInternal;
 		const id = a.runtime.id;
 
 		const { summaryTree } = await provider.summarize();
 
-		assert(
-			summaryTree.tree[".channels"].type === SummaryType.Tree,
+		assert.equal(
+			summaryTree.tree[".channels"].type,
+			SummaryType.Tree,
 			"Runtime summary tree not created for blob dds test",
 		);
 		const dataObjectTree = summaryTree.tree[".channels"].tree[id];
-		assert(
-			dataObjectTree.type === SummaryType.Tree,
+		assert.equal(
+			dataObjectTree.type,
+			SummaryType.Tree,
 			"Data store summary tree not created for blob dds test",
 		);
 		const dataObjectChannelsTree = dataObjectTree.tree[".channels"];
-		assert(
-			dataObjectChannelsTree.type === SummaryType.Tree,
+		assert.equal(
+			dataObjectChannelsTree.type,
+			SummaryType.Tree,
 			"Data store channels tree not created for blob dds test",
 		);
 		const ddsTree = dataObjectChannelsTree.tree[treeId];
-		assert(ddsTree.type === SummaryType.Tree, "Blob dds tree not created");
+		assert.equal(ddsTree.type, SummaryType.Tree, "Blob dds tree not created");
 		const indexes = ddsTree.tree.indexes;
-		assert(indexes.type === SummaryType.Tree, "Blob Indexes tree not created");
+		assert.equal(indexes.type, SummaryType.Tree, "Blob Indexes tree not created");
 		const schema = indexes.tree.Schema;
-		assert(schema.type === SummaryType.Tree, "Blob Schema tree not created");
-		assert(schema.tree.SchemaString.type === summaryType, "incorrect SchemaString type");
+		assert.equal(schema.type, SummaryType.Tree, "Blob Schema tree not created");
+		assert.equal(schema.tree.SchemaString.type, summaryType);
 	}
 
 	describe("schema index summarization", () => {
@@ -393,6 +495,9 @@ describe("SharedTree", () => {
 				const node = sf.objectRecursive("test node", {
 					child: sf.optionalRecursive([() => node, sf.number]),
 				});
+				{
+					type _check = ValidateRecursiveSchema<typeof node>;
+				}
 
 				const view = tree1.viewWith(
 					new TreeViewConfiguration({
@@ -432,11 +537,12 @@ describe("SharedTree", () => {
 				);
 				containerRuntimeFactory.processAllMessages();
 				const indexes = summaryTree.summary.tree.indexes;
-				assert(indexes.type === SummaryType.Tree, "Indexes must be a tree");
+				assert.equal(indexes.type, SummaryType.Tree, "Indexes must be a tree");
 				const schemaBlob = indexes.tree.Schema;
-				assert(schemaBlob.type === SummaryType.Tree, "Blob Schema tree not created");
-				assert(
-					schemaBlob.tree.SchemaString.type === SummaryType.Handle,
+				assert.equal(schemaBlob.type, SummaryType.Tree, "Blob Schema tree not created");
+				assert.equal(
+					schemaBlob.tree.SchemaString.type,
+					SummaryType.Handle,
 					"schemaString should be a handle",
 				);
 			});
@@ -463,11 +569,12 @@ describe("SharedTree", () => {
 				await provider.ensureSynchronized();
 				const summaryTree = await provider.trees[0].summarize();
 				const indexes = summaryTree.summary.tree.indexes;
-				assert(indexes.type === SummaryType.Tree, "Indexes must be a tree");
+				assert.equal(indexes.type, SummaryType.Tree, "Indexes must be a tree");
 				const schemaBlob = indexes.tree.Schema;
 				assert(schemaBlob.type === SummaryType.Tree, "Blob Schema tree not created");
-				assert(
-					schemaBlob.tree.SchemaString.type === SummaryType.Blob,
+				assert.equal(
+					schemaBlob.tree.SchemaString.type,
+					SummaryType.Blob,
 					"schemaString should be a Blob",
 				);
 			});
@@ -494,6 +601,36 @@ describe("SharedTree", () => {
 				await validateSchemaStringType(provider, provider.trees[0].id, SummaryType.Blob);
 			});
 		});
+	});
+
+	it("can load from summary", async () => {
+		const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
+		const [tree1] = provider.trees;
+
+		const view1 = tree1.viewWith(
+			new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+		);
+		view1.initialize(["A"]);
+		await provider.ensureSynchronized();
+
+		// Have tree1 make a summary
+		await provider.summarize();
+
+		// Ensure all trees are now caught up
+		await provider.ensureSynchronized();
+
+		// Load the last summary
+		const view2 = (await provider.createTree()).viewWith(
+			new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			}),
+		);
+
+		// Check schema loaded
+		assert(view2.compatibility.isEquivalent);
+		// Check content loaded
+		assert.deepEqual([...view2.root], ["A"]);
 	});
 
 	it("can process ops after loading from summary", async () => {
@@ -586,7 +723,7 @@ describe("SharedTree", () => {
 		await provider.ensureSynchronized();
 		validateTreeContent(loadingTree.kernel.checkout, {
 			schema: StringArray,
-			initialTree: singleJsonCursor(["b", "c"]),
+			initialTree: ["b", "c"],
 		});
 	});
 
@@ -596,7 +733,7 @@ describe("SharedTree", () => {
 		// Detached trees are not connected to the sequencing service, but they still "sequence" their edits as if they were totally ordered.
 		// The second tree must take care to avoid sequencing its edits with sequence numbers that the first tree already used.
 		// If it doesn't, the second tree will throw an error when trying to sequence a commit with sequence number that has "gone backwards" and this test will fail.
-		const sharedTreeFactory = new TreeFactory({});
+		const sharedTreeFactory = DefaultTestSharedTreeKind.getFactory();
 		const runtime = new MockFluidDataStoreRuntime({
 			idCompressor: createIdCompressor(),
 			attachState: AttachState.Detached,
@@ -616,11 +753,15 @@ describe("SharedTree", () => {
 		getBranch(tree).branch();
 		view.root.insertAtEnd("b");
 
-		const tree2 = sharedTreeFactory.create(runtime, "tree2");
-		await tree2.load({
-			deltaConnection: runtime.createDeltaConnection(),
-			objectStorage: MockStorage.createFromSummary((await tree.summarize()).summary),
-		});
+		const tree2 = await sharedTreeFactory.load(
+			runtime,
+			"tree2",
+			{
+				deltaConnection: runtime.createDeltaConnection(),
+				objectStorage: MockStorage.createFromSummary((await tree.summarize()).summary),
+			},
+			sharedTreeFactory.attributes,
+		);
 
 		const loadedView = tree2.viewWith(
 			new TreeViewConfiguration({
@@ -633,7 +774,7 @@ describe("SharedTree", () => {
 
 		validateTreeContent(tree2.kernel.checkout, {
 			schema: StringArray,
-			initialTree: singleJsonCursor(["a", "b", "c"]),
+			initialTree: ["a", "b", "c"],
 		});
 	});
 
@@ -656,7 +797,7 @@ describe("SharedTree", () => {
 
 		validateTreeContent(summarizingTree.kernel.checkout, {
 			schema: StringArray,
-			initialTree: singleJsonCursor(["b", "c"]),
+			initialTree: ["b", "c"],
 		});
 
 		await provider.ensureSynchronized();
@@ -670,20 +811,20 @@ describe("SharedTree", () => {
 
 		validateTreeContent(summarizingTree.kernel.checkout, {
 			schema: StringArray,
-			initialTree: singleJsonCursor(["a", "b", "c"]),
+			initialTree: ["a", "b", "c"],
 		});
 
 		await provider.ensureSynchronized();
 
 		validateTreeContent(loadingTree.kernel.checkout, {
 			schema: StringArray,
-			initialTree: singleJsonCursor(["a", "b", "c"]),
+			initialTree: ["a", "b", "c"],
 		});
 		unsubscribe();
 	});
 
 	it("can summarize local edits in the attach summary", async () => {
-		const onCreate = (tree: SharedTree) => {
+		const onCreate = (tree: ITreePrivate) => {
 			const view = tree.viewWith(
 				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
 			);
@@ -720,7 +861,7 @@ describe("SharedTree", () => {
 	});
 
 	it("can tolerate local edits submitted as part of a transaction in the attach summary", async () => {
-		const onCreate = (tree: SharedTree) => {
+		const onCreate = (tree: ITreePrivate) => {
 			// Schematize uses a transaction as well
 			const view = tree.viewWith(
 				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
@@ -760,7 +901,7 @@ describe("SharedTree", () => {
 	// AB#5745: Enable this test once it passes.
 	// TODO: above mentioned task is done, but this still fails. Fix it.
 	it.skip("can tolerate incomplete transactions when attaching", async () => {
-		const onCreate = (tree: SharedTree) => {
+		const onCreate = (tree: ITreePrivate) => {
 			const view = tree.viewWith(
 				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
 			);
@@ -815,7 +956,7 @@ describe("SharedTree", () => {
 		);
 		viewInit.initialize([]);
 		viewInit.dispose();
-		provider.processMessages();
+		provider.synchronizeMessages();
 
 		const [view1, view2] = provider.trees.map((t) =>
 			t.viewWith(new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation })),
@@ -826,14 +967,14 @@ describe("SharedTree", () => {
 			view1.root.insertAtStart("");
 		}
 
-		provider.processMessages();
+		provider.synchronizeMessages();
 
 		// These two edit will have ref numbers that correspond to the last of the above edits
 		view1.root.insertAtStart("");
 		view2.root.insertAtStart("");
 
 		// This synchronization point should ensure that both trees see the edits with the higher ref numbers.
-		provider.processMessages();
+		provider.synchronizeMessages();
 
 		// It's not clear if we'll ever want to expose the EditManager to ISharedTree consumers or
 		// if we'll ever expose some memory stats in which the trunk length would be included.
@@ -853,12 +994,12 @@ describe("SharedTree", () => {
 			t1.kernel?.editManager !== undefined && t2.kernel?.editManager !== undefined,
 			"EditManager has moved. This test must be updated.",
 		);
-		assert(t1.kernel.editManager.getTrunkChanges().length < 10);
-		assert(t2.kernel.editManager.getTrunkChanges().length < 10);
+		assert(t1.kernel.editManager.getTrunkChanges("main").length < 10);
+		assert(t2.kernel.editManager.getTrunkChanges("main").length < 10);
 	});
 
 	it("can process changes while detached", async () => {
-		const onCreate = (t: SharedTree) => {
+		const onCreate = (t: ITree) => {
 			const viewInit = t.viewWith(
 				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
 			);
@@ -930,30 +1071,30 @@ describe("SharedTree", () => {
 				}
 			};
 
-			provider.processMessages();
+			provider.synchronizeMessages();
 			const tree2 = provider.trees[1];
 			const view2 = tree2.viewWith(
 				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
 			);
-			provider.processMessages();
+			provider.synchronizeMessages();
 
 			// Insert node
 			view1.root.insertAtStart(value);
-			provider.processMessages();
+			provider.synchronizeMessages();
 
 			// Validate insertion
 			assert.deepEqual([...view2.root], [value]);
 
 			// Undo node insertion
 			undoStack.pop()?.revert();
-			provider.processMessages();
+			provider.synchronizeMessages();
 
 			assert.deepEqual([...view1.root], []);
 			assert.deepEqual([...view2.root], []);
 
 			// Redo node insertion
 			redoStack.pop()?.revert();
-			provider.processMessages();
+			provider.synchronizeMessages();
 
 			assert.deepEqual([...view1.root], [value]);
 			assert.deepEqual([...view2.root], [value]);
@@ -971,30 +1112,30 @@ describe("SharedTree", () => {
 			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
 				tree1.kernel.checkout.events,
 			);
-			provider.processMessages();
+			provider.synchronizeMessages();
 			const tree2 = provider.trees[1];
 			const view2 = tree2.viewWith(
 				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
 			);
-			provider.processMessages();
+			provider.synchronizeMessages();
 
 			// Insert node
 			view1.root.insertAtStart(value);
-			provider.processMessages();
+			provider.synchronizeMessages();
 
 			// Validate insertion
 			assert.deepEqual([...view2.root], [value]);
 
 			// Undo node insertion
 			undoStack.pop()?.revert();
-			provider.processMessages();
+			provider.synchronizeMessages();
 
 			assert.deepEqual([...view1.root], []);
 			assert.deepEqual([...view2.root], []);
 
 			// Redo node insertion
 			redoStack.pop()?.revert();
-			provider.processMessages();
+			provider.synchronizeMessages();
 
 			assert.deepEqual([...view1.root], [value]);
 			assert.deepEqual([...view2.root], [value]);
@@ -1014,20 +1155,20 @@ describe("SharedTree", () => {
 			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
 				tree1.kernel.checkout.events,
 			);
-			provider.processMessages();
+			provider.synchronizeMessages();
 			const view2 = provider.trees[1].viewWith(
 				new TreeViewConfiguration({
 					schema: StringArray,
 					enableSchemaValidation,
 				}),
 			);
-			provider.processMessages();
+			provider.synchronizeMessages();
 
 			// Insert node
 			view1.root.insertAtStart(value3);
 			view1.root.insertAtStart(value2);
 			view1.root.insertAtStart(value);
-			provider.processMessages();
+			provider.synchronizeMessages();
 
 			// Validate insertion
 			assert.deepEqual([...view1.root], [value, value2, value3]);
@@ -1035,28 +1176,28 @@ describe("SharedTree", () => {
 
 			// Undo node insertion
 			undoStack.pop()?.revert();
-			provider.processMessages();
+			provider.synchronizeMessages();
 
 			assert.deepEqual([...view1.root], [value2, value3]);
 			assert.deepEqual([...view2.root], [value2, value3]);
 
 			// Undo node insertion
 			undoStack.pop()?.revert();
-			provider.processMessages();
+			provider.synchronizeMessages();
 
 			assert.deepEqual([...view1.root], [value3]);
 			assert.deepEqual([...view2.root], [value3]);
 
 			// Undo node insertion
 			undoStack.pop()?.revert();
-			provider.processMessages();
+			provider.synchronizeMessages();
 
 			assert.deepEqual([...view1.root], []);
 			assert.deepEqual([...view2.root], []);
 
 			// Redo node insertion
 			redoStack.pop()?.revert();
-			provider.processMessages();
+			provider.synchronizeMessages();
 
 			assert.deepEqual([...view1.root], [value3]);
 			assert.deepEqual([...view2.root], [value3]);
@@ -1077,7 +1218,7 @@ describe("SharedTree", () => {
 				unsubscribe: unsubscribe1,
 			} = createTestUndoRedoStacks(tree1.kernel.checkout.events);
 
-			provider.processMessages();
+			provider.synchronizeMessages();
 			const tree2 = provider.trees[1];
 			const view2 = tree2.viewWith(
 				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
@@ -1088,9 +1229,9 @@ describe("SharedTree", () => {
 				unsubscribe: unsubscribe2,
 			} = createTestUndoRedoStacks(tree2.kernel.checkout.events);
 
-			const initialState = {
+			const initialState: TreeSimpleContent = {
 				schema: StringArray,
-				initialTree: singleJsonCursor(["A", "B", "C", "D"]),
+				initialTree: ["A", "B", "C", "D"],
 			};
 
 			// Validate insertion
@@ -1106,7 +1247,7 @@ describe("SharedTree", () => {
 			assert.deepEqual([...root2], ["A", "B", "C", "y", "D"]);
 
 			// Syncing will cause both trees to rebase their local changes
-			provider.processMessages();
+			provider.synchronizeMessages();
 
 			// Undo node insertion on both trees
 			undoStack1.pop()?.revert();
@@ -1115,7 +1256,7 @@ describe("SharedTree", () => {
 			undoStack2.pop()?.revert();
 			assert.deepEqual([...root2], ["A", "x", "B", "C", "D"]);
 
-			provider.processMessages();
+			provider.synchronizeMessages();
 			validateTreeContent(tree1.kernel.checkout, initialState);
 			validateTreeContent(tree2.kernel.checkout, initialState);
 
@@ -1131,7 +1272,7 @@ describe("SharedTree", () => {
 			redoStack2.pop()?.revert();
 			assert.deepEqual([...root2], ["A", "B", "C", "y", "D"]);
 
-			provider.processMessages();
+			provider.synchronizeMessages();
 			assert.deepEqual([...view1.root], expectedAfterRedo);
 			assert.deepEqual([...view2.root], expectedAfterRedo);
 			unsubscribe1();
@@ -1154,7 +1295,7 @@ describe("SharedTree", () => {
 				tree1.kernel.checkout.events,
 			);
 
-			provider.processMessages();
+			provider.synchronizeMessages();
 			const tree2 = provider.trees[1];
 			const view2 = tree2.viewWith(
 				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
@@ -1169,7 +1310,7 @@ describe("SharedTree", () => {
 			// remove in first treex
 			root1.removeAt(0);
 
-			provider.processMessages();
+			provider.synchronizeMessages();
 			const removeSequenceNumber = provider.sequenceNumber;
 			assert.deepEqual([...root1], ["B", "C", "D"]);
 			assert.deepEqual([...root2], ["B", "C", "D"]);
@@ -1179,13 +1320,13 @@ describe("SharedTree", () => {
 
 			// send edits to move the collab window up
 			root2.insertAt(3, "y");
-			provider.processMessages();
+			provider.synchronizeMessages();
 			root1.removeAt(3);
-			provider.processMessages();
+			provider.synchronizeMessages();
 			root2.insertAt(3, "y");
-			provider.processMessages();
+			provider.synchronizeMessages();
 			root1.removeAt(3);
-			provider.processMessages();
+			provider.synchronizeMessages();
 
 			assert.deepEqual([...root1], ["B", "C", "D"]);
 			assert.deepEqual([...root2], ["B", "C", "D"]);
@@ -1197,14 +1338,14 @@ describe("SharedTree", () => {
 
 			undoStack[0]?.revert();
 
-			provider.processMessages();
+			provider.synchronizeMessages();
 			assert.deepEqual([...root1], ["A", "B", "C", "D"]);
 			assert.deepEqual([...root2], ["A", "B", "C", "D"]);
 
 			assert.equal(redoStack.length, 1);
 			redoStack.pop()?.revert();
 
-			provider.processMessages();
+			provider.synchronizeMessages();
 			assert.deepEqual([...root1], ["B", "C", "D"]);
 			assert.deepEqual([...root2], ["B", "C", "D"]);
 
@@ -1230,7 +1371,7 @@ describe("SharedTree", () => {
 
 					// This test does not correctly handle views getting invalidated by schema changes, so avoid concurrent schematize
 					// which causes view invalidation when resolving the merge.
-					provider.processMessages();
+					provider.synchronizeMessages();
 
 					const tree2 = provider.trees[1];
 					const view2 = tree2.viewWith(
@@ -1239,25 +1380,25 @@ describe("SharedTree", () => {
 					const { undoStack: undoStack2, unsubscribe: unsubscribe2 } =
 						createTestUndoRedoStacks(tree2.kernel.checkout.events);
 
-					provider.processMessages();
+					provider.synchronizeMessages();
 
 					// Validate insertion
 					validateTreeContent(tree2.kernel.checkout, {
 						schema,
-						initialTree: cursorFromInsertable(schema, [["a"]]),
+						initialTree: [["a"]],
 					});
 
 					// edit subtree
 					const outerList = view2.root;
 					const innerList = outerList.at(0) ?? assert.fail();
 					innerList.insertAtEnd("b");
-					provider.processMessages();
+					provider.synchronizeMessages();
 					assert.deepEqual([...(view1.root.at(0) ?? assert.fail())], ["a", "b"]);
 					assert.deepEqual([...innerList], ["a", "b"]);
 
 					// remove subtree
 					view1.root.removeAt(0);
-					provider.processMessages();
+					provider.synchronizeMessages();
 					assert.deepEqual([...view1.root], []);
 					assert.deepEqual([...view2.root], []);
 
@@ -1269,7 +1410,7 @@ describe("SharedTree", () => {
 						undoStack1.pop()?.revert();
 					}
 
-					provider.processMessages();
+					provider.synchronizeMessages();
 					// check the undo happened
 					assert.deepEqual([...(view1.root.at(0) ?? assert.fail())], ["a"]);
 					assert.deepEqual([...(view2.root.at(0) ?? assert.fail())], ["a"]);
@@ -1285,7 +1426,8 @@ describe("SharedTree", () => {
 			const innerListSchema = sf.array(sf.string);
 			const schema = sf.array(innerListSchema);
 
-			interface Peer extends ConnectionSetter {
+			interface Peer {
+				readonly containerRuntime: TreeMockContainerRuntime;
 				readonly checkout: TreeCheckout;
 				readonly view: TreeViewAlpha<typeof schema>;
 				readonly outerList: TreeFieldFromImplicitField<typeof schema>;
@@ -1320,7 +1462,7 @@ describe("SharedTree", () => {
 				});
 			}
 
-			function peerFromSharedTree(tree: SharedTreeWithConnectionStateSetter): Peer {
+			function peerFromSharedTree(tree: SharedTreeWithContainerRuntime): Peer {
 				const view = tree.kernel.viewWith(
 					new TreeViewConfiguration({ schema, enableSchemaValidation }),
 				);
@@ -1328,11 +1470,11 @@ describe("SharedTree", () => {
 					view.initialize([["a"]]);
 				}
 				return {
+					containerRuntime: tree.containerRuntime,
 					checkout: tree.kernel.checkout,
 					view,
 					outerList: view.root,
 					innerList: view.root.at(0) ?? assert.fail(),
-					setConnected: tree.setConnected,
 					assertOuterListEquals(expected: readonly (readonly string[])[]) {
 						const actual = [...this.outerList].map((inner) => [...inner]);
 						assert.deepEqual(actual, expected);
@@ -1351,9 +1493,9 @@ describe("SharedTree", () => {
 			} {
 				const provider = new TestTreeProviderLite(2);
 				const submitter = peerFromSharedTree(provider.trees[0]);
-				provider.processMessages();
+				provider.synchronizeMessages();
 				const resubmitter = peerFromSharedTree(provider.trees[1]);
-				provider.processMessages();
+				provider.synchronizeMessages();
 				return { provider, submitter, resubmitter };
 			}
 
@@ -1376,7 +1518,7 @@ describe("SharedTree", () => {
 					const s1 = undoableInsertInInnerList(submitter, "s1");
 					const s2 = undoableInsertInInnerList(submitter, "s2");
 
-					provider.processMessages();
+					provider.synchronizeMessages();
 
 					submitter.assertOuterListEquals([]);
 					resubmitter.assertOuterListEquals([]);
@@ -1384,14 +1526,14 @@ describe("SharedTree", () => {
 					submitter.assertInnerListEquals(initialState);
 					resubmitter.assertInnerListEquals(initialState);
 
-					resubmitter.setConnected(false);
+					resubmitter.containerRuntime.connected = false;
 
 					s2.revert();
 					s1.revert();
 					submitter.assertOuterListEquals([]);
 					submitter.assertInnerListEquals(["a", "r"]);
 
-					provider.processMessages();
+					provider.synchronizeMessages();
 
 					if (scenario === "restore and edit") {
 						rRemove.revert();
@@ -1402,8 +1544,8 @@ describe("SharedTree", () => {
 					}
 					resubmitter.assertOuterListEquals([["a", "s1", "s2"]]);
 
-					resubmitter.setConnected(true);
-					provider.processMessages();
+					resubmitter.containerRuntime.connected = true;
+					provider.synchronizeMessages();
 
 					const finalState = [["a"]];
 					submitter.assertOuterListEquals(finalState);
@@ -1418,7 +1560,7 @@ describe("SharedTree", () => {
 					const sEdit = undoableInsertInInnerList(submitter, "s");
 					const sRemove = undoableRemoveOfOuterList(submitter);
 
-					provider.processMessages();
+					provider.synchronizeMessages();
 
 					submitter.assertOuterListEquals([]);
 					resubmitter.assertOuterListEquals([]);
@@ -1426,7 +1568,7 @@ describe("SharedTree", () => {
 					submitter.assertInnerListEquals(initialState);
 					resubmitter.assertInnerListEquals(initialState);
 
-					resubmitter.setConnected(false);
+					resubmitter.containerRuntime.connected = false;
 
 					if (scenario === "restore and edit") {
 						sRemove.revert();
@@ -1437,15 +1579,15 @@ describe("SharedTree", () => {
 					}
 					submitter.assertOuterListEquals([["a", "r1", "r2"]]);
 
-					provider.processMessages();
+					provider.synchronizeMessages();
 
 					r2.revert();
 					r1.revert();
 					resubmitter.assertOuterListEquals([]);
 					resubmitter.assertInnerListEquals(["a", "s"]);
 
-					resubmitter.setConnected(true);
-					provider.processMessages();
+					resubmitter.containerRuntime.connected = true;
+					provider.synchronizeMessages();
 
 					const finalState = [["a"]];
 					submitter.assertOuterListEquals(finalState);
@@ -1456,11 +1598,11 @@ describe("SharedTree", () => {
 			it("the restore of a tree edited on a branch", () => {
 				const { provider, submitter, resubmitter } = setupResubmitTest();
 
-				resubmitter.setConnected(false);
+				resubmitter.containerRuntime.connected = false;
 
 				// This is the edit that will be rebased over during the re-submit phase
 				undoableInsertInInnerList(submitter, "s");
-				provider.processMessages();
+				provider.synchronizeMessages();
 
 				// fork the tree
 				const branch = resubmitter.checkout.branch();
@@ -1483,13 +1625,94 @@ describe("SharedTree", () => {
 				rRemove.revert();
 				resubmitter.assertOuterListEquals([["a", "f"]]);
 
-				resubmitter.setConnected(true);
-				provider.processMessages();
+				resubmitter.containerRuntime.connected = true;
+				provider.synchronizeMessages();
 
 				const finalState = [["a", "f", "s"]];
 				resubmitter.assertOuterListEquals(finalState);
 				submitter.assertOuterListEquals(finalState);
 			});
+
+			// This tests a client resubmitting two commits,
+			// the first of which is a merge of a commit which has concurrently been merged by another client.
+			it("over merge of commit to be resubmitted", () => {
+				const provider = new TestTreeProviderLite(
+					2,
+					configuredSharedTree({
+						jsonValidator: FormatValidatorBasic,
+						formatVersion: SharedTreeFormatVersion.vSharedBranches,
+					}).getFactory(),
+				);
+
+				const config = new TreeViewConfiguration({ schema, enableSchemaValidation });
+				const [tree1, tree2] = provider.trees;
+				const mainView1 = asAlpha(tree1.viewWith(config));
+				mainView1.initialize([["A"]]);
+				const branchId = tree1.createSharedBranch();
+				const branchView1 = asAlpha(tree1.viewSharedBranchWith(branchId, config));
+				branchView1.root[0].insertAtEnd("B");
+				provider.synchronizeMessages();
+
+				tree1.containerRuntime.connected = false;
+				mainView1.merge(branchView1, false);
+				const mainView2 = asAlpha(tree2.viewWith(config));
+				const branchView2 = asAlpha(tree2.viewSharedBranchWith(branchId, config));
+				branchView2.root[0].insertAtEnd("C");
+				mainView2.merge(branchView2, false);
+				provider.synchronizeMessages();
+
+				tree1.containerRuntime.connected = true;
+				provider.synchronizeMessages();
+
+				assert.deepEqual(mainView1.root[0], ["A", "B", "C"]);
+				assert.deepEqual(mainView2.root[0], ["A", "B", "C"]);
+			});
+		});
+
+		it("revert constraint", () => {
+			// This test ensures that the feature works across peers as opposed to solely across branches.
+			const provider = new TestTreeProviderLite(2);
+			const config = new TreeViewConfiguration({ schema: JsonAsTree.JsonObject });
+			const viewA = asAlpha(provider.trees[0].viewWith(config));
+			const viewB = provider.trees[1].viewWith(config);
+			viewA.initialize(
+				new JsonAsTree.JsonObject({ child: new JsonAsTree.JsonObject({ id: "A" }) }),
+			);
+			provider.synchronizeMessages();
+
+			const stack = createTestUndoRedoStacks(provider.trees[0].kernel.checkout.events);
+
+			// Make transaction on a branch that does the following:
+			// 1. Changes value of "foo" to a new child.
+			// 2. Adds inverse constraint on existence of node "B" on field "foo".
+			viewA.runTransaction(() => {
+				viewA.root.child = new JsonAsTree.JsonObject({ id: "B" });
+				return {
+					preconditionsOnRevert: [{ type: "nodeInDocument", node: viewA.root.child }],
+				};
+			});
+			provider.synchronizeMessages();
+
+			assert.deepEqual(TreeBeta.exportConcise(viewA.root), { child: { id: "B" } });
+			assert.deepEqual(TreeBeta.exportConcise(viewB.root), { child: { id: "B" } });
+
+			const restoreChildA = stack.undoStack[0] ?? assert.fail("Missing undo");
+
+			// This change should violate the inverse constraint because it changes the
+			// child node from B to C
+			viewB.root.child = new JsonAsTree.JsonObject({ id: "C" });
+			provider.synchronizeMessages();
+
+			assert.deepEqual(TreeBeta.exportConcise(viewA.root), { child: { id: "C" } });
+			assert.deepEqual(TreeBeta.exportConcise(viewB.root), { child: { id: "C" } });
+
+			// This revert should do nothing since its constraint on the undo has been violated.
+			restoreChildA.revert();
+
+			assert.deepEqual(TreeBeta.exportConcise(viewA.root), { child: { id: "C" } });
+			assert.deepEqual(TreeBeta.exportConcise(viewB.root), { child: { id: "C" } });
+
+			stack.unsubscribe();
 		});
 	});
 
@@ -1502,7 +1725,7 @@ describe("SharedTree", () => {
 				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
 			);
 			view1.initialize(["A", "B", "C", "D"]);
-			provider.processMessages();
+			provider.synchronizeMessages();
 			const tree2 = provider.trees[1];
 			const view2 = tree2.viewWith(
 				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
@@ -1532,7 +1755,7 @@ describe("SharedTree", () => {
 			assert.deepEqual([...root2], ["A", "B", "C", "y", "D", "z"]);
 
 			// Syncing will cause both trees to rebase their local changes
-			provider.processMessages();
+			provider.synchronizeMessages();
 
 			assert.equal(undoStack1.length, 1);
 			assert.equal(undoStack2.length, 2);
@@ -1549,7 +1772,7 @@ describe("SharedTree", () => {
 				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
 			);
 			view1.initialize([]);
-			provider.processMessages();
+			provider.synchronizeMessages();
 			const tree2 = provider.trees[1];
 			const view2 = tree2.viewWith(
 				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
@@ -1565,7 +1788,7 @@ describe("SharedTree", () => {
 
 			// Insert node
 			view2.root.insertAtStart(value);
-			provider.processMessages();
+			provider.synchronizeMessages();
 
 			// Validate insertion
 			assert.deepEqual([...view1.root], [value]);
@@ -1586,13 +1809,14 @@ describe("SharedTree", () => {
 			view1.initialize(["a"]);
 			await provider.ensureSynchronized();
 
-			const pausedContainer: IContainerExperimental = provider.containers[0];
-			const url = (await pausedContainer.getAbsoluteUrl("")) ?? fail("didn't get url");
+			const pausedContainer: ContainerAlpha = asLegacyAlpha(provider.containers[0]);
+			const url = (await pausedContainer.getAbsoluteUrl("")) ?? assert.fail("didn't get url");
 			const pausedTree = view1;
 			await provider.opProcessingController.pauseProcessing(pausedContainer);
 			pausedTree.root.insertAt(1, "b");
 			pausedTree.root.insertAt(2, "c");
-			const pendingOps = await pausedContainer.closeAndGetPendingLocalState?.();
+			const pendingOps = await pausedContainer.getPendingLocalState();
+			pausedContainer.close();
 			provider.opProcessingController.resumeProcessing();
 
 			const otherLoadedView = provider.trees[1].viewWith(
@@ -1609,8 +1833,9 @@ describe("SharedTree", () => {
 				undefined,
 				pendingOps,
 			);
-			const dataStore = (await loadedContainer.getEntryPoint()) as ITestFluidObject;
-			const tree = await dataStore.getSharedObject<SharedTree>("TestSharedTree");
+			const dataStore = (await loadedContainer.getEntryPoint()) as TestFluidObjectInternal;
+			const tree = await dataStore.getInitialSharedObject("TestSharedTree");
+			assert(SharedTreeKind.is(tree));
 			const view = tree.viewWith(
 				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
 			);
@@ -1658,16 +1883,16 @@ describe("SharedTree", () => {
 			new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
 		);
 		view1.initialize([]);
-		provider.processMessages();
+		provider.synchronizeMessages();
 		const tree2 = provider.trees[1];
 		let opsReceived = 0;
 		tree2.on("op", () => (opsReceived += 1));
 		Tree.runTransaction(view1, () => {
 			view1.root.insertAtStart("x");
-			provider.processMessages();
+			provider.synchronizeMessages();
 			assert.equal(opsReceived, 0);
 		});
-		provider.processMessages();
+		provider.synchronizeMessages();
 		assert.equal(opsReceived, 1);
 		assert.deepEqual(
 			[
@@ -1686,7 +1911,7 @@ describe("SharedTree", () => {
 			new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
 		);
 		view1.initialize([]);
-		provider.processMessages();
+		provider.synchronizeMessages();
 		const tree2 = provider.trees[1];
 		let opsReceived = 0;
 		tree2.on("op", () => (opsReceived += 1));
@@ -1694,7 +1919,7 @@ describe("SharedTree", () => {
 			view1.root.insertAtStart("B");
 			view1.root.insertAtStart("A");
 		});
-		provider.processMessages();
+		provider.synchronizeMessages();
 		assert.equal(opsReceived, 1);
 		assert.deepEqual(
 			[
@@ -1713,7 +1938,7 @@ describe("SharedTree", () => {
 			new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
 		);
 		view1.initialize([]);
-		provider.processMessages();
+		provider.synchronizeMessages();
 		const tree2 = provider.trees[1];
 		let opsReceived = 0;
 		tree2.on("op", () => (opsReceived += 1));
@@ -1724,18 +1949,18 @@ describe("SharedTree", () => {
 			Tree.runTransaction(view1, () => {
 				view1.root.insertAtStart("A");
 			});
-			provider.processMessages();
+			provider.synchronizeMessages();
 			assert.equal(opsReceived, 0);
 			assert.deepEqual([...view2.root], []);
 			view1.root.insertAtEnd("B");
 		});
-		provider.processMessages();
+		provider.synchronizeMessages();
 		assert.equal(opsReceived, 1);
 		assert.deepEqual([...view2.root], ["A", "B"]);
 	});
 
 	it("process changes while detached", async () => {
-		const onCreate = (parentTree: SharedTree) => {
+		const onCreate = (parentTree: ISharedTree) => {
 			const parentView = parentTree.viewWith(
 				new TreeViewConfiguration({
 					schema: StringArray,
@@ -1795,7 +2020,7 @@ describe("SharedTree", () => {
 				.remove(0, 99),
 		);
 
-		provider.processMessages();
+		provider.synchronizeMessages();
 	});
 
 	describe("Schema changes", () => {
@@ -1824,7 +2049,7 @@ describe("SharedTree", () => {
 
 			await provider.ensureSynchronized();
 			assert.deepEqual([...view1.root], [value1]);
-			expectSchemaEqual(tree2.kernel.storedSchema, toStoredSchema(StringArray));
+			expectSchemaEqual(tree2.kernel.storedSchema, toInitialSchema(StringArray));
 			validateTreeConsistency(tree1, tree2);
 		});
 
@@ -1836,9 +2061,9 @@ describe("SharedTree", () => {
 			);
 			view1.initialize(["42"]);
 
-			provider.processMessages();
+			provider.synchronizeMessages();
 
-			tree1.setConnected(false);
+			tree1.containerRuntime.connected = false;
 
 			view1.root.insertAtEnd("43");
 			view1.dispose();
@@ -1850,9 +2075,9 @@ describe("SharedTree", () => {
 			// TODO:#8915: This should be able to insert the _number_ 44, not the string, but currently cannot - see bug #8915
 			view1Json.root.insertAtEnd("44");
 
-			tree1.setConnected(true);
+			tree1.containerRuntime.connected = true;
 
-			provider.processMessages();
+			provider.synchronizeMessages();
 
 			assert.deepEqual([...view1Json.root].length, 3);
 		});
@@ -1869,19 +2094,19 @@ describe("SharedTree", () => {
 				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
 			);
 			view.initialize([]);
-			expectSchemaEqual(tree.kernel.storedSchema, toStoredSchema(StringArray));
+			expectSchemaEqual(tree.kernel.storedSchema, toInitialSchema(StringArray));
 
 			tree
 				.viewWith(
 					new TreeViewConfiguration({ schema: JsonAsTree.Array, enableSchemaValidation }),
 				)
 				.upgradeSchema();
-			expectSchemaEqual(tree.kernel.storedSchema, toStoredSchema(JsonAsTree.Array));
+			expectSchemaEqual(tree.kernel.storedSchema, toInitialSchema(JsonAsTree.Array));
 
 			const revertible = undoStack.pop();
 			revertible?.revert();
 
-			expectSchemaEqual(tree.kernel.storedSchema, toStoredSchema(StringArray));
+			expectSchemaEqual(tree.kernel.storedSchema, toInitialSchema(StringArray));
 		});
 	});
 
@@ -1892,8 +2117,8 @@ describe("SharedTree", () => {
 		it("can apply and resubmit stashed schema ops", async () => {
 			const provider = await TestTreeProvider.create(2);
 
-			const pausedContainer: IContainerExperimental = provider.containers[0];
-			const url = (await pausedContainer.getAbsoluteUrl("")) ?? fail("didn't get url");
+			const pausedContainer: ContainerAlpha = asLegacyAlpha(provider.containers[0]);
+			const url = (await pausedContainer.getAbsoluteUrl("")) ?? assert.fail("didn't get url");
 			const pausedTree = provider.trees[0];
 			await provider.opProcessingController.pauseProcessing(pausedContainer);
 			const pausedView = pausedTree.viewWith(
@@ -1903,7 +2128,8 @@ describe("SharedTree", () => {
 				}),
 			);
 			pausedView.initialize([]);
-			const pendingOps = await pausedContainer.closeAndGetPendingLocalState?.();
+			const pendingOps = await pausedContainer.getPendingLocalState();
+			pausedContainer.close();
 			provider.opProcessingController.resumeProcessing();
 
 			const loadedContainer = await provider.loadTestContainer(
@@ -1911,14 +2137,15 @@ describe("SharedTree", () => {
 				undefined,
 				pendingOps,
 			);
-			const dataStore = (await loadedContainer.getEntryPoint()) as ITestFluidObject;
-			const tree = await dataStore.getSharedObject<ITreePrivate>("TestSharedTree");
+			const dataStore = (await loadedContainer.getEntryPoint()) as TestFluidObjectInternal;
+			const tree = (await dataStore.getInitialSharedObject("TestSharedTree")) as IChannel &
+				ITreePrivate;
 			await waitForContainerConnection(loadedContainer, true);
 			await provider.ensureSynchronized();
 
 			const otherLoadedTree = provider.trees[1];
-			expectSchemaEqual(tree.contentSnapshot().schema, toStoredSchema(StringArray));
-			expectSchemaEqual(otherLoadedTree.kernel.storedSchema, toStoredSchema(StringArray));
+			expectSchemaEqual(tree.contentSnapshot().schema, toInitialSchema(StringArray));
+			expectSchemaEqual(otherLoadedTree.kernel.storedSchema, toInitialSchema(StringArray));
 		});
 	});
 
@@ -1926,44 +2153,44 @@ describe("SharedTree", () => {
 		it("unspecified ForestType uses ObjectForest", () => {
 			const { trees } = new TestTreeProviderLite(
 				1,
-				new TreeFactory({
-					jsonValidator: typeboxValidator,
-				}),
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+				}).getFactory(),
 			);
 			assert.equal(trees[0].kernel.checkout.forest instanceof ObjectForest, true);
 		});
 
-		it("ForestType.Reference uses ObjectForest with additionalAsserts flag set to false", () => {
+		it("ForestTypeReference uses ObjectForest with additionalAsserts flag set to false", () => {
 			const { trees } = new TestTreeProviderLite(
 				1,
-				new TreeFactory({
-					jsonValidator: typeboxValidator,
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
 					forest: ForestTypeReference,
-				}),
+				}).getFactory(),
 			);
 			const forest = trees[0].kernel.checkout.forest;
 			assert(forest instanceof ObjectForest);
 			assert.equal(forest.additionalAsserts, false);
 		});
 
-		it("ForestType.Optimized uses ChunkedForest", () => {
+		it("ForestTypeOptimized uses ChunkedForest", () => {
 			const { trees } = new TestTreeProviderLite(
 				1,
-				new TreeFactory({
-					jsonValidator: typeboxValidator,
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
 					forest: ForestTypeOptimized,
-				}),
+				}).getFactory(),
 			);
 			assert.equal(trees[0].kernel.checkout.forest instanceof ChunkedForest, true);
 		});
 
-		it("ForestType.Expensive uses ObjectForest with additionalAsserts flag set to true", () => {
+		it("ForestTypeExpensive uses ObjectForest with additionalAsserts flag set to true", () => {
 			const { trees } = new TestTreeProviderLite(
 				1,
-				new TreeFactory({
-					jsonValidator: typeboxValidator,
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
 					forest: ForestTypeExpensiveDebug,
-				}),
+				}).getFactory(),
 			);
 			const forest = trees[0].kernel.checkout.forest;
 			assert(forest instanceof ObjectForest);
@@ -1973,10 +2200,10 @@ describe("SharedTree", () => {
 	describe("Schema based op encoding", () => {
 		// TODO:#8915: This test will fail until bug #8915 is fixed
 		it.skip("uses the correct schema for subsequent edits after schema change.", async () => {
-			const factory = new TreeFactory({
-				jsonValidator: typeboxValidator,
+			const factory = configuredSharedTree({
+				jsonValidator: FormatValidatorBasic,
 				treeEncodeType: TreeCompressionStrategy.Compressed,
-			});
+			}).getFactory();
 			const provider = new TestTreeProviderLite(2, factory);
 			const tree = provider.trees[0];
 
@@ -2005,7 +2232,7 @@ describe("SharedTree", () => {
 				view2.upgradeSchema();
 				view2.root.foo.insertAtStart(1);
 			});
-			provider.processMessages();
+			provider.synchronizeMessages();
 
 			assert.deepEqual(
 				tree.viewWith(new TreeViewConfiguration({ schema: schema2, enableSchemaValidation }))
@@ -2018,10 +2245,10 @@ describe("SharedTree", () => {
 
 		it("properly encodes ops using specified compression strategy", async () => {
 			// Check that ops are using uncompressed encoding with "Uncompressed" treeEncodeType
-			const factory = new TreeFactory({
-				jsonValidator: typeboxValidator,
+			const factory = configuredSharedTree({
+				jsonValidator: FormatValidatorBasic,
 				treeEncodeType: TreeCompressionStrategy.Uncompressed,
-			});
+			}).getFactory();
 			const provider = await TestTreeProvider.create(1, SummarizeType.onDemand, factory);
 			provider.trees[0]
 				.viewWith(new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }))
@@ -2061,10 +2288,10 @@ describe("SharedTree", () => {
 			assert.deepEqual(encodedTreeData.data[0][1], expectedUncompressedTreeData);
 
 			// Check that ops are encoded using schema based compression with "Compressed" treeEncodeType
-			const factory2 = new TreeFactory({
-				jsonValidator: typeboxValidator,
+			const factory2 = configuredSharedTree({
+				jsonValidator: FormatValidatorBasic,
 				treeEncodeType: TreeCompressionStrategy.Compressed,
-			});
+			}).getFactory();
 			const provider2 = await TestTreeProvider.create(1, SummarizeType.onDemand, factory2);
 
 			provider2.trees[0]
@@ -2091,18 +2318,47 @@ describe("SharedTree", () => {
 		});
 	});
 
+	describe("Shared Tree format v5 enablement via `configuredSharedTree`", () => {
+		it("can create a SharedTree with format v5 enabled", async () => {
+			// Create and initialize the runtime factory
+			const runtime = new MockSharedTreeRuntime();
+
+			// Enable Shared Tree format v5, which corresponds to schema format v2. Create a Shared Tree instance.
+			const tree = configuredSharedTree({
+				formatVersion: SharedTreeFormatVersion.v5,
+			}).create(runtime);
+			const schemaFactory = new SchemaFactoryAlpha("com.example");
+
+			// A schema with node and field persisted metadata
+			class Foo extends schemaFactory.objectAlpha(
+				"Foo",
+				{
+					bar: schemaFactory.required(schemaFactory.number, {
+						persistedMetadata: { "fieldMetadata": 1 },
+					}),
+				},
+				{ persistedMetadata: { "nodeMetadata": 2 } },
+			) {}
+
+			const treeView = tree.viewWith(
+				new TreeViewConfiguration({
+					schema: Foo,
+				}),
+			);
+
+			const schema = treeView.schema;
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			assert.deepEqual(schema.fields.get("bar")!.persistedMetadata, { "fieldMetadata": 1 });
+			assert.deepEqual(schema.persistedMetadata, { "nodeMetadata": 2 });
+		});
+	});
+
 	describe("Identifiers", () => {
-		it("Can use identifiers and the static Tree Apis", async () => {
-			const factory = new TreeFactory({
-				jsonValidator: typeboxValidator,
-				treeEncodeType: TreeCompressionStrategy.Compressed,
-			});
-			const provider = new TestTreeProviderLite(1, factory, true);
-			const tree1 = provider.trees[0];
+		it("Can use identifiers and the static Tree Apis", () => {
 			const sf = new SchemaFactory("com.example");
 			class Widget extends sf.object("Widget", { id: sf.identifier }) {}
 
-			const view = tree1.viewWith(
+			const view = getView(
 				new TreeViewConfiguration({
 					schema: sf.array(Widget),
 					enableSchemaValidation,
@@ -2119,7 +2375,7 @@ describe("SharedTree", () => {
 	});
 
 	describe("Schema validation", () => {
-		it("can create tree with schema validation enabled", async () => {
+		it("can create tree with schema validation enabled", () => {
 			const provider = new TestTreeProviderLite(1);
 			const [sharedTree] = provider.trees;
 			const sf = new SchemaFactory("test");
@@ -2133,8 +2389,8 @@ describe("SharedTree", () => {
 		});
 	});
 
-	// Note: this is basically a more e2e version of some tests for `toMapTree`.
-	it("throws when an invalid type is inserted at runtime", async () => {
+	// Note: this is basically a more end-to-end version of some tests for `unhydratedFlexTreeFromInsertable`.
+	it("throws when an invalid type is inserted at runtime", () => {
 		const provider = new TestTreeProviderLite(1);
 		const [sharedTree] = provider.trees;
 		const sf = new SchemaFactory("test");
@@ -2157,12 +2413,11 @@ describe("SharedTree", () => {
 	});
 
 	it("throws an error if attaching during a transaction", () => {
-		const sharedTreeFactory = new TreeFactory({});
 		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
-		const tree = sharedTreeFactory.create(runtime, "tree");
+		const tree = DefaultTestSharedTreeKind.getFactory().create(runtime, "tree");
 		const runtimeFactory = new MockContainerRuntimeFactory();
 		runtimeFactory.createContainerRuntime(runtime);
-		const view = tree.viewWith(new TreeViewConfiguration({ schema: StringArray }));
+		const view = asAlpha(tree.viewWith(new TreeViewConfiguration({ schema: StringArray })));
 		view.initialize([]);
 		assert.throws(
 			() => {
@@ -2177,12 +2432,32 @@ describe("SharedTree", () => {
 		);
 	});
 
+	it("summarize with pre-attach removed nodes", () => {
+		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
+		const sharedObject = configuredSharedTree({
+			jsonValidator: FormatValidatorBasic,
+			forest: ForestTypeExpensiveDebug,
+			oldestCompatibleClient: FluidClientVersion.v2_52,
+		}) as SharedObjectKind<ISharedTree> & ISharedObjectKind<ISharedTree>;
+		const tree = sharedObject.getFactory().create(runtime, "tree");
+		const runtimeFactory = new MockContainerRuntimeFactory();
+		runtimeFactory.createContainerRuntime(runtime);
+		const view = asAlpha(tree.viewWith(new TreeViewConfiguration({ schema: StringArray })));
+		view.initialize(["A"]);
+		view.root.removeAt(0);
+		// The fork prevents the trimming of the commit that removes "A"
+		const f = view.fork();
+		tree.getAttachSummary();
+		f.dispose();
+	});
+
 	it("breaks on exceptions", () => {
 		const tree = treeTestFactory();
 		const sf = new SchemaFactory("test");
 		const schema = sf.object("myObject", {});
 		const config = new TreeViewConfiguration({ schema, enableSchemaValidation });
 		const view = tree.viewWith(config);
+		assert(view instanceof SchematizingSimpleTreeView);
 
 		view.initialize({});
 		assert.equal(view.breaker, tree.kernel.breaker);
@@ -2210,7 +2485,10 @@ describe("SharedTree", () => {
 	it("exportVerbose & exportSimpleSchema", () => {
 		const tree = treeTestFactory();
 		assert.deepEqual(tree.exportVerbose(), undefined);
-		assert.deepEqual(tree.exportSimpleSchema(), getSimpleSchema(SchemaFactory.optional([])));
+		assert.deepEqual(
+			tree.exportSimpleSchema(),
+			toSimpleTreeSchema(SchemaFactory.optional([]), true),
+		);
 
 		const config = new TreeViewConfiguration({
 			schema: numberSchema,
@@ -2219,6 +2497,103 @@ describe("SharedTree", () => {
 		view.initialize(10);
 
 		assert.deepEqual(tree.exportVerbose(), 10);
-		assert.deepEqual(tree.exportSimpleSchema(), getSimpleSchema(numberSchema));
+		assert.deepEqual(tree.exportSimpleSchema(), toSimpleTreeSchema(numberSchema, true));
+	});
+
+	it("supports multiple shared branches", () => {
+		const provider = new TestTreeProviderLite(
+			2,
+			configuredSharedTree({
+				jsonValidator: FormatValidatorBasic,
+				formatVersion: SharedTreeFormatVersion.vSharedBranches,
+			}).getFactory(),
+		);
+		const tree1 = provider.trees[0];
+
+		const config = new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation });
+		const mainView1 = tree1.viewWith(config);
+		mainView1.initialize(["A"]);
+		provider.synchronizeMessages();
+
+		assert.deepEqual([...mainView1.root], ["A"]);
+		const tree2 = provider.trees[1];
+		provider.synchronizeMessages();
+
+		const branchId = tree1.createSharedBranch();
+		const branchView1 = tree1.viewSharedBranchWith(branchId, config);
+		assert.deepEqual([...branchView1.root], ["A"]);
+
+		mainView1.root.insertAtEnd("X");
+		branchView1.root.insertAtEnd("B");
+		assert.deepEqual([...branchView1.root], ["A", "B"]);
+		assert.deepEqual([...mainView1.root], ["A", "X"]);
+		provider.synchronizeMessages();
+
+		const branchView2 = tree2.viewSharedBranchWith(branchId, config);
+		assert.deepEqual([...branchView2.root], ["A", "B"]);
+
+		branchView2.root.insertAtEnd("C");
+		assert.deepEqual([...branchView2.root], ["A", "B", "C"]);
+		provider.synchronizeMessages();
+
+		assert.deepEqual([...branchView1.root], ["A", "B", "C"]);
+		assert.deepEqual([...mainView1.root], ["A", "X"]);
+
+		const mainView2 = tree2.viewWith(config);
+		assert.deepEqual([...mainView2.root], ["A", "X"]);
+	});
+
+	describe("can load a shared branch from summary", () => {
+		for (const subCase of [
+			"based on a commit in the collab window",
+			"based on a commit outside the collab window",
+		] as const) {
+			it(subCase, async () => {
+				const provider = await TestTreeProvider.create(
+					1,
+					SummarizeType.onDemand,
+					new SharedTreeTestFactory(() => {}, undefined, {
+						formatVersion: SharedTreeFormatVersion.vSharedBranches,
+					}),
+				);
+				const tree1 = provider.trees[0];
+				const config = new TreeViewConfiguration({
+					schema: StringArray,
+					enableSchemaValidation,
+				});
+				const mainView1 = tree1.viewWith(config);
+				mainView1.initialize([]);
+				mainView1.root.insertAtEnd("A");
+				const branchId = tree1.createSharedBranch();
+				mainView1.root.insertAtEnd("B");
+				await provider.ensureSynchronized();
+
+				const branchView1 = tree1.viewSharedBranchWith(branchId, config);
+				branchView1.root.insertAtEnd("X");
+
+				await provider.ensureSynchronized();
+
+				if (subCase === "based on a commit outside the collab window") {
+					const seqNumber = provider.containers[0].deltaManager.lastSequenceNumber;
+					while (provider.containers[0].deltaManager.minimumSequenceNumber < seqNumber) {
+						mainView1.root.insertAtEnd("C");
+						await provider.ensureSynchronized();
+					}
+					mainView1.root.insertAtEnd("C");
+					await provider.ensureSynchronized();
+				}
+
+				const lengthOnMainBranch = mainView1.root.length;
+
+				// The summary created here should include the shared branch
+				await provider.summarize();
+				await provider.ensureSynchronized();
+				const loadingTree = await provider.createTree();
+				const loadingMainView = loadingTree.viewWith(config);
+				assert.equal(loadingMainView.root.length, lengthOnMainBranch);
+				const loadingBranchView = loadingTree.viewSharedBranchWith(branchId, config);
+				assert.deepEqual([...loadingBranchView.root], ["A", "X"]);
+			});
+		}
 	});
 });

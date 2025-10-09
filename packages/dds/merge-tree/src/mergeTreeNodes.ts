@@ -4,9 +4,9 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
+import type { AttributionKey } from "@fluidframework/runtime-definitions/internal";
 
-import { IAttributionCollection } from "./attributionCollection.js";
+import type { IAttributionCollection } from "./attributionCollection.js";
 import {
 	LocalClientId,
 	NonCollabClient,
@@ -14,14 +14,14 @@ import {
 	UniversalSequenceNumber,
 } from "./constants.js";
 import { LocalReferenceCollection, type LocalReferencePosition } from "./localReference.js";
-import { TrackingGroupCollection } from "./mergeTreeTracking.js";
-import { IJSONSegment, IMarkerDef, ReferenceType } from "./ops.js";
+import { TrackingGroupCollection, type ITrackingGroup } from "./mergeTreeTracking.js";
+import type { IJSONSegment, IMarkerDef, ReferenceType } from "./ops.js";
 import { computeHierarchicalOrdinal } from "./ordinal.js";
 import type { PartialSequenceLengths } from "./partialLengths.js";
-import { PriorPerspective, type Perspective } from "./perspective.js";
-import { PropertySet, clone, createMap, type MapLike } from "./properties.js";
-import { ReferencePosition } from "./referencePositions.js";
-import { SegmentGroupCollection } from "./segmentGroupCollection.js";
+import { LocalDefaultPerspective, PriorPerspective, type Perspective } from "./perspective.js";
+import { type PropertySet, clone, createMap, type MapLike } from "./properties.js";
+import type { ReferencePosition } from "./referencePositions.js";
+import type { SegmentGroupCollection } from "./segmentGroupCollection.js";
 import {
 	hasProp,
 	isInserted,
@@ -32,8 +32,11 @@ import {
 	type IMergeNodeInfo,
 	type IHasRemovalInfo,
 	type SegmentWithInfo,
+	type ISegmentInsideObliterateInfo,
+	isInsideObliterate,
 } from "./segmentInfos.js";
-import { PropertiesManager } from "./segmentPropertiesManager.js";
+import type { PropertiesManager } from "./segmentPropertiesManager.js";
+import type { Side } from "./sequencePlace.js";
 import type { OperationStamp, SliceRemoveOperationStamp } from "./stamps.js";
 
 /**
@@ -77,23 +80,6 @@ export interface ISegmentInternal extends ISegment {
 export interface ISegmentPrivate extends ISegmentInternal {
 	segmentGroups?: SegmentGroupCollection;
 	propertyManager?: PropertiesManager;
-	/**
-	 * Populated iff this segment was inserted into a range affected by concurrent obliterates at the time of its insertion.
-	 * Contains information about the 'most recent' (i.e. 'winning' in the sense below) obliterate.
-	 *
-	 * BEWARE: We have opted for a certain form of last-write wins (LWW) semantics for obliterates:
-	 * the client which last obliterated a range is considered to have "won ownership" of that range and may insert into it
-	 * without that insertion being obliterated by other clients' concurrent obliterates.
-	 *
-	 * Therefore, this field can be populated even if the segment has not been obliterated (i.e. is still visible).
-	 * This happens precisely when the segment was inserted by the same client that 'won' the obliterate (in a scenario where
-	 * a client first issues a sided obliterate impacting a range, then inserts into that range before the server has acked the obliterate).
-	 *
-	 * See the test case "obliterate with mismatched final states" for an example of such a scenario.
-	 *
-	 * TODO:AB#29553: This property is not persisted in the summary, but it should be.
-	 */
-	obliteratePrecedingInsertion?: ObliterateInfo;
 }
 /**
  * Segment leafs are segments that have both IMergeNodeInfo and IHasInsertionInfo. This means they
@@ -146,8 +132,7 @@ export type IMergeNode = MergeBlock | ISegmentLeaf;
 /**
  * A segment representing a portion of the merge tree.
  * Segments are leaf nodes of the merge tree and contain data.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISegment {
 	readonly type: string;
@@ -192,16 +177,14 @@ export interface ISegment {
 
 /**
  * Determine if a segment has been removed.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export function segmentIsRemoved(segment: ISegment): boolean {
 	return isRemoved(segment);
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISegmentAction<TClientData> {
 	// eslint-disable-next-line @typescript-eslint/prefer-function-type
@@ -228,10 +211,24 @@ export interface InsertContext {
 
 export interface ObliterateInfo {
 	start: LocalReferencePosition;
+	startSide: Side;
 	end: LocalReferencePosition;
+	endSide: Side;
 	refSeq: number;
 	stamp: SliceRemoveOperationStamp;
 	segmentGroup: SegmentGroup | undefined;
+	/**
+	 * Defined only for unacked obliterates.
+	 *
+	 * Contains all segments inserted into the range this obliterate affects where at the time of insertion,
+	 * this obliterate was the newest concurrent obliterate that overlapped the insertion point (this information
+	 * is relevant for the tiebreak policy of allowing last-obliterater to insert).
+	 *
+	 * We need to keep this around for unacked ops because on reconnect, outstanding local obliterates may have set `obliteratePrecedingInsertion`
+	 * (tiebreak) on segments they no longer apply to, since the reissued obliterate may affect a smaller range than the original one when content
+	 * near the obliterate's endpoints was removed by another client between the time of the original obliterate and reissuing.
+	 */
+	tiebreakTrackingGroup: ITrackingGroup | undefined;
 }
 
 export interface SegmentGroup {
@@ -285,7 +282,7 @@ export class MergeBlock implements Partial<IMergeNodeInfo> {
 	partialLengths?: PartialSequenceLengths;
 
 	public constructor(public childCount: number) {
-		// Suppression needed due to the way the merge tree children are initalized - we
+		// Suppression needed due to the way the merge tree children are initialized - we
 		// allocate 8 children blocks, but any unused blocks are not counted in the childCount.
 		// Using Array.from leads to unused children being undefined, which are counted in childCount.
 		// eslint-disable-next-line unicorn/no-new-array
@@ -330,8 +327,7 @@ export function seqLTE(seq: number, minOrRefSeq: number): boolean {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export abstract class BaseSegment implements ISegment {
 	public cachedLength: number = 0;
@@ -423,6 +419,12 @@ export abstract class BaseSegment implements ISegment {
 				removes: [...this.removes],
 			});
 		}
+		if (isInsideObliterate(this)) {
+			overwriteInfo<ISegmentInsideObliterateInfo>(leafSegment, {
+				obliteratePrecedingInsertion: this.obliteratePrecedingInsertion,
+				insertionRefSeqStamp: this.insertionRefSeqStamp,
+			});
+		}
 
 		this.trackingCollection.copyTo(leafSegment);
 		if (this.attribution) {
@@ -463,8 +465,7 @@ export abstract class BaseSegment implements ISegment {
  *
  * @remarks In general, marker ids should be accessed using the inherent method
  * {@link Marker.getId}. Marker ids should not be updated after creation.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const reservedMarkerIdKey = "markerId";
 
@@ -474,8 +475,7 @@ export const reservedMarkerIdKey = "markerId";
 export const reservedMarkerSimpleTypeKey = "markerSimpleType";
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IJSONMarkerSegment extends IJSONSegment {
 	marker: IMarkerDef;
@@ -490,8 +490,7 @@ export interface IJSONMarkerSegment extends IJSONSegment {
  * start of a paragraph to the end, assuming a paragraph is bound by markers at
  * the start and end.
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class Marker extends BaseSegment implements ReferencePosition, ISegment {
 	public static readonly type = "Marker";
@@ -673,6 +672,8 @@ export class CollaborationWindow {
 	 * from a given (seq, localSeq) perspective.
 	 */
 	localSeq = 0;
+
+	public localPerspective: Perspective = new LocalDefaultPerspective(this.clientId);
 
 	public loadFrom(a: CollaborationWindow): void {
 		this.clientId = a.clientId;

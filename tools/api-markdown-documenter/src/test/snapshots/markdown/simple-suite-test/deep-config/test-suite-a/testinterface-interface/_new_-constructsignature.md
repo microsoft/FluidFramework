@@ -1,15 +1,15 @@
 # new (): TestInterface
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestInterface](/test-suite-a/testinterface-interface/) &gt; [new (): TestInterface](/test-suite-a/testinterface-interface/_new_-constructsignature)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [TestInterface](/test-suite-a/testinterface-interface/) > [new (): TestInterface](/test-suite-a/testinterface-interface/_new_-constructsignature)
 
 Test construct signature.
 
-## Signature {#\_new\_-signature}
+<h2 id="_new_-signature">Signature</h2>
 
 ```typescript
 new (): TestInterface;
 ```
 
-## Returns {#\_new\_-returns}
+<h2 id="_new_-returns">Returns</h2>
 
-**Return type:** [TestInterface](/test-suite-a/testinterface-interface/)
+**Return type**: [TestInterface](/test-suite-a/testinterface-interface/)

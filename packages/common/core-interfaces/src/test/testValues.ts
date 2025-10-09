@@ -3,22 +3,36 @@
  * Licensed under the MIT License.
  */
 
-import { assertIdenticalTypes } from "./testUtils.js";
+import { assertIdenticalTypes, replaceBigInt } from "./testUtils.js";
 
-import type { IFluidHandle, IFluidHandleErased } from "@fluidframework/core-interfaces";
+import type {
+	ErasedType,
+	IFluidHandle,
+	IFluidHandleErased,
+} from "@fluidframework/core-interfaces";
 import { fluidHandleSymbol } from "@fluidframework/core-interfaces";
+import type {
+	BrandedType,
+	JsonString,
+	ReadonlyNonNullJsonObjectWith,
+} from "@fluidframework/core-interfaces/internal";
 import type {
 	JsonTypeWith,
 	InternalUtilityTypes,
+	ReadonlyJsonTypeWith,
+	NonNullJsonObjectWith,
+	OpaqueJsonSerializable,
+	OpaqueJsonDeserialized,
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
 /* eslint-disable jsdoc/require-jsdoc */
 /* eslint-disable unicorn/no-null */
+/* eslint-disable @typescript-eslint/consistent-type-definitions */
 
 export const boolean: boolean = true as boolean; // Use `as` to avoid type conversion to `true`
 export const number: number = 0;
 export const string: string = "";
-export const symbol = Symbol("symbol");
+export const symbol: symbol = Symbol("symbol");
 export const uniqueSymbol: unique symbol = Symbol("unique symbol");
 export const bigint: bigint = 0n;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -26,7 +40,7 @@ export const aFunction = (): any => {};
 export const unknownValueOfSimpleRecord = { key: "value" } as unknown;
 export const unknownValueWithBigint = { bigint: 1n } as unknown;
 export const voidValue = null as unknown as void;
-const never = null as never;
+export const never = null as never;
 
 export const stringOrSymbol = Symbol("objectSymbol") as string | symbol;
 export const bigintOrString = "not bigint" as string | bigint;
@@ -82,13 +96,16 @@ export const arrayOfUnknown: unknown[] = [unknownValueOfSimpleRecord];
 export const arrayOfFunctions = [aFunction];
 export const arrayOfFunctionsWithProperties = [functionWithProperties];
 export const arrayOfObjectAndFunctions = [objectAndFunction];
-export const arrayOfBigintAndObjects: (bigint | { property: string })[] = [
+export const arrayOfBigintOrObjects: (bigint | { property: string })[] = [
 	{ property: "string" },
 	bigint,
 ];
-export const arrayOfSymbolsAndObjects: (symbol | { property: string })[] = [Symbol("symbol")];
+export const arrayOfSymbolOrObjects: (symbol | { property: string })[] = [Symbol("symbol")];
+export const arrayOfBigintOrSymbols = [bigintOrSymbol];
+export const arrayOfNumberBigintOrSymbols = [numberOrBigintOrSymbol];
 
 export const readonlyArrayOfNumbers: readonly number[] = arrayOfNumbers;
+export const readonlyArrayOfObjects: readonly { property: string }[] = [];
 
 // #endregion
 
@@ -118,6 +135,7 @@ export const objectWithOptionalBigint: { bigint?: bigint } = { bigint: 0n };
 
 export const objectWithNumberKey = { 3: "value" };
 export const objectWithSymbolKey = { [symbol]: "value" };
+export const objectWithUniqueSymbolKey = { [uniqueSymbol]: "value" };
 
 export const objectWithArrayOfNumbers = { arrayOfNumbers };
 export const objectWithArrayOfNumbersSparse = { arrayOfNumbersSparse };
@@ -128,8 +146,8 @@ export const objectWithArrayOfUnknown = { arrayOfUnknown };
 export const objectWithArrayOfFunctions = { arrayOfFunctions };
 export const objectWithArrayOfFunctionsWithProperties = { arrayOfFunctionsWithProperties };
 export const objectWithArrayOfObjectAndFunctions = { arrayOfObjectAndFunctions };
-export const objectWithArrayOfBigintAndObjects = { arrayOfBigintAndObjects };
-export const objectWithArrayOfSymbolsAndObjects = { arrayOfSymbolsAndObjects };
+export const objectWithArrayOfBigintOrObjects = { arrayOfBigintOrObjects };
+export const objectWithArrayOfSymbolOrObjects = { arrayOfSymbolOrObjects };
 export const objectWithReadonlyArrayOfNumbers = { readonlyArrayOfNumbers };
 
 export const objectWithUnknown = { unknown: "value" as unknown };
@@ -253,12 +271,27 @@ export const objectWithMismatchedGetterAndSetterProperty: ObjectWithMismatchedGe
 export const objectWithMismatchedGetterAndSetterPropertyViaValue: ObjectWithMismatchedGetterAndSetterProperty =
 	{ property: 0 };
 
-// #region Index signature types
+// #region Index(`Record`) signature types
+// Records and directly declared index types (`{[x: type]: type}`) can have
+// different treatment. `Record`s generally fair better but won't allow self
+// references; so, later self-references are declared with direct index types.
 
 export const stringRecordOfNumbers: Record<string, number> = { key: 0 };
 export const stringRecordOfUndefined: Record<string, undefined> = { key: undefined };
+export const stringRecordOfNumberOrUndefined: Record<string, number | undefined> = {
+	number,
+	undefined,
+};
+export const stringRecordOfSymbolOrBoolean: Record<string, symbol | boolean> = {
+	boolean,
+	symbol,
+};
 export const stringRecordOfUnknown: Record<string, unknown> = { key: 0 };
 export const stringOrNumberRecordOfStrings: Record<string | number, string> = { 5: "value" };
+export const stringOrNumberRecordOfObjects: Record<string | number, { string: string }> = {
+	8: { string: "string value" },
+	knownNumber: { string: "4" },
+};
 // Ideally TypeScript would not allow this assignment. Index signatures are
 // inherently optional and modification via `Partial` should not modify the
 // type (particularly under exactOptionalPropertyTypes=true).
@@ -292,7 +325,6 @@ export const mixedRecordOfUnknown: Record<
 };
 
 // Must use `type` over `interface` to enable intersection with `Record<>`.
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 type KnownStringAndNumber = { knownString: string; knownNumber: number };
 export const stringRecordOfNumbersOrStringsWithKnownProperties: InternalUtilityTypes.FlattenIntersection<
 	Record<string, number | string> & KnownStringAndNumber
@@ -333,23 +365,30 @@ export const stringOrNumberRecordOfUndefinedWithKnownNumber = {
 
 // #region Recursive types
 
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
-
 type ObjectWithPossibleRecursion = {
 	[x: string]: ObjectWithPossibleRecursion | string;
 };
 export const objectWithPossibleRecursion: ObjectWithPossibleRecursion = {
 	recursive: { stop: "here" },
 };
-type ObjectWithOptionalRecursion = {
+export type ObjectWithOptionalRecursion = {
 	recursive?: ObjectWithOptionalRecursion;
 };
 export const objectWithOptionalRecursion: ObjectWithOptionalRecursion = {
 	recursive: {},
 };
+export type ReadonlyObjectWithOptionalRecursion = {
+	readonly recursive?: ReadonlyObjectWithOptionalRecursion;
+};
+export const readonlyObjectWithOptionalRecursion: ReadonlyObjectWithOptionalRecursion =
+	objectWithOptionalRecursion;
+
 export const objectWithEmbeddedRecursion = {
 	outer: objectWithOptionalRecursion,
 };
+export const readonlyObjectWithEmbeddedRecursion = {
+	outer: readonlyObjectWithOptionalRecursion,
+} as const;
 export const objectWithSelfReference: ObjectWithOptionalRecursion = {};
 objectWithSelfReference.recursive = objectWithSelfReference;
 
@@ -368,6 +407,14 @@ export const objectWithAlternatingRecursion: ObjectWithAlternatingRecursionA = {
 		},
 	},
 };
+type ReadonlyObjectWithAlternatingRecursionA = {
+	readonly recurseA: ReadonlyObjectWithAlternatingRecursionB | number;
+};
+type ReadonlyObjectWithAlternatingRecursionB = {
+	readonly recurseB: ReadonlyObjectWithAlternatingRecursionA | "stop";
+};
+export const readonlyObjectWithAlternatingRecursion: ReadonlyObjectWithAlternatingRecursionA =
+	objectWithAlternatingRecursion;
 
 export type ObjectWithSymbolOrRecursion = {
 	recurse: ObjectWithSymbolOrRecursion | symbol;
@@ -375,6 +422,11 @@ export type ObjectWithSymbolOrRecursion = {
 export const objectWithSymbolOrRecursion: ObjectWithSymbolOrRecursion = {
 	recurse: { recurse: Symbol("stop") },
 };
+type ReadonlyObjectWithSymbolOrRecursion = {
+	readonly recurse: ReadonlyObjectWithSymbolOrRecursion | symbol;
+};
+export const readonlyObjectWithSymbolOrRecursion: ReadonlyObjectWithSymbolOrRecursion =
+	objectWithSymbolOrRecursion;
 
 type ObjectWithFluidHandleOrRecursion = {
 	recurseToHandle: ObjectWithFluidHandleOrRecursion | IFluidHandle<string>;
@@ -382,6 +434,13 @@ type ObjectWithFluidHandleOrRecursion = {
 export const objectWithFluidHandleOrRecursion: ObjectWithFluidHandleOrRecursion = {
 	recurseToHandle: { recurseToHandle: "fake-handle" as unknown as IFluidHandle<string> },
 };
+type ReadonlyObjectWithFluidHandleOrRecursion = {
+	readonly recurseToHandle:
+		| ReadonlyObjectWithFluidHandleOrRecursion
+		| Readonly<IFluidHandle<string>>;
+};
+export const readonlyObjectWithFluidHandleOrRecursion: ReadonlyObjectWithFluidHandleOrRecursion =
+	objectWithFluidHandleOrRecursion;
 
 export const objectWithUnknownAdjacentToOptionalRecursion = {
 	unknown: unknownValueOfSimpleRecord,
@@ -409,6 +468,18 @@ type ObjectWithOptionalUnknownInOptionalRecursion = {
 export const objectWithOptionalUnknownInOptionalRecursion: ObjectWithOptionalUnknownInOptionalRecursion =
 	objectWithUnknownInOptionalRecursion;
 
+type StringRecordWithRecursionOrNumber = {
+	[x: string]: StringRecordWithRecursionOrNumber | number;
+};
+export const stringRecordWithRecursionOrNumber: StringRecordWithRecursionOrNumber = {
+	outer: { inner: 5 },
+};
+type ReadonlyStringRecordWithRecursionOrNumber = {
+	readonly [x: string]: ReadonlyStringRecordWithRecursionOrNumber | number;
+};
+export const readonlyStringRecordWithRecursionOrNumber: ReadonlyStringRecordWithRecursionOrNumber =
+	stringRecordWithRecursionOrNumber;
+
 export type SelfRecursiveFunctionWithProperties = (() => number) & {
 	recurse?: SelfRecursiveFunctionWithProperties;
 };
@@ -425,13 +496,19 @@ export const selfRecursiveObjectAndFunction: SelfRecursiveObjectAndFunction =
 // assignment of one to the other.
 assertIdenticalTypes(selfRecursiveObjectAndFunction, selfRecursiveFunctionWithProperties);
 
-/* eslint-enable @typescript-eslint/consistent-type-definitions */
+export type ReadonlySelfRecursiveFunctionWithProperties = (() => number) & {
+	readonly recurse?: ReadonlySelfRecursiveFunctionWithProperties;
+};
+export const readonlySelfRecursiveFunctionWithProperties: ReadonlySelfRecursiveFunctionWithProperties =
+	selfRecursiveFunctionWithProperties;
+export type ReadonlySelfRecursiveObjectAndFunction = {
+	readonly recurse?: ReadonlySelfRecursiveObjectAndFunction;
+} & (() => number);
+export const readonlySelfRecursiveObjectAndFunction: ReadonlySelfRecursiveObjectAndFunction =
+	selfRecursiveObjectAndFunction;
 
-export interface SimpleObjectWithOptionalRecursion {
-	recursive?: SimpleObjectWithOptionalRecursion;
-}
 interface ObjectInheritingOptionalRecursionAndWithNestedSymbol
-	extends SimpleObjectWithOptionalRecursion {
+	extends ObjectWithOptionalRecursion {
 	complex: {
 		number: number;
 		symbol: symbol;
@@ -451,6 +528,10 @@ export const objectInheritingOptionalRecursionAndWithNestedSymbol: ObjectInherit
 	};
 
 export const simpleJson: JsonTypeWith<never> = { a: [{ b: { b2: 8 }, c: true }] };
+export const simpleImmutableJson: ReadonlyJsonTypeWith<never> = simpleJson;
+
+export const jsonObject: NonNullJsonObjectWith<never> = [simpleJson];
+export const immutableJsonObject: ReadonlyNonNullJsonObjectWith<never> = jsonObject;
 
 // #endregion
 
@@ -531,13 +612,33 @@ export const classInstanceWithPublicDataAndIsFunction = Object.assign(
 	() => 26,
 );
 
-// #region Common Class types
+type ObjectWithClassWithPrivateDataInOptionalRecursion = {
+	class: ClassWithPrivateData;
+	recurse?: ObjectWithClassWithPrivateDataInOptionalRecursion;
+};
+export const objectWithClassWithPrivateDataInOptionalRecursion: ObjectWithClassWithPrivateDataInOptionalRecursion =
+	{
+		class: classInstanceWithPrivateData,
+		recurse: { class: classInstanceWithPrivateData },
+	};
+
+// #region Built-in Class types
+
+export type Point = { x: number; y: number };
+export type StringRecordOfPoints = {
+	[p: string]: Point;
+};
 
 export const mapOfStringsToNumbers = new Map<string, number>();
 export const readonlyMapOfStringsToNumbers: ReadonlyMap<string, number> =
 	mapOfStringsToNumbers;
+export const mapOfPointToRecord = new Map<Point, StringRecordOfPoints>();
+export const readonlyMapOfPointToRecord: ReadonlyMap<Point, StringRecordOfPoints> =
+	mapOfPointToRecord;
 export const setOfNumbers = new Set<number>();
 export const readonlySetOfNumbers: ReadonlySet<number> = setOfNumbers;
+export const setOfRecords = new Set<StringRecordOfPoints>();
+export const readonlySetOfRecords: ReadonlySet<StringRecordOfPoints> = setOfRecords;
 
 // #endregion
 
@@ -545,14 +646,9 @@ export const readonlySetOfNumbers: ReadonlySet<number> = setOfNumbers;
 
 // #region Branded types
 
-declare class BrandedType<Brand> {
-	protected readonly brand: (dummy: never) => Brand;
-	private constructor();
-	public static [Symbol.hasInstance](value: never): value is never;
-}
-
 export const brandedNumber = 0 as number & BrandedType<"zero">;
-export const brandedString = "encoding" as string & BrandedType<"encoded">;
+export type BrandedString = string & BrandedType<"encoded">;
+export const brandedString = "encoding" as BrandedString;
 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 export const brandedObject = {} as object & BrandedType<"its a secret">;
 export const brandedObjectWithString = objectWithString as typeof objectWithString &
@@ -561,23 +657,235 @@ export const brandedObjectWithString = objectWithString as typeof objectWithStri
 export const objectWithBrandedNumber = { brandedNumber };
 export const objectWithBrandedString = { brandedString };
 
+export const brandedStringIndexOfBooleans: { [x: string & BrandedType<"encoded">]: boolean } =
+	{
+		[brandedString]: false,
+	};
+// TypeScript has different treatment for index types such that duck-typing
+// doesn't fully apply. These recreations are a bit different.
+export const brandedStringAliasIndexOfBooleans: { [x: BrandedString]: boolean } =
+	brandedStringIndexOfBooleans;
+// @ts-expect-error - while the same, aliased index is not treated as same (just confirm)
+assertIdenticalTypes(brandedStringAliasIndexOfBooleans, brandedStringIndexOfBooleans);
+export const brandedStringRecordOfBooleans: Record<string & BrandedType<"encoded">, boolean> =
+	brandedStringIndexOfBooleans;
+export const brandedStringAliasRecordOfBooleans: Record<BrandedString, boolean> =
+	brandedStringIndexOfBooleans;
+// Records don't have the same aliased index issue
+assertIdenticalTypes(brandedStringAliasRecordOfBooleans, brandedStringRecordOfBooleans);
+
+// There is an unknown difference in handling of objects with number or string values compared
+// to booleans and objects. (number or string valued cases did not have problems where boolean
+// of object valued cases did. A scan of logic for values did not reveal special treatment of
+// `string` or `number` compared to `boolean`. Since strings of numbers are possible key types
+// there maybe some accidental key type check having an impact.)
+export const brandedStringIndexOfNumbers: { [x: string & BrandedType<"encoded">]: number } = {
+	[brandedString]: 5,
+};
+export const brandedStringAliasIndexOfNumbers: { [x: BrandedString]: number } =
+	brandedStringIndexOfNumbers;
+// @ts-expect-error - while the same, aliased index is not treated as same (just confirm)
+assertIdenticalTypes(brandedStringAliasIndexOfNumbers, brandedStringIndexOfNumbers);
+export const brandedStringRecordOfNumbers: Record<string & BrandedType<"encoded">, number> =
+	brandedStringIndexOfNumbers;
+export const brandedStringAliasRecordOfNumbers: Record<BrandedString, number> =
+	brandedStringIndexOfNumbers;
+// Records don't have the same aliased index issue
+assertIdenticalTypes(brandedStringAliasRecordOfNumbers, brandedStringRecordOfNumbers);
+
+export const brandedStringAliasIndexOfTrueOrUndefined: {
+	[x: BrandedString]: true | undefined;
+} = {
+	[brandedString]: undefined,
+};
+
+// #region Example Data Store
+// This test mimics aspects of structures used in Presence protocol.
+interface DecodedValueRequiredState<TValue> {
+	value: TValue;
+}
+interface DecodedValueOptionalState<T> {
+	value?: T;
+}
+interface DecodedValueDirectory<T> {
+	items: {
+		[name: string | number]: DecodedValueOptionalState<T> | DecodedValueDirectory<T>;
+	};
+}
+export type DecodedValueDirectoryOrRequiredState<T> =
+	| DecodedValueDirectory<T>
+	| DecodedValueRequiredState<T>;
+export type BrandedKey = string & BrandedType<"typed-key">;
+type DataStore = {
+	[k: string]: {
+		[x: BrandedKey]: DecodedValueDirectoryOrRequiredState<OpaqueJsonDeserialized<unknown>>;
+	};
+};
+
+export const datastore: DataStore = { outer: {} };
+// #endregion
 // #endregion
 
 // #region Fluid types
 
-export const fluidHandleToNumber: IFluidHandle<number> = {
-	isAttached: false,
-	async get(): Promise<number> {
-		throw new Error("Function not implemented.");
-	},
-	[fluidHandleSymbol]: undefined as unknown as IFluidHandleErased<number>,
-};
+function makeFauxFluidHandle<T>(): IFluidHandle<T> {
+	return {
+		isAttached: false,
+		async get(): Promise<T> {
+			throw new Error("Function not implemented.");
+		},
+		[fluidHandleSymbol]: undefined as unknown as IFluidHandleErased<T>,
+	};
+}
+
+export const fluidHandleToNumber = makeFauxFluidHandle<number>();
+export const fluidHandleToRecord = makeFauxFluidHandle<{
+	[p: string]: { x: number; y: number };
+}>();
 
 export const objectWithFluidHandle = {
 	handle: fluidHandleToNumber,
 };
 
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+interface TestErasedType<T> extends ErasedType<readonly ["TestCustomType", T]> {}
+
+export const erasedType = 0 as unknown as TestErasedType<number>;
+
+export const opaqueSerializableObject = objectWithNumber as unknown as OpaqueJsonSerializable<
+	typeof objectWithNumber
+>;
+export const opaqueDeserializedObject = objectWithNumber as unknown as OpaqueJsonDeserialized<
+	typeof objectWithNumber
+>;
+export const opaqueSerializableAndDeserializedObject =
+	objectWithNumber as unknown as OpaqueJsonSerializable<typeof objectWithNumber> &
+		OpaqueJsonDeserialized<typeof objectWithNumber>;
+
+export const opaqueSerializableUnknown =
+	opaqueSerializableObject as OpaqueJsonSerializable<unknown>;
+export const opaqueDeserializedUnknown =
+	opaqueDeserializedObject as OpaqueJsonDeserialized<unknown>;
+export const opaqueSerializableAndDeserializedUnknown =
+	opaqueSerializableAndDeserializedObject as OpaqueJsonSerializable<unknown> &
+		OpaqueJsonDeserialized<unknown>;
+
+export const objectWithOpaqueSerializableUnknown = {
+	opaque: opaqueSerializableUnknown,
+};
+export const objectWithOpaqueDeserializedUnknown = {
+	opaque: opaqueDeserializedUnknown,
+};
+export const objectWithOpaqueSerializableAndDeserializedUnknown = {
+	opaque: opaqueSerializableAndDeserializedUnknown,
+};
+
+interface OptionalValue<TValue> {
+	value?: TValue;
+}
+
+export interface DirectoryOfValues<TValue> {
+	items: {
+		[name: string | number]: OptionalValue<TValue> | DirectoryOfValues<TValue>;
+	};
+}
+
+export const opaqueSerializableInRecursiveStructure: DirectoryOfValues<
+	OpaqueJsonSerializable<unknown>
+> = {
+	items: {
+		item1: {},
+		item2: { items: { subItem1: {} } },
+	},
+};
+/**
+ * This type represents the deserialized form of {@link opaqueSerializableInRecursiveStructure}
+ */
+export interface DeserializedOpaqueSerializableInRecursiveStructure {
+	items: {
+		[x: string | number]:
+			| OpaqueJsonDeserialized<DirectoryOfValues<OpaqueJsonSerializable<unknown>>>
+			| {
+					value?: OpaqueJsonDeserialized<unknown>;
+			  };
+	};
+}
+
+export const opaqueDeserializedInRecursiveStructure: DirectoryOfValues<
+	OpaqueJsonDeserialized<unknown>
+> = {
+	items: {
+		item1: {},
+		item2: { items: { subItem1: {} } },
+	},
+};
+
+export const opaqueSerializableAndDeserializedInRecursiveStructure: DirectoryOfValues<
+	OpaqueJsonSerializable<unknown> & OpaqueJsonDeserialized<unknown>
+> = {
+	items: {
+		item1: {},
+		item2: { items: { subItem1: {} } },
+	},
+};
+/**
+ * This type represents the deserialized form of {@link opaqueSerializableAndDeserializedInRecursiveStructure}
+ */
+export interface DeserializedOpaqueSerializableAndDeserializedInRecursiveStructure {
+	items: {
+		[x: string | number]:
+			| OpaqueJsonDeserialized<
+					DirectoryOfValues<OpaqueJsonSerializable<unknown> & OpaqueJsonDeserialized<unknown>>
+			  >
+			| {
+					value?: OpaqueJsonDeserialized<unknown>;
+			  };
+	};
+}
+
+export const opaqueSerializableObjectRequiringBigintSupport =
+	objectWithBigint as unknown as OpaqueJsonSerializable<typeof objectWithBigint, [bigint]>;
+export const opaqueDeserializedObjectRequiringBigintSupport =
+	objectWithBigint as unknown as OpaqueJsonDeserialized<typeof objectWithBigint, [bigint]>;
+export const opaqueSerializableAndDeserializedObjectRequiringBigintSupport =
+	objectWithBigint as unknown as OpaqueJsonSerializable<typeof objectWithBigint, [bigint]> &
+		OpaqueJsonDeserialized<typeof objectWithBigint, [bigint]>;
+
+// These values are branded as expecting `bigint` support, but they don't actually require it.
+export const opaqueSerializableObjectExpectingBigintSupport =
+	objectWithReadonlyArrayOfNumbers as unknown as OpaqueJsonSerializable<
+		typeof objectWithReadonlyArrayOfNumbers,
+		[bigint]
+	>;
+export const opaqueDeserializedObjectExpectingBigintSupport =
+	objectWithReadonlyArrayOfNumbers as unknown as OpaqueJsonDeserialized<
+		typeof objectWithReadonlyArrayOfNumbers,
+		[bigint]
+	>;
+export const opaqueSerializableAndDeserializedObjectExpectingBigintSupport =
+	objectWithReadonlyArrayOfNumbers as unknown as OpaqueJsonSerializable<
+		typeof objectWithReadonlyArrayOfNumbers,
+		[bigint]
+	> &
+		OpaqueJsonDeserialized<typeof objectWithReadonlyArrayOfNumbers, [bigint]>;
+
+export const jsonStringOfString = JSON.stringify(string) as JsonString<string>;
+export const jsonStringOfObjectWithArrayOfNumbers = JSON.stringify(
+	objectWithArrayOfNumbers,
+) as JsonString<typeof objectWithArrayOfNumbers>;
+export const jsonStringOfStringRecordOfNumbers = JSON.stringify(
+	stringRecordOfNumbers,
+) as JsonString<typeof stringRecordOfNumbers>;
+export const jsonStringOfStringRecordOfNumberOrUndefined = JSON.stringify(
+	stringRecordOfNumberOrUndefined,
+) as JsonString<typeof stringRecordOfNumberOrUndefined>;
+export const jsonStringOfBigInt = JSON.stringify(bigint, replaceBigInt) as JsonString<bigint>;
+export const jsonStringOfUnknown = JSON.stringify({
+	unknown: "you don't know me",
+}) as JsonString<unknown>;
+
 // #endregion
 
+/* eslint-enable @typescript-eslint/consistent-type-definitions */
 /* eslint-enable unicorn/no-null */
 /* eslint-enable jsdoc/require-jsdoc */

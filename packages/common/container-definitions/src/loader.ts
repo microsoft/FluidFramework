@@ -20,7 +20,6 @@ import type {
 	ISequencedProposal,
 	ISnapshotTree,
 	ISequencedDocumentMessage,
-	IContainerPackageInfo,
 } from "@fluidframework/driver-definitions/internal";
 
 import type { IAudience } from "./audience.js";
@@ -36,8 +35,7 @@ import type { AttachState } from "./runtime.js";
 
 /**
  * Encapsulates a module entry point with corresponding code details.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IFluidModuleWithDetails {
 	/**
@@ -57,8 +55,7 @@ export interface IFluidModuleWithDetails {
 /**
  * Fluid code loader resolves a code module matching the document schema, i.e. code details, such as
  * a package name and package version range.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
 	/**
@@ -106,8 +103,7 @@ export interface IFluidCodeResolver {
 
 /**
  * Events emitted by the {@link IContainer} "upwards" to the Loader and Host.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IContainerEvents extends IEvent {
 	/**
@@ -284,26 +280,42 @@ export namespace ConnectionState {
 	 * or may remain disconnected until explicitly told to connect.
 	 * @public
 	 */
-	export type Disconnected = 0;
+	export const Disconnected = 0;
+	/**
+	 * {@inheritdoc @fluidframework/container-definitions#(ConnectionState:namespace).(Disconnected:variable)}
+	 */
+	export type Disconnected = typeof Disconnected;
 
 	/**
 	 * The container is disconnected but actively trying to establish a new connection.
 	 * PLEASE NOTE that this numerical value falls out of the order you may expect for this state.
 	 * @public
 	 */
-	export type EstablishingConnection = 3;
+	export const EstablishingConnection = 3;
+	/**
+	 * {@inheritdoc @fluidframework/container-definitions#(ConnectionState:namespace).(EstablishingConnection:variable)}
+	 */
+	export type EstablishingConnection = typeof EstablishingConnection;
 
 	/**
 	 * The container has an inbound connection only, and is catching up to the latest known state from the service.
 	 * @public
 	 */
-	export type CatchingUp = 1;
+	export const CatchingUp = 1;
+	/**
+	 * {@inheritdoc @fluidframework/container-definitions#(ConnectionState:namespace).(CatchingUp:variable)}
+	 */
+	export type CatchingUp = typeof CatchingUp;
 
 	/**
 	 * The container is fully connected and syncing.
 	 * @public
 	 */
-	export type Connected = 2;
+	export const Connected = 2;
+	/**
+	 * {@inheritdoc @fluidframework/container-definitions#(ConnectionState:namespace).(Connected:variable)}
+	 */
+	export type Connected = typeof Connected;
 }
 
 /**
@@ -318,8 +330,7 @@ export type ConnectionState =
 
 /**
  * The Host's view of a Container and its connection to storage
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IContainer extends IEventProvider<IContainerEvents> {
 	/**
@@ -356,16 +367,6 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	 * loaded.
 	 */
 	getLoadedCodeDetails(): IFluidCodeDetails | undefined;
-
-	/**
-	 * Get the package info for the code details that were used to load the container.
-	 * @returns The package info for the code details that were used to load the container if it is loaded, undefined if
-	 * the container package doesn't have a name.
-	 * @deprecated To be removed in 2.40.
-	 * Use getLoadedCodeDetails instead; see https://github.com/microsoft/FluidFramework/issues/23898 for details.
-	 * Deprecating the function here to avoid polluting public container api surface.
-	 */
-	getContainerPackageInfo?(): IContainerPackageInfo | undefined;
 
 	/**
 	 * Returns true if the container has been closed and/or disposed, otherwise false.
@@ -473,7 +474,7 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	 *
 	 * @remarks
 	 *
-	 * {@link IContainer.connectionState} will be set to {@link (ConnectionState:namespace).Connected}, and the
+	 * {@link IContainer.connectionState} will be set to {@link (ConnectionState:namespace).(Connected:variable)}, and the
 	 * "connected" event will be fired if/when connection succeeds.
 	 */
 	connect(): void;
@@ -483,7 +484,7 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	 *
 	 * @remarks
 	 *
-	 * {@link IContainer.connectionState} will be set to {@link (ConnectionState:namespace).Disconnected}, and the
+	 * {@link IContainer.connectionState} will be set to {@link (ConnectionState:namespace).(Disconnected:variable)}, and the
 	 * "disconnected" event will be fired when disconnection completes.
 	 */
 	disconnect(): void;
@@ -496,7 +497,7 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	/**
 	 * The server provided ID of the client.
 	 *
-	 * Set once {@link IContainer.connectionState} is {@link (ConnectionState:namespace).Connected},
+	 * Set once {@link IContainer.connectionState} is {@link (ConnectionState:namespace).(Connected:variable)},
 	 * otherwise will be `undefined`.
 	 */
 	readonly clientId?: string | undefined;
@@ -540,8 +541,7 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 
 /**
  * The Runtime's view of the Loader, used for loading Containers
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ILoader extends Partial<IProvideLoader> {
 	/**
@@ -558,8 +558,7 @@ export interface ILoader extends Partial<IProvideLoader> {
 
 /**
  * The Host's view of the Loader, used for loading Containers
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IHostLoader extends ILoader {
 	/**
@@ -589,8 +588,7 @@ export interface IHostLoader extends ILoader {
 
 /**
  * Options to configure various behaviors of the ILoader.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type ILoaderOptions = {
@@ -632,8 +630,7 @@ export type ILoaderOptions = {
 
 /**
  * Policies to have various behaviors during container create and load.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type IContainerPolicies = {
@@ -645,8 +642,7 @@ export type IContainerPolicies = {
 
 /**
  * Accepted header keys for requests coming to the Loader
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export enum LoaderHeader {
 	/**
@@ -678,8 +674,7 @@ export enum LoaderHeader {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IContainerLoadMode {
 	opsBeforeReturn?: /*
@@ -736,8 +731,7 @@ export interface ILoaderHeader {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IProvideLoader {
 	readonly ILoader: ILoader;
@@ -748,8 +742,7 @@ export interface IProvideLoader {
  * in separate property: {@link ISnapshotTreeWithBlobContents.blobsContents}.
  *
  * @remarks This is used as the `ContainerContext`'s base snapshot when attaching.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
 	blobsContents?: { [path: string]: ArrayBufferLike };

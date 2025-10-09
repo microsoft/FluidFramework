@@ -29,12 +29,11 @@ describe("TreeBranch", () => {
 		return view;
 	}
 
-	{
-		// Test that branching from a TreeView returns a typed view (as opposed to an untyped context).
+	it("Test that branching from a TreeView returns a typed view (as opposed to an untyped context)", () => {
 		const view = init([]);
 		const branch = view.fork();
 		type _check = requireAssignableTo<typeof branch, typeof view>;
-	}
+	});
 
 	it("can downcast to a view", () => {
 		const view = init(["a", "b", "c"]);
@@ -116,8 +115,7 @@ describe("TreeBranch", () => {
 			assert.deepEqual([...branchBranch.root], ["y"]);
 			assert.throws(
 				() => view.rebaseOnto(branch),
-				(e: Error) =>
-					validateAssertionError(e, /The main branch cannot be rebased onto another branch./),
+				(e: Error) => validateAssertionError(e, /cannot be rebased onto another branch./),
 			);
 		});
 

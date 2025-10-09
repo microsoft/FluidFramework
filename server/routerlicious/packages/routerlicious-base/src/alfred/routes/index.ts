@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
-import {
+import type { IAlfredTenant } from "@fluidframework/server-services-client";
+import type {
 	IDeltaService,
 	IDocumentStorage,
 	IProducer,
@@ -18,11 +17,14 @@ import {
 	IClusterDrainingChecker,
 	IFluidAccessTokenGenerator,
 	IReadinessCheck,
+	IDenyList,
 } from "@fluidframework/server-services-core";
-import { Router } from "express";
-import { Provider } from "nconf";
-import { IAlfredTenant } from "@fluidframework/server-services-client";
-import { IDocumentDeleteService } from "../services";
+import type { Emitter as RedisEmitter } from "@socket.io/redis-emitter";
+import type { Router } from "express";
+import type { Provider } from "nconf";
+
+import type { IDocumentDeleteService } from "../services";
+
 import * as api from "./api";
 
 export interface IRoutes {
@@ -38,17 +40,19 @@ export function create(
 	singleUseTokenCache: ICache,
 	deltaService: IDeltaService,
 	storage: IDocumentStorage,
-	producer: IProducer,
+	producer: IProducer | undefined,
 	appTenants: IAlfredTenant[],
 	documentRepository: IDocumentRepository,
 	documentDeleteService: IDocumentDeleteService,
 	startupCheck: IReadinessCheck,
 	tokenRevocationManager?: ITokenRevocationManager,
 	revokedTokenChecker?: IRevokedTokenChecker,
-	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
+	collaborationSessionEventEmitter?: RedisEmitter,
 	clusterDrainingChecker?: IClusterDrainingChecker,
 	readinessCheck?: IReadinessCheck,
 	fluidAccessTokenGenerator?: IFluidAccessTokenGenerator,
+	redisCacheForGetSession?: ICache,
+	denyList?: IDenyList,
 ) {
 	return {
 		api: api.create(
@@ -70,6 +74,8 @@ export function create(
 			clusterDrainingChecker,
 			readinessCheck,
 			fluidAccessTokenGenerator,
+			redisCacheForGetSession,
+			denyList,
 		),
 	};
 }

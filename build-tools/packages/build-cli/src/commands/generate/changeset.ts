@@ -5,8 +5,8 @@
 
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
-import { VersionBumpType } from "@fluid-tools/version-tools";
-import { Package } from "@fluidframework/build-tools";
+import type { VersionBumpType } from "@fluid-tools/version-tools";
+import type { Package } from "@fluidframework/build-tools";
 import { Flags, ux } from "@oclif/core";
 import { PackageName } from "@rushstack/node-core-library";
 import { humanId } from "human-id";
@@ -423,22 +423,20 @@ function createChangesetContent(
 	const frontMatterSeparator = "---";
 
 	const lines: string[] = [frontMatterSeparator];
+
+	// Add package version bumps
 	for (const [pkg, bump] of packages.entries()) {
 		lines.push(`"${pkg.name}": ${bump}`);
 	}
-	lines.push(frontMatterSeparator);
 
+	// Add Fluid-specific metadata with __ prefix
 	if (additionalMetadata !== undefined) {
-		lines.push(frontMatterSeparator);
 		for (const [name, value] of Object.entries(additionalMetadata)) {
-			lines.push(`"${name}": ${value}`);
+			lines.push(`"__${name}": ${value}`);
 		}
-		lines.push(
-			frontMatterSeparator,
-			// an extra empty line after the front matter
-			"",
-		);
 	}
+
+	lines.push(frontMatterSeparator);
 
 	const frontMatter = lines.join("\n");
 	const changesetContents = [frontMatter, body].join("\n");

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { Abortable } from "events";
 import type {
 	BigIntStats,
 	BufferEncodingOption,
@@ -17,21 +18,27 @@ import type {
 	Stats,
 	ObjectEncodingOptions,
 } from "fs";
-import { FileHandle } from "fs/promises";
-import { Stream } from "stream";
-import { Abortable } from "events";
+import type { FileHandle } from "fs/promises";
+import type { Stream } from "stream";
+
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import type { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
-import { IFileSystemManager, IFileSystemManagerParams, IFileSystemPromises } from "../definitions";
-import { getStats, packedRefsFileName, SystemErrors } from "../fileSystemHelper";
+
+import type {
+	IFileSystemManager,
+	IFileSystemManagerParams,
+	IFileSystemPromises,
+} from "../definitions";
 import { FsPromisesBase } from "../fileSystemBase";
-import { HashMapRedis, IRedis, Redis, RedisParams } from "./redis";
+import { getStats, packedRefsFileName, SystemErrors } from "../fileSystemHelper";
+
 import {
 	executeRedisFsApiWithMetric,
 	RedisFsApis,
 	RedisFSConstants,
 	RedisFsError,
 } from "./helpers";
+import { HashMapRedis, type IRedis, Redis, type RedisParams } from "./redis";
 
 export interface RedisFsConfig {
 	enableRedisFsMetrics: boolean;

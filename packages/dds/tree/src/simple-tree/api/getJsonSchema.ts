@@ -4,16 +4,29 @@
  */
 
 import type { JsonTreeSchema } from "./jsonSchema.js";
-import type { ImplicitFieldSchema } from "../schemaTypes.js";
+import type { ImplicitAllowedTypes } from "../core/index.js";
 import { toJsonSchema } from "./simpleSchemaToJsonSchema.js";
-import { getSimpleSchema } from "./getSimpleSchema.js";
-import { getOrCreate } from "../../util/index.js";
-import type { TreeNodeSchema } from "../core/index.js";
+import type { TreeParsingOptions } from "./customTree.js";
+import { TreeViewConfigurationAlpha } from "./configuration.js";
 
 /**
- * Cache in which the results of {@link getJsonSchema} are saved.
+ * Options for how to interpret or encode a tree when schema information is available.
+ * @remarks
+ * This currently extends {@link TreeParsingOptions},
+ * removing the option to declare {@link KeyEncodingOptions.allStoredKeys} since this option is currently not supported.
+ * @input
+ * @alpha
  */
-const jsonSchemaCache = new WeakMap<TreeNodeSchema, JsonTreeSchema>();
+export interface TreeSchemaEncodingOptions extends TreeParsingOptions {
+	/**
+	 * If true, fields with default providers (like {@link SchemaFactory.identifier}) will be required.
+	 * If false, they will be optional.
+	 * @remarks
+	 * Has no effect on {@link NodeKind}s other than {@link NodeKind.Object}.
+	 * @defaultValue false.
+	 */
+	readonly requireFieldsWithDefaults?: boolean;
+}
 
 /**
  * Creates a {@link https://json-schema.org/ | JSON Schema} representation of the provided {@link TreeNodeSchema}.
@@ -63,18 +76,19 @@ const jsonSchemaCache = new WeakMap<TreeNodeSchema, JsonTreeSchema>();
  * TODO:
  * This API should allow generating JSON schema for the whole matrix of combinations:
  *
- * 1. VerboseTree and ConciseTree
- * 2. With and without requiring values with defaults (for insertion vs reading)
- * 3. Using stored keys and property keys
+ * 1. VerboseTree and (Done) ConciseTree
+ * 2. (Done) With and without requiring values with defaults (for insertion vs reading)
+ * 3. (Done) Using stored keys and property keys.
+ * 4. Control over unknown optional fields and staged allowed types (able to manually control them and/or get them from some context).
  *
- * This current API seems to give ConciseTree with property keys and ignoring default values.
- *
+ * This takes in `ImplicitAllowedTypes` since underlying `toJsonSchema` can't handle optional roots.
  *
  * @alpha
  */
-export function getJsonSchema(schema: ImplicitFieldSchema): JsonTreeSchema {
-	return getOrCreate(jsonSchemaCache, schema, () => {
-		const simpleSchema = getSimpleSchema(schema);
-		return toJsonSchema(simpleSchema);
-	});
+export function getJsonSchema(
+	schema: ImplicitAllowedTypes,
+	options: Required<TreeSchemaEncodingOptions>,
+): JsonTreeSchema {
+	const treeSchema = new TreeViewConfigurationAlpha({ schema });
+	return toJsonSchema(treeSchema, options);
 }

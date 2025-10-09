@@ -6,8 +6,7 @@
 import type { IRequest } from "@fluidframework/core-interfaces";
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IResolvedUrl {
 	type: "fluid";
@@ -22,8 +21,7 @@ export interface IResolvedUrl {
 
 /**
  * Container package info handed off to resolver.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IContainerPackageInfo {
 	/**
@@ -33,8 +31,7 @@ export interface IContainerPackageInfo {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IUrlResolver {
 	// Like DNS should be able to cache resolution requests. Then possibly just have a token provider go and do stuff?
@@ -59,8 +56,7 @@ export interface IUrlResolver {
 /**
  * Information that can be returned by a lightweight, seperately exported driver function. Used to preanalyze a URL
  * for driver compatibility and preload information.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface DriverPreCheckInfo {
 	/**
@@ -77,8 +73,7 @@ export interface DriverPreCheckInfo {
 
 /**
  * Additional key in the loader request header
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export enum DriverHeader {
 	// Key to indicate whether the request for summarizer

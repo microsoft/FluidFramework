@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
 import { type TUnsafe, Type } from "@sinclair/typebox";
 
 import { makeCodecFamily } from "../../../codec/index.js";
@@ -16,7 +17,7 @@ import {
 	referenceFreeFieldChangeRebaser,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
-import { fail, type Mutable } from "../../../util/index.js";
+import type { Mutable } from "../../../util/index.js";
 import { makeValueCodec } from "../../codec/index.js";
 
 /**
@@ -28,6 +29,7 @@ import { makeValueCodec } from "../../codec/index.js";
 export function lastWriteWinsRebaser<TChange>(data: {
 	noop: TChange;
 	invert: (changes: TChange) => TChange;
+	mute: (changes: TChange) => TChange;
 }): FieldChangeRebaser<TChange> {
 	const compose = (_change1: TChange, change2: TChange) => change2;
 	const rebase = (change: TChange, _over: TChange) => change;
@@ -69,6 +71,9 @@ export function replaceRebaser<T>(): FieldChangeRebaser<ReplaceOp<T>> {
 		invert: (changes: ReplaceOp<T>) => {
 			return changes === 0 ? 0 : { old: changes.new, new: changes.old };
 		},
+		mute: (_change: ReplaceOp<T>) => {
+			return 0;
+		},
 	});
 }
 
@@ -80,7 +85,7 @@ export const valueHandler = {
 		makeCodecFamily([
 			[1, makeValueCodec<TUnsafe<ValueChangeset>, FieldChangeEncodingContext>(Type.Any())],
 		]),
-	editor: { buildChildChanges: () => fail("Child changes not supported") },
+	editor: { buildChildChanges: () => assert.fail("Child changes not supported") },
 
 	intoDelta: (change): FieldChangeDelta => {
 		const delta: Mutable<FieldChangeDelta> = {};

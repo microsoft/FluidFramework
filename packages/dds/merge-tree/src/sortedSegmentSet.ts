@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { LocalReferencePosition } from "./localReference.js";
-import { ISegmentInternal } from "./mergeTreeNodes.js";
+import type { LocalReferencePosition } from "./localReference.js";
+import type { ISegmentInternal } from "./mergeTreeNodes.js";
 import { hasProp, toMergeNodeInfo } from "./segmentInfos.js";
 import { SortedSet } from "./sortedSet.js";
 
@@ -55,6 +55,10 @@ export class SortedSegmentSet<
 			return lref.getOffset();
 		}
 		return 0;
+	}
+
+	public onSortOrderChange(): void {
+		this.sortedItems.sort((a, b) => this.compare(a, b));
 	}
 
 	protected compare(a: T, b: T): number {

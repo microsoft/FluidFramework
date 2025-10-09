@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	MessageType,
-	ISequencedDocumentMessage,
+	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 
 import {
@@ -16,12 +16,9 @@ import {
 } from "../messageTypes.js";
 import { asBatchMetadata } from "../metadata.js";
 
-import { OpDecompressor } from "./opDecompressor.js";
-import { OpGroupingManager, isGroupedBatch } from "./opGroupingManager.js";
-import { OpSplitter, isChunkedMessage } from "./opSplitter.js";
-// eslint-disable-next-line unused-imports/no-unused-imports -- Used by "@link" comment annotation below
-import { serializeOpContents } from "./outbox.js";
-
+import type { OpDecompressor } from "./opDecompressor.js";
+import { type OpGroupingManager, isGroupedBatch } from "./opGroupingManager.js";
+import { type OpSplitter, isChunkedMessage } from "./opSplitter.js";
 /**
  * Info about the batch we learn when we process the first message
  */
@@ -244,20 +241,6 @@ export class RemoteMessageProcessor {
 			nextMessage: message,
 			batchEnd: batchMetadataFlag === false,
 		};
-	}
-}
-
-/**
- * Takes an incoming runtime message JSON.parse's its contents in place, if needed (old Loader does this for us).
- * Only to be used for runtine messages.
- * @remarks - Serialization during submit happens via {@link serializeOpContents}
- * @param mutableMessage - op message received
- */
-export function ensureContentsDeserialized(mutableMessage: ISequencedDocumentMessage): void {
-	// This should become unconditional once Loader LTS reaches 2.4 or later.
-	// There will be a long time of needing both cases, until LTS advances to that point.
-	if (typeof mutableMessage.contents === "string" && mutableMessage.contents !== "") {
-		mutableMessage.contents = JSON.parse(mutableMessage.contents);
 	}
 }
 

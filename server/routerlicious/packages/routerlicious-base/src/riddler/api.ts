@@ -3,22 +3,23 @@
  * Licensed under the MIT License.
  */
 
+import type { ITokenClaims } from "@fluidframework/protocol-definitions";
+import { handleResponse } from "@fluidframework/server-services";
 import { getRandomName } from "@fluidframework/server-services-client";
-import {
+import type {
 	ISecretManager,
 	ITenantStorage,
 	ITenantOrderer,
 	ITenantCustomData,
 	ICache,
 } from "@fluidframework/server-services-core";
-import { handleResponse } from "@fluidframework/server-services";
-import { Router } from "express";
-import { ITenantKeyGenerator } from "@fluidframework/server-services-utils";
-import { decode } from "jsonwebtoken";
-import { ITokenClaims } from "@fluidframework/protocol-definitions";
 import { getGlobalTelemetryContext } from "@fluidframework/server-services-telemetry";
+import type { ITenantKeyGenerator } from "@fluidframework/server-services-utils";
+import { Router } from "express";
+import { decode } from "jsonwebtoken";
+
+import type { ITenantRepository } from "./mongoTenantRepository";
 import { TenantManager } from "./tenantManager";
-import { ITenantRepository } from "./mongoTenantRepository";
 
 export function create(
 	tenantRepository: ITenantRepository,
@@ -30,6 +31,7 @@ export function create(
 	riddlerStorageRequestMetricInterval: number,
 	tenantKeyGenerator: ITenantKeyGenerator,
 	cache?: ICache,
+	bypassCache: boolean = false,
 ): Router {
 	const router: Router = Router();
 	const manager = new TenantManager(
@@ -60,6 +62,7 @@ export function create(
 					tenantId,
 					request.body.token,
 					includeDisabledTenant,
+					bypassCache,
 				);
 				handleResponse(validP, response);
 			},
@@ -82,6 +85,7 @@ export function create(
 			ver,
 			jti,
 			getIncludeDisabledFlag(request),
+			getForceGenerateTokenWithPrivateKeyFlag(request),
 		);
 		handleResponse(accessTokenP, response);
 	});
@@ -111,7 +115,7 @@ export function create(
 	router.get("/tenants/:id/keys", (request, response) => {
 		const tenantId = request.params.id;
 		const includeDisabledTenant = getIncludeDisabledFlag(request);
-		const tenantP = manager.getTenantKeys(tenantId, includeDisabledTenant);
+		const tenantP = manager.getTenantKeys(tenantId, includeDisabledTenant, bypassCache);
 		handleResponse(tenantP, response);
 	});
 
@@ -208,6 +212,12 @@ export function create(
 	function getIncludeDisabledFlag(request): boolean {
 		const includeDisabledRaw = request.query.includeDisabledTenant as string;
 		return includeDisabledRaw?.toLowerCase() === "true";
+	}
+
+	function getForceGenerateTokenWithPrivateKeyFlag(request): boolean {
+		const forceGenerateTokenWithPrivateKey = request.query
+			.forceGenerateTokenWithPrivateKey as string;
+		return forceGenerateTokenWithPrivateKey?.toLowerCase() === "true";
 	}
 
 	return router;

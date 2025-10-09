@@ -257,9 +257,9 @@ describe("DDS Fuzz Harness", () => {
 				assert.deepEqual(
 					[...perPairCallCounts.entries()],
 					[
-						["summarizer vs A", 2],
-						["summarizer vs B", 2],
-						["summarizer vs C", 2],
+						["A vs summarizer", 2],
+						["B vs summarizer", 2],
+						["C vs summarizer", 2],
 					],
 				);
 			});
@@ -303,9 +303,9 @@ describe("DDS Fuzz Harness", () => {
 				assert.deepEqual(
 					[...perPairCallCounts.entries()],
 					[
-						["summarizer vs A", 1],
-						["summarizer vs B", 2],
-						["summarizer vs C", 2],
+						["A vs summarizer", 1],
+						["B vs summarizer", 2],
+						["C vs summarizer", 2],
 					],
 				);
 			});
@@ -549,11 +549,11 @@ describe("DDS Fuzz Harness", () => {
 
 			// original client
 			assert.strictEqual(clientCreates[1].channel.applyStashedOpCalls, 0);
-			assert.strictEqual(clientCreates[1].channel.noopCalls, 5);
+			assert.strictEqual(clientCreates[1].channel.noopCalls, 2);
 			assert.strictEqual(clientCreates[1].channel.processCoreCalls, 0);
 
 			// client loaded from stash
-			assert.strictEqual(clientCreates[2].channel.applyStashedOpCalls, 5);
+			assert.strictEqual(clientCreates[2].channel.applyStashedOpCalls, 2);
 			assert.strictEqual(clientCreates[2].channel.noopCalls, 5);
 			assert.strictEqual(clientCreates[2].channel.processCoreCalls, 0);
 		});
@@ -600,8 +600,8 @@ describe("DDS Fuzz Harness", () => {
 
 			// original client
 			assert.strictEqual(clientCreates[1].channel.applyStashedOpCalls, 0);
-			assert.strictEqual(clientCreates[1].channel.noopCalls, 5);
-			assert.strictEqual(clientCreates[1].channel.processCoreCalls, 3);
+			assert.strictEqual(clientCreates[1].channel.noopCalls, 2);
+			assert.strictEqual(clientCreates[1].channel.processCoreCalls, 0);
 
 			// client loaded from stash
 			assert.strictEqual(
@@ -609,7 +609,7 @@ describe("DDS Fuzz Harness", () => {
 				2,
 				"3 should be saved, and 2 should be stashed",
 			);
-			assert.strictEqual(clientCreates[2].channel.noopCalls, 7);
+			assert.strictEqual(clientCreates[2].channel.noopCalls, 10);
 			assert.strictEqual(clientCreates[2].channel.processCoreCalls, 9);
 		});
 	});
@@ -667,8 +667,8 @@ describe("DDS Fuzz Harness", () => {
 					["A", "B", "C"],
 				);
 				assert.equal(finalState.summarizerClient.channel.id, "summarizer");
-				assert.deepEqual(generatedOperations[5], { type: "rehydrate" });
-				assert.deepEqual(generatedOperations[11], { type: "attach" });
+				assert.deepEqual(generatedOperations[6], { type: "rehydrate" });
+				assert.deepEqual(generatedOperations[12], { type: "attach" });
 				verifyClientsSendOpsToEachOther(finalState);
 			});
 		});
@@ -873,21 +873,26 @@ describe("DDS Fuzz Harness", () => {
 			const result = await execa(
 				"npm",
 				[
-					"run",
-					"test:mocha:base",
+					"exec",
+					"mocha",
 					"--silent",
 					"--",
-					"--reporter=json",
+					"--config",
+					path.join(_dirname, "../../.mocharc.harnessTests.cjs"),
 					path.join(_dirname, `./ddsSuiteCases/${name}.js`),
 				],
 				{
 					env: {
+						// These flags help ensure nothing extraneous is logged to the console in the child test process,
+						// ensuring the output is valid JSON.
 						FLUID_TEST_VERBOSE: undefined,
+						SILENT_TEST_OUTPUT: "1",
 					},
 					encoding: "utf8",
 					reject: false,
 				},
 			);
+
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const testResults: MochaReport = JSON.parse(result.stdout);
 			return testResults;
@@ -1037,7 +1042,9 @@ describe("DDS Fuzz Harness", () => {
 					const contents: unknown = JSON.parse(
 						fs.readFileSync(path.join(jsonDir, "0.json"), { encoding: "utf8" }),
 					);
-					assert.deepEqual(contents, [{ clientId: "A", type: "noop" }]);
+					assert.deepEqual(contents, [
+						{ clientId: "A", seed: 1325690281034360, type: "noop" },
+					]);
 				});
 			}
 		});

@@ -11,22 +11,23 @@ import { ApplicationInsights } from "@microsoft/applicationinsights-web";
 const reactPlugin = new ReactPlugin();
 let appInsights: ApplicationInsights | undefined;
 
-if (siteConfig?.customFields?.INSTRUMENTATION_KEY === undefined) {
-	console.warn("Instrumentation Key is missing. App Insights will not be initialized.");
-}
-
 // Only initialize Application Insights if not in local development.
 // Remove the condition if you want to run Application Insights locally.
 if (typeof window !== "undefined" && window.location.hostname !== "localhost") {
-	appInsights = new ApplicationInsights({
-		config: {
-			connectionString: `InstrumentationKey=${siteConfig?.customFields?.INSTRUMENTATION_KEY}`,
-			enableAutoRouteTracking: true,
-			enableDebug: true,
-			extensions: [reactPlugin],
-		},
-	});
-	appInsights.loadAppInsights();
+	const instrumentationKey = siteConfig?.customFields?.INSTRUMENTATION_KEY;
+	if (instrumentationKey === undefined) {
+		console.warn("Instrumentation Key is missing. App Insights will not be initialized.");
+	} else {
+		appInsights = new ApplicationInsights({
+			config: {
+				connectionString: `InstrumentationKey=${instrumentationKey}`,
+				enableAutoRouteTracking: true,
+				enableDebug: true,
+				extensions: [reactPlugin],
+			},
+		});
+		appInsights.loadAppInsights();
+	}
 }
 
 export default appInsights;

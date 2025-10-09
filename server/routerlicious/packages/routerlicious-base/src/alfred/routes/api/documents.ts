@@ -4,7 +4,26 @@
  */
 
 import * as crypto from "crypto";
+
+import { ScopeType } from "@fluidframework/protocol-definitions";
 import {
+	getBooleanParam,
+	validateRequestParams,
+	handleResponse,
+	validatePrivateLink,
+} from "@fluidframework/server-services";
+import {
+	convertFirstSummaryWholeSummaryTreeToSummaryTree,
+	type IAlfredTenant,
+	type ISession,
+	NetworkError,
+	DocDeleteScopeType,
+	TokenRevokeScopeType,
+	createFluidServiceNetworkError,
+	InternalErrorCode,
+	getNetworkInformationFromIP,
+} from "@fluidframework/server-services-client";
+import type {
 	IDocumentStorage,
 	IThrottler,
 	ITenantManager,
@@ -14,45 +33,41 @@ import {
 	IRevokeTokenOptions,
 	IRevokedTokenChecker,
 	IClusterDrainingChecker,
+	IDenyList,
 } from "@fluidframework/server-services-core";
-import {
-	verifyStorageToken,
-	getCreationToken,
-	throttle,
-	IThrottleMiddlewareOptions,
-	getParam,
-	validateTokenScopeClaims,
-	getBooleanFromConfig,
-	getTelemetryContextPropertiesWithHttpInfo,
-} from "@fluidframework/server-services-utils";
-import {
-	getBooleanParam,
-	validateRequestParams,
-	handleResponse,
-} from "@fluidframework/server-services";
-import { Request, Router } from "express";
-import winston from "winston";
-import {
-	convertFirstSummaryWholeSummaryTreeToSummaryTree,
-	IAlfredTenant,
-	ISession,
-	NetworkError,
-	DocDeleteScopeType,
-	TokenRevokeScopeType,
-	createFluidServiceNetworkError,
-	InternalErrorCode,
-} from "@fluidframework/server-services-client";
 import {
 	getLumberBaseProperties,
 	LumberEventName,
 	Lumberjack,
 	type Lumber,
 } from "@fluidframework/server-services-telemetry";
-import { Provider } from "nconf";
-import { v4 as uuid } from "uuid";
-import { Constants, getSession, StageTrace } from "../../../utils";
-import { IDocumentDeleteService } from "../../services";
+import {
+	verifyStorageToken,
+	getCreationToken,
+	throttle,
+	type IThrottleMiddlewareOptions,
+	getParam,
+	validateTokenScopeClaims,
+	getBooleanFromConfig,
+	getTelemetryContextPropertiesWithHttpInfo,
+	denyListMiddleware,
+} from "@fluidframework/server-services-utils";
+import { type Request, Router } from "express";
 import type { RequestHandler } from "express-serve-static-core";
+import type { Provider } from "nconf";
+import { v4 as uuid } from "uuid";
+import winston from "winston";
+
+import {
+	Constants,
+	generateCacheKey,
+	getSession,
+	setGetSessionResultInCache,
+	StageTrace,
+} from "../../../utils";
+import type { IDocumentDeleteService } from "../../services";
+
+import { getDocumentUrlsfromNetworkInfo } from "./restHelper";
 
 /**
  * Response body shape for modern clients that can handle object responses.
@@ -92,6 +107,10 @@ async function generateCreateDocumentResponseBody(
 		externalDeltaStreamUrl: string;
 		messageBrokerId?: string;
 	},
+	isEphemeral: boolean,
+	redisCacheForGetSession?: ICache,
+	ephemeralDocumentTTLSec?: number,
+	sessionCacheTTLSec?: number,
 ): Promise<ICreateDocumentResponseBody> {
 	const authorizationHeader = request.header("Authorization");
 	let newDocumentAccessToken: string | undefined;
@@ -121,6 +140,21 @@ async function generateCreateDocumentResponseBody(
 			session.messageBrokerId = sessionInfo.messageBrokerId;
 		}
 		newDocumentSession = session;
+		if (redisCacheForGetSession) {
+			// If ephemeral, set TTL to 95% of ephemeralDocumentTTLSec
+			// to account for latency in reaching here.
+			const ephemeralDocumentTTLWithLatencyMargin = ephemeralDocumentTTLSec
+				? Math.floor(ephemeralDocumentTTLSec * 0.95)
+				: undefined;
+			// Set session information in cache
+			await setGetSessionResultInCache(
+				tenantId,
+				documentId,
+				session,
+				redisCacheForGetSession,
+				isEphemeral ? ephemeralDocumentTTLWithLatencyMargin : sessionCacheTTLSec,
+			);
+		}
 	}
 	return {
 		id: documentId,
@@ -142,10 +176,15 @@ export function create(
 	tokenRevocationManager?: ITokenRevocationManager,
 	revokedTokenChecker?: IRevokedTokenChecker,
 	clusterDrainingChecker?: IClusterDrainingChecker,
+	redisCacheForGetSession?: ICache,
+	denyList?: IDenyList,
 ): Router {
 	const router: Router = Router();
+	const privateServiceHost: string | undefined = config.get("privateServiceHost");
 	const externalOrdererUrl: string = config.get("worker:serverUrl");
 	const externalHistorianUrl: string = config.get("worker:blobStorageUrl");
+	const enablePrivateLinkNetworkCheck: boolean =
+		config.get("alfred:enablePrivateLinkNetworkCheck") ?? false;
 	const externalDeltaStreamUrl: string =
 		config.get("worker:deltaStreamUrl") || externalOrdererUrl;
 	const messageBrokerId: string | undefined =
@@ -160,6 +199,10 @@ export function create(
 	);
 	const ephemeralDocumentTTLSec: number | undefined = config.get(
 		"storage:ephemeralDocumentTTLSec",
+	);
+	const sessionCacheTTLSec: number | undefined = config.get("alfred:sessionCacheTTLSec");
+	const sessionCacheTTLForDeletedDocumentsSec: number | undefined = config.get(
+		"alfred:sessionCacheTTLForDeletedDocumentsSec",
 	);
 
 	const ignoreEphemeralFlag: boolean = config.get("alfred:ignoreEphemeralFlag") ?? true;
@@ -214,7 +257,13 @@ export function create(
 		"/:tenantId/:id",
 		validateRequestParams("tenantId", "id"),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
-		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
+		verifyStorageToken(
+			tenantManager,
+			config,
+			[ScopeType.DocRead],
+			defaultTokenValidationOptions,
+		),
+		denyListMiddleware(denyList, true /* skipDocumentCheck */),
 		(request, response, next) => {
 			const tenantId = request.params.tenantId;
 			const documentId = request.params.id;
@@ -236,6 +285,7 @@ export function create(
 	router.post(
 		"/:tenantId",
 		validateRequestParams("tenantId"),
+		validatePrivateLink(tenantManager, enablePrivateLinkNetworkCheck),
 		throttle(
 			clusterThrottlers.get(Constants.createDocThrottleIdPrefix),
 			winston,
@@ -247,7 +297,7 @@ export function create(
 			createDocTenantThrottleOptions,
 			isHttpUsageCountingEnabled,
 		),
-		verifyStorageToken(tenantManager, config, {
+		verifyStorageToken(tenantManager, config, [ScopeType.DocRead, ScopeType.DocWrite], {
 			requireDocumentId: false,
 			ensureSingleUseToken: true,
 			singleUseTokenCache,
@@ -255,15 +305,22 @@ export function create(
 			tokenCache: singleUseTokenCache,
 			revokedTokenChecker,
 		}),
+		denyListMiddleware(denyList, true /* skipDocumentCheck */),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response, next) => {
+			// Tenant and document
+			const tenantId = request.params.tenantId;
 			// Reject create document request if cluster is in draining process.
 			if (
 				clusterDrainingChecker &&
-				(await clusterDrainingChecker.isClusterDraining().catch((error) => {
-					Lumberjack.error("Failed to get cluster draining status", undefined, error);
-					return false;
-				}))
+				(await clusterDrainingChecker
+					.isClusterDraining({
+						tenantId,
+					})
+					.catch((error) => {
+						Lumberjack.error("Failed to get cluster draining status", undefined, error);
+						return false;
+					}))
 			) {
 				Lumberjack.info("Cluster is in draining process. Reject create document request.");
 				const error = createFluidServiceNetworkError(503, {
@@ -272,8 +329,20 @@ export function create(
 				});
 				return handleResponse(Promise.reject(error), response);
 			}
+
+			const clientIPAddress = request.ip ? request.ip : "";
+			const networkInfo = getNetworkInformationFromIP(clientIPAddress);
 			// Tenant and document
-			const tenantId = request.params.tenantId;
+			const documentUrls = getDocumentUrlsfromNetworkInfo(
+				tenantId,
+				externalOrdererUrl,
+				externalHistorianUrl,
+				externalDeltaStreamUrl,
+				enablePrivateLinkNetworkCheck,
+				networkInfo.isPrivateLink,
+				privateServiceHost,
+			);
+
 			// If enforcing server generated document id, ignore id parameter
 			const id = enforceServerGeneratedDocumentId
 				? uuid()
@@ -306,9 +375,9 @@ export function create(
 				summary,
 				sequenceNumber,
 				crypto.randomBytes(4).toString("hex"),
-				externalOrdererUrl,
-				externalHistorianUrl,
-				externalDeltaStreamUrl,
+				documentUrls.documentOrdererUrl,
+				documentUrls.documentHistorianUrl,
+				documentUrls.documentDeltaStreamUrl,
 				values,
 				enableDiscovery,
 				isEphemeral,
@@ -327,11 +396,15 @@ export function create(
 					generateToken,
 					enableDiscovery,
 					{
-						externalOrdererUrl,
-						externalHistorianUrl,
-						externalDeltaStreamUrl,
+						externalOrdererUrl: documentUrls.documentOrdererUrl,
+						externalHistorianUrl: documentUrls.documentHistorianUrl,
+						externalDeltaStreamUrl: documentUrls.documentDeltaStreamUrl,
 						messageBrokerId,
 					},
+					isEphemeral,
+					redisCacheForGetSession,
+					ephemeralDocumentTTLSec,
+					sessionCacheTTLSec,
 				);
 				return handleResponse(
 					Promise.all([createP, generateResponseBodyP]).then(
@@ -380,6 +453,7 @@ export function create(
 	 */
 	router.get(
 		"/:tenantId/session/:id",
+		validatePrivateLink(tenantManager, enablePrivateLinkNetworkCheck),
 		throttle(
 			clusterThrottlers.get(Constants.getSessionThrottleIdPrefix),
 			winston,
@@ -390,7 +464,13 @@ export function create(
 			winston,
 			getSessionTenantThrottleOptions,
 		),
-		verifyStorageTokenForGetSession(tenantManager, config, defaultTokenValidationOptions),
+		verifyStorageTokenForGetSession(
+			tenantManager,
+			config,
+			[ScopeType.DocRead],
+			defaultTokenValidationOptions,
+		),
+		denyListMiddleware(denyList, true /* skipDocumentCheck */),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response, next) => {
 			const documentId = request.params.id;
@@ -403,13 +483,18 @@ export function create(
 			);
 			// Tracks the different stages of getSessionMetric
 			const connectionTrace = new StageTrace<string>("GetSession");
+
 			// Reject get session request on existing, inactive sessions if cluster is in draining process.
 			if (
 				clusterDrainingChecker &&
-				(await clusterDrainingChecker.isClusterDraining().catch((error) => {
-					Lumberjack.error("Failed to get cluster draining status", undefined, error);
-					return false;
-				}))
+				(await clusterDrainingChecker
+					.isClusterDraining({
+						tenantId,
+					})
+					.catch((error) => {
+						Lumberjack.error("Failed to get cluster draining status", undefined, error);
+						return false;
+					}))
 			) {
 				Lumberjack.info("Cluster is in draining process. Reject get session request.");
 				connectionTrace?.stampStage("ClusterIsDraining");
@@ -423,10 +508,22 @@ export function create(
 			const readDocumentRetryDelay: number = config.get("getSession:readDocumentRetryDelay");
 			const readDocumentMaxRetries: number = config.get("getSession:readDocumentMaxRetries");
 
-			const session = getSession(
+			const clientIPAddress = request.ip ? request.ip : "";
+			const networkInfo = getNetworkInformationFromIP(clientIPAddress);
+			const documentUrls = getDocumentUrlsfromNetworkInfo(
+				tenantId,
 				externalOrdererUrl,
 				externalHistorianUrl,
 				externalDeltaStreamUrl,
+				enablePrivateLinkNetworkCheck,
+				networkInfo.isPrivateLink,
+				privateServiceHost,
+			);
+
+			const session = getSession(
+				documentUrls.documentOrdererUrl,
+				documentUrls.documentHistorianUrl,
+				documentUrls.documentDeltaStreamUrl,
 				tenantId,
 				documentId,
 				documentRepository,
@@ -437,6 +534,9 @@ export function create(
 				connectionTrace,
 				readDocumentRetryDelay,
 				readDocumentMaxRetries,
+				redisCacheForGetSession,
+				sessionCacheTTLSec,
+				sessionCacheTTLForDeletedDocumentsSec,
 			);
 
 			const onSuccess = (result: ISession): void => {
@@ -468,7 +568,13 @@ export function create(
 		"/:tenantId/document/:id",
 		validateRequestParams("tenantId", "id"),
 		validateTokenScopeClaims(DocDeleteScopeType),
-		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
+		verifyStorageToken(
+			tenantManager,
+			config,
+			[ScopeType.DocRead, ScopeType.DocWrite],
+			defaultTokenValidationOptions,
+		),
+		denyListMiddleware(denyList, true /* skipDocumentCheck */),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response, next) => {
 			const documentId = request.params.id;
@@ -476,8 +582,30 @@ export function create(
 			const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
 			Lumberjack.info(`Received document delete request.`, lumberjackProperties);
 
+			let deleteSessionCacheP: Promise<boolean> | undefined;
+			if (redisCacheForGetSession?.delete) {
+				deleteSessionCacheP = redisCacheForGetSession
+					.delete(generateCacheKey(tenantId, documentId))
+					.catch((error) => {
+						// Log error but don't fail the request
+						Lumberjack.error(
+							"Failed to delete getSession cache",
+							lumberjackProperties,
+							error,
+						);
+						return true;
+					});
+			}
 			const deleteP = documentDeleteService.deleteDocument(tenantId, documentId);
-			return handleResponse(deleteP, response, undefined, undefined, 204);
+			return handleResponse(
+				Promise.all([deleteP, deleteSessionCacheP]).then(
+					([deletePResponse]) => deletePResponse,
+				),
+				response,
+				undefined,
+				undefined,
+				204,
+			);
 		},
 	);
 
@@ -489,7 +617,13 @@ export function create(
 		validateRequestParams("tenantId", "id"),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		validateTokenScopeClaims(TokenRevokeScopeType),
-		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
+		verifyStorageToken(
+			tenantManager,
+			config,
+			[ScopeType.DocRead, ScopeType.DocWrite],
+			defaultTokenValidationOptions,
+		),
+		denyListMiddleware(denyList, true /* skipDocumentCheck */),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response, next) => {
 			const documentId = request.params.id;

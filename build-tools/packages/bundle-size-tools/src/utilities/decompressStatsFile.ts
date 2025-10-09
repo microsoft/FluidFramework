@@ -5,7 +5,7 @@
 
 import { decode } from "msgpack-lite";
 import { inflate } from "pako";
-import { StatsCompilation } from "webpack";
+import type { StatsCompilation } from "webpack";
 
 /**
  * To save storage space, we store stats files as gzipped mspack files. This method takes

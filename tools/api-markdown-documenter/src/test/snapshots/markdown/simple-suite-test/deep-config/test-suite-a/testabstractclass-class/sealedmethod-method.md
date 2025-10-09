@@ -1,18 +1,18 @@
 # sealedMethod
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestAbstractClass](/test-suite-a/testabstractclass-class/) &gt; [sealedMethod()](/test-suite-a/testabstractclass-class/sealedmethod-method)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [TestAbstractClass](/test-suite-a/testabstractclass-class/) > [sealedMethod()](/test-suite-a/testabstractclass-class/sealedmethod-method)
 
 A test `@sealed` method.
 
-## Signature {#sealedmethod-signature}
+<h2 id="sealedmethod-signature">Signature</h2>
 
 ```typescript
 /** @sealed */
 protected sealedMethod(): string;
 ```
 
-## Returns {#sealedmethod-returns}
+<h2 id="sealedmethod-returns">Returns</h2>
 
 A string!
 
-**Return type:** string
+**Return type**: string

@@ -13,7 +13,7 @@ import {
 	MergeTreeDeltaType,
 	PropertySet,
 	ReferenceType,
-	SlidingPreference, // eslint-disable-next-line import/no-deprecated
+	SlidingPreference,
 	appendToMergeTreeDeltaRevertibles,
 	discardMergeTreeDeltaRevertible,
 	getSlideToSegoff,
@@ -34,8 +34,7 @@ import { ISharedString, SharedStringSegment } from "./sharedString.js";
 
 /**
  * Data for undoing edits on SharedStrings and Intervals.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type SharedStringRevertible = MergeTreeDeltaRevertible | IntervalRevertible;
 
@@ -43,8 +42,7 @@ const idMap = new Map<string, string>();
 
 /**
  * Data for undoing edits affecting Intervals.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type IntervalRevertible =
 	| {
@@ -100,8 +98,7 @@ function getUpdatedId(intervalId: string): string {
 
 /**
  * Create revertibles for adding an interval
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export function appendAddIntervalToRevertibles(
 	interval: SequenceInterval,
@@ -117,8 +114,7 @@ export function appendAddIntervalToRevertibles(
 
 /**
  * Create revertibles for deleting an interval
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export function appendDeleteIntervalToRevertibles(
 	string: ISharedString,
@@ -168,8 +164,7 @@ export function appendDeleteIntervalToRevertibles(
 
 /**
  * Create revertibles for moving endpoints of an interval
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export function appendChangeIntervalToRevertibles(
 	string: ISharedString,
@@ -217,8 +212,7 @@ export function appendChangeIntervalToRevertibles(
 
 /**
  * Create revertibles for changing properties of an interval
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export function appendIntervalPropertyChangedToRevertibles(
 	interval: SequenceInterval,
@@ -278,8 +272,7 @@ function addIfRevertibleRef(
 /**
  * Create revertibles for SharedStringDeltas, handling indirectly modified intervals
  * (e.g. reverting remove of a range that contains an interval will move the interval back)
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export function appendSharedStringDeltaToRevertibles(
 	string: ISharedString,
@@ -341,7 +334,7 @@ export function appendSharedStringDeltaToRevertibles(
 
 				revertible.intervals.push({
 					intervalId: interval.getIntervalId(),
-					label: interval.properties.referenceRangeLabels[0],
+					label: interval.start.properties?.referenceRangeLabels[0],
 					startOffset: offset,
 					endOffset,
 				});
@@ -351,7 +344,7 @@ export function appendSharedStringDeltaToRevertibles(
 			endIntervals.forEach(({ interval, offset }) => {
 				revertible.intervals.push({
 					intervalId: interval.getIntervalId(),
-					label: interval.properties.referenceRangeLabels[0],
+					label: interval.start.properties?.referenceRangeLabels[0],
 					endOffset: offset,
 				});
 			});
@@ -376,8 +369,7 @@ export function appendSharedStringDeltaToRevertibles(
 
 /**
  * Clean up resources held by revertibles that are no longer needed.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export function discardSharedStringRevertibles(
 	sharedString: ISharedString,
@@ -398,12 +390,13 @@ function getSlidePosition(
 	lref: LocalReferencePosition,
 	pos: number,
 ): number {
-	const slide = getSlideToSegoff(
-		{ segment: lref.getSegment(), offset: undefined },
-		lref.slidingPreference,
-	);
-	return slide?.segment !== undefined &&
-		slide.offset !== undefined &&
+	const segment = lref.getSegment();
+	const offset = lref.getOffset();
+	const slide =
+		segment === undefined
+			? undefined
+			: getSlideToSegoff({ segment, offset }, lref.slidingPreference);
+	return slide !== undefined &&
 		string.getPosition(slide.segment) !== -1 &&
 		(pos < 0 || pos >= string.getLength())
 		? string.getPosition(slide.segment) + slide.offset
@@ -433,7 +426,7 @@ function revertLocalAdd(
 	revertible: TypedRevertible<typeof IntervalOpType.ADD>,
 ) {
 	const id = getUpdatedIdFromInterval(revertible.interval);
-	const label = revertible.interval.properties.referenceRangeLabels[0];
+	const label = revertible.interval.start.properties?.referenceRangeLabels[0];
 	string.getIntervalCollection(label).removeIntervalById(id);
 }
 
@@ -461,14 +454,15 @@ function revertLocalDelete(
 	string: ISharedString,
 	revertible: TypedRevertible<typeof IntervalOpType.DELETE>,
 ) {
-	const label = revertible.interval.properties.referenceRangeLabels[0];
+	const label = revertible.interval.start.properties?.referenceRangeLabels[0];
 	const collection = string.getIntervalCollection(label);
 	const start = string.localReferencePositionToPosition(revertible.start);
 	const startSlidePos = getSlidePosition(string, revertible.start, start);
 	const end = string.localReferencePositionToPosition(revertible.end);
 	const endSlidePos = getSlidePosition(string, revertible.end, end);
 	// reusing the id causes eventual consistency bugs, so it is removed here and recreated in add
-	const { intervalId, ...props } = revertible.interval.properties;
+	const { ...props } = revertible.interval.properties;
+	const intervalId = revertible.interval.getIntervalId();
 	if (
 		isValidRange(
 			startSlidePos,
@@ -500,7 +494,7 @@ function revertLocalChange(
 	string: ISharedString,
 	revertible: TypedRevertible<typeof IntervalOpType.CHANGE>,
 ) {
-	const label = revertible.interval.properties.referenceRangeLabels[0];
+	const label = revertible.interval.start.properties?.referenceRangeLabels[0];
 	const collection = string.getIntervalCollection(label);
 	const id = getUpdatedIdFromInterval(revertible.interval);
 	const start = string.localReferencePositionToPosition(revertible.start);
@@ -540,7 +534,7 @@ function revertLocalPropertyChanged(
 	string: ISharedString,
 	revertible: TypedRevertible<typeof IntervalOpType.PROPERTY_CHANGED>,
 ) {
-	const label = revertible.interval.properties.referenceRangeLabels[0];
+	const label = revertible.interval.start.properties?.referenceRangeLabels[0];
 	const id = getUpdatedIdFromInterval(revertible.interval);
 	const newProps = revertible.propertyDeltas;
 	string.getIntervalCollection(label).change(id, { props: newProps });
@@ -583,7 +577,6 @@ interface RangeInfo {
 	segment: ISegment;
 }
 
-// eslint-disable-next-line import/no-deprecated
 class SortedRangeSet extends SortedSegmentSet<RangeInfo> {}
 
 function revertLocalSequenceRemove(
@@ -672,8 +665,7 @@ function revertLocalSequenceRemove(
 
 /**
  * Invoke revertibles to reverse prior edits
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export function revertSharedStringRevertibles(
 	sharedString: ISharedString,

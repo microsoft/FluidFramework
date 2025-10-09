@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { AttachState } from "@fluidframework/container-definitions";
@@ -36,7 +36,10 @@ describeCompat("Cache CreateNewSummary", "NoCompat", (getTestObjectProvider, api
 	}
 
 	let provider: ITestObjectProvider;
-	const dataObjectFactory = new DataObjectFactory("TestDataObject", TestDataObject, [], []);
+	const dataObjectFactory = new DataObjectFactory({
+		type: "TestDataObject",
+		ctor: TestDataObject,
+	});
 
 	const IdleDetectionTime = 100;
 	const summaryConfigOverrides: ISummaryConfiguration = {

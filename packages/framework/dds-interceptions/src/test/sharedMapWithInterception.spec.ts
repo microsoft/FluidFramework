@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
-import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
-import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
+import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
+import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import { createSharedMapWithInterception } from "../map/index.js";
@@ -20,7 +20,7 @@ describe("Shared Map with Interception", () => {
 		 */
 		const userAttributes = { userId: "Fake User" };
 		const documentId = "fakeId";
-		const attributionKey = (key: string) => `${key}.attribution`;
+		const attributionKey = (key: string): string => `${key}.attribution`;
 		let sharedMap: ISharedMap;
 		let dataStoreContext: IFluidDataStoreContext;
 
@@ -28,7 +28,7 @@ describe("Shared Map with Interception", () => {
 			callback();
 		}
 
-		function interceptionCb(map: ISharedMap, key: string, value: any): void {
+		function interceptionCb(map: ISharedMap, key: string, value: unknown): void {
 			map.set(attributionKey(key), userAttributes);
 		}
 
@@ -46,7 +46,12 @@ describe("Shared Map with Interception", () => {
 
 		// Verifies that the props are stored correctly in the given map under a key derived from the
 		// given key - under attributionKey(key).
-		function verifyMapAttribution(map: ISharedMap, key: string, value: string, props?: any) {
+		function verifyMapAttribution(
+			map: ISharedMap,
+			key: string,
+			value: string,
+			props?: unknown,
+		): void {
 			assert.equal(
 				map.get(key),
 				value,
@@ -117,7 +122,7 @@ describe("Shared Map with Interception", () => {
 			// If useWrapper above is true, this interception callback that calls a set on the wrapped object
 			// causing an infinite recursion.
 			// If useWrapper is false, it uses the passed sharedMap which does not cause recursion.
-			function recursiveInterceptionCb(map: ISharedMap, key: string, value: any) {
+			function recursiveInterceptionCb(map: ISharedMap, key: string, value: unknown): void {
 				const localMap = useWrapper ? sharedMapWithInterception : sharedMap;
 				localMap.set(attributionKey(key), userAttributes);
 			}
@@ -132,9 +137,9 @@ describe("Shared Map with Interception", () => {
 			let asserted: boolean = false;
 			try {
 				sharedMapWithInterception.set("color", "green");
-			} catch (error: any) {
+			} catch (error: unknown) {
 				assert.strictEqual(
-					error.message,
+					(error as Error).message,
 					"0x0c0",
 					"We should have caught an assert in replaceText because it detects an infinite recursion",
 				);

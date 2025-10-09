@@ -8,31 +8,34 @@ import * as api from '@fluidframework/protocol-definitions';
 import { AxiosError } from 'axios';
 import { AxiosInstance } from 'axios';
 import { AxiosRequestConfig } from 'axios';
-import { ICreateTreeEntry } from '@fluidframework/gitresources';
-import { IQuorumSnapshot } from '@fluidframework/protocol-base';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ISnapshotTree } from '@fluidframework/protocol-definitions';
+import type { ICreateTreeEntry } from '@fluidframework/gitresources';
+import type { IQuorumSnapshot } from '@fluidframework/protocol-base';
+import type { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import type { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISnapshotTreeEx } from '@fluidframework/protocol-definitions';
-import { ISummaryHandle } from '@fluidframework/protocol-definitions';
+import type { ISummaryHandle } from '@fluidframework/protocol-definitions';
 import { ISummaryTree as ISummaryTree_2 } from '@fluidframework/protocol-definitions';
-import { ITokenClaims } from '@fluidframework/protocol-definitions';
-import { ITree } from '@fluidframework/gitresources';
+import type { ITokenClaims } from '@fluidframework/protocol-definitions';
+import type { ITree } from '@fluidframework/gitresources';
 import { ITreeEntry } from '@fluidframework/protocol-definitions';
-import { IUser } from '@fluidframework/protocol-definitions';
+import type { IUser } from '@fluidframework/protocol-definitions';
 import { RawAxiosRequestHeaders } from 'axios';
-import * as resources from '@fluidframework/gitresources';
-import { ScopeType } from '@fluidframework/protocol-definitions';
-import { SummaryObject } from '@fluidframework/protocol-definitions';
+import type * as resources from '@fluidframework/gitresources';
+import type { ScopeType } from '@fluidframework/protocol-definitions';
+import type { SummaryObject } from '@fluidframework/protocol-definitions';
 
 // @internal (undocumented)
 export class BasicRestWrapper extends RestWrapper {
-    constructor(baseurl?: string, defaultQueryString?: Record<string, string | number | boolean>, maxBodyLength?: number, maxContentLength?: number, defaultHeaders?: RawAxiosRequestHeaders, axios?: AxiosInstance, refreshDefaultQueryString?: (() => Record<string, string | number | boolean>) | undefined, refreshDefaultHeaders?: (() => RawAxiosRequestHeaders) | undefined, getCorrelationId?: (() => string | undefined) | undefined, getTelemetryContextProperties?: (() => Record<string, string | number | boolean> | undefined) | undefined, refreshTokenIfNeeded?: ((authorizationHeader: RawAxiosRequestHeaders) => Promise<RawAxiosRequestHeaders | undefined>) | undefined, logHttpMetrics?: ((requestProps: IBasicRestWrapperMetricProps) => void) | undefined);
+    constructor(baseurl?: string, defaultQueryString?: Record<string, string | number | boolean>, maxBodyLength?: number, maxContentLength?: number, defaultHeaders?: RawAxiosRequestHeaders, axios?: AxiosInstance, refreshDefaultQueryString?: (() => Record<string, string | number | boolean>) | undefined, refreshDefaultHeaders?: (() => RawAxiosRequestHeaders) | undefined, getCorrelationId?: (() => string | undefined) | undefined, getTelemetryContextProperties?: (() => Record<string, string | number | boolean> | undefined) | undefined, refreshTokenIfNeeded?: ((authorizationHeader: RawAxiosRequestHeaders) => Promise<RawAxiosRequestHeaders | undefined>) | undefined, logHttpMetrics?: ((requestProps: IBasicRestWrapperMetricProps) => void) | undefined, getCallingServiceName?: (() => string | undefined) | undefined);
     // (undocumented)
     protected request<T>(requestConfig: AxiosRequestConfig, statusCode: number, canRetry?: boolean): Promise<T>;
 }
 
 // @internal
 export const buildTreePath: (...nodeNames: string[]) => string;
+
+// @internal
+export const CallingServiceHeaderName = "x-calling-service";
 
 // @internal
 export const canDeleteDoc: (scopes: string[]) => boolean;
@@ -101,7 +104,13 @@ export function generateUser(): IUser;
 export const getAuthorizationTokenFromCredentials: (credentials: ICredentials) => string;
 
 // @internal
+export const getGlobalAbortControllerContext: () => IAbortControllerContext;
+
+// @internal
 export const getGlobalTimeoutContext: () => ITimeoutContext;
+
+// @internal
+export function getNetworkInformationFromIP(clientIp?: string): NetworkInformation;
 
 // @internal (undocumented)
 export function getNextHash(message: ISequencedDocumentMessage, lastHash: string): string;
@@ -223,6 +232,13 @@ export class Historian implements IHistorian {
     getTree(sha: string, recursive: boolean): Promise<resources.ITree>;
     // (undocumented)
     updateRef(ref: string, params: resources.IPatchRefParams): Promise<resources.IRef>;
+}
+
+// @internal
+export interface IAbortControllerContext {
+    bindAbortController(abortController: AbortController, callback: () => void): void;
+    bindAbortControllerAsync<T>(abortController: AbortController, callback: () => Promise<T>): Promise<T>;
+    getAbortController(): AbortController | undefined;
 }
 
 // @internal (undocumented)
@@ -461,6 +477,7 @@ export interface ITimeoutContext {
     bindTimeout(maxDurationMs: number, callback: () => void): void;
     bindTimeoutAsync<T>(maxDurationMs: number, callback: () => Promise<T>): Promise<T>;
     checkTimeout(): void;
+    getTimeRemainingMs(): number | undefined;
 }
 
 // @internal (undocumented)
@@ -536,6 +553,8 @@ export interface IWholeSummaryPayload {
     message: string;
     // (undocumented)
     sequenceNumber: number;
+    // (undocumented)
+    summaryTime?: string;
     // (undocumented)
     type: IWholeSummaryPayloadType;
 }
@@ -619,6 +638,16 @@ export class NetworkError extends Error {
     };
 }
 
+// @internal
+export class NetworkInformation {
+    // (undocumented)
+    isPrivateLink: boolean;
+    // (undocumented)
+    privateIpAddress?: string;
+    // (undocumented)
+    privateLinkId?: string;
+}
+
 // @internal (undocumented)
 export function parseToken(tenantId: string, authorization: string | undefined): string | undefined;
 
@@ -666,7 +695,13 @@ export abstract class RestWrapper {
 }
 
 // @internal
+export const setGlobalAbortControllerContext: (abortControllerContext: IAbortControllerContext) => void;
+
+// @internal
 export const setGlobalTimeoutContext: (timeoutContext: ITimeoutContext) => void;
+
+// @internal (undocumented)
+export function setupAxiosInterceptorsForAbortSignals(getAbortController: () => AbortController | undefined): void;
 
 // @internal
 export class SummaryTreeUploadManager implements ISummaryUploadManager {

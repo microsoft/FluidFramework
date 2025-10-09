@@ -4,13 +4,15 @@
  */
 
 import { EventEmitter } from "events";
-import {
+
+import type {
 	ICollection,
 	IContext,
 	IPartitionLambda,
 	IPartitionLambdaFactory,
 	MongoManager,
 } from "@fluidframework/server-services-core";
+
 import { ScriptoriumLambda } from "./lambda";
 
 /**

@@ -19,7 +19,10 @@ module.exports = {
 		"@typescript-eslint/no-unsafe-member-access": "off",
 
 		"@typescript-eslint/no-non-null-assertion": "error",
+
+		// Catch unused variables in at lint time instead of compile time
 		"@typescript-eslint/no-unused-vars": "error",
+
 		"@typescript-eslint/switch-exhaustiveness-check": "error",
 
 		// This package is exclusively used in a Node.js context

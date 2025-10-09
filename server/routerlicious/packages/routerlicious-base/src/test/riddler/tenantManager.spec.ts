@@ -20,7 +20,7 @@ import {
 	TenantKeyGenerator,
 	generateToken,
 } from "@fluidframework/server-services-utils";
-import assert from "assert";
+import { strict as assert } from "assert";
 import { NetworkError } from "@fluidframework/server-services-client";
 import { ScopeType } from "@fluidframework/protocol-definitions";
 
@@ -797,6 +797,30 @@ describe("TenantManager", () => {
 				tokenKey1.fluidAccessToken,
 			);
 			await assert.doesNotReject(validationPKey1);
+		});
+
+		it("Should throw an error when private keys are not enabled for a tenant and forceGenerateTokenWithPrivateKey is true", async () => {
+			sandbox.stub(tenantRepository, "findOne").resolves(tenantWithoutPrivateKeys);
+			const tokenKey1 = tenantManager.signToken(
+				"cordflasher-dolphin",
+				keylessAccessTokenClaims.documentId,
+				keylessAccessTokenClaims.scopes,
+				keylessAccessTokenClaims.user,
+				undefined,
+				keylessAccessTokenClaims.ver,
+				undefined,
+				false,
+				true /* forceGenerateTokenWithPrivateKey */,
+			);
+			await assert.rejects(tokenKey1, (err) => {
+				assert(err instanceof NetworkError);
+				assert.strictEqual(err.code, 400);
+				assert.strictEqual(
+					err.message,
+					`Tenant ${tenantWithoutPrivateKeys._id} does not have private key access enabled.`,
+				);
+				return true;
+			});
 		});
 	});
 });

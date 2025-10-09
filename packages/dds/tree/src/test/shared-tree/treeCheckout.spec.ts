@@ -19,8 +19,9 @@ import {
 	EmptyKey,
 	type RevertibleFactory,
 	type NormalizedFieldUpPath,
+	TreeStoredSchemaRepository,
 } from "../../core/index.js";
-import { FieldKinds } from "../../feature-libraries/index.js";
+import { FieldKinds, MockNodeIdentifierManager } from "../../feature-libraries/index.js";
 import {
 	getBranch,
 	Tree,
@@ -28,34 +29,37 @@ import {
 	type ITreeCheckout,
 	type ITreeCheckoutFork,
 	type BranchableTree,
+	createTreeCheckout,
 } from "../../shared-tree/index.js";
 import {
 	TestTreeProviderLite,
+	buildTestForest,
 	chunkFromJsonableTrees,
 	createTestUndoRedoStacks,
 	expectSchemaEqual,
 	getView,
+	mintRevisionTag,
+	testIdCompressor,
+	testRevisionTagCodec,
 	validateUsageError,
 	viewCheckout,
 } from "../utils.js";
-import { brand, fail } from "../../util/index.js";
-import {
-	SchemaFactory,
-	TreeViewConfiguration,
-	type ImplicitFieldSchema,
-	type InsertableTreeFieldFromImplicitField,
-} from "../../index.js";
+import { brand } from "../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
 import {
-	asTreeViewAlpha,
-	getOrCreateInnerNode,
-	toStoredSchema,
+	getInnerNode,
+	SchemaFactory,
+	toUpgradeSchema,
+	TreeViewConfiguration,
+	type ImplicitFieldSchema,
 	type InsertableField,
+	type InsertableTreeFieldFromImplicitField,
 	type TreeBranch,
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { stringSchema } from "../../simple-tree/leafNodeSchema.js";
+import { asAlpha } from "../../api.js";
 
 const rootField: NormalizedFieldUpPath = {
 	parent: undefined,
@@ -75,7 +79,9 @@ describe("sharedTreeView", () => {
 			);
 			view.initialize({ x: 24 });
 			const root = view.root;
-			const anchorNode = getOrCreateInnerNode(root).anchorNode;
+			const flex = getInnerNode(root);
+			assert(flex.isHydrated());
+			const anchorNode = flex.anchorNode;
 			const log: string[] = [];
 			const unsubscribe = anchorNode.events.on("childrenChanging", () => log.push("change"));
 			const unsubscribeSubtree = anchorNode.events.on("subtreeChanging", () => {
@@ -96,11 +102,13 @@ describe("sharedTreeView", () => {
 			assert.deepEqual(log, [
 				"editStart",
 				"subtree",
+				"change",
 				"subtree",
 				"change",
 				"after",
 				"editStart",
 				"subtree",
+				"change",
 				"subtree",
 				"change",
 				"after",
@@ -115,7 +123,9 @@ describe("sharedTreeView", () => {
 			);
 			view.initialize({ x: 24 });
 			const root = view.root;
-			const anchorNode = getOrCreateInnerNode(root).anchorNode;
+			const flex = getInnerNode(root);
+			assert(flex.isHydrated());
+			const anchorNode = flex.anchorNode;
 			const log: string[] = [];
 			const unsubscribe = anchorNode.events.on("childrenChanging", (upPath) =>
 				log.push(`change-${String(upPath.parentField)}-${upPath.parentIndex}`),
@@ -138,11 +148,13 @@ describe("sharedTreeView", () => {
 			assert.deepEqual(log, [
 				"editStart",
 				"subtree-rootFieldKey-0",
+				"change-rootFieldKey-0",
 				"subtree-rootFieldKey-0",
 				"change-rootFieldKey-0",
 				"after",
 				"editStart",
 				"subtree-rootFieldKey-0",
+				"change-rootFieldKey-0",
 				"subtree-rootFieldKey-0",
 				"change-rootFieldKey-0",
 				"after",
@@ -165,7 +177,7 @@ describe("sharedTreeView", () => {
 
 				assert.equal(log.length, 0);
 
-				checkout.updateSchema(toStoredSchema(mixedSchema));
+				checkout.updateSchema(toUpgradeSchema(mixedSchema));
 
 				assert.equal(log.length, 1);
 
@@ -178,7 +190,7 @@ describe("sharedTreeView", () => {
 
 				assert.equal(log.length, 2);
 
-				checkout.updateSchema(toStoredSchema(OptionalString));
+				checkout.updateSchema(toUpgradeSchema(OptionalString), true);
 
 				assert.equal(log.length, 3);
 				unsubscribe();
@@ -195,14 +207,14 @@ describe("sharedTreeView", () => {
 
 				assert.deepEqual(log, []);
 
-				checkout.updateSchema(toStoredSchema(mixedSchema));
+				checkout.updateSchema(toUpgradeSchema(mixedSchema));
 				checkout.editor
 					.optionalField(rootField)
 					.set(
 						chunkFromJsonableTrees([{ type: brand(stringSchema.identifier), value: "A" }]),
 						true,
 					);
-				checkout.updateSchema(toStoredSchema(OptionalString));
+				checkout.updateSchema(toUpgradeSchema(OptionalString), true);
 
 				assert.deepEqual(log, ["not-revertible", "revertible", "not-revertible"]);
 				unsubscribe();
@@ -359,10 +371,9 @@ describe("sharedTreeView", () => {
 		itView("update anchors after applying a change", ({ view }) => {
 			view.root.insertAtStart("A");
 			let cursor = view.checkout.forest.allocateCursor();
-			view.checkout.forest.moveCursorToPath(
-				getOrCreateInnerNode(view.root).anchorNode,
-				cursor,
-			);
+			const flex = getInnerNode(view.root);
+			assert(flex.isHydrated());
+			view.checkout.forest.moveCursorToPath(flex.anchorNode, cursor);
 			cursor.enterField(EmptyKey);
 			cursor.firstNode();
 			const anchor = cursor.buildAnchor();
@@ -380,10 +391,9 @@ describe("sharedTreeView", () => {
 				const parentCheckout = parentView.checkout;
 				parentView.root.insertAtStart("A");
 				let cursor = parentCheckout.forest.allocateCursor();
-				parentCheckout.forest.moveCursorToPath(
-					getOrCreateInnerNode(parentView.root).anchorNode,
-					cursor,
-				);
+				const flex = getInnerNode(parentView.root);
+				assert(flex.isHydrated());
+				parentCheckout.forest.moveCursorToPath(flex.anchorNode, cursor);
 				cursor.enterField(EmptyKey);
 				cursor.firstNode();
 				const anchor = cursor.buildAnchor();
@@ -405,10 +415,9 @@ describe("sharedTreeView", () => {
 				const parentCheckout = parentView.checkout;
 				parentView.root.insertAtStart("A");
 				let cursor = parentCheckout.forest.allocateCursor();
-				parentCheckout.forest.moveCursorToPath(
-					getOrCreateInnerNode(parentView.root).anchorNode,
-					cursor,
-				);
+				const flex = getInnerNode(parentView.root);
+				assert(flex.isHydrated());
+				parentCheckout.forest.moveCursorToPath(flex.anchorNode, cursor);
 				cursor.enterField(EmptyKey);
 				cursor.firstNode();
 				const anchor = cursor.buildAnchor();
@@ -429,10 +438,9 @@ describe("sharedTreeView", () => {
 			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
 			view.root.insertAtStart("A");
 			let cursor = view.checkout.forest.allocateCursor();
-			view.checkout.forest.moveCursorToPath(
-				getOrCreateInnerNode(view.root).anchorNode,
-				cursor,
-			);
+			const flex = getInnerNode(view.root);
+			assert(flex.isHydrated());
+			view.checkout.forest.moveCursorToPath(flex.anchorNode, cursor);
 			cursor.enterField(EmptyKey);
 			cursor.firstNode();
 			const anchor = cursor.buildAnchor();
@@ -485,7 +493,7 @@ describe("sharedTreeView", () => {
 						? "schemaA"
 						: t.storedSchema.rootFieldSchema.kind === FieldKinds.optional.identifier
 							? "schemaB"
-							: fail("Unexpected schema");
+							: assert.fail("Unexpected schema");
 				}
 
 				assert.equal(getSchema(parentView.checkout), "schemaA");
@@ -515,7 +523,7 @@ describe("sharedTreeView", () => {
 				}),
 			);
 			view1.initialize([]);
-			provider.processMessages();
+			provider.synchronizeMessages();
 			const tree2 = provider.trees[1].kernel.viewWith(
 				new TreeViewConfiguration({
 					schema: sf.array(sf.string),
@@ -527,13 +535,13 @@ describe("sharedTreeView", () => {
 			const view = tree.viewWith(view1.config);
 			// Modify the view, but tree2 should remain unchanged until the edit merges all the way up
 			view.root.insertAtStart("42");
-			provider.processMessages();
+			provider.synchronizeMessages();
 			assert.equal(tree2.root[0], undefined);
 			baseTree.merge(tree);
-			provider.processMessages();
+			provider.synchronizeMessages();
 			assert.equal(tree2.root[0], undefined);
 			branch1.merge(baseTree);
-			provider.processMessages();
+			provider.synchronizeMessages();
 			assert.equal(tree2.root[0], "42");
 		});
 
@@ -549,7 +557,7 @@ describe("sharedTreeView", () => {
 				}),
 			);
 			view1.initialize([]);
-			provider.processMessages();
+			provider.synchronizeMessages();
 			let opsReceived = 0;
 			provider.trees[1].on("op", () => (opsReceived += 1));
 			const baseBranch = branch1.branch();
@@ -559,7 +567,7 @@ describe("sharedTreeView", () => {
 			view.root.insertAtStart("B");
 			baseBranch.merge(tree);
 			branch1.merge(baseBranch);
-			provider.processMessages();
+			provider.synchronizeMessages();
 			assert.equal(opsReceived, 2);
 		});
 
@@ -743,10 +751,9 @@ describe("sharedTreeView", () => {
 		itView("update anchors correctly", ({ view }) => {
 			view.root.insertAtStart("A");
 			let cursor = view.checkout.forest.allocateCursor();
-			view.checkout.forest.moveCursorToPath(
-				getOrCreateInnerNode(view.root).anchorNode,
-				cursor,
-			);
+			const flex = getInnerNode(view.root);
+			assert(flex.isHydrated());
+			view.checkout.forest.moveCursorToPath(flex.anchorNode, cursor);
 			cursor.enterField(EmptyKey);
 			cursor.firstNode();
 			const anchor = cursor.buildAnchor();
@@ -894,21 +901,21 @@ describe("sharedTreeView", () => {
 		);
 
 		view1.initialize(["A", 1, "B", 2]);
-		const storedSchema1 = toStoredSchema(schema1);
-		provider.processMessages();
+		const storedSchema1 = toUpgradeSchema(schema1);
+		provider.synchronizeMessages();
 
 		const checkout1Revertibles = createTestUndoRedoStacks(view1.checkout.events);
 
 		view1.root.removeAt(0); // Remove "A"
 		view1.root.removeAt(0); // Remove 1
 		checkout1Revertibles.undoStack.pop()?.revert(); // Restore 1
-		provider.processMessages();
+		provider.synchronizeMessages();
 
 		const checkout2Revertibles = createTestUndoRedoStacks(view2.checkout.events);
 		view2.root.removeAt(1); // Remove "B"
 		view2.root.removeAt(1); // Remove 2
 		checkout2Revertibles.undoStack.pop()?.revert(); // Restore 2
-		provider.processMessages();
+		provider.synchronizeMessages();
 
 		expectSchemaEqual(storedSchema1, view1.checkout.storedSchema);
 		expectSchemaEqual(storedSchema1, view2.checkout.storedSchema);
@@ -923,15 +930,14 @@ describe("sharedTreeView", () => {
 		assert.equal(checkout2Revertibles.redoStack.length, 1);
 		assert.equal(view2.checkout.getRemovedRoots().length, 2);
 
-		const sf2 = new SchemaFactory("schema2");
-		provider.trees[0].kernel.checkout.updateSchema(toStoredSchema(sf2.array(sf1.number)));
+		provider.trees[0].kernel.checkout.updateSchema(toUpgradeSchema([sf1.number, schema1]));
 
 		// The undo stack contains the removal of A but not the schema change
 		assert.equal(checkout1Revertibles.undoStack.length, 1);
 		assert.equal(checkout1Revertibles.redoStack.length, 1);
 		assert.deepEqual(provider.trees[0].kernel.checkout.getRemovedRoots().length, 2);
 
-		provider.processMessages();
+		provider.synchronizeMessages();
 
 		assert.equal(checkout2Revertibles.undoStack.length, 1);
 		assert.equal(checkout2Revertibles.redoStack.length, 1);
@@ -973,7 +979,7 @@ describe("sharedTreeView", () => {
 			view2.root.removeAt(2);
 
 			assert(view2 instanceof SchematizingSimpleTreeView);
-			expectSchemaEqual(toStoredSchema(newSchema), view2.checkout.storedSchema);
+			expectSchemaEqual(toUpgradeSchema(newSchema), view2.checkout.storedSchema);
 			assert.deepEqual(view2.root, ["A", "B"]);
 
 			// Rebase the child branch onto the parent branch.
@@ -981,7 +987,7 @@ describe("sharedTreeView", () => {
 
 			// The schema change and any changes after that should be dropped,
 			// but the changes before the schema change should be preserved
-			expectSchemaEqual(toStoredSchema(oldSchema), view1.checkout.storedSchema);
+			expectSchemaEqual(toUpgradeSchema(oldSchema), view1.checkout.storedSchema);
 			assert.deepEqual(view1.root, ["B", "C"]);
 		});
 
@@ -1031,14 +1037,14 @@ describe("sharedTreeView", () => {
 			view3.upgradeSchema();
 			view3.root.removeAt(0);
 
-			expectSchemaEqual(toStoredSchema(schema2), view2.checkout.storedSchema);
-			expectSchemaEqual(toStoredSchema(schema3), view3.checkout.storedSchema);
+			expectSchemaEqual(toUpgradeSchema(schema2), view2.checkout.storedSchema);
+			expectSchemaEqual(toUpgradeSchema(schema3), view3.checkout.storedSchema);
 
 			// Rebase view3 onto view2.
 			(view3.checkout as ITreeCheckoutFork).rebaseOnto(view2.checkout);
 
 			// All changes on view3 should be dropped but the schema change and edit in view2 should be preserved.
-			expectSchemaEqual(toStoredSchema(schema2), view2.checkout.storedSchema);
+			expectSchemaEqual(toUpgradeSchema(schema2), view2.checkout.storedSchema);
 			assert.deepEqual(view2.root, ["B"]);
 		});
 	});
@@ -1189,7 +1195,7 @@ describe("sharedTreeView", () => {
 
 		itView("disposing of a view also disposes of its revertibles", ({ view, tree }) => {
 			const treeBranch = tree.branch();
-			const viewBranch = asTreeViewAlpha(treeBranch.viewWith(view.config));
+			const viewBranch = asAlpha(treeBranch.viewWith(view.config));
 			const revertiblesCreated: Revertible[] = [];
 			const unsubscribe = viewBranch.events.on("changed", (_, getRevertible) => {
 				assert(getRevertible !== undefined, "commit should be revertible");
@@ -1220,7 +1226,7 @@ describe("sharedTreeView", () => {
 
 		itView("can be reverted after rebasing", ({ view, tree }) => {
 			const treeBranch = tree.branch();
-			const viewBranch = asTreeViewAlpha(treeBranch.viewWith(view.config));
+			const viewBranch = asAlpha(treeBranch.viewWith(view.config));
 			viewBranch.root.insertAtStart("A");
 
 			const stacks = createTestUndoRedoStacks(viewBranch.events);
@@ -1330,6 +1336,22 @@ describe("sharedTreeView", () => {
 			expectErrorDuringEdit({
 				duringEdit: (view) => view.merge(view),
 				error: "Merging is forbidden during a nodeChanged or treeChanged event",
+			});
+		});
+
+		it("revert a commit", () => {
+			let revertible: Revertible | undefined;
+			expectErrorDuringEdit({
+				setup: (view) => {
+					const unsubscribe = view.events.on("changed", (_, getRevertible) => {
+						revertible = getRevertible?.();
+					});
+					view.root.number = 4;
+					unsubscribe();
+					assert(revertible !== undefined, "Expected revertible to be created.");
+				},
+				duringEdit: (view) => revertible?.revert(),
+				error: "Reverting a commit is forbidden during a nodeChanged or treeChanged event",
 			});
 		});
 
@@ -1450,7 +1472,24 @@ function itView<
 		logger: IMockLoggerExt;
 	} {
 		const logger = createMockLoggerExt();
-		const view = getView(config, undefined, logger);
+
+		const schema = new TreeStoredSchemaRepository();
+		const checkout = createTreeCheckout(
+			testIdCompressor,
+			mintRevisionTag,
+			testRevisionTagCodec,
+			{
+				forest: buildTestForest({ additionalAsserts: true, schema }),
+				schema,
+				logger,
+			},
+		);
+		const view = new SchematizingSimpleTreeView<TRootSchema>(
+			checkout,
+			config,
+			new MockNodeIdentifierManager(),
+		);
+
 		if (fork) {
 			const treeBranch = getBranch(view).branch();
 			const viewBranch = treeBranch.viewWith(view.config);

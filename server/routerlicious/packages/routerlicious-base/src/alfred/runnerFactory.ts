@@ -4,24 +4,31 @@
  */
 
 import * as services from "@fluidframework/server-services";
+import {
+	getGlobalAbortControllerContext,
+	type IAlfredTenant,
+	setupAxiosInterceptorsForAbortSignals,
+} from "@fluidframework/server-services-client";
 import * as core from "@fluidframework/server-services-core";
+import type { IReadinessCheck } from "@fluidframework/server-services-core";
+import { closeRedisClientConnections, StartupCheck } from "@fluidframework/server-services-shared";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as utils from "@fluidframework/server-services-utils";
-import { Provider } from "nconf";
-import * as winston from "winston";
-import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { RedisClientConnectionManager } from "@fluidframework/server-services-utils";
+import { Emitter as RedisEmitter } from "@socket.io/redis-emitter";
+import type { Provider } from "nconf";
+import * as winston from "winston";
+
 import { Constants } from "../utils";
+
+import type { IAlfredResourcesCustomizations } from "./customizations";
 import { AlfredRunner } from "./runner";
 import {
 	DeltaService,
 	StorageNameAllocator,
-	IDocumentDeleteService,
+	type IDocumentDeleteService,
 	DocumentDeleteService,
 } from "./services";
-import { IAlfredResourcesCustomizations } from ".";
-import { IReadinessCheck } from "@fluidframework/server-services-core";
-import { closeRedisClientConnections, StartupCheck } from "@fluidframework/server-services-shared";
 
 /**
  * @internal
@@ -31,7 +38,7 @@ export class AlfredResources implements core.IResources {
 
 	constructor(
 		public config: Provider,
-		public producer: core.IProducer,
+		public producer: core.IProducer | undefined,
 		public redisConfig: any,
 		public tenantManager: core.ITenantManager,
 		public restTenantThrottlers: Map<string, core.IThrottler>,
@@ -50,10 +57,13 @@ export class AlfredResources implements core.IResources {
 		public tokenRevocationManager?: core.ITokenRevocationManager,
 		public revokedTokenChecker?: core.IRevokedTokenChecker,
 		public serviceMessageResourceManager?: core.IServiceMessageResourceManager,
+		public collaborationSessionEventEmitter?: RedisEmitter,
 		public clusterDrainingChecker?: core.IClusterDrainingChecker,
 		public enableClientIPLogging?: boolean,
 		public readinessCheck?: IReadinessCheck,
 		public fluidAccessTokenGenerator?: core.IFluidAccessTokenGenerator,
+		public redisCacheForGetSession?: core.ICache,
+		public denyList?: core.IDenyList,
 	) {
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
 		const nodeClusterConfig: Partial<services.INodeClusterConfig> | undefined = config.get(
@@ -66,7 +76,7 @@ export class AlfredResources implements core.IResources {
 	}
 
 	public async dispose(): Promise<void> {
-		const producerClosedP = this.producer.close();
+		const producerClosedP = this.producer ? this.producer.close() : Promise.resolve();
 		const mongoClosedP = this.mongoManager.close();
 		const tokenRevocationManagerP = this.tokenRevocationManager
 			? this.tokenRevocationManager.close()
@@ -95,39 +105,46 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		config: Provider,
 		customizations?: IAlfredResourcesCustomizations,
 	): Promise<AlfredResources> {
-		// Producer used to publish messages
-		const kafkaEndpoint = config.get("kafka:lib:endpoint");
-		const kafkaLibrary = config.get("kafka:lib:name");
-		const kafkaClientId = config.get("alfred:kafkaClientId");
-		const topic = config.get("alfred:topic");
-		const kafkaProducerPollIntervalMs = config.get("kafka:lib:producerPollIntervalMs");
-		const kafkaNumberOfPartitions = config.get("kafka:lib:numberOfPartitions");
-		const kafkaReplicationFactor = config.get("kafka:lib:replicationFactor");
-		const kafkaMaxBatchSize = config.get("kafka:lib:maxBatchSize");
-		const kafkaSslCACertFilePath: string = config.get("kafka:lib:sslCACertFilePath");
-		const kafkaProducerGlobalAdditionalConfig = config.get(
-			"kafka:lib:producerGlobalAdditionalConfig",
-		);
-		const eventHubConnString: string = config.get("kafka:lib:eventHubConnString");
-		const oauthBearerConfig = config.get("kafka:lib:oauthBearerConfig");
+		// Check if patchRoot API is enabled to determine if we need a producer
+		const patchRootEnabled = config.get("alfred:api:patchRoot") ?? true;
+
+		let producer: core.IProducer | undefined;
+		if (patchRootEnabled) {
+			// Producer used to publish messages
+			const kafkaEndpoint = config.get("kafka:lib:endpoint");
+			const kafkaLibrary = config.get("kafka:lib:name");
+			const kafkaClientId = config.get("alfred:kafkaClientId");
+			const topic = config.get("alfred:topic");
+			const kafkaProducerPollIntervalMs = config.get("kafka:lib:producerPollIntervalMs");
+			const kafkaNumberOfPartitions = config.get("kafka:lib:numberOfPartitions");
+			const kafkaReplicationFactor = config.get("kafka:lib:replicationFactor");
+			const kafkaMaxBatchSize = config.get("kafka:lib:maxBatchSize");
+			const kafkaSslCACertFilePath: string = config.get("kafka:lib:sslCACertFilePath");
+			const kafkaProducerGlobalAdditionalConfig = config.get(
+				"kafka:lib:producerGlobalAdditionalConfig",
+			);
+			const eventHubConnString: string = config.get("kafka:lib:eventHubConnString");
+			const oauthBearerConfig = config.get("kafka:lib:oauthBearerConfig");
+
+			producer = services.createProducer(
+				kafkaLibrary,
+				kafkaEndpoint,
+				kafkaClientId,
+				topic,
+				false,
+				kafkaProducerPollIntervalMs,
+				kafkaNumberOfPartitions,
+				kafkaReplicationFactor,
+				kafkaMaxBatchSize,
+				kafkaSslCACertFilePath,
+				eventHubConnString,
+				kafkaProducerGlobalAdditionalConfig,
+				oauthBearerConfig,
+			);
+		}
+
 		// List of Redis client connection managers that need to be closed on dispose
 		const redisClientConnectionManagers: utils.IRedisClientConnectionManager[] = [];
-
-		const producer = services.createProducer(
-			kafkaLibrary,
-			kafkaEndpoint,
-			kafkaClientId,
-			topic,
-			false,
-			kafkaProducerPollIntervalMs,
-			kafkaNumberOfPartitions,
-			kafkaReplicationFactor,
-			kafkaMaxBatchSize,
-			kafkaSslCACertFilePath,
-			eventHubConnString,
-			kafkaProducerGlobalAdditionalConfig,
-			oauthBearerConfig,
-		);
 
 		const redisConfig = config.get("redis");
 		const authEndpoint = config.get("auth:endpoint");
@@ -156,6 +173,26 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 				  );
 		redisClientConnectionManagers.push(redisClientConnectionManagerForJwtCache);
 		const redisJwtCache = new services.RedisCache(redisClientConnectionManagerForJwtCache);
+
+		const redisClientConnectionManagerForGetSessionCache =
+			customizations?.redisClientConnectionManagerForJwtCache
+				? customizations.redisClientConnectionManagerForJwtCache
+				: new RedisClientConnectionManager(
+						undefined,
+						redisConfig2,
+						redisConfig2.enableClustering,
+						redisConfig2.slotsRefreshTimeout,
+						retryDelays,
+						redisConfig2.enableVerboseErrorLogging,
+				  );
+		redisClientConnectionManagers.push(redisClientConnectionManagerForGetSessionCache);
+		const redisGetSessionCache = new services.RedisCache(
+			redisClientConnectionManagerForGetSessionCache,
+			{
+				prefix: "getSession",
+				expireAfterSeconds: 5 * 60,
+			},
+		);
 
 		// Database connection for global db if enabled
 		let globalDbMongoManager;
@@ -219,7 +256,30 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		// This.nodeTracker.on("invalidate", (id) => this.emit("invalidate", id));
 
 		const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
-		const tenantManager = new services.TenantManager(authEndpoint, internalHistorianUrl);
+		const redisClientConnectionManagerForInvalidTokenCache =
+			customizations?.redisClientConnectionManagerForInvalidTokenCache
+				? customizations.redisClientConnectionManagerForInvalidTokenCache
+				: new RedisClientConnectionManager(
+						undefined,
+						redisConfig2,
+						redisConfig2.enableClustering,
+						redisConfig2.slotsRefreshTimeout,
+						undefined /* retryDelays */,
+						redisConfig2.enableVerboseErrorLogging,
+				  );
+		redisClientConnectionManagers.push(redisClientConnectionManagerForInvalidTokenCache);
+		const redisCacheForInvalidToken = new services.RedisCache(
+			redisClientConnectionManagerForInvalidTokenCache,
+			{
+				expireAfterSeconds: redisConfig2.keyExpireAfterSeconds,
+				prefix: Constants.invalidTokenCachePrefix,
+			},
+		);
+		const tenantManager = new services.TenantManager(
+			authEndpoint,
+			internalHistorianUrl,
+			redisCacheForInvalidToken,
+		);
 
 		// Redis connection for throttling.
 		const redisConfigForThrottling = config.get("redisForThrottling");
@@ -393,6 +453,30 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			});
 		}
 		const startupCheck = new StartupCheck();
+		const documentsDenyListConfig = config.get("documentDenyList");
+		const tenantsDenyListConfig = config.get("tenantsDenyList");
+		const denyList: core.IDenyList = new utils.DenyList(
+			tenantsDenyListConfig,
+			documentsDenyListConfig,
+		);
+
+		const redisClientConnectionManagerForPub = new RedisClientConnectionManager(
+			undefined,
+			redisConfig,
+			redisConfig.enableClustering,
+			redisConfig.slotsRefreshTimeout,
+			undefined /* retryDelays */,
+			redisConfig.enableVerboseErrorLogging,
+		);
+		redisClientConnectionManagers.push(redisClientConnectionManagerForPub);
+
+		const redisEmitter = new RedisEmitter(redisClientConnectionManagerForPub.getRedisClient());
+		const axiosAbortSignalEnabled = config.get("axiosAbortSignalEnabled") ?? false;
+		if (axiosAbortSignalEnabled) {
+			setupAxiosInterceptorsForAbortSignals(() =>
+				getGlobalAbortControllerContext().getAbortController(),
+			);
+		}
 
 		return new AlfredResources(
 			config,
@@ -415,10 +499,13 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			tokenRevocationManager,
 			revokedTokenChecker,
 			serviceMessageResourceManager,
+			redisEmitter,
 			customizations?.clusterDrainingChecker,
 			enableClientIPLogging,
 			customizations?.readinessCheck,
 			customizations?.fluidAccessTokenGenerator,
+			redisGetSessionCache,
+			denyList,
 		);
 	}
 }
@@ -445,11 +532,13 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
 			resources.startupCheck,
 			resources.tokenRevocationManager,
 			resources.revokedTokenChecker,
-			undefined,
+			resources.collaborationSessionEventEmitter,
 			resources.clusterDrainingChecker,
 			resources.enableClientIPLogging,
 			resources.readinessCheck,
 			resources.fluidAccessTokenGenerator,
+			resources.redisCacheForGetSession,
+			resources.denyList,
 		);
 	}
 }

@@ -3,25 +3,33 @@
  * Licensed under the MIT License.
  */
 
+import { ScopeType } from "@fluidframework/protocol-definitions";
+import {
+	validateRequestParams,
+	handleResponse,
+	validatePrivateLink,
+} from "@fluidframework/server-services";
+import { IAlfredTenant } from "@fluidframework/server-services-client";
 import {
 	ICache,
 	IDeltaService,
 	IRevokedTokenChecker,
 	ITenantManager,
 	IThrottler,
+	IDenyList,
 } from "@fluidframework/server-services-core";
 import {
 	verifyStorageToken,
 	throttle,
-	IThrottleMiddlewareOptions,
+	type IThrottleMiddlewareOptions,
 	getParam,
 	getBooleanFromConfig,
+	denyListMiddleware,
 } from "@fluidframework/server-services-utils";
-import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
 import { Router } from "express";
-import { Provider } from "nconf";
+import type { Provider } from "nconf";
 import winston from "winston";
-import { IAlfredTenant } from "@fluidframework/server-services-client";
+
 import { Constants } from "../../../utils";
 
 export function create(
@@ -33,6 +41,7 @@ export function create(
 	clusterThrottlers: Map<string, IThrottler>,
 	jwtTokenCache?: ICache,
 	revokedTokenChecker?: IRevokedTokenChecker,
+	denyList?: IDenyList,
 ): Router {
 	const deltasCollectionName = config.get("mongo:collectionNames:deltas");
 	const rawDeltasCollectionName = config.get("mongo:collectionNames:rawdeltas");
@@ -55,6 +64,9 @@ export function create(
 		throttleIdPrefix: Constants.getDeltasThrottleIdPrefix,
 		throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
 	};
+
+	const enablePrivateLinkNetworkCheck: boolean =
+		config.get("alfred:enablePrivateLinkNetworkCheck") ?? false;
 
 	// Jwt token cache
 	const enableJwtTokenCache: boolean = getBooleanFromConfig(
@@ -87,7 +99,13 @@ export function create(
 		["/v1/:tenantId/:id", "/:tenantId/:id/v1"],
 		validateRequestParams("tenantId", "id"),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
-		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
+		verifyStorageToken(
+			tenantManager,
+			config,
+			[ScopeType.DocRead],
+			defaultTokenValidationOptions,
+		),
+		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const from = stringToSequenceNumber(request.query.from);
 			const to = stringToSequenceNumber(request.query.to);
@@ -114,7 +132,13 @@ export function create(
 		"/raw/:tenantId/:id",
 		validateRequestParams("tenantId", "id"),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
-		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
+		verifyStorageToken(
+			tenantManager,
+			config,
+			[ScopeType.DocRead],
+			defaultTokenValidationOptions,
+		),
+		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const tenantId = request.params.tenantId || appTenants[0].id;
 			const documentId = request.params.id;
@@ -132,6 +156,7 @@ export function create(
 	router.get(
 		"/:tenantId/:id",
 		validateRequestParams("tenantId", "id"),
+		validatePrivateLink(tenantManager, enablePrivateLinkNetworkCheck),
 		throttle(
 			clusterThrottlers.get(Constants.getDeltasThrottleIdPrefix),
 			winston,
@@ -142,7 +167,13 @@ export function create(
 			winston,
 			getDeltasTenantThrottleOptions,
 		),
-		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
+		verifyStorageToken(
+			tenantManager,
+			config,
+			[ScopeType.DocRead],
+			defaultTokenValidationOptions,
+		),
+		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const documentId = request.params.id;
 			let from = stringToSequenceNumber(request.query.from);

@@ -24,7 +24,7 @@ const defaultDataStoreId = "default";
 const testContainerConfig: ITestContainerConfig = {
 	runtimeOptions: {
 		summaryOptions: {
-			initialSummarizerDelayMs: 0, // back-compat - Old runtime takes 5 seconds to start summarizer without thi
+			initialSummarizerDelayMs: 0, // back-compat - Old runtime takes 5 seconds to start summarizer without this
 			summaryConfigOverrides: {
 				...DefaultSummaryConfiguration,
 				...{ maxOps: 10, initialSummarizerDelayMs: 0, minIdleTime: 10, maxIdleTime: 10 },

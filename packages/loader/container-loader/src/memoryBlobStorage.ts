@@ -4,57 +4,40 @@
  */
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
-import { assert, isObject } from "@fluidframework/core-utils/internal";
-import type { ICreateBlobResponse } from "@fluidframework/driver-definitions/internal";
+import { assert } from "@fluidframework/core-utils/internal";
+import type {
+	ICreateBlobResponse,
+	IDocumentStorageService,
+} from "@fluidframework/driver-definitions/internal";
 
-// eslint-disable-next-line import/no-deprecated
-import type { IDetachedBlobStorage } from "./loader.js";
+/**
+ * An interface used to manage blobs in memory for detached containers.
+ *
+ * @remarks
+ * On attach of the container the blobs are read, and uploaded to the server.
+ * The interface also supports serialization and initialization which is
+ * used when serializing and rehydrating a detached container with blobs.
+ */
+export interface MemoryDetachedBlobStorage
+	extends Pick<IDocumentStorageService, "createBlob" | "readBlob"> {
+	size: number;
+	/**
+	 * Return an array of all blob IDs present in storage
+	 */
+	getBlobIds(): string[];
 
-const MemoryDetachedBlobStorageIdentifier = Symbol();
-
-// eslint-disable-next-line import/no-deprecated
-interface MemoryDetachedBlobStorage extends IDetachedBlobStorage {
-	[MemoryDetachedBlobStorageIdentifier]: typeof MemoryDetachedBlobStorageIdentifier;
+	/**
+	 * After the container is attached, the detached blob storage is no longer needed and will be disposed.
+	 */
+	dispose?(): void;
 	initialize(attachmentBlobs: string[]): void;
 	serialize(): string | undefined;
 }
 
-function isMemoryDetachedBlobStorage(
-	// eslint-disable-next-line import/no-deprecated
-	detachedStorage: IDetachedBlobStorage | undefined,
-): detachedStorage is MemoryDetachedBlobStorage {
-	return (
-		isObject(detachedStorage) &&
-		MemoryDetachedBlobStorageIdentifier in detachedStorage &&
-		detachedStorage[MemoryDetachedBlobStorageIdentifier] ===
-			MemoryDetachedBlobStorageIdentifier
-	);
-}
-
-export function serializeMemoryDetachedBlobStorage(
-	// eslint-disable-next-line import/no-deprecated
-	detachedStorage: IDetachedBlobStorage | undefined,
-): string | undefined {
-	if (
-		detachedStorage !== undefined &&
-		detachedStorage.size > 0 &&
-		isMemoryDetachedBlobStorage(detachedStorage)
-	) {
-		return detachedStorage.serialize();
-	}
-}
-
 export function tryInitializeMemoryDetachedBlobStorage(
-	// eslint-disable-next-line import/no-deprecated
-	detachedStorage: IDetachedBlobStorage | undefined,
+	detachedStorage: MemoryDetachedBlobStorage,
 	attachmentBlobs: string,
 ): void {
-	if (!isMemoryDetachedBlobStorage(detachedStorage)) {
-		throw new Error(
-			"DetachedBlobStorage was not provided to the loader during serialize so cannot be provided during rehydrate.",
-		);
-	}
-
 	assert(detachedStorage.size === 0, 0x99e /* Blob storage already initialized */);
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const maybeAttachmentBlobs = JSON.parse(attachmentBlobs);
@@ -64,11 +47,16 @@ export function tryInitializeMemoryDetachedBlobStorage(
 	detachedStorage.initialize(maybeAttachmentBlobs);
 }
 
+/**
+ * Creates a new instance of `MemoryDetachedBlobStorage`.
+ * The returned storage allows for creating, reading, and managing blobs in memory.
+ * It also provides methods for serialization and initialization with attachment blobs.
+ * @returns A new `MemoryDetachedBlobStorage` instance.
+ */
 // eslint-disable-next-line import/no-deprecated
-export function createMemoryDetachedBlobStorage(): IDetachedBlobStorage {
+export function createMemoryDetachedBlobStorage(): MemoryDetachedBlobStorage {
 	const blobs: ArrayBufferLike[] = [];
 	const storage: MemoryDetachedBlobStorage = {
-		[MemoryDetachedBlobStorageIdentifier]: MemoryDetachedBlobStorageIdentifier,
 		createBlob: async (file: ArrayBufferLike): Promise<ICreateBlobResponse> => ({
 			id: `${blobs.push(file) - 1}`,
 		}),
@@ -79,7 +67,10 @@ export function createMemoryDetachedBlobStorage(): IDetachedBlobStorage {
 		},
 		getBlobIds: (): string[] => blobs.map((_, i) => `${i}`),
 		dispose: () => blobs.splice(0),
-		serialize: () => JSON.stringify(blobs.map((b) => bufferToString(b, "utf8"))),
+		serialize: () =>
+			blobs.length > 0
+				? JSON.stringify(blobs.map((b) => bufferToString(b, "utf8")))
+				: undefined,
 		initialize: (attachmentBlobs: string[]) =>
 			blobs.push(...attachmentBlobs.map((maybeBlob) => stringToBuffer(maybeBlob, "utf8"))),
 	};

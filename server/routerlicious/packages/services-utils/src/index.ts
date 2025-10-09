@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-export { IApiCounters, InMemoryApiCounters } from "./apiCounters";
+export { type IApiCounters, InMemoryApiCounters } from "./apiCounters";
 export {
 	AsyncLocalStorageContextProvider,
 	AsyncLocalStorageTelemetryContext,
 	AsyncLocalStorageTimeoutContext,
+	AsyncLocalStorageAbortControllerContext,
 } from "./asyncContext";
 export {
 	bindCorrelationId,
@@ -28,6 +29,7 @@ export {
 	isTokenValid,
 	extractTokenFromHeader,
 	getValidAccessToken,
+	getJtiClaimFromAccessToken,
 } from "./auth";
 export { getBooleanFromConfig, getNumberFromConfig } from "./configUtils";
 export { parseBoolean } from "./conversion";
@@ -37,8 +39,12 @@ export { FluidServiceError, FluidServiceErrorCode } from "./errorUtils";
 export { executeApiWithMetric } from "./executeApiWithMetric";
 export { executeOnInterval, ScheduledJob } from "./executeOnInterval";
 export { choose, getRandomName } from "./generateNames";
-export { configureGlobalTelemetryContext, configureGlobalTimeoutContext } from "./globalContext";
-export { configureLogging, IWinstonConfig } from "./logger";
+export {
+	configureGlobalTelemetryContext,
+	configureGlobalTimeoutContext,
+	configureGlobalAbortControllerContext,
+} from "./globalContext";
+export { configureLogging, type IWinstonConfig } from "./logger";
 export {
 	alternativeMorganLoggerMiddleware,
 	jsonMorganLoggerMiddleware,
@@ -48,22 +54,28 @@ export {
 	executeRedisMultiWithHmsetExpire,
 	executeRedisMultiWithHmsetExpireAndLpush,
 	getRedisClusterRetryStrategy,
-	IRedisParameters,
+	type IRedisParameters,
 } from "./redisUtils";
 export {
 	bindTelemetryContext,
 	getTelemetryContextPropertiesWithHttpInfo,
 } from "./telemetryContext";
 export { bindTimeoutContext } from "./timeoutContext";
-export { IThrottleConfig, ISimpleThrottleConfig, getThrottleConfig } from "./throttlerConfigs";
-export { IThrottleMiddlewareOptions, throttle } from "./throttlerMiddleware";
+export {
+	type IThrottleConfig,
+	type ISimpleThrottleConfig,
+	getThrottleConfig,
+} from "./throttlerConfigs";
+export { type IThrottleMiddlewareOptions, throttle } from "./throttlerMiddleware";
 export { DummyTokenRevocationManager, DummyRevokedTokenChecker } from "./tokenRevocationManager";
 export { WinstonLumberjackEngine } from "./winstonLumberjackEngine";
 export { WebSocketTracker } from "./webSocketTracker";
 export {
 	RedisClientConnectionManager,
-	IRedisClientConnectionManager,
+	type IRedisClientConnectionManager,
 } from "./redisClientConnectionManager";
-export { ITenantKeyGenerator, TenantKeyGenerator } from "./tenantKeyGenerator";
+export { type ITenantKeyGenerator, TenantKeyGenerator } from "./tenantKeyGenerator";
 export { ResponseSizeMiddleware } from "./responseSizeMiddleware";
 export { logHttpMetrics } from "./httpRequestMetricsLogger";
+export { DenyList, denyListMiddleware } from "./denyList";
+export { bindAbortControllerContext } from "./abortControllerContext";

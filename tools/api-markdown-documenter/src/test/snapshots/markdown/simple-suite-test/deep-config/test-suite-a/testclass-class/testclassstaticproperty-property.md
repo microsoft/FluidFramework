@@ -1,13 +1,13 @@
 # testClassStaticProperty
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestClass](/test-suite-a/testclass-class/) &gt; [testClassStaticProperty](/test-suite-a/testclass-class/testclassstaticproperty-property)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [TestClass](/test-suite-a/testclass-class/) > [testClassStaticProperty](/test-suite-a/testclass-class/testclassstaticproperty-property)
 
 Test static class property
 
-## Signature {#testclassstaticproperty-signature}
+<h2 id="testclassstaticproperty-signature">Signature</h2>
 
 ```typescript
 static testClassStaticProperty: (foo: number) => string;
 ```
 
-**Type:** (foo: number) =&gt; string
+**Type**: (foo: number) => string

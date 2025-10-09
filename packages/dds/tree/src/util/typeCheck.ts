@@ -127,6 +127,7 @@ export interface Invariant<in out T> extends Contravariant<T>, Covariant<T> {}
  * Compile time assert that X is True.
  * To use, simply define a type:
  * `type _check = requireTrue<your type check>;`
+ * @internal
  */
 export type requireTrue<_X extends true> = true;
 
@@ -134,6 +135,7 @@ export type requireTrue<_X extends true> = true;
  * Compile time assert that X is False.
  * To use, simply define a type:
  * `type _check = requireFalse<your type check>;`
+ * @internal
  */
 export type requireFalse<_X extends false> = true;
 
@@ -143,6 +145,7 @@ export type requireFalse<_X extends false> = true;
  * @privateRemarks
  * Use of [] in the extends clause prevents unions from being distributed over this conditional and returning `boolean` in some cases.
  * @see {@link https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#distributive-conditional-types | distributive-conditional-types} for details.
+ * @internal
  */
 export type isAssignableTo<Source, Destination> = [Source] extends [Destination]
 	? true
@@ -160,6 +163,7 @@ export type isStrictSubset<Subset, Superset> = isAssignableTo<Subset, Superset> 
 /**
  * Returns a type parameter that is true iff A and B are assignable to each other, and neither is any.
  * This is useful for checking if the output of a type meta-function is the expected type.
+ * @internal
  */
 export type areSafelyAssignable<A, B> = eitherIsAny<A, B> extends true
 	? false
@@ -169,6 +173,7 @@ export type areSafelyAssignable<A, B> = eitherIsAny<A, B> extends true
 
 /**
  * Returns a type parameter that is true iff A is any or B is any.
+ * @internal
  */
 export type eitherIsAny<A, B> = true extends isAny<A> | isAny<B> ? true : false;
 
@@ -179,6 +184,7 @@ export type eitherIsAny<A, B> = true extends isAny<A> | isAny<B> ? true : false;
  * Only `never` is assignable to `never` (`any` isn't),
  * but `any` distributes over the `extends` here while nothing else should.
  * This can be used to detect `any`.
+ * @internal
  */
 export type isAny<T> = boolean extends (T extends never ? true : false) ? true : false;
 
@@ -186,6 +192,7 @@ export type isAny<T> = boolean extends (T extends never ? true : false) ? true :
  * Compile time assert that A is assignable to (extends) B.
  * To use, simply define a type:
  * `type _check = requireAssignableTo<T, Expected>;`
+ * @internal
  */
 export type requireAssignableTo<_A extends B, B> = true;
 

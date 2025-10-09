@@ -9,7 +9,7 @@
 
 import { EventEmitter } from "@fluid-internal/client-utils";
 
-import { IRevertible } from "../types.js";
+import type { IRevertible } from "../types.js";
 
 enum UndoRedoMode {
 	None,
@@ -47,6 +47,18 @@ class Stack<T> {
 		if (this.itemPushedCallback !== undefined) {
 			this.itemPushedCallback();
 		}
+	}
+
+	/**
+	 * Returns the number of redo/undo events in the stack.
+	 */
+	public get length(): number {
+		let length = 0;
+		for (const item of this.items) {
+			// eslint-disable-next-line unicorn/no-negated-condition
+			length += item !== undefined ? (item as Stack<T>).items.length : 0;
+		}
+		return length;
 	}
 }
 
@@ -186,6 +198,20 @@ export class UndoRedoStackManager {
 		} else {
 			operationStack.push(revertible);
 		}
+	}
+
+	/**
+	 * Returns the length of the undo stack.
+	 */
+	public get undoStackLength(): number {
+		return this.undoStack.length;
+	}
+
+	/**
+	 * Returns the length of the redo stack.
+	 */
+	public get redoStackLength(): number {
+		return this.redoStack.length;
 	}
 
 	private clearRedoStack(): void {

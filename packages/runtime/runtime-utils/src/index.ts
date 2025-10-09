@@ -6,26 +6,30 @@
 export { generateHandleContextPath } from "./dataStoreHandleContextUtils.js";
 export {
 	create404Response,
-	createDataStoreFactory,
 	createResponseError,
 	exceptionToResponse,
-	Factory,
 	responseToException,
 } from "./dataStoreHelpers.js";
 export {
-	ISerializedHandle,
-	isSerializedHandle,
+	compareFluidHandles,
+	encodeHandleForSerialization,
+	FluidHandleBase,
 	isFluidHandle,
+	isFluidHandleInternalPayloadPending,
+	isFluidHandlePayloadPending,
+	isLocalFluidHandle,
+	isSerializedHandle,
+	lookupTemporaryBlobStorageId,
 	toFluidHandleErased,
 	toFluidHandleInternal,
-	FluidHandleBase,
-	compareFluidHandles,
 } from "./handles.js";
+export type { ISerializedHandle } from "./handles.js";
 export { ObjectStoragePartition } from "./objectstoragepartition.js";
 export {
 	getNormalizedObjectStoragePathParts,
 	listBlobsAtTreePath,
 } from "./objectstorageutils.js";
+export { RemoteFluidObjectHandle } from "./remoteFluidObjectHandle.js";
 export { RequestParser } from "./requestParser.js";
 export { RuntimeFactoryHelper } from "./runtimeFactoryHelper.js";
 export {
@@ -45,9 +49,28 @@ export {
 	utf8ByteLength,
 } from "./summaryUtils.js";
 export { unpackChildNodesUsedRoutes } from "./unpackUsedRoutes.js";
-export { ReadAndParseBlob, seqFromTree, encodeCompactIdToString } from "./utils.js";
+export {
+	RuntimeHeaders,
+	seqFromTree,
+	encodeCompactIdToString,
+} from "./utils.js";
+export type { ReadAndParseBlob } from "./utils.js";
 export { isSnapshotFetchRequiredForLoadingGroupId } from "./snapshotUtils.js";
 export {
 	toDeltaManagerErased,
 	toDeltaManagerInternal,
 } from "./deltaManager.js";
+export {
+	configValueToMinVersionForCollab,
+	defaultMinVersionForCollab,
+	getValidationForRuntimeOptions,
+	getConfigsForMinVersionForCollab,
+	isValidMinVersionForCollab,
+	semanticVersionToMinimumVersionForCollab,
+} from "./compatibilityBase.js";
+export type {
+	ConfigMap,
+	ConfigValidationMap,
+	MinimumMinorSemanticVersion,
+	SemanticVersion,
+} from "./compatibilityBase.js";

@@ -6,12 +6,12 @@
 import { strict as assert } from "node:assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IDeltaManager } from "@fluidframework/container-definitions/internal";
-import {
+import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import type {
 	IContainerRuntimeEvents,
-	type ISummarizeEventProps,
+	ISummarizeEventProps,
 } from "@fluidframework/container-runtime-definitions/internal";
-import {
+import type {
 	ConfigTypes,
 	IConfigProviderBase,
 	ITelemetryBaseEvent,
@@ -19,12 +19,12 @@ import {
 import { Deferred } from "@fluidframework/core-utils/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import {
-	IDocumentMessage,
-	ISummaryAck,
-	ISummaryNack,
-	ISummaryProposal,
+	type IDocumentMessage,
+	type ISummaryAck,
+	type ISummaryNack,
+	type ISummaryProposal,
 	MessageType,
-	ISequencedDocumentMessage,
+	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { isRuntimeMessage } from "@fluidframework/driver-utils/internal";
 import { MockLogger, mixinMonitoringContext } from "@fluidframework/telemetry-utils/internal";
@@ -32,13 +32,12 @@ import { MockDeltaManager } from "@fluidframework/test-runtime-utils/internal";
 import sinon from "sinon";
 
 import {
-	IGeneratedSummaryStats,
-	ISummarizeHeuristicData,
-	ISummarizerRuntime,
-	ISummaryCancellationToken,
+	type IGeneratedSummaryStats,
+	type ISummarizeHeuristicData,
+	type ISummarizerRuntime,
+	type ISummaryCancellationToken,
 	RetriableSummaryError,
-	RunningSummarizer,
-	SubmitSummaryResult,
+	type SubmitSummaryResult,
 	SummarizeHeuristicData,
 	SummaryCollection,
 	getFailMessage,
@@ -48,8 +47,8 @@ import {
 import {
 	defaultMaxAttempts,
 	defaultMaxAttemptsForSubmitFailures,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../summary/runningSummarizer.js";
+	RunningSummarizer,
+} from "../../summary/index.js";
 
 class MockRuntime extends TypedEventEmitter<IContainerRuntimeEvents> {
 	disposed = false;
@@ -223,7 +222,7 @@ describe("Runtime", () => {
 				errorMessage?: string,
 				expectedStopCount = 0,
 			) {
-				const errorPrefix = errorMessage ? `${errorMessage}: ` : "";
+				const errorPrefix = errorMessage === undefined ? "" : `${errorMessage}: `;
 				assert.strictEqual(
 					runCount,
 					expectedTotalRunCount,
@@ -253,6 +252,8 @@ describe("Runtime", () => {
 				if (shouldDeferGenerateSummary) {
 					deferGenerateSummary = new Deferred<void>();
 					await deferGenerateSummary.promise;
+					// TODO: Fix this violation and remove the disable
+					// eslint-disable-next-line require-atomic-updates
 					deferGenerateSummary = undefined;
 				}
 				return {
@@ -281,7 +282,7 @@ describe("Runtime", () => {
 				summarizer = await RunningSummarizer.start(
 					mockLogger,
 					summaryCollection.createWatcher(summarizerClientId),
-					disableHeuristics ? summaryConfigDisableHeuristics : summaryConfig,
+					disableHeuristics === true ? summaryConfigDisableHeuristics : summaryConfig,
 					async (options) => {
 						runCount++;
 						heuristicData.recordAttempt(lastRefSeq);
@@ -629,7 +630,7 @@ describe("Runtime", () => {
 						expectedEvents.push({
 							eventName: "Running:SummarizeAttemptDelay",
 							...retryProps1,
-							duration: retryAfterSeconds ? retryAfterSeconds * 1000 : undefined,
+							duration: retryAfterSeconds === undefined ? undefined : retryAfterSeconds * 1000,
 						});
 					}
 					mockLogger.assertMatch(
@@ -838,6 +839,8 @@ describe("Runtime", () => {
 
 							// Change the failure stage after 2 attempts.
 							if (attemptNumber === 2) {
+								// TODO: Fix this violation and remove the disable
+								// eslint-disable-next-line require-atomic-updates
 								currentStage = getNewStage();
 							}
 
@@ -945,6 +948,8 @@ describe("Runtime", () => {
 							// In the third attempt, fail at "submit" stage. This will trigger a nack failure. It should
 							// not retry attempts anymore because "defaultMaxAttempts" attempts have already been done.
 							if (attemptNumber === maxAttempts - 1) {
+								// TODO: Fix this violation and remove the disable
+								// eslint-disable-next-line require-atomic-updates
 								currentStage = "submit";
 							}
 

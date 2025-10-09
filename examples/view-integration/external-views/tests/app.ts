@@ -32,14 +32,6 @@ import {
 } from "../src/container/index.js";
 import { DiceRollerView } from "../src/view.js";
 
-const updateTabForId = (id: string): void => {
-	// Update the URL with the actual ID
-	location.hash = id;
-
-	// Put the ID in the tab title
-	document.title = id;
-};
-
 const urlResolver = new LocalResolver();
 const localServer = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory());
 const codeLoader: ICodeDetailsLoader = {
@@ -89,8 +81,9 @@ async function createContainerAndRenderInElement(element: HTMLDivElement): Promi
 		appRoot.render(createElement(DiceRollerView, { diceRoller }));
 	};
 
-	// update the browser URL and the window title with the actual container ID
-	updateTabForId(id);
+	// Update url and tab title
+	location.hash = id;
+	document.title = id;
 	// Render it
 	render(diceRoller);
 }

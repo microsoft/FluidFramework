@@ -230,13 +230,9 @@ export const TestChange = {
 	checkChangeList,
 	toDelta,
 	isEmpty,
+	isNonEmptyChange,
 	codec,
-	codecs: makeCodecFamily([
-		[1, codec],
-		[2, codec],
-		[3, codec],
-		[4, codec],
-	]),
+	codecs: makeCodecFamily([[1, codec]]),
 };
 deepFreeze(TestChange);
 

@@ -4,11 +4,14 @@
  */
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
-import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
-import { IDisposable } from "@fluidframework/core-interfaces";
+import type {
+	ISnapshotTreeWithBlobContents,
+	IContainerStorageService,
+} from "@fluidframework/container-definitions/internal";
+import type { IDisposable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
-import {
+import type { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
+import type {
 	FetchSource,
 	IDocumentService,
 	IDocumentStorageService,
@@ -21,15 +24,14 @@ import {
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import { isInstanceOfISnapshot, UsageError } from "@fluidframework/driver-utils/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
-// eslint-disable-next-line import/no-deprecated
-import { IDetachedBlobStorage } from "./loader.js";
+import type { MemoryDetachedBlobStorage } from "./memoryBlobStorage.js";
 import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService.js";
 import { RetriableDocumentStorageService } from "./retriableDocumentStorageService.js";
 import type {
 	ISerializedStateManagerDocumentStorageService,
-	ISnapshotInfo,
+	SerializedSnapshotInfo,
 } from "./serializedStateManager.js";
 import { convertSnapshotInfoToSnapshot } from "./utils.js";
 
@@ -48,7 +50,7 @@ export interface ISerializableBlobContents {
 export class ContainerStorageAdapter
 	implements
 		ISerializedStateManagerDocumentStorageService,
-		IDocumentStorageService,
+		IContainerStorageService,
 		IDisposable
 {
 	private _storageService: IDocumentStorageService & Partial<IDisposable>;
@@ -80,14 +82,15 @@ export class ContainerStorageAdapter
 	 * @param enableSummarizeProtocolTree - Enable uploading a protocol summary. Note: preference is given to service policy's "summarizeProtocolTree" before this value.
 	 */
 	public constructor(
-		// eslint-disable-next-line import/no-deprecated
-		detachedBlobStorage: IDetachedBlobStorage | undefined,
+		detachedBlobStorage: MemoryDetachedBlobStorage | undefined,
 		private readonly logger: ITelemetryLoggerExt,
 		/**
 		 * ArrayBufferLikes or utf8 encoded strings, containing blobs from a snapshot
 		 */
 		private readonly blobContents: { [id: string]: ArrayBufferLike | string } = {},
-		private loadingGroupIdSnapshotsFromPendingState: Record<string, ISnapshotInfo> | undefined,
+		private loadingGroupIdSnapshotsFromPendingState:
+			| Record<string, SerializedSnapshotInfo>
+			| undefined,
 		private readonly addProtocolSummaryIfMissing: (summaryTree: ISummaryTree) => ISummaryTree,
 		private readonly enableSummarizeProtocolTree: boolean | undefined,
 	) {
@@ -161,6 +164,10 @@ export class ContainerStorageAdapter
 		return undefined;
 	}
 
+	public get maximumCacheDurationMs(): IDocumentStorageServicePolicies["maximumCacheDurationMs"] {
+		return this.policies?.maximumCacheDurationMs;
+	}
+
 	public async getSnapshotTree(
 		version?: IVersion,
 		scenarioName?: string,
@@ -179,10 +186,7 @@ export class ContainerStorageAdapter
 			const localSnapshot =
 				this.loadingGroupIdSnapshotsFromPendingState[snapshotFetchOptions.loadingGroupIds[0]];
 			assert(localSnapshot !== undefined, 0x970 /* Local snapshot must be present */);
-			snapshot = convertSnapshotInfoToSnapshot(
-				localSnapshot,
-				localSnapshot.snapshotSequenceNumber,
-			);
+			snapshot = convertSnapshotInfoToSnapshot(localSnapshot);
 		} else {
 			if (this._storageService.getSnapshot === undefined) {
 				throw new UsageError(
@@ -243,12 +247,18 @@ export class ContainerStorageAdapter
 		return this._storageService.uploadSummaryWithContext(summary, context);
 	}
 
-	public async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
-		return this._storageService.downloadSummary(handle);
-	}
-
 	public async createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse> {
 		return this._storageService.createBlob(file);
+	}
+
+	/**
+	 * {@link IRuntimeStorageService.downloadSummary}.
+	 *
+	 * @deprecated - This API is deprecated and will be removed in a future release. No replacement is planned as
+	 * it is unused in the Runtime and below layers.
+	 */
+	public async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
+		return this._storageService.downloadSummary(handle);
 	}
 }
 
@@ -258,8 +268,7 @@ export class ContainerStorageAdapter
  */
 class BlobOnlyStorage implements IDocumentStorageService {
 	constructor(
-		// eslint-disable-next-line import/no-deprecated
-		private readonly detachedStorage: IDetachedBlobStorage | undefined,
+		private readonly detachedStorage: MemoryDetachedBlobStorage | undefined,
 		private readonly logger: ITelemetryLoggerExt,
 	) {}
 
@@ -271,8 +280,7 @@ class BlobOnlyStorage implements IDocumentStorageService {
 		return this.verifyStorage().readBlob(blobId);
 	}
 
-	// eslint-disable-next-line import/no-deprecated
-	private verifyStorage(): IDetachedBlobStorage {
+	private verifyStorage(): MemoryDetachedBlobStorage {
 		if (this.detachedStorage === undefined) {
 			throw new UsageError("Real storage calls not allowed in Unattached container");
 		}

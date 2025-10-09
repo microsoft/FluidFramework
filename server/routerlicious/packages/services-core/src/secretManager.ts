@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { EncryptionKeyVersion } from "./tenant";
+import type { EncryptionKeyVersion } from "./tenant";
 
 /**
  * @internal

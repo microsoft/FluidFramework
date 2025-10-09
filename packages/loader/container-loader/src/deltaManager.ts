@@ -3,30 +3,31 @@
  * Licensed under the MIT License.
  */
 
-import { ICriticalContainerError } from "@fluidframework/container-definitions";
-import {
+import type { ICriticalContainerError } from "@fluidframework/container-definitions";
+import type {
 	IDeltaManagerEvents,
 	IDeltaManagerFull,
 	IDeltaQueue,
-	type IDeltaSender,
-	type ReadOnlyInfo,
+	IDeltaSender,
+	ReadOnlyInfo,
 } from "@fluidframework/container-definitions/internal";
-import {
+import type {
 	IEventProvider,
-	type ITelemetryBaseEvent,
+	ITelemetryBaseEvent,
 	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
-import { IThrottlingWarning } from "@fluidframework/core-interfaces/internal";
+import { JsonParse } from "@fluidframework/core-interfaces/internal";
+import type { IThrottlingWarning, JsonString } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ConnectionMode } from "@fluidframework/driver-definitions";
+import type { ConnectionMode } from "@fluidframework/driver-definitions";
 import {
-	IDocumentDeltaStorageService,
-	IDocumentService,
+	type IDocumentDeltaStorageService,
+	type IDocumentService,
 	DriverErrorTypes,
-	IDocumentMessage,
+	type IDocumentMessage,
 	MessageType,
-	ISequencedDocumentMessage,
-	ISignalMessage,
+	type ISequencedDocumentMessage,
+	type ISignalMessage,
 	type IClientDetails,
 	type IClientConfiguration,
 } from "@fluidframework/driver-definitions/internal";
@@ -34,7 +35,7 @@ import { NonRetryableError, isRuntimeMessage } from "@fluidframework/driver-util
 import {
 	type ITelemetryErrorEventExt,
 	type ITelemetryGenericEventExt,
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	DataCorruptionError,
 	DataProcessingError,
 	UsageError,
@@ -46,7 +47,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import {
+import type {
 	IConnectionDetailsInternal,
 	IConnectionManager,
 	IConnectionManagerFactoryArgs,
@@ -210,7 +211,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	private initSequenceNumber: number = 0;
 
 	private readonly _inbound: DeltaQueue<ISequencedDocumentMessage>;
-	private readonly _inboundSignal: DeltaQueue<ISignalMessage>;
+	private readonly _inboundSignal: DeltaQueue<
+		ISignalMessage<{ type: never; content: JsonString<unknown> }>
+	>;
 
 	private _closed = false;
 	private _disposed = false;
@@ -433,7 +436,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 					this.close(normalizeError(error));
 				}
 			},
-			signalHandler: (signals: ISignalMessage[]) => {
+			signalHandler: (
+				signals: ISignalMessage<{ type: never; content: JsonString<unknown> }>[],
+			) => {
 				for (const signal of signals) {
 					this._inboundSignal.push(signal);
 				}
@@ -474,14 +479,16 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		});
 
 		// Inbound signal queue
-		this._inboundSignal = new DeltaQueue<ISignalMessage>((message) => {
+		this._inboundSignal = new DeltaQueue<
+			ISignalMessage<{ type: never; content: JsonString<unknown> }>
+		>((message) => {
 			if (this.handler === undefined) {
 				throw new Error("Attempted to process an inbound signal without a handler attached");
 			}
 
 			this.handler.processSignal({
 				...message,
-				content: JSON.parse(message.content as string),
+				content: JsonParse(message.content),
 			});
 		});
 

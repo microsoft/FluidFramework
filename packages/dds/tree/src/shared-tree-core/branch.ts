@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { createEmitter } from "@fluid-internal/client-utils";
+import type { Listenable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { type TelemetryEventBatcher, measure } from "@fluidframework/telemetry-utils/internal";
 
@@ -21,10 +23,14 @@ import {
 	tagRollbackInverse,
 	type RebaseStatsWithDuration,
 } from "../core/index.js";
-import type { Listenable } from "@fluidframework/core-interfaces";
-import { createEmitter } from "@fluid-internal/client-utils";
-
 import { hasSome, defineLazyCachedProperty } from "../util/index.js";
+import type {
+	OpSpaceCompressedId,
+	SessionSpaceCompressedId,
+} from "@fluidframework/id-compressor";
+
+export type BranchId = SessionSpaceCompressedId | "main";
+export type EncodedBranchId = OpSpaceCompressedId;
 
 /**
  * Describes a change to a `SharedTreeBranch`. Each of the following event types provides a `change` which contains the net change to the branch (or is undefined if there was no net change):
@@ -171,7 +177,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 	}
 
 	/**
-	 * @returns the commit at the head of this branch.
+	 * Gets the commit at the head of this branch.
 	 */
 	public getHead(): GraphCommit<TChange> {
 		return this.head;
@@ -252,12 +258,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 			// TODO: Pull this side effect out if/when more diverse ancestry walking helpers are available
 			if (c !== commit) {
 				const revision = this.mintRevisionTag();
-				const inverse = this.changeFamily.rebaser.changeRevision(
-					this.changeFamily.rebaser.invert(c, true, revision),
-					revision,
-					c.revision,
-				);
-
+				const inverse = this.changeFamily.rebaser.invert(c, true, revision);
 				inverses.push(tagRollbackInverse(inverse, revision, c.revision));
 				return false;
 			}
@@ -282,10 +283,11 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 	 * Apply all the divergent changes on the given branch to this branch.
 	 *
 	 * @param branch - the branch to merge into this branch
-	 * @returns the net change to this branch and the commits that were added to this branch by the merge,
-	 * or undefined if nothing changed
+	 * @returns the commits that were added to this branch by the merge, or undefined if nothing changed
 	 */
-	public merge(branch: SharedTreeBranch<TEditor, TChange>): void {
+	public merge(
+		branch: SharedTreeBranch<TEditor, TChange>,
+	): { sourceCommits: GraphCommit<TChange>[] } | undefined {
 		this.assertNotDisposed();
 		branch.assertNotDisposed();
 
@@ -316,6 +318,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 		this.#events.emit("beforeChange", changeEvent);
 		this.head = rebaseResult.newSourceHead;
 		this.#events.emit("afterChange", changeEvent);
+		return { sourceCommits };
 	}
 
 	/** Rebase `branchHead` onto `onto`, but return undefined if nothing changed */

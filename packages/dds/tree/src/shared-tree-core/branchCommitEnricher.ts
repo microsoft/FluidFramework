@@ -4,15 +4,17 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+
 import {
 	type ChangeRebaser,
 	type GraphCommit,
 	replaceChange,
 	type RevisionTag,
 } from "../core/index.js";
+
+import type { SharedTreeBranchChange } from "./branch.js";
 import type { ChangeEnricherReadonlyCheckout } from "./changeEnricher.js";
 import { TransactionEnricher } from "./transactionEnricher.js";
-import type { SharedTreeBranchChange } from "./branch.js";
 
 /**
  * Utility for enriching commits from a {@link Branch} before these commits are applied and submitted.
@@ -47,7 +49,6 @@ export class BranchCommitEnricher<TChange> {
 	/**
 	 * Process the given change, preparing new commits for {@link BranchCommitEnricher.enrich | enrichment}.
 	 * @param change - The change to process.
-	 * @param isAttached - Whether or not the SharedTree is attached to the service.
 	 */
 	public processChange(change: SharedTreeBranchChange<TChange>): void {
 		if (change.type === "append") {

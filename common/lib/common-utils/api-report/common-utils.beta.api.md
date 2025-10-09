@@ -4,6 +4,4 @@
 
 ```ts
 
-export { performance_2 as performance }
-
 ```

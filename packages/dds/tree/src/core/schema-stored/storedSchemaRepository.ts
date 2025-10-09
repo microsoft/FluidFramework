@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { createEmitter } from "@fluid-internal/client-utils";
+import type { Listenable } from "@fluidframework/core-interfaces/internal";
 import { BTree } from "@tylerbu/sorted-btree-es6";
 
-import type { Listenable } from "@fluidframework/core-interfaces/internal";
-import { createEmitter } from "@fluid-internal/client-utils";
 import { compareStrings } from "../../util/index.js";
 
-import type { TreeNodeSchemaIdentifier } from "./format.js";
+import type { TreeNodeSchemaIdentifier } from "./formatV1.js";
 import {
 	type StoredSchemaCollection,
 	type TreeFieldStoredSchema,

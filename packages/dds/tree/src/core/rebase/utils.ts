@@ -294,7 +294,7 @@ export function rebaseBranch<TChange>(
 	const revisionMetadata = revisionMetadataSourceFromInfo(revInfos);
 	let editsToCompose: TaggedChange<TChange>[] = targetRebasePath.slice();
 	for (const c of sourcePath) {
-		const rollback = rollbackFromCommit(changeRebaser, c, mintRevisionTag, false);
+		const rollback = rollbackFromCommit(changeRebaser, c, mintRevisionTag, true /* cache */);
 		if (sourceSet.has(c.revision)) {
 			const currentComposedEdit = makeAnonChange(changeRebaser.compose(editsToCompose));
 			editsToCompose = [currentComposedEdit];
@@ -372,8 +372,6 @@ export function rebaseChange<TChange>(
 	};
 }
 
-/**
- */
 export function revisionMetadataSourceFromInfo(
 	revInfos: readonly RevisionInfo[],
 ): RevisionMetadataSource {
@@ -440,19 +438,21 @@ function rollbackFromCommit<TChange>(
 	mintRevisionTag: () => RevisionTag,
 	cache?: boolean,
 ): TaggedChange<TChange, RevisionTag> {
-	const rollback = Rollback.get(commit);
-	if (rollback !== undefined) {
-		return rollback;
+	const cachedRollback = Rollback.get(commit);
+	if (cachedRollback !== undefined) {
+		return cachedRollback;
 	}
 	const tag = mintRevisionTag();
-	const untagged = changeRebaser.invert(commit, true, tag);
-	const deeplyTaggedRollback = changeRebaser.changeRevision(untagged, tag, commit.revision);
-	const fullyTaggedRollback = tagRollbackInverse(deeplyTaggedRollback, tag, commit.revision);
+	const rollback = tagRollbackInverse(
+		changeRebaser.invert(commit, true, tag),
+		tag,
+		commit.revision,
+	);
 
 	if (cache === true) {
-		Rollback.set(commit, fullyTaggedRollback);
+		Rollback.set(commit, rollback);
 	}
-	return fullyTaggedRollback;
+	return rollback;
 }
 
 /**
@@ -677,4 +677,31 @@ export function isAncestor<TNode extends { readonly parent?: TNode }>(
 	}
 
 	return false;
+}
+
+/**
+ * Returns a change that represents the different between two places in a commit graph.
+ * Applying this change to the state at `sourceCommit` will yield the state at `targetCommit`.
+ * @param changeRebaser - the change rebaser responsible for providing inverses to the changes in the commits.
+ * @param sourceCommit - the commit representing the initial state.
+ * @param targetCommit - the commit representing the final state.
+ * @param mintRevisionTag - a function which can be called to create revision tags for any rollback changes that need to be generated.
+ * @returns a change representing the difference between `sourceCommit` and `targetCommit`.
+ */
+export function diffHistories<TChange>(
+	changeRebaser: ChangeRebaser<TChange>,
+	sourceCommit: GraphCommit<TChange>,
+	targetCommit: GraphCommit<TChange>,
+	mintRevisionTag: () => RevisionTag,
+): TChange {
+	const sourcePath: GraphCommit<TChange>[] = [];
+	const targetPath: GraphCommit<TChange>[] = [];
+	const ancestor = findCommonAncestor([sourceCommit, sourcePath], [targetCommit, targetPath]);
+	assert(ancestor !== undefined, 0xc6f /* Branches must be related */);
+	const inverses = sourcePath.map((commit) =>
+		rollbackFromCommit(changeRebaser, commit, mintRevisionTag),
+	);
+
+	inverses.reverse();
+	return changeRebaser.compose([...inverses, ...targetPath]);
 }

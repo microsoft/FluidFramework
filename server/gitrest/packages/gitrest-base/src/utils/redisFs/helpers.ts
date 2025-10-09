@@ -6,7 +6,8 @@
 import { getRandomInt } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import sizeof from "object-sizeof";
-import { ISystemError } from "../fileSystemHelper";
+
+import type { ISystemError } from "../fileSystemHelper";
 
 export enum RedisFsApis {
 	ReadFile = "ReadFile",

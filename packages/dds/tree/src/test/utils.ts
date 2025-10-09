@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import { emulateProductionBuild } from "@fluidframework/core-utils/internal";
 import type {
 	HasListeners,
 	IEmitter,
@@ -12,7 +13,6 @@ import type {
 import {
 	createMockLoggerExt,
 	type IMockLoggerExt,
-	type ITelemetryLoggerExt,
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -28,7 +28,7 @@ import type {
 	IChannelServices,
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions/internal";
-import type { SessionId } from "@fluidframework/id-compressor";
+import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 import { assertIsStableId, createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
@@ -38,18 +38,22 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 import {
 	type ChannelFactoryRegistry,
-	type ITestContainerConfig,
-	type ITestFluidObject,
 	type ITestObjectProvider,
 	type SummaryInfo,
 	TestContainerRuntimeFactory,
 	TestFluidObjectFactory,
+	TestFluidObjectInternal,
 	TestObjectProvider,
 	createSummarizer,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 
-import { type ICodecFamily, type IJsonCodec, withSchemaValidation } from "../codec/index.js";
+import {
+	type FormatVersion,
+	type ICodecFamily,
+	type IJsonCodec,
+	withSchemaValidation,
+} from "../codec/index.js";
 import {
 	type ChangeFamily,
 	type ChangeFamilyEditor,
@@ -94,11 +98,16 @@ import {
 	type DeltaDetachedNodeRename,
 	type NormalizedFieldUpPath,
 	type ExclusiveMapTree,
+	type MapTree,
+	SchemaVersion,
+	type FieldKindIdentifier,
+	type TreeNodeSchemaIdentifier,
+	type TreeFieldStoredSchema,
 } from "../core/index.js";
-import { typeboxValidator } from "../external-utilities/index.js";
+import { FormatValidatorBasic } from "../external-utilities/index.js";
 import {
+	Context,
 	type NodeIdentifierManager,
-	buildForest,
 	defaultSchemaPolicy,
 	jsonableTreeFromFieldCursor,
 	jsonableTreeFromForest,
@@ -111,43 +120,49 @@ import {
 	mapTreeFieldFromCursor,
 	defaultChunkPolicy,
 	cursorForJsonableTreeField,
-	initializeForest,
 	chunkFieldSingle,
+	makeSchemaCodec,
+	mapTreeWithField,
+	type MinimalMapTreeNodeView,
+	jsonableTreeFromCursor,
+	cursorForMapTreeNode,
+	type FullSchemaPolicy,
+	type IncrementalEncodingPolicy,
+	defaultIncrementalEncodingPolicy,
 } from "../feature-libraries/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { makeSchemaCodec } from "../feature-libraries/schema-index/codec.js";
 import {
 	type CheckoutEvents,
-	CheckoutFlexTreeView,
 	type ITreePrivate,
 	type ITreeCheckout,
-	SharedTree,
 	type SharedTreeContentSnapshot,
 	type TreeCheckout,
 	createTreeCheckout,
 	type ISharedTreeEditor,
 	type ITreeCheckoutFork,
-} from "../shared-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import type { TreeStoredContent } from "../shared-tree/schematizeTree.js";
-import {
+	independentView,
 	SchematizingSimpleTreeView,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../shared-tree/schematizingTreeView.js";
-import type {
-	ISharedTree,
-	SharedTreeOptions,
-	SharedTreeOptionsInternal,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../shared-tree/sharedTree.js";
+	type ForestOptions,
+	type SharedTreeOptionsInternal,
+	type SharedTreeOptions,
+	buildConfiguredForest,
+	type ForestType,
+	ForestTypeReference,
+} from "../shared-tree/index.js";
 import {
 	type ImplicitFieldSchema,
 	type TreeViewConfiguration,
 	SchemaFactory,
-	toStoredSchema,
 	type TreeView,
 	type TreeBranchEvents,
 	type ITree,
+	type UnsafeUnknownSchema,
+	type InsertableField,
+	unhydratedFlexTreeFromInsertable,
+	type SimpleNodeSchema,
+	type TreeNodeSchema,
+	getStoredSchema,
+	restrictiveStoredSchemaGenerationOptions,
+	toInitialSchema,
 } from "../simple-tree/index.js";
 import {
 	Breakable,
@@ -157,6 +172,7 @@ import {
 	forEachInNestedMap,
 	tryGetFromNestedMap,
 	isReadonlyArray,
+	brand,
 } from "../util/index.js";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { Client } from "@fluid-private/test-dds-utils";
@@ -165,18 +181,35 @@ import { cursorToJsonObject, fieldJsonCursor, singleJsonCursor } from "./json/in
 import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
 import type { Transactor } from "../shared-tree-core/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import type { FieldChangeDelta } from "../feature-libraries/modular-schema/fieldChangeHandler.js";
-import { TreeFactory, configuredSharedTree } from "../treeFactory.js";
-import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
+import type { FieldChangeDelta } from "../feature-libraries/modular-schema/index.js";
+import { configuredSharedTree, type ISharedTree } from "../treeFactory.js";
 import { JsonAsTree } from "../jsonDomainSchema.js";
 import {
 	MockContainerRuntimeFactoryWithOpBunching,
 	type MockContainerRuntimeWithOpBunching,
 } from "./mocksForOpBunching.js";
-import { configureDebugAsserts } from "@fluidframework/core-utils/internal";
 import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
+import type {
+	ISharedObjectKind,
+	SharedObjectKind,
+} from "@fluidframework/shared-object-base/internal";
+// eslint-disable-next-line import/no-internal-modules
+import { ObjectForest } from "../feature-libraries/object-forest/objectForest.js";
+import {
+	allowsFieldSuperset,
+	allowsTreeSuperset,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../feature-libraries/modular-schema/index.js";
+import { initializeForest } from "./feature-libraries/index.js";
 
 // Testing utilities
+
+/**
+ * A SharedObjectKind typed to return `ISharedTree` and configured with a `jsonValidator`.
+ */
+export const DefaultTestSharedTreeKind = configuredSharedTree({
+	jsonValidator: FormatValidatorBasic,
+}) as SharedObjectKind<ISharedTree> & ISharedObjectKind<ISharedTree>;
 
 /**
  * A {@link IJsonCodec} implementation which fails on encode and decode.
@@ -218,11 +251,11 @@ export class TestTreeProvider {
 	private static readonly treeId = "TestSharedTree";
 
 	private readonly provider: ITestObjectProvider;
-	private readonly _trees: (SharedTree & ISharedObject)[] = [];
+	private readonly _trees: ISharedTree[] = [];
 	private readonly _containers: IContainer[] = [];
 	private readonly summarizer?: ISummarizer;
 
-	public get trees(): readonly (SharedTree & ISharedObject)[] {
+	public get trees(): readonly ISharedTree[] {
 		return this._trees;
 	}
 
@@ -249,9 +282,7 @@ export class TestTreeProvider {
 	public static async create(
 		trees = 0,
 		summarizeType: SummarizeType = SummarizeType.disabled,
-		factory: IChannelFactory<ITree> = configuredSharedTree({
-			jsonValidator: typeboxValidator,
-		}).getFactory(),
+		factory: IChannelFactory<ITree> = DefaultTestSharedTreeKind.getFactory(),
 	): Promise<ITestTreeProvider> {
 		// The on-demand summarizer shares a container with the first tree, so at least one tree and container must be created right away.
 		assert(
@@ -264,7 +295,11 @@ export class TestTreeProvider {
 		const containerRuntimeFactory = () =>
 			new TestContainerRuntimeFactory(
 				"@fluid-example/test-dataStore",
-				new TestFluidObjectFactory(registry),
+				new TestFluidObjectFactory(
+					registry,
+					"TestFluidObjectFactory",
+					TestFluidObjectInternal,
+				),
 				{
 					summaryOptions: {
 						summaryConfigOverrides:
@@ -278,10 +313,7 @@ export class TestTreeProvider {
 
 		if (summarizeType === SummarizeType.onDemand) {
 			const container = await objProvider.makeTestContainer();
-			const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
-			const firstTree = await dataObject.getSharedObject<SharedTree & ISharedObject>(
-				TestTreeProvider.treeId,
-			);
+			const firstTree = await this.getTree(container);
 			const { summarizer } = await createSummarizer(objProvider, container);
 			const provider = new TestTreeProvider(objProvider, [
 				container,
@@ -301,32 +333,34 @@ export class TestTreeProvider {
 		}
 	}
 
+	private static async getTree(container: IContainer): Promise<ISharedTree> {
+		const dataObject = await container.getEntryPoint();
+		assert(dataObject instanceof TestFluidObjectInternal);
+		const tree = await dataObject.getInitialSharedObjectTyped(
+			DefaultTestSharedTreeKind,
+			TestTreeProvider.treeId,
+		);
+		return tree;
+	}
+
 	/**
 	 * Create and initialize a new {@link ITreePrivate} that is connected to all other trees from this provider.
 	 * @returns the tree that was created. For convenience, the tree can also be accessed via `this[i]` where
 	 * _i_ is the index of the tree in order of creation.
 	 */
-	public async createTree(): Promise<SharedTree & ISharedObject> {
+	public async createTree(): Promise<ISharedTree> {
 		const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 			getRawConfig: (name: string): ConfigTypes => settings[name],
 		});
-		const testContainerConfig: ITestContainerConfig = {
-			loaderProps: {
-				configProvider: configProvider({
-					"Fluid.Container.enableOfflineLoad": true,
-				}),
-			},
-		};
 		const container =
 			this.trees.length === 0
-				? await this.provider.makeTestContainer(testContainerConfig)
+				? await this.provider.makeTestContainer()
 				: await this.provider.loadTestContainer();
 
 		this._containers.push(container);
-		const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
-		return (this._trees[this.trees.length] = await dataObject.getSharedObject<
-			SharedTree & ISharedObject
-		>(TestTreeProvider.treeId));
+		const tree = await TestTreeProvider.getTree(container);
+		this._trees[this.trees.length] = tree;
+		return tree;
 	}
 
 	/**
@@ -349,7 +383,7 @@ export class TestTreeProvider {
 
 	private constructor(
 		provider: ITestObjectProvider,
-		firstTreeParams?: [IContainer, SharedTree & ISharedObject, ISummarizer],
+		firstTreeParams?: [IContainer, ISharedTree, ISummarizer],
 	) {
 		this.provider = provider;
 		if (firstTreeParams !== undefined) {
@@ -372,21 +406,27 @@ export class TestTreeProvider {
 	}
 }
 
-export interface ConnectionSetter {
-	readonly setConnected: (connectionState: boolean) => void;
-}
-
-export type SharedTreeWithConnectionStateSetter = ISharedTree & ConnectionSetter;
+/**
+ * A type with subset of functionalities of mock container runtime that can help tests control
+ * the processing of messages and the connection state of the runtime.
+ */
+export type TreeMockContainerRuntime = Pick<
+	MockContainerRuntimeWithOpBunching,
+	"connected" | "pauseInboundProcessing" | "resumeInboundProcessing" | "flush"
+>;
+export type SharedTreeWithContainerRuntime = ISharedTree & {
+	readonly containerRuntime: TreeMockContainerRuntime;
+};
 
 /**
  * A test helper class that creates one or more SharedTrees connected to mock services.
  */
 export class TestTreeProviderLite {
-	private static readonly treeId = "TestSharedTree";
 	private readonly runtimeFactory: MockContainerRuntimeFactoryWithOpBunching;
-	public readonly trees: readonly SharedTreeWithConnectionStateSetter[];
+	public readonly trees: readonly SharedTreeWithContainerRuntime[];
 	public readonly logger: IMockLoggerExt = createMockLoggerExt();
-	private readonly containerRuntimes: Set<MockContainerRuntimeWithOpBunching> = new Set();
+	private readonly containerRuntimeMap: Map<string, MockContainerRuntimeWithOpBunching> =
+		new Map();
 
 	/**
 	 * Create a new {@link TestTreeProviderLite} with a number of trees pre-initialized.
@@ -406,9 +446,7 @@ export class TestTreeProviderLite {
 	 */
 	public constructor(
 		trees = 1,
-		private readonly factory = configuredSharedTree({
-			jsonValidator: typeboxValidator,
-		}).getFactory(),
+		private readonly factory: IChannelFactory<ITree> = DefaultTestSharedTreeKind.getFactory(),
 		useDeterministicSessionIds = true,
 		private readonly flushMode: FlushMode = FlushMode.Immediate,
 	) {
@@ -416,7 +454,7 @@ export class TestTreeProviderLite {
 			flushMode,
 		});
 		assert(trees >= 1, "Must initialize provider with at least one tree");
-		const t: SharedTreeWithConnectionStateSetter[] = [];
+		const t: SharedTreeWithContainerRuntime[] = [];
 		const random = useDeterministicSessionIds ? makeRandom(0xdeadbeef) : makeRandom();
 		for (let i = 0; i < trees; i++) {
 			const sessionId = random.uuid4() as SessionId;
@@ -426,38 +464,50 @@ export class TestTreeProviderLite {
 				idCompressor: createIdCompressor(sessionId),
 				logger: this.logger,
 			});
-			const tree = this.factory.create(
-				runtime,
-				TestTreeProviderLite.treeId,
-			) as SharedTreeWithConnectionStateSetter;
+			const tree = this.factory.create(runtime, `tree-${i}`);
 			const containerRuntime = this.runtimeFactory.createContainerRuntime(runtime);
-			this.containerRuntimes.add(containerRuntime);
+			this.containerRuntimeMap.set(tree.id, containerRuntime);
 			tree.connect({
 				deltaConnection: runtime.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			});
-			(tree as Mutable<SharedTreeWithConnectionStateSetter>).setConnected = (
-				connectionState: boolean,
-			) => {
-				containerRuntime.connected = connectionState;
-			};
-			t.push(tree);
+			(tree as Mutable<SharedTreeWithContainerRuntime>).containerRuntime = containerRuntime;
+			t.push(tree as SharedTreeWithContainerRuntime);
 		}
 		this.trees = t;
 	}
 
-	public processMessages(count?: number): void {
-		// In TurnBased mode, flush the messages from all the runtimes before processing the messages.
-		// Note that this does not preserve the order in which the messages were sent. To do so, tests should
-		// flush messages from individual runtimes in the order they were created.
-		if (this.flushMode === FlushMode.TurnBased) {
-			this.containerRuntimes.forEach((containerRuntime) => {
+	/**
+	 * Synchronize messages across all trees. This involves optionally flushing any messages sent by the trees so
+	 * that they are sequenced. Then, the runtime processes the messages. Flushing is needed in TurnBased mode only
+	 * where messages are not automatically flushed. In Immediate mode, each message is flushed immediately.
+	 * @param options - The options to use when synchronizing messages.
+	 * - count: The number of messages to synchronize. If not provided, all messages are synchronized.
+	 * - flush: Whether or not to flush the messages before processing them. Defaults to true. In TurnBased mode,
+	 * messages are not automatically flushed so this should either be set to true or the test should manually
+	 * flush the messages before calling this method.
+	 * @remarks
+	 * - Trees that are not connected will not flush outbound messages or process inbound messages. They will be queued
+	 * and will be processed when they are reconnected (unless their inbound processing is paused. See below).
+	 * - Trees whose inbound processing is paused will not process inbound messages but will queue them. Any queued
+	 * messages will be processed when inbound processing is resumed (unless they are not connected. See above).
+	 * - Flushing does not preserve the order in which the messages were sent. To do so, tests should flush the messages
+	 * from the trees in the order they were sent.
+	 */
+	public synchronizeMessages(options?: { count?: number; flush?: boolean }): void {
+		const flush = options?.flush ?? true;
+		if (flush) {
+			this.containerRuntimeMap.forEach((containerRuntime) => {
 				containerRuntime.flush();
 			});
 		}
-		this.runtimeFactory.processSomeMessages(
-			count ?? this.runtimeFactory.outstandingMessageCount,
-		);
+
+		const count = options?.count;
+		if (count !== undefined) {
+			this.runtimeFactory.processSomeMessages(count);
+		} else {
+			this.runtimeFactory.processAllMessages();
+		}
 	}
 
 	public get minimumSequenceNumber(): number {
@@ -550,32 +600,47 @@ export function assertDeltaEqual(a: DeltaRoot, b: DeltaRoot): void {
 /**
  * A test helper that allows custom code to be injected when a tree is created/loaded.
  */
-export class SharedTreeTestFactory extends TreeFactory {
+export class SharedTreeTestFactory implements IChannelFactory<ISharedTree> {
+	private readonly inner: IChannelFactory<ISharedTree>;
+
 	/**
 	 * @param onCreate - Called once for each created tree (not called for trees loaded from summaries).
 	 * @param onLoad - Called once for each tree that is loaded from a summary.
 	 */
 	public constructor(
-		protected readonly onCreate: (tree: SharedTree) => void,
-		protected readonly onLoad?: (tree: SharedTree) => void,
+		protected readonly onCreate: (tree: ISharedTree) => void,
+		protected readonly onLoad?: (tree: ISharedTree) => void,
 		options: SharedTreeOptionsInternal = {},
 	) {
-		super({ ...options, jsonValidator: typeboxValidator });
+		const optionsUpdated: SharedTreeOptionsInternal = {
+			...options,
+			jsonValidator: FormatValidatorBasic,
+		};
+		this.inner = configuredSharedTree(
+			optionsUpdated as SharedTreeOptions,
+		).getFactory() as IChannelFactory<ISharedTree>;
 	}
 
-	public override async load(
+	public get type(): string {
+		return this.inner.type;
+	}
+	public get attributes(): IChannelAttributes {
+		return this.inner.attributes;
+	}
+
+	public async load(
 		runtime: IFluidDataStoreRuntime,
 		id: string,
 		services: IChannelServices,
 		channelAttributes: Readonly<IChannelAttributes>,
-	): Promise<SharedTree> {
-		const tree = await super.load(runtime, id, services, channelAttributes);
+	): Promise<ISharedTree> {
+		const tree = await this.inner.load(runtime, id, services, channelAttributes);
 		this.onLoad?.(tree);
 		return tree;
 	}
 
-	public override create(runtime: IFluidDataStoreRuntime, id: string): SharedTree {
-		const tree = super.create(runtime, id);
+	public create(runtime: IFluidDataStoreRuntime, id: string): ISharedTree {
+		const tree = this.inner.create(runtime, id);
 		this.onCreate(tree);
 		return tree;
 	}
@@ -586,7 +651,11 @@ export function validateTree(tree: ITreeCheckout, expected: JsonableTree[]): voi
 	assert.deepEqual(actual, expected);
 }
 
-const schemaCodec = makeSchemaCodec({ jsonValidator: typeboxValidator });
+// If you are adding a new schema format, consider changing the encoding format used for this codec, given
+// that equality of two schemas in tests is achieved by deep-comparing their persisted representations.
+// If the newer format is a superset of the previous format, it can be safely used for comparisons. This is the
+// case with schema format v2.
+const schemaCodec = makeSchemaCodec({ jsonValidator: FormatValidatorBasic }, SchemaVersion.v2);
 
 export function checkRemovedRootsAreSynchronized(trees: readonly ITreeCheckout[]): void {
 	if (trees.length > 1) {
@@ -612,8 +681,8 @@ export function validateTreeConsistency(treeA: ITreePrivate, treeB: ITreePrivate
 }
 
 export function validateFuzzTreeConsistency(
-	treeA: Client<TreeFactory>,
-	treeB: Client<TreeFactory>,
+	treeA: Client<IChannelFactory<ISharedTree>>,
+	treeB: Client<IChannelFactory<ISharedTree>>,
 ): void {
 	validateSnapshotConsistency(
 		treeA.channel.contentSnapshot(),
@@ -622,22 +691,12 @@ export function validateFuzzTreeConsistency(
 	);
 }
 
-function contentToJsonableTree(
-	content: TreeSimpleContent | TreeStoredContent,
-): JsonableTree[] {
-	return jsonableTreeFromFieldCursor(normalizeNewFieldContent(content.initialTree));
-}
-
 export function validateTreeContent(tree: ITreeCheckout, content: TreeSimpleContent): void {
-	assert.deepEqual(toJsonableTree(tree), contentToJsonableTree(content));
-	expectSchemaEqual(tree.storedSchema, toStoredSchema(content.schema));
-}
-export function validateTreeStoredContent(
-	tree: ITreeCheckout,
-	content: TreeStoredContent,
-): void {
-	assert.deepEqual(toJsonableTree(tree), contentToJsonableTree(content));
-	expectSchemaEqual(tree.storedSchema, content.schema);
+	const contentReference = jsonableTreeFromFieldCursor(
+		fieldCursorFromInsertable<UnsafeUnknownSchema>(content.schema, content.initialTree),
+	);
+	assert.deepEqual(toJsonableTree(tree), contentReference);
+	expectSchemaEqual(tree.storedSchema, toInitialSchema(content.schema));
 }
 
 export function expectSchemaEqual(
@@ -745,6 +804,8 @@ export function checkoutWithContent(
 		events?: Listenable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
+		forestType?: ForestType;
+		shouldEncodeIncrementally?: IncrementalEncodingPolicy;
 	},
 ): TreeCheckout {
 	const { checkout } = createCheckoutWithContent(content, args);
@@ -757,9 +818,22 @@ function createCheckoutWithContent(
 		events?: Listenable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
+		forestType?: ForestType;
+		shouldEncodeIncrementally?: IncrementalEncodingPolicy;
 	},
 ): { checkout: TreeCheckout; logger: IMockLoggerExt } {
-	const forest = forestWithContent(content);
+	const fieldCursor = normalizeNewFieldContent(content.initialTree);
+	const schema = new TreeStoredSchemaRepository(content.schema);
+
+	const forest = buildConfiguredForest(
+		new Breakable("buildTestForest"),
+		args?.forestType ?? ForestTypeReference,
+		schema,
+		testIdCompressor,
+		args?.shouldEncodeIncrementally ?? defaultIncrementalEncodingPolicy,
+	);
+	initializeForest(forest, fieldCursor, testRevisionTagCodec, testIdCompressor);
+
 	const logger = createMockLoggerExt();
 	const checkout = createTreeCheckout(
 		testIdCompressor,
@@ -768,7 +842,7 @@ function createCheckoutWithContent(
 		{
 			...args,
 			forest,
-			schema: new TreeStoredSchemaRepository(content.schema),
+			schema,
 			logger,
 		},
 	);
@@ -783,22 +857,50 @@ export function flexTreeViewWithContent(
 			HasListeners<CheckoutEvents>;
 		nodeKeyManager?: NodeIdentifierManager;
 	},
-): CheckoutFlexTreeView {
+): Context {
 	const view = checkoutWithContent(
-		{ initialTree: content.initialTree, schema: toStoredSchema(content.schema) },
+		{
+			initialTree: fieldCursorFromInsertable<UnsafeUnknownSchema>(
+				content.schema,
+				content.initialTree,
+			),
+			schema: toInitialSchema(content.schema),
+		},
 		args,
 	);
-	return new CheckoutFlexTreeView(
-		view,
+	return new Context(
 		defaultSchemaPolicy,
+		view,
 		args?.nodeKeyManager ?? new MockNodeIdentifierManager(),
 	);
 }
 
+/**
+ * Builds a reference forest.
+ */
+export function buildTestForest(options: {
+	schema?: TreeStoredSchemaRepository;
+	additionalAsserts: boolean;
+	roots?: MapTree;
+}): IEditableForest {
+	return new ObjectForest(
+		new Breakable("buildTestForest"),
+		options.schema,
+		undefined,
+		options.additionalAsserts,
+		options.roots,
+	);
+}
+
 export function forestWithContent(content: TreeStoredContent): IEditableForest {
-	const forest = buildForest();
 	const fieldCursor = normalizeNewFieldContent(content.initialTree);
-	initializeForest(forest, fieldCursor, testRevisionTagCodec, testIdCompressor);
+	const roots: MapTree = mapTreeWithField(mapTreeFieldFromCursor(fieldCursor));
+	const forest = buildTestForest({
+		additionalAsserts: true,
+		schema: new TreeStoredSchemaRepository(content.schema),
+		roots,
+	});
+
 	return forest;
 }
 
@@ -812,11 +914,16 @@ export const IdentifierSchema = sf.object("identifier-object", {
 });
 
 /**
- * Crates a tree using the Json domain with a required root field.
+ * Creates a tree using the Json domain.
+ *
+ * @param json - The JSON-compatible object to initialize the tree with.
+ * @param optionalRoot - If `true`, the root field is optional; otherwise, it is required. Defaults to `false`.
  */
-export function makeTreeFromJson(json: JsonCompatible): ITreeCheckout {
+export function makeTreeFromJson(json: JsonCompatible, optionalRoot = false): ITreeCheckout {
 	return checkoutWithContent({
-		schema: toStoredSchema(JsonAsTree.Tree),
+		schema: toInitialSchema(
+			optionalRoot ? SchemaFactory.optional(JsonAsTree.Tree) : JsonAsTree.Tree,
+		),
 		initialTree: singleJsonCursor(json),
 	});
 }
@@ -853,6 +960,23 @@ export function expectJsonTree(
 	if (expectRemovedRootsAreSynchronized) {
 		checkRemovedRootsAreSynchronized(trees);
 	}
+}
+
+export function expectEqualMapTreeViews(
+	actual: MinimalMapTreeNodeView,
+	expected: MinimalMapTreeNodeView,
+): void {
+	expectEqualCursors(cursorForMapTreeNode(actual), cursorForMapTreeNode(expected));
+}
+
+export function expectEqualCursors(
+	actual: ITreeCursorSynchronous | undefined,
+	expected: ITreeCursorSynchronous,
+): void {
+	assert(actual !== undefined);
+	const actualJson = jsonableTreeFromCursor(actual);
+	const expectedJson = jsonableTreeFromCursor(expected);
+	assert.deepEqual(actualJson, expectedJson);
 }
 
 export function expectNoRemovedRoots(tree: ITreeCheckout): void {
@@ -901,7 +1025,7 @@ const assertDeepEqual = (a: unknown, b: unknown): void => assert.deepEqual(a, b)
  * Constructs a basic suite of round-trip tests for all versions of a codec family.
  * This helper should generally be wrapped in a `describe` block.
  *
- * Encoded data for JSON codecs within `family` will be validated using `typeboxValidator`.
+ * Encoded data for JSON codecs within `family` will be validated using `FormatValidatorBasic`.
  *
  * @privateRemarks It is generally not valid to compare the decoded formats with assert.deepEqual,
  * but since these round trip tests start with the decoded format (not the encoded format),
@@ -919,8 +1043,10 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 	family: ICodecFamily<TDecoded, TContext>,
 	encodingTestData: EncodingTestData<TDecoded, TEncoded, TContext>,
 	assertEquivalent: (a: TDecoded, b: TDecoded) => void = assertDeepEqual,
+	versions?: FormatVersion[],
 ): void {
-	for (const version of family.getSupportedFormats()) {
+	const versionsToTest = versions ?? family.getSupportedFormats();
+	for (const version of versionsToTest) {
 		describe(`version ${version}`, () => {
 			const codec = family.resolve(version);
 			// A common pattern to avoid validating the same portion of encoded data multiple times
@@ -930,7 +1056,7 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 			// pattern.
 			const jsonCodec =
 				codec.json.encodedSchema !== undefined
-					? withSchemaValidation(codec.json.encodedSchema, codec.json, typeboxValidator)
+					? withSchemaValidation(codec.json.encodedSchema, codec.json, FormatValidatorBasic)
 					: codec.json;
 			describe("can json roundtrip", () => {
 				for (const includeStringification of [false, true]) {
@@ -1149,45 +1275,6 @@ export function mintRevisionTag(): RevisionTag {
 
 export const testRevisionTagCodec = new RevisionTagCodec(testIdCompressor);
 
-// Session ids used for the created trees' IdCompressors must be deterministic.
-// TestTreeProviderLite does this by default.
-// Test trees which manually create their data store runtime must set up their trees'
-// session ids explicitly.
-// Note: trees which simulate attach scenarios using the mocks should finalize ids created
-// while detached. This is only relevant for attach scenarios as the mocks set up appropriate
-// finalization when messages are processed.
-const testSessionId = "beefbeef-beef-4000-8000-000000000001" as SessionId;
-
-/**
- * Simple non-factory based wrapper around `new SharedTree` with test appropriate defaults.
- *
- * See TestTreeProvider, TestTreeProviderLite and TreeFactory for other ways to build trees.
- *
- * If what is needed is a view, see options to create one without making a SharedTree instance.
- */
-export function treeTestFactory(
-	options: {
-		id?: string;
-		runtime?: IFluidDataStoreRuntime;
-		attributes?: IChannelAttributes;
-		options?: SharedTreeOptions;
-		telemetryContextPrefix?: string;
-	} = {},
-): SharedTree {
-	return new SharedTree(
-		options.id ?? "tree",
-		options.runtime ??
-			new MockFluidDataStoreRuntime({
-				idCompressor: createIdCompressor(testSessionId),
-				clientId: "test-client",
-				id: "test",
-			}),
-		options.attributes ?? new TreeFactory({}).attributes,
-		options.options ?? { jsonValidator: typeboxValidator },
-		options.telemetryContextPrefix,
-	);
-}
-
 /**
  * Given the TreeViewConfiguration, returns an uninitialized view.
  *
@@ -1195,27 +1282,33 @@ export function treeTestFactory(
  * This should allow realistic (app like testing) of all the simple-tree APIs.
  *
  * Typically, users will want to initialize the returned view with some content (thereby setting its schema) using `TreeView.initialize`.
+ *
+ * Like `SchematizingSimpleTreeView` but using internal types and uses {@link createSnapshotCompressor}.
  */
 export function getView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
-	nodeKeyManager?: NodeIdentifierManager,
-	logger?: ITelemetryLoggerExt,
+	options: ForestOptions & {
+		idCompressor?: IIdCompressor | undefined;
+	} = {},
 ): SchematizingSimpleTreeView<TSchema> {
-	const checkout = createTreeCheckout(
-		testIdCompressor,
-		mintRevisionTag,
-		testRevisionTagCodec,
-		{
-			forest: buildForest(),
-			schema: new TreeStoredSchemaRepository(),
-			logger,
-		},
-	);
-	return new SchematizingSimpleTreeView<TSchema>(
-		checkout,
-		config,
-		nodeKeyManager ?? new MockNodeIdentifierManager(),
-	);
+	const view = independentView(config, {
+		idCompressor: createSnapshotCompressor(),
+		...options,
+	});
+	assert(view instanceof SchematizingSimpleTreeView);
+	return view;
+}
+
+/**
+ * Session ids used for the created trees' IdCompressors must be deterministic.
+ * TestTreeProviderLite does this by default.
+ * Test trees which manually create their data store runtime must set up their trees'
+ * session ids explicitly.
+ */
+export const snapshotSessionId = assertIsSessionId("beefbeef-beef-4000-8000-000000000001");
+
+export function createSnapshotCompressor(seed?: number) {
+	return createAlwaysFinalizedIdCompressor(snapshotSessionId, undefined, seed);
 }
 
 /**
@@ -1293,16 +1386,38 @@ export class MockTreeCheckout implements ITreeCheckout {
 	}
 }
 
+/**
+ * {@link validateError} for `UsageError`.
+ */
 export function validateUsageError(expectedErrorMsg: string | RegExp): (error: Error) => true {
+	return validateError(expectedErrorMsg, UsageError);
+}
+
+/**
+ * {@link validateError} for `TypeError`.
+ */
+export function validateTypeError(expectedErrorMsg: string | RegExp): (error: Error) => true {
+	return validateError(expectedErrorMsg, TypeError);
+}
+
+/**
+ * Validates that a specific kind of error was thrown with the expected message.
+ *
+ * Intended for use with NodeJS's `assert.throws`.
+ */
+export function validateError(
+	expectedErrorMsg: string | RegExp,
+	errorType: new (...args: any[]) => Error = Error,
+): (error: Error) => true {
 	return (error: Error) => {
-		assert(error instanceof UsageError);
+		assert(error instanceof errorType, `Expected ${errorType.name}, got ${error}`);
 		if (
 			typeof expectedErrorMsg === "string"
 				? error.message !== expectedErrorMsg
 				: !expectedErrorMsg.test(error.message)
 		) {
 			throw new Error(
-				`Unexpected assertion thrown\nActual: ${error.message}\nExpected: ${expectedErrorMsg}`,
+				`Unexpected ${errorType.name} thrown\nActual: ${error.message}\nExpected: ${expectedErrorMsg}`,
 			);
 		}
 		return true;
@@ -1345,13 +1460,14 @@ export function moveWithin(
  * and enable debug asserts otherwise.
  */
 export function configureBenchmarkHooks(): void {
-	let debugBefore: boolean;
-	before(() => {
-		debugBefore = configureDebugAsserts(!isInPerformanceTestingMode);
-	});
-	after(() => {
-		assert.equal(configureDebugAsserts(debugBefore), !isInPerformanceTestingMode);
-	});
+	if (isInPerformanceTestingMode) {
+		before(() => {
+			emulateProductionBuild();
+		});
+		after(() => {
+			emulateProductionBuild(false);
+		});
+	}
 }
 
 export function chunkFromJsonTrees(field: JsonCompatible[]): TreeChunk {
@@ -1376,4 +1492,120 @@ export function chunkToMapTreeField(chunk: TreeChunk): ExclusiveMapTree[] {
 
 export function nodeCursorsFromChunk(trees: TreeChunk): ITreeCursorSynchronous[] {
 	return mapCursorField(trees.cursor(), (c) => c.fork());
+}
+
+/**
+ * Construct field cursor from content that is compatible with the field defined by the provided `schema`.
+ * @param schema - The schema for what to construct.
+ * @param data - The data used to construct the field content.
+ * @remarks
+ * When providing a {@link TreeNodeSchemaClass},
+ * this is the same as invoking its constructor except that an unhydrated node can also be provided and the returned value is a cursor.
+ * When `undefined` is provided (for an optional field), `undefined` is returned.
+ */
+export function fieldCursorFromInsertable<
+	TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema,
+>(
+	schema: UnsafeUnknownSchema extends TSchema
+		? ImplicitFieldSchema
+		: TSchema & ImplicitFieldSchema,
+	data: InsertableField<TSchema>,
+): ITreeCursorSynchronous {
+	const mapTree = unhydratedFlexTreeFromInsertable(
+		data as InsertableField<UnsafeUnknownSchema>,
+		schema,
+	);
+	return cursorForMapTreeField(mapTree === undefined ? [] : [mapTree]);
+}
+
+/**
+ * Helper for building {@link TreeFieldStoredSchema}.
+ */
+export function fieldSchema(
+	kind: { identifier: FieldKindIdentifier },
+	types: Iterable<TreeNodeSchemaIdentifier>,
+): TreeFieldStoredSchema {
+	return {
+		kind: kind.identifier,
+		types: new Set(types),
+		persistedMetadata: undefined,
+	};
+}
+
+export class TestSchemaRepository extends TreeStoredSchemaRepository {
+	public constructor(
+		public readonly policy: FullSchemaPolicy,
+		data?: TreeStoredSchema,
+	) {
+		super(data);
+	}
+
+	/**
+	 * Updates the specified schema iff all possible in schema data would remain in schema after the change.
+	 * @returns true iff update was performed.
+	 */
+	public tryUpdateRootFieldSchema(schema: TreeFieldStoredSchema): boolean {
+		if (allowsFieldSuperset(this.policy, this, this.rootFieldSchema, schema)) {
+			this.rootFieldSchemaData = schema;
+			this._events.emit("afterSchemaChange", this);
+			return true;
+		}
+		return false;
+	}
+	/**
+	 * Updates the specified schema iff all possible in schema data would remain in schema after the change.
+	 * @returns true iff update was performed.
+	 */
+	public tryUpdateTreeSchema(schema: SimpleNodeSchema & TreeNodeSchema): boolean {
+		const storedSchema = getStoredSchema(schema, restrictiveStoredSchemaGenerationOptions);
+		const name: TreeNodeSchemaIdentifier = brand(schema.identifier);
+		const original = this.nodeSchema.get(name);
+		if (allowsTreeSuperset(this.policy, this, original, storedSchema)) {
+			this.nodeSchemaData.set(name, storedSchema);
+			this._events.emit("afterSchemaChange", this);
+			return true;
+		}
+		return false;
+	}
+}
+
+/**
+ * Content that can populate a `SharedTree`.
+ * @remarks
+ * Consider using TreeStoredContentStrict instead which has more specific typing.
+ */
+interface TreeStoredContent {
+	readonly schema: TreeStoredSchema;
+
+	/**
+	 * Default tree content to initialize the tree with iff the tree is uninitialized
+	 * (meaning it does not even have any schema set at all).
+	 *
+	 * Can be a single field cursor, array of nodes cursors, or undefined, or a single node cursor (in which case the root is assumed to have a single child).
+	 *
+	 * This cannot encode the dummy "above root" node and thus can not specify additional detached fields.
+	 */
+	readonly initialTree: readonly ITreeCursorSynchronous[] | ITreeCursorSynchronous | undefined;
+}
+
+/**
+ * Content that can populate a `SharedTree`.
+ */
+export interface TreeStoredContentStrict {
+	/**
+	 * The stored schema.
+	 */
+	readonly schema: TreeStoredSchema;
+
+	/**
+	 * Field cursor with the initial tree content for the {@link rootField}.
+	 */
+	readonly initialTree: ITreeCursorSynchronous;
+}
+
+export function treeChunkFromCursor(fieldCursor: ITreeCursorSynchronous): TreeChunk {
+	return chunkFieldSingle(fieldCursor, {
+		policy: defaultChunkPolicy,
+		idCompressor: testIdCompressor,
+	});
 }

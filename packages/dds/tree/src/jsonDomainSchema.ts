@@ -3,15 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import {
-	SchemaFactory,
-	type AllowedTypes,
-	type FixRecursiveArraySchema,
-	type TreeNodeFromImplicitAllowedTypes,
-	type ValidateRecursiveSchema,
+import { SchemaFactory, SchemaFactoryAlpha } from "./simple-tree/index.js";
+import type {
+	AllowedTypes,
+	FixRecursiveArraySchema,
+	TreeNodeFromImplicitAllowedTypes,
+	ValidateRecursiveSchema,
+	// #region Unused imports to make d.ts cleaner
+	/* eslint-disable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars */
+	ArrayNodeCustomizableSchemaUnsafe,
+	System_Unsafe,
+	TreeNodeSchemaNonClass,
+	TreeNodeSchemaClass,
+	TreeRecordNodeUnsafe,
+	NodeKind,
+	TreeNodeSchemaCore,
+	WithType,
+	LeafSchema,
+	/* eslint-enable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars */
+	// #endregion
 } from "./simple-tree/index.js";
 
-const sf = new SchemaFactory("com.fluidframework.json");
+const sf = new SchemaFactoryAlpha("com.fluidframework.json");
 
 /**
  * Utilities for storing JSON data in {@link TreeNode}s.
@@ -24,7 +37,7 @@ const sf = new SchemaFactory("com.fluidframework.json");
  *
  * 2. The order of fields on an object is not preserved. The resulting order is arbitrary.
  *
- * JSON data can be imported from JSON into this format using `JSON.parse` then {@link TreeAlpha.importConcise} with the {@link JsonAsTree.(Tree:variable)} schema.
+ * JSON data can be imported from JSON into this format using `JSON.parse` then {@link (TreeBeta:interface).importConcise} with the {@link JsonAsTree.(Tree:variable)} schema.
  *
  * @alpha
  */
@@ -34,13 +47,14 @@ export namespace JsonAsTree {
 	 * @alpha
 	 */
 	export const Primitive = [
-		sf.null,
-		sf.boolean,
-		sf.number,
-		sf.string,
+		SchemaFactory.null,
+		SchemaFactory.number,
+		SchemaFactory.string,
+		SchemaFactory.boolean,
 	] as const satisfies AllowedTypes;
 
 	/**
+	 * {@inheritDoc JsonAsTree.(Primitive:variable)}
 	 * @alpha
 	 */
 	export type Primitive = TreeNodeFromImplicitAllowedTypes<typeof Primitive>;
@@ -49,13 +63,19 @@ export namespace JsonAsTree {
 	 * {@link AllowedTypes} for any content allowed in the {@link JsonAsTree} domain.
 	 * @example
 	 * ```typescript
-	 * const tree = TreeAlpha.importConcise(JsonAsTree.Union, { example: { nested: true }, value: 5 });
+	 * const tree = TreeBeta.importConcise(JsonAsTree.Union, { example: { nested: true }, value: 5 });
 	 * ```
+	 * @privateRemarks
+	 * The order here should not matter for any functionality related reasons.
+	 * In an attempt to improve readability of derived types (in errors, api-reports, IntelliSense etc.)
+	 * and possibly reduce incremental build related order dependence issues,
+	 * the simpler non-recursive types are listed first, followed by the recursive types.
 	 * @alpha
 	 */
-	export const Tree = [() => JsonObject, () => Array, ...Primitive] as const;
+	export const Tree = [...Primitive, () => JsonObject, () => Array] as const;
 
 	/**
+	 * {@inheritDoc JsonAsTree.(Tree:variable)}
 	 * @alpha
 	 */
 	export type Tree = TreeNodeFromImplicitAllowedTypes<typeof Tree>;
@@ -64,7 +84,7 @@ export namespace JsonAsTree {
 	 * Do not use. Exists only as a workaround for {@link https://github.com/microsoft/TypeScript/issues/59550} and {@link https://github.com/microsoft/rushstack/issues/4429}.
 	 * @system @alpha
 	 */
-	export const _APIExtractorWorkaroundObjectBase = sf.mapRecursive("object", Tree);
+	export const _APIExtractorWorkaroundObjectBase = sf.recordRecursive("object", Tree);
 
 	/**
 	 * Arbitrary JSON object as a {@link TreeNode}.
@@ -75,7 +95,7 @@ export namespace JsonAsTree {
 	 * // Due to TypeScript restrictions on recursive types, the constructor and be somewhat limiting.
 	 * const fromArray = new JsonAsTreeObject([["a", 0]]);
 	 * // Using `importConcise` can work better for JSON data:
-	 * const imported = TreeAlpha.importConcise(JsonAsTree.Object, { a: 0 });
+	 * const imported = TreeBeta.importConcise(JsonAsTree.Object, { a: 0 });
 	 * // Node API is like a Map:
 	 * const value = imported.get("a");
 	 * ```
@@ -108,13 +128,13 @@ export namespace JsonAsTree {
 	/**
 	 * Arbitrary JSON array as a {@link TreeNode}.
 	 * @remarks
-	 * This can be imported using {@link TreeAlpha.importConcise}.
+	 * This can be imported using {@link (TreeBeta:interface).importConcise}.
 	 * @example
 	 * ```typescript
 	 * // Due to TypeScript restrictions on recursive types, the constructor can be somewhat limiting.
 	 * const usingConstructor = new JsonAsTree.Array(["a", 0, new JsonAsTree.Array([1])]);
 	 * // Using `importConcise` can work better for JSON data:
-	 * const imported = TreeAlpha.importConcise(JsonAsTree.Array, ["a", 0, [1]]);
+	 * const imported = TreeBeta.importConcise(JsonAsTree.Array, ["a", 0, [1]]);
 	 * // Node API is like an Array:
 	 * const inner: JsonAsTree.Tree = imported[2];
 	 * assert(Tree.is(inner, JsonAsTree.Array));

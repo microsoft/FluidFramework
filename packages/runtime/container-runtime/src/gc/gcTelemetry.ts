@@ -4,25 +4,25 @@
  */
 
 import type { Tagged } from "@fluidframework/core-interfaces";
-import { IGarbageCollectionData } from "@fluidframework/runtime-definitions/internal";
+import type { IGarbageCollectionData } from "@fluidframework/runtime-definitions/internal";
 import {
-	ITelemetryLoggerExt,
-	MonitoringContext,
+	type ITelemetryLoggerExt,
+	type MonitoringContext,
 	generateStack,
 	tagCodeArtifacts,
 	type ITelemetryPropertiesExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { RuntimeHeaderData } from "../containerRuntime.js";
-import { ICreateContainerMetadata } from "../summary/index.js";
+import type { RuntimeHeaderData } from "../containerRuntime.js";
+import type { ICreateContainerMetadata } from "../summary/index.js";
 
 import {
-	GCFeatureMatrix,
+	type GCFeatureMatrix,
 	GCNodeType,
-	IGarbageCollectorConfigs,
+	type IGarbageCollectorConfigs,
 	UnreferencedState,
 } from "./gcDefinitions.js";
-import { UnreferencedStateTracker } from "./gcUnreferencedStateTracker.js";
+import type { UnreferencedStateTracker } from "./gcUnreferencedStateTracker.js";
 
 type NodeUsageType = "Changed" | "Loaded" | "Revived" | "Realized";
 
@@ -77,7 +77,9 @@ interface INodeUsageProps extends ICommonProps {
 	 */
 	currentReferenceTimestampMs: number;
 	/**
-	 * The package path of the node. This may not be available if the node hasn't been loaded yet
+	 * The package path of the node. This may not be available if the node hasn't been loaded yet.
+	 *
+	 * @see {@link @fluidframework/runtime-definitions#IFluidDataStoreContext.packagePath} for more details.
 	 */
 	packagePath: readonly string[] | undefined;
 	/**
@@ -208,10 +210,9 @@ export class GCTelemetryTracker {
 					return this.configs.tombstoneTimeoutMs;
 				}
 				case UnreferencedState.SweepReady: {
-					return (
-						this.configs.tombstoneTimeoutMs &&
-						this.configs.tombstoneTimeoutMs + this.configs.sweepGracePeriodMs
-					);
+					return this.configs.tombstoneTimeoutMs === undefined
+						? undefined
+						: this.configs.tombstoneTimeoutMs + this.configs.sweepGracePeriodMs;
 				}
 				default: {
 					return undefined;
@@ -279,7 +280,7 @@ export class GCTelemetryTracker {
 				const event = {
 					eventName: `${state}Object_${usageType}`,
 					...tagCodeArtifacts({ pkg: packagePath?.join("/") }),
-					stack: generateStack(),
+					stack: generateStack(30),
 					id,
 					fromId,
 					headers: { ...headers },
@@ -314,7 +315,7 @@ export class GCTelemetryTracker {
 		const event = {
 			eventName: `GC_Tombstone_${nodeType}_${eventUsageName}`,
 			...tagCodeArtifacts({ pkg: packagePath?.join("/") }),
-			stack: generateStack(),
+			stack: generateStack(30),
 			id,
 			fromId,
 			headers: { ...headers },
@@ -325,7 +326,7 @@ export class GCTelemetryTracker {
 		if (
 			usageType === "Loaded" &&
 			this.configs.throwOnTombstoneLoad &&
-			!headers?.allowTombstone
+			headers?.allowTombstone !== true
 		) {
 			this.mc.logger.sendErrorEvent(event);
 		} else {

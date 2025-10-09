@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@fluidframework/core-interfaces";
+import type { IRequest } from "@fluidframework/core-interfaces";
 import {
 	DriverHeader,
-	IResolvedUrl,
-	IUrlResolver,
+	type IResolvedUrl,
+	type IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 
 /**

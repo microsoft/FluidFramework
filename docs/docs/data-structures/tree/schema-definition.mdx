@@ -11,6 +11,10 @@ It also has three methods for specifying internal nodes; `object()`, `array()`, 
 Use the members of the class to build a schema.
 See [defining a schema](../../start/tree-start.mdx#defining-a-schema) for an example.
 
+:::note
+Once you have documents using your schema, see [Schema Evolution](./schema-evolution/index.mdx) for guidance on safely updating your schema over time.
+:::
+
 ## Object Schema
 
 Use the `object()` method to create a schema for a note. Note the following about this code:
@@ -54,8 +58,9 @@ class Note extends sf.object("Note", {
 
 For the remainder of this article, we use the inline style.
 
-You can add fields, properties, and methods like any TypeScript class including methods that wrap one or more methods in the <PackageLink packageName="tree">SharedTree API docs</PackageLink>.
-For example, the `Note` class can have the following `updateText` method. Since the method writes to shared properties, the changes are reflected on all clients.
+You can add fields, properties, and methods like any TypeScript class.
+For example, the `Note` class can have the following `updateText` method.
+Since the method writes to shared properties, the changes are reflected on all clients.
 
 ```typescript
 public updateText(text: string) {

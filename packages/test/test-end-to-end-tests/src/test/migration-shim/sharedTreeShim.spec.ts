@@ -64,12 +64,11 @@ describeCompat("SharedTreeShim", "NoCompat", (getTestObjectProvider, apis) => {
 	const newSharedTreeFactory = SharedTree.getFactory();
 	const sharedTreeShimFactory = new SharedTreeShimFactory(newSharedTreeFactory);
 
-	const dataObjectFactory = new DataObjectFactory(
-		"TestDataObject",
-		TestDataObject,
-		[sharedTreeShimFactory],
-		{},
-	);
+	const dataObjectFactory = new DataObjectFactory({
+		type: "TestDataObject",
+		ctor: TestDataObject,
+		sharedObjects: [sharedTreeShimFactory],
+	});
 
 	// The 2nd runtime factory, V2 of the code
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({

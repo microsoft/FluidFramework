@@ -22,8 +22,7 @@ import {
 
 /**
  * Mock implementation of IDeltaQueue for testing that does nothing
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 	protected readonly queue: T[] = [];
@@ -98,8 +97,7 @@ export class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 
 /**
  * Mock implementation of IDeltaManager for testing that creates mock DeltaQueues for testing
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class MockDeltaManager
 	extends TypedEventEmitter<IDeltaManagerEvents>
@@ -151,7 +149,7 @@ export class MockDeltaManager
 		return undefined as any as IClientConfiguration;
 	}
 
-	public readonly active: boolean = true;
+	public active: boolean = true;
 
 	public close(): void {}
 
@@ -186,7 +184,7 @@ export class MockDeltaManager
 		this.emit("op", message);
 	}
 
-	constructor(private readonly getClientId?: () => string) {
+	constructor(private readonly getClientId?: () => string | undefined) {
 		super();
 
 		this._inbound = new MockDeltaQueue<ISequencedDocumentMessage>();

@@ -7,7 +7,7 @@ import fs from "fs";
 import util from "util";
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
-import {
+import type {
 	IDocumentService,
 	IDocumentStorageService,
 	ISnapshotTree,

@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "chai";
-
 import type { Stats } from "./ResultTypes";
+import { assert } from "./assert.js";
 
 /**
  * This file contains generic utilities of use to a mocha reporter, especially for convenient formatting of textual

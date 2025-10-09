@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-import { IClient, IDocumentMessage } from "@fluidframework/protocol-definitions";
-import {
+import type { EventEmitter } from "events";
+
+import type { IClient, IDocumentMessage } from "@fluidframework/protocol-definitions";
+import type {
 	ICollection,
 	IContext,
 	IDocumentDetails,

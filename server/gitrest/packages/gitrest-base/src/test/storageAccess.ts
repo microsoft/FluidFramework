@@ -3,9 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
-import { IFileSystemPromises } from "../utils";
-import { ISummaryTestMode } from "./utils";
+import { strict as assert } from "assert";
+
+import type { IFileSystemPromises } from "../utils";
+
+import type { ISummaryTestMode } from "./utils";
 
 export type StorageAccessCallCounts = { [K in keyof IFileSystemPromises]?: number };
 
@@ -88,7 +90,7 @@ export function checkInitialWriteStorageAccessBaselinePerformance(
 	const _baseline = testMode.enableLowIoWrite
 		? initialWriteStorageAccessBaselinePerformanceLowIo
 		: initialWriteStorageAccessBaselinePerformance;
-	const baseline = { ..._baseline };
+	const baseline = { ..._baseline, mkdir: _baseline.mkdir ?? 0 };
 	if (testMode.repoPerDocEnabled) {
 		// repoPerDoc adds a small amount of overhead for `mkdir`.
 		baseline.mkdir += 2;
@@ -102,7 +104,7 @@ export function checkFullStorageAccessBaselinePerformance(
 	const _baseline = testMode.enableLowIoWrite
 		? fullTestStorageAccessBaselinePerformanceLowIo
 		: fullTestStorageAccessBaselinePerformance;
-	const baseline = { ..._baseline };
+	const baseline = { ..._baseline, mkdir: _baseline.mkdir ?? 0 };
 	if (testMode.repoPerDocEnabled) {
 		// repoPerDoc adds a small amount of overhead for `mkdir`.
 		baseline.mkdir += 2;

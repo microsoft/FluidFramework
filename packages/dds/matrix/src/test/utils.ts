@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import {
+import type {
 	IMatrixConsumer,
 	IMatrixProducer,
 	IMatrixReader,

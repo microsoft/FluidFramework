@@ -5,15 +5,17 @@
 
 import { EventEmitter } from "events";
 import * as http from "http";
-import { HttpServer } from "@fluidframework/server-services-shared";
-import {
+
+import type {
 	IWebServer,
 	IWebServerFactory,
 	IWebSocket,
 	IWebSocketServer,
 	RequestListener,
 } from "@fluidframework/server-services-core";
-import { Server, Socket } from "socket.io";
+import { HttpServer } from "@fluidframework/server-services-shared";
+import type { Server, Socket } from "socket.io";
+
 import { WebServer } from "./webServer";
 
 class SocketIoSocket implements IWebSocket {
@@ -22,6 +24,10 @@ class SocketIoSocket implements IWebSocket {
 	}
 
 	constructor(private readonly socket: Socket) {}
+
+	public get handshake(): any {
+		return this.socket.handshake;
+	}
 
 	public on(event: string, listener: (...args: any[]) => void) {
 		this.socket.on(event, listener);

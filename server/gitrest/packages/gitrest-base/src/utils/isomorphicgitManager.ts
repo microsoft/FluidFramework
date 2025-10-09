@@ -7,8 +7,10 @@ import type * as resources from "@fluidframework/gitresources";
 import { NetworkError } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as isomorphicGit from "isomorphic-git";
-import { IExternalStorageManager } from "../externalStorageManager";
-import {
+
+import type { IExternalStorageManager } from "../externalStorageManager";
+
+import type {
 	IExternalWriterConfig,
 	IFileSystemManager,
 	IFileSystemManagerFactories,
@@ -20,7 +22,7 @@ import {
 import { BaseGitRestTelemetryProperties } from "./gitrestTelemetryDefinitions";
 import * as helpers from "./helpers";
 import * as conversions from "./isomorphicgitConversions";
-import { IRepositoryManagerBaseOptions, RepositoryManagerBase } from "./repositoryManagerBase";
+import { type IRepositoryManagerBaseOptions, RepositoryManagerBase } from "./repositoryManagerBase";
 import { RepositoryManagerFactoryBase } from "./repositoryManagerFactoryBase";
 
 export class IsomorphicGitRepositoryManager extends RepositoryManagerBase {

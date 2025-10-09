@@ -8,12 +8,13 @@ import {
 	CollaborativeTextArea,
 	SharedStringHelper,
 } from "@fluid-example/example-utils";
+import type { SharedString } from "@fluidframework/sequence/legacy";
 import React, { useEffect, useState } from "react";
-
-import { TodoItem } from "./TodoItem.js";
 
 // eslint-disable-next-line import/no-unassigned-import
 import "./style.css";
+import { type TodoItem } from "../Todo/index.js";
+import { useTree } from "../Utils/index.js";
 
 interface TodoItemViewProps {
 	readonly todoItemModel: TodoItem;
@@ -22,25 +23,32 @@ interface TodoItemViewProps {
 
 export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewProps) => {
 	const { todoItemModel, className } = props;
-	const itemText = todoItemModel.getText();
-	const [checked, setChecked] = useState<boolean>(todoItemModel.getCheckedState());
+
+	const [itemTitle, setItemTitle] = useState<SharedString | undefined>(undefined);
+	const [itemDescription, setItemDescription] = useState<SharedString | undefined>(undefined);
 	const [detailsVisible, setDetailsVisible] = useState<boolean>(false);
 
-	useEffect(() => {
-		const refreshCheckedStateFromModel = () => {
-			setChecked(todoItemModel.getCheckedState());
-		};
-		todoItemModel.on("checkedStateChanged", refreshCheckedStateFromModel);
-		refreshCheckedStateFromModel();
+	useTree(todoItemModel);
 
-		return () => {
-			todoItemModel.off("checkedStateChanged", refreshCheckedStateFromModel);
-		};
-	}, [todoItemModel]);
+	useEffect(() => {
+		void Promise.resolve(todoItemModel.title.get()).then((text) => {
+			setItemTitle(text as SharedString);
+		});
+	}, [todoItemModel.title]);
+
+	useEffect(() => {
+		void Promise.resolve(todoItemModel.description.get()).then((text) => {
+			setItemDescription(text as SharedString);
+		});
+	}, [todoItemModel.description]);
 
 	const checkChangedHandler = (e: React.ChangeEvent<HTMLInputElement>): void => {
-		todoItemModel.setCheckedState(e.target.checked);
+		todoItemModel.completed = e.target.checked;
 	};
+
+	if (itemTitle === undefined || itemDescription === undefined) {
+		return <div>Loading item...</div>;
+	}
 
 	return (
 		<div className={`todo-item${className !== undefined ? ` ${className}` : ""}`}>
@@ -48,7 +56,7 @@ export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewPro
 				<input
 					type="checkbox"
 					className="todo-item-checkbox"
-					checked={checked}
+					checked={todoItemModel.completed}
 					onChange={checkChangedHandler}
 				/>
 				<button
@@ -60,17 +68,14 @@ export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewPro
 				>
 					{detailsVisible ? "▲" : "▼"}
 				</button>
-				<CollaborativeInput sharedString={itemText} className="todo-item-input" />
+				<CollaborativeInput sharedString={itemTitle} className="todo-item-input" />
 			</h2>
-			{
-				// The details can be shown or hidden
-				detailsVisible && (
-					<CollaborativeTextArea
-						className="todo-item-details"
-						sharedStringHelper={new SharedStringHelper(todoItemModel.getDetailedText())}
-					/>
-				)
-			}
+			{detailsVisible && (
+				<CollaborativeTextArea
+					className="todo-item-details"
+					sharedStringHelper={new SharedStringHelper(itemDescription)}
+				/>
+			)}
 		</div>
 	);
 };

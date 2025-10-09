@@ -4,8 +4,8 @@
  */
 
 module.exports = {
+	extends: ["@fluidframework/eslint-config-fluid/strict", "prettier"],
 	parserOptions: {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
-	extends: ["@fluidframework/eslint-config-fluid/minimal-deprecated", "prettier"],
 };

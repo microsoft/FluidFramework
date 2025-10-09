@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
 
 import type { RevisionTag } from "../../core/index.js";
-import { type IdAllocator, type Mutable, fail, hasSingle } from "../../util/index.js";
+import { type IdAllocator, type Mutable, hasSingle } from "../../util/index.js";
 import {
 	type CrossFieldManager,
 	CrossFieldTarget,

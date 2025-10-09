@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IBlob, ITree } from "@fluidframework/gitresources";
-import { IRepositoryManager } from "../definitions";
+import type { IBlob, ITree } from "@fluidframework/gitresources";
+
+import type { IRepositoryManager } from "../definitions";
 
 export interface IWholeSummaryOptions {
 	documentId: string;

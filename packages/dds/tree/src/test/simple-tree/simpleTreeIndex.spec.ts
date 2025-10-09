@@ -4,8 +4,9 @@
  */
 
 import { strict as assert } from "node:assert";
-import { brand, fail } from "../../util/index.js";
+import { brand } from "../../util/index.js";
 import {
+	type InsertableTypedNode,
 	SchemaFactory,
 	type TreeNode,
 	type TreeNodeSchema,
@@ -42,7 +43,7 @@ function isStringKey(key: TreeIndexKey): key is string {
 	return typeof key === "string";
 }
 
-function createView(child?: IndexableChild) {
+function createView(child?: InsertableTypedNode<typeof IndexableChild>) {
 	const config = new TreeViewConfiguration({ schema: IndexableParent });
 	const view = getView(config);
 	view.initialize(new IndexableParent({ parentKey: parentId, child }));
@@ -78,7 +79,7 @@ describe("simple tree indexes", () => {
 	});
 
 	it("does not reify tree of nodes being scanned", () => {
-		const { view, parent } = createView(new IndexableChild({ childKey: childId }));
+		const { view, parent } = createView({ childKey: childId });
 		const index = createSimpleTreeIndex(
 			view,
 			(s) => indexer(s),
@@ -99,7 +100,7 @@ describe("simple tree indexes", () => {
 		};
 		const anchor = forest.anchors.track(path);
 		const anchorNode =
-			forest.anchors.locate(anchor) ?? fail("should be able to find anchor to child");
+			forest.anchors.locate(anchor) ?? assert.fail("should be able to find anchor to child");
 		assert.equal(anchorNode.slots.has(flexTreeSlot), false);
 
 		const children = index.get(childId);

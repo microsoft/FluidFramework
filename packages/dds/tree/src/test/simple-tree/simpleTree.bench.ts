@@ -16,7 +16,7 @@ import {
 	writeWideSimpleTreeNewValue,
 	type WideTreeNode,
 } from "./benchmarkUtilities.js";
-import { SchemaFactory } from "../../simple-tree/index.js";
+import { SchemaFactory, SchemaFactoryAlpha } from "../../simple-tree/index.js";
 import { hydrate, hydrateUnsafe } from "./utils.js";
 import { configureBenchmarkHooks } from "../utils.js";
 
@@ -286,6 +286,71 @@ describe("SimpleTree benchmarks", () => {
 					const initUnhydrated = () => new mapType([["a", 1]]);
 					const initFlex = () => hydrateUnsafe(mapType, initUnhydrated());
 					const readFunction = (tree: CombinedTypes) => tree.get("b") as number;
+					generateBenchmarkPair(title, initUnhydrated, initFlex, readFunction, undefined);
+				}
+			});
+
+			describe("Record keys", () => {
+				const factory = new SchemaFactoryAlpha("test");
+				class NumberRecord extends factory.record("root", [factory.number]) {}
+				class NumberStringRecord extends factory.record("root", [
+					factory.number,
+					factory.string,
+				]) {}
+				class NumberObjectRecord extends factory.record("root", [
+					factory.number,
+					factory.object("inner", { value: factory.number }),
+				]) {}
+				// Just to simplify typing a bit below in a way that keeps TypeScript happy
+				type CombinedTypes = NumberRecord | NumberStringRecord | NumberObjectRecord;
+
+				const valueTestCases = [
+					{
+						title: `Read value from leaf`,
+						recordType: NumberRecord,
+					},
+					{
+						title: `Read value from union of two leaves`,
+						recordType: NumberStringRecord,
+					},
+					{
+						title: `Read value from union of leaf and non-leaf`,
+						recordType: NumberObjectRecord,
+					},
+				] as const;
+
+				for (const { title, recordType } of valueTestCases) {
+					const initUnhydrated = () => new recordType({ a: 1 });
+					const initFlex = () => hydrateUnsafe(recordType, initUnhydrated());
+					const readFunction = (tree: CombinedTypes) => tree.a as number;
+					generateBenchmarkPair(title, initUnhydrated, initFlex, readFunction, 1);
+				}
+
+				const undefinedTestCases = [
+					{
+						title: `Read undefined from leaf`,
+						recordType: NumberRecord,
+						read: (tree: CombinedTypes) => tree.b as number,
+						expected: undefined,
+					},
+					{
+						title: `Read undefined from union of two leaves`,
+						recordType: NumberStringRecord,
+						read: (tree: CombinedTypes) => tree.b as number,
+						expected: undefined,
+					},
+					{
+						title: `Read undefined from union of leaf and non-leaf`,
+						recordType: NumberObjectRecord,
+						read: (tree: CombinedTypes) => tree.b as number,
+						expected: undefined,
+					},
+				];
+
+				for (const { title, recordType } of undefinedTestCases) {
+					const initUnhydrated = () => new recordType({ a: 1 });
+					const initFlex = () => hydrateUnsafe(recordType, initUnhydrated());
+					const readFunction = (tree: CombinedTypes) => tree.b as number;
 					generateBenchmarkPair(title, initUnhydrated, initFlex, readFunction, undefined);
 				}
 			});

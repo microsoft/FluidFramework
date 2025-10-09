@@ -7,6 +7,7 @@ import type {
 	OpSpaceCompressedId,
 	SessionId,
 	SessionSpaceCompressedId,
+	StableId,
 } from "@fluidframework/id-compressor";
 import { Type } from "@sinclair/typebox";
 
@@ -38,6 +39,9 @@ export const RevisionTagSchema = Type.Union([
 	brandedNumberType<Exclude<EncodedRevisionTag, string>>(),
 ]);
 
+export type EncodedStableId = Brand<StableId, "EncodedStableId">;
+export const StableIdSchema = Type.String();
+
 /**
  * An ID which is unique within a revision of a `ModularChangeset`.
  * A `ModularChangeset` which is a composition of multiple revisions may contain duplicate `ChangesetLocalId`s,
@@ -65,12 +69,10 @@ export interface ChangeAtomId {
 
 export type EncodedChangeAtomId = [ChangesetLocalId, EncodedRevisionTag] | ChangesetLocalId;
 
-/**
- */
 export type ChangeAtomIdMap<T> = NestedMap<RevisionTag | undefined, ChangesetLocalId, T>;
 
 /**
- * @returns true iff `a` and `b` are the same.
+ * Returns true iff `a` and `b` are the same.
  */
 export function areEqualChangeAtomIds(a: ChangeAtomId, b: ChangeAtomId): boolean {
 	return a.localId === b.localId && a.revision === b.revision;
@@ -88,7 +90,7 @@ export function areEqualChangeAtomIdOpts(
 }
 
 /**
- * @returns a ChangeAtomId with the given revision and local ID.
+ * Returns a ChangeAtomId with the given revision and local ID.
  */
 export function makeChangeAtomId(
 	localId: ChangesetLocalId,

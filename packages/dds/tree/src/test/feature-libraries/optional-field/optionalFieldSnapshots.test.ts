@@ -15,12 +15,10 @@ import {
 } from "../../../feature-libraries/optional-field/index.js";
 import { brand } from "../../../util/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { createSnapshotCompressor } from "../../snapshots/snapshotTestScenarios.js";
 import { TestNodeId } from "../../testNodeId.js";
 import { Change } from "./optionalFieldUtils.js";
 import { TestChange } from "../../testChange.js";
-import { testIdCompressor } from "../../utils.js";
+import { createSnapshotCompressor, testIdCompressor } from "../../utils.js";
 
 function generateTestChangesets(
 	idCompressor: IIdCompressor,

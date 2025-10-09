@@ -20,8 +20,7 @@ import {
 
 /**
  * Specialized implementation of MockContainerRuntime for testing ops during reconnection.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 	/**
@@ -29,6 +28,12 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 	 */
 	protected readonly pendingRemoteMessages: ISequencedDocumentMessage[] = [];
 
+	/**
+	 * Returns the connection state of the container runtime.
+	 * Any messages that are submitted while not connected will be resubmitted via the resubmit flow on reconnection.
+	 * Any messages received while disconnected will be processed on reconnection.
+	 * Also, the clientId of the runtime will change on reconnection.
+	 */
 	public get connected(): boolean {
 		return this._connected;
 	}
@@ -216,8 +221,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 
 /**
  * Specialized implementation of MockContainerRuntimeFactory for testing ops during reconnection.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class MockContainerRuntimeFactoryForReconnection extends MockContainerRuntimeFactory {
 	override createContainerRuntime(

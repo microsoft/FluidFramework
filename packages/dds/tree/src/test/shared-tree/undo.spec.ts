@@ -9,14 +9,17 @@ import {
 	type Revertible,
 	RevertibleStatus,
 	rootFieldKey,
+	type TreeChunk,
 } from "../../core/index.js";
-import { singleJsonCursor } from "../json/index.js";
+import { fieldJsonCursor } from "../json/index.js";
 import type { ITreeCheckout } from "../../shared-tree/index.js";
 import { type JsonCompatible, brand } from "../../util/index.js";
 import {
 	chunkFromJsonTrees,
 	createTestUndoRedoStacks,
+	DefaultTestSharedTreeKind,
 	expectJsonTree,
+	getView,
 	moveWithin,
 	TestTreeProviderLite,
 } from "../utils.js";
@@ -27,15 +30,12 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
-import assert from "node:assert";
-import {
-	asTreeViewAlpha,
-	SchemaFactory,
-	TreeViewConfiguration,
-} from "../../simple-tree/index.js";
+import { strict as assert } from "node:assert";
+import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { initialize } from "../../shared-tree/schematizeTree.js";
-import { TreeFactory } from "../../treeFactory.js";
+import { FieldKinds } from "../../feature-libraries/index.js";
+import { asAlpha } from "../../api.js";
 
 const rootPath: NormalizedUpPath = {
 	detachedNodeId: undefined,
@@ -187,7 +187,7 @@ function createInitializedView() {
 		child: factory.optional(ChildNodeSchema),
 	}) {}
 	const provider = new TestTreeProviderLite();
-	const view = asTreeViewAlpha(
+	const view = asAlpha(
 		provider.trees[0].viewWith(
 			new TreeViewConfiguration({
 				schema: RootNodeSchema,
@@ -488,12 +488,27 @@ describe("Undo and redo", () => {
 	it("can undo while detached", () => {
 		const sf = new SchemaFactory(undefined);
 		class Schema extends sf.object("Object", { foo: sf.number }) {}
-		const sharedTreeFactory = new TreeFactory({});
 		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
-		const tree = sharedTreeFactory.create(runtime, "tree");
-		const view = tree.viewWith(new TreeViewConfiguration({ schema: Schema }));
+		const tree = DefaultTestSharedTreeKind.getFactory().create(runtime, "tree");
+		const view = asAlpha(tree.viewWith(new TreeViewConfiguration({ schema: Schema })));
 		view.initialize({ foo: 1 });
 		assert.equal(tree.isAttached(), false);
+		let revertible: Revertible | undefined;
+		view.events.on("changed", (_, getRevertible) => {
+			revertible = getRevertible?.();
+		});
+		view.root.foo = 2;
+		assert.equal(view.root.foo, 2);
+		assert(revertible !== undefined);
+		revertible.revert();
+		assert.equal(view.root.foo, 1);
+	});
+
+	it("can undo while independent", () => {
+		const sf = new SchemaFactory(undefined);
+		class Schema extends sf.object("Object", { foo: sf.number }) {}
+		const view = getView(new TreeViewConfiguration({ schema: Schema }));
+		view.initialize({ foo: 1 });
 		let revertible: Revertible | undefined;
 		view.events.on("changed", (_, getRevertible) => {
 			revertible = getRevertible?.();
@@ -686,15 +701,17 @@ describe("Undo and redo", () => {
  * @param attachTree - whether or not the SharedTree should be attached to the Fluid runtime
  */
 export function createCheckout(json: JsonCompatible[], attachTree: boolean): ITreeCheckout {
-	const sharedTreeFactory = new TreeFactory({});
+	const sharedTreeFactory = DefaultTestSharedTreeKind.getFactory();
 	const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
 	const tree = sharedTreeFactory.create(runtime, "tree");
 	const runtimeFactory = new MockContainerRuntimeFactory();
 	runtimeFactory.createContainerRuntime(runtime);
-	initialize(tree.kernel.checkout, {
-		schema: jsonSequenceRootSchema,
-		initialTree: json.map(singleJsonCursor),
-	});
+	initialize(tree.kernel.checkout, jsonSequenceRootSchema, () =>
+		initializeSequenceRoot(
+			tree.kernel.checkout,
+			tree.kernel.checkout.forest.chunkField(fieldJsonCursor(json)),
+		),
+	);
 
 	if (attachTree) {
 		tree.connect({
@@ -708,3 +725,14 @@ export function createCheckout(json: JsonCompatible[], attachTree: boolean): ITr
 }
 
 let temp: unknown;
+
+/**
+ * Helper for use with `initialize` when the root is a sequence.
+ */
+function initializeSequenceRoot(checkout: ITreeCheckout, content: TreeChunk): void {
+	const field = { field: rootFieldKey, parent: undefined };
+	assert(checkout.storedSchema.rootFieldSchema.kind === FieldKinds.sequence.identifier);
+	const fieldEditor = checkout.editor.sequenceField(field);
+	// TODO: should do an idempotent edit here.
+	fieldEditor.insert(0, content);
+}

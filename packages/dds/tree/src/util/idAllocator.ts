@@ -3,9 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
-
-import { fail } from "./utils.js";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 
 /**
  * Used for allocating IDs unique to a particular instance of the allocator.

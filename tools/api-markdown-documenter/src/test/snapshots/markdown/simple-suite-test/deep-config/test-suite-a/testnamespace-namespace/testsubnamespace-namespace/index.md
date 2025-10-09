@@ -1,10 +1,10 @@
 # TestSubNamespace
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestNamespace](/test-suite-a/testnamespace-namespace/) &gt; [TestSubNamespace](/test-suite-a/testnamespace-namespace/testsubnamespace-namespace/)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [TestNamespace](/test-suite-a/testnamespace-namespace/) > [TestSubNamespace](/test-suite-a/testnamespace-namespace/testsubnamespace-namespace/)
 
 Test sub-namespace
 
-## Signature {#testsubnamespace-signature}
+<h2 id="testsubnamespace-signature">Signature</h2>
 
 ```typescript
 namespace TestSubNamespace

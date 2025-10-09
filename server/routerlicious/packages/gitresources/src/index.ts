@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export {
+export type {
 	IAuthor,
 	IBlob,
 	ICommit,
@@ -25,4 +25,4 @@ export {
 	ITree,
 	ITreeEntry,
 } from "./resources";
-export { IHeader } from "./services";
+export type { IHeader } from "./services";

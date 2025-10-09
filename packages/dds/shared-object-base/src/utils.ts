@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 
-import { IFluidSerializer } from "./serializer.js";
+import type { IFluidSerializer } from "./serializer.js";
 
 /**
  * Given a mostly-plain object that may have handle objects embedded within, return a string representation of an object
@@ -39,8 +39,7 @@ export function serializeHandles(
  * @param context - The handle context for the container
  * @param bind - Bind any other handles we find in the object against this given handle.
  * @returns The fully-plain object
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export function makeHandlesSerializable(
 	value: unknown,
@@ -58,8 +57,7 @@ export function makeHandlesSerializable(
  * @param serializer - The serializer that knows how to convert serializable-form handles into handle objects
  * @param context - The handle context for the container
  * @returns The mostly-plain object with handle objects within
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export function parseHandles(value: unknown, serializer: IFluidSerializer): unknown {
 	return serializer.decode(value);
@@ -86,16 +84,19 @@ export function createSingleBlobSummary(
  *
  * @internal
  */
-export function bindHandles(
-	value: unknown,
+export function bindHandles<T = unknown>(
+	value: T,
 	serializer: IFluidSerializer,
 	bind: IFluidHandle,
-): void {
+): T {
 	// N.B. AB#7316 this could be made more efficient by writing an ad hoc
 	// implementation that doesn't clone at all. Today the distinction between
 	// this function and `encode` is purely semantic -- encoding both serializes
 	// handles and binds them, but sometimes we only wish to do the latter
 	serializer.encode(value, bind);
+
+	// Return the input value so this function can be swapped in for makeHandlesSerializable
+	return value;
 }
 
 /**

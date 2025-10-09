@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { BundleBuddyConfig } from "../BundleBuddyTypes";
-import { BundleFileData } from "./getBundleFilePathsFromFolder";
+import type { BundleBuddyConfig } from "../BundleBuddyTypes";
+import type { BundleFileData } from "./getBundleFilePathsFromFolder";
 
 export interface GetBundleBuddyConfigMapArgs {
 	bundleFileData: BundleFileData[];

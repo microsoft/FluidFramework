@@ -8,7 +8,7 @@ import type {
 	ISummarizerEvents,
 	SummarizerStopReason,
 } from "@fluidframework/container-runtime-definitions/internal";
-import {
+import type {
 	IDisposable,
 	IEvent,
 	IEventProvider,
@@ -17,23 +17,25 @@ import {
 import { assert } from "@fluidframework/core-utils/internal";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	PerformanceEvent,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { IThrottler } from "../throttler.js";
+import type { IThrottler } from "../throttler.js";
 
-import { Summarizer } from "./summarizer.js";
-import { ISummarizerClientElection } from "./summarizerClientElection.js";
-import {
-	EnqueueSummarizeResult,
+import type { ISummarizerClientElection } from "./summarizerClientElection.js";
+import type {
 	IEnqueueSummarizeOptions,
 	IOnDemandSummarizeOptions,
-	ISummarizeResults,
 	ISummarizer,
 } from "./summarizerTypes.js";
-import { SummaryCollection } from "./summaryCollection.js";
+import { stopReasonCanRunLastSummary } from "./summarizerUtils.js";
+import type { SummaryCollection } from "./summaryCollection.js";
+import type {
+	EnqueueSummarizeResult,
+	ISummarizeResults,
+} from "./summaryDelayLoadedModule/index.js";
 
 const defaultInitialDelayMs = 5000;
 const defaultOpsToBypassInitialDelay = 4000;
@@ -284,7 +286,7 @@ export class SummaryManager
 					// which would happen when we have a high enough number of unsummarized ops.
 					if (
 						startWithInitialDelay ||
-						!Summarizer.stopReasonCanRunLastSummary(shouldSummarizeState.stopReason)
+						!stopReasonCanRunLastSummary(shouldSummarizeState.stopReason)
 					) {
 						this.state = SummaryManagerState.Starting;
 						summarizer.stop(shouldSummarizeState.stopReason);

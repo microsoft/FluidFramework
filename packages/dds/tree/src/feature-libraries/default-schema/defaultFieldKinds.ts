@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { fail } from "@fluidframework/core-utils/internal";
+
 import {
 	type ChangeAtomId,
 	type DeltaDetachedNodeId,
@@ -10,7 +12,6 @@ import {
 	forbiddenFieldKindIdentifier,
 	Multiplicity,
 } from "../../core/index.js";
-import { fail } from "../../util/index.js";
 import {
 	type FieldChangeDelta,
 	type FieldChangeHandler,
@@ -31,6 +32,8 @@ import {
 import { sequenceFieldChangeHandler } from "../sequence-field/index.js";
 
 import { noChangeCodecFamily } from "./noChangeCodecs.js";
+import type { CodecTree } from "../../codec/index.js";
+import { brand, type Brand } from "../../util/index.js";
 
 /**
  * ChangeHandler that only handles no-op / identity changes.
@@ -40,6 +43,7 @@ export const noChangeHandler: FieldChangeHandler<0> = {
 		compose: (change1: 0, change2: 0) => 0,
 		invert: (changes: 0) => 0,
 		rebase: (change: 0, over: 0) => 0,
+		mute: (changes: 0) => 0,
 	}),
 	codecsFactory: () => noChangeCodecFamily,
 	editor: { buildChildChanges: () => fail(0xb0d /* Child changes not supported */) },
@@ -96,6 +100,11 @@ export const required = new FieldKindWithEditor(
 	Multiplicity.Single,
 	valueChangeHandler,
 	(types, other) =>
+		// By omitting Identifier here,
+		// this is making a policy choice that a schema upgrade cannot be done from required to identifier.
+		// Since an identifier can be upgraded into a required field,
+		// preventing the inverse helps ensure that schema upgrades are monotonic.
+		// Which direction is allowed is a subjective policy choice.
 		(other.kind === sequence.identifier ||
 			other.kind === requiredIdentifier ||
 			other.kind === optional.identifier ||
@@ -124,6 +133,10 @@ const nodeKeyIdentifier = "NodeKey";
 
 /**
  * Exactly one identifier.
+ *
+ * TODO: this is almost the same as identifier, but apparently unused.
+ * Confirm if this is truly unused since before the document format was stabilized, and remove if possible.
+ * @deprecated Superseded by {@link identifier}.
  */
 export const nodeKey = new FieldKindWithEditor(
 	nodeKeyIdentifier,
@@ -148,6 +161,7 @@ export const identifier = new FieldKindWithEditor(
 	Multiplicity.Single,
 	noChangeHandler,
 	(types, other) =>
+		// Allows upgrading from identifier to required: which way this upgrade is allowed to go is a subjective policy choice.
 		(other.kind === sequence.identifier ||
 			other.kind === requiredIdentifier ||
 			other.kind === optional.identifier ||
@@ -193,9 +207,12 @@ export const forbidden = new FieldKindWithEditor(
 	new Set(),
 );
 
-export const fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration> = new Map([
+export const fieldKindConfigurations: ReadonlyMap<
+	ModularChangeFormatVersion,
+	FieldKindConfiguration
+> = new Map([
 	[
-		1,
+		brand(1),
 		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
 			[nodeKey.identifier, { kind: nodeKey, formatVersion: 1 }],
 			[required.identifier, { kind: required, formatVersion: 1 }],
@@ -206,7 +223,7 @@ export const fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration
 		]),
 	],
 	[
-		2,
+		brand(2),
 		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
 			[nodeKey.identifier, { kind: nodeKey, formatVersion: 1 }],
 			[required.identifier, { kind: required, formatVersion: 2 }],
@@ -217,7 +234,7 @@ export const fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration
 		]),
 	],
 	[
-		3,
+		brand(3),
 		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
 			[nodeKey.identifier, { kind: nodeKey, formatVersion: 1 }],
 			[required.identifier, { kind: required, formatVersion: 2 }],
@@ -228,7 +245,7 @@ export const fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration
 		]),
 	],
 	[
-		4,
+		brand(4),
 		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
 			[nodeKey.identifier, { kind: nodeKey, formatVersion: 1 }],
 			[required.identifier, { kind: required, formatVersion: 2 }],
@@ -239,6 +256,25 @@ export const fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration
 		]),
 	],
 ]);
+
+export type ModularChangeFormatVersion = Brand<1 | 2 | 3 | 4, "ModularChangeFormatVersion">;
+export function getCodecTreeForModularChangeFormat(
+	version: ModularChangeFormatVersion,
+): CodecTree {
+	const dependencies =
+		fieldKindConfigurations.get(version) ?? fail("Unknown modular change format");
+	const children: CodecTree[] = Array.from(dependencies.entries()).map(
+		([key, { formatVersion }]) => ({
+			name: `FieldKind:${key}`,
+			version: formatVersion,
+		}),
+	);
+	return {
+		name: "ModularChange",
+		version,
+		children,
+	};
+}
 
 /**
  * All supported field kinds.
@@ -256,20 +292,10 @@ export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> =
 // TODO: Find a way to make docs like {@inheritDoc required} work in vscode.
 // TODO: ensure thy work in generated docs.
 // TODO: add these comments to the rest of the cases below.
-/**
- */
 export interface Required extends FlexFieldKind<"Value", Multiplicity.Single> {}
-/**
- */
 export interface Optional extends FlexFieldKind<"Optional", Multiplicity.Optional> {}
-/**
- */
 export interface Sequence extends FlexFieldKind<"Sequence", Multiplicity.Sequence> {}
-/**
- */
 export interface Identifier extends FlexFieldKind<"Identifier", Multiplicity.Single> {}
-/**
- */
 export interface Forbidden
 	extends FlexFieldKind<typeof forbiddenFieldKindIdentifier, Multiplicity.Forbidden> {}
 

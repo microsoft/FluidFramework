@@ -61,6 +61,10 @@ export type {
 	Off,
 	/* eslint-enable import/export */
 } from "@fluidframework/core-interfaces";
+export type { ErasedBaseType } from "@fluidframework/core-interfaces/internal";
+
+// This is an alpha API, but this package doesn't have an alpha entry point so its imported from "internal".
+export { onAssertionFailure } from "@fluidframework/core-utils/internal";
 
 export type { isFluidHandle } from "@fluidframework/runtime-utils";
 
@@ -102,18 +106,23 @@ export const SharedTree: SharedObjectKind<ITree> = OriginalSharedTree;
 /**
  * {@link SharedTree} but allowing a non-default configuration.
  * @remarks
- * This is useful for debugging and testing to opt into extra validation or see if opting out of some optimizations fixes an issue.
+ * This is useful for debugging and testing.
+ * For example, it can be used to opt into extra validation or see if opting out of some optimizations fixes an issue.
+ *
+ * With great care, and knowledge of the support and stability of the options exposed here,
+ * this can also be used to opt into some features early or for performance tuning.
+ *
  * @example
  * ```typescript
  * import {
- * 	ForestType,
  * 	TreeCompressionStrategy,
  * 	configuredSharedTree,
- * 	typeboxValidator,
- * } from "@fluid-framework/alpha";
+ * 	FormatValidatorBasic,
+ * 	ForestTypeReference,
+ * } from "fluid-framework/alpha";
  * const SharedTree = configuredSharedTree({
- * 	forest: ForestType.Reference,
- * 	jsonValidator: typeboxValidator,
+ * 	forest: ForestTypeReference,
+ * 	jsonValidator: FormatValidatorBasic,
  * 	treeEncodeType: TreeCompressionStrategy.Uncompressed,
  * });
  * ```
@@ -146,20 +155,18 @@ export type {
 	DeserializeCallback,
 	InteriorSequencePlace,
 	IInterval,
-	IIntervalCollectionEvent,
-	IIntervalCollection,
-	IntervalIndex,
 	IntervalStickiness,
 	ISequenceDeltaRange,
-	ISerializableInterval,
 	ISerializedInterval,
-	ISharedIntervalCollection,
 	ISharedSegmentSequenceEvents,
 	ISharedString,
 	SequencePlace,
 	SharedStringSegment,
 	Side,
 	ISharedSegmentSequence,
+	ISequenceIntervalCollection,
+	ISequenceIntervalCollectionEvents,
+	SequenceIntervalIndex,
 } from "@fluidframework/sequence/internal";
 
 export type {

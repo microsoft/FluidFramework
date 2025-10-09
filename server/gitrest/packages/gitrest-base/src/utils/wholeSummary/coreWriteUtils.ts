@@ -3,26 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import { IBlob, ICreateTreeEntry, ITree, ITreeEntry } from "@fluidframework/gitresources";
-import {
-	IWholeSummaryBlob,
-	IWholeSummaryTree,
-	IWholeSummaryTreeHandleEntry,
-	IWholeSummaryTreeValueEntry,
-	NetworkError,
-	WholeSummaryTreeEntry,
-} from "@fluidframework/server-services-client";
+import type { IBlob, ICreateTreeEntry, ITree, ITreeEntry } from "@fluidframework/gitresources";
 import { getGitMode, getGitType } from "@fluidframework/protocol-base";
 import { SummaryType } from "@fluidframework/protocol-definitions";
-import { IRepositoryManager } from "../definitions";
-import { IFullGitTree } from "./definitions";
+import {
+	type IWholeSummaryBlob,
+	type IWholeSummaryTree,
+	type IWholeSummaryTreeHandleEntry,
+	type IWholeSummaryTreeValueEntry,
+	NetworkError,
+	type WholeSummaryTreeEntry,
+} from "@fluidframework/server-services-client";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
+
+import type { IRepositoryManager } from "../definitions";
+
 import {
 	buildFullGitTreeFromGitTree,
 	convertFullGitTreeToFullSummaryTree,
 	convertFullSummaryToWholeSummaryEntries,
 	convertWholeSummaryTreeEntryToSummaryObject,
 } from "./conversions";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import type { IFullGitTree } from "./definitions";
 
 /**
  * Options and flags for writing a summary tree.

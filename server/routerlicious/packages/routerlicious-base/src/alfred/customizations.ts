@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IClusterDrainingChecker,
 	IDocumentRepository,
 	IStorageNameAllocator,
@@ -14,13 +14,17 @@ import {
 	IFluidAccessTokenGenerator,
 	IReadinessCheck,
 } from "@fluidframework/server-services-core";
-import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
-import { IDocumentDeleteService } from "./services";
+import type { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
+
+import { ITenantRepository } from "../riddler";
+
+import type { IDocumentDeleteService } from "./services";
 
 /**
  * @internal
  */
 export interface IAlfredResourcesCustomizations {
+	tenantRepository?: ITenantRepository;
 	documentRepository?: IDocumentRepository;
 	storageNameAllocator?: IStorageNameAllocator;
 	documentDeleteService?: IDocumentDeleteService;
@@ -31,6 +35,8 @@ export interface IAlfredResourcesCustomizations {
 	clusterDrainingChecker?: IClusterDrainingChecker;
 	redisClientConnectionManagerForJwtCache?: IRedisClientConnectionManager;
 	redisClientConnectionManagerForThrottling?: IRedisClientConnectionManager;
+	redisClientConnectionManagerForInvalidTokenCache?: IRedisClientConnectionManager;
+	redisClientConnectionManagerForGetSession?: IRedisClientConnectionManager;
 	readinessCheck?: IReadinessCheck;
 	fluidAccessTokenGenerator?: IFluidAccessTokenGenerator;
 }

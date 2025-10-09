@@ -45,7 +45,7 @@ describeCompat("GC Data Store Aliased Full Compat", "FullCompat", (getTestObject
 	}
 
 	it("An unreferenced datastore when aliased becomes referenced.", async function () {
-		// TODO: Re-enable after cross version compat bugs are fixed - ADO:6978
+		// TODO: Re-enable after cross-client compat bugs are fixed - ADO:6978
 		if (provider.type === "TestObjectProviderWithVersionedLoad") {
 			this.skip();
 		}

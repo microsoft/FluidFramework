@@ -1,17 +1,17 @@
 # (constructor)
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestNamespace](/test-suite-a/testnamespace-namespace/) &gt; [TestClass](/test-suite-a/testnamespace-namespace/testclass-class/) &gt; [(constructor)(testClassProperty)](/test-suite-a/testnamespace-namespace/testclass-class/_constructor_-constructor)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [TestNamespace](/test-suite-a/testnamespace-namespace/) > [TestClass](/test-suite-a/testnamespace-namespace/testclass-class/) > [(constructor)(testClassProperty)](/test-suite-a/testnamespace-namespace/testclass-class/_constructor_-constructor)
 
 Test class constructor
 
-## Signature {#\_constructor\_-signature}
+<h2 id="_constructor_-signature">Signature</h2>
 
 ```typescript
 constructor(testClassProperty: string);
 ```
 
-## Parameters {#\_constructor\_-parameters}
+<h2 id="_constructor_-parameters">Parameters</h2>
 
 | Parameter | Type | Description |
-| --- | --- | --- |
+| - | - | - |
 | testClassProperty | string | See [testClassProperty](/test-suite-a/testclass-class/testclassproperty-property) |

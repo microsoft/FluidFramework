@@ -3,20 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import events_pkg from "events_pkg";
-const { EventEmitter } = events_pkg;
 import * as util from "util";
+
+import { NetworkError } from "@fluidframework/server-services-client";
 import {
 	BoxcarType,
-	IBoxcarMessage,
-	IPendingBoxcar,
-	IProducer,
+	type IBoxcarMessage,
+	type IPendingBoxcar,
+	type IProducer,
 	PendingBoxcar,
 	MaxBatchSize,
+	MaxKafkaMessageSize,
 } from "@fluidframework/server-services-core";
-import { NetworkError } from "@fluidframework/server-services-client";
+import events_pkg from "events_pkg";
 import * as kafka from "kafka-node";
+
 import { ensureTopics } from "./kafkaTopics";
+
+const { EventEmitter } = events_pkg;
 
 /**
  * Kafka producer using the kafka-node library
@@ -44,7 +48,7 @@ export class KafkaNodeProducer implements IProducer {
 	) {
 		clientOptions.clientId = clientId;
 		this.maxBatchSize = maxBatchSize ?? MaxBatchSize;
-		this.maxMessageSize = maxMessageSize ?? Number.MAX_SAFE_INTEGER;
+		this.maxMessageSize = maxMessageSize ?? MaxKafkaMessageSize;
 		this.connect();
 	}
 

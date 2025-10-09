@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fromUtf8ToBase64, performanceNow } from "@fluid-internal/client-utils";
+import { performanceNow } from "@fluid-internal/client-utils";
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
@@ -351,9 +351,7 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
 		baseurl?: string,
 		initialTokenP?: Promise<ITokenResponse>,
 	): RouterliciousStorageRestWrapper {
-		const defaultQueryString = {
-			token: `${fromUtf8ToBase64(tenantId)}`,
-		};
+		const defaultQueryString = {};
 
 		const getAuthorizationHeader: AuthorizationHeaderGetter = (
 			token: ITokenResponse,

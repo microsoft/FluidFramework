@@ -1,13 +1,13 @@
 # testOptionalInterfaceProperty
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestInterface](/test-suite-a/testinterface-interface/) &gt; [testOptionalInterfaceProperty](/test-suite-a/testinterface-interface/testoptionalinterfaceproperty-propertysignature)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [TestInterface](/test-suite-a/testinterface-interface/) > [testOptionalInterfaceProperty](/test-suite-a/testinterface-interface/testoptionalinterfaceproperty-propertysignature)
 
 Test optional property
 
-## Signature {#testoptionalinterfaceproperty-signature}
+<h2 id="testoptionalinterfaceproperty-signature">Signature</h2>
 
 ```typescript
 testOptionalInterfaceProperty?: number;
 ```
 
-**Type:** number
+**Type**: number

@@ -48,14 +48,14 @@ export interface ProtoChange {
 
 export const Change = {
 	/**
-	 * @returns An empty changeset
+	 * Creates an empty changeset
 	 */
 	empty: (): OptionalChangeset => ({ moves: [], childChanges: [] }),
 	/**
+	 * Creates a changeset that moves a node from `src` to `dst`.
 	 * @param src - The register to move a node from. The register must be full in the input context of the changeset.
 	 * @param dst - The register to move that node to.
 	 * The register must be empty in the input context of the changeset, or emptied as part of the changeset.
-	 * @returns A changeset that moves a node from src to dst.
 	 */
 	move: (
 		src: RegisterId | ChangesetLocalId | ChangeAtomId,
@@ -76,10 +76,10 @@ export const Change = {
 		};
 	},
 	/**
+	 * Creates a changeset that clears a register and moves the contents to another register.
 	 * @param target - The register remove a node from. The register must be full in the input context of the changeset.
 	 * @param dst - The register to move the contents of the target register to.
 	 * The register must be empty in the input context of the changeset, or emptied as part of the changeset.
-	 * @returns A changeset that clears a register and moves the contents to another register.
 	 */
 	clear: (
 		target: RegisterId | ChangesetLocalId,
@@ -96,10 +96,10 @@ export const Change = {
 					childChanges: [],
 				},
 	/**
+	 * Creates a changeset that reserves a register.
 	 * @param target - The register to reserve. The register must NOT be full in the input context of the changeset.
 	 * @param dst - The register that the contents of the target register should be moved to should it become populated.
 	 * The register must be empty in the input context of the changeset, or emptied as part of the changeset.
-	 * @returns A changeset that reserves an register.
 	 */
 	reserve: (
 		target: RegisterId | ChangesetLocalId,
@@ -113,9 +113,9 @@ export const Change = {
 		};
 	},
 	/**
+	 * Creates a changeset that pins the current node to the field.
 	 * @param dst - The register that the contents of the field should be moved to should it become populated
 	 * with a different node that the current one (which will take its place).
-	 * @returns A changeset that pins the current node to the field.
 	 */
 	pin: (dst: ChangeAtomId | ChangesetLocalId): OptionalChangeset => {
 		return {
@@ -125,19 +125,19 @@ export const Change = {
 		};
 	},
 	/**
+	 * Creates a changeset that applies a change to a child node in the given register.
 	 * @param location - The register that contains the child node to be changed.
 	 * That register must be full in the input context of the changeset.
 	 * @param change - A change to apply to a child node.
-	 * @returns A changeset that applies the given change to the child node in the given register.
 	 */
 	childAt: (location: RegisterId | ChangesetLocalId, change: NodeId): OptionalChangeset => ({
 		moves: [],
 		childChanges: [[asRegister(location), change]],
 	}),
 	/**
+	 * Creates a changeset that applies the given change to the child node in the "self" register.
+	 * @remarks The "self" register must be full in the input context of the changeset.
 	 * @param change - A change to apply to a child node in the "self" register.
-	 * @returns A changeset that applies the given change to the child node in the "self" register.
-	 * The "self" register must be full in the input context of the changeset.
 	 */
 	child: (change: NodeId): OptionalChangeset => Change.childAt("self", change),
 	/**

@@ -8,7 +8,7 @@ import type { IClusterDrainingChecker } from "@fluidframework/server-services-co
 export class TestClusterDrainingStatusChecker implements IClusterDrainingChecker {
 	private clusterDrainingStatus: boolean = false;
 
-	public async isClusterDraining(cluster?: string): Promise<boolean> {
+	public async isClusterDraining(options?: any): Promise<boolean> {
 		return this.clusterDrainingStatus;
 	}
 

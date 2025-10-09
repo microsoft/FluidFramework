@@ -5,11 +5,11 @@
 
 import { strict as assert } from "node:assert";
 
-import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
 
 import { detectOutboundReferences, getSummaryForDatastores } from "../channelCollection.js";
-import { IContainerRuntimeMetadata, nonDataStorePaths } from "../summary/index.js";
+import { type IContainerRuntimeMetadata, nonDataStorePaths } from "../summary/index.js";
 
 describe("Runtime", () => {
 	describe("Container Runtime", () => {
@@ -121,7 +121,7 @@ describe("Runtime", () => {
 				assert.strictEqual(snapshot.id, "channels-id", "Should be lower-level");
 				assert.strictEqual(Object.keys(snapshot.trees).length, 4, "Should have 4 datastores");
 				// Put in variable to avoid type-narrowing bug
-				const nonDataStore1 = snapshot.trees[nonDataStorePaths[0]];
+				const nonDataStore1: ISnapshotTree | undefined = snapshot.trees[nonDataStorePaths[0]];
 				assert.strictEqual(
 					nonDataStore1?.id,
 					"lower-non-datastore-1",

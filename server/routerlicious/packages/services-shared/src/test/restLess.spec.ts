@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { AxiosRequestConfig } from "axios";
 import { json, urlencoded } from "body-parser";
 import express from "express";

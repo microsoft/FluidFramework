@@ -5,40 +5,43 @@
 
 import { EventEmitter } from "events";
 import { inspect } from "util";
+
+import type { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import type { IGitManager } from "@fluidframework/server-services-client";
 import {
-	ICheckpointService,
-	ICollection,
-	IContext,
-	IDeltaService,
-	IDocument,
-	IDocumentRepository,
-	IPartitionLambda,
-	IPartitionLambdaConfig,
-	IPartitionLambdaFactory,
-	IProducer,
-	IScribe,
-	ISequencedOperationMessage,
-	IServiceConfiguration,
-	ITenantManager,
-	MongoManager,
+	type ICheckpointService,
+	type ICollection,
+	type IContext,
+	type IDeltaService,
+	type IDocument,
+	type IDocumentRepository,
+	type IPartitionLambda,
+	type IPartitionLambdaConfig,
+	type IPartitionLambdaFactory,
+	type IProducer,
+	type IScribe,
+	type ISequencedOperationMessage,
+	type IServiceConfiguration,
+	type ITenantManager,
+	type MongoManager,
 	runWithRetry,
 } from "@fluidframework/server-services-core";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IGitManager } from "@fluidframework/server-services-client";
 import {
 	getLumberBaseProperties,
 	LumberEventName,
 	Lumberjack,
-	Lumber,
+	type Lumber,
 } from "@fluidframework/server-services-telemetry";
+
 import { NoOpLambda, createSessionMetric, isDocumentValid, isDocumentSessionValid } from "../utils";
+
 import { CheckpointManager } from "./checkpointManager";
+import type { ILatestSummaryState } from "./interfaces";
 import { ScribeLambda } from "./lambda";
+import { PendingMessageReader } from "./pendingMessageReader";
 import { SummaryReader } from "./summaryReader";
 import { SummaryWriter } from "./summaryWriter";
 import { getClientIds, initializeProtocol, isScribeCheckpointQuorumScrubbed } from "./utils";
-import { ILatestSummaryState } from "./interfaces";
-import { PendingMessageReader } from "./pendingMessageReader";
 
 const DefaultScribe: IScribe = {
 	lastClientSummaryHead: undefined,

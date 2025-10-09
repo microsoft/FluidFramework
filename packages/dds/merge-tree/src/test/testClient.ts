@@ -7,31 +7,31 @@ import { strict as assert } from "node:assert";
 
 import { Trace } from "@fluid-internal/client-utils";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
+import { DoublyLinkedList } from "@fluidframework/core-utils/internal";
+import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
-	ITree,
+	type ITree,
 	MessageType,
-	ISequencedDocumentMessage,
+	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
+import type { AttributionKey } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { MockStorage } from "@fluidframework/test-runtime-utils/internal";
 
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
 import { Client } from "../client.js";
-import { DoublyLinkedList } from "../collections/index.js";
-import { UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants.js";
-import { IMergeTreeOptions, ReferencePosition } from "../index.js";
-import { MergeTree, getSlideToSegoff } from "../mergeTree.js";
+import { UnassignedSequenceNumber } from "../constants.js";
+import type { IMergeTreeOptions, ReferencePosition } from "../index.js";
+import { type MergeTree, getSlideToSegoff } from "../mergeTree.js";
 import {
 	backwardExcursion,
 	forwardExcursion,
 	walkAllChildSegments,
 } from "../mergeTreeNodeWalk.js";
 import {
-	MergeBlock,
-	ISegmentPrivate,
+	type MergeBlock,
+	type ISegmentPrivate,
 	Marker,
 	MaxNodesInBlock,
 	type SegmentGroup,
@@ -44,17 +44,17 @@ import {
 	createRemoveRangeOp,
 } from "../opBuilder.js";
 import {
-	IJSONSegment,
-	IMarkerDef,
-	IMergeTreeOp,
+	type IJSONSegment,
+	type IMarkerDef,
+	type IMergeTreeOp,
 	MergeTreeDeltaType,
 	ReferenceType,
 	type IMergeTreeInsertMsg,
 } from "../ops.js";
-import { LocalReconnectingPerspective } from "../perspective.js";
-import { PropertySet } from "../properties.js";
+import { LocalReconnectingPerspective, PriorPerspective } from "../perspective.js";
+import type { PropertySet } from "../properties.js";
 import { DetachedReferencePosition, refHasTileLabel } from "../referencePositions.js";
-import { MergeTreeRevertibleDriver } from "../revertibles.js";
+import type { MergeTreeRevertibleDriver } from "../revertibles.js";
 import { assertInserted, assertMergeNode, isRemoved } from "../segmentInfos.js";
 import { SnapshotLegacy } from "../snapshotlegacy.js";
 import type { OperationStamp } from "../stamps.js";
@@ -197,17 +197,7 @@ export class TestClient extends Client {
 	}
 
 	public getText(start?: number, end?: number): string {
-		return this.textHelper.getText(
-			// Current sequence number of the collab window *should* be sufficient here, but some tests create a client but then perform operations
-			// on the merge tree directly which doesn't update that.
-			// Once textHelper.getText takes in a perspective rather than the older representation of refSeq / clientId,
-			// we can just pass in the local perspective here which is much more natural.
-			UniversalSequenceNumber,
-			this.getClientId(),
-			"",
-			start,
-			end,
-		);
+		return this.textHelper.getText(this.mergeTree.localPerspective, "", start, end);
 	}
 
 	public enqueueTestString(): void {
@@ -325,7 +315,7 @@ export class TestClient extends Client {
 	public relText(clientId: number, refSeq: number): string {
 		return `cli: ${this.getLongClientId(
 			clientId,
-		)} refSeq: ${refSeq}: ${this.textHelper.getText(refSeq, clientId)}`;
+		)} refSeq: ${refSeq}: ${this.textHelper.getText(new PriorPerspective(refSeq, clientId))}`;
 	}
 
 	public makeOpMessage(
@@ -429,8 +419,8 @@ export class TestClient extends Client {
 		});
 
 		assert(segment !== undefined, "No segment found");
-		const segoff = getSlideToSegoff({ segment, offset }) ?? segment;
-		if (segoff.segment === undefined || segoff.offset === undefined) {
+		const segoff = getSlideToSegoff({ segment, offset }, undefined, perspective);
+		if (segoff === undefined) {
 			return DetachedReferencePosition;
 		}
 
@@ -547,7 +537,7 @@ export class TestClient extends Client {
 	): ReferencePosition | undefined {
 		let foundMarker: Marker | undefined;
 
-		const { segment } = this.getContainingSegment<ISegmentPrivate>(startPos);
+		const { segment } = this.getContainingSegment<ISegmentPrivate>(startPos) ?? {};
 		assertSegmentLeaf(segment);
 		if (Marker.is(segment)) {
 			if (refHasTileLabel(segment, markerLabel)) {

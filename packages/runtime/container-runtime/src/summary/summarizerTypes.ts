@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IDeltaManager,
 	ContainerWarning,
 } from "@fluidframework/container-definitions/internal";
@@ -11,28 +11,29 @@ import type {
 	ISummarizerEvents,
 	SummarizerStopReason,
 } from "@fluidframework/container-runtime-definitions/internal";
-import {
+import type {
 	IEventProvider,
 	ITelemetryBaseProperties,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
-import {
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { ISummaryStats } from "@fluidframework/runtime-definitions/internal";
-import {
+import type { ISummaryStats } from "@fluidframework/runtime-definitions/internal";
+import type {
 	ITelemetryLoggerExt,
 	ITelemetryLoggerPropertyBag,
 } from "@fluidframework/telemetry-utils/internal";
 
-import {
-	ISummaryAckMessage,
-	ISummaryNackMessage,
-	ISummaryOpMessage,
-} from "./summaryCollection.js";
-import { SummarizeReason } from "./summaryGenerator.js";
+import type { SummarizeReason } from "./summarizerUtils.js";
+import type {
+	EnqueueSummarizeResult,
+	ISummarizeResults,
+} from "./summaryDelayLoadedModule/index.js";
+
+export const summarizerClientType = "summarizer";
 
 /**
  * Similar to AbortSignal, but using promise instead of events
@@ -137,8 +138,7 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
 
 /**
  * Options affecting summarize behavior.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummarizeOptions {
 	/**
@@ -170,8 +170,7 @@ export interface ISubmitSummaryOptions extends ISummarizeOptions {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
 	/**
@@ -186,8 +185,7 @@ export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
 
 /**
  * Options to use when enqueueing a summarize attempt.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
 	/**
@@ -207,8 +205,7 @@ export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
 /**
  * In addition to the normal summary tree + stats, this contains additional stats
  * only relevant at the root of the tree.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IGeneratedSummaryStats extends ISummaryStats {
 	/**
@@ -239,8 +236,7 @@ export interface IGeneratedSummaryStats extends ISummaryStats {
 
 /**
  * Type for summarization failures that are retriable.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IRetriableFailureError extends Error {
 	readonly retryAfterSeconds?: number;
@@ -248,8 +244,7 @@ export interface IRetriableFailureError extends Error {
 
 /**
  * Base results for all submitSummary attempts.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IBaseSummarizeResult {
 	readonly stage: "base";
@@ -266,8 +261,7 @@ export interface IBaseSummarizeResult {
 
 /**
  * Results of submitSummary after generating the summary tree.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "stage"> {
 	readonly stage: "generate";
@@ -287,8 +281,7 @@ export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "
 
 /**
  * Results of submitSummary after uploading the tree to storage.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "stage"> {
 	readonly stage: "upload";
@@ -304,8 +297,7 @@ export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "
 
 /**
  * Results of submitSummary after submitting the summarize op.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stage" | "error"> {
 	readonly stage: "submit";
@@ -334,8 +326,7 @@ export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stag
  * 3. "upload" - the summary was uploaded to storage, and the result contains the server-provided handle
  *
  * 4. "submit" - the summarize op was submitted, and the result contains the op client sequence number.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type SubmitSummaryResult =
 	| IBaseSummarizeResult
@@ -345,50 +336,20 @@ export type SubmitSummaryResult =
 
 /**
  * The stages of Summarize, used to describe how far progress succeeded in case of a failure at a later stage.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type SummaryStage = SubmitSummaryResult["stage"] | "unknown";
 
 /**
  * The data in summarizer result when submit summary stage fails.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface SubmitSummaryFailureData {
 	stage: SummaryStage;
 }
 
 /**
- * @legacy
- * @alpha
- */
-export interface IBroadcastSummaryResult {
-	readonly summarizeOp: ISummaryOpMessage;
-	readonly broadcastDuration: number;
-}
-
-/**
- * @legacy
- * @alpha
- */
-export interface IAckSummaryResult {
-	readonly summaryAckOp: ISummaryAckMessage;
-	readonly ackNackDuration: number;
-}
-
-/**
- * @legacy
- * @alpha
- */
-export interface INackSummaryResult {
-	readonly summaryNackOp: ISummaryNackMessage;
-	readonly ackNackDuration: number;
-}
-
-/**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type SummarizeResultPart<TSuccess, TFailure = undefined> =
 	| {
@@ -403,66 +364,7 @@ export type SummarizeResultPart<TSuccess, TFailure = undefined> =
 	  };
 
 /**
- * @legacy
- * @alpha
- */
-export interface ISummarizeResults {
-	/**
-	 * Resolves when we generate, upload, and submit the summary.
-	 */
-	readonly summarySubmitted: Promise<
-		SummarizeResultPart<SubmitSummaryResult, SubmitSummaryFailureData>
-	>;
-	/**
-	 * Resolves when we observe our summarize op broadcast.
-	 */
-	readonly summaryOpBroadcasted: Promise<SummarizeResultPart<IBroadcastSummaryResult>>;
-	/**
-	 * Resolves when we receive a summaryAck or summaryNack.
-	 */
-	readonly receivedSummaryAckOrNack: Promise<
-		SummarizeResultPart<IAckSummaryResult, INackSummaryResult>
-	>;
-}
-
-/**
- * @legacy
- * @alpha
- */
-export type EnqueueSummarizeResult =
-	| (ISummarizeResults & {
-			/**
-			 * Indicates that another summarize attempt is not already enqueued,
-			 * and this attempt has been enqueued.
-			 */
-			readonly alreadyEnqueued?: undefined;
-	  })
-	| (ISummarizeResults & {
-			/**
-			 * Indicates that another summarize attempt was already enqueued.
-			 */
-			readonly alreadyEnqueued: true;
-			/**
-			 * Indicates that the other enqueued summarize attempt was abandoned,
-			 * and this attempt has been enqueued enqueued.
-			 */
-			readonly overridden: true;
-	  })
-	| {
-			/**
-			 * Indicates that another summarize attempt was already enqueued.
-			 */
-			readonly alreadyEnqueued: true;
-			/**
-			 * Indicates that the other enqueued summarize attempt remains enqueued,
-			 * and this attempt has not been enqueued.
-			 */
-			readonly overridden?: undefined;
-	  };
-
-/**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummarizer extends IEventProvider<ISummarizerEvents> {
 	/**
@@ -759,8 +661,7 @@ export interface ISummarizeRunnerTelemetry extends ITelemetryLoggerPropertyBag {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummaryBaseConfiguration {
 	/**
@@ -782,8 +683,7 @@ export interface ISummaryBaseConfiguration {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfiguration {
 	state: "enabled";
@@ -846,24 +746,21 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummaryConfigurationDisableSummarizer {
 	state: "disabled";
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummaryConfigurationDisableHeuristics extends ISummaryBaseConfiguration {
 	state: "disableHeuristics";
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type ISummaryConfiguration =
 	| ISummaryConfigurationDisableSummarizer

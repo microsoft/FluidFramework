@@ -3,7 +3,7 @@
 	"extends": "<projectFolder>/../../../common/build/build-common/api-extractor-report.esm.current.json",
 	"mainEntryPointFilePath": "<projectFolder>/lib/alpha.d.ts",
 	"apiReport": {
+		// The base config omits alpha. Explicitly opt into alpha reports (in addition to public/beta) for this package.
 		"reportVariants": ["public", "beta", "alpha"]
-	},
-	"bundledPackages": ["@fluidframework/*"]
+	}
 }

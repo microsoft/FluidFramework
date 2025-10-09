@@ -26,8 +26,7 @@
  * If a SequencePlace is the endpoint of a range (e.g. start/end of an interval or search range),
  * the Side value means it is exclusive if it is nearer to the other position and inclusive if it is farther.
  * E.g. the start of a range with Side.After is exclusive of the character at the position.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type SequencePlace = number | "start" | "end" | InteriorSequencePlace;
 
@@ -35,8 +34,7 @@ export type SequencePlace = number | "start" | "end" | InteriorSequencePlace;
  * A sequence place that does not refer to the special endpoint segments.
  *
  * See {@link SequencePlace} for additional context.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface InteriorSequencePlace {
 	pos: number;
@@ -47,8 +45,7 @@ export interface InteriorSequencePlace {
  * Defines a side relative to a character in a sequence.
  *
  * @remarks See {@link SequencePlace} for additional context on usage.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export enum Side {
 	Before = 0,
@@ -58,8 +55,7 @@ export enum Side {
 /**
  * Returns the position and side of the start and end of a sequence.
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export function endpointPosAndSide(
 	start: SequencePlace | undefined,

@@ -7,26 +7,29 @@ import { ScopeType, type IUser } from "@fluidframework/protocol-definitions";
 import {
 	GitManager,
 	Historian,
-	ICredentials,
+	type ICredentials,
 	BasicRestWrapper,
 	getAuthorizationTokenFromCredentials,
-	IGitManager,
+	type IGitManager,
 	parseToken,
+	isNetworkError,
+	NetworkError,
 } from "@fluidframework/server-services-client";
 import * as core from "@fluidframework/server-services-core";
-import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
-import {
-	extractTokenFromHeader,
-	getValidAccessToken,
-	logHttpMetrics,
-} from "@fluidframework/server-services-utils";
+import type { IInvalidTokenError } from "@fluidframework/server-services-core";
 import {
 	CommonProperties,
 	getLumberBaseProperties,
 	getGlobalTelemetryContext,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
-import { RawAxiosRequestHeaders } from "axios";
+import {
+	extractTokenFromHeader,
+	getValidAccessToken,
+	logHttpMetrics,
+} from "@fluidframework/server-services-utils";
+import type { RawAxiosRequestHeaders } from "axios";
+
 import { IsEphemeralContainer } from ".";
 
 export function getRefreshTokenIfNeededCallback(
@@ -37,10 +40,7 @@ export function getRefreshTokenIfNeededCallback(
 	serviceName: string,
 ): (authorizationHeader: RawAxiosRequestHeaders) => Promise<RawAxiosRequestHeaders | undefined> {
 	const refreshTokenIfNeeded = async (authorizationHeader: RawAxiosRequestHeaders) => {
-		if (
-			authorizationHeader.Authorization &&
-			typeof authorizationHeader.Authorization === "string"
-		) {
+		if (typeof authorizationHeader.Authorization === "string") {
 			const currentAccessToken = extractTokenFromHeader(authorizationHeader.Authorization);
 			const props = {
 				...getLumberBaseProperties(documentId, tenantId),
@@ -58,7 +58,7 @@ export function getRefreshTokenIfNeededCallback(
 				Lumberjack.error("Failed to refresh access token", props, error);
 				throw error;
 			});
-			if (newAccessToken) {
+			if (newAccessToken !== undefined) {
 				return {
 					Authorization: `Basic ${newAccessToken}`,
 				};
@@ -103,6 +103,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 	constructor(
 		private readonly endpoint: string,
 		private readonly internalHistorianUrl: string,
+		private readonly invalidTokenCache?: core.ICache,
 	) {}
 
 	public async createTenant(tenantId?: string): Promise<core.ITenantConfig & { key: string }> {
@@ -119,9 +120,30 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			() => getGlobalTelemetryContext().getProperties(),
 			undefined /* refreshTokenIfNeeded */,
 			logHttpMetrics,
+			() => getGlobalTelemetryContext().getProperties().serviceName ?? "" /* serviceName */,
 		);
 		const result = await restWrapper.post<core.ITenantConfig & { key: string }>(
-			`/api/tenants/${encodeURIComponent(tenantId || "")}`,
+			`/api/tenants/${encodeURIComponent(tenantId ?? "")}`,
+			undefined /* requestBody */,
+		);
+		return result;
+	}
+
+	public async getTenantfromRiddler(tenantId?: string): Promise<core.ITenantConfig> {
+		const restWrapper = new BasicRestWrapper(
+			undefined /* baseUrl */,
+			undefined /* defaultQueryString */,
+			undefined /* maxBodyLength */,
+			undefined /* maxContentLength */,
+			undefined /* defaultHeaders */,
+			undefined /* axios */,
+			undefined /* refreshDefaultQureyString */,
+			undefined /* refreshDefaultHeaders */,
+			() => getGlobalTelemetryContext().getProperties().correlationId,
+			() => getGlobalTelemetryContext().getProperties(),
+		);
+		const result = await restWrapper.get<core.ITenantConfig>(
+			`${this.endpoint}/api/tenants/${encodeURIComponent(tenantId ?? "")}`,
 			undefined,
 		);
 		return result;
@@ -160,9 +182,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			lumberProperties /* telemetryProperties */,
 		);
 
-		const defaultQueryString = {
-			token: fromUtf8ToBase64(`${tenantId}`),
-		};
+		const defaultQueryString = {};
 		const getDefaultHeaders = () => {
 			const credentials: ICredentials = {
 				password: accessToken,
@@ -171,7 +191,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			const headers: RawAxiosRequestHeaders = {
 				Authorization: getAuthorizationTokenFromCredentials(credentials),
 			};
-			if (storageName) {
+			if (storageName !== undefined) {
 				headers.StorageName = storageName;
 			}
 
@@ -184,12 +204,9 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 		};
 
 		const refreshTokenIfNeeded = async (authorizationHeader: RawAxiosRequestHeaders) => {
-			if (
-				authorizationHeader.Authorization &&
-				typeof authorizationHeader.Authorization === "string"
-			) {
+			if (typeof authorizationHeader.Authorization === "string") {
 				const currentAccessToken = parseToken(tenantId, authorizationHeader.Authorization);
-				if (currentAccessToken) {
+				if (currentAccessToken !== undefined) {
 					const props = {
 						...lumberProperties,
 						serviceName: "historian",
@@ -210,7 +227,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 						Lumberjack.error("Failed to refresh access token", props, error);
 						throw error;
 					});
-					if (newAccessToken) {
+					if (newAccessToken !== undefined) {
 						const newCredentials: ICredentials = {
 							password: newAccessToken,
 							user: tenantId,
@@ -238,6 +255,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			() => getGlobalTelemetryContext().getProperties(),
 			refreshTokenIfNeeded,
 			logHttpMetrics,
+			() => getGlobalTelemetryContext().getProperties().serviceName ?? "" /* serviceName */,
 		);
 		const historian = new Historian(baseUrl, true, false, tenantRestWrapper);
 		const gitManager = new GitManager(historian);
@@ -245,7 +263,34 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 		return gitManager;
 	}
 
+	private throwInvalidTokenErrorAsNetworkError(cachedInvalidTokenError: string): void {
+		try {
+			const errorObject: IInvalidTokenError = JSON.parse(cachedInvalidTokenError);
+			const networkError = new NetworkError(
+				errorObject.code,
+				errorObject.message,
+				false,
+				false,
+				undefined,
+				"InvalidTokenCache",
+			);
+			throw networkError;
+		} catch (error: unknown) {
+			if (isNetworkError(error)) {
+				throw error;
+			}
+			// Do not throw an error if the cached invalid token error is not a valid JSON
+			Lumberjack.error("Failed to parse cached invalid token error", {}, error);
+		}
+	}
+
 	public async verifyToken(tenantId: string, token: string): Promise<void> {
+		if (this.invalidTokenCache) {
+			const cachedInvalidTokenError = await this.invalidTokenCache.get(token);
+			if (cachedInvalidTokenError !== null) {
+				this.throwInvalidTokenErrorAsNetworkError(cachedInvalidTokenError);
+			}
+		}
 		const restWrapper = new BasicRestWrapper(
 			this.endpoint /* baseUrl */,
 			undefined /* defaultQueryString */,
@@ -259,8 +304,36 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			() => getGlobalTelemetryContext().getProperties(),
 			undefined /* refreshTokenIfNeeded */,
 			logHttpMetrics,
+			() => getGlobalTelemetryContext().getProperties().serviceName ?? "" /* serviceName */,
 		);
-		await restWrapper.post(`/api/tenants/${encodeURIComponent(tenantId)}/validate`, { token });
+		try {
+			await restWrapper.post(`/api/tenants/${encodeURIComponent(tenantId)}/validate`, {
+				token,
+			});
+		} catch (error: unknown) {
+			if (isNetworkError(error)) {
+				// In case of a 401 or 403 error, we cache the token in the invalid token cache
+				// to avoid hitting the endpoint again with the same token.
+				if (error.code === 401 || error.code === 403) {
+					const errorToCache: IInvalidTokenError = {
+						code: error.code,
+						message: error.message,
+					};
+					// Cache the token in the invalid token cache
+					// to avoid hitting the endpoint again with the same token.
+					this.invalidTokenCache
+						?.set(token, JSON.stringify(errorToCache))
+						.catch((err) => {
+							Lumberjack.error(
+								"Failed to set token in invalid token cache",
+								{ tenantId },
+								err,
+							);
+						});
+				}
+			}
+			throw error;
+		}
 	}
 
 	public async getKey(tenantId: string, includeDisabledTenant = false): Promise<string> {
@@ -277,6 +350,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			() => getGlobalTelemetryContext().getProperties(),
 			undefined /* refreshTokenIfNeeded */,
 			logHttpMetrics,
+			() => getGlobalTelemetryContext().getProperties().serviceName ?? "" /* serviceName */,
 		);
 		const result = await restWrapper.get<core.ITenantKeys>(
 			`/api/tenants/${encodeURIComponent(tenantId)}/keys`,
@@ -308,6 +382,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			() => getGlobalTelemetryContext().getProperties(),
 			undefined /* refreshTokenIfNeeded */,
 			logHttpMetrics,
+			() => getGlobalTelemetryContext().getProperties().serviceName ?? "" /* serviceName */,
 		);
 		const result = await restWrapper.post<core.IFluidAccessToken>(
 			`/api/tenants/${encodeURIComponent(tenantId)}/accesstoken`,
@@ -349,6 +424,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			() => getGlobalTelemetryContext().getProperties(),
 			undefined /* refreshTokenIfNeeded */,
 			logHttpMetrics,
+			() => getGlobalTelemetryContext().getProperties().serviceName ?? "" /* serviceName */,
 		);
 		return restWrapper.get<core.ITenantConfig>(`/api/tenants/${tenantId}`, {
 			includeDisabledTenant,

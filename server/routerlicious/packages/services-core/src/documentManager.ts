@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocument, IDocumentStaticProperties } from "./document";
+import type { IDocument, IDocumentStaticProperties } from "./document";
 
 /**
  * @internal

@@ -18,47 +18,22 @@ resources:
       - release/*
       - main
       - next
+  repositories:
+  - repository: ff_pipeline_host
+    type: git
+    name: ff_pipeline_host
+
 
 variables:
 - template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
 - name: testWorkspace
   value: $(Pipeline.Workspace)/test
 # This is a test pipeline, not a build one, so we don't need to run CodeQL tasks
-- name: DisableCodeQL
+# Note that using this variable only works for non-1ES-template pipelines.
+- name: Codeql.SkipTaskAutoInjection
   value: true
 
 parameters:
-- name: packages
-  type: object
-  default:
-  - name: "@fluidframework/sequence"
-    affectedPaths:
-    - packages/dds/sequence
-    - packages/dds/merge-tree
-    testFileTarName: sequence
-    testCommand: test:stress
-  - name: "@fluid-experimental/tree"
-    affectedPaths:
-    - experimental/dds/tree
-    testFileTarName: experimental-tree
-    testCommand: test:stress
-  - name: "@fluidframework/tree"
-    affectedPaths:
-    - packages/dds/tree
-    testFileTarName: tree
-    testCommand: test:stress
-  - name: "@fluidframework/map"
-    affectedPaths:
-    - packages/dds/map
-    - packages/dds/merge-tree
-    testFileTarName: map
-    testCommand: test:stress
-  - name: "@fluidframework/matrix"
-    affectedPaths:
-    - packages/dds/matrix
-    - packages/dds/merge-tree
-    testFileTarName: matrix
-    testCommand: test:stress
 - name: stressMode
   values:
     - short
@@ -66,11 +41,38 @@ parameters:
     - long
   default: normal
 
-
 stages:
   - template: /tools/pipelines/templates/include-conditionally-run-stress-tests.yml@self
     parameters:
       artifactBuildId: $(resources.pipeline.client.runID)
-      packages: ${{ parameters.packages }}
+      packages:
+        - name: "@fluidframework/sequence"
+          affectedPaths:
+          - packages/dds/sequence
+          - packages/dds/merge-tree
+          testFileTarName: sequence
+          testCommand: test:stress
+        - name: "@fluid-experimental/tree"
+          affectedPaths:
+          - experimental/dds/tree
+          testFileTarName: experimental-tree
+          testCommand: test:stress
+        - name: "@fluidframework/tree"
+          affectedPaths:
+          - packages/dds/tree
+          testFileTarName: tree
+          testCommand: test:stress
+        - name: "@fluidframework/map"
+          affectedPaths:
+          - packages/dds/map
+          - packages/dds/merge-tree
+          testFileTarName: map
+          testCommand: test:stress
+        - name: "@fluidframework/matrix"
+          affectedPaths:
+          - packages/dds/matrix
+          - packages/dds/merge-tree
+          testFileTarName: matrix
+          testCommand: test:stress
       testWorkspace: ${{ variables.testWorkspace }}
       stressMode: ${{ parameters.stressMode }}

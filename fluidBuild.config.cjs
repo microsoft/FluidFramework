@@ -118,7 +118,7 @@ module.exports = {
 		// The package's local 'api-extractor-lint.json' may use the entrypoint from either CJS or ESM,
 		// therefore we need to require both before running api-extractor.
 		"check:release-tags": ["tsc", "build:esnext"],
-		"check:are-the-types-wrong": ["build"],
+		"check:are-the-types-wrong": ["tsc", "build:esnext", "api"],
 		"check:format": {
 			dependencies: [],
 			script: true,
@@ -142,6 +142,18 @@ module.exports = {
 		"clean": {
 			before: ["*"],
 		},
+
+		// Non-incremental tasks of convenience to ensure build is up-to-date
+		// before command is run. And some aliases for convenience.
+		"test:cjs": { dependsOn: ["test:unit:cjs"], script: false },
+		"test:esm": { dependsOn: ["test:unit:esm"], script: false },
+		"test:jest": ["build:compile"],
+		"test:mocha": ["build:test"],
+		"test:mocha:cjs": ["build:test:cjs"],
+		"test:mocha:esm": ["build:test:esm"],
+		"test:unit": { dependsOn: ["test:mocha", "test:jest"], script: false },
+		"test:unit:cjs": { dependsOn: ["test:mocha:cjs"], script: false },
+		"test:unit:esm": { dependsOn: ["test:mocha:esm"], script: false },
 
 		// alias for back compat
 		"build:full": {
@@ -317,6 +329,9 @@ module.exports = {
 		// Exclusion per handler
 		handlerExclusions: {
 			"fluid-build-tasks-eslint": [
+				// There are no built files, but a tsconfig.json is present to simplify the
+				// eslint config.
+				"azure/packages/azure-local-service/package.json",
 				// eslint doesn't really depend on build. Doing so just slows down a package build.
 				"^packages/test/snapshots/package.json",
 				"^packages/test/test-utils/package.json",
@@ -334,6 +349,9 @@ module.exports = {
 				"experimental/PropertyDDS/packages/property-query/test/get_config.js",
 				"server/routerlicious/packages/tinylicious/src/index.ts",
 
+				// minified DOMPurify is not a source file, so it doesn't need a header.
+				"docs/static/dompurify/purify.min.js",
+
 				// Type test files can be excluded since they're generated and known to have the correct header.
 				// This can be removed once the whole repo uses build-tools v0.35.0+.
 				/.*\/validate.*\.generated\.ts/,
@@ -341,6 +359,7 @@ module.exports = {
 			"no-js-file-extensions": [
 				// PropertyDDS uses .js files which should be renamed eventually.
 				"experimental/PropertyDDS/.*",
+				"azure/packages/azure-local-service/index.js",
 				"build-tools/packages/build-cli/bin/dev.js",
 				"build-tools/packages/build-cli/bin/run.js",
 				"build-tools/packages/build-cli/test/helpers/init.js",
@@ -356,6 +375,9 @@ module.exports = {
 				"docs/build-redirects.js",
 				"docs/download-apis.js",
 				"docs/local-api-rollup.js",
+				// Avoids MIME-type issues in the browser.
+				"docs/static/trusted-types-policy.js",
+				"docs/static/dompurify/purify.min.js",
 				"docs/static/js/add-code-copy-button.js",
 				"examples/data-objects/monaco/loaders/blobUrl.js",
 				"examples/data-objects/monaco/loaders/compile.js",
@@ -398,7 +420,6 @@ module.exports = {
 			"npm-package-json-test-scripts": [
 				"common/build/eslint-config-fluid/package.json",
 				"packages/test/mocha-test-setup/package.json",
-				"examples/apps/attributable-map/package.json",
 			],
 			"npm-package-json-test-scripts-split": [
 				"server/",
@@ -409,10 +430,6 @@ module.exports = {
 				"packages/tools/devtools/devtools-view/package.json",
 			],
 			"npm-package-exports-apis-linted": [
-				// Rollout suppressions - enable only after tools are updated to support policy
-				// as new build-tools will have the concurrently fluid-build support it uses.
-				"^common/",
-
 				// Packages that violate the API linting rules
 				// ae-missing-release-tags, ae-incompatible-release-tags
 				"^examples/data-objects/table-document/",
@@ -610,6 +627,9 @@ module.exports = {
 
 	releaseNotes: {
 		sections: {
+			// Note: Breaking changes should be reserved for major releases, which practically speaking means server.
+			// Client releases with breaking _legacy_ changes should be in the "legacy" section instead.
+			breaking: { heading: "🚨 Breaking Changes" },
 			feature: { heading: "✨ New Features" },
 			tree: { heading: "🌳 SharedTree DDS Changes" },
 			fix: { heading: "🐛 Bug Fixes" },

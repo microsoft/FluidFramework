@@ -11,24 +11,25 @@ export {
 	handleResponse,
 	IsEphemeralContainer,
 	validateRequestParams,
+	validatePrivateLink,
 } from "./http";
 export {
-	ISocketIoRedisConnection,
-	ISocketIoRedisOptions,
-	ISocketIoRedisSubscriptionConnection,
+	type ISocketIoRedisConnection,
+	type ISocketIoRedisOptions,
+	type ISocketIoRedisSubscriptionConnection,
 	RedisSocketIoAdapter,
 } from "./redisSocketIoAdapter";
 export { decodeHeader, RestLessServer } from "./restLessServer";
 export { run, runService } from "./runner";
 export { runnerHttpServerStop, closeRedisClientConnections } from "./runnerUtils";
-export { SocketIoAdapterCreator } from "./socketIoServer";
+export type { SocketIoAdapterCreator } from "./socketIoServer";
 export { DocumentStorage } from "./storage";
 export {
 	BasicWebServerFactory,
 	HttpServer,
-	INodeClusterConfig,
-	IHttpServerConfig,
-	RequestListener,
+	type INodeClusterConfig,
+	type IHttpServerConfig,
+	type RequestListener,
 	SocketIoWebServerFactory,
 	WebServer,
 	SocketIoNodeClusterWebServerFactory,

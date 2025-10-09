@@ -3,11 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IConstellation, ICoordinate } from "@fluid-example/multiview-coordinate-interface";
+import type {
+	IConstellation,
+	ICoordinate,
+} from "@fluid-example/multiview-coordinate-interface";
 import { Coordinate } from "@fluid-example/multiview-coordinate-model";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IValueChanged } from "@fluidframework/map/legacy";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IValueChanged } from "@fluidframework/map/legacy";
 
 const starListKey = "stars";
 const constellationName = "@fluid-example/constellation";
@@ -23,13 +26,11 @@ export class Constellation extends DataObject implements IConstellation {
 		return Constellation.factory;
 	}
 
-	private static readonly factory = new DataObjectFactory(
-		constellationName,
-		Constellation,
-		[],
-		{},
-		new Map([Coordinate.getFactory().registryEntry]),
-	);
+	private static readonly factory = new DataObjectFactory({
+		type: constellationName,
+		ctor: Constellation,
+		registryEntries: new Map([Coordinate.getFactory().registryEntry]),
+	});
 
 	protected async initializingFirstTime(): Promise<void> {
 		this.root.set(starListKey, []);

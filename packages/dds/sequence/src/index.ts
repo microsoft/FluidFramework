@@ -15,44 +15,27 @@
  *
  * @packageDocumentation
  */
-export {
-	IMapMessageLocalMetadata,
-	IValueOpEmitter,
-	SequenceOptions,
-} from "./intervalCollectionMapInterfaces.js";
+export { SequenceOptions } from "./intervalCollectionMapInterfaces.js";
 export {
 	IInterval,
-	Interval,
 	IntervalOpType,
 	IntervalType,
-	ISerializableInterval,
 	ISerializedInterval,
 	SequenceInterval,
 	SerializedIntervalDelta,
 	IntervalStickiness,
-	IIntervalHelpers,
-	sequenceIntervalHelpers,
 } from "./intervals/index.js";
 export {
 	DeserializeCallback,
-	IIntervalCollectionEvent,
-	IIntervalCollection,
-	IntervalLocator,
-	intervalLocatorFromEndpoint,
+	ISequenceIntervalCollection,
+	ISequenceIntervalCollectionEvents,
 } from "./intervalCollection.js";
 export {
-	IntervalIndex,
+	SequenceIntervalIndex,
 	SequenceIntervalIndexes,
-	IOverlappingIntervalsIndex,
-	createOverlappingIntervalsIndex,
-	createOverlappingSequenceIntervalsIndex,
-	IEndpointInRangeIndex,
-	IStartpointInRangeIndex,
-	createEndpointInRangeIndex,
-	createStartpointInRangeIndex,
-	IIdIntervalIndex,
-	createIdIntervalIndex,
+	ISequenceOverlappingIntervalsIndex,
 	IEndpointIndex,
+	createOverlappingIntervalsIndex,
 	createEndpointIndex,
 } from "./intervalIndex/index.js";
 export {
@@ -84,7 +67,6 @@ export {
 	SharedStringSegment,
 	SharedStringClass,
 } from "./sharedString.js";
-export { ISharedIntervalCollection } from "./sharedIntervalCollection.js";
 export { IJSONRunSegment, SharedSequence, SubSequence } from "./sharedSequence.js";
 
 export {

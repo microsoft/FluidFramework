@@ -8,8 +8,8 @@ import chalk from "picocolors";
 
 // eslint-disable-next-line import/no-deprecated
 import { MonoRepoKind, indentString } from "./library/index.js";
-import { CommandLogger } from "./logging.js";
-import { ReleaseGroup, ReleasePackage } from "./releaseGroups.js";
+import type { CommandLogger } from "./logging.js";
+import type { ReleaseGroup, ReleasePackage } from "./releaseGroups.js";
 
 /**
  * An instructional prompt to display to a user in a terminal. A prompt can have any number of sections, and each

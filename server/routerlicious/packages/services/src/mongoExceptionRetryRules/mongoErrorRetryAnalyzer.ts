@@ -4,9 +4,11 @@
  */
 
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import { ConnectionNotAvailableMode } from "../mongodb";
+
+import type { ConnectionNotAvailableMode } from "../mongodb";
+
+import type { IMongoExceptionRetryRule } from "./IMongoExceptionRetryRule";
 import { DefaultExceptionRule } from "./defaultExceptionRule";
-import { IMongoExceptionRetryRule } from "./IMongoExceptionRetryRule";
 import { createMongoErrorRetryRuleset } from "./mongoError";
 import { createMongoNetworkErrorRetryRuleset } from "./mongoNetworkError";
 
@@ -79,6 +81,6 @@ export class MongoErrorRetryAnalyzer {
 		error: any,
 		ruleSet: IMongoExceptionRetryRule[],
 	): IMongoExceptionRetryRule {
-		return ruleSet.find((rule) => rule.match(error)) || this.defaultRule;
+		return ruleSet.find((rule) => rule.match(error)) ?? this.defaultRule;
 	}
 }

@@ -17,7 +17,7 @@ import { DebuggerUI } from "./fluidDebuggerUi.js";
 
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace FluidDebugger {
@@ -40,7 +40,7 @@ export namespace FluidDebugger {
 
 	/**
 	 * @legacy
-	 * @alpha
+	 * @beta
 	 */
 	export async function createFromServiceFactory(
 		documentServiceFactory: IDocumentServiceFactory,

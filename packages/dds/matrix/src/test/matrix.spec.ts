@@ -5,18 +5,18 @@
 
 import { strict as assert } from "node:assert";
 
-import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
+import { type IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
-import {
+import type {
 	IChannelServices,
-	type IChannel,
+	IChannel,
 } from "@fluidframework/datastore-definitions/internal";
 import type { ISegmentInternal } from "@fluidframework/merge-tree/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
-	MockContainerRuntimeForReconnection,
+	type MockContainerRuntimeForReconnection,
 	MockEmptyDeltaConnection,
 	MockFluidDataStoreRuntime,
 	MockHandle,
@@ -25,8 +25,8 @@ import {
 
 import {
 	type ISharedMatrix,
-	MatrixItem,
-	SharedMatrix,
+	type MatrixItem,
+	type SharedMatrix,
 	SharedMatrixFactory,
 } from "../index.js";
 import { SharedMatrix as SharedMatrixClass } from "../matrix.js";
@@ -1111,7 +1111,7 @@ describe("Matrix1", () => {
 							0,
 							lastAddedCol,
 						) as IFluidHandleInternal;
-						assert(deletedHandle, "Route must be added before deleting");
+						assert(deletedHandle !== undefined, "Route must be added before deleting");
 
 						this.matrix1.setCell(0, lastAddedCol, undefined);
 						// Remove deleted handle's route from expected routes.
@@ -1153,7 +1153,9 @@ describe("Matrix1", () => {
 						isSetCellPolicyFWW,
 					);
 
-					for (let i = 0; i < 5000; i++) {
+					// A load of 10,000 passes at 99.22% with 2s timeout; so stay below
+					// that without other performance improvements.
+					for (let i = 0; i < 7000; i++) {
 						matrix.insertCols(0, 1);
 						matrix.insertRows(0, 1);
 						matrix.removeCols(0, 1);
@@ -1167,7 +1169,7 @@ describe("Matrix1", () => {
 						matrix.switchSetCellPolicy();
 					}
 
-					for (let i = 0; i <= 5000; i++) {
+					for (let i = 0; i <= 10_000; i++) {
 						matrix.insertCols(0, 1);
 						matrix.insertRows(0, 1);
 						matrix.removeCols(0, 1);

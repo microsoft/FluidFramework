@@ -5,7 +5,7 @@
 
 export { Lumber } from "./lumber";
 export { LumberEventName } from "./lumberEventNames";
-export { Lumberjack, ILumberjackOptions } from "./lumberjack";
+export { Lumberjack, type ILumberjackOptions } from "./lumberjack";
 export {
 	TestEngine1,
 	TestEngine2,
@@ -19,15 +19,15 @@ export {
 	getLumberBaseProperties,
 	handleError,
 	HttpProperties,
-	ILumberjackEngine,
-	ILumberjackSchemaValidationResult,
-	ILumberjackSchemaValidator,
+	type ILumberjackEngine,
+	type ILumberjackSchemaValidationResult,
+	type ILumberjackSchemaValidator,
 	LogLevel,
 	LumberType,
 	QueuedMessageProperties,
 	SessionState,
 	ThrottlingTelemetryProperties,
-	ILumberFormatter,
+	type ILumberFormatter,
 } from "./resources";
 export {
 	BaseLumberjackSchemaValidator,
@@ -35,8 +35,8 @@ export {
 	LambdaSchemaValidator,
 } from "./schema";
 export {
-	ITelemetryContextProperties,
-	ITelemetryContext,
+	type ITelemetryContextProperties,
+	type ITelemetryContext,
 	isTelemetryContextProperties,
 	getGlobalTelemetryContext,
 	setGlobalTelemetryContext,

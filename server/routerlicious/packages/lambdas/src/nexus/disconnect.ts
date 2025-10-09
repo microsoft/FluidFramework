@@ -3,16 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
 import type { IWebSocket } from "@fluidframework/server-services-core";
+import {
+	Lumberjack,
+	getLumberBaseProperties,
+	CommonProperties,
+} from "@fluidframework/server-services-telemetry";
+
 import { createRoomLeaveMessage } from "../utils";
+
 import type {
 	INexusLambdaConnectionStateTrackers,
 	INexusLambdaDependencies,
 	INexusLambdaSettings,
 } from "./interfaces";
-import { getMessageMetadata, getRoomId, isSummarizer, isWriter } from "./utils";
 import { storeClientConnectivityTime } from "./throttleAndUsage";
+import { getMessageMetadata, getRoomId, isSummarizer, isWriter } from "./utils";
 
 /**
  * Disconnect all orderer connections and store connectivity time for each.
@@ -81,6 +87,8 @@ function removeClientAndSendNotifications(
 		clientMap,
 		connectionTimeMap,
 		disconnectedClients,
+		sessionOpCountMap,
+		sessionSignalCountMap,
 	}: INexusLambdaConnectionStateTrackers,
 ): Promise<void>[] {
 	const promises: Promise<void>[] = [];
@@ -92,10 +100,16 @@ function removeClientAndSendNotifications(
 		const messageMetaData = getMessageMetadata(room.documentId, room.tenantId);
 
 		logger.info(`Disconnect of ${clientId} from room`, { messageMetaData });
-		Lumberjack.info(
-			`Disconnect of ${clientId} from room`,
-			getLumberBaseProperties(room.documentId, room.tenantId),
-		);
+
+		// Log session metrics before client removal
+		const sessionOpCount = sessionOpCountMap.get(clientId) || 0;
+		const sessionSignalCount = sessionSignalCountMap.get(clientId) || 0;
+
+		Lumberjack.info(`Disconnect of ${clientId} from room`, {
+			...getLumberBaseProperties(room.documentId, room.tenantId),
+			[CommonProperties.sessionOpCount]: sessionOpCount,
+			[CommonProperties.sessionSignalCount]: sessionSignalCount,
+		});
 		promises.push(
 			clientManager
 				.removeClient(room.tenantId, room.documentId, clientId)
@@ -103,6 +117,10 @@ function removeClientAndSendNotifications(
 					// Keep track of disconnected clientIds so that we don't repeat the disconnect signal
 					// for the same clientId if retrying when connectDocument completes after disconnectDocument.
 					disconnectedClients.add(clientId);
+
+					// Clean up session counters for this client
+					sessionOpCountMap.delete(clientId);
+					sessionSignalCountMap.delete(clientId);
 				})
 				.catch((error) => {
 					Lumberjack.error(
@@ -125,19 +143,22 @@ function removeClientAndSendNotifications(
 		// Update session tracker upon disconnection
 		if (collaborationSessionTracker) {
 			const client = clientMap.get(clientId);
-			const connectionTimestamp = connectionTimeMap.get(clientId);
 			if (client) {
 				collaborationSessionTracker
 					.endClientSession(
 						{
 							clientId,
-							joinedTime: connectionTimestamp ?? 0,
 							isSummarizerClient: isSummarizer(client.details),
 							isWriteClient: isWriter(client.scopes, client.mode),
 						},
 						{
 							tenantId: room.tenantId,
 							documentId: room.documentId,
+						},
+						undefined,
+						{
+							opCount: sessionOpCount,
+							signalCount: sessionSignalCount,
 						},
 					)
 					.catch((error) => {
@@ -165,6 +186,9 @@ export async function disconnectDocument(
 ): Promise<void> {
 	// Clear token expiration timer on disconnection
 	nexusLambdaConnectionStateTrackers.expirationTimer.clear();
+	// Clear preconnect TTL timer on disconnection
+	nexusLambdaConnectionStateTrackers.preconnectTTLTimer.clear();
+
 	// Iterate over connection and room maps to disconnect and store connectivity time.
 	const removeAndStoreP: Promise<void>[] = [
 		// Disconnect any orderer connections

@@ -89,9 +89,13 @@
 	},
 	"alfred": {
 		"kafkaClientId": "alfred",
+		"enablePrivateLinkNetworkCheck": false,
 		"sessionStickinessDurationMs": 3600000,
 		"ignoreEphemeralFlag": true,
 		"enableClientIPLogging": false,
+		"api": {
+			"patchRoot": true
+		},
 		"throttling": {
 			"restCallsPerTenant": {
 				"generalRestCall": "disabled",
@@ -141,6 +145,7 @@
 		"verifyMaxMessageSize": false,
 		"maxNumberOfClientsPerDocument": 1000000,
 		"numberOfMessagesPerTrace": 100,
+		"enablePrivateLinkNetworkCheck": false,
 		"throttling": {
 			"socketConnectionsPerTenant": "disabled",
 			"socketConnectionsPerCluster": "disabled",
@@ -283,13 +288,15 @@
 		"opsCountTelemetryEnabled": true,
 		"circuitBreakerEnabled": false,
 		"circuitBreakerOptions": {
-			"errorThresholdPercentage": 0.001,
-			"resetTimeout": 30000,
-			"timeout": false,
-			"rollingCountTimeout": 1000,
-			"rollingCountBuckets": 1000,
-			"fallbackToRestartTimeoutMs": 180000,
-			"filterOnErrors": []
+			"database": {
+				"errorThresholdPercentage": 0.001,
+				"resetTimeout": 10000,
+				"timeout": false,
+				"rollingCountTimeout": 1000,
+				"rollingCountBuckets": 1000,
+				"fallbackToRestartTimeoutMs": 60000,
+				"filterOnErrors": []
+			}
 		}
 	},
 	"copier": {
@@ -441,5 +448,8 @@
 	"getSession": {
 		"readDocumentRetryDelay": 150,
 		"readDocumentMaxRetries": 2
-	}
+	},
+	"documentDenyList": ["cc002893-ab9c-437b-b3d6-8aa4b68946fd"],
+	"tenantDenyList": [],
+	"axiosAbortSignalEnabled": true
 }

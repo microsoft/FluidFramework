@@ -3,24 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { ICriticalContainerError } from "@fluidframework/container-definitions";
-import { IRequest } from "@fluidframework/core-interfaces";
-import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
-import {
+import type { ICriticalContainerError } from "@fluidframework/container-definitions";
+import type { IRequest } from "@fluidframework/core-interfaces";
+import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import type {
 	ITelemetryContext,
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 	ISummarizeResult,
 } from "@fluidframework/runtime-definitions/internal";
-import { ReadAndParseBlob } from "@fluidframework/runtime-utils/internal";
-import {
+import type { ReadAndParseBlob } from "@fluidframework/runtime-utils/internal";
+import type {
 	ITelemetryLoggerExt,
-	type ITelemetryPropertiesExt,
+	ITelemetryPropertiesExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { RuntimeHeaderData } from "../containerRuntime.js";
-import { ContainerRuntimeGCMessage } from "../messageTypes.js";
-import {
+import type { RuntimeHeaderData } from "../containerRuntime.js";
+import type { ContainerRuntimeGCMessage } from "../messageTypes.js";
+import type {
 	IContainerRuntimeMetadata,
 	ICreateContainerMetadata,
 	IRefreshSummaryResult,
@@ -333,6 +333,8 @@ export type GarbageCollectionMessage = ISweepMessage | ITombstoneLoadedMessage;
 
 /**
  * Defines the APIs for the runtime object to be passed to the garbage collector.
+ *
+ * @internal
  */
 export interface IGarbageCollectionRuntime {
 	/**
@@ -446,7 +448,7 @@ export interface IGarbageCollector {
 	 * Returns true if this node has been deleted by GC during sweep phase.
 	 */
 	isNodeDeleted(nodePath: string): boolean;
-	setConnectionState(connected: boolean, clientId?: string): void;
+	setConnectionState(canSendOps: boolean, clientId?: string): void;
 	dispose(): void;
 }
 
@@ -508,8 +510,7 @@ export interface IGarbageCollectorCreateParams {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IGCRuntimeOptions {
 	/**

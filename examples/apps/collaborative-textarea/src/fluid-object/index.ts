@@ -4,7 +4,7 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedString, type ISharedString } from "@fluidframework/sequence/legacy";
 
 /**
@@ -24,12 +24,11 @@ export class CollaborativeText extends DataObject {
 
 	public static readonly Name = "@fluid-example/collaborative-textarea";
 
-	private static readonly factory = new DataObjectFactory(
-		CollaborativeText.Name,
-		CollaborativeText,
-		[SharedString.getFactory()],
-		{},
-	);
+	private static readonly factory = new DataObjectFactory({
+		type: CollaborativeText.Name,
+		ctor: CollaborativeText,
+		sharedObjects: [SharedString.getFactory()],
+	});
 
 	public static getFactory(): DataObjectFactory<CollaborativeText> {
 		return this.factory;

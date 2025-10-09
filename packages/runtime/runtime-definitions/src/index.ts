@@ -17,10 +17,12 @@ export type {
 	IContainerRuntimeBaseEvents,
 	IDataStore,
 	IFluidDataStoreChannel,
+	IFluidDataStorePolicies,
 	IFluidDataStoreContext,
 	IFluidParentContext,
 	IFluidDataStoreContextDetached,
 	IPendingMessagesState,
+	PackagePath,
 } from "./dataStoreContext.js";
 export { FlushMode, FlushModeExperimental, VisibilityState } from "./dataStoreContext.js";
 export type { IProvideFluidDataStoreFactory } from "./dataStoreFactory.js";
@@ -52,7 +54,12 @@ export type {
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
 	ISequencedMessageEnvelope,
+	IRuntimeStorageService,
 } from "./protocol.js";
+export {
+	encodeHandlesInContainerRuntime,
+	notifiesReadOnlyState,
+} from "./runtimeLayerCompatFeatureNames.js";
 export type {
 	CreateChildSummarizerNodeParam,
 	IExperimentalIncrementalSummaryContext,
@@ -74,3 +81,13 @@ export {
 	CreateSummarizerNodeSource,
 	totalBlobSizePropertyName,
 } from "./summary.js";
+export type { MinimumVersionForCollab } from "./compatibilityDefinitions.js";
+
+export {
+	type ContainerRuntimeBaseAlpha,
+	type StageControlsAlpha,
+	type CommitStagedChangesOptionsExperimental,
+	type IContainerRuntimeBaseExperimental,
+	type StageControlsExperimental,
+	asLegacyAlpha,
+} from "./stagingMode.js";

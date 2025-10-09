@@ -5,20 +5,20 @@
 
 import { execFileSync } from "node:child_process";
 import path from "node:path";
-import { Package } from "@fluidframework/build-tools";
+import type { Package } from "@fluidframework/build-tools";
 import { PackageName } from "@rushstack/node-core-library";
 import readPkgUp from "read-pkg-up";
 import * as semver from "semver";
-import { SimpleGit, SimpleGitOptions, simpleGit } from "simple-git";
+import { type SimpleGit, type SimpleGitOptions, simpleGit } from "simple-git";
 import type { SetRequired } from "type-fest";
 
 import type { IReleaseGroup } from "@fluid-tools/build-infrastructure";
 import { getVersionsFromStrings } from "@fluid-tools/version-tools";
 import { parseISO } from "date-fns";
-import { CommandLogger } from "../logging.js";
-import { ReleaseGroup } from "../releaseGroups.js";
+import type { CommandLogger } from "../logging.js";
+import type { ReleaseGroup } from "../releaseGroups.js";
 // eslint-disable-next-line import/no-deprecated
-import { Context, type VersionDetails, isMonoRepoKind } from "./context.js";
+import { type Context, type VersionDetails, isMonoRepoKind } from "./context.js";
 
 const newlineCrossPlatform = /\r?\n/;
 /**
@@ -165,8 +165,8 @@ export class Repository implements GitContext {
 	public async getShaForBranch(branch: string, remote?: string): Promise<string> {
 		const refspec =
 			remote === undefined ? `refs/heads/${branch}` : `refs/remotes/${remote}/${branch}`;
-		const result = await this.git.raw(`show-ref`, refspec);
-
+		// result is a string of the form '64adcdba56deb16e0641c91ca825401a9f7a01f9'
+		const result = await this.git.raw("show-ref", "--hash", refspec);
 		return result;
 	}
 
@@ -465,7 +465,7 @@ export class Repository implements GitContext {
 	 * Fetch branch
 	 */
 	public async fetchBranch(remote: string, branchName: string): Promise<void> {
-		await this.gitClient.fetch(remote, [branchName]);
+		await this.gitClient.fetch(remote, branchName);
 	}
 }
 

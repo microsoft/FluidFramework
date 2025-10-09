@@ -3,22 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { ICreateCommitParams, IRef } from "@fluidframework/gitresources";
-import {
+import type { ICreateCommitParams, IRef } from "@fluidframework/gitresources";
+import type {
 	IWholeFlatSummary,
 	IWholeSummaryPayload,
 	IWriteSummaryResponse,
 	WholeSummaryTreeEntry,
 } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+
 import { GitRestLumberEventName } from "../gitrestTelemetryDefinitions";
-import { IFullGitTree, ISummaryVersion, IWholeSummaryOptions } from "./definitions";
+
 import { convertFullGitTreeToFullSummaryTree } from "./conversions";
-import { computeLowIoSummaryTreeEntries } from "./lowIoWriteUtils";
 import {
-	IWriteSummaryTreeOptions,
+	type IWriteSummaryTreeOptions,
 	writeSummaryTree as writeSummaryTreeCore,
 } from "./coreWriteUtils";
+import type { IFullGitTree, ISummaryVersion, IWholeSummaryOptions } from "./definitions";
+import { computeLowIoSummaryTreeEntries } from "./lowIoWriteUtils";
 
 /**
  * Feature flags for writing summaries.

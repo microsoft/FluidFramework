@@ -3,9 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { ScopeType } from "@fluidframework/protocol-definitions";
-import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import { IAlfredTenant, NetworkError } from "@fluidframework/server-services-client";
 import {
 	IDocument,
@@ -24,14 +22,16 @@ import {
 	TestKafka,
 	TestNotImplementedDocumentRepository,
 	TestProducer,
+	TestRedisClientConnectionManager,
 	TestTenantManager,
 	TestThrottler,
 } from "@fluidframework/server-test-utils";
-import assert from "assert";
+import { strict as assert } from "assert";
 import express from "express";
 import nconf from "nconf";
 import Sinon from "sinon";
 import request from "supertest";
+import { Emitter as RedisEmitter } from "@socket.io/redis-emitter";
 import * as alfredApp from "../../alfred/app";
 import { DeltaService, DocumentDeleteService } from "../../alfred/services";
 import { Constants } from "../../utils";
@@ -88,6 +88,13 @@ describe("Routerlicious", () => {
 				tenantId: appTenant1.id,
 				documentId: "doc-1",
 				content: "Hello, World!",
+				session: {
+					ordererUrl: defaultProvider.get("worker:serverUrl"),
+					deltaStreamUrl: defaultProvider.get("worker:deltaStreamUrl"),
+					historianUrl: defaultProvider.get("worker:blobStorageUrl"),
+					isSessionAlive: true,
+					isSessionActive: true,
+				},
 			};
 			const defaultDbFactory = new TestDbFactory({
 				[documentsCollectionName]: [document1],
@@ -141,8 +148,10 @@ describe("Routerlicious", () => {
 			const defaultDeltaService = new DeltaService(deltasCollection, defaultTenantManager);
 			const defaultDocumentRepository = new TestNotImplementedDocumentRepository();
 			const defaultDocumentDeleteService = new DocumentDeleteService();
-			const defaultCollaborationSessionEventEmitter =
-				new TypedEventEmitter<ICollaborationSessionEvents>();
+			const defaultRedisClientConnectionManager = new TestRedisClientConnectionManager();
+			const defaultCollaborationSessionEventEmitter = new RedisEmitter(
+				defaultRedisClientConnectionManager.getRedisClient(),
+			);
 			let app: express.Application;
 			let supertest: request.SuperTest<request.Test>;
 			let testFluidAccessTokenGenerator: TestFluidAccessTokenGenerator;
@@ -265,6 +274,14 @@ describe("Routerlicious", () => {
 						await assertThrottle(
 							`/api/v1/${appTenant1.id}/${document1._id}/blobs`,
 							undefined,
+							undefined,
+							"post",
+						);
+					});
+					it("/api/v1/:tenantId/:id/broadcast-signal", async () => {
+						await assertThrottle(
+							`/api/v1/${appTenant1.id}/${document1._id}/broadcast-signal`,
+							"Bearer 12345", // Dummy bearer token
 							undefined,
 							"post",
 						);
@@ -1060,6 +1077,10 @@ describe("Routerlicious", () => {
 					supertest = request(app);
 				});
 
+				afterEach(() => {
+					Sinon.restore();
+				});
+
 				describe("/api/v1", () => {
 					it("/tenants/:tenantid/accesstoken validate access token exists in response", async () => {
 						const body = {
@@ -1129,6 +1150,100 @@ describe("Routerlicious", () => {
 							.set("Content-Type", "application/json")
 							.expect(400);
 					});
+
+					it("Successful request with redirect", async () => {
+						const body = {
+							signalContent: {
+								contents: {
+									type: "ExternalDataChanged_V1.0.0",
+									content: { taskListId: "task-list-1" },
+								},
+							},
+						};
+						const documentHostedInOtherUrl = {
+							_id: "doc-1",
+							tenantId: appTenant1.id,
+							version: "1.0",
+							documentId: "doc-1",
+							content: "Hello, World!",
+							session: {
+								ordererUrl: "http://localhost:3006",
+								deltaStreamUrl: defaultProvider.get("worker:deltaStreamUrl"),
+								historianUrl: defaultProvider.get("worker:blobStorageUrl"),
+								isSessionAlive: true,
+								isSessionActive: true,
+							},
+							createTime: Date.now(),
+							scribe: "",
+							deli: "",
+						};
+
+						Sinon.stub(defaultStorage, "getDocument").returns(
+							Promise.resolve(documentHostedInOtherUrl),
+						);
+
+						await supertest
+							.post(
+								`/api/v1/${appTenant1.id}/${documentHostedInOtherUrl._id}/broadcast-signal`,
+							)
+							.send(body)
+							.set("Authorization", tenantToken1)
+							.set("Content-Type", "application/json")
+							.expect(302);
+					});
+
+					it("Document not found", async () => {
+						const body = {
+							signalContent: {
+								contents: {
+									type: "ExternalDataChanged_V1.0.0",
+									content: { taskListId: "task-list-1" },
+								},
+							},
+						};
+
+						const documentNotFound = {
+							_id: "doc-1",
+							tenantId: appTenant1.id,
+							version: "1.0",
+							documentId: "doc-1",
+							content: "Hello, World!",
+							session: {
+								ordererUrl: defaultProvider.get("worker:serverUrl"),
+								deltaStreamUrl: defaultProvider.get("worker:deltaStreamUrl"),
+								historianUrl: defaultProvider.get("worker:blobStorageUrl"),
+								isSessionAlive: false,
+								isSessionActive: false,
+							},
+							createTime: Date.now(),
+							scribe: "",
+							deli: "",
+						};
+
+						Sinon.stub(defaultStorage, "getDocument")
+							.onFirstCall()
+							.returns(Promise.resolve(null))
+							.onSecondCall()
+							.returns(Promise.resolve(documentNotFound));
+
+						await supertest
+							.post(
+								`/api/v1/${appTenant1.id}/${documentNotFound._id}/broadcast-signal`,
+							)
+							.send(body)
+							.set("Authorization", tenantToken1)
+							.set("Content-Type", "application/json")
+							.expect(404);
+
+						await supertest
+							.post(
+								`/api/v1/${appTenant1.id}/${documentNotFound._id}/broadcast-signal`,
+							)
+							.send(body)
+							.set("Authorization", tenantToken1)
+							.set("Content-Type", "application/json")
+							.expect(404);
+					});
 				});
 
 				describe("/documents", () => {
@@ -1155,6 +1270,142 @@ describe("Routerlicious", () => {
 								return true;
 							});
 					});
+				});
+			});
+
+			describe("patchRoot feature flag", () => {
+				let spyProducerSend;
+
+				beforeEach(() => {
+					spyProducerSend = Sinon.spy(defaultProducer, "send");
+				});
+
+				afterEach(() => {
+					Sinon.restore();
+				});
+
+				const createAppWithPatchRootConfig = (patchRootEnabled: boolean | undefined) => {
+					const provider = new nconf.Provider({}).defaults({
+						alfred: {
+							restJsonSize: 1000000,
+							api: {
+								patchRoot: patchRootEnabled,
+							},
+						},
+						auth: {
+							maxTokenLifetimeSec: 1000000,
+							enableTokenExpiration: false,
+						},
+						logger: {
+							morganFormat: "json",
+						},
+						mongo: {
+							collectionNames: {
+								deltas: deltasCollectionName,
+								rawDeltas: rawDeltasCollectionName,
+							},
+						},
+						worker: {
+							blobStorageUrl: "http://localhost:3001",
+							deltaStreamUrl: "http://localhost:3005",
+							serverUrl: "http://localhost:3003",
+						},
+					});
+
+					Sinon.stub(defaultStorage, "getDocument").resolves({} as IDocument);
+
+					const restTenantThrottlers = new Map<string, TestThrottler>();
+
+					const restClusterThrottlers = new Map<string, TestThrottler>();
+
+					const startupCheck = new StartupCheck();
+					testFluidAccessTokenGenerator = new TestFluidAccessTokenGenerator();
+					return alfredApp.create(
+						provider,
+						defaultTenantManager,
+						restTenantThrottlers,
+						restClusterThrottlers,
+						defaultSingleUseTokenCache,
+						defaultStorage,
+						defaultAppTenants,
+						defaultDeltaService,
+						defaultProducer,
+						defaultDocumentRepository,
+						defaultDocumentDeleteService,
+						startupCheck,
+						undefined,
+						undefined,
+						defaultCollaborationSessionEventEmitter,
+						undefined,
+						undefined,
+						undefined,
+						testFluidAccessTokenGenerator,
+					);
+				};
+
+				it("should return 501 when patchRoot is disabled", async () => {
+					const testApp = createAppWithPatchRootConfig(false);
+					const testSupertest = request(testApp);
+
+					await testSupertest
+						.patch(`/api/v1/${appTenant1.id}/${document1._id}/root`)
+						// This is a legacy API that checks for access-token also
+						.set("Authorization", tenantToken1)
+						.set("access-token", tenantToken1.split(" ")[1])
+						.send([{ op: "testOp", path: "/testPath", value: "testValue" }])
+						.expect(501)
+						.expect((res) => {
+							assert.strictEqual(res.body.error, "patchRoot API is not implemented");
+							assert.strictEqual(
+								res.body.message,
+								"The PATCH /root endpoint is disabled on this server",
+							);
+							// Verify that producer.send was never called
+							assert(
+								spyProducerSend.notCalled,
+								"Producer should not be called when patchRoot is disabled",
+							);
+						});
+				});
+
+				it("should process normally when patchRoot is enabled", async () => {
+					const testApp = createAppWithPatchRootConfig(true);
+					const testSupertest = request(testApp);
+
+					await testSupertest
+						.patch(`/api/v1/${appTenant1.id}/${document1._id}/root`)
+						// This is a legacy API that checks for access-token also
+						.set("Authorization", tenantToken1)
+						.set("access-token", tenantToken1.split(" ")[1])
+						.send([{ op: "testOp", path: "/testPath", value: "testValue" }])
+						.expect(200)
+						.expect(() => {
+							// Verify that producer.send was called (3 times: join, op, leave)
+							assert(
+								spyProducerSend.calledThrice,
+								"Producer should be called three times for join-op-leave sequence",
+							);
+						});
+				});
+
+				it("should default to enabled when patchRoot is not specified", async () => {
+					const testApp = createAppWithPatchRootConfig(undefined);
+					const testSupertest = request(testApp);
+
+					await testSupertest
+						.patch(`/api/v1/${appTenant1.id}/${document1._id}/root`)
+						// This is a legacy API that checks for access-token also
+						.set("Authorization", tenantToken1)
+						.set("access-token", tenantToken1.split(" ")[1])
+						.send([{ op: "testOp", path: "/testPath", value: "testValue" }])
+						.expect(200)
+						.expect(() => {
+							// Verify that producer.send was called (default behavior)
+							assert(
+								spyProducerSend.calledThrice,
+								"Producer should be called by default when flag is not set",
+							);
+						});
 				});
 			});
 		});

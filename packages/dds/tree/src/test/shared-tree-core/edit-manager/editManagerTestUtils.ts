@@ -104,6 +104,7 @@ export function rebaseLocalEditsOverTrunkEdits<TChange>(
  * @param manager - The edit manager to apply the edits to
  * @param mintChange - A function used to generate new changes
  * @param defer - Used to invoke this specific overload.
+ * @param bunchCommits - If true, all trunk edits are bunched and sent to the EditManager together.
  * @returns A thunk that will apply the local edits when invoked.
  */
 export function rebaseLocalEditsOverTrunkEdits<TChange>(
@@ -112,6 +113,7 @@ export function rebaseLocalEditsOverTrunkEdits<TChange>(
 	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
 	mintChange: (revision: RevisionTag | undefined) => TChange,
 	defer: true,
+	bunchCommits?: boolean,
 ): () => void;
 export function rebaseLocalEditsOverTrunkEdits<TChange>(
 	localEditCount: number,
@@ -119,29 +121,37 @@ export function rebaseLocalEditsOverTrunkEdits<TChange>(
 	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
 	mintChange: (revision: RevisionTag | undefined) => TChange,
 	defer: boolean = false,
+	bunchCommits: boolean = false,
 ): void | (() => void) {
 	subscribeToLocalBranch(manager);
 	for (let iChange = 0; iChange < localEditCount; iChange++) {
 		const revision = mintRevisionTag();
-		manager.localBranch.apply({ change: mintChange(undefined), revision });
+		manager.getLocalBranch("main").apply({ change: mintChange(undefined), revision });
 	}
+	const trunkSessionId = "trunk" as SessionId;
 	const trunkEdits = makeArray(trunkEditCount, () => {
 		const revision = mintRevisionTag();
 		return {
 			change: mintChange(revision),
 			revision,
-			sessionId: "trunk" as SessionId,
+			sessionId: trunkSessionId,
 		};
 	});
 	const run = () => {
-		for (let iChange = 0; iChange < trunkEditCount; iChange++) {
-			const commit = trunkEdits[iChange];
-			manager.addSequencedChanges(
-				[commit],
-				commit.sessionId,
-				brand(iChange + 1),
-				brand(iChange),
-			);
+		// If bunchCommits is true, send all trunk edit commits to the EditManager together.
+		if (bunchCommits) {
+			manager.addSequencedChanges(trunkEdits, trunkSessionId, brand(1), brand(0), "main");
+		} else {
+			for (let iChange = 0; iChange < trunkEditCount; iChange++) {
+				const commit = trunkEdits[iChange];
+				manager.addSequencedChanges(
+					[commit],
+					commit.sessionId,
+					brand(iChange + 1),
+					brand(iChange),
+					"main",
+				);
+			}
 		}
 	};
 	return defer ? run : run();
@@ -194,6 +204,7 @@ export function rebasePeerEditsOverTrunkEdits<TChange>(
  * @param manager - The edit manager to apply the edits to
  * @param mintChange - A function used to generate new changes
  * @param defer - Used to invoke this specific overload.
+ * @param bunchCommits - If true, all peer edits are bunched and sent to the EditManager together.
  * @returns A thunk that will apply the peer edits when invoked.
  */
 export function rebasePeerEditsOverTrunkEdits<TChange>(
@@ -202,6 +213,7 @@ export function rebasePeerEditsOverTrunkEdits<TChange>(
 	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
 	mintChange: (revision: RevisionTag | undefined) => TChange,
 	defer: true,
+	bunchCommits?: boolean,
 ): () => void;
 export function rebasePeerEditsOverTrunkEdits<TChange>(
 	peerEditCount: number,
@@ -209,6 +221,7 @@ export function rebasePeerEditsOverTrunkEdits<TChange>(
 	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
 	mintChange: (revision: RevisionTag | undefined) => TChange,
 	defer: boolean = false,
+	bunchCommits: boolean = false,
 ): void | (() => void) {
 	subscribeToLocalBranch(manager);
 	for (let iChange = 0; iChange < trunkEditCount; iChange++) {
@@ -223,25 +236,39 @@ export function rebasePeerEditsOverTrunkEdits<TChange>(
 			"trunk" as SessionId,
 			brand(iChange + 1),
 			brand(iChange),
+			"main",
 		);
 	}
+	const peerSessionId = "peer" as SessionId;
 	const peerEdits = makeArray(peerEditCount, () => {
 		const revision = mintRevisionTag();
 		return {
 			change: mintChange(revision),
 			revision,
-			sessionId: "peer" as SessionId,
+			sessionId: peerSessionId,
 		};
 	});
 	const run = () => {
-		for (let iChange = 0; iChange < peerEditCount; iChange++) {
-			const commit = peerEdits[iChange];
+		// If bunchCommits is true, send all peer edit commits to the EditManager together.
+		if (bunchCommits) {
 			manager.addSequencedChanges(
-				[commit],
-				commit.sessionId,
-				brand(iChange + trunkEditCount + 1),
+				peerEdits,
+				peerSessionId,
+				brand(trunkEditCount + 1),
 				brand(0),
+				"main",
 			);
+		} else {
+			for (let iChange = 0; iChange < peerEditCount; iChange++) {
+				const commit = peerEdits[iChange];
+				manager.addSequencedChanges(
+					[commit],
+					commit.sessionId,
+					brand(iChange + trunkEditCount + 1),
+					brand(0),
+					"main",
+				);
+			}
 		}
 	};
 	return defer ? run : run();
@@ -324,6 +351,7 @@ export function rebaseAdvancingPeerEditsOverTrunkEdits<TChange>(
 			"trunk" as SessionId,
 			brand(iChange + 1),
 			brand(iChange),
+			"main",
 		);
 	}
 	const peerEdits = makeArray(editCount, () => {
@@ -342,6 +370,7 @@ export function rebaseAdvancingPeerEditsOverTrunkEdits<TChange>(
 				commit.sessionId,
 				brand(iChange + editCount + 1),
 				brand(iChange),
+				"main",
 			);
 		}
 	};
@@ -425,7 +454,13 @@ export function rebaseConcurrentPeerEdits<TChange>(
 	const run = () => {
 		for (let iChange = 0; iChange < peerEdits.length; iChange++) {
 			const commit = peerEdits[iChange];
-			manager.addSequencedChanges([commit], commit.sessionId, brand(iChange + 1), brand(0));
+			manager.addSequencedChanges(
+				[commit],
+				commit.sessionId,
+				brand(iChange + 1),
+				brand(0),
+				"main",
+			);
 		}
 	};
 	return defer ? run : run();
@@ -436,7 +471,9 @@ export function checkChangeList(manager: TestEditManager, intentions: number[]):
 }
 
 export function getAllChanges(manager: TestEditManager): RecursiveReadonly<TestChange>[] {
-	return manager.getTrunkChanges().concat(manager.getLocalChanges());
+	return manager
+		.getTrunkChanges("main")
+		.concat(manager.getLocalCommits("main").map((c) => c.change));
 }
 
 /** Adds a sequenced change to an `EditManager` and returns the delta that was caused by the change */
@@ -445,11 +482,13 @@ export function addSequencedChanges(
 	...args: Parameters<(typeof editManager)["addSequencedChanges"]>
 ): DeltaRoot {
 	let delta: DeltaRoot = emptyDelta;
-	const offChange = editManager.localBranch.events.on("afterChange", ({ change }) => {
-		if (change !== undefined) {
-			delta = asDelta(change.change.intentions);
-		}
-	});
+	const offChange = editManager
+		.getLocalBranch("main")
+		.events.on("afterChange", ({ change }) => {
+			if (change !== undefined) {
+				delta = asDelta(change.change.intentions);
+			}
+		});
 	editManager.addSequencedChanges(...args);
 	offChange();
 	return delta;
@@ -459,7 +498,7 @@ export function addSequencedChanges(
 function subscribeToLocalBranch<TChange>(
 	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
 ): void {
-	manager.localBranch.events.on("afterChange", (branchChange) => {
+	manager.getLocalBranch("main").events.on("afterChange", (branchChange) => {
 		// Reading the change property causes lazy computation to occur, and is important to accurately emulate SharedTree behavior
 		const _change = branchChange.change;
 	});

@@ -7,10 +7,13 @@ import {
 	ModelContainerRuntimeFactory,
 	getDataStoreEntryPoint,
 } from "@fluid-example/example-utils";
-import { IContainer } from "@fluidframework/container-definitions/legacy";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
+import type { IContainer } from "@fluidframework/container-definitions/legacy";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
 
-import { ContactCollectionInstantiationFactory, IContactCollection } from "./dataObject.js";
+import {
+	ContactCollectionInstantiationFactory,
+	type IContactCollection,
+} from "./dataObject.js";
 
 const contactCollectionId = "contactCollection";
 
@@ -32,7 +35,7 @@ export class ContactCollectionContainerRuntimeFactory extends ModelContainerRunt
 	/**
 	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
 	 */
-	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
+	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
 		const dataStore = await runtime.createDataStore(
 			ContactCollectionInstantiationFactory.type,
 		);
@@ -42,7 +45,10 @@ export class ContactCollectionContainerRuntimeFactory extends ModelContainerRunt
 	/**
 	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
 	 */
-	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
+	protected async createModel(
+		runtime: IContainerRuntime,
+		container: IContainer,
+	): Promise<IContactCollectionAppModel> {
 		return new ContactCollectionAppModel(
 			await getDataStoreEntryPoint<IContactCollection>(runtime, contactCollectionId),
 		);

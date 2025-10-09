@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { IPubSub, LocalOrderer } from "@fluidframework/server-memory-orderer";
-import { GitManager, IHistorian } from "@fluidframework/server-services-client";
+import { type IPubSub, LocalOrderer } from "@fluidframework/server-memory-orderer";
+import { GitManager, type IHistorian } from "@fluidframework/server-services-client";
 import {
 	CheckpointService,
-	ICheckpointRepository,
-	IDatabaseManager,
-	IDocumentRepository,
-	IDocumentStorage,
-	ILogger,
-	IOrderer,
-	IOrdererManager,
-	IServiceConfiguration,
+	type ICheckpointRepository,
+	type IDatabaseManager,
+	type IDocumentRepository,
+	type IDocumentStorage,
+	type ILogger,
+	type IOrderer,
+	type IOrdererManager,
+	type IServiceConfiguration,
 	MongoCheckpointRepository,
 	MongoDocumentRepository,
 } from "@fluidframework/server-services-core";
@@ -150,12 +150,7 @@ export class LocalOrdererManager implements IOrdererManager {
 	}
 
 	public async removeOrderer(tenantId: string, documentId: string): Promise<void> {
-		const key = this.getOrdererMapKey(tenantId, documentId);
-		const orderer = this.ordererMap.get(key);
-		if (orderer !== undefined) {
-			this.ordererMap.delete(key);
-			await (await orderer).close();
-		}
+		// No-op for local orderer. Orderer connections are managed separately.
 	}
 
 	private getOrdererMapKey(tenantId: string, documentId: string) {

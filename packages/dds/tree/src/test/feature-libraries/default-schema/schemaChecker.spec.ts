@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 // Reaching into internal module just to test it
 import {
-	SchemaValidationErrors,
+	SchemaValidationError,
 	compliesWithMultiplicity,
 	isFieldInSchema,
 	isNodeInSchema,
@@ -52,11 +52,6 @@ function createSchemaAndPolicy(
 		},
 		policy: {
 			fieldKinds,
-			// Note: the value of 'validateSchema' doesn't matter for the tests in this file because they're testing a
-			// layer where we already decided that we are doing validation and are validating that it works correctly.
-			validateSchema: true,
-			// TODO: unit test other options in this file
-			allowUnknownOptionalFields: () => false,
 		},
 	};
 }
@@ -71,6 +66,7 @@ function getFieldSchema(
 	return {
 		kind: kind.identifier,
 		types: new Set(allowedTypes),
+		persistedMetadata: undefined,
 	};
 }
 
@@ -111,19 +107,19 @@ describe("schema validation", () => {
 		const multiplicityTestCases: [
 			kind: Multiplicity,
 			numberToTest: number,
-			expectedResult: boolean,
+			expectedResult: undefined | SchemaValidationError,
 		][] = [
-			[Multiplicity.Forbidden, 0, true],
-			[Multiplicity.Forbidden, 1, false],
-			[Multiplicity.Single, 0, false],
-			[Multiplicity.Single, 1, true],
-			[Multiplicity.Single, 2, false],
-			[Multiplicity.Sequence, 0, true],
-			[Multiplicity.Sequence, 1, true],
-			[Multiplicity.Sequence, 2, true],
-			[Multiplicity.Optional, 0, true],
-			[Multiplicity.Optional, 1, true],
-			[Multiplicity.Optional, 2, false],
+			[Multiplicity.Forbidden, 0, undefined],
+			[Multiplicity.Forbidden, 1, SchemaValidationError.Field_ChildInForbiddenField],
+			[Multiplicity.Single, 0, SchemaValidationError.Field_MissingRequiredChild],
+			[Multiplicity.Single, 1, undefined],
+			[Multiplicity.Single, 2, SchemaValidationError.Field_MultipleChildrenNotAllowed],
+			[Multiplicity.Sequence, 0, undefined],
+			[Multiplicity.Sequence, 1, undefined],
+			[Multiplicity.Sequence, 2, undefined],
+			[Multiplicity.Optional, 0, undefined],
+			[Multiplicity.Optional, 1, undefined],
+			[Multiplicity.Optional, 2, SchemaValidationError.Field_MultipleChildrenNotAllowed],
 		];
 		for (const [kind, numberToTest, expectedResult] of multiplicityTestCases) {
 			it(`compliesWithMultiplicity(${numberToTest}, ${Multiplicity[kind]}) === ${expectedResult}`, () => {
@@ -134,13 +130,14 @@ describe("schema validation", () => {
 	});
 
 	describe("isNodeInSchema", () => {
-		it(`skips validation if stored schema is completely empty`, () => {
+		it(`does validation if stored schema is completely empty`, () => {
 			assert.equal(
 				isNodeInSchema(
 					createLeafNode("myNumberNode", 1, ValueSchema.Number).node,
 					createSchemaAndPolicy(), // Note this passes an empty stored schema
+					(x) => x,
 				),
-				SchemaValidationErrors.NoError,
+				SchemaValidationError.Node_MissingSchema,
 			);
 		});
 
@@ -156,8 +153,9 @@ describe("schema validation", () => {
 					// Note, this cannot use an empty stored schema because that would skip validation,
 					// So just putting a schema for a node that is not the one we pass in for validation.
 					createSchemaAndPolicy(new Map([[stringNode.type, stringSchema]])),
+					(x) => x,
 				),
-				SchemaValidationErrors.Node_MissingSchema,
+				SchemaValidationError.Node_MissingSchema,
 			);
 		});
 
@@ -165,15 +163,18 @@ describe("schema validation", () => {
 			it("in schema", () => {
 				const { node, schema } = createLeafNode("myNode", 1, ValueSchema.Number);
 				const schemaAndPolicy = createSchemaAndPolicy(new Map([[node.type, schema]]));
-				assert.equal(isNodeInSchema(node, schemaAndPolicy), SchemaValidationErrors.NoError);
+				assert.equal(
+					isNodeInSchema(node, schemaAndPolicy, (x) => x),
+					undefined,
+				);
 			});
 
 			it("not in schema due to invalid value", () => {
 				const { node, schema } = createLeafNode("myNode", "string", ValueSchema.Number); // "string" is not a number
 				const schemaAndPolicy = createSchemaAndPolicy(new Map([[node.type, schema]]));
 				assert.equal(
-					isNodeInSchema(node, schemaAndPolicy),
-					SchemaValidationErrors.LeafNode_InvalidValue,
+					isNodeInSchema(node, schemaAndPolicy, (x) => x),
+					SchemaValidationError.LeafNode_InvalidValue,
 				);
 			});
 
@@ -181,8 +182,8 @@ describe("schema validation", () => {
 				const { node, schema } = createLeafNode("myNode", undefined, ValueSchema.Number);
 				const schemaAndPolicy = createSchemaAndPolicy(new Map([[node.type, schema]]));
 				assert.equal(
-					isNodeInSchema(node, schemaAndPolicy),
-					SchemaValidationErrors.LeafNode_InvalidValue,
+					isNodeInSchema(node, schemaAndPolicy, (x) => x),
+					SchemaValidationError.LeafNode_InvalidValue,
 				);
 			});
 
@@ -197,8 +198,8 @@ describe("schema validation", () => {
 				};
 
 				assert.equal(
-					isNodeInSchema(outOfSchemaNode, schemaAndPolicy),
-					SchemaValidationErrors.LeafNode_FieldsNotAllowed,
+					isNodeInSchema(outOfSchemaNode, schemaAndPolicy, (x) => x),
+					SchemaValidationError.LeafNode_FieldsNotAllowed,
 				);
 			});
 		});
@@ -230,8 +231,8 @@ describe("schema validation", () => {
 				);
 
 				assert.equal(
-					isNodeInSchema(mapNode.node, schemaAndPolicy),
-					SchemaValidationErrors.NoError,
+					isNodeInSchema(mapNode.node, schemaAndPolicy, (x) => x),
+					undefined,
 				);
 			});
 
@@ -251,8 +252,8 @@ describe("schema validation", () => {
 				);
 
 				assert.equal(
-					isNodeInSchema(mapNode.node, schemaAndPolicy),
-					SchemaValidationErrors.NoError,
+					isNodeInSchema(mapNode.node, schemaAndPolicy, (x) => x),
+					undefined,
 				);
 			});
 
@@ -279,8 +280,8 @@ describe("schema validation", () => {
 				};
 
 				assert.equal(
-					isNodeInSchema(outOfSchemaNode, schemaAndPolicy),
-					SchemaValidationErrors.NonLeafNode_ValueNotAllowed,
+					isNodeInSchema(outOfSchemaNode, schemaAndPolicy, (x) => x),
+					SchemaValidationError.NonLeafNode_ValueNotAllowed,
 				);
 			});
 		});
@@ -303,8 +304,8 @@ describe("schema validation", () => {
 				);
 
 				assert.equal(
-					isNodeInSchema(objectNode.node, schemaAndPolicy),
-					SchemaValidationErrors.NoError,
+					isNodeInSchema(objectNode.node, schemaAndPolicy, (x) => x),
+					undefined,
 				);
 			});
 
@@ -325,8 +326,8 @@ describe("schema validation", () => {
 				);
 
 				assert.equal(
-					isNodeInSchema(objectNode.node, schemaAndPolicy),
-					SchemaValidationErrors.NoError,
+					isNodeInSchema(objectNode.node, schemaAndPolicy, (x) => x),
+					undefined,
 				);
 			});
 
@@ -350,8 +351,8 @@ describe("schema validation", () => {
 				);
 
 				assert.equal(
-					isNodeInSchema(objectNode.node, schemaAndPolicy),
-					SchemaValidationErrors.ObjectNode_FieldNotInSchema,
+					isNodeInSchema(objectNode.node, schemaAndPolicy, (x) => x),
+					SchemaValidationError.ObjectNode_FieldNotInSchema,
 				);
 			});
 
@@ -374,8 +375,8 @@ describe("schema validation", () => {
 				);
 
 				assert.equal(
-					isNodeInSchema(objectNode.node, schemaAndPolicy),
-					SchemaValidationErrors.Field_IncorrectMultiplicity,
+					isNodeInSchema(objectNode.node, schemaAndPolicy, (x) => x),
+					SchemaValidationError.Field_MissingRequiredChild,
 				);
 			});
 
@@ -403,8 +404,8 @@ describe("schema validation", () => {
 				};
 
 				assert.equal(
-					isNodeInSchema(outOfSchemaNode, schemaAndPolicy),
-					SchemaValidationErrors.NonLeafNode_ValueNotAllowed,
+					isNodeInSchema(outOfSchemaNode, schemaAndPolicy, (x) => x),
+					SchemaValidationError.NonLeafNode_ValueNotAllowed,
 				);
 			});
 
@@ -426,8 +427,8 @@ describe("schema validation", () => {
 				);
 
 				assert.equal(
-					isNodeInSchema(objectNode.node, schemaAndPolicy),
-					SchemaValidationErrors.Field_KindNotInSchemaPolicy,
+					isNodeInSchema(objectNode.node, schemaAndPolicy, (x) => x),
+					SchemaValidationError.Field_KindNotInSchemaPolicy,
 				);
 			});
 		});
@@ -445,8 +446,8 @@ describe("schema validation", () => {
 			const field: MapTree[] = [numberNode.node];
 
 			assert.equal(
-				isFieldInSchema(field, fieldSchema, schemaAndPolicy),
-				SchemaValidationErrors.NoError,
+				isFieldInSchema(field, fieldSchema, schemaAndPolicy, (x) => x),
+				undefined,
 			);
 		});
 
@@ -459,8 +460,8 @@ describe("schema validation", () => {
 
 			// FieldKinds.required is used above but missing in the schema policy
 			assert.equal(
-				isFieldInSchema([numberNode.node], fieldSchema, schemaAndPolicy),
-				SchemaValidationErrors.Field_KindNotInSchemaPolicy,
+				isFieldInSchema([numberNode.node], fieldSchema, schemaAndPolicy, (x) => x),
+				SchemaValidationError.Field_KindNotInSchemaPolicy,
 			);
 		});
 
@@ -478,8 +479,9 @@ describe("schema validation", () => {
 					[createLeafNode("myStringNode", "myStringValue", ValueSchema.String).node],
 					fieldSchema,
 					schemaAndPolicy,
+					(x) => x,
 				),
-				SchemaValidationErrors.Field_NodeTypeNotAllowed,
+				SchemaValidationError.Field_NodeTypeNotAllowed,
 			);
 		});
 
@@ -494,8 +496,8 @@ describe("schema validation", () => {
 			const emptyField: MapTree[] = [];
 
 			assert.equal(
-				isFieldInSchema(emptyField, fieldSchema, schemaAndPolicy),
-				SchemaValidationErrors.Field_IncorrectMultiplicity,
+				isFieldInSchema(emptyField, fieldSchema, schemaAndPolicy, (x) => x),
+				SchemaValidationError.Field_MissingRequiredChild,
 			);
 		});
 	});
@@ -508,11 +510,16 @@ describe("schema validation", () => {
 					.map((j) => mapTreeFromCursor(cursorForJsonableTreeNode(j)));
 				const schema = testTree.schemaData;
 				assert.equal(
-					isFieldInSchema(mapTrees, schema.rootFieldSchema, {
-						schema,
-						policy: defaultSchemaPolicy,
-					}),
-					SchemaValidationErrors.NoError,
+					isFieldInSchema(
+						mapTrees,
+						schema.rootFieldSchema,
+						{
+							schema,
+							policy: defaultSchemaPolicy,
+						},
+						() => assert.fail(),
+					),
+					undefined,
 				);
 			});
 		}
