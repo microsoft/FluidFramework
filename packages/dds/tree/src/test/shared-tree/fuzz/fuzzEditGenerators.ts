@@ -58,7 +58,7 @@ import {
 } from "./operationTypes.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { SchematizingSimpleTreeView } from "../../../shared-tree/schematizingTreeView.js";
-import { getOrCreateInnerNode } from "../../../simple-tree/index.js";
+import { getInnerNode } from "../../../simple-tree/index.js";
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
@@ -777,7 +777,7 @@ export interface FieldPathWithCount {
 }
 
 function upPathFromNode(node: TreeNode): UpPath {
-	const flexNode = getOrCreateInnerNode(node);
+	const flexNode = getInnerNode(node);
 	assert(flexNode.isHydrated());
 	const anchorNode = flexNode.anchorNode;
 	return anchorNode;

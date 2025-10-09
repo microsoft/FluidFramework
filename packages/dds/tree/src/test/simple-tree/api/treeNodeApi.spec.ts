@@ -86,7 +86,7 @@ import {
 import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
 import {
 	createTreeNodeFromInner,
-	getOrCreateInnerNode,
+	getInnerNode,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/core/treeNodeKernel.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -723,7 +723,7 @@ describe("treeNodeApi", () => {
 			});
 
 			it("Unknown optional fields not considered", () => {
-				class TestObjectOld extends schema.objectAlpha(
+				class TestObjectOld extends schema.object(
 					"TestObject",
 					{
 						foo: schema.string,
@@ -733,7 +733,7 @@ describe("treeNodeApi", () => {
 					},
 				) {}
 
-				class TestObjectNew extends schema.objectAlpha("TestObject", {
+				class TestObjectNew extends schema.object("TestObject", {
 					foo: schema.string,
 					bar: schema.optional(schema.string),
 				}) {}
@@ -2917,7 +2917,7 @@ describe("treeNodeApi", () => {
 				const clone = TreeBeta.clone<typeof StagedSchema>(original);
 				expectTreesEqual(original, clone);
 
-				const context = getOrCreateInnerNode(clone).context;
+				const context = getInnerNode(clone).context;
 				const flexSchema =
 					context.schema.nodeSchema.get(brand(StagedSchema.identifier)) ?? assert.fail();
 

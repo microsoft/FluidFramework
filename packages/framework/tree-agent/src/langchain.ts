@@ -59,10 +59,9 @@ export class LangchainChatModel implements SharedTreeChatModel {
 			},
 			{
 				name: this.editToolName,
-				description: `Invokes a JavaScript function to edit a user's tree`,
+				description: `Invokes a JavaScript code snippet to edit a tree of application data.`,
 				schema: z.object({
-					functionCode: z.string().describe(`The code of the JavaScript function.
-For example: "function editTree({ root, create }) { /* your code here */ }"`),
+					functionCode: z.string().describe(`The JavaScript snippet code.`),
 				}),
 			},
 		);

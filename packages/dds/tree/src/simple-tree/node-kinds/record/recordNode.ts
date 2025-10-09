@@ -15,7 +15,7 @@ import {
 	typeNameSymbol,
 	typeSchemaSymbol,
 	type UnhydratedFlexTreeNode,
-	getOrCreateInnerNode,
+	getInnerNode,
 	getKernel,
 	type InternalTreeNode,
 	type NodeSchemaMetadata,
@@ -105,7 +105,7 @@ function createRecordNodeProxy(
 			}
 
 			if (typeof key === "string") {
-				const innerNode = getOrCreateInnerNode(receiver);
+				const innerNode = getInnerNode(receiver);
 				const field = innerNode.tryGetField(brand(key));
 				if (field !== undefined) {
 					return tryGetTreeNodeForField(field);
@@ -119,7 +119,7 @@ function createRecordNodeProxy(
 				return false;
 			}
 
-			const innerNode = getOrCreateInnerNode(receiver);
+			const innerNode = getInnerNode(receiver);
 			const field = innerNode.getBoxed(brand(key)) as FlexTreeOptionalField;
 			const kernel = getKernel(receiver);
 			const innerSchema = innerNode.context.schema.nodeSchema.get(brand(schema.identifier));
@@ -143,13 +143,13 @@ function createRecordNodeProxy(
 				return false;
 			}
 
-			const innerNode = getOrCreateInnerNode(proxy);
+			const innerNode = getInnerNode(proxy);
 			const childField = innerNode.tryGetField(brand(key));
 
 			return childField !== undefined;
 		},
 		ownKeys: (target) => {
-			const innerNode = getOrCreateInnerNode(proxy);
+			const innerNode = getInnerNode(proxy);
 			return [...innerNode.keys()];
 		},
 		getOwnPropertyDescriptor: (target, key) => {
@@ -157,7 +157,7 @@ function createRecordNodeProxy(
 				return undefined;
 			}
 
-			const innerNode = getOrCreateInnerNode(proxy);
+			const innerNode = getInnerNode(proxy);
 			const field = innerNode.tryGetField(brand(key));
 
 			if (field === undefined) {
@@ -179,7 +179,7 @@ function createRecordNodeProxy(
 				return false;
 			}
 
-			const innerNode = getOrCreateInnerNode(proxy);
+			const innerNode = getInnerNode(proxy);
 			const field = innerNode.tryGetField(brand(key)) as FlexTreeOptionalField | undefined;
 			if (field !== undefined) {
 				field.editor.set(undefined, field.length === 0);

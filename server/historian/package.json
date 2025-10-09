@@ -78,6 +78,13 @@
 			"qs": "^6.11.0",
 			"socket.io-parser": "^4.2.4",
 			"sharp": "^0.33.2"
-		}
+		},
+		"onlyBuiltDependencies": [
+			"core-js",
+			"node-rdkafka",
+			"snappy",
+			"unrs-resolver",
+			"zookeeper"
+		]
 	}
 }

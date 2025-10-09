@@ -38,7 +38,7 @@ import {
 	type InternalTreeNode,
 	type TreeNode,
 	type UnhydratedFlexTreeNode,
-	getOrCreateInnerNode,
+	getInnerNode,
 	type NodeSchemaMetadata,
 	type ImplicitAllowedTypes,
 	TreeNodeValid,
@@ -243,7 +243,7 @@ function createProxyHandler(
 		get(target, propertyKey, proxy): unknown {
 			const fieldInfo = schema.flexKeyMap.get(propertyKey);
 			if (fieldInfo !== undefined) {
-				const flexNode = getOrCreateInnerNode(proxy);
+				const flexNode = getInnerNode(proxy);
 				debugAssert(() => !flexNode.context.isDisposed() || "FlexTreeNode is disposed");
 				const field = flexNode.tryGetField(fieldInfo.storedKey);
 				if (field !== undefined) {
@@ -274,7 +274,7 @@ function createProxyHandler(
 					: false;
 			}
 
-			const innerNode = getOrCreateInnerNode(proxy);
+			const innerNode = getInnerNode(proxy);
 
 			const innerSchema = innerNode.context.schema.nodeSchema.get(brand(schema.identifier));
 			assert(
@@ -321,7 +321,7 @@ function createProxyHandler(
 			// If a refactoring is done to associated flex tree data with the target not the proxy, this extra map could be removed,
 			// and the design would be more compatible with proxyless nodes.
 			const proxy = targetToProxy.get(target) ?? fail(0xadd /* missing proxy */);
-			const field = getOrCreateInnerNode(proxy).tryGetField(fieldInfo.storedKey);
+			const field = getInnerNode(proxy).tryGetField(fieldInfo.storedKey);
 
 			const p: PropertyDescriptor = {
 				value: field === undefined ? undefined : tryGetTreeNodeForField(field),

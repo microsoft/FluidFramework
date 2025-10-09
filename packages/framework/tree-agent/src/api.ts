@@ -4,11 +4,8 @@
  */
 
 import type { ImplicitFieldSchema, TreeNode } from "@fluidframework/tree";
-import type { FactoryContentObject, ReadableField } from "@fluidframework/tree/alpha";
-
 // This is used for doc links
-// eslint-disable-next-line unused-imports/no-unused-imports
-import type { SharedTreeSemanticAgent } from "./agent.js";
+import type { FactoryContentObject, ReadableField } from "@fluidframework/tree/alpha";
 
 /**
  * Logger interface for logging events from a {@link SharedTreeSemanticAgent}.
@@ -31,10 +28,22 @@ export interface SemanticAgentOptions {
 	 */
 	domainHints?: string;
 	/**
-	 * Validates any generated JavaScript created by the {@link SharedTreeChatModel.editToolName | model's editing tool} before running it.
-	 * @remarks If this returns false, then the edit will throw an error instead of attempting to execute the JavaScript.
+	 * Validates any generated JavaScript created by the {@link SharedTreeChatModel.editToolName | model's editing tool}.
+	 * @remarks This happens before the code is executed - execution can be intercepted by using the {@link SemanticAgentOptions.executeEdit | executeEdit} callback.
+	 * @param code - The generated JavaScript code as a string.
+	 * @throws If the code is invalid, this function should throw an error with a human-readable message describing why it is invalid.
 	 */
-	validator?: (js: string) => boolean;
+	validateEdit?: (code: string) => void | Promise<void>;
+	/**
+	 * Evaluates (executes) any generated JavaScript created by the {@link SharedTreeChatModel.editToolName | model's editing tool}.
+	 * @remarks This happens only after the code has been successfully validated by the optional {@link SemanticAgentOptions.validateEdit | validateEdit} function.
+	 * @param context - An object that must be provided to the generated code as a variable named "context" in its top-level scope.
+	 * @param code - The generated JavaScript code as a string.
+	 * @throws If an error is thrown while evaluating the code, it will be caught and the message will be forwarded to the model for debugging.
+	 * @remarks If this function is not provided, the generated code will be executed using a simple `eval` call, which may not provide sufficient security guarantees for some environments.
+	 * Use a library such as SES to provide a more secure implementation - see {@link createSesEditEvaluator} for a drop-in option.
+	 */
+	executeEdit?: (context: Record<string, unknown>, code: string) => void | Promise<void>;
 	/**
 	 * The maximum number of sequential edits the LLM can make before we assume it's stuck in a loop.
 	 */
@@ -50,9 +59,8 @@ export interface SemanticAgentOptions {
  * @remarks
  * - `success`: The edit was successfully applied.
  * - `disabledError`: The model is not allowed to edit the tree (i.e. {@link SharedTreeChatModel.editToolName} was not provided).
- * - `validationError`: The provided JavaScript did not pass the optional {@link SemanticAgentOptions.validator} function.
- * - `compileError`: The provided JavaScript could not be parsed or compiled.
- * - `runtimeError`: An error was thrown while executing the provided JavaScript.
+ * - `validationError`: The provided JavaScript did not pass the optional {@link SemanticAgentOptions.validateEdit} function.
+ * - `executionError`: An error was thrown while parsing or executing the provided JavaScript.
  * - `tooManyEditsError`: The {@link SharedTreeChatQuery.edit} function has been called more than the number of times specified by {@link SemanticAgentOptions.maximumSequentialEdits} for the same message.
  * - `expiredError`: The {@link SharedTreeChatQuery.edit} function was called after the issuing query has already completed.
  * @alpha
@@ -62,8 +70,7 @@ export interface EditResult {
 		| "success"
 		| "disabledError"
 		| "validationError"
-		| "compileError"
-		| "runtimeError"
+		| "executionError"
 		| "tooManyEditsError"
 		| "expiredError";
 

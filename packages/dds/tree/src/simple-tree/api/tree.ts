@@ -412,7 +412,7 @@ export interface SchemaCompatibilityStatus {
 	 * Note that other content in the stored schema that does not impact document compatibility, like {@link NodeSchemaOptionsAlpha.persistedMetadata}, does not affect this field.
 	 *
 	 * For the computation of this equivalence, {@link SchemaStaticsAlpha.staged | staged} schemas are not included.
-	 * If there are any unknown optional fields, even if allowed by {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields}, `isEquivalent` will be false.
+	 * If there are any unknown optional fields, even if allowed by {@link ObjectSchemaOptions.allowUnknownOptionalFields}, `isEquivalent` will be false.
 	 */
 	readonly isEquivalent: boolean;
 
@@ -423,7 +423,7 @@ export interface SchemaCompatibilityStatus {
 	 * If the view schema does not opt into supporting any additional cases, then `canView` is only true when `isEquivalent` is also true.
 	 * The view schema can however opt into supporting additional cases, and thus can also view documents with stored schema which would be equivalent, except for the following discrepancies:
 	 *
-	 * - An object node with {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields} to set to true that has additional optional fields in the stored schema beyond those mentioned in its view schema.
+	 * - An object node with {@link ObjectSchemaOptions.allowUnknownOptionalFields} to set to true that has additional optional fields in the stored schema beyond those mentioned in its view schema.
 	 *
 	 * - An additional type allowed at a location in the stored schema where it is {@link SchemaStaticsAlpha.staged | staged} in the view schema.
 	 *
@@ -451,7 +451,7 @@ export interface SchemaCompatibilityStatus {
 	 * @remarks
 	 * When true, it is valid to call {@link TreeView.upgradeSchema} (though if the stored schema is already an exact match, this is a no-op).
 	 *
-	 * When adding optional fields to schema which previously were marked with {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields}
+	 * When adding optional fields to schema which previously were marked with {@link ObjectSchemaOptions.allowUnknownOptionalFields}
 	 * the schema upgrade (assuming no other changes are included) will allow the previous version to view.
 	 * Even this case must still must be done with caution however as only clients with the newly added field will be able to do future upgrades.
 	 * Thus if a version of an application is shipped that adds an unknown optional field, all future versions should include it, even if its no longer used,
