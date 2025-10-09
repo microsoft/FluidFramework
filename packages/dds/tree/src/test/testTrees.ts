@@ -132,15 +132,15 @@ function test(name: string, schemaData: TreeStoredSchema, data: JsonableTree[]):
 
 const factory = new SchemaFactoryAlpha("test");
 export class Minimal extends factory.objectAlpha("minimal", {}) {}
-export class Minimal2 extends factory.objectAlpha("minimal2", {}) {}
-export class HasMinimalValueField extends factory.objectAlpha("hasMinimalValueField", {
+export class Minimal2 extends factory.object("minimal2", {}) {}
+export class HasMinimalValueField extends factory.object("hasMinimalValueField", {
 	field: Minimal,
 }) {}
-export class HasRenamedField extends factory.objectAlpha("hasRenamedField", {
+export class HasRenamedField extends factory.object("hasRenamedField", {
 	field: factory.required(Minimal, { key: "stored-name" }),
 }) {}
 
-export class HasDescriptions extends factory.objectAlpha(
+export class HasDescriptions extends factory.object(
 	"hasDescriptions",
 	{
 		field: factory.required(Minimal, { metadata: { description: "the field" } }),
@@ -148,7 +148,7 @@ export class HasDescriptions extends factory.objectAlpha(
 	{ metadata: { description: "root object" } },
 ) {}
 
-export class HasAllMetadata extends factory.objectAlpha(
+export class HasAllMetadata extends factory.object(
 	"hasDescriptions",
 	{
 		field: factory.required(Minimal, {
@@ -162,19 +162,19 @@ export class HasAllMetadata extends factory.objectAlpha(
 	},
 ) {}
 
-export class HasAmbiguousField extends factory.objectAlpha("hasAmbiguousField", {
+export class HasAmbiguousField extends factory.object("hasAmbiguousField", {
 	field: [Minimal, Minimal2],
 }) {}
-export class HasNumericValueField extends factory.objectAlpha("hasNumericValueField", {
+export class HasNumericValueField extends factory.object("hasNumericValueField", {
 	field: factory.number,
 }) {}
-export class HasPolymorphicValueField extends factory.objectAlpha("hasPolymorphicValueField", {
+export class HasPolymorphicValueField extends factory.object("hasPolymorphicValueField", {
 	field: [factory.number, Minimal],
 }) {}
-export class HasOptionalField extends factory.objectAlpha("hasOptionalField", {
+export class HasOptionalField extends factory.object("hasOptionalField", {
 	field: factory.optional(factory.number),
 }) {}
-export class HasIdentifierField extends factory.objectAlpha("hasIdentifierField", {
+export class HasIdentifierField extends factory.object("hasIdentifierField", {
 	field: factory.identifier,
 }) {}
 

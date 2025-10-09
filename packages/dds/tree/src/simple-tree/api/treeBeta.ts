@@ -185,7 +185,7 @@ export interface TreeBeta {
 	 *
 	 * - The identifiers in the node's subtree will be preserved, i.e., they are not replaced with new values.
 	 *
-	 * - If the node (or any node in its subtree) contains {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields|unknown optional fields},
+	 * - If the node (or any node in its subtree) contains {@link ObjectSchemaOptions.allowUnknownOptionalFields|unknown optional fields},
 	 * those fields will be cloned just like the known fields.
 	 */
 	clone<const TSchema extends ImplicitFieldSchema>(

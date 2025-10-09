@@ -38,7 +38,6 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 import {
 	type ChannelFactoryRegistry,
-	type ITestContainerConfig,
 	type ITestObjectProvider,
 	type SummaryInfo,
 	TestContainerRuntimeFactory,
@@ -351,16 +350,9 @@ export class TestTreeProvider {
 		const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 			getRawConfig: (name: string): ConfigTypes => settings[name],
 		});
-		const testContainerConfig: ITestContainerConfig = {
-			loaderProps: {
-				configProvider: configProvider({
-					"Fluid.Container.enableOfflineLoad": true,
-				}),
-			},
-		};
 		const container =
 			this.trees.length === 0
-				? await this.provider.makeTestContainer(testContainerConfig)
+				? await this.provider.makeTestContainer()
 				: await this.provider.loadTestContainer();
 
 		this._containers.push(container);
