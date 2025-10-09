@@ -24,7 +24,7 @@ There are three states that a node simple-tree node can be in: "Unhydrated", "hy
 
 ### Unhydrated Nodes
 
-A newly created simple-tree node, a.k.a. an **unhydrated** simple-tree node. A unhydrated simple-tree node is produced by invoking the schema-provided constructor for a node:
+A newly created simple-tree node, a.k.a. an **unhydrated** simple-tree node. An unhydrated simple-tree node is produced by invoking the schema-provided constructor for a node:
 
 ```ts
 const unhydratedPoint = new Point({ x: 3, y: 3 });
@@ -36,7 +36,7 @@ Unhydrated nodes can be read or mutated just like hydrated ones.
 ### Hydrating Nodes
 
 Between insertion edit and the change callback which updates the node to "Hydrated" (see [prepareForInsertion.ts](../prepareForInsertion.ts)),
-the node is un a poorly defined "hydrating" state and should not be interacted with.
+the node is in a poorly defined "hydrating" state and should not be interacted with.
 
 ### Hydrated Nodes
 
