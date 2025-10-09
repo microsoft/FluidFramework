@@ -106,9 +106,9 @@ describe(`Presence with AzureClient`, () => {
 		afterCleanUp.length = 0;
 	});
 
-	const numClientsForAttendeeTests = [5, 40, 100];
+	const numClientsForAttendeeTests = [5, 40, 100, 250];
 	for (const numClients of numClientsForAttendeeTests) {
-		if (numClients > 20 && !shouldRunScaleTests) {
+		if (numClients > 50 && !shouldRunScaleTests) {
 			testConsole.log(
 				`skipping Presence attendee scale tests with ${numClients} clients (set FLUID_TEST_SCALE=true to run)`,
 			);
