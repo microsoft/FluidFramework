@@ -19,10 +19,9 @@ import {
 	normalizeFieldSchema,
 } from "../fieldSchema.js";
 import {
+	type AllowedTypesFullEvaluated,
 	NodeKind,
 	type TreeNodeSchema,
-	isAnnotatedAllowedType,
-	evaluateLazySchema,
 	markSchemaMostDerived,
 } from "../core/index.js";
 import {
@@ -165,9 +164,6 @@ export interface ITreeViewConfiguration<
 
 /**
  * Configuration for {@link ViewableTree.viewWith}.
- * @privateRemarks
- * When `ImplicitAnnotatedFieldSchema` is stabilized, TSchema should be updated to use it.
- * When doing this, the example for `staged` will need to be updated/simplified.
  * @sealed @public
  */
 export class TreeViewConfiguration<
@@ -235,9 +231,9 @@ export class TreeViewConfiguration<
 				debugAssert(() => !definitions.has(schema.identifier));
 				definitions.set(schema.identifier, schema as SimpleNodeSchema & TreeNodeSchema);
 			},
-			allowedTypes({ types }): void {
+			allowedTypes({ types }: AllowedTypesFullEvaluated): void {
 				checkUnion(
-					types.map((t) => evaluateLazySchema(isAnnotatedAllowedType(t) ? t.type : t)),
+					types.map((t) => t.type),
 					config.preventAmbiguity,
 					ambiguityErrors,
 				);

@@ -20,24 +20,30 @@ export function buildFunc<const Return extends z.ZodTypeAny, const Args extends 
     rest?: Rest;
 }, ...args: Args): FunctionDef<Args, Return, Rest>;
 
-// @alpha
-export function createSemanticAgent<TSchema extends ImplicitFieldSchema>(client: BaseChatModel, treeView: TreeView<TSchema>, options?: {
-    readonly domainHints?: string;
-    readonly treeToString?: (root: ReadableField<TSchema>) => string;
-    readonly validator?: (js: string) => boolean;
-    readonly log?: Log;
-}): SharedTreeSemanticAgent;
+// @alpha @deprecated
+export function createSemanticAgent<TSchema extends ImplicitFieldSchema_2>(client: BaseChatModel, treeView: TreeView<TSchema>, options?: Readonly<SemanticAgentOptions>): SharedTreeSemanticAgent<TSchema>;
+
+// @alpha @deprecated
+export function createSemanticAgent<TSchema extends ImplicitFieldSchema_2>(client: BaseChatModel, node: ReadableField<TSchema> & TreeNode_2, options?: Readonly<SemanticAgentOptions>): SharedTreeSemanticAgent<TSchema>;
+
+// @alpha @deprecated
+export function createSemanticAgent<TSchema extends ImplicitFieldSchema_2>(client: BaseChatModel, treeView: TreeView<TSchema> | (ReadableField<TSchema> & TreeNode_2), options?: Readonly<SemanticAgentOptions>): SharedTreeSemanticAgent<TSchema>;
 
 // @alpha
-export function createSemanticAgent<T extends TreeNode>(client: BaseChatModel, node: T, options?: {
-    readonly domainHints?: string;
-    readonly treeToString?: (root: T) => string;
-    readonly validator?: (js: string) => boolean;
-    readonly log?: Log;
-}): SharedTreeSemanticAgent;
+export function createSesEditEvaluator(options?: {
+    compartmentOptions?: CompartmentOptions;
+    lockdownOptions?: LockdownOptions;
+}): Promise<SemanticAgentOptions["executeEdit"]>;
 
 // @alpha
 export type Ctor<T = any> = new (...args: any[]) => T;
+
+// @alpha
+export interface EditResult {
+    message: string;
+    // (undocumented)
+    type: "success" | "disabledError" | "validationError" | "executionError" | "tooManyEditsError" | "expiredError";
+}
 
 // @alpha
 export interface ExposedMethods {
@@ -73,19 +79,58 @@ export interface IExposedMethods {
 export type Infer<T> = T extends FunctionDef<infer Args, infer Return, infer Rest> ? z.infer<z.ZodFunction<z.ZodTuple<ArgsTuple<Args>, Rest>, Return>> : never;
 
 // @alpha
+export class LangchainChatModel implements SharedTreeChatModel {
+    constructor(model: BaseChatModel);
+    // (undocumented)
+    appendContext(text: string): void;
+    // (undocumented)
+    readonly editToolName = "GenerateTreeEditingCode";
+    // (undocumented)
+    get name(): string | undefined;
+    // (undocumented)
+    query(query: SharedTreeChatQuery): Promise<string>;
+}
+
+// @alpha
 export const llmDefault: unique symbol;
 
-// @alpha (undocumented)
-export type Log = (message: string) => void;
+// @alpha
+export interface Logger {
+    log(message: string): void;
+}
 
 // @alpha
 export type MethodKeys<T> = {
     [K in keyof T]: T[K] extends (...args: any[]) => any ? K : never;
 };
 
-// @alpha (undocumented)
-export interface SharedTreeSemanticAgent {
-    query(userPrompt: string): Promise<string | undefined>;
+// @alpha
+export interface SemanticAgentOptions {
+    domainHints?: string;
+    executeEdit?: (context: Record<string, unknown>, code: string) => void | Promise<void>;
+    logger?: Logger;
+    maximumSequentialEdits?: number;
+    validateEdit?: (code: string) => void | Promise<void>;
+}
+
+// @alpha
+export interface SharedTreeChatModel {
+    appendContext?(text: string): void;
+    editToolName?: string;
+    name?: string;
+    query(message: SharedTreeChatQuery): Promise<string>;
+}
+
+// @alpha
+export interface SharedTreeChatQuery {
+    edit(js: string): Promise<EditResult>;
+    text: string;
+}
+
+// @alpha @sealed
+export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
+    constructor(client: SharedTreeChatModel, tree: TreeView<TSchema> | (ReadableField<TSchema> & TreeNode), options?: Readonly<SemanticAgentOptions> | undefined);
+    query(userPrompt: string): Promise<string>;
 }
 
 // @alpha

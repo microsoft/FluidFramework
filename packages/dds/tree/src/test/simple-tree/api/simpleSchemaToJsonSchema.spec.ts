@@ -14,6 +14,7 @@ import {
 	numberSchema,
 	SchemaFactoryAlpha,
 	stringSchema,
+	TreeBeta,
 	type JsonObjectNodeSchema,
 	type JsonTreeSchema,
 	type UnsafeUnknownSchema,
@@ -683,7 +684,7 @@ describe("simpleSchemaToJsonSchema", () => {
 				const testSchema = normalizeFieldSchema(testTree.schema).allowedTypes;
 
 				{
-					const withPropertyKeys = TreeAlpha.exportConcise(tree, {
+					const withPropertyKeys = TreeBeta.exportConcise(tree, {
 						keys: KeyEncodingOptions.usePropertyKeys,
 					});
 					const jsonSchema = getJsonSchema(testSchema, {
@@ -695,7 +696,7 @@ describe("simpleSchemaToJsonSchema", () => {
 				}
 
 				{
-					const withStoredKeys = TreeAlpha.exportConcise(tree, {
+					const withStoredKeys = TreeBeta.exportConcise(tree, {
 						keys: KeyEncodingOptions.knownStoredKeys,
 					});
 					const jsonSchema = getJsonSchema(testSchema, {
@@ -707,7 +708,7 @@ describe("simpleSchemaToJsonSchema", () => {
 				}
 
 				{
-					const withPropertyKeys = TreeAlpha.exportConcise(tree, {
+					const withPropertyKeys = TreeBeta.exportConcise(tree, {
 						keys: KeyEncodingOptions.usePropertyKeys,
 					});
 					const jsonSchema = getJsonSchema(testSchema, {
@@ -719,7 +720,7 @@ describe("simpleSchemaToJsonSchema", () => {
 				}
 
 				{
-					const withStoredKeys = TreeAlpha.exportConcise(tree, {
+					const withStoredKeys = TreeBeta.exportConcise(tree, {
 						keys: KeyEncodingOptions.knownStoredKeys,
 					});
 					const jsonSchema = getJsonSchema(testSchema, {
