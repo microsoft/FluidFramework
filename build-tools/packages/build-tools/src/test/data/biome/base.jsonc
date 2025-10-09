@@ -9,18 +9,7 @@
 	},
 	"files": {
 		"ignoreUnknown": true,
-
-		"ignore": [
-			// Build output
-			"**/base-1/*",
-			"**/base-2/*",
-			"**/base/*.done.build.log"
-		],
-
 		"maxSize": 2097152
-	},
-	"organizeImports": {
-		"enabled": false
 	},
 	"linter": {
 		"enabled": false,
@@ -59,7 +48,7 @@
 			// of the repo.
 			//
 			// This configuration should be kept up-to-date with the settings in `experimental/dds/tree/biome.jsonc`.
-			"include": ["experimental/dds/tree/**"],
+			"includes": ["experimental/dds/tree/**"],
 			"formatter": {
 				"lineWidth": 120
 			},
@@ -77,7 +66,7 @@
 			// format them conservatively without trailing commas.
 			//
 			// See also: https://github.com/microsoft/vscode/issues/102061
-			"include": [
+			"includes": [
 				"**/*.jsonc",
 
 				// Tools reading api-extractor config files do not consistently support trailing commas.
@@ -99,7 +88,7 @@
 		{
 			// JSONC WITH TRAILING COMMAS
 			// These JSONC files are known to support trailing commas.
-			"include": [
+			"includes": [
 				// vscode config files all support trailing commas.
 				"**/.vscode/*.json",
 
@@ -120,7 +109,7 @@
 			// PACKAGE.JSON
 			// These settings are used to format package.json files in the way npm itself does, with the exception of using
 			// tabs instead of spaces.
-			"include": ["**/package.json"],
+			"includes": ["**/package.json"],
 			"json": {
 				"formatter": {
 					"lineWidth": 1

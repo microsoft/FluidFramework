@@ -1,4 +1,5 @@
 {
+	"root": false,
 	"$schema": "../../../../../node_modules/@biomejs/biome/configuration_schema.json",
 	"extends": ["../pkg-a/biome.jsonc", "../add-includes-ignores.jsonc"],
 	"files": {
