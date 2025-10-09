@@ -45,6 +45,7 @@ export function createTestDocumentServiceFactoryProxy(
 export function createTestCodeLoaderProxy(props?: {
 	createDetachedBlob?: boolean;
 	layerCompatDetails?: ILayerCompatDetails;
+	runtimeWithout_setConnectionStatus?: true;
 }): ICodeDetailsLoader {
 	return {
 		load: async () => {
@@ -73,7 +74,14 @@ export function createTestCodeLoaderProxy(props?: {
 										pending: [],
 									}),
 									disposed: false,
-									setConnectionState: () => {},
+									setConnectionState: props?.runtimeWithout_setConnectionStatus
+										? () => {}
+										: AbsentProperty,
+									setConnectionStatus: props?.runtimeWithout_setConnectionStatus
+										? AbsentProperty
+										: () => {
+												throw new Error("call not expected");
+											},
 									ILayerCompatDetails: props?.layerCompatDetails ?? AbsentProperty,
 								});
 							},
