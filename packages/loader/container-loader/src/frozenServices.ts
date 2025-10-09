@@ -27,6 +27,7 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 
 import type { IConnectionStateChangeReason } from "./contracts.js";
+import { isPromiseLike } from "@fluidframework/core-utils/internal";
 
 /**
  * Creation of a FrozenDocumentServiceFactory which wraps an existing
@@ -36,11 +37,22 @@ import type { IConnectionStateChangeReason } from "./contracts.js";
  * @returns A FrozenDocumentServiceFactory
  * @legacy @alpha
  */
-export function createFrozenDocumentServiceFactory(
-	documentServiceFactory: IDocumentServiceFactory,
-): IDocumentServiceFactory {
-	return new FrozenDocumentServiceFactory(documentServiceFactory);
+export async function createFrozenDocumentServiceFactory(
+	factory: IDocumentServiceFactory | Promise<IDocumentServiceFactory>,
+): Promise<IDocumentServiceFactory> {
+	if (isPromiseLike(factory)) {
+		const resolved = await factory;
+		return resolved instanceof FrozenDocumentServiceFactory
+			? resolved
+			: new FrozenDocumentServiceFactory(resolved);
+	}
+
+	// Sync path
+	return factory instanceof FrozenDocumentServiceFactory
+		? factory
+		: new FrozenDocumentServiceFactory(factory);
 }
+
 export class FrozenDocumentServiceFactory implements IDocumentServiceFactory {
 	constructor(private readonly documentServiceFactory?: IDocumentServiceFactory) {}
 
