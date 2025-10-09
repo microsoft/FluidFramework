@@ -37,16 +37,9 @@ import { isPromiseLike } from "@fluidframework/core-utils/internal";
  * @returns A FrozenDocumentServiceFactory
  * @legacy @alpha
  */
-export async function createFrozenDocumentServiceFactory(
-	factory: IDocumentServiceFactory | Promise<IDocumentServiceFactory>,
-): Promise<IDocumentServiceFactory> {
-	if (isPromiseLike(factory)) {
-		const resolved = await factory;
-		return resolved instanceof FrozenDocumentServiceFactory
-			? resolved
-			: new FrozenDocumentServiceFactory(resolved);
-	}
-
+export function createFrozenDocumentServiceFactory(
+	factory?: IDocumentServiceFactory | Promise<IDocumentServiceFactory>,
+): IDocumentServiceFactory {
 	// Sync path
 	return factory instanceof FrozenDocumentServiceFactory
 		? factory
@@ -54,12 +47,20 @@ export async function createFrozenDocumentServiceFactory(
 }
 
 export class FrozenDocumentServiceFactory implements IDocumentServiceFactory {
-	constructor(private readonly documentServiceFactory?: IDocumentServiceFactory) {}
+	constructor(
+		private readonly documentServiceFactory?:
+			| IDocumentServiceFactory
+			| Promise<IDocumentServiceFactory>,
+	) {}
 
 	async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
+		let factory = this.documentServiceFactory;
+		if (isPromiseLike(factory)) {
+			factory = await this.documentServiceFactory;
+		}
 		return new FrozenDocumentService(
 			resolvedUrl,
-			await this.documentServiceFactory?.createDocumentService(resolvedUrl),
+			await factory?.createDocumentService(resolvedUrl),
 		);
 	}
 	async createContainer(): Promise<IDocumentService> {

@@ -197,8 +197,6 @@ export async function loadFrozenContainerFromPendingState(
 ): Promise<IContainer> {
 	return loadExistingContainer({
 		...props,
-		documentServiceFactory: await createFrozenDocumentServiceFactory(
-			props.documentServiceFactory,
-		),
+		documentServiceFactory: createFrozenDocumentServiceFactory(props.documentServiceFactory),
 	});
 }
