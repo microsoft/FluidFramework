@@ -9,6 +9,7 @@ import {
 	NodeKind,
 	normalizeAndEvaluateAnnotatedAllowedTypes,
 	type AllowedTypesMetadata,
+	type TreeNodeSchema,
 } from "../core/index.js";
 import type { ImplicitFieldSchema } from "../fieldSchema.js";
 import {
@@ -53,7 +54,7 @@ const schemaCache = new WeakMap<ImplicitFieldSchema, TreeViewConfigurationAlpha>
  * incremental summary feature and APIs are stabilized.
  */
 export function getShouldIncrementallySummarizeAllowedTypes(
-	rootSchema: ImplicitFieldSchema,
+	rootSchema: TreeNodeSchema,
 ): IncrementalEncodingPolicy {
 	const treeSchema = getOrCreate(
 		schemaCache,
