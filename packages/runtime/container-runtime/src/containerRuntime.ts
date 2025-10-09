@@ -23,6 +23,7 @@ import type {
 	IDeltaManagerFull,
 	ILoader,
 	IContainerStorageService,
+	ConnectionStatus,
 } from "@fluidframework/container-definitions/internal";
 import {
 	ConnectionState,
@@ -1696,7 +1697,7 @@ export class ContainerRuntime
 		this.messageAtLastSummary = lastMessageFromMetadata(metadata);
 
 		// Note that we only need to pull the *initial* connected state from the context.
-		// Later updates come through calls to setConnectionState.
+		// Later updates come through calls to setConnectionState/Status.
 		this.canSendOps = connected;
 		this.canSendSignals = this.getConnectionState
 			? this.getConnectionState() === ConnectionState.Connected ||
@@ -2783,6 +2784,59 @@ export class ContainerRuntime
 		this.channelCollection.notifyReadOnlyState(readonly);
 
 	public setConnectionState(canSendOps: boolean, clientId?: string): void {
+		this.setConnectionStateToConnectedOrDisconnected(canSendOps, clientId);
+	}
+
+	public setConnectionStatus(status: ConnectionStatus): void {
+		switch (status.connectionState) {
+			case ConnectionState.Connected: {
+				this.setConnectionStateToConnectedOrDisconnected(
+					status.canSendOps,
+					status.clientConnectionId,
+				);
+
+				break;
+			}
+			case ConnectionState.Disconnected: {
+				this.setConnectionStateToConnectedOrDisconnected(
+					status.canSendOps,
+					status.priorConnectedClientConnectionId,
+				);
+
+				break;
+			}
+			case ConnectionState.CatchingUp: {
+				assert(
+					this.getConnectionState !== undefined &&
+						this.getConnectionState() === ConnectionState.CatchingUp,
+					"connection state mismatch between getConnectionState and setConnectionStatus notification",
+				);
+
+				// Note: Historically when only `setConnectionState` of `IRuntime`
+				// was supported, it was possible to be in `CatchingUp` state and
+				// call through to `setConnectionStateCore` when there is a readonly
+				// change - see `Container`'s `"deltaManager.on("readonly"`. There
+				// would not be a transition of `canSendOps` in that case, but
+				// `channelCollection` and `garbageCollector` would receive early
+				// `setConnectionState` call AND `this` would `emit` "disconnected"
+				// event.
+
+				this.emitServiceConnectionEvents(
+					/* canSendOpsChanged */ this.canSendOps,
+					/* canSendOps */ false,
+					status.pendingClientConnectionId,
+				);
+
+				break;
+			}
+			// No default
+		}
+	}
+
+	private setConnectionStateToConnectedOrDisconnected(
+		canSendOps: boolean,
+		clientId: string | undefined,
+	): void {
 		// Validate we have consistent state
 		const currentClientId = this._audience.getSelf()?.clientId;
 		assert(clientId === currentClientId, 0x977 /* input clientId does not match Audience */);

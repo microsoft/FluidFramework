@@ -558,12 +558,19 @@ export class Container
 			// Ideally, we should supply pendingLocalState?.clientId here as well, not in constructor, but it does not matter (at least today)
 			this.connectionStateHandler.initProtocol(this.protocolHandler);
 
-			// Propagate current connection state through the system.
-			const readonly = this.readOnlyInfo.readonly ?? false;
 			// This call does not look like needed any more, with delaying all connection-related events past loaded phase.
 			// Yet, there could be some customer code that would break if we do not deliver it.
 			// Will be removed in further PRs with proper changeset.
-			this.setContextConnectedState(false /* connected */, readonly);
+			const runtime = this._runtime;
+			if (
+				runtime !== undefined &&
+				// Check for older runtime that may need this call
+				!("setConnectionStatus" in runtime) &&
+				runtime.disposed === false
+			) {
+				runtime.setConnectionState(false /* canSendOps */, this.clientId);
+			}
+
 			// Deliver delayed calls to DeltaManager - we ignored "connect" events while loading.
 			const cm = this._deltaManager.connectionManager;
 			if (cm.connected) {
@@ -2121,10 +2128,7 @@ export class Container
 
 		deltaManager.on("readonly", (readonly) => {
 			if (this.loaded) {
-				this.setContextConnectedState(
-					this.connectionState === ConnectionState.Connected,
-					readonly,
-				);
+				this.setConnectionStatus(readonly);
 			}
 			this.emit("readonly", readonly);
 		});
@@ -2235,6 +2239,11 @@ export class Container
 			this.signalAudience.setCurrentClientId(clientId);
 		}
 
+		this.setConnectionStatus(
+			/* readonly */ this.readOnlyInfo.readonly ?? false,
+			/* onlyCallSetConnectionStateIfConnectedOrDisconnected */ true,
+		);
+
 		// We communicate only transitions to Connected & Disconnected states, skipping all other states.
 		// This can be changed in the future, for example we likely should add "CatchingUp" event on Container.
 		if (
@@ -2246,7 +2255,6 @@ export class Container
 
 		// Both protocol and context should not be undefined if we got so far.
 
-		this.setContextConnectedState(connected, this.readOnlyInfo.readonly ?? false);
 		this.protocolHandler.setConnectionState(connected, this.clientId);
 		raiseConnectedEvent(
 			this.mc.logger,
@@ -2513,18 +2521,85 @@ export class Container
 	};
 
 	/**
-	 * Set the connected state of the ContainerContext
-	 * This controls the "connected" state of the ContainerRuntime as well
-	 * @param connected - Is the container currently connected?
+	 * Send the connected status to the runtime.
 	 * @param readonly - Is the container in readonly mode?
+	 * @param onlyCallSetConnectionStateIfConnectedOrDisconnected - If true, only
+	 * call older `setConnectionState` on the runtime if the connection state is
+	 * either Connected or Disconnected. This exists to preserve older behavior
+	 * where the runtime was only notified of these two states.
 	 */
-	private setContextConnectedState(connected: boolean, readonly: boolean): void {
+	private setConnectionStatus(
+		readonly: boolean,
+		onlyCallSetConnectionStateIfConnectedOrDisconnected: boolean = false,
+	): void {
 		if (this._runtime?.disposed === false && this.loaded) {
-			this.runtime.setConnectionState(
-				connected &&
-					!readonly /* container can send ops if connected to service and not in readonly mode */,
-				this.clientId,
-			);
+			const setConnectionStatus = this.runtime.setConnectionStatus?.bind(this.runtime);
+			if (setConnectionStatus === undefined) {
+				if (
+					!onlyCallSetConnectionStateIfConnectedOrDisconnected ||
+					this.connectionState === ConnectionState.Connected ||
+					this.connectionState === ConnectionState.Disconnected
+				) {
+					this.runtime.setConnectionState(
+						this.connectionState === ConnectionState.Connected &&
+							!readonly /* container can send ops if connected to service and not in readonly mode */,
+						this.clientId,
+					);
+				}
+			} else {
+				const pendingClientConnectionId = this.connectionStateHandler.pendingClientId;
+				const connectionState = this.connectionState;
+				switch (connectionState) {
+					case ConnectionState.EstablishingConnection: {
+						setConnectionStatus({
+							connectionState,
+							canSendOps: false,
+						});
+
+						break;
+					}
+					case ConnectionState.CatchingUp: {
+						// When catching up, we have a pending clientId, but it
+						// is not usable for ops. Send clientId with canSendOps false.
+						assert(pendingClientConnectionId !== undefined, "catching up without clientId");
+						setConnectionStatus({
+							connectionState,
+							pendingClientConnectionId,
+							canSendOps: false,
+						});
+
+						break;
+					}
+					case ConnectionState.Connected: {
+						// When connected, we have an active clientId. Pass it along
+						// with canSendOps true/false based on readonly.
+						const clientConnectionId = this.clientId;
+						assert(clientConnectionId !== undefined, "connected without clientId");
+						assert(
+							clientConnectionId === pendingClientConnectionId,
+							"connected with different clientId than pending",
+						);
+						setConnectionStatus({
+							connectionState,
+							clientConnectionId,
+							canSendOps: !readonly,
+						});
+
+						break;
+					}
+					case ConnectionState.Disconnected: {
+						setConnectionStatus({
+							connectionState,
+							priorPendingClientConnectionId: pendingClientConnectionId,
+							priorConnectedClientConnectionId: this.clientId,
+							canSendOps: false,
+						});
+
+						break;
+					}
+					// No default
+				}
+			}
 		}
 	}
 
