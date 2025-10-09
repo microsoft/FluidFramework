@@ -461,6 +461,9 @@ importers:
 
   examples/apps/collaborative-textarea:
     dependencies:
+      '@fluid-example/example-driver':
+        specifier: workspace:~
+        version: link:../../utils/example-driver
       '@fluid-example/example-utils':
         specifier: workspace:~
         version: link:../../utils/example-utils
@@ -470,6 +473,9 @@ importers:
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../packages/common/container-definitions
+      '@fluidframework/container-loader':
+        specifier: workspace:~
+        version: link:../../../packages/loader/container-loader
       '@fluidframework/container-runtime-definitions':
         specifier: workspace:~
         version: link:../../../packages/runtime/container-runtime-definitions
@@ -498,6 +504,9 @@ importers:
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
+      '@fluid-example/example-webpack-integration':
+        specifier: workspace:~
+        version: link:../../utils/example-webpack-integration
       '@fluid-tools/build-cli':
         specifier: ^0.58.3
         version: 0.58.3(@types/node@18.19.86)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
@@ -588,6 +597,9 @@ importers:
 
   examples/apps/contact-collection:
     dependencies:
+      '@fluid-example/example-driver':
+        specifier: workspace:~
+        version: link:../../utils/example-driver
       '@fluid-example/example-utils':
         specifier: workspace:~
         version: link:../../utils/example-utils
@@ -597,6 +609,9 @@ importers:
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../packages/common/container-definitions
+      '@fluidframework/container-loader':
+        specifier: workspace:~
+        version: link:../../../packages/loader/container-loader
       '@fluidframework/container-runtime-definitions':
         specifier: workspace:~
         version: link:../../../packages/runtime/container-runtime-definitions
@@ -625,6 +640,9 @@ importers:
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
+      '@fluid-example/example-webpack-integration':
+        specifier: workspace:~
+        version: link:../../utils/example-webpack-integration
       '@fluid-tools/build-cli':
         specifier: ^0.58.3
         version: 0.58.3(@types/node@18.19.86)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
@@ -727,6 +745,9 @@ importers:
       '@fluid-example/collaborative-textarea':
         specifier: workspace:~
         version: link:../collaborative-textarea
+      '@fluid-example/example-driver':
+        specifier: workspace:~
+        version: link:../../utils/example-driver
       '@fluid-example/example-utils':
         specifier: workspace:~
         version: link:../../utils/example-utils
@@ -745,6 +766,9 @@ importers:
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../packages/common/container-definitions
+      '@fluidframework/container-loader':
+        specifier: workspace:~
+        version: link:../../../packages/loader/container-loader
       '@fluidframework/container-runtime-definitions':
         specifier: workspace:~
         version: link:../../../packages/runtime/container-runtime-definitions
@@ -785,6 +809,9 @@ importers:
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
+      '@fluid-example/example-webpack-integration':
+        specifier: workspace:~
+        version: link:../../utils/example-webpack-integration
       '@fluid-tools/build-cli':
         specifier: ^0.58.3
         version: 0.58.3(@types/node@18.19.86)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
@@ -1026,6 +1053,9 @@ importers:
 
   examples/apps/staging:
     dependencies:
+      '@fluid-example/example-driver':
+        specifier: workspace:~
+        version: link:../../utils/example-driver
       '@fluid-example/example-utils':
         specifier: workspace:~
         version: link:../../utils/example-utils
@@ -1087,6 +1117,9 @@ importers:
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
+      '@fluid-example/example-webpack-integration':
+        specifier: workspace:~
+        version: link:../../utils/example-webpack-integration
       '@fluid-tools/build-cli':
         specifier: ^0.58.3
         version: 0.58.3(@types/node@18.19.86)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
@@ -1180,6 +1213,9 @@ importers:
 
   examples/apps/task-selection:
     dependencies:
+      '@fluid-example/example-driver':
+        specifier: workspace:~
+        version: link:../../utils/example-driver
       '@fluid-example/example-utils':
         specifier: workspace:~
         version: link:../../utils/example-utils
@@ -1192,6 +1228,9 @@ importers:
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../packages/common/container-definitions
+      '@fluidframework/container-loader':
+        specifier: workspace:~
+        version: link:../../../packages/loader/container-loader
       '@fluidframework/container-runtime-definitions':
         specifier: workspace:~
         version: link:../../../packages/runtime/container-runtime-definitions
@@ -1220,6 +1259,9 @@ importers:
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
+      '@fluid-example/example-webpack-integration':
+        specifier: workspace:~
+        version: link:../../utils/example-webpack-integration
       '@fluid-tools/build-cli':
         specifier: ^0.58.3
         version: 0.58.3(@types/node@18.19.86)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
@@ -1356,6 +1398,9 @@ importers:
 
   examples/apps/tree-comparison:
     dependencies:
+      '@fluid-example/example-driver':
+        specifier: workspace:~
+        version: link:../../utils/example-driver
       '@fluid-example/example-utils':
         specifier: workspace:~
         version: link:../../utils/example-utils
@@ -1420,6 +1465,9 @@ importers:
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
+      '@fluid-example/example-webpack-integration':
+        specifier: workspace:~
+        version: link:../../utils/example-webpack-integration
       '@fluid-tools/build-cli':
         specifier: ^0.58.3
         version: 0.58.3(@types/node@18.19.86)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
