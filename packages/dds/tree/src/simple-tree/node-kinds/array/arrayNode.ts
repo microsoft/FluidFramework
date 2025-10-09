@@ -25,7 +25,7 @@ import {
 	typeSchemaSymbol,
 	getOrCreateNodeFromInnerNode,
 	getSimpleNodeSchemaFromInnerNode,
-	getOrCreateInnerNode,
+	getInnerNode,
 	type TreeNodeSchemaClass,
 	getKernel,
 	type UnhydratedFlexTreeNode,
@@ -477,7 +477,7 @@ export class IterableTreeArrayContent<T> implements Iterable<T> {
  * Given a array node proxy, returns its underlying LazySequence field.
  */
 function getSequenceField(arrayNode: ReadonlyArrayNode): FlexTreeSequenceField {
-	return getOrCreateInnerNode(arrayNode).getBoxed(EmptyKey) as FlexTreeSequenceField;
+	return getInnerNode(arrayNode).getBoxed(EmptyKey) as FlexTreeSequenceField;
 }
 
 // For compatibility, we are initially implement 'readonly T[]' by applying the Array.prototype methods
@@ -886,7 +886,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		);
 
 		const kernel = getKernel(this);
-		const flexContext = kernel.getOrCreateInnerNode().context;
+		const flexContext = kernel.getInnerNode().context;
 		assert(
 			flexContext === kernel.context.flexContext,
 			0xc14 /* Expected flexContext to match */,
