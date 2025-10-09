@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { TreeStoredSchemaSubscription } from "../../../core/index.js";
+import type {
+	TreeNodeSchemaIdentifier,
+	TreeStoredSchemaSubscription,
+} from "../../../core/index.js";
 import {
 	Chunker,
 	type IChunker,
@@ -11,13 +14,16 @@ import {
 	defaultChunkPolicy,
 	makeTreeChunker,
 	polymorphic,
-	tryShapeFromSchema,
+	tryShapeFromNodeSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree.js";
 // Allow importing from this specific file which is being tested:
 // eslint-disable-next-line import/no-internal-modules
 import { buildChunkedForest } from "../../../feature-libraries/chunked-forest/chunkedForest.js";
-import { defaultSchemaPolicy } from "../../../feature-libraries/index.js";
+import {
+	defaultIncrementalEncodingPolicy,
+	defaultSchemaPolicy,
+} from "../../../feature-libraries/index.js";
 import { testForest } from "../../forestTestSuite.js";
 
 const chunkers: [string, (schema: TreeStoredSchemaSubscription) => IChunker][] = [
@@ -33,7 +39,10 @@ const chunkers: [string, (schema: TreeStoredSchemaSubscription) => IChunker][] =
 				() => polymorphic,
 			),
 	],
-	["default", (schema) => makeTreeChunker(schema, defaultSchemaPolicy)],
+	[
+		"default",
+		(schema) => makeTreeChunker(schema, defaultSchemaPolicy, defaultIncrementalEncodingPolicy),
+	],
 	[
 		"sequences",
 		(schema): IChunker =>
@@ -48,7 +57,16 @@ const chunkers: [string, (schema: TreeStoredSchemaSubscription) => IChunker][] =
 				Number.POSITIVE_INFINITY,
 				Number.POSITIVE_INFINITY,
 				1,
-				tryShapeFromSchema,
+				(type: TreeNodeSchemaIdentifier, shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>) =>
+					tryShapeFromNodeSchema(
+						{
+							schema,
+							policy: defaultSchemaPolicy,
+							shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
+							shapes,
+						},
+						type,
+					),
 			),
 	],
 	[
@@ -60,7 +78,16 @@ const chunkers: [string, (schema: TreeStoredSchemaSubscription) => IChunker][] =
 				Number.POSITIVE_INFINITY,
 				Number.POSITIVE_INFINITY,
 				defaultChunkPolicy.uniformChunkNodeCount,
-				tryShapeFromSchema,
+				(type: TreeNodeSchemaIdentifier, shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>) =>
+					tryShapeFromNodeSchema(
+						{
+							schema,
+							policy: defaultSchemaPolicy,
+							shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
+							shapes,
+						},
+						type,
+					),
 			),
 	],
 	[
@@ -72,7 +99,16 @@ const chunkers: [string, (schema: TreeStoredSchemaSubscription) => IChunker][] =
 				2,
 				1,
 				defaultChunkPolicy.uniformChunkNodeCount,
-				tryShapeFromSchema,
+				(type: TreeNodeSchemaIdentifier, shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>) =>
+					tryShapeFromNodeSchema(
+						{
+							schema,
+							policy: defaultSchemaPolicy,
+							shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
+							shapes,
+						},
+						type,
+					),
 			),
 	],
 ];
