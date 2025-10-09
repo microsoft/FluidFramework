@@ -21,7 +21,7 @@ import type {
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 
-import { FrozenDocumentServiceFactory } from "./frozenServices.js";
+import { createFrozenDocumentServiceFactory } from "./frozenServices.js";
 import { Loader } from "./loader.js";
 import type { ProtocolHandlerBuilder } from "./protocol.js";
 
@@ -197,6 +197,6 @@ export async function loadFrozenContainerFromPendingState(
 ): Promise<IContainer> {
 	return loadExistingContainer({
 		...props,
-		documentServiceFactory: new FrozenDocumentServiceFactory(props.documentServiceFactory),
+		documentServiceFactory: createFrozenDocumentServiceFactory(props.documentServiceFactory),
 	});
 }
