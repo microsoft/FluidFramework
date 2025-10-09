@@ -290,11 +290,13 @@ export class SerializedStateManager implements IDisposable {
 			);
 			const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(snapshot);
 			const attributes = await getDocumentAttributes(this.storageAdapter, baseSnapshotTree);
-			this.refreshTimer?.start();
-			this.snapshotInfo = {
-				snapshot,
-				snapshotSequenceNumber: attributes.sequenceNumber,
-			};
+			if (this.offlineLoadEnabled) {
+				this.refreshTimer?.start();
+				this.snapshotInfo = {
+					snapshot,
+					snapshotSequenceNumber: attributes.sequenceNumber,
+				};
+			}
 			return { snapshot, version, attributes };
 		} else {
 			const { baseSnapshot, snapshotBlobs, savedOps } = pendingLocalState;
