@@ -7,24 +7,20 @@ const assert = require("assert");
 const path = require("path");
 const { ESLint } = require("eslint");
 const plugin = require("../../../index.js");
+const { createESLintConfig } = require("../eslintConfigHelper.js");
 
 describe("ESLint Rule Tests", function () {
 	function createESLintInstance(config) {
-		return new ESLint({
-			overrideConfigFile: true,
-			overrideConfig: [{
-				files: ["**/*.ts"],
-				languageOptions: {
-					parser: require("@typescript-eslint/parser"),
-					parserOptions: config.parserOptions,
-				},
-				plugins: {
-					"@fluid-internal/fluid": plugin,
-					...config.plugins,
-				},
-				rules: config.rules,
-			}],
+		const eslintOptions = createESLintConfig({
+			parser: "@typescript-eslint/parser",
+			parserOptions: config.parserOptions,
+			plugin,
+			pluginName: "@fluid-internal/fluid",
+			rules: config.rules,
+			extraPlugins: config.plugins,
 		});
+
+		return new ESLint(eslintOptions);
 	}
 
 	it("Should report an error for restricted tag imports", async function () {

@@ -103,7 +103,11 @@ module.exports = {
 					});
 				}
 
-				if (isStrictlyTypedVariable(getVariableType(parentNode.left, getScope(parentNode.left)))) {
+				if (
+					isStrictlyTypedVariable(
+						getVariableType(parentNode.left, getScope(parentNode.left)),
+					)
+				) {
 					// This defect occurs when an index signature type is assigned to a strictly typed variable after its declaration
 					return context.report({
 						node,
@@ -640,7 +644,9 @@ function getKeyValue(node, context) {
 	if (node.type === "Literal") return node.value;
 	if (node.type === "Identifier") {
 		// ESLint 9 requires node argument for getScope
-		let scope = context.sourceCode?.getScope ? context.sourceCode.getScope(node) : context.getScope();
+		let scope = context.sourceCode?.getScope
+			? context.sourceCode.getScope(node)
+			: context.getScope();
 		while (scope) {
 			const variable = scope.variables.find((v) => v.name === node.name);
 			if (variable) {

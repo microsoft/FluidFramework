@@ -7,27 +7,23 @@ const assert = require("assert");
 const path = require("path");
 const { ESLint } = require("eslint");
 const plugin = require("../../../index.js");
+const { createESLintConfig } = require("../eslintConfigHelper.js");
 
 describe("Do not allow Markdown links in JSDoc/TSDoc comments", function () {
 	async function lintFile(file) {
-		const eslint = new ESLint({
-			overrideConfigFile: true,
-			overrideConfig: [{
-				files: ["**/*.ts"],
-				languageOptions: {
-					parser: require("@typescript-eslint/parser"),
-					parserOptions: {
-						project: path.join(__dirname, "../example/tsconfig.json"),
-					},
-				},
-				plugins: {
-					"@fluid-internal/fluid": plugin,
-				},
-				rules: {
-					"@fluid-internal/fluid/no-markdown-links-in-jsdoc": "error",
-				},
-			}],
+		const eslintOptions = createESLintConfig({
+			parser: "@typescript-eslint/parser",
+			parserOptions: {
+				project: path.join(__dirname, "../example/tsconfig.json"),
+			},
+			plugin,
+			pluginName: "@fluid-internal/fluid",
+			rules: {
+				"@fluid-internal/fluid/no-markdown-links-in-jsdoc": "error",
+			},
 		});
+
+		const eslint = new ESLint(eslintOptions);
 		const fileToLint = path.join(__dirname, "../example/no-markdown-links-in-jsdoc", file);
 		const results = await eslint.lintFiles([fileToLint]);
 		assert.equal(results.length, 1, "Expected a single result for linting a single file.");

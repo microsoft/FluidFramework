@@ -7,27 +7,23 @@ const assert = require("assert");
 const path = require("path");
 const { ESLint } = require("eslint");
 const plugin = require("../../../index.js");
+const { createESLintConfig } = require("../eslintConfigHelper.js");
 
 describe("Do not allow release tags on members", function () {
 	function createESLintInstance() {
-		return new ESLint({
-			overrideConfigFile: true,
-			overrideConfig: [{
-				files: ["**/*.ts"],
-				languageOptions: {
-					parser: require("@typescript-eslint/parser"),
-					parserOptions: {
-						project: path.join(__dirname, "../example/tsconfig.json"),
-					},
-				},
-				plugins: {
-					"@fluid-internal/fluid": plugin,
-				},
-				rules: {
-					"@fluid-internal/fluid/no-member-release-tags": ["error"],
-				},
-			}],
+		const eslintOptions = createESLintConfig({
+			parser: "@typescript-eslint/parser",
+			parserOptions: {
+				project: path.join(__dirname, "../example/tsconfig.json"),
+			},
+			plugin,
+			pluginName: "@fluid-internal/fluid",
+			rules: {
+				"@fluid-internal/fluid/no-member-release-tags": ["error"],
+			},
 		});
+
+		return new ESLint(eslintOptions);
 	}
 
 	it("Should report errors for including release tags inside the class declaration", async function () {
