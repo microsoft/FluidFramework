@@ -161,6 +161,12 @@ const resolvedUrl: IResolvedUrl = {
 	endpoints: {},
 };
 
+const errorFn = (error: Error, expected: string): boolean => {
+	assert.notStrictEqual(error.message, undefined, "error is undefined");
+	assert.strictEqual(error.message, expected, `Unexpected error: ${error.message}`);
+	return true;
+};
+
 const getAttributesFromPendingState = (
 	pendingState: IPendingContainerState,
 ): IDocumentAttributes => {
@@ -196,6 +202,29 @@ describe("serializedStateManager", () => {
 	});
 
 	describe("before refreshing the snapshot", () => {
+		it("can't get pending local state when offline load disabled", async () => {
+			const storageAdapter = new MockStorageAdapter();
+			const serializedStateManager = new SerializedStateManager(
+				enableOfflineSnapshotRefresh(logger),
+				storageAdapter,
+				false,
+				eventEmitter,
+				() => false,
+				() => false,
+			);
+
+			await assert.rejects(
+				async () =>
+					serializedStateManager.getPendingLocalState(
+						"clientId",
+						new MockRuntime(),
+						resolvedUrl,
+					),
+				(error: Error) =>
+					errorFn(error, "Can't get pending local state unless offline load is enabled"),
+				"container can get local state with offline load disabled",
+			);
+		});
 		it("can get pending local state after attach", async () => {
 			const serializedStateManager = new SerializedStateManager(
 				enableOfflineSnapshotRefresh(logger),

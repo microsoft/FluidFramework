@@ -447,6 +447,7 @@ export class SerializedStateManager implements IDisposable {
 			this.snapshotInfo = {
 				snapshot,
 				snapshotSequenceNumber: snapshot.sequenceNumber ?? 0,
+				snapshotFetchedTime: Date.now(),
 			};
 			this.refreshTimer?.start();
 		}
