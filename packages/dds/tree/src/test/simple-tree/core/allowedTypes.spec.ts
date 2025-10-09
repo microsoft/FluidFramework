@@ -9,14 +9,14 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 
 import {
 	allowUnused,
+	numberSchema,
 	SchemaFactory,
+	stringSchema,
 	type booleanSchema,
 	type InsertableObjectFromSchemaRecord,
 	type InsertableTreeFieldFromImplicitField,
 	type InsertableTypedNode,
 	type LazyItem,
-	type numberSchema,
-	type stringSchema,
 	type TreeLeafValue,
 	type TreeNode,
 	type TreeNodeSchema,
@@ -209,9 +209,38 @@ const schema = new SchemaFactory("com.example");
 		type Mixed = readonly [A1, A2];
 
 		type Empty = readonly [];
-		type _check1 = requireAssignableTo<Empty, UnannotateAllowedTypesList<Empty>>;
+		{
+			type _check1 = requireAssignableTo<Empty, UnannotateAllowedTypesList<Empty>>;
+			type _check2 = requireAssignableTo<UnannotateAllowedTypesList<Mixed>, readonly A2[]>;
+		}
 
-		type _check2 = requireAssignableTo<UnannotateAllowedTypesList<Mixed>, readonly A2[]>;
+		// Generic cases
+		{
+			type A = LazyItem<TreeNodeSchema>;
+			type B = AnnotatedAllowedType;
+
+			type _check1 = requireAssignableTo<[A], UnannotateAllowedTypesList<[A]>>;
+			type _check2 = requireAssignableTo<UnannotateAllowedTypesList<[A]>, [A]>;
+			type _check3 = requireAssignableTo<UnannotateAllowedTypesList<[B]>, [A]>;
+			type _check4 = requireAssignableTo<
+				UnannotateAllowedTypesList<[AnnotatedAllowedType<TreeNodeSchema>]>,
+				[TreeNodeSchema]
+			>;
+		}
+		// Concrete cases
+		{
+			type A = typeof SchemaFactory.number;
+
+			type _check1 = requireTrue<areSafelyAssignable<UnannotateAllowedTypesList<[A]>, [A]>>;
+			type _check2 = requireTrue<
+				areSafelyAssignable<
+					UnannotateAllowedTypesList<[{ type: A; metadata: { custom: "x" } }]>,
+					[A]
+				>
+			>;
+
+			type _check4 = requireAssignableTo<UnannotateAllowedTypesList<[A]>, [A]>;
+		}
 	}
 }
 
@@ -407,8 +436,6 @@ describe("allowedTypes", () => {
 	});
 
 	describe("normalizeAnnotatedAllowedTypes", () => {
-		const stringSchema = schema.string;
-		const numberSchema = schema.number;
 		const lazyString = () => stringSchema;
 		const lazyNumber = () => numberSchema;
 

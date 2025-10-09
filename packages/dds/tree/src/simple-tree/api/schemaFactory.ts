@@ -94,13 +94,13 @@ export function schemaFromValue(value: TreeValue): TreeNodeSchema {
 }
 
 /**
- * Options when declaring an {@link SchemaFactory.object|object node}'s schema
+ * Options when declaring an {@link SchemaFactory.object|object node}'s schema.
  *
  * @input
- * @alpha
+ * @beta
  */
-export interface SchemaFactoryObjectOptions<TCustomMetadata = unknown>
-	extends NodeSchemaOptionsAlpha<TCustomMetadata> {
+export interface ObjectSchemaOptions<TCustomMetadata = unknown>
+	extends NodeSchemaOptions<TCustomMetadata> {
 	/**
 	 * Allow nodes typed with this object node schema to contain optional fields that are not present in the schema declaration.
 	 * Such nodes can come into existence either via import APIs (see remarks) or by way of collaboration with another client
@@ -150,11 +150,21 @@ export interface SchemaFactoryObjectOptions<TCustomMetadata = unknown>
 }
 
 /**
+ * Options when declaring an {@link SchemaFactory.object|object node}'s schema
+ *
+ * @input
+ * @alpha
+ */
+export interface ObjectSchemaOptionsAlpha<TCustomMetadata = unknown>
+	extends ObjectSchemaOptions<TCustomMetadata>,
+		NodeSchemaOptionsAlpha<TCustomMetadata> {}
+
+/**
  * Default options for Object node schema creation.
  * @remarks Omits parameters that are not relevant for common use cases.
  */
 export const defaultSchemaFactoryObjectOptions: Required<
-	Omit<SchemaFactoryObjectOptions, "metadata" | "persistedMetadata">
+	Omit<ObjectSchemaOptionsAlpha, "metadata" | "persistedMetadata">
 > = {
 	allowUnknownOptionalFields: false,
 };

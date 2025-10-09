@@ -1025,7 +1025,6 @@ export class Container
 				this.mc.config.getBoolean("Fluid.Container.enableOfflineFull") ??
 				options.enableOfflineLoad === true);
 		this.serializedStateManager = new SerializedStateManager(
-			pendingLocalState,
 			this.subLogger,
 			this.storageAdapter,
 			offlineLoadEnabled,
@@ -1128,6 +1127,7 @@ export class Container
 				this._protocolHandler?.close();
 
 				this.connectionStateHandler.dispose();
+				this.serializedStateManager.dispose();
 			} catch (newError) {
 				this.mc.logger.sendErrorEvent({ eventName: "ContainerCloseException" }, newError);
 			}
@@ -1174,6 +1174,7 @@ export class Container
 				this._protocolHandler?.close();
 
 				this.connectionStateHandler.dispose();
+				this.serializedStateManager.dispose();
 
 				const maybeError = error === undefined ? undefined : new Error(error.message);
 				this._runtime?.dispose(maybeError);
@@ -1668,7 +1669,7 @@ export class Container
 
 		// Fetch specified snapshot.
 		const { baseSnapshot, version, attributes } =
-			await this.serializedStateManager.fetchSnapshot(specifiedVersion);
+			await this.serializedStateManager.fetchSnapshot(specifiedVersion, pendingLocalState);
 		const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(baseSnapshot);
 		this._loadedFromVersion = version;
 

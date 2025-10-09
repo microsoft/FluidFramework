@@ -78,7 +78,7 @@ describe("Prompt generation", () => {
 				subtree: new Subtree(view),
 				editToolName: "EditTreeTool",
 			});
-			assert.ok(!prompt.includes("ALWAYS prefer to use the application helper methods"));
+			assert.ok(!prompt.includes("ALWAYS prefer to use any application helper methods"));
 		}
 
 		// If there are methods, then the prompt should mention them
@@ -102,7 +102,7 @@ describe("Prompt generation", () => {
 				subtree: new Subtree(view),
 				editToolName: "EditTreeTool",
 			});
-			assert.ok(prompt.includes("ALWAYS prefer to use the application helper methods"));
+			assert.ok(prompt.includes("ALWAYS prefer to use any application helper methods"));
 		}
 	});
 
@@ -161,6 +161,11 @@ describe("Prompt generation", () => {
 
 describe("Prompt snapshot", () => {
 	const updateSnapshots = false;
+
+	it("does not update automatically", () => {
+		// Prevent accidentally checking in `updateSnapshots = true`
+		assert.equal(updateSnapshots, false);
+	});
 
 	it("with all options enabled", () => {
 		class TestMap extends sf.map("TestMap", sf.number) {
