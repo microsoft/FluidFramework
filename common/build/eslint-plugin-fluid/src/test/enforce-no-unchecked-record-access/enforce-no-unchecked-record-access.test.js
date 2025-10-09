@@ -15,7 +15,6 @@ describe("ESLint Rule Tests", function () {
 			parser: "@typescript-eslint/parser",
 			parserOptions: {
 				project: path.join(__dirname, "../example/tsconfig.json"),
-				projectService: true,
 				tsconfigRootDir: path.join(__dirname, "../example"),
 			},
 			plugin,

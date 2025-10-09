@@ -36,6 +36,7 @@ describe("ESLint Rule Tests", function () {
 			},
 			parserOptions: {
 				project: path.join(__dirname, "../example/tsconfig.json"),
+				tsconfigRootDir: path.join(__dirname, "../example"),
 			},
 		});
 		const filesToLint = ["fileWithImports.ts", "mockModule.ts"].map((file) =>
@@ -70,6 +71,7 @@ describe("ESLint Rule Tests", function () {
 			},
 			parserOptions: {
 				project: path.join(__dirname, "../example/tsconfig.json"),
+				tsconfigRootDir: path.join(__dirname, "../example"),
 			},
 		});
 		const filesToLint = ["fileWithExceptionImports.ts", "exceptionFile.ts"].map((file) =>
@@ -97,6 +99,7 @@ describe("ESLint Rule Tests", function () {
 			},
 			parserOptions: {
 				project: path.join(__dirname, "../example/tsconfig.json"),
+				tsconfigRootDir: path.join(__dirname, "../example"),
 			},
 		});
 		const filesToLint = ["fileWithImports.ts", "mockModule.ts"].map((file) =>
