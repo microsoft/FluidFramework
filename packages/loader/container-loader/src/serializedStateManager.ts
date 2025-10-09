@@ -195,7 +195,7 @@ export class SerializedStateManager implements IDisposable {
 	/**
 	 * @param subLogger - Container's logger to use as parent for our logger
 	 * @param storageAdapter - Storage adapter for fetching snapshots
-	 * @param _offlineLoadEnabled  - Is serializing/rehydrating containers allowed?
+	 * @param _offlineLoadEnabled - Is serializing/rehydrating containers allowed?
 	 * @param containerEvent - Source of the "saved" event when the container has all its pending state uploaded
 	 * @param containerDirty - Is the container "dirty"? That's the opposite of "saved" - there is pending state that may not have been received yet by the service.
 	 */
