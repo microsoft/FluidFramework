@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/routerlicious-urlresolver",
-	"version": "2.61.0",
+	"version": "2.63.0",
 	"description": "Url Resolver for routerlicious urls.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -65,7 +65,7 @@
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"test": "npm run test:mocha",
 		"test:mocha": "npm run test:mocha:esm && npm run test:mocha:cjs",
-		"test:mocha:cjs": "cross-env MOCHA_SPEC=dist/test mocha",
+		"test:mocha:cjs": "cross-env FLUID_TEST_MODULE_SYSTEM=CJS mocha",
 		"test:mocha:esm": "mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
@@ -86,7 +86,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.58.3",
 		"@fluidframework/eslint-config-fluid": "^6.0.0",
-		"@fluidframework/routerlicious-urlresolver-previous": "npm:@fluidframework/routerlicious-urlresolver@2.60.0",
+		"@fluidframework/routerlicious-urlresolver-previous": "npm:@fluidframework/routerlicious-urlresolver@2.62.0",
 		"@microsoft/api-extractor": "7.52.11",
 		"@types/mocha": "^10.0.10",
 		"@types/nconf": "^0.10.0",

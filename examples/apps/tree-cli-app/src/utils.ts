@@ -21,7 +21,7 @@ import {
 	extractPersistedSchema,
 	FluidClientVersion,
 	independentInitializedView,
-	typeboxValidator,
+	FormatValidatorBasic,
 	type ForestOptions,
 	type ICodecOptions,
 	type JsonCompatible,
@@ -31,6 +31,7 @@ import {
 	TreeAlpha,
 	KeyEncodingOptions,
 } from "@fluidframework/tree/alpha";
+import { TreeBeta } from "@fluidframework/tree/beta";
 import { type Static, Type } from "@sinclair/typebox";
 
 import type { Item } from "./schema.js";
@@ -61,7 +62,7 @@ export function loadDocument(source: string | undefined): List {
 
 	switch (parts.at(-2)) {
 		case "concise": {
-			return TreeAlpha.importConcise(List, fileData as ConciseTree);
+			return TreeBeta.importConcise(List, fileData as ConciseTree);
 		}
 		case "verbose": {
 			return TreeAlpha.importVerbose(List, fileData as VerboseTree);
@@ -72,7 +73,9 @@ export function loadDocument(source: string | undefined): List {
 			});
 		}
 		case "compressed": {
-			return TreeAlpha.importCompressed(List, fileData, { jsonValidator: typeboxValidator });
+			return TreeAlpha.importCompressed(List, fileData, {
+				jsonValidator: FormatValidatorBasic,
+			});
 		}
 		case "snapshot": {
 			// TODO: This should probably do a validating parse of the data (probably using type box) rather than just casting it.
@@ -138,13 +141,13 @@ export function exportContent(destination: string, tree: List): JsonCompatible {
 
 	switch (parts.at(-2)) {
 		case "concise": {
-			return TreeAlpha.exportConcise(tree) as JsonCompatible;
+			return TreeBeta.exportConcise(tree) as JsonCompatible;
 		}
 		case "verbose": {
 			return TreeAlpha.exportVerbose(tree) as JsonCompatible;
 		}
 		case "concise-stored": {
-			return TreeAlpha.exportConcise(tree, {
+			return TreeBeta.exportConcise(tree, {
 				keys: KeyEncodingOptions.knownStoredKeys,
 			}) as JsonCompatible;
 		}
@@ -249,7 +252,7 @@ export function rejectHandles(key: string, value: unknown): unknown {
 	return value;
 }
 
-const options: ForestOptions & ICodecOptions = { jsonValidator: typeboxValidator };
+const options: ForestOptions & ICodecOptions = { jsonValidator: FormatValidatorBasic };
 
 const File = Type.Object({
 	tree: Type.Unsafe<JsonCompatible<IFluidHandle>>(),

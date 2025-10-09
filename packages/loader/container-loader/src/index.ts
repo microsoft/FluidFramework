@@ -4,15 +4,18 @@
  */
 
 export { ConnectionState } from "./connectionState.js";
-export { type IContainerExperimental, waitContainerToCatchUp } from "./container.js";
+export { type ContainerAlpha, waitContainerToCatchUp, asLegacyAlpha } from "./container.js";
+export { createFrozenDocumentServiceFactory } from "./frozenServices.js";
 export {
 	createDetachedContainer,
 	loadExistingContainer,
 	rehydrateDetachedContainer,
+	loadFrozenContainerFromPendingState,
 	type ICreateAndLoadContainerProps,
 	type ICreateDetachedContainerProps,
 	type ILoadExistingContainerProps,
 	type IRehydrateDetachedContainerProps,
+	type ILoadFrozenContainerFromPendingStateProps,
 } from "./createAndLoadContainerUtils.js";
 export {
 	type ICodeDetailsLoader,

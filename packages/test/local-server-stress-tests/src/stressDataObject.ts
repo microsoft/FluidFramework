@@ -31,11 +31,9 @@ import type {
 // eslint-disable-next-line import/no-internal-modules
 import { modifyClusterSize } from "@fluidframework/id-compressor/internal/test-utils";
 import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
-import type {
-	// eslint-disable-next-line import/no-deprecated
-	IContainerRuntimeBaseExperimental,
-	// eslint-disable-next-line import/no-deprecated
-	StageControlsExperimental,
+import {
+	asLegacyAlpha,
+	type StageControlsAlpha,
 } from "@fluidframework/runtime-definitions/internal";
 import { RuntimeHeaders, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import { timeoutAwait } from "@fluidframework/test-utils/internal";
@@ -145,7 +143,7 @@ export class StressDataObject extends DataObject {
 	}
 
 	public get attached() {
-		return this.runtime.attachState === AttachState.Attached;
+		return this.runtime.attachState !== AttachState.Detached;
 	}
 
 	public async uploadBlob(tag: `blob-${number}`, contents: string) {
@@ -305,11 +303,8 @@ export class DefaultStressDataObject extends StressDataObject {
 		this._locallyCreatedObjects.push(obj);
 	}
 
-	// eslint-disable-next-line import/no-deprecated
-	private stageControls: StageControlsExperimental | undefined;
-	// eslint-disable-next-line import/no-deprecated
-	private readonly containerRuntimeExp: IContainerRuntimeBaseExperimental =
-		this.context.containerRuntime;
+	private stageControls: StageControlsAlpha | undefined;
+	private readonly containerRuntimeExp = asLegacyAlpha(this.context.containerRuntime);
 	public enterStagingMode() {
 		assert(
 			this.containerRuntimeExp.enterStagingMode !== undefined,

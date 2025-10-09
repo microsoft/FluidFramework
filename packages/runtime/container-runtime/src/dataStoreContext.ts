@@ -168,7 +168,7 @@ export interface IFluidDataStoreContextProps {
  * Properties necessary for creating a local FluidDataStoreContext
  */
 export interface ILocalFluidDataStoreContextProps extends IFluidDataStoreContextProps {
-	readonly pkg: Readonly<string[]> | undefined;
+	readonly pkg: readonly string[] | undefined;
 	readonly snapshotTree: ISnapshotTree | undefined;
 	readonly makeLocallyVisibleFn: () => void;
 }
@@ -282,7 +282,7 @@ export abstract class FluidDataStoreContext
 
 	private isStagingMode: boolean = false;
 	public isReadOnly = (): boolean =>
-		(this.isStagingMode && this.channel?.policies?.readonlyInStagingMode !== false) ||
+		(this.isStagingMode && this.channel?.policies?.readonlyInStagingMode === true) ||
 		this.parentContext.isReadOnly();
 
 	public get connected(): boolean {
@@ -1231,7 +1231,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	private snapshotFetchRequired: boolean | undefined;
 	private readonly runtime: IContainerRuntimeBase;
 	private readonly blobContents: Map<string, ArrayBuffer> | undefined;
-	private readonly isSnapshotInISnapshotFormat: boolean | undefined;
+	private readonly isSnapshotInISnapshotFormat: boolean;
 
 	constructor(props: IRemoteFluidDataStoreContextProps) {
 		super(props, true /* existing */, false /* isLocalDataStore */, () => {
@@ -1290,7 +1290,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 				this.blobContents,
 			);
 		}
-		if (this.snapshotFetchRequired) {
+		if (this.snapshotFetchRequired === true) {
 			assert(
 				this.loadingGroupId !== undefined,
 				0x8f5 /* groupId should be present to fetch snapshot */,

@@ -4,10 +4,9 @@
  */
 
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
-import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
+import type { IFileEntry, ISnapshot } from "@fluidframework/driver-definitions/internal";
 import { UsageError } from "@fluidframework/driver-utils/internal";
 import type {
-	IFileEntry,
 	IOdspResolvedUrl,
 	InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";

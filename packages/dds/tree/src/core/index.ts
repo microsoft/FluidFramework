@@ -102,6 +102,8 @@ export {
 	cursorChunk,
 	tryGetChunk,
 	type ChunkedCursor,
+	type DetachedFieldIndexFormatVersion,
+	getCodecTreeForDetachedFieldIndexFormat,
 } from "./tree/index.js";
 
 export {
@@ -150,6 +152,7 @@ export {
 	Multiplicity,
 	type SchemaPolicy,
 	SchemaVersion,
+	type SchemaFormatVersion,
 } from "./schema-stored/index.js";
 
 export {
@@ -207,6 +210,7 @@ export {
 	type ChangeAtomIdRangeMap,
 	newChangeAtomIdRangeMap,
 	compareRevisions,
+	diffHistories,
 } from "./rebase/index.js";
 
 export {

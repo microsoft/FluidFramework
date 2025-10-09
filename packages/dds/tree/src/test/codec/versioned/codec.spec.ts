@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { type ICodecFamily, type IJsonCodec, makeCodecFamily } from "../../../codec/index.js";
-import { typeboxValidator } from "../../../external-utilities/index.js";
+import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { ClientVersionDispatchingCodecBuilder } from "../../../codec/versioned/codec.js";
 import { validateUsageError } from "../../utils.js";
@@ -47,12 +47,12 @@ describe("versioned Codecs", () => {
 		it("round trip", () => {
 			const codec1 = builder.build({
 				minVersionForCollab: "2.0.0",
-				jsonValidator: typeboxValidator,
+				jsonValidator: FormatValidatorBasic,
 			});
 			const codec2 = builder.build({
 				// We have to cast to a `MinimumVersionForCollab` because "6.0.0" is not a valid value for that type.
 				minVersionForCollab: "6.0.0" as MinimumVersionForCollab,
-				jsonValidator: typeboxValidator,
+				jsonValidator: FormatValidatorBasic,
 			});
 			const v1 = codec1.encode(42);
 			const v2 = codec2.encode(42);

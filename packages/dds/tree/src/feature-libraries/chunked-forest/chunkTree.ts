@@ -12,10 +12,8 @@ import {
 	type ITreeCursorSynchronous,
 	LeafNodeStoredSchema,
 	ObjectNodeStoredSchema,
-	type StoredSchemaCollection,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
-	type TreeStoredSchema,
 	type TreeStoredSchemaSubscription,
 	type TreeValue,
 	type Value,
@@ -24,6 +22,7 @@ import {
 	ValueSchema,
 	type TreeChunk,
 	tryGetChunk,
+	type SchemaAndPolicy,
 } from "../../core/index.js";
 import { getOrCreate } from "../../util/index.js";
 import type { FullSchemaPolicy } from "../modular-schema/index.js";
@@ -32,6 +31,7 @@ import { isStableNodeIdentifier } from "../node-identifier/index.js";
 import { BasicChunk } from "./basicChunk.js";
 import { SequenceChunk } from "./sequenceChunk.js";
 import { type FieldShape, TreeShape, UniformChunk } from "./uniformChunk.js";
+import type { IncrementalEncodingPolicy } from "./codec/index.js";
 
 export interface Disposable {
 	/**
@@ -39,13 +39,13 @@ export interface Disposable {
 	 */
 	dispose(): void;
 }
-
 /**
  * Creates a ChunkPolicy which responds to schema changes.
  */
 export function makeTreeChunker(
 	schema: TreeStoredSchemaSubscription,
 	policy: FullSchemaPolicy,
+	shouldEncodeIncrementally: IncrementalEncodingPolicy,
 ): IChunker {
 	return new Chunker(
 		schema,
@@ -53,7 +53,16 @@ export function makeTreeChunker(
 		defaultChunkPolicy.sequenceChunkInlineThreshold,
 		defaultChunkPolicy.sequenceChunkInlineThreshold,
 		defaultChunkPolicy.uniformChunkNodeCount,
-		tryShapeFromSchema,
+		(type: TreeNodeSchemaIdentifier, shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>) =>
+			tryShapeFromNodeSchema(
+				{
+					schema,
+					policy,
+					shouldEncodeIncrementally,
+					shapes,
+				},
+				type,
+			),
 	);
 }
 
@@ -73,7 +82,7 @@ export interface IChunker extends ChunkPolicy, Disposable {
  *
  * @remarks
  * For example, a schema transitively containing a sequence field, optional field, or allowing multiple child types will be Polymorphic.
- * See `tryShapeFromSchema` for how to tell if a type is Polymorphic.
+ * See `tryShapeFromNodeSchema` for how to tell if a type is Polymorphic.
  *
  * TODO: cache some of the possible shapes here.
  */
@@ -109,9 +118,7 @@ export class Chunker implements IChunker {
 		public readonly sequenceChunkInlineThreshold: number,
 		public readonly uniformChunkNodeCount: number,
 		// eslint-disable-next-line @typescript-eslint/no-shadow
-		private readonly tryShapeFromSchema: (
-			schema: TreeStoredSchema,
-			policy: FullSchemaPolicy,
+		private readonly tryShapeFromNodeSchema: (
 			type: TreeNodeSchemaIdentifier,
 			shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
 		) => ShapeInfo,
@@ -126,7 +133,7 @@ export class Chunker implements IChunker {
 			this.sequenceChunkSplitThreshold,
 			this.sequenceChunkInlineThreshold,
 			this.uniformChunkNodeCount,
-			this.tryShapeFromSchema,
+			this.tryShapeFromNodeSchema,
 		);
 	}
 
@@ -138,7 +145,7 @@ export class Chunker implements IChunker {
 		this.unregisterSchemaCallback = this.schema.events.on("afterSchemaChange", () =>
 			this.schemaChanged(),
 		);
-		return this.tryShapeFromSchema(this.schema, this.policy, schema, this.typeShapes);
+		return this.tryShapeFromNodeSchema(schema, this.typeShapes);
 	}
 
 	public dispose(): void {
@@ -226,75 +233,126 @@ export function makePolicy(policy?: Partial<ChunkPolicy>): ChunkPolicy {
 	return withDefaults;
 }
 
-export function shapesFromSchema(
-	schema: StoredSchemaCollection,
-	policy: FullSchemaPolicy,
-): Map<TreeNodeSchemaIdentifier, ShapeInfo> {
-	const shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo> = new Map();
-	for (const identifier of schema.nodeSchema.keys()) {
-		tryShapeFromSchema(schema, policy, identifier, shapes);
-	}
-	return shapes;
+export interface ShapeFromSchemaParameters extends SchemaAndPolicy {
+	/**
+	 * Policy function to determine if a field should be encoded incrementally.
+	 * Incrementally encoding requires the subtree to not start in the middle of a larger uniform chunk.
+	 * Thus returning true from this callback indicates that shapes should not be produced which could
+	 *contain the incremental portion as a part of a larger shape.
+	 */
+	readonly shouldEncodeIncrementally: IncrementalEncodingPolicy;
+	/**
+	 * A cache for shapes which may be read and/or updated.
+	 * As the shape is a function of the other members of `ShapeFromSchemaParameters`,
+	 * it must be replaced or cleared if any of the properties other than this cache are modified.
+	 */
+	readonly shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>;
 }
 
 /**
- * If `schema` has only one shape, return it.
- *
- * Note that this does not tolerate optional or sequence fields, nor does it optimize for patterns of specific values.
+ * A TreeFieldStoredSchema with some additional context about where it is in the tree.
  */
-export function tryShapeFromSchema(
-	schema: StoredSchemaCollection,
-	policy: FullSchemaPolicy,
-	type: TreeNodeSchemaIdentifier,
-	shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
+export interface FieldSchemaWithContext {
+	/**
+	 * The identifier of the specific field schema to analyze for shape uniformity.
+	 */
+	readonly fieldSchema: TreeFieldStoredSchema;
+	/**
+	 * The identifier of the parent node schema containing this field.
+	 * If undefined, this is a root field.
+	 */
+	readonly parentNodeSchema?: TreeNodeSchemaIdentifier;
+	/**
+	 * The field key/name used to identify this field within the parent node.
+	 */
+	readonly key: FieldKey;
+}
+
+/**
+ * Analyzes a tree node schema to determine if it has a single, uniform shape that can be optimized for chunking.
+ * If the schema defines a tree structure with a deterministic, fixed shape (no optional fields, no sequences,
+ * single child types), returns a TreeShape that can be used for efficient uniform chunking. Otherwise,
+ * returns Polymorphic to indicate the shape varies and should use basic chunking.
+ *
+ * @param context - {@link ShapeFromSchemaParameters}.
+ * @param nodeSchema - The identifier of the specific node schema to analyze for shape uniformity.
+ * @returns TreeShape if the schema has a uniform shape, or Polymorphic if shape varies.
+ *
+ * @remarks
+ * The determination here is conservative. `shouldEncodeIncrementally` is used to split up shapes so incrementally
+ * encoded schema are not part of larger shapes. It also does not tolerate optional or sequence fields, nor does it
+ * optimize for patterns of specific values.
+ */
+export function tryShapeFromNodeSchema(
+	context: ShapeFromSchemaParameters,
+	nodeSchema: TreeNodeSchemaIdentifier,
 ): ShapeInfo {
-	return getOrCreate(shapes, type, () => {
-		const treeSchema = schema.nodeSchema.get(type) ?? fail(0xaf9 /* missing schema */);
+	const { schema, shapes } = context;
+	return getOrCreate(shapes, nodeSchema, () => {
+		const treeSchema = schema.nodeSchema.get(nodeSchema) ?? fail(0xaf9 /* missing schema */);
 		if (treeSchema instanceof LeafNodeStoredSchema) {
 			// Allow all string values (but only string values) to be compressed by the id compressor.
 			// This allows compressing all compressible identifiers without requiring additional context to know which values could be identifiers.
 			// Attempting to compress other string shouldn't have significant overhead,
 			// and if any of them do end up compressing, that's a benefit not a bug.
 			return treeSchema.leafValue === ValueSchema.String
-				? new TreeShape(type, true, [], true)
-				: new TreeShape(type, true, [], false);
+				? new TreeShape(nodeSchema, true, [], true)
+				: new TreeShape(nodeSchema, true, [], false);
 		}
 		if (treeSchema instanceof ObjectNodeStoredSchema) {
 			const fieldsArray: FieldShape[] = [];
-			for (const [key, field] of treeSchema.objectNodeFields) {
-				const fieldShape = tryShapeFromFieldSchema(schema, policy, field, key, shapes);
+			for (const [key, fieldSchema] of treeSchema.objectNodeFields) {
+				const fieldShape = tryShapeFromFieldSchema(context, {
+					fieldSchema,
+					parentNodeSchema: nodeSchema,
+					key,
+				});
 				if (fieldShape === undefined) {
 					return polymorphic;
 				}
 				fieldsArray.push(fieldShape);
 			}
-			return new TreeShape(type, false, fieldsArray);
+			return new TreeShape(nodeSchema, false, fieldsArray);
 		}
 		return polymorphic;
 	});
 }
 
 /**
- * If `schema` has only one shape, return it.
+ * Same as {@link tryShapeFromNodeSchema} but for fields with {@link FieldSchemaWithContext} instead of a nodeSchema.
  *
- * Note that this does not tolerate optional or sequence fields, nor does it optimize for patterns of specific values.
+ * @param context - {@link ShapeFromFieldSchemaParameters}.
+ * @param fieldSchemaWithContext - {@link FieldSchemaWithContext}.
+ * @returns FieldShape if the field has a uniform shape, or undefined if the field is polymorphic.
  */
 export function tryShapeFromFieldSchema(
-	schema: StoredSchemaCollection,
-	policy: FullSchemaPolicy,
-	type: TreeFieldStoredSchema,
-	key: FieldKey,
-	shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
+	context: ShapeFromSchemaParameters,
+	fieldSchemaWithContext: FieldSchemaWithContext,
 ): FieldShape | undefined {
-	const kind = policy.fieldKinds.get(type.kind) ?? fail(0xafa /* missing FieldKind */);
+	const { schema, policy, shouldEncodeIncrementally, shapes } = context;
+	const { fieldSchema, parentNodeSchema, key } = fieldSchemaWithContext;
+	// If this field should be encoded incrementally, use polymorphic shape so that they
+	// are chunked separately and can be re-used across encodings if they do not change.
+	if (shouldEncodeIncrementally(parentNodeSchema, key)) {
+		return undefined;
+	}
+	const kind = policy.fieldKinds.get(fieldSchema.kind) ?? fail(0xafa /* missing FieldKind */);
 	if (kind.multiplicity !== Multiplicity.Single) {
 		return undefined;
 	}
-	if (type.types?.size !== 1) {
+	if (fieldSchema.types?.size !== 1) {
 		return undefined;
 	}
-	const childType = [...type.types][0] ?? oob();
-	const childShape = tryShapeFromSchema(schema, policy, childType, shapes);
+	const childType = [...fieldSchema.types][0] ?? oob();
+	const childShape = tryShapeFromNodeSchema(
+		{
+			schema,
+			policy,
+			shouldEncodeIncrementally,
+			shapes,
+		},
+		childType,
+	);
 	if (childShape instanceof Polymorphic) {
 		return undefined;
 	}
@@ -490,7 +548,16 @@ export function chunkRange(
 	return output;
 }
 /**
- * @param idCompressor - compressor used to encoded string values that are compressible by the idCompressor for in-memory representation.
+ * Extracts values from the current cursor position according to the provided tree shape.
+ *
+ * Walks through the tree structure defined by the shape, extracting values from leaf nodes
+ * and recursively processing child fields. If an ID compressor is provided, compressible
+ * string values (stable node identifiers) will be recompressed for optimal storage.
+ *
+ * @param cursor - Tree cursor positioned at the node to extract values from
+ * @param shape - The tree shape defining the structure to extract
+ * @param values - Array to append the extracted values to
+ * @param idCompressor - Optional compressor used to encode string values that are compressible by the idCompressor for in-memory representation.
  * If the idCompressor is not provided, the values will be the original uncompressed values.
  */
 export function insertValues(

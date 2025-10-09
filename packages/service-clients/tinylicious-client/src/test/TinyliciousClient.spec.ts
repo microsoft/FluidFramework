@@ -329,12 +329,12 @@ for (const compatibilityMode of ["1", "2"] as const) {
 			});
 
 			const newPair = await createFluidContainer.create(TestDataObject);
-			assert.ok(newPair?.handle);
+			assert(newPair?.handle !== undefined);
 
 			const map1 = createFluidContainer.initialObjects.map1;
 			map1.set("newpair-id", newPair.handle);
 			const obj = await map1.get("newpair-id").get();
-			assert.ok(obj, "container added dynamic objects incorrectly");
+			assert(obj !== undefined, "container added dynamic objects incorrectly");
 		});
 
 		/**

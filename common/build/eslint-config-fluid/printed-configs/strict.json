@@ -41,6 +41,15 @@
         "@babel/semi": [
             "off"
         ],
+        "@fluid-internal/fluid/no-file-path-links-in-jsdoc": [
+            "error"
+        ],
+        "@fluid-internal/fluid/no-hyphen-after-jsdoc-tag": [
+            "error"
+        ],
+        "@fluid-internal/fluid/no-markdown-links-in-jsdoc": [
+            "error"
+        ],
         "@fluid-internal/fluid/no-member-release-tags": [
             "error"
         ],
@@ -609,7 +618,7 @@
             "error"
         ],
         "@typescript-eslint/ban-types": [
-            "error"
+            "off"
         ],
         "@typescript-eslint/block-spacing": [
             "off"
@@ -740,6 +749,9 @@
             "off"
         ],
         "@typescript-eslint/no-empty-interface": [
+            "off"
+        ],
+        "@typescript-eslint/no-empty-object-type": [
             "error"
         ],
         "@typescript-eslint/no-explicit-any": [
@@ -875,6 +887,9 @@
         "@typescript-eslint/no-unsafe-enum-comparison": [
             "error"
         ],
+        "@typescript-eslint/no-unsafe-function-type": [
+            "error"
+        ],
         "@typescript-eslint/no-unsafe-member-access": [
             "error"
         ],
@@ -891,6 +906,9 @@
             "off"
         ],
         "@typescript-eslint/no-var-requires": [
+            "error"
+        ],
+        "@typescript-eslint/no-wrapper-object-types": [
             "error"
         ],
         "@typescript-eslint/non-nullable-type-assertion-style": [

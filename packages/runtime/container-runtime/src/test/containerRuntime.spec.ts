@@ -32,7 +32,7 @@ import type {
 	ITelemetryBaseLogger,
 	OpaqueJsonDeserialized,
 } from "@fluidframework/core-interfaces/internal";
-import type { ISummaryTree } from "@fluidframework/driver-definitions";
+import type { ISummaryTree, SummaryObject } from "@fluidframework/driver-definitions";
 import {
 	type ISnapshot,
 	type ISummaryContext,
@@ -384,7 +384,7 @@ describe("Runtime", () => {
 				const containerRuntime = await ContainerRuntime.loadRuntime({
 					context: getMockContext({
 						settings: {
-							"Fluid.Container.enableOfflineLoad": true,
+							"Fluid.ContainerRuntime.enableBatchIdTracking": true,
 						},
 					}) as IContainerContext,
 					registryEntries: [],
@@ -426,12 +426,12 @@ describe("Runtime", () => {
 				assert.strictEqual(containerRuntime.isDirty, false);
 			});
 
-			for (const enableOfflineLoad of [true, undefined])
+			for (const enableBatchIdTracking of [true, undefined])
 				it("Replaying ops should resend in correct order, with batch ID if applicable", async () => {
 					const containerRuntime = (await ContainerRuntime.loadRuntime({
 						context: getMockContext({
 							settings: {
-								"Fluid.Container.enableOfflineLoad": enableOfflineLoad, // batchId only stamped if true
+								"Fluid.ContainerRuntime.enableBatchIdTracking": enableBatchIdTracking, // batchId only stamped if true
 							},
 						}) as IContainerContext,
 						registryEntries: [],
@@ -468,7 +468,7 @@ describe("Runtime", () => {
 						);
 					}
 
-					if (enableOfflineLoad) {
+					if (enableBatchIdTracking === true) {
 						assert(
 							batchIdMatchesUnsentFormat(
 								// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -541,7 +541,7 @@ describe("Runtime", () => {
 						contents: "test content",
 					});
 
-					const expectedSubmitCount = skipSafetyFlushDuringProcessStack ? 0 : 1;
+					const expectedSubmitCount = skipSafetyFlushDuringProcessStack === true ? 0 : 1;
 					assert.equal(
 						submittedOps.length,
 						expectedSubmitCount,
@@ -2368,11 +2368,13 @@ describe("Runtime", () => {
 		});
 
 		describe("Duplicate Batch Detection", () => {
-			for (const enableOfflineLoad of [undefined, true]) {
-				it(`DuplicateBatchDetector enablement matches Offline load (${enableOfflineLoad ? "ENABLED" : "DISABLED"})`, async () => {
+			for (const enableBatchIdTracking of [undefined, true]) {
+				it(`DuplicateBatchDetector is disabled if Batch Id Tracking isn't needed (${enableBatchIdTracking === true ? "ENABLED" : "DISABLED"})`, async () => {
 					const containerRuntime = await ContainerRuntime.loadRuntime({
 						context: getMockContext({
-							settings: { "Fluid.Container.enableOfflineLoad": enableOfflineLoad },
+							settings: {
+								"Fluid.ContainerRuntime.enableBatchIdTracking": enableBatchIdTracking,
+							},
 						}) as IContainerContext,
 						registryEntries: [],
 						existing: false,
@@ -2393,9 +2395,8 @@ describe("Runtime", () => {
 						false,
 					);
 					// Process a duplicate batch "batchId1" with different seqNum 234
-					const assertThrowsOnlyIfExpected = enableOfflineLoad
-						? assert.throws
-						: assert.doesNotThrow;
+					const assertThrowsOnlyIfExpected =
+						enableBatchIdTracking === true ? assert.throws : assert.doesNotThrow;
 					const errorPredicate = (e: Error) =>
 						e.message === "Duplicate batch - The same batch was sequenced twice";
 					assertThrowsOnlyIfExpected(
@@ -2418,7 +2419,9 @@ describe("Runtime", () => {
 
 			it("Can roundrip DuplicateBatchDetector state through summary/snapshot", async () => {
 				// Duplicate Batch Detection requires OfflineLoad enabled
-				const settings_enableOfflineLoad = { "Fluid.Container.enableOfflineLoad": true };
+				const settings_enableOfflineLoad = {
+					"Fluid.ContainerRuntime.enableBatchIdTracking": true,
+				};
 				const containerRuntime = await ContainerRuntime.loadRuntime({
 					context: getMockContext({
 						settings: settings_enableOfflineLoad,
@@ -2443,8 +2446,8 @@ describe("Runtime", () => {
 					false,
 				);
 				const { summary } = await containerRuntime.summarize({ fullTree: true });
-				const blob = summary.tree[recentBatchInfoBlobName];
-				assert(blob.type === SummaryType.Blob, "Expected blob");
+				const blob: SummaryObject | undefined = summary.tree[recentBatchInfoBlobName];
+				assert(blob?.type === SummaryType.Blob, "Expected blob");
 				assert.equal(blob.content, '[[123,"batchId1"]]', "Expected single batchId mapping");
 
 				// Load a new ContainerRuntime with the serialized DuplicateBatchDetector state.
@@ -2617,6 +2620,8 @@ describe("Runtime", () => {
 
 			function createSnapshot(addMissingDatastore: boolean, setGroupId: boolean = true): void {
 				if (addMissingDatastore) {
+					// TODO: Fix this violation and remove the disable
+					// eslint-disable-next-line @fluid-internal/fluid/no-unchecked-record-access
 					snapshotTree.trees[".channels"].trees.missingDataStore = {
 						blobs: { ".component": "id" },
 						trees: {
@@ -2777,13 +2782,15 @@ describe("Runtime", () => {
 					["missingDataStore"],
 				);
 				assert.deepStrictEqual(
-					snapshotTree.trees[".channels"].trees.missingDataStore,
+					snapshotTree.trees[".channels"]?.trees.missingDataStore,
 					snapshot.snapshotTree,
 					"snapshot should be equal",
 				);
 				assert(getSnapshotCalledTimes === 1, "second time should be from cache");
 
 				// Set api to undefined to see that it should not be called again.
+				// TODO: Fix this violation and remove the disable
+				// eslint-disable-next-line require-atomic-updates
 				containerContext.storage.getSnapshot = undefined;
 				const datastore2 = await containerRuntime.resolveHandle({
 					url: "/missingDataStore",
