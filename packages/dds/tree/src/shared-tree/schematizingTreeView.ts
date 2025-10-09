@@ -9,7 +9,7 @@ import type {
 	IEmitter,
 	Listenable,
 } from "@fluidframework/core-interfaces/internal";
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, oob, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { anchorSlot, rootFieldKey } from "../core/index.js";
@@ -204,7 +204,11 @@ export class SchematizingSimpleTreeView<
 					this.pendingHydration = () => {
 						assert(batches.length <= 1, "initialize should have a single batch");
 						if (batches.length !== 0) {
-							doHydration(0, rootFieldKey);
+							doHydration(batches[0] ?? oob(), {
+								parent: undefined,
+								parentField: rootFieldKey,
+								parentIndex: 0,
+							});
 						}
 					};
 				},

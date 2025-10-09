@@ -7,7 +7,6 @@ import type {
 	SchemaAndPolicy,
 	IForestSubscription,
 	UpPath,
-	NodeIndex,
 	FieldKey,
 	DetachedField,
 	TreeFieldStoredSchema,
@@ -32,7 +31,7 @@ import {
 	unhydratedFlexTreeFromInsertable,
 } from "./unhydratedFlexTreeFromInsertable.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { brand } from "../util/index.js";
+import { brand, type Mutable } from "../util/index.js";
 import {
 	getKernel,
 	type ImplicitAllowedTypes,
@@ -176,15 +175,6 @@ function validateAndPrepare(
 }
 
 /**
- * An {@link UpPath} that is just index zero in a {@link DetachedField} which can be modified at a later time.
- */
-interface Root extends UpPath {
-	readonly parent: undefined;
-	parentField: DetachedField & FieldKey;
-	readonly parentIndex: NodeIndex & 0;
-}
-
-/**
  * The path from the included node to the root of the content tree it was inserted as part of.
  */
 interface RelativeNodePath {
@@ -199,7 +189,7 @@ interface LocatedNodesBatch {
 	/**
 	 * UpPath shared by all {@link RelativeNodePath}s in this batch corresponding to the root of the inserted content.
 	 */
-	readonly rootPath: Root;
+	readonly rootPath: Mutable<UpPath>;
 	readonly paths: RelativeNodePath[];
 }
 
@@ -246,7 +236,7 @@ export function prepareContentForHydration(
 		);
 	}
 
-	const doHydration = doHydrationDefault(batches, context.checkout.forest);
+	const doHydration = hydrator(batches, context.checkout.forest);
 	scheduler(batches, doHydration);
 }
 
@@ -296,10 +286,15 @@ type HydrationScheduler = (
 	locatedNodes: readonly LocatedNodesBatch[],
 	/**
 	 * Does the actual hydration. Should be called for each index in `locatedNodes` once the corresponding content has been inserted into the tree.
-	 * The provided `fieldKey` is the key under the batch's `rootPath` in which the content is contained.
 	 */
-	doHydration: (index: number, fieldKey: FieldKey) => void,
+	doHydration: Hydrator,
 ) => void;
+
+/**
+ * Does the actual hydration.
+ * The provided `attachPath` is the path the content is currently under (where it was attached in the tree).
+ */
+type Hydrator = (batch: LocatedNodesBatch, attachPath: UpPath) => void;
 
 /**
  * Register events which will hydrate batches of nodes when they are inserted.
@@ -311,31 +306,39 @@ type HydrationScheduler = (
 function scheduleHydration(
 	locatedNodes: readonly LocatedNodesBatch[],
 	forest: IForestSubscription,
-	doHydration: (index: number, fieldKey: FieldKey) => void,
+	doHydration: Hydrator,
 ): void {
 	// Only subscribe to the event if there is at least one TreeNode tree to hydrate - this is not the case when inserting an empty array [].
 	if (locatedNodes.length > 0) {
 		// Creating a new array emits one event per element in the array, so listen to the event once for each element
-		let i = 0;
+		let index = 0;
 		const off = forest.events.on("afterRootFieldCreated", (fieldKey) => {
-			doHydration(i, fieldKey);
-			if (++i === locatedNodes.length) {
+			// Indexing is safe here because of the length check above. This assumes the array has not been modified which should be the case.
+			const batch = locatedNodes[index] ?? oob();
+			doHydration(batch, { parent: undefined, parentField: fieldKey, parentIndex: 0 });
+			if (++index === locatedNodes.length) {
 				off();
 			}
 		});
 	}
 }
 
-function doHydrationDefault(
+/**
+ * Implementation of {@link Hydrator}.
+ */
+function hydrator(
 	locatedNodes: readonly LocatedNodesBatch[],
 	forest: IForestSubscription,
-): (index: number, fieldKey: FieldKey) => void {
-	return (index: number, fieldKey: FieldKey) => {
+): (batch: LocatedNodesBatch, attachedPath: UpPath) => void {
+	return (batch: LocatedNodesBatch, attachedPath: UpPath) => {
 		const context = forest.anchors.slots.get(ContextSlot) ?? fail(0xb41 /* missing context */);
 
-		// Indexing is safe here because of the length check above. This assumes the array has not been modified which should be the case.
-		const batch = locatedNodes[index] ?? oob();
+		// Modify paths in batch to point to correct location:
 		debugAssert(() => batch.rootPath.parentField === placeholderKey);
+		batch.rootPath.parentField = attachedPath.parentField;
+		batch.rootPath.parent = attachedPath.parent;
+		batch.rootPath.parentIndex = attachedPath.parentIndex;
+
 		// To hydrate a TreeNode, it must be associated with a HydratedFlexTreeNode.
 		// Find or create one as necessary.
 		for (const { path, node } of batch.paths) {
