@@ -89,7 +89,6 @@ export class ContainerStorageAdapter
 	public constructor(
 		detachedBlobStorage: MemoryDetachedBlobStorage | undefined,
 		private readonly logger: ITelemetryLoggerExt,
-
 		private loadingGroupIdSnapshotsFromPendingState:
 			| Record<string, SerializedSnapshotInfo>
 			| undefined,
