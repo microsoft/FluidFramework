@@ -34,6 +34,7 @@ import {
 	applyFieldEdit,
 	applySynchronizationOp,
 	applyUndoRedoEdit,
+	applySharedBranchOperation,
 } from "./fuzzEditReducers.js";
 import {
 	createOnCreate,
@@ -87,6 +88,9 @@ const fuzzComposedVsIndividualReducer = combineReducers<Operation, BranchedTreeF
 	},
 	forkMergeOperation: (state, operation) => {
 		return applyForkMergeOperation(state, operation);
+	},
+	sharedBranchOperation: (state, operation) => {
+		applySharedBranchOperation(state, operation);
 	},
 });
 
