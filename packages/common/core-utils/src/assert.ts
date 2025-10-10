@@ -253,7 +253,7 @@ export function emulateProductionBuild(enable = true): void {
 	emulateProductionBuildCount += enable ? 1 : -1;
 	assert(
 		emulateProductionBuildCount >= 0,
-		"emulateProductionBuild disabled more than it was enabled",
+		0xc70 /* emulateProductionBuild disabled more than it was enabled */,
 	);
 }
 
