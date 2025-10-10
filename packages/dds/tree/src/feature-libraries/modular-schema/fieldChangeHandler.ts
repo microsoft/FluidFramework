@@ -139,10 +139,6 @@ export interface FieldChangeRebaser<TChangeset> {
 	mute(change: TChangeset): TChangeset;
 }
 
-export interface RootsInfo {
-	areSameNodes(oldId: ChangeAtomId, newId: ChangeAtomId, count?: number): boolean;
-}
-
 /**
  * Helper for creating a {@link FieldChangeRebaser} which does not need access to revision tags.
  * This should only be used for fields where the child nodes cannot be edited.

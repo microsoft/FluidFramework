@@ -124,12 +124,6 @@ export interface ComposeNodeManager {
 		count: number,
 		convertToPin: boolean,
 	): void;
-
-	areSameNodes(
-		baseDetachId: ChangeAtomId,
-		newAttachId: ChangeAtomId,
-		count: number,
-	): RangeQueryEntry<ChangeAtomId, boolean>;
 }
 
 export interface RebaseNodeManager {

@@ -73,26 +73,20 @@ function makeModularChangeCodec(
 	ChangeEncodingContext
 > {
 	if (version < minVersionForCodec2) {
-		const codec = makeModularChangeCodecV1(
+		return makeModularChangeCodecV1(
 			fieldKinds,
 			revisionTagCodec,
 			fieldsCodec,
 			codecOptions,
 			chunkCompressionStrategy,
 		);
-
-		(codec as any).version = version;
-		return codec;
 	}
 
-	const codec2 = makeModularChangeCodecV2(
+	return makeModularChangeCodecV2(
 		fieldKinds,
 		revisionTagCodec,
 		fieldsCodec,
 		codecOptions,
 		chunkCompressionStrategy,
 	);
-
-	(codec2 as any).version = version;
-	return codec2;
 }

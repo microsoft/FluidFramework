@@ -43,7 +43,6 @@ export {
 	NodeAttachState,
 	type FieldChangeEncodingContext,
 	type NestedChangesIndices,
-	type RootsInfo,
 	supportChangeHandlingBackCompat,
 } from "./fieldChangeHandler.js";
 export {

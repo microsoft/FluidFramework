@@ -26,5 +26,4 @@ export const failComposeManager: ComposeNodeManager = {
 	sendNewChangesToBaseSourceLocation: failingDelegate,
 	composeAttachDetach: failingDelegate,
 	composeDetachAttach: failingDelegate,
-	areSameNodes: failingDelegate,
 };

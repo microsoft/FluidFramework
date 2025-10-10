@@ -826,9 +826,6 @@ function newComposeManager(): TestComposeManager {
 		},
 
 		composeDetachAttach(baseDetachId, newAttachId, count, preserveRename): void {},
-		areSameNodes(baseDetachId, newAttachId, count): RangeQueryEntry<ChangeAtomId, boolean> {
-			return { start: baseDetachId, value: true, length: count };
-		},
 	};
 
 	return manager;

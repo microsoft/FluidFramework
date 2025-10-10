@@ -3282,11 +3282,11 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 		this.invalidateBaseFields(detachFields);
 	}
 
-	public areSameNodes(
+	private areSameNodes(
 		baseDetachId: ChangeAtomId,
 		newAttachId: ChangeAtomId,
 		count: number,
-	): RangeQueryEntry<ChangeAtomId, boolean> {
+	): RangeQueryResult<boolean> {
 		const renamedDetachEntry = firstAttachIdFromDetachId(
 			this.table.composedRootNodes,
 			baseDetachId,
@@ -4002,9 +4002,9 @@ function firstAttachIdFromDetachId(
 	roots: RootNodeTable,
 	detachId: ChangeAtomId,
 	count: number,
-): RangeQueryEntry<ChangeAtomId, ChangeAtomId> {
+): RangeQueryResult<ChangeAtomId> {
 	const result = roots.oldToNewId.getFirst(detachId, count);
-	return { ...result, start: detachId, value: result.value ?? detachId };
+	return { ...result, value: result.value ?? detachId };
 }
 
 function firstDetachIdFromAttachId(
@@ -4088,11 +4088,56 @@ function rebaseRoots(
 	}
 
 	for (const entry of change.rootNodes.outputDetachLocations.entries()) {
-		// XXX: This entry should be removed if node is attached in both input and output
-		rebasedRoots.outputDetachLocations.set(entry.start, entry.length, entry.value);
+		rebaseOutputDetachLocation(
+			entry.start,
+			entry.length,
+			entry.value,
+			rebasedRoots,
+			change,
+			base,
+		);
 	}
 
 	return rebasedRoots;
+}
+
+function rebaseOutputDetachLocation(
+	rootId: ChangeAtomId,
+	count: number,
+	fieldId: FieldId,
+	rebasedRoots: RootNodeTable,
+	newChange: ModularChangeset,
+	baseChange: ModularChangeset,
+): void {
+	let countToProcess = count;
+	const baseRenameEntry = firstAttachIdFromDetachId(
+		baseChange.rootNodes,
+		rootId,
+		countToProcess,
+	);
+	countToProcess = baseRenameEntry.length;
+	const rebasedRootId = baseRenameEntry.value;
+
+	// const baseAttachEntry = getFirstAttachField(
+	// 	baseChange.crossFieldKeys,
+	// 	rebasedRootId,
+	// 	countToProcess,
+	// );
+	// countToProcess = baseAttachEntry.length;
+
+	rebasedRoots.outputDetachLocations.set(rebasedRootId, count, fieldId);
+
+	const countRemaining = count - countToProcess;
+	if (countRemaining > 0) {
+		rebaseOutputDetachLocation(
+			offsetChangeAtomId(rootId, countToProcess),
+			countRemaining,
+			fieldId,
+			rebasedRoots,
+			newChange,
+			baseChange,
+		);
+	}
 }
 
 function rebaseRename(
