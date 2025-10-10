@@ -255,7 +255,7 @@ describe("SharedObjectCore", () => {
 		});
 	});
 
-	describe.only("handle binding without encode in bindHandles", () => {
+	describe("handle binding without encode in bindHandles", () => {
 		let sharedObject: MySharedObjectCore;
 		let dataStoreRuntime: MockFluidDataStoreRuntime;
 
