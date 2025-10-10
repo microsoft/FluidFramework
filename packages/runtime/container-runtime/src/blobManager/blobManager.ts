@@ -334,7 +334,10 @@ export class BlobManager {
 		// explicitly invoked via sharePendingBlobs() in case we are loaded in a frozen container.
 		if (pendingBlobs !== undefined) {
 			for (const [localId, serializableBlobRecord] of Object.entries(pendingBlobs)) {
-				assert(!this.redirectTable.has(localId), "Pending blob already in redirect table");
+				assert(
+					!this.redirectTable.has(localId),
+					0xc7e /* Pending blob already in redirect table */,
+				);
 				const localBlobRecord = {
 					...serializableBlobRecord,
 					blob: stringToBuffer(serializableBlobRecord.blob, "base64"),
@@ -438,7 +441,7 @@ export class BlobManager {
 	private getNonPayloadPendingBlobHandle(localId: string): BlobHandle {
 		const localBlobRecord = this.localBlobCache.get(localId);
 		assert(localBlobRecord !== undefined, 0x384 /* requesting handle for unknown blob */);
-		assert(localBlobRecord.state === "attached", "Expected blob to be attached");
+		assert(localBlobRecord.state === "attached", 0xc7f /* Expected blob to be attached */);
 
 		return new BlobHandle(
 			getGCNodePathFromLocalId(localId),
@@ -546,7 +549,7 @@ export class BlobManager {
 		assert(
 			localBlobRecordInitial?.state === "localOnly" ||
 				localBlobRecordInitial?.state === "uploaded",
-			"Expect uploadAndAttach to be called with either localOnly or uploaded state",
+			0xc80 /* Expect uploadAndAttach to be called with either localOnly or uploaded state */,
 		);
 		const { blob } = localBlobRecordInitial;
 
@@ -569,7 +572,7 @@ export class BlobManager {
 			}
 			assert(
 				localBlobRecord?.state === "localOnly",
-				"Attempting to upload from unexpected state",
+				0xc81 /* Attempting to upload from unexpected state */,
 			);
 
 			this.localBlobCache.set(localId, { state: "uploading", blob });
@@ -644,7 +647,7 @@ export class BlobManager {
 			}
 			assert(
 				localBlobRecord?.state === "uploaded",
-				"Attempting to attach from unexpected state",
+				0xc82 /* Attempting to attach from unexpected state */,
 			);
 
 			// If we just uploaded the blob TTL really shouldn't be expired at this location. But if we loaded from
@@ -936,12 +939,12 @@ export class BlobManager {
 		const pendingBlobs: IPendingBlobs = {};
 		for (const localId of this.pendingBlobsWithAttachedHandles) {
 			const localBlobRecord = this.localBlobCache.get(localId);
-			assert(localBlobRecord !== undefined, "Pending blob must be in local cache");
+			assert(localBlobRecord !== undefined, 0xc83 /* Pending blob must be in local cache */);
 			assert(
 				localBlobRecord.state === "uploading" ||
 					localBlobRecord.state === "uploaded" ||
 					localBlobRecord.state === "attaching",
-				"Pending blob must be in uploading, uploaded, or attaching state",
+				0xc84 /* Pending blob must be in uploading, uploaded, or attaching state */,
 			);
 			// We treat blobs in both uploaded and attaching state as just being uploaded, to distrust
 			// whether we expect to see any ack for a BlobAttach op. We just remain prepared to handle

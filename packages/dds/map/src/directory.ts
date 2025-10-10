@@ -2457,7 +2457,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			}
 			assert(
 				pendingEntry.type === "createSubDirectory",
-				"Unexpected pending data for createSubDirectory op",
+				0xc71 /* Unexpected pending data for createSubDirectory op */,
 			);
 
 			// We still need to emit the disposed event for any locally created (and now
@@ -2487,7 +2487,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			}
 			assert(
 				pendingEntry.type === "deleteSubDirectory",
-				"Unexpected pending data for deleteSubDirectory op",
+				0xc72 /* Unexpected pending data for deleteSubDirectory op */,
 			);
 			this.pendingSubDirectoryData.splice(pendingEntryIndex, 1);
 
