@@ -1187,7 +1187,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		if (detachedBind) {
 			// Create a local value and serialize it.
 			// AB#47081: This will be removed once we can validate that it is no longer needed.
-			bindHandles(value, this.serializer, this.directory.handle);
+			bindHandles(value, this.directory.handle);
 		}
 
 		// If we are not attached, don't submit the op.
