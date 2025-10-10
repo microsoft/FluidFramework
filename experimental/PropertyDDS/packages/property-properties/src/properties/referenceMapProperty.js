@@ -45,13 +45,13 @@ export class ReferenceMapProperty extends StringMapProperty {
     /**
      * Resolves the referenced property for the given key
      *
-     * @param  {string|array<string|number>} in_ids the ID of the property or an array of IDs
+     * @param  {string|array<string|number>} in_ids -  the ID of the property or an array of IDs
      *     if an array is passed, the .get function will be performed on each id in sequence
      *     for example .get(['position','x']) is equivalent to .get('position').get('x').
      *     If .get resolves to a ReferenceProperty, it will return the property that the ReferenceProperty
      *     refers to.
      * @param {Object} in_options - parameter object
-     * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS]
+     * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS] -
      *     How should this function behave during reference resolution?
      *
      * @return {property-properties.BaseProperty|undefined} The property object the reference points to or undefined if it
@@ -170,7 +170,7 @@ export class ReferenceMapProperty extends StringMapProperty {
 
     /**
      * Returns the string value stored in the map
-     * @param {string} in_key the key of the reference
+     * @param {string} in_key - the key of the reference
      * @return {string} the path string
      */
     getValue(in_key) {
@@ -182,12 +182,7 @@ export class ReferenceMapProperty extends StringMapProperty {
      */
     _resolvePathSegment(in_segment, in_segmentType) {
         // Array tokens are automatically resolved
-        if (in_segmentType === PathHelper.TOKEN_TYPES.ARRAY_TOKEN) {
-            return this.get(in_segment, { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER });
-        } else {
-            // Everything else is handled by the implementation in the base property
-            return AbstractStaticCollectionProperty.prototype._resolvePathSegment.call(this, in_segment, in_segmentType);
-        }
+        return in_segmentType === PathHelper.TOKEN_TYPES.ARRAY_TOKEN ? this.get(in_segment, { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER }) : AbstractStaticCollectionProperty.prototype._resolvePathSegment.call(this, in_segment, in_segmentType);
     }
 }
 

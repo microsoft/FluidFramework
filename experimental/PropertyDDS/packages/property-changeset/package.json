@@ -61,7 +61,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluid-experimental/property-common": "^1.4.0",
+    "@fluid-experimental/property-common": "workspace:~",
     "ajv": "7.1.1",
     "ajv-keywords": "4.0.0",
     "async": "^3.2.0",
@@ -72,7 +72,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.24.0",
-    "@fluidframework/mocha-test-setup": "^1.4.0",
+    "@fluidframework/mocha-test-setup": "workspace:~",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/lodash": "^4.14.118",
     "@types/mocha": "^9.1.1",
@@ -81,7 +81,7 @@
     "concurrently": "^6.2.0",
     "copyfiles": "^2.1.0",
     "cross-env": "^7.0.2",
-    "eslint": "~8.6.0",
+    "eslint": "~8.55.0",
     "mocha": "^10.0.0",
     "nock": "^13.3.3",
     "nyc": "^15.0.0",

@@ -60,13 +60,9 @@ parameters:
   type: boolean
   default: false
 
-- name: namespace
-  type: boolean
-  default: true
-
 - name: buildNumberInPatch
-  type: string
-  default:
+  type: boolean
+  default: false
 
 - name: nonScopedPackages
   type: object
@@ -89,6 +85,20 @@ parameters:
   type: string
   default: "^0.5.0"
 
+- name: packageManager
+  type: string
+  default: npm
+
+- name: packageManagerInstallCommand
+  type: string
+  default: 'npm ci --unsafe-perm'
+
+# The semver range constraint to use for interdependencies; that is, dependencies on other packages within the release
+# group
+- name: interdependencyRange
+  type: string
+  default: "^"
+
 trigger: none
 
 variables:
@@ -99,10 +109,8 @@ variables:
     value: 1
   - template: include-vars.yml
     parameters:
-      publishOverride: ${{ parameters.publishOverride }}
-      releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
-      buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
-      nonScopedPackages: ${{ parameters.nonScopedPackages }}
+      publishOverride: '${{ parameters.publishOverride }}'
+      releaseBuildOverride: '${{ parameters.releaseBuildOverride }}'
 
 stages:
   # Install / Build / Test Stage
@@ -114,10 +122,14 @@ stages:
         displayName: Build
         pool: ${{ parameters.poolBuild }}
         variables:
+          - group: ado-feeds
+          - group: storage-vars
           # Coverage has quality issues in LTS, and root-causing + fixing is not a priority given changes to LTS at this point
           # will be things like upgrading node or security fixes, not adding new features.
-          testCoverage: false
-          releaseBuildVar: $[variables.releaseBuild]
+          - name: testCoverage
+            value: false
+          - name: releaseBuildVar
+            value: $[variables.releaseBuild]
         steps:
         # Setup
         - checkout: self
@@ -157,7 +169,6 @@ stages:
                 componentDetection=${{ variables.componentDetection }}
                 publish=${{ variables.publish }}
                 canRelease=${{ variables.canRelease }}
-                publishNonScopedPackages=${{ variables.publishNonScopedPackages }}
                 targetBranchName = $(System.PullRequest.TargetBranch)
 
                 release=$(release)"
@@ -197,31 +208,32 @@ stages:
 
         # Install
         - task: UseNode@1
-          displayName: Use Node 18.17.1
+          displayName: Use Node 20.15.1
           inputs:
-            version: 18.17.1
+            version: 20.15.1
         - task: Npm@1
-          displayName: Install npm 6
+          displayName: Install npm 10
           retryCountOnTaskFailure: 4
           inputs:
             command: 'custom'
-            customCommand: 'install --global npm@^6'
-            customRegistry: 'useNpmrc'
-        - task: Npm@1
-          displayName: npm ci
-          inputs:
-            command: 'custom'
-            workingDir: ${{ parameters.buildDirectory }}
-            customCommand: 'ci --unsafe-perm'
+            customCommand: 'install --global npm@^10'
             customRegistry: 'useNpmrc'
 
+        # Install pnpm
+        - template: /tools/pipelines/templates/include-install.yml@self
+          parameters:
+            packageManager: '${{ parameters.packageManager }}'
+            buildDirectory: '${{ parameters.buildDirectory }}'
+            packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
+
         # Set version
-        - template: include-set-package-version.yml
+        - template: include-set-package-version.yml@self
           parameters:
             buildDirectory: ${{ parameters.buildDirectory }}
             buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
             buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
             tagName: ${{ parameters.tagName }}
+            interdependencyRange: '${{ parameters.interdependencyRange }}'
 
         # Build
         - ${{ if ne(parameters.taskBuild, 'false') }}:
@@ -307,34 +319,14 @@ stages:
         - ${{ if ne(parameters.taskPack, false) }}:
           - task: Bash@3
             displayName: npm pack
+            env:
+              PACKAGE_MANAGER: '${{ parameters.packageManager }}'
+              RELEASE_GROUP: '${{ parameters.tagName }}'
+              STAGING_PATH: $(Build.ArtifactStagingDirectory)
             inputs:
-              targetType: 'inline'
-              workingDirectory: ${{ parameters.buildDirectory }}
-              script: |
-                mkdir $(Build.ArtifactStagingDirectory)/pack/
-                mkdir $(Build.ArtifactStagingDirectory)/pack/scoped/
-                mkdir $(Build.ArtifactStagingDirectory)/test-files/
-                if [[ "${{ variables.publishNonScopedPackages }}" == "True" ]]; then
-                  mkdir $(Build.ArtifactStagingDirectory)/pack/non-scoped/
-                fi
-                if [ -f "lerna.json" ]; then
-                  npx lerna exec --no-private --no-sort -- npm pack --unsafe-perm && \
-                  npx lerna exec --no-private --no-sort --parallel -- mv -t $(Build.ArtifactStagingDirectory)/pack/scoped/ ./*.tgz && \
-                  npx lerna exec --no-private --no-sort --parallel -- "[ ! -f ./*test-files.tar ] || (echo 'test files found' && mv -t $(Build.ArtifactStagingDirectory)/test-files/ ./*test-files.tar)"
-                else
-                  npm pack --unsafe-perm && \
-                  mv -t $(Build.ArtifactStagingDirectory)/pack/scoped/ ./*.tgz
-                fi
-
-          - ${{ if eq(variables.publishNonScopedPackages, true) }}:
-            - ${{ each parameter in parameters.nonScopedPackages }}:
-              - task: Bash@3
-                displayName: Move Non-Scoped Package ${{parameter}}
-                inputs:
-                  targetType: 'inline'
-                  workingDirectory: ${{ parameters.buildDirectory }}
-                  script: |
-                    mv -t $(Build.ArtifactStagingDirectory)/pack/non-scoped/ $(Build.ArtifactStagingDirectory)/pack/scoped/${{parameter}}*.tgz
+              targetType: filePath
+              workingDirectory: '${{ parameters.buildDirectory }}'
+              filePath: $(Build.SourcesDirectory)/scripts/pack-packages.sh
 
           - task: PublishBuildArtifacts@1
             displayName: Publish Artifact - pack
@@ -380,6 +372,7 @@ stages:
                 eq(variables['Build.Reason'], 'PullRequest'),
                 ne(variables['System.PullRequest.IsFork'], 'true')
               )
+            continueOnError: true
             env:
               ADO_API_TOKEN: $(System.AccessToken)
               DANGER_GITHUB_API_TOKEN: $(githubPublicRepoSecret)
@@ -410,7 +403,7 @@ stages:
           inputs:
             targetType: 'inline'
             script: |
-              git status | grep -v -E 'package.json|package-lock.json|packageVersion.ts|lerna.json|build-cli/README.md|\(use.*' | grep '^\s' > git_status.log
+              git status | grep -v -E 'package.json|package-lock.json|packageVersion.ts|.npmrc|lerna.json|build-cli/README.md|\(use.*' | grep '^\s' > git_status.log
               if [ `cat git_status.log | wc -l` != "0" ]; then
                 cat git_status.log
                 echo "##vso[task.logissue type=error]Build should not create extraneous files"
@@ -442,6 +435,4 @@ stages:
   - ${{ if eq(variables.publish, true) }}:
     - template: include-publish-npm-package.yml
       parameters:
-        namespace: ${{ parameters.namespace }}
         tagName: ${{ parameters.tagName }}
-        publishNonScopedPackages: ${{ variables.publishNonScopedPackages }}

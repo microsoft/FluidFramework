@@ -143,7 +143,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
     /**
      * Default constructor for ArrayProperty
      * @param {Object} [in_params] - the parameters
-     * @param {Number} [in_params.length = 0] the length of the array, if applicable
+     * @param {Number} [in_params.length = 0] - the length of the array, if applicable
      * @param {string} [in_scope] - The scope in which the property typeid is defined
      * @protected
      */
@@ -213,8 +213,8 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
     /**
      * Insert into the array at a given position.
      * It will not overwrite the existing values, it will push them to the right.
-     * @param {number} in_position target index
-     * @param {*} in_value inserted value or property
+     * @param {number} in_position - target index
+     * @param {*} in_value - inserted value or property
      * @throws if in_position is smaller than zero, larger than the length of the array or not a number.
      * @throws if trying to insert a property that already has a parent.
      * @throws if trying to modify a referenced property.
@@ -237,7 +237,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
 
     /**
      * Add one or more values at the end of the array
-     * @param {Array<property-properties.BaseProperty>|property-properties.BaseProperty|*|Array<*>} in_values
+     * @param {Array<property-properties.BaseProperty>|property-properties.BaseProperty|*|Array<*>} in_values -
      * the item or items to be pushed (either properties or values). If an array is passed, .push
      *  will be called on each item in the array.
      * @throws if trying to push a property that is a root property
@@ -262,7 +262,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
     /**
      * Add a value at the front of the array or letters to the beginning of a string (for StringProperty)
      * It can also add multiple values to an array if you pass in an array of values.
-     * @param {Array<*>|*|Array<property-properties.BaseProperty>|property-properties.BaseProperty} in_values the values
+     * @param {Array<*>|*|Array<property-properties.BaseProperty>|property-properties.BaseProperty} in_values - the values
      * or properties to be pushed
      * @throws if trying to insert a property that already has a parent.
      * @throws if trying to insert a root property
@@ -282,7 +282,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      * Removes an element of the array (or a letter in a StringProperty) and shifts remaining elements to the left
      * E.g. [1, 2, 3]   .remove(1) => [1, 3]
      * E.g. (StringProperty) 'ABCDE'  .remove(1) => 'ACDE'
-     * @param {number} in_position the index that will be removed
+     * @param {number} in_position - the index that will be removed
      * @throws if in_position is not a number
      * @throws if trying to remove something that does not exist
      * @throws if trying to remove an item with a parent
@@ -334,8 +334,8 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
     /**
      * Change an existing element of the array. This will overwrite an existing element.
      * E.g. [1, 2, 3]  .set(1, 8) => [1, 8, 3]
-     * @param {number} in_position the target index
-     * @param {*} in_value the new property or value
+     * @param {number} in_position - the target index
+     * @param {*} in_value - the new property or value
      * @throws if in_position is not a number
      * @throws if in_position is smaller than zero
      */
@@ -368,12 +368,8 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
                 for (var i = 0; i < in_values.length; i++) {
                     var prop = in_values[i];
 
-                    if (in_values[i] instanceof BaseProperty) {
-                        prop = in_values[i];
-                    } else {
-                        prop = Property.PropertyFactory._createProperty(
+                    prop = in_values[i] instanceof BaseProperty ? in_values[i] : Property.PropertyFactory._createProperty(
                             in_values[i].typeid || this._typeid, null, in_values[i].value, this._getScope());
-                    }
                     arr.push(prop);
                 }
 
@@ -389,7 +385,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
     /**
      * See {@link ArrayProperty.setValues}
      *
-     * @param {Array<*>|Object} in_values an array or object containing the values to be set.
+     * @param {Array<*>|Object} in_values - an array or object containing the values to be set.
      */
     _setValuesInternal(in_values) {
         this._checkIsNotReadOnly(true);
@@ -427,7 +423,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      * items at those indexes.
      * For arrays of Properties, this can be used to set nested values in properties found in the array.
      * For example: setValues({0: {position: {x: 2, y:3}}});
-     * @param {Array<*>|Object} in_values an array or object containing the values to be set.
+     * @param {Array<*>|Object} in_values - an array or object containing the values to be set.
      * @throws if one of the path in in_values does not correspond to a path in the property
      */
     setValues(in_values) {
@@ -498,10 +494,10 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
     /**
      * Sets the pending and dirty changesets
      *
-     * @param {property-properties.SerializedChangeSet|undefined|null} in_pending
+     * @param {property-properties.SerializedChangeSet|undefined|null} in_pending -
      *     The pending changeset. If null is passed, no change will be
      *     applied. undefined indicates that the changes should be reset
-     * @param {property-properties.SerializedChangeSet|undefined|null} in_dirty
+     * @param {property-properties.SerializedChangeSet|undefined|null} in_dirty -
      *     The dirty changeset. If null is passed, no change will be
      *     applied. undefined indicates that the changes should be reset
      */
@@ -534,11 +530,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
         if (this._dirty) {
             if (this._dirty.dirty === undefined &&
                 this._dirty.pending === undefined) {
-                if (oldFlags === 0) {
-                    this._dirty = undefined;
-                } else {
-                    this._dirty = DIRTY_STATE_FLAGS_ARRAY[oldFlags];
-                }
+                this._dirty = oldFlags === 0 ? undefined : DIRTY_STATE_FLAGS_ARRAY[oldFlags];
             } else {
                 this._dirty.flags = oldFlags;
             }
@@ -549,7 +541,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
 
     /**
      * Sets the dirty flags for this property
-     * @param {Number} in_flags The dirty flags
+     * @param {Number} in_flags - The dirty flags
      */
     _setDirtyFlags(in_flags) {
         if (this._dirty) {
@@ -585,8 +577,8 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      * Inserts the content of a given array into the array property
      * It will not overwrite the existing values but push them to the right instead.
      * E.g. [1, 2, 3] .insertRange(1, [9, 8]) => [1, 9, 8, 2, 3]
-     * @param {number} in_offset target index
-     * @param {Array<*>} in_array the array to be inserted
+     * @param {number} in_offset - target index
+     * @param {Array<*>} in_array - the array to be inserted
      * @throws if in_offset is smaller than zero, larger than the length of the array or not a number.
      * @throws if trying to insert a property that already has a parent.
      * @throws if trying to modify a referenced property.
@@ -613,9 +605,9 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
     /**
      * inserts the content of a given array, but doesn't dirty the property
      * this is useful for batch changes
-     * @param {number} in_offset target index
-     * @param {Array<*>} in_array the array to be inserted
-     * @param {Boolean=} [in_setParents=true] If true, set parent of inserted properties.
+     * @param {number} in_offset - target index
+     * @param {Array<*>} in_array - the array to be inserted
+     * @param {Boolean=} [in_setParents=true] - If true, set parent of inserted properties.
      *                   If false, caller has already set parents.
      * @private
      */
@@ -657,8 +649,8 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      * Removes a given number of elements from the array property (or given number of letters from a StringProperty)
      *  and shifts remaining values to the left.
      * E.g. [1, 2, 3, 4, 5]  .removeRange(1, 3) => [1, 5]
-     * @param {number} in_offset target start index
-     * @param {number} in_deleteCount number of elements to be deleted
+     * @param {number} in_offset - target start index
+     * @param {number} in_deleteCount - number of elements to be deleted
      * @throws if in_offset is not a number
      * @throws if in_deleteCount is not a number
      * @throws if trying to remove an item with a parent
@@ -686,8 +678,8 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
     /**
      * removes a given number of elements from the array property, and ensures, if this is not
      * a primitive array, that any existing properties have their parent pointer cleared.
-     * @param {number} in_offset target start index
-     * @param {number} in_deleteCount number of elements to be deleted
+     * @param {number} in_offset - target start index
+     * @param {number} in_deleteCount - number of elements to be deleted
      * @private
      */
     _clearRange(in_offset, in_deleteCount) {
@@ -707,8 +699,8 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
     /**
      * removes a given number of elements from the array property, but doesn't dirty the property
      * this is useful for batch changes
-     * @param {number} in_offset target start index
-     * @param {number} in_deleteCount number of elements to be deleted
+     * @param {number} in_offset - target start index
+     * @param {number} in_deleteCount - number of elements to be deleted
      * @private
      */
     _removeRangeWithoutDirtying(in_offset, in_deleteCount) {
@@ -725,8 +717,8 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      * Sets the array properties elements to the content of the given array
      * All changed elements must already exist. This will overwrite existing elements.
      * E.g. [1, 2, 3, 4, 5]  .setRange(1, [7, 8]) => [1, 7, 8, 4, 5]
-     * @param {number} in_offset target start index
-     * @param {Array<*>|Array<property-properties.BaseProperty>} in_array contains the elements to be set
+     * @param {number} in_offset - target start index
+     * @param {Array<*>|Array<property-properties.BaseProperty>} in_array - contains the elements to be set
      * @throws if in_offset is not a number
      * @throws if in_offset is smaller than zero or higher than the length of the array
      */
@@ -751,8 +743,8 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      * sets the array properties elements to the content of the given array
      * all changed elements must already exist. This version doesn't dirty the property,
      * which is useful for batch changes
-     * @param {number} in_offset target start index
-     * @param {Array<*>} in_array contains the elements to be set
+     * @param {number} in_offset - target start index
+     * @param {Array<*>} in_array - contains the elements to be set
      */
     _setRangeWithoutDirtying(in_offset, in_array) {
         this._modifyRangeWithoutDirtying(in_offset, in_array);
@@ -762,8 +754,8 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      * sets the array properties elements to the content of the given array
      * all changed elements must already exist. This version doesn't dirty the property,
      * which is useful for batch changes
-     * @param {number} in_offset target start index
-     * @param {Array<*>} in_array contains the elements to be set
+     * @param {number} in_offset - target start index
+     * @param {Array<*>} in_array - contains the elements to be set
      */
     _modifyRangeWithoutDirtying(in_offset, in_array) {
         // Has to be overloaded for arrays of properties!
@@ -823,13 +815,13 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
 
     /**
      * Gets the array element at a given index
-     * @param {number | array<string|number>} in_position the target index
+     * @param {number | array<string|number>} in_position - the target index
      * if an array is passed, elements in the array will be treated as part of a path.
      * The first item in an array should be a position in the array.
      * For example, .get([0,'position','x']) is the equivalent of .get(0).get('position').get('x')
      * If it encounters a ReferenceProperty, .get will, by default, resolve the property it refers to.
      * @param {Object} in_options - parameter object
-     * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS]
+     * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS] -
      *     How should this function behave during reference resolution?
      * @throws if in_position is an array and the first item in the array is not a number
      * @throws if in_position is neither an array nor a number.
@@ -875,22 +867,27 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
             return prop;
         }
 
-        if (in_position === PATH_TOKENS.ROOT) {
-            return prop.getRoot();
-        } else if (in_position === PATH_TOKENS.UP) {
-            return prop.getParent();
-        } else if (in_position === PATH_TOKENS.REF) {
-            throw new Error(MSG.NO_GET_DEREFERENCE_ONLY);
-        } else {
-            var pos = Math.floor(in_position);
-            ConsoleUtils.assert(isFinite(pos), MSG.IN_POSITION_MUST_BE_NUMBER);
-            var result = this._dataArrayGetValue(pos);
-            if (in_options.referenceResolutionMode === BaseProperty.REFERENCE_RESOLUTION.ALWAYS) {
-                if (result instanceof Property.ReferenceProperty) {
-                    result = result.ref;
-                }
+        switch (in_position) {
+            case PATH_TOKENS.ROOT: {
+                return prop.getRoot();
             }
-            return result;
+            case PATH_TOKENS.UP: {
+                return prop.getParent();
+            }
+            case PATH_TOKENS.REF: {
+                throw new Error(MSG.NO_GET_DEREFERENCE_ONLY);
+            }
+            default: {
+                var pos = Math.floor(in_position);
+                ConsoleUtils.assert(isFinite(pos), MSG.IN_POSITION_MUST_BE_NUMBER);
+                var result = this._dataArrayGetValue(pos);
+                if (in_options.referenceResolutionMode === BaseProperty.REFERENCE_RESOLUTION.ALWAYS) {
+                    if (result instanceof Property.ReferenceProperty) {
+                        result = result.ref;
+                    }
+                }
+                return result;
+            }
         }
     }
 
@@ -1292,7 +1289,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      * Some primitive types (e.g. Int64, which is not natively supported by javascript) require
      * special treatment on deserialization. For supported types, we can just return the input here.
      *
-     * @param {Array<property-properties.SerializedChangeSet>} in_serializedObj the serialized object
+     * @param {Array<property-properties.SerializedChangeSet>} in_serializedObj - the serialized object
      * @return {Array} in_array - The array of special objects that were deserialized
      */
     _deserializeArray(in_serializedObj) {
@@ -1476,36 +1473,47 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
                 }
             } else if (currentArrayIndex === opStartIndex) {
                 // handle the op
-                if (op.type === ArrayChangeSetIterator.types.REMOVE) {
-                    // no need to do something (removes are just copied)
-                    iterator.next(); // we've completely consumed that op
-                } else if (op.type === ArrayChangeSetIterator.types.INSERT) {
-                    // we have to convert the inserts:
-                    var currentInsert = op.operation;
-                    var newInsert = [currentInsert[0], []];
-                    for (var j = 0; j < currentInsert[1].length; ++j) {
-                        // TODO: we don't use the data from the changeset anymore, since we directly
-                        // TODO: read the data from the array now - remove the data from the op and
-                        // TODO: replace it with just the length instead
-                        if (!this._dataArrayGetValue(opStartIndex + j)) {
-                            throw new Error('insert: invalid index');
+                switch (op.type) {
+                    case ArrayChangeSetIterator.types.REMOVE: {
+                        // no need to do something (removes are just copied)
+                        iterator.next(); // we've completely consumed that op
+
+                    break;
+                    }
+                    case ArrayChangeSetIterator.types.INSERT: {
+                        // we have to convert the inserts:
+                        var currentInsert = op.operation;
+                        var newInsert = [currentInsert[0], []];
+                        for (var j = 0; j < currentInsert[1].length; ++j) {
+                            // TODO: we don't use the data from the changeset anymore, since we directly
+                            // TODO: read the data from the array now - remove the data from the op and
+                            // TODO: replace it with just the length instead
+                            if (!this._dataArrayGetValue(opStartIndex + j)) {
+                                throw new Error('insert: invalid index');
+                            }
+                            newInsert[1].push(this._dataArrayGetValue(opStartIndex + j).serialize(
+                                {
+                                    'dirtyOnly': false, 'includeRootTypeid': true, 'dirtinessType': in_dirtinessType,
+                                    'includeReferencedRepositories': in_includeReferencedRepositories,
+                                }));
                         }
-                        newInsert[1].push(this._dataArrayGetValue(opStartIndex + j).serialize(
-                            {
-                                'dirtyOnly': false, 'includeRootTypeid': true, 'dirtinessType': in_dirtinessType,
-                                'includeReferencedRepositories': in_includeReferencedRepositories,
-                            }));
+                        if (!result.insert) {
+                            result.insert = [];
+                        }
+                        result.insert.push(newInsert);
+                        currentArrayIndex += currentInsert[1].length; // we've read and used these entries above
+                        iterator.next(); // we've completely consumed that op
+
+                    break;
                     }
-                    if (!result.insert) {
-                        result.insert = [];
+                    case ArrayChangeSetIterator.types.MODIFY: {
+                        // Prevent from looping infinitly
+                        // TODO: Might want to decide if there's something to do here
+                        iterator.next(); // we've completely consumed that op
+
+                    break;
                     }
-                    result.insert.push(newInsert);
-                    currentArrayIndex += currentInsert[1].length; // we've read and used these entries above
-                    iterator.next(); // we've completely consumed that op
-                } else if (op.type === ArrayChangeSetIterator.types.MODIFY) {
-                    // Prevent from looping infinitly
-                    // TODO: Might want to decide if there's something to do here
-                    iterator.next(); // we've completely consumed that op
+                // No default
                 }
             }
         }
@@ -1650,16 +1658,12 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      * @return {string} The typeid
      */
     getFullTypeid(in_hideCollection) {
-        if (in_hideCollection) {
-            return this._typeid;
-        } else {
-            return TypeIdHelper.createSerializationTypeId(this._typeid, 'array');
-        }
+        return in_hideCollection ? this._typeid : TypeIdHelper.createSerializationTypeId(this._typeid, 'array');
     }
 
     /**
      * Creates and initializes the data array
-     * @param {Number} in_length      the initial length of the array
+     * @param {Number} in_length - the initial length of the array
      */
     _dataArrayCreate(in_length) {
         // This really creates a generic array for custom type arrays. For primitive arrays, like
@@ -1727,7 +1731,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
     /**
      * Removes a range from the data array
      * @param {Number} in_position - Position at which to start the removal
-     * @param {Number} in_length   - The number of entries to remove
+     * @param {Number} in_length - The number of entries to remove
      */
     _dataArrayRemoveRange(in_position, in_length) {
         this._dataArrayRef.removeRange(in_position, in_length);
@@ -1752,11 +1756,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
     _getScope() {
         var scope = AbstractStaticCollectionProperty.prototype._getScope.call(this);
 
-        if (scope !== undefined) {
-            return scope;
-        } else {
-            return this._scope;
-        }
+        return scope !== undefined ? scope : this._scope;
     }
 
     /**

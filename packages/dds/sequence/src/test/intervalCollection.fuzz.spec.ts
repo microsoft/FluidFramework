@@ -552,7 +552,7 @@ describe("IntervalCollection fuzz testing", () => {
     // TODO:AB#5337: re-enable these seeds.
     const skipSeeds = [1, 3, 4, 8];
     for (let i = 0; i < testCount; i++) {
-        if (skipSeeds.indexOf(i) !== -1) {
+        if (skipSeeds.includes(i)) {
             continue;
         }
         const generator = take(100, makeOperationGenerator({ validateInterval: 10 }));

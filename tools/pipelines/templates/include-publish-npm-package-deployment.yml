@@ -4,29 +4,18 @@
 # include-publish-npm-package-deployment
 
 parameters:
-- name: namespace
-  type: boolean
+- name: feedUrl
+  type: string
 
-- name: official
-  type: boolean
-
-- name: feedName
+- name: feedKind
   type: string
 
 - name: environment
   type: string
 
-- name: publishNonScopedPackages
-  type: boolean
-  default: false
-
 - name: pool
   type: object
   default: Small-eastus2
-
-- name: publishFlags
-  type: string
-  default:
 
 - name: customEndPoint
   type: string
@@ -36,6 +25,18 @@ parameters:
   type: string
   default:
 
+- name: buildToolsVersionToInstall
+  type: string
+  default: "^0.55.0"
+
+- name: packageManager
+  type: string
+  default: npm
+
+- name: packageManagerInstallCommand
+  type: string
+  default: 'npm ci --unsafe-perm'
+
 jobs:
 - deployment: publish_${{ replace(parameters.environment, '-', '_') }}
   displayName: Publish ${{ parameters.environment }}
@@ -44,42 +45,68 @@ jobs:
   workspace:
     clean: all
   variables:
-    version: $[ stageDependencies.build.build.outputs['SetVersion.version']]
-    isLatest: $[ stageDependencies.build.build.outputs['SetVersion.isLatest']]
+    - group: ado-feeds
+    - name: version
+      value: $[ stageDependencies.build.build.outputs['SetVersion.version']]
+    - name: isLatest
+      value: $[ stageDependencies.build.build.outputs['SetVersion.isLatest']]
   strategy:
     runOnce:
         deploy:
           steps:
           - download: current
             artifact: pack
+          - checkout: self
+            clean: true
+            lfs: false
+            submodules: false
           - task: UseNode@1
-            displayName: Use Node 18.17.1
+            displayName: Use Node 20.15.1
             inputs:
-              version: 18.17.1
+              version: 20.15.1
           - task: Npm@1
-            displayName: Install npm 6
+            displayName: Install npm 10
             retryCountOnTaskFailure: 4
             inputs:
               command: 'custom'
-              customCommand: 'install --global npm@^6'
+              customCommand: 'install --global npm@^10'
               customRegistry: 'useNpmrc'
+          # Install pnpm and dependencies so flub is available for publish steps
+          - template: /tools/pipelines/templates/include-install.yml@self
+            parameters:
+              packageManager: '${{ parameters.packageManager }}'
+              buildDirectory: .
+              packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
+          # Add installed build-tools to CLI
+          - task: Bash@3
+            name: InstallBuildTools
+            displayName: Install Fluid Build Tools (from npm)
+            inputs:
+              targetType: 'inline'
+              workingDirectory: .
+              script: |
+                echo "installing version @${{ parameters.buildToolsVersionToInstall }}"
+
+                npm install --global "@fluid-tools/build-cli@${{ parameters.buildToolsVersionToInstall }}"
+
+                # This can be removed once all builds tools are moved to the build-cli library
+                npm install --global "@fluidframework/build-tools@${{ parameters.buildToolsVersionToInstall }}"
+          - task: Bash@3
+            name: BuildToolsInstallCheck
+            displayName: Check Build Tools Installation
+            inputs:
+              targetType: 'inline'
+              workingDirectory: .
+              script: |
+                # Output the help and full command list for debugging purposes
+                flub --help
+                flub commands
           - template: include-publish-npm-package-steps.yml
             parameters:
-              namespace: ${{ parameters.namespace }}
-              artifactPath: scoped
-              feedName: ${{ parameters.feedName }}
+              artifactPath: tarballs
+              feedKind: ${{ parameters.feedKind }}
+              feedUrl: ${{ parameters.feedUrl }}
               customEndPoint: ${{ parameters.customEndPoint }}
-              official: ${{ parameters.official }}
-              publishFlags: ${{ parameters.publishFlags }}
-          - ${{ if eq(parameters.publishNonScopedPackages, true) }}:
-            - template: include-publish-npm-package-steps.yml
-              parameters:
-                namespace: false
-                artifactPath: non-scoped
-                feedName: ${{ parameters.feedName }}
-                official: ${{ parameters.official }}
-                customEndPoint: ${{ parameters.customEndPoint }}
-                publishFlags: ${{ parameters.publishFlags }}
           - template: include-git-tag-steps.yml
             parameters:
               tagName: ${{ parameters.tagName }}

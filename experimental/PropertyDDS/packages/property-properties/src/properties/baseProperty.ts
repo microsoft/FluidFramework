@@ -166,11 +166,7 @@ export abstract class BaseProperty {
      * property belongs to
      */
     protected _getScope(): string | undefined {
-        if (this._parent) {
-            return this.getRoot()._getScope();
-        } else {
-            return undefined;
-        }
+        return this._parent ? this.getRoot()._getScope() : undefined;
     }
 
     /**
@@ -355,7 +351,7 @@ export abstract class BaseProperty {
      * Modifies the property according to the given changeset
      *
      * @param in_changeSet - The changeset to apply
-     * @param {property-properties.BaseProperty.PathFilteringOptions} [in_filteringOptions]
+     * @param {property-properties.BaseProperty.PathFilteringOptions} [in_filteringOptions] -
      *    The filtering options to consider while applying the ChangeSet.
      * @throws if in_changeSet is invalid.
      */
@@ -375,7 +371,7 @@ export abstract class BaseProperty {
      * @param in_reportToView - By default, the dirtying will always be reported to the checkout view
      *                          and trigger a modified event there. When batching updates, this
      *                          can be prevented via this flag.
-     * @param {property-properties.BaseProperty.PathFilteringOptions} [in_filteringOptions]
+     * @param {property-properties.BaseProperty.PathFilteringOptions} [in_filteringOptions] -
      *    The filtering options to consider while applying the ChangeSet. For now it is only used to
      *    control property creation, to prevent properties from being created outside the checked out
      *    paths. It does not validate that a value inside the ChangeSet is outside those paths.
@@ -819,11 +815,7 @@ export abstract class BaseProperty {
             }
             return undefined;
         });
-        if (foundPath === BREAK_TRAVERSAL) {
-            return path.join('');
-        } else {
-            return undefined;
-        }
+        return foundPath === BREAK_TRAVERSAL ? path.join('') : undefined;
     }
 
     /**
@@ -885,11 +877,7 @@ export abstract class BaseProperty {
             return this._getPathsThroughRepoRef(in_fromProperty);
         } else {
             var directPath = this._getDirectPath(in_fromProperty);
-            if (directPath !== undefined) {
-                return [directPath];
-            } else {
-                return [this._getIndirectPath(in_fromProperty)];
-            }
+            return directPath !== undefined ? [directPath] : [this._getIndirectPath(in_fromProperty)];
         }
     }
 
@@ -995,11 +983,7 @@ export abstract class BaseProperty {
         ConsoleUtils.assert(_.isFunction(in_callback), MSG.CALLBACK_NOT_FCT);
         if (this._parent) {
             var result = in_callback(this._parent);
-            if (result !== BREAK_TRAVERSAL) {
-                return this._parent.traverseUp(in_callback);
-            } else {
-                return BREAK_TRAVERSAL;
-            }
+            return result !== BREAK_TRAVERSAL ? this._parent.traverseUp(in_callback) : BREAK_TRAVERSAL;
         }
 
         return undefined;
@@ -1052,11 +1036,11 @@ export abstract class BaseProperty {
      * @param in_serializedObj - The serialized changeset to apply to this node. This
      *     has to be a normalized change-set (only containing insertions and property assignments. Deletes and Modify
      *     must not appear)
-     * @param in_filteringOptions
+     * @param in_filteringOptions -
      *    The filtering options to consider while deserializing the property.
-     * @param in_createChangeSet
+     * @param in_createChangeSet -
      *    Should a changeset be created for this deserialization?
-     * @param in_reportToView
+     * @param in_reportToView -
      *    Usually the dirtying should be reported to the view and trigger a modified
      *    event there. This can be prevented via this flag.
      * @throws if called on a read-only property.
@@ -1080,9 +1064,9 @@ export abstract class BaseProperty {
      *     has to be a normalized change-set (only containing inserts. Removes and Modifies are forbidden).
      * @param in_reportToView - Usually the dirtying should be reported to the view
      *     and trigger a modified event there. When batching updates, this can be prevented via this flag.
-     * @param in_filteringOptions
+     * @param in_filteringOptions -
      *    The filtering options to consider while deserializing the property.
-     * @param in_createChangeSet
+     * @param in_createChangeSet -
      *    Should a changeset be created for this deserialization?
      * @returns ChangeSet with the changes that actually were performed during the
      *     deserialization

@@ -91,14 +91,7 @@ export class SharedStringHelper extends TypedEventEmitter<ISharedStringHelperEve
                 }
                 const changeStartPosition = op.pos1;
                 const changeLength = (op.seg as string).length;
-                let newPosition: number;
-                if (oldPosition <= changeStartPosition) {
-                    // Position is unmoved by the insertion if it is before the insertion's start
-                    newPosition = oldPosition;
-                } else {
-                    // Position is moved by the length of the insertion if it is after the insertion's start
-                    newPosition = oldPosition + changeLength;
-                }
+                const newPosition = oldPosition <= changeStartPosition ? oldPosition : oldPosition + changeLength;
                 // eslint-disable-next-line max-len
                 // console.log(`previousText: ${previousText} newText: ${this._latestText} ChangeRange: ${changeStartPosition}-${changeStartPosition + changeLength}, Transform: ${oldPosition} -> ${newPosition}`);
                 // console.log(op);

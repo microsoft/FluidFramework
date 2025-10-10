@@ -341,11 +341,7 @@ export class ChangeSet {
                 if (baseIsSetChange) {
                     // we have to convert back to a string, if it had been converted before
                     let newValue;
-                    if (isEmpty(in_baseChanges[in_changedKey])) {
-                        newValue = "";
-                    } else {
-                        newValue = in_baseChanges[in_changedKey].insert[0][1];
-                    }
+                    newValue = isEmpty(in_baseChanges[in_changedKey]) ? "" : in_baseChanges[in_changedKey].insert[0][1];
                     if (oldValue !== undefined) {
                         in_baseChanges[in_changedKey] = {
                             value: newValue,
@@ -403,7 +399,7 @@ export class ChangeSet {
      *
      * @param io_changeSet   -
      *     The ChangeSet that is rebased behind the state obtained by application of this ChangeSet
-     * @param out_conflicts A list of paths that resulted in conflicts together with the type of the conflict
+     * @param out_conflicts - A list of paths that resulted in conflicts together with the type of the conflict
      * @param in_options - Optional additional parameters
      * @returns The rebased ChangeSet (the same object as io_changeSet, it will be
      *     modified in place)
@@ -691,7 +687,7 @@ export class ChangeSet {
      * recursive helper function for ChangeSet.prototype._toReversibleChangeSet
      * which converts a irreversible changeset to a reversible changeset
      * or updates the former state of a reversible changeset
-     * @param in_context the traversal context
+     * @param in_context - the traversal context
      */
     private _recursivelyBuildReversibleChangeSet(in_context: Utils.TraversalContext) {
         const opType = in_context.getOperationType();
@@ -893,7 +889,7 @@ export class ChangeSet {
      * WARNING: This function is still experimental and needs more testing
      * and it's set to private for now. It will be converted to a public API function
      * in a later release.
-     * @param in_oldSerializedState the old state
+     * @param in_oldSerializedState - the old state
      */
     public _toReversibleChangeSet(in_oldSerializedState: SerializedChangeSet) {
         ConsoleUtils.assert(in_oldSerializedState !== undefined,
@@ -1042,8 +1038,8 @@ export class ChangeSet {
 
     /**
      * Helper function to extract the first level paths from a given change set
-     * @param in_changeSet The ChangeSet to extract paths from
-     * @param isPrimitiveCollection Is this a primitive type collection?
+     * @param in_changeSet - The ChangeSet to extract paths from
+     * @param isPrimitiveCollection - Is this a primitive type collection?
      *
      * @returns List of paths found at the first level of the change set
      */
@@ -1065,7 +1061,7 @@ export class ChangeSet {
 
     /**
      * recursive helper function for ChangeSet.prototype._toInverseChangeSet
-     * @param in_context the traversal context
+     * @param in_context - the traversal context
      */
     private _recursivelyInvertReversibleChangeset(in_context: Utils.TraversalContext) {
         in_context.setUserData(in_context.getUserData() || {});
