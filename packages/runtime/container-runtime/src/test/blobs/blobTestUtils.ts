@@ -55,6 +55,15 @@ interface BlobCreateOptions {
 	minTTLOverride?: number | undefined;
 }
 
+export const getSerializedBlobForString = (str: string): string =>
+	bufferToString(textToBlob(str), "base64");
+
+export const getDedupedStorageIdForString = async (str: string): Promise<string> =>
+	getDedupedStorageId(textToBlob(str));
+
+export const getDedupedStorageId = async (blob: ArrayBufferLike): Promise<string> =>
+	gitHashFile(IsoBuffer.from(bufferToString(blob, "base64"), "base64"));
+
 export class MockBlobStorage
 	implements Pick<IContainerStorageService, "createBlob" | "readBlob">
 {
@@ -88,13 +97,7 @@ export class MockBlobStorage
 	public readonly createBlob = async (
 		blob: ArrayBufferLike,
 	): Promise<ICreateBlobResponseWithTTL> => {
-		let id: string;
-		if (this.dedupe) {
-			const s = bufferToString(blob, "base64");
-			id = await gitHashFile(IsoBuffer.from(s, "base64"));
-		} else {
-			id = this.blobs.size.toString();
-		}
+		const id = this.dedupe ? await getDedupedStorageId(blob) : this.blobs.size.toString();
 		this.pendingBlobs.push([id, blob]);
 		this._blobsReceived++;
 

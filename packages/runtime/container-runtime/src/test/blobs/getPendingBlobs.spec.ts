@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { bufferToString } from "@fluid-internal/client-utils";
+import { v4 as uuid } from "uuid";
 
 import type { SerializableLocalBlobRecord } from "../../blobManager/index.js";
 
@@ -13,6 +13,8 @@ import {
 	attachHandle,
 	createTestMaterial,
 	ensureBlobsShared,
+	getDedupedStorageIdForString,
+	getSerializedBlobForString,
 	getSummaryContentsWithFormatValidation,
 	MIN_TTL,
 	textToBlob,
@@ -49,7 +51,7 @@ for (const createBlobPayloadPending of [false, true]) {
 				assert.deepStrictEqual(pendingBlobs, {
 					[localId]: {
 						state: "localOnly",
-						blob: bufferToString(textToBlob("hello"), "base64"),
+						blob: getSerializedBlobForString("hello"),
 					},
 				});
 			} else {
@@ -89,7 +91,7 @@ for (const createBlobPayloadPending of [false, true]) {
 				const pendingBlob: SerializableLocalBlobRecord | undefined = pendingBlobs[localId];
 				assert(pendingBlob !== undefined, "Expect pending blob with localId");
 				assert.strictEqual(pendingBlob.state, "uploaded");
-				assert.strictEqual(pendingBlob.blob, bufferToString(textToBlob("hello"), "base64"));
+				assert.strictEqual(pendingBlob.blob, getSerializedBlobForString("hello"));
 				assert.strictEqual(pendingBlob.storageId, "b6fc4c620b67d95f953a5c1c1230aaab5db5a1b0");
 				assert.strictEqual(typeof pendingBlob.uploadTime, "number");
 				assert.strictEqual(pendingBlob.minTTLInSeconds, MIN_TTL);
@@ -160,15 +162,18 @@ for (const createBlobPayloadPending of [false, true]) {
 				const pendingBlob2: SerializableLocalBlobRecord | undefined = pendingBlobs[localId2];
 				assert(pendingBlob2 !== undefined, "Expect pending blob with localId2");
 				assert.strictEqual(pendingBlob2.state, "uploaded");
-				assert.strictEqual(pendingBlob2.blob, bufferToString(textToBlob("world"), "base64"));
-				assert.strictEqual(pendingBlob2.storageId, "04fea06420ca60892f73becee3614f6d023a4b7f");
+				assert.strictEqual(pendingBlob2.blob, getSerializedBlobForString("world"));
+				assert.strictEqual(
+					pendingBlob2.storageId,
+					await getDedupedStorageIdForString("world"),
+				);
 				assert.strictEqual(typeof pendingBlob2.uploadTime, "number");
 				assert.strictEqual(pendingBlob2.minTTLInSeconds, MIN_TTL);
 
 				const pendingBlob3: SerializableLocalBlobRecord | undefined = pendingBlobs[localId3];
 				assert(pendingBlob3 !== undefined, "Expect pending blob with localId3");
 				assert.strictEqual(pendingBlob3.state, "localOnly");
-				assert.strictEqual(pendingBlob3.blob, bufferToString(textToBlob("fizz"), "base64"));
+				assert.strictEqual(pendingBlob3.blob, getSerializedBlobForString("fizz"));
 			} else {
 				const pendingBlobs = blobManager.getPendingBlobs();
 				assert.strictEqual(pendingBlobs, undefined);
@@ -182,23 +187,23 @@ for (const createBlobPayloadPending of [false, true]) {
 
 		it("Round-trips pending blobs when they are not shared", async () => {
 			const pendingBlobs = {
-				"a11323e2-27c1-417a-a5c3-e202cf515188": {
+				[uuid()]: {
 					state: "uploaded",
-					blob: "aGVsbG8=", // "hello"
-					storageId: "b6fc4c620b67d95f953a5c1c1230aaab5db5a1b0",
+					blob: getSerializedBlobForString("hello"),
+					storageId: await getDedupedStorageIdForString("hello"),
 					// Even though this is expired, it should still round-trip as-is since this test
 					// doesn't try to start the share process for it.
 					uploadTime: 0,
 					minTTLInSeconds: 86400,
 				},
-				"0f2e8b7e-bec9-4694-9aee-6d635713e5e6": {
+				[uuid()]: {
 					state: "localOnly",
-					blob: "d29ybGQ=", // "world"
+					blob: getSerializedBlobForString("world"),
 				},
-				"97268155-d656-4bd2-8271-8ed9a14fc179": {
+				[uuid()]: {
 					state: "uploaded",
-					blob: "Zml6eg==", // "fizz"
-					storageId: "9b00ce20c29ae905c86d7ae0e832d95d63a468ca",
+					blob: getSerializedBlobForString("fizz"),
+					storageId: await getDedupedStorageIdForString("fizz"),
 					uploadTime: Date.now(),
 					minTTLInSeconds: 86400,
 				},
@@ -218,5 +223,12 @@ for (const createBlobPayloadPending of [false, true]) {
 			assert.strictEqual(ids, undefined);
 			assert.strictEqual(redirectTable, undefined);
 		});
+	});
+
+	describe(`Load with pending blobs (pending payloads): ${createBlobPayloadPending}`, () => {
+		it("Can read blobs loaded from pending state before sharing", async () => {});
+		it("Can complete sharing for a blob loaded in localOnly state", async () => {});
+		it("Can complete sharing for a blob loaded in uploaded state that is not expired", async () => {});
+		it("Can complete sharing for a blob loaded in uploaded state that is expired", async () => {});
 	});
 }
