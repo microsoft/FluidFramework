@@ -275,8 +275,8 @@ export function getProtocolSnapshotTree(snapshot: ISnapshotTree): ISnapshotTree 
 }
 
 export const combineSnapshotTreeAndSnapshotBlobs = ({
-	snapshotTree,
 	blobContents,
+	snapshotTree,
 }: Pick<ISnapshot, "blobContents" | "snapshotTree">): ISnapshotTreeWithBlobContents => {
 	const currentTreeBlobs: { [path: string]: ArrayBufferLike } = {};
 
