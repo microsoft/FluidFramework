@@ -10,6 +10,7 @@ import type { Static, TAnySchema, TSchema } from "@sinclair/typebox";
 
 import type { ChangeEncodingContext } from "../core/index.js";
 import type { JsonCompatibleReadOnly } from "../util/index.js";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 
 /**
  * Translates decoded data to encoded data.
@@ -151,7 +152,7 @@ export interface CodecWriteOptions extends ICodecOptions {
 	 * Note that versions older than this should not result in data corruption if they access the data:
 	 * the data's format should be versioned and if they can't handle the format they should error.
 	 */
-	readonly oldestCompatibleClient: FluidClientVersion;
+	readonly minVersionForCollab: MinimumVersionForCollab;
 }
 
 /**
@@ -466,16 +467,6 @@ export function withSchemaValidation<
  * For example, document if there is an encoding efficiency improvement of oping into that version or newer.
  * Versions with no notable impact can be omitted.
  *
- * These use numeric values for easy threshold comparisons.
- * Without zero padding, version 2.10 is treated as 2.1, which is numerically less than 2.2.
- * Adding leading zeros to the minor version ensures correct comparisons.
- * For example, version 2.20.0 is encoded as 2.020, and version 2.2.0 is encoded as 2.002.
- * For example FF 2.20.0 is encoded as 2.020 and FF 2.2.0 is encoded as 2.002.
- *
- * Three digits was selected as that will likely be enough, while two digits could easily be too few.
- * If three digits ends up being too few, minor releases of 1000 and higher
- * could still be handled using something like 2.999_00001 without having to change the lower releases.
- *
  * This scheme assumes a single version will always be enough to communicate compatibility.
  * For this to work, compatibility has to be strictly increasing.
  * If this is violated (for example a subset of incompatible features from 3.x that are not in 3.0 are back ported to 2.x),
@@ -487,7 +478,7 @@ export function withSchemaValidation<
  * For example, if needed, would adding more leading zeros to the minor version break things.
  * @alpha
  */
-export enum FluidClientVersion {
+export const FluidClientVersion = {
 	/**
 	 * Fluid Framework Client 1.4 and newer.
 	 * @remarks
@@ -497,8 +488,10 @@ export enum FluidClientVersion {
 	 */
 	// v1_4 = 1.004,
 
-	/** Fluid Framework Client 2.0 and newer. */
-	v2_0 = 2.0,
+	/**
+	 * Fluid Framework Client 2.0 and newer.
+	 */
+	v2_0: "2.0.0",
 
 	/** Fluid Framework Client 2.1 and newer. */
 	// If we think we might want to start allowing opting into something that landed in 2.1 (without opting into something newer),
@@ -509,19 +502,8 @@ export enum FluidClientVersion {
 	/** Fluid Framework Client 2.52 and newer. */
 	// New formats introduced in 2.52:
 	// - DetachedFieldIndex FormatV2
-	v2_52 = 2.052,
-
-	/**
-	 * Enable unreleased and unfinished features.
-	 * @remarks
-	 * Using this value can result in documents which can not be opened in future versions of the framework.
-	 * It can also result in data corruption by enabling unfinished features which may not handle all cases correctly.
-	 *
-	 * This can be used with specific APIs when the caller has knowledge of what specific features those APIs will be opted into with it.
-	 * This is useful for testing features before they are released, but should not be used in production code.
-	 */
-	EnableUnstableFeatures = Number.POSITIVE_INFINITY,
-}
+	v2_52: "2.52.0",
+} as const satisfies Record<string, MinimumVersionForCollab>;
 
 /**
  * An up to date version which includes all the important stable features.
@@ -532,7 +514,7 @@ export enum FluidClientVersion {
  * Update as needed.
  * TODO: Consider using packageVersion.ts to keep this current.
  */
-export const currentVersion: FluidClientVersion = FluidClientVersion.v2_0;
+export const currentVersion: MinimumVersionForCollab = FluidClientVersion.v2_0;
 
 export interface CodecTree {
 	readonly name: string;
