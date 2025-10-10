@@ -33,6 +33,10 @@ parameters:
   type: string
   default: npm
 
+- name: packageManagerInstallCommand
+  type: string
+  default: 'npm ci --unsafe-perm'
+
 jobs:
 - deployment: publish_${{ replace(parameters.environment, '-', '_') }}
   displayName: Publish ${{ parameters.environment }}
@@ -72,6 +76,7 @@ jobs:
             parameters:
               packageManager: '${{ parameters.packageManager }}'
               buildDirectory: .
+              packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
           # Add installed build-tools to CLI
           - task: Bash@3
             name: InstallBuildTools

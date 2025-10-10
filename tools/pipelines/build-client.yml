@@ -109,6 +109,7 @@ extends:
     nonScopedPackages: ${{ parameters.nonScopedPackages }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     buildDirectory: .
+    packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm
     tagName: client
     poolBuild: Large-eastus2

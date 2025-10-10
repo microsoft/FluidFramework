@@ -9,6 +9,10 @@ parameters:
 
 - name: buildDirectory
   type: string
+
+- name: packageManagerInstallCommand
+  type: string
+
 steps:
   - ${{ if eq(parameters.packageManager, 'pnpm') }}:
     - template: /tools/pipelines/templates/include-install-pnpm.yml@self
@@ -23,4 +27,4 @@ steps:
       workingDirectory: ${{ parameters.buildDirectory }}
       script: |
         set -eu -o pipefail
-        pnpm i --frozen-lockfile
+        ${{ parameters.packageManagerInstallCommand }}
