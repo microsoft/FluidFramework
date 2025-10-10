@@ -32,6 +32,7 @@ import {
 
 import {
 	getBlobContentsFromTree,
+	type ContainerStorageAdapter,
 	type ISerializableBlobContents,
 } from "./containerStorageAdapter.js";
 import {
@@ -133,8 +134,8 @@ interface ISnapshotInfo {
 }
 
 export type ISerializedStateManagerDocumentStorageService = Pick<
-	IDocumentStorageService,
-	"getSnapshot" | "getSnapshotTree" | "getVersions" | "readBlob"
+	ContainerStorageAdapter,
+	"getSnapshot" | "getSnapshotTree" | "getVersions" | "readBlob" | "cacheSnapshotBlobs"
 > & {
 	loadedGroupIdSnapshots: Record<string, ISnapshot>;
 };
@@ -300,11 +301,13 @@ export class SerializedStateManager implements IDisposable {
 			return { snapshot, version, attributes };
 		} else {
 			const { baseSnapshot, snapshotBlobs, savedOps } = pendingLocalState;
-			const attributes = await getDocumentAttributes(this.storageAdapter, baseSnapshot);
 			const blobContents = new Map<string, ArrayBuffer>();
 			for (const [id, value] of Object.entries(snapshotBlobs)) {
 				blobContents.set(id, stringToBuffer(value, "utf8"));
 			}
+			this.storageAdapter.cacheSnapshotBlobs(blobContents);
+			const attributes = await getDocumentAttributes(this.storageAdapter, baseSnapshot);
+
 			const snapshot: ISnapshot = {
 				sequenceNumber: attributes.sequenceNumber,
 				snapshotTree: baseSnapshot,
