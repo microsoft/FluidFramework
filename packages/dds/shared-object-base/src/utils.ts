@@ -92,11 +92,7 @@ export function createSingleBlobSummary(
  *
  * @internal
  */
-export function bindHandles<T = unknown>(
-	value: T,
-	serializer: IFluidSerializer,
-	bind: IFluidHandle,
-): T {
+export function bindHandles<T = unknown>(value: T, bind: IFluidHandle): T {
 	const nodesToProcess: unknown[] = [value];
 	const visitedNodes = new Set<unknown>();
 
@@ -106,20 +102,20 @@ export function bindHandles<T = unknown>(
 		const node = nodesToProcess.pop();
 
 		if (isFluidHandle(node)) {
-			bind.bind(toFluidHandleInternal(node));
-		} else if (isObject(node) && !visitedNodes.has(node)) {
 			visitedNodes.add(node);
-			for (const key of Object.keys(node)) {
-				const val: unknown = node[key];
-				if (isObject(val) || isFluidHandle(val)) {
-					nodesToProcess.push(val);
-				}
-			}
+			bind.bind(toFluidHandleInternal(node));
 		} else if (Array.isArray(node) && !visitedNodes.has(node)) {
 			visitedNodes.add(node);
 			for (const item of node) {
-				if (isObject(item) || isFluidHandle(item)) {
+				if (isObject(item)) {
 					nodesToProcess.push(item);
+				}
+			}
+		} else if (isObject(node) && !visitedNodes.has(node)) {
+			visitedNodes.add(node);
+			for (const val of Object.values(node)) {
+				if (isObject(val)) {
+					nodesToProcess.push(val);
 				}
 			}
 		}

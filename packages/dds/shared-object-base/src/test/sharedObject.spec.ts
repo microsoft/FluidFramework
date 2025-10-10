@@ -26,6 +26,7 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 import sinon from "sinon";
 
+import { bindHandles } from "../index.js";
 import { FluidSerializer, type IFluidSerializer } from "../serializer.js";
 import { SharedObject, SharedObjectCore } from "../sharedObject.js";
 
@@ -251,6 +252,92 @@ describe("SharedObjectCore", () => {
 				),
 				"Submit should be called with message content including a serialized handle string (default case)",
 			);
+		});
+	});
+
+	describe("handle binding without encode in bindHandles", () => {
+		let sharedObject: MySharedObjectCore;
+		let dataStoreRuntime: MockFluidDataStoreRuntime;
+		let mockBind: sinon.SinonSpy;
+
+		// Define a mock handle object
+		const mockHandle = new MockHandle("some data");
+
+		// Define message content with the handle in various formats
+		const messageContentWithHandle = {
+			type: "opWithHandle",
+			handle: mockHandle,
+		};
+
+		const messageContentWithNestedHandle = {
+			type: "opWithNestedHandle",
+			nested: {
+				handle: mockHandle,
+			},
+		};
+
+		const messageContentWithHandleInArray = {
+			type: "opWithHandleInArray",
+			handles: [mockHandle],
+		};
+
+		beforeEach(() => {
+			dataStoreRuntime = new MockFluidDataStoreRuntime();
+
+			sharedObject = new MySharedObjectCore({
+				id: "testId",
+				runtime: dataStoreRuntime,
+			});
+
+			// Spy on the bindHandles function
+			mockBind = sinon.spy(bindHandles);
+		});
+
+		afterEach(() => {
+			// Reset the bind spy after each test
+			mockBind.resetHistory();
+		});
+
+		it("binds handle object with plain handle", async () => {
+			const result = mockBind(
+				messageContentWithHandle,
+				sharedObject.handle,
+			) as typeof messageContentWithHandle;
+
+			assert.deepStrictEqual(
+				result,
+				messageContentWithHandle,
+				"Object reference should be unchanged",
+			);
+			assert(mockBind.calledOnce, "bindHandles should be called once");
+		});
+
+		it("binds handle object with handle in nested object", async () => {
+			const result = mockBind(
+				messageContentWithNestedHandle,
+				sharedObject.handle,
+			) as typeof messageContentWithNestedHandle;
+
+			assert.deepStrictEqual(
+				result,
+				messageContentWithNestedHandle,
+				"Object reference should be unchanged",
+			);
+			assert(mockBind.calledOnce, "bindHandles should be called once");
+		});
+
+		it("binds handle object with handle in array", async () => {
+			const result = mockBind(
+				messageContentWithHandleInArray,
+				sharedObject.handle,
+			) as typeof messageContentWithHandleInArray;
+
+			assert.deepStrictEqual(
+				result,
+				messageContentWithHandleInArray,
+				"Object reference should be unchanged",
+			);
+			assert(mockBind.calledOnce, "bindHandles should be called once");
 		});
 	});
 });
