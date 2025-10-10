@@ -21,16 +21,14 @@ export function buildFunc<const Return extends z.ZodTypeAny, const Args extends 
 }, ...args: Args): FunctionDef<Args, Return, Rest>;
 
 // @alpha
-export function createSemanticAgent<TSchema extends ImplicitFieldSchema>(client: BaseChatModel, treeView: TreeView<TSchema>, options?: Readonly<SemanticAgentOptions<ReadableField<TSchema>>>): SharedTreeSemanticAgent;
-
-// @alpha
-export function createSemanticAgent<T extends TreeNode>(client: BaseChatModel, node: T, options?: Readonly<SemanticAgentOptions<T>>): SharedTreeSemanticAgent;
-
-// @alpha
-export function createSemanticAgent<TSchema extends ImplicitFieldSchema>(client: BaseChatModel, treeView: TreeView<TSchema> | (ReadableField<TSchema> & TreeNode), options?: Readonly<SemanticAgentOptions<ReadableField<TSchema>>>): SharedTreeSemanticAgent;
-
-// @alpha
 export type Ctor<T = any> = new (...args: any[]) => T;
+
+// @alpha
+export interface EditResult {
+    message: string;
+    // (undocumented)
+    type: "success" | "disabledError" | "validationError" | "executionError" | "tooManyEditsError" | "expiredError";
+}
 
 // @alpha
 export interface ExposedMethods {
@@ -69,9 +67,8 @@ export type Infer<T> = T extends FunctionDef<infer Args, infer Return, infer Res
 export const llmDefault: unique symbol;
 
 // @alpha
-export interface Logger<TTree extends ReadableField<ImplicitFieldSchema> = ReadableField<ImplicitFieldSchema>> {
+export interface Logger {
     log(message: string): void;
-    treeToString?(tree: TTree): string;
 }
 
 // @alpha
@@ -80,19 +77,32 @@ export type MethodKeys<T> = {
 };
 
 // @alpha
-export interface SemanticAgentOptions<TSchema extends ReadableField<ImplicitFieldSchema>> {
-    // (undocumented)
+export interface SemanticAgentOptions {
     domainHints?: string;
-    // (undocumented)
-    logger?: Logger<TSchema>;
+    executeEdit?: (context: Record<string, unknown>, code: string) => void | Promise<void>;
+    logger?: Logger;
     maximumSequentialEdits?: number;
-    // (undocumented)
-    validator?: (js: string) => boolean;
+    validateEdit?: (code: string) => void | Promise<void>;
 }
 
-// @alpha (undocumented)
-export interface SharedTreeSemanticAgent {
-    query(userPrompt: string): Promise<string | undefined>;
+// @alpha
+export interface SharedTreeChatModel {
+    appendContext?(text: string): void;
+    editToolName?: string;
+    name?: string;
+    query(message: SharedTreeChatQuery): Promise<string>;
+}
+
+// @alpha
+export interface SharedTreeChatQuery {
+    edit(js: string): Promise<EditResult>;
+    text: string;
+}
+
+// @alpha @sealed
+export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
+    constructor(client: SharedTreeChatModel, tree: TreeView<TSchema> | (ReadableField<TSchema> & TreeNode), options?: Readonly<SemanticAgentOptions> | undefined);
+    query(userPrompt: string): Promise<string>;
 }
 
 // @alpha

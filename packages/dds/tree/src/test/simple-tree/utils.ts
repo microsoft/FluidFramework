@@ -91,8 +91,6 @@ export function describeHydration(
  * Given the schema and initial tree data, returns a hydrated tree node.
  * @remarks
  * For minimal/concise targeted unit testing of specific simple-tree content.
- *
- * This produces "marinated" nodes, meaning hydrated nodes which may not have an inner node cached yet.
  */
 export function hydrate<const TSchema extends ImplicitFieldSchema>(
 	schema: TSchema,
