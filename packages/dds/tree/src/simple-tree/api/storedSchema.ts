@@ -13,11 +13,7 @@ import {
 } from "../../feature-libraries/schema-index/index.js";
 import type { JsonCompatible } from "../../util/index.js";
 import type { SchemaUpgrade } from "../core/index.js";
-import {
-	normalizeFieldSchema,
-	type ImplicitAnnotatedFieldSchema,
-	type ImplicitFieldSchema,
-} from "../fieldSchema.js";
+import { normalizeFieldSchema, type ImplicitFieldSchema } from "../fieldSchema.js";
 import { toStoredSchema } from "../toStoredSchema.js";
 import { TreeViewConfigurationAlpha } from "./configuration.js";
 
@@ -57,7 +53,7 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
  * @alpha
  */
 export function extractPersistedSchema(
-	schema: ImplicitAnnotatedFieldSchema,
+	schema: ImplicitFieldSchema,
 	oldestCompatibleClient: FluidClientVersion,
 	includeStaged: (upgrade: SchemaUpgrade) => boolean,
 ): JsonCompatible {

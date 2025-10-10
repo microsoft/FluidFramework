@@ -41,7 +41,6 @@ import type {
 	IContainerRuntimeWithResolveHandle_Deprecated,
 	JoinedStatus,
 	OutboundExtensionMessage,
-	UnverifiedBrand,
 } from "@fluidframework/container-runtime-definitions/internal";
 import type {
 	FluidObject,
@@ -708,13 +707,6 @@ export let getSingleUseLegacyLogCallback = (logger: ITelemetryLoggerExt, type: s
  */
 export interface UnknownIncomingTypedMessage extends TypedMessage {
 	content: OpaqueJsonDeserialized<unknown>;
-}
-
-/**
- * Does nothing helper to apply unverified branding to a value.
- */
-function markUnverified<const T>(value: T): T & UnverifiedBrand<T> {
-	return value as T & UnverifiedBrand<T>;
 }
 
 type UnsequencedSignalEnvelope = Omit<ISignalEnvelope, "clientBroadcastSignalSequenceNumber">;
@@ -1943,7 +1935,7 @@ export class ContainerRuntime
 				}),
 			isBlobDeleted: (blobPath: string) => this.garbageCollector.isNodeDeleted(blobPath),
 			runtime: this,
-			stashedBlobs: pendingRuntimeState?.pendingAttachmentBlobs,
+			pendingBlobs: pendingRuntimeState?.pendingAttachmentBlobs,
 			createBlobPayloadPending: this.sessionSchema.createBlobPayloadPending === true,
 		});
 
@@ -3330,12 +3322,12 @@ export class ContainerRuntime
 		local: boolean,
 	): void {
 		const envelope = message.content;
-		const transformed = markUnverified({
+		const transformed = {
 			clientId: message.clientId,
 			content: envelope.contents.content,
 			type: envelope.contents.type,
 			targetClientId: message.targetClientId,
-		});
+		};
 
 		// Only collect signal telemetry for broadcast messages sent by the current client.
 		if (message.clientId === this.clientId) {
@@ -3358,8 +3350,7 @@ export class ContainerRuntime
 
 	private routeNonContainerSignal(
 		address: string,
-		signalMessage: IInboundSignalMessage<UnknownIncomingTypedMessage> &
-			UnverifiedBrand<UnknownIncomingTypedMessage>,
+		signalMessage: IInboundSignalMessage<UnknownIncomingTypedMessage>,
 		local: boolean,
 	): void {
 		// channelCollection signals are identified by no starting `/` in address.

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { createEmitter } from "@fluid-internal/client-utils";
+import { bufferToString, createEmitter, stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	AttachState,
 	type IContainerStorageService,
@@ -22,7 +22,7 @@ import type {
 	Listenable,
 	PayloadState,
 } from "@fluidframework/core-interfaces/internal";
-import { assert, Deferred } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import type { ICreateBlobResponse } from "@fluidframework/driver-definitions/internal";
 import type {
 	IGarbageCollectionData,
@@ -40,7 +40,6 @@ import {
 	LoggingError,
 	type MonitoringContext,
 	PerformanceEvent,
-	UsageError,
 	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
@@ -48,7 +47,6 @@ import { v4 as uuid } from "uuid";
 import { isBlobMetadata } from "../metadata.js";
 
 import {
-	getStorageIds,
 	summarizeBlobManagerState,
 	toRedirectTable,
 	type IBlobManagerLoadInfo,
@@ -80,9 +78,9 @@ export class BlobHandle
 		return (this._events ??= createEmitter<ILocalFluidHandleEvents>());
 	}
 
-	private _state: PayloadState = "pending";
+	private _payloadState: PayloadState;
 	public get payloadState(): PayloadState {
-		return this._state;
+		return this._payloadState;
 	}
 
 	/**
@@ -99,16 +97,18 @@ export class BlobHandle
 	public constructor(
 		public readonly path: string,
 		public readonly routeContext: IFluidHandleContext,
+		// TODO: just take the blob rather than a get function?
 		public get: () => Promise<ArrayBufferLike>,
 		public readonly payloadPending: boolean,
 		private readonly onAttachGraph?: () => void,
 	) {
 		super();
+		this._payloadState = payloadPending ? "pending" : "shared";
 		this.absolutePath = generateHandleContextPath(path, this.routeContext);
 	}
 
 	public readonly notifyShared = (): void => {
-		this._state = "shared";
+		this._payloadState = "shared";
 		this._events?.emit("payloadShared");
 	};
 
@@ -125,7 +125,7 @@ export class BlobHandle
 	}
 }
 
-// Restrict the IContainerRuntime interface to the subset required by BlobManager.  This helps to make
+// Restrict the IContainerRuntime interface to the subset required by BlobManager. This helps to make
 // the contract explicit and reduces the amount of mocking required for tests.
 export type IBlobManagerRuntime = Pick<
 	IContainerRuntime,
@@ -136,34 +136,98 @@ export type IBlobManagerRuntime = Pick<
 export type ICreateBlobResponseWithTTL = ICreateBlobResponse &
 	Partial<Record<"minTTLInSeconds", number>>;
 
-interface PendingBlob {
+/**
+ * A blob tracked by BlobManager that is only available on the local client. It is not currently
+ * attempting an upload.
+ */
+interface LocalOnlyBlob {
+	state: "localOnly";
 	blob: ArrayBufferLike;
-	opsent?: boolean;
-	storageId?: string;
-	handleP: Deferred<BlobHandle>;
-	uploadP?: Promise<void>;
-	uploadTime?: number;
-	minTTLInSeconds?: number;
-	attached?: boolean;
-	acked?: boolean;
-	abortSignal?: AbortSignal;
 }
+
+/**
+ * A blob tracked by BlobManager that is only known to be available on the local client, but is in
+ * the process of being uploaded to storage.
+ */
+interface UploadingBlob {
+	state: "uploading";
+	blob: ArrayBufferLike;
+}
+
+/**
+ * A blob tracked by BlobManager that has been uploaded to storage. If the TTL has not expired, it
+ * should still be available in storage. It is not currently attempting to send a BlobAttach op.
+ */
+interface UploadedBlob {
+	state: "uploaded";
+	blob: ArrayBufferLike;
+	storageId: string;
+	uploadTime: number;
+	minTTLInSeconds: number | undefined;
+}
+
+/**
+ * A blob tracked by BlobManager that has been uploaded to storage and is in the process of sending
+ * a BlobAttach op and waiting for the ack.
+ */
+interface AttachingBlob {
+	state: "attaching";
+	blob: ArrayBufferLike;
+	storageId: string;
+	uploadTime: number;
+	minTTLInSeconds: number | undefined;
+}
+
+/**
+ * A blob tracked by BlobManager that has been uploaded to storage and its BlobAttach op has been
+ * ack'd. It is fully shared and available to all clients, and is no longer considered pending.
+ */
+interface AttachedBlob {
+	state: "attached";
+	blob: ArrayBufferLike;
+}
+
+/**
+ * Blobs that were created locally are tracked, and may be in one of these states. When first
+ * created, they are in localOnly state. The process of sharing has two steps, blob upload and
+ * sending a BlobAttach op. Progress through the stages may regress back to localOnly if we
+ * determine the storage may have deleted the blob before we could finish attaching it.
+ */
+type LocalBlobRecord =
+	| LocalOnlyBlob
+	| UploadingBlob
+	| UploadedBlob
+	| AttachingBlob
+	| AttachedBlob;
+
+/**
+ * Serializable form of the LocalBlobRecord that can be used to save and restore pending state.
+ * Omits attached blobs since they are fully uploaded and don't need to be saved and restored.
+ * Omits uploading and attaching states since upon restore we will need to restart those processes.
+ */
+type SerializableLocalBlobRecord =
+	| (Omit<LocalOnlyBlob, "blob"> & { blob: string })
+	| (Omit<UploadedBlob, "blob"> & { blob: string });
 
 export interface IPendingBlobs {
-	[localId: string]: {
-		blob: string;
-		storageId?: string;
-		uploadTime?: number;
-		minTTLInSeconds?: number;
-		acked?: boolean;
-	};
+	[localId: string]: SerializableLocalBlobRecord;
 }
 
+/**
+ * Check if for a given uploaded or attaching blob, the TTL is too close to expiry to safely attempt
+ * an attach. Currently using a heuristic of half the TTL duration having passed since upload.
+ */
+const isTTLTooCloseToExpiry = (blobRecord: UploadedBlob | AttachingBlob): boolean =>
+	blobRecord.minTTLInSeconds !== undefined &&
+	Date.now() - blobRecord.uploadTime > (blobRecord.minTTLInSeconds / 2) * 1000;
+
 interface IBlobManagerInternalEvents {
-	uploadFailed: (localId: string, error: unknown) => void;
-	handleAttached: (pending: PendingBlob) => void;
+	blobExpired: (localId: string) => void;
+	handleAttached: (pending: LocalBlobRecord) => void;
 	processedBlobAttach: (localId: string, storageId: string) => void;
 }
+
+const createAbortError = (): LoggingError => new LoggingError("uploadBlob aborted");
 
 export const blobManagerBasePath = "_blobs";
 
@@ -181,16 +245,19 @@ export class BlobManager {
 	private readonly redirectTable: Map<string, string>;
 
 	/**
-	 * Blobs which we have not yet seen a BlobAttach op round-trip and not yet attached to a DDS.
+	 * The localBlobCache has a dual role of caching locally-created blobs, as well as tracking their state as they
+	 * are shared. Keys are localIds.
 	 */
-	private readonly pendingBlobs: Map<string, PendingBlob> = new Map();
-
+	private readonly localBlobCache: Map<string, LocalBlobRecord> = new Map();
 	/**
-	 * Track ops in flight for online flow. This is used for optimizations where if we receive an ack for a storage ID,
-	 * we can resolve all pending blobs with the same storage ID even though they may have different local IDs. That's
-	 * because we know that the server will not delete the blob corresponding to that storage ID.
+	 * Blobs with an attached handle that have not finished blob-attaching are the set we need to provide from
+	 * getPendingState().  This stores their local IDs, and then we can look them up against the localBlobCache.
 	 */
-	private readonly opsInFlight: Map<string, Set<string>> = new Map();
+	private readonly pendingBlobsWithAttachedHandles: Set<string> = new Set();
+	/**
+	 * Local IDs for any pending blobs we loaded with and have not yet started the upload/attach flow for.
+	 */
+	private readonly pendingOnlyLocalIds: Set<string> = new Set();
 
 	private readonly sendBlobAttachOp: (localId: string, storageId: string) => void;
 
@@ -230,7 +297,7 @@ export class BlobManager {
 		// blobPath's format - `/<basePath>/<localId>`.
 		readonly isBlobDeleted: (blobPath: string) => boolean;
 		readonly runtime: IBlobManagerRuntime;
-		stashedBlobs: IPendingBlobs | undefined;
+		pendingBlobs: IPendingBlobs | undefined;
 		readonly localIdGenerator?: (() => string) | undefined;
 		readonly createBlobPayloadPending: boolean;
 	}) {
@@ -242,11 +309,13 @@ export class BlobManager {
 			blobRequested,
 			isBlobDeleted,
 			runtime,
+			pendingBlobs,
 			localIdGenerator,
 			createBlobPayloadPending,
 		} = props;
 		this.routeContext = routeContext;
 		this.storage = storage;
+		this.sendBlobAttachOp = sendBlobAttachOp;
 		this.blobRequested = blobRequested;
 		this.isBlobDeleted = isBlobDeleted;
 		this.runtime = runtime;
@@ -260,51 +329,31 @@ export class BlobManager {
 
 		this.redirectTable = toRedirectTable(blobManagerLoadInfo, this.mc.logger);
 
-		this.sendBlobAttachOp = (localId: string, storageId: string) => {
-			const pendingEntry = this.pendingBlobs.get(localId);
-			assert(
-				pendingEntry !== undefined,
-				0x725 /* Must have pending blob entry for upcoming op */,
-			);
-			if (
-				pendingEntry?.uploadTime !== undefined &&
-				pendingEntry?.minTTLInSeconds !== undefined
-			) {
-				const secondsSinceUpload = (Date.now() - pendingEntry.uploadTime) / 1000;
-				const expired = pendingEntry.minTTLInSeconds - secondsSinceUpload < 0;
-				this.mc.logger.sendTelemetryEvent({
-					eventName: "sendBlobAttach",
-					secondsSinceUpload,
-					minTTLInSeconds: pendingEntry.minTTLInSeconds,
-					expired,
-				});
-				if (expired) {
-					// reupload blob and reset previous fields
-					this.pendingBlobs.set(localId, {
-						...pendingEntry,
-						storageId: undefined,
-						uploadTime: undefined,
-						minTTLInSeconds: undefined,
-						opsent: false,
-						uploadP: this.uploadBlob(localId, pendingEntry.blob),
-					});
-					return;
-				}
+		// We populate the localBlobCache with any pending blobs we are provided, which makes them available
+		// to access even though they are not shared yet. However, we don't start the share flow until it is
+		// explicitly invoked via sharePendingBlobs() in case we are loaded in a frozen container.
+		if (pendingBlobs !== undefined) {
+			for (const [localId, serializableBlobRecord] of Object.entries(pendingBlobs)) {
+				assert(!this.redirectTable.has(localId), "Pending blob already in redirect table");
+				const localBlobRecord = {
+					...serializableBlobRecord,
+					blob: stringToBuffer(serializableBlobRecord.blob, "base64"),
+				};
+				this.localBlobCache.set(localId, localBlobRecord);
+				// Since we received these blobs from pending state, we'll assume they were only added to the
+				// pending state at generation time because their handles were attached. We add them back here
+				// in case we need to round-trip them back out again due to another getPendingBlobs() call.
+				this.pendingBlobsWithAttachedHandles.add(localId);
+				this.pendingOnlyLocalIds.add(localId);
 			}
-			pendingEntry.opsent = true;
-			sendBlobAttachOp(localId, storageId);
-		};
+		}
 	}
 
-	private createAbortError(pending?: PendingBlob): LoggingError {
-		return new LoggingError("uploadBlob aborted", {
-			acked: pending?.acked,
-			uploadTime: pending?.uploadTime,
-		});
-	}
-
+	/**
+	 * Returns whether a blob with the given localId can be retrieved by the BlobManager via getBlob().
+	 */
 	public hasBlob(localId: string): boolean {
-		return this.redirectTable.get(localId) !== undefined;
+		return this.redirectTable.has(localId) || this.localBlobCache.has(localId);
 	}
 
 	/**
@@ -340,16 +389,17 @@ export class BlobManager {
 		// is configured.
 		this.blobRequested(getGCNodePathFromLocalId(localId));
 
-		const pending = this.pendingBlobs.get(localId);
-		if (pending) {
-			return pending.blob;
+		const localBlobRecord = this.localBlobCache.get(localId);
+		if (localBlobRecord !== undefined) {
+			return localBlobRecord.blob;
 		}
 
 		let storageId = this.redirectTable.get(localId);
 		if (storageId === undefined) {
 			// Only blob handles explicitly marked with pending payload are permitted to exist without
 			// yet knowing their storage id. Otherwise they must already be associated with a storage id.
-			// Handles for detached blobs are not payload pending.
+			// Handles for detached blobs are not payload pending, though they should also always be present
+			// in the localBlobCache and therefore should never need to refer to storage.
 			assert(payloadPending, 0x11f /* "requesting unknown blobs" */);
 			// If we didn't find it in the redirectTable and it's payloadPending, assume the attach op is coming
 			// eventually and wait. We do this even if the local client doesn't have the blob payloadPending flag
@@ -385,40 +435,17 @@ export class BlobManager {
 		);
 	}
 
-	private getBlobHandle(localId: string): BlobHandle {
-		assert(
-			this.redirectTable.has(localId) || this.pendingBlobs.has(localId),
-			0x384 /* requesting handle for unknown blob */,
-		);
-		const pending = this.pendingBlobs.get(localId);
-		// Create a callback function for once the handle has been attached
-		const callback = pending
-			? () => {
-					pending.attached = true;
-					// Notify listeners (e.g. serialization process) that handle has been attached
-					this.internalEvents.emit("handleAttached", pending);
-					this.deletePendingBlobMaybe(localId);
-				}
-			: undefined;
+	private getNonPayloadPendingBlobHandle(localId: string): BlobHandle {
+		const localBlobRecord = this.localBlobCache.get(localId);
+		assert(localBlobRecord !== undefined, 0x384 /* requesting handle for unknown blob */);
+		assert(localBlobRecord.state === "attached", "Expected blob to be attached");
+
 		return new BlobHandle(
 			getGCNodePathFromLocalId(localId),
 			this.routeContext,
 			async () => this.getBlob(localId, false),
 			false, // payloadPending
-			callback,
 		);
-	}
-
-	private async createBlobDetached(
-		blob: ArrayBufferLike,
-	): Promise<IFluidHandleInternalPayloadPending<ArrayBufferLike>> {
-		const localId = this.localIdGenerator();
-		// Blobs created while the container is detached are stored in IDetachedBlobStorage.
-		// The 'IContainerStorageService.createBlob()' call below will respond with a pseudo storage ID.
-		// That pseudo storage ID will be replaced with the real storage ID at attach time.
-		const { id: detachedStorageId } = await this.storage.createBlob(blob);
-		this.setRedirection(localId, detachedStorageId);
-		return this.getBlobHandle(localId);
 	}
 
 	public async createBlob(
@@ -426,7 +453,7 @@ export class BlobManager {
 		signal?: AbortSignal,
 	): Promise<IFluidHandleInternalPayloadPending<ArrayBufferLike>> {
 		if (this.runtime.attachState === AttachState.Detached) {
-			return this.createBlobDetached(blob);
+			return this.createBlobDetached(blob, signal);
 		}
 		if (this.runtime.attachState === AttachState.Attaching) {
 			// blob upload is not supported in "Attaching" state
@@ -439,48 +466,46 @@ export class BlobManager {
 		);
 
 		return this.createBlobPayloadPending
-			? this.createBlobWithPayloadPending(blob)
+			? this.createBlobWithPayloadPending(blob, signal)
 			: this.createBlobLegacy(blob, signal);
+	}
+
+	private async createBlobDetached(
+		blob: ArrayBufferLike,
+		signal?: AbortSignal,
+	): Promise<IFluidHandleInternalPayloadPending<ArrayBufferLike>> {
+		if (signal?.aborted === true) {
+			throw createAbortError();
+		}
+		const localId = this.localIdGenerator();
+		this.localBlobCache.set(localId, { state: "uploading", blob });
+		// Blobs created while the container is detached are stored in IDetachedBlobStorage.
+		// The 'IContainerStorageService.createBlob()' call below will respond with a pseudo storage ID.
+		// That pseudo storage ID will be replaced with the real storage ID at attach time.
+		const { id: detachedStorageId } = await this.storage.createBlob(blob);
+		// From the perspective of the BlobManager, the blob is now fully attached. The actual
+		// upload/attach process at container attach time is treated as opaque to this tracking.
+		this.localBlobCache.set(localId, { state: "attached", blob });
+		this.redirectTable.set(localId, detachedStorageId);
+		return this.getNonPayloadPendingBlobHandle(localId);
 	}
 
 	private async createBlobLegacy(
 		blob: ArrayBufferLike,
 		signal?: AbortSignal,
 	): Promise<IFluidHandleInternalPayloadPending<ArrayBufferLike>> {
-		if (signal?.aborted === true) {
-			throw this.createAbortError();
-		}
-
-		// Create a local ID for the blob. After uploading it to storage and before returning it, a local ID to
-		// storage ID mapping is created.
 		const localId = this.localIdGenerator();
-		const pendingEntry: PendingBlob = {
-			blob,
-			handleP: new Deferred(),
-			uploadP: this.uploadBlob(localId, blob),
-			attached: false,
-			acked: false,
-			abortSignal: signal,
-			opsent: false,
-		};
-		this.pendingBlobs.set(localId, pendingEntry);
-
-		const abortListener = (): void => {
-			if (pendingEntry.acked !== true) {
-				pendingEntry.handleP.reject(this.createAbortError(pendingEntry));
-			}
-		};
-		signal?.addEventListener("abort", abortListener, { once: true });
-
-		return pendingEntry.handleP.promise.finally(() => {
-			signal?.removeEventListener("abort", abortListener);
-		});
+		this.localBlobCache.set(localId, { state: "localOnly", blob });
+		await this.uploadAndAttach(localId, signal);
+		return this.getNonPayloadPendingBlobHandle(localId);
 	}
 
 	private createBlobWithPayloadPending(
 		blob: ArrayBufferLike,
+		signal?: AbortSignal,
 	): IFluidHandleInternalPayloadPending<ArrayBufferLike> {
 		const localId = this.localIdGenerator();
+		this.localBlobCache.set(localId, { state: "localOnly", blob });
 
 		const blobHandle = new BlobHandle(
 			getGCNodePathFromLocalId(localId),
@@ -488,157 +513,209 @@ export class BlobManager {
 			async () => blob,
 			true, // payloadPending
 			() => {
-				const pendingEntry: PendingBlob = {
-					blob,
-					handleP: new Deferred(),
-					uploadP: this.uploadBlob(localId, blob),
-					attached: true,
-					acked: false,
-					opsent: false,
-				};
-				this.pendingBlobs.set(localId, pendingEntry);
+				this.pendingBlobsWithAttachedHandles.add(localId);
+				const uploadAndAttachP = this.uploadAndAttach(localId, signal);
+				uploadAndAttachP.then(blobHandle.notifyShared).catch((error) => {
+					// TODO: notifyShared won't fail directly, but it emits an event to the customer.
+					// Consider what to do if the customer's code throws. reportError is nice.
+				});
+				uploadAndAttachP.catch(blobHandle.notifyFailed);
 			},
 		);
-
-		const onProcessedBlobAttach = (_localId: string, _storageId: string): void => {
-			if (_localId === localId) {
-				this.internalEvents.off("processedBlobAttach", onProcessedBlobAttach);
-				blobHandle.notifyShared();
-			}
-		};
-		this.internalEvents.on("processedBlobAttach", onProcessedBlobAttach);
-
-		const onUploadFailed = (_localId: string, error: unknown): void => {
-			if (_localId === localId) {
-				this.internalEvents.off("uploadFailed", onUploadFailed);
-				blobHandle.notifyFailed(error);
-			}
-		};
-		this.internalEvents.on("uploadFailed", onUploadFailed);
 
 		return blobHandle;
 	}
 
 	/**
-	 * Upload a blob to the storage service.
-	 * @returns A promise that resolves when the upload is complete and a blob attach op has been sent (but not ack'd).
+	 * Upload and attach the localBlobCache entry for the given localId.
 	 *
-	 * @privateRemarks This method must not reject, as there is no error handling for it in current tracking.
+	 * Expects the localBlobCache entry for the given localId to be in either localOnly or uploaded state
+	 * when called. Returns a promise that resolves when the blob completes uploading and attaching, or else
+	 * rejects if an error is encountered or the signal is aborted.
 	 */
-	private async uploadBlob(localId: string, blob: ArrayBufferLike): Promise<void> {
-		let response: ICreateBlobResponseWithTTL;
-		try {
-			response = await this.storage.createBlob(blob);
-		} catch (error) {
-			const entry = this.pendingBlobs.get(localId);
-			this.mc.logger.sendTelemetryEvent({
-				eventName: "UploadBlobReject",
-				// TODO: better typing
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-				error: error as any,
-				message: entry === undefined ? "Missing pendingBlob" : undefined,
-				localId,
-			});
-			// We probably should assert the pendingBlobs entry here, but we don't currently have any error handling
-			// for the uploadP - a promise rejection would be unhandled anyway. For now we can detect this with the
-			// message on the UploadBlobReject telemetry.
-			if (entry !== undefined) {
-				entry.handleP.reject(error);
-				this.deletePendingBlob(localId);
-			}
-			this.internalEvents.emit("uploadFailed", localId, error);
-			return;
-		}
-
-		try {
-			this.onUploadResolve(localId, response);
-		} catch (error) {
-			this.mc.logger.sendTelemetryEvent({
-				eventName: "OnUploadResolveError",
-				// TODO: better typing
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-				error: error as any,
-				localId,
-			});
-		}
-	}
-
-	/**
-	 * Set up a mapping in the redirect table from fromId to toId. Also, notify the runtime that a reference is added
-	 * which is required for GC.
-	 */
-	private setRedirection(fromId: string, toId: string): void {
-		this.redirectTable.set(fromId, toId);
-	}
-
-	private deletePendingBlobMaybe(localId: string): void {
-		if (this.pendingBlobs.has(localId)) {
-			const entry = this.pendingBlobs.get(localId);
-			if (entry?.attached === true && entry?.acked === true) {
-				this.deletePendingBlob(localId);
-			}
-		}
-	}
-
-	private deletePendingBlob(id: string): void {
-		this.pendingBlobs.delete(id);
-	}
-
-	private onUploadResolve(
+	private readonly uploadAndAttach = async (
 		localId: string,
-		response: ICreateBlobResponseWithTTL,
-	): ICreateBlobResponseWithTTL | undefined {
-		const entry = this.pendingBlobs.get(localId);
-
-		assert(entry !== undefined, 0x6c8 /* pending blob entry not found for uploaded blob */);
-		if (entry.abortSignal?.aborted === true && entry.opsent !== true) {
-			this.mc.logger.sendTelemetryEvent({
-				eventName: "BlobAborted",
-				localId,
-			});
-			this.deletePendingBlob(localId);
-			return;
+		signal?: AbortSignal,
+	): Promise<void> => {
+		if (signal?.aborted === true) {
+			this.localBlobCache.delete(localId);
+			this.pendingBlobsWithAttachedHandles.delete(localId);
+			throw createAbortError();
 		}
+		const localBlobRecordInitial = this.localBlobCache.get(localId);
 		assert(
-			entry.storageId === undefined,
-			0x386 /* Must have pending blob entry for uploaded blob */,
+			localBlobRecordInitial?.state === "localOnly" ||
+				localBlobRecordInitial?.state === "uploaded",
+			"Expect uploadAndAttach to be called with either localOnly or uploaded state",
 		);
-		entry.storageId = response.id;
-		entry.uploadTime = Date.now();
-		entry.minTTLInSeconds = response.minTTLInSeconds;
-		// Send a blob attach op. This serves two purposes:
-		// 1. If its a new blob, i.e., it isn't de-duped, the server will keep the blob alive if it sees this op
-		//    until its storage ID is added to the next summary.
-		// 2. It will create a local ID to storage ID mapping in all clients which is needed to retrieve the
-		//    blob from the server via the storage ID.
-		if (entry.opsent !== true) {
-			this.sendBlobAttachOp(localId, response.id);
-		}
-		const storageIds = getStorageIds(this.redirectTable);
-		if (storageIds.has(response.id)) {
-			// The blob is de-duped. Set up a local ID to storage ID mapping and return the blob. Since this is
-			// an existing blob, we don't have to wait for the op to be ack'd since this step has already
-			// happened before and so, the server won't delete it.
-			this.setRedirection(localId, response.id);
-			const blobHandle = this.getBlobHandle(localId);
-			blobHandle.notifyShared();
-			entry.handleP.resolve(blobHandle);
-			this.deletePendingBlobMaybe(localId);
-		} else {
-			// If there is already an op for this storage ID, append the local ID to the list. Once any op for
-			// this storage ID is ack'd, all pending blobs for it can be resolved since the op will keep the
-			// blob alive in storage.
-			let setForRemoteId = this.opsInFlight.get(response.id);
-			if (setForRemoteId === undefined) {
-				setForRemoteId = new Set();
-				this.opsInFlight.set(response.id, setForRemoteId);
+		const { blob } = localBlobRecordInitial;
+
+		/**
+		 * Expects the localBlobCache entry for the given localId to be in either localOnly or uploaded state
+		 * when called. Returns a promise that resolves when the blob is in uploaded or attached state, or else
+		 * rejects on error during upload or if the signal is aborted.
+		 *
+		 * Most of the time this should be expected to exit in uploaded state, but if we are loading from pending
+		 * state we may see an attach op from the client that generated the pending state, which can complete the
+		 * attach while the upload is outstanding.
+		 */
+		const ensureUploaded = async (): Promise<void> => {
+			const localBlobRecord = this.localBlobCache.get(localId);
+			if (localBlobRecord?.state === "uploaded") {
+				// In normal creation flows, the blob will be in localOnly state here. But in the case of loading
+				// with pending state we can call it with an uploaded-but-not-attached blob. Start the upload
+				// flow only if it's localOnly.
+				return;
 			}
-			// seeing the same localId twice can happen if a blob is being reuploaded and stashed.
-			// TODO: review stashing logic and see if we can avoid this, as well in tests.
-			setForRemoteId.add(localId);
+			assert(
+				localBlobRecord?.state === "localOnly",
+				"Attempting to upload from unexpected state",
+			);
+
+			this.localBlobCache.set(localId, { state: "uploading", blob });
+			await new Promise<void>((resolve, reject) => {
+				// If we eventually have driver-level support for abort, then this can simplify a bit as we won't
+				// need to track upload completion and abort separately. Until then, we need to handle the case that
+				// the upload continues and settles after becoming irrelevant due to signal abort or blob attach.
+				let uploadHasBecomeIrrelevant = false;
+				const onSignalAbort = (): void => {
+					removeListeners();
+					uploadHasBecomeIrrelevant = true;
+					this.localBlobCache.delete(localId);
+					this.pendingBlobsWithAttachedHandles.delete(localId);
+					reject(createAbortError());
+				};
+				const onProcessedBlobAttach = (_localId: string, _storageId: string): void => {
+					if (_localId === localId) {
+						removeListeners();
+						uploadHasBecomeIrrelevant = true;
+						resolve();
+					}
+				};
+				const removeListeners = (): void => {
+					this.internalEvents.off("processedBlobAttach", onProcessedBlobAttach);
+					signal?.removeEventListener("abort", onSignalAbort);
+				};
+				this.internalEvents.on("processedBlobAttach", onProcessedBlobAttach);
+				signal?.addEventListener("abort", onSignalAbort);
+
+				this.storage
+					.createBlob(blob)
+					.then((createBlobResponse: ICreateBlobResponseWithTTL) => {
+						if (!uploadHasBecomeIrrelevant) {
+							removeListeners();
+							this.localBlobCache.set(localId, {
+								state: "uploaded",
+								blob,
+								storageId: createBlobResponse.id,
+								uploadTime: Date.now(),
+								minTTLInSeconds: createBlobResponse.minTTLInSeconds,
+							});
+							resolve();
+						}
+					})
+					.catch((error) => {
+						if (!uploadHasBecomeIrrelevant) {
+							removeListeners();
+							// If the storage call errors, we can't recover. Reject to throw back to the caller.
+							this.localBlobCache.delete(localId);
+							this.pendingBlobsWithAttachedHandles.delete(localId);
+							reject(error);
+						}
+					});
+			});
+		};
+
+		/**
+		 * Expects the localBlobCache entry for the given localId to be in uploaded or attached state when called.
+		 * Returns a promise that resolves to true if the blob is successfully attached, or false if it cannot be
+		 * attached and the upload flow needs to be restarted from the top (currently only if the TTL expires before
+		 * attach can be completed). In the latter case, the localBlobRecord will also be reset to localOnly state.
+		 * The promise rejects if the signal is aborted.
+		 */
+		const tryAttach = async (): Promise<boolean> => {
+			const localBlobRecord = this.localBlobCache.get(localId);
+			if (localBlobRecord?.state === "attached") {
+				// In normal creation flows, the blob will be in uploaded state here. But if we are loading from pending
+				// state and see an attach op from the client that generated the pending state, we may have reached
+				// attached state in the middle of the upload attempt. In that case there's no more work to do and we
+				// can just return.
+				return true;
+			}
+			assert(
+				localBlobRecord?.state === "uploaded",
+				"Attempting to attach from unexpected state",
+			);
+
+			// If we just uploaded the blob TTL really shouldn't be expired at this location. But if we loaded from
+			// pending state, the upload may have happened some time far in the past and could be expired here.
+			if (isTTLTooCloseToExpiry(localBlobRecord)) {
+				// If the TTL is expired, we assume it's gone from the storage and so is effectively localOnly again.
+				// Then when we re-enter the loop, we'll re-upload it.
+				this.localBlobCache.set(localId, { state: "localOnly", blob });
+				// Emitting here isn't really necessary since the only listener would be attached below. Including here
+				// for completeness though, in case we add other listeners in the future.
+				this.internalEvents.emit("blobExpired", localId);
+				return false;
+			} else {
+				this.localBlobCache.set(localId, {
+					...localBlobRecord,
+					state: "attaching",
+				});
+
+				// Send and await a blob attach op. This serves two purposes:
+				// 1. If its a new blob, i.e., it isn't de-duped, the server will keep the blob alive if it sees this op
+				//    until its storage ID is added to the next summary.
+				// 2. It will create a local ID to storage ID mapping in all clients which is needed to retrieve the
+				//    blob from the server via the storage ID.
+				return new Promise<boolean>((resolve, reject) => {
+					const onProcessedBlobAttach = (_localId: string, _storageId: string): void => {
+						if (_localId === localId) {
+							removeListeners();
+							resolve(true);
+						}
+					};
+					// Although we already checked for TTL expiry above, the op we're about to send may later be asked
+					// to resubmit. Before we resubmit, we check again for TTL expiry - this listener is how we learn if
+					// we discovered expiry in the resubmit flow.
+					const onBlobExpired = (_localId: string): void => {
+						if (_localId === localId) {
+							removeListeners();
+							resolve(false);
+						}
+					};
+					const onSignalAbort = (): void => {
+						removeListeners();
+						this.localBlobCache.delete(localId);
+						this.pendingBlobsWithAttachedHandles.delete(localId);
+						reject(createAbortError());
+					};
+					const removeListeners = (): void => {
+						this.internalEvents.off("processedBlobAttach", onProcessedBlobAttach);
+						this.internalEvents.off("blobExpired", onBlobExpired);
+						signal?.removeEventListener("abort", onSignalAbort);
+					};
+
+					this.internalEvents.on("processedBlobAttach", onProcessedBlobAttach);
+					this.internalEvents.on("blobExpired", onBlobExpired);
+					signal?.addEventListener("abort", onSignalAbort);
+					this.sendBlobAttachOp(localId, localBlobRecord.storageId);
+				});
+			}
+		};
+
+		let attachCompleted = false;
+		while (!attachCompleted) {
+			await ensureUploaded();
+			attachCompleted = await tryAttach();
+
+			// If something stopped the attach from completing successfully (currently just TTL expiry),
+			// we expect that the blob was already updated to reflect the updated state (i.e. back to localOnly)
+			// and we'll try the loop again from the top.
 		}
-		return response;
-	}
+		// When the blob successfully attaches, the localBlobRecord will have been updated to attached state
+		// at the time we processed the op, so there's nothing else to do here.
+	};
 
 	/**
 	 * Resubmit a BlobAttach op. Used to add storage IDs to ops that were
@@ -648,14 +725,22 @@ export class BlobManager {
 	public reSubmit(metadata: Record<string, unknown> | undefined): void {
 		assert(isBlobMetadata(metadata), 0xc01 /* Expected blob metadata for a BlobAttach op */);
 		const { localId, blobId: storageId } = metadata;
-		// Any blob that we're actively trying to advance to attached state must have a
-		// pendingBlobs entry. Decline to resubmit for anything else.
-		// For example, we might be asked to resubmit stashed ops for blobs that never had
-		// their handle attached - these won't have a pendingBlobs entry and we shouldn't
-		// try to attach them since they won't be accessible to the customer and would just
-		// be considered garbage immediately.
-		if (this.pendingBlobs.has(localId)) {
-			this.sendBlobAttachOp(localId, storageId);
+		// Any blob that we're actively trying to advance to attached state must be in attaching state.
+		// Decline to resubmit for anything else.
+		// For example, we might be asked to resubmit stashed ops for blobs that never had their handle
+		// attached - these won't have a localBlobCache entry because we filter them out when generating
+		// pending state. We shouldn't try to attach them since they won't be accessible to the customer
+		// and would just be considered garbage immediately.
+		// TODO: Is it possible that we'd be asked to resubmit for a pending blob before we call sharePendingBlobs?
+		const localBlobRecord = this.localBlobCache.get(localId);
+		if (localBlobRecord?.state === "attaching") {
+			// If the TTL is expired, we assume it's gone from the storage and so is effectively localOnly again.
+			if (isTTLTooCloseToExpiry(localBlobRecord)) {
+				this.localBlobCache.set(localId, { state: "localOnly", blob: localBlobRecord.blob });
+				this.internalEvents.emit("blobExpired", localId);
+			} else {
+				this.sendBlobAttachOp(localId, storageId);
+			}
 		}
 	}
 
@@ -665,46 +750,25 @@ export class BlobManager {
 			0xc02 /* Expected blob metadata for a BlobAttach op */,
 		);
 		const { localId, blobId: storageId } = message.metadata;
-		const pendingEntry = this.pendingBlobs.get(localId);
-		if (pendingEntry?.abortSignal?.aborted === true) {
-			this.deletePendingBlob(localId);
-			return;
+		const maybeLocalBlobRecord = this.localBlobCache.get(localId);
+		if (maybeLocalBlobRecord !== undefined) {
+			const attachedBlobRecord: AttachedBlob = {
+				state: "attached",
+				blob: maybeLocalBlobRecord.blob,
+			};
+			// Processing a blob attach op is authoritative and may stomp on any existing state. Other
+			// callsites that update localBlobCache entries must take proper caution to handle the case
+			// that a blob attach op is processed concurrently.
+			this.localBlobCache.set(localId, attachedBlobRecord);
+			// Note there may or may not be an entry in pendingBlobsWithAttachedHandles for this localId,
+			// in particular for the non-payloadPending case since we should be reaching this point
+			// before even returning a handle to the caller.
+			this.pendingBlobsWithAttachedHandles.delete(localId);
+			this.pendingOnlyLocalIds.delete(localId);
 		}
-
-		this.setRedirection(localId, storageId);
+		this.redirectTable.set(localId, storageId);
 		// set identity (id -> id) entry
-		this.setRedirection(storageId, storageId);
-
-		if (local) {
-			const waitingBlobs = this.opsInFlight.get(storageId);
-			if (waitingBlobs !== undefined) {
-				// For each op corresponding to this storage ID that we are waiting for, resolve the pending blob.
-				// This is safe because the server will keep the blob alive and the op containing the local ID to
-				// storage ID is already in flight and any op containing this local ID will be sequenced after that.
-				for (const pendingLocalId of waitingBlobs) {
-					const entry = this.pendingBlobs.get(pendingLocalId);
-					assert(
-						entry !== undefined,
-						0x38f /* local online BlobAttach op with no pending blob entry */,
-					);
-					this.setRedirection(pendingLocalId, storageId);
-					entry.acked = true;
-					const blobHandle = this.getBlobHandle(pendingLocalId);
-					blobHandle.notifyShared();
-					entry.handleP.resolve(blobHandle);
-					this.deletePendingBlobMaybe(pendingLocalId);
-				}
-				this.opsInFlight.delete(storageId);
-			}
-			const localEntry = this.pendingBlobs.get(localId);
-			if (localEntry) {
-				localEntry.acked = true;
-				const blobHandle = this.getBlobHandle(localId);
-				blobHandle.notifyShared();
-				localEntry.handleP.resolve(blobHandle);
-				this.deletePendingBlobMaybe(localId);
-			}
-		}
+		this.redirectTable.set(storageId, storageId);
 		this.internalEvents.emit("processedBlobAttach", localId, storageId);
 	}
 
@@ -733,18 +797,8 @@ export class BlobManager {
 	}
 
 	/**
-	 * Delete attachment blobs that are sweep ready.
-	 * @param sweepReadyBlobRoutes - The routes of blobs that are sweep ready and should be deleted. These routes will
-	 * be based off of local ids.
-	 * @returns The routes of blobs that were deleted.
-	 */
-	public deleteSweepReadyNodes(sweepReadyBlobRoutes: readonly string[]): readonly string[] {
-		this.deleteBlobsFromRedirectTable(sweepReadyBlobRoutes);
-		return [...sweepReadyBlobRoutes];
-	}
-
-	/**
 	 * Delete blobs with the given routes from the redirect table.
+	 * @returns The routes of blobs that were deleted.
 	 *
 	 * @remarks
 	 * The routes are GC nodes paths of format -`/<blobManagerBasePath>/<localId>`.
@@ -759,11 +813,11 @@ export class BlobManager {
 	 * will ensure we don't create an attachment blob for them at the next summary. The service would then delete them
 	 * some time in the future.
 	 */
-	private deleteBlobsFromRedirectTable(blobRoutes: readonly string[]): void {
+	public deleteSweepReadyNodes(sweepReadyBlobRoutes: readonly string[]): readonly string[] {
 		// maybeUnusedStorageIds is used to compute the set of storage IDs that *used to have a local ID*, but that
 		// local ID is being deleted.
 		const maybeUnusedStorageIds: Set<string> = new Set();
-		for (const route of blobRoutes) {
+		for (const route of sweepReadyBlobRoutes) {
 			const localId = getLocalIdFromGCNodePath(route);
 			// If the blob hasn't already been deleted, log an error because this should never happen.
 			// If the blob has already been deleted, log a telemetry event. This can happen because multiple GC
@@ -799,6 +853,7 @@ export class BlobManager {
 		for (const storageId of maybeUnusedStorageIds) {
 			this.redirectTable.delete(storageId);
 		}
+		return [...sweepReadyBlobRoutes];
 	}
 
 	/**
@@ -851,41 +906,59 @@ export class BlobManager {
 		for (const [localId, detachedStorageId] of redirectTableEntries) {
 			const newStorageId = detachedStorageTable.get(detachedStorageId);
 			assert(newStorageId !== undefined, 0xc53 /* Couldn't find a matching storage ID */);
-			this.setRedirection(localId, newStorageId);
+			this.redirectTable.set(localId, newStorageId);
 			// set identity (id -> id) entry
-			this.setRedirection(newStorageId, newStorageId);
+			this.redirectTable.set(newStorageId, newStorageId);
 		}
+	};
+
+	/**
+	 * Upload and attach any pending blobs that the BlobManager was loaded with that have not already
+	 * been attached in the meantime.
+	 * @returns A promise that resolves when all the uploads and attaches have completed, or rejects
+	 * if any of them fail.
+	 */
+	public readonly sharePendingBlobs = async (): Promise<void> => {
+		const localIdsToUpload = [...this.pendingOnlyLocalIds];
+		this.pendingOnlyLocalIds.clear();
+		// TODO: Determine if Promise.all is ergonomic at the callsite. Would Promise.allSettled be better?
+		await Promise.all<void>(
+			localIdsToUpload.map(async (localId) => this.uploadAndAttach(localId)),
+		);
 	};
 
 	/**
 	 * To be used in getPendingLocalState flow. Get a serializable record of the blobs that are
 	 * pending upload and/or their BlobAttach op, which can be given to a new BlobManager to
 	 * resume work.
-	 *
-	 * @privateRemarks
-	 * For now, we don't track any pending blobs since the getPendingBlobs flow doesn't enable
-	 * restoring to a state where an accessible handle has been stored by the customer (and we'll
-	 * just drop any BlobAttach ops on the ground during reSubmit). However, once we add support
-	 * for payload-pending handles, this will return the blobs associated with those handles.
 	 */
 	public getPendingBlobs(): IPendingBlobs | undefined {
-		return undefined;
-	}
-
-	/**
-	 * Part of container serialization when imminent closure is enabled (Currently when calling closeAndGetPendingLocalState).
-	 * This asynchronous function resolves all pending createBlob calls and waits for each blob
-	 * to be attached. It will also send BlobAttach ops for each pending blob that hasn't sent it
-	 * yet so that serialized container can resubmit them when rehydrated.
-	 *
-	 * @param stopBlobAttachingSignal - Optional signal to abort the blob attaching process.
-	 * @returns - A promise that resolves with the details of the attached blobs,
-	 * or undefined if no blobs were processed.
-	 */
-	public async attachAndGetPendingBlobs(
-		stopBlobAttachingSignal?: AbortSignal,
-	): Promise<IPendingBlobs | undefined> {
-		throw new UsageError("attachAndGetPendingBlobs is no longer supported");
+		const pendingBlobs: IPendingBlobs = {};
+		for (const localId of this.pendingBlobsWithAttachedHandles) {
+			const localBlobRecord = this.localBlobCache.get(localId);
+			assert(localBlobRecord !== undefined, "Pending blob must be in local cache");
+			assert(
+				localBlobRecord.state === "uploading" ||
+					localBlobRecord.state === "uploaded" ||
+					localBlobRecord.state === "attaching",
+				"Pending blob must be in uploading, uploaded, or attaching state",
+			);
+			// We treat blobs in both uploaded and attaching state as just being uploaded, to distrust
+			// whether we expect to see any ack for a BlobAttach op. We just remain prepared to handle
+			// a BlobAttach op for it if we do see one after loading from pending state.
+			pendingBlobs[localId] =
+				localBlobRecord.state === "uploading"
+					? {
+							state: "localOnly",
+							blob: bufferToString(localBlobRecord.blob, "base64"),
+						}
+					: {
+							...localBlobRecord,
+							state: "uploaded",
+							blob: bufferToString(localBlobRecord.blob, "base64"),
+						};
+		}
+		return Object.keys(pendingBlobs).length > 0 ? pendingBlobs : undefined;
 	}
 }
 

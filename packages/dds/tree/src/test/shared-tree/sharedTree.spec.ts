@@ -18,7 +18,6 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
-import { configureDebugAsserts } from "@fluidframework/core-utils/internal";
 
 import {
 	CommitKind,
@@ -54,7 +53,6 @@ import {
 	type ITreePrivate,
 	SharedTreeFormatVersion,
 	Tree,
-	TreeAlpha,
 	type TreeCheckout,
 } from "../../shared-tree/index.js";
 import {
@@ -110,6 +108,7 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { JsonAsTree } from "../../jsonDomainSchema.js";
 import {
 	toSimpleTreeSchema,
+	TreeBeta,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/api/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -154,15 +153,6 @@ function treeTestFactory(): ISharedTree {
 }
 
 describe("SharedTree", () => {
-	let debugAssertsDefault: boolean;
-	beforeEach(() => {
-		debugAssertsDefault = configureDebugAsserts(true);
-	});
-
-	afterEach(() => {
-		configureDebugAsserts(debugAssertsDefault);
-	});
-
 	describe("viewWith", () => {
 		it("@Smoke initialize tree", () => {
 			const tree = treeTestFactory();
@@ -1703,8 +1693,8 @@ describe("SharedTree", () => {
 			});
 			provider.synchronizeMessages();
 
-			assert.deepEqual(TreeAlpha.exportConcise(viewA.root), { child: { id: "B" } });
-			assert.deepEqual(TreeAlpha.exportConcise(viewB.root), { child: { id: "B" } });
+			assert.deepEqual(TreeBeta.exportConcise(viewA.root), { child: { id: "B" } });
+			assert.deepEqual(TreeBeta.exportConcise(viewB.root), { child: { id: "B" } });
 
 			const restoreChildA = stack.undoStack[0] ?? assert.fail("Missing undo");
 
@@ -1713,14 +1703,14 @@ describe("SharedTree", () => {
 			viewB.root.child = new JsonAsTree.JsonObject({ id: "C" });
 			provider.synchronizeMessages();
 
-			assert.deepEqual(TreeAlpha.exportConcise(viewA.root), { child: { id: "C" } });
-			assert.deepEqual(TreeAlpha.exportConcise(viewB.root), { child: { id: "C" } });
+			assert.deepEqual(TreeBeta.exportConcise(viewA.root), { child: { id: "C" } });
+			assert.deepEqual(TreeBeta.exportConcise(viewB.root), { child: { id: "C" } });
 
 			// This revert should do nothing since its constraint on the undo has been violated.
 			restoreChildA.revert();
 
-			assert.deepEqual(TreeAlpha.exportConcise(viewA.root), { child: { id: "C" } });
-			assert.deepEqual(TreeAlpha.exportConcise(viewB.root), { child: { id: "C" } });
+			assert.deepEqual(TreeBeta.exportConcise(viewA.root), { child: { id: "C" } });
+			assert.deepEqual(TreeBeta.exportConcise(viewB.root), { child: { id: "C" } });
 
 			stack.unsubscribe();
 		});
