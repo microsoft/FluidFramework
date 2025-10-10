@@ -72,7 +72,7 @@ export class ContainerStorageAdapter
 	}
 
 	/**
-	 * ArrayBufferLikes or utf8 encoded strings, containing blobs from a snapshot
+	 * ArrayBufferLikes  containing blobs from a snapshot
 	 */
 	private readonly blobContents: { [id: string]: ArrayBufferLike } = {};
 
