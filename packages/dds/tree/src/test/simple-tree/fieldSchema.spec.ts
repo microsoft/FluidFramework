@@ -6,16 +6,21 @@
 import { strict as assert } from "node:assert";
 
 import {
+	relaxObject,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	type AllowedTypes,
 	type booleanSchema,
+	type CustomizedSchemaTyping,
+	type DefaultTreeNodeFromImplicitAllowedTypes,
 	type ImplicitAllowedTypes,
 	type numberSchema,
+	type SchemaUnionToIntersection,
 	type stringSchema,
 	type TreeLeafValue,
 	type TreeNode,
 	type TreeNodeSchema,
+	type UnsafeUnknownSchema,
 } from "../../simple-tree/index.js";
 
 import {
@@ -33,6 +38,7 @@ import type {
 	areSafelyAssignable,
 	requireAssignableTo,
 	requireTrue,
+	UnionToIntersection,
 } from "../../util/index.js";
 import { TreeAlpha } from "../../shared-tree/index.js";
 
@@ -303,9 +309,11 @@ describe("fieldSchema", () => {
 				schemaTypes: T,
 				content: InsertableTreeFieldFromImplicitField<T>,
 			) {
-				class GenericContainer extends sf.object("GenericContainer", {
-					content: schemaTypes,
-				}) {}
+				class GenericContainer extends relaxObject(
+					sf.object("GenericContainer", {
+						content: schemaTypes,
+					}),
+				) {}
 
 				// Both create and the constructor type check as desired.
 				const _created = TreeAlpha.create(GenericContainer, { content });
@@ -321,17 +329,19 @@ describe("fieldSchema", () => {
 				schemaTypes: T,
 				content: InsertableTreeFieldFromImplicitField<T>,
 			) {
-				class GenericContainer extends sf.object("GenericContainer", {
-					content: sf.required(schemaTypes),
-				}) {}
+				class GenericContainer extends relaxObject(
+					sf.object("GenericContainer", {
+						content: sf.required(schemaTypes),
+					}),
+				) {}
 
 				// Users of the class (if it were returned from this test function with a concrete type instead of a generic one) would be fine,
 				// but using it in this generic context has issues.
 				// Specifically the construction APIs don't type check as desired.
 
-				// @ts-expect-error Compiler limitation, see comment above.
+				// todo // @ts-expect-error Compiler limitation, see comment above.
 				const _created = TreeAlpha.create(GenericContainer, { content });
-				// @ts-expect-error Compiler limitation, see comment above.
+				// todo // @ts-expect-error Compiler limitation, see comment above.
 				return new GenericContainer({ content });
 			}
 
@@ -342,9 +352,11 @@ describe("fieldSchema", () => {
 				schemaTypes: T,
 				content: InsertableTreeFieldFromImplicitField<T> | undefined,
 			) {
-				class GenericContainer extends sf.object("GenericContainer", {
-					content: sf.optional(schemaTypes),
-				}) {}
+				class GenericContainer extends relaxObject(
+					sf.object("GenericContainer", {
+						content: sf.optional(schemaTypes),
+					}),
+				) {}
 
 				// Like with the above case, TypeScript fails to simplify the input types, and these do not build.
 
@@ -392,7 +404,7 @@ describe("fieldSchema", () => {
 
 			// @ts-expect-error Compiler limitation, see comment above.
 			type _check5 = requireAssignableTo<ArgFieldRequired2, ArgFieldImplicit2>;
-			// @ts-expect-error Compiler limitation, see comment above.
+			// TODO: // @ts-expect-error Compiler limitation, see comment above.
 			type _check6 = requireAssignableTo<ArgFieldImplicit2, ArgFieldRequired2>;
 		});
 
@@ -408,7 +420,7 @@ describe("fieldSchema", () => {
 
 			// @ts-expect-error Compiler limitation, see comment above.
 			type _check5 = requireAssignableTo<ArgFieldRequired2, ArgFieldImplicit2>;
-			// @ts-expect-error Compiler limitation, see comment above.
+			// TODO: // @ts-expect-error Compiler limitation, see comment above.
 			type _check6 = requireAssignableTo<ArgFieldImplicit2, ArgFieldRequired2>;
 		});
 
@@ -422,7 +434,7 @@ describe("fieldSchema", () => {
 
 			// @ts-expect-error Compiler limitation, see comment above.
 			type _check5 = requireAssignableTo<ArgFieldOptional, ArgFieldImplicit | undefined>;
-			// @ts-expect-error Compiler limitation, see comment above.
+			// TODO: // @ts-expect-error Compiler limitation, see comment above.
 			type _check6 = requireAssignableTo<ArgFieldImplicit | undefined, ArgFieldOptional>;
 
 			// At least this case allows undefined, like recursive object fields, but unlike non recursive object fields.

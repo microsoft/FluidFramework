@@ -12,10 +12,6 @@ import type {
 import { allowUnused } from "../../../simple-tree/index.js";
 import {
 	customizeSchemaTypingUnsafe,
-	type InsertableObjectFromSchemaRecordUnsafe,
-	type InsertableTreeFieldFromImplicitFieldUnsafe,
-	type InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
-	type ReadonlyMapInlined,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/api/typesUnsafe.js";
 import { SchemaFactory, type ValidateRecursiveSchema } from "../../../simple-tree/index.js";
@@ -45,15 +41,16 @@ import type { areSafelyAssignable, requireTrue } from "../../../util/index.js";
 // customizeSchemaTypingUnsafe and InsertableObjectFromSchemaRecordUnsafe
 {
 	const sf = new SchemaFactory("recursive");
+	// @ts-expect-error compiler differes from intelisense here
 	class Bad extends sf.objectRecursive("O", {
-		// customizeSchemaTypingUnsafe needs to be applied to the allowed types, not eh field: this is wrong!
+		// @ts-expect-error customizeSchemaTypingUnsafe needs to be applied to the allowed types, not the field: this is wrong!
 		recursive: customizeSchemaTypingUnsafe(sf.optionalRecursive([() => Bad])).custom<{
 			input: 5;
 		}>(),
 	}) {}
 
 	{
-		// Ideally this would error, but detecting this is invalid is hard.
+		// @ts-expect-error this should error
 		type _check = ValidateRecursiveSchema<typeof Bad>;
 	}
 
@@ -67,19 +64,21 @@ import type { areSafelyAssignable, requireTrue } from "../../../util/index.js";
 
 	// Record
 	{
-		type T = InsertableObjectFromSchemaRecordUnsafe<typeof O.info>["recursive"];
+		type T = System_Unsafe.InsertableObjectFromSchemaRecordUnsafe<typeof O.info>["recursive"];
 		type _check = requireTrue<areSafelyAssignable<T, 5 | undefined>>;
 	}
 
 	// Field
 	{
-		type T = InsertableTreeFieldFromImplicitFieldUnsafe<typeof O.info.recursive.allowedTypes>;
+		type T = System_Unsafe.InsertableTreeFieldFromImplicitFieldUnsafe<
+			typeof O.info.recursive.allowedTypes
+		>;
 		type _check = requireTrue<areSafelyAssignable<T, 5>>;
 	}
 
 	// AllowedTypes
 	{
-		type T = InsertableTreeNodeFromImplicitAllowedTypesUnsafe<
+		type T = System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe<
 			typeof O.info.recursive.allowedTypes
 		>;
 		type _check = requireTrue<areSafelyAssignable<T, 5>>;

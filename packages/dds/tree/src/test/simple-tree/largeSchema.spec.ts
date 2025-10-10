@@ -4,6 +4,7 @@
  */
 
 import {
+	relaxObject,
 	SchemaFactory,
 	TreeViewConfiguration,
 	type ImplicitFieldSchema,
@@ -544,16 +545,16 @@ describe("largeSchema", () => {
 			prefix: N,
 			inner: T,
 		) {
-			class Depth009 extends schema.object(`Deep${prefix}9`, { x: inner }) {}
-			class Depth008 extends schema.object(`Deep${prefix}8`, { x: Depth009 }) {}
-			class Depth007 extends schema.object(`Deep${prefix}7`, { x: Depth008 }) {}
-			class Depth006 extends schema.object(`Deep${prefix}6`, { x: Depth007 }) {}
-			class Depth005 extends schema.object(`Deep${prefix}5`, { x: Depth006 }) {}
-			class Depth004 extends schema.object(`Deep${prefix}4`, { x: Depth005 }) {}
-			class Depth003 extends schema.object(`Deep${prefix}3`, { x: Depth004 }) {}
-			class Depth002 extends schema.object(`Deep${prefix}2`, { x: Depth003 }) {}
-			class Depth001 extends schema.object(`Deep${prefix}1`, { x: Depth002 }) {}
-			class Depth000 extends schema.object(`Deep${prefix}0`, { x: Depth001 }) {}
+			class Depth009 extends relaxObject(schema.object(`Deep${prefix}9`, { x: inner })) {}
+			class Depth008 extends relaxObject(schema.object(`Deep${prefix}8`, { x: Depth009 })) {}
+			class Depth007 extends relaxObject(schema.object(`Deep${prefix}7`, { x: Depth008 })) {}
+			class Depth006 extends relaxObject(schema.object(`Deep${prefix}6`, { x: Depth007 })) {}
+			class Depth005 extends relaxObject(schema.object(`Deep${prefix}5`, { x: Depth006 })) {}
+			class Depth004 extends relaxObject(schema.object(`Deep${prefix}4`, { x: Depth005 })) {}
+			class Depth003 extends relaxObject(schema.object(`Deep${prefix}3`, { x: Depth004 })) {}
+			class Depth002 extends relaxObject(schema.object(`Deep${prefix}2`, { x: Depth003 })) {}
+			class Depth001 extends relaxObject(schema.object(`Deep${prefix}1`, { x: Depth002 })) {}
+			class Depth000 extends relaxObject(schema.object(`Deep${prefix}0`, { x: Depth001 })) {}
 			return Depth000;
 		}
 

@@ -12,6 +12,7 @@ import {
 	objectSchema,
 	type RecordNodeCustomizableSchema,
 	recordSchema,
+	type TreeObjectNodeRelaxed,
 } from "../node-kinds/index.js";
 import {
 	defaultSchemaFactoryObjectOptions,
@@ -33,6 +34,7 @@ import type {
 	WithType,
 	AllowedTypesMetadata,
 	AllowedTypesFullFromMixed,
+	TreeNode,
 } from "../core/index.js";
 import {
 	normalizeToAnnotatedAllowedType,
@@ -567,4 +569,34 @@ export class SchemaFactoryAlpha<
 	>(name: T): SchemaFactoryAlpha<ScopedSchemaName<TScope, T>, TNameInner> {
 		return new SchemaFactoryAlpha(scoped<TScope, TName, T>(this, name));
 	}
+}
+
+/**
+ * Convert an object node to a version with a relaxed types for its fields.
+ * @remarks
+ * This can help get TypeScript to allow sub-classing it in generic contexts.
+ * This must be to the class from the SchemaFactory then subclassed.
+ * @alpha
+ */
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+export function relaxObject<const T extends TreeNodeSchemaClass<string, NodeKind.Object>>(
+	t: T,
+) {
+	return t as T extends TreeNodeSchemaClass<
+		infer Name,
+		NodeKind.Object,
+		TreeNode,
+		infer TInsertable,
+		infer ImplicitlyConstructable,
+		infer Info extends RestrictiveStringRecord<ImplicitFieldSchema>
+	>
+		? TreeNodeSchemaClass<
+				Name,
+				NodeKind.Object,
+				TreeObjectNodeRelaxed<Info, Name>,
+				TInsertable,
+				ImplicitlyConstructable,
+				Info
+			>
+		: T;
 }

@@ -30,7 +30,7 @@ import {
 	type NodeFromSchema,
 	unhydratedFlexTreeFromInsertable,
 	type TreeFieldFromImplicitField,
-	type GetTypesUnsafe,
+	type System_Unsafe,
 } from "../../../../simple-tree/index.js";
 import type {
 	FieldHasDefault,
@@ -484,7 +484,7 @@ describeHydration(
 				const initial: InsertableField<NonExact> = { child: 1 };
 				const n: NonExact = init(NonExact, initial);
 				const childRead = n.child;
-				type XXX = FlattenKeys<GetTypesUnsafe<typeof child>>;
+				type XXX = FlattenKeys<System_Unsafe.GetTypesUnsafe<typeof child>>;
 				type _check = requireTrue<areSafelyAssignable<typeof childRead, number | null>>;
 				assert.throws(() => {
 					// @ts-expect-error this should not compile
@@ -610,6 +610,7 @@ describeHydration(
 				assert.throws(() => {
 					// TODO: AB#35799 this should not compile!
 					// If it does compile, it must be a UsageError.
+					// @ts-expect-error writing to an identifier is not allowed
 					root.id = "b";
 				});
 			});

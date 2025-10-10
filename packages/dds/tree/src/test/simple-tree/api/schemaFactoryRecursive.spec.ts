@@ -28,14 +28,18 @@ import {
 	type AllowedTypesFull,
 	type ImplicitAllowedTypes,
 	type AllowedTypes,
+	customizeSchemaTyping,
+	type ObjectFromSchemaRecord,
+	type AssignableTreeFieldFromImplicitField,
 } from "../../../simple-tree/index.js";
 import {
 	allowUnused,
 	type ValidateRecursiveSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/api/schemaFactoryRecursive.js";
-import type {
-	System_Unsafe,
+import {
+	customizeSchemaTypingUnsafe,
+	type System_Unsafe,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/api/typesUnsafe.js";
 import { SharedTree } from "../../../treeFactory.js";
@@ -1463,6 +1467,7 @@ describe("SchemaFactory Recursive methods", () => {
 	});
 
 	describe("custom types", () => {
+		const sf = new SchemaFactoryAlpha("");
 		it("custom non-recursive children", () => {
 			class O extends sf.objectRecursive("O", {
 				a: customizeSchemaTyping(sf.number).custom<{

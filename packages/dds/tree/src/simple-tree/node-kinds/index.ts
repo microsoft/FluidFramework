@@ -38,6 +38,8 @@ export {
 	type SimpleKeyMap,
 	type AssignableTreeFieldFromImplicitField,
 	type ApplyKindAssignment,
+	type ObjectFromSchemaRecordRelaxed,
+	type TreeObjectNodeRelaxed,
 } from "./object/index.js";
 
 export {

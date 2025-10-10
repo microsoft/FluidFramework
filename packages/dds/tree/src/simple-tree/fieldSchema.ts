@@ -12,7 +12,6 @@ import type { FlexTreeHydratedContextMinimal } from "../feature-libraries/index.
 import {
 	type MakeNominal,
 	brand,
-	type UnionToIntersection,
 	compareSets,
 	type requireTrue,
 	type areOnlyKeys,

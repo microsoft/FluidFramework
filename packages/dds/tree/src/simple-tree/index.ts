@@ -182,6 +182,7 @@ export {
 	KeyEncodingOptions,
 	type TreeParsingOptions,
 	type SchemaFactory_base,
+	relaxObject,
 } from "./api/index.js";
 
 export type {
@@ -259,6 +260,8 @@ export {
 	type RecordNodePojoEmulationSchema,
 	RecordNodeSchema,
 	type TreeRecordNode,
+	type ObjectFromSchemaRecordRelaxed,
+	type TreeObjectNodeRelaxed,
 } from "./node-kinds/index.js";
 export {
 	unhydratedFlexTreeFromInsertable,
@@ -289,3 +292,5 @@ export {
 	nullSchema,
 } from "./leafNodeSchema.js";
 export type { LeafSchema } from "./leafNodeSchema.js";
+
+export type { DefaultTreeNodeFromImplicitAllowedTypes } from "./schemaTypes.js";
