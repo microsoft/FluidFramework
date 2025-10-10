@@ -52,8 +52,8 @@
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace",
-		"typetests:gen": "flub generate typetests --dir . -v",
-		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
+    "typetests:gen": "fluid-type-validator -d .",
+    "typetests:prepare": "fluid-type-validator -d . -p"
   },
   "nyc": {
     "all": true,
@@ -81,27 +81,26 @@
     "base64-js": "^1.5.1",
     "events": "^3.1.0",
     "lodash": "^4.17.21",
-    "sha.js": "^2.4.12"
+    "sha.js": "^2.4.11"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.24.0",
-    "@fluidframework/build-tools": "^0.55.0",
+    "@fluidframework/build-tools": "^0.2.74327",
     "@fluidframework/common-utils-previous": "npm:@fluidframework/common-utils@^0.32.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
-    "@microsoft/api-extractor": "~7.22.2",
+    "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/base64-js": "^1.3.0",
     "@types/benchmark": "^2.1.0",
     "@types/jest": "22.2.3",
     "@types/jest-environment-puppeteer": "2.2.0",
     "@types/mocha": "^9.1.1",
-    "@types/node": "^14.18.0",
     "@types/puppeteer": "1.3.0",
     "@types/sinon": "^7.0.13",
     "benchmark": "^2.1.4",
     "concurrently": "^6.2.0",
     "copyfiles": "^2.1.0",
-    "eslint": "~8.55.0",
+    "eslint": "~8.6.0",
     "jest": "^26.6.3",
     "jest-junit": "^10.0.0",
     "jest-puppeteer": "^4.4.0",
@@ -121,17 +120,13 @@
     "outputName": "jest-junit-report.xml"
   },
   "typeValidation": {
-    "entrypoint": "public",
+    "version": "0.33.1000",
     "broken": {
-      "Function_extractLogSafeErrorProperties": {
+      "RemovedFunctionDeclaration_extractLogSafeErrorProperties": {
         "forwardCompat": false,
         "backCompat": false
       },
-      "Class_BatchManager": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "ClassStatics_BatchManager": {
+      "RemovedClassDeclaration_BatchManager": {
         "forwardCompat": false,
         "backCompat": false
       }
