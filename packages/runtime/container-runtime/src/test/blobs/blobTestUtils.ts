@@ -293,7 +293,7 @@ class MockOrderingService {
 		this.sequenceAll();
 	};
 
-	private readonly waitOpAvailable = async (): Promise<void> => {
+	public readonly waitOpAvailable = async (): Promise<void> => {
 		if (this.unprocessedOps.length === 0) {
 			return new Promise<void>((resolve) => {
 				const onOpReceived = (op: UnprocessedOp) => {
