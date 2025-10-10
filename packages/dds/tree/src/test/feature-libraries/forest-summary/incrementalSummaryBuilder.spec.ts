@@ -89,7 +89,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 		return new ForestIncrementalSummaryBuilder(
 			true /* enableIncrementalSummary */,
 			(cursor: ITreeCursorSynchronous) => {
-				return testChunk;
+				return [testChunk];
 			},
 			defaultIncrementalEncodingPolicy,
 		);
