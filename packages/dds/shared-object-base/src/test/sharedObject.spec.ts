@@ -255,10 +255,9 @@ describe("SharedObjectCore", () => {
 		});
 	});
 
-	describe("handle binding without encode in bindHandles", () => {
+	describe.only("handle binding without encode in bindHandles", () => {
 		let sharedObject: MySharedObjectCore;
 		let dataStoreRuntime: MockFluidDataStoreRuntime;
-		let mockBind: sinon.SinonSpy;
 
 		// Define a mock handle object
 		const mockHandle = new MockHandle("some data");
@@ -288,56 +287,51 @@ describe("SharedObjectCore", () => {
 				id: "testId",
 				runtime: dataStoreRuntime,
 			});
-
-			// Spy on the bindHandles function
-			mockBind = sinon.spy(bindHandles);
-		});
-
-		afterEach(() => {
-			// Reset the bind spy after each test
-			mockBind.resetHistory();
 		});
 
 		it("binds handle object with plain handle", async () => {
-			const result = mockBind(
-				messageContentWithHandle,
-				sharedObject.handle,
-			) as typeof messageContentWithHandle;
+			const result = bindHandles(messageContentWithHandle, sharedObject.handle);
 
 			assert.deepStrictEqual(
 				result,
 				messageContentWithHandle,
 				"Object reference should be unchanged",
 			);
-			assert(mockBind.calledOnce, "bindHandles should be called once");
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/dot-notation
+			const pendingHandles: Set<MockHandle<string>> = sharedObject.handle["pendingHandles"];
+
+			assert.strictEqual(pendingHandles.size, 1, "There should be one pending handle");
+			assert(pendingHandles.has(mockHandle), "Pending handles should include the mock handle");
 		});
 
 		it("binds handle object with handle in nested object", async () => {
-			const result = mockBind(
-				messageContentWithNestedHandle,
-				sharedObject.handle,
-			) as typeof messageContentWithNestedHandle;
+			const result = bindHandles(messageContentWithNestedHandle, sharedObject.handle);
 
 			assert.deepStrictEqual(
 				result,
 				messageContentWithNestedHandle,
 				"Object reference should be unchanged",
 			);
-			assert(mockBind.calledOnce, "bindHandles should be called once");
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/dot-notation
+			const pendingHandles: Set<MockHandle<string>> = sharedObject.handle["pendingHandles"];
+
+			assert.strictEqual(pendingHandles.size, 1, "There should be one pending handle");
+			assert(pendingHandles.has(mockHandle), "Pending handles should include the mock handle");
 		});
 
 		it("binds handle object with handle in array", async () => {
-			const result = mockBind(
-				messageContentWithHandleInArray,
-				sharedObject.handle,
-			) as typeof messageContentWithHandleInArray;
+			const result = bindHandles(messageContentWithHandleInArray, sharedObject.handle);
 
 			assert.deepStrictEqual(
 				result,
 				messageContentWithHandleInArray,
 				"Object reference should be unchanged",
 			);
-			assert(mockBind.calledOnce, "bindHandles should be called once");
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/dot-notation
+			const pendingHandles: Set<MockHandle<string>> = sharedObject.handle["pendingHandles"];
+
+			assert.strictEqual(pendingHandles.size, 1, "There should be one pending handle");
+			assert(pendingHandles.has(mockHandle), "Pending handles should include the mock handle");
 		});
 	});
 });
