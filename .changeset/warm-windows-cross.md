@@ -26,16 +26,16 @@ initializing Shared Tree like:
 
 Then the new implementation depends on how the application initializes Fluid.
 
-##### Migrating: applications using `AzureClient`/`OdspClient`
+##### Applications using `AzureClient`/`OdspClient`
 
-If an application is using the declarative model (e.g., `AzureClient`/`OdspClient`), it should continue to call `configuredSharedTree`
+If an application is using the declarative model (for example, `AzureClient`/`OdspClient`), it should continue to call `configuredSharedTree`
 but specify `minVersionForCollab` instead:
 
 ```ts
     const factory = configuredSharedTree({ ..., minVersionForCollab: "2.52.0" });
 ```
 
-##### Migrating: applications calling `loadContainerRuntime`
+##### Applications calling `loadContainerRuntime`
 
 If an application is initializing the `ContainerRuntime` directly, it should now specify the `minVersionForCollab` there:
 
