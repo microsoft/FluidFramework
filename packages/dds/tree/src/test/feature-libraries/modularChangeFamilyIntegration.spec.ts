@@ -1045,6 +1045,120 @@ describe("ModularChangeFamily integration", () => {
 			assertEqual(rebased, expected);
 		});
 
+		// XXX: Cleanup the detached move entry
+		it.skip("composite move over remove", () => {
+			const [changeReceiver, getChanges] = testChangeReceiver(family);
+			const editor = new DefaultEditBuilder(family, mintRevisionTag, changeReceiver);
+
+			const fieldAPath = { parent: undefined, field: fieldA };
+			editor.sequenceField(fieldAPath).remove(0, 1);
+			editor.move(fieldAPath, 0, 1, fieldAPath, 2);
+			editor.move(fieldAPath, 1, 1, fieldAPath, 4);
+
+			const [removeUntagged, moveA, moveB] = getChanges();
+			const remove = tagChangeInline(removeUntagged, tag1);
+			const move = tagChangeInline(
+				family.compose([makeAnonChange(moveA), makeAnonChange(moveB)]),
+				tag2,
+			);
+
+			const rebased = family.rebase(
+				move,
+				remove,
+				revisionMetadataSourceFromInfo([{ revision: tag1 }, { revision: tag2 }]),
+			);
+
+			const oldId: ChangeAtomId = { revision: tag1, localId: brand(0) };
+			const expected = Change.build(
+				{
+					family,
+					maxId: 4,
+					renames: [
+						{
+							oldId,
+							newId: { revision: tag2, localId: brand(3) },
+							count: 1,
+							detachLocation: { nodeId: undefined, field: fieldA },
+						},
+					],
+					revisions: [{ revision: tag2 }],
+				},
+				Change.field(fieldA, sequence.identifier, [
+					MarkMaker.rename(1, oldId, { revision: tag2, localId: brand(1) }),
+					MarkMaker.skip(1),
+					MarkMaker.rename(
+						1,
+						{ revision: tag2, localId: brand(2) },
+						{ revision: tag2, localId: brand(3) },
+					),
+					MarkMaker.skip(2),
+					MarkMaker.insert(1, { revision: tag2, localId: brand(4) }, { id: brand(3) }),
+				]),
+			);
+
+			assertEqual(rebased, expected);
+		});
+
+		it("detached composite move over revive", () => {
+			const oldId: ChangeAtomId = { revision: tag3, localId: brand(0) };
+			const revive = Change.build(
+				{
+					family,
+					maxId: 0,
+					renames: [
+						{
+							oldId,
+							newId: { revision: tag1, localId: brand(0) },
+							count: 1,
+							detachLocation: { nodeId: undefined, field: fieldA },
+						},
+					],
+					revisions: [{ revision: tag1 }],
+				},
+				Change.field(fieldA, sequence.identifier, [
+					MarkMaker.revive(1, oldId, { revision: tag1 }),
+				]),
+			);
+
+			const detachCellId: ChangeAtomId = { revision: tag2, localId: brand(0) };
+			const moveId: ChangeAtomId = { revision: tag2, localId: brand(1) };
+			const move = Change.build(
+				{
+					family,
+					maxId: 1,
+					renames: [
+						{
+							oldId,
+							newId: moveId,
+							count: 1,
+							detachLocation: { nodeId: undefined, field: fieldA },
+						},
+					],
+					revisions: [{ revision: tag2 }],
+				},
+				Change.field(fieldA, sequence.identifier, [
+					MarkMaker.rename(1, oldId, detachCellId),
+					MarkMaker.moveIn(1, moveId),
+				]),
+			);
+
+			const rebased = family.rebase(
+				tagChange(move, tag2),
+				tagChange(revive, tag1),
+				revisionMetadataSourceFromInfo([{ revision: tag1 }, { revision: tag2 }]),
+			);
+
+			const expected = Change.build(
+				{ family, maxId: 1, revisions: [{ revision: tag2 }] },
+				Change.field(fieldA, sequence.identifier, [
+					MarkMaker.moveOut(1, moveId, { detachCellId }),
+					MarkMaker.moveIn(1, moveId),
+				]),
+			);
+
+			assertEqual(rebased, expected);
+		});
+
 		it("prunes its output", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
 			const editor = new DefaultEditBuilder(family, mintRevisionTag, changeReceiver);

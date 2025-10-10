@@ -245,7 +245,8 @@ function addMovedMarkEffect(mark: Mark, effect: Detach): Mark {
 	if (isAttach(mark) && isDetach(effect)) {
 		return { ...mark, type: "Insert" };
 	} else if (isRename(mark) && isDetach(effect)) {
-		return { ...effect, count: mark.count, cellRename: mark.idOverride };
+		// XXX: Should this ever be cellRename instead?
+		return { ...effect, count: mark.count, detachCellId: mark.idOverride };
 	} else if (isTombstone(mark)) {
 		return { ...mark, ...effect };
 	}

@@ -4084,7 +4084,7 @@ function rebaseRoots(
 	}
 
 	for (const entry of change.rootNodes.outputDetachLocations.entries()) {
-		// XXX: Are there any conditions where we should remove this entry?
+		// XXX: This entry should be removed if node is attached in both input and output
 		rebasedRoots.outputDetachLocations.set(entry.start, entry.length, entry.value);
 	}
 
