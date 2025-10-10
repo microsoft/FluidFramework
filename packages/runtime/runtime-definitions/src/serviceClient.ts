@@ -3,22 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import type { ErasedType } from "@fluidframework/core-interfaces";
+import {
+	type ErasedBaseType,
+	ErasedTypeImplementation,
+} from "@fluidframework/core-interfaces/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { MinimumVersionForCollab } from "./compatibilityDefinitions.js";
-
-/**
- * A collection of entries looked up by a `type` string.
- * @remarks
- * Use of a function for this allows a few things that most collections would not:
- * 1. It's possible to generate placeholder / error values on demand.
- * 2. It makes loading from some external registry on demand practical.
- * 3. The lookup can throw an exception is appropriate
- * (the implementer can decide how to handle requests for unknown types, producing placeholders or errors).
- * @input
- * @alpha
- */
-export type Registry<T> = (type: string) => T;
+import type { IFluidDataStoreContext, IFluidDataStoreChannel } from "./dataStoreContext.js";
+import type { IFluidDataStoreFactory } from "./dataStoreFactory.js";
+import type { Registry, RegistryKey } from "./registry.js";
 
 /**
  * Options for configuring a {@link ServiceClient}.
@@ -100,15 +94,74 @@ export interface FluidContainerAttached<T = unknown> extends FluidContainer<T> {
 
 /**
  * TODO:
- * These should be usable as SharedObjectKinds:
- * either make DataStoreFactory extend SharedObjectKinds, or make SharedObjectKind explicitly include DataStoreFactory.
+ * SharedObjects should be usable as these (putting only a single shared object as root in container might need special logic).
  * @privateRemarks
  * Type erased {@link IFluidDataStoreFactory}.
  * @sealed
  * @alpha
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface DataStoreKind<T> extends ErasedType<readonly ["DataStoreFactory", T]> {}
+export interface DataStoreKind<T = unknown>
+	extends RegistryKey<DataStoreKind, DataStoreKind<T>>,
+		ErasedBaseType<readonly ["DataStoreKind", T]> {}
+
+/**
+ * Implementation of {@link DataStoreKind}.
+ * @internal
+ */
+export class DataStoreKindImplementation<T>
+	extends ErasedTypeImplementation<DataStoreKind<T>>
+	implements DataStoreKind<T>, IFluidDataStoreFactory
+{
+	/**
+	 * Type guard for narrowing unions which contain DataStoreKind<T> to DataStoreKind<T>.
+	 */
+	public static narrowGeneric<T>(
+		value: T,
+	): value is DataStoreKindImplementation<T extends DataStoreKind<infer T2> ? T2 : never> & T {
+		return value instanceof DataStoreKindImplementation;
+	}
+
+	public readonly type: string;
+	public readonly createDataStore?: (context: IFluidDataStoreContext) => {
+		readonly runtime: IFluidDataStoreChannel;
+	};
+
+	public constructor(
+		private readonly factory: Pick<
+			IFluidDataStoreFactory,
+			"type" | "instantiateDataStore" | "createDataStore"
+		>,
+	) {
+		super();
+		this.type = factory.type;
+		if (factory.createDataStore !== undefined) {
+			this.createDataStore = factory.createDataStore.bind(factory);
+		}
+	}
+
+	public async instantiateDataStore(
+		context: IFluidDataStoreContext,
+		existing: boolean,
+	): Promise<IFluidDataStoreChannel> {
+		return this.factory.instantiateDataStore(context, existing);
+	}
+
+	public get IFluidDataStoreFactory(): IFluidDataStoreFactory {
+		return this;
+	}
+
+	public adapt(value: DataStoreKind): DataStoreKind<T> {
+		if (value === this) {
+			return value as DataStoreKind<T>;
+		}
+		if (value.type === this.type) {
+			throw new UsageError(`Conflicting DataStoreKinds with same type: ${this.type}`);
+		}
+		throw new UsageError(
+			`Mismatched DataStoreKind type. Expected: ${this.type}, got: ${value.type}`,
+		);
+	}
+}
 
 /**
  * A connection to a Fluid storage service.

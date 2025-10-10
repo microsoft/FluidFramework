@@ -9,12 +9,12 @@ import {
 	FluidDataStoreRuntime,
 } from "@fluidframework/datastore/internal";
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
-import type {
-	Registry,
-	DataStoreKind,
-	IFluidDataStoreFactory,
-	IFluidDataStoreContext,
-	IFluidDataStoreChannel,
+import {
+	type Registry,
+	type DataStoreKind,
+	type IFluidDataStoreContext,
+	type IFluidDataStoreChannel,
+	DataStoreKindImplementation,
 } from "@fluidframework/runtime-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -116,30 +116,21 @@ export interface DataStoreOptions<in out TRoot extends IFluidLoadable, out TOutp
 }
 
 /**
- * Creates a {@link @fluidframework/runtime-definitions#DataStoreFactory} from {@link DataStoreOptions}.
- * @remarks
- * Performs validation some validation of the input before bundling it up in a partially type erased form.
+ * Creates a {@link @fluidframework/runtime-definitions#DataStoreKind} from {@link DataStoreOptions}.
  * @alpha
  */
 export function dataStoreKind<T, TRoot extends IFluidLoadable>(
 	options: DataStoreOptions<TRoot, T>,
 ): DataStoreKind<T> {
-	const f: IFluidDataStoreFactory = {
+	return new DataStoreKindImplementation<T>({
 		type: options.type,
-
 		async instantiateDataStore(
 			context: IFluidDataStoreContext,
 			existing: boolean,
 		): Promise<IFluidDataStoreChannel> {
 			return createDataStore(context, existing, options);
 		},
-
-		get IFluidDataStoreFactory(): IFluidDataStoreFactory {
-			return f;
-		},
-	};
-
-	return f as IFluidDataStoreFactory & DataStoreKind<T>;
+	});
 }
 
 async function convertRegistry(

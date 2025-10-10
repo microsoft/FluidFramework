@@ -84,14 +84,24 @@ export {
 export type { MinimumVersionForCollab } from "./compatibilityDefinitions.js";
 
 export type {
+	Registry,
+	RegistryKey,
+} from "./registry.js";
+export {
+	registryLookup,
+	basicKey,
+} from "./registry.js";
+
+export type {
 	DataStoreKind,
 	FluidContainer,
 	ServiceClient,
 	ServiceOptions,
 	FluidContainerAttached,
-	Registry,
 	FluidContainerWithService,
 } from "./serviceClient.js";
+
+export { DataStoreKindImplementation } from "./serviceClient.js";
 
 export {
 	type ContainerRuntimeBaseAlpha,

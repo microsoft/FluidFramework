@@ -144,24 +144,27 @@ export abstract class ErasedTypeImplementation<
 	}
 
 	/**
-	 * Allows narrowing from TInterface to the internal implementation type via `instanceof`.
+	 * Allows narrowing to the internal implementation type via `instanceof`.
 	 */
-	public static [Symbol.hasInstance]<
-		TThis extends abstract new (
-			...args: unknown[]
-		) => object,
-	>(this: TThis, value: ErasedBaseType | InstanceType<TThis>): value is InstanceType<TThis> {
-		return Object.prototype.isPrototypeOf.call(this.prototype, value);
+	public static [Symbol.hasInstance]<TThis extends { prototype: object }>(
+		this: TThis,
+		value: unknown,
+	): value is InstanceTypeRelaxed<TThis> {
+		return (
+			typeof value === "object" &&
+			value !== null &&
+			Object.prototype.isPrototypeOf.call(this.prototype, value)
+		);
 	}
 
 	/**
 	 * Narrows from TInterface to the internal implementation type, throwing if the value is not of the correct type.
 	 */
-	public static narrow<TThis extends abstract new (...args: unknown[]) => object>(
+	public static narrow<TThis extends { prototype: object }>(
 		this: TThis,
-		value: ErasedBaseType | InstanceType<TThis>,
-	): asserts value is InstanceType<TThis> {
-		if (!Object.prototype.isPrototypeOf.call(this.prototype, value)) {
+		value: ErasedBaseType | InstanceTypeRelaxed<TThis>,
+	): asserts value is InstanceTypeRelaxed<TThis> {
+		if (!ErasedTypeImplementation[Symbol.hasInstance].call(this, value as object)) {
 			throw new TypeError("Invalid ErasedBaseType instance");
 		}
 	}
@@ -175,3 +178,10 @@ export abstract class ErasedTypeImplementation<
 		return this;
 	}
 }
+
+/**
+ * The same as the built-in InstanceType, but works on classes with private constructors.
+ * @privateRemarks
+ * This is based on the trick in {@link https://stackoverflow.com/a/74657881}.
+ */
+type InstanceTypeRelaxed<TClass> = InstanceType<(new () => never) & TClass>;

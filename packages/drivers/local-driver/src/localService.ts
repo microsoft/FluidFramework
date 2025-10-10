@@ -34,6 +34,7 @@ import type {
 	IFluidDataStoreRegistry,
 	FluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions/internal";
+import { DataStoreKindImplementation } from "@fluidframework/runtime-definitions/internal";
 import {
 	LocalDeltaConnectionServer,
 	type ILocalDeltaConnectionServer,
@@ -305,13 +306,13 @@ class EphemeralServiceContainer<T> implements FluidContainerWithService<T> {
 	}
 
 	public async createDataStore(kind: DataStoreKind<T>): Promise<T> {
-		const factory = kind as unknown as IFluidDataStoreFactory;
+		DataStoreKindImplementation.narrow(kind);
 
 		// TODO: Do something better
 		const containerRuntime = (this.container as any).runtime as ContainerRuntime;
 		// TODO: Do something better
-		const context = containerRuntime.createDetachedDataStore([factory.type]);
-		return (await factory.instantiateDataStore(context, false)) as T;
+		const context = containerRuntime.createDetachedDataStore([kind.type]);
+		return (await kind.instantiateDataStore(context, false)) as T;
 	}
 
 	public async attach(): Promise<FluidContainerAttached<T>> {
@@ -335,9 +336,10 @@ class EphemeralServiceContainer<T> implements FluidContainerWithService<T> {
 function normalizeRegistry<T>(
 	input: DataStoreKind<T> | Registry<Promise<DataStoreKind<T>>>,
 ): Registry<Promise<DataStoreKind<T>>> {
-	// TODO: its possible one might use a constructor as a DataStoreKind, which would break this. A better check might be needed.
-	if (typeof input === "function") {
-		return input;
+	if (DataStoreKindImplementation.narrowGeneric(input)) {
+		const x = input;
+		return async () => x;
 	}
-	return async () => input;
+	assert(typeof input === "function", "Registry must be a function");
+	return input;
 }
