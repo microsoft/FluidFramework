@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@fluidframework/core-interfaces";
+import type { IRequest } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise, Timer } from "@fluidframework/core-utils/internal";
+import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
-	IGarbageCollectionDetailsBase,
-	ISummarizeResult,
+	type IGarbageCollectionDetailsBase,
+	type ISummarizeResult,
 	gcTreeKey,
 	type IGarbageCollectionData,
 	type ITelemetryContext,
@@ -17,9 +18,9 @@ import {
 	responseToException,
 } from "@fluidframework/runtime-utils/internal";
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	DataProcessingError,
-	MonitoringContext,
+	type MonitoringContext,
 	PerformanceEvent,
 	createChildLogger,
 	createChildMonitoringContext,
@@ -29,23 +30,23 @@ import {
 import { blobManagerBasePath } from "../blobManager/index.js";
 import { TombstoneResponseHeaderKey } from "../containerRuntime.js";
 import { ClientSessionExpiredError } from "../error.js";
-import { ContainerMessageType, ContainerRuntimeGCMessage } from "../messageTypes.js";
-import { IRefreshSummaryResult } from "../summary/index.js";
+import { ContainerMessageType, type ContainerRuntimeGCMessage } from "../messageTypes.js";
+import type { IRefreshSummaryResult } from "../summary/index.js";
 
 import { generateGCConfigs } from "./gcConfigs.js";
 import {
 	GCNodeType,
-	GarbageCollectionMessage,
+	type GarbageCollectionMessage,
 	GarbageCollectionMessageType,
-	IGCMetadata,
-	IGCResult,
-	IGCStats,
-	IGarbageCollectionRuntime,
-	IGarbageCollector,
-	IGarbageCollectorConfigs,
-	IGarbageCollectorCreateParams,
-	IMarkPhaseStats,
-	ISweepPhaseStats,
+	type IGCMetadata,
+	type IGCResult,
+	type IGCStats,
+	type IGarbageCollectionRuntime,
+	type IGarbageCollector,
+	type IGarbageCollectorConfigs,
+	type IGarbageCollectorCreateParams,
+	type IMarkPhaseStats,
+	type ISweepPhaseStats,
 	UnreferencedState,
 	type IGCNodeUpdatedProps,
 } from "./gcDefinitions.js";
@@ -57,7 +58,7 @@ import {
 	urlToGCNodePath,
 } from "./gcHelpers.js";
 import { runGarbageCollection } from "./gcReferenceGraphAlgorithm.js";
-import {
+import type {
 	IGarbageCollectionSnapshotData,
 	IGarbageCollectionState,
 } from "./gcSummaryDefinitions.js";
@@ -190,7 +191,7 @@ export class GarbageCollector implements IGarbageCollector {
 			);
 			let timeoutMs = this.configs.sessionExpiryTimeoutMs;
 
-			if (pendingSessionExpiryTimerStarted) {
+			if (pendingSessionExpiryTimerStarted !== undefined) {
 				// NOTE: This assumes the client clock hasn't been tampered with since the original session
 				const timeLapsedSincePendingTimer = Date.now() - pendingSessionExpiryTimerStarted;
 				timeoutMs -= timeLapsedSincePendingTimer;
@@ -232,7 +233,7 @@ export class GarbageCollector implements IGarbageCollector {
 
 				try {
 					// For newer documents, GC data should be present in the GC tree in the root of the snapshot.
-					const gcSnapshotTree = baseSnapshot.trees[gcTreeKey];
+					const gcSnapshotTree: ISnapshotTree | undefined = baseSnapshot.trees[gcTreeKey];
 					if (gcSnapshotTree === undefined) {
 						// back-compat - Older documents get their gc data reset for simplicity as there are few of them
 						// incremental gc summary will not work with older gc data as well
@@ -845,6 +846,8 @@ export class GarbageCollector implements IGarbageCollector {
 			if (gcDataSuperSet.gcNodes[sourceNodeId] === undefined) {
 				gcDataSuperSet.gcNodes[sourceNodeId] = outboundRoutes;
 			} else {
+				// TODO: Fix this violation and remove the disable
+				// eslint-disable-next-line @fluid-internal/fluid/no-unchecked-record-access
 				gcDataSuperSet.gcNodes[sourceNodeId].push(...outboundRoutes);
 			}
 			newOutboundRoutesSinceLastRun.push(...outboundRoutes);
@@ -1179,6 +1182,12 @@ export class GarbageCollector implements IGarbageCollector {
 	public dispose(): void {
 		this.sessionExpiryTimer?.clear();
 		this.sessionExpiryTimer = undefined;
+
+		// Clear all unreferenced node timers to prevent process hanging
+		for (const tracker of this.unreferencedNodesState.values()) {
+			tracker.stopTracking();
+		}
+		this.unreferencedNodesState.clear();
 	}
 
 	/**

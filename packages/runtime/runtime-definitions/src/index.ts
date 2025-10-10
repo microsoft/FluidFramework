@@ -14,7 +14,6 @@ export type {
 	AliasResult,
 	CreateChildSummarizerNodeFn,
 	IContainerRuntimeBase,
-	IContainerRuntimeBaseExperimental,
 	IContainerRuntimeBaseEvents,
 	IDataStore,
 	IFluidDataStoreChannel,
@@ -23,8 +22,6 @@ export type {
 	IFluidParentContext,
 	IFluidDataStoreContextDetached,
 	IPendingMessagesState,
-	StageControlsExperimental,
-	CommitStagedChangesOptionsExperimental,
 	PackagePath,
 } from "./dataStoreContext.js";
 export { FlushMode, FlushModeExperimental, VisibilityState } from "./dataStoreContext.js";
@@ -84,3 +81,13 @@ export {
 	CreateSummarizerNodeSource,
 	totalBlobSizePropertyName,
 } from "./summary.js";
+export type { MinimumVersionForCollab } from "./compatibilityDefinitions.js";
+
+export {
+	type ContainerRuntimeBaseAlpha,
+	type StageControlsAlpha,
+	type CommitStagedChangesOptionsExperimental,
+	type IContainerRuntimeBaseExperimental,
+	type StageControlsExperimental,
+	asLegacyAlpha,
+} from "./stagingMode.js";

@@ -4,8 +4,8 @@
  */
 
 import {
-	AsyncGenerator,
-	AsyncReducer,
+	type AsyncGenerator,
+	type AsyncReducer,
 	combineReducersAsync,
 	createWeightedAsyncGenerator,
 } from "@fluid-private/stochastic-test-utils";

@@ -9,25 +9,33 @@ import { getOrCreate } from "../util/index.js";
 import {
 	Context,
 	getTreeNodeSchemaPrivateData,
-	normalizeAnnotatedAllowedTypes,
+	normalizeAndEvaluateAnnotatedAllowedTypes,
 	UnhydratedContext,
 	type TreeNodeSchema,
 	type TreeNodeSchemaInitializedData,
 } from "./core/index.js";
 import { normalizeFieldSchema, type ImplicitFieldSchema } from "./fieldSchema.js";
-import { toStoredSchema } from "./toStoredSchema.js";
+import { toStoredSchema, toUnhydratedSchema } from "./toStoredSchema.js";
 
 const contextCache: WeakMap<ImplicitFieldSchema, Context> = new WeakMap();
 
 /**
  * Utility for creating {@link Context}s for unhydrated nodes.
+ * @remarks
+ * The resulting context will not allow any unknown optional fields.
  */
 export function getUnhydratedContext(schema: ImplicitFieldSchema): Context {
 	return getOrCreate(contextCache, schema, (s) => {
 		const normalized = normalizeFieldSchema(schema);
 
-		const flexContext = new UnhydratedContext(defaultSchemaPolicy, toStoredSchema(schema));
-		return new Context(normalized.annotatedAllowedTypesNormalized, flexContext);
+		const flexContext = new UnhydratedContext(
+			defaultSchemaPolicy,
+			toStoredSchema(schema, toUnhydratedSchema),
+		);
+		return new Context(
+			flexContext,
+			Context.schemaMapFromRootSchema(normalized.allowedTypesFull.evaluate()),
+		);
 	});
 }
 
@@ -43,7 +51,7 @@ export function getTreeNodeSchemaInitializedData(
 		...handler,
 		context: getUnhydratedContext(schema),
 		childAnnotatedAllowedTypes: data.childAnnotatedAllowedTypes.map(
-			normalizeAnnotatedAllowedTypes,
+			normalizeAndEvaluateAnnotatedAllowedTypes,
 		),
 	};
 }

@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	createChildLogger,
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-import {
-	type LocalEmptyBatchPlaceholder,
-	type OutboundBatch,
-	type OutboundSingletonBatch,
+import type {
+	LocalEmptyBatchPlaceholder,
+	OutboundBatch,
+	OutboundSingletonBatch,
 } from "./definitions.js";
 
 /**
@@ -134,9 +134,9 @@ export class OpGroupingManager {
 		// We expect this will be on the first message, if present at all.
 		let groupedBatchId;
 		for (const message of batch.messages) {
-			if (message.metadata) {
+			if (message.metadata !== undefined) {
 				const { batch: _batch, batchId, ...rest } = message.metadata;
-				if (batchId) {
+				if (batchId !== undefined) {
 					groupedBatchId = batchId;
 				}
 				assert(Object.keys(rest).length === 0, 0x5dd /* cannot group ops with metadata */);

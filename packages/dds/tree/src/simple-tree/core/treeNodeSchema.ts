@@ -6,18 +6,16 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
-import type { SimpleNodeSchemaBase } from "../simpleSchema.js";
+import type { SimpleNodeSchemaBase } from "./simpleNodeSchemaBase.js";
 import type { TreeNode } from "./treeNode.js";
 import type { InternalTreeNode, Unhydrated } from "./types.js";
 import type { UnionToIntersection } from "../../util/index.js";
-import type {
-	ImplicitAnnotatedAllowedTypes,
-	NormalizedAnnotatedAllowedTypes,
-} from "./allowedTypes.js";
+import type { ImplicitAllowedTypes, AllowedTypesFullEvaluated } from "./allowedTypes.js";
 import type { Context } from "./context.js";
-import type { FieldKey, NodeData } from "../../core/index.js";
+import type { FieldKey, NodeData, TreeNodeStoredSchema } from "../../core/index.js";
 import type { UnhydratedFlexTreeField } from "./unhydratedFlexTree.js";
 import type { FactoryContent } from "../unhydratedFlexTreeFromInsertable.js";
+import type { StoredSchemaGenerationOptions } from "./toStored.js";
 
 /**
  * Schema for a {@link TreeNode} or {@link TreeLeafValue}.
@@ -390,12 +388,17 @@ export interface TreeNodeSchemaPrivateData {
 	 * If this is stabilized, it will live alongside the childTypes property on {@link TreeNodeSchemaCore}.
 	 * @system
 	 */
-	readonly childAnnotatedAllowedTypes: readonly ImplicitAnnotatedAllowedTypes[];
+	readonly childAnnotatedAllowedTypes: readonly ImplicitAllowedTypes[];
 
 	/**
 	 * Idempotent initialization function that pre-caches data and can dereference lazy schema references.
 	 */
 	idempotentInitialize(): TreeNodeSchemaInitializedData;
+
+	/**
+	 * Converts a the schema into a {@link TreeNodeStoredSchema}.
+	 */
+	toStored(options: StoredSchemaGenerationOptions): TreeNodeStoredSchema;
 }
 
 /**
@@ -419,7 +422,7 @@ export interface TreeNodeSchemaInitializedData {
 	 * If this is stabilized, it will live alongside the childTypes property on {@link TreeNodeSchemaCore}.
 	 * @system
 	 */
-	readonly childAnnotatedAllowedTypes: readonly NormalizedAnnotatedAllowedTypes[];
+	readonly childAnnotatedAllowedTypes: readonly AllowedTypesFullEvaluated[];
 
 	/**
 	 * A {@link Context} which can be used for unhydrated nodes of this schema.

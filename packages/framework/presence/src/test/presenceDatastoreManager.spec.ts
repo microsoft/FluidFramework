@@ -9,6 +9,7 @@ import type {
 	InboundExtensionMessage,
 	RawInboundExtensionMessage,
 } from "@fluidframework/container-runtime-definitions/internal";
+import type { JsonSerializable, TypedMessage } from "@fluidframework/core-interfaces/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
 import type { SinonFakeTimers } from "sinon";
@@ -541,7 +542,7 @@ describe("Presence", () => {
 					[attendeeId1]: {
 						"rev": 1,
 						"timestamp": 0,
-						"value": {},
+						"value": toOpaqueJson({}),
 					},
 				},
 			};
@@ -562,8 +563,9 @@ describe("Presence", () => {
 			/**
 			 * Use to pretend any general inbound message is an unverified Presence message
 			 */
-			function markUnverifiedIncomingMessage(
-				message: InboundExtensionMessage,
+			function markUnverifiedIncomingMessage<T extends TypedMessage>(
+				// make sure message "was" at least serializable
+				message: InboundExtensionMessage<T> & JsonSerializable<T>,
 			): RawInboundExtensionMessage<SignalMessages> {
 				return message as RawInboundExtensionMessage<SignalMessages>;
 			}
@@ -579,11 +581,9 @@ describe("Presence", () => {
 							"system:presence": systemWorkspaceUpdate,
 							"s:name:testStateWorkspace": statesWorkspaceUpdate,
 						},
-					},
+					} as const satisfies InboundExtensionMessage<SignalMessages>["content"],
 					clientId: "client1",
-				} as const satisfies Omit<InboundExtensionMessage<SignalMessages>, "type"> & {
-					type: string;
-				};
+				} as const;
 				processSignal(
 					optional ? ["?"] : [],
 					markUnverifiedIncomingMessage(unrecognizedMessage),

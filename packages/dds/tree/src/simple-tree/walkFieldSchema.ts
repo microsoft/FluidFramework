@@ -8,6 +8,7 @@ import { type ImplicitFieldSchema, normalizeFieldSchema } from "./fieldSchema.js
 
 /**
  * Traverses all {@link TreeNodeSchema} schema reachable from `schema`, applying the visitor pattern.
+ * @internal
  */
 export function walkFieldSchema(
 	schema: ImplicitFieldSchema,
@@ -15,7 +16,7 @@ export function walkFieldSchema(
 	visitedSet: Set<TreeNodeSchema> = new Set(),
 ): void {
 	walkAllowedTypes(
-		normalizeFieldSchema(schema).annotatedAllowedTypesNormalized,
+		normalizeFieldSchema(schema).allowedTypesFull.evaluate(),
 		visitor,
 		visitedSet,
 	);

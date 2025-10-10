@@ -11,9 +11,9 @@ import {
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { EndOfTreeSegment } from "./endOfTreeSegment.js";
-import { LocalReferenceCollection, LocalReferencePosition } from "./localReference.js";
-import { MergeTree, findRootMergeBlock } from "./mergeTree.js";
-import { IMergeTreeDeltaCallbackArgs } from "./mergeTreeDeltaCallback.js";
+import { LocalReferenceCollection, type LocalReferencePosition } from "./localReference.js";
+import { type MergeTree, findRootMergeBlock } from "./mergeTree.js";
+import type { IMergeTreeDeltaCallbackArgs } from "./mergeTreeDeltaCallback.js";
 import { depthFirstNodeWalk } from "./mergeTreeNodeWalk.js";
 import {
 	assertSegmentLeaf,
@@ -22,15 +22,18 @@ import {
 	type ISegmentLeaf,
 	type ISegmentPrivate,
 } from "./mergeTreeNodes.js";
-import { ITrackingGroup, Trackable, UnorderedTrackingGroup } from "./mergeTreeTracking.js";
-import { IJSONSegment, MergeTreeDeltaType, ReferenceType } from "./ops.js";
-import { PropertySet, matchProperties } from "./properties.js";
+import {
+	type ITrackingGroup,
+	type Trackable,
+	UnorderedTrackingGroup,
+} from "./mergeTreeTracking.js";
+import { type IJSONSegment, MergeTreeDeltaType, ReferenceType } from "./ops.js";
+import { type PropertySet, matchProperties } from "./properties.js";
 import { DetachedReferencePosition } from "./referencePositions.js";
 import { toRemovalInfo } from "./segmentInfos.js";
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type MergeTreeDeltaRevertible =
 	| {
@@ -72,8 +75,7 @@ interface RemoveSegmentRefProperties {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface MergeTreeRevertibleDriver {
 	insertFromSpec(pos: number, spec: IJSONSegment): void;
@@ -203,8 +205,7 @@ function appendLocalAnnotateToRevertibles(
 /**
  * Appends a merge tree delta to the list of revertibles.
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export function appendToMergeTreeDeltaRevertibles(
 	deltaArgs: IMergeTreeDeltaCallbackArgs,
@@ -240,8 +241,7 @@ export function appendToMergeTreeDeltaRevertibles(
 /**
  * Removes all revertibles from the list of revertibles.
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export function discardMergeTreeDeltaRevertible(
 	revertibles: MergeTreeDeltaRevertible[],
@@ -403,8 +403,7 @@ function getPosition(mergeTreeWithRevert: MergeTreeWithRevert, segment: ISegment
 /**
  * Reverts all operations in the list of revertibles.
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export function revertMergeTreeDeltaRevertibles(
 	driver: MergeTreeRevertibleDriver,

@@ -10,10 +10,11 @@ export {
 	tryGetTreeNodeSchema,
 	type InnerNode,
 	tryDisposeTreeNode,
-	getOrCreateInnerNode,
+	getInnerNode,
 	treeNodeFromAnchor,
 	getSimpleNodeSchemaFromInnerNode,
 	SimpleContextSlot,
+	withBufferedTreeEvents,
 } from "./treeNodeKernel.js";
 export { type WithType, typeNameSymbol, typeSchemaSymbol } from "./withType.js";
 export {
@@ -52,31 +53,35 @@ export {
 	isAnnotatedAllowedTypes,
 	isAnnotatedAllowedType,
 	normalizeAllowedTypes,
-	normalizeAnnotatedAllowedTypes,
-	unannotateImplicitAllowedTypes,
+	normalizeAndEvaluateAnnotatedAllowedTypes,
+	normalizeToAnnotatedAllowedType,
 	markSchemaMostDerived,
 	evaluateLazySchema,
+	createSchemaUpgrade,
+	AnnotatedAllowedTypesInternal,
+	normalizeAllowedTypesInternal,
 } from "./allowedTypes.js";
 export type {
 	AnnotatedAllowedType,
-	NormalizedAnnotatedAllowedTypes,
+	AllowedTypesFullEvaluated,
 	ImplicitAllowedTypes,
-	ImplicitAnnotatedAllowedTypes,
-	UnannotateImplicitAllowedTypes,
 	AllowedTypesMetadata,
 	AllowedTypes,
 	TreeNodeFromImplicitAllowedTypes,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	InsertableTreeNodeFromAllowedTypes,
 	Input,
-	UnannotateAllowedTypes,
-	UnannotateAllowedType,
 	UnannotateAllowedTypesList,
-	UnannotateAllowedTypeOrLazyItem,
 	AllowedTypeMetadata,
 	AnnotatedAllowedTypes,
+	AnnotateAllowedTypesList,
+	SchemaUpgrade,
+	AllowedTypesFullInternal,
+	AllowedTypesFull,
+	AllowedTypesFullFromMixed,
+	NumberKeys,
 } from "./allowedTypes.js";
-export { walkAllowedTypes, type SchemaVisitor } from "./walkSchema.js";
+export { walkAllowedTypes, walkNodeSchema, type SchemaVisitor } from "./walkSchema.js";
 export { Context, HydratedContext } from "./context.js";
 export {
 	getOrCreateNodeFromInnerNode,
@@ -100,4 +105,11 @@ export {
 	TreeNodeValid,
 	type MostDerivedData,
 	createTreeNodeSchemaPrivateData,
+	isClassBasedSchema,
 } from "./treeNodeValid.js";
+export type { SimpleNodeSchemaBase } from "./simpleNodeSchemaBase.js";
+export {
+	type StoredSchemaGenerationOptions,
+	convertAllowedTypes,
+	allowedTypeFilter,
+} from "./toStored.js";

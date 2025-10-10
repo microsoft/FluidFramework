@@ -3,37 +3,37 @@
  * Licensed under the MIT License.
  */
 
-import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
+import type { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
 import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IChannel,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
-import {
+import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import type {
 	ITelemetryContext,
 	IFluidDataStoreContext,
 	IGarbageCollectionData,
 	ISummarizeResult,
-	type IPendingMessagesState,
-	type IRuntimeMessageCollection,
-	type IRuntimeStorageService,
+	IPendingMessagesState,
+	IRuntimeMessageCollection,
+	IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	DataProcessingError,
 } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	ChannelServiceEndpoints,
-	IChannelContext,
+	type ChannelServiceEndpoints,
+	type IChannelContext,
 	createChannelServiceEndpoints,
 	loadChannel,
 	loadChannelFactoryAndAttributes,
 	summarizeChannel,
 	summarizeChannelAsync,
 } from "./channelContext.js";
-import { ISharedObjectRegistry } from "./dataStoreRuntime.js";
+import type { ISharedObjectRegistry } from "./dataStoreRuntime.js";
 
 /**
  * Channel context for a locally created channel

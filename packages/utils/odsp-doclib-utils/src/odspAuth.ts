@@ -16,6 +16,8 @@ import { unauthPostAsync } from "./odspRequest.js";
 export interface IOdspTokens {
 	readonly accessToken: string;
 	readonly refreshToken: string;
+	readonly receivedAt?: number; // Unix timestamp in seconds
+	readonly expiresIn?: number; // Seconds from reception until the token expires
 }
 
 /**
@@ -27,8 +29,7 @@ export interface IPublicClientConfig {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IOdspAuthRequestInfo {
 	accessToken: string;
@@ -61,14 +62,12 @@ type TokenRequestBody = TokenRequestCredentials & {
 
 // eslint-disable-next-line jsdoc/require-description -- TODO: Add documentation
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const getOdspScope = (server: string): string =>
 	`offline_access ${getSiteUrl(server)}/AllSites.Write`;
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const pushScope =
 	"offline_access https://pushchannel.1drv.ms/PushChannel.ReadWrite.All";
@@ -191,8 +190,13 @@ export async function fetchTokens(
 			throw error;
 		}
 	}
+
+	const receivedAt = Math.floor(Date.now() / 1000); // Convert milliseconds to seconds
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+	const expiresIn = parsedResponse.expires_in ?? 3600; // Default to 1 hour (3600 seconds) if not provided
+
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-	return { accessToken, refreshToken };
+	return { accessToken, refreshToken, receivedAt, expiresIn };
 }
 
 /**
@@ -241,10 +245,7 @@ export async function refreshTokens(
 		grant_type: "refresh_token",
 		refresh_token,
 	};
-	const newTokens = await fetchTokens(server, scope, clientConfig, credentials);
-
-	// Instead of returning, update the passed in tokens object
-	return { accessToken: newTokens.accessToken, refreshToken: newTokens.refreshToken };
+	return fetchTokens(server, scope, clientConfig, credentials);
 }
 
 const createConfig = (token: string): RequestInit => ({

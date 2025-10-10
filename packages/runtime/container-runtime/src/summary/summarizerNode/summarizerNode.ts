@@ -3,36 +3,38 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
-import {
+import type {
 	ISnapshotTree,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	channelsTreeName,
-	IExperimentalIncrementalSummaryContext,
-	ITelemetryContext,
-	CreateChildSummarizerNodeParam,
+	type IExperimentalIncrementalSummaryContext,
+	type ITelemetryContext,
+	type CreateChildSummarizerNodeParam,
 	CreateSummarizerNodeSource,
-	ISummarizeResult,
-	ISummarizerNode,
-	ISummarizerNodeConfig,
-	SummarizeInternalFn,
+	type ISummarizeResult,
+	type ISummarizerNode,
+	type ISummarizerNodeConfig,
+	type SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions/internal";
 import { mergeStats } from "@fluidframework/runtime-utils/internal";
-import { type ITelemetryErrorEventExt } from "@fluidframework/telemetry-utils/internal";
 import {
-	ITelemetryLoggerExt,
 	LoggingError,
 	PerformanceEvent,
 	TelemetryDataTag,
 	createChildLogger,
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
+import type {
+	ITelemetryErrorEventExt,
+	ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 
-import {
+import type {
 	ICreateChildDetails,
 	IRefreshSummaryResult,
 	IStartSummaryResult,

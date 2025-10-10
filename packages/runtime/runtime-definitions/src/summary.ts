@@ -20,8 +20,7 @@ import type {
 
 /**
  * Contains the aggregation data from a Tree/Subtree.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummaryStats {
 	treeNodeCount: number;
@@ -37,8 +36,7 @@ export interface ISummaryStats {
  * each of its DDS.
  * Any component that implements IChannelContext, IFluidDataStoreChannel or extends SharedObject
  * will be taking part of the summarization process.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummaryTreeWithStats {
 	/**
@@ -54,8 +52,7 @@ export interface ISummaryTreeWithStats {
 
 /**
  * Represents a summary at a current sequence number.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummarizeResult {
 	stats: ISummaryStats;
@@ -76,8 +73,7 @@ export interface ISummarizeResult {
  *   ...
  *     "path1":
  * ```
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummarizeInternalResult extends ISummarizeResult {
 	id: string;
@@ -90,8 +86,7 @@ export interface ISummarizeInternalResult extends ISummarizeResult {
 /**
  * @experimental - Can be deleted/changed at any time
  * Contains the necessary information to allow DDSes to do incremental summaries
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IExperimentalIncrementalSummaryContext {
 	/**
@@ -117,8 +112,7 @@ export interface IExperimentalIncrementalSummaryContext {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type SummarizeInternalFn = (
 	fullTree: boolean,
@@ -128,8 +122,7 @@ export type SummarizeInternalFn = (
 ) => Promise<ISummarizeInternalResult>;
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummarizerNodeConfig {
 	/**
@@ -140,8 +133,7 @@ export interface ISummarizerNodeConfig {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummarizerNodeConfigWithGC extends ISummarizerNodeConfig {
 	/**
@@ -152,8 +144,7 @@ export interface ISummarizerNodeConfigWithGC extends ISummarizerNodeConfig {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export enum CreateSummarizerNodeSource {
 	FromSummary,
@@ -161,8 +152,7 @@ export enum CreateSummarizerNodeSource {
 	Local,
 }
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type CreateChildSummarizerNodeParam =
 	| {
@@ -178,8 +168,7 @@ export type CreateChildSummarizerNodeParam =
 	  };
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummarizerNode {
 	/**
@@ -271,8 +260,7 @@ export interface ISummarizerNode {
  * `isReferenced`: This tells whether this node is referenced in the document or not.
  *
  * `updateUsedRoutes`: Used to notify this node of routes that are currently in use in it.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummarizerNodeWithGC extends ISummarizerNode {
 	createChild(
@@ -366,8 +354,7 @@ export interface ITelemetryContextExt {
 /**
  * Contains telemetry data relevant to summarization workflows.
  * This object is expected to be modified directly by various summarize methods.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ITelemetryContext {
 	/**

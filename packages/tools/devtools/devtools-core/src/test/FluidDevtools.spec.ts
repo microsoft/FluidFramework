@@ -27,7 +27,7 @@ describe("FluidDevtools unit tests", () => {
 	it("Container change events", () => {
 		const devtools = FluidDevtools.initialize();
 
-		expect(devtools.getAllContainerDevtools().length).to.equal(0);
+		expect(devtools.getAllContainers().length).to.equal(0);
 
 		const container = createMockContainer();
 		const containerKey = "test-container-key";
@@ -37,7 +37,7 @@ describe("FluidDevtools unit tests", () => {
 		};
 		devtools.registerContainerDevtools(containerProps);
 
-		expect(devtools.getAllContainerDevtools().length).to.equal(1);
+		expect(devtools.getAllContainers().length).to.equal(1);
 
 		const containerDevtools = devtools.getContainerDevtools(containerKey);
 		expect(containerDevtools).to.not.be.undefined;
@@ -46,7 +46,7 @@ describe("FluidDevtools unit tests", () => {
 
 		devtools.closeContainerDevtools(containerKey);
 
-		expect(devtools.getAllContainerDevtools().length).to.equal(0);
+		expect(devtools.getAllContainers().length).to.equal(0);
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		expect(containerDevtools!.disposed).to.be.true;
 

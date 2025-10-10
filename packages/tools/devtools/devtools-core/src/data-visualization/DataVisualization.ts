@@ -255,9 +255,8 @@ export class DataVisualizerGraph
 			objectId = getKeyForFluidObject(rootSharedObject);
 			visualizationFunction = visualizeDataObject;
 		} else if (isTreeDataObj) {
-			rootSharedObject = (
-				visualizableObject as unknown as { readonly sharedTree: ISharedObject }
-			).sharedTree;
+			rootSharedObject = (visualizableObject as unknown as { readonly tree: ISharedObject })
+				.tree;
 			objectId = getKeyForFluidObject(rootSharedObject);
 			visualizationFunction = visualizeTreeDataObject;
 		} else {

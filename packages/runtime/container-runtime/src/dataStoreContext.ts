@@ -3,29 +3,33 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter, type ILayerCompatDetails } from "@fluid-internal/client-utils";
-import { AttachState, IAudience } from "@fluidframework/container-definitions";
 import {
-	IDeltaManager,
+	TypedEventEmitter,
+	type ILayerCompatDetails,
+	type IProvideLayerCompatDetails,
+} from "@fluid-internal/client-utils";
+import { AttachState, type IAudience } from "@fluidframework/container-definitions";
+import {
+	type IDeltaManager,
 	isIDeltaManagerFull,
 	type IDeltaManagerFull,
 	type ReadOnlyInfo,
 } from "@fluidframework/container-definitions/internal";
-import {
+import type {
 	FluidObject,
 	IDisposable,
 	ITelemetryBaseProperties,
-	type IEvent,
+	IEvent,
 } from "@fluidframework/core-interfaces";
-import {
-	type IFluidHandleContext,
-	type IFluidHandleInternal,
-	type ITelemetryBaseLogger,
+import type {
+	IFluidHandleContext,
+	IFluidHandleInternal,
+	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces/internal";
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
-import { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
-import {
-	type ISnapshot,
+import type { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
+import type {
+	ISnapshot,
 	IDocumentMessage,
 	ISnapshotTree,
 	ITreeEntry,
@@ -38,31 +42,32 @@ import {
 } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
-	ISummaryTreeWithStats,
-	ITelemetryContext,
-	IGarbageCollectionData,
-	CreateChildSummarizerNodeFn,
-	CreateChildSummarizerNodeParam,
-	FluidDataStoreRegistryEntry,
-	IContainerRuntimeBase,
-	IDataStore,
-	IFluidDataStoreChannel,
-	IFluidDataStoreContext,
-	IFluidDataStoreContextDetached,
-	IFluidDataStoreRegistry,
-	IGarbageCollectionDetailsBase,
-	IProvideFluidDataStoreFactory,
-	ISummarizeInternalResult,
-	ISummarizeResult,
-	ISummarizerNodeWithGC,
-	SummarizeInternalFn,
+	type ISummaryTreeWithStats,
+	type ITelemetryContext,
+	type IGarbageCollectionData,
+	type CreateChildSummarizerNodeFn,
+	type CreateChildSummarizerNodeParam,
+	type FluidDataStoreRegistryEntry,
+	type IContainerRuntimeBase,
+	type IDataStore,
+	type IFluidDataStoreChannel,
+	type IFluidDataStoreContext,
+	type IFluidDataStoreContextDetached,
+	type IFluidDataStoreRegistry,
+	type IGarbageCollectionDetailsBase,
+	type IProvideFluidDataStoreFactory,
+	type ISummarizeInternalResult,
+	type ISummarizeResult,
+	type ISummarizerNodeWithGC,
+	type SummarizeInternalFn,
 	channelsTreeName,
-	IInboundSignalMessage,
+	type IInboundSignalMessage,
 	type IPendingMessagesState,
 	type IRuntimeMessageCollection,
 	type IFluidDataStoreFactory,
 	type PackagePath,
 	type IRuntimeStorageService,
+	type MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
@@ -71,7 +76,7 @@ import {
 import {
 	DataProcessingError,
 	LoggingError,
-	MonitoringContext,
+	type MonitoringContext,
 	ThresholdCounter,
 	UsageError,
 	createChildMonitoringContext,
@@ -88,8 +93,8 @@ import {
 } from "./runtimeLayerCompatState.js";
 import {
 	// eslint-disable-next-line import/no-deprecated
-	ReadFluidDataStoreAttributes,
-	WriteFluidDataStoreAttributes,
+	type ReadFluidDataStoreAttributes,
+	type WriteFluidDataStoreAttributes,
 	dataStoreAttributesBlobName,
 	getAttributesFormatVersion,
 	getFluidDataStoreAttributes,
@@ -163,7 +168,7 @@ export interface IFluidDataStoreContextProps {
  * Properties necessary for creating a local FluidDataStoreContext
  */
 export interface ILocalFluidDataStoreContextProps extends IFluidDataStoreContextProps {
-	readonly pkg: Readonly<string[]> | undefined;
+	readonly pkg: readonly string[] | undefined;
 	readonly snapshotTree: ISnapshotTree | undefined;
 	readonly makeLocallyVisibleFn: () => void;
 }
@@ -243,7 +248,11 @@ class ContextDeltaManagerProxy extends BaseDeltaManagerProxy {
  */
 export abstract class FluidDataStoreContext
 	extends TypedEventEmitter<IFluidDataStoreContextEvents>
-	implements IFluidDataStoreContextInternal, IFluidDataStoreContext, IDisposable
+	implements
+		IFluidDataStoreContextInternal,
+		IFluidDataStoreContext,
+		IDisposable,
+		IProvideLayerCompatDetails
 {
 	public get packagePath(): PackagePath {
 		assert(this.pkg !== undefined, 0x139 /* "Undefined package path" */);
@@ -273,7 +282,7 @@ export abstract class FluidDataStoreContext
 
 	private isStagingMode: boolean = false;
 	public isReadOnly = (): boolean =>
-		(this.isStagingMode && this.channel?.policies?.readonlyInStagingMode !== false) ||
+		(this.isStagingMode && this.channel?.policies?.readonlyInStagingMode === true) ||
 		this.parentContext.isReadOnly();
 
 	public get connected(): boolean {
@@ -342,6 +351,11 @@ export abstract class FluidDataStoreContext
 	public get ILayerCompatDetails(): ILayerCompatDetails {
 		return runtimeCompatDetailsForDataStore;
 	}
+
+	/**
+	 * {@inheritdoc IFluidDataStoreContext.minVersionForCollab}
+	 */
+	public readonly minVersionForCollab: MinimumVersionForCollab;
 
 	private baseSnapshotSequenceNumber: number | undefined;
 
@@ -452,6 +466,7 @@ export abstract class FluidDataStoreContext
 
 		this._containerRuntime = props.parentContext.containerRuntime;
 		this.parentContext = props.parentContext;
+		this.minVersionForCollab = props.parentContext.minVersionForCollab;
 		this.id = props.id;
 		this.storage = props.storage;
 		this.scope = props.scope;
@@ -1216,7 +1231,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	private snapshotFetchRequired: boolean | undefined;
 	private readonly runtime: IContainerRuntimeBase;
 	private readonly blobContents: Map<string, ArrayBuffer> | undefined;
-	private readonly isSnapshotInISnapshotFormat: boolean | undefined;
+	private readonly isSnapshotInISnapshotFormat: boolean;
 
 	constructor(props: IRemoteFluidDataStoreContextProps) {
 		super(props, true /* existing */, false /* isLocalDataStore */, () => {
@@ -1275,7 +1290,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 				this.blobContents,
 			);
 		}
-		if (this.snapshotFetchRequired) {
+		if (this.snapshotFetchRequired === true) {
 			assert(
 				this.loadingGroupId !== undefined,
 				0x8f5 /* groupId should be present to fetch snapshot */,

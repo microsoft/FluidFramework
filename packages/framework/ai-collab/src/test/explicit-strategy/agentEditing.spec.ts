@@ -14,6 +14,7 @@ import {
 	getJsonSchema,
 	SharedTree,
 	TreeViewConfiguration,
+	KeyEncodingOptions,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/tree/internal";
 
@@ -127,7 +128,10 @@ describe("Makes TS type strings from schema", () => {
 		}) {}
 		assert.equal(
 			getPromptFriendlyTreeSchema(
-				getJsonSchema(Foo, { requireFieldsWithDefaults: false, useStoredKeys: false }),
+				getJsonSchema(Foo, {
+					requireFieldsWithDefaults: false,
+					keys: KeyEncodingOptions.usePropertyKeys,
+				}),
 			),
 			"interface Foo { x: number; y: string; z: null | undefined; }",
 		);
@@ -141,7 +145,10 @@ describe("Makes TS type strings from schema", () => {
 		}) {}
 		assert.equal(
 			getPromptFriendlyTreeSchema(
-				getJsonSchema(Foo, { requireFieldsWithDefaults: false, useStoredKeys: false }),
+				getJsonSchema(Foo, {
+					requireFieldsWithDefaults: false,
+					keys: KeyEncodingOptions.usePropertyKeys,
+				}),
 			),
 			"interface Foo { y: string; }",
 		);
@@ -157,7 +164,10 @@ describe("Makes TS type strings from schema", () => {
 		}) {}
 		assert.equal(
 			getPromptFriendlyTreeSchema(
-				getJsonSchema(Foo, { requireFieldsWithDefaults: false, useStoredKeys: false }),
+				getJsonSchema(Foo, {
+					requireFieldsWithDefaults: false,
+					keys: KeyEncodingOptions.usePropertyKeys,
+				}),
 			),
 			"interface Bar { z: number; } interface Foo { y: number | string | Bar; }",
 		);
@@ -170,7 +180,10 @@ describe("Makes TS type strings from schema", () => {
 		}) {}
 		assert.equal(
 			getPromptFriendlyTreeSchema(
-				getJsonSchema(Foo, { requireFieldsWithDefaults: false, useStoredKeys: false }),
+				getJsonSchema(Foo, {
+					requireFieldsWithDefaults: false,
+					keys: KeyEncodingOptions.usePropertyKeys,
+				}),
 			),
 			"interface Foo { y: number[]; }",
 		);
@@ -186,7 +199,10 @@ describe("Makes TS type strings from schema", () => {
 		}) {}
 		assert.equal(
 			getPromptFriendlyTreeSchema(
-				getJsonSchema(Foo, { requireFieldsWithDefaults: false, useStoredKeys: false }),
+				getJsonSchema(Foo, {
+					requireFieldsWithDefaults: false,
+					keys: KeyEncodingOptions.usePropertyKeys,
+				}),
 			),
 			"interface Foo { y: (number | (number | string[])[])[]; }",
 		);
@@ -195,7 +211,10 @@ describe("Makes TS type strings from schema", () => {
 	it("for objects in the demo schema", () => {
 		assert.equal(
 			getPromptFriendlyTreeSchema(
-				getJsonSchema(RootObject, { requireFieldsWithDefaults: false, useStoredKeys: false }),
+				getJsonSchema(RootObject, {
+					requireFieldsWithDefaults: false,
+					keys: KeyEncodingOptions.usePropertyKeys,
+				}),
 			),
 			"interface Vector { x: number; y: number; z: number | undefined; } interface RootObject { str: string; vectors: Vector[]; bools: boolean[]; }",
 		);

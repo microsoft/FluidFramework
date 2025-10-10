@@ -10,6 +10,7 @@ import {
 	getBooleanParam,
 	validateRequestParams,
 	handleResponse,
+	validatePrivateLink,
 } from "@fluidframework/server-services";
 import {
 	convertFirstSummaryWholeSummaryTreeToSummaryTree,
@@ -20,6 +21,7 @@ import {
 	TokenRevokeScopeType,
 	createFluidServiceNetworkError,
 	InternalErrorCode,
+	getNetworkInformationFromIP,
 } from "@fluidframework/server-services-client";
 import type {
 	IDocumentStorage,
@@ -64,6 +66,8 @@ import {
 	StageTrace,
 } from "../../../utils";
 import type { IDocumentDeleteService } from "../../services";
+
+import { getDocumentUrlsfromNetworkInfo } from "./restHelper";
 
 /**
  * Response body shape for modern clients that can handle object responses.
@@ -176,8 +180,11 @@ export function create(
 	denyList?: IDenyList,
 ): Router {
 	const router: Router = Router();
+	const privateServiceHost: string | undefined = config.get("privateServiceHost");
 	const externalOrdererUrl: string = config.get("worker:serverUrl");
 	const externalHistorianUrl: string = config.get("worker:blobStorageUrl");
+	const enablePrivateLinkNetworkCheck: boolean =
+		config.get("alfred:enablePrivateLinkNetworkCheck") ?? false;
 	const externalDeltaStreamUrl: string =
 		config.get("worker:deltaStreamUrl") || externalOrdererUrl;
 	const messageBrokerId: string | undefined =
@@ -278,6 +285,7 @@ export function create(
 	router.post(
 		"/:tenantId",
 		validateRequestParams("tenantId"),
+		validatePrivateLink(tenantManager, enablePrivateLinkNetworkCheck),
 		throttle(
 			clusterThrottlers.get(Constants.createDocThrottleIdPrefix),
 			winston,
@@ -321,6 +329,20 @@ export function create(
 				});
 				return handleResponse(Promise.reject(error), response);
 			}
+
+			const clientIPAddress = request.ip ? request.ip : "";
+			const networkInfo = getNetworkInformationFromIP(clientIPAddress);
+			// Tenant and document
+			const documentUrls = getDocumentUrlsfromNetworkInfo(
+				tenantId,
+				externalOrdererUrl,
+				externalHistorianUrl,
+				externalDeltaStreamUrl,
+				enablePrivateLinkNetworkCheck,
+				networkInfo.isPrivateLink,
+				privateServiceHost,
+			);
+
 			// If enforcing server generated document id, ignore id parameter
 			const id = enforceServerGeneratedDocumentId
 				? uuid()
@@ -353,9 +375,9 @@ export function create(
 				summary,
 				sequenceNumber,
 				crypto.randomBytes(4).toString("hex"),
-				externalOrdererUrl,
-				externalHistorianUrl,
-				externalDeltaStreamUrl,
+				documentUrls.documentOrdererUrl,
+				documentUrls.documentHistorianUrl,
+				documentUrls.documentDeltaStreamUrl,
 				values,
 				enableDiscovery,
 				isEphemeral,
@@ -374,9 +396,9 @@ export function create(
 					generateToken,
 					enableDiscovery,
 					{
-						externalOrdererUrl,
-						externalHistorianUrl,
-						externalDeltaStreamUrl,
+						externalOrdererUrl: documentUrls.documentOrdererUrl,
+						externalHistorianUrl: documentUrls.documentHistorianUrl,
+						externalDeltaStreamUrl: documentUrls.documentDeltaStreamUrl,
 						messageBrokerId,
 					},
 					isEphemeral,
@@ -431,6 +453,7 @@ export function create(
 	 */
 	router.get(
 		"/:tenantId/session/:id",
+		validatePrivateLink(tenantManager, enablePrivateLinkNetworkCheck),
 		throttle(
 			clusterThrottlers.get(Constants.getSessionThrottleIdPrefix),
 			winston,
@@ -460,6 +483,7 @@ export function create(
 			);
 			// Tracks the different stages of getSessionMetric
 			const connectionTrace = new StageTrace<string>("GetSession");
+
 			// Reject get session request on existing, inactive sessions if cluster is in draining process.
 			if (
 				clusterDrainingChecker &&
@@ -484,10 +508,22 @@ export function create(
 			const readDocumentRetryDelay: number = config.get("getSession:readDocumentRetryDelay");
 			const readDocumentMaxRetries: number = config.get("getSession:readDocumentMaxRetries");
 
-			const session = getSession(
+			const clientIPAddress = request.ip ? request.ip : "";
+			const networkInfo = getNetworkInformationFromIP(clientIPAddress);
+			const documentUrls = getDocumentUrlsfromNetworkInfo(
+				tenantId,
 				externalOrdererUrl,
 				externalHistorianUrl,
 				externalDeltaStreamUrl,
+				enablePrivateLinkNetworkCheck,
+				networkInfo.isPrivateLink,
+				privateServiceHost,
+			);
+
+			const session = getSession(
+				documentUrls.documentOrdererUrl,
+				documentUrls.documentHistorianUrl,
+				documentUrls.documentDeltaStreamUrl,
 				tenantId,
 				documentId,
 				documentRepository,

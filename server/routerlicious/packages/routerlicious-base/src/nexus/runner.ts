@@ -88,6 +88,9 @@ export class NexusRunner implements IRunner {
 				"nexus:maxNumberOfClientsPerDocument",
 			);
 			const numberOfMessagesPerTrace = this.config.get("nexus:numberOfMessagesPerTrace");
+			const enablePrivateLinkNetworkCheck =
+				this.config.get("nexus:enablePrivateLinkNetworkCheck") ?? false;
+			const preconnectTTLMs = this.config.get("nexus:preconnectTTLMs");
 			const maxTokenLifetimeSec = this.config.get("auth:maxTokenLifetimeSec");
 			const isTokenExpiryEnabled = this.config.get("auth:enableTokenExpiration");
 			const isClientConnectivityCountingEnabled = this.config.get(
@@ -116,6 +119,7 @@ export class NexusRunner implements IRunner {
 				isTokenExpiryEnabled,
 				isClientConnectivityCountingEnabled,
 				isSignalUsageCountingEnabled,
+				enablePrivateLinkNetworkCheck,
 				this.redisCache,
 				this.socketConnectTenantThrottler,
 				this.socketConnectClusterThrottler,
@@ -129,6 +133,7 @@ export class NexusRunner implements IRunner {
 				this.clusterDrainingChecker,
 				this.collaborationSessionTracker,
 				this.denyList,
+				preconnectTTLMs,
 			);
 
 			if (this.tokenRevocationManager) {

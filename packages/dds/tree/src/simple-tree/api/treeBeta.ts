@@ -3,19 +3,43 @@
  * Licensed under the MIT License.
  */
 
+import type { ITreeCursorSynchronous, TreeFieldStoredSchema } from "../../core/index.js";
 import {
+	defaultSchemaPolicy,
+	FieldKinds,
+	isTreeValue,
+} from "../../feature-libraries/index.js";
+import { brand } from "../../util/index.js";
+import {
+	Context,
 	getKernel,
+	getOrCreateNodeFromInnerNode,
 	isTreeNode,
+	UnhydratedContext,
 	type NodeKind,
+	type TreeLeafValue,
 	type TreeNode,
 	type Unhydrated,
 	type WithType,
 } from "../core/index.js";
-import type { ImplicitFieldSchema, TreeFieldFromImplicitField } from "../fieldSchema.js";
+import { getUnhydratedContext } from "../createContext.js";
+import type {
+	ImplicitFieldSchema,
+	InsertableTreeFieldFromImplicitField,
+	TreeFieldFromImplicitField,
+} from "../fieldSchema.js";
+import {
+	unhydratedFlexTreeFromInsertable,
+	type InsertableContent,
+} from "../unhydratedFlexTreeFromInsertable.js";
 
 import { createFromCursor } from "./create.js";
+import { conciseFromCursor, type ConciseTree } from "./conciseTree.js";
+import type { TreeEncodingOptions } from "./customTree.js";
+import { cursorFromVerbose } from "./verboseTree.js";
 import type { TreeChangeEvents } from "./treeChangeEvents.js";
 import { treeNodeApi } from "./treeNodeApi.js";
+import type { InsertableField, UnsafeUnknownSchema } from "../unsafeUnknownSchema.js";
 
 // Tests for this file are grouped with those for treeNodeApi.ts as that is where this functionality will eventually land,
 // and where most of the actual implementation is for much of it.
@@ -114,6 +138,39 @@ export interface TreeBeta {
 	): () => void;
 
 	/**
+	 * A less type-safe version of {@link (TreeAlpha:interface).create}, suitable for importing data.
+	 * @remarks
+	 * Due to {@link ConciseTree} relying on type inference from the data, its use is somewhat limited.
+	 * This does not support {@link ConciseTree|ConciseTrees} with customized handle encodings or using persisted keys.
+	 * Use "compressed" or "verbose" formats for more flexibility.
+	 *
+	 * When using this function,
+	 * it is recommend to ensure your schema is unambiguous with {@link ITreeConfigurationOptions.preventAmbiguity}.
+	 * If the schema is ambiguous, consider using {@link (TreeAlpha:interface).create} and {@link Unhydrated} nodes where needed,
+	 * or using {@link (TreeAlpha:interface).(importVerbose:1)} and specify all types.
+	 *
+	 * Documented (and thus recoverable) error handling/reporting for this is not yet implemented,
+	 * but for now most invalid inputs will throw a recoverable error.
+	 */
+	importConcise<const TSchema extends ImplicitFieldSchema>(
+		schema: TSchema,
+		data: ConciseTree | undefined,
+	): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
+
+	/**
+	 * Copy a snapshot of the current version of a TreeNode into a {@link ConciseTree}.
+	 */
+	exportConcise(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): ConciseTree;
+
+	/**
+	 * Copy a snapshot of the current version of a TreeNode into a {@link ConciseTree}, allowing undefined.
+	 */
+	exportConcise(
+		node: TreeNode | TreeLeafValue | undefined,
+		options?: TreeEncodingOptions,
+	): ConciseTree | undefined;
+
+	/**
 	 * Clones the persisted data associated with a node.
 	 *
 	 * @param node - The node to clone.
@@ -128,8 +185,8 @@ export interface TreeBeta {
 	 *
 	 * - The identifiers in the node's subtree will be preserved, i.e., they are not replaced with new values.
 	 *
-	 * @privateRemarks
-	 * TODO: AB#43548: How this handles unknown optional fields needs to be figured out, tested and documented.
+	 * - If the node (or any node in its subtree) contains {@link ObjectSchemaOptions.allowUnknownOptionalFields|unknown optional fields},
+	 * those fields will be cloned just like the known fields.
 	 */
 	clone<const TSchema extends ImplicitFieldSchema>(
 		node: TreeFieldFromImplicitField<TSchema>,
@@ -137,7 +194,7 @@ export interface TreeBeta {
 
 	// TODO: support more clone options
 	// /**
-	//  * Like {@link TreeBeta.create}, except deeply clones existing nodes.
+	//  * Like {@link (TreeBeta:interface).create}, except deeply clones existing nodes.
 	//  * @remarks
 	//  * This only clones the persisted data associated with a node.
 	//  * Local state, such as properties added to customized schema classes, will not be cloned:
@@ -153,6 +210,107 @@ export interface TreeBeta {
 	// 		replaceIdentifiers?: true;
 	// 	},
 	// ): TreeFieldFromImplicitField<TSchema>;
+
+	/**
+	 * Construct tree content that is compatible with the field defined by the provided `schema`.
+	 * @param schema - The schema for what to construct. As this is an {@link ImplicitFieldSchema}, a {@link FieldSchema}, {@link TreeNodeSchema} or {@link AllowedTypes} array can be provided.
+	 * @param data - The data used to construct the field content.
+	 * @remarks
+	 * When providing a {@link TreeNodeSchemaClass}, this is the same as invoking its constructor except that an unhydrated node can also be provided.
+	 * This function exists as a generalization that can be used in other cases as well,
+	 * such as when `undefined` might be allowed (for an optional field), or when the type should be inferred from the data when more than one type is possible.
+	 */
+	create<const TSchema extends ImplicitFieldSchema>(
+		schema: TSchema,
+		data: InsertableTreeFieldFromImplicitField<TSchema>,
+	): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
+}
+
+/**
+ * Borrow a cursor from a node.
+ * @remarks
+ * The cursor must be put back to its original location before the node is used again.
+ */
+export function borrowCursorFromTreeNodeOrValue(
+	node: TreeNode | TreeLeafValue,
+): ITreeCursorSynchronous {
+	if (isTreeValue(node)) {
+		return cursorFromVerbose(node, {});
+	}
+	const kernel = getKernel(node);
+	const cursor = kernel.getInnerNode().borrowCursor();
+	return cursor;
+}
+
+/**
+ * {@inheritDoc (TreeBeta:interface).importConcise}
+ */
+export function importConcise<TSchema extends ImplicitFieldSchema>(
+	schema: TSchema & ImplicitFieldSchema,
+	data: ConciseTree | undefined,
+): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
+/**
+ * {@inheritDoc (TreeAlpha:interface).importConcise}
+ */
+export function importConcise<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+	schema: UnsafeUnknownSchema extends TSchema
+		? ImplicitFieldSchema
+		: TSchema & ImplicitFieldSchema,
+	data: ConciseTree | undefined,
+): Unhydrated<
+	TSchema extends ImplicitFieldSchema
+		? TreeFieldFromImplicitField<TSchema>
+		: TreeNode | TreeLeafValue | undefined
+>;
+export function importConcise<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+	schema: UnsafeUnknownSchema extends TSchema
+		? ImplicitFieldSchema
+		: TSchema & ImplicitFieldSchema,
+	data: ConciseTree | undefined,
+): Unhydrated<
+	TSchema extends ImplicitFieldSchema
+		? TreeFieldFromImplicitField<TSchema>
+		: TreeNode | TreeLeafValue | undefined
+> {
+	// Create the tree content from insertable data
+	const mapTree = unhydratedFlexTreeFromInsertable(
+		data as InsertableField<UnsafeUnknownSchema>,
+		schema,
+	);
+	const result = mapTree === undefined ? undefined : getOrCreateNodeFromInnerNode(mapTree);
+	return result as Unhydrated<
+		TSchema extends ImplicitFieldSchema
+			? TreeFieldFromImplicitField<TSchema>
+			: TreeNode | TreeLeafValue | undefined
+	>;
+}
+
+/**
+ * {@inheritDoc (TreeBeta:interface).(exportConcise:1)}
+ */
+export function exportConcise(
+	node: TreeNode | TreeLeafValue,
+	options?: TreeEncodingOptions,
+): ConciseTree;
+/**
+ * {@inheritDoc (TreeBeta:interface).(exportConcise:2)}
+ */
+export function exportConcise(
+	node: TreeNode | TreeLeafValue | undefined,
+	options?: TreeEncodingOptions,
+): ConciseTree | undefined;
+export function exportConcise(
+	node: TreeNode | TreeLeafValue | undefined,
+	options?: TreeEncodingOptions,
+): ConciseTree | undefined {
+	if (!isTreeNode(node)) {
+		return node;
+	}
+	const config: TreeEncodingOptions = { ...options };
+
+	const kernel = getKernel(node);
+	const cursor = borrowCursorFromTreeNodeOrValue(node);
+	return conciseFromCursor(cursor, kernel.context, config);
 }
 
 /**
@@ -168,6 +326,10 @@ export const TreeBeta: TreeBeta = {
 	): () => void {
 		return treeNodeApi.on(node, eventName, listener);
 	},
+
+	importConcise,
+	exportConcise,
+
 	clone<const TSchema extends ImplicitFieldSchema>(
 		node: TreeFieldFromImplicitField<TSchema>,
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
@@ -177,9 +339,35 @@ export const TreeBeta: TreeBeta = {
 		}
 
 		const kernel = getKernel(node);
-		const cursor = kernel.getOrCreateInnerNode().borrowCursor();
-		return createFromCursor(kernel.schema, cursor) as Unhydrated<
+		const cursor = kernel.getInnerNode().borrowCursor();
+
+		// To handle when the node transitively contains unknown optional fields,
+		// derive the context from the source node's stored schema which has stored schema for any such fields and their contents.
+		const flexContext = new UnhydratedContext(
+			defaultSchemaPolicy,
+			kernel.context.flexContext.schema,
+		);
+		const context = new Context(flexContext, getUnhydratedContext(kernel.schema).schema);
+
+		const fieldSchema: TreeFieldStoredSchema = {
+			kind: FieldKinds.required.identifier,
+			types: new Set([brand(kernel.schema.identifier)]),
+			persistedMetadata: undefined,
+		};
+		return createFromCursor(kernel.schema, cursor, fieldSchema, context) as Unhydrated<
 			TreeFieldFromImplicitField<TSchema>
 		>;
+	},
+
+	create<const TSchema extends ImplicitFieldSchema>(
+		schema: TSchema,
+		data: InsertableTreeFieldFromImplicitField<TSchema>,
+	): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
+		const mapTree = unhydratedFlexTreeFromInsertable(
+			data as InsertableContent | undefined,
+			schema,
+		);
+		const result = mapTree === undefined ? undefined : getOrCreateNodeFromInnerNode(mapTree);
+		return result as Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 	},
 };

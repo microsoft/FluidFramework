@@ -81,15 +81,15 @@
 		"buffer": "^6.0.3",
 		"events": "^3.1.0",
 		"lodash": "^4.17.21",
-		"sha.js": "^2.4.11"
+		"sha.js": "^2.4.12"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.56.0",
+		"@fluid-tools/build-cli": "^0.57.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.56.0",
+		"@fluidframework/build-tools": "^0.57.0",
 		"@fluidframework/common-utils-previous": "npm:@fluidframework/common-utils@1.0.0",
-		"@fluidframework/eslint-config-fluid": "^5.8.0",
-		"@microsoft/api-extractor": "7.52.8",
+		"@fluidframework/eslint-config-fluid": "^6.1.0",
+		"@microsoft/api-extractor": "7.52.11",
 		"@types/base64-js": "^1.3.0",
 		"@types/benchmark": "^2.1.0",
 		"@types/jest": "29.5.3",
@@ -98,12 +98,12 @@
 		"@types/node": "^18.19.39",
 		"@types/sinon": "^17.0.3",
 		"benchmark": "^2.1.4",
-		"c8": "^8.0.1",
+		"c8": "^10.1.3",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
-		"eslint": "~8.55.0",
-		"eslint-config-prettier": "~9.0.0",
+		"eslint": "~8.57.0",
+		"eslint-config-prettier": "~10.1.8",
 		"jest": "^29.6.2",
 		"jest-junit": "^10.0.0",
 		"jest-puppeteer": "^10.1.3",
@@ -118,7 +118,7 @@
 		"ts-node": "^10.9.1",
 		"typescript": "~5.4.5"
 	},
-	"packageManager": "pnpm@9.15.7+sha512.ed98f9c748442673c46964b70345bd2282c9b305e8eae539b34ab31d6ef24ef8dd59d8b55f27466f705500b009d9c113471cf87e544f3d5036b297330c26e996",
+	"packageManager": "pnpm@10.17.1+sha512.17c560fca4867ae9473a3899ad84a88334914f379be46d455cbf92e5cf4b39d34985d452d2583baf19967fa76cb5c17bc9e245529d0b98745721aa7200ecaf7a",
 	"fluidBuild": {
 		"branchReleaseTypes": {
 			"main": "minor",
@@ -143,14 +143,16 @@
 		}
 	},
 	"pnpm": {
-		"commentsOverrides": [
+		"ignoredBuiltDependencies": ["core-js"],
+		"onlyBuiltDependencies": ["puppeteer"],
+		"overridesComments": [
 			"sharp <0.32.6 has a vulnerability that Component Governance flags (https://github.com/advisories/GHSA-54xq-cgqr-rpm3). It's a transitive dependency through jssm-viz-cli, which hasn't updated to a version with the fix"
 		],
 		"overrides": {
 			"sharp": "^0.33.2"
 		},
 		"patchedDependencies": {
-			"@microsoft/api-extractor@7.52.8": "../../../patches/@microsoft__api-extractor@7.52.8.patch"
+			"@microsoft/api-extractor@7.52.11": "../../../patches/@microsoft__api-extractor@7.52.11.patch"
 		}
 	},
 	"typeValidation": {

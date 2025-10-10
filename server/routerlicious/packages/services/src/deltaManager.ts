@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import { type ISequencedDocumentMessage, ScopeType } from "@fluidframework/protocol-definitions";
 import { BasicRestWrapper } from "@fluidframework/server-services-client";
 import type { IDeltaService, ITenantManager } from "@fluidframework/server-services-core";
@@ -87,9 +86,7 @@ export class DeltaManager implements IDeltaService {
 		const scopes = [ScopeType.DocRead];
 		const accessToken = await this.getAccessToken(tenantId, documentId, scopes);
 
-		const defaultQueryString = {
-			token: fromUtf8ToBase64(`${tenantId}`),
-		};
+		const defaultQueryString = {};
 
 		const getDefaultHeaders = () => {
 			const token = { jwt: accessToken };

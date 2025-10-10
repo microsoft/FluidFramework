@@ -675,7 +675,7 @@ describe("ArrayNode", () => {
 					});
 					const { array1, array2 } = init(schema, { array1: [1, "bad", 2], array2: [] });
 					const expected = validateUsageError(
-						/Type in source sequence is not allowed in destination./,
+						"Type com.fluidframework.leaf.string in source sequence is not allowed in destination.",
 					);
 					assert.throws(() => array2.moveRangeToIndex(0, 1, 3, array1), expected);
 					assert.throws(() => array2.moveRangeToIndex(0, 0, 2, array1), expected);

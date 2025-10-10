@@ -35,6 +35,7 @@ import type {
 	INexusLambdaConnectionStateTrackers,
 	INexusLambdaDependencies,
 } from "./interfaces";
+import { checkNetworkInformation } from "./networkHelper";
 import { isValidConnectionMessage } from "./protocol";
 import {
 	checkThrottleAndUsage,
@@ -90,10 +91,38 @@ function parseRelayUserAgent(relayUserAgent: string | undefined): Record<string,
 	return map;
 }
 
-// TODO: documentation
-// eslint-disable-next-line jsdoc/require-description
 /**
+ * Configures the WebSocket server to handle client connections, operations, and signals.
+ *
  * @internal
+ *
+ * @param webSocketServer - The WebSocket server to configure event handlers on.
+ * @param ordererManager - The orderer manager to handle operation sequencing.
+ * @param tenantManager - The tenant manager to manage tenant information retrieval and auth.
+ * @param storage - Unused.
+ * @param clientManager - The client manager to keep track of connected clients.
+ * @param metricLogger - Unused.
+ * @param logger - The logger to use for logging telemetry.
+ * @param maxNumberOfClientsPerDocument - The maximum number of concurrent clients allowed to connect per document. Default: 1000000.
+ * @param numberOfMessagesPerTrace - The sampling rate for adding traces to messages. Example: 100 means every 100th message will have a trace added. Default: 100.
+ * @param maxTokenLifetimeSec - The maximum lifetime of a token in seconds. After this time, the token will be considered expired and the client will be disconnected. Default: 3600 (1 hour).
+ * @param isTokenExpiryEnabled - Whether token expiry is enabled. If true, the token will be checked for expiry and the client will be disconnected if it is expired. Default: false.
+ * @param isClientConnectivityCountingEnabled - Whether client connectivity counting is enabled. If true, the client connectivity count will be counted for usage tracking. Default: false.
+ * @param isSignalUsageCountingEnabled - Whether signal usage counting is enabled. If true, the signal send count will be counted for usage tracking. Default: false.
+ * @param cache - Unused.
+ * @param connectThrottlerPerTenant - The throttler to use for connection requests per tenant.
+ * @param connectThrottlerPerCluster - The throttler to use for connection requests per "cluster" (group of websocket servers).
+ * @param submitOpThrottler - The throttler to use for submit operation requests.
+ * @param submitSignalThrottler - The throttler to use for submit signal requests.
+ * @param throttleAndUsageStorageManager - The storage manager to use for throttle and usage data.
+ * @param verifyMaxMessageSize - Whether to verify the maximum message size for submitted operations based on {@link DefaultServiceConfiguration.maxMessageSize}.
+ * @param socketTracker - The tracker to use for tracking socket connections correlated to access tokens used for closing a connection if the access token is revoked.
+ * @param revokedTokenChecker - The checker to use for checking if a token is revoked.
+ * @param collaborationSessionEventEmitter - The event emitter to use for emitting collaboration session events such as broadcasting signals to a specific client in a session.
+ * @param clusterDrainingChecker - The checker to use for determining if a "cluster" (group of websocket servers) is "draining" (i.e., not accepting new connections).
+ * @param collaborationSessionTracker - The tracker to use for tracking collaboration sessions (count, duration, etc.) for telemetry purposes.
+ * @param denyList - The deny list to use for checking if a tenant or document is not allowed for use.
+ * @param preconnectTTLMs - The time-to-live (TTL) for connected clients in milliseconds before a "connect_document" message is received. After this time, the client will be disconnected if no "connect_document" message is received, or if the "connect_document" attempt is rejected. Default: undefined (disabled).
  */
 export function configureWebSocketServices(
 	webSocketServer: core.IWebSocketServer,
@@ -105,10 +134,11 @@ export function configureWebSocketServices(
 	logger: core.ILogger,
 	maxNumberOfClientsPerDocument: number = 1000000,
 	numberOfMessagesPerTrace: number = 100,
-	maxTokenLifetimeSec: number = 60 * 60,
+	maxTokenLifetimeSec: number = 60 * 60, // 1 hour
 	isTokenExpiryEnabled: boolean = false,
 	isClientConnectivityCountingEnabled: boolean = false,
 	isSignalUsageCountingEnabled: boolean = false,
+	enablePrivateLinkNetworkCheck: boolean = false,
 	cache?: core.ICache,
 	connectThrottlerPerTenant?: core.IThrottler,
 	connectThrottlerPerCluster?: core.IThrottler,
@@ -122,6 +152,7 @@ export function configureWebSocketServices(
 	clusterDrainingChecker?: core.IClusterDrainingChecker,
 	collaborationSessionTracker?: core.ICollaborationSessionTracker,
 	denyList?: core.IDenyList,
+	preconnectTTLMs?: number,
 ): void {
 	const lambdaDependencies: INexusLambdaDependencies = {
 		ordererManager,
@@ -152,6 +183,15 @@ export function configureWebSocketServices(
 		// Timer to check token expiry for this socket connection
 		const expirationTimer = new ExpirationTimer(() => socket.disconnect(true));
 
+		// Timer to disconnect the client if no "connect_document" message is received within the preconnect TTL.
+		const preconnectTTLTimer = new ExpirationTimer(() => {
+			socket.disconnect(true);
+			Lumberjack.warning("Client disconnected due to preconnect TTL expiration");
+		});
+		if (preconnectTTLMs) {
+			preconnectTTLTimer.set(preconnectTTLMs);
+		}
+
 		/**
 		 * Maps and sets to track various information related to client connections.
 		 * Note: These maps/sets are expected to have only one client id entry.
@@ -175,6 +215,12 @@ export function configureWebSocketServices(
 		// Map from client Ids to supportedFeatures ()
 		const supportedFeaturesMap = new Map<string, Record<string, unknown>>();
 
+		// Map from client IDs to session operation count
+		const sessionOpCountMap = new Map<string, number>();
+
+		// Map from client IDs to session signal count
+		const sessionSignalCountMap = new Map<string, number>();
+
 		// Set of client Ids that have been disconnected from orderer.
 		const disconnectedOrdererConnections = new Set<string>();
 
@@ -188,9 +234,12 @@ export function configureWebSocketServices(
 			clientMap,
 			connectionTimeMap,
 			expirationTimer,
+			preconnectTTLTimer,
 			disconnectedOrdererConnections,
 			disconnectedClients,
 			supportedFeaturesMap,
+			sessionOpCountMap,
+			sessionSignalCountMap,
 		};
 
 		let connectDocumentComplete: boolean = false;
@@ -202,6 +251,7 @@ export function configureWebSocketServices(
 		// Note connect is a reserved socket.io word so we use connect_document to represent the connect request
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		socket.on("connect_document", async (connectionMessage: unknown) => {
+			preconnectTTLTimer.pause();
 			if (!isValidConnectionMessage(connectionMessage)) {
 				// If the connection message is invalid, emit an error and return.
 				// This will prevent the connection from being established, but more importantly
@@ -238,6 +288,7 @@ export function configureWebSocketServices(
 					error,
 				);
 				socket.emit("connect_document_error", error);
+				preconnectTTLTimer.resume();
 				return;
 			}
 
@@ -257,6 +308,25 @@ export function configureWebSocketServices(
 				[BaseTelemetryProperties.correlationId]: correlationId,
 			};
 
+			if (enablePrivateLinkNetworkCheck) {
+				const networkInfo = await checkNetworkInformation(tenantManager, socket);
+				if (!networkInfo.shouldConnect) {
+					const nackMessage = createNackMessage(
+						404,
+						NackErrorType.BadRequestError,
+						networkInfo.message,
+					);
+					const error = new NetworkError(404, "socket private link check failed");
+					Lumberjack.warning(
+						"socket private link check failed",
+						baseLumberjackProperties,
+						error,
+					);
+					socket.emit("nack", "", [nackMessage]);
+					return;
+				}
+			}
+
 			connectDocumentP = getGlobalTelemetryContext().bindPropertiesAsync(
 				{ correlationId, ...baseLumberjackProperties },
 				async () =>
@@ -272,10 +342,12 @@ export function configureWebSocketServices(
 						.then((message) => {
 							socket.emit("connect_document_success", message.connection);
 							disposers.push(message.dispose);
+							preconnectTTLTimer.clear();
 						})
 						.catch((error) => {
 							socket.emit("connect_document_error", error);
 							expirationTimer.clear();
+							preconnectTTLTimer.resume();
 						})
 						.finally(() => {
 							connectDocumentComplete = true;
@@ -448,6 +520,10 @@ export function configureWebSocketServices(
 							});
 
 							if (sanitized.length > 0) {
+								// Increment session op count for this client
+								const currentOpCount = sessionOpCountMap.get(clientId) || 0;
+								sessionOpCountMap.set(clientId, currentOpCount + sanitized.length);
+
 								// Cannot await this order call without delaying other message batches in this submitOp.
 								connection
 									.order(sanitized)
@@ -543,6 +619,10 @@ export function configureWebSocketServices(
 						socket.emit("nack", "", [nackMessage]);
 						return;
 					}
+
+					// Increment session signal count for this client
+					const currentSignalCount = sessionSignalCountMap.get(clientId) || 0;
+					sessionSignalCountMap.set(clientId, currentSignalCount + messageCount);
 
 					if (supportedFeaturesMap.get(clientId)?.submit_signals_v2) {
 						for (const signal of contentBatches) {

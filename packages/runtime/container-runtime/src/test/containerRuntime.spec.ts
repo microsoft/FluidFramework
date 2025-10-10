@@ -10,46 +10,49 @@ import {
 	type ILayerCompatDetails,
 	type IProvideLayerCompatDetails,
 } from "@fluid-internal/client-utils";
-import { AttachState, ICriticalContainerError } from "@fluidframework/container-definitions";
+import {
+	AttachState,
+	type ICriticalContainerError,
+} from "@fluidframework/container-definitions";
 import {
 	ContainerErrorTypes,
-	IContainerContext,
+	type IContainerContext,
 	type IBatchMessage,
 } from "@fluidframework/container-definitions/internal";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import {
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import type {
 	ConfigTypes,
 	FluidObject,
 	IConfigProviderBase,
 	IResponse,
 } from "@fluidframework/core-interfaces";
-import {
+import type {
+	IErrorBase,
 	ISignalEnvelope,
-	type IErrorBase,
-	type ITelemetryBaseLogger,
-	type JsonDeserialized,
+	ITelemetryBaseLogger,
+	OpaqueJsonDeserialized,
 } from "@fluidframework/core-interfaces/internal";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
+import type { ISummaryTree, SummaryObject } from "@fluidframework/driver-definitions";
 import {
-	ISnapshot,
-	ISummaryContext,
+	type ISnapshot,
+	type ISummaryContext,
 	type ISnapshotTree,
 	MessageType,
-	ISequencedDocumentMessage,
+	type ISequencedDocumentMessage,
 	type IVersion,
 	type FetchSource,
 	type IDocumentAttributes,
 	SummaryType,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	ISummaryTreeWithStats,
-	FluidDataStoreRegistryEntry,
+	type ISummaryTreeWithStats,
+	type FluidDataStoreRegistryEntry,
 	FlushMode,
 	FlushModeExperimental,
-	IFluidDataStoreContext,
-	IFluidDataStoreFactory,
-	IFluidDataStoreRegistry,
-	NamedFluidDataStoreRegistryEntries,
+	type IFluidDataStoreContext,
+	type IFluidDataStoreFactory,
+	type IFluidDataStoreRegistry,
+	type NamedFluidDataStoreRegistryEntries,
 	type IRuntimeMessageCollection,
 	type ISequencedMessageEnvelope,
 	type IEnvelope,
@@ -57,8 +60,9 @@ import {
 	type ISummarizeInternalResult,
 	type IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
+import { defaultMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import {
-	IFluidErrorBase,
+	type IFluidErrorBase,
 	MockLogger,
 	createChildLogger,
 	isFluidError,
@@ -74,16 +78,16 @@ import {
 import Sinon, { type SinonFakeTimers } from "sinon";
 
 import { ChannelCollection } from "../channelCollection.js";
-import { defaultMinVersionForCollab } from "../compatUtils.js";
 import { CompressionAlgorithms, enabledCompressionConfig } from "../compressionDefinitions.js";
 import {
 	ContainerRuntime,
-	IContainerRuntimeOptions,
-	IPendingRuntimeState,
+	type IContainerRuntimeOptions,
+	type IPendingRuntimeState,
 	defaultPendingOpsWaitTimeoutMs,
 	getSingleUseLegacyLogCallback,
 	type ContainerRuntimeOptionsInternal,
 	type IContainerRuntimeOptionsInternal,
+	type UnknownIncomingTypedMessage,
 } from "../containerRuntime.js";
 import {
 	ContainerMessageType,
@@ -97,13 +101,13 @@ import type {
 	LocalBatchMessage,
 } from "../opLifecycle/index.js";
 import { pkgVersion } from "../packageVersion.js";
-import {
+import type {
 	IPendingLocalState,
 	IPendingMessage,
 	PendingStateManager,
 } from "../pendingStateManager.js";
 import {
-	ISummaryCancellationToken,
+	type ISummaryCancellationToken,
 	neverCancelledSummaryToken,
 	recentBatchInfoBlobName,
 	type IRefreshSummaryAckOptions,
@@ -147,14 +151,12 @@ const changeConnectionState = (
 };
 
 interface ISignalEnvelopeWithClientIds {
-	envelope: ISignalEnvelope<{ type: string; content: JsonDeserialized<unknown> }>;
+	envelope: ISignalEnvelope<UnknownIncomingTypedMessage>;
 	clientId: string;
 	targetClientId?: string;
 }
 
-function isSignalEnvelope(
-	obj: unknown,
-): obj is ISignalEnvelope<{ type: string; content: JsonDeserialized<unknown> }> {
+function isSignalEnvelope(obj: unknown): obj is ISignalEnvelope<UnknownIncomingTypedMessage> {
 	return (
 		typeof obj === "object" &&
 		obj !== null &&
@@ -198,6 +200,12 @@ function stubChannelCollection(
 
 	containerRuntime.channelCollection = stub;
 	return stub;
+}
+
+function assertSignalContentIsAString(
+	content: OpaqueJsonDeserialized<unknown> | string,
+): asserts content is string {
+	assert(typeof content === "string", "Signal content expected to be a string");
 }
 
 describe("Runtime", () => {
@@ -376,7 +384,7 @@ describe("Runtime", () => {
 				const containerRuntime = await ContainerRuntime.loadRuntime({
 					context: getMockContext({
 						settings: {
-							"Fluid.Container.enableOfflineLoad": true,
+							"Fluid.ContainerRuntime.enableBatchIdTracking": true,
 						},
 					}) as IContainerContext,
 					registryEntries: [],
@@ -418,12 +426,12 @@ describe("Runtime", () => {
 				assert.strictEqual(containerRuntime.isDirty, false);
 			});
 
-			for (const enableOfflineLoad of [true, undefined])
+			for (const enableBatchIdTracking of [true, undefined])
 				it("Replaying ops should resend in correct order, with batch ID if applicable", async () => {
 					const containerRuntime = (await ContainerRuntime.loadRuntime({
 						context: getMockContext({
 							settings: {
-								"Fluid.Container.enableOfflineLoad": enableOfflineLoad, // batchId only stamped if true
+								"Fluid.ContainerRuntime.enableBatchIdTracking": enableBatchIdTracking, // batchId only stamped if true
 							},
 						}) as IContainerContext,
 						registryEntries: [],
@@ -460,7 +468,7 @@ describe("Runtime", () => {
 						);
 					}
 
-					if (enableOfflineLoad) {
+					if (enableBatchIdTracking === true) {
 						assert(
 							batchIdMatchesUnsentFormat(
 								// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -533,7 +541,7 @@ describe("Runtime", () => {
 						contents: "test content",
 					});
 
-					const expectedSubmitCount = skipSafetyFlushDuringProcessStack ? 0 : 1;
+					const expectedSubmitCount = skipSafetyFlushDuringProcessStack === true ? 0 : 1;
 					assert.equal(
 						submittedOps.length,
 						expectedSubmitCount,
@@ -2284,59 +2292,6 @@ describe("Runtime", () => {
 				assert.strictEqual(typeof state, "object");
 				assert.strictEqual(state.pending?.pendingStates, pendingStates);
 			});
-			it("notifyImminentClosure. Some pending state", async () => {
-				const logger = new MockLogger();
-
-				const containerRuntime = await ContainerRuntime.loadRuntime({
-					context: getMockContext({ logger }) as IContainerContext,
-					registryEntries: [],
-					existing: false,
-					runtimeOptions: {
-						enableRuntimeIdCompressor: "on",
-					},
-					provideEntryPoint: mockProvideEntryPoint,
-				});
-				const pendingStates: IPendingMessage[] = Array.from({ length: 5 }, (_, i) => ({
-					content: i.toString(),
-					type: "message",
-					referenceSequenceNumber: 0,
-					localOpMetadata: undefined,
-					opMetadata: undefined,
-					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5, staged: false },
-					runtimeOp: undefined,
-				}));
-				const mockPendingStateManager = new Proxy<PendingStateManager>(
-					{} as unknown as PendingStateManager,
-					{
-						get: (_t, p: keyof PendingStateManager, _r) => {
-							switch (p) {
-								case "getLocalState": {
-									return (): IPendingLocalState => ({
-										pendingStates,
-									});
-								}
-								case "pendingMessagesCount": {
-									return 5;
-								}
-								default: {
-									assert.fail(`unexpected access to pendingStateManager.${p}`);
-								}
-							}
-						},
-					},
-				);
-
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-				(containerRuntime as any).pendingStateManager = mockPendingStateManager;
-
-				const stateP = containerRuntime.getPendingLocalState({
-					notifyImminentClosure: true,
-				}) as PromiseLike<Partial<IPendingRuntimeState>>;
-				assert("then" in stateP, "should be a promise like");
-				const state = await stateP;
-				assert.strictEqual(typeof state, "object");
-				assert.strictEqual(state.pending?.pendingStates, pendingStates);
-			});
 
 			it("sessionExpiryTimerStarted. No pending state", async () => {
 				const logger = new MockLogger();
@@ -2352,7 +2307,7 @@ describe("Runtime", () => {
 				});
 
 				const state = (await containerRuntime.getPendingLocalState({
-					notifyImminentClosure: true,
+					notifyImminentClosure: false,
 					sessionExpiryTimerStarted: 100,
 				})) as Partial<IPendingRuntimeState>;
 				assert.strictEqual(typeof state, "object");
@@ -2405,7 +2360,7 @@ describe("Runtime", () => {
 				(containerRuntime as any).pendingStateManager = mockPendingStateManager;
 
 				const state = (await containerRuntime.getPendingLocalState({
-					notifyImminentClosure: true,
+					notifyImminentClosure: false,
 					sessionExpiryTimerStarted: 100,
 				})) as Partial<IPendingRuntimeState>;
 				assert.strictEqual(state.sessionExpiryTimerStarted, 100);
@@ -2413,11 +2368,13 @@ describe("Runtime", () => {
 		});
 
 		describe("Duplicate Batch Detection", () => {
-			for (const enableOfflineLoad of [undefined, true]) {
-				it(`DuplicateBatchDetector enablement matches Offline load (${enableOfflineLoad ? "ENABLED" : "DISABLED"})`, async () => {
+			for (const enableBatchIdTracking of [undefined, true]) {
+				it(`DuplicateBatchDetector is disabled if Batch Id Tracking isn't needed (${enableBatchIdTracking === true ? "ENABLED" : "DISABLED"})`, async () => {
 					const containerRuntime = await ContainerRuntime.loadRuntime({
 						context: getMockContext({
-							settings: { "Fluid.Container.enableOfflineLoad": enableOfflineLoad },
+							settings: {
+								"Fluid.ContainerRuntime.enableBatchIdTracking": enableBatchIdTracking,
+							},
 						}) as IContainerContext,
 						registryEntries: [],
 						existing: false,
@@ -2438,9 +2395,8 @@ describe("Runtime", () => {
 						false,
 					);
 					// Process a duplicate batch "batchId1" with different seqNum 234
-					const assertThrowsOnlyIfExpected = enableOfflineLoad
-						? assert.throws
-						: assert.doesNotThrow;
+					const assertThrowsOnlyIfExpected =
+						enableBatchIdTracking === true ? assert.throws : assert.doesNotThrow;
 					const errorPredicate = (e: Error) =>
 						e.message === "Duplicate batch - The same batch was sequenced twice";
 					assertThrowsOnlyIfExpected(
@@ -2463,7 +2419,9 @@ describe("Runtime", () => {
 
 			it("Can roundrip DuplicateBatchDetector state through summary/snapshot", async () => {
 				// Duplicate Batch Detection requires OfflineLoad enabled
-				const settings_enableOfflineLoad = { "Fluid.Container.enableOfflineLoad": true };
+				const settings_enableOfflineLoad = {
+					"Fluid.ContainerRuntime.enableBatchIdTracking": true,
+				};
 				const containerRuntime = await ContainerRuntime.loadRuntime({
 					context: getMockContext({
 						settings: settings_enableOfflineLoad,
@@ -2488,8 +2446,8 @@ describe("Runtime", () => {
 					false,
 				);
 				const { summary } = await containerRuntime.summarize({ fullTree: true });
-				const blob = summary.tree[recentBatchInfoBlobName];
-				assert(blob.type === SummaryType.Blob, "Expected blob");
+				const blob: SummaryObject | undefined = summary.tree[recentBatchInfoBlobName];
+				assert(blob?.type === SummaryType.Blob, "Expected blob");
 				assert.equal(blob.content, '[[123,"batchId1"]]', "Expected single batchId mapping");
 
 				// Load a new ContainerRuntime with the serialized DuplicateBatchDetector state.
@@ -2662,6 +2620,8 @@ describe("Runtime", () => {
 
 			function createSnapshot(addMissingDatastore: boolean, setGroupId: boolean = true): void {
 				if (addMissingDatastore) {
+					// TODO: Fix this violation and remove the disable
+					// eslint-disable-next-line @fluid-internal/fluid/no-unchecked-record-access
 					snapshotTree.trees[".channels"].trees.missingDataStore = {
 						blobs: { ".component": "id" },
 						trees: {
@@ -2822,13 +2782,15 @@ describe("Runtime", () => {
 					["missingDataStore"],
 				);
 				assert.deepStrictEqual(
-					snapshotTree.trees[".channels"].trees.missingDataStore,
+					snapshotTree.trees[".channels"]?.trees.missingDataStore,
 					snapshot.snapshotTree,
 					"snapshot should be equal",
 				);
 				assert(getSnapshotCalledTimes === 1, "second time should be from cache");
 
 				// Set api to undefined to see that it should not be called again.
+				// TODO: Fix this violation and remove the disable
+				// eslint-disable-next-line require-atomic-updates
 				containerContext.storage.getSnapshot = undefined;
 				const datastore2 = await containerRuntime.resolveHandle({
 					url: "/missingDataStore",
@@ -3014,16 +2976,11 @@ describe("Runtime", () => {
 			function sendSignals(count: number): void {
 				for (let i = 0; i < count; i++) {
 					containerRuntime.submitSignal("TestSignalType", `TestSignalContent ${i + 1}`);
-					assert(
-						submittedSignals[submittedSignals.length - 1].envelope.contents.type ===
-							"TestSignalType",
-						"Signal type should match",
-					);
-					assert(
-						submittedSignals[submittedSignals.length - 1].envelope.contents.content ===
-							`TestSignalContent ${i + 1}`,
-						"Signal content should match",
-					);
+					const { type, content } =
+						submittedSignals[submittedSignals.length - 1].envelope.contents;
+					assert(type === "TestSignalType", "Signal type should match");
+					assertSignalContentIsAString(content);
+					assert(content === `TestSignalContent ${i + 1}`, "Signal content should match");
 				}
 			}
 
@@ -3789,6 +3746,29 @@ describe("Runtime", () => {
 						"Container should throw when op compression is on and op grouping is off",
 					);
 				});
+
+				it("Throws when createBlobPayloadPending is on and explicitSchemaControl is not enabled", async () => {
+					await assert.rejects(
+						async () =>
+							ContainerRuntime.loadRuntime({
+								context: getMockContext() as IContainerContext,
+								registryEntries: [],
+								existing: false,
+								runtimeOptions: {
+									createBlobPayloadPending: true,
+								},
+								provideEntryPoint: mockProvideEntryPoint,
+							}),
+						(error: IErrorBase) => {
+							return (
+								error.errorType === ContainerErrorTypes.usageError &&
+								error.message ===
+									"explicitSchemaControl must be enabled to use createBlobPayloadPending"
+							);
+						},
+						"Container should throw when createBlobPayloadPending is on and explicitSchemaControl is not enabled",
+					);
+				});
 			});
 		});
 
@@ -4184,7 +4164,7 @@ describe("Runtime", () => {
 						existing: false,
 						// We would normally throw (since `createBlobPayloadPending` requires 2.40), but since we did
 						// not explicity set minVersionForCollab, we allow it.
-						runtimeOptions: { createBlobPayloadPending: true },
+						runtimeOptions: { createBlobPayloadPending: true, explicitSchemaControl: true },
 						provideEntryPoint: mockProvideEntryPoint,
 					});
 				});

@@ -472,6 +472,7 @@ declare type current_as_old_for_Class_Tenant = requireAssignableTo<TypeOnly<curr
  * typeValidation.broken:
  * "Class_TenantManager": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_TenantManager = requireAssignableTo<TypeOnly<old.TenantManager>, TypeOnly<current.TenantManager>>
 
 /*

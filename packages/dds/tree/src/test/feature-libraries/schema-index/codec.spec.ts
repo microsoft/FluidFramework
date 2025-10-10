@@ -12,7 +12,7 @@ import {
 	type FieldKindIdentifier,
 	type TreeStoredSchema,
 } from "../../../core/index.js";
-import { typeboxValidator } from "../../../external-utilities/index.js";
+import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import {
 	allowsRepoSuperset,
 	defaultSchemaPolicy,
@@ -25,21 +25,21 @@ import { Format as FormatV2 } from "../../../feature-libraries/schema-index/form
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 import { type EncodingTestData, makeEncodingTestSuite } from "../../utils.js";
 // eslint-disable-next-line import/no-internal-modules
-import { toStoredSchema } from "../../../simple-tree/toStoredSchema.js";
+import { toInitialSchema } from "../../../simple-tree/toStoredSchema.js";
 import { SchemaFactory } from "../../../simple-tree/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeSchemaCodecs } from "../../../feature-libraries/schema-index/index.js";
 
-const schemaCodecs = makeSchemaCodecs({ jsonValidator: typeboxValidator });
-const codecV1 = makeSchemaCodec({ jsonValidator: typeboxValidator }, SchemaVersion.v1);
-const codecV2 = makeSchemaCodec({ jsonValidator: typeboxValidator }, SchemaVersion.v2);
+const schemaCodecs = makeSchemaCodecs({ jsonValidator: FormatValidatorBasic });
+const codecV1 = makeSchemaCodec({ jsonValidator: FormatValidatorBasic }, SchemaVersion.v1);
+const codecV2 = makeSchemaCodec({ jsonValidator: FormatValidatorBasic }, SchemaVersion.v2);
 
-const schema2 = toStoredSchema(SchemaFactory.optional(JsonAsTree.Primitive));
+const schema2 = toInitialSchema(SchemaFactory.optional(JsonAsTree.Primitive));
 
 const testCases: EncodingTestData<TreeStoredSchema, FormatV1> = {
 	successes: [
-		["json", toStoredSchema(JsonAsTree.Tree)],
+		["json", toInitialSchema(JsonAsTree.Tree)],
 		["testSchemas", schema2],
 	],
 };

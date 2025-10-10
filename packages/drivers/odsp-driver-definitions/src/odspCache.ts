@@ -3,17 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type FiveDaysMs, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
-
-/**
- * Must be less than IDocumentStorageServicePolicies.maximumCacheDurationMs policy of 5 days.
- * That policy is the outward expression and this value is the implementation - using a larger value
- * would violate that statement of the driver's behavior.
- * Other parts of the system (such as Garbage Collection) depend on that policy being properly implemented.
- *
- * @internal
- */
-export const maximumCacheDurationMs: FiveDaysMs = 432_000_000; // 5 days in ms
+import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 
 /**
  * Describes what kind of content is stored in cache entry.
@@ -28,8 +18,7 @@ export const snapshotKey = "snapshot";
 export const snapshotWithLoadingGroupIdKey = "snapshotWithLoadingGroupId";
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type CacheContentType = "snapshot" | "ops" | "snapshotWithLoadingGroupId";
 
@@ -39,8 +28,8 @@ export type CacheContentType = "snapshot" | "ops" | "snapshotWithLoadingGroupId"
  * to implement storage / identify files.
  */
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
+ * @deprecated This interface was move to `@fluidframework/driver-definitions`. Please update your references.
  */
 export interface IFileEntry {
 	/**
@@ -55,12 +44,16 @@ export interface IFileEntry {
 	 * This is IOdspResolvedUrl in case of ODSP driver.
 	 */
 	resolvedUrl: IResolvedUrl;
+	/**
+	 * Optional version of the file.
+	 */
+	fileVersion?: string;
 }
 
 /**
  * Cache entry. Identifies file that this entry belongs to, and type of content stored in it.
- * @legacy
- * @alpha
+ * @legacy @beta
+ * @deprecated This interface was move to `@fluidframework/driver-definitions`. Please update your references.
  */
 export interface IEntry {
 	/**
@@ -83,8 +76,8 @@ export interface IEntry {
 
 /**
  * Cache entry. Identifies file that this entry belongs to, and type of content stored in it.
- * @legacy
- * @alpha
+ * @legacy @beta
+ * @deprecated This interface was move to `@fluidframework/driver-definitions`. Please update your references.
  */
 export interface ICacheEntry extends IEntry {
 	/**
@@ -99,8 +92,8 @@ export interface ICacheEntry extends IEntry {
  * cache implementation that does not survive across sessions. Snapshot entires stored in the
  * IPersistedCache will be considered stale and removed after 2 days. Read the README for more
  * information.
- * @legacy
- * @alpha
+ * @legacy @beta
+ * @deprecated This interface was move to `@fluidframework/driver-definitions`. Please update your references.
  */
 export interface IPersistedCache {
 	/**
@@ -119,18 +112,8 @@ export interface IPersistedCache {
 	put(entry: ICacheEntry, value: any): Promise<void>;
 
 	/**
-	 * Removes the entries from the cache for given parametres.
+	 * Removes the entries from the cache for given parameters.
 	 * @param file - file entry to be deleted.
 	 */
 	removeEntries(file: IFileEntry): Promise<void>;
-}
-
-/**
- * Api to generate a cache key from cache entry.
- * @param entry - cache entry from which a cache key is generated
- * @returns The key for cache.
- * @internal
- */
-export function getKeyForCacheEntry(entry: ICacheEntry): string {
-	return `${entry.file.docId}_${entry.type}_${entry.key}`;
 }

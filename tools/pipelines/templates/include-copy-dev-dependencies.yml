@@ -1,0 +1,60 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# Copy runtime devDependencies from an installed package to somewhere else (usually the root package in the workspace)
+# and install them.
+# This is useful for test workloads that don't run in the original context of the package (i.e. that need to install it)
+# such as the performance benchmarks and e2e test pipelines.
+
+parameters:
+- name: sourcePackageLocation
+  type: string
+
+- name: destPackageLocation
+  type: string
+
+steps:
+# The test workload we are running frequently depends on devDependencies of the package being installed.
+# To make sure these are available, copy them to the root package.json and reinstall.
+- task: Bash@3
+  displayName: Copy devDependencies
+  inputs:
+    targetType: 'inline'
+    script: |
+      set -eu -o pipefail
+
+      testPkgJsonPath=${{ parameters.sourcePackageLocation }}/package.json
+      pkgJsonPath=${{ parameters.destPackageLocation }}/package.json
+      node -e "
+        const { devDependencies } = require('$testPkgJsonPath');
+        const pkg = require('$pkgJsonPath');
+        if (!pkg.devDependencies) {
+          pkg.devDependencies = {};
+        }
+        // Avoid copying some common dev dependencies that should only be required at build time.
+        // Keeping the dependency tree small helps reduce job time and likelihood of install failures, since
+        // dependencies added as part of this step won't be reproducible via pnpm-lock.
+        const avoidCopying = new Set([
+          '@types/node',
+          'typescript',
+          '@microsoft/api-extractor',
+          '@fluid-tools/build-cli',
+          '@fluidframework/build-common',
+          '@fluidframework/build-tools'
+        ]);
+        for (const [k, v] of Object.entries(devDependencies)) {
+          if (!pkg.devDependencies[k] && !avoidCopying.has(k)) {
+            // Note that if you use string interpolation, bash interpreting the dollar sign takes precedence.
+            console.log('Adding devDependency ' + k + '@' + v);
+            pkg.devDependencies[k] = v;
+          }
+        }
+        require('fs').writeFileSync('$pkgJsonPath', JSON.stringify(pkg));
+      "
+
+- task: Bash@3
+  displayName: 'pnpm install - extra dependencies for test files'
+  retryCountOnTaskFailure: 10
+  inputs:
+    targetType: 'inline'
+    script: 'pnpm install --no-frozen-lockfile'

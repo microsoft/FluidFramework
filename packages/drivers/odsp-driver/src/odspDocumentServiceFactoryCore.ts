@@ -9,6 +9,8 @@ import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import type {
 	IDocumentService,
 	IDocumentServiceFactory,
+	IFileEntry,
+	IPersistedCache,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
 import {
@@ -17,9 +19,7 @@ import {
 } from "@fluidframework/driver-utils/internal";
 import {
 	type HostStoragePolicy,
-	type IFileEntry,
 	type IOdspUrlParts,
-	type IPersistedCache,
 	type IRelaySessionAwareDriverFactory,
 	type ISharingLinkKind,
 	type ISocketStorageDiscovery,
@@ -41,6 +41,7 @@ import {
 	NonPersistentCache,
 } from "./odspCache.js";
 import { OdspDocumentService } from "./odspDocumentService.js";
+import { odspDriverCompatDetailsForLoader } from "./odspLayerCompatState.js";
 import {
 	type IExistingFileInfo,
 	type INewFileInfo,
@@ -59,7 +60,7 @@ import {
  * This constructor should be used by environments that support dynamic imports and that wish
  * to leverage code splitting as a means to keep bundles as small as possible.
  * @legacy
- * @alpha
+ * @beta
  */
 export class OdspDocumentServiceFactoryCore
 	implements IDocumentServiceFactory, IRelaySessionAwareDriverFactory
@@ -148,6 +149,7 @@ export class OdspDocumentServiceFactoryCore
 		const fileEntry: IFileEntry = {
 			resolvedUrl: odspResolvedUrl,
 			docId: odspResolvedUrl.hashedDocumentId,
+			fileVersion: undefined,
 		};
 		const cacheAndTracker = createOdspCacheAndTracker(
 			this.persistedCache,
@@ -245,6 +247,15 @@ export class OdspDocumentServiceFactoryCore
 		};
 	}
 
+	/**
+	 * The compatibility details of the ODSP Driver layer that is exposed to the Loader layer
+	 * for validating Loader-Driver compatibility.
+	 * @remarks This is for internal use only.
+	 * The type of this should be ILayerCompatDetails. However, ILayerCompatDetails is internal and this class
+	 * is currently marked as legacy alpha. So, using unknown here.
+	 */
+	public readonly ILayerCompatDetails?: unknown = odspDriverCompatDetailsForLoader;
+
 	public async createDocumentService(
 		resolvedUrl: IResolvedUrl,
 		logger?: ITelemetryBaseLogger,
@@ -277,7 +288,11 @@ export class OdspDocumentServiceFactoryCore
 			createOdspCacheAndTracker(
 				this.persistedCache,
 				this.nonPersistentCache,
-				{ resolvedUrl: odspResolvedUrl, docId: odspResolvedUrl.hashedDocumentId },
+				{
+					resolvedUrl: odspResolvedUrl,
+					docId: odspResolvedUrl.hashedDocumentId,
+					fileVersion: odspResolvedUrl.fileVersion,
+				},
 				extLogger,
 				clientIsSummarizer,
 			);

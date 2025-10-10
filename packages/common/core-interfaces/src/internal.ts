@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line no-restricted-syntax
+// The "internal" exports are a superset of the standard ones. So, we want to export everything from the standard barrel file.
+// eslint-disable-next-line no-restricted-syntax, @typescript-eslint/no-restricted-imports
 export * from "./index.js";
 
-// Important: all other exports must be type only exports. In package.json exports,
-//  index.js is listed as the runtime file. This is done so that all imports are
-//  using the same outer runtime file. (Could be changed if needed.)
+export type { JsonString, JsonStringifyOptions } from "./jsonString.js";
+export { JsonStringify, JsonParse } from "./jsonString.js";
 
 export type { JsonTypeToOpaqueJson, OpaqueJsonToJsonType } from "./jsonUtils.js";
 

@@ -6,13 +6,13 @@ A namespace tagged as `@beta`.
 
 **WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.**
 
-## Signature {#testbetanamespace-signature}
+<h2 id="testbetanamespace-signature">Signature</h2>
 
 ```typescript
 export declare namespace TestBetaNamespace
 ```
 
-## Remarks {#testbetanamespace-remarks}
+<h2 id="testbetanamespace-remarks">Remarks</h2>
 
 Tests release level inheritance.
 
@@ -26,31 +26,31 @@ Tests release level inheritance.
 
 ## Variable Details
 
-### alphaMember {#alphamember-variable}
+<h3 id="alphamember-variable">alphaMember</h3>
 
 **WARNING: This API is provided as an alpha preview and may change without notice. Use at your own risk.**
 
-#### Signature {#alphamember-signature}
+<h4 id="alphamember-signature">Signature</h4>
 
 ```typescript
 alphaMember = "alpha"
 ```
 
-### betaMember {#betamember-variable}
+<h3 id="betamember-variable">betaMember</h3>
 
 **WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.**
 
-#### Signature {#betamember-signature}
+<h4 id="betamember-signature">Signature</h4>
 
 ```typescript
 betaMember = "beta"
 ```
 
-### publicMember {#publicmember-variable}
+<h3 id="publicmember-variable">publicMember</h3>
 
 **WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.**
 
-#### Signature {#publicmember-signature}
+<h4 id="publicmember-signature">Signature</h4>
 
 ```typescript
 publicMember = "public"

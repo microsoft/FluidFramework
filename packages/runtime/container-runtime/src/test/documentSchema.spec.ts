@@ -6,12 +6,15 @@
 import { strict as assert } from "node:assert";
 
 import {
+	defaultMinVersionForCollab,
+	type SemanticVersion,
+} from "@fluidframework/runtime-utils/internal";
+import {
 	createMockLoggerExt,
 	type IMockLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import { lt } from "semver-ts";
 
-import { defaultMinVersionForCollab, type SemanticVersion } from "../compatUtils.js";
 import { pkgVersion } from "../packageVersion.js";
 import {
 	DocumentsSchemaController,
@@ -22,7 +25,7 @@ import {
 } from "../summary/index.js";
 
 function boolToProp(b: boolean | undefined) {
-	return b ? true : undefined;
+	return b === true ? true : undefined;
 }
 
 function arrayToProp(arr: string[]) {

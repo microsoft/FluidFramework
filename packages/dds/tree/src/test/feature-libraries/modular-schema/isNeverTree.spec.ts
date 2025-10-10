@@ -32,7 +32,7 @@ import { fieldSchema } from "../../utils.js";
  */
 const emptyMap: ReadonlyMap<never, never> = new Map<never, never>();
 
-describe("Schema Comparison", () => {
+describe("isNeverTree", () => {
 	/**
 	 * TreeFieldStoredSchema which is impossible for any data to be in schema with.
 	 */

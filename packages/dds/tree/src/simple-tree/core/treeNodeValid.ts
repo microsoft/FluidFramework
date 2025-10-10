@@ -8,9 +8,8 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { type FlexTreeNode, isFlexTreeNode } from "../../feature-libraries/index.js";
 
-import { markEager } from "./flexList.js";
 import { inPrototypeChain, privateToken, TreeNode } from "./treeNode.js";
-import type { UnhydratedFlexTreeNode } from "./unhydratedFlexTree.js";
+import { UnhydratedFlexTreeNode } from "./unhydratedFlexTree.js";
 import {
 	NodeKind,
 	type TreeNodeSchema,
@@ -26,7 +25,8 @@ import {
 } from "./treeNodeKernel.js";
 import type { InternalTreeNode } from "./types.js";
 import { typeSchemaSymbol } from "./withType.js";
-import type { ImplicitAnnotatedAllowedTypes } from "./allowedTypes.js";
+import type { ImplicitAllowedTypes } from "./allowedTypes.js";
+import type { SimpleNodeSchemaBase } from "./simpleNodeSchemaBase.js";
 
 /**
  * Class which all {@link TreeNode}s must extend.
@@ -193,16 +193,21 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 		);
 
 		const result = schema.prepareInstance(this, node);
+		// For unhydrated nodes, grab the context from the `simpleContext` (which likely is from cache.oneTimeInitialized.context,
+		// but might be customized for better schema evolution support like unknown optional fields like in clone)
+		// For hydrated nodes, this context is unused, so using the default from cache.oneTimeInitialized.context is always fine.
+		const context =
+			node instanceof UnhydratedFlexTreeNode
+				? node.simpleContext
+				: cache.oneTimeInitialized.context;
 		// The TreeNodeKernel associates itself the TreeNode (result here, not node) so it can be looked up later via getKernel.
 		// If desired this could be put in a non-enumerable symbol property for lookup instead, but that gets messy going through proxies,
 		// so just relying on the WeakMap seems like the cleanest approach.
-		new TreeNodeKernel(result, schema, node, cache.oneTimeInitialized.context);
+		new TreeNodeKernel(result, schema, node, context);
 
 		return result;
 	}
 }
-// Class objects are functions (callable), so we need a strong way to distinguish between `schema` and `() => schema` when used as a `LazyItem`.
-markEager(TreeNodeValid);
 
 /**
  * Data cached about the most derived type in a schema's class hierarchy.
@@ -226,7 +231,7 @@ export interface MostDerivedData {
 export function schemaAsTreeNodeValid(
 	schema: TreeNodeSchemaCore<string, NodeKind, boolean>,
 ): typeof TreeNodeValid & TreeNodeSchema {
-	if (!inPrototypeChain(schema, TreeNodeValid)) {
+	if (!isClassBasedSchema(schema)) {
 		// Use JSON.stringify to quote and escape identifier string.
 		throw new UsageError(
 			`Schema for ${JSON.stringify(
@@ -235,7 +240,16 @@ export function schemaAsTreeNodeValid(
 		);
 	}
 
-	return schema as typeof TreeNodeValid & TreeNodeSchema;
+	return schema;
+}
+
+/**
+ * Check if a schema is a {@link TreeNodeValid}.
+ */
+export function isClassBasedSchema(
+	schema: SimpleNodeSchemaBase<NodeKind>,
+): schema is typeof TreeNodeValid & TreeNodeSchema {
+	return inPrototypeChain(schema, TreeNodeValid);
 }
 
 /**
@@ -245,7 +259,8 @@ export function schemaAsTreeNodeValid(
  */
 export function createTreeNodeSchemaPrivateData(
 	schema: TreeNodeSchemaCore<string, NodeKind, boolean>,
-	childAnnotatedAllowedTypes: readonly ImplicitAnnotatedAllowedTypes[],
+	childAnnotatedAllowedTypes: readonly ImplicitAllowedTypes[],
+	toStored: TreeNodeSchemaPrivateData["toStored"],
 ): TreeNodeSchemaPrivateData {
 	const schemaValid = schemaAsTreeNodeValid(schema);
 	// Since this closes over the schema, ensure this schema is marked as most derived
@@ -255,6 +270,7 @@ export function createTreeNodeSchemaPrivateData(
 	return {
 		idempotentInitialize: () => schemaValid.oneTimeInitialize().oneTimeInitialized,
 		childAnnotatedAllowedTypes,
+		toStored,
 	};
 }
 

@@ -9,7 +9,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import { hasSingle } from "../util/index.js";
 
-import { type ImplicitFieldSchema, normalizeFieldSchema, FieldKind } from "./fieldSchema.js";
+import { normalizeFieldSchema, FieldKind, type ImplicitFieldSchema } from "./fieldSchema.js";
 import {
 	CompatibilityLevel,
 	getKernel,

@@ -5,6 +5,7 @@
 
 export {
 	type FormatVersion,
+	DependentFormatVersion,
 	type IBinaryCodec,
 	type ICodecFamily,
 	type ICodecOptions,
@@ -21,13 +22,18 @@ export {
 	withSchemaValidation,
 	FluidClientVersion,
 	currentVersion,
+	toFormatValidator,
+	FormatValidatorNoOp,
+	type FormatValidator,
+	type CodecTree,
+	jsonableCodecTree,
+	extractJsonValidator,
 } from "./codec.js";
 export {
 	DiscriminatedUnionDispatcher,
 	type DiscriminatedUnionLibrary,
 	unionOptions,
 } from "./discriminatedUnions.js";
-export { noopValidator } from "./noopValidator.js";
 export {
 	Versioned,
 	makeVersionedCodec,

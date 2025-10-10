@@ -131,6 +131,7 @@ export interface INexusLambdaDependencies {
 
 export interface INexusLambdaConnectionStateTrackers {
 	expirationTimer: ExpirationTimer;
+	preconnectTTLTimer: ExpirationTimer;
 	connectionsMap: Map<string, IOrdererConnection>;
 	connectionTimeMap: Map<string, number>;
 	scopeMap: Map<string, string[]>;
@@ -139,4 +140,6 @@ export interface INexusLambdaConnectionStateTrackers {
 	disconnectedOrdererConnections: Set<string>;
 	disconnectedClients: Set<string>;
 	supportedFeaturesMap: Map<string, Record<string, unknown>>;
+	sessionOpCountMap: Map<string, number>;
+	sessionSignalCountMap: Map<string, number>;
 }

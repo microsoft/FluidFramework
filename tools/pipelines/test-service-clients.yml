@@ -2,6 +2,7 @@
 # Licensed under the MIT License.
 
 # test-service-clients pipeline
+# pipeline: https://dev.azure.com/fluidframework/internal/_build?definitionId=80
 
 name: $(Build.BuildId)
 
@@ -19,6 +20,10 @@ resources:
       - main
       - next
       - lts
+  repositories:
+    - repository: ff_pipeline_host
+      type: git
+      name: ff_pipeline_host
 
 variables:
 - template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
@@ -35,7 +40,8 @@ variables:
   value: 'ServiceClientsEndToEndTests'
   readonly: true
 # This is a test pipeline, not a build one, so we don't need to run CodeQL tasks
-- name: DisableCodeQL
+# Note that using this variable only works for non-1ES-template pipelines.
+- name: Codeql.SkipTaskAutoInjection
   value: true
 
 stages:
@@ -44,7 +50,7 @@ stages:
     parameters:
       stageId: e2e_azure_client_frs
       stageDisplayName: e2e - azure-client with AFR
-      poolBuild: Small-eastus2
+      poolBuild: Large-eastus2
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
       testCommand: test:realsvc:azure
@@ -61,7 +67,7 @@ stages:
     parameters:
       stageId: e2e_azure_client_local_server
       stageDisplayName: e2e - azure-client with Azure local service
-      poolBuild: Small-eastus2
+      poolBuild: Large-eastus2
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
       testCommand: test:realsvc:tinylicious
@@ -81,7 +87,7 @@ stages:
       poolBuild: Small-eastus2
       testPackage: ${{ variables.testOdspPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
-      testCommand: test:realsvc:odsp:run
+      testCommand: test:realsvc:odsp
       artifactBuildId: $(resources.pipeline.client.runID)
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:

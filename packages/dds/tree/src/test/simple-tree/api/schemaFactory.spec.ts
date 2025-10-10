@@ -6,10 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { oob, unreachableCase } from "@fluidframework/core-utils/internal";
-import {
-	MockHandle,
-	validateAssertionError,
-} from "@fluidframework/test-runtime-utils/internal";
+import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
 import { TreeStatus } from "../../../feature-libraries/index.js";
 import {
@@ -28,27 +25,49 @@ import {
 	isTreeNode,
 	NodeKind,
 	type TreeFieldFromImplicitField,
+	TreeViewConfigurationAlpha,
+	SchemaFactoryBeta,
+	allowUnused,
+	type InsertableTreeFieldFromImplicitField,
 } from "../../../simple-tree/index.js";
 import {
 	// Import directly to get the non-type import to allow testing of the package only instanceof
 	TreeNode,
+	type AllowedTypes,
+	type AllowedTypesFull,
+	type AnnotatedAllowedType,
+	type AnnotatedAllowedTypes,
+	type InsertableTreeNodeFromAllowedTypes,
+	type InsertableTreeNodeFromImplicitAllowedTypes,
+	type UnannotateAllowedTypesList,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/core/index.js";
 import {
 	SchemaFactory,
 	schemaFromValue,
-	schemaStaticsBase,
-	type SchemaStatics,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/api/schemaFactory.js";
-import type {
-	areSafelyAssignable,
-	requireAssignableTo,
-	requireTrue,
+import {
+	schemaStaticsStable,
+	type SchemaStatics,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../simple-tree/api/schemaStatics.js";
+import {
+	brand,
+	type areSafelyAssignable,
+	type IsUnion,
+	type requireAssignableTo,
+	type requireFalse,
+	type requireTrue,
 } from "../../../util/index.js";
 
 import { hydrate } from "../utils.js";
-import { getView, validateUsageError } from "../../utils.js";
+import { getView, TestTreeProviderLite, validateUsageError } from "../../utils.js";
+import type { SchematizingSimpleTreeView } from "../../../shared-tree/index.js";
+import { EmptyKey } from "../../../core/index.js";
+
+// Tests for the non-recursive API subset of SchemaFactory and SchemaFactoryAlpha.
+// Recursive APIs are tested in schemaFactoryRecursive.spec.ts
 
 {
 	const schema = new SchemaFactory("Blah");
@@ -324,11 +343,7 @@ describe("schemaFactory", () => {
 						x: schema.required(schema.number, { key: "foo" }),
 						y: schema.required(schema.number, { key: "foo" }),
 					}),
-				(error: Error) =>
-					validateAssertionError(
-						error,
-						/Duplicate stored key "foo" in schema "com.example.Point"/,
-					),
+				validateUsageError(/Duplicate stored key "foo" in schema "com.example.Point"/),
 			);
 		});
 
@@ -340,11 +355,10 @@ describe("schemaFactory", () => {
 						foo: schema.number,
 						bar: schema.required(schema.string, { key: "foo" }),
 					}),
-				(error: Error) =>
-					validateAssertionError(
-						error,
-						/Stored key "foo" in schema "com.example.Object" conflicts with a property key of the same name/,
-					),
+
+				validateUsageError(
+					/Stored key "foo" in schema "com.example.Object" conflicts with a property key of the same name/,
+				),
 			);
 		});
 
@@ -370,7 +384,7 @@ describe("schemaFactory", () => {
 		});
 
 		it("Node schema metadata", () => {
-			const factory = new SchemaFactoryAlpha("");
+			const factory = new SchemaFactoryBeta("");
 
 			const fooMetadata = {
 				description: "An object called Foo",
@@ -379,7 +393,7 @@ describe("schemaFactory", () => {
 				},
 			};
 
-			class Foo extends factory.objectAlpha(
+			class Foo extends factory.object(
 				"Foo",
 				{ bar: factory.number },
 				{ metadata: fooMetadata },
@@ -390,6 +404,8 @@ describe("schemaFactory", () => {
 			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
 			const description = Foo.metadata.description;
 			const baz = Foo.metadata.custom.baz;
+			type _check1 = requireTrue<areSafelyAssignable<typeof description, string>>;
+			type _check2 = requireTrue<areSafelyAssignable<typeof baz, boolean>>;
 		});
 
 		it("Field schema metadata", () => {
@@ -624,6 +640,8 @@ describe("schemaFactory", () => {
 			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
 			const description = Foo.metadata.description;
 			const baz = Foo.metadata.custom.baz;
+			type _check1 = requireTrue<areSafelyAssignable<typeof description, string>>;
+			type _check2 = requireTrue<areSafelyAssignable<typeof baz, boolean>>;
 		});
 	});
 
@@ -693,6 +711,8 @@ describe("schemaFactory", () => {
 			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
 			const description = Foo.metadata.description;
 			const baz = Foo.metadata.custom.baz;
+			type _check1 = requireTrue<areSafelyAssignable<typeof description, string>>;
+			type _check2 = requireTrue<areSafelyAssignable<typeof baz, boolean>>;
 		});
 	});
 
@@ -739,6 +759,10 @@ describe("schemaFactory", () => {
 			const factory = new SchemaFactoryAlpha("test");
 			class NamedRecord extends factory.record("name", factory.number) {}
 			const namedInstance = new NamedRecord({ x: 5 });
+			const x: number = namedInstance.x;
+			// TODO: AB#47136: this (and likely the line above as well) should not compile as the typing is incorrect (y is undefined, not number)
+			const y: number = namedInstance.y;
+			delete namedInstance.x;
 		});
 
 		it("Node schema metadata", () => {
@@ -760,6 +784,8 @@ describe("schemaFactory", () => {
 			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
 			const description = Foo.metadata.description;
 			const baz = Foo.metadata.custom.baz;
+			type _check1 = requireTrue<areSafelyAssignable<typeof description, string>>;
+			type _check2 = requireTrue<areSafelyAssignable<typeof baz, boolean>>;
 		});
 	});
 
@@ -999,7 +1025,7 @@ describe("schemaFactory", () => {
 
 	it("statics", () => {
 		const f = new SchemaFactory("");
-		for (const [key, value] of Object.entries(schemaStaticsBase)) {
+		for (const [key, value] of Object.entries(schemaStaticsStable)) {
 			assert.equal((SchemaFactory as unknown as Record<string, unknown>)[key], value);
 			assert.equal((f as unknown as Record<string, unknown>)[key], value);
 		}
@@ -1263,10 +1289,40 @@ describe("schemaFactory", () => {
 	});
 
 	it("scopedFactory", () => {
+		const factory = new SchemaFactoryBeta("test.blah");
+
+		const scopedFactory: SchemaFactoryBeta<"test.blah.scoped"> =
+			factory.scopedFactory("scoped");
+		assert.equal(scopedFactory.scope, "test.blah.scoped");
+		type _check = requireTrue<
+			areSafelyAssignable<typeof scopedFactory.scope, "test.blah.scoped">
+		>;
+
+		type Scope = typeof scopedFactory extends SchemaFactoryBeta<infer S> ? S : never;
+
+		function inferScope<TScope extends string>(f: SchemaFactory<TScope>) {
+			return f.scope;
+		}
+
+		const inferred = inferScope(scopedFactory);
+		// TODO: AB#43345
+		// @ts-expect-error Known issue: see "variance with respect to scope and alpha" test.
+		type _check2 = requireTrue<areSafelyAssignable<typeof inferred, "test.blah.scoped">>;
+
+		function inferScope2<TScope extends string>(
+			f: SchemaFactory<TScope> | SchemaFactoryBeta<TScope>,
+		) {
+			return f.scope;
+		}
+		const inferred2 = inferScope2(scopedFactory);
+		type _check3 = requireTrue<areSafelyAssignable<typeof inferred2, "test.blah.scoped">>;
+	});
+
+	it("scopedFactoryAlpha", () => {
 		const factory = new SchemaFactoryAlpha("test.blah");
 
 		const scopedFactory: SchemaFactoryAlpha<"test.blah.scoped"> =
-			factory.scopedFactory("scoped");
+			factory.scopedFactoryAlpha("scoped");
 		assert.equal(scopedFactory.scope, "test.blah.scoped");
 		type _check = requireTrue<
 			areSafelyAssignable<typeof scopedFactory.scope, "test.blah.scoped">
@@ -1290,6 +1346,399 @@ describe("schemaFactory", () => {
 		}
 		const inferred2 = inferScope2(scopedFactory);
 		type _check3 = requireTrue<areSafelyAssignable<typeof inferred2, "test.blah.scoped">>;
+	});
+
+	// TODO: AB#44317: The error messages for rejecting insertions which would put a document out of schema due to staged types are poor, and should be improved.
+	// Many tests here include coverage for these errors.
+	describe("staged", () => {
+		const schemaFactory = new SchemaFactoryAlpha("staged tests");
+
+		class TestObject extends schemaFactory.objectAlpha("TestObject", {
+			foo: SchemaFactoryAlpha.types([
+				SchemaFactoryAlpha.number,
+				SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+			]),
+		}) {}
+
+		it("allows forward references", () => {
+			const schemaFactoryAlpha = new SchemaFactoryAlpha("test");
+			class A extends schemaFactoryAlpha.objectAlpha("A", {
+				foo: SchemaFactoryAlpha.types([SchemaFactoryAlpha.staged(() => B)]),
+			}) {}
+
+			class B extends schemaFactoryAlpha.objectAlpha("B", {}) {}
+
+			const config = new TreeViewConfiguration({
+				schema: A,
+			});
+		});
+
+		it("example", () => {
+			const factory = new SchemaFactoryAlpha("test");
+			class A extends factory.objectAlpha("A", {}) {}
+			class B extends factory.objectAlpha("B", {}) {}
+
+			// Does not support B
+			const configBefore = new TreeViewConfigurationAlpha({
+				schema: A,
+			});
+
+			// Supports documents with or without B
+			const configStaged = new TreeViewConfigurationAlpha({
+				// Adds staged support for B.
+				// Currently this requires wrapping the root field with `SchemaFactoryAlpha.required`:
+				// this is normally implicitly included, but is currently required while the "staged" APIs are `@alpha`.
+				schema: SchemaFactoryAlpha.types([A, SchemaFactoryAlpha.staged(B)]),
+			});
+
+			// Only supports documents with A and B: can be used to upgrade schema to add B.
+			const configAfter = new TreeViewConfigurationAlpha({
+				schema: [A, B],
+			});
+		});
+
+		describe("in objects", () => {
+			it("are permitted when unhydrated", () => {
+				const testObject = new TestObject({ foo: "test" });
+				assert.equal(testObject.foo, "test");
+				testObject.foo = 42;
+				assert.equal(testObject.foo, 42);
+				testObject.foo = "test";
+				assert.equal(testObject.foo, "test");
+			});
+
+			it("can't be hydrated", () => {
+				const testObject = new TestObject({ foo: "test" });
+				const provider = new TestTreeProviderLite(1);
+
+				const config = new TreeViewConfiguration({
+					schema: TestObject,
+				});
+				const view = provider.trees[0].viewWith(config);
+				view.initialize({ foo: 3 });
+				assert.throws(() => {
+					view.root = testObject;
+				}, validateUsageError("Tree does not conform to schema: Field_NodeTypeNotAllowed"));
+			});
+
+			it("can't be set", () => {
+				const provider = new TestTreeProviderLite(1);
+
+				const config = new TreeViewConfiguration({
+					schema: TestObject,
+				});
+				const view = provider.trees[0].viewWith(config);
+				view.initialize({ foo: 3 });
+				provider.synchronizeMessages();
+				assert.throws(() => {
+					view.root.foo = "test";
+				}, validateUsageError("Tree does not conform to schema: Field_NodeTypeNotAllowed"));
+			});
+		});
+
+		describe("in maps", () => {
+			it("typing", () => {
+				const allowedTypes = SchemaFactoryAlpha.types([
+					SchemaFactoryAlpha.number,
+					SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+				]);
+
+				allowUnused<requireAssignableTo<typeof allowedTypes, AllowedTypes>>();
+				allowUnused<
+					requireAssignableTo<
+						typeof allowedTypes,
+						readonly [typeof SchemaFactoryAlpha.number, typeof SchemaFactoryAlpha.string]
+					>
+				>();
+
+				allowUnused<requireAssignableTo<typeof allowedTypes, AnnotatedAllowedTypes>>();
+				allowUnused<
+					requireAssignableTo<
+						typeof allowedTypes,
+						UnannotateAllowedTypesList<
+							readonly [typeof SchemaFactoryAlpha.number, typeof SchemaFactoryAlpha.string]
+						>
+					>
+				>();
+				allowUnused<
+					requireAssignableTo<
+						typeof allowedTypes,
+						AnnotatedAllowedTypes<
+							readonly [
+								AnnotatedAllowedType<typeof SchemaFactoryAlpha.number>,
+								AnnotatedAllowedType<typeof SchemaFactoryAlpha.string>,
+							]
+						>
+					>
+				>();
+
+				allowUnused<
+					requireAssignableTo<
+						typeof allowedTypes,
+						AllowedTypesFull<
+							readonly [
+								AnnotatedAllowedType<typeof SchemaFactoryAlpha.number>,
+								AnnotatedAllowedType<typeof SchemaFactoryAlpha.string>,
+							]
+						>
+					>
+				>();
+
+				{
+					type InField = InsertableTreeFieldFromImplicitField<typeof allowedTypes>;
+					allowUnused<requireAssignableTo<InField, number | string>>();
+					allowUnused<requireAssignableTo<number | string, InField>>();
+				}
+
+				{
+					type InAllowedTypes = InsertableTreeNodeFromImplicitAllowedTypes<
+						typeof allowedTypes
+					>;
+					allowUnused<requireAssignableTo<InAllowedTypes, number | string>>();
+					allowUnused<requireAssignableTo<number | string, InAllowedTypes>>();
+				}
+
+				{
+					type InAllowedTypes = InsertableTreeNodeFromAllowedTypes<typeof allowedTypes>;
+					allowUnused<requireAssignableTo<InAllowedTypes, number | string>>();
+					allowUnused<requireAssignableTo<number | string, InAllowedTypes>>();
+				}
+
+				allowUnused<requireFalse<IsUnion<typeof allowedTypes>>>();
+			});
+
+			class TestMap extends schemaFactory.mapAlpha(
+				"TestMap",
+				SchemaFactoryAlpha.types([
+					SchemaFactoryAlpha.number,
+					SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+				]),
+			) {}
+
+			it("are permitted when unhydrated", () => {
+				const testMap = new TestMap({ foo: "test" });
+				assert.equal(testMap.get("foo"), "test");
+				testMap.set("foo", 42);
+				assert.equal(testMap.get("foo"), 42);
+				testMap.set("foo", "test");
+				assert.equal(testMap.get("foo"), "test");
+			});
+
+			it("can't be hydrated", () => {
+				const testMap = new TestMap({ foo: "test" });
+				const provider = new TestTreeProviderLite(1);
+
+				const config = new TreeViewConfiguration({
+					schema: TestMap,
+				});
+				const view = provider.trees[0].viewWith(config);
+				view.initialize({ foo: 3 });
+				assert.throws(() => {
+					view.root = testMap;
+				}, validateUsageError("Tree does not conform to schema: Field_NodeTypeNotAllowed"));
+			});
+
+			it("can't be set", () => {
+				const provider = new TestTreeProviderLite(1);
+
+				const config = new TreeViewConfiguration({
+					schema: TestMap,
+				});
+				const view = provider.trees[0].viewWith(config);
+				view.initialize({});
+				provider.synchronizeMessages();
+				assert.throws(() => {
+					view.root.set("foo", "test");
+				}, validateUsageError("Tree does not conform to schema: Field_NodeTypeNotAllowed"));
+			});
+		});
+
+		describe("in records", () => {
+			class TestRecord extends schemaFactory.recordAlpha(
+				"TestRecord",
+				SchemaFactoryAlpha.types([
+					SchemaFactoryAlpha.number,
+					SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+				]),
+			) {}
+
+			it("are permitted when unhydrated", () => {
+				const testRecord = new TestRecord({ foo: "test" });
+				assert.equal(testRecord.foo, "test");
+				testRecord.foo = 42;
+				assert.equal(testRecord.foo, 42);
+				testRecord.foo = "test";
+				assert.equal(testRecord.foo, "test");
+			});
+
+			it("can't be hydrated", () => {
+				const testRecord = new TestRecord({ foo: "test" });
+				const provider = new TestTreeProviderLite(1);
+
+				const config = new TreeViewConfiguration({
+					schema: TestRecord,
+				});
+				const view = provider.trees[0].viewWith(config);
+				view.initialize({ foo: 3 });
+				assert.throws(() => {
+					view.root = testRecord;
+				}, validateUsageError("Tree does not conform to schema: Field_NodeTypeNotAllowed"));
+			});
+
+			it("can't be set", () => {
+				const provider = new TestTreeProviderLite(1);
+
+				const config = new TreeViewConfiguration({
+					schema: TestRecord,
+				});
+				const view = provider.trees[0].viewWith(config);
+				view.initialize({});
+				provider.synchronizeMessages();
+				assert.throws(() => {
+					view.root.foo = "test";
+				}, validateUsageError("Tree does not conform to schema: Field_NodeTypeNotAllowed"));
+			});
+		});
+
+		describe("in arrays", () => {
+			/**
+			 * Allows numbers, and staged to allow strings.
+			 */
+			class TestArray extends schemaFactory.arrayAlpha(
+				"TestArray",
+				SchemaFactoryAlpha.types([
+					SchemaFactoryAlpha.number,
+					SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+				]),
+			) {}
+
+			it("are permitted when unhydrated", () => {
+				const testArray = new TestArray(["test"]);
+				testArray.insertAtEnd("test");
+				assert.deepEqual(Array.from(testArray.values()), ["test", "test"]);
+				testArray.insertAtEnd(5);
+				assert.deepEqual(Array.from(testArray.values()), ["test", "test", 5]);
+			});
+
+			it("can't be hydrated", () => {
+				const testArray = new TestArray(["test"]);
+				const provider = new TestTreeProviderLite(1);
+
+				const config = new TreeViewConfiguration({
+					schema: TestArray,
+				});
+				const view = provider.trees[0].viewWith(config);
+				view.initialize([]);
+				assert.throws(
+					() => {
+						view.root = testArray;
+					},
+					validateUsageError(/Tree does not conform to schema/),
+				);
+			});
+
+			it("can't be inserted", () => {
+				const provider = new TestTreeProviderLite(1);
+
+				const config = new TreeViewConfiguration({
+					schema: TestArray,
+				});
+				const view = provider.trees[0].viewWith(config);
+				view.initialize([]);
+				provider.synchronizeMessages();
+				assert.throws(
+					() => {
+						view.root.insertAtEnd("test");
+					},
+					validateUsageError(/Tree does not conform to schema/),
+				);
+			});
+
+			it("can't be inserted, deeper", () => {
+				const provider = new TestTreeProviderLite(1);
+
+				class Root extends schemaFactory.objectAlpha("TestObject", {
+					foo: TestArray,
+				}) {}
+
+				const config = new TreeViewConfiguration({
+					schema: Root,
+				});
+				const view = provider.trees[0].viewWith(config);
+				view.initialize({
+					foo: [],
+				});
+				provider.synchronizeMessages();
+
+				const x = (
+					view as SchematizingSimpleTreeView<typeof Root>
+				).checkout.storedSchema.nodeSchema.get(brand(Root.identifier));
+
+				const f = x?.getFieldSchema(EmptyKey);
+
+				assert.throws(
+					() => {
+						view.root.foo.insertAtEnd("test");
+					},
+					validateUsageError(/Tree does not conform to schema/),
+				);
+			});
+
+			it("can't be inserted, even when type is referenced", () => {
+				const provider = new TestTreeProviderLite(1);
+
+				class Root extends schemaFactory.objectAlpha("TestObject", {
+					foo: TestArray,
+					// Reference to string schema, so the node schema can be found.
+					bar: schemaFactory.string,
+				}) {}
+
+				const config = new TreeViewConfiguration({
+					schema: Root,
+				});
+				const view = provider.trees[0].viewWith(config);
+				view.initialize({
+					foo: [],
+					bar: "x",
+				});
+				provider.synchronizeMessages();
+
+				const x = (
+					view as SchematizingSimpleTreeView<typeof Root>
+				).checkout.storedSchema.nodeSchema.get(brand(Root.identifier));
+
+				const f = x?.getFieldSchema(EmptyKey);
+
+				assert.throws(
+					() => {
+						view.root.foo.insertAtEnd("test");
+					},
+					validateUsageError(/Tree does not conform to schema/),
+				);
+			});
+
+			it("can't be moved in from another field", () => {
+				const provider = new TestTreeProviderLite(1);
+
+				const config = new TreeViewConfiguration({
+					schema: schemaFactory.objectAlpha("TestObject", {
+						foo: TestArray,
+						bar: schemaFactory.arrayAlpha("StringArray", schemaFactory.string),
+					}),
+				});
+				const view = provider.trees[0].viewWith(config);
+				view.initialize({
+					foo: [],
+					bar: ["test"],
+				});
+				provider.synchronizeMessages();
+				assert.throws(() => {
+					view.root.foo.moveToEnd(0, view.root.bar);
+				}, validateUsageError(
+					"Type com.fluidframework.leaf.string in source sequence is not allowed in destination's stored schema: this would likely require upgrading the document to permit a staged schema.",
+				));
+			});
+		});
 	});
 });
 

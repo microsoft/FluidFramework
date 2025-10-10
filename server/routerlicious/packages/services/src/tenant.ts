@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import { ScopeType, type IUser } from "@fluidframework/protocol-definitions";
 import {
 	GitManager,
@@ -41,10 +40,7 @@ export function getRefreshTokenIfNeededCallback(
 	serviceName: string,
 ): (authorizationHeader: RawAxiosRequestHeaders) => Promise<RawAxiosRequestHeaders | undefined> {
 	const refreshTokenIfNeeded = async (authorizationHeader: RawAxiosRequestHeaders) => {
-		if (
-			authorizationHeader.Authorization &&
-			typeof authorizationHeader.Authorization === "string"
-		) {
+		if (typeof authorizationHeader.Authorization === "string") {
 			const currentAccessToken = extractTokenFromHeader(authorizationHeader.Authorization);
 			const props = {
 				...getLumberBaseProperties(documentId, tenantId),
@@ -62,7 +58,7 @@ export function getRefreshTokenIfNeededCallback(
 				Lumberjack.error("Failed to refresh access token", props, error);
 				throw error;
 			});
-			if (newAccessToken) {
+			if (newAccessToken !== undefined) {
 				return {
 					Authorization: `Basic ${newAccessToken}`,
 				};
@@ -127,8 +123,28 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			() => getGlobalTelemetryContext().getProperties().serviceName ?? "" /* serviceName */,
 		);
 		const result = await restWrapper.post<core.ITenantConfig & { key: string }>(
-			`/api/tenants/${encodeURIComponent(tenantId || "")}`,
+			`/api/tenants/${encodeURIComponent(tenantId ?? "")}`,
 			undefined /* requestBody */,
+		);
+		return result;
+	}
+
+	public async getTenantfromRiddler(tenantId?: string): Promise<core.ITenantConfig> {
+		const restWrapper = new BasicRestWrapper(
+			undefined /* baseUrl */,
+			undefined /* defaultQueryString */,
+			undefined /* maxBodyLength */,
+			undefined /* maxContentLength */,
+			undefined /* defaultHeaders */,
+			undefined /* axios */,
+			undefined /* refreshDefaultQureyString */,
+			undefined /* refreshDefaultHeaders */,
+			() => getGlobalTelemetryContext().getProperties().correlationId,
+			() => getGlobalTelemetryContext().getProperties(),
+		);
+		const result = await restWrapper.get<core.ITenantConfig>(
+			`${this.endpoint}/api/tenants/${encodeURIComponent(tenantId ?? "")}`,
+			undefined,
 		);
 		return result;
 	}
@@ -166,9 +182,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			lumberProperties /* telemetryProperties */,
 		);
 
-		const defaultQueryString = {
-			token: fromUtf8ToBase64(`${tenantId}`),
-		};
+		const defaultQueryString = {};
 		const getDefaultHeaders = () => {
 			const credentials: ICredentials = {
 				password: accessToken,
@@ -177,7 +191,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			const headers: RawAxiosRequestHeaders = {
 				Authorization: getAuthorizationTokenFromCredentials(credentials),
 			};
-			if (storageName) {
+			if (storageName !== undefined) {
 				headers.StorageName = storageName;
 			}
 
@@ -190,12 +204,9 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 		};
 
 		const refreshTokenIfNeeded = async (authorizationHeader: RawAxiosRequestHeaders) => {
-			if (
-				authorizationHeader.Authorization &&
-				typeof authorizationHeader.Authorization === "string"
-			) {
+			if (typeof authorizationHeader.Authorization === "string") {
 				const currentAccessToken = parseToken(tenantId, authorizationHeader.Authorization);
-				if (currentAccessToken) {
+				if (currentAccessToken !== undefined) {
 					const props = {
 						...lumberProperties,
 						serviceName: "historian",
@@ -216,7 +227,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 						Lumberjack.error("Failed to refresh access token", props, error);
 						throw error;
 					});
-					if (newAccessToken) {
+					if (newAccessToken !== undefined) {
 						const newCredentials: ICredentials = {
 							password: newAccessToken,
 							user: tenantId,
@@ -276,7 +287,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 	public async verifyToken(tenantId: string, token: string): Promise<void> {
 		if (this.invalidTokenCache) {
 			const cachedInvalidTokenError = await this.invalidTokenCache.get(token);
-			if (cachedInvalidTokenError) {
+			if (cachedInvalidTokenError !== null) {
 				this.throwInvalidTokenErrorAsNetworkError(cachedInvalidTokenError);
 			}
 		}

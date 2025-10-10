@@ -11,7 +11,7 @@ import {
 	type TreeNode,
 	type TreeNodeApi,
 	type TreeView,
-	getOrCreateInnerNode,
+	getInnerNode,
 	treeNodeApi,
 	rollback,
 	type TransactionConstraint,
@@ -60,6 +60,9 @@ export interface Tree extends TreeNodeApi {
 export const Tree: Tree = {
 	...treeNodeApi,
 
+	// Note: the implementation details of `createRunTransaction` are deprecated.
+	// We have introduced replacement `@alpha` APIs on `TreeBranch`, but until they are `@public`, we can't reasonably deprecated this.
+	// Once they have been promoted to public, we can deprecate this API.
 	runTransaction: createRunTransaction(),
 
 	contains(parent: TreeNode, child: TreeNode): boolean {
@@ -444,7 +447,7 @@ export function runTransaction<
 	} else {
 		const node = treeOrNode as TNode;
 		const t = transaction as (node: TNode) => TResult | typeof rollback;
-		const context = getOrCreateInnerNode(node).context;
+		const context = getInnerNode(node).context;
 		if (context.isHydrated() === false) {
 			throw new UsageError(
 				"Transactions cannot be run on Unhydrated nodes. Transactions apply to a TreeView and Unhydrated nodes are not part of a TreeView.",

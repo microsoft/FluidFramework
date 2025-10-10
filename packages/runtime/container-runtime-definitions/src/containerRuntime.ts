@@ -32,8 +32,7 @@ import type { ContainerExtensionStore } from "./containerExtension.js";
 
 /**
  * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IContainerRuntimeWithResolveHandle_Deprecated extends IContainerRuntime {
 	readonly IFluidHandleContext: IFluidHandleContext;
@@ -42,8 +41,7 @@ export interface IContainerRuntimeWithResolveHandle_Deprecated extends IContaine
 
 /**
  * Events emitted by {@link IContainerRuntime}.
- * @legacy
- * @alpha
+ * @legacy @beta
  * @sealed
  */
 export interface IContainerRuntimeEvents
@@ -54,8 +52,7 @@ export interface IContainerRuntimeEvents
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  * @sealed
  */
 export type SummarizerStopReason =
@@ -93,8 +90,7 @@ export type SummarizerStopReason =
 	| "latestSummaryStateStale";
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  * @sealed
  */
 export interface ISummarizeEventProps {
@@ -114,8 +110,7 @@ export interface ISummarizeEventProps {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  * @sealed
  */
 export interface ISummarizerObservabilityProps {
@@ -124,8 +119,7 @@ export interface ISummarizerObservabilityProps {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  * @sealed
  */
 export interface ISummarizerEvents extends IEvent {
@@ -159,8 +153,7 @@ export interface ISummarizerEvents extends IEvent {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  * @sealed
  */
 export type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase &
@@ -168,8 +161,7 @@ export type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase &
 
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
- * @legacy
- * @alpha
+ * @legacy @beta
  * @sealed
  */
 export interface IContainerRuntime
@@ -208,6 +200,17 @@ export interface IContainerRuntime
  *
  * @internal
  */
-export interface IContainerRuntimeInternal
-	extends IContainerRuntime,
-		ContainerExtensionStore {}
+export interface IContainerRuntimeInternal extends IContainerRuntime, ContainerExtensionStore {
+	/**
+	 * Lookup the blob storage ID for a given local blob id.
+	 * @param localId - The local blob id. Likely coming from a handle.
+	 * @returns The storage ID if found and the blob is not pending, undefined otherwise.
+	 * @remarks
+	 * This method provides access to the BlobManager's storage ID lookup functionality.
+	 * For blobs with pending payloads (localId exists but upload hasn't finished), this is expected to return undefined.
+	 * Consumers should use the observability APIs on the handle (handle.payloadState, payloadShared event)
+	 * to understand/wait for storage ID availability.
+	 * Similarly, when the runtime is detached, this will return undefined as no blobs have been uploaded to storage.
+	 */
+	lookupTemporaryBlobStorageId(localId: string): string | undefined;
+}

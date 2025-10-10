@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import type { SessionId } from "@fluidframework/id-compressor";
 
-import { type ICodecOptions, noopValidator } from "../../codec/index.js";
+import type { ICodecOptions } from "../../codec/index.js";
 import { TreeStoredSchemaRepository } from "../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { decode } from "../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
@@ -59,9 +59,10 @@ describe("sharedTreeChangeCodec", () => {
 			dummyFieldBatchCodec,
 			codecOptions,
 		);
-		const sharedTreeChangeCodec = makeSharedTreeChangeCodecFamily(modularChangeCodecs, {
-			jsonValidator: noopValidator,
-		}).resolve(1).json;
+		const sharedTreeChangeCodec = makeSharedTreeChangeCodecFamily(
+			modularChangeCodecs,
+			codecOptions,
+		).resolve(1).json;
 
 		const dummyTestSchema = new TreeStoredSchemaRepository();
 		const dummyContext = {

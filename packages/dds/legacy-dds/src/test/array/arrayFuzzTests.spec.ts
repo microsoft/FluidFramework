@@ -9,7 +9,7 @@ import { createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
 import { describe } from "mocha";
 
 import { _dirname } from "./dirname.cjs";
-import { baseSharedArrayModel } from "./fuzzUtils.js";
+import { baseSharedArrayModel, eventEmitterForFuzzHarness } from "./fuzzUtils.js";
 
 describe("SharedArray fuzz", () => {
 	createDDSFuzzSuite(baseSharedArrayModel, {
@@ -19,12 +19,14 @@ describe("SharedArray fuzz", () => {
 		clientJoinOptions: {
 			maxNumberOfClients: 5,
 			clientAddProbability: 0.1,
+			stashableClientProbability: 0.3,
 		},
 		detachedStartOptions: {
 			numOpsBeforeAttach: 5,
-			rehydrateDisabled: true,
 		},
+		rollbackProbability: 0.2,
 		defaultTestCount: 50,
 		saveFailures: { directory: path.join(_dirname, "../../src/test/results") },
+		emitter: eventEmitterForFuzzHarness,
 	});
 });

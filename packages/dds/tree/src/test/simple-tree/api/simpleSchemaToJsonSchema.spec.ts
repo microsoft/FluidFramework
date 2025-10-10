@@ -8,11 +8,13 @@ import {
 	FieldKind,
 	generateSchemaFromSimpleSchema,
 	getJsonSchema,
+	KeyEncodingOptions,
 	NodeKind,
 	normalizeFieldSchema,
 	numberSchema,
 	SchemaFactoryAlpha,
 	stringSchema,
+	TreeBeta,
 	type JsonObjectNodeSchema,
 	type JsonTreeSchema,
 	type UnsafeUnknownSchema,
@@ -37,7 +39,7 @@ function simpleToJsonSchema(simpleSchema: SimpleTreeSchema): JsonTreeSchema {
 	const schema = generateSchemaFromSimpleSchema(simpleSchema);
 	return toJsonSchema(schema, {
 		requireFieldsWithDefaults: false,
-		useStoredKeys: false,
+		keys: KeyEncodingOptions.usePropertyKeys,
 	});
 }
 
@@ -290,7 +292,7 @@ describe("simpleSchemaToJsonSchema", () => {
 			const empty = schemaFactory.objectAlpha("empty", {});
 			const emptyJson = convertObjectNodeSchema(empty, {
 				requireFieldsWithDefaults: false,
-				useStoredKeys: false,
+				keys: KeyEncodingOptions.usePropertyKeys,
 			});
 			const expectedEmpty: JsonObjectNodeSchema = {
 				type: "object",
@@ -312,7 +314,7 @@ describe("simpleSchemaToJsonSchema", () => {
 			}) {}
 			const withFieldJson = convertObjectNodeSchema(WithField, {
 				requireFieldsWithDefaults: false,
-				useStoredKeys: false,
+				keys: KeyEncodingOptions.usePropertyKeys,
 			});
 			const expectedWithField: JsonObjectNodeSchema = {
 				type: "object",
@@ -682,40 +684,48 @@ describe("simpleSchemaToJsonSchema", () => {
 				const testSchema = normalizeFieldSchema(testTree.schema).allowedTypes;
 
 				{
-					const withPropertyKeys = TreeAlpha.exportConcise(tree, { useStoredKeys: false });
+					const withPropertyKeys = TreeBeta.exportConcise(tree, {
+						keys: KeyEncodingOptions.usePropertyKeys,
+					});
 					const jsonSchema = getJsonSchema(testSchema, {
 						requireFieldsWithDefaults: true,
-						useStoredKeys: false,
+						keys: KeyEncodingOptions.usePropertyKeys,
 					});
 					const validator = getJsonValidator(jsonSchema);
 					validator(withPropertyKeys, true);
 				}
 
 				{
-					const withStoredKeys = TreeAlpha.exportConcise(tree, { useStoredKeys: true });
+					const withStoredKeys = TreeBeta.exportConcise(tree, {
+						keys: KeyEncodingOptions.knownStoredKeys,
+					});
 					const jsonSchema = getJsonSchema(testSchema, {
 						requireFieldsWithDefaults: true,
-						useStoredKeys: true,
+						keys: KeyEncodingOptions.knownStoredKeys,
 					});
 					const validator = getJsonValidator(jsonSchema);
 					validator(withStoredKeys, true);
 				}
 
 				{
-					const withPropertyKeys = TreeAlpha.exportConcise(tree, { useStoredKeys: false });
+					const withPropertyKeys = TreeBeta.exportConcise(tree, {
+						keys: KeyEncodingOptions.usePropertyKeys,
+					});
 					const jsonSchema = getJsonSchema(testSchema, {
 						requireFieldsWithDefaults: false,
-						useStoredKeys: false,
+						keys: KeyEncodingOptions.usePropertyKeys,
 					});
 					const validator = getJsonValidator(jsonSchema);
 					validator(withPropertyKeys, true);
 				}
 
 				{
-					const withStoredKeys = TreeAlpha.exportConcise(tree, { useStoredKeys: true });
+					const withStoredKeys = TreeBeta.exportConcise(tree, {
+						keys: KeyEncodingOptions.knownStoredKeys,
+					});
 					const jsonSchema = getJsonSchema(testSchema, {
 						requireFieldsWithDefaults: false,
-						useStoredKeys: true,
+						keys: KeyEncodingOptions.knownStoredKeys,
 					});
 					const validator = getJsonValidator(jsonSchema);
 					validator(withStoredKeys, true);

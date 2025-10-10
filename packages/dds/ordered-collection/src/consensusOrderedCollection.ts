@@ -5,26 +5,29 @@
 
 import { bufferToString } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
 import {
 	MessageType,
-	ISequencedDocumentMessage,
+	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
-import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base/internal";
+import {
+	type IFluidSerializer,
+	SharedObject,
+} from "@fluidframework/shared-object-base/internal";
 import { v4 as uuid } from "uuid";
 
 import {
-	ConsensusCallback,
+	type ConsensusCallback,
 	ConsensusResult,
-	IConsensusOrderedCollection,
-	IConsensusOrderedCollectionEvents,
-	IOrderedCollection,
+	type IConsensusOrderedCollection,
+	type IConsensusOrderedCollectionEvents,
+	type IOrderedCollection,
 } from "./interfaces.js";
 
 const snapshotFileNameData = "header";
@@ -97,8 +100,7 @@ const idForLocalUnattachedClient = undefined;
  *
  * Generally not used directly. A derived type will pass in a backing data type
  * IOrderedCollection that will define the deterministic add/acquire order and snapshot ability.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 
 // TODO: #22835 Use undefined instead of any (breaking change)

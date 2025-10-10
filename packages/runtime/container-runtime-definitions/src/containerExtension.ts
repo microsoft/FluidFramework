@@ -13,6 +13,7 @@ import type {
 	JsonDeserialized,
 	JsonSerializable,
 	Listenable,
+	OpaqueJsonDeserialized,
 	TypedMessage,
 } from "@fluidframework/core-interfaces/internal";
 import type { IQuorumClients } from "@fluidframework/driver-definitions/internal";
@@ -64,10 +65,25 @@ export type OutboundExtensionMessage<TMessage extends TypedMessage = TypedMessag
  * Brand for value that has not been verified.
  *
  * @remarks
- * Usage:
+ * What element is unverified is left up to the user and should be
+ * coordinated with and documented for associated logic.
  *
- * - Cast any value to `UnverifiedBrand` using `as unknown as UnverifiedBrand<T>`
- * when it is not yet confirmed that value is of type `T`.
+ * One type of unverified data is whether a `string` represents an identifier
+ * known to the system, such as an email address. This unverified email address
+ * could be represented as `string & UnverifiedBrand<EmailAddress>` where
+ * `EmailAddress` is a branded type for email addresses, such as
+ * `string & BrandedType<"EmailAddress">`.
+ *
+ * Another type of unverified data is particular structure of value where little
+ * to no or weak structure is known. An example is data received over the
+ * wire that is expected to be of a certain structure but has not yet been
+ * verified.
+ *
+ * Usage where value (type `U`) is not yet verified to be type `T`:
+ *
+ * - Cast value of type `U` suspected/expected to be `T` but not verified (where
+ * `T extends U`) to `UnverifiedBrand` using `as U & UnverifiedBrand<T>`. An
+ * example base type `U` for an object is `Record<string, unknown>`.
  *
  * - When `T` value is needed, use narrowing type guards to check (preferred)
  * or cast from `UnverifiedBrand` using `as unknown` when "instance" must
@@ -85,8 +101,8 @@ export type OutboundExtensionMessage<TMessage extends TypedMessage = TypedMessag
  * @sealed
  * @internal
  */
-export declare class UnverifiedBrand<T> extends BrandedType<T> {
-	private readonly UnverifiedValue: T;
+export declare class UnverifiedBrand<T> extends BrandedType<UnverifiedBrand<unknown>> {
+	protected readonly UnverifiedValue: T;
 	private constructor();
 }
 
@@ -102,7 +118,7 @@ export type RawInboundExtensionMessage<TMessage extends TypedMessage = TypedMess
 		? InternalUtilityTypes.FlattenIntersection<
 				ExtensionMessage<{
 					type: string;
-					content: JsonDeserialized<unknown>;
+					content: OpaqueJsonDeserialized<unknown>;
 				}> & {
 					/**
 					 * The client ID that submitted the message.
@@ -127,7 +143,9 @@ export type VerifiedInboundExtensionMessage<TMessage extends TypedMessage = Type
 		? InternalUtilityTypes.FlattenIntersection<
 				ExtensionMessage<{
 					type: TMessage["type"];
-					content: JsonDeserialized<TMessage["content"]>;
+					content: unknown extends TMessage["content"]
+						? OpaqueJsonDeserialized<unknown>
+						: JsonDeserialized<TMessage["content"]>;
 				}> & {
 					/**
 					 * The client ID that submitted the message.
@@ -199,13 +217,24 @@ export interface ContainerExtension<
 }
 
 /**
+ * Join status for container.
+ *
+ * @internal
+ */
+export type JoinedStatus = "disconnected" | "joinedForReading" | "joinedForWriting";
+
+/**
  * Events emitted by the {@link ExtensionHost}.
  *
+ * @remarks
+ * With loaders prior to 2.52.0, readonly clients will not get joined status or events.
+ * The only events emitted will be "joined" with canWrite = true and "disconnected".
  * @internal
  */
 export interface ExtensionHostEvents {
 	"disconnected": () => void;
-	"connected": (clientId: ClientConnectionId) => void;
+	"joined": (props: { clientId: ClientConnectionId; canWrite: boolean }) => void;
+	"connectionTypeChanged": (canWrite: boolean) => void;
 }
 
 /**
@@ -218,7 +247,21 @@ export interface ExtensionHostEvents {
  * @internal
  */
 export interface ExtensionHost<TRuntimeProperties extends ExtensionRuntimeProperties> {
-	readonly isConnected: () => boolean;
+	/**
+	 * Gets the current joined status of the container.
+	 *
+	 * @remarks
+	 * Returns one of three possible {@link JoinedStatus} values:
+	 * - "disconnected": The container is not connected to the service
+	 * - "joinedForReading": The container has a read-only connection
+	 * - "joinedForWriting": The container has a write connection
+	 *
+	 * Status changes are signaled through :
+	 * - {@link ExtensionHostEvents.disconnected}: Transitioning to Disconnected state
+	 * - {@link ExtensionHostEvents.joined}: Transition to Connected state (either for reading or writing)
+	 * - {@link ExtensionHostEvents.connectionTypeChanged}: When connection type has changed (e.g., write to read)
+	 */
+	readonly getJoinedStatus: () => JoinedStatus;
 	readonly getClientId: () => ClientConnectionId | undefined;
 
 	readonly events: Listenable<ExtensionHostEvents>;

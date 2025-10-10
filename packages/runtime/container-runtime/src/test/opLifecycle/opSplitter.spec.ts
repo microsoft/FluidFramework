@@ -8,16 +8,16 @@
 import { strict as assert } from "node:assert";
 import * as crypto from "node:crypto";
 
-import { IBatchMessage } from "@fluidframework/container-definitions/internal";
+import type { IBatchMessage } from "@fluidframework/container-definitions/internal";
 import { ContainerMessageType } from "@fluidframework/container-runtime-previous/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { CompressionAlgorithms } from "../../compressionDefinitions.js";
 import type { ContainerRuntimeChunkedOpMessage } from "../../messageTypes.js";
 import {
-	OutboundBatchMessage,
-	IChunkedOp,
+	type OutboundBatchMessage,
+	type IChunkedOp,
 	OpSplitter,
 	isChunkedMessage,
 	splitOp,
@@ -379,6 +379,8 @@ describe("OpSplitter", () => {
 							) as ContainerRuntimeChunkedOpMessage
 						).contents.contents,
 				);
+				// TODO: Fix this violation and remove the disable
+				// eslint-disable-next-line unicorn/no-array-reduce
 				const sentContent = [...contentSentSeparately, lastChunk.contents].reduce(
 					(accumulator, current) => `${accumulator}${current}`,
 				);

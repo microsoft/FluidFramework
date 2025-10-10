@@ -19,13 +19,16 @@ import {
 	normalizeFieldSchema,
 } from "../fieldSchema.js";
 import {
+	type AllowedTypesFullEvaluated,
 	NodeKind,
 	type TreeNodeSchema,
-	isAnnotatedAllowedType,
-	evaluateLazySchema,
 	markSchemaMostDerived,
 } from "../core/index.js";
-import { toStoredSchema } from "../toStoredSchema.js";
+import {
+	permissiveStoredSchemaGenerationOptions,
+	restrictiveStoredSchemaGenerationOptions,
+	toStoredSchema,
+} from "../toStoredSchema.js";
 import {
 	isArrayNodeSchema,
 	isMapNodeSchema,
@@ -213,7 +216,8 @@ export class TreeViewConfiguration<
 
 		// Eagerly perform this conversion to surface errors sooner.
 		// Includes detection of duplicate schema identifiers.
-		toStoredSchema(config.schema);
+		toStoredSchema(config.schema, restrictiveStoredSchemaGenerationOptions);
+		toStoredSchema(config.schema, permissiveStoredSchemaGenerationOptions);
 
 		const definitions = new Map<string, SimpleNodeSchema & TreeNodeSchema>();
 
@@ -227,9 +231,9 @@ export class TreeViewConfiguration<
 				debugAssert(() => !definitions.has(schema.identifier));
 				definitions.set(schema.identifier, schema as SimpleNodeSchema & TreeNodeSchema);
 			},
-			allowedTypes({ types }): void {
+			allowedTypes({ types }: AllowedTypesFullEvaluated): void {
 				checkUnion(
-					types.map((t) => evaluateLazySchema(isAnnotatedAllowedType(t) ? t.type : t)),
+					types.map((t) => t.type),
 					config.preventAmbiguity,
 					ambiguityErrors,
 				);

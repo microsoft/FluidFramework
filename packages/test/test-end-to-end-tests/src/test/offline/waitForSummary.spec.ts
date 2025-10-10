@@ -15,7 +15,7 @@ import {
 	type IContainer,
 	type IHostLoader,
 } from "@fluidframework/container-definitions/internal";
-import type { IContainerExperimental } from "@fluidframework/container-loader/internal";
+import { asLegacyAlpha, type ContainerAlpha } from "@fluidframework/container-loader/internal";
 import type {
 	ConfigTypes,
 	IConfigProviderBase,
@@ -75,7 +75,7 @@ describeCompat(
 		];
 		let provider: ITestObjectProvider;
 		let loader: IHostLoader;
-		let container: IContainerExperimental;
+		let container: ContainerAlpha;
 		let url: any;
 		let map1: MinimalMap;
 		let dataStore1: ITestFluidObject;
@@ -84,7 +84,6 @@ describeCompat(
 			registry,
 			loaderProps: {
 				configProvider: configProvider({
-					"Fluid.Container.enableOfflineLoad": true,
 					"Fluid.Sequence.intervalStickinessEnabled": true,
 				}),
 			},
@@ -137,10 +136,12 @@ describeCompat(
 		async function initialize(initializeMap: (d: ITestFluidObject) => Promise<MinimalMap>) {
 			provider = getTestObjectProvider({ syncSummarizer: true });
 			loader = provider.makeTestLoader(mainContainerConfig);
-			container = await createAndAttachContainer(
-				provider.defaultCodeDetails,
-				loader,
-				provider.driver.createCreateNewRequest(provider.documentId),
+			container = asLegacyAlpha(
+				await createAndAttachContainer(
+					provider.defaultCodeDetails,
+					loader,
+					provider.driver.createCreateNewRequest(provider.documentId),
+				),
 			);
 			provider.updateDocumentId(container.resolvedUrl);
 			url = await container.getAbsoluteUrl("");
@@ -255,12 +256,15 @@ describeCompat(
 					[LoaderHeader.loadMode]: { deltaConnection: "none" },
 					[LoaderHeader.version]: summaryVersion,
 				};
-				const container2: IContainerExperimental = await loader.resolve({ url, headers });
+				const container2: ContainerAlpha = asLegacyAlpha(
+					await loader.resolve({ url, headers }),
+				);
 				const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 				const map2 = await getMap(dataStore2);
 				// generate ops with RSN === summary SN
 				map2.set("2", "2");
-				const stashBlob = await container2.closeAndGetPendingLocalState?.();
+				const stashBlob = await container2.getPendingLocalState();
+				container2.close();
 				assert(stashBlob);
 				const pendingState = JSON.parse(stashBlob);
 
@@ -294,7 +298,17 @@ describeCompat(
 					new Promise<string | undefined>((resolve, reject) =>
 						container.on("op", (op) => {
 							if (op.type === "summarize") {
-								resolve(container.closeAndGetPendingLocalState?.());
+								if (container.getPendingLocalState !== undefined) {
+									container
+										.getPendingLocalState()
+										.then((pendingState) => {
+											container.close();
+											resolve(pendingState);
+										})
+										.catch(reject);
+								} else {
+									resolve(undefined);
+								}
 							}
 						}),
 					),

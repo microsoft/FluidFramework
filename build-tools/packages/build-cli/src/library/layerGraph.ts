@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "node:assert";
+import { strict as assert } from "node:assert";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { Package } from "@fluidframework/build-tools";
@@ -254,7 +254,7 @@ class PackageNode extends BaseNode {
 	/**
 	 * Packages this package is directly dependent upon
 	 */
-	public get childDependencies(): Readonly<PackageNode[]> {
+	public get childDependencies(): readonly PackageNode[] {
 		return this._childDependencies;
 	}
 
@@ -571,7 +571,6 @@ But some packages in layer A depend on packages in layer B, and likewise some in
 
 			this.padArraysToSameLength(packagesInCell, layersInCell, "&nbsp;");
 			lines.push(`| Packages | Layer Dependencies |`, `| --- | --- |`);
-			// eslint-disable-next-line unicorn/no-array-push-push
 			lines.push(
 				`| ${packagesInCell.join("</br>")} | ${layersInCell.join("</br>")} |${newline}`,
 			);

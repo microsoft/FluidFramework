@@ -12,13 +12,17 @@ import type {
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { anchorSlot } from "../core/index.js";
+import { anchorSlot, rootFieldKey } from "../core/index.js";
 import {
 	type NodeIdentifierManager,
 	defaultSchemaPolicy,
-	cursorForMapTreeNode,
+	cursorForMapTreeField,
 	TreeStatus,
 	Context,
+	type FlexTreeOptionalField,
+	type FlexTreeUnknownUnboxed,
+	FieldKinds,
+	type FlexTreeRequiredField,
 } from "../feature-libraries/index.js";
 import {
 	type ImplicitFieldSchema,
@@ -38,7 +42,7 @@ import {
 	type UnsafeUnknownSchema,
 	type TreeBranch,
 	type TreeBranchEvents,
-	getOrCreateInnerNode,
+	getInnerNode,
 	getKernel,
 	type VoidTransactionCallbackStatus,
 	type TransactionCallbackStatus,
@@ -51,9 +55,11 @@ import {
 	areImplicitFieldSchemaEqual,
 	prepareForInsertionContextless,
 	type FieldSchema,
-	toStoredSchema,
 	tryDisposeTreeNode,
+	FieldSchemaAlpha,
 	TreeViewConfigurationAlpha,
+	toInitialSchema,
+	toUpgradeSchema,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
@@ -62,7 +68,7 @@ import {
 	type WithBreakable,
 } from "../util/index.js";
 
-import { canInitialize, ensureSchema, initialize } from "./schematizeTree.js";
+import { canInitialize, initialize, initializerFromChunk } from "./schematizeTree.js";
 import type { ITreeCheckout, TreeCheckout } from "./treeCheckout.js";
 
 /**
@@ -77,7 +83,7 @@ export const ViewSlot = anchorSlot<TreeView<ImplicitFieldSchema>>();
 @breakingClass
 export class SchematizingSimpleTreeView<
 	in out TRootSchema extends ImplicitFieldSchema | UnsafeUnknownSchema,
-> implements TreeBranch, TreeViewAlpha<TRootSchema>, WithBreakable
+> implements TreeViewAlpha<TRootSchema>, WithBreakable
 {
 	/**
 	 * This is set to undefined when this object is disposed or the view schema does not support viewing the document's stored schema.
@@ -114,6 +120,11 @@ export class SchematizingSimpleTreeView<
 	 * which are implementation details and should not be exposed to the user.
 	 */
 	private midUpgrade = false;
+
+	/**
+	 * Hydration work deferred until Context has been created.
+	 */
+	private pendingHydration?: () => void;
 
 	private readonly rootFieldSchema: FieldSchema;
 	public readonly breaker: Breakable;
@@ -171,7 +182,14 @@ export class SchematizingSimpleTreeView<
 		}
 
 		this.runSchemaEdit(() => {
-			const schema = toStoredSchema(this.config.schema);
+			const schema = toInitialSchema(this.config.schema);
+			// This has to be the contextless version, since when "initialize" is called (right after this),
+			// it will do a schema change which would dispose of the current context (see inside `update`).
+			// Thus using the current context (if any) would hydrate nodes then
+			// immediately dispose them instead of having them actually be useable after initialize.
+			// For this to work,
+			// the hydration must be deferred until after the content is inserted into the tree and the final schema change is done (for required roots),
+			// but before any user event could could run.
 			const mapTree = prepareForInsertionContextless(
 				content as InsertableContent | undefined,
 				this.rootFieldSchema,
@@ -180,12 +198,35 @@ export class SchematizingSimpleTreeView<
 					policy: defaultSchemaPolicy,
 				},
 				this,
+				schema.rootFieldSchema,
+				(batches, doHydration) => {
+					assert(this.pendingHydration === undefined, "pendingHydration already set");
+					this.pendingHydration = () => {
+						assert(batches.length <= 1, "initialize should at most one hydration batch");
+						for (const batch of batches) {
+							doHydration(batch, {
+								parent: undefined,
+								parentField: rootFieldKey,
+								parentIndex: 0,
+							});
+						}
+					};
+				},
 			);
 
-			initialize(this.checkout, {
+			this.checkout.transaction.start();
+
+			initialize(
+				this.checkout,
 				schema,
-				initialTree: mapTree === undefined ? undefined : cursorForMapTreeNode(mapTree),
-			});
+				initializerFromChunk(this.checkout, () => {
+					// This must be done after initial schema is set!
+					return this.checkout.forest.chunkField(
+						cursorForMapTreeField(mapTree === undefined ? [] : [mapTree]),
+					);
+				}),
+			);
+			this.checkout.transaction.commit();
 		});
 	}
 
@@ -204,10 +245,8 @@ export class SchematizingSimpleTreeView<
 			);
 		}
 
-		this.runSchemaEdit(() => {
-			const result = ensureSchema(this.viewSchema, this.checkout);
-			assert(result, 0x8bf /* Schema upgrade should always work if canUpgrade is set. */);
-		});
+		const newSchema = toUpgradeSchema(this.viewSchema.viewSchema.root);
+		this.runSchemaEdit(() => this.checkout.updateSchema(newSchema));
 	}
 
 	/**
@@ -317,11 +356,17 @@ export class SchematizingSimpleTreeView<
 				this.nodeKeyManager,
 			);
 			assert(!slots.has(SimpleContextSlot), 0xa47 /* extra simple tree context */);
+			assert(
+				this.rootFieldSchema instanceof FieldSchemaAlpha,
+				0xbfa /* all field schema should be FieldSchemaAlpha */,
+			);
 			slots.set(
 				SimpleContextSlot,
 				new HydratedContext(
-					normalizeFieldSchema(this.rootFieldSchema).annotatedAllowedTypesNormalized,
 					this.flexTreeContext,
+					HydratedContext.schemaMapFromRootSchema(
+						this.rootFieldSchema.allowedTypesFull.evaluate(),
+					),
 				),
 			);
 
@@ -334,7 +379,10 @@ export class SchematizingSimpleTreeView<
 				// TODO: provide a better event: this.view.flexTree.on(????) and/or integrate with with the normal event code paths.
 
 				// Track what the root was before to be able to detect changes.
-				let lastRoot: ReadableField<TRootSchema> = this.root;
+				// This uses the flex tree root to avoid demanding the simple-tree TreeNode when it might not be hydrated yet.
+				let lastRoot: FlexTreeUnknownUnboxed | undefined = (
+					this.flexTreeContext.root as FlexTreeOptionalField
+				).content;
 
 				this.flexTreeViewUnregisterCallbacks.add(
 					this.checkout.events.on("afterBatch", () => {
@@ -343,8 +391,8 @@ export class SchematizingSimpleTreeView<
 						// - The rootChanged event will already be raised at the end of the current upgrade
 						// - It doesn't matter that `lastRoot` isn't updated in this case, because `update` will be called again before the upgrade
 						//   completes (at which point this callback and the `lastRoot` captured here will be out of scope anyway)
-						if (!this.midUpgrade && lastRoot !== this.root) {
-							lastRoot = this.root;
+						if (!this.midUpgrade && lastRoot !== this.flexRoot.content) {
+							lastRoot = this.flexRoot.content;
 							this.events.emit("rootChanged");
 						}
 					}),
@@ -358,6 +406,10 @@ export class SchematizingSimpleTreeView<
 		);
 
 		if (!this.midUpgrade) {
+			assert(
+				this.pendingHydration === undefined,
+				"no nodes should be pending hydration when triggering events that could access nodes",
+			);
 			this.events.emit("schemaChanged");
 			this.events.emit("rootChanged");
 		}
@@ -370,6 +422,9 @@ export class SchematizingSimpleTreeView<
 		} finally {
 			this.midUpgrade = false;
 		}
+		// Ensure hydration is flushed before events run which could access nodes.
+		this.pendingHydration?.();
+		this.pendingHydration = undefined;
 		this.events.emit("schemaChanged");
 		this.events.emit("rootChanged");
 	}
@@ -404,13 +459,13 @@ export class SchematizingSimpleTreeView<
 		this.checkout.forest.anchors.slots.delete(ViewSlot);
 		this.currentCompatibility = undefined;
 		this.onDispose?.();
-		if (this.checkout.isBranch && !this.checkout.disposed) {
-			// All (non-main) branches are 1:1 with views, so if a user manually disposes a view, we should also dispose the checkout/branch.
+		if (!this.checkout.isSharedBranch && !this.checkout.disposed) {
+			// All non-shared branches are 1:1 with views, so if a user manually disposes a view, we should also dispose the checkout/branch.
 			this.checkout.dispose();
 		}
 	}
 
-	public get root(): ReadableField<TRootSchema> {
+	private get flexRoot(): FlexTreeOptionalField | FlexTreeRequiredField {
 		this.breaker.use();
 		if (!this.compatibility.canView) {
 			throw new UsageError(
@@ -418,7 +473,17 @@ export class SchematizingSimpleTreeView<
 			);
 		}
 		const view = this.getFlexTreeContext();
-		return tryGetTreeNodeForField(view.root) as ReadableField<TRootSchema>;
+		assert(
+			view.root.is(FieldKinds.optional) ||
+				view.root.is(FieldKinds.required) ||
+				view.root.is(FieldKinds.identifier),
+			"unexpected root field kind",
+		);
+		return view.root;
+	}
+
+	public get root(): ReadableField<TRootSchema> {
+		return tryGetTreeNodeForField(this.flexRoot) as ReadableField<TRootSchema>;
 	}
 
 	public set root(newRoot: InsertableField<TRootSchema>) {
@@ -429,7 +494,12 @@ export class SchematizingSimpleTreeView<
 			);
 		}
 		const view = this.getFlexTreeContext();
-		setField(view.root, this.rootFieldSchema, newRoot as InsertableContent | undefined);
+		setField(
+			view.root,
+			this.rootFieldSchema,
+			newRoot as InsertableContent | undefined,
+			this.checkout.storedSchema.rootFieldSchema,
+		);
 	}
 
 	// #region Branching
@@ -478,7 +548,7 @@ export function addConstraintsToTransaction(
 	for (const constraint of constraints) {
 		switch (constraint.type) {
 			case "nodeInDocument": {
-				const node = getOrCreateInnerNode(constraint.node);
+				const node = getInnerNode(constraint.node);
 				const nodeStatus = getKernel(constraint.node).getStatus();
 				if (nodeStatus !== TreeStatus.InDocument) {
 					const revertText = constraintsOnRevert ? " on revert" : "";

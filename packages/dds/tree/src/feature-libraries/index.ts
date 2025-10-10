@@ -9,7 +9,11 @@ export {
 } from "./editableTreeBinder.js";
 export { allowsValue, assertAllowedValue, isTreeValue } from "./valueUtilities.js";
 
-export { ForestSummarizer } from "./forest-summary/index.js";
+export {
+	ForestSummarizer,
+	getCodecTreeForForestFormat,
+	type ForestFormatVersion,
+} from "./forest-summary/index.js";
 export {
 	cursorForMapTreeField,
 	cursorForMapTreeNode,
@@ -28,6 +32,7 @@ export {
 	encodeTreeSchema,
 	makeSchemaCodec,
 	makeSchemaCodecs,
+	getCodecTreeForSchemaFormat,
 } from "./schema-index/index.js";
 export {
 	stackTreeNodeCursor,
@@ -92,15 +97,21 @@ export { mapRootChanges } from "./deltaUtils.js";
 export {
 	type TreeChunk,
 	chunkTree,
+	chunkField,
 	chunkFieldSingle,
 	buildChunkedForest,
 	defaultChunkPolicy,
 	type FieldBatch,
 	type FieldBatchCodec,
+	type FieldBatchFormatVersion,
+	getCodecTreeForFieldBatchFormat,
 	makeTreeChunker,
 	makeFieldBatchCodec,
 	fluidVersionToFieldBatchCodecWriteVersion,
 	type FieldBatchEncodingContext,
+	emptyChunk,
+	type IncrementalEncodingPolicy,
+	defaultIncrementalEncodingPolicy,
 } from "./chunked-forest/index.js";
 
 export {
@@ -136,7 +147,9 @@ export {
 	SchemaValidationError,
 	isNodeInSchema,
 	isFieldInSchema,
-	inSchemaOrThrow,
+	throwOutOfSchema,
+	getCodecTreeForModularChangeFormat,
+	type ModularChangeFormatVersion,
 } from "./default-schema/index.js";
 
 export {
@@ -169,9 +182,16 @@ export {
 	type FlexTreeHydratedContextMinimal,
 	type HydratedFlexTreeNode,
 	getOrCreateHydratedFlexTreeNode,
+	currentObserver,
+	withObservation,
+	type Observer,
 } from "./flex-tree/index.js";
 
-export { TreeCompressionStrategy } from "./treeCompressionUtils.js";
+export {
+	TreeCompressionStrategy,
+	TreeCompressionStrategyExtended,
+	type TreeCompressionStrategyPrivate,
+} from "./treeCompressionUtils.js";
 
 export { valueSchemaAllows } from "./valueUtilities.js";
 
@@ -181,6 +201,8 @@ export {
 	type SchemaChange,
 	makeSchemaChangeCodecs,
 	EncodedSchemaChange,
+	getCodecTreeForSchemaChangeFormat,
+	type SchemaChangeFormatVersion,
 } from "./schema-edits/index.js";
 
 export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily.js";
@@ -193,5 +215,3 @@ export {
 	type TreeIndexKey,
 	type TreeIndexNodes,
 } from "./indexing/index.js";
-
-export { initializeForest } from "./initializeForest.js";
