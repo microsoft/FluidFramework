@@ -37,7 +37,7 @@ importers:
         version: link:packages/tools/changelog-generator-wrapper
       '@fluid-tools/build-cli':
         specifier: ^0.58.3
-        version: 0.58.3(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)
+        version: 0.58.3(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluid-tools/markdown-magic':
         specifier: workspace:~
         version: link:tools/markdown-magic
@@ -122,7 +122,7 @@ importers:
         version: 0.58.3(@types/node@22.14.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
-        version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
+        version: 6.0.0(eslint@8.55.0)(typescript@5.9.2)
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
@@ -11832,15 +11832,6 @@ importers:
       '@fluidframework/tree':
         specifier: workspace:~
         version: link:../../dds/tree
-      '@langchain/core':
-        specifier: ^0.3.66
-        version: 0.3.66(openai@5.12.2(ws@8.18.0)(zod@3.25.76))
-      langchain:
-        specifier: ^0.3.30
-        version: 0.3.30(@langchain/anthropic@0.3.26(@langchain/core@0.3.66(openai@5.12.2(ws@8.18.0)(zod@3.25.76))))(@langchain/core@0.3.66(openai@5.12.2(ws@8.18.0)(zod@3.25.76)))(@langchain/google-genai@0.2.16(@langchain/core@0.3.66(openai@5.12.2(ws@8.18.0)(zod@3.25.76))))(axios@0.30.0)(handlebars@4.7.8)(openai@5.12.2(ws@8.18.0)(zod@3.25.76))(ws@8.18.0)
-      ses:
-        specifier: ^1.14.0
-        version: 1.14.0
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
@@ -11859,7 +11850,7 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.58.3
-        version: 0.58.3(@types/node@18.19.86)(encoding@0.1.13)(typescript@5.4.5)
+        version: 0.58.3(@types/node@18.19.86)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -11877,13 +11868,16 @@ importers:
         version: link:../../runtime/test-runtime-utils
       '@langchain/anthropic':
         specifier: ^0.3.24
-        version: 0.3.26(@langchain/core@0.3.66(openai@5.12.2(ws@8.18.0)(zod@3.25.76)))
+        version: 0.3.26(@langchain/core@0.3.78(openai@5.12.2(ws@8.18.0)(zod@3.25.76)))
+      '@langchain/core':
+        specifier: ^0.3.78
+        version: 0.3.78(openai@5.12.2(ws@8.18.0)(zod@3.25.76))
       '@langchain/google-genai':
         specifier: ^0.2.16
-        version: 0.2.16(@langchain/core@0.3.66(openai@5.12.2(ws@8.18.0)(zod@3.25.76)))
+        version: 0.2.16(@langchain/core@0.3.78(openai@5.12.2(ws@8.18.0)(zod@3.25.76)))
       '@langchain/openai':
         specifier: ^0.6.12
-        version: 0.6.12(@langchain/core@0.3.66(openai@5.12.2(ws@8.18.0)(zod@3.25.76)))(ws@8.18.0)
+        version: 0.6.12(@langchain/core@0.3.78(openai@5.12.2(ws@8.18.0)(zod@3.25.76)))(ws@8.18.0)
       '@microsoft/api-extractor':
         specifier: 7.52.11
         version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
@@ -11896,6 +11890,182 @@ importers:
       '@types/uuid':
         specifier: ^9.0.2
         version: 9.0.8
+      c8:
+        specifier: ^10.1.3
+        version: 10.1.3
+      concurrently:
+        specifier: ^8.2.1
+        version: 8.2.2
+      copyfiles:
+        specifier: ^2.4.1
+        version: 2.4.1
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
+      eslint:
+        specifier: ~8.55.0
+        version: 8.55.0
+      eslint-config-prettier:
+        specifier: ~9.0.0
+        version: 9.0.0(eslint@8.55.0)
+      mocha:
+        specifier: ^10.8.2
+        version: 10.8.2
+      mocha-multi-reporters:
+        specifier: ^1.5.1
+        version: 1.5.1(mocha@10.8.2)
+      prettier:
+        specifier: ~3.0.3
+        version: 3.0.3
+      rimraf:
+        specifier: ^4.4.0
+        version: 4.4.1
+      ses:
+        specifier: ^1.14.0
+        version: 1.14.0
+      typescript:
+        specifier: ~5.4.5
+        version: 5.4.5
+
+  packages/framework/tree-agent-langchain:
+    dependencies:
+      '@fluidframework/telemetry-utils':
+        specifier: workspace:~
+        version: link:../../utils/telemetry-utils
+      '@fluidframework/tree-agent':
+        specifier: workspace:~
+        version: link:../tree-agent
+      '@langchain/core':
+        specifier: ^0.3.78
+        version: 0.3.78(openai@5.12.2(ws@8.18.0)(zod@3.25.76))
+      zod:
+        specifier: ^3.25.32
+        version: 3.25.76
+    devDependencies:
+      '@arethetypeswrong/cli':
+        specifier: ^0.17.1
+        version: 0.17.1
+      '@biomejs/biome':
+        specifier: ~1.9.3
+        version: 1.9.4
+      '@fluid-internal/mocha-test-setup':
+        specifier: workspace:~
+        version: link:../../test/mocha-test-setup
+      '@fluid-tools/build-cli':
+        specifier: ^0.58.3
+        version: 0.58.3(@types/node@18.19.86)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+      '@fluidframework/build-common':
+        specifier: ^2.0.3
+        version: 2.0.3
+      '@fluidframework/build-tools':
+        specifier: ^0.58.3
+        version: 0.58.3(@types/node@18.19.86)
+      '@fluidframework/core-utils':
+        specifier: workspace:~
+        version: link:../../common/core-utils
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^6.0.0
+        version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
+      '@fluidframework/runtime-utils':
+        specifier: workspace:~
+        version: link:../../runtime/runtime-utils
+      '@fluidframework/tree':
+        specifier: workspace:~
+        version: link:../../dds/tree
+      '@langchain/anthropic':
+        specifier: ^0.3.24
+        version: 0.3.26(@langchain/core@0.3.78(openai@5.12.2(ws@8.18.0)(zod@3.25.76)))
+      '@langchain/google-genai':
+        specifier: ^0.2.16
+        version: 0.2.16(@langchain/core@0.3.78(openai@5.12.2(ws@8.18.0)(zod@3.25.76)))
+      '@langchain/openai':
+        specifier: ^0.6.12
+        version: 0.6.12(@langchain/core@0.3.78(openai@5.12.2(ws@8.18.0)(zod@3.25.76)))(ws@8.18.0)
+      '@microsoft/api-extractor':
+        specifier: 7.52.11
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
+      '@types/mocha':
+        specifier: ^10.0.10
+        version: 10.0.10
+      '@types/node':
+        specifier: ^18.19.0
+        version: 18.19.86
+      c8:
+        specifier: ^10.1.3
+        version: 10.1.3
+      concurrently:
+        specifier: ^8.2.1
+        version: 8.2.2
+      copyfiles:
+        specifier: ^2.4.1
+        version: 2.4.1
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
+      eslint:
+        specifier: ~8.55.0
+        version: 8.55.0
+      eslint-config-prettier:
+        specifier: ~9.0.0
+        version: 9.0.0(eslint@8.55.0)
+      mocha:
+        specifier: ^10.8.2
+        version: 10.8.2
+      mocha-multi-reporters:
+        specifier: ^1.5.1
+        version: 1.5.1(mocha@10.8.2)
+      prettier:
+        specifier: ~3.0.3
+        version: 3.0.3
+      rimraf:
+        specifier: ^4.4.0
+        version: 4.4.1
+      typescript:
+        specifier: ~5.4.5
+        version: 5.4.5
+
+  packages/framework/tree-agent-ses:
+    dependencies:
+      '@fluidframework/tree-agent':
+        specifier: workspace:~
+        version: link:../tree-agent
+      ses:
+        specifier: ^1.14.0
+        version: 1.14.0
+    devDependencies:
+      '@arethetypeswrong/cli':
+        specifier: ^0.17.1
+        version: 0.17.1
+      '@biomejs/biome':
+        specifier: ~1.9.3
+        version: 1.9.4
+      '@fluid-internal/mocha-test-setup':
+        specifier: workspace:~
+        version: link:../../test/mocha-test-setup
+      '@fluid-tools/build-cli':
+        specifier: ^0.58.3
+        version: 0.58.3(@types/node@18.19.86)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+      '@fluidframework/build-common':
+        specifier: ^2.0.3
+        version: 2.0.3
+      '@fluidframework/build-tools':
+        specifier: ^0.58.3
+        version: 0.58.3(@types/node@18.19.86)
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^6.0.0
+        version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
+      '@fluidframework/tree':
+        specifier: workspace:~
+        version: link:../../dds/tree
+      '@microsoft/api-extractor':
+        specifier: 7.52.11
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
+      '@types/mocha':
+        specifier: ^10.0.10
+        version: 10.0.10
+      '@types/node':
+        specifier: ^18.19.0
+        version: 18.19.86
       c8:
         specifier: ^10.1.3
         version: 10.1.3
@@ -18311,8 +18481,8 @@ packages:
     peerDependencies:
       '@langchain/core': '>=0.3.58 <0.4.0'
 
-  '@langchain/core@0.3.66':
-    resolution: {integrity: sha512-d3SgSDOlgOjdIbReIXVQl9HaQzKqO/5+E+o3kJwoKXLGP9dxi7+lMyaII7yv7G8/aUxMWLwFES9zc1jFoeJEZw==}
+  '@langchain/core@0.3.78':
+    resolution: {integrity: sha512-Nn0x9erQlK3zgtRU1Z8NUjLuyW0gzdclMsvLQ6wwLeDqV91pE+YKl6uQb+L2NUDs4F0N7c2Zncgz46HxrvPzuA==}
     engines: {node: '>=18'}
 
   '@langchain/google-genai@0.2.16':
@@ -18326,12 +18496,6 @@ packages:
     engines: {node: '>=18'}
     peerDependencies:
       '@langchain/core': '>=0.3.68 <0.4.0'
-
-  '@langchain/textsplitters@0.1.0':
-    resolution: {integrity: sha512-djI4uw9rlkAb5iMhtLED+xJebDdAG935AdP4eRTB02R7OB/act55Bj9wsskhZsvuyQRpO4O1wQOp85s6T6GWmw==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      '@langchain/core': '>=0.2.21 <0.4.0'
 
   '@leichtgewicht/ip-codec@2.0.5':
     resolution: {integrity: sha512-Vo+PSpZG2/fmgmiNzYK9qWRh8h/CHrwD0mo1h1DzL4yzHNSfWYujGTYsWGreD000gcgmZ7K4Ys6Tx9TxtsKdDw==}
@@ -23666,66 +23830,8 @@ packages:
     resolution: {integrity: sha512-Sz49ZWR/BjNOq+2UK1k9ONZUVq8eyuCj30Zgc8VrRNtFlTBZduzuvehUd5kjQF6/Fms3Ir3EYqzJryw9tRvsSw==}
     engines: {node: '>=18'}
 
-  langchain@0.3.30:
-    resolution: {integrity: sha512-UyVsfwHDpHbrnWrjWuhJHqi8Non+Zcsf2kdpDTqyJF8NXrHBOpjdHT5LvPuW9fnE7miDTWf5mLcrWAGZgcrznQ==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      '@langchain/anthropic': '*'
-      '@langchain/aws': '*'
-      '@langchain/cerebras': '*'
-      '@langchain/cohere': '*'
-      '@langchain/core': '>=0.3.58 <0.4.0'
-      '@langchain/deepseek': '*'
-      '@langchain/google-genai': '*'
-      '@langchain/google-vertexai': '*'
-      '@langchain/google-vertexai-web': '*'
-      '@langchain/groq': '*'
-      '@langchain/mistralai': '*'
-      '@langchain/ollama': '*'
-      '@langchain/xai': '*'
-      axios: ^0.30.0
-      cheerio: '*'
-      handlebars: ^4.7.8
-      peggy: ^3.0.2
-      typeorm: '*'
-    peerDependenciesMeta:
-      '@langchain/anthropic':
-        optional: true
-      '@langchain/aws':
-        optional: true
-      '@langchain/cerebras':
-        optional: true
-      '@langchain/cohere':
-        optional: true
-      '@langchain/deepseek':
-        optional: true
-      '@langchain/google-genai':
-        optional: true
-      '@langchain/google-vertexai':
-        optional: true
-      '@langchain/google-vertexai-web':
-        optional: true
-      '@langchain/groq':
-        optional: true
-      '@langchain/mistralai':
-        optional: true
-      '@langchain/ollama':
-        optional: true
-      '@langchain/xai':
-        optional: true
-      axios:
-        optional: true
-      cheerio:
-        optional: true
-      handlebars:
-        optional: true
-      peggy:
-        optional: true
-      typeorm:
-        optional: true
-
-  langsmith@0.3.52:
-    resolution: {integrity: sha512-GxKl1uxCJa/PbB0CtzpfYtGIYQBQrrdTjkcIqrL5eCldOb4ro2jiqC0HbkVcs1ytK3Xe+SHoA0NUv062XXto/g==}
+  langsmith@0.3.73:
+    resolution: {integrity: sha512-zuAAFiY6yfqU+Y8OicEmBqahLWqzMumNY7tcXnuGk8P26hS5aqh+9rXfI4zv0nr++97kNP9WCiBDgPWcrSWlDA==}
     peerDependencies:
       '@opentelemetry/api': '*'
       '@opentelemetry/exporter-trace-otlp-proto': '*'
@@ -24875,9 +24981,6 @@ packages:
         optional: true
       zod:
         optional: true
-
-  openapi-types@12.1.3:
-    resolution: {integrity: sha512-N4YtSYJqghVu4iek2ZUvcN/0aqH1kRDuNqzcycDxhOUpg7GdvLa2F3DgS6yBNhInhv2r/6I0Flkn7CqL8+nIcw==}
 
   opener@1.5.2:
     resolution: {integrity: sha512-ur5UIdyw5Y7yEj9wLzhqXiy6GZ3Mwx0yGI+5sMn2r0N0v3cKJvUmFH5yPP+WXh9e0xfyzyJX95D8l088DNFj7A==}
@@ -29796,6 +29899,16 @@ snapshots:
       - supports-color
       - typescript
 
+  '@fluid-internal/eslint-plugin-fluid@0.1.5(eslint@8.55.0)(typescript@5.9.2)':
+    dependencies:
+      '@microsoft/tsdoc': 0.14.2
+      '@typescript-eslint/parser': 6.21.0(eslint@8.55.0)(typescript@5.9.2)
+      ts-morph: 22.0.0
+    transitivePeerDependencies:
+      - eslint
+      - supports-color
+      - typescript
+
   '@fluid-internal/test-driver-definitions@2.62.0':
     dependencies:
       '@fluidframework/core-interfaces': 2.62.0
@@ -29811,83 +29924,6 @@ snapshots:
       moment: 2.30.1
     transitivePeerDependencies:
       - supports-color
-
-  '@fluid-tools/build-cli@0.58.3(@types/node@18.19.86)(encoding@0.1.13)(typescript@5.4.5)':
-    dependencies:
-      '@andrewbranch/untar.js': 1.0.3
-      '@fluid-tools/build-infrastructure': 0.58.3(@types/node@18.19.86)
-      '@fluid-tools/version-tools': 0.58.3(@types/node@18.19.86)
-      '@fluidframework/build-tools': 0.58.3(@types/node@18.19.86)
-      '@fluidframework/bundle-size-tools': 0.58.3
-      '@inquirer/prompts': 7.2.0(@types/node@18.19.86)
-      '@microsoft/api-extractor': 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
-      '@oclif/core': 4.0.36
-      '@oclif/plugin-autocomplete': 3.2.13
-      '@oclif/plugin-commands': 4.1.13
-      '@oclif/plugin-help': 6.2.19
-      '@oclif/plugin-not-found': 3.2.30(@types/node@18.19.86)
-      '@octokit/core': 5.2.0
-      '@octokit/rest': 21.0.2
-      '@rushstack/node-core-library': 5.14.0(@types/node@18.19.86)
-      async: 3.2.6
-      azure-devops-node-api: 11.2.0
-      change-case: 3.1.0
-      cosmiconfig: 8.3.6(typescript@5.4.5)
-      danger: 13.0.4(encoding@0.1.13)
-      date-fns: 2.30.0
-      debug: 4.4.3(supports-color@8.1.1)
-      execa: 5.1.1
-      fflate: 0.8.2
-      fs-extra: 11.3.0
-      github-slugger: 2.0.0
-      globby: 11.1.0
-      gray-matter: 4.0.3
-      human-id: 4.1.1
-      issue-parser: 7.0.1
-      json5: 2.2.3
-      jssm: 5.104.1
-      jszip: 3.10.1
-      latest-version: 9.0.0
-      mdast: 3.0.0
-      mdast-util-heading-range: 4.0.0
-      mdast-util-to-string: 4.0.0
-      minimatch: 7.4.6
-      npm-check-updates: 16.14.20
-      oclif: 4.16.2(@types/node@18.19.86)
-      picocolors: 1.1.1
-      prettier: 3.2.5
-      prompts: 2.4.2
-      read-pkg-up: 7.0.1
-      remark: 15.0.1
-      remark-gfm: 4.0.0
-      remark-github: 12.0.0
-      remark-github-beta-blockquote-admonitions: 3.1.1
-      remark-toc: 9.0.0
-      replace-in-file: 7.2.0
-      resolve.exports: 2.0.3
-      semver: 7.7.1
-      simple-git: 3.27.0
-      sort-json: 2.0.1
-      sort-package-json: 1.57.0
-      strip-ansi: 6.0.1
-      table: 6.9.0
-      ts-morph: 22.0.0
-      type-fest: 2.19.0
-      unist-util-visit: 5.0.0
-      xml2js: 0.5.0
-    transitivePeerDependencies:
-      - '@swc/core'
-      - '@types/node'
-      - bluebird
-      - bufferutil
-      - encoding
-      - esbuild
-      - react-devtools-core
-      - supports-color
-      - typescript
-      - uglify-js
-      - utf-8-validate
-      - webpack-cli
 
   '@fluid-tools/build-cli@0.58.3(@types/node@18.19.86)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)':
     dependencies:
@@ -29931,83 +29967,6 @@ snapshots:
       minimatch: 7.4.6
       npm-check-updates: 16.14.20
       oclif: 4.16.2(@types/node@18.19.86)
-      picocolors: 1.1.1
-      prettier: 3.2.5
-      prompts: 2.4.2
-      read-pkg-up: 7.0.1
-      remark: 15.0.1
-      remark-gfm: 4.0.0
-      remark-github: 12.0.0
-      remark-github-beta-blockquote-admonitions: 3.1.1
-      remark-toc: 9.0.0
-      replace-in-file: 7.2.0
-      resolve.exports: 2.0.3
-      semver: 7.7.1
-      simple-git: 3.27.0
-      sort-json: 2.0.1
-      sort-package-json: 1.57.0
-      strip-ansi: 6.0.1
-      table: 6.9.0
-      ts-morph: 22.0.0
-      type-fest: 2.19.0
-      unist-util-visit: 5.0.0
-      xml2js: 0.5.0
-    transitivePeerDependencies:
-      - '@swc/core'
-      - '@types/node'
-      - bluebird
-      - bufferutil
-      - encoding
-      - esbuild
-      - react-devtools-core
-      - supports-color
-      - typescript
-      - uglify-js
-      - utf-8-validate
-      - webpack-cli
-
-  '@fluid-tools/build-cli@0.58.3(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)':
-    dependencies:
-      '@andrewbranch/untar.js': 1.0.3
-      '@fluid-tools/build-infrastructure': 0.58.3(@types/node@22.14.1)
-      '@fluid-tools/version-tools': 0.58.3(@types/node@22.14.1)
-      '@fluidframework/build-tools': 0.58.3(@types/node@22.14.1)
-      '@fluidframework/bundle-size-tools': 0.58.3
-      '@inquirer/prompts': 7.2.0(@types/node@22.14.1)
-      '@microsoft/api-extractor': 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.14.1)
-      '@oclif/core': 4.0.36
-      '@oclif/plugin-autocomplete': 3.2.13
-      '@oclif/plugin-commands': 4.1.13
-      '@oclif/plugin-help': 6.2.19
-      '@oclif/plugin-not-found': 3.2.30(@types/node@22.14.1)
-      '@octokit/core': 5.2.0
-      '@octokit/rest': 21.0.2
-      '@rushstack/node-core-library': 5.14.0(@types/node@22.14.1)
-      async: 3.2.6
-      azure-devops-node-api: 11.2.0
-      change-case: 3.1.0
-      cosmiconfig: 8.3.6(typescript@5.4.5)
-      danger: 13.0.4(encoding@0.1.13)
-      date-fns: 2.30.0
-      debug: 4.4.3(supports-color@8.1.1)
-      execa: 5.1.1
-      fflate: 0.8.2
-      fs-extra: 11.3.0
-      github-slugger: 2.0.0
-      globby: 11.1.0
-      gray-matter: 4.0.3
-      human-id: 4.1.1
-      issue-parser: 7.0.1
-      json5: 2.2.3
-      jssm: 5.104.1
-      jszip: 3.10.1
-      latest-version: 9.0.0
-      mdast: 3.0.0
-      mdast-util-heading-range: 4.0.0
-      mdast-util-to-string: 4.0.0
-      minimatch: 7.4.6
-      npm-check-updates: 16.14.20
-      oclif: 4.16.2(@types/node@22.14.1)
       picocolors: 1.1.1
       prettier: 3.2.5
       prompts: 2.4.2
@@ -30430,20 +30389,6 @@ snapshots:
       - uglify-js
       - webpack-cli
 
-  '@fluidframework/bundle-size-tools@0.58.3':
-    dependencies:
-      azure-devops-node-api: 11.2.0
-      jszip: 3.10.1
-      msgpack-lite: 0.1.26
-      pako: 2.1.0
-      typescript: 5.4.5
-      webpack: 5.97.1
-    transitivePeerDependencies:
-      - '@swc/core'
-      - esbuild
-      - uglify-js
-      - webpack-cli
-
   '@fluidframework/bundle-size-tools@0.58.3(webpack-cli@5.1.4)':
     dependencies:
       azure-devops-node-api: 11.2.0
@@ -30855,6 +30800,35 @@ snapshots:
       eslint-plugin-tsdoc: 0.2.17
       eslint-plugin-unicorn: 48.0.1(eslint@8.55.0)
       eslint-plugin-unused-imports: 3.0.0(@typescript-eslint/eslint-plugin@6.7.5(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0)
+    transitivePeerDependencies:
+      - eslint
+      - eslint-import-resolver-node
+      - eslint-import-resolver-webpack
+      - eslint-plugin-import-x
+      - supports-color
+      - typescript
+
+  '@fluidframework/eslint-config-fluid@6.0.0(eslint@8.55.0)(typescript@5.9.2)':
+    dependencies:
+      '@fluid-internal/eslint-plugin-fluid': 0.1.5(eslint@8.55.0)(typescript@5.9.2)
+      '@microsoft/tsdoc': 0.14.2
+      '@rushstack/eslint-patch': 1.4.0
+      '@rushstack/eslint-plugin': 0.13.1(eslint@8.55.0)(typescript@5.9.2)
+      '@rushstack/eslint-plugin-security': 0.7.1(eslint@8.55.0)(typescript@5.9.2)
+      '@typescript-eslint/eslint-plugin': 6.7.5(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.9.2))(eslint@8.55.0)(typescript@5.9.2)
+      '@typescript-eslint/parser': 6.7.5(eslint@8.55.0)(typescript@5.9.2)
+      eslint-config-biome: 1.9.4
+      eslint-config-prettier: 9.0.0(eslint@8.55.0)
+      eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.9.2))(eslint-plugin-i@2.29.1)(eslint@8.55.0)
+      eslint-plugin-eslint-comments: 3.2.0(eslint@8.55.0)
+      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.9.2))(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0)
+      eslint-plugin-jsdoc: 46.8.2(eslint@8.55.0)
+      eslint-plugin-promise: 6.1.1(eslint@8.55.0)
+      eslint-plugin-react: 7.33.2(eslint@8.55.0)
+      eslint-plugin-react-hooks: 4.6.2(eslint@8.55.0)
+      eslint-plugin-tsdoc: 0.2.17
+      eslint-plugin-unicorn: 48.0.1(eslint@8.55.0)
+      eslint-plugin-unused-imports: 3.0.0(@typescript-eslint/eslint-plugin@6.7.5(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.9.2))(eslint@8.55.0)(typescript@5.9.2))(eslint@8.55.0)
     transitivePeerDependencies:
       - eslint
       - eslint-import-resolver-node
@@ -32457,20 +32431,20 @@ snapshots:
 
   '@kwsites/promise-deferred@1.1.1': {}
 
-  '@langchain/anthropic@0.3.26(@langchain/core@0.3.66(openai@5.12.2(ws@8.18.0)(zod@3.25.76)))':
+  '@langchain/anthropic@0.3.26(@langchain/core@0.3.78(openai@5.12.2(ws@8.18.0)(zod@3.25.76)))':
     dependencies:
       '@anthropic-ai/sdk': 0.56.0
-      '@langchain/core': 0.3.66(openai@5.12.2(ws@8.18.0)(zod@3.25.76))
+      '@langchain/core': 0.3.78(openai@5.12.2(ws@8.18.0)(zod@3.25.76))
       fast-xml-parser: 4.5.3
 
-  '@langchain/core@0.3.66(openai@5.12.2(ws@8.18.0)(zod@3.25.76))':
+  '@langchain/core@0.3.78(openai@5.12.2(ws@8.18.0)(zod@3.25.76))':
     dependencies:
       '@cfworker/json-schema': 4.1.1
       ansi-styles: 5.2.0
       camelcase: 6.3.0
       decamelize: 1.2.0
       js-tiktoken: 1.0.20
-      langsmith: 0.3.52(openai@5.12.2(ws@8.18.0)(zod@3.25.76))
+      langsmith: 0.3.73(openai@5.12.2(ws@8.18.0)(zod@3.25.76))
       mustache: 4.2.0
       p-queue: 6.6.2
       p-retry: 4.6.2
@@ -32483,25 +32457,20 @@ snapshots:
       - '@opentelemetry/sdk-trace-base'
       - openai
 
-  '@langchain/google-genai@0.2.16(@langchain/core@0.3.66(openai@5.12.2(ws@8.18.0)(zod@3.25.76)))':
+  '@langchain/google-genai@0.2.16(@langchain/core@0.3.78(openai@5.12.2(ws@8.18.0)(zod@3.25.76)))':
     dependencies:
       '@google/generative-ai': 0.24.1
-      '@langchain/core': 0.3.66(openai@5.12.2(ws@8.18.0)(zod@3.25.76))
+      '@langchain/core': 0.3.78(openai@5.12.2(ws@8.18.0)(zod@3.25.76))
       uuid: 11.1.0
 
-  '@langchain/openai@0.6.12(@langchain/core@0.3.66(openai@5.12.2(ws@8.18.0)(zod@3.25.76)))(ws@8.18.0)':
+  '@langchain/openai@0.6.12(@langchain/core@0.3.78(openai@5.12.2(ws@8.18.0)(zod@3.25.76)))(ws@8.18.0)':
     dependencies:
-      '@langchain/core': 0.3.66(openai@5.12.2(ws@8.18.0)(zod@3.25.76))
+      '@langchain/core': 0.3.78(openai@5.12.2(ws@8.18.0)(zod@3.25.76))
       js-tiktoken: 1.0.20
       openai: 5.12.2(ws@8.18.0)(zod@3.25.76)
       zod: 3.25.76
     transitivePeerDependencies:
       - ws
-
-  '@langchain/textsplitters@0.1.0(@langchain/core@0.3.66(openai@5.12.2(ws@8.18.0)(zod@3.25.76)))':
-    dependencies:
-      '@langchain/core': 0.3.66(openai@5.12.2(ws@8.18.0)(zod@3.25.76))
-      js-tiktoken: 1.0.20
 
   '@leichtgewicht/ip-codec@2.0.5': {}
 
@@ -33304,10 +33273,28 @@ snapshots:
       - supports-color
       - typescript
 
+  '@rushstack/eslint-plugin-security@0.7.1(eslint@8.55.0)(typescript@5.9.2)':
+    dependencies:
+      '@rushstack/tree-pattern': 0.3.1
+      '@typescript-eslint/experimental-utils': 5.59.11(eslint@8.55.0)(typescript@5.9.2)
+      eslint: 8.55.0
+    transitivePeerDependencies:
+      - supports-color
+      - typescript
+
   '@rushstack/eslint-plugin@0.13.1(eslint@8.55.0)(typescript@5.4.5)':
     dependencies:
       '@rushstack/tree-pattern': 0.3.1
       '@typescript-eslint/experimental-utils': 5.59.11(eslint@8.55.0)(typescript@5.4.5)
+      eslint: 8.55.0
+    transitivePeerDependencies:
+      - supports-color
+      - typescript
+
+  '@rushstack/eslint-plugin@0.13.1(eslint@8.55.0)(typescript@5.9.2)':
+    dependencies:
+      '@rushstack/tree-pattern': 0.3.1
+      '@typescript-eslint/experimental-utils': 5.59.11(eslint@8.55.0)(typescript@5.9.2)
       eslint: 8.55.0
     transitivePeerDependencies:
       - supports-color
@@ -34126,9 +34113,37 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@typescript-eslint/eslint-plugin@6.7.5(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.9.2))(eslint@8.55.0)(typescript@5.9.2)':
+    dependencies:
+      '@eslint-community/regexpp': 4.12.1
+      '@typescript-eslint/parser': 6.7.5(eslint@8.55.0)(typescript@5.9.2)
+      '@typescript-eslint/scope-manager': 6.7.5
+      '@typescript-eslint/type-utils': 6.7.5(eslint@8.55.0)(typescript@5.9.2)
+      '@typescript-eslint/utils': 6.7.5(eslint@8.55.0)(typescript@5.9.2)
+      '@typescript-eslint/visitor-keys': 6.7.5
+      debug: 4.4.3(supports-color@8.1.1)
+      eslint: 8.55.0
+      graphemer: 1.4.0
+      ignore: 5.3.2
+      natural-compare: 1.4.0
+      semver: 7.7.1
+      ts-api-utils: 1.4.3(typescript@5.9.2)
+    optionalDependencies:
+      typescript: 5.9.2
+    transitivePeerDependencies:
+      - supports-color
+
   '@typescript-eslint/experimental-utils@5.59.11(eslint@8.55.0)(typescript@5.4.5)':
     dependencies:
       '@typescript-eslint/utils': 5.59.11(eslint@8.55.0)(typescript@5.4.5)
+      eslint: 8.55.0
+    transitivePeerDependencies:
+      - supports-color
+      - typescript
+
+  '@typescript-eslint/experimental-utils@5.59.11(eslint@8.55.0)(typescript@5.9.2)':
+    dependencies:
+      '@typescript-eslint/utils': 5.59.11(eslint@8.55.0)(typescript@5.9.2)
       eslint: 8.55.0
     transitivePeerDependencies:
       - supports-color
@@ -34147,6 +34162,19 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@typescript-eslint/parser@6.21.0(eslint@8.55.0)(typescript@5.9.2)':
+    dependencies:
+      '@typescript-eslint/scope-manager': 6.21.0
+      '@typescript-eslint/types': 6.21.0
+      '@typescript-eslint/typescript-estree': 6.21.0(typescript@5.9.2)
+      '@typescript-eslint/visitor-keys': 6.21.0
+      debug: 4.4.3(supports-color@8.1.1)
+      eslint: 8.55.0
+    optionalDependencies:
+      typescript: 5.9.2
+    transitivePeerDependencies:
+      - supports-color
+
   '@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5)':
     dependencies:
       '@typescript-eslint/scope-manager': 6.7.5
@@ -34157,6 +34185,19 @@ snapshots:
       eslint: 8.55.0
     optionalDependencies:
       typescript: 5.4.5
+    transitivePeerDependencies:
+      - supports-color
+
+  '@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.9.2)':
+    dependencies:
+      '@typescript-eslint/scope-manager': 6.7.5
+      '@typescript-eslint/types': 6.7.5
+      '@typescript-eslint/typescript-estree': 6.7.5(typescript@5.9.2)
+      '@typescript-eslint/visitor-keys': 6.7.5
+      debug: 4.4.3(supports-color@8.1.1)
+      eslint: 8.55.0
+    optionalDependencies:
+      typescript: 5.9.2
     transitivePeerDependencies:
       - supports-color
 
@@ -34192,6 +34233,18 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@typescript-eslint/type-utils@6.7.5(eslint@8.55.0)(typescript@5.9.2)':
+    dependencies:
+      '@typescript-eslint/typescript-estree': 6.7.5(typescript@5.9.2)
+      '@typescript-eslint/utils': 6.7.5(eslint@8.55.0)(typescript@5.9.2)
+      debug: 4.4.3(supports-color@8.1.1)
+      eslint: 8.55.0
+      ts-api-utils: 1.4.3(typescript@5.9.2)
+    optionalDependencies:
+      typescript: 5.9.2
+    transitivePeerDependencies:
+      - supports-color
+
   '@typescript-eslint/types@5.59.11': {}
 
   '@typescript-eslint/types@5.62.0': {}
@@ -34211,6 +34264,20 @@ snapshots:
       tsutils: 3.21.0(typescript@5.4.5)
     optionalDependencies:
       typescript: 5.4.5
+    transitivePeerDependencies:
+      - supports-color
+
+  '@typescript-eslint/typescript-estree@5.59.11(typescript@5.9.2)':
+    dependencies:
+      '@typescript-eslint/types': 5.59.11
+      '@typescript-eslint/visitor-keys': 5.59.11
+      debug: 4.4.3(supports-color@8.1.1)
+      globby: 11.1.0
+      is-glob: 4.0.3
+      semver: 7.7.1
+      tsutils: 3.21.0(typescript@5.9.2)
+    optionalDependencies:
+      typescript: 5.9.2
     transitivePeerDependencies:
       - supports-color
 
@@ -34243,6 +34310,21 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@typescript-eslint/typescript-estree@6.21.0(typescript@5.9.2)':
+    dependencies:
+      '@typescript-eslint/types': 6.21.0
+      '@typescript-eslint/visitor-keys': 6.21.0
+      debug: 4.4.3(supports-color@8.1.1)
+      globby: 11.1.0
+      is-glob: 4.0.3
+      minimatch: 9.0.3
+      semver: 7.7.1
+      ts-api-utils: 1.4.3(typescript@5.9.2)
+    optionalDependencies:
+      typescript: 5.9.2
+    transitivePeerDependencies:
+      - supports-color
+
   '@typescript-eslint/typescript-estree@6.7.5(typescript@5.4.5)':
     dependencies:
       '@typescript-eslint/types': 6.7.5
@@ -34257,6 +34339,20 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@typescript-eslint/typescript-estree@6.7.5(typescript@5.9.2)':
+    dependencies:
+      '@typescript-eslint/types': 6.7.5
+      '@typescript-eslint/visitor-keys': 6.7.5
+      debug: 4.4.3(supports-color@8.1.1)
+      globby: 11.1.0
+      is-glob: 4.0.3
+      semver: 7.7.1
+      ts-api-utils: 1.4.3(typescript@5.9.2)
+    optionalDependencies:
+      typescript: 5.9.2
+    transitivePeerDependencies:
+      - supports-color
+
   '@typescript-eslint/utils@5.59.11(eslint@8.55.0)(typescript@5.4.5)':
     dependencies:
       '@eslint-community/eslint-utils': 4.4.1(eslint@8.55.0)
@@ -34265,6 +34361,21 @@ snapshots:
       '@typescript-eslint/scope-manager': 5.59.11
       '@typescript-eslint/types': 5.59.11
       '@typescript-eslint/typescript-estree': 5.59.11(typescript@5.4.5)
+      eslint: 8.55.0
+      eslint-scope: 5.1.1
+      semver: 7.7.1
+    transitivePeerDependencies:
+      - supports-color
+      - typescript
+
+  '@typescript-eslint/utils@5.59.11(eslint@8.55.0)(typescript@5.9.2)':
+    dependencies:
+      '@eslint-community/eslint-utils': 4.4.1(eslint@8.55.0)
+      '@types/json-schema': 7.0.15
+      '@types/semver': 7.7.0
+      '@typescript-eslint/scope-manager': 5.59.11
+      '@typescript-eslint/types': 5.59.11
+      '@typescript-eslint/typescript-estree': 5.59.11(typescript@5.9.2)
       eslint: 8.55.0
       eslint-scope: 5.1.1
       semver: 7.7.1
@@ -34295,6 +34406,20 @@ snapshots:
       '@typescript-eslint/scope-manager': 6.7.5
       '@typescript-eslint/types': 6.7.5
       '@typescript-eslint/typescript-estree': 6.7.5(typescript@5.4.5)
+      eslint: 8.55.0
+      semver: 7.7.1
+    transitivePeerDependencies:
+      - supports-color
+      - typescript
+
+  '@typescript-eslint/utils@6.7.5(eslint@8.55.0)(typescript@5.9.2)':
+    dependencies:
+      '@eslint-community/eslint-utils': 4.4.1(eslint@8.55.0)
+      '@types/json-schema': 7.0.15
+      '@types/semver': 7.7.0
+      '@typescript-eslint/scope-manager': 6.7.5
+      '@typescript-eslint/types': 6.7.5
+      '@typescript-eslint/typescript-estree': 6.7.5(typescript@5.9.2)
       eslint: 8.55.0
       semver: 7.7.1
     transitivePeerDependencies:
@@ -34379,7 +34504,7 @@ snapshots:
 
   '@vvago/vale@3.11.2':
     dependencies:
-      axios: 1.8.4
+      axios: 1.8.4(debug@4.4.3)
       rimraf: 5.0.10
       tar: 6.2.1
       unzipper: 0.10.14
@@ -34828,26 +34953,9 @@ snapshots:
 
   axe-core@4.10.2: {}
 
-  axios@0.30.0:
-    dependencies:
-      follow-redirects: 1.15.9
-      form-data: 4.0.4
-      proxy-from-env: 1.1.0
-    transitivePeerDependencies:
-      - debug
-    optional: true
-
   axios@0.30.0(debug@4.4.3):
     dependencies:
       follow-redirects: 1.15.9(debug@4.4.3)
-      form-data: 4.0.4
-      proxy-from-env: 1.1.0
-    transitivePeerDependencies:
-      - debug
-
-  axios@1.8.4:
-    dependencies:
-      follow-redirects: 1.15.9
       form-data: 4.0.4
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
@@ -36590,6 +36698,25 @@ snapshots:
       - eslint-import-resolver-webpack
       - supports-color
 
+  eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.9.2))(eslint-plugin-i@2.29.1)(eslint@8.55.0):
+    dependencies:
+      '@nolyfill/is-core-module': 1.0.39
+      debug: 4.4.3(supports-color@8.1.1)
+      enhanced-resolve: 5.17.1
+      eslint: 8.55.0
+      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.9.2))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0)
+      fast-glob: 3.3.3
+      get-tsconfig: 4.10.0
+      is-bun-module: 1.3.0
+      is-glob: 4.0.3
+    optionalDependencies:
+      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.9.2))(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0)
+    transitivePeerDependencies:
+      - '@typescript-eslint/parser'
+      - eslint-import-resolver-node
+      - eslint-import-resolver-webpack
+      - supports-color
+
   eslint-module-utils@2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0):
     dependencies:
       debug: 3.2.7
@@ -36598,6 +36725,17 @@ snapshots:
       eslint: 8.55.0
       eslint-import-resolver-node: 0.3.9
       eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1)(eslint@8.55.0)
+    transitivePeerDependencies:
+      - supports-color
+
+  eslint-module-utils@2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.9.2))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0):
+    dependencies:
+      debug: 3.2.7
+    optionalDependencies:
+      '@typescript-eslint/parser': 6.7.5(eslint@8.55.0)(typescript@5.9.2)
+      eslint: 8.55.0
+      eslint-import-resolver-node: 0.3.9
+      eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.9.2))(eslint-plugin-i@2.29.1)(eslint@8.55.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -36618,6 +36756,23 @@ snapshots:
       eslint: 8.55.0
       eslint-import-resolver-node: 0.3.9
       eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0)
+      get-tsconfig: 4.10.0
+      is-glob: 4.0.3
+      minimatch: 3.1.2
+      semver: 7.7.1
+    transitivePeerDependencies:
+      - '@typescript-eslint/parser'
+      - eslint-import-resolver-typescript
+      - eslint-import-resolver-webpack
+      - supports-color
+
+  eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.9.2))(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0):
+    dependencies:
+      debug: 4.4.3(supports-color@8.1.1)
+      doctrine: 3.0.0
+      eslint: 8.55.0
+      eslint-import-resolver-node: 0.3.9
+      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.9.2))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0)
       get-tsconfig: 4.10.0
       is-glob: 4.0.3
       minimatch: 3.1.2
@@ -36723,6 +36878,13 @@ snapshots:
       eslint-rule-composer: 0.3.0
     optionalDependencies:
       '@typescript-eslint/eslint-plugin': 6.7.5(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0)(typescript@5.4.5)
+
+  eslint-plugin-unused-imports@3.0.0(@typescript-eslint/eslint-plugin@6.7.5(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.9.2))(eslint@8.55.0)(typescript@5.9.2))(eslint@8.55.0):
+    dependencies:
+      eslint: 8.55.0
+      eslint-rule-composer: 0.3.0
+    optionalDependencies:
+      '@typescript-eslint/eslint-plugin': 6.7.5(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.9.2))(eslint@8.55.0)(typescript@5.9.2)
 
   eslint-rule-composer@0.3.0: {}
 
@@ -37193,8 +37355,6 @@ snapshots:
   flatted@3.3.2: {}
 
   fn.name@1.1.0: {}
-
-  follow-redirects@1.15.9: {}
 
   follow-redirects@1.15.9(debug@4.3.7):
     optionalDependencies:
@@ -39127,33 +39287,7 @@ snapshots:
 
   ky@1.7.3: {}
 
-  langchain@0.3.30(@langchain/anthropic@0.3.26(@langchain/core@0.3.66(openai@5.12.2(ws@8.18.0)(zod@3.25.76))))(@langchain/core@0.3.66(openai@5.12.2(ws@8.18.0)(zod@3.25.76)))(@langchain/google-genai@0.2.16(@langchain/core@0.3.66(openai@5.12.2(ws@8.18.0)(zod@3.25.76))))(axios@0.30.0)(handlebars@4.7.8)(openai@5.12.2(ws@8.18.0)(zod@3.25.76))(ws@8.18.0):
-    dependencies:
-      '@langchain/core': 0.3.66(openai@5.12.2(ws@8.18.0)(zod@3.25.76))
-      '@langchain/openai': 0.6.12(@langchain/core@0.3.66(openai@5.12.2(ws@8.18.0)(zod@3.25.76)))(ws@8.18.0)
-      '@langchain/textsplitters': 0.1.0(@langchain/core@0.3.66(openai@5.12.2(ws@8.18.0)(zod@3.25.76)))
-      js-tiktoken: 1.0.20
-      js-yaml: 4.1.0
-      jsonpointer: 5.0.1
-      langsmith: 0.3.52(openai@5.12.2(ws@8.18.0)(zod@3.25.76))
-      openapi-types: 12.1.3
-      p-retry: 4.6.2
-      uuid: 10.0.0
-      yaml: 2.6.1
-      zod: 3.25.76
-    optionalDependencies:
-      '@langchain/anthropic': 0.3.26(@langchain/core@0.3.66(openai@5.12.2(ws@8.18.0)(zod@3.25.76)))
-      '@langchain/google-genai': 0.2.16(@langchain/core@0.3.66(openai@5.12.2(ws@8.18.0)(zod@3.25.76)))
-      axios: 0.30.0
-      handlebars: 4.7.8
-    transitivePeerDependencies:
-      - '@opentelemetry/api'
-      - '@opentelemetry/exporter-trace-otlp-proto'
-      - '@opentelemetry/sdk-trace-base'
-      - openai
-      - ws
-
-  langsmith@0.3.52(openai@5.12.2(ws@8.18.0)(zod@3.25.76)):
+  langsmith@0.3.73(openai@5.12.2(ws@8.18.0)(zod@3.25.76)):
     dependencies:
       '@types/uuid': 10.0.0
       chalk: 4.1.2
@@ -40720,8 +40854,6 @@ snapshots:
     optionalDependencies:
       ws: 8.18.0
       zod: 3.25.76
-
-  openapi-types@12.1.3: {}
 
   opener@1.5.2: {}
 
@@ -43048,7 +43180,7 @@ snapshots:
       schema-utils: 3.3.0
       serialize-javascript: 6.0.2
       terser: 5.37.0
-      webpack: 5.97.1
+      webpack: 5.97.1(webpack-cli@5.1.4)
 
   terser@5.37.0:
     dependencies:
@@ -43240,6 +43372,10 @@ snapshots:
     dependencies:
       typescript: 5.4.5
 
+  ts-api-utils@1.4.3(typescript@5.9.2):
+    dependencies:
+      typescript: 5.9.2
+
   ts-deepmerge@7.0.2: {}
 
   ts-interface-checker@0.1.13: {}
@@ -43328,7 +43464,7 @@ snapshots:
       '@tsconfig/node14': 1.0.3
       '@tsconfig/node16': 1.0.4
       '@types/node': 22.14.1
-      acorn: 8.15.0
+      acorn: 8.14.1
       acorn-walk: 8.3.4
       arg: 4.1.3
       create-require: 1.1.1
@@ -43376,6 +43512,11 @@ snapshots:
     dependencies:
       tslib: 1.14.1
       typescript: 5.4.5
+
+  tsutils@3.21.0(typescript@5.9.2):
+    dependencies:
+      tslib: 1.14.1
+      typescript: 5.9.2
 
   tuf-js@1.1.7:
     dependencies:
@@ -44105,36 +44246,6 @@ snapshots:
       wildcard: 2.0.1
 
   webpack-sources@3.2.3: {}
-
-  webpack@5.97.1:
-    dependencies:
-      '@types/eslint-scope': 3.7.7
-      '@types/estree': 1.0.6
-      '@webassemblyjs/ast': 1.14.1
-      '@webassemblyjs/wasm-edit': 1.14.1
-      '@webassemblyjs/wasm-parser': 1.14.1
-      acorn: 8.15.0
-      browserslist: 4.24.2
-      chrome-trace-event: 1.0.4
-      enhanced-resolve: 5.17.1
-      es-module-lexer: 1.5.4
-      eslint-scope: 5.1.1
-      events: 3.3.0
-      glob-to-regexp: 0.4.1
-      graceful-fs: 4.2.11
-      json-parse-even-better-errors: 2.3.1
-      loader-runner: 4.3.0
-      mime-types: 2.1.35
-      neo-async: 2.6.2
-      schema-utils: 3.3.0
-      tapable: 2.2.1
-      terser-webpack-plugin: 5.3.10(webpack@5.97.1)
-      watchpack: 2.4.2
-      webpack-sources: 3.2.3
-    transitivePeerDependencies:
-      - '@swc/core'
-      - esbuild
-      - uglify-js
 
   webpack@5.97.1(webpack-cli@5.1.4):
     dependencies:

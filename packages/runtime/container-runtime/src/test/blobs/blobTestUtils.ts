@@ -414,7 +414,7 @@ export const createTestMaterial = (
 		blobRequested: () => undefined,
 		isBlobDeleted: mockGarbageCollector.isBlobDeleted,
 		runtime: mockRuntime,
-		stashedBlobs: pendingBlobs,
+		pendingBlobs,
 		createBlobPayloadPending,
 	});
 
