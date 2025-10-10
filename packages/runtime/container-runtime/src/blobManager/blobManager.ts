@@ -938,16 +938,16 @@ export class BlobManager {
 			const localBlobRecord = this.localBlobCache.get(localId);
 			assert(localBlobRecord !== undefined, "Pending blob must be in local cache");
 			assert(
-				localBlobRecord.state === "uploading" ||
-					localBlobRecord.state === "uploaded" ||
-					localBlobRecord.state === "attaching",
-				"Pending blob must be in uploading, uploaded, or attaching state",
+				localBlobRecord.state !== "attached",
+				"Pending blob must not be in attached state",
 			);
-			// We treat blobs in both uploaded and attaching state as just being uploaded, to distrust
-			// whether we expect to see any ack for a BlobAttach op. We just remain prepared to handle
-			// a BlobAttach op for it if we do see one after loading from pending state.
+			// We downgrade uploading blobs to localOnly, and attaching blobs to uploaded. In the case of
+			// uploading blobs, we don't have a way to retrieve the eventual storageId so the upload will
+			// need to be restarted anyway. In the case of attaching blobs, we can't know whether the
+			// BlobAttach op will eventually be ack'd. So we assume we'll need to send another op, but also
+			// remain prepared to handle seeing the ack of the original op after loading from pending state.
 			pendingBlobs[localId] =
-				localBlobRecord.state === "uploading"
+				localBlobRecord.state === "localOnly" || localBlobRecord.state === "uploading"
 					? {
 							state: "localOnly",
 							blob: bufferToString(localBlobRecord.blob, "base64"),
