@@ -17,14 +17,10 @@ import {
 	type IsUnion,
 	type MakeNominal,
 } from "../../util/index.js";
-import { isLazy, type FlexListToUnion, type LazyItem } from "./flexList.js";
-import {
-	NodeKind,
-	type InsertableTypedNode,
-	type NodeFromSchema,
-	type TreeNodeSchema,
-} from "./treeNodeSchema.js";
+import { isLazy, type LazyItem } from "./flexList.js";
+import { NodeKind, type InsertableTypedNode, type TreeNodeSchema } from "./treeNodeSchema.js";
 import { schemaAsTreeNodeValid } from "./treeNodeValid.js";
+import type { GetTypes } from "../schemaTypes.js";
 
 /**
  * Schema for types allowed in some location in a tree (like a field, map entry or array).
@@ -633,15 +629,15 @@ export function markSchemaMostDerived(
 
 /**
  * Type of tree node for a field of the given schema.
+ *
+ * @typeparam TSchema - Schema to process.
+ * @remarks
+ * Defaults to {@link DefaultTreeNodeFromImplicitAllowedTypes}.
  * @public
  */
 export type TreeNodeFromImplicitAllowedTypes<
 	TSchema extends ImplicitAllowedTypes = TreeNodeSchema,
-> = TSchema extends TreeNodeSchema
-	? NodeFromSchema<TSchema>
-	: TSchema extends AllowedTypes
-		? NodeFromSchema<FlexListToUnion<TSchema>>
-		: unknown;
+> = GetTypes<TSchema>["output"];
 
 /**
  * This type exists only to be linked from documentation to provide a single linkable place to document some details of
@@ -700,20 +696,13 @@ export type Input<T extends never> = T;
 /**
  * Type of content that can be inserted into the tree for a node of the given schema.
  *
- * @see {@link Input}
- *
  * @typeparam TSchema - Schema to process.
- *
- * @privateRemarks
- * This is a bit overly conservative, since cases like `A | [A]` give never and could give `A`.
+ * @remarks
+ * Defaults to {@link DefaultInsertableTreeNodeFromImplicitAllowedTypes}.
  * @public
  */
 export type InsertableTreeNodeFromImplicitAllowedTypes<TSchema extends ImplicitAllowedTypes> =
-	[TSchema] extends [TreeNodeSchema]
-		? InsertableTypedNode<TSchema>
-		: [TSchema] extends [AllowedTypes]
-			? InsertableTreeNodeFromAllowedTypes<TSchema>
-			: never;
+	GetTypes<TSchema>["input"];
 
 /**
  * Type of content that can be inserted into the tree for a node of the given schema.

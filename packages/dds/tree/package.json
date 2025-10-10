@@ -236,7 +236,11 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"TypeAlias_InsertableTreeNodeFromImplicitAllowedTypes": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "public"
 	}
 }

@@ -36,6 +36,10 @@ export {
 	setField,
 	type TreeObjectNode,
 	type SimpleKeyMap,
+	type AssignableTreeFieldFromImplicitField,
+	type ApplyKindAssignment,
+	type ObjectFromSchemaRecordRelaxed,
+	type TreeObjectNodeRelaxed,
 } from "./object/index.js";
 
 export {
