@@ -60,10 +60,6 @@ parameters:
   type: boolean
   default: false
 
-- name: namespace
-  type: boolean
-  default: true
-
 - name: buildNumberInPatch
   type: boolean
   default: false
@@ -92,10 +88,6 @@ parameters:
 - name: packageManager
   type: string
   default: npm
-
-- name: packageManagerInstallCommand
-  type: string
-  default: 'npm ci --unsafe-perm'
 
 # The semver range constraint to use for interdependencies; that is, dependencies on other packages within the release
 # group
@@ -228,7 +220,6 @@ stages:
           parameters:
             packageManager: '${{ parameters.packageManager }}'
             buildDirectory: '${{ parameters.buildDirectory }}'
-            packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
 
         # Set version
         - template: include-set-package-version.yml@self

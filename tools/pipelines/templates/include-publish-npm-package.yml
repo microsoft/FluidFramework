@@ -23,7 +23,6 @@ stages:
       feedUrl: $(ado-feeds-test)
       environment: test-package-build-feed
       pool: ${{ parameters.pool }}
-      packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
       packageManager: pnpm
 
 - stage: publish_npm_internal
@@ -37,7 +36,6 @@ stages:
       feedKind: internal-build
       environment: package-build-feed
       pool: ${{ parameters.pool }}
-      packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
       packageManager: pnpm
 
 - stage: publish_npm_official
@@ -53,5 +51,4 @@ stages:
       pool: ${{ parameters.pool }}
       customEndPoint: npmjs
       tagName: ${{ parameters.tagName }}
-      packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
       packageManager: pnpm

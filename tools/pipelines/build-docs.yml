@@ -185,10 +185,10 @@ stages:
             version: 18.17.1
 
         - task: Npm@1
-          displayName: Install npm 6
+          displayName: Install npm 10
           inputs:
             command: 'custom'
-            customCommand: 'install --global npm@^6'
+            customCommand: 'install --global npm@^10'
             customRegistry: 'useNpmrc'
 
         - task: Npm@1
@@ -239,10 +239,10 @@ stages:
             version: 18.17.1
 
         - task: Npm@1
-          displayName: Install npm 6
+          displayName: Install npm 10
           inputs:
             command: 'custom'
-            customCommand: 'install --global npm@^6'
+            customCommand: 'install --global npm@^10'
             customRegistry: 'useNpmrc'
 
         - task: UseDotNet@2
