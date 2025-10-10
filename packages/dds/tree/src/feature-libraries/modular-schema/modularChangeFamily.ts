@@ -62,6 +62,7 @@ import {
 	RangeMap,
 	balancedReduce,
 	type RangeQueryEntry,
+	type RangeQueryResultFragment,
 } from "../../util/index.js";
 import type { TreeChunk } from "../chunked-forest/index.js";
 
@@ -2224,13 +2225,18 @@ function addAttachesToSet(
 			entry.start,
 			entry.length,
 		)) {
-			const detachId = detachIdEntry.value ?? detachIdEntry.start;
+			const detachId =
+				detachIdEntry.value ?? offsetChangeAtomId(entry.start, detachIdEntry.offset);
 			for (const detachEntry of change.crossFieldKeys.getAll2(
 				{ ...detachId, target: CrossFieldTarget.Source },
 				detachIdEntry.length,
 			)) {
 				if (detachEntry.value === undefined) {
-					rootIds.set(detachEntry.start, detachEntry.length, true);
+					rootIds.set(
+						offsetChangeAtomId(detachId, detachEntry.offset),
+						detachEntry.length,
+						true,
+					);
 				}
 			}
 		}
@@ -2736,7 +2742,7 @@ class InvertNodeManagerI implements InvertNodeManager {
 	public invertAttach(
 		attachId: ChangeAtomId,
 		count: number,
-	): RangeQueryResult<ChangeAtomId, DetachedNodeEntry> {
+	): RangeQueryResult<DetachedNodeEntry> {
 		let countToProcess = count;
 
 		const detachIdEntry = firstDetachIdFromAttachId(
@@ -2754,7 +2760,7 @@ class InvertNodeManagerI implements InvertNodeManager {
 		);
 		countToProcess = detachEntry.length;
 
-		let result: RangeQueryResult<ChangeAtomId, DetachedNodeEntry>;
+		let result: RangeQueryResult<DetachedNodeEntry>;
 		if (detachEntry.value !== undefined) {
 			const moveEntry = this.table.entries.getFirst(attachId, countToProcess);
 			result = { ...moveEntry, value: { nodeChange: moveEntry.value } };
@@ -2768,7 +2774,6 @@ class InvertNodeManagerI implements InvertNodeManager {
 
 			countToProcess = nodeIdEntry.length;
 			result = {
-				start: attachId,
 				value: { nodeChange: nodeIdEntry.value, detachId: detachIdEntry.value },
 				length: countToProcess,
 			};
@@ -2793,7 +2798,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 	public getNewChangesForBaseAttach(
 		baseAttachId: ChangeAtomId,
 		count: number,
-	): RangeQueryResult<ChangeAtomId, RebaseDetachedNodeEntry> {
+	): RangeQueryResult<RebaseDetachedNodeEntry | undefined> {
 		let countToProcess = count;
 
 		// XXX: This should not longer be necessary.
@@ -2824,7 +2829,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 
 		countToProcess = newRenameEntry.length;
 
-		let result: RangeQueryResult<ChangeAtomId, DetachedNodeEntry>;
+		let result: RangeQueryResult<DetachedNodeEntry | undefined>;
 		// eslint-disable-next-line unicorn/prefer-ternary
 		if (newNodeId !== undefined || newRenameEntry.value !== undefined) {
 			result = {
@@ -2998,7 +3003,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 	public getNewRenameForBaseRename(
 		baseRenameTo: ChangeAtomId,
 		count: number,
-	): RangeQueryResult<ChangeAtomId, ChangeAtomId> {
+	): RangeQueryResult<ChangeAtomId | undefined> {
 		let countToProcess = count;
 		const inputEntry = firstDetachIdFromAttachId(
 			this.table.baseChange.rootNodes,
@@ -3064,7 +3069,7 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 	public getNewChangesForBaseDetach(
 		baseDetachId: ChangeAtomId,
 		count: number,
-	): RangeQueryResult<ChangeAtomId, DetachedNodeEntry> {
+	): RangeQueryResult<DetachedNodeEntry | undefined> {
 		let countToProcess = count;
 
 		// XXX: There should no longer be a rename entry for a node detached by the same changeset.
@@ -3084,12 +3089,12 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 
 		countToProcess = baseAttachEntry.length;
 
-		let result: RangeQueryResult<ChangeAtomId, DetachedNodeEntry>;
+		let result: RangeQueryResult<DetachedNodeEntry | undefined>;
 		if (baseAttachEntry.value !== undefined) {
 			// The base detach was part of a move.
 			// We check if we've previously seen a node change at the move destination.
 			const entry = this.table.entries.getFirst(baseDetachId, countToProcess);
-			result = { start: baseDetachId, value: entry.value, length: entry.length };
+			result = { value: entry.value, length: entry.length };
 		} else {
 			// The detached nodes are still detached in the new change's input context.
 			// XXX: Do we need to dealias whenever pulling node IDs out of the root node table?
@@ -3108,7 +3113,6 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 
 			countToProcess = newRenameEntry.length;
 			result = {
-				start: baseDetachId,
 				value: { nodeChange: rootEntry.value, detachId: newRenameEntry.value },
 				length: countToProcess,
 			};
@@ -3207,7 +3211,7 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 				detachEntry.length,
 			)) {
 				this.table.composedRootNodes.detachLocations.set(
-					rootLocationEntry.start,
+					offsetChangeAtomId(baseAttachId, rootLocationEntry.offset),
 					rootLocationEntry.length,
 					rootLocationEntry.value ?? this.fieldId,
 				);
@@ -3919,7 +3923,7 @@ function getFirstFieldForCrossFieldKey(
 	changeset: ModularChangeset,
 	key: CrossFieldKey,
 	count: number,
-): RangeQueryResult<CrossFieldKey, FieldId> {
+): RangeQueryResult<FieldId | undefined> {
 	const result = changeset.crossFieldKeys.getFirst(key, count);
 	if (result.value === undefined) {
 		return result;
@@ -4000,7 +4004,7 @@ function firstAttachIdFromDetachId(
 	count: number,
 ): RangeQueryEntry<ChangeAtomId, ChangeAtomId> {
 	const result = roots.oldToNewId.getFirst(detachId, count);
-	return { ...result, value: result.value ?? detachId };
+	return { ...result, start: detachId, value: result.value ?? detachId };
 }
 
 function firstDetachIdFromAttachId(
@@ -4009,7 +4013,7 @@ function firstDetachIdFromAttachId(
 	count: number,
 ): RangeQueryEntry<ChangeAtomId, ChangeAtomId> {
 	const result = roots.newToOldId.getFirst(attachId, count);
-	return { ...result, value: result.value ?? attachId };
+	return { ...result, start: attachId, value: result.value ?? attachId };
 }
 
 function rebaseCrossFieldKeys(
@@ -4357,17 +4361,15 @@ function invertRootTable(change: ModularChangeset, isRollback: boolean): RootNod
 
 			for (const attachEntry of doesChangeAttachNodes(change.crossFieldKeys, newId, length)) {
 				if (!attachEntry.value) {
-					// XXX: Improve range map API
-					const offset = subtractChangeAtomIds(attachEntry.start, newId);
+					const offsetNewId = offsetChangeAtomId(newId, attachEntry.offset);
 
 					// XXX: Is it possible that this change moves the detached root to a different field?
 					addNodeRename(
 						invertedRoots,
-						offsetChangeAtomId(newId, offset),
-						offsetChangeAtomId(oldId, offset),
+						offsetNewId,
+						offsetChangeAtomId(oldId, attachEntry.offset),
 						attachEntry.length,
-						change.rootNodes.detachLocations.getFirst(attachEntry.start, attachEntry.length)
-							.value,
+						change.rootNodes.detachLocations.getFirst(offsetNewId, attachEntry.length).value,
 					);
 				}
 			}
@@ -4381,7 +4383,7 @@ function doesChangeAttachNodes(
 	table: CrossFieldKeyTable,
 	id: ChangeAtomId,
 	count: number,
-): RangeQueryEntry<ChangeAtomId, boolean>[] {
+): RangeQueryResultFragment<boolean>[] {
 	return table
 		.getAll2({ ...id, target: CrossFieldTarget.Destination }, count)
 		.map((entry) => ({ ...entry, value: entry.value !== undefined }));
@@ -4391,7 +4393,8 @@ function doesChangeDetachNodes(
 	table: CrossFieldKeyTable,
 	id: ChangeAtomId,
 	count: number,
-): RangeQueryEntry<ChangeAtomId, boolean>[] {
+): RangeQueryResultFragment<boolean>[] {
+	// XXX: Should have type which is a fragment with non-null value.
 	return table
 		.getAll2({ ...id, target: CrossFieldTarget.Source }, count)
 		.map((entry) => ({ ...entry, value: entry.value !== undefined }));
@@ -4401,7 +4404,7 @@ function getDetachFields(
 	table: CrossFieldKeyTable,
 	id: ChangeAtomId,
 	count: number,
-): RangeQueryResult<CrossFieldKey, FieldId>[] {
+): RangeQueryResultFragment<FieldId | undefined>[] {
 	return table.getAll2({ ...id, target: CrossFieldTarget.Source }, count);
 }
 
@@ -4409,7 +4412,7 @@ export function getFirstDetachField(
 	table: CrossFieldKeyTable,
 	id: ChangeAtomId,
 	count: number,
-): RangeQueryResult<CrossFieldKey, FieldId> {
+): RangeQueryResult<FieldId | undefined> {
 	return table.getFirst({ target: CrossFieldTarget.Source, ...id }, count);
 }
 
@@ -4417,7 +4420,7 @@ export function getFirstAttachField(
 	table: CrossFieldKeyTable,
 	id: ChangeAtomId,
 	count: number,
-): RangeQueryResult<CrossFieldKey, FieldId> {
+): RangeQueryResult<FieldId | undefined> {
 	return table.getFirst({ target: CrossFieldTarget.Destination, ...id }, count);
 }
 
@@ -4429,21 +4432,17 @@ export function addNodeRename(
 	detachLocation: FieldId | undefined,
 ): void {
 	for (const entry of table.oldToNewId.getAll2(oldId, count)) {
-		// XXX: RangeMap offsets
-		const offset = subtractChangeAtomIds(entry.start, oldId);
 		assert(
 			entry.value === undefined ||
-				areEqualChangeAtomIds(entry.value, offsetChangeAtomId(newId, offset)),
+				areEqualChangeAtomIds(entry.value, offsetChangeAtomId(newId, entry.offset)),
 			"Rename collision detected",
 		);
 	}
 
 	for (const entry of table.newToOldId.getAll2(newId, count)) {
-		// XXX: RangeMap offsets
-		const offset = subtractChangeAtomIds(entry.start, newId);
 		assert(
 			entry.value === undefined ||
-				areEqualChangeAtomIds(entry.value, offsetChangeAtomId(oldId, offset)),
+				areEqualChangeAtomIds(entry.value, offsetChangeAtomId(oldId, entry.offset)),
 			"Rename collision detected",
 		);
 	}

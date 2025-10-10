@@ -795,7 +795,7 @@ function newInvertManager(): TestInvertManager {
 		invertAttach(
 			attachId: ChangeAtomId,
 			count: number,
-		): RangeQueryResult<ChangeAtomId, DetachedNodeEntry> {
+		): RangeQueryResult<DetachedNodeEntry | undefined> {
 			throw new Error("Function not implemented.");
 		},
 	};
@@ -810,7 +810,7 @@ function newComposeManager(): TestComposeManager {
 		getNewChangesForBaseDetach(
 			baseDetachId: ChangeAtomId,
 			count: number,
-		): RangeQueryResult<ChangeAtomId, DetachedNodeEntry> {
+		): RangeQueryResult<DetachedNodeEntry | undefined> {
 			throw new Error("Not implemented");
 		},
 
@@ -841,7 +841,7 @@ function newRebaseManager(): TestRebaseManager {
 		getNewChangesForBaseAttach(
 			baseAttachId: ChangeAtomId,
 			count: number,
-		): RangeQueryResult<ChangeAtomId, DetachedNodeEntry> {
+		): RangeQueryResult<DetachedNodeEntry | undefined> {
 			throw new Error("Function not implemented.");
 		},
 
@@ -861,17 +861,14 @@ function newRebaseManager(): TestRebaseManager {
 			throw new Error("Function not implemented.");
 		},
 
-		doesBaseMoveNodes(
-			id: ChangeAtomId,
-			count: number,
-		): RangeQueryEntry<ChangeAtomId, boolean> {
+		doesBaseMoveNodes(id: ChangeAtomId, count: number): RangeQueryResult<boolean> {
 			throw new Error("Function not implemented.");
 		},
 
 		getNewRenameForBaseRename(
 			baseRenameTo: ChangeAtomId,
 			count: number,
-		): RangeQueryResult<ChangeAtomId, ChangeAtomId> {
+		): RangeQueryResult<ChangeAtomId | undefined> {
 			throw new Error("Function not implemented.");
 		},
 	};

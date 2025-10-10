@@ -434,12 +434,9 @@ export function makeModularChangeCodecV1(
 	type ChangeAtomMappingQuery = (
 		id: ChangeAtomId,
 		count: number,
-	) => RangeQueryResult<ChangeAtomId, ChangeAtomId>;
+	) => RangeQueryResult<ChangeAtomId | undefined>;
 
-	type ChangeAtomIdRangeQuery = (
-		id: ChangeAtomId,
-		count: number,
-	) => RangeQueryEntry<ChangeAtomId, boolean>;
+	type ChangeAtomIdRangeQuery = (id: ChangeAtomId, count: number) => RangeQueryResult<boolean>;
 	type NodeEncoder = (nodeId: NodeId) => EncodedNodeChangeset;
 	type NodeDecoder = (encoded: EncodedNodeChangeset, fieldId: NodeLocation) => NodeId;
 
@@ -502,10 +499,7 @@ export function makeModularChangeCodecV1(
 	const modularChangeCodec: ModularChangeCodec = {
 		encode: (change, context) => {
 			const fieldToRoots = getFieldToRoots(change.rootNodes);
-			const isAttachId = (
-				id: ChangeAtomId,
-				count: number,
-			): RangeQueryEntry<ChangeAtomId, boolean> => {
+			const isAttachId = (id: ChangeAtomId, count: number): RangeQueryResult<boolean> => {
 				const attachEntry = getFirstAttachField(change.crossFieldKeys, id, count);
 				return { ...attachEntry, value: attachEntry.value !== undefined };
 			};
@@ -523,7 +517,7 @@ export function makeModularChangeCodecV1(
 			const getInputDetachId = (
 				id: ChangeAtomId,
 				count: number,
-			): RangeQueryResult<ChangeAtomId, ChangeAtomId> => {
+			): RangeQueryResult<ChangeAtomId | undefined> => {
 				return change.rootNodes.newToOldId.getFirst(id, count);
 			};
 

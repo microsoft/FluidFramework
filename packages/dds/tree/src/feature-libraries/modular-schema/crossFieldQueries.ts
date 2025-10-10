@@ -25,16 +25,16 @@ export function setInCrossFieldMap<T>(
 	map.set(id, count, value);
 }
 
-// TODO: Rename to NodeMoveType(Attach | Detach)
 export function getFirstFromCrossFieldMap<T>(
 	map: CrossFieldMap<T>,
 	revision: RevisionTag | undefined,
 	id: ChangesetLocalId,
 	count: number,
-): RangeQueryResult<ChangeAtomId, T> {
+): RangeQueryResult<T | undefined> {
 	return map.getFirst({ revision, localId: id }, count);
 }
 
+// TODO: Rename to NodeMoveType(Attach | Detach)
 export enum CrossFieldTarget {
 	Source,
 	Destination,
@@ -69,7 +69,7 @@ export interface InvertNodeManager {
 	invertAttach(
 		attachId: ChangeAtomId,
 		count: number,
-	): RangeQueryResult<ChangeAtomId, DetachedNodeEntry>;
+	): RangeQueryResult<DetachedNodeEntry | undefined>;
 }
 
 export interface ComposeNodeManager {
@@ -82,7 +82,7 @@ export interface ComposeNodeManager {
 	getNewChangesForBaseDetach(
 		baseDetachId: ChangeAtomId,
 		count: number,
-	): RangeQueryResult<ChangeAtomId, DetachedNodeEntry>;
+	): RangeQueryResult<DetachedNodeEntry | undefined>;
 
 	/**
 	 * Must be called by a field kind when composing an attach in the base changeset with a detach in the new changeset.
@@ -144,7 +144,7 @@ export interface RebaseNodeManager {
 	getNewChangesForBaseAttach(
 		baseAttachId: ChangeAtomId,
 		count: number,
-	): RangeQueryResult<ChangeAtomId, RebaseDetachedNodeEntry>;
+	): RangeQueryResult<RebaseDetachedNodeEntry | undefined>;
 
 	// XXX: It's not clear if this must be called even when newDetachId and nodeChange are undefined.
 	// XXX: It's not clear if it's okay to call this once with a newDetachId then once with a nodeChange.
@@ -175,7 +175,7 @@ export interface RebaseNodeManager {
 	 * are moved to a different location by the base changeset, either because they are being attached or because their last
 	 * detach location is being changed.
 	 */
-	doesBaseMoveNodes(id: ChangeAtomId, count: number): RangeQueryEntry<ChangeAtomId, boolean>;
+	doesBaseMoveNodes(id: ChangeAtomId, count: number): RangeQueryResult<boolean>;
 
 	/**
 	 * Given a detached node ID in the base changeset's output context,
@@ -184,7 +184,7 @@ export interface RebaseNodeManager {
 	getNewRenameForBaseRename(
 		baseRenameTo: ChangeAtomId,
 		count: number,
-	): RangeQueryResult<ChangeAtomId, ChangeAtomId>;
+	): RangeQueryResult<ChangeAtomId | undefined>;
 }
 
 export interface DetachedNodeEntry {

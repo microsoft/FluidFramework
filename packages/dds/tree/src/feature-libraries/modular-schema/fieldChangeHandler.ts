@@ -14,12 +14,7 @@ import type {
 	RevisionMetadataSource,
 	RevisionTag,
 } from "../../core/index.js";
-import type {
-	IdAllocator,
-	Invariant,
-	RangeQueryEntry,
-	RangeQueryResult,
-} from "../../util/index.js";
+import type { IdAllocator, Invariant, RangeQueryResult } from "../../util/index.js";
 import type {
 	ComposeNodeManager,
 	InvertNodeManager,
@@ -235,9 +230,9 @@ export interface FieldChangeEncodingContext {
 	getInputDetachId(
 		id: ChangeAtomId,
 		count: number,
-	): RangeQueryResult<ChangeAtomId, ChangeAtomId>;
-	isAttachId(id: ChangeAtomId, count: number): RangeQueryEntry<ChangeAtomId, boolean>;
-	isDetachId(id: ChangeAtomId, count: number): RangeQueryEntry<ChangeAtomId, boolean>;
+	): RangeQueryResult<ChangeAtomId | undefined>;
+	isAttachId(id: ChangeAtomId, count: number): RangeQueryResult<boolean>;
+	isDetachId(id: ChangeAtomId, count: number): RangeQueryResult<boolean>;
 
 	decodeNode(encodedNode: EncodedNodeChangeset): NodeId;
 	decodeRootNodeChange(detachId: ChangeAtomId, encodedNode: EncodedNodeChangeset): void;

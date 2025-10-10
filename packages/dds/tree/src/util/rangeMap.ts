@@ -96,24 +96,25 @@ export class RangeMap<K, V> {
 	/**
 	 * Like getAll, but includes entries where the value is undefined.
 	 */
-	public getAll2(start: K, length: number): RangeQueryResult<K, V>[] {
+	public getAll2(start: K, length: number): RangeQueryResultFragment<V | undefined>[] {
 		let nextKey = start;
-		let lengthRemaining = length;
-		const result: RangeQueryResult<K, V>[] = [];
+		let offset = 0;
+		const result: RangeQueryResultFragment<V | undefined>[] = [];
 		for (const entry of this.getAll(start, length)) {
 			const lengthBefore = this.subtractKeys(entry.start, nextKey);
 			if (lengthBefore > 0) {
-				result.push({ start: nextKey, length: lengthBefore, value: undefined });
-				lengthRemaining -= lengthBefore;
+				result.push({ offset, length: lengthBefore, value: undefined });
+				offset += lengthBefore;
 			}
 
-			result.push(entry);
+			result.push({ offset, length: entry.length, value: entry.value });
 			nextKey = this.offsetKey(entry.start, entry.length);
-			lengthRemaining -= entry.length;
+			offset += entry.length;
 		}
 
+		const lengthRemaining = length - offset;
 		if (lengthRemaining > 0) {
-			result.push({ start: nextKey, length: lengthRemaining, value: undefined });
+			result.push({ offset, length: lengthRemaining, value: undefined });
 		}
 
 		return result;
@@ -127,7 +128,7 @@ export class RangeMap<K, V> {
 	 * @returns A RangeQueryResult containing the value associated with `start`,
 	 * and the number of consecutive keys with that same value (at least 1, at most `length`).
 	 */
-	public getFirst(start: K, length: number): RangeQueryResult<K, V> {
+	public getFirst(start: K, length: number): RangeQueryResult<V | undefined> {
 		{
 			// We first check for an entry with a key less than or equal to `start`.
 			const entry = this.tree.getPairOrNextLower(start);
@@ -141,7 +142,6 @@ export class RangeMap<K, V> {
 				if (overlappingLength > 0) {
 					return {
 						value: this.offsetValue(value, lengthBeforeQuery),
-						start,
 						length: overlappingLength,
 					};
 				}
@@ -157,11 +157,11 @@ export class RangeMap<K, V> {
 
 				const lastQueryKey = this.offsetKey(start, length - 1);
 				if (this.le(entryKey, lastQueryKey)) {
-					return { value: undefined, start, length: this.subtractKeys(entryKey, start) };
+					return { value: undefined, length: this.subtractKeys(entryKey, start) };
 				}
 			}
 
-			return { value: undefined, start, length };
+			return { value: undefined, length };
 		}
 	}
 
@@ -332,18 +332,11 @@ interface RangeEntry<V> {
 /**
  * Describes the result of a range query, including the value and length of the matching prefix.
  */
-export interface RangeQueryResult<K, V> {
-	// XXX: Consider replacing this with an offset from the initial query key.
-	/**
-	 * The key for the first element in the range.
-	 */
-	readonly start: K;
-
+export interface RangeQueryResult<V> {
 	/**
 	 * The value of the first key in the query range.
-	 * If no matching range is found, this will be undefined.
 	 */
-	readonly value: V | undefined;
+	readonly value: V;
 
 	/**
 	 * The length of the prefix of the query range which has the same value.
@@ -353,8 +346,19 @@ export interface RangeQueryResult<K, V> {
 	readonly length: number;
 }
 
-export interface RangeQueryEntry<K, V> extends RangeQueryResult<K, V> {
+export interface RangeQueryResultFragment<V> extends RangeQueryResult<V> {
+	/**
+	 * The offset from the query key to the key this result is associated with.
+	 * This is useful in the case where a query returns multiple `RangeQueryResults`
+	 * addressing the key range.
+	 */
+	readonly offset: number;
+}
+
+export interface RangeQueryEntry<K, V> {
+	readonly start: K;
 	readonly value: V;
+	readonly length: number;
 }
 
 export function newIntegerRangeMap<V>(): RangeMap<number, V> {

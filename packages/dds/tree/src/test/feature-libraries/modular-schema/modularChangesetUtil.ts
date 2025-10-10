@@ -701,8 +701,8 @@ const dummyComposeManager: ComposeNodeManager = {
 	getNewChangesForBaseDetach(
 		baseDetachId: ChangeAtomId,
 		count: number,
-	): RangeQueryResult<ChangeAtomId, DetachedNodeEntry> {
-		return { start: baseDetachId, value: undefined, length: count };
+	): RangeQueryResult<DetachedNodeEntry | undefined> {
+		return { value: undefined, length: count };
 	},
 
 	composeAttachDetach: unsupportedFunc,

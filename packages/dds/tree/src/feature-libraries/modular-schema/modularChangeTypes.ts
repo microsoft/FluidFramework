@@ -114,19 +114,19 @@ export function rangeQueryChangeAtomIdMap<T>(
 	map: ChangeAtomIdBTree<T>,
 	id: ChangeAtomId,
 	count: number,
-): RangeQueryResult<ChangeAtomId, T> {
+): RangeQueryResult<T | undefined> {
 	const pair = map.getPairOrNextHigher([id.revision, id.localId]);
 	if (pair === undefined) {
-		return { start: id, value: undefined, length: count };
+		return { value: undefined, length: count };
 	}
 
 	const [[revision, localId], value] = pair;
 	const lengthBefore = subtractChangeAtomIds({ revision, localId }, id);
 	if (lengthBefore === 0) {
-		return { start: id, value, length: 1 };
+		return { value, length: 1 };
 	}
 
-	return { start: id, value: undefined, length: Math.min(lengthBefore, count) };
+	return { value: undefined, length: Math.min(lengthBefore, count) };
 }
 
 export function setInChangeAtomIdMap<T>(

@@ -124,6 +124,7 @@ export {
 export {
 	RangeMap,
 	type RangeQueryResult,
+	type RangeQueryResultFragment,
 	type RangeQueryEntry,
 	newIntegerRangeMap,
 	areAdjacentIntegerRanges,
