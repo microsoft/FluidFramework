@@ -71,8 +71,13 @@ class EphemeralServiceClient implements ServiceClient {
 
 	public async createContainer<T>(
 		root: DataStoreKind<T>,
+		registry?: Registry<Promise<DataStoreKind<T>>>,
 	): Promise<FluidContainerWithService<T>> {
-		return EphemeralServiceContainer.createDetached(normalizeRegistry(root), this, root);
+		return EphemeralServiceContainer.createDetached(
+			normalizeRegistry(registry ?? root),
+			this,
+			root,
+		);
 	}
 
 	public async loadContainer<T>(
@@ -297,6 +302,16 @@ class EphemeralServiceContainer<T> implements FluidContainerWithService<T> {
 	) {
 		containers.push(this);
 		updateContainers();
+	}
+
+	public async createDataStore(kind: DataStoreKind<T>): Promise<T> {
+		const factory = kind as unknown as IFluidDataStoreFactory;
+
+		// TODO: Do something better
+		const containerRuntime = (this.container as any).runtime as ContainerRuntime;
+		// TODO: Do something better
+		const context = containerRuntime.createDetachedDataStore([factory.type]);
+		return (await factory.instantiateDataStore(context, false)) as T;
 	}
 
 	public async attach(): Promise<FluidContainerAttached<T>> {

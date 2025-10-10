@@ -60,6 +60,14 @@ export interface FluidContainer<T = unknown> {
 	 * The type of the root data store is defined by the {@link DataStoreKind} used to create the container.
 	 */
 	readonly data: T;
+
+	/**
+	 * Create a new detached datastore `T` which can be attached to this container
+	 * by adding a handle to it to a datastore which is already attached to the container.
+	 * @remarks
+	 * `kind` must be included in the registry used to create or load this container.
+	 */
+	createDataStore(kind: DataStoreKind<T>): Promise<T>;
 }
 
 /**
@@ -120,7 +128,10 @@ export interface ServiceClient {
 	 * @privateRemarks
 	 * TODO:As this is a detached container, it should be able to be created synchronously.
 	 */
-	createContainer<T>(root: DataStoreKind<T>): Promise<FluidContainerWithService<T>>;
+	createContainer<T>(
+		root: DataStoreKind<T>,
+		registry?: Registry<Promise<DataStoreKind<T>>>,
+	): Promise<FluidContainerWithService<T>>;
 
 	/**
 	 * Loads an existing container from the service.

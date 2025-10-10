@@ -24,7 +24,27 @@ import type { ISharedObject } from "./types.js";
 /**
  * A {@link @fluidframework/runtime-definitions#Registry} of shared object kinds that can be created or loaded within a data store.
  * @remarks
- * Supports lazy code loading.
+ * Supports lazy code loading in a limited way (a single lazy load per registry).
+ * @privateRemarks
+ * TODO: The framework provided SharedObjects should be exposed in a way indistinguishable from custom Sub-DataStores.
+ * This can be done by unifying the DataStoreKind and SharedObjectKind types.
+ * For now, this would mean having DataStoreKind extend SharedObjectKind, since we can allow a DataStore in all places SharedObjects are allowed,
+ * but do not allow SharedObjects at the root.
+ * Fixing this, and allowing shared objects at the root (maybe use a trivial wrapper DataStore) could simplifying things, allowing DataStores and Containers to share some types (like how they create detached contents, have registries, have a root etc).
+ *
+ * Part of this unification could be to relax the output from the factories / registries. Allowing the output to be an arbitrary type, which might be a promise, and might not be one could help.
+ * Removal of the IFluidLoadable requirement, and allowing the returned type to expose handles to itself how ever it wants (or not at all) might be viable and simplify typing And allow for strongly typed handles at creation time at least).
+ * Maybe when Registry(type) gives a promise, it could instead give a factory which outputs a promise wrapped type? The check that the provided creation key is valid for that factory can be deferred until the promise resolves.
+ *
+ * Idea: creation key can have an interface that subsets the factory / SharedObjectKind / DataStoreKind so they can be used, or some branded key (string, and/or object with stronger identity what knows the type string) can be used.
+ * Have Key interface contain validation function to check that the factory used (or maybe the value produced from it) is valid for that key.
+ * During load, get with validation that simply checks the factory's type string matches the key's type string.
+ * When using SharedObjectKind or DataStoreKind, validation can check factory object identity against key.
+ *
+ * Goal: Mostly unify container, datastore and shared object abstractions.
+ * Maybe unify a bit with service client since it also has a way to create detached things with an initialized root then attach them.
+ * SharedObjects are just built in leaf DataStores.
+ *
  * @input
  * @alpha
  */

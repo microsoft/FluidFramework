@@ -55,7 +55,7 @@ describe("treeDataStore", () => {
 			initializer: () => 1,
 		});
 
-		const service = createEphemeralServiceClient();
+		const service = createEphemeralServiceClient({ minVersionForCollab: "2.20.0" });
 
 		// Someday it would be nice to support this pattern, but that is longer term.
 		// const container1 = await service.attachContainer(createContainer(myFactory));
@@ -112,6 +112,7 @@ describe("treeDataStore", () => {
 
 	it("lazy loading example", async () => {
 		// A minimal datastore which lazy loads SharedTree when needed.
+		// Due to limitations on registries, this has to load SharedTree when the dataStore is loaded, not when shared tree is needed in the datastore.
 		const myFactory = dataStoreKind({
 			type: "my-tree",
 			registry: async () => {
@@ -134,5 +135,26 @@ describe("treeDataStore", () => {
 		const lazyContainer = await service.loadContainer(attached.id, async () => myFactory);
 
 		assert(SharedTree.is(lazyContainer.data));
+	});
+
+	it("createDataStore", async () => {
+		const myFactory = treeDataStoreKind({
+			type: "my-tree",
+			config: new TreeViewConfiguration({
+				schema: [SchemaFactoryAlpha.number, SchemaFactory.handle],
+			}),
+			initializer: () => 1,
+		});
+
+		const service = createEphemeralServiceClient();
+		const container = await service.createContainer(myFactory);
+
+		const secondTree = await container.createDataStore(myFactory);
+
+		secondTree.root = 2;
+
+		// TODO: get handle to new datastore, put in first to attach.
+
+		assert.equal(secondTree.root, 2);
 	});
 });

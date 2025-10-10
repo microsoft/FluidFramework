@@ -68,6 +68,7 @@ export interface DetachedAttributionKey {
 
 // @alpha @sealed
 export interface FluidContainer<T = unknown> {
+    createDataStore(kind: DataStoreKind<T>): Promise<T>;
     readonly data: T;
     readonly id?: string | undefined;
 }
@@ -475,7 +476,7 @@ export type Registry<T> = (type: string) => T;
 
 // @alpha @sealed
 export interface ServiceClient {
-    createContainer<T>(root: DataStoreKind<T>): Promise<FluidContainerWithService<T>>;
+    createContainer<T>(root: DataStoreKind<T>, registry?: Registry<Promise<DataStoreKind<T>>>): Promise<FluidContainerWithService<T>>;
     loadContainer<T>(id: string, root: DataStoreKind<T> | Registry<Promise<DataStoreKind<T>>>): Promise<FluidContainerAttached<T>>;
 }
 
