@@ -205,7 +205,7 @@ type LocalBlobRecord =
  * Omits attached blobs since they are fully uploaded and don't need to be saved and restored.
  * Omits uploading and attaching states since upon restore we will need to restart those processes.
  */
-type SerializableLocalBlobRecord =
+export type SerializableLocalBlobRecord =
 	| (Omit<LocalOnlyBlob, "blob"> & { blob: string })
 	| (Omit<UploadedBlob, "blob"> & { blob: string });
 

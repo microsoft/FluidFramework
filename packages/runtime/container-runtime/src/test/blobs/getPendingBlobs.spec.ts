@@ -7,12 +7,15 @@ import { strict as assert } from "node:assert";
 
 import { bufferToString } from "@fluid-internal/client-utils";
 
+import type { SerializableLocalBlobRecord } from "../../blobManager/index.js";
+
 import {
 	attachHandle,
 	blobToText,
 	createTestMaterial,
 	ensureBlobsShared,
 	getSummaryContentsWithFormatValidation,
+	MIN_TTL,
 	textToBlob,
 	unpackHandle,
 	waitHandlePayloadShared,
@@ -95,10 +98,27 @@ for (const createBlobPayloadPending of [false, true]) {
 			const handle = await handleP;
 			const { localId } = unpackHandle(handle);
 			attachHandle(handle);
+			await new Promise<void>((resolve) =>
+				mockOrderingService.events.on("opReceived", () => resolve()),
+			);
+			assert.strictEqual(
+				mockBlobStorage.blobsProcessed,
+				1,
+				"Blob should have been uploaded from the original blob manager",
+			);
+
 			const pendingBlobs = blobManager1.getPendingBlobs();
-			assert.deepStrictEqual(pendingBlobs, {
-				[localId]: { state: "localOnly", blob: bufferToString(textToBlob("hello"), "base64") },
-			});
+			assert(
+				pendingBlobs !== undefined && Object.entries(pendingBlobs).length === 1,
+				"Expect one pending blob",
+			);
+			const pendingBlob: SerializableLocalBlobRecord | undefined = pendingBlobs[localId];
+			assert(pendingBlob !== undefined, "Expect pending blob with localId");
+			assert.strictEqual(pendingBlob.state, "uploaded");
+			assert.strictEqual(pendingBlob.blob, bufferToString(textToBlob("hello"), "base64"));
+			assert.strictEqual(pendingBlob.storageId, "b6fc4c620b67d95f953a5c1c1230aaab5db5a1b0");
+			assert.strictEqual(typeof pendingBlob.uploadTime, "number");
+			assert.strictEqual(pendingBlob.minTTLInSeconds, MIN_TTL);
 
 			const { ids: ids1, redirectTable: redirectTable1 } =
 				getSummaryContentsWithFormatValidation(blobManager1);
@@ -157,148 +177,18 @@ for (const createBlobPayloadPending of [false, true]) {
 				getSummaryContentsWithFormatValidation(blobManager2);
 			assert.strictEqual(ids4?.length, 1);
 			assert.strictEqual(redirectTable4?.length, 1);
+
+			// Also verify that the only upload was the one from the original BlobManager.
+			assert.strictEqual(
+				mockBlobStorage.blobsProcessed,
+				1,
+				"Should not have reuploaded the blob, it was not expired",
+			);
 		});
 
-		// it("shutdown multiple blobs", async () => {
-		// 	await runtime.attach();
-		// 	await runtime.connect();
-		// 	const blob = textToBlob("blob");
-		// 	const handleP = runtime.createBlob(blob);
-		// 	await runtime.processBlobs(true);
-		// 	const blob2 = textToBlob("blob2");
-		// 	const handleP2 = runtime.createBlob(blob2);
-		// 	const pendingStateP = runtime.getPendingLocalState();
-		// 	await runtime.processHandles();
-		// 	await assert.doesNotReject(handleP);
-		// 	await assert.doesNotReject(handleP2);
-		// 	const pendingState = await pendingStateP;
-		// 	const pendingBlobs = pendingState[1] ?? {};
-		// 	assert.strictEqual(Object.keys(pendingBlobs).length, 2);
-
-		// 	const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
-		// 	assert.strictEqual(summaryData.ids?.length, 0);
-		// 	assert.strictEqual(summaryData.redirectTable, undefined);
-
-		// 	const runtime2 = new MockRuntime(
-		// 		mc,
-		// 		false, // createBlobPayloadPending
-		// 		summaryData,
-		// 		false,
-		// 		pendingState,
-		// 	);
-		// 	await runtime2.attach();
-		// 	await runtime2.connect();
-		// 	await runtime2.processAll();
-
-		// 	const summaryData2 = getSummaryContentsWithFormatValidation(runtime2.blobManager);
-		// 	assert.strictEqual(summaryData2.ids?.length, 2);
-		// 	assert.strictEqual(summaryData2.redirectTable?.length, 2);
-		// });
-
-		// it("upload blob while getting pending state", async () => {
-		// 	await runtime.attach();
-		// 	await runtime.connect();
-		// 	const blob = textToBlob("blob");
-		// 	const handleP = runtime.createBlob(blob);
-		// 	await runtime.processBlobs(true);
-		// 	const blob2 = textToBlob("blob2");
-		// 	const handleP2 = runtime.createBlob(blob2);
-		// 	const pendingStateP = runtime.getPendingLocalState();
-		// 	await runtime.processHandles();
-		// 	const handleP3 = runtime.createBlob(textToBlob("blob3"));
-		// 	await runtime.processBlobs(true);
-		// 	await runtime.processHandles();
-		// 	await assert.doesNotReject(handleP);
-		// 	await assert.doesNotReject(handleP2);
-		// 	await assert.doesNotReject(handleP3);
-		// 	const pendingState = await pendingStateP;
-		// 	const pendingBlobs = pendingState[1] ?? {};
-		// 	assert.strictEqual(Object.keys(pendingBlobs).length, 3);
-
-		// 	const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
-		// 	assert.strictEqual(summaryData.ids?.length, 0);
-		// 	assert.strictEqual(summaryData.redirectTable, undefined);
-
-		// 	const runtime2 = new MockRuntime(
-		// 		mc,
-		// 		false, // createBlobPayloadPending
-		// 		summaryData,
-		// 		false,
-		// 		pendingState,
-		// 	);
-		// 	await runtime2.attach();
-		// 	await runtime2.connect();
-		// 	await runtime2.processAll();
-
-		// 	const summaryData2 = getSummaryContentsWithFormatValidation(runtime2.blobManager);
-		// 	assert.strictEqual(summaryData2.ids?.length, 3);
-		// 	assert.strictEqual(summaryData2.redirectTable?.length, 3);
-		// });
-
-		// it("retries blob after being rejected if it was stashed", async () => {
-		// 	await runtime.attach();
-		// 	await runtime.connect();
-		// 	const blob = textToBlob("blob");
-		// 	const handleP = runtime.createBlob(blob);
-		// 	const pendingStateP = runtime.getPendingLocalState();
-		// 	await runtime.processHandles();
-		// 	await assert.doesNotReject(handleP);
-		// 	const pendingState = await pendingStateP;
-		// 	const pendingBlobs = (pendingState[1] ?? {}) as IPendingBlobs;
-		// 	assert.strictEqual(Object.keys(pendingBlobs).length, 1);
-		// 	assert.strictEqual(Object.values(pendingBlobs)[0].acked, false);
-		// 	assert.strictEqual(Object.values(pendingBlobs)[0].uploadTime, undefined);
-
-		// 	const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
-		// 	assert.strictEqual(summaryData.ids?.length, 0);
-		// 	assert.strictEqual(summaryData.redirectTable, undefined);
-
-		// 	const runtime2 = new MockRuntime(
-		// 		mc,
-		// 		false, // createBlobPayloadPending
-		// 		summaryData,
-		// 		false,
-		// 		pendingState,
-		// 	);
-		// 	await runtime2.attach();
-		// 	await runtime2.connect(0, true);
-		// 	await runtime2.processAll();
-		// 	const summaryData2 = getSummaryContentsWithFormatValidation(runtime2.blobManager);
-		// 	assert.strictEqual(summaryData2.ids?.length, 1);
-		// 	assert.strictEqual(summaryData2.redirectTable?.length, 1);
-		// });
-
-		// it("does not restart upload after applying stashed ops if not expired", async () => {
-		// 	await runtime.attach();
-		// 	await runtime.connect();
-		// 	const blob = textToBlob("blob");
-		// 	const handleP = runtime.createBlob(blob);
-		// 	await runtime.processBlobs(true);
-		// 	const pendingStateP = runtime.getPendingLocalState();
-		// 	await runtime.processHandles();
-		// 	await assert.doesNotReject(handleP);
-		// 	const pendingState = await pendingStateP;
-		// 	const pendingBlobs = pendingState[1] ?? {};
-		// 	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		// 	assert.ok(pendingBlobs[Object.keys(pendingBlobs)[0]].storageId);
-		// 	const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
-
-		// 	const runtime2 = new MockRuntime(
-		// 		mc,
-		// 		false, // createBlobPayloadPending
-		// 		summaryData,
-		// 		false,
-		// 		pendingState,
-		// 	);
-		// 	await runtime2.attach();
-		// 	assert.strictEqual(runtime2.unprocessedBlobs.size, 0);
-		// 	await runtime2.connect();
-		// 	await runtime2.processAll();
-
-		// 	const summaryData2 = getSummaryContentsWithFormatValidation(runtime2.blobManager);
-		// 	assert.strictEqual(summaryData2.ids?.length, 1);
-		// 	assert.strictEqual(summaryData2.redirectTable?.length, 1);
-		// });
+		// TODO: Ensure one of the tests has multiple blobs
+		// TODO: Add test for repeat calls on single blob manager
+		// TODO: Add test for round-tripping through multiple blob managers
 
 		// it("does restart upload after applying stashed ops if expired", async () => {
 		// 	await runtime.attach();
