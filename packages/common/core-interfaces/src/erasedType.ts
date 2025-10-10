@@ -183,5 +183,6 @@ export abstract class ErasedTypeImplementation<
  * The same as the built-in InstanceType, but works on classes with private constructors.
  * @privateRemarks
  * This is based on the trick in {@link https://stackoverflow.com/a/74657881}.
+ * @internal
  */
-type InstanceTypeRelaxed<TClass> = InstanceType<(new () => never) & TClass>;
+export type InstanceTypeRelaxed<TClass> = InstanceType<(new () => never) & TClass>;

@@ -29,6 +29,23 @@ export interface ServiceOptions {
 }
 
 /**
+ * A {@link RegistryKey} for a {@link DataStoreKind}.
+ * @remarks
+ * This is implemented by {@link DataStoreKind}, but alternative implementations can be used if needed.
+ *
+ * If lazy loading, and therefor want a key that doers not eagerly load the DataStoreKind, an alternative key can be implemented.
+ * @privateRemarks
+ * TODO: A built in common pattern for the lazy key case should be provided.
+ * TODO: this same key pattern should be applied to SharedObjectKind.
+ * @input
+ * @alpha
+ */
+export type DataStoreKey<T, TAll = unknown> = RegistryKey<
+	Promise<DataStoreKind<T>>,
+	Promise<DataStoreKind<TAll>>
+>;
+
+/**
  * A Fluid container.
  * @remarks
  * A document which can be stored to or loaded from a Fluid service using a {@link ServiceClient}.
@@ -42,7 +59,7 @@ export interface ServiceOptions {
  * @sealed
  * @alpha
  */
-export interface FluidContainer<T = unknown> {
+export interface FluidContainer<TData = unknown> {
 	/**
 	 * The unique identifier for this container, if it has been attached to a service.
 	 */
@@ -53,7 +70,7 @@ export interface FluidContainer<T = unknown> {
 	 * @remarks
 	 * The type of the root data store is defined by the {@link DataStoreKind} used to create the container.
 	 */
-	readonly data: T;
+	readonly data: TData;
 
 	/**
 	 * Create a new detached datastore `T` which can be attached to this container
@@ -61,7 +78,7 @@ export interface FluidContainer<T = unknown> {
 	 * @remarks
 	 * `kind` must be included in the registry used to create or load this container.
 	 */
-	createDataStore(kind: DataStoreKind<T>): Promise<T>;
+	createDataStore<T>(kind: DataStoreKey<T>): Promise<T>;
 }
 
 /**
@@ -101,7 +118,7 @@ export interface FluidContainerAttached<T = unknown> extends FluidContainer<T> {
  * @alpha
  */
 export interface DataStoreKind<T = unknown>
-	extends RegistryKey<DataStoreKind, DataStoreKind<T>>,
+	extends DataStoreKey<T>,
 		ErasedBaseType<readonly ["DataStoreKind", T]> {}
 
 /**
@@ -115,10 +132,24 @@ export class DataStoreKindImplementation<T>
 	/**
 	 * Type guard for narrowing unions which contain DataStoreKind<T> to DataStoreKind<T>.
 	 */
-	public static narrowGeneric<T>(
+	public static guard<T>(
 		value: T,
 	): value is DataStoreKindImplementation<T extends DataStoreKind<infer T2> ? T2 : never> & T {
 		return value instanceof DataStoreKindImplementation;
+	}
+
+	/**
+	 * Type guard for narrowing unions which contain DataStoreKind<T> to DataStoreKind<T>.
+	 */
+	public static narrowGeneric<T>(
+		value: T,
+	): asserts value is DataStoreKindImplementation<
+		T extends DataStoreKind<infer T2> ? T2 : never
+	> &
+		T {
+		if (!DataStoreKindImplementation.guard(value)) {
+			throw new Error("Invalid DataStoreKindImplementation");
+		}
 	}
 
 	public readonly type: string;
@@ -128,7 +159,7 @@ export class DataStoreKindImplementation<T>
 
 	public constructor(
 		private readonly factory: Pick<
-			IFluidDataStoreFactory,
+			DataStoreKindImplementation<T>,
 			"type" | "instantiateDataStore" | "createDataStore"
 		>,
 	) {
@@ -150,15 +181,16 @@ export class DataStoreKindImplementation<T>
 		return this;
 	}
 
-	public adapt(value: DataStoreKind): DataStoreKind<T> {
-		if (value === this) {
-			return value as DataStoreKind<T>;
+	public async adapt(value: Promise<DataStoreKind>): Promise<DataStoreKind<T>> {
+		const input = await value;
+		if (input === this) {
+			return input as DataStoreKind<T>;
 		}
-		if (value.type === this.type) {
+		if (input.type === this.type) {
 			throw new UsageError(`Conflicting DataStoreKinds with same type: ${this.type}`);
 		}
 		throw new UsageError(
-			`Mismatched DataStoreKind type. Expected: ${this.type}, got: ${value.type}`,
+			`Mismatched DataStoreKind type. Expected: ${this.type}, got: ${input.type}`,
 		);
 	}
 }
@@ -181,9 +213,11 @@ export interface ServiceClient {
 	 * @privateRemarks
 	 * TODO:As this is a detached container, it should be able to be created synchronously.
 	 */
+	createContainer<T>(root: DataStoreKind<T>): Promise<FluidContainerWithService<T>>;
+
 	createContainer<T>(
-		root: DataStoreKind<T>,
-		registry?: Registry<Promise<DataStoreKind<T>>>,
+		root: DataStoreKey<T>,
+		registry: Registry<Promise<DataStoreKind>>,
 	): Promise<FluidContainerWithService<T>>;
 
 	/**

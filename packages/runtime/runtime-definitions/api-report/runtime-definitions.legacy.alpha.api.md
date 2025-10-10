@@ -19,6 +19,9 @@ export interface AttributionInfo {
 // @beta @legacy
 export type AttributionKey = OpAttributionKey | DetachedAttributionKey | LocalAttributionKey;
 
+// @alpha
+export function basicKey<T>(type: string): RegistryKey<T, T>;
+
 // @beta @sealed @deprecated @legacy
 export interface CommitStagedChangesOptionsExperimental {
     squash?: boolean;
@@ -55,8 +58,11 @@ export enum CreateSummarizerNodeSource {
     Local = 2
 }
 
+// @alpha @input
+export type DataStoreKey<T, TAll = unknown> = RegistryKey<Promise<DataStoreKind<T>>, Promise<DataStoreKind<TAll>>>;
+
 // @alpha @sealed
-export interface DataStoreKind<T> extends ErasedType<readonly ["DataStoreFactory", T]> {
+export interface DataStoreKind<T = unknown> extends DataStoreKey<T>, ErasedBaseType<readonly ["DataStoreKind", T]> {
 }
 
 // @beta @legacy
@@ -67,9 +73,9 @@ export interface DetachedAttributionKey {
 }
 
 // @alpha @sealed
-export interface FluidContainer<T = unknown> {
-    createDataStore(kind: DataStoreKind<T>): Promise<T>;
-    readonly data: T;
+export interface FluidContainer<TData = unknown> {
+    createDataStore<T>(kind: DataStoreKey<T>): Promise<T>;
+    readonly data: TData;
     readonly id?: string | undefined;
 }
 
@@ -474,9 +480,20 @@ export type PackagePath = readonly string[];
 // @alpha @input
 export type Registry<T> = (type: string) => T;
 
+// @alpha @input
+export interface RegistryKey<TOut, TIn = unknown> {
+    adapt(value: TIn): TOut;
+    readonly type: string;
+}
+
+// @alpha
+export function registryLookup<TOut, TIn>(registry: Registry<TIn>, key: RegistryKey<TOut, TIn>): TOut;
+
 // @alpha @sealed
 export interface ServiceClient {
-    createContainer<T>(root: DataStoreKind<T>, registry?: Registry<Promise<DataStoreKind<T>>>): Promise<FluidContainerWithService<T>>;
+    createContainer<T>(root: DataStoreKind<T>): Promise<FluidContainerWithService<T>>;
+    // (undocumented)
+    createContainer<T>(root: DataStoreKey<T>, registry: Registry<Promise<DataStoreKind>>): Promise<FluidContainerWithService<T>>;
     loadContainer<T>(id: string, root: DataStoreKind<T> | Registry<Promise<DataStoreKind<T>>>): Promise<FluidContainerAttached<T>>;
 }
 

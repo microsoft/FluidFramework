@@ -22,7 +22,10 @@ export type Registry<T> = (type: string) => T;
  * Use with {@link registryLookup}.
  * @remarks
  * Used to look up a `T` in a `Registry<T>`, and produce an `F` from it.
+ * @privateRemarks
+ * This is currently input and sealed, meaning effectively type erased since the design might change.
  * @input
+ * @sealed
  * @alpha
  */
 export interface RegistryKey<TOut, TIn = unknown> {

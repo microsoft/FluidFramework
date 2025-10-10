@@ -17,6 +17,7 @@ import {
 	synchronizeLocalService,
 } from "@fluidframework/local-driver/internal";
 import { SharedTree } from "../treeFactory.js";
+import { SchematizingSimpleTreeView } from "../shared-tree/index.js";
 
 describe("treeDataStore", () => {
 	it("detached example", async () => {
@@ -150,6 +151,8 @@ describe("treeDataStore", () => {
 		const container = await service.createContainer(myFactory);
 
 		const secondTree = await container.createDataStore(myFactory);
+
+		assert((secondTree as unknown) instanceof SchematizingSimpleTreeView);
 
 		secondTree.root = 2;
 

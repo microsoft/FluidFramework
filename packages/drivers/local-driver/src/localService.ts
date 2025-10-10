@@ -33,8 +33,12 @@ import type {
 	MinimumVersionForCollab,
 	IFluidDataStoreRegistry,
 	FluidDataStoreRegistryEntry,
+	DataStoreKey,
 } from "@fluidframework/runtime-definitions/internal";
-import { DataStoreKindImplementation } from "@fluidframework/runtime-definitions/internal";
+import {
+	DataStoreKindImplementation,
+	registryLookup,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	LocalDeltaConnectionServer,
 	type ILocalDeltaConnectionServer,
@@ -70,15 +74,24 @@ export function createEphemeralServiceClient(
 class EphemeralServiceClient implements ServiceClient {
 	public constructor(public readonly options: ServiceOptions) {}
 
+	public createContainer<T>(root: DataStoreKind<T>): Promise<FluidContainerWithService<T>>;
+
+	public createContainer<T>(
+		root: DataStoreKey<T>,
+		registry: Registry<Promise<DataStoreKind>>,
+	): Promise<FluidContainerWithService<T>>;
+
 	public async createContainer<T>(
-		root: DataStoreKind<T>,
+		root: DataStoreKey<T> | DataStoreKind<T>,
 		registry?: Registry<Promise<DataStoreKind<T>>>,
 	): Promise<FluidContainerWithService<T>> {
-		return EphemeralServiceContainer.createDetached(
-			normalizeRegistry(registry ?? root),
-			this,
-			root,
-		);
+		if (registry === undefined) {
+			DataStoreKindImplementation.narrowGeneric(root);
+			return EphemeralServiceContainer.createDetached(normalizeRegistry(root), this, root);
+		} else {
+			const result = await registryLookup(registry, root);
+			return EphemeralServiceContainer.createDetached(registry, this, result);
+		}
 	}
 
 	public async loadContainer<T>(
@@ -249,7 +262,7 @@ function makeCodeLoader<T>(
 
 let documentIdCounter = 0;
 
-class EphemeralServiceContainer<T> implements FluidContainerWithService<T> {
+class EphemeralServiceContainer<TData> implements FluidContainerWithService<TData> {
 	public static async createDetached<T>(
 		registry: DataStoreRegistry<T>,
 		service: EphemeralServiceClient,
@@ -295,27 +308,31 @@ class EphemeralServiceContainer<T> implements FluidContainerWithService<T> {
 	}
 
 	private constructor(
-		public readonly registry: Registry<Promise<DataStoreKind<T>>>,
+		public readonly registry: Registry<Promise<DataStoreKind<TData>>>,
 		public readonly service: EphemeralServiceClient,
 		public readonly container: IContainer,
-		public readonly data: T,
+		public readonly data: TData,
 		public id: string | undefined,
 	) {
 		containers.push(this);
 		updateContainers();
 	}
 
-	public async createDataStore(kind: DataStoreKind<T>): Promise<T> {
-		DataStoreKindImplementation.narrow(kind);
+	public async createDataStore<T>(key: DataStoreKey<T>): Promise<T> {
+		const kind = await registryLookup(this.registry, key);
+		DataStoreKindImplementation.narrowGeneric(kind);
 
 		// TODO: Do something better
 		const containerRuntime = (this.container as any).runtime as ContainerRuntime;
 		// TODO: Do something better
 		const context = containerRuntime.createDetachedDataStore([kind.type]);
-		return (await kind.instantiateDataStore(context, false)) as T;
+		const channel = await kind.instantiateDataStore(context, false);
+		const dataStore = await context.attachRuntime(kind, channel);
+		const entryPoint = await dataStore.entryPoint.get();
+		return entryPoint as T;
 	}
 
-	public async attach(): Promise<FluidContainerAttached<T>> {
+	public async attach(): Promise<FluidContainerAttached<TData>> {
 		// TODO: handel concurrent attach calls
 		if (this.id !== undefined) {
 			throw new UsageError("Container already attached");
@@ -336,7 +353,7 @@ class EphemeralServiceContainer<T> implements FluidContainerWithService<T> {
 function normalizeRegistry<T>(
 	input: DataStoreKind<T> | Registry<Promise<DataStoreKind<T>>>,
 ): Registry<Promise<DataStoreKind<T>>> {
-	if (DataStoreKindImplementation.narrowGeneric(input)) {
+	if (DataStoreKindImplementation.guard(input)) {
 		const x = input;
 		return async () => x;
 	}

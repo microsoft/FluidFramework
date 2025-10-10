@@ -99,6 +99,7 @@ export type {
 	ServiceOptions,
 	FluidContainerAttached,
 	FluidContainerWithService,
+	DataStoreKey,
 } from "./serviceClient.js";
 
 export { DataStoreKindImplementation } from "./serviceClient.js";
