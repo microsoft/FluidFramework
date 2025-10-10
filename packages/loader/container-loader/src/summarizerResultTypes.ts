@@ -39,8 +39,6 @@ type OnDemandSummaryStageResult<TSuccess> =
 	| {
 			readonly success: false;
 			readonly error: IErrorBase;
-			readonly message?: string;
-			readonly data?: unknown;
 	  };
 
 interface ISummaryOpMessage extends ISequencedDocumentMessage {
