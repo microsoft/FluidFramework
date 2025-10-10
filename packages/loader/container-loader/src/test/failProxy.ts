@@ -31,16 +31,17 @@ export const failSometimeProxy = <T extends object>(handler: PartialOrAbsent<T>)
 				return undefined;
 			}
 			if (p in handler) {
-				if (handler[p] === AbsentProperty) {
+				const value = Reflect.get(t, p, r);
+				if (value === AbsentProperty) {
 					return undefined;
 				}
-				return Reflect.get(t, p, r);
+				return value;
 			}
 			throw new Error(`${p.toString()} not implemented`);
 		},
 		has: (t, p): boolean => {
 			if (p in handler) {
-				return handler[p] !== AbsentProperty;
+				return Reflect.get(t, p) !== AbsentProperty;
 			}
 			throw new Error(`${p.toString()} not implemented or declared as absent`);
 		},

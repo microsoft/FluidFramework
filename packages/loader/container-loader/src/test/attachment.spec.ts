@@ -87,7 +87,11 @@ const createProxyWithFailDefault = <T extends Record<string, any>>(
 	return new Proxy(partial, {
 		get: (t, p, r): unknown => {
 			if (p in t) {
-				return Reflect.get(t, p, r);
+				const value = Reflect.get(t, p, r);
+				if (value === AbsentProperty) {
+					return undefined;
+				}
+				return value;
 			}
 
 			return new Proxy(
