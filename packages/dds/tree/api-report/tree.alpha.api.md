@@ -1444,6 +1444,18 @@ export enum TreeCompressionStrategy {
     Uncompressed = 1
 }
 
+// @alpha
+export function treeDataStoreKind<const TSchema extends ImplicitFieldSchema>(options: TreeDataStoreOptions<TSchema>): DataStoreKind<TreeView<TSchema>>;
+
+// @alpha @input
+export interface TreeDataStoreOptions<TSchema extends ImplicitFieldSchema> extends Pick<DataStoreOptions<never, never>, "type"> {
+    readonly config: TreeViewConfiguration<TSchema>;
+    readonly initializer?: (creator: SharedObjectCreator) => InsertableTreeFieldFromImplicitField<TSchema>;
+    // (undocumented)
+    readonly key?: SharedObjectKey<ITree>;
+    readonly registry?: Iterable<SharedObjectKind<IFluidLoadable>> | SharedObjectRegistry;
+}
+
 // @beta @input
 export interface TreeEncodingOptions<TKeyOptions = KeyEncodingOptions> {
     readonly keys?: TKeyOptions;

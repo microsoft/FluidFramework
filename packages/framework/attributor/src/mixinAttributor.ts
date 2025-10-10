@@ -3,15 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import type { IContainerContext } from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
-import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
-import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { FluidObject } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
+	FluidDataStoreRegistryEntry,
 	IContainerRuntimeBase,
-	NamedFluidDataStoreRegistryEntries,
+	IFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions/internal";
 import { loggerToMonitoringContext } from "@fluidframework/telemetry-utils/internal";
 
@@ -51,18 +49,12 @@ export const mixinAttributor = (
 	Base: typeof ContainerRuntime = ContainerRuntime,
 ): typeof ContainerRuntime =>
 	class ContainerRuntimeWithAttributor extends Base {
-		public static async loadRuntime(params: {
-			context: IContainerContext;
-			registryEntries: NamedFluidDataStoreRegistryEntries;
-			existing: boolean;
-			runtimeOptions?: IContainerRuntimeOptions;
-			containerScope?: FluidObject;
-			containerRuntimeCtor?: typeof ContainerRuntime;
-			provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
-		}): Promise<ContainerRuntime> {
+		public static override async loadRuntime(
+			params: Parameters<typeof Base.loadRuntime>[0],
+		): Promise<ContainerRuntime> {
 			const {
 				context,
-				registryEntries,
+				registry,
 				existing,
 				provideEntryPoint,
 				runtimeOptions,
@@ -72,10 +64,26 @@ export const mixinAttributor = (
 
 			const mc = loggerToMonitoringContext(context.taggedLogger);
 			const factory = new RuntimeAttributorFactory();
-			const registryEntriesCopy: NamedFluidDataStoreRegistryEntries = [
-				...registryEntries,
-				[RuntimeAttributorFactory.type, Promise.resolve(factory)],
-			];
+			const registryCopy: IFluidDataStoreRegistry = {
+				async get(name: string): Promise<FluidDataStoreRegistryEntry | undefined> {
+					if (name === RuntimeAttributorFactory.type) {
+						return factory;
+					}
+					return registry.get(name);
+				},
+				get IFluidDataStoreRegistry(): IFluidDataStoreRegistry {
+					return this;
+				},
+			};
+
+			if (registry.getSync !== undefined) {
+				registryCopy.getSync = (name: string) => {
+					if (name === RuntimeAttributorFactory.type) {
+						return factory;
+					}
+					return registry.getSync?.(name);
+				};
+			}
 			const shouldTrackAttribution = mc.config.getBoolean(enableOnNewFileKey) ?? false;
 			if (shouldTrackAttribution) {
 				const { options } = context;
@@ -83,17 +91,15 @@ export const mixinAttributor = (
 				(options.attribution ??= {}).track = true;
 			}
 
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-			const runtime = (await Base.loadRuntime({
+			const runtime = await Base.loadRuntime({
 				context,
-				registryEntries: registryEntriesCopy,
+				registry: registryCopy,
 				provideEntryPoint,
 				runtimeOptions,
 				containerScope,
 				existing,
 				containerRuntimeCtor,
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			} as any)) as ContainerRuntimeWithAttributor;
+			});
 
 			let runtimeAttributor: IRuntimeAttributor | undefined;
 			if (shouldTrackAttribution) {

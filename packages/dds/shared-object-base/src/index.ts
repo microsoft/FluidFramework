@@ -11,6 +11,7 @@ export {
 	type ISharedObjectKind,
 	type SharedObjectKind,
 	createSharedObjectKind,
+	type SharedObjectKey,
 } from "./sharedObject.js";
 export type { ISharedObject, ISharedObjectEvents } from "./types.js";
 export {
@@ -32,3 +33,9 @@ export {
 	type SharedObjectOptions,
 	mergeAPIs,
 } from "./sharedObjectKernel.js";
+export { dataStoreKind, sharedObjectRegistryFromIterable } from "./dataStoreKind.js";
+export type {
+	DataStoreOptions,
+	SharedObjectCreator,
+	SharedObjectRegistry,
+} from "./dataStoreKind.js";

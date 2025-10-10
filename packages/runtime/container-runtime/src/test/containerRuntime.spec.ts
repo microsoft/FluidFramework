@@ -89,6 +89,7 @@ import {
 	type IContainerRuntimeOptionsInternal,
 	type UnknownIncomingTypedMessage,
 } from "../containerRuntime.js";
+import { FluidDataStoreRegistry } from "../dataStoreRegistry.js";
 import {
 	ContainerMessageType,
 	type InboundSequencedContainerRuntimeMessage,
@@ -325,7 +326,7 @@ describe("Runtime", () => {
 				const logger = new MockLogger();
 				const containerRuntime = await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
-					registryEntries: [],
+					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					runtimeOptions: {
 						enableRuntimeIdCompressor: "on",
@@ -353,7 +354,7 @@ describe("Runtime", () => {
 			it("Default flush mode", async () => {
 				const containerRuntime = await ContainerRuntime.loadRuntime({
 					context: getMockContext() as IContainerContext,
-					registryEntries: [],
+					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
@@ -368,7 +369,7 @@ describe("Runtime", () => {
 				};
 				const containerRuntime = await ContainerRuntime.loadRuntime({
 					context: getMockContext() as IContainerContext,
-					registryEntries: [],
+					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					runtimeOptions,
 					provideEntryPoint: mockProvideEntryPoint,
@@ -387,7 +388,7 @@ describe("Runtime", () => {
 							"Fluid.ContainerRuntime.enableBatchIdTracking": true,
 						},
 					}) as IContainerContext,
-					registryEntries: [],
+					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
@@ -434,7 +435,7 @@ describe("Runtime", () => {
 								"Fluid.ContainerRuntime.enableBatchIdTracking": enableBatchIdTracking, // batchId only stamped if true
 							},
 						}) as IContainerContext,
-						registryEntries: [],
+						registry: new FluidDataStoreRegistry([]),
 						existing: false,
 						runtimeOptions: {},
 						provideEntryPoint: mockProvideEntryPoint,
@@ -519,7 +520,7 @@ describe("Runtime", () => {
 
 					const containerRuntime = await ContainerRuntime.loadRuntime({
 						context: mockContext as IContainerContext,
-						registryEntries: [],
+						registry: new FluidDataStoreRegistry([]),
 						existing: false,
 						runtimeOptions: {},
 						provideEntryPoint: mockProvideEntryPoint,
@@ -581,7 +582,7 @@ describe("Runtime", () => {
 
 				const containerRuntime = await ContainerRuntime.loadRuntime({
 					context: mockContext,
-					registryEntries: [],
+					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					runtimeOptions: { enableRuntimeIdCompressor: "on" },
 					provideEntryPoint: mockProvideEntryPoint,
@@ -692,7 +693,7 @@ describe("Runtime", () => {
 
 						containerRuntime = (await ContainerRuntime.loadRuntime({
 							context: mockContext as IContainerContext,
-							registryEntries: [],
+							registry: new FluidDataStoreRegistry([]),
 							existing: false,
 							runtimeOptions,
 							provideEntryPoint: mockProvideEntryPoint,
@@ -906,7 +907,7 @@ describe("Runtime", () => {
 						};
 						containerRuntime = (await ContainerRuntime.loadRuntime({
 							context: getMockContextForOrderSequentially() as IContainerContext,
-							registryEntries: [],
+							registry: new FluidDataStoreRegistry([]),
 							existing: false,
 							runtimeOptions,
 							provideEntryPoint: mockProvideEntryPoint,
@@ -1041,7 +1042,7 @@ describe("Runtime", () => {
 				const updateDirtyStateStub = sandbox.stub(mockContext, "updateDirtyContainerState");
 				await ContainerRuntime.loadRuntime({
 					context: mockContext as IContainerContext,
-					registryEntries: [],
+					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					runtimeOptions: undefined,
 					containerScope: {},
@@ -1056,7 +1057,7 @@ describe("Runtime", () => {
 				const updateDirtyStateStub = sandbox.stub(mockContext, "updateDirtyContainerState");
 				await ContainerRuntime.loadRuntime({
 					context: mockContext as IContainerContext,
-					registryEntries: [],
+					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					requestHandler: undefined,
 					runtimeOptions: {},
@@ -1071,7 +1072,7 @@ describe("Runtime", () => {
 				const updateDirtyStateStub = sandbox.stub(mockContext, "updateDirtyContainerState");
 				await ContainerRuntime.loadRuntime({
 					context: mockContext as IContainerContext,
-					registryEntries: [],
+					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					requestHandler: undefined,
 					runtimeOptions: {},
@@ -1086,7 +1087,7 @@ describe("Runtime", () => {
 				const updateDirtyStateStub = sandbox.stub(mockContext, "updateDirtyContainerState");
 				await ContainerRuntime.loadRuntime({
 					context: mockContext as IContainerContext,
-					registryEntries: [],
+					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					requestHandler: undefined,
 					runtimeOptions: {},
@@ -1163,7 +1164,7 @@ describe("Runtime", () => {
 				containerErrors.length = 0;
 				containerRuntime = await ContainerRuntime.loadRuntime({
 					context: getMockContextForPendingStateProgressTracking() as IContainerContext,
-					registryEntries: [],
+					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					requestHandler: undefined,
 					runtimeOptions: {
@@ -1431,7 +1432,7 @@ describe("Runtime", () => {
 				};
 				containerRuntime = await ContainerRuntime.loadRuntime({
 					context: getMockContext() as IContainerContext,
-					registryEntries: [],
+					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					requestHandler: undefined,
 					runtimeOptions,
@@ -1535,7 +1536,7 @@ describe("Runtime", () => {
 							provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
 							existing: boolean;
 							runtimeOptions: IContainerRuntimeOptions;
-							registryEntries: NamedFluidDataStoreRegistryEntries;
+							registry: IFluidDataStoreRegistry;
 							containerScope: FluidObject;
 						}): Promise<ContainerRuntime> {
 							// Note: we're mutating the parameter object here, normally a no-no, but shouldn't be
@@ -1563,7 +1564,7 @@ describe("Runtime", () => {
 					context: getMockContext() as IContainerContext,
 					provideEntryPoint: async (containerRuntime) => myEntryPoint,
 					existing: false,
-					registryEntries: [],
+					registry: new FluidDataStoreRegistry([]),
 				});
 
 				assert.equal(
@@ -1578,7 +1579,7 @@ describe("Runtime", () => {
 			it("Ensure private member is stable to support legacy usage", async () => {
 				const containerRuntime_withSummarizeInternal = (await ContainerRuntime.loadRuntime({
 					context: getMockContext() as IContainerContext,
-					registryEntries: [],
+					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					provideEntryPoint: mockProvideEntryPoint,
 				})) as unknown as {
@@ -1610,7 +1611,7 @@ describe("Runtime", () => {
 					context: getMockContext() as IContainerContext,
 					provideEntryPoint: async (ctrRuntime) => myEntryPoint,
 					existing: false,
-					registryEntries: [],
+					registry: new FluidDataStoreRegistry([]),
 				});
 
 				// The entryPoint should come from the provided initialization function.
@@ -1638,7 +1639,7 @@ describe("Runtime", () => {
 					requestHandler: async (req, ctrRuntime) => myResponse,
 					provideEntryPoint: async (ctrRuntime) => myEntryPoint,
 					existing: false,
-					registryEntries: [],
+					registry: new FluidDataStoreRegistry([]),
 				});
 
 				// Calling request on the runtime should use the request handler we passed in the runtime's constructor.
@@ -1670,7 +1671,7 @@ describe("Runtime", () => {
 			beforeEach(async () => {
 				containerRuntime = await ContainerRuntime.loadRuntime({
 					context: getMockContext() as IContainerContext,
-					registryEntries: [],
+					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
@@ -1760,7 +1761,7 @@ describe("Runtime", () => {
 			it("Container load stats", async () => {
 				await ContainerRuntime.loadRuntime({
 					context: localGetMockContext({}) as IContainerContext,
-					registryEntries: [],
+					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					runtimeOptions,
 					provideEntryPoint: mockProvideEntryPoint,
@@ -1784,7 +1785,7 @@ describe("Runtime", () => {
 				};
 				await ContainerRuntime.loadRuntime({
 					context: localGetMockContext(featureGates) as IContainerContext,
-					registryEntries: [],
+					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					runtimeOptions,
 					provideEntryPoint: mockProvideEntryPoint,
@@ -1847,7 +1848,7 @@ describe("Runtime", () => {
 				it("Loader not supported for async FlushMode, fallback to TurnBased", async () => {
 					const runtime = await ContainerRuntime.loadRuntime({
 						context: localGetMockContext(features) as IContainerContext,
-						registryEntries: [],
+						registry: new FluidDataStoreRegistry([]),
 						existing: false,
 						runtimeOptions,
 						provideEntryPoint: mockProvideEntryPoint,
@@ -1868,7 +1869,7 @@ describe("Runtime", () => {
 					context: localGetMockContext(
 						new Map([["referenceSequenceNumbers", true]]),
 					) as IContainerContext,
-					registryEntries: [],
+					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					runtimeOptions,
 					provideEntryPoint: mockProvideEntryPoint,
@@ -1891,7 +1892,7 @@ describe("Runtime", () => {
 				};
 				const runtime = await ContainerRuntime.loadRuntime({
 					context: localGetMockContext(undefined, compatDetails) as IContainerContext,
-					registryEntries: [],
+					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					runtimeOptions,
 					provideEntryPoint: mockProvideEntryPoint,
@@ -1922,7 +1923,7 @@ describe("Runtime", () => {
 				const settings = {};
 				containerRuntime = await ContainerRuntime.loadRuntime({
 					context: getMockContext(settings) as IContainerContext,
-					registryEntries: [],
+					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					provideEntryPoint: mockProvideEntryPoint,
 				});
@@ -2181,7 +2182,7 @@ describe("Runtime", () => {
 				});
 				const containerRuntime = await ContainerRuntime.loadRuntime({
 					context: mockContext as IContainerContext,
-					registryEntries: [],
+					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					provideEntryPoint: mockProvideEntryPoint,
 				});
@@ -2210,7 +2211,7 @@ describe("Runtime", () => {
 
 				const containerRuntime = await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
-					registryEntries: [],
+					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					runtimeOptions: {
 						enableRuntimeIdCompressor: "on",
@@ -2248,7 +2249,7 @@ describe("Runtime", () => {
 
 				const containerRuntime = await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
-					registryEntries: [],
+					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					runtimeOptions: {
 						enableRuntimeIdCompressor: "on",
@@ -2298,7 +2299,7 @@ describe("Runtime", () => {
 
 				const containerRuntime = await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
-					registryEntries: [],
+					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					runtimeOptions: {
 						enableRuntimeIdCompressor: "on",
@@ -2319,7 +2320,7 @@ describe("Runtime", () => {
 
 				const containerRuntime = await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
-					registryEntries: [],
+					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					runtimeOptions: {
 						enableRuntimeIdCompressor: "on",
@@ -2376,7 +2377,7 @@ describe("Runtime", () => {
 								"Fluid.ContainerRuntime.enableBatchIdTracking": enableBatchIdTracking,
 							},
 						}) as IContainerContext,
-						registryEntries: [],
+						registry: new FluidDataStoreRegistry([]),
 						existing: false,
 						runtimeOptions: {
 							enableRuntimeIdCompressor: "on",
@@ -2426,7 +2427,7 @@ describe("Runtime", () => {
 					context: getMockContext({
 						settings: settings_enableOfflineLoad,
 					}) as IContainerContext,
-					registryEntries: [],
+					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					runtimeOptions: {
 						enableRuntimeIdCompressor: "on",
@@ -2464,7 +2465,7 @@ describe("Runtime", () => {
 						},
 						mockStorage,
 					}) as IContainerContext,
-					registryEntries: [],
+					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					runtimeOptions: {
 						enableRuntimeIdCompressor: "on",
@@ -2682,7 +2683,9 @@ describe("Runtime", () => {
 				createSnapshot(true /* addMissingDatastore */, false /* Don't set groupId property */);
 				containerRuntime = await ContainerRuntime.loadRuntime({
 					context: containerContext,
-					registryEntries: [["@fluid-example/smde", Promise.resolve(entryDefault)]],
+					registry: new FluidDataStoreRegistry([
+						["@fluid-example/smde", Promise.resolve(entryDefault)],
+					]),
 					existing: true,
 					runtimeOptions: {
 						enableRuntimeIdCompressor: "on",
@@ -2710,7 +2713,9 @@ describe("Runtime", () => {
 				containerContext.clientDetails.type = "summarizer";
 				containerRuntime = await ContainerRuntime.loadRuntime({
 					context: containerContext,
-					registryEntries: [["@fluid-example/smde", Promise.resolve(entryDefault)]],
+					registry: new FluidDataStoreRegistry([
+						["@fluid-example/smde", Promise.resolve(entryDefault)],
+					]),
 					existing: true,
 					runtimeOptions: {
 						enableRuntimeIdCompressor: "on",
@@ -2758,7 +2763,9 @@ describe("Runtime", () => {
 				createSnapshot(true /* addMissingDatastore */);
 				containerRuntime = await ContainerRuntime.loadRuntime({
 					context: containerContext,
-					registryEntries: [["@fluid-example/smde", Promise.resolve(entryDefault)]],
+					registry: new FluidDataStoreRegistry([
+						["@fluid-example/smde", Promise.resolve(entryDefault)],
+					]),
 					existing: true,
 					runtimeOptions: {
 						enableRuntimeIdCompressor: "on",
@@ -2820,7 +2827,9 @@ describe("Runtime", () => {
 				createSnapshot(true /* addMissingDatastore */);
 				containerRuntime = await ContainerRuntime.loadRuntime({
 					context: containerContext,
-					registryEntries: [["@fluid-example/smde", Promise.resolve(entryDefault)]],
+					registry: new FluidDataStoreRegistry([
+						["@fluid-example/smde", Promise.resolve(entryDefault)],
+					]),
 					existing: true,
 					runtimeOptions: {
 						enableRuntimeIdCompressor: "on",
@@ -2863,7 +2872,9 @@ describe("Runtime", () => {
 				createSnapshot(true /* addMissingDatastore */);
 				containerRuntime = await ContainerRuntime.loadRuntime({
 					context: containerContext,
-					registryEntries: [["@fluid-example/smde", Promise.resolve(entryDefault)]],
+					registry: new FluidDataStoreRegistry([
+						["@fluid-example/smde", Promise.resolve(entryDefault)],
+					]),
 					existing: true,
 					runtimeOptions: {
 						enableRuntimeIdCompressor: "on",
@@ -2960,7 +2971,7 @@ describe("Runtime", () => {
 				};
 				containerRuntime = (await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
-					registryEntries: [],
+					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					requestHandler: undefined,
 					runtimeOptions,
@@ -3531,7 +3542,7 @@ describe("Runtime", () => {
 							{ logger: remoteLogger },
 							"remoteMockClientId",
 						) as IContainerContext,
-						registryEntries: [],
+						registry: new FluidDataStoreRegistry([]),
 						existing: false,
 						requestHandler: undefined,
 						runtimeOptions,
@@ -3726,7 +3737,7 @@ describe("Runtime", () => {
 						async () =>
 							ContainerRuntime.loadRuntime({
 								context: getMockContext() as IContainerContext,
-								registryEntries: [],
+								registry: new FluidDataStoreRegistry([]),
 								existing: false,
 								runtimeOptions: {
 									enableGroupedBatching: false,
@@ -3752,7 +3763,7 @@ describe("Runtime", () => {
 						async () =>
 							ContainerRuntime.loadRuntime({
 								context: getMockContext() as IContainerContext,
-								registryEntries: [],
+								registry: new FluidDataStoreRegistry([]),
 								existing: false,
 								runtimeOptions: {
 									createBlobPayloadPending: true,
@@ -3777,7 +3788,7 @@ describe("Runtime", () => {
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
-					registryEntries: [],
+					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
@@ -3819,7 +3830,7 @@ describe("Runtime", () => {
 					await assert.rejects(async () => {
 						await ContainerRuntime.loadRuntime({
 							context: getMockContext({ logger }) as IContainerContext,
-							registryEntries: [],
+							registry: new FluidDataStoreRegistry([]),
 							existing: false,
 							runtimeOptions: {},
 							provideEntryPoint: mockProvideEntryPoint,
@@ -3835,7 +3846,7 @@ describe("Runtime", () => {
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
-					registryEntries: [],
+					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
@@ -3873,7 +3884,7 @@ describe("Runtime", () => {
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
-					registryEntries: [],
+					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
@@ -3911,7 +3922,7 @@ describe("Runtime", () => {
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
-					registryEntries: [],
+					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
@@ -3949,7 +3960,7 @@ describe("Runtime", () => {
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
-					registryEntries: [],
+					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					provideEntryPoint: mockProvideEntryPoint,
 					minVersionForCollab,
@@ -3985,7 +3996,7 @@ describe("Runtime", () => {
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
-					registryEntries: [],
+					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					runtimeOptions: {
 						summaryOptions: { initialSummarizerDelayMs: 1 },
@@ -4053,7 +4064,7 @@ describe("Runtime", () => {
 					const logger = new MockLogger();
 					await ContainerRuntime.loadRuntime({
 						context: getMockContext({ logger }) as IContainerContext,
-						registryEntries: [],
+						registry: new FluidDataStoreRegistry([]),
 						existing: false,
 						runtimeOptions,
 						provideEntryPoint: mockProvideEntryPoint,
@@ -4092,7 +4103,7 @@ describe("Runtime", () => {
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
-					registryEntries: [],
+					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
@@ -4146,7 +4157,7 @@ describe("Runtime", () => {
 					await assert.rejects(async () => {
 						await ContainerRuntime.loadRuntime({
 							context: getMockContext({ logger }) as IContainerContext,
-							registryEntries: [],
+							registry: new FluidDataStoreRegistry([]),
 							existing: false,
 							runtimeOptions,
 							provideEntryPoint: mockProvideEntryPoint,
@@ -4160,7 +4171,7 @@ describe("Runtime", () => {
 				await assert.doesNotReject(async () => {
 					await ContainerRuntime.loadRuntime({
 						context: getMockContext({ logger }) as IContainerContext,
-						registryEntries: [],
+						registry: new FluidDataStoreRegistry([]),
 						existing: false,
 						// We would normally throw (since `createBlobPayloadPending` requires 2.40), but since we did
 						// not explicity set minVersionForCollab, we allow it.
@@ -4177,7 +4188,7 @@ describe("Runtime", () => {
 			beforeEach("init", async () => {
 				containerRuntime = (await ContainerRuntime.loadRuntime({
 					context: getMockContext() as IContainerContext,
-					registryEntries: [],
+					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
@@ -4243,7 +4254,7 @@ describe("Runtime", () => {
 				}) as IContainerContext;
 				containerRuntime = (await ContainerRuntime.loadRuntime({
 					context: mockContext,
-					registryEntries: [],
+					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
@@ -4261,7 +4272,7 @@ describe("Runtime", () => {
 				}) as IContainerContext;
 				containerRuntime = (await ContainerRuntime.loadRuntime({
 					context: mockContext,
-					registryEntries: [],
+					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,

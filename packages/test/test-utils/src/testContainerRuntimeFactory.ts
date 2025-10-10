@@ -7,8 +7,8 @@ import { IContainerContext, IRuntime } from "@fluidframework/container-definitio
 import {
 	ContainerRuntime,
 	DefaultSummaryConfiguration,
+	FluidDataStoreRegistry,
 	type IContainerRuntimeOptionsInternal,
-	type LoadContainerRuntimeParams,
 	type MinimumVersionForCollab,
 } from "@fluidframework/container-runtime/internal";
 import {
@@ -166,10 +166,10 @@ export const createTestContainerRuntimeFactory = (
 			};
 			return containerRuntimeCtor.loadRuntime({
 				context,
-				registryEntries: [
+				registry: new FluidDataStoreRegistry([
 					["default", Promise.resolve(this.dataStoreFactory)],
 					[this.type, Promise.resolve(this.dataStoreFactory)],
-				],
+				]),
 				// eslint-disable-next-line import/no-deprecated
 				requestHandler: buildRuntimeRequestHandler(getDefaultObject, ...this.requestHandlers),
 				provideEntryPoint,
@@ -177,7 +177,7 @@ export const createTestContainerRuntimeFactory = (
 				containerScope: context.scope,
 				existing,
 				minVersionForCollab: this.minVersionForCollab,
-			} satisfies LoadContainerRuntimeParams);
+			});
 		}
 	};
 };

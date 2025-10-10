@@ -417,7 +417,7 @@ export interface LocalAttributionKey {
     type: "local";
 }
 
-// @beta @legacy
+// @beta
 export type MinimumVersionForCollab = `${1 | 2}.${bigint}.${bigint}` | `${1 | 2}.${bigint}.${bigint}-${string}`;
 
 // @beta @legacy
@@ -440,6 +440,12 @@ export interface OpAttributionKey {
 
 // @beta @legacy
 export type PackagePath = readonly string[];
+
+// @public @sealed @input
+export interface RegistryKey<TOut, TIn = unknown> {
+    adapt(value: TIn): TOut;
+    readonly type: string;
+}
 
 // @beta @sealed @deprecated @legacy
 export interface StageControlsExperimental {

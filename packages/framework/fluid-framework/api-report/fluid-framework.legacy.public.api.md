@@ -751,7 +751,7 @@ export interface SchemaStatics {
 type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
 
 // @public @sealed
-export interface SharedObjectKind<out TSharedObject = unknown> extends ErasedType<readonly ["SharedObjectKind", TSharedObject]> {
+export interface SharedObjectKind<out TSharedObject = unknown> extends SharedObjectKey<TSharedObject>, ErasedType<readonly ["SharedObjectKind", TSharedObject]> {
     is(value: IFluidLoadable): value is IFluidLoadable & TSharedObject;
 }
 

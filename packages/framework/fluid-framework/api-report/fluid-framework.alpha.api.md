@@ -220,6 +220,17 @@ export function createSimpleTreeIndex<TFieldSchema extends ImplicitFieldSchema, 
 // @alpha
 export function createSimpleTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey extends TreeIndexKey, TValue, TSchema extends TreeNodeSchema>(view: TreeView<TFieldSchema>, indexer: Map<TreeNodeSchema, string>, getValue: (nodes: TreeIndexNodes<NodeFromSchema<TSchema>>) => TValue, isKeyValid: (key: TreeIndexKey) => key is TKey, indexableSchema: readonly TSchema[]): SimpleTreeIndex<TKey, TValue>;
 
+// @alpha
+export function dataStoreKind<T, TRoot extends IFluidLoadable>(options: DataStoreOptions<TRoot, T>): DataStoreKind<T>;
+
+// @alpha @input (undocumented)
+export interface DataStoreOptions<in out TRoot extends IFluidLoadable, out TOutput> {
+    instantiateFirstTime(rootCreator: SharedObjectCreator<TRoot>, creator: SharedObjectCreator): Promise<TRoot>;
+    readonly registry: SharedObjectRegistry;
+    readonly type: string;
+    view(root: TRoot): Promise<TOutput>;
+}
+
 // @public @sealed @system
 interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider"> {
 }
@@ -1342,10 +1353,24 @@ export class SchemaUpgrade {
 // @public @system
 type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
 
+// @alpha @sealed
+export interface SharedObjectCreator<TConstraint = IFluidLoadable> {
+    create<T extends TConstraint>(kind: SharedObjectKey<T>): Promise<T>;
+}
+
 // @public @sealed
-export interface SharedObjectKind<out TSharedObject = unknown> extends ErasedType<readonly ["SharedObjectKind", TSharedObject]> {
+export interface SharedObjectKind<out TSharedObject = unknown> extends SharedObjectKey<TSharedObject>, ErasedType<readonly ["SharedObjectKind", TSharedObject]> {
     is(value: IFluidLoadable): value is IFluidLoadable & TSharedObject;
 }
+
+// @alpha @input
+export type SharedObjectRegistry = () => Promise<Registry<SharedObjectKind<IFluidLoadable>>>;
+
+// @alpha
+export function sharedObjectRegistryFromIterable(entries: Iterable<SharedObjectKind<IFluidLoadable> | {
+    type: string;
+    kind: () => Promise<SharedObjectKind<IFluidLoadable>>;
+}>): SharedObjectRegistry;
 
 // @public
 export const SharedTree: SharedObjectKind<ITree>;
@@ -1834,6 +1859,16 @@ export interface TreeChangeEventsBeta<TNode extends TreeNode = TreeNode> extends
 export enum TreeCompressionStrategy {
     Compressed = 0,
     Uncompressed = 1
+}
+
+// @alpha
+export function treeDataStoreKind<const TSchema extends ImplicitFieldSchema>(options: TreeDataStoreOptions<TSchema>): DataStoreKind<TreeView<TSchema>>;
+
+// @alpha @input
+export interface TreeDataStoreOptions<TSchema extends ImplicitFieldSchema> extends Pick<DataStoreOptions<never, never>, "type"> {
+    readonly config: TreeViewConfiguration<TSchema>;
+    readonly initializer?: (creator: SharedObjectCreator) => InsertableTreeFieldFromImplicitField<TSchema>;
+    readonly registry?: Iterable<SharedObjectKind<IFluidLoadable>> | SharedObjectRegistry;
 }
 
 // @beta @input

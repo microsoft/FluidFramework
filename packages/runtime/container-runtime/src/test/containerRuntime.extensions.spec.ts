@@ -24,6 +24,7 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { ContainerRuntime } from "../containerRuntime.js";
+import { FluidDataStoreRegistry } from "../dataStoreRegistry.js";
 
 const testExtensionId: ContainerExtensionId = "test:extension";
 
@@ -117,7 +118,7 @@ async function createRuntimeWithMockContext(isReadonly: boolean = false): Promis
 	const context = new MockContext(isReadonly);
 	const runtime = await ContainerRuntime.loadRuntime({
 		context,
-		registryEntries: [],
+		registry: new FluidDataStoreRegistry([]),
 		existing: false,
 		provideEntryPoint: async () => ({}),
 	});
@@ -133,7 +134,7 @@ async function createRuntimeWithoutConnectionState(isReadonly: boolean = false):
 	delete context.getConnectionState;
 	const runtime = await ContainerRuntime.loadRuntime({
 		context,
-		registryEntries: [],
+		registry: new FluidDataStoreRegistry([]),
 		existing: false,
 		provideEntryPoint: async () => ({}),
 	});

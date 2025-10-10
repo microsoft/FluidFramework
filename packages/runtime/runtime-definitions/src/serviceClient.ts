@@ -1,0 +1,269 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import {
+	type ErasedBaseType,
+	ErasedTypeImplementation,
+} from "@fluidframework/core-interfaces/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
+import type { MinimumVersionForCollab } from "./compatibilityDefinitions.js";
+import type { IFluidDataStoreContext, IFluidDataStoreChannel } from "./dataStoreContext.js";
+import type { IFluidDataStoreFactory } from "./dataStoreFactory.js";
+import type { Registry, RegistryKey } from "./registry.js";
+
+/**
+ * Options for configuring a {@link ServiceClient}.
+ * @remarks
+ * These are the options which apply to all services.
+ *
+ * Individual services will extend with with additional options.
+ *
+ * @input
+ * @alpha
+ */
+export interface ServiceOptions {
+	readonly minVersionForCollab: MinimumVersionForCollab;
+}
+
+/**
+ * A {@link RegistryKey} for a {@link DataStoreKind}.
+ * @remarks
+ * This is implemented by {@link DataStoreKind}, but alternative implementations can be used if needed.
+ *
+ * If lazy loading, and therefor want a key that doers not eagerly load the DataStoreKind, an alternative key can be implemented.
+ * @privateRemarks
+ * TODO: A built in common pattern for the lazy key case should be provided.
+ * TODO: this same key pattern should be applied to SharedObjectKind.
+ * TODO: things probably break if "adapt" does anything except throw or return the result from the input promise.
+ * @input
+ * @alpha
+ */
+export type DataStoreKey<T, TAll = unknown> = RegistryKey<
+	Promise<DataStoreKind<T>>,
+	Promise<DataStoreKind<TAll>>
+>;
+
+/**
+ * A Fluid container.
+ * @remarks
+ * A document which can be stored to or loaded from a Fluid service using a {@link ServiceClient}.
+ *
+ * @privateRemarks
+ * This will likely end up needing many of IFluidContainer's APIs, like disconnect, connectionState, events etc.
+ * Before adding them though, care should be taken to consider if they can be improved or simplified.
+ * For example maybe a single status enum for `detached -> attaching -> dirty -> saved -> closed` would be good.
+ * Or maybe `detached -> attaching -> attached -> closed` and a timer for how long since the last unsaved change was created.
+ *
+ * @sealed
+ * @alpha
+ */
+export interface FluidContainer<TData = unknown> {
+	/**
+	 * The unique identifier for this container, if it has been attached to a service.
+	 */
+	readonly id?: string | undefined;
+
+	/**
+	 * The root data store of the container.
+	 * @remarks
+	 * The type of the root data store is defined by the {@link DataStoreKind} used to create the container.
+	 */
+	readonly data: TData;
+
+	/**
+	 * Create a new detached datastore `T` which can be attached to this container
+	 * by adding a handle to it to a datastore which is already attached to the container.
+	 * @remarks
+	 * `kind` must be included in the registry used to create or load this container.
+	 */
+	createDataStore<T>(kind: DataStoreKey<T>): Promise<T>;
+}
+
+/**
+ * A Fluid container with an associated {@link ServiceClient} it can attach to.
+ * @sealed
+ * @alpha
+ */
+export interface FluidContainerWithService<T = unknown> extends FluidContainer<T> {
+	/**
+	 * Attaches this container to the associated service client.
+	 *
+	 * The returned promise resolves once the container is attached: the container from the promise is the same one passed in as the argument.
+	 */
+	attach(): Promise<FluidContainerAttached<T>>;
+
+	// This could expose access to the ServiceClient if needed.
+}
+
+/**
+ * A Fluid container that has been attached to a service.
+ * @sealed
+ * @alpha
+ */
+export interface FluidContainerAttached<T = unknown> extends FluidContainer<T> {
+	/**
+	 * {@inheritdoc FluidContainer.id}
+	 */
+	readonly id: string;
+}
+
+/**
+ * TODO:
+ * SharedObjects should be usable as these (putting only a single shared object as root in container might need special logic).
+ * @privateRemarks
+ * Type erased {@link IFluidDataStoreFactory}.
+ * @sealed
+ * @alpha
+ */
+export interface DataStoreKind<T = unknown>
+	extends DataStoreKey<T>,
+		ErasedBaseType<readonly ["DataStoreKind", T]> {}
+
+/**
+ * Implementation of {@link DataStoreKind}.
+ * @internal
+ */
+export class DataStoreKindImplementation<T>
+	extends ErasedTypeImplementation<DataStoreKind<T>>
+	implements DataStoreKind<T>, IFluidDataStoreFactory
+{
+	/**
+	 * Type guard for narrowing unions which contain DataStoreKind<T> to DataStoreKind<T>.
+	 */
+	public static guard<T>(
+		value: T,
+	): value is DataStoreKindImplementation<T extends DataStoreKind<infer T2> ? T2 : never> & T {
+		return value instanceof DataStoreKindImplementation;
+	}
+
+	/**
+	 * Type guard for narrowing unions which contain DataStoreKind<T> to DataStoreKind<T>.
+	 */
+	public static narrowGeneric<T>(
+		value: T,
+	): asserts value is DataStoreKindImplementation<
+		T extends DataStoreKind<infer T2> ? T2 : never
+	> &
+		T {
+		if (!DataStoreKindImplementation.guard(value)) {
+			throw new Error("Invalid DataStoreKindImplementation");
+		}
+	}
+
+	public readonly type: string;
+	public readonly createDataStore?: (context: IFluidDataStoreContext) => {
+		readonly runtime: IFluidDataStoreChannel;
+	};
+
+	public constructor(
+		private readonly factory: Pick<
+			DataStoreKindImplementation<T>,
+			"type" | "instantiateDataStore" | "createDataStore"
+		>,
+	) {
+		super();
+		this.type = factory.type;
+		if (factory.createDataStore !== undefined) {
+			this.createDataStore = factory.createDataStore.bind(factory);
+		}
+	}
+
+	public async instantiateDataStore(
+		context: IFluidDataStoreContext,
+		existing: boolean,
+	): Promise<IFluidDataStoreChannel> {
+		return this.factory.instantiateDataStore(context, existing);
+	}
+
+	public get IFluidDataStoreFactory(): IFluidDataStoreFactory {
+		return this;
+	}
+
+	public async adapt(value: Promise<DataStoreKind>): Promise<DataStoreKind<T>> {
+		const input = await value;
+		if (input === this) {
+			return this;
+		}
+		if (input.type === this.type) {
+			throw new UsageError(`Conflicting DataStoreKinds with same type: ${this.type}`);
+		}
+		throw new UsageError(
+			`Mismatched DataStoreKind type. Expected: ${this.type}, got: ${input.type}`,
+		);
+	}
+}
+
+/**
+ * A connection to a Fluid storage service.
+ * @sealed
+ * @alpha
+ */
+export interface ServiceClient {
+	/**
+	 * Attaches a detached container.
+	 *
+	 * The returned promise resolves once the container is attached: the container from the promise is the same one passed in as the argument.
+	 */
+	// TODO: supporting this and a service independent createContainer would be nice, but is current impractical. Can be added later.
+	// attachContainer<T>(detached: FluidContainer<T>): Promise<FluidContainerAttached<T>>;
+	/**
+	 * Creates a detached container associated with this service client.
+	 * @privateRemarks
+	 * TODO:As this is a detached container, it should be able to be created synchronously.
+	 */
+	createContainer<T>(root: DataStoreKind<T>): Promise<FluidContainerWithService<T>>;
+
+	createContainer<T>(
+		root: DataStoreKey<T>,
+		registry: Registry<Promise<DataStoreKind>>,
+	): Promise<FluidContainerWithService<T>>;
+
+	/**
+	 * Loads an existing container from the service.
+	 * @param id - The unique identifier of the container to load.
+	 * @param root - The {@link DataStoreKind} for the root, or a registry which will be used to look up the root based on its type.
+	 *
+	 * @throws a UsageError if the DataStoreKind's type (either the root directly or looked up from the registry) does not match the type of the root data store in the container.
+	 *
+	 * @privateRemarks
+	 * The ability to provide a registry here means that it's possible to:
+	 * 1. Load a container which might have a few different possible roots, for example because of versioning.
+	 * 2. Generate the DataStoreKind on demand based on the type: this approach could be used for things like debug tools which can load any possible container.
+	 * 3. Generating the DataStoreKind if the type is unrecognized, for example to provide a placeholder which might support some minimal functionality (like debug inspection, and summary).
+	 *
+	 * The ability to provide just a single DataStoreKind<T> is purely a convenience to make it cleaner to use this in simple cases.
+	 */
+	loadContainer<T>(
+		id: string,
+		root: DataStoreKind<T> | Registry<Promise<DataStoreKind<T>>>,
+	): Promise<FluidContainerAttached<T>>;
+}
+
+/**
+ * Creates a detached container.
+ *
+ * @privateRemarks
+ * When implemented, this function likely will need to move elsewhere for dependency reasons.
+ *
+ * # Implementation challenges
+ * The current Fluid code (Mainly IContainer and Container.createDetached packages/loader/container-loader/src/container.ts)
+ * seem to follow patterns that would make implementing this difficult.
+ *
+ * Container.createDetached is currently async, which seems unnecessary and undesirable as creation of detached content should be able to be done synchronously.
+ *
+ * Additionally it seems like the service must be provided at creation time since IContainer.attach exists and does not take the service client implementation.
+ *
+ * Therefor it is unclear if this proposed API is actually practical to implement.
+ *
+ * If it is impractical, a workaround could be provided for the shorter term as an alternative async method on the ServiceClient.
+ *
+ * @alpha
+ */
+// // TODO: support this as an alternative to ServiceClient.createContainer.
+// // This would be nice to have even if there was no way to attach it for non collaborative non persisted use cases.
+// export function createContainer<T>(root: DataStoreKind<T>): FluidContainer<T> {
+// 	throw new Error("TODO: Not implemented: createContainer");
+// }
