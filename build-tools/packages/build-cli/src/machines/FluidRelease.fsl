@@ -137,6 +137,7 @@ CheckShouldCommitDeps 'failure'
 // Bumps a release group and prompts to push/PR or commit changes
 
 DoReleaseGroupBump 'success'
+=> DoLayerGenerationUpdate 'success'
 => CheckShouldCommitBump 'success'
 => PromptToPRBump;
 
