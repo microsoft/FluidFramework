@@ -210,7 +210,7 @@ export class PropertyTemplate {
                 (_.isObject(in_obj) !== _.isObject(target)) ||
                 (_.isArray(in_obj) !== _.isArray(target)) ||
                 !_.isObject(target)) {
-                throw new TypeError(
+                throw new Error(
                     MSG.INVALID_TARGET_PROPERTY_TEMPLATE + this.typeid,
                 );
             }
