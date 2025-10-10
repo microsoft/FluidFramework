@@ -60,10 +60,6 @@ parameters:
   type: boolean
   default: false
 
-- name: namespace
-  type: boolean
-  default: true
-
 - name: buildNumberInPatch
   type: boolean
   default: false
