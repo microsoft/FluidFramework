@@ -35,6 +35,7 @@ import {
 	totalBlobSizePropertyName,
 	type IRuntimeMessageCollection,
 	type IRuntimeMessagesContent,
+	type RegistryKey,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	toDeltaManagerInternal,
@@ -52,6 +53,7 @@ import {
 	type ICustomData,
 	type IFluidErrorBase,
 	LoggingError,
+	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -1028,13 +1030,29 @@ export interface ISharedObjectKind<TSharedObject> {
  * @public
  */
 export interface SharedObjectKind<out TSharedObject = unknown>
-	extends ErasedType<readonly ["SharedObjectKind", TSharedObject]> {
+	extends SharedObjectKey<TSharedObject>,
+		ErasedType<readonly ["SharedObjectKind", TSharedObject]> {
 	/**
 	 * Check whether an {@link @fluidframework/core-interfaces#IFluidLoadable} is an instance of this shared object kind.
 	 * @remarks This should be used in place of `instanceof` checks for shared objects, as their actual classes are not exported in Fluid's public API.
 	 */
 	is(value: IFluidLoadable): value is IFluidLoadable & TSharedObject;
 }
+
+/**
+ * A {@link @fluidframework/runtime-definitions#RegistryKey} for a {@link SharedObjectKind}.
+ * @remarks
+ * This is implemented by {@link SharedObjectKind}, but alternative implementations can be used if needed.
+ *
+ * If lazy loading, and therefor want a key that doers not eagerly load the DataStoreKind, an alternative key can be implemented.
+ * @privateRemarks
+ * TODO: A built in common pattern for the lazy key case should be provided.
+ * TODO: this same key pattern should be applied to SharedObjectKind.
+ * TODO: things probably break if "adapt" does anything except throw or return the result from the input promise.
+ * @input
+ * @public
+ */
+export type SharedObjectKey<T> = RegistryKey<SharedObjectKind<T>, SharedObjectKind>;
 
 /**
  * Utility for creating ISharedObjectKind instances.
@@ -1061,9 +1079,25 @@ export function createSharedObjectKind<TSharedObject>(
 		is(value: IFluidLoadable): value is IFluidLoadable & TSharedObject {
 			return isChannel(value) && value.attributes.type === factory.Type;
 		},
+
+		type: factory.Type,
+
+		adapt: (value: SharedObjectKind): SharedObjectKind<TSharedObject> => {
+			if (value === resultFinal) {
+				return resultFinal;
+			}
+			if (value.type === result.type) {
+				throw new UsageError(`Conflicting DataStoreKinds with same type: ${result.type}`);
+			}
+			throw new UsageError(
+				`Mismatched DataStoreKind type. Expected: ${result.type}, got: ${value.type}`,
+			);
+		},
 	};
 
-	return result as typeof result & SharedObjectKind<TSharedObject>;
+	const resultFinal = result as typeof result & SharedObjectKind<TSharedObject>;
+
+	return resultFinal;
 }
 
 function isChannel(loadable: IFluidLoadable): loadable is IChannel {

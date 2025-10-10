@@ -11,6 +11,7 @@ export {
 	type ISharedObjectKind,
 	type SharedObjectKind,
 	createSharedObjectKind,
+	type SharedObjectKey,
 } from "./sharedObject.js";
 export type { ISharedObject, ISharedObjectEvents } from "./types.js";
 export {

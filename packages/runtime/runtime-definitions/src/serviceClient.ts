@@ -37,6 +37,7 @@ export interface ServiceOptions {
  * @privateRemarks
  * TODO: A built in common pattern for the lazy key case should be provided.
  * TODO: this same key pattern should be applied to SharedObjectKind.
+ * TODO: things probably break if "adapt" does anything except throw or return the result from the input promise.
  * @input
  * @alpha
  */
@@ -184,7 +185,7 @@ export class DataStoreKindImplementation<T>
 	public async adapt(value: Promise<DataStoreKind>): Promise<DataStoreKind<T>> {
 		const input = await value;
 		if (input === this) {
-			return input as DataStoreKind<T>;
+			return this;
 		}
 		if (input.type === this.type) {
 			throw new UsageError(`Conflicting DataStoreKinds with same type: ${this.type}`);

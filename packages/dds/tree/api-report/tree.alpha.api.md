@@ -1451,6 +1451,8 @@ export function treeDataStoreKind<const TSchema extends ImplicitFieldSchema>(opt
 export interface TreeDataStoreOptions<TSchema extends ImplicitFieldSchema> extends Pick<DataStoreOptions<never, never>, "type"> {
     readonly config: TreeViewConfiguration<TSchema>;
     readonly initializer?: (creator: SharedObjectCreator) => InsertableTreeFieldFromImplicitField<TSchema>;
+    // (undocumented)
+    readonly key?: SharedObjectKey<ITree>;
     readonly registry?: Iterable<SharedObjectKind<IFluidLoadable>> | SharedObjectRegistry;
 }
 

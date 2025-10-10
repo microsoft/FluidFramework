@@ -4,6 +4,12 @@
 
 ```ts
 
+// @public @sealed @input
+export interface RegistryKey<TOut, TIn = unknown> {
+    adapt(value: TIn): TOut;
+    readonly type: string;
+}
+
 // (No @packageDocumentation comment for this package)
 
 ```

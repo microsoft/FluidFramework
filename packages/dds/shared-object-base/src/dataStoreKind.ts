@@ -15,10 +15,11 @@ import {
 	type IFluidDataStoreContext,
 	type IFluidDataStoreChannel,
 	DataStoreKindImplementation,
+	registryLookup,
 } from "@fluidframework/runtime-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { ISharedObjectKind, SharedObjectKind } from "./sharedObject.js";
+import type { ISharedObjectKind, SharedObjectKey, SharedObjectKind } from "./sharedObject.js";
 import type { ISharedObject } from "./types.js";
 
 /**
@@ -154,13 +155,16 @@ async function createDataStore<T, TRoot extends IFluidLoadable>(
 	existing: boolean,
 	options: DataStoreOptions<TRoot, T>,
 ): Promise<IFluidDataStoreChannel> {
+	const sharedObjectRegistry = await options.registry();
 	const runtime: FluidDataStoreRuntime = new FluidDataStoreRuntime(
 		context,
+		// TODO: avoid duplicate evaluation of registry
 		await convertRegistry(options.registry),
 		existing,
 		async (rt: IFluidDataStoreRuntime) => {
 			const creator: SharedObjectCreator = {
-				async create<T2 extends IFluidLoadable>(kind: SharedObjectKind<T2>): Promise<T2> {
+				async create<T2 extends IFluidLoadable>(key: SharedObjectKey<T2>): Promise<T2> {
+					const kind = registryLookup(sharedObjectRegistry, key);
 					// Create detached channel.
 					const sharedObject = kind as unknown as ISharedObjectKind<T2>;
 					return sharedObject.create(rt);
@@ -170,12 +174,13 @@ async function createDataStore<T, TRoot extends IFluidLoadable>(
 			let createdRoot: TRoot | undefined;
 
 			const rootCreator: SharedObjectCreator<TRoot> = {
-				async create<T2 extends TRoot>(kind: SharedObjectKind<T2>): Promise<T2> {
+				async create<T2 extends TRoot>(key: SharedObjectKey<T2>): Promise<T2> {
 					// Create named channel under the root id.
 					// Error if called twice.
 					if (createdRoot !== undefined) {
 						throw new UsageError("Root shared object already created");
 					}
+					const kind = registryLookup(sharedObjectRegistry, key);
 					const sharedObject = kind as unknown as ISharedObjectKind<T2>;
 					const result = sharedObject.create(rt, rootSharedObjectId);
 
@@ -217,5 +222,5 @@ export interface SharedObjectCreator<TConstraint = IFluidLoadable> {
 	/**
 	 * Create an instance of `kind`, which must be registered in the registry of the surrounding data store.
 	 */
-	create<T extends TConstraint>(kind: SharedObjectKind<T>): Promise<T>;
+	create<T extends TConstraint>(kind: SharedObjectKey<T>): Promise<T>;
 }

@@ -1355,11 +1355,11 @@ type ScopedSchemaName<TScope extends string | undefined, TName extends number | 
 
 // @alpha @sealed
 export interface SharedObjectCreator<TConstraint = IFluidLoadable> {
-    create<T extends TConstraint>(kind: SharedObjectKind<T>): Promise<T>;
+    create<T extends TConstraint>(kind: SharedObjectKey<T>): Promise<T>;
 }
 
 // @public @sealed
-export interface SharedObjectKind<out TSharedObject = unknown> extends ErasedType<readonly ["SharedObjectKind", TSharedObject]> {
+export interface SharedObjectKind<out TSharedObject = unknown> extends SharedObjectKey<TSharedObject>, ErasedType<readonly ["SharedObjectKind", TSharedObject]> {
     is(value: IFluidLoadable): value is IFluidLoadable & TSharedObject;
 }
 

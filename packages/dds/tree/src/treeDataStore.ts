@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	ImplicitFieldSchema,
 	InsertableTreeFieldFromImplicitField,
@@ -12,7 +11,7 @@ import type {
 	TreeViewConfiguration,
 } from "./simple-tree/index.js";
 import type { DataStoreKind } from "@fluidframework/runtime-definitions/internal";
-import type { SharedObjectKind } from "@fluidframework/shared-object-base";
+import type { SharedObjectKey, SharedObjectKind } from "@fluidframework/shared-object-base";
 import { SharedTree } from "./treeFactory.js";
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import {
@@ -48,6 +47,8 @@ export interface TreeDataStoreOptions<TSchema extends ImplicitFieldSchema>
 	 * {@link configuredSharedTree} can be used to customize the SharedTree kind used in the registry.
 	 */
 	readonly registry?: Iterable<SharedObjectKind<IFluidLoadable>> | SharedObjectRegistry;
+
+	readonly key?: SharedObjectKey<ITree>;
 }
 
 /**
@@ -71,17 +72,12 @@ export function treeDataStoreKind<const TSchema extends ImplicitFieldSchema>(
 			rootCreator: SharedObjectCreator,
 			creator: SharedObjectCreator,
 		): Promise<ITree> {
-			const lookup = await registry();
-			const treeKind = lookup(SharedTree.getFactory().type);
-			const tree = await rootCreator.create(treeKind);
-			// TODO: Should this pass for customized SharedTree kinds? Should there be a different check?
-			assert(SharedTree.is(tree), "Created shared tree should be a SharedTree");
-			if (options.initializer !== undefined) {
-				const view = tree.viewWith(options.config);
-				view.initialize(options.initializer(creator));
-				view.dispose();
-			}
-			return tree;
+			return instantiateTreeFirstTime(
+				rootCreator,
+				creator,
+				options.key ?? SharedTree,
+				options,
+			);
 		},
 		async view(tree): Promise<TreeView<TSchema>> {
 			const view = tree.viewWith(options.config);
@@ -89,4 +85,27 @@ export function treeDataStoreKind<const TSchema extends ImplicitFieldSchema>(
 		},
 	});
 	return result;
+}
+
+export async function instantiateTreeFirstTime<TSchema extends ImplicitFieldSchema>(
+	rootCreator: SharedObjectCreator,
+	creator: SharedObjectCreator,
+	treeKind: SharedObjectKey<ITree>,
+	options: Pick<TreeDataStoreOptions<TSchema>, "config" | "initializer">,
+): Promise<ITree> {
+	const tree = await rootCreator.create(treeKind);
+	initializeTreeFirstTime(tree, options, creator);
+	return tree;
+}
+
+function initializeTreeFirstTime<TSchema extends ImplicitFieldSchema>(
+	tree: ITree,
+	options: Pick<TreeDataStoreOptions<TSchema>, "config" | "initializer">,
+	creator: SharedObjectCreator,
+): void {
+	if (options.initializer !== undefined) {
+		const view = tree.viewWith(options.config);
+		view.initialize(options.initializer(creator));
+		view.dispose();
+	}
 }

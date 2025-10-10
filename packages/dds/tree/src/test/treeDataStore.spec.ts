@@ -9,15 +9,17 @@ import {
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	TreeViewConfiguration,
+	type ITree,
 } from "../simple-tree/index.js";
 import { dataStoreKind } from "@fluidframework/shared-object-base/internal";
-import { treeDataStoreKind } from "../treeDataStore.js";
+import { instantiateTreeFirstTime, treeDataStoreKind } from "../treeDataStore.js";
 import {
 	createEphemeralServiceClient,
 	synchronizeLocalService,
 } from "@fluidframework/local-driver/internal";
 import { SharedTree } from "../treeFactory.js";
-import { SchematizingSimpleTreeView } from "../shared-tree/index.js";
+import { SchematizingSimpleTreeView, Tree } from "../shared-tree/index.js";
+import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 
 describe("treeDataStore", () => {
 	it("detached example", async () => {
@@ -156,8 +158,54 @@ describe("treeDataStore", () => {
 
 		secondTree.root = 2;
 
-		// TODO: get handle to new datastore, put in first to attach.
-
 		assert.equal(secondTree.root, 2);
+	});
+
+	it("createDataStore: collaboration in attached datastore", async () => {
+		const config = new TreeViewConfiguration({
+			schema: [SchemaFactoryAlpha.number, SchemaFactory.handle],
+		});
+
+		// A DataStore which is an initialized ITree with the above config.
+		const MyTree = dataStoreKind<ITree, ITree>({
+			type: "my-tree",
+			registry: async () => () => SharedTree,
+			async instantiateFirstTime(rootCreator, creator): Promise<ITree> {
+				return instantiateTreeFirstTime(rootCreator, creator, SharedTree, {
+					config,
+					initializer: () => 1,
+				});
+			},
+			view: async (tree) => tree,
+		});
+
+		const service = createEphemeralServiceClient();
+
+		// Create a container with a MyTree as the data
+		const container1 = await (await service.createContainer(MyTree)).attach();
+
+		// Create a second MyTree in the container, and put a handle to it in the root data.
+		{
+			const mainView = container1.data.viewWith(config);
+			const secondTree = await container1.createDataStore(MyTree);
+			const secondView = secondTree.viewWith(config);
+			secondView.root = 3;
+
+			// Attach the second tree by placing a handle to it in the first.
+			mainView.root = secondTree.handle;
+		}
+
+		await synchronizeLocalService();
+
+		// Load the container, traverse the handle, and confirm the second tree is as expected.
+		{
+			const container2 = await service.loadContainer(container1.id, MyTree);
+			const mainView = container2.data.viewWith(config);
+			assert(Tree.is(mainView.root, SchemaFactoryAlpha.handle));
+
+			const secondTree = (await mainView.root.get()) as IFluidLoadable;
+			assert(SharedTree.is(secondTree));
+			assert.equal(secondTree.viewWith(config).root, 3);
+		}
 	});
 });
