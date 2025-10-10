@@ -137,7 +137,7 @@ export class MockBlobStorage
 		return blob;
 	};
 
-	private readonly waitBlobAvailable = async (): Promise<void> => {
+	public readonly waitBlobAvailable = async (): Promise<void> => {
 		if (this.pendingBlobs.length === 0) {
 			return new Promise<void>((resolve) => {
 				const onBlobReceived = () => {
@@ -185,18 +185,18 @@ export class MockStorageAdapter
 	public readonly events = createEmitter<MockBlobStorageEvents>();
 	public readonly detachedStorage = new MockBlobStorage(false);
 	public readonly attachedStorage = new MockBlobStorage(true);
-	public readonly pause = (): void => {
-		this.getCurrentStorage().pause();
-	};
-	public readonly unpause = (): void => {
-		this.getCurrentStorage().unpause();
-	};
+
+	public readonly pause = (): void => this.getCurrentStorage().pause();
+	public readonly unpause = (): void => this.getCurrentStorage().unpause();
+
 	public get blobsReceived(): number {
 		return this.getCurrentStorage().blobsReceived;
 	}
+
 	public get blobsCreated(): number {
 		return this.getCurrentStorage().blobsCreated;
 	}
+
 	public constructor(private attached: boolean) {
 		if (attached) {
 			this.attachedStorage.events.on("blobCreated", this.onBlobCreated);
@@ -208,15 +208,13 @@ export class MockStorageAdapter
 			this.detachedStorage.events.on("blobReceived", this.onBlobReceived);
 		}
 	}
-	private readonly onBlobCreated = (id: string, minTTLOverride?: number | undefined) => {
+
+	private readonly onBlobCreated = (id: string, minTTLOverride?: number | undefined) =>
 		this.events.emit("blobCreated", id, minTTLOverride);
-	};
-	private readonly onBlobCreateFailed = (id: string, error: Error) => {
+	private readonly onBlobCreateFailed = (id: string, error: Error) =>
 		this.events.emit("blobCreateFailed", id, error);
-	};
-	private readonly onBlobReceived = () => {
-		this.events.emit("blobReceived");
-	};
+	private readonly onBlobReceived = () => this.events.emit("blobReceived");
+
 	public readonly simulateAttach = async (
 		patchRedirectTable: BlobManager["patchRedirectTable"],
 	): Promise<void> => {
@@ -248,8 +246,10 @@ export class MockStorageAdapter
 		this.attachedStorage.events.on("blobCreateFailed", this.onBlobCreateFailed);
 		this.attachedStorage.events.on("blobReceived", this.onBlobReceived);
 	};
+
 	private readonly getCurrentStorage = (): MockBlobStorage =>
 		this.attached ? this.attachedStorage : this.detachedStorage;
+
 	public readonly createBlob = async (
 		blob: ArrayBufferLike,
 	): Promise<ICreateBlobResponseWithTTL> => this.getCurrentStorage().createBlob(blob);
@@ -257,13 +257,14 @@ export class MockStorageAdapter
 	public readBlob = async (id: string): Promise<ArrayBufferLike> =>
 		this.getCurrentStorage().readBlob(id);
 
-	public readonly createOne = (createOptions?: BlobCreateOptions): void => {
-		this.getCurrentStorage().createOne(createOptions);
-	};
+	public readonly waitBlobAvailable = async (): Promise<void> =>
+		this.getCurrentStorage().waitBlobAvailable();
 
-	public readonly waitCreateOne = async (createOptions?: BlobCreateOptions): Promise<void> => {
-		return this.getCurrentStorage().waitCreateOne(createOptions);
-	};
+	public readonly createOne = (createOptions?: BlobCreateOptions): void =>
+		this.getCurrentStorage().createOne(createOptions);
+
+	public readonly waitCreateOne = async (createOptions?: BlobCreateOptions): Promise<void> =>
+		this.getCurrentStorage().waitCreateOne(createOptions);
 }
 
 export interface UnprocessedOp {
