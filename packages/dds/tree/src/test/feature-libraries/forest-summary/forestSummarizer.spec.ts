@@ -46,6 +46,7 @@ import {
 	SchemaFactoryAlpha,
 	toStoredSchema,
 	TreeViewConfiguration,
+	TreeViewConfigurationAlpha,
 } from "../../../simple-tree/index.js";
 import { fieldJsonCursor } from "../../json/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -369,7 +370,9 @@ describe("ForestSummarizer", () => {
 					initialContent,
 					encodeType: TreeCompressionStrategyExtended.CompressedIncremental,
 					forestType: ForestTypeOptimized,
-					shouldEncodeIncrementally: getShouldIncrementallySummarizeAllowedTypes(Root),
+					shouldEncodeIncrementally: getShouldIncrementallySummarizeAllowedTypes(
+						new TreeViewConfigurationAlpha({ schema: Root }),
+					),
 				});
 			}
 

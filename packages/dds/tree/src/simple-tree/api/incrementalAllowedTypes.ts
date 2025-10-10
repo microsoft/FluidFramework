@@ -6,20 +6,12 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import type { FieldKey, TreeNodeSchemaIdentifier } from "../../core/index.js";
 import {
-	NodeKind,
-	normalizeAndEvaluateAnnotatedAllowedTypes,
+	getTreeNodeSchemaPrivateData,
+	normalizeAllowedTypes,
 	type AllowedTypesMetadata,
-	type TreeNodeSchema,
 } from "../core/index.js";
-import type { ImplicitFieldSchema } from "../fieldSchema.js";
-import {
-	isArrayNodeSchema,
-	isMapNodeSchema,
-	isObjectNodeSchema,
-	isRecordNodeSchema,
-} from "../node-kinds/index.js";
-import { TreeViewConfigurationAlpha } from "./configuration.js";
-import { getOrCreate } from "../../util/index.js";
+import { isObjectNodeSchema } from "../node-kinds/index.js";
+import type { TreeSchema } from "./configuration.js";
 import type { IncrementalEncodingPolicy } from "../../feature-libraries/index.js";
 
 /**
@@ -31,8 +23,6 @@ import type { IncrementalEncodingPolicy } from "../../feature-libraries/index.js
 export const incrementalAllowedTypesMetadata: AllowedTypesMetadata["custom"] = {
 	incrementalSummaryOptimization: true,
 };
-
-const schemaCache = new WeakMap<ImplicitFieldSchema, TreeViewConfigurationAlpha>();
 
 /**
  * This helper function {@link getShouldIncrementallySummarizeAllowedTypes} can be used to generate a callback function
@@ -54,14 +44,8 @@ const schemaCache = new WeakMap<ImplicitFieldSchema, TreeViewConfigurationAlpha>
  * incremental summary feature and APIs are stabilized.
  */
 export function getShouldIncrementallySummarizeAllowedTypes(
-	rootSchema: TreeNodeSchema,
+	rootSchema: TreeSchema,
 ): IncrementalEncodingPolicy {
-	const treeSchema = getOrCreate(
-		schemaCache,
-		rootSchema,
-		() => new TreeViewConfigurationAlpha({ schema: rootSchema }),
-	);
-
 	return (
 		targetNodeIdentifier: TreeNodeSchemaIdentifier | undefined,
 		targetFieldKey: FieldKey,
@@ -71,7 +55,7 @@ export function getShouldIncrementallySummarizeAllowedTypes(
 			return false;
 		}
 
-		const targetNode = treeSchema.definitions.get(targetNodeIdentifier);
+		const targetNode = rootSchema.definitions.get(targetNodeIdentifier);
 		if (targetNode === undefined) {
 			// The requested type is unknown to this schema.
 			// In this case we have no hints available from the view schema, and fall back to the default behavior of non-incremental encoding.
@@ -82,27 +66,27 @@ export function getShouldIncrementallySummarizeAllowedTypes(
 		}
 
 		if (isObjectNodeSchema(targetNode)) {
-			for (const [key, fieldSchema] of targetNode.fields) {
-				if (key === targetFieldKey) {
-					const annotatedAllowedTypes = normalizeAndEvaluateAnnotatedAllowedTypes(
-						fieldSchema.allowedTypes,
+			const targetPropertyKey = targetNode.storedKeyToPropertyKey.get(targetFieldKey);
+			if (targetPropertyKey !== undefined) {
+				const fieldSchema = targetNode.fields.get(targetPropertyKey);
+				if (fieldSchema !== undefined) {
+					return (
+						fieldSchema.allowedTypesFull.metadata.custom === incrementalAllowedTypesMetadata
 					);
-					return annotatedAllowedTypes.metadata.custom === incrementalAllowedTypesMetadata;
 				}
 			}
 			return false;
 		}
 
-		if (
-			isArrayNodeSchema(targetNode) ||
-			isMapNodeSchema(targetNode) ||
-			isRecordNodeSchema(targetNode)
-		) {
-			const annotatedAllowedTypes = normalizeAndEvaluateAnnotatedAllowedTypes(targetNode.info);
-			return annotatedAllowedTypes.metadata.custom === incrementalAllowedTypesMetadata;
-		}
-
-		assert(targetNode.kind === NodeKind.Leaf, "unexpected node kind");
-		return false;
+		const allowedTypes = getTreeNodeSchemaPrivateData(targetNode).childAnnotatedAllowedTypes;
+		assert(
+			allowedTypes.length === 1,
+			"Non object nodes with fields should only have one allowedTypes entry",
+		);
+		return (
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			normalizeAllowedTypes(allowedTypes[0]!).metadata.custom ===
+			incrementalAllowedTypesMetadata
+		);
 	};
 }
