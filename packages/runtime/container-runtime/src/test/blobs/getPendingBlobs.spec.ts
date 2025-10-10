@@ -57,7 +57,7 @@ for (const createBlobPayloadPending of [false, true]) {
 			assert.strictEqual(redirectTable1, undefined);
 
 			// Error the original upload, so we can be sure that the created blob came from the load with pending blobs.
-			await mockBlobStorage.waitProcessOne({ error: new Error("Upload failed") });
+			await mockBlobStorage.waitCreateOne({ error: new Error("Upload failed") });
 			await assert.rejects(waitHandlePayloadShared(handle), { message: "Upload failed" });
 
 			const { blobManager: blobManager2 } = createTestMaterial({
@@ -71,7 +71,7 @@ for (const createBlobPayloadPending of [false, true]) {
 
 			const sharePendingBlobsP = blobManager2.sharePendingBlobs();
 			// Let the upload from pending state succeed
-			await mockBlobStorage.waitProcessOne();
+			await mockBlobStorage.waitCreateOne();
 			await sharePendingBlobsP;
 			const blobAfterSharing = await blobManager2.getBlob(localId, createBlobPayloadPending);
 			assert.strictEqual(blobToText(blobAfterSharing), "hello");
@@ -102,7 +102,7 @@ for (const createBlobPayloadPending of [false, true]) {
 				mockOrderingService.events.on("opReceived", () => resolve()),
 			);
 			assert.strictEqual(
-				mockBlobStorage.blobsProcessed,
+				mockBlobStorage.blobsCreated,
 				1,
 				"Blob should have been uploaded from the original blob manager",
 			);
@@ -180,7 +180,7 @@ for (const createBlobPayloadPending of [false, true]) {
 
 			// Also verify that the only upload was the one from the original BlobManager.
 			assert.strictEqual(
-				mockBlobStorage.blobsProcessed,
+				mockBlobStorage.blobsCreated,
 				1,
 				"Should not have reuploaded the blob, it was not expired",
 			);
@@ -206,7 +206,7 @@ for (const createBlobPayloadPending of [false, true]) {
 				mockOrderingService.events.on("opReceived", () => resolve()),
 			);
 			assert.strictEqual(
-				mockBlobStorage.blobsProcessed,
+				mockBlobStorage.blobsCreated,
 				1,
 				"Blob should have been uploaded from the original blob manager",
 			);
@@ -290,7 +290,7 @@ for (const createBlobPayloadPending of [false, true]) {
 
 			// Also verify that the second BlobManager did a reupload.
 			assert.strictEqual(
-				mockBlobStorage.blobsProcessed,
+				mockBlobStorage.blobsCreated,
 				2,
 				"Should have reuploaded the blob, it was expired",
 			);

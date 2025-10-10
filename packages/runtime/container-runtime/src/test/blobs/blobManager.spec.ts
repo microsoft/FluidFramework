@@ -292,7 +292,7 @@ for (const createBlobPayloadPending of [false, true]) {
 						handle.events.on("payloadShareFailed", onPayloadShareFailed);
 
 						attachHandle(handle);
-						await mockBlobStorage.waitProcessOne({
+						await mockBlobStorage.waitCreateOne({
 							error: new LoggingError("fake driver error"),
 						});
 						mockBlobStorage.unpause();
@@ -316,7 +316,7 @@ for (const createBlobPayloadPending of [false, true]) {
 						// If the blobs are created without pending payloads, we don't get to see the handle at
 						// all so we can't inspect its state.
 						const createBlobP = blobManager.createBlob(textToBlob("hello"));
-						await mockBlobStorage.waitProcessOne({
+						await mockBlobStorage.waitCreateOne({
 							error: new LoggingError("fake driver error"),
 						});
 						mockBlobStorage.unpause();
@@ -342,13 +342,13 @@ for (const createBlobPayloadPending of [false, true]) {
 						attachHandle(_handle);
 					}
 					// Use a negative TTL to force the blob to be expired immediately
-					await mockBlobStorage.waitProcessOne({ minTTLOverride: -1 });
+					await mockBlobStorage.waitCreateOne({ minTTLOverride: -1 });
 					// After unpausing, the second attempt will be processed with a normal TTL
 					mockBlobStorage.unpause();
 					const handle = await handleP;
 					await ensureBlobsShared([handle]);
 					assert.strictEqual(
-						mockBlobStorage.blobsProcessed,
+						mockBlobStorage.blobsCreated,
 						2,
 						"Blob should have been reuploaded once",
 					);
@@ -587,8 +587,8 @@ for (const createBlobPayloadPending of [false, true]) {
 							message: "uploadBlob aborted",
 						},
 					);
-					await mockBlobStorage.waitProcessOne({ error: new Error("fake driver error") });
-					await mockBlobStorage.waitProcessOne({ error: new Error("fake driver error") });
+					await mockBlobStorage.waitCreateOne({ error: new Error("fake driver error") });
+					await mockBlobStorage.waitCreateOne({ error: new Error("fake driver error") });
 					await assert.rejects(
 						createBlobPayloadPending ? ensureBlobsShared([await createP2]) : createP2,
 						{
@@ -947,7 +947,7 @@ for (const createBlobPayloadPending of [false, true]) {
 				);
 
 				// Allow just the blob upload to process, but not the attach op
-				await mockBlobStorage.waitProcessOne();
+				await mockBlobStorage.waitCreateOne();
 				const storageId2 = blobManager.lookupTemporaryBlobStorageId(localId);
 				assert.strictEqual(
 					storageId2,
