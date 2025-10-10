@@ -134,10 +134,21 @@ module.exports = {
 		"@fluid-internal/fluid/no-unchecked-record-access": "error",
 
 		/**
+		 * Replaced @rushstack/no-new-null with @typescript-eslint/no-restricted-types.
 		 * The @rushstack rules are documented in the package README:
 		 * {@link https://www.npmjs.com/package/@rushstack/eslint-plugin}
 		 */
-		"@rushstack/no-new-null": "warn",
+		"@typescript-eslint/no-restricted-types": [
+			"warn",
+			{
+				types: {
+					null: {
+						message: "Use 'undefined' instead of 'null'",
+						fixWith: "undefined",
+					},
+				},
+			},
+		],
 
 		/**
 		 * RATIONALE: Harmless.
