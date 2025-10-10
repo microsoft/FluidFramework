@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 import { brand } from "../../util/index.js";
 import {
+	type InsertableTypedNode,
 	SchemaFactory,
 	type TreeNode,
 	type TreeNodeSchema,
@@ -42,7 +43,7 @@ function isStringKey(key: TreeIndexKey): key is string {
 	return typeof key === "string";
 }
 
-function createView(child?: IndexableChild) {
+function createView(child?: InsertableTypedNode<typeof IndexableChild>) {
 	const config = new TreeViewConfiguration({ schema: IndexableParent });
 	const view = getView(config);
 	view.initialize(new IndexableParent({ parentKey: parentId, child }));
@@ -78,7 +79,7 @@ describe("simple tree indexes", () => {
 	});
 
 	it("does not reify tree of nodes being scanned", () => {
-		const { view, parent } = createView(new IndexableChild({ childKey: childId }));
+		const { view, parent } = createView({ childKey: childId });
 		const index = createSimpleTreeIndex(
 			view,
 			(s) => indexer(s),

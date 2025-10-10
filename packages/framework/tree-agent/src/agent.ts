@@ -17,13 +17,7 @@ import type {
 } from "@fluidframework/tree/alpha";
 import { ObjectNodeSchema, Tree } from "@fluidframework/tree/alpha";
 
-import type {
-	SharedTreeChatModel,
-	EditFunction,
-	EditResult,
-	SemanticAgentOptions,
-	Logger,
-} from "./api.js";
+import type { SharedTreeChatModel, EditResult, SemanticAgentOptions, Logger } from "./api.js";
 import { getPrompt, stringifyTree } from "./prompt.js";
 import { Subtree } from "./subtree.js";
 import {
@@ -32,7 +26,7 @@ import {
 	llmDefault,
 	type TreeView,
 	findNamedSchemas,
-	fail,
+	toErrorString,
 } from "./utils.js";
 
 /**
@@ -42,17 +36,11 @@ import {
 const defaultMaxSequentialEdits = 20;
 
 /**
- * The name of the parameter passed to the edit function.
- */
-const paramsName = "params";
-
-/**
  * An agent that uses a {@link SharedTreeChatModel} to interact with a SharedTree.
  * @remarks This class forwards user queries to the chat model, and handles the application of any edits to the tree that the model requests.
  * @alpha @sealed
  */
 export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
-	public static editFunctionName = "editTree";
 	// Converted from ECMAScript private fields (#name) to TypeScript private members for easier debugger inspection.
 	private readonly outerTree: Subtree<TSchema>;
 	/**
@@ -63,7 +51,7 @@ export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
 	public constructor(
 		private readonly client: SharedTreeChatModel,
 		tree: TreeView<TSchema> | (ReadableField<TSchema> & TreeNode),
-		private readonly options?: Readonly<SemanticAgentOptions<TSchema>>,
+		private readonly options?: Readonly<SemanticAgentOptions>,
 	) {
 		if (tree instanceof TreeNode) {
 			Tree.on(tree, "treeChanged", () => (this.outerTreeIsDirty = true));
@@ -75,7 +63,6 @@ export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
 		const prompt = getPrompt({
 			subtree: this.outerTree,
 			editToolName: this.client.editToolName,
-			editFunctionName: this.client.editFunctionName,
 			domainHints: this.options?.domainHints,
 		});
 		this.options?.logger?.log(`# Fluid Framework SharedTree AI Agent Log\n\n`);
@@ -124,9 +111,9 @@ export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
 		let active = true;
 		let editCount = 0;
 		let editFailed = false;
-		const { editFunctionName } = this.client;
-		const edit = async (js: string): Promise<EditResult> => {
-			if (editFunctionName === undefined) {
+		const { editToolName } = this.client;
+		const edit = async (editCode: string): Promise<EditResult> => {
+			if (editToolName === undefined) {
 				return {
 					type: "disabledError",
 					message: "Editing is not enabled for this model.",
@@ -149,9 +136,9 @@ export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
 
 			const editResult = await applyTreeFunction(
 				queryTree,
-				js,
-				editFunctionName ?? fail("Expected edit function name to be defined"),
-				this.options?.validator,
+				editCode,
+				this.options?.validateEdit ?? defaultValidateEdit,
+				this.options?.executeEdit ?? defaultExecuteEdit,
 				this.options?.logger,
 			);
 
@@ -211,19 +198,22 @@ function constructTreeNode(schema: TreeNodeSchema, value: FactoryContentObject):
  */
 async function applyTreeFunction<TSchema extends ImplicitFieldSchema>(
 	tree: Subtree<TSchema>,
-	fn: string | EditFunction<TSchema>,
-	editFunctionName: string,
-	validator: ((js: string) => boolean) | undefined,
-	logger: Logger<ReadableField<TSchema>> | undefined,
+	editCode: string,
+	validateEdit: Required<SemanticAgentOptions>["validateEdit"],
+	executeEdit: Required<SemanticAgentOptions>["executeEdit"],
+	logger: Logger | undefined,
 ): Promise<EditResult> {
 	logger?.log(`### Editing Tool Invoked\n\n`);
-	logger?.log(`#### Generated Code\n\n\`\`\`javascript\n${fn}\n\`\`\`\n\n`);
+	logger?.log(`#### Generated Code\n\n\`\`\`javascript\n${editCode}\n\`\`\`\n\n`);
 
-	if (validator?.(fn.toString()) === false) {
+	try {
+		await validateEdit(editCode);
+	} catch (error: unknown) {
 		logger?.log(`#### Code Validation Failed\n\n`);
+		logger?.log(`\`\`\`JSON\n${toErrorString(error)}\n\`\`\`\n\n`);
 		return {
 			type: "validationError",
-			message: "The generated code did not pass validation. Please try again.",
+			message: `The generated code did not pass validation: ${toErrorString(error)}`,
 		};
 	}
 
@@ -236,7 +226,7 @@ async function applyTreeFunction<TSchema extends ImplicitFieldSchema>(
 
 	// Fork a branch to edit. If the edit fails or produces an error, we discard this branch, otherwise we merge it.
 	const editTree = tree.fork();
-	const params = {
+	const context = {
 		get root(): ReadableField<TSchema> {
 			return editTree.field;
 		},
@@ -246,64 +236,34 @@ async function applyTreeFunction<TSchema extends ImplicitFieldSchema>(
 		create,
 	};
 
-	let editFunction: EditFunction<TSchema>;
-	if (typeof fn === "string") {
-		try {
-			editFunction = processLlmCode(fn, editFunctionName);
-		} catch (error) {
-			logger?.log(`#### Error\n\n`);
-			const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
-			logger?.log(`\`\`\`JSON\n${errorMessage}\n\`\`\`\n\n`);
-			editTree.branch.dispose();
-			return {
-				type: "compileError",
-				message: `The supplied JavaScript function is not valid: ${errorMessage}`,
-			};
-		}
-	} else {
-		editFunction = fn;
-	}
-
 	try {
-		await editFunction(params);
+		await executeEdit(context, editCode);
 	} catch (error: unknown) {
 		logger?.log(`#### Error\n\n`);
-		const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
-		logger?.log(`\`\`\`JSON\n${errorMessage}\n\`\`\`\n\n`);
+		logger?.log(`\`\`\`JSON\n${toErrorString(error)}\n\`\`\`\n\n`);
 		editTree.branch.dispose();
 		return {
-			type: "runtimeError",
-			message: `Running the function produced an error. The state of the tree will be reset to its previous state as it was before the function ran. Please try again. Here is the error: ${errorMessage}`,
+			type: "executionError",
+			message: `Running the generated code produced an error. The state of the tree will be reset to its previous state as it was before the code ran. Please try again. Here is the error: ${toErrorString(error)}`,
 		};
 	}
 
 	tree.branch.merge(editTree.branch);
 	logger?.log(`#### New Tree State\n\n`);
-	logger?.log(
-		`${
-			logger?.treeToString?.(tree.field) ?? `\`\`\`JSON\n${stringifyTree(tree.field)}\n\`\`\``
-		}\n\n`,
-	);
+	logger?.log(`${`\`\`\`JSON\n${stringifyTree(tree.field)}\n\`\`\``}\n\n`);
 	return {
 		type: "success",
-		message: `After running the function, the new state of the tree is:\n\n\`\`\`JSON\n${stringifyTree(tree.field)}\n\`\`\``,
+		message: `After running the code, the new state of the tree is:\n\n\`\`\`JSON\n${stringifyTree(tree.field)}\n\`\`\``,
 	};
 }
 
-function processLlmCode<TSchema extends ImplicitFieldSchema>(
-	code: string,
-	editFunctionName: string,
-): EditFunction<TSchema> {
-	// TODO: use a library like Acorn to analyze the code more robustly
-	const regex = new RegExp(`function\\s+${editFunctionName}\\s*\\(`);
-	if (!regex.test(code)) {
-		throw new Error(
-			`Generated code does not contain a function named \`${editFunctionName}\``,
-		);
-	}
+const defaultValidateEdit: Required<SemanticAgentOptions>["validateEdit"] = () => {};
 
-	const executionCode = `${code}\n\n${editFunctionName}(${paramsName});`;
+const defaultExecuteEdit: Required<SemanticAgentOptions>["executeEdit"] = async (
+	context,
+	code,
+) => {
 	// eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
-	const fn = new Function(paramsName, executionCode);
-	return fn as EditFunction<TSchema>;
-}
+	const fn = new Function("context", code);
+	await fn(context);
+};

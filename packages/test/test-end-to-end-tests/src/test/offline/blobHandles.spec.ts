@@ -11,10 +11,7 @@ import { asLegacyAlpha } from "@fluidframework/container-loader/internal";
 import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import {
-	type ITestObjectProvider,
-	createTestConfigProvider,
-} from "@fluidframework/test-utils/internal";
+import { type ITestObjectProvider } from "@fluidframework/test-utils/internal";
 
 const interceptResult = <T>(
 	parent: any,
@@ -61,9 +58,6 @@ describeCompat("Offline and Blobs", "NoCompat", (getTestObjectProvider, apis) =>
 			},
 		},
 	};
-	const configProvider = createTestConfigProvider({
-		"Fluid.Container.enableOfflineLoad": true,
-	});
 	const testDataObjectType = "TestDataObject";
 	const dataObjectFactory = new DataObjectFactory({
 		type: testDataObjectType,
@@ -107,11 +101,7 @@ describeCompat("Offline and Blobs", "NoCompat", (getTestObjectProvider, apis) =>
 
 	// ADO#44999: Update for placeholder pending blob creation and getPendingLocalState
 	it.skip("Slow blob create request before container closes", async () => {
-		const container = asLegacyAlpha(
-			await provider.createContainer(runtimeFactory, {
-				configProvider,
-			}),
-		);
+		const container = asLegacyAlpha(await provider.createContainer(runtimeFactory));
 		const mainObject = (await container.getEntryPoint()) as TestDataObject;
 
 		await provider.ensureSynchronized();

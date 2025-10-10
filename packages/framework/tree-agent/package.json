@@ -115,8 +115,6 @@
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
-		"@langchain/core": "^0.3.66",
-		"langchain": "^0.3.30",
 		"uuid": "^11.1.0",
 		"zod": "^3.25.32"
 	},
@@ -132,6 +130,7 @@
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@langchain/anthropic": "^0.3.24",
+		"@langchain/core": "^0.3.78",
 		"@langchain/google-genai": "^0.2.16",
 		"@langchain/openai": "^0.6.12",
 		"@microsoft/api-extractor": "7.52.11",
@@ -148,6 +147,7 @@
 		"mocha-multi-reporters": "^1.5.1",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
+		"ses": "^1.14.0",
 		"typescript": "~5.4.5"
 	},
 	"fluidBuild": {

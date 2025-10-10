@@ -14,7 +14,7 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 
 import type { ISerializableBlobContents } from "../containerStorageAdapter.js";
-import type { ISnapshotInfo } from "../serializedStateManager.js";
+import type { SerializedSnapshotInfo } from "../serializedStateManager.js";
 import {
 	convertSnapshotInfoToSnapshot,
 	convertSnapshotToSnapshotInfo,
@@ -153,7 +153,7 @@ describe("container-loader utils", () => {
 			someKey: JSON.stringify({ some: 10, data: 20 }),
 		};
 
-		const blobContents: Map<string, ArrayBufferLike> = new Map([
+		const blobContents: Map<string, ArrayBuffer> = new Map([
 			["someKey", stringToBuffer(JSON.stringify({ some: 10, data: 20 }), "utf8")],
 		]);
 
@@ -166,20 +166,24 @@ describe("container-loader utils", () => {
 			snapshotFormatV: 1,
 		};
 
-		const snapshotInfo: ISnapshotInfo = {
+		const snapshotInfo: SerializedSnapshotInfo = {
 			snapshotSequenceNumber: 123,
 			baseSnapshot: snapshotTree,
 			snapshotBlobs,
 		};
 
 		it("Converts SnapshotInfo to Snapshot", async () => {
-			const convertedSnapshot = convertSnapshotInfoToSnapshot(snapshotInfo, 123);
+			const convertedSnapshot = convertSnapshotInfoToSnapshot(snapshotInfo);
 			assert.deepEqual(convertedSnapshot, snapshot);
 		});
 
 		it("Converts Snapshot to SnapshotInfo", async () => {
 			const convertedSnapshotInfo = convertSnapshotToSnapshotInfo(snapshot);
-			assert.deepEqual(convertedSnapshotInfo, snapshotInfo);
+			assert.deepEqual<SerializedSnapshotInfo>(convertedSnapshotInfo, {
+				baseSnapshot: snapshot.snapshotTree,
+				snapshotSequenceNumber: snapshot.sequenceNumber ?? 0,
+				snapshotBlobs,
+			});
 		});
 	});
 });

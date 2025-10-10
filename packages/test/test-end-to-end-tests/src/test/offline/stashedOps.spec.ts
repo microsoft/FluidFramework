@@ -2328,11 +2328,6 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				},
 			},
 		},
-		loaderProps: {
-			configProvider: configProvider({
-				"Fluid.Container.enableOfflineLoad": true,
-			}),
-		},
 	};
 
 	it("handles stashed ops with reference sequence number of 0", async function () {
