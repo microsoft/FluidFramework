@@ -4,9 +4,9 @@
  */
 
 import {
-	Uint8ArrayToArrayBuffer,
 	bufferToString,
 	stringToBuffer,
+	Uint8ArrayToArrayBuffer,
 } from "@fluid-internal/client-utils";
 import { assert, compareArrays, unreachableCase } from "@fluidframework/core-utils/internal";
 import { type ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
@@ -34,7 +34,7 @@ import type { ISerializableBlobContents } from "./containerStorageAdapter.js";
 import type {
 	IPendingContainerState,
 	IPendingDetachedContainerState,
-	ISnapshotInfo,
+	SerializedSnapshotInfo,
 	SnapshotWithBlobs,
 } from "./serializedStateManager.js";
 
@@ -195,7 +195,7 @@ function convertSummaryToISnapshot(
  * Note, this assumes the ISnapshot sequence number is defined. Otherwise an assert will be thrown
  * @param snapshot - ISnapshot
  */
-export function convertSnapshotToSnapshotInfo(snapshot: ISnapshot): ISnapshotInfo {
+export function convertSnapshotToSnapshotInfo(snapshot: ISnapshot): SerializedSnapshotInfo {
 	assert(
 		snapshot.sequenceNumber !== undefined,
 		0x93a /* Snapshot sequence number is missing */,
@@ -219,8 +219,7 @@ export function convertSnapshotToSnapshotInfo(snapshot: ISnapshot): ISnapshotInf
  * @param snapshot - ISnapshot
  */
 export function convertSnapshotInfoToSnapshot(
-	snapshotInfo: ISnapshotInfo,
-	snapshotSequenceNumber: number,
+	snapshotInfo: SerializedSnapshotInfo,
 ): ISnapshot {
 	const blobContents = new Map<string, ArrayBuffer>();
 	for (const [blobId, serializedContent] of Object.entries(snapshotInfo.snapshotBlobs)) {
@@ -230,7 +229,7 @@ export function convertSnapshotInfoToSnapshot(
 		snapshotTree: snapshotInfo.baseSnapshot,
 		blobContents,
 		ops: [],
-		sequenceNumber: snapshotSequenceNumber,
+		sequenceNumber: snapshotInfo.snapshotSequenceNumber,
 		latestSequenceNumber: undefined,
 		snapshotFormatV: 1,
 	};

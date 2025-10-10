@@ -212,27 +212,22 @@ for (const createBlobPayloadPending of [false, true]) {
 					mockBlobStorage.readBlob = async () => {
 						throw new Error("BOOM!");
 					};
+					const localId = "someLocalId";
+					const remoteId = "someRemoteId";
 					const { mockLogger, mockRuntime, blobManager } = createTestMaterial({
 						mockBlobStorage,
+						blobManagerLoadInfo: {
+							ids: [remoteId],
+							redirectTable: [[localId, remoteId]],
+						},
 						createBlobPayloadPending,
 					});
 
-					const handle = await blobManager.createBlob(textToBlob("hello"));
-					const { localId } = unpackHandle(handle);
-					if (createBlobPayloadPending) {
-						await ensureBlobsShared([handle]);
-					} else {
-						// We have to attach the handle in the legacy flow, or else getBlob will
-						// short-circuit storage and get the blob from the pendingBlobs.
-						attachHandle(handle);
-					}
-
-					mockLogger.clear();
 					mockRuntime.disposed = true;
 					const getBlobP = blobManager.getBlob(localId, createBlobPayloadPending);
 					await assert.rejects(
 						getBlobP,
-						(e: Error) => e.message === "BOOM!",
+						{ message: "BOOM!" },
 						"Expected getBlob to throw with test error message",
 					);
 					mockLogger.assertMatchNone(
@@ -514,85 +509,90 @@ for (const createBlobPayloadPending of [false, true]) {
 			});
 
 			describe("Abort", () => {
-				it("Can abort before blob upload", async function () {
-					if (createBlobPayloadPending) {
-						// Blob creation with pending payload doesn't support abort
-						this.skip();
-					}
+				it("Can abort before blob upload", async () => {
 					const { blobManager } = createTestMaterial({ createBlobPayloadPending });
 					const ac = new AbortController();
 					ac.abort("abort test");
-					await assert.rejects(blobManager.createBlob(textToBlob("hello"), ac.signal), {
-						message: "uploadBlob aborted",
-						uploadTime: undefined,
-						acked: undefined,
-					});
+					const createP = blobManager.createBlob(textToBlob("hello"), ac.signal);
+					await assert.rejects(
+						createBlobPayloadPending ? ensureBlobsShared([await createP]) : createP,
+						{
+							message: "uploadBlob aborted",
+						},
+					);
 					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
 					assert.strictEqual(ids, undefined);
 					assert.strictEqual(redirectTable, undefined);
 				});
 
-				it("Can abort during blob upload", async function () {
-					if (createBlobPayloadPending) {
-						// Blob creation with pending payload doesn't support abort
-						this.skip();
-					}
+				it("Can abort during blob upload", async () => {
 					const { mockBlobStorage, blobManager } = createTestMaterial({
 						createBlobPayloadPending,
 					});
 					mockBlobStorage.pause();
 					const ac = new AbortController();
 					const createP = blobManager.createBlob(textToBlob("hello"), ac.signal);
+					if (createBlobPayloadPending) {
+						const handle = await createP;
+						attachHandle(handle);
+					}
 					ac.abort("abort test");
-					await assert.rejects(createP, {
-						message: "uploadBlob aborted",
-						uploadTime: undefined,
-						acked: false,
-					});
+					await assert.rejects(
+						createBlobPayloadPending ? ensureBlobsShared([await createP]) : createP,
+						{
+							message: "uploadBlob aborted",
+						},
+					);
 					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
 					assert.strictEqual(ids, undefined);
 					assert.strictEqual(redirectTable, undefined);
 				});
 
-				it("Can abort before failed blob upload", async function () {
-					if (createBlobPayloadPending) {
-						// Blob creation with pending payload doesn't support abort
-						this.skip();
-					}
+				it("Can abort before failed blob upload", async () => {
 					const { mockBlobStorage, blobManager } = createTestMaterial({
 						createBlobPayloadPending,
 					});
 					mockBlobStorage.pause();
 					const ac = new AbortController();
-					const createP = blobManager.createBlob(textToBlob("hello"), ac.signal);
+					const createP1 = blobManager.createBlob(textToBlob("hello"), ac.signal);
 					const createP2 = blobManager.createBlob(textToBlob("world"));
+					if (createBlobPayloadPending) {
+						const handle1 = await createP1;
+						const handle2 = await createP2;
+						attachHandle(handle1);
+						attachHandle(handle2);
+					}
 					ac.abort("abort test");
-					await assert.rejects(createP, {
-						message: "uploadBlob aborted",
-						uploadTime: undefined,
-						acked: false,
-					});
+					await assert.rejects(
+						createBlobPayloadPending ? ensureBlobsShared([await createP1]) : createP1,
+						{
+							message: "uploadBlob aborted",
+						},
+					);
 					await mockBlobStorage.waitProcessOne({ error: new Error("fake driver error") });
 					await mockBlobStorage.waitProcessOne({ error: new Error("fake driver error") });
-					await assert.rejects(createP2, {
-						message: "fake driver error",
-					});
+					await assert.rejects(
+						createBlobPayloadPending ? ensureBlobsShared([await createP2]) : createP2,
+						{
+							message: "fake driver error",
+						},
+					);
 					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
 					assert.strictEqual(ids, undefined);
 					assert.strictEqual(redirectTable, undefined);
 				});
 
-				it("Can abort while blob attach op is in flight", async function () {
-					if (createBlobPayloadPending) {
-						// Blob creation with pending payload doesn't support abort
-						this.skip();
-					}
+				it("Can abort while blob attach op is in flight", async () => {
 					const { mockOrderingService, blobManager } = createTestMaterial({
 						createBlobPayloadPending,
 					});
 					mockOrderingService.pause();
 					const ac = new AbortController();
 					const createP = blobManager.createBlob(textToBlob("hello"), ac.signal);
+					if (createBlobPayloadPending) {
+						const handle = await createP;
+						attachHandle(handle);
+					}
 					// Wait for the op to be sent
 					await new Promise<void>((resolve) => {
 						if (mockOrderingService.messagesReceived !== 1) {
@@ -606,39 +606,33 @@ for (const createBlobPayloadPending of [false, true]) {
 						}
 					});
 					ac.abort("abort test");
-					await assert.rejects(createP, (error) => {
-						assert.strictEqual((error as Error).message, "uploadBlob aborted");
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-						assert.strictEqual(typeof (error as any).uploadTime, "number");
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-						assert.strictEqual((error as any).acked, false);
-						return true;
-					});
+					await assert.rejects(
+						createBlobPayloadPending ? ensureBlobsShared([await createP]) : createP,
+						{
+							message: "uploadBlob aborted",
+						},
+					);
 
 					// Also verify that BlobManager doesn't resubmit the op for an already-aborted blob
 					await mockOrderingService.waitDropOne();
-					// TODO: Today we still resubmit the attach op even after abort, but probably shouldn't.
-					// This also means that only the local client will believe the snapshot is empty, other clients will have added
-					// the blob to their snapshot after seeing the resubmitted attach op.
-					// assert.strictEqual(
-					// 	mockOrderingService.messagesReceived,
-					// 	1,
-					// 	"Shouldn't have sent more ops",
-					// );
+					assert.strictEqual(
+						mockOrderingService.messagesReceived,
+						1,
+						"Shouldn't have sent more ops",
+					);
 
 					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
 					assert.strictEqual(ids, undefined);
 					assert.strictEqual(redirectTable, undefined);
 				});
 
-				it("Abort does nothing after blob creation succeeds", async function () {
-					if (createBlobPayloadPending) {
-						// Blob creation with pending payload doesn't support abort
-						this.skip();
-					}
+				it("Abort does nothing after blob creation succeeds", async () => {
 					const { blobManager } = createTestMaterial({ createBlobPayloadPending });
 					const ac = new AbortController();
-					await blobManager.createBlob(textToBlob("hello"), ac.signal);
+					const handle = await blobManager.createBlob(textToBlob("hello"), ac.signal);
+					if (createBlobPayloadPending) {
+						await ensureBlobsShared([handle]);
+					}
 					ac.abort("abort test");
 					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
 					assert.strictEqual(ids?.length, 1);

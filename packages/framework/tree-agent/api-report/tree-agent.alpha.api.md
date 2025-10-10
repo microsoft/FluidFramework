@@ -20,21 +20,6 @@ export function buildFunc<const Return extends z.ZodTypeAny, const Args extends 
     rest?: Rest;
 }, ...args: Args): FunctionDef<Args, Return, Rest>;
 
-// @alpha @deprecated
-export function createSemanticAgent<TSchema extends ImplicitFieldSchema_2>(client: BaseChatModel, treeView: TreeView<TSchema>, options?: Readonly<SemanticAgentOptions>): SharedTreeSemanticAgent<TSchema>;
-
-// @alpha @deprecated
-export function createSemanticAgent<TSchema extends ImplicitFieldSchema_2>(client: BaseChatModel, node: ReadableField<TSchema> & TreeNode_2, options?: Readonly<SemanticAgentOptions>): SharedTreeSemanticAgent<TSchema>;
-
-// @alpha @deprecated
-export function createSemanticAgent<TSchema extends ImplicitFieldSchema_2>(client: BaseChatModel, treeView: TreeView<TSchema> | (ReadableField<TSchema> & TreeNode_2), options?: Readonly<SemanticAgentOptions>): SharedTreeSemanticAgent<TSchema>;
-
-// @alpha
-export function createSesEditEvaluator(options?: {
-    compartmentOptions?: CompartmentOptions;
-    lockdownOptions?: LockdownOptions;
-}): Promise<SemanticAgentOptions["executeEdit"]>;
-
 // @alpha
 export type Ctor<T = any> = new (...args: any[]) => T;
 
@@ -77,19 +62,6 @@ export interface IExposedMethods {
 
 // @alpha
 export type Infer<T> = T extends FunctionDef<infer Args, infer Return, infer Rest> ? z.infer<z.ZodFunction<z.ZodTuple<ArgsTuple<Args>, Rest>, Return>> : never;
-
-// @alpha
-export class LangchainChatModel implements SharedTreeChatModel {
-    constructor(model: BaseChatModel);
-    // (undocumented)
-    appendContext(text: string): void;
-    // (undocumented)
-    readonly editToolName = "GenerateTreeEditingCode";
-    // (undocumented)
-    get name(): string | undefined;
-    // (undocumented)
-    query(query: SharedTreeChatQuery): Promise<string>;
-}
 
 // @alpha
 export const llmDefault: unique symbol;
