@@ -218,7 +218,26 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Interface_ContainerRuntimeOptions": {
+				"backCompat": false
+			},
+			"Interface_ISummaryRuntimeOptions": {
+				"backCompat": false
+			},
+			"Interface_LoadContainerRuntimeParams": {
+				"backCompat": false
+			},
+			"TypeAlias_IContainerRuntimeOptions": {
+				"backCompat": false
+			},
+			"TypeAlias_ISummaryConfiguration": {
+				"backCompat": false
+			},
+			"Variable_DefaultSummaryConfiguration": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }
