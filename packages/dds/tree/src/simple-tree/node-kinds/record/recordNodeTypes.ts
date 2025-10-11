@@ -64,7 +64,7 @@ export interface RecordNodeCustomizableSchema<
 			/* TInsertable */ RecordNodeInsertableData<T>,
 			/* ImplicitlyConstructable */ ImplicitlyConstructable,
 			/* Info */ T,
-			/* TConstructorExtra */ never,
+			/* TConstructorExtra */ undefined,
 			/* TCustomMetadata */ TCustomMetadata
 		>,
 		SimpleRecordNodeSchema<TCustomMetadata> {}
@@ -85,7 +85,7 @@ export interface RecordNodePojoEmulationSchema<
 			/* TInsertable */ RecordNodeInsertableData<T>,
 			/* ImplicitlyConstructable */ ImplicitlyConstructable,
 			/* Info */ T,
-			/* TConstructorExtra */ never,
+			/* TConstructorExtra */ undefined,
 			/* TCustomMetadata */ TCustomMetadata
 		>,
 		SimpleRecordNodeSchema<TCustomMetadata> {}

@@ -59,7 +59,7 @@ import {
 	getTreeNodeSchemaInitializedData,
 	getUnhydratedContext,
 } from "../../createContext.js";
-import type { System_Unsafe } from "../../api/index.js";
+import type { NodeSchemaOptionsAlpha, System_Unsafe } from "../../api/index.js";
 import type {
 	ArrayNodeCustomizableSchema,
 	ArrayNodePojoEmulationSchema,
@@ -1152,8 +1152,7 @@ export function arraySchema<
 	info: T,
 	implicitlyConstructable: ImplicitlyConstructable,
 	customizable: boolean,
-	metadata?: NodeSchemaMetadata<TCustomMetadata>,
-	persistedMetadata?: JsonCompatibleReadOnlyObject | undefined,
+	nodeOptions: NodeSchemaOptionsAlpha<TCustomMetadata>,
 ) {
 	type Output = ArrayNodeCustomizableSchema<
 		TName,
@@ -1164,6 +1163,7 @@ export function arraySchema<
 		ArrayNodePojoEmulationSchema<TName, T, ImplicitlyConstructable, TCustomMetadata> &
 		TreeNodeSchemaCorePrivate;
 
+	const persistedMetadata = nodeOptions?.persistedMetadata;
 	const normalizedTypes = normalizeAllowedTypes(info);
 	const lazyAllowedTypesIdentifiers = new Lazy(
 		() => new Set(normalizedTypes.evaluate().map((type) => type.identifier)),
@@ -1252,7 +1252,8 @@ export function arraySchema<
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return normalizedTypes.evaluateSet();
 		}
-		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
+		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> =
+			nodeOptions.metadata ?? {};
 		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
 			persistedMetadata;
 

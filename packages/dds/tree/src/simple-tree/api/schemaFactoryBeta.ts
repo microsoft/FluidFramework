@@ -90,14 +90,10 @@ export class SchemaFactoryBeta<
 		true,
 		T
 	> {
-		return objectSchema(
-			scoped<TScope, TName, Name>(this, name),
-			fields,
-			true,
-			options?.allowUnknownOptionalFields ??
-				defaultSchemaFactoryObjectOptions.allowUnknownOptionalFields,
-			options?.metadata,
-		);
+		return objectSchema(scoped<TScope, TName, Name>(this, name), fields, true, {
+			...defaultSchemaFactoryObjectOptions,
+			...(options ?? {}),
+		});
 	}
 
 	public override objectRecursive<
@@ -192,6 +188,7 @@ export class SchemaFactoryBeta<
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
 	 * @param allowedTypes - The types that may appear in the record.
+	 * @param options - Additional options for the schema.
 	 *
 	 * @remarks
 	 * The underlying data format for `Record` nodes is the same as that for `Map` nodes.
@@ -211,9 +208,14 @@ export class SchemaFactoryBeta<
 	 *
 	 * {@label NAMED}
 	 */
-	public record<const Name extends TName, const T extends ImplicitAllowedTypes>(
+	public record<
+		const Name extends TName,
+		const T extends ImplicitAllowedTypes,
+		const TCustomMetadata = unknown,
+	>(
 		name: Name,
 		allowedTypes: T,
+		options?: NodeSchemaOptions<TCustomMetadata>,
 	): TreeNodeSchemaClass<
 		/* Name */ ScopedSchemaName<TScope, Name>,
 		/* Kind */ NodeKind.Record,
@@ -221,7 +223,8 @@ export class SchemaFactoryBeta<
 		/* TInsertable */ RecordNodeInsertableData<T>,
 		/* ImplicitlyConstructable */ true,
 		/* Info */ T,
-		/* TConstructorExtra */ undefined
+		/* TConstructorExtra */ undefined,
+		/* TCustomMetadata */ TCustomMetadata
 	>;
 
 	/**
@@ -233,6 +236,7 @@ export class SchemaFactoryBeta<
 	public record<const T extends ImplicitAllowedTypes>(
 		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | readonly TreeNodeSchema[]),
 		maybeAllowedTypes?: T,
+		options?: NodeSchemaOptions,
 	): TreeNodeSchema<
 		/* Name */ ScopedSchemaName<TScope, string>,
 		/* Kind */ NodeKind.Record,
@@ -274,6 +278,7 @@ export class SchemaFactoryBeta<
 			maybeAllowedTypes,
 			/* customizable */ true,
 			/* implicitlyConstructable */ true,
+			options,
 		);
 		return out;
 	}
@@ -307,24 +312,13 @@ export class SchemaFactoryBeta<
 		/* Info */ T,
 		/* TConstructorExtra */ undefined
 	> {
-		const record = recordSchema({
+		return recordSchema({
 			identifier: scoped<TScope, TName, Name>(this, name),
 			info: allowedTypes,
 			customizable,
 			implicitlyConstructable,
-			metadata: options?.metadata,
+			nodeOptions: options,
 		});
-
-		return record as TreeNodeSchemaBoth<
-			/* Name */ ScopedSchemaName<TScope, Name>,
-			/* Kind */ NodeKind.Record,
-			/* TNode */ TreeRecordNode<T> &
-				WithType<ScopedSchemaName<TScope, string>, NodeKind.Record>,
-			/* TInsertable */ RecordNodeInsertableData<T>,
-			/* ImplicitlyConstructable */ ImplicitlyConstructable,
-			/* Info */ T,
-			/* TConstructorExtra */ undefined
-		>;
 	}
 
 	/**

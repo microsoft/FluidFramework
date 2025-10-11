@@ -65,6 +65,7 @@ import type {
 } from "./mapNodeTypes.js";
 import { recordLikeDataToFlexContent } from "../common.js";
 import { MapNodeStoredSchema } from "../../../core/index.js";
+import type { NodeSchemaOptionsAlpha } from "../../api/index.js";
 
 /**
  * A map of string keys to tree objects.
@@ -268,8 +269,7 @@ export function mapSchema<
 	info: T,
 	implicitlyConstructable: ImplicitlyConstructable,
 	useMapPrototype: boolean,
-	metadata?: NodeSchemaMetadata<TCustomMetadata>,
-	persistedMetadata?: JsonCompatibleReadOnlyObject | undefined,
+	nodeOptions: NodeSchemaOptionsAlpha<TCustomMetadata> = {},
 ) {
 	const normalizedTypes = normalizeAllowedTypes(info);
 	const lazyAllowedTypesIdentifiers = new Lazy(
@@ -277,6 +277,7 @@ export function mapSchema<
 	);
 
 	let privateData: TreeNodeSchemaPrivateData | undefined;
+	const persistedMetadata = nodeOptions.persistedMetadata;
 
 	class Schema extends CustomMapNodeBase<T> implements TreeMapNode<T> {
 		public static override prepareInstance<T2>(
@@ -319,7 +320,8 @@ export function mapSchema<
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return normalizedTypes.evaluateSet();
 		}
-		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
+		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> =
+			nodeOptions.metadata ?? {};
 		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
 			persistedMetadata;
 
