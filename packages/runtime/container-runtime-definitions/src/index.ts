@@ -4,13 +4,17 @@
  */
 
 export type {
+	ContainerExtensionId,
+	ExtensionCompatibilityDetails,
+} from "@fluidframework/runtime-definitions/internal";
+export type {
 	ClientConnectionId,
 	ContainerExtensionFactory,
-	ContainerExtensionId,
 	ContainerExtensionStore,
 	ContainerExtension,
 	ExtensionHost,
 	ExtensionHostEvents,
+	ExtensionInstantiationResult,
 	ExtensionMessage,
 	ExtensionRuntimeProperties,
 	InboundExtensionMessage,
