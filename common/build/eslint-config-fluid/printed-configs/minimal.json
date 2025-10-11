@@ -22,7 +22,7 @@
     },
     "plugins": [
         "eslint-comments",
-        "import",
+        "import-x",
         "@fluid-internal/fluid",
         "unicorn",
         "unused-imports",
@@ -1135,31 +1135,31 @@
         "implicit-arrow-linebreak": [
             "off"
         ],
-        "import/default": [
+        "import-x/default": [
             2
         ],
-        "import/export": [
+        "import-x/export": [
             2
         ],
-        "import/named": [
+        "import-x/named": [
             "off"
         ],
-        "import/namespace": [
+        "import-x/namespace": [
             2
         ],
-        "import/no-default-export": [
+        "import-x/no-default-export": [
             "error"
         ],
-        "import/no-deprecated": [
+        "import-x/no-deprecated": [
             "error"
         ],
-        "import/no-duplicates": [
+        "import-x/no-duplicates": [
             1
         ],
-        "import/no-extraneous-dependencies": [
+        "import-x/no-extraneous-dependencies": [
             "error"
         ],
-        "import/no-internal-modules": [
+        "import-x/no-internal-modules": [
             "error",
             {
                 "allow": [
@@ -1174,29 +1174,31 @@
                 ]
             }
         ],
-        "import/no-named-as-default": [
+        "import-x/no-named-as-default": [
             1
         ],
-        "import/no-named-as-default-member": [
+        "import-x/no-named-as-default-member": [
             1
         ],
-        "import/no-nodejs-modules": [
+        "import-x/no-nodejs-modules": [
             "error"
         ],
-        "import/no-unassigned-import": [
+        "import-x/no-rename-default": [
+            1
+        ],
+        "import-x/no-unassigned-import": [
             "error"
         ],
-        "import/no-unresolved": [
+        "import-x/no-unresolved": [
             2,
             {
-                "caseSensitive": true,
-                "caseSensitiveStrict": false
+                "caseSensitive": true
             }
         ],
-        "import/no-unused-modules": [
+        "import-x/no-unused-modules": [
             "error"
         ],
-        "import/order": [
+        "import-x/order": [
             "error",
             {
                 "newlines-between": "always",
@@ -1206,6 +1208,8 @@
                     "orderImportKind": "ignore"
                 },
                 "distinctGroup": true,
+                "sortTypesGroup": false,
+                "named": false,
                 "warnOnUnassignedImports": false
             }
         ],
@@ -1985,27 +1989,29 @@
         ]
     },
     "settings": {
-        "import/extensions": [
+        "import-x/extensions": [
             ".ts",
             ".tsx",
             ".d.ts",
             ".js",
             ".jsx",
-            ".jsx"
+            ".jsx",
+            ".cjs",
+            ".mjs"
         ],
-        "import/external-module-folders": [
+        "import-x/external-module-folders": [
             "node_modules",
             "node_modules/@types"
         ],
-        "import/parsers": {
+        "import-x/parsers": {
             "@typescript-eslint/parser": [
                 ".ts",
                 ".tsx",
                 ".d.ts",
-                ".tsx"
+                ".mts"
             ]
         },
-        "import/resolver": {
+        "import-x/resolver": {
             "typescript": {
                 "extensions": [
                     ".ts",
@@ -2031,9 +2037,8 @@
             "node": {
                 "extensions": [
                     ".ts",
-                    ".cts",
-                    ".mts",
                     ".tsx",
+                    ".d.ts",
                     ".js",
                     ".jsx"
                 ]

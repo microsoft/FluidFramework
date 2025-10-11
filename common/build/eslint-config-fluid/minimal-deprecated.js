@@ -72,9 +72,9 @@ module.exports = {
 	extends: [
 		"./base",
 		"plugin:eslint-comments/recommended",
-		"plugin:import/errors",
-		"plugin:import/warnings",
-		"plugin:import/typescript",
+		"plugin:import-x/errors",
+		"plugin:import-x/warnings",
+		"plugin:import-x/typescript",
 		"prettier",
 	],
 	globals: {
@@ -181,7 +181,7 @@ module.exports = {
 		],
 
 		"eqeqeq": ["error", "smart"],
-		"import/no-deprecated": "error",
+		"import-x/no-deprecated": "error",
 		"max-len": [
 			"error",
 			{
@@ -411,13 +411,13 @@ module.exports = {
 		 * By default, libraries should not take dependencies on node libraries.
 		 * This rule can be disabled at the project level for libraries that are intended to be used only in node.
 		 */
-		"import/no-nodejs-modules": ["error"],
+		"import-x/no-nodejs-modules": ["error"],
 
 		/**
 		 * Allow Fluid Framework to import from its own internal packages.
-		 * https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/no-internal-modules.md
+		 * https://github.com/un-ts/eslint-plugin-import-x/blob/master/docs/rules/no-internal-modules.md
 		 */
-		"import/no-internal-modules": [
+		"import-x/no-internal-modules": [
 			"error",
 			{
 				allow: permittedImports,
@@ -467,8 +467,8 @@ module.exports = {
 			rules: {
 				"@typescript-eslint/no-invalid-this": "off",
 				"@typescript-eslint/unbound-method": "off", // This rule has false positives in many of our test projects.
-				"import/no-nodejs-modules": "off", // Node libraries are OK for test files.
-				"import/no-deprecated": "off", // Deprecated APIs are OK to use in test files.
+				"import-x/no-nodejs-modules": "off", // Node libraries are OK for test files.
+				"import-x/no-deprecated": "off", // Deprecated APIs are OK to use in test files.
 
 				// Disabled for test files
 				"@typescript-eslint/consistent-type-exports": "off",
@@ -482,7 +482,7 @@ module.exports = {
 				],
 
 				// For test files only, additionally allow import of '/test*' and '/internal/test*' exports.
-				"import/no-internal-modules": [
+				"import-x/no-internal-modules": [
 					"error",
 					{
 						allow: ["@fluid*/*/test*", "@fluid*/*/internal/test*"].concat(
@@ -492,23 +492,23 @@ module.exports = {
 				],
 
 				// Test code may leverage dev dependencies
-				"import/no-extraneous-dependencies": ["error", { devDependencies: true }],
+				"import-x/no-extraneous-dependencies": ["error", { devDependencies: true }],
 			},
 		},
 	],
 	settings: {
-		"import/extensions": [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
-		"import/parsers": {
+		"import-x/extensions": [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
+		"import-x/parsers": {
 			"@typescript-eslint/parser": [".ts", ".tsx", ".d.ts"],
 		},
-		"import/resolver": {
+		"import-x/resolver": {
 			/**
-			 * Note: the key order of import/resolver is relevant in the completely resolved eslint config (see ./printed-configs).
+			 * Note: the key order of import-x/resolver is relevant in the completely resolved eslint config (see ./printed-configs).
 			 * Resolvers are tried in key order, and the first one to successfully resolve the import wins. See:
-			 * https://github.com/import-js/eslint-plugin-import/blob/c0ac54b8a721c2b1c9048838acc4d6282f4fe7a7/utils/resolve.js#L196
+			 * https://github.com/un-ts/eslint-plugin-import-x/blob/master/src/utils/resolve.ts
 			 *
 			 * It's important that the typescript resolver is first, as the node resolver legitimately resolves some imports to modules
-			 * with stripped type information, which can cause silent negatives in lint rules. For example, import/no-deprecated fails
+			 * with stripped type information, which can cause silent negatives in lint rules. For example, import-x/no-deprecated fails
 			 * to lint against import and usage of deprecated types when the import is resolvable and resolved using the node resolver.
 			 */
 			typescript: {
