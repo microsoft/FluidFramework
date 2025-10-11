@@ -7,7 +7,12 @@ import type {
 	ILayerCompatDetails,
 	IProvideLayerCompatDetails,
 } from "@fluid-internal/client-utils";
-import { createEmitter, Trace, TypedEventEmitter } from "@fluid-internal/client-utils";
+import {
+	checkLayerCompatibility,
+	createEmitter,
+	Trace,
+	TypedEventEmitter,
+} from "@fluid-internal/client-utils";
 import type {
 	IAudience,
 	ISelf,
@@ -253,6 +258,7 @@ import {
 import { BatchRunCounter, RunCounter } from "./runCounter.js";
 import {
 	runtimeCompatDetailsForLoader,
+	runtimeCoreCompatDetails,
 	validateLoaderCompatibility,
 } from "./runtimeLayerCompatState.js";
 import { SignalTelemetryManager } from "./signalTelemetryProcessing.js";
@@ -317,6 +323,18 @@ type ExtensionEntry = ContainerExtensionFactory<unknown, any, unknown[]> extends
 ) => infer T
 	? T
 	: never;
+
+/**
+ * ContainerRuntime's compatibility details that is exposed to Container Extensions.
+ */
+const containerRuntimeCompatDetailsForContainerExtensions = {
+	...runtimeCoreCompatDetails,
+	/**
+	 * The features supported by the ContainerRuntime's ContainerExtensionStore
+	 * implementation.
+	 */
+	supportedFeatures: new Set<string>(),
+} as const satisfies ILayerCompatDetails;
 
 /**
  * Creates an error object to be thrown / passed to Container's close fn in case of an unknown message type.
@@ -5254,6 +5272,24 @@ export class ContainerRuntime
 		factory: ContainerExtensionFactory<T, TRuntimeProperties, TUseContext>,
 		...useContext: TUseContext
 	): T {
+		const compatCheckResult = checkLayerCompatibility(
+			factory.hostRequirements,
+			containerRuntimeCompatDetailsForContainerExtensions,
+		);
+		if (!compatCheckResult.isCompatible) {
+			throw new UsageError("Extension is not compatible with ContainerRuntime", {
+				errorDetails: JSON.stringify({
+					containerRuntimeVersion:
+						containerRuntimeCompatDetailsForContainerExtensions.pkgVersion,
+					containerRuntimeGeneration:
+						containerRuntimeCompatDetailsForContainerExtensions.generation,
+					minSupportedGeneration: factory.hostRequirements.minSupportedGeneration,
+					isGenerationCompatible: compatCheckResult.isGenerationCompatible,
+					unsupportedFeatures: compatCheckResult.unsupportedFeatures,
+				}),
+			});
+		}
+
 		let entry = this.extensions.get(id);
 		if (entry === undefined) {
 			const audience = this.signalAudience;
@@ -5275,10 +5311,33 @@ export class ContainerRuntime
 			entry = new factory(runtime, ...useContext);
 			this.extensions.set(id, entry);
 		} else {
-			assert(
-				entry instanceof factory,
-				0xba1 /* Extension entry is not of the expected type */,
-			);
+			const { extension, compatibility } = entry;
+			if (
+				// Check short-circuit (re-use) for same instance which must be
+				// same version and capabilities.
+				!(entry instanceof factory) &&
+				// Check version and capabilities if different instance. If
+				// version matches and existing has all capabilities of
+				// requested, then allow direct reuse.
+				(compatibility.version !== factory.instanceCompatibility.version ||
+					[...factory.instanceCompatibility.capabilities].some(
+						(cap) => !compatibility.capabilities.has(cap),
+					))
+			) {
+				if (gt(compatibility.version, factory.instanceCompatibility.version)) {
+					// This is an attempt to acquire an older version of an
+					// extension that is already acquired. Let existing newer
+					entry = extension.handleVersionOrCapabilitiesMismatch(
+						entry,
+						factory.instanceCompatibility,
+					);
+				} else {
+					// This is an attempt to acquire a newer or more capable
+					// version of an extension that is already acquired. Replace
+					// existing with new.
+					entry = factory.upgradeVersionOrCapabilities(entry, compatibility);
+				}
+			}
 			entry.extension.onNewUse(...useContext);
 		}
 		return entry.interface as T;

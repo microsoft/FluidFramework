@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { ILayerCompatDetails } from "@fluid-internal/client-utils";
+import type {
+	ILayerCompatDetails,
+	ILayerCompatSupportRequirements,
+} from "@fluid-internal/client-utils";
 import type { IAudience } from "@fluidframework/container-definitions/internal";
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports -- BrandedType is a class declaration only
 import type {
@@ -166,6 +169,56 @@ export interface ExtensionRuntimeProperties {
 }
 
 /**
+ * Identifying characteristics of a registrant for checking runtime compatibility.
+ */
+export interface ExtensionCompatibilityDetails {
+	/**
+	 * Compatibility generation.
+	 */
+	readonly generation: number;
+	/**
+	 * Semver string representing the version of the registrant.
+	 */
+	readonly version: string;
+	/**
+	 * Set of capabilities supported by the registrant.
+	 */
+	readonly capabilities: ReadonlySet<string>;
+}
+
+/**
+ *
+ */
+export interface ExtensionInstantiationResult<
+	TInterface,
+	TRuntimeProperties extends ExtensionRuntimeProperties,
+	TUseContext extends unknown[],
+> {
+	readonly compatibility: ExtensionCompatibilityDetails;
+	readonly interface: TInterface;
+	readonly extension: ContainerExtension<TRuntimeProperties, TUseContext>;
+}
+
+export type HandleVersionOrCapabilitiesMismatch<
+	T,
+	TRuntimeProperties extends ExtensionRuntimeProperties,
+	TUseContext extends unknown[],
+> = //  unknown extends T
+// 	? <TInterface>(
+// 			existingInstantiation: ExtensionInstantiationResult<
+// 				TInterface,
+// 				TRuntimeProperties,
+// 				TUseContext
+// 			>,
+// 			other: ExtensionCompatibilityDetails,
+// 		) => ExtensionInstantiationResult<TInterface, TRuntimeProperties, TUseContext>
+// 	:
+(
+	existingInstantiation: ExtensionInstantiationResult<T, TRuntimeProperties, TUseContext>,
+	other: ExtensionCompatibilityDetails,
+) => ExtensionInstantiationResult<T, TRuntimeProperties, TUseContext>;
+
+/**
  * Defines requirements for a component to register with container as an extension.
  *
  * @internal
@@ -174,6 +227,12 @@ export interface ContainerExtension<
 	TRuntimeProperties extends ExtensionRuntimeProperties,
 	TUseContext extends unknown[] = [],
 > {
+	readonly handleVersionOrCapabilitiesMismatch: HandleVersionOrCapabilitiesMismatch<
+		unknown,
+		TRuntimeProperties,
+		TUseContext
+	>;
+
 	/**
 	 * Notifies the extension of a new use context.
 	 *
@@ -328,17 +387,25 @@ export interface ExtensionHost<TRuntimeProperties extends ExtensionRuntimeProper
  *
  * @internal
  */
-export type ContainerExtensionFactory<
-	T,
+export interface ContainerExtensionFactory<
+	TInterface,
 	TRuntimeProperties extends ExtensionRuntimeProperties,
 	TUseContext extends unknown[] = [],
-> = new (
-	host: ExtensionHost<TRuntimeProperties>,
-	...useContext: TUseContext
-) => {
-	readonly interface: T;
-	readonly extension: ContainerExtension<TRuntimeProperties, TUseContext>;
-};
+> {
+	readonly hostRequirements: ILayerCompatSupportRequirements;
+	readonly instanceCompatibility: ExtensionCompatibilityDetails;
+
+	new (
+		host: ExtensionHost<TRuntimeProperties>,
+		...useContext: TUseContext
+	): ExtensionInstantiationResult<TInterface, TRuntimeProperties, TUseContext>;
+
+	readonly upgradeVersionOrCapabilities: HandleVersionOrCapabilitiesMismatch<
+		TInterface,
+		TRuntimeProperties,
+		TUseContext
+	>;
+}
 
 /**
  * Unique identifier for extension
@@ -371,12 +438,12 @@ export interface ContainerExtensionStore {
 	 * @returns The extension
 	 */
 	acquireExtension<
-		T,
+		TInterface,
 		TRuntimeProperties extends ExtensionRuntimeProperties,
 		TUseContext extends unknown[] = [],
 	>(
 		id: ContainerExtensionId,
-		factory: ContainerExtensionFactory<T, TRuntimeProperties, TUseContext>,
+		factory: ContainerExtensionFactory<TInterface, TRuntimeProperties, TUseContext>,
 		...context: TUseContext
-	): T;
+	): TInterface;
 }

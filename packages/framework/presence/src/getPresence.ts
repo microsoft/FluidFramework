@@ -6,6 +6,7 @@
 import type {
 	ContainerExtension,
 	ContainerExtensionFactory,
+	ExtensionCompatibilityDetails,
 	InboundExtensionMessage,
 } from "@fluidframework/container-runtime-definitions/internal";
 import { assert } from "@fluidframework/core-utils/internal";
@@ -17,6 +18,13 @@ import type { Presence, PresenceWithNotifications } from "./presence.js";
 import type { PresenceExtensionInterface } from "./presenceManager.js";
 import { createPresenceManager } from "./presenceManager.js";
 import type { SignalMessages } from "./protocol.js";
+import type { ILayerCompatSupportRequirements } from "@fluid-internal/client-utils";
+
+const presenceCompatibility = {
+	generation: 1,
+	version: "0.1.0",
+	capabilities: new Set([]),
+} as const satisfies ExtensionCompatibilityDetails;
 
 /**
  * Common Presence manager for a container
@@ -28,7 +36,21 @@ class ContainerPresenceManager
 			ContainerExtensionFactory<PresenceWithNotifications, ExtensionRuntimeProperties>
 		>
 {
+	public static readonly instanceCompatibility = presenceCompatibility;
+	public static readonly hostRequirements = {
+		minSupportedGeneration: 1,
+		requiredFeatures: [],
+	} as const satisfies ILayerCompatSupportRequirements;
+	public static upgradeVersionOrCapabilities(
+		currentEntry: unknown,
+		newCompatibility: ExtensionCompatibilityDetails,
+	): any {
+		// Presence is not expected to change version or capabilities
+		return currentEntry;
+	}
+
 	// ContainerExtensionFactory return elements
+	public readonly compatibility = presenceCompatibility;
 	public readonly interface: PresenceWithNotifications;
 	public readonly extension = this;
 
@@ -41,6 +63,14 @@ class ContainerPresenceManager
 				host.submitAddressedSignal([], message);
 			},
 		});
+	}
+
+	public handleVersionOrCapabilitiesMismatch(
+		currentEntry: unknown,
+		newCompatibility: ExtensionCompatibilityDetails,
+	): any {
+		// Presence is not expected to change version or capabilities
+		return currentEntry;
 	}
 
 	public onNewUse(): void {
@@ -56,7 +86,7 @@ class ContainerPresenceManager
 	): void {
 		this.manager.processSignal(addressChain, message, local);
 	}
-}
+} // satisfies ContainerExtensionFactory<PresenceWithNotifications, ExtensionRuntimeProperties>;
 
 /**
  * Acquire a {@link Presence} from a Fluid Container
