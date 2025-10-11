@@ -6,22 +6,25 @@
 const assert = require("assert");
 const path = require("path");
 const { ESLint } = require("eslint");
+const plugin = require("../../../index.js");
+const { createESLintConfig } = require("../eslintConfigHelper.js");
 
 describe("ESLint Rule Tests", function () {
 	async function lintFile(file) {
-		const eslint = new ESLint({
-			useEslintrc: false,
-			overrideConfig: {
-				rules: {
-					"no-unchecked-record-access": "error",
-				},
-				parser: "@typescript-eslint/parser",
-				parserOptions: {
-					project: path.join(__dirname, "../example/tsconfig.json"),
-				},
+		const eslintOptions = createESLintConfig({
+			parser: "@typescript-eslint/parser",
+			parserOptions: {
+				project: path.join(__dirname, "../example/tsconfig.json"),
+				tsconfigRootDir: path.join(__dirname, "../example"),
 			},
-			rulePaths: [path.join(__dirname, "../../rules")],
+			plugin,
+			pluginName: "@fluid-internal/fluid",
+			rules: {
+				"@fluid-internal/fluid/no-unchecked-record-access": "error",
+			},
 		});
+
+		const eslint = new ESLint(eslintOptions);
 		const fileToLint = path.join(__dirname, "../example/no-unchecked-record-access", file);
 		const results = await eslint.lintFiles([fileToLint]);
 		return results[0];

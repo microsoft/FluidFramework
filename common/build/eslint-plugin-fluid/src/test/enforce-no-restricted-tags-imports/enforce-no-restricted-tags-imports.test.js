@@ -6,20 +6,27 @@
 const assert = require("assert");
 const path = require("path");
 const { ESLint } = require("eslint");
+const plugin = require("../../../index.js");
+const { createESLintConfig } = require("../eslintConfigHelper.js");
 
 describe("ESLint Rule Tests", function () {
 	function createESLintInstance(config) {
-		return new ESLint({
-			useEslintrc: false,
-			overrideConfig: config,
-			rulePaths: [path.join(__dirname, "../../rules")],
+		const eslintOptions = createESLintConfig({
+			parser: "@typescript-eslint/parser",
+			parserOptions: config.parserOptions,
+			plugin,
+			pluginName: "@fluid-internal/fluid",
+			rules: config.rules,
+			extraPlugins: config.plugins,
 		});
+
+		return new ESLint(eslintOptions);
 	}
 
 	it("Should report an error for restricted tag imports", async function () {
 		const eslint = createESLintInstance({
 			rules: {
-				"no-restricted-tags-imports": [
+				"@fluid-internal/fluid/no-restricted-tags-imports": [
 					"error",
 					{
 						tags: ["@internal", "@alpha"],
@@ -27,9 +34,9 @@ describe("ESLint Rule Tests", function () {
 					},
 				],
 			},
-			parser: "@typescript-eslint/parser",
 			parserOptions: {
 				project: path.join(__dirname, "../example/tsconfig.json"),
+				tsconfigRootDir: path.join(__dirname, "../example"),
 			},
 		});
 		const filesToLint = ["fileWithImports.ts", "mockModule.ts"].map((file) =>
@@ -51,7 +58,7 @@ describe("ESLint Rule Tests", function () {
 	it("Should not report an error for restricted tag imports for exceptions", async function () {
 		const eslint = createESLintInstance({
 			rules: {
-				"no-restricted-tags-imports": [
+				"@fluid-internal/fluid/no-restricted-tags-imports": [
 					"error",
 					{
 						tags: ["@internal", "@alpha"],
@@ -62,9 +69,9 @@ describe("ESLint Rule Tests", function () {
 					},
 				],
 			},
-			parser: "@typescript-eslint/parser",
 			parserOptions: {
 				project: path.join(__dirname, "../example/tsconfig.json"),
+				tsconfigRootDir: path.join(__dirname, "../example"),
 			},
 		});
 		const filesToLint = ["fileWithExceptionImports.ts", "exceptionFile.ts"].map((file) =>
@@ -79,7 +86,7 @@ describe("ESLint Rule Tests", function () {
 	it("Should report an error for tsconfig provided config", async function () {
 		const eslint = createESLintInstance({
 			rules: {
-				"no-restricted-tags-imports": [
+				"@fluid-internal/fluid/no-restricted-tags-imports": [
 					"error",
 					{
 						tags: ["@internal", "@alpha"],
@@ -90,9 +97,9 @@ describe("ESLint Rule Tests", function () {
 					},
 				],
 			},
-			parser: "@typescript-eslint/parser",
 			parserOptions: {
 				project: path.join(__dirname, "../example/tsconfig.json"),
+				tsconfigRootDir: path.join(__dirname, "../example"),
 			},
 		});
 		const filesToLint = ["fileWithImports.ts", "mockModule.ts"].map((file) =>
