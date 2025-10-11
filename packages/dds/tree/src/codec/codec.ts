@@ -287,7 +287,7 @@ export class MappedDependentFormatVersion<
 {
 	public constructor(private readonly map: ReadonlyMap<TParentVersion, TChildVersion>) {}
 	public lookup(parent: TParentVersion): TChildVersion {
-		return this.map.get(parent) ?? fail("Unknown parent version");
+		return this.map.get(parent) ?? fail(0xc73 /* Unknown parent version */);
 	}
 }
 
