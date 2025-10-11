@@ -8,7 +8,6 @@ import {
 	ContainerRuntime,
 	DefaultSummaryConfiguration,
 	type IContainerRuntimeOptionsInternal,
-	type LoadContainerRuntimeParams,
 	type MinimumVersionForCollab,
 } from "@fluidframework/container-runtime/internal";
 import {
@@ -177,7 +176,7 @@ export const createTestContainerRuntimeFactory = (
 				containerScope: context.scope,
 				existing,
 				minVersionForCollab: this.minVersionForCollab,
-			} satisfies LoadContainerRuntimeParams);
+			});
 		}
 	};
 };
