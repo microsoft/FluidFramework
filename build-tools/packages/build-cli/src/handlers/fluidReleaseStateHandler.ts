@@ -41,7 +41,11 @@ import {
 	checkTypeTestPrepare,
 	checkValidReleaseGroup,
 } from "./checkFunctions.js";
-import { doBumpReleasedDependencies, doReleaseGroupBump } from "./doFunctions.js";
+import {
+	doBumpReleasedDependencies,
+	doLayerGenerationUpdate,
+	doReleaseGroupBump,
+} from "./doFunctions.js";
 import { InitFailedStateHandler } from "./initFailedStateHandler.js";
 import {
 	promptToCommitChanges,
@@ -191,6 +195,7 @@ export class FluidReleaseStateHandler extends InitFailedStateHandler {
 		["CheckTypeTestPrepare2", checkTypeTestPrepare],
 		["CheckValidReleaseGroup", checkValidReleaseGroup],
 		["DoBumpReleasedDependencies", doBumpReleasedDependencies],
+		["DoLayerGenerationUpdate", doLayerGenerationUpdate],
 		["DoMajorRelease", handleBumpType],
 		["DoMinorRelease", handleBumpType],
 		["DoPatchRelease", handleBumpType],
