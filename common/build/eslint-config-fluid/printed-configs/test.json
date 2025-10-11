@@ -617,9 +617,6 @@
         "@typescript-eslint/ban-tslint-comment": [
             "error"
         ],
-        "@typescript-eslint/ban-types": [
-            "off"
-        ],
         "@typescript-eslint/block-spacing": [
             "off"
         ],
@@ -720,6 +717,9 @@
         "@typescript-eslint/no-array-constructor": [
             "error"
         ],
+        "@typescript-eslint/no-array-delete": [
+            "error"
+        ],
         "@typescript-eslint/no-base-to-string": [
             "error"
         ],
@@ -736,9 +736,6 @@
             "error"
         ],
         "@typescript-eslint/no-empty-function": [
-            "off"
-        ],
-        "@typescript-eslint/no-empty-interface": [
             "off"
         ],
         "@typescript-eslint/no-empty-object-type": [
@@ -779,9 +776,6 @@
         ],
         "@typescript-eslint/no-invalid-this": [
             "off"
-        ],
-        "@typescript-eslint/no-loss-of-precision": [
-            "error"
         ],
         "@typescript-eslint/no-magic-numbers": [
             "off"
@@ -828,6 +822,17 @@
                 ]
             }
         ],
+        "@typescript-eslint/no-restricted-types": [
+            "error",
+            {
+                "types": {
+                    "null": {
+                        "message": "Avoid using null; prefer undefined instead.",
+                        "fixWith": "undefined"
+                    }
+                }
+            }
+        ],
         "@typescript-eslint/no-shadow": [
             "error",
             {
@@ -836,9 +841,6 @@
             }
         ],
         "@typescript-eslint/no-this-alias": [
-            "error"
-        ],
-        "@typescript-eslint/no-throw-literal": [
             "error"
         ],
         "@typescript-eslint/no-unnecessary-qualifier": [
@@ -877,6 +879,9 @@
         "@typescript-eslint/no-unsafe-return": [
             "error"
         ],
+        "@typescript-eslint/no-unsafe-unary-minus": [
+            "error"
+        ],
         "@typescript-eslint/no-unused-expressions": [
             "error"
         ],
@@ -898,7 +903,13 @@
         "@typescript-eslint/object-curly-spacing": [
             "off"
         ],
+        "@typescript-eslint/only-throw-error": [
+            "error"
+        ],
         "@typescript-eslint/prefer-as-const": [
+            "error"
+        ],
+        "@typescript-eslint/prefer-find": [
             "error"
         ],
         "@typescript-eslint/prefer-for-of": [
@@ -919,7 +930,13 @@
         "@typescript-eslint/prefer-optional-chain": [
             "error"
         ],
+        "@typescript-eslint/prefer-promise-reject-errors": [
+            "error"
+        ],
         "@typescript-eslint/prefer-readonly": [
+            "error"
+        ],
+        "@typescript-eslint/prefer-regexp-exec": [
             "error"
         ],
         "@typescript-eslint/prefer-string-starts-ends-with": [
@@ -1340,7 +1357,7 @@
             "error"
         ],
         "no-class-assign": [
-            "error"
+            "off"
         ],
         "no-comma-dangle": [
             "off"
@@ -1445,7 +1462,7 @@
             "error"
         ],
         "no-loss-of-precision": [
-            "off"
+            "error"
         ],
         "no-magic-numbers": [
             "off"

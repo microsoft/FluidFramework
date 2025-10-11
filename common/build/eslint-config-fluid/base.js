@@ -39,12 +39,6 @@ module.exports = {
 	plugins: ["import", "unicorn"],
 	reportUnusedDisableDirectives: true,
 	rules: {
-		// These rules were deprecated, then removed in `@typescript-eslint/eslint-plugin` v8.
-		// They are replaced by a set of more specific rules, which have been enabled in the list below.
-		// These explicit disable will need to be removed when this package is updated to v8+ of the plugin.
-		"@typescript-eslint/ban-types": "off",
-		"@typescript-eslint/no-empty-interface": "off",
-
 		// Please keep entries alphabetized within a group
 
 		// #region Fluid Custom Rules
@@ -109,7 +103,7 @@ module.exports = {
 			},
 		],
 		"@typescript-eslint/no-this-alias": "error",
-		"@typescript-eslint/no-throw-literal": "error",
+		"@typescript-eslint/only-throw-error": "error",
 		"@typescript-eslint/no-unused-expressions": "error",
 		"@typescript-eslint/no-unused-vars": "off",
 		"@typescript-eslint/no-unnecessary-qualifier": "error",
@@ -156,6 +150,17 @@ module.exports = {
 		],
 		"@typescript-eslint/unified-signatures": "error",
 		"@typescript-eslint/no-wrapper-object-types": "error",
+		"@typescript-eslint/no-restricted-types": [
+			"error",
+			{
+				types: {
+					null: {
+						message: "Avoid using null; prefer undefined instead.",
+						fixWith: "undefined",
+					},
+				},
+			},
+		],
 
 		// #endregion
 
