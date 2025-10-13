@@ -4,40 +4,50 @@
  */
 
 import { strict as assert } from "node:assert";
-import path from "node:path";
 
 import { expect } from "chai";
-import { afterEach, describe, it } from "mocha";
+import { after, afterEach, before, describe, it } from "mocha";
 import * as semver from "semver";
-import { simpleGit } from "simple-git";
 
 import { loadBuildProject } from "../buildProject.js";
-import type { ReleaseGroupName, WorkspaceName } from "../types.js";
+import type { IReleaseGroup, IWorkspace, ReleaseGroupName, WorkspaceName } from "../types.js";
 import { setVersion } from "../versions.js";
 
-import { testDataPath, testRepoRoot } from "./init.js";
-
-const repo = loadBuildProject(path.join(testDataPath, "./testRepo"));
-const main = repo.releaseGroups.get("main" as ReleaseGroupName);
-assert(main !== undefined);
-
-const group2 = repo.releaseGroups.get("group2" as ReleaseGroupName);
-assert(group2 !== undefined);
-
-const group3 = repo.releaseGroups.get("group3" as ReleaseGroupName);
-assert(group3 !== undefined);
-
-const secondWorkspace = repo.workspaces.get("second" as WorkspaceName);
-assert(secondWorkspace !== undefined);
-
-/**
- * A git client rooted in the test repo. Used for resetting tests.
- */
-const git = simpleGit(testRepoRoot);
+import { setupTestRepo } from "./testUtils.js";
 
 describe("setVersion", () => {
-	afterEach(async () => {
-		await git.checkout(["HEAD", "--", testRepoRoot]);
+	let testRepoRoot: string;
+	let cleanup: () => Promise<void>;
+	let repo: ReturnType<typeof loadBuildProject>;
+	let main: IReleaseGroup;
+	let group2: IReleaseGroup;
+	let group3: IReleaseGroup;
+	let secondWorkspace: IWorkspace;
+
+	before(async () => {
+		const setup = await setupTestRepo();
+		testRepoRoot = setup.testRepoRoot;
+		cleanup = setup.cleanup;
+
+		repo = loadBuildProject(testRepoRoot);
+		main = repo.releaseGroups.get("main" as ReleaseGroupName);
+		assert(main !== undefined);
+
+		group2 = repo.releaseGroups.get("group2" as ReleaseGroupName);
+		assert(group2 !== undefined);
+
+		group3 = repo.releaseGroups.get("group3" as ReleaseGroupName);
+		assert(group3 !== undefined);
+
+		secondWorkspace = repo.workspaces.get("second" as WorkspaceName);
+		assert(secondWorkspace !== undefined);
+	});
+
+	after(async () => {
+		await cleanup();
+	});
+
+	afterEach(() => {
 		repo.reload();
 	});
 

@@ -10,7 +10,7 @@ import * as path from "node:path";
 
 import { expect } from "chai";
 import { readJson, writeJson } from "fs-extra/esm";
-import { describe, it } from "mocha";
+import { after, before, describe, it } from "mocha";
 import { CleanOptions, simpleGit } from "simple-git";
 
 import { loadBuildProject } from "../buildProject.js";
@@ -19,6 +19,7 @@ import { findGitRootSync, getChangedSinceRef, getFiles, getRemote } from "../git
 import type { PackageJson } from "../types.js";
 
 import { packageRootPath, testRepoRoot } from "./init.js";
+import { setupTestRepo } from "./testUtils.js";
 
 describe("findGitRootSync", () => {
 	it("finds root", () => {
@@ -51,8 +52,21 @@ describe("getRemote", () => {
 });
 
 describe("getChangedSinceRef: local", () => {
+	let testRepoRoot: string;
+	let cleanup: () => Promise<void>;
 	const git = simpleGit(process.cwd());
-	const repo = loadBuildProject(testRepoRoot);
+	let repo: ReturnType<typeof loadBuildProject>;
+
+	before(async () => {
+		const setup = await setupTestRepo();
+		testRepoRoot = setup.testRepoRoot;
+		cleanup = setup.cleanup;
+		repo = loadBuildProject(testRepoRoot);
+	});
+
+	after(async () => {
+		await cleanup();
+	});
 
 	beforeEach(async () => {
 		// create a file
