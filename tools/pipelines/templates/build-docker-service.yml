@@ -206,10 +206,10 @@ stages:
         version: 18.17.1
 
     - task: Npm@1
-      displayName: Install npm 6
+      displayName: Install npm 10
       inputs:
         command: 'custom'
-        customCommand: 'install --global npm@^6'
+        customCommand: 'install --global npm@^10'
         customRegistry: 'useNpmrc'
 
     # Component detection
@@ -389,7 +389,6 @@ stages:
 - ${{ if and(eq(variables.publish, true), ne(parameters.releaseKind, 'docker')) }}:
   - template: include-publish-npm-package.yml
     parameters:
-      namespace: true
       tagName: ${{ parameters.tagName }}
 
 - ${{ if eq(variables.releaseImage, true) }}:

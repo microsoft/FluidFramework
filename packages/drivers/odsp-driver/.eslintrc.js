@@ -4,15 +4,24 @@
  */
 
 module.exports = {
-    "extends": [
-        require.resolve("@fluidframework/eslint-config-fluid")
-    ],
-    "parserOptions": {
-        "project": ["./tsconfig.json", "./src/test/tsconfig.json"]
+    extends: [require.resolve("@fluidframework/eslint-config-fluid")],
+    parserOptions: {
+        project: ["./tsconfig.json", "./src/test/tsconfig.json"],
     },
-    "rules": {
+    rules: {
         "@typescript-eslint/no-non-null-assertion": "off",
         "@typescript-eslint/no-use-before-define": "off",
         "@typescript-eslint/strict-boolean-expressions": "off",
-    }
-}
+    },
+    overrides: [
+        {
+            // Rules only for type validation files
+            files: ["**/test/types/*.generated.*"],
+            rules: {
+                "max-len": "off",
+                "@typescript-eslint/semi": "off",
+                "@typescript-eslint/comma-spacing": "off",
+            },
+        },
+    ],
+};

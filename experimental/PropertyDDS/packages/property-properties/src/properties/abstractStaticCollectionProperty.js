@@ -35,13 +35,13 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
     /**
      * Returns the sub-property having the given name, or following the given paths, in this property.
      *
-     * @param  {string|number|array<string|number>} in_ids the ID or IDs of the property or an array of IDs
+     * @param  {string|number|array<string|number>} in_ids -  the ID or IDs of the property or an array of IDs
      *     if an array is passed, the .get function will be performed on each id in sequence
      *     for example .get(['position','x']) is equivalent to .get('position').get('x').
      *     If .get resolves to a ReferenceProperty, it will, by default, return the property that the
      *     ReferenceProperty refers to.
      * @param {Object} in_options - parameter object
-     * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS]
+     * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS] -
      *     How should this function behave during reference resolution?
      *
      * @throws if an in_id is neither a string or an array of strings and numbers.
@@ -82,14 +82,25 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
                     return undefined;
                 }
             }
-        } else if (in_ids === PATH_TOKENS.ROOT) {
-            prop = prop.getRoot();
-        } else if (in_ids === PATH_TOKENS.UP) {
-            prop = prop.getParent();
-        } else if (in_ids === PATH_TOKENS.REF) {
-            throw new Error(MSG.NO_GET_DEREFERENCE_ONLY);
         } else {
-            throw new Error(MSG.STRING_OR_ARRAY_STRINGS + in_ids);
+            switch (in_ids) {
+                case PATH_TOKENS.ROOT: {
+                    prop = prop.getRoot();
+
+                    break;
+                }
+                case PATH_TOKENS.UP: {
+                    prop = prop.getParent();
+
+                    break;
+                }
+                case PATH_TOKENS.REF: {
+                    throw new Error(MSG.NO_GET_DEREFERENCE_ONLY);
+                }
+                default: {
+                    throw new Error(MSG.STRING_OR_ARRAY_STRINGS + in_ids);
+                }
+            }
         }
 
         return prop;
@@ -98,7 +109,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
     /**
      * Returns the sub-property having the given name in this property.
      *
-     * @param  {string|number} in_id the id of the prop you wish to retrieve.
+     * @param  {string|number} in_id -  the id of the prop you wish to retrieve.
      *
      * @return {property-properties.BaseProperty | undefined} The property you seek or undefined if none is found.
      */
@@ -114,11 +125,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
      * @return {string} String identifying the property
      */
     getId() {
-        if (this._id !== null) {
-            return this._id;
-        } else {
-            return this.getGuid();
-        }
+        return this._id !== null ? this._id : this.getGuid();
     }
 
     /**
@@ -136,13 +143,13 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
     /**
      * returns the value of a sub-property
      * This is a shortcut for .get(in_ids, in_options).getValue()
-     * @param  {string|number|Array<string|number>} in_ids the ID or IDs of the property or an array of IDs
+     * @param  {string|number|Array<string|number>} in_ids -  the ID or IDs of the property or an array of IDs
      *     if an array is passed, the .get function will be performed on each id in sequence
      *     for example .getValue(['position','x']) is equivalent to .get('position').get('x').getValue().
      *     If at any point .get resolves to a ReferenceProperty, it will, by default, return the property that the
      *     ReferenceProperty refers to.
      * @param {Object} in_options - parameter object
-     * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS]
+     * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS] -
      *     How should this function behave during reference resolution?
      * @throws if the in_ids does not resolve to a ValueProperty or StringProperty
      * @throws if in_ids is not a string or an array of strings or numbers.
@@ -229,9 +236,9 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
     /**
      * Expand a path returning the property or value at the end.
      *
-     * @param {string} in_path the path
+     * @param {string} in_path - the path
      * @param {Object} in_options - parameter object
-     * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS]
+     * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS] -
      *     How should this function behave during reference resolution?
      * @throws if in_path is not a valid path
      * @return {property-properties.BaseProperty|undefined|*} resolved path
@@ -314,19 +321,15 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
             throw new Error(MSG.INVALID_PATH_TOKEN + in_segment);
         }
 
-        if (this.has(in_segment)) {
-            return this.get(in_segment, { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER });
-        } else {
-            return undefined;
-        }
+        return this.has(in_segment) ? this.get(in_segment, { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER }) : undefined;
     }
 
     /**
      * Given an object that mirrors a PSet Template, assigns the properties to the values
      * found in that object.
      * See {@link setValues}
-     * @param {object} in_values The object containing the nested values to assign
-     * @param {boolean} in_typed Whether the values are typed/polymorphic.
+     * @param {object} in_values - The object containing the nested values to assign
+     * @param {boolean} in_typed - Whether the values are typed/polymorphic.
      * @param {boolean} in_initial  - Whether we are setting default/initial values
         or if the function is called directly with the values to set.
      */
@@ -367,7 +370,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
      * }
      * </pre>
      *
-     * @param {object} in_values The object containing the nested values to assign
+     * @param {object} in_values - The object containing the nested values to assign
      * @throws if in_values is not an object (or in the case of ArrayProperty, an array)
      * @throws if one of the path in in_values does not correspond to a path in that property
      * @throws if one of the path to a value in in_values leads to a property in this property.
@@ -389,7 +392,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
      * This is an internal function, called by the PropertyFactory when instantiating a template and internally by the
      * NodeProperty. Adding children dynamically by the user is only allowed in the NodeProperty.
      *
-     * @param {property-properties.BaseProperty} in_property the property to append
+     * @param {property-properties.BaseProperty} in_property - the property to append
      * @param {boolean} in_allowChildMerges - Whether merging of children (nested properties) is allowed.
      *                                        This is used for extending inherited properties.
      * @protected
@@ -427,7 +430,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
     * This is an internal function that merges children of two properties.
     * This is used for extending inherited properties.
     *
-    * @param {property-properties.BaseProperty} in_property the property to merge its children (nested properties) with.
+    * @param {property-properties.BaseProperty} in_property - the property to merge its children (nested properties) with.
     * @protected
     */
     _merge(in_property) {

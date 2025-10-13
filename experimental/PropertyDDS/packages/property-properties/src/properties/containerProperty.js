@@ -43,7 +43,7 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
     /**
      * Returns the sub-property having the given name in this property.
      *
-     * @param  {string|number} in_id the id of the prop you wish to retrieve.
+     * @param  {string|number} in_id -  the id of the prop you wish to retrieve.
      *
      * @return {property-properties.BaseProperty | undefined} The property you seek or undefined if none is found.
      */
@@ -53,8 +53,8 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
 
     /**
      * Adds an optional child to list of possible optional children.
-     * @param {string} in_id Id of the optional child
-     * @param {string} in_typeid typeid which determines what type the child should be
+     * @param {string} in_id - Id of the optional child
+     * @param {string} in_typeid - typeid which determines what type the child should be
      * @private
      */
     _addOptionalChild(in_id, in_typeid) {
@@ -135,11 +135,7 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
         if (this._parent) {
             return this.getRoot()._getScope();
         } else {
-            if (this._checkedOutRepositoryInfo) {
-                return this._checkedOutRepositoryInfo.getScope();
-            } else {
-                return undefined;
-            }
+            return this._checkedOutRepositoryInfo ? this._checkedOutRepositoryInfo.getScope() : undefined;
         }
     }
 
@@ -177,11 +173,8 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
      */
     _validateRemove(in_id) {
         if (!this._dynamicChildren[in_id]) {
-            if (this._staticChildren[in_id] !== undefined) {
-                throw new Error(MSG.CANNOT_REMOVE_NON_OPTIONAL_PROP + in_id);
-            } else {
-                throw new Error((MSG.REMOVING_NON_EXISTING_KEY + in_id));
-            }
+            const error = this._staticChildren[in_id] !== undefined ? new Error(MSG.CANNOT_REMOVE_NON_OPTIONAL_PROP + in_id) : new Error((MSG.REMOVING_NON_EXISTING_KEY + in_id));
+            throw error;
         }
     }
 
@@ -308,7 +301,7 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
      * You would update the values like
      * `baseProperty.setValues({foo: 'hello', bar: {baz: 1}});`
      * WARNING: not completely implemented for all types
-     * @param {object} in_properties The properties you would like to assign
+     * @param {object} in_properties - The properties you would like to assign
      * @private
      */
     setValues(in_properties) {

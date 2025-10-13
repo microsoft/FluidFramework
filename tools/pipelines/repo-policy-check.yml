@@ -19,38 +19,47 @@ pool:
   Small-eastus2
 
 variables:
+- name: pnpmStorePath
+  value: $(Pipeline.Workspace)/.pnpm-store
 - name: skipComponentGovernanceDetection
   value: true
+- group: ado-feeds
 
-steps:
-- task: UseNode@1
-  displayName: Use Node 18.17.1
-  inputs:
-    version: 18.17.1
+stages:
+- stage: run_policy_check
+  jobs:
+  - job: run_policy_check
+    steps:
+    # Install
+    - task: UseNode@1
+      displayName: Use Node 20.15.1
+      inputs:
+        version: 20.15.1
 
-- task: Npm@1
-  displayName: Install npm 6
-  retryCountOnTaskFailure: 4
-  inputs:
-    command: 'custom'
-    customCommand: 'install --global npm@^6'
-    customRegistry: 'useNpmrc'
+    - template: /tools/pipelines/templates/include-install-pnpm.yml@self
+      parameters:
+        buildDirectory: .
 
-- task: Npm@1
-  displayName: npm ci
-  inputs:
-    command: 'custom'
-    customCommand: 'ci --ignore-scripts'
-    customRegistry: 'useNpmrc'
+    - task: Bash@3
+      displayName: Install root dependencies
+      inputs:
+        targetType: 'inline'
+        workingDirectory: .
+        script: |
+          set -eu -o pipefail
+          # We only need to install the root dependencies
+          pnpm install --workspace-root --frozen-lockfile
 
-- task: Npm@1
-  displayName: Policy Check
-  inputs:
-    command: 'custom'
-    customCommand: 'run policy-check'
+    - task: Npm@1
+      displayName: Policy Check
+      inputs:
+        command: 'custom'
+        customCommand: 'run policy-check'
 
-- task: Npm@1
-  displayName: Layer Check
-  inputs:
-    command: 'custom'
-    customCommand: 'run layer-check'
+    - task: Bash@3
+      displayName: Prune pnpm store
+      inputs:
+        targetType: 'inline'
+        script: |
+          set -eu -o pipefail
+          pnpm store prune

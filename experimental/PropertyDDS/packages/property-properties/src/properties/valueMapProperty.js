@@ -98,8 +98,8 @@ export class ValueMapProperty extends MapProperty {
     /**
      * Sets the value of a property into the map.
      *
-     * @param {string} in_key the key under which the entry is set
-     * @param {*} in_value the value to be set
+     * @param {string} in_key - the key under which the entry is set
+     * @param {*} in_value - the value to be set
      */
     set(in_key, in_value) {
         if (validationsEnabled.enabled) {
@@ -372,11 +372,7 @@ export class Integer64MapProperty extends ValueMapProperty {
         _.mapValues(this._dynamicChildren, function(val, key) {
             // TODO: The 'toString()' function is defined on Integer64Property, so we need to create
             //       such object to use it. It would be better to have it in Utils Integer64.prototype.toString
-            if (val instanceof Int64) {
-                int64Prop = new Int64Property({});
-            } else {
-                int64Prop = new Uint64Property({});
-            }
+            int64Prop = val instanceof Int64 ? new Int64Property({}) : new Uint64Property({});
             int64Prop.setValueLow(val.getValueLow());
             int64Prop.setValueHigh(val.getValueHigh());
             printFct(indent + key + ': ' + int64Prop);

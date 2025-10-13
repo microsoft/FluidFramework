@@ -1,0 +1,86 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# include-install-pnpm
+#
+# This template can be included in pipelines to install pnpm with store caching enabled.
+
+parameters:
+# The path containing the project(s) to build.
+- name: buildDirectory
+  type: string
+
+# If set to false, the pnpm store will not be cached or restored from cache.
+- name: enableCache
+  type: boolean
+  default: true
+
+# The path to the pnpm store. The contents here will be cached and restored when using pnpm in a pipeline.
+- name: pnpmStorePath
+  type: string
+  default: $(Pipeline.Workspace)/.pnpm-store
+
+# Where to place the user-level .npmrc file. Pnpm will be configured to reference this file for the duration of the job.
+# Rather than rely on the default $HOME/.npmrc, we specify a known-reasonable location here.
+# Users of the template probably don't need to change this.
+- name: userNpmrcPath
+  type: string
+  default: $(Agent.TempDirectory)/.npmrc
+
+steps:
+- ${{ if eq(parameters.enableCache, true) }}:
+  - task: Cache@2
+    displayName: Cache pnpm store
+    timeoutInMinutes: 3
+    continueOnError: true
+    inputs:
+      # Caches are already scoped to individual pipelines, so no need to include the release group name or tag
+      # in the cache key
+      key: 'pnpm-store | "$(Agent.OS)" | ${{ parameters.buildDirectory }}/pnpm-lock.yaml'
+      path: ${{ parameters.pnpmStorePath }}
+      restoreKeys: |
+        pnpm-store | "$(Agent.OS)"
+
+- task: Bash@3
+  displayName: Install and configure pnpm
+  # The previous task (cache restoration) can timeout, which is classified as canceled, but since it's just cache
+  # restoration, we want to continue even if it timed out.
+  condition: or(succeeded(), canceled())
+  inputs:
+    targetType: 'inline'
+    workingDirectory: ${{ parameters.buildDirectory }}
+    # workspace-concurrency 0 means use use the CPU core count. This is better than the default (4) for larger agents.
+    script: |
+      set -eu -o pipefail
+      echo "Using node $(node --version)"
+      sudo corepack enable
+      echo "Using pnpm $(pnpm -v)"
+      # This ensures all subsequent tasks in this job will use the pnpm configuration set here.
+      echo "##vso[task.setvariable variable=NPM_CONFIG_USERCONFIG]$NPM_CONFIG_USERCONFIG"
+      echo "Pnpm user config location: $(pnpm config get userconfig)"
+      pnpm config set store-dir ${{ parameters.pnpmStorePath }}
+      echo "Pnpm store: ${{ parameters.pnpmStorePath }}"
+      echo "Primary registry: ${NPM_REGISTRY}"
+      pnpm config set -g workspace-concurrency 0
+      pnpm config set registry "${NPM_REGISTRY}"
+      if [ ${NPM_REGISTRY} == "https://registry.npmjs.org/" ]; then
+        echo "##vso[task.setvariable variable=registryType]public"
+      else
+        echo "##vso[task.setvariable variable=registryType]private"
+      fi
+  env:
+    NPM_REGISTRY: $(ado-feeds-primary-registry)
+    NPM_CONFIG_USERCONFIG: ${{ parameters.userNpmrcPath}}
+    # We should leverage the primary npm registry to install pnpm as well. However, ADO artifacts feeds do not implement
+    # the full npm registry API including a route that corepack uses to get package metadata--the version route here:
+    # https://github.com/nodejs/corepack/blob/bc13d40037d0b1bfd386e260ae741f55505b5c7c/sources/npmRegistryUtils.ts#L32
+    # Thus installing pnpm from an ADO feed using corepack is not possible at time of writing.
+    # COREPACK_NPM_REGISTRY: $(ado-feeds-primary-registry)
+
+# Authenticate to npm feed if required
+- task: npmAuthenticate@0
+  displayName: 'Npm authenticate'
+  condition: and(succeeded(), eq(variables['registryType'], 'private'))
+  retryCountOnTaskFailure: 1
+  inputs:
+    workingFile: ${{ parameters.userNpmrcPath }}

@@ -17,19 +17,19 @@ const { MSG } = require('@fluid-experimental/property-common').constants;
 export class PropertyTemplate {
     /**
      * Constructor for creating a PropertyTemplate based on the given parameters.
-     * @param {object} in_params List of parameters
-     * @param {string} in_params.id id of the property
-     * @param {string} in_params.name Name of the property
-     * @param {string} in_params.typeid The type identifier
-     * @param {number=} [in_params.length=1] The length of the property. Only valid if
+     * @param {object} in_params - List of parameters
+     * @param {string} in_params.id - id of the property
+     * @param {string} in_params.name - Name of the property
+     * @param {string} in_params.typeid - The type identifier
+     * @param {number=} [in_params.length=1] - The length of the property. Only valid if
      *   the property is an array, otherwise the length defaults to 1
-     * @param {string} in_params.context The type of property this template represents
+     * @param {string} in_params.context - The type of property this template represents
      *   i.e. array, hash, etc.
-     * @param {Array.<object>} in_params.properties List of property templates that
+     * @param {Array.<object>} in_params.properties - List of property templates that
      *   are used to define children properties
-     * @param {Array.<object>} in_params.constants List of property templates that
+     * @param {Array.<object>} in_params.constants - List of property templates that
      *   are used to define constant properties and their values
-     * @param {Array.<string>} in_params.inherits List of property template typeids that this
+     * @param {Array.<string>} in_params.inherits - List of property template typeids that this
      *   PropertyTemplate inherits from
      *
      * @constructor
@@ -45,11 +45,7 @@ export class PropertyTemplate {
 
         /** Size of the property (if this is an array) */
         if (params.context === 'array') {
-            if (params.length !== undefined) {
-                this.length = params.length;
-            } else {
-                this.length = 0;
-            }
+            this.length = params.length !== undefined ? params.length : 0;
         } else {
             this.length = 1;
         }
@@ -88,7 +84,7 @@ export class PropertyTemplate {
 
     /**
      * internal function to recursivly traverse a property template and create dictionaries for found inline enums
-     * @param {{}} in_currentPropertyLevel the current level in the template hierarchie
+     * @param {{}} in_currentPropertyLevel - the current level in the template hierarchie
      */
     _digestNestedInlineEnumProperties(in_currentPropertyLevel) {
         if (in_currentPropertyLevel.properties) {
@@ -126,11 +122,7 @@ export class PropertyTemplate {
             minValue = value < minValue ? value : minValue;
         }
 
-        if (enumDictionary.enumEntriesByValue.hasOwnProperty(0)) {
-            enumDictionary.defaultValue = 0;
-        } else {
-            enumDictionary.defaultValue = minValue;
-        }
+        enumDictionary.defaultValue = enumDictionary.enumEntriesByValue.hasOwnProperty(0) ? 0 : minValue;
 
         return enumDictionary;
     }
@@ -317,7 +309,7 @@ export class PropertyTemplate {
       * Determines if the argument is a template structure
       *
       * @public
-      * @param {object} in_param parameter to assess
+      * @param {object} in_param - parameter to assess
       *
       * @return {Boolean} returns true if in_param is a template
       */
@@ -332,7 +324,7 @@ export class PropertyTemplate {
     * Extracts typeids directly referred to in a template
     *
     * @public
-    * @param {object} template structure from which to extract dependencies
+    * @param {object} template - structure from which to extract dependencies
     *
     * @return {Array} list of typeids this template refers directly to
     */

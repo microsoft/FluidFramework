@@ -22,7 +22,7 @@ export class ValidationResultBuilder {
 
     /**
      * Instantiates a ValidationResultBuilder
-     * @param in_typeid A template typeid.
+     * @param in_typeid - A template typeid.
      */
     constructor(in_typeid: string) {
         this._result = {
@@ -40,7 +40,7 @@ export class ValidationResultBuilder {
 
     /**
      * Add a validation error.
-     * @param {Error} in_error An Error instance.
+     * @param {Error} in_error - An Error instance.
      */
     public get result() {
         return this._result;
@@ -48,7 +48,7 @@ export class ValidationResultBuilder {
 
     /**
      * Add a validation error.
-     * @param in_error An Error instance.
+     * @param in_error - An Error instance.
      */
     public addError(in_error: Error) {
         this._result.isValid = false;
@@ -60,7 +60,7 @@ export class ValidationResultBuilder {
 
     /**
      * Add a validation warning.
-     * @param in_msg A warning description.
+     * @param in_msg - A warning description.
      */
     public addWarning(in_msg: string) {
         this._result.warnings.push(in_msg);

@@ -100,11 +100,8 @@ export class PropertiesManager {
             // The delta should be null if undefined, as thats how we encode delete
             deltas[key] = (previousValue === undefined) ? null : previousValue;
             let newValue: any;
-            if (combiningOp) {
-                newValue = combine(combiningOp, previousValue, newValue, seq);
-            } else {
-                newValue = newProps[key];
-            }
+            // eslint-disable-next-line prefer-const
+            newValue = combiningOp ? combine(combiningOp, previousValue, newValue, seq) : newProps[key];
             if (newValue === null) {
                 // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
                 delete oldProps[key];

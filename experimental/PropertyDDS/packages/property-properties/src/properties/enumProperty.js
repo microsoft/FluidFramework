@@ -61,7 +61,7 @@ export class EnumProperty extends Int32Property {
     /**
      * Sets the (internal, integer) value of the property
      *
-     * @param {Number|string} in_value the new integer value - it must be a valid enum integer for this property
+     * @param {Number|string} in_value - the new integer value - it must be a valid enum integer for this property
      *                                 or
      *                                 the new enum value in form of a valid enum string for this EnumProperty
      * @throws if no entry exists for in_value
@@ -83,7 +83,7 @@ export class EnumProperty extends Int32Property {
     /**
      * Sets the property by an enum string
      *
-     * @param {string} in_stringId the enum string we want to switch to
+     * @param {string} in_stringId - the enum string we want to switch to
      * @throws if in_stringId is not a string
      * @throws if no entry is found for in_stringId
      */

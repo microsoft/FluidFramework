@@ -67,7 +67,7 @@
   - BREAKING.md
 
 dependencies:
-  - lerna-package-lock.json
+  - pnpm-lock.yaml
   - package-lock.json
 
 documentation:

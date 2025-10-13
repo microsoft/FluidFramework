@@ -104,7 +104,7 @@ export class Integer64Property extends ValueProperty {
     /**
      * Internal function to update the value of the Integer64Property
      *
-     * @param {Int64|String|Number} in_value the new value
+     * @param {Int64|String|Number} in_value - the new value
      * @param {boolean} [in_reportToView = true] - By default, the dirtying will always be reported to the checkout view
      *                                             and trigger a modified event there. When batching updates, this
      *                                             can be prevented via this flag.
@@ -144,7 +144,7 @@ export class Integer64Property extends ValueProperty {
     }
 
     /**
-     * @param {number} in_high set the higher 32 bit integer part
+     * @param {number} in_high - set the higher 32 bit integer part
      * @throws if in_high is not a number
      * @return {boolean} true if the value was actually changed
      */
@@ -161,7 +161,7 @@ export class Integer64Property extends ValueProperty {
     }
 
     /**
-     * @param {number} in_low set the lower 32 bit integer part
+     * @param {number} in_low - set the lower 32 bit integer part
      * @throws if in_low is not a number
      * @return {boolean} true if the value was actually changed
      */
@@ -225,11 +225,7 @@ export class Integer64Property extends ValueProperty {
     _serialize(in_dirtyOnly, in_includeRootTypeid,
         in_dirtinessType, in_includeReferencedRepositories) {
         if (in_dirtyOnly) {
-            if (this._isDirty(in_dirtinessType)) {
-                return [this._data.getValueLow(), this._data.getValueHigh()];
-            } else {
-                return {};
-            }
+            return this._isDirty(in_dirtinessType) ? [this._data.getValueLow(), this._data.getValueHigh()] : {};
         } else {
             return [this._data.getValueLow(), this._data.getValueHigh()];
         }
@@ -238,7 +234,7 @@ export class Integer64Property extends ValueProperty {
     /**
      * The toString() method returns a string representing the specified Integer64 object.
      *
-     * @param {number} [in_radix = 10]  An integer between 2 and 36 specifying
+     * @param {number} [in_radix = 10] - An integer between 2 and 36 specifying
      *      the base to use for representing numeric values.
      * @return {string} A string representing the specified Integer64 object.
      */
@@ -249,8 +245,8 @@ export class Integer64Property extends ValueProperty {
     /**
      * The Integer64.fromString() method parses a string argument updates object's lower and higher 32 bit integer parts.
      *
-     * @param {string} in_string The value to parse. Leading whitespace in the string argument is ignored.
-     * @param {number} [in_radix = 10] An integer between 2 and 36 that represents the
+     * @param {string} in_string - The value to parse. Leading whitespace in the string argument is ignored.
+     * @param {number} [in_radix = 10] - An integer between 2 and 36 that represents the
      *     radix (the base in mathematical numeral systems) of the above mentioned string.
      * @throws if in_string is not a string
      * @throws if in_radix is entered but is not a number between 2 and 36

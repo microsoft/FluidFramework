@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import Vue from "vue";
+import { createApp } from "vue";
 import { IDiceRoller } from "../dataObject";
 
 /**
@@ -12,7 +12,7 @@ import { IDiceRoller } from "../dataObject";
  * @param div - The HTMLElement to render into
  */
 export function vueRenderDiceRoller(diceRoller: IDiceRoller, div: HTMLDivElement) {
-    const app = new Vue({
+    const app = createApp({
         template: `
         <div style="font-size: 50px; text-align: center" >
             <div>Vue</div>
@@ -34,16 +34,16 @@ export function vueRenderDiceRoller(diceRoller: IDiceRoller, div: HTMLDivElement
         },
         computed: {
             diceCharacter() {
-                return String.fromCodePoint(0x267f + this.diceValue);
+                return String.fromCodePoint(0x267f + (this.diceValue as number));
             },
             diceColor() {
                 return `hsl(${this.diceValue * 60}, 70%, 50%)`;
             },
         },
         mounted() {
-            diceRoller.on("diceRolled", (this as any).updateDiceValue);
+            diceRoller.on("diceRolled", this.updateDiceValue);
         },
     });
 
-    app.$mount(div);
+    app.mount(div);
 }

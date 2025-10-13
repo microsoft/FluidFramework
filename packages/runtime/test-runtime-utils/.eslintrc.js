@@ -4,26 +4,32 @@
  */
 
 module.exports = {
-    "extends": [
-        require.resolve("@fluidframework/eslint-config-fluid")
-    ],
-    "parserOptions": {
-        "project": ["./tsconfig.json", "./src/test/tsconfig.json"]
+    extends: [require.resolve("@fluidframework/eslint-config-fluid")],
+    parserOptions: {
+        project: ["./tsconfig.json", "./src/test/tsconfig.json"],
     },
-    "rules": {
+    rules: {
         "@typescript-eslint/strict-boolean-expressions": "off",
 
         // This library is used in the browser, so we don't want dependencies on most node libraries.
-        "import/no-nodejs-modules": ["error", {"allow": ["events"]}],
+        "import/no-nodejs-modules": ["error", { allow: ["events"] }],
     },
-    "overrides": [
+    overrides: [
         {
             // The assertion shortcode map file is auto-generated, so disable some rules.
-            "files": ["src/assertionShortCodesMap.ts"],
-            "rules": {
+            files: ["src/assertionShortCodesMap.ts"],
+            rules: {
                 "@typescript-eslint/comma-dangle": "off",
-            }
-        }
+            },
+        },
+        {
+            // Rules only for type validation files
+            files: ["**/test/types/*.generated.*"],
+            rules: {
+                "max-len": "off",
+                "@typescript-eslint/semi": "off",
+                "@typescript-eslint/comma-spacing": "off",
+            },
+        },
     ],
-
-}
+};

@@ -40,26 +40,27 @@
     "webpack:dev": "webpack --env=\"development\""
   },
   "dependencies": {
-    "@fluidframework/aqueduct": "^1.4.0",
+    "@fluidframework/aqueduct": "workspace:~",
     "@fluidframework/common-utils": "^0.32.2",
-    "@fluidframework/container-definitions": "^1.4.0",
-    "@fluidframework/container-runtime": "^1.4.0",
-    "@fluidframework/container-runtime-definitions": "^1.4.0",
-    "@fluidframework/core-interfaces": "^1.4.0",
-    "@fluidframework/datastore": "^1.4.0",
-    "@fluidframework/datastore-definitions": "^1.4.0",
-    "@fluidframework/map": "^1.4.0",
-    "@fluidframework/merge-tree": "^1.4.0",
-    "@fluidframework/request-handler": "^1.4.0",
-    "@fluidframework/runtime-definitions": "^1.4.0",
-    "@fluidframework/runtime-utils": "^1.4.0",
-    "@fluidframework/sequence": "^1.4.0",
-    "@fluidframework/view-adapters": "^1.4.0",
-    "@fluidframework/view-interfaces": "^1.4.0",
+    "@fluidframework/container-definitions": "workspace:~",
+    "@fluidframework/container-runtime": "workspace:~",
+    "@fluidframework/container-runtime-definitions": "workspace:~",
+    "@fluidframework/core-interfaces": "workspace:~",
+    "@fluidframework/datastore": "workspace:~",
+    "@fluidframework/datastore-definitions": "workspace:~",
+    "@fluidframework/map": "workspace:~",
+    "@fluidframework/merge-tree": "workspace:~",
+    "@fluidframework/request-handler": "workspace:~",
+    "@fluidframework/runtime-definitions": "workspace:~",
+    "@fluidframework/runtime-utils": "workspace:~",
+    "@fluidframework/sequence": "workspace:~",
+    "@fluidframework/view-adapters": "workspace:~",
+    "@fluidframework/view-interfaces": "workspace:~",
     "@types/prosemirror-model": "1.16.2",
     "@types/prosemirror-schema-list": "1.0.3",
     "@types/prosemirror-state": "1.3.0",
     "@types/prosemirror-view": "1.23.3",
+    "events": "^3.1.0",
     "orderedmap": "^1.1.1",
     "prosemirror-example-setup": "1.1.2",
     "prosemirror-history": "1.3.0",
@@ -72,7 +73,7 @@
     "prosemirror-view": "1.25.0"
   },
   "devDependencies": {
-    "@fluid-tools/webpack-fluid-loader": "^1.4.0",
+    "@fluid-tools/webpack-fluid-loader": "workspace:~",
     "@fluidframework/build-common": "^0.24.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@rushstack/eslint-config": "^2.5.1",
@@ -81,13 +82,13 @@
     "concurrently": "^6.2.0",
     "copyfiles": "^2.1.0",
     "css-loader": "^1.0.0",
-    "eslint": "~8.6.0",
+    "eslint": "~8.55.0",
     "rimraf": "^2.6.2",
     "style-loader": "^1.0.0",
     "ts-loader": "^9.3.0",
     "typescript": "~4.5.5",
     "typescript-formatter": "7.1.0",
-    "webpack": "^5.72.0",
+    "webpack": "^5.76.0",
     "webpack-cli": "^4.9.2",
     "webpack-dev-server": "~4.6.0",
     "webpack-merge": "^5.8.0"
@@ -101,5 +102,10 @@
         "library": "main"
       }
     }
+  },
+  "typeValidation": {
+    "disabled": true,
+    "broken": {},
+    "entrypoint": "internal"
   }
 }

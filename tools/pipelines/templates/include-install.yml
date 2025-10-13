@@ -1,0 +1,30 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# include-install template for the install step in client build and test stability pipeline
+
+parameters:
+- name: packageManager
+  type: string
+
+- name: buildDirectory
+  type: string
+
+- name: packageManagerInstallCommand
+  type: string
+
+steps:
+  - ${{ if eq(parameters.packageManager, 'pnpm') }}:
+    - template: /tools/pipelines/templates/include-install-pnpm.yml@self
+      parameters:
+        buildDirectory: ${{ parameters.buildDirectory }}
+
+  - task: Bash@3
+    displayName: Install dependencies
+    retryCountOnTaskFailure: 4
+    inputs:
+      targetType: 'inline'
+      workingDirectory: ${{ parameters.buildDirectory }}
+      script: |
+        set -eu -o pipefail
+        ${{ parameters.packageManagerInstallCommand }}
