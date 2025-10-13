@@ -475,7 +475,7 @@ for (const createBlobPayloadPending of [false, true]) {
 				const blob1 = await blobManager.getBlob("blob1", createBlobPayloadPending);
 				assert.strictEqual(blobToText(blob1), "hello");
 
-				// Verify a single blobs uploaded (the reupload) and a single message sequenced
+				// Verify a single blob uploaded (the reupload) and a single message sequenced
 				assert.strictEqual(mockBlobStorage.blobsCreated, 1);
 				assert.strictEqual(mockOrderingService.messagesSequenced, 1);
 
