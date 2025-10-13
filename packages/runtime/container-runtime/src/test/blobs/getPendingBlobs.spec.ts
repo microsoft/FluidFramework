@@ -282,8 +282,8 @@ for (const createBlobPayloadPending of [false, true]) {
 					});
 				}
 
-				const roundTrippedPendingBlobs = blobManager.getPendingBlobs();
-				const expectedPendingBlobs: IPendingBlobs = {
+				const roundTrippedPendingBlobs1 = blobManager.getPendingBlobs();
+				const expectedPendingBlobs1: IPendingBlobs = {
 					// blob1 and blob3 should be unmodified (including retaining the uploadTime blob3 started with)
 					// since they were not expired and did not progress.
 					...pendingBlobs,
@@ -295,17 +295,59 @@ for (const createBlobPayloadPending of [false, true]) {
 					},
 				};
 
-				assert.deepStrictEqual(roundTrippedPendingBlobs, expectedPendingBlobs);
+				assert.deepStrictEqual(roundTrippedPendingBlobs1, expectedPendingBlobs1);
 
 				// Nothing should have made it into the summary
-				const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
-				assert.strictEqual(ids, undefined);
-				assert.strictEqual(redirectTable, undefined);
+				const { ids: ids1, redirectTable: redirectTable1 } =
+					getSummaryContentsWithFormatValidation(blobManager);
+				assert.strictEqual(ids1, undefined);
+				assert.strictEqual(redirectTable1, undefined);
 
-				// Unpause everything and let the share complete so we can await the promise
+				// Allow the blob1 upload to succeed
+				await mockBlobStorage.waitCreateOne();
+				// And allow the blob3 attach to succeed
+				await mockOrderingService.waitSequenceOne();
+
+				const roundTrippedPendingBlobs2 = blobManager.getPendingBlobs();
+
+				assert(roundTrippedPendingBlobs2 !== undefined);
+				const {
+					blob1: roundTrippedPendingBlob1,
+					blob2: roundTrippedPendingBlob2,
+					blob3: roundTrippedPendingBlob3,
+				} = roundTrippedPendingBlobs2;
+				// blob1 was allowed to upload
+				assert.strictEqual(roundTrippedPendingBlob1.state, "uploaded");
+				assert.strictEqual(roundTrippedPendingBlob1.blob, getSerializedBlobForString("hello"));
+				assert.strictEqual(
+					roundTrippedPendingBlob1.storageId,
+					await getDedupedStorageIdForString("hello"),
+				);
+				assert.strictEqual(typeof roundTrippedPendingBlob1.uploadTime, "number");
+				assert.strictEqual(roundTrippedPendingBlob1.minTTLInSeconds, MIN_TTL);
+				// blob2 is still waiting on upload
+				assert.strictEqual(roundTrippedPendingBlob2.state, "localOnly");
+				assert.strictEqual(roundTrippedPendingBlob2.blob, getSerializedBlobForString("world"));
+				// blob3 should be shared and no longer in the pending blobs.
+				assert.strictEqual(roundTrippedPendingBlob3, undefined);
+
+				// blob3 will now be in the summary
+				const { ids: ids2, redirectTable: redirectTable2 } =
+					getSummaryContentsWithFormatValidation(blobManager);
+				assert.strictEqual(ids2?.length, 1);
+				assert.strictEqual(redirectTable2?.length, 1);
+
+				// Unpause everything and let the share complete
 				mockBlobStorage.unpause();
 				mockOrderingService.unpause();
 				await sharePendingBlobsP;
+
+				// Nothing should be pending any more, and everything should be in the summary.
+				assert.strictEqual(blobManager.getPendingBlobs(), undefined);
+				const { ids: ids3, redirectTable: redirectTable3 } =
+					getSummaryContentsWithFormatValidation(blobManager);
+				assert.strictEqual(ids3?.length, 3);
+				assert.strictEqual(redirectTable3?.length, 3);
 			});
 		});
 
