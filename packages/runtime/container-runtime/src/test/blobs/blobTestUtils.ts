@@ -276,13 +276,13 @@ export interface UnprocessedMessage {
 }
 
 interface MockOrderingServiceEvents {
-	opDropped: (op: UnprocessedMessage) => void;
-	opReceived: (op: UnprocessedMessage) => void;
-	opSequenced: (op: ISequencedMessageEnvelope) => void;
+	messageDropped: (message: UnprocessedMessage) => void;
+	messageReceived: (message: UnprocessedMessage) => void;
+	messageSequenced: (message: ISequencedMessageEnvelope) => void;
 }
 
 class MockOrderingService {
-	public readonly unprocessedOps: UnprocessedMessage[] = [];
+	public readonly unprocessedMessages: UnprocessedMessage[] = [];
 	public readonly events = createEmitter<MockOrderingServiceEvents>();
 	private _messagesReceived = 0;
 	public get messagesReceived(): number {
@@ -304,23 +304,23 @@ class MockOrderingService {
 	};
 
 	public readonly waitMessageAvailable = async (): Promise<void> => {
-		if (this.unprocessedOps.length === 0) {
+		if (this.unprocessedMessages.length === 0) {
 			return new Promise<void>((resolve) => {
-				const onMessageReceived = (op: UnprocessedMessage) => {
+				const onMessageReceived = (message: UnprocessedMessage) => {
 					resolve();
-					this.events.off("opReceived", onMessageReceived);
+					this.events.off("messageReceived", onMessageReceived);
 				};
-				this.events.on("opReceived", onMessageReceived);
+				this.events.on("messageReceived", onMessageReceived);
 			});
 		}
 	};
 
 	public readonly sequenceOne = () => {
-		const op = this.unprocessedOps.shift();
-		assert(op !== undefined, "Tried sequencing, but none to sequence");
+		const message = this.unprocessedMessages.shift();
+		assert(message !== undefined, "Tried sequencing, but none to sequence");
 		this._messagesSequenced++;
 		// BlobManager only checks the metadata, so this cast is good enough.
-		this.events.emit("opSequenced", op as ISequencedMessageEnvelope);
+		this.events.emit("messageSequenced", message as ISequencedMessageEnvelope);
 	};
 
 	public readonly waitSequenceOne = async () => {
@@ -332,17 +332,17 @@ class MockOrderingService {
 		this.sequenceOne();
 	};
 
-	// Sequence all unprocessed ops. The events emitted can be used to drive normal processing scenarios.
+	// Sequence all unprocessed messages. The events emitted can be used to drive normal processing scenarios.
 	public readonly sequenceAll = () => {
-		while (this.unprocessedOps.length > 0) {
+		while (this.unprocessedMessages.length > 0) {
 			this.sequenceOne();
 		}
 	};
 
 	public readonly dropOne = () => {
-		const op = this.unprocessedOps.shift();
-		assert(op !== undefined, "Tried dropping, but none to drop");
-		this.events.emit("opDropped", op);
+		const message = this.unprocessedMessages.shift();
+		assert(message !== undefined, "Tried dropping, but none to drop");
+		this.events.emit("messageDropped", message);
 	};
 
 	public readonly waitDropOne = async () => {
@@ -354,24 +354,28 @@ class MockOrderingService {
 		this.dropOne();
 	};
 
-	// Drop all unprocessed ops. The events emitted can be used to drive resubmit scenarios.
+	// Drop all unprocessed messages. The events emitted can be used to drive resubmit scenarios.
 	public readonly dropAll = () => {
-		// Only drop the current unprocessed ops, since this will trigger resubmit and we don't
+		// Only drop the current unprocessed messages, since this will trigger resubmit and we don't
 		// necessarily want to drop those too.
-		const numberToDrop = this.unprocessedOps.length;
+		const numberToDrop = this.unprocessedMessages.length;
 		for (let i = 0; i < numberToDrop; i++) {
 			this.dropOne();
 		}
 	};
 
-	public readonly sendBlobAttachOp = (clientId: string, localId: string, remoteId: string) => {
-		const op: UnprocessedMessage = {
+	public readonly sendBlobAttachMessage = (
+		clientId: string,
+		localId: string,
+		remoteId: string,
+	) => {
+		const message: UnprocessedMessage = {
 			clientId,
 			metadata: { localId, blobId: remoteId },
 		};
-		this.unprocessedOps.push(op);
+		this.unprocessedMessages.push(message);
 		this._messagesReceived++;
-		this.events.emit("opReceived", op);
+		this.events.emit("messageReceived", message);
 		if (!this._paused) {
 			this.sequenceAll();
 		}
@@ -451,8 +455,8 @@ export const createTestMaterial = (
 		routeContext: mockRuntime as unknown as IFluidHandleContext,
 		blobManagerLoadInfo,
 		storage: mockBlobStorage,
-		sendBlobAttachOp: (localId: string, storageId: string) =>
-			mockOrderingService.sendBlobAttachOp(clientId, localId, storageId),
+		sendBlobAttachMessage: (localId: string, storageId: string) =>
+			mockOrderingService.sendBlobAttachMessage(clientId, localId, storageId),
 		blobRequested: () => undefined,
 		isBlobDeleted: mockGarbageCollector.isBlobDeleted,
 		runtime: mockRuntime,
@@ -460,13 +464,13 @@ export const createTestMaterial = (
 		createBlobPayloadPending,
 	});
 
-	mockOrderingService.events.on("opSequenced", (op: ISequencedMessageEnvelope) => {
-		blobManager.processBlobAttachMessage(op, op.clientId === clientId);
+	mockOrderingService.events.on("messageSequenced", (message: ISequencedMessageEnvelope) => {
+		blobManager.processBlobAttachMessage(message, message.clientId === clientId);
 	});
 
-	mockOrderingService.events.on("opDropped", (op: UnprocessedMessage) => {
-		if (op.clientId === clientId) {
-			blobManager.reSubmit(op.metadata as unknown as Record<string, unknown>);
+	mockOrderingService.events.on("messageDropped", (message: UnprocessedMessage) => {
+		if (message.clientId === clientId) {
+			blobManager.reSubmit(message.metadata as unknown as Record<string, unknown>);
 		}
 	});
 

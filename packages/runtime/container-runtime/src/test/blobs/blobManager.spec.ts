@@ -149,7 +149,7 @@ for (const createBlobPayloadPending of [false, true]) {
 					assert.strictEqual(blobToText(blobFromHandle), "hello", "Blob content mismatch");
 
 					assert(isFluidHandlePayloadPending(handle));
-					// With payloadPending handles, we won't actually upload and send the attach op until the
+					// With payloadPending handles, we won't actually upload and send the attach message until the
 					// handle is attached.
 					if (createBlobPayloadPending) {
 						assert.strictEqual(
@@ -182,11 +182,11 @@ for (const createBlobPayloadPending of [false, true]) {
 						createBlobPayloadPending,
 					});
 					let storageId: string | undefined;
-					const onOpReceived = (op: UnprocessedMessage) => {
-						storageId = op.metadata.blobId;
-						mockOrderingService.events.off("opReceived", onOpReceived);
+					const onMessageReceived = (message: UnprocessedMessage) => {
+						storageId = message.metadata.blobId;
+						mockOrderingService.events.off("messageReceived", onMessageReceived);
 					};
-					mockOrderingService.events.on("opReceived", onOpReceived);
+					mockOrderingService.events.on("messageReceived", onMessageReceived);
 					const handle = await blobManager.createBlob(textToBlob("hello"));
 					if (createBlobPayloadPending) {
 						await ensureBlobsShared([handle]);
@@ -424,21 +424,21 @@ for (const createBlobPayloadPending of [false, true]) {
 							remoteHandleP,
 							localHandleP,
 						]);
-						// Attach the handle to generate an op, but don't wait for the blob to be shared yet
-						// until we unpause the ordering service and can process those ops.
+						// Attach the handle to generate an message, but don't wait for the blob to be shared yet
+						// until we unpause the ordering service and can process those messages.
 						attachHandle(remoteHandle);
 						attachHandle(localHandle);
 					}
-					// Ensure both blobs have completed upload and are waiting for their ops to be ack'd
+					// Ensure both blobs have completed upload and are waiting for their messages to be ack'd
 					await new Promise<void>((resolve) => {
 						if (mockOrderingService.messagesReceived !== 2) {
-							const onOpReceived = () => {
+							const onMessageReceived = () => {
 								if (mockOrderingService.messagesReceived === 2) {
 									resolve();
-									mockOrderingService.events.off("opReceived", onOpReceived);
+									mockOrderingService.events.off("messageReceived", onMessageReceived);
 								}
 							};
-							mockOrderingService.events.on("opReceived", onOpReceived);
+							mockOrderingService.events.on("messageReceived", onMessageReceived);
 						}
 					});
 					mockOrderingService.unpause();
@@ -600,7 +600,7 @@ for (const createBlobPayloadPending of [false, true]) {
 					assert.strictEqual(redirectTable, undefined);
 				});
 
-				it("Can abort while blob attach op is in flight", async () => {
+				it("Can abort while blob attach message is in flight", async () => {
 					const { mockOrderingService, blobManager } = createTestMaterial({
 						createBlobPayloadPending,
 					});
@@ -611,16 +611,16 @@ for (const createBlobPayloadPending of [false, true]) {
 						const handle = await createP;
 						attachHandle(handle);
 					}
-					// Wait for the op to be sent
+					// Wait for the message to be sent
 					await new Promise<void>((resolve) => {
 						if (mockOrderingService.messagesReceived !== 1) {
-							const onOpReceived = () => {
+							const onMessageReceived = () => {
 								if (mockOrderingService.messagesReceived === 1) {
 									resolve();
-									mockOrderingService.events.off("opReceived", onOpReceived);
+									mockOrderingService.events.off("messageReceived", onMessageReceived);
 								}
 							};
-							mockOrderingService.events.on("opReceived", onOpReceived);
+							mockOrderingService.events.on("messageReceived", onMessageReceived);
 						}
 					});
 					ac.abort("abort test");
@@ -631,12 +631,12 @@ for (const createBlobPayloadPending of [false, true]) {
 						},
 					);
 
-					// Also verify that BlobManager doesn't resubmit the op for an already-aborted blob
+					// Also verify that BlobManager doesn't resubmit the message for an already-aborted blob
 					await mockOrderingService.waitDropOne();
 					assert.strictEqual(
 						mockOrderingService.messagesReceived,
 						1,
-						"Shouldn't have sent more ops",
+						"Shouldn't have sent more messages",
 					);
 
 					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
@@ -946,16 +946,16 @@ for (const createBlobPayloadPending of [false, true]) {
 					"Storage ID should be undefined while blob upload pending",
 				);
 
-				// Allow just the blob upload to process, but not the attach op
+				// Allow just the blob upload to process, but not the attach message
 				await mockBlobStorage.waitCreateOne();
 				const storageId2 = blobManager.lookupTemporaryBlobStorageId(localId);
 				assert.strictEqual(
 					storageId2,
 					undefined,
-					"Storage ID should be undefined while blob attach op pending",
+					"Storage ID should be undefined while blob attach message pending",
 				);
 
-				// Now allow the attach op to be sequenced
+				// Now allow the attach message to be sequenced
 				await mockOrderingService.waitSequenceOne();
 				await ensureBlobsShared([handle]);
 				const storageIdAfterProcessing = blobManager.lookupTemporaryBlobStorageId(localId);
