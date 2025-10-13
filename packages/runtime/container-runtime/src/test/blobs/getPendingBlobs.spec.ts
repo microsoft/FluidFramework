@@ -445,9 +445,9 @@ for (const createBlobPayloadPending of [false, true]) {
 				mockOrderingService.sendBlobAttachMessage("priorClientId", "blob2", "remoteBlob2");
 				mockOrderingService.sendBlobAttachMessage("priorClientId", "blob3", "remoteBlob3");
 
-				// Should already have sequenced all three messages sent above
-				assert.strictEqual(mockBlobStorage.blobsCreated, 0);
-				assert.strictEqual(mockOrderingService.messagesSequenced, 3);
+				// Should already have received and sequenced all three messages sent above
+				assert.strictEqual(mockBlobStorage.blobsReceived, 0);
+				assert.strictEqual(mockOrderingService.messagesReceived, 3);
 
 				// The blobs should be attached after processing the attach messages, and so should no longer
 				// be in the pending state
@@ -460,9 +460,13 @@ for (const createBlobPayloadPending of [false, true]) {
 				// Should be a no-op
 				await blobManager.sharePendingBlobs();
 
-				// Verify no uploads and no additional messages sequenced.
-				assert.strictEqual(mockBlobStorage.blobsCreated, 0);
-				assert.strictEqual(mockOrderingService.messagesSequenced, 3);
+				// Verify no uploads and no additional messages received.
+				// Wait briefly to ensure there aren't any uploads or messages queued in microtasks
+				await new Promise<void>((resolve) => {
+					setTimeout(() => resolve(), 10);
+				});
+				assert.strictEqual(mockBlobStorage.blobsReceived, 0);
+				assert.strictEqual(mockOrderingService.messagesReceived, 3);
 			});
 
 			it("Attach message arrives during upload attempts", async () => {
@@ -505,9 +509,9 @@ for (const createBlobPayloadPending of [false, true]) {
 				mockOrderingService.sendBlobAttachMessage("priorClientId", "blob1", "remoteBlob1");
 				mockOrderingService.sendBlobAttachMessage("priorClientId", "blob2", "remoteBlob2");
 
-				// Should already have sequenced both messages sent above
-				assert.strictEqual(mockBlobStorage.blobsCreated, 0);
-				assert.strictEqual(mockOrderingService.messagesSequenced, 2);
+				// Should already have received and sequenced both messages sent above
+				assert.strictEqual(mockBlobStorage.blobsReceived, 2);
+				assert.strictEqual(mockOrderingService.messagesReceived, 2);
 
 				// The sharePendingBlobs() call should have resolved since all blobs are now attached
 				await sharePendingBlobsP;
@@ -524,9 +528,12 @@ for (const createBlobPayloadPending of [false, true]) {
 				await mockBlobStorage.waitCreateOne();
 
 				// The two uploads will complete, but we should stop afterwards and not submit attach messages.
-				assert.strictEqual(mockBlobStorage.blobsCreated, 2);
-				// TODO: Make sure this would not run too soon to catch an incorrectly sequenced message
-				assert.strictEqual(mockOrderingService.messagesSequenced, 2);
+				// Wait briefly to ensure there aren't any messages queued in microtasks
+				await new Promise<void>((resolve) => {
+					setTimeout(() => resolve(), 10);
+				});
+				assert.strictEqual(mockBlobStorage.blobsReceived, 2);
+				assert.strictEqual(mockOrderingService.messagesReceived, 2);
 			});
 		});
 	});
