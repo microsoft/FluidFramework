@@ -21,8 +21,8 @@
         "sourceType": "module"
     },
     "plugins": [
-        "eslint-comments",
         "import-x",
+        "eslint-comments",
         "@fluid-internal/fluid",
         "unused-imports",
         "promise",
@@ -1146,16 +1146,16 @@
             "off"
         ],
         "import-x/default": [
-            2
+            "error"
         ],
         "import-x/export": [
-            2
+            "error"
         ],
         "import-x/named": [
             "off"
         ],
         "import-x/namespace": [
-            2
+            "error"
         ],
         "import-x/no-default-export": [
             "error"
@@ -1164,7 +1164,7 @@
             "off"
         ],
         "import-x/no-duplicates": [
-            1
+            "warn"
         ],
         "import-x/no-extraneous-dependencies": [
             "error",
@@ -1190,22 +1190,19 @@
             }
         ],
         "import-x/no-named-as-default": [
-            1
+            "warn"
         ],
         "import-x/no-named-as-default-member": [
-            1
+            "warn"
         ],
         "import-x/no-nodejs-modules": [
             "off"
-        ],
-        "import-x/no-rename-default": [
-            1
         ],
         "import-x/no-unassigned-import": [
             "error"
         ],
         "import-x/no-unresolved": [
-            2,
+            "error",
             {
                 "caseSensitive": true
             }
@@ -2359,17 +2356,14 @@
                     "browser",
                     "default"
                 ]
-            },
-            "node": {
-                "extensions": [
-                    ".ts",
-                    ".tsx",
-                    ".d.ts",
-                    ".js",
-                    ".jsx"
-                ]
             }
         },
+        "import-x/resolver-next": [
+            {
+                "interfaceVersion": 3,
+                "name": "eslint-import-resolver-typescript"
+            }
+        ],
         "jsdoc": {
             "mode": "typescript",
             "tagNamePreference": {

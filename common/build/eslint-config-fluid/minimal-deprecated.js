@@ -69,14 +69,7 @@ module.exports = {
 		es2024: false,
 		node: true,
 	},
-	extends: [
-		"./base",
-		"plugin:eslint-comments/recommended",
-		"plugin:import-x/errors",
-		"plugin:import-x/warnings",
-		"plugin:import-x/typescript",
-		"prettier",
-	],
+	extends: ["./base", "plugin:eslint-comments/recommended", "prettier"],
 	globals: {
 		Atomics: "readonly",
 		SharedArrayBuffer: "readonly",
@@ -497,44 +490,7 @@ module.exports = {
 		},
 	],
 	settings: {
-		"import-x/extensions": [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
-		"import-x/parsers": {
-			"@typescript-eslint/parser": [".ts", ".tsx", ".d.ts"],
-		},
-		"import-x/resolver": {
-			/**
-			 * Note: the key order of import-x/resolver is relevant in the completely resolved eslint config (see ./printed-configs).
-			 * Resolvers are tried in key order, and the first one to successfully resolve the import wins. See:
-			 * https://github.com/un-ts/eslint-plugin-import-x/blob/master/src/utils/resolve.ts
-			 *
-			 * It's important that the typescript resolver is first, as the node resolver legitimately resolves some imports to modules
-			 * with stripped type information, which can cause silent negatives in lint rules. For example, import-x/no-deprecated fails
-			 * to lint against import and usage of deprecated types when the import is resolvable and resolved using the node resolver.
-			 */
-			typescript: {
-				extensions: [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
-				conditionNames: [
-					// This supports the test-only conditional export pattern used in merge-tree and id-compressor.
-					"allow-ff-test-exports",
-
-					// Default condition names below, see https://www.npmjs.com/package/eslint-import-resolver-typescript#conditionnames
-					"types",
-					"import",
-
-					// APF: https://angular.io/guide/angular-package-format
-					"esm2020",
-					"es2020",
-					"es2015",
-
-					"require",
-					"node",
-					"node-addons",
-					"browser",
-					"default",
-				],
-			},
-		},
-		"jsdoc": {
+		jsdoc: {
 			// The following are intended to keep js/jsx JSDoc comments in line with TSDoc syntax used in ts/tsx code.
 			tagNamePreference: {
 				arg: {
