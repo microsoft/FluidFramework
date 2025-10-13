@@ -5,12 +5,11 @@
 
 import { strict as assert } from "node:assert";
 
-import { v4 as uuid } from "uuid";
-
-import type { SerializableLocalBlobRecord } from "../../blobManager/index.js";
+import type { IPendingBlobs, SerializableLocalBlobRecord } from "../../blobManager/index.js";
 
 import {
 	attachHandle,
+	blobToText,
 	createTestMaterial,
 	ensureBlobsShared,
 	getDedupedStorageIdForString,
@@ -92,7 +91,7 @@ for (const createBlobPayloadPending of [false, true]) {
 				assert(pendingBlob !== undefined, "Expect pending blob with localId");
 				assert.strictEqual(pendingBlob.state, "uploaded");
 				assert.strictEqual(pendingBlob.blob, getSerializedBlobForString("hello"));
-				assert.strictEqual(pendingBlob.storageId, "b6fc4c620b67d95f953a5c1c1230aaab5db5a1b0");
+				assert.strictEqual(pendingBlob.storageId, await getDedupedStorageIdForString("hello"));
 				assert.strictEqual(typeof pendingBlob.uploadTime, "number");
 				assert.strictEqual(pendingBlob.minTTLInSeconds, MIN_TTL);
 			} else {
@@ -186,28 +185,28 @@ for (const createBlobPayloadPending of [false, true]) {
 		});
 
 		it("Round-trips pending blobs when they are not shared", async () => {
-			const pendingBlobs = {
-				[uuid()]: {
+			const pendingBlobs: IPendingBlobs = {
+				["blob1"]: {
 					state: "uploaded",
 					blob: getSerializedBlobForString("hello"),
 					storageId: await getDedupedStorageIdForString("hello"),
 					// Even though this is expired, it should still round-trip as-is since this test
 					// doesn't try to start the share process for it.
 					uploadTime: 0,
-					minTTLInSeconds: 86400,
+					minTTLInSeconds: MIN_TTL,
 				},
-				[uuid()]: {
+				["blob2"]: {
 					state: "localOnly",
 					blob: getSerializedBlobForString("world"),
 				},
-				[uuid()]: {
+				["blob3"]: {
 					state: "uploaded",
 					blob: getSerializedBlobForString("fizz"),
 					storageId: await getDedupedStorageIdForString("fizz"),
 					uploadTime: Date.now(),
-					minTTLInSeconds: 86400,
+					minTTLInSeconds: MIN_TTL,
 				},
-			} as const;
+			};
 
 			const { blobManager } = createTestMaterial({
 				pendingBlobs,
@@ -226,9 +225,140 @@ for (const createBlobPayloadPending of [false, true]) {
 	});
 
 	describe(`Load with pending blobs (pending payloads): ${createBlobPayloadPending}`, () => {
-		it("Can read blobs loaded from pending state before sharing", async () => {});
-		it("Can complete sharing for a blob loaded in localOnly state", async () => {});
-		it("Can complete sharing for a blob loaded in uploaded state that is not expired", async () => {});
-		it("Can complete sharing for a blob loaded in uploaded state that is expired", async () => {});
+		it("Can read blobs loaded from pending state before sharing", async () => {
+			const pendingBlobs: IPendingBlobs = {
+				["blob1"]: {
+					state: "localOnly",
+					blob: getSerializedBlobForString("hello"),
+				},
+				["blob2"]: {
+					state: "uploaded",
+					blob: getSerializedBlobForString("world"),
+					storageId: await getDedupedStorageIdForString("world"),
+					uploadTime: Date.now(),
+					minTTLInSeconds: MIN_TTL,
+				},
+			};
+
+			const { blobManager } = createTestMaterial({
+				pendingBlobs,
+				createBlobPayloadPending,
+			});
+
+			assert(blobManager.hasBlob("blob1"));
+			const blob1 = await blobManager.getBlob("blob1", createBlobPayloadPending);
+			assert.strictEqual(blobToText(blob1), "hello");
+
+			assert(blobManager.hasBlob("blob2"));
+			const blob2 = await blobManager.getBlob("blob2", createBlobPayloadPending);
+			assert.strictEqual(blobToText(blob2), "world");
+
+			// Nothing should have made it into the summary
+			const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+			assert.strictEqual(ids, undefined);
+			assert.strictEqual(redirectTable, undefined);
+		});
+
+		it("Can complete sharing for a blob loaded in localOnly state", async () => {
+			const pendingBlobs: IPendingBlobs = {
+				["blob1"]: {
+					state: "localOnly",
+					blob: getSerializedBlobForString("hello"),
+				},
+			};
+
+			const { mockBlobStorage, mockOrderingService, blobManager } = createTestMaterial({
+				pendingBlobs,
+				createBlobPayloadPending,
+			});
+
+			await blobManager.sharePendingBlobs();
+
+			assert(blobManager.hasBlob("blob1"));
+			const blob1 = await blobManager.getBlob("blob1", createBlobPayloadPending);
+			assert.strictEqual(blobToText(blob1), "hello");
+
+			// Verify only a single blob uploaded and a single op processed
+			assert.strictEqual(mockBlobStorage.blobsCreated, 1);
+			assert.strictEqual(mockOrderingService.messagesSequenced, 1);
+
+			// Shared blob should be in the summary
+			const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+			assert.strictEqual(ids?.length, 1);
+			assert.strictEqual(redirectTable?.length, 1);
+
+			// Blob should no longer appear in pending state
+			assert.strictEqual(blobManager.getPendingBlobs(), undefined);
+		});
+
+		it("Can complete sharing for a blob loaded in uploaded state that is not expired", async () => {
+			const pendingBlobs: IPendingBlobs = {
+				["blob1"]: {
+					state: "uploaded",
+					blob: getSerializedBlobForString("hello"),
+					storageId: await getDedupedStorageIdForString("hello"),
+					uploadTime: Date.now(),
+					minTTLInSeconds: MIN_TTL,
+				},
+			};
+
+			const { mockBlobStorage, mockOrderingService, blobManager } = createTestMaterial({
+				pendingBlobs,
+				createBlobPayloadPending,
+			});
+
+			await blobManager.sharePendingBlobs();
+
+			assert(blobManager.hasBlob("blob1"));
+			const blob1 = await blobManager.getBlob("blob1", createBlobPayloadPending);
+			assert.strictEqual(blobToText(blob1), "hello");
+
+			// Verify no blobs uploaded and a single op processed
+			assert.strictEqual(mockBlobStorage.blobsCreated, 0);
+			assert.strictEqual(mockOrderingService.messagesSequenced, 1);
+
+			// Shared blob should be in the summary
+			const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+			assert.strictEqual(ids?.length, 1);
+			assert.strictEqual(redirectTable?.length, 1);
+
+			// Blob should no longer appear in pending state
+			assert.strictEqual(blobManager.getPendingBlobs(), undefined);
+		});
+
+		it("Can complete sharing for a blob loaded in uploaded state that is expired", async () => {
+			const pendingBlobs: IPendingBlobs = {
+				["blob1"]: {
+					state: "uploaded",
+					blob: getSerializedBlobForString("hello"),
+					storageId: await getDedupedStorageIdForString("hello"),
+					uploadTime: 0,
+					minTTLInSeconds: MIN_TTL,
+				},
+			};
+
+			const { mockBlobStorage, mockOrderingService, blobManager } = createTestMaterial({
+				pendingBlobs,
+				createBlobPayloadPending,
+			});
+
+			await blobManager.sharePendingBlobs();
+
+			assert(blobManager.hasBlob("blob1"));
+			const blob1 = await blobManager.getBlob("blob1", createBlobPayloadPending);
+			assert.strictEqual(blobToText(blob1), "hello");
+
+			// Verify a single blobs uploaded (the reupload) and a single op processed
+			assert.strictEqual(mockBlobStorage.blobsCreated, 1);
+			assert.strictEqual(mockOrderingService.messagesSequenced, 1);
+
+			// Shared blob should be in the summary
+			const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+			assert.strictEqual(ids?.length, 1);
+			assert.strictEqual(redirectTable?.length, 1);
+
+			// Blob should no longer appear in pending state
+			assert.strictEqual(blobManager.getPendingBlobs(), undefined);
+		});
 	});
 }

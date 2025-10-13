@@ -284,7 +284,14 @@ interface MockOrderingServiceEvents {
 class MockOrderingService {
 	public readonly unprocessedOps: UnprocessedOp[] = [];
 	public readonly events = createEmitter<MockOrderingServiceEvents>();
-	public messagesReceived = 0;
+	private _messagesReceived = 0;
+	public get messagesReceived(): number {
+		return this._messagesReceived;
+	}
+	private _messagesSequenced = 0;
+	public get messagesSequenced(): number {
+		return this._messagesSequenced;
+	}
 
 	private _paused: boolean = false;
 	public pause = () => {
@@ -311,6 +318,7 @@ class MockOrderingService {
 	public readonly sequenceOne = () => {
 		const op = this.unprocessedOps.shift();
 		assert(op !== undefined, "Tried sequencing, but none to sequence");
+		this._messagesSequenced++;
 		// BlobManager only checks the metadata, so this cast is good enough.
 		this.events.emit("opSequenced", op as ISequencedMessageEnvelope);
 	};
@@ -362,7 +370,7 @@ class MockOrderingService {
 			metadata: { localId, blobId: remoteId },
 		};
 		this.unprocessedOps.push(op);
-		this.messagesReceived++;
+		this._messagesReceived++;
 		this.events.emit("opReceived", op);
 		if (!this._paused) {
 			this.sequenceAll();
