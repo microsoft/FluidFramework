@@ -205,6 +205,12 @@ export async function canonicalizeChangesets(
 	const changesetDir = path.join(releaseGroupRootDir, DEFAULT_CHANGESET_PATH);
 	const changesets = await loadChangesets(changesetDir, logger);
 
+	if (changesets.length === 0) {
+		throw new Error(
+			`No changesets found in ${changesetDir} - cannot determine version bump type`,
+		);
+	}
+
 	// Determine the highest bump type and save it for later - it determines the changesets-calculated version.
 	const bumpTypes: Set<VersionBumpType> = new Set();
 	for (const changeset of changesets) {

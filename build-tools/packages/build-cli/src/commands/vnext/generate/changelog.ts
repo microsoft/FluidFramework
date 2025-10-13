@@ -49,7 +49,7 @@ export default class GenerateChangeLogCommand extends BaseCommandWithBuildProjec
 	public async run(): Promise<void> {
 		const buildProject = this.getBuildProject();
 
-		const { releaseGroup: releaseGroupName } = this.flags;
+		const { releaseGroup: releaseGroupName, version: versionOverride } = this.flags;
 
 		const releaseGroup = buildProject.releaseGroups.get(releaseGroupName);
 		if (releaseGroup === undefined) {
@@ -78,11 +78,14 @@ export default class GenerateChangeLogCommand extends BaseCommandWithBuildProjec
 		// restore the package versions that were changed by `changeset version`
 		await setVersion(packagesToCheck, releaseGroupVersion);
 
+		// Extract the version string from the SemVer object if provided
+		const versionString = versionOverride?.version;
+
 		// Calls processPackage on all packages.
 		ux.action.start("Processing changelog updates");
 		const processPromises: Promise<void>[] = [];
 		for (const pkg of packagesToCheck) {
-			processPromises.push(updateChangelogs(pkg, bumpType));
+			processPromises.push(updateChangelogs(pkg, bumpType, versionString));
 		}
 		const results = await Promise.allSettled(processPromises);
 		const failures = results.filter((p) => p.status === "rejected");

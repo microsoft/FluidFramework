@@ -12,14 +12,37 @@ import {
 } from "@fluid-tools/version-tools";
 import { inc } from "semver";
 
+/**
+ * Escapes special regex characters in a string to make it safe for use in a RegExp.
+ */
+function escapeRegex(str: string): string {
+	return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Replaces all occurrences of a search string with a replacement string in a file.
+ * The search string is treated as a literal string, not a regex pattern.
+ *
+ * @param search - The literal string to search for (will be escaped for regex safety)
+ * @param replace - The string to replace matches with
+ * @param filePath - The path to the file to modify
+ * @throws Error if the file cannot be read or written
+ */
 async function replaceInFile(
 	search: string,
 	replace: string,
 	filePath: string,
 ): Promise<void> {
-	const content = await readFile(filePath, "utf8");
-	const newContent = content.replace(new RegExp(search, "g"), replace);
-	await writeFile(filePath, newContent, "utf8");
+	try {
+		const content = await readFile(filePath, "utf8");
+		const escapedSearch = escapeRegex(search);
+		const newContent = content.replace(new RegExp(escapedSearch, "g"), replace);
+		await writeFile(filePath, newContent, "utf8");
+	} catch (error) {
+		throw new Error(
+			`Failed to replace "${search}" with "${replace}" in file ${filePath}: ${error}`,
+		);
+	}
 }
 
 export async function updateChangelogs(
