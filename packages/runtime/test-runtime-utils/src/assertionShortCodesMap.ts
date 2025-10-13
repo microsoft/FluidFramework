@@ -1896,5 +1896,6 @@ export const shortCodeMap = {
 	"0xc81": "Attempting to upload from unexpected state",
 	"0xc82": "Attempting to attach from unexpected state",
 	"0xc83": "Pending blob must be in local cache",
-	"0xc84": "Pending blob must not be in attached state"
+	"0xc84": "Pending blob must not be in attached state",
+	"0xc85": "bind must be an ISharedObjectHandle"
 };
