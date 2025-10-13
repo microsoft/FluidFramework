@@ -6,7 +6,7 @@
 const assert = require("assert");
 const path = require("path");
 const plugin = require("../../../index.js");
-const { createESLintConfig, ESLint } = require("../eslintConfigHelper.js");
+const { createESLintConfig, ESLint } = require("../eslintConfigHelper.cjs");
 
 describe("Do not allow release tags on members", function () {
 	function createESLintInstance() {
