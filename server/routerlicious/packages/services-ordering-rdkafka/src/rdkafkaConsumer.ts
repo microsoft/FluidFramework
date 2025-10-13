@@ -4,7 +4,7 @@
  */
 
 import { Deferred } from "@fluidframework/common-utils";
-import {
+import type {
 	IConsumer,
 	IPartition,
 	IQueuedMessage,
@@ -15,7 +15,7 @@ import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { InMemoryApiCounters } from "@fluidframework/server-services-utils";
 import type * as kafkaTypes from "node-rdkafka";
 
-import { IKafkaBaseOptions, IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
+import { type IKafkaBaseOptions, type IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
 
 /**
  * @internal

@@ -3,31 +3,33 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ITenantConfig,
-	ITenantConfigManager,
-	type ICache,
-	type IInvalidTokenError,
-} from "@fluidframework/server-services-core";
+import type { ITokenClaims } from "@fluidframework/protocol-definitions";
 import {
 	BasicRestWrapper,
 	isNetworkError,
 	NetworkError,
-	RestWrapper,
+	type RestWrapper,
 	validateTokenClaimsExpiration,
 } from "@fluidframework/server-services-client";
-import { v4 as uuid } from "uuid";
+import type {
+	ITenantConfig,
+	ITenantConfigManager,
+	ICache,
+	IInvalidTokenError,
+} from "@fluidframework/server-services-core";
 import {
 	BaseTelemetryProperties,
 	Lumberjack,
 	getGlobalTelemetryContext,
 } from "@fluidframework/server-services-telemetry";
-import { getRequestErrorTranslator } from "../utils";
-import { ITenantService } from "./definitions";
-import { RedisTenantCache } from "./redisTenantCache";
 import { logHttpMetrics } from "@fluidframework/server-services-utils";
-import type { ITokenClaims } from "@fluidframework/protocol-definitions";
 import { decode } from "jsonwebtoken";
+import { v4 as uuid } from "uuid";
+
+import { getRequestErrorTranslator } from "../utils";
+
+import type { ITenantService } from "./definitions";
+import type { RedisTenantCache } from "./redisTenantCache";
 
 export class RiddlerService implements ITenantService, ITenantConfigManager {
 	private readonly restWrapper: RestWrapper;
@@ -161,10 +163,12 @@ export class RiddlerService implements ITenantService, ITenantConfigManager {
 				.catch(getRequestErrorTranslator(tokenValidationUrl, "POST", lumberProperties));
 
 			const claims = decode(token) as ITokenClaims;
-			let tokenLifetimeInSec = validateTokenClaimsExpiration(
+			const tokenLifetimeInMSec = validateTokenClaimsExpiration(
 				claims,
 				this.maxTokenLifetimeSec,
 			);
+
+			let tokenLifetimeInSec = Math.floor(tokenLifetimeInMSec / 1000);
 			// in case the service clock is behind, reducing the lifetime of token by 5%
 			// to avoid using an expired token.
 			if (tokenLifetimeInSec) {

@@ -2,7 +2,7 @@
 
 An interface with an index signature.
 
-### Signature {#testinterfacewithindexsignature-signature}
+<h3 id="testinterfacewithindexsignature-signature">Signature</h3>
 
 ```typescript
 export interface TestInterfaceWithIndexSignature
@@ -10,6 +10,6 @@ export interface TestInterfaceWithIndexSignature
 
 ### Index Signatures
 
-| IndexSignature | Description |
+| Index Signature | Description |
 | - | - |
 | [\[foo: number\]: { bar: string; }](docs/test-suite-a/testinterfacewithindexsignature-_indexer_-indexsignature) | Test index signature. |

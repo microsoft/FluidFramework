@@ -9,7 +9,7 @@ import {
 	comparePersistedSchema,
 	extractPersistedSchema,
 	FluidClientVersion,
-	typeboxValidator,
+	FormatValidatorBasic,
 	type ForestOptions,
 	type ICodecOptions,
 	type ImplicitFieldSchema,
@@ -112,7 +112,7 @@ const historicalSchema: {
 
 describe("schema", () => {
 	it("current schema matches latest historical schema", () => {
-		const current = extractPersistedSchema(config, FluidClientVersion.v2_0);
+		const current = extractPersistedSchema(config.schema, FluidClientVersion.v2_0, () => true);
 
 		// For compatibility with deep equality and simple objects, round trip via JSON to erase prototypes.
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -128,7 +128,7 @@ describe("schema", () => {
 	});
 
 	describe("historical schema can be upgraded to current schema", () => {
-		const options: ForestOptions & ICodecOptions = { jsonValidator: typeboxValidator };
+		const options: ForestOptions & ICodecOptions = { jsonValidator: FormatValidatorBasic };
 
 		for (let documentIndex = 0; documentIndex < historicalSchema.length; documentIndex++) {
 			for (let viewIndex = 0; viewIndex < historicalSchema.length; viewIndex++) {

@@ -16,7 +16,6 @@ import {
 	PropertySet,
 } from "@fluidframework/merge-tree/internal";
 
-// eslint-disable-next-line import/no-deprecated
 import { SharedSegmentSequence } from "./sequence.js";
 
 const MaxRun = 128;
@@ -119,7 +118,6 @@ export class SubSequence<T> extends BaseSegment {
  * @deprecated SharedSequence will be removed in a upcoming release. It has been moved to the fluid-experimental/sequence-deprecated package
  * @internal
  */
-// eslint-disable-next-line import/no-deprecated
 export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
 	constructor(
 		document: IFluidDataStoreRuntime,

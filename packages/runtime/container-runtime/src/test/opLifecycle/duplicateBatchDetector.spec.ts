@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type { ITelemetryContext } from "@fluidframework/runtime-definitions/internal";
 
 // eslint-disable-next-line import/no-internal-modules

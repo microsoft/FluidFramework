@@ -4,11 +4,11 @@
  */
 
 import { TypedEventEmitter, performanceNow } from "@fluid-internal/client-utils";
-import { IEvent } from "@fluidframework/core-interfaces";
+import type { IEvent } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base/internal";
-import { IClient } from "@fluidframework/driver-definitions";
-import {
+import type { IClient } from "@fluidframework/driver-definitions";
+import type {
 	IAnyDriverError,
 	IConnect,
 	IDocumentMessage,
@@ -18,17 +18,17 @@ import {
 	ISignalMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { createGenericNetworkError } from "@fluidframework/driver-utils/internal";
-import { OdspError } from "@fluidframework/odsp-driver-definitions/internal";
+import type { OdspError } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	IFluidErrorBase,
-	ITelemetryLoggerExt,
+	type IFluidErrorBase,
+	type ITelemetryLoggerExt,
 	loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
-import { Socket } from "socket.io-client";
+import type { Socket } from "socket.io-client";
 import { v4 as uuid } from "uuid";
 
-import { IFlushOpsResponse, IGetOpsResponse, IOdspSocketError } from "./contracts.js";
-import { EpochTracker } from "./epochTracker.js";
+import type { IFlushOpsResponse, IGetOpsResponse, IOdspSocketError } from "./contracts.js";
+import type { EpochTracker } from "./epochTracker.js";
 import { errorObjectFromSocketError } from "./odspError.js";
 import { pkgVersion } from "./packageVersion.js";
 import { SocketIOClientStatic } from "./socketModule.js";

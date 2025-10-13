@@ -20,7 +20,6 @@ export {
 	IInterval,
 	IntervalOpType,
 	IntervalType,
-	ISerializableInterval,
 	ISerializedInterval,
 	SequenceInterval,
 	SerializedIntervalDelta,

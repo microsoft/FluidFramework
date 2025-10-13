@@ -3,19 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "chai";
-import { Test } from "mocha";
+import type { Test } from "mocha";
 
+import type { BenchmarkArguments, Titled, MochaExclusiveOptions } from "../Configuration";
 import {
-	BenchmarkArguments,
 	isParentProcess,
 	isInPerformanceTestingMode,
-	Titled,
-	MochaExclusiveOptions,
 	qualifiedTitle,
 	TestType,
 } from "../Configuration";
 import type { BenchmarkResult } from "../ResultTypes";
+import { fail } from "../assert.js";
 import { Phase, runBenchmark } from "../runBenchmark";
 
 /**
@@ -74,7 +72,7 @@ export function supportParentProcess<
 			// - --childProcess flag added (so data will be returned via stdout as json)
 
 			// Pull the command (Node.js most likely) out of the first argument since spawnSync takes it separately.
-			const command = process.argv0 ?? assert.fail("there must be a command");
+			const command = process.argv0 ?? fail("there must be a command");
 
 			// We expect all node-specific flags to be present in execArgv so they can be passed to the child process.
 			// At some point mocha was processing the expose-gc flag itself and not passing it here, unless explicitly
@@ -111,17 +109,17 @@ export function supportParentProcess<
 			const result = childProcess.spawnSync(command, childArgs, { encoding: "utf8" });
 
 			if (result.error) {
-				assert.fail(`Child process reported an error: ${result.error.message}`);
+				fail(`Child process reported an error: ${result.error.message}`);
 			}
 
 			if (result.stderr !== "") {
-				assert.fail(`Child process logged errors: ${result.stderr}`);
+				fail(`Child process logged errors: ${result.stderr}`);
 			}
 
 			// Find the json blob in the child's output.
 			const output =
 				result.stdout.split("\n").find((s) => s.startsWith("{")) ??
-				assert.fail(`child process must output a json blob. Got:\n${result.stdout}`);
+				fail(`child process must output a json blob. Got:\n${result.stdout}`);
 
 			test.emit("benchmark end", JSON.parse(output));
 			return;

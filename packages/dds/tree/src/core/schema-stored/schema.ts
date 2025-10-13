@@ -7,6 +7,7 @@ import { fail } from "@fluidframework/core-utils/internal";
 
 import { DiscriminatedUnionDispatcher } from "../../codec/index.js";
 import {
+	type Brand,
 	type JsonCompatibleReadOnlyObject,
 	type MakeNominal,
 	brand,
@@ -39,6 +40,7 @@ export enum SchemaVersion {
 	 */
 	v2 = 2,
 }
+export type SchemaFormatVersion = Brand<SchemaVersion, "SchemaFormatVersion">;
 
 type FieldSchemaFormat = FieldSchemaFormatV1 | FieldSchemaFormatV2;
 
@@ -105,7 +107,11 @@ export interface SchemaAndPolicy {
 }
 
 /**
- * Extra data needed to interpret schema.
+ * Extra data needed to interpret stored schema.
+ * @remarks
+ * This contains information that describes the semantics of things which can be referenced in stored schema.
+ * For example, field kind identifiers refer to specific field kinds, which imply specific rules around what is valid in a given field (the multiplicity).
+ * This structure provides such information, allowing it to be possible to determine if a given tree complies with a particular stored schema.
  */
 export interface SchemaPolicy {
 	/**
@@ -116,21 +122,6 @@ export interface SchemaPolicy {
 	 * and will be unable to process any changes that use those FieldKinds.
 	 */
 	readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindData>;
-
-	/**
-	 * If true, new content inserted into the tree should be validated against the stored schema.
-	 */
-	readonly validateSchema: boolean;
-
-	/**
-	 * Whether to allow a document to be opened when a particular stored schema (identified by `identifier`)
-	 * contains optional fields that are not known to the view schema.
-	 *
-	 * @privateRemarks
-	 * Plumbing this in via `SchemaPolicy` avoids needing to walk the view schema representation repeatedly in places
-	 * that need it (schema validation, view vs stored compatibility checks).
-	 */
-	allowUnknownOptionalFields(identifier: TreeNodeSchemaIdentifier): boolean;
 }
 
 /**
@@ -166,7 +157,7 @@ export interface TreeFieldStoredSchema {
  *
  * 2. The schema used for out of schema fields (which thus must be empty/not exist) on object and leaf nodes.
  */
-export const forbiddenFieldKindIdentifier = "Forbidden";
+export const forbiddenFieldKindIdentifier: FieldKindIdentifier = brand("Forbidden");
 
 /**
  * A schema for empty fields (fields which must always be empty).
@@ -174,7 +165,7 @@ export const forbiddenFieldKindIdentifier = "Forbidden";
  */
 export const storedEmptyFieldSchema: TreeFieldStoredSchema = {
 	// This kind requires the field to be empty.
-	kind: brand(forbiddenFieldKindIdentifier),
+	kind: forbiddenFieldKindIdentifier,
 	// This type set also forces the field to be empty not not allowing any types as all.
 	types: new Set(),
 	persistedMetadata: undefined,
@@ -185,8 +176,6 @@ export const storedEmptyFieldSchema: TreeFieldStoredSchema = {
  */
 export const identifierFieldKindIdentifier = "Identifier";
 
-/**
- */
 export abstract class TreeNodeStoredSchema {
 	protected _typeCheck!: MakeNominal;
 
@@ -213,12 +202,9 @@ export abstract class TreeNodeStoredSchema {
 	public abstract getFieldSchema(field: FieldKey): TreeFieldStoredSchema;
 }
 
-/**
- */
 export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 	/**
-	 * @param objectNodeFields -
-	 * Schema for fields with keys scoped to this TreeNodeStoredSchema.
+	 * @param objectNodeFields - Schema for fields with keys scoped to this TreeNodeStoredSchema.
 	 * This refers to the TreeFieldStoredSchema directly
 	 * (as opposed to just supporting FieldSchemaIdentifier and having a central FieldKey -\> TreeFieldStoredSchema map).
 	 * This allows us short friendly field keys which can be ergonomically used as field names in code.
@@ -272,12 +258,9 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 	}
 }
 
-/**
- */
 export class MapNodeStoredSchema extends TreeNodeStoredSchema {
 	/**
-	 * @param mapFields -
-	 * Allows using the fields as a map, with the keys being
+	 * @param mapFields - Allows using the fields as a map, with the keys being
 	 * FieldKeys and the values being constrained by this TreeFieldStoredSchema.
 	 * Usually `FieldKind.Value` should NOT be used here
 	 * since no nodes can ever be in schema if you use `FieldKind.Value` here
@@ -306,12 +289,9 @@ export class MapNodeStoredSchema extends TreeNodeStoredSchema {
 	}
 }
 
-/**
- */
 export class LeafNodeStoredSchema extends TreeNodeStoredSchema {
 	/**
-	 * @param leafValue -
-	 * There are several approaches for how to store actual data in the tree
+	 * @param leafValue - There are several approaches for how to store actual data in the tree
 	 * (special node types, special field contents, data on nodes etc.)
 	 * as well as several options about how the data should be modeled at this level
 	 * (byte sequence? javascript type? json?),

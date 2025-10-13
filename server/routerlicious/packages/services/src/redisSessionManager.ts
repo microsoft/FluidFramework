@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	ICollaborationSession,
 	ICollaborationSessionManager,
 } from "@fluidframework/server-services-core";
-import {
+import type {
 	IRedisClientConnectionManager,
 	IRedisParameters,
 } from "@fluidframework/server-services-utils";
@@ -48,6 +48,14 @@ interface IShortCollaborationSession {
 		 * {@link ICollaborationSessionTelemetryProperties.maxConcurrentClients}
 		 */
 		mcc: number;
+		/**
+		 * {@link ICollaborationSessionTelemetryProperties.sessionOpCount}
+		 */
+		soc?: number;
+		/**
+		 * {@link ICollaborationSessionTelemetryProperties.sessionSignalCount}
+		 */
+		ssc?: number;
 	};
 }
 
@@ -85,7 +93,7 @@ export class RedisCollaborationSessionManager implements ICollaborationSessionMa
 		options?: Partial<IRedisCollaborationSessionManagerOptions>,
 	) {
 		this.options = { ...defaultRedisCollaborationSessionManagerOptions, ...options };
-		if (parameters?.prefix) {
+		if (parameters?.prefix !== undefined) {
 			this.prefix = parameters.prefix;
 		}
 
@@ -124,15 +132,26 @@ export class RedisCollaborationSessionManager implements ICollaborationSessionMa
 	}
 
 	public async getAllSessions(): Promise<ICollaborationSession[]> {
+		const sessions: ICollaborationSession[] = [];
+		await this.iterateAllSessions(async (session: ICollaborationSession) => {
+			sessions.push(session);
+		});
+		return sessions;
+	}
+
+	public async iterateAllSessions<T>(
+		callback: (session: ICollaborationSession) => Promise<T>,
+	): Promise<T[]> {
 		// Use HSCAN to iterate over te key:value pairs of the hashmap
 		// in batches to get all sessions with minimal impact on Redis.
 		const sessionJsonScanStream = this.redisClientConnectionManager
 			.getRedisClient()
 			.hscanStream(this.prefix, { count: this.options.maxScanBatchSize });
+
 		return new Promise((resolve, reject) => {
-			const sessions: ICollaborationSession[] = [];
+			const callbackPs: Promise<T>[] = [];
 			sessionJsonScanStream.on("data", (result: string[]) => {
-				if (!result) {
+				if (result.length === 0) {
 					// When redis scan is done, it pushes null to the stream.
 					// This should only trigger the "end" event, but we should check for it to be safe.
 					return;
@@ -145,11 +164,14 @@ export class RedisCollaborationSessionManager implements ICollaborationSessionMa
 				for (let i = 0; i < result.length; i += 2) {
 					const fieldKey = result[i];
 					const sessionJson = result[i + 1];
-					sessions.push(this.getFullSession(fieldKey, JSON.parse(sessionJson)));
+					const fullSession = this.getFullSession(fieldKey, JSON.parse(sessionJson));
+					// Call the callback for each session.
+					// We do not await the callback here to allow for concurrent processing of sessions.
+					callbackPs.push(callback(fullSession));
 				}
 			});
 			sessionJsonScanStream.on("end", () => {
-				resolve(sessions);
+				resolve(Promise.all(callbackPs));
 			});
 			sessionJsonScanStream.on("error", (error) => {
 				reject(error);
@@ -166,6 +188,8 @@ export class RedisCollaborationSessionManager implements ICollaborationSessionMa
 				hwc: session.telemetryProperties.hadWriteClient,
 				tlj: session.telemetryProperties.totalClientsJoined,
 				mcc: session.telemetryProperties.maxConcurrentClients,
+				soc: session.telemetryProperties.sessionOpCount,
+				ssc: session.telemetryProperties.sessionSignalCount,
 			},
 		};
 	}
@@ -183,6 +207,8 @@ export class RedisCollaborationSessionManager implements ICollaborationSessionMa
 				hadWriteClient: shortSession.tp.hwc,
 				totalClientsJoined: shortSession.tp.tlj,
 				maxConcurrentClients: shortSession.tp.mcc,
+				sessionOpCount: shortSession.tp.soc,
+				sessionSignalCount: shortSession.tp.ssc,
 			},
 		};
 	}

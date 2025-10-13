@@ -4,36 +4,37 @@
  */
 
 import {
+	DriverVersionHeaderName,
+	CallingServiceHeaderName,
+} from "@fluidframework/server-services-client";
+import type {
 	IStorageNameRetriever,
 	IThrottler,
 	IRevokedTokenChecker,
 	IDocumentManager,
 	IReadinessCheck,
-	type IDenyList,
+	IDenyList,
 } from "@fluidframework/server-services-core";
-import { json, urlencoded } from "body-parser";
-import compression from "compression";
-import cors from "cors";
-import express from "express";
-import * as nconf from "nconf";
+import { RestLessServer, createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
 import {
-	DriverVersionHeaderName,
-	CallingServiceHeaderName,
-} from "@fluidframework/server-services-client";
+	BaseTelemetryProperties,
+	CommonProperties,
+	HttpProperties,
+} from "@fluidframework/server-services-telemetry";
 import {
 	alternativeMorganLoggerMiddleware,
 	bindAbortControllerContext,
 	bindTelemetryContext,
 	jsonMorganLoggerMiddleware,
 } from "@fluidframework/server-services-utils";
-import {
-	BaseTelemetryProperties,
-	CommonProperties,
-	HttpProperties,
-} from "@fluidframework/server-services-telemetry";
-import { RestLessServer, createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
+import { json, urlencoded } from "body-parser";
+import compression from "compression";
+import cors from "cors";
+import express from "express";
+import type * as nconf from "nconf";
+
 import * as routes from "./routes";
-import { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "./services";
+import type { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "./services";
 import { Constants, getDocumentIdFromRequest, getTenantIdFromRequest } from "./utils";
 
 export function create(
@@ -83,6 +84,7 @@ export function create(
 				(tokens, req, res) => {
 					const tenantId = getTenantIdFromRequest(req.params);
 					const authHeader = req.get("Authorization");
+					const documentId = getDocumentIdFromRequest(tenantId, authHeader);
 					const additionalProperties: Record<string, any> = {
 						[HttpProperties.driverVersion]: tokens.req(
 							req,
@@ -90,13 +92,12 @@ export function create(
 							DriverVersionHeaderName,
 						),
 						[BaseTelemetryProperties.tenantId]: tenantId,
-						[BaseTelemetryProperties.documentId]: getDocumentIdFromRequest(
-							tenantId,
-							authHeader,
-						),
+						[BaseTelemetryProperties.documentId]: documentId,
 						[CommonProperties.callingServiceName]:
 							req.headers[CallingServiceHeaderName] ?? "",
 					};
+					res.locals.tenantId = tenantId;
+					res.locals.documentId = documentId;
 					if (req.get(Constants.IsEphemeralContainer) !== undefined) {
 						additionalProperties.isEphemeralContainer = req.get(
 							Constants.IsEphemeralContainer,

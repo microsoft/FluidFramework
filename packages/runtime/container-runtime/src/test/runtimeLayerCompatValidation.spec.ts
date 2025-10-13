@@ -13,10 +13,13 @@ import type {
 import {
 	AttachState,
 	type IContainerContext,
+	type ICriticalContainerError,
 } from "@fluidframework/container-definitions/internal";
 import {
 	FluidErrorTypes,
 	type ITelemetryBaseProperties,
+	type Tagged,
+	type TelemetryBaseEventPropertyType,
 } from "@fluidframework/core-interfaces/internal";
 import { createChildLogger, isFluidError } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -30,10 +33,10 @@ import { ContainerRuntime } from "../containerRuntime.js";
 import { pkgVersion } from "../packageVersion.js";
 import {
 	runtimeCompatDetailsForLoader,
-	loaderSupportRequirements,
+	loaderSupportRequirementsForRuntime,
 	validateLoaderCompatibility,
 	validateDatastoreCompatibility,
-	dataStoreSupportRequirements,
+	dataStoreSupportRequirementsForRuntime,
 } from "../runtimeLayerCompatState.js";
 
 import { createLocalDataStoreContext } from "./dataStoreCreationHelper.js";
@@ -49,7 +52,7 @@ function validateFailureProperties(
 	error: Error,
 	isGenerationCompatible: boolean,
 	layerGeneration: number,
-	layerType: "Loader" | "DataStore",
+	layerType: "Loader" | "Driver" | "DataStore",
 	unsupportedFeatures?: string[],
 ): boolean {
 	assert(
@@ -81,420 +84,291 @@ function validateFailureProperties(
 		"Unsupported features not as expected",
 	);
 
-	if (layerType === "Loader") {
-		assert.strictEqual(properties.loaderVersion, pkgVersion, "Loader version not as expected");
-		assert.strictEqual(
-			properties.loaderGeneration,
-			layerGeneration,
-			"Loader generation not as expected",
-		);
-	} else {
-		assert.strictEqual(
-			properties.dataStoreVersion,
-			pkgVersion,
-			"DataStore version not as expected",
-		);
-		assert.strictEqual(
-			properties.dataStoreGeneration,
-			layerGeneration,
-			"DataStore generation not as expected",
-		);
+	let otherLayerVersion:
+		| TelemetryBaseEventPropertyType
+		| Tagged<TelemetryBaseEventPropertyType>
+		| undefined;
+	let otherLayerGeneration:
+		| TelemetryBaseEventPropertyType
+		| Tagged<TelemetryBaseEventPropertyType>
+		| undefined;
+
+	switch (layerType) {
+		case "Loader": {
+			otherLayerVersion = properties.loaderVersion;
+			otherLayerGeneration = properties.loaderGeneration;
+			break;
+		}
+		case "Driver": {
+			otherLayerVersion = properties.driverVersion;
+			otherLayerGeneration = properties.driverGeneration;
+			break;
+		}
+		case "DataStore": {
+			otherLayerVersion = properties.dataStoreVersion;
+			otherLayerGeneration = properties.dataStoreGeneration;
+			break;
+		}
+		default: {
+			assert.fail(`Unexpected layer type: ${layerType}`);
+		}
 	}
+
+	assert.strictEqual(otherLayerVersion, pkgVersion, `${layerType} version not as expected`);
+	assert.strictEqual(
+		otherLayerGeneration,
+		layerGeneration,
+		`${layerType} generation not as expected`,
+	);
 	return true;
 }
 
+async function createAndLoadRuntime(
+	compatibilityDetails?: ILayerCompatDetails,
+): Promise<void> {
+	const mockContext: Partial<IContainerContext & IProvideLayerCompatDetails> = {
+		attachState: AttachState.Attached,
+		deltaManager: new MockDeltaManager(),
+		audience: new MockAudience(),
+		quorum: new MockQuorumClients(),
+		taggedLogger: createChildLogger({}),
+		clientDetails: { capabilities: { interactive: true } },
+		closeFn: (error): void => {},
+		updateDirtyContainerState: (_dirty: boolean) => {},
+		getLoadedFromVersion: () => undefined,
+		ILayerCompatDetails: compatibilityDetails,
+	};
+
+	await ContainerRuntime.loadRuntime({
+		context: mockContext as IContainerContext,
+		registryEntries: [],
+		existing: false,
+		provideEntryPoint: async () => ({
+			myProp: "myValue",
+		}),
+	});
+}
+
+async function createAndLoadDataStore(
+	compatibilityDetails?: ILayerCompatDetails,
+): Promise<void> {
+	const localDataStoreContext = createLocalDataStoreContext({}, compatibilityDetails);
+	await localDataStoreContext.realize();
+}
+
 describe("Runtime Layer compatibility", () => {
-	describe("Runtime <-> Loader compatibility", () => {
-		let originalRequiredFeatures: readonly string[];
-		beforeEach(() => {
-			originalRequiredFeatures = [...loaderSupportRequirements.requiredFeatures];
-		});
+	/**
+	 * These tests ensure that the validation logic for layer compatibility is correct
+	 * and has the correct error / properties.
+	 */
+	describe("Validation error and properties", () => {
+		const testCases: {
+			layerType: "Loader" | "Driver" | "DataStore";
+			layerSupportRequirements: ILayerCompatSupportRequirementsOverride;
+			validateCompatibility: (
+				maybeCompatDetails: ILayerCompatDetails | undefined,
+				disposeFn: (error?: ICriticalContainerError) => void,
+			) => void;
+		}[] = [
+			{
+				layerType: "Loader",
+				validateCompatibility: validateLoaderCompatibility,
+				layerSupportRequirements:
+					loaderSupportRequirementsForRuntime as ILayerCompatSupportRequirementsOverride,
+			},
+			{
+				layerType: "DataStore",
+				validateCompatibility: validateDatastoreCompatibility,
+				layerSupportRequirements:
+					dataStoreSupportRequirementsForRuntime as ILayerCompatSupportRequirementsOverride,
+			},
+		];
 
-		afterEach(() => {
-			(loaderSupportRequirements as ILayerCompatSupportRequirementsOverride).requiredFeatures =
-				[...originalRequiredFeatures];
-		});
-		/**
-		 * These tests validates that the layer compat state and validateLoaderCompatibility function correctly
-		 * validates the compatibility between Runtime and Loader layers.
-		 */
-		describe("validateLoaderCompatibility", () => {
-			it("Runtime is compatible with old Loader (pre-enforcement)", () => {
-				// Older Loader will not have ILayerCompatDetails defined.
-				assert.doesNotThrow(
-					() =>
-						validateLoaderCompatibility(
-							undefined /* maybeloaderCompatDetailsForRuntime */,
-							() => {
+		for (const testCase of testCases) {
+			const layerSupportRequirements = testCase.layerSupportRequirements;
+			let originalRequiredFeatures: readonly string[];
+			beforeEach(() => {
+				originalRequiredFeatures = [...layerSupportRequirements.requiredFeatures];
+			});
+
+			afterEach(() => {
+				layerSupportRequirements.requiredFeatures = [...originalRequiredFeatures];
+			});
+
+			describe(`Validate ${testCase.layerType} Compatibility`, () => {
+				it(`Runtime is compatible with old ${testCase.layerType} (pre-enforcement)`, () => {
+					// Older layer will not have ILayerCompatDetails defined.
+					assert.doesNotThrow(
+						() =>
+							testCase.validateCompatibility(undefined /* maybeCompatDetails */, () => {
 								throw new Error("should not dispose");
-							},
-						),
-					"Runtime should be compatible with older Loader",
-				);
+							}),
+						`Runtime should be compatible with older ${testCase.layerType} layer`,
+					);
+				});
+
+				it(`Runtime generation and features are compatible with ${testCase.layerType}`, () => {
+					layerSupportRequirements.requiredFeatures = ["feature1", "feature2"];
+					const layerCompatDetails: ILayerCompatDetails = {
+						pkgVersion,
+						generation: layerSupportRequirements.minSupportedGeneration,
+						supportedFeatures: new Set(layerSupportRequirements.requiredFeatures),
+					};
+					assert.doesNotThrow(
+						() =>
+							testCase.validateCompatibility(layerCompatDetails, () => {
+								throw new Error("should not dispose");
+							}),
+						`Runtime should be compatible with ${testCase.layerType} layer`,
+					);
+				});
+
+				it(`Loader generation is incompatible with ${testCase.layerType}`, () => {
+					const disposeFn = Sinon.fake();
+					layerSupportRequirements.requiredFeatures = ["feature1", "feature2"];
+					const layerGeneration = layerSupportRequirements.minSupportedGeneration - 1;
+					const layerCompatDetails: ILayerCompatDetails = {
+						pkgVersion,
+						generation: layerGeneration,
+						supportedFeatures: new Set(layerSupportRequirements.requiredFeatures),
+					};
+					assert.throws(
+						() => testCase.validateCompatibility(layerCompatDetails, disposeFn),
+						(e: Error) =>
+							validateFailureProperties(
+								e,
+								false /* isGenerationCompatible */,
+								layerGeneration,
+								testCase.layerType,
+							),
+						`Runtime should be incompatible with ${testCase.layerType} layer`,
+					);
+					assert(disposeFn.calledOnce, "Dispose should be called");
+				});
+
+				it(`Runtime features are incompatible with ${testCase.layerType}`, () => {
+					const disposeFn = Sinon.fake();
+					const layerGeneration = layerSupportRequirements.minSupportedGeneration;
+					const requiredFeatures = ["feature2", "feature3"];
+					layerSupportRequirements.requiredFeatures = requiredFeatures;
+
+					const layerCompatDetails: ILayerCompatDetails = {
+						pkgVersion,
+						generation: layerGeneration,
+						supportedFeatures: new Set(),
+					};
+
+					assert.throws(
+						() => testCase.validateCompatibility(layerCompatDetails, disposeFn),
+						(e: Error) =>
+							validateFailureProperties(
+								e,
+								true /* isGenerationCompatible */,
+								layerGeneration,
+								testCase.layerType,
+								requiredFeatures,
+							),
+						`Runtime should be incompatible with ${testCase.layerType} layer`,
+					);
+					assert(disposeFn.calledOnce, "Dispose should be called");
+				});
+
+				it(`Runtime generation and features are both incompatible with ${testCase.layerType}`, () => {
+					const disposeFn = Sinon.fake();
+					const layerGeneration = layerSupportRequirements.minSupportedGeneration - 1;
+					const requiredFeatures = ["feature2"];
+					layerSupportRequirements.requiredFeatures = requiredFeatures;
+
+					const layerCompatDetails: ILayerCompatDetails = {
+						pkgVersion,
+						generation: layerGeneration,
+						supportedFeatures: new Set(),
+					};
+
+					assert.throws(
+						() => testCase.validateCompatibility(layerCompatDetails, disposeFn),
+						(e: Error) =>
+							validateFailureProperties(
+								e,
+								false /* isGenerationCompatible */,
+								layerGeneration,
+								testCase.layerType,
+								requiredFeatures,
+							),
+						`Runtime should be incompatible with ${testCase.layerType} layer`,
+					);
+					assert(disposeFn.calledOnce, "Dispose should be called");
+				});
 			});
-
-			it("Runtime generation and features are compatible with Loader", () => {
-				(
-					loaderSupportRequirements as ILayerCompatSupportRequirementsOverride
-				).requiredFeatures = ["feature1", "feature2"];
-				const loaderCompatDetailsForRuntime: ILayerCompatDetails = {
-					pkgVersion,
-					generation: loaderSupportRequirements.minSupportedGeneration,
-					supportedFeatures: new Set(loaderSupportRequirements.requiredFeatures),
-				};
-				assert.doesNotThrow(
-					() =>
-						validateLoaderCompatibility(loaderCompatDetailsForRuntime, () => {
-							throw new Error("should not dispose");
-						}),
-					"Runtime should be compatible with Loader layer",
-				);
-			});
-
-			it("Runtime generation is incompatible with Loader", () => {
-				const disposeFn = Sinon.fake();
-				(
-					loaderSupportRequirements as ILayerCompatSupportRequirementsOverride
-				).requiredFeatures = ["feature1", "feature2"];
-				const loaderGeneration = loaderSupportRequirements.minSupportedGeneration - 1;
-				const loaderCompatDetailsForRuntime: ILayerCompatDetails = {
-					pkgVersion,
-					generation: loaderGeneration,
-					supportedFeatures: new Set(loaderSupportRequirements.requiredFeatures),
-				};
-				assert.throws(
-					() => validateLoaderCompatibility(loaderCompatDetailsForRuntime, disposeFn),
-					(e: Error) =>
-						validateFailureProperties(
-							e,
-							false /* isGenerationCompatible */,
-							loaderGeneration,
-							"Loader",
-						),
-					"Runtime should be incompatible with Loader layer",
-				);
-				assert(disposeFn.calledOnce, "Dispose should be called");
-			});
-
-			it("Runtime features are incompatible with Loader", () => {
-				const disposeFn = Sinon.fake();
-				const requiredFeatures = ["feature2", "feature3"];
-				(
-					loaderSupportRequirements as ILayerCompatSupportRequirementsOverride
-				).requiredFeatures = requiredFeatures;
-
-				const loaderCompatDetailsForRuntime: ILayerCompatDetails = {
-					pkgVersion,
-					generation: loaderSupportRequirements.minSupportedGeneration,
-					supportedFeatures: new Set(),
-				};
-
-				assert.throws(
-					() => validateLoaderCompatibility(loaderCompatDetailsForRuntime, disposeFn),
-					(e: Error) =>
-						validateFailureProperties(
-							e,
-							true /* isGenerationCompatible */,
-							loaderSupportRequirements.minSupportedGeneration,
-							"Loader",
-							requiredFeatures,
-						),
-					"Runtime should be incompatible with Loader layer",
-				);
-				assert(disposeFn.calledOnce, "Dispose should be called");
-			});
-
-			it("Runtime generation and features are both incompatible with Loader", () => {
-				const disposeFn = Sinon.fake();
-				const loaderGeneration = loaderSupportRequirements.minSupportedGeneration - 1;
-				const requiredFeatures = ["feature2"];
-				(
-					loaderSupportRequirements as ILayerCompatSupportRequirementsOverride
-				).requiredFeatures = requiredFeatures;
-
-				const loaderCompatDetailsForRuntime: ILayerCompatDetails = {
-					pkgVersion,
-					generation: loaderGeneration,
-					supportedFeatures: new Set(),
-				};
-
-				assert.throws(
-					() => validateLoaderCompatibility(loaderCompatDetailsForRuntime, disposeFn),
-					(e: Error) =>
-						validateFailureProperties(
-							e,
-							false /* isGenerationCompatible */,
-							loaderGeneration,
-							"Loader",
-							requiredFeatures,
-						),
-					"Runtime should be incompatible with Loader layer",
-				);
-				assert(disposeFn.calledOnce, "Dispose should be called");
-			});
-		});
-
-		/**
-		 * These tests validates that the Runtime layer compatibility is correctly enforced during container runtime creation.
-		 */
-		describe("Container Runtime creation", () => {
-			const mockProvideEntryPoint = async () => ({
-				myProp: "myValue",
-			});
-
-			const localGetMockContext = (
-				compatibilityDetails?: ILayerCompatDetails,
-			): Partial<IContainerContext & IProvideLayerCompatDetails> => {
-				return {
-					attachState: AttachState.Attached,
-					deltaManager: new MockDeltaManager(),
-					audience: new MockAudience(),
-					quorum: new MockQuorumClients(),
-					taggedLogger: createChildLogger({}),
-					clientDetails: { capabilities: { interactive: true } },
-					closeFn: (error): void => {},
-					updateDirtyContainerState: (_dirty: boolean) => {},
-					getLoadedFromVersion: () => undefined,
-					ILayerCompatDetails: compatibilityDetails,
-				};
-			};
-
-			it("Older Loader is compatible", async () => {
-				await assert.doesNotReject(
-					async () =>
-						ContainerRuntime.loadRuntime({
-							context: localGetMockContext() as IContainerContext,
-							registryEntries: [],
-							existing: false,
-							provideEntryPoint: mockProvideEntryPoint,
-						}),
-					"Older Loader should be compatible",
-				);
-			});
-
-			it("Loader with generation >= minSupportedGeneration is compatible", async () => {
-				const loaderCompatDetailsForRuntime: ILayerCompatDetails = {
-					pkgVersion,
-					generation: loaderSupportRequirements.minSupportedGeneration,
-					supportedFeatures: new Set(),
-				};
-
-				await assert.doesNotReject(
-					async () =>
-						ContainerRuntime.loadRuntime({
-							context: localGetMockContext(loaderCompatDetailsForRuntime) as IContainerContext,
-							registryEntries: [],
-							existing: false,
-							provideEntryPoint: mockProvideEntryPoint,
-						}),
-					"Loader with generation >= minSupportedGeneration should be compatible",
-				);
-			});
-
-			it("Loader with generation < minSupportedGeneration is not compatible", async () => {
-				const loaderGeneration = loaderSupportRequirements.minSupportedGeneration - 1;
-				const loaderCompatDetailsForRuntime: ILayerCompatDetails = {
-					pkgVersion,
-					generation: loaderGeneration,
-					supportedFeatures: new Set(),
-				};
-
-				await assert.rejects(
-					async () =>
-						ContainerRuntime.loadRuntime({
-							context: localGetMockContext(loaderCompatDetailsForRuntime) as IContainerContext,
-							registryEntries: [],
-							existing: false,
-							provideEntryPoint: mockProvideEntryPoint,
-						}),
-					(error: Error) =>
-						validateFailureProperties(
-							error,
-							false /* isGenerationCompatible */,
-							loaderGeneration,
-							"Loader",
-						),
-					"Loader with generation < minSupportedGeneration should be incompatible",
-				);
-			});
-		});
+		}
 	});
 
-	describe("Runtime <-> DataStore compatibility", () => {
-		let originalRequiredFeatures: readonly string[];
-		beforeEach(() => {
-			originalRequiredFeatures = dataStoreSupportRequirements.requiredFeatures;
-		});
+	/**
+	 * These tests validates that the Loader layer compatibility is correctly enforced during load / initialization.
+	 */
+	describe("Validation during load / initialization", () => {
+		const testCases: {
+			layerType: "Loader" | "DataStore" | "Driver";
+			layerSupportRequirements: ILayerCompatSupportRequirementsOverride;
+			createAndLoad: (compatibilityDetails?: ILayerCompatDetails) => Promise<void>;
+		}[] = [
+			{
+				layerType: "Loader",
+				layerSupportRequirements:
+					loaderSupportRequirementsForRuntime as ILayerCompatSupportRequirementsOverride,
+				createAndLoad: createAndLoadRuntime,
+			},
+			{
+				layerType: "DataStore",
+				layerSupportRequirements:
+					dataStoreSupportRequirementsForRuntime as ILayerCompatSupportRequirementsOverride,
+				createAndLoad: createAndLoadDataStore,
+			},
+		];
 
-		afterEach(() => {
-			(
-				dataStoreSupportRequirements as ILayerCompatSupportRequirementsOverride
-			).requiredFeatures = [...originalRequiredFeatures];
-		});
-		/**
-		 * These tests validates that the layer compat state and validateDataStoreCompatibility function correctly
-		 * validate the compatibility between Runtime and DataStore layers.
-		 */
-		describe("validateDataStoreCompatibility", () => {
-			it("Runtime is compatible with old DataStore (pre-enforcement)", () => {
-				// Older DataStore will not have ILayerCompatDetails defined.
-				assert.doesNotThrow(
-					() =>
-						validateDatastoreCompatibility(undefined /* maybeDataStoreCompatDetails */, () => {
-							throw new Error("should not dispose");
-						}),
-					"Runtime should be compatible with older DataStore",
-				);
+		for (const testCase of testCases) {
+			describe(`Validate ${testCase.layerType} Compatibility`, () => {
+				it(`Older ${testCase.layerType} is compatible`, async () => {
+					await assert.doesNotReject(
+						async () => testCase.createAndLoad(),
+						`Older ${testCase.layerType} should be compatible`,
+					);
+				});
+
+				it(`${testCase.layerType} with generation >= minSupportedGeneration is compatible`, async () => {
+					const layerCompatDetails: ILayerCompatDetails = {
+						pkgVersion,
+						generation: testCase.layerSupportRequirements.minSupportedGeneration,
+						supportedFeatures: new Set(),
+					};
+
+					await assert.doesNotReject(
+						async () => testCase.createAndLoad(layerCompatDetails),
+						`${testCase.layerType} with generation >= minSupportedGeneration should be compatible`,
+					);
+				});
+
+				it(`${testCase.layerType} with generation < minSupportedGeneration is not compatible`, async () => {
+					const layerGeneration = testCase.layerSupportRequirements.minSupportedGeneration - 1;
+					const layerCompatDetails: ILayerCompatDetails = {
+						pkgVersion,
+						generation: layerGeneration,
+						supportedFeatures: new Set(),
+					};
+
+					await assert.rejects(
+						async () => testCase.createAndLoad(layerCompatDetails),
+						(error: Error) =>
+							validateFailureProperties(
+								error,
+								false /* isGenerationCompatible */,
+								layerGeneration,
+								testCase.layerType,
+							),
+						`${testCase.layerType} with generation < minSupportedGeneration should be incompatible`,
+					);
+				});
 			});
-
-			it("Runtime generation and features are compatible with DataStore", () => {
-				(
-					dataStoreSupportRequirements as ILayerCompatSupportRequirementsOverride
-				).requiredFeatures = ["feature1", "feature2"];
-				const dataStoreCompatDetails: ILayerCompatDetails = {
-					pkgVersion,
-					generation: dataStoreSupportRequirements.minSupportedGeneration,
-					supportedFeatures: new Set(dataStoreSupportRequirements.requiredFeatures),
-				};
-				assert.doesNotThrow(
-					() =>
-						validateDatastoreCompatibility(dataStoreCompatDetails, () => {
-							throw new Error("should not dispose");
-						}),
-					"Runtime should be compatible with DataStore layer",
-				);
-			});
-
-			it("Runtime generation is incompatible with DataStore", () => {
-				const disposeFn = Sinon.fake();
-				(
-					dataStoreSupportRequirements as ILayerCompatSupportRequirementsOverride
-				).requiredFeatures = ["feature1", "feature2"];
-				const dataStoreGeneration = dataStoreSupportRequirements.minSupportedGeneration - 1;
-				const dataStoreCompatDetails: ILayerCompatDetails = {
-					pkgVersion,
-					generation: dataStoreGeneration,
-					supportedFeatures: new Set(dataStoreSupportRequirements.requiredFeatures),
-				};
-				assert.throws(
-					() => validateDatastoreCompatibility(dataStoreCompatDetails, disposeFn),
-					(e: Error) =>
-						validateFailureProperties(
-							e,
-							false /* isGenerationCompatible */,
-							dataStoreGeneration,
-							"DataStore",
-						),
-					"Runtime should be incompatible with DataStore layer",
-				);
-				assert(disposeFn.calledOnce, "Dispose should be called");
-			});
-
-			it("Runtime features are incompatible with DataStore", () => {
-				const disposeFn = Sinon.fake();
-				const requiredFeatures = ["feature2", "feature3"];
-				(
-					dataStoreSupportRequirements as ILayerCompatSupportRequirementsOverride
-				).requiredFeatures = requiredFeatures;
-
-				const dataStoreCompatDetails: ILayerCompatDetails = {
-					pkgVersion,
-					generation: dataStoreSupportRequirements.minSupportedGeneration,
-					supportedFeatures: new Set(),
-				};
-
-				assert.throws(
-					() => validateDatastoreCompatibility(dataStoreCompatDetails, disposeFn),
-					(e: Error) =>
-						validateFailureProperties(
-							e,
-							true /* isGenerationCompatible */,
-							dataStoreSupportRequirements.minSupportedGeneration,
-							"DataStore",
-							requiredFeatures,
-						),
-					"Runtime should be incompatible with DataStore layer",
-				);
-				assert(disposeFn.calledOnce, "Dispose should be called");
-			});
-
-			it("Runtime generation and features are both incompatible with DataStore", () => {
-				const disposeFn = Sinon.fake();
-				const dataStoreGeneration = dataStoreSupportRequirements.minSupportedGeneration - 1;
-				const requiredFeatures = ["feature2"];
-				(
-					dataStoreSupportRequirements as ILayerCompatSupportRequirementsOverride
-				).requiredFeatures = requiredFeatures;
-
-				const dataStoreCompatDetails: ILayerCompatDetails = {
-					pkgVersion,
-					generation: dataStoreGeneration,
-					supportedFeatures: new Set(),
-				};
-
-				assert.throws(
-					() => validateDatastoreCompatibility(dataStoreCompatDetails, disposeFn),
-					(e: Error) =>
-						validateFailureProperties(
-							e,
-							false /* isGenerationCompatible */,
-							dataStoreGeneration,
-							"DataStore",
-							requiredFeatures,
-						),
-					"Runtime should be incompatible with DataStore layer",
-				);
-				assert(disposeFn.calledOnce, "Dispose should be called");
-			});
-		});
-
-		/**
-		 * These tests validates that the Runtime layer compatibility is correctly enforced during data store context realization.
-		 */
-		describe("FluidDataStoreContext realization", () => {
-			it("Older DataStore is compatible", async () => {
-				const localDataStoreContext = createLocalDataStoreContext({});
-				await assert.doesNotReject(
-					async () => localDataStoreContext.realize(),
-					"Older DataStore should be compatible",
-				);
-			});
-
-			it("DataStore with generation >= minSupportedGeneration is compatible", async () => {
-				const dataStoreCompatDetails: ILayerCompatDetails = {
-					pkgVersion,
-					generation: dataStoreSupportRequirements.minSupportedGeneration,
-					supportedFeatures: new Set(),
-				};
-				const localDataStoreContext = createLocalDataStoreContext({}, dataStoreCompatDetails);
-
-				await assert.doesNotReject(
-					async () => localDataStoreContext.realize(),
-					"DataStore with generation >= minSupportedGeneration should be compatible",
-				);
-			});
-
-			it("DataStore with generation < minSupportedGeneration is not compatible", async () => {
-				const dataStoreGeneration = dataStoreSupportRequirements.minSupportedGeneration - 1;
-				const dataStoreCompatDetails: ILayerCompatDetails = {
-					pkgVersion,
-					generation: dataStoreGeneration,
-					supportedFeatures: new Set(),
-				};
-				const localDataStoreContext = createLocalDataStoreContext({}, dataStoreCompatDetails);
-
-				await assert.rejects(
-					async () => localDataStoreContext.realize(),
-					(error: Error) =>
-						validateFailureProperties(
-							error,
-							false /* isGenerationCompatible */,
-							dataStoreGeneration,
-							"DataStore",
-						),
-					"DataStore with generation < minSupportedGeneration should be incompatible",
-				);
-			});
-		});
+		}
 	});
 });

@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { DocumentContext } from "@fluidframework/server-lambdas-driver";
+import type { DocumentContext } from "@fluidframework/server-lambdas-driver";
 import {
-	IServiceConfiguration,
+	type IServiceConfiguration,
 	LambdaCloseType,
 	NackMessagesType,
 } from "@fluidframework/server-services-core";
 import {
 	CommonProperties,
 	getLumberBaseProperties,
-	Lumber,
-	LumberEventName,
+	type Lumber,
+	type LumberEventName,
 	Lumberjack,
 	SessionState,
 } from "@fluidframework/server-services-telemetry";

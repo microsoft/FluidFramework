@@ -10,6 +10,7 @@ import { tryGetTreeNodeSchema } from "./treeNodeKernel.js";
 import { NodeKind, type TreeNodeSchemaClass } from "./treeNodeSchema.js";
 // eslint-disable-next-line import/no-deprecated
 import { type WithType, typeNameSymbol, type typeSchemaSymbol } from "./withType.js";
+import { markEager } from "./flexList.js";
 
 /**
  * A non-{@link NodeKind.Leaf|leaf} SharedTree node. Includes objects, arrays, and maps.
@@ -27,23 +28,21 @@ import { type WithType, typeNameSymbol, type typeSchemaSymbol } from "./withType
  *
  * 2. Explicit construction of {@link Unhydrated} nodes using either {@link TreeNodeSchemaClass} as a constructor or {@link TreeNodeSchemaNonClass|TreeNodeSchemaNonClass.create}.
  * Either way the {@link TreeNodeSchema} produced must be produced using a {@link SchemaFactory}.
+ * There are also higher level APIs which wrap these, including {@link (TreeBeta:interface).create}, {@link (TreeBeta:interface).clone},
+ * and import APIs like {@link (TreeBeta:interface).importConcise}, {@link (TreeAlpha:interface).importVerbose}, and {@link (TreeAlpha:interface).importCompressed}.
  *
  * 3. Implicit construction: Several APIs which logically require an unhydrated TreeNode also allow passing in a value which could be used to explicitly construct the node instead.
- * These APIs internally call the constructor with the provided value, so it's really just a special case of the above option.
+ * These APIs internally call the constructor with the provided value (typically behaving like {@link (TreeAlpha:interface).create}), so it's really just a special case of the above option.
  * Note that when constructing nodes, sometimes implicit construction is not allowed
  * (either at runtime due to ambiguous types or at compile time due to TypeScript limitations):
  * in such cases, explicit construction must be used.
- *
  * @privateRemarks
  * This is a class not an interface to enable stricter type checking (see {@link TreeNode.#brand})
  * and some runtime enforcement of schema class policy (see the the validation in the constructor).
- * This class is however only `type` exported not value exported, preventing the class object from being used,
- * similar to how interfaces work.
  *
  * Not all node implementations include this in their prototype chain (some hide it with a proxy),
  * and thus cause the default/built in `instanceof` to return false despite our type checking and all other APIs treating them as TreeNodes.
  * This class provides a custom `Symbol.hasInstance` to fix `instanceof` for this class and all classes extending it.
- * For now the type-only export prevents use of `instanceof` on this class (but allows it in subclasses like schema classes).
  * @sealed @public
  */
 export abstract class TreeNode implements WithType {
@@ -138,6 +137,8 @@ export abstract class TreeNode implements WithType {
 		}
 	}
 }
+// Class objects are functions (callable), so we need a strong way to distinguish between `schema` and `() => schema` when used as a `LazyItem`.
+markEager(TreeNode);
 
 /**
  * `token` to pass to {@link TreeNode}'s constructor used to detect invalid subclasses.

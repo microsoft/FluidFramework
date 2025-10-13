@@ -6,7 +6,6 @@
 import { strict as assert } from "node:assert";
 
 import { createPresenceManager } from "../presenceManager.js";
-import { StateFactoryInternal } from "../stateFactory.js";
 
 import { addControlsTests } from "./broadcastControlsTests.js";
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
@@ -124,7 +123,7 @@ export function checkCompiles(): void {
 					key2: { ref: "default", someId: 0 },
 				},
 			}),
-			validatedMap: StateFactoryInternal.latestMap({
+			validatedMap: StateFactory.latestMap({
 				local: {
 					key1: { x: 0, y: 0 },
 					key2: { ref: "default", someId: 0 },

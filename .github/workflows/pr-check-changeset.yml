@@ -12,6 +12,7 @@ on:
     types: [labeled, unlabeled, opened, synchronize, reopened]
 
 permissions:
+  contents: read
   pull-requests: read
 
 jobs:

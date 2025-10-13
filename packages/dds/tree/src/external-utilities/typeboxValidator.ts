@@ -8,7 +8,7 @@ import type { Static, TSchema } from "@sinclair/typebox";
 // eslint-disable-next-line import/no-internal-modules
 import { TypeCompiler } from "@sinclair/typebox/compiler";
 
-import type { JsonValidator } from "../codec/index.js";
+import { toFormatValidator, type JsonValidator } from "../codec/index.js";
 
 /**
  * A {@link JsonValidator} implementation which uses TypeBox's JSON schema validator.
@@ -18,10 +18,8 @@ import type { JsonValidator } from "../codec/index.js";
  * (i.e. a JSON validator is only included in an application's bundle if that application references it).
  *
  * Defining this validator in its own file also helps to ensure it is tree-shakeable.
- *
- * @alpha
  */
-export const typeboxValidator: JsonValidator = {
+const typeboxValidator: JsonValidator = {
 	compile: <Schema extends TSchema>(schema: Schema) => {
 		const compiledFormat = TypeCompiler.Compile(schema);
 		return {
@@ -29,3 +27,9 @@ export const typeboxValidator: JsonValidator = {
 		};
 	},
 };
+
+/**
+ * A {@link FormatValidator} implementation which uses TypeBox's JSON schema validator.
+ * @alpha
+ */
+export const FormatValidatorBasic = toFormatValidator(typeboxValidator);

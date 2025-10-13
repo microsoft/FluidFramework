@@ -37,7 +37,11 @@ export interface GeneralDatastoreMessageContent {
 	};
 }
 
-type DatastoreMessageContent = SystemDatastore & GeneralDatastoreMessageContent;
+/**
+ * Combined datastore structure for messages.
+ */
+export type DatastoreMessageContent = SystemDatastore & GeneralDatastoreMessageContent;
+
 type AcknowledgmentId = string;
 
 /**

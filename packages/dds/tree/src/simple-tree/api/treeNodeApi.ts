@@ -8,14 +8,7 @@ import { assert, oob, fail, unreachableCase } from "@fluidframework/core-utils/i
 import { EmptyKey, rootFieldKey } from "../../core/index.js";
 import { type TreeStatus, isTreeValue, FieldKinds } from "../../feature-libraries/index.js";
 import { extractFromOpaque } from "../../util/index.js";
-import {
-	type TreeLeafValue,
-	type ImplicitFieldSchema,
-	FieldSchema,
-	type ImplicitAllowedTypes,
-	type TreeNodeFromImplicitAllowedTypes,
-	normalizeAllowedTypes,
-} from "../schemaTypes.js";
+import { type ImplicitFieldSchema, FieldSchema } from "../fieldSchema.js";
 import {
 	booleanSchema,
 	handleSchema,
@@ -35,10 +28,14 @@ import {
 	tryGetTreeNodeSchema,
 	getOrCreateNodeFromInnerNode,
 	typeSchemaSymbol,
-	getOrCreateInnerNode,
+	getInnerNode,
+	type TreeLeafValue,
+	type ImplicitAllowedTypes,
+	type TreeNodeFromImplicitAllowedTypes,
+	normalizeAllowedTypes,
 } from "../core/index.js";
 import type { TreeChangeEvents } from "./treeChangeEvents.js";
-import { isObjectNodeSchema } from "../node-kinds/index.js";
+import { isArrayNodeSchema, isObjectNodeSchema } from "../node-kinds/index.js";
 import { tryGetTreeNodeForField } from "../getTreeNodeForField.js";
 
 /**
@@ -144,7 +141,7 @@ export interface TreeNodeApi {
  */
 export const treeNodeApi: TreeNodeApi = {
 	parent(node: TreeNode): TreeNode | undefined {
-		const editNode = getOrCreateInnerNode(node).parentField.parent.parent;
+		const editNode = getInnerNode(node).parentField.parent.parent;
 		if (editNode === undefined) {
 			return undefined;
 		}
@@ -193,7 +190,7 @@ export const treeNodeApi: TreeNodeApi = {
 						);
 						listener({ changedProperties });
 					});
-				} else if (nodeSchema.kind === NodeKind.Array) {
+				} else if (isArrayNodeSchema(nodeSchema)) {
 					return kernel.events.on("childrenChangedAfterBatch", () => {
 						listener({ changedProperties: undefined });
 					});
@@ -225,7 +222,7 @@ export const treeNodeApi: TreeNodeApi = {
 		if (actualSchema === undefined) {
 			return false;
 		}
-		return normalizeAllowedTypes(schema).has(actualSchema);
+		return normalizeAllowedTypes(schema).evaluateSet().has(actualSchema);
 	},
 	schema(node: TreeNode | TreeLeafValue): TreeNodeSchema {
 		return tryGetSchema(node) ?? fail(0xb37 /* Not a tree node */);
@@ -309,7 +306,7 @@ export function getIdentifierFromNode(
 		return undefined;
 	}
 
-	const flexNode = getOrCreateInnerNode(node);
+	const flexNode = getInnerNode(node);
 	const identifierFieldKeys = schema.identifierFieldKeys;
 
 	switch (identifierFieldKeys.length) {
@@ -364,7 +361,7 @@ export function getIdentifierFromNode(
 export function getStoredKey(node: TreeNode): string | number {
 	// Note: the flex domain strictly works with "stored keys", and knows nothing about the developer-facing
 	// "property keys".
-	const parentField = getOrCreateInnerNode(node).parentField;
+	const parentField = getInnerNode(node).parentField;
 	if (parentField.parent.schema === FieldKinds.sequence.identifier) {
 		// The parent of `node` is an array node
 		assert(

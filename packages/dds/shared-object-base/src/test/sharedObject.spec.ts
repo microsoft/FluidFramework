@@ -7,14 +7,14 @@ import { strict as assert } from "node:assert";
 
 // Add IFluidHandle import for mock handle
 import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
-import {
+import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 	IFluidDataStoreRuntimeInternalConfig,
 } from "@fluidframework/datastore-definitions/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import {
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions/internal";
@@ -26,7 +26,8 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 import sinon from "sinon";
 
-import { FluidSerializer, IFluidSerializer } from "../serializer.js";
+import { bindHandles } from "../index.js";
+import { FluidSerializer, type IFluidSerializer } from "../serializer.js";
 import { SharedObject, SharedObjectCore } from "../sharedObject.js";
 
 class MySharedObject extends SharedObject {
@@ -251,6 +252,86 @@ describe("SharedObjectCore", () => {
 				),
 				"Submit should be called with message content including a serialized handle string (default case)",
 			);
+		});
+	});
+
+	describe("handle binding without encode in bindHandles", () => {
+		let sharedObject: MySharedObjectCore;
+		let dataStoreRuntime: MockFluidDataStoreRuntime;
+
+		// Define a mock handle object
+		const mockHandle = new MockHandle("some data");
+
+		// Define message content with the handle in various formats
+		const messageContentWithHandle = {
+			type: "opWithHandle",
+			handle: mockHandle,
+		};
+
+		const messageContentWithNestedHandle = {
+			type: "opWithNestedHandle",
+			nested: {
+				handle: mockHandle,
+			},
+		};
+
+		const messageContentWithHandleInArray = {
+			type: "opWithHandleInArray",
+			handles: [mockHandle],
+		};
+
+		beforeEach(() => {
+			dataStoreRuntime = new MockFluidDataStoreRuntime();
+
+			sharedObject = new MySharedObjectCore({
+				id: "testId",
+				runtime: dataStoreRuntime,
+			});
+		});
+
+		it("binds handle object with plain handle", async () => {
+			const result = bindHandles(messageContentWithHandle, sharedObject.handle);
+
+			assert.deepStrictEqual(
+				result,
+				messageContentWithHandle,
+				"Object reference should be unchanged",
+			);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/dot-notation
+			const pendingHandles: Set<MockHandle<string>> = sharedObject.handle["pendingHandles"];
+
+			assert.strictEqual(pendingHandles.size, 1, "There should be one pending handle");
+			assert(pendingHandles.has(mockHandle), "Pending handles should include the mock handle");
+		});
+
+		it("binds handle object with handle in nested object", async () => {
+			const result = bindHandles(messageContentWithNestedHandle, sharedObject.handle);
+
+			assert.deepStrictEqual(
+				result,
+				messageContentWithNestedHandle,
+				"Object reference should be unchanged",
+			);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/dot-notation
+			const pendingHandles: Set<MockHandle<string>> = sharedObject.handle["pendingHandles"];
+
+			assert.strictEqual(pendingHandles.size, 1, "There should be one pending handle");
+			assert(pendingHandles.has(mockHandle), "Pending handles should include the mock handle");
+		});
+
+		it("binds handle object with handle in array", async () => {
+			const result = bindHandles(messageContentWithHandleInArray, sharedObject.handle);
+
+			assert.deepStrictEqual(
+				result,
+				messageContentWithHandleInArray,
+				"Object reference should be unchanged",
+			);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/dot-notation
+			const pendingHandles: Set<MockHandle<string>> = sharedObject.handle["pendingHandles"];
+
+			assert.strictEqual(pendingHandles.size, 1, "There should be one pending handle");
+			assert(pendingHandles.has(mockHandle), "Pending handles should include the mock handle");
 		});
 	});
 });

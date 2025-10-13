@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 
 import {
 	ITestDataObject,
@@ -194,60 +194,6 @@ describeCompat(
 			});
 
 			/**
-			 * Validates that non-root data stores that have other non-root data stores as dependencies are not visible
-			 * until the parent data store is visible. Also, they are visible in remote clients and can send ops.
-			 */
-			it("validates that non-root data store and its dependencies become visible correctly", async function () {
-				const dataObject2 = await createNonRootDataObject(containerRuntime1);
-				const dataObject3 = await createNonRootDataObject(containerRuntime1);
-
-				// Add the handle of dataObject3 to dataObject2's DDS. Since dataObject2 and its DDS are not visible yet,
-				// dataObject2 should also be not visible (reachable).
-				dataObject2._root.set("dataObject3", dataObject3.handle);
-				await assert.rejects(
-					resolveHandleWithoutWait(containerRuntime1, dataObject3._context.id),
-					"Data object 3 must not be visible from root yet",
-				);
-
-				// Adding handle of dataObject2 to a visible DDS should make it and dataObject3 visible (reachable)
-				// from the root.
-				dataObject1._root.set("dataObject2", dataObject2.handle);
-				await assert.doesNotReject(
-					resolveHandleWithoutWait(containerRuntime1, dataObject2._context.id),
-					"Data object 2 must be visible from root after its handle is added",
-				);
-				await assert.doesNotReject(
-					resolveHandleWithoutWait(containerRuntime1, dataObject3._context.id),
-					"Data object 3 must be visible from root after its parent's handle is added",
-				);
-
-				if (detachedMode) {
-					await container1.attach(provider.driver.createCreateNewRequest(provider.documentId));
-					await waitForContainerConnection(container1);
-				}
-
-				// Load a second container and validate that both the non-root data stores are visible in it.
-				const container2 = await provider.loadTestContainer();
-				await provider.ensureSynchronized();
-				const dataObject1C2 =
-					await getContainerEntryPointBackCompat<ITestDataObject>(container2);
-				const dataObject2C2 = await getAndValidateDataObject(dataObject1C2, "dataObject2");
-				const dataObject3C2 = await getAndValidateDataObject(dataObject2C2, "dataObject3");
-
-				// Send ops for the data stores in both local and remote container and validate that the ops are
-				// successfully processed.
-				dataObject2._root.set("key1", "value1");
-				dataObject2C2._root.set("key2", "value2");
-				dataObject3._root.set("key1", "value1");
-				dataObject3C2._root.set("key2", "value2");
-				await provider.ensureSynchronized();
-				assert.strictEqual(dataObject2._root.get("key2"), "value2");
-				assert.strictEqual(dataObject2C2._root.get("key1"), "value1");
-				assert.strictEqual(dataObject3._root.get("key2"), "value2");
-				assert.strictEqual(dataObject3C2._root.get("key1"), "value1");
-			});
-
-			/**
 			 * Validates that root data stores that have other non-root data stores as dependencies are not visible
 			 * until the parent root data store is visible. Also, they are visible in remote clients and can send ops.
 			 */
@@ -412,6 +358,72 @@ describeCompat(
 				assert.strictEqual(map2C2.get("key1"), "value1");
 			});
 		};
+
+		/**
+		 * Validates that non-root data stores that have other non-root data stores as dependencies are not visible
+		 * until the parent data store is visible. Also, they are visible in remote clients and can send ops.
+		 *
+		 * Handles cannot resolve until a container is attached, so this test should not be run when the initial
+		 * container is detached. See packages/test/local-server-tests/src/test/handleResolution.spec.ts for testing
+		 * handle access in the detached case.
+		 */
+		it("validates that non-root data store and its dependencies become visible correctly", async function () {
+			const provider2 = getTestObjectProvider();
+			if (provider2.driver.type !== "local") {
+				this.skip();
+			}
+
+			const testContainer = await provider2.makeTestContainer();
+			await waitForContainerConnection(testContainer);
+
+			const testDataObject =
+				await getContainerEntryPointBackCompat<ITestDataObject>(testContainer);
+			const testContainerRuntime = testDataObject._context
+				.containerRuntime as IContainerRuntimeWithResolveHandle_Deprecated;
+
+			const dataObject2 = await createNonRootDataObject(testContainerRuntime);
+			const dataObject3 = await createNonRootDataObject(testContainerRuntime);
+
+			// Add the handle of dataObject3 to dataObject2's DDS. Since dataObject2 and its DDS are not visible yet,
+			// dataObject2 should also be not visible (reachable).
+			dataObject2._root.set("dataObject3", dataObject3.handle);
+			await assert.rejects(
+				resolveHandleWithoutWait(testContainerRuntime, dataObject3._context.id),
+				"Data object 3 must not be visible from root yet",
+			);
+
+			// Adding handle of dataObject2 to a visible DDS should make it and dataObject3 visible (reachable)
+			// from the root.
+			testDataObject._root.set("dataObject2", dataObject2.handle);
+			await assert.doesNotReject(
+				resolveHandleWithoutWait(testContainerRuntime, dataObject2._context.id),
+				"Data object 2 must be visible from root after its handle is added",
+			);
+			await assert.doesNotReject(
+				resolveHandleWithoutWait(testContainerRuntime, dataObject3._context.id),
+				"Data object 3 must be visible from root after its parent's handle is added",
+			);
+
+			// Load a second container and validate that both the non-root data stores are visible in it.
+			const container2 = await provider2.loadTestContainer();
+			await provider2.ensureSynchronized();
+			const dataObject1C2 =
+				await getContainerEntryPointBackCompat<ITestDataObject>(container2);
+			const dataObject2C2 = await getAndValidateDataObject(dataObject1C2, "dataObject2");
+			const dataObject3C2 = await getAndValidateDataObject(dataObject2C2, "dataObject3");
+
+			// Send ops for the data stores in both local and remote container and validate that the ops are
+			// successfully processed.
+			dataObject2._root.set("key1", "value1");
+			dataObject2C2._root.set("key2", "value2");
+			dataObject3._root.set("key1", "value1");
+			dataObject3C2._root.set("key2", "value2");
+			await provider2.ensureSynchronized();
+			assert.strictEqual(dataObject2._root.get("key2"), "value2");
+			assert.strictEqual(dataObject2C2._root.get("key1"), "value1");
+			assert.strictEqual(dataObject3._root.get("key2"), "value2");
+			assert.strictEqual(dataObject3C2._root.get("key1"), "value1");
+		});
 
 		describe("Detached container", () => {
 			tests(true /* detachedMode */);

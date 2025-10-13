@@ -4,16 +4,20 @@
  */
 
 import type { JsonTreeSchema } from "./jsonSchema.js";
-import type { ImplicitAllowedTypes } from "../schemaTypes.js";
+import type { ImplicitAllowedTypes } from "../core/index.js";
 import { toJsonSchema } from "./simpleSchemaToJsonSchema.js";
-import type { TreeEncodingOptions } from "./customTree.js";
+import type { TreeParsingOptions } from "./customTree.js";
 import { TreeViewConfigurationAlpha } from "./configuration.js";
 
 /**
  * Options for how to interpret or encode a tree when schema information is available.
+ * @remarks
+ * This currently extends {@link TreeParsingOptions},
+ * removing the option to declare {@link KeyEncodingOptions.allStoredKeys} since this option is currently not supported.
+ * @input
  * @alpha
  */
-export interface TreeSchemaEncodingOptions extends TreeEncodingOptions {
+export interface TreeSchemaEncodingOptions extends TreeParsingOptions {
 	/**
 	 * If true, fields with default providers (like {@link SchemaFactory.identifier}) will be required.
 	 * If false, they will be optional.
@@ -75,6 +79,7 @@ export interface TreeSchemaEncodingOptions extends TreeEncodingOptions {
  * 1. VerboseTree and (Done) ConciseTree
  * 2. (Done) With and without requiring values with defaults (for insertion vs reading)
  * 3. (Done) Using stored keys and property keys.
+ * 4. Control over unknown optional fields and staged allowed types (able to manually control them and/or get them from some context).
  *
  * This takes in `ImplicitAllowedTypes` since underlying `toJsonSchema` can't handle optional roots.
  *

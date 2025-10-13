@@ -6,14 +6,14 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { UnassignedSequenceNumber } from "./constants.js";
-import { MergeTree } from "./mergeTree.js";
+import type { MergeTree } from "./mergeTree.js";
 import { MergeTreeMaintenanceType } from "./mergeTreeDeltaCallback.js";
 import {
 	type MergeBlock,
 	assignChild,
 	getMinSeqStamp,
-	IMergeNode,
-	ISegmentPrivate,
+	type IMergeNode,
+	type ISegmentPrivate,
 	Marker,
 	MaxNodesInBlock,
 } from "./mergeTreeNodes.js";
@@ -144,7 +144,7 @@ function scourNode(node: MergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTr
 	let prevSegment: ISegmentPrivate | undefined;
 	for (let k = 0; k < node.childCount; k++) {
 		// TODO Non null asserting, why is this not null?
-		const childNode = node.children[k]!;
+		const childNode = node.children[k];
 		if (!childNode.isLeaf() || childNode.segmentGroups?.empty === false) {
 			holdNodes.push(childNode);
 			prevSegment = undefined;

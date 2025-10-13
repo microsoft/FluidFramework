@@ -7,15 +7,15 @@ import { strict as assert } from "node:assert";
 import path from "node:path";
 
 import {
-	ReleaseVersion,
-	VersionBumpType,
+	type ReleaseVersion,
+	type VersionBumpType,
 	detectBumpType,
 	detectVersionScheme,
 	getPreviousVersions,
 	isVersionBumpType,
 } from "@fluid-tools/version-tools";
 import { rawlist } from "@inquirer/prompts";
-import { Command, Flags, ux } from "@oclif/core";
+import { type Command, Flags, ux } from "@oclif/core";
 import { differenceInBusinessDays, formatDistanceToNow } from "date-fns";
 import { writeJson } from "fs-extra/esm";
 import chalk from "picocolors";
@@ -25,12 +25,12 @@ import { table } from "table";
 import { releaseGroupFlag } from "../../flags.js";
 import {
 	BaseCommand,
-	Context,
-	PackageVersionMap,
-	ReleaseReport,
-	ReportKind,
+	type Context,
+	type PackageVersionMap,
+	type ReleaseReport,
+	type ReportKind,
 	type Repository,
-	VersionDetails,
+	type VersionDetails,
 	filterVersionsOlderThan,
 	getDisplayDate,
 	getDisplayDateRelative,
@@ -39,8 +39,12 @@ import {
 	sortVersions,
 	toReportKind,
 } from "../../library/index.js";
-import { CommandLogger } from "../../logging.js";
-import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../../releaseGroups.js";
+import type { CommandLogger } from "../../logging.js";
+import {
+	type ReleaseGroup,
+	type ReleasePackage,
+	isReleaseGroup,
+} from "../../releaseGroups.js";
 
 /**
  * Controls behavior when there is a list of releases and one needs to be selected.

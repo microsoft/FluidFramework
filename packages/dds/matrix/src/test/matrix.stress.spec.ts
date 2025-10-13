@@ -5,16 +5,16 @@
 
 import { strict as assert } from "node:assert";
 
-import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
+import type { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import {
 	MockContainerRuntimeFactoryForReconnection,
-	MockContainerRuntimeForReconnection,
+	type MockContainerRuntimeForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 import { Random } from "best-random";
 
-import { SharedMatrix, type MatrixItem } from "../index.js";
+import type { MatrixItem, SharedMatrix } from "../index.js";
 import { SharedMatrix as SharedMatrixClass } from "../matrix.js";
 
 import { UndoRedoStackManager } from "./undoRedoStackManager.js";

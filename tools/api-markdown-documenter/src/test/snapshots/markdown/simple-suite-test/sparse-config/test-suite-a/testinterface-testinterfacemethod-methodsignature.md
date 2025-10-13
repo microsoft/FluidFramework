@@ -2,12 +2,12 @@
 
 Test interface method
 
-### Signature {#testinterfacemethod-signature}
+<h3 id="testinterfacemethod-signature">Signature</h3>
 
 ```typescript
 testInterfaceMethod(): void;
 ```
 
-### Remarks {#testinterfacemethod-remarks}
+<h3 id="testinterfacemethod-remarks">Remarks</h3>
 
 Here are some remarks about the method

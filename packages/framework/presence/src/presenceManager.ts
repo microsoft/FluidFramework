@@ -90,7 +90,9 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 		);
 		this.attendees = this.systemWorkspace;
 
-		runtime.events.on("connected", this.onConnect.bind(this));
+		runtime.events.on("joined", ({ clientId: joinedClientId }: { clientId: string }) => {
+			this.onConnect(joinedClientId);
+		});
 
 		runtime.events.on("disconnected", () => {
 			const currentClientId = runtime.getClientId();
@@ -101,14 +103,14 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 
 		runtime.getAudience().on("removeMember", this.removeClientConnectionId.bind(this));
 
-		// Check if already connected at the time of construction.
+		// Check if already connected (can send signals) at the time of construction.
 		// If constructed during data store load, the runtime may already be connected
-		// and the "connected" event will be raised during completion. With construction
-		// delayed we expect that "connected" event has passed.
+		// and the "joined" event will be raised during completion. With construction
+		// delayed we expect that "joined" event has passed.
 		// Note: In some manual testing, this does not appear to be enough to
 		// always trigger an initial connect.
 		const clientId = runtime.getClientId();
-		if (clientId !== undefined && runtime.isConnected()) {
+		if (clientId !== undefined && runtime.getJoinedStatus() !== "disconnected") {
 			this.onConnect(clientId);
 		}
 	}

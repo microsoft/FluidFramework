@@ -3,39 +3,37 @@
  * Licensed under the MIT License.
  */
 
-import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
+import type { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
 import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IChannel,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import {
-	IDocumentStorageService,
-	ISnapshotTree,
-} from "@fluidframework/driver-definitions/internal";
-import {
+import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import type {
 	ITelemetryContext,
 	IFluidDataStoreContext,
 	IGarbageCollectionData,
 	ISummarizeResult,
-	type IPendingMessagesState,
-	type IRuntimeMessageCollection,
+	IPendingMessagesState,
+	IRuntimeMessageCollection,
+	IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	DataProcessingError,
 } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	ChannelServiceEndpoints,
-	IChannelContext,
+	type ChannelServiceEndpoints,
+	type IChannelContext,
 	createChannelServiceEndpoints,
 	loadChannel,
 	loadChannelFactoryAndAttributes,
 	summarizeChannel,
 	summarizeChannelAsync,
 } from "./channelContext.js";
-import { ISharedObjectRegistry } from "./dataStoreRuntime.js";
+import type { ISharedObjectRegistry } from "./dataStoreRuntime.js";
 
 /**
  * Channel context for a locally created channel
@@ -216,7 +214,7 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 		registry: ISharedObjectRegistry,
 		runtime: IFluidDataStoreRuntime,
 		dataStoreContext: IFluidDataStoreContext,
-		storageService: IDocumentStorageService,
+		storageService: IRuntimeStorageService,
 		logger: ITelemetryLoggerExt,
 		submitFn: (content: unknown, localOpMetadata: unknown) => void,
 		dirtyFn: (address: string) => void,
@@ -329,7 +327,7 @@ export class LocalChannelContext extends LocalChannelContextBase {
 		public readonly channel: IChannel,
 		runtime: IFluidDataStoreRuntime,
 		dataStoreContext: IFluidDataStoreContext,
-		storageService: IDocumentStorageService,
+		storageService: IRuntimeStorageService,
 		logger: ITelemetryLoggerExt,
 		submitFn: (content: unknown, localOpMetadata: unknown) => void,
 		dirtyFn: (address: string) => void,

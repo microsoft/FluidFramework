@@ -12,6 +12,8 @@ export {
 	type Forbidden,
 	fieldKinds,
 	fieldKindConfigurations,
+	getCodecTreeForModularChangeFormat,
+	type ModularChangeFormatVersion,
 } from "./defaultFieldKinds.js";
 
 export {
@@ -30,7 +32,7 @@ export {
 	SchemaValidationError,
 	isNodeInSchema,
 	isFieldInSchema,
-	inSchemaOrThrow,
+	throwOutOfSchema,
 } from "./schemaChecker.js";
 
 export { defaultSchemaPolicy } from "./defaultSchema.js";

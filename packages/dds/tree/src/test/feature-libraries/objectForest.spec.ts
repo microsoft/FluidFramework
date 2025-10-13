@@ -13,7 +13,7 @@ import {
 	rootFieldKey,
 	TreeStoredSchemaRepository,
 } from "../../core/index.js";
-import { cursorForMapTreeNode, initializeForest } from "../../feature-libraries/index.js";
+import { cursorForMapTreeNode } from "../../feature-libraries/index.js";
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
 import { buildForest } from "../../feature-libraries/object-forest/index.js";
@@ -21,7 +21,8 @@ import { Breakable, type JsonCompatible, brand } from "../../util/index.js";
 import { testForest } from "../forestTestSuite.js";
 import { testIdCompressor, testRevisionTagCodec, validateUsageError } from "../utils.js";
 import { fieldJsonCursor } from "../json/index.js";
-import { toStoredSchema, SchemaFactory } from "../../simple-tree/index.js";
+import { SchemaFactory, toInitialSchema } from "../../simple-tree/index.js";
+import { initializeForest } from "./initializeForest.js";
 
 describe("object-forest", () => {
 	describe("forest suite", () => {
@@ -140,7 +141,7 @@ describe("object-forest", () => {
 				buildForest(
 					new Breakable("test"),
 					// Required field, but not content: should error.
-					new TreeStoredSchemaRepository(toStoredSchema(SchemaFactory.string)),
+					new TreeStoredSchemaRepository(toInitialSchema(SchemaFactory.string)),
 					undefined,
 					true,
 				),
@@ -152,7 +153,7 @@ describe("object-forest", () => {
 		const forest = buildForest(
 			new Breakable("test"),
 			// Field allowing nothing
-			new TreeStoredSchemaRepository(toStoredSchema(SchemaFactory.optional([]))),
+			new TreeStoredSchemaRepository(toInitialSchema(SchemaFactory.optional([]))),
 			undefined,
 			true,
 		);

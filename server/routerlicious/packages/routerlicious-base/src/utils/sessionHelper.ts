@@ -4,17 +4,21 @@
  */
 
 import { delay } from "@fluidframework/common-utils";
-import { ISession, isNetworkError, NetworkError } from "@fluidframework/server-services-client";
 import {
-	IDocument,
+	type ISession,
+	isNetworkError,
+	NetworkError,
+} from "@fluidframework/server-services-client";
+import {
+	type IDocument,
 	runWithRetry,
-	IDocumentRepository,
-	IClusterDrainingChecker,
+	type IDocumentRepository,
+	type IClusterDrainingChecker,
 	type ICache,
 } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 
-import { StageTrace } from "./trace";
+import type { StageTrace } from "./trace";
 
 const defaultSessionStickinessDurationMs = 60 * 60 * 1000; // 60 minutes
 const defaultGetSessionCacheTtlInSeconds = 5 * 60; // 5 mins

@@ -28,7 +28,6 @@ import type {
 import {
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
-	createServiceAudience,
 } from "@fluidframework/fluid-static/internal";
 import {
 	OdspDocumentServiceFactory,
@@ -41,14 +40,14 @@ import type { OdspResourceTokenFetchOptions } from "@fluidframework/odsp-driver-
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import type { TokenResponse } from "./interfaces.js";
 import type {
+	TokenResponse,
 	OdspClientProps,
 	OdspConnectionConfig,
 	OdspContainerAttachProps,
-	OdspContainerServices,
+	OdspContainerServices as IOdspContainerServices,
 } from "./interfaces.js";
-import { createOdspAudienceMember } from "./odspAudience.js";
+import { OdspContainerServices } from "./odspContainerServices.js";
 import type { IOdspTokenProvider } from "./token.js";
 
 async function getStorageToken(
@@ -118,7 +117,7 @@ export class OdspClient {
 		containerSchema: T,
 	): Promise<{
 		container: IFluidContainer<T>;
-		services: OdspContainerServices;
+		services: IOdspContainerServices;
 	}> {
 		const loaderProps = this.getLoaderProps(containerSchema);
 
@@ -142,7 +141,7 @@ export class OdspClient {
 		containerSchema: T,
 	): Promise<{
 		container: IFluidContainer<T>;
-		services: OdspContainerServices;
+		services: IOdspContainerServices;
 	}> {
 		const loaderProps = this.getLoaderProps(containerSchema);
 		const url = createOdspUrl({
@@ -232,12 +231,7 @@ export class OdspClient {
 		return fluidContainer;
 	}
 
-	private async getContainerServices(container: IContainer): Promise<OdspContainerServices> {
-		return {
-			audience: createServiceAudience({
-				container,
-				createServiceMember: createOdspAudienceMember,
-			}),
-		};
+	private async getContainerServices(container: IContainer): Promise<IOdspContainerServices> {
+		return new OdspContainerServices(container);
 	}
 }

@@ -3,30 +3,33 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter, type ILayerCompatDetails } from "@fluid-internal/client-utils";
-import { AttachState, IAudience } from "@fluidframework/container-definitions";
 import {
-	IDeltaManager,
+	TypedEventEmitter,
+	type ILayerCompatDetails,
+	type IProvideLayerCompatDetails,
+} from "@fluid-internal/client-utils";
+import { AttachState, type IAudience } from "@fluidframework/container-definitions";
+import {
+	type IDeltaManager,
 	isIDeltaManagerFull,
 	type IDeltaManagerFull,
 	type ReadOnlyInfo,
 } from "@fluidframework/container-definitions/internal";
-import {
+import type {
 	FluidObject,
 	IDisposable,
 	ITelemetryBaseProperties,
-	type IEvent,
+	IEvent,
 } from "@fluidframework/core-interfaces";
-import {
-	type IFluidHandleContext,
-	type IFluidHandleInternal,
-	type ITelemetryBaseLogger,
+import type {
+	IFluidHandleContext,
+	IFluidHandleInternal,
+	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces/internal";
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
-import { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
-import {
-	IDocumentStorageService,
-	type ISnapshot,
+import type { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
+import type {
+	ISnapshot,
 	IDocumentMessage,
 	ISnapshotTree,
 	ITreeEntry,
@@ -39,30 +42,32 @@ import {
 } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
-	ISummaryTreeWithStats,
-	ITelemetryContext,
-	IGarbageCollectionData,
-	CreateChildSummarizerNodeFn,
-	CreateChildSummarizerNodeParam,
-	FluidDataStoreRegistryEntry,
-	IContainerRuntimeBase,
-	IDataStore,
-	IFluidDataStoreChannel,
-	IFluidDataStoreContext,
-	IFluidDataStoreContextDetached,
-	IFluidDataStoreRegistry,
-	IGarbageCollectionDetailsBase,
-	IProvideFluidDataStoreFactory,
-	ISummarizeInternalResult,
-	ISummarizeResult,
-	ISummarizerNodeWithGC,
-	SummarizeInternalFn,
+	type ISummaryTreeWithStats,
+	type ITelemetryContext,
+	type IGarbageCollectionData,
+	type CreateChildSummarizerNodeFn,
+	type CreateChildSummarizerNodeParam,
+	type FluidDataStoreRegistryEntry,
+	type IContainerRuntimeBase,
+	type IDataStore,
+	type IFluidDataStoreChannel,
+	type IFluidDataStoreContext,
+	type IFluidDataStoreContextDetached,
+	type IFluidDataStoreRegistry,
+	type IGarbageCollectionDetailsBase,
+	type IProvideFluidDataStoreFactory,
+	type ISummarizeInternalResult,
+	type ISummarizeResult,
+	type ISummarizerNodeWithGC,
+	type SummarizeInternalFn,
 	channelsTreeName,
-	IInboundSignalMessage,
+	type IInboundSignalMessage,
 	type IPendingMessagesState,
 	type IRuntimeMessageCollection,
 	type IFluidDataStoreFactory,
-	type IFluidParentContext,
+	type PackagePath,
+	type IRuntimeStorageService,
+	type MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
@@ -71,7 +76,7 @@ import {
 import {
 	DataProcessingError,
 	LoggingError,
-	MonitoringContext,
+	type MonitoringContext,
 	ThresholdCounter,
 	UsageError,
 	createChildMonitoringContext,
@@ -88,8 +93,8 @@ import {
 } from "./runtimeLayerCompatState.js";
 import {
 	// eslint-disable-next-line import/no-deprecated
-	ReadFluidDataStoreAttributes,
-	WriteFluidDataStoreAttributes,
+	type ReadFluidDataStoreAttributes,
+	type WriteFluidDataStoreAttributes,
 	dataStoreAttributesBlobName,
 	getAttributesFormatVersion,
 	getFluidDataStoreAttributes,
@@ -146,10 +151,16 @@ export interface IFluidDataStoreContextInternal extends IFluidDataStoreContext {
 export interface IFluidDataStoreContextProps {
 	readonly id: string;
 	readonly parentContext: IFluidParentContextPrivate;
-	readonly storage: IDocumentStorageService;
+	readonly storage: IRuntimeStorageService;
 	readonly scope: FluidObject;
 	readonly createSummarizerNodeFn: CreateChildSummarizerNodeFn;
-	readonly pkg?: Readonly<string[]>;
+	/**
+	 * See {@link FluidDataStoreContext.pkg}.
+	 */
+	readonly pkg?: PackagePath;
+	/**
+	 * See {@link FluidDataStoreContext.loadingGroupId}.
+	 */
 	readonly loadingGroupId?: string;
 }
 
@@ -157,7 +168,7 @@ export interface IFluidDataStoreContextProps {
  * Properties necessary for creating a local FluidDataStoreContext
  */
 export interface ILocalFluidDataStoreContextProps extends IFluidDataStoreContextProps {
-	readonly pkg: Readonly<string[]> | undefined;
+	readonly pkg: readonly string[] | undefined;
 	readonly snapshotTree: ISnapshotTree | undefined;
 	readonly makeLocallyVisibleFn: () => void;
 }
@@ -179,8 +190,6 @@ export interface IRemoteFluidDataStoreContextProps extends IFluidDataStoreContex
 
 // back-compat: To be removed in the future.
 // Added in "2.0.0-rc.2.0.0" timeframe (to support older builds).
-/**
- */
 export interface IFluidDataStoreContextEvents extends IEvent {
 	(event: "attaching" | "attached", listener: () => void);
 }
@@ -235,13 +244,17 @@ class ContextDeltaManagerProxy extends BaseDeltaManagerProxy {
 }
 
 /**
- * Represents the context for the store. This context is passed to the store runtime.
+ * {@link IFluidDataStoreContext} for the implementations of {@link IFluidDataStoreChannel} which powers the {@link IDataStore}s.
  */
 export abstract class FluidDataStoreContext
 	extends TypedEventEmitter<IFluidDataStoreContextEvents>
-	implements IFluidDataStoreContextInternal, IFluidParentContext, IDisposable
+	implements
+		IFluidDataStoreContextInternal,
+		IFluidDataStoreContext,
+		IDisposable,
+		IProvideLayerCompatDetails
 {
-	public get packagePath(): readonly string[] {
+	public get packagePath(): PackagePath {
 		assert(this.pkg !== undefined, 0x139 /* "Undefined package path" */);
 		return this.pkg;
 	}
@@ -269,7 +282,7 @@ export abstract class FluidDataStoreContext
 
 	private isStagingMode: boolean = false;
 	public isReadOnly = (): boolean =>
-		(this.isStagingMode && this.channel?.policies?.readonlyInStagingMode !== false) ||
+		(this.isStagingMode && this.channel?.policies?.readonlyInStagingMode === true) ||
 		this.parentContext.isReadOnly();
 
 	public get connected(): boolean {
@@ -338,6 +351,11 @@ export abstract class FluidDataStoreContext
 	public get ILayerCompatDetails(): ILayerCompatDetails {
 		return runtimeCompatDetailsForDataStore;
 	}
+
+	/**
+	 * {@inheritdoc IFluidDataStoreContext.minVersionForCollab}
+	 */
+	public readonly minVersionForCollab: MinimumVersionForCollab;
 
 	private baseSnapshotSequenceNumber: number | undefined;
 
@@ -413,14 +431,32 @@ export abstract class FluidDataStoreContext
 
 	public readonly id: string;
 	private readonly _containerRuntime: IContainerRuntimeBase;
+	/**
+	 * Information for this data store from its parent.
+	 *
+	 * @remarks
+	 * The parent which provided this information currently can be the container runtime or a datastore (if the datastore this context is for is nested under another one).
+	 */
 	private readonly parentContext: IFluidParentContextPrivate;
-	public readonly storage: IDocumentStorageService;
+	public readonly storage: IRuntimeStorageService;
 	public readonly scope: FluidObject;
-	// Represents the group to which the data store belongs too.
+	/**
+	 * The loading group to which the data store belongs to.
+	 */
 	public readonly loadingGroupId: string | undefined;
-	protected pkg?: readonly string[];
+	/**
+	 * {@link PackagePath} of this data store.
+	 *
+	 * This can be undefined when a data store is delay loaded, i.e., the attributes of this data store in the snapshot are not fetched until this data store is actually used.
+	 * At that time, the attributes blob is fetched and the pkg is updated from it.
+	 *
+	 * @see {@link PackagePath}.
+	 * @see {@link IFluidDataStoreContext.packagePath}.
+	 * @see {@link factoryFromPackagePath}.
+	 */
+	protected pkg?: PackagePath;
 
-	constructor(
+	public constructor(
 		props: IFluidDataStoreContextProps,
 		private readonly existing: boolean,
 		public readonly isLocalDataStore: boolean,
@@ -430,6 +466,7 @@ export abstract class FluidDataStoreContext
 
 		this._containerRuntime = props.parentContext.containerRuntime;
 		this.parentContext = props.parentContext;
+		this.minVersionForCollab = props.parentContext.minVersionForCollab;
 		this.id = props.id;
 		this.storage = props.storage;
 		this.scope = props.scope;
@@ -522,10 +559,13 @@ export abstract class FluidDataStoreContext
 		attachState: AttachState.Attaching | AttachState.Attached,
 	): void;
 
-	private rejectDeferredRealize(
+	/**
+	 * Throw a {@link LoggingError} indicating that {@link factoryFromPackagePath} failed.
+	 */
+	private factoryFromPackagePathError(
 		reason: string,
 		failedPkgPath?: string,
-		fullPackageName?: readonly string[],
+		fullPackageName?: PackagePath,
 	): never {
 		throw new LoggingError(
 			reason,
@@ -560,34 +600,45 @@ export abstract class FluidDataStoreContext
 		return this.channelP;
 	}
 
+	/**
+	 * Gets the factory that would be used to instantiate this data store by calling `instantiateDataStore` based on {@link pkg}.
+	 * @remarks
+	 * Also populates {@link registry}.
+	 *
+	 * Must be called after {@link pkg} is set, and only called once.
+	 *
+	 * @see {@link @fluidframework/container-runtime-definitions#IContainerRuntimeBase.createDataStore}.
+	 * @see {@link FluidDataStoreContext.pkg}.
+	 */
 	protected async factoryFromPackagePath(): Promise<IFluidDataStoreFactory> {
-		const packages = this.pkg;
-		if (packages === undefined) {
-			this.rejectDeferredRealize("packages is undefined");
+		const path = this.pkg;
+		if (path === undefined) {
+			this.factoryFromPackagePathError("packages is undefined");
 		}
 
 		let entry: FluidDataStoreRegistryEntry | undefined;
 		let registry: IFluidDataStoreRegistry | undefined =
 			this.parentContext.IFluidDataStoreRegistry;
-		let lastPkg: string | undefined;
-		for (const pkg of packages) {
+		let lastIdentifier: string | undefined;
+		// Follow the path, looking up each identifier in the registry along the way:
+		for (const identifier of path) {
 			if (!registry) {
-				this.rejectDeferredRealize("No registry for package", lastPkg, packages);
+				this.factoryFromPackagePathError("No registry for package", lastIdentifier, path);
 			}
-			lastPkg = pkg;
-			entry = registry.getSync?.(pkg) ?? (await registry.get(pkg));
+			lastIdentifier = identifier;
+			entry = registry.getSync?.(identifier) ?? (await registry.get(identifier));
 			if (!entry) {
-				this.rejectDeferredRealize(
+				this.factoryFromPackagePathError(
 					"Registry does not contain entry for the package",
-					pkg,
-					packages,
+					identifier,
+					path,
 				);
 			}
 			registry = entry.IFluidDataStoreRegistry;
 		}
 		const factory = entry?.IFluidDataStoreFactory;
 		if (factory === undefined) {
-			this.rejectDeferredRealize("Can't find factory for package", lastPkg, packages);
+			this.factoryFromPackagePathError("Can't find factory for package", lastIdentifier, path);
 		}
 
 		assert(this.registry === undefined, 0x157 /* "datastore registry already attached" */);
@@ -596,7 +647,7 @@ export abstract class FluidDataStoreContext
 		return factory;
 	}
 
-	createChildDataStore<T extends IFluidDataStoreFactory>(
+	public createChildDataStore<T extends IFluidDataStoreFactory>(
 		childFactory: T,
 	): ReturnType<Exclude<T["createDataStore"], undefined>> {
 		const maybe = this.registry?.getSync?.(childFactory.type);
@@ -1180,7 +1231,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	private snapshotFetchRequired: boolean | undefined;
 	private readonly runtime: IContainerRuntimeBase;
 	private readonly blobContents: Map<string, ArrayBuffer> | undefined;
-	private readonly isSnapshotInISnapshotFormat: boolean | undefined;
+	private readonly isSnapshotInISnapshotFormat: boolean;
 
 	constructor(props: IRemoteFluidDataStoreContextProps) {
 		super(props, true /* existing */, false /* isLocalDataStore */, () => {
@@ -1239,7 +1290,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 				this.blobContents,
 			);
 		}
-		if (this.snapshotFetchRequired) {
+		if (this.snapshotFetchRequired === true) {
 			assert(
 				this.loadingGroupId !== undefined,
 				0x8f5 /* groupId should be present to fetch snapshot */,

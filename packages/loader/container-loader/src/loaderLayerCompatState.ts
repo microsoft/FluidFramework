@@ -44,7 +44,7 @@ export const loaderCompatDetailsForRuntime: ILayerCompatDetails = {
  * The requirements that the Runtime layer must meet to be compatible with this Loader.
  * @internal
  */
-export const runtimeSupportRequirements: ILayerCompatSupportRequirements = {
+export const runtimeSupportRequirementsForLoader: ILayerCompatSupportRequirements = {
 	/**
 	 * Minimum generation that Runtime must be at to be compatible with Loader. Note that 0 is used here for
 	 * Runtime layers before the introduction of the layer compatibility enforcement.
@@ -60,7 +60,7 @@ export const runtimeSupportRequirements: ILayerCompatSupportRequirements = {
  * The requirements that the Driver layer must meet to be compatible with this Loader.
  * @internal
  */
-export const driverSupportRequirements: ILayerCompatSupportRequirements = {
+export const driverSupportRequirementsForLoader: ILayerCompatSupportRequirements = {
 	/**
 	 * Minimum generation that Driver must be at to be compatible with Loader. Note that 0 is used here for
 	 * Driver layers before the introduction of the layer compatibility enforcement.
@@ -73,15 +73,14 @@ export const driverSupportRequirements: ILayerCompatSupportRequirements = {
 };
 
 /**
- * Validates that the Runtime layer is compatible with the Loader.
+ * Validates that the Runtime layer is compatible with the Loader. *
  * @internal
  */
 export function validateRuntimeCompatibility(
 	maybeRuntimeCompatDetails: ILayerCompatDetails | undefined,
-	disposeFn: (error?: ICriticalContainerError) => void,
 ): void {
 	const layerCheckResult = checkLayerCompatibility(
-		runtimeSupportRequirements,
+		runtimeSupportRequirementsForLoader,
 		maybeRuntimeCompatDetails,
 	);
 	if (!layerCheckResult.isCompatible) {
@@ -91,12 +90,11 @@ export function validateRuntimeCompatibility(
 				runtimeVersion: maybeRuntimeCompatDetails?.pkgVersion,
 				loaderGeneration: loaderCompatDetailsForRuntime.generation,
 				runtimeGeneration: maybeRuntimeCompatDetails?.generation,
-				minSupportedGeneration: runtimeSupportRequirements.minSupportedGeneration,
+				minSupportedGeneration: runtimeSupportRequirementsForLoader.minSupportedGeneration,
 				isGenerationCompatible: layerCheckResult.isGenerationCompatible,
 				unsupportedFeatures: layerCheckResult.unsupportedFeatures,
 			}),
 		});
-		disposeFn(error);
 		throw error;
 	}
 }
@@ -110,7 +108,7 @@ export function validateDriverCompatibility(
 	disposeFn: (error?: ICriticalContainerError) => void,
 ): void {
 	const layerCheckResult = checkLayerCompatibility(
-		driverSupportRequirements,
+		driverSupportRequirementsForLoader,
 		maybeDriverCompatDetails,
 	);
 	if (!layerCheckResult.isCompatible) {
@@ -120,7 +118,7 @@ export function validateDriverCompatibility(
 				driverVersion: maybeDriverCompatDetails?.pkgVersion,
 				loaderGeneration: loaderCoreCompatDetails.generation,
 				driverGeneration: maybeDriverCompatDetails?.generation,
-				minSupportedGeneration: driverSupportRequirements.minSupportedGeneration,
+				minSupportedGeneration: driverSupportRequirementsForLoader.minSupportedGeneration,
 				isGenerationCompatible: layerCheckResult.isGenerationCompatible,
 				unsupportedFeatures: layerCheckResult.unsupportedFeatures,
 			}),

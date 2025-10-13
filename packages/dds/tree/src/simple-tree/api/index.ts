@@ -24,14 +24,18 @@ export type {
 	ITreeAlpha,
 } from "./tree.js";
 export { asTreeViewAlpha } from "./tree.js";
+export { type SchemaStatics, schemaStatics } from "./schemaStatics.js";
 export {
 	SchemaFactory,
 	type ScopedSchemaName,
-	type SchemaFactoryObjectOptions,
-	type SchemaStatics,
-	schemaStatics,
+	type ObjectSchemaOptionsAlpha,
+	type ObjectSchemaOptions,
+	type NodeSchemaOptions,
+	type NodeSchemaOptionsAlpha,
+	type SchemaFactory_base,
 } from "./schemaFactory.js";
-export { SchemaFactoryAlpha } from "./schemaFactoryAlpha.js";
+export { SchemaFactoryBeta } from "./schemaFactoryBeta.js";
+export { SchemaFactoryAlpha, type SchemaStaticsAlpha } from "./schemaFactoryAlpha.js";
 export type {
 	ValidateRecursiveSchema,
 	FixRecursiveArraySchema,
@@ -54,6 +58,11 @@ export {
 } from "./treeNodeApi.js";
 export { createFromCursor } from "./create.js";
 export {
+	type DirtyTreeStatus,
+	trackDirtyNodes,
+	type DirtyTreeMap,
+} from "./dirtyIndex.js";
+export {
 	type JsonSchemaId,
 	type JsonSchemaType,
 	type JsonObjectNodeSchema,
@@ -67,6 +76,8 @@ export {
 	type JsonTreeSchema,
 	type JsonFieldSchema,
 	type JsonLeafSchemaType,
+	type JsonRecordNodeSchema,
+	type JsonStringKeyPatternProperties,
 } from "./jsonSchema.js";
 export type { TreeSchemaEncodingOptions } from "./getJsonSchema.js";
 export { getJsonSchema } from "./getJsonSchema.js";
@@ -78,6 +89,14 @@ export type {
 	ArrayNodeCustomizableSchemaUnsafe,
 	MapNodeCustomizableSchemaUnsafe,
 	System_Unsafe,
+	TreeRecordNodeUnsafe,
+	UnannotateAllowedTypeUnsafe,
+	AnnotatedAllowedTypeUnsafe,
+	AnnotatedAllowedTypesUnsafe,
+	AllowedTypesFullUnsafe,
+	AllowedTypesFullFromMixedUnsafe,
+	UnannotateAllowedTypesListUnsafe,
+	AnnotateAllowedTypesListUnsafe,
 } from "./typesUnsafe.js";
 
 export {
@@ -97,6 +116,8 @@ export {
 	tryStoredSchemaAsArray,
 	replaceHandles,
 	type HandleConverter,
+	KeyEncodingOptions,
+	type TreeParsingOptions,
 } from "./customTree.js";
 
 export {
@@ -105,7 +126,14 @@ export {
 	replaceConciseTreeHandles,
 } from "./conciseTree.js";
 
-export { TreeBeta, type NodeChangedData, type TreeChangeEventsBeta } from "./treeBeta.js";
+export {
+	borrowCursorFromTreeNodeOrValue,
+	exportConcise,
+	importConcise,
+	type NodeChangedData,
+	TreeBeta,
+	type TreeChangeEventsBeta,
+} from "./treeBeta.js";
 export { createSimpleTreeIndex, type SimpleTreeIndex } from "./simpleTreeIndex.js";
 export {
 	createIdentifierIndex,

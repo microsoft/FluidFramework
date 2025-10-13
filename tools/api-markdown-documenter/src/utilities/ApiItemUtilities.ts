@@ -90,21 +90,42 @@ export type ApiMemberKind = Exclude<
 >;
 
 /**
+ * `ApiItem` union type representing constructor-like API kinds.
+ *
+ * @public
+ */
+export type ApiConstructorLike = ApiConstructor | ApiConstructSignature;
+
+/**
  * `ApiItem` union type representing function-like API kinds.
  *
  * @public
  */
 export type ApiFunctionLike =
-	| ApiConstructSignature
-	| ApiConstructor
+	| ApiConstructorLike
 	| ApiFunction
 	| ApiMethod
 	| ApiMethodSignature;
 
 /**
  * `ApiItem` union type representing type-like API kinds.
+ *
+ * @public
  */
 export type ApiTypeLike = ApiInterface | ApiClass | ApiTypeAlias;
+
+/**
+ * Type narrowing utility for determining if an `ApiItem` is type-like.
+ *
+ * @public
+ */
+export function isTypeLike(apiItem: ApiItem): apiItem is ApiTypeLike {
+	return (
+		apiItem.kind === ApiItemKind.Interface ||
+		apiItem.kind === ApiItemKind.Class ||
+		apiItem.kind === ApiItemKind.TypeAlias
+	);
+}
 
 /**
  * `ApiItem` union type representing call-signature-like API kinds.

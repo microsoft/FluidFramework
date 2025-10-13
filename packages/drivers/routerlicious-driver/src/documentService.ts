@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter, type ILayerCompatDetails } from "@fluid-internal/client-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import { IClient } from "@fluidframework/driver-definitions";
 import {
@@ -45,7 +45,6 @@ import {
 	TokenFetcher,
 } from "./restWrapper.js";
 import { RestWrapper } from "./restWrapperBase.js";
-import { r11sDriverCompatDetailsForLoader } from "./routerliciousLayerCompatState.js";
 import type { IGetSessionInfoResponse } from "./sessionInfoManager.js";
 import { SocketIOClientStatic } from "./socketModule.js";
 import { ITokenProvider } from "./tokens.js";
@@ -95,14 +94,6 @@ export class DocumentService
 
 	public get policies(): IDocumentServicePolicies | undefined {
 		return this._policies;
-	}
-
-	/**
-	 * The compatibility details of the ODSP Driver layer that is exposed to the Loader layer
-	 * for validating Loader-Driver compatibility.
-	 */
-	public get ILayerCompatDetails(): ILayerCompatDetails {
-		return r11sDriverCompatDetailsForLoader;
 	}
 
 	public dispose() {}

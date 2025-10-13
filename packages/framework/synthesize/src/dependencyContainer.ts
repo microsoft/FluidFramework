@@ -6,7 +6,7 @@
 import { LazyPromise } from "@fluidframework/core-utils/internal";
 
 import { IFluidDependencySynthesizer } from "./IFluidDependencySynthesizer.js";
-import {
+import type {
 	AsyncFluidObjectProvider,
 	AsyncOptionalFluidObjectProvider,
 	AsyncRequiredFluidObjectProvider,
@@ -18,7 +18,7 @@ import {
  * DependencyContainer is similar to a IoC Container. It takes providers and will
  * synthesize an object based on them when requested.
  * @legacy
- * @alpha
+ * @beta
  */
 export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: use a real type here

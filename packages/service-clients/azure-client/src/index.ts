@@ -12,6 +12,7 @@
 export { AzureClient } from "./AzureClient.js";
 export type {
 	AzureClientProps,
+	AzureClientPropsInternal,
 	AzureConnectionConfig,
 	AzureConnectionConfigType,
 	AzureContainerServices,

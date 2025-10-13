@@ -96,8 +96,6 @@ export interface ChangeRebaser<TChangeset> {
 	): TChangeset;
 }
 
-/**
- */
 export interface TaggedChange<TChangeset, TTag = RevisionTag | undefined> {
 	readonly revision: TTag;
 	/**
@@ -127,16 +125,12 @@ export function mapTaggedChange<TIn, TOut>(
  */
 export type RevisionIndexer = (tag: RevisionTag) => number | undefined;
 
-/**
- */
 export interface RevisionMetadataSource {
 	readonly getIndex: RevisionIndexer;
 	readonly tryGetInfo: (tag: RevisionTag | undefined) => RevisionInfo | undefined;
 	readonly hasRollback: (tag: RevisionTag) => boolean;
 }
 
-/**
- */
 export interface RevisionInfo {
 	readonly revision: RevisionTag;
 	/**

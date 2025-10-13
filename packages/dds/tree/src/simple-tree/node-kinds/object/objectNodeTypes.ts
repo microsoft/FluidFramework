@@ -7,14 +7,15 @@ import type { RestrictiveStringRecord } from "../../../util/index.js";
 import type {
 	TreeObjectNode,
 	SimpleKeyMap,
-	InsertableObjectFromAnnotatedSchemaRecord,
+	InsertableObjectFromSchemaRecord,
 } from "./objectNode.js";
-import type {
-	FieldSchemaAlpha,
-	ImplicitAnnotatedFieldSchema,
-	UnannotateSchemaRecord,
-} from "../../schemaTypes.js";
-import { NodeKind, type TreeNodeSchemaClass, type TreeNodeSchema } from "../../core/index.js";
+import type { FieldSchemaAlpha, ImplicitFieldSchema } from "../../fieldSchema.js";
+import {
+	NodeKind,
+	type TreeNodeSchemaClass,
+	type TreeNodeSchema,
+	type TreeNodeSchemaCorePrivate,
+} from "../../core/index.js";
 import type { FieldKey } from "../../../core/index.js";
 import type { SimpleObjectFieldSchema, SimpleObjectNodeSchema } from "../../simpleSchema.js";
 
@@ -26,14 +27,14 @@ import type { SimpleObjectFieldSchema, SimpleObjectNodeSchema } from "../../simp
 export interface ObjectNodeSchema<
 	out TName extends string = string,
 	in out T extends
-		RestrictiveStringRecord<ImplicitAnnotatedFieldSchema> = RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
+		RestrictiveStringRecord<ImplicitFieldSchema> = RestrictiveStringRecord<ImplicitFieldSchema>,
 	ImplicitlyConstructable extends boolean = boolean,
 	out TCustomMetadata = unknown,
 > extends TreeNodeSchemaClass<
 			TName,
 			NodeKind.Object,
-			TreeObjectNode<UnannotateSchemaRecord<T>, TName>,
-			InsertableObjectFromAnnotatedSchemaRecord<T>,
+			TreeObjectNode<T, TName>,
+			InsertableObjectFromSchemaRecord<T>,
 			ImplicitlyConstructable,
 			T,
 			never,
@@ -49,7 +50,7 @@ export interface ObjectNodeSchema<
 /**
  * Extra data provided on all {@link ObjectNodeSchema} that is not included in the (soon possibly public) ObjectNodeSchema type.
  */
-export interface ObjectNodeSchemaInternalData {
+export interface ObjectNodeSchemaInternalData extends TreeNodeSchemaCorePrivate {
 	/**
 	 * {@inheritdoc SimpleKeyMap}
 	 */
@@ -83,8 +84,13 @@ export const ObjectNodeSchema = {
 	},
 } as const;
 
-export function isObjectNodeSchema(
-	schema: TreeNodeSchema,
-): schema is ObjectNodeSchema & ObjectNodeSchemaInternalData {
+/**
+ * {@link ObjectNodeSchema} with data that is not part of the package-exported API surface.
+ */
+export type ObjectNodeSchemaPrivate = ObjectNodeSchema &
+	ObjectNodeSchemaInternalData &
+	TreeNodeSchemaCorePrivate;
+
+export function isObjectNodeSchema(schema: TreeNodeSchema): schema is ObjectNodeSchemaPrivate {
 	return schema.kind === NodeKind.Object;
 }

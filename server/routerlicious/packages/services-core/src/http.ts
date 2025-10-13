@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as http from "http";
+import type * as http from "http";
 
 /**
  * @internal
@@ -25,6 +25,8 @@ export interface IWebServerFactory {
  */
 export interface IWebSocket {
 	id: string;
+
+	handshake: any;
 
 	on(event: string, listener: (...args: any[]) => void): void;
 

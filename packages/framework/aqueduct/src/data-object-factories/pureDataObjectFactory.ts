@@ -145,8 +145,7 @@ async function createDataObject<
  * registry entries, and the runtime class to use for the data object.
  * @typeParam TObj - DataObject (concrete type)
  * @typeParam I - The input types for the DataObject
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface DataObjectFactoryProps<
 	TObj extends PureDataObject<I>,
@@ -198,8 +197,7 @@ export interface DataObjectFactoryProps<
  *
  * @typeParam TObj - DataObject (concrete type)
  * @typeParam I - The input types for the DataObject
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class PureDataObjectFactory<
 	TObj extends PureDataObject<I>,
@@ -387,7 +385,7 @@ export class PureDataObjectFactory<
 	public async createInstanceWithDataStore(
 		containerRuntime: IContainerRuntimeBase,
 		initialState?: I["InitialState"],
-		packagePath?: Readonly<string[]>,
+		packagePath?: readonly string[],
 		loadingGroupId?: string,
 	): Promise<[TObj, IDataStore]> {
 		const context = containerRuntime.createDetachedDataStore(
@@ -442,7 +440,7 @@ export class PureDataObjectFactory<
 
 	protected async createNonRootInstanceCore(
 		containerRuntime: IContainerRuntimeBase,
-		packagePath: Readonly<string[]>,
+		packagePath: readonly string[],
 		initialState?: I["InitialState"],
 		loadingGroupId?: string,
 	): Promise<TObj> {

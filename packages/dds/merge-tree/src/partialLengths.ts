@@ -5,12 +5,12 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { MergeTree } from "./mergeTree.js";
+import type { MergeTree } from "./mergeTree.js";
 import {
-	CollaborationWindow,
+	type CollaborationWindow,
 	getMinSeqStamp,
-	IMergeNode,
-	ISegmentPrivate,
+	type IMergeNode,
+	type ISegmentPrivate,
 	type MergeBlock,
 } from "./mergeTreeNodes.js";
 import {
@@ -582,9 +582,9 @@ export class PartialSequenceLengths {
 			// Segment was obliterated on insert. Generally this means it should be visible only to the
 			// inserting client (in which case we add an adjustment to only that client's perspective),
 			// but if that client has also removed it, we don't need to add anything.
-			const wasRemovedByInsertingClient =
-				removeInfo !== undefined &&
-				removeInfo.removes.some((remove) => remove.clientId === clientId);
+			const wasRemovedByInsertingClient = removeInfo?.removes.some(
+				(remove) => remove.clientId === clientId,
+			);
 
 			if (!wasRemovedByInsertingClient) {
 				const removeSeq = firstRemove?.seq;

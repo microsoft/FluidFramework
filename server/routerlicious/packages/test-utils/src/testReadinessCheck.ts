@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IReadinessCheck, IReadinessStatus, ICheck } from "@fluidframework/server-services-core";
+import type {
+	IReadinessCheck,
+	IReadinessStatus,
+	ICheck,
+} from "@fluidframework/server-services-core";
 
 export class TestCheck implements ICheck {
 	private throwException = false;

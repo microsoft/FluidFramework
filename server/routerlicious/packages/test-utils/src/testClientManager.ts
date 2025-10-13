@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IClient, ISignalClient } from "@fluidframework/protocol-definitions";
-import { IClientManager, ISequencedSignalClient } from "@fluidframework/server-services-core";
+import type { IClient, ISignalClient } from "@fluidframework/protocol-definitions";
+import type { IClientManager, ISequencedSignalClient } from "@fluidframework/server-services-core";
 
 /**
  * @internal

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as core from "@fluidframework/server-services-core";
+import type * as core from "@fluidframework/server-services-core";
 
-import { TinyliciousResources } from "./resources";
+import type { TinyliciousResources } from "./resources";
 import { TinyliciousRunner } from "./runner";
 
 export class TinyliciousRunnerFactory implements core.IRunnerFactory<TinyliciousResources> {

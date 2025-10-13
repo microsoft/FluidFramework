@@ -8,6 +8,7 @@ import { describe, it } from "mocha";
 
 import {
 	VersionOptions,
+	normalizeConfig,
 	previousVersion,
 	resetBrokenTests,
 	updateTypeTestDependency,
@@ -41,7 +42,7 @@ function packageWithTypeValidation(enabled = true): PackageWithTypeTestSettings 
 			"test-package-previous": "4.0.0",
 		},
 		typeValidation: {
-			entrypoint: "legacy",
+			entrypoint: "legacyAlpha",
 			broken: {
 				"broken-api": {
 					backCompat: false,
@@ -149,7 +150,7 @@ describe("typetests tests", () => {
 		it("minimal", () => {
 			const pkgJson: { typeValidation?: ITypeValidationConfig } = {
 				typeValidation: {
-					entrypoint: "legacy",
+					entrypoint: "legacyAlpha",
 					broken: {
 						"broken-api": {
 							backCompat: false,
@@ -159,7 +160,7 @@ describe("typetests tests", () => {
 				},
 			};
 			resetBrokenTests(pkgJson);
-			assert.deepEqual(pkgJson, { typeValidation: { broken: {}, entrypoint: "legacy" } });
+			assert.deepEqual(pkgJson, { typeValidation: { broken: {}, entrypoint: "legacyAlpha" } });
 		});
 
 		it("ignores packages with no typeValidation node", () => {
@@ -207,5 +208,36 @@ describe("typetests tests", () => {
 				assert.equal(previousVersion(input), expected);
 			});
 		}
+	});
+
+	describe("normalizeConfig", () => {
+		it("undefined config", () => {
+			const result = normalizeConfig(undefined);
+			expect(result).to.deep.equal({
+				broken: {},
+			});
+		});
+
+		it("config with defaults", () => {
+			const result = normalizeConfig(defaultTypeValidationConfig);
+			expect(result).to.deep.equal({
+				broken: {},
+			});
+		});
+
+		it("disabled config", () => {
+			const result = normalizeConfig({
+				disabled: true,
+				broken: {
+					"broken-api": {
+						backCompat: false,
+					},
+				},
+				entrypoint: defaultTypeValidationConfig.entrypoint,
+			});
+			expect(result).to.deep.equal({
+				disabled: true,
+			});
+		});
 	});
 });

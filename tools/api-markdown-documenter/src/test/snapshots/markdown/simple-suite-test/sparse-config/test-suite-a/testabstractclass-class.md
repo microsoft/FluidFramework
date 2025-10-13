@@ -2,7 +2,7 @@
 
 A test abstract class.
 
-### Signature {#testabstractclass-signature}
+<h3 id="testabstractclass-signature">Signature</h3>
 
 ```typescript
 export declare abstract class TestAbstractClass
@@ -18,7 +18,7 @@ export declare abstract class TestAbstractClass
 
 | Property | Modifiers | Type | Description |
 | - | - | - | - |
-| [abstractPropertyGetter](docs/test-suite-a/testabstractclass-abstractpropertygetter-property) | `readonly` | [TestMappedType](docs/test-suite-a/testmappedtype-typealias) | A test abstract getter property. |
+| [abstractPropertyGetter](docs/test-suite-a/testabstractclass-abstractpropertygetter-property) | `readonly` | [TestMappedType](docs/test-suite-a/testmappedtype-typealias) | <p>A test abstract getter property.</p><p>@escapedTag</p> |
 | [protectedProperty](docs/test-suite-a/testabstractclass-protectedproperty-property) | `readonly` | [TestEnum](docs/test-suite-a/testenum-enum) | A test protected property. |
 
 ### Methods

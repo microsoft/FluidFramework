@@ -11,29 +11,25 @@ import {
 	AnchorTreeIndex,
 	isTreeValue,
 } from "../../../feature-libraries/index.js";
-import type {
-	AnchorNode,
-	FieldKey,
-	IEditableForest,
-	ITreeSubscriptionCursor,
-	TreeValue,
+import {
+	forEachNode,
+	type AnchorNode,
+	type FieldKey,
+	type IEditableForest,
+	type ITreeSubscriptionCursor,
+	type TreeValue,
 } from "../../../core/index.js";
 import { brand, disposeSymbol, getOrCreate } from "../../../util/index.js";
 import {
-	getOrCreateInnerNode,
+	getInnerNode,
 	SchemaFactory,
 	TreeViewConfiguration,
 	type TreeNode,
 } from "../../../simple-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import type { SchematizingSimpleTreeView } from "../../../shared-tree/schematizingTreeView.js";
+import type { SchematizingSimpleTreeView } from "../../../shared-tree/index.js";
 import { Tree } from "../../../shared-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { simpleTreeNodeSlot } from "../../../simple-tree/core/treeNodeKernel.js";
-// eslint-disable-next-line import/no-internal-modules
-import { makeTree } from "../../../feature-libraries/flex-tree/lazyNode.js";
-// eslint-disable-next-line import/no-internal-modules
-import { getOrCreateNodeFromInnerNode } from "../../../simple-tree/core/index.js";
+import { getOrCreateHydratedFlexTreeNode } from "../../../feature-libraries/index.js";
+import { getOrCreateNodeFromInnerNode } from "../../../simple-tree/index.js";
 
 function readStringField(cursor: ITreeSubscriptionCursor, fieldKey: FieldKey): string {
 	cursor.enterField(fieldKey);
@@ -73,14 +69,14 @@ describe("tree indexes", () => {
 		return { view, parent: view.root };
 	}
 
-	function makeTreeNode(
+	function getOrCreateTreeNode(
 		anchorNode: AnchorNode,
 		forest: IEditableForest,
 		root: SchematizingSimpleTreeView<typeof IndexableParent>,
 	): TreeNode | TreeValue {
 		const cursor = forest.allocateCursor();
 		forest.moveCursorToPath(anchorNode, cursor);
-		const flexNode = makeTree(root.getView().context, cursor);
+		const flexNode = getOrCreateHydratedFlexTreeNode(root.getFlexTreeContext(), cursor);
 		cursor.free();
 		return getOrCreateNodeFromInnerNode(flexNode);
 	}
@@ -109,8 +105,7 @@ describe("tree indexes", () => {
 				);
 			},
 			(anchorNode: AnchorNode) => {
-				const simpleTree =
-					anchorNode.slots.get(simpleTreeNodeSlot) ?? makeTreeNode(anchorNode, forest, root);
+				const simpleTree = getOrCreateTreeNode(anchorNode, forest, root);
 				if (!isTreeValue(simpleTree)) {
 					return Tree.status(simpleTree);
 				}
@@ -132,7 +127,7 @@ describe("tree indexes", () => {
 						[
 							key,
 							nodes.map((f) => {
-								const flexNode: FlexTreeNode = getOrCreateInnerNode(f);
+								const flexNode: FlexTreeNode = getInnerNode(f);
 								assert(flexNode.isHydrated());
 								return getOrCreate(
 									anchorIds,
@@ -224,30 +219,29 @@ describe("tree indexes", () => {
 							const colors = new Map<string, number>();
 
 							cursor.enterField(brand("bird"));
-							if (cursor.firstNode()) {
-								cursor.enterField(brand("eggs"));
-								cursor.firstNode();
-								cursor.enterField(brand("")); // enter the array of eggs
-								let hasNextEgg = cursor.firstNode();
+							cursor.enterNode(0);
+							cursor.enterField(brand("eggs"));
+							cursor.enterNode(0);
+							cursor.enterField(brand("")); // enter the array of eggs
 
-								while (hasNextEgg) {
-									cursor.enterField(brand("color"));
-									cursor.firstNode();
-									const color = cursor.value as string;
+							forEachNode(cursor, () => {
+								cursor.enterField(brand("color"));
+								cursor.enterNode(0);
+								const color = cursor.value;
+								assert(typeof color === "string");
 
-									// increment or initialize color count in the map
-									colors.set(color, (colors.get(color) ?? 0) + 1);
+								// increment or initialize color count in the map
+								colors.set(color, (colors.get(color) ?? 0) + 1);
 
-									cursor.exitNode();
-									cursor.exitField(); // exit "color"
-									hasNextEgg = cursor.nextNode(); // move to next egg
-								}
-								cursor.exitNode(); // exit the current egg
-								cursor.exitField(); // exit the array field
-								cursor.exitNode(); // exit the array node
-								cursor.exitField(); // exit "eggs" field
-								cursor.exitNode(); // exit "bird"
-							}
+								cursor.exitNode();
+								cursor.exitField(); // exit "color"
+							});
+
+							cursor.exitField(); // exit the array of eggs
+							cursor.exitNode(); // exit the array node
+							cursor.exitField(); // exit "eggs" field
+							cursor.exitNode(); // exit "Bird" node
+							cursor.exitField(); // exit "bird" field
 
 							// Early exit if no colors were found
 							if (colors.size === 0) {
@@ -276,7 +270,7 @@ describe("tree indexes", () => {
 				(anchorNode: AnchorNode) => {
 					const cursor = forest.allocateCursor();
 					forest.moveCursorToPath(anchorNode, cursor);
-					const flexNode = makeTree(root.getView().context, cursor);
+					const flexNode = getOrCreateHydratedFlexTreeNode(root.getFlexTreeContext(), cursor);
 					cursor.free();
 					const simpleTree = getOrCreateNodeFromInnerNode(flexNode);
 					if (!isTreeValue(simpleTree)) {
@@ -300,7 +294,7 @@ describe("tree indexes", () => {
 							[
 								key,
 								nodes.map((f) => {
-									const flexNode: FlexTreeNode = getOrCreateInnerNode(f);
+									const flexNode: FlexTreeNode = getInnerNode(f);
 									assert(flexNode.isHydrated());
 									return getOrCreate(
 										anchorIds,
@@ -434,9 +428,7 @@ describe("tree indexes", () => {
 					},
 					() => 3,
 					(anchorNode: AnchorNode) => {
-						const simpleTree =
-							anchorNode.slots.get(simpleTreeNodeSlot) ??
-							makeTreeNode(anchorNode, forest, view);
+						const simpleTree = getOrCreateTreeNode(anchorNode, forest, view);
 						if (!isTreeValue(simpleTree)) {
 							return Tree.status(simpleTree);
 						}

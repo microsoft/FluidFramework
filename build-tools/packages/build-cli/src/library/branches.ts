@@ -6,14 +6,14 @@
 import { PackageName } from "@rushstack/node-core-library";
 import * as semver from "semver";
 
-import { Context } from "./context.js";
+import type { Context } from "./context.js";
 
 import {
 	DEFAULT_PRERELEASE_IDENTIFIER,
-	ReleaseVersion,
-	VersionBumpType,
-	VersionChangeTypeExtended,
-	VersionScheme,
+	type ReleaseVersion,
+	type VersionBumpType,
+	type VersionChangeTypeExtended,
+	type VersionScheme,
 	bumpVersionScheme,
 	detectVersionScheme,
 	fromInternalScheme,
@@ -23,12 +23,12 @@ import {
 } from "@fluid-tools/version-tools";
 
 import {
-	ReleaseGroup,
-	ReleasePackage,
-	ReleaseSource,
+	type ReleaseGroup,
+	type ReleasePackage,
+	type ReleaseSource,
 	isReleaseGroup,
 } from "../releaseGroups.js";
-import { DependencyUpdateType } from "./bump.js";
+import type { DependencyUpdateType } from "./bump.js";
 
 /**
  * Creates an appropriate branch for a release group and bump type. Does not commit!

@@ -8,16 +8,16 @@ export { OdcApiSiteOrigin, OdcFileSiteOrigin } from "./constants.js";
 
 export {
 	ClpCompliantAppHeader,
-	IClpCompliantAppHeader,
-	ISharingLinkHeader,
-	OdspFluidDataStoreLocator,
+	type IClpCompliantAppHeader,
+	type ISharingLinkHeader,
+	type OdspFluidDataStoreLocator,
 	SharingLinkHeader,
 } from "./contractsPublic.js";
 
 // public utils
 export { checkUrl } from "./checkUrl.js";
 export { createOdspUrl } from "./createOdspUrl.js";
-export { getHashedDocumentId, ISnapshotContents } from "./odspPublicUtils.js";
+export { getHashedDocumentId, type ISnapshotContents } from "./odspPublicUtils.js";
 export { getOdspUrlParts, isOdcUrl, isSpoUrl } from "./odspUrlHelper.js";
 
 // prefetch latest snapshot before container load
@@ -37,7 +37,7 @@ export { createOdspCreateContainerRequest } from "./createOdspCreateContainerReq
 export { OdspDriverUrlResolver } from "./odspDriverUrlResolver.js";
 export {
 	OdspDriverUrlResolverForShareLink,
-	ShareLinkFetcherProps,
+	type ShareLinkFetcherProps,
 } from "./odspDriverUrlResolverForShareLink.js";
 
 // It's used by URL resolve code, but also has some public functions
@@ -48,22 +48,22 @@ export {
 	storeLocatorInOdspUrl,
 } from "./odspFluidFileLink.js";
 
-export {
+export type {
 	IOdspCache,
 	IPersistedFileCache,
 	INonPersistentCache,
 	IPrefetchSnapshotContents,
 } from "./odspCache.js";
-export {
+export type {
 	ICacheAndTracker,
-	type EpochTracker,
+	EpochTracker,
 	FetchType,
 	FetchTypeInternal,
 } from "./epochTracker.js";
-export { IOdspResponse, isOdspResolvedUrl } from "./odspUtils.js";
+export { type IOdspResponse, isOdspResolvedUrl } from "./odspUtils.js";
 export { SnapshotFormatSupportType } from "./fetchSnapshot.js";
 export {
-	ISnapshotContentsWithProps,
+	type ISnapshotContentsWithProps,
 	parseCompactSnapshotResponse,
 } from "./compactSnapshotParser.js";
 

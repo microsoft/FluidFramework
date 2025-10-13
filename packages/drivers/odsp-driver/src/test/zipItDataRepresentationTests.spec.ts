@@ -13,9 +13,9 @@ import { TreeBuilderSerializer } from "../WriteBufferUtils.js";
 import {
 	BlobCore,
 	BlobShallowCopy,
-	IStringElement,
+	type IStringElement,
 	NodeCore,
-	NodeTypes,
+	type NodeTypes,
 	TreeBuilder,
 	assertBlobCoreInstance,
 	assertBoolInstance,

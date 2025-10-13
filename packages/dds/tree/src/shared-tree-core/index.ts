@@ -8,6 +8,7 @@ export {
 	SharedTreeBranch,
 	type SharedTreeBranchChange,
 	type SharedTreeBranchEvents,
+	type BranchId,
 } from "./branch.js";
 
 export {
@@ -38,12 +39,18 @@ export {
 	NoOpChangeEnricher,
 } from "./changeEnricher.js";
 
-export { makeEditManagerCodec } from "./editManagerCodecs.js";
+export {
+	makeEditManagerCodec,
+	getCodecTreeForEditManagerFormatWithChange,
+	type EditManagerFormatVersion,
+	editManagerFormatVersions,
+} from "./editManagerCodecs.js";
 export { EditManagerSummarizer } from "./editManagerSummarizer.js";
 export {
 	EditManager,
 	minimumPossibleSequenceNumber,
 	type SummaryData,
+	type SharedBranchSummaryData,
 } from "./editManager.js";
 export type {
 	Commit,
@@ -51,4 +58,10 @@ export type {
 	SequencedCommit,
 	SummarySessionBranch,
 	EncodedCommit,
-} from "./editManagerFormat.js";
+} from "./editManagerFormatCommons.js";
+
+export {
+	type MessageFormatVersion,
+	messageFormatVersions,
+	getCodecTreeForMessageFormatWithChange,
+} from "./messageCodecs.js";

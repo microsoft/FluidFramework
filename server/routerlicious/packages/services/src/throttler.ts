@@ -4,12 +4,12 @@
  */
 
 import {
-	IThrottler,
-	IThrottlerHelper,
-	IThrottlerResponse,
+	type IThrottler,
+	type IThrottlerHelper,
+	type IThrottlerResponse,
 	ThrottlingError,
-	ILogger,
-	IUsageData,
+	type ILogger,
+	type IUsageData,
 } from "@fluidframework/server-services-core";
 import {
 	CommonProperties,
@@ -117,6 +117,7 @@ export class Throttler implements IThrottler {
 
 		// check cached throttle status, but allow operation through if status is not yet cached
 		const cachedThrottlerResponse = this.throttlerResponseCache.get(id);
+		// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- Optional chaining negatively impacts type narrowing below.
 		if (cachedThrottlerResponse && cachedThrottlerResponse.throttleStatus) {
 			const retryAfterInSeconds = Math.ceil(cachedThrottlerResponse.retryAfterInMs / 1000);
 			this.logger?.info(`Throttled: ${id}`, {
@@ -144,7 +145,7 @@ export class Throttler implements IThrottler {
 	}
 
 	private updateCountDelta(id: string, value: number): void {
-		const currentValue = this.countDeltaMap.get(id) || 0;
+		const currentValue = this.countDeltaMap.get(id) ?? 0;
 
 		this.countDeltaMap.set(id, currentValue + value);
 	}

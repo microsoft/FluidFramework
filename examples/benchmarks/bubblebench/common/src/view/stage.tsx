@@ -5,7 +5,7 @@
 
 import React from "react";
 
-import { IAppState } from "../types.js";
+import type { IAppState } from "../types.js";
 
 import { BubbleView } from "./bubble.js";
 

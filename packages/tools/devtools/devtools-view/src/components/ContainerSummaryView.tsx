@@ -42,6 +42,7 @@ import {
 } from "@fluidframework/devtools-core/internal";
 import React from "react";
 
+import { useContainerFeaturesContext } from "../ContainerFeatureFlagHelper.js";
 import { useMessageRelay } from "../MessageRelayContext.js";
 import { useLogger } from "../TelemetryUtils.js";
 import { connectionStateToString } from "../Utilities.js";
@@ -138,48 +139,86 @@ function DataRow(props: DataRowProps): React.ReactElement {
 	);
 }
 
+/**
+ * Determines the appropriate badge color based on the container status.
+ *
+ * @param status - The container status string to evaluate
+ * @returns The badge color that best represents the status severity:
+ * - "danger" for closed, detached, or disconnected states
+ * - "warning" for transitional states like attaching or catching up
+ * - "success" for healthy states like connected or attached
+ * - "subtle" for read-only or unknown states
+ */
+function getStatusBadgeColor(status: string): "success" | "warning" | "danger" | "subtle" {
+	switch (status) {
+		case "Closed":
+		case "Detached":
+		case "Disconnected": {
+			return "danger";
+		}
+		case "Attaching":
+		case "Establishing connection":
+		case "Catching up": {
+			return "warning";
+		}
+		case "Connected":
+		case "Attached": {
+			return "success";
+		}
+		case "Read-only": {
+			return "subtle";
+		}
+		default: {
+			return "subtle";
+		}
+	}
+}
+
+/**
+ * Renders a table cell containing status badges for container states.
+ *
+ * @param statusComponents - Array of status strings to display as badges
+ * @returns A table cell layout with status badges displayed horizontally
+ *
+ * @remarks
+ * - If no status components are provided, shows an "Unknown" badge
+ * - Multiple status badges are displayed side by side with flexbox layout
+ * - Each badge color is determined by getStatusBadgeColor function
+ */
 function containerStatusValueCell(statusComponents: string[]): React.ReactElement {
+	// Show all states simultaneously in a single container
+	if (statusComponents.length === 0) {
+		return (
+			<TableCellLayout>
+				<Badge shape="rounded" color="subtle">
+					Unknown
+				</Badge>
+			</TableCellLayout>
+		);
+	}
+
+	// Create a flex container to show all status badges side by side
 	return (
-		<TableCellLayout
-			media={((): JSX.Element => {
-				switch (statusComponents[0]) {
-					case AttachState.Attaching: {
-						return (
-							<Badge shape="rounded" color="warning">
-								{statusComponents[0]}
-							</Badge>
-						);
-					}
-					case AttachState.Detached: {
-						return (
-							<Badge shape="rounded" color="danger">
-								{statusComponents[0]}
-							</Badge>
-						);
-					}
-					default: {
-						return (
-							<Badge shape="rounded" color="success">
-								{statusComponents[0]}
-							</Badge>
-						);
-					}
-				}
-			})()}
-		>
-			{statusComponents[1] === "Connected" ? (
-				<Badge shape="rounded" color="success">
-					{statusComponents[1]}
-				</Badge>
-			) : (
-				<Badge shape="rounded" color="danger">
-					{statusComponents[1]}
-				</Badge>
-			)}
+		<TableCellLayout>
+			<div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
+				{statusComponents.map((status, index) => (
+					<Badge key={index} shape="rounded" color={getStatusBadgeColor(status)}>
+						{status}
+					</Badge>
+				))}
+			</div>
 		</TableCellLayout>
 	);
 }
 
+/**
+ * Custom hook that provides styles for the ContainerSummaryView component.
+ *
+ * @returns An object containing CSS-in-JS styles for:
+ * - root: Main container with flexbox column layout
+ * - title: Centered title styling
+ * - actions: Left-aligned actions container
+ */
 const useContainerSummaryViewStyles = makeStyles({
 	root: {
 		display: "flex",
@@ -215,6 +254,8 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 			minWidth: 70,
 		},
 	});
+
+	const { containerFeatureFlags } = useContainerFeaturesContext();
 
 	const { columnSizing_unstable, tableRef } = useTableFeatures({ columns, items }, [
 		useTableColumnSizing_unstable({ columnSizingOptions }),
@@ -292,21 +333,27 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		usageLogger?.sendTelemetryEvent({ eventName: "CloseContainerButtonClicked" });
 	}
 
-	// Build up status string
+	// Build up status string - show all states simultaneously
 	const statusComponents: string[] = [];
-	if (closed) {
+	if (containerState.closed) {
 		statusComponents.push("Closed");
 	} else {
+		// Always show attach state
 		statusComponents.push(containerState.attachState);
-		if (containerState.attachState === AttachState.Attached) {
+
+		// Show connection state if applicable (regardless of readonly state)
+		if (
+			containerState.attachState === AttachState.Attached &&
+			containerState.connectionState !== undefined
+		) {
 			statusComponents.push(connectionStateToString(containerState.connectionState));
-		} else {
-			/*
-			 * If the container is not attached, it is not connected
-			 * TODO: If the container is detached, it is advisable to disable the action buttons
-			 * since Fluid will consistently fail to establish a connection with a detached container.
-			 */
+		} else if (containerState.attachState !== AttachState.Attached) {
+			// If not attached, show disconnected state
 			statusComponents.push(connectionStateToString(ConnectionState.Disconnected));
+		}
+
+		if (containerState.isReadOnly === true) {
+			statusComponents.push("Read-only");
 		}
 	}
 
@@ -339,15 +386,17 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 					</TableBody>
 				</Table>
 			</div>
-			<div className={styles.actions}>
-				<ActionsBar
-					isContainerConnected={containerState.connectionState === ConnectionState.Connected}
-					containerState={containerState}
-					tryConnect={tryConnect}
-					forceDisconnect={forceDisconnect}
-					closeContainer={closeContainer}
-				/>
-			</div>
+			{containerFeatureFlags.canModifyContainerState !== false && (
+				<div className={styles.actions}>
+					<ActionsBar
+						isContainerConnected={containerState.connectionState === ConnectionState.Connected}
+						containerState={containerState}
+						tryConnect={tryConnect}
+						forceDisconnect={forceDisconnect}
+						closeContainer={closeContainer}
+					/>
+				</div>
+			)}
 		</div>
 	);
 }

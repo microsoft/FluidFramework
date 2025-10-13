@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
-import { SessionId, createIdCompressor } from "../../index.js";
+import { type SessionId, createIdCompressor } from "../../index.js";
 import { modifyClusterSize } from "../idCompressorTestUtilities.js";
 
 import { _dirname } from "./dirname.cjs";

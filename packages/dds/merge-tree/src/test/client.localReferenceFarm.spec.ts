@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-
 import { strict as assert } from "node:assert";
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
@@ -12,11 +10,11 @@ import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { SlidingPreference, setValidateRefCount } from "../localReference.js";
 import type { ISegmentPrivate } from "../mergeTreeNodes.js";
 import { ReferenceType } from "../ops.js";
-import { ReferencePosition } from "../referencePositions.js";
+import type { ReferencePosition } from "../referencePositions.js";
 
 import {
-	IConfigRange,
-	IMergeTreeOperationRunnerConfig,
+	type IConfigRange,
+	type IMergeTreeOperationRunnerConfig,
 	doOverRanges,
 	generateClientNames,
 	removeRange,

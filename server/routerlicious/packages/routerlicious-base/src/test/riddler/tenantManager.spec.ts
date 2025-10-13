@@ -20,7 +20,7 @@ import {
 	TenantKeyGenerator,
 	generateToken,
 } from "@fluidframework/server-services-utils";
-import assert from "assert";
+import { strict as assert } from "assert";
 import { NetworkError } from "@fluidframework/server-services-client";
 import { ScopeType } from "@fluidframework/protocol-definitions";
 

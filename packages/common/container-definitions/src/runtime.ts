@@ -14,7 +14,6 @@ import type {
 	ISummaryTree,
 } from "@fluidframework/driver-definitions";
 import type {
-	IDocumentStorageService,
 	ISnapshot,
 	IDocumentMessage,
 	ISnapshotTree,
@@ -22,12 +21,18 @@ import type {
 	IVersion,
 	MessageType,
 	ISequencedDocumentMessage,
+	ICreateBlobResponse,
+	ISummaryContext,
+	ISnapshotFetchOptions,
+	FetchSource,
+	IDocumentStorageServicePolicies,
+	ISummaryHandle,
 } from "@fluidframework/driver-definitions/internal";
 
 import type { IAudience } from "./audience.js";
 import type { IDeltaManager } from "./deltas.js";
 import type { ICriticalContainerError } from "./error.js";
-import type { ILoader } from "./loader.js";
+import type { ConnectionState, ILoader } from "./loader.js";
 
 /**
  * The attachment state of some Fluid data (e.g. a container or data store), denoting whether it is uploaded to the
@@ -57,8 +62,7 @@ export enum AttachState {
  * The IRuntime represents an instantiation of a code package within a Container.
  * Primarily held by the ContainerContext to be able to interact with the running instance of the Container.
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IRuntime extends IDisposable {
 	/**
@@ -119,14 +123,122 @@ export interface IRuntime extends IDisposable {
 
 /**
  * Payload type for IContainerContext.submitBatchFn()
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IBatchMessage {
 	contents?: string;
 	metadata?: Record<string, unknown>;
 	compression?: string;
 	referenceSequenceNumber?: number;
+}
+
+/**
+ * Interface to provide access to snapshots and policies to the Runtime layer. This should follow the Loader / Runtime
+ * layer compatibility rules.
+ *
+ * @remarks It contains a subset of APIs from {@link @fluidframework/driver-definitions#IDocumentStorageService} but
+ * allows the Runtime to not support layer compatibility with the Driver layer. Instead, it supports compatibility
+ * with the Loader layer which it already does.
+ *
+ * @legacy @beta
+ */
+export interface IContainerStorageService {
+	/**
+	 * Whether or not the object has been disposed.
+	 * If true, the object should be considered invalid, and its other state should be disregarded.
+	 *
+	 * @deprecated - This API is deprecated and will be removed in a future release. No replacement is planned as
+	 * it is unused in the Runtime layer.
+	 */
+	readonly disposed?: boolean;
+
+	/**
+	 * Dispose of the object and its resources.
+	 * @param error - Optional error indicating the reason for the disposal, if the object was
+	 * disposed as the result of an error.
+	 *
+	 * @deprecated - This API is deprecated and will be removed in a future release. No replacement is planned as
+	 * it is unused in the Runtime layer.
+	 */
+	dispose?(error?: Error): void;
+
+	/**
+	 * Policies implemented/instructed by driver.
+	 *
+	 * @deprecated - This will be removed in a future release. The Runtime layer only needs `maximumCacheDurationMs`
+	 * policy which is added as a separate property.
+	 */
+	readonly policies?: IDocumentStorageServicePolicies | undefined;
+
+	/**
+	 * See {@link @fluidframework/driver-definitions#IDocumentStorageServicePolicies.maximumCacheDurationMs}
+	 */
+	readonly maximumCacheDurationMs?: IDocumentStorageServicePolicies["maximumCacheDurationMs"];
+
+	/**
+	 * Returns the snapshot tree.
+	 * @param version - Version of the snapshot to be fetched.
+	 * @param scenarioName - scenario in which this api is called. This will be recorded by server and would help
+	 * in debugging purposes to see why this call was made.
+	 */
+	// TODO: use `undefined` instead.
+	// eslint-disable-next-line @rushstack/no-new-null
+	getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
+
+	/**
+	 * Returns the snapshot which can contain other artifacts too like blob contents, ops etc. It is different from
+	 * `getSnapshotTree` api in that, that API only returns the snapshot tree from the snapshot.
+	 * @param snapshotFetchOptions - Options specified by the caller to specify and want certain behavior from the
+	 * driver when fetching the snapshot.
+	 */
+	getSnapshot?(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot>;
+
+	/**
+	 * Retrieves all versions of the document starting at the specified versionId - or null if from the head
+	 * @param versionId - Version id of the requested version.
+	 * @param count - Number of the versions to be fetched.
+	 * @param scenarioName - scenario in which this api is called. This will be recorded by server and would help
+	 * in debugging purposes to see why this call was made.
+	 * @param fetchSource - Callers can specify the source of the response. For ex. Driver may choose to cache
+	 * requests and serve data from cache. That will result in stale info returned. Callers can disable this
+	 * functionality by passing fetchSource = noCache and ensuring that driver will return latest information
+	 * from storage.
+	 */
+	getVersions(
+		// TODO: use `undefined` instead.
+		// eslint-disable-next-line @rushstack/no-new-null
+		versionId: string | null,
+		count: number,
+		scenarioName?: string,
+		fetchSource?: FetchSource,
+	): Promise<IVersion[]>;
+
+	/**
+	 * Creates a blob out of the given buffer
+	 */
+	createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
+
+	/**
+	 * Reads the object with the given ID, returns content in arrayBufferLike
+	 */
+	readBlob(id: string): Promise<ArrayBufferLike>;
+
+	/**
+	 * Uploads a summary tree to storage using the given context for reference of previous summary handle.
+	 * The ISummaryHandles in the uploaded tree should have paths to indicate which summary object they are
+	 * referencing from the previously acked summary.
+	 * Returns the uploaded summary handle.
+	 */
+	uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
+
+	/**
+	 * Retrieves the commit that matches the packfile handle. If the packfile has already been committed and the
+	 * server has deleted it this call may result in a broken promise.
+	 *
+	 * @deprecated - This API is deprecated and will be removed in a future release. No replacement is planned as
+	 * it is unused in the Runtime and below layers.
+	 */
+	downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
 }
 
 /**
@@ -140,8 +252,7 @@ export interface IBatchMessage {
  * TODO: once `@alpha` tag is removed, `unknown` should be removed from submitSignalFn.
  * See {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/7462}
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IContainerContext {
 	/**
@@ -154,9 +265,18 @@ export interface IContainerContext {
 	readonly options: Record<string | number, any>;
 	readonly clientId: string | undefined;
 	readonly clientDetails: IClientDetails;
-	readonly storage: IDocumentStorageService;
+	readonly storage: IContainerStorageService;
 	readonly connected: boolean;
 	readonly baseSnapshot: ISnapshotTree | undefined;
+
+	/**
+	 * Gets the current connection state of the container.
+	 *
+	 * @remarks
+	 * This provides more detailed connection state information beyond the simple boolean `connected` property.
+	 * Available starting from version 2.52.0. Property is not present in older versions.
+	 */
+	readonly getConnectionState?: () => ConnectionState;
 	/**
 	 * @deprecated Please use submitBatchFn & submitSummaryFn
 	 */
@@ -233,14 +353,12 @@ export interface IContainerContext {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const IRuntimeFactory: keyof IProvideRuntimeFactory = "IRuntimeFactory";
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IProvideRuntimeFactory {
 	readonly IRuntimeFactory: IRuntimeFactory;
@@ -251,8 +369,7 @@ export interface IProvideRuntimeFactory {
  *
  * Provides the entry point for the ContainerContext to load the proper IRuntime
  * to start up the running instance of the Container.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IRuntimeFactory extends IProvideRuntimeFactory {
 	/**
@@ -267,8 +384,7 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
 
 /**
  * Defines list of properties expected for getPendingLocalState
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IGetPendingLocalStateProps {
 	/**

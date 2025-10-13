@@ -9,7 +9,7 @@ import ReactDOM from "react-dom";
 
 import {
 	DataObjectGridContainerRuntimeFactory,
-	IDataObjectGridAppModel,
+	type IDataObjectGridAppModel,
 } from "./container.js";
 import { DataObjectGridAppView } from "./dataObjectGridView.js";
 

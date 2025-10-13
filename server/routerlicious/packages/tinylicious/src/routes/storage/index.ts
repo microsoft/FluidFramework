@@ -4,7 +4,7 @@
  */
 
 import { Router } from "express";
-import nconf from "nconf";
+import type nconf from "nconf";
 
 import * as blobs from "./git/blobs";
 import * as commits from "./git/commits";

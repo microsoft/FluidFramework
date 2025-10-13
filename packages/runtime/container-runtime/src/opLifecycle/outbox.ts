@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IBatchMessage } from "@fluidframework/container-definitions/internal";
-import {
+import type { IBatchMessage } from "@fluidframework/container-definitions/internal";
+import type {
 	ITelemetryBaseLogger,
-	type ITelemetryBaseProperties,
+	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import {
@@ -17,27 +17,30 @@ import {
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { ICompressionRuntimeOptions } from "../compressionDefinitions.js";
-import { PendingMessageResubmitData, PendingStateManager } from "../pendingStateManager.js";
+import type { ICompressionRuntimeOptions } from "../compressionDefinitions.js";
+import type {
+	PendingMessageResubmitData,
+	PendingStateManager,
+} from "../pendingStateManager.js";
 
 import {
 	BatchManager,
-	BatchSequenceNumbers,
+	type BatchSequenceNumbers,
 	sequenceNumbersMatch,
 	type BatchId,
 } from "./batchManager.js";
-import {
+import type {
 	LocalBatchMessage,
 	IBatchCheckpoint,
-	type OutboundBatchMessage,
-	type OutboundSingletonBatch,
-	type LocalBatch,
-	type OutboundBatch,
+	OutboundBatchMessage,
+	OutboundSingletonBatch,
+	LocalBatch,
+	OutboundBatch,
 } from "./definitions.js";
-import { OpCompressor } from "./opCompressor.js";
-import { OpGroupingManager } from "./opGroupingManager.js";
+import type { OpCompressor } from "./opCompressor.js";
+import type { OpGroupingManager } from "./opGroupingManager.js";
 import { serializeOp } from "./opSerialization.js";
-import { OpSplitter } from "./opSplitter.js";
+import type { OpSplitter } from "./opSplitter.js";
 
 export interface IOutboxConfig {
 	readonly compressionOptions: ICompressionRuntimeOptions;
@@ -455,10 +458,7 @@ export class Outbox {
 		if (
 			batchManager.options.canRebase &&
 			rawBatch.hasReentrantOps === true &&
-			// NOTE: This is too restrictive. We should rebase for any reentrant op, not just if it's going to be a grouped batch
-			// However there is some test that is depending on this behavior so we haven't removed these conditions yet. See AB#33427
-			groupingEnabled &&
-			rawBatch.messages.length > 1
+			groupingEnabled
 		) {
 			assert(!this.rebasing, 0x6fa /* A rebased batch should never have reentrant ops */);
 			// If a batch contains reentrant ops (ops created as a result from processing another op)

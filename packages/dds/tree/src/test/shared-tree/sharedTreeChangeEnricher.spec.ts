@@ -17,7 +17,7 @@ import {
 	tagChange,
 } from "../../core/index.js";
 import { cursorToJsonObject, fieldJsonCursor } from "../json/index.js";
-import { typeboxValidator } from "../../external-utilities/index.js";
+import { FormatValidatorBasic } from "../../external-utilities/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { optional } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 import {
@@ -27,7 +27,6 @@ import {
 	ModularEditBuilder,
 	type TreeChunk,
 	fieldKinds,
-	initializeForest,
 } from "../../feature-libraries/index.js";
 import {
 	type SharedTreeMutableChangeEnricher,
@@ -55,6 +54,7 @@ import {
 } from "../utils.js";
 import { FluidClientVersion } from "../../codec/index.js";
 import { jsonSequenceRootSchema } from "../sequenceRootUtils.js";
+import { initializeForest } from "../feature-libraries/index.js";
 
 const content: JsonCompatible = { x: 42 };
 
@@ -93,7 +93,7 @@ export function setupEnricher() {
 		idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
 		testRevisionTagCodec,
 		testIdCompressor,
-		{ jsonValidator: typeboxValidator, oldestCompatibleClient: FluidClientVersion.v2_0 },
+		{ jsonValidator: FormatValidatorBasic, minVersionForCollab: FluidClientVersion.v2_0 },
 	);
 	const schema = new TreeStoredSchemaRepository(jsonSequenceRootSchema);
 	const forest = buildTestForest({ additionalAsserts: true, schema });

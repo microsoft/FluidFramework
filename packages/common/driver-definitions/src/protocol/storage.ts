@@ -6,8 +6,7 @@
 import type { IsoDate } from "./date.js";
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IDocumentAttributes {
 	/**
@@ -22,8 +21,7 @@ export interface IDocumentAttributes {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export enum FileMode {
 	File = "100644",
@@ -34,8 +32,7 @@ export enum FileMode {
 
 /**
  * Raw blob stored within the tree.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IBlob {
 	/**
@@ -46,21 +43,19 @@ export interface IBlob {
 	/**
 	 * The encoding of the contents string
 	 */
-	// eslint-disable-next-line unicorn/text-encoding-identifier-case
+	// eslint-disable-next-line unicorn/text-encoding-identifier-case -- Cannot change "utf-8" to "utf8" as this encoding value is stored in summaries and would be a breaking change which needs to be done first before changing to utf8
 	encoding: "utf-8" | "base64";
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IAttachment {
 	id: string;
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ICreateBlobResponse {
 	id: string;
@@ -68,8 +63,7 @@ export interface ICreateBlobResponse {
 
 /**
  * A tree entry wraps a path with a type of node.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type ITreeEntry = {
 	/**
@@ -99,8 +93,7 @@ export type ITreeEntry = {
 
 /**
  * Type of entries that can be stored in a tree.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export enum TreeEntry {
 	Blob = "Blob",
@@ -109,8 +102,7 @@ export enum TreeEntry {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ITree {
 	entries: ITreeEntry[];
@@ -136,8 +128,7 @@ export interface ITree {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISnapshotTree {
 	id?: string;
@@ -168,8 +159,7 @@ export interface ISnapshotTreeEx extends ISnapshotTree {
 
 /**
  * Represents a version of the snapshot of a data store.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IVersion {
 	/**

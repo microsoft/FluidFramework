@@ -104,6 +104,14 @@ export class RecursiveMap extends schema.mapRecursive("RM", [() => RecursiveMap]
 	type _check = ValidateRecursiveSchema<typeof RecursiveMap>;
 }
 
+export class RecursiveRecord extends schemaAlpha.recordRecursive("RR", [
+	SchemaFactory.number,
+	() => RecursiveRecord,
+]) {}
+{
+	type _check = ValidateRecursiveSchema<typeof RecursiveRecord>;
+}
+
 /**
  * Workaround to avoid
  * `error TS2310: Type 'RecursiveArray' recursively references itself as a base type.` in the d.ts file.
@@ -117,7 +125,7 @@ export class RecursiveArray extends schema.arrayRecursive("RA", [() => Recursive
 /**
  * This is an anti-pattern: not creating a named class for schema that are part of the recursive path causes generated .d.ts files to get type `any`.
  * This happens (without errors!) even if NoImplicitAny is enabled.
- * See the [TypeScript Issue](https://github.com/microsoft/TypeScript/issues/55832) for more details.
+ * See the {@link https://github.com/microsoft/TypeScript/issues/55832 | TypeScript Issue} for more details.
  */
 export const BadArraySelf = schema.arrayRecursive("BadArraySelf", [() => BadArraySelf]);
 {

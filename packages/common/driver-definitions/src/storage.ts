@@ -73,15 +73,13 @@ export interface IDeltaStorageService {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type IStreamResult<T> = { done: true } | { done: false; value: T };
 
 /**
  * Read interface for the Queue
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IStream<T> {
 	read(): Promise<IStreamResult<T>>;
@@ -89,8 +87,7 @@ export interface IStream<T> {
 
 /**
  * Interface to provide access to stored deltas for a shared object
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IDocumentDeltaStorageService {
 	/**
@@ -117,16 +114,14 @@ export interface IDocumentDeltaStorageService {
 // internal assumptions of the Runtime's GC feature will be violated
 // DO NOT INCREASE THIS TYPE'S VALUE
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type FiveDaysMs = 432_000_000; /* 5 days in milliseconds */
 
 /**
  * Policies describing attributes or characteristics of the driver's storage service,
  * to direct how other components interact with the driver
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IDocumentStorageServicePolicies {
 	/**
@@ -147,8 +142,7 @@ export interface IDocumentStorageServicePolicies {
 
 /**
  * Interface to provide access to snapshots saved for a shared object
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IDocumentStorageService extends Partial<IDisposable> {
 	/**
@@ -221,8 +215,7 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
 
 /**
  * Events emitted by {@link IDocumentService}.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IDocumentServiceEvents extends IEvent {
 	/**
@@ -233,15 +226,16 @@ export interface IDocumentServiceEvents extends IEvent {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
 	(event: "nack", listener: (documentId: string, message: INack[]) => void);
 	/**
 	 * @param reason - The reason for the disconnection.
-	 * Note: this parameter will become optional in a future release to support clean disconnections.
-	 * Signature will change from `(reason: IAnyDriverError) => void` to `(reason?: IAnyDriverError) => void`.
+	 * Note: this parameter will also accept undefined in a future release to support clean disconnections.
+	 * When `reason` is provided, it indicates an error that caused the disconnection. When `undefined`, it represents
+	 * a clean, intentional disconnect that should not be treated as an error.
+	 * Signature will change from `(reason: IAnyDriverError) => void` to `(reason: IAnyDriverError | undefined) => void`.
 	 * Update your listener implementations to handle cases where `reason` is undefined.
 	 */
 	(event: "disconnect", listener: (reason: IAnyDriverError) => void);
@@ -254,8 +248,7 @@ export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IDocumentDeltaConnection
 	extends IDisposable,
@@ -337,8 +330,7 @@ export interface IDocumentDeltaConnection
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export enum LoaderCachingPolicy {
 	/**
@@ -353,8 +345,7 @@ export enum LoaderCachingPolicy {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IDocumentServicePolicies {
 	/**
@@ -376,8 +367,7 @@ export interface IDocumentServicePolicies {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IDocumentService extends IEventProvider<IDocumentServiceEvents> {
 	resolvedUrl: IResolvedUrl;
@@ -418,8 +408,7 @@ export interface IDocumentService extends IEventProvider<IDocumentServiceEvents>
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IDocumentServiceFactory {
 	/**
@@ -461,8 +450,7 @@ export interface IDocumentServiceFactory {
 /**
  * Context for uploading a summary to storage.
  * Indicates the previously acked summary.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummaryContext {
 	/**
@@ -479,8 +467,7 @@ export interface ISummaryContext {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export enum FetchSource {
 	default = "default",
@@ -490,8 +477,7 @@ export enum FetchSource {
 /**
  * A "Full" container Snapshot, including ISnapshotTree, blobs and outstanding ops (and other metadata)
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISnapshot {
 	snapshotTree: ISnapshotTree;
@@ -514,8 +500,7 @@ export interface ISnapshot {
 /**
  * Snapshot fetch options which are used to communicate different things to the driver
  * when fetching the snapshot.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISnapshotFetchOptions {
 	/**

@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { ILayerCompatDetails } from "@fluid-internal/client-utils";
+import { ITelemetryBaseLogger, type FluidObject } from "@fluidframework/core-interfaces";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	IDocumentService,
@@ -29,6 +30,15 @@ export class ReplayDocumentServiceFactory implements IDocumentServiceFactory {
 			documentServiceFactory,
 			new ReplayControllerStatic(from, to),
 		);
+	}
+
+	/**
+	 * The compatibility details of the base Driver layer that is exposed to the Loader layer
+	 * for validating Loader-Driver compatibility.
+	 */
+	public get ILayerCompatDetails(): ILayerCompatDetails | undefined {
+		return (this.documentServiceFactory as FluidObject<ILayerCompatDetails>)
+			.ILayerCompatDetails;
 	}
 
 	public constructor(
