@@ -270,19 +270,19 @@ export class MockStorageAdapter
 		this.getCurrentStorage().waitCreateOne(createOptions);
 }
 
-export interface UnprocessedOp {
+export interface UnprocessedMessage {
 	clientId: string;
 	metadata: IBlobMetadata;
 }
 
 interface MockOrderingServiceEvents {
-	opDropped: (op: UnprocessedOp) => void;
-	opReceived: (op: UnprocessedOp) => void;
+	opDropped: (op: UnprocessedMessage) => void;
+	opReceived: (op: UnprocessedMessage) => void;
 	opSequenced: (op: ISequencedMessageEnvelope) => void;
 }
 
 class MockOrderingService {
-	public readonly unprocessedOps: UnprocessedOp[] = [];
+	public readonly unprocessedOps: UnprocessedMessage[] = [];
 	public readonly events = createEmitter<MockOrderingServiceEvents>();
 	private _messagesReceived = 0;
 	public get messagesReceived(): number {
@@ -303,14 +303,14 @@ class MockOrderingService {
 		this.sequenceAll();
 	};
 
-	public readonly waitOpAvailable = async (): Promise<void> => {
+	public readonly waitMessageAvailable = async (): Promise<void> => {
 		if (this.unprocessedOps.length === 0) {
 			return new Promise<void>((resolve) => {
-				const onOpReceived = (op: UnprocessedOp) => {
+				const onMessageReceived = (op: UnprocessedMessage) => {
 					resolve();
-					this.events.off("opReceived", onOpReceived);
+					this.events.off("opReceived", onMessageReceived);
 				};
-				this.events.on("opReceived", onOpReceived);
+				this.events.on("opReceived", onMessageReceived);
 			});
 		}
 	};
@@ -328,7 +328,7 @@ class MockOrderingService {
 			this._paused,
 			"waitSequenceOne is only available in paused mode to avoid conflicting with normal sequencing",
 		);
-		await this.waitOpAvailable();
+		await this.waitMessageAvailable();
 		this.sequenceOne();
 	};
 
@@ -350,7 +350,7 @@ class MockOrderingService {
 			this._paused,
 			"waitDropOne is only available in paused mode to avoid conflicting with normal sequencing",
 		);
-		await this.waitOpAvailable();
+		await this.waitMessageAvailable();
 		this.dropOne();
 	};
 
@@ -365,7 +365,7 @@ class MockOrderingService {
 	};
 
 	public readonly sendBlobAttachOp = (clientId: string, localId: string, remoteId: string) => {
-		const op: UnprocessedOp = {
+		const op: UnprocessedMessage = {
 			clientId,
 			metadata: { localId, blobId: remoteId },
 		};
@@ -464,7 +464,7 @@ export const createTestMaterial = (
 		blobManager.processBlobAttachMessage(op, op.clientId === clientId);
 	});
 
-	mockOrderingService.events.on("opDropped", (op: UnprocessedOp) => {
+	mockOrderingService.events.on("opDropped", (op: UnprocessedMessage) => {
 		if (op.clientId === clientId) {
 			blobManager.reSubmit(op.metadata as unknown as Record<string, unknown>);
 		}

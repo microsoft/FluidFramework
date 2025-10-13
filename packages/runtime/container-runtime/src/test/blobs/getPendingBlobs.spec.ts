@@ -78,7 +78,7 @@ for (const createBlobPayloadPending of [false, true]) {
 			}
 
 			// Wait until we are sure the BlobAttach op is pending
-			await mockOrderingService.waitOpAvailable();
+			await mockOrderingService.waitMessageAvailable();
 
 			const pendingBlobs = blobManager.getPendingBlobs();
 			if (createBlobPayloadPending) {
@@ -138,7 +138,7 @@ for (const createBlobPayloadPending of [false, true]) {
 				attachHandle(handle2);
 			}
 			await mockBlobStorage.waitCreateOne();
-			await mockOrderingService.waitOpAvailable();
+			await mockOrderingService.waitMessageAvailable();
 
 			// Third blob uploading
 			const handleP3 = blobManager.createBlob(textToBlob("fizz"));
@@ -278,7 +278,7 @@ for (const createBlobPayloadPending of [false, true]) {
 			const blob1 = await blobManager.getBlob("blob1", createBlobPayloadPending);
 			assert.strictEqual(blobToText(blob1), "hello");
 
-			// Verify only a single blob uploaded and a single op processed
+			// Verify only a single blob uploaded and a single op sequenced
 			assert.strictEqual(mockBlobStorage.blobsCreated, 1);
 			assert.strictEqual(mockOrderingService.messagesSequenced, 1);
 
@@ -313,7 +313,7 @@ for (const createBlobPayloadPending of [false, true]) {
 			const blob1 = await blobManager.getBlob("blob1", createBlobPayloadPending);
 			assert.strictEqual(blobToText(blob1), "hello");
 
-			// Verify no blobs uploaded and a single op processed
+			// Verify no blobs uploaded and a single op sequenced
 			assert.strictEqual(mockBlobStorage.blobsCreated, 0);
 			assert.strictEqual(mockOrderingService.messagesSequenced, 1);
 
@@ -348,7 +348,7 @@ for (const createBlobPayloadPending of [false, true]) {
 			const blob1 = await blobManager.getBlob("blob1", createBlobPayloadPending);
 			assert.strictEqual(blobToText(blob1), "hello");
 
-			// Verify a single blobs uploaded (the reupload) and a single op processed
+			// Verify a single blobs uploaded (the reupload) and a single op sequenced
 			assert.strictEqual(mockBlobStorage.blobsCreated, 1);
 			assert.strictEqual(mockOrderingService.messagesSequenced, 1);
 
@@ -400,7 +400,7 @@ for (const createBlobPayloadPending of [false, true]) {
 			const blob3 = await blobManager.getBlob("blob3", createBlobPayloadPending);
 			assert.strictEqual(blobToText(blob3), "fizz");
 
-			// Two blobs uploaded (blob1 and blob3) and three ops processed
+			// Two blobs uploaded (blob1 and blob3) and three messages sequenced
 			assert.strictEqual(mockBlobStorage.blobsCreated, 2);
 			assert.strictEqual(mockOrderingService.messagesSequenced, 3);
 
@@ -445,11 +445,11 @@ for (const createBlobPayloadPending of [false, true]) {
 				mockOrderingService.sendBlobAttachOp("priorClientId", "blob2", "remoteBlob2");
 				mockOrderingService.sendBlobAttachOp("priorClientId", "blob3", "remoteBlob3");
 
-				// Should already have processed all three ops sent above
+				// Should already have sequenced all three messages sent above
 				assert.strictEqual(mockBlobStorage.blobsCreated, 0);
 				assert.strictEqual(mockOrderingService.messagesSequenced, 3);
 
-				// The blobs should be attached after processing the attach ops, and so should no longer
+				// The blobs should be attached after processing the attach messages, and so should no longer
 				// be in the pending state
 				assert.strictEqual(blobManager.getPendingBlobs(), undefined);
 				// Shared blobs should be in the summary
@@ -460,9 +460,73 @@ for (const createBlobPayloadPending of [false, true]) {
 				// Should be a no-op
 				await blobManager.sharePendingBlobs();
 
-				// Verify no uploads and no additional ops processed.
+				// Verify no uploads and no additional messages sequenced.
 				assert.strictEqual(mockBlobStorage.blobsCreated, 0);
 				assert.strictEqual(mockOrderingService.messagesSequenced, 3);
+			});
+
+			it("Attach op arrives during upload attempts", async () => {
+				const pendingBlobs: IPendingBlobs = {
+					["blob1"]: {
+						state: "localOnly",
+						blob: getSerializedBlobForString("hello"),
+					},
+					["blob2"]: {
+						state: "uploaded",
+						blob: getSerializedBlobForString("world"),
+						storageId: await getDedupedStorageIdForString("world"),
+						uploadTime: 0,
+						minTTLInSeconds: MIN_TTL,
+					},
+				};
+
+				const { mockBlobStorage, mockOrderingService, blobManager } = createTestMaterial({
+					pendingBlobs,
+					createBlobPayloadPending,
+				});
+
+				mockBlobStorage.pause();
+
+				const sharePendingBlobsP = blobManager.sharePendingBlobs();
+
+				// Wait and make sure both blobs have started uploading
+				if (mockBlobStorage.blobsReceived < 2) {
+					await new Promise<void>((resolve) => {
+						const onBlobReceived = () => {
+							if (mockBlobStorage.blobsReceived === 2) {
+								mockBlobStorage.events.off("blobReceived", onBlobReceived);
+								resolve();
+							}
+						};
+						mockBlobStorage.events.on("blobReceived", onBlobReceived);
+					});
+				}
+
+				mockOrderingService.sendBlobAttachOp("priorClientId", "blob1", "remoteBlob1");
+				mockOrderingService.sendBlobAttachOp("priorClientId", "blob2", "remoteBlob2");
+
+				// Should already have sequenced both messages sent above
+				assert.strictEqual(mockBlobStorage.blobsCreated, 0);
+				assert.strictEqual(mockOrderingService.messagesSequenced, 2);
+
+				// The sharePendingBlobs() call should have resolved since all blobs are now attached
+				await sharePendingBlobsP;
+				// The blobs should be attached after processing the attach messages, and so should no longer
+				// be in the pending state
+				assert.strictEqual(blobManager.getPendingBlobs(), undefined);
+				// Shared blobs should be in the summary
+				const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+				assert.strictEqual(ids?.length, 2);
+				assert.strictEqual(redirectTable?.length, 2);
+
+				// Allow the uploads to complete
+				await mockBlobStorage.waitCreateOne();
+				await mockBlobStorage.waitCreateOne();
+
+				// The two uploads will complete, but we should stop afterwards and not submit attach messages.
+				assert.strictEqual(mockBlobStorage.blobsCreated, 2);
+				// TODO: Make sure this would not run too soon to catch an incorrectly sequenced op
+				assert.strictEqual(mockOrderingService.messagesSequenced, 2);
 			});
 		});
 	});

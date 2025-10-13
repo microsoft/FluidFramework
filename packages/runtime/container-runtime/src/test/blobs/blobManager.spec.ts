@@ -28,7 +28,7 @@ import {
 	textToBlob,
 	unpackHandle,
 	waitHandlePayloadShared,
-	type UnprocessedOp,
+	type UnprocessedMessage,
 } from "./blobTestUtils.js";
 
 for (const createBlobPayloadPending of [false, true]) {
@@ -182,7 +182,7 @@ for (const createBlobPayloadPending of [false, true]) {
 						createBlobPayloadPending,
 					});
 					let storageId: string | undefined;
-					const onOpReceived = (op: UnprocessedOp) => {
+					const onOpReceived = (op: UnprocessedMessage) => {
 						storageId = op.metadata.blobId;
 						mockOrderingService.events.off("opReceived", onOpReceived);
 					};
