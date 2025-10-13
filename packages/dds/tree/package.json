@@ -180,6 +180,7 @@
 		"@tylerbu/sorted-btree-es6": "^1.8.0",
 		"@types/ungap__structured-clone": "^1.2.0",
 		"@ungap/structured-clone": "^1.2.0",
+		"semver-ts": "^1.0.3",
 		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
