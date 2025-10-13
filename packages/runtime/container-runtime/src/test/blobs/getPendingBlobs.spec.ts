@@ -413,6 +413,57 @@ for (const createBlobPayloadPending of [false, true]) {
 			assert.strictEqual(blobManager.getPendingBlobs(), undefined);
 		});
 
-		it("Does not proceed with sharing a pending blob if the attach op from a prior client is received", async () => {});
+		describe("Seeing an attach op from a prior client", () => {
+			it("Attach op arrives before calling sharePendingBlobs()", async () => {
+				const pendingBlobs: IPendingBlobs = {
+					["blob1"]: {
+						state: "localOnly",
+						blob: getSerializedBlobForString("hello"),
+					},
+					["blob2"]: {
+						state: "uploaded",
+						blob: getSerializedBlobForString("world"),
+						storageId: await getDedupedStorageIdForString("world"),
+						uploadTime: Date.now(),
+						minTTLInSeconds: MIN_TTL,
+					},
+					["blob3"]: {
+						state: "uploaded",
+						blob: getSerializedBlobForString("fizz"),
+						storageId: await getDedupedStorageIdForString("fizz"),
+						uploadTime: 0,
+						minTTLInSeconds: MIN_TTL,
+					},
+				};
+
+				const { mockBlobStorage, mockOrderingService, blobManager } = createTestMaterial({
+					pendingBlobs,
+					createBlobPayloadPending,
+				});
+
+				mockOrderingService.sendBlobAttachOp("priorClientId", "blob1", "remoteBlob1");
+				mockOrderingService.sendBlobAttachOp("priorClientId", "blob2", "remoteBlob2");
+				mockOrderingService.sendBlobAttachOp("priorClientId", "blob3", "remoteBlob3");
+
+				// Should already have processed all three ops sent above
+				assert.strictEqual(mockBlobStorage.blobsCreated, 0);
+				assert.strictEqual(mockOrderingService.messagesSequenced, 3);
+
+				// The blobs should be attached after processing the attach ops, and so should no longer
+				// be in the pending state
+				assert.strictEqual(blobManager.getPendingBlobs(), undefined);
+				// Shared blobs should be in the summary
+				const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+				assert.strictEqual(ids?.length, 3);
+				assert.strictEqual(redirectTable?.length, 3);
+
+				// Should be a no-op
+				await blobManager.sharePendingBlobs();
+
+				// Verify no uploads and no additional ops processed.
+				assert.strictEqual(mockBlobStorage.blobsCreated, 0);
+				assert.strictEqual(mockOrderingService.messagesSequenced, 3);
+			});
+		});
 	});
 }
