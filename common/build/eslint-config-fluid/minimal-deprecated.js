@@ -4,7 +4,7 @@
  */
 
 /**
- * Shared list of permitted imports for configuring and override the `import/no-internal-modules` rule.
+ * Shared list of permitted imports for configuring and override the `import-x/no-internal-modules` rule.
  */
 const permittedImports = [
 	// Within Fluid Framework allow import of '/internal' from other FF packages.

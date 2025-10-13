@@ -2009,16 +2009,49 @@
             ]
         },
         "import-x/resolver": {
-            "typescript": {
-                "extensions": [
-                    ".ts",
-                    ".tsx",
-                    ".d.ts",
-                    ".js",
-                    ".jsx"
+            "name": "tsResolver",
+            "options": {
+                "typescript": {
+                    "extensions": [
+                        ".ts",
+                        ".tsx",
+                        ".d.ts",
+                        ".js",
+                        ".jsx"
+                    ],
+                    "conditionNames": [
+                        "allow-ff-test-exports",
+                        "types",
+                        "import",
+                        "esm2020",
+                        "es2020",
+                        "es2015",
+                        "require",
+                        "node",
+                        "node-addons",
+                        "browser",
+                        "default"
+                    ]
+                }
+            },
+            "resolver": {
+                "DEFAULT_CONFIGS": [
+                    "tsconfig.json",
+                    "jsconfig.json"
                 ],
-                "conditionNames": [
-                    "allow-ff-test-exports",
+                "DEFAULT_IGNORE": "**/node_modules/**",
+                "DEFAULT_JSCONFIG": "jsconfig.json",
+                "DEFAULT_TRY_PATHS": [
+                    "",
+                    "tsconfig.json",
+                    "jsconfig.json"
+                ],
+                "DEFAULT_TSCONFIG": "tsconfig.json",
+                "IMPORT_RESOLVER_NAME": "eslint-import-resolver-typescript",
+                "JS_EXT_PATTERN": {},
+                "MATCH_ALL": "**",
+                "TSCONFIG_NOT_FOUND_REGEXP": {},
+                "defaultConditionNames": [
                     "types",
                     "import",
                     "esm2020",
@@ -2029,15 +2062,75 @@
                     "node-addons",
                     "browser",
                     "default"
-                ]
-            }
+                ],
+                "defaultExtensionAlias": {
+                    ".js": [
+                        ".ts",
+                        ".tsx",
+                        ".d.ts",
+                        ".js"
+                    ],
+                    ".ts": [
+                        ".ts",
+                        ".d.ts",
+                        ".js"
+                    ],
+                    ".jsx": [
+                        ".tsx",
+                        ".d.ts",
+                        ".jsx"
+                    ],
+                    ".tsx": [
+                        ".tsx",
+                        ".d.ts",
+                        ".jsx",
+                        ".js"
+                    ],
+                    ".cjs": [
+                        ".cts",
+                        ".d.cts",
+                        ".cjs"
+                    ],
+                    ".cts": [
+                        ".cts",
+                        ".d.cts",
+                        ".cjs"
+                    ],
+                    ".mjs": [
+                        ".mts",
+                        ".d.mts",
+                        ".mjs"
+                    ],
+                    ".mts": [
+                        ".mts",
+                        ".d.mts",
+                        ".mjs"
+                    ]
+                },
+                "defaultExtensions": [
+                    ".ts",
+                    ".tsx",
+                    ".d.ts",
+                    ".js",
+                    ".jsx",
+                    ".json",
+                    ".node"
+                ],
+                "defaultMainFields": [
+                    "types",
+                    "typings",
+                    "fesm2020",
+                    "fesm2015",
+                    "esm2020",
+                    "es2020",
+                    "module",
+                    "jsnext:main",
+                    "main"
+                ],
+                "interfaceVersion": 2
+            },
+            "typescript": true
         },
-        "import-x/resolver-next": [
-            {
-                "interfaceVersion": 3,
-                "name": "eslint-import-resolver-typescript"
-            }
-        ],
         "jsdoc": {
             "mode": "typescript",
             "tagNamePreference": {
