@@ -8,7 +8,10 @@
  * ESLint 8 uses the legacy config format, while ESLint 9 uses flat config.
  */
 
-const eslintVersion = parseInt(require("eslint/package.json").version.split(".")[0]);
+// Support testing against different ESLint versions using npm aliases
+const eslintPackage = process.env.ESLINT_PACKAGE || "eslint";
+const eslintVersion = parseInt(require(`${eslintPackage}/package.json`).version.split(".")[0]);
+const { ESLint } = require(eslintPackage);
 
 /**
  * Creates ESLint options object compatible with both ESLint 8 and 9.
@@ -63,4 +66,4 @@ function createESLintConfig(config) {
 	return eslintOptions;
 }
 
-module.exports = { createESLintConfig, eslintVersion };
+module.exports = { createESLintConfig, eslintVersion, ESLint };

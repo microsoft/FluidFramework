@@ -21,8 +21,8 @@
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"test": "npm run test:both",
 		"test:both": "npm run test:eslint8 && npm run test:eslint9",
-		"test:eslint8": "pnpm add -D eslint@~8.57.1 && pnpm run test:mocha",
-		"test:eslint9": "pnpm add -D eslint@~9.37.0 && pnpm run test:mocha",
+		"test:eslint8": "cross-env ESLINT_PACKAGE=eslint8 npm run test:mocha",
+		"test:eslint9": "cross-env ESLINT_PACKAGE=eslint npm run test:mocha",
 		"test:mocha": "mocha \"src/test/**/*.test.*js\""
 	},
 	"dependencies": {
@@ -34,7 +34,9 @@
 	"devDependencies": {
 		"@fluid-tools/markdown-magic": "file:../../../tools/markdown-magic",
 		"@fluidframework/build-common": "^2.0.3",
+		"cross-env": "^7.0.3",
 		"eslint": "~9.37.0",
+		"eslint8": "npm:eslint@~8.57.1",
 		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
 		"prettier": "~3.6.2",

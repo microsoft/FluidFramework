@@ -5,9 +5,8 @@
 
 const assert = require("assert");
 const path = require("path");
-const { ESLint } = require("eslint");
 const plugin = require("../../../index.js");
-const { createESLintConfig } = require("../eslintConfigHelper.js");
+const { createESLintConfig, ESLint } = require("../eslintConfigHelper.js");
 
 describe("Do not allow file path links in JSDoc/TSDoc comments", function () {
 	async function lintFile(file) {
