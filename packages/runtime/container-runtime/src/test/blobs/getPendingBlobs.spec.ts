@@ -360,5 +360,59 @@ for (const createBlobPayloadPending of [false, true]) {
 			// Blob should no longer appear in pending state
 			assert.strictEqual(blobManager.getPendingBlobs(), undefined);
 		});
+
+		it("Multiple blobs in multiple states", async () => {
+			const pendingBlobs: IPendingBlobs = {
+				["blob1"]: {
+					state: "localOnly",
+					blob: getSerializedBlobForString("hello"),
+				},
+				["blob2"]: {
+					state: "uploaded",
+					blob: getSerializedBlobForString("world"),
+					storageId: await getDedupedStorageIdForString("world"),
+					uploadTime: Date.now(),
+					minTTLInSeconds: MIN_TTL,
+				},
+				["blob3"]: {
+					state: "uploaded",
+					blob: getSerializedBlobForString("fizz"),
+					storageId: await getDedupedStorageIdForString("fizz"),
+					uploadTime: 0,
+					minTTLInSeconds: MIN_TTL,
+				},
+			};
+
+			const { mockBlobStorage, mockOrderingService, blobManager } = createTestMaterial({
+				pendingBlobs,
+				createBlobPayloadPending,
+			});
+
+			await blobManager.sharePendingBlobs();
+
+			assert(blobManager.hasBlob("blob1"));
+			const blob1 = await blobManager.getBlob("blob1", createBlobPayloadPending);
+			assert.strictEqual(blobToText(blob1), "hello");
+			assert(blobManager.hasBlob("blob2"));
+			const blob2 = await blobManager.getBlob("blob2", createBlobPayloadPending);
+			assert.strictEqual(blobToText(blob2), "world");
+			assert(blobManager.hasBlob("blob3"));
+			const blob3 = await blobManager.getBlob("blob3", createBlobPayloadPending);
+			assert.strictEqual(blobToText(blob3), "fizz");
+
+			// Two blobs uploaded (blob1 and blob3) and three ops processed
+			assert.strictEqual(mockBlobStorage.blobsCreated, 2);
+			assert.strictEqual(mockOrderingService.messagesSequenced, 3);
+
+			// Shared blobs should be in the summary
+			const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+			assert.strictEqual(ids?.length, 3);
+			assert.strictEqual(redirectTable?.length, 3);
+
+			// Blobs should no longer appear in pending state
+			assert.strictEqual(blobManager.getPendingBlobs(), undefined);
+		});
+
+		it("Does not proceed with sharing a pending blob if the attach op from a prior client is received", async () => {});
 	});
 }
