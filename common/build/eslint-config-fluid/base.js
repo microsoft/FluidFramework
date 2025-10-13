@@ -376,7 +376,7 @@ module.exports = {
 	settings: {
 		"import-x/extensions": [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
 		"import-x/parsers": {
-			"@typescript-eslint/parser": [".ts", ".tsx", ".d.ts"],
+			"@typescript-eslint/parser": [".ts", ".tsx", ".d.ts", ".cts", ".mts"],
 		},
 		"import-x/resolver": {
 			name: "tsResolver",
