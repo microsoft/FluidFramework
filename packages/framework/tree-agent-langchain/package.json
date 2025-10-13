@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/tree-agent-langchain",
-	"version": "2.63.0",
+	"version": "2.70.0",
 	"description": "LangChain integration helpers for @fluidframework/tree-agent",
 	"homepage": "https://fluidframework.com",
 	"repository": {
