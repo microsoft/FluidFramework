@@ -222,6 +222,88 @@ for (const createBlobPayloadPending of [false, true]) {
 			assert.strictEqual(ids, undefined);
 			assert.strictEqual(redirectTable, undefined);
 		});
+
+		it("Round-trips pending blobs when they are partially shared", async () => {
+			const pendingBlobs = {
+				["blob1"]: {
+					state: "localOnly",
+					blob: getSerializedBlobForString("hello"),
+				},
+				["blob2"]: {
+					state: "uploaded",
+					blob: getSerializedBlobForString("world"),
+					storageId: await getDedupedStorageIdForString("world"),
+					uploadTime: 0,
+					minTTLInSeconds: MIN_TTL,
+				},
+				["blob3"]: {
+					state: "uploaded",
+					blob: getSerializedBlobForString("fizz"),
+					storageId: await getDedupedStorageIdForString("fizz"),
+					uploadTime: Date.now(),
+					minTTLInSeconds: MIN_TTL,
+				},
+			} as const satisfies IPendingBlobs;
+
+			const { mockBlobStorage, mockOrderingService, blobManager } = createTestMaterial({
+				pendingBlobs,
+				createBlobPayloadPending,
+			});
+
+			mockBlobStorage.pause();
+			mockOrderingService.pause();
+
+			const sharePendingBlobsP = blobManager.sharePendingBlobs();
+
+			// Wait and make sure we are waiting on the uploads and messages
+			if (mockBlobStorage.blobsReceived < 2) {
+				await new Promise<void>((resolve) => {
+					const onBlobReceived = () => {
+						if (mockBlobStorage.blobsReceived === 2) {
+							mockBlobStorage.events.off("blobReceived", onBlobReceived);
+							resolve();
+						}
+					};
+					mockBlobStorage.events.on("blobReceived", onBlobReceived);
+				});
+			}
+			if (mockOrderingService.messagesReceived < 1) {
+				await new Promise<void>((resolve) => {
+					const onMessageReceived = () => {
+						if (mockOrderingService.messagesReceived === 1) {
+							mockOrderingService.events.off("messageReceived", onMessageReceived);
+							resolve();
+						}
+					};
+					mockOrderingService.events.on("messageReceived", onMessageReceived);
+				});
+			}
+
+			const roundTrippedPendingBlobs = blobManager.getPendingBlobs();
+			const expectedPendingBlobs: IPendingBlobs = {
+				// blob1 and blob3 should be unmodified (including retaining the uploadTime blob3 started with)
+				// since they were not expired and did not progress.
+				...pendingBlobs,
+				// Since blob2 was expired, it will be back in uploading state when we getPendingBlobs(),
+				// and so will be downgraded to localOnly.
+				["blob2"]: {
+					state: "localOnly",
+					blob: getSerializedBlobForString("world"),
+				},
+			};
+
+			assert.deepStrictEqual(roundTrippedPendingBlobs, expectedPendingBlobs);
+
+			// Nothing should have made it into the summary
+			const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+			assert.strictEqual(ids, undefined);
+			assert.strictEqual(redirectTable, undefined);
+
+			// Unpause everything and let the share complete so we can await the promise
+			mockBlobStorage.unpause();
+			mockOrderingService.unpause();
+			await sharePendingBlobsP;
+		});
 	});
 
 	describe(`Load with pending blobs (pending payloads): ${createBlobPayloadPending}`, () => {
@@ -513,7 +595,7 @@ for (const createBlobPayloadPending of [false, true]) {
 				assert.strictEqual(mockBlobStorage.blobsReceived, 2);
 				assert.strictEqual(mockOrderingService.messagesReceived, 2);
 
-				// The sharePendingBlobs() call should have resolved since all blobs are now attached
+				// The sharePendingBlobs() call should resolve since all blobs are now attached
 				await sharePendingBlobsP;
 				// The blobs should be attached after processing the attach messages, and so should no longer
 				// be in the pending state
@@ -534,6 +616,172 @@ for (const createBlobPayloadPending of [false, true]) {
 				});
 				assert.strictEqual(mockBlobStorage.blobsReceived, 2);
 				assert.strictEqual(mockOrderingService.messagesReceived, 2);
+			});
+
+			it("Attach message arrives during attach attempt", async () => {
+				const pendingBlobs: IPendingBlobs = {
+					["blob1"]: {
+						state: "localOnly",
+						blob: getSerializedBlobForString("hello"),
+					},
+					["blob2"]: {
+						state: "uploaded",
+						blob: getSerializedBlobForString("world"),
+						storageId: await getDedupedStorageIdForString("world"),
+						uploadTime: Date.now(),
+						minTTLInSeconds: MIN_TTL,
+					},
+					["blob3"]: {
+						state: "uploaded",
+						blob: getSerializedBlobForString("fizz"),
+						storageId: await getDedupedStorageIdForString("fizz"),
+						uploadTime: 0,
+						minTTLInSeconds: MIN_TTL,
+					},
+				};
+
+				const { mockBlobStorage, mockOrderingService, blobManager } = createTestMaterial({
+					pendingBlobs,
+					createBlobPayloadPending,
+				});
+
+				mockOrderingService.pause();
+
+				// Enqueue the attach messages from the prior client, so they will be sequenced before the
+				// new messages resulting from the sharePendingBlobs() call.
+				mockOrderingService.sendBlobAttachMessage("priorClientId", "blob1", "remoteBlob1");
+				mockOrderingService.sendBlobAttachMessage("priorClientId", "blob2", "remoteBlob2");
+				mockOrderingService.sendBlobAttachMessage("priorClientId", "blob3", "remoteBlob3");
+
+				const sharePendingBlobsP = blobManager.sharePendingBlobs();
+
+				// Wait and make sure all three blobs are awaiting an ack (on top of the three messages
+				// from the prior client)
+				if (mockOrderingService.messagesReceived < 6) {
+					await new Promise<void>((resolve) => {
+						const onMessageReceived = () => {
+							if (mockOrderingService.messagesReceived === 6) {
+								mockOrderingService.events.off("messageReceived", onMessageReceived);
+								resolve();
+							}
+						};
+						mockOrderingService.events.on("messageReceived", onMessageReceived);
+					});
+				}
+
+				assert.strictEqual(mockBlobStorage.blobsReceived, 2);
+				assert.strictEqual(mockOrderingService.messagesReceived, 6);
+
+				// Sequence the three messages from the prior client
+				mockOrderingService.sequenceOne();
+				mockOrderingService.sequenceOne();
+				mockOrderingService.sequenceOne();
+
+				// The sharePendingBlobs() call should resolve since all blobs are now attached
+				await sharePendingBlobsP;
+				// The blobs should be attached after processing the attach messages, and so should no longer
+				// be in the pending state
+				assert.strictEqual(blobManager.getPendingBlobs(), undefined);
+				// Shared blobs should be in the summary
+				const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+				assert.strictEqual(ids?.length, 3);
+				assert.strictEqual(redirectTable?.length, 3);
+
+				// Sequence/drop the messages generated by sharePendingBlobs() - either way we should not error
+				// or generate any further messages.
+				mockOrderingService.sequenceOne();
+				mockOrderingService.dropOne();
+				mockOrderingService.dropOne();
+
+				// Wait briefly to ensure there aren't any messages queued in microtasks
+				await new Promise<void>((resolve) => {
+					setTimeout(() => resolve(), 10);
+				});
+				assert.strictEqual(mockBlobStorage.blobsReceived, 2);
+				assert.strictEqual(mockOrderingService.messagesReceived, 6);
+			});
+
+			it("Attach message arrives after attach completes", async () => {
+				const pendingBlobs: IPendingBlobs = {
+					["blob1"]: {
+						state: "localOnly",
+						blob: getSerializedBlobForString("hello"),
+					},
+					["blob2"]: {
+						state: "uploaded",
+						blob: getSerializedBlobForString("world"),
+						storageId: await getDedupedStorageIdForString("world"),
+						uploadTime: Date.now(),
+						minTTLInSeconds: MIN_TTL,
+					},
+					["blob3"]: {
+						state: "uploaded",
+						blob: getSerializedBlobForString("fizz"),
+						storageId: await getDedupedStorageIdForString("fizz"),
+						uploadTime: 0,
+						minTTLInSeconds: MIN_TTL,
+					},
+				};
+
+				const { mockBlobStorage, mockOrderingService, blobManager } = createTestMaterial({
+					pendingBlobs,
+					createBlobPayloadPending,
+				});
+
+				mockOrderingService.pause();
+
+				const sharePendingBlobsP = blobManager.sharePendingBlobs();
+
+				// Wait and make sure all three blobs are awaiting an ack (on top of the three messages
+				// from the prior client)
+				if (mockOrderingService.messagesReceived < 3) {
+					await new Promise<void>((resolve) => {
+						const onMessageReceived = () => {
+							if (mockOrderingService.messagesReceived === 3) {
+								mockOrderingService.events.off("messageReceived", onMessageReceived);
+								resolve();
+							}
+						};
+						mockOrderingService.events.on("messageReceived", onMessageReceived);
+					});
+				}
+
+				// Enqueue the attach messages from the prior client after the ones from the sharePendingBlobs
+				// call, so they will be sequenced after. This scenario is probably rare in normal/intended use,
+				// since it would imply the prior client is still connected.
+				mockOrderingService.sendBlobAttachMessage("priorClientId", "blob1", "remoteBlob1");
+				mockOrderingService.sendBlobAttachMessage("priorClientId", "blob2", "remoteBlob2");
+				mockOrderingService.sendBlobAttachMessage("priorClientId", "blob3", "remoteBlob3");
+
+				assert.strictEqual(mockBlobStorage.blobsReceived, 2);
+				assert.strictEqual(mockOrderingService.messagesReceived, 6);
+
+				// Sequence the three messages from the new client
+				mockOrderingService.sequenceOne();
+				mockOrderingService.sequenceOne();
+				mockOrderingService.sequenceOne();
+
+				// The sharePendingBlobs() call should resolve since all blobs are now attached
+				await sharePendingBlobsP;
+				// The blobs should be attached after processing the attach messages, and so should no longer
+				// be in the pending state
+				assert.strictEqual(blobManager.getPendingBlobs(), undefined);
+				// Shared blobs should be in the summary
+				const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+				assert.strictEqual(ids?.length, 3);
+				assert.strictEqual(redirectTable?.length, 3);
+
+				// Sequence the messages from the prior client. We should not error.
+				mockOrderingService.sequenceOne();
+				mockOrderingService.sequenceOne();
+				mockOrderingService.sequenceOne();
+
+				// Wait briefly to ensure there aren't any messages queued in microtasks
+				await new Promise<void>((resolve) => {
+					setTimeout(() => resolve(), 10);
+				});
+				assert.strictEqual(mockBlobStorage.blobsReceived, 2);
+				assert.strictEqual(mockOrderingService.messagesReceived, 6);
 			});
 		});
 	});
