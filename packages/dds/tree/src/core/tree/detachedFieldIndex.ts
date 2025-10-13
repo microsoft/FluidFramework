@@ -84,7 +84,7 @@ export class DetachedFieldIndex {
 	) {
 		this.options = options ?? {
 			jsonValidator: FormatValidatorNoOp,
-			oldestCompatibleClient: FluidClientVersion.v2_0,
+			minVersionForCollab: FluidClientVersion.v2_0,
 		};
 		this.codec = makeDetachedFieldIndexCodec(revisionTagCodec, this.options, idCompressor);
 	}

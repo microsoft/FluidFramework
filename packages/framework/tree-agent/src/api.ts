@@ -35,13 +35,13 @@ export interface SemanticAgentOptions {
 	 */
 	validateEdit?: (code: string) => void | Promise<void>;
 	/**
-	 * Evaluates (executes) any generated JavaScript created by the {@link SharedTreeChatModel.editToolName | model's editing tool}.
+	 * Evaluates/runs any generated JavaScript created by the {@link SharedTreeChatModel.editToolName | model's editing tool}.
 	 * @remarks This happens only after the code has been successfully validated by the optional {@link SemanticAgentOptions.validateEdit | validateEdit} function.
 	 * @param context - An object that must be provided to the generated code as a variable named "context" in its top-level scope.
 	 * @param code - The generated JavaScript code as a string.
-	 * @throws If an error is thrown while evaluating the code, it will be caught and the message will be forwarded to the model for debugging.
+	 * @throws If an error is thrown while executing the code, it will be caught and the message will be forwarded to the model for debugging.
 	 * @remarks If this function is not provided, the generated code will be executed using a simple `eval` call, which may not provide sufficient security guarantees for some environments.
-	 * Use a library such as SES to provide a more secure implementation - see {@link createSesEditEvaluator} for a drop-in option.
+	 * Use a library such as SES to provide a more secure implementation - see `@fluidframework/tree-agent-ses` for a drop-in implementation.
 	 */
 	executeEdit?: (context: Record<string, unknown>, code: string) => void | Promise<void>;
 	/**
@@ -114,6 +114,7 @@ export interface SharedTreeChatQuery {
 /**
  * A plugin interface that handles queries from a {@link SharedTreeSemanticAgent}.
  * @remarks This wraps an underlying communication with an LLM and receives all necessary {@link SharedTreeChatModel.appendContext | context} from the {@link SharedTreeSemanticAgent | agent} for the LLM to properly analyze and edit the tree.
+ * See `@fluidframework/tree-agent-langchain` for a drop-in implementation based on the LangChain library.
  * @alpha
  */
 export interface SharedTreeChatModel {

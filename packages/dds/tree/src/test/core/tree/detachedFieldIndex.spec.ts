@@ -224,7 +224,7 @@ function generateTestCases(
 describe("DetachedFieldIndex Codecs", () => {
 	const options: CodecWriteOptions = {
 		jsonValidator: FormatValidatorBasic,
-		oldestCompatibleClient: FluidClientVersion.v2_0,
+		minVersionForCollab: FluidClientVersion.v2_0,
 	};
 
 	it("encodes with a version stamp.", () => {
