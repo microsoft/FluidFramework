@@ -72,9 +72,9 @@ module.exports = {
 	extends: [
 		"./base",
 		"plugin:eslint-comments/recommended",
-		"plugin:import/errors",
-		"plugin:import/warnings",
-		"plugin:import/typescript",
+		"plugin:import-x/errors",
+		"plugin:import-x/warnings",
+		"plugin:import-x/typescript",
 		"prettier",
 	],
 	globals: {
