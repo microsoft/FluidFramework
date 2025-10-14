@@ -232,10 +232,13 @@ export async function createContainerFromPayload(
 			body: JSON.stringify(requestPayload),
 		});
 
+		// Fetch doesn't auto-throw on non-2xx responses like axios did, so check explicitly
+		if (!response.ok) {
+			throw new Error(`Error creating container. Status code: ${response.status}`);
+		}
+
 		if (response.status === 201) {
 			console.log("Container created successfully");
-		} else {
-			throw new Error(`Error creating container. Status code: ${response.status}`);
 		}
 
 		const data: { id?: string } | string = (await response.json()) as { id?: string } | string;
