@@ -23,14 +23,14 @@ const sf = new SchemaFactoryAlpha("com.fluidframework.serializable");
  * @remarks
  * Schema which replicate the Fluid Serializable data model with {@link TreeNode}s.
  *
- * Fluid Serializable data can be imported from the {@link FluidSerializableAsTree.Data|Fluid Serializable format} into this format using {@link (TreeAlpha:interface).importConcise} with the {@link FluidSerializableAsTree.(Tree:variable)} schema.
+ * Fluid Serializable data can be imported from the {@link FluidSerializableAsTree.Data|Fluid Serializable format} into this format using {@link (TreeBeta:interface).importConcise} with the {@link FluidSerializableAsTree.(Tree:variable)} schema.
  * @alpha
  */
 export namespace FluidSerializableAsTree {
 	/**
 	 * Data which can be serialized by Fluid.
 	 * @remarks
-	 * Can be encoded as a {@link FluidSerializableAsTree.(Tree:type)} using {@link (TreeAlpha:interface).importConcise}.
+	 * Can be encoded as a {@link FluidSerializableAsTree.(Tree:type)} using {@link (TreeBeta:interface).importConcise}.
 	 * @alpha
 	 */
 	export type Data = JsonCompatible<IFluidHandle>;
@@ -39,7 +39,7 @@ export namespace FluidSerializableAsTree {
 	 * {@link AllowedTypes} for any content allowed in the {@link FluidSerializableAsTree} domain.
 	 * @example
 	 * ```typescript
-	 * const tree = TreeAlpha.importConcise(FluidSerializableAsTree.Tree, { example: { nested: true }, value: 5 });
+	 * const tree = TreeBeta.importConcise(FluidSerializableAsTree.Tree, { example: { nested: true }, value: 5 });
 	 * ```
 	 * @alpha
 	 */
@@ -69,7 +69,7 @@ export namespace FluidSerializableAsTree {
 	 * // Due to TypeScript restrictions on recursive types, the constructor and be somewhat limiting.
 	 * const fromArray = new JsonAsTreeObject([["a", 0]]);
 	 * // Using `importConcise` can work better for Fluid Serializable data:
-	 * const imported = TreeAlpha.importConcise(FluidSerializableAsTree.Object, { a: 0 });
+	 * const imported = TreeBeta.importConcise(FluidSerializableAsTree.Object, { a: 0 });
 	 * // Node API is like a Map:
 	 * const value = imported.get("a");
 	 * ```
@@ -102,13 +102,13 @@ export namespace FluidSerializableAsTree {
 	/**
 	 * Arbitrary Fluid Serializable array as a {@link TreeNode}.
 	 * @remarks
-	 * This can be imported using {@link (TreeAlpha:interface).importConcise}.
+	 * This can be imported using {@link (TreeBeta:interface).importConcise}.
 	 * @example
 	 * ```typescript
 	 * // Due to TypeScript restrictions on recursive types, the constructor can be somewhat limiting.
 	 * const usingConstructor = new FluidSerializableAsTree.Array(["a", 0, new FluidSerializableAsTree.Array([1])]);
 	 * // Using `importConcise` can work better for Fluid Serializable data:
-	 * const imported = TreeAlpha.importConcise(FluidSerializableAsTree.Array, ["a", 0, [1]]);
+	 * const imported = TreeBeta.importConcise(FluidSerializableAsTree.Array, ["a", 0, [1]]);
 	 * // Node API is like an Array:
 	 * const inner: FluidSerializableAsTree.Tree = imported[2];
 	 * assert(Tree.is(inner, FluidSerializableAsTree.Array));
