@@ -8,7 +8,7 @@
         "@eslint-community/eslint-comments",
         "@typescript-eslint:@typescript-eslint/eslint-plugin@8.18.2",
         "import-x:eslint-plugin-import-x@4.16.1",
-        "unicorn:eslint-plugin-unicorn@48.0.1",
+        "unicorn:eslint-plugin-unicorn@54.0.0",
         "@rushstack",
         "@rushstack/security",
         "jsdoc",
@@ -1986,6 +1986,9 @@
             2
         ],
         "unicorn/consistent-destructuring": [
+            0
+        ],
+        "unicorn/consistent-empty-array-spread": [
             2
         ],
         "unicorn/consistent-function-scoping": [
@@ -2027,6 +2030,9 @@
         "unicorn/no-abusive-eslint-disable": [
             2
         ],
+        "unicorn/no-anonymous-default-export": [
+            2
+        ],
         "unicorn/no-array-callback-reference": [
             2
         ],
@@ -2043,6 +2049,9 @@
             2
         ],
         "unicorn/no-await-expression-member": [
+            2
+        ],
+        "unicorn/no-await-in-promise-methods": [
             2
         ],
         "unicorn/no-console-spaces": [
@@ -2063,6 +2072,9 @@
         "unicorn/no-instanceof-array": [
             2
         ],
+        "unicorn/no-invalid-fetch-options": [
+            2
+        ],
         "unicorn/no-invalid-remove-event-listener": [
             2
         ],
@@ -2072,7 +2084,13 @@
         "unicorn/no-lonely-if": [
             2
         ],
+        "unicorn/no-magic-array-flat-depth": [
+            2
+        ],
         "unicorn/no-negated-condition": [
+            2
+        ],
+        "unicorn/no-negation-in-equality-check": [
             2
         ],
         "unicorn/no-nested-ternary": [
@@ -2093,6 +2111,9 @@
         "unicorn/no-process-exit": [
             2
         ],
+        "unicorn/no-single-promise-in-promise-methods": [
+            2
+        ],
         "unicorn/no-static-only-class": [
             2
         ],
@@ -2106,6 +2127,9 @@
             2
         ],
         "unicorn/no-unnecessary-await": [
+            2
+        ],
+        "unicorn/no-unnecessary-polyfills": [
             2
         ],
         "unicorn/no-unreadable-array-destructuring": [
@@ -2261,6 +2285,9 @@
         "unicorn/prefer-spread": [
             2
         ],
+        "unicorn/prefer-string-raw": [
+            2
+        ],
         "unicorn/prefer-string-replace-all": [
             0
         ],
@@ -2271,6 +2298,9 @@
             2
         ],
         "unicorn/prefer-string-trim-start-end": [
+            2
+        ],
+        "unicorn/prefer-structured-clone": [
             2
         ],
         "unicorn/prefer-switch": [
