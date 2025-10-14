@@ -173,10 +173,10 @@ export function semanticVersionToMinimumVersionForCollab(
 		checkValidMinVersionForCollabVerbose(minVersionForCollab);
 	if (!(isValidSemver && isGteLowestMinVersion && isLtePkgVersion)) {
 		throw new UsageError(
-			`Version ${minVersionForCollab} is not a valid MinimumVersionForCollab.` +
-				` It must be in a valid semver format, at least ${lowestMinVersionForCollab},` +
-				` and less than or equal to the current package version ${pkgVersion}.` +
-				` Details: { isValidSemver: ${isValidSemver}, isGteLowestMinVersion: ${isGteLowestMinVersion}, isLtePkgVersion: ${isLtePkgVersion} }`,
+			`Version ${minVersionForCollab} is not a valid MinimumVersionForCollab. ` +
+				`It must be in a valid semver format, at least ${lowestMinVersionForCollab}, ` +
+				`and less than or equal to the current package version ${pkgVersion}. ` +
+				`Details: { isValidSemver: ${isValidSemver}, isGteLowestMinVersion: ${isGteLowestMinVersion}, isLtePkgVersion: ${isLtePkgVersion} }`,
 		);
 	}
 
