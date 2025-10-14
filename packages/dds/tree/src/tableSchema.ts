@@ -591,20 +591,12 @@ export namespace System_TableSchema {
 				return new this({ columns: [], rows: [] }) as InstanceType<TThis>;
 			}
 
-			public getColumn(id: string): ColumnValueType | undefined {
-				// TypeScript is unable to narrow the types correctly here, hence the casts.
-				// See: https://github.com/microsoft/TypeScript/issues/52144
-				return this.columns.find((column) => (column as ColumnValueType).id === id) as
-					| ColumnValueType
-					| undefined;
+			public getColumn(indexOrId: number | string): ColumnValueType | undefined {
+				return this._tryGetColumn(indexOrId);
 			}
 
-			public getRow(id: string): RowValueType | undefined {
-				// TypeScript is unable to narrow the types correctly here, hence the casts.
-				// See: https://github.com/microsoft/TypeScript/issues/52144
-				return this.rows.find((_row) => (_row as RowValueType).id === id) as
-					| RowValueType
-					| undefined;
+			public getRow(indexOrId: number | string): RowValueType | undefined {
+				return this._tryGetRow(indexOrId);
 			}
 
 			public getCell(
@@ -816,7 +808,8 @@ export namespace System_TableSchema {
 					// So if we throw an error here for any row, no rows will be removed.
 					for (const rowToRemove of rowsToRemove) {
 						// We have already validated that all of the rows exist above, so this is safe.
-						this.rows.removeAt(this.rows.indexOf(rowToRemove));
+						const index = this.rows.indexOf(rowToRemove);
+						this.rows.removeAt(index);
 					}
 				});
 				return rowsToRemove;
@@ -908,8 +901,30 @@ export namespace System_TableSchema {
 			private _tryGetColumn(
 				columnOrIdOrIndex: ColumnValueType | string | number,
 			): ColumnValueType | undefined {
-				const columnId = this._tryGetColumnId(columnOrIdOrIndex);
-				return columnId === undefined ? undefined : this.getColumn(columnId);
+				if (typeof columnOrIdOrIndex === "number") {
+					if (columnOrIdOrIndex < 0 || columnOrIdOrIndex >= this.columns.length) {
+						return undefined;
+					}
+					// TypeScript is unable to narrow the types correctly here, hence the cast.
+					// See: https://github.com/microsoft/TypeScript/issues/52144
+					return this.columns[columnOrIdOrIndex] as ColumnValueType;
+				}
+
+				if (typeof columnOrIdOrIndex === "string") {
+					const columnId = columnOrIdOrIndex;
+					// TypeScript is unable to narrow the types correctly here, hence the casts.
+					// See: https://github.com/microsoft/TypeScript/issues/52144
+					return this.columns.find((col) => (col as ColumnValueType).id === columnId) as
+						| ColumnValueType
+						| undefined;
+				}
+
+				// If the user provided a node, ensure it actually exists in this table.
+				if (!this.columns.includes(columnOrIdOrIndex)) {
+					return undefined;
+				}
+
+				return columnOrIdOrIndex;
 			}
 
 			/**
@@ -922,34 +937,9 @@ export namespace System_TableSchema {
 			): ColumnValueType {
 				const column = this._tryGetColumn(columnOrIdOrIndex);
 				if (column === undefined) {
-					this._throwMissingColumnError(columnOrIdOrIndex);
+					Table._throwMissingColumnError(columnOrIdOrIndex);
 				}
 				return column;
-			}
-
-			/**
-			 * Resolves a Column node, ID, or index to its ID.
-			 * @remarks
-			 * If an ID is provided, it is returned as-is.
-			 * If an index is provided, the corresponding column's ID is returned.
-			 * If a node is provided, its ID is returned.
-			 */
-			private _tryGetColumnId(
-				columnOrIdOrIndex: ColumnValueType | string | number,
-			): string | undefined {
-				if (typeof columnOrIdOrIndex === "string") {
-					return columnOrIdOrIndex;
-				}
-
-				if (typeof columnOrIdOrIndex === "number") {
-					if (columnOrIdOrIndex < 0 || columnOrIdOrIndex >= this.columns.length) {
-						return undefined;
-					}
-					const column = this.columns[columnOrIdOrIndex] as ColumnValueType;
-					return column.id;
-				}
-
-				return columnOrIdOrIndex.id;
 			}
 
 			/**
@@ -962,7 +952,7 @@ export namespace System_TableSchema {
 			/**
 			 * Throw a `UsageError` for a missing Column by its ID or index.
 			 */
-			private _throwMissingColumnError(
+			private static _throwMissingColumnError(
 				columnOrIdOrIndex: ColumnValueType | string | number,
 			): never {
 				if (typeof columnOrIdOrIndex === "number") {
@@ -980,10 +970,32 @@ export namespace System_TableSchema {
 			 * @remarks Searches for a match based strictly on the ID and returns that result.
 			 */
 			private _tryGetRow(
-				rowOrIdOrIndex: string | number | RowValueType,
+				rowOrIdOrIndex: RowValueType | string | number,
 			): RowValueType | undefined {
-				const rowId = this._tryGetRowId(rowOrIdOrIndex);
-				return rowId === undefined ? undefined : this.getRow(rowId);
+				if (typeof rowOrIdOrIndex === "number") {
+					if (rowOrIdOrIndex < 0 || rowOrIdOrIndex >= this.rows.length) {
+						return undefined;
+					}
+					// TypeScript is unable to narrow the types correctly here, hence the cast.
+					// See: https://github.com/microsoft/TypeScript/issues/52144
+					return this.rows[rowOrIdOrIndex] as RowValueType;
+				}
+
+				if (typeof rowOrIdOrIndex === "string") {
+					const rowId = rowOrIdOrIndex;
+					// TypeScript is unable to narrow the types correctly here, hence the casts.
+					// See: https://github.com/microsoft/TypeScript/issues/52144
+					return this.rows.find((row) => (row as RowValueType).id === rowId) as
+						| RowValueType
+						| undefined;
+				}
+
+				// If the user provided a node, ensure it actually exists in this table.
+				if (!this.rows.includes(rowOrIdOrIndex)) {
+					return undefined;
+				}
+
+				return rowOrIdOrIndex;
 			}
 
 			/**
@@ -997,31 +1009,6 @@ export namespace System_TableSchema {
 					Table._throwMissingRowError(rowOrIdOrIndex);
 				}
 				return row;
-			}
-
-			/**
-			 * Resolves a Row node, ID, or index to its ID.
-			 * @remarks
-			 * If an ID is provided, it is returned as-is.
-			 * If an index is provided, the corresponding Row's ID is returned.
-			 * If a node is provided, its ID is returned.
-			 */
-			private _tryGetRowId(
-				rowOrIdOrIndex: RowValueType | string | number,
-			): string | undefined {
-				if (typeof rowOrIdOrIndex === "string") {
-					return rowOrIdOrIndex;
-				}
-
-				if (typeof rowOrIdOrIndex === "number") {
-					if (rowOrIdOrIndex < 0 || rowOrIdOrIndex >= this.rows.length) {
-						return undefined;
-					}
-					const foo = this.rows[rowOrIdOrIndex] as RowValueType;
-					return foo.id;
-				}
-
-				return rowOrIdOrIndex.id;
 			}
 
 			/**
@@ -1552,19 +1539,27 @@ export namespace TableSchema {
 		 */
 		readonly rows: TreeArrayNode<TRow>;
 
-		// TODO: by index
 		/**
 		 * Gets a table column by its {@link TableSchema.Column.id}.
 		 * @returns The column, if it exists. Otherwise, `undefined`.
 		 */
 		getColumn(id: string): TreeNodeFromImplicitAllowedTypes<TColumn> | undefined;
+		/**
+		 * Gets a table column by its index in the table.
+		 * @returns The column, if it exists. Otherwise, `undefined`.
+		 */
+		getColumn(index: number): TreeNodeFromImplicitAllowedTypes<TColumn> | undefined;
 
-		// TODO: by index
 		/**
 		 * Gets a table row by its {@link TableSchema.Row.id}.
 		 * @returns The row, if it exists. Otherwise, `undefined`.
 		 */
 		getRow(id: string): TreeNodeFromImplicitAllowedTypes<TRow> | undefined;
+		/**
+		 * Gets a table row by its index in the table.
+		 * @returns The row, if it exists. Otherwise, `undefined`.
+		 */
+		getRow(index: number): TreeNodeFromImplicitAllowedTypes<TRow> | undefined;
 
 		/**
 		 * Gets a cell in the table by corresponding column and row.
