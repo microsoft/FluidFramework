@@ -16,7 +16,7 @@ import { inc } from "semver";
  * Escapes special regex characters in a string to make it safe for use in a RegExp.
  */
 function escapeRegex(str: string): string {
-	return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+	return str.replace(/[$()*+.?[\\\]^{|}]/g, "\\$&");
 }
 
 /**
