@@ -10,9 +10,6 @@ const { createESLintConfig, eslintVersion, ESLint } = require("../eslintConfigHe
 describe(`Do not allow file path links in JSDoc/TSDoc comments (eslint ${eslintVersion})`, function () {
 	async function lintFile(file) {
 		const eslintOptions = createESLintConfig({
-			parserOptions: {
-				project: path.join(__dirname, "../example/tsconfig.json"),
-			},
 			rules: {
 				"@fluid-internal/fluid/no-file-path-links-in-jsdoc": "error",
 			},

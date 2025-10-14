@@ -10,9 +10,6 @@ const { createESLintConfig, eslintVersion, ESLint } = require("../eslintConfigHe
 describe(`ESLint Rule Tests (eslint ${eslintVersion})`, function () {
 	async function lintFile(file) {
 		const eslintOptions = createESLintConfig({
-			parserOptions: {
-				project: path.join(__dirname, "../example/tsconfig.json"),
-			},
 			rules: {
 				"@fluid-internal/fluid/no-unchecked-record-access": "error",
 			},

@@ -5,18 +5,9 @@
 
 const assert = require("assert");
 const path = require("path");
-const { createESLintConfig, eslintVersion, ESLint } = require("../eslintConfigHelper.cjs");
+const { createESLintInstance, eslintVersion } = require("../eslintConfigHelper.cjs");
 
 describe(`ESLint Rule Tests (eslint ${eslintVersion})`, function () {
-	function createESLintInstance(config) {
-		const eslintOptions = createESLintConfig({
-			parserOptions: config.parserOptions,
-			rules: config.rules,
-			extraPlugins: config.plugins,
-		});
-
-		return new ESLint(eslintOptions);
-	}
 
 	it("Should report an error for restricted tag imports", async function () {
 		const eslint = createESLintInstance({
@@ -28,9 +19,6 @@ describe(`ESLint Rule Tests (eslint ${eslintVersion})`, function () {
 						exceptions: { "@alpha": ["./exceptionFile.ts"] },
 					},
 				],
-			},
-			parserOptions: {
-				project: path.join(__dirname, "../example/tsconfig.json"),
 			},
 		});
 		const filesToLint = ["fileWithImports.ts", "mockModule.ts"].map((file) =>

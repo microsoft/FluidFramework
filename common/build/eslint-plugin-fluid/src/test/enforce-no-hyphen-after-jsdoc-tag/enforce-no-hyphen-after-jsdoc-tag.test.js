@@ -15,9 +15,6 @@ describe(`Do not allow \`-\` following JSDoc/TSDoc tags (eslint ${eslintVersion}
 	 */
 	async function lintFile(file) {
 		const eslintOptions = createESLintConfig({
-			parserOptions: {
-				project: path.join(__dirname, "../example/tsconfig.json"),
-			},
 			rules: {
 				"@fluid-internal/fluid/no-hyphen-after-jsdoc-tag": "error",
 			},
