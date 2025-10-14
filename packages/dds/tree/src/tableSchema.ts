@@ -825,9 +825,9 @@ export namespace System_TableSchema {
 			public removeCell(
 				key: TableSchema.CellKey<TColumnSchema, TRowSchema>,
 			): CellValueType | undefined {
-				const { column: columnOrId, row: rowOrId } = key;
-				const row = this._getRow(rowOrId);
-				const column = this._getColumn(columnOrId);
+				const { column: columnOrIdOrIndex, row: rowOrIdOrIndex } = key;
+				const row = this._getRow(rowOrIdOrIndex);
+				const column = this._getColumn(columnOrIdOrIndex);
 
 				const cell: CellValueType | undefined = row.getCell(column.id);
 				if (cell === undefined) {
@@ -906,7 +906,7 @@ export namespace System_TableSchema {
 			 * @remarks Searches for a match based strictly on the ID and returns that result.
 			 */
 			private _tryGetColumn(
-				columnOrId: string | ColumnValueType,
+				columnOrId: ColumnValueType | string | number,
 			): ColumnValueType | undefined {
 				const columnId = this._getColumnId(columnOrId);
 				return this.getColumn(columnId);
@@ -917,21 +917,37 @@ export namespace System_TableSchema {
 			 * @throws Throws a `UsageError` if there is no match.
 			 * @remarks Searches for a match based strictly on the ID and returns that result.
 			 */
-			private _getColumn(columnOrId: string | ColumnValueType): ColumnValueType {
-				const column = this._tryGetColumn(columnOrId);
+			private _getColumn(
+				columnOrIdOrIndex: ColumnValueType | string | number,
+			): ColumnValueType {
+				const column = this._tryGetColumn(columnOrIdOrIndex);
 				if (column === undefined) {
-					this._throwMissingColumnError(this._getColumnId(columnOrId));
+					this._throwMissingColumnIdError(this._getColumnId(columnOrIdOrIndex));
 				}
 				return column;
 			}
 
 			/**
-			 * Resolves a Column node or ID to its ID.
+			 * Resolves a Column node, ID, or index to its ID.
+			 * @remarks
 			 * If an ID is provided, it is returned as-is.
+			 * If an index is provided, the corresponding column's ID is returned.
 			 * If a node is provided, its ID is returned.
 			 */
-			private _getColumnId(columnOrId: string | ColumnValueType): string {
-				return typeof columnOrId === "string" ? columnOrId : columnOrId.id;
+			private _getColumnId(columnOrIdOrIndex: ColumnValueType | string | number): string {
+				if (typeof columnOrIdOrIndex === "string") {
+					return columnOrIdOrIndex;
+				}
+
+				if (typeof columnOrIdOrIndex === "number") {
+					if (columnOrIdOrIndex < 0 || columnOrIdOrIndex >= this.columns.length) {
+						Table._throwColumnIndexOutOfBoundsError(columnOrIdOrIndex);
+					}
+					const column = this.columns[columnOrIdOrIndex] as ColumnValueType;
+					return column.id;
+				}
+
+				return columnOrIdOrIndex.id;
 			}
 
 			/**
@@ -944,8 +960,17 @@ export namespace System_TableSchema {
 			/**
 			 * Throw a `UsageError` for a missing Column by its ID.
 			 */
-			private _throwMissingColumnError(columnId: string): never {
+			private _throwMissingColumnIdError(columnId: string): never {
 				throw new UsageError(`No column with ID "${columnId}" exists in the table.`);
+			}
+
+			/**
+			 * Throw a `UsageError` for a missing Row by its index.
+			 */
+			private static _throwColumnIndexOutOfBoundsError(columnIndex: number): never {
+				throw new UsageError(
+					`Column index "${columnIndex}" is out of bounds. Expected to be on [0, ${columnIndex - 1}].`,
+				);
 			}
 
 			/**
@@ -953,8 +978,10 @@ export namespace System_TableSchema {
 			 * Returns `undefined` if there is no match.
 			 * @remarks Searches for a match based strictly on the ID and returns that result.
 			 */
-			private _tryGetRow(rowOrId: string | RowValueType): RowValueType | undefined {
-				const rowId = this._getRowId(rowOrId);
+			private _tryGetRow(
+				rowOrIdOrIndex: string | number | RowValueType,
+			): RowValueType | undefined {
+				const rowId = this._getRowId(rowOrIdOrIndex);
 				return this.getRow(rowId);
 			}
 
@@ -963,28 +990,51 @@ export namespace System_TableSchema {
 			 * @throws Throws a `UsageError` if there is no match.
 			 * @remarks Searches for a match based strictly on the ID and returns that result.
 			 */
-			private _getRow(rowOrId: string | RowValueType): RowValueType {
-				const row = this._tryGetRow(rowOrId);
+			private _getRow(rowOrIdOrIndex: RowValueType | string | number): RowValueType {
+				const row = this._tryGetRow(rowOrIdOrIndex);
 				if (row === undefined) {
-					this._throwMissingRowError(this._getRowId(rowOrId));
+					Table._throwMissingRowIdError(this._getRowId(rowOrIdOrIndex));
 				}
 				return row;
 			}
 
 			/**
-			 * Resolves a Row node or ID to its ID.
+			 * Resolves a Row node, ID, or index to its ID.
+			 * @remarks
 			 * If an ID is provided, it is returned as-is.
+			 * If an index is provided, the corresponding Row's ID is returned.
 			 * If a node is provided, its ID is returned.
 			 */
-			private _getRowId(rowOrId: string | RowValueType): string {
-				return typeof rowOrId === "string" ? rowOrId : rowOrId.id;
+			private _getRowId(rowOrIdOrIndex: RowValueType | string | number): string {
+				if (typeof rowOrIdOrIndex === "string") {
+					return rowOrIdOrIndex;
+				}
+
+				if (typeof rowOrIdOrIndex === "number") {
+					if (rowOrIdOrIndex < 0 || rowOrIdOrIndex >= this.rows.length) {
+						Table._throwRowIndexOutOfBoundsError(rowOrIdOrIndex);
+					}
+					const foo = this.rows[rowOrIdOrIndex] as RowValueType;
+					return foo.id;
+				}
+
+				return rowOrIdOrIndex.id;
 			}
 
 			/**
 			 * Throw a `UsageError` for a missing Row by its ID.
 			 */
-			private _throwMissingRowError(rowId: string): never {
+			private static _throwMissingRowIdError(rowId: string): never {
 				throw new UsageError(`No row with ID "${rowId}" exists in the table.`);
+			}
+
+			/**
+			 * Throw a `UsageError` for a missing Row by its index.
+			 */
+			private static _throwRowIndexOutOfBoundsError(rowIndex: number): never {
+				throw new UsageError(
+					`Row index "${rowIndex}" is out of bounds. Expected to be on [0, ${rowIndex - 1}].`,
+				);
 			}
 
 			private static _removeRange<TNodeSchema extends ImplicitAllowedTypes>(
@@ -1413,14 +1463,14 @@ export namespace TableSchema {
 		TRow extends ImplicitAllowedTypes,
 	> {
 		/**
-		 * {@link TableSchema.Column} or {@link TableSchema.Column.id} at which the cell is located.
+		 * {@link TableSchema.Column}, {@link TableSchema.Column.id}, or column index at which the cell is located.
 		 */
-		readonly column: string | TreeNodeFromImplicitAllowedTypes<TColumn>;
+		readonly column: string | number | TreeNodeFromImplicitAllowedTypes<TColumn>;
 
 		/**
-		 * {@link TableSchema.Row} or {@link TableSchema.Row.id} at which the cell is located.
+		 * {@link TableSchema.Row}, {@link TableSchema.Row.id}, or row index at which the cell is located.
 		 */
-		readonly row: string | TreeNodeFromImplicitAllowedTypes<TRow>;
+		readonly row: string | number | TreeNodeFromImplicitAllowedTypes<TRow>;
 	}
 
 	/**
