@@ -1555,12 +1555,14 @@ export namespace TableSchema {
 		// TODO: by index
 		/**
 		 * Gets a table column by its {@link TableSchema.Column.id}.
+		 * @returns The column, if it exists. Otherwise, `undefined`.
 		 */
 		getColumn(id: string): TreeNodeFromImplicitAllowedTypes<TColumn> | undefined;
 
 		// TODO: by index
 		/**
 		 * Gets a table row by its {@link TableSchema.Row.id}.
+		 * @returns The row, if it exists. Otherwise, `undefined`.
 		 */
 		getRow(id: string): TreeNodeFromImplicitAllowedTypes<TRow> | undefined;
 
