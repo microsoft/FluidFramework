@@ -66,6 +66,7 @@ import {
 	notifiesReadOnlyState,
 	encodeHandlesInContainerRuntime,
 	type IFluidDataStorePolicies,
+	type MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -293,6 +294,11 @@ export class FluidDataStoreRuntime
 	private readonly submitMessagesWithoutEncodingHandles: boolean;
 
 	/**
+	 * See `IFluidDataStoreRuntimeInternalConfig.minVersionForCollab`.
+	 */
+	public readonly minVersionForCollab?: MinimumVersionForCollab | undefined;
+
+	/**
 	 * Create an instance of a DataStore runtime.
 	 *
 	 * @param dataStoreContext - Context object for the runtime.
@@ -441,6 +447,8 @@ export class FluidDataStoreRuntime
 		// They're accessed via IFluidDataStoreRuntimeExperimental interface.
 		// eslint-disable-next-line no-void
 		void [this.inStagingMode, this.isDirty];
+
+		this.minVersionForCollab = this.dataStoreContext.minVersionForCollab;
 	}
 
 	/**
@@ -1128,25 +1136,10 @@ export class FluidDataStoreRuntime
 	private visitLocalBoundContextsDuringAttach(
 		visitor: (contextId: string, context: LocalChannelContextBase) => void,
 	): void {
-		/**
-		 * back-compat 0.59.1000 - getAttachSummary() is called when making a data store globally visible (previously
-		 * attaching state). Ideally, attachGraph() should have already be called making it locally visible. However,
-		 * before visibility state was added, this may not have been the case and getAttachSummary() could be called:
-		 *
-		 * 1. Before attaching the data store - When a detached container is attached.
-		 *
-		 * 2. After attaching the data store - When a data store is created and bound in an attached container.
-		 *
-		 * The basic idea is that all local object should become locally visible before they are globally visible.
-		 */
-		this.attachGraph();
-
-		// This assert cannot be added now due to back-compat. To be uncommented when the following issue is fixed -
-		// https://github.com/microsoft/FluidFramework/issues/9688.
-		//
-		// assert(this.visibilityState === VisibilityState.LocallyVisible,
-		//  "The data store should be locally visible when generating attach summary",
-		// );
+		assert(
+			this.visibilityState === VisibilityState.LocallyVisible,
+			0xc2c /* The data store should be locally visible when generating attach summary */,
+		);
 
 		const visitedContexts = new Set<string>();
 		let visitedLength = -1;
@@ -1173,6 +1166,11 @@ export class FluidDataStoreRuntime
 		}
 	}
 
+	/**
+	 * Do not use.
+	 * @deprecated Use `IFluidDataStoreContext.submitMessage` instead.
+	 * @see https://github.com/microsoft/FluidFramework/issues/24406
+	 */
 	public submitMessage(
 		type: DataStoreMessageType,
 		// TODO: use something other than `any` here (breaking change)

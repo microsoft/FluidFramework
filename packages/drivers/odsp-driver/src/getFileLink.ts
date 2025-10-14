@@ -115,7 +115,7 @@ export const getFileLink = mockify(
  * @param logger - logger to send events.
  * @returns Response from the API call.
  * @legacy
- * @alpha
+ * @beta
  */
 async function getFileLinkWithLocationRedirectionHandling(
 	getToken: TokenFetcher<OdspResourceTokenFetchOptions>,

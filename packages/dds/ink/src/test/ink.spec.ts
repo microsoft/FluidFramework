@@ -39,14 +39,14 @@ describe("Ink", () => {
 		});
 
 		it("Can create Ink", () => {
-			assert.ok(ink, "Could not create ink");
+			assert(ink !== undefined, "Could not create ink");
 		});
 
 		it("Can create / get a stroke", () => {
 			const strokeId = ink.createStroke(pen).id;
 
 			const stroke = ink.getStroke(strokeId);
-			assert.ok(stroke, "Could not retrieve the stroke");
+			assert(stroke !== undefined, "Could not retrieve the stroke");
 			assert.equal(stroke.id, strokeId, "The stroke's id is incorrect");
 			assert.deepEqual(stroke.pen, pen, "The stroke's pen is incorrect");
 		});
@@ -82,7 +82,7 @@ describe("Ink", () => {
 
 		it("Can clear a stroke", () => {
 			const strokeId = ink.createStroke(pen).id;
-			assert.ok(ink.getStroke(strokeId), "Could not retrieve the stroke");
+			assert(ink.getStroke(strokeId) !== undefined, "Could not retrieve the stroke");
 
 			// Clear the stroke.
 			ink.clear();
@@ -144,8 +144,11 @@ describe("Ink", () => {
 			ink.connect(services1);
 
 			// Verify that both the inks have the stroke.
-			assert.ok(ink.getStroke(strokeId), "The first ink does not have the stroke");
-			assert.ok(ink2.getStroke(strokeId), "The second ink does not have the stroke");
+			assert(ink.getStroke(strokeId) !== undefined, "The first ink does not have the stroke");
+			assert(
+				ink2.getStroke(strokeId) !== undefined,
+				"The second ink does not have the stroke",
+			);
 
 			// Add a point to the stroke in the second ink.
 			const inkPoint = {
@@ -211,13 +214,13 @@ describe("Ink", () => {
 
 			// Verify that the first ink has the correct stroke.
 			const stroke1 = ink.getStroke(strokeId);
-			assert.ok(stroke1, "Could not retrieve the stroke");
+			assert(stroke1 !== undefined, "Could not retrieve the stroke");
 			assert.equal(stroke1.id, strokeId, "The stroke's id is incorrect");
 			assert.deepEqual(stroke1.pen, pen, "The stroke's pen is incorrect");
 
 			// Verify that the remote ink has the correct stroke.
 			const stroke2 = ink2.getStroke(strokeId);
-			assert.ok(stroke2, "Could not retrieve the stroke in remote client");
+			assert(stroke2 !== undefined, "Could not retrieve the stroke in remote client");
 			assert.equal(stroke2.id, strokeId, "The stroke's id is incorrect in remote client");
 			assert.deepEqual(stroke2.pen, pen, "The stroke's pen is incorrect in remote client");
 		});
@@ -317,8 +320,11 @@ describe("Ink", () => {
 			containerRuntimeFactory.processAllMessages();
 
 			// Verify that both the inks have the stroke.
-			assert.ok(ink.getStroke(strokeId), "Could not retrieve the stroke");
-			assert.ok(ink2.getStroke(strokeId), "Could not retrieve the stroke in remote client");
+			assert(ink.getStroke(strokeId) !== undefined, "Could not retrieve the stroke");
+			assert(
+				ink2.getStroke(strokeId) !== undefined,
+				"Could not retrieve the stroke in remote client",
+			);
 
 			// Clear the stroke.
 			ink.clear();
@@ -378,8 +384,14 @@ describe("Ink", () => {
 			containerRuntimeFactory.processAllMessages();
 
 			// Verify that the stroke is present in both the client.
-			assert.ok(ink.getStroke(strokeId), "The local client does not have the stroke");
-			assert.ok(ink2.getStroke(strokeId), "The remote client does not have the stroke");
+			assert(
+				ink.getStroke(strokeId) !== undefined,
+				"The local client does not have the stroke",
+			);
+			assert(
+				ink2.getStroke(strokeId) !== undefined,
+				"The remote client does not have the stroke",
+			);
 
 			// Add a point to the stroke in the second ink.
 			const inkPoint = {
@@ -429,8 +441,14 @@ describe("Ink", () => {
 			containerRuntimeFactory.processAllMessages();
 
 			// Verify that the stroke is present in both the client.
-			assert.ok(ink.getStroke(strokeId), "The local client does not have the stroke");
-			assert.ok(ink2.getStroke(strokeId), "The remote client does not have the stroke");
+			assert(
+				ink.getStroke(strokeId) !== undefined,
+				"The local client does not have the stroke",
+			);
+			assert(
+				ink2.getStroke(strokeId) !== undefined,
+				"The remote client does not have the stroke",
+			);
 
 			// Disconnect the second client.
 			containerRuntime2.connected = false;

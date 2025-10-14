@@ -21,7 +21,7 @@ import type {
 	TreeNodeSchemaIdentifier,
 	Value,
 } from "../../../../core/index.js";
-import { typeboxValidator } from "../../../../external-utilities/index.js";
+import { FormatValidatorBasic } from "../../../../external-utilities/index.js";
 import {
 	decode,
 	readValue,
@@ -76,6 +76,7 @@ import type {
 import {
 	TreeCompressionStrategy,
 	cursorForJsonableTreeField,
+	defaultIncrementalEncodingPolicy,
 	fieldKinds,
 	jsonableTreeFromFieldCursor,
 } from "../../../../feature-libraries/index.js";
@@ -139,7 +140,7 @@ describe("compressedEncode", () => {
 					testIdCompressor,
 					undefined /* incrementalEncoder */,
 				);
-				const codec = makeFieldBatchCodec({ jsonValidator: typeboxValidator }, context);
+				const codec = makeFieldBatchCodec({ jsonValidator: FormatValidatorBasic }, context);
 				const result = codec.encode(input, {
 					encodeType: TreeCompressionStrategy.Compressed,
 					idCompressor: testIdCompressor,
@@ -421,7 +422,7 @@ describe("compressedEncode", () => {
 			chunkReferenceIds: ChunkReferenceId[],
 		): IncrementalEncoder {
 			return {
-				shouldEncodeFieldIncrementally: () => true,
+				shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
 				encodeIncrementalField: () => chunkReferenceIds,
 			};
 		}

@@ -3,8 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { fail } from "@fluidframework/core-utils/internal";
 import {
+	type CodecTree,
 	DiscriminatedUnionDispatcher,
+	type FormatVersion,
 	type ICodecFamily,
 	type ICodecOptions,
 	type IJsonCodec,
@@ -13,12 +16,21 @@ import {
 } from "../codec/index.js";
 import type { ChangeEncodingContext, TreeStoredSchema } from "../core/index.js";
 import {
+	type ModularChangeFormatVersion,
 	type ModularChangeset,
 	type SchemaChange,
+	type SchemaChangeFormatVersion,
 	defaultSchemaPolicy,
+	getCodecTreeForModularChangeFormat,
+	getCodecTreeForSchemaChangeFormat,
 	makeSchemaChangeCodecs,
 } from "../feature-libraries/index.js";
-import type { JsonCompatibleReadOnly, Mutable } from "../util/index.js";
+import {
+	brand,
+	type Brand,
+	type JsonCompatibleReadOnly,
+	type Mutable,
+} from "../util/index.js";
 
 import {
 	EncodedSharedTreeChange,
@@ -31,40 +43,66 @@ export function makeSharedTreeChangeCodecFamily(
 	options: ICodecOptions,
 ): ICodecFamily<SharedTreeChange, ChangeEncodingContext> {
 	const schemaChangeCodecs = makeSchemaChangeCodecs(options);
-	return makeCodecFamily([
-		[
-			1,
+	const versions: [
+		FormatVersion,
+		IJsonCodec<
+			SharedTreeChange,
+			EncodedSharedTreeChange,
+			EncodedSharedTreeChange,
+			ChangeEncodingContext
+		>,
+	][] = Array.from(dependenciesForChangeFormat.entries()).map(
+		([format, { modularChange, schemaChange }]) => [
+			format,
 			makeSharedTreeChangeCodec(
-				modularChangeCodecFamily.resolve(1).json,
-				schemaChangeCodecs.resolve(1).json,
+				modularChangeCodecFamily.resolve(modularChange).json,
+				schemaChangeCodecs.resolve(schemaChange).json,
 				options,
 			),
 		],
-		[
-			2,
-			makeSharedTreeChangeCodec(
-				modularChangeCodecFamily.resolve(2).json,
-				schemaChangeCodecs.resolve(1).json,
-				options,
-			),
+	);
+	return makeCodecFamily(versions);
+}
+
+interface ChangeFormatDependencies {
+	readonly modularChange: ModularChangeFormatVersion;
+	readonly schemaChange: SchemaChangeFormatVersion;
+}
+
+export type SharedTreeChangeFormatVersion = Brand<
+	1 | 2 | 3 | 4,
+	"SharedTreeChangeFormatVersion"
+>;
+
+/**
+ * Defines for each SharedTree change format the corresponding dependent formats to use.
+ * This is an arbitrary mapping that is injected in the SharedTree change codec.
+ * Once an entry is defined and used in production, it cannot be changed.
+ * This is because the format for the dependent formats are not explicitly versioned.
+ */
+export const dependenciesForChangeFormat: Map<
+	SharedTreeChangeFormatVersion,
+	ChangeFormatDependencies
+> = new Map([
+	[brand(1), { modularChange: brand(1), schemaChange: brand(1) }],
+	[brand(2), { modularChange: brand(2), schemaChange: brand(1) }],
+	[brand(3), { modularChange: brand(3), schemaChange: brand(1) }],
+	[brand(4), { modularChange: brand(4), schemaChange: brand(1) }],
+]);
+
+export function getCodecTreeForChangeFormat(
+	version: SharedTreeChangeFormatVersion,
+): CodecTree {
+	const { modularChange, schemaChange } =
+		dependenciesForChangeFormat.get(version) ?? fail(0xc78 /* Unknown change format */);
+	return {
+		name: "SharedTreeChange",
+		version,
+		children: [
+			getCodecTreeForModularChangeFormat(modularChange),
+			getCodecTreeForSchemaChangeFormat(schemaChange),
 		],
-		[
-			3,
-			makeSharedTreeChangeCodec(
-				modularChangeCodecFamily.resolve(3).json,
-				schemaChangeCodecs.resolve(1).json,
-				options,
-			),
-		],
-		[
-			4,
-			makeSharedTreeChangeCodec(
-				modularChangeCodecFamily.resolve(4).json,
-				schemaChangeCodecs.resolve(1).json,
-				options,
-			),
-		],
-	]);
+	};
 }
 
 function makeSharedTreeChangeCodec(

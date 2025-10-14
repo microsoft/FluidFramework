@@ -36,7 +36,7 @@ import {
 /**
  * {@link BaseContainerRuntimeFactory} construction properties.
  * @legacy
- * @alpha
+ * @beta
  */
 export interface BaseContainerRuntimeFactoryProps {
 	/**
@@ -63,8 +63,8 @@ export interface BaseContainerRuntimeFactoryProps {
 	 */
 	provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
 	/**
-	 * The minVersionForCollab passed to the ContainerRuntime when instantiating it.
-	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams} for more details on this property.
+	 * Minimum version of the FF runtime that is required to collaborate on new documents.
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minVersionForCollab} for more details on this property.
 	 */
 	minVersionForCollab?: MinimumVersionForCollab | undefined;
 }
@@ -74,7 +74,7 @@ export interface BaseContainerRuntimeFactoryProps {
  * request handlers, runtimeOptions, and entryPoint initialization function.
  * It can be subclassed to implement a first-time initialization procedure for the containers it creates.
  * @legacy
- * @alpha
+ * @beta
  */
 export class BaseContainerRuntimeFactory
 	extends RuntimeFactoryHelper

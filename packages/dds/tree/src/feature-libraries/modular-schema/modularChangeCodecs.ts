@@ -12,6 +12,7 @@ import {
 	type IJsonCodec,
 	type IMultiFormatCodec,
 	type SchemaValidationFunction,
+	extractJsonValidator,
 	makeCodecFamily,
 	withSchemaValidation,
 } from "../../codec/index.js";
@@ -128,7 +129,7 @@ function makeModularChangeCodec(
 		return {
 			codec,
 			compiledSchema: codec.json.encodedSchema
-				? codecOptions.jsonValidator.compile(codec.json.encodedSchema)
+				? extractJsonValidator(codecOptions.jsonValidator).compile(codec.json.encodedSchema)
 				: undefined,
 		};
 	};

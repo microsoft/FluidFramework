@@ -4,6 +4,9 @@
 
 ```ts
 
+// @alpha @legacy
+export function asLegacyAlpha(base: IContainer): ContainerAlpha;
+
 // @public
 export enum ConnectionState {
     CatchingUp = 1,
@@ -12,8 +15,16 @@ export enum ConnectionState {
     EstablishingConnection = 3
 }
 
+// @alpha @sealed @legacy
+export interface ContainerAlpha extends IContainer {
+    getPendingLocalState(): Promise<string>;
+}
+
 // @beta @legacy
 export function createDetachedContainer(createDetachedContainerProps: ICreateDetachedContainerProps): Promise<IContainer>;
+
+// @alpha @legacy
+export function createFrozenDocumentServiceFactory(factory?: IDocumentServiceFactory | Promise<IDocumentServiceFactory>): IDocumentServiceFactory;
 
 // @beta @legacy (undocumented)
 export interface IBaseProtocolHandler {
@@ -92,6 +103,14 @@ export interface ILoadExistingContainerProps extends ICreateAndLoadContainerProp
     readonly request: IRequest;
 }
 
+// @alpha @legacy
+export interface ILoadFrozenContainerFromPendingStateProps extends ILoadExistingContainerProps {
+    readonly pendingLocalState: string;
+}
+
+// @alpha @legacy
+export type ILoadSummarizerContainerProps = Omit<ILoadExistingContainerProps, "pendingLocalState">;
+
 // @beta @legacy
 export interface IParsedUrl {
     id: string;
@@ -159,6 +178,31 @@ export class Loader implements IHostLoader {
 // @beta @legacy
 export function loadExistingContainer(loadExistingContainerProps: ILoadExistingContainerProps): Promise<IContainer>;
 
+// @alpha @legacy
+export function loadFrozenContainerFromPendingState(props: ILoadFrozenContainerFromPendingStateProps): Promise<IContainer>;
+
+// @alpha @legacy
+export function loadSummarizerContainerAndMakeSummary(loadSummarizerContainerProps: ILoadSummarizerContainerProps): Promise<LoadSummarizerSummaryResult>;
+
+// @alpha @legacy
+export type LoadSummarizerSummaryResult = {
+    readonly success: true;
+    readonly summaryResults: OnDemandSummaryResults;
+} | {
+    readonly success: false;
+    readonly error: IErrorBase;
+};
+
+// @alpha @legacy
+export interface OnDemandSummaryResults {
+    readonly summaryInfo: {
+        readonly stage?: SummaryStage;
+        readonly handle?: string;
+    };
+    readonly summaryOpBroadcasted: boolean;
+    readonly summarySubmitted: boolean;
+}
+
 // @beta @legacy
 export type ProtocolHandlerBuilder = (attributes: IDocumentAttributes, snapshot: IQuorumSnapshot, sendProposal: (key: string, value: any) => number) => IProtocolHandler;
 
@@ -174,8 +218,11 @@ export type QuorumProposalsSnapshot = {
 // @beta @legacy
 export function rehydrateDetachedContainer(rehydrateDetachedContainerProps: IRehydrateDetachedContainerProps): Promise<IContainer>;
 
-// @alpha @legacy
+// @beta @legacy
 export function resolveWithLocationRedirectionHandling<T>(api: (request: IRequest) => Promise<T>, request: IRequest, urlResolver: IUrlResolver, logger?: ITelemetryBaseLogger): Promise<T>;
+
+// @alpha @legacy
+export type SummaryStage = "base" | "generate" | "upload" | "submit" | "unknown";
 
 // @beta @legacy
 export function tryParseCompatibleResolvedUrl(url: string): IParsedUrl | undefined;

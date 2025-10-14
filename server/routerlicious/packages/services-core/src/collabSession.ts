@@ -48,6 +48,14 @@ export interface ICollaborationSessionTelemetryProperties {
 	 * The maximum number of clients that have been connected to the session at the same time.
 	 */
 	maxConcurrentClients: number;
+	/**
+	 * Total number of operations emitted by all clients in this session.
+	 */
+	sessionOpCount?: number;
+	/**
+	 * Total number of signals emitted by all clients in this session.
+	 */
+	sessionSignalCount?: number;
 }
 
 /**
@@ -183,11 +191,16 @@ export interface ICollaborationSessionTracker {
 	 * @param client - Information about the unique client leaving/ending the session.
 	 * @param sessionInfo - Information to identify the document session being joined/started.
 	 * @param otherConnectedClients - Optional list of other clients currently connected to the document session.
+	 * @param clientMetrics - Optional client-specific metrics to add to session totals.
 	 */
 	endClientSession(
 		client: Omit<ICollaborationSessionClient, "joinedTime">,
 		sessionId: Pick<ICollaborationSession, "tenantId" | "documentId">,
 		knownConnectedClients?: ISignalClient[],
+		clientMetrics?: {
+			opCount?: number;
+			signalCount?: number;
+		},
 	): Promise<void>;
 	/**
 	 * Remove all currently tracked sessions that are no longer active and should have expired based on the session timeout.

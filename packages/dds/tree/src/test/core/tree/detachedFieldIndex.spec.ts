@@ -25,7 +25,7 @@ import type { FormatV1 } from "../../../core/tree/detachedFieldIndexFormatV1.js"
 import { version2, type FormatV2 } from "../../../core/tree/detachedFieldIndexFormatV2.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { DetachedFieldSummaryData } from "../../../core/tree/detachedFieldIndexTypes.js";
-import { typeboxValidator } from "../../../external-utilities/index.js";
+import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import {
 	type IdAllocator,
 	type JsonCompatibleReadOnly,
@@ -223,8 +223,8 @@ function generateTestCases(
 
 describe("DetachedFieldIndex Codecs", () => {
 	const options: CodecWriteOptions = {
-		jsonValidator: typeboxValidator,
-		oldestCompatibleClient: FluidClientVersion.v2_0,
+		jsonValidator: FormatValidatorBasic,
+		minVersionForCollab: FluidClientVersion.v2_0,
 	};
 
 	it("encodes with a version stamp.", () => {

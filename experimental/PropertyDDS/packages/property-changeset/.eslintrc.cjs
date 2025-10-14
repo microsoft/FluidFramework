@@ -29,6 +29,7 @@ module.exports = {
 		"@typescript-eslint/no-unsafe-return": "off",
 		"@typescript-eslint/no-unused-expressions": "off",
 		"@typescript-eslint/no-var-requires": "off",
+		"@typescript-eslint/no-wrapper-object-type": "off",
 		"@typescript-eslint/prefer-for-of": "off",
 		"@typescript-eslint/prefer-includes": "off",
 		"@typescript-eslint/prefer-nullish-coalescing": "off",

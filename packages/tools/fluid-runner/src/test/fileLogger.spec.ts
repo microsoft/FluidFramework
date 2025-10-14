@@ -40,10 +40,6 @@ describe("fileLogger", () => {
 		logger.send({ eventName: "event4", category: "category2", prop2: "value4" });
 	}
 
-	beforeEach(() => {
-		fs.mkdirSync(outputFolder);
-	});
-
 	afterEach(() => {
 		fs.rmdirSync(outputFolder, { recursive: true });
 	});

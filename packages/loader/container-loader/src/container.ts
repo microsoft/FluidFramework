@@ -140,9 +140,10 @@ import { NoopHeuristic } from "./noopHeuristic.js";
 import { pkgVersion } from "./packageVersion.js";
 import type { IQuorumSnapshot } from "./protocol/index.js";
 import {
-	type IProtocolHandler,
+	type InternalProtocolHandlerBuilder,
 	ProtocolHandler,
 	type ProtocolHandlerBuilder,
+	type ProtocolHandlerInternal,
 	protocolHandlerShouldProcessSignal,
 } from "./protocol.js";
 import { initQuorumValuesFromCodeDetails } from "./quorum.js";
@@ -152,14 +153,15 @@ import {
 	SerializedStateManager,
 } from "./serializedStateManager.js";
 import {
-	type ISnapshotTreeWithBlobContents,
 	combineAppAndProtocolSummary,
 	combineSnapshotTreeAndSnapshotBlobs,
 	getDetachedContainerStateFromSerializedContainer,
 	getDocumentAttributes,
 	getProtocolSnapshotTree,
-	getSnapshotTreeAndBlobsFromSerializedContainer,
+	getISnapshotFromSerializedContainer,
 	runSingle,
+	convertISnapshotToSnapshotWithBlobs,
+	convertSnapshotInfoToSnapshot,
 } from "./utils.js";
 
 const detachedContainerRefSeqNumber = 0;
@@ -380,7 +382,7 @@ interface IContainerLifecycleEvents extends IEvent {
 
 export class Container
 	extends EventEmitterWithErrorHandling<IContainerEvents>
-	implements IContainer, IContainerExperimental
+	implements IContainer, ContainerAlpha
 {
 	/**
 	 * Load an existing container.
@@ -495,7 +497,7 @@ export class Container
 	private readonly scope: FluidObject;
 	private readonly subLogger: ITelemetryLoggerExt;
 	private readonly detachedBlobStorage: MemoryDetachedBlobStorage | undefined;
-	private readonly protocolHandlerBuilder: ProtocolHandlerBuilder;
+	private readonly protocolHandlerBuilder: InternalProtocolHandlerBuilder;
 	private readonly client: IClient;
 
 	private readonly mc: MonitoringContext;
@@ -597,8 +599,8 @@ export class Container
 		}
 		return this._runtime;
 	}
-	private _protocolHandler: IProtocolHandler | undefined;
-	private get protocolHandler(): IProtocolHandler {
+	private _protocolHandler: ProtocolHandlerInternal | undefined;
+	private get protocolHandler(): ProtocolHandlerInternal {
 		if (this._protocolHandler === undefined) {
 			throw new Error("Attempted to access protocolHandler before it was defined");
 		}
@@ -830,7 +832,7 @@ export class Container
 				attributes: IDocumentAttributes,
 				quorumSnapshot: IQuorumSnapshot,
 				sendProposal: (key: string, value: unknown) => number,
-			): ProtocolHandler =>
+			): ProtocolHandlerInternal =>
 				new ProtocolHandler(
 					attributes,
 					quorumSnapshot,
@@ -1011,18 +1013,17 @@ export class Container
 		this.storageAdapter = new ContainerStorageAdapter(
 			this.detachedBlobStorage,
 			this.mc.logger,
-			pendingLocalState?.snapshotBlobs,
 			pendingLocalState?.loadedGroupIdSnapshots,
 			addProtocolSummaryIfMissing,
 			enableSummarizeProtocolTree,
 		);
 
 		const offlineLoadEnabled =
-			(this.isInteractiveClient &&
-				this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad")) ??
-			options.enableOfflineLoad === true;
+			this.isInteractiveClient &&
+			(this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ??
+				this.mc.config.getBoolean("Fluid.Container.enableOfflineFull") ??
+				options.enableOfflineLoad !== false);
 		this.serializedStateManager = new SerializedStateManager(
-			pendingLocalState,
 			this.subLogger,
 			this.storageAdapter,
 			offlineLoadEnabled,
@@ -1125,6 +1126,7 @@ export class Container
 				this._protocolHandler?.close();
 
 				this.connectionStateHandler.dispose();
+				this.serializedStateManager.dispose();
 			} catch (newError) {
 				this.mc.logger.sendErrorEvent({ eventName: "ContainerCloseException" }, newError);
 			}
@@ -1171,6 +1173,7 @@ export class Container
 				this._protocolHandler?.close();
 
 				this.connectionStateHandler.dispose();
+				this.serializedStateManager.dispose();
 
 				const maybeError = error === undefined ? undefined : new Error(error.message);
 				this._runtime?.dispose(maybeError);
@@ -1249,16 +1252,14 @@ export class Container
 				this.captureProtocolSummary(),
 			);
 
-		const { baseSnapshot, snapshotBlobs } =
-			getSnapshotTreeAndBlobsFromSerializedContainer(combinedSummary);
+		const snapshot = getISnapshotFromSerializedContainer(combinedSummary);
 		const pendingRuntimeState =
 			attachingData === undefined ? undefined : this.runtime.getPendingLocalState();
 		assert(!isPromiseLike(pendingRuntimeState), 0x8e3 /* should not be a promise */);
 
 		const detachedContainerState: IPendingDetachedContainerState = {
 			attached: false,
-			baseSnapshot,
-			snapshotBlobs,
+			...convertISnapshotToSnapshotWithBlobs(snapshot),
 			pendingRuntimeState,
 			hasAttachmentBlobs:
 				this.detachedBlobStorage !== undefined && this.detachedBlobStorage.size > 0,
@@ -1350,7 +1351,6 @@ export class Container
 
 					let attachP = runRetriableAttachProcess({
 						initialAttachmentData: this.attachmentData,
-						offlineLoadEnabled: this.serializedStateManager.offlineLoadEnabled,
 						detachedBlobStorage: this.detachedBlobStorage,
 						setAttachmentData,
 						createAttachmentSummary,
@@ -1641,10 +1641,9 @@ export class Container
 		const timings: Record<string, number> = { phase1: performanceNow() };
 		this.service = await this.createDocumentService(resolvedUrl, { mode: "load" });
 
-		// Except in cases where it has stashed ops or requested by feature gate, the container will connect in "read" mode
+		// Except in cases where its requested by feature gate, the container will connect in "read" mode
 		const mode =
-			this.mc.config.getBoolean("Fluid.Container.ForceWriteConnection") === true ||
-			(pendingLocalState?.savedOps.length ?? 0) > 0
+			this.mc.config.getBoolean("Fluid.Container.ForceWriteConnection") === true
 				? "write"
 				: "read";
 		const connectionArgs: IConnectionArgs = {
@@ -1668,14 +1667,13 @@ export class Container
 		timings.phase2 = performanceNow();
 
 		// Fetch specified snapshot.
-		const { baseSnapshot, version } =
-			await this.serializedStateManager.fetchSnapshot(specifiedVersion);
+		const {
+			snapshot: baseSnapshot,
+			version,
+			attributes,
+		} = await this.serializedStateManager.fetchSnapshot(specifiedVersion, pendingLocalState);
 		const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(baseSnapshot);
 		this._loadedFromVersion = version;
-		const attributes: IDocumentAttributes = await getDocumentAttributes(
-			this.storageAdapter,
-			baseSnapshotTree,
-		);
 
 		// If we saved ops, we will replay them and don't need DeltaManager to fetch them
 		const lastProcessedSequenceNumber =
@@ -1849,18 +1847,20 @@ export class Container
 				0x250 /* "serialized container with attachment blobs must be rehydrated with detached blob storage" */,
 			);
 		}
-		const snapshotTreeWithBlobContents: ISnapshotTreeWithBlobContents =
-			combineSnapshotTreeAndSnapshotBlobs(baseSnapshot, snapshotBlobs);
-		this.storageAdapter.loadSnapshotFromSnapshotBlobs(snapshotBlobs);
-		const attributes = await getDocumentAttributes(
-			this.storageAdapter,
-			snapshotTreeWithBlobContents,
-		);
+
+		const snapshot = convertSnapshotInfoToSnapshot({
+			baseSnapshot,
+			snapshotBlobs,
+			snapshotSequenceNumber: 0,
+		});
+
+		this.storageAdapter.cacheSnapshotBlobs(snapshot.blobContents);
+		const attributes = await getDocumentAttributes(this.storageAdapter, snapshot.snapshotTree);
 
 		await this.attachDeltaManagerOpHandler(attributes);
 
 		// Initialize the protocol handler
-		const baseTree = getProtocolSnapshotTree(snapshotTreeWithBlobContents);
+		const baseTree = getProtocolSnapshotTree(snapshot.snapshotTree);
 		const qValues = await readAndParse<[string, ICommittedProposal][]>(
 			this.storageAdapter,
 			baseTree.blobs.quorumValues,
@@ -1877,8 +1877,9 @@ export class Container
 
 		await this.instantiateRuntime(
 			codeDetails,
-			snapshotTreeWithBlobContents,
+			combineSnapshotTreeAndSnapshotBlobs(snapshot),
 			pendingRuntimeState,
+			snapshot,
 		);
 
 		this.setLoaded();
@@ -2558,14 +2559,22 @@ export class Container
 
 /**
  * IContainer interface that includes experimental features still under development.
- * @internal
+ * @alpha @legacy @sealed
  */
-export interface IContainerExperimental extends IContainer {
+export interface ContainerAlpha extends IContainer {
 	/**
 	 * Get pending state from container. WARNING: misuse of this API can result in duplicate op
 	 * submission and potential document corruption. The blob returned MUST be deleted if and when this
 	 * container emits a "connected" event.
 	 * @returns serialized blob that can be passed to Loader.resolve()
 	 */
-	getPendingLocalState?(): Promise<string>;
+	getPendingLocalState(): Promise<string>;
+}
+
+/**
+ * Converts types to their alpha counterparts to expose alpha functionality.
+ * @legacy @alpha
+ */
+export function asLegacyAlpha(base: IContainer): ContainerAlpha {
+	return base as ContainerAlpha;
 }

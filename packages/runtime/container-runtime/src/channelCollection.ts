@@ -46,6 +46,7 @@ import {
 	type IRuntimeMessagesContent,
 	type InboundAttachMessage,
 	type IRuntimeMessageCollection,
+	type MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -127,8 +128,14 @@ interface FluidDataStoreMessage {
  * being staged on IFluidParentContext can be added here as well, likely with optionality removed,
  * to ease interactions within this package.
  */
-export interface IFluidParentContextPrivate extends Omit<IFluidParentContext, "isReadOnly"> {
+export interface IFluidParentContextPrivate
+	extends Omit<IFluidParentContext, "isReadOnly" | "minVersionForCollab"> {
 	readonly isReadOnly: () => boolean;
+
+	/**
+	 * {@inheritdoc IFluidParentContext.minVersionForCollab}
+	 */
+	readonly minVersionForCollab: MinimumVersionForCollab;
 }
 
 /**
@@ -198,6 +205,7 @@ export function wrapContext(context: IFluidParentContextPrivate): IFluidParentCo
 		setChannelDirty: (address: string) => {
 			return context.setChannelDirty(address);
 		},
+		minVersionForCollab: context.minVersionForCollab,
 	};
 }
 
@@ -401,7 +409,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			const attachMessage = contents as InboundAttachMessage;
 			// We need to process the GC Data for both local and remote attach messages
 			const foundGCData = processAttachMessageGCData(
-				attachMessage.snapshot,
+				attachMessage.snapshot ?? undefined,
 				(nodeId, toPath) => {
 					// nodeId is the relative path under the node being attached. Always starts with "/", but no trailing "/" after an id
 					const fromPath = `/${attachMessage.id}${nodeId === "/" ? "" : nodeId}`;
@@ -537,7 +545,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 
 		// If message timestamp doesn't exist, this is called in a detached container. Don't notify GC in that case
 		// because it doesn't run in detached container and doesn't need to know about this route.
-		if (messageTimestampMs) {
+		if (messageTimestampMs !== undefined) {
 			this.parentContext.addedGCOutboundRoute("/", `/${internalId}`, messageTimestampMs);
 		}
 
@@ -642,7 +650,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	}
 
 	public createDetachedDataStore(
-		pkg: Readonly<string[]>,
+		pkg: readonly string[],
 		loadingGroupId?: string,
 	): IFluidDataStoreContextDetached {
 		return this.createContext(
@@ -654,7 +662,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	}
 
 	public createDataStoreContext(
-		pkg: Readonly<string[]>,
+		pkg: readonly string[],
 		loadingGroupId?: string,
 	): IFluidDataStoreContextInternal {
 		return this.createContext(
@@ -667,7 +675,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 
 	protected createContext<T extends LocalFluidDataStoreContext>(
 		id: string,
-		pkg: Readonly<string[]>,
+		pkg: readonly string[],
 		contextCtor: new (props: ILocalDetachedFluidDataStoreContextProps) => T,
 		loadingGroupId?: string,
 	): T {
@@ -1605,8 +1613,8 @@ export function getSummaryForDatastores(
 	}
 
 	if (rootHasIsolatedChannels(metadata)) {
-		const datastoresSnapshot = snapshot.trees[channelsTreeName];
-		assert(!!datastoresSnapshot, 0x168 /* Expected tree in snapshot not found */);
+		const datastoresSnapshot: ISnapshotTree | undefined = snapshot.trees[channelsTreeName];
+		assert(datastoresSnapshot !== undefined, 0x168 /* Expected tree in snapshot not found */);
 		return datastoresSnapshot;
 	} else {
 		// back-compat: strip out all non-datastore paths before giving to DataStores object.

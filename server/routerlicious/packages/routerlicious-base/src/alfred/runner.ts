@@ -54,7 +54,7 @@ export class AlfredRunner implements IRunner {
 		private readonly storage: IDocumentStorage,
 		private readonly appTenants: IAlfredTenant[],
 		private readonly deltaService: IDeltaService,
-		private readonly producer: IProducer,
+		private readonly producer: IProducer | undefined,
 		private readonly documentRepository: IDocumentRepository,
 		private readonly documentDeleteService: IDocumentDeleteService,
 		private readonly startupCheck: IReadinessCheck,

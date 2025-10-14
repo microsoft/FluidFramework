@@ -12,7 +12,7 @@ import {
 import type { IExperimentalIncrementalSummaryContext } from "@fluidframework/runtime-definitions/internal";
 import { MockStorage } from "@fluidframework/test-runtime-utils/internal";
 
-import { typeboxValidator } from "../../../external-utilities/index.js";
+import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index.js";
 import {
 	ForestSummarizer,
@@ -21,6 +21,7 @@ import {
 	defaultSchemaPolicy,
 	makeFieldBatchCodec,
 	type FieldBatchEncodingContext,
+	type IncrementalEncodingPolicy,
 	type TreeCompressionStrategyPrivate,
 } from "../../../feature-libraries/index.js";
 import {
@@ -61,10 +62,7 @@ function createForestSummarizer(args: {
 	forestType: ForestType;
 	// The content and schema to initialize the forest with. By default, it is an empty forest.
 	initialContent?: TreeStoredContentStrict;
-	shouldEncodeFieldIncrementally?: (
-		nodeIdentifier: TreeNodeSchemaIdentifier,
-		fieldKey: FieldKey,
-	) => boolean;
+	shouldEncodeIncrementally?: IncrementalEncodingPolicy;
 }): { forestSummarizer: ForestSummarizer; checkout: TreeCheckout } {
 	const {
 		initialContent = {
@@ -73,15 +71,16 @@ function createForestSummarizer(args: {
 		},
 		encodeType,
 		forestType,
-		shouldEncodeFieldIncrementally,
+		shouldEncodeIncrementally,
 	} = args;
-	const fieldBatchCodec = makeFieldBatchCodec({ jsonValidator: typeboxValidator }, 1);
+	const fieldBatchCodec = makeFieldBatchCodec({ jsonValidator: FormatValidatorBasic }, 1);
 	const options: CodecWriteOptions = {
-		jsonValidator: typeboxValidator,
-		oldestCompatibleClient: FluidClientVersion.v2_0,
+		jsonValidator: FormatValidatorBasic,
+		minVersionForCollab: FluidClientVersion.v2_0,
 	};
 	const checkout = checkoutWithContent(initialContent, {
 		forestType,
+		shouldEncodeIncrementally,
 	});
 	const encoderContext: FieldBatchEncodingContext = {
 		encodeType,
@@ -98,7 +97,7 @@ function createForestSummarizer(args: {
 			encoderContext,
 			options,
 			testIdCompressor,
-			shouldEncodeFieldIncrementally,
+			shouldEncodeIncrementally,
 		),
 	};
 }
@@ -289,8 +288,8 @@ describe("ForestSummarizer", () => {
 					}),
 				};
 
-				const shouldEncodeFieldIncrementally = (
-					nodeIdentifier: TreeNodeSchemaIdentifier,
+				const shouldEncodeIncrementally = (
+					nodeIdentifier: TreeNodeSchemaIdentifier | undefined,
 					fieldKey: FieldKey,
 				): boolean => {
 					if (nodeIdentifier === SimpleObject.identifier && fieldKey === "foo") {
@@ -303,7 +302,7 @@ describe("ForestSummarizer", () => {
 					initialContent,
 					encodeType: TreeCompressionStrategyExtended.CompressedIncremental,
 					forestType: ForestTypeOptimized,
-					shouldEncodeFieldIncrementally,
+					shouldEncodeIncrementally,
 				});
 
 				// Incremental summary context for the first summary. This is needed for incremental summarization.
@@ -323,7 +322,7 @@ describe("ForestSummarizer", () => {
 				const { forestSummarizer: forestSummarizer2 } = createForestSummarizer({
 					encodeType: TreeCompressionStrategyExtended.CompressedIncremental,
 					forestType: ForestTypeOptimized,
-					shouldEncodeFieldIncrementally,
+					shouldEncodeIncrementally,
 				});
 				await assert.doesNotReject(async () => {
 					await forestSummarizer2.load(mockStorage, JSON.parse);
@@ -383,8 +382,8 @@ describe("ForestSummarizer", () => {
 					true,
 				);
 
-				const shouldEncodeFieldIncrementally = (
-					nodeIdentifier: TreeNodeSchemaIdentifier,
+				const shouldEncodeIncrementally = (
+					nodeIdentifier: TreeNodeSchemaIdentifier | undefined,
 					fieldKey: FieldKey,
 				): boolean => {
 					return tryGetFromNestedMap(incrementalFieldsMap, nodeIdentifier, fieldKey) ?? false;
@@ -394,7 +393,7 @@ describe("ForestSummarizer", () => {
 					initialContent,
 					encodeType: TreeCompressionStrategyExtended.CompressedIncremental,
 					forestType: ForestTypeOptimized,
-					shouldEncodeFieldIncrementally,
+					shouldEncodeIncrementally,
 				});
 			}
 
