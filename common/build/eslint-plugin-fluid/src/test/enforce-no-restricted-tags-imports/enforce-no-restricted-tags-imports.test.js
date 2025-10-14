@@ -5,16 +5,12 @@
 
 const assert = require("assert");
 const path = require("path");
-const plugin = require("../../../index.js");
-const { createESLintConfig, ESLint } = require("../eslintConfigHelper.cjs");
+const { createESLintConfig, eslintVersion, ESLint } = require("../eslintConfigHelper.cjs");
 
-describe("ESLint Rule Tests", function () {
+describe(`ESLint Rule Tests (eslint ${eslintVersion})`, function () {
 	function createESLintInstance(config) {
 		const eslintOptions = createESLintConfig({
-			parser: "@typescript-eslint/parser",
 			parserOptions: config.parserOptions,
-			plugin,
-			pluginName: "@fluid-internal/fluid",
 			rules: config.rules,
 			extraPlugins: config.plugins,
 		});
@@ -35,7 +31,6 @@ describe("ESLint Rule Tests", function () {
 			},
 			parserOptions: {
 				project: path.join(__dirname, "../example/tsconfig.json"),
-				tsconfigRootDir: path.join(__dirname, "../example"),
 			},
 		});
 		const filesToLint = ["fileWithImports.ts", "mockModule.ts"].map((file) =>
@@ -70,7 +65,6 @@ describe("ESLint Rule Tests", function () {
 			},
 			parserOptions: {
 				project: path.join(__dirname, "../example/tsconfig.json"),
-				tsconfigRootDir: path.join(__dirname, "../example"),
 			},
 		});
 		const filesToLint = ["fileWithExceptionImports.ts", "exceptionFile.ts"].map((file) =>
@@ -98,7 +92,6 @@ describe("ESLint Rule Tests", function () {
 			},
 			parserOptions: {
 				project: path.join(__dirname, "../example/tsconfig.json"),
-				tsconfigRootDir: path.join(__dirname, "../example"),
 			},
 		});
 		const filesToLint = ["fileWithImports.ts", "mockModule.ts"].map((file) =>

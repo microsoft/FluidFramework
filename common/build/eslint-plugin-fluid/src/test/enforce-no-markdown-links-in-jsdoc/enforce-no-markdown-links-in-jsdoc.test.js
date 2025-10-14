@@ -5,18 +5,14 @@
 
 const assert = require("assert");
 const path = require("path");
-const plugin = require("../../../index.js");
-const { createESLintConfig, ESLint } = require("../eslintConfigHelper.cjs");
+const { createESLintConfig, eslintVersion, ESLint } = require("../eslintConfigHelper.cjs");
 
-describe("Do not allow Markdown links in JSDoc/TSDoc comments", function () {
+describe(`Do not allow Markdown links in JSDoc/TSDoc comments (eslint ${eslintVersion})`, function () {
 	async function lintFile(file) {
 		const eslintOptions = createESLintConfig({
-			parser: "@typescript-eslint/parser",
 			parserOptions: {
 				project: path.join(__dirname, "../example/tsconfig.json"),
 			},
-			plugin,
-			pluginName: "@fluid-internal/fluid",
 			rules: {
 				"@fluid-internal/fluid/no-markdown-links-in-jsdoc": "error",
 			},
