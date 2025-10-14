@@ -1,0 +1,533 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { strict as assert } from "node:assert";
+import { appendFileSync, closeSync, mkdirSync, openSync } from "node:fs";
+
+import { oob, unreachableCase } from "@fluidframework/core-utils/internal";
+import { isFluidHandle } from "@fluidframework/runtime-utils";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { type ImplicitFieldSchema, TreeViewConfiguration } from "@fluidframework/tree";
+import {
+	TreeAlpha,
+	independentView,
+	type InsertableField,
+	type ReadableField,
+	type TreeNode,
+	type UnsafeUnknownSchema,
+	type VerboseTree,
+	type VerboseTreeNode,
+} from "@fluidframework/tree/internal";
+import { SharedTreeSemanticAgent, type TreeView } from "@fluidframework/tree-agent/alpha";
+import { ChatAnthropic } from "@langchain/anthropic";
+import type { BaseChatModel } from "@langchain/core/language_models/chat_models"; // eslint-disable-line import/no-internal-modules
+import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import { ChatOpenAI } from "@langchain/openai";
+
+import { createLangchainChatModel } from "../chatModel.js";
+
+/**
+ * Throw an error with the given message
+ */
+export function fail(message: string): never {
+	throw new Error(message);
+}
+
+/**
+ * Throw a usage error with the given message
+ */
+export function failUsage(message: string): never {
+	throw new UsageError(message);
+}
+
+/**
+ * Validates that the error is a UsageError with the expected error message.
+ */
+export function validateUsageError(expectedErrorMsg: string | RegExp): (error: Error) => true {
+	return (error: Error) => {
+		assert(error instanceof UsageError);
+		if (
+			typeof expectedErrorMsg === "string"
+				? error.message !== expectedErrorMsg
+				: !expectedErrorMsg.test(error.message)
+		) {
+			throw new Error(
+				`Unexpected assertion thrown\nActual: ${error.message}\nExpected: ${expectedErrorMsg}`,
+			);
+		}
+		return true;
+	};
+}
+
+/**
+ * The LLM providers supported by {@link createLlmClient}.
+ */
+export type LlmProvider = "openai" | "anthropic" | "gemini";
+
+/**
+ * Creates a new instance of the LLM client based on the specified provider.
+ */
+export function createLlmClient(provider: LlmProvider): BaseChatModel {
+	switch (provider) {
+		case "openai": {
+			return new ChatOpenAI({
+				model: "gpt-5-2025-08-07",
+				apiKey:
+					process.env.OPENAI_API_KEY ??
+					failUsage("Missing OPENAI_API_KEY environment variable"),
+				reasoning: { effort: "high" },
+				maxTokens: 20000,
+				metadata: {
+					modelName: "GPT 5",
+				},
+			});
+		}
+		case "anthropic": {
+			return new ChatAnthropic({
+				model: "claude-3-7-sonnet-20250219",
+				apiKey:
+					process.env.ANTHROPIC_API_KEY ??
+					failUsage("Missing ANTHROPIC_API_KEY environment variable"),
+				thinking: { type: "enabled", budget_tokens: 10000 },
+				maxTokens: 20000,
+				metadata: {
+					modelName: "Claude 3.7 Sonnet",
+				},
+			});
+		}
+		case "gemini": {
+			return new ChatGoogleGenerativeAI({
+				model: "gemini-2.5-pro-exp-03-25",
+				apiKey:
+					process.env.GEMINI_API_KEY ??
+					failUsage("Missing GOOGLE_API_KEY environment variable"),
+				maxOutputTokens: 20000,
+				metadata: {
+					modelName: "Gemini 2.5 Pro Exp",
+				},
+			});
+		}
+		default: {
+			unreachableCase(provider);
+		}
+	}
+}
+
+/**
+ * Queries the LLM with the specified prompt and logs the results to a file.
+ * @remarks Use the following environment variables to set the LLM API keys:
+ * - `OPENAI_API_KEY` for OpenAI
+ * - `ANTHROPIC_API_KEY` for Anthropic
+ * - `GEMINI_API_KEY` for Gemini
+ */
+async function queryDomain<TSchema extends ImplicitFieldSchema>(
+	schema: TSchema,
+	initialTree: InsertableField<TSchema>,
+	provider: LlmProvider,
+	prompt: string,
+	options?: {
+		subtree?: (root: ReadableField<TSchema>) => TreeNode;
+		domainHints?: string;
+		readonly log?: (text: string) => void;
+	},
+): Promise<TreeView<TSchema>> {
+	const view = independentView(new TreeViewConfiguration({ schema }), {});
+	view.initialize(initialTree);
+	const client = createLangchainChatModel(createLlmClient(provider));
+	const logger = options?.log === undefined ? undefined : { log: options.log };
+	const subtree = options?.subtree?.(view.root);
+	const agent =
+		subtree === undefined
+			? new SharedTreeSemanticAgent(client, view, {
+					logger,
+					domainHints: options?.domainHints,
+				})
+			: new SharedTreeSemanticAgent(client, subtree, {
+					logger,
+					domainHints: options?.domainHints,
+				});
+
+	await agent.query(prompt);
+	return view;
+}
+
+/**
+ * TODO
+ */
+export interface LLMIntegrationTest<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema> {
+	readonly name: string;
+	readonly schema: TRoot;
+	readonly initialTree: () => InsertableField<TRoot>;
+	readonly prompt: string;
+	readonly expected: ScorableVerboseTree;
+	readonly options?: {
+		readonly subtree?: (root: ReadableField<TRoot>) => TreeNode;
+		readonly domainHints?: string;
+		readonly log?: (text: string) => void;
+	};
+}
+
+interface TestResult {
+	readonly name: string;
+	readonly provider: LlmProvider;
+	readonly score: number;
+	readonly duration: number;
+}
+
+const resultsFolderPath = "./src/test/integration-test-results";
+
+function formatDate(date: Date): string {
+	return date
+		.toLocaleString("en-US", {
+			timeZone: "America/Los_Angeles",
+			year: "numeric",
+			month: "2-digit",
+			day: "2-digit",
+			hour: "2-digit",
+			minute: "2-digit",
+			second: "2-digit",
+			hour12: false,
+		})
+		.replace(/[\s,/:]/g, "-");
+}
+
+/**
+ * TODO
+ */
+export function describeIntegrationTests(
+	tests: LLMIntegrationTest<UnsafeUnknownSchema>[],
+): void {
+	describe.skip(`LLM integration tests`, () => {
+		const results: TestResult[] = [];
+		let startTime: Date | undefined;
+		before(() => {
+			startTime = new Date();
+			mkdirSync(`${resultsFolderPath}/${formatDate(startTime)}`, { recursive: true });
+		});
+
+		after(() => {
+			const filteredResults = results.filter((r) => r.name !== "");
+			assert(startTime !== undefined, "Expected startTime to be set");
+			let table = "| Test Name | Provider | Score | Elapsed Time (seconds) |\n";
+			table += "| --- | --- | ---:| ---:|\n";
+			for (const result of filteredResults) {
+				table += `| ${result.name} | ${result.provider} | ${(result.score * 100).toFixed(2)}% | ${Math.ceil(result.duration / 1000)} |\n`;
+			}
+			const resultsFile = openSync(
+				`${resultsFolderPath}/${formatDate(startTime)}/results.md`,
+				"a",
+			);
+			appendFileSync(resultsFile, "# Results\n\n", { encoding: "utf8" });
+			appendFileSync(
+				resultsFile,
+				`Total score: ${((filteredResults.reduce((a, b) => a + b.score, 0) / filteredResults.length) * 100).toFixed(2)}%\n\n`,
+			);
+			appendFileSync(resultsFile, "## Test Cases\n\n", { encoding: "utf8" });
+			appendFileSync(resultsFile, table, { encoding: "utf8" });
+			closeSync(resultsFile);
+		});
+
+		// Group tests by domain, in case they were not already ordered that way in the test list.
+		const groups = new Map<unknown, LLMIntegrationTest<UnsafeUnknownSchema>[]>();
+		for (const test of tests) {
+			let t = groups.get(test.schema);
+			if (t === undefined) {
+				t = [];
+				groups.set(test.schema, t);
+			}
+			t.push(test);
+		}
+		const grouped = [...groups.values()].flat();
+
+		it("RUN ALL (in parallel)", async () => {
+			const promises: Promise<void>[] = [];
+			for (const test of grouped) {
+				for (const provider of ["openai", "anthropic", "gemini"] as const) {
+					const result = {
+						name: test.name,
+						provider,
+						score: 0,
+						duration: 0,
+					} satisfies TestResult;
+					results.push(result);
+					promises.push(runTest(test, provider, result));
+				}
+			}
+			await handleAllSettledResults(promises);
+		});
+
+		describe("sorted by scenario", () => {
+			it("RUN ALL (in parallel)", async () => {
+				const promises: Promise<void>[] = [];
+				for (const test of grouped) {
+					for (const provider of ["openai", "anthropic", "gemini"] as const) {
+						const result = {
+							name: test.name,
+							provider,
+							score: 0,
+							duration: 0,
+						} satisfies TestResult;
+						results.push(result);
+						promises.push(runTest(test, provider, result));
+					}
+				}
+				await handleAllSettledResults(promises);
+			});
+			for (const test of grouped) {
+				describe(test.name, () => {
+					it("RUN ALL (in parallel)", async () => {
+						const promises: Promise<void>[] = [];
+						for (const provider of ["openai", "anthropic", "gemini"] as const) {
+							const result = {
+								name: test.name,
+								provider,
+								score: 0,
+								duration: 0,
+							} satisfies TestResult;
+							results.push(result);
+							promises.push(runTest(test, provider, result));
+						}
+						await handleAllSettledResults(promises);
+					});
+					for (const provider of ["openai", "anthropic", "gemini"] as const) {
+						it(`via ${provider}`, async () => {
+							const result = {
+								name: test.name,
+								provider,
+								score: 0,
+								duration: 0,
+							} satisfies TestResult;
+							results.push(result);
+							await runTest(test, provider, result);
+						});
+					}
+				});
+			}
+		});
+
+		describe("sorted by provider", () => {
+			it("RUN ALL (in parallel)", async () => {
+				const promises: Promise<void>[] = [];
+				for (const provider of ["openai", "anthropic", "gemini"] as const) {
+					for (const test of grouped) {
+						const result = {
+							name: test.name,
+							provider,
+							score: 0,
+							duration: 0,
+						} satisfies TestResult;
+						results.push(result);
+						promises.push(runTest(test, provider, result));
+					}
+				}
+				await handleAllSettledResults(promises);
+			});
+			for (const provider of ["openai", "anthropic", "gemini"] as const) {
+				describe(`via ${provider}`, () => {
+					it("RUN ALL (in parallel)", async () => {
+						const promises: Promise<void>[] = [];
+						for (const test of grouped) {
+							const result = {
+								name: test.name,
+								provider,
+								score: 0,
+								duration: 0,
+							} satisfies TestResult;
+							results.push(result);
+							promises.push(runTest(test, provider, result));
+						}
+						await handleAllSettledResults(promises);
+					});
+					for (const test of grouped) {
+						it(test.name, async () => {
+							const result = {
+								name: test.name,
+								provider,
+								score: 0,
+								duration: 0,
+							} satisfies TestResult;
+							results.push(result);
+							await runTest(test, provider, result);
+						});
+					}
+				});
+			}
+		});
+
+		async function runTest(
+			test: LLMIntegrationTest<UnsafeUnknownSchema>,
+			provider: LlmProvider,
+			result: { score: number; duration: number },
+		): Promise<void> {
+			assert(startTime !== undefined, "Expected startTime to be set");
+			const { name, schema, initialTree, prompt, expected, options } = test;
+			const fd = openSync(
+				`${resultsFolderPath}/${formatDate(startTime)}/${name}-${provider}.md`,
+				"w",
+			);
+			const view = await queryDomain(
+				schema as unknown as ImplicitFieldSchema, // TODO: typing
+				initialTree() as never, // TODO: typing
+				provider,
+				prompt,
+				{
+					subtree: options?.subtree,
+					domainHints: options?.domainHints,
+					log: (text) => {
+						appendFileSync(fd, text, { encoding: "utf8" });
+					},
+				},
+			);
+			result.duration = Date.now() - startTime.getTime();
+			closeSync(fd);
+
+			if (view.root === undefined) {
+				result.score = expected === undefined ? 1 : 0;
+			} else {
+				const actualVerbose = TreeAlpha.exportVerbose(view.root) as VerboseTree<never>;
+				result.score = scoreTree(expected, actualVerbose, actualVerbose);
+			}
+		}
+	});
+}
+
+/**
+ * TODO
+ */
+export const scoreSymbol = Symbol("Scope");
+
+/**
+ * TODO
+ */
+export type ScorableVerboseTreeNode = Partial<Pick<VerboseTreeNode<never>, "type">> & {
+	fields?: ScorableVerboseTree[] | Record<string, ScorableVerboseTree>;
+} & {
+	[scoreSymbol]?: (actual: VerboseTreeNode<never>, actualTree: VerboseTree<never>) => number;
+};
+
+/**
+ * TODO
+ */
+export type ScorableVerboseTree = VerboseTree<never> | ScorableVerboseTreeNode;
+
+function hasScoreSymbol(
+	node: VerboseTreeNode<never> | ScorableVerboseTreeNode,
+): node is ScorableVerboseTreeNode & {
+	[scoreSymbol]: (actual: VerboseTreeNode<never>, actualTree: VerboseTree<never>) => number;
+} {
+	return scoreSymbol in node;
+}
+
+function scoreTree(
+	expected: ScorableVerboseTree,
+	actual: VerboseTree<never>,
+	actualTree: VerboseTree<never>,
+): number {
+	if (isFluidHandle(expected) || isFluidHandle(actual)) {
+		return expected === actual ? 1 : 0;
+	}
+
+	switch (typeof expected) {
+		case "string":
+		case "number":
+		case "boolean":
+		default: {
+			return expected === actual ? 1 : 0;
+		}
+		case "object": {
+			if (expected === null || actual === null) {
+				return expected === actual ? 1 : 0;
+			}
+			if (typeof actual !== "object") {
+				return 0;
+			}
+			if (hasScoreSymbol(expected)) {
+				if (expected.type !== undefined && expected.type !== actual.type) {
+					return 0;
+				}
+				let score = 1;
+				if (expected.fields !== undefined) {
+					score = scoreFields(expected.fields, actual.fields, actualTree);
+					if (score < Number.EPSILON) {
+						return 0;
+					}
+				}
+				return score * expected[scoreSymbol](actual, actualTree);
+			}
+			if (expected.type !== actual.type) {
+				return 0;
+			}
+			return scoreFields(expected.fields, actual.fields, actualTree);
+		}
+	}
+}
+
+function scoreFields(
+	expected: ScorableVerboseTreeNode["fields"],
+	actual: VerboseTreeNode<never>["fields"],
+	actualTree: VerboseTree<never>,
+): number {
+	if (expected === undefined) {
+		return 0;
+	}
+
+	let score = 1;
+
+	if (Array.isArray(expected)) {
+		if (!Array.isArray(actual)) {
+			return 0;
+		}
+		if (expected.length !== actual.length) {
+			return 0;
+		}
+		for (let i = 0; i < expected.length; i++) {
+			score *= scoreTree(expected[i] ?? oob(), actual[i] ?? oob(), actualTree);
+			if (score < Number.EPSILON) {
+				return 0;
+			}
+		}
+	} else {
+		if (Array.isArray(actual)) {
+			return 0;
+		}
+		const expectedKeys = Reflect.ownKeys(expected)
+			.filter((k): k is string =>
+				typeof k === "string" ? true : fail("Encountered unexpected symbol key"),
+			)
+			.sort();
+		const actualKeys = Reflect.ownKeys(actual)
+			.filter((k): k is string =>
+				typeof k === "string" ? true : fail("Encountered unexpected symbol key"),
+			)
+			.sort();
+		if (expectedKeys.length !== actualKeys.length) {
+			return 0;
+		}
+		for (let i = 0; i < expectedKeys.length; i++) {
+			const expectedField = expected[expectedKeys[i] ?? oob()];
+			const actualField = actual[actualKeys[i] ?? oob()];
+			if (expectedField === undefined || actualField === undefined) {
+				return 0;
+			}
+			score *= scoreTree(expectedField, actualField, actualTree);
+			if (score < Number.EPSILON) {
+				return 0;
+			}
+		}
+	}
+
+	return score;
+}
+
+async function handleAllSettledResults(promises: Promise<unknown>[]): Promise<void> {
+	const results = await Promise.allSettled(promises);
+	const errors = results
+		.filter((result): result is PromiseRejectedResult => result.status === "rejected")
+		.map((result) => result.reason as unknown);
+
+	if (errors.length > 0) {
+		throw new Error(`Multiple errors occurred: ${errors.join("; ")}`);
+	}
+}
