@@ -12,7 +12,6 @@ import type { FlexTreeHydratedContextMinimal } from "../feature-libraries/index.
 import {
 	type MakeNominal,
 	brand,
-	type UnionToIntersection,
 	compareSets,
 	type requireTrue,
 	type areOnlyKeys,
@@ -34,6 +33,11 @@ import { normalizeAllowedTypes } from "./core/index.js";
 import type { SimpleFieldSchema } from "./simpleSchema.js";
 import type { UnsafeUnknownSchema } from "./unsafeUnknownSchema.js";
 import type { InsertableContent } from "./unhydratedFlexTreeFromInsertable.js";
+import type {
+	CustomizedSchemaTyping,
+	CustomTypes,
+	SchemaUnionToIntersection,
+} from "./schemaTypes.js";
 
 /**
  * Kind of a field on an {@link TreeObjectNode}.
@@ -584,7 +588,9 @@ export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = Fie
  */
 export type InsertableTreeFieldFromImplicitField<
 	TSchemaInput extends ImplicitFieldSchema,
-	TSchema = UnionToIntersection<TSchemaInput>,
+	TSchema = [TSchemaInput] extends [CustomizedSchemaTyping<unknown, CustomTypes>]
+		? TSchemaInput
+		: SchemaUnionToIntersection<TSchemaInput>,
 > = [TSchema] extends [FieldSchema<infer Kind, infer Types>]
 	? ApplyKindInput<InsertableTreeNodeFromImplicitAllowedTypes<Types>, Kind, true>
 	: [TSchema] extends [ImplicitAllowedTypes]
