@@ -5,7 +5,12 @@
 
 import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
 
-import type { ChangeAtomId, RevisionMetadataSource, RevisionTag } from "../../core/index.js";
+import {
+	areEqualChangeAtomIds,
+	type ChangeAtomId,
+	type RevisionMetadataSource,
+	type RevisionTag,
+} from "../../core/index.js";
 import type { IdAllocator } from "../../util/index.js";
 import type {
 	ComposeNodeManager,
@@ -203,13 +208,17 @@ function composeMarksIgnoreChild(
 
 function updateBaseMarkId(moveEffects: ComposeNodeManager, baseMark: Mark): Mark {
 	if (isDetach(baseMark)) {
+		const baseDetachId = getDetachedRootId(baseMark);
 		const updatedDetachId = getUpdatedDetachId(moveEffects, baseMark);
-		if (updatedDetachId !== undefined) {
+		if (
+			updatedDetachId !== undefined &&
+			!areEqualChangeAtomIds(updatedDetachId, baseDetachId)
+		) {
 			return {
 				...baseMark,
 				revision: updatedDetachId.revision,
 				id: updatedDetachId.localId,
-				detachCellId: baseMark.detachCellId ?? getDetachedRootId(baseMark),
+				detachCellId: baseMark.detachCellId ?? baseDetachId,
 			};
 		}
 	}
