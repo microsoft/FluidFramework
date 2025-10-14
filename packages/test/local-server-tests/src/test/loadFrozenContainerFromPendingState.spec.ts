@@ -38,16 +38,6 @@ const initialize = async () => {
 		await createDetachedContainer({
 			codeDetails,
 			...loaderProps,
-			configProvider: {
-				getRawConfig: (name) => {
-					switch (name) {
-						case "Fluid.Container.enableOfflineLoad":
-							return true;
-						default:
-							return undefined;
-					}
-				},
-			},
 		}),
 	);
 	const { ITestFluidObject }: FluidObject<TestFluidObject> =

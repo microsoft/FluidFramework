@@ -76,6 +76,7 @@ import type {
 import {
 	TreeCompressionStrategy,
 	cursorForJsonableTreeField,
+	defaultIncrementalEncodingPolicy,
 	fieldKinds,
 	jsonableTreeFromFieldCursor,
 } from "../../../../feature-libraries/index.js";
@@ -421,7 +422,7 @@ describe("compressedEncode", () => {
 			chunkReferenceIds: ChunkReferenceId[],
 		): IncrementalEncoder {
 			return {
-				shouldEncodeFieldIncrementally: () => true,
+				shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
 				encodeIncrementalField: () => chunkReferenceIds,
 			};
 		}

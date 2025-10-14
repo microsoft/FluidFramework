@@ -153,14 +153,15 @@ import {
 	SerializedStateManager,
 } from "./serializedStateManager.js";
 import {
-	type ISnapshotTreeWithBlobContents,
 	combineAppAndProtocolSummary,
 	combineSnapshotTreeAndSnapshotBlobs,
 	getDetachedContainerStateFromSerializedContainer,
 	getDocumentAttributes,
 	getProtocolSnapshotTree,
-	getSnapshotTreeAndBlobsFromSerializedContainer,
+	getISnapshotFromSerializedContainer,
 	runSingle,
+	convertISnapshotToSnapshotWithBlobs,
+	convertSnapshotInfoToSnapshot,
 } from "./utils.js";
 
 const detachedContainerRefSeqNumber = 0;
@@ -1012,7 +1013,6 @@ export class Container
 		this.storageAdapter = new ContainerStorageAdapter(
 			this.detachedBlobStorage,
 			this.mc.logger,
-			pendingLocalState?.snapshotBlobs,
 			pendingLocalState?.loadedGroupIdSnapshots,
 			addProtocolSummaryIfMissing,
 			enableSummarizeProtocolTree,
@@ -1022,9 +1022,8 @@ export class Container
 			this.isInteractiveClient &&
 			(this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ??
 				this.mc.config.getBoolean("Fluid.Container.enableOfflineFull") ??
-				options.enableOfflineLoad === true);
+				options.enableOfflineLoad !== false);
 		this.serializedStateManager = new SerializedStateManager(
-			pendingLocalState,
 			this.subLogger,
 			this.storageAdapter,
 			offlineLoadEnabled,
@@ -1127,6 +1126,7 @@ export class Container
 				this._protocolHandler?.close();
 
 				this.connectionStateHandler.dispose();
+				this.serializedStateManager.dispose();
 			} catch (newError) {
 				this.mc.logger.sendErrorEvent({ eventName: "ContainerCloseException" }, newError);
 			}
@@ -1173,6 +1173,7 @@ export class Container
 				this._protocolHandler?.close();
 
 				this.connectionStateHandler.dispose();
+				this.serializedStateManager.dispose();
 
 				const maybeError = error === undefined ? undefined : new Error(error.message);
 				this._runtime?.dispose(maybeError);
@@ -1251,16 +1252,14 @@ export class Container
 				this.captureProtocolSummary(),
 			);
 
-		const { baseSnapshot, snapshotBlobs } =
-			getSnapshotTreeAndBlobsFromSerializedContainer(combinedSummary);
+		const snapshot = getISnapshotFromSerializedContainer(combinedSummary);
 		const pendingRuntimeState =
 			attachingData === undefined ? undefined : this.runtime.getPendingLocalState();
 		assert(!isPromiseLike(pendingRuntimeState), 0x8e3 /* should not be a promise */);
 
 		const detachedContainerState: IPendingDetachedContainerState = {
 			attached: false,
-			baseSnapshot,
-			snapshotBlobs,
+			...convertISnapshotToSnapshotWithBlobs(snapshot),
 			pendingRuntimeState,
 			hasAttachmentBlobs:
 				this.detachedBlobStorage !== undefined && this.detachedBlobStorage.size > 0,
@@ -1352,7 +1351,6 @@ export class Container
 
 					let attachP = runRetriableAttachProcess({
 						initialAttachmentData: this.attachmentData,
-						offlineLoadEnabled: this.serializedStateManager.offlineLoadEnabled,
 						detachedBlobStorage: this.detachedBlobStorage,
 						setAttachmentData,
 						createAttachmentSummary,
@@ -1669,8 +1667,11 @@ export class Container
 		timings.phase2 = performanceNow();
 
 		// Fetch specified snapshot.
-		const { baseSnapshot, version, attributes } =
-			await this.serializedStateManager.fetchSnapshot(specifiedVersion);
+		const {
+			snapshot: baseSnapshot,
+			version,
+			attributes,
+		} = await this.serializedStateManager.fetchSnapshot(specifiedVersion, pendingLocalState);
 		const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(baseSnapshot);
 		this._loadedFromVersion = version;
 
@@ -1846,18 +1847,20 @@ export class Container
 				0x250 /* "serialized container with attachment blobs must be rehydrated with detached blob storage" */,
 			);
 		}
-		const snapshotTreeWithBlobContents: ISnapshotTreeWithBlobContents =
-			combineSnapshotTreeAndSnapshotBlobs(baseSnapshot, snapshotBlobs);
-		this.storageAdapter.loadSnapshotFromSnapshotBlobs(snapshotBlobs);
-		const attributes = await getDocumentAttributes(
-			this.storageAdapter,
-			snapshotTreeWithBlobContents,
-		);
+
+		const snapshot = convertSnapshotInfoToSnapshot({
+			baseSnapshot,
+			snapshotBlobs,
+			snapshotSequenceNumber: 0,
+		});
+
+		this.storageAdapter.cacheSnapshotBlobs(snapshot.blobContents);
+		const attributes = await getDocumentAttributes(this.storageAdapter, snapshot.snapshotTree);
 
 		await this.attachDeltaManagerOpHandler(attributes);
 
 		// Initialize the protocol handler
-		const baseTree = getProtocolSnapshotTree(snapshotTreeWithBlobContents);
+		const baseTree = getProtocolSnapshotTree(snapshot.snapshotTree);
 		const qValues = await readAndParse<[string, ICommittedProposal][]>(
 			this.storageAdapter,
 			baseTree.blobs.quorumValues,
@@ -1874,8 +1877,9 @@ export class Container
 
 		await this.instantiateRuntime(
 			codeDetails,
-			snapshotTreeWithBlobContents,
+			combineSnapshotTreeAndSnapshotBlobs(snapshot),
 			pendingRuntimeState,
+			snapshot,
 		);
 
 		this.setLoaded();
