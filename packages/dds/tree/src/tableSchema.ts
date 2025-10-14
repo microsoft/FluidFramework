@@ -610,13 +610,13 @@ export namespace System_TableSchema {
 			public getCell(
 				key: TableSchema.CellKey<TColumnSchema, TRowSchema>,
 			): CellValueType | undefined {
-				const { column: columnOrId, row: rowOrId } = key;
-				const row = this._tryGetRow(rowOrId);
+				const { column: columnOrIdOrIndex, row: rowOrIdOrIndex } = key;
+				const row = this._tryGetRow(rowOrIdOrIndex);
 				if (row === undefined) {
 					return undefined;
 				}
 
-				const column = this._tryGetColumn(columnOrId);
+				const column = this._tryGetColumn(columnOrIdOrIndex);
 				if (column === undefined) {
 					return undefined;
 				}
@@ -906,10 +906,10 @@ export namespace System_TableSchema {
 			 * @remarks Searches for a match based strictly on the ID and returns that result.
 			 */
 			private _tryGetColumn(
-				columnOrId: ColumnValueType | string | number,
+				columnOrIdOrIndex: ColumnValueType | string | number,
 			): ColumnValueType | undefined {
-				const columnId = this._getColumnId(columnOrId);
-				return this.getColumn(columnId);
+				const columnId = this._tryGetColumnId(columnOrIdOrIndex);
+				return columnId === undefined ? undefined : this.getColumn(columnId);
 			}
 
 			/**
@@ -922,7 +922,7 @@ export namespace System_TableSchema {
 			): ColumnValueType {
 				const column = this._tryGetColumn(columnOrIdOrIndex);
 				if (column === undefined) {
-					this._throwMissingColumnIdError(this._getColumnId(columnOrIdOrIndex));
+					this._throwMissingColumnError(columnOrIdOrIndex);
 				}
 				return column;
 			}
@@ -934,14 +934,16 @@ export namespace System_TableSchema {
 			 * If an index is provided, the corresponding column's ID is returned.
 			 * If a node is provided, its ID is returned.
 			 */
-			private _getColumnId(columnOrIdOrIndex: ColumnValueType | string | number): string {
+			private _tryGetColumnId(
+				columnOrIdOrIndex: ColumnValueType | string | number,
+			): string | undefined {
 				if (typeof columnOrIdOrIndex === "string") {
 					return columnOrIdOrIndex;
 				}
 
 				if (typeof columnOrIdOrIndex === "number") {
 					if (columnOrIdOrIndex < 0 || columnOrIdOrIndex >= this.columns.length) {
-						Table._throwColumnIndexOutOfBoundsError(columnOrIdOrIndex);
+						return undefined;
 					}
 					const column = this.columns[columnOrIdOrIndex] as ColumnValueType;
 					return column.id;
@@ -958,19 +960,18 @@ export namespace System_TableSchema {
 			}
 
 			/**
-			 * Throw a `UsageError` for a missing Column by its ID.
+			 * Throw a `UsageError` for a missing Column by its ID or index.
 			 */
-			private _throwMissingColumnIdError(columnId: string): never {
-				throw new UsageError(`No column with ID "${columnId}" exists in the table.`);
-			}
+			private _throwMissingColumnError(
+				columnOrIdOrIndex: ColumnValueType | string | number,
+			): never {
+				if (typeof columnOrIdOrIndex === "number") {
+					throw new UsageError(`No column exists at index ${columnOrIdOrIndex}.`);
+				}
 
-			/**
-			 * Throw a `UsageError` for a missing Row by its index.
-			 */
-			private static _throwColumnIndexOutOfBoundsError(columnIndex: number): never {
-				throw new UsageError(
-					`Column index "${columnIndex}" is out of bounds. Expected to be on [0, ${columnIndex - 1}].`,
-				);
+				const columnId =
+					typeof columnOrIdOrIndex === "string" ? columnOrIdOrIndex : columnOrIdOrIndex.id;
+				throw new UsageError(`No column with ID "${columnId}" exists in the table.`);
 			}
 
 			/**
@@ -981,19 +982,19 @@ export namespace System_TableSchema {
 			private _tryGetRow(
 				rowOrIdOrIndex: string | number | RowValueType,
 			): RowValueType | undefined {
-				const rowId = this._getRowId(rowOrIdOrIndex);
-				return this.getRow(rowId);
+				const rowId = this._tryGetRowId(rowOrIdOrIndex);
+				return rowId === undefined ? undefined : this.getRow(rowId);
 			}
 
 			/**
-			 * Attempts to resolve the provided Row node or ID to a Row node in the table.
+			 * Attempts to resolve the provided Row node, ID, or index to a Row node in the table.
 			 * @throws Throws a `UsageError` if there is no match.
 			 * @remarks Searches for a match based strictly on the ID and returns that result.
 			 */
 			private _getRow(rowOrIdOrIndex: RowValueType | string | number): RowValueType {
 				const row = this._tryGetRow(rowOrIdOrIndex);
 				if (row === undefined) {
-					Table._throwMissingRowIdError(this._getRowId(rowOrIdOrIndex));
+					Table._throwMissingRowError(rowOrIdOrIndex);
 				}
 				return row;
 			}
@@ -1005,14 +1006,16 @@ export namespace System_TableSchema {
 			 * If an index is provided, the corresponding Row's ID is returned.
 			 * If a node is provided, its ID is returned.
 			 */
-			private _getRowId(rowOrIdOrIndex: RowValueType | string | number): string {
+			private _tryGetRowId(
+				rowOrIdOrIndex: RowValueType | string | number,
+			): string | undefined {
 				if (typeof rowOrIdOrIndex === "string") {
 					return rowOrIdOrIndex;
 				}
 
 				if (typeof rowOrIdOrIndex === "number") {
 					if (rowOrIdOrIndex < 0 || rowOrIdOrIndex >= this.rows.length) {
-						Table._throwRowIndexOutOfBoundsError(rowOrIdOrIndex);
+						return undefined;
 					}
 					const foo = this.rows[rowOrIdOrIndex] as RowValueType;
 					return foo.id;
@@ -1022,19 +1025,17 @@ export namespace System_TableSchema {
 			}
 
 			/**
-			 * Throw a `UsageError` for a missing Row by its ID.
+			 * Throw a `UsageError` for a missing Row by its ID or index.
 			 */
-			private static _throwMissingRowIdError(rowId: string): never {
-				throw new UsageError(`No row with ID "${rowId}" exists in the table.`);
-			}
+			private static _throwMissingRowError(
+				rowOrIdOrIndex: RowValueType | string | number,
+			): never {
+				if (typeof rowOrIdOrIndex === "number") {
+					throw new UsageError(`No row exists at index ${rowOrIdOrIndex}.`);
+				}
 
-			/**
-			 * Throw a `UsageError` for a missing Row by its index.
-			 */
-			private static _throwRowIndexOutOfBoundsError(rowIndex: number): never {
-				throw new UsageError(
-					`Row index "${rowIndex}" is out of bounds. Expected to be on [0, ${rowIndex - 1}].`,
-				);
+				const rowId = typeof rowOrIdOrIndex === "string" ? rowOrIdOrIndex : rowOrIdOrIndex.id;
+				throw new UsageError(`No row with ID "${rowId}" exists in the table.`);
 			}
 
 			private static _removeRange<TNodeSchema extends ImplicitAllowedTypes>(
@@ -1551,19 +1552,22 @@ export namespace TableSchema {
 		 */
 		readonly rows: TreeArrayNode<TRow>;
 
+		// TODO: by index
 		/**
 		 * Gets a table column by its {@link TableSchema.Column.id}.
 		 */
 		getColumn(id: string): TreeNodeFromImplicitAllowedTypes<TColumn> | undefined;
 
+		// TODO: by index
 		/**
 		 * Gets a table row by its {@link TableSchema.Row.id}.
 		 */
 		getRow(id: string): TreeNodeFromImplicitAllowedTypes<TRow> | undefined;
 
 		/**
-		 * Gets a cell in the table by column and row IDs.
+		 * Gets a cell in the table by corresponding column and row.
 		 * @param key - A key that uniquely distinguishes a cell in the table, represented as a combination of the column ID and row ID.
+		 * @returns The cell, if it exists. Otherwise, `undefined`.
 		 */
 		getCell(key: CellKey<TColumn, TRow>): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
 

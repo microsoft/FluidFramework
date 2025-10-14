@@ -1391,6 +1391,69 @@ describe("TableFactory unit tests", () => {
 	});
 
 	describeHydration("Reading values", (initializeTree) => {
+		it("Get cell", () => {
+			const cell00 = new Cell({ value: "0-0" });
+			const cell01 = new Cell({ value: "0-1" });
+			const cell10 = new Cell({ value: "1-0" });
+			const cell11 = new Cell({ value: "1-1" });
+			const column0 = new Column({ id: "column-0", props: {} });
+			const column1 = new Column({ id: "column-1", props: {} });
+			const row0 = new Row({
+				id: "row-0",
+				cells: {
+					"column-0": cell00,
+					"column-1": cell01,
+				},
+				props: {},
+			});
+			const row1 = new Row({
+				id: "row-1",
+				cells: { "column-0": cell10, "column-1": cell11 },
+				props: {},
+			});
+
+			const table = initializeTree(Table, {
+				columns: [column0, column1],
+				rows: [row0, row1],
+			});
+
+			// Get cell (by indices)
+			const getByIndices = table.getCell({ row: 1, column: 0 });
+			assert(getByIndices !== undefined);
+			assertEqualTrees(getByIndices, {
+				value: "1-0",
+			});
+
+			// Get cell (by IDs)
+			const getByIds = table.getCell({ row: "row-0", column: "column-0" });
+			assert(getByIds !== undefined);
+			assertEqualTrees(getByIds, {
+				value: "0-0",
+			});
+
+			// Get cell (by nodes)
+			const getByNodes = table.getCell({ row: row1, column: column1 });
+			assert(getByNodes !== undefined);
+			assertEqualTrees(getByNodes, {
+				value: "1-1",
+			});
+
+			// Get cell (index out of bounds)
+			assert(table.getCell({ row: 5, column: 0 }) === undefined);
+
+			// Get cell (nonexistent IDs)
+			assert(table.getCell({ row: "row-0", column: "foo" }) === undefined);
+
+			// Get cell (nodes that aren't in the table)
+			assert(
+				table.getCell({
+					row: new Row({ id: "row-2", cells: {}, props: {} }),
+					column: column0,
+				}) === undefined,
+			);
+		});
+
+		// TODO: replace with column/row/cell specific tests
 		it("Gets proper table elements with getter methods", () => {
 			const cell0 = new Cell({ value: "Hello World!" });
 			const column0 = new Column({ id: "column-0", props: {} });
