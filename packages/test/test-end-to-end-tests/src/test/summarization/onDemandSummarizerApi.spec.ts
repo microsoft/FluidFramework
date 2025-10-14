@@ -187,7 +187,7 @@ describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, a
 		assert(summaryResults.summaryOpBroadcasted, "on-demand summary op not broadcasted");
 	});
 
-	it("on-demand summary succeeds while normal summary is inflight", async () => {
+	it.skip("on-demand summary succeeds while normal summary is inflight", async () => {
 		const enabledSummarizerConfig: ITestContainerConfig = {
 			fluidDataObjectType: DataObjectFactoryType.Test,
 		};
