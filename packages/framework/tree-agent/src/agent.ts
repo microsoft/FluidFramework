@@ -110,7 +110,7 @@ export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
 		const maxEditCount = this.options?.maximumSequentialEdits ?? defaultMaxSequentialEdits;
 		let active = true;
 		let editCount = 0;
-		let editFailed = false;
+		let rollbackEdits = false;
 		const { editToolName } = this.client;
 		const edit = async (editCode: string): Promise<EditResult> => {
 			if (editToolName === undefined) {
@@ -127,7 +127,7 @@ export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
 			}
 
 			if (++editCount > maxEditCount) {
-				editFailed = true;
+				rollbackEdits = true;
 				return {
 					type: "tooManyEditsError",
 					message: `The maximum number of edits (${maxEditCount}) for this query has been exceeded.`,
@@ -142,7 +142,7 @@ export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
 				this.options?.logger,
 			);
 
-			editFailed ||= editResult.type !== "success";
+			rollbackEdits = editResult.type !== "success";
 			return editResult;
 		};
 
@@ -152,7 +152,7 @@ export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
 		});
 		active = false;
 
-		if (!editFailed) {
+		if (!rollbackEdits) {
 			this.outerTree.branch.merge(queryTree.branch);
 			this.outerTreeIsDirty = false;
 		}

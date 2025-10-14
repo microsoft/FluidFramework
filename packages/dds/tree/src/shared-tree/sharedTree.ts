@@ -942,7 +942,7 @@ export function buildConfiguredForest(
 
 export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	jsonValidator: FormatValidatorNoOp,
-	oldestCompatibleClient: FluidClientVersion.v2_0,
+	minVersionForCollab: FluidClientVersion.v2_0,
 	forest: ForestTypeReference,
 	treeEncodeType: TreeCompressionStrategy.Compressed,
 	formatVersion: SharedTreeFormatVersion.v3,

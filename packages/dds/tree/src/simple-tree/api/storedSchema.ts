@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { FluidClientVersion, ICodecOptions } from "../../codec/index.js";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import type { ICodecOptions } from "../../codec/index.js";
 import { SchemaVersion } from "../../core/index.js";
 import { encodeTreeSchema, makeSchemaCodec } from "../../feature-libraries/index.js";
 import {
@@ -24,7 +25,7 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
  * Dumps the "persisted" schema subset of the provided `schema` into a deterministic JSON-compatible, semi-human-readable format.
  *
  * @param schema - The schema to dump.
- * @param oldestCompatibleClient - The oldest client version which can read the schema: impacts the format used.
+ * @param minVersionForCollab - The oldest client version which can read the schema: impacts the format used.
  * @param includeStaged - filter for selecting which staged allowed types to include in the output.
  *
  * @remarks
@@ -54,11 +55,11 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
  */
 export function extractPersistedSchema(
 	schema: ImplicitFieldSchema,
-	oldestCompatibleClient: FluidClientVersion,
+	minVersionForCollab: MinimumVersionForCollab,
 	includeStaged: (upgrade: SchemaUpgrade) => boolean,
 ): JsonCompatible {
 	const stored = toStoredSchema(schema, { includeStaged });
-	const schemaWriteVersion = clientVersionToSchemaVersion(oldestCompatibleClient);
+	const schemaWriteVersion = clientVersionToSchemaVersion(minVersionForCollab);
 	return encodeTreeSchema(stored, schemaWriteVersion);
 }
 

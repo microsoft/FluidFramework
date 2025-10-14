@@ -93,6 +93,11 @@ class MockStorageAdapter implements ISerializedStateManagerDocumentStorageServic
 			this.blobs.set(id, stringToBuffer(blob, "utf8"));
 		}
 	}
+	public cacheSnapshotBlobs(snapshotBlobs: Map<string, ArrayBuffer>): void {
+		for (const [key, value] of snapshotBlobs.entries()) {
+			this.blobs.set(key, value);
+		}
+	}
 
 	public async updateGroupIdSnapshots(): Promise<void> {}
 	public get loadedGroupIdSnapshots(): Record<string, ISnapshot> {

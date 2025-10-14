@@ -7,7 +7,6 @@ import { fail, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import {
 	type CodecTree,
-	type FluidClientVersion,
 	type ICodecFamily,
 	type ICodecOptions,
 	type IJsonCodec,
@@ -29,14 +28,15 @@ import { brand, type JsonCompatible } from "../../util/index.js";
 
 import { Format as FormatV1 } from "./formatV1.js";
 import { Format as FormatV2 } from "./formatV2.js";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 
 /**
- * Convert a FluidClientVersion to a SchemaVersion.
- * @param clientVersion - The FluidClientVersion to convert.
- * @returns The SchemaVersion that corresponds to the provided FluidClientVersion.
+ * Convert a MinimumVersionForCollab to a SchemaVersion.
+ * @param clientVersion - The MinimumVersionForCollab to convert.
+ * @returns The SchemaVersion that corresponds to the provided MinimumVersionForCollab.
  */
 export function clientVersionToSchemaVersion(
-	clientVersion: FluidClientVersion,
+	clientVersion: MinimumVersionForCollab,
 ): SchemaVersion {
 	// Only one version of the schema codec is currently supported.
 	return SchemaVersion.v1;

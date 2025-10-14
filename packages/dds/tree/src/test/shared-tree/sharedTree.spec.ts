@@ -2433,11 +2433,13 @@ describe("SharedTree", () => {
 	});
 
 	it("summarize with pre-attach removed nodes", () => {
-		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
+		const runtime = new MockFluidDataStoreRuntime({
+			idCompressor: createIdCompressor(),
+			minVersionForCollab: FluidClientVersion.v2_52,
+		});
 		const sharedObject = configuredSharedTree({
 			jsonValidator: FormatValidatorBasic,
 			forest: ForestTypeExpensiveDebug,
-			oldestCompatibleClient: FluidClientVersion.v2_52,
 		}) as SharedObjectKind<ISharedTree> & ISharedObjectKind<ISharedTree>;
 		const tree = sharedObject.getFactory().create(runtime, "tree");
 		const runtimeFactory = new MockContainerRuntimeFactory();

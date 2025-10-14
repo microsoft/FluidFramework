@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/container-runtime",
-	"version": "2.63.0",
+	"version": "2.70.0",
 	"description": "Fluid container runtime",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -218,7 +218,26 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Interface_ContainerRuntimeOptions": {
+				"backCompat": false
+			},
+			"Interface_ISummaryRuntimeOptions": {
+				"backCompat": false
+			},
+			"Interface_LoadContainerRuntimeParams": {
+				"backCompat": false
+			},
+			"TypeAlias_IContainerRuntimeOptions": {
+				"backCompat": false
+			},
+			"TypeAlias_ISummaryConfiguration": {
+				"backCompat": false
+			},
+			"Variable_DefaultSummaryConfiguration": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }

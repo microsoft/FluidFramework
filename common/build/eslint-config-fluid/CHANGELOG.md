@@ -1,5 +1,13 @@
 # @fluidframework/eslint-config-fluid Changelog
 
+## [8.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v8.0_0)
+
+### eslint-plugin-import replaced by eslint-plugin-import-x
+
+The package now uses rules from [eslint-plugin-import-x](https://github.com/un-ts/eslint-plugin-import-x) instead of
+eslint-plugin-import. Integrating this change will require renaming eslint disable comments and overrides, but the
+changes are mechanical.
+
 ## [7.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v7.0_0)
 
 ### New Rules

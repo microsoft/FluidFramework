@@ -40,6 +40,7 @@ export {
 	type ISummaryConfigurationDisableHeuristics,
 	type ISummaryConfigurationDisableSummarizer,
 	type ISummaryConfigurationHeuristics,
+	type ISummaryConfigurationWithSummaryOnRequest,
 	type ISummaryBaseConfiguration,
 } from "./summarizerTypes.js";
 export {
@@ -98,6 +99,7 @@ export {
 	summarizerRequestUrl,
 	DefaultSummaryConfiguration,
 	isSummariesDisabled,
+	isSummaryOnRequest,
 } from "./summaryHelpers.js";
 export {
 	type IdCompressorMode,

@@ -539,7 +539,10 @@ export function normalizeAllowedTypesInternal(
 	return getOrCreate(cachedNormalize, type, () => {
 		// Due to more specific internal type, the above does not narrow sufficiently, so more narrowing is needed.
 		// It is possible this will give a false error if a TreeNodeSchema which matches this check is used.
-		assert(!("types" in type && "metadata" in type), "invalid AnnotatedAllowedTypes");
+		assert(
+			!("types" in type && "metadata" in type),
+			0xc7d /* invalid AnnotatedAllowedTypes */,
+		);
 
 		const annotatedTypes: AnnotatedAllowedType[] = (isReadonlyArray(type) ? type : [type]).map(
 			normalizeToAnnotatedAllowedType,

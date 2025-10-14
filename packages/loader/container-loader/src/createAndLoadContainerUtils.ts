@@ -9,6 +9,7 @@ import type {
 	IFluidCodeDetails,
 	IContainerPolicies,
 } from "@fluidframework/container-definitions/internal";
+import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import type {
 	FluidObject,
 	IConfigProviderBase,
@@ -20,10 +21,44 @@ import type {
 	IDocumentServiceFactory,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
+import { DriverHeader } from "@fluidframework/driver-definitions/internal";
+import {
+	GenericError,
+	normalizeError,
+	createChildMonitoringContext,
+	mixinMonitoringContext,
+	sessionStorageConfigProvider,
+	PerformanceEvent,
+	isFluidError,
+} from "@fluidframework/telemetry-utils/internal";
+import { v4 as uuid } from "uuid";
 
+import { DebugLogger } from "./debugLogger.js";
 import { createFrozenDocumentServiceFactory } from "./frozenServices.js";
 import { Loader } from "./loader.js";
+import { pkgVersion } from "./packageVersion.js";
 import type { ProtocolHandlerBuilder } from "./protocol.js";
+import type {
+	LoadSummarizerSummaryResult,
+	OnDemandSummaryResults,
+	SummarizeOnDemandResults,
+} from "./summarizerResultTypes.js";
+
+interface OnDemandSummarizeResultsPromises {
+	readonly summarySubmitted: Promise<SummarizeOnDemandResults["summarySubmitted"]>;
+	readonly summaryOpBroadcasted: Promise<SummarizeOnDemandResults["summaryOpBroadcasted"]>;
+}
+
+interface OnDemandSummarizeOptions {
+	readonly reason?: string;
+	readonly retryOnFailure?: boolean;
+	readonly fullTree?: boolean;
+}
+
+interface SummarizerLike {
+	readonly ISummarizer?: SummarizerLike;
+	summarizeOnDemand(options: OnDemandSummarizeOptions): OnDemandSummarizeResultsPromises;
+}
 
 /**
  * Properties necessary for creating and loading a container.
@@ -102,6 +137,15 @@ export interface ILoadExistingContainerProps extends ICreateAndLoadContainerProp
 	 */
 	readonly pendingLocalState?: string | undefined;
 }
+
+/**
+ * Props used to load summarizer container.
+ * @legacy @alpha
+ */
+export type ILoadSummarizerContainerProps = Omit<
+	ILoadExistingContainerProps,
+	"pendingLocalState"
+>;
 
 /**
  * Props used to create a detached container.
@@ -199,4 +243,134 @@ export async function loadFrozenContainerFromPendingState(
 		...props,
 		documentServiceFactory: createFrozenDocumentServiceFactory(props.documentServiceFactory),
 	});
+}
+
+/**
+ * Loads a summarizer container with the required headers, triggers an on-demand summary, and then closes it.
+ * Returns success/failure and an optional error for host-side handling.
+ *
+ * @legacy @alpha
+ */
+export async function loadSummarizerContainerAndMakeSummary(
+	loadSummarizerContainerProps: ILoadSummarizerContainerProps,
+): Promise<LoadSummarizerSummaryResult> {
+	const { logger, configProvider, request: originalRequest } = loadSummarizerContainerProps;
+	const telemetryProps = {
+		loaderId: uuid(),
+		loaderVersion: pkgVersion,
+	};
+
+	const subMc = mixinMonitoringContext(
+		DebugLogger.mixinDebugLogger("fluid:telemetry", logger, {
+			all: telemetryProps,
+		}),
+		sessionStorageConfigProvider.value,
+		configProvider,
+	);
+	const mc = createChildMonitoringContext({
+		logger: subMc.logger,
+		namespace: "SummarizerOnDemand",
+	});
+	return PerformanceEvent.timedExecAsync(
+		mc.logger,
+		{ eventName: "SummarizerOnDemandSummary" },
+		async (event) => {
+			const baseHeaders = originalRequest.headers;
+			const request = {
+				...originalRequest,
+				headers: {
+					...baseHeaders,
+					[LoaderHeader.cache]: false,
+					[LoaderHeader.clientDetails]: {
+						capabilities: { interactive: false },
+						type: "summarizer",
+					},
+					[DriverHeader.summarizingClient]: true,
+					[LoaderHeader.reconnect]: false,
+				},
+			};
+
+			const container = await loadExistingContainer({
+				...loadSummarizerContainerProps,
+				request,
+			});
+
+			let summarySubmitted: SummarizeOnDemandResults["summarySubmitted"];
+			let summaryOpBroadcasted: SummarizeOnDemandResults["summaryOpBroadcasted"];
+			try {
+				if (container.getEntryPoint === undefined) {
+					throw new GenericError("container.getEntryPoint() is undefined");
+				}
+				const fluidObject = (await container.getEntryPoint()) as FluidObject<SummarizerLike>;
+				const summarizer = fluidObject?.ISummarizer;
+				if (summarizer === undefined) {
+					throw new GenericError("Summarizer entry point not available");
+				}
+				// Host controlled feature gate for fullTree
+				// Default value will be false
+				const fullTreeGate =
+					mc.config.getBoolean("Fluid.Summarizer.FullTree.OnDemand") === true;
+
+				const summarizeResults: OnDemandSummarizeResultsPromises =
+					summarizer.summarizeOnDemand({
+						reason: "summaryOnRequest",
+						retryOnFailure: true,
+						fullTree: fullTreeGate,
+					});
+				[summarySubmitted, summaryOpBroadcasted] = await Promise.all([
+					summarizeResults.summarySubmitted,
+					summarizeResults.summaryOpBroadcasted,
+				]);
+
+				const summaryResults: OnDemandSummaryResults = {
+					summarySubmitted: summarySubmitted.success,
+					summaryInfo: summarySubmitted.success
+						? {
+								stage: summarySubmitted.data.stage,
+								handle: summaryOpBroadcasted.success
+									? summaryOpBroadcasted.data.summarizeOp.contents.handle
+									: undefined,
+							}
+						: {},
+					summaryOpBroadcasted: summaryOpBroadcasted.success,
+				};
+
+				if (summarySubmitted.success && summaryOpBroadcasted.success) {
+					event.end({
+						success: true,
+						summarySubmitted: true,
+						summaryOpBroadcasted: true,
+					});
+					return {
+						success: true,
+						summaryResults,
+					};
+				}
+
+				const failureError =
+					summarySubmitted.success === false
+						? summarySubmitted.error
+						: summaryOpBroadcasted.success === false
+							? summaryOpBroadcasted.error
+							: new GenericError("On demand summary failed");
+
+				event.end({
+					success: false,
+					summarySubmitted: summarySubmitted.success,
+					summaryOpBroadcasted: summaryOpBroadcasted.success,
+				});
+				return {
+					success: false,
+					error: failureError,
+				};
+			} catch (error) {
+				event.cancel({ success: false }, error);
+				const caughtError = isFluidError(error) ? error : normalizeError(error);
+				return { success: false, error: caughtError };
+			} finally {
+				container.dispose();
+			}
+		},
+		{ start: true, end: true, cancel: "generic" },
+	);
 }

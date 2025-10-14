@@ -94,7 +94,7 @@ export function getCodecTreeForChangeFormat(
 	version: SharedTreeChangeFormatVersion,
 ): CodecTree {
 	const { modularChange, schemaChange } =
-		dependenciesForChangeFormat.get(version) ?? fail("Unknown change format");
+		dependenciesForChangeFormat.get(version) ?? fail(0xc78 /* Unknown change format */);
 	return {
 		name: "SharedTreeChange",
 		version,

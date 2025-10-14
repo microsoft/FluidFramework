@@ -70,7 +70,7 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 		const localCommits = getLocalCommits();
 		assert(
 			localCommits[0]?.revision === revision,
-			"Expected local commits to start with specified revision",
+			0xc79 /* Expected local commits to start with specified revision */,
 		);
 
 		// Some in-flight commits have stale enrichments, so we recompute them.
@@ -128,7 +128,8 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 
 	private getPendingChange(revision: RevisionTag): PendingChange<TChange> {
 		return (
-			this.pendingChanges.get(revision) ?? fail("No pending change stored for this revision")
+			this.pendingChanges.get(revision) ??
+			fail(0xc7a /* No pending change stored for this revision */)
 		);
 	}
 

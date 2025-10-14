@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/example-webpack-integration",
-	"version": "2.63.0",
+	"version": "2.70.0",
 	"private": true,
 	"description": "Webpack configuration used by examples in the FluidFramework repo.",
 	"homepage": "https://fluidframework.com",

@@ -5,17 +5,14 @@
 
 import { strict as assert } from "node:assert";
 
-import {
-	type FluidClientVersion,
-	type ICodecFamily,
-	type IJsonCodec,
-	makeCodecFamily,
-} from "../../../codec/index.js";
+import { type ICodecFamily, type IJsonCodec, makeCodecFamily } from "../../../codec/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { ClientVersionDispatchingCodecBuilder } from "../../../codec/versioned/codec.js";
 import { validateUsageError } from "../../utils.js";
 import { pkgVersion } from "../../../packageVersion.js";
+import { gt } from "semver-ts";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 
 describe("versioned Codecs", () => {
 	describe("ClientVersionDispatchingCodecBuilder", () => {
@@ -42,16 +39,19 @@ describe("versioned Codecs", () => {
 		]);
 		const builder = new ClientVersionDispatchingCodecBuilder(
 			family,
-			(oldestCompatibleClient: FluidClientVersion) => (oldestCompatibleClient > 5 ? 2 : 1),
+			(minVersionForCollab: MinimumVersionForCollab) =>
+				// Arbitrary version selection logic for test purposes. Versions greater than 5.0.0 get v2 codec.
+				gt(minVersionForCollab, "5.0.0") ? 2 : 1,
 		);
 
 		it("round trip", () => {
 			const codec1 = builder.build({
-				oldestCompatibleClient: 2 as FluidClientVersion,
+				minVersionForCollab: "2.0.0",
 				jsonValidator: FormatValidatorBasic,
 			});
 			const codec2 = builder.build({
-				oldestCompatibleClient: 6 as FluidClientVersion,
+				// We have to cast to a `MinimumVersionForCollab` because "6.0.0" is not a valid value for that type.
+				minVersionForCollab: "6.0.0" as MinimumVersionForCollab,
 				jsonValidator: FormatValidatorBasic,
 			});
 			const v1 = codec1.encode(42);
@@ -66,7 +66,7 @@ describe("versioned Codecs", () => {
 			assert.throws(
 				() => codec1.decode({ version: 3, value2: 42 }),
 				validateUsageError(`Unsupported version 3 encountered while decoding data. Supported versions for this data are: 1, 2.
-The client which encoded this data likely specified an "oldestCompatibleClient" value which corresponds to a version newer than the version of this client ("${pkgVersion}").`),
+The client which encoded this data likely specified an "minVersionForCollab" value which corresponds to a version newer than the version of this client ("${pkgVersion}").`),
 			);
 		});
 	});

@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import { isFluidError } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -14,7 +15,10 @@ import {
 	type SemanticVersion,
 	type ConfigValidationMap,
 	configValueToMinVersionForCollab,
+	lowestMinVersionForCollab,
+	checkValidMinVersionForCollabVerbose,
 } from "../compatibilityBase.js";
+import { pkgVersion } from "../packageVersion.js";
 
 describe("compatibilityBase", () => {
 	describe("getConfigsForMinVersionForCollab", () => {
@@ -358,6 +362,51 @@ describe("compatibilityBase", () => {
 						return error.message === test.expectedErrorMessage;
 					},
 				);
+			});
+		}
+	});
+
+	describe("minVersionForCollab validation", () => {
+		const testCases: {
+			version: MinimumVersionForCollab;
+			checks: {
+				isValidSemver: boolean;
+				isGteLowestMinVersion: boolean;
+				isLtePkgVersion: boolean;
+			};
+		}[] = [
+			{
+				version: pkgVersion,
+				checks: { isValidSemver: true, isGteLowestMinVersion: true, isLtePkgVersion: true },
+			},
+			{
+				version: lowestMinVersionForCollab,
+				checks: { isValidSemver: true, isGteLowestMinVersion: true, isLtePkgVersion: true },
+			},
+			{
+				// Cast since this is not a valid MinimumVersionForCollab, but is a valid semver.
+				version: "0.0.0" as MinimumVersionForCollab,
+				checks: { isValidSemver: true, isGteLowestMinVersion: false, isLtePkgVersion: true },
+			},
+			{
+				// Cast since this is not a valid MinimumVersionForCollab, but is a valid semver.
+				version: "1000000.0.0" as MinimumVersionForCollab,
+				checks: { isValidSemver: true, isGteLowestMinVersion: true, isLtePkgVersion: false },
+			},
+			{
+				// Cast since this is not a valid MinimumVersionForCollab and is not a valid semver.
+				version: "1.2" as MinimumVersionForCollab,
+				checks: { isValidSemver: false, isGteLowestMinVersion: false, isLtePkgVersion: false },
+			},
+		];
+
+		for (const testCase of testCases) {
+			it(`checkValidMinVersionForCollabVerbose return value for ${testCase.version} matches expected result.`, () => {
+				const { isValidSemver, isGteLowestMinVersion, isLtePkgVersion } =
+					checkValidMinVersionForCollabVerbose(testCase.version);
+				assert.deepEqual(isValidSemver, testCase.checks.isValidSemver);
+				assert.deepEqual(isGteLowestMinVersion, testCase.checks.isGteLowestMinVersion);
+				assert.deepEqual(isLtePkgVersion, testCase.checks.isLtePkgVersion);
 			});
 		}
 	});

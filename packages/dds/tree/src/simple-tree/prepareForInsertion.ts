@@ -343,7 +343,7 @@ function hydrator(
 		// Find or create one as necessary.
 		for (const { path, node } of batch.paths) {
 			const anchor = forest.anchors.track(path);
-			const anchorNode = forest.anchors.locate(anchor) ?? fail("missing anchor");
+			const anchorNode = forest.anchors.locate(anchor) ?? fail(0xc7b /* missing anchor */);
 
 			let flexNode = anchorNode.slots.get(flexTreeSlot);
 			if (flexNode === undefined) {

@@ -26,7 +26,6 @@ export type Ctor<T = any> = new (...args: any[]) => T;
 // @alpha
 export interface EditResult {
     message: string;
-    // (undocumented)
     type: "success" | "disabledError" | "validationError" | "executionError" | "tooManyEditsError" | "expiredError";
 }
 

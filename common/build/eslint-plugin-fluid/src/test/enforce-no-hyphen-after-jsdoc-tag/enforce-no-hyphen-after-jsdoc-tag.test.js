@@ -5,28 +5,22 @@
 
 const assert = require("assert");
 const path = require("path");
-const { ESLint } = require("eslint");
+const { createESLintConfig, eslintVersion, ESLint } = require("../eslintConfigHelper.cjs");
 
-describe("Do not allow `-` following JSDoc/TSDoc tags", function () {
+describe(`Do not allow \`-\` following JSDoc/TSDoc tags (eslint ${eslintVersion})`, function () {
 	/**
 	 *
 	 * @param {string} file - Path to the file being linted. Relative to the `example/no-hyphen-after-jsdoc-tag` folder.
 	 * @returns
 	 */
 	async function lintFile(file) {
-		const eslint = new ESLint({
-			useEslintrc: false,
-			overrideConfig: {
-				rules: {
-					"no-hyphen-after-jsdoc-tag": "error",
-				},
-				parser: "@typescript-eslint/parser",
-				parserOptions: {
-					project: path.join(__dirname, "../example/tsconfig.json"),
-				},
+		const eslintOptions = createESLintConfig({
+			rules: {
+				"@fluid-internal/fluid/no-hyphen-after-jsdoc-tag": "error",
 			},
-			rulePaths: [path.join(__dirname, "../../rules")],
 		});
+
+		const eslint = new ESLint(eslintOptions);
 		const fileToLint = path.join(__dirname, "../example/no-hyphen-after-jsdoc-tag", file);
 		const results = await eslint.lintFiles([fileToLint]);
 		assert.equal(results.length, 1, "Expected a single result for linting a single file.");

@@ -56,16 +56,19 @@ export interface SemanticAgentOptions {
 
 /**
  * A result from an edit attempt via the {@link SharedTreeChatQuery.edit} function.
- * @remarks
- * - `success`: The edit was successfully applied.
- * - `disabledError`: The model is not allowed to edit the tree (i.e. {@link SharedTreeChatModel.editToolName} was not provided).
- * - `validationError`: The provided JavaScript did not pass the optional {@link SemanticAgentOptions.validateEdit} function.
- * - `executionError`: An error was thrown while parsing or executing the provided JavaScript.
- * - `tooManyEditsError`: The {@link SharedTreeChatQuery.edit} function has been called more than the number of times specified by {@link SemanticAgentOptions.maximumSequentialEdits} for the same message.
- * - `expiredError`: The {@link SharedTreeChatQuery.edit} function was called after the issuing query has already completed.
  * @alpha
  */
 export interface EditResult {
+	/**
+	 * The type of the edit result.
+	 * @remarks
+	 * - `success`: The edit was successfully applied.
+	 * - `disabledError`: The model is not allowed to edit the tree (i.e. {@link SharedTreeChatModel.editToolName} was not provided).
+	 * - `validationError`: The provided JavaScript did not pass the optional {@link SemanticAgentOptions.validateEdit} function.
+	 * - `executionError`: An error was thrown while parsing or executing the provided JavaScript.
+	 * - `tooManyEditsError`: The {@link SharedTreeChatQuery.edit} function has been called more than the number of times specified by {@link SemanticAgentOptions.maximumSequentialEdits} for the same message.
+	 * - `expiredError`: The {@link SharedTreeChatQuery.edit} function was called after the issuing query has already completed.
+	 */
 	type:
 		| "success"
 		| "disabledError"
@@ -107,6 +110,9 @@ export interface SharedTreeChatQuery {
 	/**
 	 * Edit the tree with the provided JavaScript function code.
 	 * @remarks Attempting an edit may fail for a variety of reasons which are captured in the {@link EditResult | returned object}.
+	 * If an edit fails, the tree will not be modified and the model may attempt another edit if desired.
+	 * When the query ends, if the last edit attempt was successful, all edits made during the query will be merged into the agent's SharedTree.
+	 * Otherwise, all edits made during the query will be discarded.
 	 */
 	edit(js: string): Promise<EditResult>;
 }

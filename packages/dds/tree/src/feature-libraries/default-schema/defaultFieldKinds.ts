@@ -262,7 +262,7 @@ export function getCodecTreeForModularChangeFormat(
 	version: ModularChangeFormatVersion,
 ): CodecTree {
 	const dependencies =
-		fieldKindConfigurations.get(version) ?? fail("Unknown modular change format");
+		fieldKindConfigurations.get(version) ?? fail(0xc7c /* Unknown modular change format */);
 	const children: CodecTree[] = Array.from(dependencies.entries()).map(
 		([key, { formatVersion }]) => ({
 			name: `FieldKind:${key}`,

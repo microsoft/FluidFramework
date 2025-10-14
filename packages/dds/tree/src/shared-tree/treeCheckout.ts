@@ -298,7 +298,7 @@ export function createTreeCheckout(
 	const forest = args?.forest ?? buildForest(breaker, schema);
 	const defaultCodecOptions = {
 		jsonValidator: FormatValidatorNoOp,
-		oldestCompatibleClient: FluidClientVersion.v2_0,
+		minVersionForCollab: FluidClientVersion.v2_0,
 	};
 	const defaultFieldBatchVersion = 1;
 	const changeFamily =

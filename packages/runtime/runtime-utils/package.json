@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/runtime-utils",
-	"version": "2.63.0",
+	"version": "2.70.0",
 	"description": "Collection of utility functions for Fluid Runtime",
 	"homepage": "https://fluidframework.com",
 	"repository": {
