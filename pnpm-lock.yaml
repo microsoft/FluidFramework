@@ -9350,6 +9350,9 @@ importers:
       '@ungap/structured-clone':
         specifier: ^1.2.0
         version: 1.2.1
+      semver-ts:
+        specifier: ^1.0.3
+        version: 1.0.3
       uuid:
         specifier: ^11.1.0
         version: 11.1.0

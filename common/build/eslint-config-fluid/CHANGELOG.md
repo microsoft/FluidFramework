@@ -6,12 +6,12 @@
 
 The package now uses rules from
 [@eslint-community/eslint-plugin-eslint-comments](https://eslint-community.github.io/eslint-plugin-eslint-comments/)
- v4.5.0 instead of eslint-plugin-eslint-comments v3.2.0. Integrating this change will require renaming eslint disable
- comments and overrides, but the changes are mechanical.
+v4.5.0 instead of eslint-plugin-eslint-comments v3.2.0. Integrating this change will require renaming eslint disable
+comments and overrides, but the changes are mechanical.
 
 ## [8.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v8.0_0)
 
-### eslint-plugin-eslint-comments replaced by @eslint-community/eslint-plugin-eslint-comments
+### eslint-plugin-import replaced by eslint-plugin-import-x
 
 The package now uses rules from [eslint-plugin-import-x](https://github.com/un-ts/eslint-plugin-import-x) instead of
 eslint-plugin-import. Integrating this change will require renaming eslint disable comments and overrides, but the
