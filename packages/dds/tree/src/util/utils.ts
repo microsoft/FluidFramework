@@ -291,7 +291,7 @@ export function count(iterable: Iterable<unknown>): number {
  * @remarks
  * This does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
- * @alpha
+ * @beta
  */
 export type JsonCompatible<TExtra = never> =
 	| string
@@ -308,7 +308,7 @@ export type JsonCompatible<TExtra = never> =
  * @remarks
  * This does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
- * @alpha
+ * @beta
  */
 export type JsonCompatibleObject<TExtra = never> = { [P in string]?: JsonCompatible<TExtra> };
 
