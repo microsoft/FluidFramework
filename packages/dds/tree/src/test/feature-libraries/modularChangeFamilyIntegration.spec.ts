@@ -1045,8 +1045,7 @@ describe("ModularChangeFamily integration", () => {
 			assertEqual(rebased, expected);
 		});
 
-		// XXX: Cleanup the detached move entry
-		it.skip("composite move over remove", () => {
+		it("composite move over remove", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
 			const editor = new DefaultEditBuilder(family, mintRevisionTag, changeReceiver);
 

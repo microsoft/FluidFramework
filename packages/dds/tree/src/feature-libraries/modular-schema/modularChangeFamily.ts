@@ -2924,21 +2924,6 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 					countToProcess,
 					this.fieldId,
 				);
-
-				const newAttachEntry = getFirstAttachField(
-					this.table.newChange.crossFieldKeys,
-					newDetachId,
-					countToProcess,
-				);
-
-				countToProcess = newAttachEntry.length;
-				if (newAttachEntry.value !== undefined) {
-					this.table.rebasedRootNodes.outputDetachLocations.set(
-						newDetachId,
-						countToProcess,
-						newAttachEntry.value,
-					);
-				}
 			}
 		}
 
