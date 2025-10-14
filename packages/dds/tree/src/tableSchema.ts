@@ -959,9 +959,15 @@ export namespace System_TableSchema {
 					throw new UsageError(`No column exists at index ${columnOrIdOrIndex}.`);
 				}
 
-				const columnId =
-					typeof columnOrIdOrIndex === "string" ? columnOrIdOrIndex : columnOrIdOrIndex.id;
-				throw new UsageError(`No column with ID "${columnId}" exists in the table.`);
+				if (typeof columnOrIdOrIndex === "string") {
+					throw new UsageError(
+						`No column with ID "${columnOrIdOrIndex}" exists in the table.`,
+					);
+				}
+
+				throw new UsageError(
+					`The specified column node with ID "${columnOrIdOrIndex.id}" does not exist in the table.`,
+				);
 			}
 
 			/**
@@ -1021,8 +1027,13 @@ export namespace System_TableSchema {
 					throw new UsageError(`No row exists at index ${rowOrIdOrIndex}.`);
 				}
 
-				const rowId = typeof rowOrIdOrIndex === "string" ? rowOrIdOrIndex : rowOrIdOrIndex.id;
-				throw new UsageError(`No row with ID "${rowId}" exists in the table.`);
+				if (typeof rowOrIdOrIndex === "string") {
+					throw new UsageError(`No row with ID "${rowOrIdOrIndex}" exists in the table.`);
+				}
+
+				throw new UsageError(
+					`The specified row node with ID "${rowOrIdOrIndex.id}" does not exist in the table.`,
+				);
 			}
 
 			private static _removeRange<TNodeSchema extends ImplicitAllowedTypes>(
@@ -1263,7 +1274,7 @@ export namespace TableSchema {
 
 		/**
 		 * Gets all of the populated cells in the column, keyed by their associated row IDs.
-		 * @throws Throws an error if the column is not in a table.
+		 * @throws Throws an error if the  column is not in a table.
 		 */
 		getCells(): readonly {
 			rowId: string;

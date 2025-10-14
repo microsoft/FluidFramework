@@ -943,7 +943,9 @@ describe("TableFactory unit tests", () => {
 
 			assert.throws(
 				() => table.removeColumns([new Column({ id: "column-0", props: {} })]),
-				validateUsageError(/No column with ID "column-0" exists in the table./),
+				validateUsageError(
+					/The specified column node with ID "column-0" does not exist in the table./,
+				),
 			);
 		});
 
@@ -956,7 +958,9 @@ describe("TableFactory unit tests", () => {
 
 			assert.throws(
 				() => table.removeColumns([column0, new Column({ id: "column-1", props: {} })]),
-				validateUsageError(/No column with ID "column-1" exists in the table./),
+				validateUsageError(
+					/The specified column node with ID "column-1" does not exist in the table./,
+				),
 			);
 
 			// Additionally, `column-0` should not have been removed.
@@ -1086,7 +1090,9 @@ describe("TableFactory unit tests", () => {
 
 			assert.throws(
 				() => table.removeRows([new Row({ id: "row-0", cells: {}, props: {} })]),
-				validateUsageError(/No row with ID "row-0" exists in the table./),
+				validateUsageError(
+					/The specified row node with ID "row-0" does not exist in the table./,
+				),
 			);
 		});
 
@@ -1099,7 +1105,9 @@ describe("TableFactory unit tests", () => {
 
 			assert.throws(
 				() => table.removeRows([row0, new Row({ id: "row-1", cells: {}, props: {} })]),
-				validateUsageError(/No row with ID "row-1" exists in the table./),
+				validateUsageError(
+					/The specified row node with ID "row-1" does not exist in the table./,
+				),
 			);
 
 			// Additionally, `row-0` should not have been removed.
