@@ -32,11 +32,14 @@ importers:
       eslint-import-resolver-typescript:
         specifier: ~4.4.4
         version: 4.4.4(eslint-plugin-import-x@4.16.1(@typescript-eslint/utils@8.31.1(eslint@8.57.1)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint@8.57.1))(eslint@8.57.1)
+      eslint-plugin-eslint-comments:
+        specifier: ~3.2.0
+        version: 3.2.0(eslint@8.57.1)
       eslint-plugin-import-x:
         specifier: ~4.16.1
         version: 4.16.1(@typescript-eslint/utils@8.31.1(eslint@8.57.1)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint@8.57.1)
       eslint-plugin-jsdoc:
-        specifier: ~55.0.5
+        specifier: ~55.0.2
         version: 55.0.5(eslint@8.57.1)
       eslint-plugin-promise:
         specifier: ~7.2.1
@@ -933,6 +936,12 @@ packages:
         optional: true
       eslint-plugin-import-x:
         optional: true
+
+  eslint-plugin-eslint-comments@3.2.0:
+    resolution: {integrity: sha512-0jkOl0hfojIHHmEHgmNdqv4fmh7300NdpA9FFpF7zaoLvB/QeXOGNLIo86oAveJFrfB1p05kC8hpEMHM8DwWVQ==}
+    engines: {node: '>=6.5.0'}
+    peerDependencies:
+      eslint: '>=4.19.1'
 
   eslint-plugin-import-x@4.16.1:
     resolution: {integrity: sha512-vPZZsiOKaBAIATpFE2uMI4w5IRwdv/FpQ+qZZMR4E+PeOcM4OeoEbqxRMnywdxP19TyB/3h6QBB0EWon7letSQ==}
@@ -3366,6 +3375,12 @@ snapshots:
       eslint-plugin-import-x: 4.16.1(@typescript-eslint/utils@8.31.1(eslint@8.57.1)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint@8.57.1)
     transitivePeerDependencies:
       - supports-color
+
+  eslint-plugin-eslint-comments@3.2.0(eslint@8.57.1):
+    dependencies:
+      escape-string-regexp: 1.0.5
+      eslint: 8.57.1
+      ignore: 5.3.2
 
   eslint-plugin-import-x@4.16.1(@typescript-eslint/utils@8.31.1(eslint@8.57.1)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint@8.57.1):
     dependencies:

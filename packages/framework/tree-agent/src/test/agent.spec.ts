@@ -236,7 +236,26 @@ describe("Semantic Agent", () => {
 		assert.ok(editResult.message.includes("already completed"));
 	});
 
-	it("does not change tree if a subsequent edit fails", async () => {
+	it("does not roll back if a failed edit is followed by a successful edit in the same query", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
+		view.initialize("Content");
+		const model: SharedTreeChatModel = {
+			editToolName,
+			async query({ edit }) {
+				const result1 = await edit(`throw new Error("boom");`);
+				assert.equal(result1.type, "executionError", result1.message);
+				const result2 = await edit(`context.root = "Recovered";`);
+				assert.equal(result2.type, "success", result2.message);
+				return result2.message;
+			},
+		};
+		const agent = new SharedTreeSemanticAgent(model, view);
+		const response = await agent.query("First");
+		assert.match(response, /the new state of the tree is/i);
+		assert.equal(view.root, "Recovered");
+	});
+
+	it("rolls back if a successful edit is followed by a failed edit in the same query", async () => {
 		// First edit succeeds, but the second fails, so the tree should remain unchanged.
 		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
 		view.initialize("Initial");

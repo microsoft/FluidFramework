@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+const tsResolver = require("eslint-import-resolver-typescript");
+
 /**
  * Base configuration from which all of our exported configs extends.
  */
@@ -379,13 +381,43 @@ module.exports = {
 	settings: {
 		"import-x/extensions": [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
 		"import-x/parsers": {
-			"@typescript-eslint/parser": [".ts", ".tsx", ".d.ts"],
+			"@typescript-eslint/parser": [".ts", ".tsx", ".d.ts", ".cts", ".mts"],
 		},
 		"import-x/resolver": {
-			// See remark in minimal-deprecated.js on the importance of import-x/resolver key order.
-			node: {
-				extensions: [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
+			name: "tsResolver",
+			options: {
+				typescript: {
+					extensions: [
+						// `.mts`, `.cts`, `.d.mts`, `.d.cts`, `.mjs`, `.cjs` are not included because `.cjs` and `.mjs` must be used
+						// explicitly in imports
+						".ts",
+						".tsx",
+						".d.ts",
+						".js",
+						".jsx",
+					],
+					conditionNames: [
+						// This supports the test-only conditional export pattern used in merge-tree and id-compressor.
+						"allow-ff-test-exports",
+
+						// Default condition names below, see https://github.com/import-js/eslint-import-resolver-typescript#conditionnames
+						"types",
+						"import",
+
+						// APF: https://angular.io/guide/angular-package-format
+						"esm2020",
+						"es2020",
+						"es2015",
+
+						"require",
+						"node",
+						"node-addons",
+						"browser",
+						"default",
+					],
+				},
 			},
+			resolver: tsResolver, // required
 		},
 	},
 };

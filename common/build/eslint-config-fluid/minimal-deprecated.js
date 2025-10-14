@@ -69,13 +69,7 @@ module.exports = {
 		es2024: false,
 		node: true,
 	},
-	extends: [
-		"./base",
-		"plugin:@eslint-community/eslint-comments/recommended",
-		"plugin:import-x/recommended",
-		"plugin:import-x/typescript",
-		"prettier",
-	],
+	extends: ["./base", "plugin:eslint-comments/recommended", "prettier"],
 	globals: {
 		Atomics: "readonly",
 		SharedArrayBuffer: "readonly",
@@ -106,7 +100,7 @@ module.exports = {
 	settings: {
 		"import-x/resolver": {
 			typescript: true,
-		}
+		},
 	},
 	reportUnusedDisableDirectives: true,
 	ignorePatterns: [
@@ -423,7 +417,7 @@ module.exports = {
 
 		/**
 		 * Allow Fluid Framework to import from its own internal packages.
-		 * https://github.com/import-js/eslint-plugin-import-x/blob/main/docs/rules/no-internal-modules.md
+		 * https://github.com/un-ts/eslint-plugin-import-x/blob/master/docs/rules/no-internal-modules.md
 		 */
 		"import-x/no-internal-modules": [
 			"error",
@@ -505,44 +499,7 @@ module.exports = {
 		},
 	],
 	settings: {
-		"import-x/extensions": [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
-		"import-x/parsers": {
-			"@typescript-eslint/parser": [".ts", ".tsx", ".d.ts"],
-		},
-		"import-x/resolver": {
-			/**
-			 * Note: the key order of import-x/resolver is relevant in the completely resolved eslint config (see ./printed-configs).
-			 * Resolvers are tried in key order, and the first one to successfully resolve the import wins. See:
-			 * https://github.com/import-js/eslint-plugin-import-x/blob/c0ac54b8a721c2b1c9048838acc4d6282f4fe7a7/utils/resolve.js#L196
-			 *
-			 * It's important that the typescript resolver is first, as the node resolver legitimately resolves some imports to modules
-			 * with stripped type information, which can cause silent negatives in lint rules. For example, import-x/no-deprecated fails
-			 * to lint against import and usage of deprecated types when the import is resolvable and resolved using the node resolver.
-			 */
-			typescript: {
-				extensions: [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
-				conditionNames: [
-					// This supports the test-only conditional export pattern used in merge-tree and id-compressor.
-					"allow-ff-test-exports",
-
-					// Default condition names below, see https://www.npmjs.com/package/eslint-import-resolver-typescript#conditionnames
-					"types",
-					"import",
-
-					// APF: https://angular.io/guide/angular-package-format
-					"esm2020",
-					"es2020",
-					"es2015",
-
-					"require",
-					"node",
-					"node-addons",
-					"browser",
-					"default",
-				],
-			},
-		},
-		"jsdoc": {
+		jsdoc: {
 			// The following are intended to keep js/jsx JSDoc comments in line with TSDoc syntax used in ts/tsx code.
 			tagNamePreference: {
 				arg: {
