@@ -321,7 +321,6 @@ export async function setUpLocalServerTestSharedTree(
 	} = options;
 
 	const featureGates = options.featureGates ?? {};
-	featureGates['Fluid.Container.enableOfflineLoad'] = true;
 
 	const treeId = id ?? 'test';
 	let factory: SharedTreeFactory;

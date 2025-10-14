@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/react",
-	"version": "2.63.0",
+	"version": "2.70.0",
 	"description": "Utilities for integrating content powered by the Fluid Framework into React applications",
 	"homepage": "https://fluidframework.com",
 	"repository": {
