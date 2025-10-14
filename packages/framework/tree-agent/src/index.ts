@@ -9,7 +9,7 @@
  * @packageDocumentation
  */
 
-export type { SharedTreeSemanticAgent } from "./agent.js";
+export { SharedTreeSemanticAgent } from "./agent.js";
 export type {
 	EditResult,
 	SharedTreeChatModel,
@@ -31,4 +31,3 @@ export {
 	type Infer,
 	type IExposedMethods,
 } from "./methodBinding.js";
-export { LangchainChatModel, createSemanticAgent } from "./langchain.js";

@@ -16,3 +16,7 @@ export {
 	type ChunkReferenceId,
 	getCodecTreeForFieldBatchFormat,
 } from "./codecs.js";
+export {
+	type IncrementalEncodingPolicy,
+	defaultIncrementalEncodingPolicy,
+} from "./incrementalEncodingPolicy.js";
