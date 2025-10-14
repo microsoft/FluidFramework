@@ -17,7 +17,7 @@ module.exports = {
 	},
 	extends: [
 		"eslint:recommended",
-		"plugin:@eslint-community/eslint-comments/recommended",
+		"plugin:eslint-comments/recommended",
 		"plugin:@typescript-eslint/eslint-recommended",
 		"plugin:@typescript-eslint/recommended-type-checked",
 		"plugin:@typescript-eslint/stylistic-type-checked",
@@ -41,6 +41,12 @@ module.exports = {
 	plugins: ["import-x", "unicorn"],
 	reportUnusedDisableDirectives: true,
 	rules: {
+		// These rules were deprecated, then removed in `@typescript-eslint/eslint-plugin` v8.
+		// They are replaced by a set of more specific rules, which have been enabled in the list below.
+		// These explicit disable will need to be removed when this package is updated to v8+ of the plugin.
+		"@typescript-eslint/ban-types": "off",
+		"@typescript-eslint/no-empty-interface": "off",
+
 		// Please keep entries alphabetized within a group
 
 		// #region Fluid Custom Rules
@@ -105,7 +111,7 @@ module.exports = {
 			},
 		],
 		"@typescript-eslint/no-this-alias": "error",
-		"@typescript-eslint/only-throw-error": "error",
+		"@typescript-eslint/no-throw-literal": "error",
 		"@typescript-eslint/no-unused-expressions": "error",
 		"@typescript-eslint/no-unused-vars": "off",
 		"@typescript-eslint/no-unnecessary-qualifier": "error",
@@ -152,22 +158,11 @@ module.exports = {
 		],
 		"@typescript-eslint/unified-signatures": "error",
 		"@typescript-eslint/no-wrapper-object-types": "error",
-		"@typescript-eslint/no-restricted-types": [
-			"error",
-			{
-				types: {
-					null: {
-						message: "Avoid using null; prefer undefined instead.",
-						fixWith: "undefined",
-					},
-				},
-			},
-		],
 
 		// #endregion
 
-		// @eslint-community/eslint-plugin-eslint-comments
-		"@eslint-community/eslint-comments/disable-enable-pair": [
+		// eslint-plugin-eslint-comments
+		"eslint-comments/disable-enable-pair": [
 			"error",
 			{
 				allowWholeFile: true,
@@ -302,7 +297,7 @@ module.exports = {
 		"no-shadow": "off", // Superseded by @typescript-eslint/no-shadow
 		"no-sparse-arrays": "error",
 		"no-template-curly-in-string": "error",
-		"no-throw-literal": "off", // Superseded by @typescript-eslint/only-throw-error
+		"no-throw-literal": "off", // Superseded by @typescript-eslint/no-throw-literal
 		"no-trailing-spaces": "error",
 		"no-undef-init": "error",
 		"no-underscore-dangle": "off",

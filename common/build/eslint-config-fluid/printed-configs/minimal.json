@@ -21,8 +21,6 @@
         "sourceType": "module"
     },
     "plugins": [
-        "@eslint-community/eslint-comments",
-        "@typescript-eslint",
         "import-x",
         "eslint-comments",
         "@fluid-internal/fluid",
@@ -30,7 +28,10 @@
         "unused-imports",
         "tsdoc",
         "promise",
-        "jsdoc"
+        "jsdoc",
+        "@typescript-eslint",
+        "@rushstack/security",
+        "@rushstack"
     ],
     "reportUnusedDisableDirectives": true,
     "rules": {
@@ -39,24 +40,6 @@
         ],
         "@babel/semi": [
             "off"
-        ],
-        "@eslint-community/eslint-comments/disable-enable-pair": [
-            "error",
-            {
-                "allowWholeFile": true
-            }
-        ],
-        "@eslint-community/eslint-comments/no-aggregating-enable": [
-            "error"
-        ],
-        "@eslint-community/eslint-comments/no-duplicate-disable": [
-            "error"
-        ],
-        "@eslint-community/eslint-comments/no-unlimited-disable": [
-            "error"
-        ],
-        "@eslint-community/eslint-comments/no-unused-enable": [
-            "error"
         ],
         "@fluid-internal/fluid/no-file-path-links-in-jsdoc": [
             "error"
@@ -72,6 +55,9 @@
         ],
         "@fluid-internal/fluid/no-unchecked-record-access": [
             "error"
+        ],
+        "@rushstack/no-new-null": [
+            "warn"
         ],
         "@rushstack/typedef-var": [
             "off"
@@ -631,6 +617,9 @@
         "@typescript-eslint/ban-tslint-comment": [
             "error"
         ],
+        "@typescript-eslint/ban-types": [
+            "off"
+        ],
         "@typescript-eslint/block-spacing": [
             "off"
         ],
@@ -718,9 +707,6 @@
         "@typescript-eslint/no-array-constructor": [
             "error"
         ],
-        "@typescript-eslint/no-array-delete": [
-            "error"
-        ],
         "@typescript-eslint/no-base-to-string": [
             "error"
         ],
@@ -737,6 +723,9 @@
             "error"
         ],
         "@typescript-eslint/no-empty-function": [
+            "off"
+        ],
+        "@typescript-eslint/no-empty-interface": [
             "off"
         ],
         "@typescript-eslint/no-empty-object-type": [
@@ -771,6 +760,9 @@
         ],
         "@typescript-eslint/no-invalid-this": [
             "off"
+        ],
+        "@typescript-eslint/no-loss-of-precision": [
+            "error"
         ],
         "@typescript-eslint/no-magic-numbers": [
             "off"
@@ -826,17 +818,6 @@
                 ]
             }
         ],
-        "@typescript-eslint/no-restricted-types": [
-            "warn",
-            {
-                "types": {
-                    "null": {
-                        "message": "Use 'undefined' instead of 'null'",
-                        "fixWith": "undefined"
-                    }
-                }
-            }
-        ],
         "@typescript-eslint/no-shadow": [
             "error",
             {
@@ -845,6 +826,9 @@
             }
         ],
         "@typescript-eslint/no-this-alias": [
+            "error"
+        ],
+        "@typescript-eslint/no-throw-literal": [
             "error"
         ],
         "@typescript-eslint/no-unnecessary-qualifier": [
@@ -883,9 +867,6 @@
         "@typescript-eslint/no-unsafe-return": [
             "error"
         ],
-        "@typescript-eslint/no-unsafe-unary-minus": [
-            "error"
-        ],
         "@typescript-eslint/no-unused-expressions": [
             "error"
         ],
@@ -907,13 +888,7 @@
         "@typescript-eslint/object-curly-spacing": [
             "off"
         ],
-        "@typescript-eslint/only-throw-error": [
-            "error"
-        ],
         "@typescript-eslint/prefer-as-const": [
-            "error"
-        ],
-        "@typescript-eslint/prefer-find": [
             "error"
         ],
         "@typescript-eslint/prefer-for-of": [
@@ -934,13 +909,7 @@
         "@typescript-eslint/prefer-optional-chain": [
             "error"
         ],
-        "@typescript-eslint/prefer-promise-reject-errors": [
-            "error"
-        ],
         "@typescript-eslint/prefer-readonly": [
-            "error"
-        ],
-        "@typescript-eslint/prefer-regexp-exec": [
             "error"
         ],
         "@typescript-eslint/prefer-string-starts-ends-with": [
@@ -1086,7 +1055,10 @@
             "smart"
         ],
         "eslint-comments/disable-enable-pair": [
-            "error"
+            "error",
+            {
+                "allowWholeFile": true
+            }
         ],
         "eslint-comments/no-aggregating-enable": [
             "error"
@@ -1340,7 +1312,7 @@
             "error"
         ],
         "no-class-assign": [
-            "off"
+            "error"
         ],
         "no-comma-dangle": [
             "off"
@@ -1445,7 +1417,7 @@
             "error"
         ],
         "no-loss-of-precision": [
-            "error"
+            "off"
         ],
         "no-magic-numbers": [
             "off"

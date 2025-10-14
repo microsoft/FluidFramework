@@ -84,6 +84,12 @@ module.exports = {
 		project: "./tsconfig.json",
 	},
 	plugins: [
+		// Plugin documentation: https://www.npmjs.com/package/@rushstack/eslint-plugin
+		"@rushstack/eslint-plugin",
+		// Plugin documentation: https://www.npmjs.com/package/@rushstack/eslint-plugin-security
+		"@rushstack/eslint-plugin-security",
+		// Plugin documentation: https://www.npmjs.com/package/@typescript-eslint/eslint-plugin
+		"@typescript-eslint/eslint-plugin",
 		// Plugin documentation: https://www.npmjs.com/package/eslint-plugin-jsdoc
 		"eslint-plugin-jsdoc",
 		// Plugin documentation: https://www.npmjs.com/package/eslint-plugin-promise
@@ -97,11 +103,6 @@ module.exports = {
 		// Custom ESLint rules
 		"@fluid-internal/eslint-plugin-fluid",
 	],
-	settings: {
-		"import-x/resolver": {
-			typescript: true,
-		},
-	},
 	reportUnusedDisableDirectives: true,
 	ignorePatterns: [
 		// Don't lint generated packageVersion files.
@@ -126,20 +127,10 @@ module.exports = {
 		"@fluid-internal/fluid/no-unchecked-record-access": "error",
 
 		/**
-		 * Disallow use of `null` type in favor of `undefined`.
-		 * Migrated from @rushstack/no-new-null to @typescript-eslint/no-restricted-types.
+		 * The @rushstack rules are documented in the package README:
+		 * {@link https://www.npmjs.com/package/@rushstack/eslint-plugin}
 		 */
-		"@typescript-eslint/no-restricted-types": [
-			"warn",
-			{
-				types: {
-					null: {
-						message: "Use 'undefined' instead of 'null'",
-						fixWith: "undefined",
-					},
-				},
-			},
-		],
+		"@rushstack/no-new-null": "warn",
 
 		/**
 		 * RATIONALE: Harmless.
@@ -162,7 +153,7 @@ module.exports = {
 		/**
 		 * Encourages minimal disabling of eslint rules, while still permitting whole-file exclusions.
 		 */
-		"@eslint-community/eslint-comments/disable-enable-pair": [
+		"eslint-comments/disable-enable-pair": [
 			"error",
 			{
 				allowWholeFile: true,

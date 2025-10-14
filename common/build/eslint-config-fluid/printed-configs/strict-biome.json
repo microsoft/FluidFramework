@@ -21,14 +21,15 @@
         "sourceType": "module"
     },
     "plugins": [
-        "@eslint-community/eslint-comments",
-        "@typescript-eslint",
         "import-x",
         "eslint-comments",
         "@fluid-internal/fluid",
         "unused-imports",
         "promise",
         "jsdoc",
+        "@typescript-eslint",
+        "@rushstack/security",
+        "@rushstack",
         "unicorn",
         "tsdoc"
     ],
@@ -39,24 +40,6 @@
         ],
         "@babel/semi": [
             "off"
-        ],
-        "@eslint-community/eslint-comments/disable-enable-pair": [
-            "error",
-            {
-                "allowWholeFile": true
-            }
-        ],
-        "@eslint-community/eslint-comments/no-aggregating-enable": [
-            "error"
-        ],
-        "@eslint-community/eslint-comments/no-duplicate-disable": [
-            "error"
-        ],
-        "@eslint-community/eslint-comments/no-unlimited-disable": [
-            "error"
-        ],
-        "@eslint-community/eslint-comments/no-unused-enable": [
-            "error"
         ],
         "@eslint-community/eslint-plugin-mysticatea/no-this-in-static": [
             "off"
@@ -96,6 +79,9 @@
         ],
         "@next/eslint-plugin-next/no-unwanted-polyfillio": [
             "off"
+        ],
+        "@rushstack/no-new-null": [
+            "error"
         ],
         "@rushstack/typedef-var": [
             "off"
@@ -768,9 +754,6 @@
         "@typescript-eslint/no-array-constructor": [
             "off"
         ],
-        "@typescript-eslint/no-array-delete": [
-            "error"
-        ],
         "@typescript-eslint/no-base-to-string": [
             "error"
         ],
@@ -897,17 +880,6 @@
                 ]
             }
         ],
-        "@typescript-eslint/no-restricted-types": [
-            "error",
-            {
-                "types": {
-                    "null": {
-                        "message": "Use 'undefined' instead of 'null'",
-                        "fixWith": "undefined"
-                    }
-                }
-            }
-        ],
         "@typescript-eslint/no-shadow": [
             "error",
             {
@@ -917,6 +889,9 @@
         ],
         "@typescript-eslint/no-this-alias": [
             "off"
+        ],
+        "@typescript-eslint/no-throw-literal": [
+            "error"
         ],
         "@typescript-eslint/no-unnecessary-qualifier": [
             "error"
@@ -954,9 +929,6 @@
         "@typescript-eslint/no-unsafe-return": [
             "error"
         ],
-        "@typescript-eslint/no-unsafe-unary-minus": [
-            "error"
-        ],
         "@typescript-eslint/no-unused-expressions": [
             "error"
         ],
@@ -987,13 +959,7 @@
         "@typescript-eslint/object-curly-spacing": [
             "off"
         ],
-        "@typescript-eslint/only-throw-error": [
-            "error"
-        ],
         "@typescript-eslint/prefer-as-const": [
-            "error"
-        ],
-        "@typescript-eslint/prefer-find": [
             "error"
         ],
         "@typescript-eslint/prefer-for-of": [
@@ -1017,13 +983,7 @@
         "@typescript-eslint/prefer-optional-chain": [
             "off"
         ],
-        "@typescript-eslint/prefer-promise-reject-errors": [
-            "error"
-        ],
         "@typescript-eslint/prefer-readonly": [
-            "error"
-        ],
-        "@typescript-eslint/prefer-regexp-exec": [
             "error"
         ],
         "@typescript-eslint/prefer-string-starts-ends-with": [
@@ -1178,7 +1138,10 @@
             "smart"
         ],
         "eslint-comments/disable-enable-pair": [
-            "error"
+            "error",
+            {
+                "allowWholeFile": true
+            }
         ],
         "eslint-comments/no-aggregating-enable": [
             "error"
@@ -2196,9 +2159,6 @@
             "error"
         ],
         "unicorn/consistent-destructuring": [
-            "off"
-        ],
-        "unicorn/consistent-empty-array-spread": [
             "error"
         ],
         "unicorn/consistent-function-scoping": [
@@ -2240,9 +2200,6 @@
         "unicorn/no-abusive-eslint-disable": [
             "error"
         ],
-        "unicorn/no-anonymous-default-export": [
-            "error"
-        ],
         "unicorn/no-array-callback-reference": [
             "error"
         ],
@@ -2259,9 +2216,6 @@
             "error"
         ],
         "unicorn/no-await-expression-member": [
-            "error"
-        ],
-        "unicorn/no-await-in-promise-methods": [
             "error"
         ],
         "unicorn/no-console-spaces": [
@@ -2282,9 +2236,6 @@
         "unicorn/no-instanceof-array": [
             "off"
         ],
-        "unicorn/no-invalid-fetch-options": [
-            "error"
-        ],
         "unicorn/no-invalid-remove-event-listener": [
             "error"
         ],
@@ -2294,13 +2245,7 @@
         "unicorn/no-lonely-if": [
             "error"
         ],
-        "unicorn/no-magic-array-flat-depth": [
-            "error"
-        ],
         "unicorn/no-negated-condition": [
-            "error"
-        ],
-        "unicorn/no-negation-in-equality-check": [
             "error"
         ],
         "unicorn/no-nested-ternary": [
@@ -2321,9 +2266,6 @@
         "unicorn/no-process-exit": [
             "error"
         ],
-        "unicorn/no-single-promise-in-promise-methods": [
-            "error"
-        ],
         "unicorn/no-static-only-class": [
             "off"
         ],
@@ -2337,9 +2279,6 @@
             "off"
         ],
         "unicorn/no-unnecessary-await": [
-            "error"
-        ],
-        "unicorn/no-unnecessary-polyfills": [
             "error"
         ],
         "unicorn/no-unreadable-array-destructuring": [
@@ -2495,9 +2434,6 @@
         "unicorn/prefer-spread": [
             "error"
         ],
-        "unicorn/prefer-string-raw": [
-            "error"
-        ],
         "unicorn/prefer-string-replace-all": [
             "off"
         ],
@@ -2508,9 +2444,6 @@
             "error"
         ],
         "unicorn/prefer-string-trim-start-end": [
-            "error"
-        ],
-        "unicorn/prefer-structured-clone": [
             "error"
         ],
         "unicorn/prefer-switch": [
