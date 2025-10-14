@@ -31,4 +31,3 @@ export {
 	type Infer,
 	type IExposedMethods,
 } from "./methodBinding.js";
-export { LangchainChatModel, createSemanticAgent } from "./langchain.js";

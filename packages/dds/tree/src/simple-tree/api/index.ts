@@ -28,8 +28,8 @@ export { type SchemaStatics, schemaStatics } from "./schemaStatics.js";
 export {
 	SchemaFactory,
 	type ScopedSchemaName,
-	type SchemaFactoryObjectOptions,
-	type SchemaFactoryObjectOptionsAlpha,
+	type ObjectSchemaOptionsAlpha,
+	type ObjectSchemaOptions,
 	type NodeSchemaOptions,
 	type NodeSchemaOptionsAlpha,
 	type SchemaFactory_base,
@@ -90,6 +90,13 @@ export type {
 	MapNodeCustomizableSchemaUnsafe,
 	System_Unsafe,
 	TreeRecordNodeUnsafe,
+	UnannotateAllowedTypeUnsafe,
+	AnnotatedAllowedTypeUnsafe,
+	AnnotatedAllowedTypesUnsafe,
+	AllowedTypesFullUnsafe,
+	AllowedTypesFullFromMixedUnsafe,
+	UnannotateAllowedTypesListUnsafe,
+	AnnotateAllowedTypesListUnsafe,
 } from "./typesUnsafe.js";
 
 export {

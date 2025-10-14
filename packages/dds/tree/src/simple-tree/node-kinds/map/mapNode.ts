@@ -26,7 +26,7 @@ import {
 	typeNameSymbol,
 	type TreeNode,
 	typeSchemaSymbol,
-	getOrCreateInnerNode,
+	getInnerNode,
 	type InternalTreeNode,
 	type UnhydratedFlexTreeNode,
 	normalizeAllowedTypes,
@@ -173,7 +173,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 	}
 
 	private get innerNode(): InnerNode {
-		return getOrCreateInnerNode(this);
+		return getInnerNode(this);
 	}
 
 	private editor(key: string): OptionalFieldEditBuilder<FlexibleNodeContent> {
@@ -242,7 +242,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		callbackFn: (value: TreeNodeFromImplicitAllowedTypes<T>, key: string, map: TThis) => void,
 		thisArg?: unknown,
 	): void {
-		for (const field of getOrCreateInnerNode(this)) {
+		for (const field of getInnerNode(this)) {
 			const node = tryGetTreeNodeForField(field) as TreeNodeFromImplicitAllowedTypes<T>;
 			callbackFn.call(thisArg, node, field.key, this);
 		}

@@ -24,6 +24,8 @@
 @fluidframework/driver-utils
 @fluidframework/container-loader
 @fluidframework/undo-redo
+@fluidframework/tree-agent-ses
+@fluidframework/tree-agent-langchain
 @fluidframework/tree-agent
 @fluidframework/synthesize
 @fluidframework/request-handler

@@ -20,23 +20,13 @@ export function buildFunc<const Return extends z.ZodTypeAny, const Args extends 
     rest?: Rest;
 }, ...args: Args): FunctionDef<Args, Return, Rest>;
 
-// @alpha @deprecated
-export function createSemanticAgent<TSchema extends ImplicitFieldSchema_2>(client: BaseChatModel, treeView: TreeView<TSchema>, options?: Readonly<SemanticAgentOptions>): SharedTreeSemanticAgent<TSchema>;
-
-// @alpha @deprecated
-export function createSemanticAgent<TSchema extends ImplicitFieldSchema_2>(client: BaseChatModel, node: ReadableField<TSchema> & TreeNode_2, options?: Readonly<SemanticAgentOptions>): SharedTreeSemanticAgent<TSchema>;
-
-// @alpha @deprecated
-export function createSemanticAgent<TSchema extends ImplicitFieldSchema_2>(client: BaseChatModel, treeView: TreeView<TSchema> | (ReadableField<TSchema> & TreeNode_2), options?: Readonly<SemanticAgentOptions>): SharedTreeSemanticAgent<TSchema>;
-
 // @alpha
 export type Ctor<T = any> = new (...args: any[]) => T;
 
 // @alpha
 export interface EditResult {
     message: string;
-    // (undocumented)
-    type: "success" | "disabledError" | "validationError" | "compileError" | "runtimeError" | "tooManyEditsError" | "expiredError";
+    type: "success" | "disabledError" | "validationError" | "executionError" | "tooManyEditsError" | "expiredError";
 }
 
 // @alpha
@@ -73,19 +63,6 @@ export interface IExposedMethods {
 export type Infer<T> = T extends FunctionDef<infer Args, infer Return, infer Rest> ? z.infer<z.ZodFunction<z.ZodTuple<ArgsTuple<Args>, Rest>, Return>> : never;
 
 // @alpha
-export class LangchainChatModel implements SharedTreeChatModel {
-    constructor(model: BaseChatModel);
-    // (undocumented)
-    appendContext(text: string): void;
-    // (undocumented)
-    readonly editToolName = "GenerateTreeEditingCode";
-    // (undocumented)
-    get name(): string | undefined;
-    // (undocumented)
-    query(query: SharedTreeChatQuery): Promise<string>;
-}
-
-// @alpha
 export const llmDefault: unique symbol;
 
 // @alpha
@@ -101,9 +78,10 @@ export type MethodKeys<T> = {
 // @alpha
 export interface SemanticAgentOptions {
     domainHints?: string;
+    executeEdit?: (context: Record<string, unknown>, code: string) => void | Promise<void>;
     logger?: Logger;
     maximumSequentialEdits?: number;
-    validator?: (js: string) => boolean;
+    validateEdit?: (code: string) => void | Promise<void>;
 }
 
 // @alpha

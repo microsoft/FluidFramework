@@ -44,7 +44,7 @@ import {
 	unhydratedFlexTreeFromInsertable,
 	getOrCreateNodeFromInnerNode,
 	getOrCreateNodeFromInnerUnboxedNode,
-	getOrCreateInnerNode,
+	getInnerNode,
 	NodeKind,
 	tryGetTreeNodeForField,
 	isObjectNodeSchema,
@@ -202,12 +202,12 @@ export interface TreeIdentifierUtils {
  * @remarks
  * Use via the {@link (TreeAlpha:variable)} singleton.
  *
- * The unhydrated node creation APIs in this interface do not support {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields | unknown optional fields}.
+ * The unhydrated node creation APIs in this interface do not support {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields}.
  * This is because unknown optional fields still must have a schema: its just that the schema may come from the document's stored schema.
  * Unhydrated nodes created via this interface are not associated with any document, so there is nowhere for them to get schema for unknown optional fields.
  * Note that {@link (TreeBeta:interface).clone} can create an unhydrated node with unknown optional fields, as it uses the source node's stored schema (if any).
  *
- * Export APIs in this interface include {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields | unknown optional fields}
+ * Export APIs in this interface include {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields}
  * if they are using {@link KeyEncodingOptions.allStoredKeys}.
  *
  * @privateRemarks
@@ -286,7 +286,7 @@ export interface TreeAlpha {
 	 * @param data - The data used to construct the field content. See {@link (TreeAlpha:interface).(exportVerbose:1)}.
 	 * @remarks
 	 * This currently does not support input containing
-	 * {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields| unknown optional fields} but does support
+	 * {@link ObjectSchemaOptions.allowUnknownOptionalFields| unknown optional fields} but does support
 	 * {@link SchemaStaticsAlpha.staged | staged} allowed types.
 	 * Non-empty default values for fields are currently not supported (must be provided in the input).
 	 * The content will be validated against the schema and an error will be thrown if out of schema.
@@ -331,10 +331,7 @@ export interface TreeAlpha {
 	 */
 	exportCompressed(
 		tree: TreeNode | TreeLeafValue,
-		options: { idCompressor?: IIdCompressor } & Pick<
-			CodecWriteOptions,
-			"oldestCompatibleClient"
-		>,
+		options: { idCompressor?: IIdCompressor } & Pick<CodecWriteOptions, "minVersionForCollab">,
 	): JsonCompatible<IFluidHandle>;
 
 	/**
@@ -379,7 +376,7 @@ export interface TreeAlpha {
 	/**
 	 * Gets the child of the given node with the given property key if a child exists under that key.
 	 *
-	 * @remarks {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields | Unknown optional fields} of Object nodes will not be returned by this method.
+	 * @remarks {@link ObjectSchemaOptions.allowUnknownOptionalFields | Unknown optional fields} of Object nodes will not be returned by this method.
 	 *
 	 * @param node - The parent node whose child is being requested.
 	 * @param key - The property key under the node under which the child is being requested.
@@ -400,7 +397,7 @@ export interface TreeAlpha {
 	 *
 	 * Optional properties of Object nodes with no value are not included in the result.
 	 *
-	 * {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields | Unknown optional fields} of Object nodes are not included in the result.
+	 * {@link ObjectSchemaOptions.allowUnknownOptionalFields | Unknown optional fields} of Object nodes are not included in the result.
 	 *
 	 * @param node - The node whose children are being requested.
 	 *
@@ -812,13 +809,10 @@ export const TreeAlpha: TreeAlpha = {
 
 	exportCompressed(
 		node: TreeNode | TreeLeafValue,
-		options: { idCompressor?: IIdCompressor } & Pick<
-			CodecWriteOptions,
-			"oldestCompatibleClient"
-		>,
+		options: { idCompressor?: IIdCompressor } & Pick<CodecWriteOptions, "minVersionForCollab">,
 	): JsonCompatible<IFluidHandle> {
 		const schema = tryGetSchema(node) ?? fail(0xacf /* invalid input */);
-		const format = fluidVersionToFieldBatchCodecWriteVersion(options.oldestCompatibleClient);
+		const format = fluidVersionToFieldBatchCodecWriteVersion(options.minVersionForCollab);
 		const codec = makeFieldBatchCodec({ jsonValidator: FormatValidatorNoOp }, format);
 		const cursor = borrowFieldCursorFromTreeNodeOrValue(node);
 		const batch: FieldBatch = [cursor];
@@ -881,7 +875,7 @@ export const TreeAlpha: TreeAlpha = {
 		node: TreeNode,
 		propertyKey: string | number,
 	): TreeNode | TreeLeafValue | undefined => {
-		const flexNode = getOrCreateInnerNode(node);
+		const flexNode = getInnerNode(node);
 		debugAssert(
 			() => !flexNode.context.isDisposed() || "The provided tree node has been disposed.",
 		);
@@ -951,7 +945,7 @@ export const TreeAlpha: TreeAlpha = {
 	},
 
 	children(node: TreeNode): [propertyKey: string | number, child: TreeNode | TreeLeafValue][] {
-		const flexNode = getOrCreateInnerNode(node);
+		const flexNode = getInnerNode(node);
 		debugAssert(
 			() => !flexNode.context.isDisposed() || "The provided tree node has been disposed.",
 		);

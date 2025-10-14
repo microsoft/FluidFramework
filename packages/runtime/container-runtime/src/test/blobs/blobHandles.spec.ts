@@ -78,7 +78,7 @@ describe("BlobHandles", () => {
 			sendBlobAttachOp(_localId, _storageId) {
 				d.resolve();
 			},
-			stashedBlobs: {},
+			pendingBlobs: {},
 			localIdGenerator: () => "localId",
 			isBlobDeleted: () => false,
 			storage: failProxy<IRuntimeStorageService>({
@@ -107,8 +107,8 @@ describe("BlobHandles", () => {
 		// getting blob handle before attaching from the pending blob list
 		assert.strictEqual(blobToText(await blobHandle.get()), "content");
 		blobHandle.attachGraph();
-		// getting blob handle after attaching from storage
-		assert.strictEqual(blobToText(await blobHandle.get()), "contentFromStorage");
+		// Even after attaching, we read the locally cached copy (not getting contentFromStorage)
+		assert.strictEqual(blobToText(await blobHandle.get()), "content");
 	});
 
 	it("Reupload expired blob", async () => {
@@ -118,7 +118,7 @@ describe("BlobHandles", () => {
 			sendBlobAttachOp(_localId, _storageId) {
 				d.resolve();
 			},
-			stashedBlobs: {},
+			pendingBlobs: {},
 			localIdGenerator: () => "localId",
 			storage: failProxy<IRuntimeStorageService>({
 				createBlob: async () => {
