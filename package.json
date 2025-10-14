@@ -362,6 +362,7 @@
 		],
 		"overrides": {
 			"@types/node@<18": "^18.19.0",
+			"@types/node@>=22": "^20.0.0",
 			"good-fences>nodegit": "npm:empty-npm-package@1.0.0",
 			"qs": "^6.11.0",
 			"simplemde>codemirror": "^5.65.11",
