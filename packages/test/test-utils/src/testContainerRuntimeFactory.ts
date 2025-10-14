@@ -163,6 +163,10 @@ export const createTestContainerRuntimeFactory = (
 				}
 				return undefined; // continue search
 			};
+
+			// This usage of `containerRuntimeCtor.loadRuntime`, an `@internal` API, called on past versions of this package,
+			// adds an extra constraint that makes changing that API more difficult than it otherwise would be.
+			// Actual customers / apps should not be dependent on stability of this API, but this code is, at least for now.
 			return containerRuntimeCtor.loadRuntime({
 				context,
 				registryEntries: [

@@ -841,12 +841,13 @@ export class ContainerRuntime
 	 * @param params - An object housing the runtime properties.
 	 * {@link LoadContainerRuntimeParams} except internal, while still having layer compat obligations.
 	 * @privateRemarks
-	 * Despite this being `@internal`, this has layer compat implications so changing it is problematic.
-	 * Instead of changing this, {@link loadRuntime2} was added.
-	 * This is directly invoked by `createTestContainerRuntimeFactory`:
-	 * if that is the only cross version use,
-	 * then `createTestContainerRuntimeFactory` could be updated to handle both versions or use the stable {@link loadContainerRuntime} API,
-	 * and `loadRuntime` could be removed (replaced by `loadRuntime2` which could be renamed back to `loadRuntime`).
+	 * Despite this being `@internal`, `@fluidframework/test-utils` uses it in `createTestContainerRuntimeFactory` and assumes multiple versions of the package expose the same API.
+	 *
+	 * Also note that `mixinAttributor` from `@fluid-experimental/attributor` overrides this function:
+	 * that will have to be updated if changing the signature of this function as well.
+	 *
+	 * Assuming these usages are updated appropriately,
+	 * `loadRuntime` could be removed (replaced by `loadRuntime2` which could be renamed back to `loadRuntime`).
 	 */
 	public static async loadRuntime(
 		params: LoadContainerRuntimeParams & {
