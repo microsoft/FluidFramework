@@ -355,6 +355,7 @@
 		"comments": [
 			"node types < 18 are bumped to use the latest 18.x types. Though we don't support 18, old deps that still depend on old type versions will be guaranteed to be working with the correct types for the node version they target.",
 			"nodegit is replaced with an empty package here because it's currently only used by good-fences for features we do not need, and has issues building when changing node versions. See https://github.com/smikula/good-fences/issues/105 for details.",
+			"node types >= 22 are bumped down to 20.x to work around issues with packages using different types.",
 			"codemirror and marked overrides are because simplemde use * versions, and the fully up to date versions of its deps do not work. packageExtensions was tried to fix this, but did not work.",
 			"@fluentui/react-positioning's dependency on @floating-ui/dom causes a peer dependency violation, so overriding it forces a version that meets peer dependency requirements is installed.",
 			"oclif includes some AWS-related features, but we don't use them, so we override those dependencies with empty packages. This helps reduce lockfile churn since the deps release very frequently.",
