@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/canvas",
-	"version": "2.63.0",
+	"version": "2.63.1",
 	"private": true,
 	"description": "Fluid ink canvas",
 	"homepage": "https://fluidframework.com",
@@ -88,8 +88,6 @@
 		}
 	},
 	"typeValidation": {
-		"disabled": true,
-		"broken": {},
-		"entrypoint": "internal"
+		"disabled": true
 	}
 }
