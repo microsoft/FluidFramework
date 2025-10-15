@@ -35,7 +35,6 @@ module.exports = {
 			// Overrides for type-tests
 			files: ["src/test/types/*"],
 			rules: {
-				"unicorn/prevent-abbreviations": "off",
 				"max-len": "off",
 			},
 		},
