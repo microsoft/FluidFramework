@@ -61,13 +61,11 @@
 		"@fluidframework/build-tools": "^0.58.3",
 		"@fluidframework/eslint-config-fluid": "~7.0.0",
 		"copyfiles": "^2.4.1",
-		"eslint": "~8.57.0",
+		"eslint": "~8.57.1",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"disabled": true,
-		"broken": {},
-		"entrypoint": "internal"
+		"disabled": true
 	}
 }

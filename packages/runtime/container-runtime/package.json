@@ -210,7 +210,7 @@
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
-		"eslint": "~8.57.0",
+		"eslint": "~8.57.1",
 		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
 		"rimraf": "^4.4.0",
@@ -218,26 +218,7 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"Interface_ContainerRuntimeOptions": {
-				"backCompat": false
-			},
-			"Interface_ISummaryRuntimeOptions": {
-				"backCompat": false
-			},
-			"Interface_LoadContainerRuntimeParams": {
-				"backCompat": false
-			},
-			"TypeAlias_IContainerRuntimeOptions": {
-				"backCompat": false
-			},
-			"TypeAlias_ISummaryConfiguration": {
-				"backCompat": false
-			},
-			"Variable_DefaultSummaryConfiguration": {
-				"backCompat": false
-			}
-		},
+		"broken": {},
 		"entrypoint": "legacy"
 	}
 }
