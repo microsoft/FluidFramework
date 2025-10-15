@@ -1318,6 +1318,7 @@ export function createSnapshotTreeFromContents(contents: {
 	};
 
 	for (const [path, content] of Object.entries(contents)) {
+		// Remove empty strings to handle leading, trailing, or consecutive slashes in the path.
 		const pathParts = path.split("/").filter((part) => part !== "");
 		let currentTree = tree;
 
@@ -1335,7 +1336,7 @@ export function createSnapshotTreeFromContents(contents: {
 
 		// Add the blob at the final location
 		const blobName = pathParts[pathParts.length - 1];
-		if (blobName) {
+		if (blobName !== undefined) {
 			currentTree.blobs[blobName] = content;
 		}
 	}
