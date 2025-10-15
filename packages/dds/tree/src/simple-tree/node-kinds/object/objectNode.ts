@@ -87,6 +87,7 @@ import {
 	type InsertableContent,
 } from "../../unhydratedFlexTreeFromInsertable.js";
 import { convertField, convertFieldKind } from "../../toStoredSchema.js";
+import type { ObjectSchemaOptionsAlpha } from "../../api/index.js";
 
 /**
  * Generates the properties for an ObjectNode from its field schema object.
@@ -415,9 +416,7 @@ export function objectSchema<
 	identifier: TName,
 	info: T,
 	implicitlyConstructable: ImplicitlyConstructable,
-	allowUnknownOptionalFields: boolean,
-	metadata?: NodeSchemaMetadata<TCustomMetadata>,
-	persistedMetadata?: JsonCompatibleReadOnlyObject | undefined,
+	nodeOptions: ObjectSchemaOptionsAlpha<TCustomMetadata>,
 ): ObjectNodeSchema<TName, T, ImplicitlyConstructable, TCustomMetadata> &
 	ObjectNodeSchemaInternalData &
 	TreeNodeSchemaCorePrivate {
@@ -471,7 +470,8 @@ export function objectSchema<
 			]),
 		);
 		public static readonly identifierFieldKeys: readonly FieldKey[] = identifierFieldKeys;
-		public static readonly allowUnknownOptionalFields: boolean = allowUnknownOptionalFields;
+		public static readonly allowUnknownOptionalFields: boolean =
+			nodeOptions.allowUnknownOptionalFields ?? false;
 
 		public static override prepareInstance<T2>(
 			this: typeof TreeNodeValid<T2>,
@@ -561,9 +561,10 @@ export function objectSchema<
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;
 		}
-		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
+		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> =
+			nodeOptions.metadata ?? {};
 		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
-			persistedMetadata;
+			nodeOptions.persistedMetadata;
 
 		// eslint-disable-next-line import/no-deprecated
 		public get [typeNameSymbol](): TName {
@@ -592,7 +593,7 @@ export function objectSchema<
 							convertField(fieldSchema.schema, storedOptions),
 						);
 					}
-					return new ObjectNodeStoredSchema(fields, persistedMetadata);
+					return new ObjectNodeStoredSchema(fields, nodeOptions.persistedMetadata);
 				},
 			));
 		}
