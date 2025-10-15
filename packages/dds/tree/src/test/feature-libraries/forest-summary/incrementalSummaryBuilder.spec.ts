@@ -77,7 +77,11 @@ function getReadAndParseChunk<T extends JsonCompatible<IFluidHandle>>(
 	};
 }
 
-function getTestChunk(): TreeChunk {
+/**
+ * Returns a mock TreeChunk for testing. It is a minimal implementation that only implements the `referenceAdded`
+ * method since that is the only method of the `TreeChunk` used by the `ForestIncrementalSummaryBuilder`.
+ */
+function getMockChunk(): TreeChunk {
 	return { referenceAdded: () => {} } as unknown as TreeChunk;
 }
 
@@ -90,11 +94,11 @@ const initialSequenceNumber = 0;
 
 describe("ForestIncrementalSummaryBuilder", () => {
 	function createIncrementalSummaryBuilder() {
-		const testChunk = getTestChunk();
+		const mockChunk = getMockChunk();
 		return new ForestIncrementalSummaryBuilder(
 			true /* enableIncrementalSummary */,
 			(cursor: ITreeCursorSynchronous) => {
-				return testChunk;
+				return mockChunk;
 			},
 			defaultIncrementalEncodingPolicy,
 			initialSequenceNumber,
@@ -268,11 +272,11 @@ describe("ForestIncrementalSummaryBuilder", () => {
 			// Verify chunks can be retrieved
 			builder.decodeIncrementalChunk(referenceId0, (encoded) => {
 				assert.deepEqual(encoded, blobMap.get(chunkContentsPath0));
-				return getTestChunk();
+				return getMockChunk();
 			});
 			builder.decodeIncrementalChunk(referenceId1, (encoded) => {
 				assert.deepEqual(encoded, blobMap.get(chunkContentsPath1));
-				return getTestChunk();
+				return getMockChunk();
 			});
 		});
 
@@ -310,11 +314,11 @@ describe("ForestIncrementalSummaryBuilder", () => {
 			// Verify both parent and nested chunks can be retrieved
 			builder.decodeIncrementalChunk(referenceId0, (encoded) => {
 				assert.deepEqual(encoded, blobMap.get(parentContentsPath));
-				return getTestChunk();
+				return getMockChunk();
 			});
 			builder.decodeIncrementalChunk(referenceId1, (encoded) => {
 				assert.deepEqual(encoded, blobMap.get(childContentsPath));
-				return getTestChunk();
+				return getMockChunk();
 			});
 		});
 
@@ -511,7 +515,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 			await builder.load(storageService, getReadAndParseChunk(blobMap));
 
 			// Notify the builder that the chunk with the above reference ID was decoded.
-			builder.decodeIncrementalChunk(referenceId, () => getTestChunk());
+			builder.decodeIncrementalChunk(referenceId, () => getMockChunk());
 
 			const incrementalSummaryContext = createMockIncrementalSummaryContext(
 				initialSequenceNumber + 1,
@@ -555,7 +559,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 			await builder.load(storageService, getReadAndParseChunk(blobMap));
 			builder.decodeIncrementalChunk(referenceId0, (encoded) => {
 				assert.deepEqual(encoded, blobMap.get(chunkContentsPath0));
-				return getTestChunk();
+				return getMockChunk();
 			});
 		});
 
@@ -564,7 +568,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 			assert.throws(
 				() =>
 					builder.decodeIncrementalChunk(999 as ChunkReferenceId, (encoded) => {
-						return getTestChunk();
+						return getMockChunk();
 					}),
 				(error: Error) => validateAssertionError(error, "Encoded incremental chunk not found"),
 			);
