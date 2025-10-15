@@ -642,7 +642,7 @@ const hasSelectedClientSpec = (op: unknown): op is SelectedClientSpec =>
 /**
  * Mixes in the ability to select a client to perform an operation on.
  * Makes this available to existing generators and reducers in the passed-in model via {@link LocalServerStressState.client}
- * and \@fluid-private/test-dds-utils#LocalServerStressTestState.channel.
+ * and fluid-private/test-dds-utils#LocalServerStressTestState.channel.
  *
  * @remarks This exists purely for convenience, as "pick a client to perform an operation on" is a common concern.
  * @privateRemarks This is currently file-exported for testing purposes, but it could be reasonable to
