@@ -6,7 +6,6 @@
 module.exports = {
 	extends: [
 		require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated"),
-		"prettier",
 	],
 	rules: {
 		"@typescript-eslint/prefer-nullish-coalescing": "off", // requires strictNullChecks

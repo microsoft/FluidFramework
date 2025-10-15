@@ -6,7 +6,6 @@
 module.exports = {
 	extends: [
 		require.resolve("@fluidframework/eslint-config-fluid"),
-		"prettier",
 		"../../.eslintrc.cjs",
 		"plugin:react/recommended",
 		"plugin:react-hooks/recommended",

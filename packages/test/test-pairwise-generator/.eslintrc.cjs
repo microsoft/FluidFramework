@@ -4,7 +4,7 @@
  */
 
 module.exports = {
-	extends: ["@fluidframework/eslint-config-fluid/minimal-deprecated", "prettier"],
+	extends: ["@fluidframework/eslint-config-fluid/minimal-deprecated"],
 	rules: {
 		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 	},

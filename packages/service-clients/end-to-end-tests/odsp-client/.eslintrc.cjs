@@ -4,7 +4,7 @@
  */
 
 module.exports = {
-	extends: [require.resolve("@fluidframework/eslint-config-fluid"), "prettier"],
+	extends: [require.resolve("@fluidframework/eslint-config-fluid")],
 	rules: {
 		"prefer-arrow-callback": "off",
 		"@typescript-eslint/strict-boolean-expressions": "off", // requires strictNullChecks=true in tsconfig

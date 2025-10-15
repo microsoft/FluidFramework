@@ -8,7 +8,6 @@ module.exports = {
 	extends: [
 		// eslint-disable-next-line node/no-extraneous-require
 		require.resolve("@fluidframework/eslint-config-fluid"),
-		"prettier",
 	],
 	parserOptions: {
 		project: "./tsconfig.lint.json",
