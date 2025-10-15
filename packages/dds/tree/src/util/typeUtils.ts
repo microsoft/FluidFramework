@@ -19,7 +19,8 @@ export type FlattenKeys<T> = [{ [Property in keyof T]: T[Property] }][_InlineTri
  *
  * @remarks
  * The TypeScript compiler can be convinced to inline a generic type
- * (so the result of evaluating the generic type show up in IntelliSense and error messages instead of just the invocation of the generic type)
+ * (so the result of evaluating the generic type show up in IntelliSense and error messages instead of
+ * just the invocation of the generic type)
  * by creating an object with a field, and returning the type of that field.
  *
  * For example:
@@ -79,7 +80,8 @@ export type _InlineTrick = 0;
  */
 export type _RecursiveTrick = never;
 
-// This block is kept here to ensure the above example behaves as documented, and can be copied into the example to update it as needed.
+// This block is kept here to ensure the above example behaves as documented, and can be copied into the example
+// to update it as needed.
 {
 	/* eslint-disable @typescript-eslint/no-unused-vars */
 
@@ -93,7 +95,8 @@ export type _RecursiveTrick = never;
 		}
 	>;
 
-	// Adding `K extends _RecursiveTrick ? _RecursiveTrick:` OR `T extends _RecursiveTrick ? _RecursiveTrick :` makes it compile and has no effect on the type produced.
+	// Adding `K extends _RecursiveTrick ? _RecursiveTrick:` OR `T extends _RecursiveTrick ? _RecursiveTrick :`
+	// makes it compile and has no effect on the type produced.
 	type Works<T> = FlattenKeys<
 		{
 			[K in keyof T]: 0;
@@ -129,7 +132,8 @@ export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
 /**
  * Alternative to the built-in `Record<string, T>` type which is readonly and does not permit symbols.
  * @remarks
- * It would be nice if `keyof RestrictiveStringRecord<T>` returned string, but it does not: use `keyof RestrictiveStringRecord<T> & string` instead.
+ * It would be nice if `keyof RestrictiveStringRecord<T>` returned string, but it does not.
+ * Use `keyof RestrictiveStringRecord<T> & string` instead.
  * @system @public
  */
 export type RestrictiveStringRecord<T> = {
@@ -153,7 +157,8 @@ export type IsUnion<T, T2 = T> = T extends unknown
 /**
  * Convert a union of types to an intersection of those types. Useful for `TransformEvents`.
  * @privateRemarks
- * First an always true extends clause is used (T extends T) to distribute T into to a union of types contravariant over each member of the T union.
+ * First an always true extends clause is used (T extends T) to distribute T into to a union of types
+ * contravariant over each member of the T union.
  * Then the constraint on the type parameter in this new context is inferred, giving the intersection.
  * @system @public
  */
@@ -187,7 +192,8 @@ export type PopUnion<
  * @privateRemarks
  * `A` is a tuple to prepend members of the union to.
  *
- * https://www.hacklewayne.com/typescript-convert-union-to-tuple-array-yes-but-how and https://catchts.com/union-array both explain the general approach this uses pretty well.
+ * https://www.hacklewayne.com/typescript-convert-union-to-tuple-array-yes-but-how and https://catchts.com/union-array
+ * both explain the general approach this uses pretty well.
  * This implementation is inspired to those, but slightly different in implementation.
  * @system @beta
  */
@@ -202,12 +208,14 @@ export type UnionToTuple<
 /**
  * This is unsafe, meaning that the returned value might not match its type.
  *
- * For the result to match its type, T must be a union of the types of each item in `items` in the order that they occur.
+ * For the result to match its type, T must be a union of the types of each item in `items` in the order that
+ * they occur.
  * For this to be possible, there must be no duplicate or overlapping types.
  * This is fragile and must be used with care.
  *
  * @remarks
- * The main use-case for this is recovering lost information from {@link AllowedTypes} which is necessary to preserve when using them with {@link Input} APIs.
+ * The main use-case for this is recovering lost information from {@link AllowedTypes} which is necessary to preserve
+ * when using them with {@link Input} APIs.
  * Since {@link AllowedTypes} is actually order independent, it is somewhat safer when used to produce `AllowedTypes`.
  *
  * @example

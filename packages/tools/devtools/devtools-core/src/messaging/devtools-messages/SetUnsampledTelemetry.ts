@@ -25,7 +25,8 @@ export namespace SetUnsampledTelemetry {
 	 */
 	export interface MessageData {
 		/**
-		 * String representation of whether unsampled telemetry should be enabled or disabled. True for enabled, false for disabled.
+		 * String representation of whether unsampled telemetry should be enabled or disabled.
+		 * True for enabled, false for disabled.
 		 */
 		unsampledTelemetry: boolean;
 	}

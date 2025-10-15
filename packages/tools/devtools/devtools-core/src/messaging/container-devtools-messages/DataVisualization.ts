@@ -58,7 +58,8 @@ export namespace DataVisualization {
 	}
 
 	/**
-	 * Outbound message containing a visual description of the DDS associated with {@link HasFluidObjectId.fluidObjectId}.
+	 * Outbound message containing a visual description of the DDS associated with
+	 * {@link HasFluidObjectId.fluidObjectId}.
 	 *
 	 * @internal
 	 */

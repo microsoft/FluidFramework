@@ -21,5 +21,6 @@ import { runContentScript } from "./ContentScriptContent.js";
  * see {@link https://developer.chrome.com/docs/extensions/mv3/devtools/#content-script-to-devtools | here}.
  */
 
-// Tests assume this just calls "runContentScript": any changes to the body of this module should be made to "run", or may require updates to the tests.
+// Tests assume this just calls "runContentScript".
+// Any changes to the body of this module should be made to "run", or may require updates to the tests.
 runContentScript(browser, window);

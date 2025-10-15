@@ -27,7 +27,8 @@ export namespace ConnectContainer {
 	export type MessageData = HasContainerKey;
 
 	/**
-	 * Inbound message requesting that the Container associated with the specified ID be connected (if currently disconnected).
+	 * Inbound message requesting that the Container associated with the specified ID be connected
+	 * (if currently disconnected).
 	 *
 	 * @internal
 	 */

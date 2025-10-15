@@ -49,7 +49,8 @@ import {
  */
 
 /**
- * Cache used to prevent repeatedly generating the same Zod validation objects for the same {@link SimpleTreeSchema} as generate propts for repeated calls to an LLM
+ * Cache used to prevent repeatedly generating the same Zod validation objects for the same {@link SimpleTreeSchema}
+ * as generate propts for repeated calls to an LLM.
  */
 const promptSchemaCache = new WeakMap<
 	SimpleTreeSchema,
@@ -99,12 +100,16 @@ export function generateEditTypesForPrompt(
 }
 
 /**
- * Generates a set of ZOD validation objects for the various types of data that can be put into the provided {@link SimpleTreeSchema}
- * and then uses those sets to generate an all-encompassing ZOD object for each type of {@link TreeEdit} that can validate any of the types of data that can be put into the tree.
+ * Generates a set of ZOD validation objects for the various types of data that can be put into the provided
+ * {@link SimpleTreeSchema} and then uses those sets to generate an all-encompassing ZOD object for each type
+ * of {@link TreeEdit} that can validate any of the types of data that can be put into the tree.
  *
- * @returns a Record of schema names to Zod validation objects, and the name of the root schema used to encompass all of the other schemas.
+ * @returns A Record of schema names to Zod validation objects,
+ * and the name of the root schema used to encompass all of the other schemas.
  *
- * @remarks The return type of this function is designed to work with Typechat's createZodJsonValidator as well as be used as the JSON schema for OpenAi's structured output response format.
+ * @remarks
+ * The return type of this function is designed to work with Typechat's createZodJsonValidator as well as be used
+ * as the JSON schema for OpenAi's structured output response format.
  */
 function generateEditTypes(
 	schemas: Iterable<SimpleTreeSchema>,
@@ -116,7 +121,8 @@ function generateEditTypes(
 	const domainTypes: Record<string, ZodTypeAny> = {};
 	for (const schema of schemas) {
 		for (const name of schema.definitions.keys()) {
-			// If this does overwrite anything in domainTypes, it is guaranteed to be overwritten with an identical value due to the getOrCreate
+			// If this does overwrite anything in domainTypes, it is guaranteed to be overwritten with an
+			// identical value due to the getOrCreate
 			domainTypes[name] = getOrCreateType(
 				schema.definitions,
 				name,
@@ -189,7 +195,8 @@ function getOrCreateType(
 ): ZodTypeAny {
 	const simpleNodeSchema = definitionMap.get(definition) ?? fail("Unexpected definition");
 	return getOrCreate(objectCache, simpleNodeSchema, () => {
-		// Handle recursive types: temporarily create a zod "lazy" type that can be referenced by a recursive call to getOrCreateType.
+		// Handle recursive types: temporarily create a zod "lazy" type that can be referenced by a
+		// recursive call to getOrCreateType.
 		let type: ZodTypeAny | undefined;
 		objectCache.set(
 			simpleNodeSchema,
@@ -209,7 +216,8 @@ function getOrCreateType(
 						.filter(([, value]) => value !== undefined),
 				);
 
-				// Unlike arrays/maps/records, object nodes include methods directly on them rather than using an intersection
+				// Unlike arrays/maps/records, object nodes include methods directly on them rather than using
+				// an intersection
 				for (const [name, zodFunction] of getBoundMethods(definition, bindableSchemas)) {
 					if (properties[name] !== undefined) {
 						throw new UsageError(

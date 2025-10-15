@@ -26,7 +26,8 @@ describe("SettingsView Accessibility Check", () => {
 		await user.tab();
 		const dropdown = screen.getByRole("combobox", { name: /Theme Selection Dropdown/ });
 		expect(dropdown).toHaveFocus();
-		// The dropdown theme options are divs but get compiled as buttons in the expect function and thus fail any expect calls.
+		// The dropdown theme options are divs but get compiled as buttons in the expect function
+		// and thus fail any expect calls.
 		await user.tab();
 		const privacyLink = screen.getByRole("link", { name: /Microsoft Privacy Statement/ });
 		expect(privacyLink).toHaveFocus();

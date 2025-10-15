@@ -4,9 +4,13 @@
  */
 
 module.exports = {
-	extends: [require.resolve("@fluidframework/eslint-config-fluid/strict"), "prettier"],
+	extends: [require.resolve("@fluidframework/eslint-config-fluid/strict")],
 	parserOptions: {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
+	},
+	rules: {
+		// A lot of long lines. Since this package is not under active development anymore, not worth addressing.
+		'max-len': 'off'
 	},
 	overrides: [
 		{

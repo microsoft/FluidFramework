@@ -62,7 +62,8 @@ export interface ContainerDevtoolsProps extends HasContainerKey {
  * - {@link ConnectContainer.Message}: When received, {@link @fluidframework/container-definitions#IContainer.connect}
  * will be called on the {@link ContainerDevtools.container} (if it is disconnected).
  *
- * - {@link DisconnectContainer.Message}: When received, {@link @fluidframework/container-definitions#IContainer.disconnect}
+ * - {@link DisconnectContainer.Message}: When received,
+ * {@link @fluidframework/container-definitions#IContainer.disconnect}
  * will be called on the {@link ContainerDevtools.container} (if it is connected).
  *
  * - {@link CloseContainer.Message}: When received, {@link @fluidframework/container-definitions#IContainer.close}
@@ -77,7 +78,8 @@ export interface ContainerDevtoolsProps extends HasContainerKey {
  *
  * **Messages it posts:**
  *
- * - {@link ContainerDevtoolsFeatures.Message}: Posted only when requested via {@link GetContainerDevtoolsFeatures.Message}.
+ * - {@link ContainerDevtoolsFeatures.Message}: Posted only when requested via
+ * {@link GetContainerDevtoolsFeatures.Message}.
  *
  * - {@link AudienceSummary.Message}: Posted any time the Container's Audience state changes, or when requested
  * (via {@link GetAudienceSummary.Message}).

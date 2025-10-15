@@ -9,7 +9,8 @@ import React, { useEffect, useState } from "react";
 import { externalDataServicePort } from "../mock-external-data-service-interface/index.js";
 import type { ITaskData } from "../model-interface/index.js";
 
-// Hardcoding a taskListId here for now. In a real scenario this would be provided by the user when creating a task list component in the container.
+// Hardcoding a taskListId here for now.
+// In a real scenario this would be provided by the user when creating a task list component in the container.
 
 const externalTaskListId = "task-list-1";
 /**

@@ -58,7 +58,9 @@ const useStyles = makeStyles({
 
 /**
  * Page that shows op latency metrics.
- * @remarks TODO: Once Op Latency data is available from {@link messageRelay}, the op latency data should be passed into the graph instead of this test data set.
+ * @remarks
+ * TODO: Once Op Latency data is available from {@link messageRelay},
+ * the op latency data should be passed into the graph instead of this test data set.
  */
 export function OpLatencyView(): React.ReactElement {
 	const styles = useStyles();

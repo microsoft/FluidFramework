@@ -99,7 +99,8 @@ function createToolTipContents(schema: SharedTreeSchemaNode): VisualTreeNode {
 }
 
 /**
- * Converts the visual representation from {@link visualizeNodeBySchema} to a visual tree compatible with the devtools-view.
+ * Converts the visual representation from {@link visualizeNodeBySchema}
+ * to a visual tree compatible with the devtools-view.
  * @param tree - the visual representation of the SharedTree.
  * @returns - the visual representation of type {@link VisualChildNode}
  */
@@ -180,9 +181,13 @@ interface FieldSchemaProperties {
 /**
  * Processes and visualizes the fields of a verbose tree node.
  *
- * @param treeFields - The fields of the tree node to visualize. Can be either an array of VerboseTree (for array nodes) or a Record of field names to VerboseTree (for object/map nodes).
- * @param treeDefinitions - Map containing all schema definitions for the entire tree structure. Each definition describes the shape and constraints of a particular node type.
- * @param fieldSchemaProperties - Record mapping field names to their schema properties, including allowed types and whether they are required.
+ * @param treeFields - The fields of the tree node to visualize.
+ * Can be either an array of VerboseTree (for array nodes) or a Record of field names to
+ * VerboseTree (for object/map nodes).
+ * @param treeDefinitions - Map containing all schema definitions for the entire tree structure.
+ * Each definition describes the shape and constraints of a particular node type.
+ * @param fieldSchemaProperties - Record mapping field names to their schema properties,
+ * including allowed types and whether they are required.
  * @param visualizeChildData - Callback function to visualize child node data.
  *
  * @returns A record mapping field names/indices to their visual tree representations.
@@ -258,7 +263,8 @@ async function visualizeMapNode(
 	for (const key of Object.keys(tree.fields)) {
 		mapNodeSchemaProperties[key] = {
 			allowedTypes: schema.allowedTypesIdentifiers,
-			// Map values are always required. Don't display field requirement information, since that information is redundant.
+			// Map values are always required.
+			// Don't display field requirement information, since that information is redundant.
 			isRequired: undefined,
 		};
 	}
@@ -298,7 +304,8 @@ async function visualizeArrayNode(
 	for (const [i] of children.entries()) {
 		arrayNodeSchemaProperties[i] = {
 			allowedTypes: schema.allowedTypesIdentifiers,
-			// Array values are always required. Don't display field requirement information, since that information is redundant.
+			// Array values are always required.
+			// Don't display field requirement information, since that information is redundant.
 			isRequired: undefined,
 		};
 	}
@@ -323,7 +330,8 @@ async function visualizeArrayNode(
  * Creates the visual representation of non-leaf SharedTree nodes.
  *
  * @remarks
- * Processes internal tree nodes based on their schema type (e.g., ObjectNodeStoredSchema, MapNodeStoredSchema, ArrayNodeStoredSchema),
+ * Processes internal tree nodes based on their schema type
+ * (e.g., ObjectNodeStoredSchema, MapNodeStoredSchema, ArrayNodeStoredSchema),
  * producing the visual representation for each type.
  *
  * @see {@link https://fluidframework.com/docs/data-structures/tree/} for more information on the SharedTree schema.

@@ -11,8 +11,8 @@ import { getOrCreate } from "./utils.js";
 /**
  * Key in a {@link BrandedMapSubset}.
  * @remarks
- * Due to the `TContent` type parameter being invariant (which it has to be since keys are used to both read and write data),
- * generic collections end up needing to constrain their key's `TContent` to `any`.
+ * Due to the `TContent` type parameter being invariant (which it has to be since keys are used to both read
+ * and write data), generic collections end up needing to constrain their key's `TContent` to `any`.
  */
 export type BrandedKey<TKey, TContent> = TKey & Invariant<TContent>;
 

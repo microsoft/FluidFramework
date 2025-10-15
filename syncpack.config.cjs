@@ -120,7 +120,6 @@ module.exports = {
 			dependencies: [
 				"@biomejs/biome",
 				"eslint-plugin-*",
-				"eslint-config-prettier",
 				"eslint",
 				"less",
 				"prettier",

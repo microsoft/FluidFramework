@@ -135,7 +135,8 @@ export interface ServiceProps {
 	 *
 	 * @remarks
 	 *
-	 * This endpoint will unregister a given webhook from the external data service so that it will no longer receive data change notifications.
+	 * This endpoint will unregister a given webhook from the external data service so that it will no longer
+	 * receive data change notifications.
 	 */
 	externalDataServiceWebhookUnregistrationUrl: string;
 	/**
@@ -293,7 +294,8 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 					"Content-Type": "application/json",
 				},
 				body: JSON.stringify({
-					// The external data service will call this service's own webhook echoer endpoint which will in turn notify our subscribers of the data changes.
+					// The external data service will call this service's own webhook echoer endpoint which will in turn
+					// notify our subscribers of the data changes.
 					url: `http://localhost:${port}/external-data-webhook?externalTaskListId=${externalTaskListId}`,
 					externalTaskListId,
 				}),
@@ -324,12 +326,14 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 	/**
 	 * An 'events' endpoint that can be called by Fluid services.
 	 *
-	 * For the 'session-end' event {@link SessionEndEventsListenerRequest}: If after unregistering the given client URL, there are any task ids that have an outstanding
-	 * webhook registered using this service's internal '/external-data-webhook' endpoint but has no respective active client sessions mapped to them anymore,
+	 * For the 'session-end' event {@link SessionEndEventsListenerRequest}: If after unregistering the given client URL,
+	 * there are any task ids that have an outstanding webhook registered using this service's internal
+	 * '/external-data-webhook' endpoint but has no respective active client sessions mapped to them anymore,
 	 * then those webhooks will be deregistered.
 	 *
-	 * @remarks Currently, the only supported request type is 'session-end' {@link SessionEndEventsListenerRequest} which enables the Fluid service to notify this service
-	 * that a particular Fluid session has ended which in turn causes this service to unregister any related webhooks to the respective Fluid session.
+	 * @remarks Currently, the only supported request type is 'session-end' {@link SessionEndEventsListenerRequest}
+	 * which enables the Fluid service to notify this service that a particular Fluid session has ended which in turn
+	 * causes this service to unregister any related webhooks to the respective Fluid session.
 	 */
 	expressApp.post("/events-listener", (request: EventsListenerRequest, result) => {
 		const eventType = request.body?.type;
@@ -365,6 +369,7 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 						"Content-Type": "application/json",
 					},
 					body: JSON.stringify({
+						// eslint-disable-next-line max-len
 						// External data service will call our webhook echoer to notify our subscribers of the data changes.
 						url: `http://localhost:${port}/external-data-webhook?externalTaskListId=${emptyExternalTaskListId}`,
 						emptyExternalTaskListId,
@@ -372,6 +377,7 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 				}).catch((error) => {
 					console.error(
 						formatLogMessage(
+							// eslint-disable-next-line max-len
 							`Un-registering for data update notifications webhook with the external data service failed due to an error.`,
 						),
 						error,

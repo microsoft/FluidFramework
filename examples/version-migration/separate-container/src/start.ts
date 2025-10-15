@@ -144,13 +144,15 @@ const setupContainer = async (
 		(await loadExistingContainer({ ...loaderProps, request: { url: id } }));
 	const model = await getModelFromContainer<IMigratableModel>(container);
 
-	// In this example, our container code mixes in an IMigratorEntryPoint to the container entryPoint.  The getMigrator
-	// function lets us construct an IMigrator by providing the necessary external tools it needs to operate.  The IMigrator
-	// is an object we can use to watch migration status, propose a migration, and discover the migration result.
+	// In this example, our container code mixes in an IMigratorEntryPoint to the container entryPoint.
+	// The getMigrator function lets us construct an IMigrator by providing the necessary external tools it needs
+	// to operate.
+	// The IMigrator is an object we can use to watch migration status, propose a migration, and discover the migration
+	// result.
 	const { getMigrator } = (await container.getEntryPoint()) as IMigratorEntryPoint;
 	const migrator: IMigrator = await getMigrator(
-		// Note that the LoadSourceContainerCallback must load a new instance of the container.  We cannot simply return the
-		// container reference we already got above since it may contain local un-ack'd changes.
+		// Note that the LoadSourceContainerCallback must load a new instance of the container.
+		// We cannot simply return the container reference we got above since it may contain local un-ack'd changes.
 		async () => loadExistingContainer({ ...loaderProps, request: { url: id } }),
 		migrationCallback,
 	);

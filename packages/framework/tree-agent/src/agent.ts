@@ -31,13 +31,17 @@ import {
 
 /**
  * The default maximum number of sequential edits the LLM can make before we assume it's stuck in a loop.
- * @remarks This can be overridden by passing {@link SemanticAgentOptions.maximumSequentialEdits | maximumSequentialEdits} to {@link createSemanticAgent}.
+ * @remarks
+ * This can be overridden by passing {@link SemanticAgentOptions.maximumSequentialEdits | maximumSequentialEdits}
+ * to {@link createSemanticAgent}.
  */
 const defaultMaxSequentialEdits = 20;
 
 /**
  * An agent that uses a {@link SharedTreeChatModel} to interact with a SharedTree.
- * @remarks This class forwards user queries to the chat model, and handles the application of any edits to the tree that the model requests.
+ * @remarks
+ * This class forwards user queries to the chat model, and handles the application of any edits to the tree that
+ * the model requests.
  * @alpha @sealed
  */
 export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
@@ -100,11 +104,13 @@ export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
 				`The tree has changed since the last query. The new state of the tree is: \n\n\`\`\`JSON\n${stringified}\n\`\`\``,
 			);
 			this.options?.logger?.log(
-				`### Latest Tree State\n\nThe Tree was edited by a local or remote user since the previous query. The latest state is:\n\n\`\`\`JSON\n${stringified}\n\`\`\`\n\n`,
+				`### Latest Tree State\n\nThe Tree was edited by a local or remote user since the previous query. ` +
+				`The latest state is:\n\n\`\`\`JSON\n${stringified}\n\`\`\`\n\n`,
 			);
 		}
 
-		// Fork a branch that will live for the lifetime of this query (which can be multiple LLM calls if the there are errors or the LLM decides to take multiple steps to accomplish a task).
+		// Fork a branch that will live for the lifetime of this query (which can be multiple LLM calls if the there
+		// are errors or the LLM decides to take multiple steps to accomplish a task).
 		// The branch will be merged back into the outer branch if and only if the query succeeds.
 		const queryTree = this.outerTree.fork();
 		const maxEditCount = this.options?.maximumSequentialEdits ?? defaultMaxSequentialEdits;
@@ -164,7 +170,9 @@ export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
 
 /**
  * Creates an unhydrated node of the given schema with the given value.
- * @remarks If the schema is an object with {@link llmDefault | default values}, this function populates the node with those defaults.
+ * @remarks
+ * If the schema is an object with {@link llmDefault | default values},
+ * this function populates the node with those defaults.
  */
 function constructTreeNode(schema: TreeNodeSchema, value: FactoryContentObject): TreeNode {
 	if (schema instanceof ObjectNodeSchema) {

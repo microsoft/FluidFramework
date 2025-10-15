@@ -26,7 +26,8 @@ type ClientSessionString = string;
 
 /**
  * Represents the external data servers query url or uuid.
- * This is the URL or the id of the external resource that the customer service needs to subscribe for at the external service.
+ * This is the URL or the id of the external resource that the customer service needs to subscribe
+ * for at the external service.
  */
 type ExternalTaskListId = string;
 
@@ -119,11 +120,13 @@ export class ClientManager<TData = unknown> {
 	): void {
 		const client = clientRecordToString(clientRecord);
 		const clientTaskListIds = this._clientMapping.get(client);
+		// eslint-disable-next-line max-len
 		// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- Use of optional chaining disrupts needed type narrowing
 		if (clientTaskListIds !== undefined && clientTaskListIds.has(externalTaskListId)) {
 			clientTaskListIds.delete(externalTaskListId);
 		}
 		const taskListClients = this._taskListMapping.get(externalTaskListId);
+		// eslint-disable-next-line max-len
 		// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- Use of optional chaining disrupts needed type narrowing
 		if (taskListClients !== undefined && taskListClients.has(client)) {
 			taskListClients.delete(client);
@@ -142,6 +145,7 @@ export class ClientManager<TData = unknown> {
 			// eslint-disable-next-line unicorn/no-array-for-each
 			clientTaskListIds.forEach((taskListId) => {
 				const taskListClients = this._taskListMapping.get(taskListId);
+				// eslint-disable-next-line max-len
 				// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- Use of optional chaining disrupts needed type narrowing
 				if (taskListClients !== undefined && taskListClients.has(client)) {
 					taskListClients.delete(client);

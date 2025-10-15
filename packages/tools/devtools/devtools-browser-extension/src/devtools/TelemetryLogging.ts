@@ -49,8 +49,8 @@ const fetchHttpXHROverride: IXHROverride = {
 							oncomplete(response.status, headerMap, text);
 						})
 						.catch((error) => {
-							// Something wrong with the response body? Play it safe by passing the response status; don't try to
-							// explicitly re-send the telemetry events by specifying status 0.
+							// Something wrong with the response body? Play it safe by passing the response status;
+							// don't try to explicitly re-send the telemetry events by specifying status 0.
 							oncomplete(response.status, headerMap, "");
 						});
 				} else {
@@ -110,8 +110,8 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 			loggingLevelConsole: 0, // Do not log to console
 			disableDbgExt: true, // Small perf optimization
 			extensions: [
-				// Passing no channels here when the user opts out of telemetry would be ideal, completely ensuring telemetry
-				// could not be sent out at all. Could be a later improvement.
+				// Passing no channels here when the user opts out of telemetry would be ideal,
+				// completely ensuring telemetry could not be sent out at all. Could be a later improvement.
 				this.postChannel,
 			],
 			extensionConfig: {
@@ -154,7 +154,8 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 		// Clear localStorage and reset identifiers if the user opts out
 		if (!optIn) {
 			localStorage.removeItem(this.CONTINUITY_ID_KEY);
-			// Reset identifiers, ensuring any subsequent telemetry will have fresh identifiers if the user opts in again.
+			// Reset identifiers, ensuring any subsequent telemetry will have fresh identifiers if the user
+			// opts in again.
 			this.continuityID = undefined;
 			this.sessionID = undefined;
 			return;
@@ -168,16 +169,19 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 			this.generateIdentifiers();
 		}
 
-		// Note: the calls that the 1DS SDK makes to external endpoints might fail if the last part of the eventName is not uppercase
-		// Note: "Fluid.Framework" here has a connection to the Aria tenant(s) we're targetting, and the full string
-		// impacts the way the data is structured once ingested. Don't change this without proper consideration.
+		// Note: the calls that the 1DS SDK makes to external endpoints might fail if the last part of the eventName
+		// is not uppercase.
+		// Note: "Fluid.Framework" here has a connection to the Aria tenant(s) we're targetting,
+		// and the full string impacts the way the data is structured once ingested.
+		// Don't change this without proper consideration.
 		const eventType = `Fluid.Framework.Devtools.Usage`;
 
 		const telemetryEvent = {
 			name: eventType, // Dictates which table the event goes to
 			data: {
 				["Event.Time"]: new Date(),
-				["Event.Name"]: eventType, // Same as 'name' but is an actual column in Kusto; useful for cross-table queries
+				// "Event.Name" is the same as 'name' but is an actual column in Kusto; useful for cross-table queries
+				["Event.Name"]: eventType,
 				["Data.extensionVersion"]: extensionVersion,
 				["Data.sessionID"]: this.sessionID,
 				["Data.continuityID"]: this.continuityID,
@@ -191,8 +195,9 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 				continue;
 			}
 			if ((value as Tagged<TelemetryBaseEventPropertyType>).value !== undefined) {
-				// In Fluid Devtools we don't currently plan to log tagged properties because we don't intend to capture any
-				// user-identifiable or user-generated information. If we do later, we'll need to add support for this.
+				// In Fluid Devtools we don't currently plan to log tagged properties because we don't intend to
+				// capture any user-identifiable or user-generated information.
+				// If we do later, we'll need to add support for this.
 				throw new Error(`Tagged properties not supported by telemetry logger`);
 			}
 			if (!["string", "number", "boolean"].includes(typeof value)) {
@@ -205,7 +210,8 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 	}
 
 	/**
-	 * Flush the underlying sink, forcing any events that haven't been sent to the remote endpoint to be sent immediately.
+	 * Flush the underlying sink,
+	 * forcing any events that haven't been sent to the remote endpoint to be sent immediately.
 	 */
 	public flush(): void {
 		if (this.enabled) {

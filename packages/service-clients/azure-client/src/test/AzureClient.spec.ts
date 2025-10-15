@@ -327,6 +327,7 @@ for (const compatibilityMode of ["1", "2"] as const) {
 			);
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const { sweepEnabled, throwOnTombstoneLoad } =
+				// eslint-disable-next-line max-len
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 				(container_defaultConfig as any).container._runtime.garbageCollector.configs;
 

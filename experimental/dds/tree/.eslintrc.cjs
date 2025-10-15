@@ -4,7 +4,7 @@
  */
 
 module.exports = {
-	extends: ['@fluidframework/eslint-config-fluid/minimal-deprecated', 'prettier'],
+	extends: ['@fluidframework/eslint-config-fluid/minimal-deprecated'],
 	root: true,
 	rules: {
 		// TODO: Recover "noUnusedLocals" behavior as part of linting.  (This rule seems to be broken in the Fluid repo.)
@@ -25,6 +25,9 @@ module.exports = {
 		'@typescript-eslint/no-unsafe-return': 'off',
 		'import/no-deprecated': 'off',
 		'@fluid-internal/fluid/no-unchecked-record-access': 'off',
+
+		// A lot of long lines. Since this package is not under active development anymore, not worth addressing.
+		'max-len': 'off'
 	},
 	overrides: [
 		{

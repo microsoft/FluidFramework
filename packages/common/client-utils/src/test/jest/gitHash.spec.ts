@@ -48,6 +48,7 @@ async function evaluateBrowserHash(
 	// so pull in the function as a string and eval it directly instead
 	// there are also issues around nested function calls when using page.exposeFunction, so
 	// do only the crypto.subtle part in page.evaluate and do the other half outside
+	// eslint-disable-next-line max-len
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 	const browserHashFn: string = HashBrowser.__get__("digestBuffer").toString();
 

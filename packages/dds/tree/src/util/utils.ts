@@ -77,7 +77,8 @@ export function makeArray<T>(size: number, filler: (index: number) => T): T[] {
  * Returns the last element of an array, or `undefined` if the array has no elements.
  * @param array - The array to get the last element from.
  * @remarks
- * If the type of the array has been narrowed by e.g. {@link hasSome | hasSome(array)} or {@link hasSingle | hasOne(array)} then the return type will be `T` rather than `T | undefined`.
+ * If the type of the array has been narrowed by e.g. {@link hasSome | hasSome(array)} or
+ * {@link hasSingle | hasOne(array)} then the return type will be `T` rather than `T | undefined`.
  */
 export function getLast<T>(array: readonly [T, ...T[]]): T;
 export function getLast<T>(array: { [index: number]: T; length: number }): T | undefined;
@@ -89,8 +90,10 @@ export function getLast<T>(array: { [index: number]: T; length: number }): T | u
  * Returns true if and only if the given array has at least one element.
  * @param array - The array to check.
  * @remarks
- * If `array` contains at least one element, its type will be narrowed and can benefit from improved typing from e.g. `array[0]` and {@link getLast | getLast(array)}.
- * This is especially useful when "noUncheckedIndexedAccess" is enabled in the TypeScript compiler options, since the return type of `array[0]` will be `T` rather than `T | undefined`.
+ * If `array` contains at least one element, its type will be narrowed and can benefit from improved typing
+ * from e.g. `array[0]` and {@link getLast | getLast(array)}.
+ * This is especially useful when "noUncheckedIndexedAccess" is enabled in the TypeScript compiler options,
+ * since the return type of `array[0]` will be `T` rather than `T | undefined`.
  */
 export function hasSome<T>(array: T[]): array is [T, ...T[]];
 export function hasSome<T>(array: readonly T[]): array is readonly [T, ...T[]];
@@ -109,8 +112,10 @@ export function iterableHasSome<T>(iterable: Iterable<T>): boolean {
  * Returns true if and only if the given array has exactly one element.
  * @param array - The array to check.
  * @remarks
- * If `array` contains exactly one element, its type will be narrowed and can benefit from improved typing from e.g. `array[0]` and {@link getLast | getLast(array)}.
- * This is especially useful when "noUncheckedIndexedAccess" is enabled in the TypeScript compiler options, since the return type of `array[0]` will be `T` rather than `T | undefined`.
+ * If `array` contains exactly one element, its type will be narrowed and can benefit from improved typing
+ * from e.g. `array[0]` and {@link getLast | getLast(array)}.
+ * This is especially useful when "noUncheckedIndexedAccess" is enabled in the TypeScript compiler options,
+ * since the return type of `array[0]` will be `T` rather than `T | undefined`.
  */
 export function hasSingle<T>(array: T[]): array is [T];
 export function hasSingle<T>(array: readonly T[]): array is readonly [T];
@@ -193,7 +198,8 @@ export function getOrAddInMap<Key, Value>(
  * Retrieve a value from a map with the given key, or create a new entry if the key is not in the map.
  * @param map - The map to query/update
  * @param key - The key to lookup in the map
- * @param defaultValue - a function which returns a default value. This is called and used to set an initial value for the given key in the map if none exists
+ * @param defaultValue - a function which returns a default value.
+ * This is called and used to set an initial value for the given key in the map if none exists.
  * @returns either the existing value for the given key, or the newly-created value (the result of `defaultValue`)
  */
 export function getOrCreate<K, V>(
@@ -259,7 +265,8 @@ export function* filterIterable<T>(
  * Finds the first element in the given iterable that satisfies a predicate.
  * @param iterable - The iterable to search for an eligible element
  * @param predicate - The predicate to run against each element
- * @returns The first element in the iterable that satisfies the predicate, or undefined if the iterable contains no such element
+ * @returns The first element in the iterable that satisfies the predicate,
+ * or undefined if the iterable contains no such element
  */
 export function find<T>(iterable: Iterable<T>, predicate: (t: T) => boolean): T | undefined {
 	for (const t of iterable) {
@@ -286,7 +293,8 @@ export function count(iterable: Iterable<unknown>): number {
  * Use for Json compatible data.
  *
  * @typeparam TExtra - Type permitted in addition to the normal JSON types.
- * Commonly used for to allow {@link @fluidframework/core-interfaces#IFluidHandle} within the otherwise JSON compatible content.
+ * Commonly used for to allow {@link @fluidframework/core-interfaces#IFluidHandle} within the otherwise
+ * JSON-compatible content.
  *
  * @remarks
  * This does not robustly forbid non json comparable data via type checking,
@@ -405,7 +413,8 @@ export function assertNonNegativeSafeInteger(index: number): void {
  * Convert an object into a Map.
  *
  * This function must only be used with objects specifically intended to encode map like information.
- * The only time such objects should be used is for encoding maps as object literals to allow for developer ergonomics or JSON compatibility.
+ * The only time such objects should be used is for encoding maps as object literals to allow for developer
+ * ergonomics or JSON compatibility.
  * Even those two use-cases need to be carefully considered as using objects as maps can have a lot of issues
  * (including but not limited to unintended access to __proto__ and other non-owned keys).
  * This function helps these few cases get into using an actual map in as safe of was as is practical.
@@ -427,7 +436,8 @@ export function objectToMap<MapKey extends string | number | symbol, MapValue>(
  *
  * @remarks
  * This function must only be used with objects specifically intended to encode map like information.
- * The only time such objects should be used is for encoding maps as object literals to allow for developer ergonomics or JSON compatibility.
+ * The only time such objects should be used is for encoding maps as object literals to allow for developer
+ * ergonomics or JSON compatibility.
  * Even those two use-cases need to be carefully considered as using objects as maps can have a lot of issues
  * (including but not limited to unintended access to __proto__ and other non-owned keys).
  * {@link objectToMap} helps these few cases get into using an actual map in as safe of a way as is practical.
@@ -485,7 +495,8 @@ export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined {
 
 /**
  * Type with a name describing what it is.
- * Typically used with values (like schema) that can be stored in a map, but in some representations have their name/key as a field.
+ * Typically used with values (like schema) that can be stored in a map,
+ * but in some representations have their name/key as a field.
  */
 export interface Named<TName> {
 	readonly name: TName;
@@ -529,7 +540,8 @@ export interface IDisposable {
 	 *
 	 * @remarks
 	 * May cleanup resources retained by this object.
-	 * Often includes un-registering from events and thus preventing other objects from retaining a reference to this indefinably.
+	 * Often includes un-registering from events and thus preventing other objects from retaining a reference
+	 * to this indefinitely.
 	 *
 	 * Usually the only operations allowed after disposal are querying if an object is already disposed,
 	 * but this can vary between implementations.
@@ -591,14 +603,21 @@ export function defineLazyCachedProperty<
  * If `source` is undefined or does not have the property defined, then this function will do nothing.
  * @param property - The property to copy.
  * @param destination - The object to copy the property to.
- * @remarks This function is useful for copying properties from one object to another while minimizing the presence of `undefined` values.
- * If `property` is not present on `source` - or if `property` is present, but has a value of `undefined` - then this function will not modify `destination`.
- * This is different from doing `destination.foo = source.foo`, which would define a `"foo"` property on `destination` with the value `undefined`.
+ * @remarks This function is useful for copying properties from one object to another while minimizing the presence
+ * of `undefined` values.
+ * If `property` is not present on `source` - or if `property` is present, but has a value of `undefined` -
+ * then this function will not modify `destination`.
+ * This is different from doing `destination.foo = source.foo`, which would define a `"foo"` property on
+ * `destination` with the value `undefined`.
  *
- * If the type of `source` is known to have `property`, then this function asserts that the type of `destination` has `property` as well after the call.
+ * If the type of `source` is known to have `property`, then this function asserts that the type of `destination`
+ * has `property` as well after the call.
  *
- * This function first reads the property value (if present) from `source` and then sets it on `destination`, as opposed to e.g. directly copying the property descriptor.
- * @privateRemarks The first overload of this function allows auto-complete to suggest property names from `source`, but by having the second overload we still allow for arbitrary property names.
+ * This function first reads the property value (if present) from `source` and then sets it on `destination`,
+ * as opposed to e.g. directly copying the property descriptor.
+ * @privateRemarks
+ * The first overload of this function allows auto-complete to suggest property names from `source`,
+ * but by having the second overload we still allow for arbitrary property names.
  */
 export function copyPropertyIfDefined<S extends object, K extends keyof S, D extends object>(
 	source: S | undefined,
@@ -633,11 +652,12 @@ export function copyPropertyIfDefined<
 
 /**
  * Reduces an array of values into a single value.
- * This is similar to `Array.prototype.reduce`,
- * except that it recursively reduces the left and right halves of the input before reducing their respective reductions.
+ * This is similar to `Array.prototype.reduce`, except that it recursively reduces the left and right halves
+ * of the input before reducing their respective reductions.
  *
  * When compared with an approach like reducing all the values left-to-right,
- * this balanced approach is beneficial when the cost of invoking `callbackFn` is proportional to the number reduced values that its parameters collectively represent.
+ * this balanced approach is beneficial when the cost of invoking `callbackFn` is proportional to the number of
+ * reduced values that its parameters collectively represent.
  * For example, if `T` is an array, and `callbackFn` concatenates its inputs,
  * then `balancedReduce` will have O(N*log(N)) time complexity instead of `Array.prototype.reduce`'s O(N²).
  * However, if `callbackFn` is O(1) then both `balancedReduce` and `Array.prototype.reduce` will have O(N) complexity.

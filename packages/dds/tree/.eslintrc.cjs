@@ -4,7 +4,7 @@
  */
 
 module.exports = {
-	extends: [require.resolve("@fluidframework/eslint-config-fluid"), "prettier"],
+	extends: [require.resolve("@fluidframework/eslint-config-fluid")],
 	parserOptions: {
 		project: ["./tsconfig.json"],
 	},
@@ -30,6 +30,9 @@ module.exports = {
 
 		// TODO: Remove this override once this config has been updated to extend the "strict" base config.
 		"@typescript-eslint/explicit-member-accessibility": "error",
+
+		// TODO: Remove after addressing issues. Low priority, and many hits.
+		"max-len": "off",
 
 		// #region TODO: remove these once eslint-config-fluid has been updated to 5.8.0
 		"@typescript-eslint/consistent-type-exports": [
@@ -104,6 +107,13 @@ module.exports = {
 			rules: {
 				"@typescript-eslint/no-unused-vars": ["off"],
 				"@typescript-eslint/explicit-function-return-type": "off",
+			},
+		},
+		{
+			// Overrides for type-tests
+			files: ["src/test/types/*"],
+			rules: {
+				"max-len": "off",
 			},
 		},
 	],

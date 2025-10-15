@@ -46,7 +46,8 @@ export namespace ContainerDevtoolsFeatures {
 	}
 
 	/**
-	 * Creates a {@link ContainerDevtoolsFeatures.Message} from the provided {@link ContainerDevtoolsFeatures.MessageData}.
+	 * Creates a {@link ContainerDevtoolsFeatures.Message} from the provided
+	 * {@link ContainerDevtoolsFeatures.MessageData}.
 	 *
 	 * @internal
 	 */

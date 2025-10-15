@@ -39,7 +39,8 @@ export interface PopupViewProps {
 export function PopupView(props: PopupViewProps): React.ReactElement {
 	const { backgroundServiceConnection } = props;
 
-	// Indicates if Fluid Devtools is running in the current page (i.e. the application is using it and initialized it correctly).
+	// Indicates if Fluid Devtools is running in the current page
+	// (i.e. the application is using it and initialized it correctly).
 	// Undefined means still looking or that the message which is sent to discover this has not been sent yet.
 	const [foundDevtools, setFoundDevtools] = React.useState<boolean | undefined>(undefined);
 

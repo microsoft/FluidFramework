@@ -51,7 +51,8 @@ export class Subtree<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema> {
 		if (this.viewOrNode instanceof TreeNode) {
 			const parent = Tree.parent(this.viewOrNode);
 			if (parent === undefined) {
-				// In general, this is not a correct cast, but we know that the root of the branch at least allows the type of `value`
+				// In general, this is not a correct cast, but we know that the root of the branch at least
+				// allows the type of `value`
 				const view = this.branch as TreeView<TRoot>;
 				view.root = value;
 			} else {

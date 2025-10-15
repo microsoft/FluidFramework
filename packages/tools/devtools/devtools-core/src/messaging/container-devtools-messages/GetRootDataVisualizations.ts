@@ -42,7 +42,8 @@ export namespace GetRootDataVisualizations {
 	}
 
 	/**
-	 * Creates a {@link GetRootDataVisualizations.Message} from the provided {@link GetRootDataVisualizations.MessageData}.
+	 * Creates a {@link GetRootDataVisualizations.Message} from the provided
+	 * {@link GetRootDataVisualizations.MessageData}.
 	 *
 	 * @internal
 	 */

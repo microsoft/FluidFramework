@@ -23,7 +23,8 @@ describe("ContainerSummaryView Accessibility Check", () => {
 		opLatencyTelemetry: true,
 	};
 
-	// Mock feature flag to test that the ContainerSummaryView is accessible when the container state modification is supported
+	// Mock feature flag to test that the ContainerSummaryView is accessible when the container state
+	// modification is supported
 	const mockFeatureFlags = {
 		containerFeatureFlags: {
 			containerDataVisualization: true,

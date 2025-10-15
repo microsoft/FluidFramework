@@ -187,7 +187,8 @@ describe("CustomEventEmitter", () => {
 			assert.deepEqual(log, expected);
 		}
 
-		// Because event ordering is not guaranteed, we first test the control case to ensure that the second event fires after the first...
+		// Because event ordering is not guaranteed,
+		// we first test the control case to ensure that the second event fires after the first...
 		test(false, ["A", "B"]);
 		// ... and then test the same scenario but with the second event removed before it can fire.
 		test(true, ["A"]);
@@ -268,7 +269,8 @@ describe("CustomEventEmitter", () => {
 	});
 
 	it("includes symbol description in the error message on multiple registrations of the same listener", () => {
-		// This test ensures that symbol types are registered, error on double registration, and include the description of the symbol in the error message.
+		// This test ensures that symbol types are registered, error on double registration,
+		// and include the description of the symbol in the error message.
 		const eventSymbol = Symbol("TestEvent");
 		const emitter = createEmitter<{ [eventSymbol]: () => void }>();
 		const listener = (): void => {};
@@ -286,7 +288,9 @@ describe("CustomEventEmitter", () => {
  *
  * Provides an API for subscribing to and listening to events.
  *
- * @remarks Classes wishing to emit events may either extend this class, compose over it, or expose it as a property of type {@link @fluidframework/core-interfaces#Listenable}.
+ * @remarks
+ * Classes wishing to emit events may either extend this class, compose over it,
+ * or expose it as a property of type {@link @fluidframework/core-interfaces#Listenable}.
  *
  * Note: These are for testing only and should not be re-exported.
  */

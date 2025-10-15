@@ -33,7 +33,8 @@ export function getPrompt<TRoot extends ImplicitFieldSchema>(args: {
 	const arrayInterfaceName = "TreeArray";
 	const mapInterfaceName = "TreeMap";
 	const simpleSchema = getSimpleSchema(schema);
-	// Inspect the schema to determine what kinds of nodes are possible - this will affect how much information we need to include in the prompt.
+	// Inspect the schema to determine what kinds of nodes are possible.
+	// This will affect how much information we need to include in the prompt.
 	let hasArrays = false;
 	let hasMaps = false;
 	let exampleObjectName: string | undefined;

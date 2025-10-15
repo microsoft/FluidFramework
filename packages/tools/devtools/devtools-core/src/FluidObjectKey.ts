@@ -8,10 +8,12 @@ let counter = 0;
 const visualizerIdMap = new WeakMap<object, number>();
 
 /**
- * Associates a unique stringified number with an {@link @fluidframework/devtools/devtools-core#VisualizerNode} in {@link DataVisualization}.
+ * Associates a unique stringified number with an {@link @fluidframework/devtools/devtools-core#VisualizerNode}
+ * in {@link DataVisualization}.
  *
  * @remarks
- * The key is tied to the object identity, not the object's contents; modifying the object will not cause it to get a different key.
+ * The key is tied to the object identity, not the object's contents;
+ * modifying the object will not cause it to get a different key.
  * Adopted from the {@link @fluidframework/react#objectIdNumber} function.
  */
 export function getKeyForFluidObject(visualizerNode: object): string {

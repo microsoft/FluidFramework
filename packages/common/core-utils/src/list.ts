@@ -345,7 +345,8 @@ export class DoublyLinkedList<T>
  * @typeParam T - The type of data stored in the list nodes.
  * @param list - The list to walk.
  * @param visitor - Function called for each node. If it returns `false`, iteration stops.
- * @param start - Optional node to start iteration from. If not provided, starts at the first (or last if `forward` is false) node.
+ * @param start - Optional node to start iteration from.
+ * If not provided, starts at the first (or last if `forward` is false) node.
  * @param forward - If `true` (default), iterates forward; if `false`, iterates backward.
  * @returns `false` if iteration was stopped early by the visitor, otherwise `true`.
  *

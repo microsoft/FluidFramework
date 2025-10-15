@@ -26,7 +26,8 @@ export interface IInventoryListAppModel
 	 */
 	readonly inventoryList: IInventoryList;
 
-	// TODO: TEMPORARY debug API to trigger a summary - for now the demo disables automatic summarization entirely, so this allows it to advance past the stages that require a summary.
+	// TODO: TEMPORARY debug API to trigger a summary - for now the demo disables automatic summarization entirely,
+	// so this allows it to advance past the stages that require a summary.
 	readonly DEBUG_summarizeOnDemand: () => void;
 }
 

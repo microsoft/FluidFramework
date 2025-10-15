@@ -34,5 +34,6 @@ export type {
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 
-// Re-export so developers have access to parameter types for createContainer/getContainer without pulling in fluid-static
+// Re-export so developers have access to parameter types for createContainer/getContainer
+// without pulling in fluid-static
 export type { CompatibilityMode } from "@fluidframework/fluid-static";
