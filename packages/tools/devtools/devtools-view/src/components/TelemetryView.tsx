@@ -562,10 +562,12 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 
 			{/*
 				SplitPane fom the react-split-pane package is incompatible with _the types_ for React 18.
-				To fix it, the SplitPaneProps type in it should be updated to have a new property `children: React.ReactNode;`.
+				To fix it, the SplitPaneProps type in it should be updated to have a new property
+				`children: React.ReactNode;`.
 				At runtime there are no issues, so just ignoring the TS error for now.
 				Note that ts-ignore does take "arguments" and only has an effect on the line right below it.
-				The error we want to ignore is TS2322 specifically but there is no way to only ignore specific TS errors.
+				The error we want to ignore is TS2322 specifically but there is no way to only ignore specific
+				TS errors.
 
 				TODO: we should look for an alternative to replace this library. AB#18876
 				// @ts-expect-error See comment above */}

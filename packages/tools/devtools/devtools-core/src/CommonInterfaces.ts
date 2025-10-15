@@ -4,7 +4,8 @@
  */
 
 /**
- * A key used to identify and differentiate Containers registered with the {@link @fluidframework/devtools-core#IFluidDevtools}.
+ * A key used to identify and differentiate Containers registered with the
+ * {@link @fluidframework/devtools-core#IFluidDevtools}.
  *
  * @remarks Each Container registered with the Devtools must be assigned a unique `containerKey`.
  *
@@ -45,7 +46,8 @@ export interface HasFluidObjectId {
 	/**
 	 * The ID of the Fluid object (DDS) associated with data or a request.
 	 * @privateRemarks
-	 * TODO: This should be renamed to something like 'fluidObjectKey' to better reflect its purpose as a key rather than an ID.
+	 * TODO: This should be renamed to something like 'fluidObjectKey' to better reflect its purpose as a key
+	 * rather than an ID.
 	 * Cannot be changed now due to backward compatibility requirements.
 	 */
 	readonly fluidObjectId: FluidObjectId;

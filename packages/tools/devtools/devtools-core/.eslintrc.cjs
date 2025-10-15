@@ -4,7 +4,7 @@
  */
 
 module.exports = {
-	extends: [require.resolve("@fluidframework/eslint-config-fluid/strict"), "prettier"],
+	extends: [require.resolve("@fluidframework/eslint-config-fluid/strict")],
 	parserOptions: {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
@@ -27,6 +27,13 @@ module.exports = {
 
 				// Superseded by chai-expect rule
 				"@typescript-eslint/no-unused-expressions": "off",
+			},
+		},
+		{
+			// Overrides for type-tests
+			files: ["src/test/types/*"],
+			rules: {
+				"max-len": "off",
 			},
 		},
 	],

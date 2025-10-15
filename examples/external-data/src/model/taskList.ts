@@ -166,8 +166,9 @@ export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialSta
 
 		draftPriorityCell.set(priority);
 
-		// To add a task, we update the SharedMap draftData on TaskList. This way the change is propagated to all collaborators
-		// and persisted.  In turn, this will trigger the "valueChanged" event and handleDraftTaskAdded which will update
+		// To add a task, we update the SharedMap draftData on TaskList.
+		// This way the change is propagated to all collaborators and persisted.
+		// In turn, this will trigger the "valueChanged" event and handleDraftTaskAdded which will update
 		// the this.tasks collection.
 		const draftDataPT: PersistedTask = {
 			id,
@@ -576,6 +577,7 @@ export class BaseDocument extends DataObject implements IBaseDocument {
 
 	protected async hasInitialized(): Promise<void> {
 		for (const [id, taskListHandle] of this.root) {
+			// eslint-disable-next-line max-len
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 			const taskListResolved = await taskListHandle.get();
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument

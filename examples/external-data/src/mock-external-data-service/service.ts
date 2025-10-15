@@ -16,7 +16,8 @@ import { MockWebhook } from "./webhook.js";
 
 /**
  * Represents the external data servers query url or uuid.
- * This is the URL or the id of the external resource that the customer service needs to subscribe for at the external service.
+ * This is the URL or the id of the external resource that the customer service needs to subscribe
+ * for at the external service.
  */
 type ExternalTaskListId = string;
 
@@ -295,7 +296,8 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 
 				let taskData: ITaskData;
 				try {
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+				// eslint-disable-next-line max-len
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 					taskData = assertValidTaskData((responseBody as any).taskList);
 				} catch (error) {
 					const errorMessage = "Received task data received from external data source.";

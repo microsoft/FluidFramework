@@ -4,7 +4,7 @@
  */
 
 module.exports = {
-	extends: [require.resolve("@fluidframework/eslint-config-fluid/strict"), "prettier"],
+	extends: [require.resolve("@fluidframework/eslint-config-fluid/strict")],
 	parserOptions: {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
@@ -36,6 +36,7 @@ module.exports = {
 			files: ["src/test/types/*"],
 			rules: {
 				"unicorn/prevent-abbreviations": "off",
+				"max-len": "off",
 			},
 		},
 		{

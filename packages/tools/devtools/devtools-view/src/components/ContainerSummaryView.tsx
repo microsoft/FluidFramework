@@ -122,6 +122,7 @@ function DataRow(props: DataRowProps): React.ReactElement {
 		<TableRow>
 			<TableCell
 				{
+					// eslint-disable-next-line max-len
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 					...(columnProps as any).getTableCellProps("containerProperty")
 				}
@@ -287,9 +288,10 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 
 		messageRelay.on("message", messageHandler);
 
-		// Reset state with Container data, to ensure we aren't displaying stale data (for the wrong container) while we
-		// wait for a response to the message sent below. Especially relevant for the Container-related views because this
-		// component wont be unloaded and reloaded if the user just changes the menu selection from one Container to another.
+		// Reset state with Container data, to ensure we aren't displaying stale data (for the wrong container)
+		// while we wait for a response to the message sent below. Especially relevant for the Container-related
+		// views because this component wont be unloaded and reloaded if the user just changes the menu selection
+		// from one Container to another.
 		setContainerState(undefined);
 
 		// Request state info for the newly specified containerKey

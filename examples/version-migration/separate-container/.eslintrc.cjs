@@ -4,10 +4,6 @@
  */
 
 module.exports = {
-	extends: [
-		require.resolve("@fluidframework/eslint-config-fluid"),
-		"prettier",
-		"../../.eslintrc.cjs",
-	],
+	extends: [require.resolve("@fluidframework/eslint-config-fluid"), "../../.eslintrc.cjs"],
 	rules: {},
 };

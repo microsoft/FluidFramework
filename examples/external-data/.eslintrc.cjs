@@ -11,7 +11,6 @@ module.exports = {
 		require.resolve("@fluidframework/eslint-config-fluid"),
 		"plugin:react/recommended",
 		"plugin:react-hooks/recommended",
-		"prettier",
 		"../.eslintrc.cjs",
 	],
 	rules: {

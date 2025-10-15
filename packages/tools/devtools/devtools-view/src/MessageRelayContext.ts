@@ -7,7 +7,8 @@ import type { IMessageRelay } from "@fluidframework/devtools-core/internal";
 import React from "react";
 
 /**
- * Context for accessing a shared {@link @fluidframework/devtools-core#IMessageRelay} for communicating with the webpage.
+ * Context for accessing a shared {@link @fluidframework/devtools-core#IMessageRelay} for communicating with
+ * the webpage.
  *
  * @remarks
  *

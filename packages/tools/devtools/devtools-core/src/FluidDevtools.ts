@@ -95,7 +95,8 @@ export interface FluidDevtoolsProps {
 	/**
 	 * (optional) List of Containers to initialize the devtools with.
 	 *
-	 * @remarks Additional Containers can be registered with the Devtools via {@link IFluidDevtools.registerContainerDevtools}.
+	 * @remarks Additional Containers can be registered with the Devtools via
+	 * {@link IFluidDevtools.registerContainerDevtools}.
 	 */
 	initialContainers?: ContainerDevtoolsProps[];
 
@@ -396,7 +397,8 @@ export class FluidDevtools implements IFluidDevtools {
 	}
 
 	/**
-	 * Gets the registered Container Devtools or Container Runtime Devtools associated with the provided {@link ContainerKey}, if one exists.
+	 * Gets the registered Container Devtools or Container Runtime Devtools associated with the provided
+	 * {@link ContainerKey}, if one exists.
 	 * Otherwise returns `undefined`.
 	 */
 	public getContainerDevtools(containerKey: ContainerKey): IContainerDevtools | undefined {
@@ -497,7 +499,8 @@ export class FluidDevtools implements IFluidDevtools {
 	 * Generates a readable key for a container runtime using package path and sequential numbering.
 	 *
 	 * @privateRemarks
-	 * TODO: Once we enable automatic extraction of ContainerData for IContainer instance, extend the usage of assigning readable key.
+	 * TODO: Once we enable automatic extraction of ContainerData for IContainer instance,
+	 * extend the usage of assigning readable key.
 	 */
 	private generateReadableKey(baseKey: string): string {
 		// Get the next number for this base key

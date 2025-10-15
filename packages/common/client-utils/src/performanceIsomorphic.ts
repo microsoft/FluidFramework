@@ -8,7 +8,8 @@
  *
  * @remarks
  *
- * The performance API is available as an attribute on the `WindowOrWorkerGlobalScope` object which `globalThis` points to.
+ * The performance API is available as an attribute on the `WindowOrWorkerGlobalScope` object which
+ * `globalThis` points to.
  * - The [global `performance` attribute](https://w3c.github.io/hr-time/#the-performance-attribute)
  * - [`globalThis`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/globalThis)
  *

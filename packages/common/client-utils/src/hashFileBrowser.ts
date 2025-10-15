@@ -22,6 +22,7 @@ function encodeDigest(hashArray: Uint8Array, encoding: "hex" | "base64"): string
 		case "hex": {
 			const hashHex = Array.prototype.map
 				.call(hashArray, (byte) => {
+					// eslint-disable-next-line max-len
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 					return byte.toString(16).padStart(2, "0") as string;
 				})

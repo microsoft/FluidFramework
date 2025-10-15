@@ -214,8 +214,8 @@ export class Timer implements ITimer {
 					this.exceptionHandler(error);
 				} else {
 					// This will be unhandled exception, but it's better to have unhandled exception than swallow it.
-					// Applications might have telemetry to report unhandled exceptions, letting us know where we are missing
-					// exception handlers.
+					// Applications might have telemetry to report unhandled exceptions,
+					// letting us know where we are missing exception handlers.
 					throw error;
 				}
 			}

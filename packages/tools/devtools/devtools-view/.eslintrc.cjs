@@ -9,7 +9,6 @@ module.exports = {
 		require.resolve("@fluidframework/eslint-config-fluid/strict"),
 		"plugin:react/recommended",
 		"plugin:react-hooks/recommended",
-		"prettier",
 	],
 	parserOptions: {
 		project: ["./tsconfig.esm.json", "./src/test/tsconfig.esm.json"],

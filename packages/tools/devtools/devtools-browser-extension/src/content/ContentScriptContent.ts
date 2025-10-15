@@ -37,8 +37,8 @@ export function runContentScript(
 	 * The lifetime of the script itself is roughly the same as the lifetime of the tab, but in our case it
 	 * doesn't do anything until it is activated by the Background Worker.
 	 *
-	 * Once initialized, this script relays messages between the tab and the Background Worker, which in turn communicates
-	 * with the Devtools extension.
+	 * Once initialized, this script relays messages between the tab and the Background Worker,
+	 * which in turn communicates with the Devtools extension.
 	 *
 	 * For an overview of how the various scripts communicate in the Devtools extension model,
 	 * see {@link https://developer.chrome.com/docs/extensions/mv3/devtools/#content-script-to-devtools | here}.

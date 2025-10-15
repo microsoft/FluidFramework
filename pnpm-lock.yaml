@@ -4247,9 +4247,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      eslint-config-prettier:
-        specifier: ~9.0.0
-        version: 9.0.0(eslint@8.55.0)
       expect-puppeteer:
         specifier: ^9.0.2
         version: 9.0.2
@@ -5603,9 +5600,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      eslint-config-prettier:
-        specifier: ~9.0.0
-        version: 9.0.0(eslint@8.55.0)
       expect-puppeteer:
         specifier: ^9.0.2
         version: 9.0.2
@@ -5781,9 +5775,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      eslint-config-prettier:
-        specifier: ~9.0.0
-        version: 9.0.0(eslint@8.55.0)
       expect-puppeteer:
         specifier: ^9.0.2
         version: 9.0.2
@@ -7206,9 +7197,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      eslint-config-prettier:
-        specifier: ~9.0.0
-        version: 9.0.0(eslint@8.55.0)
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -7446,9 +7434,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      eslint-config-prettier:
-        specifier: ~9.0.0
-        version: 9.0.0(eslint@8.55.0)
       jest:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.86)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@18.19.86)(typescript@5.4.5))
@@ -7654,9 +7639,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      eslint-config-prettier:
-        specifier: ~9.0.0
-        version: 9.0.0(eslint@8.55.0)
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -9441,9 +9423,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      eslint-config-prettier:
-        specifier: ~9.0.0
-        version: 9.0.0(eslint@8.55.0)
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -10592,9 +10571,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      eslint-config-prettier:
-        specifier: ~9.0.0
-        version: 9.0.0(eslint@8.55.0)
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -10892,9 +10868,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      eslint-config-prettier:
-        specifier: ~9.0.0
-        version: 9.0.0(eslint@8.55.0)
       eslint-plugin-jest:
         specifier: ~27.4.2
         version: 27.4.3(@typescript-eslint/eslint-plugin@6.7.5(@typescript-eslint/parser@6.21.0(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0)(jest@29.7.0(@types/node@18.19.86)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@18.19.86)(typescript@5.4.5)))(typescript@5.4.5)
@@ -11629,9 +11602,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      eslint-config-prettier:
-        specifier: ~9.0.0
-        version: 9.0.0(eslint@8.55.0)
       global-jsdom:
         specifier: ^26.0.0
         version: 26.0.0(jsdom@20.0.3)
@@ -11899,9 +11869,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      eslint-config-prettier:
-        specifier: ~9.0.0
-        version: 9.0.0(eslint@8.55.0)
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -11999,9 +11966,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      eslint-config-prettier:
-        specifier: ~9.0.0
-        version: 9.0.0(eslint@8.55.0)
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -12075,9 +12039,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      eslint-config-prettier:
-        specifier: ~9.0.0
-        version: 9.0.0(eslint@8.55.0)
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -13261,9 +13222,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      eslint-config-prettier:
-        specifier: ~9.0.0
-        version: 9.0.0(eslint@8.55.0)
       fluid-framework:
         specifier: workspace:~
         version: link:../../framework/fluid-framework
@@ -15357,9 +15315,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      eslint-config-prettier:
-        specifier: ~9.0.0
-        version: 9.0.0(eslint@8.55.0)
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -15511,9 +15466,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      eslint-config-prettier:
-        specifier: ~9.0.0
-        version: 9.0.0(eslint@8.55.0)
       eslint-plugin-chai-expect:
         specifier: ~3.0.0
         version: 3.0.0(eslint@8.55.0)
@@ -15692,9 +15644,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      eslint-config-prettier:
-        specifier: ~9.0.0
-        version: 9.0.0(eslint@8.55.0)
       eslint-plugin-chai-expect:
         specifier: ~3.0.0
         version: 3.0.0(eslint@8.55.0)
@@ -15852,9 +15801,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      eslint-config-prettier:
-        specifier: ~9.0.0
-        version: 9.0.0(eslint@8.55.0)
       eslint-plugin-jest:
         specifier: ~27.4.2
         version: 27.4.3(@typescript-eslint/eslint-plugin@6.7.5(@typescript-eslint/parser@6.21.0(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0)(jest@29.7.0(@types/node@22.14.1)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@22.14.1)(typescript@5.4.5)))(typescript@5.4.5)
@@ -16039,9 +15985,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      eslint-config-prettier:
-        specifier: ~9.0.0
-        version: 9.0.0(eslint@8.55.0)
       eslint-plugin-jest:
         specifier: ~27.4.2
         version: 27.4.3(@typescript-eslint/eslint-plugin@6.7.5(@typescript-eslint/parser@6.21.0(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0)(jest@29.7.0(@types/node@18.19.86)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@18.19.86)(typescript@5.4.5)))(typescript@5.4.5)

@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-// Recharts does not have types for many objects at this time. For now, these eslint disable directive should be active until we create our own types for recharts
+// Recharts does not have types for many objects at this time.
+// For now, these eslint disable directive should be active until we create our own types for recharts
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-call */

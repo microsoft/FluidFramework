@@ -126,6 +126,7 @@ export class IsoBuffer extends Uint8Array {
 			// The version of the from function for the node buffer, which takes a buffer or typed array
 			// as first parameter, does not have any offset or length parameters. Those are just silently
 			// ignored and not taken into account
+			// eslint-disable-next-line max-len
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
 			return IsoBuffer.fromArrayBuffer(value.buffer, value.byteOffset, value.byteLength);
 		} else if (isArrayBuffer(value)) {
@@ -166,6 +167,7 @@ export class IsoBuffer extends Uint8Array {
 				return new IsoBuffer(encoded.buffer);
 			}
 			case "utf8":
+			// eslint-disable-next-line max-len
 			// eslint-disable-next-line unicorn/text-encoding-identifier-case -- this value is supported, just discouraged
 			case "utf-8":
 			case undefined: {

@@ -8,7 +8,8 @@ import { SchemaFactoryBeta } from "@fluidframework/tree/beta";
 // eslint-disable-next-line eslint-comments/disable-enable-pair
 /* eslint-disable jsdoc/require-jsdoc */
 
-// An extremely simple domain model for "smoke" tests to ensure that the AI agent can execute the most basic of tasks without failing.
+// An extremely simple domain model for "smoke" tests to ensure that the AI agent can execute the most
+// basic of tasks without failing.
 
 const sf = new SchemaFactoryBeta("com.microsoft.fluid.tree-agent.smoke");
 

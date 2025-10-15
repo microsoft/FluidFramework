@@ -11,7 +11,9 @@ import { TreeAlpha, type TreeBranch, type TreeViewAlpha } from "@fluidframework/
  * @param node - The node to find the corresponding node for.
  * @param branch - The target branch to find the corresponding node on.
  * @returns The corresponding node on the target branch, or `undefined` if it could not be found.
- * @remarks A corresponding node is one that can be reached by following the same exact property path from the root in both views.
+ * @remarks
+ * A corresponding node is one that can be reached by following the same exact property path
+ * from the root in both views.
  * @alpha
  * @privateRemarks This is a candidate for lifting into `@fluidframework/tree/alpha`.
  */

@@ -17,7 +17,8 @@ import type {
  * Retrieve a value from a map with the given key, or create a new entry if the key is not in the map.
  * @param map - The map to query/update
  * @param key - The key to lookup in the map
- * @param defaultValue - a function which returns a default value. This is called and used to set an initial value for the given key in the map if none exists
+ * @param defaultValue - a function which returns a default value.
+ * This is called and used to set an initial value for the given key in the map if none exists
  * @returns either the existing value for the given key, or the newly-created value (the result of `defaultValue`)
  * @internal
  */
@@ -33,7 +34,9 @@ function getOrCreate<K, V>(map: MapGetSet<K, V>, key: K, defaultValue: (key: K) 
 /**
  * Provides an API for subscribing to and listening to events.
  *
- * @remarks Classes wishing to emit events may either extend this class, compose over it, or expose it as a property of type {@link @fluidframework/core-interfaces#Listenable}.
+ * @remarks
+ * Classes wishing to emit events may either extend this class, compose over it,
+ * or expose it as a property of type {@link @fluidframework/core-interfaces#Listenable}.
  *
  * @example Extending this class
  *
@@ -91,7 +94,8 @@ export class CustomEventEmitter<TListeners extends Listeners<TListeners>>
 		Set<(...args: any[]) => TListeners[keyof TListeners]>
 	>();
 
-	// Because this is protected and not public, calling this externally (not from a subclass) makes sending events to the constructed instance impossible.
+	// Because this is protected and not public, calling this externally (not from a subclass)
+	// makes sending events to the constructed instance impossible.
 	// Instead, use the static `create` function to get an instance which allows emitting events.
 	protected constructor(private readonly noListeners?: NoListenersCallback<TListeners>) {}
 
@@ -103,7 +107,8 @@ export class CustomEventEmitter<TListeners extends Listeners<TListeners>>
 		if (listeners !== undefined) {
 			// Current tsc (5.4.5) cannot spread `args` into `listener()`.
 			const argArray: unknown[] = args;
-			// This explicitly copies listeners so that new listeners added during this call to emit will not receive this event.
+			// This explicitly copies listeners so that new listeners added during this call to emit
+			// will not receive this event.
 			for (const listener of [...listeners]) {
 				// If listener has been unsubscribed while invoking other listeners, skip it.
 				if (listeners.has(listener)) {
@@ -193,10 +198,13 @@ class ComposableEventEmitter<TListeners extends Listeners<TListeners>>
 }
 
 /**
- * Create a {@link @fluidframework/core-interfaces#Listenable} that can be instructed to emit events via the {@link @fluidframework/core-interfaces#IEmitter} interface.
+ * Create a {@link @fluidframework/core-interfaces#Listenable} that can be instructed to emit events via the
+ * {@link @fluidframework/core-interfaces#IEmitter} interface.
  *
- * A class can delegate handling {@link @fluidframework/core-interfaces#Listenable} to the returned value while using it to emit the events.
- * See also CustomEventEmitter which be used as a base class to implement {@link @fluidframework/core-interfaces#Listenable} via extension.
+ * A class can delegate handling {@link @fluidframework/core-interfaces#Listenable} to the returned value while using
+ * it to emit the events.
+ * See also CustomEventEmitter which be used as a base class to implement
+ * {@link @fluidframework/core-interfaces#Listenable} via extension.
  * @example Forwarding events to the emitter
  * ```typescript
  * interface MyEvents {

@@ -314,9 +314,10 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 	const treeDefinitions = treeSimpleSchema.definitions;
 
 	/**
-	 * {@link visualizeSharedTreeBySchema} passes `allowedTypes` into co-recursive functions while constructing the visual representation.
-	 * Since the {@link SimpleTreeSchema.allowedTypes} of each children node is only accessible at the parent field level,
-	 * each node's allowed types are computed at the parent field level.
+	 * {@link visualizeSharedTreeBySchema} passes `allowedTypes` into co-recursive functions while constructing
+	 * the visual representation.
+	 * Since the {@link SimpleTreeSchema.allowedTypes} of each children node is only accessible at the parent
+	 * field level, each node's allowed types are computed at the parent field level.
 	 */
 	const allowedTypes = treeSimpleSchema.root.allowedTypesIdentifiers;
 	const isRequired = treeSimpleSchema.root.kind === FieldKind.Required;
@@ -382,7 +383,8 @@ export const visualizeUnknownSharedObject: VisualizeSharedObject = async (
 
 /**
  * List of default visualizers included in the library.
- * @remarks {@link @fluidframework/aqueduct#DataObject} & {@link @fluidframework/aqueduct#TreeDataObject} do not have type information and thus are not included in the list.
+ * @remarks {@link @fluidframework/aqueduct#DataObject} & {@link @fluidframework/aqueduct#TreeDataObject}
+ * do not have type information and thus are not included in the list.
  */
 export const defaultVisualizers: Record<string, VisualizeSharedObject> = {
 	[SharedCell.getFactory().type]: visualizeSharedCell,

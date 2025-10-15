@@ -4,7 +4,7 @@
  */
 
 module.exports = {
-	extends: [require.resolve("@fluidframework/eslint-config-fluid/strict"), "prettier"],
+	extends: [require.resolve("@fluidframework/eslint-config-fluid/strict")],
 	parserOptions: {
 		project: [
 			"./tsconfig.json",
@@ -13,4 +13,13 @@ module.exports = {
 			"./src/test/types/tsconfig.json",
 		],
 	},
+	overrides: [
+		{
+			// Overrides for type-tests
+			files: ["src/test/types/*"],
+			rules: {
+				"max-len": "off",
+			},
+		},
+	],
 };

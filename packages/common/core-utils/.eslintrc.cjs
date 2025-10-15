@@ -4,7 +4,7 @@
  */
 
 module.exports = {
-	extends: [require.resolve("@fluidframework/eslint-config-fluid/strict"), "prettier"],
+	extends: [require.resolve("@fluidframework/eslint-config-fluid/strict")],
 
 	parserOptions: {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
@@ -24,6 +24,13 @@ module.exports = {
 
 				// Does not work well with describe/it block scoping
 				"unicorn/consistent-function-scoping": "off",
+			},
+		},
+		{
+			// Overrides for type-tests
+			files: ["src/test/types/*"],
+			rules: {
+				"max-len": "off",
 			},
 		},
 	],

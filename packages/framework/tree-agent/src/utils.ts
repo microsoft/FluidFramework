@@ -68,7 +68,8 @@ export function* mapIterable<T, U>(
  * Retrieve a value from a map with the given key, or create a new entry if the key is not in the map.
  * @param map - The map to query/update
  * @param key - The key to lookup in the map
- * @param defaultValue - a function which returns a default value. This is called and used to set an initial value for the given key in the map if none exists
+ * @param defaultValue - a function which returns a default value.
+ * This is called and used to set an initial value for the given key in the map if none exists
  * @returns either the existing value for the given key, or the newly-created value (the result of `defaultValue`)
  *
  * @remarks originally from tree/src/util/utils.ts
@@ -89,7 +90,9 @@ export function getOrCreate<K, V>(
 /**
  * TODO
  * @alpha
- * @privateRemarks This is a subset of the TreeViewAlpha functionality because if take it wholesale, it causes problems with invariance of the generic parameters.
+ * @privateRemarks
+ * This is a subset of the TreeViewAlpha functionality because if take it wholesale,
+ * it causes problems with invariance of the generic parameters.
  */
 export type TreeView<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema> = Pick<
 	TreeViewAlpha<TRoot>,
@@ -116,7 +119,8 @@ export function hasAtLeastTwo<T>(array: T[]): array is [T, T, ...T[]] {
 }
 
 /**
- * Include this property in a field's schema metadata to indicate that the field's value should be generated via a provided function rather than by the LLM.
+ * Include this property in a field's schema metadata to indicate that the field's value should be generated
+ * via a provided function rather than by the LLM.
  * @example
  * ```ts
  * class Object extends schemaFactory.object("Object", {
@@ -154,8 +158,11 @@ export function constructNode(schema: TreeNodeSchema, value: InsertableContent):
 }
 
 /**
- * Returns the unqualified name of a tree value's schema (e.g. a node with schema identifier `"my.scope.MyNode"` returns `"MyNode"`).
- * @remarks If the schema is an inlined array, map, or record type, then it has no name and this function will return a string representation of the type (e.g., `"MyNode[]"` or `"Map<string, MyNode>"`).
+ * Returns the unqualified name of a tree value's schema
+ * (e.g. a node with schema identifier `"my.scope.MyNode"` returns `"MyNode"`).
+ * @remarks
+ * If the schema is an inlined array, map, or record type, then it has no name and this function will return
+ * a string representation of the type (e.g., `"MyNode[]"` or `"Map<string, MyNode>"`).
  */
 export function getFriendlyName(schema: TreeNodeSchema): string {
 	if (schema.kind === NodeKind.Leaf || isNamedSchema(schema.identifier)) {
@@ -228,7 +235,8 @@ let detailsI: SchemaDetails = {
  * declaration for the associated type and is referenced by that name in the emitted type declarations. Other types
  * referenced in the schema are emitted in their structural form.
  * @param schema - A schema object where each property provides a name for an associated Zod type.
- * @param details - Optional details about the schema. The fields will be set according to the details in the given schema.
+ * @param details - Optional details about the schema.
+ * The fields will be set according to the details in the given schema.
  * @returns The TypeScript source code corresponding to the schema.
  */
 export function getZodSchemaAsTypeScript(
@@ -368,7 +376,8 @@ export function getZodSchemaAsTypeScript(
 				return appendReadonlyType(type);
 			}
 			case z.ZodFirstPartyTypeKind.ZodEffects: {
-				// Currently, this only handles schema class instances, but there are other cases in which a ZodEffects could theoretically be used.
+				// Currently, this only handles schema class instances, but there are other cases in which a ZodEffects
+				// could theoretically be used.
 				if (instanceOfs.has(type)) {
 					const objectNodeSchema = instanceOfs.get(type);
 					if (objectNodeSchema === undefined) {
@@ -379,7 +388,8 @@ export function getZodSchemaAsTypeScript(
 					return append(getFriendlyName(objectNodeSchema));
 				}
 				throw new Error(
-					"Unsupported zod effects type. Did you use z.instanceOf? Use ExposedMethods.instanceOf function to reference schema classes in methods.",
+					"Unsupported zod effects type. " +
+					"Did you use z.instanceOf? Use ExposedMethods.instanceOf function to reference schema classes in methods.",
 				);
 			}
 			case z.ZodFirstPartyTypeKind.ZodVoid: {

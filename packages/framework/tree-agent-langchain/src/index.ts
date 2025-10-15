@@ -4,7 +4,8 @@
  */
 
 /**
- * LangChain integration helpers for the {@link @fluidframework/tree-agent#SharedTreeSemanticAgent | SharedTreeSemanticAgent}.
+ * LangChain integration helpers for the
+ * {@link @fluidframework/tree-agent#SharedTreeSemanticAgent | SharedTreeSemanticAgent}.
  *
  * @packageDocumentation
  */

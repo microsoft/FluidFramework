@@ -199,7 +199,8 @@ export class DataVisualizerGraph
 	 * {@link DataVisualizerGraph.rootData | root shared objects}.
 	 */
 	public async renderRootHandles(): Promise<Record<string, RootHandleNode>> {
-		// TODO: We should be rendering the DataObject from the root, but this requires change in the devtools package in general.
+		// TODO: We should be rendering the DataObject from the root,
+		// but this requires change in the devtools package in general.
 
 		// Rendering the root entries amounts to initializing visualizer nodes for each of them, and returning
 		// a list of handle nodes. Consumers can request data for each of these handles as needed.
@@ -285,8 +286,8 @@ export class DataVisualizerGraph
 	}
 
 	/**
-	 * Adds a visualizer node to the collection for the specified {@link @fluidframework/core-interfaces#(IFluidHandle:interface)}
-	 * if one does not already exist.
+	 * Adds a visualizer node to the collection for the specified
+	 * {@link @fluidframework/core-interfaces#(IFluidHandle:interface)} if one does not already exist.
 	 *
 	 * @returns
 	 *
@@ -536,10 +537,12 @@ function isSharedObject(value: unknown): value is ISharedObject {
 }
 
 /**
- * Determines whether or not the provided value is an {@link DataObject} using `instanceof`, for the purposes of this library.
+ * Determines whether or not the provided value is an {@link DataObject} using `instanceof`,
+ * for the purposes of this library.
  * @remarks
  * Uses `instanceof` over checking specific properties or methods, because we decided that a version mix-up with
- * {@link @fluidframework/aqueduct#} is unlikely between devtools and end-user applications, and we don't support it anyway.
+ * {@link @fluidframework/aqueduct#} is unlikely between devtools and end-user applications,
+ * and we don't support it anyway.
  */
 function isDataObject(value: unknown): value is DataObject {
 	if (
@@ -561,10 +564,12 @@ function isDataObject(value: unknown): value is DataObject {
 }
 
 /**
- * Determines whether or not the provided value is a {@link TreeDataObject} using `instanceof`, for the purposes of this library.
+ * Determines whether or not the provided value is a {@link TreeDataObject} using `instanceof`,
+ * for the purposes of this library.
  * @remarks
  * Tries to use `instanceof` because we decided that a version mix-up with
- * {@link @fluidframework/aqueduct#} is unlikely between devtools and end-user applications, and we don't support it anyway.
+ * {@link @fluidframework/aqueduct#} is unlikely between devtools and end-user applications,
+ * and we don't support it anyway.
  * In addition, we check for the presence of key properties that make a `TreeDataObject` unique:
  * - `TreeDataObject.tree` getter
  * - `TreeDataObject.treeView` getter

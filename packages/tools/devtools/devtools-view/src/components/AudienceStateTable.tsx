@@ -54,7 +54,8 @@ export interface AudienceStateTableProps {
 }
 
 /**
- * Renders audience state data of client(s)'s clientId, userId, mode, and scopres who are currently connected to the container.
+ * Renders audience state data of client(s)'s clientId, userId, mode, and scopres who are currently
+ * connected to the container.
  */
 export function AudienceStateTable(props: AudienceStateTableProps): React.ReactElement {
 	const { audienceStateItems } = props;

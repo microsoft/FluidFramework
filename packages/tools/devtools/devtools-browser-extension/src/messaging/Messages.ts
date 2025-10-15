@@ -42,7 +42,8 @@ export const devToolsInitAcknowledgementType = "acknowledge-initialize-devtools"
 /**
  * Devtools initialization acknowledgement.
  *
- * Sent from the Background Script to the Devtools Script to acknowledge the received {@link DevToolsInitMessage} was processed.
+ * Sent from the Background Script to the Devtools Script to acknowledge the received
+ * {@link DevToolsInitMessage} was processed.
  * @internal
  */
 export interface DevToolsInitAcknowledgement extends ISourcedDevtoolsMessage {

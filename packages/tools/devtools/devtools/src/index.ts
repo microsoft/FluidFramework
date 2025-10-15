@@ -16,7 +16,8 @@
  * To enable visualization of Telemetry data, you may create a {@link DevtoolsLogger} and
  * provide it during Devtools initialization.
  *
- * For more details and examples, see the {@link https://github.com/microsoft/FluidFramework/tree/main/packages/tools/devtools/devtools | package README}.
+ * For more details and examples, see the
+ * {@link https://github.com/microsoft/FluidFramework/tree/main/packages/tools/devtools/devtools | package README}.
  *
  * @packageDocumentation
  */
@@ -54,7 +55,8 @@ export interface DevtoolsProps {
 	/**
 	 * (optional) List of Containers to initialize the devtools with.
 	 *
-	 * @remarks Additional Containers can be registered with the Devtools via {@link IDevtools.registerContainerDevtools}.
+	 * @remarks Additional Containers can be registered with the Devtools via
+	 * {@link IDevtools.registerContainerDevtools}.
 	 */
 	readonly initialContainers?: ContainerDevtoolsProps[];
 
@@ -87,7 +89,8 @@ export interface ContainerDevtoolsProps extends HasContainerKey {
  *
  * The lifetime of the associated singleton is bound by that of the Window (globalThis), and it will be automatically
  * disposed of on Window unload.
- * If you wish to dispose of it earlier, you may call its {@link @fluidframework/core-interfaces#IDisposable.dispose} method.
+ * If you wish to dispose of it earlier, you may call its
+ * {@link @fluidframework/core-interfaces#IDisposable.dispose} method.
  *
  * @sealed
  * @beta

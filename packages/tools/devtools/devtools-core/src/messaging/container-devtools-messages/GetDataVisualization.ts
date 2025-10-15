@@ -27,7 +27,8 @@ export namespace GetDataVisualization {
 	export type MessageData = HasContainerKey & HasFluidObjectId;
 
 	/**
-	 * Inbound message requesting a visualization for a specific DDS via its associated {@link HasFluidObjectId.fluidObjectId}.
+	 * Inbound message requesting a visualization for a specific DDS via its associated
+	 * {@link HasFluidObjectId.fluidObjectId}.
 	 *
 	 * Will result in the {@link DataVisualization.Message} message being posted.
 	 *

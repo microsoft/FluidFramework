@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable max-len */
+
 /**
  * Asserts the specified condition.
  *
@@ -295,3 +297,5 @@ function skipInProductionInner(conditional: () => void): void {
 	// eslint-disable-next-line spaced-comment
 	/*#__PURE__*/ conditional();
 }
+
+/* eslint-enable max-len */
