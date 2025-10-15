@@ -162,7 +162,7 @@ export abstract class ErasedTypeImplementation<
 	 * @remarks
 	 * This does a checked conversion, throwing a `TypeError` if invalid.
 	 *
-	 * If would be safer if this narrowed from `TInterface`, but that is not possible since type parameters can not be accessed in static methods.
+	 * It would be safer if this narrowed from `TInterface`, but that is not possible since type parameters can not be accessed in static methods.
 	 * Replacing `ErasedTypeImplementation` with a generic function which returns a non-generic class could be used to work around this limitation if desired.
 	 *
 	 * Derived classes can provide their own customized narrowing function with a more specific types if desired.
