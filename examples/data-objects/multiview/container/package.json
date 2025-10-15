@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/multiview-container",
-	"version": "2.63.0",
+	"version": "2.63.1",
 	"private": true,
 	"description": "Container for multiview sample",
 	"homepage": "https://fluidframework.com",
@@ -98,8 +98,6 @@
 		}
 	},
 	"typeValidation": {
-		"disabled": true,
-		"broken": {},
-		"entrypoint": "internal"
+		"disabled": true
 	}
 }

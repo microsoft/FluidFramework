@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/stochastic-test-utils",
-	"version": "2.63.0",
+	"version": "2.63.1",
 	"description": "Utilities for stochastic tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -120,8 +120,6 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"disabled": true,
-		"broken": {},
-		"entrypoint": "internal"
+		"disabled": true
 	}
 }
