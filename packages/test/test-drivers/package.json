@@ -68,7 +68,6 @@
 		"@fluidframework/tinylicious-driver": "workspace:~",
 		"@fluidframework/tool-utils": "workspace:~",
 		"agentkeepalive": "^4.5.0",
-		"axios": "^1.8.4",
 		"semver": "^7.7.1",
 		"uuid": "^11.1.0"
 	},

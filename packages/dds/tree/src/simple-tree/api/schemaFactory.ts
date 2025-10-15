@@ -402,7 +402,6 @@ export class SchemaFactory<
 	> {
 		return objectSchema(scoped(this, name), fields, true, {
 			...defaultSchemaFactoryObjectOptions,
-			...(options ?? {}),
 		});
 	}
 
@@ -855,7 +854,7 @@ export class SchemaFactory<
 			allowedTypes as T & ImplicitAllowedTypes,
 			true,
 			false,
-			options ?? {},
+			{},
 		);
 
 		return RecursiveArray as TreeNodeSchemaClass<
@@ -905,7 +904,7 @@ export class SchemaFactory<
 			// Setting this (implicitlyConstructable) to true seems to work ok currently, but not for other node kinds.
 			// Supporting this could be fragile and might break other future changes, so it's being kept as false for now.
 			false,
-			options ?? {},
+			{},
 		);
 
 		return MapSchema as TreeNodeSchemaClass<
