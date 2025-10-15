@@ -105,7 +105,7 @@ export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
 			);
 			this.options?.logger?.log(
 				`### Latest Tree State\n\nThe Tree was edited by a local or remote user since the previous query. ` +
-				`The latest state is:\n\n\`\`\`JSON\n${stringified}\n\`\`\`\n\n`,
+					`The latest state is:\n\n\`\`\`JSON\n${stringified}\n\`\`\`\n\n`,
 			);
 		}
 

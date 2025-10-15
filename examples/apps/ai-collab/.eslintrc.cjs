@@ -6,10 +6,7 @@
 const { importInternalModulesAllowed } = require("../../.eslintrc.data.cjs");
 
 module.exports = {
-	extends: [
-		require.resolve("@fluidframework/eslint-config-fluid"),
-		"../../.eslintrc.cjs",
-	],
+	extends: [require.resolve("@fluidframework/eslint-config-fluid"), "../../.eslintrc.cjs"],
 	parserOptions: {
 		project: ["./tsconfig.json"],
 	},

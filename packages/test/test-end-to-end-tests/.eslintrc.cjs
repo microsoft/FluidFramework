@@ -4,10 +4,7 @@
  */
 
 module.exports = {
-	extends: [
-		require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated"),
-
-	],
+	extends: [require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated")],
 	parserOptions: {
 		project: ["./src/test/tsconfig.json"],
 	},

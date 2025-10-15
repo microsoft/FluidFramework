@@ -27,7 +27,7 @@ module.exports = {
 		'@fluid-internal/fluid/no-unchecked-record-access': 'off',
 
 		// A lot of long lines. Since this package is not under active development anymore, not worth addressing.
-		'max-len': 'off'
+		'max-len': 'off',
 	},
 	overrides: [
 		{

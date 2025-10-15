@@ -4,10 +4,7 @@
  */
 
 module.exports = {
-	extends: [
-		require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated"),
-
-	],
+	extends: [require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated")],
 	overrides: [
 		{
 			// Rules only for test files

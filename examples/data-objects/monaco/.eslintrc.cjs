@@ -4,10 +4,7 @@
  */
 
 module.exports = {
-	extends: [
-		require.resolve("@fluidframework/eslint-config-fluid"),
-		"../../.eslintrc.cjs",
-	],
+	extends: [require.resolve("@fluidframework/eslint-config-fluid"), "../../.eslintrc.cjs"],
 	rules: {
 		"@typescript-eslint/strict-boolean-expressions": "off",
 		"no-bitwise": "off",

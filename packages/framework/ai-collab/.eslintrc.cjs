@@ -10,7 +10,7 @@ module.exports = {
 	},
 	rules: {
 		// A lot of long lines. Since this package is not under active development anymore, not worth addressing.
-		'max-len': 'off'
+		"max-len": "off",
 	},
 	overrides: [
 		{

@@ -296,8 +296,8 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 
 				let taskData: ITaskData;
 				try {
-				// eslint-disable-next-line max-len
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+					// eslint-disable-next-line max-len
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 					taskData = assertValidTaskData((responseBody as any).taskList);
 				} catch (error) {
 					const errorMessage = "Received task data received from external data source.";
