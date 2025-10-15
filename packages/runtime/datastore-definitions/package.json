@@ -101,7 +101,14 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Interface_IChannelServices": {
+				"forwardCompat": false
+			},
+			"Interface_IChannelStorageService": {
+				"forwardCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }
