@@ -19,4 +19,11 @@ export interface HasContainerKey {
 export interface IDevtoolsLogger extends ITelemetryBaseLogger {
 }
 
+// @beta @sealed
+export interface IFluidDevtools extends IDisposable {
+    closeContainerDevtools(containerKey: ContainerKey): void;
+    registerContainerDevtools(props: ContainerDevtoolsProps): void;
+    registerContainerRuntime(props: ContainerRuntimeProps): Promise<void>;
+}
+
 ```

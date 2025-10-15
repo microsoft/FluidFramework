@@ -18,7 +18,7 @@ import {
 
 /**
  * Properties for registering a {@link @fluidframework/container-definitions#IContainer} with the Devtools.
- * @alpha
+ * @beta
  */
 export interface ContainerDevtoolsProps extends HasContainerKey {
 	/**
