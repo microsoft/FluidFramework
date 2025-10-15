@@ -25,7 +25,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/index.js";
 import type { ITreeCursorSynchronous } from "../../../core/index.js";
-import type { JsonCompatible } from "../../../util/index.js";
+import { brand, type JsonCompatible } from "../../../util/index.js";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 /**
@@ -77,21 +77,31 @@ function getReadAndParseChunk<T extends JsonCompatible<IFluidHandle>>(
 	};
 }
 
-const testChunk = {} as unknown as TreeChunk;
+/**
+ * Returns a mock TreeChunk for testing. It is a minimal implementation that only implements the `referenceAdded`
+ * method since that is the only method of the `TreeChunk` used by the `ForestIncrementalSummaryBuilder`.
+ */
+function getMockChunk(): TreeChunk {
+	return { referenceAdded: () => {} } as unknown as TreeChunk;
+}
+
 const testCursor = { getFieldLength: () => 1 } as unknown as ITreeCursorSynchronous;
 
 const stringify = JSON.stringify;
 const mockForestSummaryContent = "test-summary-content";
 const mockEncodedChunk = {} as unknown as EncodedFieldBatch;
+const initialSequenceNumber = 0;
 
 describe("ForestIncrementalSummaryBuilder", () => {
 	function createIncrementalSummaryBuilder() {
+		const mockChunk = getMockChunk();
 		return new ForestIncrementalSummaryBuilder(
 			true /* enableIncrementalSummary */,
 			(cursor: ITreeCursorSynchronous) => {
-				return testChunk;
+				return mockChunk;
 			},
 			defaultIncrementalEncodingPolicy,
+			initialSequenceNumber,
 		);
 	}
 
@@ -229,23 +239,27 @@ describe("ForestIncrementalSummaryBuilder", () => {
 		});
 
 		it("loads chunk contents from snapshot tree", async () => {
+			const referenceId0: ChunkReferenceId = brand(0);
+			const referenceId1: ChunkReferenceId = brand(1);
+			const chunkContentsPath0 = `${referenceId0}/contents`;
+			const chunkContentsPath1 = `${referenceId1}/contents`;
 			const builder = createIncrementalSummaryBuilder();
 			const blobMap = new Map([
-				["0/contents", "chunk0"],
-				["1/contents", "chunk1"],
+				[chunkContentsPath0, "chunk0"],
+				[chunkContentsPath1, "chunk1"],
 			]);
 			const mockSnapshotTree: ISnapshotTree = {
 				trees: {
-					"0": {
+					[`${referenceId0}`]: {
 						trees: {},
 						blobs: {
-							contents: blobMap.get("0/contents") ?? "",
+							contents: blobMap.get(chunkContentsPath0) ?? "",
 						},
 					},
-					"1": {
+					[`${referenceId1}`]: {
 						trees: {},
 						blobs: {
-							contents: blobMap.get("1/contents") ?? "",
+							contents: blobMap.get(chunkContentsPath1) ?? "",
 						},
 					},
 				},
@@ -256,40 +270,39 @@ describe("ForestIncrementalSummaryBuilder", () => {
 			await builder.load(storageService, getReadAndParseChunk(blobMap));
 
 			// Verify chunks can be retrieved
-			const chunk0 = builder.getEncodedIncrementalChunk(0 as ChunkReferenceId);
-			const chunk1 = builder.getEncodedIncrementalChunk(1 as ChunkReferenceId);
-
-			assert.deepEqual(
-				chunk0,
-				blobMap.get("0/contents"),
-				"Chunk 0 should match stored contents",
-			);
-			assert.deepEqual(
-				chunk1,
-				blobMap.get("1/contents"),
-				"Chunk 1 should match stored contents",
-			);
+			builder.decodeIncrementalChunk(referenceId0, (encoded) => {
+				assert.deepEqual(encoded, blobMap.get(chunkContentsPath0));
+				return getMockChunk();
+			});
+			builder.decodeIncrementalChunk(referenceId1, (encoded) => {
+				assert.deepEqual(encoded, blobMap.get(chunkContentsPath1));
+				return getMockChunk();
+			});
 		});
 
 		it("loads nested chunk trees recursively", async () => {
+			const referenceId0: ChunkReferenceId = brand(0);
+			const referenceId1: ChunkReferenceId = brand(1);
+			const parentContentsPath = `${referenceId0}/contents`;
+			const childContentsPath = `${referenceId0}/${referenceId1}/contents`;
 			const builder = createIncrementalSummaryBuilder();
 			const blobMap = new Map([
-				["0/contents", "chunk0"],
-				["0/1/contents", "chunk1"],
+				[parentContentsPath, "chunk0"],
+				[childContentsPath, "chunk1"],
 			]);
 			const mockSnapshotTree: ISnapshotTree = {
 				trees: {
-					"0": {
+					[`${referenceId0}`]: {
 						trees: {
-							"1": {
+							[`${referenceId1}`]: {
 								trees: {},
 								blobs: {
-									contents: blobMap.get("0/1/contents") ?? "",
+									contents: blobMap.get(childContentsPath) ?? "",
 								},
 							},
 						},
 						blobs: {
-							contents: blobMap.get("0/contents") ?? "",
+							contents: blobMap.get(parentContentsPath) ?? "",
 						},
 					},
 				},
@@ -299,11 +312,14 @@ describe("ForestIncrementalSummaryBuilder", () => {
 			await builder.load(storageService, getReadAndParseChunk(blobMap));
 
 			// Verify both parent and nested chunks can be retrieved
-			const parentChunk = builder.getEncodedIncrementalChunk(0 as ChunkReferenceId);
-			const nestedChunk = builder.getEncodedIncrementalChunk(1 as ChunkReferenceId);
-
-			assert.deepEqual(parentChunk, blobMap.get("0/contents"));
-			assert.deepEqual(nestedChunk, blobMap.get("0/1/contents"));
+			builder.decodeIncrementalChunk(referenceId0, (encoded) => {
+				assert.deepEqual(encoded, blobMap.get(parentContentsPath));
+				return getMockChunk();
+			});
+			builder.decodeIncrementalChunk(referenceId1, (encoded) => {
+				assert.deepEqual(encoded, blobMap.get(childContentsPath));
+				return getMockChunk();
+			});
 		});
 
 		it("throws when chunk contents are missing", async () => {
@@ -476,19 +492,63 @@ describe("ForestIncrementalSummaryBuilder", () => {
 			});
 			const summaryEntry: { type?: SummaryType } | undefined =
 				summary.summary.tree[`${referenceId1}`];
+			assert.equal(summaryEntry?.type, SummaryType.Handle);
+		});
+
+		it("should assign increasing chunk reference IDs for new chunks after load", async () => {
+			// Load a builder with an existing chunk with the following chunk reference ID.
+			const referenceId: ChunkReferenceId = brand(1);
+			const builder = createIncrementalSummaryBuilder();
+			const blobMap = new Map([[`${referenceId}/contents`, "chunk0"]]);
+			const mockSnapshotTree: ISnapshotTree = {
+				trees: {
+					[`${referenceId}`]: {
+						trees: {},
+						blobs: {
+							contents: blobMap.get(`${referenceId}/contents`) ?? "",
+						},
+					},
+				},
+				blobs: {},
+			};
+			const storageService = createMockStorageService(mockSnapshotTree, blobMap);
+			await builder.load(storageService, getReadAndParseChunk(blobMap));
+
+			// Notify the builder that the chunk with the above reference ID was decoded.
+			builder.decodeIncrementalChunk(referenceId, () => getMockChunk());
+
+			const incrementalSummaryContext = createMockIncrementalSummaryContext(
+				initialSequenceNumber + 1,
+				initialSequenceNumber,
+			);
+			builder.startSummary({
+				fullTree: false,
+				incrementalSummaryContext,
+				stringify,
+			});
+			// The encoded chunk should be assigned the next chunk reference ID.
+			const newReferenceIds = builder.encodeIncrementalField(
+				testCursor,
+				() => mockEncodedChunk,
+			);
+			assert.equal(newReferenceIds.length, 1);
+			const newReferenceId = newReferenceIds[0];
+			assert.equal(newReferenceId, referenceId + 1);
 		});
 	});
 
-	describe("getEncodedIncrementalChunk", () => {
-		it("returns encoded chunk when it exists", async () => {
+	describe("decodeIncrementalChunk", () => {
+		it("decodes chunk when it exists", async () => {
+			const referenceId0: ChunkReferenceId = brand(0);
+			const chunkContentsPath0 = `${referenceId0}/contents`;
 			const builder = createIncrementalSummaryBuilder();
-			const blobMap = new Map([["0/contents", "chunk0"]]);
+			const blobMap = new Map([[chunkContentsPath0, "chunk0"]]);
 			const mockSnapshotTree: ISnapshotTree = {
 				trees: {
-					"0": {
+					[`${referenceId0}`]: {
 						trees: {},
 						blobs: {
-							contents: blobMap.get("0/contents") ?? "",
+							contents: blobMap.get(chunkContentsPath0) ?? "",
 						},
 					},
 				},
@@ -497,21 +557,20 @@ describe("ForestIncrementalSummaryBuilder", () => {
 
 			const storageService = createMockStorageService(mockSnapshotTree, blobMap);
 			await builder.load(storageService, getReadAndParseChunk(blobMap));
-
-			const result = builder.getEncodedIncrementalChunk(0 as ChunkReferenceId);
-			assert.deepEqual(
-				result,
-				blobMap.get("0/contents"),
-				"Should return correct chunk contents",
-			);
+			builder.decodeIncrementalChunk(referenceId0, (encoded) => {
+				assert.deepEqual(encoded, blobMap.get(chunkContentsPath0));
+				return getMockChunk();
+			});
 		});
 
 		it("throws when encoded chunk does not exist", () => {
 			const builder = createIncrementalSummaryBuilder();
 			assert.throws(
-				() => builder.getEncodedIncrementalChunk(999 as ChunkReferenceId),
-				(error: Error) =>
-					validateAssertionError(error, "Incremental chunk contents not found"),
+				() =>
+					builder.decodeIncrementalChunk(999 as ChunkReferenceId, (encoded) => {
+						return getMockChunk();
+					}),
+				(error: Error) => validateAssertionError(error, "Encoded incremental chunk not found"),
 			);
 		});
 	});

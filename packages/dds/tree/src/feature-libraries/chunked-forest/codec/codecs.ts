@@ -81,11 +81,15 @@ export interface IncrementalEncoder {
  */
 export interface IncrementalDecoder {
 	/**
-	 * Called to get the encoded contents of an chunk in an incremental field with the given reference ID.
-	 * @param referenceId - The reference ID of the chunk to retrieve.
-	 * @returns The encoded contents of the chunk.
+	 * Called to decode an incremental chunk with the given reference ID.
+	 * @param referenceId - The reference ID of the chunk to decode.
+	 * @param chunkDecoder - A function that decodes the chunk.
+	 * @returns The decoded chunk.
 	 */
-	getEncodedIncrementalChunk: (referenceId: ChunkReferenceId) => EncodedFieldBatch;
+	decodeIncrementalChunk(
+		referenceId: ChunkReferenceId,
+		chunkDecoder: (encoded: EncodedFieldBatch) => TreeChunk,
+	): TreeChunk;
 }
 /**
  * Combines the properties of {@link IncrementalEncoder} and {@link IncrementalDecoder}.
