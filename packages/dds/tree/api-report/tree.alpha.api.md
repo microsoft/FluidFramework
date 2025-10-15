@@ -1214,8 +1214,8 @@ export namespace System_Unsafe {
 // @alpha
 export namespace TableSchema {
     export interface CellKey<TColumn extends ImplicitAllowedTypes, TRow extends ImplicitAllowedTypes> {
-        readonly column: string | TreeNodeFromImplicitAllowedTypes<TColumn>;
-        readonly row: string | TreeNodeFromImplicitAllowedTypes<TRow>;
+        readonly column: string | number | TreeNodeFromImplicitAllowedTypes<TColumn>;
+        readonly row: string | number | TreeNodeFromImplicitAllowedTypes<TRow>;
     }
     // @sealed
     export interface Column<TCell extends ImplicitAllowedTypes, TProps extends ImplicitFieldSchema = ImplicitFieldSchema> {
@@ -1268,7 +1268,9 @@ export namespace TableSchema {
         readonly columns: TreeArrayNode<TColumn>;
         getCell(key: CellKey<TColumn, TRow>): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
         getColumn(id: string): TreeNodeFromImplicitAllowedTypes<TColumn> | undefined;
+        getColumn(index: number): TreeNodeFromImplicitAllowedTypes<TColumn> | undefined;
         getRow(id: string): TreeNodeFromImplicitAllowedTypes<TRow> | undefined;
+        getRow(index: number): TreeNodeFromImplicitAllowedTypes<TRow> | undefined;
         insertColumns(params: InsertColumnsParameters<TColumn>): TreeNodeFromImplicitAllowedTypes<TColumn>[];
         insertRows(params: InsertRowsParameters<TRow>): TreeNodeFromImplicitAllowedTypes<TRow>[];
         removeCell(key: CellKey<TColumn, TRow>): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
