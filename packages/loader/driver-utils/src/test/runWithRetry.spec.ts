@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
@@ -15,7 +15,7 @@ const fastSetTimeout: any = (
 	callback: (...cbArgs: any[]) => void,
 	ms: number,
 	...args: any[]
-) => _setTimeout(callback, ms / 1000.0, ...args);
+) => _setTimeout(callback, ms / 1000, ...args);
 async function runWithFastSetTimeout<T>(callback: () => Promise<T>): Promise<T> {
 	global.setTimeout = fastSetTimeout;
 	return callback().finally(() => {
@@ -108,7 +108,7 @@ describe("runWithRetry Tests", () => {
 		};
 		try {
 			success = await runWithFastSetTimeout(async () => runWithRetry(api, "test", logger, {}));
-		} catch (error) {}
+		} catch {}
 		assert.strictEqual(retryTimes, 0, "Should retry");
 		assert.strictEqual(success, true, "Should succeed as retry should be successful");
 	});
@@ -128,7 +128,7 @@ describe("runWithRetry Tests", () => {
 		try {
 			success = await runWithFastSetTimeout(async () => runWithRetry(api, "test", logger, {}));
 			assert.fail("Should not succeed");
-		} catch (error) {}
+		} catch {}
 		assert.strictEqual(retryTimes, 0, "Should not retry");
 		assert.strictEqual(success, false, "Should not succeed as canRetry was not set");
 	});
@@ -147,7 +147,7 @@ describe("runWithRetry Tests", () => {
 		try {
 			success = await runWithFastSetTimeout(async () => runWithRetry(api, "test", logger, {}));
 			assert.fail("Should not succeed");
-		} catch (error) {}
+		} catch {}
 		assert.strictEqual(retryTimes, 0, "Should not retry");
 		assert.strictEqual(success, false, "Should not succeed as canRetry was not set");
 	});
@@ -173,7 +173,7 @@ describe("runWithRetry Tests", () => {
 				}),
 			);
 			assert.fail("Should not succeed");
-		} catch (error) {}
+		} catch {}
 		assert.strictEqual(retryTimes, 0, "Should not retry");
 		assert.strictEqual(success, false, "Should not succeed as retrying was disabled");
 	});
