@@ -220,15 +220,19 @@ export function createSimpleTreeIndex<TFieldSchema extends ImplicitFieldSchema, 
 // @alpha
 export function createSimpleTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey extends TreeIndexKey, TValue, TSchema extends TreeNodeSchema>(view: TreeView<TFieldSchema>, indexer: Map<TreeNodeSchema, string>, getValue: (nodes: TreeIndexNodes<NodeFromSchema<TSchema>>) => TValue, isKeyValid: (key: TreeIndexKey) => key is TKey, indexableSchema: readonly TSchema[]): SimpleTreeIndex<TKey, TValue>;
 
+// @alpha @sealed
+export interface DataStoreContext extends SharedObjectCreator {
+}
+
 // @alpha
 export function dataStoreKind<T, TRoot extends IFluidLoadable>(options: DataStoreOptions<TRoot, T>): DataStoreKind<T>;
 
-// @alpha @input (undocumented)
+// @alpha @input
 export interface DataStoreOptions<in out TRoot extends IFluidLoadable, out TOutput> {
-    instantiateFirstTime(rootCreator: SharedObjectCreator<TRoot>, creator: SharedObjectCreator): Promise<TRoot>;
+    instantiateFirstTime(rootCreator: SharedObjectCreator<TRoot>, context: DataStoreContext): Promise<TRoot>;
     readonly registry: SharedObjectRegistry;
     readonly type: string;
-    view(root: TRoot): Promise<TOutput>;
+    view(root: TRoot, context: DataStoreContext): Promise<TOutput>;
 }
 
 // @public @sealed @system
@@ -764,6 +768,9 @@ TSchema
 
 // @public
 export type InsertableTypedNode<TSchema extends TreeNodeSchema, T = UnionToIntersection<TSchema>> = (T extends TreeNodeSchema<string, NodeKind, TreeNode | TreeLeafValue, never, true> ? NodeBuilderData<T> : never) | (T extends TreeNodeSchema ? Unhydrated<TreeNode extends NodeFromSchema<T> ? never : NodeFromSchema<T>> : never);
+
+// @alpha
+export function instantiateTreeFirstTime<TSchema extends ImplicitFieldSchema>(rootCreator: SharedObjectCreator, creator: SharedObjectCreator, treeKind: SharedObjectKey<ITree>, options: Pick<TreeDataStoreOptions<TSchema>, "config" | "initializer">): Promise<ITree>;
 
 // @public @sealed
 export interface InternalTreeNode extends ErasedType<"@fluidframework/tree.InternalTreeNode"> {

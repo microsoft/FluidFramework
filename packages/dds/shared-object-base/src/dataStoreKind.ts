@@ -84,6 +84,9 @@ export function sharedObjectRegistryFromIterable(
 }
 
 /**
+ * Options which define how to construct a particular {@link @fluidframework/runtime-definitions#DataStoreKind}.
+ * @remarks
+ * Use {@link dataStoreKind} to create a {@link @fluidframework/runtime-definitions#DataStoreKind} from these options.
  * @input
  * @alpha
  */
@@ -99,21 +102,26 @@ export interface DataStoreOptions<in out TRoot extends IFluidLoadable, out TOutp
 
 	/**
 	 * The registry of shared object kinds (including other DataStores) that can be loaded or created within this DataStore.
+	 *
+	 * TODO: actually allow this to contain datastores.
 	 */
 	readonly registry: SharedObjectRegistry;
+
 	/**
 	 * Create the initial content of the datastore, and return the root shared object.
 	 */
 	instantiateFirstTime(
 		rootCreator: SharedObjectCreator<TRoot>,
-		creator: SharedObjectCreator,
+		context: DataStoreContext,
 	): Promise<TRoot>;
+
 	/**
 	 * Construct a view of the datastore's root shared object.
 	 *
 	 * @param root - The root shared object of the datastore, created by `instantiateFirstTime` (though possibly created by another client and loaded by this one).
+	 * @param context - A {@link DataStoreContext} that can be used to create additional shared objects.
 	 */
-	view(root: TRoot): Promise<TOutput>;
+	view(root: TRoot, context: DataStoreContext): Promise<TOutput>;
 }
 
 /**
@@ -162,7 +170,7 @@ async function createDataStore<T, TRoot extends IFluidLoadable>(
 		await convertRegistry(options.registry),
 		existing,
 		async (rt: IFluidDataStoreRuntime) => {
-			const creator: SharedObjectCreator = {
+			const innerContext: DataStoreContext = {
 				async create<T2 extends IFluidLoadable>(key: SharedObjectKey<T2>): Promise<T2> {
 					const kind = registryLookup(sharedObjectRegistry, key);
 					// Create detached channel.
@@ -196,7 +204,7 @@ async function createDataStore<T, TRoot extends IFluidLoadable>(
 			if (existing) {
 				root = (await rt.getChannel(rootSharedObjectId)) as unknown as TRoot;
 			} else {
-				root = await options.instantiateFirstTime(rootCreator, creator);
+				root = await options.instantiateFirstTime(rootCreator, innerContext);
 				if (root !== createdRoot) {
 					throw new UsageError(
 						"instantiateFirstTime did not return root created with rootCreator",
@@ -204,7 +212,7 @@ async function createDataStore<T, TRoot extends IFluidLoadable>(
 				}
 			}
 
-			return (await options.view(root)) as unknown as FluidObject;
+			return (await options.view(root, innerContext)) as unknown as FluidObject;
 		},
 	);
 
@@ -224,3 +232,13 @@ export interface SharedObjectCreator<TConstraint = IFluidLoadable> {
 	 */
 	create<T extends TConstraint>(kind: SharedObjectKey<T>): Promise<T>;
 }
+
+/**
+ * Contextual information about a DataStore which is provided when instantiating or loading it.
+ * @privateRemarks
+ * TODO: this can expose more contextual information about the data store as needed.
+ * @sealed
+ * @alpha
+ */
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface DataStoreContext extends SharedObjectCreator {}

@@ -60,7 +60,7 @@ export type DataStoreKey<T, TAll = unknown> = RegistryKey<
  * @sealed
  * @alpha
  */
-export interface FluidContainer<TData = unknown> {
+export interface FluidContainer<TData = unknown> extends DataStoreCreator {
 	/**
 	 * The unique identifier for this container, if it has been attached to a service.
 	 */
@@ -72,12 +72,19 @@ export interface FluidContainer<TData = unknown> {
 	 * The type of the root data store is defined by the {@link DataStoreKind} used to create the container.
 	 */
 	readonly data: TData;
+}
 
+/**
+ * A context which has a registry and can create data stores using it.
+ * @sealed
+ * @alpha
+ */
+export interface DataStoreCreator {
 	/**
-	 * Create a new detached datastore `T` which can be attached to this container
-	 * by adding a handle to it to a datastore which is already attached to the container.
+	 * Create a new detached datastore `T` which can be attached to the {@link FluidContainer}.
+	 * by adding a handle to it to a DataStore or SharedObject which is already attached to the {@link FluidContainer}.
 	 * @remarks
-	 * `kind` must be included in the registry used to create or load this container.
+	 * `kind` must be included in the registry used to create or load this {@link DataStoreCreator}.
 	 */
 	createDataStore<T>(kind: DataStoreKey<T>): Promise<T>;
 }
@@ -112,15 +119,25 @@ export interface FluidContainerAttached<T = unknown> extends FluidContainer<T> {
 
 /**
  * TODO:
- * SharedObjects should be usable as these (putting only a single shared object as root in container might need special logic).
+ * SharedObjects should be usable as these (putting shared objects directly in the container might need special logic).
  * @privateRemarks
  * Type erased {@link IFluidDataStoreFactory}.
  * @sealed
  * @alpha
  */
-export interface DataStoreKind<T = unknown>
+export interface DataStoreKind<out T = unknown>
 	extends DataStoreKey<T>,
 		ErasedBaseType<readonly ["DataStoreKind", T]> {}
+
+/**
+ * A registry of {@link DataStoreKind}s.
+ * @remarks
+ * TODO: unify this with SharedObjectRegistry.
+ *
+ * @input
+ * @alpha
+ */
+export type DataStoreRegistry<out T = unknown> = Registry<Promise<DataStoreKind<T>>>;
 
 /**
  * Implementation of {@link DataStoreKind}.
@@ -218,7 +235,7 @@ export interface ServiceClient {
 
 	createContainer<T>(
 		root: DataStoreKey<T>,
-		registry: Registry<Promise<DataStoreKind>>,
+		registry: DataStoreRegistry,
 	): Promise<FluidContainerWithService<T>>;
 
 	/**
@@ -238,7 +255,7 @@ export interface ServiceClient {
 	 */
 	loadContainer<T>(
 		id: string,
-		root: DataStoreKind<T> | Registry<Promise<DataStoreKind<T>>>,
+		root: DataStoreKind<T> | DataStoreRegistry<T>,
 	): Promise<FluidContainerAttached<T>>;
 }
 

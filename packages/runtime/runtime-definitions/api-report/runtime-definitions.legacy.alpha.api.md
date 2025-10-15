@@ -58,12 +58,20 @@ export enum CreateSummarizerNodeSource {
     Local = 2
 }
 
+// @alpha @sealed
+export interface DataStoreCreator {
+    createDataStore<T>(kind: DataStoreKey<T>): Promise<T>;
+}
+
 // @alpha @input
 export type DataStoreKey<T, TAll = unknown> = RegistryKey<Promise<DataStoreKind<T>>, Promise<DataStoreKind<TAll>>>;
 
 // @alpha @sealed
-export interface DataStoreKind<T = unknown> extends DataStoreKey<T>, ErasedBaseType<readonly ["DataStoreKind", T]> {
+export interface DataStoreKind<out T = unknown> extends DataStoreKey<T>, ErasedBaseType<readonly ["DataStoreKind", T]> {
 }
+
+// @alpha @sealed @input
+export type DataStoreRegistry<out T = unknown> = Registry<Promise<DataStoreKind<T>>>;
 
 // @beta @legacy
 export interface DetachedAttributionKey {
@@ -73,8 +81,7 @@ export interface DetachedAttributionKey {
 }
 
 // @alpha @sealed
-export interface FluidContainer<TData = unknown> {
-    createDataStore<T>(kind: DataStoreKey<T>): Promise<T>;
+export interface FluidContainer<TData = unknown> extends DataStoreCreator {
     readonly data: TData;
     readonly id?: string | undefined;
 }
@@ -493,8 +500,8 @@ export function registryLookup<TOut, TIn>(registry: Registry<TIn>, key: Registry
 export interface ServiceClient {
     createContainer<T>(root: DataStoreKind<T>): Promise<FluidContainerWithService<T>>;
     // (undocumented)
-    createContainer<T>(root: DataStoreKey<T>, registry: Registry<Promise<DataStoreKind>>): Promise<FluidContainerWithService<T>>;
-    loadContainer<T>(id: string, root: DataStoreKind<T> | Registry<Promise<DataStoreKind<T>>>): Promise<FluidContainerAttached<T>>;
+    createContainer<T>(root: DataStoreKey<T>, registry: DataStoreRegistry): Promise<FluidContainerWithService<T>>;
+    loadContainer<T>(id: string, root: DataStoreKind<T> | DataStoreRegistry<T>): Promise<FluidContainerAttached<T>>;
 }
 
 // @alpha @input

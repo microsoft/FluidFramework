@@ -29,13 +29,13 @@ import type {
 	DataStoreKind,
 	Registry,
 	FluidContainerWithService,
-	IFluidDataStoreFactory,
 	MinimumVersionForCollab,
 	IFluidDataStoreRegistry,
 	FluidDataStoreRegistryEntry,
 	DataStoreKey,
 } from "@fluidframework/runtime-definitions/internal";
 import {
+	basicKey,
 	DataStoreKindImplementation,
 	registryLookup,
 } from "@fluidframework/runtime-definitions/internal";
@@ -177,7 +177,9 @@ type DataStoreRegistry<T> = Registry<Promise<DataStoreKind<T>>>;
 function convertRegistry<T>(registry: DataStoreRegistry<T>): IFluidDataStoreRegistry {
 	return {
 		async get(name: string): Promise<FluidDataStoreRegistryEntry | undefined> {
-			return (await registry(name)) as unknown as IFluidDataStoreFactory;
+			const dataStoreKind = await registryLookup(registry, basicKey(name));
+			DataStoreKindImplementation.narrowGeneric(dataStoreKind);
+			return dataStoreKind;
 		},
 		get IFluidDataStoreRegistry(): IFluidDataStoreRegistry {
 			return this;
@@ -218,9 +220,7 @@ function makeCodeLoader<T>(
 
 			if (!existing) {
 				assert(root !== undefined, "Root data store kind must be provided for new containers");
-				const dataStore = await runtime.createDataStore(
-					(root as unknown as IFluidDataStoreFactory).type,
-				);
+				const dataStore = await runtime.createDataStore(root.type);
 				const aliasResult = await dataStore.trySetAlias(rootDataStoreId);
 				assert(aliasResult === "Success", "Should be able to set alias on new data store");
 			}

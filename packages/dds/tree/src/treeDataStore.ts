@@ -55,6 +55,8 @@ export interface TreeDataStoreOptions<TSchema extends ImplicitFieldSchema>
  * Simple tree specific wrapper around {@link @fluidframework/shared-object-base#dataStoreKind}.
  * @remarks
  * Use {@link @fluidframework/shared-object-base#dataStoreKind} directly if more control is needed, even if still just using tree.
+ *
+ * This uses {@link instantiateTreeFirstTime} to create the tree, and optionally initialize it.
  * @alpha
  */
 export function treeDataStoreKind<const TSchema extends ImplicitFieldSchema>(
@@ -87,6 +89,12 @@ export function treeDataStoreKind<const TSchema extends ImplicitFieldSchema>(
 	return result;
 }
 
+/**
+ * Simple tree instantiation helper.
+ * @remarks
+ * This is used by {@link treeDataStoreKind}, but can also be used in custom DataStores with {@link @fluidframework/shared-object-base#dataStoreKind}.
+ * @alpha
+ */
 export async function instantiateTreeFirstTime<TSchema extends ImplicitFieldSchema>(
 	rootCreator: SharedObjectCreator,
 	creator: SharedObjectCreator,

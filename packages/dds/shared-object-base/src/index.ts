@@ -38,4 +38,5 @@ export type {
 	DataStoreOptions,
 	SharedObjectCreator,
 	SharedObjectRegistry,
+	DataStoreContext,
 } from "./dataStoreKind.js";
