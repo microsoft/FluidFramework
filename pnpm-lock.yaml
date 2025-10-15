@@ -6524,7 +6524,7 @@ importers:
         specifier: ^0.58.3
         version: 0.58.3(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: ~7.0.0
+        specifier: ^7.0.0
         version: 7.0.0(eslint@8.57.1)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.52.11
@@ -6672,7 +6672,7 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/runtime/container-runtime
       '@fluidframework/eslint-config-fluid':
-        specifier: ~7.0.0
+        specifier: ^7.0.0
         version: 7.0.0(eslint@8.57.1)(typescript@5.4.5)
       '@fluidframework/local-driver':
         specifier: workspace:~
