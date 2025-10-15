@@ -13,7 +13,6 @@ import { SharedCell } from "@fluidframework/cell/internal";
 import type { IContainerContext } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
-	FluidDataStoreRegistry,
 	type IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
@@ -69,7 +68,7 @@ export class ReplayRuntimeFactory extends RuntimeFactoryHelper {
 			},
 			existing,
 			runtimeOptions: this.runtimeOptions,
-			registry: new FluidDataStoreRegistry(this.registries),
+			registryEntries: this.registries,
 		});
 	}
 }
