@@ -40,7 +40,7 @@ describe("Hardware Stats", () => {
 		mockLogger.events.filter((event) => event.eventName === "DeviceSpec");
 
 	const loadContainer = async () =>
-		ContainerRuntime.loadRuntime({
+		ContainerRuntime.loadRuntime2({
 			context: mockContext as IContainerContext,
 			registry: new FluidDataStoreRegistry([]),
 			runtimeOptions: {

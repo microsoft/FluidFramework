@@ -271,7 +271,7 @@ export interface ISummaryCollectionOpEvents extends IEvent {
 }
 
 // @beta @legacy (undocumented)
-export type ISummaryConfiguration = ISummaryConfigurationDisableSummarizer | ISummaryConfigurationDisableHeuristics | ISummaryConfigurationHeuristics;
+export type ISummaryConfiguration = ISummaryConfigurationDisableSummarizer | ISummaryConfigurationDisableHeuristics | ISummaryConfigurationHeuristics | ISummaryConfigurationWithSummaryOnRequest;
 
 // @beta @legacy (undocumented)
 export interface ISummaryConfigurationDisableHeuristics extends ISummaryBaseConfiguration {
@@ -297,6 +297,12 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
     runtimeOpWeight: number;
     // (undocumented)
     state: "enabled";
+}
+
+// @beta @legacy
+export interface ISummaryConfigurationWithSummaryOnRequest extends ISummaryBaseConfiguration {
+    // (undocumented)
+    state: "summaryOnRequest";
 }
 
 // @beta @legacy

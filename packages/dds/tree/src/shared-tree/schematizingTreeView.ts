@@ -200,9 +200,15 @@ export class SchematizingSimpleTreeView<
 				this,
 				schema.rootFieldSchema,
 				(batches, doHydration) => {
-					assert(this.pendingHydration === undefined, "pendingHydration already set");
+					assert(
+						this.pendingHydration === undefined,
+						0xc74 /* pendingHydration already set */,
+					);
 					this.pendingHydration = () => {
-						assert(batches.length <= 1, "initialize should at most one hydration batch");
+						assert(
+							batches.length <= 1,
+							0xc75 /* initialize should at most one hydration batch */,
+						);
 						for (const batch of batches) {
 							doHydration(batch, {
 								parent: undefined,
@@ -408,7 +414,7 @@ export class SchematizingSimpleTreeView<
 		if (!this.midUpgrade) {
 			assert(
 				this.pendingHydration === undefined,
-				"no nodes should be pending hydration when triggering events that could access nodes",
+				0xc76 /* no nodes should be pending hydration when triggering events that could access nodes */,
 			);
 			this.events.emit("schemaChanged");
 			this.events.emit("rootChanged");
@@ -477,7 +483,7 @@ export class SchematizingSimpleTreeView<
 			view.root.is(FieldKinds.optional) ||
 				view.root.is(FieldKinds.required) ||
 				view.root.is(FieldKinds.identifier),
-			"unexpected root field kind",
+			0xc77 /* unexpected root field kind */,
 		);
 		return view.root;
 	}
