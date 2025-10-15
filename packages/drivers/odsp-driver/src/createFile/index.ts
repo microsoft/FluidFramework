@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { delay } from "@fluidframework/core-utils/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 export async function useCreateNewModule<T = void>(
@@ -53,10 +52,6 @@ export async function useCreateNewModule<T = void>(
 				odspLogger.sendErrorEvent({ eventName: "createNewModuleLoadFailed" }, error);
 				throw error;
 			}
-
-			// Exponential backoff: 100ms, 200ms, 400ms
-			const delayMs = 100 * Math.pow(2, attempt - 1);
-			await delay(delayMs);
 		}
 	}
 
