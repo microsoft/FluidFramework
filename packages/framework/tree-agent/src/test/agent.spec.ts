@@ -16,8 +16,13 @@ import {
 	TreeViewConfiguration,
 } from "@fluidframework/tree/alpha";
 
-import { SharedTreeSemanticAgent } from "../agent.js";
-import type { EditResult, SharedTreeChatModel } from "../api.js";
+import { SharedTreeSemanticAgent, bindEditor } from "../agent.js";
+import type {
+	EditResult,
+	SharedTreeChatModel,
+	SynchronousEditor,
+	AsynchronousEditor,
+} from "../api.js";
 
 const sf = new SchemaFactory(undefined);
 const editToolName = "EditTreeTool";
@@ -102,35 +107,6 @@ describe("Semantic Agent", () => {
 		assert.equal(view.root, "Content", "Tree should not have changed");
 	});
 
-	it("runs validation on edit code", async () => {
-		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
-		view.initialize("Orig");
-		let callCount = 0;
-		const model: SharedTreeChatModel = {
-			editToolName,
-			async query({ edit }) {
-				callCount++;
-				if (callCount === 1) {
-					const validLooking = `context.root = "New";`;
-					const result = await edit(validLooking);
-					assert.equal(result.type, "validationError", result.message);
-					return result.message;
-				}
-				return "Second ok";
-			},
-		};
-		const agent = new SharedTreeSemanticAgent(model, view, {
-			validateEdit: () => {
-				throw new Error("The code was trying to hack the mainframe!");
-			},
-		});
-		const response = await agent.query("First");
-		assert.ok(response.includes("mainframe"));
-		// Check that a subsequent query still works.
-		assert.equal(view.root, "Orig", "Tree should not have changed after failed validation");
-		assert.equal(await agent.query("Second"), "Second ok");
-	});
-
 	it("handles malformed edit code", async () => {
 		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
 		view.initialize("Content");
@@ -141,7 +117,7 @@ describe("Semantic Agent", () => {
 				callCount++;
 				if (callCount === 1) {
 					const result1 = await edit("const ; x = 1, for else");
-					assert.equal(result1.type, "executionError", result1.message);
+					assert.equal(result1.type, "editingError", result1.message);
 					return result1.message;
 				}
 				return "Recovered";
@@ -164,7 +140,7 @@ describe("Semantic Agent", () => {
 				callCount++;
 				if (callCount === 1) {
 					const result = await edit(`throw new Error("boom");`);
-					assert.equal(result.type, "executionError", result.message);
+					assert.equal(result.type, "editingError", result.message);
 					return result.message;
 				}
 				// On second query perform successful edit to prove recovery.
@@ -243,7 +219,7 @@ describe("Semantic Agent", () => {
 			editToolName,
 			async query({ edit }) {
 				const result1 = await edit(`throw new Error("boom");`);
-				assert.equal(result1.type, "executionError", result1.message);
+				assert.equal(result1.type, "editingError", result1.message);
 				const result2 = await edit(`context.root = "Recovered";`);
 				assert.equal(result2.type, "success", result2.message);
 				return result2.message;
@@ -265,7 +241,7 @@ describe("Semantic Agent", () => {
 				const result1 = await edit(`context.root = "First";`);
 				assert.equal(result1.type, "success", result1.message);
 				const result2 = await edit(`throw new Error("boom");`);
-				assert.equal(result2.type, "executionError", result2.message);
+				assert.equal(result2.type, "editingError", result2.message);
 				return result2.message;
 			},
 		};
@@ -386,5 +362,61 @@ describe("Semantic Agent", () => {
 		assert.equal(view.root.child.value, "Changed");
 		// Context should not know about types outside of the subtree
 		assert.ok(!context.includes("Parent"));
+	});
+
+	describe("bindEditor", () => {
+		/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
+		interface TestContext {
+			root: string;
+		}
+
+		it("binds a synchronous editor and returns a void runner", () => {
+			const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
+			view.initialize("Initial");
+			const syncEditor: SynchronousEditor = (context, _code) => {
+				(context as unknown as TestContext).root = "SyncEdit";
+			};
+			const run = bindEditor(view, syncEditor);
+			const result = run("ignored");
+			assert.equal(view.root, "SyncEdit");
+			assert.equal(result, undefined, "Synchronous runner should return void");
+		});
+
+		it("binds an asynchronous editor and returns a Promise runner", async () => {
+			const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
+			view.initialize("Initial");
+			const asyncEditor: AsynchronousEditor = async (context, _code) => {
+				(context as unknown as TestContext).root = "AsyncEdit";
+			};
+			const run = bindEditor(view, asyncEditor) as (code: string) => Promise<void>;
+			const promise = run("ignored");
+			assert.ok(typeof (promise as unknown as { then?: unknown }).then === "function");
+			await promise;
+			assert.equal(view.root, "AsyncEdit");
+		});
+
+		it("propagates synchronous errors", () => {
+			const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
+			view.initialize("Initial");
+			const syncErrorEditor: SynchronousEditor = (_context, _code) => {
+				throw new Error("syncBoom");
+			};
+			const run = bindEditor(view, syncErrorEditor);
+			assert.throws(() => run("ignored"), /syncBoom/);
+			assert.equal(view.root, "Initial", "Tree should not have changed after error");
+		});
+
+		it("propagates asynchronous errors (Promise rejection)", async () => {
+			const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
+			view.initialize("Initial");
+			const asyncErrorEditor: AsynchronousEditor = async () => {
+				throw new Error("asyncBoom");
+			};
+			const run = bindEditor(view, asyncErrorEditor) as (code: string) => Promise<void>;
+			const promise = run("ignored");
+			await assert.rejects(promise, /asyncBoom/);
+			assert.equal(view.root, "Initial", "Tree should not have changed after async error");
+		});
+		/* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
 	});
 });

@@ -4,8 +4,12 @@
  */
 
 import type { ImplicitFieldSchema, TreeNode } from "@fluidframework/tree";
-// This is used for doc links
+// These are used for doc links
 import type { FactoryContentObject, ReadableField } from "@fluidframework/tree/alpha";
+
+// This is used for doc links
+// eslint-disable-next-line unused-imports/no-unused-imports
+import type { bindEditor, defaultEditor } from "./agent.js";
 
 /**
  * Logger interface for logging events from a {@link SharedTreeSemanticAgent}.
@@ -19,6 +23,26 @@ export interface Logger {
 }
 
 /**
+ * A synchronous function that executes a string of JavaScript code to perform an edit within a {@link SharedTreeSemanticAgent}.
+ * @param context - An object that must be provided to the generated code as a variable named "context" in its top-level scope.
+ * @param code - The JavaScript code that should be executed.
+ * @remarks To simulate the execution of an editor outside of an {@link SharedTreeSemanticAgent | agent}, you can use {@link bindEditor | bindEditor} to bind an editor to a specific subtree.
+ * @alpha
+ */
+export type SynchronousEditor = (context: Record<string, unknown>, code: string) => void;
+/**
+ * An asynchronous function that executes a string of JavaScript code to perform an edit within a {@link SharedTreeSemanticAgent}.
+ * @param context - An object that must be provided to the generated code as a variable named "context" in its top-level scope.
+ * @param code - The JavaScript code that should be executed.
+ * @remarks To simulate the execution of an editor outside of an {@link SharedTreeSemanticAgent | agent}, you can use {@link bindEditor | bindEditor} to bind an editor to a specific subtree.
+ * @alpha
+ */
+export type AsynchronousEditor = (
+	context: Record<string, unknown>,
+	code: string,
+) => Promise<void>;
+
+/**
  * Options used to parameterize the creation of a {@link SharedTreeSemanticAgent}.
  * @alpha
  */
@@ -28,22 +52,14 @@ export interface SemanticAgentOptions {
 	 */
 	domainHints?: string;
 	/**
-	 * Validates any generated JavaScript created by the {@link SharedTreeChatModel.editToolName | model's editing tool}.
-	 * @remarks This happens before the code is executed - execution can be intercepted by using the {@link SemanticAgentOptions.executeEdit | executeEdit} callback.
-	 * @param code - The generated JavaScript code as a string.
-	 * @throws If the code is invalid, this function should throw an error with a human-readable message describing why it is invalid.
-	 */
-	validateEdit?: (code: string) => void | Promise<void>;
-	/**
-	 * Evaluates/runs any generated JavaScript created by the {@link SharedTreeChatModel.editToolName | model's editing tool}.
-	 * @remarks This happens only after the code has been successfully validated by the optional {@link SemanticAgentOptions.validateEdit | validateEdit} function.
-	 * @param context - An object that must be provided to the generated code as a variable named "context" in its top-level scope.
-	 * @param code - The generated JavaScript code as a string.
-	 * @throws If an error is thrown while executing the code, it will be caught and the message will be forwarded to the model for debugging.
-	 * @remarks If this function is not provided, the generated code will be executed using a simple `eval` call, which may not provide sufficient security guarantees for some environments.
+	 * Executes any generated JavaScript created by the {@link SharedTreeChatModel.editToolName | model's editing tool}.
+	 * @remarks If an error is thrown while executing the code, it will be caught and the message will be forwarded to the {@link SharedTreeChatModel | model} for debugging.
+	 * @remarks If this function is not provided, the generated code will be executed using a {@link defaultEditor | simple default} which may not provide sufficient security guarantees for some environments.
 	 * Use a library such as SES to provide a more secure implementation - see `@fluidframework/tree-agent-ses` for a drop-in implementation.
+	 *
+	 * To simulate the execution of an editor outside of an {@link SharedTreeSemanticAgent | agent}, you can use {@link bindEditor | bindEditor} to bind an editor to a specific subtree.
 	 */
-	executeEdit?: (context: Record<string, unknown>, code: string) => void | Promise<void>;
+	editor?: SynchronousEditor | AsynchronousEditor;
 	/**
 	 * The maximum number of sequential edits the LLM can make before we assume it's stuck in a loop.
 	 */
@@ -64,18 +80,11 @@ export interface EditResult {
 	 * @remarks
 	 * - `success`: The edit was successfully applied.
 	 * - `disabledError`: The model is not allowed to edit the tree (i.e. {@link SharedTreeChatModel.editToolName} was not provided).
-	 * - `validationError`: The provided JavaScript did not pass the optional {@link SemanticAgentOptions.validateEdit} function.
-	 * - `executionError`: An error was thrown while parsing or executing the provided JavaScript.
+	 * - `editingError`: An error was thrown while parsing or executing the provided JavaScript.
 	 * - `tooManyEditsError`: The {@link SharedTreeChatQuery.edit} function has been called more than the number of times specified by {@link SemanticAgentOptions.maximumSequentialEdits} for the same message.
 	 * - `expiredError`: The {@link SharedTreeChatQuery.edit} function was called after the issuing query has already completed.
 	 */
-	type:
-		| "success"
-		| "disabledError"
-		| "validationError"
-		| "executionError"
-		| "tooManyEditsError"
-		| "expiredError";
+	type: "success" | "disabledError" | "editingError" | "tooManyEditsError" | "expiredError";
 
 	/**
 	 * A human-readable message describing the result of the edit attempt.
