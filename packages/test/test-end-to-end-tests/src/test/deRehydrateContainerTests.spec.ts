@@ -10,6 +10,7 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 import type { ISharedCell } from "@fluidframework/cell/internal";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import type { SharedCounter } from "@fluidframework/counter/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
@@ -542,9 +543,11 @@ describeCompat(
 					"Storage should be present in detached data store",
 				);
 				let success1: boolean | undefined;
-				await defaultDataStore.context.storage.getSnapshotTree(undefined).catch((err) => {
-					success1 = false;
-				});
+				await (defaultDataStore.context.containerRuntime as IContainerRuntime).storage
+					.getSnapshotTree(undefined)
+					.catch((err) => {
+						success1 = false;
+					});
 				assert(
 					success1 === false,
 					"Snapshot fetch should not be allowed in detached data store",
@@ -559,9 +562,11 @@ describeCompat(
 					"Storage should be present in rehydrated data store",
 				);
 				let success2: boolean | undefined;
-				await defaultDataStore2.context.storage.getSnapshotTree(undefined).catch((err) => {
-					success2 = false;
-				});
+				await (defaultDataStore2.context.containerRuntime as IContainerRuntime).storage
+					.getSnapshotTree(undefined)
+					.catch((err) => {
+						success2 = false;
+					});
 				assert(
 					success2 === false,
 					"Snapshot fetch should not be allowed in rehydrated data store",
