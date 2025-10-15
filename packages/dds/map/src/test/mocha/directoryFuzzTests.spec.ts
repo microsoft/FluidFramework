@@ -5,11 +5,18 @@
 
 import * as dirPath from "node:path";
 
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { takeAsync } from "@fluid-private/stochastic-test-utils";
-import { type DDSFuzzModel, createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
+import {
+	type DDSFuzzHarnessEvents,
+	type DDSFuzzModel,
+	createDDSFuzzSuite,
+	registerOracle,
+} from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 import { DirectoryFactory } from "../../index.js";
+import { SharedDirectoryOracle } from "../directoryOracle.js";
 
 import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
 import { _dirname } from "./dirname.cjs";
@@ -21,6 +28,16 @@ import {
 	type DirOperation,
 	type DirOperationGenerationConfig,
 } from "./fuzzUtils.js";
+import { hasSharedDirectoryOracle, type ISharedDirectoryWithOracle } from "./oracleUtils.js";
+
+const oracleEmitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
+
+oracleEmitter.on("clientCreate", (client) => {
+	const channel = client.channel as ISharedDirectoryWithOracle;
+	const directoryOracle = new SharedDirectoryOracle(channel);
+	channel.sharedDirectoryOracle = directoryOracle;
+	registerOracle(directoryOracle);
+});
 
 describe("SharedDirectory fuzz Create/Delete concentrated", () => {
 	const options: DirOperationGenerationConfig = {
@@ -37,7 +54,16 @@ describe("SharedDirectory fuzz Create/Delete concentrated", () => {
 		workloadName: "default directory 1",
 		generatorFactory: () => takeAsync(100, makeDirOperationGenerator(options)),
 		reducer: makeDirReducer({ clientIds: ["A", "B", "C"], printConsoleLogs: false }),
-		validateConsistency: async (a, b) => assertEquivalentDirectories(a.channel, b.channel),
+		validateConsistency: async (a, b) => {
+			if (hasSharedDirectoryOracle(a.channel)) {
+				a.channel.sharedDirectoryOracle.validate();
+			}
+
+			if (hasSharedDirectoryOracle(b.channel)) {
+				b.channel.sharedDirectoryOracle.validate();
+			}
+			return assertEquivalentDirectories(a.channel, b.channel);
+		},
 		factory: new DirectoryFactory(),
 	};
 
@@ -56,6 +82,7 @@ describe("SharedDirectory fuzz Create/Delete concentrated", () => {
 			stashableClientProbability: 0.2,
 		},
 		defaultTestCount: 25,
+		emitter: oracleEmitter,
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 21,
 		saveFailures: { directory: dirPath.join(_dirname, "../../../src/test/mocha/results/1") },
@@ -83,6 +110,7 @@ describe("SharedDirectory fuzz Create/Delete concentrated", () => {
 				stashableClientProbability: undefined,
 			},
 			defaultTestCount: 200,
+			emitter: oracleEmitter,
 			// Uncomment this line to replay a specific seed from its failure file:
 			// replay: 0,
 			saveFailures: {
@@ -108,6 +136,7 @@ describe("SharedDirectory fuzz", () => {
 			stashableClientProbability: 0.2,
 		},
 		defaultTestCount: 25,
+		emitter: oracleEmitter,
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
 		saveFailures: { directory: dirPath.join(_dirname, "../../../src/test/mocha/results/2") },
@@ -136,6 +165,7 @@ describe("SharedDirectory fuzz", () => {
 				stashableClientProbability: undefined,
 			},
 			defaultTestCount: 200,
+			emitter: oracleEmitter,
 			// Uncomment this line to replay a specific seed from its failure file:
 			// replay: 0,
 			saveFailures: {
