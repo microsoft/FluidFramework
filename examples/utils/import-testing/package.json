@@ -65,8 +65,6 @@
 		"typescript-5.9": "npm:typescript@~5.9.2"
 	},
 	"typeValidation": {
-		"disabled": true,
-		"broken": {},
-		"entrypoint": "internal"
+		"disabled": true
 	}
 }
