@@ -11,3 +11,4 @@ Removed deprecated export of MinimumVersionForCollab from @fluidframework/contai
 
 Removed the deprecated re-export of MinimumVersionForCollab from @fluidframework/container-runtime.
 This type should now be imported from @fluidframework/runtime-definitions.
+See the [Fluid Framework 2.52.0 release notes](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.52.0) for details.
