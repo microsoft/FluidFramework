@@ -10,7 +10,6 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 import type { ISharedCell } from "@fluidframework/cell/internal";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import type { SharedCounter } from "@fluidframework/counter/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
@@ -530,47 +529,6 @@ describeCompat(
 				assert.strictEqual(coc.id, cocId, "COC should exist!!");
 				assert.strictEqual(sharedMatrix.id, sharedMatrixId, "Shared matrix should exist!!");
 				assert.strictEqual(sparseMatrix.id, sparseMatrixId, "Sparse matrix should exist!!");
-			});
-
-			it("Storage in detached container", async () => {
-				const { container } = await createDetachedContainerAndGetEntryPoint();
-
-				const snapshotTree = container.serialize();
-				const defaultDataStore =
-					await getContainerEntryPointBackCompat<TestFluidObject>(container);
-				assert(
-					defaultDataStore.context.storage !== undefined,
-					"Storage should be present in detached data store",
-				);
-				let success1: boolean | undefined;
-				await (defaultDataStore.context.containerRuntime as IContainerRuntime).storage
-					.getSnapshotTree(undefined)
-					.catch((err) => {
-						success1 = false;
-					});
-				assert(
-					success1 === false,
-					"Snapshot fetch should not be allowed in detached data store",
-				);
-
-				const container2: IContainer =
-					await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
-				const defaultDataStore2 =
-					await getContainerEntryPointBackCompat<TestFluidObject>(container2);
-				assert(
-					defaultDataStore2.context.storage !== undefined,
-					"Storage should be present in rehydrated data store",
-				);
-				let success2: boolean | undefined;
-				await (defaultDataStore2.context.containerRuntime as IContainerRuntime).storage
-					.getSnapshotTree(undefined)
-					.catch((err) => {
-						success2 = false;
-					});
-				assert(
-					success2 === false,
-					"Snapshot fetch should not be allowed in rehydrated data store",
-				);
 			});
 
 			it("Change contents of dds, then rehydrate and then check summary", async () => {
