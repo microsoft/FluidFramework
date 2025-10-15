@@ -10,18 +10,18 @@ import {
 	createTreeNodeSchemaPrivateData,
 	type MostDerivedData,
 	TreeNodeValid,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/core/treeNodeValid.js";
 
 import type { FlexTreeNode } from "../../feature-libraries/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { numberSchema } from "../../simple-tree/leafNodeSchema.js";
 import { validateUsageError } from "../utils.js";
 import { brand } from "../../util/index.js";
 import {
 	getTreeNodeSchemaInitializedData,
 	getUnhydratedContext,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/createContext.js";
 import {
 	inPrototypeChain,
@@ -35,7 +35,7 @@ import {
 	privateDataSymbol,
 	CompatibilityLevel,
 	type TreeNodeSchemaPrivateData,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/core/index.js";
 import { LeafNodeStoredSchema, ValueSchema } from "../../core/index.js";
 

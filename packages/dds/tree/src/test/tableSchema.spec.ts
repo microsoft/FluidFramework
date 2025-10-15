@@ -23,7 +23,7 @@ import type {
 } from "../util/index.js";
 import { validateUsageError } from "./utils.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshots/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { describeHydration } from "./simple-tree/utils.js";
 
 const schemaFactory = new SchemaFactoryAlpha("test");

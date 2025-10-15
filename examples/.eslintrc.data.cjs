@@ -42,7 +42,7 @@ const lintConfig = {
 		 * Allow Fluid Framework examples to import from unstable and legacy APIs.
 		 * https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/no-internal-modules.md
 		 */
-		"import/no-internal-modules": [
+		"import-x/no-internal-modules": [
 			"error",
 			{
 				allow: importInternalModulesAllowed,
@@ -53,7 +53,7 @@ const lintConfig = {
 		{
 			files: ["*.spec.ts", "src/test/**", "tests/**"],
 			rules: {
-				"import/no-internal-modules": [
+				"import-x/no-internal-modules": [
 					"error",
 					{
 						allow: importInternalModulesAllowedForTest,

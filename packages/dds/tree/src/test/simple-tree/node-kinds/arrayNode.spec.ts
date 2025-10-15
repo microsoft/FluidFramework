@@ -25,7 +25,7 @@ import type {
 	requireTrue,
 	UnionToIntersection,
 } from "../../../util/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { asIndex } from "../../../simple-tree/node-kinds/index.js";
 import { TestTreeProviderLite, validateUsageError } from "../../utils.js";
 

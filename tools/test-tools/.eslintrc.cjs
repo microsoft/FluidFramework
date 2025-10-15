@@ -13,7 +13,7 @@ module.exports = {
 		"@typescript-eslint/ban-ts-comment": "off",
 		"@typescript-eslint/no-non-null-assertion": "off",
 
-		"import/no-nodejs-modules": "off",
+		"import-x/no-nodejs-modules": "off",
 		"unicorn/no-process-exit": "off",
 		"unicorn/prefer-node-protocol": "off",
 	},

@@ -44,7 +44,7 @@ import type {
 	IValueChanged,
 } from "./interfaces.js";
 import type {
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	ISerializableValue,
 	ISerializedValue,
 } from "./internalInterfaces.js";
@@ -106,7 +106,7 @@ export interface IDirectorySetOperation {
 	/**
 	 * Value to be set on the key.
 	 */
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	value: ISerializableValue;
 }
 
@@ -299,7 +299,7 @@ export interface IDirectoryDataObject {
 	/**
 	 * Key/value date set by the user.
 	 */
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	storage?: Record<string, ISerializableValue>;
 
 	/**
@@ -775,7 +775,7 @@ export class SharedDirectory
 					const parsedSerializable = parseHandles(
 						serializable,
 						this.serializer,
-						// eslint-disable-next-line import/no-deprecated
+						// eslint-disable-next-line import-x/no-deprecated
 					) as ISerializableValue;
 					migrateIfSharedSerializable(parsedSerializable, this.serializer, this.handle);
 					currentSubDir.populateStorage(key, parsedSerializable.value);
@@ -1006,7 +1006,7 @@ export class SharedDirectory
 				if (!currentSubDirObject.storage) {
 					currentSubDirObject.storage = {};
 				}
-				// eslint-disable-next-line import/no-deprecated
+				// eslint-disable-next-line import-x/no-deprecated
 				const result: ISerializableValue = {
 					type: value.type,
 					value: value.value && (JSON.parse(value.value) as object),

@@ -29,7 +29,7 @@ import type {
 	IFluidDataStoreRuntime,
 	IFluidDataStoreRuntimeEvents,
 	IDeltaManagerErased,
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	IFluidDataStoreRuntimeExperimental,
 } from "@fluidframework/datastore-definitions/internal";
 import {
@@ -61,7 +61,7 @@ import {
 	type IInboundSignalMessage,
 	type IRuntimeMessageCollection,
 	type IRuntimeMessagesContent,
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	type IContainerRuntimeBaseExperimental,
 	notifiesReadOnlyState,
 	encodeHandlesInContainerRuntime,
@@ -454,10 +454,10 @@ export class FluidDataStoreRuntime
 	/**
 	 * Implementation of IFluidDataStoreRuntimeExperimental.inStagingMode
 	 */
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	private get inStagingMode(): IFluidDataStoreRuntimeExperimental["inStagingMode"] {
 		return (
-			// eslint-disable-next-line import/no-deprecated
+			// eslint-disable-next-line import-x/no-deprecated
 			(this.dataStoreContext.containerRuntime as IContainerRuntimeBaseExperimental)
 				?.inStagingMode
 		);
@@ -466,7 +466,7 @@ export class FluidDataStoreRuntime
 	/**
 	 * Implementation of IFluidDataStoreRuntimeExperimental.isDirty
 	 */
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	private get isDirty(): IFluidDataStoreRuntimeExperimental["isDirty"] {
 		return this.pendingOpCount.value > 0;
 	}

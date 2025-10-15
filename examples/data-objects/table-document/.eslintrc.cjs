@@ -15,6 +15,6 @@ module.exports = {
 	rules: {
 		"@typescript-eslint/prefer-nullish-coalescing": "off", // requires strictNullChecks
 		"@typescript-eslint/strict-boolean-expressions": "off",
-		"import/no-deprecated": "off", // This package as a whole is deprecated so it uses deprecated APIs
+		"import-x/no-deprecated": "off", // This package as a whole is deprecated so it uses deprecated APIs
 	},
 };

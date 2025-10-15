@@ -5,7 +5,7 @@
 
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
-// eslint-disable-next-line import/no-deprecated
+// eslint-disable-next-line import-x/no-deprecated
 import type { IFluidDataStoreRuntimeExperimental } from "@fluidframework/datastore-definitions/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils";
 
@@ -92,7 +92,7 @@ export class SharedObjectHandle
 	constructor(
 		protected readonly value: ISharedObject,
 		path: string,
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated
 		private readonly runtime: IFluidDataStoreRuntimeExperimental,
 	) {
 		super(value, path, runtime.IFluidHandleContext);

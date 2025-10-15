@@ -9,7 +9,7 @@ module.exports = {
 		project: ["./tsconfig.lint.json"],
 	},
 	settings: {
-		"import/resolver": "node",
+		"import-x/resolver": "node",
 	},
 	rules: {
 		// TODO: this package should really extend some base JS config, and not pull in TS-specific rules.
@@ -24,7 +24,7 @@ module.exports = {
 		"@typescript-eslint/no-unsafe-return": "off",
 		"@typescript-eslint/restrict-plus-operands": "off",
 		"@typescript-eslint/strict-boolean-expressions": "off",
-		"import/no-nodejs-modules": "off",
+		"import-x/no-nodejs-modules": "off",
 		"promise/param-names": "off",
 	},
 };

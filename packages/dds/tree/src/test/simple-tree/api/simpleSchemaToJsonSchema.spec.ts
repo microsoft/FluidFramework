@@ -23,13 +23,13 @@ import { getJsonValidator } from "./jsonSchemaUtilities.js";
 import type {
 	SimpleNodeSchema,
 	SimpleTreeSchema,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/simpleSchema.js";
 
 import {
 	convertObjectNodeSchema,
 	toJsonSchema,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/simpleSchemaToJsonSchema.js";
 import { ValueSchema } from "../../../core/index.js";
 import { testSimpleTrees } from "../../testTrees.js";

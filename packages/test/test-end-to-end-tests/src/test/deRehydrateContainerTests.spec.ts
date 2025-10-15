@@ -36,7 +36,7 @@ import {
 } from "@fluidframework/test-utils/internal";
 import * as semver from "semver";
 
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { SnapshotWithBlobs } from "../../../../loader/container-loader/lib/serializedStateManager.js";
 import { pkgVersion } from "../packageVersion.js";
 

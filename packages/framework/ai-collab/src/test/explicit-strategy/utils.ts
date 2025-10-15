@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { OpenAI, AzureOpenAI } from "openai";
 

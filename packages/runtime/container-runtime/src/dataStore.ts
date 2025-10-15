@@ -11,7 +11,7 @@ import type {
 	AliasResult,
 	IDataStore,
 	IFluidDataStoreChannel,
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	IContainerRuntimeBaseExperimental,
 } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -80,7 +80,7 @@ class DataStore implements IDataStore {
 		if (alias.includes("/")) {
 			throw new UsageError(`The alias cannot contain slashes: '${alias}'`);
 		}
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated
 		const runtime = this.parentContext.containerRuntime as IContainerRuntimeBaseExperimental;
 		if (runtime.inStagingMode === true) {
 			throw new UsageError("Cannot set aliases while in staging mode");
