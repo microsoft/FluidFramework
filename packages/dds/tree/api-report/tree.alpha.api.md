@@ -437,6 +437,9 @@ TSchema
 // @public
 export type InsertableTypedNode<TSchema extends TreeNodeSchema, T = UnionToIntersection<TSchema>> = (T extends TreeNodeSchema<string, NodeKind, TreeNode | TreeLeafValue, never, true> ? NodeBuilderData<T> : never) | (T extends TreeNodeSchema ? Unhydrated<TreeNode extends NodeFromSchema<T> ? never : NodeFromSchema<T>> : never);
 
+// @alpha
+export function instantiateTreeFirstTime<TSchema extends ImplicitFieldSchema>(rootCreator: SharedObjectCreator, creator: SharedObjectCreator, treeKind: SharedObjectKey<ITree>, options: Pick<TreeDataStoreOptions<TSchema>, "config" | "initializer">): Promise<ITree>;
+
 // @public @sealed
 export interface InternalTreeNode extends ErasedType<"@fluidframework/tree.InternalTreeNode"> {
 }
@@ -1446,6 +1449,18 @@ export interface TreeChangeEventsBeta<TNode extends TreeNode = TreeNode> extends
 export enum TreeCompressionStrategy {
     Compressed = 0,
     Uncompressed = 1
+}
+
+// @alpha
+export function treeDataStoreKind<const TSchema extends ImplicitFieldSchema>(options: TreeDataStoreOptions<TSchema>): DataStoreKind<TreeView<TSchema>>;
+
+// @alpha @input
+export interface TreeDataStoreOptions<TSchema extends ImplicitFieldSchema> extends Pick<DataStoreOptions<never, never>, "type"> {
+    readonly config: TreeViewConfiguration<TSchema>;
+    readonly initializer?: (creator: SharedObjectCreator) => InsertableTreeFieldFromImplicitField<TSchema>;
+    // (undocumented)
+    readonly key?: SharedObjectKey<ITree>;
+    readonly registry?: Iterable<SharedObjectKind<IFluidLoadable>> | SharedObjectRegistry;
 }
 
 // @beta @input
