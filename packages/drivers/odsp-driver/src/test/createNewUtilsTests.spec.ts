@@ -754,30 +754,30 @@ describe("Create New Utils Tests", () => {
 			assert.strictEqual(attemptCount, 3, "Should have been called three times");
 
 			// Verify telemetry shows the retry pattern
-            logger.assertMatch([
-                {
-                    eventName: "createNewModuleLoaded",
-                    attempt: 1,
-                },
-                {
-                    eventName: "createNewModuleImportRetry",
-                    attempt: 1,
-                    maxRetries: 3,
-                },
-                {
-                    eventName: "createNewModuleLoaded",
-                    attempt: 2,
-                },
-                {
-                    eventName: "createNewModuleImportRetry",
-                    attempt: 2,
-                    maxRetries: 3,
-                },
-                {
-                    eventName: "createNewModuleLoaded",
-                    attempt: 3,
-                },
-            ]);
+			logger.assertMatch([
+				{
+					eventName: "createNewModuleLoaded",
+					attempt: 1,
+				},
+				{
+					eventName: "createNewModuleImportRetry",
+					attempt: 1,
+					maxRetries: 3,
+				},
+				{
+					eventName: "createNewModuleLoaded",
+					attempt: 2,
+				},
+				{
+					eventName: "createNewModuleImportRetry",
+					attempt: 2,
+					maxRetries: 3,
+				},
+				{
+					eventName: "createNewModuleLoaded",
+					attempt: 3,
+				},
+			]);
 		});
 
 		it("Should fail after max retries are exhausted", async () => {
