@@ -6524,7 +6524,7 @@ importers:
         specifier: ^0.58.3
         version: 0.58.3(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^6.1.0
+        specifier: ~6.1.0
         version: 6.1.0(eslint@8.57.1)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.52.11
