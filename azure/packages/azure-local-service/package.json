@@ -36,7 +36,6 @@
 		"@fluidframework/build-tools": "^0.58.3",
 		"@fluidframework/eslint-config-fluid": "^6.0.0",
 		"eslint": "~8.55.0",
-		"eslint-config-prettier": "~9.0.0",
 		"pm2": "^5.4.2",
 		"rimraf": "^4.4.0"
 	},
