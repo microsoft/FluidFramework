@@ -51,9 +51,35 @@ export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
 }
 
 // @beta @legacy
-export abstract class DataObject<I extends DataObjectTypes = DataObjectTypes> extends PureDataObject<I> {
-    protected getUninitializedErrorString(item: string): string;
-    initializeInternal(existing: boolean): Promise<void>;
+export interface CreateDataObjectProps<TObj extends PureDataObject, I extends DataObjectTypes> {
+    // (undocumented)
+    context: IFluidDataStoreContext;
+    // (undocumented)
+    ctor: new (props: IDataObjectProps<I>) => TObj;
+    // (undocumented)
+    existing: boolean;
+    // (undocumented)
+    initialState?: I["InitialState"];
+    // (undocumented)
+    optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>;
+    // (undocumented)
+    policies?: Partial<IFluidDataStorePolicies>;
+    // (undocumented)
+    runtimeClassArg: typeof FluidDataStoreRuntime;
+    // (undocumented)
+    sharedObjectRegistry: ISharedObjectRegistry;
+}
+
+// @beta @legacy
+export abstract class DataObject<I extends DataObjectTypes = DataObjectTypes> extends MigrationDataObject<RootDirectoryView, I> {
+    // (undocumented)
+    protected asyncGetDataForMigration(existingModel: RootDirectoryView): Promise<never>;
+    // (undocumented)
+    protected canPerformMigration(): Promise<boolean>;
+    // (undocumented)
+    protected getModelDescriptors(): Promise<readonly [ModelDescriptor<RootDirectoryView>, ...ModelDescriptor<RootDirectoryView>[]]>;
+    // (undocumented)
+    protected migrateDataObject(newModel: RootDirectoryView, data: never): void;
     protected get root(): ISharedDirectory;
 }
 
@@ -65,6 +91,7 @@ export class DataObjectFactory<TObj extends DataObject<I>, I extends DataObjectT
 
 // @beta @legacy
 export interface DataObjectFactoryProps<TObj extends PureDataObject<I>, I extends DataObjectTypes = DataObjectTypes> {
+    readonly afterBindRuntime?: (runtime: IFluidDataStoreChannel) => Promise<void>;
     readonly ctor: new (props: IDataObjectProps<I>) => TObj;
     readonly optionalProviders?: FluidObjectSymbolProvider<I["OptionalProviders"]>;
     readonly policies?: Partial<IFluidDataStorePolicies>;
@@ -91,6 +118,66 @@ export interface IDataObjectProps<I extends DataObjectTypes = DataObjectTypes> {
     readonly providers: AsyncFluidObjectProvider<I["OptionalProviders"]>;
     // (undocumented)
     readonly runtime: IFluidDataStoreRuntime;
+}
+
+// @beta @legacy
+export interface IDelayLoadChannelFactory<T = unknown> extends IChannelFactory<T> {
+    // (undocumented)
+    createAsync(runtime: IFluidDataStoreRuntime, id?: string): Promise<T>;
+    // (undocumented)
+    loadObjectKindAsync(): Promise<void>;
+}
+
+// @beta @legacy
+export interface IMigrationInfo extends IProvideMigrationInfo {
+    // (undocumented)
+    readonly readyToMigrate: () => Promise<boolean>;
+    readonly tryMigrate: () => Promise<boolean>;
+}
+
+// @beta @legacy
+export interface IProvideMigrationInfo extends FluidObject {
+    IMigrationInfo?: IMigrationInfo | undefined;
+}
+
+// @beta @legacy
+export abstract class MigrationDataObject<TUniversalView, I extends DataObjectTypes = DataObjectTypes, TMigrationData = never> extends PureDataObject<I> implements IProvideMigrationInfo {
+    protected abstract asyncGetDataForMigration(existingModel: TUniversalView): Promise<TMigrationData>;
+    protected abstract canPerformMigration(): Promise<boolean>;
+    get dataModel(): {
+        descriptor: ModelDescriptor<TUniversalView>;
+        view: TUniversalView;
+    } | undefined;
+    protected abstract getModelDescriptors(): Promise<readonly [ModelDescriptor<TUniversalView>, ...ModelDescriptor<TUniversalView>[]]>;
+    protected getUninitializedErrorString(item: string): string;
+    // (undocumented)
+    get IMigrationInfo(): IMigrationInfo | undefined;
+    // (undocumented)
+    initializeInternal(existing: boolean): Promise<void>;
+    // (undocumented)
+    migrate(): Promise<void>;
+    protected abstract migrateDataObject(newModel: TUniversalView, data: TMigrationData): void;
+    // (undocumented)
+    shouldMigrateBeforeInitialized(): Promise<boolean>;
+}
+
+// @beta @legacy
+export class MigrationDataObjectFactory<TObj extends MigrationDataObject<TUniversalView, I, TMigrationData>, TUniversalView, I extends DataObjectTypes = DataObjectTypes, TMigrationData = never> extends PureDataObjectFactory<TObj, I> {
+    constructor(props: DataObjectFactoryProps<TObj, I>, modelDescriptors: readonly ModelDescriptor<TUniversalView>[]);
+}
+
+// @beta @legacy
+export interface ModelDescriptor<TModel = unknown> {
+    create: (runtime: IFluidDataStoreRuntime) => TModel;
+    ensureFactoriesLoaded: () => Promise<void>;
+    // (undocumented)
+    is?: (m: unknown) => m is TModel;
+    // (undocumented)
+    probe: (runtime: IFluidDataStoreRuntime) => Promise<TModel | undefined>;
+    sharedObjects: {
+        alwaysLoaded?: IChannelFactory[];
+        delayLoaded?: IDelayLoadChannelFactory[];
+    };
 }
 
 // @beta @legacy
@@ -122,6 +209,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends DataObjectTypes = DataObjectTypes> implements IFluidDataStoreFactory, Partial<IProvideFluidDataStoreRegistry> {
     constructor(type: string, ctor: new (props: IDataObjectProps<I>) => TObj, sharedObjects?: readonly IChannelFactory[], optionalProviders?: FluidObjectSymbolProvider<I["OptionalProviders"]>, registryEntries?: NamedFluidDataStoreRegistryEntries, runtimeClass?: typeof FluidDataStoreRuntime);
     constructor(props: DataObjectFactoryProps<TObj, I>);
+    readonly afterBindRuntime?: (runtime: IFluidDataStoreChannel) => Promise<void>;
     createChildInstance(parentContext: IFluidDataStoreContext, initialState?: I["InitialState"], loadingGroupId?: string): Promise<TObj>;
     createInstance(runtime: IContainerRuntimeBase, initialState?: I["InitialState"], loadingGroupId?: string): Promise<TObj>;
     // (undocumented)
@@ -135,14 +223,34 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
     get IFluidDataStoreFactory(): this;
     get IFluidDataStoreRegistry(): IFluidDataStoreRegistry | undefined;
     instantiateDataStore(context: IFluidDataStoreContext, existing: boolean): Promise<IFluidDataStoreChannel>;
+    // (undocumented)
+    protected observeCreateDataObject(createProps: CreateDataObjectProps<TObj, I>): Promise<void>;
     get registryEntry(): NamedFluidDataStoreRegistryEntry;
     readonly type: string;
 }
 
 // @beta @legacy
-export abstract class TreeDataObject<TDataObjectTypes extends DataObjectTypes = DataObjectTypes> extends PureDataObject<TDataObjectTypes> {
+export interface RootDirectoryView {
     // (undocumented)
-    initializeInternal(existing: boolean): Promise<void>;
+    root: ISharedDirectory;
+}
+
+// @beta @legacy
+export interface RootTreeView {
+    // (undocumented)
+    tree: ITree_2;
+}
+
+// @beta @legacy
+export abstract class TreeDataObject<TDataObjectTypes extends DataObjectTypes = DataObjectTypes> extends MigrationDataObject<RootTreeView, TDataObjectTypes> {
+    // (undocumented)
+    protected asyncGetDataForMigration(existingModel: RootTreeView): Promise<never>;
+    // (undocumented)
+    protected canPerformMigration(): Promise<boolean>;
+    // (undocumented)
+    protected getModelDescriptors(): Promise<readonly [ModelDescriptor<RootTreeView>, ...ModelDescriptor<RootTreeView>[]]>;
+    // (undocumented)
+    protected migrateDataObject(newModel: RootTreeView, data: never): void;
     protected get tree(): ITree_2;
 }
 
