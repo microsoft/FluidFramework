@@ -11,7 +11,19 @@ export type Arg<T extends z.ZodTypeAny = z.ZodTypeAny> = readonly [name: string,
 export type ArgsTuple<T extends readonly Arg[]> = T extends readonly [infer Single extends Arg] ? [Single[1]] : T extends readonly [infer Head extends Arg, ...infer Tail extends readonly Arg[]] ? [Head[1], ...ArgsTuple<Tail>] : never;
 
 // @alpha
+export type AsynchronousEditor = (context: Record<string, unknown>, code: string) => Promise<void>;
+
+// @alpha
 export type BindableSchema = TreeNodeSchema<string, NodeKind.Object> | TreeNodeSchema<string, NodeKind.Record> | TreeNodeSchema<string, NodeKind.Array> | TreeNodeSchema<string, NodeKind.Map>;
+
+// @alpha
+export const bindEditor: typeof bindEditorImpl;
+
+// @alpha
+export function bindEditorImpl<TSchema extends ImplicitFieldSchema>(tree: TreeView<TSchema> | (ReadableField<TSchema> & TreeNode), editor: SynchronousEditor): (code: string) => void;
+
+// @alpha
+export function bindEditorImpl<TSchema extends ImplicitFieldSchema>(tree: TreeView<TSchema> | (ReadableField<TSchema> & TreeNode), editor: AsynchronousEditor): (code: string) => Promise<void>;
 
 // @alpha
 export function buildFunc<const Return extends z.ZodTypeAny, const Args extends readonly Arg[], const Rest extends z.ZodTypeAny | null = null>(def: {
@@ -24,9 +36,12 @@ export function buildFunc<const Return extends z.ZodTypeAny, const Args extends 
 export type Ctor<T = any> = new (...args: any[]) => T;
 
 // @alpha
+export const defaultEditor: AsynchronousEditor;
+
+// @alpha
 export interface EditResult {
     message: string;
-    type: "success" | "disabledError" | "validationError" | "executionError" | "tooManyEditsError" | "expiredError";
+    type: "success" | "disabledError" | "editingError" | "tooManyEditsError" | "expiredError";
 }
 
 // @alpha
@@ -78,10 +93,9 @@ export type MethodKeys<T> = {
 // @alpha
 export interface SemanticAgentOptions {
     domainHints?: string;
-    executeEdit?: (context: Record<string, unknown>, code: string) => void | Promise<void>;
+    editor?: SynchronousEditor | AsynchronousEditor;
     logger?: Logger;
     maximumSequentialEdits?: number;
-    validateEdit?: (code: string) => void | Promise<void>;
 }
 
 // @alpha
@@ -103,6 +117,9 @@ export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
     constructor(client: SharedTreeChatModel, tree: TreeView<TSchema> | (ReadableField<TSchema> & TreeNode), options?: Readonly<SemanticAgentOptions> | undefined);
     query(userPrompt: string): Promise<string>;
 }
+
+// @alpha
+export type SynchronousEditor = (context: Record<string, unknown>, code: string) => void;
 
 // @alpha
 export type TreeView<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema> = Pick<TreeViewAlpha<TRoot>, "root" | "fork" | "merge" | "rebaseOnto" | "schema" | "events"> & TreeBranch;
