@@ -140,6 +140,10 @@ export class MockBlobStorage
 		return blob;
 	};
 
+	/**
+	 * Waits until at least one blob is available to be created. This is useful to confirm
+	 * the BlobManager is awaiting the upload to complete.
+	 */
 	public readonly waitBlobAvailable = async (): Promise<void> => {
 		if (this.pendingBlobs.length === 0) {
 			return new Promise<void>((resolve) => {
@@ -303,6 +307,10 @@ class MockOrderingService {
 		this.sequenceAll();
 	};
 
+	/**
+	 * Waits until at least one message is available to be sequenced. This is useful to confirm
+	 * the BlobManager is awaiting the attach message's ack.
+	 */
 	public readonly waitMessageAvailable = async (): Promise<void> => {
 		if (this.unprocessedMessages.length === 0) {
 			return new Promise<void>((resolve) => {
