@@ -94,7 +94,7 @@ export function bindHandles<T = unknown>(value: T, bind: IFluidHandle): T {
 	const nodesToProcess: unknown[] = [value];
 	const visitedNodes = new Set<unknown>();
 
-	assert(isISharedObjectHandle(bind), "bind must be an ISharedObjectHandle");
+	assert(isISharedObjectHandle(bind), 0xc85 /* bind must be an ISharedObjectHandle */);
 
 	while (nodesToProcess.length > 0) {
 		const node = nodesToProcess.pop();

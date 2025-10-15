@@ -1,5 +1,86 @@
 # @fluidframework/tree
 
+## 2.63.0
+
+### Minor Changes
+
+- Stabilize allowUnknownOptionalFields to beta [9b89d8f90f8](https://github.com/microsoft/FluidFramework/commit/9b89d8f90f8a4533d3cda786189421f48d6d4bab)
+
+  When constructing object node schema with `SchemaFactoryBeta.object` or `SchemaFactoryBeta.objectRecursive` you can now provide the `allowUnknownOptionalFields` option as well as other `metadata` which were previously only available in `SchemaFactoryAlpha.objectAlpha` and `SchemaFactoryAlpha.objectRecursive`.
+
+  Additionally the alpha interface `SchemaFactoryObjectOptions` has been renamed to `ObjectSchemaOptionsAlpha` to better align with the other related types.
+
+- Alpha APIs for annotated allowed types have been refactored [9b89d8f90f8](https://github.com/microsoft/FluidFramework/commit/9b89d8f90f8a4533d3cda786189421f48d6d4bab)
+
+  Staged allowed types must now be run through `SchemaFactoryAlpha.types` to convert them into an [`AllowedTypes`](https://fluidframework.com/docs/api/tree/allowedtypes-typealias).
+  This change also means that it is now possible to use the produced `AllowedTypesFull` in non-alpha APIs since it implements `AllowedTypes`.
+
+  Reading data out of `ImplicitAllowedTypes` should now be done via `normalizeAllowedTypes` which now returns a `AllowedTypesFull` providing access to all the data in a friendly format.
+
+- Add TreeBeta.create [9b89d8f90f8](https://github.com/microsoft/FluidFramework/commit/9b89d8f90f8a4533d3cda786189421f48d6d4bab)
+
+  Adds `TreeBeta.create`, which is a more stable version of the existing [`TreeAlpha.create`](https://fluidframework.com/docs/api/tree/treealpha-interface#create-methodsignature).
+  The only difference is the new `TreeBeta.create` does not support the `@alpha` [`UnsafeUnknownSchema`](https://fluidframework.com/docs/api/tree/unsafeunknownschema-typealias) option.
+
+- Add SchemaFactoryAlpha.typesRecursive and SchemaFactoryAlpha.stagedRecursive [9b89d8f90f8](https://github.com/microsoft/FluidFramework/commit/9b89d8f90f8a4533d3cda786189421f48d6d4bab)
+
+  With these new APIs, it is now possible to [`stage`](https://fluidframework.com/docs/api/fluid-framework/schemafactoryalpha-class#staged-property) changes to recursive types.
+
+- Add FluidSerializableAsTree domain for representing trees of serializable data (alpha) [9b89d8f90f8](https://github.com/microsoft/FluidFramework/commit/9b89d8f90f8a4533d3cda786189421f48d6d4bab)
+
+  Like [JsonAsTree](https://fluidframework.com/docs/api/tree/jsonastree-namespace/), but also supports [Fluid Handles](https://fluidframework.com/docs/concepts/handles).
+
+- Promote Record node types and factories to beta [9b89d8f90f8](https://github.com/microsoft/FluidFramework/commit/9b89d8f90f8a4533d3cda786189421f48d6d4bab)
+
+  Record tree node schema may now be declared using [SchemaFactoryBeta](https://fluidframework.com/docs/api/tree/schemafactorybeta-class) in addition to [SchemaFactoryAlpha](https://fluidframework.com/docs/api/tree/schemafactoryalpha-class).
+
+- Promote importConcise and exportConcise to beta [9b89d8f90f8](https://github.com/microsoft/FluidFramework/commit/9b89d8f90f8a4533d3cda786189421f48d6d4bab)
+
+  `importConcise` and `exportConcise` were previously available via [TreeAlpha](https://fluidframework.com/docs/api/tree/treealpha-interface).
+  They may now also be accessed via [TreeBeta](https://fluidframework.com/docs/api/tree/treebeta-interface).
+
+  Note that the beta form of `importConcise` does not support [UnsafeUnknownSchema](https://fluidframework.com/docs/api/fluid-framework/unsafeunknownschema-typealias).
+
+- MinimumVersionForCollab is now used in place of tree's alpha FluidClientVersion [9b89d8f90f8](https://github.com/microsoft/FluidFramework/commit/9b89d8f90f8a4533d3cda786189421f48d6d4bab)
+
+  `FluidClientVersion`: No longer used as the type for Fluid Client versions in APIs/codecs (for example, `oldestCompatibleClient`).
+  Additionally, `FluidClientVersion` is now a const object with members that declare specific [`MinimumVersionForCollab`](https://fluidframework.com/docs/api/runtime-definitions/minimumversionforcollab-typealias) versions.
+  These are intended to be used with APIs that require a version (such as `TreeAlpha.exportCompressed`).
+
+  `CodecWriteOptions` and `SharedTreeOptions`: `oldestCompatibleClient` has been replaced by `minVersionForCollab`.
+  See migration guide below.
+
+  `TreeAlpha.exportCompressed`: The `options` parameter previously had `oldestCompatibleClient` and now has `minVersionForCollab`.
+  Migrating requires a rename. Existing `FluidClientVersion.*` values are now `MinimumClientVersion`s.
+
+  #### Migrating
+
+  If an application is calling `loadContainerRuntime` directly and previously specified the minimum client version when
+  initializing Shared Tree like:
+
+  ```ts
+      const factory = configuredSharedTree({ ..., oldestCompatibleClient: FluidClientVersion.v2_52 });
+  ```
+
+  Then the new implementation depends on how the application initializes Fluid.
+
+  ##### Applications using `AzureClient`/`OdspClient`
+
+  If an application is using the declarative model (for example, `AzureClient`/`OdspClient`), it should continue to call `configuredSharedTree`
+  but specify `minVersionForCollab` instead:
+
+  ```ts
+      const factory = configuredSharedTree({ ..., minVersionForCollab: "2.52.0" });
+  ```
+
+  ##### Applications calling `loadContainerRuntime`
+
+  If an application is initializing the `ContainerRuntime` directly, it should now specify the `minVersionForCollab` there:
+
+  ```ts
+      const runtime = await loadContainerRuntime({ ..., minVersionForCollab: "2.52.0" });
+  ```
+
 ## 2.62.0
 
 ### Minor Changes

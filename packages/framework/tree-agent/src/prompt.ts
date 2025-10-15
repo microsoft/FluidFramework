@@ -87,6 +87,49 @@ const ${communize(exampleObjectName)} = context.create.${exampleObjectName}({ /*
 // const ${communize(exampleObjectName)} = { /* ...properties... */ };
 \`\`\`\n\n`;
 
+	const reinsertionExplanation = `Once non-primitive data has been removed from the tree (e.g. replaced via assignment, or removed from an array), that data cannot be re-inserted into the tree.
+Instead, it must be deep cloned and recreated.
+${
+	exampleObjectName === undefined
+		? ""
+		: `For example:
+
+\`\`\`javascript
+// Data is removed from the tree:
+const ${communize(exampleObjectName)} = parent.${communize(exampleObjectName)};
+parent.${communize(exampleObjectName)} = undefined;
+// \`${communize(exampleObjectName)}\` cannot be directly re-inserted into the tree - this will throw an error:
+// parent.${communize(exampleObjectName)} = ${communize(exampleObjectName)}; // ❌ A node may not be inserted into the tree more than once
+// Instead, it must be deep cloned and recreated before insertion:
+parent.${communize(exampleObjectName)} = context.create.${exampleObjectName}({ /*... deep clone all properties from \`${communize(exampleObjectName)}\` */ });
+\`\`\`${
+				hasArrays
+					? `\n\nThe same applies when using arrays:\n\`\`\`javascript
+// Data is removed from the tree:
+const item = arrayOf${exampleObjectName}[0];
+arrayOf${exampleObjectName}.removeAt(0);
+// \`item\` cannot be directly re-inserted into the tree - this will throw an error:
+arrayOf${exampleObjectName}.insertAt(0, item); // ❌ A node may not be inserted into the tree more than once
+// Instead, it must be deep cloned and recreated before insertion:
+arrayOf${exampleObjectName}.insertAt(0, context.create.${exampleObjectName}({ /*... deep clone all properties from \`item\` */ }));
+\`\`\``
+					: ""
+			}${
+				hasMaps
+					? `\n\nThe same applies when using maps:
+\`\`\`javascript
+// Data is removed from the tree:
+const value = mapOf${exampleObjectName}.get("someKey");
+mapOf${exampleObjectName}.delete("someKey");
+// \`value\` cannot be directly re-inserted into the tree - this will throw an error:
+mapOf${exampleObjectName}.set("someKey", value); // ❌ A node may not be inserted into the tree more than once
+// Instead, it must be deep cloned and recreated before insertion:
+mapOf${exampleObjectName}.set("someKey", context.create.${exampleObjectName}({ /*... deep clone all properties from \`value\` */ }));
+\`\`\``
+					: ""
+			}`
+}`;
+
 	const arrayEditing = `#### Editing Arrays
 
 The arrays in the tree are somewhat different than normal JavaScript \`Array\`s.
@@ -133,14 +176,13 @@ This \`context\` variable holds the current state of the tree in the \`root\` pr
 You may mutate any part of the root tree as necessary, taking into account the caveats around${hasArrays ? ` arrays${hasMaps ? " and" : ""}` : ""}${hasMaps ? " maps" : ""} detailed below.
 You may also set the \`root\` property of the context to be an entirely new value as long as it is one of the types allowed at the root of the tree (\`${Array.from(rootTypes.values(), (t) => getFriendlyName(t)).join(" | ")}\`).
 ${helperMethodExplanation}
-
 ${hasArrays ? arrayEditing : ""}${hasMaps ? mapEditing : ""}#### Additional Notes
 
 Before outputting the edit function, you should check that it is valid according to both the application tree's schema and any restrictions of the editing APIs described above.
 
-Once data has been removed from the tree (e.g. replaced via assignment, or removed from an array), that data cannot be re-inserted into the tree - instead, it must be deep cloned and recreated.
+${builderExplanation}${reinsertionExplanation}
 
-${builderExplanation}Finally, double check that the edits would accomplish the user's request (if it is possible).
+Finally, double check that the edits would accomplish the user's request (if it is possible).
 
 `;
 
