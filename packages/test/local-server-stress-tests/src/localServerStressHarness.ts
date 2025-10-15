@@ -164,7 +164,7 @@ export interface LocalServerStressModel<TOperation extends BaseOperation> {
 	 * Equivalence validation function, which should verify that the provided clients contain the same data.
 	 * This is run at each synchronization point for all connected clients (as disconnected clients won't
 	 * necessarily have the same set of ops applied).
-	 * @throws - An informative error if the clients don't have equivalent data.
+	 * @throws An informative error if the clients don't have equivalent data.
 	 */
 	validateConsistency: (clientA: Client, clientB: Client) => void | Promise<void>;
 
@@ -642,7 +642,7 @@ const hasSelectedClientSpec = (op: unknown): op is SelectedClientSpec =>
 /**
  * Mixes in the ability to select a client to perform an operation on.
  * Makes this available to existing generators and reducers in the passed-in model via {@link LocalServerStressState.client}
- * and {@link  @fluid-private/test-dds-utils#LocalServerStressTestState.channel}.
+ * and \@fluid-private/test-dds-utils#LocalServerStressTestState.channel.
  *
  * @remarks This exists purely for convenience, as "pick a client to perform an operation on" is a common concern.
  * @privateRemarks This is currently file-exported for testing purposes, but it could be reasonable to
