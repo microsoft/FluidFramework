@@ -712,4 +712,158 @@ describe("Create New Utils Tests", () => {
 			);
 		});
 	});
+	describe("useCreateNewModule retry and timeout logic", () => {
+		it("Should succeed on first attempt when module loads quickly", async () => {
+			const logger = new MockLogger();
+			const childLogger = createChildLogger({ logger });
+
+			const result = await useCreateNewModule(childLogger, async (module) => {
+				assert(module !== undefined, "Module should be loaded");
+				return "success";
+			});
+
+			assert.strictEqual(result, "success", "Should return the expected result");
+
+			// Verify telemetry was logged for successful load on first attempt
+			logger.assertMatch([
+				{
+					eventName: "createNewModuleLoaded",
+					attempt: 1,
+				},
+			]);
+		});
+
+		it("Should retry when func throws an error and eventually succeed", async () => {
+			const logger = new MockLogger();
+			const childLogger = createChildLogger({ logger });
+			let attemptCount = 0;
+
+			const result = await useCreateNewModule(childLogger, async (module) => {
+				assert(module !== undefined, "Module should be loaded");
+				attemptCount++;
+
+				// Fail on first attempt, succeed on second
+				if (attemptCount < 3) {
+					throw new Error("First attempt failed");
+				}
+
+				return "success after retry";
+			});
+
+			assert.strictEqual(result, "success after retry", "Should return the expected result");
+			assert.strictEqual(attemptCount, 3, "Should have been called three times");
+
+			// Verify telemetry shows the retry pattern
+            logger.assertMatch([
+                {
+                    eventName: "createNewModuleLoaded",
+                    attempt: 1,
+                },
+                {
+                    eventName: "createNewModuleImportRetry",
+                    attempt: 1,
+                    maxRetries: 3,
+                },
+                {
+                    eventName: "createNewModuleLoaded",
+                    attempt: 2,
+                },
+                {
+                    eventName: "createNewModuleImportRetry",
+                    attempt: 2,
+                    maxRetries: 3,
+                },
+                {
+                    eventName: "createNewModuleLoaded",
+                    attempt: 3,
+                },
+            ]);
+		});
+
+		it("Should fail after max retries are exhausted", async () => {
+			const logger = new MockLogger();
+			const childLogger = createChildLogger({ logger });
+			let attemptCount = 0;
+
+			await assert.rejects(
+				async () =>
+					useCreateNewModule(childLogger, async (module) => {
+						assert(module !== undefined, "Module should be loaded");
+						attemptCount++;
+						throw new Error("Persistent failure");
+					}),
+				(error: Error) => {
+					assert.strictEqual(error.message, "Persistent failure");
+					return true;
+				},
+				"Should throw after exhausting retries",
+			);
+
+			// With current implementation we try 3 times
+			assert.strictEqual(attemptCount, 3, "Should have attempted exactly 3 times");
+
+			// Verify error telemetry was logged
+			const errorEvents = logger.events.filter(
+				(e) => e.eventName === "createNewModuleLoadFailed",
+			);
+			assert.strictEqual(errorEvents.length, 1, "Should log error event once");
+		});
+
+		it("Should handle errors with proper telemetry on each retry", async () => {
+			const logger = new MockLogger();
+			const childLogger = createChildLogger({ logger });
+			let attemptCount = 0;
+			const errors = ["Error 1"];
+
+			const result = await useCreateNewModule(childLogger, async (module) => {
+				assert(module !== undefined, "Module should be loaded");
+
+				if (attemptCount < errors.length) {
+					const error = new Error(errors[attemptCount]);
+					attemptCount++;
+					throw error;
+				}
+
+				attemptCount++;
+				return "success after retry";
+			});
+
+			assert.strictEqual(result, "success after retry");
+			assert.strictEqual(attemptCount, 2, "Should have retried once");
+
+			// Check that retry telemetry includes error messages
+			const retryEvents = logger.events.filter(
+				(e) => e.eventName === "createNewModuleImportRetry",
+			);
+			assert.strictEqual(retryEvents.length, 1, "Should have one retry event");
+			assert.strictEqual(
+				retryEvents[0].error,
+				"Error 1",
+				"Retry should log the error message",
+			);
+		});
+
+		it("Should include attempt number in success telemetry", async () => {
+			const logger = new MockLogger();
+			const childLogger = createChildLogger({ logger });
+			let callCount = 0;
+
+			await useCreateNewModule(childLogger, async (module) => {
+				callCount++;
+				if (callCount === 1) {
+					throw new Error("Retry once");
+				}
+				return "success";
+			});
+
+			const successEvents = logger.events.filter(
+				(e) => e.eventName === "createNewModuleLoaded",
+			);
+
+			// Should have 2 load events (first failed in func, second succeeded)
+			assert.strictEqual(successEvents.length, 2, "Should have logged module loaded twice");
+			assert.strictEqual(successEvents[0].attempt, 1, "First attempt should be 1");
+			assert.strictEqual(successEvents[1].attempt, 2, "Second attempt should be 2");
+		});
+	});
 });
