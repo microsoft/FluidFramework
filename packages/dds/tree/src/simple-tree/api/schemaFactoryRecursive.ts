@@ -283,6 +283,6 @@ export function allowUnused<T>(t?: T): void {}
  * }
  * ```
  *
- * @alpha
+ * @beta
  */
 export type FixRecursiveArraySchema<T> = T extends TreeNodeSchema ? undefined : undefined;
