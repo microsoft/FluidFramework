@@ -602,7 +602,7 @@ export async function getLatestSnapshotInfo(
  * @returns An ISnapshotTree and its version.
  */
 async function getSnapshot(
-/* eslint-enable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag */
+	/* eslint-enable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag */
 	mc: MonitoringContext,
 	storageAdapter: Pick<
 		IDocumentStorageService,
