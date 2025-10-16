@@ -810,6 +810,7 @@ export class Container
 		validateDriverCompatibility(
 			maybeDriverCompatDetails.ILayerCompatDetails,
 			(error) => {} /* disposeFn */, // There is nothing to dispose here, so just ignore the error.
+			subLogger,
 		);
 
 		this.connectionTransitionTimes[ConnectionState.Disconnected] = performanceNow();
@@ -2481,7 +2482,10 @@ export class Container
 
 			// Validate that the Runtime is compatible with this Loader.
 			const maybeRuntimeCompatDetails = runtime as FluidObject<ILayerCompatDetails>;
-			validateRuntimeCompatibility(maybeRuntimeCompatDetails.ILayerCompatDetails);
+			validateRuntimeCompatibility(
+				maybeRuntimeCompatDetails.ILayerCompatDetails,
+				this.mc.logger,
+			);
 
 			this._runtime = runtime;
 			this._lifecycleEvents.emit("runtimeInstantiated");

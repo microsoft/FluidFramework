@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import {
-	checkLayerCompatibility,
-	type ILayerCompatDetails,
-	type ILayerCompatSupportRequirements,
+import type {
+	ILayerCompatDetails,
+	ILayerCompatSupportRequirements,
 } from "@fluid-internal/client-utils";
 import type { ICriticalContainerError } from "@fluidframework/container-definitions";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { validateLayerCompatibility } from "@fluidframework/telemetry-utils/internal";
 
 import { pkgVersion } from "./packageVersion.js";
 
@@ -78,25 +78,17 @@ export const driverSupportRequirementsForLoader: ILayerCompatSupportRequirements
  */
 export function validateRuntimeCompatibility(
 	maybeRuntimeCompatDetails: ILayerCompatDetails | undefined,
+	logger: ITelemetryBaseLogger,
 ): void {
-	const layerCheckResult = checkLayerCompatibility(
+	validateLayerCompatibility(
+		"loader",
+		"runtime",
+		loaderCompatDetailsForRuntime,
 		runtimeSupportRequirementsForLoader,
 		maybeRuntimeCompatDetails,
+		() => {} /* disposeFn - no op. This will be handled by the caller */,
+		logger,
 	);
-	if (!layerCheckResult.isCompatible) {
-		const error = new UsageError("Loader is not compatible with Runtime", {
-			errorDetails: JSON.stringify({
-				loaderVersion: loaderCompatDetailsForRuntime.pkgVersion,
-				runtimeVersion: maybeRuntimeCompatDetails?.pkgVersion,
-				loaderGeneration: loaderCompatDetailsForRuntime.generation,
-				runtimeGeneration: maybeRuntimeCompatDetails?.generation,
-				minSupportedGeneration: runtimeSupportRequirementsForLoader.minSupportedGeneration,
-				isGenerationCompatible: layerCheckResult.isGenerationCompatible,
-				unsupportedFeatures: layerCheckResult.unsupportedFeatures,
-			}),
-		});
-		throw error;
-	}
 }
 
 /**
@@ -106,24 +98,15 @@ export function validateRuntimeCompatibility(
 export function validateDriverCompatibility(
 	maybeDriverCompatDetails: ILayerCompatDetails | undefined,
 	disposeFn: (error?: ICriticalContainerError) => void,
+	logger: ITelemetryBaseLogger,
 ): void {
-	const layerCheckResult = checkLayerCompatibility(
+	validateLayerCompatibility(
+		"loader",
+		"driver",
+		loaderCompatDetailsForRuntime,
 		driverSupportRequirementsForLoader,
 		maybeDriverCompatDetails,
+		disposeFn,
+		logger,
 	);
-	if (!layerCheckResult.isCompatible) {
-		const error = new UsageError("Loader is not compatible with Driver", {
-			errorDetails: JSON.stringify({
-				loaderVersion: loaderCoreCompatDetails.pkgVersion,
-				driverVersion: maybeDriverCompatDetails?.pkgVersion,
-				loaderGeneration: loaderCoreCompatDetails.generation,
-				driverGeneration: maybeDriverCompatDetails?.generation,
-				minSupportedGeneration: driverSupportRequirementsForLoader.minSupportedGeneration,
-				isGenerationCompatible: layerCheckResult.isGenerationCompatible,
-				unsupportedFeatures: layerCheckResult.unsupportedFeatures,
-			}),
-		});
-		disposeFn(error);
-		throw error;
-	}
 }
