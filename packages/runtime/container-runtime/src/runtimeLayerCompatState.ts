@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import {
-	checkLayerCompatibility,
-	type ILayerCompatDetails,
-	type ILayerCompatSupportRequirements,
+import type {
+	ILayerCompatDetails,
+	ILayerCompatSupportRequirements,
 } from "@fluid-internal/client-utils";
 import type { ICriticalContainerError } from "@fluidframework/container-definitions";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces/internal";
 import {
 	encodeHandlesInContainerRuntime,
 	notifiesReadOnlyState,
 } from "@fluidframework/runtime-definitions/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { validateLayerCompatibility } from "@fluidframework/telemetry-utils/internal";
 
 import { pkgVersion } from "./packageVersion.js";
 
@@ -95,26 +95,17 @@ export const dataStoreSupportRequirementsForRuntime: ILayerCompatSupportRequirem
 export function validateLoaderCompatibility(
 	maybeLoaderCompatDetailsForRuntime: ILayerCompatDetails | undefined,
 	disposeFn: (error?: ICriticalContainerError) => void,
+	logger: ITelemetryBaseLogger,
 ): void {
-	const layerCheckResult = checkLayerCompatibility(
+	validateLayerCompatibility(
+		"runtime",
+		"loader",
+		runtimeCompatDetailsForLoader,
 		loaderSupportRequirementsForRuntime,
 		maybeLoaderCompatDetailsForRuntime,
+		disposeFn,
+		logger,
 	);
-	if (!layerCheckResult.isCompatible) {
-		const error = new UsageError("Runtime is not compatible with Loader", {
-			errorDetails: JSON.stringify({
-				runtimeVersion: runtimeCoreCompatDetails.pkgVersion,
-				loaderVersion: maybeLoaderCompatDetailsForRuntime?.pkgVersion,
-				runtimeGeneration: runtimeCoreCompatDetails.generation,
-				loaderGeneration: maybeLoaderCompatDetailsForRuntime?.generation,
-				minSupportedGeneration: loaderSupportRequirementsForRuntime.minSupportedGeneration,
-				isGenerationCompatible: layerCheckResult.isGenerationCompatible,
-				unsupportedFeatures: layerCheckResult.unsupportedFeatures,
-			}),
-		});
-		disposeFn(error);
-		throw error;
-	}
 }
 
 /**
@@ -122,26 +113,17 @@ export function validateLoaderCompatibility(
  * @internal
  */
 export function validateDatastoreCompatibility(
-	maybeDataStoreCompatDetails: ILayerCompatDetails | undefined,
+	maybeDataStoreCompatDetailsForRuntime: ILayerCompatDetails | undefined,
 	disposeFn: () => void,
+	logger: ITelemetryBaseLogger,
 ): void {
-	const layerCheckResult = checkLayerCompatibility(
+	validateLayerCompatibility(
+		"runtime",
+		"datastore",
+		runtimeCompatDetailsForDataStore,
 		dataStoreSupportRequirementsForRuntime,
-		maybeDataStoreCompatDetails,
+		maybeDataStoreCompatDetailsForRuntime,
+		disposeFn,
+		logger,
 	);
-	if (!layerCheckResult.isCompatible) {
-		const error = new UsageError("Runtime is not compatible with DataStore", {
-			errorDetails: JSON.stringify({
-				runtimeVersion: runtimeCoreCompatDetails.pkgVersion,
-				dataStoreVersion: maybeDataStoreCompatDetails?.pkgVersion,
-				runtimeGeneration: runtimeCoreCompatDetails.generation,
-				dataStoreGeneration: maybeDataStoreCompatDetails?.generation,
-				minSupportedGeneration: dataStoreSupportRequirementsForRuntime.minSupportedGeneration,
-				isGenerationCompatible: layerCheckResult.isGenerationCompatible,
-				unsupportedFeatures: layerCheckResult.unsupportedFeatures,
-			}),
-		});
-		disposeFn();
-		throw error;
-	}
 }

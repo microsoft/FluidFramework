@@ -325,11 +325,6 @@ export class FluidDataStoreRuntime
 
 		this.policies = { ...defaultPolicies, ...policies };
 
-		// Validate that the Runtime is compatible with this DataStore.
-		const { ILayerCompatDetails: runtimeCompatDetails } =
-			dataStoreContext as FluidObject<ILayerCompatDetails>;
-		validateRuntimeCompatibility(runtimeCompatDetails, this.dispose.bind(this));
-
 		if (contextSupportsFeature(dataStoreContext, notifiesReadOnlyState)) {
 			this._readonly = dataStoreContext.isReadOnly();
 		} else {
@@ -353,6 +348,15 @@ export class FluidDataStoreRuntime
 				all: { dataStoreId: uuid(), dataStoreVersion: pkgVersion },
 			},
 		});
+
+		// Validate that the Runtime is compatible with this DataStore.
+		const { ILayerCompatDetails: runtimeCompatDetails } =
+			dataStoreContext as FluidObject<ILayerCompatDetails>;
+		validateRuntimeCompatibility(
+			runtimeCompatDetails,
+			this.dispose.bind(this),
+			this.mc.logger,
+		);
 
 		this.id = dataStoreContext.id;
 		this.options = dataStoreContext.options;
