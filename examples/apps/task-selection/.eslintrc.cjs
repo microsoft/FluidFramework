@@ -5,9 +5,12 @@
 
 module.exports = {
 	extends: [
-		require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated"),
+		require.resolve("@fluidframework/eslint-config-fluid"),
 		"prettier",
 		"../../.eslintrc.cjs",
 	],
-	rules: {},
+	rules: {
+		"@typescript-eslint/explicit-function-return-type": "off",
+		"@typescript-eslint/explicit-module-boundary-types": "off",
+	},
 };
