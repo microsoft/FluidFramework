@@ -16,27 +16,22 @@ export async function useCreateNewModule<T = void>(
 	// while only happens once in lifetime of a document which happens in the background after creation of
 	// detached container.
 
-	const maxRetries = 3;
-	const retryDelayMs = 50; // 50ms delay between retries
+	const maxRetries = 2;
+	const retryDelayMs = 50; // 50 ms delay between retries
+	// eslint-disable-next-line @typescript-eslint/consistent-type-imports
+	let module: typeof import("./createNewModule.js") | undefined;
 
 	for (let attempt = 1; attempt <= maxRetries; attempt++) {
-		try {
-			// Add delay before retry attempts (not on first attempt)
-			if (attempt > 1) {
-				await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
-			}
-
-			// Import the module
-			const module = await import(
-				/* webpackChunkName: "createNewModule" */ "./createNewModule.js"
-			);
-			odspLogger.sendTelemetryEvent({ eventName: "createNewModuleLoaded", attempt });
-
-			// Execute the function with the successfully imported module
-			// Business logic errors will propagate naturally without retry
-			return await func(module);
-		} catch (error) {
-			if (attempt < maxRetries) {
+		// Add delay before retry attempts (not on first attempt)
+		if (attempt > 1) {
+			await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
+		}
+		module = await import(/* webpackChunkName: "createNewModule" */ "./createNewModule.js")
+			.then((m) => {
+				odspLogger.sendTelemetryEvent({ eventName: "createNewModuleLoaded", attempt });
+				return m;
+			})
+			.catch((error) => {
 				odspLogger.sendTelemetryEvent(
 					{
 						eventName: "createNewModuleImportRetry",
@@ -45,21 +40,25 @@ export async function useCreateNewModule<T = void>(
 					},
 					error,
 				);
-			} else {
-				// Final attempt failed
-				odspLogger.sendErrorEvent(
-					{
-						eventName: "createNewModuleLoadFailed",
-						attempt,
-						maxRetries,
-					},
-					error,
-				);
-				throw error;
-			}
+				return undefined;
+			});
+		if (module) {
+			break;
 		}
 	}
 
-	// This should never be reached, but TypeScript needs it for type safety
-	throw new Error("Module import failed after all retry attempts");
+	if (!module) {
+		const error = new Error("Failed to load createNewModule");
+		// Final attempt failed
+		odspLogger.sendErrorEvent(
+			{
+				eventName: "createNewModuleLoadFailed",
+				maxRetries,
+			},
+			error,
+		);
+		throw error;
+	}
+
+	return func(module);
 }
