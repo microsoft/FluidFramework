@@ -42,7 +42,7 @@ export interface Transactor {
 	 * If a transaction is already in progress when this new transaction starts, then this transaction will be "nested" inside of it,
 	 * i.e. the outer transaction will still be in progress after this new transaction is committed or aborted.
 	 *
-	 * @remarks - Asynchronous transactions are not supported on the root checkout,
+	 * @remarks Asynchronous transactions are not supported on the root checkout,
 	 * since it is always kept up-to-date with the latest remote edits and the results of this rebasing (which might invalidate
 	 * the transaction) is not visible to the application author.
 	 * Instead,
