@@ -1976,8 +1976,8 @@ export class ModularChangeFamily
 	}
 
 	/**
-	 * Asserts that each child and cross field key in each field has a correct entry in
-	 * `nodeToParent` or `crossFieldKeyTable`.
+	 * Asserts that each node has a correct entry in `change.nodeToParent`,
+	 * and each cross field key has a correct entry in `change.crossFieldKeys`.
 	 * @returns the number of children found.
 	 */
 	private validateFieldChanges(
@@ -3191,17 +3191,26 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 				undefined,
 			);
 
-			for (const rootLocationEntry of this.table.baseChange.rootNodes.detachLocations.getAll2(
+			const baseRootIdEntry = firstDetachIdFromAttachId(
+				this.table.baseChange.rootNodes,
 				baseAttachId,
-				detachEntry.length,
-			)) {
-				this.table.composedRootNodes.detachLocations.set(
-					offsetChangeAtomId(baseAttachId, rootLocationEntry.offset),
-					rootLocationEntry.length,
-					rootLocationEntry.value ?? this.fieldId,
-				);
-			}
+				countToProcess,
+			);
+			countToProcess = baseRootIdEntry.length;
 
+			const baseDetachId = baseRootIdEntry.value;
+
+			const baseDetachLocationEntry = this.table.baseChange.rootNodes.detachLocations.getFirst(
+				baseDetachId,
+				countToProcess,
+			);
+			countToProcess = baseDetachLocationEntry.length;
+
+			this.table.composedRootNodes.outputDetachLocations.set(
+				baseDetachId,
+				countToProcess,
+				this.fieldId,
+			);
 			this.table.removedCrossFieldKeys.set(
 				{ ...newDetachId, target: CrossFieldTarget.Source },
 				countToProcess,
