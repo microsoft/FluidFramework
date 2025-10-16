@@ -16,7 +16,7 @@ export async function useCreateNewModule<T = void>(
 	// while only happens once in lifetime of a document which happens in the background after creation of
 	// detached container.
 
-	const maxRetries = 2;
+	const maxRetries = 3;
 	const retryDelayMs = 50; // 50 ms delay between retries
 	// eslint-disable-next-line @typescript-eslint/consistent-type-imports
 	let module: typeof import("./createNewModule.js") | undefined;
