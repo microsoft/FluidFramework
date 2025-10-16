@@ -642,8 +642,6 @@ describe("ForestSummarizer", () => {
 					incrementalSummaryContext: incrementalSummaryContext2,
 				});
 
-				// This summary should have the same number of handles as the second summary that failed. Also, the handle
-				// paths must exist in the first summary tree (not the second).
 				validateHandlesInForestSummary(summary2.summary, {
 					shouldContainHandle: true,
 					handleCount: itemsCount - 1,
