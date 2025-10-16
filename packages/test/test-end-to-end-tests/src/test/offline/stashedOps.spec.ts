@@ -1660,23 +1660,27 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 	});
 
-	it.skip("close while uploading multiple blob", async function () {
+	it("close while uploading multiple blob", async function () {
 		const dataStore = (await container1.getEntryPoint()) as ITestFluidObject;
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 		await provider.ensureSynchronized();
 
-		const blobP1 = dataStore.runtime.uploadBlob(stringToBuffer("blob contents 1", "utf8"));
-		const blobP2 = dataStore.runtime.uploadBlob(stringToBuffer("blob contents 2", "utf8"));
-		const blobP3 = dataStore.runtime.uploadBlob(stringToBuffer("blob contents 3", "utf8"));
-		// TODO: This portion was using closeAndGetPendingLocalState - using getPendingLocalState instead to allow compilation
-		// const pendingOpsP = container1.closeAndGetPendingLocalState?.();
-		const pendingOpsP = container1.getPendingLocalState();
-		map.set("blob handle 1", await blobP1);
-		map.set("blob handle 2", await blobP2);
-		map.set("blob handle 3", await blobP3);
-		const pendingOps = await pendingOpsP;
+		const handle1 = await dataStore.runtime.uploadBlob(
+			stringToBuffer("blob contents 1", "utf8"),
+		);
+		const handle2 = await dataStore.runtime.uploadBlob(
+			stringToBuffer("blob contents 2", "utf8"),
+		);
+		const handle3 = await dataStore.runtime.uploadBlob(
+			stringToBuffer("blob contents 3", "utf8"),
+		);
+		map.set("blob handle 1", handle1);
+		map.set("blob handle 2", handle2);
+		map.set("blob handle 3", handle3);
+		const pendingState = await container1.getPendingLocalState();
+		container1.close();
 
-		const container2 = await loader.resolve({ url }, pendingOps);
+		const container2 = await loader.resolve({ url }, pendingState);
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		await provider.ensureSynchronized();
