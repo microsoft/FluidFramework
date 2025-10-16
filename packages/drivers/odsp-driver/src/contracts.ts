@@ -231,7 +231,7 @@ export interface IFlushOpsResponse {
 
 /**
  * Represents the cached snapshot value.
- * @deprecated - This will be replaced with ISnapshotCachedEntry2 which wraps the new ISnapshot interface.
+ * @deprecated This will be replaced with ISnapshotCachedEntry2 which wraps the new ISnapshot interface.
  * For now, to support back compat from cache, we need to keep it for now.
  */
 // eslint-disable-next-line import/no-deprecated
