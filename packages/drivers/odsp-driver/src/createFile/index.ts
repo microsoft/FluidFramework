@@ -17,29 +17,21 @@ export async function useCreateNewModule<T = void>(
 	// detached container.
 
 	const maxRetries = 3;
-	const timeoutMs = 100; // 100ms
-	let lastError: Error;
+	const retryDelayMs = 50; // 50ms delay between retries
+	// eslint-disable-next-line @typescript-eslint/consistent-type-imports
+	let module: typeof import("./createNewModule.js") | undefined;
 
 	for (let attempt = 1; attempt <= maxRetries; attempt++) {
 		try {
-			// Create timeout promise
-			const timeoutPromise = new Promise<never>((_resolve, reject) => {
-				setTimeout(
-					() => reject(new Error(`Import timed out after ${timeoutMs}ms`)),
-					timeoutMs,
-				);
-			});
+			// Add delay before retry attempts (not on first attempt)
+			if (attempt > 1) {
+				await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
+			}
 
-			// Race the import against the timeout
-			const module = await Promise.race([
-				import(/* webpackChunkName: "createNewModule" */ "./createNewModule.js"),
-				timeoutPromise,
-			]).then((m) => {
-				odspLogger.sendTelemetryEvent({ eventName: "createNewModuleLoaded", attempt });
-				return m;
-			});
-
-			return await func(module);
+			// Import the module
+			module = await import(/* webpackChunkName: "createNewModule" */ "./createNewModule.js");
+			odspLogger.sendTelemetryEvent({ eventName: "createNewModuleLoaded", attempt });
+			break; // Import succeeded, exit the loop
 		} catch (error) {
 			odspLogger.sendTelemetryEvent({
 				eventName: "createNewModuleImportRetry",
@@ -55,6 +47,7 @@ export async function useCreateNewModule<T = void>(
 		}
 	}
 
-	// This should never be reached due to the throw in the loop, but TypeScript needs it
-	throw lastError!;
+	// Execute the function with the successfully imported module
+	// Business logic errors will propagate naturally without retry
+	return func(module!);
 }
