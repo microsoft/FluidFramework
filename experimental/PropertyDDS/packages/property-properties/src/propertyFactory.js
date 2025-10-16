@@ -851,8 +851,8 @@ class PropertyFactory {
 	 *
 	 * @param {property-properties.PropertyTemplate|string} in_typeid - typeid of for the property the given
 	 * template/constructor represents
-	 * @param {property-properties.PropertyTemplate|object|property-properties.BaseProperty} in_templateOrProperty -
-	 * Template/native property class to associate with the typeid
+	 * @param {property-properties.PropertyTemplate|object|property-properties.BaseProperty} in_templateOrProperty - Template/native
+	 * property class to associate with the typeid
 	 * @param {string} [in_context='single'] - The context for which the parameter is added (if it is set to all the
 	 * object will be used in all contexts)
 	 */
@@ -1573,8 +1573,8 @@ class PropertyFactory {
 	 *
 	 * @param {string} in_typeid - The type unique identifier
 	 * @param {string} in_id - The id of the property to create
-	 * @param {property-properties.PropertyTemplate|object|property-properties.BaseProperty} in_templateOrConstructor -
-	 * the Template/Property for this in_typeid
+	 * @param {property-properties.PropertyTemplate|object|property-properties.BaseProperty} in_templateOrConstructor - The
+	 * Template/Property for this in_typeid
 	 * @param {string|undefined} in_scope - The scope in which the property typeid is defined
 	 *
 	 * @returns {property-properties.BaseProperty} The property that serves as parent for the properties in the template
@@ -2160,8 +2160,8 @@ class PropertyFactory {
 	 * sessions, when trying out different templates.
 	 *
 	 * @protected
-	 * @param {property-properties.PropertyTemplate|object|property-properties.BaseProperty} in_template -
-	 * The template to reregister
+	 * @param {property-properties.PropertyTemplate|object|property-properties.BaseProperty} in_template - The template
+	 * to reregister.
 	 */
 	_reregister(in_template) {
 		var typeid = in_template.typeid;

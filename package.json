@@ -170,7 +170,7 @@
 		"@fluid-tools/markdown-magic": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.58.3",
-		"@fluidframework/eslint-config-fluid": "^6.0.0",
+		"@fluidframework/eslint-config-fluid": "^6.1.0",
 		"@fluidframework/test-tools": "^1.0.195075",
 		"@microsoft/api-extractor": "7.52.11",
 		"@vvago/vale": "^3.11.2",
@@ -180,7 +180,7 @@
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"danger": "^13.0.4",
-		"eslint": "~8.55.0",
+		"eslint": "~8.57.1",
 		"jest": "^29.6.2",
 		"mocha": "^10.8.2",
 		"puppeteer": "^23.6.0",
@@ -355,6 +355,7 @@
 		"comments": [
 			"node types < 18 are bumped to use the latest 18.x types. Though we don't support 18, old deps that still depend on old type versions will be guaranteed to be working with the correct types for the node version they target.",
 			"nodegit is replaced with an empty package here because it's currently only used by good-fences for features we do not need, and has issues building when changing node versions. See https://github.com/smikula/good-fences/issues/105 for details.",
+			"node types >= 22 are bumped down to 20.x to work around issues with packages using different types.",
 			"codemirror and marked overrides are because simplemde use * versions, and the fully up to date versions of its deps do not work. packageExtensions was tried to fix this, but did not work.",
 			"@fluentui/react-positioning's dependency on @floating-ui/dom causes a peer dependency violation, so overriding it forces a version that meets peer dependency requirements is installed.",
 			"oclif includes some AWS-related features, but we don't use them, so we override those dependencies with empty packages. This helps reduce lockfile churn since the deps release very frequently.",
@@ -362,6 +363,7 @@
 		],
 		"overrides": {
 			"@types/node@<18": "^18.19.0",
+			"@types/node@>=22": "^20.0.0",
 			"good-fences>nodegit": "npm:empty-npm-package@1.0.0",
 			"qs": "^6.11.0",
 			"simplemde>codemirror": "^5.65.11",
