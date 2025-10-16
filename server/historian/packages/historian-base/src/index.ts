@@ -23,6 +23,8 @@ export {
 	type ITenant,
 	type ITenantCustomDataExternal,
 	type ITenantService,
+	type IPostEphemeralContainerChecker,
+	type ICreateGitServiceArgs,
 	RedisCache,
 	RedisTenantCache,
 	RestGitService,
