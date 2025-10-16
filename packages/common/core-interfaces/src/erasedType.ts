@@ -144,24 +144,34 @@ export abstract class ErasedTypeImplementation<
 	}
 
 	/**
-	 * Allows narrowing from TInterface to the internal implementation type via `instanceof`.
+	 * {@link https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates|Type predicate} for narrowing the internal implementation type via `instanceof`.
 	 */
-	public static [Symbol.hasInstance]<
-		TThis extends abstract new (
-			...args: unknown[]
-		) => object,
-	>(this: TThis, value: ErasedBaseType | InstanceType<TThis>): value is InstanceType<TThis> {
-		return Object.prototype.isPrototypeOf.call(this.prototype, value);
+	public static [Symbol.hasInstance]<TThis extends { prototype: object }>(
+		this: TThis,
+		value: unknown,
+	): value is InstanceTypeRelaxed<TThis> {
+		return (
+			typeof value === "object" &&
+			value !== null &&
+			Object.prototype.isPrototypeOf.call(this.prototype, value)
+		);
 	}
 
 	/**
-	 * Narrows from TInterface to the internal implementation type, throwing if the value is not of the correct type.
+	 * {@link https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html#assertion-functions|Type assertion} which narrows from ErasedBaseType to the internal implementation type.
+	 * @remarks
+	 * This does a checked conversion, throwing a `TypeError` if invalid.
+	 *
+	 * It would be safer if this narrowed from `TInterface`, but that is not possible since type parameters can not be accessed in static methods.
+	 * Replacing `ErasedTypeImplementation` with a generic function which returns a non-generic class could be used to work around this limitation if desired.
+	 *
+	 * Derived classes can provide their own customized narrowing function with a more specific types if desired.
 	 */
-	public static narrow<TThis extends abstract new (...args: unknown[]) => object>(
+	public static narrow<TThis extends { prototype: object }>(
 		this: TThis,
-		value: ErasedBaseType | InstanceType<TThis>,
-	): asserts value is InstanceType<TThis> {
-		if (!Object.prototype.isPrototypeOf.call(this.prototype, value)) {
+		value: ErasedBaseType | InstanceTypeRelaxed<TThis>,
+	): asserts value is InstanceTypeRelaxed<TThis> {
+		if (!ErasedTypeImplementation[Symbol.hasInstance].call(this, value as object)) {
 			throw new TypeError("Invalid ErasedBaseType instance");
 		}
 	}
@@ -169,9 +179,17 @@ export abstract class ErasedTypeImplementation<
 	/**
 	 * Upcasts the instance to the erased interface type.
 	 * @remarks
-	 * This is mainly useful when inferring interface type is required.
+	 * This is mainly useful when inferring the interface type is required.
 	 */
 	public upCast<TThis extends TInterface>(this: TThis): TInterface {
 		return this;
 	}
 }
+
+/**
+ * The same as the built-in InstanceType, but works on classes with private constructors.
+ * @privateRemarks
+ * This is based on the trick in {@link https://stackoverflow.com/a/74657881}.
+ * @internal
+ */
+export type InstanceTypeRelaxed<TClass> = InstanceType<(new () => never) & TClass>;
