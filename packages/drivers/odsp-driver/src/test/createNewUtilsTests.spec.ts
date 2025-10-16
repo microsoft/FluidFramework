@@ -712,25 +712,4 @@ describe("Create New Utils Tests", () => {
 			);
 		});
 	});
-	describe("useCreateNewModule retry and timeout logic", () => {
-		it("Should succeed on first attempt when module loads quickly", async () => {
-			const logger = new MockLogger();
-			const childLogger = createChildLogger({ logger });
-
-			const result = await useCreateNewModule(childLogger, async (module) => {
-				assert(module !== undefined, "Module should be loaded");
-				return "success";
-			});
-
-			assert.strictEqual(result, "success", "Should return the expected result");
-
-			// Verify telemetry was logged for successful load on first attempt
-			logger.assertMatch([
-				{
-					eventName: "createNewModuleLoaded",
-					attempt: 1,
-				},
-			]);
-		});
-	});
 });

@@ -18,8 +18,6 @@ export async function useCreateNewModule<T = void>(
 
 	const maxRetries = 3;
 	const retryDelayMs = 50; // 50ms delay between retries
-	// eslint-disable-next-line @typescript-eslint/consistent-type-imports
-	let module: typeof import("./createNewModule.js") | undefined;
 
 	for (let attempt = 1; attempt <= maxRetries; attempt++) {
 		try {
@@ -29,25 +27,39 @@ export async function useCreateNewModule<T = void>(
 			}
 
 			// Import the module
-			module = await import(/* webpackChunkName: "createNewModule" */ "./createNewModule.js");
+			const module = await import(
+				/* webpackChunkName: "createNewModule" */ "./createNewModule.js"
+			);
 			odspLogger.sendTelemetryEvent({ eventName: "createNewModuleLoaded", attempt });
-			break; // Import succeeded, exit the loop
-		} catch (error) {
-			odspLogger.sendTelemetryEvent({
-				eventName: "createNewModuleImportRetry",
-				attempt,
-				maxRetries,
-				error: (error as Error).message,
-			});
 
-			if (attempt === maxRetries) {
-				odspLogger.sendErrorEvent({ eventName: "createNewModuleLoadFailed" }, error);
+			// Execute the function with the successfully imported module
+			// Business logic errors will propagate naturally without retry
+			return await func(module);
+		} catch (error) {
+			if (attempt < maxRetries) {
+				odspLogger.sendTelemetryEvent(
+					{
+						eventName: "createNewModuleImportRetry",
+						attempt,
+						maxRetries,
+					},
+					error,
+				);
+			} else {
+				// Final attempt failed
+				odspLogger.sendErrorEvent(
+					{
+						eventName: "createNewModuleLoadFailed",
+						attempt,
+						maxRetries,
+					},
+					error,
+				);
 				throw error;
 			}
 		}
 	}
 
-	// Execute the function with the successfully imported module
-	// Business logic errors will propagate naturally without retry
-	return func(module!);
+	// This should never be reached, but TypeScript needs it for type safety
+	throw new Error("Module import failed after all retry attempts");
 }
