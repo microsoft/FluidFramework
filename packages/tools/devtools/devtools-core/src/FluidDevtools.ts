@@ -77,7 +77,7 @@ export function getContainerAlreadyRegisteredErrorText(containerKey: ContainerKe
 
 /**
  * Properties for configuring the Devtools.
- * @alpha
+ * @beta
  */
 export interface FluidDevtoolsProps {
 	/**
@@ -517,7 +517,7 @@ export class FluidDevtools implements IFluidDevtools {
  *
  * It is automatically disposed on webpage unload, but it can be closed earlier by calling `dispose`
  * on the returned handle.
- * @alpha
+ * @beta
  */
 export function initializeDevtools(props?: FluidDevtoolsProps): IFluidDevtools {
 	return FluidDevtools.initialize(props);
@@ -525,7 +525,7 @@ export function initializeDevtools(props?: FluidDevtoolsProps): IFluidDevtools {
 
 /**
  * Gets the Devtools singleton if it has been {@link initializeDevtools | initialized}, otherwise returns `undefined`.
- * @alpha
+ * @beta
  */
 export function tryGetFluidDevtools(): IFluidDevtools | undefined {
 	return FluidDevtools.tryGet();

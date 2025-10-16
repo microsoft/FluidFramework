@@ -4,25 +4,25 @@
 
 ```ts
 
-// @alpha
+// @beta @input
 export interface ContainerDevtoolsProps extends HasContainerKey {
-    container: IContainer;
-    containerData?: Record<string, IFluidLoadable>;
+    readonly container: IContainer;
+    readonly containerData?: Record<string, IFluidLoadable>;
 }
 
 // @beta
 export type ContainerKey = string;
 
-// @alpha @input
+// @beta
 export interface ContainerRuntimeProps {
-    label?: string;
+    readonly label?: string;
     readonly runtime: IContainerRuntime;
 }
 
 // @beta
 export function createDevtoolsLogger(baseLogger?: ITelemetryBaseLogger): IDevtoolsLogger;
 
-// @alpha
+// @beta
 export interface FluidDevtoolsProps {
     initialContainers?: ContainerDevtoolsProps[];
     logger?: IDevtoolsLogger;
@@ -44,10 +44,10 @@ export interface IFluidDevtools extends IDisposable {
     registerContainerRuntime(props: ContainerRuntimeProps): Promise<void>;
 }
 
-// @alpha
+// @beta
 export function initializeDevtools(props?: FluidDevtoolsProps): IFluidDevtools;
 
-// @alpha
+// @beta
 export function tryGetFluidDevtools(): IFluidDevtools | undefined;
 
 ```
