@@ -20,6 +20,7 @@ export async function useCreateNewModule<T = void>(
 	const retryDelayMs = 50; // 50 ms delay between retries
 	// eslint-disable-next-line @typescript-eslint/consistent-type-imports
 	let module: typeof import("./createNewModule.js") | undefined;
+	let lastError: unknown;
 
 	for (let attempt = 1; attempt <= maxRetries; attempt++) {
 		// Add delay before retry attempts (not on first attempt)
@@ -32,6 +33,7 @@ export async function useCreateNewModule<T = void>(
 				return m;
 			})
 			.catch((error) => {
+				lastError = error;
 				odspLogger.sendTelemetryEvent(
 					{
 						eventName: "createNewModuleImportRetry",
@@ -49,16 +51,15 @@ export async function useCreateNewModule<T = void>(
 	}
 
 	if (!module) {
-		const error = new Error("Failed to load createNewModule");
 		// Final attempt failed
 		odspLogger.sendErrorEvent(
 			{
 				eventName: "createNewModuleLoadFailed",
 				maxRetries,
 			},
-			error,
+			lastError,
 		);
-		throw error;
+		throw lastError;
 	}
 
 	return func(module);
