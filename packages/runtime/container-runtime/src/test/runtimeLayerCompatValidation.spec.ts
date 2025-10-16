@@ -106,8 +106,8 @@ function validateFailureProperties(
 			break;
 		}
 		case "datastore": {
-			otherLayerVersion = telemetryProps.dataStoreVersion;
-			otherLayerGeneration = detailedProperties.dataStoreGeneration;
+			otherLayerVersion = telemetryProps.datastoreVersion;
+			otherLayerGeneration = detailedProperties.datastoreGeneration;
 			break;
 		}
 		default: {
