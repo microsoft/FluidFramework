@@ -42,6 +42,7 @@ export async function useCreateNewModule<T = void>(
 				);
 				return undefined;
 			});
+		// If successfully loaded the module, break out of the loop and use it
 		if (module) {
 			break;
 		}
