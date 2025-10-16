@@ -352,9 +352,6 @@ export interface LoadContainerRuntimeParams {
     runtimeOptions?: IContainerRuntimeOptions;
 }
 
-// @beta @legacy
-export type MinimumVersionForCollab = `${1 | 2}.${bigint}.${bigint}` | `${1 | 2}.${bigint}.${bigint}-${string}`;
-
 // @beta @deprecated @legacy (undocumented)
 export type OmitAttributesVersions<T> = Omit<T, "snapshotFormatVersion" | "summaryFormatVersion">;
 

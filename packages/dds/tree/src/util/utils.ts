@@ -291,7 +291,11 @@ export function count(iterable: Iterable<unknown>): number {
  * @remarks
  * This does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
- * @alpha
+ *
+ * @privateRemarks
+ * TODO (before promoting to public): consider moving this to a more general location - this isn't SharedTree-specific.
+ *
+ * @beta
  */
 export type JsonCompatible<TExtra = never> =
 	| string
@@ -305,10 +309,15 @@ export type JsonCompatible<TExtra = never> =
 
 /**
  * Use for Json object compatible data.
+ *
  * @remarks
  * This does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
- * @alpha
+ *
+ * @privateRemarks
+ * TODO (before promoting to public): consider moving this to a more general location - this isn't SharedTree-specific.
+ *
+ * @beta
  */
 export type JsonCompatibleObject<TExtra = never> = { [P in string]?: JsonCompatible<TExtra> };
 

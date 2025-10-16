@@ -46,6 +46,7 @@ import {
 	TreeCompressionStrategy,
 	cursorForJsonableTreeField,
 	defaultSchemaPolicy,
+	emptyChunk,
 	jsonableTreeFromFieldCursor,
 } from "../../../../feature-libraries/index.js";
 import { type JsonCompatibleReadOnly, brand } from "../../../../util/index.js";
@@ -64,7 +65,6 @@ import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { assertIsSessionId, testIdCompressor } from "../../../utils.js";
 import {
 	SpecialField,
-	version,
 	type EncodedFieldBatch,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/format.js";
@@ -365,14 +365,9 @@ describe("schemaBasedEncoding", () => {
 				},
 			};
 			const mockIncrementalDecoder: IncrementalDecoder = {
-				getEncodedIncrementalChunk: (referenceId: ChunkReferenceId): EncodedFieldBatch => {
+				decodeIncrementalChunk: (referenceId, chunkDecoder) => {
 					assert(referenceId === testReferenceId);
-					return {
-						version,
-						identifiers: [],
-						shapes: [{ a: 0 }],
-						data: [[0, []]],
-					} satisfies EncodedFieldBatch;
+					return emptyChunk;
 				},
 			};
 

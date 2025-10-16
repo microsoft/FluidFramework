@@ -28,11 +28,11 @@ import {
 	textToBlob,
 	unpackHandle,
 	waitHandlePayloadShared,
-	type UnprocessedOp,
+	type UnprocessedMessage,
 } from "./blobTestUtils.js";
 
 for (const createBlobPayloadPending of [false, true]) {
-	describe(`BlobManager (pending payloads): ${createBlobPayloadPending}`, () => {
+	describe(`BlobManager (pending payloads: ${createBlobPayloadPending})`, () => {
 		// #region Detached usage
 		describe("Detached usage", () => {
 			it("Responds as expected for retrieving unknown blob IDs", async () => {
@@ -131,19 +131,14 @@ for (const createBlobPayloadPending of [false, true]) {
 					const handle = await blobManager.createBlob(textToBlob("hello"));
 					const { localId } = unpackHandle(handle);
 
-					// TODO: For now, the blob manager can't find pending blobs in unattached handles,
-					// like the ones we will have just created if createBlobPayloadPending. Once the
-					// internal bookkeeping has been updated to include these, we don't need to
-					// ensureBlobsShared() here anymore and these checks can be applied to both the
-					// legacy and payloadPending flows.
-					if (!createBlobPayloadPending) {
-						assert(blobManager.hasBlob(localId));
-						const _blobFromManager = await blobManager.getBlob(
-							localId,
-							createBlobPayloadPending,
-						);
-						assert.strictEqual(blobToText(_blobFromManager), "hello", "Blob content mismatch");
-					}
+					// Even though in the payloadPending case we haven't actually uploaded the blob yet, we
+					// should still be able to check for it and retrieve it using the locally-cached copy.
+					assert(blobManager.hasBlob(localId));
+					const _blobFromManager = await blobManager.getBlob(
+						localId,
+						createBlobPayloadPending,
+					);
+					assert.strictEqual(blobToText(_blobFromManager), "hello", "Blob content mismatch");
 
 					assert.strictEqual(
 						handle.payloadPending,
@@ -154,7 +149,7 @@ for (const createBlobPayloadPending of [false, true]) {
 					assert.strictEqual(blobToText(blobFromHandle), "hello", "Blob content mismatch");
 
 					assert(isFluidHandlePayloadPending(handle));
-					// With payloadPending handles, we won't actually upload and send the attach op until the
+					// With payloadPending handles, we won't actually upload and send the attach message until the
 					// handle is attached.
 					if (createBlobPayloadPending) {
 						assert.strictEqual(
@@ -187,11 +182,11 @@ for (const createBlobPayloadPending of [false, true]) {
 						createBlobPayloadPending,
 					});
 					let storageId: string | undefined;
-					const onOpReceived = (op: UnprocessedOp) => {
-						storageId = op.metadata.blobId;
-						mockOrderingService.events.off("opReceived", onOpReceived);
+					const onMessageReceived = (message: UnprocessedMessage) => {
+						storageId = message.metadata.blobId;
+						mockOrderingService.events.off("messageReceived", onMessageReceived);
 					};
-					mockOrderingService.events.on("opReceived", onOpReceived);
+					mockOrderingService.events.on("messageReceived", onMessageReceived);
 					const handle = await blobManager.createBlob(textToBlob("hello"));
 					if (createBlobPayloadPending) {
 						await ensureBlobsShared([handle]);
@@ -205,6 +200,29 @@ for (const createBlobPayloadPending of [false, true]) {
 						createBlobPayloadPending,
 					);
 					assert.strictEqual(blobToText(blobFromManager), "hello", "Blob content mismatch");
+				});
+
+				it("Retrieves locally-created blobs without making a storage call", async () => {
+					const mockBlobStorage = new MockStorageAdapter(true);
+					mockBlobStorage.readBlob = async () => {
+						throw new Error("BOOM!");
+					};
+					const { blobManager } = createTestMaterial({
+						mockBlobStorage,
+						createBlobPayloadPending,
+					});
+					const handle = await blobManager.createBlob(textToBlob("hello"));
+					const { localId } = unpackHandle(handle);
+					if (createBlobPayloadPending) {
+						await ensureBlobsShared([handle]);
+					}
+
+					// If this tries to make a storage request it will throw.
+					assert(blobManager.hasBlob(localId));
+					const blobFromManager = await blobManager.getBlob(localId, createBlobPayloadPending);
+					assert.strictEqual(blobToText(blobFromManager), "hello", "Blob content mismatch");
+					const blobFromHandle = await handle.get();
+					assert.strictEqual(blobToText(blobFromHandle), "hello", "Blob content mismatch");
 				});
 
 				it("Does not log an error if runtime is disposed during readBlob error", async () => {
@@ -274,7 +292,7 @@ for (const createBlobPayloadPending of [false, true]) {
 						handle.events.on("payloadShareFailed", onPayloadShareFailed);
 
 						attachHandle(handle);
-						await mockBlobStorage.waitProcessOne({
+						await mockBlobStorage.waitCreateOne({
 							error: new LoggingError("fake driver error"),
 						});
 						mockBlobStorage.unpause();
@@ -298,7 +316,7 @@ for (const createBlobPayloadPending of [false, true]) {
 						// If the blobs are created without pending payloads, we don't get to see the handle at
 						// all so we can't inspect its state.
 						const createBlobP = blobManager.createBlob(textToBlob("hello"));
-						await mockBlobStorage.waitProcessOne({
+						await mockBlobStorage.waitCreateOne({
 							error: new LoggingError("fake driver error"),
 						});
 						mockBlobStorage.unpause();
@@ -324,13 +342,13 @@ for (const createBlobPayloadPending of [false, true]) {
 						attachHandle(_handle);
 					}
 					// Use a negative TTL to force the blob to be expired immediately
-					await mockBlobStorage.waitProcessOne({ minTTLOverride: -1 });
+					await mockBlobStorage.waitCreateOne({ minTTLOverride: -1 });
 					// After unpausing, the second attempt will be processed with a normal TTL
 					mockBlobStorage.unpause();
 					const handle = await handleP;
 					await ensureBlobsShared([handle]);
 					assert.strictEqual(
-						mockBlobStorage.blobsProcessed,
+						mockBlobStorage.blobsCreated,
 						2,
 						"Blob should have been reuploaded once",
 					);
@@ -406,21 +424,21 @@ for (const createBlobPayloadPending of [false, true]) {
 							remoteHandleP,
 							localHandleP,
 						]);
-						// Attach the handle to generate an op, but don't wait for the blob to be shared yet
-						// until we unpause the ordering service and can process those ops.
+						// Attach the handle to generate an message, but don't wait for the blob to be shared yet
+						// until we unpause the ordering service and can process those messages.
 						attachHandle(remoteHandle);
 						attachHandle(localHandle);
 					}
-					// Ensure both blobs have completed upload and are waiting for their ops to be ack'd
+					// Ensure both blobs have completed upload and are waiting for their messages to be ack'd
 					await new Promise<void>((resolve) => {
 						if (mockOrderingService.messagesReceived !== 2) {
-							const onOpReceived = () => {
+							const onMessageReceived = () => {
 								if (mockOrderingService.messagesReceived === 2) {
 									resolve();
-									mockOrderingService.events.off("opReceived", onOpReceived);
+									mockOrderingService.events.off("messageReceived", onMessageReceived);
 								}
 							};
-							mockOrderingService.events.on("opReceived", onOpReceived);
+							mockOrderingService.events.on("messageReceived", onMessageReceived);
 						}
 					});
 					mockOrderingService.unpause();
@@ -569,8 +587,8 @@ for (const createBlobPayloadPending of [false, true]) {
 							message: "uploadBlob aborted",
 						},
 					);
-					await mockBlobStorage.waitProcessOne({ error: new Error("fake driver error") });
-					await mockBlobStorage.waitProcessOne({ error: new Error("fake driver error") });
+					await mockBlobStorage.waitCreateOne({ error: new Error("fake driver error") });
+					await mockBlobStorage.waitCreateOne({ error: new Error("fake driver error") });
 					await assert.rejects(
 						createBlobPayloadPending ? ensureBlobsShared([await createP2]) : createP2,
 						{
@@ -582,7 +600,7 @@ for (const createBlobPayloadPending of [false, true]) {
 					assert.strictEqual(redirectTable, undefined);
 				});
 
-				it("Can abort while blob attach op is in flight", async () => {
+				it("Can abort while blob attach message is in flight", async () => {
 					const { mockOrderingService, blobManager } = createTestMaterial({
 						createBlobPayloadPending,
 					});
@@ -593,16 +611,16 @@ for (const createBlobPayloadPending of [false, true]) {
 						const handle = await createP;
 						attachHandle(handle);
 					}
-					// Wait for the op to be sent
+					// Wait for the message to be sent
 					await new Promise<void>((resolve) => {
 						if (mockOrderingService.messagesReceived !== 1) {
-							const onOpReceived = () => {
+							const onMessageReceived = () => {
 								if (mockOrderingService.messagesReceived === 1) {
 									resolve();
-									mockOrderingService.events.off("opReceived", onOpReceived);
+									mockOrderingService.events.off("messageReceived", onMessageReceived);
 								}
 							};
-							mockOrderingService.events.on("opReceived", onOpReceived);
+							mockOrderingService.events.on("messageReceived", onMessageReceived);
 						}
 					});
 					ac.abort("abort test");
@@ -613,12 +631,12 @@ for (const createBlobPayloadPending of [false, true]) {
 						},
 					);
 
-					// Also verify that BlobManager doesn't resubmit the op for an already-aborted blob
+					// Also verify that BlobManager doesn't resubmit the message for an already-aborted blob
 					await mockOrderingService.waitDropOne();
 					assert.strictEqual(
 						mockOrderingService.messagesReceived,
 						1,
-						"Shouldn't have sent more ops",
+						"Shouldn't have sent more messages",
 					);
 
 					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
@@ -928,16 +946,16 @@ for (const createBlobPayloadPending of [false, true]) {
 					"Storage ID should be undefined while blob upload pending",
 				);
 
-				// Allow just the blob upload to process, but not the attach op
-				await mockBlobStorage.waitProcessOne();
+				// Allow just the blob upload to process, but not the attach message
+				await mockBlobStorage.waitCreateOne();
 				const storageId2 = blobManager.lookupTemporaryBlobStorageId(localId);
 				assert.strictEqual(
 					storageId2,
 					undefined,
-					"Storage ID should be undefined while blob attach op pending",
+					"Storage ID should be undefined while blob attach message pending",
 				);
 
-				// Now allow the attach op to be sequenced
+				// Now allow the attach message to be sequenced
 				await mockOrderingService.waitSequenceOne();
 				await ensureBlobsShared([handle]);
 				const storageIdAfterProcessing = blobManager.lookupTemporaryBlobStorageId(localId);
