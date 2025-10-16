@@ -7,7 +7,7 @@
  * In a future release we will move these types here and export them directly with:
  *
  * @deprecated SharedSequence is not recommended for use and will be removed in an upcoming release.
- * For more info, please see [Github issue 8526](https://github.com/microsoft/FluidFramework/issues/8526)
+ * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}
  */
 export {
 	SubSequence,

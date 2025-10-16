@@ -191,6 +191,7 @@ export type HarnessOperation =
 	| StashClient
 	| Rollback;
 
+/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive */
 /**
  * Represents a generic fuzz model for testing eventual consistency of a DDS.
  *
@@ -235,6 +236,7 @@ export interface DDSFuzzModel<
 	TOperation extends BaseOperation,
 	TState extends DDSFuzzTestState<TChannelFactory> = DDSFuzzTestState<TChannelFactory>,
 > {
+	/* eslint-enable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag */
 	/**
 	 * Name for this model. This is used for test case naming, and should generally reflect properties
 	 * about the kinds of operations that are generated.
@@ -266,7 +268,7 @@ export interface DDSFuzzModel<
 	 * Equivalence validation function, which should verify that the provided channels contain the same data.
 	 * This is run at each synchronization point for all connected clients (as disconnected clients won't
 	 * necessarily have the same set of ops applied).
-	 * @throws - An informative error if the channels don't have equivalent data.
+	 * @throws An informative error if the channels don't have equivalent data.
 	 */
 	validateConsistency: (
 		channelA: Client<TChannelFactory>,
