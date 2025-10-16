@@ -157,6 +157,9 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				},
 			},
 			enableRuntimeIdCompressor: "on",
+			// Enable createBlobPayloadPending, otherwise there will be no pending blobs to test.
+			explicitSchemaControl: true,
+			createBlobPayloadPending: true,
 		},
 		loaderProps: {
 			configProvider: configProvider({
@@ -1632,20 +1635,17 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	// The in-flight blob upload will need to be completable after loading with the pending state, but
 	// we will expect the customer to have already stored the blob handle prior to calling getPendingState.
 
-	it.skip("close while uploading blob", async function () {
+	it("close while uploading blob", async function () {
 		const dataStore = (await container1.getEntryPoint()) as ITestFluidObject;
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 		await provider.ensureSynchronized();
 
-		const blobP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
-		// TODO: This portion was using closeAndGetPendingLocalState - using getPendingLocalState instead to allow compilation
-		// const pendingOpsP = container1.closeAndGetPendingLocalState?.();
-		const pendingOpsP = container1.getPendingLocalState();
-		const handle = await blobP;
+		const handle = await dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
 		map.set("blob handle", handle);
-		const pendingOps = await pendingOpsP;
+		const pendingState = await container1.getPendingLocalState();
+		container1.close();
 
-		const container2 = await loader.resolve({ url }, pendingOps);
+		const container2 = await loader.resolve({ url }, pendingState);
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 
