@@ -13,5 +13,8 @@ module.exports = {
 	},
 	rules: {
 		"import/no-nodejs-modules": "off",
+
+		// FIXME: This rule is crashing on this package - disable until fixed
+		"@typescript-eslint/unbound-method": "off",
 	},
 };

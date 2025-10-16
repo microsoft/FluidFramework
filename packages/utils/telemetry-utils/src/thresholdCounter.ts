@@ -14,6 +14,8 @@ export class ThresholdCounter {
 	public constructor(
 		private readonly threshold: number,
 		private readonly logger: ITelemetryLoggerExt,
+
+		// eslint-disable-next-line @typescript-eslint/prefer-readonly -- false positive, modified in sendIfMultiple()
 		private thresholdMultiple = threshold,
 	) {}
 

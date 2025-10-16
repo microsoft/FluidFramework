@@ -63,6 +63,7 @@ export class LegacyTreeInventoryItem
 	public constructor(
 		private readonly _id: string,
 		private readonly _name: string,
+		// eslint-disable-next-line @typescript-eslint/prefer-readonly -- false positive, modified in handleQuantityUpdate()
 		private _quantity: number,
 		private readonly _setQuantity: (quantity: number) => void,
 		public readonly deleteItem: () => void,

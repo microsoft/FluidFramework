@@ -29,6 +29,9 @@ module.exports = {
 		],
 		"@typescript-eslint/no-import-type-side-effects": "error",
 		// #endregion
+
+		// FIXME: This rule is crashing on this package - disable until fixed
+		"@typescript-eslint/unbound-method": "off",
 	},
 	overrides: [
 		{

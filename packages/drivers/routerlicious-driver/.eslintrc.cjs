@@ -16,5 +16,8 @@ module.exports = {
 		"@typescript-eslint/strict-boolean-expressions": "off",
 		"no-case-declarations": "off",
 		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+
+		// FIXME: This rule is crashing on this package - disable until fixed
+		"@typescript-eslint/unbound-method": "off",
 	},
 };

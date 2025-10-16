@@ -10,18 +10,15 @@ import type {
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 
+/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive */
 /**
  * Types of test drivers.
  * These values are replicated in {@link @fluid-private/test-version-utils#compatOptions.d.ts}. Ensure that any revisions here are also reflected in test-version-utils.
  * @internal
  */
 export type TestDriverTypes =
-	| "tinylicious"
-	| "t9s"
-	| "routerlicious"
-	| "r11s"
-	| "odsp"
-	| "local";
+	/* eslint-enable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag */
+	"tinylicious" | "t9s" | "routerlicious" | "r11s" | "odsp" | "local";
 
 /**
  * Types of Routerlicious endpoints.

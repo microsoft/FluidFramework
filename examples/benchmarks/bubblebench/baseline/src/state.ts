@@ -17,7 +17,9 @@ export class AppState implements IAppState {
 	public readonly clients: SimpleClient[];
 
 	constructor(
+		// eslint-disable-next-line @typescript-eslint/prefer-readonly -- false positive, modified in setSize()
 		private _width: number,
+		// eslint-disable-next-line @typescript-eslint/prefer-readonly -- false positive, modified in setSize()
 		private _height: number,
 		numBubbles: number,
 	) {

@@ -17,5 +17,8 @@ module.exports = {
 		"@typescript-eslint/strict-boolean-expressions": "off",
 		"@typescript-eslint/promise-function-async": "off",
 		"@typescript-eslint/no-misused-promises": "off",
+
+		// FIXME: This rule is crashing on this package - disable until fixed
+		"@typescript-eslint/unbound-method": "off",
 	},
 };
