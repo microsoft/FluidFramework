@@ -26,7 +26,6 @@ import type {
 	ISnapshotFetchOptions,
 	FetchSource,
 	IDocumentStorageServicePolicies,
-	ISummaryHandle,
 } from "@fluidframework/driver-definitions/internal";
 
 import type { IAudience } from "./audience.js";
@@ -144,25 +143,6 @@ export interface IBatchMessage {
  */
 export interface IContainerStorageService {
 	/**
-	 * Whether or not the object has been disposed.
-	 * If true, the object should be considered invalid, and its other state should be disregarded.
-	 *
-	 * @deprecated - This API is deprecated and will be removed in a future release. No replacement is planned as
-	 * it is unused in the Runtime layer.
-	 */
-	readonly disposed?: boolean;
-
-	/**
-	 * Dispose of the object and its resources.
-	 * @param error - Optional error indicating the reason for the disposal, if the object was
-	 * disposed as the result of an error.
-	 *
-	 * @deprecated - This API is deprecated and will be removed in a future release. No replacement is planned as
-	 * it is unused in the Runtime layer.
-	 */
-	dispose?(error?: Error): void;
-
-	/**
 	 * Policies implemented/instructed by driver.
 	 *
 	 * @deprecated - This will be removed in a future release. The Runtime layer only needs `maximumCacheDurationMs`
@@ -230,15 +210,6 @@ export interface IContainerStorageService {
 	 * Returns the uploaded summary handle.
 	 */
 	uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
-
-	/**
-	 * Retrieves the commit that matches the packfile handle. If the packfile has already been committed and the
-	 * server has deleted it this call may result in a broken promise.
-	 *
-	 * @deprecated - This API is deprecated and will be removed in a future release. No replacement is planned as
-	 * it is unused in the Runtime and below layers.
-	 */
-	downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
 }
 
 /**

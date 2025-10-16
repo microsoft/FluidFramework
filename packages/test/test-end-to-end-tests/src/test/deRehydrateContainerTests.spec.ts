@@ -531,43 +531,6 @@ describeCompat(
 				assert.strictEqual(sparseMatrix.id, sparseMatrixId, "Sparse matrix should exist!!");
 			});
 
-			it("Storage in detached container", async () => {
-				const { container } = await createDetachedContainerAndGetEntryPoint();
-
-				const snapshotTree = container.serialize();
-				const defaultDataStore =
-					await getContainerEntryPointBackCompat<TestFluidObject>(container);
-				assert(
-					defaultDataStore.context.storage !== undefined,
-					"Storage should be present in detached data store",
-				);
-				let success1: boolean | undefined;
-				await defaultDataStore.context.storage.getSnapshotTree(undefined).catch((err) => {
-					success1 = false;
-				});
-				assert(
-					success1 === false,
-					"Snapshot fetch should not be allowed in detached data store",
-				);
-
-				const container2: IContainer =
-					await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
-				const defaultDataStore2 =
-					await getContainerEntryPointBackCompat<TestFluidObject>(container2);
-				assert(
-					defaultDataStore2.context.storage !== undefined,
-					"Storage should be present in rehydrated data store",
-				);
-				let success2: boolean | undefined;
-				await defaultDataStore2.context.storage.getSnapshotTree(undefined).catch((err) => {
-					success2 = false;
-				});
-				assert(
-					success2 === false,
-					"Snapshot fetch should not be allowed in rehydrated data store",
-				);
-			});
-
 			it("Change contents of dds, then rehydrate and then check summary", async () => {
 				const { container } = await createDetachedContainerAndGetEntryPoint();
 

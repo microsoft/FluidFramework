@@ -8,16 +8,6 @@ import type {
 	ITree,
 	ISignalMessage,
 	ISequencedDocumentMessage,
-	IDocumentStorageServicePolicies,
-	IVersion,
-	ISnapshotTree,
-	ISnapshotFetchOptions,
-	ISnapshot,
-	FetchSource,
-	ICreateBlobResponse,
-	ISummaryTree,
-	ISummaryHandle,
-	ISummaryContext,
 } from "@fluidframework/driver-definitions/internal";
 
 /**
@@ -142,73 +132,4 @@ export interface IRuntimeStorageService {
 	 * Reads the object with the given ID, returns content in arrayBufferLike
 	 */
 	readBlob(id: string): Promise<ArrayBufferLike>;
-
-	/**
-	 * Whether or not the object has been disposed.
-	 * If true, the object should be considered invalid, and its other state should be disregarded.
-	 *
-	 * @deprecated - This API is deprecated and will be removed in a future release. No replacement is planned as
-	 * it is unused in the DataStore layer.
-	 */
-	readonly disposed?: boolean;
-
-	/**
-	 * Dispose of the object and its resources.
-	 * @param error - Optional error indicating the reason for the disposal, if the object was
-	 * disposed as the result of an error.
-	 *
-	 * @deprecated - This API is deprecated and will be removed in a future release. No replacement is planned as
-	 * it is unused in the DataStore layer.
-	 */
-	dispose?(error?: Error): void;
-
-	/**
-	 * @deprecated - This will be removed in a future release. No replacement is planned as
-	 * it is unused in the DataStore layer.
-	 */
-	readonly policies?: IDocumentStorageServicePolicies | undefined;
-
-	/**
-	 * @deprecated - This will be removed in a future release. No replacement is planned as
-	 * it is unused in the DataStore layer.
-	 */
-	// eslint-disable-next-line @rushstack/no-new-null
-	getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
-
-	/**
-	 * @deprecated - This will be removed in a future release. No replacement is planned as
-	 * it is unused in the DataStore layer.
-	 */
-	getSnapshot?(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot>;
-
-	/**
-	 * @deprecated - This will be removed in a future release. No replacement is planned as
-	 * it is unused in the DataStore layer.
-	 */
-	getVersions(
-		// TODO: use `undefined` instead.
-		// eslint-disable-next-line @rushstack/no-new-null
-		versionId: string | null,
-		count: number,
-		scenarioName?: string,
-		fetchSource?: FetchSource,
-	): Promise<IVersion[]>;
-
-	/**
-	 * @deprecated - This will be removed in a future release. No replacement is planned as
-	 * it is unused in the DataStore layer.
-	 */
-	createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
-
-	/**
-	 * @deprecated - This will be removed in a future release. No replacement is planned as
-	 * it is unused in the DataStore layer.
-	 */
-	uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
-
-	/**
-	 * @deprecated - This will be removed in a future release. No replacement is planned as
-	 * it is unused in the DataStore layer.
-	 */
-	downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
 }
