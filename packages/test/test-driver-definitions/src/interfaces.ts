@@ -17,8 +17,12 @@ import type {
  * @internal
  */
 export type TestDriverTypes =
-	/* eslint-enable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag */
-	"tinylicious" | "t9s" | "routerlicious" | "r11s" | "odsp" | "local";
+	| "tinylicious"
+	| "t9s"
+	| "routerlicious"
+	| "r11s"
+	| "odsp"
+	| "local";
 
 /**
  * Types of Routerlicious endpoints.
@@ -26,6 +30,7 @@ export type TestDriverTypes =
  * @internal
  */
 export type RouterliciousEndpoint = "frs" | "frsCanary" | "r11s" | "docker";
+/* eslint-enable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag */
 
 /**
  * Types of Odsp endpoints.
