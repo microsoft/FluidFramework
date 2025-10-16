@@ -36,7 +36,8 @@ export function validateLayerCompatibility(
 			incompatibleLayer: layer2,
 			[`${layer1}Version`]: compatDetailsLayer1.pkgVersion,
 			[`${layer2}Version`]: maybeCompatDetailsLayer2?.pkgVersion ?? "unknown",
-			diff: compatDetailsLayer1.generation - (maybeCompatDetailsLayer2?.generation ?? 0),
+			minDiffMonths:
+				compatDetailsLayer1.generation - (maybeCompatDetailsLayer2?.generation ?? 0),
 		};
 		const detailedProperties = {
 			[`${layer1}Generation`]: compatDetailsLayer1.generation,
@@ -45,10 +46,13 @@ export function validateLayerCompatibility(
 			isGenerationCompatible: layerCheckResult.isGenerationCompatible,
 			unsupportedFeatures: layerCheckResult.unsupportedFeatures,
 		};
-		const error = new UsageError(`${layer1} is not compatible with ${layer2}`, {
-			...coreProperties,
-			errorDetails: JSON.stringify(detailedProperties),
-		});
+		const error = new UsageError(
+			`The versions of the ${layer1} and ${layer2} are not compatible`,
+			{
+				...coreProperties,
+				errorDetails: JSON.stringify(detailedProperties),
+			},
+		);
 		logger.send({
 			eventName: "LayerIncompatibilityError",
 			category: "error",
