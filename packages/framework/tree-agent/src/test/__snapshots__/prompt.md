@@ -42,7 +42,6 @@ You may mutate any part of the root tree as necessary, taking into account the c
 You may also set the `root` property of the context to be an entirely new value as long as it is one of the types allowed at the root of the tree (`Obj`).
 Manipulating the data using the APIs described below is allowed, but when possible ALWAYS prefer to use any application helper methods exposed on the schema TypeScript types if the goal can be accomplished that way.
 It will often not be possible to fully accomplish the goal using those helpers. When this is the case, mutate the objects as normal, taking into account the following guidance.
-
 #### Editing Arrays
 
 The arrays in the tree are somewhat different than normal JavaScript `Array`s.
@@ -267,8 +266,6 @@ export interface TreeMap<T> extends ReadonlyMap<string, T> {
 
 Before outputting the edit function, you should check that it is valid according to both the application tree's schema and any restrictions of the editing APIs described above.
 
-Once data has been removed from the tree (e.g. replaced via assignment, or removed from an array), that data cannot be re-inserted into the tree - instead, it must be deep cloned and recreated.
-
 When constructing new objects, you should wrap them in the appropriate builder function rather than simply making a javascript object.
 The builders are available on the `create` property on the context object and are named according to the type that they create.
 For example:
@@ -278,6 +275,42 @@ For example:
 const testArrayItem = context.create.TestArrayItem({ /* ...properties... */ });
 // Don't do this:
 // const testArrayItem = { /* ...properties... */ };
+```
+
+Once non-primitive data has been removed from the tree (e.g. replaced via assignment, or removed from an array), that data cannot be re-inserted into the tree.
+Instead, it must be deep cloned and recreated.
+For example:
+
+```javascript
+// Data is removed from the tree:
+const testArrayItem = parent.testArrayItem;
+parent.testArrayItem = undefined;
+// `testArrayItem` cannot be directly re-inserted into the tree - this will throw an error:
+// parent.testArrayItem = testArrayItem; // ❌ A node may not be inserted into the tree more than once
+// Instead, it must be deep cloned and recreated before insertion:
+parent.testArrayItem = context.create.TestArrayItem({ /*... deep clone all properties from `testArrayItem` */ });
+```
+
+The same applies when using arrays:
+```javascript
+// Data is removed from the tree:
+const item = arrayOfTestArrayItem[0];
+arrayOfTestArrayItem.removeAt(0);
+// `item` cannot be directly re-inserted into the tree - this will throw an error:
+arrayOfTestArrayItem.insertAt(0, item); // ❌ A node may not be inserted into the tree more than once
+// Instead, it must be deep cloned and recreated before insertion:
+arrayOfTestArrayItem.insertAt(0, context.create.TestArrayItem({ /*... deep clone all properties from `item` */ }));
+```
+
+The same applies when using maps:
+```javascript
+// Data is removed from the tree:
+const value = mapOfTestArrayItem.get("someKey");
+mapOfTestArrayItem.delete("someKey");
+// `value` cannot be directly re-inserted into the tree - this will throw an error:
+mapOfTestArrayItem.set("someKey", value); // ❌ A node may not be inserted into the tree more than once
+// Instead, it must be deep cloned and recreated before insertion:
+mapOfTestArrayItem.set("someKey", context.create.TestArrayItem({ /*... deep clone all properties from `value` */ }));
 ```
 
 Finally, double check that the edits would accomplish the user's request (if it is possible).

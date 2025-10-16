@@ -38,8 +38,13 @@ export const defaultMinVersionForCollab =
  * Today we use "1.0.0", because our policy supports N/N-1 & N/N-2, which includes
  * all minor versions of N. Though LTS starts at 1.4.0, we should stay consistent
  * with our policy and allow all 1.x versions to be compatible with 2.x.
+ *
+ * @privateRemarks
+ * Exported for use in tests.
+ *
+ * @internal
  */
-const lowestMinVersionForCollab = "1.0.0" as const satisfies MinimumVersionForCollab;
+export const lowestMinVersionForCollab = "1.0.0" as const satisfies MinimumVersionForCollab;
 
 /**
  * String in a valid semver format specifying bottom of a minor version
@@ -114,6 +119,31 @@ export function getConfigsForMinVersionForCollab<T extends Record<SemanticVersio
 }
 
 /**
+ * Returns detailed information about the validity of a minVersionForCollab.
+ * @param minVersionForCollab - The minVersionForCollab to validate.
+ * @returns An object containing the validity information.
+ *
+ * @internal
+ */
+export function checkValidMinVersionForCollabVerbose(
+	minVersionForCollab: MinimumVersionForCollab,
+): {
+	isValidSemver: boolean;
+	isGteLowestMinVersion: boolean;
+	isLtePkgVersion: boolean;
+} {
+	const isValidSemver = valid(minVersionForCollab) !== null;
+	return {
+		isValidSemver,
+
+		// We have to check if the value is a valid semver before calling gte/lte, otherwise they will throw when parsing the version.
+		isGteLowestMinVersion:
+			isValidSemver && gte(minVersionForCollab, lowestMinVersionForCollab),
+		isLtePkgVersion: isValidSemver && lte(minVersionForCollab, pkgVersion),
+	};
+}
+
+/**
  * Checks if the minVersionForCollab is valid.
  * A valid minVersionForCollab is a MinimumVersionForCollab that is at least `lowestMinVersionForCollab` and less than or equal to the current package version.
  *
@@ -122,11 +152,9 @@ export function getConfigsForMinVersionForCollab<T extends Record<SemanticVersio
 export function isValidMinVersionForCollab(
 	minVersionForCollab: MinimumVersionForCollab,
 ): boolean {
-	return (
-		valid(minVersionForCollab) !== null &&
-		gte(minVersionForCollab, lowestMinVersionForCollab) &&
-		lte(minVersionForCollab, pkgVersion)
-	);
+	const { isValidSemver, isGteLowestMinVersion, isLtePkgVersion } =
+		checkValidMinVersionForCollabVerbose(minVersionForCollab);
+	return isValidSemver && isGteLowestMinVersion && isLtePkgVersion;
 }
 
 /**
@@ -141,9 +169,14 @@ export function semanticVersionToMinimumVersionForCollab(
 	semanticVersion: SemanticVersion,
 ): MinimumVersionForCollab {
 	const minVersionForCollab = semanticVersion as MinimumVersionForCollab;
-	if (!isValidMinVersionForCollab(minVersionForCollab)) {
+	const { isValidSemver, isGteLowestMinVersion, isLtePkgVersion } =
+		checkValidMinVersionForCollabVerbose(minVersionForCollab);
+	if (!(isValidSemver && isGteLowestMinVersion && isLtePkgVersion)) {
 		throw new UsageError(
-			`Version ${minVersionForCollab} is not a valid MinimumVersionForCollab.`,
+			`Version ${minVersionForCollab} is not a valid MinimumVersionForCollab. ` +
+				`It must be in a valid semver format, at least ${lowestMinVersionForCollab}, ` +
+				`and less than or equal to the current package version ${pkgVersion}. ` +
+				`Details: { isValidSemver: ${isValidSemver}, isGteLowestMinVersion: ${isGteLowestMinVersion}, isLtePkgVersion: ${isLtePkgVersion} }`,
 		);
 	}
 

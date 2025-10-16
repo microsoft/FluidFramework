@@ -11,7 +11,19 @@ export type Arg<T extends z.ZodTypeAny = z.ZodTypeAny> = readonly [name: string,
 export type ArgsTuple<T extends readonly Arg[]> = T extends readonly [infer Single extends Arg] ? [Single[1]] : T extends readonly [infer Head extends Arg, ...infer Tail extends readonly Arg[]] ? [Head[1], ...ArgsTuple<Tail>] : never;
 
 // @alpha
+export type AsynchronousEditor = (context: Record<string, unknown>, code: string) => Promise<void>;
+
+// @alpha
 export type BindableSchema = TreeNodeSchema<string, NodeKind.Object> | TreeNodeSchema<string, NodeKind.Record> | TreeNodeSchema<string, NodeKind.Array> | TreeNodeSchema<string, NodeKind.Map>;
+
+// @alpha
+export const bindEditor: typeof bindEditorImpl;
+
+// @alpha
+export function bindEditorImpl<TSchema extends ImplicitFieldSchema>(tree: TreeView<TSchema> | (ReadableField<TSchema> & TreeNode), editor: SynchronousEditor): (code: string) => void;
+
+// @alpha
+export function bindEditorImpl<TSchema extends ImplicitFieldSchema>(tree: TreeView<TSchema> | (ReadableField<TSchema> & TreeNode), editor: AsynchronousEditor): (code: string) => Promise<void>;
 
 // @alpha
 export function buildFunc<const Return extends z.ZodTypeAny, const Args extends readonly Arg[], const Rest extends z.ZodTypeAny | null = null>(def: {
@@ -20,29 +32,16 @@ export function buildFunc<const Return extends z.ZodTypeAny, const Args extends 
     rest?: Rest;
 }, ...args: Args): FunctionDef<Args, Return, Rest>;
 
-// @alpha @deprecated
-export function createSemanticAgent<TSchema extends ImplicitFieldSchema_2>(client: BaseChatModel, treeView: TreeView<TSchema>, options?: Readonly<SemanticAgentOptions>): SharedTreeSemanticAgent<TSchema>;
-
-// @alpha @deprecated
-export function createSemanticAgent<TSchema extends ImplicitFieldSchema_2>(client: BaseChatModel, node: ReadableField<TSchema> & TreeNode_2, options?: Readonly<SemanticAgentOptions>): SharedTreeSemanticAgent<TSchema>;
-
-// @alpha @deprecated
-export function createSemanticAgent<TSchema extends ImplicitFieldSchema_2>(client: BaseChatModel, treeView: TreeView<TSchema> | (ReadableField<TSchema> & TreeNode_2), options?: Readonly<SemanticAgentOptions>): SharedTreeSemanticAgent<TSchema>;
-
-// @alpha
-export function createSesEditEvaluator(options?: {
-    compartmentOptions?: CompartmentOptions;
-    lockdownOptions?: LockdownOptions;
-}): Promise<SemanticAgentOptions["executeEdit"]>;
-
 // @alpha
 export type Ctor<T = any> = new (...args: any[]) => T;
 
 // @alpha
+export const defaultEditor: AsynchronousEditor;
+
+// @alpha
 export interface EditResult {
     message: string;
-    // (undocumented)
-    type: "success" | "disabledError" | "validationError" | "executionError" | "tooManyEditsError" | "expiredError";
+    type: "success" | "disabledError" | "editingError" | "tooManyEditsError" | "expiredError";
 }
 
 // @alpha
@@ -79,19 +78,6 @@ export interface IExposedMethods {
 export type Infer<T> = T extends FunctionDef<infer Args, infer Return, infer Rest> ? z.infer<z.ZodFunction<z.ZodTuple<ArgsTuple<Args>, Rest>, Return>> : never;
 
 // @alpha
-export class LangchainChatModel implements SharedTreeChatModel {
-    constructor(model: BaseChatModel);
-    // (undocumented)
-    appendContext(text: string): void;
-    // (undocumented)
-    readonly editToolName = "GenerateTreeEditingCode";
-    // (undocumented)
-    get name(): string | undefined;
-    // (undocumented)
-    query(query: SharedTreeChatQuery): Promise<string>;
-}
-
-// @alpha
 export const llmDefault: unique symbol;
 
 // @alpha
@@ -107,10 +93,9 @@ export type MethodKeys<T> = {
 // @alpha
 export interface SemanticAgentOptions {
     domainHints?: string;
-    executeEdit?: (context: Record<string, unknown>, code: string) => void | Promise<void>;
+    editor?: SynchronousEditor | AsynchronousEditor;
     logger?: Logger;
     maximumSequentialEdits?: number;
-    validateEdit?: (code: string) => void | Promise<void>;
 }
 
 // @alpha
@@ -132,6 +117,9 @@ export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
     constructor(client: SharedTreeChatModel, tree: TreeView<TSchema> | (ReadableField<TSchema> & TreeNode), options?: Readonly<SemanticAgentOptions> | undefined);
     query(userPrompt: string): Promise<string>;
 }
+
+// @alpha
+export type SynchronousEditor = (context: Record<string, unknown>, code: string) => void;
 
 // @alpha
 export type TreeView<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema> = Pick<TreeViewAlpha<TRoot>, "root" | "fork" | "merge" | "rebaseOnto" | "schema" | "events"> & TreeBranch;

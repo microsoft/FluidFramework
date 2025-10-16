@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/markdown-magic",
-	"version": "2.63.0",
+	"version": "2.70.0",
 	"private": true,
 	"description": "Contains shared utilities for Markdown content generation and embedding using markdown-magic.",
 	"homepage": "https://fluidframework.com",
@@ -39,8 +39,6 @@
 		"chalk is left at version 4 (not 5) to keep CommonJS support."
 	],
 	"typeValidation": {
-		"disabled": true,
-		"broken": {},
-		"entrypoint": "internal"
+		"disabled": true
 	}
 }
