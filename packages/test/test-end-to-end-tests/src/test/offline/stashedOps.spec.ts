@@ -1631,10 +1631,6 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		assert.strictEqual(bufferToString(handleGet2, "utf8"), "blob contents");
 	});
 
-	// ADO#44999: The following scenarios are possible with payload pending, but will function differently.
-	// The in-flight blob upload will need to be completable after loading with the pending state, but
-	// we will expect the customer to have already stored the blob handle prior to calling getPendingState.
-
 	it("close while uploading blob", async function () {
 		const dataStore = (await container1.getEntryPoint()) as ITestFluidObject;
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
@@ -1649,6 +1645,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 
+		// TODO: We've not yet decided where to expose sharePendingBlobs(), so for now casting and reaching.
+		// Replace with calling the proper API when available.
+		// Share the pending blob so container1 will be able to find it.
+		await (dataStore2.context.containerRuntime as any).blobManager.sharePendingBlobs();
 		await provider.ensureSynchronized();
 		assert.strictEqual(
 			bufferToString(await map1.get("blob handle").get(), "utf8"),
@@ -1683,6 +1683,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const container2 = await loader.resolve({ url }, pendingState);
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
+		// TODO: We've not yet decided where to expose sharePendingBlobs(), so for now casting and reaching.
+		// Replace with calling the proper API when available.
+		// Share the pending blob so container1 will be able to find it.
+		await (dataStore2.context.containerRuntime as any).blobManager.sharePendingBlobs();
 		await provider.ensureSynchronized();
 		for (let i = 1; i <= 3; i++) {
 			assert.strictEqual(
