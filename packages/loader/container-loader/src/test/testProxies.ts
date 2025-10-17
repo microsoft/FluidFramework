@@ -22,7 +22,7 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import { v4 as uuid } from "uuid";
 
-import { failSometimeProxy } from "./failProxy.js";
+import { AbsentProperty, failSometimeProxy } from "./failProxy.js";
 
 export function createTestDocumentServiceFactoryProxy(
 	resolvedUrl: IResolvedUrl,
@@ -38,7 +38,7 @@ export function createTestDocumentServiceFactoryProxy(
 						createBlob: async () => ({ id: uuid() }),
 					}),
 			}),
-		ILayerCompatDetails: compatibilityDetails,
+		ILayerCompatDetails: compatibilityDetails ?? AbsentProperty,
 	});
 }
 
@@ -74,7 +74,7 @@ export function createTestCodeLoaderProxy(props?: {
 									}),
 									disposed: false,
 									setConnectionState: () => {},
-									ILayerCompatDetails: props?.layerCompatDetails,
+									ILayerCompatDetails: props?.layerCompatDetails ?? AbsentProperty,
 								});
 							},
 						},

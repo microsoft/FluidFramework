@@ -25,6 +25,9 @@ import {
 } from "../attachment.js";
 import { combineAppAndProtocolSummary } from "../utils.js";
 
+import type { PartialOrAbsent } from "./failProxy.js";
+import { AbsentProperty } from "./failProxy.js";
+
 const emptySummary = combineAppAndProtocolSummary(
 	{ tree: {}, type: SummaryType.Tree },
 	{ tree: {}, type: SummaryType.Tree },
@@ -78,13 +81,17 @@ const createDetachStorage = (
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const createProxyWithFailDefault = <T extends Record<string, any> | undefined>(
-	partial: Partial<T> = {},
+const createProxyWithFailDefault = <T extends Record<string, any>>(
+	partial: PartialOrAbsent<T> = {},
 ): T => {
 	return new Proxy(partial, {
 		get: (t, p, r): unknown => {
 			if (p in t) {
-				return Reflect.get(t, p, r);
+				const value = Reflect.get(t, p, r);
+				if (value === AbsentProperty) {
+					return undefined;
+				}
+				return value;
 			}
 
 			return new Proxy(
@@ -202,7 +209,7 @@ describe("runRetriableAttachProcess", () => {
 				// we have blobs storage, but it is empty,
 				// so it should be treat like there are no blobs
 				detachedBlobStorage: createProxyWithFailDefault<
-					AttachProcessProps["detachedBlobStorage"]
+					Required<AttachProcessProps>["detachedBlobStorage"]
 				>({ size: 0 }),
 			});
 
@@ -221,7 +228,7 @@ describe("runRetriableAttachProcess", () => {
 				await runRetriableAttachProcess(
 					createProxyWithFailDefault<AttachProcessProps>({
 						initialAttachmentData: initial,
-						detachedBlobStorage: undefined,
+						detachedBlobStorage: AbsentProperty,
 						createAttachmentSummary: () => {
 							throw error;
 						},
@@ -251,7 +258,7 @@ describe("runRetriableAttachProcess", () => {
 						initialAttachmentData: initial,
 						setAttachmentData: (data) => (attachmentData = data),
 						createAttachmentSummary: () => emptySummary,
-						detachedBlobStorage: undefined,
+						detachedBlobStorage: AbsentProperty,
 						createOrGetStorageService: () => {
 							throw error;
 						},
