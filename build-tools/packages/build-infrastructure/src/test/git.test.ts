@@ -10,7 +10,7 @@ import * as path from "node:path";
 
 import { expect } from "chai";
 import { readJson, writeJson } from "fs-extra/esm";
-import { describe, it } from "mocha";
+import { before, describe, it } from "mocha";
 import { CleanOptions, simpleGit } from "simple-git";
 
 import { loadBuildProject } from "../buildProject.js";
@@ -53,6 +53,23 @@ describe("getRemote", () => {
 describe("getChangedSinceRef: local", () => {
 	const git = simpleGit(process.cwd());
 	const repo = loadBuildProject(testRepoRoot);
+
+	before(async () => {
+		// Check for uncommitted changes in testRepoRoot to avoid accidentally reverting local work
+		const status = await git.status([testRepoRoot]);
+		const hasChanges =
+			status.files.length > 0 ||
+			status.created.length > 0 ||
+			status.deleted.length > 0 ||
+			status.modified.length > 0 ||
+			status.renamed.length > 0;
+
+		if (hasChanges) {
+			throw new Error(
+				`testRepo directory has uncommitted changes. This test modifies and reverts files in testRepo. Please commit or stash your changes before running this test.`,
+			);
+		}
+	});
 
 	beforeEach(async () => {
 		// create a file
