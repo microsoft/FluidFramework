@@ -836,7 +836,7 @@ export class ContainerRuntime
 	 * @privateRemarks
 	 * Despite this being `@internal`, `@fluidframework/test-utils` uses it in `createTestContainerRuntimeFactory` and assumes multiple versions of the package expose the same API.
 	 *
-	 * Also note that `mixinAttributor` from `@fluid experimental/attributor` overrides this function:
+	 * Also note that `mixinAttributor` from `@fluid-experimental/attributor` overrides this function:
 	 * that will have to be updated if changing the signature of this function as well.
 	 *
 	 * Assuming these usages are updated appropriately,
