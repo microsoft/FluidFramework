@@ -754,6 +754,9 @@
         "@typescript-eslint/no-array-constructor": [
             "off"
         ],
+        "@typescript-eslint/no-array-delete": [
+            "error"
+        ],
         "@typescript-eslint/no-base-to-string": [
             "error"
         ],
@@ -880,6 +883,17 @@
                 ]
             }
         ],
+        "@typescript-eslint/no-restricted-types": [
+            "error",
+            {
+                "types": {
+                    "null": {
+                        "message": "Avoid using null; prefer undefined instead.",
+                        "fixWith": "undefined"
+                    }
+                }
+            }
+        ],
         "@typescript-eslint/no-shadow": [
             "error",
             {
@@ -889,9 +903,6 @@
         ],
         "@typescript-eslint/no-this-alias": [
             "off"
-        ],
-        "@typescript-eslint/no-throw-literal": [
-            "error"
         ],
         "@typescript-eslint/no-unnecessary-qualifier": [
             "error"
@@ -929,6 +940,9 @@
         "@typescript-eslint/no-unsafe-return": [
             "error"
         ],
+        "@typescript-eslint/no-unsafe-unary-minus": [
+            "error"
+        ],
         "@typescript-eslint/no-unused-expressions": [
             "error"
         ],
@@ -959,7 +973,13 @@
         "@typescript-eslint/object-curly-spacing": [
             "off"
         ],
+        "@typescript-eslint/only-throw-error": [
+            "error"
+        ],
         "@typescript-eslint/prefer-as-const": [
+            "error"
+        ],
+        "@typescript-eslint/prefer-find": [
             "error"
         ],
         "@typescript-eslint/prefer-for-of": [
@@ -983,7 +1003,13 @@
         "@typescript-eslint/prefer-optional-chain": [
             "off"
         ],
+        "@typescript-eslint/prefer-promise-reject-errors": [
+            "error"
+        ],
         "@typescript-eslint/prefer-readonly": [
+            "error"
+        ],
+        "@typescript-eslint/prefer-regexp-exec": [
             "error"
         ],
         "@typescript-eslint/prefer-string-starts-ends-with": [
