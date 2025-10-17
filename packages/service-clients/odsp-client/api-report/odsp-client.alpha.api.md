@@ -8,6 +8,21 @@
 export type IOdspAudience = IServiceAudience<OdspMember>;
 
 // @beta
+export interface IOdspFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema> extends IFluidContainer<TContainerSchema> {
+    attach(props?: ContainerAttachProps<OdspContainerAttachProps>): Promise<string>;
+    serialize(): string;
+    uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
+}
+
+// @beta
+export interface IOdspFluidContainerEvents extends IEvent {
+    // (undocumented)
+    (event: "readOnlyStateChanged", listener: (readonly: boolean) => void): void;
+    // (undocumented)
+    (event: "sensitivityLabelChanged", listener: (sensitivityLabelsInfo: string) => void): void;
+}
+
+// @beta
 export interface IOdspTokenProvider {
     fetchStorageToken(siteUrl: string, refresh: boolean): Promise<TokenResponse>;
     fetchWebsocketToken(siteUrl: string, refresh: boolean): Promise<TokenResponse>;
@@ -23,6 +38,10 @@ export class OdspClient {
     }>;
     // (undocumented)
     getContainer<T extends ContainerSchema>(id: string, containerSchema: T): Promise<{
+        container: IFluidContainer<T>;
+        services: OdspContainerServices;
+    }>;
+    rehydrateContainer<T extends ContainerSchema>(serializedContainer: string, containerSchema: T): Promise<{
         container: IFluidContainer<T>;
         services: OdspContainerServices;
     }>;
@@ -43,9 +62,20 @@ export interface OdspConnectionConfig {
     tokenProvider: IOdspTokenProvider;
 }
 
+// @beta (undocumented)
+export interface OdspContainerAttachProps {
+    eTag?: string;
+    fileName: string | undefined;
+    filePath: string | undefined;
+    itemId?: string;
+}
+
 // @beta
-export interface OdspContainerServices {
+export interface OdspContainerServices extends IEventProvider<IOdspFluidContainerEvents> {
     audience: IOdspAudience;
+    dispose(): void;
+    getReadOnlyState(): boolean | undefined;
+    lookupTemporaryBlobURL<T>(handle: IFluidHandle<T>): string | undefined;
 }
 
 // @beta
