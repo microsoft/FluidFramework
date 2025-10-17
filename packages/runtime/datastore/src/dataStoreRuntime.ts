@@ -1392,7 +1392,7 @@ export class FluidDataStoreRuntime
 	 * Indicates the given channel is dirty from Summarizer's point of view,
 	 * i.e. it has local changes that need to be included in the summary.
 	 *
-	 * @remarks - If a channel's changes are rolled back or rebased away, we won't
+	 * @remarks If a channel's changes are rolled back or rebased away, we won't
 	 * clear the dirty flag set here.
 	 */
 	private setChannelDirty(address: string): void {

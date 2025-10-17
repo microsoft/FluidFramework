@@ -39,7 +39,7 @@ export class DuplicateBatchDetector {
 	 * Records this batch's batchId, and checks if it's a duplicate of a batch we've already seen.
 	 * If it's a duplicate, also return the sequence number of the other batch for logging.
 	 *
-	 * @remarks - We also use the minimumSequenceNumber to clear out old batchIds that are no longer at risk for duplicates.
+	 * @remarks We also use the minimumSequenceNumber to clear out old batchIds that are no longer at risk for duplicates.
 	 */
 	public processInboundBatch(
 		batchStart: BatchStartInfo,
@@ -97,7 +97,7 @@ export class DuplicateBatchDetector {
 	 * Returns a snapshot of the state of the detector which can be included in a summary
 	 * and used to "rehydrate" this class when loading from a snapshot.
 	 *
-	 * @returns - A serializable object representing the state of the detector, or undefined if there is nothing to save.
+	 * @returns A serializable object representing the state of the detector, or undefined if there is nothing to save.
 	 */
 	public getRecentBatchInfoForSummary(
 		telemetryContext?: ITelemetryContext,

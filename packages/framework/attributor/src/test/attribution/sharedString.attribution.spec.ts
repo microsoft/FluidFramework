@@ -401,7 +401,7 @@ type NonSymbolWithUndefinedNonFunctionPropertyOf<T extends object> = Exclude<
 	undefined | symbol
 >;
 
-/* eslint-disable @rushstack/no-new-null, @typescript-eslint/ban-types -- the type below needs to accept null and
+/* eslint-disable @rushstack/no-new-null, @typescript-eslint/no-unsafe-function-type -- the type below needs to accept null and
   Function; the lint disable is here so as not to interfere with the inline comments explaining what the type does and
   how it works. */
 /**
@@ -431,7 +431,8 @@ type JsonDeserialized<T, TReplaced = never> = /* test for 'any' */ boolean exten
 					| string
 					| TReplaced
 			? /* primitive types => */ T
-			: /* test for not a function */ Extract<T, Function> extends never
+			: // eslint-disable-next-line @typescript-eslint/ban-types
+				/* test for not a function */ Extract<T, Function> extends never
 				? /* not a function => test for object */ T extends object
 					? /* object => test for array */ T extends (infer E)[]
 						? /* array => */ JsonDeserialized<E, TReplaced>[]
@@ -452,7 +453,7 @@ type JsonDeserialized<T, TReplaced = never> = /* test for 'any' */ boolean exten
 							}
 					: /* not an object => */ never
 				: /* function => */ never;
-/* eslint-enable @rushstack/no-new-null, @typescript-eslint/ban-types */
+/* eslint-enable @rushstack/no-new-null, @typescript-eslint/no-unsafe-function-type */
 
 function readJson<T>(filepath: string): JsonDeserialized<T> {
 	return JSON.parse(readFileSync(filepath, { encoding: "utf8" })) as JsonDeserialized<T>;

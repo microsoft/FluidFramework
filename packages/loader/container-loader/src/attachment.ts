@@ -134,7 +134,7 @@ export interface AttachProcessProps {
  * this method will resume the attachment process and attempt to complete it.
  *
  * @param AttachProcessProps - The data and services necessary to run the attachment process
- * @returns - The attach summary (only if offline load is enabled), or undefined
+ * @returns The attach summary (only if offline load is enabled), or undefined
  */
 export const runRetriableAttachProcess = async ({
 	detachedBlobStorage,

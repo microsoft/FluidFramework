@@ -81,7 +81,7 @@ export enum FlushModeExperimental {
 	 * This feature requires a version of the loader which supports reference sequence numbers. If an older version of
 	 * the loader is used, the runtime will fall back on FlushMode.TurnBased.
 	 *
-	 * @experimental - Not ready for use
+	 * @experimental Not ready for use
 	 */
 	Async = 2,
 }
