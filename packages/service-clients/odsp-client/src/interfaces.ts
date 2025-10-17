@@ -5,6 +5,9 @@
 
 import type {
 	IConfigProviderBase,
+	IDisposable,
+	IEvent,
+	IEventProvider,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import type { IMember, IServiceAudience } from "@fluidframework/fluid-static";
@@ -75,6 +78,22 @@ export interface OdspContainerAttachProps {
 }
 
 /**
+ * Events emitted by the ODSP container service to notify consumers of select
+ * container changes.
+ * @beta
+ */
+export interface IOdspContainerServicesEvents extends IEvent {
+	/**
+	 * Emitted when the read-only state of the container changes.
+	 */
+	(event: "readOnlyStateChanged", listener: (readonly: boolean) => void): void;
+	/**
+	 * Emitted when the sensitivity label of the container changes.
+	 */
+	(event: "sensitivityLabelChanged", listener: (sensitivityLabelsInfo: string) => void): void;
+}
+
+/**
  * OdspContainerServices is returned by the OdspClient alongside a FluidContainer. It holds the
  * functionality specifically tied to the ODSP service, and how the data stored in the
  * FluidContainer is persisted in the backend and consumed by users. Any functionality regarding
@@ -82,11 +101,19 @@ export interface OdspContainerAttachProps {
  * use, will not be included here but rather on the FluidContainer class itself.
  * @beta
  */
-export interface OdspContainerServices {
+export interface OdspContainerServices
+	extends IEventProvider<IOdspContainerServicesEvents>,
+		IDisposable {
 	/**
 	 * Provides an object that facilitates obtaining information about users present in the Fluid session, as well as listeners for roster changes triggered by users joining or leaving the session.
 	 */
 	audience: IOdspAudience;
+
+	/**
+	 * Gets the read-only state of the container, if available.
+	 * @returns The read-only state (true when readonly, false when editable), or undefined if not available.
+	 */
+	getReadOnlyState(): boolean | undefined;
 }
 
 /**
