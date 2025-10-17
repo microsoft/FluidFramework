@@ -53,10 +53,10 @@ export interface SchemaValidationFunction<Schema extends TSchema> {
  * However, persisted data can sometimes be corrupted, bugs can produce invalid data, or users can mix up which data is compatible with which APIs.
  * In such cases, a format validator can help catch issues.
  *
- * Current options are {@link https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/codec/codec.ts | FormatValidatorNoOp} and {@link https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/external-utilities/typeboxValidator.ts | FormatValidatorBasic}.
+ * Current options are {@link FormatValidatorNoOp} and {@link FormatValidatorBasic}.
  * @privateRemarks
- * Implement using {@link https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/codec/codec.ts | toFormatValidator}.
- * Consume using {@link https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/codec/codec.ts | extractJsonValidator}.
+ * Implement using {@link toFormatValidator}.
+ * Consume using {@link extractJsonValidator}.
  *
  * Exposing this as the stable API entry point (instead of {@link JsonValidator}) means that we avoid leaking the reference to TypeBox to the API surface.
  * Additionally, if we adopt non JSON formats, we can just update the validators as needed without breaking the API.
