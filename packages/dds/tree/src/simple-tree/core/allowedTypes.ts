@@ -253,32 +253,20 @@ export class AnnotatedAllowedTypesInternal<
 		return this.lazyEvaluate.value.identifiers;
 	}
 
-	public static override [Symbol.hasInstance]<
-		TThis extends
-			| (abstract new (
-					...args: unknown[]
-			  ) => object)
-			| typeof AnnotatedAllowedTypesInternal,
-	>(
+	public static override [Symbol.hasInstance]<TThis extends { prototype: object }>(
 		this: TThis,
-		value: ErasedBaseType | InstanceTypeRelaxed<TThis> | ImplicitAllowedTypes,
+		value: unknown,
 	): value is InstanceTypeRelaxed<TThis> & AnnotatedAllowedTypesInternal & AllowedTypesFull {
-		return Object.prototype.isPrototypeOf.call(this.prototype, value);
+		return ErasedTypeImplementation[Symbol.hasInstance].call(this, value);
 	}
 
-	public static override narrow<
-		TThis extends
-			| (abstract new (
-					...args: unknown[]
-			  ) => object)
-			| typeof AnnotatedAllowedTypesInternal,
-	>(
+	public static override narrow<TThis extends { prototype: object }>(
 		this: TThis,
 		value: ErasedBaseType | InstanceTypeRelaxed<TThis> | ImplicitAllowedTypes,
 	): asserts value is InstanceTypeRelaxed<TThis> &
 		AnnotatedAllowedTypesInternal &
 		AllowedTypesFull {
-		if (!Object.prototype.isPrototypeOf.call(this.prototype, value)) {
+		if (!ErasedTypeImplementation[Symbol.hasInstance].call(this, value)) {
 			throw new TypeError("Invalid AnnotatedAllowedTypes instance");
 		}
 	}
@@ -539,7 +527,10 @@ export function normalizeAllowedTypesInternal(
 	return getOrCreate(cachedNormalize, type, () => {
 		// Due to more specific internal type, the above does not narrow sufficiently, so more narrowing is needed.
 		// It is possible this will give a false error if a TreeNodeSchema which matches this check is used.
-		assert(!("types" in type && "metadata" in type), "invalid AnnotatedAllowedTypes");
+		assert(
+			!("types" in type && "metadata" in type),
+			0xc7d /* invalid AnnotatedAllowedTypes */,
+		);
 
 		const annotatedTypes: AnnotatedAllowedType[] = (isReadonlyArray(type) ? type : [type]).map(
 			normalizeToAnnotatedAllowedType,

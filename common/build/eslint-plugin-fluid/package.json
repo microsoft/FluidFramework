@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/eslint-plugin-fluid",
-	"version": "0.3.1",
+	"version": "0.4.0",
 	"description": "Custom ESLint rules for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -19,22 +19,32 @@
 		"format": "npm run prettier:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
-		"test": "mocha \"src/test/**/*.test.*js\""
+		"test": "npm run test:both",
+		"test:both": "npm run test:eslint8 && npm run test:eslint9",
+		"test:eslint8": "cross-env ESLINT_PACKAGE=eslint8 npm run test:mocha",
+		"test:eslint9": "cross-env ESLINT_PACKAGE=eslint npm run test:mocha",
+		"test:mocha": "mocha \"src/test/**/*.test.*js\""
 	},
 	"dependencies": {
 		"@microsoft/tsdoc": "^0.15.1",
-		"@typescript-eslint/parser": "~7.18.0",
+		"@typescript-eslint/parser": "~8.46.0",
+		"@typescript-eslint/utils": "~8.46.0",
 		"ts-morph": "^22.0.0"
 	},
 	"devDependencies": {
 		"@fluid-tools/markdown-magic": "file:../../../tools/markdown-magic",
 		"@fluidframework/build-common": "^2.0.3",
-		"eslint": "^8.57.0",
+		"cross-env": "^7.0.3",
+		"eslint": "~9.37.0",
+		"eslint8": "npm:eslint@~8.57.1",
 		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
 		"prettier": "~3.6.2",
 		"rimraf": "^5.0.7",
 		"typescript": "~5.4.5"
+	},
+	"peerDependencies": {
+		"eslint": "^8.57.0 || ^9.37.0"
 	},
 	"packageManager": "pnpm@10.17.1+sha512.17c560fca4867ae9473a3899ad84a88334914f379be46d455cbf92e5cf4b39d34985d452d2583baf19967fa76cb5c17bc9e245529d0b98745721aa7200ecaf7a"
 }

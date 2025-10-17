@@ -16,8 +16,13 @@ import {
 	TreeViewConfiguration,
 } from "@fluidframework/tree/alpha";
 
-import { SharedTreeSemanticAgent } from "../agent.js";
-import type { EditResult, SharedTreeChatModel } from "../api.js";
+import { SharedTreeSemanticAgent, bindEditor } from "../agent.js";
+import type {
+	EditResult,
+	SharedTreeChatModel,
+	SynchronousEditor,
+	AsynchronousEditor,
+} from "../api.js";
 
 const sf = new SchemaFactory(undefined);
 const editToolName = "EditTreeTool";
@@ -39,15 +44,12 @@ describe("Semantic Agent", () => {
 	it("can apply an edit from a query", async () => {
 		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
 		view.initialize("Content");
-		const code = `
-	function editTree(params) {
-		params.root = "Edited";
-	}`;
+		const code = `context.root = "Edited";`;
 		const model: SharedTreeChatModel = {
 			editToolName,
 			async query({ edit }) {
 				const result = await edit(code);
-				assert(result.type === "success", "Edit was not successful");
+				assert(result.type === "success", result.message);
 				return result.message;
 			},
 		};
@@ -63,22 +65,20 @@ describe("Semantic Agent", () => {
 		view.initialize("Content");
 		let editCount = 0;
 		const firstEdit = `
-	function editTree(params) {
-		params.root = "First Edit";
-	}`;
+			context.root = "First Edit";
+		`;
 		const secondEdit = `
-	function editTreeAgain(params) {
-		params.root = "Second Edit";
-	}`;
+			context.root = "Second Edit";
+		`;
 		const model: SharedTreeChatModel = {
 			editToolName,
 			async query({ edit }) {
 				editCount++;
 				if (editCount === 1) {
 					const result1 = await edit(firstEdit);
-					assert(result1.type === "success", "First edit was not successful");
+					assert(result1.type === "success", result1.message);
 					const result2 = await edit(secondEdit);
-					assert(result2.type === "success", "Second edit was not successful");
+					assert(result2.type === "success", result2.message);
 					return result2.message;
 				}
 				return "No edits";
@@ -96,9 +96,7 @@ describe("Semantic Agent", () => {
 		view.initialize("Content");
 		const model: SharedTreeChatModel = {
 			async query({ edit }) {
-				const result = await edit(`function editTree(params) {
-					params.root = "Edited";
-				}`);
+				const result = await edit(`context.root = "Edited";`);
 				assert.equal(result.type, "disabledError", "Expected edit to be disabled");
 				return result.message;
 			},
@@ -107,35 +105,6 @@ describe("Semantic Agent", () => {
 		const response = await agent.query("Query");
 		assert.ok(response.includes("Editing is not enabled"));
 		assert.equal(view.root, "Content", "Tree should not have changed");
-	});
-
-	it("runs validation on edit code", async () => {
-		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
-		view.initialize("Orig");
-		let callCount = 0;
-		const model: SharedTreeChatModel = {
-			editToolName,
-			async query({ edit }) {
-				callCount++;
-				if (callCount === 1) {
-					const validLooking = `function verifyName(params) {
-						params.root = "New";
-					}`;
-					const result = await edit(validLooking);
-					assert.equal(result.type, "validationError");
-					return result.message;
-				}
-				return "Second ok";
-			},
-		};
-		const agent = new SharedTreeSemanticAgent(model, view, {
-			validator: () => false,
-		});
-		const response = await agent.query("First");
-		assert.ok(response.includes("did not pass validation"));
-		// Check that a subsequent query still works.
-		assert.equal(view.root, "Orig", "Tree should not have changed after failed validation");
-		assert.equal(await agent.query("Second"), "Second ok");
 	});
 
 	it("handles malformed edit code", async () => {
@@ -147,26 +116,16 @@ describe("Semantic Agent", () => {
 			async query({ edit }) {
 				callCount++;
 				if (callCount === 1) {
-					// Does not define any function.
-					const result1 = await edit("const notAFunction = 1;");
-					assert.equal(result1.type, "compileError");
-					assert.ok(result1.message.includes("invokable function"));
+					const result1 = await edit("const ; x = 1, for else");
+					assert.equal(result1.type, "editingError", result1.message);
 					return result1.message;
-				}
-				if (callCount === 2) {
-					// Invalid JS syntax (missing closing brace).
-					const result2 = await edit(`function stillInvalid(params){ params.root = 'Changed'`);
-					assert.equal(result2.type, "compileError");
-					return result2.message;
 				}
 				return "Recovered";
 			},
 		};
 		const agent = new SharedTreeSemanticAgent(model, view);
 		const response1 = await agent.query("First");
-		assert.ok(response1.includes("invokable function"));
-		const response2 = await agent.query("Second");
-		assert.ok(response2.includes("not valid"));
+		assert.ok(response1.includes("Unexpected token"));
 		// Check that a subsequent query still works.
 		assert.equal(await agent.query("Second"), "Recovered");
 	});
@@ -180,17 +139,13 @@ describe("Semantic Agent", () => {
 			async query({ edit }) {
 				callCount++;
 				if (callCount === 1) {
-					const result = await edit(`function causeBoom(params) {
-						throw new Error("boom");
-					}`);
-					assert.equal(result.type, "runtimeError");
+					const result = await edit(`throw new Error("boom");`);
+					assert.equal(result.type, "editingError", result.message);
 					return result.message;
 				}
 				// On second query perform successful edit to prove recovery.
-				const result2 = await edit(`function repairTree(params) {
-					params.root = "Recovered";
-				}`);
-				assert.equal(result2.type, "success");
+				const result2 = await edit(`context.root = "Recovered";`);
+				assert.equal(result2.type, "success", result2.message);
 				return "Recovered";
 			},
 		};
@@ -212,25 +167,17 @@ describe("Semantic Agent", () => {
 			async query({ edit }) {
 				callCount++;
 				if (callCount === 1) {
-					const result1 = await edit(`function editOnce(params) {
-						params.root = "One";
-					}`);
-					assert.equal(result1.type, "success");
-					const result2 = await edit(`function editTwice(params) {
-						params.root = "Two";
-					}`);
-					assert.equal(result2.type, "success");
-					const result3 = await edit(`function editThrice(params) {
-						params.root = "Three";
-					}`);
-					assert.equal(result3.type, "tooManyEditsError");
+					const result1 = await edit(`context.root = "One";`);
+					assert.equal(result1.type, "success", result1.message);
+					const result2 = await edit(`context.root = "Two";`);
+					assert.equal(result2.type, "success", result2.message);
+					const result3 = await edit(`context.root = "Three";`);
+					assert.equal(result3.type, "tooManyEditsError", result3.message);
 					return result3.message;
 				}
 				// On second query should be able to edit again.
-				const result = await edit(`function editAgain(params) {
-					params.root = "Recovered";
-				}`);
-				assert.equal(result.type, "success");
+				const result = await edit(`context.root = "Recovered";`);
+				assert.equal(result.type, "success", result.message);
 				return "Recovered";
 			},
 		};
@@ -260,28 +207,41 @@ describe("Semantic Agent", () => {
 		const response = await agent.query("First");
 		assert.equal(response, "They'll never know!");
 		assert(stolenEditCallback !== undefined, "Expected to have stolen the edit callback");
-		const editResult = await stolenEditCallback(
-			`function lateEdit(params){ params.root = 'Edit too late'; }`,
-		);
-		assert.equal(editResult.type, "expiredError");
+		const editResult = await stolenEditCallback(`context.root = 'Edit too late';`);
+		assert.equal(editResult.type, "expiredError", editResult.message);
 		assert.ok(editResult.message.includes("already completed"));
 	});
 
-	it("does not change tree if a subsequent edit fails", async () => {
+	it("does not roll back if a failed edit is followed by a successful edit in the same query", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
+		view.initialize("Content");
+		const model: SharedTreeChatModel = {
+			editToolName,
+			async query({ edit }) {
+				const result1 = await edit(`throw new Error("boom");`);
+				assert.equal(result1.type, "editingError", result1.message);
+				const result2 = await edit(`context.root = "Recovered";`);
+				assert.equal(result2.type, "success", result2.message);
+				return result2.message;
+			},
+		};
+		const agent = new SharedTreeSemanticAgent(model, view);
+		const response = await agent.query("First");
+		assert.match(response, /the new state of the tree is/i);
+		assert.equal(view.root, "Recovered");
+	});
+
+	it("rolls back if a successful edit is followed by a failed edit in the same query", async () => {
 		// First edit succeeds, but the second fails, so the tree should remain unchanged.
 		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
 		view.initialize("Initial");
 		const model: SharedTreeChatModel = {
 			editToolName,
 			async query({ edit }) {
-				const result1 = await edit(`function firstAttempt(params) {
-					params.root = "First";
-				}`);
-				assert.equal(result1.type, "success");
-				const result2 = await edit(`function secondAttempt(params) {
-					throw new Error("boom");
-				}`);
-				assert.equal(result2.type, "runtimeError");
+				const result1 = await edit(`context.root = "First";`);
+				assert.equal(result1.type, "success", result1.message);
+				const result2 = await edit(`throw new Error("boom");`);
+				assert.equal(result2.type, "editingError", result2.message);
 				return result2.message;
 			},
 		};
@@ -303,10 +263,8 @@ describe("Semantic Agent", () => {
 		const model: SharedTreeChatModel = {
 			editToolName,
 			async query({ edit }) {
-				const result = await edit(`function replacePerson(params) {
-					params.root = params.create.Person({ name: "Bob" });
-				}`);
-				assert.equal(result.type, "success");
+				const result = await edit(`context.root = context.create.Person({ name: "Bob" });`);
+				assert.equal(result.type, "success", result.message);
 				assert.equal(typeof result.message, "string");
 				assert.ok(result.message.includes("Bob"));
 				return "Done";
@@ -391,10 +349,10 @@ describe("Semantic Agent", () => {
 			},
 			async query(message) {
 				assert.equal(message.text, "Query");
-				const result = await message.edit(`function mutateChild(params) {
-					params.root = params.create.Child?.({ value: "Changed" });
-				}`);
-				assert.equal(result.type, "success");
+				const result = await message.edit(
+					`context.root = context.create.Child?.({ value: "Changed" });`,
+				);
+				assert.equal(result.type, "success", result.message);
 				return "Done";
 			},
 		};
@@ -406,168 +364,59 @@ describe("Semantic Agent", () => {
 		assert.ok(!context.includes("Parent"));
 	});
 
-	describe("processLlmCode detection", () => {
-		async function runEditWithCode(code: string): Promise<{
-			result: EditResult;
+	describe("bindEditor", () => {
+		/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
+		interface TestContext {
 			root: string;
-			response: string;
-		}> {
-			const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
-			view.initialize("Initial");
-			let captured: EditResult | undefined;
-			const model: SharedTreeChatModel = {
-				editToolName,
-				async query({ edit }) {
-					captured = await edit(code);
-					return captured.message;
-				},
-			};
-			const agent = new SharedTreeSemanticAgent(model, view);
-			const response = await agent.query("Mutation");
-			assert.ok(captured !== undefined, "Expected edit callback to be invoked");
-			return {
-				result: captured,
-				root: view.root,
-				response,
-			};
 		}
 
-		it("supports async function declarations with arbitrary names", async () => {
-			const code = `
-async function renameRoot(params) {
-	await Promise.resolve();
-	params.root = "Async Declaration";
-}`;
-			const { result, root } = await runEditWithCode(code);
-			assert.equal(result.type, "success");
-			assert.equal(root, "Async Declaration");
+		it("binds a synchronous editor and returns a void runner", () => {
+			const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
+			view.initialize("Initial");
+			const syncEditor: SynchronousEditor = (context, _code) => {
+				(context as unknown as TestContext).root = "SyncEdit";
+			};
+			const run = bindEditor(view, syncEditor);
+			const result = run("ignored");
+			assert.equal(view.root, "SyncEdit");
+			assert.equal(result, undefined, "Synchronous runner should return void");
 		});
 
-		it("supports function declarations with arbitrary names", async () => {
-			const code = `
-function renameRoot(params) {
-	params.root = "Custom Declaration";
-}`;
-			const { result, root } = await runEditWithCode(code);
-			assert.equal(result.type, "success");
-			assert.equal(root, "Custom Declaration");
+		it("binds an asynchronous editor and returns a Promise runner", async () => {
+			const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
+			view.initialize("Initial");
+			const asyncEditor: AsynchronousEditor = async (context, _code) => {
+				(context as unknown as TestContext).root = "AsyncEdit";
+			};
+			const run = bindEditor(view, asyncEditor) as (code: string) => Promise<void>;
+			const promise = run("ignored");
+			assert.ok(typeof (promise as unknown as { then?: unknown }).then === "function");
+			await promise;
+			assert.equal(view.root, "AsyncEdit");
 		});
 
-		it("supports async function expressions assigned to constants", async () => {
-			const code = `
-const mutate = async function(params) {
-	await Promise.resolve();
-	params.root = "Async Function Expression";
-};`;
-			const { result, root } = await runEditWithCode(code);
-			assert.equal(result.type, "success");
-			assert.equal(root, "Async Function Expression");
+		it("propagates synchronous errors", () => {
+			const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
+			view.initialize("Initial");
+			const syncErrorEditor: SynchronousEditor = (_context, _code) => {
+				throw new Error("syncBoom");
+			};
+			const run = bindEditor(view, syncErrorEditor);
+			assert.throws(() => run("ignored"), /syncBoom/);
+			assert.equal(view.root, "Initial", "Tree should not have changed after error");
 		});
 
-		it("supports async arrow functions", async () => {
-			const code = `
-const mutate = async (params) => {
-	await Promise.resolve();
-	params.root = "Async Arrow";
-};`;
-			const { result, root } = await runEditWithCode(code);
-			assert.equal(result.type, "success");
-			assert.equal(root, "Async Arrow");
+		it("propagates asynchronous errors (Promise rejection)", async () => {
+			const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
+			view.initialize("Initial");
+			const asyncErrorEditor: AsynchronousEditor = async () => {
+				throw new Error("asyncBoom");
+			};
+			const run = bindEditor(view, asyncErrorEditor) as (code: string) => Promise<void>;
+			const promise = run("ignored");
+			await assert.rejects(promise, /asyncBoom/);
+			assert.equal(view.root, "Initial", "Tree should not have changed after async error");
 		});
-
-		it("supports arrow functions without async", async () => {
-			const code = `
-const mutate = (params) => {
-	params.root = "Arrow";
-};`;
-			const { result, root } = await runEditWithCode(code);
-			assert.equal(result.type, "success");
-			assert.equal(root, "Arrow");
-		});
-		it("supports arrow functions without parentheses or block bodies", async () => {
-			const code = `
-const mutate = params => (params.root = "Implicit Arrow");
-`;
-			const { result, root } = await runEditWithCode(code);
-			assert.equal(result.type, "success");
-			assert.equal(root, "Implicit Arrow");
-		});
-
-		it("supports export function declarations", async () => {
-			const code = `
-export function renameRoot(params) {
-	params.root = "Exported Declaration";
-}
-`;
-			const { result, root } = await runEditWithCode(code);
-			assert.equal(result.type, "success");
-			assert.equal(root, "Exported Declaration");
-		});
-
-		it("supports export default function declarations", async () => {
-			const code = `
-export default function renameRoot(params) {
-	params.root = "Exported Default";
-}
-`;
-			const { result, root } = await runEditWithCode(code);
-			assert.equal(result.type, "success");
-			assert.equal(root, "Exported Default");
-		});
-
-		it("supports export const function expressions", async () => {
-			const code = `
-export const mutate = (params) => {
-	params.root = "Exported Const";
-};
-`;
-			const { result, root } = await runEditWithCode(code);
-			assert.equal(result.type, "success");
-			assert.equal(root, "Exported Const");
-		});
-
-		it("supports export default identifier statements", async () => {
-			const code = `
-const mutate = (params) => {
-	params.root = "Exported Identifier";
-};
-export default mutate;
-`;
-			const { result, root } = await runEditWithCode(code);
-			assert.equal(result.type, "success");
-			assert.equal(root, "Exported Identifier");
-		});
-
-		it("supports export named specifiers", async () => {
-			const code = `
-const mutate = (params) => {
-	params.root = "Exported Specifier";
-};
-export { mutate };
-`;
-			const { result, root } = await runEditWithCode(code);
-			assert.equal(result.type, "success");
-			assert.equal(root, "Exported Specifier");
-		});
-
-		it("supports reassigning declared variables", async () => {
-			const code = `
-let mutate;
-mutate = async (params) => {
-	await Promise.resolve();
-	params.root = "Async Assigned";
-};`;
-			const { result, root } = await runEditWithCode(code);
-			assert.equal(result.type, "success");
-			assert.equal(root, "Async Assigned");
-		});
-
-		it("reports a compile error when no invokable function is defined", async () => {
-			const { result, root, response } = await runEditWithCode("const value = 42;");
-			assert.equal(result.type, "compileError");
-			assert.ok(result.message.includes("invokable function"));
-			assert.ok(response.includes("invokable function"));
-			assert.equal(root, "Initial");
-		});
+		/* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
 	});
 });

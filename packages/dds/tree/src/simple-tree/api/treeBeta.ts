@@ -185,7 +185,7 @@ export interface TreeBeta {
 	 *
 	 * - The identifiers in the node's subtree will be preserved, i.e., they are not replaced with new values.
 	 *
-	 * - If the node (or any node in its subtree) contains {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields|unknown optional fields},
+	 * - If the node (or any node in its subtree) contains {@link ObjectSchemaOptions.allowUnknownOptionalFields|unknown optional fields},
 	 * those fields will be cloned just like the known fields.
 	 */
 	clone<const TSchema extends ImplicitFieldSchema>(
@@ -238,7 +238,7 @@ export function borrowCursorFromTreeNodeOrValue(
 		return cursorFromVerbose(node, {});
 	}
 	const kernel = getKernel(node);
-	const cursor = kernel.getOrCreateInnerNode().borrowCursor();
+	const cursor = kernel.getInnerNode().borrowCursor();
 	return cursor;
 }
 
@@ -339,7 +339,7 @@ export const TreeBeta: TreeBeta = {
 		}
 
 		const kernel = getKernel(node);
-		const cursor = kernel.getOrCreateInnerNode().borrowCursor();
+		const cursor = kernel.getInnerNode().borrowCursor();
 
 		// To handle when the node transitively contains unknown optional fields,
 		// derive the context from the source node's stored schema which has stored schema for any such fields and their contents.

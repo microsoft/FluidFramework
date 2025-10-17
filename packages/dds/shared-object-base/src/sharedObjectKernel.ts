@@ -142,6 +142,7 @@ class SharedObjectFromKernel<
 			logger: this.logger,
 			idCompressor: runtime.idCompressor,
 			lastSequenceNumber: () => this.deltaManager.lastSequenceNumber,
+			initialSequenceNumber: this.deltaManager.initialSequenceNumber,
 
 			// This cast is needed since IFluidDataStoreRuntimeInternalConfig does not extend IFluidDataStoreRuntime directly. This pattern
 			// allows us to avoid breaking changes to IFluidDataStoreRuntime by hiding internal members in a separate interface, but comes
@@ -299,6 +300,10 @@ export interface KernelArgs {
 	 * {@inheritdoc @fluidframework/container-definitions#IDeltaManager.lastSequenceNumber}
 	 */
 	readonly lastSequenceNumber: () => number;
+	/**
+	 * {@inheritdoc @fluidframework/container-definitions#IDeltaManager.initialSequenceNumber}
+	 */
+	readonly initialSequenceNumber: number;
 	/**
 	 * Minimum version of the FF runtime that is required to collaborate on new documents. Used so that a
 	 * compatible set of feature flags and formats can be enabled in the SharedObject implementation.

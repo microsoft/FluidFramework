@@ -82,6 +82,10 @@
 			"nanoid": "^3.3.9",
 			"qs": "^6.11.0",
 			"sharp": "^0.33.2"
-		}
+		},
+		"onlyBuiltDependencies": [
+			"core-js",
+			"unrs-resolver"
+		]
 	}
 }

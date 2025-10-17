@@ -228,6 +228,9 @@ export const schemaStatics = {
 	},
 } as const;
 
+/**
+ * {@link Unenforced} version of {@link createFieldSchema}.
+ */
 function createFieldSchemaUnsafe<
 	Kind extends FieldKind,
 	Types extends System_Unsafe.ImplicitAllowedTypesUnsafe,

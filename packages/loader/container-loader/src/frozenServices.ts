@@ -5,6 +5,7 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IDisposable } from "@fluidframework/core-interfaces";
+import { isPromiseLike } from "@fluidframework/core-utils/internal";
 import {
 	ScopeType,
 	type ConnectionMode,
@@ -28,13 +29,38 @@ import {
 
 import type { IConnectionStateChangeReason } from "./contracts.js";
 
+/**
+ * Creation of a FrozenDocumentServiceFactory which wraps an existing
+ * DocumentServiceFactory to provide a storage-only document service.
+ *
+ * @param documentServiceFactory - The underlying DocumentServiceFactory to wrap.
+ * @returns A FrozenDocumentServiceFactory
+ * @legacy @alpha
+ */
+export function createFrozenDocumentServiceFactory(
+	factory?: IDocumentServiceFactory | Promise<IDocumentServiceFactory>,
+): IDocumentServiceFactory {
+	// Sync path
+	return factory instanceof FrozenDocumentServiceFactory
+		? factory
+		: new FrozenDocumentServiceFactory(factory);
+}
+
 export class FrozenDocumentServiceFactory implements IDocumentServiceFactory {
-	constructor(private readonly documentServiceFactory?: IDocumentServiceFactory) {}
+	constructor(
+		private readonly documentServiceFactory?:
+			| IDocumentServiceFactory
+			| Promise<IDocumentServiceFactory>,
+	) {}
 
 	async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
+		let factory = this.documentServiceFactory;
+		if (isPromiseLike(factory)) {
+			factory = await this.documentServiceFactory;
+		}
 		return new FrozenDocumentService(
 			resolvedUrl,
-			await this.documentServiceFactory?.createDocumentService(resolvedUrl),
+			await factory?.createDocumentService(resolvedUrl),
 		);
 	}
 	async createContainer(): Promise<IDocumentService> {

@@ -619,3 +619,17 @@ export function findNamedSchemas(
 export function communize(str: string): string {
 	return str.charAt(0).toLowerCase() + str.slice(1);
 }
+
+/**
+ * Stringify an unknown error value
+ */
+export function toErrorString(error: unknown): string {
+	if (error instanceof Error) {
+		return error.message;
+	}
+	try {
+		return JSON.stringify(error);
+	} catch {
+		return String(error);
+	}
+}

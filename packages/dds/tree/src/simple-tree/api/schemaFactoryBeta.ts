@@ -14,15 +14,20 @@ import type {
 } from "../core/index.js";
 
 import {
+	objectSchema,
 	recordSchema,
+	type InsertableObjectFromSchemaRecord,
 	type RecordNodeInsertableData,
+	type TreeObjectNode,
 	type TreeRecordNode,
 } from "../node-kinds/index.js";
 import {
+	defaultSchemaFactoryObjectOptions,
 	SchemaFactory,
 	scoped,
 	structuralName,
 	type NodeSchemaOptions,
+	type ObjectSchemaOptions,
 	type ScopedSchemaName,
 } from "./schemaFactory.js";
 import type { System_Unsafe, TreeRecordNodeUnsafe } from "./typesUnsafe.js";
@@ -34,9 +39,11 @@ import type {
 	FieldSchemaAlpha,
 	FieldPropsAlpha,
 	FieldKind,
+	ImplicitFieldSchema,
 } from "../fieldSchema.js";
 import type { LeafSchema } from "../leafNodeSchema.js";
 import type { SimpleLeafNodeSchema } from "../simpleSchema.js";
+import type { RestrictiveStringRecord } from "../../util/index.js";
 /* eslint-enable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars, import/no-duplicates */
 
 /**
@@ -57,7 +64,69 @@ export class SchemaFactoryBeta<
 	public scopedFactory<const T extends TName, TNameInner extends number | string = string>(
 		name: T,
 	): SchemaFactoryBeta<ScopedSchemaName<TScope, T>, TNameInner> {
-		return new SchemaFactoryBeta(scoped(this, name));
+		return new SchemaFactoryBeta(scoped<TScope, TName, T>(this, name));
+	}
+
+	/**
+	 * Define a {@link TreeNodeSchemaClass} for a {@link TreeObjectNode}.
+	 *
+	 * @param name - Unique identifier for this schema within this factory's scope.
+	 * @param fields - Schema for fields of the object node's schema. Defines what children can be placed under each key.
+	 * @param options - Additional options for the schema.
+	 */
+	public override object<
+		const Name extends TName,
+		const T extends RestrictiveStringRecord<ImplicitFieldSchema>,
+		const TCustomMetadata = unknown,
+	>(
+		name: Name,
+		fields: T,
+		options?: ObjectSchemaOptions<TCustomMetadata>,
+	): TreeNodeSchemaClass<
+		ScopedSchemaName<TScope, Name>,
+		NodeKind.Object,
+		TreeObjectNode<T, ScopedSchemaName<TScope, Name>>,
+		object & InsertableObjectFromSchemaRecord<T>,
+		true,
+		T
+	> {
+		return objectSchema(scoped<TScope, TName, Name>(this, name), fields, true, {
+			...defaultSchemaFactoryObjectOptions,
+			...(options ?? {}),
+		});
+	}
+
+	public override objectRecursive<
+		const Name extends TName,
+		const T extends RestrictiveStringRecord<System_Unsafe.ImplicitFieldSchemaUnsafe>,
+		const TCustomMetadata = unknown,
+	>(
+		name: Name,
+		t: T,
+		options?: ObjectSchemaOptions<TCustomMetadata>,
+	): TreeNodeSchemaClass<
+		ScopedSchemaName<TScope, Name>,
+		NodeKind.Object,
+		System_Unsafe.TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>,
+		object & System_Unsafe.InsertableObjectFromSchemaRecordUnsafe<T>,
+		false,
+		T
+	> {
+		type TScopedName = ScopedSchemaName<TScope, Name>;
+		return this.object(
+			name,
+			t as T & RestrictiveStringRecord<ImplicitFieldSchema>,
+			options,
+		) as unknown as TreeNodeSchemaClass<
+			TScopedName,
+			NodeKind.Object,
+			System_Unsafe.TreeObjectNodeUnsafe<T, TScopedName>,
+			object & System_Unsafe.InsertableObjectFromSchemaRecordUnsafe<T>,
+			false,
+			T,
+			never,
+			TCustomMetadata
+		>;
 	}
 
 	/**
@@ -113,11 +182,13 @@ export class SchemaFactoryBeta<
 		/* Info */ T,
 		/* TConstructorExtra */ undefined
 	>;
+
 	/**
 	 * Define (and add to this library) a {@link TreeNodeSchemaClass} for a {@link (TreeRecordNode:interface)}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
 	 * @param allowedTypes - The types that may appear in the record.
+	 * @param options - Additional options for the schema.
 	 *
 	 * @remarks
 	 * The underlying data format for `Record` nodes is the same as that for `Map` nodes.
@@ -137,9 +208,14 @@ export class SchemaFactoryBeta<
 	 *
 	 * {@label NAMED}
 	 */
-	public record<const Name extends TName, const T extends ImplicitAllowedTypes>(
+	public record<
+		const Name extends TName,
+		const T extends ImplicitAllowedTypes,
+		const TCustomMetadata = unknown,
+	>(
 		name: Name,
 		allowedTypes: T,
+		options?: NodeSchemaOptions<TCustomMetadata>,
 	): TreeNodeSchemaClass<
 		/* Name */ ScopedSchemaName<TScope, Name>,
 		/* Kind */ NodeKind.Record,
@@ -147,8 +223,10 @@ export class SchemaFactoryBeta<
 		/* TInsertable */ RecordNodeInsertableData<T>,
 		/* ImplicitlyConstructable */ true,
 		/* Info */ T,
-		/* TConstructorExtra */ undefined
+		/* TConstructorExtra */ undefined,
+		/* TCustomMetadata */ TCustomMetadata
 	>;
+
 	/**
 	 * {@link SchemaFactoryBeta.record} implementation.
 	 *
@@ -158,6 +236,7 @@ export class SchemaFactoryBeta<
 	public record<const T extends ImplicitAllowedTypes>(
 		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | readonly TreeNodeSchema[]),
 		maybeAllowedTypes?: T,
+		options?: NodeSchemaOptions,
 	): TreeNodeSchema<
 		/* Name */ ScopedSchemaName<TScope, string>,
 		/* Kind */ NodeKind.Record,
@@ -199,6 +278,7 @@ export class SchemaFactoryBeta<
 			maybeAllowedTypes,
 			/* customizable */ true,
 			/* implicitlyConstructable */ true,
+			options,
 		);
 		return out;
 	}
@@ -232,24 +312,13 @@ export class SchemaFactoryBeta<
 		/* Info */ T,
 		/* TConstructorExtra */ undefined
 	> {
-		const record = recordSchema({
+		return recordSchema({
 			identifier: scoped<TScope, TName, Name>(this, name),
 			info: allowedTypes,
 			customizable,
 			implicitlyConstructable,
-			metadata: options?.metadata,
+			nodeOptions: options,
 		});
-
-		return record as TreeNodeSchemaBoth<
-			/* Name */ ScopedSchemaName<TScope, Name>,
-			/* Kind */ NodeKind.Record,
-			/* TNode */ TreeRecordNode<T> &
-				WithType<ScopedSchemaName<TScope, string>, NodeKind.Record>,
-			/* TInsertable */ RecordNodeInsertableData<T>,
-			/* ImplicitlyConstructable */ ImplicitlyConstructable,
-			/* Info */ T,
-			/* TConstructorExtra */ undefined
-		>;
 	}
 
 	/**
