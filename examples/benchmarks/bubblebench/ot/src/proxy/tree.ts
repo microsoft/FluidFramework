@@ -10,6 +10,7 @@ const contextSym = Symbol("proxy.context");
 
 type Consumer = (ops: json1.JSONOp) => void;
 
+// eslint-disable-next-line @typescript-eslint/no-wrapper-object-types
 interface IProxy extends Object {
 	[contextSym]: { parent?: IProxy; parentKey: json1.Key };
 }
@@ -23,7 +24,7 @@ function getPath(target: IProxy, key: json1.Key, path: json1.Key[] = []): json1.
 	return path;
 }
 
-const cache = new WeakMap<Object, IProxy>();
+const cache = new WeakMap<object, IProxy>();
 
 const arrayPatch = {
 	push:
@@ -54,11 +55,11 @@ const arrayPatch = {
 };
 
 const createObjectProxy = (
-	subject: Object,
+	subject: object,
 	consumer: Consumer,
 	parent?: IProxy,
 	parentKey?: json1.Key,
-): Object => {
+): object => {
 	const handler: ProxyHandler<IProxy> = {
 		get: (target: IProxy, key: string | symbol, receiver: IProxy) => {
 			if (key === contextSym) {
@@ -108,13 +109,13 @@ function indexify(key: string | symbol): string | symbol | number {
 }
 
 const createArrayProxy = (
-	subject: Object,
+	subject: object,
 	consumer: Consumer,
 	parent?: IProxy,
 	parentKey?: json1.Key,
-): Object =>
+): object =>
 	new Proxy(subject, {
-		get: (target: Object, key: string | symbol, receiver: IProxy): unknown => {
+		get: (target: object, key: string | symbol, receiver: IProxy): unknown => {
 			if (key === contextSym) {
 				return { parent, parentKey };
 			}
@@ -128,14 +129,14 @@ const createArrayProxy = (
 
 			// eslint-disable-next-line no-param-reassign
 			key = indexify(key as string) as string;
-			const value = target[key] as Object;
+			const value = target[key] as object;
 
 			return value !== null && typeof value === "object"
 				? getProxy(/* target: */ value, consumer, /* parent: */ receiver, key)
 				: value;
 		},
 		set: (
-			target: Object,
+			target: object,
 			key: string | symbol,
 			value: json1.Doc,
 			receiver: IProxy,
@@ -161,7 +162,7 @@ const createArrayProxy = (
 	});
 
 function getProxy(
-	target: Object,
+	target: object,
 	consumer: Consumer,
 	parent?: IProxy,
 	parentKey?: json1.Key,
@@ -177,5 +178,5 @@ function getProxy(
 	return self;
 }
 
-export const observe = <T extends Object>(target: T, consumer: Consumer): T =>
+export const observe = <T extends object>(target: T, consumer: Consumer): T =>
 	getProxy(target, consumer) as unknown as T;

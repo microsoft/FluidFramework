@@ -21,7 +21,7 @@ import {
  * from alternative perspectives: a remote client will have seen all of its own previous operations as well as
  * those at or below the op's reference sequence number.
  *
- * @remarks - As the `readonly` identifies suggest, these stamps should be treated as immutable.
+ * @remarks As the `readonly` identifies suggest, these stamps should be treated as immutable.
  * New operations applied to a merge-tree should create new stamps rather than modify existing ones (e.g. when
  * a change's ack happens).
  * @internal

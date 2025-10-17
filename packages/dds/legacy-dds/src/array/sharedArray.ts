@@ -484,7 +484,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	 * Load share array from snapshot
 	 *
 	 * @param storage - the storage to get the snapshot from
-	 * @returns - promise that resolved when the load is completed
+	 * @returns promise that resolved when the load is completed
 	 */
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
 		const header = await storage.readBlob(snapshotFileName);

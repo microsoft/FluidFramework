@@ -245,7 +245,7 @@ export const SchemaFactory_base = classWithStatics(schemaStaticsPublic);
  *
  * 4. Additional static members added to schema should pick relatively unique keys to reduce the risk of colliding with implementation details what are not exposed in the API.
  *
- * 5. If exporting the schema from a package which uses API-Extractor, export the base class and derived class separately to work around [a known limitation](https://github.com/microsoft/rushstack/issues/4429).
+ * 5. If exporting the schema from a package which uses API-Extractor, export the base class and derived class separately to work around {@link https://github.com/microsoft/rushstack/issues/4429 | a known limitation}.
  *
  * Note:
  * POJO stands for Plain Old JavaScript Object.
@@ -293,7 +293,7 @@ export const SchemaFactory_base = classWithStatics(schemaStaticsPublic);
  *
  * 8. IntelliSense: Shows internal type generation logic: `object & TreeNode & ObjectFromSchemaRecord<{}> & WithType<"test.x">`.
  *
- * 9. Recursion: Unsupported: [Generated `.d.ts` files replace recursive references with `any`](https://github.com/microsoft/TypeScript/issues/55832),
+ * 9. Recursion: Unsupported: {@link https://github.com/microsoft/TypeScript/issues/55832 | Generated `.d.ts` files replace recursive references with `any`},
  * breaking the use of recursive schema across compilation boundaries.
  *
  * Note that while "POJO Emulation" nodes act a lot like POJO objects, they are not true POJO objects:

@@ -95,7 +95,7 @@ export interface IAttributionCollection<T> {
 	 * Example: If the Attribution Offsets in the segment is [0, 10, 20, 30, 40] and request is for (startOffset: 5, endOffset: 25),
 	 * then result would be [(offset: 0, key: key1), (offset:10, key: key2), (offset:20, key: key3)].
 	 * @param channel - When specified, gets attribution keys associated with a particular channel.
-	 * @returns - undefined if the provided channel is not found or list of attribution keys along with
+	 * @returns undefined if the provided channel is not found or list of attribution keys along with
 	 * the corresponding offset start boundary.
 	 */
 	getKeysInOffsetRange(

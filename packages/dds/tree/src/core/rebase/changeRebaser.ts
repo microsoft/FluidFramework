@@ -12,7 +12,7 @@ import type { RevisionTag } from "./types.js";
  *
  * This interface is used to provide rebase policy to `Rebaser`.
  *
- * The implementation must ensure TChangeset forms a [group](https://en.wikipedia.org/wiki/Group_(mathematics)) where:
+ * The implementation must ensure TChangeset forms a {@link https://en.wikipedia.org/wiki/Group_(mathematics | group}) where:
  * - `compose([])` is the identity element.
  * - associativity is defined as `compose([...a, ...b])` is equal to
  * `compose([compose(a), compose(b)])` for all `a` and `b`.

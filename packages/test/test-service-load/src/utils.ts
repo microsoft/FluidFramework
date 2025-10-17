@@ -154,7 +154,7 @@ export const globalConfigurations: Record<string, ConfigTypes> = {
  * in the global test configuration {@link globalConfigurations}.
  *
  * @param configs - the supplied configs
- * @returns - an instance of a config provider
+ * @returns an instance of a config provider
  */
 export const configProvider = (configs: Record<string, ConfigTypes>): IConfigProviderBase => {
 	return {

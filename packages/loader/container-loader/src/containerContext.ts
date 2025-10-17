@@ -84,7 +84,7 @@ export class ContainerContext
 		IProvideLayerCompatDetails
 {
 	/**
-	 * @deprecated - This has been replaced by ILayerCompatDetails.
+	 * @deprecated This has been replaced by ILayerCompatDetails.
 	 */
 	public readonly supportedFeatures: ReadonlyMap<string, unknown> = new Map([
 		/**

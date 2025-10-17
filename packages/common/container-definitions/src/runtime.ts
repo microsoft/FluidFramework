@@ -147,7 +147,7 @@ export interface IContainerStorageService {
 	 * Whether or not the object has been disposed.
 	 * If true, the object should be considered invalid, and its other state should be disregarded.
 	 *
-	 * @deprecated - This API is deprecated and will be removed in a future release. No replacement is planned as
+	 * @deprecated This API is deprecated and will be removed in a future release. No replacement is planned as
 	 * it is unused in the Runtime layer.
 	 */
 	readonly disposed?: boolean;
@@ -157,7 +157,7 @@ export interface IContainerStorageService {
 	 * @param error - Optional error indicating the reason for the disposal, if the object was
 	 * disposed as the result of an error.
 	 *
-	 * @deprecated - This API is deprecated and will be removed in a future release. No replacement is planned as
+	 * @deprecated This API is deprecated and will be removed in a future release. No replacement is planned as
 	 * it is unused in the Runtime layer.
 	 */
 	dispose?(error?: Error): void;
@@ -165,7 +165,7 @@ export interface IContainerStorageService {
 	/**
 	 * Policies implemented/instructed by driver.
 	 *
-	 * @deprecated - This will be removed in a future release. The Runtime layer only needs `maximumCacheDurationMs`
+	 * @deprecated This will be removed in a future release. The Runtime layer only needs `maximumCacheDurationMs`
 	 * policy which is added as a separate property.
 	 */
 	readonly policies?: IDocumentStorageServicePolicies | undefined;
@@ -235,7 +235,7 @@ export interface IContainerStorageService {
 	 * Retrieves the commit that matches the packfile handle. If the packfile has already been committed and the
 	 * server has deleted it this call may result in a broken promise.
 	 *
-	 * @deprecated - This API is deprecated and will be removed in a future release. No replacement is planned as
+	 * @deprecated This API is deprecated and will be removed in a future release. No replacement is planned as
 	 * it is unused in the Runtime and below layers.
 	 */
 	downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
@@ -330,7 +330,7 @@ export interface IContainerContext {
 	updateDirtyContainerState(dirty: boolean): void;
 
 	/**
-	 * @deprecated - This has been deprecated. It was used internally and there is no replacement.
+	 * @deprecated This has been deprecated. It was used internally and there is no replacement.
 	 */
 	readonly supportedFeatures?: ReadonlyMap<string, unknown>;
 
