@@ -431,7 +431,8 @@ type JsonDeserialized<T, TReplaced = never> = /* test for 'any' */ boolean exten
 					| string
 					| TReplaced
 			? /* primitive types => */ T
-			: /* test for not a function */ Extract<T, Function> extends never
+			: // eslint-disable-next-line @typescript-eslint/ban-types
+				/* test for not a function */ Extract<T, Function> extends never
 				? /* not a function => test for object */ T extends object
 					? /* object => test for array */ T extends (infer E)[]
 						? /* array => */ JsonDeserialized<E, TReplaced>[]
