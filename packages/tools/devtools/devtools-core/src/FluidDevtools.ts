@@ -78,6 +78,7 @@ export function getContainerAlreadyRegisteredErrorText(containerKey: ContainerKe
 /**
  * Properties for configuring the Devtools.
  * @beta
+ * @input
  */
 export interface FluidDevtoolsProps {
 	/**
@@ -90,14 +91,14 @@ export interface FluidDevtoolsProps {
 	 * This is provided to the Devtools instance strictly to enable communicating supported / desired functionality with
 	 * external listeners.
 	 */
-	logger?: IDevtoolsLogger;
+	readonly logger?: IDevtoolsLogger;
 
 	/**
 	 * (optional) List of Containers to initialize the devtools with.
 	 *
 	 * @remarks Additional Containers can be registered with the Devtools via {@link IFluidDevtools.registerContainerDevtools}.
 	 */
-	initialContainers?: ContainerDevtoolsProps[];
+	readonly initialContainers?: ContainerDevtoolsProps[];
 
 	// TODO: Add ability for customers to specify custom data visualizer overrides
 }

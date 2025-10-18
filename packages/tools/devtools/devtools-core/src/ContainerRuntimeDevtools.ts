@@ -24,6 +24,7 @@ import type { InboundHandlers } from "./messaging/index.js";
 /**
  * Properties for registering a container runtime with the Devtools.
  * @beta
+ * @input
  */
 export interface ContainerRuntimeProps {
 	/**
