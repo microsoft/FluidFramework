@@ -23,6 +23,71 @@ export interface Logger {
 }
 
 /**
+ * The context object available to generated code when editing a tree.
+ * @remarks This object is provided to JavaScript code executed by the {@link SynchronousEditor | editor} as a variable named `context`.
+ * It contains the current state of the tree and utilities for creating and inspecting tree nodes.
+ * @alpha
+ */
+export interface Context<TSchema extends ImplicitFieldSchema> {
+	/**
+	 * The root of the tree that can be read or modified.
+	 * @remarks
+	 * You can read properties and navigate through the tree starting from this root.
+	 * You can also assign a new value to this property to replace the entire tree, as long as the new value is one of the types allowed at the root.
+	 *
+	 * Example: Read the current root with `const currentRoot = context.root;`
+	 *
+	 * Example: Replace the entire root with `context.root = context.create.MyRootType({ });`
+	 */
+	root: ReadableField<TSchema>;
+
+	/**
+	 * A collection of builder functions for creating new tree nodes.
+	 * @remarks
+	 * Each property on this object is named after a type in the tree schema.
+	 * Call the corresponding function to create a new node of that type.
+	 * Always use these builder functions when creating new nodes rather than plain JavaScript objects.
+	 *
+	 * Example: Create a new Person node with `context.create.Person({ name: "Alice", age: 30 })`
+	 *
+	 * Example: Create a new Task node with `context.create.Task({ title: "Buy groceries", completed: false })`
+	 */
+	create: Record<string, (input: FactoryContentObject) => TreeNode>;
+
+	/**
+	 * A collection of type-checking functions for tree nodes.
+	 * @remarks
+	 * Each property on this object is named after a type in the tree schema.
+	 * Call the corresponding function to check if a node is of that specific type.
+	 * This is useful when working with nodes that could be one of multiple types.
+	 *
+	 * Example: Check if a node is a Person with `if (context.is.Person(node)) { console.log(node.name); }`
+	 */
+	is: Record<string, <T extends TreeNode>(input: T) => input is T>;
+
+	/**
+	 * Returns the parent node of the given child node.
+	 * @param child - The node whose parent you want to find.
+	 * @returns The parent node, or `undefined` if the node is the root or is not in the tree.
+	 * @remarks
+	 * Example: Get the parent with `const parent = context.parent(childNode);`
+	 */
+	parent(child: TreeNode): TreeNode | undefined;
+
+	/**
+	 * Returns the key or index of the given node within its parent.
+	 * @param child - The node whose key you want to find.
+	 * @returns A string key if the node is in an object or map, or a numeric index if the node is in an array.
+	 * @remarks
+	 * For a node in an object, this might return a string like "firstName".
+	 * For a node in an array, this might return a number like 0, 1, 2, etc.
+	 *
+	 * Example: `const key = context.key(childNode);`
+	 */
+	key(child: TreeNode): string | number;
+}
+
+/**
  * A synchronous function that executes a string of JavaScript code to perform an edit within a {@link SharedTreeSemanticAgent}.
  * @param context - An object that must be provided to the generated code as a variable named "context" in its top-level scope.
  * @param code - The JavaScript code that should be executed.
