@@ -125,6 +125,13 @@ const assertIntervals = (
 	assert.deepEqual(actualPos, expected, "intervals are not as expected");
 };
 
+// Helper function just for validating that we've captured the pending state we expect
+const pendingBlobsFromPendingState = (pendingState: string): Record<string, any> => {
+	const pendingStateParsed = JSON.parse(pendingState);
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+	return pendingStateParsed.pendingRuntimeState.pendingAttachmentBlobs;
+};
+
 // Introduced in 0.37
 // REVIEW: enable compat testing
 describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
@@ -1641,6 +1648,18 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const pendingState = await container1.getPendingLocalState();
 		container1.close();
 
+		// In practice, the upload that was triggered by setting the handle in the map probably didn't complete before
+		// the getPendingLocalState() call was able to record the pending state, but maybe it could happen with the local
+		// service if microtasks shift around in the future. Verify we are testing the scenario we think we are testing.
+		const pendingBlobsRecord = pendingBlobsFromPendingState(pendingState);
+		const pendingBlob = Object.values(pendingBlobsRecord)[0];
+		assert(pendingBlob !== undefined, "Expect a pending blob in pending state");
+		assert.strictEqual(
+			pendingBlob.state,
+			"localOnly",
+			"Expect the upload hasn't completed yet",
+		);
+
 		const container2 = await loader.resolve({ url }, pendingState);
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
@@ -1679,6 +1698,17 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		map.set("blob handle 3", handle3);
 		const pendingState = await container1.getPendingLocalState();
 		container1.close();
+
+		// In practice, the uploads triggered by setting the handles in the map probably didn't complete before
+		// the getPendingLocalState() call was able to record the pending state, but maybe it could happen with the local
+		// service if microtasks shift around in the future. Verify we are testing the scenario we think we are testing.
+		const pendingBlobsRecord = pendingBlobsFromPendingState(pendingState);
+		const pendingBlobs = Object.values(pendingBlobsRecord);
+		assert.strictEqual(pendingBlobs?.length, 3, "Expect 3 pending blobs in pending state");
+		assert(
+			pendingBlobs.every((pendingBlob) => pendingBlob.state === "localOnly"),
+			"Expect none of the uploads have completed yet",
+		);
 
 		const container2 = await loader.resolve({ url }, pendingState);
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
