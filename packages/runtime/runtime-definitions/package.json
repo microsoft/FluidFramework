@@ -119,7 +119,17 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Interface_CommitStagedChangesOptionsExperimental": {
+				"backCompat": false
+			},
+			"Interface_IContainerRuntimeBaseExperimental": {
+				"backCompat": false
+			},
+			"Interface_StageControlsExperimental": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }

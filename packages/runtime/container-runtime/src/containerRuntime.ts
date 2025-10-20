@@ -120,10 +120,8 @@ import type {
 	IInboundSignalMessage,
 	IRuntimeMessagesContent,
 	ISummarizerNodeWithGC,
-	// eslint-disable-next-line import/no-deprecated
-	StageControlsExperimental,
-	// eslint-disable-next-line import/no-deprecated
-	IContainerRuntimeBaseExperimental,
+	StageControlsInternal,
+	IContainerRuntimeBaseInternal,
 	IFluidParentContext,
 	MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
@@ -817,8 +815,7 @@ export class ContainerRuntime
 	extends TypedEventEmitter<IContainerRuntimeEvents>
 	implements
 		IContainerRuntimeInternal,
-		// eslint-disable-next-line import/no-deprecated
-		IContainerRuntimeBaseExperimental,
+		IContainerRuntimeBaseInternal,
 		// eslint-disable-next-line import/no-deprecated
 		IContainerRuntimeWithResolveHandle_Deprecated,
 		IRuntime,
@@ -3452,8 +3449,7 @@ export class ContainerRuntime
 	 */
 	public orderSequentially<T>(callback: () => T): T {
 		let checkpoint: IBatchCheckpoint | undefined;
-		// eslint-disable-next-line import/no-deprecated
-		let stageControls: StageControlsExperimental | undefined;
+		let stageControls: StageControlsInternal | undefined;
 		if (this.mc.config.getBoolean("Fluid.ContainerRuntime.EnableRollback") === true) {
 			if (!this.batchRunner.running && !this.inStagingMode) {
 				stageControls = this.enterStagingMode();
@@ -3517,8 +3513,7 @@ export class ContainerRuntime
 		return result;
 	}
 
-	// eslint-disable-next-line import/no-deprecated
-	private stageControls: StageControlsExperimental | undefined;
+	private stageControls: StageControlsInternal | undefined;
 
 	/**
 	 * If true, the ContainerRuntime is not submitting any new ops to the ordering service.
@@ -3533,10 +3528,9 @@ export class ContainerRuntime
 	 * Enter Staging Mode, such that ops submitted to the ContainerRuntime will not be sent to the ordering service.
 	 * To exit Staging Mode, call either discardChanges or commitChanges on the Stage Controls returned from this method.
 	 *
-	 * @returns StageControlsExperimental - Controls for exiting Staging Mode.
+	 * @returns StageControlsInternal - Controls for exiting Staging Mode.
 	 */
-	// eslint-disable-next-line import/no-deprecated
-	public enterStagingMode = (): StageControlsExperimental => {
+	public enterStagingMode = (): StageControlsInternal => {
 		if (this.stageControls !== undefined) {
 			throw new UsageError("Already in staging mode");
 		}
@@ -3569,8 +3563,7 @@ export class ContainerRuntime
 			}
 		};
 
-		// eslint-disable-next-line import/no-deprecated
-		const stageControls: StageControlsExperimental = {
+		const stageControls: StageControlsInternal = {
 			discardChanges: () =>
 				exitStagingMode(() => {
 					// Pop all staged batches from the PSM and roll them back in LIFO order
