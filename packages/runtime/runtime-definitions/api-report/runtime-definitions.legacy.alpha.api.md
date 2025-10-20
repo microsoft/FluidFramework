@@ -70,7 +70,7 @@ export type DataStoreKey<T, TAll = unknown> = RegistryKey<Promise<DataStoreKind<
 export interface DataStoreKind<out T = unknown> extends DataStoreKey<T>, ErasedBaseType<readonly ["DataStoreKind", T]> {
 }
 
-// @alpha @sealed @input
+// @alpha @input
 export type DataStoreRegistry<out T = unknown> = Registry<Promise<DataStoreKind<T>>>;
 
 // @beta @legacy

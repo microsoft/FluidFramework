@@ -8,7 +8,6 @@ import {
 	ContainerRuntime,
 	DefaultSummaryConfiguration,
 	type IContainerRuntimeOptionsInternal,
-	type MinimumVersionForCollab,
 } from "@fluidframework/container-runtime/internal";
 import {
 	IContainerRuntime,
@@ -27,6 +26,7 @@ import {
 import {
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,
+	type MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import { RequestParser, RuntimeFactoryHelper } from "@fluidframework/runtime-utils/internal";
 

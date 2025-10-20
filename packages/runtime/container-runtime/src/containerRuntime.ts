@@ -1939,7 +1939,7 @@ export class ContainerRuntime
 			routeContext: this.handleContext,
 			blobManagerLoadInfo,
 			storage: this.storage,
-			sendBlobAttachOp: (localId: string, blobId: string) => {
+			sendBlobAttachMessage: (localId: string, blobId: string) => {
 				if (!this.disposed) {
 					this.submit(
 						{ type: ContainerMessageType.BlobAttach, contents: undefined },
