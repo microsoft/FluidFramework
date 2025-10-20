@@ -94,7 +94,7 @@
 // 		idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
 // 		testRevisionTagCodec,
 // 		testIdCompressor,
-// 		{ jsonValidator: FormatValidatorBasic, oldestCompatibleClient: FluidClientVersion.v2_0 },
+// 		{ jsonValidator: FormatValidatorBasic, minVersionForCollab: FluidClientVersion.v2_0 },
 // 	);
 // 	const schema = new TreeStoredSchemaRepository(jsonSequenceRootSchema);
 // 	const forest = buildTestForest({ additionalAsserts: true, schema });

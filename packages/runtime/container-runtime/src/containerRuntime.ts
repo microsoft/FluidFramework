@@ -282,6 +282,7 @@ import {
 	type IRootSummarizerNodeWithGC,
 	type ISerializedElection,
 	isSummariesDisabled,
+	isSummaryOnRequest,
 	type ISubmitSummaryOptions,
 	type ISummarizeResults,
 	type ISummarizerInternalsProvider,
@@ -729,7 +730,9 @@ export interface LoadContainerRuntimeParams {
 	 */
 	existing: boolean;
 	/**
-	 * Additional options to be passed to the runtime
+	 * Additional options to be passed to the runtime.
+	 * @remarks
+	 * Defaults to `{}`.
 	 */
 	runtimeOptions?: IContainerRuntimeOptions;
 	/**
@@ -828,37 +831,60 @@ export class ContainerRuntime
 {
 	/**
 	 * Load the stores from a snapshot and returns the runtime.
-	 * @param params - An object housing the runtime properties:
-	 * - context - Context of the container.
-	 * - registryEntries - Mapping from data store types to their corresponding factories.
-	 * - existing - Pass 'true' if loading from an existing snapshot.
-	 * - requestHandler - (optional) Request handler for the request() method of the container runtime.
-	 * Only relevant for back-compat while we remove the request() method and move fully to entryPoint as the main pattern.
-	 * - runtimeOptions - Additional options to be passed to the runtime
-	 * - containerScope - runtime services provided with context
-	 * - containerRuntimeCtor - Constructor to use to create the ContainerRuntime instance.
-	 * This allows mixin classes to leverage this method to define their own async initializer.
-	 * - provideEntryPoint - Promise that resolves to an object which will act as entryPoint for the Container.
-	 * - minVersionForCollab - Minimum version of the FF runtime that this runtime supports collaboration with.
-	 * This object should provide all the functionality that the Container is expected to provide to the loader layer.
+	 * @param params - An object housing the runtime properties.
+	 * {@link LoadContainerRuntimeParams} except internal, while still having layer compat obligations.
+	 * @privateRemarks
+	 * Despite this being `@internal`, `@fluidframework/test-utils` uses it in `createTestContainerRuntimeFactory` and assumes multiple versions of the package expose the same API.
+	 *
+	 * Also note that `mixinAttributor` from `@fluid-experimental/attributor` overrides this function:
+	 * that will have to be updated if changing the signature of this function as well.
+	 *
+	 * Assuming these usages are updated appropriately,
+	 * `loadRuntime` could be removed (replaced by `loadRuntime2` which could be renamed back to `loadRuntime`).
 	 */
-	public static async loadRuntime(params: {
-		context: IContainerContext;
-		registryEntries: NamedFluidDataStoreRegistryEntries;
-		existing: boolean;
-		runtimeOptions?: IContainerRuntimeOptionsInternal;
-		containerScope?: FluidObject;
-		containerRuntimeCtor?: typeof ContainerRuntime;
-		/**
-		 * @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-		 */
-		requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
-		provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
-		minVersionForCollab?: MinimumVersionForCollab;
-	}): Promise<ContainerRuntime> {
+	public static async loadRuntime(
+		params: LoadContainerRuntimeParams & {
+			/**
+			 * Constructor to use to create the ContainerRuntime instance.
+			 * @remarks
+			 * Defaults to {@link ContainerRuntime}.
+			 */
+			containerRuntimeCtor?: typeof ContainerRuntime;
+		},
+	): Promise<ContainerRuntime> {
+		return ContainerRuntime.loadRuntime2({
+			...params,
+			registry: new FluidDataStoreRegistry(params.registryEntries),
+		});
+	}
+
+	/**
+	 * Load the stores from a snapshot and returns the runtime.
+	 * @remarks
+	 * Same as {@link ContainerRuntime.loadRuntime},
+	 * but with `registry` instead of `registryEntries` and more `runtimeOptions`.
+	 */
+	public static async loadRuntime2(
+		params: Omit<LoadContainerRuntimeParams, "registryEntries" | "runtimeOptions"> & {
+			/**
+			 * Mapping from data store types to their corresponding factories.
+			 */
+			registry: IFluidDataStoreRegistry;
+			/**
+			 * Constructor to use to create the ContainerRuntime instance.
+			 * @remarks
+			 * Defaults to {@link ContainerRuntime}.
+			 */
+			containerRuntimeCtor?: typeof ContainerRuntime;
+			/**
+			 * {@link LoadContainerRuntimeParams.runtimeOptions}, except with additional internal only options.
+			 */
+			runtimeOptions?: IContainerRuntimeOptionsInternal;
+		},
+	): Promise<ContainerRuntime> {
 		const {
 			context,
-			registryEntries,
+			registry,
 			existing,
 			requestHandler,
 			provideEntryPoint,
@@ -957,8 +983,6 @@ export class ContainerRuntime
 			"enableRuntimeIdCompressor" in runtimeOptions
 				? runtimeOptions.enableRuntimeIdCompressor
 				: defaultConfigs.enableRuntimeIdCompressor;
-
-		const registry = new FluidDataStoreRegistry(registryEntries);
 
 		const tryFetchBlob = async <T>(blobName: string): Promise<T | undefined> => {
 			const blobId = context.baseSnapshot?.blobs[blobName];
@@ -1915,7 +1939,7 @@ export class ContainerRuntime
 			routeContext: this.handleContext,
 			blobManagerLoadInfo,
 			storage: this.storage,
-			sendBlobAttachOp: (localId: string, blobId: string) => {
+			sendBlobAttachMessage: (localId: string, blobId: string) => {
 				if (!this.disposed) {
 					this.submit(
 						{ type: ContainerMessageType.BlobAttach, contents: undefined },
@@ -2180,31 +2204,7 @@ export class ContainerRuntime
 			this.deltaManager,
 			this.baseLogger,
 		);
-		const orderedClientLogger = createChildLogger({
-			logger: this.baseLogger,
-			namespace: "OrderedClientElection",
-		});
-		const orderedClientCollection = new OrderedClientCollection(
-			orderedClientLogger,
-			this.innerDeltaManager,
-			this._quorum,
-		);
-		const orderedClientElectionForSummarizer = new OrderedClientElection(
-			orderedClientLogger,
-			orderedClientCollection,
-			this.electedSummarizerData ?? this.innerDeltaManager.lastSequenceNumber,
-			SummarizerClientElection.isClientEligible,
-			this.mc.config.getBoolean(
-				"Fluid.ContainerRuntime.OrderedClientElection.EnablePerformanceEvents",
-			),
-		);
-
-		this.summarizerClientElection = new SummarizerClientElection(
-			orderedClientLogger,
-			summaryCollection,
-			orderedClientElectionForSummarizer,
-			maxOpsSinceLastSummary,
-		);
+		const onRequestMode = isSummaryOnRequest(this.summaryConfiguration);
 
 		if (this.isSummarizerClient) {
 			// We want to dynamically import any thing inside summaryDelayLoadedModule module only when we are the summarizer client,
@@ -2227,9 +2227,38 @@ export class ContainerRuntime
 						() => this.innerDeltaManager.active,
 					),
 			);
-		} else if (SummarizerClientElection.clientDetailsPermitElection(this.clientDetails)) {
+		} else if (
+			!onRequestMode &&
+			SummarizerClientElection.clientDetailsPermitElection(this.clientDetails)
+		) {
 			// Only create a SummaryManager and SummarizerClientElection
 			// if summaries are enabled and we are not the summarizer client.
+			const orderedClientLogger = createChildLogger({
+				logger: this.baseLogger,
+				namespace: "OrderedClientElection",
+			});
+			const orderedClientCollection = new OrderedClientCollection(
+				orderedClientLogger,
+				this.innerDeltaManager,
+				this._quorum,
+			);
+			const orderedClientElectionForSummarizer = new OrderedClientElection(
+				orderedClientLogger,
+				orderedClientCollection,
+				this.electedSummarizerData ?? this.innerDeltaManager.lastSequenceNumber,
+				SummarizerClientElection.isClientEligible,
+				this.mc.config.getBoolean(
+					"Fluid.ContainerRuntime.OrderedClientElection.EnablePerformanceEvents",
+				),
+			);
+
+			this.summarizerClientElection = new SummarizerClientElection(
+				orderedClientLogger,
+				summaryCollection,
+				orderedClientElectionForSummarizer,
+				maxOpsSinceLastSummary,
+			);
+
 			const defaultAction = (): void => {
 				if (summaryCollection.opsSinceLastAck > maxOpsSinceLastSummary) {
 					this.mc.logger.sendTelemetryEvent({ eventName: "SummaryStatus:Behind" });

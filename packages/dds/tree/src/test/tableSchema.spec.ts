@@ -943,7 +943,9 @@ describe("TableFactory unit tests", () => {
 
 			assert.throws(
 				() => table.removeColumns([new Column({ id: "column-0", props: {} })]),
-				validateUsageError(/No column with ID "column-0" exists in the table./),
+				validateUsageError(
+					/The specified column node with ID "column-0" does not exist in the table./,
+				),
 			);
 		});
 
@@ -956,7 +958,9 @@ describe("TableFactory unit tests", () => {
 
 			assert.throws(
 				() => table.removeColumns([column0, new Column({ id: "column-1", props: {} })]),
-				validateUsageError(/No column with ID "column-1" exists in the table./),
+				validateUsageError(
+					/The specified column node with ID "column-1" does not exist in the table./,
+				),
 			);
 
 			// Additionally, `column-0` should not have been removed.
@@ -1086,7 +1090,9 @@ describe("TableFactory unit tests", () => {
 
 			assert.throws(
 				() => table.removeRows([new Row({ id: "row-0", cells: {}, props: {} })]),
-				validateUsageError(/No row with ID "row-0" exists in the table./),
+				validateUsageError(
+					/The specified row node with ID "row-0" does not exist in the table./,
+				),
 			);
 		});
 
@@ -1099,7 +1105,9 @@ describe("TableFactory unit tests", () => {
 
 			assert.throws(
 				() => table.removeRows([row0, new Row({ id: "row-1", cells: {}, props: {} })]),
-				validateUsageError(/No row with ID "row-1" exists in the table./),
+				validateUsageError(
+					/The specified row node with ID "row-1" does not exist in the table./,
+				),
 			);
 
 			// Additionally, `row-0` should not have been removed.
@@ -1391,23 +1399,173 @@ describe("TableFactory unit tests", () => {
 	});
 
 	describeHydration("Reading values", (initializeTree) => {
-		it("Gets proper table elements with getter methods", () => {
-			const cell0 = new Cell({ value: "Hello World!" });
+		it("getCell", () => {
+			const cell00 = new Cell({ value: "0-0" });
+			const cell01 = new Cell({ value: "0-1" });
+			const cell10 = new Cell({ value: "1-0" });
+			const cell11 = new Cell({ value: "1-1" });
 			const column0 = new Column({ id: "column-0", props: {} });
-			const row0 = new Row({ id: "row-0", cells: { "column-0": cell0 }, props: {} });
-
-			const table = initializeTree(Table, {
-				columns: [column0],
-				rows: [row0],
+			const column1 = new Column({ id: "column-1", props: {} });
+			const row0 = new Row({
+				id: "row-0",
+				cells: {
+					"column-0": cell00,
+					"column-1": cell01,
+				},
+				props: {},
+			});
+			const row1 = new Row({
+				id: "row-1",
+				cells: { "column-0": cell10, "column-1": cell11 },
+				props: {},
 			});
 
-			const cell = table.getCell({ column: "column-0", row: "row-0" });
-			const column = table.getColumn("column-0");
-			const row = table.getRow("row-0");
+			const table = initializeTree(Table, {
+				columns: [column0, column1],
+				rows: [row0, row1],
+			});
 
-			assert.equal(cell, cell0);
-			assert.equal(row, row0);
-			assert.equal(column, column0);
+			// Get cell (by indices)
+			const getByIndices = table.getCell({ row: 1, column: 0 });
+			assert(getByIndices !== undefined);
+			assertEqualTrees(getByIndices, {
+				value: "1-0",
+			});
+
+			// Get cell (by IDs)
+			const getByIds = table.getCell({ row: "row-0", column: "column-0" });
+			assert(getByIds !== undefined);
+			assertEqualTrees(getByIds, {
+				value: "0-0",
+			});
+
+			// Get cell (by nodes)
+			const getByNodes = table.getCell({ row: row1, column: column1 });
+			assert(getByNodes !== undefined);
+			assertEqualTrees(getByNodes, {
+				value: "1-1",
+			});
+
+			// Get cell (index out of bounds)
+			assert(table.getCell({ row: 5, column: 0 }) === undefined);
+
+			// Get cell (nonexistent ID)
+			assert(table.getCell({ row: "row-0", column: "foo" }) === undefined);
+
+			// Get cell (node that isn't in the table)
+			assert(
+				table.getCell({
+					// Note, while a row with this ID exists in the table, this *node* does not.
+					row: new Row({ id: "row-1", cells: {}, props: {} }),
+					column: column0,
+				}) === undefined,
+			);
+		});
+
+		it("getRow", () => {
+			const cell00 = new Cell({ value: "0-0" });
+			const cell01 = new Cell({ value: "0-1" });
+			const cell10 = new Cell({ value: "1-0" });
+			const cell11 = new Cell({ value: "1-1" });
+			const column0 = new Column({ id: "column-0", props: {} });
+			const column1 = new Column({ id: "column-1", props: {} });
+			const row0 = new Row({
+				id: "row-0",
+				cells: {
+					"column-0": cell00,
+					"column-1": cell01,
+				},
+				props: {},
+			});
+			const row1 = new Row({
+				id: "row-1",
+				cells: { "column-0": cell10, "column-1": cell11 },
+				props: {},
+			});
+
+			const table = initializeTree(Table, {
+				columns: [column0, column1],
+				rows: [row0, row1],
+			});
+
+			// Get row (by index)
+			const getByIndex = table.getRow(1);
+			assert(getByIndex !== undefined);
+			assertEqualTrees(getByIndex, {
+				id: "row-1",
+				cells: {
+					"column-0": { value: "1-0" },
+					"column-1": { value: "1-1" },
+				},
+				props: {},
+			});
+
+			// Get row (by ID)
+			const getByIds = table.getRow("row-0");
+			assert(getByIds !== undefined);
+			assertEqualTrees(getByIds, {
+				id: "row-0",
+				cells: {
+					"column-0": { value: "0-0" },
+					"column-1": { value: "0-1" },
+				},
+				props: {},
+			});
+
+			// Get row (index out of bounds)
+			assert(table.getRow(5) === undefined);
+
+			// Get row (nonexistent ID)
+			assert(table.getRow("foo") === undefined);
+		});
+
+		it("getRow", () => {
+			const cell00 = new Cell({ value: "0-0" });
+			const cell01 = new Cell({ value: "0-1" });
+			const cell10 = new Cell({ value: "1-0" });
+			const cell11 = new Cell({ value: "1-1" });
+			const column0 = new Column({ id: "column-0", props: {} });
+			const column1 = new Column({ id: "column-1", props: {} });
+			const row0 = new Row({
+				id: "row-0",
+				cells: {
+					"column-0": cell00,
+					"column-1": cell01,
+				},
+				props: {},
+			});
+			const row1 = new Row({
+				id: "row-1",
+				cells: { "column-0": cell10, "column-1": cell11 },
+				props: {},
+			});
+
+			const table = initializeTree(Table, {
+				columns: [column0, column1],
+				rows: [row0, row1],
+			});
+
+			// Get column (by index)
+			const getByIndex = table.getColumn(1);
+			assert(getByIndex !== undefined);
+			assertEqualTrees(getByIndex, {
+				id: "column-1",
+				props: {},
+			});
+
+			// Get column (by ID)
+			const getByIds = table.getColumn("column-0");
+			assert(getByIds !== undefined);
+			assertEqualTrees(getByIds, {
+				id: "column-0",
+				props: {},
+			});
+
+			// Get column (index out of bounds)
+			assert(table.getColumn(5) === undefined);
+
+			// Get column (nonexistent ID)
+			assert(table.getColumn("foo") === undefined);
 		});
 	});
 
