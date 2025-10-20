@@ -206,17 +206,23 @@ interface IDocumentSchemaCurrentIncoming extends Omit<IDocumentSchemaCurrent, "i
 }
 
 interface IProperty<T = unknown> {
-	and: (persistedSchema: T, providedSchema: T) => T;
-	or: (persistedSchema: T, providedSchema: T) => T;
+	/**
+	 * Returns the value to use for this property for the current session's schema.
+	 */
+	calculateSessionValue: (persistedSchema: T, providedSchema: T) => T;
+	/**
+	 * Returns the value for this property to propose for potential future schema upgrades.
+	 */
+	calculateFutureValue: (persistedSchema: T, providedSchema: T) => T;
 	validate(t: unknown): boolean;
 }
 
 class TrueOrUndefined implements IProperty<true | undefined> {
-	public and(persistedSchema?: true, providedSchema?: true): true | undefined {
+	public calculateSessionValue(persistedSchema?: true, providedSchema?: true): true | undefined {
 		return persistedSchema;
 	}
 
-	public or(persistedSchema?: true, providedSchema?: true): true | undefined {
+	public calculateFutureValue(persistedSchema?: true, providedSchema?: true): true | undefined {
 		return persistedSchema === true || providedSchema === true ? true : undefined;
 	}
 
@@ -226,27 +232,28 @@ class TrueOrUndefined implements IProperty<true | undefined> {
 }
 
 class TrueOrUndefinedMax extends TrueOrUndefined {
-	public and(persistedSchema?: true, providedSchema?: true): true | undefined {
-		return this.or(persistedSchema, providedSchema);
+	public calculateSessionValue(persistedSchema?: true, providedSchema?: true): true | undefined {
+		return this.calculateFutureValue(persistedSchema, providedSchema);
 	}
 }
 
 class MultiChoice implements IProperty<string | undefined> {
 	constructor(private readonly choices: string[]) {}
 
-	public and(persistedSchema?: string, providedSchema?: string): string | undefined {
+	public calculateSessionValue(persistedSchema?: string, providedSchema?: string): string | undefined {
 		if (persistedSchema === undefined) {
 			return undefined;
 		}
 		if (providedSchema === undefined) {
 			return persistedSchema;
 		}
+		// When both are defined, take the minimum (most restrictive) choice.
 		return this.choices[
 			Math.min(this.choices.indexOf(persistedSchema), this.choices.indexOf(providedSchema))
 		];
 	}
 
-	public or(persistedSchema?: string, providedSchema?: string): string | undefined {
+	public calculateFutureValue(persistedSchema?: string, providedSchema?: string): string | undefined {
 		if (persistedSchema === undefined) {
 			return providedSchema;
 		}
@@ -265,13 +272,13 @@ class MultiChoice implements IProperty<string | undefined> {
 
 class IdCompressorProperty extends MultiChoice {
 	// document schema always wins!
-	public and(persistedSchema?: string, providedSchema?: string): string | undefined {
+	public calculateSessionValue(persistedSchema?: string, providedSchema?: string): string | undefined {
 		return persistedSchema;
 	}
 }
 
 class CheckVersions implements IProperty<string[] | undefined> {
-	public or(
+	public calculateFutureValue(
 		persistedSchema: string[] = [],
 		providedSchema: string[] = [],
 	): string[] | undefined {
@@ -280,11 +287,11 @@ class CheckVersions implements IProperty<string[] | undefined> {
 	}
 
 	// Once version is there, it stays there forever.
-	public and(
+	public calculateSessionValue(
 		persistedSchema: string[] = [],
 		providedSchema: string[] = [],
 	): string[] | undefined {
-		return this.or(persistedSchema, providedSchema);
+		return this.calculateFutureValue(persistedSchema, providedSchema);
 	}
 
 	public validate(t: unknown): boolean {
@@ -369,7 +376,11 @@ function checkRuntimeCompatibility(
 	}
 }
 
-function and(
+/**
+ * Calculates the "session" schema based on the persisted and provided schemas.
+ * This will be used to determine what features should be used for the current session.
+ */
+function calculateSessionSchema(
 	persistedSchema: IDocumentSchemaCurrentIncoming,
 	providedSchema: IDocumentSchemaCurrent,
 ): IDocumentSchemaCurrent {
@@ -378,7 +389,7 @@ function and(
 		...Object.keys(persistedSchema.runtime),
 		...Object.keys(providedSchema.runtime),
 	])) {
-		runtime[key] = (documentSchemaSupportedConfigs[key] as IProperty).and(
+		runtime[key] = (documentSchemaSupportedConfigs[key] as IProperty).calculateSessionValue(
 			persistedSchema.runtime[key],
 			providedSchema.runtime[key],
 		);
@@ -397,7 +408,11 @@ function and(
 	};
 }
 
-function or(
+/**
+ * Calculates the "future" schema based on the persisted and provided schemas.
+ * This will be used to propose schema changes for future sessions.
+ */
+function calculateFutureSchema(
 	persistedSchema: IDocumentSchemaCurrentIncoming,
 	providedSchema: IDocumentSchemaCurrent,
 ): IDocumentSchemaCurrent {
@@ -406,7 +421,7 @@ function or(
 		...Object.keys(persistedSchema.runtime),
 		...Object.keys(providedSchema.runtime),
 	])) {
-		runtime[key] = (documentSchemaSupportedConfigs[key] as IProperty).or(
+		runtime[key] = (documentSchemaSupportedConfigs[key] as IProperty).calculateFutureValue(
 			persistedSchema.runtime[key],
 			providedSchema.runtime[key],
 		);
@@ -500,13 +515,16 @@ function arrayToProp(arr: string[]): string[] | undefined {
  * likely contain data in a new format.
  *
  * Controller operates with 4 schemas:
- * - document schema: whatever we loaded from summary metadata + ops. It follows eventuall consistency rules (i.e. like DDS).
+ * - document schema: whatever we loaded from summary metadata + ops. It follows eventual consistency rules (i.e. like DDS).
  * - desired schema - what client is asking for to have (i.e. all the desired settings, based on runtime options / feature gates).
- * - session schema - current session schema. It's "and" of the above two schemas.
- * - future schema - "or" of document and desires schemas.
+ * - session schema - current session schema. Computed using calculateSessionSchema() on the above two schemas.
+ * - future schema - proposed schema for future sessions. Computed using calculateFutureSchema() on document and desired schemas.
  *
- * "or" & "and" operators are defined individually for each property. For Boolean properties it's literally &&, || operators.
- * But for other properties it's more nuanced.
+ * calculateSessionValue() & calculateFutureValue() operators are defined individually for each property, but in general:
+ * - calculateSessionValue() gives priority to the persisted document schema. This allows clients that shipped with a feature
+ *   disabled to eventually use the feature if another client successfully upgrades the document schema.
+ * - calculateFutureValue() combines both schemas to maximally enable features that are enabled in either schema.
+ * For most properties, the behavior is more nuanced than simple boolean &&/|| operators.
  *
  * Whenver document schema does not match future schema, controller will send an op that attempts to changs documents schema to
  * future schema.
@@ -552,12 +570,12 @@ export class DocumentsSchemaController {
 	// This includes requests to enable to disable functionality
 	private readonly desiredSchema: IDocumentSchemaCurrent;
 
-	// OR() of document schema and desired schema. It enables all the features that are enabled in either of schemas.
+	// Computed using calculateFutureValue() on the persisted/desired schemas. It enables all the features that are enabled in either.
 	private futureSchema: IDocumentSchemaCurrent | undefined;
 
 	// Current schema this session operates with.
 	// 1) Legacy mode (explicitSchemaControl === false): this is same as desired schema - all options that were requested to be on are on, and all options requested to be off are off.
-	// 2) Non-legacy mode (explicitSchemaControl === true): this is AND() of document schema and desired schema. Only options that are enabled in both are enabled here.
+	// 2) Non-legacy mode (explicitSchemaControl === true): computed using calculateSessionSchema() on the persisted and desired schemas.
 	//    If there are any options that are not enabled in document schema, but are enabled in desired schema, then attempt to change schema
 	//    (and enable such options) will be made through the session.
 	public sessionSchema: IDocumentSchemaCurrent;
@@ -663,8 +681,8 @@ export class DocumentsSchemaController {
 			);
 			this.futureSchema = undefined;
 		} else {
-			this.sessionSchema = and(this.documentSchema, this.desiredSchema);
-			this.futureSchema = or(this.documentSchema, this.desiredSchema);
+			this.sessionSchema = calculateSessionSchema(this.documentSchema, this.desiredSchema);
+			this.futureSchema = calculateFutureSchema(this.documentSchema, this.desiredSchema);
 			assert(this.sessionSchema.runtime.explicitSchemaControl === true, 0x94b /* legacy */);
 			assert(this.futureSchema.runtime.explicitSchemaControl === true, 0x94c /* legacy */);
 			if (same(this.documentSchema, this.futureSchema)) {
@@ -778,7 +796,7 @@ export class DocumentsSchemaController {
 				refSeq: sequenceNumber,
 			} satisfies IDocumentSchemaCurrentIncoming;
 			this.documentSchema = schema;
-			this.sessionSchema = and(schema, this.desiredSchema);
+			this.sessionSchema = calculateSessionSchema(schema, this.desiredSchema);
 			assert(this.sessionSchema.refSeq === sequenceNumber, 0x97d /* seq# */);
 
 			// legacy behavior is automatically off for the document once someone sends a schema op -
