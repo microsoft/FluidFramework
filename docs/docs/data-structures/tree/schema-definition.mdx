@@ -194,7 +194,7 @@ This is because maps and arrays already have an empty state (e.g. a map with no 
 For most applications, there is no meaningful difference between an empty map and a lack of a map, or between an empty array and a lack of an array.
 Unless you have a good reason (for example, when adding a map or array to an existing type), make maps and arrays required.
 
-When maps and arrays are optional, the application must check if the the map or array is undefined at all read sites.
+When maps and arrays are optional, the application must check if the map or array is undefined at all read sites.
 Even worse, the application must do extra work when writing.
 If the map/array is not present, then the application must first create the map/array, and only then may populate it.
 
