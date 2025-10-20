@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { oob } from "@fluidframework/core-utils/internal";
 import { NodeKind, Tree, TreeNode } from "@fluidframework/tree";
 import type { ImplicitFieldSchema, TreeMapNode } from "@fluidframework/tree";
 import type { ReadableField } from "@fluidframework/tree/alpha";
@@ -34,10 +35,20 @@ export function getPrompt<TRoot extends ImplicitFieldSchema>(args: {
 	const mapInterfaceName = "TreeMap";
 	const simpleSchema = getSimpleSchema(schema);
 	// Inspect the schema to determine what kinds of nodes are possible - this will affect how much information we need to include in the prompt.
+	const rootTypes = [...normalizeFieldSchema(schema).allowedTypeSet];
+	const rootTypeUnion = `${rootTypes.map((t) => getFriendlyName(t)).join(" | ")}`;
+	let nodeTypeUnion: string | undefined;
 	let hasArrays = false;
 	let hasMaps = false;
 	let exampleObjectName: string | undefined;
 	for (const [definition, nodeSchema] of simpleSchema.definitions) {
+		if (nodeSchema.kind !== NodeKind.Leaf) {
+			nodeTypeUnion =
+				nodeTypeUnion === undefined
+					? unqualifySchema(definition)
+					: `${nodeTypeUnion} | ${unqualifySchema(definition)}`;
+		}
+
 		switch (nodeSchema.kind) {
 			case NodeKind.Array: {
 				hasArrays = true;
@@ -68,24 +79,81 @@ export function getPrompt<TRoot extends ImplicitFieldSchema>(args: {
 	const stringified = stringifyTree(field);
 	const details: SchemaDetails = { hasHelperMethods: false };
 	const typescriptSchemaTypes = getZodSchemaAsTypeScript(domainTypes, details);
+
+	const create =
+		exampleObjectName === undefined
+			? ""
+			: `\n	/**
+	 * A collection of builder functions for creating new tree nodes.
+	 * @remarks
+	 * Each property on this object is named after a type in the tree schema.
+	 * Call the corresponding function to create a new node of that type.
+	 * Always use these builder functions when creating new nodes rather than plain JavaScript objects.
+	 *
+	 * For example:
+	 *
+	 * \`\`\`javascript
+	 * // This creates a new ${exampleObjectName} object:
+	 * const ${communize(exampleObjectName)} = context.create.${exampleObjectName}({ ...properties });
+	 * // Don't do this:
+	 * // const ${communize(exampleObjectName)} = { ...properties };
+	 * \`\`\`
+	 */
+	create: Record<string, <T extends TreeData>(input: T) => T>;\n`;
+
+	const isDocs =
+		exampleObjectName === undefined
+			? ""
+			: `\n	/**
+	 * A collection of type-guard functions for data in the tree.
+	 * @remarks
+	 * Each property on this object is named after a type in the tree schema.
+	 * Call the corresponding function to check if a node is of that specific type.
+	 * This is useful when working with nodes that could be one of multiple types.
+	 *
+	 * ${`Example: Check if a node is a ${exampleObjectName} with \`if (context.is.${exampleObjectName}(node)) {}\``}
+	 */
+	is: Record<string, <T extends TreeData>(input: unknown) => input is T>;\n`;
+
+	const context = `\`\`\`typescript
+	${nodeTypeUnion === undefined ? "" : `type TreeData = ${nodeTypeUnion};\n\n`}	/**
+	 * An object available to generated code which provides read and write access to the tree as well as utilities for creating and inspecting data in the tree.
+	 * @remarks This object is available as a variable named \`context\` in the scope of the generated JavaScript snippet.
+	 */
+	interface Context<TSchema extends ImplicitFieldSchema> {
+	/**
+	 * The root of the tree that can be read or mutated.
+	 * @remarks
+	 * You can read properties and navigate through the tree starting from this root.
+	 * You can also assign a new value to this property to replace the entire tree, as long as the new value is one of the types allowed at the root.
+	 *
+	 * Example: Read the current root with \`const currentRoot = context.root;\`
+	 *${rootTypes.length > 0 ? ` Example: Replace the entire root with \`context.root = context.create.${getFriendlyName(rootTypes[0] ?? oob())}({ });\`\n	 *` : ""}/
+	root: ReadableField<TSchema>;
+	${create}
+	${isDocs}
+	/**
+	 * Returns the parent object/array/map of the given object/array/map, if there is one.
+	 * @returns The parent node, or \`undefined\` if the node is the root or is not in the tree.
+	 * @remarks
+	 * Example: Get the parent with \`const parent = context.parent(child);\`
+	 */
+	parent(child: TreeData): TreeData | undefined;
+
+	/**
+	 * Returns the property key or index of the given object/array/map within its parent.
+	 * @returns A string key if the child is in an object or map, or a numeric index if the child is in an array.
+	 *
+	 * Example: \`const key = context.key(child);\`
+	 */
+	key(child: TreeData): string | number;
+}
+\`\`\``;
+
 	const helperMethodExplanation = details.hasHelperMethods
 		? `Manipulating the data using the APIs described below is allowed, but when possible ALWAYS prefer to use any application helper methods exposed on the schema TypeScript types if the goal can be accomplished that way.
 It will often not be possible to fully accomplish the goal using those helpers. When this is the case, mutate the objects as normal, taking into account the following guidance.`
 		: "";
-
-	const builderExplanation =
-		exampleObjectName === undefined
-			? ""
-			: `When constructing new objects, you should wrap them in the appropriate builder function rather than simply making a javascript object.
-The builders are available on the \`create\` property on the context object and are named according to the type that they create.
-For example:
-
-\`\`\`javascript
-// This creates a new ${exampleObjectName} object:
-const ${communize(exampleObjectName)} = context.create.${exampleObjectName}({ /* ...properties... */ });
-// Don't do this:
-// const ${communize(exampleObjectName)} = { /* ...properties... */ };
-\`\`\`\n\n`;
 
 	const reinsertionExplanation = `Once non-primitive data has been removed from the tree (e.g. replaced via assignment, or removed from an array), that data cannot be re-inserted into the tree.
 Instead, it must be deep cloned and recreated.
@@ -160,7 +228,6 @@ ${getTreeMapNodeDocumentation(mapInterfaceName)}
 
 `;
 
-	const rootTypes = normalizeFieldSchema(schema).allowedTypeSet;
 	const editing = `If the user asks you to edit the tree, you should author a snippet of JavaScript code to accomplish the user-specified goal, following the instructions for editing detailed below.
 You must use the "${editToolName}" tool to run the generated code.
 After editing the tree, review the latest state of the tree to see if it satisfies the user's request.
@@ -173,14 +240,18 @@ If the user asks you to edit the document, you will write a snippet of JavaScrip
 The snippet may be synchronous or asynchronous (i.e. it may \`await\` functions if necessary).
 The snippet has a \`context\` variable in its scope.
 This \`context\` variable holds the current state of the tree in the \`root\` property.
-You may mutate any part of the root tree as necessary, taking into account the caveats around${hasArrays ? ` arrays${hasMaps ? " and" : ""}` : ""}${hasMaps ? " maps" : ""} detailed below.
-You may also set the \`root\` property of the context to be an entirely new value as long as it is one of the types allowed at the root of the tree (\`${Array.from(rootTypes.values(), (t) => getFriendlyName(t)).join(" | ")}\`).
+You may mutate any part of this tree as necessary, taking into account the caveats around${hasArrays ? ` arrays${hasMaps ? " and" : ""}` : ""}${hasMaps ? " maps" : ""} detailed below.
+You may also set the \`root\` property of the context to be an entirely new value as long as it is one of the types allowed at the root of the tree (\`${rootTypeUnion}\`).
+You should also use the \`context\` object to create new data to insert into the tree, using the builder functions available on the \`create\` property.
+There are other additional helper functions available on the \`context\` object to help you analyze the tree.
+Here is the definition of the \`Context\` interface:
+${context}
 ${helperMethodExplanation}
 ${hasArrays ? arrayEditing : ""}${hasMaps ? mapEditing : ""}#### Additional Notes
 
 Before outputting the edit function, you should check that it is valid according to both the application tree's schema and any restrictions of the editing APIs described above.
 
-${builderExplanation}${reinsertionExplanation}
+${reinsertionExplanation}
 
 Finally, double check that the edits would accomplish the user's request (if it is possible).
 
