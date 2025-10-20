@@ -23,4 +23,4 @@ The following deprecated properties have been removed from `IContainerStorageSer
 - `disposed`
 - `downloadSummary`
 
-The deprecations were announced in version [2.52.0](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.52.0).
+Please see [this Github issue](https://github.com/microsoft/FluidFramework/issues/25069) for more details.

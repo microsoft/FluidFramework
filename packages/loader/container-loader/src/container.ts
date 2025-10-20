@@ -32,7 +32,6 @@ import type {
 	ReadOnlyInfo,
 	ILoader,
 	ILoaderOptions,
-	IDocumentStorageService,
 } from "@fluidframework/container-definitions/internal";
 import { isFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import {
@@ -55,6 +54,7 @@ import {
 import {
 	type IDocumentService,
 	type IDocumentServiceFactory,
+	type IDocumentStorageService,
 	type IResolvedUrl,
 	type ISnapshot,
 	type IThrottlingWarning,
