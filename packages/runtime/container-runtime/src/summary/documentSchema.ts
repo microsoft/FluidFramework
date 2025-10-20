@@ -213,7 +213,7 @@ interface IProperty<T = unknown> {
 
 class TrueOrUndefined implements IProperty<true | undefined> {
 	public and(persistedSchema?: true, providedSchema?: true): true | undefined {
-		return persistedSchema === true && providedSchema === true ? true : undefined;
+		return persistedSchema;
 	}
 
 	public or(persistedSchema?: true, providedSchema?: true): true | undefined {
@@ -235,8 +235,11 @@ class MultiChoice implements IProperty<string | undefined> {
 	constructor(private readonly choices: string[]) {}
 
 	public and(persistedSchema?: string, providedSchema?: string): string | undefined {
-		if (persistedSchema === undefined || providedSchema === undefined) {
+		if (persistedSchema === undefined) {
 			return undefined;
+		}
+		if (providedSchema === undefined) {
+			return persistedSchema;
 		}
 		return this.choices[
 			Math.min(this.choices.indexOf(persistedSchema), this.choices.indexOf(providedSchema))

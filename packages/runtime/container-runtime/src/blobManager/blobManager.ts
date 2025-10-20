@@ -272,7 +272,7 @@ export class BlobManager {
 	private readonly runtime: IBlobManagerRuntime;
 	private readonly localIdGenerator: () => string;
 
-	private readonly createBlobPayloadPending: boolean;
+	private createBlobPayloadPending: boolean;
 
 	public constructor(props: {
 		readonly routeContext: IFluidHandleContext;
@@ -962,6 +962,10 @@ export class BlobManager {
 						};
 		}
 		return Object.keys(pendingBlobs).length > 0 ? pendingBlobs : undefined;
+	}
+
+	public updateCreateBlobPayloadPending(value: boolean): void {
+		this.createBlobPayloadPending = value;
 	}
 }
 

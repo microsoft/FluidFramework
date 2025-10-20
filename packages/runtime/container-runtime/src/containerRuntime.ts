@@ -2118,6 +2118,11 @@ export class ContainerRuntime
 		if (schema.runtime.idCompressorMode !== undefined) {
 			this.loadIdCompressor();
 		}
+
+		// TODO: Handle other schema changes that can be applied at runtime.
+		this.blobManager.updateCreateBlobPayloadPending(
+			this.sessionSchema.createBlobPayloadPending === true,
+		);
 	}
 
 	public getCreateChildSummarizerNodeFn(
