@@ -183,7 +183,6 @@ export interface IFluidDataStoreRuntime
 export interface IFluidDataStoreRuntimeAlpha extends IFluidDataStoreRuntime {
 	readonly inStagingMode: boolean;
 	readonly isDirty: boolean;
-	readonly activeLocalOperationActivity: boolean | undefined;
 }
 
 /**
