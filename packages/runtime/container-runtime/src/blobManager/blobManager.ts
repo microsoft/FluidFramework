@@ -964,7 +964,7 @@ export class BlobManager {
 		return Object.keys(pendingBlobs).length > 0 ? pendingBlobs : undefined;
 	}
 
-	public updateCreateBlobPayloadPending(value: boolean): void {
+	public setCreateBlobPayloadPending(value: boolean): void {
 		this.createBlobPayloadPending = value;
 	}
 }
