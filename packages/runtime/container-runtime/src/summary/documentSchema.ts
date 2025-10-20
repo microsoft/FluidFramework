@@ -233,6 +233,7 @@ class TrueOrUndefined implements IProperty<true | undefined> {
 
 class TrueOrUndefinedMax extends TrueOrUndefined {
 	public calculateSessionValue(persistedSchema?: true, providedSchema?: true): true | undefined {
+		// Since we want new behavior to be "sticky", we use the future value immediately.
 		return this.calculateFutureValue(persistedSchema, providedSchema);
 	}
 }
