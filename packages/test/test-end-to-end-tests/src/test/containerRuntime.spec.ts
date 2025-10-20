@@ -201,140 +201,144 @@ describeCompat(
 	},
 );
 
-describeCompat("Schema change", "NoCompat", (getTestObjectProvider, apis) => {
-	describe("ID compressor upgrade", () => {
-		let provider: ITestObjectProvider;
+describeCompat("Id Compressor Schema change", "NoCompat", (getTestObjectProvider, apis) => {
+	let provider: ITestObjectProvider;
 
-		async function loadContainer(options: ITestContainerConfig) {
-			return provider.loadTestContainer(options);
-		}
+	async function loadContainer(options: ITestContainerConfig) {
+		return provider.loadTestContainer(options);
+	}
 
-		async function getEntryPoint(container: IContainer) {
-			return getContainerEntryPointBackCompat<ITestDataObject>(container);
-		}
+	async function getEntryPoint(container: IContainer) {
+		return getContainerEntryPointBackCompat<ITestDataObject>(container);
+	}
 
-		beforeEach("getTestObjectProvider", async () => {
-			provider = getTestObjectProvider();
-		});
-
-		it("upgrade with explicitSchemaControl = false", async () => {
-			await testUpgrade(false);
-		});
-
-		it("upgrade with explicitSchemaControl = true", async () => {
-			await testUpgrade(true);
-		});
-
-		async function testUpgrade(explicitSchemaControl: boolean) {
-			const options: ITestContainerConfig = {
-				runtimeOptions: {
-					explicitSchemaControl: true,
-				},
-			};
-
-			const container = await provider.makeTestContainer({
-				runtimeOptions: {
-					explicitSchemaControl: false,
-					enableRuntimeIdCompressor: undefined,
-				},
-			});
-			const entry = await getEntryPoint(container);
-			entry._root.set("someKey", "someValue");
-
-			// ensure that old container is fully loaded (connected)
-			await provider.ensureSynchronized();
-
-			const container2 = await loadContainer({
-				runtimeOptions: {
-					explicitSchemaControl,
-					enableRuntimeIdCompressor: "delayed",
-				},
-			});
-			const entry2 = await getEntryPoint(container2);
-
-			// Send some ops, it will trigger schema change ops
-			// This will also trigger delay loading of ID compressor for both clients!
-			entry2._root.set("someKey2", "someValue");
-			await provider.ensureSynchronized();
-
-			// ID compressor loading is async. THere is no way to check when it's done.
-			// To be safe, make another round of sending-waiting
-			entry2._root.set("someKey2", "someValue");
-			await provider.ensureSynchronized();
-
-			// Now we should have new schema, ID compressor loaded, and be able to allocate ID range
-			// In order for ID compressor to produce short IDs, the following needs to happen:
-			// 1. Request unique ID (will initially get long ID)
-			// 2. Send any op (will trigger ID compressor to reserve short IDs)
-			entry._context.containerRuntime.generateDocumentUniqueId();
-			entry._root.set("someKey3", "someValue");
-			entry2._context.containerRuntime.generateDocumentUniqueId();
-			entry2._root.set("someKey4", "someValue");
-			await provider.ensureSynchronized();
-
-			const id = entry._context.containerRuntime.generateDocumentUniqueId();
-			const id2 = entry2._context.containerRuntime.generateDocumentUniqueId();
-
-			if (explicitSchemaControl) {
-				// Now ID compressor should give us short IDs!
-				assert(Number.isInteger(id));
-				assert(Number.isInteger(id2));
-			} else {
-				// Runtime will not change enableRuntimeIdCompressor setting if explicitSchemaControl is off
-				// Other containers will not expect ID compressor ops and will fail, thus runtime does not allow this upgrade.
-				// generateDocumentUniqueId() works, but gives long IDs
-				assert(!Number.isInteger(id));
-				assert(!Number.isInteger(id2));
-			}
-
-			assert(!container.closed);
-			assert(!container2.closed);
-		}
+	beforeEach("getTestObjectProvider", async () => {
+		provider = getTestObjectProvider();
 	});
 
-	it('Document schema can upgrade "ship dark" clients', async function () {
-		let provider: ITestObjectProvider;
+	it("upgrade with explicitSchemaControl = false", async () => {
+		await testUpgrade(false);
+	});
 
-		beforeEach("getTestObjectProvider", async () => {
-			provider = getTestObjectProvider();
+	it("upgrade with explicitSchemaControl = true", async () => {
+		await testUpgrade(true);
+	});
+
+	async function testUpgrade(explicitSchemaControl: boolean) {
+		const options: ITestContainerConfig = {
+			runtimeOptions: {
+				explicitSchemaControl: true,
+			},
+		};
+
+		const container = await provider.makeTestContainer({
+			runtimeOptions: {
+				explicitSchemaControl: false,
+				enableRuntimeIdCompressor: undefined,
+			},
 		});
+		const entry = await getEntryPoint(container);
+		entry._root.set("someKey", "someValue");
 
-		const shipDarkOptions: ITestContainerConfig = {
-			runtimeOptions: {
-				explicitSchemaControl: true,
-				createBlobPayloadPending: undefined,
-			},
-		};
-		const shipBrightOptions: ITestContainerConfig = {
-			runtimeOptions: {
-				explicitSchemaControl: true,
-				createBlobPayloadPending: true,
-			},
-			minVersionForCollab: "2.40.0",
-		};
-		const container1 = await provider.makeTestContainer(shipDarkOptions);
-		const container2 = await provider.loadTestContainer(shipBrightOptions);
-		const dataStore1 = await getContainerEntryPointBackCompat<ITestDataObject>(container1);
-		const dataStore2 = await getContainerEntryPointBackCompat<ITestDataObject>(container2);
-		const _runtime2 = dataStore2._context.containerRuntime;
-
-		// Sending an op will trigger a schema change op
-		const blob = await dataStore2._runtime.uploadBlob(
-			stringToBuffer("some random text", "utf-8"),
-		);
-		dataStore2._root.set("my blob", blob);
+		// ensure that old container is fully loaded (connected)
 		await provider.ensureSynchronized();
 
-		// After summarizing, clients that ship dark will have createBlobPayloadPending = true
-		const summarizer = await createSummarizer(provider, container1);
-		await summarizeNow(summarizer.summarizer);
+		const container2 = await loadContainer({
+			runtimeOptions: {
+				explicitSchemaControl,
+				enableRuntimeIdCompressor: "delayed",
+			},
+		});
+		const entry2 = await getEntryPoint(container2);
 
-		const container3 = await provider.loadTestContainer(shipDarkOptions);
-		const dataStore3 = await getContainerEntryPointBackCompat<ITestDataObject>(container3);
-		const _runtime3 = dataStore3._context.containerRuntime;
-		assert.equal((_runtime3 as any).sessionSchema.createBlobPayloadPending, true);
-	});
+		// Send some ops, it will trigger schema change ops
+		// This will also trigger delay loading of ID compressor for both clients!
+		entry2._root.set("someKey2", "someValue");
+		await provider.ensureSynchronized();
+
+		// ID compressor loading is async. THere is no way to check when it's done.
+		// To be safe, make another round of sending-waiting
+		entry2._root.set("someKey2", "someValue");
+		await provider.ensureSynchronized();
+
+		// Now we should have new schema, ID compressor loaded, and be able to allocate ID range
+		// In order for ID compressor to produce short IDs, the following needs to happen:
+		// 1. Request unique ID (will initially get long ID)
+		// 2. Send any op (will trigger ID compressor to reserve short IDs)
+		entry._context.containerRuntime.generateDocumentUniqueId();
+		entry._root.set("someKey3", "someValue");
+		entry2._context.containerRuntime.generateDocumentUniqueId();
+		entry2._root.set("someKey4", "someValue");
+		await provider.ensureSynchronized();
+
+		const id = entry._context.containerRuntime.generateDocumentUniqueId();
+		const id2 = entry2._context.containerRuntime.generateDocumentUniqueId();
+
+		if (explicitSchemaControl) {
+			// Now ID compressor should give us short IDs!
+			assert(Number.isInteger(id));
+			assert(Number.isInteger(id2));
+		} else {
+			// Runtime will not change enableRuntimeIdCompressor setting if explicitSchemaControl is off
+			// Other containers will not expect ID compressor ops and will fail, thus runtime does not allow this upgrade.
+			// generateDocumentUniqueId() works, but gives long IDs
+			assert(!Number.isInteger(id));
+			assert(!Number.isInteger(id2));
+		}
+
+		assert(!container.closed);
+		assert(!container2.closed);
+	}
 });
+
+describeCompat(
+	"Schema upgrades for existing clients",
+	"NoCompat",
+	(getTestObjectProvider, apis) => {
+		let provider: ITestObjectProvider;
+
+		beforeEach("getTestObjectProvider", async () => {
+			provider = getTestObjectProvider();
+		});
+
+		it(`Document schema can upgrade "ship dark" client`, async function () {
+			const shipDarkOptions: ITestContainerConfig = {
+				runtimeOptions: {
+					explicitSchemaControl: true,
+					createBlobPayloadPending: undefined,
+				},
+			};
+			const shipBrightOptions: ITestContainerConfig = {
+				runtimeOptions: {
+					explicitSchemaControl: true,
+					createBlobPayloadPending: true,
+				},
+				minVersionForCollab: "2.40.0",
+			};
+			const container1 = await provider.makeTestContainer(shipDarkOptions);
+			const container2 = await provider.loadTestContainer(shipBrightOptions);
+			const dataStore1 = await getContainerEntryPointBackCompat<ITestDataObject>(container1);
+			const dataStore2 = await getContainerEntryPointBackCompat<ITestDataObject>(container2);
+			const _runtime2 = dataStore2._context.containerRuntime;
+
+			// Sending an op will trigger a schema change op
+			const blob = await dataStore2._runtime.uploadBlob(
+				stringToBuffer("some random text", "utf-8"),
+			);
+			dataStore2._root.set("my blob", blob);
+			await provider.ensureSynchronized();
+
+			// After summarizing, clients that ship dark will have createBlobPayloadPending = true
+			const summarizer = await createSummarizer(provider, container1);
+			await summarizeNow(summarizer.summarizer);
+
+			const container3 = await provider.loadTestContainer(shipDarkOptions);
+			const dataStore3 = await getContainerEntryPointBackCompat<ITestDataObject>(container3);
+			const _runtime3 = dataStore3._context.containerRuntime;
+			assert.equal((_runtime3 as any).sessionSchema.createBlobPayloadPending, true);
+		});
+	},
+);
 
 describeCompat(
 	"minVersionForCollab (FullCompat)",
