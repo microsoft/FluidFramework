@@ -964,6 +964,10 @@ export class BlobManager {
 		return Object.keys(pendingBlobs).length > 0 ? pendingBlobs : undefined;
 	}
 
+	/**
+	 * Sets the value of createBlobPayloadPending. This should only be called by the runtime to update
+	 * the createBlobPayloadPending flag after a document schema change.
+	 */
 	public setCreateBlobPayloadPending(value: boolean): void {
 		this.createBlobPayloadPending = value;
 	}

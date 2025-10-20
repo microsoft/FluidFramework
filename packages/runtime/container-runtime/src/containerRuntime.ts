@@ -2120,7 +2120,7 @@ export class ContainerRuntime
 		}
 
 		// TODO: Handle other schema changes that can be applied at runtime.
-		this.blobManager.updateCreateBlobPayloadPending(
+		this.blobManager.setCreateBlobPayloadPending(
 			this.sessionSchema.createBlobPayloadPending === true,
 		);
 	}
