@@ -231,6 +231,9 @@ class TrueOrUndefined implements IProperty<true | undefined> {
 	}
 }
 
+/**
+ * Similar to TrueOrUndefined, but will always use the "maximal" value (true) immediately, regardless of the persisted value.
+ */
 class TrueOrUndefinedMax extends TrueOrUndefined {
 	public calculateSessionValue(persistedSchema?: true, providedSchema?: true): true | undefined {
 		// Since we want new behavior to be "sticky", we use the future value immediately.

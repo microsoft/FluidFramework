@@ -5,7 +5,6 @@
 
 import { strict as assert } from "assert";
 
-import { stringToBuffer } from "@fluid-internal/client-utils";
 import { describeCompat, ITestDataObject } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { CompressionAlgorithms } from "@fluidframework/container-runtime/internal";
@@ -319,23 +318,50 @@ describeCompat(
 			const container2 = await provider.loadTestContainer(shipBrightOptions);
 			const dataStore1 = await getContainerEntryPointBackCompat<ITestDataObject>(container1);
 			const dataStore2 = await getContainerEntryPointBackCompat<ITestDataObject>(container2);
+			const _runtime1 = dataStore1._context.containerRuntime;
 			const _runtime2 = dataStore2._context.containerRuntime;
 
-			// Sending an op will trigger a schema change op
-			const blob = await dataStore2._runtime.uploadBlob(
-				stringToBuffer("some random text", "utf-8"),
+			// Existing clients should still be using old schema (no schema change op sent yet)
+			assert.equal(
+				(_runtime1 as any).sessionSchema.createBlobPayloadPending,
+				undefined,
+				'Existing "ship dark" clients should have createBlobPayloadPending = undefined',
 			);
-			dataStore2._root.set("my blob", blob);
+			assert.equal(
+				(_runtime2 as any).sessionSchema.createBlobPayloadPending,
+				undefined,
+				'Existing "ship bright" clients should have createBlobPayloadPending = undefined',
+			);
+
+			// When container 2 ("ship bright" client) sends an op, a schema change op should also be sent
+			dataStore2._root.set("foo", "bar");
 			await provider.ensureSynchronized();
 
-			// After summarizing, clients that ship dark will have createBlobPayloadPending = true
+			// Existing clients should have updated schema after schema change op
+			assert.equal(
+				(_runtime1 as any).sessionSchema.createBlobPayloadPending,
+				true,
+				'Existing "ship dark" clients should have createBlobPayloadPending = true',
+			);
+			assert.equal(
+				(_runtime2 as any).sessionSchema.createBlobPayloadPending,
+				true,
+				'Existing "ship bright" clients should have createBlobPayloadPending = true',
+			);
+
+			// After summarizing, clients that ship dark should be loaded with createBlobPayloadPending = true
 			const summarizer = await createSummarizer(provider, container1);
 			await summarizeNow(summarizer.summarizer);
 
 			const container3 = await provider.loadTestContainer(shipDarkOptions);
 			const dataStore3 = await getContainerEntryPointBackCompat<ITestDataObject>(container3);
 			const _runtime3 = dataStore3._context.containerRuntime;
-			assert.equal((_runtime3 as any).sessionSchema.createBlobPayloadPending, true);
+
+			assert.equal(
+				(_runtime3 as any).sessionSchema.createBlobPayloadPending,
+				true,
+				'New "ship dark" clients should have createBlobPayloadPending = true',
+			);
 		});
 	},
 );
