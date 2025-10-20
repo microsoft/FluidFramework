@@ -108,8 +108,6 @@ export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRu
 // @alpha @sealed @legacy (undocumented)
 export interface IFluidDataStoreRuntimeAlpha extends IFluidDataStoreRuntime {
     // (undocumented)
-    readonly activeLocalOperationActivity: boolean | undefined;
-    // (undocumented)
     readonly inStagingMode: boolean;
     // (undocumented)
     readonly isDirty: boolean;
