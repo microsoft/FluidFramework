@@ -45,7 +45,7 @@ const schemaB = SchemaFactoryAlpha.optional(SchemaFactoryAlpha.types([
 ### Step 2: Upgrade the Schema to Deploy Reading Support
 
 We can now deploy `schemaB` to clients as a complete replacement to `schemaA`.
-At this point, new clients will be able to read documents containing strings and old documents will not.
+At this point, new clients will be able to read documents containing strings and old clients will not.
 This is safe because no clients have the ability to insert strings into the document.
 
 ```typescript
@@ -54,14 +54,9 @@ const configB = new TreeViewConfiguration({
     schema: schemaB,
 });
 const viewB = treeB.viewWith(configB);
-// check that we can read the tree
-assert.deepEqual(viewB.root, 5);
-// upgrade to schema B: this is a no-op
-viewB.upgradeSchema();
-synchronizeTrees();
+// check view B can read the document
+assert.equal(viewB.compatibility.canView, true);
 
-// check view A can read the document
-assert.deepEqual(viewA.root, 5);
 // check view B cannot write strings to the root
 assert.throws(() => {
     viewB.root = "test";
@@ -94,6 +89,8 @@ const configC = new TreeViewConfiguration({
     schema: schemaC,
 });
 const viewC = treeC.viewWith(configC);
+assert.equal(viewC.compatibility.canView, false);
+assert.equal(viewC.compatibility.canUpgrade, true);
 // upgrade to schema C and change the root to a string
 viewC.upgradeSchema();
 viewC.root = "test";
