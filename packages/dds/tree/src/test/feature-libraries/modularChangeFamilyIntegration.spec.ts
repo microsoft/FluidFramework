@@ -1463,15 +1463,16 @@ describe("ModularChangeFamily integration", () => {
 
 			const composed = family.compose([move, remove]);
 
+			const detachCellId: ChangeAtomId = { revision: tag1, localId: brand(0) };
 			const detachId: ChangeAtomId = { revision: tag2, localId: brand(2) };
 			const fieldAId = { nodeId: undefined, field: fieldA };
 			const expected = Change.build(
 				{
 					family,
-					maxId: 4,
+					maxId: 2,
 					detachedMoves: [
 						{
-							detachId,
+							detachId: detachCellId,
 							count: 1,
 							newLocation: fieldAId,
 						},
@@ -1481,7 +1482,7 @@ describe("ModularChangeFamily integration", () => {
 
 				Change.field(fieldA, sequence.identifier, [
 					MarkMaker.remove(1, detachId, {
-						detachCellId: { revision: tag1, localId: brand(0) },
+						detachCellId,
 					}),
 					MarkMaker.skip(1),
 					MarkMaker.rename(
