@@ -351,6 +351,7 @@ export class SharedTreeKernel
 		serializer: IFluidSerializer,
 		submitLocalMessage: (content: unknown, localOpMetadata?: unknown) => void,
 		lastSequenceNumber: () => number | undefined,
+		initialSequenceNumber: number,
 		private readonly logger: ITelemetryLoggerExt | undefined,
 		idCompressor: IIdCompressor,
 		optionsParam: SharedTreeOptionsInternal,
@@ -398,6 +399,7 @@ export class SharedTreeKernel
 			encoderContext,
 			options,
 			idCompressor,
+			initialSequenceNumber,
 			options.shouldEncodeIncrementally,
 		);
 		const removedRootsSummarizer = new DetachedFieldIndexSummarizer(removedRoots);
@@ -960,7 +962,7 @@ export function buildConfiguredForest(
 
 export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	jsonValidator: FormatValidatorNoOp,
-	oldestCompatibleClient: FluidClientVersion.v2_0,
+	minVersionForCollab: FluidClientVersion.v2_0,
 	forest: ForestTypeReference,
 	treeEncodeType: TreeCompressionStrategy.Compressed,
 	formatVersion: SharedTreeFormatVersion.v3,

@@ -57,6 +57,7 @@ import {
 import { prepareForInsertion } from "../../prepareForInsertion.js";
 import { recordLikeDataToFlexContent } from "../common.js";
 import { MapNodeStoredSchema } from "../../../core/index.js";
+import type { NodeSchemaOptionsAlpha } from "../../api/index.js";
 
 /**
  * Create a proxy which implements the {@link TreeRecordNode} API.
@@ -227,15 +228,7 @@ export interface RecordSchemaOptions<
 
 	readonly implicitlyConstructable: TImplicitlyConstructable;
 
-	/**
-	 * Optional ephemeral metadata for the object node schema.
-	 */
-	readonly metadata?: NodeSchemaMetadata<TCustomMetadata>;
-
-	/**
-	 * Optional persisted metadata for the object node schema.
-	 */
-	readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
+	readonly nodeOptions?: NodeSchemaOptionsAlpha<TCustomMetadata>;
 }
 
 /**
@@ -258,14 +251,8 @@ export function recordSchema<
 		TCustomMetadata
 	>,
 ) {
-	const {
-		identifier,
-		info,
-		customizable,
-		implicitlyConstructable,
-		metadata,
-		persistedMetadata,
-	} = options;
+	const { identifier, info, customizable, implicitlyConstructable, nodeOptions } = options;
+	const persistedMetadata = nodeOptions?.persistedMetadata;
 
 	const normalizedTypes = normalizeAllowedTypes(info);
 	const lazyAllowedTypesIdentifiers = new Lazy(
@@ -369,7 +356,8 @@ export function recordSchema<
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return normalizedTypes.evaluateSet();
 		}
-		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
+		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> =
+			nodeOptions?.metadata ?? {};
 		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
 			persistedMetadata;
 

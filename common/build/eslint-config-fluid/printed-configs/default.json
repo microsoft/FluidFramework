@@ -21,8 +21,8 @@
         "sourceType": "module"
     },
     "plugins": [
+        "import-x",
         "eslint-comments",
-        "import",
         "@fluid-internal/fluid",
         "unused-imports",
         "promise",
@@ -1154,31 +1154,31 @@
         "implicit-arrow-linebreak": [
             "off"
         ],
-        "import/default": [
-            2
+        "import-x/default": [
+            "error"
         ],
-        "import/export": [
-            2
+        "import-x/export": [
+            "error"
         ],
-        "import/named": [
+        "import-x/named": [
             "off"
         ],
-        "import/namespace": [
-            2
-        ],
-        "import/no-default-export": [
+        "import-x/namespace": [
             "error"
         ],
-        "import/no-deprecated": [
+        "import-x/no-default-export": [
             "error"
         ],
-        "import/no-duplicates": [
-            1
-        ],
-        "import/no-extraneous-dependencies": [
+        "import-x/no-deprecated": [
             "error"
         ],
-        "import/no-internal-modules": [
+        "import-x/no-duplicates": [
+            "warn"
+        ],
+        "import-x/no-extraneous-dependencies": [
+            "error"
+        ],
+        "import-x/no-internal-modules": [
             "error",
             {
                 "allow": [
@@ -1193,29 +1193,28 @@
                 ]
             }
         ],
-        "import/no-named-as-default": [
-            1
+        "import-x/no-named-as-default": [
+            "warn"
         ],
-        "import/no-named-as-default-member": [
-            1
+        "import-x/no-named-as-default-member": [
+            "warn"
         ],
-        "import/no-nodejs-modules": [
+        "import-x/no-nodejs-modules": [
             "error"
         ],
-        "import/no-unassigned-import": [
+        "import-x/no-unassigned-import": [
             "error"
         ],
-        "import/no-unresolved": [
-            2,
+        "import-x/no-unresolved": [
+            "error",
             {
-                "caseSensitive": true,
-                "caseSensitiveStrict": false
+                "caseSensitive": true
             }
         ],
-        "import/no-unused-modules": [
+        "import-x/no-unused-modules": [
             "error"
         ],
-        "import/order": [
+        "import-x/order": [
             "error",
             {
                 "newlines-between": "always",
@@ -1225,6 +1224,8 @@
                     "orderImportKind": "ignore"
                 },
                 "distinctGroup": true,
+                "sortTypesGroup": false,
+                "named": false,
                 "warnOnUnassignedImports": false
             }
         ],
@@ -2315,37 +2316,73 @@
         ]
     },
     "settings": {
-        "import/extensions": [
+        "import-x/extensions": [
             ".ts",
             ".tsx",
             ".d.ts",
             ".js",
             ".jsx",
-            ".jsx"
+            ".jsx",
+            ".cjs",
+            ".mjs"
         ],
-        "import/external-module-folders": [
+        "import-x/external-module-folders": [
             "node_modules",
             "node_modules/@types"
         ],
-        "import/parsers": {
+        "import-x/parsers": {
             "@typescript-eslint/parser": [
                 ".ts",
                 ".tsx",
                 ".d.ts",
-                ".tsx"
+                ".cts",
+                ".mts"
             ]
         },
-        "import/resolver": {
-            "typescript": {
-                "extensions": [
-                    ".ts",
-                    ".tsx",
-                    ".d.ts",
-                    ".js",
-                    ".jsx"
+        "import-x/resolver": {
+            "name": "tsResolver",
+            "options": {
+                "typescript": {
+                    "extensions": [
+                        ".ts",
+                        ".tsx",
+                        ".d.ts",
+                        ".js",
+                        ".jsx"
+                    ],
+                    "conditionNames": [
+                        "allow-ff-test-exports",
+                        "types",
+                        "import",
+                        "esm2020",
+                        "es2020",
+                        "es2015",
+                        "require",
+                        "node",
+                        "node-addons",
+                        "browser",
+                        "default"
+                    ]
+                }
+            },
+            "resolver": {
+                "DEFAULT_CONFIGS": [
+                    "tsconfig.json",
+                    "jsconfig.json"
                 ],
-                "conditionNames": [
-                    "allow-ff-test-exports",
+                "DEFAULT_IGNORE": "**/node_modules/**",
+                "DEFAULT_JSCONFIG": "jsconfig.json",
+                "DEFAULT_TRY_PATHS": [
+                    "",
+                    "tsconfig.json",
+                    "jsconfig.json"
+                ],
+                "DEFAULT_TSCONFIG": "tsconfig.json",
+                "IMPORT_RESOLVER_NAME": "eslint-import-resolver-typescript",
+                "JS_EXT_PATTERN": {},
+                "MATCH_ALL": "**",
+                "TSCONFIG_NOT_FOUND_REGEXP": {},
+                "defaultConditionNames": [
                     "types",
                     "import",
                     "esm2020",
@@ -2356,18 +2393,74 @@
                     "node-addons",
                     "browser",
                     "default"
-                ]
-            },
-            "node": {
-                "extensions": [
+                ],
+                "defaultExtensionAlias": {
+                    ".js": [
+                        ".ts",
+                        ".tsx",
+                        ".d.ts",
+                        ".js"
+                    ],
+                    ".ts": [
+                        ".ts",
+                        ".d.ts",
+                        ".js"
+                    ],
+                    ".jsx": [
+                        ".tsx",
+                        ".d.ts",
+                        ".jsx"
+                    ],
+                    ".tsx": [
+                        ".tsx",
+                        ".d.ts",
+                        ".jsx",
+                        ".js"
+                    ],
+                    ".cjs": [
+                        ".cts",
+                        ".d.cts",
+                        ".cjs"
+                    ],
+                    ".cts": [
+                        ".cts",
+                        ".d.cts",
+                        ".cjs"
+                    ],
+                    ".mjs": [
+                        ".mts",
+                        ".d.mts",
+                        ".mjs"
+                    ],
+                    ".mts": [
+                        ".mts",
+                        ".d.mts",
+                        ".mjs"
+                    ]
+                },
+                "defaultExtensions": [
                     ".ts",
-                    ".cts",
-                    ".mts",
                     ".tsx",
+                    ".d.ts",
                     ".js",
-                    ".jsx"
-                ]
-            }
+                    ".jsx",
+                    ".json",
+                    ".node"
+                ],
+                "defaultMainFields": [
+                    "types",
+                    "typings",
+                    "fesm2020",
+                    "fesm2015",
+                    "esm2020",
+                    "es2020",
+                    "module",
+                    "jsnext:main",
+                    "main"
+                ],
+                "interfaceVersion": 2
+            },
+            "typescript": true
         },
         "jsdoc": {
             "mode": "typescript",
