@@ -409,8 +409,7 @@ export class SchemaFactoryAlpha<
 			allowedTypes,
 			true,
 			true,
-			options?.metadata,
-			options?.persistedMetadata,
+			options,
 		);
 	}
 
@@ -460,8 +459,7 @@ export class SchemaFactoryAlpha<
 			allowedTypes,
 			true,
 			true,
-			options?.metadata,
-			options?.persistedMetadata,
+			options ?? {},
 		);
 	}
 
@@ -511,8 +509,7 @@ export class SchemaFactoryAlpha<
 			info: allowedTypes,
 			customizable: true,
 			implicitlyConstructable: true,
-			metadata: options?.metadata,
-			persistedMetadata: options?.persistedMetadata,
+			nodeOptions: options,
 		});
 	}
 
@@ -536,8 +533,7 @@ export class SchemaFactoryAlpha<
 			// Setting this to true seems to work ok currently, but not for other node kinds.
 			// Supporting this could be fragile and might break other future changes, so it's being kept as false for now.
 			implicitlyConstructable: false,
-			metadata: options?.metadata,
-			persistedMetadata: options?.persistedMetadata,
+			nodeOptions: options,
 		});
 
 		return RecordSchema as TreeNodeSchemaClass<

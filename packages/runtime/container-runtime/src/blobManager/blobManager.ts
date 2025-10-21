@@ -168,7 +168,7 @@ interface UploadedBlob {
 
 /**
  * A blob tracked by BlobManager that has been uploaded to storage and is in the process of sending
- * a BlobAttach op and waiting for the ack.
+ * a BlobAttach message and waiting for the ack.
  */
 interface AttachingBlob {
 	state: "attaching";
@@ -179,7 +179,7 @@ interface AttachingBlob {
 }
 
 /**
- * A blob tracked by BlobManager that has been uploaded to storage and its BlobAttach op has been
+ * A blob tracked by BlobManager that has been uploaded to storage and its BlobAttach message has been
  * ack'd. It is fully shared and available to all clients, and is no longer considered pending.
  */
 interface AttachedBlob {
@@ -205,7 +205,7 @@ type LocalBlobRecord =
  * Omits attached blobs since they are fully uploaded and don't need to be saved and restored.
  * Omits uploading and attaching states since upon restore we will need to restart those processes.
  */
-type SerializableLocalBlobRecord =
+export type SerializableLocalBlobRecord =
 	| (Omit<LocalOnlyBlob, "blob"> & { blob: string })
 	| (Omit<UploadedBlob, "blob"> & { blob: string });
 
@@ -259,7 +259,7 @@ export class BlobManager {
 	 */
 	private readonly pendingOnlyLocalIds: Set<string> = new Set();
 
-	private readonly sendBlobAttachOp: (localId: string, storageId: string) => void;
+	private readonly sendBlobAttachMessage: (localId: string, storageId: string) => void;
 
 	private readonly routeContext: IFluidHandleContext;
 	private readonly storage: Pick<IContainerStorageService, "createBlob" | "readBlob">;
@@ -280,16 +280,16 @@ export class BlobManager {
 		blobManagerLoadInfo: IBlobManagerLoadInfo;
 		readonly storage: Pick<IContainerStorageService, "createBlob" | "readBlob">;
 		/**
-		 * Submit a BlobAttach op. When a blob is uploaded, there is a short grace period before which the blob is
-		 * deleted. The BlobAttach op notifies the server that blob is in use. The server will then not delete the
+		 * Submit a BlobAttach message. When a blob is uploaded, there is a short grace period before which the blob is
+		 * deleted. The BlobAttach message notifies the server that blob is in use. The server will then not delete the
 		 * the blob as long as it is listed as referenced in future summaries. The summarizing client will know to
-		 * include the storage ID in the summary when it sees the op.
+		 * include the storage ID in the summary when it sees the message.
 		 *
-		 * The op will also include a local ID to inform all clients of the relation to the storage ID, without
-		 * knowledge of which they cannot request the blob from storage. It's important that this op is sequenced
-		 * before any ops that reference the local ID, otherwise, an invalid handle could be added to the document.
+		 * The message will also include a local ID to inform all clients of the relation to the storage ID, without
+		 * knowledge of which they cannot request the blob from storage. It's important that this message is sequenced
+		 * before any messages that reference the local ID, otherwise, an invalid handle could be added to the document.
 		 */
-		sendBlobAttachOp: (localId: string, storageId: string) => void;
+		sendBlobAttachMessage: (localId: string, storageId: string) => void;
 		// Called when a blob node is requested. blobPath is the path of the blob's node in GC's graph.
 		// blobPath's format - `/<basePath>/<localId>`.
 		readonly blobRequested: (blobPath: string) => void;
@@ -305,7 +305,7 @@ export class BlobManager {
 			routeContext,
 			blobManagerLoadInfo,
 			storage,
-			sendBlobAttachOp,
+			sendBlobAttachMessage,
 			blobRequested,
 			isBlobDeleted,
 			runtime,
@@ -315,7 +315,7 @@ export class BlobManager {
 		} = props;
 		this.routeContext = routeContext;
 		this.storage = storage;
-		this.sendBlobAttachOp = sendBlobAttachOp;
+		this.sendBlobAttachMessage = sendBlobAttachMessage;
 		this.blobRequested = blobRequested;
 		this.isBlobDeleted = isBlobDeleted;
 		this.runtime = runtime;
@@ -334,7 +334,10 @@ export class BlobManager {
 		// explicitly invoked via sharePendingBlobs() in case we are loaded in a frozen container.
 		if (pendingBlobs !== undefined) {
 			for (const [localId, serializableBlobRecord] of Object.entries(pendingBlobs)) {
-				assert(!this.redirectTable.has(localId), "Pending blob already in redirect table");
+				assert(
+					!this.redirectTable.has(localId),
+					0xc7e /* Pending blob already in redirect table */,
+				);
 				const localBlobRecord = {
 					...serializableBlobRecord,
 					blob: stringToBuffer(serializableBlobRecord.blob, "base64"),
@@ -401,7 +404,7 @@ export class BlobManager {
 			// Handles for detached blobs are not payload pending, though they should also always be present
 			// in the localBlobCache and therefore should never need to refer to storage.
 			assert(payloadPending, 0x11f /* "requesting unknown blobs" */);
-			// If we didn't find it in the redirectTable and it's payloadPending, assume the attach op is coming
+			// If we didn't find it in the redirectTable and it's payloadPending, assume the attach message is coming
 			// eventually and wait. We do this even if the local client doesn't have the blob payloadPending flag
 			// enabled, in case a remote client does have it enabled. This wait may be infinite if the uploading
 			// client failed the upload and doesn't exist anymore.
@@ -438,7 +441,7 @@ export class BlobManager {
 	private getNonPayloadPendingBlobHandle(localId: string): BlobHandle {
 		const localBlobRecord = this.localBlobCache.get(localId);
 		assert(localBlobRecord !== undefined, 0x384 /* requesting handle for unknown blob */);
-		assert(localBlobRecord.state === "attached", "Expected blob to be attached");
+		assert(localBlobRecord.state === "attached", 0xc7f /* Expected blob to be attached */);
 
 		return new BlobHandle(
 			getGCNodePathFromLocalId(localId),
@@ -546,7 +549,7 @@ export class BlobManager {
 		assert(
 			localBlobRecordInitial?.state === "localOnly" ||
 				localBlobRecordInitial?.state === "uploaded",
-			"Expect uploadAndAttach to be called with either localOnly or uploaded state",
+			0xc80 /* Expect uploadAndAttach to be called with either localOnly or uploaded state */,
 		);
 		const { blob } = localBlobRecordInitial;
 
@@ -556,7 +559,7 @@ export class BlobManager {
 		 * rejects on error during upload or if the signal is aborted.
 		 *
 		 * Most of the time this should be expected to exit in uploaded state, but if we are loading from pending
-		 * state we may see an attach op from the client that generated the pending state, which can complete the
+		 * state we may see an attach message from the client that generated the pending state, which can complete the
 		 * attach while the upload is outstanding.
 		 */
 		const ensureUploaded = async (): Promise<void> => {
@@ -569,7 +572,7 @@ export class BlobManager {
 			}
 			assert(
 				localBlobRecord?.state === "localOnly",
-				"Attempting to upload from unexpected state",
+				0xc81 /* Attempting to upload from unexpected state */,
 			);
 
 			this.localBlobCache.set(localId, { state: "uploading", blob });
@@ -637,14 +640,14 @@ export class BlobManager {
 			const localBlobRecord = this.localBlobCache.get(localId);
 			if (localBlobRecord?.state === "attached") {
 				// In normal creation flows, the blob will be in uploaded state here. But if we are loading from pending
-				// state and see an attach op from the client that generated the pending state, we may have reached
+				// state and see an attach message from the client that generated the pending state, we may have reached
 				// attached state in the middle of the upload attempt. In that case there's no more work to do and we
 				// can just return.
 				return true;
 			}
 			assert(
 				localBlobRecord?.state === "uploaded",
-				"Attempting to attach from unexpected state",
+				0xc82 /* Attempting to attach from unexpected state */,
 			);
 
 			// If we just uploaded the blob TTL really shouldn't be expired at this location. But if we loaded from
@@ -675,7 +678,7 @@ export class BlobManager {
 							resolve(true);
 						}
 					};
-					// Although we already checked for TTL expiry above, the op we're about to send may later be asked
+					// Although we already checked for TTL expiry above, the message we're about to send may later be asked
 					// to resubmit. Before we resubmit, we check again for TTL expiry - this listener is how we learn if
 					// we discovered expiry in the resubmit flow.
 					const onBlobExpired = (_localId: string): void => {
@@ -699,7 +702,7 @@ export class BlobManager {
 					this.internalEvents.on("processedBlobAttach", onProcessedBlobAttach);
 					this.internalEvents.on("blobExpired", onBlobExpired);
 					signal?.addEventListener("abort", onSignalAbort);
-					this.sendBlobAttachOp(localId, localBlobRecord.storageId);
+					this.sendBlobAttachMessage(localId, localBlobRecord.storageId);
 				});
 			}
 		};
@@ -718,16 +721,16 @@ export class BlobManager {
 	};
 
 	/**
-	 * Resubmit a BlobAttach op. Used to add storage IDs to ops that were
+	 * Resubmit a BlobAttach op. Used to add storage IDs to messages that were
 	 * submitted to runtime while disconnected.
-	 * @param metadata - op metadata containing storage and/or local IDs
+	 * @param metadata - message metadata containing storage and/or local IDs
 	 */
 	public reSubmit(metadata: Record<string, unknown> | undefined): void {
 		assert(isBlobMetadata(metadata), 0xc01 /* Expected blob metadata for a BlobAttach op */);
 		const { localId, blobId: storageId } = metadata;
 		// Any blob that we're actively trying to advance to attached state must be in attaching state.
 		// Decline to resubmit for anything else.
-		// For example, we might be asked to resubmit stashed ops for blobs that never had their handle
+		// For example, we might be asked to resubmit stashed messages for blobs that never had their handle
 		// attached - these won't have a localBlobCache entry because we filter them out when generating
 		// pending state. We shouldn't try to attach them since they won't be accessible to the customer
 		// and would just be considered garbage immediately.
@@ -739,7 +742,7 @@ export class BlobManager {
 				this.localBlobCache.set(localId, { state: "localOnly", blob: localBlobRecord.blob });
 				this.internalEvents.emit("blobExpired", localId);
 			} else {
-				this.sendBlobAttachOp(localId, storageId);
+				this.sendBlobAttachMessage(localId, storageId);
 			}
 		}
 	}
@@ -756,9 +759,9 @@ export class BlobManager {
 				state: "attached",
 				blob: maybeLocalBlobRecord.blob,
 			};
-			// Processing a blob attach op is authoritative and may stomp on any existing state. Other
+			// Processing a blob attach message is authoritative and may stomp on any existing state. Other
 			// callsites that update localBlobCache entries must take proper caution to handle the case
-			// that a blob attach op is processed concurrently.
+			// that a blob attach message is processed concurrently.
 			this.localBlobCache.set(localId, attachedBlobRecord);
 			// Note there may or may not be an entry in pendingBlobsWithAttachedHandles for this localId,
 			// in particular for the non-payloadPending case since we should be reaching this point
@@ -821,7 +824,7 @@ export class BlobManager {
 			const localId = getLocalIdFromGCNodePath(route);
 			// If the blob hasn't already been deleted, log an error because this should never happen.
 			// If the blob has already been deleted, log a telemetry event. This can happen because multiple GC
-			// sweep ops can contain the same data store. It would be interesting to track how often this happens.
+			// sweep messages can contain the same data store. It would be interesting to track how often this happens.
 			const alreadyDeleted = this.isBlobDeleted(route);
 			const storageId = this.redirectTable.get(localId);
 			if (storageId === undefined) {
@@ -936,18 +939,18 @@ export class BlobManager {
 		const pendingBlobs: IPendingBlobs = {};
 		for (const localId of this.pendingBlobsWithAttachedHandles) {
 			const localBlobRecord = this.localBlobCache.get(localId);
-			assert(localBlobRecord !== undefined, "Pending blob must be in local cache");
+			assert(localBlobRecord !== undefined, 0xc83 /* Pending blob must be in local cache */);
 			assert(
-				localBlobRecord.state === "uploading" ||
-					localBlobRecord.state === "uploaded" ||
-					localBlobRecord.state === "attaching",
-				"Pending blob must be in uploading, uploaded, or attaching state",
+				localBlobRecord.state !== "attached",
+				0xc84 /* Pending blob must not be in attached state */,
 			);
-			// We treat blobs in both uploaded and attaching state as just being uploaded, to distrust
-			// whether we expect to see any ack for a BlobAttach op. We just remain prepared to handle
-			// a BlobAttach op for it if we do see one after loading from pending state.
+			// We downgrade uploading blobs to localOnly, and attaching blobs to uploaded. In the case of
+			// uploading blobs, we don't have a way to retrieve the eventual storageId so the upload will
+			// need to be restarted anyway. In the case of attaching blobs, we can't know whether the
+			// BlobAttach message will eventually be ack'd. So we assume we'll need to send another message, but also
+			// remain prepared to handle seeing the ack of the original message after loading from pending state.
 			pendingBlobs[localId] =
-				localBlobRecord.state === "uploading"
+				localBlobRecord.state === "localOnly" || localBlobRecord.state === "uploading"
 					? {
 							state: "localOnly",
 							blob: bufferToString(localBlobRecord.blob, "base64"),

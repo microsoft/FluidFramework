@@ -9,13 +9,20 @@
  * @packageDocumentation
  */
 
-export { SharedTreeSemanticAgent } from "./agent.js";
+export {
+	SharedTreeSemanticAgent,
+	bindEditor,
+	bindEditorImpl,
+	defaultEditor,
+} from "./agent.js";
 export type {
 	EditResult,
 	SharedTreeChatModel,
 	SharedTreeChatQuery,
 	Logger,
 	SemanticAgentOptions,
+	SynchronousEditor,
+	AsynchronousEditor,
 } from "./api.js";
 export { type TreeView, llmDefault } from "./utils.js";
 export {
@@ -31,5 +38,3 @@ export {
 	type Infer,
 	type IExposedMethods,
 } from "./methodBinding.js";
-export { LangchainChatModel, createSemanticAgent } from "./langchain.js";
-export { createSesEditEvaluator } from "./ses.js";

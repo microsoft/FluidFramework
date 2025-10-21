@@ -26,7 +26,7 @@ import type { areSafelyAssignable, requireTrue } from "../../../util/index.js";
 	// UnannotateAllowedTypeUnsafe
 	{
 		type num = UnannotateAllowedTypeUnsafe<typeof numberSchema>;
-		allowUnused<requireTrue<areSafelyAssignable<num, typeof numberSchema>>>;
+		allowUnused<requireTrue<areSafelyAssignable<num, typeof numberSchema>>>();
 
 		const annotatedAllowedType = {
 			type: numberSchema,
@@ -34,7 +34,7 @@ import type { areSafelyAssignable, requireTrue } from "../../../util/index.js";
 		} satisfies AnnotatedAllowedTypeUnsafe;
 
 		type annotated = UnannotateAllowedTypeUnsafe<typeof annotatedAllowedType>;
-		allowUnused<requireTrue<areSafelyAssignable<annotated, typeof numberSchema>>>;
+		allowUnused<requireTrue<areSafelyAssignable<annotated, typeof numberSchema>>>();
 	}
 }
 

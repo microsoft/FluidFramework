@@ -267,7 +267,7 @@ type PendingSubDirectoryEntry = PendingSubDirectoryCreate | PendingSubDirectoryD
 /**
  * Create info for the subdirectory.
  *
- * @deprecated - This interface will no longer be exported in the future(AB#8004).
+ * @deprecated This interface will no longer be exported in the future(AB#8004).
  *
  * @legacy @beta
  */
@@ -291,7 +291,7 @@ export interface ICreateInfo {
  * | JSON.stringify}, direct result from
  * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse | JSON.parse}.
  *
- * @deprecated - This interface will no longer be exported in the future(AB#8004).
+ * @deprecated This interface will no longer be exported in the future(AB#8004).
  *
  * @legacy @beta
  */
@@ -320,7 +320,7 @@ export interface IDirectoryDataObject {
 /**
  * {@link IDirectory} storage format.
  *
- * @deprecated - This interface will no longer be exported in the future(AB#8004).
+ * @deprecated This interface will no longer be exported in the future(AB#8004).
  *
  * @legacy @beta
  */
@@ -1187,7 +1187,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		if (detachedBind) {
 			// Create a local value and serialize it.
 			// AB#47081: This will be removed once we can validate that it is no longer needed.
-			bindHandles(value, this.serializer, this.directory.handle);
+			bindHandles(value, this.directory.handle);
 		}
 
 		// If we are not attached, don't submit the op.
@@ -2457,7 +2457,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			}
 			assert(
 				pendingEntry.type === "createSubDirectory",
-				"Unexpected pending data for createSubDirectory op",
+				0xc71 /* Unexpected pending data for createSubDirectory op */,
 			);
 
 			// We still need to emit the disposed event for any locally created (and now
@@ -2487,7 +2487,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			}
 			assert(
 				pendingEntry.type === "deleteSubDirectory",
-				"Unexpected pending data for deleteSubDirectory op",
+				0xc72 /* Unexpected pending data for deleteSubDirectory op */,
 			);
 			this.pendingSubDirectoryData.splice(pendingEntryIndex, 1);
 

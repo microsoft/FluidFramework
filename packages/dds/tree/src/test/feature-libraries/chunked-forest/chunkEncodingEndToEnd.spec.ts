@@ -91,7 +91,7 @@ import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index
 
 const options: CodecWriteOptions = {
 	jsonValidator: FormatValidatorBasic,
-	oldestCompatibleClient: FluidClientVersion.v2_0,
+	minVersionForCollab: FluidClientVersion.v2_0,
 };
 
 const fieldBatchCodec = makeFieldBatchCodec({ jsonValidator: FormatValidatorBasic }, 1);
@@ -202,6 +202,7 @@ describe("End to end chunked encoding", () => {
 			context,
 			options,
 			idCompressor,
+			0 /* initialSequenceNumber */,
 		);
 
 		// This function is declared in the test to have access to the original uniform chunk for comparison.
@@ -235,6 +236,7 @@ describe("End to end chunked encoding", () => {
 			context,
 			options,
 			idCompressor,
+			0 /* initialSequenceNumber */,
 		);
 
 		// This function is declared in the test to have access to the original uniform chunk for comparison.
@@ -263,6 +265,7 @@ describe("End to end chunked encoding", () => {
 				encoderContext,
 				options,
 				testIdCompressor,
+				0 /* initialSequenceNumber */,
 			);
 
 			const { summary } = forestSummarizer.summarize({ stringify: JSON.stringify });
@@ -290,6 +293,7 @@ describe("End to end chunked encoding", () => {
 				encoderContext,
 				options,
 				testIdCompressor,
+				0 /* initialSequenceNumber */,
 			);
 
 			const { summary } = forestSummarizer.summarize({ stringify: JSON.stringify });
@@ -312,6 +316,7 @@ describe("End to end chunked encoding", () => {
 				encoderContext,
 				options,
 				testIdCompressor,
+				0 /* initialSequenceNumber */,
 			);
 
 			const { summary } = forestSummarizer.summarize({ stringify: JSON.stringify });

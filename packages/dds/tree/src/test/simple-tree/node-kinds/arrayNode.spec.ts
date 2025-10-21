@@ -72,6 +72,18 @@ describe("ArrayNode", () => {
 			assert.equal(n.y, 3);
 			assert.deepEqual(thisList, [n, n]);
 		});
+
+		it("does not pass Array.isArray", () => {
+			const array = init(CustomizableNumberArray, [1, 2, 3]);
+			assert.equal(Array.isArray(array), false);
+		});
+	});
+
+	describeHydration("pojo-emulation", (init) => {
+		it("passes Array.isArray", () => {
+			const array = init(PojoEmulationNumberArray, [1, 2, 3]);
+			assert.equal(Array.isArray(array), true);
+		});
 	});
 
 	describe("insertable types", () => {
