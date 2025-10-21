@@ -218,11 +218,17 @@ interface IProperty<T = unknown> {
 }
 
 class TrueOrUndefined implements IProperty<true | undefined> {
-	public calculateSessionValue(persistedSchema?: true, providedSchema?: true): true | undefined {
+	public calculateSessionValue(
+		persistedSchema?: true,
+		providedSchema?: true,
+	): true | undefined {
 		return persistedSchema;
 	}
 
-	public calculateFutureValue(persistedSchema?: true, providedSchema?: true): true | undefined {
+	public calculateFutureValue(
+		persistedSchema?: true,
+		providedSchema?: true,
+	): true | undefined {
 		return persistedSchema === true || providedSchema === true ? true : undefined;
 	}
 
@@ -235,7 +241,10 @@ class TrueOrUndefined implements IProperty<true | undefined> {
  * Similar to TrueOrUndefined, but will always use the "maximal" value (true) immediately, regardless of the persisted value.
  */
 class TrueOrUndefinedMax extends TrueOrUndefined {
-	public calculateSessionValue(persistedSchema?: true, providedSchema?: true): true | undefined {
+	public calculateSessionValue(
+		persistedSchema?: true,
+		providedSchema?: true,
+	): true | undefined {
 		// Since we want new behavior to be "sticky", we use the future value immediately.
 		return this.calculateFutureValue(persistedSchema, providedSchema);
 	}
@@ -244,7 +253,10 @@ class TrueOrUndefinedMax extends TrueOrUndefined {
 class MultiChoice implements IProperty<string | undefined> {
 	constructor(private readonly choices: string[]) {}
 
-	public calculateSessionValue(persistedSchema?: string, providedSchema?: string): string | undefined {
+	public calculateSessionValue(
+		persistedSchema?: string,
+		providedSchema?: string,
+	): string | undefined {
 		if (persistedSchema === undefined) {
 			return undefined;
 		}
@@ -257,7 +269,10 @@ class MultiChoice implements IProperty<string | undefined> {
 		];
 	}
 
-	public calculateFutureValue(persistedSchema?: string, providedSchema?: string): string | undefined {
+	public calculateFutureValue(
+		persistedSchema?: string,
+		providedSchema?: string,
+	): string | undefined {
 		if (persistedSchema === undefined) {
 			return providedSchema;
 		}
@@ -276,7 +291,10 @@ class MultiChoice implements IProperty<string | undefined> {
 
 class IdCompressorProperty extends MultiChoice {
 	// document schema always wins!
-	public calculateSessionValue(persistedSchema?: string, providedSchema?: string): string | undefined {
+	public calculateSessionValue(
+		persistedSchema?: string,
+		providedSchema?: string,
+	): string | undefined {
 		return persistedSchema;
 	}
 }
