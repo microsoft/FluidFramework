@@ -78,7 +78,7 @@ export {
 	assertNonNegativeSafeInteger,
 	objectToMap,
 	invertMap,
-	oneFromSet,
+	oneFromIterable,
 	type Named,
 	compareNamed,
 	disposeSymbol,

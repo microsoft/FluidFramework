@@ -125,6 +125,13 @@ const assertIntervals = (
 	assert.deepEqual(actualPos, expected, "intervals are not as expected");
 };
 
+// Helper function just for validating that we've captured the pending state we expect
+const pendingBlobsFromPendingState = (pendingState: string): Record<string, any> => {
+	const pendingStateParsed = JSON.parse(pendingState);
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+	return pendingStateParsed.pendingRuntimeState.pendingAttachmentBlobs;
+};
+
 // Introduced in 0.37
 // REVIEW: enable compat testing
 describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
@@ -157,6 +164,9 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				},
 			},
 			enableRuntimeIdCompressor: "on",
+			// Enable createBlobPayloadPending, otherwise there will be no pending blobs to test.
+			explicitSchemaControl: true,
+			createBlobPayloadPending: true,
 		},
 		loaderProps: {
 			configProvider: configProvider({
@@ -1628,27 +1638,36 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		assert.strictEqual(bufferToString(handleGet2, "utf8"), "blob contents");
 	});
 
-	// ADO#44999: The following scenarios are possible with payload pending, but will function differently.
-	// The in-flight blob upload will need to be completable after loading with the pending state, but
-	// we will expect the customer to have already stored the blob handle prior to calling getPendingState.
-
-	it.skip("close while uploading blob", async function () {
+	it("close while uploading blob", async function () {
 		const dataStore = (await container1.getEntryPoint()) as ITestFluidObject;
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 		await provider.ensureSynchronized();
 
-		const blobP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
-		// TODO: This portion was using closeAndGetPendingLocalState - using getPendingLocalState instead to allow compilation
-		// const pendingOpsP = container1.closeAndGetPendingLocalState?.();
-		const pendingOpsP = container1.getPendingLocalState();
-		const handle = await blobP;
+		const handle = await dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
 		map.set("blob handle", handle);
-		const pendingOps = await pendingOpsP;
+		const pendingState = await container1.getPendingLocalState();
+		container1.close();
 
-		const container2 = await loader.resolve({ url }, pendingOps);
+		// In practice, the upload that was triggered by setting the handle in the map probably didn't complete before
+		// the getPendingLocalState() call was able to record the pending state, but maybe it could happen with the local
+		// service if microtasks shift around in the future. Verify we are testing the scenario we think we are testing.
+		const pendingBlobsRecord = pendingBlobsFromPendingState(pendingState);
+		const pendingBlob = Object.values(pendingBlobsRecord)[0];
+		assert(pendingBlob !== undefined, "Expect a pending blob in pending state");
+		assert.strictEqual(
+			pendingBlob.state,
+			"localOnly",
+			"Expect the upload hasn't completed yet",
+		);
+
+		const container2 = await loader.resolve({ url }, pendingState);
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 
+		// TODO: We've not yet decided where to expose sharePendingBlobs(), so for now casting and reaching.
+		// Replace with calling the proper API when available.
+		// Share the pending blob so container1 will be able to find it.
+		await (dataStore2.context.containerRuntime as any).blobManager.sharePendingBlobs();
 		await provider.ensureSynchronized();
 		assert.strictEqual(
 			bufferToString(await map1.get("blob handle").get(), "utf8"),
@@ -1660,25 +1679,44 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 	});
 
-	it.skip("close while uploading multiple blob", async function () {
+	it("close while uploading multiple blob", async function () {
 		const dataStore = (await container1.getEntryPoint()) as ITestFluidObject;
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 		await provider.ensureSynchronized();
 
-		const blobP1 = dataStore.runtime.uploadBlob(stringToBuffer("blob contents 1", "utf8"));
-		const blobP2 = dataStore.runtime.uploadBlob(stringToBuffer("blob contents 2", "utf8"));
-		const blobP3 = dataStore.runtime.uploadBlob(stringToBuffer("blob contents 3", "utf8"));
-		// TODO: This portion was using closeAndGetPendingLocalState - using getPendingLocalState instead to allow compilation
-		// const pendingOpsP = container1.closeAndGetPendingLocalState?.();
-		const pendingOpsP = container1.getPendingLocalState();
-		map.set("blob handle 1", await blobP1);
-		map.set("blob handle 2", await blobP2);
-		map.set("blob handle 3", await blobP3);
-		const pendingOps = await pendingOpsP;
+		const handle1 = await dataStore.runtime.uploadBlob(
+			stringToBuffer("blob contents 1", "utf8"),
+		);
+		const handle2 = await dataStore.runtime.uploadBlob(
+			stringToBuffer("blob contents 2", "utf8"),
+		);
+		const handle3 = await dataStore.runtime.uploadBlob(
+			stringToBuffer("blob contents 3", "utf8"),
+		);
+		map.set("blob handle 1", handle1);
+		map.set("blob handle 2", handle2);
+		map.set("blob handle 3", handle3);
+		const pendingState = await container1.getPendingLocalState();
+		container1.close();
 
-		const container2 = await loader.resolve({ url }, pendingOps);
+		// In practice, the uploads triggered by setting the handles in the map probably didn't complete before
+		// the getPendingLocalState() call was able to record the pending state, but maybe it could happen with the local
+		// service if microtasks shift around in the future. Verify we are testing the scenario we think we are testing.
+		const pendingBlobsRecord = pendingBlobsFromPendingState(pendingState);
+		const pendingBlobs = Object.values(pendingBlobsRecord);
+		assert.strictEqual(pendingBlobs?.length, 3, "Expect 3 pending blobs in pending state");
+		assert(
+			pendingBlobs.every((pendingBlob) => pendingBlob.state === "localOnly"),
+			"Expect none of the uploads have completed yet",
+		);
+
+		const container2 = await loader.resolve({ url }, pendingState);
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
+		// TODO: We've not yet decided where to expose sharePendingBlobs(), so for now casting and reaching.
+		// Replace with calling the proper API when available.
+		// Share the pending blob so container1 will be able to find it.
+		await (dataStore2.context.containerRuntime as any).blobManager.sharePendingBlobs();
 		await provider.ensureSynchronized();
 		for (let i = 1; i <= 3; i++) {
 			assert.strictEqual(
@@ -1692,26 +1730,24 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		}
 	});
 
-	it.skip("load offline from stashed ops with pending blob", async function () {
+	it("load offline from stashed ops with pending blob", async function () {
 		const container = await loadContainerOffline(testContainerConfig, provider, { url });
 		const dataStore = (await container.container.getEntryPoint()) as ITestFluidObject;
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 
 		// Call uploadBlob() while offline to get local ID handle, and generate an op referencing it
-		const handleP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents 1", "utf8"));
-		// TODO: This portion was using closeAndGetPendingLocalState - using getPendingLocalState instead to allow compilation
-		// const stashedChangesP = container.container.closeAndGetPendingLocalState?.();
-		const stashedChangesP = container.container.getPendingLocalState();
-		const handle = await handleP;
+		const handle = await dataStore.runtime.uploadBlob(
+			stringToBuffer("blob contents 1", "utf8"),
+		);
 		map.set("blob handle 1", handle);
-
-		const stashedChanges = await stashedChangesP;
+		const pendingState = await container.container.getPendingLocalState();
+		container.container.close();
 
 		const container3 = await loadContainerOffline(
 			testContainerConfig,
 			provider,
 			{ url },
-			stashedChanges,
+			pendingState,
 		);
 		const dataStore3 = (await container3.container.getEntryPoint()) as ITestFluidObject;
 		const map3 = await dataStore3.getSharedObject<ISharedMap>(mapId);
@@ -1723,6 +1759,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 		container3.connect();
 		await waitForContainerConnection(container3.container);
+		// TODO: We've not yet decided where to expose sharePendingBlobs(), so for now casting and reaching.
+		// Replace with calling the proper API when available.
+		// Share the pending blob so container1 will be able to find it.
+		await (dataStore3.context.containerRuntime as any).blobManager.sharePendingBlobs();
 		await provider.ensureSynchronized();
 
 		assert.strictEqual(
@@ -1735,25 +1775,27 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 	});
 
-	it.skip("stashed changes with blobs", async function () {
+	it("stashed changes with blobs", async function () {
 		const container = await loadContainerOffline(testContainerConfig, provider, { url });
 		const dataStore = (await container.container.getEntryPoint()) as ITestFluidObject;
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 
 		// Call uploadBlob() while offline to get local ID handle, and generate an op referencing it
-		const handleP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents 1", "utf8"));
-		// TODO: This portion was using closeAndGetPendingLocalState - using getPendingLocalState instead to allow compilation
-		// const stashedChangesP = container.container.closeAndGetPendingLocalState?.();
-		const stashedChangesP = container.container.getPendingLocalState();
-		const handle = await handleP;
+		const handle = await dataStore.runtime.uploadBlob(
+			stringToBuffer("blob contents 1", "utf8"),
+		);
 		map.set("blob handle 1", handle);
+		const pendingState = await container.container.getPendingLocalState();
+		container.container.close();
 
-		const stashedChanges = await stashedChangesP;
-
-		const container3 = await loader.resolve({ url }, stashedChanges);
+		const container3 = await loader.resolve({ url }, pendingState);
 		const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
 		const map3 = await dataStore3.getSharedObject<ISharedMap>(mapId);
 
+		// TODO: We've not yet decided where to expose sharePendingBlobs(), so for now casting and reaching.
+		// Replace with calling the proper API when available.
+		// Share the pending blob so container1 will be able to find it.
+		await (dataStore3.context.containerRuntime as any).blobManager.sharePendingBlobs();
 		await provider.ensureSynchronized();
 
 		// Blob is uploaded and accessible by all clients
