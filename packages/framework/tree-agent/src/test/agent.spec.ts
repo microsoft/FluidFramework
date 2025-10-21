@@ -17,12 +17,7 @@ import {
 } from "@fluidframework/tree/alpha";
 
 import { SharedTreeSemanticAgent, bindEditor } from "../agent.js";
-import type {
-	EditResult,
-	SharedTreeChatModel,
-	SynchronousEditor,
-	AsynchronousEditor,
-} from "../api.js";
+import type { EditResult, SharedTreeChatModel } from "../api.js";
 
 const sf = new SchemaFactory(undefined);
 const editToolName = "EditTreeTool";
@@ -254,25 +249,7 @@ describe("Semantic Agent", () => {
 	});
 
 	it("passes constructors to edit code", async () => {
-		const sfLocal = new SchemaFactory("Test");
-		class Person extends sfLocal.object("Person", {
-			name: sfLocal.required(sfLocal.string),
-		}) {}
-		const view = independentView(new TreeViewConfiguration({ schema: Person }), {});
-		view.initialize(new Person({ name: "Alice" }));
-		const model: SharedTreeChatModel = {
-			editToolName,
-			async query({ edit }) {
-				const result = await edit(`context.root = context.create.Person({ name: "Bob" });`);
-				assert.equal(result.type, "success", result.message);
-				assert.equal(typeof result.message, "string");
-				assert.ok(result.message.includes("Bob"));
-				return "Done";
-			},
-		};
-		const agent = new SharedTreeSemanticAgent(model, view);
-		assert.equal(await agent.query("Change"), "Done");
-		assert.equal((view.root as unknown as Person).name, "Bob");
+		// Moved to the dedicated context helpers describe block below.
 	});
 
 	it("supplies the system prompt as context", async () => {
@@ -297,6 +274,97 @@ describe("Semantic Agent", () => {
 			(first as string).includes(editToolName),
 			"System prompt should reference edit tool name",
 		);
+	});
+
+	describe("context helpers", () => {
+		it("passes constructors to edit code", async () => {
+			const sfLocal = new SchemaFactory("Test");
+			class Person extends sfLocal.object("Person", {
+				name: sfLocal.required(sfLocal.string),
+			}) {}
+			const view = independentView(new TreeViewConfiguration({ schema: Person }), {});
+			view.initialize(new Person({ name: "Alice" }));
+			const model: SharedTreeChatModel = {
+				editToolName,
+				async query({ edit }) {
+					const result = await edit(`context.root = context.create.Person({ name: "Bob" });`);
+					assert.equal(result.type, "success", result.message);
+					return "Done";
+				},
+			};
+			const agent = new SharedTreeSemanticAgent(model, view);
+			assert.equal(await agent.query("Change"), "Done");
+			assert.equal(view.root.name, "Bob");
+		});
+
+		it("provides working type guards via context.is", async () => {
+			const sfLocal = new SchemaFactory("TestIs");
+			class Person extends sfLocal.object("Person", {
+				name: sfLocal.required(sfLocal.string),
+				age: sfLocal.required(sfLocal.number),
+			}) {}
+			const view = independentView(new TreeViewConfiguration({ schema: Person }), {});
+			view.initialize(new Person({ name: "Alice", age: 25 }));
+			const model: SharedTreeChatModel = {
+				editToolName,
+				async query({ edit }) {
+					const result = await edit(
+						`if (context.is.Person(context.root)) { context.root.age = 26; } else { throw new Error('Type guard failed'); }`,
+					);
+					assert.equal(result.type, "success", result.message);
+					return "OK";
+				},
+			};
+			const agent = new SharedTreeSemanticAgent(model, view);
+			assert.equal(await agent.query("Update Age"), "OK");
+			assert.equal(view.root.age, 26);
+		});
+
+		it("exposes parent helper returning the owning object", async () => {
+			const sfLocal = new SchemaFactory("TestParent");
+			class Child extends sfLocal.object("Child", {
+				value: sfLocal.required(sfLocal.string),
+			}) {}
+			class Parent extends sfLocal.object("Parent", { child: Child }) {}
+			const view = independentView(new TreeViewConfiguration({ schema: Parent }), {});
+			view.initialize(new Parent({ child: new Child({ value: "Initial" }) }));
+			const model: SharedTreeChatModel = {
+				editToolName,
+				async query({ edit }) {
+					const result = await edit(
+						`const p = context.parent(context.root.child); if (!p) { throw new Error('No parent'); } if (!context.is.Parent(p)) { throw new Error('Wrong parent type'); } p.child.value = 'ViaParent';`,
+					);
+					assert.equal(result.type, "success", result.message);
+					return "Done";
+				},
+			};
+			const agent = new SharedTreeSemanticAgent(model, view);
+			assert.equal(await agent.query("Parent Edit"), "Done");
+			assert.equal(view.root.child.value, "ViaParent");
+		});
+
+		it("exposes key helper returning property name for object child", async () => {
+			const sfLocal = new SchemaFactory("TestKey");
+			class Child extends sfLocal.object("Child", {
+				value: sfLocal.required(sfLocal.string),
+			}) {}
+			class Parent extends sfLocal.object("Parent", { child: Child }) {}
+			const view = independentView(new TreeViewConfiguration({ schema: Parent }), {});
+			view.initialize(new Parent({ child: new Child({ value: "Initial" }) }));
+			const model: SharedTreeChatModel = {
+				editToolName,
+				async query({ edit }) {
+					const result = await edit(
+						`const k = context.key(context.root.child); if (k !== 'child') { throw new Error('Unexpected key: ' + k); } context.root.child.value = 'KeyWorked';`,
+					);
+					assert.equal(result.type, "success", result.message);
+					return "Done";
+				},
+			};
+			const agent = new SharedTreeSemanticAgent(model, view);
+			assert.equal(await agent.query("Key Edit"), "Done");
+			assert.equal(view.root.child.value, "KeyWorked");
+		});
 	});
 
 	it("supplies additional context if the tree changes between queries", async () => {
@@ -373,7 +441,7 @@ describe("Semantic Agent", () => {
 		it("binds a synchronous editor and returns a void runner", () => {
 			const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
 			view.initialize("Initial");
-			const syncEditor: SynchronousEditor = (context, _code) => {
+			const syncEditor = (context, _code): void => {
 				(context as unknown as TestContext).root = "SyncEdit";
 			};
 			const run = bindEditor(view, syncEditor);
@@ -385,10 +453,10 @@ describe("Semantic Agent", () => {
 		it("binds an asynchronous editor and returns a Promise runner", async () => {
 			const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
 			view.initialize("Initial");
-			const asyncEditor: AsynchronousEditor = async (context, _code) => {
+			const asyncEditor = async (context, _code): Promise<void> => {
 				(context as unknown as TestContext).root = "AsyncEdit";
 			};
-			const run = bindEditor(view, asyncEditor) as (code: string) => Promise<void>;
+			const run = bindEditor(view, asyncEditor);
 			const promise = run("ignored");
 			assert.ok(typeof (promise as unknown as { then?: unknown }).then === "function");
 			await promise;
@@ -398,7 +466,7 @@ describe("Semantic Agent", () => {
 		it("propagates synchronous errors", () => {
 			const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
 			view.initialize("Initial");
-			const syncErrorEditor: SynchronousEditor = (_context, _code) => {
+			const syncErrorEditor = (_context, _code): void => {
 				throw new Error("syncBoom");
 			};
 			const run = bindEditor(view, syncErrorEditor);
@@ -409,10 +477,10 @@ describe("Semantic Agent", () => {
 		it("propagates asynchronous errors (Promise rejection)", async () => {
 			const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
 			view.initialize("Initial");
-			const asyncErrorEditor: AsynchronousEditor = async () => {
+			const asyncErrorEditor = async (): Promise<void> => {
 				throw new Error("asyncBoom");
 			};
-			const run = bindEditor(view, asyncErrorEditor) as (code: string) => Promise<void>;
+			const run = bindEditor(view, asyncErrorEditor);
 			const promise = run("ignored");
 			await assert.rejects(promise, /asyncBoom/);
 			assert.equal(view.root, "Initial", "Tree should not have changed after async error");
