@@ -858,7 +858,7 @@ function newRebaseManager(): TestRebaseManager {
 			throw new Error("Function not implemented.");
 		},
 
-		doesBaseMoveNodes(id: ChangeAtomId, count: number): RangeQueryResult<boolean> {
+		doesBaseAttachNodes(id: ChangeAtomId, count: number): RangeQueryResult<boolean> {
 			throw new Error("Function not implemented.");
 		},
 

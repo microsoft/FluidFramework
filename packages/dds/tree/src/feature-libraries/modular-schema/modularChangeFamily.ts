@@ -2956,7 +2956,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		this.table.movedDetaches.set(id, count, true);
 	}
 
-	public doesBaseMoveNodes(
+	public doesBaseAttachNodes(
 		id: ChangeAtomId,
 		count: number,
 	): RangeQueryEntry<ChangeAtomId, boolean> {
@@ -2968,21 +2968,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		);
 
 		countToProcess = attachEntry.length;
-
-		if (attachEntry.value !== undefined) {
-			return { start: id, value: true, length: countToProcess };
-		}
-
-		const detachedMoveEntry = this.table.baseChange.rootNodes.outputDetachLocations.getFirst(
-			id,
-			countToProcess,
-		);
-
-		return {
-			start: id,
-			value: detachedMoveEntry.value !== undefined,
-			length: detachedMoveEntry.length,
-		};
+		return { start: id, value: attachEntry.value !== undefined, length: countToProcess };
 	}
 
 	public getNewRenameForBaseRename(
@@ -3168,11 +3154,22 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 		);
 		countToProcess = baseDetachLocationEntry.length;
 
-		this.table.composedRootNodes.outputDetachLocations.set(
-			baseDetachId,
-			countToProcess,
-			this.fieldId,
-		);
+		if (newAttachEntry.value === undefined) {
+			const newOutputDetachLocationEntry =
+				this.table.newChange.rootNodes.outputDetachLocations.getFirst(
+					newDetachId,
+					countToProcess,
+				);
+
+			countToProcess = newOutputDetachLocationEntry.length;
+
+			this.table.composedRootNodes.outputDetachLocations.delete(newDetachId, countToProcess);
+			this.table.composedRootNodes.outputDetachLocations.set(
+				baseDetachId,
+				countToProcess,
+				newOutputDetachLocationEntry.value ?? this.fieldId,
+			);
+		}
 
 		if (detachEntry.value !== undefined) {
 			// The base change moves these nodes.
@@ -3642,13 +3639,6 @@ export function buildModularChangesetFromField(props: {
 		const field = { nodeId: undefined, field: path.field };
 		for (const { key, count } of localCrossFieldKeys) {
 			crossFieldKeys.set(key, count, field);
-			if (key.target === CrossFieldTarget.Destination) {
-				rootNodes.detachLocations.set(
-					{ revision: key.revision, localId: key.localId },
-					count,
-					field,
-				);
-			}
 		}
 
 		if (childId !== undefined) {
@@ -3680,13 +3670,6 @@ export function buildModularChangesetFromField(props: {
 
 	for (const { key, count } of localCrossFieldKeys) {
 		crossFieldKeys.set(key, count, { nodeId: parentId, field: path.field });
-		if (key.target === CrossFieldTarget.Destination) {
-			rootNodes.detachLocations.set(
-				{ revision: key.revision, localId: key.localId },
-				count,
-				fieldId,
-			);
-		}
 	}
 
 	if (childId !== undefined) {
@@ -4379,7 +4362,7 @@ export function cloneRootTable(table: RootNodeTable): RootNodeTable {
 		newToOldId: table.newToOldId.clone(),
 		nodeChanges: brand(table.nodeChanges.clone()),
 		detachLocations: table.detachLocations.clone(),
-		outputDetachLocations: table.detachLocations.clone(),
+		outputDetachLocations: table.outputDetachLocations.clone(),
 	};
 }
 

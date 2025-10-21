@@ -1449,7 +1449,7 @@ describe("ModularChangeFamily integration", () => {
 			assertModularChangesetsEqual(composed, expected);
 		});
 
-		it.skip("move and remove", () => {
+		it("move and remove", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
 			const editor = new DefaultEditBuilder(family, mintRevisionTag, changeReceiver);
 

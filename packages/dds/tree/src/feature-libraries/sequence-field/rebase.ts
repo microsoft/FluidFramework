@@ -3,9 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fail, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
-import type { ChangeAtomId, RevisionMetadataSource, RevisionTag } from "../../core/index.js";
+import {
+	areEqualChangeAtomIds,
+	type ChangeAtomId,
+	type RevisionMetadataSource,
+	type RevisionTag,
+} from "../../core/index.js";
 import type { IdAllocator, Mutable } from "../../util/index.js";
 import {
 	type RebaseNodeManager,
@@ -121,7 +126,7 @@ class RebaseQueue {
 				return moveEffects.getNewChangesForBaseAttach(getAttachedRootId(mark), mark.count)
 					.length;
 			} else if (isDetach(mark)) {
-				return moveEffects.doesBaseMoveNodes(getDetachedRootId(mark), mark.count).length;
+				return moveEffects.doesBaseAttachNodes(getDetachedRootId(mark), mark.count).length;
 			}
 
 			let count = mark.count;
@@ -130,7 +135,7 @@ class RebaseQueue {
 			}
 
 			return mark.cellId !== undefined
-				? moveEffects.doesBaseMoveNodes(mark.cellId, count).length
+				? moveEffects.doesBaseAttachNodes(mark.cellId, count).length
 				: count;
 		};
 
@@ -246,7 +251,11 @@ function addMovedMarkEffect(mark: Mark, effect: Detach): Mark {
 		return { ...mark, type: "Insert" };
 	} else if (isRename(mark) && isDetach(effect)) {
 		// XXX: Should this ever be cellRename instead?
-		return { ...effect, count: mark.count, detachCellId: mark.idOverride };
+		const result = { ...effect, count: mark.count };
+		if (!areEqualChangeAtomIds(mark.idOverride, getDetachedRootId(effect))) {
+			result.detachCellId = mark.idOverride;
+		}
+		return result;
 	} else if (isTombstone(mark)) {
 		return { ...mark, ...effect };
 	}
@@ -301,7 +310,7 @@ function rebaseMarkIgnoreChild(
 
 		const { remains, follows } = separateEffectsForMove(
 			extractMarkEffect(currMark),
-			baseDetachId,
+			baseMark,
 			moveEffects,
 		);
 
@@ -330,15 +339,6 @@ function rebaseMarkIgnoreChild(
 
 		// XXX: Is this right if currMark is a rename?
 		return withCellId(currMark, getOutputCellId(baseMark));
-	} else if (
-		isRename(currMark) &&
-		moveEffects.doesBaseMoveNodes(
-			currMark.cellId ?? fail("Rename should target an empty cell"),
-			currMark.count,
-		).value
-	) {
-		// XXX: Shouldn't the base changeset have a rename for these cells if the nodes are moved?
-		return generateNoOpWithCellId(currMark);
 	} else {
 		return currMark;
 	}
@@ -350,7 +350,7 @@ function rebaseMarkIgnoreChild(
  */
 function separateEffectsForMove(
 	mark: MarkEffect,
-	baseDetachId: ChangeAtomId,
+	baseMark: CellMark<Detach>,
 	nodeManager: RebaseNodeManager,
 ): {
 	remains?: MarkEffect;
@@ -365,11 +365,20 @@ function separateEffectsForMove(
 				return { remains: { type: "Rename", idOverride: mark.cellRename }, follows: mark };
 			}
 
+			const baseDetachId = getDetachedRootId(baseMark);
+			const outputCellId = getDetachOutputCellId(baseMark);
+			const doesBaseMoveNodes =
+				!areEqualChangeAtomIds(outputCellId, baseDetachId) ||
+				nodeManager.doesBaseAttachNodes(baseDetachId, baseMark.count).value;
+
 			// We should rename these cells unless the nodes are reattached elsewhere,
 			// in which case we will rename those cells instead.
-			const remains: MarkEffect = nodeManager.doesBaseMoveNodes(baseDetachId, 1).value
+			const remains: MarkEffect = doesBaseMoveNodes
 				? {}
-				: { type: "Rename", idOverride: getDetachOutputCellId(mark) };
+				: {
+						type: "Rename",
+						idOverride: getDetachOutputCellId(mark),
+					};
 
 			return { remains, follows: mark };
 		}

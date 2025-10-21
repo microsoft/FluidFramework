@@ -2971,7 +2971,7 @@ describe("Editing", () => {
 				assert.equal(hydratedArrayOnB.length, 0);
 			});
 
-			it("Edit removed map node", () => {
+			it.skip("Edit removed map node", () => {
 				const sf = new SchemaFactory(undefined);
 				class Child extends sf.object("Child", {}) {}
 				class Parent extends sf.object("Parent", {

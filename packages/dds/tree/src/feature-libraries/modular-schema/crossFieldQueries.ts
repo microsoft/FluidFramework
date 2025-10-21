@@ -166,10 +166,9 @@ export interface RebaseNodeManager {
 
 	/**
 	 * Returns whether nodes which were either previously detached by `id` or the base changeset is now detaching with `id`
-	 * are moved to a different location by the base changeset, either because they are being attached or because their last
-	 * detach location is being changed.
+	 * are also reattached by the base changeset.
 	 */
-	doesBaseMoveNodes(id: ChangeAtomId, count: number): RangeQueryResult<boolean>;
+	doesBaseAttachNodes(id: ChangeAtomId, count: number): RangeQueryResult<boolean>;
 
 	/**
 	 * Given a detached node ID in the base changeset's output context,
