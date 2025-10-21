@@ -110,6 +110,7 @@
 				"@fluidframework/sequence#build:test",
 				"@fluidframework/map#build:test",
 				"@fluidframework/matrix#build:test",
+				"@fluidframework/task-manager#build:test",
 				"@fluidframework/tree#build:test"
 			]
 		}
