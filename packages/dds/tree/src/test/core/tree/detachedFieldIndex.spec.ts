@@ -10,10 +10,9 @@ import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 
 import {
-	type DeltaDetachedNodeId,
 	DetachedFieldIndex,
 	type ForestRootId,
-	type RevisionTag,
+	makeDetachedNodeId,
 	RevisionTagCodec,
 } from "../../../core/index.js";
 import {
@@ -233,13 +232,6 @@ function makeDetachedFieldIndex(): DetachedFieldIndex {
 	);
 }
 
-function makeDetachedNodeId(
-	minor: number,
-	major: RevisionTag | undefined,
-): DeltaDetachedNodeId {
-	return major === undefined ? { minor } : { major, minor };
-}
-
 describe("DetachedFieldIndex Codecs", () => {
 	const options: CodecWriteOptions = {
 		jsonValidator: FormatValidatorBasic,
@@ -343,13 +335,13 @@ describe("DetachedFieldIndex methods", () => {
 		it("can retrieve entries after creating", () => {
 			const detachedIndex = makeDetachedFieldIndex();
 			const revisionTag1 = mintRevisionTag();
-			const detachedNodeId1 = makeDetachedNodeId(1, revisionTag1);
+			const detachedNodeId1 = makeDetachedNodeId(revisionTag1, 1);
 
 			const revisionTag2 = mintRevisionTag();
 			const rootId = detachedIndex.createEntry(detachedNodeId1, revisionTag2);
 
 			const revisionTag3 = mintRevisionTag();
-			const detachedNodeId2 = makeDetachedNodeId(2, revisionTag3);
+			const detachedNodeId2 = makeDetachedNodeId(revisionTag3, 2);
 			assert.equal(detachedIndex.tryGetEntry(detachedNodeId1), rootId);
 			assert.equal(detachedIndex.getEntry(detachedNodeId1), rootId);
 			assert.equal(detachedIndex.tryGetEntry(detachedNodeId2), undefined);
@@ -359,7 +351,7 @@ describe("DetachedFieldIndex methods", () => {
 		it("creates multiple rootIds and minorIds when count > 1 is passed in", () => {
 			const detachedIndex = makeDetachedFieldIndex();
 			const revisionTag1 = mintRevisionTag();
-			const detachedNodeId1 = makeDetachedNodeId(1, revisionTag1);
+			const detachedNodeId1 = makeDetachedNodeId(revisionTag1, 1);
 
 			const revisionTag2 = mintRevisionTag();
 			detachedIndex.createEntry(detachedNodeId1, revisionTag2, 2);
@@ -368,7 +360,14 @@ describe("DetachedFieldIndex methods", () => {
 			assert.equal(rootIds.length, 2);
 
 			const entries = Array.from(detachedIndex.entries());
-			assert.notEqual(entries[0].id.minor, entries[1].id.minor);
+			assert.deepEqual(entries, [
+				{ root: rootIds[0], latestRelevantRevision: revisionTag2, id: detachedNodeId1 },
+				{
+					root: rootIds[1],
+					latestRelevantRevision: revisionTag2,
+					id: { major: detachedNodeId1.major, minor: detachedNodeId1.minor + 1 },
+				},
+			]);
 		});
 	});
 
@@ -376,17 +375,22 @@ describe("DetachedFieldIndex methods", () => {
 		const detachedIndex = makeDetachedFieldIndex();
 
 		const revisionTag1 = mintRevisionTag();
-		const detachedNodeId1 = makeDetachedNodeId(1, revisionTag1);
-		const detachedNodeId2 = makeDetachedNodeId(2, undefined);
+		const detachedNodeId1 = makeDetachedNodeId(revisionTag1, 1);
+		const detachedNodeId2 = makeDetachedNodeId(undefined, 2);
 
 		const revisionTag2 = mintRevisionTag();
 		const rootId1 = detachedIndex.createEntry(detachedNodeId1, revisionTag2);
-		const rootId2 = detachedIndex.createEntry(detachedNodeId2, revisionTag2);
+		const rootId2 = detachedIndex.createEntry(detachedNodeId2, revisionTag2, 2);
 
 		const entries = Array.from(detachedIndex.entries());
 		assert.deepEqual(entries, [
 			{ root: rootId1, latestRelevantRevision: revisionTag2, id: detachedNodeId1 },
 			{ root: rootId2, latestRelevantRevision: revisionTag2, id: detachedNodeId2 },
+			{
+				root: rootId2 + 1,
+				latestRelevantRevision: revisionTag2,
+				id: makeDetachedNodeId(undefined, 3),
+			},
 		]);
 	});
 
@@ -394,16 +398,22 @@ describe("DetachedFieldIndex methods", () => {
 		const detachedIndex = makeDetachedFieldIndex();
 
 		const revisionTag1 = mintRevisionTag();
-		const detachedNodeId1 = makeDetachedNodeId(1, revisionTag1);
-		const detachedNodeId2 = makeDetachedNodeId(2, revisionTag1);
+		const detachedNodeId1 = makeDetachedNodeId(revisionTag1, 1);
+		const detachedNodeId2 = makeDetachedNodeId(revisionTag1, 2);
 
 		const revisionTag2 = mintRevisionTag();
 		detachedIndex.createEntry(detachedNodeId1, revisionTag2);
-		detachedIndex.createEntry(detachedNodeId2, revisionTag2);
+		detachedIndex.createEntry(detachedNodeId2, revisionTag2, 2);
+
+		const revisionTag3 = mintRevisionTag();
+		const detachedNodeId3 = makeDetachedNodeId(revisionTag1, 4);
+		const undeletedRootId = detachedIndex.createEntry(detachedNodeId3, revisionTag3);
 
 		detachedIndex.deleteRootsLastTouchedByRevision(revisionTag2);
 		assert.equal(detachedIndex.tryGetEntry(detachedNodeId1), undefined);
 		assert.equal(detachedIndex.tryGetEntry(detachedNodeId2), undefined);
+		assert.equal(detachedIndex.tryGetEntry(makeDetachedNodeId(revisionTag1, 3)), undefined);
+		assert.equal(detachedIndex.tryGetEntry(detachedNodeId3), undeletedRootId);
 	});
 
 	it("deleteRootsLastTouchedByRevision for an unknown revision does not throw", () => {
@@ -416,7 +426,7 @@ describe("DetachedFieldIndex methods", () => {
 		const detachedIndex = makeDetachedFieldIndex();
 
 		const revisionTag1 = mintRevisionTag();
-		const detachedNodeId1 = makeDetachedNodeId(1, revisionTag1);
+		const detachedNodeId1 = makeDetachedNodeId(revisionTag1, 1);
 
 		const revisionTag2 = mintRevisionTag();
 		detachedIndex.createEntry(detachedNodeId1, revisionTag2);
@@ -430,8 +440,8 @@ describe("DetachedFieldIndex methods", () => {
 		const detachedIndex = makeDetachedFieldIndex();
 
 		const revisionTag1 = mintRevisionTag();
-		const detachedNodeId1 = makeDetachedNodeId(1, revisionTag1);
-		const detachedNodeId2 = makeDetachedNodeId(2, revisionTag1);
+		const detachedNodeId1 = makeDetachedNodeId(revisionTag1, 1);
+		const detachedNodeId2 = makeDetachedNodeId(revisionTag1, 2);
 
 		const revisionTag2 = mintRevisionTag();
 		detachedIndex.createEntry(detachedNodeId1, revisionTag2);
@@ -445,7 +455,7 @@ describe("DetachedFieldIndex methods", () => {
 		const detachedIndex = makeDetachedFieldIndex();
 
 		const revisionTag1 = mintRevisionTag();
-		const detachedNodeId = makeDetachedNodeId(1, revisionTag1);
+		const detachedNodeId = makeDetachedNodeId(revisionTag1, 1);
 
 		const revisionTag2 = mintRevisionTag();
 		const rootId = detachedIndex.createEntry(detachedNodeId, revisionTag2);
@@ -468,7 +478,7 @@ describe("DetachedFieldIndex methods", () => {
 		const detachedIndex = makeDetachedFieldIndex();
 
 		const revisionTag1 = mintRevisionTag();
-		const detachedNodeId = makeDetachedNodeId(1, revisionTag1);
+		const detachedNodeId = makeDetachedNodeId(revisionTag1, 1);
 
 		const revisionTag2 = mintRevisionTag();
 		const rootId = detachedIndex.createEntry(detachedNodeId, revisionTag2);
@@ -497,7 +507,7 @@ describe("DetachedFieldIndex methods", () => {
 			const detachedIndex = makeDetachedFieldIndex();
 
 			const revisionTag1 = mintRevisionTag();
-			const detachedNodeId = makeDetachedNodeId(1, revisionTag1);
+			const detachedNodeId = makeDetachedNodeId(revisionTag1, 1);
 
 			const revisionTag2 = mintRevisionTag();
 			const rootId = detachedIndex.createEntry(detachedNodeId, revisionTag2);
@@ -520,7 +530,7 @@ describe("DetachedFieldIndex methods", () => {
 	it("clone copies the maxId and detachedIndex contents, and changes to clone does not affect the original.", () => {
 		const detachedIndex = makeDetachedFieldIndex();
 		const revisionTag1 = mintRevisionTag();
-		const detachedNodeId = makeDetachedNodeId(1, revisionTag1);
+		const detachedNodeId = makeDetachedNodeId(revisionTag1, 1);
 
 		const revisionTag2 = mintRevisionTag();
 		const rootId = detachedIndex.createEntry(detachedNodeId, revisionTag2);
@@ -538,12 +548,13 @@ describe("DetachedFieldIndex methods", () => {
 		assert.equal(detachedIndex.tryGetEntry(detachedNodeId), rootId);
 	});
 
-	it("toFieldKey", () => {
+	it("toFieldKey created different field keys for different root ids", () => {
 		const detachedIndex = makeDetachedFieldIndex();
 		const revisionTag1 = mintRevisionTag();
-		const detachedNodeId = makeDetachedNodeId(1, revisionTag1);
+		const detachedNodeId = makeDetachedNodeId(revisionTag1, 1);
+		const detachedNodeId2 = makeDetachedNodeId(revisionTag1, 2);
 		const rootId = detachedIndex.createEntry(detachedNodeId);
-		// The string "test" comes from the hardcoded name from the helper function makeDetachedFieldIndex in this file.
-		assert.equal(detachedIndex.toFieldKey(rootId), "test-0");
+		const rootId2 = detachedIndex.createEntry(detachedNodeId2);
+		assert.notEqual(detachedIndex.toFieldKey(rootId), detachedIndex.toFieldKey(rootId2));
 	});
 });
