@@ -176,6 +176,17 @@ export interface IDocumentSchemaFeatures {
 export const currentDocumentVersionSchema = 1;
 
 /**
+ * Narrows the properties in IDocumentSchemaFeatures (all as optional)
+ *
+ * @internal
+ */
+export type SessionSchemaRuntimeFeatures = {
+	[P in keyof IDocumentSchemaFeatures]?: IDocumentSchemaFeatures[P] extends boolean
+		? true
+		: IDocumentSchemaFeatures[P];
+};
+
+/**
  * Current document schema.
  * This interface represents the schema that we currently understand and know the
  * structure of (which properties will be present).
@@ -185,12 +196,7 @@ export const currentDocumentVersionSchema = 1;
 export interface IDocumentSchemaCurrent extends Required<IDocumentSchema> {
 	// This is the version of the schema that we currently understand.
 	version: typeof currentDocumentVersionSchema;
-	// This narrows the runtime property to only include the properties in IDocumentSchemaFeatures (all as optional)
-	runtime: {
-		[P in keyof IDocumentSchemaFeatures]?: IDocumentSchemaFeatures[P] extends boolean
-			? true
-			: IDocumentSchemaFeatures[P];
-	};
+	runtime: SessionSchemaRuntimeFeatures;
 }
 
 /**

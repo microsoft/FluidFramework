@@ -45,6 +45,7 @@ import {
 import { v4 as uuid } from "uuid";
 
 import { isBlobMetadata } from "../metadata.js";
+import type { SessionSchemaRuntimeFeatures } from "../summary/index.js";
 
 import {
 	summarizeBlobManagerState,
@@ -349,6 +350,17 @@ export class BlobManager {
 				this.pendingBlobsWithAttachedHandles.add(localId);
 				this.pendingOnlyLocalIds.add(localId);
 			}
+		}
+
+		if (!this.createBlobPayloadPending) {
+			const listener = (newSchema: SessionSchemaRuntimeFeatures): void => {
+				if (newSchema.createBlobPayloadPending === true) {
+					this.createBlobPayloadPending = true;
+					// Once createBlobPayloadPending is on it stays on, so we can remove the listener.
+					this.runtime.off("schemaChanged", listener);
+				}
+			};
+			this.runtime.on("schemaChanged", listener);
 		}
 	}
 
@@ -962,14 +974,6 @@ export class BlobManager {
 						};
 		}
 		return Object.keys(pendingBlobs).length > 0 ? pendingBlobs : undefined;
-	}
-
-	/**
-	 * Sets the value of createBlobPayloadPending. This should only be called by the runtime to update
-	 * the createBlobPayloadPending flag after a document schema change.
-	 */
-	public setCreateBlobPayloadPending(value: boolean): void {
-		this.createBlobPayloadPending = value;
 	}
 }
 

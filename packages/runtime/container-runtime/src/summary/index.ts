@@ -112,6 +112,7 @@ export {
 	type IDocumentSchemaChangeMessageIncoming,
 	type IDocumentSchemaChangeMessageOutgoing,
 	type IDocumentSchemaFeatures,
+	type SessionSchemaRuntimeFeatures,
 } from "./documentSchema.js";
 export {
 	getFailMessage,

@@ -273,7 +273,6 @@ import {
 	type IdCompressorMode,
 	type IDocumentSchemaChangeMessageIncoming,
 	type IDocumentSchemaCurrent,
-	type IDocumentSchemaFeatures,
 	type IEnqueueSummarizeOptions,
 	type IGeneratedSummaryStats,
 	type IGenerateSummaryTreeResult,
@@ -295,6 +294,7 @@ import {
 	recentBatchInfoBlobName,
 	RetriableSummaryError,
 	rootHasIsolatedChannels,
+	type SessionSchemaRuntimeFeatures,
 	type SubmitSummaryResult,
 	type Summarizer,
 	SummarizerClientElection,
@@ -1284,11 +1284,7 @@ export class ContainerRuntime
 	 * In such case it will be off in session schema, however this client will propose change to schema, and once / if
 	 * this op roundtrips, compression will be On. Client can't send compressed ops until it's change in schema.
 	 */
-	public get sessionSchema(): {
-		[P in keyof IDocumentSchemaFeatures]?: IDocumentSchemaFeatures[P] extends boolean
-			? true
-			: IDocumentSchemaFeatures[P];
-	} {
+	public get sessionSchema(): SessionSchemaRuntimeFeatures {
 		return this.documentsSchemaController.sessionSchema.runtime;
 	}
 
@@ -2119,10 +2115,8 @@ export class ContainerRuntime
 			this.loadIdCompressor();
 		}
 
-		// TODO: Handle other schema changes that can be applied at runtime.
-		this.blobManager.setCreateBlobPayloadPending(
-			this.sessionSchema.createBlobPayloadPending === true,
-		);
+		// Emit the schemaChangedEvent for sub-systems to listen to and handle accordingly.
+		this.emit("schemaChanged", this.sessionSchema);
 	}
 
 	public getCreateChildSummarizerNodeFn(

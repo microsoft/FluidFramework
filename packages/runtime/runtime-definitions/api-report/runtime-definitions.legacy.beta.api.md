@@ -104,6 +104,8 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
     (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): any;
     // (undocumented)
     (event: "dispose", listener: () => void): any;
+    // (undocumented)
+    (event: "schemaChanged", listener: (newSchema: unknown) => void): any;
 }
 
 // @beta @sealed @deprecated @legacy

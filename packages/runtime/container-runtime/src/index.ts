@@ -98,6 +98,7 @@ export {
 	type IDocumentSchemaChangeMessageIncoming,
 	type IDocumentSchemaChangeMessageOutgoing,
 	type IDocumentSchemaFeatures,
+	type SessionSchemaRuntimeFeatures,
 	type ReadFluidDataStoreAttributes,
 	type IFluidDataStoreAttributes0,
 	type IFluidDataStoreAttributes1,
