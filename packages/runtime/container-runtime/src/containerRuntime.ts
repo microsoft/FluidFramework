@@ -829,6 +829,7 @@ export class ContainerRuntime
 		IProvideFluidHandleContext,
 		IProvideLayerCompatDetails
 {
+	/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive */
 	/**
 	 * Load the stores from a snapshot and returns the runtime.
 	 * @param params - An object housing the runtime properties.
@@ -857,6 +858,7 @@ export class ContainerRuntime
 			registry: new FluidDataStoreRegistry(params.registryEntries),
 		});
 	}
+	/* eslint-enable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag */
 
 	/**
 	 * Load the stores from a snapshot and returns the runtime.
