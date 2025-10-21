@@ -1235,6 +1235,14 @@ export class MockEmptyDeltaConnection implements IDeltaConnection {
 export class MockObjectStorageService implements IChannelStorageService {
 	private readonly snapshotTree: ISnapshotTree;
 
+	/**
+	 * @param contents - Key value pairs that represent a snapshot.
+	 * The keys are the path to the contents of a blob in the snapshot tree. The corresponding values are its contents.
+	 *
+	 * @remarks
+	 * The snapshot contents must not change after it has been passed here as the changes will not be reflected
+	 * in the snapshot tree retrieved via `getSnapshotTree`.
+	 */
 	public constructor(private readonly contents: { [key: string]: string }) {
 		this.snapshotTree = createSnapshotTreeFromContents(contents);
 	}
