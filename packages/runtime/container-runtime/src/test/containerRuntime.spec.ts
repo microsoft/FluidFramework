@@ -18,6 +18,7 @@ import {
 	ContainerErrorTypes,
 	type IContainerContext,
 	type IBatchMessage,
+	type IContainerStorageService,
 } from "@fluidframework/container-definitions/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type {
@@ -58,7 +59,6 @@ import {
 	type IEnvelope,
 	type ITelemetryContext,
 	type ISummarizeInternalResult,
-	type IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
 import { defaultMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import {
@@ -242,7 +242,7 @@ describe("Runtime", () => {
 	const mockClientId = "mockClientId";
 
 	// Mock the storage layer so "submitSummary" works.
-	const defaultMockStorage: Partial<IRuntimeStorageService> = {
+	const defaultMockStorage: Partial<IContainerStorageService> = {
 		uploadSummaryWithContext: async (summary: ISummaryTree, context: ISummaryContext) => {
 			return "fakeHandle";
 		},
@@ -251,7 +251,7 @@ describe("Runtime", () => {
 		params: {
 			settings?: Record<string, ConfigTypes>;
 			logger?: ITelemetryBaseLogger;
-			mockStorage?: Partial<IRuntimeStorageService>;
+			mockStorage?: Partial<IContainerStorageService>;
 			loadedFromVersion?: IVersion;
 			baseSnapshot?: ISnapshotTree;
 			connected?: boolean;
@@ -298,7 +298,7 @@ describe("Runtime", () => {
 			},
 			clientId,
 			connected,
-			storage: mockStorage as IRuntimeStorageService,
+			storage: mockStorage as IContainerStorageService,
 			baseSnapshot,
 		} satisfies Partial<IContainerContext>;
 
@@ -2119,7 +2119,7 @@ describe("Runtime", () => {
 					summaryRefSeq: 100,
 					summaryLogger: createChildLogger({}),
 				};
-				class MockStorageService implements Partial<IRuntimeStorageService> {
+				class MockStorageService implements Partial<IContainerStorageService> {
 					/**
 					 * This always returns the same snapshot. Basically, when container runtime receives an ack for the
 					 * deleted snapshot and tries to fetch the latest snapshot, return the latest snapshot.
