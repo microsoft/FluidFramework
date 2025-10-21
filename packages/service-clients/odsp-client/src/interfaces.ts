@@ -72,6 +72,18 @@ export interface OdspContainerAttachProps {
 	 * The file name of the Fluid file. If undefined, the file is named with a GUID.
 	 */
 	fileName: string | undefined;
+
+	/**
+	 * The ID of the item (file) to which the container is being attached.
+	 * When combined with eTag, this will trigger a conversion of an existing file to a Fluid file.
+	 */
+	itemId?: string;
+
+	/**
+	 * Optional eTag to use when attaching the container.
+	 * If provided, the container will
+	 */
+	eTag?: string;
 }
 
 /**
