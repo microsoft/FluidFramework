@@ -109,6 +109,7 @@ export type {
 	UnionToIntersection,
 	UnionToTuple,
 	PopUnion,
+	PreventExtraProperties,
 } from "./typeUtils.js";
 
 export { unsafeArrayToTuple } from "./typeUtils.js";

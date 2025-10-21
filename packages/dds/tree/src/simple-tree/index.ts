@@ -261,7 +261,9 @@ export {
 	RecordNodeSchema,
 	type TreeRecordNode,
 	type ObjectFromSchemaRecordRelaxed,
-	type TreeObjectNodeRelaxed,
+	type ObjectSchemaTypingOptions,
+	type AssignableTreeFieldFromImplicitFieldDefault,
+	type TreeFieldFromImplicitFieldDefault,
 } from "./node-kinds/index.js";
 export {
 	unhydratedFlexTreeFromInsertable,

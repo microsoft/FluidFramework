@@ -8,14 +8,13 @@ import {
 	arraySchema,
 	type MapNodeCustomizableSchema,
 	mapSchema,
+	type ObjectFromSchemaRecordRelaxed,
 	type ObjectNodeSchema,
 	objectSchema,
 	type RecordNodeCustomizableSchema,
 	recordSchema,
-	type TreeObjectNodeRelaxed,
 } from "../node-kinds/index.js";
 import {
-	defaultSchemaFactoryObjectOptions,
 	scoped,
 	type NodeSchemaOptionsAlpha,
 	type ObjectSchemaOptionsAlpha,
@@ -23,7 +22,7 @@ import {
 } from "./schemaFactory.js";
 import { schemaStatics } from "./schemaStatics.js";
 import type { ImplicitFieldSchema } from "../fieldSchema.js";
-import type { RestrictiveStringRecord } from "../../util/index.js";
+import type { PreventExtraProperties, RestrictiveStringRecord } from "../../util/index.js";
 import type {
 	NodeKind,
 	TreeNodeSchema,
@@ -202,12 +201,12 @@ export class SchemaFactoryAlpha<
 	public objectAlpha<
 		const Name extends TName,
 		const T extends RestrictiveStringRecord<ImplicitFieldSchema>,
-		const TCustomMetadata = unknown,
+		const TOptions extends ObjectSchemaOptionsAlpha = ObjectSchemaOptionsAlpha,
 	>(
 		name: Name,
 		fields: T,
-		options?: ObjectSchemaOptionsAlpha<TCustomMetadata>,
-	): ObjectNodeSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> & {
+		options?: PreventExtraProperties<TOptions, ObjectSchemaOptionsAlpha>,
+	): ObjectNodeSchema<ScopedSchemaName<TScope, Name>, T, true, TOptions> & {
 		/**
 		 * Typing checking workaround: not for for actual use.
 		 * @remarks
@@ -220,15 +219,7 @@ export class SchemaFactoryAlpha<
 		 */
 		readonly createFromInsertable: unknown;
 	} {
-		return objectSchema(
-			scoped<TScope, TName, Name>(this, name),
-			fields,
-			true,
-			options?.allowUnknownOptionalFields ??
-				defaultSchemaFactoryObjectOptions.allowUnknownOptionalFields,
-			options?.metadata,
-			options?.persistedMetadata,
-		);
+		return objectSchema(scoped<TScope, TName, Name>(this, name), fields, true, options);
 	}
 
 	/**
@@ -238,10 +229,12 @@ export class SchemaFactoryAlpha<
 		const Name extends TName,
 		const T extends RestrictiveStringRecord<System_Unsafe.ImplicitFieldSchemaUnsafe>,
 		const TCustomMetadata = unknown,
+		const TOptions extends
+			ObjectSchemaOptionsAlpha<TCustomMetadata> = ObjectSchemaOptionsAlpha<TCustomMetadata>,
 	>(
 		name: Name,
 		t: T,
-		options?: ObjectSchemaOptionsAlpha<TCustomMetadata>,
+		options?: PreventExtraProperties<TOptions, ObjectSchemaOptionsAlpha>,
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Object,
@@ -283,7 +276,7 @@ export class SchemaFactoryAlpha<
 				ScopedSchemaName<TScope, Name>,
 				RestrictiveStringRecord<ImplicitFieldSchema>,
 				false,
-				TCustomMetadata
+				TOptions
 			>;
 	}
 
@@ -588,15 +581,19 @@ export function relaxObject<const T extends TreeNodeSchemaClass<string, NodeKind
 		TreeNode,
 		infer TInsertable,
 		infer ImplicitlyConstructable,
-		infer Info extends RestrictiveStringRecord<ImplicitFieldSchema>
+		infer Info extends RestrictiveStringRecord<ImplicitFieldSchema>,
+		infer TConstructorExtra,
+		infer TCustomMetadata
 	>
 		? TreeNodeSchemaClass<
 				Name,
 				NodeKind.Object,
-				TreeObjectNodeRelaxed<Info, Name>,
+				TreeNode & WithType<Name, NodeKind.Object, T> & ObjectFromSchemaRecordRelaxed<Info>,
 				TInsertable,
 				ImplicitlyConstructable,
-				Info
+				Info,
+				TConstructorExtra,
+				TCustomMetadata
 			>
 		: T;
 }

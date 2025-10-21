@@ -24,6 +24,7 @@ import type {
 	RestrictiveStringRecord,
 	FlattenKeys,
 	JsonCompatibleReadOnlyObject,
+	PreventExtraProperties,
 } from "../../../util/index.js";
 import { brand } from "../../../util/index.js";
 
@@ -51,6 +52,7 @@ import {
 	type TreeNodeSchemaCorePrivate,
 	type TreeNodeSchemaPrivateData,
 	getInnerNode,
+	type TreeLeafValue,
 } from "../../core/index.js";
 import {
 	getTreeNodeSchemaInitializedData,
@@ -77,6 +79,7 @@ import {
 	type ContextualFieldProvider,
 	extractFieldProvider,
 	isConstant,
+	type ApplyKind,
 } from "../../fieldSchema.js";
 import type { SimpleObjectFieldSchema } from "../../simpleSchema.js";
 import {
@@ -87,7 +90,13 @@ import {
 	type InsertableContent,
 } from "../../unhydratedFlexTreeFromInsertable.js";
 import { convertField, convertFieldKind } from "../../toStoredSchema.js";
-import type { GetTypes, SchemaUnionToIntersection } from "../../schemaTypes.js";
+import type {
+	DefaultTreeNodeFromImplicitAllowedTypes,
+	GetTypes,
+	SchemaUnionToIntersection,
+	StrictTypes,
+} from "../../schemaTypes.js";
+import type { ObjectSchemaOptionsAlpha } from "../../api/index.js";
 
 /**
  * Generates the properties for an ObjectNode from its field schema object.
@@ -112,23 +121,36 @@ import type { GetTypes, SchemaUnionToIntersection } from "../../schemaTypes.js";
 // } & {
 // 	readonly [Property in keyof T]: TreeFieldFromImplicitField<T[Property & string]>;
 // };
-export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> =
-	RestrictiveStringRecord<ImplicitFieldSchema> extends T
-		? // eslint-disable-next-line @typescript-eslint/ban-types
-			{}
-		: {
+
+export type ObjectFromSchemaRecord<
+	T extends RestrictiveStringRecord<ImplicitFieldSchema>,
+	Options extends ObjectSchemaTypingOptions = Record<string, undefined>,
+> = RestrictiveStringRecord<ImplicitFieldSchema> extends T
+	? // eslint-disable-next-line @typescript-eslint/ban-types
+		{}
+	: [Options["supportReadonlyFields"]] extends [true]
+		? {
 				-readonly [Property in keyof T as [
 					AssignableTreeFieldFromImplicitField<T[Property & string]>,
 					// If the types we want to allow setting to are just never or undefined, remove the setter
 				] extends [never | undefined]
 					? never
-					: Property]: AssignableTreeFieldFromImplicitField<T[Property & string]>;
+					: Property]: [Options["supportCustomizedFields"]] extends [true]
+					? AssignableTreeFieldFromImplicitField<T[Property & string]>
+					: AssignableTreeFieldFromImplicitFieldDefault<T[Property & string]>;
 			} & {
-				readonly [Property in keyof T]: TreeFieldFromImplicitField<T[Property & string]>;
+				readonly [Property in keyof T]: [Options["supportCustomizedFields"]] extends [true]
+					? TreeFieldFromImplicitField<T[Property & string]>
+					: TreeFieldFromImplicitFieldDefault<T[Property & string]>;
+			}
+		: {
+				-readonly [Property in keyof T]: [Options["supportCustomizedFields"]] extends [true]
+					? TreeFieldFromImplicitField<T[Property & string]>
+					: TreeFieldFromImplicitFieldDefault<T[Property & string]>;
 			};
 
 /**
- * Same as  {@link ObjectFromSchemaRecord}, but does not remove setters for fields which can't be assigned to.
+ * Same as  {@link ObjectFromSchemaRecord}, but hard codes `supportReadonlyFields` and `supportCustomizedFields` to `false`.
  * @system @beta
  */
 export type ObjectFromSchemaRecordRelaxed<
@@ -137,8 +159,26 @@ export type ObjectFromSchemaRecordRelaxed<
 	? // eslint-disable-next-line @typescript-eslint/ban-types
 		{}
 	: {
-			[Property in keyof T]: TreeFieldFromImplicitField<T[Property & string]>;
+			[Property in keyof T]: TreeFieldFromImplicitFieldDefault<T[Property & string]>;
 		};
+
+/**
+ * Default version of {@link TreeFieldFromImplicitField}.
+ *
+ * Uses `StrictTypes` policy.
+ *
+ * @remarks
+ * This exists instead of just clearing the custom types annotation to work around limitations in TypeScript ability to propagate generic type parameters through conditionals in generic code.
+ *
+ * @system @public
+ */
+export type TreeFieldFromImplicitFieldDefault<
+	TSchema extends ImplicitFieldSchema = FieldSchema,
+> = TSchema extends FieldSchema<infer Kind, infer Types>
+	? ApplyKind<DefaultTreeNodeFromImplicitAllowedTypes<Types>, Kind>
+	: TSchema extends ImplicitAllowedTypes
+		? DefaultTreeNodeFromImplicitAllowedTypes<TSchema>
+		: TreeNode | TreeLeafValue | undefined;
 
 /**
  * Type of content that can be assigned to a field of the given schema.
@@ -159,6 +199,25 @@ export type AssignableTreeFieldFromImplicitField<
 		: never;
 
 /**
+ * Default version of {@link AssignableTreeFieldFromImplicitField}.
+ *
+ * Uses `StrictTypes` policy.
+ *
+ * @remarks
+ * This exists instead of just clearing the custom types annotation to work around limitations in TypeScript ability to propagate generic type parameters through conditionals in generic code.
+ *
+ * @system @public
+ */
+export type AssignableTreeFieldFromImplicitFieldDefault<
+	TSchemaInput extends ImplicitFieldSchema,
+	TSchema = SchemaUnionToIntersection<TSchemaInput>,
+> = [TSchema] extends [FieldSchema<infer Kind, infer Types>]
+	? ApplyKindAssignment<StrictTypes<Types>["readWrite"], Kind>
+	: [TSchema] extends [ImplicitAllowedTypes]
+		? StrictTypes<TSchema>["readWrite"]
+		: never;
+
+/**
  * Suitable for assignment.
  *
  * @see {@link Input}
@@ -172,6 +231,15 @@ export type ApplyKindAssignment<T, Kind extends FieldKind> = [Kind] extends [
 		? T | undefined
 		: // Unknown, non-exact and identifier fields are not assignable.
 			never;
+
+/**
+ * Control details of type generation for an object schema.
+ * @input @public
+ */
+export interface ObjectSchemaTypingOptions {
+	readonly supportReadonlyFields?: true | undefined;
+	readonly supportCustomizedFields?: true | undefined;
+}
 
 /**
  * A {@link TreeNode} which modules a JavaScript object.
@@ -190,16 +258,8 @@ export type ApplyKindAssignment<T, Kind extends FieldKind> = [Kind] extends [
 export type TreeObjectNode<
 	T extends RestrictiveStringRecord<ImplicitFieldSchema>,
 	TypeName extends string = string,
-> = TreeNode & ObjectFromSchemaRecord<T> & WithType<TypeName, NodeKind.Object, T>;
-
-/**
- * {@link TreeObjectNode} except using {@link ObjectFromSchemaRecordRelaxed}.
- * @beta
- */
-export type TreeObjectNodeRelaxed<
-	T extends RestrictiveStringRecord<ImplicitFieldSchema>,
-	TypeName extends string = string,
-> = TreeNode & ObjectFromSchemaRecordRelaxed<T> & WithType<TypeName, NodeKind.Object, T>;
+	Options extends ObjectSchemaTypingOptions = Record<string, undefined>,
+> = TreeNode & WithType<TypeName, NodeKind.Object, T> & ObjectFromSchemaRecord<T, Options>;
 
 /**
  * Type utility for determining if an implicit field schema is known to have a default value.
@@ -486,15 +546,13 @@ export function objectSchema<
 	TName extends string,
 	const T extends RestrictiveStringRecord<ImplicitFieldSchema>,
 	const ImplicitlyConstructable extends boolean,
-	const TCustomMetadata = unknown,
+	TOptions extends ObjectSchemaOptionsAlpha = ObjectSchemaOptionsAlpha,
 >(
 	identifier: TName,
 	info: T,
 	implicitlyConstructable: ImplicitlyConstructable,
-	allowUnknownOptionalFields: boolean,
-	metadata?: NodeSchemaMetadata<TCustomMetadata>,
-	persistedMetadata?: JsonCompatibleReadOnlyObject | undefined,
-): ObjectNodeSchema<TName, T, ImplicitlyConstructable, TCustomMetadata> &
+	options?: PreventExtraProperties<TOptions, ObjectSchemaOptionsAlpha>,
+): ObjectNodeSchema<TName, T, ImplicitlyConstructable, TOptions> &
 	ObjectNodeSchemaInternalData &
 	TreeNodeSchemaCorePrivate {
 	// Field set can't be modified after this since derived data is stored in maps.
@@ -547,7 +605,9 @@ export function objectSchema<
 			]),
 		);
 		public static readonly identifierFieldKeys: readonly FieldKey[] = identifierFieldKeys;
-		public static readonly allowUnknownOptionalFields: boolean = allowUnknownOptionalFields;
+		public static readonly allowUnknownOptionalFields: boolean =
+			options?.allowUnknownOptionalFields ??
+			defaultSchemaFactoryObjectOptions.allowUnknownOptionalFields;
 
 		public static override prepareInstance<T2>(
 			this: typeof TreeNodeValid<T2>,
@@ -637,9 +697,20 @@ export function objectSchema<
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;
 		}
-		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
+		public static readonly metadata: NodeSchemaMetadata<
+			TOptions extends ObjectSchemaOptionsAlpha<infer TCustomMetadataX>
+				? TCustomMetadataX
+				: unknown
+		> = {
+			custom: options?.metadata?.custom as TOptions extends ObjectSchemaOptionsAlpha<
+				infer TCustomMetadataX
+			>
+				? TCustomMetadataX
+				: unknown,
+			description: options?.metadata?.description,
+		};
 		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
-			persistedMetadata;
+			options?.persistedMetadata;
 
 		// eslint-disable-next-line import/no-deprecated
 		public get [typeNameSymbol](): TName {
@@ -668,7 +739,7 @@ export function objectSchema<
 							convertField(fieldSchema.schema, storedOptions),
 						);
 					}
-					return new ObjectNodeStoredSchema(fields, persistedMetadata);
+					return new ObjectNodeStoredSchema(fields, options?.persistedMetadata);
 				},
 			));
 		}
@@ -676,11 +747,21 @@ export function objectSchema<
 	type Output = typeof CustomObjectNode &
 		(new (
 			input: InsertableObjectFromSchemaRecord<T> | InternalTreeNode,
-		) => TreeObjectNode<T, TName>);
+		) => TreeObjectNode<T, TName, TOptions>);
 	return CustomObjectNode as Output;
 }
 
 const targetToProxy: WeakMap<object, TreeNode> = new WeakMap();
+
+/**
+ * Default options for Object node schema creation.
+ * @remarks Omits parameters that are not relevant for common use cases.
+ */
+export const defaultSchemaFactoryObjectOptions = {
+	allowUnknownOptionalFields: false,
+	supportReadonlyFields: undefined,
+	supportCustomizedFields: undefined,
+} as const satisfies Omit<ObjectSchemaOptionsAlpha, "metadata" | "persistedMetadata">;
 
 /**
  * Ensures that the set of property keys in the schema is unique.

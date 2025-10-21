@@ -10,13 +10,13 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/in
 
 import {
 	type ITree,
-	SchemaFactory,
 	treeNodeApi as Tree,
 	TreeViewConfiguration,
 	type TreeView,
 	customizeSchemaTyping,
 	type GetTypes,
 	type Customizer,
+	SchemaFactoryAlpha,
 } from "../../../simple-tree/index.js";
 import { DefaultTestSharedTreeKind, getView } from "../../utils.js";
 import {
@@ -27,7 +27,7 @@ import {
 } from "../../../util/index.js";
 
 // Since this no longer follows the builder pattern, it is a SchemaFactory instead of a SchemaBuilder.
-const schema = new SchemaFactory("com.example");
+const schema = new SchemaFactoryAlpha("com.example");
 
 /**
  * An example schema based type.
@@ -133,9 +133,13 @@ describe("Class based end to end example", () => {
 	});
 
 	it("customized narrowing", () => {
-		class Specific extends schema.object("Specific", {
-			s: customizeSchemaTyping(schema.string).simplified<"foo" | "bar">(),
-		}) {}
+		class Specific extends schema.object(
+			"Specific",
+			{
+				s: customizeSchemaTyping(schema.string).simplified<"foo" | "bar">(),
+			},
+			{ supportCustomizedFields: true },
+		) {}
 		const parent = new Specific({ s: "bar" });
 		// Reading field gives narrowed type
 		const s: "foo" | "bar" = parent.s;
@@ -150,9 +154,13 @@ describe("Class based end to end example", () => {
 			// Assignment can't be made be more restrictive than the read type, but we can choose to disable it.
 			readWrite: never;
 		}>();
-		class Specific extends schema.object("Specific", {
-			s: specialString,
-		}) {}
+		class Specific extends schema.object(
+			"Specific",
+			{
+				s: specialString,
+			},
+			{ supportCustomizedFields: true, supportReadonlyFields: true },
+		) {}
 		const parent = new Specific({ s: "bar" });
 		// Reading gives string
 		const s = parent.s;
@@ -178,9 +186,13 @@ describe("Class based end to end example", () => {
 	it("customized branding", () => {
 		type SpecialString = Brand<string, "tree.SpecialString">;
 
-		class Specific extends schema.object("Specific", {
-			s: customizeSchemaTyping(schema.string).simplified<SpecialString>(),
-		}) {}
+		class Specific extends schema.object(
+			"Specific",
+			{
+				s: customizeSchemaTyping(schema.string).simplified<SpecialString>(),
+			},
+			{ supportCustomizedFields: true, supportReadonlyFields: true },
+		) {}
 		const parent = new Specific({ s: brand("bar") });
 		const s: SpecialString = parent.s;
 
@@ -192,17 +204,29 @@ describe("Class based end to end example", () => {
 		const runtimeDeterminedSchema = schema.string as
 			| typeof schema.string
 			| typeof schema.number;
-		class Strict extends schema.object("Strict", {
-			s: runtimeDeterminedSchema,
-		}) {}
+		class Strict extends schema.object(
+			"Strict",
+			{
+				s: runtimeDeterminedSchema,
+			},
+			{ supportCustomizedFields: true, supportReadonlyFields: true },
+		) {}
 
-		class Relaxed extends schema.object("Relaxed", {
-			s: customizeSchemaTyping(runtimeDeterminedSchema).relaxed(),
-		}) {}
+		class Relaxed extends schema.object(
+			"Relaxed",
+			{
+				s: customizeSchemaTyping(runtimeDeterminedSchema).relaxed(),
+			},
+			{ supportCustomizedFields: true, supportReadonlyFields: true },
+		) {}
 
-		class RelaxedArray extends schema.object("Relaxed", {
-			s: customizeSchemaTyping([runtimeDeterminedSchema]).relaxed(),
-		}) {}
+		class RelaxedArray extends schema.object(
+			"Relaxed",
+			{
+				s: customizeSchemaTyping([runtimeDeterminedSchema]).relaxed(),
+			},
+			{ supportCustomizedFields: true, supportReadonlyFields: true },
+		) {}
 
 		const customizer = customizeSchemaTyping(runtimeDeterminedSchema);
 		{

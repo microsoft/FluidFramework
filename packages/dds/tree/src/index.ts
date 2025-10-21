@@ -289,9 +289,11 @@ export {
 	type TreeParsingOptions,
 	type SchemaFactory_base,
 	type NumberKeys,
-	type TreeObjectNodeRelaxed,
-	type ObjectFromSchemaRecordRelaxed,
 	type DefaultTreeNodeFromImplicitAllowedTypes,
+	type ObjectFromSchemaRecordRelaxed,
+	type ObjectSchemaTypingOptions,
+	type AssignableTreeFieldFromImplicitFieldDefault,
+	type TreeFieldFromImplicitFieldDefault,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
@@ -332,6 +334,7 @@ export type {
 	JsonCompatibleObject,
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnlyObject,
+	PreventExtraProperties,
 } from "./util/index.js";
 export { cloneWithReplacements } from "./util/index.js";
 

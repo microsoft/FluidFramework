@@ -1490,20 +1490,24 @@ describe("SchemaFactory Recursive methods", () => {
 		});
 
 		it("custom recursive children", () => {
-			class O extends sf.objectRecursive("O", {
-				// Test that customizeSchemaTyping works for non recursive members of recursive types
-				a: customizeSchemaTyping(sf.number).custom<{
-					input: 1;
-					readWrite: never;
-					output: 2;
-				}>(),
-				recursive: sf.optionalRecursive(
-					customizeSchemaTypingUnsafe([() => O]).custom<{
-						input: unknown;
+			class O extends sf.objectRecursive(
+				"O",
+				{
+					// Test that customizeSchemaTyping works for non recursive members of recursive types
+					a: customizeSchemaTyping(sf.number).custom<{
+						input: 1;
 						readWrite: never;
+						output: 2;
 					}>(),
-				),
-			}) {}
+					recursive: sf.optionalRecursive(
+						customizeSchemaTypingUnsafe([() => O]).custom<{
+							input: unknown;
+							readWrite: never;
+						}>(),
+					),
+				},
+				{ supportCustomizedFields: true, supportReadonlyFields: true },
+			) {}
 			{
 				type _check = ValidateRecursiveSchema<typeof O>;
 			}

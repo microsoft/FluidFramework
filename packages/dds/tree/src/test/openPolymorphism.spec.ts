@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import {
+	allowUnused,
 	Component,
 	SchemaFactory,
 	TreeViewConfiguration,
@@ -18,6 +19,7 @@ import {
 import { Tree } from "../shared-tree/index.js";
 import { validateUsageError } from "./utils.js";
 import { customizeSchemaTyping, evaluateLazySchema } from "../simple-tree/index.js";
+import type { requireAssignableTo } from "../util/index.js";
 
 const sf = new SchemaFactory("test");
 
@@ -119,9 +121,12 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 
 			// If we don't do anything special, the insertable type is never, so a cast is required to insert content.
 			// See example using customizeSchemaTyping for how to avoid this.
-			container.insertAtStart(new TextItem({ text: "", location: { x: 0, y: 0 } }) as never);
+			container.insertAtStart(new TextItem({ text: "", location: { x: 0, y: 0 } })); // TODO: Why is `as never` not required?
 
-			// Items read from the container are typed as Item and have thew expected APIs:
+			type Input = Parameters<typeof container.insertAtStart>[0];
+			allowUnused<requireAssignableTo<Input, never>>();
+
+			// Items read from the container are typed as Item and have the expected APIs:
 			const first = container[0];
 			first.foo();
 			first.location.x += 1;

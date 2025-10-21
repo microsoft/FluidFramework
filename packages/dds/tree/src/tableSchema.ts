@@ -30,7 +30,6 @@ import {
 	type InsertableField,
 	withBufferedTreeEvents,
 	type DefaultTreeNodeFromImplicitAllowedTypes,
-	relaxObject,
 } from "./simple-tree/index.js";
 
 // Future improvement TODOs:
@@ -230,12 +229,10 @@ export namespace System_TableSchema {
 		 * A column in a table.
 		 */
 		class Column
-			extends relaxObject(
-				schemaFactory.object("Column", columnFields, {
-					// Will make it easier to evolve this schema in the future.
-					allowUnknownOptionalFields: true,
-				}),
-			)
+			extends schemaFactory.object("Column", columnFields, {
+				// Will make it easier to evolve this schema in the future.
+				allowUnknownOptionalFields: true,
+			})
 			implements TableSchema.Column<TCellSchema, TPropsSchema>
 		{
 			public getCells(): {
@@ -412,12 +409,10 @@ export namespace System_TableSchema {
 		 * The Row schema - this is a map of Cells where the key is the column id
 		 */
 		class Row
-			extends relaxObject(
-				schemaFactory.object("Row", rowFields, {
-					// Will make it easier to evolve this schema in the future.
-					allowUnknownOptionalFields: true,
-				}),
-			)
+			extends schemaFactory.object("Row", rowFields, {
+				// Will make it easier to evolve this schema in the future.
+				allowUnknownOptionalFields: true,
+			})
 			implements TableSchema.Row<TCellSchema, TPropsSchema>
 		{
 			public getCell(
@@ -615,9 +610,11 @@ export namespace System_TableSchema {
 		 * The Table schema
 		 */
 		class Table
-			extends schemaFactory.objectAlpha("Table", tableFields, {
+			extends schemaFactory.object("Table", tableFields, {
 				// Will make it easier to evolve this schema in the future.
 				allowUnknownOptionalFields: true,
+				supportReadonlyFields: true,
+				supportCustomizedFields: true,
 			})
 			implements TableSchema.Table<TInputScope, TCellSchema, TColumnSchema, TRowSchema>
 		{

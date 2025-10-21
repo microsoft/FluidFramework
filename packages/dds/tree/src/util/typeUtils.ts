@@ -224,3 +224,14 @@ export type UnionToTuple<
 export function unsafeArrayToTuple<T>(items: T[]): UnionToTuple<T> {
 	return items as UnionToTuple<T>;
 }
+
+/**
+ * When inferring a type from a parameter to capture the typing of the members, this can be used provide errors when the user provides an input with a invalid property.
+ * @remarks
+ * This ensures typos in property names are caught.
+ * This does not constrain the types of the values of the properties: it is assumed that the user has already done that via an extends clause if needed.
+ * @system @beta
+ */
+export type PreventExtraProperties<T, Expected> = T & {
+	[x in keyof T]: x extends keyof Expected ? T[x] : undefined;
+};

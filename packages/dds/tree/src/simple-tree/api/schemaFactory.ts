@@ -50,6 +50,7 @@ import {
 	type InsertableObjectFromSchemaRecord,
 	type TreeMapNode,
 	type TreeObjectNode,
+	type ObjectSchemaTypingOptions,
 } from "../node-kinds/index.js";
 import {
 	FieldKind,
@@ -100,7 +101,8 @@ export function schemaFromValue(value: TreeValue): TreeNodeSchema {
  * @beta
  */
 export interface ObjectSchemaOptions<TCustomMetadata = unknown>
-	extends NodeSchemaOptions<TCustomMetadata> {
+	extends NodeSchemaOptions<TCustomMetadata>,
+		ObjectSchemaTypingOptions {
 	/**
 	 * Allow nodes typed with this object node schema to contain optional fields that are not present in the schema declaration.
 	 * Such nodes can come into existence either via import APIs (see remarks) or by way of collaboration with another client
@@ -158,16 +160,6 @@ export interface ObjectSchemaOptions<TCustomMetadata = unknown>
 export interface ObjectSchemaOptionsAlpha<TCustomMetadata = unknown>
 	extends ObjectSchemaOptions<TCustomMetadata>,
 		NodeSchemaOptionsAlpha<TCustomMetadata> {}
-
-/**
- * Default options for Object node schema creation.
- * @remarks Omits parameters that are not relevant for common use cases.
- */
-export const defaultSchemaFactoryObjectOptions: Required<
-	Omit<ObjectSchemaOptionsAlpha, "metadata" | "persistedMetadata">
-> = {
-	allowUnknownOptionalFields: false,
-};
 
 /**
  * The name of a schema produced by {@link SchemaFactory}, including its optional scope prefix.
@@ -397,12 +389,7 @@ export class SchemaFactory<
 		true,
 		T
 	> {
-		return objectSchema(
-			scoped(this, name),
-			fields,
-			true,
-			defaultSchemaFactoryObjectOptions.allowUnknownOptionalFields,
-		);
+		return objectSchema(scoped(this, name), fields, true);
 	}
 
 	/**

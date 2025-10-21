@@ -295,6 +295,19 @@ describe("TableFactory unit tests", () => {
 				rows: [{ id: "row-0", props: { label: "Row 0" }, cells: {} }],
 			});
 		});
+
+		it("Readonly IDs", () => {
+			const column = new Column({ props: {} });
+			assert.throws(() => {
+				// @ts-expect-error id is readonly
+				column.id = "column-1";
+			});
+			const row = new Row({ cells: {} });
+			assert.throws(() => {
+				// @ts-expect-error id is readonly
+				row.id = "row-1";
+			});
+		});
 	});
 
 	describeHydration("Initialization", (initializeTree) => {
