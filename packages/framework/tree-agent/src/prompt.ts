@@ -19,6 +19,7 @@ import {
 	communize,
 	unqualifySchema,
 	type SchemaDetails,
+	findSchemas,
 } from "./utils.js";
 
 /**
@@ -33,7 +34,6 @@ export function getPrompt<TRoot extends ImplicitFieldSchema>(args: {
 	const { field, schema } = subtree;
 	const arrayInterfaceName = "TreeArray";
 	const mapInterfaceName = "TreeMap";
-	const simpleSchema = getSimpleSchema(schema);
 	// Inspect the schema to determine what kinds of nodes are possible - this will affect how much information we need to include in the prompt.
 	const rootTypes = [...normalizeFieldSchema(schema).allowedTypeSet];
 	const rootTypeUnion = `${rootTypes.map((t) => getFriendlyName(t)).join(" | ")}`;
@@ -41,15 +41,15 @@ export function getPrompt<TRoot extends ImplicitFieldSchema>(args: {
 	let hasArrays = false;
 	let hasMaps = false;
 	let exampleObjectName: string | undefined;
-	for (const [definition, nodeSchema] of simpleSchema.definitions) {
-		if (nodeSchema.kind !== NodeKind.Leaf) {
+	for (const s of findSchemas(schema)) {
+		if (s.kind !== NodeKind.Leaf) {
 			nodeTypeUnion =
 				nodeTypeUnion === undefined
-					? unqualifySchema(definition)
-					: `${nodeTypeUnion} | ${unqualifySchema(definition)}`;
+					? getFriendlyName(s)
+					: `${nodeTypeUnion} | ${getFriendlyName(s)}`;
 		}
 
-		switch (nodeSchema.kind) {
+		switch (s.kind) {
 			case NodeKind.Array: {
 				hasArrays = true;
 				break;
@@ -59,14 +59,14 @@ export function getPrompt<TRoot extends ImplicitFieldSchema>(args: {
 				break;
 			}
 			case NodeKind.Object: {
-				exampleObjectName ??= unqualifySchema(definition);
+				exampleObjectName ??= getFriendlyName(s);
 				break;
 			}
 			// No default
 		}
 	}
 
-	const { domainTypes } = generateEditTypesForPrompt(schema, simpleSchema);
+	const { domainTypes } = generateEditTypesForPrompt(schema, getSimpleSchema(schema));
 	for (const [key, value] of Object.entries(domainTypes)) {
 		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 		delete domainTypes[key];

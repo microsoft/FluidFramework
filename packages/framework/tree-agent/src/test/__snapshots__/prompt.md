@@ -44,7 +44,7 @@ You should also use the `context` object to create new data to insert into the t
 There are other additional helper functions available on the `context` object to help you analyze the tree.
 Here is the definition of the `Context` interface:
 ```typescript
-	type TreeData = TestMap | TestArrayItem | TestArray | Obj;
+	type TreeData = Obj | TestMap | TestArray | TestArrayItem;
 
 	/**
 	 * An object available to generated code which provides read and write access to the tree as well as utilities for creating and inspecting data in the tree.
@@ -72,10 +72,10 @@ Here is the definition of the `Context` interface:
 	 * For example:
 	 *
 	 * ```javascript
-	 * // This creates a new TestArrayItem object:
-	 * const testArrayItem = context.create.TestArrayItem({ ...properties });
+	 * // This creates a new Obj object:
+	 * const obj = context.create.Obj({ ...properties });
 	 * // Don't do this:
-	 * // const testArrayItem = { ...properties };
+	 * // const obj = { ...properties };
 	 * ```
 	 */
 	create: Record<string, <T extends TreeData>(input: T) => T>;
@@ -88,7 +88,7 @@ Here is the definition of the `Context` interface:
 	 * Call the corresponding function to check if a node is of that specific type.
 	 * This is useful when working with nodes that could be one of multiple types.
 	 *
-	 * Example: Check if a node is a TestMap with `if (context.is.TestMap(node)) {}`
+	 * Example: Check if a node is a Obj with `if (context.is.Obj(node)) {}`
 	 */
 	is: Record<string, <T extends TreeData>(data: unknown) => data is T>;
 	
@@ -363,34 +363,34 @@ For example:
 
 ```javascript
 // Data is removed from the tree:
-const testArrayItem = parent.testArrayItem;
-parent.testArrayItem = undefined;
-// `testArrayItem` cannot be directly re-inserted into the tree - this will throw an error:
-// parent.testArrayItem = testArrayItem; // ❌ A node may not be inserted into the tree more than once
+const obj = parent.obj;
+parent.obj = undefined;
+// `obj` cannot be directly re-inserted into the tree - this will throw an error:
+// parent.obj = obj; // ❌ A node may not be inserted into the tree more than once
 // Instead, it must be deep cloned and recreated before insertion:
-parent.testArrayItem = context.create.TestArrayItem({ /*... deep clone all properties from `testArrayItem` */ });
+parent.obj = context.create.Obj({ /*... deep clone all properties from `obj` */ });
 ```
 
 The same applies when using arrays:
 ```javascript
 // Data is removed from the tree:
-const item = arrayOfTestArrayItem[0];
-arrayOfTestArrayItem.removeAt(0);
+const item = arrayOfObj[0];
+arrayOfObj.removeAt(0);
 // `item` cannot be directly re-inserted into the tree - this will throw an error:
-arrayOfTestArrayItem.insertAt(0, item); // ❌ A node may not be inserted into the tree more than once
+arrayOfObj.insertAt(0, item); // ❌ A node may not be inserted into the tree more than once
 // Instead, it must be deep cloned and recreated before insertion:
-arrayOfTestArrayItem.insertAt(0, context.create.TestArrayItem({ /*... deep clone all properties from `item` */ }));
+arrayOfObj.insertAt(0, context.create.Obj({ /*... deep clone all properties from `item` */ }));
 ```
 
 The same applies when using maps:
 ```javascript
 // Data is removed from the tree:
-const value = mapOfTestArrayItem.get("someKey");
-mapOfTestArrayItem.delete("someKey");
+const value = mapOfObj.get("someKey");
+mapOfObj.delete("someKey");
 // `value` cannot be directly re-inserted into the tree - this will throw an error:
-mapOfTestArrayItem.set("someKey", value); // ❌ A node may not be inserted into the tree more than once
+mapOfObj.set("someKey", value); // ❌ A node may not be inserted into the tree more than once
 // Instead, it must be deep cloned and recreated before insertion:
-mapOfTestArrayItem.set("someKey", context.create.TestArrayItem({ /*... deep clone all properties from `value` */ }));
+mapOfObj.set("someKey", context.create.Obj({ /*... deep clone all properties from `value` */ }));
 ```
 
 Finally, double check that the edits would accomplish the user's request (if it is possible).
