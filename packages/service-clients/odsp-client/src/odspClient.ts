@@ -11,6 +11,7 @@ import type {
 import {
 	createDetachedContainer,
 	loadExistingContainer,
+	rehydrateDetachedContainer,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
 import type {
@@ -127,6 +128,33 @@ export class OdspClient {
 				package: "no-dynamic-package",
 				config: {},
 			},
+		});
+
+		const fluidContainer = await this.createFluidContainer(container, this.connectionConfig);
+
+		const services = await this.getContainerServices(container);
+
+		return { container: fluidContainer as IFluidContainer<T>, services };
+	}
+
+	/**
+	 * Create a new container from the serialized state of a detached container.
+	 *
+	 * @param serializedContainer - Serialized string representation of the container.
+	 * @param containerSchema - The schema of the container to rehydrate.
+	 */
+	public async rehydrateContainer<T extends ContainerSchema>(
+		serializedContainer: string,
+		containerSchema: T,
+	): Promise<{
+		container: IFluidContainer<T>;
+		services: IOdspContainerServices;
+	}> {
+		const loaderProps = this.getLoaderProps(containerSchema);
+
+		const container = await rehydrateDetachedContainer({
+			...loaderProps,
+			serializedState: serializedContainer,
 		});
 
 		const fluidContainer = await this.createFluidContainer(container, this.connectionConfig);
