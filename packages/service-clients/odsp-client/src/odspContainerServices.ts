@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
+import type { IDisposable } from "@fluidframework/core-interfaces";
 import { createServiceAudience } from "@fluidframework/fluid-static/internal";
 
 import type {
@@ -12,8 +14,6 @@ import type {
 	IOdspContainerServicesEvents,
 } from "./interfaces.js";
 import { createOdspAudienceMember } from "./odspAudience.js";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import type { IDisposable } from "@fluidframework/core-interfaces";
 
 /**
  * @internal
@@ -36,21 +36,21 @@ export class OdspContainerServices
 		});
 	}
 
-	private readonly readonlyEventHandler = (readonly: boolean) => {
+	private readonly readonlyEventHandler = (readonly: boolean): void => {
 		this.emit("readOnlyStateChanged", readonly);
 	};
 
-	private readonly metadataUpdateEventHandler = (metadata: Record<string, string>) => {
+	private readonly metadataUpdateEventHandler = (metadata: Record<string, string>): void => {
 		if (metadata?.sensitivityLabelsInfo !== undefined) {
 			this.emit("sensitivityLabelChanged", metadata.sensitivityLabelsInfo);
 		}
 	};
 
-	public get disposed() {
+	public get disposed(): boolean {
 		return this._disposed;
 	}
 
-	public dispose() {
+	public dispose(): void {
 		if (this._disposed) {
 			return;
 		}
