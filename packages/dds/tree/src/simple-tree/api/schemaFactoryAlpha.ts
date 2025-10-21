@@ -228,9 +228,7 @@ export class SchemaFactoryAlpha<
 	public override objectRecursive<
 		const Name extends TName,
 		const T extends RestrictiveStringRecord<System_Unsafe.ImplicitFieldSchemaUnsafe>,
-		const TCustomMetadata = unknown,
-		const TOptions extends
-			ObjectSchemaOptionsAlpha<TCustomMetadata> = ObjectSchemaOptionsAlpha<TCustomMetadata>,
+		const TOptions extends ObjectSchemaOptionsAlpha = ObjectSchemaOptionsAlpha,
 	>(
 		name: Name,
 		t: T,
@@ -243,9 +241,15 @@ export class SchemaFactoryAlpha<
 		false,
 		T,
 		never,
-		TCustomMetadata
+		TOptions extends ObjectSchemaOptionsAlpha<infer TCustomMetadataX>
+			? TCustomMetadataX
+			: unknown
 	> &
-		SimpleObjectNodeSchema<TCustomMetadata> &
+		SimpleObjectNodeSchema<
+			TOptions extends ObjectSchemaOptionsAlpha<infer TCustomMetadataX>
+				? TCustomMetadataX
+				: unknown
+		> &
 		// We can't just use non generic `ObjectNodeSchema` here since "Base constructors must all have the same return type".
 		// We also can't just use generic `ObjectNodeSchema` here and not `TreeNodeSchemaClass` since that doesn't work with unsafe recursive types.
 		// ObjectNodeSchema<
@@ -270,7 +274,9 @@ export class SchemaFactoryAlpha<
 			false,
 			T,
 			never,
-			TCustomMetadata
+			TOptions extends ObjectSchemaOptionsAlpha<infer TCustomMetadataX>
+				? TCustomMetadataX
+				: unknown
 		> &
 			ObjectNodeSchema<
 				ScopedSchemaName<TScope, Name>,

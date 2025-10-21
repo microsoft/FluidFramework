@@ -125,6 +125,9 @@ export function asAlpha<TSchema extends ImplicitFieldSchema>(view: TreeView<TSch
 // @public @system
 export type AssignableTreeFieldFromImplicitField<TSchemaInput extends ImplicitFieldSchema, TSchema = SchemaUnionToIntersection<TSchemaInput>> = [TSchema] extends [FieldSchema<infer Kind, infer Types>] ? ApplyKindAssignment<GetTypes<Types>["readWrite"], Kind> : [TSchema] extends [ImplicitAllowedTypes] ? GetTypes<TSchema>["readWrite"] : never;
 
+// @public @system
+export type AssignableTreeFieldFromImplicitFieldDefault<TSchemaInput extends ImplicitFieldSchema, TSchema = SchemaUnionToIntersection<TSchemaInput>> = [TSchema] extends [FieldSchema<infer Kind, infer Types>] ? ApplyKindAssignment<StrictTypes<Types>["readWrite"], Kind> : [TSchema] extends [ImplicitAllowedTypes] ? StrictTypes<TSchema>["readWrite"] : never;
+
 // @alpha @deprecated
 export function asTreeViewAlpha<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): TreeViewAlpha<TSchema>;
 
@@ -1140,36 +1143,46 @@ export type NumberKeys<T, Transformed = {
 }> = Transformed[`${number}` & keyof Transformed];
 
 // @public @system
-export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> = RestrictiveStringRecord<ImplicitFieldSchema> extends T ? {} : {
+export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>, Options extends ObjectSchemaTypingOptions = Record<string, undefined>> = RestrictiveStringRecord<ImplicitFieldSchema> extends T ? {} : [Options["supportReadonlyFields"]] extends [true] ? {
     -readonly [Property in keyof T as [
     AssignableTreeFieldFromImplicitField<T[Property & string]>
-    ] extends [never | undefined] ? never : Property]: AssignableTreeFieldFromImplicitField<T[Property & string]>;
+    ] extends [never | undefined] ? never : Property]: [Options["supportCustomizedFields"]] extends [true] ? AssignableTreeFieldFromImplicitField<T[Property & string]> : AssignableTreeFieldFromImplicitFieldDefault<T[Property & string]>;
 } & {
-    readonly [Property in keyof T]: TreeFieldFromImplicitField<T[Property & string]>;
+    readonly [Property in keyof T]: [Options["supportCustomizedFields"]] extends [true] ? TreeFieldFromImplicitField<T[Property & string]> : TreeFieldFromImplicitFieldDefault<T[Property & string]>;
+} : {
+    -readonly [Property in keyof T]: [Options["supportCustomizedFields"]] extends [true] ? TreeFieldFromImplicitField<T[Property & string]> : TreeFieldFromImplicitFieldDefault<T[Property & string]>;
 };
 
 // @beta @system
 export type ObjectFromSchemaRecordRelaxed<T extends RestrictiveStringRecord<ImplicitFieldSchema>> = RestrictiveStringRecord<ImplicitFieldSchema> extends T ? {} : {
-    [Property in keyof T]: TreeFieldFromImplicitField<T[Property & string]>;
+    [Property in keyof T]: TreeFieldFromImplicitFieldDefault<T[Property & string]>;
 };
 
 // @alpha @sealed
-export interface ObjectNodeSchema<out TName extends string = string, in out T extends RestrictiveStringRecord<ImplicitFieldSchema> = RestrictiveStringRecord<ImplicitFieldSchema>, ImplicitlyConstructable extends boolean = boolean, out TCustomMetadata = unknown> extends TreeNodeSchemaClass<TName, NodeKind.Object, TreeObjectNode<T, TName>, InsertableObjectFromSchemaRecord<T>, ImplicitlyConstructable, T, never, TCustomMetadata>, SimpleObjectNodeSchema<TCustomMetadata> {
+export interface ObjectNodeSchema<out TName extends string = string, in out T extends RestrictiveStringRecord<ImplicitFieldSchema> = RestrictiveStringRecord<ImplicitFieldSchema>, ImplicitlyConstructable extends boolean = boolean, TOptions extends ObjectSchemaOptionsAlpha = ObjectSchemaOptionsAlpha, TCustomMetadataInferred = TOptions extends ObjectSchemaOptionsAlpha<infer TCustomMetadataX> ? TCustomMetadataX : unknown> extends TreeNodeSchemaClass<TName, NodeKind.Object, TreeObjectNode<T, TName, TOptions>, InsertableObjectFromSchemaRecord<T>, ImplicitlyConstructable, T, never, TCustomMetadataInferred>, SimpleObjectNodeSchema<TCustomMetadataInferred> {
     readonly fields: ReadonlyMap<string, FieldSchemaAlpha & SimpleObjectFieldSchema>;
 }
 
 // @alpha (undocumented)
 export const ObjectNodeSchema: {
-    readonly [Symbol.hasInstance]: (value: TreeNodeSchema) => value is ObjectNodeSchema<string, RestrictiveStringRecord<ImplicitFieldSchema>, boolean, unknown>;
+    readonly [Symbol.hasInstance]: (value: TreeNodeSchema) => value is ObjectNodeSchema<string, RestrictiveStringRecord<ImplicitFieldSchema>, boolean, ObjectSchemaOptionsAlpha<unknown>, unknown>;
 };
 
 // @beta @input
-export interface ObjectSchemaOptions<TCustomMetadata = unknown> extends NodeSchemaOptions<TCustomMetadata> {
+export interface ObjectSchemaOptions<TCustomMetadata = unknown> extends NodeSchemaOptions<TCustomMetadata>, ObjectSchemaTypingOptions {
     readonly allowUnknownOptionalFields?: boolean;
 }
 
 // @alpha @input
 export interface ObjectSchemaOptionsAlpha<TCustomMetadata = unknown> extends ObjectSchemaOptions<TCustomMetadata>, NodeSchemaOptionsAlpha<TCustomMetadata> {
+}
+
+// @public @input
+export interface ObjectSchemaTypingOptions {
+    // (undocumented)
+    readonly supportCustomizedFields?: true | undefined;
+    // (undocumented)
+    readonly supportReadonlyFields?: true | undefined;
 }
 
 // @alpha @sealed
@@ -1189,6 +1202,11 @@ export function persistedToSimpleSchema(persisted: JsonCompatible, options: ICod
 
 // @beta @system
 export type PopUnion<Union, AsOverloadedFunction = UnionToIntersection<Union extends unknown ? (f: Union) => void : never>> = AsOverloadedFunction extends (a: infer First) => void ? First : never;
+
+// @beta @system
+export type PreventExtraProperties<T, Expected> = T & {
+    [x in keyof T]: x extends keyof Expected ? T[x] : undefined;
+};
 
 // @alpha @system
 export type ReadableField<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> = TreeFieldFromImplicitField<ReadSchema<TSchema>>;
@@ -1343,10 +1361,10 @@ export class SchemaFactoryAlpha<out TScope extends string | undefined = string |
     readonly leaves: readonly [LeafSchema<"string", string> & SimpleLeafNodeSchema, LeafSchema<"number", number> & SimpleLeafNodeSchema, LeafSchema<"boolean", boolean> & SimpleLeafNodeSchema, LeafSchema<"null", null> & SimpleLeafNodeSchema, LeafSchema<"handle", IFluidHandle_2<unknown>> & SimpleLeafNodeSchema];
     mapAlpha<Name extends TName, const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptionsAlpha<TCustomMetadata>): MapNodeCustomizableSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata>;
     mapRecursive<Name extends TName, const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptionsAlpha<TCustomMetadata>): MapNodeCustomizableSchemaUnsafe<ScopedSchemaName<TScope, Name>, T, TCustomMetadata>;
-    objectAlpha<const Name extends TName, const T extends RestrictiveStringRecord<ImplicitFieldSchema>, const TCustomMetadata = unknown>(name: Name, fields: T, options?: ObjectSchemaOptionsAlpha<TCustomMetadata>): ObjectNodeSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> & {
+    objectAlpha<const Name extends TName, const T extends RestrictiveStringRecord<ImplicitFieldSchema>, const TOptions extends ObjectSchemaOptionsAlpha = ObjectSchemaOptionsAlpha>(name: Name, fields: T, options?: PreventExtraProperties<TOptions, ObjectSchemaOptionsAlpha>): ObjectNodeSchema<ScopedSchemaName<TScope, Name>, T, true, TOptions> & {
         readonly createFromInsertable: unknown;
     };
-    objectRecursive<const Name extends TName, const T extends RestrictiveStringRecord<System_Unsafe.ImplicitFieldSchemaUnsafe>, const TCustomMetadata = unknown>(name: Name, t: T, options?: ObjectSchemaOptionsAlpha<TCustomMetadata>): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, System_Unsafe.TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>, object & System_Unsafe.InsertableObjectFromSchemaRecordUnsafe<T>, false, T, never, TCustomMetadata> & SimpleObjectNodeSchema<TCustomMetadata> & Pick<ObjectNodeSchema, "fields">;
+    objectRecursive<const Name extends TName, const T extends RestrictiveStringRecord<System_Unsafe.ImplicitFieldSchemaUnsafe>, const TOptions extends ObjectSchemaOptionsAlpha = ObjectSchemaOptionsAlpha>(name: Name, t: T, options?: PreventExtraProperties<TOptions, ObjectSchemaOptionsAlpha>): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, System_Unsafe.TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>, object & System_Unsafe.InsertableObjectFromSchemaRecordUnsafe<T>, false, T, never, TOptions extends ObjectSchemaOptionsAlpha<infer TCustomMetadataX> ? TCustomMetadataX : unknown> & SimpleObjectNodeSchema<TOptions extends ObjectSchemaOptionsAlpha<infer TCustomMetadataX> ? TCustomMetadataX : unknown> & Pick<ObjectNodeSchema, "fields">;
     static readonly optional: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider"> | undefined) => FieldSchemaAlpha<FieldKind.Optional, T, TCustomMetadata>;
     readonly optional: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider"> | undefined) => FieldSchemaAlpha<FieldKind.Optional, T, TCustomMetadata>;
     static readonly optionalRecursive: <const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider"> | undefined) => FieldSchemaAlphaUnsafe<FieldKind.Optional, T, TCustomMetadata>;
@@ -1372,10 +1390,9 @@ export class SchemaFactoryAlpha<out TScope extends string | undefined = string |
 
 // @beta
 export class SchemaFactoryBeta<out TScope extends string | undefined = string | undefined, TName extends number | string = string> extends SchemaFactory<TScope, TName> {
-    object<const Name extends TName, const T extends RestrictiveStringRecord<ImplicitFieldSchema>, const TCustomMetadata = unknown>(name: Name, fields: T, options?: ObjectSchemaOptions<TCustomMetadata>): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNode<T, ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecord<T>, true, T>;
+    object<const Name extends TName, const T extends RestrictiveStringRecord<ImplicitFieldSchema>, const TOptions extends ObjectSchemaOptions = ObjectSchemaOptions>(name: Name, fields: T, options?: PreventExtraProperties<TOptions, ObjectSchemaOptions>): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNode<T, ScopedSchemaName<TScope, Name>, TOptions>, object & InsertableObjectFromSchemaRecord<T>, true, T>;
     // (undocumented)
     objectRecursive<const Name extends TName, const T extends RestrictiveStringRecord<System_Unsafe.ImplicitFieldSchemaUnsafe>, const TCustomMetadata = unknown>(name: Name, t: T, options?: ObjectSchemaOptions<TCustomMetadata>): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, System_Unsafe.TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>, object & System_Unsafe.InsertableObjectFromSchemaRecordUnsafe<T>, false, T>;
-    objectRelaxed<const Name extends TName, const T extends RestrictiveStringRecord<ImplicitFieldSchema>, const TCustomMetadata = unknown>(name: Name, fields: T, options?: ObjectSchemaOptions<TCustomMetadata>): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNodeRelaxed<T, ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecord<T>, true, T>;
     record<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchemaNonClass<ScopedSchemaName<TScope, `Record<${string}>`>, NodeKind.Record, TreeRecordNode<T> & WithType<ScopedSchemaName<TScope, `Record<${string}>`>, NodeKind.Record>, RecordNodeInsertableData<T>, true, T, undefined>;
     record<const Name extends TName, const T extends ImplicitAllowedTypes>(name: Name, allowedTypes: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Record, TreeRecordNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Record>, RecordNodeInsertableData<T>, true, T, undefined>;
     recordRecursive<Name extends TName, const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Record, TreeRecordNodeUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Record, unknown>, {
@@ -1987,6 +2004,9 @@ export interface TreeEncodingOptions<TKeyOptions = KeyEncodingOptions> {
 // @public
 export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = FieldSchema> = TSchema extends FieldSchema<infer Kind, infer Types> ? ApplyKind<TreeNodeFromImplicitAllowedTypes<Types>, Kind> : TSchema extends ImplicitAllowedTypes ? TreeNodeFromImplicitAllowedTypes<TSchema> : TreeNode | TreeLeafValue | undefined;
 
+// @public @system
+export type TreeFieldFromImplicitFieldDefault<TSchema extends ImplicitFieldSchema = FieldSchema> = TSchema extends FieldSchema<infer Kind, infer Types> ? ApplyKind<DefaultTreeNodeFromImplicitAllowedTypes<Types>, Kind> : TSchema extends ImplicitAllowedTypes ? DefaultTreeNodeFromImplicitAllowedTypes<TSchema> : TreeNode | TreeLeafValue | undefined;
+
 // @alpha @sealed
 export interface TreeIdentifierUtils {
     (node: TreeNode): string | undefined;
@@ -2073,10 +2093,7 @@ export type TreeNodeSchemaNonClass<Name extends string = string, Kind extends No
 });
 
 // @public
-export type TreeObjectNode<T extends RestrictiveStringRecord<ImplicitFieldSchema>, TypeName extends string = string> = TreeNode & ObjectFromSchemaRecord<T> & WithType<TypeName, NodeKind.Object, T>;
-
-// @beta
-export type TreeObjectNodeRelaxed<T extends RestrictiveStringRecord<ImplicitFieldSchema>, TypeName extends string = string> = TreeNode & ObjectFromSchemaRecordRelaxed<T> & WithType<TypeName, NodeKind.Object, T>;
+export type TreeObjectNode<T extends RestrictiveStringRecord<ImplicitFieldSchema>, TypeName extends string = string, Options extends ObjectSchemaTypingOptions = Record<string, undefined>> = TreeNode & WithType<TypeName, NodeKind.Object, T> & ObjectFromSchemaRecord<T, Options>;
 
 // @alpha @input
 export type TreeParsingOptions = TreeEncodingOptions<KeyEncodingOptions.usePropertyKeys | KeyEncodingOptions.knownStoredKeys>;

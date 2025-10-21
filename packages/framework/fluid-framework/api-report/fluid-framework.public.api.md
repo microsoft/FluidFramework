@@ -27,6 +27,9 @@ Kind
 // @public @system
 export type AssignableTreeFieldFromImplicitField<TSchemaInput extends ImplicitFieldSchema, TSchema = SchemaUnionToIntersection<TSchemaInput>> = [TSchema] extends [FieldSchema<infer Kind, infer Types>] ? ApplyKindAssignment<GetTypes<Types>["readWrite"], Kind> : [TSchema] extends [ImplicitAllowedTypes] ? GetTypes<TSchema>["readWrite"] : never;
 
+// @public @system
+export type AssignableTreeFieldFromImplicitFieldDefault<TSchemaInput extends ImplicitFieldSchema, TSchema = SchemaUnionToIntersection<TSchemaInput>> = [TSchema] extends [FieldSchema<infer Kind, infer Types>] ? ApplyKindAssignment<StrictTypes<Types>["readWrite"], Kind> : [TSchema] extends [ImplicitAllowedTypes] ? StrictTypes<TSchema>["readWrite"] : never;
+
 // @public
 export enum AttachState {
     Attached = "Attached",
@@ -626,13 +629,23 @@ export type NumberKeys<T, Transformed = {
 }> = Transformed[`${number}` & keyof Transformed];
 
 // @public @system
-export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> = RestrictiveStringRecord<ImplicitFieldSchema> extends T ? {} : {
+export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>, Options extends ObjectSchemaTypingOptions = Record<string, undefined>> = RestrictiveStringRecord<ImplicitFieldSchema> extends T ? {} : [Options["supportReadonlyFields"]] extends [true] ? {
     -readonly [Property in keyof T as [
     AssignableTreeFieldFromImplicitField<T[Property & string]>
-    ] extends [never | undefined] ? never : Property]: AssignableTreeFieldFromImplicitField<T[Property & string]>;
+    ] extends [never | undefined] ? never : Property]: [Options["supportCustomizedFields"]] extends [true] ? AssignableTreeFieldFromImplicitField<T[Property & string]> : AssignableTreeFieldFromImplicitFieldDefault<T[Property & string]>;
 } & {
-    readonly [Property in keyof T]: TreeFieldFromImplicitField<T[Property & string]>;
+    readonly [Property in keyof T]: [Options["supportCustomizedFields"]] extends [true] ? TreeFieldFromImplicitField<T[Property & string]> : TreeFieldFromImplicitFieldDefault<T[Property & string]>;
+} : {
+    -readonly [Property in keyof T]: [Options["supportCustomizedFields"]] extends [true] ? TreeFieldFromImplicitField<T[Property & string]> : TreeFieldFromImplicitFieldDefault<T[Property & string]>;
 };
+
+// @public @input
+export interface ObjectSchemaTypingOptions {
+    // (undocumented)
+    readonly supportCustomizedFields?: true | undefined;
+    // (undocumented)
+    readonly supportReadonlyFields?: true | undefined;
+}
 
 // @public
 export type Off = () => void;
@@ -978,6 +991,9 @@ export interface TreeChangeEvents {
 // @public
 export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = FieldSchema> = TSchema extends FieldSchema<infer Kind, infer Types> ? ApplyKind<TreeNodeFromImplicitAllowedTypes<Types>, Kind> : TSchema extends ImplicitAllowedTypes ? TreeNodeFromImplicitAllowedTypes<TSchema> : TreeNode | TreeLeafValue | undefined;
 
+// @public @system
+export type TreeFieldFromImplicitFieldDefault<TSchema extends ImplicitFieldSchema = FieldSchema> = TSchema extends FieldSchema<infer Kind, infer Types> ? ApplyKind<DefaultTreeNodeFromImplicitAllowedTypes<Types>, Kind> : TSchema extends ImplicitAllowedTypes ? DefaultTreeNodeFromImplicitAllowedTypes<TSchema> : TreeNode | TreeLeafValue | undefined;
+
 // @public
 export type TreeLeafValue = number | string | boolean | IFluidHandle | null;
 
@@ -1044,7 +1060,7 @@ export type TreeNodeSchemaNonClass<Name extends string = string, Kind extends No
 });
 
 // @public
-export type TreeObjectNode<T extends RestrictiveStringRecord<ImplicitFieldSchema>, TypeName extends string = string> = TreeNode & ObjectFromSchemaRecord<T> & WithType<TypeName, NodeKind.Object, T>;
+export type TreeObjectNode<T extends RestrictiveStringRecord<ImplicitFieldSchema>, TypeName extends string = string, Options extends ObjectSchemaTypingOptions = Record<string, undefined>> = TreeNode & WithType<TypeName, NodeKind.Object, T> & ObjectFromSchemaRecord<T, Options>;
 
 // @public
 export enum TreeStatus {
