@@ -6,7 +6,7 @@
 // eslint-disable-next-line import/no-unassigned-import
 import "ses";
 
-import type { SemanticAgentOptions } from "@fluidframework/tree-agent/alpha";
+import type { AsynchronousEditor } from "@fluidframework/tree-agent/alpha";
 
 /**
  * Used to track whether the SES `lockdown` function has already been called by this module.
@@ -24,7 +24,7 @@ const lockdownSymbol = Symbol.for("tree-agent.ses.locked");
 export function createSesEditExecutor(options?: {
 	compartmentOptions?: { globals?: Map<string, unknown>; [key: string]: unknown };
 	lockdownOptions?: Record<string, unknown>;
-}): SemanticAgentOptions["executeEdit"] {
+}): AsynchronousEditor {
 	const optionsGlobals: Map<string, unknown> =
 		options?.compartmentOptions?.globals ?? new Map<string, unknown>();
 
