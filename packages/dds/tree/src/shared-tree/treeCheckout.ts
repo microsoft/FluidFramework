@@ -944,7 +944,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		const revisionForInvert = this.mintRevisionTag();
 
 		let change = tagChange(
-			this.changeFamily.rebaser.invert(commitToRevert, false, revisionForInvert),
+			this.changeFamily.rebaser.invert(commitToRevert, false, revisionForInvert, true),
 			revisionForInvert,
 		);
 
@@ -1123,6 +1123,12 @@ class EditLock {
 			},
 			addNodeExistsConstraintOnRevert(path) {
 				editor.addNodeExistsConstraintOnRevert(path);
+			},
+			addNoChangeConstraint() {
+				editor.addNoChangeConstraint();
+			},
+			addNoChangeConstraintOnRevert() {
+				editor.addNoChangeConstraintOnRevert();
 			},
 		};
 	}

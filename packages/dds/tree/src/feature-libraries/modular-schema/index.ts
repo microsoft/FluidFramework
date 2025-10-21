@@ -51,6 +51,7 @@ export type {
 	FieldChangeset,
 	HasFieldChanges,
 	ModularChangeset,
+	NoChangeConstraint,
 	NodeExistsConstraint,
 	NodeId,
 } from "./modularChangeTypes.js";

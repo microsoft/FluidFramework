@@ -238,13 +238,19 @@ describe("SharedTreeChangeFamily", () => {
 					makeAnonChange(stDataChange1),
 					isRollback,
 					tag,
+					false,
 				);
 
 				const expected = {
 					changes: [
 						{
 							type: "data",
-							innerChange: modularFamily.invert(makeAnonChange(dataChange1), isRollback, tag),
+							innerChange: modularFamily.invert(
+								makeAnonChange(dataChange1),
+								isRollback,
+								tag,
+								false,
+							),
 						},
 					],
 				};

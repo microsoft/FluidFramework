@@ -60,6 +60,10 @@ export interface ModularChangeset extends HasFieldChanges {
 	 * If this count is greater than 0, it will prevent the changeset from being applied.
 	 */
 	readonly constraintViolationCount?: number;
+	/** Global no change constraint that gets violated whenever the changeset is rebased */
+	readonly noChangeConstraint?: NoChangeConstraint;
+	/** Global no change constraint for reverts that gets violated whenever the changeset is reverted */
+	readonly noChangeConstraintOnRevert?: NoChangeConstraint;
 	/**
 	 * The number of constraint violations that apply to the revert of the changeset. If this count is greater than 0, it will
 	 * prevent the changeset from being reverted or undone.
@@ -113,6 +117,14 @@ export interface NodeExistsConstraint {
 }
 
 /**
+ * A constraint that is violated whenever the edit with the constraint is rebased.
+ * Once violated, this constraint should remain violated.
+ */
+export interface NoChangeConstraint {
+	violated: boolean;
+}
+
+/**
  * Changeset for a subtree rooted at a specific node.
  */
 export interface NodeChangeset extends HasFieldChanges {
@@ -120,6 +132,10 @@ export interface NodeChangeset extends HasFieldChanges {
 	nodeExistsConstraint?: NodeExistsConstraint;
 	/** Keeps track of whether node exists constraint will be violated when this change is reverted */
 	nodeExistsConstraintOnRevert?: NodeExistsConstraint;
+	/** Keeps track of whether no change constraint has been violated by this change */
+	noChangeConstraint?: NoChangeConstraint;
+	/** Keeps track of whether no change on revert constraint has been violated by this change */
+	noChangeConstraintOnRevert?: NoChangeConstraint;
 }
 
 export type NodeId = ChangeAtomId;

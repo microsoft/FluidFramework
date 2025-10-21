@@ -922,7 +922,7 @@ describe("ModularChangeFamily", () => {
 			};
 
 			assertEqual(
-				family.invert(makeAnonChange(rootChange1a), false, revisionForInvert),
+				family.invert(makeAnonChange(rootChange1a), false, revisionForInvert, false),
 				expectedInverse,
 			);
 		});
@@ -951,7 +951,7 @@ describe("ModularChangeFamily", () => {
 			};
 
 			assertEqual(
-				family.invert(makeAnonChange(rootChange1aGeneric), false, revisionForInvert),
+				family.invert(makeAnonChange(rootChange1aGeneric), false, revisionForInvert, false),
 				expectedInverse,
 			);
 		});
@@ -969,8 +969,8 @@ describe("ModularChangeFamily", () => {
 			);
 			deepFreeze(change1);
 			const revisionForInvert = mintRevisionTag();
-			const actualRollback = family.invert(change1, true, revisionForInvert);
-			const actualUndo = family.invert(change1, false, revisionForInvert);
+			const actualRollback = family.invert(change1, true, revisionForInvert, false);
+			const actualUndo = family.invert(change1, false, revisionForInvert, false);
 
 			const expectedRollback: ModularChangeset = {
 				...Change.empty(),
@@ -1452,6 +1452,28 @@ describe("ModularChangeFamily", () => {
 				[
 					"without node field changes",
 					inlineRevision(rootChangeWithoutNodeFieldChanges, tag1),
+					context,
+				],
+				[
+					"with no change constraint",
+					inlineRevision(
+						{
+							...buildChangeset([]),
+							noChangeConstraint: { violated: false },
+						},
+						tag1,
+					),
+					context,
+				],
+				[
+					"with violated no change constraint",
+					inlineRevision(
+						{
+							...buildChangeset([]),
+							noChangeConstraint: { violated: true },
+						},
+						tag1,
+					),
 					context,
 				],
 			],

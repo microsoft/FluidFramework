@@ -55,6 +55,7 @@ export interface ChangeRebaser<TChangeset> {
 	 * This flag is relevant to merge semantics that are dependent on edit sequencing order:
 	 * - In the context of an undo, this function inverts a change that is sequenced and applied before the produced inverse.
 	 * - In the context of a rollback, this function inverts a change that is sequenced after but applied before the produced inverse.
+	 * * @param isRevert - true if the change is inverted as part of a revert operation
 	 * @returns the inverse of `changes`.
 	 *
 	 * `compose([changes, inverse(changes)])` be equal to `compose([])`:
@@ -64,6 +65,7 @@ export interface ChangeRebaser<TChangeset> {
 		changes: TaggedChange<TChangeset>,
 		isRollback: boolean,
 		revision: RevisionTag,
+		isRevert: boolean,
 	): TChangeset;
 
 	/**

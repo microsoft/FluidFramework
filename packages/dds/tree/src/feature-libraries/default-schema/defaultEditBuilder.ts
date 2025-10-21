@@ -171,6 +171,18 @@ export interface IDefaultEditBuilder<TContent = TreeChunk> {
 	 * @param path - The path to the node that must exist when reverting a change.
 	 */
 	addNodeExistsConstraintOnRevert(path: NormalizedUpPath): void;
+
+	/**
+	 * Add a global constraint that will be violated if the edit is rebased.
+	 * Once violated, this constraint should remain violated.
+	 */
+	addNoChangeConstraint(): void;
+
+	/**
+	 * Add a global constraint that will be violated if the edit is rebased after being reverted.
+	 * Once violated, this constraint should remain violated.
+	 */
+	addNoChangeConstraintOnRevert(): void;
 }
 
 /**
@@ -201,6 +213,14 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 
 	public addNodeExistsConstraintOnRevert(path: UpPath): void {
 		this.modularBuilder.addNodeExistsConstraintOnRevert(path, this.mintRevisionTag());
+	}
+
+	public addNoChangeConstraint(): void {
+		this.modularBuilder.addNoChangeConstraint(this.mintRevisionTag());
+	}
+
+	public addNoChangeConstraintOnRevert(): void {
+		this.modularBuilder.addNoChangeConstraintOnRevert(this.mintRevisionTag());
 	}
 
 	public valueField(field: FieldUpPath): ValueFieldEditBuilder<TreeChunk> {
