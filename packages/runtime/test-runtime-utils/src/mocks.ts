@@ -1304,7 +1304,7 @@ function setContentsFromSummaryTree(
 
 /**
  * Create an ISnapshotTree from contents object (reverse of setContentsFromSummaryTree)
- * * @param contents - Object with path/value pairs
+ * @param contents - Object with path/value pairs
  * @returns ISnapshotTree representing the hierarchical structure
  */
 export function createSnapshotTreeFromContents(contents: {
