@@ -53,7 +53,7 @@ async function runAndValidateBatch(
 	let containerUrl: string | undefined;
 	{
 		const loader = provider.createLoader([
-			[provider.defaultCodeDetails, provider.createFluidEntryPoint()],
+			[provider.defaultCodeDetails, provider.createFluidEntryPoint({ runtimeOptions })],
 		]);
 
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
