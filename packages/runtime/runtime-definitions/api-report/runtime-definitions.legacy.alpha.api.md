@@ -19,6 +19,9 @@ export interface AttributionInfo {
 // @beta @legacy
 export type AttributionKey = OpAttributionKey | DetachedAttributionKey | LocalAttributionKey;
 
+// @alpha
+export function basicKey<T>(type: string): RegistryKey<T, T>;
+
 // @beta @sealed @deprecated @legacy
 export interface CommitStagedChangesOptionsExperimental {
     squash?: boolean;
@@ -55,11 +58,42 @@ export enum CreateSummarizerNodeSource {
     Local = 2
 }
 
+// @alpha @sealed
+export interface DataStoreCreator {
+    createDataStore<T>(kind: DataStoreKey<T>): Promise<T>;
+}
+
+// @alpha @input
+export type DataStoreKey<T, TAll = unknown> = RegistryKey<Promise<DataStoreKind<T>>, Promise<DataStoreKind<TAll>>>;
+
+// @alpha @sealed
+export interface DataStoreKind<out T = unknown> extends DataStoreKey<T>, ErasedBaseType<readonly ["DataStoreKind", T]> {
+}
+
+// @alpha @input
+export type DataStoreRegistry<out T = unknown> = Registry<Promise<DataStoreKind<T>>>;
+
 // @beta @legacy
 export interface DetachedAttributionKey {
     id: 0;
     // (undocumented)
     type: "detached";
+}
+
+// @alpha @sealed
+export interface FluidContainer<TData = unknown> extends DataStoreCreator {
+    readonly data: TData;
+    readonly id?: string | undefined;
+}
+
+// @alpha @sealed
+export interface FluidContainerAttached<T = unknown> extends FluidContainer<T> {
+    readonly id: string;
+}
+
+// @alpha @sealed
+export interface FluidContainerWithService<T = unknown> extends FluidContainer<T> {
+    attach(): Promise<FluidContainerAttached<T>>;
 }
 
 // @beta @legacy
@@ -426,7 +460,7 @@ export interface LocalAttributionKey {
     type: "local";
 }
 
-// @beta @legacy
+// @beta
 export type MinimumVersionForCollab = `${1 | 2}.${bigint}.${bigint}` | `${1 | 2}.${bigint}.${bigint}-${string}`;
 
 // @beta @legacy
@@ -449,6 +483,32 @@ export interface OpAttributionKey {
 
 // @beta @legacy
 export type PackagePath = readonly string[];
+
+// @alpha @input
+export type Registry<T> = (type: string) => T;
+
+// @public @sealed @input
+export interface RegistryKey<TOut, TIn = unknown> {
+    adapt(value: TIn): TOut;
+    readonly type: string;
+}
+
+// @alpha
+export function registryLookup<TOut, TIn>(registry: Registry<TIn>, key: RegistryKey<TOut, TIn>): TOut;
+
+// @alpha @sealed
+export interface ServiceClient {
+    createContainer<T>(root: DataStoreKind<T>): Promise<FluidContainerWithService<T>>;
+    // (undocumented)
+    createContainer<T>(root: DataStoreKey<T>, registry: DataStoreRegistry): Promise<FluidContainerWithService<T>>;
+    loadContainer<T>(id: string, root: DataStoreKind<T> | DataStoreRegistry<T>): Promise<FluidContainerAttached<T>>;
+}
+
+// @alpha @input
+export interface ServiceOptions {
+    // (undocumented)
+    readonly minVersionForCollab: MinimumVersionForCollab;
+}
 
 // @alpha @sealed @legacy
 export interface StageControlsAlpha {

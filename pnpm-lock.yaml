@@ -9318,6 +9318,9 @@ importers:
       '@fluidframework/core-utils':
         specifier: workspace:~
         version: link:../../common/core-utils
+      '@fluidframework/datastore':
+        specifier: workspace:~
+        version: link:../../runtime/datastore
       '@fluidframework/datastore-definitions':
         specifier: workspace:~
         version: link:../../runtime/datastore-definitions
@@ -9397,6 +9400,9 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.1.0
         version: 6.1.0(eslint@8.57.1)(typescript@5.4.5)
+      '@fluidframework/local-driver':
+        specifier: workspace:~
+        version: link:../../drivers/local-driver
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
@@ -9755,6 +9761,18 @@ importers:
       '@fluid-internal/client-utils':
         specifier: workspace:~
         version: link:../../common/client-utils
+      '@fluidframework/container-definitions':
+        specifier: workspace:~
+        version: link:../../common/container-definitions
+      '@fluidframework/container-loader':
+        specifier: workspace:~
+        version: link:../../loader/container-loader
+      '@fluidframework/container-runtime':
+        specifier: workspace:^
+        version: link:../../runtime/container-runtime
+      '@fluidframework/container-runtime-definitions':
+        specifier: workspace:^
+        version: link:../../runtime/container-runtime-definitions
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../common/core-interfaces
@@ -9776,6 +9794,9 @@ importers:
       '@fluidframework/routerlicious-driver':
         specifier: workspace:~
         version: link:../routerlicious-driver
+      '@fluidframework/runtime-definitions':
+        specifier: workspace:~
+        version: link:../../runtime/runtime-definitions
       '@fluidframework/server-local-server':
         specifier: ^7.0.0
         version: 7.0.0
@@ -26297,7 +26318,6 @@ packages:
   semver-try-require@6.2.3:
     resolution: {integrity: sha512-6q1N/Vr/4/G0EcQ1k4svN5kwfh3MJs4Gfl+zBAVcKn+AeIjKLwTXQ143Y6YHu6xEeN5gSCbCD1/5+NwCipLY5A==}
     engines: {node: ^14||^16||>=18}
-    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   semver-ts@1.0.3:
     resolution: {integrity: sha512-RMf2+Nbd0Hiq5u8LADzqnSRb09Vu1UKOLFw9P9nm8XY3JPeFjv3DLVYBZjPWFHUxBVz7ktIVGR3xFjYilHlXng==}
