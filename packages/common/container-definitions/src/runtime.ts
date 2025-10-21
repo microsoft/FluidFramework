@@ -145,7 +145,7 @@ export interface IContainerStorageService {
 	/**
 	 * Policies implemented/instructed by driver.
 	 *
-	 * @deprecated - This will be removed in a future release. The Runtime layer only needs `maximumCacheDurationMs`
+	 * @deprecated This will be removed in a future release. The Runtime layer only needs `maximumCacheDurationMs`
 	 * policy which is added as a separate property.
 	 */
 	readonly policies?: IDocumentStorageServicePolicies | undefined;
@@ -301,7 +301,7 @@ export interface IContainerContext {
 	updateDirtyContainerState(dirty: boolean): void;
 
 	/**
-	 * @deprecated - This has been deprecated. It was used internally and there is no replacement.
+	 * @deprecated This has been deprecated. It was used internally and there is no replacement.
 	 */
 	readonly supportedFeatures?: ReadonlyMap<string, unknown>;
 
