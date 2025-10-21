@@ -49,6 +49,6 @@ export function getTreeNodeSchemaInitializedData(
 	return {
 		...handler,
 		context: getUnhydratedContext(schema),
-		childAnnotatedAllowedTypes: data.childAllowedTypes.map((t) => t.evaluate()),
+		childAllowedTypes: data.childAllowedTypes.map((t) => t.evaluate()),
 	};
 }

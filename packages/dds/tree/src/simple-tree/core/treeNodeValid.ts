@@ -259,7 +259,7 @@ export function isClassBasedSchema(
  */
 export function createTreeNodeSchemaPrivateData(
 	schema: TreeNodeSchemaCore<string, NodeKind, boolean>,
-	childAnnotatedAllowedTypes: readonly AllowedTypesFull[],
+	childAllowedTypes: readonly AllowedTypesFull[],
 	toStored: TreeNodeSchemaPrivateData["toStored"],
 ): TreeNodeSchemaPrivateData {
 	const schemaValid = schemaAsTreeNodeValid(schema);
@@ -269,7 +269,7 @@ export function createTreeNodeSchemaPrivateData(
 
 	return {
 		idempotentInitialize: () => schemaValid.oneTimeInitialize().oneTimeInitialized,
-		childAllowedTypes: childAnnotatedAllowedTypes,
+		childAllowedTypes,
 		toStored,
 	};
 }

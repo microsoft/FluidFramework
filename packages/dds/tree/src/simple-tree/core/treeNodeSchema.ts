@@ -417,7 +417,7 @@ export interface TreeNodeSchemaInitializedData {
 	 * If this is stabilized, it will live alongside the childTypes property on {@link TreeNodeSchemaCore}.
 	 * @system
 	 */
-	readonly childAnnotatedAllowedTypes: readonly AllowedTypesFullEvaluated[];
+	readonly childAllowedTypes: readonly AllowedTypesFullEvaluated[];
 
 	/**
 	 * A {@link Context} which can be used for unhydrated nodes of this schema.
