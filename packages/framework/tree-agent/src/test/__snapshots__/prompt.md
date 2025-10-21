@@ -38,8 +38,77 @@ If the user asks you to edit the document, you will write a snippet of JavaScrip
 The snippet may be synchronous or asynchronous (i.e. it may `await` functions if necessary).
 The snippet has a `context` variable in its scope.
 This `context` variable holds the current state of the tree in the `root` property.
-You may mutate any part of the root tree as necessary, taking into account the caveats around arrays and maps detailed below.
+You may mutate any part of this tree as necessary, taking into account the caveats around arrays and maps detailed below.
 You may also set the `root` property of the context to be an entirely new value as long as it is one of the types allowed at the root of the tree (`Obj`).
+You should also use the `context` object to create new data to insert into the tree, using the builder functions available on the `create` property.
+There are other additional helper functions available on the `context` object to help you analyze the tree.
+Here is the definition of the `Context` interface:
+```typescript
+	type TreeData = TestMap | TestArrayItem | TestArray | Obj;
+
+	/**
+	 * An object available to generated code which provides read and write access to the tree as well as utilities for creating and inspecting data in the tree.
+	 * @remarks This object is available as a variable named `context` in the scope of the generated JavaScript snippet.
+	 */
+	interface Context<TSchema extends ImplicitFieldSchema> {
+	/**
+	 * The root of the tree that can be read or mutated.
+	 * @remarks
+	 * You can read properties and navigate through the tree starting from this root.
+	 * You can also assign a new value to this property to replace the entire tree, as long as the new value is one of the types allowed at the root.
+	 *
+	 * Example: Read the current root with `const currentRoot = context.root;`
+	 * Example: Replace the entire root with `context.root = context.create.Obj({ });`
+	 */
+	root: ReadableField<TSchema>;
+	
+	/**
+	 * A collection of builder functions for creating new tree nodes.
+	 * @remarks
+	 * Each property on this object is named after a type in the tree schema.
+	 * Call the corresponding function to create a new node of that type.
+	 * Always use these builder functions when creating new nodes rather than plain JavaScript objects.
+	 *
+	 * For example:
+	 *
+	 * ```javascript
+	 * // This creates a new TestArrayItem object:
+	 * const testArrayItem = context.create.TestArrayItem({ ...properties });
+	 * // Don't do this:
+	 * // const testArrayItem = { ...properties };
+	 * ```
+	 */
+	create: Record<string, <T extends TreeData>(input: T) => T>;
+
+	
+	/**
+	 * A collection of type-guard functions for data in the tree.
+	 * @remarks
+	 * Each property on this object is named after a type in the tree schema.
+	 * Call the corresponding function to check if a node is of that specific type.
+	 * This is useful when working with nodes that could be one of multiple types.
+	 *
+	 * Example: Check if a node is a TestArrayItem with `if (context.is.TestArrayItem(node)) {}`
+	 */
+	is: Record<string, <T extends TreeData>(input: unknown) => input is T>;
+
+	/**
+	 * Returns the parent object/array/map of the given object/array/map, if there is one.
+	 * @returns The parent node, or `undefined` if the node is the root or is not in the tree.
+	 * @remarks
+	 * Example: Get the parent with `const parent = context.parent(child);`
+	 */
+	parent(child: TreeData): TreeData | undefined;
+
+	/**
+	 * Returns the property key or index of the given object/array/map within its parent.
+	 * @returns A string key if the child is in an object or map, or a numeric index if the child is in an array.
+	 *
+	 * Example: `const key = context.key(child);`
+	 */
+	key(child: TreeData): string | number;
+}
+```
 Manipulating the data using the APIs described below is allowed, but when possible ALWAYS prefer to use any application helper methods exposed on the schema TypeScript types if the goal can be accomplished that way.
 It will often not be possible to fully accomplish the goal using those helpers. When this is the case, mutate the objects as normal, taking into account the following guidance.
 #### Editing Arrays
@@ -265,17 +334,6 @@ export interface TreeMap<T> extends ReadonlyMap<string, T> {
 #### Additional Notes
 
 Before outputting the edit function, you should check that it is valid according to both the application tree's schema and any restrictions of the editing APIs described above.
-
-When constructing new objects, you should wrap them in the appropriate builder function rather than simply making a javascript object.
-The builders are available on the `create` property on the context object and are named according to the type that they create.
-For example:
-
-```javascript
-// This creates a new TestArrayItem object:
-const testArrayItem = context.create.TestArrayItem({ /* ...properties... */ });
-// Don't do this:
-// const testArrayItem = { /* ...properties... */ };
-```
 
 Once non-primitive data has been removed from the tree (e.g. replaced via assignment, or removed from an array), that data cannot be re-inserted into the tree.
 Instead, it must be deep cloned and recreated.
