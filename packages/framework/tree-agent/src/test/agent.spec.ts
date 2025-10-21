@@ -248,10 +248,6 @@ describe("Semantic Agent", () => {
 		assert.equal(view.root, "Initial", "Tree should not have changed");
 	});
 
-	it("passes constructors to edit code", async () => {
-		// Moved to the dedicated context helpers describe block below.
-	});
-
 	it("supplies the system prompt as context", async () => {
 		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
 		view.initialize("X");
@@ -365,6 +361,46 @@ describe("Semantic Agent", () => {
 			assert.equal(await agent.query("Key Edit"), "Done");
 			assert.equal(view.root.child.value, "KeyWorked");
 		});
+
+		it("provides working isArray helper", async () => {
+			const sfLocal = new SchemaFactory("TestIsArray");
+			const NumberArray = sfLocal.array(sfLocal.number);
+			const view = independentView(new TreeViewConfiguration({ schema: NumberArray }), {});
+			view.initialize([1, 2, 3]);
+			const model: SharedTreeChatModel = {
+				editToolName,
+				async query({ edit }) {
+					const result = await edit(
+						`if (!context.isArray([]) ||!context.isArray(context.root)) { throw new Error('Expected array root'); } context.root.insertAt(0, 99);`,
+					);
+					assert.equal(result.type, "success", result.message);
+					return "ArrayOK";
+				},
+			};
+			const agent = new SharedTreeSemanticAgent(model, view);
+			assert.equal(await agent.query("Array Edit"), "ArrayOK");
+			assert.equal(view.root[0], 99);
+		});
+
+		it("provides working isMap helper", async () => {
+			const sfLocal = new SchemaFactory("TestIsMap");
+			class NumberMap extends sfLocal.map("NumberMap", sfLocal.number) {}
+			const view = independentView(new TreeViewConfiguration({ schema: NumberMap }), {});
+			view.initialize(new NumberMap(new Map([["x", 1]])));
+			const model: SharedTreeChatModel = {
+				editToolName,
+				async query({ edit }) {
+					const result = await edit(
+						`if (!context.isMap(new Map()) || !context.isMap(context.root)) { throw new Error('Expected map root'); } context.root.set('y', 2);`,
+					);
+					assert.equal(result.type, "success", result.message);
+					return "MapOK";
+				},
+			};
+			const agent = new SharedTreeSemanticAgent(model, view);
+			assert.equal(await agent.query("Map Edit"), "MapOK");
+			assert.equal(view.root.get("y"), 2);
+		});
 	});
 
 	it("supplies additional context if the tree changes between queries", async () => {
@@ -433,7 +469,6 @@ describe("Semantic Agent", () => {
 	});
 
 	describe("bindEditor", () => {
-		/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
 		interface TestContext {
 			root: string;
 		}
@@ -485,6 +520,5 @@ describe("Semantic Agent", () => {
 			await assert.rejects(promise, /asyncBoom/);
 			assert.equal(view.root, "Initial", "Tree should not have changed after async error");
 		});
-		/* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
 	});
 });
