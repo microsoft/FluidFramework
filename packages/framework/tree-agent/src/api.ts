@@ -49,8 +49,6 @@ export interface Context<TSchema extends ImplicitFieldSchema> {
 	 * Always use these builder functions when creating new nodes rather than plain JavaScript objects.
 	 *
 	 * Example: Create a new Person node with `context.create.Person({ name: "Alice", age: 30 })`
-	 *
-	 * Example: Create a new Task node with `context.create.Task({ title: "Buy groceries", completed: false })`
 	 */
 	create: Record<string, (input: FactoryContentObject) => TreeNode>;
 
@@ -64,6 +62,16 @@ export interface Context<TSchema extends ImplicitFieldSchema> {
 	 * Example: Check if a node is a Person with `if (context.is.Person(node)) { console.log(node.name); }`
 	 */
 	is: Record<string, <T extends TreeNode>(input: T) => input is T>;
+
+	/**
+	 * Checks if the given node is an array.
+	 */
+	isArray(value: unknown): boolean;
+
+	/**
+	 * Checks if the given node is a map.
+	 */
+	isMap(value: unknown): boolean;
 
 	/**
 	 * Returns the parent node of the given child node.

@@ -8,7 +8,7 @@ import type {
 	TreeFieldFromImplicitField,
 	TreeNodeSchema,
 } from "@fluidframework/tree";
-import { TreeNode } from "@fluidframework/tree";
+import { NodeKind, TreeNode } from "@fluidframework/tree";
 import type {
 	ReadableField,
 	FactoryContentObject,
@@ -313,6 +313,26 @@ function bindEditorToSubtree<TSchema extends ImplicitFieldSchema>(
 		},
 		create,
 		is,
+		isArray(node) {
+			if (Array.isArray(node)) {
+				return true;
+			}
+			if (node instanceof TreeNode) {
+				const schema = Tree.schema(node);
+				return schema.kind === NodeKind.Array;
+			}
+			return false;
+		},
+		isMap(node) {
+			if (node instanceof Map) {
+				return true;
+			}
+			if (node instanceof TreeNode) {
+				const schema = Tree.schema(node);
+				return schema.kind === NodeKind.Map;
+			}
+			return false;
+		},
 		parent: (child: TreeNode): TreeNode | undefined => Tree.parent(child),
 		key: (child: TreeNode): string | number => Tree.key(child),
 	} satisfies Context<TSchema>;
