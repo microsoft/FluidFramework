@@ -20,10 +20,10 @@ export type BindableSchema = TreeNodeSchema<string, NodeKind.Object> | TreeNodeS
 export const bindEditor: typeof bindEditorImpl;
 
 // @alpha
-export function bindEditorImpl<TSchema extends ImplicitFieldSchema>(tree: TreeView<TSchema> | (ReadableField<TSchema> & TreeNode), editor: SynchronousEditor): (code: string) => void;
+export function bindEditorImpl<TSchema extends ImplicitFieldSchema>(tree: TreeView<TSchema> | (ReadableField<TSchema> & TreeNode), editor: AsynchronousEditor): (code: string) => Promise<void>;
 
 // @alpha
-export function bindEditorImpl<TSchema extends ImplicitFieldSchema>(tree: TreeView<TSchema> | (ReadableField<TSchema> & TreeNode), editor: AsynchronousEditor): (code: string) => Promise<void>;
+export function bindEditorImpl<TSchema extends ImplicitFieldSchema>(tree: TreeView<TSchema> | (ReadableField<TSchema> & TreeNode), editor: SynchronousEditor): (code: string) => void;
 
 // @alpha
 export function buildFunc<const Return extends z.ZodTypeAny, const Args extends readonly Arg[], const Rest extends z.ZodTypeAny | null = null>(def: {

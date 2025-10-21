@@ -57,7 +57,7 @@ export interface BoundFieldChangeRebaser<TChangeset> {
 	/**
 	 * Rebase the provided change over the composition of a set of base changes.
 	 *
-	 * @remarks - A revision metadata source is provided to this function currently in order to retain
+	 * @remarks A revision metadata source is provided to this function currently in order to retain
 	 * metadata from original edits in the case of repeated composition (i.e. what happens when sandwich
 	 * rebasing). This is a bit inconsistent with the spirit of the rest of this interface, and depending
 	 * on further refactoring would be nice to remove.

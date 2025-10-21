@@ -636,7 +636,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	 * @param kind - The {@link CommitKind} that produced this revertible (e.g., Default, Undo, Redo).
 	 * @param checkout - The {@link TreeCheckout} instance this revertible belongs to.
 	 * @param onRevertibleDisposed - Callback function that will be called when the revertible is disposed.
-	 * @returns - {@link RevertibleAlpha}
+	 * @returns A {@link RevertibleAlpha} object.
 	 */
 	private createRevertible(
 		revision: RevisionTag,
