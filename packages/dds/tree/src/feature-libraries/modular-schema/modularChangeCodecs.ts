@@ -218,7 +218,7 @@ function makeModularChangeCodec(
 	): EncodedNodeChangeset {
 		const encodedChange: EncodedNodeChangeset = {};
 		// Note: revert constraints are ignored for now because they would only be needed if we supported reverting changes made by peers.
-		const { fieldChanges, nodeExistsConstraint } = change;
+		const { fieldChanges, nodeExistsConstraint, noChangeConstraint } = change;
 
 		if (fieldChanges !== undefined) {
 			encodedChange.fieldChanges = encodeFieldChangesForJsonI(fieldChanges, context);
@@ -226,6 +226,10 @@ function makeModularChangeCodec(
 
 		if (nodeExistsConstraint !== undefined) {
 			encodedChange.nodeExistsConstraint = nodeExistsConstraint;
+		}
+
+		if (noChangeConstraint !== undefined) {
+			encodedChange.noChangeConstraint = noChangeConstraint;
 		}
 
 		return encodedChange;
@@ -304,7 +308,7 @@ function makeModularChangeCodec(
 		idAllocator: IdAllocator,
 	): NodeChangeset {
 		const decodedChange: NodeChangeset = {};
-		const { fieldChanges, nodeExistsConstraint } = encodedChange;
+		const { fieldChanges, nodeExistsConstraint, noChangeConstraint } = encodedChange;
 
 		if (fieldChanges !== undefined) {
 			decodedChange.fieldChanges = decodeFieldChangesFromJson(
@@ -318,6 +322,10 @@ function makeModularChangeCodec(
 
 		if (nodeExistsConstraint !== undefined) {
 			decodedChange.nodeExistsConstraint = nodeExistsConstraint;
+		}
+
+		if (noChangeConstraint !== undefined) {
+			decodedChange.noChangeConstraint = noChangeConstraint;
 		}
 
 		return decodedChange;
@@ -482,6 +490,7 @@ function makeModularChangeCodec(
 				builds: encodeDetachedNodes(change.builds, context),
 				refreshers: encodeDetachedNodes(change.refreshers, context),
 				violations: change.constraintViolationCount,
+				noChangeConstraint: change.noChangeConstraint,
 			};
 		},
 
@@ -511,6 +520,10 @@ function makeModularChangeCodec(
 
 			if (encodedChange.violations !== undefined) {
 				decoded.constraintViolationCount = encodedChange.violations;
+			}
+
+			if (encodedChange.noChangeConstraint !== undefined) {
+				decoded.noChangeConstraint = encodedChange.noChangeConstraint;
 			}
 
 			const decodedRevInfos = decodeRevisionInfos(encodedChange.revisions, context);

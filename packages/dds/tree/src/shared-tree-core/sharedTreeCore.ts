@@ -606,7 +606,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				resubmitMachine ??
 				new DefaultResubmitMachine(
 					(change: TaggedChange<TChange>) =>
-						this.changeFamily.rebaser.invert(change, true, this.mintRevisionTag()),
+						this.changeFamily.rebaser.invert(change, true, this.mintRevisionTag(), false),
 					changeEnricher,
 				),
 		});

@@ -63,10 +63,19 @@ const EncodedNodeExistsConstraint = Type.Object(
 );
 type EncodedNodeExistsConstraint = Static<typeof EncodedNodeExistsConstraint>;
 
+const EncodedNoChangeConstraint = Type.Object(
+	{
+		violated: Type.Boolean(),
+	},
+	noAdditionalProps,
+);
+type EncodedNoChangeConstraint = Static<typeof EncodedNoChangeConstraint>;
+
 export const EncodedNodeChangeset = Type.Object(
 	{
 		fieldChanges: Type.Optional(EncodedFieldChangeMap),
 		nodeExistsConstraint: Type.Optional(EncodedNodeExistsConstraint),
+		noChangeConstraint: Type.Optional(EncodedNoChangeConstraint),
 	},
 	noAdditionalProps,
 );
@@ -138,6 +147,9 @@ export const EncodedModularChangeset = Type.Object(
 		 * The number of constraints within this changeset that are violated.
 		 */
 		violations: Type.Optional(Type.Number({ minimum: 0, multipleOf: 1 })),
+
+		/** Global no change constraint that gets violated whenever the changeset is rebased */
+		noChangeConstraint: Type.Optional(EncodedNoChangeConstraint),
 	},
 	noAdditionalProps,
 );

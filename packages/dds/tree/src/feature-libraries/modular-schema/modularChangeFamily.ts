@@ -84,6 +84,7 @@ import {
 	type FieldId,
 	type ModularChangeset,
 	newCrossFieldKeyTable,
+	type NoChangeConstraint,
 	type NodeChangeset,
 	type NodeId,
 } from "./modularChangeTypes.js";
@@ -199,6 +200,11 @@ export class ModularChangeFamily
 			change2,
 		);
 
+		// Compose "no change" constraints - violated if either change has it violated
+		const noChangeConstraint = change1.noChangeConstraint ?? change2.noChangeConstraint;
+		const noChangeConstraintOnRevert =
+			change1.noChangeConstraintOnRevert ?? change2.noChangeConstraintOnRevert;
+
 		return makeModularChangeset({
 			fieldChanges,
 			nodeChanges,
@@ -207,6 +213,8 @@ export class ModularChangeFamily
 			crossFieldKeys,
 			maxId: idState.maxId,
 			revisions: revInfos,
+			noChangeConstraint,
+			noChangeConstraintOnRevert,
 			builds: allBuilds,
 			destroys: allDestroys,
 			refreshers: allRefreshers,
@@ -660,13 +668,15 @@ export class ModularChangeFamily
 	/**
 	 * @param change - The change to invert.
 	 * @param isRollback - Whether the inverted change is meant to rollback a change on a branch as is the case when
-	 * @param revisionForInvert - The revision for the invert changeset.
 	 * performing a sandwich rebase.
+	 * @param revisionForInvert - The revision for the invert changeset.
+	 * @param isRevert - Whether the change has been inverted as a result of a revert
 	 */
 	public invert(
 		change: TaggedChange<ModularChangeset>,
 		isRollback: boolean,
 		revisionForInvert: RevisionTag,
+		isRevert: boolean,
 	): ModularChangeset {
 		// Rollback changesets destroy the nodes created by the change being rolled back.
 		const destroys = isRollback ? invertBuilds(change.change.builds) : undefined;
@@ -681,10 +691,17 @@ export class ModularChangeFamily
 			? [{ revision: revisionForInvert, rollbackOf: change.revision }]
 			: [{ revision: revisionForInvert }];
 
+		// If this invert is the result of a revert, then we need to ensure noChangeConstraintOnRevert
+		// is applied under noChangeConstraint, so that if this is then rebased, the noChangeConstraint will be violated.
+		const noChangeConstraint = isRevert ? change.change.noChangeConstraintOnRevert : undefined;
+		const noChangeConstraintOnRevert = change.change.noChangeConstraint;
+
 		if (hasConflicts(change.change)) {
 			return makeModularChangeset({
 				maxId: change.change.maxId as number,
 				revisions: revInfos,
+				noChangeConstraint,
+				noChangeConstraintOnRevert,
 				destroys,
 			});
 		}
@@ -764,6 +781,8 @@ export class ModularChangeFamily
 			revisions: revInfos,
 			constraintViolationCount: change.change.constraintViolationCountOnRevert,
 			constraintViolationCountOnRevert: change.change.constraintViolationCount,
+			noChangeConstraint,
+			noChangeConstraintOnRevert,
 			destroys,
 		});
 	}
@@ -911,6 +930,13 @@ export class ModularChangeFamily
 		const revertConstraintState = newConstraintState(
 			change.constraintViolationCountOnRevert ?? 0,
 		);
+
+		let noChangeConstraint = change.noChangeConstraint;
+		if (noChangeConstraint !== undefined && !noChangeConstraint.violated) {
+			noChangeConstraint = { violated: true };
+			constraintState.violationCount += 1;
+		}
+
 		this.updateConstraintsForFields(
 			rebasedFields,
 			NodeAttachState.Attached,
@@ -930,6 +956,8 @@ export class ModularChangeFamily
 			revisions: change.revisions,
 			constraintViolationCount: constraintState.violationCount,
 			constraintViolationCountOnRevert: revertConstraintState.violationCount,
+			noChangeConstraint,
+			noChangeConstraintOnRevert: change.noChangeConstraintOnRevert,
 			builds: change.builds,
 			destroys: change.destroys,
 			refreshers: change.refreshers,
@@ -2620,6 +2648,8 @@ function makeModularChangeset(
 		revisions?: readonly RevisionInfo[];
 		constraintViolationCount?: number;
 		constraintViolationCountOnRevert?: number;
+		noChangeConstraint?: NoChangeConstraint;
+		noChangeConstraintOnRevert?: NoChangeConstraint;
 		builds?: ChangeAtomIdBTree<TreeChunk>;
 		destroys?: ChangeAtomIdBTree<number>;
 		refreshers?: ChangeAtomIdBTree<TreeChunk>;
@@ -2649,6 +2679,12 @@ function makeModularChangeset(
 		props.constraintViolationCountOnRevert > 0
 	) {
 		changeset.constraintViolationCountOnRevert = props.constraintViolationCountOnRevert;
+	}
+	if (props.noChangeConstraint !== undefined) {
+		changeset.noChangeConstraint = props.noChangeConstraint;
+	}
+	if (props.noChangeConstraintOnRevert !== undefined) {
+		changeset.noChangeConstraintOnRevert = props.noChangeConstraintOnRevert;
 	}
 	if (props.builds !== undefined && props.builds.size > 0) {
 		changeset.builds = props.builds;
@@ -2842,6 +2878,24 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 				revision,
 			),
 		);
+	}
+
+	public addNoChangeConstraint(revision: RevisionTag): void {
+		const changeset = makeModularChangeset({
+			maxId: -1,
+			noChangeConstraint: { violated: false },
+		});
+
+		this.applyChange(tagChange(changeset, revision));
+	}
+
+	public addNoChangeConstraintOnRevert(revision: RevisionTag): void {
+		const changeset = makeModularChangeset({
+			maxId: -1,
+			noChangeConstraintOnRevert: { violated: false },
+		});
+
+		this.applyChange(tagChange(changeset, revision));
 	}
 }
 
