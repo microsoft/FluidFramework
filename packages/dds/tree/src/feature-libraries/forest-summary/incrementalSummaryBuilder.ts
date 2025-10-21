@@ -392,14 +392,9 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 		// Validate that a summary is currently being tracked and that the tracked summary properties are defined.
 		validateTrackingSummary(this.forestSummaryState, this.trackedSummaryProperties);
 
-		if (cursor.getFieldLength() === 0) {
-			return [];
-		}
-
 		const chunkReferenceIds: ChunkReferenceId[] = [];
 		const chunks = this.getChunkAtCursor(cursor);
 		for (const chunk of chunks) {
-			let chunkReferenceId: ChunkReferenceId;
 			let chunkProperties: ChunkSummaryProperties;
 
 			// Try and get the properties of the chunk from the latest successful summary.
@@ -412,23 +407,23 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 			);
 			if (previousChunkProperties !== undefined && !this.trackedSummaryProperties.fullTree) {
 				chunkProperties = previousChunkProperties;
-				chunkReferenceId = previousChunkProperties.referenceId;
 				this.trackedSummaryProperties.parentSummaryBuilder.addHandle(
-					`${chunkReferenceId}`,
+					`${chunkProperties.referenceId}`,
 					SummaryType.Tree,
-					`${this.trackedSummaryProperties.latestSummaryBasePath}/${previousChunkProperties.summaryPath}`,
+					`${this.trackedSummaryProperties.latestSummaryBasePath}/${chunkProperties.summaryPath}`,
 				);
 			} else {
 				// Generate a new reference ID for the chunk.
-				chunkReferenceId = brand(this.nextReferenceId++);
+				const newReferenceId: ChunkReferenceId = brand(this.nextReferenceId++);
+
 				// Add the reference ID of this chunk to the chunk summary path and use the path as the summary path
 				// for the chunk in its summary properties.
 				// This is done before encoding the chunk so that the summary path is updated correctly when encoding
 				// any incremental chunks that are under this chunk.
-				this.trackedSummaryProperties.chunkSummaryPath.push(chunkReferenceId);
+				this.trackedSummaryProperties.chunkSummaryPath.push(newReferenceId);
 
 				chunkProperties = {
-					referenceId: chunkReferenceId,
+					referenceId: newReferenceId,
 					summaryPath: this.trackedSummaryProperties.chunkSummaryPath.join("/"),
 				};
 
@@ -447,7 +442,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 				// Add this chunk's summary tree to the parent's summary tree. The summary tree contains its encoded
 				// contents and the summary trees of any incremental chunks under it.
 				parentSummaryBuilder.addWithStats(
-					`${chunkReferenceId}`,
+					`${newReferenceId}`,
 					chunkSummaryBuilder.getSummaryTree(),
 				);
 
@@ -462,7 +457,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 				chunk,
 				chunkProperties,
 			);
-			chunkReferenceIds.push(chunkReferenceId);
+			chunkReferenceIds.push(chunkProperties.referenceId);
 		}
 		return chunkReferenceIds;
 	}

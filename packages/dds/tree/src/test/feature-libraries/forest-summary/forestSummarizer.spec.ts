@@ -401,7 +401,7 @@ describe("ForestSummarizer", () => {
 
 			it("can incrementally summarize a forest", async () => {
 				const itemsCount = 4;
-				const { forestSummarizer } = setupForestForIncrementalSummarization(
+				const { forestSummarizer, checkout } = setupForestForIncrementalSummarization(
 					createInitialBoard(itemsCount),
 				);
 
@@ -415,6 +415,8 @@ describe("ForestSummarizer", () => {
 					stringify: JSON.stringify,
 					incrementalSummaryContext: incrementalSummaryContext1,
 				});
+				const view = checkout.viewWith(new TreeViewConfiguration({ schema: Root }));
+				const root = view.root;
 				validateSummaryIsIncremental(summary1.summary);
 				// This summary should not contain any handles since it's the first summary.
 				validateHandlesInForestSummary(summary1.summary, {

@@ -201,7 +201,9 @@ export function chunkFieldSingle(
 }
 
 /**
- * Combine multiple TreeChunks into a single TreeChunk.
+ * Create a single TreeChunk from an array of TreeChunks.
+ * @remarks
+ * This takes ownership of the provided TreeChunk references, and returns an owned referenced.
  */
 export function combineChunks(chunks: TreeChunk[]): TreeChunk {
 	if (chunks.length === 1) {

@@ -6,13 +6,18 @@
 import type { FieldKey, TreeNodeSchemaIdentifier } from "../../core/index.js";
 import {
 	getTreeNodeSchemaPrivateData,
-	normalizeAllowedTypes,
+	type AllowedTypesFull,
 	type AllowedTypesMetadata,
 } from "../core/index.js";
 import { isObjectNodeSchema } from "../node-kinds/index.js";
 import type { TreeSchema } from "./configuration.js";
 import type { IncrementalEncodingPolicy } from "../../feature-libraries/index.js";
 import { oneFromIterable } from "../../util/index.js";
+import { assert } from "@fluidframework/core-utils/internal";
+
+export const incrementalSummaryOptimizationSymbol: unique symbol = Symbol(
+	"IncrementalSummaryOptimization",
+);
 
 /**
  * A set of allowed types in a schema can be opted in to incremental summary optimization by adding the
@@ -21,8 +26,19 @@ import { oneFromIterable } from "../../util/index.js";
  * included in the summary that is uploaded to the service.
  */
 export const incrementalAllowedTypesMetadata: AllowedTypesMetadata["custom"] = {
-	incrementalSummaryOptimization: true,
+	[incrementalSummaryOptimizationSymbol]: true,
 };
+
+/**
+ * Returns true if the provided allowed types has the {@link incrementalAllowedTypesMetadata} custom metadata.
+ */
+function isIncrementalAllowedTypesMetadata(allowedTypes: AllowedTypesFull): boolean {
+	const customMetadata = allowedTypes.metadata.custom;
+	return (
+		customMetadata !== undefined &&
+		(customMetadata as Record<symbol, unknown>)[incrementalSummaryOptimizationSymbol] === true
+	);
+}
 
 /**
  * This helper function {@link getShouldIncrementallySummarizeAllowedTypes} can be used to generate a callback function
@@ -70,20 +86,19 @@ export function getShouldIncrementallySummarizeAllowedTypes(
 			if (targetPropertyKey !== undefined) {
 				const fieldSchema = targetNode.fields.get(targetPropertyKey);
 				if (fieldSchema !== undefined) {
-					return (
-						fieldSchema.allowedTypesFull.metadata.custom === incrementalAllowedTypesMetadata
-					);
+					return isIncrementalAllowedTypesMetadata(fieldSchema.allowedTypesFull);
 				}
 			}
 			return false;
 		}
 
 		const allowedTypes = oneFromIterable(
-			getTreeNodeSchemaPrivateData(targetNode).childAnnotatedAllowedTypes,
+			getTreeNodeSchemaPrivateData(targetNode).childAllowedTypes,
 		);
-		return allowedTypes === undefined
-			? false
-			: normalizeAllowedTypes(allowedTypes).metadata.custom ===
-					incrementalAllowedTypesMetadata;
+		assert(
+			allowedTypes !== undefined,
+			"Non object nodes with fields should only have one allowedTypes entry",
+		);
+		return isIncrementalAllowedTypesMetadata(allowedTypes);
 	};
 }
