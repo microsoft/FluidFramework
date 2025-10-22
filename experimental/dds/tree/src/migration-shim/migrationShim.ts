@@ -265,7 +265,7 @@ export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent
 	 * twice, we will be in a "v2" state even though we really are in a "v1" state. We will encounter unexpected op
 	 * dropping behavior or lack thereof and may corrupt the document.
 	 * @param services - the services to generate the shim services from
-	 * @returns - shim services
+	 * @returns shim services
 	 */
 	private generateShimServicesOnce(services: IChannelServices): IShimChannelServices {
 		assert(

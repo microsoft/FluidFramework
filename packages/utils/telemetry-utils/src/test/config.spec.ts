@@ -25,7 +25,7 @@ const getMockStore = (settings: Record<string, string>): Storage => {
 			// eslint-disable-next-line unicorn/no-null
 			return settings[key] ?? null;
 		},
-		getOps: (): Readonly<string[]> => ops,
+		getOps: (): readonly string[] => ops,
 		length: Object.keys(settings).length,
 		clear: (): void => {},
 		// eslint-disable-next-line unicorn/no-null

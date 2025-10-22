@@ -6,6 +6,7 @@
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import {
+	type CodecTree,
 	type CodecWriteOptions,
 	FluidClientVersion,
 	type ICodecFamily,
@@ -20,6 +21,7 @@ import { version2 } from "./detachedFieldIndexFormatV2.js";
 import { makeDetachedNodeToFieldCodecV1 } from "./detachedFieldIndexCodecV1.js";
 import { makeDetachedNodeToFieldCodecV2 } from "./detachedFieldIndexCodecV2.js";
 import type { DetachedFieldSummaryData } from "./detachedFieldIndexTypes.js";
+import type { Brand } from "../../util/index.js";
 
 export function makeDetachedFieldIndexCodec(
 	revisionTagCodec: RevisionTagCodec,
@@ -28,7 +30,7 @@ export function makeDetachedFieldIndexCodec(
 ): IJsonCodec<DetachedFieldSummaryData> {
 	const family = makeDetachedFieldIndexCodecFamily(revisionTagCodec, options, idCompressor);
 	const writeVersion =
-		options.oldestCompatibleClient < FluidClientVersion.v2_52 ? version1 : version2;
+		options.minVersionForCollab < FluidClientVersion.v2_52 ? version1 : version2;
 	return makeVersionDispatchingCodec(family, { ...options, writeVersion });
 }
 
@@ -41,4 +43,11 @@ export function makeDetachedFieldIndexCodecFamily(
 		[version1, makeDetachedNodeToFieldCodecV1(revisionTagCodec, options, idCompressor)],
 		[version2, makeDetachedNodeToFieldCodecV2(revisionTagCodec, options, idCompressor)],
 	]);
+}
+
+export type DetachedFieldIndexFormatVersion = Brand<1 | 2, "DetachedFieldIndexFormatVersion">;
+export function getCodecTreeForDetachedFieldIndexFormat(
+	version: DetachedFieldIndexFormatVersion,
+): CodecTree {
+	return { name: "DetachedFieldIndex", version };
 }

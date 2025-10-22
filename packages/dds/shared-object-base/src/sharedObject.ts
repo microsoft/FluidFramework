@@ -480,7 +480,7 @@ export abstract class SharedObjectCore<
 				(this.runtime as IFluidDataStoreRuntimeInternalConfig)
 					.submitMessagesWithoutEncodingHandles === true;
 			const contentToSubmit = onlyBind
-				? bindHandles(content, this.serializer, this.handle)
+				? bindHandles(content, this.handle)
 				: makeHandlesSerializable(content, this.serializer, this.handle);
 
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion

@@ -10,7 +10,12 @@ module.exports = {
 	},
 	rules: {
 		"@typescript-eslint/no-namespace": "off",
+
+		// This library leverages empty, derived interface definitions to capture concepts
+		// in a nicely reusable way.
 		"@typescript-eslint/no-empty-interface": "off",
+		"@typescript-eslint/no-empty-object-type": "off",
+
 		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 
 		// This package is build with noUnusedLocals disabled for a specific use case (see note in tsconfig.json),

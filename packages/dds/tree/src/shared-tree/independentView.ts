@@ -26,6 +26,7 @@ import {
 	type FieldBatchEncodingContext,
 	defaultSchemaPolicy,
 	TreeCompressionStrategy,
+	defaultIncrementalEncodingPolicy,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { Format } from "../feature-libraries/schema-index/formatV1.js";
@@ -43,6 +44,7 @@ import {
 import { createTreeCheckout } from "./treeCheckout.js";
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import { initialize, initializerFromChunk } from "./schematizeTree.js";
+import { combineChunks } from "../feature-libraries/index.js";
 
 /**
  * Create an uninitialized {@link TreeView} that is not tied to any {@link ITree} instance.
@@ -67,6 +69,7 @@ export function independentView<const TSchema extends ImplicitFieldSchema>(
 		options.forest ?? defaultSharedTreeOptions.forest,
 		schema,
 		idCompressor,
+		defaultIncrementalEncodingPolicy,
 	);
 	const checkout = createTreeCheckout(idCompressor, mintRevisionTag, revisionTagCodec, {
 		forest,
@@ -144,6 +147,7 @@ export function independentInitializedViewInternal<const TSchema extends Implici
 		options.forest ?? defaultSharedTreeOptions.forest,
 		schemaRepository,
 		idCompressor,
+		defaultIncrementalEncodingPolicy,
 	);
 
 	const checkout = createTreeCheckout(idCompressor, mintRevisionTag, revisionTagCodec, {
@@ -155,7 +159,9 @@ export function independentInitializedViewInternal<const TSchema extends Implici
 	initialize(
 		checkout,
 		schema,
-		initializerFromChunk(checkout, () => checkout.forest.chunkField(rootFieldCursor)),
+		initializerFromChunk(checkout, () =>
+			combineChunks(checkout.forest.chunkField(rootFieldCursor)),
+		),
 	);
 	return new SchematizingSimpleTreeView<TSchema>(
 		checkout,

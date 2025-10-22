@@ -8,7 +8,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 /**
  * An object which counts the number of users / references to it.
  * @remarks
- * This implements the [Reference counting](https://en.wikipedia.org/wiki/Reference_counting) pattern.
+ * This implements the {@link https://en.wikipedia.org/wiki/Reference_counting | Reference counting} pattern.
  * Getting the reference count correct is difficult in TypeScript and great care must be used.
  * Because of this, this interface should not be used in the public API.
  */

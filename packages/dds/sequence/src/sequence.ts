@@ -472,7 +472,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * even if the op is resubmitted more than once. Thus during resubmit, `inFlightRefSeqs` gets populated with the
 	 * original refSeq rather than the refSeq at the time of reconnection.
 	 *
-	 * @remarks - In some not fully understood cases, the runtime may process incoming ops before putting an op that this
+	 * @remarks In some not fully understood cases, the runtime may process incoming ops before putting an op that this
 	 * DDS submits over the wire. See `inFlightRefSeqs` for more details.
 	 */
 	private get currentRefSeq() {

@@ -398,7 +398,7 @@ export interface FlexTreeOptionalField extends FlexTreeField {
 export type FlexTreeTypedField<Kind extends FlexFieldKind> =
 	Kind extends typeof FieldKinds.sequence
 		? FlexTreeSequenceField
-		: Kind extends typeof FieldKinds.required
+		: Kind extends typeof FieldKinds.required | typeof FieldKinds.identifier
 			? FlexTreeRequiredField
 			: Kind extends typeof FieldKinds.optional
 				? FlexTreeOptionalField

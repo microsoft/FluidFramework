@@ -5,6 +5,7 @@
 
 export {
 	type FormatVersion,
+	DependentFormatVersion,
 	type IBinaryCodec,
 	type ICodecFamily,
 	type ICodecOptions,
@@ -24,6 +25,8 @@ export {
 	toFormatValidator,
 	FormatValidatorNoOp,
 	type FormatValidator,
+	type CodecTree,
+	jsonableCodecTree,
 	extractJsonValidator,
 } from "./codec.js";
 export {

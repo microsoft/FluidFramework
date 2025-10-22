@@ -32,12 +32,15 @@ module.exports = {
 					.filter((comment) => comment.type === "Block" && comment.value.startsWith("*"));
 
 				for (const comment of comments) {
+					// +2 for the leading "/*", which is omitted by `comment.value`, but included in `comment.range`.
+					const commentStartIndex = comment.range[0] + 2;
+
 					// Find any JSDoc/TSDoc tags followed by a hyphen
-					const matches = comment.value.matchAll(/(@[a-zA-Z0-9]+)\s*?-(.*)/g);
+					const matches = comment.value.matchAll(/(@[a-zA-Z0-9]+)\s*?-\s*?(.*)/g);
 					for (const match of matches) {
 						const [fullMatch, tag, body] = match;
 
-						const startIndex = comment.range[0] + match.index;
+						const startIndex = commentStartIndex + match.index;
 						const endIndex = startIndex + fullMatch.length;
 
 						context.report({

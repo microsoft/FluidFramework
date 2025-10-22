@@ -88,12 +88,9 @@ describe("TaskManager", () => {
 		});
 
 		it("Can create a connected TaskManager", () => {
-			assert.ok(taskManager1, "Could not create a task manager");
-			assert.ok(taskManager1.isAttached(), "TaskManager should be attached");
-			assert.ok(
-				(taskManager1 as TaskManagerClass).connected,
-				"TaskManager should be connected",
-			);
+			assert(taskManager1 !== undefined, "Could not create a task manager");
+			assert(taskManager1.isAttached(), "TaskManager should be attached");
+			assert((taskManager1 as TaskManagerClass).connected, "TaskManager should be connected");
 		});
 
 		describe("Volunteering for a task", () => {
@@ -931,9 +928,9 @@ describe("TaskManager", () => {
 
 		it("Can create a TaskManager while disconnected", () => {
 			containerRuntime1.connected = false;
-			assert.ok(taskManager1, "Could not create a task manager");
-			assert.ok(taskManager1.isAttached(), "TaskManager should be attached");
-			assert.ok(!taskManager1.connected, "TaskManager should be disconnected");
+			assert(taskManager1 !== undefined, "Could not create a task manager");
+			assert(taskManager1.isAttached(), "TaskManager should be attached");
+			assert(!taskManager1.connected, "TaskManager should be disconnected");
 		});
 
 		describe("Behavior transitioning to disconnect", () => {

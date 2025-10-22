@@ -86,11 +86,6 @@ describeCompat(
 				},
 				enableRuntimeIdCompressor: "on",
 			},
-			loaderProps: {
-				configProvider: configProvider({
-					"Fluid.Container.enableOfflineLoad": true,
-				}),
-			},
 		};
 
 		let provider: ITestObjectProvider;

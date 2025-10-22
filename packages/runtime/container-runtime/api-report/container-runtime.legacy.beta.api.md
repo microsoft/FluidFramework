@@ -271,7 +271,7 @@ export interface ISummaryCollectionOpEvents extends IEvent {
 }
 
 // @beta @legacy (undocumented)
-export type ISummaryConfiguration = ISummaryConfigurationDisableSummarizer | ISummaryConfigurationDisableHeuristics | ISummaryConfigurationHeuristics;
+export type ISummaryConfiguration = ISummaryConfigurationDisableSummarizer | ISummaryConfigurationDisableHeuristics | ISummaryConfigurationHeuristics | ISummaryConfigurationWithSummaryOnRequest;
 
 // @beta @legacy (undocumented)
 export interface ISummaryConfigurationDisableHeuristics extends ISummaryBaseConfiguration {
@@ -297,6 +297,12 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
     runtimeOpWeight: number;
     // (undocumented)
     state: "enabled";
+}
+
+// @beta @legacy
+export interface ISummaryConfigurationWithSummaryOnRequest extends ISummaryBaseConfiguration {
+    // (undocumented)
+    state: "summaryOnRequest";
 }
 
 // @beta @legacy
@@ -345,9 +351,6 @@ export interface LoadContainerRuntimeParams {
     requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
     runtimeOptions?: IContainerRuntimeOptions;
 }
-
-// @beta @legacy
-export type MinimumVersionForCollab = `${1 | 2}.${bigint}.${bigint}` | `${1 | 2}.${bigint}.${bigint}-${string}`;
 
 // @beta @deprecated @legacy (undocumented)
 export type OmitAttributesVersions<T> = Omit<T, "snapshotFormatVersion" | "summaryFormatVersion">;

@@ -104,7 +104,8 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 			lastClientLeaveTime: undefined,
 			telemetryProperties: {
 				hadWriteClient:
-					existingSession?.telemetryProperties?.hadWriteClient || client.isWriteClient,
+					(existingSession?.telemetryProperties?.hadWriteClient ?? false) ||
+					client.isWriteClient,
 				totalClientsJoined:
 					(existingSession?.telemetryProperties?.totalClientsJoined ?? 0) +
 					totalCurrentClients,
@@ -331,7 +332,7 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 		// Session end timer expired and no clients are connected, so end the session.
 		const now = Date.now();
 		// Use the latest session information if available, otherwise use the passed session
-		const finalSession = latestSessionInformation || session;
+		const finalSession = latestSessionInformation ?? session;
 		const sessionDurationInMs = now - finalSession.firstClientJoinTime;
 		const metric = Lumberjack.newLumberMetric(LumberEventName.NexusSessionResult, {
 			...getLumberBaseProperties(finalSession.documentId, finalSession.tenantId),
@@ -349,9 +350,9 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 					: undefined,
 			...finalSession.telemetryProperties,
 			// Explicitly include session-level metrics using CommonProperties enum values
-			[CommonProperties.sessionOpCount]: finalSession.telemetryProperties.sessionOpCount || 0,
+			[CommonProperties.sessionOpCount]: finalSession.telemetryProperties.sessionOpCount ?? 0,
 			[CommonProperties.sessionSignalCount]:
-				finalSession.telemetryProperties.sessionSignalCount || 0,
+				finalSession.telemetryProperties.sessionSignalCount ?? 0,
 		});
 		// The lumber metric is created at the end of the session, so "timestamp" is the end time, rather than the usual "start time".
 		// Override the timestamp to be the start time of the session.

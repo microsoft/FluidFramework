@@ -67,7 +67,6 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 	};
 	const configProvider = createTestConfigProvider();
 	configProvider.set("Fluid.Container.UseLoadingGroupIdForSnapshotFetch2", true);
-	configProvider.set("Fluid.Container.enableOfflineLoad", true);
 
 	const testDataObjectType = "TestDataObject";
 	const dataObjectFactory = new DataObjectFactory({
@@ -144,10 +143,6 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 		dataObjectB._root.set("B", "B");
 
 		// Get Pending state and close
-		assert(
-			container.getPendingLocalState !== undefined,
-			"Test can't run without getPendingLocalState",
-		);
 		const pendingState = await container.getPendingLocalState();
 		container.close();
 

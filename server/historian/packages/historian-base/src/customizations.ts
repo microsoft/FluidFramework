@@ -9,6 +9,7 @@ import type {
 	IReadinessCheck,
 } from "@fluidframework/server-services-core";
 import type { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
+
 import type { ISimplifiedCustomDataRetriever } from "./services";
 
 export interface IHistorianResourcesCustomizations {

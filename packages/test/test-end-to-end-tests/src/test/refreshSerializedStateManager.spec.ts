@@ -102,7 +102,6 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 					},
 				}),
 				configProvider: configProvider({
-					"Fluid.Container.enableOfflineLoad": true,
 					"Fluid.Container.enableOfflineSnapshotRefresh": true,
 				}),
 			},
@@ -176,7 +175,6 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 					},
 				}),
 				configProvider: configProvider({
-					"Fluid.Container.enableOfflineLoad": true,
 					"Fluid.Container.enableOfflineSnapshotRefresh": true,
 					"Fluid.Container.snapshotRefreshTimeoutMs": 100,
 				}),
@@ -247,7 +245,6 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 					},
 				}),
 				configProvider: configProvider({
-					"Fluid.Container.enableOfflineLoad": true,
 					"Fluid.Container.enableOfflineSnapshotRefresh": true,
 				}),
 			},

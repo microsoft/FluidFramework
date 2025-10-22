@@ -15,11 +15,12 @@ import type {
 	IReadinessCheck,
 	IDenyList,
 } from "@fluidframework/server-services-core";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import type { Provider } from "nconf";
 import * as winston from "winston";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import type { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "./services";
+
 import * as app from "./app";
+import type { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "./services";
 
 export class HistorianRunner implements IRunner {
 	private server: IWebServer | undefined;

@@ -7,7 +7,7 @@ import { strict as assert, fail } from "node:assert";
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { MockNodeIdentifierManager } from "../../feature-libraries/index.js";
+import { MockNodeIdentifierManager, TreeStatus } from "../../feature-libraries/index.js";
 import {
 	SchematizingSimpleTreeView,
 	// eslint-disable-next-line import/no-internal-modules
@@ -25,6 +25,7 @@ import {
 	getKernel,
 	toInitialSchema,
 	toUpgradeSchema,
+	SchemaFactoryBeta,
 } from "../../simple-tree/index.js";
 import {
 	checkoutWithContent,
@@ -40,6 +41,7 @@ import { insert, makeTreeFromJsonSequence } from "../sequenceRootUtils.js";
 import {
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
+	Tree,
 	type TreeCheckout,
 } from "../../shared-tree/index.js";
 import type { Mutable } from "../../util/index.js";
@@ -103,6 +105,51 @@ describe("SchematizingSimpleTreeView", () => {
 				validateUsageError(/initialized more than once/),
 			);
 		});
+		{
+			const emptyContent = {
+				schema: emptySchema,
+				initialTree: undefined,
+			};
+			class SimpleTestObject extends schema.object("TestObject", {
+				content: schema.number,
+			}) {}
+			const configNode = new TreeViewConfiguration({ schema: SimpleTestObject });
+			it("Initialize node", () => {
+				const checkout = checkoutWithContent(emptyContent);
+				const view = new SchematizingSimpleTreeView(
+					checkout,
+					configNode,
+					new MockNodeIdentifierManager(),
+				);
+
+				const { compatibility } = view;
+				assert.equal(compatibility.canView, false);
+				assert.equal(compatibility.canUpgrade, false);
+				assert.equal(compatibility.canInitialize, true);
+
+				view.initialize({ content: 5 });
+				assert.equal(view.root.content, 5);
+			});
+			it("Initialize node with hydration", () => {
+				const checkout = checkoutWithContent(emptyContent);
+				const view = new SchematizingSimpleTreeView(
+					checkout,
+					configNode,
+					new MockNodeIdentifierManager(),
+				);
+
+				const { compatibility } = view;
+				assert.equal(compatibility.canView, false);
+				assert.equal(compatibility.canUpgrade, false);
+				assert.equal(compatibility.canInitialize, true);
+
+				const node = new SimpleTestObject({ content: 5 });
+				assert.equal(Tree.status(node), TreeStatus.New);
+				view.initialize(node);
+				assert.equal(view.root, node);
+				assert.equal(Tree.status(node), TreeStatus.InDocument);
+			});
+		}
 
 		for (const additionalAsserts of [true, false]) {
 			for (const enableSchemaValidation of [true, false]) {
@@ -122,7 +169,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 					const root = new Root({ content: 5 });
 
-					const inner = getKernel(root).getOrCreateInnerNode();
+					const inner = getKernel(root).getInnerNode();
 					const field = inner.getBoxed(brand("content"));
 					const child = field.boxedAt(0) ?? assert.fail("Expected child");
 					assert(child instanceof UnhydratedFlexTreeNode);
@@ -145,10 +192,13 @@ describe("SchematizingSimpleTreeView", () => {
 				});
 
 				it(`Initialize invalid content: staged allowed type with enableSchemaValidation: ${enableSchemaValidation}, additionalAsserts: ${additionalAsserts}`, () => {
-					class StagedSchema extends schema.arrayAlpha("TestArray", [
-						SchemaFactoryAlpha.number,
-						SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
-					]) {}
+					class StagedSchema extends schema.arrayAlpha(
+						"TestArray",
+						SchemaFactoryAlpha.types([
+							SchemaFactoryAlpha.number,
+							SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+						]),
+					) {}
 
 					const emptyContent = {
 						schema: emptySchema,
@@ -321,13 +371,13 @@ describe("SchematizingSimpleTreeView", () => {
 		// This sort of scenario might be reasonably encountered when an "older" version of an application opens
 		// up a document that has been created and/or edited by a "newer" version of an application (which has
 		// expanded the schema to include more information).
-		const factory = new SchemaFactoryAlpha(undefined);
-		class PersonGeneralized extends factory.objectAlpha("Person", {
+		const factory = new SchemaFactoryBeta(undefined);
+		class PersonGeneralized extends factory.object("Person", {
 			name: factory.string,
 			age: factory.number,
 			address: factory.optional(factory.string),
 		}) {}
-		class PersonSpecific extends factory.objectAlpha(
+		class PersonSpecific extends factory.object(
 			"Person",
 			{
 				name: factory.string,
@@ -384,14 +434,14 @@ describe("SchematizingSimpleTreeView", () => {
 	});
 
 	it("Calling moveToEnd on a more specific schema preserves a node's optional fields that were unknown to that schema", () => {
-		const factorySpecific = new SchemaFactoryAlpha(undefined);
-		const factoryGeneral = new SchemaFactoryAlpha(undefined);
-		class PersonGeneralized extends factorySpecific.objectAlpha("Person", {
+		const factorySpecific = new SchemaFactoryBeta(undefined);
+		const factoryGeneral = new SchemaFactoryBeta(undefined);
+		class PersonGeneralized extends factorySpecific.object("Person", {
 			name: factoryGeneral.string,
 			age: factoryGeneral.number,
 			address: factoryGeneral.optional(factoryGeneral.string),
 		}) {}
-		class PersonSpecific extends factorySpecific.objectAlpha(
+		class PersonSpecific extends factorySpecific.object(
 			"Person",
 			{
 				name: factorySpecific.string,

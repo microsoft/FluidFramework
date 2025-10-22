@@ -20,12 +20,6 @@ export {
 } from "./containerRuntime.js";
 export type { ICompressionRuntimeOptions } from "./compressionDefinitions.js";
 export { CompressionAlgorithms, disabledCompressionConfig } from "./compressionDefinitions.js";
-export type {
-	/**
-	 * @deprecated Import from `@fluidframework/runtime-definitions/legacy` instead.
-	 */
-	MinimumVersionForCollab,
-} from "@fluidframework/runtime-definitions/internal";
 export {
 	ContainerMessageType,
 	type UnknownContainerRuntimeMessage,
@@ -113,6 +107,7 @@ export {
 	type ISummaryConfigurationHeuristics,
 	type ISummaryConfigurationDisableSummarizer,
 	type ISummaryConfigurationDisableHeuristics,
+	type ISummaryConfigurationWithSummaryOnRequest,
 	type ISummaryConfiguration,
 	DefaultSummaryConfiguration,
 } from "./summary/index.js";

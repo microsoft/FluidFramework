@@ -161,7 +161,7 @@ export const Changeset = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Array(Mark(tNodeChange));
 
 /**
- * @privateRemarks - Many of these names are currently used in the sequence-field types. Putting them in a namespace makes codec code more readable.
+ * @privateRemarks Many of these names are currently used in the sequence-field types. Putting them in a namespace makes codec code more readable.
  */
 export namespace Encoded {
 	export type CellCount = Static<typeof CellCount>;

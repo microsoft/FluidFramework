@@ -35,7 +35,7 @@ const foo = bar;
 | Interface | Description |
 | - | - |
 | [TestEmptyInterface](docs/test-suite-a#testemptyinterface-interface) | An empty interface |
-| [TestInterface](docs/test-suite-a#testinterface-interface) | Test interface |
+| [TestInterface](docs/test-suite-a#testinterface-interface) | <p>Test \[interface\]\(https://www.typescriptlang.org/docs/handbook/interfaces.html\).</p><p>Cheers\!</p> |
 | [TestInterfaceExtendingOtherInterfaces](docs/test-suite-a#testinterfaceextendingotherinterfaces-interface) | Test interface that extends other interfaces |
 | [TestInterfaceWithCallSignature](docs/test-suite-a#testinterfacewithcallsignature-interface) | An interface with a complex call signature. |
 | [TestInterfaceWithIndexSignature](docs/test-suite-a#testinterfacewithindexsignature-interface) | An interface with an index signature. |
@@ -105,7 +105,9 @@ export interface TestEmptyInterface
 
 <h2 id="testinterface-interface">TestInterface</h2>
 
-Test interface
+Test \[interface]\(https\://www\.typescriptlang.org/docs/handbook/interfaces.html).
+
+Cheers!
 
 <h3 id="testinterface-signature">Signature</h3>
 

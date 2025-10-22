@@ -11,7 +11,6 @@ import {
 	FluidDataStoreRegistry,
 	loadContainerRuntime,
 	type IContainerRuntimeOptions,
-	type MinimumVersionForCollab,
 } from "@fluidframework/container-runtime/internal";
 import type {
 	IContainerRuntime,
@@ -29,6 +28,7 @@ import type {
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
 	IProvideFluidDataStoreRegistry,
+	MinimumVersionForCollab,
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
 import { RequestParser, RuntimeFactoryHelper } from "@fluidframework/runtime-utils/internal";

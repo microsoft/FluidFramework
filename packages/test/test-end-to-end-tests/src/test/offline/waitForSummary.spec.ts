@@ -84,7 +84,6 @@ describeCompat(
 			registry,
 			loaderProps: {
 				configProvider: configProvider({
-					"Fluid.Container.enableOfflineLoad": true,
 					"Fluid.Sequence.intervalStickinessEnabled": true,
 				}),
 			},

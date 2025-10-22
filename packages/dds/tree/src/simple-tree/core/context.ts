@@ -9,7 +9,7 @@ import type {
 	FlexTreeHydratedContext,
 } from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";
-import type { NormalizedAnnotatedAllowedTypes } from "./allowedTypes.js";
+import type { AllowedTypesFullEvaluated } from "./allowedTypes.js";
 
 import type { TreeNodeSchema } from "./treeNodeSchema.js";
 import { walkAllowedTypes } from "./walkSchema.js";
@@ -29,7 +29,7 @@ import { walkAllowedTypes } from "./walkSchema.js";
  */
 export class Context {
 	public static schemaMapFromRootSchema(
-		rootSchema: NormalizedAnnotatedAllowedTypes,
+		rootSchema: AllowedTypesFullEvaluated,
 	): ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeSchema> {
 		const schema: Map<TreeNodeSchemaIdentifier, TreeNodeSchema> = new Map();
 		walkAllowedTypes(rootSchema, {

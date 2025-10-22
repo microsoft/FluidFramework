@@ -81,7 +81,7 @@ export enum FlushModeExperimental {
 	 * This feature requires a version of the loader which supports reference sequence numbers. If an older version of
 	 * the loader is used, the runtime will fall back on FlushMode.TurnBased.
 	 *
-	 * @experimental - Not ready for use
+	 * @experimental Not ready for use
 	 */
 	Async = 2,
 }
@@ -248,7 +248,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/README.md | README}.
 	 */
 	createDetachedDataStore(
-		pkg: Readonly<string[]>,
+		pkg: readonly string[],
 		loadingGroupId?: string,
 	): IFluidDataStoreContextDetached;
 

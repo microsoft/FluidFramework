@@ -12,7 +12,9 @@ import type {
 } from "@fluidframework/server-services-core";
 import type { Router } from "express";
 import type * as nconf from "nconf";
+
 import type { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "../services";
+
 /* eslint-disable import/no-internal-modules */
 import * as blobs from "./git/blobs";
 import * as commits from "./git/commits";

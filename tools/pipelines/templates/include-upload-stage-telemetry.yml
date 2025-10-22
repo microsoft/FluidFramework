@@ -42,7 +42,7 @@ stages:
     - group: ado-feeds
 
     steps:
-    - checkout: git://internal/ff_pipeline_host
+    - checkout: ff_pipeline_host
 
     - template: /tools/pipelines/templates/include-use-node-version.yml@self
 

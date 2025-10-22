@@ -10,7 +10,7 @@ import { isStableId } from "@fluidframework/id-compressor/internal";
 import { Tree } from "../../shared-tree/index.js";
 import { rootFieldKey } from "../../core/index.js";
 import {
-	getOrCreateInnerNode,
+	getInnerNode,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	TreeBeta,
@@ -54,15 +54,15 @@ describe("Unhydrated nodes", () => {
 		const record = new TestRecord({});
 		const array = new TestArray([leaf]);
 		const object = new TestObject({ map, array, record });
-		assert.equal(getOrCreateInnerNode(leaf) instanceof UnhydratedFlexTreeNode, true);
-		assert.equal(getOrCreateInnerNode(map) instanceof UnhydratedFlexTreeNode, true);
-		assert.equal(getOrCreateInnerNode(array) instanceof UnhydratedFlexTreeNode, true);
-		assert.equal(getOrCreateInnerNode(object) instanceof UnhydratedFlexTreeNode, true);
+		assert.equal(getInnerNode(leaf) instanceof UnhydratedFlexTreeNode, true);
+		assert.equal(getInnerNode(map) instanceof UnhydratedFlexTreeNode, true);
+		assert.equal(getInnerNode(array) instanceof UnhydratedFlexTreeNode, true);
+		assert.equal(getInnerNode(object) instanceof UnhydratedFlexTreeNode, true);
 		const hydratedObject = hydrate(TestObject, object);
-		assert.equal(getOrCreateInnerNode(leaf) instanceof UnhydratedFlexTreeNode, false);
-		assert.equal(getOrCreateInnerNode(map) instanceof UnhydratedFlexTreeNode, false);
-		assert.equal(getOrCreateInnerNode(array) instanceof UnhydratedFlexTreeNode, false);
-		assert.equal(getOrCreateInnerNode(object) instanceof UnhydratedFlexTreeNode, false);
+		assert.equal(getInnerNode(leaf) instanceof UnhydratedFlexTreeNode, false);
+		assert.equal(getInnerNode(map) instanceof UnhydratedFlexTreeNode, false);
+		assert.equal(getInnerNode(array) instanceof UnhydratedFlexTreeNode, false);
+		assert.equal(getInnerNode(object) instanceof UnhydratedFlexTreeNode, false);
 		assert.equal(hydratedObject, object);
 		assert.equal(hydratedObject.array, array);
 		assert.equal(hydratedObject.map, map);

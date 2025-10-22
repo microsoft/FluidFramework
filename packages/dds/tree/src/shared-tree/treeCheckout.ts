@@ -298,7 +298,7 @@ export function createTreeCheckout(
 	const forest = args?.forest ?? buildForest(breaker, schema);
 	const defaultCodecOptions = {
 		jsonValidator: FormatValidatorNoOp,
-		oldestCompatibleClient: FluidClientVersion.v2_0,
+		minVersionForCollab: FluidClientVersion.v2_0,
 	};
 	const defaultFieldBatchVersion = 1;
 	const changeFamily =
@@ -636,7 +636,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	 * @param kind - The {@link CommitKind} that produced this revertible (e.g., Default, Undo, Redo).
 	 * @param checkout - The {@link TreeCheckout} instance this revertible belongs to.
 	 * @param onRevertibleDisposed - Callback function that will be called when the revertible is disposed.
-	 * @returns - {@link RevertibleAlpha}
+	 * @returns A {@link RevertibleAlpha} object.
 	 */
 	private createRevertible(
 		revision: RevisionTag,
@@ -789,7 +789,10 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
 	): void {
 		// TODO: Dispose old branch, if necessary
-		assert(!this.#transaction.isInProgress(), "Cannot switch branches during a transaction");
+		assert(
+			!this.#transaction.isInProgress(),
+			0xc55 /* Cannot switch branches during a transaction */,
+		);
 		const diff = diffHistories(
 			this.changeFamily.rebaser,
 			this.#transaction.branch.getHead(),
@@ -1021,7 +1024,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	// #region Commit Validation
 
 	/** Used to maintain the contract of {@link onCommitValid}(). */
-	#validatedCommits = new WeakMap<
+	readonly #validatedCommits = new WeakMap<
 		GraphCommit<SharedTreeChange>,
 		((commit: GraphCommit<SharedTreeChange>) => void)[] | true
 	>();

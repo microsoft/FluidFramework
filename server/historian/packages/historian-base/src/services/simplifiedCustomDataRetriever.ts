@@ -4,6 +4,7 @@
  */
 
 import type { ITenantCustomData } from "@fluidframework/server-services-core";
+
 import type { ISimplifiedCustomDataRetriever } from "./definitions";
 
 /**

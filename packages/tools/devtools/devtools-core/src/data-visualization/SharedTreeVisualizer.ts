@@ -47,7 +47,7 @@ export function determineNodeKind(nodeKind: VisualNodeKind): VisualNodeKind {
 /**
  * Returns allowed types of the non-leaf nodes in the tree.
  * @param allowedTypes - a string if array node, `Record<string, string>` for non-array nodes.
- * @returns - a VisualChildNode with the allowed type.
+ * @returns a VisualChildNode with the allowed type.
  */
 function createAllowedTypesVisualTree(
 	allowedTypes: string | Record<string, string>,
@@ -101,7 +101,7 @@ function createToolTipContents(schema: SharedTreeSchemaNode): VisualTreeNode {
 /**
  * Converts the visual representation from {@link visualizeNodeBySchema} to a visual tree compatible with the devtools-view.
  * @param tree - the visual representation of the SharedTree.
- * @returns - the visual representation of type {@link VisualChildNode}
+ * @returns the visual representation of type {@link VisualChildNode}
  */
 export function toVisualTree(tree: VisualSharedTreeNode): VisualChildNode {
 	if (tree.kind === VisualSharedTreeNodeKind.LeafNode) {

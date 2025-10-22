@@ -227,7 +227,7 @@ describeCompat("TableDocument", "LoaderCompat", (getTestObjectProvider) => {
 			assert.equal(slice.numRows, 2);
 
 			const visited: string[] = [];
-			(slice as TableSlice).values.forEachRowMajor((row, col) => {
+			(slice as TableSlice).values?.forEachRowMajor((row, col) => {
 				visited.push(`${row},${col}`);
 				return true;
 			});
@@ -251,7 +251,7 @@ describeCompat("TableDocument", "LoaderCompat", (getTestObjectProvider) => {
 			assert.equal(slice.numRows, 2);
 
 			const visited: string[] = [];
-			(slice as TableSlice).values.forEachColMajor((row, col) => {
+			(slice as TableSlice).values?.forEachColMajor((row, col) => {
 				visited.push(`${row},${col}`);
 				return true;
 			});

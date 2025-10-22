@@ -38,8 +38,7 @@ export function colIndexToName(colIndex: number) {
  * @internal
  */
 export function parseRange(range: string) {
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	const matches = rangeExpr.exec(range)!;
+	const matches = rangeExpr.exec(range);
 	const minCol = colNameToIndex(matches[1]);
 	const minRow = parseInt(matches[2], 10) - 1; // 1-indexed -> 0-indexed
 	const maxCol = colNameToIndex(matches[3]);

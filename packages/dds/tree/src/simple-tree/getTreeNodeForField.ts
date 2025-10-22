@@ -40,7 +40,7 @@ export function tryGetTreeNodeForField(
 			return tryToUnboxLeaves(typedField);
 		}
 		case FieldKinds.identifier.identifier: {
-			// Identifier fields are just value fields that hold strings
+			// Identifier fields are just required fields that hold strings
 			return (field as FlexTreeRequiredField).content as string;
 		}
 

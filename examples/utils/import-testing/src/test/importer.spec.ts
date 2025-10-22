@@ -151,9 +151,11 @@ describe("import tests", () => {
 		type Inner = typeof inner;
 		type Inner2 = typeof inner2;
 		type _check1 = requireAssignableTo<undefined, Inner2>;
+
 		// This undesired assignment is permitted due to schema-aware types being mangled by `any` from d.ts file. See note on BadArraySelf.
 		// Intellisense thinks this is an error because it's not using the d.ts files and instead using the actual source which has correct typing.
-		type _check2 = requireAssignableTo<number, Inner2>;
+		// "build" tests (which compile these tests and the source in this package together) have the same behavior as intellisense, so this is disabled.
+		// type _check2 = requireAssignableTo<number, Inner2>;
 	});
 
 	it("GoodArraySelf", () => {

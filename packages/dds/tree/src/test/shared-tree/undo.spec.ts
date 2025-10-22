@@ -34,7 +34,7 @@ import { strict as assert } from "node:assert";
 import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { initialize } from "../../shared-tree/schematizeTree.js";
-import { FieldKinds } from "../../feature-libraries/index.js";
+import { combineChunks, FieldKinds } from "../../feature-libraries/index.js";
 import { asAlpha } from "../../api.js";
 
 const rootPath: NormalizedUpPath = {
@@ -709,7 +709,7 @@ export function createCheckout(json: JsonCompatible[], attachTree: boolean): ITr
 	initialize(tree.kernel.checkout, jsonSequenceRootSchema, () =>
 		initializeSequenceRoot(
 			tree.kernel.checkout,
-			tree.kernel.checkout.forest.chunkField(fieldJsonCursor(json)),
+			combineChunks(tree.kernel.checkout.forest.chunkField(fieldJsonCursor(json))),
 		),
 	);
 

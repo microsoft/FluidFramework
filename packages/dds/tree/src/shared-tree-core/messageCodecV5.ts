@@ -105,7 +105,10 @@ export function makeV5CodecWithVersion<TChangeset>(
 					return { type: "branch", sessionId: originatorId, branchId };
 				}
 
-				assert(encodedRevision !== undefined, "Commit messages must have a revision");
+				assert(
+					encodedRevision !== undefined,
+					0xc6a /* Commit messages must have a revision */,
+				);
 				const revision = revisionTagCodec.decode(encodedRevision, changeContext);
 
 				return {

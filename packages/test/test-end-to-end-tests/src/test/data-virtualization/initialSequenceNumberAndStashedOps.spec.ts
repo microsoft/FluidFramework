@@ -29,11 +29,6 @@ describeCompat(
 					},
 				},
 			},
-			loaderProps: {
-				configProvider: configProvider({
-					"Fluid.Container.enableOfflineLoad": true,
-				}),
-			},
 		};
 
 		let provider: ITestObjectProvider;

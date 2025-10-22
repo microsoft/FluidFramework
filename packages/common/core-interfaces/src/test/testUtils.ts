@@ -31,6 +31,13 @@ export function assertIdenticalTypes<const T, const U>(
 }
 
 /**
+ * Use to verify that a parameter is accepted as a specific type.
+ */
+export function parameterAcceptedAs<T>(_: T): void {
+	// Do nothing.  Used to verify type compatibility.
+}
+
+/**
  * Creates a non-viable (`undefined`) instance of type T to be used for type checking.
  */
 export function createInstanceOf<T>(): T {

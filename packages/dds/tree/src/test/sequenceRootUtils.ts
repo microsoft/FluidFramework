@@ -25,9 +25,9 @@ export const jsonSequenceRootSchema: TreeStoredSchema = {
 	rootFieldSchema: {
 		kind: FieldKinds.sequence.identifier,
 		types: new Set(
-			[...normalizeAllowedTypes(JsonAsTree.Tree)].map((s) =>
-				brand<TreeNodeSchemaIdentifier>(s.identifier),
-			),
+			normalizeAllowedTypes(JsonAsTree.Tree)
+				.evaluate()
+				.map((s) => brand<TreeNodeSchemaIdentifier>(s.identifier)),
 		),
 		persistedMetadata: undefined,
 	},

@@ -47,8 +47,8 @@ function getConfig(
 	tenantSecret?: string,
 	driverPolicies?: IRouterliciousDriverPolicies,
 ) {
-	assert(tenantId, "Missing tenantId");
-	assert(tenantSecret, "Missing tenant secret");
+	assert(tenantId !== undefined, "Missing tenantId");
+	assert(tenantSecret !== undefined, "Missing tenant secret");
 	if (discoveryEndpoint !== undefined) {
 		// The hostUrl, deltaStreamUrl and deltaStorageUrl will be replaced by the URLs of the discovery result.
 		// The deltaStorageUrl is firstly set to https://dummy-historian to make the workflow successful.
@@ -64,7 +64,7 @@ function getConfig(
 			driverPolicies,
 		};
 	}
-	assert(fluidHost, "Missing Fluid host");
+	assert(fluidHost !== undefined, "Missing Fluid host");
 	return {
 		serviceEndpoint: {
 			hostUrl: fluidHost,
@@ -97,7 +97,7 @@ function getEndpointConfigFromEnv(r11sEndpointName: RouterliciousEndpoint) {
 		// Allow legacy setting from fluid__webpack__ for r11s for now
 		return getLegacyConfigFromEnv();
 	}
-	assert(configStr, `Missing config for ${r11sEndpointName}`);
+	assert(configStr !== undefined, `Missing config for ${r11sEndpointName}`);
 	const config = JSON.parse(configStr);
 	return getConfig(
 		config.discoveryEndpoint,

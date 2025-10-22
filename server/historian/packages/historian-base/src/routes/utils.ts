@@ -3,18 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { RequestHandler } from "express";
-import { decode } from "jsonwebtoken";
-import type * as nconf from "nconf";
 import type { ITokenClaims } from "@fluidframework/protocol-definitions";
 import { NetworkError } from "@fluidframework/server-services-client";
-import { validateTokenClaims } from "@fluidframework/server-services-utils";
-import { handleResponse } from "@fluidframework/server-services-shared";
-import {
-	Lumberjack,
-	getGlobalTelemetryContext,
-	getLumberBaseProperties,
-} from "@fluidframework/server-services-telemetry";
 import {
 	runWithRetry,
 	type IStorageNameRetriever,
@@ -23,6 +13,17 @@ import {
 	type IThrottler,
 	type IDenyList,
 } from "@fluidframework/server-services-core";
+import { handleResponse } from "@fluidframework/server-services-shared";
+import {
+	Lumberjack,
+	getGlobalTelemetryContext,
+	getLumberBaseProperties,
+} from "@fluidframework/server-services-telemetry";
+import { validateTokenClaims } from "@fluidframework/server-services-utils";
+import type { RequestHandler } from "express";
+import { decode } from "jsonwebtoken";
+import type * as nconf from "nconf";
+
 import {
 	type ICache,
 	type ITenantService,
@@ -352,6 +353,7 @@ export function verifyToken(
 	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	return async (request, response, next) => {
 		try {
+			// eslint-disable-next-line @fluid-internal/fluid/no-unchecked-record-access
 			const reqTenantId = request.params.tenantId;
 			const authorization = request.get("Authorization");
 			if (!authorization) {

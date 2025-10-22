@@ -23,7 +23,7 @@ import type { IGCMetadata } from "../gc/index.js";
 import type { IDocumentSchema } from "./documentSchema.js";
 
 /**
- * @deprecated - This interface will no longer be exported in the future(AB#8004).
+ * @deprecated This interface will no longer be exported in the future(AB#8004).
  * @legacy @beta
  */
 export type OmitAttributesVersions<T> = Omit<
@@ -32,7 +32,7 @@ export type OmitAttributesVersions<T> = Omit<
 >;
 
 /**
- * @deprecated - This interface will no longer be exported in the future(AB#8004).
+ * @deprecated This interface will no longer be exported in the future(AB#8004).
  * @legacy @beta
  */
 export interface IFluidDataStoreAttributes0 {
@@ -48,7 +48,7 @@ export interface IFluidDataStoreAttributes0 {
 }
 
 /**
- * @deprecated - This interface will no longer be exported in the future(AB#8004).
+ * @deprecated This interface will no longer be exported in the future(AB#8004).
  * @legacy @beta
  */
 export interface IFluidDataStoreAttributes1
@@ -58,7 +58,7 @@ export interface IFluidDataStoreAttributes1
 }
 
 /**
- * @deprecated - This interface will no longer be exported in the future(AB#8004).
+ * @deprecated This interface will no longer be exported in the future(AB#8004).
  * @legacy @beta
  */
 export interface IFluidDataStoreAttributes2
@@ -81,7 +81,7 @@ export interface IFluidDataStoreAttributes2
  * store like the package, snapshotFormatVersion to take different decisions based on a particular
  * snapshotFormatVersion.
  *
- * @deprecated - This interface will no longer be exported in the future(AB#8004).
+ * @deprecated This interface will no longer be exported in the future(AB#8004).
  *
  * @legacy @beta
  *
@@ -126,7 +126,7 @@ export function hasIsolatedChannels(attributes: ReadFluidDataStoreAttributes): b
 export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGCMetadata {
 	readonly summaryFormatVersion: 1;
 	/**
-	 * @deprecated - used by old (prior to 2.0 RC3) runtimes
+	 * @deprecated used by old (prior to 2.0 RC3) runtimes
 	 */
 	readonly message?: ISummaryMetadataMessage;
 	/**

@@ -11,10 +11,7 @@ import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
-import {
-	type ITestObjectProvider,
-	createTestConfigProvider,
-} from "@fluidframework/test-utils/internal";
+import { type ITestObjectProvider } from "@fluidframework/test-utils/internal";
 
 describeCompat("Offline Attach Ops", "NoCompat", (getTestObjectProvider, apis) => {
 	const { DataObjectFactory, DataObject } = apis.dataRuntime;
@@ -66,18 +63,13 @@ describeCompat("Offline Attach Ops", "NoCompat", (getTestObjectProvider, apis) =
 	});
 
 	let provider: ITestObjectProvider;
-	const configProvider = createTestConfigProvider({
-		"Fluid.Container.enableOfflineLoad": true,
-	});
 	beforeEach("setup", async function () {
 		provider = getTestObjectProvider();
 	});
 
 	it("Can create loadingGroupId", async () => {
 		const container: ContainerAlpha = asLegacyAlpha(
-			await provider.createContainer(runtimeFactory, {
-				configProvider,
-			}),
+			await provider.createContainer(runtimeFactory),
 		);
 		const mainObject = (await container.getEntryPoint()) as TestDataObject;
 
@@ -92,11 +84,6 @@ describeCompat("Offline Attach Ops", "NoCompat", (getTestObjectProvider, apis) =
 		assert(serializedState !== undefined, "serializedState should not be undefined");
 
 		// This should not hang
-		await provider.loadContainer(
-			runtimeFactory,
-			{ configProvider },
-			undefined,
-			serializedState,
-		);
+		await provider.loadContainer(runtimeFactory, undefined, undefined, serializedState);
 	});
 });

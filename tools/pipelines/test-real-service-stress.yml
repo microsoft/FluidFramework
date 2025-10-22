@@ -19,6 +19,10 @@ resources:
       - main
       - next
       - lts
+  repositories:
+  - repository: ff_pipeline_host
+    type: git
+    name: ff_pipeline_host
 
 variables:
 - template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
@@ -42,6 +46,7 @@ stages:
     parameters:
       stageId: stress_tests_odsp
       stageDisplayName: Stress tests - Odsp
+      odspTenantType: prod
       poolBuild: Large-eastus2
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
@@ -59,6 +64,7 @@ stages:
     parameters:
       stageId: stress_tests_odspdf
       stageDisplayName: Stress tests - Odspdf
+      odspTenantType: dogfood
       poolBuild: Large-eastus2
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
@@ -67,11 +73,7 @@ stages:
       testCommand: start:odspdf
       skipTestResultPublishing: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
-      stageVariables:
-        - group: stress-odspdf-lock
       env:
-        login__microsoft__clientId: $(login-microsoft-clientId)
-        login__odspdf__test__tenants: $(automation-stress-login-odspdf-test-tenants)
         FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
         FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
 
@@ -106,6 +108,7 @@ stages:
       artifactBuildId: $(resources.pipeline.client.runID)
       timeoutInMinutes: 120
       testCommand: start:frs
+      lockBehavior: sequential
       skipTestResultPublishing: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       stageVariables:
@@ -126,6 +129,7 @@ stages:
       artifactBuildId: $(resources.pipeline.client.runID)
       timeoutInMinutes: 120
       testCommand: start:frs:canary
+      lockBehavior: sequential
       skipTestResultPublishing: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       stageVariables:

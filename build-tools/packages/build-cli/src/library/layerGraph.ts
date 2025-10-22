@@ -254,7 +254,7 @@ class PackageNode extends BaseNode {
 	/**
 	 * Packages this package is directly dependent upon
 	 */
-	public get childDependencies(): Readonly<PackageNode[]> {
+	public get childDependencies(): readonly PackageNode[] {
 		return this._childDependencies;
 	}
 

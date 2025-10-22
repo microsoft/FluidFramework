@@ -63,7 +63,7 @@ export function Uint8ArrayToString(
  *
  * @internal
  */
-export function stringToBuffer(input: string, encoding: string): ArrayBufferLike {
+export function stringToBuffer(input: string, encoding: string): ArrayBuffer {
 	const iso = IsoBuffer.from(input, encoding);
 	// In a Node environment, IsoBuffer may be a Node.js Buffer.  Node.js will
 	// pool multiple small Buffer instances into a single ArrayBuffer, in which

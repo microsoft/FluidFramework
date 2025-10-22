@@ -148,22 +148,18 @@ export class SampledTelemetryHelper<
 	private readonly measurementsMap = new Map<string, LoggerData>();
 
 	/**
-	 * @param eventBase -
-	 * Custom properties to include in the telemetry performance event when it is written.
-	 * @param logger -
-	 * The logger to use to write the telemetry performance event.
-	 * @param sampleThreshold -
-	 * Telemetry performance events will be generated every time we hit this many executions of the code block.
-	 * @param includeAggregateMetrics -
-	 * If set to `true`, the telemetry performance event will include aggregated metrics (total duration, min duration,
-	 * max duration) for all the executions in between generated events.
-	 * @param perBucketProperties -
-	 * Map of strings that represent different buckets (which can be specified when calling the 'measure' method), to
-	 * properties which should be added to the telemetry event for that bucket. If a bucket being measured does not
-	 * have an entry in this map, no additional properties will be added to its telemetry events. The following keys are
-	 * reserved for use by this class: "duration", "count", "totalDuration", "minDuration", "maxDuration". If any of
-	 * them is specified as a key in one of the ITelemetryBaseProperties objects in this map, that key-value pair will be
-	 * ignored.
+	 * @param eventBase - Custom properties to include in the telemetry performance event when it is written.
+	 * @param logger - The logger to use to write the telemetry performance event.
+	 * @param sampleThreshold - Telemetry performance events will be generated every time we hit this many executions
+	 * of the code block.
+	 * @param includeAggregateMetrics - If set to `true`, the telemetry performance event will include aggregated
+	 * metrics (total duration, min duration, max duration) for all the executions in between generated events.
+	 * @param perBucketProperties - Map of strings that represent different buckets (which can be specified when calling
+	 * the 'measure' method), to properties which should be added to the telemetry event for that bucket.
+	 * If a bucket being measured does not have an entry in this map, no additional properties will be added to its
+	 * telemetry events. The following keys are reserved for use by this class: "duration", "count", "totalDuration",
+	 * "minDuration", "maxDuration". If any of them is specified as a key in one of the ITelemetryBaseProperties objects
+	 * in this map, that key-value pair will be ignored.
 	 */
 	public constructor(
 		private readonly eventBase: ITelemetryGenericEventExt,

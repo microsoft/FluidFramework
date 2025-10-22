@@ -143,8 +143,8 @@ export class ValueProperty extends BaseProperty {
 	 * @param {boolean} in_dirtyOnly - Only include dirty entries in the serialization
 	 * @param {boolean} in_includeRootTypeid - Include the typeid of the root of the hierarchy.
 	 * Has no effect for ValueProperty
-	 * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_dirtinessType] -
-	 * The type of dirtiness to use when reporting dirty changes. By default this is `PENDING_CHANGE`.
+	 * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_dirtinessType] - The type of dirtiness to use
+	 * when reporting dirty changes. By default this is `PENDING_CHANGE`.
 	 * @param {boolean} [in_includeReferencedRepositories=false] - If this is set to true, the serialize
 	 * function will descend into referenced repositories. WARNING: if there are loops in the references
 	 * this can result in an infinite loop

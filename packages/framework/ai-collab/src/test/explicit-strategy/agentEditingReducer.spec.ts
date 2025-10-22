@@ -1646,8 +1646,7 @@ describe("Diff Creation", () => {
 				nodePath: [
 					{
 						shortId: undefined,
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						schemaIdentifier: getSchemaIdentifier(modifyEdit.modification)!,
+						schemaIdentifier: getSchemaIdentifier(modifyEdit.modification),
 						parentField: "nestedStr",
 					},
 					{

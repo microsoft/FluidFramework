@@ -697,7 +697,7 @@ export function diffHistories<TChange>(
 	const sourcePath: GraphCommit<TChange>[] = [];
 	const targetPath: GraphCommit<TChange>[] = [];
 	const ancestor = findCommonAncestor([sourceCommit, sourcePath], [targetCommit, targetPath]);
-	assert(ancestor !== undefined, "Branches must be related");
+	assert(ancestor !== undefined, 0xc6f /* Branches must be related */);
 	const inverses = sourcePath.map((commit) =>
 		rollbackFromCommit(changeRebaser, commit, mintRevisionTag),
 	);

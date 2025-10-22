@@ -64,20 +64,25 @@ describe("toStoredSchema", () => {
 
 	describe("toInitialSchema with staged schema", () => {
 		it("root", () => {
-			const converted = toInitialSchema([
-				SchemaFactoryAlpha.number,
-				SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
-			]);
+			const converted = toInitialSchema(
+				SchemaFactoryAlpha.types([
+					SchemaFactoryAlpha.number,
+					SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+				]),
+			);
 			const field = converted.rootFieldSchema;
 			assert.equal(field.types.size, 1);
 		});
 
 		it("shallow", () => {
 			const schemaFactory = new SchemaFactoryAlpha("com.example");
-			class TestArray extends schemaFactory.arrayAlpha("TestArray", [
-				SchemaFactoryAlpha.number,
-				SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
-			]) {}
+			class TestArray extends schemaFactory.arrayAlpha(
+				"TestArray",
+				SchemaFactoryAlpha.types([
+					SchemaFactoryAlpha.number,
+					SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+				]),
+			) {}
 
 			const converted = toInitialSchema(TestArray);
 			const node = converted.nodeSchema.get(brand(TestArray.identifier)) ?? assert.fail();
@@ -87,10 +92,13 @@ describe("toStoredSchema", () => {
 
 		it("nested", () => {
 			const schemaFactory = new SchemaFactoryAlpha("com.example");
-			class TestArray extends schemaFactory.arrayAlpha("TestArray", [
-				SchemaFactoryAlpha.number,
-				SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
-			]) {}
+			class TestArray extends schemaFactory.arrayAlpha(
+				"TestArray",
+				SchemaFactoryAlpha.types([
+					SchemaFactoryAlpha.number,
+					SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+				]),
+			) {}
 			class Root extends schemaFactory.objectAlpha("TestObject", {
 				foo: TestArray,
 			}) {}
@@ -113,11 +121,15 @@ describe("toStoredSchema", () => {
 
 		it("staged", () => {
 			const storedRestrictive = convertField(
-				SchemaFactoryAlpha.required(SchemaFactoryAlpha.staged(SchemaFactory.number)),
+				SchemaFactoryAlpha.required(
+					SchemaFactoryAlpha.types([SchemaFactoryAlpha.staged(SchemaFactory.number)]),
+				),
 				restrictiveStoredSchemaGenerationOptions,
 			);
 			const storedPermissive = convertField(
-				SchemaFactoryAlpha.required(SchemaFactoryAlpha.staged(SchemaFactory.number)),
+				SchemaFactoryAlpha.required(
+					SchemaFactoryAlpha.types([SchemaFactoryAlpha.staged(SchemaFactory.number)]),
+				),
 				permissiveStoredSchemaGenerationOptions,
 			);
 			assert.equal(storedRestrictive.kind, FieldKinds.required.identifier);

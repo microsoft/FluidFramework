@@ -178,7 +178,7 @@ export interface IFluidDataStoreRuntime
 
 /**
  * @experimental
- * @deprecated - These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
+ * @deprecated These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
  * @legacy @beta
  * @sealed
  */

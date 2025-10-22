@@ -86,7 +86,7 @@ import {
 import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
 import {
 	createTreeNodeFromInner,
-	getOrCreateInnerNode,
+	getInnerNode,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/core/treeNodeKernel.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -194,12 +194,12 @@ describe("treeNodeApi", () => {
 						() => invalidations.add("exportCompressed"),
 						() =>
 							TreeAlpha.exportCompressed(node, {
-								oldestCompatibleClient: FluidClientVersion.v2_0,
+								minVersionForCollab: FluidClientVersion.v2_0,
 							}),
 					);
 					TreeAlpha.trackObservations(
 						() => invalidations.add("exportConcise"),
-						() => TreeAlpha.exportConcise(node, {}),
+						() => TreeBeta.exportConcise(node, {}),
 					);
 					TreeAlpha.trackObservations(
 						() => invalidations.add("exportVerbose"),
@@ -723,7 +723,7 @@ describe("treeNodeApi", () => {
 			});
 
 			it("Unknown optional fields not considered", () => {
-				class TestObjectOld extends schema.objectAlpha(
+				class TestObjectOld extends schema.object(
 					"TestObject",
 					{
 						foo: schema.string,
@@ -733,7 +733,7 @@ describe("treeNodeApi", () => {
 					},
 				) {}
 
-				class TestObjectNew extends schema.objectAlpha("TestObject", {
+				class TestObjectNew extends schema.object("TestObject", {
 					foo: schema.string,
 					bar: schema.optional(schema.string),
 				}) {}
@@ -2871,7 +2871,10 @@ describe("treeNodeApi", () => {
 		it("can clone staged types", () => {
 			const schemaFactoryAlpha = new SchemaFactoryAlpha("shared tree tests");
 			class StagedSchema extends schemaFactoryAlpha.objectAlpha("TestObject", {
-				foo: [SchemaFactoryAlpha.number, SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string)],
+				foo: SchemaFactoryAlpha.types([
+					SchemaFactoryAlpha.number,
+					SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+				]),
 			}) {}
 
 			const original = new StagedSchema({ foo: "test" });
@@ -2883,7 +2886,10 @@ describe("treeNodeApi", () => {
 		describe("clone uses stored schema from source, breaking insertion of staged types the source lacked", () => {
 			const schemaFactoryAlpha = new SchemaFactoryAlpha("shared tree tests");
 			class StagedSchema extends schemaFactoryAlpha.objectAlpha("TestObject", {
-				foo: [SchemaFactoryAlpha.number, SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string)],
+				foo: SchemaFactoryAlpha.types([
+					SchemaFactoryAlpha.number,
+					SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+				]),
 			}) {}
 			it("Unhydrated case: staged type is allowed", () => {
 				const original = new StagedSchema({ foo: 5 });
@@ -2911,7 +2917,7 @@ describe("treeNodeApi", () => {
 				const clone = TreeBeta.clone<typeof StagedSchema>(original);
 				expectTreesEqual(original, clone);
 
-				const context = getOrCreateInnerNode(clone).context;
+				const context = getInnerNode(clone).context;
 				const flexSchema =
 					context.schema.nodeSchema.get(brand(StagedSchema.identifier)) ?? assert.fail();
 
@@ -3114,32 +3120,32 @@ describe("treeNodeApi", () => {
 		describe("importConcise", () => {
 			it("undefined", () => {
 				// Valid
-				assert.equal(TreeAlpha.importConcise(schema.optional([]), undefined), undefined);
+				assert.equal(TreeBeta.importConcise(schema.optional([]), undefined), undefined);
 				// Undefined where not allowed
 				assert.throws(
-					() => TreeAlpha.importConcise(schema.required([]), undefined),
+					() => TreeBeta.importConcise(schema.required([]), undefined),
 					validateUsageError(/Got undefined for non-optional field/),
 				);
 				// Undefined required, not provided
 				assert.throws(
-					() => TreeAlpha.importConcise(schema.optional([]), 1),
+					() => TreeBeta.importConcise(schema.optional([]), 1),
 					validateUsageError(/incompatible with all of the types allowed/),
 				);
 			});
 
 			it("union", () => {
 				// Valid
-				assert.equal(TreeAlpha.importConcise([schema.null, schema.number], null), null);
+				assert.equal(TreeBeta.importConcise([schema.null, schema.number], null), null);
 				// invalid
 				assert.throws(
-					() => TreeAlpha.importConcise([schema.null, schema.number], "x"),
+					() => TreeBeta.importConcise([schema.null, schema.number], "x"),
 					validateUsageError(/The provided data is incompatible/),
 				);
 			});
 
 			it("object", () => {
 				const A = schema.object("A", { x: schema.number });
-				const a = TreeAlpha.importConcise(A, { x: 1 });
+				const a = TreeBeta.importConcise(A, { x: 1 });
 				assert.deepEqual(a, { x: 1 });
 			});
 		});
@@ -3148,7 +3154,7 @@ describe("treeNodeApi", () => {
 			for (const testCase of testDocuments) {
 				it(testCase.name, () => {
 					const view = testDocumentIndependentView(testCase);
-					const exported = TreeAlpha.exportConcise(view.root);
+					const exported = TreeBeta.exportConcise(view.root);
 					if (testCase.ambiguous) {
 						assert.throws(
 							() => TreeAlpha.importConcise<UnsafeUnknownSchema>(testCase.schema, exported),
@@ -3162,7 +3168,7 @@ describe("treeNodeApi", () => {
 						if (!testCase.hasUnknownOptionalFields) {
 							expectTreesEqual(view.root, imported);
 						}
-						const exported2 = TreeAlpha.exportConcise(imported);
+						const exported2 = TreeBeta.exportConcise(imported);
 						assert.deepEqual(exported, exported2);
 					}
 				});
@@ -3173,7 +3179,7 @@ describe("treeNodeApi", () => {
 			for (const testCase of testDocuments) {
 				it(testCase.name, () => {
 					const view = testDocumentIndependentView(testCase);
-					const exported = TreeAlpha.exportConcise(view.root, {
+					const exported = TreeBeta.exportConcise(view.root, {
 						keys: KeyEncodingOptions.allStoredKeys,
 					});
 					// We have nothing that imports concise trees with stored keys, so no validation here.
@@ -3181,16 +3187,16 @@ describe("treeNodeApi", () => {
 					// Test exporting unhydrated nodes.
 					// For nodes with unknown optional fields and thus are picky about the context, this can catch issues with the context.
 					const clone = TreeBeta.clone(view.root);
-					const exportedClone = TreeAlpha.exportConcise(clone, {
+					const exportedClone = TreeBeta.exportConcise(clone, {
 						keys: KeyEncodingOptions.allStoredKeys,
 					});
 
 					assert.deepEqual(exported, exportedClone);
 
-					const exportedKnown = TreeAlpha.exportConcise(view.root, {
+					const exportedKnown = TreeBeta.exportConcise(view.root, {
 						keys: KeyEncodingOptions.knownStoredKeys,
 					});
-					const exportedCloneKnown = TreeAlpha.exportConcise(clone, {
+					const exportedCloneKnown = TreeBeta.exportConcise(clone, {
 						keys: KeyEncodingOptions.knownStoredKeys,
 					});
 
@@ -3206,7 +3212,7 @@ describe("treeNodeApi", () => {
 		});
 
 		it("export-undefined", () => {
-			assert.equal(TreeAlpha.exportConcise(undefined), undefined);
+			assert.equal(TreeBeta.exportConcise(undefined), undefined);
 		});
 	});
 
@@ -3527,7 +3533,7 @@ describe("treeNodeApi", () => {
 						);
 						assert(tree !== undefined);
 						const exported = TreeAlpha.exportCompressed(tree, {
-							oldestCompatibleClient: FluidClientVersion.v2_0,
+							minVersionForCollab: FluidClientVersion.v2_0,
 						});
 						const imported = TreeAlpha.importCompressed(testCase.schema, exported, {
 							jsonValidator: ajvValidator,
@@ -3581,6 +3587,6 @@ function expectTreesEqual(
 	// Since this uses some of the tools to compare trees that this is testing for, perform the comparison in a few ways to reduce risk of a bug making this pass when it shouldn't:
 	// This case could have false negatives (two trees with ambiguous schema could export the same concise tree),
 	// but should have no false positives since equal trees always have the same concise tree.
-	assert.deepEqual(TreeAlpha.exportConcise(a), TreeAlpha.exportConcise(b));
+	assert.deepEqual(TreeBeta.exportConcise(a), TreeBeta.exportConcise(b));
 	assert.deepEqual(TreeAlpha.exportVerbose(a), TreeAlpha.exportVerbose(b));
 }

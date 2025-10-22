@@ -30,7 +30,7 @@ export class StorageServiceWithAttachBlobs implements IRuntimeStorageService {
 
 	/**
 	 * {@link IRuntimeStorageService.policies}.
-	 * @deprecated - This will be removed in a future release. The DataStore layer does not need this.
+	 * @deprecated This will be removed in a future release. The DataStore layer does not need this.
 	 */
 	public get policies(): IDocumentStorageServicePolicies | undefined {
 		return this.internalStorageService.policies;
@@ -49,7 +49,7 @@ export class StorageServiceWithAttachBlobs implements IRuntimeStorageService {
 
 	/**
 	 * {@link IRuntimeStorageService.getSnapshotTree}.
-	 * @deprecated - This will be removed in a future release. The DataStore layer does not need this.
+	 * @deprecated This will be removed in a future release. The DataStore layer does not need this.
 	 */
 	public async getSnapshotTree(
 		version?: IVersion,
@@ -61,7 +61,7 @@ export class StorageServiceWithAttachBlobs implements IRuntimeStorageService {
 
 	/**
 	 * {@link IRuntimeStorageService.getSnapshot}.
-	 * @deprecated - This will be removed in a future release. The DataStore layer does not need this.
+	 * @deprecated This will be removed in a future release. The DataStore layer does not need this.
 	 */
 	public async getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot> {
 		if (this.internalStorageService.getSnapshot !== undefined) {
@@ -74,7 +74,7 @@ export class StorageServiceWithAttachBlobs implements IRuntimeStorageService {
 
 	/**
 	 * {@link IRuntimeStorageService.getVersions}.
-	 * @deprecated - This will be removed in a future release. The DataStore layer does not need this.
+	 * @deprecated This will be removed in a future release. The DataStore layer does not need this.
 	 */
 	public async getVersions(
 		// eslint-disable-next-line @rushstack/no-new-null
@@ -93,7 +93,7 @@ export class StorageServiceWithAttachBlobs implements IRuntimeStorageService {
 
 	/**
 	 * {@link IRuntimeStorageService.uploadSummaryWithContext}.
-	 * @deprecated - This will be removed in a future release. The DataStore layer does not need this.
+	 * @deprecated This will be removed in a future release. The DataStore layer does not need this.
 	 */
 	public async uploadSummaryWithContext(
 		summary: ISummaryTree,
@@ -104,7 +104,7 @@ export class StorageServiceWithAttachBlobs implements IRuntimeStorageService {
 
 	/**
 	 * {@link IRuntimeStorageService.createBlob}.
-	 * @deprecated - This will be removed in a future release. The DataStore layer does not need this.
+	 * @deprecated This will be removed in a future release. The DataStore layer does not need this.
 	 */
 	public async createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse> {
 		return this.internalStorageService.createBlob(file);
@@ -112,7 +112,7 @@ export class StorageServiceWithAttachBlobs implements IRuntimeStorageService {
 
 	/**
 	 * {@link IRuntimeStorageService.downloadSummary}.
-	 * @deprecated - This will be removed in a future release. The DataStore layer does not need this.
+	 * @deprecated This will be removed in a future release. The DataStore layer does not need this.
 	 */
 	public async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
 		return this.internalStorageService.downloadSummary(handle);

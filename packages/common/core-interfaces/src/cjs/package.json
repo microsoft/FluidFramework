@@ -12,7 +12,7 @@
 		},
 		"./internal": {
 			"types": "./internal.d.ts",
-			"default": "./index.js"
+			"default": "./internal.js"
 		},
 		"./internal/exposedUtilityTypes": "./exposedUtilityTypes.js"
 	}

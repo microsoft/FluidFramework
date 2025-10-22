@@ -7,7 +7,7 @@ import http from "http";
 
 import { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
-import Agent from "agentkeepalive";
+import { HttpAgent } from "agentkeepalive";
 
 import { LocalDriverApi, LocalDriverApiType } from "./localDriverApi.js";
 import { LocalServerTestDriver } from "./localServerTestDriver.js";
@@ -44,7 +44,7 @@ export const DriverApi: DriverApiType = {
 // our drivers will end up throwing an error like ECONNRESET or "socket hang up", indicating that "the other side of
 // the connection closed it abruptly", which in this case isn't really abruptly, it's just that the client doesn't
 // immediately react to the server closing the socket.
-http.globalAgent = new Agent();
+http.globalAgent = new HttpAgent();
 
 /**
  * @internal

@@ -147,6 +147,15 @@ module.exports = {
 			range: "",
 		},
 
+		// @fluid-example/import-testing typescript versions should use ~
+		{
+			label: "@fluid-example/import-testing typescript versions should use ~",
+			dependencies: ["typescript-*"],
+			dependencyTypes: ["dev"],
+			packages: ["@fluid-example/import-testing"],
+			range: "~",
+		},
+
 		// All deps should use caret ranges unless previously overridden
 		{
 			label: "Dependencies should use caret dependency ranges",

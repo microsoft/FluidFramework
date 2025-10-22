@@ -29,7 +29,7 @@ parameters:
   default: $(Agent.TempDirectory)
 
 steps:
-- checkout: git://internal/ff_pipeline_host
+- checkout: ff_pipeline_host
 
 - task: Bash@3
   displayName: Print parameter/variable values for troubleshooting

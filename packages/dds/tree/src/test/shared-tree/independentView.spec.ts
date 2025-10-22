@@ -35,7 +35,7 @@ describe("independentView", () => {
 				{
 					schema: extractPersistedSchema(config.schema, FluidClientVersion.v2_0, () => true),
 					tree: TreeAlpha.exportCompressed(1, {
-						oldestCompatibleClient: FluidClientVersion.v2_0,
+						minVersionForCollab: FluidClientVersion.v2_0,
 					}),
 					idCompressor: testIdCompressor,
 				},

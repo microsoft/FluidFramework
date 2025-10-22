@@ -26,17 +26,14 @@ import {
 	typeNameSymbol,
 	type TreeNode,
 	typeSchemaSymbol,
-	getOrCreateInnerNode,
+	getInnerNode,
 	type InternalTreeNode,
 	type UnhydratedFlexTreeNode,
 	normalizeAllowedTypes,
-	unannotateImplicitAllowedTypes,
 	type ImplicitAllowedTypes,
-	type ImplicitAnnotatedAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type NodeSchemaMetadata,
 	type TreeNodeFromImplicitAllowedTypes,
-	type UnannotateImplicitAllowedTypes,
 	TreeNodeValid,
 	type MostDerivedData,
 	type TreeNodeSchemaInitializedData,
@@ -68,6 +65,7 @@ import type {
 } from "./mapNodeTypes.js";
 import { recordLikeDataToFlexContent } from "../common.js";
 import { MapNodeStoredSchema } from "../../../core/index.js";
+import type { NodeSchemaOptionsAlpha } from "../../api/index.js";
 
 /**
  * A map of string keys to tree objects.
@@ -176,7 +174,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 	}
 
 	private get innerNode(): InnerNode {
-		return getOrCreateInnerNode(this);
+		return getInnerNode(this);
 	}
 
 	private editor(key: string): OptionalFieldEditBuilder<FlexibleNodeContent> {
@@ -245,7 +243,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		callbackFn: (value: TreeNodeFromImplicitAllowedTypes<T>, key: string, map: TThis) => void,
 		thisArg?: unknown,
 	): void {
-		for (const field of getOrCreateInnerNode(this)) {
+		for (const field of getInnerNode(this)) {
 			const node = tryGetTreeNodeForField(field) as TreeNodeFromImplicitAllowedTypes<T>;
 			callbackFn.call(thisArg, node, field.key, this);
 		}
@@ -263,7 +261,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function mapSchema<
 	TName extends string,
-	const T extends ImplicitAnnotatedAllowedTypes,
+	const T extends ImplicitAllowedTypes,
 	const ImplicitlyConstructable extends boolean,
 	const TCustomMetadata = unknown,
 >(
@@ -271,22 +269,17 @@ export function mapSchema<
 	info: T,
 	implicitlyConstructable: ImplicitlyConstructable,
 	useMapPrototype: boolean,
-	metadata?: NodeSchemaMetadata<TCustomMetadata>,
-	persistedMetadata?: JsonCompatibleReadOnlyObject | undefined,
+	nodeOptions: NodeSchemaOptionsAlpha<TCustomMetadata> = {},
 ) {
-	const lazyChildTypes = new Lazy(() =>
-		normalizeAllowedTypes(unannotateImplicitAllowedTypes(info)),
-	);
+	const normalizedTypes = normalizeAllowedTypes(info);
 	const lazyAllowedTypesIdentifiers = new Lazy(
-		() => new Set([...lazyChildTypes.value].map((type) => type.identifier)),
+		() => new Set(normalizedTypes.evaluate().map((type) => type.identifier)),
 	);
 
 	let privateData: TreeNodeSchemaPrivateData | undefined;
+	const persistedMetadata = nodeOptions.persistedMetadata;
 
-	class Schema
-		extends CustomMapNodeBase<UnannotateImplicitAllowedTypes<T>>
-		implements TreeMapNode<UnannotateImplicitAllowedTypes<T>>
-	{
+	class Schema extends CustomMapNodeBase<T> implements TreeMapNode<T> {
 		public static override prepareInstance<T2>(
 			this: typeof TreeNodeValid<T2>,
 			instance: TreeNodeValid<T2>,
@@ -325,9 +318,10 @@ export function mapSchema<
 		public static readonly implicitlyConstructable: ImplicitlyConstructable =
 			implicitlyConstructable;
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
-			return lazyChildTypes.value;
+			return normalizedTypes.evaluateSet();
 		}
-		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
+		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> =
+			nodeOptions.metadata ?? {};
 		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
 			persistedMetadata;
 
@@ -342,7 +336,7 @@ export function mapSchema<
 		public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
 			return (privateData ??= createTreeNodeSchemaPrivateData(
 				this,
-				[info],
+				[normalizedTypes],
 				(storedOptions) =>
 					new MapNodeStoredSchema(
 						{

@@ -36,11 +36,6 @@ describeCompat("Container dirty flag", "NoCompat", (getTestObjectProvider, apis)
 	const testContainerConfig: ITestContainerConfig = {
 		fluidDataObjectType: DataObjectFactoryType.Test,
 		registry,
-		loaderProps: {
-			configProvider: configProvider({
-				"Fluid.Container.enableOfflineLoad": true,
-			}),
-		},
 	};
 
 	let provider: ITestObjectProvider;

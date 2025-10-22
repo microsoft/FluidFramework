@@ -14,11 +14,8 @@ module.exports = {
 	rules: {
 		"import/no-nodejs-modules": "off",
 
-		// TODO: enable strict null checks in tsconfig and remove these overrides
-		"@typescript-eslint/prefer-nullish-coalescing": "off",
-		"@typescript-eslint/strict-boolean-expressions": "off",
-
-		// TODO: fix violations and remove this override
+		// TODO: fix violations and remove these overrides
 		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+		"@typescript-eslint/strict-boolean-expressions": "warn",
 	},
 };

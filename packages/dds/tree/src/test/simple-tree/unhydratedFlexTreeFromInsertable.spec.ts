@@ -1025,7 +1025,8 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 				checkout: dummyContext.checkout,
 				nodeKeyManager,
 			};
-			prepareContentForHydration([actual], context.checkout.forest, context);
+
+			prepareContentForHydration([actual], () => {}, context);
 
 			const expected: MapTree = {
 				type: brand("test.object"),

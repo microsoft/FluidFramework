@@ -41,7 +41,6 @@ import type {
 	IContainerRuntimeWithResolveHandle_Deprecated,
 	JoinedStatus,
 	OutboundExtensionMessage,
-	UnverifiedBrand,
 } from "@fluidframework/container-runtime-definitions/internal";
 import type {
 	FluidObject,
@@ -283,6 +282,7 @@ import {
 	type IRootSummarizerNodeWithGC,
 	type ISerializedElection,
 	isSummariesDisabled,
+	isSummaryOnRequest,
 	type ISubmitSummaryOptions,
 	type ISummarizeResults,
 	type ISummarizerInternalsProvider,
@@ -710,13 +710,6 @@ export interface UnknownIncomingTypedMessage extends TypedMessage {
 	content: OpaqueJsonDeserialized<unknown>;
 }
 
-/**
- * Does nothing helper to apply unverified branding to a value.
- */
-function markUnverified<const T>(value: T): T & UnverifiedBrand<T> {
-	return value as T & UnverifiedBrand<T>;
-}
-
 type UnsequencedSignalEnvelope = Omit<ISignalEnvelope, "clientBroadcastSignalSequenceNumber">;
 
 /**
@@ -737,7 +730,9 @@ export interface LoadContainerRuntimeParams {
 	 */
 	existing: boolean;
 	/**
-	 * Additional options to be passed to the runtime
+	 * Additional options to be passed to the runtime.
+	 * @remarks
+	 * Defaults to `{}`.
 	 */
 	runtimeOptions?: IContainerRuntimeOptions;
 	/**
@@ -836,37 +831,60 @@ export class ContainerRuntime
 {
 	/**
 	 * Load the stores from a snapshot and returns the runtime.
-	 * @param params - An object housing the runtime properties:
-	 * - context - Context of the container.
-	 * - registryEntries - Mapping from data store types to their corresponding factories.
-	 * - existing - Pass 'true' if loading from an existing snapshot.
-	 * - requestHandler - (optional) Request handler for the request() method of the container runtime.
-	 * Only relevant for back-compat while we remove the request() method and move fully to entryPoint as the main pattern.
-	 * - runtimeOptions - Additional options to be passed to the runtime
-	 * - containerScope - runtime services provided with context
-	 * - containerRuntimeCtor - Constructor to use to create the ContainerRuntime instance.
-	 * This allows mixin classes to leverage this method to define their own async initializer.
-	 * - provideEntryPoint - Promise that resolves to an object which will act as entryPoint for the Container.
-	 * - minVersionForCollab - Minimum version of the FF runtime that this runtime supports collaboration with.
-	 * This object should provide all the functionality that the Container is expected to provide to the loader layer.
+	 * @param params - An object housing the runtime properties.
+	 * {@link LoadContainerRuntimeParams} except internal, while still having layer compat obligations.
+	 * @privateRemarks
+	 * Despite this being `@internal`, `@fluidframework/test-utils` uses it in `createTestContainerRuntimeFactory` and assumes multiple versions of the package expose the same API.
+	 *
+	 * Also note that `mixinAttributor` from `@fluid-experimental/attributor` overrides this function:
+	 * that will have to be updated if changing the signature of this function as well.
+	 *
+	 * Assuming these usages are updated appropriately,
+	 * `loadRuntime` could be removed (replaced by `loadRuntime2` which could be renamed back to `loadRuntime`).
 	 */
-	public static async loadRuntime(params: {
-		context: IContainerContext;
-		registryEntries: NamedFluidDataStoreRegistryEntries;
-		existing: boolean;
-		runtimeOptions?: IContainerRuntimeOptionsInternal;
-		containerScope?: FluidObject;
-		containerRuntimeCtor?: typeof ContainerRuntime;
-		/**
-		 * @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-		 */
-		requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
-		provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
-		minVersionForCollab?: MinimumVersionForCollab;
-	}): Promise<ContainerRuntime> {
+	public static async loadRuntime(
+		params: LoadContainerRuntimeParams & {
+			/**
+			 * Constructor to use to create the ContainerRuntime instance.
+			 * @remarks
+			 * Defaults to {@link ContainerRuntime}.
+			 */
+			containerRuntimeCtor?: typeof ContainerRuntime;
+		},
+	): Promise<ContainerRuntime> {
+		return ContainerRuntime.loadRuntime2({
+			...params,
+			registry: new FluidDataStoreRegistry(params.registryEntries),
+		});
+	}
+
+	/**
+	 * Load the stores from a snapshot and returns the runtime.
+	 * @remarks
+	 * Same as {@link ContainerRuntime.loadRuntime},
+	 * but with `registry` instead of `registryEntries` and more `runtimeOptions`.
+	 */
+	public static async loadRuntime2(
+		params: Omit<LoadContainerRuntimeParams, "registryEntries" | "runtimeOptions"> & {
+			/**
+			 * Mapping from data store types to their corresponding factories.
+			 */
+			registry: IFluidDataStoreRegistry;
+			/**
+			 * Constructor to use to create the ContainerRuntime instance.
+			 * @remarks
+			 * Defaults to {@link ContainerRuntime}.
+			 */
+			containerRuntimeCtor?: typeof ContainerRuntime;
+			/**
+			 * {@link LoadContainerRuntimeParams.runtimeOptions}, except with additional internal only options.
+			 */
+			runtimeOptions?: IContainerRuntimeOptionsInternal;
+		},
+	): Promise<ContainerRuntime> {
 		const {
 			context,
-			registryEntries,
+			registry,
 			existing,
 			requestHandler,
 			provideEntryPoint,
@@ -965,8 +983,6 @@ export class ContainerRuntime
 			"enableRuntimeIdCompressor" in runtimeOptions
 				? runtimeOptions.enableRuntimeIdCompressor
 				: defaultConfigs.enableRuntimeIdCompressor;
-
-		const registry = new FluidDataStoreRegistry(registryEntries);
 
 		const tryFetchBlob = async <T>(blobName: string): Promise<T | undefined> => {
 			const blobId = context.baseSnapshot?.blobs[blobName];
@@ -1349,7 +1365,14 @@ export class ContainerRuntime
 
 	private readonly batchRunner = new BatchRunCounter();
 	private readonly _flushMode: FlushMode;
-	private readonly offlineEnabled: boolean;
+	/**
+	 * BatchId tracking is needed whenever there's a possibility of a "forked Container",
+	 * where the same local state is pending in two different running Containers, each of
+	 * which is trying to ensure it's persisted.
+	 * "Offline Load" from serialized pending state is one such scenario since two Containers
+	 * could load from the same serialized pending state.
+	 */
+	private readonly batchIdTrackingEnabled: boolean;
 	private flushScheduled = false;
 
 	private canSendOps: boolean;
@@ -1796,10 +1819,12 @@ export class ContainerRuntime
 		} else {
 			this._flushMode = runtimeOptions.flushMode;
 		}
-		this.offlineEnabled =
-			this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ?? false;
+		this.batchIdTrackingEnabled =
+			this.mc.config.getBoolean("Fluid.Container.enableOfflineFull") ??
+			this.mc.config.getBoolean("Fluid.ContainerRuntime.enableBatchIdTracking") ??
+			false;
 
-		if (this.offlineEnabled && this._flushMode !== FlushMode.TurnBased) {
+		if (this.batchIdTrackingEnabled && this._flushMode !== FlushMode.TurnBased) {
 			const error = new UsageError("Offline mode is only supported in turn-based mode");
 			this.closeFn(error);
 			throw error;
@@ -1808,7 +1833,7 @@ export class ContainerRuntime
 		// DuplicateBatchDetection is only enabled if Offline Load is enabled
 		// It maintains a cache of all batchIds/sequenceNumbers within the collab window.
 		// Don't waste resources doing so if not needed.
-		if (this.offlineEnabled) {
+		if (this.batchIdTrackingEnabled) {
 			this.duplicateBatchDetector = new DuplicateBatchDetector(recentBatchInfo);
 		}
 
@@ -1914,7 +1939,7 @@ export class ContainerRuntime
 			routeContext: this.handleContext,
 			blobManagerLoadInfo,
 			storage: this.storage,
-			sendBlobAttachOp: (localId: string, blobId: string) => {
+			sendBlobAttachMessage: (localId: string, blobId: string) => {
 				if (!this.disposed) {
 					this.submit(
 						{ type: ContainerMessageType.BlobAttach, contents: undefined },
@@ -1934,7 +1959,7 @@ export class ContainerRuntime
 				}),
 			isBlobDeleted: (blobPath: string) => this.garbageCollector.isNodeDeleted(blobPath),
 			runtime: this,
-			stashedBlobs: pendingRuntimeState?.pendingAttachmentBlobs,
+			pendingBlobs: pendingRuntimeState?.pendingAttachmentBlobs,
 			createBlobPayloadPending: this.sessionSchema.createBlobPayloadPending === true,
 		});
 
@@ -2179,31 +2204,7 @@ export class ContainerRuntime
 			this.deltaManager,
 			this.baseLogger,
 		);
-		const orderedClientLogger = createChildLogger({
-			logger: this.baseLogger,
-			namespace: "OrderedClientElection",
-		});
-		const orderedClientCollection = new OrderedClientCollection(
-			orderedClientLogger,
-			this.innerDeltaManager,
-			this._quorum,
-		);
-		const orderedClientElectionForSummarizer = new OrderedClientElection(
-			orderedClientLogger,
-			orderedClientCollection,
-			this.electedSummarizerData ?? this.innerDeltaManager.lastSequenceNumber,
-			SummarizerClientElection.isClientEligible,
-			this.mc.config.getBoolean(
-				"Fluid.ContainerRuntime.OrderedClientElection.EnablePerformanceEvents",
-			),
-		);
-
-		this.summarizerClientElection = new SummarizerClientElection(
-			orderedClientLogger,
-			summaryCollection,
-			orderedClientElectionForSummarizer,
-			maxOpsSinceLastSummary,
-		);
+		const onRequestMode = isSummaryOnRequest(this.summaryConfiguration);
 
 		if (this.isSummarizerClient) {
 			// We want to dynamically import any thing inside summaryDelayLoadedModule module only when we are the summarizer client,
@@ -2226,9 +2227,38 @@ export class ContainerRuntime
 						() => this.innerDeltaManager.active,
 					),
 			);
-		} else if (SummarizerClientElection.clientDetailsPermitElection(this.clientDetails)) {
+		} else if (
+			!onRequestMode &&
+			SummarizerClientElection.clientDetailsPermitElection(this.clientDetails)
+		) {
 			// Only create a SummaryManager and SummarizerClientElection
 			// if summaries are enabled and we are not the summarizer client.
+			const orderedClientLogger = createChildLogger({
+				logger: this.baseLogger,
+				namespace: "OrderedClientElection",
+			});
+			const orderedClientCollection = new OrderedClientCollection(
+				orderedClientLogger,
+				this.innerDeltaManager,
+				this._quorum,
+			);
+			const orderedClientElectionForSummarizer = new OrderedClientElection(
+				orderedClientLogger,
+				orderedClientCollection,
+				this.electedSummarizerData ?? this.innerDeltaManager.lastSequenceNumber,
+				SummarizerClientElection.isClientEligible,
+				this.mc.config.getBoolean(
+					"Fluid.ContainerRuntime.OrderedClientElection.EnablePerformanceEvents",
+				),
+			);
+
+			this.summarizerClientElection = new SummarizerClientElection(
+				orderedClientLogger,
+				summaryCollection,
+				orderedClientElectionForSummarizer,
+				maxOpsSinceLastSummary,
+			);
+
 			const defaultAction = (): void => {
 				if (summaryCollection.opsSinceLastAck > maxOpsSinceLastSummary) {
 					this.mc.logger.sendTelemetryEvent({ eventName: "SummaryStatus:Behind" });
@@ -2317,7 +2347,7 @@ export class ContainerRuntime
 	 * Api to fetch the snapshot from the service for a loadingGroupIds.
 	 * @param loadingGroupIds - LoadingGroupId for which the snapshot is asked for.
 	 * @param pathParts - Parts of the path, which we want to extract from the snapshot tree.
-	 * @returns - snapshotTree and the sequence number of the snapshot.
+	 * @returns snapshotTree and the sequence number of the snapshot.
 	 */
 	public async getSnapshotForLoadingGroupId(
 		loadingGroupIds: string[],
@@ -2427,7 +2457,7 @@ export class ContainerRuntime
 	 * @param pathParts - Part of the path, which we want to extract from the snapshot tree.
 	 * @param hasIsolatedChannels - whether the channels are present inside ".channels" subtree. Older
 	 * snapshots will not have trees inside ".channels", so check that.
-	 * @returns - requested snapshot tree based on the path parts.
+	 * @returns requested snapshot tree based on the path parts.
 	 */
 	private getSnapshotTreeForPath(
 		snapshotTree: ISnapshotTree,
@@ -3321,12 +3351,12 @@ export class ContainerRuntime
 		local: boolean,
 	): void {
 		const envelope = message.content;
-		const transformed = markUnverified({
+		const transformed = {
 			clientId: message.clientId,
 			content: envelope.contents.content,
 			type: envelope.contents.type,
 			targetClientId: message.targetClientId,
-		});
+		};
 
 		// Only collect signal telemetry for broadcast messages sent by the current client.
 		if (message.clientId === this.clientId) {
@@ -3349,8 +3379,7 @@ export class ContainerRuntime
 
 	private routeNonContainerSignal(
 		address: string,
-		signalMessage: IInboundSignalMessage<UnknownIncomingTypedMessage> &
-			UnverifiedBrand<UnknownIncomingTypedMessage>,
+		signalMessage: IInboundSignalMessage<UnknownIncomingTypedMessage>,
 		local: boolean,
 	): void {
 		// channelCollection signals are identified by no starting `/` in address.
@@ -3392,7 +3421,7 @@ export class ContainerRuntime
 	/**
 	 * Flush the current batch of ops to the ordering service for sequencing
 	 * This method is not expected to be called in the middle of a batch.
-	 * @remarks - If it throws (e.g. if the batch is too large to send), the container will be closed.
+	 * @remarks If it throws (e.g. if the batch is too large to send), the container will be closed.
 	 *
 	 * @param resubmitInfo - If defined, indicates this is a resubmission of a batch with the given Batch info needed for resubmit.
 	 */
@@ -3610,7 +3639,7 @@ export class ContainerRuntime
 	}
 
 	public createDetachedDataStore(
-		pkg: Readonly<string[]>,
+		pkg: readonly string[],
 		loadingGroupId?: string,
 	): IFluidDataStoreContextDetached {
 		return this.channelCollection.createDetachedDataStore(pkg, loadingGroupId);
@@ -3749,7 +3778,7 @@ export class ContainerRuntime
 	/**
 	 * Builds the Summary tree including all the channels and the container state.
 	 *
-	 * @remarks - Unfortunately, this function is accessed in a non-typesafe way by a legacy first-party partner,
+	 * @remarks Unfortunately, this function is accessed in a non-typesafe way by a legacy first-party partner,
 	 * so until we can provide a proper API for their scenario, we need to ensure this function doesn't change.
 	 */
 	private async summarizeInternal(
@@ -4492,7 +4521,7 @@ export class ContainerRuntime
 	 * Emit "dirty" or "saved" event based on the current dirty state of the document.
 	 * This must be called every time the states underlying the dirty state change.
 	 *
-	 * @privateRemarks - It's helpful to think of this as an event handler registered
+	 * @privateRemarks It's helpful to think of this as an event handler registered
 	 * for hypothetical "changed" events for PendingStateManager, Outbox, and Container Attach machinery.
 	 * But those events don't exist so we manually call this wherever we know those changes happen.
 	 */
@@ -4762,7 +4791,7 @@ export class ContainerRuntime
 		const resubmitInfo = {
 			// Only include Batch ID if "Offline Load" feature is enabled
 			// It's only needed to identify batches across container forks arising from misuse of offline load.
-			batchId: this.offlineEnabled ? batchId : undefined,
+			batchId: this.batchIdTrackingEnabled ? batchId : undefined,
 			staged,
 		};
 

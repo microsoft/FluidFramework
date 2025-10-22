@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { RawAxiosRequestHeaders } from "axios";
 import type * as git from "@fluidframework/gitresources";
 import {
 	type IGetRefParamsExternal,
@@ -18,16 +17,19 @@ import {
 	LatestSummaryId,
 } from "@fluidframework/server-services-client";
 import { type ITenantStorage, runWithRetry } from "@fluidframework/server-services-core";
-import { v4 as uuid } from "uuid";
-import * as winston from "winston";
 import {
 	BaseTelemetryProperties,
 	Lumberjack,
 	getGlobalTelemetryContext,
 } from "@fluidframework/server-services-telemetry";
-import { Constants, getRequestErrorTranslator } from "../utils";
-import type { ICache } from "./definitions";
 import { logHttpMetrics } from "@fluidframework/server-services-utils";
+import type { RawAxiosRequestHeaders } from "axios";
+import { v4 as uuid } from "uuid";
+import * as winston from "winston";
+
+import { Constants, getRequestErrorTranslator } from "../utils";
+
+import type { ICache } from "./definitions";
 
 // We include the historian version in the user-agent string
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
@@ -293,7 +295,7 @@ export class RestGitService {
 	/**
 	 * Retrieve a summary from cache or storage.
 	 * @param sha - version id for the requested summary. When using Git, this is the commit sha for the summary.
-	 * @param _useCache - Ignored. See [#14623](https://github.com/microsoft/FluidFramework/issues/14623) for more details.
+	 * @param _useCache - Ignored. See {@link https://github.com/microsoft/FluidFramework/issues/14623 | #14623}) for more details.
 	 */
 	public async getSummary(sha: string, _useCache: boolean): Promise<IWholeFlatSummary> {
 		// Fetch a summary requested by sha

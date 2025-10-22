@@ -84,7 +84,7 @@ export interface ISummarizeInternalResult extends ISummarizeResult {
 }
 
 /**
- * @experimental - Can be deleted/changed at any time
+ * @experimental Can be deleted/changed at any time
  * Contains the necessary information to allow DDSes to do incremental summaries
  * @legacy @beta
  */
