@@ -79,6 +79,7 @@ export function getContainerAlreadyRegisteredErrorText(containerKey: ContainerKe
  * Properties for configuring the Devtools.
  * @beta
  * @input
+ * @sealed
  */
 export interface FluidDevtoolsProps {
 	/**
