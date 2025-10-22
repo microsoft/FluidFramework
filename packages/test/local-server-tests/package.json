@@ -14,22 +14,22 @@
 	"sideEffects": false,
 	"type": "commonjs",
 	"scripts": {
+		"biome-check": "biome check .",
+		"biome-format": "biome check . --write",
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"build:test": "tsc --project ./src/test/tsconfig.json",
-		"check:biome": "biome check .",
-		"check:format": "npm run check:biome",
+		"check:format": "npm run biome-check",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
+		"coverage": "c8 npm test",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-		"format": "npm run format:biome",
-		"format:biome": "biome check . --write",
+		"format": "npm run biome-format",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"test": "npm run test:mocha",
-		"test:coverage": "c8 npm test",
 		"test:mocha": "mocha \"lib/test/**/*.spec.*js\"",
-		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha"
+		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
+		"tsc-test": "tsc --project ./src/test/tsconfig.json"
 	},
 	"c8": {
 		"all": true,
@@ -99,9 +99,9 @@
 	},
 	"fluidBuild": {
 		"tasks": {
-			"build:test": [
+			"tsc-test": [
 				"^tsc",
-				"^api-extractor:commonjs"
+				"^generate-entrypoints-commonjs"
 			]
 		}
 	},

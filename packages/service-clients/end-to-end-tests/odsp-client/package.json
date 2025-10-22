@@ -13,23 +13,23 @@
 	"sideEffects": false,
 	"type": "module",
 	"scripts": {
+		"biome-check": "biome check .",
+		"biome-format": "biome check . --write",
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"build:test": "tsc --project ./src/test/tsconfig.json",
-		"check:biome": "biome check .",
-		"check:format": "npm run check:biome",
+		"check:format": "npm run biome-check",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
+		"coverage": "c8 npm test",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-		"format": "npm run format:biome",
-		"format:biome": "biome check . --write",
+		"format": "npm run biome-format",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"test": "npm run test:realsvc:odsp",
-		"test:coverage": "c8 npm test",
 		"test:realsvc:odsp": "npm run test:realsvc:odsp:run -- --driver=odsp --odspEndpointName=odsp",
 		"test:realsvc:odsp:run": "mocha --exit --timeout 20000 --config src/test/.mocharc.cjs",
-		"test:realsvc:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:realsvc:odsp"
+		"test:realsvc:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:realsvc:odsp",
+		"tsc-test": "tsc --project ./src/test/tsconfig.json"
 	},
 	"c8": {
 		"all": true,
@@ -91,9 +91,9 @@
 	},
 	"fluidBuild": {
 		"tasks": {
-			"build:test": [
-				"^api-extractor:esnext",
-				"^build:esnext",
+			"tsc-test": [
+				"^generate-entrypoints-esnext",
+				"^esnext",
 				"^tsc"
 			]
 		}

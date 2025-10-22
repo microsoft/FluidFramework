@@ -14,10 +14,10 @@
 	"main": "server.js",
 	"browser": "browser.js",
 	"scripts": {
-		"check:biome": "biome check .",
-		"check:format": "npm run check:biome",
-		"format": "npm run format:biome",
-		"format:biome": "biome check . --write"
+		"biome-check": "biome check .",
+		"biome-format": "biome check . --write",
+		"check:format": "npm run biome-check",
+		"format": "npm run biome-format"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3"

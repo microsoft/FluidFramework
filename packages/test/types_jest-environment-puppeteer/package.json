@@ -14,12 +14,12 @@
 	"main": "",
 	"types": "index.d.ts",
 	"scripts": {
+		"biome-check": "biome check .",
+		"biome-format": "biome check . --write",
 		"build": "fluid-build . --task build",
-		"check:biome": "biome check .",
-		"check:format": "npm run check:biome",
+		"check:format": "npm run biome-check",
 		"clean": "rimraf --glob \"*.tsbuildinfo\" \"*.build.log\"",
-		"format": "npm run format:biome",
-		"format:biome": "biome check . --write"
+		"format": "npm run biome-format"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",

@@ -13,25 +13,25 @@
 	"author": "Microsoft and contributors",
 	"type": "module",
 	"scripts": {
+		"biome-check": "biome check .",
+		"biome-format": "biome check . --write",
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"build:esnext": "tsc --project ./tsconfig.json",
-		"build:test": "npm run build:test:esm",
-		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
-		"check:biome": "biome check .",
-		"check:format": "npm run check:biome",
+		"build:test": "npm run tsc-test-esm",
+		"check:format": "npm run biome-check",
 		"clean": "rimraf --glob build dist lib bundleAnalysis \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
+		"esnext": "tsc --project ./tsconfig.json",
 		"explore:tree": "fluid-build . --task webpack && source-map-explorer ./build/sharedTree.js --html bundleAnalysis/reportTree.html",
-		"format": "npm run format:biome",
-		"format:biome": "biome check . --write",
+		"format": "npm run biome-format",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"prepack": "npm run webpack",
 		"test": "npm run test:mocha",
 		"test:mocha": "npm run test:mocha:esm",
 		"test:mocha:esm": "mocha",
+		"tsc-test-esm": "tsc --project ./src/test/tsconfig.json",
 		"webpack": "webpack",
 		"webpack:profile": "npm run webpack"
 	},
@@ -85,7 +85,7 @@
 				"webpack"
 			],
 			"webpack": [
-				"^build:esnext"
+				"^esnext"
 			],
 			"test:mocha:esm": [
 				"...",

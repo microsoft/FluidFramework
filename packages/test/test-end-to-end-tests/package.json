@@ -13,18 +13,17 @@
 	"sideEffects": false,
 	"type": "module",
 	"scripts": {
+		"biome-check": "biome check .",
+		"biome-format": "biome check . --write",
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"build:genver": "gen-version",
-		"build:test": "npm run build:test:esm",
-		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
-		"check:biome": "biome check .",
-		"check:format": "npm run check:biome",
+		"build:test": "npm run tsc-test-esm",
+		"check:format": "npm run biome-check",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-		"format": "npm run format:biome",
-		"format:biome": "biome check . --write",
+		"format": "npm run biome-format",
+		"generate-version": "gen-version",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"start:tinylicious:test": "tinylicious > tinylicious.log 2>&1",
@@ -53,7 +52,8 @@
 		"test:realsvc:tinylicious:report": "npm run test:realsvc:tinylicious",
 		"test:realsvc:tinylicious:report:full": "cross-env fluid__test__backCompat=FULL npm run test:realsvc:tinylicious",
 		"test:realsvc:tinylicious:run": "npm run test:realsvc:run -- --driver=t9s --timeout=5s",
-		"test:realsvc:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:realsvc"
+		"test:realsvc:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:realsvc",
+		"tsc-test-esm": "tsc --project ./src/test/tsconfig.json"
 	},
 	"c8": {
 		"all": true,
@@ -151,9 +151,9 @@
 	},
 	"fluidBuild": {
 		"tasks": {
-			"build:test:esm": [
-				"^build:esnext",
-				"build:genver",
+			"tsc-test-esm": [
+				"^esnext",
+				"generate-version",
 				"^tsc"
 			]
 		}
