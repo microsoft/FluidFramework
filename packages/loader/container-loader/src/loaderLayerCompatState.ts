@@ -8,8 +8,10 @@ import type {
 	ILayerCompatSupportRequirements,
 } from "@fluid-internal/client-utils";
 import type { ICriticalContainerError } from "@fluidframework/container-definitions";
-import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { validateLayerCompatibility } from "@fluidframework/telemetry-utils/internal";
+import {
+	validateLayerCompatibility,
+	type ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { pkgVersion } from "./packageVersion.js";
 
@@ -78,7 +80,7 @@ export const driverSupportRequirementsForLoader: ILayerCompatSupportRequirements
  */
 export function validateRuntimeCompatibility(
 	maybeRuntimeCompatDetails: ILayerCompatDetails | undefined,
-	logger: ITelemetryBaseLogger,
+	logger: ITelemetryLoggerExt,
 ): void {
 	validateLayerCompatibility(
 		"loader",
@@ -98,7 +100,7 @@ export function validateRuntimeCompatibility(
 export function validateDriverCompatibility(
 	maybeDriverCompatDetails: ILayerCompatDetails | undefined,
 	disposeFn: (error?: ICriticalContainerError) => void,
-	logger: ITelemetryBaseLogger,
+	logger: ITelemetryLoggerExt,
 ): void {
 	validateLayerCompatibility(
 		"loader",

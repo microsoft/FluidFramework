@@ -8,12 +8,14 @@ import type {
 	ILayerCompatSupportRequirements,
 } from "@fluid-internal/client-utils";
 import type { ICriticalContainerError } from "@fluidframework/container-definitions";
-import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces/internal";
 import {
 	encodeHandlesInContainerRuntime,
 	notifiesReadOnlyState,
 } from "@fluidframework/runtime-definitions/internal";
-import { validateLayerCompatibility } from "@fluidframework/telemetry-utils/internal";
+import {
+	validateLayerCompatibility,
+	type ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { pkgVersion } from "./packageVersion.js";
 
@@ -95,7 +97,7 @@ export const dataStoreSupportRequirementsForRuntime: ILayerCompatSupportRequirem
 export function validateLoaderCompatibility(
 	maybeLoaderCompatDetailsForRuntime: ILayerCompatDetails | undefined,
 	disposeFn: (error?: ICriticalContainerError) => void,
-	logger: ITelemetryBaseLogger,
+	logger: ITelemetryLoggerExt,
 ): void {
 	validateLayerCompatibility(
 		"runtime",
@@ -115,11 +117,11 @@ export function validateLoaderCompatibility(
 export function validateDatastoreCompatibility(
 	maybeDataStoreCompatDetailsForRuntime: ILayerCompatDetails | undefined,
 	disposeFn: () => void,
-	logger: ITelemetryBaseLogger,
+	logger: ITelemetryLoggerExt,
 ): void {
 	validateLayerCompatibility(
 		"runtime",
-		"datastore",
+		"dataStore",
 		runtimeCompatDetailsForDataStore,
 		dataStoreSupportRequirementsForRuntime,
 		maybeDataStoreCompatDetailsForRuntime,

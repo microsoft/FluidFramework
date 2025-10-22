@@ -33,7 +33,7 @@ type ILayerCompatSupportRequirementsOverride = Omit<
 	requiredFeatures: string[];
 };
 
-describe("Datastore Layer compatibility", () => {
+describe("DataStore Layer compatibility", () => {
 	let originalRequiredFeatures: readonly string[];
 	beforeEach(() => {
 		originalRequiredFeatures = [...runtimeSupportRequirementsForDataStore.requiredFeatures];
@@ -71,9 +71,9 @@ describe("Datastore Layer compatibility", () => {
 			"Generation compatibility not as expected",
 		);
 		assert.strictEqual(
-			telemetryProps.datastoreVersion,
+			telemetryProps.dataStoreVersion,
 			pkgVersion,
-			"Datastore version not as expected",
+			"DataStore version not as expected",
 		);
 		assert.strictEqual(
 			telemetryProps.runtimeVersion,
@@ -81,9 +81,9 @@ describe("Datastore Layer compatibility", () => {
 			"Runtime version not as expected",
 		);
 		assert.strictEqual(
-			detailedProperties.datastoreGeneration,
+			detailedProperties.dataStoreGeneration,
 			dataStoreCompatDetailsForRuntime.generation,
-			"Datastore generation not as expected",
+			"DataStore generation not as expected",
 		);
 		assert.strictEqual(
 			detailedProperties.runtimeGeneration,
@@ -105,11 +105,11 @@ describe("Datastore Layer compatibility", () => {
 
 	/**
 	 * These tests validates that the layer compat state and validateRuntimeCompatibility function correctly
-	 * validate the compatibility between Datastore and Runtime layers.
+	 * validate the compatibility between DataStore and Runtime layers.
 	 */
 	describe("validateRuntimeCompatibility", () => {
 		const logger = createChildLogger();
-		it("Datastore is compatible with old Runtime (pre-enforcement)", () => {
+		it("DataStore is compatible with old Runtime (pre-enforcement)", () => {
 			// Older Runtime will not have ILayerCompatDetails defined.
 			assert.doesNotThrow(
 				() =>
@@ -120,11 +120,11 @@ describe("Datastore Layer compatibility", () => {
 						},
 						logger,
 					),
-				"Datastore should be compatible with older Runtime",
+				"DataStore should be compatible with older Runtime",
 			);
 		});
 
-		it("Datastore generation and features are compatible with Runtime", () => {
+		it("DataStore generation and features are compatible with Runtime", () => {
 			(
 				runtimeSupportRequirementsForDataStore as ILayerCompatSupportRequirementsOverride
 			).requiredFeatures = ["feature1", "feature2"];
@@ -142,11 +142,11 @@ describe("Datastore Layer compatibility", () => {
 						},
 						logger,
 					),
-				"Datastore should be compatible with Runtime layer",
+				"DataStore should be compatible with Runtime layer",
 			);
 		});
 
-		it("Datastore generation is incompatible with Runtime", () => {
+		it("DataStore generation is incompatible with Runtime", () => {
 			const disposeFn = Sinon.fake();
 			(
 				runtimeSupportRequirementsForDataStore as ILayerCompatSupportRequirementsOverride
@@ -162,12 +162,12 @@ describe("Datastore Layer compatibility", () => {
 				() => validateRuntimeCompatibility(runtimeCompatDetails, disposeFn, logger),
 				(e: Error) =>
 					validateFailureProperties(e, false /* isGenerationCompatible */, runtimeGeneration),
-				"Datastore should be incompatible with Runtime layer",
+				"DataStore should be incompatible with Runtime layer",
 			);
 			assert(disposeFn.calledOnce, "Dispose should be called");
 		});
 
-		it("Datastore features are incompatible with Runtime", () => {
+		it("DataStore features are incompatible with Runtime", () => {
 			const disposeFn = Sinon.fake();
 			const requiredFeatures = ["feature2", "feature3"];
 			(
@@ -189,12 +189,12 @@ describe("Datastore Layer compatibility", () => {
 						runtimeSupportRequirementsForDataStore.minSupportedGeneration,
 						requiredFeatures,
 					),
-				"Datastore should be incompatible with Runtime layer",
+				"DataStore should be incompatible with Runtime layer",
 			);
 			assert(disposeFn.calledOnce, "Dispose should be called");
 		});
 
-		it("Datastore generation and features are both incompatible with Runtime", () => {
+		it("DataStore generation and features are both incompatible with Runtime", () => {
 			const disposeFn = Sinon.fake();
 			const runtimeGeneration =
 				runtimeSupportRequirementsForDataStore.minSupportedGeneration - 1;
@@ -218,7 +218,7 @@ describe("Datastore Layer compatibility", () => {
 						runtimeGeneration,
 						requiredFeatures,
 					),
-				"Datastore should be incompatible with Runtime layer",
+				"DataStore should be incompatible with Runtime layer",
 			);
 			assert(disposeFn.calledOnce, "Dispose should be called");
 		});

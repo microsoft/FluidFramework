@@ -108,9 +108,9 @@ function validateFailureProperties(
 				layerVersion = telemetryProps.runtimeVersion as string;
 				layerGeneration = detailedProperties.runtimeGeneration as number;
 				break;
-			case "datastore":
-				layerVersion = telemetryProps.datastoreVersion as string;
-				layerGeneration = detailedProperties.datastoreGeneration as number;
+			case "dataStore":
+				layerVersion = telemetryProps.dataStoreVersion as string;
+				layerGeneration = detailedProperties.dataStoreGeneration as number;
 				break;
 			default:
 				assert.fail(`Unexpected layer type: ${type}`);
@@ -189,7 +189,7 @@ function getLayerTestParams(
 				layer1Generation: runtimeCoreCompatDetails.generation,
 				layer2CompatDetails: loaderCompatDetailsForRuntime,
 			};
-		case "runtime-datastore":
+		case "runtime-dataStore":
 			return {
 				layer1SupportRequirements:
 					dataStoreSupportRequirementsForRuntime as ILayerCompatSupportRequirementsOverride,
@@ -197,7 +197,7 @@ function getLayerTestParams(
 				layer1Generation: runtimeCoreCompatDetails.generation,
 				layer2CompatDetails: dataStoreCompatDetailsForRuntime,
 			};
-		case "datastore-runtime":
+		case "dataStore-runtime":
 			return {
 				layer1SupportRequirements:
 					runtimeSupportRequirementsForDataStore as ILayerCompatSupportRequirementsOverride,
@@ -233,14 +233,14 @@ function getExpectedErrorEvents(
 
 	// In case of validating Runtime and DataStore, we expect one of the following addition error events
 	// to be logged before the container dispose event:
-	if ((layer1 === "datastore" || layer2 === "datastore") && flow === "load") {
+	if ((layer1 === "dataStore" || layer2 === "dataStore") && flow === "load") {
 		// In load flows, the layer compat validation in the Runtime and the DataStore layers both happen
 		// during data store realization, so we expect this error event to be logged.
 		expectedErrorEvents.unshift({
 			eventName: "fluid:telemetry:FluidDataStoreContext:RealizeError",
 			errorType: "usageError",
 		});
-	} else if (layer2 === "datastore" && flow === "create") {
+	} else if (layer2 === "dataStore" && flow === "create") {
 		// In create flows, the layer compat validation in the Runtime layer happens during data store runtime
 		// attach, so we expect this error event to be logged.
 		// However, the validation in the DataStore layer happens during its creation which is outside of the
@@ -260,9 +260,9 @@ function getExpectedErrorEvents(
 			break;
 		case "runtime":
 			telemetryNamespace =
-				layer2 === "datastore" ? ":FluidDataStoreContext:" : ":ContainerRuntime:";
+				layer2 === "dataStore" ? ":FluidDataStoreContext:" : ":ContainerRuntime:";
 			break;
-		case "datastore":
+		case "dataStore":
 			telemetryNamespace = ":FluidDataStoreRuntime:";
 			break;
 		default:
@@ -299,10 +299,10 @@ describeCompat("Layer compatibility validation", "NoCompat", (getTestObjectProvi
 		},
 		{
 			layer1: "runtime",
-			layer2: "datastore",
+			layer2: "dataStore",
 		},
 		{
-			layer1: "datastore",
+			layer1: "dataStore",
 			layer2: "runtime",
 		},
 	];

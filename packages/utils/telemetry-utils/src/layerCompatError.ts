@@ -9,12 +9,16 @@ import {
 	type ILayerCompatDetails,
 	type ILayerCompatSupportRequirements,
 } from "@fluid-internal/client-utils";
-import type { IErrorBase, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { IErrorBase } from "@fluidframework/core-interfaces";
 
 import { UsageError } from "./error.js";
+import type { ITelemetryLoggerExt } from "./telemetryTypes.js";
 
 /**
  * Validates the compatibility between two layers using their compatibility details and support requirements.
+ * If the layers are incompatible, it logs an "LayerIncompatibilityError" error event. It will also call the dispose
+ * function with the error and throw the error.
+ *
  * @internal
  */
 export function validateLayerCompatibility(
@@ -24,7 +28,7 @@ export function validateLayerCompatibility(
 	compatSupportRequirementsLayer1: ILayerCompatSupportRequirements,
 	maybeCompatDetailsLayer2: ILayerCompatDetails | undefined,
 	disposeFn: (error?: IErrorBase) => void,
-	logger: ITelemetryBaseLogger,
+	logger: ITelemetryLoggerExt,
 ): void {
 	const layerCheckResult = checkLayerCompatibility(
 		compatSupportRequirementsLayer1,
@@ -53,11 +57,12 @@ export function validateLayerCompatibility(
 				errorDetails: JSON.stringify(detailedProperties),
 			},
 		);
-		logger.send({
-			eventName: "LayerIncompatibilityError",
-			category: "error",
-			errorDetails: JSON.stringify({ ...coreProperties, ...detailedProperties }),
-		});
+		logger.sendErrorEvent(
+			{
+				eventName: "LayerIncompatibilityError",
+			},
+			error,
+		);
 		disposeFn(error);
 		throw error;
 	}

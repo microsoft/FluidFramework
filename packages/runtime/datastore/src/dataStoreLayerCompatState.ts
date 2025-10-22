@@ -7,8 +7,10 @@ import type {
 	ILayerCompatDetails,
 	ILayerCompatSupportRequirements,
 } from "@fluid-internal/client-utils";
-import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { validateLayerCompatibility } from "@fluidframework/telemetry-utils/internal";
+import {
+	validateLayerCompatibility,
+	type ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { pkgVersion } from "./packageVersion.js";
 
@@ -62,10 +64,10 @@ export const runtimeSupportRequirementsForDataStore: ILayerCompatSupportRequirem
 export function validateRuntimeCompatibility(
 	maybeRuntimeCompatDetails: ILayerCompatDetails | undefined,
 	disposeFn: () => void,
-	logger: ITelemetryBaseLogger,
+	logger: ITelemetryLoggerExt,
 ): void {
 	validateLayerCompatibility(
-		"datastore",
+		"dataStore",
 		"runtime",
 		dataStoreCompatDetailsForRuntime,
 		runtimeSupportRequirementsForDataStore,

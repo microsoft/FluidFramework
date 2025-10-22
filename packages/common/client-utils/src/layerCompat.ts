@@ -7,7 +7,7 @@
  * The different Fluid layers in a client.
  * @internal
  */
-export type FluidLayer = "loader" | "driver" | "runtime" | "datastore";
+export type FluidLayer = "loader" | "driver" | "runtime" | "dataStore";
 
 /**
  * Result of a layer compatibility check - whether a layer is compatible with another layer.

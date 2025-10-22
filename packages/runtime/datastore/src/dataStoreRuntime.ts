@@ -323,24 +323,6 @@ export class FluidDataStoreRuntime
 			0x30e /* Id cannot contain slashes. DataStoreContext should have validated this. */,
 		);
 
-		this.policies = { ...defaultPolicies, ...policies };
-
-		if (contextSupportsFeature(dataStoreContext, notifiesReadOnlyState)) {
-			this._readonly = dataStoreContext.isReadOnly();
-		} else {
-			this._readonly = this.dataStoreContext.deltaManager.readOnlyInfo.readonly === true;
-			this.dataStoreContext.deltaManager.on("readonly", (readonly) =>
-				this.notifyReadOnlyState(readonly),
-			);
-		}
-
-		this.submitMessagesWithoutEncodingHandles = contextSupportsFeature(
-			dataStoreContext,
-			encodeHandlesInContainerRuntime,
-		);
-		// We read this property here to avoid a compiler error (unused private member)
-		debugAssert(() => this.submitMessagesWithoutEncodingHandles !== undefined);
-
 		this.mc = createChildMonitoringContext({
 			logger: dataStoreContext.baseLogger,
 			namespace: "FluidDataStoreRuntime",
@@ -357,6 +339,24 @@ export class FluidDataStoreRuntime
 			this.dispose.bind(this),
 			this.mc.logger,
 		);
+
+		if (contextSupportsFeature(dataStoreContext, notifiesReadOnlyState)) {
+			this._readonly = dataStoreContext.isReadOnly();
+		} else {
+			this._readonly = this.dataStoreContext.deltaManager.readOnlyInfo.readonly === true;
+			this.dataStoreContext.deltaManager.on("readonly", (readonly) =>
+				this.notifyReadOnlyState(readonly),
+			);
+		}
+
+		this.policies = { ...defaultPolicies, ...policies };
+
+		this.submitMessagesWithoutEncodingHandles = contextSupportsFeature(
+			dataStoreContext,
+			encodeHandlesInContainerRuntime,
+		);
+		// We read this property here to avoid a compiler error (unused private member)
+		debugAssert(() => this.submitMessagesWithoutEncodingHandles !== undefined);
 
 		this.id = dataStoreContext.id;
 		this.options = dataStoreContext.options;

@@ -52,7 +52,7 @@ function validateFailureProperties(
 	error: Error,
 	isGenerationCompatible: boolean,
 	layerGeneration: number,
-	layerType: "loader" | "datastore",
+	layerType: "loader" | "dataStore",
 	unsupportedFeatures?: string[],
 ): boolean {
 	assert(
@@ -105,9 +105,9 @@ function validateFailureProperties(
 			otherLayerGeneration = detailedProperties.loaderGeneration;
 			break;
 		}
-		case "datastore": {
-			otherLayerVersion = telemetryProps.datastoreVersion;
-			otherLayerGeneration = detailedProperties.datastoreGeneration;
+		case "dataStore": {
+			otherLayerVersion = telemetryProps.dataStoreVersion;
+			otherLayerGeneration = detailedProperties.dataStoreGeneration;
 			break;
 		}
 		default: {
@@ -165,7 +165,7 @@ describe("Runtime Layer compatibility", () => {
 	describe("Validation error and properties", () => {
 		const logger = createChildLogger();
 		const testCases: {
-			layerType: "loader" | "datastore";
+			layerType: "loader" | "dataStore";
 			layerSupportRequirements: ILayerCompatSupportRequirementsOverride;
 			validateCompatibility: (
 				maybeCompatDetails: ILayerCompatDetails | undefined,
@@ -180,7 +180,7 @@ describe("Runtime Layer compatibility", () => {
 					loaderSupportRequirementsForRuntime as ILayerCompatSupportRequirementsOverride,
 			},
 			{
-				layerType: "datastore",
+				layerType: "dataStore",
 				validateCompatibility: (maybeCompatDetails, disposeFn) =>
 					validateDatastoreCompatibility(maybeCompatDetails, disposeFn, logger),
 				layerSupportRequirements:
@@ -312,7 +312,7 @@ describe("Runtime Layer compatibility", () => {
 	 */
 	describe("Validation during load / initialization", () => {
 		const testCases: {
-			layerType: "loader" | "datastore";
+			layerType: "loader" | "dataStore";
 			layerSupportRequirements: ILayerCompatSupportRequirementsOverride;
 			createAndLoad: (compatibilityDetails?: ILayerCompatDetails) => Promise<void>;
 		}[] = [
@@ -323,7 +323,7 @@ describe("Runtime Layer compatibility", () => {
 				createAndLoad: createAndLoadRuntime,
 			},
 			{
-				layerType: "datastore",
+				layerType: "dataStore",
 				layerSupportRequirements:
 					dataStoreSupportRequirementsForRuntime as ILayerCompatSupportRequirementsOverride,
 				createAndLoad: createAndLoadDataStore,
