@@ -34,6 +34,12 @@ export const FluidErrorTypes = {
 	 * Error indicating an API is being used improperly resulting in an invalid operation.
 	 */
 	usageError: "usageError",
+
+	/**
+	 * Error indicating that two Fluid layers are incompatible. For instance, if the Loader layer is
+	 * not compatible with the Runtime layer, the container will be disposed with this error.
+	 */
+	layerIncompatibilityError: "layerIncompatibilityError",
 } as const;
 
 /**
@@ -127,4 +133,46 @@ export interface IThrottlingWarning extends IErrorBase {
 	 */
 	readonly errorType: typeof FluidErrorTypes.throttlingError;
 	readonly retryAfterSeconds: number;
+}
+
+/**
+ * Usage error indicating that two layers are incompatible.
+ * See {@link FluidErrorTypes.layerIncompatibilityError} for more details.
+ * @legacy @beta
+ */
+export interface ILayerIncompatibilityError extends IErrorBase {
+	/**
+	 * {@inheritDoc IErrorBase.errorType}
+	 */
+	readonly errorType: typeof FluidErrorTypes.layerIncompatibilityError;
+	/**
+	 * The layer that is reporting the incompatibility.
+	 */
+	readonly layer: string;
+	/**
+	 * The layer that is incompatible with the reporting layer.
+	 */
+	readonly incompatibleLayer: string;
+	/**
+	 * The package version of the reporting layer.
+	 */
+	readonly layerVersion: string;
+	/**
+	 * The package version of the incompatible layer.
+	 */
+	readonly incompatibleLayerVersion: string;
+	/**
+	 * The number of months of compatibility requirements between the two layers.
+	 */
+	readonly compatibilityRequirementsInMonths: number;
+	/**
+	 * The minimum actual difference in months between the release of the two layers.
+	 * Note that the actual difference may be higher than this value because the maximum difference reported
+	 * is capped as per the release version where the compatibility enforcement was introduced.
+	 */
+	readonly actualDifferenceInMonths: number;
+	/**
+	 * Additional details about the incompatibility to be used for debugging purposes.
+	 */
+	readonly details: string;
 }

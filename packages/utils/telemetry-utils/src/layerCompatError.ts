@@ -11,7 +11,7 @@ import {
 } from "@fluid-internal/client-utils";
 import type { IErrorBase } from "@fluidframework/core-interfaces";
 
-import { UsageError } from "./error.js";
+import { LayerIncompatibilityError } from "./error.js";
 import type { ITelemetryLoggerExt } from "./telemetryTypes.js";
 
 /**
@@ -38,29 +38,36 @@ export function validateLayerCompatibility(
 		const coreProperties = {
 			layer: layer1,
 			incompatibleLayer: layer2,
-			[`${layer1}Version`]: compatDetailsLayer1.pkgVersion,
-			[`${layer2}Version`]: maybeCompatDetailsLayer2?.pkgVersion ?? "unknown",
-			minDiffMonths:
+			layerVersion: compatDetailsLayer1.pkgVersion,
+			incompatibleLayerVersion: maybeCompatDetailsLayer2?.pkgVersion ?? "unknown",
+			compatibilityRequirementsInMonths:
+				compatDetailsLayer1.generation -
+				compatSupportRequirementsLayer1.minSupportedGeneration,
+			actualDifferenceInMonths:
 				compatDetailsLayer1.generation - (maybeCompatDetailsLayer2?.generation ?? 0),
 		};
 		const detailedProperties = {
-			[`${layer1}Generation`]: compatDetailsLayer1.generation,
-			[`${layer2}Generation`]: maybeCompatDetailsLayer2?.generation,
+			layerGeneration: compatDetailsLayer1.generation,
+			incompatibleLayerGeneration: maybeCompatDetailsLayer2?.generation,
 			minSupportedGeneration: compatSupportRequirementsLayer1.minSupportedGeneration,
 			isGenerationCompatible: layerCheckResult.isGenerationCompatible,
 			unsupportedFeatures: layerCheckResult.unsupportedFeatures,
 		};
-		const error = new UsageError(
+
+		const error = new LayerIncompatibilityError(
 			`The versions of the ${layer1} and ${layer2} are not compatible`,
 			{
 				...coreProperties,
-				errorDetails: JSON.stringify(detailedProperties),
+				details: JSON.stringify(detailedProperties),
 			},
 		);
-		logger.sendErrorEvent({
-			eventName: "LayerIncompatibilityError",
-			errorDetails: JSON.stringify({ ...coreProperties, ...detailedProperties }),
-		});
+		logger.sendErrorEvent(
+			{
+				eventName: "LayerIncompatibilityError",
+				errorDetails: JSON.stringify({ ...coreProperties, ...detailedProperties }),
+			},
+			error,
+		);
 		disposeFn(error);
 		throw error;
 	}

@@ -6,16 +6,17 @@
 import { strict as assert } from "node:assert";
 
 import type {
+	FluidLayer,
 	ILayerCompatDetails,
 	ILayerCompatSupportRequirements,
 } from "@fluid-internal/client-utils";
 import type { ICriticalContainerError } from "@fluidframework/container-definitions/internal";
-import {
-	FluidErrorTypes,
-	type ITelemetryBaseProperties,
-} from "@fluidframework/core-interfaces/internal";
+import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces/internal";
 import type { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions/internal";
-import { createChildLogger, isFluidError } from "@fluidframework/telemetry-utils/internal";
+import {
+	createChildLogger,
+	isLayerIncompatibilityError,
+} from "@fluidframework/telemetry-utils/internal";
 import Sinon from "sinon";
 
 import { Loader } from "../loader.js";
@@ -44,36 +45,29 @@ type ILayerCompatSupportRequirementsOverride = Omit<
 function validateFailureProperties(
 	error: Error,
 	isGenerationCompatible: boolean,
-	layerGeneration: number,
-	layerType: "runtime" | "driver",
+	incompatibleLayerGeneration: number,
+	incompatibleLayer: FluidLayer,
 	unsupportedFeatures?: string[],
 ): boolean {
-	assert(
-		isFluidError(error) && error.errorType === FluidErrorTypes.usageError,
-		"Error should be a usageError",
-	);
-	assert.strictEqual(
-		error.errorType,
-		FluidErrorTypes.usageError,
-		"Error type should be usageError",
-	);
-	const telemetryProps = error.getTelemetryProperties();
-	assert(typeof telemetryProps.errorDetails === "string", "Error details should be present");
-	const detailedProperties = JSON.parse(
-		telemetryProps.errorDetails,
-	) as ITelemetryBaseProperties;
+	assert(isLayerIncompatibilityError(error), "Error should be a layerIncompatibilityError");
+	assert(typeof error.details === "string", "Error details should be present");
+	const detailedProperties = JSON.parse(error.details) as ITelemetryBaseProperties;
 	assert.strictEqual(
 		detailedProperties.isGenerationCompatible,
 		isGenerationCompatible,
 		"Generation compatibility not as expected",
 	);
+
+	assert.strictEqual(error.layer, "loader", "Layer type not as expected");
 	assert.strictEqual(
-		telemetryProps.loaderVersion,
-		pkgVersion,
-		"Loader version not as expected",
+		error.incompatibleLayer,
+		incompatibleLayer,
+		"Incompatible layer type not as expected",
 	);
+
+	assert.strictEqual(error.layerVersion, pkgVersion, "Loader version not as expected");
 	assert.strictEqual(
-		detailedProperties.loaderGeneration,
+		detailedProperties.layerGeneration,
 		loaderCoreCompatDetails.generation,
 		"Loader generation not as expected",
 	);
@@ -83,29 +77,16 @@ function validateFailureProperties(
 		"Unsupported features not as expected",
 	);
 
-	if (layerType === "runtime") {
-		assert.strictEqual(
-			telemetryProps.runtimeVersion,
-			pkgVersion,
-			"Runtime version not as expected",
-		);
-		assert.strictEqual(
-			detailedProperties.runtimeGeneration,
-			layerGeneration,
-			"Runtime generation not as expected",
-		);
-	} else {
-		assert.strictEqual(
-			telemetryProps.driverVersion,
-			pkgVersion,
-			"Driver version not as expected",
-		);
-		assert.strictEqual(
-			detailedProperties.driverGeneration,
-			layerGeneration,
-			"Driver generation not as expected",
-		);
-	}
+	assert.strictEqual(
+		error.incompatibleLayerVersion,
+		pkgVersion,
+		`${incompatibleLayer} version not as expected`,
+	);
+	assert.strictEqual(
+		detailedProperties.incompatibleGeneration,
+		incompatibleLayerGeneration,
+		`${incompatibleLayer} generation not as expected`,
+	);
 	return true;
 }
 

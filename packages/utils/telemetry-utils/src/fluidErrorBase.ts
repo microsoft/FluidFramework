@@ -4,6 +4,10 @@
  */
 
 import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import {
+	FluidErrorTypes,
+	type ILayerIncompatibilityError,
+} from "@fluidframework/core-interfaces/internal";
 
 import type { ITelemetryPropertiesExt } from "./telemetryTypes.js";
 
@@ -109,4 +113,15 @@ export function isFluidError(error: unknown): error is IFluidErrorBase {
 		hasErrorInstanceId(error) &&
 		hasTelemetryPropFunctions(error)
 	);
+}
+
+/**
+ * Helper that returns whether the provided error is a layer incompatibility error.
+ *
+ * @internal
+ */
+export function isLayerIncompatibilityError(
+	error: unknown,
+): error is ILayerIncompatibilityError {
+	return isFluidError(error) && error.errorType === FluidErrorTypes.layerIncompatibilityError;
 }

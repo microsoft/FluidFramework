@@ -9,17 +9,17 @@ import type {
 	ILayerCompatDetails,
 	ILayerCompatSupportRequirements,
 } from "@fluid-internal/client-utils";
-import {
-	FluidErrorTypes,
-	type ITelemetryBaseProperties,
-} from "@fluidframework/core-interfaces/internal";
+import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
-import { createChildLogger, isFluidError } from "@fluidframework/telemetry-utils/internal";
+import {
+	createChildLogger,
+	isLayerIncompatibilityError,
+} from "@fluidframework/telemetry-utils/internal";
 import { MockFluidDataStoreContext } from "@fluidframework/test-runtime-utils/internal";
 import Sinon from "sinon";
 
 import {
-	dataStoreCompatDetailsForRuntime,
+	dataStoreCoreCompatDetails,
 	runtimeSupportRequirementsForDataStore,
 	validateRuntimeCompatibility,
 } from "../dataStoreLayerCompatState.js";
@@ -48,57 +48,46 @@ describe("DataStore Layer compatibility", () => {
 	function validateFailureProperties(
 		error: Error,
 		isGenerationCompatible: boolean,
-		runtimeGeneration: number,
+		incompatibleLayerGeneration: number,
 		unsupportedFeatures?: string[],
 	): boolean {
-		assert(
-			isFluidError(error) && error.errorType === FluidErrorTypes.usageError,
-			"Error should be a usageError",
-		);
-		assert.strictEqual(
-			error.errorType,
-			FluidErrorTypes.usageError,
-			"Error type should be usageError",
-		);
-		const telemetryProps = error.getTelemetryProperties();
-		assert(typeof telemetryProps.errorDetails === "string", "Error details should be present");
-		const detailedProperties = JSON.parse(
-			telemetryProps.errorDetails,
-		) as ITelemetryBaseProperties;
+		assert(isLayerIncompatibilityError(error), "Error should be a layerIncompatibilityError");
+		assert(typeof error.details === "string", "Error details should be present");
+		const detailedProperties = JSON.parse(error.details) as ITelemetryBaseProperties;
 		assert.strictEqual(
 			detailedProperties.isGenerationCompatible,
 			isGenerationCompatible,
 			"Generation compatibility not as expected",
 		);
+
+		assert.strictEqual(error.layer, "dataStore", "Layer type not as expected");
 		assert.strictEqual(
-			telemetryProps.dataStoreVersion,
-			pkgVersion,
-			"DataStore version not as expected",
+			error.incompatibleLayer,
+			"runtime",
+			"Incompatible layer type not as expected",
 		);
+
+		assert.strictEqual(error.layerVersion, pkgVersion, "DataStore version not as expected");
 		assert.strictEqual(
-			telemetryProps.runtimeVersion,
-			pkgVersion,
-			"Runtime version not as expected",
-		);
-		assert.strictEqual(
-			detailedProperties.dataStoreGeneration,
-			dataStoreCompatDetailsForRuntime.generation,
+			detailedProperties.layerGeneration,
+			dataStoreCoreCompatDetails.generation,
 			"DataStore generation not as expected",
-		);
-		assert.strictEqual(
-			detailedProperties.runtimeGeneration,
-			runtimeGeneration,
-			"Runtime generation not as expected",
-		);
-		assert.strictEqual(
-			detailedProperties.minSupportedGeneration,
-			runtimeSupportRequirementsForDataStore.minSupportedGeneration,
-			"Min supported generation not as expected",
 		);
 		assert.deepStrictEqual(
 			detailedProperties.unsupportedFeatures,
 			unsupportedFeatures,
 			"Unsupported features not as expected",
+		);
+
+		assert.strictEqual(
+			error.incompatibleLayerVersion,
+			pkgVersion,
+			`Runtime version not as expected`,
+		);
+		assert.strictEqual(
+			detailedProperties.incompatibleLayerGeneration,
+			incompatibleLayerGeneration,
+			`Runtime generation not as expected`,
 		);
 		return true;
 	}

@@ -29,7 +29,10 @@ import {
 	runtimeCompatDetailsForLoader,
 	runtimeCoreCompatDetails,
 } from "@fluidframework/container-runtime/internal";
-import { type ITelemetryBaseProperties } from "@fluidframework/core-interfaces/internal";
+import {
+	FluidErrorTypes,
+	type ITelemetryBaseProperties,
+} from "@fluidframework/core-interfaces/internal";
 import {
 	dataStoreCompatDetailsForRuntime,
 	dataStoreCoreCompatDetails,
@@ -38,7 +41,8 @@ import {
 import { localDriverCompatDetailsForLoader } from "@fluidframework/local-driver/internal";
 import { odspDriverCompatDetailsForLoader } from "@fluidframework/odsp-driver/internal";
 import { r11sDriverCompatDetailsForLoader } from "@fluidframework/routerlicious-driver/internal";
-import { isUsageError, ITestObjectProvider } from "@fluidframework/test-utils/internal";
+import { isLayerIncompatibilityError } from "@fluidframework/telemetry-utils/internal";
+import { ITestObjectProvider } from "@fluidframework/test-utils/internal";
 
 type ILayerCompatSupportRequirementsOverride = Omit<
 	ILayerCompatSupportRequirements,
@@ -67,15 +71,12 @@ function validateFailureProperties(
 	error: Error,
 	isGenerationCompatible: boolean,
 	minSupportedGeneration: number,
-	layerValidationProps: ILayerValidationProps[],
+	layer1ValidationProps: ILayerValidationProps,
+	layer2ValidationProps: ILayerValidationProps,
 	unsupportedFeatures?: string[],
 ): boolean {
-	assert(isUsageError(error), "Error should be a usageError");
-	const telemetryProps = error.getTelemetryProperties();
-	assert(typeof telemetryProps.errorDetails === "string", "Error details should be present");
-	const detailedProperties = JSON.parse(
-		telemetryProps.errorDetails,
-	) as ITelemetryBaseProperties;
+	assert(isLayerIncompatibilityError(error), "Error should be a layerIncompatibilityError");
+	const detailedProperties = JSON.parse(error.details) as ITelemetryBaseProperties;
 	assert.strictEqual(
 		detailedProperties.isGenerationCompatible,
 		isGenerationCompatible,
@@ -92,32 +93,32 @@ function validateFailureProperties(
 		"Unsupported features not as expected",
 	);
 
-	for (const { type, pkgVersion, generation } of layerValidationProps) {
-		let layerVersion: string;
-		let layerGeneration: number;
-		switch (type) {
-			case "driver":
-				layerVersion = telemetryProps.driverVersion as string;
-				layerGeneration = detailedProperties.driverGeneration as number;
-				break;
-			case "loader":
-				layerVersion = telemetryProps.loaderVersion as string;
-				layerGeneration = detailedProperties.loaderGeneration as number;
-				break;
-			case "runtime":
-				layerVersion = telemetryProps.runtimeVersion as string;
-				layerGeneration = detailedProperties.runtimeGeneration as number;
-				break;
-			case "dataStore":
-				layerVersion = telemetryProps.dataStoreVersion as string;
-				layerGeneration = detailedProperties.dataStoreGeneration as number;
-				break;
-			default:
-				assert.fail(`Unexpected layer type: ${type}`);
-		}
-		assert.strictEqual(layerVersion, pkgVersion, `${type} version not as expected`);
-		assert.strictEqual(layerGeneration, generation, `${type} generation not as expected`);
-	}
+	assert.strictEqual(error.layer, layer1ValidationProps.type, "Layer type not as expected");
+	assert.strictEqual(
+		error.incompatibleLayer,
+		layer2ValidationProps.type,
+		"Incompatible layer type not as expected",
+	);
+	assert.strictEqual(
+		error.layerVersion,
+		layer1ValidationProps.pkgVersion,
+		"Layer version not as expected",
+	);
+	assert.strictEqual(
+		error.incompatibleLayerVersion,
+		layer2ValidationProps.pkgVersion,
+		"Incompatible layer version not as expected",
+	);
+	assert.strictEqual(
+		detailedProperties.layerGeneration,
+		layer1ValidationProps.generation,
+		"Layer generation not as expected",
+	);
+	assert.strictEqual(
+		detailedProperties.incompatibleLayerGeneration,
+		layer2ValidationProps.generation,
+		"Incompatible layer generation not as expected",
+	);
 	return true;
 }
 
@@ -222,7 +223,10 @@ function getExpectedErrorEvents(
 ): ExpectedEvents {
 	// The container disposes with a usage error event if the compatibility check fails.
 	const expectedErrorEvents: ExpectedEvents = [
-		{ eventName: "fluid:telemetry:Container:ContainerDispose", errorType: "usageError" },
+		{
+			eventName: "fluid:telemetry:Container:ContainerDispose",
+			errorType: FluidErrorTypes.layerIncompatibilityError,
+		},
 	];
 
 	// Loader layer validates Driver compatibility during container creation, so if it fails,
@@ -238,7 +242,7 @@ function getExpectedErrorEvents(
 		// during data store realization, so we expect this error event to be logged.
 		expectedErrorEvents.unshift({
 			eventName: "fluid:telemetry:FluidDataStoreContext:RealizeError",
-			errorType: "usageError",
+			errorType: FluidErrorTypes.layerIncompatibilityError,
 		});
 	} else if (layer2 === "dataStore" && flow === "create") {
 		// In create flows, the layer compat validation in the Runtime layer happens during data store runtime
@@ -247,7 +251,7 @@ function getExpectedErrorEvents(
 		// data store runtime attach flow, so we do not expect this error event to be logged.
 		expectedErrorEvents.unshift({
 			eventName: "fluid:telemetry:FluidDataStoreContext:AttachRuntimeError",
-			errorType: "usageError",
+			errorType: FluidErrorTypes.layerIncompatibilityError,
 		});
 	}
 
@@ -394,18 +398,16 @@ describeCompat("Layer compatibility validation", "NoCompat", (getTestObjectProvi
 										e,
 										false /* isGenerationCompatible */,
 										layer1SupportRequirements.minSupportedGeneration,
-										[
-											{
-												type: layer1,
-												pkgVersion: layer1Version,
-												generation: layer1Generation,
-											},
-											{
-												type: layer2,
-												pkgVersion: layer2CompatDetails.pkgVersion,
-												generation: layer2CompatDetails.generation,
-											},
-										],
+										{
+											type: layer1,
+											pkgVersion: layer1Version,
+											generation: layer1Generation,
+										},
+										{
+											type: layer2,
+											pkgVersion: layer2CompatDetails.pkgVersion,
+											generation: layer2CompatDetails.generation,
+										},
 									),
 								`${layer2}'s generation should not be compatible with ${layer1}`,
 							);
@@ -427,18 +429,16 @@ describeCompat("Layer compatibility validation", "NoCompat", (getTestObjectProvi
 										e,
 										true /* isGenerationCompatible */,
 										layer1SupportRequirements.minSupportedGeneration,
-										[
-											{
-												type: layer1,
-												pkgVersion: layer1Version,
-												generation: layer1Generation,
-											},
-											{
-												type: layer2,
-												pkgVersion: layer2CompatDetails.pkgVersion,
-												generation: layer2CompatDetails.generation,
-											},
-										],
+										{
+											type: layer1,
+											pkgVersion: layer1Version,
+											generation: layer1Generation,
+										},
+										{
+											type: layer2,
+											pkgVersion: layer2CompatDetails.pkgVersion,
+											generation: layer2CompatDetails.generation,
+										},
 										requiredFeatures,
 									),
 								`${layer2}'s supported features should not be compatible with ${layer1}`,
