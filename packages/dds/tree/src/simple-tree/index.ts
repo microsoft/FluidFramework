@@ -180,7 +180,7 @@ export {
 	type SchemaStaticsAlpha,
 	KeyEncodingOptions,
 	type TreeParsingOptions,
-	incrementalAllowedTypesMetadata,
+	incrementalSummaryHint,
 	getShouldIncrementallySummarizeAllowedTypes,
 	type SchemaFactory_base,
 } from "./api/index.js";

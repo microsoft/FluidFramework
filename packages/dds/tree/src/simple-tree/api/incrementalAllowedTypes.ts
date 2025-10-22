@@ -4,39 +4,42 @@
  */
 
 import type { FieldKey, TreeNodeSchemaIdentifier } from "../../core/index.js";
-import {
-	getTreeNodeSchemaPrivateData,
-	type AllowedTypesFull,
-	type AllowedTypesMetadata,
-} from "../core/index.js";
+import { getTreeNodeSchemaPrivateData, type AllowedTypesFull } from "../core/index.js";
 import { isObjectNodeSchema } from "../node-kinds/index.js";
 import type { TreeSchema } from "./configuration.js";
 import type { IncrementalEncodingPolicy } from "../../feature-libraries/index.js";
 import { oneFromIterable } from "../../util/index.js";
 import { assert } from "@fluidframework/core-utils/internal";
 
-export const incrementalSummaryOptimizationSymbol: unique symbol = Symbol(
-	"IncrementalSummaryOptimization",
-);
+/**
+ * A symbol when present in the {@link AnnotatedAllowedTypes.metadata.custom} property, opts in the allowed types
+ * to incremental summary optimization.
+ * These allowed types will be optimized during summary such that if they don't change across summaries,
+ * they will not be encoded and their content will not be included in the summary that is uploaded to the service.
+ * @remarks
+ * See {@link getShouldIncrementallySummarizeAllowedTypes} for more details.
+ *
+ * Use {@link SchemaStaticsAlpha.types} to add this metadata to allowed types in a schema.
+ * @example
+ * ```typescript
+ * const sf = new SchemaFactoryAlpha("IncrementalSummarization");
+ * class Foo extends sf.objectAlpha("foo", {
+ *   bar: sf.types([{ type: sf.string, metadata: {} }], {
+ *     custom: { [incrementalSummaryHint]: true },
+ *   }),
+ * }) {}
+ * ```
+ */
+export const incrementalSummaryHint: unique symbol = Symbol("IncrementalSummaryHint");
 
 /**
- * A set of allowed types in a schema can be opted in to incremental summary optimization by adding the
- * {@link incrementalAllowedTypesMetadata} to them. These allowed types will be optimized during summary
- * such that if they don't change across summaries, they will not be encoded and their content will not be
- * included in the summary that is uploaded to the service.
+ * Returns true if the provided allowed types's custom metadata has {@link incrementalSummaryHint}.
  */
-export const incrementalAllowedTypesMetadata: AllowedTypesMetadata["custom"] = {
-	[incrementalSummaryOptimizationSymbol]: true,
-};
-
-/**
- * Returns true if the provided allowed types has the {@link incrementalAllowedTypesMetadata} custom metadata.
- */
-function isIncrementalAllowedTypesMetadata(allowedTypes: AllowedTypesFull): boolean {
+function isIncrementalSummaryHintInAllowedTypes(allowedTypes: AllowedTypesFull): boolean {
 	const customMetadata = allowedTypes.metadata.custom;
 	return (
 		customMetadata !== undefined &&
-		(customMetadata as Record<symbol, unknown>)[incrementalSummaryOptimizationSymbol] === true
+		(customMetadata as Record<symbol, unknown>)[incrementalSummaryHint] === true
 	);
 }
 
@@ -45,7 +48,7 @@ function isIncrementalAllowedTypesMetadata(allowedTypes: AllowedTypesFull): bool
  * of type {@link IncrementalEncodingPolicy}.
  * This callback can be passed as the value for {@link SharedTreeOptionsInternal.shouldEncodeFieldIncrementally} parameter
  * when creating the tree.
- * It will be called for each allowed types in the schema to determine if it should be incrementally summarized.
+ * It will be called for each {@link AllowedTypes} in the schema to determine if it should be incrementally summarized.
  *
  * @param rootSchema - The schema for the root of the tree.
  * @returns A callback function of type {@link IncrementalEncodingPolicy} which can be used to determine if a field
@@ -86,7 +89,7 @@ export function getShouldIncrementallySummarizeAllowedTypes(
 			if (targetPropertyKey !== undefined) {
 				const fieldSchema = targetNode.fields.get(targetPropertyKey);
 				if (fieldSchema !== undefined) {
-					return isIncrementalAllowedTypesMetadata(fieldSchema.allowedTypesFull);
+					return isIncrementalSummaryHintInAllowedTypes(fieldSchema.allowedTypesFull);
 				}
 			}
 			return false;
@@ -99,6 +102,6 @@ export function getShouldIncrementallySummarizeAllowedTypes(
 			allowedTypes !== undefined,
 			"Non object nodes with fields should only have one allowedTypes entry",
 		);
-		return isIncrementalAllowedTypesMetadata(allowedTypes);
+		return isIncrementalSummaryHintInAllowedTypes(allowedTypes);
 	};
 }
