@@ -57,12 +57,10 @@ export function validateLayerCompatibility(
 				errorDetails: JSON.stringify(detailedProperties),
 			},
 		);
-		logger.sendErrorEvent(
-			{
-				eventName: "LayerIncompatibilityError",
-			},
-			error,
-		);
+		logger.sendErrorEvent({
+			eventName: "LayerIncompatibilityError",
+			errorDetails: JSON.stringify({ ...coreProperties, ...detailedProperties }),
+		});
 		disposeFn(error);
 		throw error;
 	}
