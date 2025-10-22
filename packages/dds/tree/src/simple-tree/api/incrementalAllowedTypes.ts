@@ -33,7 +33,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 export const incrementalSummaryHint: unique symbol = Symbol("IncrementalSummaryHint");
 
 /**
- * Returns true if the provided allowed types's custom metadata has {@link incrementalSummaryHint}.
+ * Returns true if the provided allowed types's custom metadata has {@link incrementalSummaryHint} as true.
  */
 function isIncrementalSummaryHintInAllowedTypes(allowedTypes: AllowedTypesFull): boolean {
 	const customMetadata = allowedTypes.metadata.custom;
