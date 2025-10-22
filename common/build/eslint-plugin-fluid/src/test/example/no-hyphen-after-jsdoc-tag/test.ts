@@ -6,7 +6,7 @@
 /**
  * I am a test function with pretty standard docs, but all of my tags have hyphens after them :(
  * @remarks - Here are some remarks.
- * @deprecated- This function is deprecated, use something else.
+ * @deprecated - This function is deprecated, use something else.
  * @returns - The concatenated string.
  */
 function invalid<T>(param1: string, param2: T): string {
@@ -15,6 +15,8 @@ function invalid<T>(param1: string, param2: T): string {
 
 /**
  * I am a test function with pretty standard docs, and none of my tags have hyphens after them :)
+ * \@foo - escaped at sign to avoid being treated as a tag
+ * `@foo - code formatted at sign to avoid being treated as a tag`
  * @remarks Here are some remarks.
  * @deprecated This function is deprecated, use something else.
  * @returns The concatenated string.
