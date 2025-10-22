@@ -1132,10 +1132,9 @@ describe("Outbox", () => {
 			assert.throws(
 				() => outbox.flush(),
 				(error: Error) => {
-					return (
-						validateAssertionError(error,
-							"Flushing must not happen while incoming changes are being processed",
-						)
+					return validateAssertionError(
+						error,
+						"Flushing must not happen while incoming changes are being processed",
 					);
 				},
 				"Should assert when flushing non-empty batches while reentrant",
