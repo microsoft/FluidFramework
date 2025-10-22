@@ -181,6 +181,8 @@ export {
 	type SchemaStaticsAlpha,
 	KeyEncodingOptions,
 	type TreeParsingOptions,
+	incrementalSummaryHint,
+	getShouldIncrementallySummarizeAllowedTypes,
 	type SchemaFactory_base,
 	relaxObject,
 } from "./api/index.js";
