@@ -28,36 +28,36 @@
 	"main": "lib/index.js",
 	"types": "lib/index.d.ts",
 	"scripts": {
+		"api-extractor": "api-extractor run --local",
+		"api-extractor-ci-docs": "api-extractor run",
+		"attw": "attw --pack .",
+		"biome-check": "biome check .",
+		"biome-format": "biome check . --write",
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "api-extractor run --local",
-		"build:esnext": "fluid-tsc module --project ./tsconfig.esm.json && copyfiles -f ../../../../common/build/build-common/src/esm/package.json ./lib",
-		"build:test": "concurrently npm:build:test:cjs npm:build:test:esm",
-		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
-		"build:test:esm": "fluid-tsc module --project ./src/test/tsconfig.esm.json",
-		"check:are-the-types-wrong": "attw --pack .",
-		"check:biome": "biome check .",
+		"build:format-first": "npm run format && npm run build",
+		"build:test": "concurrently npm:tsc-test-cjs npm:tsc-test-esm",
 		"check:exports": "api-extractor run --config ./api-extractor-lint.json",
-		"check:format": "npm run check:biome",
-		"ci:build:docs": "api-extractor run",
+		"check:format": "npm run biome-check",
 		"clean": "rimraf --glob _api-extractor-temp coverage dist lib nyc \"**/*.tsbuildinfo\" \"**/*.build.log\"",
+		"compile:format-first": "npm run format && npm run build:compile",
+		"coverage": "npm run test:jest:coverage",
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",
-		"format": "npm run format:biome",
-		"format-and-build": "npm run format && npm run build",
-		"format-and-compile": "npm run format && npm run build:compile",
-		"format:biome": "biome check . --write",
+		"esnext": "fluid-tsc module --project ./tsconfig.esm.json && copyfiles -f ../../../../common/build/build-common/src/esm/package.json ./lib",
+		"format": "npm run biome-format",
+		"jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:jest",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"rebuild": "npm run clean && npm run build",
 		"test": "npm run test:jest",
-		"test:coverage": "npm run test:jest:coverage",
 		"test:jest": "pnpm test:jest:cjs && echo skip per fluentui issue 30778 - pnpm test:jest:esm",
 		"test:jest:cjs": "jest --ci --roots ./dist",
 		"test:jest:coverage": "jest --coverage --ci",
 		"test:jest:esm": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --roots ./lib",
-		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:jest",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist",
+		"tsc-test-cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
+		"tsc-test-esm": "fluid-tsc module --project ./src/test/tsconfig.esm.json",
 		"tsc:watch": "copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist && fluid-tsc commonjs --watch --project ./tsconfig.cjs.json"
 	},
 	"dependencies": {
@@ -137,7 +137,7 @@
 	"fluidBuild": {
 		"tasks": {
 			"check:exports": [
-				"build:esnext"
+				"esnext"
 			]
 		}
 	},

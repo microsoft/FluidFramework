@@ -23,17 +23,17 @@
 	"main": "lib/index.js",
 	"types": "lib/index.d.ts",
 	"scripts": {
+		"biome-check": "biome check .",
+		"biome-format": "biome check . --write",
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"build:copy": "copyfiles -u 1 \"src/**/*.css\" lib/",
-		"build:esnext": "tsc --project ./tsconfig.json",
-		"check:biome": "biome check .",
-		"check:format": "npm run check:biome",
+		"check:format": "npm run biome-check",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
+		"copyfiles": "copyfiles -u 1 \"src/**/*.css\" lib/",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-		"format": "npm run format:biome",
-		"format:biome": "biome check . --write",
+		"esnext": "tsc --project ./tsconfig.json",
+		"format": "npm run biome-format",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format"
 	},
@@ -65,11 +65,11 @@
 	"fluidBuild": {
 		"tasks": {
 			"eslint": [
-				"@fluid-example/multiview-coordinate-interface#build:esnext",
+				"@fluid-example/multiview-coordinate-interface#esnext",
 				"^tsc"
 			],
-			"build:esnext": [
-				"@fluid-example/multiview-coordinate-interface#build:esnext",
+			"esnext": [
+				"@fluid-example/multiview-coordinate-interface#esnext",
 				"^tsc"
 			]
 		}

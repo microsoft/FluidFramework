@@ -55,28 +55,27 @@
 	"main": "lib/indexBrowser.js",
 	"types": "lib/indexBrowser.d.ts",
 	"scripts": {
+		"api-extractor": "api-extractor run --local --config api-extractor/api-extractor-model-browser.json",
+		"api-extractor-ci-api-reports-browser-current": "api-extractor run --config api-extractor/api-extractor-report-browser.current.json",
+		"api-extractor-ci-api-reports-browser-legacy": "api-extractor run --config api-extractor/api-extractor-report-browser.legacy.json",
+		"api-extractor-ci-api-reports-node-current": "api-extractor run --config api-extractor/api-extractor-report-node.current.json",
+		"api-extractor-ci-api-reports-node-legacy": "api-extractor run --config api-extractor/api-extractor-report-node.legacy.json",
+		"api-extractor-ci-docs": "api-extractor run --config api-extractor/api-extractor-model-browser.json",
+		"api-extractor-exports-bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
+		"api-reports-browser-current": "api-extractor run --local --config api-extractor/api-extractor-report-browser.current.json",
+		"api-reports-browser-legacy": "api-extractor run --local --config api-extractor/api-extractor-report-browser.legacy.json",
+		"attw": "attw --pack . --exclude-entrypoints ./internal-api-report/current ./internal-api-report/legacy",
+		"biome-check": "biome check .",
+		"biome-format": "biome check . --write",
 		"build": "fluid-build . --task build",
-		"build:api-reports": "concurrently \"npm:build:api-reports:browser:*\" && concurrently \"npm:build:api-reports:node:*\"",
-		"build:api-reports:browser:current": "api-extractor run --local --config api-extractor/api-extractor-report-browser.current.json",
-		"build:api-reports:browser:legacy": "api-extractor run --local --config api-extractor/api-extractor-report-browser.legacy.json",
-		"build:api-reports:node:current": "npm run ci:build:api-reports:node:current",
-		"build:api-reports:node:legacy": "npm run ci:build:api-reports:node:legacy",
+		"build:api-reports": "concurrently \"npm:api-reports-browser-*\" && concurrently \"npm:build:api-reports:node:*\"",
+		"build:api-reports:node:current": "npm run api-extractor-ci-api-reports-node-current",
+		"build:api-reports:node:legacy": "npm run api-extractor-ci-api-reports-node-legacy",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "api-extractor run --local --config api-extractor/api-extractor-model-browser.json",
-		"build:esnext": "tsc --project ./tsconfig.json",
-		"build:exports:browser": "flub generate entrypoints --outFileLegacyBeta legacy --outFilePrefix {@unscopedPackageName}.browser. --mainEntrypoint ./src/indexBrowser.ts --outDir ./lib",
-		"build:exports:node": "flub generate entrypoints --outFileLegacyBeta legacy --outFilePrefix {@unscopedPackageName}.node. --mainEntrypoint ./src/indexNode.ts --outDir ./lib",
-		"build:test": "concurrently npm:build:test:mocha npm:build:test:jest npm:build:test:types",
-		"build:test:jest": "fluid-tsc commonjs --project ./src/test/jest/tsconfig.cjs.json",
-		"build:test:mocha": "concurrently npm:build:test:mocha:esm npm:build:test:mocha:cjs",
-		"build:test:mocha:cjs": "fluid-tsc commonjs --project ./src/test/mocha/tsconfig.cjs.json",
-		"build:test:mocha:esm": "tsc --project ./src/test/mocha/tsconfig.json",
-		"build:test:types": "tsc --project ./src/test/types/tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack . --exclude-entrypoints ./internal-api-report/current ./internal-api-report/legacy",
-		"check:biome": "biome check .",
-		"check:exports": "concurrently \"npm:check:exports:*\"",
-		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
+		"build:test": "concurrently npm:tsc-test:mocha npm:jest npm:tsc-test-types",
+		"build:test:mocha": "concurrently npm:tsc-test-mocha-esm npm:tsc-test-mocha-cjs",
+		"check:exports": "concurrently \"npm:api-extractor-exports-bundle-release-*\"",
 		"check:exports:cjs:indexBrowser": "api-extractor run --config api-extractor/api-extractor-lint-indexBrowser.cjs.json",
 		"check:exports:cjs:indexNode": "api-extractor run --config api-extractor/api-extractor-lint-indexNode.cjs.json",
 		"check:exports:esm:browser:current": "api-extractor run --config api-extractor/api-extractor-lint-browser.current.esm.json",
@@ -85,27 +84,28 @@
 		"check:exports:esm:indexNode": "api-extractor run --config api-extractor/api-extractor-lint-indexNode.esm.json",
 		"check:exports:esm:node:current": "api-extractor run --config api-extractor/api-extractor-lint-node.current.esm.json",
 		"check:exports:esm:node:legacy": "api-extractor run --config api-extractor/api-extractor-lint-node.legacy.esm.json",
-		"check:format": "npm run check:biome",
-		"ci:build:api-reports": "concurrently \"npm:ci:build:api-reports:*\"",
-		"ci:build:api-reports:browser:current": "api-extractor run --config api-extractor/api-extractor-report-browser.current.json",
-		"ci:build:api-reports:browser:legacy": "api-extractor run --config api-extractor/api-extractor-report-browser.legacy.json",
-		"ci:build:api-reports:node:current": "api-extractor run --config api-extractor/api-extractor-report-node.current.json",
-		"ci:build:api-reports:node:legacy": "api-extractor run --config api-extractor/api-extractor-report-node.legacy.json",
-		"ci:build:docs": "api-extractor run --config api-extractor/api-extractor-model-browser.json",
+		"check:format": "npm run biome-check",
+		"ci:build:api-reports": "concurrently \"npm:api-extractor-ci-api-reports-*\"",
 		"clean": "rimraf --glob _api-extractor-temp dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
+		"coverage": "c8 npm test",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-		"format": "npm run format:biome",
-		"format:biome": "biome check . --write",
+		"esnext": "tsc --project ./tsconfig.json",
+		"format": "npm run biome-format",
+		"generate-exports-browser": "flub generate entrypoints --outFileLegacyBeta legacy --outFilePrefix {@unscopedPackageName}.browser. --mainEntrypoint ./src/indexBrowser.ts --outDir ./lib",
+		"generate-exports-node": "flub generate entrypoints --outFileLegacyBeta legacy --outFilePrefix {@unscopedPackageName}.node. --mainEntrypoint ./src/indexNode.ts --outDir ./lib",
+		"jest": "fluid-tsc commonjs --project ./src/test/jest/tsconfig.cjs.json",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"test": "npm run test:mocha && npm run test:jest",
-		"test:coverage": "c8 npm test",
 		"test:jest": "jest --ci",
 		"test:mocha": "npm run test:mocha:esm && npm run test:mocha:cjs",
 		"test:mocha:cjs": "cross-env FLUID_TEST_MODULE_SYSTEM=CJS \"MOCHA_SPEC=dist/test/mocha/**/*.spec.*js\" mocha",
 		"test:mocha:esm": "cross-env \"MOCHA_SPEC=lib/test/mocha/**/*.spec.*js\" mocha",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
+		"tsc-test-mocha-cjs": "fluid-tsc commonjs --project ./src/test/mocha/tsconfig.cjs.json",
+		"tsc-test-mocha-esm": "tsc --project ./src/test/mocha/tsconfig.json",
+		"tsc-test-types": "tsc --project ./src/test/types/tsconfig.json",
 		"typetests:gen": "flub generate typetests --dir . -v",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
@@ -182,31 +182,31 @@
 		"tasks": {
 			"eslint": [
 				"tsc",
-				"build:esnext",
-				"build:test:mocha:esm",
-				"build:test:jest",
-				"build:test:types"
+				"esnext",
+				"tsc-test-mocha-esm",
+				"jest",
+				"tsc-test-types"
 			],
-			"build:api-reports:browser:current": [
-				"build:exports:browser"
+			"api-reports-browser-current": [
+				"generate-exports-browser"
 			],
-			"build:api-reports:browser:legacy": [
-				"build:exports:browser"
+			"api-reports-browser-legacy": [
+				"generate-exports-browser"
 			],
 			"build:api-reports:node:current": [
-				"build:api-reports:browser:current"
+				"api-reports-browser-current"
 			],
 			"build:api-reports:node:legacy": [
-				"build:api-reports:browser:legacy"
+				"api-reports-browser-legacy"
 			],
-			"build:exports:browser": [
-				"build:esnext"
+			"generate-exports-browser": [
+				"esnext"
 			],
-			"build:exports:node": [
-				"build:esnext"
+			"generate-exports-node": [
+				"esnext"
 			],
-			"check:exports:bundle-release-tags": [
-				"build:exports:browser"
+			"api-extractor-exports-bundle-release-tags": [
+				"generate-exports-browser"
 			],
 			"check:exports:cjs:indexBrowser": [
 				"tsc"
@@ -215,46 +215,46 @@
 				"tsc"
 			],
 			"check:exports:esm:browser:current": [
-				"build:exports:browser"
+				"generate-exports-browser"
 			],
 			"check:exports:esm:browser:legacy": [
-				"build:exports:browser"
+				"generate-exports-browser"
 			],
 			"check:exports:esm:indexBrowser": [
-				"build:esnext"
+				"esnext"
 			],
 			"check:exports:esm:indexNode": [
-				"build:exports:node"
+				"generate-exports-node"
 			],
 			"check:exports:esm:node:current": [
-				"build:exports:node"
+				"generate-exports-node"
 			],
 			"check:exports:esm:node:legacy": [
-				"build:exports:node"
+				"generate-exports-node"
 			],
-			"build:test:jest": [
+			"jest": [
 				"tsc"
 			],
-			"build:test:mocha:cjs": [
+			"tsc-test-mocha-cjs": [
 				"tsc"
 			],
-			"build:test:mocha:esm": [
-				"build:esnext"
+			"tsc-test-mocha-esm": [
+				"esnext"
 			],
-			"build:test:types": [
-				"build:esnext"
+			"tsc-test-types": [
+				"esnext"
 			],
-			"ci:build:api-reports:browser:current": [
-				"build:exports:browser"
+			"api-extractor-ci-api-reports-browser-current": [
+				"generate-exports-browser"
 			],
-			"ci:build:api-reports:browser:legacy": [
-				"build:exports:browser"
+			"api-extractor-ci-api-reports-browser-legacy": [
+				"generate-exports-browser"
 			],
-			"ci:build:api-reports:node:current": [
-				"build:exports:node"
+			"api-extractor-ci-api-reports-node-current": [
+				"generate-exports-node"
 			],
-			"ci:build:api-reports:node:legacy": [
-				"build:exports:node"
+			"api-extractor-ci-api-reports-node-legacy": [
+				"generate-exports-node"
 			]
 		}
 	},
