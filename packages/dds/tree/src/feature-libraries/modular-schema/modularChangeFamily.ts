@@ -1391,13 +1391,29 @@ export class ModularChangeFamily
 					metadata,
 				);
 			} else {
+				const baseDetachLocation = table.baseChange.rootNodes.detachLocations.getFirst(
+					parentBase.root,
+					1,
+				).value;
+
 				assignRootChange(
 					table.rebasedRootNodes,
 					table.rebasedNodeToParent,
 					renamedRoot,
 					baseNodeId,
-					table.baseChange.rootNodes.detachLocations.getFirst(parentBase.root, 1).value,
+					baseDetachLocation,
 				);
+
+				// We need to make sure the rebased changeset includes the detach location,
+				// so we add that field to `affectedBaseFields` unless it's already been processed.
+				if (
+					baseDetachLocation !== undefined &&
+					!table.baseFieldToContext.has(
+						fieldChangeFromId(table.baseChange, baseDetachLocation),
+					)
+				) {
+					table.affectedBaseFields.set(fieldIdKeyFromFieldId(baseDetachLocation), true);
+				}
 			}
 
 			return;
@@ -3022,6 +3038,7 @@ function assignRootChange(
 		setInChangeAtomIdMap(nodeToParent, nodeId, { root: detachId });
 	}
 
+	// XXX: Invalidate field?
 	table.detachLocations.set(detachId, 1, detachLocation);
 }
 
@@ -4495,6 +4512,7 @@ export function addNodeRename(
 	table.newToOldId.set(newId, count, oldId);
 
 	if (detachLocation !== undefined) {
+		// XXX: Invalidate field?
 		table.detachLocations.set(oldId, count, detachLocation);
 	}
 }
