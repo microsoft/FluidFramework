@@ -19,6 +19,7 @@ import {
 	cursorForMapTreeField,
 	TreeStatus,
 	Context,
+	combineChunks,
 	type FlexTreeOptionalField,
 	type FlexTreeUnknownUnboxed,
 	FieldKinds,
@@ -227,8 +228,10 @@ export class SchematizingSimpleTreeView<
 				schema,
 				initializerFromChunk(this.checkout, () => {
 					// This must be done after initial schema is set!
-					return this.checkout.forest.chunkField(
-						cursorForMapTreeField(mapTree === undefined ? [] : [mapTree]),
+					return combineChunks(
+						this.checkout.forest.chunkField(
+							cursorForMapTreeField(mapTree === undefined ? [] : [mapTree]),
+						),
 					);
 				}),
 			);

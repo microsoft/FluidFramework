@@ -1273,8 +1273,11 @@ export function arraySchema<
 		}
 
 		public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
-			return (privateData ??= createTreeNodeSchemaPrivateData(this, [info], (storedOptions) =>
-				arrayNodeStoredSchema(convertAllowedTypes(info, storedOptions), persistedMetadata),
+			return (privateData ??= createTreeNodeSchemaPrivateData(
+				this,
+				[normalizedTypes],
+				(storedOptions) =>
+					arrayNodeStoredSchema(convertAllowedTypes(info, storedOptions), persistedMetadata),
 			));
 		}
 	}
