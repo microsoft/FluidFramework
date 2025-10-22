@@ -266,7 +266,7 @@ export interface DDSFuzzModel<
 	 * Equivalence validation function, which should verify that the provided channels contain the same data.
 	 * This is run at each synchronization point for all connected clients (as disconnected clients won't
 	 * necessarily have the same set of ops applied).
-	 * @throws - An informative error if the channels don't have equivalent data.
+	 * @throws An informative error if the channels don't have equivalent data.
 	 */
 	validateConsistency: (
 		channelA: Client<TChannelFactory>,

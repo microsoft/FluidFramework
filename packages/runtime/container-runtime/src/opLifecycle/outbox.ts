@@ -252,7 +252,7 @@ export class Outbox {
 	 * message as the first message. If flushing partial batch is not enabled, we will throw (except for reentrant ops).
 	 * This would indicate we expected this case to be precluded by logic elsewhere.
 	 *
-	 * @remarks - To detect batch interruption, we compare both the reference sequence number
+	 * @remarks To detect batch interruption, we compare both the reference sequence number
 	 * (i.e. last message processed by DeltaManager) and the client sequence number of the
 	 * last message processed by the ContainerRuntime. In the absence of op reentrancy, this
 	 * pair will remain stable during a single JS turn during which the batch is being built up.
@@ -539,7 +539,7 @@ export class Outbox {
 	/**
 	 * As necessary and enabled, groups / compresses / chunks the given batch.
 	 *
-	 * @remarks - If chunking happens, a side effect here is that 1 or more chunks are queued immediately for sending in next JS turn.
+	 * @remarks If chunking happens, a side effect here is that 1 or more chunks are queued immediately for sending in next JS turn.
 	 *
 	 * @param localBatch - Local Batch to be virtualized - i.e. transformed into an Outbound Batch
 	 * @param groupingEnabled - If true, Grouped batching is enabled.
