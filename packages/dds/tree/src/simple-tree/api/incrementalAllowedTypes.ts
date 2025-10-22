@@ -12,8 +12,8 @@ import { oneFromIterable } from "../../util/index.js";
 import { assert } from "@fluidframework/core-utils/internal";
 
 /**
- * A symbol when present in the {@link AnnotatedAllowedTypes.metadata.custom} property, opts in the allowed types
- * to incremental summary optimization.
+ * A symbol when present in the {@link AnnotatedAllowedTypes.metadata.custom} property as true, opts in the allowed
+ * types to incremental summary optimization.
  * These allowed types will be optimized during summary such that if they don't change across summaries,
  * they will not be encoded and their content will not be included in the summary that is uploaded to the service.
  * @remarks
