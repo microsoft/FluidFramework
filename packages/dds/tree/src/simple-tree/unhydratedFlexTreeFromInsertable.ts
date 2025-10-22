@@ -17,6 +17,7 @@ import {
 	isTreeNode,
 	type TreeNode,
 	type TreeNodeSchema,
+	schemaSymbol,
 	type Unhydrated,
 	UnhydratedFlexTreeNode,
 } from "./core/index.js";
@@ -125,16 +126,24 @@ For class-based schema, this can be done by replacing an expression like "{foo: 
 
 /**
  * Returns all types for which the data is schema-compatible.
+ * @remarks This will respect the {@link schemaSymbol} property on data to disambiguate types - if present, only that type will be returned.
  */
 export function getPossibleTypes(
 	allowedTypes: ReadonlySet<TreeNodeSchema>,
 	data: FactoryContent,
 ): TreeNodeSchema[] {
 	assert(data !== undefined, 0x889 /* undefined cannot be used as FactoryContent. */);
+	const type =
+		typeof data === "object" && data !== null
+			? (data as Partial<{ [schemaSymbol]: string }>)[schemaSymbol]
+			: undefined;
 
 	let best = CompatibilityLevel.None;
 	const possibleTypes: TreeNodeSchema[] = [];
 	for (const schema of allowedTypes) {
+		if (type !== undefined && schema.identifier === type) {
+			return [schema];
+		}
 		const handler = getTreeNodeSchemaPrivateData(schema).idempotentInitialize();
 		const level = handler.shallowCompatibilityTest(data);
 		if (level > best) {
