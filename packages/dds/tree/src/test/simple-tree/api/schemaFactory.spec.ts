@@ -29,6 +29,7 @@ import {
 	SchemaFactoryBeta,
 	allowUnused,
 	type InsertableTreeFieldFromImplicitField,
+	type DefaultTreeNodeFromImplicitAllowedTypes,
 } from "../../../simple-tree/index.js";
 import {
 	// Import directly to get the non-type import to allow testing of the package only instanceof
@@ -104,6 +105,46 @@ import { EmptyKey } from "../../../core/index.js";
 
 		type FromArray = TreeNodeFromImplicitAllowedTypes<[typeof Note, typeof Note]>;
 		type _check5 = requireTrue<areSafelyAssignable<FromArray, Note>>;
+	}
+	// TreeNodeFromImplicitAllowedTypes class
+	{
+		class NoteCustomized extends schema.object("Note", { text: schema.string }) {
+			public test: boolean = false;
+		}
+
+		type _check = requireAssignableTo<typeof NoteCustomized, TreeNodeSchema>;
+		type _checkNodeType = requireAssignableTo<
+			typeof NoteCustomized,
+			TreeNodeSchema<string, NodeKind, NoteCustomized>
+		>;
+
+		type TestDefault = DefaultTreeNodeFromImplicitAllowedTypes<typeof NoteCustomized>;
+
+		type _checkDefault1 = requireAssignableTo<TestDefault, NoteCustomized>;
+		type _checkDefault2 = requireTrue<areSafelyAssignable<TestDefault, NoteCustomized>>;
+		type Instance = InstanceType<typeof NoteCustomized>;
+		type _checkInstance = requireTrue<areSafelyAssignable<Instance, NoteCustomized>>;
+
+		type Test = TreeNodeFromImplicitAllowedTypes<typeof NoteCustomized>;
+		type _check2 = requireTrue<areSafelyAssignable<Test, NoteCustomized>>;
+
+		type _check3 = requireTrue<
+			areSafelyAssignable<
+				TreeNodeFromImplicitAllowedTypes<[typeof NoteCustomized]>,
+				NoteCustomized
+			>
+		>;
+		type _check4 = requireTrue<
+			areSafelyAssignable<
+				TreeNodeFromImplicitAllowedTypes<[() => typeof NoteCustomized]>,
+				NoteCustomized
+			>
+		>;
+
+		type FromArray = TreeNodeFromImplicitAllowedTypes<
+			[typeof NoteCustomized, typeof NoteCustomized]
+		>;
+		type _check5 = requireTrue<areSafelyAssignable<FromArray, NoteCustomized>>;
 	}
 
 	// TreeFieldFromImplicitField
@@ -474,6 +515,33 @@ describe("schemaFactory", () => {
 			assert.deepEqual(schema.fields.get("baz")!.persistedMetadata, fooMetadata);
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			assert.deepEqual(schema.fields.get("qux")!.persistedMetadata, fooMetadata);
+		});
+
+		it("typed options", () => {
+			const schema = new SchemaFactoryBeta("com.example");
+			const fields = { id: schema.identifier, x: schema.number };
+			class _NoOptions extends schema.object("X", fields) {}
+			class EmptyOptions extends schema.object("X", fields, {}) {}
+
+			class TypoOption extends schema.object("X", fields, {
+				// @ts-expect-error Typo in option name
+				wrong: true,
+			}) {}
+
+			class ValidOptions extends schema.object("X", fields, {
+				allowUnknownOptionalFields: true,
+				supportReadonlyFields: true,
+				supportCustomizedFields: true,
+			}) {}
+
+			const empty = new EmptyOptions({ x: 1 });
+			empty.id = "hello";
+
+			const valid = new ValidOptions({ x: 1 });
+			assert.throws(() => {
+				// @ts-expect-error id is readonly
+				valid.id = "hello";
+			});
 		});
 
 		describe("deep equality", () => {

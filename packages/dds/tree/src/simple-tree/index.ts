@@ -162,6 +162,7 @@ export {
 	type TransactionResultSuccess,
 	type TransactionResultFailed,
 	rollback,
+	Component,
 	generateSchemaFromSimpleSchema,
 	replaceConciseTreeHandles,
 	replaceHandles,
@@ -183,7 +184,20 @@ export {
 	incrementalSummaryHint,
 	getShouldIncrementallySummarizeAllowedTypes,
 	type SchemaFactory_base,
+	relaxObject,
 } from "./api/index.js";
+
+export type {
+	SchemaUnionToIntersection,
+	CustomTypes,
+	CustomizedSchemaTyping,
+	StrictTypes,
+	Customizer,
+	GetTypes,
+	DefaultInsertableTreeNodeFromImplicitAllowedTypes,
+} from "./schemaTypes.js";
+export { CustomizedTyping, customizeSchemaTyping } from "./schemaTypes.js";
+
 export type {
 	SimpleTreeSchema,
 	SimpleNodeSchema,
@@ -235,6 +249,8 @@ export {
 	type FieldHasDefault,
 	type InsertableObjectFromSchemaRecord,
 	type ObjectFromSchemaRecord,
+	type AssignableTreeFieldFromImplicitField,
+	type ApplyKindAssignment,
 	ObjectNodeSchema,
 	type ObjectNodeSchemaPrivate,
 	isObjectNodeSchema,
@@ -246,6 +262,10 @@ export {
 	type RecordNodePojoEmulationSchema,
 	RecordNodeSchema,
 	type TreeRecordNode,
+	type ObjectFromSchemaRecordRelaxed,
+	type ObjectSchemaTypingOptions,
+	type AssignableTreeFieldFromImplicitFieldDefault,
+	type TreeFieldFromImplicitFieldDefault,
 } from "./node-kinds/index.js";
 export {
 	unhydratedFlexTreeFromInsertable,
@@ -276,3 +296,5 @@ export {
 	nullSchema,
 } from "./leafNodeSchema.js";
 export type { LeafSchema } from "./leafNodeSchema.js";
+
+export type { DefaultTreeNodeFromImplicitAllowedTypes } from "./schemaTypes.js";

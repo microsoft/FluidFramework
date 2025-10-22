@@ -29,6 +29,9 @@ import {
 	type InsertableTypedNode,
 	type NodeFromSchema,
 	unhydratedFlexTreeFromInsertable,
+	type TreeFieldFromImplicitField,
+	type System_Unsafe,
+	SchemaFactoryBeta,
 } from "../../../../simple-tree/index.js";
 import type {
 	FieldHasDefault,
@@ -40,6 +43,7 @@ import { describeHydration, hydrate, pretty } from "../../utils.js";
 import { brand } from "../../../../util/index.js";
 import type {
 	areSafelyAssignable,
+	FlattenKeys,
 	isAssignableTo,
 	requireAssignableTo,
 	requireFalse,
@@ -53,6 +57,8 @@ import { FieldKinds } from "../../../../feature-libraries/index.js";
 import {
 	createField,
 	UnhydratedFlexTreeNode,
+	type TreeLeafValue,
+	type TreeNode,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../simple-tree/core/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -60,7 +66,7 @@ import { getUnhydratedContext } from "../../../../simple-tree/createContext.js";
 // eslint-disable-next-line import/no-internal-modules
 import { createTreeNodeFromInner } from "../../../../simple-tree/core/treeNodeKernel.js";
 
-const schemaFactory = new SchemaFactory("Test");
+const schemaFactory = new SchemaFactoryBeta("Test");
 
 // InsertableObjectFromSchemaRecord
 {
@@ -365,14 +371,150 @@ describeHydration(
 			});
 
 			it("assigning identifier errors", () => {
-				class HasId extends schemaFactory.object("hasID", {
+				class HasId extends schemaFactory.object(
+					"hasID",
+					{
+						id: schemaFactory.identifier,
+					},
+					{ supportReadonlyFields: true },
+				) {}
+				const n = init(HasId, {});
+				assert.throws(() => {
+					// @ts-expect-error this should not compile
+					n.id = "x";
+				});
+			});
+
+			it("assigning non-exact schema errors - ImplicitFieldSchema", () => {
+				const child: ImplicitFieldSchema = schemaFactory.number;
+				class NonExact extends schemaFactory.object(
+					"NonExact",
+					{
+						child,
+					},
+					{ supportReadonlyFields: true },
+				) {}
+				// @ts-expect-error Should not compile, and does not due to non-exact typing.
+				const initial: InsertableField<NonExact> = { child: 1 };
+				const n: NonExact = init(NonExact, initial);
+				assert.throws(() => {
+					// @ts-expect-error this should not compile
+					n.child = "x";
+				});
+			});
+
+			it("assigning non-exact optional schema", () => {
+				const child: ImplicitFieldSchema = schemaFactory.number;
+				class NonExact extends schemaFactory.object(
+					"NonExact",
+					{
+						child: schemaFactory.optional(child),
+					},
+					{ supportReadonlyFields: true },
+				) {}
+				// @ts-expect-error Should not compile, and does not due to non-exact typing.
+				const initial: InsertableField<NonExact> = { child: 1 };
+				const n: NonExact = init(NonExact, initial);
+
+				assert.throws(() => {
+					// @ts-expect-error this should not compile
+					n.child = "x";
+				});
+
+				type Read = TreeFieldFromImplicitField<(typeof NonExact.info)["child"]>;
+				type _check1 = requireTrue<
+					areSafelyAssignable<Read, undefined | TreeNode | TreeLeafValue>
+				>;
+
+				const read = n.child;
+				type _check2 = requireTrue<
+					areSafelyAssignable<typeof read, undefined | TreeNode | TreeLeafValue>
+				>;
+
+				// This would be ok, but allowing it forces allowing assigning any of the values that can be read, which is very unsafe here.
+				// @ts-expect-error this should not compile
+				n.child = undefined;
+			});
+
+			it("assigning non-exact schema errors - union", () => {
+				const child = schemaFactory.number as
+					| typeof schemaFactory.number
+					| typeof schemaFactory.null;
+				class NonExact extends schemaFactory.object(
+					"NonExact",
+					{
+						child,
+					},
+					{ supportReadonlyFields: true },
+				) {}
+				// @ts-expect-error Should not compile, and does not due to non-exact typing.
+				const initial: InsertableField<NonExact> = { child: 1 };
+				const n: NonExact = init(NonExact, initial);
+				const childRead = n.child;
+				assert.throws(() => {
+					// @ts-expect-error this should not compile
+					n.child = "x";
+				});
+
+				assert.throws(() => {
+					// @ts-expect-error this should not compile
+					n.child = null;
+				});
+
+				// @ts-expect-error this should not compile
+				n.child = 5;
+			});
+
+			it("assigning identifier errors - ImplicitFieldSchema - recursive", () => {
+				class HasId extends schemaFactory.objectRecursive("hasID", {
 					id: schemaFactory.identifier,
 				}) {}
 				const n = init(HasId, {});
 				assert.throws(() => {
-					// TODO: AB:9129: this should not compile
+					// @ts-expect-error Readonly
 					n.id = "x";
 				});
+			});
+
+			it("assigning non-exact schema errors - union - recursive", () => {
+				const child: ImplicitFieldSchema = schemaFactory.number;
+				class NonExact extends schemaFactory.objectRecursive("NonExact", {
+					child,
+				}) {}
+				// @ts-expect-error Should not compile, and does not due to non-exact typing.
+				const initial: InsertableField<NonExact> = { child: 1 };
+				const n: NonExact = init(NonExact, initial);
+				assert.throws(() => {
+					// Due to recursive type limitations, this compiles but shouldn't, see ObjectFromSchemaRecordUnsafe
+					n.child = "x";
+				});
+			});
+
+			it("assigning non-exact schema errors - recursive", () => {
+				const child = schemaFactory.number as
+					| typeof schemaFactory.number
+					| typeof schemaFactory.null;
+				class NonExact extends schemaFactory.objectRecursive("NonExact", {
+					child,
+				}) {}
+				// @ts-expect-error Should not compile, and does not due to non-exact typing.
+				const initial: InsertableField<NonExact> = { child: 1 };
+				const n: NonExact = init(NonExact, initial);
+				const childRead = n.child;
+				type XXX = FlattenKeys<System_Unsafe.GetTypesUnsafe<typeof child>>;
+				type _check = requireTrue<areSafelyAssignable<typeof childRead, number | null>>;
+				assert.throws(() => {
+					// @ts-expect-error this should not compile
+					n.child = "x";
+				});
+
+				assert.throws(() => {
+					// Due to recursive type limitations, this compiles but shouldn't, see ObjectFromSchemaRecordUnsafe
+					n.child = null;
+				});
+
+				// Due to recursive type limitations, this compiles but shouldn't, see ObjectFromSchemaRecordUnsafe
+				n.child = 5;
 			});
 		});
 
@@ -478,13 +620,18 @@ describeHydration(
 			});
 
 			it("identifier", () => {
-				class Schema extends schemaFactory.object("parent", {
-					id: schemaFactory.identifier,
-				}) {}
+				class Schema extends schemaFactory.object(
+					"parent",
+					{
+						id: schemaFactory.identifier,
+					},
+					{ supportReadonlyFields: true },
+				) {}
 				const root = init(Schema, { id: "a" });
 				assert.throws(() => {
 					// TODO: AB#35799 this should not compile!
 					// If it does compile, it must be a UsageError.
+					// @ts-expect-error writing to an identifier is not allowed
 					root.id = "b";
 				});
 			});
@@ -697,11 +844,51 @@ describeHydration(
 			});
 
 			it("optional custom shadowing", () => {
-				class Schema extends schemaFactory.object("x", {
-					foo: schemaFactory.optional(schemaFactory.number),
-				}) {
+				class Schema extends schemaFactory.object(
+					"x",
+					{
+						foo: schemaFactory.optional(schemaFactory.number),
+					},
+					{ supportReadonlyFields: undefined },
+				) {
 					// Since fields are own properties, we expect inherited properties (like this) to be shadowed by fields.
-					// However in TypeScript they work like inherited properties, so the types don't make the runtime behavior.
+					// However in TypeScript they work like inherited properties, so the types don't match the runtime behavior.
+					// eslint-disable-next-line @typescript-eslint/class-literal-property-style
+					public override get foo(): 5 {
+						return 5;
+					}
+				}
+				function typeTest() {
+					const n = hydrate(Schema, { foo: 1 });
+					assert.equal(n.foo, 1);
+					// @ts-expect-error TypeScript typing does not understand that fields are own properties and thus shadow the getter here.
+					n.foo = undefined;
+				}
+
+				function typeTest2() {
+					const n = hydrate(Schema, { foo: undefined });
+					const x = n.foo;
+					// TypeScript is typing the "foo" field based on the getter not the field, which does not match runtime behavior.
+					type check_ = requireAssignableTo<typeof x, 5>;
+				}
+
+				assert.throws(
+					() => new Schema({ foo: undefined }),
+					(e: Error) => validateAssertionError(e, /this shadowing will not work/),
+				);
+			});
+
+			it("optional custom shadowing readonly", () => {
+				class Schema extends schemaFactory.object(
+					"x",
+					{
+						foo: schemaFactory.optional(schemaFactory.number),
+					},
+					{ supportReadonlyFields: true },
+				) {
+					// Since fields are own properties, we expect inherited properties (like this) to be shadowed by fields.
+					// However in TypeScript they work like inherited properties, so the types don't match the runtime behavior.
+					// @ts-expect-error bad shadow
 					// eslint-disable-next-line @typescript-eslint/class-literal-property-style
 					public override get foo(): 5 {
 						return 5;
