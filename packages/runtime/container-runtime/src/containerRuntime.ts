@@ -1215,6 +1215,37 @@ export class ContainerRuntime
 			recentBatchInfo,
 		);
 
+		// We can kick off resuming blob sharing as soon as the container stops being readonly.
+		// We don't need to await it, it's OK to proceed in the background. If we encounter any error,
+		// we'll close the container.
+		new Promise<void>((resolve) => {
+			const canStartSharing = (): boolean =>
+				runtime.connected && context.deltaManager.readOnlyInfo.readonly !== true;
+			if (canStartSharing()) {
+				resolve();
+				return;
+			}
+
+			const onReadonly = (readonly: boolean): void => {
+				if (canStartSharing()) {
+					context.deltaManager.off("readonly", onReadonly);
+					runtime.off("connectionTypeChanged", onConnectedChanged);
+					resolve();
+				}
+			};
+			const onConnectedChanged = (connected: boolean): void => {
+				if (canStartSharing()) {
+					context.deltaManager.off("readonly", onReadonly);
+					runtime.off("connected", onConnectedChanged);
+					resolve();
+				}
+			};
+			context.deltaManager.on("readonly", onReadonly);
+			runtime.on("connected", onConnectedChanged);
+		})
+			.then(runtime.blobManager.sharePendingBlobs)
+			.catch(runtime.closeFn);
+
 		// Initialize the base state of the runtime before it's returned.
 		await runtime.initializeBaseState(context.loader);
 
