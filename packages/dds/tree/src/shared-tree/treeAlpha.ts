@@ -58,6 +58,8 @@ import {
 	importConcise,
 	exportConcise,
 	borrowCursorFromTreeNodeOrValue,
+	schemaSymbol,
+	type TreeNodeSchema,
 } from "../simple-tree/index.js";
 import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
 import {
@@ -519,6 +521,31 @@ export interface TreeAlpha {
 		onInvalidation: () => void,
 		trackDuring: () => TResult,
 	): ObservationResults<TResult>;
+
+	/**
+	 * Ensures that the provided content will be interpreted as the given schema when inserting into the tree.
+	 * @returns `content`, for convenience.
+	 * @remarks
+	 * If applicable, this will tag the given content with a {@link schemaSymbol | special property} that indicates its intended schema.
+	 * The `content` will be interpreted as the given `schema` when later inserted into the tree.
+	 * This is particularly useful when the content's schema cannot be inferred from its structure alone because it is compatible with multiple schemas.
+	 * @example
+	 * ```typescript
+	 * const sf = new SchemaFactory("example");
+	 * class Dog extends sf.object("Dog", { name: sf.string() }) {}
+	 * class Cat extends sf.object("Cat", { name: sf.string() }) {}
+	 * class Root extends sf.object("Root", { pet: [Dog, Cat] }) {}
+	 * // ...
+	 * const pet = { name: "Max" };
+	 * view.root.pet = pet; // Error: ambiguous schema - is it a Dog or a Cat?
+	 * TreeAlpha.ensureSchema(Dog, pet); // Tags `pet` as a Dog.
+	 * view.root.pet = pet; // No error - it's a Dog.
+	 * ```
+	 */
+	ensureSchema<TSchema extends TreeNodeSchema, TContent extends InsertableField<TSchema>>(
+		schema: TSchema,
+		content: TContent,
+	): TContent;
 }
 
 /**
@@ -1002,6 +1029,21 @@ export const TreeAlpha: TreeAlpha = {
 			}
 		}
 		return result;
+	},
+
+	ensureSchema<TSchema extends TreeNodeSchema, TNode extends InsertableField<TSchema>>(
+		schema: TSchema,
+		node: TNode,
+	): TNode {
+		if (typeof node === "object" && node !== null) {
+			Reflect.defineProperty(node, schemaSymbol, {
+				configurable: false,
+				enumerable: false,
+				writable: true,
+				value: schema.identifier,
+			});
+		}
+		return node;
 	},
 };
 

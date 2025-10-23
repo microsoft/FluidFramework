@@ -1335,7 +1335,10 @@ export interface SchemaStaticsAlpha {
     readonly typesRecursive: <const T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[]>(t: T, metadata?: AllowedTypesMetadata) => AllowedTypesFullFromMixedUnsafe<T>;
 }
 
-// @alpha @sealed
+// @alpha
+export const schemaSymbol: unique symbol;
+
+// @beta @sealed
 export class SchemaUpgrade {
     // (undocumented)
     protected _typeCheck: MakeNominal;
@@ -1740,6 +1743,7 @@ export interface TreeAlpha {
     child(node: TreeNode, key: string | number): TreeNode | TreeLeafValue | undefined;
     children(node: TreeNode): Iterable<[propertyKey: string | number, child: TreeNode | TreeLeafValue]>;
     create<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(schema: UnsafeUnknownSchema extends TSchema ? ImplicitFieldSchema : TSchema & ImplicitFieldSchema, data: InsertableField<TSchema>): Unhydrated<TSchema extends ImplicitFieldSchema ? TreeFieldFromImplicitField<TSchema> : TreeNode | TreeLeafValue | undefined>;
+    ensureSchema<TSchema extends TreeNodeSchema, TContent extends InsertableField<TSchema>>(schema: TSchema, content: TContent): TContent;
     exportCompressed(tree: TreeNode | TreeLeafValue, options: {
         idCompressor?: IIdCompressor;
     } & Pick<CodecWriteOptions, "minVersionForCollab">): JsonCompatible<IFluidHandle>;
