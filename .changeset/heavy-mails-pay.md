@@ -5,4 +5,5 @@
 ---
 getSnapshotTree is now required in IChannelStorageService
 
-The `getSnapshotTree` property was added as optional to `IChannelStorageService` in version [2.51.0](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.51.0#user-content-new-getsnapshottree-api-on-ichannelstorageservice-24970). It is now a required property.
+The `getSnapshotTree` property was added as optional to `IChannelStorageService` in version 2.51.0. It is now a required property.
+See this [github issue](https://github.com/microsoft/FluidFramework/issues/25178) for more details.
