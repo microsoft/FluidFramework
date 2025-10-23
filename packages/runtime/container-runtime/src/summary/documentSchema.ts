@@ -740,7 +740,7 @@ export class DocumentsSchemaController {
 	 * @param contents - contents of the messages
 	 * @param local - whether op is local
 	 * @param sequenceNumber - sequence number of the op
-	 * @returns - true if schema was accepted, otherwise false (rejected due to failed CAS)
+	 * @returns true if schema was accepted, otherwise false (rejected due to failed CAS)
 	 */
 	public processDocumentSchemaMessages(
 		contents: IDocumentSchemaChangeMessageIncoming[],

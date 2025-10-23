@@ -15,7 +15,7 @@ export function adaptEnum<TScope extends string, const TEnum extends Record<stri
         }, Record<string, never>, true, Record<string, never>, undefined>; }[keyof TEnum]>;
 };
 
-// @alpha @input
+// @beta @input
 export interface AllowedTypeMetadata {
     readonly custom?: unknown;
     readonly stagedSchemaUpgrade?: SchemaUpgrade;
@@ -24,13 +24,13 @@ export interface AllowedTypeMetadata {
 // @public @system
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
 
-// @alpha @sealed
+// @beta @sealed
 export type AllowedTypesFull<T extends readonly AnnotatedAllowedType[] = readonly AnnotatedAllowedType[]> = AnnotatedAllowedTypes<T> & UnannotateAllowedTypesList<T>;
 
-// @alpha @sealed
+// @beta @sealed
 export type AllowedTypesFullEvaluated = AllowedTypesFull<readonly AnnotatedAllowedType<TreeNodeSchema>[]>;
 
-// @alpha @sealed
+// @beta @sealed @system
 export type AllowedTypesFullFromMixed<T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]> = UnannotateAllowedTypesList<T> & AnnotatedAllowedTypes<AnnotateAllowedTypesList<T>>;
 
 // @alpha @sealed @system
@@ -39,7 +39,7 @@ export type AllowedTypesFullFromMixedUnsafe<T extends readonly Unenforced<Annota
 // @alpha @sealed @system
 export type AllowedTypesFullUnsafe<T extends readonly AnnotatedAllowedTypeUnsafe[] = readonly AnnotatedAllowedTypeUnsafe[]> = AnnotatedAllowedTypes<T> & UnannotateAllowedTypesListUnsafe<T>;
 
-// @alpha @input
+// @beta @input
 export interface AllowedTypesMetadata {
     readonly custom?: unknown;
 }
@@ -47,7 +47,7 @@ export interface AllowedTypesMetadata {
 // @alpha
 export function allowUnused<T>(t?: T): void;
 
-// @alpha @system
+// @beta @system
 export type AnnotateAllowedTypesList<T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]> = {
     [I in keyof T]: T[I] extends AnnotatedAllowedType<unknown> ? T[I] : AnnotatedAllowedType<T[I]>;
 };
@@ -57,13 +57,13 @@ export type AnnotateAllowedTypesListUnsafe<T extends readonly Unenforced<Annotat
     [I in keyof T]: T[I] extends AnnotatedAllowedTypeUnsafe ? T[I] : AnnotatedAllowedTypeUnsafe<T[I]>;
 };
 
-// @alpha @sealed
+// @beta @sealed
 export interface AnnotatedAllowedType<T = LazyItem<TreeNodeSchema>> {
     readonly metadata: AllowedTypeMetadata;
     readonly type: T;
 }
 
-// @alpha @sealed
+// @beta @sealed
 export interface AnnotatedAllowedTypes<T = readonly AnnotatedAllowedType[]> extends ErasedBaseType<"tree.AnnotatedAllowedTypes"> {
     evaluate(): AllowedTypesFullEvaluated;
     evaluateIdentifiers(): ReadonlySet<string>;
@@ -965,7 +965,7 @@ export interface SchemaStaticsAlpha {
     readonly typesRecursive: <const T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[]>(t: T, metadata?: AllowedTypesMetadata) => AllowedTypesFullFromMixedUnsafe<T>;
 }
 
-// @alpha @sealed
+// @beta @sealed
 export class SchemaUpgrade {
     // (undocumented)
     protected _typeCheck: MakeNominal;
@@ -1638,7 +1638,7 @@ const typeNameSymbol: unique symbol;
 // @public @system
 export const typeSchemaSymbol: unique symbol;
 
-// @alpha @system
+// @beta @system
 export type UnannotateAllowedTypesList<T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]> = {
     [I in keyof T]: T[I] extends AnnotatedAllowedType<infer X> ? X : T[I];
 };

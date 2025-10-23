@@ -44,7 +44,7 @@ export enum ContainerMessageType {
 	/**
 	 * An op containing an IdRange of Ids allocated using the runtime's IdCompressor since
 	 * the last allocation op was sent.
-	 * See the [IdCompressor README](./id-compressor/README.md) for more details.
+	 * See the {@link https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/id-compressor/README.md|IdCompressor README} for more details.
 	 */
 	IdAllocation = "idAllocation",
 

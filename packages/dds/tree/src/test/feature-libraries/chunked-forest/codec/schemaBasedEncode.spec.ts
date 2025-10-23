@@ -37,7 +37,6 @@ import {
 	buildContext,
 	getFieldEncoder,
 	getNodeEncoder,
-	oneFromSet,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/schemaBasedEncode.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -93,12 +92,6 @@ const identifierShape = new NodeShapeBasedEncoder(
 );
 
 describe("schemaBasedEncoding", () => {
-	it("oneFromSet", () => {
-		assert.equal(oneFromSet(undefined), undefined);
-		assert.equal(oneFromSet(new Set([5])), 5);
-		assert.equal(oneFromSet(new Set([1, 2])), undefined);
-	});
-
 	describe("getFieldEncoder", () => {
 		it("monomorphic-value", () => {
 			const context = new EncoderContext(

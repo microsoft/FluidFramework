@@ -106,6 +106,28 @@ export function iterableHasSome<T>(iterable: Iterable<T>): boolean {
 }
 
 /**
+ * Returns the value from the given iterable if it contains exactly one item, otherwise `undefined`.
+ * @remarks
+ * Note that if the iterable itself may contain `undefined` values,
+ * it is not possible to use this to distinguish between an iterable that contains exactly one `undefined` value and an iterable that contains zero or multiple values.
+ */
+export function oneFromIterable<T>(items: Iterable<T>): T | undefined {
+	const iterator = items[Symbol.iterator]();
+	const first = iterator.next();
+	if (first.done === true) {
+		// Empty iterable case.
+		return undefined;
+	}
+	const second = iterator.next();
+	if (second.done === true) {
+		// Single item iterable case.
+		return first.value;
+	}
+	// Multiple item iterable case.
+	return undefined;
+}
+
+/**
  * Returns true if and only if the given array has exactly one element.
  * @param array - The array to check.
  * @remarks
@@ -475,21 +497,6 @@ export function invertMap<Key, Value>(input: Map<Key, Value>): Map<Value, Key> {
 		0x88a /* all values in a map must be unique to invert it */,
 	);
 	return result;
-}
-
-/**
- * Returns the value from `set` if it contains exactly one item, otherwise `undefined`.
- */
-export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined {
-	if (set === undefined) {
-		return undefined;
-	}
-	if (set.size !== 1) {
-		return undefined;
-	}
-	for (const item of set) {
-		return item;
-	}
 }
 
 /**

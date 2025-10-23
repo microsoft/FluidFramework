@@ -99,7 +99,7 @@ import type { ObjectSchemaOptionsAlpha } from "../../api/index.js";
  */
 export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> =
 	RestrictiveStringRecord<ImplicitFieldSchema> extends T
-		? // eslint-disable-next-line @typescript-eslint/ban-types
+		? // eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/ban-types
 			{}
 		: {
 				-readonly [Property in keyof T]: Property extends string
@@ -577,10 +577,7 @@ export function objectSchema<
 		public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
 			return (privateData ??= createTreeNodeSchemaPrivateData(
 				this,
-				Array.from(
-					flexKeyMap.values(),
-					({ schema }) => normalizeFieldSchema(schema).allowedTypes,
-				),
+				Array.from(CustomObjectNode.fields.values(), (schema) => schema.allowedTypesFull),
 				(storedOptions) => {
 					const fields: Map<FieldKey, TreeFieldStoredSchema> = new Map();
 					for (const fieldSchema of flexKeyMap.values()) {
