@@ -526,7 +526,7 @@ describe("SchemaFactory Recursive methods", () => {
 
 			type _check2 = requireTrue<areSafelyAssignable<typeof baz, true>>;
 
-			// This must be checked after the types are checks to avoid it narrowing and making the type checks above not test anything.
+			// This must be checked after the types are checked to avoid it narrowing and making the type checks above not test anything.
 			assert.deepEqual(Foo.metadata, {
 				description: "A recursive object called Foo",
 				custom: { baz: true },
@@ -560,7 +560,7 @@ describe("SchemaFactory Recursive methods", () => {
 
 			type _check2 = requireTrue<areSafelyAssignable<typeof baz, true>>;
 
-			// This must be checked after the types are checks to avoid it narrowing and making the type checks above not test anything.
+			// This must be checked after the types are checked to avoid it narrowing and making the type checks above not test anything.
 			assert.deepEqual(Foo.metadata, {
 				description: "A recursive object called Foo",
 				custom: { baz: true },

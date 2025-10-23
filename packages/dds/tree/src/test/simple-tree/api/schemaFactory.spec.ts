@@ -452,7 +452,7 @@ describe("schemaFactory", () => {
 			const baz = custom.baz;
 			type _check3 = requireTrue<areSafelyAssignable<typeof baz, true>>;
 
-			// This must be checked after the types are checks to avoid it narrowing and making the type checks above not test anything.
+			// This must be checked after the types are checked to avoid it narrowing and making the type checks above not test anything.
 			assert.deepEqual(Foo.metadata, fooMetadata);
 		});
 
@@ -489,7 +489,7 @@ describe("schemaFactory", () => {
 			const baz = custom.baz;
 			type _check3 = requireTrue<areSafelyAssignable<typeof baz, true>>;
 
-			// This must be checked after the types are checks to avoid it narrowing and making the type checks above not test anything.
+			// This must be checked after the types are checked to avoid it narrowing and making the type checks above not test anything.
 			assert.deepEqual(Foo.metadata, fooMetadata);
 		});
 
