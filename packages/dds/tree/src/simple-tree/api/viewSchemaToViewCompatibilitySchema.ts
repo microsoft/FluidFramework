@@ -3,18 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import { NodeKind } from "../core/index.js";
-import type {
-	SimpleArrayNodeSchema,
-	SimpleLeafNodeSchema,
-	SimpleMapNodeSchema,
-	SimpleNodeSchema,
-	SimpleObjectFieldSchema,
-	SimpleObjectNodeSchema,
-	SimpleRecordNodeSchema,
-	SimpleTreeSchema,
-} from "../simpleSchema.js";
+import { assert } from "@fluidframework/core-utils/internal";
+import type { SimpleNodeSchema, SimpleTreeSchema } from "../simpleSchema.js";
 import type { TreeSchema } from "./configuration.js";
 import { LeafNodeSchema } from "../leafNodeSchema.js";
 import {
@@ -23,6 +13,7 @@ import {
 	ObjectNodeSchema,
 	RecordNodeSchema,
 } from "../node-kinds/index.js";
+import { copySimpleNodeSchema, SimpleSchemaCopyKind } from "./viewSchemaToSimpleSchema.js";
 
 /**
  * Convert a stored schema to a SimpleSchema and preserve information needed for compatibility testing.
@@ -58,9 +49,9 @@ export function toViewCompatibilityTreeSchema(
 		// It is probably enough to just walk the fields of object schema here.
 
 		// Read properties that are needed for compatibility and copy them to a SimpleNodeSchema.
-		// TODO: Refactor copy methods to avoid duplication with viewSchemaToSimpleSchema.
-		// TODO: Does anything need to be done outside of `copyNodeSchema`? Are there any properties on TreeNodeSchema or the root field that need to be handled?
-		const simpleNodeSchema = copySchemaObjects ? copyNodeSchema(nodeSchema) : nodeSchema;
+		const simpleNodeSchema = copySchemaObjects
+			? copySimpleNodeSchema(nodeSchema, SimpleSchemaCopyKind.ViewCompatibilitySchema)
+			: nodeSchema;
 		definitions.set(nodeSchema.identifier, simpleNodeSchema);
 	}
 
@@ -75,69 +66,5 @@ export function toViewCompatibilityTreeSchema(
 				}
 			: schema.root, // TODO: Convert the root field
 		definitions,
-	};
-}
-
-/**
- * Copies a {@link SimpleNodeSchema} into a new plain JavaScript object.
- *
- * @remarks Caches the result on the input schema for future calls.
- */
-function copyNodeSchema(schema: SimpleNodeSchema): SimpleNodeSchema {
-	const kind = schema.kind;
-	switch (kind) {
-		case NodeKind.Leaf:
-			return copyLeafSchema(schema);
-		case NodeKind.Array:
-		case NodeKind.Map:
-		case NodeKind.Record:
-			return copySchemaWithAllowedTypes(schema);
-		case NodeKind.Object:
-			return copyObjectSchema(schema);
-		default:
-			unreachableCase(kind);
-	}
-}
-
-function copyLeafSchema(schema: SimpleLeafNodeSchema): SimpleLeafNodeSchema {
-	return {
-		kind: NodeKind.Leaf,
-		leafKind: schema.leafKind,
-		metadata: schema.metadata,
-		persistedMetadata: schema.persistedMetadata,
-	};
-}
-
-function copySchemaWithAllowedTypes(
-	schema: SimpleMapNodeSchema | SimpleArrayNodeSchema | SimpleRecordNodeSchema,
-): SimpleMapNodeSchema | SimpleArrayNodeSchema | SimpleRecordNodeSchema {
-	return {
-		kind: schema.kind,
-		allowedTypesIdentifiers: schema.allowedTypesIdentifiers,
-		metadata: schema.metadata,
-		persistedMetadata: schema.persistedMetadata,
-	};
-}
-
-function copyObjectSchema(schema: SimpleObjectNodeSchema): SimpleObjectNodeSchema {
-	const fields: Map<string, SimpleObjectFieldSchema> = new Map();
-	for (const [propertyKey, field] of schema.fields) {
-		// field already is a SimpleObjectFieldSchema, but copy the subset of the properties needed by this interface to get a clean simple object.
-		fields.set(propertyKey, {
-			kind: field.kind,
-			allowedTypesIdentifiers: field.allowedTypesIdentifiers,
-			metadata: field.metadata,
-			persistedMetadata: field.persistedMetadata,
-			storedKey: field.storedKey,
-			stagedSchemaUpgrades: field.stagedSchemaUpgrades,
-		});
-	}
-
-	return {
-		kind: NodeKind.Object,
-		fields,
-		metadata: schema.metadata,
-		persistedMetadata: schema.persistedMetadata,
-		allowUnknownOptionalFields: schema.allowUnknownOptionalFields,
 	};
 }
