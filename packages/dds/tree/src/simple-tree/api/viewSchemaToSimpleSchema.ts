@@ -60,7 +60,7 @@ export function toSimpleTreeSchema(
 				0xb60 /* Invalid schema */,
 			);
 			const outSchema = copySchemaObjects
-				? copySimpleNodeSchema(nodeSchema, SimpleSchemaCopyKind.SimpleSchema)
+				? copySimpleNodeSchema(nodeSchema, SimpleSchemaCopyMode.SimpleSchema)
 				: nodeSchema;
 			definitions.set(nodeSchema.identifier, outSchema);
 		},
@@ -82,7 +82,7 @@ export function toSimpleTreeSchema(
 /**
  * Specifies which fields are included when copying a Simple Schema.
  */
-export enum SimpleSchemaCopyKind {
+export enum SimpleSchemaCopyMode {
 	// TODO: Rename
 	SimpleSchema,
 	ViewCompatibilitySchema,
@@ -95,54 +95,84 @@ export enum SimpleSchemaCopyKind {
  */
 export function copySimpleNodeSchema(
 	schema: SimpleNodeSchema,
-	copyKind: SimpleSchemaCopyKind,
+	copyMode: SimpleSchemaCopyMode,
 ): SimpleNodeSchema {
 	const kind = schema.kind;
 	switch (kind) {
 		case NodeKind.Leaf:
-			return copySimpleLeafSchema(schema);
+			return copySimpleLeafSchema(schema, copyMode);
 		case NodeKind.Array:
 		case NodeKind.Map:
 		case NodeKind.Record:
-			return copySimpleSchemaWithAllowedTypes(schema);
+			return copySimpleSchemaWithAllowedTypes(schema, copyMode);
 		case NodeKind.Object:
-			return copySimpleObjectSchema(schema, copyKind);
+			return copySimpleObjectSchema(schema, copyMode);
 		default:
 			unreachableCase(kind);
 	}
 }
 
-function copySimpleLeafSchema(schema: SimpleLeafNodeSchema): SimpleLeafNodeSchema {
-	return {
-		kind: NodeKind.Leaf,
-		leafKind: schema.leafKind,
-		metadata: schema.metadata,
-		persistedMetadata: schema.persistedMetadata,
-	};
+function copySimpleLeafSchema(
+	schema: SimpleLeafNodeSchema,
+	copyMode: SimpleSchemaCopyMode,
+): SimpleLeafNodeSchema {
+	switch (copyMode) {
+		case SimpleSchemaCopyMode.SimpleSchema:
+			return {
+				kind: NodeKind.Leaf,
+				leafKind: schema.leafKind,
+				metadata: schema.metadata,
+				persistedMetadata: schema.persistedMetadata,
+			};
+		case SimpleSchemaCopyMode.ViewCompatibilitySchema:
+			return {
+				kind: NodeKind.Leaf,
+				leafKind: schema.leafKind,
+				// Don't include metadata or persistedMetadata in view compatibility schema.
+				metadata: {},
+				persistedMetadata: undefined,
+			};
+		default:
+			unreachableCase(copyMode);
+	}
 }
 
 function copySimpleSchemaWithAllowedTypes(
 	schema: SimpleMapNodeSchema | SimpleArrayNodeSchema | SimpleRecordNodeSchema,
+	copyMode: SimpleSchemaCopyMode,
 ): SimpleMapNodeSchema | SimpleArrayNodeSchema | SimpleRecordNodeSchema {
-	return {
-		kind: schema.kind,
-		allowedTypesIdentifiers: schema.allowedTypesIdentifiers,
-		metadata: schema.metadata,
-		persistedMetadata: schema.persistedMetadata,
-	};
+	switch (copyMode) {
+		case SimpleSchemaCopyMode.SimpleSchema:
+			return {
+				kind: schema.kind,
+				allowedTypesIdentifiers: schema.allowedTypesIdentifiers,
+				metadata: schema.metadata,
+				persistedMetadata: schema.persistedMetadata,
+			};
+		case SimpleSchemaCopyMode.ViewCompatibilitySchema:
+			return {
+				kind: schema.kind,
+				allowedTypesIdentifiers: schema.allowedTypesIdentifiers,
+				// Don't include metadata or persistedMetadata in view compatibility schema.
+				metadata: {},
+				persistedMetadata: undefined,
+			};
+		default:
+			unreachableCase(copyMode);
+	}
 }
 
 function copySimpleObjectSchema(
 	schema: SimpleObjectNodeSchema,
-	copyKind: SimpleSchemaCopyKind,
+	copyMode: SimpleSchemaCopyMode,
 ): SimpleObjectNodeSchema {
 	const fields: Map<string, SimpleObjectFieldSchema> = new Map();
 	for (const [propertyKey, field] of schema.fields) {
 		// field already is a SimpleObjectFieldSchema, but copy the subset of the properties needed by this interface to get a clean simple object.
 		let simpleField: SimpleObjectFieldSchema | undefined;
 
-		switch (copyKind) {
-			case SimpleSchemaCopyKind.SimpleSchema:
+		switch (copyMode) {
+			case SimpleSchemaCopyMode.SimpleSchema:
 				simpleField = {
 					kind: field.kind,
 					allowedTypesIdentifiers: field.allowedTypesIdentifiers,
@@ -152,19 +182,20 @@ function copySimpleObjectSchema(
 				};
 				break;
 
-			case SimpleSchemaCopyKind.ViewCompatibilitySchema:
+			case SimpleSchemaCopyMode.ViewCompatibilitySchema:
 				simpleField = {
 					kind: field.kind,
 					allowedTypesIdentifiers: field.allowedTypesIdentifiers,
-					metadata: field.metadata,
-					persistedMetadata: field.persistedMetadata,
+					// Don't include metadata or persistedMetadata in view compatibility schema.
+					metadata: {},
+					persistedMetadata: undefined,
 					storedKey: field.storedKey,
 					stagedSchemaUpgrades: field.stagedSchemaUpgrades,
 				};
 				break;
 
 			default:
-				unreachableCase(copyKind);
+				unreachableCase(copyMode);
 		}
 
 		fields.set(propertyKey, simpleField);
@@ -172,8 +203,8 @@ function copySimpleObjectSchema(
 
 	let simpleObject: SimpleObjectNodeSchema | undefined;
 
-	switch (copyKind) {
-		case SimpleSchemaCopyKind.SimpleSchema:
+	switch (copyMode) {
+		case SimpleSchemaCopyMode.SimpleSchema:
 			simpleObject = {
 				kind: NodeKind.Object,
 				fields,
@@ -182,18 +213,19 @@ function copySimpleObjectSchema(
 			};
 			break;
 
-		case SimpleSchemaCopyKind.ViewCompatibilitySchema:
+		case SimpleSchemaCopyMode.ViewCompatibilitySchema:
 			simpleObject = {
 				kind: NodeKind.Object,
 				fields,
-				metadata: schema.metadata,
-				persistedMetadata: schema.persistedMetadata,
+				// Don't include metadata or persistedMetadata in view compatibility schema.
+				metadata: {},
+				persistedMetadata: undefined,
 				allowUnknownOptionalFields: schema.allowUnknownOptionalFields,
 			};
 			break;
 
 		default:
-			unreachableCase(copyKind);
+			unreachableCase(copyMode);
 	}
 
 	return simpleObject;

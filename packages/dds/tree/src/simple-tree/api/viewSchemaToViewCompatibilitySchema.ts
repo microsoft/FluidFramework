@@ -13,7 +13,7 @@ import {
 	ObjectNodeSchema,
 	RecordNodeSchema,
 } from "../node-kinds/index.js";
-import { copySimpleNodeSchema, SimpleSchemaCopyKind } from "./viewSchemaToSimpleSchema.js";
+import { copySimpleNodeSchema, SimpleSchemaCopyMode } from "./viewSchemaToSimpleSchema.js";
 
 /**
  * Convert a stored schema to a SimpleSchema and preserve information needed for compatibility testing.
@@ -50,7 +50,7 @@ export function toViewCompatibilityTreeSchema(
 
 		// Read properties that are needed for compatibility and copy them to a SimpleNodeSchema.
 		const simpleNodeSchema = copySchemaObjects
-			? copySimpleNodeSchema(nodeSchema, SimpleSchemaCopyKind.ViewCompatibilitySchema)
+			? copySimpleNodeSchema(nodeSchema, SimpleSchemaCopyMode.ViewCompatibilitySchema)
 			: nodeSchema;
 		definitions.set(nodeSchema.identifier, simpleNodeSchema);
 	}
