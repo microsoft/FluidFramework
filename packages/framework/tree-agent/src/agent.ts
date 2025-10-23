@@ -30,11 +30,12 @@ import { getPrompt, stringifyTree } from "./prompt.js";
 import { Subtree } from "./subtree.js";
 import {
 	constructNode,
-	getFriendlyName,
 	llmDefault,
 	type TreeView,
-	findNamedSchemas,
+	findSchemas,
 	toErrorString,
+	unqualifySchema,
+	isNamedSchema,
 } from "./utils.js";
 
 /**
@@ -298,8 +299,8 @@ function bindEditorToSubtree<TSchema extends ImplicitFieldSchema>(
 	// Stick the tree schema constructors on an object passed to the function so that the LLM can create new nodes.
 	const create: Record<string, (input: FactoryContentObject) => TreeNode> = {};
 	const is: Record<string, <T extends TreeNode>(input: unknown) => input is T> = {};
-	for (const schema of findNamedSchemas(tree.schema)) {
-		const name = getFriendlyName(schema);
+	for (const schema of findSchemas(tree.schema, (s) => isNamedSchema(s.identifier))) {
+		const name = unqualifySchema(schema.identifier);
 		create[name] = (input: FactoryContentObject) => constructTreeNode(schema, input);
 		is[name] = <T extends TreeNode>(input: unknown): input is T => Tree.is(input, schema);
 	}
