@@ -169,7 +169,7 @@ function copySimpleObjectSchema(
 	const fields: Map<string, SimpleObjectFieldSchema> = new Map();
 	for (const [propertyKey, field] of schema.fields) {
 		// field already is a SimpleObjectFieldSchema, but copy the subset of the properties needed by this interface to get a clean simple object.
-		let simpleField: SimpleObjectFieldSchema | undefined;
+		let simpleField: SimpleObjectFieldSchema;
 
 		switch (copyMode) {
 			case SimpleSchemaCopyMode.SimpleSchema:
@@ -201,7 +201,7 @@ function copySimpleObjectSchema(
 		fields.set(propertyKey, simpleField);
 	}
 
-	let simpleObject: SimpleObjectNodeSchema | undefined;
+	let simpleObject: SimpleObjectNodeSchema;
 
 	switch (copyMode) {
 		case SimpleSchemaCopyMode.SimpleSchema:
