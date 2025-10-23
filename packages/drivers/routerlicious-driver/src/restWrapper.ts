@@ -47,10 +47,10 @@ const buildRequestUrl = (requestConfig: AxiosRequestConfig) =>
 const axiosBuildRequestInitConfig = (requestConfig: AxiosRequestConfig): RequestInit => {
 	const requestInit: RequestInit = {
 		method: requestConfig.method,
-		// NOTE: I believe that although the Axios type permits non-string values in the header, here we are
-		// guaranteed the requestConfig only has string values in its header.
-		headers: requestConfig.headers as Record<string, string>,
-		body: requestConfig.data,
+		// Only set headers if they exist to avoid passing undefined
+		...(requestConfig.headers && { headers: requestConfig.headers as Record<string, string> }),
+		// Only set body if it exists to avoid passing undefined
+		...(requestConfig.data !== undefined && { body: requestConfig.data }),
 	};
 	return requestInit;
 };
