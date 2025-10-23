@@ -8,6 +8,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 import { copy } from "fs-extra/esm";
+import { simpleGit } from "simple-git";
 
 import { testRepoRoot as originalTestRepoRoot } from "./init.js";
 
@@ -15,9 +16,13 @@ import { testRepoRoot as originalTestRepoRoot } from "./init.js";
  * Creates a temporary copy of the test repository to avoid using git operations
  * that could silently revert local changes in the source repository.
  *
+ * @param initGit - Whether to initialize the temp directory as a git repository with an initial commit.
+ * This is required for tests that need to use git operations like `git add` or detect changes.
  * @returns An object containing the path to the temporary test repo and a cleanup function
  */
-export async function setupTestRepo(): Promise<{
+export async function setupTestRepo(
+	initGit: boolean = false,
+): Promise<{
 	testRepoRoot: string;
 	cleanup: () => Promise<void>;
 }> {
@@ -30,6 +35,14 @@ export async function setupTestRepo(): Promise<{
 		// Preserve timestamps to avoid unnecessary git change detection
 		preserveTimestamps: true,
 	});
+
+	if (initGit) {
+		// Initialize a git repository and commit all files
+		const git = simpleGit(testRepoRoot);
+		await git.init();
+		await git.add(".");
+		await git.commit("Initial commit");
+	}
 
 	const cleanup = async (): Promise<void> => {
 		await rm(tempDir, { recursive: true, force: true });

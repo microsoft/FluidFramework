@@ -10,7 +10,7 @@ import * as path from "node:path";
 
 import { expect } from "chai";
 import { readJson, writeJson } from "fs-extra/esm";
-import { before, describe, it } from "mocha";
+import { after, before, describe, it } from "mocha";
 import { CleanOptions, simpleGit } from "simple-git";
 
 import { loadBuildProject } from "../buildProject.js";
@@ -19,6 +19,7 @@ import { findGitRootSync, getChangedSinceRef, getFiles, getRemote } from "../git
 import type { PackageJson } from "../types.js";
 
 import { packageRootPath, testRepoRoot } from "./init.js";
+import { setupTestRepo } from "./testUtils.js";
 
 describe("findGitRootSync", () => {
 	it("finds root", () => {
@@ -51,24 +52,23 @@ describe("getRemote", () => {
 });
 
 describe("getChangedSinceRef: local", () => {
-	const git = simpleGit(process.cwd());
-	const repo = loadBuildProject(testRepoRoot);
+	let testRepoRoot: string;
+	let cleanup: () => Promise<void>;
+	let git: ReturnType<typeof simpleGit>;
+	let repo: ReturnType<typeof loadBuildProject>;
 
 	before(async () => {
-		// Check for uncommitted changes in testRepoRoot to avoid accidentally reverting local work
-		const status = await git.status([testRepoRoot]);
-		const hasChanges =
-			status.files.length > 0 ||
-			status.created.length > 0 ||
-			status.deleted.length > 0 ||
-			status.modified.length > 0 ||
-			status.renamed.length > 0;
+		// Set up a temporary copy of the test repo with git initialized
+		const setup = await setupTestRepo(true);
+		testRepoRoot = setup.testRepoRoot;
+		cleanup = setup.cleanup;
 
-		if (hasChanges) {
-			throw new Error(
-				`testRepo directory has uncommitted changes. This test modifies and reverts files in testRepo. Please commit or stash your changes before running this test.`,
-			);
-		}
+		git = simpleGit(testRepoRoot);
+		repo = loadBuildProject(testRepoRoot);
+	});
+
+	after(async () => {
+		await cleanup();
 	});
 
 	beforeEach(async () => {
