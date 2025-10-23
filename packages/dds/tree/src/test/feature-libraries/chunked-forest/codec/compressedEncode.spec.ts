@@ -489,7 +489,7 @@ describe("compressedEncode", () => {
 				(error: Error) =>
 					validateAssertionError(
 						error,
-						"incremental encoding must be enabled to use IncrementalFieldShape",
+						"incremental encoder must be defined to use incrementalFieldEncoder",
 					),
 			);
 		});
