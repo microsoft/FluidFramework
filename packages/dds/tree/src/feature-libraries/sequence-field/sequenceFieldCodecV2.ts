@@ -437,6 +437,7 @@ function encodeRename(
 		// These cells are the final detach location of moved nodes.
 		const encodedRevision = encodeRevision(mark.idOverride.revision);
 
+		// XXX: Use finalEndpoint if there is an associated cellDetachId.
 		return {
 			attachAndDetach: {
 				attach: {
@@ -462,6 +463,8 @@ function encodeRename(
 	const isMoveOutAndDetach = !areEqualChangeAtomIds(outputRootId, mark.idOverride);
 	if (isMoveOutAndAttach || isMoveOutAndDetach) {
 		// Detached nodes which were last at this cell location have been moved.
+		// XXX: mark.idOverride represents detachCellId, so we should represent it using the moveOut's ID and use outputRootId as the finalDetachId.
+		// Is that always true?
 		return {
 			moveOut: {
 				revision: encodeRevision(outputRootId.revision),

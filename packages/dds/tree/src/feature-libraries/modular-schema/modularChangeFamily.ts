@@ -3004,8 +3004,9 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		const moveEntry = this.table.entries.getFirst(inputId, countToProcess);
 
 		countToProcess = moveEntry.length;
-		if (moveEntry.value?.detachId !== undefined) {
-			return { ...moveEntry, value: moveEntry.value.detachId };
+		if (moveEntry.value !== undefined) {
+			// XXX
+			return { ...moveEntry, value: moveEntry.value.bonusId ?? moveEntry.value.detachId };
 		}
 
 		return this.table.newChange.rootNodes.oldToNewId.getFirst(inputId, countToProcess);
@@ -3148,13 +3149,13 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 			);
 		}
 
-		const detachEntry = getFirstDetachField(
+		const baseDetachEntry = getFirstDetachField(
 			this.table.baseChange.crossFieldKeys,
 			baseAttachId,
 			countToProcess,
 		);
 
-		countToProcess = detachEntry.length;
+		countToProcess = baseDetachEntry.length;
 
 		const baseRootIdEntry = firstDetachIdFromAttachId(
 			this.table.baseChange.rootNodes,
@@ -3165,35 +3166,20 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 
 		const baseDetachId = baseRootIdEntry.value;
 
-		const baseDetachLocationEntry = this.table.baseChange.rootNodes.detachLocations.getFirst(
-			baseDetachId,
-			countToProcess,
-		);
-		countToProcess = baseDetachLocationEntry.length;
-
-		if (newAttachEntry.value === undefined) {
-			const newOutputDetachLocationEntry =
-				this.table.newChange.rootNodes.outputDetachLocations.getFirst(
-					newDetachId,
-					countToProcess,
-				);
-
-			countToProcess = newOutputDetachLocationEntry.length;
-
-			this.table.composedRootNodes.outputDetachLocations.delete(newDetachId, countToProcess);
-			this.table.composedRootNodes.outputDetachLocations.set(
-				baseDetachId,
+		const newOutputDetachLocationEntry =
+			this.table.newChange.rootNodes.outputDetachLocations.getFirst(
+				newDetachId,
 				countToProcess,
-				newOutputDetachLocationEntry.value ?? this.fieldId,
 			);
-		}
 
-		if (detachEntry.value !== undefined) {
+		countToProcess = newOutputDetachLocationEntry.length;
+
+		if (baseDetachEntry.value !== undefined) {
 			// The base change moves these nodes.
 			const prevEntry =
-				this.table.entries.getFirst(baseAttachId, detachEntry.length).value ?? {};
+				this.table.entries.getFirst(baseAttachId, baseDetachEntry.length).value ?? {};
 
-			this.table.entries.set(baseAttachId, detachEntry.length, {
+			this.table.entries.set(baseAttachId, baseDetachEntry.length, {
 				...prevEntry,
 				detachId: newDetachId,
 			});
@@ -3210,18 +3196,30 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 			this.table.movedCrossFieldKeys.set(
 				{ ...newDetachId, target: CrossFieldTarget.Source },
 				countToProcess,
-				detachEntry.value,
+				baseDetachEntry.value,
 			);
 
-			this.invalidateBaseFields([detachEntry.value]);
+			this.table.composedRootNodes.outputDetachLocations.set(
+				newDetachId,
+				countToProcess,
+				newOutputDetachLocationEntry.value ?? this.fieldId,
+			);
+
+			this.invalidateBaseFields([baseDetachEntry.value]);
 		} else {
+			const baseDetachLocationEntry = this.table.baseChange.rootNodes.detachLocations.getFirst(
+				baseDetachId,
+				countToProcess,
+			);
+			countToProcess = baseDetachLocationEntry.length;
+
 			// These nodes were detached in the base change's input context,
 			// so the net effect of the two changes is a rename.
 			appendNodeRename(
 				this.table.composedRootNodes,
 				baseAttachId,
 				newDetachId,
-				detachEntry.length,
+				baseDetachEntry.length,
 				this.table.baseChange.rootNodes,
 				baseDetachLocationEntry.value ?? this.fieldId,
 			);
@@ -3230,6 +3228,13 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 				{ ...newDetachId, target: CrossFieldTarget.Source },
 				countToProcess,
 				true,
+			);
+
+			this.table.composedRootNodes.outputDetachLocations.delete(newDetachId, countToProcess);
+			this.table.composedRootNodes.outputDetachLocations.set(
+				baseDetachId,
+				countToProcess,
+				newOutputDetachLocationEntry.value ?? this.fieldId,
 			);
 		}
 
@@ -4301,6 +4306,11 @@ function composeRootTables(
 				);
 			}
 		}
+	}
+
+	for (const entry of change2.rootNodes.outputDetachLocations.entries()) {
+		// XXX: Handle change1's renames
+		mergedTable.outputDetachLocations.set(entry.start, entry.length, entry.value);
 	}
 
 	return mergedTable;
