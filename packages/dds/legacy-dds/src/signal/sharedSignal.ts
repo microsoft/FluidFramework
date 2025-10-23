@@ -119,7 +119,7 @@ export class SharedSignalClass<T extends SerializableTypeForSharedSignal = any>
 	 * Load share signal from snapshot
 	 *
 	 * @param _storage - the storage to get the snapshot from
-	 * @returns - promise that resolved when the load is completed
+	 * @returns promise that resolved when the load is completed
 	 */
 	protected async loadCore(_storage: IChannelStorageService): Promise<void> {}
 

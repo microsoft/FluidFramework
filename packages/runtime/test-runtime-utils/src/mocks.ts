@@ -709,7 +709,10 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
 	}
 
 	getMembers(): Map<string, ISequencedClient> {
-		return this.members;
+		// Implementation always generates a new Map.
+		// Mock should as well in case any callers rely on being able to modify
+		// the returned Map.
+		return new Map(this.members);
 	}
 	getMember(clientId: string): ISequencedClient | undefined {
 		return this.getMembers().get(clientId);
@@ -1235,6 +1238,17 @@ export class MockEmptyDeltaConnection implements IDeltaConnection {
 export class MockObjectStorageService implements IChannelStorageService {
 	private readonly snapshotTree: ISnapshotTree;
 
+<<<<<<< HEAD
+=======
+	/**
+	 * @param contents - Key value pairs that represent a snapshot.
+	 * The keys are the path to the contents of a blob in the snapshot tree. The corresponding values are its contents.
+	 *
+	 * @remarks
+	 * The snapshot contents must not change after it has been passed here as the changes will not be reflected
+	 * in the snapshot tree retrieved via `getSnapshotTree`.
+	 */
+>>>>>>> main
 	public constructor(private readonly contents: { [key: string]: string }) {
 		this.snapshotTree = createSnapshotTreeFromContents(contents);
 	}
@@ -1242,11 +1256,9 @@ export class MockObjectStorageService implements IChannelStorageService {
 	public async readBlob(path: string): Promise<ArrayBufferLike> {
 		return stringToBuffer(this.contents[path], "utf8");
 	}
-
 	public async contains(path: string): Promise<boolean> {
 		return this.contents[path] !== undefined;
 	}
-
 	public async list(path: string): Promise<string[]> {
 		const pathPartsLength = getNormalizedObjectStoragePathParts(path).length;
 		return Object.keys(this.contents).filter(

@@ -28,6 +28,7 @@ import {
 	type AllowedTypesFull,
 	type ImplicitAllowedTypes,
 	type AllowedTypes,
+	SchemaFactoryBeta,
 } from "../../../simple-tree/index.js";
 import {
 	allowUnused,
@@ -498,7 +499,41 @@ describe("SchemaFactory Recursive methods", () => {
 			}
 		});
 
-		it("Node schema metadata", () => {
+		it("Node schema metadata - beta", () => {
+			const factory = new SchemaFactoryBeta("");
+			class Foo extends factory.objectRecursive(
+				"Foo",
+				{ bar: [() => Foo] },
+				{
+					metadata: {
+						description: "A recursive object called Foo",
+						custom: { baz: true },
+					},
+				},
+			) {}
+
+			const custom = Foo.metadata.custom;
+
+			// Currently it is impossible to have required custom metadata: it always includes undefined as an option.
+			// TODO: having a way to make metadata required would be nice.
+			type _check1 = requireTrue<
+				areSafelyAssignable<typeof custom, { baz: true } | undefined>
+			>;
+			assert(custom !== undefined);
+
+			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
+			const baz = custom.baz;
+
+			type _check2 = requireTrue<areSafelyAssignable<typeof baz, true>>;
+
+			// This must be checked after the types are checked to avoid it narrowing and making the type checks above not test anything.
+			assert.deepEqual(Foo.metadata, {
+				description: "A recursive object called Foo",
+				custom: { baz: true },
+			});
+		});
+
+		it("Node schema metadata - alpha", () => {
 			const factory = new SchemaFactoryAlpha("");
 			class Foo extends factory.objectRecursive(
 				"Foo",
@@ -511,14 +546,25 @@ describe("SchemaFactory Recursive methods", () => {
 				},
 			) {}
 
+			const custom = Foo.metadata.custom;
+
+			// Currently it is impossible to have required custom metadata: it always includes undefined as an option.
+			// TODO: having a way to make metadata required would be nice.
+			type _check1 = requireTrue<
+				areSafelyAssignable<typeof custom, { baz: true } | undefined>
+			>;
+			assert(custom !== undefined);
+
+			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
+			const baz = custom.baz;
+
+			type _check2 = requireTrue<areSafelyAssignable<typeof baz, true>>;
+
+			// This must be checked after the types are checked to avoid it narrowing and making the type checks above not test anything.
 			assert.deepEqual(Foo.metadata, {
 				description: "A recursive object called Foo",
 				custom: { baz: true },
 			});
-
-			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
-			const baz = Foo.metadata.custom.baz;
-			type _check1 = requireTrue<areSafelyAssignable<typeof baz, true>>;
 		});
 	});
 	describe("ValidateRecursiveSchema", () => {

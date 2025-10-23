@@ -577,10 +577,7 @@ export function objectSchema<
 		public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
 			return (privateData ??= createTreeNodeSchemaPrivateData(
 				this,
-				Array.from(
-					flexKeyMap.values(),
-					({ schema }) => normalizeFieldSchema(schema).allowedTypes,
-				),
+				Array.from(CustomObjectNode.fields.values(), (schema) => schema.allowedTypesFull),
 				(storedOptions) => {
 					const fields: Map<FieldKey, TreeFieldStoredSchema> = new Map();
 					for (const fieldSchema of flexKeyMap.values()) {

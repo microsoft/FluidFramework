@@ -198,6 +198,22 @@ describe("FluidDataStoreRuntime Tests", () => {
 		);
 	});
 
+	it("getChannel - Channel Not Found case is distinguishable from other errors", async () => {
+		// IMPORTANT:
+		// If this string ever changes, it may break error handling in other places that depend on this exact text
+		// Why would anyone depend on an error message for control flow?
+		// Because it's a new use case and haven't added an API for this yet (See AB#50886)
+		const CHANNEL_NOT_FOUND = "Channel does not exist";
+
+		const dataStoreRuntime = createRuntime(dataStoreContext, sharedObjectRegistry);
+
+		await assert.rejects(
+			dataStoreRuntime.getChannel("nonExistentChannel"),
+			(error: Error) => error.message === CHANNEL_NOT_FOUND,
+			"Error message must be specific so that it can be handled differently from other errors",
+		);
+	});
+
 	it("entryPoint is initialized correctly", async () => {
 		const myObj: FluidObject = { fakeProp: "fakeValue" };
 		const dataStoreRuntime = createRuntime(
