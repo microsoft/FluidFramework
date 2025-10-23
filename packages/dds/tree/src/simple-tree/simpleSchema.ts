@@ -5,7 +5,7 @@
 
 import type { ValueSchema } from "../core/index.js";
 import type { JsonCompatibleReadOnlyObject } from "../util/index.js";
-import type { NodeKind, SimpleNodeSchemaBase } from "./core/index.js";
+import type { NodeKind, SchemaUpgrade, SimpleNodeSchemaBase } from "./core/index.js";
 import type { FieldKind, FieldSchemaMetadata } from "./fieldSchema.js";
 
 /*
@@ -58,6 +58,13 @@ export interface SimpleObjectNodeSchema<out TCustomMetadata = unknown>
 	 * especially if/when TreeNodeSchema for objects provide more maps.
 	 */
 	readonly fields: ReadonlyMap<string, SimpleObjectFieldSchema>;
+
+	/**
+	 * Whether the object node allows unknown optional fields.
+	 *
+	 * @remarks Used for compatibility checks (see {@link toViewCompatibilityTreeSchema}). Not available in all cases.
+	 */
+	readonly allowUnknownOptionalFields?: boolean;
 }
 
 /**
@@ -185,6 +192,13 @@ export interface SimpleFieldSchema {
 	 * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
 	 */
 	readonly allowedTypesIdentifiers: ReadonlySet<string>;
+
+	/**
+	 * Staged schema upgrades for this field indexed by the allowed type identifier they apply to.
+	 *
+	 * @remarks Used for compatibility checks (see {@link toViewCompatibilityTreeSchema}). Not available in all cases.
+	 */
+	readonly stagedSchemaUpgrades?: SchemaUpgrade[];
 
 	/**
 	 * {@inheritDoc FieldSchemaMetadata}

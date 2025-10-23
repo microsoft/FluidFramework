@@ -268,6 +268,8 @@ export class FieldSchemaAlpha<Kind extends FieldKind = FieldKind, Types extends 
     get allowedTypesIdentifiers(): ReadonlySet<string>;
     // (undocumented)
     get persistedMetadata(): JsonCompatibleReadOnlyObject | undefined;
+    // (undocumented)
+    get stagedSchemaUpgrades(): SchemaUpgrade[];
 }
 
 // @alpha @sealed @system
@@ -310,7 +312,7 @@ export namespace FluidSerializableAsTree {
     export type Data = JsonCompatible<IFluidHandle>;
     const // @system
     _APIExtractorWorkaroundObjectBase: TreeNodeSchemaClass_2<"com.fluidframework.serializable.object", NodeKind_2.Record, TreeRecordNodeUnsafe_2<readonly [() => typeof FluidSerializableObject, () => typeof Array, LeafSchema_2<"string", string>, LeafSchema_2<"number", number>, LeafSchema_2<"boolean", boolean>, LeafSchema_2<"null", null>, LeafSchema_2<"handle", IFluidHandle<unknown>>]> & WithType_2<"com.fluidframework.serializable.object", NodeKind_2.Record, unknown>, {
-    readonly [x: string]: string | number | IFluidHandle<unknown> | System_Unsafe_2.InsertableTypedNodeUnsafe<LeafSchema_2<"boolean", boolean>, LeafSchema_2<"boolean", boolean>> | FluidSerializableObject | Array | null;
+    readonly [x: string]: string | number | IFluidHandle<unknown> | FluidSerializableObject | Array | System_Unsafe_2.InsertableTypedNodeUnsafe<LeafSchema_2<"boolean", boolean>, LeafSchema_2<"boolean", boolean>> | null;
     }, false, readonly [() => typeof FluidSerializableObject, () => typeof Array, LeafSchema_2<"string", string>, LeafSchema_2<"number", number>, LeafSchema_2<"boolean", boolean>, LeafSchema_2<"null", null>, LeafSchema_2<"handle", IFluidHandle<unknown>>], undefined, unknown>;
     // @sealed
     export class FluidSerializableObject extends _APIExtractorWorkaroundObjectBase {
@@ -510,7 +512,7 @@ export namespace JsonAsTree {
     }
     const // @system
     _APIExtractorWorkaroundObjectBase: TreeNodeSchemaClass<"com.fluidframework.json.object", NodeKind.Record, TreeRecordNodeUnsafe<readonly [LeafSchema<"null", null>, LeafSchema<"number", number>, LeafSchema<"string", string>, LeafSchema<"boolean", boolean>, () => typeof JsonObject, () => typeof Array]> & WithType<"com.fluidframework.json.object", NodeKind.Record, unknown>, {
-        readonly [x: string]: string | number | JsonObject | Array | System_Unsafe.InsertableTypedNodeUnsafe<LeafSchema<"boolean", boolean>, LeafSchema<"boolean", boolean>> | null;
+        readonly [x: string]: string | number | System_Unsafe.InsertableTypedNodeUnsafe<LeafSchema<"boolean", boolean>, LeafSchema<"boolean", boolean>> | JsonObject | Array | null;
     }, false, readonly [LeafSchema<"null", null>, LeafSchema<"number", number>, LeafSchema<"string", string>, LeafSchema<"boolean", boolean>, () => typeof JsonObject, () => typeof Array], undefined, unknown>;
     export type Primitive = TreeNodeFromImplicitAllowedTypes<typeof Primitive>;
     // @system
@@ -1007,6 +1009,7 @@ export interface SimpleFieldSchema {
     readonly kind: FieldKind;
     readonly metadata: FieldSchemaMetadata;
     readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
+    readonly stagedSchemaUpgrades?: SchemaUpgrade[];
 }
 
 // @alpha @sealed
@@ -1040,6 +1043,7 @@ export interface SimpleObjectFieldSchema extends SimpleFieldSchema {
 
 // @alpha @sealed
 export interface SimpleObjectNodeSchema<out TCustomMetadata = unknown> extends SimpleNodeSchemaBaseAlpha<NodeKind.Object, TCustomMetadata> {
+    readonly allowUnknownOptionalFields?: boolean;
     readonly fields: ReadonlyMap<string, SimpleObjectFieldSchema>;
 }
 
@@ -1293,6 +1297,9 @@ export namespace TableSchema {
         readonly row: TRow;
     }): System_TableSchema.TableSchemaBase<TScope, TCell, TColumn, TRow>;
 }
+
+// @alpha
+export function toViewCompatibilityTreeSchema(schema: TreeSchema, copySchemaObjects: boolean): SimpleTreeSchema;
 
 // @alpha
 export function trackDirtyNodes(view: TreeViewAlpha<ImplicitFieldSchema>, dirty: DirtyTreeMap): () => void;

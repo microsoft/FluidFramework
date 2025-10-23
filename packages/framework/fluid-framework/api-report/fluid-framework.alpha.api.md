@@ -322,6 +322,8 @@ export class FieldSchemaAlpha<Kind extends FieldKind = FieldKind, Types extends 
     get allowedTypesIdentifiers(): ReadonlySet<string>;
     // (undocumented)
     get persistedMetadata(): JsonCompatibleReadOnlyObject | undefined;
+    // (undocumented)
+    get stagedSchemaUpgrades(): SchemaUpgrade[];
 }
 
 // @alpha @sealed @system
@@ -1385,6 +1387,7 @@ export interface SimpleFieldSchema {
     readonly kind: FieldKind;
     readonly metadata: FieldSchemaMetadata;
     readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
+    readonly stagedSchemaUpgrades?: SchemaUpgrade[];
 }
 
 // @alpha @sealed
@@ -1418,6 +1421,7 @@ export interface SimpleObjectFieldSchema extends SimpleFieldSchema {
 
 // @alpha @sealed
 export interface SimpleObjectNodeSchema<out TCustomMetadata = unknown> extends SimpleNodeSchemaBaseAlpha<NodeKind.Object, TCustomMetadata> {
+    readonly allowUnknownOptionalFields?: boolean;
     readonly fields: ReadonlyMap<string, SimpleObjectFieldSchema>;
 }
 

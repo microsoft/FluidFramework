@@ -28,6 +28,7 @@ import type {
 	TreeLeafValue,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	AllowedTypesFull,
+	SchemaUpgrade,
 } from "./core/index.js";
 import { normalizeAllowedTypes } from "./core/index.js";
 
@@ -410,6 +411,18 @@ export class FieldSchemaAlpha<
 
 	public get allowedTypesIdentifiers(): ReadonlySet<string> {
 		return this.allowedTypesFull.evaluateIdentifiers();
+	}
+
+	public get stagedSchemaUpgrades(): SchemaUpgrade[] {
+		const annotatedAllowedTypes = this.allowedTypesFull.evaluate().types;
+		const upgrades: SchemaUpgrade[] = [];
+		for (const type of annotatedAllowedTypes) {
+			if (type.metadata.stagedSchemaUpgrade !== undefined) {
+				upgrades.push(type.metadata.stagedSchemaUpgrade);
+			}
+		}
+
+		return upgrades;
 	}
 
 	protected constructor(
