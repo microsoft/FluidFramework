@@ -83,7 +83,7 @@ function validateFailureProperties(
 		`${incompatibleLayer} version not as expected`,
 	);
 	assert.strictEqual(
-		detailedProperties.incompatibleGeneration,
+		detailedProperties.incompatibleLayerGeneration,
 		incompatibleLayerGeneration,
 		`${incompatibleLayer} generation not as expected`,
 	);
