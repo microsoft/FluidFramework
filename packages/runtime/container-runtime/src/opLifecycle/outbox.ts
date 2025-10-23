@@ -316,7 +316,7 @@ export class Outbox {
 
 		// If we're configured to flush partial batches, do that now and return (don't throw)
 		if (this.params.config.flushPartialBatches) {
-			this.flush();
+			this.flushAll();
 			return;
 		}
 
@@ -365,6 +365,25 @@ export class Outbox {
 	 * @param resubmitInfo - Key information when flushing a resubmitted batch. Undefined means this is not resubmit.
 	 */
 	public flush(resubmitInfo?: BatchResubmitInfo): void {
+		// We have nothing to flush if all batchManagers are empty, and we we're not needing to resubmit an empty batch placeholder
+		if (
+			this.idAllocationBatch.empty &&
+			this.blobAttachBatch.empty &&
+			this.mainBatch.empty &&
+			resubmitInfo?.batchId === undefined
+		) {
+			return;
+		}
+
+		assert(
+			!this.isContextReentrant(),
+			0xb7b /* Flushing must not happen while incoming changes are being processed */,
+		);
+
+		this.flushAll(resubmitInfo);
+	}
+
+	private flushAll(resubmitInfo?: BatchResubmitInfo): void {
 		const allBatchesEmpty =
 			this.idAllocationBatch.empty && this.blobAttachBatch.empty && this.mainBatch.empty;
 		if (allBatchesEmpty) {
@@ -378,11 +397,6 @@ export class Outbox {
 			}
 			return;
 		}
-
-		assert(
-			!this.isContextReentrant(),
-			0xb7b /* Flushing must not happen while incoming changes are being processed */,
-		);
 
 		// Don't use resubmittingBatchId for idAllocationBatch.
 		// ID Allocation messages are not directly resubmitted so don't pass the resubmitInfo
@@ -406,11 +420,6 @@ export class Outbox {
 		resubmittingBatchId: BatchId,
 		resubmittingStagedBatch: boolean,
 	): void {
-		assert(
-			!this.isContextReentrant(),
-			"Flushing must not happen while incoming changes are being processed",
-		);
-
 		const referenceSequenceNumber =
 			this.params.getCurrentSequenceNumbers().referenceSequenceNumber;
 		assert(
