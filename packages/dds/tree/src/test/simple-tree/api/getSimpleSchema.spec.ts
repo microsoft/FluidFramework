@@ -10,6 +10,8 @@ import {
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	stringSchema,
+	toViewCompatibilityTreeSchema,
+	TreeViewConfigurationAlpha,
 	type SimpleLeafNodeSchema,
 	type SimpleNodeSchema,
 	type SimpleObjectFieldSchema,
@@ -35,352 +37,733 @@ const simpleNumber: SimpleLeafNodeSchema = {
 };
 
 describe("getSimpleSchema", () => {
-	it("non-copying", () => {
+	describe("non-copying", () => {
 		const Schema = stringSchema;
 		const root = SchemaFactoryAlpha.optional(Schema);
-
-		const actual = toSimpleTreeSchema(root, false);
 
 		const expected: SimpleTreeSchema = {
 			root,
 			definitions: new Map([[Schema.identifier, Schema]]),
 		};
-		assert.deepEqual(actual, expected);
 
-		assert.equal(actual.root, root);
-		assert.equal(actual.definitions.get(Schema.identifier), Schema);
+		it("toSimpleTreeSchema", () => {
+			const actual = toSimpleTreeSchema(root, false);
+
+			assert.deepEqual(actual, expected);
+
+			assert.equal(actual.root, root);
+			assert.equal(actual.definitions.get(Schema.identifier), Schema);
+		});
+
+		it("toViewCompatibilityTreeSchema", () => {
+			const treeView = new TreeViewConfigurationAlpha({ schema: root });
+			const actual = toViewCompatibilityTreeSchema(treeView, false);
+
+			assert.deepEqual(actual, expected);
+
+			assert.equal(actual.root, root);
+			assert.equal(actual.definitions.get(Schema.identifier), Schema);
+		});
 	});
 
-	it("Field Schema", () => {
+	describe("Field Schema", () => {
 		const schemaFactory = new SchemaFactory("test");
 		const Schema = schemaFactory.optional(schemaFactory.string, {
 			metadata: { description: "An optional string." },
 		});
 
-		const actual = toSimpleTreeSchema(Schema, true);
+		it("toSimpleTreeSchema", () => {
+			const actual = toSimpleTreeSchema(Schema, true);
 
-		const expected: SimpleTreeSchema = {
-			root: {
-				kind: FieldKind.Optional,
-				metadata: { description: "An optional string." },
-				allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
-				persistedMetadata: undefined,
-			},
-			definitions: new Map([["com.fluidframework.leaf.string", simpleString]]),
-		};
-		assert.deepEqual(actual, expected);
+			const expected: SimpleTreeSchema = {
+				root: {
+					kind: FieldKind.Optional,
+					metadata: { description: "An optional string." },
+					allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+					persistedMetadata: undefined,
+				},
+				definitions: new Map([["com.fluidframework.leaf.string", simpleString]]),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
+
+		it("toViewCompatibilityTreeSchema", () => {
+			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
+			const actual = toViewCompatibilityTreeSchema(treeView, true);
+
+			const expected: SimpleTreeSchema = {
+				root: {
+					kind: FieldKind.Optional,
+					metadata: { description: "An optional string." },
+					allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+					persistedMetadata: undefined,
+					stagedSchemaUpgrades: [],
+				},
+				definitions: new Map([["com.fluidframework.leaf.string", simpleString]]),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
 	});
 
-	it("Leaf node", () => {
+	describe("Leaf node", () => {
 		const Schema = SchemaFactory.string;
 
-		const actual = toSimpleTreeSchema(Schema, true);
+		it("toSimpleTreeSchema", () => {
+			const actual = toSimpleTreeSchema(Schema, true);
 
-		const expected: SimpleTreeSchema = {
-			root: {
-				kind: FieldKind.Required,
-				metadata: {},
-				allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
-				persistedMetadata: undefined,
-			},
-			definitions: new Map([["com.fluidframework.leaf.string", simpleString]]),
-		};
-		assert.deepEqual(actual, expected);
+			const expected: SimpleTreeSchema = {
+				root: {
+					kind: FieldKind.Required,
+					metadata: {},
+					allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+					persistedMetadata: undefined,
+				},
+				definitions: new Map([["com.fluidframework.leaf.string", simpleString]]),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
+
+		it("toViewCompatibilityTreeSchema", () => {
+			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
+			const actual = toViewCompatibilityTreeSchema(treeView, true);
+
+			const expected: SimpleTreeSchema = {
+				root: {
+					kind: FieldKind.Required,
+					metadata: {},
+					allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+					persistedMetadata: undefined,
+					stagedSchemaUpgrades: [],
+				},
+				definitions: new Map([["com.fluidframework.leaf.string", simpleString]]),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
 	});
 
-	it("Union root", () => {
+	describe("Union root", () => {
 		const Schema = [SchemaFactory.number, SchemaFactory.string];
 
-		const actual = toSimpleTreeSchema(Schema, true);
+		it("toSimpleTreeSchema", () => {
+			const actual = toSimpleTreeSchema(Schema, true);
 
-		const expected: SimpleTreeSchema = {
-			root: {
-				kind: FieldKind.Required,
-				metadata: {},
-				persistedMetadata: undefined,
-				allowedTypesIdentifiers: new Set([
-					"com.fluidframework.leaf.number",
-					"com.fluidframework.leaf.string",
+			const expected: SimpleTreeSchema = {
+				root: {
+					kind: FieldKind.Required,
+					metadata: {},
+					persistedMetadata: undefined,
+					allowedTypesIdentifiers: new Set([
+						"com.fluidframework.leaf.number",
+						"com.fluidframework.leaf.string",
+					]),
+				},
+				definitions: new Map([
+					["com.fluidframework.leaf.number", simpleNumber],
+					["com.fluidframework.leaf.string", simpleString],
 				]),
-			},
-			definitions: new Map([
-				["com.fluidframework.leaf.number", simpleNumber],
-				["com.fluidframework.leaf.string", simpleString],
-			]),
-		};
-		assert.deepEqual(actual, expected);
+			};
+
+			assert.deepEqual(actual, expected);
+		});
+
+		it("toViewCompatibilityTreeSchema", () => {
+			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
+			const actual = toViewCompatibilityTreeSchema(treeView, true);
+
+			const expected: SimpleTreeSchema = {
+				root: {
+					kind: FieldKind.Required,
+					metadata: {},
+					persistedMetadata: undefined,
+					allowedTypesIdentifiers: new Set([
+						"com.fluidframework.leaf.number",
+						"com.fluidframework.leaf.string",
+					]),
+					stagedSchemaUpgrades: [],
+				},
+				definitions: new Map([
+					["com.fluidframework.leaf.number", simpleNumber],
+					["com.fluidframework.leaf.string", simpleString],
+				]),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
 	});
 
-	it("Array schema", () => {
+	describe("Array schema", () => {
 		const schemaFactory = new SchemaFactory("test");
 		class Schema extends schemaFactory.array("array", schemaFactory.string) {}
 
-		const actual = toSimpleTreeSchema(Schema, true);
+		it("toSimpleTreeSchema", () => {
+			const actual = toSimpleTreeSchema(Schema, true);
 
-		const expected: SimpleTreeSchema = {
-			root: {
-				kind: FieldKind.Required,
-				metadata: {},
-				persistedMetadata: undefined,
-				allowedTypesIdentifiers: new Set(["test.array"]),
-			},
-			definitions: new Map<string, SimpleNodeSchema>([
-				[
-					"test.array",
-					{
-						kind: NodeKind.Array,
-						allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
-						metadata: {},
-						persistedMetadata: undefined,
-					},
-				],
-				["com.fluidframework.leaf.string", simpleString],
-			]),
-		};
-		assert.deepEqual(actual, expected);
+			const expected: SimpleTreeSchema = {
+				root: {
+					kind: FieldKind.Required,
+					metadata: {},
+					persistedMetadata: undefined,
+					allowedTypesIdentifiers: new Set(["test.array"]),
+				},
+				definitions: new Map<string, SimpleNodeSchema>([
+					[
+						"test.array",
+						{
+							kind: NodeKind.Array,
+							allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+							metadata: {},
+							persistedMetadata: undefined,
+						},
+					],
+					["com.fluidframework.leaf.string", simpleString],
+				]),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
+
+		it("toViewCompatibilityTreeSchema", () => {
+			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
+			const actual = toViewCompatibilityTreeSchema(treeView, true);
+
+			const expected: SimpleTreeSchema = {
+				root: {
+					kind: FieldKind.Required,
+					metadata: {},
+					persistedMetadata: undefined,
+					allowedTypesIdentifiers: new Set(["test.array"]),
+					stagedSchemaUpgrades: [],
+				},
+				definitions: new Map<string, SimpleNodeSchema>([
+					[
+						"test.array",
+						{
+							kind: NodeKind.Array,
+							allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+							metadata: {},
+							persistedMetadata: undefined,
+						},
+					],
+					["com.fluidframework.leaf.string", simpleString],
+				]),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
 	});
 
-	it("Map schema", () => {
+	describe("Map schema", () => {
 		const schemaFactory = new SchemaFactory("test");
 		class Schema extends schemaFactory.map("map", schemaFactory.string) {}
 
-		const actual = toSimpleTreeSchema(Schema, true);
-		const expected: SimpleTreeSchema = {
-			root: {
-				kind: FieldKind.Required,
-				metadata: {},
-				persistedMetadata: undefined,
-				allowedTypesIdentifiers: new Set(["test.map"]),
-			},
-			definitions: new Map<string, SimpleNodeSchema>([
-				[
-					"test.map",
-					{
-						kind: NodeKind.Map,
-						metadata: {},
-						persistedMetadata: undefined,
-						allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
-					},
-				],
-				["com.fluidframework.leaf.string", simpleString],
-			]),
-		};
-		assert.deepEqual(actual, expected);
+		it("toSimpleTreeSchema", () => {
+			const actual = toSimpleTreeSchema(Schema, true);
+
+			const expected: SimpleTreeSchema = {
+				root: {
+					kind: FieldKind.Required,
+					metadata: {},
+					persistedMetadata: undefined,
+					allowedTypesIdentifiers: new Set(["test.map"]),
+				},
+				definitions: new Map<string, SimpleNodeSchema>([
+					[
+						"test.map",
+						{
+							kind: NodeKind.Map,
+							metadata: {},
+							persistedMetadata: undefined,
+							allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+						},
+					],
+					["com.fluidframework.leaf.string", simpleString],
+				]),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
+
+		it("toViewCompatibilityTreeSchema", () => {
+			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
+			const actual = toViewCompatibilityTreeSchema(treeView, true);
+
+			const expected: SimpleTreeSchema = {
+				root: {
+					kind: FieldKind.Required,
+					metadata: {},
+					persistedMetadata: undefined,
+					allowedTypesIdentifiers: new Set(["test.map"]),
+					stagedSchemaUpgrades: [],
+				},
+				definitions: new Map<string, SimpleNodeSchema>([
+					[
+						"test.map",
+						{
+							kind: NodeKind.Map,
+							metadata: {},
+							persistedMetadata: undefined,
+							allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+						},
+					],
+					["com.fluidframework.leaf.string", simpleString],
+				]),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
 	});
 
-	it("Record schema", () => {
+	describe("Record schema", () => {
 		const schemaFactory = new SchemaFactoryAlpha("test");
 		class Schema extends schemaFactory.record("record", schemaFactory.string) {}
 
-		const actual = toSimpleTreeSchema(Schema, true);
-		const expected: SimpleTreeSchema = {
-			root: {
-				kind: FieldKind.Required,
-				metadata: {},
-				persistedMetadata: undefined,
-				allowedTypesIdentifiers: new Set(["test.record"]),
-			},
-			definitions: new Map<string, SimpleNodeSchema>([
-				[
-					"test.record",
-					{
-						kind: NodeKind.Record,
-						metadata: {},
-						persistedMetadata: undefined,
-						allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
-					},
-				],
-				["com.fluidframework.leaf.string", simpleString],
-			]),
-		};
-		assert.deepEqual(actual, expected);
+		it("toSimpleTreeSchema", () => {
+			const actual = toSimpleTreeSchema(Schema, true);
+
+			const expected: SimpleTreeSchema = {
+				root: {
+					kind: FieldKind.Required,
+					metadata: {},
+					persistedMetadata: undefined,
+					allowedTypesIdentifiers: new Set(["test.record"]),
+				},
+				definitions: new Map<string, SimpleNodeSchema>([
+					[
+						"test.record",
+						{
+							kind: NodeKind.Record,
+							metadata: {},
+							persistedMetadata: undefined,
+							allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+						},
+					],
+					["com.fluidframework.leaf.string", simpleString],
+				]),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
+
+		it("toViewCompatibilityTreeSchema", () => {
+			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
+			const actual = toViewCompatibilityTreeSchema(treeView, true);
+
+			const expected: SimpleTreeSchema = {
+				root: {
+					kind: FieldKind.Required,
+					metadata: {},
+					persistedMetadata: undefined,
+					allowedTypesIdentifiers: new Set(["test.record"]),
+					stagedSchemaUpgrades: [],
+				},
+				definitions: new Map<string, SimpleNodeSchema>([
+					[
+						"test.record",
+						{
+							kind: NodeKind.Record,
+							metadata: {},
+							persistedMetadata: undefined,
+							allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+						},
+					],
+					["com.fluidframework.leaf.string", simpleString],
+				]),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
 	});
 
-	it("Object schema", () => {
+	describe("Object schema", () => {
 		const schemaFactory = new SchemaFactory("test");
 		class Schema extends schemaFactory.object("object", {
 			foo: schemaFactory.optional(schemaFactory.number),
 			bar: schemaFactory.required(schemaFactory.string),
 		}) {}
 
-		const actual = toSimpleTreeSchema(Schema, true);
+		it("toSimpleTreeSchema", () => {
+			const actual = toSimpleTreeSchema(Schema, true);
 
-		const expected: SimpleTreeSchema = {
-			root: {
-				kind: FieldKind.Required,
-				metadata: {},
-				persistedMetadata: undefined,
-				allowedTypesIdentifiers: new Set(["test.object"]),
-			},
-			definitions: new Map<string, SimpleNodeSchema>([
-				[
-					"test.object",
-					{
-						kind: NodeKind.Object,
-						metadata: {},
-						persistedMetadata: undefined,
-						fields: new Map<string, SimpleObjectFieldSchema>([
-							[
-								"foo",
-								{
-									kind: FieldKind.Optional,
-									metadata: {},
-									persistedMetadata: undefined,
-									allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.number"]),
-									storedKey: "foo",
-								},
-							],
-							[
-								"bar",
-								{
-									kind: FieldKind.Required,
-									metadata: {},
-									persistedMetadata: undefined,
-									allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
-									storedKey: "bar",
-								},
-							],
-						]),
-					} satisfies SimpleObjectNodeSchema,
-				],
-				["com.fluidframework.leaf.number", simpleNumber],
-				["com.fluidframework.leaf.string", simpleString],
-			]),
-		};
-		assert.deepEqual(actual, expected);
+			const expected: SimpleTreeSchema = {
+				root: {
+					kind: FieldKind.Required,
+					metadata: {},
+					persistedMetadata: undefined,
+					allowedTypesIdentifiers: new Set(["test.object"]),
+				},
+				definitions: new Map<string, SimpleNodeSchema>([
+					[
+						"test.object",
+						{
+							kind: NodeKind.Object,
+							metadata: {},
+							persistedMetadata: undefined,
+							fields: new Map<string, SimpleObjectFieldSchema>([
+								[
+									"foo",
+									{
+										kind: FieldKind.Optional,
+										metadata: {},
+										persistedMetadata: undefined,
+										allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.number"]),
+										storedKey: "foo",
+									},
+								],
+								[
+									"bar",
+									{
+										kind: FieldKind.Required,
+										metadata: {},
+										persistedMetadata: undefined,
+										allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+										storedKey: "bar",
+									},
+								],
+							]),
+						} satisfies SimpleObjectNodeSchema,
+					],
+					["com.fluidframework.leaf.number", simpleNumber],
+					["com.fluidframework.leaf.string", simpleString],
+				]),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
+
+		it("toViewCompatibilityTreeSchema", () => {
+			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
+			const actual = toViewCompatibilityTreeSchema(treeView, true);
+
+			const expected: SimpleTreeSchema = {
+				root: {
+					kind: FieldKind.Required,
+					metadata: {},
+					persistedMetadata: undefined,
+					allowedTypesIdentifiers: new Set(["test.object"]),
+					stagedSchemaUpgrades: [],
+				},
+				definitions: new Map<string, SimpleNodeSchema>([
+					[
+						"test.object",
+						{
+							kind: NodeKind.Object,
+							metadata: {},
+							persistedMetadata: undefined,
+							allowUnknownOptionalFields: false,
+							fields: new Map<string, SimpleObjectFieldSchema>([
+								[
+									"foo",
+									{
+										kind: FieldKind.Optional,
+										metadata: {},
+										persistedMetadata: undefined,
+										allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.number"]),
+										storedKey: "foo",
+										stagedSchemaUpgrades: [],
+									},
+								],
+								[
+									"bar",
+									{
+										kind: FieldKind.Required,
+										metadata: {},
+										persistedMetadata: undefined,
+										allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+										storedKey: "bar",
+										stagedSchemaUpgrades: [],
+									},
+								],
+							]),
+						} satisfies SimpleObjectNodeSchema,
+					],
+					["com.fluidframework.leaf.number", simpleNumber],
+					["com.fluidframework.leaf.string", simpleString],
+				]),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
 	});
 
-	it("Object schema including an identifier field", () => {
+	describe("Object schema including an identifier field", () => {
 		const schemaFactory = new SchemaFactory("test");
 		class Schema extends schemaFactory.object("object", {
 			id: schemaFactory.identifier,
 		}) {}
 
-		const actual = toSimpleTreeSchema(Schema, true);
+		it("toSimpleTreeSchema", () => {
+			const actual = toSimpleTreeSchema(Schema, true);
 
-		const expected: SimpleTreeSchema = {
-			root: {
-				kind: FieldKind.Required,
-				metadata: {},
-				persistedMetadata: undefined,
-				allowedTypesIdentifiers: new Set(["test.object"]),
-			},
-			definitions: new Map<string, SimpleNodeSchema>([
-				[
-					"test.object",
-					{
-						kind: NodeKind.Object,
-						metadata: {},
-						persistedMetadata: undefined,
-						fields: new Map([
-							[
-								"id",
-								{
-									kind: FieldKind.Identifier,
-									metadata: {},
-									persistedMetadata: undefined,
-									allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
-									storedKey: "id",
-								},
-							],
-						]),
-					},
-				],
-				["com.fluidframework.leaf.string", simpleString],
-			]),
-		};
-		assert.deepEqual(actual, expected);
+			const expected: SimpleTreeSchema = {
+				root: {
+					kind: FieldKind.Required,
+					metadata: {},
+					persistedMetadata: undefined,
+					allowedTypesIdentifiers: new Set(["test.object"]),
+				},
+				definitions: new Map<string, SimpleNodeSchema>([
+					[
+						"test.object",
+						{
+							kind: NodeKind.Object,
+							metadata: {},
+							persistedMetadata: undefined,
+							fields: new Map([
+								[
+									"id",
+									{
+										kind: FieldKind.Identifier,
+										metadata: {},
+										persistedMetadata: undefined,
+										allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+										storedKey: "id",
+									},
+								],
+							]),
+						},
+					],
+					["com.fluidframework.leaf.string", simpleString],
+				]),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
+
+		it("toViewCompatibilityTreeSchema", () => {
+			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
+
+			const expected: SimpleTreeSchema = {
+				root: {
+					kind: FieldKind.Required,
+					metadata: {},
+					persistedMetadata: undefined,
+					allowedTypesIdentifiers: new Set(["test.object"]),
+					stagedSchemaUpgrades: [],
+				},
+				definitions: new Map<string, SimpleNodeSchema>([
+					[
+						"test.object",
+						{
+							kind: NodeKind.Object,
+							metadata: {},
+							persistedMetadata: undefined,
+							allowUnknownOptionalFields: false,
+							fields: new Map([
+								[
+									"id",
+									{
+										kind: FieldKind.Identifier,
+										metadata: {},
+										persistedMetadata: undefined,
+										allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+										storedKey: "id",
+										stagedSchemaUpgrades: [],
+									},
+								],
+							]),
+						},
+					],
+					["com.fluidframework.leaf.string", simpleString],
+				]),
+			};
+
+			const actual = toViewCompatibilityTreeSchema(treeView, true);
+			assert.deepEqual(actual, expected);
+		});
 	});
 
-	it("Object schema including a union field", () => {
+	describe("Object schema including a union field", () => {
 		const schemaFactory = new SchemaFactory("test");
 		class Schema extends schemaFactory.object("object", {
 			foo: schemaFactory.required([schemaFactory.number, schemaFactory.string]),
 		}) {}
 
-		// Must enable copy so deep equality passes.
-		const actual = toSimpleTreeSchema(Schema, true);
+		it("toSimpleTreeSchema", () => {
+			// Must enable copy so deep equality passes.
+			const actual = toSimpleTreeSchema(Schema, true);
 
-		const expected: SimpleTreeSchema = {
-			root: {
-				kind: FieldKind.Required,
-				metadata: {},
-				persistedMetadata: undefined,
-				allowedTypesIdentifiers: new Set(["test.object"]),
-			},
-			definitions: new Map<string, SimpleNodeSchema>([
-				[
-					"test.object",
-					{
-						kind: NodeKind.Object,
-						metadata: {},
-						persistedMetadata: undefined,
-						fields: new Map([
-							[
-								"foo",
-								{
-									kind: FieldKind.Required,
-									metadata: {},
-									persistedMetadata: undefined,
-									allowedTypesIdentifiers: new Set([
-										"com.fluidframework.leaf.number",
-										"com.fluidframework.leaf.string",
-									]),
-									storedKey: "foo",
-								},
-							],
-						]),
-					},
-				],
-				["com.fluidframework.leaf.number", simpleNumber],
-				["com.fluidframework.leaf.string", simpleString],
-			]),
-		};
-		assert.deepEqual(actual, expected);
+			const expected: SimpleTreeSchema = {
+				root: {
+					kind: FieldKind.Required,
+					metadata: {},
+					persistedMetadata: undefined,
+					allowedTypesIdentifiers: new Set(["test.object"]),
+				},
+				definitions: new Map<string, SimpleNodeSchema>([
+					[
+						"test.object",
+						{
+							kind: NodeKind.Object,
+							metadata: {},
+							persistedMetadata: undefined,
+							fields: new Map([
+								[
+									"foo",
+									{
+										kind: FieldKind.Required,
+										metadata: {},
+										persistedMetadata: undefined,
+										allowedTypesIdentifiers: new Set([
+											"com.fluidframework.leaf.number",
+											"com.fluidframework.leaf.string",
+										]),
+										storedKey: "foo",
+									},
+								],
+							]),
+						},
+					],
+					["com.fluidframework.leaf.number", simpleNumber],
+					["com.fluidframework.leaf.string", simpleString],
+				]),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
+
+		it("toViewCompatibilityTreeSchema", () => {
+			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
+
+			// Must enable copy so deep equality passes.
+			const actual = toViewCompatibilityTreeSchema(treeView, true);
+
+			const expected: SimpleTreeSchema = {
+				root: {
+					kind: FieldKind.Required,
+					metadata: {},
+					persistedMetadata: undefined,
+					allowedTypesIdentifiers: new Set(["test.object"]),
+					stagedSchemaUpgrades: [],
+				},
+				definitions: new Map<string, SimpleNodeSchema>([
+					[
+						"test.object",
+						{
+							kind: NodeKind.Object,
+							metadata: {},
+							persistedMetadata: undefined,
+							allowUnknownOptionalFields: false,
+							fields: new Map([
+								[
+									"foo",
+									{
+										kind: FieldKind.Required,
+										metadata: {},
+										persistedMetadata: undefined,
+										allowedTypesIdentifiers: new Set([
+											"com.fluidframework.leaf.number",
+											"com.fluidframework.leaf.string",
+										]),
+										storedKey: "foo",
+										stagedSchemaUpgrades: [],
+									},
+								],
+							]),
+						},
+					],
+					["com.fluidframework.leaf.number", simpleNumber],
+					["com.fluidframework.leaf.string", simpleString],
+				]),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
 	});
 
-	it("Recursive object schema", () => {
+	describe("Recursive object schema", () => {
 		const schemaFactory = new SchemaFactory("test");
 		class Schema extends schemaFactory.objectRecursive("recursive-object", {
 			foo: schemaFactory.optionalRecursive([schemaFactory.string, () => Schema]),
 		}) {}
 
-		const actual = toSimpleTreeSchema(Schema, true);
+		it("toSimpleTreeSchema", () => {
+			const actual = toSimpleTreeSchema(Schema, true);
 
-		const expected: SimpleTreeSchema = {
-			root: {
-				kind: FieldKind.Required,
-				metadata: {},
-				persistedMetadata: undefined,
-				allowedTypesIdentifiers: new Set(["test.recursive-object"]),
-			},
-			definitions: new Map<string, SimpleNodeSchema>([
-				[
-					"test.recursive-object",
-					{
-						kind: NodeKind.Object,
-						metadata: {},
-						persistedMetadata: undefined,
-						fields: new Map([
-							[
-								"foo",
-								{
-									kind: FieldKind.Optional,
-									metadata: {},
-									persistedMetadata: undefined,
-									allowedTypesIdentifiers: new Set([
-										"com.fluidframework.leaf.string",
-										"test.recursive-object",
-									]),
-									storedKey: "foo",
-								},
-							],
-						]),
-					},
-				],
-				["com.fluidframework.leaf.string", simpleString],
-			]),
-		};
-		assert.deepEqual(actual, expected);
+			const expected: SimpleTreeSchema = {
+				root: {
+					kind: FieldKind.Required,
+					metadata: {},
+					persistedMetadata: undefined,
+					allowedTypesIdentifiers: new Set(["test.recursive-object"]),
+				},
+				definitions: new Map<string, SimpleNodeSchema>([
+					[
+						"test.recursive-object",
+						{
+							kind: NodeKind.Object,
+							metadata: {},
+							persistedMetadata: undefined,
+							fields: new Map([
+								[
+									"foo",
+									{
+										kind: FieldKind.Optional,
+										metadata: {},
+										persistedMetadata: undefined,
+										allowedTypesIdentifiers: new Set([
+											"com.fluidframework.leaf.string",
+											"test.recursive-object",
+										]),
+										storedKey: "foo",
+									},
+								],
+							]),
+						},
+					],
+					["com.fluidframework.leaf.string", simpleString],
+				]),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
+
+		it("toViewCompatibilityTreeSchema", () => {
+			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
+			const actual = toViewCompatibilityTreeSchema(treeView, true);
+
+			const expected: SimpleTreeSchema = {
+				root: {
+					kind: FieldKind.Required,
+					metadata: {},
+					persistedMetadata: undefined,
+					allowedTypesIdentifiers: new Set(["test.recursive-object"]),
+					stagedSchemaUpgrades: [],
+				},
+				definitions: new Map<string, SimpleNodeSchema>([
+					[
+						"test.recursive-object",
+						{
+							kind: NodeKind.Object,
+							metadata: {},
+							persistedMetadata: undefined,
+							allowUnknownOptionalFields: false,
+							fields: new Map([
+								[
+									"foo",
+									{
+										kind: FieldKind.Optional,
+										metadata: {},
+										persistedMetadata: undefined,
+										allowedTypesIdentifiers: new Set([
+											"com.fluidframework.leaf.string",
+											"test.recursive-object",
+										]),
+										storedKey: "foo",
+										stagedSchemaUpgrades: [],
+									},
+								],
+							]),
+						},
+					],
+					["com.fluidframework.leaf.string", simpleString],
+				]),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
 	});
 });

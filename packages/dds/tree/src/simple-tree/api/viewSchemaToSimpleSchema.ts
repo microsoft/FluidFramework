@@ -128,7 +128,6 @@ function copySimpleObjectSchema(schema: SimpleObjectNodeSchema): SimpleObjectNod
 			metadata: field.metadata,
 			persistedMetadata: field.persistedMetadata,
 			storedKey: field.storedKey,
-			stagedSchemaUpgrades: field.stagedSchemaUpgrades,
 		});
 	}
 
@@ -137,6 +136,5 @@ function copySimpleObjectSchema(schema: SimpleObjectNodeSchema): SimpleObjectNod
 		fields,
 		metadata: schema.metadata,
 		persistedMetadata: schema.persistedMetadata,
-		allowUnknownOptionalFields: schema.allowUnknownOptionalFields,
 	};
 }
