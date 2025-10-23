@@ -15,8 +15,9 @@ import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal
 import type { SinonFakeTimers } from "sinon";
 import { useFakeTimers, spy } from "sinon";
 
+import type { ClientConnectionId } from "../baseTypes.js";
 import { toOpaqueJson } from "../internalUtils.js";
-import type { AttendeeId, PresenceWithNotifications } from "../presence.js";
+import type { PresenceWithNotifications } from "../presence.js";
 import { createPresenceManager } from "../presenceManager.js";
 import type { InternalWorkspaceAddress, SignalMessages } from "../protocol.js";
 import type { SystemWorkspaceDatastore } from "../systemWorkspace.js";
@@ -25,6 +26,7 @@ import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import type { ProcessSignalFunction } from "./testUtils.js";
 import {
 	assertFinalExpectations,
+	broadcastJoinResponseDelaysMs,
 	connectionId2,
 	createSpecificAttendeeId,
 	prepareConnectedPresence,
@@ -32,12 +34,32 @@ import {
 	attendeeId2,
 } from "./testUtils.js";
 
+const attendee0SystemWorkspaceDatastore = {
+	"clientToSessionId": {
+		["client0"]: {
+			"rev": 0,
+			"timestamp": 0,
+			"value": createSpecificAttendeeId("attendeeId-0"),
+		},
+	},
+} as const satisfies SystemWorkspaceDatastore;
+
 const attendee4SystemWorkspaceDatastore = {
 	"clientToSessionId": {
-		["client4" as AttendeeId]: {
+		["client4"]: {
 			"rev": 0,
 			"timestamp": 700,
 			"value": createSpecificAttendeeId("attendeeId-4"),
+		},
+	},
+} as const satisfies SystemWorkspaceDatastore;
+
+const attendee5SystemWorkspaceDatastore = {
+	"clientToSessionId": {
+		["client5"]: {
+			"rev": 0,
+			"timestamp": 800,
+			"value": createSpecificAttendeeId("attendeeId-5"),
 		},
 	},
 } as const satisfies SystemWorkspaceDatastore;
@@ -83,7 +105,7 @@ describe("Presence", () => {
 			prepareConnectedPresence(runtime, "attendeeId-2", "client2", clock, logger);
 		});
 
-		describe("responds to ClientJoin", () => {
+		describe("handles ClientJoin", () => {
 			let processSignal: ProcessSignalFunction;
 
 			beforeEach(() => {
@@ -99,7 +121,79 @@ describe("Presence", () => {
 				clock.tick(10);
 			});
 
-			it("with broadcast immediately when preferred responder", () => {
+			function joinClients(
+				updateProviders: ClientConnectionId[],
+				delayToJoinClient5: number | undefined,
+			): void {
+				// Join client4
+				processSignal(
+					[],
+					{
+						type: "Pres:ClientJoin",
+						content: {
+							sendTimestamp: clock.now - 50,
+							avgLatency: 50,
+							data: {
+								"system:presence": attendee4SystemWorkspaceDatastore,
+							},
+							updateProviders,
+						},
+						clientId: "client4",
+					},
+					false,
+				);
+
+				if (delayToJoinClient5 !== undefined) {
+					// Advance clock to delay joining client5
+					clock.tick(delayToJoinClient5);
+
+					// Join client5
+					processSignal(
+						[],
+						{
+							type: "Pres:ClientJoin",
+							content: {
+								sendTimestamp: clock.now - 50,
+								avgLatency: 50,
+								data: {
+									"system:presence": attendee5SystemWorkspaceDatastore,
+								},
+								updateProviders,
+							},
+							clientId: "client5",
+						},
+						false,
+					);
+				}
+			}
+
+			function processClient0ResponseForClient4(): void {
+				// Setup
+				// client 0 handles client 4 join
+				processSignal(
+					[],
+					{
+						type: "Pres:DatastoreUpdate",
+						content: {
+							"avgLatency": 10,
+							"data": {
+								"system:presence": {
+									"clientToSessionId": {
+										...attendee0SystemWorkspaceDatastore.clientToSessionId,
+										...attendee4SystemWorkspaceDatastore.clientToSessionId,
+									},
+								},
+							},
+							"isComplete": true,
+							"sendTimestamp": clock.now - 10,
+						},
+						clientId: "client0",
+					},
+					false,
+				);
+			}
+
+			it("when preferred responder ... with broadcast immediately", () => {
 				// Setup
 				logger.registerExpectedEvent({
 					eventName: "Presence:JoinResponse",
@@ -153,67 +247,164 @@ describe("Presence", () => {
 				assertFinalExpectations(runtime, logger);
 			});
 
-			it("with broadcast after delay when NOT preferred responder", () => {
-				// #region Part 1 (no response)
-				// Act
-				processSignal(
-					[],
-					{
-						type: "Pres:ClientJoin",
-						content: {
-							sendTimestamp: clock.now - 20,
-							avgLatency: 0,
-							data: {
-								"system:presence": attendee4SystemWorkspaceDatastore,
-							},
-							updateProviders: ["client0", "client1"],
-						},
-						clientId: "client4",
-					},
-					false,
-				);
-				// #endregion
+			describe("when NOT preferred responder", () => {
+				it("and no other responses ... with broadcast after delay", () => {
+					// Setup
+					const responseOrder = 2;
+					// 3 * named length (client0 and client1) + quorum sequence order (third -> 2)
+					const responderIndex = 3 * 2 + responseOrder;
+					const updateTime =
+						clock.now +
+						broadcastJoinResponseDelaysMs.namedResponder +
+						broadcastJoinResponseDelaysMs.backupResponderBase +
+						broadcastJoinResponseDelaysMs.backupResponderIncrement * responderIndex;
 
-				// #region Part 2 (response after delay)
-				// Setup
-				logger.registerExpectedEvent({
-					eventName: "Presence:JoinResponse",
-					details: JSON.stringify({
-						type: "broadcastAll",
-						requestor: "client4",
-						role: "secondary",
-						order: 2,
-					}),
-				});
-				runtime.signalsExpected.push([
-					{
-						type: "Pres:DatastoreUpdate",
-						content: {
-							"avgLatency": 10,
-							"data": {
-								"system:presence": {
-									"clientToSessionId": {
-										...attendee4SystemWorkspaceDatastore.clientToSessionId,
-										[connectionId2]: {
-											"rev": 0,
-											"timestamp": initialTime,
-											"value": attendeeId2,
+					// #region Part 1 (no response)
+					// Act
+					// join client 4
+					joinClients(["client0", "client1"], undefined);
+
+					clock.tick(updateTime - clock.now - 1);
+					// #endregion
+
+					// #region Part 2 (response after delay)
+					// Setup
+					logger.registerExpectedEvent({
+						eventName: "Presence:JoinResponse",
+						details: JSON.stringify({
+							type: "broadcastAll",
+							requestor: "client4",
+							role: "secondary",
+							order: 2,
+						}),
+					});
+					runtime.signalsExpected.push([
+						{
+							type: "Pres:DatastoreUpdate",
+							content: {
+								"avgLatency": 10,
+								"data": {
+									"system:presence": {
+										"clientToSessionId": {
+											...attendee4SystemWorkspaceDatastore.clientToSessionId,
+											[connectionId2]: {
+												"rev": 0,
+												"timestamp": initialTime,
+												"value": attendeeId2,
+											},
 										},
 									},
 								},
+								"isComplete": true,
+								"sendTimestamp": clock.now + 1,
 							},
-							"isComplete": true,
-							"sendTimestamp": clock.now + 180,
 						},
-					},
-				]);
+					]);
 
-				// Act
-				clock.tick(200);
+					// Act
+					clock.tick(1);
 
-				// Verify
-				assertFinalExpectations(runtime, logger);
-				// #endregion
+					// Verify
+					assertFinalExpectations(runtime, logger);
+					// #endregion
+				});
+
+				it("and other has fully responded ... without broadcast", () => {
+					// Setup
+					// join client 4
+					joinClients(["client0", "client1"], undefined);
+
+					clock.tick(broadcastJoinResponseDelaysMs.namedResponder);
+
+					// Act
+					// client 0 handles client 4 join
+					processClient0ResponseForClient4();
+
+					clock.runAll();
+
+					// Verify
+					assertFinalExpectations(runtime, logger);
+				});
+
+				// There is a hole in the protocol where all complete responses are considered
+				// to resolve all pending join requests. However a complete response might be
+				// crafted and sent prior to a recent join request and the recent joiner may
+				// not have all of the messages to fill in the gap.
+				it("(expect to fail) and other has partially responded ... with broadcast after delay", () => {
+					// Setup
+					const responseOrder = 2;
+					// 3 * named length (client0 and client1) + quorum sequence order (third -> 2)
+					const responderIndex = 3 * 2 + responseOrder;
+					const client4ResponseDelay =
+						broadcastJoinResponseDelaysMs.namedResponder +
+						broadcastJoinResponseDelaysMs.backupResponderBase +
+						broadcastJoinResponseDelaysMs.backupResponderIncrement * responderIndex;
+					const client4UpdateTime = clock.now + client4ResponseDelay;
+					const delayToJoinClient5 = client4ResponseDelay / 2;
+					const client5UpdateTime = client4UpdateTime + delayToJoinClient5;
+
+					// join clients 4 and 5
+					joinClients(["client0", "client1"], delayToJoinClient5);
+
+					clock.tick(client4UpdateTime - clock.now - 1);
+
+					// client 0 handles client 4 join
+					processClient0ResponseForClient4();
+
+					clock.tick(client5UpdateTime - clock.now - 1);
+
+					logger.registerExpectedEvent({
+						eventName: "Presence:JoinResponse",
+						details: JSON.stringify({
+							type: "broadcastAll",
+							requestor: "client5",
+							role: "secondary",
+							order: 2,
+						}),
+					});
+					runtime.signalsExpected.push([
+						{
+							type: "Pres:DatastoreUpdate",
+							content: {
+								"avgLatency": 10,
+								"data": {
+									"system:presence": {
+										"clientToSessionId": {
+											...attendee0SystemWorkspaceDatastore.clientToSessionId,
+											...attendee4SystemWorkspaceDatastore.clientToSessionId,
+											...attendee5SystemWorkspaceDatastore.clientToSessionId,
+											[connectionId2]: {
+												"rev": 0,
+												"timestamp": initialTime,
+												"value": attendeeId2,
+											},
+										},
+									},
+								},
+								"isComplete": true,
+								"sendTimestamp": clock.now + 1,
+							},
+						},
+					]);
+
+					// Act
+					clock.tick(1);
+
+					// Verify
+					// TODO: Once protocol is fixed, remove assert.throws and signalsExpected check+reset.
+					assert.throws(
+						() => {
+							assertFinalExpectations(runtime, logger);
+						},
+						{
+							name: "Error",
+							message: /Expected Events not found/,
+						},
+					);
+					assert.equal(runtime.signalsExpected.length, 1);
+					runtime.signalsExpected.length = 0;
+					// #endregion
+				});
 			});
 		});
 
