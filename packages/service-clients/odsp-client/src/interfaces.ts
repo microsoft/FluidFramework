@@ -91,7 +91,7 @@ export interface IOdspFluidContainer<
 	 * A newly created container starts detached from the collaborative service.
 	 * Calling `attach()` uploads the new container to the service and connects to the collaborative service.
 	 *
-	 * This function is same as the IFluidContainer.attach function, but has ODSP specific function signatures.
+	 * This function is the same as the IFluidContainer.attach function, but has ODSP specific function signatures.
 	 *
 	 * @param props - Optional properties to pass to the attach function.
 	 *
