@@ -64,7 +64,6 @@ export function validateLayerCompatibility(
 		logger.sendErrorEvent(
 			{
 				eventName: "LayerIncompatibilityError",
-				errorDetails: JSON.stringify({ ...coreProperties, ...detailedProperties }),
 			},
 			error,
 		);

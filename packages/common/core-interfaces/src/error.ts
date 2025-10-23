@@ -131,17 +131,16 @@ export interface IThrottlingWarning extends IErrorBase {
 
 /**
  * Symbol used to identify an error of type {@link ILayerIncompatibilityError}.
- * @legacy @beta
+ * @legacy @alpha
  */
 export const layerIncompatibilityErrorSymbol: unique symbol = Symbol(
 	"LayerIncompatibilityError",
 );
 
 /**
- * Usage error indicating that two layers are incompatible.
  * Usage error indicating that two Fluid layers are incompatible. For instance, if the Loader layer is
  * not compatible with the Runtime layer, the container will be disposed with this error.
- * @legacy @beta
+ * @legacy @alpha
  */
 export interface ILayerIncompatibilityError extends IErrorBase {
 	/**
@@ -170,13 +169,13 @@ export interface ILayerIncompatibilityError extends IErrorBase {
 	 */
 	readonly incompatibleLayerVersion: string;
 	/**
-	 * The number of months of compatibility requirements between the two layers.
+	 * The number of months of compatibility requirements between the two layers as per the layer compatibility policy.
 	 */
 	readonly compatibilityRequirementsInMonths: number;
 	/**
 	 * The minimum actual difference in months between the release of the two layers.
-	 * Note that the actual difference may be higher than this value because the maximum difference reported
-	 * is capped as per the release version where the compatibility enforcement was introduced.
+	 * Note that for layers with package versions older than 2.63.0, the actual difference may be higher than this value
+	 * because the difference reported is capped as per 2.63.0 where the compatibility enforcement was introduced.
 	 */
 	readonly actualDifferenceInMonths: number;
 	/**
