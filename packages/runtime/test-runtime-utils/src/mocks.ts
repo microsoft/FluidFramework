@@ -708,7 +708,10 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
 	}
 
 	getMembers(): Map<string, ISequencedClient> {
-		return this.members;
+		// Implementation always generates a new Map.
+		// Mock should as well in case any callers rely on being able to modify
+		// the returned Map.
+		return new Map(this.members);
 	}
 	getMember(clientId: string): ISequencedClient | undefined {
 		return this.getMembers().get(clientId);
