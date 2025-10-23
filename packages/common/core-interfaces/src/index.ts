@@ -14,6 +14,7 @@ export type {
 	IThrottlingWarning,
 	ILayerIncompatibilityError,
 } from "./error.js";
+export { layerIncompatibilityErrorSymbol } from "./error.js";
 export { FluidErrorTypes } from "./error.js";
 
 export type {

@@ -225,7 +225,7 @@ function getExpectedErrorEvents(
 	const expectedErrorEvents: ExpectedEvents = [
 		{
 			eventName: "fluid:telemetry:Container:ContainerDispose",
-			errorType: FluidErrorTypes.layerIncompatibilityError,
+			errorType: FluidErrorTypes.usageError,
 		},
 	];
 
@@ -242,7 +242,7 @@ function getExpectedErrorEvents(
 		// during data store realization, so we expect this error event to be logged.
 		expectedErrorEvents.unshift({
 			eventName: "fluid:telemetry:FluidDataStoreContext:RealizeError",
-			errorType: FluidErrorTypes.layerIncompatibilityError,
+			errorType: FluidErrorTypes.usageError,
 		});
 	} else if (layer2 === "dataStore" && flow === "create") {
 		// In create flows, the layer compat validation in the Runtime layer happens during data store runtime
@@ -251,7 +251,7 @@ function getExpectedErrorEvents(
 		// data store runtime attach flow, so we do not expect this error event to be logged.
 		expectedErrorEvents.unshift({
 			eventName: "fluid:telemetry:FluidDataStoreContext:AttachRuntimeError",
-			errorType: FluidErrorTypes.layerIncompatibilityError,
+			errorType: FluidErrorTypes.usageError,
 		});
 	}
 

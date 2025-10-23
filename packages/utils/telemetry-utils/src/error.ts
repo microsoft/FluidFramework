@@ -6,6 +6,7 @@
 import type { IErrorBase, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import {
 	FluidErrorTypes,
+	layerIncompatibilityErrorSymbol,
 	type IGenericError,
 	type ILayerIncompatibilityError,
 	type IUsageError,
@@ -215,15 +216,16 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
 }
 
 /**
- * Error indicating that two {@link FluidLayer}s are incompatible.
+ * Error indicating that two Fluid layers are incompatible.
+ * See {@link @fluidframework/core-interfaces#ILayerIncompatibilityError} for more details.
  *
  * @internal
  */
 export class LayerIncompatibilityError
-	extends LoggingError
+	extends UsageError
 	implements ILayerIncompatibilityError
 {
-	public readonly errorType = FluidErrorTypes.layerIncompatibilityError;
+	public [layerIncompatibilityErrorSymbol] = true as const;
 	public readonly layer: string;
 	public readonly layerVersion: string;
 	public readonly incompatibleLayer: string;

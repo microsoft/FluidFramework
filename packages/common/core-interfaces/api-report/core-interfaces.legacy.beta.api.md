@@ -292,6 +292,19 @@ export interface IFluidLoadable extends IProvideFluidLoadable {
 }
 
 // @beta @legacy
+export interface ILayerIncompatibilityError extends IErrorBase {
+    readonly [layerIncompatibilityErrorSymbol]: true;
+    readonly actualDifferenceInMonths: number;
+    readonly compatibilityRequirementsInMonths: number;
+    readonly details: string;
+    readonly errorType: typeof FluidErrorTypes.usageError;
+    readonly incompatibleLayer: string;
+    readonly incompatibleLayerVersion: string;
+    readonly layer: string;
+    readonly layerVersion: string;
+}
+
+// @beta @legacy
 export interface ILocalFluidHandle<T> extends IFluidHandlePayloadPending<T> {
     readonly events: Listenable<IFluidHandleEvents & ILocalFluidHandleEvents>;
     readonly payloadShareError: unknown;
@@ -383,6 +396,9 @@ export interface IThrottlingWarning extends IErrorBase {
     // (undocumented)
     readonly retryAfterSeconds: number;
 }
+
+// @beta @legacy
+export const layerIncompatibilityErrorSymbol: unique symbol;
 
 // @public @sealed
 export interface Listenable<TListeners extends object> {

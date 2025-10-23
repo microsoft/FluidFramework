@@ -34,12 +34,6 @@ export const FluidErrorTypes = {
 	 * Error indicating an API is being used improperly resulting in an invalid operation.
 	 */
 	usageError: "usageError",
-
-	/**
-	 * Error indicating that two Fluid layers are incompatible. For instance, if the Loader layer is
-	 * not compatible with the Runtime layer, the container will be disposed with this error.
-	 */
-	layerIncompatibilityError: "layerIncompatibilityError",
 } as const;
 
 /**
@@ -136,15 +130,29 @@ export interface IThrottlingWarning extends IErrorBase {
 }
 
 /**
+ * Symbol used to identify an error of type {@link ILayerIncompatibilityError}.
+ * @legacy @beta
+ */
+export const layerIncompatibilityErrorSymbol: unique symbol = Symbol(
+	"LayerIncompatibilityError",
+);
+
+/**
  * Usage error indicating that two layers are incompatible.
- * See {@link FluidErrorTypes.layerIncompatibilityError} for more details.
+ * Usage error indicating that two Fluid layers are incompatible. For instance, if the Loader layer is
+ * not compatible with the Runtime layer, the container will be disposed with this error.
  * @legacy @beta
  */
 export interface ILayerIncompatibilityError extends IErrorBase {
 	/**
 	 * {@inheritDoc IErrorBase.errorType}
 	 */
-	readonly errorType: typeof FluidErrorTypes.layerIncompatibilityError;
+	readonly errorType: typeof FluidErrorTypes.usageError;
+
+	/**
+	 * Symbol used to identify this error as a layer incompatibility error.
+	 */
+	readonly [layerIncompatibilityErrorSymbol]: true;
 	/**
 	 * The layer that is reporting the incompatibility.
 	 */
