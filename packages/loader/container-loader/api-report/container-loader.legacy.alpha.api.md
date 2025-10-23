@@ -203,25 +203,16 @@ export interface OnDemandSummaryResults {
     readonly summarySubmitted: boolean;
 }
 
-// @alpha @legacy (undocumented)
+// @alpha @legacy
 export class PendingLocalStateStore<TKey> {
-    // (undocumented)
     [Symbol.iterator](): Iterator<[TKey, string]>;
-    // (undocumented)
     clear(): void;
-    // (undocumented)
     delete(key: TKey): boolean;
-    // (undocumented)
     entries(): Iterator<[TKey, string]>;
-    // (undocumented)
     get(key: TKey): string | undefined;
-    // (undocumented)
     has(key: TKey): boolean;
-    // (undocumented)
     keys(): IterableIterator<TKey>;
-    // (undocumented)
-    set(key: TKey, value: string): this;
-    // (undocumented)
+    set(key: TKey, pendingLocalState: string): this;
     get size(): number;
 }
 
