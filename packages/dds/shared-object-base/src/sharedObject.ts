@@ -178,20 +178,6 @@ export abstract class SharedObjectCore<
 		const { opProcessingHelper, callbacksHelper } = this.setUpSampledTelemetryHelpers();
 		this.opProcessingHelper = opProcessingHelper;
 		this.callbacksHelper = callbacksHelper;
-
-		const processMessagesCore = this.processMessagesCore?.bind(this);
-		this.processMessagesHelper =
-			processMessagesCore === undefined
-				? (messagesCollection: IRuntimeMessageCollection) =>
-						processHelper(messagesCollection, this.process.bind(this))
-				: (messagesCollection: IRuntimeMessageCollection) => {
-						processMessagesCoreHelper(
-							messagesCollection,
-							this.opProcessingHelper,
-							this.emitInternal.bind(this),
-							processMessagesCore,
-						);
-					};
 	}
 
 	/**
@@ -409,21 +395,6 @@ export abstract class SharedObjectCore<
 		return;
 	}
 
-	/**
-	 * Derived classes must override this to do custom processing on a remote message.
-	 * @param message - The message to process
-	 * @param local - True if the shared object is local
-	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
-	 * For messages from a remote client, this will be undefined.
-	 *
-	 * @deprecated Replaced by {@link SharedObjectCore.processMessagesCore}.
-	 */
-	protected abstract processCore(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	): void;
-
 	/* eslint-disable jsdoc/check-indentation */
 	/**
 	 * Process a 'bunch' of messages for this shared object.
@@ -441,16 +412,7 @@ export abstract class SharedObjectCore<
 	 *
 	 */
 	/* eslint-enable jsdoc/check-indentation */
-	protected processMessagesCore?(messagesCollection: IRuntimeMessageCollection): void;
-
-	/**
-	 * Calls {@link SharedObjectCore.processCore} or {@link SharedObjectCore.processMessagesCore} depending on whether
-	 * processMessagesCore is defined. This helper is used to keep the code cleaner while we have to support both these
-	 * function.
-	 */
-	private readonly processMessagesHelper: (
-		messagesCollection: IRuntimeMessageCollection,
-	) => void;
+	protected abstract processMessagesCore(messagesCollection: IRuntimeMessageCollection): void;
 
 	/**
 	 * Called when the object has disconnected from the delta stream.
@@ -628,39 +590,6 @@ export abstract class SharedObjectCore<
 		}
 	}
 
-	/**
-	 * Handles a message being received from the remote delta server.
-	 * @param message - The message to process
-	 * @param local - Whether the message originated from the local client
-	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
-	 * For messages from a remote client, this will be undefined.
-	 *
-	 * @deprecated Replaced by {@link SharedObjectCore.processMessages}.
-	 */
-	private process(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	): void {
-		this.verifyNotClosed(); // This will result in container closure.
-		this.emitInternal("pre-op", message, local, this);
-
-		this.opProcessingHelper.measure(
-			(): ICustomData<ProcessTelemetryProperties> => {
-				this.processCore(message, local, localOpMetadata);
-				const telemetryProperties: ProcessTelemetryProperties = {
-					sequenceDifference: message.sequenceNumber - message.referenceSequenceNumber,
-				};
-				return {
-					customData: telemetryProperties,
-				};
-			},
-			local ? "local" : "remote",
-		);
-
-		this.emitInternal("op", message, local, this);
-	}
-
 	/* eslint-disable jsdoc/check-indentation */
 	/**
 	 * Process a bunch of messages for this shared object. A bunch is group of messages that have the following properties:
@@ -696,7 +625,12 @@ export abstract class SharedObjectCore<
 			...messagesCollection,
 			messagesContent: decodedMessagesContent,
 		};
-		this.processMessagesHelper(decodedMessagesCollection);
+		processMessagesCoreHelper(
+			decodedMessagesCollection,
+			this.opProcessingHelper,
+			this.emitInternal.bind(this),
+			this.processMessagesCore.bind(this),
+		);
 	}
 
 	/**
@@ -1073,7 +1007,6 @@ function isChannel(loadable: IFluidLoadable): loadable is IChannel {
 
 /**
  * Utility that processes the given messages in the message collection together by calling `processMessagesCore`.
- * This will be called when {@link SharedObjectCore.processMessagesCore} is defined.
  */
 function processMessagesCoreHelper(
 	messagesCollection: IRuntimeMessageCollection,
@@ -1115,30 +1048,4 @@ function processMessagesCoreHelper(
 		local ? "local" : "remote",
 	);
 	emitEvents("op", messagesContent);
-}
-
-/**
- * Utility that processes the given messages in the message collection one by one by calling `process`. This will
- * be called when {@link SharedObjectCore.processMessagesCore} is not defined.
- */
-function processHelper(
-	messagesCollection: IRuntimeMessageCollection,
-	process: (
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	) => void,
-): void {
-	const { envelope, local, messagesContent } = messagesCollection;
-	for (const { contents, localOpMetadata, clientSequenceNumber } of messagesContent) {
-		process(
-			{
-				...envelope,
-				contents,
-				clientSequenceNumber,
-			},
-			local,
-			localOpMetadata,
-		);
-	}
 }
