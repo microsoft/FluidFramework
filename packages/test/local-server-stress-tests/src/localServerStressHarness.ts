@@ -519,7 +519,6 @@ function mixinAddRemoveClient<TOperation extends BaseOperation>(
 			frozenContainer.dispose();
 			removed.container.dispose();
 
-			removed.container.dispose();
 			return state;
 		}
 		return model.reducer(state, op);
