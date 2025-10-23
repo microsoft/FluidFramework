@@ -41,7 +41,8 @@ module.exports = {
 				"check:format",
 				"compile",
 				"lint",
-				// API validation happens through lint → check:exports → api
+				"build:api-reports",
+				"build:docs",
 				"build:manifest",
 				"build:readme",
 			],
