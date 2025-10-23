@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
+
 import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
 import { describe, it, after, afterEach, before, beforeEach } from "mocha";
 import { useFakeTimers, type SinonFakeTimers } from "sinon";
@@ -23,7 +25,8 @@ describe("Presence", () => {
 	describe("batching", () => {
 		let runtime: MockEphemeralRuntime;
 		let logger: EventAndErrorTrackingLogger;
-		const initialTime = 1000;
+		const initialTime = 500;
+		const testStartTime = 1010;
 		let clock: SinonFakeTimers;
 		let presence: PresenceWithNotifications;
 
@@ -35,8 +38,6 @@ describe("Presence", () => {
 			logger = new EventAndErrorTrackingLogger();
 			runtime = new MockEphemeralRuntime(logger);
 
-			// Note that while the initialTime is set to 1000, the prepareConnectedPresence call advances
-			// it to 1010 so all tests start at that time.
 			clock.setSystemTime(initialTime);
 
 			// Set up the presence connection.
@@ -47,6 +48,12 @@ describe("Presence", () => {
 				clock,
 				logger,
 			).presence;
+
+			// Note that while the initialTime was set to 500, the prepareConnectedPresence call advances
+			// it. Set a consistent start time for all tests.
+			const deltaToStart = testStartTime - clock.now;
+			assert(deltaToStart >= 0);
+			clock.tick(deltaToStart);
 		});
 
 		afterEach(() => {
@@ -72,7 +79,11 @@ describe("Presence", () => {
 								"data": {
 									"system:presence": {
 										"clientToSessionId": {
-											[connectionId2]: { "rev": 0, "timestamp": 1000, "value": attendeeId2 },
+											[connectionId2]: {
+												"rev": 0,
+												"timestamp": initialTime,
+												"value": attendeeId2,
+											},
 										},
 									},
 									"s:name:testStateWorkspace": {
@@ -99,7 +110,11 @@ describe("Presence", () => {
 								"data": {
 									"system:presence": {
 										"clientToSessionId": {
-											[connectionId2]: { "rev": 0, "timestamp": 1000, "value": attendeeId2 },
+											[connectionId2]: {
+												"rev": 0,
+												"timestamp": initialTime,
+												"value": attendeeId2,
+											},
 										},
 									},
 									"s:name:testStateWorkspace": {
@@ -126,7 +141,11 @@ describe("Presence", () => {
 								"data": {
 									"system:presence": {
 										"clientToSessionId": {
-											[connectionId2]: { "rev": 0, "timestamp": 1000, "value": attendeeId2 },
+											[connectionId2]: {
+												"rev": 0,
+												"timestamp": initialTime,
+												"value": attendeeId2,
+											},
 										},
 									},
 									"s:name:testStateWorkspace": {
@@ -168,7 +187,7 @@ describe("Presence", () => {
 				assertFinalExpectations(runtime, logger);
 			});
 
-			it("sets timer for default allowableUpdateLatency", async () => {
+			it("sets timer for default allowableUpdateLatencyMs", async () => {
 				runtime.signalsExpected.push([
 					{
 						type: "Pres:DatastoreUpdate",
@@ -180,7 +199,7 @@ describe("Presence", () => {
 									"clientToSessionId": {
 										[connectionId2]: {
 											"rev": 0,
-											"timestamp": 1000,
+											"timestamp": initialTime,
 											"value": attendeeId2,
 										},
 									},
@@ -215,7 +234,7 @@ describe("Presence", () => {
 				clock.tick(100); // Time is now 1110
 			});
 
-			it("batches signals sent within default allowableUpdateLatency", async () => {
+			it("batches signals sent within default allowableUpdateLatencyMs", async () => {
 				runtime.signalsExpected.push(
 					[
 						{
@@ -226,7 +245,11 @@ describe("Presence", () => {
 								"data": {
 									"system:presence": {
 										"clientToSessionId": {
-											[connectionId2]: { "rev": 0, "timestamp": 1000, "value": attendeeId2 },
+											[connectionId2]: {
+												"rev": 0,
+												"timestamp": initialTime,
+												"value": attendeeId2,
+											},
 										},
 									},
 									"s:name:testStateWorkspace": {
@@ -253,7 +276,11 @@ describe("Presence", () => {
 								"data": {
 									"system:presence": {
 										"clientToSessionId": {
-											[connectionId2]: { "rev": 0, "timestamp": 1000, "value": attendeeId2 },
+											[connectionId2]: {
+												"rev": 0,
+												"timestamp": initialTime,
+												"value": attendeeId2,
+											},
 										},
 									},
 									"s:name:testStateWorkspace": {
@@ -315,7 +342,7 @@ describe("Presence", () => {
 				clock.tick(30); // Time is now 1180
 			});
 
-			it("batches signals sent within a specified allowableUpdateLatency", async () => {
+			it("batches signals sent within a specified allowableUpdateLatencyMs", async () => {
 				runtime.signalsExpected.push(
 					[
 						{
@@ -326,7 +353,11 @@ describe("Presence", () => {
 								"data": {
 									"system:presence": {
 										"clientToSessionId": {
-											[connectionId2]: { "rev": 0, "timestamp": 1000, "value": attendeeId2 },
+											[connectionId2]: {
+												"rev": 0,
+												"timestamp": initialTime,
+												"value": attendeeId2,
+											},
 										},
 									},
 									"s:name:testStateWorkspace": {
@@ -353,7 +384,11 @@ describe("Presence", () => {
 								"data": {
 									"system:presence": {
 										"clientToSessionId": {
-											[connectionId2]: { "rev": 0, "timestamp": 1000, "value": attendeeId2 },
+											[connectionId2]: {
+												"rev": 0,
+												"timestamp": initialTime,
+												"value": attendeeId2,
+											},
 										},
 									},
 									"s:name:testStateWorkspace": {
@@ -424,7 +459,11 @@ describe("Presence", () => {
 								"data": {
 									"system:presence": {
 										"clientToSessionId": {
-											[connectionId2]: { "rev": 0, "timestamp": 1000, "value": attendeeId2 },
+											[connectionId2]: {
+												"rev": 0,
+												"timestamp": initialTime,
+												"value": attendeeId2,
+											},
 										},
 									},
 									"s:name:testStateWorkspace": {
@@ -460,7 +499,11 @@ describe("Presence", () => {
 								"data": {
 									"system:presence": {
 										"clientToSessionId": {
-											[connectionId2]: { "rev": 0, "timestamp": 1000, "value": attendeeId2 },
+											[connectionId2]: {
+												"rev": 0,
+												"timestamp": initialTime,
+												"value": attendeeId2,
+											},
 										},
 									},
 									"s:name:testStateWorkspace": {
@@ -530,7 +573,11 @@ describe("Presence", () => {
 								"data": {
 									"system:presence": {
 										"clientToSessionId": {
-											[connectionId2]: { "rev": 0, "timestamp": 1000, "value": attendeeId2 },
+											[connectionId2]: {
+												"rev": 0,
+												"timestamp": initialTime,
+												"value": attendeeId2,
+											},
 										},
 									},
 									"s:name:testStateWorkspace": {
@@ -566,7 +613,11 @@ describe("Presence", () => {
 								"data": {
 									"system:presence": {
 										"clientToSessionId": {
-											[connectionId2]: { "rev": 0, "timestamp": 1000, "value": attendeeId2 },
+											[connectionId2]: {
+												"rev": 0,
+												"timestamp": initialTime,
+												"value": attendeeId2,
+											},
 										},
 									},
 									"s:name:testStateWorkspace": {
@@ -632,7 +683,7 @@ describe("Presence", () => {
 									"clientToSessionId": {
 										[connectionId2]: {
 											"rev": 0,
-											"timestamp": 1000,
+											"timestamp": initialTime,
 											"value": attendeeId2,
 										},
 									},
@@ -713,7 +764,11 @@ describe("Presence", () => {
 								"data": {
 									"system:presence": {
 										"clientToSessionId": {
-											[connectionId2]: { "rev": 0, "timestamp": 1000, "value": attendeeId2 },
+											[connectionId2]: {
+												"rev": 0,
+												"timestamp": initialTime,
+												"value": attendeeId2,
+											},
 										},
 									},
 									"n:name:testNotificationWorkspace": {
@@ -739,7 +794,11 @@ describe("Presence", () => {
 								"data": {
 									"system:presence": {
 										"clientToSessionId": {
-											[connectionId2]: { "rev": 0, "timestamp": 1000, "value": attendeeId2 },
+											[connectionId2]: {
+												"rev": 0,
+												"timestamp": initialTime,
+												"value": attendeeId2,
+											},
 										},
 									},
 									"n:name:testNotificationWorkspace": {
@@ -801,7 +860,11 @@ describe("Presence", () => {
 								"data": {
 									"system:presence": {
 										"clientToSessionId": {
-											[connectionId2]: { "rev": 0, "timestamp": 1000, "value": attendeeId2 },
+											[connectionId2]: {
+												"rev": 0,
+												"timestamp": initialTime,
+												"value": attendeeId2,
+											},
 										},
 									},
 									"s:name:testStateWorkspace": {
@@ -841,7 +904,11 @@ describe("Presence", () => {
 								"data": {
 									"system:presence": {
 										"clientToSessionId": {
-											[connectionId2]: { "rev": 0, "timestamp": 1000, "value": attendeeId2 },
+											[connectionId2]: {
+												"rev": 0,
+												"timestamp": initialTime,
+												"value": attendeeId2,
+											},
 										},
 									},
 									"n:name:testNotificationWorkspace": {

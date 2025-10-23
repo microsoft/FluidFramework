@@ -159,6 +159,12 @@
 			},
 			"ClassStatics_MockFluidDataStoreContext": {
 				"backCompat": false
+			},
+			"Class_MockObjectStorageService": {
+				"forwardCompat": false
+			},
+			"Class_MockSharedObjectServices": {
+				"forwardCompat": false
 			}
 		},
 		"entrypoint": "legacy"

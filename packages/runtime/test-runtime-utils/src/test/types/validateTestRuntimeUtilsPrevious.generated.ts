@@ -221,6 +221,7 @@ declare type current_as_old_for_Class_MockHandle = requireAssignableTo<TypeOnly<
  * typeValidation.broken:
  * "Class_MockObjectStorageService": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_MockObjectStorageService = requireAssignableTo<TypeOnly<old.MockObjectStorageService>, TypeOnly<current.MockObjectStorageService>>
 
 /*
@@ -257,6 +258,7 @@ declare type current_as_old_for_Class_MockQuorumClients = requireAssignableTo<Ty
  * typeValidation.broken:
  * "Class_MockSharedObjectServices": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_MockSharedObjectServices = requireAssignableTo<TypeOnly<old.MockSharedObjectServices>, TypeOnly<current.MockSharedObjectServices>>
 
 /*
