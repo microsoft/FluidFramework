@@ -379,7 +379,6 @@ export class Outbox {
 			!this.isContextReentrant(),
 			0xb7b /* Flushing must not happen while incoming changes are being processed */,
 		);
-
 		this.flushAll(resubmitInfo);
 	}
 
