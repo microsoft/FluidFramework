@@ -44,6 +44,7 @@ import {
 import { createTreeCheckout } from "./treeCheckout.js";
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import { initialize, initializerFromChunk } from "./schematizeTree.js";
+import { combineChunks } from "../feature-libraries/index.js";
 
 /**
  * Create an uninitialized {@link TreeView} that is not tied to any {@link ITree} instance.
@@ -158,7 +159,9 @@ export function independentInitializedViewInternal<const TSchema extends Implici
 	initialize(
 		checkout,
 		schema,
-		initializerFromChunk(checkout, () => checkout.forest.chunkField(rootFieldCursor)),
+		initializerFromChunk(checkout, () =>
+			combineChunks(checkout.forest.chunkField(rootFieldCursor)),
+		),
 	);
 	return new SchematizingSimpleTreeView<TSchema>(
 		checkout,
