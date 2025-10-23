@@ -292,10 +292,40 @@ function createProxyHandler(
 			return true;
 		},
 		deleteProperty(target, propertyKey): boolean {
-			// TODO: supporting delete when it makes sense (custom local fields, and optional field) could be added as a feature in the future.
-			throw new UsageError(
-				`Object nodes do not support the delete operator. Optional fields can be assigned to undefined instead.`,
-			);
+			const fieldInfo = schema.flexKeyMap.get(propertyKey);
+			if (fieldInfo === undefined) {
+				return allowAdditionalProperties ? Reflect.deleteProperty(target, propertyKey) : false;
+			}
+
+			const proxy = targetToProxy.get(target) ?? fail("missing proxy");
+			const innerNode = getInnerNode(proxy);
+
+			const innerSchema = innerNode.context.schema.nodeSchema.get(brand(schema.identifier));
+			assert(innerSchema instanceof ObjectNodeStoredSchema, "Expected ObjectNodeStoredSchema");
+
+			const field = innerNode.tryGetField(fieldInfo?.storedKey);
+			// If the field is already undefined, return true.
+			if (field === undefined) {
+				return true;
+			}
+
+			// Delete should only be possible for optional fields. If called on a required field, throw a usage error.
+			switch (field.schema) {
+				case FieldKinds.optional.identifier: {
+					setField(
+						field,
+						fieldInfo?.schema,
+						undefined,
+						innerSchema?.getFieldSchema(fieldInfo?.storedKey),
+					);
+					return true;
+				}
+				case FieldKinds.required.identifier: {
+					throw new UsageError("Required fields cannot be deleted.");
+				}
+				default:
+					fail("invalid FieldKind");
+			}
 		},
 		has: (target, propertyKey) => {
 			return (
