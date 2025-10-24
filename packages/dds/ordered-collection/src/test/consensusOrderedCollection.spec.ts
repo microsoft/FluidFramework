@@ -466,7 +466,7 @@ describe("ConsensusOrderedCollection", () => {
 		runGCTests(GCOrderedCollectionProvider);
 	});
 
-	describe.only("Rollback", () => {
+	describe("Rollback", () => {
 		let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
 
 		let testCollection1: IConsensusOrderedCollection;
