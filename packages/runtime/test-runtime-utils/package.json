@@ -154,6 +154,12 @@
 	},
 	"typeValidation": {
 		"broken": {
+			"Class_MockFluidDataStoreContext": {
+				"backCompat": false
+			},
+			"ClassStatics_MockFluidDataStoreContext": {
+				"backCompat": false
+			},
 			"Class_MockObjectStorageService": {
 				"forwardCompat": false
 			},

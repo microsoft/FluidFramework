@@ -33,6 +33,6 @@ export class ObjectStoragePartition implements IChannelStorageService {
 	}
 
 	public getSnapshotTree(): ISnapshotTree | undefined {
-		return this.storage.getSnapshotTree?.();
+		return this.storage.getSnapshotTree();
 	}
 }
