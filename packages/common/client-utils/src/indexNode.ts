@@ -29,6 +29,7 @@ export {
 export { createEmitter } from "./events/index.js";
 
 export {
+	type FluidLayer,
 	checkLayerCompatibility,
 	type LayerCompatCheckResult,
 	type ILayerCompatDetails,

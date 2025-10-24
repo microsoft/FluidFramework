@@ -45,6 +45,7 @@ import {
 	ITreeEntry,
 	MessageType,
 	ISequencedDocumentMessage,
+	type ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
@@ -1235,21 +1236,35 @@ export class MockEmptyDeltaConnection implements IDeltaConnection {
  * @legacy @beta
  */
 export class MockObjectStorageService implements IChannelStorageService {
-	public constructor(private readonly contents: { [key: string]: string }) {}
+	private readonly snapshotTree: ISnapshotTree;
+
+	/**
+	 * @param contents - Key value pairs that represent a snapshot.
+	 * The keys are the path to the contents of a blob in the snapshot tree. The corresponding values are its contents.
+	 *
+	 * @remarks
+	 * The snapshot contents must not change after it has been passed here as the changes will not be reflected
+	 * in the snapshot tree retrieved via `getSnapshotTree`.
+	 */
+	public constructor(private readonly contents: { [key: string]: string }) {
+		this.snapshotTree = createSnapshotTreeFromContents(contents);
+	}
 
 	public async readBlob(path: string): Promise<ArrayBufferLike> {
 		return stringToBuffer(this.contents[path], "utf8");
 	}
-
 	public async contains(path: string): Promise<boolean> {
 		return this.contents[path] !== undefined;
 	}
-
 	public async list(path: string): Promise<string[]> {
 		const pathPartsLength = getNormalizedObjectStoragePathParts(path).length;
 		return Object.keys(this.contents).filter(
 			(key) => key.startsWith(path) && key.split("/").length === pathPartsLength + 1,
 		);
+	}
+
+	public getSnapshotTree(): ISnapshotTree {
+		return this.snapshotTree;
 	}
 }
 
@@ -1296,4 +1311,44 @@ function setContentsFromSummaryTree(
 				assert(false, "Unexpected summary type on mock createFromSummary");
 		}
 	}
+}
+
+/**
+ * Create an ISnapshotTree from contents object (reverse of setContentsFromSummaryTree)
+ * @param contents - Object with path/value pairs
+ * @returns ISnapshotTree representing the hierarchical structure
+ */
+export function createSnapshotTreeFromContents(contents: {
+	[key: string]: string;
+}): ISnapshotTree {
+	const tree: ISnapshotTree = {
+		trees: {},
+		blobs: {},
+	};
+
+	for (const [path, content] of Object.entries(contents)) {
+		// Remove empty strings to handle leading, trailing, or consecutive slashes in the path.
+		const pathParts = path.split("/").filter((part) => part !== "");
+		let currentTree = tree;
+
+		// Navigate/create the tree structure for all but the last part
+		for (let i = 0; i < pathParts.length - 1; i++) {
+			const part = pathParts[i];
+			if (!currentTree.trees[part]) {
+				currentTree.trees[part] = {
+					trees: {},
+					blobs: {},
+				};
+			}
+			currentTree = currentTree.trees[part];
+		}
+
+		// Add the blob at the final location
+		const blobName = pathParts[pathParts.length - 1];
+		if (blobName !== undefined) {
+			currentTree.blobs[blobName] = content;
+		}
+	}
+
+	return tree;
 }

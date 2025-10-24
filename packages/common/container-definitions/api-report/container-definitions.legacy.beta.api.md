@@ -209,12 +209,6 @@ export type IContainerPolicies = {
 // @beta @legacy
 export interface IContainerStorageService {
     createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
-    // @deprecated
-    dispose?(error?: Error): void;
-    // @deprecated
-    readonly disposed?: boolean;
-    // @deprecated
-    downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
     getSnapshot?(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot>;
     getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
     getVersions(versionId: string | null, count: number, scenarioName?: string, fetchSource?: FetchSource): Promise<IVersion[]>;
