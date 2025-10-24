@@ -63,7 +63,7 @@ export class LeafNodeSchema<Name extends string, const T extends ValueSchema>
 					allowedTypes: ReadonlySet<TreeNodeSchema>,
 				): FlexContent => leafToFlexContent(data, this, allowedTypes),
 			})),
-		childAnnotatedAllowedTypes: [],
+		childAllowedTypes: [],
 		toStored: () => new LeafNodeStoredSchema(this.leafKind),
 	};
 	#initializedData: TreeNodeSchemaInitializedData | undefined;

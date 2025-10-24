@@ -212,8 +212,8 @@ export class SharedTreeFactory implements IChannelFactory {
 
 	/**
 	 * Get a factory for SharedTree to register with the data store.
-	 * @param writeFormat - Determines the format version the SharedTree will write ops and summaries in. See [the write format
-	 * documentation](../docs/Write-Format.md) for more information.
+	 * @param writeFormat - Determines the format version the SharedTree will write ops and summaries in. See {@link https://github.com/microsoft/FluidFramework/blob/main/experimental/dds/tree/docs/Write-Format.md | the write format
+	 * documentation} for more information.
 	 * @param options - Configuration options for this tree
 	 * @returns A factory that creates `SharedTree`s and loads them from storage.
 	 */
@@ -379,7 +379,7 @@ export interface StashedLocalOpMetadata {
 const stashedSessionId = '8477b8d5-cf6c-4673-8345-8f076a8f9bc6' as SessionId;
 
 /**
- * A [distributed tree](../Readme.md).
+ * A {@link https://github.com/microsoft/FluidFramework/blob/main/experimental/dds/tree/README.md | distributed tree}.
  * @alpha
  */
 export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeIdContext {
@@ -397,7 +397,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * that was initialized with a newer write version connects to the session. Care must be taken when changing this value,
 	 * as a staged rollout must of occurred such that all collaborating clients must have the code to read at least the version
 	 * written.
-	 * See [the write format documentation](../docs/Write-Format.md) for more information.
+	 * See {@link https://github.com/microsoft/FluidFramework/blob/main/experimental/dds/tree/docs/Write-Format.md | the write format documentation} for more information.
 	 * @param options - Configuration options for this tree
 	 * @returns A factory that creates `SharedTree`s and loads them from storage.
 	 */
@@ -530,8 +530,8 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * Create a new SharedTree.
 	 * @param runtime - The runtime the SharedTree will be associated with
 	 * @param id - Unique ID for the SharedTree
-	 * @param writeFormat - Determines the format version the SharedTree will write ops and summaries in. See [the write format
-	 * documentation](../docs/Write-Format.md) for more information.
+	 * @param writeFormat - Determines the format version the SharedTree will write ops and summaries in. See {@link https://github.com/microsoft/FluidFramework/blob/main/experimental/dds/tree/docs/Write-Format.md | the write format
+	 * documentation} for more information.
 	 * @param options - Configuration options for this tree
 	 */
 	public constructor(runtime: IFluidDataStoreRuntime, id: string, ...args: SharedTreeArgs<WriteFormat.v0_0_2>);

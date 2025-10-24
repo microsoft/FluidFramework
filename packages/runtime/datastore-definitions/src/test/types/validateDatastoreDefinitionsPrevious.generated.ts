@@ -76,6 +76,7 @@ declare type current_as_old_for_Interface_IChannelFactory = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_IChannelServices": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_IChannelServices = requireAssignableTo<TypeOnly<old.IChannelServices>, TypeOnly<current.IChannelServices>>
 
 /*
@@ -94,6 +95,7 @@ declare type current_as_old_for_Interface_IChannelServices = requireAssignableTo
  * typeValidation.broken:
  * "Interface_IChannelStorageService": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_IChannelStorageService = requireAssignableTo<TypeOnly<old.IChannelStorageService>, TypeOnly<current.IChannelStorageService>>
 
 /*

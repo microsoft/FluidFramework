@@ -114,6 +114,12 @@
 		"broken": {
 			"Interface_IFluidDataStoreRuntimeExperimental": {
 				"backCompat": false
+			},
+			"Interface_IChannelServices": {
+				"forwardCompat": false
+			},
+			"Interface_IChannelStorageService": {
+				"forwardCompat": false
 			}
 		},
 		"entrypoint": "legacy"

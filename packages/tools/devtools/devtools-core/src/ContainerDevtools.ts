@@ -18,13 +18,15 @@ import {
 
 /**
  * Properties for registering a {@link @fluidframework/container-definitions#IContainer} with the Devtools.
- * @alpha
+ * @beta
+ * @input
+ * @sealed
  */
 export interface ContainerDevtoolsProps extends HasContainerKey {
 	/**
 	 * The Container to register with the Devtools.
 	 */
-	container: IContainer;
+	readonly container: IContainer;
 
 	/**
 	 * (optional) Distributed Data Structures (DDSs) associated with the
@@ -39,7 +41,7 @@ export interface ContainerDevtoolsProps extends HasContainerKey {
 	 *
 	 * @privateRemarks TODO: rename this to make it more clear that this data does not *belong* to the Container.
 	 */
-	containerData?: Record<string, IFluidLoadable>;
+	readonly containerData?: Record<string, IFluidLoadable>;
 
 	// TODO: Add ability for customers to specify custom visualizer overrides
 }

@@ -544,6 +544,8 @@ export class MockObjectStorageService implements IChannelStorageService {
     // (undocumented)
     contains(path: string): Promise<boolean>;
     // (undocumented)
+    getSnapshotTree(): ISnapshotTree;
+    // (undocumented)
     list(path: string): Promise<string[]>;
     // (undocumented)
     readBlob(path: string): Promise<ArrayBufferLike>;

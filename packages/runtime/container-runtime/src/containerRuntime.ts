@@ -1578,13 +1578,6 @@ export class ContainerRuntime
 
 		this.isSnapshotInstanceOfISnapshot = snapshotWithContents !== undefined;
 
-		// Validate that the Loader is compatible with this Runtime.
-		const maybeLoaderCompatDetailsForRuntime = context as FluidObject<ILayerCompatDetails>;
-		validateLoaderCompatibility(
-			maybeLoaderCompatDetailsForRuntime.ILayerCompatDetails,
-			this.disposeFn,
-		);
-
 		this.mc = createChildMonitoringContext({
 			logger: this.baseLogger,
 			namespace: "ContainerRuntime",
@@ -1594,6 +1587,14 @@ export class ContainerRuntime
 				},
 			},
 		});
+
+		// Validate that the Loader is compatible with this Runtime.
+		const maybeLoaderCompatDetailsForRuntime = context as FluidObject<ILayerCompatDetails>;
+		validateLoaderCompatibility(
+			maybeLoaderCompatDetailsForRuntime.ILayerCompatDetails,
+			this.disposeFn,
+			this.mc.logger,
+		);
 
 		// If we support multiple algorithms in the future, then we would need to manage it here carefully.
 		// We can use runtimeOptions.compressionOptions.compressionAlgorithm, but only if it's in the schema list!
@@ -2344,7 +2345,7 @@ export class ContainerRuntime
 	 * Api to fetch the snapshot from the service for a loadingGroupIds.
 	 * @param loadingGroupIds - LoadingGroupId for which the snapshot is asked for.
 	 * @param pathParts - Parts of the path, which we want to extract from the snapshot tree.
-	 * @returns - snapshotTree and the sequence number of the snapshot.
+	 * @returns snapshotTree and the sequence number of the snapshot.
 	 */
 	public async getSnapshotForLoadingGroupId(
 		loadingGroupIds: string[],
@@ -2454,7 +2455,7 @@ export class ContainerRuntime
 	 * @param pathParts - Part of the path, which we want to extract from the snapshot tree.
 	 * @param hasIsolatedChannels - whether the channels are present inside ".channels" subtree. Older
 	 * snapshots will not have trees inside ".channels", so check that.
-	 * @returns - requested snapshot tree based on the path parts.
+	 * @returns requested snapshot tree based on the path parts.
 	 */
 	private getSnapshotTreeForPath(
 		snapshotTree: ISnapshotTree,
@@ -3418,7 +3419,7 @@ export class ContainerRuntime
 	/**
 	 * Flush the current batch of ops to the ordering service for sequencing
 	 * This method is not expected to be called in the middle of a batch.
-	 * @remarks - If it throws (e.g. if the batch is too large to send), the container will be closed.
+	 * @remarks If it throws (e.g. if the batch is too large to send), the container will be closed.
 	 *
 	 * @param resubmitInfo - If defined, indicates this is a resubmission of a batch with the given Batch info needed for resubmit.
 	 */
@@ -3771,7 +3772,7 @@ export class ContainerRuntime
 	/**
 	 * Builds the Summary tree including all the channels and the container state.
 	 *
-	 * @remarks - Unfortunately, this function is accessed in a non-typesafe way by a legacy first-party partner,
+	 * @remarks Unfortunately, this function is accessed in a non-typesafe way by a legacy first-party partner,
 	 * so until we can provide a proper API for their scenario, we need to ensure this function doesn't change.
 	 */
 	private async summarizeInternal(
@@ -4514,7 +4515,7 @@ export class ContainerRuntime
 	 * Emit "dirty" or "saved" event based on the current dirty state of the document.
 	 * This must be called every time the states underlying the dirty state change.
 	 *
-	 * @privateRemarks - It's helpful to think of this as an event handler registered
+	 * @privateRemarks It's helpful to think of this as an event handler registered
 	 * for hypothetical "changed" events for PendingStateManager, Outbox, and Container Attach machinery.
 	 * But those events don't exist so we manually call this wherever we know those changes happen.
 	 */

@@ -174,14 +174,12 @@ If a client upgrades a document to a new schema that older clients cannot read, 
 **Two-Phase Deployment Strategy**
 
 **Phase 1: Deploy Schema Reading Support**
-- Deploy application versions that can read the new schema without upgrading documents
-- Wait until all (or "tolerably most") users have updated to the new application version. This is called **client saturation**.
-- Monitor deployment metrics to ensure coverage
+- Deploy application versions that can read the new schema without upgrading documents.
+- Monitor deployment metrics to ensure all (or "tolerably most") users have updated to the new application version. This is called **client saturation**.
 
 **Phase 2: Enable Document Upgrades**
-- Deploy code that automatically upgrades documents to the new schema
-- All clients can now collaborate since they support reading the upgraded schema
-- Monitor for any compatibility issues
+- Deploy code that automatically upgrades documents to the new schema.
+- Monitor for any compatibility issues.
 
 Changes that are both [backwards compatible](./index.mdx#backwards-compatibility) and [forwards compatible](./index.mdx#forwards-compatibility) are capable of cross-version collaboration without requiring a staged rollout.
 In that case, new clients can read and write to the same document as old clients without either one being fundamentally incompatible.

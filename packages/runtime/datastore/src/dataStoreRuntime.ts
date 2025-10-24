@@ -321,12 +321,23 @@ export class FluidDataStoreRuntime
 			0x30e /* Id cannot contain slashes. DataStoreContext should have validated this. */,
 		);
 
-		this.policies = { ...defaultPolicies, ...policies };
+		this.mc = createChildMonitoringContext({
+			logger: dataStoreContext.baseLogger,
+			namespace: "FluidDataStoreRuntime",
+			properties: {
+				all: { dataStoreId: uuid(), dataStoreVersion: pkgVersion },
+				error: { inStagingMode: () => this.inStagingMode, isDirty: () => this.isDirty },
+			},
+		});
 
 		// Validate that the Runtime is compatible with this DataStore.
 		const { ILayerCompatDetails: runtimeCompatDetails } =
 			dataStoreContext as FluidObject<ILayerCompatDetails>;
-		validateRuntimeCompatibility(runtimeCompatDetails, this.dispose.bind(this));
+		validateRuntimeCompatibility(
+			runtimeCompatDetails,
+			this.dispose.bind(this),
+			this.mc.logger,
+		);
 
 		if (contextSupportsFeature(dataStoreContext, notifiesReadOnlyState)) {
 			this._readonly = dataStoreContext.isReadOnly();
@@ -337,21 +348,14 @@ export class FluidDataStoreRuntime
 			);
 		}
 
+		this.policies = { ...defaultPolicies, ...policies };
+
 		this.submitMessagesWithoutEncodingHandles = contextSupportsFeature(
 			dataStoreContext,
 			encodeHandlesInContainerRuntime,
 		);
 		// We read this property here to avoid a compiler error (unused private member)
 		debugAssert(() => this.submitMessagesWithoutEncodingHandles !== undefined);
-
-		this.mc = createChildMonitoringContext({
-			logger: dataStoreContext.baseLogger,
-			namespace: "FluidDataStoreRuntime",
-			properties: {
-				all: { dataStoreId: uuid(), dataStoreVersion: pkgVersion },
-				error: { inStagingMode: () => this.inStagingMode, isDirty: () => this.isDirty },
-			},
-		});
 
 		this.id = dataStoreContext.id;
 		this.options = dataStoreContext.options;
@@ -1380,7 +1384,7 @@ export class FluidDataStoreRuntime
 	 * Indicates the given channel is dirty from Summarizer's point of view,
 	 * i.e. it has local changes that need to be included in the summary.
 	 *
-	 * @remarks - If a channel's changes are rolled back or rebased away, we won't
+	 * @remarks If a channel's changes are rolled back or rebased away, we won't
 	 * clear the dirty flag set here.
 	 */
 	private setChannelDirty(address: string): void {

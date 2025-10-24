@@ -26,7 +26,7 @@ import { Container } from "../container.js";
 import { Loader } from "../loader.js";
 import type { IPendingDetachedContainerState } from "../serializedStateManager.js";
 
-import { failProxy, failSometimeProxy } from "./failProxy.js";
+import { AbsentProperty, failProxy, failSometimeProxy } from "./failProxy.js";
 import {
 	createTestCodeLoaderProxy,
 	createTestDocumentServiceFactoryProxy,
@@ -35,7 +35,7 @@ import {
 const documentServiceFactoryFailProxy = failSometimeProxy<
 	IDocumentServiceFactory & IProvideLayerCompatDetails
 >({
-	ILayerCompatDetails: undefined,
+	ILayerCompatDetails: AbsentProperty,
 });
 
 describe("loader unit test", () => {

@@ -42,7 +42,7 @@ export interface IChannelServices {
 // @beta @legacy
 export interface IChannelStorageService {
     contains(path: string): Promise<boolean>;
-    getSnapshotTree?(): ISnapshotTree | undefined;
+    getSnapshotTree(): ISnapshotTree | undefined;
     list(path: string): Promise<string[]>;
     readBlob(path: string): Promise<ArrayBufferLike>;
 }

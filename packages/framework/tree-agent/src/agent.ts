@@ -8,7 +8,7 @@ import type {
 	TreeFieldFromImplicitField,
 	TreeNodeSchema,
 } from "@fluidframework/tree";
-import { TreeNode } from "@fluidframework/tree";
+import { NodeKind, TreeNode } from "@fluidframework/tree";
 import type {
 	ReadableField,
 	FactoryContentObject,
@@ -24,16 +24,18 @@ import type {
 	Logger,
 	SynchronousEditor,
 	AsynchronousEditor,
+	Context,
 } from "./api.js";
 import { getPrompt, stringifyTree } from "./prompt.js";
 import { Subtree } from "./subtree.js";
 import {
 	constructNode,
-	getFriendlyName,
 	llmDefault,
 	type TreeView,
-	findNamedSchemas,
+	findSchemas,
 	toErrorString,
+	unqualifySchema,
+	isNamedSchema,
 } from "./utils.js";
 
 /**
@@ -248,16 +250,6 @@ export const defaultEditor: AsynchronousEditor = async (context, code) => {
 };
 
 /**
- * Binds the given {@link SynchronousEditor | editor} to the given view or tree.
- * @returns A function that takes a string of JavaScript code and executes it on the given view or tree using the given editor function.
- * @remarks This is useful for testing/debugging code execution without needing to set up a full {@link SharedTreeSemanticAgent | agent}.
- * @alpha
- */
-export function bindEditorImpl<TSchema extends ImplicitFieldSchema>(
-	tree: TreeView<TSchema> | (ReadableField<TSchema> & TreeNode),
-	editor: SynchronousEditor,
-): (code: string) => void;
-/**
  * Binds the given {@link AsynchronousEditor | editor} to the given view or tree.
  * @returns A function that takes a string of JavaScript code and executes it on the given view or tree using the given editor function.
  * @remarks This is useful for testing/debugging code execution without needing to set up a full {@link SharedTreeSemanticAgent | agent}.
@@ -267,6 +259,16 @@ export function bindEditorImpl<TSchema extends ImplicitFieldSchema>(
 	tree: TreeView<TSchema> | (ReadableField<TSchema> & TreeNode),
 	editor: AsynchronousEditor,
 ): (code: string) => Promise<void>;
+/**
+ * Binds the given {@link SynchronousEditor | editor} to the given view or tree.
+ * @returns A function that takes a string of JavaScript code and executes it on the given view or tree using the given editor function.
+ * @remarks This is useful for testing/debugging code execution without needing to set up a full {@link SharedTreeSemanticAgent | agent}.
+ * @alpha
+ */
+export function bindEditorImpl<TSchema extends ImplicitFieldSchema>(
+	tree: TreeView<TSchema> | (ReadableField<TSchema> & TreeNode),
+	editor: SynchronousEditor,
+): (code: string) => void;
 /**
  * Binds the given {@link SynchronousEditor | editor} or {@link AsynchronousEditor | editor} to the given view or tree.
  * @returns A function that takes a string of JavaScript code and executes it on the given view or tree using the given editor function.
@@ -296,9 +298,11 @@ function bindEditorToSubtree<TSchema extends ImplicitFieldSchema>(
 ): (code: string) => void | Promise<void> {
 	// Stick the tree schema constructors on an object passed to the function so that the LLM can create new nodes.
 	const create: Record<string, (input: FactoryContentObject) => TreeNode> = {};
-	for (const schema of findNamedSchemas(tree.schema)) {
-		const name = getFriendlyName(schema);
+	const is: Record<string, <T extends TreeNode>(input: unknown) => input is T> = {};
+	for (const schema of findSchemas(tree.schema, (s) => isNamedSchema(s.identifier))) {
+		const name = unqualifySchema(schema.identifier);
 		create[name] = (input: FactoryContentObject) => constructTreeNode(schema, input);
+		is[name] = <T extends TreeNode>(input: unknown): input is T => Tree.is(input, schema);
 	}
 
 	const context = {
@@ -309,7 +313,30 @@ function bindEditorToSubtree<TSchema extends ImplicitFieldSchema>(
 			tree.field = value;
 		},
 		create,
-	};
+		is,
+		isArray(node) {
+			if (Array.isArray(node)) {
+				return true;
+			}
+			if (node instanceof TreeNode) {
+				const schema = Tree.schema(node);
+				return schema.kind === NodeKind.Array;
+			}
+			return false;
+		},
+		isMap(node) {
+			if (node instanceof Map) {
+				return true;
+			}
+			if (node instanceof TreeNode) {
+				const schema = Tree.schema(node);
+				return schema.kind === NodeKind.Map;
+			}
+			return false;
+		},
+		parent: (child: TreeNode): TreeNode | undefined => Tree.parent(child),
+		key: (child: TreeNode): string | number => Tree.key(child),
+	} satisfies Context<TSchema>;
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
 	return (code: string) => executeEdit(context, code);
