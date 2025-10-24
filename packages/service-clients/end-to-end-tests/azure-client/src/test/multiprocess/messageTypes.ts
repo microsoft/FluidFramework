@@ -67,7 +67,13 @@ export interface ConnectCommand {
  */
 interface DebugReportCommand {
 	command: "debugReport";
+	/**
+	 * Send event log entries.
+	 */
 	sendEventLog?: true;
+	/**
+	 * Send basic attendee statistics (like count of connected).
+	 */
 	reportAttendees?: true;
 }
 

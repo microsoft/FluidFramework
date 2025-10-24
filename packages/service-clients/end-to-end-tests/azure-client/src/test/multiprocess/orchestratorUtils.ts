@@ -108,6 +108,11 @@ export async function forkChildProcesses(
 	return { children, childErrorPromise };
 }
 
+/**
+ * Instructs all listed child processes to send debug reports and then the
+ * collection is output sorted by timestamp. Report content is up to the child
+ * processes, but typically includes messages sent and some telemetry events.
+ */
 export async function executeDebugReports(
 	childrenRequestedToReport: ChildProcess[],
 ): Promise<void> {

@@ -47,7 +47,7 @@ const timeoutMultiplier = debuggerAttached ? 1000 : useAzure ? 3 : 1;
  * @param context - The Mocha test context.
  * @param duration - The duration in milliseconds to set the timeout to. Zero disables the timeout.
  */
-function setTimeout(context: Mocha.Context, duration: number): void {
+function setTestTimeout(context: Mocha.Context, duration: number): void {
 	const currentTimeout = context.timeout();
 	const newTimeout =
 		debuggerAttached || currentTimeout === 0 || duration === 0
@@ -123,7 +123,7 @@ describe(`Presence with AzureClient`, () => {
 					this.skip();
 				}
 
-				setTimeout(this, childConnectTimeoutMs + allAttendeesJoinedTimeoutMs + 1000);
+				setTestTimeout(this, childConnectTimeoutMs + allAttendeesJoinedTimeoutMs + 1000);
 
 				// Setup
 				const { children, childErrorPromise } = await forkChildProcesses(
@@ -162,7 +162,7 @@ describe(`Presence with AzureClient`, () => {
 
 				const childDisconnectTimeoutMs = 10_000 * timeoutMultiplier;
 
-				setTimeout(
+				setTestTimeout(
 					this,
 					childConnectTimeoutMs +
 						allAttendeesFullyJoinedTimeoutMs +
@@ -241,7 +241,7 @@ describe(`Presence with AzureClient`, () => {
 					// Gather and report debug info from children
 					// If there are less than 10 children, get all reports.
 					// Otherwise, just child 0 and those not fully joined.
-					setTimeout(this, 0); // Disable test timeout. Will throw within 20s below.
+					setTestTimeout(this, 0); // Disable test timeout. Will throw within 20s below.
 					const childrenRequestedToReport =
 						children.length <= 10
 							? children

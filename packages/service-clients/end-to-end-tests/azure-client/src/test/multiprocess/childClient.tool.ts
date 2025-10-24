@@ -451,42 +451,44 @@ class MessageHandler {
 		// Prevent reentrance. Queue messages until after connect is fully processed.
 		this.msgQueue = [];
 
-		const { container, containerId, connected } = await getOrCreateContainer({
-			...msg,
-			logger: this.logger,
-			onDisconnected: this.onDisconnected,
-		});
-		this.container = container;
-		const presence = getPresence(container);
-		this.presence = presence;
+		try {
+			const { container, containerId, connected } = await getOrCreateContainer({
+				...msg,
+				logger: this.logger,
+				onDisconnected: this.onDisconnected,
+			});
+			this.container = container;
+			const presence = getPresence(container);
+			this.presence = presence;
 
-		// wait for 'ConnectionState.Connected'
-		await connected;
+			// wait for 'ConnectionState.Connected'
+			await connected;
 
-		// Acknowledge connection before sending current attendee information
-		this.send({
-			event: "connected",
-			containerId,
-			attendeeId: presence.attendees.getMyself().attendeeId,
-		});
+			// Acknowledge connection before sending current attendee information
+			this.send({
+				event: "connected",
+				containerId,
+				attendeeId: presence.attendees.getMyself().attendeeId,
+			});
 
-		// Send existing attendees excluding self to parent/orchestrator
-		const self = presence.attendees.getMyself();
-		for (const attendee of presence.attendees.getAttendees()) {
-			if (attendee !== self && attendee.getConnectionStatus() === "Connected") {
-				this.sendAttendeeConnected(attendee);
+			// Send existing attendees excluding self to parent/orchestrator
+			const self = presence.attendees.getMyself();
+			for (const attendee of presence.attendees.getAttendees()) {
+				if (attendee !== self && attendee.getConnectionStatus() === "Connected") {
+					this.sendAttendeeConnected(attendee);
+				}
 			}
-		}
 
-		// Listen for presence events to notify parent/orchestrator when a new attendee joins or leaves the session.
-		presence.attendees.events.on("attendeeConnected", this.sendAttendeeConnected);
-		presence.attendees.events.on("attendeeDisconnected", this.sendAttendeeDisconnected);
-
-		// Process any queued messages received while connecting
-		for (const queuedMsg of this.msgQueue) {
-			this.processMessage(queuedMsg);
+			// Listen for presence events to notify parent/orchestrator when a new attendee joins or leaves the session.
+			presence.attendees.events.on("attendeeConnected", this.sendAttendeeConnected);
+			presence.attendees.events.on("attendeeDisconnected", this.sendAttendeeDisconnected);
+		} finally {
+			// Process any queued messages received while connecting
+			for (const queuedMsg of this.msgQueue) {
+				this.processMessage(queuedMsg);
+			}
+			this.msgQueue = undefined;
 		}
-		this.msgQueue = undefined;
 	}
 
 	private handleDebugReport(
@@ -528,6 +530,8 @@ class MessageHandler {
 			this.send({ event: "error", error: `${process_id} is not connected to presence` });
 			return;
 		}
+		// Disconnect event is treated as an error in normal handling.
+		// Remove listener as this disconnect is intentional.
 		this.container.off("disconnected", this.onDisconnected);
 		this.container.disconnect();
 		this.send({
