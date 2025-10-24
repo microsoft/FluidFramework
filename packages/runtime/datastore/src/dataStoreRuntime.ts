@@ -453,7 +453,7 @@ export class FluidDataStoreRuntime
 	 * Implementation of IFluidDataStoreRuntimeAlpha.inStagingMode
 	 */
 	private get inStagingMode(): IFluidDataStoreRuntimeAlpha["inStagingMode"] {
-		return asLegacyAlpha(this.dataStoreContext.containerRuntime).inStagingMode;
+		return asLegacyAlpha(this.dataStoreContext.containerRuntime)?.inStagingMode;
 	}
 
 	/**
