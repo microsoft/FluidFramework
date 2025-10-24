@@ -397,8 +397,7 @@ export abstract class SharedObjectCore<
 
 	/* eslint-disable jsdoc/check-indentation */
 	/**
-	 * Derived classes must override this to do custom processing on a bunch of remote messages.
-	 * Process a 'bunch' of messages for this shared object.
+	 * Derived classes must override this to do custom processing on a 'bunch' of remote messages.
 	 * @remarks
 	 * A 'bunch' is a group of messages that have the following properties:
 	 * - They are all part of the same grouped batch, which entails:
