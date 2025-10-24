@@ -1460,7 +1460,7 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 			);
 		});
 
-		it("with type symbol", () => {
+		it("with contentSchemaSymbol", () => {
 			const f = new SchemaFactory("test");
 			class A extends f.object("A", {
 				value: f.string,
@@ -1479,8 +1479,8 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 
 			// Type symbol specified that does not match any options
 			const invalidContent = { [contentSchemaSymbol]: "test.C", value: "hello" };
-			// Should fall back to A, as if no type symbol was provided
-			assert.deepEqual(getPossibleTypes(new Set([A]), invalidContent), [A]);
+			// Should report no valid types
+			assert.deepEqual(getPossibleTypes(new Set([]), invalidContent), []);
 		});
 	});
 
