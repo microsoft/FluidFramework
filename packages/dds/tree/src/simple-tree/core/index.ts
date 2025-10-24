@@ -16,7 +16,12 @@ export {
 	SimpleContextSlot,
 	withBufferedTreeEvents,
 } from "./treeNodeKernel.js";
-export { type WithType, typeNameSymbol, typeSchemaSymbol } from "./withType.js";
+export {
+	type WithType,
+	typeNameSymbol,
+	typeSchemaSymbol,
+	contentSchemaSymbol,
+} from "./withType.js";
 export {
 	type Unhydrated,
 	type InternalTreeNode,
