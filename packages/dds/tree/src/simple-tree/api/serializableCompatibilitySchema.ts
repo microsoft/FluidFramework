@@ -15,7 +15,7 @@ import type {
 import { NodeKind } from "../core/index.js";
 
 /**
- * Convert a view schema to a serializable format for compatibility testing.
+ * Converts a view schema to a serializable format for compatibility testing.
  * @remarks The JSON-compatible schema returned from this method is only intended for use in snapshots/comparisons of view schemas.
  * It is not possible to reconstruct a full view schema from the serialized format.
  * @param treeSchema - The tree schema to convert.
