@@ -10,8 +10,13 @@ import {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import {
+	ISummaryTreeWithStats,
+	type IRuntimeMessageCollection,
+	type IRuntimeMessagesContent,
+	type ISequencedMessageEnvelope,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	IFluidSerializer,
 	SharedObject,
@@ -103,17 +108,47 @@ export abstract class SharedOT<TState, TOp> extends SharedObject {
 
 	protected onDisconnect() {}
 
-	protected processCore(message: ISequencedDocumentMessage, local: boolean) {
+	protected processCore(
+		message: ISequencedDocumentMessage,
+		local: boolean,
+		localOpMetadata: unknown,
+	): void {
+		this.processMessage(
+			message,
+			{
+				contents: message.contents,
+				localOpMetadata,
+				clientSequenceNumber: message.clientSequenceNumber,
+			},
+			local,
+		);
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
+	 */
+	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+		const { envelope, local, messagesContent } = messagesCollection;
+		for (const messageContent of messagesContent) {
+			this.processMessage(envelope, messageContent, local);
+		}
+	}
+
+	private processMessage(
+		messageEnvelope: ISequencedMessageEnvelope,
+		messagesContent: IRuntimeMessagesContent,
+		local: boolean,
+	) {
 		// Discard any sequenced ops that are now below the minimum sequence number.
 		const minSeq = this.deltaManager.minimumSequenceNumber;
 		while (this.sequencedOps[0]?.seq < minSeq) {
 			this.sequencedOps.shift();
 		}
 
-		let remoteOp = message.contents;
-		const messageSeq = message.sequenceNumber;
-		const remoteRefSeq = message.referenceSequenceNumber;
-		const remoteClient = message.clientId;
+		let remoteOp = messagesContent.contents;
+		const messageSeq = messageEnvelope.sequenceNumber;
+		const remoteRefSeq = messageEnvelope.referenceSequenceNumber;
+		const remoteClient = messageEnvelope.clientId;
 
 		// Adjust the incoming sequenced op to account for prior sequenced ops that the
 		// sender hadn't yet seen at the time they sent the op.

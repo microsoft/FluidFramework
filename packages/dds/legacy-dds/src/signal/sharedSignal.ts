@@ -16,7 +16,12 @@ import type {
 	ISequencedDocumentMessage,
 	ITree,
 } from "@fluidframework/driver-definitions/internal";
-import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import type {
+	ISummaryTreeWithStats,
+	IRuntimeMessageCollection,
+	IRuntimeMessagesContent,
+	ISequencedMessageEnvelope,
+} from "@fluidframework/runtime-definitions/internal";
 import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
@@ -130,21 +135,39 @@ export class SharedSignalClass<T extends SerializableTypeForSharedSignal = any>
 	 */
 	protected onDisconnect(): void {}
 
-	/**
-	 * Process a shared signal operation
-	 *
-	 * @param message - the message to prepare
-	 * @param local - whether the message was sent by the local client
-	 * @param _localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
-	 * For messages from a remote client, this will be undefined.
-	 */
 	protected processCore(
 		message: ISequencedDocumentMessage,
 		local: boolean,
-		_localOpMetadata: unknown,
+		localOpMetadata: unknown,
 	): void {
-		if ((message.type as MessageType) === MessageType.Operation && !local) {
-			const op = message.contents as ISignalOperation<T>;
+		this.processMessage(
+			message,
+			{
+				contents: message.contents,
+				localOpMetadata,
+				clientSequenceNumber: message.clientSequenceNumber,
+			},
+			local,
+		);
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
+	 */
+	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+		const { envelope, local, messagesContent } = messagesCollection;
+		for (const messageContent of messagesContent) {
+			this.processMessage(envelope, messageContent, local);
+		}
+	}
+
+	private processMessage(
+		messageEnvelope: ISequencedMessageEnvelope,
+		messageContent: IRuntimeMessagesContent,
+		local: boolean,
+	): void {
+		if ((messageEnvelope.type as MessageType) === MessageType.Operation && !local) {
+			const op = messageContent.contents as ISignalOperation<T>;
 
 			switch (op.type) {
 				case "signal": {
@@ -158,7 +181,6 @@ export class SharedSignalClass<T extends SerializableTypeForSharedSignal = any>
 			}
 		}
 	}
-
 	private notifyCore(op: ISignalOperation<T>, isLocal: boolean): void {
 		this.emit("notify", op.metadata, isLocal);
 	}

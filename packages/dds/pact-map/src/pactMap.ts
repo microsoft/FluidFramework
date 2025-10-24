@@ -15,7 +15,12 @@ import {
 	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
-import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import type {
+	ISummaryTreeWithStats,
+	IRuntimeMessageCollection,
+	IRuntimeMessagesContent,
+	ISequencedMessageEnvelope,
+} from "@fluidframework/runtime-definitions/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
 	SharedObject,
@@ -387,31 +392,60 @@ export class PactMapClass<T = unknown>
 		this.submitLocalMessage(pactMapOp, localOpMetadata);
 	}
 
-	/**
-	 * Process a PactMap operation
-	 *
-	 * @param message - the message to prepare
-	 * @param local - whether the message was sent by the local client
-	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
-	 * For messages from a remote client, this will be undefined.
-	 */
 	protected processCore(
 		message: ISequencedDocumentMessage,
 		local: boolean,
 		localOpMetadata: unknown,
 	): void {
+		this.processMessage(
+			message,
+			{
+				contents: message.contents,
+				localOpMetadata,
+				clientSequenceNumber: message.clientSequenceNumber,
+			},
+			local,
+		);
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
+	 */
+	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+		const { envelope, local, messagesContent } = messagesCollection;
+		for (const messageContent of messagesContent) {
+			this.processMessage(envelope, messageContent, local);
+		}
+	}
+
+	private processMessage(
+		messageEnvelope: ISequencedMessageEnvelope,
+		messageContent: IRuntimeMessagesContent,
+		local: boolean,
+	): void {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-		if (message.type === MessageType.Operation) {
-			const op = message.contents as IPactMapOperation<T>;
+		if (messageEnvelope.type === MessageType.Operation) {
+			const op = messageContent.contents as IPactMapOperation<T>;
 
 			switch (op.type) {
 				case "set": {
-					this.incomingOp.emit("set", op.key, op.value, op.refSeq, message.sequenceNumber);
+					this.incomingOp.emit(
+						"set",
+						op.key,
+						op.value,
+						op.refSeq,
+						messageEnvelope.sequenceNumber,
+					);
 					break;
 				}
 
 				case "accept": {
-					this.incomingOp.emit("accept", op.key, message.clientId, message.sequenceNumber);
+					this.incomingOp.emit(
+						"accept",
+						op.key,
+						messageEnvelope.clientId,
+						messageEnvelope.sequenceNumber,
+					);
 					break;
 				}
 

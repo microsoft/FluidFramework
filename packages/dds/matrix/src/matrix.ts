@@ -26,7 +26,12 @@ import {
 	ReferenceType,
 	segmentIsRemoved,
 } from "@fluidframework/merge-tree/internal";
-import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import type {
+	ISummaryTreeWithStats,
+	IRuntimeMessageCollection,
+	IRuntimeMessagesContent,
+	ISequencedMessageEnvelope,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	ObjectStoragePartition,
 	SummaryTreeBuilder,
@@ -997,10 +1002,43 @@ export class SharedMatrix<T = any>
 	}
 
 	protected processCore(
-		msg: ISequencedDocumentMessage,
+		message: ISequencedDocumentMessage,
 		local: boolean,
 		localOpMetadata: unknown,
 	): void {
+		this.processMessage(
+			message,
+			{
+				contents: message.contents,
+				localOpMetadata,
+				clientSequenceNumber: message.clientSequenceNumber,
+			},
+			local,
+		);
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
+	 */
+	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+		const { envelope, local, messagesContent } = messagesCollection;
+		for (const messageContent of messagesContent) {
+			this.processMessage(envelope, messageContent, local);
+		}
+	}
+
+	private processMessage(
+		messageEnvelope: ISequencedMessageEnvelope,
+		messageContent: IRuntimeMessagesContent,
+		local: boolean,
+	): void {
+		// Reconstruct the ISequencedDocumentMessage which is needed by merge tree client.
+		const msg: ISequencedDocumentMessage = {
+			...messageEnvelope,
+			contents: messageContent.contents,
+			clientSequenceNumber: messageContent.clientSequenceNumber,
+		};
+		const localOpMetadata = messageContent.localOpMetadata;
 		if (local) {
 			const recordedRefSeq = this.inFlightRefSeqs.shift();
 			assert(recordedRefSeq !== undefined, 0x8ba /* No pending recorded refSeq found */);
@@ -1013,7 +1051,7 @@ export class SharedMatrix<T = any>
 			// assert(recordedRefSeq <= message.referenceSequenceNumber, "RefSeq mismatch");
 		}
 
-		const contents = msg.contents as MatrixSetOrVectorOp<T>;
+		const contents = messageContent.contents as MatrixSetOrVectorOp<T>;
 		const target = contents.target;
 
 		switch (target) {
