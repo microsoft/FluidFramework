@@ -323,12 +323,22 @@ export class FluidDataStoreRuntime
 			0x30e /* Id cannot contain slashes. DataStoreContext should have validated this. */,
 		);
 
-		this.policies = { ...defaultPolicies, ...policies };
+		this.mc = createChildMonitoringContext({
+			logger: dataStoreContext.baseLogger,
+			namespace: "FluidDataStoreRuntime",
+			properties: {
+				all: { dataStoreId: uuid(), dataStoreVersion: pkgVersion },
+			},
+		});
 
 		// Validate that the Runtime is compatible with this DataStore.
 		const { ILayerCompatDetails: runtimeCompatDetails } =
 			dataStoreContext as FluidObject<ILayerCompatDetails>;
-		validateRuntimeCompatibility(runtimeCompatDetails, this.dispose.bind(this));
+		validateRuntimeCompatibility(
+			runtimeCompatDetails,
+			this.dispose.bind(this),
+			this.mc.logger,
+		);
 
 		if (contextSupportsFeature(dataStoreContext, notifiesReadOnlyState)) {
 			this._readonly = dataStoreContext.isReadOnly();
@@ -339,20 +349,14 @@ export class FluidDataStoreRuntime
 			);
 		}
 
+		this.policies = { ...defaultPolicies, ...policies };
+
 		this.submitMessagesWithoutEncodingHandles = contextSupportsFeature(
 			dataStoreContext,
 			encodeHandlesInContainerRuntime,
 		);
 		// We read this property here to avoid a compiler error (unused private member)
 		debugAssert(() => this.submitMessagesWithoutEncodingHandles !== undefined);
-
-		this.mc = createChildMonitoringContext({
-			logger: dataStoreContext.baseLogger,
-			namespace: "FluidDataStoreRuntime",
-			properties: {
-				all: { dataStoreId: uuid(), dataStoreVersion: pkgVersion },
-			},
-		});
 
 		this.id = dataStoreContext.id;
 		this.options = dataStoreContext.options;
