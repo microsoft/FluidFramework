@@ -668,7 +668,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
     get logViewer(): LogViewer;
     mergeEditsFrom(other: SharedTree, edits: Iterable<Edit<InternalizedChange>>, stableIdRemapper?: (id: StableNodeId) => StableNodeId): EditId[];
     protected onDisconnect(): void;
-    protected processCore(message: unknown, local: boolean): void;
     protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void;
     protected registerCore(): void;
     // (undocumented)

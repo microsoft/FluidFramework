@@ -14,7 +14,6 @@ import {
 	IChannelServices,
 	IChannelStorageService,
 } from '@fluidframework/datastore-definitions/internal';
-import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
 import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
@@ -997,14 +996,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 			summaryLoadPerformanceEvent.cancel({ eventName: 'SummaryLoadFailure' }, error);
 			throw error;
 		}
-	}
-
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processCore}
-	 */
-	protected processCore(message: unknown, local: boolean): void {
-		const typedMessage = message as ISequencedDocumentMessage;
-		this.processMessage(typedMessage, typedMessage.contents);
 	}
 
 	/**

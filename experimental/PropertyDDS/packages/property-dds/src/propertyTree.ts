@@ -363,18 +363,6 @@ export class SharedPropertyTree extends SharedObject {
 		this._root._reportDirtinessToView();
 	}
 
-	protected processCore(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	): void {
-		this.processMessage(message, {
-			contents: message.contents,
-			localOpMetadata,
-			clientSequenceNumber: message.clientSequenceNumber,
-		});
-	}
-
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
 	 */

@@ -13,7 +13,6 @@ import type {
 	IChannelStorageService,
 	IFluidDataStoreRuntimeInternalConfig,
 } from "@fluidframework/datastore-definitions/internal";
-import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
@@ -45,13 +44,6 @@ class MySharedObject extends SharedObject {
 		throw new Error("Method not implemented.");
 	}
 	protected async loadCore(services: IChannelStorageService): Promise<void> {
-		throw new Error("Method not implemented.");
-	}
-	protected processCore(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	): void {
 		throw new Error("Method not implemented.");
 	}
 	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
@@ -107,13 +99,6 @@ class MySharedObjectCore extends SharedObjectCore {
 		throw new Error("Method not implemented.");
 	}
 	protected async loadCore(services: IChannelStorageService): Promise<void> {
-		throw new Error("Method not implemented.");
-	}
-	protected processCore(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	): void {
 		throw new Error("Method not implemented.");
 	}
 	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
