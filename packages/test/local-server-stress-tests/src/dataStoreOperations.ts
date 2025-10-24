@@ -9,7 +9,10 @@ import type { Client } from "./localServerStressHarness";
 
 export const validateAllDataStoresSaved = async (...clients: Client[]) => {
 	for (const client of clients) {
-		assert(client.container.isDirty === false, `[${client.tag}] Container is dirty!`);
+		assert(
+			client.container.isDirty === false,
+			`[${client.tag}] Container is dirty!\n${await client.container.getPendingLocalState()}`,
+		);
 		for (const entry of (await client.entryPoint.getContainerObjects()).filter(
 			(v) => v.type === "stressDataObject",
 		)) {
@@ -17,7 +20,7 @@ export const validateAllDataStoresSaved = async (...clients: Client[]) => {
 			const stressDataObject = entry.stressDataObject;
 			assert(
 				stressDataObject.isDirty === false,
-				`[${client.tag}] DataObject ${stressDataObject.id} is dirty!`,
+				`[${client.tag}] DataObject ${stressDataObject.id} is dirty!\n${await client.container.getPendingLocalState()}`,
 			);
 		}
 	}
