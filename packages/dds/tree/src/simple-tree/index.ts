@@ -6,6 +6,7 @@
 export {
 	typeNameSymbol,
 	typeSchemaSymbol,
+	contentSchemaSymbol,
 	type WithType,
 	type TreeNodeSchema,
 	type AnnotatedAllowedType,

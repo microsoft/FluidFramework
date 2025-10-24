@@ -14,7 +14,12 @@ import {
 	MessageType,
 	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import type {
+	ISummaryTreeWithStats,
+	IRuntimeMessageCollection,
+	IRuntimeMessagesContent,
+	ISequencedMessageEnvelope,
+} from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import {
 	type IFluidSerializer,
@@ -307,8 +312,34 @@ export class ConsensusOrderedCollection<T = any>
 		local: boolean,
 		localOpMetadata: unknown,
 	): void {
-		if (message.type === MessageType.Operation) {
-			const op = message.contents as IConsensusOrderedCollectionOperation<T>;
+		this.processMessage(
+			message,
+			{
+				contents: message.contents,
+				localOpMetadata,
+				clientSequenceNumber: message.clientSequenceNumber,
+			},
+			local,
+		);
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
+	 */
+	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+		const { envelope, local, messagesContent } = messagesCollection;
+		for (const messageContent of messagesContent) {
+			this.processMessage(envelope, messageContent, local);
+		}
+	}
+
+	private processMessage(
+		messageEnvelope: ISequencedMessageEnvelope,
+		messageContent: IRuntimeMessagesContent,
+		local: boolean,
+	): void {
+		if (messageEnvelope.type === MessageType.Operation) {
+			const op = messageContent.contents as IConsensusOrderedCollectionOperation<T>;
 			let value: IConsensusOrderedCollectionValue<T> | undefined;
 			switch (op.opName) {
 				case "add": {
@@ -321,7 +352,7 @@ export class ConsensusOrderedCollection<T = any>
 				}
 
 				case "acquire": {
-					value = this.acquireCore(op.acquireId, message.clientId ?? undefined);
+					value = this.acquireCore(op.acquireId, messageEnvelope.clientId ?? undefined);
 					break;
 				}
 
@@ -341,7 +372,7 @@ export class ConsensusOrderedCollection<T = any>
 			}
 			if (local) {
 				// Resolve the pending promise for this operation now that we have received an ack for it.
-				const resolve = localOpMetadata as PendingResolve<T>;
+				const resolve = messageContent.localOpMetadata as PendingResolve<T>;
 				resolve(value);
 			}
 		}

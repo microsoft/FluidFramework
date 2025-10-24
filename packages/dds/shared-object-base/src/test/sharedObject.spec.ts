@@ -17,6 +17,7 @@ import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitio
 import type {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
+	IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import { isSerializedHandle } from "@fluidframework/runtime-utils/internal";
 import {
@@ -51,6 +52,9 @@ class MySharedObject extends SharedObject {
 		local: boolean,
 		localOpMetadata: unknown,
 	): void {
+		throw new Error("Method not implemented.");
+	}
+	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
 		throw new Error("Method not implemented.");
 	}
 	protected onDisconnect(): void {
@@ -110,6 +114,9 @@ class MySharedObjectCore extends SharedObjectCore {
 		local: boolean,
 		localOpMetadata: unknown,
 	): void {
+		throw new Error("Method not implemented.");
+	}
+	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
 		throw new Error("Method not implemented.");
 	}
 	protected onDisconnect(): void {
