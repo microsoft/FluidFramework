@@ -25,6 +25,7 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject<IConsensus
     protected onDisconnect(): void;
     // (undocumented)
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
+    protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void;
     // (undocumented)
     protected release(acquireId: string): void;
     // (undocumented)
