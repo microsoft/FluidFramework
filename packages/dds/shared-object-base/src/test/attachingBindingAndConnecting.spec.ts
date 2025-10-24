@@ -21,6 +21,7 @@ import type {
 	IExperimentalIncrementalSummaryContext,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
+	IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
@@ -70,6 +71,10 @@ type OverridableType = Overridable<{
 		local: boolean,
 		localOpMetadata: unknown,
 	) => void;
+	processMessagesCore: (
+		this: SharedObject,
+		messagesCollection: IRuntimeMessageCollection,
+	) => void;
 	onDisconnect: (this: SharedObject) => void;
 	applyStashedOp: (this: SharedObject, content: unknown) => void;
 	didAttach: () => void;
@@ -83,6 +88,7 @@ function createTestSharedObject(overrides: OverridableType): {
 		protected summarizeCore = overrides?.summarizeCore?.bind(this);
 		protected loadCore = overrides?.loadCore?.bind(this);
 		protected processCore = overrides?.processCore?.bind(this);
+		protected processMessagesCore = overrides?.processMessagesCore?.bind(this);
 		protected onDisconnect = overrides?.onDisconnect?.bind(this);
 		protected applyStashedOp = overrides?.applyStashedOp?.bind(this);
 		protected didAttach =

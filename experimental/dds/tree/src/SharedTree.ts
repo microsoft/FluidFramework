@@ -15,7 +15,12 @@ import {
 	IChannelStorageService,
 } from '@fluidframework/datastore-definitions/internal';
 import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
-import { ISummaryTreeWithStats, ITelemetryContext } from '@fluidframework/runtime-definitions/internal';
+import {
+	ISummaryTreeWithStats,
+	ITelemetryContext,
+	type IRuntimeMessageCollection,
+	type ISequencedMessageEnvelope,
+} from '@fluidframework/runtime-definitions/internal';
 import {
 	IFluidSerializer,
 	ISharedObjectEvents,
@@ -998,11 +1003,24 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processCore}
 	 */
 	protected processCore(message: unknown, local: boolean): void {
-		const typedMessage = message as Omit<ISequencedDocumentMessage, 'contents'> & {
-			contents: SharedTreeOp_0_0_2 | SharedTreeOp;
-		};
-		this.cachingLogViewer.setMinimumSequenceNumber(typedMessage.minimumSequenceNumber);
-		const op = typedMessage.contents;
+		const typedMessage = message as ISequencedDocumentMessage;
+		this.processMessage(typedMessage, typedMessage.contents);
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
+	 */
+	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+		const { envelope, messagesContent } = messagesCollection;
+		for (const messageContent of messagesContent) {
+			this.processMessage(envelope, messageContent.contents);
+		}
+	}
+
+	private processMessage(messageEnvelope: ISequencedMessageEnvelope, contents: unknown): void {
+		const typedContents = contents as SharedTreeOp_0_0_2 | SharedTreeOp;
+		this.cachingLogViewer.setMinimumSequenceNumber(messageEnvelope.minimumSequenceNumber);
+		const op = typedContents;
 		if (op.version === undefined) {
 			// Back-compat: some legacy documents may contain trailing ops with an unstamped version; normalize them.
 			(op as { version: WriteFormat | undefined }).version = WriteFormat.v0_0_2;
@@ -1024,7 +1042,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 				if (op.version === WriteFormat.v0_1_1) {
 					this.internStringsFromEdit(edit);
 				}
-				this.processSequencedEdit(edit, typedMessage);
+				this.processSequencedEdit(edit, messageEnvelope);
 			}
 		} else if (type === SharedTreeOpType.Update) {
 			this.processVersionUpdate(op.version);
@@ -1071,7 +1089,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		}
 	}
 
-	private processSequencedEdit(edit: Edit<ChangeInternal>, message: ISequencedDocumentMessage): void {
+	private processSequencedEdit(edit: Edit<ChangeInternal>, messageEnvelope: ISequencedMessageEnvelope): void {
 		const { id: editId } = edit;
 		const wasLocalEdit = this.editLog.isLocalEdit(editId);
 
@@ -1086,9 +1104,9 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		}
 
 		if (wasLocalEdit) {
-			this.editLog.addSequencedEdit(edit, message);
+			this.editLog.addSequencedEdit(edit, messageEnvelope);
 		} else {
-			this.applyEditLocally(edit, message);
+			this.applyEditLocally(edit, messageEnvelope);
 		}
 	}
 
@@ -1311,10 +1329,10 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		}
 	}
 
-	private applyEditLocally(edit: Edit<ChangeInternal>, message: ISequencedDocumentMessage | undefined): void {
-		const isSequenced = message !== undefined;
+	private applyEditLocally(edit: Edit<ChangeInternal>, messageEnvelope: ISequencedMessageEnvelope | undefined): void {
+		const isSequenced = messageEnvelope !== undefined;
 		if (isSequenced) {
-			this.editLog.addSequencedEdit(edit, message);
+			this.editLog.addSequencedEdit(edit, messageEnvelope);
 		} else {
 			this.editLog.addLocalEdit(edit);
 		}

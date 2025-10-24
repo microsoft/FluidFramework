@@ -6,6 +6,7 @@
 export {
 	typeNameSymbol,
 	typeSchemaSymbol,
+	contentSchemaSymbol,
 	type WithType,
 	type TreeNodeSchema,
 	type AnnotatedAllowedType,
@@ -182,6 +183,8 @@ export {
 	type SchemaStaticsAlpha,
 	KeyEncodingOptions,
 	type TreeParsingOptions,
+	incrementalSummaryHint,
+	getShouldIncrementallySummarizeAllowedTypes,
 	type SchemaFactory_base,
 } from "./api/index.js";
 export type {

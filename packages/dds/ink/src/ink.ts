@@ -13,7 +13,12 @@ import {
 	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
-import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import type {
+	ISummaryTreeWithStats,
+	IRuntimeMessageCollection,
+	IRuntimeMessagesContent,
+	ISequencedMessageEnvelope,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	type IFluidSerializer,
 	SharedObject,
@@ -215,8 +220,43 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
 		local: boolean,
 		localOpMetadata: unknown,
 	): void {
-		if (message.type === MessageType.Operation && !local) {
-			const operation = message.contents as IInkOperation;
+		this.processMessage(
+			message,
+			{
+				contents: message.contents,
+				localOpMetadata,
+				clientSequenceNumber: message.clientSequenceNumber,
+			},
+			local,
+		);
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
+	 */
+	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+		const { envelope, local, messagesContent } = messagesCollection;
+		for (const messageContent of messagesContent) {
+			this.processMessage(envelope, messageContent, local);
+		}
+	}
+
+	/**
+	 * Process an ink operation message.
+	 *
+	 * @param messageEnvelope - The message envelope.
+	 * @param messageContent - The runtime message content containing the contents, i.e., payload and the
+	 * local op metadata. For local client messages, this is the metadata that was submitted with the message.
+	 * For messages from a remote client, this will be `undefined`.
+	 * @param local - Whether or not the message was sent by the local client.
+	 */
+	private processMessage(
+		messageEnvelope: ISequencedMessageEnvelope,
+		messageContent: IRuntimeMessagesContent,
+		local: boolean,
+	): void {
+		if (messageEnvelope.type === MessageType.Operation && !local) {
+			const operation = messageContent.contents as IInkOperation;
 			switch (operation.type) {
 				case "clear": {
 					this.executeClearOperation(operation);

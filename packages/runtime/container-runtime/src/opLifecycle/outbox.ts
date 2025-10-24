@@ -365,6 +365,16 @@ export class Outbox {
 	 * @param resubmitInfo - Key information when flushing a resubmitted batch. Undefined means this is not resubmit.
 	 */
 	public flush(resubmitInfo?: BatchResubmitInfo): void {
+		// We have nothing to flush if all batchManagers are empty, and we we're not needing to resubmit an empty batch placeholder
+		if (
+			this.idAllocationBatch.empty &&
+			this.blobAttachBatch.empty &&
+			this.mainBatch.empty &&
+			resubmitInfo?.batchId === undefined
+		) {
+			return;
+		}
+
 		assert(
 			!this.isContextReentrant(),
 			0xb7b /* Flushing must not happen while incoming changes are being processed */,
