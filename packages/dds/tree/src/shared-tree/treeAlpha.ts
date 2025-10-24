@@ -529,7 +529,9 @@ export interface TreeAlpha {
 	 * @remarks
 	 * If applicable, this will tag the given content with a {@link contentSchemaSymbol | special property} that indicates its intended schema.
 	 * The `content` will be interpreted as the given `schema` when later inserted into the tree.
+	 *
 	 * This does not validate that the content actually conforms to the given schema (such validation will be done at insert time).
+	 * If the content is not compatible with the tagged schema, an error will be thrown when the content is inserted.
 	 *
 	 * This is particularly useful when the content's schema cannot be inferred from its structure alone because it is compatible with multiple schemas.
 	 * @example
