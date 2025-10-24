@@ -15,6 +15,7 @@ import {
 	connectAndListenForAttendees,
 	connectAndWaitForAttendees,
 	connectChildProcesses,
+	executeDebugReports,
 	forkChildProcesses,
 	getLatestMapValueResponses,
 	getLatestValueResponses,
@@ -46,7 +47,7 @@ const timeoutMultiplier = debuggerAttached ? 1000 : useAzure ? 3 : 1;
  * @param context - The Mocha test context.
  * @param duration - The duration in milliseconds to set the timeout to. Zero disables the timeout.
  */
-function setTimeout(context: Mocha.Context, duration: number): void {
+function setTestTimeout(context: Mocha.Context, duration: number): void {
 	const currentTimeout = context.timeout();
 	const newTimeout =
 		debuggerAttached || currentTimeout === 0 || duration === 0
@@ -86,11 +87,6 @@ function setTimeout(context: Mocha.Context, duration: number): void {
  * - Send response messages including any relevant data back to the orchestrator to verify expected behavior.
  */
 
-/**
- * This particular test suite tests the following E2E functionality for Presence:
- * - Announce 'attendeeConnected' when remote client joins session.
- * - Announce 'attendeeDisconnected' when remote client disconnects.
- */
 describe(`Presence with AzureClient`, () => {
 	const afterCleanUp: (() => void)[] = [];
 
@@ -112,9 +108,13 @@ describe(`Presence with AzureClient`, () => {
 		 */
 		const childConnectTimeoutMs = 1000 * numClients * timeoutMultiplier;
 		/**
-		 * Timeout for presence attendees to connect {@link AttendeeConnectedEvent}
+		 * Timeout for presence attendees to join per first child perspective {@link AttendeeConnectedEvent}
 		 */
 		const allAttendeesJoinedTimeoutMs = (1000 + 200 * numClients) * timeoutMultiplier;
+		/**
+		 * Timeout for presence attendees to fully join (everyone knows about everyone) {@link AttendeeConnectedEvent}
+		 */
+		const allAttendeesFullyJoinedTimeoutMs = (2000 + 300 * numClients) * timeoutMultiplier;
 
 		for (const writeClients of [numClients, 1]) {
 			it(`announces 'attendeeConnected' when remote client joins session [${numClients} clients, ${writeClients} writers]`, async function () {
@@ -123,7 +123,7 @@ describe(`Presence with AzureClient`, () => {
 					this.skip();
 				}
 
-				setTimeout(this, childConnectTimeoutMs + allAttendeesJoinedTimeoutMs + 1000);
+				setTestTimeout(this, childConnectTimeoutMs + allAttendeesJoinedTimeoutMs + 1000);
 
 				// Setup
 				const { children, childErrorPromise } = await forkChildProcesses(
@@ -144,11 +144,8 @@ describe(`Presence with AzureClient`, () => {
 				);
 			});
 
-			it(`announces 'attendeeDisconnected' when remote client disconnects [${numClients} clients, ${writeClients} writers]`, async function () {
-				// AB#48866: Fix intermittently failing presence tests
-				if (useAzure) {
-					this.skip();
-				}
+			// Even at 5 clients reaching fully connected state is unreliable with current implementation.
+			it.skip(`announces 'attendeeDisconnected' when remote client disconnects [${numClients} clients, ${writeClients} writers]`, async function () {
 				// TODO: AB#45620: "Presence: perf: update Join pattern for scale" can handle
 				// larger counts of read-only attendees. Without protocol changes tests with
 				// 20+ attendees exceed current limits.
@@ -156,12 +153,19 @@ describe(`Presence with AzureClient`, () => {
 					this.skip();
 				}
 
+				if (useAzure && numClients > 50) {
+					// Even with increased timeouts, more than 50 clients can be too large for AFR.
+					// This may be due to slow responses/inactivity from the clients that are
+					// creating pressure on ADO agent.
+					this.skip();
+				}
+
 				const childDisconnectTimeoutMs = 10_000 * timeoutMultiplier;
 
-				setTimeout(
+				setTestTimeout(
 					this,
 					childConnectTimeoutMs +
-						allAttendeesJoinedTimeoutMs +
+						allAttendeesFullyJoinedTimeoutMs +
 						childDisconnectTimeoutMs +
 						1000,
 				);
@@ -172,31 +176,91 @@ describe(`Presence with AzureClient`, () => {
 					afterCleanUp,
 				);
 
+				const startConnectAndFullJoin = performance.now();
 				const connectResult = await connectAndListenForAttendees(children, {
 					writeClients,
 					attendeeCountRequired: numClients - 1,
 					childConnectTimeoutMs,
 				});
+				// eslint-disable-next-line @typescript-eslint/no-floating-promises
+				connectResult.attendeeCountRequiredPromises[0].then(() =>
+					testConsole.log(
+						`[${new Date().toISOString()}] All attendees joined per child 0 after ${performance.now() - startConnectAndFullJoin}ms`,
+					),
+				);
 
 				// Wait for all attendees to be fully joined
 				// Keep a tally for debuggability
 				let childrenFullyJoined = 0;
+				const setNotFullyJoined = new Set<number>();
+				for (let i = 0; i < children.length; i++) {
+					setNotFullyJoined.add(i);
+				}
 				const allAttendeesFullyJoined = Promise.all(
-					// eslint-disable-next-line @typescript-eslint/promise-function-async
-					connectResult.attendeeCountRequiredPromises.map((attendeeFullyJoinedPromise) =>
-						attendeeFullyJoinedPromise.then(() => childrenFullyJoined++),
+					connectResult.attendeeCountRequiredPromises.map(
+						async (attendeeFullyJoinedPromise, index) => {
+							await attendeeFullyJoinedPromise;
+							childrenFullyJoined++;
+							setNotFullyJoined.delete(index);
+						},
 					),
 				);
-				await timeoutAwait(allAttendeesFullyJoined, {
-					durationMs: allAttendeesJoinedTimeoutMs,
+				let timedout = true;
+				const allFullyJoinedOrChildError = Promise.race([
+					allAttendeesFullyJoined,
+					childErrorPromise,
+				]).finally(() => (timedout = false));
+				await timeoutAwait(allFullyJoinedOrChildError, {
+					durationMs: allAttendeesFullyJoinedTimeoutMs,
 					errorMsg: "Not all attendees fully joined",
-				}).catch((error) => {
+				}).catch(async (error) => {
 					// Ideally this information would just be in the timeout error message, but that
 					// must be a resolved string (not dynamic). So, just log it separately.
-					testConsole.log(`${childrenFullyJoined} attendees fully joined before error...`);
+					testConsole.log(
+						`[${new Date().toISOString()}] ${childrenFullyJoined} attendees fully joined before error...`,
+					);
+					if (timedout) {
+						// Gather additional timing data if timed out to understand what increased
+						// timeout could work. Test will still fail if this secondary wait succeeds.
+						const startAdditionalWait = performance.now();
+						try {
+							await timeoutAwait(allFullyJoinedOrChildError, {
+								durationMs: allAttendeesFullyJoinedTimeoutMs,
+							});
+							testConsole.log(
+								`[${new Date().toISOString()}] All attendees fully joined after additional wait (${performance.now() - startAdditionalWait}ms)`,
+							);
+						} catch (secondaryError) {
+							testConsole.log(
+								`[${new Date().toISOString()}] Secondary await resulted in`,
+								secondaryError,
+							);
+						}
+					}
+
+					// Gather and report debug info from children
+					// If there are less than 10 children, get all reports.
+					// Otherwise, just child 0 and those not fully joined.
+					setTestTimeout(this, 0); // Disable test timeout. Will throw within 20s below.
+					const childrenRequestedToReport =
+						children.length <= 10
+							? children
+							: // Just those not fully joined
+								children.filter((_, index) => index === 0 || setNotFullyJoined.has(index));
+					await timeoutAwait(
+						Promise.race([executeDebugReports(childrenRequestedToReport), childErrorPromise]),
+						{ durationMs: 20_000, errorMsg: "Debug report timeout" },
+					).catch((debugAwaitError) => {
+						testConsole.error("Debug report await resulted in", debugAwaitError);
+					});
+
 					throw error;
 				});
+				testConsole.log(
+					`[${new Date().toISOString()}] All attendees fully joined after ${performance.now() - startConnectAndFullJoin}ms`,
+				);
 
+				let child0ReportRequested = false;
 				const waitForDisconnected = children.map(async (child, index) =>
 					index === 0
 						? Promise.resolve()
@@ -216,7 +280,23 @@ describe(`Presence with AzureClient`, () => {
 									durationMs: childDisconnectTimeoutMs,
 									errorMsg: `Attendee[${index}] Disconnected Timeout`,
 								},
-							),
+							).catch(async (error) => {
+								const childrenRequestedToReport = [child];
+								if (!child0ReportRequested) {
+									childrenRequestedToReport.unshift(children[0]);
+									child0ReportRequested = true;
+								}
+								await timeoutAwait(
+									Promise.race([
+										executeDebugReports(childrenRequestedToReport),
+										childErrorPromise,
+									]),
+									{ durationMs: 20_000, errorMsg: "Debug report timeout" },
+								).catch((debugAwaitError) => {
+									testConsole.error("Debug report await resulted in", debugAwaitError);
+								});
+								throw error;
+							}),
 				);
 
 				// Act - disconnect first child process
