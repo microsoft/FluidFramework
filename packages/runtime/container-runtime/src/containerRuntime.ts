@@ -3529,7 +3529,7 @@ export class ContainerRuntime
 	 * Enter Staging Mode, such that ops submitted to the ContainerRuntime will not be sent to the ordering service.
 	 * To exit Staging Mode, call either discardChanges or commitChanges on the Stage Controls returned from this method.
 	 *
-	 * @returns StageControlsInternal - Controls for exiting Staging Mode.
+	 * @returns Controls for exiting Staging Mode.
 	 */
 	public enterStagingMode = (): StageControlsInternal => {
 		if (this.stageControls !== undefined) {
