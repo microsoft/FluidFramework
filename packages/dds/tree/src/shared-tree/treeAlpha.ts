@@ -85,6 +85,7 @@ import {
 	type Observer,
 	withObservation,
 } from "../feature-libraries/index.js";
+import type { TreeBranchAlpha } from "../simple-tree/index.js";
 import { independentInitializedView, type ViewContent } from "./independentView.js";
 import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
 import { isFluidHandle } from "@fluidframework/runtime-utils";
@@ -230,7 +231,7 @@ export interface TreeAlpha {
 	 * This does not fork a new branch, but rather retrieves the _existing_ branch for the node.
 	 * To create a new branch, use e.g. {@link TreeBranch.fork | `myBranch.fork()`}.
 	 */
-	branch(node: TreeNode): TreeBranch | undefined;
+	branch(node: TreeNode): TreeBranchAlpha | undefined;
 
 	/**
 	 * Construct tree content that is compatible with the field defined by the provided `schema`.
@@ -755,7 +756,7 @@ export const TreeAlpha: TreeAlpha = {
 		return result;
 	},
 
-	branch(node: TreeNode): TreeBranch | undefined {
+	branch(node: TreeNode): TreeBranchAlpha | undefined {
 		const kernel = getKernel(node);
 		if (!kernel.isHydrated()) {
 			return undefined;

@@ -122,6 +122,6 @@ export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
 export type SynchronousEditor = (context: Record<string, unknown>, code: string) => void;
 
 // @alpha
-export type TreeView<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema> = Pick<TreeViewAlpha<TRoot>, "root" | "fork" | "merge" | "rebaseOnto" | "schema" | "events"> & TreeBranch;
+export type TreeView<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema> = Pick<TreeViewAlpha<TRoot>, "root" | "fork" | "merge" | "rebaseOnto" | "schema" | "events"> & TreeBranchAlpha;
 
 ```
