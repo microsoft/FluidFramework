@@ -186,11 +186,43 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		this.targetedSignalSupport = this.runtime.supportedFeatures.has("submit_signals_v2");
 	}
 
-	public joinSession(clientId: ClientConnectionId): void {
+	private getInteractiveMembersExcludingSelf(selfClientId: ClientConnectionId): {
+		all: Set<ClientConnectionId>;
+		writers: Set<ClientConnectionId>;
+	} {
+		const audience = this.runtime.getAudience();
+		const members = audience.getMembers();
+		const all = new Set<ClientConnectionId>();
+		const writers = new Set<ClientConnectionId>();
+		// Remove self (if present)
+		members.delete(selfClientId);
+		// Gather interactive client IDs
+		for (const [id, client] of members) {
+			if (client.details.capabilities.interactive) {
+				all.add(id);
+				if (client.mode === "write") {
+					writers.add(id);
+				}
+			}
+		}
+		return {
+			all,
+			writers,
+		};
+	}
+
+	public joinSession(selfClientId: ClientConnectionId): void {
+		const interactiveMembersExcludingSelf =
+			this.getInteractiveMembersExcludingSelf(selfClientId);
+
 		// Broadcast join message to all clients
-		const updateProviders = [...this.runtime.getQuorum().getMembers().keys()].filter(
-			(quorumClientId) => quorumClientId !== clientId,
-		);
+		// Select primary update providers
+		// Use write members if any, then fallback to read-only members.
+		const updateProviders = [
+			...(interactiveMembersExcludingSelf.writers.size > 0
+				? interactiveMembersExcludingSelf.writers
+				: interactiveMembersExcludingSelf.all),
+		];
 		// Limit to three providers to prevent flooding the network.
 		// If none respond, others present will (should) after a delay.
 		if (updateProviders.length > 3) {
@@ -330,8 +362,8 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		assert(clientConnectionId !== undefined, 0xa59 /* Client connected without clientId */);
 		const currentClientToSessionValueState =
 			// When connected, `clientToSessionId` must always have current connection entry.
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			this.datastore["system:presence"].clientToSessionId[clientConnectionId]!;
+			this.datastore["system:presence"].clientToSessionId[clientConnectionId];
+		assert(currentClientToSessionValueState !== undefined, "Client connection update missing");
 
 		const newMessage = {
 			sendTimestamp: Date.now(),

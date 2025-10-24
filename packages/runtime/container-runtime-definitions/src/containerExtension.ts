@@ -282,7 +282,7 @@ export interface ExtensionHost<TRuntimeProperties extends ExtensionRuntimeProper
 	 * @remarks
 	 * Status changes are signaled through :
 	 * - {@link ExtensionHostEvents.disconnected}: Transitioning to Disconnected state
-	 * - {@link ExtensionHostEvents.joined}: Transition to Connected state (either for reading or writing)
+	 * - {@link ExtensionHostEvents.joined}: Transition to CatchingUp or Connected state (either for reading or writing)
 	 * - {@link ExtensionHostEvents.operabilityChanged}: When operability has changed (e.g., write to read)
 	 */
 	readonly getJoinedStatus: () => JoinedStatus;
@@ -313,6 +313,13 @@ export interface ExtensionHost<TRuntimeProperties extends ExtensionRuntimeProper
 	 */
 	getQuorum: () => IQuorumClients;
 
+	/**
+	 * The collection of all clients as enumerated by the service.
+	 *
+	 * @remarks This may include/exclude those found within the quorum.
+	 * It produces results faster than {@link ExtensionHost.getQuorum}, but
+	 * will be inaccurate if any signals are lost.
+	 */
 	getAudience: () => IAudience;
 }
 
