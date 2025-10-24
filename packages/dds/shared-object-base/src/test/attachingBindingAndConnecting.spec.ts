@@ -86,11 +86,11 @@ function createTestSharedObject(overrides: OverridableType): {
 } {
 	class TestSharedObject extends SharedObject {
 		protected summarizeCore = overrides?.summarizeCore?.bind(this);
-		protected loadCore = overrides?.loadCore?.bind(this) ?? (async () => {});
-		protected processCore = overrides?.processCore?.bind(this) ?? (() => {});
-		protected processMessagesCore = overrides?.processMessagesCore?.bind(this) ?? (() => {});
-		protected onDisconnect = overrides?.onDisconnect?.bind(this) ?? (() => {});
-		protected applyStashedOp = overrides?.applyStashedOp?.bind(this) ?? (() => {});
+		protected loadCore = overrides?.loadCore?.bind(this);
+		protected processCore = overrides?.processCore?.bind(this);
+		protected processMessagesCore = overrides?.processMessagesCore?.bind(this);
+		protected onDisconnect = overrides?.onDisconnect?.bind(this);
+		protected applyStashedOp = overrides?.applyStashedOp?.bind(this);
 		protected didAttach =
 			overrides.didAttach?.bind(this) ?? (() => assert.fail("didAttach not set"));
 	}

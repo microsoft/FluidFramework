@@ -736,12 +736,13 @@ export class SharedPropertyTree extends SharedObject {
 
 				// eslint-disable-next-line @typescript-eslint/prefer-for-of
 				for (let i = 0; i < missingDeltas.length; i++) {
-					if (missingDeltas[i].sequenceNumber < commitMetadata.sequenceNumber) {
+					const missingDelta = missingDeltas[i];
+					if (missingDelta.sequenceNumber < commitMetadata.sequenceNumber) {
 						// TODO: Don't spy on the DeltaManager's private internals.
 						// This is trying to mimic what DeltaManager does in processInboundMessage, but there's no guarantee that
 						// private implementation won't change.
 						const remoteChange: IPropertyTreeMessage = JSON.parse(
-							missingDeltas[i].contents as string,
+							missingDelta.contents as string,
 						).contents.contents.content.contents;
 						const { changeSet } = (
 							await axios.get(
@@ -760,7 +761,7 @@ export class SharedPropertyTree extends SharedObject {
 							this.addRemoteChange(remoteChange);
 						}
 					} else {
-						this.processMessage(missingDeltas[i], missingDeltas[i].contents);
+						this.processMessage(missingDelta, missingDelta.contents);
 					}
 				}
 
