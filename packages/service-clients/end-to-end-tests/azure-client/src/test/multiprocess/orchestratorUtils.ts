@@ -109,10 +109,10 @@ export async function forkChildProcesses(
 }
 
 export async function executeDebugReports(
-	childrenNotFullyJoined: ChildProcess[],
+	childrenRequestedToReport: ChildProcess[],
 ): Promise<void> {
 	const debugReportPromises: Promise<EventEntry[]>[] = [];
-	for (const child of childrenNotFullyJoined) {
+	for (const child of childrenRequestedToReport) {
 		const debugReportPromise = new Promise<EventEntry[]>((resolve) => {
 			const handler = (msg: MessageFromChild): void => {
 				if (msg.event === "debugReportComplete") {

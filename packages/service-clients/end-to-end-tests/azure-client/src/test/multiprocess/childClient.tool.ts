@@ -473,7 +473,7 @@ class MessageHandler {
 		// Send existing attendees excluding self to parent/orchestrator
 		const self = presence.attendees.getMyself();
 		for (const attendee of presence.attendees.getAttendees()) {
-			if (attendee !== self) {
+			if (attendee !== self && attendee.getConnectionStatus() === "Connected") {
 				this.sendAttendeeConnected(attendee);
 			}
 		}
