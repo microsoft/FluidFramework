@@ -213,3 +213,52 @@ export function protocolHandlerShouldProcessSignal(
 	}
 	return false;
 }
+
+export function wrapProtocolHandlerBuilder(
+	builder: ProtocolHandlerBuilder,
+	signalAudience: IAudienceOwner,
+): InternalProtocolHandlerBuilder {
+	return (
+		attributes: IDocumentAttributes,
+		snapshot: IQuorumSnapshot,
+		sendProposal: (key: string, value: unknown) => number,
+	): ProtocolHandlerInternal => {
+		const baseHandler = builder(attributes, snapshot, sendProposal);
+		return {
+			quorum: baseHandler.quorum,
+			attributes: baseHandler.attributes,
+			setConnectionState: baseHandler.setConnectionState.bind(baseHandler),
+			snapshot: baseHandler.snapshot.bind(baseHandler),
+			close: baseHandler.close.bind(baseHandler),
+			processMessage: baseHandler.processMessage.bind(baseHandler),
+			getProtocolState: baseHandler.getProtocolState.bind(baseHandler),
+			audience: baseHandler.audience,
+			processSignal: (message: AudienceSignal) => {
+				const innerContent = message.content;
+				switch (innerContent.type) {
+					case SignalType.Clear: {
+						const members = signalAudience.getMembers();
+						for (const clientId of members.keys()) {
+							signalAudience.removeMember(clientId);
+						}
+						break;
+					}
+					case SignalType.ClientJoin: {
+						const newClient = innerContent.content;
+						signalAudience.addMember(newClient.clientId, newClient.client);
+						break;
+					}
+					case SignalType.ClientLeave: {
+						const leftClientId = innerContent.content;
+						signalAudience.removeMember(leftClientId);
+						break;
+					}
+					default: {
+						break;
+					}
+				}
+				baseHandler.processSignal(message);
+			},
+		};
+	};
+}
