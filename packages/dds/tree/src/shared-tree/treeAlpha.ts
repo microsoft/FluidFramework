@@ -58,7 +58,7 @@ import {
 	importConcise,
 	exportConcise,
 	borrowCursorFromTreeNodeOrValue,
-	schemaSymbol,
+	contentSchemaSymbol,
 	type TreeNodeSchema,
 } from "../simple-tree/index.js";
 import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
@@ -87,6 +87,7 @@ import {
 } from "../feature-libraries/index.js";
 import { independentInitializedView, type ViewContent } from "./independentView.js";
 import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
+import { isFluidHandle } from "@fluidframework/runtime-utils";
 
 const identifier: TreeIdentifierUtils = (node: TreeNode): string | undefined => {
 	const nodeIdentifier = getIdentifierFromNode(node, "uncompressed");
@@ -526,8 +527,10 @@ export interface TreeAlpha {
 	 * Ensures that the provided content will be interpreted as the given schema when inserting into the tree.
 	 * @returns `content`, for convenience.
 	 * @remarks
-	 * If applicable, this will tag the given content with a {@link schemaSymbol | special property} that indicates its intended schema.
+	 * If applicable, this will tag the given content with a {@link contentSchemaSymbol | special property} that indicates its intended schema.
 	 * The `content` will be interpreted as the given `schema` when later inserted into the tree.
+	 * This does not validate that the content actually conforms to the given schema (such validation will be done at insert time).
+	 *
 	 * This is particularly useful when the content's schema cannot be inferred from its structure alone because it is compatible with multiple schemas.
 	 * @example
 	 * ```typescript
@@ -542,7 +545,7 @@ export interface TreeAlpha {
 	 * view.root.pet = pet; // No error - it's a Dog.
 	 * ```
 	 */
-	ensureSchema<TSchema extends TreeNodeSchema, TContent extends InsertableField<TSchema>>(
+	tagContentSchema<TSchema extends TreeNodeSchema, TContent extends InsertableField<TSchema>>(
 		schema: TSchema,
 		content: TContent,
 	): TContent;
@@ -1031,12 +1034,12 @@ export const TreeAlpha: TreeAlpha = {
 		return result;
 	},
 
-	ensureSchema<TSchema extends TreeNodeSchema, TNode extends InsertableField<TSchema>>(
+	tagContentSchema<TSchema extends TreeNodeSchema, TNode extends InsertableField<TSchema>>(
 		schema: TSchema,
 		node: TNode,
 	): TNode {
-		if (typeof node === "object" && node !== null) {
-			Reflect.defineProperty(node, schemaSymbol, {
+		if (typeof node === "object" && node !== null && !isFluidHandle(node)) {
+			Reflect.defineProperty(node, contentSchemaSymbol, {
 				configurable: false,
 				enumerable: false,
 				writable: true,

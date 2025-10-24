@@ -44,7 +44,7 @@ export const typeSchemaSymbol: unique symbol = Symbol("TreeNode Schema");
 
 /**
  * The intended type of insertable content that is to become a {@link TreeNode}.
- * @remarks **Note:** Whenever possible, use the type-safe {@link (TreeAlpha:interface).ensureSchema} function rather than manually employing this symbol.
+ * @remarks Use the type-safe {@link (TreeAlpha:interface).tagContentSchema} function to tag insertable content with this symbol.
  *
  * If a property with this symbol key is present on an object that is inserted into the tree,
  * the tree will use the schema identifier specified by the value of this property when creating the node.
@@ -57,11 +57,11 @@ export const typeSchemaSymbol: unique symbol = Symbol("TreeNode Schema");
  * class Root extends sf.object("Root", { pet: [Dog, Cat] }) {}
  * // ...
  * view.root.pet = { name: "Max" }; // Error: ambiguous schema - is it a Dog or a Cat?
- * view.root.pet = { name: "Max", [schemaSymbol]: "example.Dog" }; // No error - it's a Dog.
+ * view.root.pet = { name: "Max", [contentSchemaSymbol]: "example.Dog" }; // No error - it's a Dog.
  * ```
  * @alpha
  */
-export const schemaSymbol: unique symbol = Symbol("SharedTree Schema");
+export const contentSchemaSymbol: unique symbol = Symbol("SharedTree Schema");
 
 /**
  * Adds a type symbol to a type for stronger typing.

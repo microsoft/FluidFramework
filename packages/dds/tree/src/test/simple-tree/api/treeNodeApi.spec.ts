@@ -3545,7 +3545,7 @@ describe("treeNodeApi", () => {
 		});
 	});
 
-	describe("ensureType", () => {
+	describe("tagContentSchema", () => {
 		const sf = new SchemaFactory("test");
 		class Son extends sf.object("Son", { value: sf.number }) {}
 		class Daughter extends sf.object("Daughter", { value: sf.number }) {}
@@ -3554,19 +3554,21 @@ describe("treeNodeApi", () => {
 		}) {}
 		it("returns the same value that was passed in", () => {
 			const child = { value: 3 };
-			const son = TreeAlpha.ensureSchema(Son, child);
+			const son = TreeAlpha.tagContentSchema(Son, child);
 			assert.equal(son, child);
 		});
 
 		it("allows leaf types", () => {
 			const nullValue = null;
-			assert.equal(TreeAlpha.ensureSchema(schema.null, nullValue), nullValue);
+			assert.equal(TreeAlpha.tagContentSchema(schema.null, nullValue), nullValue);
 			const booleanValue = true;
-			assert.equal(TreeAlpha.ensureSchema(schema.boolean, booleanValue), booleanValue);
+			assert.equal(TreeAlpha.tagContentSchema(schema.boolean, booleanValue), booleanValue);
 			const numberValue = 3;
-			assert.equal(TreeAlpha.ensureSchema(schema.number, numberValue), numberValue);
+			assert.equal(TreeAlpha.tagContentSchema(schema.number, numberValue), numberValue);
 			const stringValue = "hello";
-			assert.equal(TreeAlpha.ensureSchema(schema.string, stringValue), stringValue);
+			assert.equal(TreeAlpha.tagContentSchema(schema.string, stringValue), stringValue);
+			const handleValue = new MockHandle("test");
+			assert.equal(TreeAlpha.tagContentSchema(schema.handle, handleValue), handleValue);
 		});
 
 		it("tags an object that is otherwise ambiguous", () => {
@@ -3579,7 +3581,7 @@ describe("treeNodeApi", () => {
 				validateUsageError(/compatible with more than one type/),
 			);
 			// If we explicitly tag it as a Daughter, it is thereafter interpreted as such.
-			const daughter = TreeAlpha.ensureSchema(Daughter, child);
+			const daughter = TreeAlpha.tagContentSchema(Daughter, child);
 			const parent = hydrate(Parent, { child: daughter });
 			assert(Tree.is(parent.child, Daughter));
 		});
@@ -3597,7 +3599,7 @@ describe("treeNodeApi", () => {
 				},
 				validateUsageError(/compatible with more than one type/),
 			);
-			const daughters = TreeAlpha.ensureSchema(Daughters, children);
+			const daughters = TreeAlpha.tagContentSchema(Daughters, children);
 			const parent = hydrate(ArrayParent, { children: daughters });
 			assert(Tree.is(parent.children, Daughters));
 		});
@@ -3619,17 +3621,27 @@ describe("treeNodeApi", () => {
 				},
 				validateUsageError(/compatible with more than one type/),
 			);
-			const daughterMap = TreeAlpha.ensureSchema(DaughterMap, children);
+			const daughterMap = TreeAlpha.tagContentSchema(DaughterMap, children);
 			const parent = hydrate(MapParent, { children: daughterMap });
 			assert(Tree.is(parent.children, DaughterMap));
 		});
 
 		it("can re-tag an object that has already been tagged", () => {
 			const child = { value: 3 };
-			const daughter = TreeAlpha.ensureSchema(Daughter, child);
-			const son = TreeAlpha.ensureSchema(Son, daughter);
+			const daughter = TreeAlpha.tagContentSchema(Daughter, child);
+			const son = TreeAlpha.tagContentSchema(Son, daughter);
 			const parent = hydrate(Parent, { child: son });
 			assert(Tree.is(parent.child, Son));
+		});
+
+		it("does not allow content to be interpreted as other types", () => {
+			const child = { value: 3 };
+			hydrate(Son, child);
+			const daughter = TreeAlpha.tagContentSchema(Daughter, child);
+			assert.throws(
+				() => hydrate(Son, daughter),
+				validateUsageError(/incompatible with all of the types/),
+			);
 		});
 
 		it("can be used to disambiguate deep trees", () => {
@@ -3654,22 +3666,22 @@ describe("treeNodeApi", () => {
 			assert.throws(() => {
 				hydrate(GrandParent, {
 					parent: {
-						child: TreeAlpha.ensureSchema(Son, { value: 3 }),
+						child: TreeAlpha.tagContentSchema(Son, { value: 3 }),
 					},
 				});
 			});
 			// Ambiguous parent, but tagged child
 			assert.throws(() => {
 				hydrate(GrandParent, {
-					parent: TreeAlpha.ensureSchema(Father, {
+					parent: TreeAlpha.tagContentSchema(Father, {
 						child: { value: 3 },
 					}),
 				});
 			});
 			// Both parent and child tagged
 			const grandParent = hydrate(GrandParent, {
-				parent: TreeAlpha.ensureSchema(Father, {
-					child: TreeAlpha.ensureSchema(Son, { value: 3 }),
+				parent: TreeAlpha.tagContentSchema(Father, {
+					child: TreeAlpha.tagContentSchema(Son, { value: 3 }),
 				}),
 			});
 			assert.ok(Tree.is(grandParent.parent, Father));

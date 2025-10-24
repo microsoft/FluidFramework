@@ -43,7 +43,7 @@ import {
 } from "../../feature-libraries/index.js";
 import { validateUsageError } from "../utils.js";
 // eslint-disable-next-line import/no-internal-modules
-import { schemaSymbol, UnhydratedFlexTreeNode } from "../../simple-tree/core/index.js";
+import { contentSchemaSymbol, UnhydratedFlexTreeNode } from "../../simple-tree/core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { getUnhydratedContext } from "../../simple-tree/createContext.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -1469,16 +1469,16 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 				value: f.string,
 			}) {}
 			// Type symbol specified when there is only one valid option
-			const content = { [schemaSymbol]: "test.A", value: "hello" };
+			const content = { [contentSchemaSymbol]: "test.A", value: "hello" };
 			assert.deepEqual(getPossibleTypes(new Set([A]), content), [A]);
 
 			// Type symbol specified when there are multiple valid options
-			const ambiguousContent = { [schemaSymbol]: "test.B", value: "hello" };
+			const ambiguousContent = { [contentSchemaSymbol]: "test.B", value: "hello" };
 			// Only B, even though A is also valid based on properties
 			assert.deepEqual(getPossibleTypes(new Set([A, B]), ambiguousContent), [B]);
 
 			// Type symbol specified that does not match any options
-			const invalidContent = { [schemaSymbol]: "test.C", value: "hello" };
+			const invalidContent = { [contentSchemaSymbol]: "test.C", value: "hello" };
 			// Should fall back to A, as if no type symbol was provided
 			assert.deepEqual(getPossibleTypes(new Set([A]), invalidContent), [A]);
 		});

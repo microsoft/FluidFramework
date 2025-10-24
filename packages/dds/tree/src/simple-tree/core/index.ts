@@ -20,7 +20,7 @@ export {
 	type WithType,
 	typeNameSymbol,
 	typeSchemaSymbol,
-	schemaSymbol,
+	contentSchemaSymbol,
 } from "./withType.js";
 export {
 	type Unhydrated,
