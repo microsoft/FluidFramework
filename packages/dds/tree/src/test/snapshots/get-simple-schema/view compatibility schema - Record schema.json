@@ -1,0 +1,21 @@
+{
+  "root": {
+    "kind": 1,
+    "allowedTypesIdentifiers": [
+      "test.record"
+    ],
+    "hasStagedSchemaUpgrades": false
+  },
+  "definitions": {
+    "com.fluidframework.leaf.string": {
+      "kind": 3,
+      "leafKind": 1
+    },
+    "test.record": {
+      "kind": 4,
+      "allowedTypesIdentifiers": [
+        "com.fluidframework.leaf.string"
+      ]
+    }
+  }
+}

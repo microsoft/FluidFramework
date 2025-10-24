@@ -274,4 +274,7 @@ export {
 	nullSchema,
 } from "./leafNodeSchema.js";
 export type { LeafSchema } from "./leafNodeSchema.js";
-export { toViewCompatibilityTreeSchema } from "./api/index.js";
+export {
+	toViewCompatibilityTreeSchema,
+	toSerializableCompatibilitySchema,
+} from "./api/index.js";

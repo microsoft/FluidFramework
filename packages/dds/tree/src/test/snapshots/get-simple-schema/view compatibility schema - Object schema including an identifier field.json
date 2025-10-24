@@ -1,0 +1,29 @@
+{
+  "root": {
+    "kind": 1,
+    "allowedTypesIdentifiers": [
+      "test.object"
+    ],
+    "hasStagedSchemaUpgrades": false
+  },
+  "definitions": {
+    "com.fluidframework.leaf.string": {
+      "kind": 3,
+      "leafKind": 1
+    },
+    "test.object": {
+      "kind": 2,
+      "fields": {
+        "id": {
+          "kind": 2,
+          "allowedTypesIdentifiers": [
+            "com.fluidframework.leaf.string"
+          ],
+          "hasStagedSchemaUpgrades": false,
+          "storedKey": "id"
+        }
+      },
+      "allowUnknownOptionalFields": false
+    }
+  }
+}

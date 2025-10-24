@@ -10,9 +10,9 @@ import {
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	stringSchema,
+	toSerializableCompatibilitySchema,
 	toViewCompatibilityTreeSchema,
 	TreeViewConfigurationAlpha,
-	type ImplicitFieldSchema,
 	type SimpleLeafNodeSchema,
 	type SimpleNodeSchema,
 	type SimpleObjectFieldSchema,
@@ -23,7 +23,6 @@ import { ValueSchema } from "../../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { toSimpleTreeSchema } from "../../../simple-tree/api/viewSchemaToSimpleSchema.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
-import type { JsonCompatible } from "../../../util/index.js";
 
 const simpleString: SimpleLeafNodeSchema = {
 	leafKind: ValueSchema.String,
@@ -38,17 +37,6 @@ const simpleNumber: SimpleLeafNodeSchema = {
 	metadata: {},
 	persistedMetadata: undefined,
 };
-
-function toSerializableCompatibilitySchema<TSchema extends ImplicitFieldSchema>(
-	treeView: TreeViewConfigurationAlpha<TSchema>,
-): JsonCompatible {
-	const serializableSchema = toViewCompatibilityTreeSchema(
-		treeView,
-		// Copying is required for JSON serialization to avoid circular references in metadata/etc.
-		true,
-	) as unknown as JsonCompatible;
-	return serializableSchema;
-}
 
 describe("getSimpleSchema", () => {
 	useSnapshotDirectory("get-simple-schema");
@@ -122,7 +110,7 @@ describe("getSimpleSchema", () => {
 			assert.deepEqual(actual, expected);
 		});
 
-		it("toViewCompatibilityTreeSchema with JSON serialization - Field Schema", () => {
+		it("view compatibility schema - Field Schema", () => {
 			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
 			const actual = toSerializableCompatibilitySchema(treeView);
 			takeJsonSnapshot(actual);
@@ -166,7 +154,7 @@ describe("getSimpleSchema", () => {
 			assert.deepEqual(actual, expected);
 		});
 
-		it("toViewCompatibilityTreeSchema with JSON serialization - Leaf node", () => {
+		it("view compatibility schema - Leaf node", () => {
 			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
 			const actual = toSerializableCompatibilitySchema(treeView);
 			takeJsonSnapshot(actual);
@@ -222,7 +210,7 @@ describe("getSimpleSchema", () => {
 			assert.deepEqual(actual, expected);
 		});
 
-		it("toViewCompatibilityTreeSchema with JSON serialization - Union root", () => {
+		it("view compatibility schema - Union root", () => {
 			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
 			const actual = toSerializableCompatibilitySchema(treeView);
 			takeJsonSnapshot(actual);
@@ -289,7 +277,7 @@ describe("getSimpleSchema", () => {
 			assert.deepEqual(actual, expected);
 		});
 
-		it("toViewCompatibilityTreeSchema with JSON serialization - Array schema", () => {
+		it("view compatibility schema - Array schema", () => {
 			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
 			const actual = toSerializableCompatibilitySchema(treeView);
 			takeJsonSnapshot(actual);
@@ -356,7 +344,7 @@ describe("getSimpleSchema", () => {
 			assert.deepEqual(actual, expected);
 		});
 
-		it("toViewCompatibilityTreeSchema with JSON serialization - Map schema", () => {
+		it("view compatibility schema - Map schema", () => {
 			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
 			const actual = toSerializableCompatibilitySchema(treeView);
 			takeJsonSnapshot(actual);
@@ -423,7 +411,7 @@ describe("getSimpleSchema", () => {
 			assert.deepEqual(actual, expected);
 		});
 
-		it("toViewCompatibilityTreeSchema with JSON serialization - Record schema", () => {
+		it("view compatibility schema - Record schema", () => {
 			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
 			const actual = toSerializableCompatibilitySchema(treeView);
 			takeJsonSnapshot(actual);
@@ -540,7 +528,7 @@ describe("getSimpleSchema", () => {
 			assert.deepEqual(actual, expected);
 		});
 
-		it("toViewCompatibilityTreeSchema with JSON serialization - Object schema", () => {
+		it("view compatibility schema - Object schema", () => {
 			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
 			const actual = toSerializableCompatibilitySchema(treeView);
 			takeJsonSnapshot(actual);
@@ -633,7 +621,7 @@ describe("getSimpleSchema", () => {
 			assert.deepEqual(actual, expected);
 		});
 
-		it("toViewCompatibilityTreeSchema with JSON serialization - Object schema including an identifier field", () => {
+		it("view compatibility schema - Object schema including an identifier field", () => {
 			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
 			const actual = toSerializableCompatibilitySchema(treeView);
 			takeJsonSnapshot(actual);
@@ -737,7 +725,7 @@ describe("getSimpleSchema", () => {
 			assert.deepEqual(actual, expected);
 		});
 
-		it("toViewCompatibilityTreeSchema with JSON serialization - Object schema including a union field", () => {
+		it("view compatibility schema - Object schema including a union field", () => {
 			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
 			const actual = toSerializableCompatibilitySchema(treeView);
 			takeJsonSnapshot(actual);
@@ -836,7 +824,7 @@ describe("getSimpleSchema", () => {
 			assert.deepEqual(actual, expected);
 		});
 
-		it("toViewCompatibilityTreeSchema with JSON serialization - Recursive object schema", () => {
+		it("view compatibility schema - Recursive object schema", () => {
 			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
 			const actual = toSerializableCompatibilitySchema(treeView);
 			takeJsonSnapshot(actual);

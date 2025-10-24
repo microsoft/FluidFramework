@@ -1,0 +1,15 @@
+{
+  "root": {
+    "kind": 0,
+    "allowedTypesIdentifiers": [
+      "com.fluidframework.leaf.string"
+    ],
+    "hasStagedSchemaUpgrades": false
+  },
+  "definitions": {
+    "com.fluidframework.leaf.string": {
+      "kind": 3,
+      "leafKind": 1
+    }
+  }
+}
