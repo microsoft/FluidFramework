@@ -227,7 +227,7 @@ class MessageHandler {
 			eventName: msg.event,
 			details:
 				msg.event === "debugReportComplete" && msg.log
-					? `{"logLength":${msg.log.length}}`
+					? JSON.stringify({ logLength: msg.log.length })
 					: JSON.stringify(msg),
 		});
 		send(msg);
