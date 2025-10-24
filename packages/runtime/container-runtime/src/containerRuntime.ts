@@ -1569,6 +1569,7 @@ export class ContainerRuntime
 			deltaManager,
 			quorum,
 			audience,
+			signalAudience,
 			pendingLocalState,
 			supportedFeatures,
 			snapshotWithContents,
@@ -1723,7 +1724,8 @@ export class ContainerRuntime
 		// Later updates come through calls to setConnectionState/Status.
 		this.canSendOps = connected;
 		this.canSendSignals = this.getConnectionState
-			? this.getConnectionState() === ConnectionState.Connected
+			? this.getConnectionState() === ConnectionState.Connected ||
+				this.getConnectionState() === ConnectionState.CatchingUp
 			: undefined;
 
 		this.mc.logger.sendTelemetryEvent({
@@ -2038,6 +2040,8 @@ export class ContainerRuntime
 				oldClientId = clientId;
 			});
 		}
+
+		this.signalAudience = signalAudience;
 
 		const closeSummarizerDelayOverride = this.mc.config.getNumber(
 			"Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs",
@@ -2948,7 +2952,7 @@ export class ContainerRuntime
 	 * Emits service connection events based on connection state changes.
 	 *
 	 * @remarks
-	 * "connectedToService" is emitted when container connection state transitions to 'Connected' regardless of connection mode.
+	 * "connectedToService" is emitted when container connection state transitions to 'CatchingUp' or 'Connected' regardless of connection mode.
 	 * "disconnectedFromService" excludes false "disconnected" events that happen when readonly client transitions to 'Connected'.
 	 */
 	private emitServiceConnectionEvents(
@@ -2960,16 +2964,20 @@ export class ContainerRuntime
 			return;
 		}
 
-		const canSendSignals = this.getConnectionState() === ConnectionState.Connected;
+		const connectionState = this.getConnectionState();
+		const canSendSignals =
+			connectionState === ConnectionState.Connected ||
+			connectionState === ConnectionState.CatchingUp;
 		const canSendSignalsChanged = this.canSendSignals !== canSendSignals;
 		this.canSendSignals = canSendSignals;
 		if (canSendSignalsChanged) {
-			// If canSendSignals changed, we either transitioned from Connected to Disconnected or CatchingUp to Connected
+			// If canSendSignals changed, we either transitioned from CatchingUp or
+			// Connected to Disconnected or EstablishingConnection to CatchingUp.
 			if (canSendSignals) {
-				// Emit for CatchingUp to Connected transition
+				// Emit for EstablishingConnection to CatchingUp or Connected transition
 				this.emit("connectedToService", clientId, canSendOps);
 			} else {
-				// Emit for Connected to Disconnected transition
+				// Emit for CatchingUp or Connected to Disconnected transition
 				this.emit("disconnectedFromService");
 			}
 		} else if (canSendOpsChanged) {
@@ -3731,6 +3739,14 @@ export class ContainerRuntime
 	public getAudience(): IAudience {
 		return this._audience;
 	}
+
+	/**
+	 * When defined, this {@link @fluidframework/container-definitions#IAudience}
+	 * maintains member list using signals only.
+	 * Thus "write" members may be known earlier than quorum and avoid noise from
+	 * un-summarized quorum history.
+	 */
+	private readonly signalAudience?: IAudience;
 
 	/**
 	 * Returns true of container is dirty, i.e. there are some pending local changes that
@@ -5239,7 +5255,11 @@ export class ContainerRuntime
 		const getConnectionState = this.getConnectionState;
 		if (getConnectionState) {
 			const connectionState = getConnectionState();
-			if (connectionState === ConnectionState.Connected) {
+			if (
+				connectionState === ConnectionState.Connected ||
+				connectionState === ConnectionState.CatchingUp
+			) {
+				// Note: when CatchingUp, canSendOps will always be false.
 				return this.canSendOps ? "joinedForWriting" : "joinedForReading";
 			}
 		} else if (this.canSendOps) {
@@ -5265,9 +5285,10 @@ export class ContainerRuntime
 	): T {
 		let entry = this.extensions.get(id);
 		if (entry === undefined) {
+			const audience = this.signalAudience;
 			const runtime = {
 				getJoinedStatus: this.getJoinedStatus.bind(this),
-				getClientId: () => this.clientId,
+				getClientId: audience ? () => audience.getSelf()?.clientId : () => this.clientId,
 				events: this.lazyEventsForExtensions.value,
 				logger: this.baseLogger,
 				submitAddressedSignal: (
@@ -5277,7 +5298,7 @@ export class ContainerRuntime
 					this.submitExtensionSignal(id, addressChain, message);
 				},
 				getQuorum: this.getQuorum.bind(this),
-				getAudience: this.getAudience.bind(this),
+				getAudience: audience ? () => audience : this.getAudience.bind(this),
 				supportedFeatures: this.ILayerCompatDetails.supportedFeatures,
 			} satisfies ExtensionHost<TRuntimeProperties>;
 			entry = new factory(runtime, ...useContext);
