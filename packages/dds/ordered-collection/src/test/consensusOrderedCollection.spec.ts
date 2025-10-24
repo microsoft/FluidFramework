@@ -594,6 +594,66 @@ describe("ConsensusOrderedCollection", () => {
 			assert.equal(releaseFired, true, "release event should fire post rollback");
 		});
 
+		it("can rollback only the complete op", async () => {
+			let acquireFired = false;
+			let completeFired = false;
+			testCollection1.on("acquire", () => {
+				acquireFired = true;
+			});
+			testCollection1.on("complete", () => {
+				completeFired = true;
+			});
+
+			const addP = testCollection1.add("value");
+			containerRuntime1.flush();
+			containerRuntimeFactory.processAllMessages();
+			await addP;
+
+			const acquiredP1 = acquireAndComplete(testCollection1);
+			containerRuntime1.flushSomeMessages(1); // flush only the acquire op
+			containerRuntimeFactory.processAllMessages();
+			setImmediate(() => {
+				containerRuntime1.rollback?.(); // rollback before flushing the complete op
+				containerRuntime1.flush();
+				containerRuntimeFactory.processAllMessages();
+			});
+
+			const acquiredVal1 = (await acquiredP1) as unknown;
+			assert.equal(acquiredVal1, "value", "Should have acquired value");
+			assert.equal(acquireFired, true, "Acquire event should have fired");
+			assert.equal(completeFired, false, "Complete event should not fire");
+		});
+
+		it("can rollback only the release op", async () => {
+			let acquireFired = false;
+			let releaseFired = false;
+			testCollection1.on("acquire", () => {
+				acquireFired = true;
+			});
+			testCollection1.on("localRelease", () => {
+				releaseFired = true;
+			});
+
+			const addP = testCollection1.add("value");
+			containerRuntime1.flush();
+			containerRuntimeFactory.processAllMessages();
+			await addP;
+
+			const acquiredP1 = acquireAndComplete(testCollection1);
+			containerRuntime1.flushSomeMessages(1); // flush only the acquire op
+			containerRuntimeFactory.processAllMessages();
+			setImmediate(() => {
+				containerRuntime1.rollback?.(); // rollback before flushing the release op
+				containerRuntime1.flush();
+				containerRuntimeFactory.processAllMessages();
+			});
+
+			const acquiredVal1 = (await acquiredP1) as unknown;
+			assert.equal(acquiredVal1, "value", "Should have acquired value");
+			assert.equal(acquireFired, true, "Acquire event should have fired");
+			assert.equal(releaseFired, false, "Release event should not fire");
+		});
+
 		describe("Rollback across remote ops", () => {
 			it("can rollback add across remote ops", async () => {
 				let addFiredCount1 = 0;
