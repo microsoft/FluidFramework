@@ -214,7 +214,7 @@ const WorkspaceSchema: WorkspaceSchema = {};
 
 class MessageHandler {
 	private readonly log: EventEntry[] = [];
-	private msgQueue: undefined | MessageFromParent[];
+	private msgQueue: undefined | Exclude<MessageFromParent, { command: "ping" | "connect" }>[];
 	private container: IFluidContainer | undefined;
 	private presence: Presence | undefined;
 	private readonly workspaces = new Map<string, StatesWorkspace<WorkspaceSchema>>();
@@ -484,7 +484,7 @@ class MessageHandler {
 
 		// Process any queued messages received while connecting
 		for (const queuedMsg of this.msgQueue) {
-			await this.onMessage(queuedMsg);
+			this.processMessage(queuedMsg);
 		}
 		this.msgQueue = undefined;
 	}
