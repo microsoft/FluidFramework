@@ -1,6 +1,5 @@
 import type { JsonCompatible, JsonCompatibleObject } from "../../util/index.js";
-import type { ImplicitFieldSchema } from "../fieldSchema.js";
-import type { TreeViewConfigurationAlpha } from "./configuration.js";
+import type { TreeSchema } from "./configuration.js";
 import { toViewCompatibilityTreeSchema } from "./viewSchemaToViewCompatibilitySchema.js";
 import { fail, unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
@@ -19,16 +18,13 @@ import { NodeKind } from "../core/index.js";
  * Convert a view schema to a serializable format for compatibility testing.
  * @remarks The JSON-compatible schema returned from this method is only intended for use in snapshots/comparisons of view schemas.
  * It is not possible to reconstruct a full view schema from the serialized format.
- * @param treeView - The tree view schema to convert.
+ * @param treeSchema - The tree schema to convert.
  * @returns A serializable representation of the view schema.
  */
-export function toSerializableCompatibilitySchema<TSchema extends ImplicitFieldSchema>(
-	treeView: TreeViewConfigurationAlpha<TSchema>,
-): JsonCompatible {
+export function toSerializableCompatibilitySchema(treeSchema: TreeSchema): JsonCompatible {
 	const simpleSchema = toViewCompatibilityTreeSchema(
-		treeView,
-		// Copying is required for JSON serialization to avoid potential circular references in metadata/etc., as well as to ensure
-		// that the Map type serialization approach below does not modify the original schema.
+		treeSchema,
+		// Copying strips out references to metadata and other non-essential information.
 		true,
 	);
 
