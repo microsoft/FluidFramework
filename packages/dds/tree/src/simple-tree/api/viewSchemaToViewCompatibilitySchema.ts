@@ -44,10 +44,6 @@ export function toViewCompatibilityTreeSchema(
 			0xb60 /* Invalid schema */,
 		);
 
-		// TODO: Do we need walkNodeSchema to recurse into fields in this context?
-		// Probably not: we are walking all schema definitions unconditionally without worrying about tree order.
-		// It is probably enough to just walk the fields of object schema here.
-
 		// Read properties that are needed for compatibility and copy them to a SimpleNodeSchema.
 		const simpleNodeSchema = copySchemaObjects
 			? copySimpleNodeSchema(nodeSchema, SimpleSchemaCopyMode.ViewCompatibilitySchema)

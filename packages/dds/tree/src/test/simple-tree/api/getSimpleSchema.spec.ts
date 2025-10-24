@@ -12,6 +12,7 @@ import {
 	stringSchema,
 	toViewCompatibilityTreeSchema,
 	TreeViewConfigurationAlpha,
+	type ImplicitFieldSchema,
 	type SimpleLeafNodeSchema,
 	type SimpleNodeSchema,
 	type SimpleObjectFieldSchema,
@@ -21,6 +22,8 @@ import {
 import { ValueSchema } from "../../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { toSimpleTreeSchema } from "../../../simple-tree/api/viewSchemaToSimpleSchema.js";
+import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
+import type { JsonCompatible } from "../../../util/index.js";
 
 const simpleString: SimpleLeafNodeSchema = {
 	leafKind: ValueSchema.String,
@@ -36,7 +39,20 @@ const simpleNumber: SimpleLeafNodeSchema = {
 	persistedMetadata: undefined,
 };
 
+function toSerializableCompatibilitySchema<TSchema extends ImplicitFieldSchema>(
+	treeView: TreeViewConfigurationAlpha<TSchema>,
+): JsonCompatible {
+	const serializableSchema = toViewCompatibilityTreeSchema(
+		treeView,
+		// Copying is required for JSON serialization to avoid circular references in metadata/etc.
+		true,
+	) as unknown as JsonCompatible;
+	return serializableSchema;
+}
+
 describe("getSimpleSchema", () => {
+	useSnapshotDirectory("get-simple-schema");
+
 	describe("non-copying", () => {
 		const Schema = stringSchema;
 		const root = SchemaFactoryAlpha.optional(Schema);
@@ -105,6 +121,12 @@ describe("getSimpleSchema", () => {
 
 			assert.deepEqual(actual, expected);
 		});
+
+		it("toViewCompatibilityTreeSchema with JSON serialization - Field Schema", () => {
+			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
+			const actual = toSerializableCompatibilitySchema(treeView);
+			takeJsonSnapshot(actual);
+		});
 	});
 
 	describe("Leaf node", () => {
@@ -142,6 +164,12 @@ describe("getSimpleSchema", () => {
 			};
 
 			assert.deepEqual(actual, expected);
+		});
+
+		it("toViewCompatibilityTreeSchema with JSON serialization - Leaf node", () => {
+			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
+			const actual = toSerializableCompatibilitySchema(treeView);
+			takeJsonSnapshot(actual);
 		});
 	});
 
@@ -192,6 +220,12 @@ describe("getSimpleSchema", () => {
 			};
 
 			assert.deepEqual(actual, expected);
+		});
+
+		it("toViewCompatibilityTreeSchema with JSON serialization - Union root", () => {
+			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
+			const actual = toSerializableCompatibilitySchema(treeView);
+			takeJsonSnapshot(actual);
 		});
 	});
 
@@ -254,6 +288,12 @@ describe("getSimpleSchema", () => {
 
 			assert.deepEqual(actual, expected);
 		});
+
+		it("toViewCompatibilityTreeSchema with JSON serialization - Array schema", () => {
+			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
+			const actual = toSerializableCompatibilitySchema(treeView);
+			takeJsonSnapshot(actual);
+		});
 	});
 
 	describe("Map schema", () => {
@@ -315,6 +355,12 @@ describe("getSimpleSchema", () => {
 
 			assert.deepEqual(actual, expected);
 		});
+
+		it("toViewCompatibilityTreeSchema with JSON serialization - Map schema", () => {
+			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
+			const actual = toSerializableCompatibilitySchema(treeView);
+			takeJsonSnapshot(actual);
+		});
 	});
 
 	describe("Record schema", () => {
@@ -375,6 +421,12 @@ describe("getSimpleSchema", () => {
 			};
 
 			assert.deepEqual(actual, expected);
+		});
+
+		it("toViewCompatibilityTreeSchema with JSON serialization - Record schema", () => {
+			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
+			const actual = toSerializableCompatibilitySchema(treeView);
+			takeJsonSnapshot(actual);
 		});
 	});
 
@@ -487,6 +539,12 @@ describe("getSimpleSchema", () => {
 
 			assert.deepEqual(actual, expected);
 		});
+
+		it("toViewCompatibilityTreeSchema with JSON serialization - Object schema", () => {
+			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
+			const actual = toSerializableCompatibilitySchema(treeView);
+			takeJsonSnapshot(actual);
+		});
 	});
 
 	describe("Object schema including an identifier field", () => {
@@ -573,6 +631,12 @@ describe("getSimpleSchema", () => {
 
 			const actual = toViewCompatibilityTreeSchema(treeView, true);
 			assert.deepEqual(actual, expected);
+		});
+
+		it("toViewCompatibilityTreeSchema with JSON serialization - Object schema including an identifier field", () => {
+			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
+			const actual = toSerializableCompatibilitySchema(treeView);
+			takeJsonSnapshot(actual);
 		});
 	});
 
@@ -672,6 +736,12 @@ describe("getSimpleSchema", () => {
 
 			assert.deepEqual(actual, expected);
 		});
+
+		it("toViewCompatibilityTreeSchema with JSON serialization - Object schema including a union field", () => {
+			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
+			const actual = toSerializableCompatibilitySchema(treeView);
+			takeJsonSnapshot(actual);
+		});
 	});
 
 	describe("Recursive object schema", () => {
@@ -764,6 +834,12 @@ describe("getSimpleSchema", () => {
 			};
 
 			assert.deepEqual(actual, expected);
+		});
+
+		it("toViewCompatibilityTreeSchema with JSON serialization - Recursive object schema", () => {
+			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
+			const actual = toSerializableCompatibilitySchema(treeView);
+			takeJsonSnapshot(actual);
 		});
 	});
 });
