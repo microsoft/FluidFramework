@@ -129,7 +129,7 @@ export interface ITreeAlpha extends ITree {
  * The branch associated directly with the {@link ITree | SharedTree} is the "main" branch, and all other branches fork (directly or transitively) from that main branch.
  * @sealed @beta
  */
-export interface TreeBranch {
+export interface TreeBranch extends IDisposable {
 	/**
 	 * Fork a new branch off of this branch which is based off of this branch's current state.
 	 * @remarks Any changes to the tree on the new branch will not apply to this branch until the new branch is e.g. {@link TreeBranch.merge | merged} back into this branch.
@@ -174,17 +174,14 @@ export interface TreeBranch {
 }
 
 /**
- * A collection of functionality associated with a (version-control-style) branch of a SharedTree.
- * @remarks A `TreeBranch` allows for the {@link TreeBranch.fork | creation of branches} and for those branches to later be {@link TreeBranch.merge | merged}.
- *
+ * {@link TreeBranch} with alpha-level APIs.
+ * @remarks
  * The `TreeBranch` for a specific {@link TreeNode} may be acquired by calling `TreeAlpha.branch`.
  *
  * A branch does not necessarily know the schema of its SharedTree - to convert a branch to a {@link TreeViewAlpha | view with a schema}, use {@link TreeBranchAlpha.hasRootSchema | hasRootSchema()}.
- *
- * The branch associated directly with the {@link ITree | SharedTree} is the "main" branch, and all other branches fork (directly or transitively) from that main branch.
  * @sealed @alpha
  */
-export interface TreeBranchAlpha extends IDisposable, TreeBranch {
+export interface TreeBranchAlpha extends TreeBranch {
 	/**
 	 * Events for the branch
 	 */

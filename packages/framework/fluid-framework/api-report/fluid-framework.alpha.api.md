@@ -117,6 +117,9 @@ export const ArrayNodeSchema: {
 // @alpha
 export function asAlpha<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): TreeViewAlpha<TSchema>;
 
+// @beta
+export function asBeta<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): TreeViewBeta<TSchema>;
+
 // @alpha @deprecated
 export function asTreeViewAlpha<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): TreeViewAlpha<TSchema>;
 
@@ -1736,7 +1739,7 @@ export const Tree: Tree;
 
 // @alpha @sealed @system
 export interface TreeAlpha {
-    branch(node: TreeNode): TreeBranch | undefined;
+    branch(node: TreeNode): TreeBranchAlpha | undefined;
     child(node: TreeNode, key: string | number): TreeNode | TreeLeafValue | undefined;
     children(node: TreeNode): Iterable<[propertyKey: string | number, child: TreeNode | TreeLeafValue]>;
     create<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(schema: UnsafeUnknownSchema extends TSchema ? ImplicitFieldSchema : TSchema & ImplicitFieldSchema, data: InsertableField<TSchema>): Unhydrated<TSchema extends ImplicitFieldSchema ? TreeFieldFromImplicitField<TSchema> : TreeNode | TreeLeafValue | undefined>;
@@ -1800,14 +1803,20 @@ export interface TreeBeta {
 // @beta
 export const TreeBeta: TreeBeta;
 
-// @alpha @sealed
+// @beta @sealed
 export interface TreeBranch extends IDisposable {
     dispose(error?: Error): void;
-    readonly events: Listenable<TreeBranchEvents>;
     fork(): TreeBranch;
-    hasRootSchema<TSchema extends ImplicitFieldSchema>(schema: TSchema): this is TreeViewAlpha<TSchema>;
     merge(branch: TreeBranch, disposeMerged?: boolean): void;
     rebaseOnto(branch: TreeBranch): void;
+}
+
+// @alpha @sealed
+export interface TreeBranchAlpha extends TreeBranch {
+    readonly events: Listenable<TreeBranchEvents>;
+    // (undocumented)
+    fork(): TreeBranchAlpha;
+    hasRootSchema<TSchema extends ImplicitFieldSchema>(schema: TSchema): this is TreeViewAlpha<TSchema>;
     runTransaction<TSuccessValue, TFailureValue>(transaction: () => TransactionCallbackStatus<TSuccessValue, TFailureValue>, params?: RunTransactionParams): TransactionResultExt<TSuccessValue, TFailureValue>;
     runTransaction(transaction: () => VoidTransactionCallbackStatus | void, params?: RunTransactionParams): TransactionResult;
 }
@@ -1987,7 +1996,7 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 }
 
 // @alpha @sealed
-export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> extends Omit<TreeView<ReadSchema<TSchema>>, "root" | "initialize">, TreeBranch {
+export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> extends Omit<TreeViewBeta<ReadSchema<TSchema>>, "root" | "initialize" | "fork">, TreeBranchAlpha {
     // (undocumented)
     readonly events: Listenable<TreeViewEvents & TreeBranchEvents>;
     // (undocumented)
@@ -1997,6 +2006,12 @@ export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | Unsa
     // (undocumented)
     get root(): ReadableField<TSchema>;
     set root(newRoot: InsertableField<TSchema>);
+}
+
+// @beta @sealed
+export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema> extends TreeView<TSchema>, TreeBranch {
+    // (undocumented)
+    fork(): ReturnType<TreeBranch["fork"]> & TreeViewBeta<TSchema>;
 }
 
 // @public @sealed

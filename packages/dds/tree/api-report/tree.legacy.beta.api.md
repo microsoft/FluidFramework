@@ -642,7 +642,7 @@ export interface TreeBeta {
 export const TreeBeta: TreeBeta;
 
 // @beta @sealed
-export interface TreeBranch {
+export interface TreeBranch extends IDisposable {
     dispose(error?: Error): void;
     fork(): TreeBranch;
     merge(branch: TreeBranch, disposeMerged?: boolean): void;

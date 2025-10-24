@@ -1412,7 +1412,7 @@ export interface TreeBeta {
 export const TreeBeta: TreeBeta;
 
 // @beta @sealed
-export interface TreeBranch {
+export interface TreeBranch extends IDisposable {
     dispose(error?: Error): void;
     fork(): TreeBranch;
     merge(branch: TreeBranch, disposeMerged?: boolean): void;
@@ -1420,7 +1420,7 @@ export interface TreeBranch {
 }
 
 // @alpha @sealed
-export interface TreeBranchAlpha extends IDisposable, TreeBranch {
+export interface TreeBranchAlpha extends TreeBranch {
     readonly events: Listenable_2<TreeBranchEvents>;
     // (undocumented)
     fork(): TreeBranchAlpha;

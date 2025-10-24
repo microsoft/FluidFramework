@@ -12,7 +12,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { ImplicitFieldSchema, TreeNodeSchemaClass } from "@fluidframework/tree";
 import type {
 	InsertableContent,
-	TreeBranch,
+	TreeBranchAlpha,
 	TreeNode,
 	TreeNodeSchema,
 	TreeViewAlpha,
@@ -95,7 +95,7 @@ export type TreeView<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema> = 
 	TreeViewAlpha<TRoot>,
 	"root" | "fork" | "merge" | "rebaseOnto" | "schema" | "events"
 > &
-	TreeBranch;
+	TreeBranchAlpha;
 
 /**
  * TODO
