@@ -8,10 +8,7 @@ import type {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
-import {
-	MessageType,
-	type ISequencedDocumentMessage,
-} from "@fluidframework/driver-definitions/internal";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type {
 	ISummaryTreeWithStats,
@@ -210,25 +207,6 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
 		const content = await readAndParse<ISerializableInk>(storage, snapshotFileName);
 		this.inkData = new InkData(content);
-	}
-
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processCore}
-	 */
-	protected processCore(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	): void {
-		this.processMessage(
-			message,
-			{
-				contents: message.contents,
-				localOpMetadata,
-				clientSequenceNumber: message.clientSequenceNumber,
-			},
-			local,
-		);
 	}
 
 	/**

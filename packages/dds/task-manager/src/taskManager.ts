@@ -14,10 +14,7 @@ import type {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
-import {
-	MessageType,
-	type ISequencedDocumentMessage,
-} from "@fluidframework/driver-definitions/internal";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type {
 	ISummaryTreeWithStats,
@@ -96,7 +93,7 @@ export class TaskManagerClass
 	 */
 	private readonly taskQueues = new Map<string, string[]>();
 
-	// opWatcher emits for every op on this data store.  This is just a repackaging of processCore into events.
+	// opWatcher emits for every op on this data store.  This is just a repackaging of processMessagesCore into events.
 	private readonly opWatcher: EventEmitter = new EventEmitter();
 	// queueWatcher emits an event whenever the consensus state of the task queues changes
 	private readonly queueWatcher: EventEmitter = new EventEmitter();
@@ -696,22 +693,6 @@ export class TaskManagerClass
 		if (pendingOps.length === 0) {
 			this.latestPendingOps.delete(content.taskId);
 		}
-	}
-
-	protected processCore(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	): void {
-		this.processMessage(
-			message,
-			{
-				contents: message.contents,
-				localOpMetadata,
-				clientSequenceNumber: message.clientSequenceNumber,
-			},
-			local,
-		);
 	}
 
 	/**

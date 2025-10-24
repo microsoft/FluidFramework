@@ -16,10 +16,7 @@ import {
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
 import { SummaryObject, SummaryType } from "@fluidframework/driver-definitions";
-import {
-	MessageType,
-	type ISequencedDocumentMessage,
-} from "@fluidframework/driver-definitions/internal";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import {
 	IExperimentalIncrementalSummaryContext,
@@ -154,23 +151,6 @@ class TestIncrementalSummaryBlobDDS extends SharedObject {
 			const blobContent = await readAndParse<IBlob>(storage, blob);
 			this.blobMap.set(blob, blobContent);
 		}
-	}
-	protected processCore(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	): void {
-		this.processMessagesCore({
-			envelope: message,
-			local,
-			messagesContent: [
-				{
-					contents: message.contents,
-					localOpMetadata,
-					clientSequenceNumber: message.clientSequenceNumber,
-				},
-			],
-		});
 	}
 	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
 		const { envelope, messagesContent } = messagesCollection;
@@ -389,24 +369,6 @@ class TestIncrementalSummaryTreeDDSClass extends SharedObject {
 			node.children.push(childNode);
 		}
 		return node;
-	}
-
-	protected processCore(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	): void {
-		this.processMessagesCore({
-			envelope: message,
-			local,
-			messagesContent: [
-				{
-					contents: message.contents,
-					localOpMetadata,
-					clientSequenceNumber: message.clientSequenceNumber,
-				},
-			],
-		});
 	}
 
 	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
