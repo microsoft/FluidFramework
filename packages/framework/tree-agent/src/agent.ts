@@ -199,7 +199,7 @@ function constructTreeNode(schema: TreeNodeSchema, content: FactoryContentObject
 		toInsert = contentWithDefaults;
 	}
 
-	// Cast to never because tagContentSchema is typed to only accept InsertableContent, but we know that constructNode produces valid content for the schema.
+	// Cast to never because tagContentSchema is typed to only accept InsertableContent, but we know that 'toInsert' (either the original content or contentWithDefaults) produces valid content for the schema.
 	return TreeAlpha.tagContentSchema(schema, toInsert as never);
 }
 
