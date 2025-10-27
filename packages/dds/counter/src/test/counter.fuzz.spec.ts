@@ -32,12 +32,6 @@ describe("Counter fuzz testing", () => {
 describe("Counter fuzz testing with rebasing", () => {
 	createDDSFuzzSuite(baseCounterModel, {
 		validationStrategy: { type: "fixedInterval", interval: defaultOptions.validateInterval },
-		skip: [],
-		rebaseProbability: 0.15,
-		containerRuntimeOptions: {
-			flushMode: FlushMode.TurnBased,
-			enableGroupedBatching: true,
-		},
 		clientJoinOptions: {
 			maxNumberOfClients: 6,
 			clientAddProbability: 0.05,
@@ -45,6 +39,11 @@ describe("Counter fuzz testing with rebasing", () => {
 		},
 		defaultTestCount: defaultOptions.testCount,
 		saveFailures: { directory: path.join(_dirname, "../../src/test/results") },
+		containerRuntimeOptions: {
+			flushMode: FlushMode.TurnBased,
+			enableGroupedBatching: true,
+		},
+		rebaseProbability: 0.15,
 		// TODO: Enable rollback in AB#44705
 		rollbackProbability: 0,
 		// Uncomment this line to replay a specific seed:

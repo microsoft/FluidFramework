@@ -32,6 +32,11 @@ export const defaultOptions: Required<OperationGenerationConfig> = {
 type FuzzTestState = DDSFuzzTestState<CounterFactory>;
 
 /**
+ * Represents Counter operation types for fuzz testing
+ */
+export type CounterOperation = IIncrementOperation;
+
+/**
  * Config options for generating Counter operations
  */
 interface OperationGenerationConfig {
@@ -49,12 +54,10 @@ interface OperationGenerationConfig {
 	operations?: number;
 }
 
-function makeOperationGenerator(): Generator<IIncrementOperation, FuzzTestState> {
-	type OpSelectionState = FuzzTestState & {
-		incrementAmount: number;
-	};
+function makeOperationGenerator(): Generator<CounterOperation, FuzzTestState> {
+	type OpSelectionState = FuzzTestState;
 
-	async function increment(state: OpSelectionState): Promise<IIncrementOperation> {
+	async function increment(state: OpSelectionState): Promise<CounterOperation> {
 		return {
 			type: "increment",
 			incrementAmount: state.random.integer(-10, 10),
@@ -62,14 +65,13 @@ function makeOperationGenerator(): Generator<IIncrementOperation, FuzzTestState>
 	}
 
 	const clientBaseOperationGenerator = createWeightedGenerator<
-		IIncrementOperation,
+		CounterOperation,
 		OpSelectionState
 	>([[increment, 1]]);
 
 	return async (state: FuzzTestState) =>
 		clientBaseOperationGenerator({
 			...state,
-			incrementAmount: state.random.integer(-10, 10),
 		});
 }
 
@@ -80,35 +82,13 @@ interface LoggingInfo {
 	counterNames: string[];
 }
 
-function logCurrentState(state: FuzzTestState, loggingInfo: LoggingInfo): void {
-	for (const client of state.clients) {
-		const counter = client.channel;
-		assert(counter !== undefined);
-		if (loggingInfo.counterNames.includes(client.containerRuntime.clientId)) {
-			console.log(`Counter ${counter.id} value: ${counter.value}\n`);
-		}
-	}
-}
-
-function makeReducer(loggingInfo?: LoggingInfo): Reducer<IIncrementOperation, FuzzTestState> {
-	const withLogging =
-		<T>(baseReducer: Reducer<T, FuzzTestState>): Reducer<T, FuzzTestState> =>
-		(state, operation) => {
-			if (loggingInfo !== undefined) {
-				logCurrentState(state, loggingInfo);
-				console.log("-".repeat(20));
-				console.log("Next operation:", JSON.stringify(operation, undefined, 4));
-			}
-			baseReducer(state, operation);
-		};
-
-	const reducer = combineReducers<IIncrementOperation, FuzzTestState>({
+function makeReducer(loggingInfo?: LoggingInfo): Reducer<CounterOperation, FuzzTestState> {
+	const reducer = combineReducers<CounterOperation, FuzzTestState>({
 		increment: ({ client }, { incrementAmount }) => {
 			client.channel.increment(incrementAmount);
 		},
 	});
-
-	return withLogging(reducer);
+	return reducer;
 }
 
 function assertEqualCounters(a: ISharedCounter, b: ISharedCounter): void {
@@ -118,14 +98,11 @@ function assertEqualCounters(a: ISharedCounter, b: ISharedCounter): void {
 /**
  * Base fuzz model for Counter
  */
-export const baseCounterModel: DDSFuzzModel<
-	CounterFactory,
-	IIncrementOperation,
-	FuzzTestState
-> = {
-	workloadName: "default configuration",
-	generatorFactory: () => take(100, makeOperationGenerator()),
-	reducer: makeReducer(),
-	validateConsistency: (a, b) => assertEqualCounters(a.channel, b.channel),
-	factory: new CounterFactory(),
-};
+export const baseCounterModel: DDSFuzzModel<CounterFactory, CounterOperation, FuzzTestState> =
+	{
+		workloadName: "default configuration",
+		generatorFactory: () => take(100, makeOperationGenerator()),
+		reducer: makeReducer(),
+		validateConsistency: (a, b) => assertEqualCounters(a.channel, b.channel),
+		factory: new CounterFactory(),
+	};
