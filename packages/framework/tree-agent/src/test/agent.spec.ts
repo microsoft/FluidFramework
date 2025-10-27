@@ -272,6 +272,33 @@ describe("Semantic Agent", () => {
 		);
 	});
 
+	it("can insert content multiple times", async () => {
+		class Color extends sf.object("Color", {
+			r: sf.number,
+			g: sf.number,
+			b: sf.number,
+		}) {}
+		class Gradient extends sf.object("Gradient", {
+			startColor: Color,
+			endColor: Color,
+		}) {}
+		const view = independentView(new TreeViewConfiguration({ schema: Gradient }), {});
+		view.initialize({ startColor: { r: 0, g: 0, b: 0 }, endColor: { r: 0, g: 0, b: 0 } });
+		const code = `const white = context.create.Color({ r: 255, g: 255, b: 255 }); 
+context.root = context.create.Gradient({ startColor: white, endColor: white });`;
+		const model: SharedTreeChatModel = {
+			editToolName,
+			async query({ edit }) {
+				const result = await edit(code);
+				assert(result.type === "success", result.message);
+				return result.message;
+			},
+		};
+		const agent = new SharedTreeSemanticAgent(model, view);
+		await agent.query("Query");
+		assert.equal(view.root.startColor.r, 255);
+	});
+
 	describe("context helpers", () => {
 		it("passes constructors to edit code", async () => {
 			const sfLocal = new SchemaFactory("Test");
