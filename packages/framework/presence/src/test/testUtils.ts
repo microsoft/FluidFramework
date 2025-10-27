@@ -16,6 +16,7 @@ import type { SinonFakeTimers } from "sinon";
 import { createPresenceManager } from "../presenceManager.js";
 import type {
 	InboundClientJoinMessage,
+	InboundDatastoreUpdateMessage,
 	OutboundClientJoinMessage,
 	SignalMessages,
 } from "../protocol.js";
@@ -122,6 +123,26 @@ export function generateBasicClientJoin(
 }
 
 /**
+ * Expected delays for broadcasting join responses
+ */
+export const broadcastJoinResponseDelaysMs = {
+	/**
+	 * The delay in milliseconds before a join response is sent to any client.
+	 */
+	namedResponder: 0,
+	/**
+	 * The delay in milliseconds all backup responders wait before sending
+	 * a join response to allow others to respond first.
+	 */
+	backupResponderBase: 20,
+	/**
+	 * The additional delay in milliseconds a backup responder waits per
+	 * ordering before sending a join response.
+	 */
+	backupResponderIncrement: 20,
+} as const;
+
+/**
  * Function signature for sending a signal to the presence manager.
  */
 export type ProcessSignalFunction = ReturnType<typeof createPresenceManager>["processSignal"];
@@ -155,18 +176,21 @@ export function prepareConnectedPresence(
 	const quorumClientIds = [...runtime.quorum.getMembers().keys()].filter(
 		(quorumClientId) => quorumClientId !== clientConnectionId,
 	);
-	if (quorumClientIds.length > 3) {
-		quorumClientIds.length = 3;
+	const updateProviders = quorumClientIds;
+	if (updateProviders.length > 3) {
+		updateProviders.length = 3;
 	}
 
 	const expectedClientJoin: OutboundClientJoinMessage &
 		Partial<Pick<InboundClientJoinMessage, "clientId">> = generateBasicClientJoin(clock.now, {
 		attendeeId,
 		clientConnectionId,
-		updateProviders: quorumClientIds,
+		updateProviders,
 	});
 	delete expectedClientJoin.clientId;
-	runtime.signalsExpected.push([expectedClientJoin]);
+	if (updateProviders.length > 0) {
+		runtime.signalsExpected.push([expectedClientJoin]);
+	}
 
 	const presence = createPresenceManager(runtime, attendeeId as AttendeeId);
 
@@ -200,8 +224,30 @@ export function prepareConnectedPresence(
 	// Pass a little time (to mimic reality)
 	clock.tick(10);
 
-	// Return the join signal
-	processSignal([], { ...expectedClientJoin, clientId: clientConnectionId }, true);
+	if (updateProviders.length > 0) {
+		// Return the join signal
+		processSignal([], { ...expectedClientJoin, clientId: clientConnectionId }, true);
+
+		// Pass time (to mimic likely response)
+		clock.tick(broadcastJoinResponseDelaysMs.namedResponder + 20);
+
+		// Send a fake join response
+		// There are no other attendees in the session (not realistic) but this
+		// convinces the presence manager that it now has full knowledge, which
+		// enables it to respond to other's join requests accurately.
+		processSignal(
+			[],
+			{
+				type: "Pres:DatastoreUpdate",
+				content: {
+					...expectedClientJoin.content,
+					isComplete: true,
+				},
+				clientId: updateProviders[0],
+			} satisfies InboundDatastoreUpdateMessage,
+			false,
+		);
+	}
 
 	return {
 		presence,

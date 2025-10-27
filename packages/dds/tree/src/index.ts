@@ -123,6 +123,7 @@ export {
 	type WithType,
 	type NodeChangedData,
 	type SchemaUpgrade,
+	contentSchemaSymbol,
 	// Types not really intended for public use, but used in links.
 	// Can not be moved to internalTypes since doing so causes app code to throw errors like:
 	// Error: src/simple-tree/objectNode.ts:72:1 - (ae-unresolved-link) The @link reference could not be resolved: The package "@fluidframework/tree" does not have an export "TreeNodeApi"
@@ -137,6 +138,13 @@ export {
 	type ArrayNodeCustomizableSchemaUnsafe,
 	type MapNodeCustomizableSchemaUnsafe,
 	type TreeRecordNodeUnsafe,
+	type UnannotateAllowedTypeUnsafe,
+	type AnnotatedAllowedTypeUnsafe,
+	type AnnotatedAllowedTypesUnsafe,
+	type AllowedTypesFullUnsafe,
+	type AllowedTypesFullFromMixedUnsafe,
+	type UnannotateAllowedTypesListUnsafe,
+	type AnnotateAllowedTypesListUnsafe,
 	// System types (not in Internal types for various reasons, like doc links or cannot be named errors).
 	type typeSchemaSymbol,
 	type TreeNodeSchemaNonClass,
@@ -157,6 +165,7 @@ export {
 	singletonSchema,
 	type UnsafeUnknownSchema,
 	type TreeViewAlpha,
+	type TreeViewBeta,
 	type InsertableField,
 	type Insertable,
 	type InsertableContent,
@@ -227,6 +236,7 @@ export {
 	type InsertableTreeNodeFromAllowedTypes,
 	type Input,
 	type TreeBranch,
+	type TreeBranchAlpha,
 	type TreeBranchEvents,
 	asTreeViewAlpha,
 	type NodeSchemaOptions,
@@ -330,4 +340,4 @@ export type { MapNodeInsertableData } from "./simple-tree/index.js";
 export { JsonAsTree } from "./jsonDomainSchema.js";
 export { FluidSerializableAsTree } from "./serializableDomainSchema.js";
 export { TableSchema, type System_TableSchema } from "./tableSchema.js";
-export { asAlpha } from "./api.js";
+export { asAlpha, asBeta } from "./api.js";

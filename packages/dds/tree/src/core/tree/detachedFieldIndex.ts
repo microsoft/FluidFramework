@@ -84,7 +84,7 @@ export class DetachedFieldIndex {
 	) {
 		this.options = options ?? {
 			jsonValidator: FormatValidatorNoOp,
-			oldestCompatibleClient: FluidClientVersion.v2_0,
+			minVersionForCollab: FluidClientVersion.v2_0,
 		};
 		this.codec = makeDetachedFieldIndexCodec(revisionTagCodec, this.options, idCompressor);
 	}
@@ -293,7 +293,10 @@ export class DetachedFieldIndex {
 					root: brand<ForestRootId>(root + i),
 					latestRelevantRevision: revision,
 				});
-				setInNestedMap(this.latestRelevantRevisionToFields, revision, root, nodeId);
+				setInNestedMap(this.latestRelevantRevisionToFields, revision, root + i, {
+					major: nodeId.major,
+					minor: nodeId.minor + i,
+				});
 			}
 		}
 		return root;

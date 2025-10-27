@@ -48,7 +48,7 @@ import { brand } from "../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
 import {
-	getOrCreateInnerNode,
+	getInnerNode,
 	SchemaFactory,
 	toUpgradeSchema,
 	TreeViewConfiguration,
@@ -79,7 +79,7 @@ describe("sharedTreeView", () => {
 			);
 			view.initialize({ x: 24 });
 			const root = view.root;
-			const flex = getOrCreateInnerNode(root);
+			const flex = getInnerNode(root);
 			assert(flex.isHydrated());
 			const anchorNode = flex.anchorNode;
 			const log: string[] = [];
@@ -123,7 +123,7 @@ describe("sharedTreeView", () => {
 			);
 			view.initialize({ x: 24 });
 			const root = view.root;
-			const flex = getOrCreateInnerNode(root);
+			const flex = getInnerNode(root);
 			assert(flex.isHydrated());
 			const anchorNode = flex.anchorNode;
 			const log: string[] = [];
@@ -371,7 +371,7 @@ describe("sharedTreeView", () => {
 		itView("update anchors after applying a change", ({ view }) => {
 			view.root.insertAtStart("A");
 			let cursor = view.checkout.forest.allocateCursor();
-			const flex = getOrCreateInnerNode(view.root);
+			const flex = getInnerNode(view.root);
 			assert(flex.isHydrated());
 			view.checkout.forest.moveCursorToPath(flex.anchorNode, cursor);
 			cursor.enterField(EmptyKey);
@@ -391,7 +391,7 @@ describe("sharedTreeView", () => {
 				const parentCheckout = parentView.checkout;
 				parentView.root.insertAtStart("A");
 				let cursor = parentCheckout.forest.allocateCursor();
-				const flex = getOrCreateInnerNode(parentView.root);
+				const flex = getInnerNode(parentView.root);
 				assert(flex.isHydrated());
 				parentCheckout.forest.moveCursorToPath(flex.anchorNode, cursor);
 				cursor.enterField(EmptyKey);
@@ -415,7 +415,7 @@ describe("sharedTreeView", () => {
 				const parentCheckout = parentView.checkout;
 				parentView.root.insertAtStart("A");
 				let cursor = parentCheckout.forest.allocateCursor();
-				const flex = getOrCreateInnerNode(parentView.root);
+				const flex = getInnerNode(parentView.root);
 				assert(flex.isHydrated());
 				parentCheckout.forest.moveCursorToPath(flex.anchorNode, cursor);
 				cursor.enterField(EmptyKey);
@@ -438,7 +438,7 @@ describe("sharedTreeView", () => {
 			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
 			view.root.insertAtStart("A");
 			let cursor = view.checkout.forest.allocateCursor();
-			const flex = getOrCreateInnerNode(view.root);
+			const flex = getInnerNode(view.root);
 			assert(flex.isHydrated());
 			view.checkout.forest.moveCursorToPath(flex.anchorNode, cursor);
 			cursor.enterField(EmptyKey);
@@ -751,7 +751,7 @@ describe("sharedTreeView", () => {
 		itView("update anchors correctly", ({ view }) => {
 			view.root.insertAtStart("A");
 			let cursor = view.checkout.forest.allocateCursor();
-			const flex = getOrCreateInnerNode(view.root);
+			const flex = getInnerNode(view.root);
 			assert(flex.isHydrated());
 			view.checkout.forest.moveCursorToPath(flex.anchorNode, cursor);
 			cursor.enterField(EmptyKey);

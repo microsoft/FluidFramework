@@ -298,7 +298,7 @@ export function createTreeCheckout(
 	const forest = args?.forest ?? buildForest(breaker, schema);
 	const defaultCodecOptions = {
 		jsonValidator: FormatValidatorNoOp,
-		oldestCompatibleClient: FluidClientVersion.v2_0,
+		minVersionForCollab: FluidClientVersion.v2_0,
 	};
 	const defaultFieldBatchVersion = 1;
 	const changeFamily =
@@ -636,7 +636,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	 * @param kind - The {@link CommitKind} that produced this revertible (e.g., Default, Undo, Redo).
 	 * @param checkout - The {@link TreeCheckout} instance this revertible belongs to.
 	 * @param onRevertibleDisposed - Callback function that will be called when the revertible is disposed.
-	 * @returns - {@link RevertibleAlpha}
+	 * @returns A {@link RevertibleAlpha} object.
 	 */
 	private createRevertible(
 		revision: RevisionTag,

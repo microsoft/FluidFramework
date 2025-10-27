@@ -38,7 +38,6 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 import {
 	type ChannelFactoryRegistry,
-	type ITestContainerConfig,
 	type ITestObjectProvider,
 	type SummaryInfo,
 	TestContainerRuntimeFactory,
@@ -128,6 +127,8 @@ import {
 	jsonableTreeFromCursor,
 	cursorForMapTreeNode,
 	type FullSchemaPolicy,
+	type IncrementalEncodingPolicy,
+	defaultIncrementalEncodingPolicy,
 } from "../feature-libraries/index.js";
 import {
 	type CheckoutEvents,
@@ -351,16 +352,9 @@ export class TestTreeProvider {
 		const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 			getRawConfig: (name: string): ConfigTypes => settings[name],
 		});
-		const testContainerConfig: ITestContainerConfig = {
-			loaderProps: {
-				configProvider: configProvider({
-					"Fluid.Container.enableOfflineLoad": true,
-				}),
-			},
-		};
 		const container =
 			this.trees.length === 0
-				? await this.provider.makeTestContainer(testContainerConfig)
+				? await this.provider.makeTestContainer()
 				: await this.provider.loadTestContainer();
 
 		this._containers.push(container);
@@ -534,7 +528,7 @@ export class TestTreeProviderLite {
  * after the spy is no longer needed.
  */
 export function spyOnMethod(
-	// eslint-disable-next-line @typescript-eslint/ban-types
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type, @typescript-eslint/ban-types
 	methodClass: Function,
 	methodName: string,
 	spy: () => void,
@@ -811,6 +805,7 @@ export function checkoutWithContent(
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
 		forestType?: ForestType;
+		shouldEncodeIncrementally?: IncrementalEncodingPolicy;
 	},
 ): TreeCheckout {
 	const { checkout } = createCheckoutWithContent(content, args);
@@ -824,6 +819,7 @@ function createCheckoutWithContent(
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
 		forestType?: ForestType;
+		shouldEncodeIncrementally?: IncrementalEncodingPolicy;
 	},
 ): { checkout: TreeCheckout; logger: IMockLoggerExt } {
 	const fieldCursor = normalizeNewFieldContent(content.initialTree);
@@ -834,6 +830,7 @@ function createCheckoutWithContent(
 		args?.forestType ?? ForestTypeReference,
 		schema,
 		testIdCompressor,
+		args?.shouldEncodeIncrementally ?? defaultIncrementalEncodingPolicy,
 	);
 	initializeForest(forest, fieldCursor, testRevisionTagCodec, testIdCompressor);
 

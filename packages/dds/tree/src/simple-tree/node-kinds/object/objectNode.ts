@@ -38,7 +38,7 @@ import {
 	type InternalTreeNode,
 	type TreeNode,
 	type UnhydratedFlexTreeNode,
-	getOrCreateInnerNode,
+	getInnerNode,
 	type NodeSchemaMetadata,
 	type ImplicitAllowedTypes,
 	TreeNodeValid,
@@ -87,6 +87,7 @@ import {
 	type InsertableContent,
 } from "../../unhydratedFlexTreeFromInsertable.js";
 import { convertField, convertFieldKind } from "../../toStoredSchema.js";
+import type { ObjectSchemaOptionsAlpha } from "../../api/index.js";
 
 /**
  * Generates the properties for an ObjectNode from its field schema object.
@@ -98,7 +99,7 @@ import { convertField, convertFieldKind } from "../../toStoredSchema.js";
  */
 export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> =
 	RestrictiveStringRecord<ImplicitFieldSchema> extends T
-		? // eslint-disable-next-line @typescript-eslint/ban-types
+		? // eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/ban-types
 			{}
 		: {
 				-readonly [Property in keyof T]: Property extends string
@@ -243,7 +244,7 @@ function createProxyHandler(
 		get(target, propertyKey, proxy): unknown {
 			const fieldInfo = schema.flexKeyMap.get(propertyKey);
 			if (fieldInfo !== undefined) {
-				const flexNode = getOrCreateInnerNode(proxy);
+				const flexNode = getInnerNode(proxy);
 				debugAssert(() => !flexNode.context.isDisposed() || "FlexTreeNode is disposed");
 				const field = flexNode.tryGetField(fieldInfo.storedKey);
 				if (field !== undefined) {
@@ -274,7 +275,7 @@ function createProxyHandler(
 					: false;
 			}
 
-			const innerNode = getOrCreateInnerNode(proxy);
+			const innerNode = getInnerNode(proxy);
 
 			const innerSchema = innerNode.context.schema.nodeSchema.get(brand(schema.identifier));
 			assert(
@@ -321,7 +322,7 @@ function createProxyHandler(
 			// If a refactoring is done to associated flex tree data with the target not the proxy, this extra map could be removed,
 			// and the design would be more compatible with proxyless nodes.
 			const proxy = targetToProxy.get(target) ?? fail(0xadd /* missing proxy */);
-			const field = getOrCreateInnerNode(proxy).tryGetField(fieldInfo.storedKey);
+			const field = getInnerNode(proxy).tryGetField(fieldInfo.storedKey);
 
 			const p: PropertyDescriptor = {
 				value: field === undefined ? undefined : tryGetTreeNodeForField(field),
@@ -415,9 +416,7 @@ export function objectSchema<
 	identifier: TName,
 	info: T,
 	implicitlyConstructable: ImplicitlyConstructable,
-	allowUnknownOptionalFields: boolean,
-	metadata?: NodeSchemaMetadata<TCustomMetadata>,
-	persistedMetadata?: JsonCompatibleReadOnlyObject | undefined,
+	nodeOptions: ObjectSchemaOptionsAlpha<TCustomMetadata>,
 ): ObjectNodeSchema<TName, T, ImplicitlyConstructable, TCustomMetadata> &
 	ObjectNodeSchemaInternalData &
 	TreeNodeSchemaCorePrivate {
@@ -471,7 +470,8 @@ export function objectSchema<
 			]),
 		);
 		public static readonly identifierFieldKeys: readonly FieldKey[] = identifierFieldKeys;
-		public static readonly allowUnknownOptionalFields: boolean = allowUnknownOptionalFields;
+		public static readonly allowUnknownOptionalFields: boolean =
+			nodeOptions.allowUnknownOptionalFields ?? false;
 
 		public static override prepareInstance<T2>(
 			this: typeof TreeNodeValid<T2>,
@@ -561,9 +561,10 @@ export function objectSchema<
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;
 		}
-		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
+		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> =
+			nodeOptions.metadata ?? {};
 		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
-			persistedMetadata;
+			nodeOptions.persistedMetadata;
 
 		// eslint-disable-next-line import/no-deprecated
 		public get [typeNameSymbol](): TName {
@@ -576,10 +577,7 @@ export function objectSchema<
 		public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
 			return (privateData ??= createTreeNodeSchemaPrivateData(
 				this,
-				Array.from(
-					flexKeyMap.values(),
-					({ schema }) => normalizeFieldSchema(schema).allowedTypes,
-				),
+				Array.from(CustomObjectNode.fields.values(), (schema) => schema.allowedTypesFull),
 				(storedOptions) => {
 					const fields: Map<FieldKey, TreeFieldStoredSchema> = new Map();
 					for (const fieldSchema of flexKeyMap.values()) {
@@ -592,7 +590,7 @@ export function objectSchema<
 							convertField(fieldSchema.schema, storedOptions),
 						);
 					}
-					return new ObjectNodeStoredSchema(fields, persistedMetadata);
+					return new ObjectNodeStoredSchema(fields, nodeOptions.persistedMetadata);
 				},
 			));
 		}

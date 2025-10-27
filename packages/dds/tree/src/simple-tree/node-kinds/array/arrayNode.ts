@@ -25,7 +25,7 @@ import {
 	typeSchemaSymbol,
 	getOrCreateNodeFromInnerNode,
 	getSimpleNodeSchemaFromInnerNode,
-	getOrCreateInnerNode,
+	getInnerNode,
 	type TreeNodeSchemaClass,
 	getKernel,
 	type UnhydratedFlexTreeNode,
@@ -59,7 +59,7 @@ import {
 	getTreeNodeSchemaInitializedData,
 	getUnhydratedContext,
 } from "../../createContext.js";
-import type { System_Unsafe } from "../../api/index.js";
+import type { NodeSchemaOptionsAlpha, System_Unsafe } from "../../api/index.js";
 import type {
 	ArrayNodeCustomizableSchema,
 	ArrayNodePojoEmulationSchema,
@@ -477,7 +477,7 @@ export class IterableTreeArrayContent<T> implements Iterable<T> {
  * Given a array node proxy, returns its underlying LazySequence field.
  */
 function getSequenceField(arrayNode: ReadonlyArrayNode): FlexTreeSequenceField {
-	return getOrCreateInnerNode(arrayNode).getBoxed(EmptyKey) as FlexTreeSequenceField;
+	return getInnerNode(arrayNode).getBoxed(EmptyKey) as FlexTreeSequenceField;
 }
 
 // For compatibility, we are initially implement 'readonly T[]' by applying the Array.prototype methods
@@ -886,7 +886,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		);
 
 		const kernel = getKernel(this);
-		const flexContext = kernel.getOrCreateInnerNode().context;
+		const flexContext = kernel.getInnerNode().context;
 		assert(
 			flexContext === kernel.context.flexContext,
 			0xc14 /* Expected flexContext to match */,
@@ -1152,8 +1152,7 @@ export function arraySchema<
 	info: T,
 	implicitlyConstructable: ImplicitlyConstructable,
 	customizable: boolean,
-	metadata?: NodeSchemaMetadata<TCustomMetadata>,
-	persistedMetadata?: JsonCompatibleReadOnlyObject | undefined,
+	nodeOptions: NodeSchemaOptionsAlpha<TCustomMetadata>,
 ) {
 	type Output = ArrayNodeCustomizableSchema<
 		TName,
@@ -1164,6 +1163,7 @@ export function arraySchema<
 		ArrayNodePojoEmulationSchema<TName, T, ImplicitlyConstructable, TCustomMetadata> &
 		TreeNodeSchemaCorePrivate;
 
+	const persistedMetadata = nodeOptions?.persistedMetadata;
 	const normalizedTypes = normalizeAllowedTypes(info);
 	const lazyAllowedTypesIdentifiers = new Lazy(
 		() => new Set(normalizedTypes.evaluate().map((type) => type.identifier)),
@@ -1252,7 +1252,8 @@ export function arraySchema<
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return normalizedTypes.evaluateSet();
 		}
-		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
+		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> =
+			nodeOptions.metadata ?? {};
 		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
 			persistedMetadata;
 
@@ -1272,8 +1273,11 @@ export function arraySchema<
 		}
 
 		public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
-			return (privateData ??= createTreeNodeSchemaPrivateData(this, [info], (storedOptions) =>
-				arrayNodeStoredSchema(convertAllowedTypes(info, storedOptions), persistedMetadata),
+			return (privateData ??= createTreeNodeSchemaPrivateData(
+				this,
+				[normalizedTypes],
+				(storedOptions) =>
+					arrayNodeStoredSchema(convertAllowedTypes(info, storedOptions), persistedMetadata),
 			));
 		}
 	}

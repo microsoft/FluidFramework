@@ -12,6 +12,7 @@ export {
 	type IChunker,
 	chunkFieldSingle,
 	chunkField,
+	combineChunks,
 } from "./chunkTree.js";
 export { buildChunkedForest } from "./chunkedForest.js";
 export {
@@ -25,5 +26,7 @@ export {
 	fluidVersionToFieldBatchCodecWriteVersion,
 	type IncrementalEncoderDecoder,
 	type ChunkReferenceId,
+	type IncrementalEncodingPolicy,
+	defaultIncrementalEncodingPolicy,
 } from "./codec/index.js";
 export { emptyChunk } from "./emptyChunk.js";

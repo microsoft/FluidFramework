@@ -15,7 +15,7 @@ import {
 	typeNameSymbol,
 	typeSchemaSymbol,
 	type UnhydratedFlexTreeNode,
-	getOrCreateInnerNode,
+	getInnerNode,
 	getKernel,
 	type InternalTreeNode,
 	type NodeSchemaMetadata,
@@ -57,6 +57,7 @@ import {
 import { prepareForInsertion } from "../../prepareForInsertion.js";
 import { recordLikeDataToFlexContent } from "../common.js";
 import { MapNodeStoredSchema } from "../../../core/index.js";
+import type { NodeSchemaOptionsAlpha } from "../../api/index.js";
 
 /**
  * Create a proxy which implements the {@link TreeRecordNode} API.
@@ -105,7 +106,7 @@ function createRecordNodeProxy(
 			}
 
 			if (typeof key === "string") {
-				const innerNode = getOrCreateInnerNode(receiver);
+				const innerNode = getInnerNode(receiver);
 				const field = innerNode.tryGetField(brand(key));
 				if (field !== undefined) {
 					return tryGetTreeNodeForField(field);
@@ -119,7 +120,7 @@ function createRecordNodeProxy(
 				return false;
 			}
 
-			const innerNode = getOrCreateInnerNode(receiver);
+			const innerNode = getInnerNode(receiver);
 			const field = innerNode.getBoxed(brand(key)) as FlexTreeOptionalField;
 			const kernel = getKernel(receiver);
 			const innerSchema = innerNode.context.schema.nodeSchema.get(brand(schema.identifier));
@@ -143,13 +144,13 @@ function createRecordNodeProxy(
 				return false;
 			}
 
-			const innerNode = getOrCreateInnerNode(proxy);
+			const innerNode = getInnerNode(proxy);
 			const childField = innerNode.tryGetField(brand(key));
 
 			return childField !== undefined;
 		},
 		ownKeys: (target) => {
-			const innerNode = getOrCreateInnerNode(proxy);
+			const innerNode = getInnerNode(proxy);
 			return [...innerNode.keys()];
 		},
 		getOwnPropertyDescriptor: (target, key) => {
@@ -157,7 +158,7 @@ function createRecordNodeProxy(
 				return undefined;
 			}
 
-			const innerNode = getOrCreateInnerNode(proxy);
+			const innerNode = getInnerNode(proxy);
 			const field = innerNode.tryGetField(brand(key));
 
 			if (field === undefined) {
@@ -179,7 +180,7 @@ function createRecordNodeProxy(
 				return false;
 			}
 
-			const innerNode = getOrCreateInnerNode(proxy);
+			const innerNode = getInnerNode(proxy);
 			const field = innerNode.tryGetField(brand(key)) as FlexTreeOptionalField | undefined;
 			if (field !== undefined) {
 				field.editor.set(undefined, field.length === 0);
@@ -227,15 +228,7 @@ export interface RecordSchemaOptions<
 
 	readonly implicitlyConstructable: TImplicitlyConstructable;
 
-	/**
-	 * Optional ephemeral metadata for the object node schema.
-	 */
-	readonly metadata?: NodeSchemaMetadata<TCustomMetadata>;
-
-	/**
-	 * Optional persisted metadata for the object node schema.
-	 */
-	readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
+	readonly nodeOptions?: NodeSchemaOptionsAlpha<TCustomMetadata>;
 }
 
 /**
@@ -258,14 +251,8 @@ export function recordSchema<
 		TCustomMetadata
 	>,
 ) {
-	const {
-		identifier,
-		info,
-		customizable,
-		implicitlyConstructable,
-		metadata,
-		persistedMetadata,
-	} = options;
+	const { identifier, info, customizable, implicitlyConstructable, nodeOptions } = options;
+	const persistedMetadata = nodeOptions?.persistedMetadata;
 
 	const normalizedTypes = normalizeAllowedTypes(info);
 	const lazyAllowedTypesIdentifiers = new Lazy(
@@ -369,7 +356,8 @@ export function recordSchema<
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return normalizedTypes.evaluateSet();
 		}
-		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
+		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> =
+			nodeOptions?.metadata ?? {};
 		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
 			persistedMetadata;
 
@@ -393,7 +381,7 @@ export function recordSchema<
 		public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
 			return (privateData ??= createTreeNodeSchemaPrivateData(
 				this,
-				[info],
+				[normalizedTypes],
 				(storedOptions) =>
 					new MapNodeStoredSchema(
 						{
