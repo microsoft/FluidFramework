@@ -75,10 +75,12 @@ class ConcurrencyLimiter {
 			assert(this.limit >= 0);
 		}
 
-		const p = worker().then(() => {
+		const p = worker().finally(() => {
 			this.limit++;
 			if (this.deferred) {
 				assert(this.limit === 0);
+				// This will allow other processing to proceed even on error.
+				// To end early, check for error and reject deferred.
 				this.deferred.resolve();
 				this.deferred = undefined;
 			}
