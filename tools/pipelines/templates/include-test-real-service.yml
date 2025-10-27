@@ -288,8 +288,8 @@ stages:
                 # Wait for each service endpoint with timeout
                 for port in 3001 3002 3003; do
                   echo "Waiting for localhost:$port..."
-                  timeout=60
-                  while ! curl -sf "http://localhost:$port" > /dev/null 2>&1; do
+                  timeout=30
+                  while ! curl -sf "http://localhost:$port/ping" > /dev/null 2>&1; do
                     if [ $timeout -le 0 ]; then
                       echo "ERROR: Service on port $port failed to become ready"
                       docker-compose -f $(Build.SourcesDirectory)/FluidFramework/server/docker-compose.yml logs
