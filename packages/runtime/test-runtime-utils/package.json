@@ -157,7 +157,13 @@
 			"Class_MockFluidDataStoreContext": {
 				"backCompat": false
 			},
+			"Class_MockFluidDataStoreRuntime": {
+				"backCompat": false
+			},
 			"ClassStatics_MockFluidDataStoreContext": {
+				"backCompat": false
+			},
+			"ClassStatics_MockFluidDataStoreRuntime": {
 				"backCompat": false
 			},
 			"Class_MockObjectStorageService": {
