@@ -19,10 +19,13 @@ import {
 } from "../modular-schema/index.js";
 
 import { Changeset as ChangesetSchema, type Encoded } from "./formatV3.js";
-import { makeV2CodecHelpers } from "./sequenceFieldCodecV2.js";
+import {
+	decodeSequenceChangeset,
+	encodeRevision,
+	encodeSequenceChangeset,
+	makeV2CodecHelpers,
+} from "./sequenceFieldCodecV2.js";
 import type { Changeset, Mark, MarkEffect, Rename } from "./types.js";
-import { isNoopMark } from "./utils.js";
-import { assert } from "@fluidframework/core-utils/internal";
 
 export function makeV3Codec(
 	revisionTagCodec: IJsonCodec<
@@ -102,62 +105,18 @@ export function makeV3Codec(
 		encode: (
 			changeset: Changeset,
 			context: FieldChangeEncodingContext,
-		): JsonCompatibleReadOnly & Encoded.Changeset<NodeChangeSchema> => {
-			assert(
-				context.rootNodeChanges.length === 0 && context.rootRenames.entries().length === 0,
-				"XXX",
-			);
-
-			const jsonMarks: Encoded.Changeset<NodeChangeSchema> = [];
-			for (const mark of changeset) {
-				const encodedMark: Encoded.Mark<NodeChangeSchema> = {
-					count: mark.count,
-				};
-				if (!isNoopMark(mark)) {
-					encodedMark.effect = encodeMarkEffect(mark, context);
-				}
-				if (mark.cellId !== undefined) {
-					encodedMark.cellId = atomIdCodec.encode(mark.cellId, context.baseContext);
-				}
-				if (mark.changes !== undefined) {
-					encodedMark.changes = context.encodeNode(mark.changes);
-				}
-				jsonMarks.push(encodedMark);
-			}
-			return jsonMarks;
-		},
+		): JsonCompatibleReadOnly & Encoded.Changeset<NodeChangeSchema> =>
+			encodeSequenceChangeset(
+				changeset,
+				context,
+				(revision) => encodeRevision(revision, context.baseContext, revisionTagCodec),
+				atomIdCodec,
+				encodeMarkEffect,
+			),
 		decode: (
 			changeset: Encoded.Changeset<NodeChangeSchema>,
 			context: FieldChangeEncodingContext,
-		): Changeset => {
-			const marks: Changeset = [];
-			for (const mark of changeset) {
-				const decodedMark: Mark = {
-					count: mark.count,
-				};
-
-				if (mark.cellId !== undefined) {
-					decodedMark.cellId = atomIdCodec.decode(mark.cellId, context.baseContext);
-				}
-
-				if (mark.effect !== undefined) {
-					Object.assign(
-						decodedMark,
-						decodeMarkEffect(mark.effect, mark.count, decodedMark.cellId, context),
-					);
-					assert(mark.effect.rename === undefined, "XXX");
-					assert(mark.effect.attachAndDetach === undefined, "XXX");
-				}
-
-				if (mark.changes !== undefined) {
-					assert(mark.cellId === undefined, "XXX");
-					decodedMark.changes = context.decodeNode(mark.changes);
-				}
-
-				marks.push(decodedMark);
-			}
-			return marks;
-		},
+		): Changeset => decodeSequenceChangeset(changeset, context, atomIdCodec, decodeMarkEffect),
 		encodedSchema: ChangesetSchema(EncodedNodeChangeset),
 	};
 }

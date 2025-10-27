@@ -83,7 +83,12 @@ export function makeV2CodecHelpers(
 		decoderLibrary,
 
 		encodeMarkEffect(mark: Mark, context: FieldChangeEncodingContext): Encoded.MarkEffect {
-			throw new Error("Function not implemented.");
+			return encodeMarkEffect(
+				mark,
+				context,
+				(revision) => encodeRevision(revision, context.baseContext, revisionTagCodec),
+				changeAtomIdCodec,
+			);
 		},
 
 		decodeRevision: (
@@ -103,6 +108,54 @@ export function makeV2CodecHelpers(
 			return decoderDispatcher.dispatch(encoded, count, cellId, context);
 		},
 	};
+}
+
+export type DecodeMarkEffect = (
+	encoded: Encoded.MarkEffect,
+	count: number,
+	cellId: ChangeAtomId | undefined,
+	context: FieldChangeEncodingContext,
+) => MarkEffect;
+
+export function decodeSequenceChangeset(
+	changeset: Encoded.Changeset<NodeChangeSchema>,
+	context: FieldChangeEncodingContext,
+	changeAtomIdCodec: IJsonCodec<
+		ChangeAtomId,
+		EncodedChangeAtomId,
+		EncodedChangeAtomId,
+		ChangeEncodingContext
+	>,
+	decodeMarkEffect: DecodeMarkEffect,
+): Changeset {
+	const marks: Changeset = [];
+	for (const mark of changeset) {
+		const decodedMark: Mark = {
+			count: mark.count,
+		};
+
+		if (mark.cellId !== undefined) {
+			decodedMark.cellId = changeAtomIdCodec.decode(mark.cellId, context.baseContext);
+		}
+
+		if (mark.effect !== undefined) {
+			Object.assign(
+				decodedMark,
+				decodeMarkEffect(mark.effect, mark.count, decodedMark.cellId, context),
+			);
+		}
+
+		if (mark.changes !== undefined) {
+			if (decodedMark.cellId !== undefined) {
+				context.decodeRootNodeChange(decodedMark.cellId, mark.changes);
+			} else {
+				decodedMark.changes = context.decodeNode(mark.changes);
+			}
+		}
+
+		marks.push(decodedMark);
+	}
+	return marks;
 }
 
 function makeMarkEffectDecoder(
@@ -314,6 +367,12 @@ function decodeDetach(
 	return mark;
 }
 
+/**
+ * If we want to make the node change aspect of this codec more type-safe, we could adjust generics
+ * to be in terms of the schema rather than the concrete type of the node change.
+ */
+type NodeChangeSchema = TAnySchema;
+
 export function makeV2Codec(
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,
@@ -327,69 +386,49 @@ export function makeV2Codec(
 	JsonCompatibleReadOnly,
 	FieldChangeEncodingContext
 > {
-	const { decodeMarkEffect, changeAtomIdCodec } = makeV2CodecHelpers(revisionTagCodec);
-	/**
-	 * If we want to make the node change aspect of this codec more type-safe, we could adjust generics
-	 * to be in terms of the schema rather than the concrete type of the node change.
-	 */
-	type NodeChangeSchema = TAnySchema;
+	const { decodeMarkEffect, encodeMarkEffect, changeAtomIdCodec } =
+		makeV2CodecHelpers(revisionTagCodec);
 
 	return {
 		encode: (
 			changeset: Changeset,
 			context: FieldChangeEncodingContext,
-		): JsonCompatibleReadOnly & Encoded.Changeset<NodeChangeSchema> => {
-			function encodeRevision(
-				revision: RevisionTag | undefined,
-			): EncodedRevisionTag | undefined {
-				if (revision === undefined || revision === context.baseContext.revision) {
-					return undefined;
-				}
-
-				return revisionTagCodec.encode(revision, context.baseContext);
-			}
-
-			const jsonMarks: Encoded.Changeset<NodeChangeSchema> = [];
-			for (const mark of changeset) {
-				jsonMarks.push(...encodeMark(mark, context, encodeRevision, changeAtomIdCodec));
-			}
-			return jsonMarks;
-		},
+		): JsonCompatibleReadOnly & Encoded.Changeset<NodeChangeSchema> =>
+			encodeSequenceChangeset(
+				changeset,
+				context,
+				(revision) => encodeRevision(revision, context.baseContext, revisionTagCodec),
+				changeAtomIdCodec,
+				encodeMarkEffect,
+			),
 		decode: (
 			changeset: Encoded.Changeset<NodeChangeSchema>,
 			context: FieldChangeEncodingContext,
-		): Changeset => {
-			const marks: Changeset = [];
-			for (const mark of changeset) {
-				const decodedMark: Mark = {
-					count: mark.count,
-				};
-
-				if (mark.cellId !== undefined) {
-					decodedMark.cellId = changeAtomIdCodec.decode(mark.cellId, context.baseContext);
-				}
-
-				if (mark.effect !== undefined) {
-					Object.assign(
-						decodedMark,
-						decodeMarkEffect(mark.effect, mark.count, decodedMark.cellId, context),
-					);
-				}
-
-				if (mark.changes !== undefined) {
-					if (decodedMark.cellId !== undefined) {
-						context.decodeRootNodeChange(decodedMark.cellId, mark.changes);
-					} else {
-						decodedMark.changes = context.decodeNode(mark.changes);
-					}
-				}
-
-				marks.push(decodedMark);
-			}
-			return marks;
-		},
+		): Changeset =>
+			decodeSequenceChangeset(changeset, context, changeAtomIdCodec, decodeMarkEffect),
 		encodedSchema: ChangesetSchema(EncodedNodeChangeset),
 	};
+}
+
+export function encodeSequenceChangeset(
+	changeset: Changeset,
+	context: FieldChangeEncodingContext,
+	encodeRevision: (revision: RevisionTag | undefined) => EncodedRevisionTag | undefined,
+	changeAtomIdCodec: IJsonCodec<
+		ChangeAtomId,
+		EncodedChangeAtomId,
+		EncodedChangeAtomId,
+		ChangeEncodingContext
+	>,
+	encodeMarkEffect: EncodeMarkEffect,
+): JsonCompatibleReadOnly & Encoded.Changeset<NodeChangeSchema> {
+	const jsonMarks: Encoded.Changeset<NodeChangeSchema> = [];
+	for (const mark of changeset) {
+		jsonMarks.push(
+			...encodeMark(mark, context, encodeRevision, changeAtomIdCodec, encodeMarkEffect),
+		);
+	}
+	return jsonMarks;
 }
 
 function encodeMark(
@@ -402,17 +441,18 @@ function encodeMark(
 		EncodedChangeAtomId,
 		ChangeEncodingContext
 	>,
+	encodeMarkEffect: EncodeMarkEffect,
 ): Encoded.Mark<TAnySchema>[] {
 	const splitLength = getLengthToSplitMark(mark, context);
 	if (splitLength < mark.count) {
 		const [mark1, mark2] = splitMark(mark, splitLength);
 		return [
-			encodeSplitMark(mark1, context, encodeRevision, changeAtomIdCodec),
-			...encodeMark(mark2, context, encodeRevision, changeAtomIdCodec),
+			encodeSplitMark(mark1, context, encodeRevision, changeAtomIdCodec, encodeMarkEffect),
+			...encodeMark(mark2, context, encodeRevision, changeAtomIdCodec, encodeMarkEffect),
 		];
 	}
 
-	return [encodeSplitMark(mark, context, encodeRevision, changeAtomIdCodec)];
+	return [encodeSplitMark(mark, context, encodeRevision, changeAtomIdCodec, encodeMarkEffect)];
 }
 
 function encodeRename(
@@ -536,6 +576,7 @@ function encodeSplitMark(
 		EncodedChangeAtomId,
 		ChangeEncodingContext
 	>,
+	encodeMarkEffect: EncodeMarkEffect,
 ): Encoded.Mark<TAnySchema> {
 	const encodedMark: Encoded.Mark<TAnySchema> = {
 		count: mark.count,
@@ -556,6 +597,18 @@ function encodeSplitMark(
 
 	return encodedMark;
 }
+
+type EncodeMarkEffect = (
+	mark: Mark,
+	context: FieldChangeEncodingContext,
+	encodeRevision: (revision: RevisionTag | undefined) => EncodedRevisionTag | undefined,
+	changeAtomIdCodec: IJsonCodec<
+		ChangeAtomId,
+		EncodedChangeAtomId,
+		EncodedChangeAtomId,
+		ChangeEncodingContext
+	>,
+) => Encoded.MarkEffect;
 
 function encodeMarkEffect(
 	mark: Mark,
@@ -652,6 +705,21 @@ function encodeMarkEffect(
 		default:
 			unreachableCase(type);
 	}
+}
+
+export function encodeRevision(
+	revision: RevisionTag | undefined,
+	context: ChangeEncodingContext,
+	revisionTagCodec: IJsonCodec<
+		RevisionTag,
+		EncodedRevisionTag,
+		EncodedRevisionTag,
+		ChangeEncodingContext
+	>,
+): EncodedRevisionTag | undefined {
+	return revision === undefined || revision === context.revision
+		? undefined
+		: revisionTagCodec.encode(revision, context);
 }
 
 /**
