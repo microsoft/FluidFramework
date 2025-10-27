@@ -70,6 +70,9 @@ type ApplyKindInput<T, Kind extends FieldKind, DefaultsAreOptional extends boole
 Kind
 ] extends [FieldKind.Required] ? T : [Kind] extends [FieldKind.Optional] ? T | undefined : [Kind] extends [FieldKind.Identifier] ? DefaultsAreOptional extends true ? T | undefined : T : never;
 
+// @beta
+export function asBeta<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): TreeViewBeta<TSchema>;
+
 // @public
 export enum AttachState {
     Attached = "Attached",
@@ -1416,6 +1419,14 @@ export interface TreeBeta {
 // @beta
 export const TreeBeta: TreeBeta;
 
+// @beta @sealed
+export interface TreeBranch extends IDisposable {
+    dispose(error?: Error): void;
+    fork(): TreeBranch;
+    merge(branch: TreeBranch, disposeMerged?: boolean): void;
+    rebaseOnto(branch: TreeBranch): void;
+}
+
 // @public @sealed
 export interface TreeChangeEvents {
     nodeChanged(unstable?: unknown): void;
@@ -1537,6 +1548,12 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
     set root(newRoot: InsertableTreeFieldFromImplicitField<TSchema>);
     readonly schema: TSchema;
     upgradeSchema(): void;
+}
+
+// @beta @sealed
+export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema> extends TreeView<TSchema>, TreeBranch {
+    // (undocumented)
+    fork(): ReturnType<TreeBranch["fork"]> & TreeViewBeta<TSchema>;
 }
 
 // @public @sealed

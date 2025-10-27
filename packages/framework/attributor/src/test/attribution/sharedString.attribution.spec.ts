@@ -246,6 +246,15 @@ function createSharedString(
 	const clientIds = Array.from({ length: numClients }, () => random.uuid4());
 	const quorum = makeMockQuorum(clientIds);
 	const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+	const originalPushMessage =
+		containerRuntimeFactory.pushMessage.bind(containerRuntimeFactory);
+	// Mock server-generated timestamps to be deterministic.
+	let msgNum = 0;
+	containerRuntimeFactory.pushMessage = (msg: Partial<ISequencedDocumentMessage>) => {
+		msgNum++;
+		msg.timestamp = getTimestamp(msgNum);
+		originalPushMessage(msg);
+	};
 	let attributor: IAttributor | undefined;
 	let serializer: Encoder<IAttributor, string> | undefined;
 	const initialState: FuzzTestState = {
@@ -271,10 +280,7 @@ function createSharedString(
 				serializer = makeSerializer(dataStoreRuntime);
 				// DeltaManager mock doesn't have high fidelity but attribution requires DataStoreRuntime implements
 				// quorum / op emission.
-				let opIndex = 0;
 				sharedString.on("op", (message) => {
-					opIndex++;
-					message.timestamp = getTimestamp(opIndex);
 					deltaManager.emit("op", message);
 				});
 				dataStoreRuntime.getQuorum = (): IQuorumClients => quorum;

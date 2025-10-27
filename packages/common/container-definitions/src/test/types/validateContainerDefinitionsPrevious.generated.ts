@@ -211,6 +211,7 @@ declare type old_as_current_for_Interface_IContainerContext = requireAssignableT
  * typeValidation.broken:
  * "Interface_IContainerContext": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IContainerContext = requireAssignableTo<TypeOnly<current.IContainerContext>, TypeOnly<old.IContainerContext>>
 
 /*
@@ -265,6 +266,7 @@ declare type old_as_current_for_Interface_IContainerStorageService = requireAssi
  * typeValidation.broken:
  * "Interface_IContainerStorageService": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IContainerStorageService = requireAssignableTo<TypeOnly<current.IContainerStorageService>, TypeOnly<old.IContainerStorageService>>
 
 /*
