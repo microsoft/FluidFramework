@@ -25,7 +25,7 @@ import type {
 } from "@fluidframework/shared-object-base/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
-import type { DependentFormatVersion, ICodecOptions, IJsonCodec } from "../codec/index.js";
+import type { CodecWriteOptions, DependentFormatVersion, IJsonCodec } from "../codec/index.js";
 import {
 	type ChangeFamily,
 	type ChangeFamilyEditor,
@@ -64,11 +64,6 @@ import type { ResubmitMachine } from "./resubmitMachine.js";
 
 // TODO: Organize this to be adjacent to persisted types.
 const summarizablesTreeKey = "indexes";
-
-export interface ExplicitCoreCodecVersions {
-	editManager: EditManagerFormatVersion;
-	message: MessageFormatVersion;
-}
 
 export interface ClonableSchemaAndPolicy extends SchemaAndPolicy {
 	schema: TreeStoredSchemaRepository;
@@ -128,8 +123,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		logger: ITelemetryBaseLogger | undefined,
 		summarizables: readonly Summarizable[],
 		protected readonly changeFamily: ChangeFamily<TEditor, TChange>,
-		options: ICodecOptions,
-		formatOptions: ExplicitCoreCodecVersions,
+		options: CodecWriteOptions,
 		changeFormatVersionForEditManager: DependentFormatVersion<EditManagerFormatVersion>,
 		changeFormatVersionForMessage: DependentFormatVersion<MessageFormatVersion>,
 		protected readonly idCompressor: IIdCompressor,
@@ -172,7 +166,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			changeFormatVersionForEditManager,
 			revisionTagCodec,
 			options,
-			formatOptions.editManager,
 		);
 		this.summarizables = [
 			new EditManagerSummarizer(
@@ -193,7 +186,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			changeFormatVersionForMessage,
 			new RevisionTagCodec(idCompressor),
 			options,
-			formatOptions.message,
 		);
 
 		this.registerSharedBranchForEditing(

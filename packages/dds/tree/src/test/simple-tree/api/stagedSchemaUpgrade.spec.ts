@@ -25,7 +25,7 @@ import {
 	type ViewContent,
 } from "../../../shared-tree/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
-import { FluidClientVersion } from "../../../codec/index.js";
+import { currentVersion, FluidClientVersion } from "../../../codec/index.js";
 
 // Some documentation links to this file on GitHub: renaming it may break those links.
 
@@ -183,7 +183,7 @@ describe("staged schema upgrade", () => {
 
 		const viewB = independentInitializedView(
 			configB,
-			{ jsonValidator: FormatValidatorBasic },
+			{ jsonValidator: FormatValidatorBasic, minVersionForCollab: currentVersion },
 			content,
 		);
 		// check that we can read the tree
@@ -203,7 +203,7 @@ describe("staged schema upgrade", () => {
 
 		const viewC = independentInitializedView(
 			configC,
-			{ jsonValidator: FormatValidatorBasic },
+			{ jsonValidator: FormatValidatorBasic, minVersionForCollab: currentVersion },
 			content,
 		);
 

@@ -22,7 +22,6 @@ export {
 } from "./transaction.js";
 
 export {
-	type ExplicitCoreCodecVersions,
 	SharedTreeCore,
 	type Summarizable,
 	type SummaryElementParser,
@@ -44,6 +43,7 @@ export {
 	getCodecTreeForEditManagerFormatWithChange,
 	type EditManagerFormatVersion,
 	editManagerFormatVersions,
+	clientVersionToEditManagerFormatVersion,
 } from "./editManagerCodecs.js";
 export { EditManagerSummarizer } from "./editManagerSummarizer.js";
 export {
@@ -64,4 +64,5 @@ export {
 	type MessageFormatVersion,
 	messageFormatVersions,
 	getCodecTreeForMessageFormatWithChange,
+	clientVersionToMessageFormatVersion,
 } from "./messageCodecs.js";

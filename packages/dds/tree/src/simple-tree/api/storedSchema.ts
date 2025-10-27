@@ -4,8 +4,7 @@
  */
 
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
-import type { ICodecOptions } from "../../codec/index.js";
-import { SchemaVersion } from "../../core/index.js";
+import type { CodecWriteOptions } from "../../codec/index.js";
 import { encodeTreeSchema, makeSchemaCodec } from "../../feature-libraries/index.js";
 import {
 	clientVersionToSchemaVersion,
@@ -96,11 +95,11 @@ export function extractPersistedSchema(
 export function comparePersistedSchema(
 	persisted: JsonCompatible,
 	view: ImplicitFieldSchema,
-	options: ICodecOptions,
+	options: CodecWriteOptions,
 ): Omit<SchemaCompatibilityStatus, "canInitialize"> {
 	// Any version can be passed down to makeSchemaCodec here.
 	// We only use the decode part, which always dispatches to the correct codec based on the version in the data, not the version passed to `makeSchemaCodec`.
-	const schemaCodec = makeSchemaCodec(options, SchemaVersion.v1);
+	const schemaCodec = makeSchemaCodec(options);
 	const stored = schemaCodec.decode(persisted as FormatV1);
 	const config = new TreeViewConfigurationAlpha({
 		schema: normalizeFieldSchema(view),

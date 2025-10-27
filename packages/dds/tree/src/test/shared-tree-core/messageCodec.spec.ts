@@ -28,7 +28,7 @@ import {
 	testRevisionTagCodec,
 	validateUsageError,
 } from "../utils.js";
-import { DependentFormatVersion } from "../../codec/index.js";
+import { currentVersion, DependentFormatVersion } from "../../codec/index.js";
 
 const commit1 = {
 	revision: mintRevisionTag(),
@@ -159,6 +159,7 @@ describe("message codec", () => {
 			testRevisionTagCodec,
 			{
 				jsonValidator: FormatValidatorBasic,
+				minVersionForCollab: currentVersion,
 			},
 		);
 

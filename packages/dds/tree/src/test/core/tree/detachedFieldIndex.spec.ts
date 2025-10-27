@@ -23,9 +23,11 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import type { FormatV1 } from "../../../core/tree/detachedFieldIndexFormatV1.js";
 // eslint-disable-next-line import/no-internal-modules
-import { version2, type FormatV2 } from "../../../core/tree/detachedFieldIndexFormatV2.js";
+import type { FormatV2 } from "../../../core/tree/detachedFieldIndexFormatV2.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { DetachedFieldSummaryData } from "../../../core/tree/detachedFieldIndexTypes.js";
+// eslint-disable-next-line import/no-internal-modules
+import { DetachedFieldIndexVersion } from "../../../core/tree/detachedFieldIndexFormatCommon.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import {
 	type IdAllocator,
@@ -213,7 +215,7 @@ function generateTestCases(
 		},
 		{
 			name: "Unfinalized id",
-			validFor: new Set([version2]),
+			validFor: new Set([DetachedFieldIndexVersion.v2]),
 			data: {
 				maxId,
 				data: new Map([[unfinalizedRevision, new Map([[0, { root: brand(1) }]])]]),

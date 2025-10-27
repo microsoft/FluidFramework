@@ -4,10 +4,11 @@
  */
 
 import { assert, oob } from "@fluidframework/core-utils/internal";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 
 import {
 	type CodecTree,
-	type ICodecOptions,
+	type CodecWriteOptions,
 	type IJsonCodec,
 	makeVersionedValidatedCodec,
 } from "../../codec/index.js";
@@ -15,7 +16,7 @@ import type { FieldKey, ITreeCursorSynchronous } from "../../core/index.js";
 import type { FieldBatchCodec, FieldBatchEncodingContext } from "../chunked-forest/index.js";
 
 import { Format } from "./format.js";
-import type { Brand } from "../../util/index.js";
+import { brand, type Brand } from "../../util/index.js";
 
 /**
  * Uses field cursors
@@ -23,15 +24,28 @@ import type { Brand } from "../../util/index.js";
 export type FieldSet = ReadonlyMap<FieldKey, ITreeCursorSynchronous>;
 export type ForestCodec = IJsonCodec<FieldSet, Format, Format, FieldBatchEncodingContext>;
 
+/**
+ * Convert a MinimumVersionForCollab to a ForestFormatVersion.
+ * @param clientVersion - The MinimumVersionForCollab to convert.
+ * @returns The ForestFormatVersion that corresponds to the provided MinimumVersionForCollab.
+ */
+function clientVersionToForestSummaryVersion(
+	clientVersion: MinimumVersionForCollab,
+): ForestFormatVersion {
+	// Currently, forest summary codec only writes in version 1.
+	return brand(ForestVersion.v1);
+}
+
 export function makeForestSummarizerCodec(
-	options: ICodecOptions,
+	options: CodecWriteOptions,
 	fieldBatchCodec: FieldBatchCodec,
 ): ForestCodec {
 	const inner = fieldBatchCodec;
 	// TODO: AB#41865
 	// This needs to be updated to support multiple versions.
 	// The second version will be used to enable incremental summarization.
-	return makeVersionedValidatedCodec(options, new Set([1]), Format, {
+	const writeVersion = clientVersionToForestSummaryVersion(options.minVersionForCollab);
+	return makeVersionedValidatedCodec(options, new Set([ForestVersion.v1]), Format, {
 		encode: (data: FieldSet, context: FieldBatchEncodingContext): Format => {
 			const keys: FieldKey[] = [];
 			const fields: ITreeCursorSynchronous[] = [];
@@ -39,7 +53,7 @@ export function makeForestSummarizerCodec(
 				keys.push(key);
 				fields.push(value);
 			}
-			return { keys, fields: inner.encode(fields, context), version: 1 };
+			return { keys, fields: inner.encode(fields, context), version: writeVersion };
 		},
 		decode: (data: Format, context: FieldBatchEncodingContext): FieldSet => {
 			const out: Map<FieldKey, ITreeCursorSynchronous> = new Map();
@@ -53,7 +67,15 @@ export function makeForestSummarizerCodec(
 	});
 }
 
-export type ForestFormatVersion = Brand<1, "ForestFormatVersion">;
-export function getCodecTreeForForestFormat(version: ForestFormatVersion): CodecTree {
-	return { name: "Forest", version };
+/**
+ * The format version for the forest.
+ */
+export enum ForestVersion {
+	v1 = 1,
+}
+export type ForestFormatVersion = Brand<ForestVersion, "ForestFormatVersion">;
+export function getCodecTreeForForestFormat(
+	clientVersion: MinimumVersionForCollab,
+): CodecTree {
+	return { name: "Forest", version: clientVersionToForestSummaryVersion(clientVersion) };
 }

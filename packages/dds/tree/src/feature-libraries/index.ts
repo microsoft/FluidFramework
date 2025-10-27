@@ -33,6 +33,7 @@ export {
 	makeSchemaCodec,
 	makeSchemaCodecs,
 	getCodecTreeForSchemaFormat,
+	clientVersionToSchemaVersion,
 } from "./schema-index/index.js";
 export {
 	stackTreeNodeCursor,
@@ -107,7 +108,6 @@ export {
 	getCodecTreeForFieldBatchFormat,
 	makeTreeChunker,
 	makeFieldBatchCodec,
-	fluidVersionToFieldBatchCodecWriteVersion,
 	type FieldBatchEncodingContext,
 	emptyChunk,
 	combineChunks,

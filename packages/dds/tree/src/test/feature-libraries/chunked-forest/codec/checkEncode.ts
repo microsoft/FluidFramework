@@ -21,7 +21,7 @@ import type {
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";
 import {
 	type EncodedFieldBatch,
-	version,
+	FieldBatchVersion,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/format.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -94,7 +94,7 @@ function testDecode(
 	incrementalDecoder?: IncrementalDecoder,
 ): EncodedFieldBatch {
 	const chunk = updateShapesAndIdentifiersEncoding(
-		version,
+		FieldBatchVersion.v1,
 		cloneArrays(buffer),
 		identifierFilter,
 	);

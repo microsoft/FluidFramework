@@ -4,4 +4,7 @@
  */
 
 export { forestSummaryKey, ForestSummarizer } from "./forestSummarizer.js";
-export { getCodecTreeForForestFormat, type ForestFormatVersion } from "./codec.js";
+export {
+	getCodecTreeForForestFormat,
+	type ForestFormatVersion,
+} from "./codec.js";

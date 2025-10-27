@@ -5,9 +5,21 @@
 
 import { type Static, type TSchema, Type } from "@sinclair/typebox";
 
-import { brandedNumberType } from "../../util/index.js";
+import { brandedNumberType, type Brand } from "../../util/index.js";
 
 import type { ForestRootId } from "./detachedFieldIndexTypes.js";
+
+/**
+ * The format version for the detached field index.
+ */
+export enum DetachedFieldIndexVersion {
+	v1 = 1,
+	v2 = 2,
+}
+export type DetachedFieldIndexFormatVersion = Brand<
+	DetachedFieldIndexVersion,
+	"DetachedFieldIndexFormatVersion"
+>;
 
 /**
  * The ID of a detached node. Is not globally unique on.

@@ -17,7 +17,7 @@ import type { JsonCompatibleReadOnly } from "../util/index.js";
 import { Message } from "./messageFormatV5.js";
 import type { DecodedMessage } from "./messageTypes.js";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import type { MessageEncodingContext } from "./messageCodecs.js";
+import type { MessageEncodingContext, MessageVersion } from "./messageCodecs.js";
 import { decodeBranchId, encodeBranchId } from "./branchIdCodec.js";
 
 export function makeV5CodecWithVersion<TChangeset>(
@@ -29,7 +29,7 @@ export function makeV5CodecWithVersion<TChangeset>(
 		ChangeEncodingContext
 	>,
 	options: ICodecOptions,
-	version: 5,
+	version: MessageVersion.v5,
 ): IJsonCodec<
 	DecodedMessage<TChangeset>,
 	JsonCompatibleReadOnly,

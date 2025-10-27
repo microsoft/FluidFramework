@@ -4,8 +4,10 @@
  */
 
 import { fail } from "@fluidframework/core-utils/internal";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import {
 	type CodecTree,
+	type CodecWriteOptions,
 	DiscriminatedUnionDispatcher,
 	type FormatVersion,
 	type ICodecFamily,
@@ -40,7 +42,7 @@ import type { SharedTreeChange, SharedTreeInnerChange } from "./sharedTreeChange
 
 export function makeSharedTreeChangeCodecFamily(
 	modularChangeCodecFamily: ICodecFamily<ModularChangeset, ChangeEncodingContext>,
-	options: ICodecOptions,
+	options: CodecWriteOptions,
 ): ICodecFamily<SharedTreeChange, ChangeEncodingContext> {
 	const schemaChangeCodecs = makeSchemaChangeCodecs(options);
 	const versions: [
@@ -92,6 +94,7 @@ export const dependenciesForChangeFormat: Map<
 
 export function getCodecTreeForChangeFormat(
 	version: SharedTreeChangeFormatVersion,
+	clientVersion: MinimumVersionForCollab,
 ): CodecTree {
 	const { modularChange, schemaChange } =
 		dependenciesForChangeFormat.get(version) ?? fail(0xc78 /* Unknown change format */);
@@ -100,7 +103,7 @@ export function getCodecTreeForChangeFormat(
 		version,
 		children: [
 			getCodecTreeForModularChangeFormat(modularChange),
-			getCodecTreeForSchemaChangeFormat(schemaChange),
+			getCodecTreeForSchemaChangeFormat(schemaChange, clientVersion),
 		],
 	};
 }

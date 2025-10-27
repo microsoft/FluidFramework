@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
-import type { ICodecOptions } from "../../../codec/index.js";
+import { currentVersion, type CodecWriteOptions } from "../../../codec/index.js";
 import { rootFieldKey } from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import {
@@ -33,8 +33,11 @@ import { brand } from "../../../util/index.js";
 import { EmptyObject } from "../../cursorTestSuite.js";
 import { testIdCompressor, validateUsageError } from "../../utils.js";
 
-const codecOptions: ICodecOptions = { jsonValidator: FormatValidatorBasic };
-const fieldBatchCodec = makeFieldBatchCodec(codecOptions, 1);
+const codecOptions: CodecWriteOptions = {
+	jsonValidator: FormatValidatorBasic,
+	minVersionForCollab: currentVersion,
+};
+const fieldBatchCodec = makeFieldBatchCodec(codecOptions);
 const context = {
 	encodeType: TreeCompressionStrategy.Uncompressed,
 	originatorId: testIdCompressor.localSessionId,

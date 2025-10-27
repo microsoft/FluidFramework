@@ -4,11 +4,12 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 
 import {
 	type CodecTree,
+	type CodecWriteOptions,
 	type ICodecFamily,
-	type ICodecOptions,
 	type IJsonCodec,
 	makeCodecFamily,
 	makeVersionDispatchingCodec,
@@ -26,7 +27,9 @@ import type { Brand } from "../../util/index.js";
  * @param options - Specifies common codec options, including which `validator` to use.
  * @returns The composed codec family.
  */
-export function makeSchemaChangeCodecs(options: ICodecOptions): ICodecFamily<SchemaChange> {
+export function makeSchemaChangeCodecs(
+	options: CodecWriteOptions,
+): ICodecFamily<SchemaChange> {
 	return makeCodecFamily([
 		[SchemaVersion.v1, makeSchemaChangeCodecV1(options, SchemaVersion.v1)],
 		[SchemaVersion.v2, makeSchemaChangeCodecV1(options, SchemaVersion.v2)],
@@ -39,11 +42,12 @@ export type SchemaChangeFormatVersion = Brand<
 >;
 export function getCodecTreeForSchemaChangeFormat(
 	version: SchemaChangeFormatVersion,
+	clientVersion: MinimumVersionForCollab,
 ): CodecTree {
 	return {
 		name: "SchemaChange",
 		version,
-		children: [getCodecTreeForSchemaFormat(version)],
+		children: [getCodecTreeForSchemaFormat(clientVersion)],
 	};
 }
 
@@ -54,7 +58,7 @@ export function getCodecTreeForSchemaChangeFormat(
  * @returns The composed codec.
  */
 export function makeSchemaChangeCodec(
-	options: ICodecOptions,
+	options: CodecWriteOptions,
 	writeVersion: SchemaVersion,
 ): IJsonCodec<SchemaChange> {
 	const family = makeSchemaChangeCodecs(options);
@@ -68,10 +72,10 @@ export function makeSchemaChangeCodec(
  * @returns The composed schema change codec.
  */
 function makeSchemaChangeCodecV1(
-	options: ICodecOptions,
+	options: CodecWriteOptions,
 	schemaWriteVersion: SchemaVersion,
 ): IJsonCodec<SchemaChange, EncodedSchemaChange> {
-	const schemaCodec = makeSchemaCodec(options, schemaWriteVersion);
+	const schemaCodec = makeSchemaCodec(options);
 	const schemaChangeCodec: IJsonCodec<SchemaChange, EncodedSchemaChange> = {
 		encode: (schemaChange) => {
 			assert(

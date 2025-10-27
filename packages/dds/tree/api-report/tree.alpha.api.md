@@ -153,7 +153,7 @@ export interface CommitMetadata {
 }
 
 // @alpha
-export function comparePersistedSchema(persisted: JsonCompatible, view: ImplicitFieldSchema, options: ICodecOptions): Omit<SchemaCompatibilityStatus, "canInitialize">;
+export function comparePersistedSchema(persisted: JsonCompatible, view: ImplicitFieldSchema, options: CodecWriteOptions): Omit<SchemaCompatibilityStatus, "canInitialize">;
 
 // @beta
 export type ConciseTree<THandle = IFluidHandle> = Exclude<TreeLeafValue, IFluidHandle> | THandle | ConciseTree<THandle>[] | {
@@ -386,7 +386,7 @@ export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
 export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
 
 // @alpha
-export function independentInitializedView<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options: ForestOptions & ICodecOptions, content: ViewContent): TreeViewAlpha<TSchema>;
+export function independentInitializedView<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options: ForestOptions & CodecWriteOptions, content: ViewContent): TreeViewAlpha<TSchema>;
 
 // @alpha
 export function independentView<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options: ForestOptions & {
@@ -744,7 +744,7 @@ export interface ObservationResults<TResult> {
 export type Off = Off_2;
 
 // @alpha
-export function persistedToSimpleSchema(persisted: JsonCompatible, options: ICodecOptions): SimpleTreeSchema;
+export function persistedToSimpleSchema(persisted: JsonCompatible, options: CodecWriteOptions): SimpleTreeSchema;
 
 // @beta @system
 export type PopUnion<Union, AsOverloadedFunction = UnionToIntersection<Union extends unknown ? (f: Union) => void : never>> = AsOverloadedFunction extends (a: infer First) => void ? First : never;

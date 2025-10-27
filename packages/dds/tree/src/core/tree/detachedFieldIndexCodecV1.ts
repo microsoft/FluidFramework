@@ -14,9 +14,10 @@ import {
 	RevisionTagSchema,
 } from "../rebase/index.js";
 
-import { type FormatV1, version1 } from "./detachedFieldIndexFormatV1.js";
+import type { FormatV1 } from "./detachedFieldIndexFormatV1.js";
 import type { DetachedFieldSummaryData, Major } from "./detachedFieldIndexTypes.js";
 import { makeDetachedFieldIndexCodecFromMajorCodec } from "./detachedFieldIndexCodecCommon.js";
+import { DetachedFieldIndexVersion } from "./detachedFieldIndexFormatCommon.js";
 
 class MajorCodec implements IJsonCodec<Major, EncodedRevisionTag> {
 	public constructor(
@@ -74,7 +75,7 @@ export function makeDetachedNodeToFieldCodecV1(
 	return makeDetachedFieldIndexCodecFromMajorCodec(
 		options,
 		majorCodec,
-		version1,
+		DetachedFieldIndexVersion.v1,
 		RevisionTagSchema,
 	);
 }

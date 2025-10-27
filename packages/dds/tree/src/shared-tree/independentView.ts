@@ -10,12 +10,11 @@ import {
 	createIdCompressor,
 } from "@fluidframework/id-compressor/internal";
 
-import type { ICodecOptions } from "../codec/index.js";
+import type { CodecWriteOptions, ICodecOptions } from "../codec/index.js";
 import {
 	type ITreeCursorSynchronous,
 	type RevisionTag,
 	RevisionTagCodec,
-	SchemaVersion,
 	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
 } from "../core/index.js";
@@ -96,12 +95,12 @@ export function independentView<const TSchema extends ImplicitFieldSchema>(
  */
 export function independentInitializedView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
-	options: ForestOptions & ICodecOptions,
+	options: ForestOptions & CodecWriteOptions,
 	content: ViewContent,
 ): TreeViewAlpha<TSchema> {
 	const idCompressor: IIdCompressor = content.idCompressor;
-	const fieldBatchCodec = makeFieldBatchCodec(options, 1);
-	const schemaCodec = makeSchemaCodec(options, SchemaVersion.v1);
+	const fieldBatchCodec = makeFieldBatchCodec(options);
+	const schemaCodec = makeSchemaCodec(options);
 
 	const schema = schemaCodec.decode(content.schema as Format);
 	const context: FieldBatchEncodingContext = {
