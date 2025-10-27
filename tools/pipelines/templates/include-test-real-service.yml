@@ -286,7 +286,9 @@ stages:
                 echo "Waiting for services to be ready..."
 
                 # Wait for each service endpoint with timeout
-                # Historian (3001) uses /healthz/startup, others use /ping
+                # Alfred (3003) and Historian (3001) use /healthz/startup
+                # Nexus (3002) uses /ping
+
                 echo "Waiting for localhost:3001 (historian)..."
                 timeout=30
                 while ! curl -sf "http://localhost:3001/healthz/startup" > /dev/null 2>&1; do
@@ -301,21 +303,33 @@ stages:
                 done
                 echo "  ✓ Historian on port 3001 is ready"
 
-                for port in 3002 3003; do
-                  echo "Waiting for localhost:$port..."
-                  timeout=30
-                  while ! curl -sf "http://localhost:$port/ping" > /dev/null 2>&1; do
-                    if [ $timeout -le 0 ]; then
-                      echo "ERROR: Service on port $port failed to become ready"
-                      docker-compose -f $(Build.SourcesDirectory)/FluidFramework/server/docker-compose.yml logs
-                      exit 1
-                    fi
-                    echo "  Still waiting... ($timeout seconds remaining)"
-                    sleep 2
-                    timeout=$((timeout - 2))
-                  done
-                  echo "  ✓ Service on port $port is ready"
+                echo "Waiting for localhost:3002 (nexus)..."
+                timeout=30
+                while ! curl -sf "http://localhost:3002/ping" > /dev/null 2>&1; do
+                  if [ $timeout -le 0 ]; then
+                    echo "ERROR: Nexus service failed to become ready"
+                    docker-compose -f $(Build.SourcesDirectory)/FluidFramework/server/docker-compose.yml logs nexus
+                    exit 1
+                  fi
+                  echo "  Still waiting... ($timeout seconds remaining)"
+                  sleep 2
+                  timeout=$((timeout - 2))
                 done
+                echo "  ✓ Nexus on port 3002 is ready"
+
+                echo "Waiting for localhost:3003 (alfred)..."
+                timeout=30
+                while ! curl -sf "http://localhost:3003/healthz/startup" > /dev/null 2>&1; do
+                  if [ $timeout -le 0 ]; then
+                    echo "ERROR: Alfred service failed to become ready"
+                    docker-compose -f $(Build.SourcesDirectory)/FluidFramework/server/docker-compose.yml logs alfred
+                    exit 1
+                  fi
+                  echo "  Still waiting... ($timeout seconds remaining)"
+                  sleep 2
+                  timeout=$((timeout - 2))
+                done
+                echo "  ✓ Alfred on port 3003 is ready"
 
                 echo "All services are ready!"
 
