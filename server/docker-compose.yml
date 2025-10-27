@@ -15,12 +15,6 @@ services:
       - "3003:3003"
       - "3002:3002"
       - "3001:3001"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3003/", "--max-time", "5"]
-      interval: 10s
-      timeout: 5s
-      retries: 12
-      start_period: 30s
   alfred:
     image: ${REGISTRY_URL:-mcr.microsoft.com}/fluidframework/routerlicious/server:${ALFRED_IMAGE_TAG:-latest}
     expose:
