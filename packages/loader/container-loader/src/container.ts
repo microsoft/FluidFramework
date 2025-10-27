@@ -2558,6 +2558,7 @@ export class Container
 						setConnectionStatus({
 							connectionState,
 							canSendOps: false,
+							readonly,
 						});
 
 						break;
@@ -2570,6 +2571,7 @@ export class Container
 							connectionState,
 							pendingClientConnectionId,
 							canSendOps: false,
+							readonly,
 						});
 
 						break;
@@ -2587,6 +2589,7 @@ export class Container
 							connectionState,
 							clientConnectionId,
 							canSendOps: !readonly,
+							readonly,
 						});
 
 						break;
@@ -2597,6 +2600,7 @@ export class Container
 							priorPendingClientConnectionId: pendingClientConnectionId,
 							priorConnectedClientConnectionId: this.clientId,
 							canSendOps: false,
+							readonly,
 						});
 
 						break;

@@ -173,6 +173,7 @@ function updateConnectionState(
 			runtime.setConnectionStatus({
 				connectionState,
 				canSendOps: false,
+				readonly: context.isReadonly,
 			});
 
 			break;
@@ -183,6 +184,7 @@ function updateConnectionState(
 				connectionState,
 				pendingClientConnectionId: clientId,
 				canSendOps: false,
+				readonly: context.isReadonly,
 			});
 
 			break;
@@ -193,6 +195,7 @@ function updateConnectionState(
 				connectionState,
 				clientConnectionId: clientId,
 				canSendOps: !context.isReadonly,
+				readonly: context.isReadonly,
 			});
 
 			break;
@@ -201,6 +204,7 @@ function updateConnectionState(
 			runtime.setConnectionStatus({
 				connectionState,
 				canSendOps: false,
+				readonly: context.isReadonly,
 				priorPendingClientConnectionId: context.signalAudience?.getSelf()?.clientId,
 				priorConnectedClientConnectionId: context.clientId,
 			});
