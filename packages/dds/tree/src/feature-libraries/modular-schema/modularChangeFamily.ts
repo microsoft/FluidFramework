@@ -1812,7 +1812,12 @@ export class ModularChangeFamily
 			fieldChanges: updatedFields,
 			nodeChanges: updatedNodes,
 			nodeToParent: updatedNodeToParent,
-			rootNodes: replaceRootTableRevision(change.rootNodes, oldRevisions, newRevision),
+			rootNodes: replaceRootTableRevision(
+				change.rootNodes,
+				oldRevisions,
+				newRevision,
+				change.nodeAliases,
+			),
 
 			// We've updated all references to old node IDs, so we no longer need an alias table.
 			nodeAliases: newTupleBTree(),
@@ -4629,6 +4634,7 @@ function replaceRootTableRevision(
 	table: RootNodeTable,
 	oldRevisions: Set<RevisionTag | undefined>,
 	newRevision: RevisionTag | undefined,
+	nodeAliases: ChangeAtomIdBTree<NodeId>,
 ): RootNodeTable {
 	const oldToNewId = table.oldToNewId.mapEntries(
 		(id) => replaceAtomRevisions(id, oldRevisions, newRevision),
@@ -4643,18 +4649,28 @@ function replaceRootTableRevision(
 	const nodeChanges: ChangeAtomIdBTree<NodeId> = newTupleBTree(
 		[...table.nodeChanges.entries()].map(([[revision, id], nodeId]) => [
 			[oldRevisions.has(revision) ? newRevision : revision, id],
-			replaceAtomRevisions(nodeId, oldRevisions, newRevision),
+			replaceAtomRevisions(normalizeNodeId(nodeId, nodeAliases), oldRevisions, newRevision),
 		]),
 	);
 
 	const detachLocations = table.detachLocations.mapEntries(
 		(id) => replaceAtomRevisions(id, oldRevisions, newRevision),
-		(fieldId) => replaceFieldIdRevision(fieldId, oldRevisions, newRevision),
+		(fieldId) =>
+			replaceFieldIdRevision(
+				normalizeFieldId(fieldId, nodeAliases),
+				oldRevisions,
+				newRevision,
+			),
 	);
 
 	const outputDetachLocations = table.outputDetachLocations.mapEntries(
 		(id) => replaceAtomRevisions(id, oldRevisions, newRevision),
-		(fieldId) => replaceFieldIdRevision(fieldId, oldRevisions, newRevision),
+		(fieldId) =>
+			replaceFieldIdRevision(
+				normalizeFieldId(fieldId, nodeAliases),
+				oldRevisions,
+				newRevision,
+			),
 	);
 
 	return { oldToNewId, newToOldId, nodeChanges, detachLocations, outputDetachLocations };
