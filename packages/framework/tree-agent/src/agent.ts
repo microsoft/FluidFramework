@@ -15,7 +15,7 @@ import type {
 	InsertableContent,
 	ReadSchema,
 } from "@fluidframework/tree/alpha";
-import { ObjectNodeSchema, Tree } from "@fluidframework/tree/alpha";
+import { ObjectNodeSchema, Tree, TreeAlpha } from "@fluidframework/tree/alpha";
 
 import type {
 	SharedTreeChatModel,
@@ -29,7 +29,6 @@ import type {
 import { getPrompt, stringifyTree } from "./prompt.js";
 import { Subtree } from "./subtree.js";
 import {
-	constructNode,
 	llmDefault,
 	type TreeView,
 	findSchemas,
@@ -174,11 +173,12 @@ export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
  * Creates an unhydrated node of the given schema with the given value.
  * @remarks If the schema is an object with {@link llmDefault | default values}, this function populates the node with those defaults.
  */
-function constructTreeNode(schema: TreeNodeSchema, value: FactoryContentObject): TreeNode {
+function constructTreeNode(schema: TreeNodeSchema, content: FactoryContentObject): TreeNode {
+	let toInsert = content;
 	if (schema instanceof ObjectNodeSchema) {
-		const inputWithDefaults: Record<string, InsertableContent | undefined> = {};
+		const contentWithDefaults: Record<string, InsertableContent | undefined> = {};
 		for (const [key, field] of schema.fields) {
-			if (value[key] === undefined) {
+			if (content[key] === undefined) {
 				if (
 					typeof field.metadata.custom === "object" &&
 					field.metadata.custom !== null &&
@@ -188,17 +188,19 @@ function constructTreeNode(schema: TreeNodeSchema, value: FactoryContentObject):
 					if (typeof defaulter === "function") {
 						const defaultValue: unknown = defaulter();
 						if (defaultValue !== undefined) {
-							inputWithDefaults[key] = defaultValue;
+							contentWithDefaults[key] = defaultValue;
 						}
 					}
 				}
 			} else {
-				inputWithDefaults[key] = value[key];
+				contentWithDefaults[key] = content[key];
 			}
 		}
-		return constructNode(schema, inputWithDefaults);
+		toInsert = contentWithDefaults;
 	}
-	return constructNode(schema, value);
+
+	// Cast to never because tagContentSchema is typed to only accept InsertableContent, but we know that 'toInsert' (either the original content or contentWithDefaults) produces valid content for the schema.
+	return TreeAlpha.tagContentSchema(schema, toInsert as never);
 }
 
 /**

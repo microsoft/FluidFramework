@@ -26,6 +26,52 @@ export namespace ConnectionState {
 // @public
 export type ConnectionState = ConnectionState.Disconnected | ConnectionState.EstablishingConnection | ConnectionState.CatchingUp | ConnectionState.Connected;
 
+// @beta @sealed @legacy
+export type ConnectionStatus = ConnectionStatusEstablishingConnection | ConnectionStatusCatchingUp | ConnectionStatusConnected | ConnectionStatusDisconnected;
+
+// @beta @sealed @legacy
+export interface ConnectionStatusCatchingUp extends ConnectionStatusTemplate {
+    // (undocumented)
+    canSendOps: false;
+    // (undocumented)
+    connectionState: ConnectionState.CatchingUp;
+    pendingClientConnectionId: string;
+}
+
+// @beta @sealed @legacy
+export interface ConnectionStatusConnected extends ConnectionStatusTemplate {
+    // (undocumented)
+    canSendOps: boolean;
+    clientConnectionId: string;
+    // (undocumented)
+    connectionState: ConnectionState.Connected;
+}
+
+// @beta @sealed @legacy
+export interface ConnectionStatusDisconnected extends ConnectionStatusTemplate {
+    // (undocumented)
+    canSendOps: false;
+    // (undocumented)
+    connectionState: ConnectionState.Disconnected;
+    priorConnectedClientConnectionId: string | undefined;
+    priorPendingClientConnectionId: string | undefined;
+}
+
+// @beta @sealed @legacy
+export interface ConnectionStatusEstablishingConnection extends ConnectionStatusTemplate {
+    // (undocumented)
+    canSendOps: false;
+    // (undocumented)
+    connectionState: ConnectionState.EstablishingConnection;
+}
+
+// @beta @sealed @legacy
+export interface ConnectionStatusTemplate {
+    canSendOps: boolean;
+    // (undocumented)
+    connectionState: ConnectionState;
+}
+
 // @beta @legacy
 export const ContainerErrorTypes: {
     readonly clientSessionExpiredError: "clientSessionExpiredError";
@@ -157,6 +203,8 @@ export interface IContainerContext {
     // (undocumented)
     readonly quorum: IQuorumClients;
     readonly scope: FluidObject;
+    // @system
+    readonly signalAudience?: IAudience;
     readonly snapshotWithContents?: ISnapshot;
     // (undocumented)
     readonly storage: IContainerStorageService;
@@ -421,6 +469,7 @@ export interface IRuntime extends IDisposable {
     processSignal(message: any, local: boolean): any;
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
     setConnectionState(canSendOps: boolean, clientId?: string): any;
+    setConnectionStatus?(status: ConnectionStatus): void;
 }
 
 // @beta @legacy (undocumented)

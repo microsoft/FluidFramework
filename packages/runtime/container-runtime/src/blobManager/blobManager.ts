@@ -924,7 +924,6 @@ export class BlobManager {
 	public readonly sharePendingBlobs = async (): Promise<void> => {
 		const localIdsToUpload = [...this.pendingOnlyLocalIds];
 		this.pendingOnlyLocalIds.clear();
-		// TODO: Determine if Promise.all is ergonomic at the callsite. Would Promise.allSettled be better?
 		await Promise.all<void>(
 			localIdsToUpload.map(async (localId) => this.uploadAndAttach(localId)),
 		);

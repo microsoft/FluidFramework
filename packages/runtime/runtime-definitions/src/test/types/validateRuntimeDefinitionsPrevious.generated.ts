@@ -76,6 +76,7 @@ declare type current_as_old_for_Interface_AttributionInfo = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_CommitStagedChangesOptionsExperimental": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_CommitStagedChangesOptionsExperimental = requireAssignableTo<TypeOnly<current.CommitStagedChangesOptionsExperimental>, TypeOnly<old.CommitStagedChangesOptionsExperimental>>
 
 /*
@@ -139,6 +140,7 @@ declare type current_as_old_for_Interface_IContainerRuntimeBaseEvents = requireA
  * typeValidation.broken:
  * "Interface_IContainerRuntimeBaseExperimental": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IContainerRuntimeBaseExperimental = requireAssignableTo<TypeOnly<current.IContainerRuntimeBaseExperimental>, TypeOnly<old.IContainerRuntimeBaseExperimental>>
 
 /*
@@ -656,6 +658,7 @@ declare type current_as_old_for_Interface_OpAttributionKey = requireAssignableTo
  * typeValidation.broken:
  * "Interface_StageControlsExperimental": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_StageControlsExperimental = requireAssignableTo<TypeOnly<current.StageControlsExperimental>, TypeOnly<old.StageControlsExperimental>>
 
 /*
