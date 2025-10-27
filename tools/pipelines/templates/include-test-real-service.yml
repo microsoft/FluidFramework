@@ -276,6 +276,33 @@ stages:
               HISTORIAN_IMAGE_TAG: ${{ parameters.historianImageTag }}
               GITREST_IMAGE_TAG: ${{ parameters.gitrestImageTag }}
               GITSSH_IMAGE_TAG: ${{ parameters.gitsshImageTag }}
+          - task: Bash@3
+            displayName: 'Wait for services to be ready'
+            inputs:
+              targetType: 'inline'
+              script: |
+                set -eu -o pipefail
+
+                echo "Waiting for services to be ready..."
+
+                # Wait for each service endpoint with timeout
+                for port in 3001 3002 3003; do
+                  echo "Waiting for localhost:$port..."
+                  timeout=60
+                  while ! curl -sf "http://localhost:$port" > /dev/null 2>&1; do
+                    if [ $timeout -le 0 ]; then
+                      echo "ERROR: Service on port $port failed to become ready"
+                      docker-compose -f $(Build.SourcesDirectory)/FluidFramework/server/docker-compose.yml logs
+                      exit 1
+                    fi
+                    echo "  Still waiting... ($timeout seconds remaining)"
+                    sleep 2
+                    timeout=$((timeout - 2))
+                  done
+                  echo "  ✓ Service on port $port is ready"
+                done
+
+                echo "All services are ready!"
 
         - task: Bash@3
           displayName: Install base dependencies
