@@ -286,7 +286,22 @@ stages:
                 echo "Waiting for services to be ready..."
 
                 # Wait for each service endpoint with timeout
-                for port in 3001 3002 3003; do
+                # Historian (3001) uses /healthz/startup, others use /ping
+                echo "Waiting for localhost:3001 (historian)..."
+                timeout=30
+                while ! curl -sf "http://localhost:3001/healthz/startup" > /dev/null 2>&1; do
+                  if [ $timeout -le 0 ]; then
+                    echo "ERROR: Historian service failed to become ready"
+                    docker-compose -f $(Build.SourcesDirectory)/FluidFramework/server/docker-compose.yml logs historian
+                    exit 1
+                  fi
+                  echo "  Still waiting... ($timeout seconds remaining)"
+                  sleep 2
+                  timeout=$((timeout - 2))
+                done
+                echo "  ✓ Historian on port 3001 is ready"
+
+                for port in 3002 3003; do
                   echo "Waiting for localhost:$port..."
                   timeout=30
                   while ! curl -sf "http://localhost:$port/ping" > /dev/null 2>&1; do

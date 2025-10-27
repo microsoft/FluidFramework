@@ -99,7 +99,7 @@ services:
       - IS_FLUID_SERVER=true
     restart: always
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/ping", "--max-time", "3"]
+      test: ["CMD", "curl", "-f", "http://localhost:3000/healthz/startup", "--max-time", "3"]
       interval: 5s
       timeout: 3s
       retries: 10
