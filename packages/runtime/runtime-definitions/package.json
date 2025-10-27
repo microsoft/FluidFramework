@@ -120,6 +120,15 @@
 	},
 	"typeValidation": {
 		"broken": {
+			"Interface_CommitStagedChangesOptionsExperimental": {
+				"backCompat": false
+			},
+			"Interface_IContainerRuntimeBaseExperimental": {
+				"backCompat": false
+			},
+			"Interface_StageControlsExperimental": {
+				"backCompat": false
+			},
 			"Interface_IFluidDataStoreContext": {
 				"backCompat": false
 			},

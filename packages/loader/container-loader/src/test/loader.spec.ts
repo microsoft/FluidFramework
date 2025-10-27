@@ -190,4 +190,24 @@ describe("loader unit test", () => {
 			subLogger: logger.logger,
 		});
 	});
+
+	it("can attach with `IRuntime` only implementing `setConnectionState`", async () => {
+		const resolvedUrl: IResolvedUrl = {
+			id: "none",
+			endpoints: {},
+			tokens: {},
+			type: "fluid",
+			url: "none",
+		};
+		const urlResolver = failSometimeProxy<IUrlResolver>({
+			resolve: async () => resolvedUrl,
+		});
+		const loader = new Loader({
+			codeLoader: createTestCodeLoaderProxy({ runtimeWithout_setConnectionStatus: true }),
+			documentServiceFactory: createTestDocumentServiceFactoryProxy(resolvedUrl),
+			urlResolver,
+		});
+		const container = await loader.createDetachedContainer({ package: "none" });
+		await container.attach({ url: "none" });
+	});
 });

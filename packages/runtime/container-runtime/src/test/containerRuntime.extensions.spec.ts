@@ -84,6 +84,8 @@ class MockContext implements IContainerContext {
 	public getConnectionState? = (): ConnectionState => this.connectionState;
 
 	public readonly audience = new MockAudience();
+	// signalAudience is optional to allow simulating older loader (create mock, then delete this property)
+	public signalAudience? = new MockAudience();
 
 	// State for testing purposes
 	private connectionState: ConnectionState = ConnectionState.Disconnected;
@@ -106,7 +108,10 @@ class MockContext implements IContainerContext {
 	public setConnectionState(connectionState: ConnectionState, clientId?: string): void {
 		this.connectionState = connectionState;
 		if (clientId !== undefined) {
-			this.audience.setCurrentClientId(clientId);
+			this.signalAudience?.setCurrentClientId(clientId);
+			if (connectionState !== ConnectionState.CatchingUp) {
+				this.audience.setCurrentClientId(clientId);
+			}
 		}
 	}
 }
@@ -132,6 +137,7 @@ async function createRuntimeWithoutConnectionState(isReadonly: boolean = false):
 	const context = new MockContext(isReadonly);
 	// Delete the getConnectionState method before creating the runtime
 	delete context.getConnectionState;
+	delete context.signalAudience;
 	const runtime = await ContainerRuntime.loadRuntime2({
 		context,
 		registry: new FluidDataStoreRegistry([]),
@@ -144,19 +150,61 @@ async function createRuntimeWithoutConnectionState(isReadonly: boolean = false):
 function updateConnectionState(
 	runtime: ContainerRuntime,
 	context: MockContext,
+	connectionState: ConnectionState.EstablishingConnection | ConnectionState.Disconnected,
+	clientId?: undefined,
+): void;
+function updateConnectionState(
+	runtime: ContainerRuntime,
+	context: MockContext,
+	connectionState: ConnectionState.CatchingUp | ConnectionState.Connected,
+	clientId: string,
+): void;
+
+function updateConnectionState(
+	runtime: ContainerRuntime,
+	context: MockContext,
 	connectionState: ConnectionState,
-	clientId?: string,
+	clientId?: string | undefined,
 ): void {
 	context.setConnectionState(connectionState, clientId);
 
-	if (
-		connectionState === ConnectionState.Connected ||
-		connectionState === ConnectionState.Disconnected
-	) {
-		runtime.setConnectionState(
-			connectionState === ConnectionState.Connected && !context.isReadonly,
-			context.clientId,
-		);
+	switch (connectionState) {
+		case ConnectionState.EstablishingConnection: {
+			runtime.setConnectionStatus({
+				connectionState,
+				canSendOps: false,
+			});
+
+			break;
+		}
+		case ConnectionState.CatchingUp: {
+			assert(clientId !== undefined, "clientId must be provided when catching up");
+			runtime.setConnectionStatus({
+				connectionState,
+				pendingClientConnectionId: clientId,
+				canSendOps: false,
+			});
+
+			break;
+		}
+		case ConnectionState.Connected: {
+			assert(clientId !== undefined, "clientId must be provided when connected");
+			runtime.setConnectionStatus({
+				connectionState,
+				clientConnectionId: clientId,
+				canSendOps: !context.isReadonly,
+			});
+
+			break;
+		}
+		default: {
+			runtime.setConnectionStatus({
+				connectionState,
+				canSendOps: false,
+				priorPendingClientConnectionId: context.signalAudience?.getSelf()?.clientId,
+				priorConnectedClientConnectionId: context.clientId,
+			});
+		}
 	}
 }
 
@@ -164,12 +212,12 @@ function setupExtensionEventListeners(extensionInterface: {
 	connectedToService: boolean;
 	events: Listenable<ExtensionHostEvents>;
 }): {
-	type: "joined" | "disconnected" | "connectionTypeChanged";
+	type: keyof ExtensionHostEvents;
 	clientId?: string;
 	canWrite?: boolean;
 }[] {
 	const events: {
-		type: "joined" | "disconnected" | "connectionTypeChanged";
+		type: keyof ExtensionHostEvents;
 		clientId?: string;
 		canWrite?: boolean;
 	}[] = [];
@@ -185,8 +233,8 @@ function setupExtensionEventListeners(extensionInterface: {
 		events.push({ type: "disconnected" });
 	});
 
-	extensionInterface.events.on("connectionTypeChanged", (canWrite: boolean) => {
-		events.push({ type: "connectionTypeChanged", canWrite });
+	extensionInterface.events.on("operabilityChanged", (canWrite: boolean) => {
+		events.push({ type: "operabilityChanged", canWrite });
 	});
 
 	return events;
@@ -217,12 +265,12 @@ describe("Runtime", () => {
 				});
 
 				it("should return false when context is `CatchingUp`", async () => {
-					updateConnectionState(runtime, context, ConnectionState.CatchingUp);
+					updateConnectionState(runtime, context, ConnectionState.CatchingUp, "mockClientId");
 
 					assert.strictEqual(
 						extension.connectedToService,
-						false,
-						"Extension should be disconnected during CatchingUp state",
+						true,
+						"Extension should be connected during CatchingUp state",
 					);
 				});
 
@@ -298,7 +346,7 @@ describe("Runtime", () => {
 
 			describe("event handling", () => {
 				let events: {
-					type: "joined" | "disconnected" | "connectionTypeChanged";
+					type: keyof ExtensionHostEvents;
 					clientId?: string;
 					canWrite?: boolean;
 				}[];
@@ -331,22 +379,26 @@ describe("Runtime", () => {
 
 					// Transition to CatchingUp
 					updateConnectionState(runtime, context, ConnectionState.CatchingUp, "mockClientId");
+					assert.strictEqual(events.length, 1, "Should have received one joined event");
+					assert.deepStrictEqual(
+						events[0],
+						{ type: "joined", clientId: "mockClientId", canWrite: false },
+						"First event should be joined for reading",
+					);
 					assert.strictEqual(
 						extension.connectedToService,
-						false,
-						"Extension should be disconnected during CatchingUp",
+						true,
+						"Extension should be connected during CatchingUp",
 					);
-					assert.strictEqual(events.length, 0, "Should have no events during CatchingUp");
 
 					// Transition to Connected
 					updateConnectionState(runtime, context, ConnectionState.Connected, "mockClientId");
-					assert.strictEqual(events.length, 1, "Should have received one joined events");
+					assert.strictEqual(events.length, 2, "Should have received two events total");
 					assert.deepStrictEqual(
-						events[0],
-						{ type: "joined", clientId: "mockClientId", canWrite: true },
-						"First event should be joined for writing",
+						events[1],
+						{ type: "operabilityChanged", canWrite: true },
+						"Second event should be operabilityChanged to can write",
 					);
-
 					assert.strictEqual(
 						extension.connectedToService,
 						true,
@@ -355,11 +407,11 @@ describe("Runtime", () => {
 
 					// Transition back to Disconnected
 					updateConnectionState(runtime, context, ConnectionState.Disconnected);
-					assert.strictEqual(events.length, 2, "Should have received two events total");
+					assert.strictEqual(events.length, 3, "Should have received three events total");
 					assert.deepStrictEqual(
-						events[1],
+						events[2],
 						{ type: "disconnected" },
-						"Second event should be disconnected",
+						"Third event should be disconnected",
 					);
 					assert.strictEqual(
 						extension.connectedToService,
@@ -414,21 +466,8 @@ describe("Runtime", () => {
 					);
 					assert.strictEqual(
 						readOnlyExtension.connectedToService,
-						false,
-						"Extension should be disconnected during CatchingUp",
-					);
-					assert.strictEqual(
-						readOnlyEvents.length,
-						0,
-						"Should have no events during CatchingUp",
-					);
-
-					// Transition to Connected
-					updateConnectionState(
-						readOnlyRuntime,
-						readOnlyContext,
-						ConnectionState.Connected,
-						"mockClientId",
+						true,
+						"Extension should be connected during CatchingUp",
 					);
 					assert.strictEqual(
 						readOnlyEvents.length,
@@ -440,6 +479,15 @@ describe("Runtime", () => {
 						{ type: "joined", clientId: "mockClientId", canWrite: false },
 						"Event should be joined for reading",
 					);
+
+					// Transition to Connected
+					updateConnectionState(
+						readOnlyRuntime,
+						readOnlyContext,
+						ConnectionState.Connected,
+						"mockClientId",
+					);
+					assert.strictEqual(readOnlyEvents.length, 1, "Should have received one event total");
 					assert.strictEqual(
 						readOnlyExtension.connectedToService,
 						true,
@@ -495,17 +543,17 @@ describe("Runtime", () => {
 					assert.strictEqual(
 						events.length,
 						3,
-						"Should have received three events total: joined + two connectionTypeChanged",
+						"Should have received three events total: joined + two operabilityChanged",
 					);
 					assert.deepStrictEqual(
 						events[1],
-						{ type: "connectionTypeChanged", canWrite: false },
-						"Second event should indicate connection type changed to read-only",
+						{ type: "operabilityChanged", canWrite: false },
+						"Second event should indicate operability changed to read-only",
 					);
 					assert.deepStrictEqual(
 						events[2],
-						{ type: "connectionTypeChanged", canWrite: true },
-						"Third event should indicate connection type changed to writable",
+						{ type: "operabilityChanged", canWrite: true },
+						"Third event should indicate operability changed to writable",
 					);
 				});
 

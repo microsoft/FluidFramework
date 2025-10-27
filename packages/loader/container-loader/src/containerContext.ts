@@ -102,6 +102,7 @@ export class ContainerContext
 	public readonly storage: IContainerStorageService;
 	public readonly quorum: IQuorumClients;
 	public readonly audience: IAudience;
+	public readonly signalAudience: IAudience;
 	public readonly loader: ILoader;
 	public readonly submitFn: (
 		type: MessageType,
@@ -182,6 +183,7 @@ export class ContainerContext
 		this.storage = config.storage;
 		this.quorum = config.quorum;
 		this.audience = config.audience;
+		this.signalAudience = config.signalAudience;
 		this.loader = config.loader;
 		this.submitFn = config.submitFn;
 		this.submitSummaryFn = config.submitSummaryFn;
