@@ -248,6 +248,15 @@ class MessageHandler {
 
 	private readonly logger: ITelemetryBaseLogger = {
 		send: (event: ITelemetryBaseEvent, logLevel?: LogLevel) => {
+			// Special case unexpected telemetry event
+			if (event.eventName.endsWith(":JoinResponseWhenAlone")) {
+				this.send({
+					event: "error",
+					error: `Unexpected ClientJoin response. Details: ${JSON.stringify(event.details)}`,
+				});
+				// Keep going
+			}
+
 			const interest = telemetryEventInterestLevel(event.eventName);
 			if (interest === "none") {
 				return;

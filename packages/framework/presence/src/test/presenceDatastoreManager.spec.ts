@@ -18,6 +18,7 @@ import { useFakeTimers, spy } from "sinon";
 import type { ClientConnectionId } from "../baseTypes.js";
 import { toOpaqueJson } from "../internalUtils.js";
 import type { PresenceWithNotifications } from "../presence.js";
+import { broadcastJoinResponseDelaysMs } from "../presenceDatastoreManager.js";
 import { createPresenceManager } from "../presenceManager.js";
 import type { InternalWorkspaceAddress, SignalMessages } from "../protocol.js";
 import type { SystemWorkspaceDatastore } from "../systemWorkspace.js";
@@ -26,7 +27,6 @@ import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import type { ProcessSignalFunction } from "./testUtils.js";
 import {
 	assertFinalExpectations,
-	broadcastJoinResponseDelaysMs,
 	connectionId2,
 	createSpecificAttendeeId,
 	prepareConnectedPresence,
@@ -185,6 +185,7 @@ describe("Presence", () => {
 								},
 							},
 							"isComplete": true,
+							"joinResponseFor": ["client4"],
 							"sendTimestamp": clock.now - 10,
 						},
 						clientId: "client0",
@@ -193,14 +194,29 @@ describe("Presence", () => {
 				);
 			}
 
-			it("when preferred responder ... with broadcast immediately", () => {
+			it(`when preferred responder ... with broadcast after ${broadcastJoinResponseDelaysMs.namedResponder}ms`, () => {
+				// Setup
+				const updateTime = clock.now + broadcastJoinResponseDelaysMs.namedResponder;
+
+				// #region Part 1 (no response)
+				// Act
+				// join clients 4 and 5
+				joinClients(["client2"], broadcastJoinResponseDelaysMs.namedResponder / 2);
+
+				// Advance to one tick before expected response time
+				clock.tick(updateTime - 1 - clock.now);
+				// #endregion
+
+				// #region Part 2 (response after delay)
 				// Setup
 				logger.registerExpectedEvent({
 					eventName: "Presence:JoinResponse",
 					details: JSON.stringify({
 						type: "broadcastAll",
-						requestor: "client4",
-						role: "primary",
+						attendeeId: attendeeId2,
+						connectionId: connectionId2,
+						primaryResponses: JSON.stringify(["client4", "client5"]),
+						secondaryResponses: JSON.stringify([]),
 					}),
 				});
 				runtime.signalsExpected.push([
@@ -211,6 +227,8 @@ describe("Presence", () => {
 							"data": {
 								"system:presence": {
 									"clientToSessionId": {
+										...attendee4SystemWorkspaceDatastore.clientToSessionId,
+										...attendee5SystemWorkspaceDatastore.clientToSessionId,
 										[connectionId2]: {
 											"rev": 0,
 											"timestamp": initialTime,
@@ -220,31 +238,18 @@ describe("Presence", () => {
 								},
 							},
 							"isComplete": true,
-							"sendTimestamp": clock.now,
+							"joinResponseFor": ["client4", "client5"],
+							"sendTimestamp": clock.now + 1,
 						},
 					},
 				]);
 
 				// Act
-				processSignal(
-					[],
-					{
-						type: "Pres:ClientJoin",
-						content: {
-							sendTimestamp: clock.now - 50,
-							avgLatency: 50,
-							data: {
-								"system:presence": attendee4SystemWorkspaceDatastore,
-							},
-							updateProviders: ["client2"],
-						},
-						clientId: "client4",
-					},
-					false,
-				);
+				clock.tick(1);
 
 				// Verify
 				assertFinalExpectations(runtime, logger);
+				// #endregion
 			});
 
 			describe("when NOT preferred responder", () => {
@@ -256,7 +261,6 @@ describe("Presence", () => {
 					const updateTime =
 						clock.now +
 						broadcastJoinResponseDelaysMs.namedResponder +
-						broadcastJoinResponseDelaysMs.backupResponderBase +
 						broadcastJoinResponseDelaysMs.backupResponderIncrement * responderIndex;
 
 					// #region Part 1 (no response)
@@ -273,9 +277,10 @@ describe("Presence", () => {
 						eventName: "Presence:JoinResponse",
 						details: JSON.stringify({
 							type: "broadcastAll",
-							requestor: "client4",
-							role: "secondary",
-							order: 2,
+							attendeeId: attendeeId2,
+							connectionId: connectionId2,
+							primaryResponses: JSON.stringify([]),
+							secondaryResponses: JSON.stringify([["client4", responseOrder]]),
 						}),
 					});
 					runtime.signalsExpected.push([
@@ -296,6 +301,7 @@ describe("Presence", () => {
 									},
 								},
 								"isComplete": true,
+								"joinResponseFor": ["client4"],
 								"sendTimestamp": clock.now + 1,
 							},
 						},
@@ -326,18 +332,13 @@ describe("Presence", () => {
 					assertFinalExpectations(runtime, logger);
 				});
 
-				// There is a hole in the protocol where all complete responses are considered
-				// to resolve all pending join requests. However a complete response might be
-				// crafted and sent prior to a recent join request and the recent joiner may
-				// not have all of the messages to fill in the gap.
-				it("(expect to fail) and other has partially responded ... with broadcast after delay", () => {
+				it("and other has partially responded ... with broadcast after delay", () => {
 					// Setup
 					const responseOrder = 2;
 					// 3 * named length (client0 and client1) + quorum sequence order (third -> 2)
 					const responderIndex = 3 * 2 + responseOrder;
 					const client4ResponseDelay =
 						broadcastJoinResponseDelaysMs.namedResponder +
-						broadcastJoinResponseDelaysMs.backupResponderBase +
 						broadcastJoinResponseDelaysMs.backupResponderIncrement * responderIndex;
 					const client4UpdateTime = clock.now + client4ResponseDelay;
 					const delayToJoinClient5 = client4ResponseDelay / 2;
@@ -357,9 +358,10 @@ describe("Presence", () => {
 						eventName: "Presence:JoinResponse",
 						details: JSON.stringify({
 							type: "broadcastAll",
-							requestor: "client5",
-							role: "secondary",
-							order: 2,
+							attendeeId: attendeeId2,
+							connectionId: connectionId2,
+							primaryResponses: JSON.stringify([]),
+							secondaryResponses: JSON.stringify([["client5", responseOrder]]),
 						}),
 					});
 					runtime.signalsExpected.push([
@@ -382,6 +384,8 @@ describe("Presence", () => {
 									},
 								},
 								"isComplete": true,
+								// Only responding for client5 (client4 has been handled)
+								"joinResponseFor": ["client5"],
 								"sendTimestamp": clock.now + 1,
 							},
 						},
@@ -391,18 +395,7 @@ describe("Presence", () => {
 					clock.tick(1);
 
 					// Verify
-					// TODO: Once protocol is fixed, remove assert.throws and signalsExpected check+reset.
-					assert.throws(
-						() => {
-							assertFinalExpectations(runtime, logger);
-						},
-						{
-							name: "Error",
-							message: /Expected Events not found/,
-						},
-					);
-					assert.equal(runtime.signalsExpected.length, 1);
-					runtime.signalsExpected.length = 0;
+					assertFinalExpectations(runtime, logger);
 					// #endregion
 				});
 			});
