@@ -13,6 +13,7 @@ import { getUnexpectedLogErrorException } from "@fluidframework/test-utils/inter
 import { spy } from "sinon";
 import type { SinonFakeTimers } from "sinon";
 
+import { broadcastJoinResponseDelaysMs } from "../presenceDatastoreManager.js";
 import { createPresenceManager } from "../presenceManager.js";
 import type {
 	InboundClientJoinMessage,
@@ -123,26 +124,6 @@ export function generateBasicClientJoin(
 }
 
 /**
- * Expected delays for broadcasting join responses
- */
-export const broadcastJoinResponseDelaysMs = {
-	/**
-	 * The delay in milliseconds before a join response is sent to any client.
-	 */
-	namedResponder: 0,
-	/**
-	 * The delay in milliseconds all backup responders wait before sending
-	 * a join response to allow others to respond first.
-	 */
-	backupResponderBase: 20,
-	/**
-	 * The additional delay in milliseconds a backup responder waits per
-	 * ordering before sending a join response.
-	 */
-	backupResponderIncrement: 20,
-} as const;
-
-/**
  * Function signature for sending a signal to the presence manager.
  */
 export type ProcessSignalFunction = ReturnType<typeof createPresenceManager>["processSignal"];
@@ -165,7 +146,10 @@ export function prepareConnectedPresence(
 ): {
 	presence: PresenceWithNotifications;
 	processSignal: ProcessSignalFunction;
+	localAvgLatency: number;
 } {
+	const localAvgLatency = 10;
+
 	// Set runtime to connected state
 	runtime.clientId = clientConnectionId;
 	runtime.joined = true;
@@ -173,10 +157,21 @@ export function prepareConnectedPresence(
 	logger?.registerExpectedEvent({ eventName: "Presence:PresenceInstantiated" });
 
 	// This logic needs to be kept in sync with datastore manager.
-	const quorumClientIds = [...runtime.quorum.getMembers().keys()].filter(
-		(quorumClientId) => quorumClientId !== clientConnectionId,
-	);
-	const updateProviders = quorumClientIds;
+	// From PresenceDatastoreManager.getInteractiveMembersExcludingSelf:
+	const members = runtime.audience.getMembers();
+	members.delete(clientConnectionId);
+	const all = new Set<ClientConnectionId>();
+	const writers = new Set<ClientConnectionId>();
+	for (const [id, client] of members) {
+		if (client.details.capabilities.interactive) {
+			all.add(id);
+			if (client.mode === "write") {
+				writers.add(id);
+			}
+		}
+	}
+	// From PresenceDatastoreManager.joinSession:
+	const updateProviders = [...(writers.size > 0 ? writers : all)];
 	if (updateProviders.length > 3) {
 		updateProviders.length = 3;
 	}
@@ -188,9 +183,7 @@ export function prepareConnectedPresence(
 		updateProviders,
 	});
 	delete expectedClientJoin.clientId;
-	if (updateProviders.length > 0) {
-		runtime.signalsExpected.push([expectedClientJoin]);
-	}
+	runtime.signalsExpected.push([expectedClientJoin]);
 
 	const presence = createPresenceManager(runtime, attendeeId as AttendeeId);
 
@@ -222,12 +215,12 @@ export function prepareConnectedPresence(
 	runtime.assertAllSignalsSubmitted();
 
 	// Pass a little time (to mimic reality)
-	clock.tick(10);
+	clock.tick(localAvgLatency);
+
+	// Return the [local] join signal
+	processSignal([], { ...expectedClientJoin, clientId: clientConnectionId }, true);
 
 	if (updateProviders.length > 0) {
-		// Return the join signal
-		processSignal([], { ...expectedClientJoin, clientId: clientConnectionId }, true);
-
 		// Pass time (to mimic likely response)
 		clock.tick(broadcastJoinResponseDelaysMs.namedResponder + 20);
 
@@ -242,6 +235,7 @@ export function prepareConnectedPresence(
 				content: {
 					...expectedClientJoin.content,
 					isComplete: true,
+					joinResponseFor: [clientConnectionId],
 				},
 				clientId: updateProviders[0],
 			} satisfies InboundDatastoreUpdateMessage,
@@ -252,6 +246,7 @@ export function prepareConnectedPresence(
 	return {
 		presence,
 		processSignal,
+		localAvgLatency,
 	};
 }
 
