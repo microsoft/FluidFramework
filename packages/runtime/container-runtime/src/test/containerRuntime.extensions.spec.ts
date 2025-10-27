@@ -269,8 +269,8 @@ describe("Runtime", () => {
 
 					assert.strictEqual(
 						extension.connectedToService,
-						false,
-						"Extension should be disconnected during CatchingUp state",
+						true,
+						"Extension should be connected during CatchingUp state",
 					);
 				});
 
@@ -379,22 +379,26 @@ describe("Runtime", () => {
 
 					// Transition to CatchingUp
 					updateConnectionState(runtime, context, ConnectionState.CatchingUp, "mockClientId");
+					assert.strictEqual(events.length, 1, "Should have received one joined event");
+					assert.deepStrictEqual(
+						events[0],
+						{ type: "joined", clientId: "mockClientId", canWrite: false },
+						"First event should be joined for reading",
+					);
 					assert.strictEqual(
 						extension.connectedToService,
-						false,
-						"Extension should be disconnected during CatchingUp",
+						true,
+						"Extension should be connected during CatchingUp",
 					);
-					assert.strictEqual(events.length, 0, "Should have no events during CatchingUp");
 
 					// Transition to Connected
 					updateConnectionState(runtime, context, ConnectionState.Connected, "mockClientId");
-					assert.strictEqual(events.length, 1, "Should have received one joined events");
+					assert.strictEqual(events.length, 2, "Should have received two events total");
 					assert.deepStrictEqual(
-						events[0],
-						{ type: "joined", clientId: "mockClientId", canWrite: true },
-						"First event should be joined for writing",
+						events[1],
+						{ type: "operabilityChanged", canWrite: true },
+						"Second event should be operabilityChanged to can write",
 					);
-
 					assert.strictEqual(
 						extension.connectedToService,
 						true,
@@ -403,11 +407,11 @@ describe("Runtime", () => {
 
 					// Transition back to Disconnected
 					updateConnectionState(runtime, context, ConnectionState.Disconnected);
-					assert.strictEqual(events.length, 2, "Should have received two events total");
+					assert.strictEqual(events.length, 3, "Should have received three events total");
 					assert.deepStrictEqual(
-						events[1],
+						events[2],
 						{ type: "disconnected" },
-						"Second event should be disconnected",
+						"Third event should be disconnected",
 					);
 					assert.strictEqual(
 						extension.connectedToService,
@@ -462,21 +466,8 @@ describe("Runtime", () => {
 					);
 					assert.strictEqual(
 						readOnlyExtension.connectedToService,
-						false,
-						"Extension should be disconnected during CatchingUp",
-					);
-					assert.strictEqual(
-						readOnlyEvents.length,
-						0,
-						"Should have no events during CatchingUp",
-					);
-
-					// Transition to Connected
-					updateConnectionState(
-						readOnlyRuntime,
-						readOnlyContext,
-						ConnectionState.Connected,
-						"mockClientId",
+						true,
+						"Extension should be connected during CatchingUp",
 					);
 					assert.strictEqual(
 						readOnlyEvents.length,
@@ -488,6 +479,15 @@ describe("Runtime", () => {
 						{ type: "joined", clientId: "mockClientId", canWrite: false },
 						"Event should be joined for reading",
 					);
+
+					// Transition to Connected
+					updateConnectionState(
+						readOnlyRuntime,
+						readOnlyContext,
+						ConnectionState.Connected,
+						"mockClientId",
+					);
+					assert.strictEqual(readOnlyEvents.length, 1, "Should have received one event total");
 					assert.strictEqual(
 						readOnlyExtension.connectedToService,
 						true,
