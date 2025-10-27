@@ -1215,6 +1215,8 @@ export class ContainerRuntime
 			recentBatchInfo,
 		);
 
+		runtime.sharePendingBlobs();
+
 		// Initialize the base state of the runtime before it's returned.
 		await runtime.initializeBaseState(context.loader);
 
@@ -4549,7 +4551,6 @@ export class ContainerRuntime
 		contents: any,
 		localOpMetadata: unknown = undefined,
 	): void {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		this.submit({ type, contents }, localOpMetadata);
 	}
 
@@ -5133,6 +5134,43 @@ export class ContainerRuntime
 			},
 		);
 	}
+
+	/**
+	 * ContainerRuntime knows about additional restrictions on when blob sharing can be resumed as compared
+	 * to BlobManager. In particular, it wants to avoid sharing blobs while in readonly state, and it also
+	 * wants to avoid sharing blobs before connection completes (otherwise it may cause the sharing to happen
+	 * before processing shared ops).
+	 *
+	 * This method can be called safely before those conditions are met. In the background, it will wait until
+	 * it is safe before initiating sharing. It will close the container on any error.
+	 */
+	public sharePendingBlobs = (): void => {
+		new Promise<void>((resolve) => {
+			// eslint-disable-next-line unicorn/consistent-function-scoping
+			const canStartSharing = (): boolean =>
+				this.connected && this.deltaManager.readOnlyInfo.readonly !== true;
+
+			if (canStartSharing()) {
+				resolve();
+				return;
+			}
+
+			const checkCanShare = (readonly: boolean): void => {
+				if (canStartSharing()) {
+					this.deltaManager.off("readonly", checkCanShare);
+					this.off("connected", checkCanShare);
+					resolve();
+				}
+			};
+			this.deltaManager.on("readonly", checkCanShare);
+			this.on("connected", checkCanShare);
+		})
+			.then(this.blobManager.sharePendingBlobs)
+			// It may not be necessary to close the container on failures - this should just mean there's
+			// a handle in the container that is stuck pending, which is a scenario that customers need to
+			// handle anyway. Starting with this more aggressive/restrictive behavior to be cautious.
+			.catch(this.closeFn);
+	};
 
 	public summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults {
 		if (this._summarizer !== undefined) {
