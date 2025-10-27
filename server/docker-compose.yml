@@ -3,15 +3,24 @@ services:
     platform: linux/amd64/v3
     image: nginx:latest
     depends_on:
-      - "alfred"
-      - "historian"
-      - "nexus"
+      alfred:
+        condition: service_healthy
+      historian:
+        condition: service_healthy
+      nexus:
+        condition: service_healthy
     volumes:
       - ./routerlicious/nginx.conf:/etc/nginx/nginx.conf
     ports:
       - "3003:3003"
       - "3002:3002"
       - "3001:3001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3003"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
   alfred:
     image: ${REGISTRY_URL:-mcr.microsoft.com}/fluidframework/routerlicious/server:${ALFRED_IMAGE_TAG:-latest}
     expose:
@@ -22,6 +31,12 @@ services:
       - NODE_ENV=development
       - IS_FLUID_SERVER=true
     restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
   nexus:
     image: ${REGISTRY_URL:-mcr.microsoft.com}/fluidframework/routerlicious/server:${ALFRED_IMAGE_TAG:-latest}
     expose:
@@ -32,6 +47,12 @@ services:
       - NODE_ENV=development
       - IS_FLUID_SERVER=true
     restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
   deli:
     image: ${REGISTRY_URL:-mcr.microsoft.com}/fluidframework/routerlicious/server:${ALFRED_IMAGE_TAG:-latest}
     command: node packages/routerlicious/dist/kafka-service/index.js deli /usr/src/server/packages/routerlicious/dist/deli/index.js
@@ -83,6 +104,12 @@ services:
       - NODE_ENV=development
       - IS_FLUID_SERVER=true
     restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
   gitrest:
     image: ${REGISTRY_URL:-mcr.microsoft.com}/fluidframework/routerlicious/gitrest:${GITREST_IMAGE_TAG:-latest}
     environment:

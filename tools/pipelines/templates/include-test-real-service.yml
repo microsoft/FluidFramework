@@ -268,7 +268,7 @@ stages:
               containerregistrytype: 'Container Registry'
               dockerComposeFile: $(Build.SourcesDirectory)/FluidFramework/server/docker-compose.yml
               action: 'Run a Docker Compose command'
-              dockerComposeCommand: 'up -d'
+              dockerComposeCommand: 'up -d --wait'
               projectName: 'routerlicious'
             env:
               REGISTRY_URL: fluidcr.azurecr.io/build
