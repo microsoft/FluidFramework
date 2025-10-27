@@ -1,5 +1,15 @@
 # @fluidframework/fluid-static
 
+## 2.70.0
+
+### Minor Changes
+
+- Removed deprecated export of MinimumVersionForCollab from @fluidframework/container-runtime ([#25309](https://github.com/microsoft/FluidFramework/pull/25309)) [776cb1ce31](https://github.com/microsoft/FluidFramework/commit/776cb1ce31176e1eb07ba2723c2d51e6f4cc379f)
+
+  Removed the deprecated re-export of MinimumVersionForCollab from @fluidframework/container-runtime.
+  This type should now be imported from @fluidframework/runtime-definitions.
+  See the [Fluid Framework 2.52.0 release notes](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.52.0) for details.
+
 ## 2.63.0
 
 Dependency updates only.
