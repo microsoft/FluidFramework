@@ -19,10 +19,8 @@ import {
 	type ISession,
 	getGlobalTimeoutContext,
 	type IGitManager,
-	NetworkError,
 } from "@fluidframework/server-services-client";
 import {
-	type IAdditionalQueryParams,
 	type ICollection,
 	type IDeliState,
 	type IDocument,
@@ -44,7 +42,6 @@ import {
 	Lumberjack,
 	type Lumber,
 } from "@fluidframework/server-services-telemetry";
-import { AsyncLocalStorageContextProvider } from "@fluidframework/server-services-utils";
 import * as winston from "winston";
 
 /**
@@ -60,15 +57,7 @@ export enum DocCreationStage {
 	DocCreated = "DocCreated",
 }
 
-// Basic protection against obvious attacks
-const MAX_DEPTH = 10; // Prevent deep nesting attacks
-const MAX_KEY_LENGTH = 200; // Prevent extremely long keys
-const MAX_VALUE_LENGTH = 10000; // Prevent extremely long values
-const MAX_OBJECT_SIZE = 100; // Prevent too many properties
-
 export class DocumentStorage implements IDocumentStorage {
-	protected readonly createDocContext: AsyncLocalStorageContextProvider<IAdditionalQueryParams> =
-		new AsyncLocalStorageContextProvider<IAdditionalQueryParams>();
 	constructor(
 		protected readonly documentRepository: IDocumentRepository,
 		protected readonly tenantManager: ITenantManager,
@@ -175,92 +164,83 @@ export class DocumentStorage implements IDocumentStorage {
 		enableDiscovery: boolean = false,
 		isEphemeralContainer: boolean = false,
 		messageBrokerId?: string,
-		additionalQueryParams?: IAdditionalQueryParams,
 	): Promise<IDocumentDetails> {
-		// Basic security validation for extensibility point
-		this.validateAdditionalQueryParams(additionalQueryParams);
-		return this.createDocContext.bindContext(additionalQueryParams ?? {}, async () => {
-			const createDocTrace = new StageTrace<DocCreationStage>(DocCreationStage.Started);
-			const lumberjackProperties: Record<string, any> = {
-				...getLumberBaseProperties(documentId, tenantId),
-				enableWholeSummaryUpload: this.enableWholeSummaryUpload,
-				[CommonProperties.isEphemeralContainer]: isEphemeralContainer,
-			};
-			let runTimeError;
-			const createDocMetric = Lumberjack.newLumberMetric(
-				LumberEventName.CreateDocument,
-				lumberjackProperties,
-			);
-			try {
-				const storageName = await this.storageNameAssigner?.assign(tenantId, documentId);
-				const storageNameAssignerEnabled = !!this.storageNameAssigner;
-				lumberjackProperties.storageName = storageName;
-				lumberjackProperties.storageNameAssignerEnabled = storageNameAssignerEnabled;
-				if (storageNameAssignerEnabled && !storageName) {
-					// Using a warning instead of an error just in case there are some outliers that we don't know about.
-					Lumberjack.warning(
-						"Failed to get storage name for new document.",
-						lumberjackProperties,
-					);
-				}
-				createDocTrace.stampStage(DocCreationStage.StorageNameAllocated);
-				getGlobalTimeoutContext().checkTimeout();
-
-				const gitManager = await this.getGitManager(
-					tenantId,
-					documentId,
-					storageName,
-					isEphemeralContainer,
-				);
-
-				const protocolTree = this.createInitialProtocolTree(sequenceNumber, values);
-				const fullTree = this.createFullTree(appTree, protocolTree);
-				const blobsShaCache = new Map<string, string>();
-				const uploadManager = this.enableWholeSummaryUpload
-					? new WholeSummaryUploadManager(gitManager)
-					: new SummaryTreeUploadManager(
-							gitManager,
-							blobsShaCache,
-							async () => undefined,
-					  );
-
-				const summaryTimeStr = new Date().toISOString();
-
-				const dbResult: IDocumentDetails = await this.createDocumentCore(
-					createDocMetric,
+		const createDocTrace = new StageTrace<DocCreationStage>(DocCreationStage.Started);
+		const lumberjackProperties: Record<string, any> = {
+			...getLumberBaseProperties(documentId, tenantId),
+			enableWholeSummaryUpload: this.enableWholeSummaryUpload,
+			[CommonProperties.isEphemeralContainer]: isEphemeralContainer,
+		};
+		let runTimeError;
+		const createDocMetric = Lumberjack.newLumberMetric(
+			LumberEventName.CreateDocument,
+			lumberjackProperties,
+		);
+		try {
+			const storageName = await this.storageNameAssigner?.assign(tenantId, documentId);
+			const storageNameAssignerEnabled = !!this.storageNameAssigner;
+			lumberjackProperties.storageName = storageName;
+			lumberjackProperties.storageNameAssignerEnabled = storageNameAssignerEnabled;
+			if (storageNameAssignerEnabled && !storageName) {
+				// Using a warning instead of an error just in case there are some outliers that we don't know about.
+				Lumberjack.warning(
+					"Failed to get storage name for new document.",
 					lumberjackProperties,
-					createDocTrace,
-					uploadManager,
-					fullTree,
-					gitManager,
-					documentId,
-					summaryTimeStr,
-					sequenceNumber,
-					initialHash,
-					values,
-					ordererUrl,
-					historianUrl,
-					deltaStreamUrl,
-					messageBrokerId,
-					enableDiscovery,
-					tenantId,
-					storageName,
-					isEphemeralContainer,
 				);
-				createDocTrace.stampStage(DocCreationStage.DocCreationCompleted);
-				return dbResult;
-			} catch (err: unknown) {
-				runTimeError = err;
-				throw err;
-			} finally {
-				createDocMetric.setProperty("createDocTrace", createDocTrace.trace);
-				if (runTimeError) {
-					createDocMetric.error("Failed created doc", runTimeError);
-				} else {
-					createDocMetric.success("Successfully created doc");
-				}
 			}
-		});
+			createDocTrace.stampStage(DocCreationStage.StorageNameAllocated);
+			getGlobalTimeoutContext().checkTimeout();
+
+			const gitManager = await this.getGitManager(
+				tenantId,
+				documentId,
+				storageName,
+				isEphemeralContainer,
+			);
+
+			const protocolTree = this.createInitialProtocolTree(sequenceNumber, values);
+			const fullTree = this.createFullTree(appTree, protocolTree);
+			const blobsShaCache = new Map<string, string>();
+			const uploadManager = this.enableWholeSummaryUpload
+				? new WholeSummaryUploadManager(gitManager)
+				: new SummaryTreeUploadManager(gitManager, blobsShaCache, async () => undefined);
+
+			const summaryTimeStr = new Date().toISOString();
+
+			const dbResult: IDocumentDetails = await this.createDocumentCore(
+				createDocMetric,
+				lumberjackProperties,
+				createDocTrace,
+				uploadManager,
+				fullTree,
+				gitManager,
+				documentId,
+				summaryTimeStr,
+				sequenceNumber,
+				initialHash,
+				values,
+				ordererUrl,
+				historianUrl,
+				deltaStreamUrl,
+				messageBrokerId,
+				enableDiscovery,
+				tenantId,
+				storageName,
+				isEphemeralContainer,
+			);
+			createDocTrace.stampStage(DocCreationStage.DocCreationCompleted);
+			return dbResult;
+		} catch (err: unknown) {
+			runTimeError = err;
+			throw err;
+		} finally {
+			createDocMetric.setProperty("createDocTrace", createDocTrace.trace);
+			if (runTimeError) {
+				createDocMetric.error("Failed created doc", runTimeError);
+			} else {
+				createDocMetric.success("Successfully created doc");
+			}
+		}
 	}
 
 	protected async createDocumentCore(
@@ -410,86 +390,6 @@ export class DocumentStorage implements IDocumentStorage {
 			documentDbValue.ttl = this.ephemeralDocumentTTLSec;
 		}
 		return documentDbValue;
-	}
-
-	/**
-	 * Basic validation for additionalQueryParams extensibility point.
-	 * Override this method in derived classes for custom validation logic.
-	 */
-	protected validateAdditionalQueryParams(additionalQueryParams?: IAdditionalQueryParams): void {
-		if (!additionalQueryParams) {
-			return;
-		}
-
-		// Log usage for security monitoring (in non-production or with privacy considerations)
-		const paramKeys = Object.keys(additionalQueryParams);
-		if (paramKeys.length > 0) {
-			Lumberjack.info("additionalQueryParams usage detected", {
-				paramCount: paramKeys.length,
-				// Only log keys, not values, for privacy
-				paramKeys: paramKeys.join(","),
-			});
-		}
-
-		this.validateObjectRecursive(additionalQueryParams, 0);
-	}
-
-	/**
-	 * Recursive validation helper
-	 */
-	private validateObjectRecursive(obj: IAdditionalQueryParams, currentDepth: number): void {
-		if (currentDepth > MAX_DEPTH) {
-			throw new NetworkError(
-				400,
-				"additionalQueryParams: Maximum nesting depth exceeded",
-				false,
-			);
-		}
-
-		if (typeof obj !== "object" || obj === null) {
-			return;
-		}
-
-		const keys = Object.keys(obj);
-		if (keys.length > MAX_OBJECT_SIZE) {
-			throw new NetworkError(400, "additionalQueryParams: Too many properties", false);
-		}
-
-		for (const key of keys) {
-			if (key.length > MAX_KEY_LENGTH) {
-				throw new NetworkError(400, "additionalQueryParams: Key length exceeded", false);
-			}
-
-			const value = obj[key];
-			if (value === undefined) {
-				continue;
-			}
-
-			if (typeof value === "string" && value.length > MAX_VALUE_LENGTH) {
-				throw new NetworkError(400, "additionalQueryParams: Value length exceeded", false);
-			} else if (Array.isArray(value)) {
-				if (value.length > MAX_OBJECT_SIZE) {
-					throw new NetworkError(
-						400,
-						"additionalQueryParams: Array size exceeded",
-						false,
-					);
-				}
-				for (const item of value) {
-					if (typeof item === "string" && item.length > MAX_VALUE_LENGTH) {
-						throw new NetworkError(
-							400,
-							"additionalQueryParams: Array item length exceeded",
-							false,
-						);
-					} else if (typeof item === "object") {
-						this.validateObjectRecursive(item, currentDepth + 1);
-					}
-				}
-			} else if (typeof value === "object" && value !== null) {
-				this.validateObjectRecursive(value, currentDepth + 1);
-			}
-		}
 	}
 
 	protected async uploadSummary(

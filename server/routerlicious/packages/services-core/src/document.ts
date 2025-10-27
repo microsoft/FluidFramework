@@ -37,18 +37,6 @@ export interface IDocumentStaticProperties {
 /**
  * @internal
  */
-export interface IAdditionalQueryParams {
-	[key: string]:
-		| undefined
-		| string
-		| string[]
-		| IAdditionalQueryParams
-		| IAdditionalQueryParams[];
-}
-
-/**
- * @internal
- */
 export interface IDocumentStorage {
 	// eslint-disable-next-line @rushstack/no-new-null
 	getDocument(tenantId: string, documentId: string): Promise<IDocument | null>;
@@ -76,7 +64,6 @@ export interface IDocumentStorage {
 		enableDiscovery: boolean,
 		isEphemeralContainer: boolean,
 		messageBrokerId?: string,
-		additionalQueryParams?: IAdditionalQueryParams,
 	): Promise<IDocumentDetails>;
 }
 
