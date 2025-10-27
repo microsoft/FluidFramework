@@ -9,6 +9,7 @@ export {
 	createResponseError,
 	exceptionToResponse,
 	responseToException,
+	asLegacyAlpha,
 } from "./dataStoreHelpers.js";
 export {
 	compareFluidHandles,
