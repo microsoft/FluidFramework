@@ -131,8 +131,8 @@ function createRecordNodeProxy(
 
 			// To stay consistent with ObjectNode behavior, we treat "= undefined" as delete.
 			if (value === undefined) {
-				field.editor.set(undefined, field.length === 0)
-				return true
+				field.editor.set(undefined, field.length === 0);
+				return true;
 			}
 
 			const mapTree = prepareForInsertion(

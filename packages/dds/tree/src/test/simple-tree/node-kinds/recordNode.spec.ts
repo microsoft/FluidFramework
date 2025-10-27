@@ -233,8 +233,8 @@ describe("RecordNode", () => {
 			it("setting value to undefined behaves as a delete", () => {
 				const record = init(schemaType, { foo: 1 });
 				assert.equal(record.foo, 1);
-				(record as Record<string, number | undefined>).foo = undefined
-				assert.equal(record.foo, undefined)
+				(record as Record<string, number | undefined>).foo = undefined;
+				assert.equal(record.foo, undefined);
 			});
 
 			it("can delete values", () => {
