@@ -216,12 +216,39 @@ export interface ContainerExtension<
 	) => void;
 }
 
+// These are exported individual types as this is a type only package and does
+// not support enums with runtime footprint.
 /**
- * Join status for container.
+ * The container is not connected to the service.
+ * @internal
+ */
+export type JoinedStatus_disconnected = "disconnected";
+/**
+ * The container has a connection and read-only operability.
+ * @internal
+ */
+export type JoinedStatus_joinedForReading = "joinedForReading";
+/**
+ * The container has a connection and write operability.
+ * @internal
+ */
+export type JoinedStatus_joinedForWriting = "joinedForWriting";
+
+/**
+ * Joined status for container.
+ *
+ * @remarks
+ * May be:
+ * - {@link JoinedStatus_disconnected|"disconnected"}
+ * - {@link JoinedStatus_joinedForReading|"joinedForReading"}
+ * - {@link JoinedStatus_joinedForWriting|"joinedForWriting"}
  *
  * @internal
  */
-export type JoinedStatus = "disconnected" | "joinedForReading" | "joinedForWriting";
+export type JoinedStatus =
+	| JoinedStatus_disconnected
+	| JoinedStatus_joinedForReading
+	| JoinedStatus_joinedForWriting;
 
 /**
  * Events emitted by the {@link ExtensionHost}.
@@ -234,7 +261,7 @@ export type JoinedStatus = "disconnected" | "joinedForReading" | "joinedForWriti
 export interface ExtensionHostEvents {
 	"disconnected": () => void;
 	"joined": (props: { clientId: ClientConnectionId; canWrite: boolean }) => void;
-	"connectionTypeChanged": (canWrite: boolean) => void;
+	"operabilityChanged": (canWrite: boolean) => void;
 }
 
 /**
@@ -250,16 +277,13 @@ export interface ExtensionHost<TRuntimeProperties extends ExtensionRuntimeProper
 	/**
 	 * Gets the current joined status of the container.
 	 *
-	 * @remarks
-	 * Returns one of three possible {@link JoinedStatus} values:
-	 * - "disconnected": The container is not connected to the service
-	 * - "joinedForReading": The container has a read-only connection
-	 * - "joinedForWriting": The container has a write connection
+	 * @returns The current {@link JoinedStatus} of the container.
 	 *
+	 * @remarks
 	 * Status changes are signaled through :
 	 * - {@link ExtensionHostEvents.disconnected}: Transitioning to Disconnected state
 	 * - {@link ExtensionHostEvents.joined}: Transition to Connected state (either for reading or writing)
-	 * - {@link ExtensionHostEvents.connectionTypeChanged}: When connection type has changed (e.g., write to read)
+	 * - {@link ExtensionHostEvents.operabilityChanged}: When operability has changed (e.g., write to read)
 	 */
 	readonly getJoinedStatus: () => JoinedStatus;
 	readonly getClientId: () => ClientConnectionId | undefined;
