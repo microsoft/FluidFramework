@@ -53,6 +53,7 @@ export function testSnapshots() {
 							}),
 							decodeRootNodeChange: () => {},
 							decodeRootRename: () => {},
+							decodeMoveAndDetach: () => {},
 							generateId: () => ({ localId: brand(0) }),
 						});
 						takeJsonSnapshot(encoded);

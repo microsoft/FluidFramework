@@ -52,6 +52,7 @@ export function makeV3Codec(
 	): Encoded.MarkEffect {
 		const type = mark.type;
 		switch (type) {
+			// XXX: Some renames should be encoded as attach and detach
 			case "Rename":
 				return {
 					rename: {
@@ -88,6 +89,7 @@ export function makeV3Codec(
 			cellId: ChangeAtomId | undefined,
 			context: FieldChangeEncodingContext,
 		): Rename {
+			// XXX: Handle root renames
 			return {
 				type: "Rename",
 				idOverride: atomIdCodec.decode(encoded.idOverride, context.baseContext),

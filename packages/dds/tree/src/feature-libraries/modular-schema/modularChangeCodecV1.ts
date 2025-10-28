@@ -181,6 +181,7 @@ export function makeModularChangeCodecV1(
 				decodeNode: () => fail(0xb1e /* Should not decode nodes during field encoding */),
 				decodeRootNodeChange: () => fail("Should not be called during encoding"),
 				decodeRootRename: () => fail("Should not be called during encoding"),
+				decodeMoveAndDetach: () => fail("Should not be called during encoding"),
 				generateId: () => fail("Should not be called during encoding"),
 			};
 
@@ -282,6 +283,10 @@ export function makeModularChangeCodecV1(
 
 				decodeRootRename: (oldId, newId, count): void => {
 					addNodeRename(decodedRootTable, oldId, newId, count, fieldId);
+				},
+
+				decodeMoveAndDetach: (moveId, detachId, count): void => {
+					// XXX
 				},
 
 				generateId: (): ChangeAtomId => ({

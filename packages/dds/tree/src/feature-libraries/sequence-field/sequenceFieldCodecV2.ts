@@ -316,8 +316,13 @@ function makeMarkEffectDecoder(
 						};
 
 			assert(cellId !== undefined, "Attach and detach should target an empty cell");
-			const isNodeMove = encoded.attach.moveIn !== undefined;
-			if (!isNodeMove) {
+			if (encoded.attach.moveIn !== undefined) {
+				const moveId = getAttachedRootId(
+					this.moveIn(encoded.attach.moveIn, count, cellId, context) as Attach,
+				);
+
+				context.decodeMoveAndDetach(moveId, detachId, count);
+			} else {
 				context.decodeRootRename(cellId, detachId, count);
 			}
 

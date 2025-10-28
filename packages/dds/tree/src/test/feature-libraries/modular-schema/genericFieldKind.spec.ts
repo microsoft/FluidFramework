@@ -230,6 +230,7 @@ describe("GenericField", () => {
 						rootRenames: newChangeAtomIdTransform(),
 						decodeRootNodeChange: () => {},
 						decodeRootRename: () => {},
+						decodeMoveAndDetach: () => {},
 						generateId: () => ({
 							localId: brand(0),
 						}),

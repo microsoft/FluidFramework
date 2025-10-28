@@ -63,6 +63,7 @@ export function testSnapshots() {
 							rootRenames: newChangeAtomIdTransform(),
 							decodeRootNodeChange: () => {},
 							decodeRootRename: () => {},
+							decodeMoveAndDetach: () => {},
 							generateId: () => ({
 								localId: brand(0),
 							}),
