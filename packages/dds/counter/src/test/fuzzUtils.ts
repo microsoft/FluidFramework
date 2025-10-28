@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import * as path from "node:path";
 
 import type {
 	AsyncGenerator as Generator,
@@ -14,19 +15,30 @@ import {
 	createWeightedAsyncGenerator as createWeightedGenerator,
 	takeAsync as take,
 } from "@fluid-private/stochastic-test-utils";
-import type { DDSFuzzModel, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
+import type {
+	DDSFuzzModel,
+	DDSFuzzSuiteOptions,
+	DDSFuzzTestState,
+} from "@fluid-private/test-dds-utils";
 
 import type { IIncrementOperation } from "../counter.js";
 import { CounterFactory } from "../counterFactory.js";
 import type { ISharedCounter } from "../interfaces.js";
 
+import { _dirname } from "./dirname.cjs";
+
 /**
  * Default options for Counter fuzz testing
  */
-export const defaultOptions: Required<OperationGenerationConfig> = {
-	validateInterval: 10,
-	testCount: 100,
-	operations: 100,
+export const defaultOptions: Partial<DDSFuzzSuiteOptions> = {
+	validationStrategy: { type: "fixedInterval", interval: 10 },
+	clientJoinOptions: {
+		maxNumberOfClients: 6,
+		clientAddProbability: 0.05,
+		stashableClientProbability: 0.2,
+	},
+	defaultTestCount: 100,
+	saveFailures: { directory: path.join(_dirname, "../../src/test/results") },
 };
 
 type FuzzTestState = DDSFuzzTestState<CounterFactory>;
@@ -36,28 +48,8 @@ type FuzzTestState = DDSFuzzTestState<CounterFactory>;
  */
 export type CounterOperation = IIncrementOperation;
 
-/**
- * Config options for generating Counter operations
- */
-interface OperationGenerationConfig {
-	/**
-	 * Number of ops in between each synchronization/validation of the Counters
-	 */
-	validateInterval?: number;
-	/**
-	 * Number of tests to generate
-	 */
-	testCount?: number;
-	/**
-	 * Number of operations to perform in each test
-	 */
-	operations?: number;
-}
-
 function makeOperationGenerator(): Generator<CounterOperation, FuzzTestState> {
-	type OpSelectionState = FuzzTestState;
-
-	async function increment(state: OpSelectionState): Promise<CounterOperation> {
+	async function increment(state: FuzzTestState): Promise<CounterOperation> {
 		return {
 			type: "increment",
 			incrementAmount: state.random.integer(-10, 10),
@@ -66,7 +58,7 @@ function makeOperationGenerator(): Generator<CounterOperation, FuzzTestState> {
 
 	const clientBaseOperationGenerator = createWeightedGenerator<
 		CounterOperation,
-		OpSelectionState
+		FuzzTestState
 	>([[increment, 1]]);
 
 	return async (state: FuzzTestState) =>
@@ -75,14 +67,7 @@ function makeOperationGenerator(): Generator<CounterOperation, FuzzTestState> {
 		});
 }
 
-interface LoggingInfo {
-	/**
-	 * ids of the Counters to track over time
-	 */
-	counterNames: string[];
-}
-
-function makeReducer(loggingInfo?: LoggingInfo): Reducer<CounterOperation, FuzzTestState> {
+function makeReducer(): Reducer<CounterOperation, FuzzTestState> {
 	const reducer = combineReducers<CounterOperation, FuzzTestState>({
 		increment: ({ client }, { incrementAmount }) => {
 			client.channel.increment(incrementAmount);
