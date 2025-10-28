@@ -1,5 +1,13 @@
 # @fluid-experimental/presence
 
+## 2.70.0
+
+### Minor Changes
+
+- Improved join scalability ([#25371](https://github.com/microsoft/FluidFramework/pull/25371)) [98dadd30ae](https://github.com/microsoft/FluidFramework/commit/98dadd30aebbf202c9fad268013d27719129c774)
+
+  Protocol for attendees joining has been updated to more efficiently accommodate a larger number of attendees, including when few-to-none have write access.
+
 ## 2.63.0
 
 Dependency updates only.
