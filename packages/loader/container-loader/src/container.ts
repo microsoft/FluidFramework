@@ -2236,7 +2236,7 @@ export class Container
 			// Signal-based Audience does not wait for ops. So provide clientId
 			// as soon as possible.
 			const clientId = this.connectionStateHandler.pendingClientId;
-			assert(clientId !== undefined, "catching up without clientId");
+			assert(clientId !== undefined, 0xc89 /* catching up without clientId */);
 			this.signalAudience.setCurrentClientId(clientId);
 		}
 
@@ -2566,7 +2566,10 @@ export class Container
 					case ConnectionState.CatchingUp: {
 						// When catching up, we have a pending clientId, but it
 						// is not usable for ops. Send clientId with canSendOps false.
-						assert(pendingClientConnectionId !== undefined, "catching up without clientId");
+						assert(
+							pendingClientConnectionId !== undefined,
+							0xc8a /* catching up without clientId */,
+						);
 						setConnectionStatus({
 							connectionState,
 							pendingClientConnectionId,
@@ -2580,10 +2583,10 @@ export class Container
 						// When connected, we have an active clientId. Pass it along
 						// with canSendOps true/false based on readonly.
 						const clientConnectionId = this.clientId;
-						assert(clientConnectionId !== undefined, "connected without clientId");
+						assert(clientConnectionId !== undefined, 0xc8b /* connected without clientId */);
 						assert(
 							clientConnectionId === pendingClientConnectionId,
-							"connected with different clientId than pending",
+							0xc8c /* connected with different clientId than pending */,
 						);
 						setConnectionStatus({
 							connectionState,
