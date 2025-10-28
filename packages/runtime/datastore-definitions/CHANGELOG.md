@@ -1,5 +1,14 @@
 # @fluidframework/datastore-definitions
 
+## 2.70.0
+
+### Minor Changes
+
+- getSnapshotTree is now required in IChannelStorageService ([#25707](https://github.com/microsoft/FluidFramework/pull/25707)) [d1c4c0ab1d](https://github.com/microsoft/FluidFramework/commit/d1c4c0ab1d9f15af93f0a02c0dd0d13851655af8)
+
+  The `getSnapshotTree` property was added as optional to `IChannelStorageService` in version 2.51.0. It is now a required property.
+  See this [github issue](https://github.com/microsoft/FluidFramework/issues/25178) for more details.
+
 ## 2.63.0
 
 Dependency updates only.

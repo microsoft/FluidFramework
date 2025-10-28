@@ -1,5 +1,31 @@
 # @fluidframework/runtime-definitions
 
+## 2.70.0
+
+### Minor Changes
+
+- Deprecated properties have been removed from IRuntimeStorageService and IContainerStorageService ([#25708](https://github.com/microsoft/FluidFramework/pull/25708)) [82c936ed28](https://github.com/microsoft/FluidFramework/commit/82c936ed285c7e450d5e907a531ce71178f57819)
+
+  The following deprecated properties have been removed from `IRuntimeStorageService`:
+
+  - `createBlob`
+  - `dispose`
+  - `disposed`
+  - `downloadSummary`
+  - `getSnapshot`
+  - `getSnapshotTree`
+  - `getVersions`
+  - `policies`
+  - `uploadSummaryWithContext`
+
+  The following deprecated properties have been removed from `IContainerStorageService`:
+
+  - `dispose`
+  - `disposed`
+  - `downloadSummary`
+
+  Please see [this Github issue](https://github.com/microsoft/FluidFramework/issues/25069) for more details.
+
 ## 2.63.0
 
 Dependency updates only.
