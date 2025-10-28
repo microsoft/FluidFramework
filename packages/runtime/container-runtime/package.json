@@ -219,6 +219,9 @@
 	},
 	"typeValidation": {
 		"broken": {
+			"Interface_LoadContainerRuntimeParams": {
+				"backCompat": false
+			},
 			"TypeAlias_MinimumVersionForCollab": {
 				"backCompat": false,
 				"forwardCompat": false

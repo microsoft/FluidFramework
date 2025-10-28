@@ -10,14 +10,14 @@ import type {
 	Serializable,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
-import {
-	MessageType,
-	type ISequencedDocumentMessage,
-} from "@fluidframework/driver-definitions/internal";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type {
 	ISummaryTreeWithStats,
 	AttributionKey,
+	IRuntimeMessageCollection,
+	ISequencedMessageEnvelope,
+	IRuntimeMessagesContent,
 } from "@fluidframework/runtime-definitions/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
@@ -173,10 +173,10 @@ export class SharedCell<T = any>
 	 * Set the Op-based attribution through the SequencedDocumentMessage,
 	 * or set the local/detached attribution.
 	 */
-	private setAttribution(message?: ISequencedDocumentMessage): void {
+	private setAttribution(messageEnvelope?: ISequencedMessageEnvelope): void {
 		if (this.options?.attribution?.track ?? false) {
-			this.attribution = message
-				? { type: "op", seq: message.sequenceNumber }
+			this.attribution = messageEnvelope
+				? { type: "op", seq: messageEnvelope.sequenceNumber }
 				: this.isAttached()
 					? { type: "local" }
 					: { type: "detached", id: 0 };
@@ -243,19 +243,21 @@ export class SharedCell<T = any>
 	}
 
 	/**
-	 * Process a cell operation (op).
-	 *
-	 * @param message - The message to prepare.
-	 * @param local - Whether or not the message was sent by the local client.
-	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
-	 * For messages from a remote client, this will be `undefined`.
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
 	 */
-	protected processCore(
-		message: ISequencedDocumentMessage,
+	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+		const { envelope, local, messagesContent } = messagesCollection;
+		for (const messageContent of messagesContent) {
+			this.processMessage(envelope, messageContent, local);
+		}
+	}
+
+	private processMessage(
+		messageEnvelope: ISequencedMessageEnvelope,
+		messageContent: IRuntimeMessagesContent,
 		local: boolean,
-		localOpMetadata: unknown,
 	): void {
-		const cellOpMetadata = localOpMetadata as ICellLocalOpMetadata;
+		const cellOpMetadata = messageContent.localOpMetadata as ICellLocalOpMetadata;
 		if (this.messageId !== this.messageIdObserved) {
 			// We are waiting for an ACK on our change to this cell - we will ignore all messages until we get it.
 			if (local) {
@@ -273,16 +275,16 @@ export class SharedCell<T = any>
 				// We got an ACK. Update messageIdObserved.
 				this.messageIdObserved = cellOpMetadata.pendingMessageId;
 				// update the attributor
-				this.setAttribution(message);
+				this.setAttribution(messageEnvelope);
 			}
 			return;
 		}
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-		if (message.type === MessageType.Operation && !local) {
-			const op = message.contents as ICellOperation;
+		if (messageEnvelope.type === MessageType.Operation && !local) {
+			const op = messageContent.contents as ICellOperation;
 			// update the attributor
-			this.setAttribution(message);
+			this.setAttribution(messageEnvelope);
 			this.applyInnerOp(op);
 		}
 	}

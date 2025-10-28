@@ -6,6 +6,7 @@
 export {
 	typeNameSymbol,
 	typeSchemaSymbol,
+	contentSchemaSymbol,
 	type WithType,
 	type TreeNodeSchema,
 	type AnnotatedAllowedType,
@@ -135,7 +136,9 @@ export {
 	type UnannotateAllowedTypesListUnsafe,
 	type AnnotateAllowedTypesListUnsafe,
 	type TreeViewAlpha,
+	type TreeViewBeta,
 	type TreeBranch,
+	type TreeBranchAlpha,
 	type TreeBranchEvents,
 	getPropertyKeyFromStoredKey,
 	getStoredKey,
