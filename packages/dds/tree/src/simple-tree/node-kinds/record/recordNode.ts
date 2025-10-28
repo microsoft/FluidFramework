@@ -129,12 +129,6 @@ function createRecordNodeProxy(
 				0xc1a /* Expected MapNodeStoredSchema */,
 			);
 
-			// To stay consistent with ObjectNode behavior, we treat "= undefined" as delete.
-			if (value === undefined) {
-				field.editor.set(undefined, field.length === 0);
-				return true;
-			}
-
 			const mapTree = prepareForInsertion(
 				value,
 				createFieldSchema(FieldKind.Optional, kernel.schema.info as ImplicitAllowedTypes),
