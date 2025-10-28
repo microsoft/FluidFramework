@@ -56,9 +56,9 @@ export function toViewCompatibilityTreeSchema(
 			? {
 					kind: schema.root.kind,
 					allowedTypesIdentifiers: schema.root.allowedTypesIdentifiers,
+					allowedTypesInfo: schema.root.allowedTypesInfo,
 					metadata: schema.root.metadata,
 					persistedMetadata: schema.root.persistedMetadata,
-					stagedSchemaUpgrades: schema.root.stagedSchemaUpgrades,
 				}
 			: schema.root, // TODO: Convert the root field
 		definitions,

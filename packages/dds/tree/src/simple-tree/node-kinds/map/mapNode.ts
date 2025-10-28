@@ -66,6 +66,7 @@ import type {
 import { recordLikeDataToFlexContent } from "../common.js";
 import { MapNodeStoredSchema } from "../../../core/index.js";
 import type { NodeSchemaOptionsAlpha } from "../../api/index.js";
+import type { AllowedTypeInfo } from "../../simpleSchema.js";
 
 /**
  * A map of string keys to tree objects.
@@ -275,6 +276,15 @@ export function mapSchema<
 	const lazyAllowedTypesIdentifiers = new Lazy(
 		() => new Set(normalizedTypes.evaluate().map((type) => type.identifier)),
 	);
+	const lazyAllowedTypesInfo = new Lazy(() => {
+		const map = new Map<string, AllowedTypeInfo>();
+		for (const type of normalizedTypes.evaluate()) {
+			map.set(type.identifier, {
+				isStaged: false,
+			});
+		}
+		return map;
+	});
 
 	let privateData: TreeNodeSchemaPrivateData | undefined;
 	const persistedMetadata = nodeOptions.persistedMetadata;
@@ -301,6 +311,10 @@ export function mapSchema<
 
 		public static get allowedTypesIdentifiers(): ReadonlySet<string> {
 			return lazyAllowedTypesIdentifiers.value;
+		}
+
+		public static get allowedTypesInfo(): ReadonlyMap<string, AllowedTypeInfo> {
+			return lazyAllowedTypesInfo.value;
 		}
 
 		protected static override constructorCached: MostDerivedData | undefined = undefined;

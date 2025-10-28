@@ -1,10 +1,12 @@
 {
   "root": {
     "kind": 1,
-    "allowedTypesIdentifiers": [
-      "test.object"
-    ],
-    "hasStagedSchemaUpgrades": false
+    "allowedTypesInfo": [
+      {
+        "identifier": "test.object",
+        "isReadOnly": false
+      }
+    ]
   },
   "definitions": {
     "com.fluidframework.leaf.number": {
@@ -20,11 +22,16 @@
       "fields": {
         "foo": {
           "kind": 1,
-          "allowedTypesIdentifiers": [
-            "com.fluidframework.leaf.number",
-            "com.fluidframework.leaf.string"
+          "allowedTypesInfo": [
+            {
+              "identifier": "com.fluidframework.leaf.number",
+              "isReadOnly": false
+            },
+            {
+              "identifier": "com.fluidframework.leaf.string",
+              "isReadOnly": false
+            }
           ],
-          "hasStagedSchemaUpgrades": false,
           "storedKey": "foo"
         }
       },

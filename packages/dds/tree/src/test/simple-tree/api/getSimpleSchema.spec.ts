@@ -84,6 +84,7 @@ describe("getSimpleSchema", () => {
 					kind: FieldKind.Optional,
 					metadata: { description: "An optional string." },
 					allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+					allowedTypesInfo: new Map([["com.fluidframework.leaf.string", { isStaged: false }]]),
 					persistedMetadata: undefined,
 				},
 				definitions: new Map([["com.fluidframework.leaf.string", simpleString]]),
@@ -101,8 +102,8 @@ describe("getSimpleSchema", () => {
 					kind: FieldKind.Optional,
 					metadata: { description: "An optional string." },
 					allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+					allowedTypesInfo: new Map([["com.fluidframework.leaf.string", { isStaged: false }]]),
 					persistedMetadata: undefined,
-					stagedSchemaUpgrades: [],
 				},
 				definitions: new Map([["com.fluidframework.leaf.string", simpleString]]),
 			};
@@ -128,6 +129,7 @@ describe("getSimpleSchema", () => {
 					kind: FieldKind.Required,
 					metadata: {},
 					allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+					allowedTypesInfo: new Map([["com.fluidframework.leaf.string", { isStaged: false }]]),
 					persistedMetadata: undefined,
 				},
 				definitions: new Map([["com.fluidframework.leaf.string", simpleString]]),
@@ -145,8 +147,8 @@ describe("getSimpleSchema", () => {
 					kind: FieldKind.Required,
 					metadata: {},
 					allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+					allowedTypesInfo: new Map([["com.fluidframework.leaf.string", { isStaged: false }]]),
 					persistedMetadata: undefined,
-					stagedSchemaUpgrades: [],
 				},
 				definitions: new Map([["com.fluidframework.leaf.string", simpleString]]),
 			};
@@ -176,6 +178,10 @@ describe("getSimpleSchema", () => {
 						"com.fluidframework.leaf.number",
 						"com.fluidframework.leaf.string",
 					]),
+					allowedTypesInfo: new Map([
+						["com.fluidframework.leaf.number", { isStaged: false }],
+						["com.fluidframework.leaf.string", { isStaged: false }],
+					]),
 				},
 				definitions: new Map([
 					["com.fluidframework.leaf.number", simpleNumber],
@@ -199,7 +205,10 @@ describe("getSimpleSchema", () => {
 						"com.fluidframework.leaf.number",
 						"com.fluidframework.leaf.string",
 					]),
-					stagedSchemaUpgrades: [],
+					allowedTypesInfo: new Map([
+						["com.fluidframework.leaf.number", { isStaged: false }],
+						["com.fluidframework.leaf.string", { isStaged: false }],
+					]),
 				},
 				definitions: new Map([
 					["com.fluidframework.leaf.number", simpleNumber],
@@ -230,6 +239,7 @@ describe("getSimpleSchema", () => {
 					metadata: {},
 					persistedMetadata: undefined,
 					allowedTypesIdentifiers: new Set(["test.array"]),
+					allowedTypesInfo: new Map([["test.array", { isStaged: false }]]),
 				},
 				definitions: new Map<string, SimpleNodeSchema>([
 					[
@@ -237,6 +247,9 @@ describe("getSimpleSchema", () => {
 						{
 							kind: NodeKind.Array,
 							allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+							allowedTypesInfo: new Map([
+								["com.fluidframework.leaf.string", { isStaged: false }],
+							]),
 							metadata: {},
 							persistedMetadata: undefined,
 						},
@@ -258,7 +271,7 @@ describe("getSimpleSchema", () => {
 					metadata: {},
 					persistedMetadata: undefined,
 					allowedTypesIdentifiers: new Set(["test.array"]),
-					stagedSchemaUpgrades: [],
+					allowedTypesInfo: new Map([["test.array", { isStaged: false }]]),
 				},
 				definitions: new Map<string, SimpleNodeSchema>([
 					[
@@ -266,6 +279,9 @@ describe("getSimpleSchema", () => {
 						{
 							kind: NodeKind.Array,
 							allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+							allowedTypesInfo: new Map([
+								["com.fluidframework.leaf.string", { isStaged: false }],
+							]),
 							metadata: {},
 							persistedMetadata: undefined,
 						},
@@ -297,6 +313,7 @@ describe("getSimpleSchema", () => {
 					metadata: {},
 					persistedMetadata: undefined,
 					allowedTypesIdentifiers: new Set(["test.map"]),
+					allowedTypesInfo: new Map([["test.map", { isStaged: false }]]),
 				},
 				definitions: new Map<string, SimpleNodeSchema>([
 					[
@@ -306,6 +323,9 @@ describe("getSimpleSchema", () => {
 							metadata: {},
 							persistedMetadata: undefined,
 							allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+							allowedTypesInfo: new Map([
+								["com.fluidframework.leaf.string", { isStaged: false }],
+							]),
 						},
 					],
 					["com.fluidframework.leaf.string", simpleString],
@@ -325,7 +345,7 @@ describe("getSimpleSchema", () => {
 					metadata: {},
 					persistedMetadata: undefined,
 					allowedTypesIdentifiers: new Set(["test.map"]),
-					stagedSchemaUpgrades: [],
+					allowedTypesInfo: new Map([["test.map", { isStaged: false }]]),
 				},
 				definitions: new Map<string, SimpleNodeSchema>([
 					[
@@ -335,6 +355,9 @@ describe("getSimpleSchema", () => {
 							metadata: {},
 							persistedMetadata: undefined,
 							allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+							allowedTypesInfo: new Map([
+								["com.fluidframework.leaf.string", { isStaged: false }],
+							]),
 						},
 					],
 					["com.fluidframework.leaf.string", simpleString],
@@ -364,6 +387,7 @@ describe("getSimpleSchema", () => {
 					metadata: {},
 					persistedMetadata: undefined,
 					allowedTypesIdentifiers: new Set(["test.record"]),
+					allowedTypesInfo: new Map([["test.record", { isStaged: false }]]),
 				},
 				definitions: new Map<string, SimpleNodeSchema>([
 					[
@@ -373,6 +397,9 @@ describe("getSimpleSchema", () => {
 							metadata: {},
 							persistedMetadata: undefined,
 							allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+							allowedTypesInfo: new Map([
+								["com.fluidframework.leaf.string", { isStaged: false }],
+							]),
 						},
 					],
 					["com.fluidframework.leaf.string", simpleString],
@@ -392,7 +419,7 @@ describe("getSimpleSchema", () => {
 					metadata: {},
 					persistedMetadata: undefined,
 					allowedTypesIdentifiers: new Set(["test.record"]),
-					stagedSchemaUpgrades: [],
+					allowedTypesInfo: new Map([["test.record", { isStaged: false }]]),
 				},
 				definitions: new Map<string, SimpleNodeSchema>([
 					[
@@ -402,6 +429,9 @@ describe("getSimpleSchema", () => {
 							metadata: {},
 							persistedMetadata: undefined,
 							allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+							allowedTypesInfo: new Map([
+								["com.fluidframework.leaf.string", { isStaged: false }],
+							]),
 						},
 					],
 					["com.fluidframework.leaf.string", simpleString],
@@ -434,6 +464,7 @@ describe("getSimpleSchema", () => {
 					metadata: {},
 					persistedMetadata: undefined,
 					allowedTypesIdentifiers: new Set(["test.object"]),
+					allowedTypesInfo: new Map([["test.object", { isStaged: false }]]),
 				},
 				definitions: new Map<string, SimpleNodeSchema>([
 					[
@@ -450,6 +481,9 @@ describe("getSimpleSchema", () => {
 										metadata: {},
 										persistedMetadata: undefined,
 										allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.number"]),
+										allowedTypesInfo: new Map([
+											["com.fluidframework.leaf.number", { isStaged: false }],
+										]),
 										storedKey: "foo",
 									},
 								],
@@ -460,6 +494,9 @@ describe("getSimpleSchema", () => {
 										metadata: {},
 										persistedMetadata: undefined,
 										allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+										allowedTypesInfo: new Map([
+											["com.fluidframework.leaf.string", { isStaged: false }],
+										]),
 										storedKey: "bar",
 									},
 								],
@@ -484,7 +521,7 @@ describe("getSimpleSchema", () => {
 					metadata: {},
 					persistedMetadata: undefined,
 					allowedTypesIdentifiers: new Set(["test.object"]),
-					stagedSchemaUpgrades: [],
+					allowedTypesInfo: new Map([["test.object", { isStaged: false }]]),
 				},
 				definitions: new Map<string, SimpleNodeSchema>([
 					[
@@ -502,8 +539,10 @@ describe("getSimpleSchema", () => {
 										metadata: {},
 										persistedMetadata: undefined,
 										allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.number"]),
+										allowedTypesInfo: new Map([
+											["com.fluidframework.leaf.number", { isStaged: false }],
+										]),
 										storedKey: "foo",
-										stagedSchemaUpgrades: [],
 									},
 								],
 								[
@@ -513,8 +552,10 @@ describe("getSimpleSchema", () => {
 										metadata: {},
 										persistedMetadata: undefined,
 										allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+										allowedTypesInfo: new Map([
+											["com.fluidframework.leaf.string", { isStaged: false }],
+										]),
 										storedKey: "bar",
-										stagedSchemaUpgrades: [],
 									},
 								],
 							]),
@@ -550,6 +591,7 @@ describe("getSimpleSchema", () => {
 					metadata: {},
 					persistedMetadata: undefined,
 					allowedTypesIdentifiers: new Set(["test.object"]),
+					allowedTypesInfo: new Map([["test.object", { isStaged: false }]]),
 				},
 				definitions: new Map<string, SimpleNodeSchema>([
 					[
@@ -566,6 +608,9 @@ describe("getSimpleSchema", () => {
 										metadata: {},
 										persistedMetadata: undefined,
 										allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+										allowedTypesInfo: new Map([
+											["com.fluidframework.leaf.string", { isStaged: false }],
+										]),
 										storedKey: "id",
 									},
 								],
@@ -588,7 +633,7 @@ describe("getSimpleSchema", () => {
 					metadata: {},
 					persistedMetadata: undefined,
 					allowedTypesIdentifiers: new Set(["test.object"]),
-					stagedSchemaUpgrades: [],
+					allowedTypesInfo: new Map([["test.object", { isStaged: false }]]),
 				},
 				definitions: new Map<string, SimpleNodeSchema>([
 					[
@@ -606,8 +651,10 @@ describe("getSimpleSchema", () => {
 										metadata: {},
 										persistedMetadata: undefined,
 										allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+										allowedTypesInfo: new Map([
+											["com.fluidframework.leaf.string", { isStaged: false }],
+										]),
 										storedKey: "id",
-										stagedSchemaUpgrades: [],
 									},
 								],
 							]),
@@ -644,6 +691,7 @@ describe("getSimpleSchema", () => {
 					metadata: {},
 					persistedMetadata: undefined,
 					allowedTypesIdentifiers: new Set(["test.object"]),
+					allowedTypesInfo: new Map([["test.object", { isStaged: false }]]),
 				},
 				definitions: new Map<string, SimpleNodeSchema>([
 					[
@@ -662,6 +710,10 @@ describe("getSimpleSchema", () => {
 										allowedTypesIdentifiers: new Set([
 											"com.fluidframework.leaf.number",
 											"com.fluidframework.leaf.string",
+										]),
+										allowedTypesInfo: new Map([
+											["com.fluidframework.leaf.number", { isStaged: false }],
+											["com.fluidframework.leaf.string", { isStaged: false }],
 										]),
 										storedKey: "foo",
 									},
@@ -689,7 +741,7 @@ describe("getSimpleSchema", () => {
 					metadata: {},
 					persistedMetadata: undefined,
 					allowedTypesIdentifiers: new Set(["test.object"]),
-					stagedSchemaUpgrades: [],
+					allowedTypesInfo: new Map([["test.object", { isStaged: false }]]),
 				},
 				definitions: new Map<string, SimpleNodeSchema>([
 					[
@@ -710,8 +762,11 @@ describe("getSimpleSchema", () => {
 											"com.fluidframework.leaf.number",
 											"com.fluidframework.leaf.string",
 										]),
+										allowedTypesInfo: new Map([
+											["com.fluidframework.leaf.number", { isStaged: false }],
+											["com.fluidframework.leaf.string", { isStaged: false }],
+										]),
 										storedKey: "foo",
-										stagedSchemaUpgrades: [],
 									},
 								],
 							]),
@@ -747,6 +802,7 @@ describe("getSimpleSchema", () => {
 					metadata: {},
 					persistedMetadata: undefined,
 					allowedTypesIdentifiers: new Set(["test.recursive-object"]),
+					allowedTypesInfo: new Map([["test.recursive-object", { isStaged: false }]]),
 				},
 				definitions: new Map<string, SimpleNodeSchema>([
 					[
@@ -765,6 +821,10 @@ describe("getSimpleSchema", () => {
 										allowedTypesIdentifiers: new Set([
 											"com.fluidframework.leaf.string",
 											"test.recursive-object",
+										]),
+										allowedTypesInfo: new Map([
+											["com.fluidframework.leaf.string", { isStaged: false }],
+											["test.recursive-object", { isStaged: false }],
 										]),
 										storedKey: "foo",
 									},
@@ -789,7 +849,7 @@ describe("getSimpleSchema", () => {
 					metadata: {},
 					persistedMetadata: undefined,
 					allowedTypesIdentifiers: new Set(["test.recursive-object"]),
-					stagedSchemaUpgrades: [],
+					allowedTypesInfo: new Map([["test.recursive-object", { isStaged: false }]]),
 				},
 				definitions: new Map<string, SimpleNodeSchema>([
 					[
@@ -810,8 +870,11 @@ describe("getSimpleSchema", () => {
 											"com.fluidframework.leaf.string",
 											"test.recursive-object",
 										]),
+										allowedTypesInfo: new Map([
+											["com.fluidframework.leaf.string", { isStaged: false }],
+											["test.recursive-object", { isStaged: false }],
+										]),
 										storedKey: "foo",
-										stagedSchemaUpgrades: [],
 									},
 								],
 							]),

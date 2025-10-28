@@ -1,10 +1,12 @@
 {
   "root": {
     "kind": 1,
-    "allowedTypesIdentifiers": [
-      "test.array"
-    ],
-    "hasStagedSchemaUpgrades": false
+    "allowedTypesInfo": [
+      {
+        "identifier": "test.array",
+        "isReadOnly": false
+      }
+    ]
   },
   "definitions": {
     "com.fluidframework.leaf.string": {

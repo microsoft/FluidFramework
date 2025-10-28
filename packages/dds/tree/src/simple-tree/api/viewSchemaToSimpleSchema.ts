@@ -70,6 +70,7 @@ export function toSimpleTreeSchema(
 		root: copySchemaObjects
 			? ({
 					allowedTypesIdentifiers: normalizedSchema.allowedTypesIdentifiers,
+					allowedTypesInfo: normalizedSchema.allowedTypesInfo,
 					kind: normalizedSchema.kind,
 					metadata: normalizedSchema.metadata,
 					persistedMetadata: normalizedSchema.persistedMetadata,
@@ -146,6 +147,7 @@ function copySimpleSchemaWithAllowedTypes(
 			return {
 				kind: schema.kind,
 				allowedTypesIdentifiers: schema.allowedTypesIdentifiers,
+				allowedTypesInfo: schema.allowedTypesInfo,
 				metadata: schema.metadata,
 				persistedMetadata: schema.persistedMetadata,
 			};
@@ -153,6 +155,7 @@ function copySimpleSchemaWithAllowedTypes(
 			return {
 				kind: schema.kind,
 				allowedTypesIdentifiers: schema.allowedTypesIdentifiers,
+				allowedTypesInfo: schema.allowedTypesInfo,
 				// Don't include metadata or persistedMetadata in view compatibility schema.
 				metadata: {},
 				persistedMetadata: undefined,
@@ -176,6 +179,7 @@ function copySimpleObjectSchema(
 				simpleField = {
 					kind: field.kind,
 					allowedTypesIdentifiers: field.allowedTypesIdentifiers,
+					allowedTypesInfo: field.allowedTypesInfo,
 					metadata: field.metadata,
 					persistedMetadata: field.persistedMetadata,
 					storedKey: field.storedKey,
@@ -186,11 +190,11 @@ function copySimpleObjectSchema(
 				simpleField = {
 					kind: field.kind,
 					allowedTypesIdentifiers: field.allowedTypesIdentifiers,
+					allowedTypesInfo: field.allowedTypesInfo,
 					// Don't include metadata or persistedMetadata in view compatibility schema.
 					metadata: {},
 					persistedMetadata: undefined,
 					storedKey: field.storedKey,
-					stagedSchemaUpgrades: field.stagedSchemaUpgrades,
 				};
 				break;
 

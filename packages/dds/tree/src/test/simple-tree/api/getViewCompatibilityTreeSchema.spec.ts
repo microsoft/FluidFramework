@@ -17,29 +17,28 @@ describe("getViewCompatibilityTreeSchema", () => {
 		const leafSchema = stringSchema;
 		const schemaFactory = new SchemaFactoryAlpha("test");
 		const root = schemaFactory.optional(
+			// Staged allowed types are read-only for the sake of schema migrations
 			schemaFactory.types([schemaFactory.staged(leafSchema)]),
 		);
 
-		const stagedSchemaUpgrades = root.stagedSchemaUpgrades;
-
-		it("Should preserve staged schema upgrades when converting to SimpleTreeSchema", () => {
+		it("Should preserve isReadOnly when converting to SimpleTreeSchema", () => {
 			const expected: SimpleTreeSchema = {
 				root: {
 					kind: FieldKind.Optional,
+					allowedTypesInfo: new Map([[leafSchema.identifier, { isStaged: true }]]),
 					allowedTypesIdentifiers: new Set([leafSchema.identifier]),
 					metadata: {},
 					persistedMetadata: undefined,
-					stagedSchemaUpgrades,
 				},
 				definitions: new Map([[leafSchema.identifier, leafSchema]]),
 			};
 
 			const treeView = new TreeViewConfigurationAlpha({ schema: root });
 			const actual = toViewCompatibilityTreeSchema(treeView, true);
-			assert.deepEqual(actual.root.stagedSchemaUpgrades, expected.root.stagedSchemaUpgrades);
+			assert.deepEqual(actual.root.allowedTypesInfo, expected.root.allowedTypesInfo);
 		});
 
-		it("view compatibility schema - hasStagedSchemaUpgrades", () => {
+		it("view compatibility schema - allowedTypesIdentifiers", () => {
 			const treeView = new TreeViewConfigurationAlpha({ schema: root });
 			const actual = toSerializableCompatibilitySchema(treeView);
 			takeJsonSnapshot(actual);

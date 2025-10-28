@@ -5,7 +5,7 @@
 
 import type { ValueSchema } from "../core/index.js";
 import type { JsonCompatibleReadOnlyObject } from "../util/index.js";
-import type { NodeKind, SchemaUpgrade, SimpleNodeSchemaBase } from "./core/index.js";
+import type { NodeKind, SimpleNodeSchemaBase } from "./core/index.js";
 import type { FieldKind, FieldSchemaMetadata } from "./fieldSchema.js";
 
 /*
@@ -99,6 +99,11 @@ export interface SimpleArrayNodeSchema<out TCustomMetadata = unknown>
 	 * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
 	 */
 	readonly allowedTypesIdentifiers: ReadonlySet<string>;
+
+	/**
+	 * Information about the allowed types.
+	 */
+	readonly allowedTypesInfo: ReadonlyMap<string, AllowedTypeInfo>;
 }
 
 /**
@@ -116,6 +121,11 @@ export interface SimpleMapNodeSchema<out TCustomMetadata = unknown>
 	 * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
 	 */
 	readonly allowedTypesIdentifiers: ReadonlySet<string>;
+
+	/**
+	 * Information about the allowed types.
+	 */
+	readonly allowedTypesInfo: ReadonlyMap<string, AllowedTypeInfo>;
 }
 
 /**
@@ -133,6 +143,11 @@ export interface SimpleRecordNodeSchema<out TCustomMetadata = unknown>
 	 * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
 	 */
 	readonly allowedTypesIdentifiers: ReadonlySet<string>;
+
+	/**
+	 * Information about the allowed types.
+	 */
+	readonly allowedTypesInfo: ReadonlyMap<string, AllowedTypeInfo>;
 }
 
 /**
@@ -170,6 +185,20 @@ export type SimpleNodeSchema =
 	| SimpleRecordNodeSchema;
 
 /**
+ * Information about allowed types under a field.
+ *
+ * @alpha
+ * @sealed
+ */
+export interface AllowedTypeInfo {
+	/**
+	 * True if there is an associated schema upgrade that makes this type read-only.
+	 * Undefined if derived from a stored schema, which has no concept of staged allowed type upgrades.
+	 */
+	readonly isStaged?: boolean;
+}
+
+/**
  * A simple, shallow representation of a schema for a field.
  *
  * @remarks This definition is incomplete, and references child types by identifiers.
@@ -194,11 +223,9 @@ export interface SimpleFieldSchema {
 	readonly allowedTypesIdentifiers: ReadonlySet<string>;
 
 	/**
-	 * Staged schema upgrades for this field indexed by the allowed type identifier they apply to.
-	 *
-	 * @remarks Used for compatibility checks (see {@link toViewCompatibilityTreeSchema}). Not available in all cases.
+	 * Information about the allowed types under this field.
 	 */
-	readonly stagedSchemaUpgrades?: SchemaUpgrade[];
+	readonly allowedTypesInfo: ReadonlyMap<string, AllowedTypeInfo>;
 
 	/**
 	 * {@inheritDoc FieldSchemaMetadata}

@@ -1,10 +1,12 @@
 {
   "root": {
     "kind": 1,
-    "allowedTypesIdentifiers": [
-      "test.recursive-object"
-    ],
-    "hasStagedSchemaUpgrades": false
+    "allowedTypesInfo": [
+      {
+        "identifier": "test.recursive-object",
+        "isReadOnly": false
+      }
+    ]
   },
   "definitions": {
     "com.fluidframework.leaf.string": {
@@ -16,11 +18,16 @@
       "fields": {
         "foo": {
           "kind": 0,
-          "allowedTypesIdentifiers": [
-            "com.fluidframework.leaf.string",
-            "test.recursive-object"
+          "allowedTypesInfo": [
+            {
+              "identifier": "com.fluidframework.leaf.string",
+              "isReadOnly": false
+            },
+            {
+              "identifier": "test.recursive-object",
+              "isReadOnly": false
+            }
           ],
-          "hasStagedSchemaUpgrades": false,
           "storedKey": "foo"
         }
       },

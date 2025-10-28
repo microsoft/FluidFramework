@@ -68,6 +68,7 @@ import type {
 import { brand, type JsonCompatibleReadOnlyObject } from "../../../util/index.js";
 import { nullSchema } from "../../leafNodeSchema.js";
 import { arrayNodeStoredSchema } from "../../toStoredSchema.js";
+import type { AllowedTypeInfo } from "../../simpleSchema.js";
 
 /**
  * A covariant base type for {@link (TreeArrayNode:interface)}.
@@ -1168,6 +1169,15 @@ export function arraySchema<
 	const lazyAllowedTypesIdentifiers = new Lazy(
 		() => new Set(normalizedTypes.evaluate().map((type) => type.identifier)),
 	);
+	const lazyAllowedTypesInfo = new Lazy(() => {
+		const map = new Map<string, AllowedTypeInfo>();
+		for (const type of normalizedTypes.evaluate()) {
+			map.set(type.identifier, {
+				isStaged: false,
+			});
+		}
+		return map;
+	});
 
 	let privateData: TreeNodeSchemaPrivateData | undefined;
 
@@ -1204,6 +1214,10 @@ export function arraySchema<
 
 		public static get allowedTypesIdentifiers(): ReadonlySet<string> {
 			return lazyAllowedTypesIdentifiers.value;
+		}
+
+		public static get allowedTypesInfo(): ReadonlyMap<string, AllowedTypeInfo> {
+			return lazyAllowedTypesInfo.value;
 		}
 
 		protected static override constructorCached: MostDerivedData | undefined = undefined;

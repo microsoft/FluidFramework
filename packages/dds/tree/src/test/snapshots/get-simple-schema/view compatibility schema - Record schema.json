@@ -1,10 +1,12 @@
 {
   "root": {
     "kind": 1,
-    "allowedTypesIdentifiers": [
-      "test.record"
-    ],
-    "hasStagedSchemaUpgrades": false
+    "allowedTypesInfo": [
+      {
+        "identifier": "test.record",
+        "isReadOnly": false
+      }
+    ]
   },
   "definitions": {
     "com.fluidframework.leaf.string": {

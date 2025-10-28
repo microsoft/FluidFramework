@@ -3,6 +3,7 @@ import type { TreeSchema } from "./configuration.js";
 import { toViewCompatibilityTreeSchema } from "./viewSchemaToViewCompatibilitySchema.js";
 import { fail, unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
+	AllowedTypeInfo,
 	SimpleArrayNodeSchema,
 	SimpleFieldSchema,
 	SimpleLeafNodeSchema,
@@ -130,14 +131,17 @@ function toSerializableObjectField(
  * @returns A serializable representation of the field schema.
  */
 function toSerializableField(fieldSchema: SimpleFieldSchema): JsonCompatibleObject {
+	const allowedTypesInfo: JsonCompatibleObject[] = [];
+	for (const [identifier, typeInfo] of fieldSchema.allowedTypesInfo ??
+		new Map<string, AllowedTypeInfo>()) {
+		allowedTypesInfo.push({
+			identifier,
+			isReadOnly: typeInfo.isStaged,
+		});
+	}
 	return {
 		kind: fieldSchema.kind,
-		allowedTypesIdentifiers: setToArray(fieldSchema.allowedTypesIdentifiers),
-
-		// We can't serialize SchemaUpgrades, but the presence of staged upgrades is useful information for compatibility testing.
-		hasStagedSchemaUpgrades:
-			fieldSchema.stagedSchemaUpgrades !== undefined &&
-			fieldSchema.stagedSchemaUpgrades.length > 0,
+		allowedTypesInfo,
 	};
 }
 

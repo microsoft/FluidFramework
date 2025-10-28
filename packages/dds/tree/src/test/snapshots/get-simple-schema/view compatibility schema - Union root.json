@@ -1,11 +1,16 @@
 {
   "root": {
     "kind": 1,
-    "allowedTypesIdentifiers": [
-      "com.fluidframework.leaf.number",
-      "com.fluidframework.leaf.string"
-    ],
-    "hasStagedSchemaUpgrades": false
+    "allowedTypesInfo": [
+      {
+        "identifier": "com.fluidframework.leaf.number",
+        "isReadOnly": false
+      },
+      {
+        "identifier": "com.fluidframework.leaf.string",
+        "isReadOnly": false
+      }
+    ]
   },
   "definitions": {
     "com.fluidframework.leaf.number": {

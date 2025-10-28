@@ -42,6 +42,7 @@ import {
 	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
 	type TreeStoredSchemaSubscription,
+	type TreeTypeSet,
 	getCodecTreeForDetachedFieldIndexFormat,
 	makeDetachedFieldIndex,
 	moveToDetachedField,
@@ -98,6 +99,7 @@ import {
 	FieldKind,
 	type ITreeAlpha,
 	type SimpleObjectFieldSchema,
+	type AllowedTypeInfo,
 } from "../simple-tree/index.js";
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
@@ -950,6 +952,16 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
 };
 
+function buildAllowedTypesInfo(types: TreeTypeSet): ReadonlyMap<string, AllowedTypeInfo> {
+	const allowedTypesInfo = new Map<string, AllowedTypeInfo>();
+	for (const type of types) {
+		allowedTypesInfo.set(type, {
+			isStaged: false,
+		});
+	}
+	return allowedTypesInfo;
+}
+
 function exportSimpleFieldSchemaStored(schema: TreeFieldStoredSchema): SimpleFieldSchema {
 	let kind: FieldKind;
 	switch (schema.kind) {
@@ -971,7 +983,9 @@ function exportSimpleFieldSchemaStored(schema: TreeFieldStoredSchema): SimpleFie
 	}
 	return {
 		kind,
+		// TODO: Refactor
 		allowedTypesIdentifiers: schema.types,
+		allowedTypesInfo: buildAllowedTypesInfo(schema.types),
 		metadata: {},
 		persistedMetadata: schema.persistedMetadata,
 	};
@@ -988,6 +1002,7 @@ function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeS
 		return {
 			kind: NodeKind.Array,
 			allowedTypesIdentifiers: arrayTypes,
+			allowedTypesInfo: buildAllowedTypesInfo(arrayTypes),
 			metadata: {},
 			persistedMetadata: schema.metadata,
 		};
@@ -1007,6 +1022,7 @@ function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeS
 		return {
 			kind: NodeKind.Map,
 			allowedTypesIdentifiers: schema.mapFields.types,
+			allowedTypesInfo: buildAllowedTypesInfo(schema.mapFields.types),
 			metadata: {},
 			persistedMetadata: schema.metadata,
 		};
