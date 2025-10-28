@@ -13,7 +13,7 @@ import { type FormatV2, StableOrFinalRevisionTag } from "./detachedFieldIndexFor
 import type { DetachedFieldSummaryData, Major } from "./detachedFieldIndexTypes.js";
 import { makeDetachedFieldIndexCodecFromMajorCodec } from "./detachedFieldIndexCodecCommon.js";
 import { isStableId } from "@fluidframework/id-compressor/internal";
-import { DetachedFieldIndexVersion } from "./detachedFieldIndexFormatCommon.js";
+import { DetachedFieldIndexFormatVersion } from "./detachedFieldIndexFormatCommon.js";
 
 class MajorCodec implements IJsonCodec<Major> {
 	public constructor(
@@ -63,7 +63,7 @@ export function makeDetachedNodeToFieldCodecV2(
 	return makeDetachedFieldIndexCodecFromMajorCodec(
 		options,
 		majorCodec,
-		DetachedFieldIndexVersion.v2,
+		DetachedFieldIndexFormatVersion.v2,
 		StableOrFinalRevisionTag,
 	);
 }

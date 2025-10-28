@@ -71,10 +71,10 @@ import {
 	clientVersionToEditManagerFormatVersion,
 	clientVersionToMessageFormatVersion,
 	type ClonableSchemaAndPolicy,
-	type EditManagerFormatVersion,
+	EditManagerFormatVersion,
 	getCodecTreeForEditManagerFormatWithChange,
 	getCodecTreeForMessageFormatWithChange,
-	type MessageFormatVersion,
+	MessageFormatVersion,
 	SharedTreeCore,
 } from "../shared-tree-core/index.js";
 import {
@@ -619,11 +619,11 @@ export type SharedTreeFormatVersion = typeof SharedTreeFormatVersion;
  * This is because the format for SharedTree changes are not explicitly versioned.
  */
 export const changeFormatVersionForEditManager = DependentFormatVersion.fromPairs([
-	[brand<EditManagerFormatVersion>(1), brand<SharedTreeChangeFormatVersion>(1)],
-	[brand<EditManagerFormatVersion>(2), brand<SharedTreeChangeFormatVersion>(2)],
-	[brand<EditManagerFormatVersion>(3), brand<SharedTreeChangeFormatVersion>(3)],
-	[brand<EditManagerFormatVersion>(4), brand<SharedTreeChangeFormatVersion>(4)],
-	[brand<EditManagerFormatVersion>(5), brand<SharedTreeChangeFormatVersion>(4)],
+	[EditManagerFormatVersion.v1, brand<SharedTreeChangeFormatVersion>(1)],
+	[EditManagerFormatVersion.v2, brand<SharedTreeChangeFormatVersion>(2)],
+	[EditManagerFormatVersion.v3, brand<SharedTreeChangeFormatVersion>(3)],
+	[EditManagerFormatVersion.v4, brand<SharedTreeChangeFormatVersion>(4)],
+	[EditManagerFormatVersion.v5, brand<SharedTreeChangeFormatVersion>(4)],
 ]);
 
 /**
@@ -633,12 +633,12 @@ export const changeFormatVersionForEditManager = DependentFormatVersion.fromPair
  * This is because the format for SharedTree changes are not explicitly versioned.
  */
 export const changeFormatVersionForMessage = DependentFormatVersion.fromPairs([
-	[brand<MessageFormatVersion>(undefined), brand<SharedTreeChangeFormatVersion>(1)],
-	[brand<MessageFormatVersion>(1), brand<SharedTreeChangeFormatVersion>(1)],
-	[brand<MessageFormatVersion>(2), brand<SharedTreeChangeFormatVersion>(2)],
-	[brand<MessageFormatVersion>(3), brand<SharedTreeChangeFormatVersion>(3)],
-	[brand<MessageFormatVersion>(4), brand<SharedTreeChangeFormatVersion>(4)],
-	[brand<MessageFormatVersion>(5), brand<SharedTreeChangeFormatVersion>(4)],
+	[MessageFormatVersion.undefined, brand<SharedTreeChangeFormatVersion>(1)],
+	[MessageFormatVersion.v1, brand<SharedTreeChangeFormatVersion>(1)],
+	[MessageFormatVersion.v2, brand<SharedTreeChangeFormatVersion>(2)],
+	[MessageFormatVersion.v3, brand<SharedTreeChangeFormatVersion>(3)],
+	[MessageFormatVersion.v4, brand<SharedTreeChangeFormatVersion>(4)],
+	[MessageFormatVersion.v5, brand<SharedTreeChangeFormatVersion>(4)],
 ]);
 
 function getCodecTreeForEditManagerFormat(clientVersion: MinimumVersionForCollab): CodecTree {

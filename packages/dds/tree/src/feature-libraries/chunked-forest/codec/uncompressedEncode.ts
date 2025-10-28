@@ -12,7 +12,7 @@ import type { FluidSerializableReadOnly } from "../../valueUtilities.js";
 
 import type { FieldBatch } from "./fieldBatch.js";
 import {
-	FieldBatchVersion,
+	FieldBatchFormatVersion,
 	type EncodedFieldBatch,
 	type EncodedNestedArrayShape,
 	type EncodedNodeShape,
@@ -30,7 +30,7 @@ import type { ShapeIndex } from "./formatGeneric.js";
 export function uncompressedEncode(batch: FieldBatch): EncodedFieldBatch {
 	const rootFields = batch.map(encodeSequence);
 	return {
-		version: FieldBatchVersion.v1,
+		version: FieldBatchFormatVersion.v1,
 		identifiers: [],
 		// A single shape used to encode all fields.
 		shapes: [{ c: anyNodeShape }, { a: anyArray }],

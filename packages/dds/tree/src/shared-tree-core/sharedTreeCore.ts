@@ -51,16 +51,13 @@ import { BranchCommitEnricher } from "./branchCommitEnricher.js";
 import { type ChangeEnricherReadonlyCheckout, NoOpChangeEnricher } from "./changeEnricher.js";
 import { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
 import { EditManager, minimumPossibleSequenceNumber } from "./editManager.js";
-import { makeEditManagerCodec, type EditManagerFormatVersion } from "./editManagerCodecs.js";
-import type { SeqNumber } from "./editManagerFormatCommons.js";
+import { makeEditManagerCodec } from "./editManagerCodecs.js";
+import type { EditManagerFormatVersion, SeqNumber } from "./editManagerFormatCommons.js";
 import { EditManagerSummarizer } from "./editManagerSummarizer.js";
-import {
-	type MessageEncodingContext,
-	type MessageFormatVersion,
-	makeMessageCodec,
-} from "./messageCodecs.js";
+import { type MessageEncodingContext, makeMessageCodec } from "./messageCodecs.js";
 import type { DecodedMessage } from "./messageTypes.js";
 import type { ResubmitMachine } from "./resubmitMachine.js";
+import type { MessageFormatVersion } from "./messageFormat.js";
 
 // TODO: Organize this to be adjacent to persisted types.
 const summarizablesTreeKey = "indexes";

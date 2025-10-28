@@ -20,11 +20,7 @@ import type { RevisionTagCodec } from "../rebase/index.js";
 import { makeDetachedNodeToFieldCodecV1 } from "./detachedFieldIndexCodecV1.js";
 import { makeDetachedNodeToFieldCodecV2 } from "./detachedFieldIndexCodecV2.js";
 import type { DetachedFieldSummaryData } from "./detachedFieldIndexTypes.js";
-import { brand } from "../../util/index.js";
-import {
-	DetachedFieldIndexVersion,
-	type DetachedFieldIndexFormatVersion,
-} from "./detachedFieldIndexFormatCommon.js";
+import { DetachedFieldIndexFormatVersion } from "./detachedFieldIndexFormatCommon.js";
 
 /**
  * Convert a MinimumVersionForCollab to a version for detached field codecs.
@@ -35,8 +31,8 @@ function clientVersionToDetachedFieldVersion(
 	clientVersion: MinimumVersionForCollab,
 ): DetachedFieldIndexFormatVersion {
 	return clientVersion < FluidClientVersion.v2_52
-		? brand(DetachedFieldIndexVersion.v1)
-		: brand(DetachedFieldIndexVersion.v2);
+		? DetachedFieldIndexFormatVersion.v1
+		: DetachedFieldIndexFormatVersion.v2;
 }
 
 export function makeDetachedFieldIndexCodec(
@@ -58,11 +54,11 @@ export function makeDetachedFieldIndexCodecFamily(
 ): ICodecFamily<DetachedFieldSummaryData> {
 	return makeCodecFamily([
 		[
-			DetachedFieldIndexVersion.v1,
+			DetachedFieldIndexFormatVersion.v1,
 			makeDetachedNodeToFieldCodecV1(revisionTagCodec, options, idCompressor),
 		],
 		[
-			DetachedFieldIndexVersion.v2,
+			DetachedFieldIndexFormatVersion.v2,
 			makeDetachedNodeToFieldCodecV2(revisionTagCodec, options, idCompressor),
 		],
 	]);

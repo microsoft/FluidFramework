@@ -203,7 +203,6 @@ export {
 	makeSchemaChangeCodecs,
 	EncodedSchemaChange,
 	getCodecTreeForSchemaChangeFormat,
-	type SchemaChangeFormatVersion,
 } from "./schema-edits/index.js";
 
 export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily.js";

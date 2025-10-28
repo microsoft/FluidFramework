@@ -120,4 +120,24 @@ export const EncodedSharedBranch = <ChangeSchema extends TSchema>(tChange: Chang
 		noAdditionalProps,
 	);
 
+/**
+ * The format version for the EditManager.
+ */
+export const EditManagerFormatVersion = {
+	v1: 1,
+	v2: 2,
+	v3: 3,
+	v4: 4,
+	v5: 5,
+};
+export type EditManagerFormatVersion =
+	(typeof EditManagerFormatVersion)[keyof typeof EditManagerFormatVersion];
+export const editManagerFormatVersions: ReadonlySet<EditManagerFormatVersion> = new Set([
+	EditManagerFormatVersion.v1,
+	EditManagerFormatVersion.v2,
+	EditManagerFormatVersion.v3,
+	EditManagerFormatVersion.v4,
+	EditManagerFormatVersion.v5,
+]);
+
 /* eslint-enable @typescript-eslint/explicit-function-return-type */

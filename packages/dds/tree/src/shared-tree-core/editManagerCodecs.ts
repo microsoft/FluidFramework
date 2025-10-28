@@ -23,12 +23,16 @@ import type {
 	RevisionTag,
 	SchemaAndPolicy,
 } from "../core/index.js";
-import { brand, type Brand, type JsonCompatibleReadOnly } from "../util/index.js";
+import type { JsonCompatibleReadOnly } from "../util/index.js";
 
 import type { SummaryData } from "./editManager.js";
 import { makeV1CodecWithVersion } from "./editManagerCodecsV1toV4.js";
 import { makeV5CodecWithVersion } from "./editManagerCodecsV5.js";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import {
+	EditManagerFormatVersion,
+	editManagerFormatVersions,
+} from "./editManagerFormatCommons.js";
 
 export interface EditManagerEncodingContext {
 	idCompressor: IIdCompressor;
@@ -44,7 +48,7 @@ export function clientVersionToEditManagerFormatVersion(
 	clientVersion: MinimumVersionForCollab,
 ): EditManagerFormatVersion {
 	// Currently, edit manager codec only writes in version 3.
-	return brand(EditManagerVersion.v3);
+	return EditManagerFormatVersion.v3;
 }
 
 export function makeEditManagerCodec<TChangeset>(
@@ -97,44 +101,25 @@ export function makeEditManagerCodecs<TChangeset>(
 	][] = Array.from(editManagerFormatVersions, (version) => {
 		const changeCodec = changeCodecs.resolve(dependentChangeFormatVersion.lookup(version));
 		switch (version) {
-			case EditManagerVersion.v1:
-			case EditManagerVersion.v2:
-			case EditManagerVersion.v3:
-			case EditManagerVersion.v4:
+			case EditManagerFormatVersion.v1:
+			case EditManagerFormatVersion.v2:
+			case EditManagerFormatVersion.v3:
+			case EditManagerFormatVersion.v4:
 				return [
 					version,
 					makeV1CodecWithVersion(changeCodec, revisionTagCodec, options, version),
 				];
-			case EditManagerVersion.v5:
+			case EditManagerFormatVersion.v5:
 				return [
 					version,
 					makeV5CodecWithVersion(changeCodec, revisionTagCodec, options, version),
 				];
 			default:
-				unreachableCase(version);
+				unreachableCase(version as never);
 		}
 	});
 	return makeCodecFamily(registry);
 }
-
-/**
- * The format version for the EditManager.
- */
-export enum EditManagerVersion {
-	v1 = 1,
-	v2 = 2,
-	v3 = 3,
-	v4 = 4,
-	v5 = 5,
-}
-export type EditManagerFormatVersion = Brand<EditManagerVersion, "EditManagerFormatVersion">;
-export const editManagerFormatVersions: ReadonlySet<EditManagerFormatVersion> = new Set([
-	brand(EditManagerVersion.v1),
-	brand(EditManagerVersion.v2),
-	brand(EditManagerVersion.v3),
-	brand(EditManagerVersion.v4),
-	brand(EditManagerVersion.v5),
-]);
 
 export function getCodecTreeForEditManagerFormatWithChange(
 	clientVersion: MinimumVersionForCollab,

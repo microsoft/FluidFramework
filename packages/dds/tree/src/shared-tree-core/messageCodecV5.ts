@@ -17,8 +17,9 @@ import type { JsonCompatibleReadOnly } from "../util/index.js";
 import { Message } from "./messageFormatV5.js";
 import type { DecodedMessage } from "./messageTypes.js";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import type { MessageEncodingContext, MessageVersion } from "./messageCodecs.js";
+import type { MessageEncodingContext } from "./messageCodecs.js";
 import { decodeBranchId, encodeBranchId } from "./branchIdCodec.js";
+import { MessageFormatVersion } from "./messageFormat.js";
 
 export function makeV5CodecWithVersion<TChangeset>(
 	changeCodec: ChangeFamilyCodec<TChangeset>,
@@ -29,7 +30,6 @@ export function makeV5CodecWithVersion<TChangeset>(
 		ChangeEncodingContext
 	>,
 	options: ICodecOptions,
-	version: MessageVersion.v5,
 ): IJsonCodec<
 	DecodedMessage<TChangeset>,
 	JsonCompatibleReadOnly,
@@ -68,14 +68,14 @@ export function makeV5CodecWithVersion<TChangeset>(
 							originatorId: message.sessionId,
 							changeset: changeCodec.encode(message.commit.change, changeContext),
 							branchId: encodeBranchId(context.idCompressor, message.branchId),
-							version,
+							version: MessageFormatVersion.v5,
 						} satisfies Message & JsonCompatibleReadOnly;
 					}
 					case "branch": {
 						return {
 							originatorId: message.sessionId,
 							branchId: encodeBranchId(context.idCompressor, message.branchId),
-							version,
+							version: MessageFormatVersion.v5,
 						} satisfies Message & JsonCompatibleReadOnly;
 					}
 					default:

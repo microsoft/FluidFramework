@@ -56,7 +56,7 @@ import {
 	EncodedFieldBatch,
 	type EncodedValueShape,
 	validVersions,
-	FieldBatchVersion,
+	FieldBatchFormatVersion,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/format.js";
 import type {
@@ -180,7 +180,9 @@ describe("compressedEncode", () => {
 				const buffer: BufferFormat<EncodedChunkShape> = [];
 				encodeValue(value, shape, buffer);
 				assert.deepEqual(buffer, encoded);
-				const processed = updateShapesAndIdentifiersEncoding(FieldBatchVersion.v1, [buffer]);
+				const processed = updateShapesAndIdentifiersEncoding(FieldBatchFormatVersion.v1, [
+					buffer,
+				]);
 				assert(processed.data.length === 1);
 				const stream = { data: processed.data[0], offset: 0 };
 				const decoded = readValue(stream, shape, {
