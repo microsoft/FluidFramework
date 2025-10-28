@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/data-object-base",
-	"version": "2.70.0",
+	"version": "2.71.0",
 	"description": "Data object base for synchronously and lazily loaded object scenarios",
 	"homepage": "https://fluidframework.com",
 	"repository": {
