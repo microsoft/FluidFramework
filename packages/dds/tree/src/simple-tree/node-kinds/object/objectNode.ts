@@ -57,7 +57,7 @@ import {
 	getUnhydratedContext,
 } from "../../createContext.js";
 import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
-import {
+import type {
 	ObjectNodeSchema,
 	ObjectNodeSchemaInternalData,
 	ObjectNodeSchemaPrivate,
@@ -117,24 +117,24 @@ export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFie
  * Non-empty fields are enumerable and empty optional fields are non-enumerable own properties with the value `undefined`.
  * No other own `own` or `enumerable` properties are included on object nodes unless the user of the node manually adds custom session only state.
  * This allows a majority of general purpose JavaScript object processing operations (like `for...in`, `Reflect.ownKeys()` and `Object.entries()`) to enumerate all the children.
- * 
+ *
  * Field Assignment and Deletion
  * Assigning to a field updates the tree value as long as it is still valid based on the schema.
  * - For required fields, assigning `undefined` is invalid, and will throw.
  * - For optional fields, assigning `undefined` removes the field's contents, and marks it as empty (non-enumerable and value set to undefined).
- * 
+ *
  * Example:
  * ```ts
  * const Foo = schemaFactory.object("Foo", {bar: schemaFactory.optional(schemaFactory.number)});
  * const node = new Foo({bar: 1})
- * 
+ *
  * // This clears the field, is non-enumerable, and value is undefined.
  * delete node.bar;
- * 
+ *
  * // This is equivalent to the delete example.
  * node.bar = undefined
  * ```
- * 
+ *
  * The API for fields is defined by {@link ObjectFromSchemaRecord}.
  * @public
  */
