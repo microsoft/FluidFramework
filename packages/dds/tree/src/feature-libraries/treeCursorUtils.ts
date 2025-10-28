@@ -4,6 +4,7 @@
  */
 
 import { assert, oob, debugAssert, fail } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	CursorLocationType,
@@ -19,7 +20,6 @@ import {
 	detachedFieldAsKey,
 	rootField,
 } from "../core/index.js";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * {@link ITreeCursorSynchronous} that can return the underlying node objects.
@@ -73,6 +73,11 @@ export function stackTreeFieldCursor<TNode>(
 }
 
 /**
+ * The representation of a field used by {@link CursorAdapter}.
+ */
+export type Field<TNode> = Pick<readonly TNode[], typeof Symbol.iterator | "length" | number>;
+
+/**
  * Provides functionality to allow a {@link stackTreeNodeCursor} and {@link stackTreeFieldCursor} to implement cursors.
  */
 export interface CursorAdapter<TNode> {
@@ -91,10 +96,10 @@ export interface CursorAdapter<TNode> {
 	/**
 	 * @returns the child nodes for the given node and key.
 	 */
-	getFieldFromNode(node: TNode, key: FieldKey): readonly TNode[];
+	getFieldFromNode(node: TNode, key: FieldKey): Field<TNode>;
 }
 
-type SiblingsOrKey<TNode> = readonly TNode[] | readonly FieldKey[];
+type SiblingsOrKey<TNode> = Field<TNode> | readonly FieldKey[];
 
 /**
  * A class that satisfies part of the ITreeCursorSynchronous implementation.
@@ -122,7 +127,7 @@ export abstract class SynchronousCursor {
  * 2. Support for cursors which are field cursors at the root.
  */
 class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNode> {
-	public readonly [CursorMarker] = true;
+	public override readonly [CursorMarker] = true;
 	/**
 	 * Might start at special root where fields are detached sequences.
 	 *
@@ -146,38 +151,41 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 	}
 
 	public getFieldKey(): FieldKey {
-		debugAssert(() =>
-			this.mode === CursorLocationType.Fields ? true : "must be in fields mode",
-		);
-		return this.siblings[this.index] as FieldKey;
+		debugAssert(() => this.mode === CursorLocationType.Fields || "must be in fields mode");
+		// index is kept inbounds as an invariant of the class.
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		return (this.siblings as readonly FieldKey[])[this.index]!;
 	}
 
 	private getStackedFieldKey(height: number): FieldKey {
-		assert(height % 2 === 1, 0x3b8 /* must field height */);
+		debugAssert(() => height % 2 === 1 || "expected odd height when in field");
 		const siblingStack = this.siblingStack[height] ?? oob();
 		const indexStack = this.indexStack[height] ?? oob();
-		return siblingStack[indexStack] as FieldKey;
+		// index is kept inbounds as an invariant of the class.
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		return (siblingStack as readonly FieldKey[])[indexStack]!;
 	}
 
 	private getStackedNodeIndex(height: number): number {
-		// assert(height % 2 === 0, "must be node height");
+		debugAssert(() => height % 2 === 0 || "must be node height");
 		return this.indexStack[height] ?? oob();
 	}
 
 	private getStackedNode(height: number): TNode {
 		const index = this.getStackedNodeIndex(height);
-		// Test is failing when using `?? oob()` here.
+		// Can not use `?? oob()` since null and undefined are valid values.
+		// index is kept inbounds as an invariant of the class.
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return (this.siblingStack[height] as readonly TNode[])[index]!;
+		return (this.siblingStack[height] as Field<TNode>)[index]!;
 	}
 
 	public getFieldLength(): number {
-		// assert(this.mode === CursorLocationType.Fields, "must be in fields mode");
+		debugAssert(() => this.mode === CursorLocationType.Fields || "must be in fields mode");
 		return this.getField().length;
 	}
 
 	public enterNode(index: number): void {
-		// assert(this.mode === CursorLocationType.Fields, "must be in fields mode");
+		debugAssert(() => this.mode === CursorLocationType.Fields || "must be in fields mode");
 		const siblings = this.getField();
 		if (!(index in siblings)) {
 			throw new UsageError(
@@ -264,7 +272,7 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 	}
 
 	public enterField(key: FieldKey): void {
-		// assert(this.mode === CursorLocationType.Nodes, "must be in nodes mode");
+		debugAssert(() => this.mode === CursorLocationType.Nodes || "must be in nodes mode");
 		this.siblingStack.push(this.siblings);
 		this.indexStack.push(this.index);
 
@@ -293,7 +301,7 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 	}
 
 	public firstField(): boolean {
-		// assert(this.mode === CursorLocationType.Nodes, "must be in nodes mode");
+		debugAssert(() => this.mode === CursorLocationType.Nodes || "must be in nodes mode");
 		const fields = this.adapter.keysFromNode(this.getNode());
 		if (fields.length === 0) {
 			return false;
@@ -307,7 +315,9 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 	}
 
 	public seekNodes(offset: number): boolean {
-		// assert(this.mode === CursorLocationType.Nodes, "can only seekNodes when in Nodes");
+		debugAssert(
+			() => this.mode === CursorLocationType.Nodes || "can only seekNodes when in Nodes",
+		);
 		this.index += offset;
 		if (this.index in this.siblings) {
 			return true;
@@ -317,7 +327,9 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 	}
 
 	public firstNode(): boolean {
-		// assert(this.mode === CursorLocationType.Fields, "firstNode only allowed in fields mode");
+		debugAssert(
+			() => this.mode === CursorLocationType.Fields || "firstNode only allowed in fields mode",
+		);
 		const nodes = this.getField();
 		if (nodes.length === 0) {
 			return false;
@@ -330,9 +342,8 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 	}
 
 	public nextNode(): boolean {
-		assert(
-			this.mode === CursorLocationType.Nodes,
-			0x406 /* can only nextNode when in Nodes */,
+		debugAssert(
+			() => this.mode === CursorLocationType.Nodes || "can only nextNode when in Nodes",
 		);
 		this.index++;
 		if (this.index < (this.siblings as []).length) {
@@ -343,28 +354,41 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 	}
 
 	public exitField(): void {
-		// assert(this.mode === CursorLocationType.Fields, "can only navigate up from field when in field");
+		debugAssert(
+			() =>
+				this.mode === CursorLocationType.Fields ||
+				"can only navigate up from field when in field",
+		);
 		this.siblings =
 			this.siblingStack.pop() ?? fail(0xac3 /* Unexpected siblingStack.length */);
 		this.index = this.indexStack.pop() ?? fail(0xac4 /* Unexpected indexStack.length */);
 	}
 
 	public exitNode(): void {
-		// assert(this.mode === CursorLocationType.Nodes, "can only navigate up from node when in node");
+		debugAssert(
+			() =>
+				this.mode === CursorLocationType.Nodes ||
+				"can only navigate up from node when in node",
+		);
 		this.siblings =
 			this.siblingStack.pop() ?? fail(0xac5 /* Unexpected siblingStack.length */);
 		this.index = this.indexStack.pop() ?? fail(0xac6 /* Unexpected indexStack.length */);
 	}
 
 	public getNode(): TNode {
-		// assert(this.mode === CursorLocationType.Nodes, "can only get node when in node");
-		// Test is failing when using `?? oob()` here.
+		debugAssert(
+			() => this.mode === CursorLocationType.Nodes || "can only get node when in node",
+		);
+		// Can not use `?? oob()` since null and undefined are valid values.
+		// index is kept inbounds as an invariant of the class.
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return (this.siblings as TNode[])[this.index]!;
+		return (this.siblings as Field<TNode>)[this.index]!;
 	}
 
-	private getField(): readonly TNode[] {
-		// assert(this.mode === CursorLocationType.Fields, "can only get field when in fields");
+	private getField(): Field<TNode> {
+		debugAssert(
+			() => this.mode === CursorLocationType.Fields || "can only get field when in fields",
+		);
 		const parent = this.getStackedNode(this.indexStack.length - 1);
 		const key: FieldKey = this.getFieldKey();
 		const field = this.adapter.getFieldFromNode(parent, key);
@@ -372,21 +396,23 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 	}
 
 	/**
-	 * @returns the value of the current node
+	 * The value of the current node
 	 */
 	public get value(): Value {
 		return this.adapter.value(this.getNode());
 	}
 
 	/**
-	 * @returns the type of the current node
+	 * The type of the current node
 	 */
 	public get type(): TreeType {
 		return this.adapter.type(this.getNode());
 	}
 
 	public get fieldIndex(): number {
-		// assert(this.mode === CursorLocationType.Nodes, "can only node's index when in node");
+		debugAssert(
+			() => this.mode === CursorLocationType.Nodes || "can only node's index when in node",
+		);
 		return this.index;
 	}
 

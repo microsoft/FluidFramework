@@ -3,36 +3,33 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob } from "@fluidframework/core-utils/internal";
-import type { GraphCommit, TaggedChange } from "../core/index.js";
-import { disposeSymbol, hasSome } from "../util/index.js";
-import type { ChangeEnricherReadonlyCheckout, ResubmitMachine } from "./index.js";
+import { assert, fail, oob } from "@fluidframework/core-utils/internal";
+
+import type { GraphCommit, RevisionTag, TaggedChange } from "../core/index.js";
+import { disposeSymbol } from "../util/index.js";
+
+import type { ChangeEnricherReadonlyCheckout } from "./changeEnricher.js";
+import type { ResubmitMachine } from "./resubmitMachine.js";
+
+interface PendingChange<TChange> {
+	commit: GraphCommit<TChange>;
+	lastEnrichment: number;
+}
 
 /**
  * Default implementation of {@link ResubmitMachine}.
  */
 export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange> {
 	/**
-	 * The list of commits (from oldest to most recent) that have been submitted but not sequenced.
+	 * Maps from revision of submitted commit to the pending change for that commit.
 	 */
-	private inFlightQueue: GraphCommit<TChange>[] = [];
+	private readonly pendingChanges: Map<RevisionTag, PendingChange<TChange>> = new Map();
 
 	/**
-	 * The list of commits (from oldest to most recent) that should be resubmitted.
+	 * The current enrichment version for in-flight commits.
+	 * Incremented when a peer commit is sequenced.
 	 */
-	private resubmitQueue: GraphCommit<TChange>[] = [];
-
-	/**
-	 * Represents the index in the `inFlightQueue` array of the most recent in flight commit that has
-	 * undergone rebasing but whose enrichments have not been updated.
-	 * All in-flight commits with an index inferior or equal to this number have stale enrichments.
-	 *
-	 * Is -1 when *any* of the following is true:
-	 * - There are no in-flight commits (i.e., no local commits have been made or they have all been sequenced)
-	 * - None of the in-flight commits have been rebased
-	 * - In-flight commits that have been rebased have all had their enrichments updated
-	 */
-	private latestInFlightCommitWithStaleEnrichments: number = -1;
+	private currentEnrichment: number = 0;
 
 	public constructor(
 		/**
@@ -47,92 +44,103 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 	) {}
 
 	public onCommitSubmitted(commit: GraphCommit<TChange>): void {
-		if (this.isInResubmitPhase) {
-			const toResubmit = this.resubmitQueue.shift();
-			assert(
-				toResubmit === commit,
-				0x981 /* Unexpected commit submitted during resubmit phase */,
-			);
-		}
-		this.inFlightQueue.push(commit);
+		this.pendingChanges.set(commit.revision, {
+			commit,
+			lastEnrichment: this.currentEnrichment,
+		});
 	}
 
-	public prepareForResubmit(toResubmit: readonly GraphCommit<TChange>[]): void {
+	public onCommitRollback(commit: GraphCommit<TChange>): void {
+		this.pendingChanges.delete(commit.revision);
+	}
+
+	private updateEnrichments(
+		revision: RevisionTag,
+		getLocalCommits: () => readonly GraphCommit<TChange>[],
+	): void {
+		const pendingChange = this.pendingChanges.get(revision);
+		if (
+			pendingChange === undefined ||
+			pendingChange.lastEnrichment === this.currentEnrichment
+		) {
+			// The first commit to resubmit has a valid enrichment, so all pending commits must be valid.
+			return;
+		}
+
+		const localCommits = getLocalCommits();
 		assert(
-			!this.isInResubmitPhase,
-			0x957 /* Invalid resubmit phase start during incomplete resubmit phase */,
+			localCommits[0]?.revision === revision,
+			0xc79 /* Expected local commits to start with specified revision */,
 		);
-		assert(
-			toResubmit.length === this.inFlightQueue.length,
-			0x958 /* Unexpected resubmit of more or fewer commits than are in flight */,
-		);
-		if (this.latestInFlightCommitWithStaleEnrichments === -1) {
-			// No in-flight commits have stale enrichments, so we can resubmit them as is
-			this.resubmitQueue = this.inFlightQueue;
-			this.inFlightQueue = [];
-		} else {
-			const checkout = this.tip.fork();
-			// Roll back the checkout to the state before the oldest commit
-			for (let iCommit = toResubmit.length - 1; iCommit >= 0; iCommit -= 1) {
-				const commit = toResubmit[iCommit] ?? oob();
-				const rollback = this.makeRollback(commit);
-				// WARNING: it's not currently possible to roll back past a schema change (see AB#7265).
-				// Either we have to make it possible to do so, or this logic will have to change to work
-				// forwards from an earlier fork instead of backwards.
-				checkout.applyTipChange(rollback);
-			}
-			// Update the enrichments of the stale commits
-			for (
-				let iCommit = 0;
-				iCommit <= this.latestInFlightCommitWithStaleEnrichments;
-				iCommit += 1
-			) {
-				const commit = toResubmit[iCommit] ?? oob();
+
+		// Some in-flight commits have stale enrichments, so we recompute them.
+		const checkout = this.tip.fork();
+
+		// Roll back the checkout to the state before the oldest commit
+		for (let iCommit = localCommits.length - 1; iCommit >= 0; iCommit -= 1) {
+			const commit = localCommits[iCommit] ?? oob();
+			const rollback = this.makeRollback(commit);
+			// WARNING: it's not currently possible to roll back past a schema change (see AB#7265).
+			// Either we have to make it possible to do so, or this logic will have to change to work
+			// forwards from an earlier fork instead of backwards.
+			checkout.applyTipChange(rollback);
+		}
+
+		// Update the enrichments of the stale commits.
+		for (const [iCommit, commit] of localCommits.entries()) {
+			const current = this.getPendingChange(commit.revision);
+			assert(
+				current !== undefined,
+				0xbda /* there must be an inflight commit for each resubmit commit */,
+			);
+
+			if (current.lastEnrichment < this.currentEnrichment) {
 				const enrichedChange = checkout.updateChangeEnrichments(
 					commit.change,
 					commit.revision,
 				);
 				const enrichedCommit = { ...commit, change: enrichedChange };
-				this.resubmitQueue.push(enrichedCommit);
-				if (iCommit < this.latestInFlightCommitWithStaleEnrichments) {
+
+				// Optimization: only apply the enriched change if the next commit also needs enrichment.
+				const nextCommit = localCommits[iCommit + 1];
+				if (
+					nextCommit !== undefined &&
+					this.getPendingChange(nextCommit.revision).lastEnrichment < this.currentEnrichment
+				) {
 					checkout.applyTipChange(enrichedChange, commit.revision);
 				}
-				this.inFlightQueue.shift();
+
+				current.commit = enrichedCommit;
+				current.lastEnrichment = this.currentEnrichment;
 			}
-			checkout[disposeSymbol]();
-			// Whatever commits are left do not have stale enrichments
-			for (const commit of this.inFlightQueue) {
-				this.resubmitQueue.push(commit);
-			}
-			this.inFlightQueue.length = 0;
 		}
-		this.latestInFlightCommitWithStaleEnrichments = -1;
+		checkout[disposeSymbol]();
 	}
 
-	public peekNextCommit(): GraphCommit<TChange> {
-		assert(
-			this.isInResubmitPhase,
-			0x982 /* No available commit to resubmit outside of resubmit phase */,
+	public getEnrichedCommit(
+		revision: RevisionTag,
+		getLocalCommitsSince: () => readonly GraphCommit<TChange>[],
+	): GraphCommit<TChange> | undefined {
+		this.updateEnrichments(revision, getLocalCommitsSince);
+		const pendingChange = this.pendingChanges.get(revision);
+		return pendingChange?.commit;
+	}
+
+	private getPendingChange(revision: RevisionTag): PendingChange<TChange> {
+		return (
+			this.pendingChanges.get(revision) ??
+			fail(0xc7a /* No pending change stored for this revision */)
 		);
-		assert(hasSome(this.resubmitQueue), 0xa87 /* Expected resubmit queue to be non-empty */);
-		return this.resubmitQueue[0];
 	}
 
-	public get isInResubmitPhase(): boolean {
-		return this.resubmitQueue.length !== 0;
-	}
-
-	public onSequencedCommitApplied(isLocal: boolean): void {
-		if (isLocal) {
-			// The oldest in-flight commit has been sequenced
-			assert(this.inFlightQueue.length > 0, 0x959 /* Sequencing of unknown local commit */);
-			this.inFlightQueue.shift();
-			if (this.latestInFlightCommitWithStaleEnrichments >= 0) {
-				this.latestInFlightCommitWithStaleEnrichments -= 1;
-			}
-		} else {
-			// A peer commit has been sequenced
-			this.latestInFlightCommitWithStaleEnrichments = this.inFlightQueue.length - 1;
+	public onSequencedCommitApplied(revision: RevisionTag, isLocal: boolean): void {
+		// We no longer need to track enrichment for the commit with this revision.
+		// Note that we may have a commit for this revision even if this is not a local change,
+		// as this client and another peer may have merged the same commit from a shared branch.
+		this.pendingChanges.delete(revision);
+		if (!isLocal) {
+			// A peer commit has been sequenced, invalidating the enrichment of our in-flight commits.
+			this.currentEnrichment++;
 		}
 	}
 }

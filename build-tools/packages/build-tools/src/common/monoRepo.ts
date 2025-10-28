@@ -9,8 +9,8 @@ import { getPackagesSync } from "@manypkg/get-packages";
 import { readFileSync, readJsonSync } from "fs-extra";
 import YAML from "yaml";
 
-import { IFluidBuildDir } from "../fluidBuild/fluidBuildConfig";
-import { Logger, defaultLogger } from "./logging";
+import type { IFluidBuildDir } from "../fluidBuild/fluidBuildConfig";
+import { type Logger, defaultLogger } from "./logging";
 import { Package } from "./npmPackage";
 import { execWithErrorAsync, rimrafWithErrorAsync } from "./utils";
 

@@ -8,18 +8,18 @@ import type {
 	ISummarizerEvents,
 	SummarizerStopReason,
 } from "@fluidframework/container-runtime-definitions/internal";
-import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
+import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import {
-	IFluidErrorBase,
-	ITelemetryLoggerExt,
+	type IFluidErrorBase,
+	type ITelemetryLoggerExt,
 	LoggingError,
 	UsageError,
 	createChildLogger,
 	wrapErrorAndLog,
 } from "@fluidframework/telemetry-utils/internal";
 
-import {
+import type {
 	IConnectableRuntime,
 	IEnqueueSummarizeOptions,
 	IOnDemandSummarizeOptions,
@@ -28,12 +28,12 @@ import {
 	ISummarizerInternalsProvider,
 	ISummarizerRuntime,
 	ISummarizingWarning,
-	type IRetriableFailureError,
-	type ISummaryConfiguration,
+	IRetriableFailureError,
+	ISummaryConfiguration,
 } from "../summarizerTypes.js";
-import { SummaryCollection } from "../summaryCollection.js";
+import type { SummaryCollection } from "../summaryCollection.js";
 
-import { ICancellableSummarizerController } from "./runWhileConnectedCoordinator.js";
+import type { ICancellableSummarizerController } from "./runWhileConnectedCoordinator.js";
 import { RunningSummarizer } from "./runningSummarizer.js";
 import { SummarizeHeuristicData } from "./summarizerHeuristics.js";
 import { SummarizeResultBuilder } from "./summaryResultBuilder.js";
@@ -326,7 +326,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 
 	public summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults {
 		try {
-			if (this._disposed || this.runningSummarizer?.disposed) {
+			if (this._disposed || this.runningSummarizer?.disposed === true) {
 				throw new UsageError("Summarizer is already disposed.");
 			}
 			if (

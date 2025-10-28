@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IDbFactory } from "@fluidframework/server-services-core";
+import type { IDbFactory } from "@fluidframework/server-services-core";
+import type { Provider } from "nconf";
 
-import { Provider } from "nconf";
-import { LevelDbFactory } from "./levelDb";
 import { InMemoryDbFactory } from "./inMemorydb";
+import { LevelDbFactory } from "./levelDb";
 
 export async function getDbFactory(config: Provider): Promise<IDbFactory> {
 	return config.get("db:inMemory")

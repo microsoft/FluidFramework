@@ -12,7 +12,7 @@ import {
 	type IFluidCodeDetails,
 	type IHostLoader,
 } from '@fluidframework/container-definitions/internal';
-import { IContainerExperimental, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader/internal';
+import { asLegacyAlpha, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader/internal';
 import { DefaultSummaryConfiguration, SummaryCollection } from '@fluidframework/container-runtime/internal';
 import type { ConfigTypes, IConfigProviderBase, IFluidHandle, IRequestHeader } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
@@ -76,6 +76,7 @@ import {
 } from '../../persisted-types/index.js';
 
 import { RefreshingTestTree, SimpleTestTree, TestTree, buildLeaf } from './TestNode.js';
+import { _dirname } from './dirname.cjs';
 
 /** Objects returned by setUpTestSharedTree */
 export interface SharedTreeTestingComponents {
@@ -320,7 +321,6 @@ export async function setUpLocalServerTestSharedTree(
 	} = options;
 
 	const featureGates = options.featureGates ?? {};
-	featureGates['Fluid.Container.enableOfflineLoad'] = true;
 
 	const treeId = id ?? 'test';
 	let factory: SharedTreeFactory;
@@ -505,7 +505,7 @@ export function areNodesEquivalent(...nodes: NodeData<unknown>[]): boolean {
 
 // This accounts for this file being executed after compilation. If many tests want to leverage resources, we should unify
 // resource path logic to a single place.
-export const testDocumentsPathBase = resolve(__dirname, '../../../src/test/documents/');
+export const testDocumentsPathBase = resolve(_dirname, '../../../src/test/documents/');
 
 export const versionComparator = (versionA: string, versionB: string): number => {
 	const versionASplit = versionA.split('.');
@@ -689,13 +689,14 @@ export async function waitForSummary(mainContainer: IContainer): Promise<string>
  */
 export async function withContainerOffline<TReturn>(
 	provider: ITestObjectProvider,
-	container: IContainerExperimental,
+	container: IContainer,
 	action: () => TReturn
 ): Promise<{ actionReturn: TReturn; pendingLocalState: string }> {
 	await provider.ensureSynchronized();
 	await provider.opProcessingController.pauseProcessing(container);
 	const actionReturn = action();
-	const pendingLocalState = await container.closeAndGetPendingLocalState?.();
+	const pendingLocalState = await asLegacyAlpha(container).getPendingLocalState();
+	container.close();
 	assert(pendingLocalState !== undefined, 0x726 /* pendingLocalState should be defined */);
 	return { actionReturn, pendingLocalState };
 }

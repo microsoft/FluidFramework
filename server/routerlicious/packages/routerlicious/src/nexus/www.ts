@@ -4,13 +4,14 @@
  */
 
 import * as path from "path";
-import * as winston from "winston";
-import { configureLogging } from "@fluidframework/server-services-utils";
+
 import {
 	NexusResourcesFactory,
 	NexusRunnerFactory,
 } from "@fluidframework/server-routerlicious-base";
 import { runService } from "@fluidframework/server-services-shared";
+import { configureLogging } from "@fluidframework/server-services-utils";
+import * as winston from "winston";
 
 const configPath = path.join(__dirname, "../../config/config.json");
 

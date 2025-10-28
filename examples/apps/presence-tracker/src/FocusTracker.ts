@@ -7,11 +7,11 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
 import type {
 	Attendee,
-	Latest,
+	LatestRaw,
 	Presence,
 	StatesWorkspace,
-} from "@fluidframework/presence/alpha";
-import { AttendeeStatus, StateFactory } from "@fluidframework/presence/alpha";
+} from "@fluidframework/presence/beta";
+import { AttendeeStatus, StateFactory } from "@fluidframework/presence/beta";
 
 /**
  * IFocusState is the data that individual session clients share via presence.
@@ -40,7 +40,7 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 	/**
 	 * State that tracks the latest focus state of connected session clients.
 	 */
-	private readonly focus: Latest<IFocusState>;
+	private readonly focus: LatestRaw<IFocusState>;
 
 	constructor(
 		private readonly presence: Presence,
@@ -48,7 +48,7 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 		/**
 		 * A states workspace that the FocusTracker will use to share focus states with other session clients.
 		 */
-		// eslint-disable-next-line @typescript-eslint/ban-types -- empty object is the correct typing
+		// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/ban-types -- empty object is the correct typing
 		readonly statesWorkspace: StatesWorkspace<{}>,
 	) {
 		super();
@@ -57,11 +57,13 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 		// window.
 		statesWorkspace.add(
 			"focus",
-			StateFactory.latest<IFocusState>({ hasFocus: window.document.hasFocus() }),
+			StateFactory.latest<IFocusState>({
+				local: { hasFocus: window.document.hasFocus() },
+			}),
 		);
 
 		// Save a reference to the focus state for easy access within the FocusTracker.
-		this.focus = statesWorkspace.props.focus;
+		this.focus = statesWorkspace.states.focus;
 
 		// When the focus state is updated, the FocusTracker should emit the focusChanged event.
 		this.focus.events.on("remoteUpdated", ({ attendee, value }) => {

@@ -17,8 +17,6 @@ import {
 
 import type { FullSchemaPolicy } from "./fieldKind.js";
 
-/**
- */
 export function isNeverField(
 	policy: FullSchemaPolicy,
 	originalData: TreeStoredSchema,

@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-nodejs-modules
 import { strict as assert } from "node:assert";
 
-import { StableId } from "../index.js";
+import type { StableId } from "../index.js";
 import { readNumericUuid, writeNumericUuid } from "../persistanceUtilities.js";
 import {
 	addNumericUuids,

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import type { Listenable } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 
-import type { Listenable } from "@fluidframework/core-interfaces/internal";
 import type { FieldKey, TreeStoredSchemaSubscription } from "../schema-stored/index.js";
 import {
 	type Anchor,
@@ -84,15 +84,14 @@ export interface IForestSubscription {
 	clone(schema: TreeStoredSchemaSubscription, anchors: AnchorSet): IEditableForest;
 
 	/**
-	 * Generate a TreeChunk for the content in the given field cursor.
+	 * Generate a TreeChunk[] for the current field (and its children) of cursor.
 	 * This can be used to chunk data that is then inserted into the forest.
 	 *
 	 * @remarks
-	 * Like {@link chunkField}, but forces the results into a single TreeChunk.
-	 * While any TreeChunk is compatible with any forest, this method creates one optimized for this specific forest.
+	 * Similar to {@link chunkField} but it creates chunks optimized for this specific forest by using its compression policy.
 	 * The provided data must be compatible with the forest's current schema.
 	 */
-	chunkField(cursor: ITreeCursorSynchronous): TreeChunk;
+	chunkField(cursor: ITreeCursorSynchronous): TreeChunk[];
 
 	/**
 	 * Allocates a cursor in the "cleared" state.
@@ -252,8 +251,6 @@ export interface ITreeSubscriptionCursor extends ITreeCursor {
 	// getParentInfo(id: NodeId): TreeLocation;
 }
 
-/**
- */
 export enum ITreeSubscriptionCursorState {
 	/**
 	 * On the current revision of the forest.
@@ -269,8 +266,6 @@ export enum ITreeSubscriptionCursorState {
 	Freed,
 }
 
-/**
- */
 export const enum TreeNavigationResult {
 	/**
 	 * Attempt to navigate cursor to a key or index that is outside the client's view.

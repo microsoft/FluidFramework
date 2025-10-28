@@ -4,11 +4,14 @@
  */
 
 import { promises as fsPromises } from "fs";
-import { StatsCompilation } from "webpack";
+import type { StatsCompilation } from "webpack";
 
-import { BundleBuddyConfig } from "../BundleBuddyTypes";
+import type { BundleBuddyConfig } from "../BundleBuddyTypes";
 import { decompressStatsFile, getAllFilesInDirectory } from "../utilities";
-import { BundleFileData, getBundleFilePathsFromFolder } from "./getBundleFilePathsFromFolder";
+import {
+	type BundleFileData,
+	getBundleFilePathsFromFolder,
+} from "./getBundleFilePathsFromFolder";
 
 /**
  * Returns a list of all the files relevant to bundle buddy from the given folder

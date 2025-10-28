@@ -5,7 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
-import { RunCounter } from "../runCounter.js";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+
+import type { BatchResubmitInfo } from "../opLifecycle/index.js";
+import { BatchRunCounter, RunCounter } from "../runCounter.js";
 
 describe("RunCounter", () => {
 	it("should start with zero runs", () => {
@@ -51,5 +54,58 @@ describe("RunCounter", () => {
 		}, /test error/);
 		assert.strictEqual(runCounter.runs, 0);
 		assert.strictEqual(runCounter.running, false);
+	});
+});
+
+describe("BatchRunCounter", () => {
+	describe("BatchRunCounter", () => {
+		it("should start with zero runs and undefined resubmitInfo", () => {
+			const batchRunCounter = new BatchRunCounter();
+			assert.strictEqual(batchRunCounter.runs, 0);
+			assert.strictEqual(batchRunCounter.running, false);
+			assert.strictEqual(batchRunCounter.resubmitInfo, undefined);
+		});
+
+		it("should set and clear resubmitInfo during run", () => {
+			const batchRunCounter = new BatchRunCounter();
+			const info: BatchResubmitInfo = { batchId: "foo", staged: true };
+			batchRunCounter.run(() => {
+				assert.strictEqual(batchRunCounter.resubmitInfo, info);
+			}, info);
+			assert.strictEqual(batchRunCounter.resubmitInfo, undefined);
+		});
+
+		it("should pass through return value from run", () => {
+			const batchRunCounter = new BatchRunCounter();
+			const result = batchRunCounter.run(() => 123, undefined);
+			assert.strictEqual(result, 123);
+		});
+
+		it("should decrement runs and clear resubmitInfo even if action throws", () => {
+			const batchRunCounter = new BatchRunCounter();
+			const info: BatchResubmitInfo = { batchId: "foo", staged: true };
+			assert.throws(() => {
+				batchRunCounter.run(() => {
+					throw new Error("fail");
+				}, info);
+			}, /fail/);
+			assert.strictEqual(batchRunCounter.runs, 0);
+			assert.strictEqual(batchRunCounter.resubmitInfo, undefined);
+		});
+
+		it("should not allow reentrancy if outer call sets resubmitInfo", () => {
+			const batchRunCounter = new BatchRunCounter();
+			assert.throws(
+				() => {
+					batchRunCounter.run(
+						() => {
+							batchRunCounter.run(() => {});
+						},
+						{ batchId: "foo", staged: true },
+					);
+				},
+				(e) => validateAssertionError(e as Error, "Reentrancy not allowed in BatchRunCounter"),
+			);
+		});
 	});
 });

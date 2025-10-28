@@ -6,20 +6,28 @@
 /* eslint-disable @rushstack/no-new-null */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IDeltaManager } from "@fluidframework/container-definitions/internal";
-import { IEvent, IEventProvider, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import type {
+	IEvent,
+	IEventProvider,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { IClient, IQuorumClients, ISequencedClient } from "@fluidframework/driver-definitions";
+import type {
+	IClient,
+	IQuorumClients,
+	ISequencedClient,
+} from "@fluidframework/driver-definitions";
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	UsageError,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { summarizerClientType } from "./index.js";
+import { summarizerClientType } from "./summarizerTypes.js";
 
 // helper types for recursive readonly.
-// eslint-disable-next-line @typescript-eslint/ban-types
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type, @typescript-eslint/ban-types
 export type ImmutablePrimitives = undefined | null | boolean | string | number | Function;
 export type Immutable<T> = T extends ImmutablePrimitives
 	? T

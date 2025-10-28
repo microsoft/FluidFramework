@@ -6,6 +6,7 @@
 import type { BroadcastControls } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { NotificationsManager } from "./notificationsManager.js";
+import type { Presence, PresenceWithNotifications } from "./presence.js";
 
 /**
  * Unique address within a session.
@@ -21,14 +22,14 @@ import type { NotificationsManager } from "./notificationsManager.js";
  *   "address:object0/sub-object2:pointers"
  * ```
  *
- * @alpha
+ * @beta
  */
 export type WorkspaceAddress = `${string}:${string}`;
 
 /**
  * Single entry in {@link StatesWorkspaceSchema} or  {@link NotificationsWorkspaceSchema}.
  *
- * @alpha
+ * @beta
  */
 export type StatesWorkspaceEntry<
 	TKey extends string,
@@ -43,9 +44,12 @@ export type StatesWorkspaceEntry<
  *
  * Keys of schema are the keys of the {@link StatesWorkspace} providing access to State objects.
  *
- * @alpha
+ * @beta
  */
 export interface StatesWorkspaceSchema {
+	/**
+	 * Key-value pairs of State objects registered with the {@link StatesWorkspace}.
+	 */
 	[key: string]: StatesWorkspaceEntry<typeof key, InternalTypes.ValueDirectoryOrState<any>>;
 }
 
@@ -53,7 +57,7 @@ export interface StatesWorkspaceSchema {
  * Map of State objects registered with {@link StatesWorkspace}.
  *
  * @sealed
- * @alpha
+ * @beta
  */
 export type StatesWorkspaceEntries<TSchema extends StatesWorkspaceSchema> = {
 	/**
@@ -74,7 +78,7 @@ export type StatesWorkspaceEntries<TSchema extends StatesWorkspaceSchema> = {
  * each client's state is independent and may only be updated by originating client.
  *
  * @sealed
- * @alpha
+ * @beta
  */
 export interface StatesWorkspace<
 	TSchema extends StatesWorkspaceSchema,
@@ -100,12 +104,17 @@ export interface StatesWorkspace<
 	/**
 	 * Registry of State objects.
 	 */
-	readonly props: StatesWorkspaceEntries<TSchema>;
+	readonly states: StatesWorkspaceEntries<TSchema>;
 
 	/**
 	 * Default controls for management of broadcast updates.
 	 */
 	readonly controls: BroadcastControls;
+
+	/**
+	 * Containing {@link Presence}
+	 */
+	readonly presence: Presence;
 }
 
 // #endregion StatesWorkspace
@@ -134,7 +143,7 @@ export interface NotificationsWorkspaceSchema {
  * @privateRemarks
  * This should be kept mostly in sync with {@link StatesWorkspace}. Notably the
  * return type of `add` is limited here and the `controls` property is omitted.
- * The `PresenceStatesImpl` class implements `StatesWorkspace` and therefore
+ * The `PresenceStatesImpl` class implements `AnyWorkspace` and therefore
  * `NotificationsWorkspace`, so long as this is proper subset.
  *
  * @sealed
@@ -160,7 +169,24 @@ export interface NotificationsWorkspace<TSchema extends NotificationsWorkspaceSc
 	/**
 	 * Registry of `NotificationsManager`s.
 	 */
-	readonly props: StatesWorkspaceEntries<TSchema>;
+	readonly notifications: StatesWorkspaceEntries<TSchema>;
+
+	/**
+	 * Containing {@link PresenceWithNotifications}
+	 */
+	readonly presence: PresenceWithNotifications;
 }
 
 // #endregion NotificationsWorkspace
+
+/**
+ * `AnyWorkspace` is a superset of {@link StatesWorkspace} and {@link NotificationsWorkspace}.
+ */
+export interface AnyWorkspace<
+	TSchema extends StatesWorkspaceSchema,
+	TManagerConstraints = unknown,
+> extends StatesWorkspace<TSchema, TManagerConstraints> {
+	readonly notifications: StatesWorkspaceEntries<TSchema>;
+	// TO be removed if/when notifications are fully supported
+	readonly presence: PresenceWithNotifications;
+}

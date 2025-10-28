@@ -21,8 +21,8 @@
         "sourceType": "module"
     },
     "plugins": [
+        "import-x",
         "eslint-comments",
-        "import",
         "@fluid-internal/fluid",
         "unicorn",
         "unused-imports",
@@ -41,6 +41,15 @@
         "@babel/semi": [
             "off"
         ],
+        "@fluid-internal/fluid/no-file-path-links-in-jsdoc": [
+            "error"
+        ],
+        "@fluid-internal/fluid/no-hyphen-after-jsdoc-tag": [
+            "error"
+        ],
+        "@fluid-internal/fluid/no-markdown-links-in-jsdoc": [
+            "error"
+        ],
         "@fluid-internal/fluid/no-member-release-tags": [
             "error"
         ],
@@ -51,6 +60,546 @@
             "warn"
         ],
         "@rushstack/typedef-var": [
+            "off"
+        ],
+        "@stylistic/array-bracket-newline": [
+            "off"
+        ],
+        "@stylistic/array-bracket-spacing": [
+            "off"
+        ],
+        "@stylistic/array-element-newline": [
+            "off"
+        ],
+        "@stylistic/arrow-parens": [
+            "off"
+        ],
+        "@stylistic/arrow-spacing": [
+            "off"
+        ],
+        "@stylistic/block-spacing": [
+            "off"
+        ],
+        "@stylistic/brace-style": [
+            "off"
+        ],
+        "@stylistic/comma-dangle": [
+            "off"
+        ],
+        "@stylistic/comma-spacing": [
+            "off"
+        ],
+        "@stylistic/comma-style": [
+            "off"
+        ],
+        "@stylistic/computed-property-spacing": [
+            "off"
+        ],
+        "@stylistic/dot-location": [
+            "off"
+        ],
+        "@stylistic/eol-last": [
+            "off"
+        ],
+        "@stylistic/func-call-spacing": [
+            "off"
+        ],
+        "@stylistic/function-call-argument-newline": [
+            "off"
+        ],
+        "@stylistic/function-call-spacing": [
+            "off"
+        ],
+        "@stylistic/function-paren-newline": [
+            "off"
+        ],
+        "@stylistic/generator-star-spacing": [
+            "off"
+        ],
+        "@stylistic/implicit-arrow-linebreak": [
+            "off"
+        ],
+        "@stylistic/indent": [
+            "off"
+        ],
+        "@stylistic/indent-binary-ops": [
+            "off"
+        ],
+        "@stylistic/js/array-bracket-newline": [
+            "off"
+        ],
+        "@stylistic/js/array-bracket-spacing": [
+            "off"
+        ],
+        "@stylistic/js/array-element-newline": [
+            "off"
+        ],
+        "@stylistic/js/arrow-parens": [
+            "off"
+        ],
+        "@stylistic/js/arrow-spacing": [
+            "off"
+        ],
+        "@stylistic/js/block-spacing": [
+            "off"
+        ],
+        "@stylistic/js/brace-style": [
+            "off"
+        ],
+        "@stylistic/js/comma-dangle": [
+            "off"
+        ],
+        "@stylistic/js/comma-spacing": [
+            "off"
+        ],
+        "@stylistic/js/comma-style": [
+            "off"
+        ],
+        "@stylistic/js/computed-property-spacing": [
+            "off"
+        ],
+        "@stylistic/js/dot-location": [
+            "off"
+        ],
+        "@stylistic/js/eol-last": [
+            "off"
+        ],
+        "@stylistic/js/func-call-spacing": [
+            "off"
+        ],
+        "@stylistic/js/function-call-argument-newline": [
+            "off"
+        ],
+        "@stylistic/js/function-call-spacing": [
+            "off"
+        ],
+        "@stylistic/js/function-paren-newline": [
+            "off"
+        ],
+        "@stylistic/js/generator-star-spacing": [
+            "off"
+        ],
+        "@stylistic/js/implicit-arrow-linebreak": [
+            "off"
+        ],
+        "@stylistic/js/indent": [
+            "off"
+        ],
+        "@stylistic/js/jsx-quotes": [
+            "off"
+        ],
+        "@stylistic/js/key-spacing": [
+            "off"
+        ],
+        "@stylistic/js/keyword-spacing": [
+            "off"
+        ],
+        "@stylistic/js/linebreak-style": [
+            "off"
+        ],
+        "@stylistic/js/lines-around-comment": [
+            0
+        ],
+        "@stylistic/js/max-len": [
+            0
+        ],
+        "@stylistic/js/max-statements-per-line": [
+            "off"
+        ],
+        "@stylistic/js/multiline-ternary": [
+            "off"
+        ],
+        "@stylistic/js/new-parens": [
+            "off"
+        ],
+        "@stylistic/js/newline-per-chained-call": [
+            "off"
+        ],
+        "@stylistic/js/no-confusing-arrow": [
+            0
+        ],
+        "@stylistic/js/no-extra-parens": [
+            "off"
+        ],
+        "@stylistic/js/no-extra-semi": [
+            "off"
+        ],
+        "@stylistic/js/no-floating-decimal": [
+            "off"
+        ],
+        "@stylistic/js/no-mixed-operators": [
+            0
+        ],
+        "@stylistic/js/no-mixed-spaces-and-tabs": [
+            "off"
+        ],
+        "@stylistic/js/no-multi-spaces": [
+            "off"
+        ],
+        "@stylistic/js/no-multiple-empty-lines": [
+            "off"
+        ],
+        "@stylistic/js/no-tabs": [
+            0
+        ],
+        "@stylistic/js/no-trailing-spaces": [
+            "off"
+        ],
+        "@stylistic/js/no-whitespace-before-property": [
+            "off"
+        ],
+        "@stylistic/js/nonblock-statement-body-position": [
+            "off"
+        ],
+        "@stylistic/js/object-curly-newline": [
+            "off"
+        ],
+        "@stylistic/js/object-curly-spacing": [
+            "off"
+        ],
+        "@stylistic/js/object-property-newline": [
+            "off"
+        ],
+        "@stylistic/js/one-var-declaration-per-line": [
+            "off"
+        ],
+        "@stylistic/js/operator-linebreak": [
+            "off"
+        ],
+        "@stylistic/js/padded-blocks": [
+            "off"
+        ],
+        "@stylistic/js/quote-props": [
+            "off"
+        ],
+        "@stylistic/js/quotes": [
+            0
+        ],
+        "@stylistic/js/rest-spread-spacing": [
+            "off"
+        ],
+        "@stylistic/js/semi": [
+            "off"
+        ],
+        "@stylistic/js/semi-spacing": [
+            "off"
+        ],
+        "@stylistic/js/semi-style": [
+            "off"
+        ],
+        "@stylistic/js/space-before-blocks": [
+            "off"
+        ],
+        "@stylistic/js/space-before-function-paren": [
+            "off"
+        ],
+        "@stylistic/js/space-in-parens": [
+            "off"
+        ],
+        "@stylistic/js/space-infix-ops": [
+            "off"
+        ],
+        "@stylistic/js/space-unary-ops": [
+            "off"
+        ],
+        "@stylistic/js/switch-colon-spacing": [
+            "off"
+        ],
+        "@stylistic/js/template-curly-spacing": [
+            "off"
+        ],
+        "@stylistic/js/template-tag-spacing": [
+            "off"
+        ],
+        "@stylistic/js/wrap-iife": [
+            "off"
+        ],
+        "@stylistic/js/wrap-regex": [
+            "off"
+        ],
+        "@stylistic/js/yield-star-spacing": [
+            "off"
+        ],
+        "@stylistic/jsx-child-element-spacing": [
+            "off"
+        ],
+        "@stylistic/jsx-closing-bracket-location": [
+            "off"
+        ],
+        "@stylistic/jsx-closing-tag-location": [
+            "off"
+        ],
+        "@stylistic/jsx-curly-newline": [
+            "off"
+        ],
+        "@stylistic/jsx-curly-spacing": [
+            "off"
+        ],
+        "@stylistic/jsx-equals-spacing": [
+            "off"
+        ],
+        "@stylistic/jsx-first-prop-new-line": [
+            "off"
+        ],
+        "@stylistic/jsx-indent": [
+            "off"
+        ],
+        "@stylistic/jsx-indent-props": [
+            "off"
+        ],
+        "@stylistic/jsx-max-props-per-line": [
+            "off"
+        ],
+        "@stylistic/jsx-newline": [
+            "off"
+        ],
+        "@stylistic/jsx-one-expression-per-line": [
+            "off"
+        ],
+        "@stylistic/jsx-props-no-multi-spaces": [
+            "off"
+        ],
+        "@stylistic/jsx-quotes": [
+            "off"
+        ],
+        "@stylistic/jsx-tag-spacing": [
+            "off"
+        ],
+        "@stylistic/jsx-wrap-multilines": [
+            "off"
+        ],
+        "@stylistic/jsx/jsx-child-element-spacing": [
+            "off"
+        ],
+        "@stylistic/jsx/jsx-closing-bracket-location": [
+            "off"
+        ],
+        "@stylistic/jsx/jsx-closing-tag-location": [
+            "off"
+        ],
+        "@stylistic/jsx/jsx-curly-newline": [
+            "off"
+        ],
+        "@stylistic/jsx/jsx-curly-spacing": [
+            "off"
+        ],
+        "@stylistic/jsx/jsx-equals-spacing": [
+            "off"
+        ],
+        "@stylistic/jsx/jsx-first-prop-new-line": [
+            "off"
+        ],
+        "@stylistic/jsx/jsx-indent": [
+            "off"
+        ],
+        "@stylistic/jsx/jsx-indent-props": [
+            "off"
+        ],
+        "@stylistic/jsx/jsx-max-props-per-line": [
+            "off"
+        ],
+        "@stylistic/key-spacing": [
+            "off"
+        ],
+        "@stylistic/keyword-spacing": [
+            "off"
+        ],
+        "@stylistic/linebreak-style": [
+            "off"
+        ],
+        "@stylistic/lines-around-comment": [
+            0
+        ],
+        "@stylistic/max-len": [
+            0
+        ],
+        "@stylistic/max-statements-per-line": [
+            "off"
+        ],
+        "@stylistic/member-delimiter-style": [
+            "off"
+        ],
+        "@stylistic/multiline-ternary": [
+            "off"
+        ],
+        "@stylistic/new-parens": [
+            "off"
+        ],
+        "@stylistic/newline-per-chained-call": [
+            "off"
+        ],
+        "@stylistic/no-confusing-arrow": [
+            0
+        ],
+        "@stylistic/no-extra-parens": [
+            "off"
+        ],
+        "@stylistic/no-extra-semi": [
+            "off"
+        ],
+        "@stylistic/no-floating-decimal": [
+            "off"
+        ],
+        "@stylistic/no-mixed-operators": [
+            0
+        ],
+        "@stylistic/no-mixed-spaces-and-tabs": [
+            "off"
+        ],
+        "@stylistic/no-multi-spaces": [
+            "off"
+        ],
+        "@stylistic/no-multiple-empty-lines": [
+            "off"
+        ],
+        "@stylistic/no-tabs": [
+            0
+        ],
+        "@stylistic/no-trailing-spaces": [
+            "off"
+        ],
+        "@stylistic/no-whitespace-before-property": [
+            "off"
+        ],
+        "@stylistic/nonblock-statement-body-position": [
+            "off"
+        ],
+        "@stylistic/object-curly-newline": [
+            "off"
+        ],
+        "@stylistic/object-curly-spacing": [
+            "off"
+        ],
+        "@stylistic/object-property-newline": [
+            "off"
+        ],
+        "@stylistic/one-var-declaration-per-line": [
+            "off"
+        ],
+        "@stylistic/operator-linebreak": [
+            "off"
+        ],
+        "@stylistic/padded-blocks": [
+            "off"
+        ],
+        "@stylistic/quote-props": [
+            "off"
+        ],
+        "@stylistic/quotes": [
+            0
+        ],
+        "@stylistic/rest-spread-spacing": [
+            "off"
+        ],
+        "@stylistic/semi": [
+            "off"
+        ],
+        "@stylistic/semi-spacing": [
+            "off"
+        ],
+        "@stylistic/semi-style": [
+            "off"
+        ],
+        "@stylistic/space-before-blocks": [
+            "off"
+        ],
+        "@stylistic/space-before-function-paren": [
+            "off"
+        ],
+        "@stylistic/space-in-parens": [
+            "off"
+        ],
+        "@stylistic/space-infix-ops": [
+            "off"
+        ],
+        "@stylistic/space-unary-ops": [
+            "off"
+        ],
+        "@stylistic/switch-colon-spacing": [
+            "off"
+        ],
+        "@stylistic/template-curly-spacing": [
+            "off"
+        ],
+        "@stylistic/template-tag-spacing": [
+            "off"
+        ],
+        "@stylistic/ts/block-spacing": [
+            "off"
+        ],
+        "@stylistic/ts/brace-style": [
+            "off"
+        ],
+        "@stylistic/ts/comma-dangle": [
+            "off"
+        ],
+        "@stylistic/ts/comma-spacing": [
+            "off"
+        ],
+        "@stylistic/ts/func-call-spacing": [
+            "off"
+        ],
+        "@stylistic/ts/function-call-spacing": [
+            "off"
+        ],
+        "@stylistic/ts/indent": [
+            "off"
+        ],
+        "@stylistic/ts/key-spacing": [
+            "off"
+        ],
+        "@stylistic/ts/keyword-spacing": [
+            "off"
+        ],
+        "@stylistic/ts/lines-around-comment": [
+            0
+        ],
+        "@stylistic/ts/member-delimiter-style": [
+            "off"
+        ],
+        "@stylistic/ts/no-extra-parens": [
+            "off"
+        ],
+        "@stylistic/ts/no-extra-semi": [
+            "off"
+        ],
+        "@stylistic/ts/object-curly-spacing": [
+            "off"
+        ],
+        "@stylistic/ts/quotes": [
+            0
+        ],
+        "@stylistic/ts/semi": [
+            "off"
+        ],
+        "@stylistic/ts/space-before-blocks": [
+            "off"
+        ],
+        "@stylistic/ts/space-before-function-paren": [
+            "off"
+        ],
+        "@stylistic/ts/space-infix-ops": [
+            "off"
+        ],
+        "@stylistic/ts/type-annotation-spacing": [
+            "off"
+        ],
+        "@stylistic/type-annotation-spacing": [
+            "off"
+        ],
+        "@stylistic/type-generic-spacing": [
+            "off"
+        ],
+        "@stylistic/type-named-tuple-spacing": [
+            "off"
+        ],
+        "@stylistic/wrap-iife": [
+            "off"
+        ],
+        "@stylistic/wrap-regex": [
+            "off"
+        ],
+        "@stylistic/yield-star-spacing": [
             "off"
         ],
         "@typescript-eslint/adjacent-overload-signatures": [
@@ -69,7 +618,7 @@
             "error"
         ],
         "@typescript-eslint/ban-types": [
-            "error"
+            "off"
         ],
         "@typescript-eslint/block-spacing": [
             "off"
@@ -177,6 +726,9 @@
             "off"
         ],
         "@typescript-eslint/no-empty-interface": [
+            "off"
+        ],
+        "@typescript-eslint/no-empty-object-type": [
             "error"
         ],
         "@typescript-eslint/no-explicit-any": [
@@ -236,6 +788,36 @@
         "@typescript-eslint/no-require-imports": [
             "error"
         ],
+        "@typescript-eslint/no-restricted-imports": [
+            "error",
+            {
+                "paths": [
+                    {
+                        "name": "assert",
+                        "importNames": [
+                            "default"
+                        ],
+                        "message": "Use `strict` instead. E.g. `import { strict as assert } from \"node:assert\";`"
+                    },
+                    {
+                        "name": "node:assert",
+                        "importNames": [
+                            "default"
+                        ],
+                        "message": "Use `strict` instead. E.g. `import { strict as assert } from \"node:assert\";`"
+                    }
+                ],
+                "patterns": [
+                    {
+                        "group": [
+                            "./index.js",
+                            "**/../index.js"
+                        ],
+                        "message": "Importing from a parent index file tends to cause cyclic dependencies. Import from a more specific sibling file instead."
+                    }
+                ]
+            }
+        ],
         "@typescript-eslint/no-shadow": [
             "error",
             {
@@ -276,6 +858,9 @@
         "@typescript-eslint/no-unsafe-enum-comparison": [
             "off"
         ],
+        "@typescript-eslint/no-unsafe-function-type": [
+            "error"
+        ],
         "@typescript-eslint/no-unsafe-member-access": [
             "off"
         ],
@@ -292,6 +877,9 @@
             "off"
         ],
         "@typescript-eslint/no-var-requires": [
+            "error"
+        ],
+        "@typescript-eslint/no-wrapper-object-types": [
             "error"
         ],
         "@typescript-eslint/non-nullable-type-assertion-style": [
@@ -547,31 +1135,31 @@
         "implicit-arrow-linebreak": [
             "off"
         ],
-        "import/default": [
-            2
+        "import-x/default": [
+            "error"
         ],
-        "import/export": [
-            2
+        "import-x/export": [
+            "error"
         ],
-        "import/named": [
+        "import-x/named": [
             "off"
         ],
-        "import/namespace": [
-            2
-        ],
-        "import/no-default-export": [
+        "import-x/namespace": [
             "error"
         ],
-        "import/no-deprecated": [
+        "import-x/no-default-export": [
             "error"
         ],
-        "import/no-duplicates": [
-            1
-        ],
-        "import/no-extraneous-dependencies": [
+        "import-x/no-deprecated": [
             "error"
         ],
-        "import/no-internal-modules": [
+        "import-x/no-duplicates": [
+            "warn"
+        ],
+        "import-x/no-extraneous-dependencies": [
+            "error"
+        ],
+        "import-x/no-internal-modules": [
             "error",
             {
                 "allow": [
@@ -586,29 +1174,28 @@
                 ]
             }
         ],
-        "import/no-named-as-default": [
-            1
+        "import-x/no-named-as-default": [
+            "warn"
         ],
-        "import/no-named-as-default-member": [
-            1
+        "import-x/no-named-as-default-member": [
+            "warn"
         ],
-        "import/no-nodejs-modules": [
+        "import-x/no-nodejs-modules": [
             "error"
         ],
-        "import/no-unassigned-import": [
+        "import-x/no-unassigned-import": [
             "error"
         ],
-        "import/no-unresolved": [
-            2,
+        "import-x/no-unresolved": [
+            "error",
             {
-                "caseSensitive": true,
-                "caseSensitiveStrict": false
+                "caseSensitive": true
             }
         ],
-        "import/no-unused-modules": [
+        "import-x/no-unused-modules": [
             "error"
         ],
-        "import/order": [
+        "import-x/order": [
             "error",
             {
                 "newlines-between": "always",
@@ -618,6 +1205,8 @@
                     "orderImportKind": "ignore"
                 },
                 "distinctGroup": true,
+                "sortTypesGroup": false,
+                "named": false,
                 "warnOnUnassignedImports": false
             }
         ],
@@ -864,6 +1453,9 @@
         ],
         "no-new-func": [
             "error"
+        ],
+        "no-new-native-nonconstructor": [
+            "off"
         ],
         "no-new-symbol": [
             "off"
@@ -1251,6 +1843,9 @@
         "unicorn/prefer-type-error": [
             "error"
         ],
+        "unicorn/template-indent": [
+            0
+        ],
         "unused-imports/no-unused-imports": [
             "error"
         ],
@@ -1391,37 +1986,73 @@
         ]
     },
     "settings": {
-        "import/extensions": [
+        "import-x/extensions": [
             ".ts",
             ".tsx",
             ".d.ts",
             ".js",
             ".jsx",
-            ".jsx"
+            ".jsx",
+            ".cjs",
+            ".mjs"
         ],
-        "import/external-module-folders": [
+        "import-x/external-module-folders": [
             "node_modules",
             "node_modules/@types"
         ],
-        "import/parsers": {
+        "import-x/parsers": {
             "@typescript-eslint/parser": [
                 ".ts",
                 ".tsx",
                 ".d.ts",
-                ".tsx"
+                ".cts",
+                ".mts"
             ]
         },
-        "import/resolver": {
-            "typescript": {
-                "extensions": [
-                    ".ts",
-                    ".tsx",
-                    ".d.ts",
-                    ".js",
-                    ".jsx"
+        "import-x/resolver": {
+            "name": "tsResolver",
+            "options": {
+                "typescript": {
+                    "extensions": [
+                        ".ts",
+                        ".tsx",
+                        ".d.ts",
+                        ".js",
+                        ".jsx"
+                    ],
+                    "conditionNames": [
+                        "allow-ff-test-exports",
+                        "types",
+                        "import",
+                        "esm2020",
+                        "es2020",
+                        "es2015",
+                        "require",
+                        "node",
+                        "node-addons",
+                        "browser",
+                        "default"
+                    ]
+                }
+            },
+            "resolver": {
+                "DEFAULT_CONFIGS": [
+                    "tsconfig.json",
+                    "jsconfig.json"
                 ],
-                "conditionNames": [
-                    "allow-ff-test-exports",
+                "DEFAULT_IGNORE": "**/node_modules/**",
+                "DEFAULT_JSCONFIG": "jsconfig.json",
+                "DEFAULT_TRY_PATHS": [
+                    "",
+                    "tsconfig.json",
+                    "jsconfig.json"
+                ],
+                "DEFAULT_TSCONFIG": "tsconfig.json",
+                "IMPORT_RESOLVER_NAME": "eslint-import-resolver-typescript",
+                "JS_EXT_PATTERN": {},
+                "MATCH_ALL": "**",
+                "TSCONFIG_NOT_FOUND_REGEXP": {},
+                "defaultConditionNames": [
                     "types",
                     "import",
                     "esm2020",
@@ -1432,18 +2063,74 @@
                     "node-addons",
                     "browser",
                     "default"
-                ]
-            },
-            "node": {
-                "extensions": [
+                ],
+                "defaultExtensionAlias": {
+                    ".js": [
+                        ".ts",
+                        ".tsx",
+                        ".d.ts",
+                        ".js"
+                    ],
+                    ".ts": [
+                        ".ts",
+                        ".d.ts",
+                        ".js"
+                    ],
+                    ".jsx": [
+                        ".tsx",
+                        ".d.ts",
+                        ".jsx"
+                    ],
+                    ".tsx": [
+                        ".tsx",
+                        ".d.ts",
+                        ".jsx",
+                        ".js"
+                    ],
+                    ".cjs": [
+                        ".cts",
+                        ".d.cts",
+                        ".cjs"
+                    ],
+                    ".cts": [
+                        ".cts",
+                        ".d.cts",
+                        ".cjs"
+                    ],
+                    ".mjs": [
+                        ".mts",
+                        ".d.mts",
+                        ".mjs"
+                    ],
+                    ".mts": [
+                        ".mts",
+                        ".d.mts",
+                        ".mjs"
+                    ]
+                },
+                "defaultExtensions": [
                     ".ts",
-                    ".cts",
-                    ".mts",
                     ".tsx",
+                    ".d.ts",
                     ".js",
-                    ".jsx"
-                ]
-            }
+                    ".jsx",
+                    ".json",
+                    ".node"
+                ],
+                "defaultMainFields": [
+                    "types",
+                    "typings",
+                    "fesm2020",
+                    "fesm2015",
+                    "esm2020",
+                    "es2020",
+                    "module",
+                    "jsnext:main",
+                    "main"
+                ],
+                "interfaceVersion": 2
+            },
+            "typescript": true
         },
         "jsdoc": {
             "mode": "typescript",

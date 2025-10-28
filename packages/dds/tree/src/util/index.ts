@@ -78,7 +78,7 @@ export {
 	assertNonNegativeSafeInteger,
 	objectToMap,
 	invertMap,
-	oneFromSet,
+	oneFromIterable,
 	type Named,
 	compareNamed,
 	disposeSymbol,
@@ -95,6 +95,7 @@ export {
 	defineLazyCachedProperty,
 	copyPropertyIfDefined as copyProperty,
 	getOrAddInMap,
+	iterableHasSome,
 } from "./utils.js";
 export { ReferenceCountedBase, type ReferenceCounted } from "./referenceCounting.js";
 

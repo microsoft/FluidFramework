@@ -9,8 +9,9 @@ import {
 	type Revertible,
 	RevertibleStatus,
 	rootFieldKey,
+	type TreeChunk,
 } from "../../core/index.js";
-import { singleJsonCursor } from "../json/index.js";
+import { fieldJsonCursor } from "../json/index.js";
 import type { ITreeCheckout } from "../../shared-tree/index.js";
 import { type JsonCompatible, brand } from "../../util/index.js";
 import {
@@ -29,14 +30,12 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
-import assert from "node:assert";
-import {
-	asTreeViewAlpha,
-	SchemaFactory,
-	TreeViewConfiguration,
-} from "../../simple-tree/index.js";
+import { strict as assert } from "node:assert";
+import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { initialize } from "../../shared-tree/schematizeTree.js";
+import { combineChunks, FieldKinds } from "../../feature-libraries/index.js";
+import { asAlpha } from "../../api.js";
 
 const rootPath: NormalizedUpPath = {
 	detachedNodeId: undefined,
@@ -188,7 +187,7 @@ function createInitializedView() {
 		child: factory.optional(ChildNodeSchema),
 	}) {}
 	const provider = new TestTreeProviderLite();
-	const view = asTreeViewAlpha(
+	const view = asAlpha(
 		provider.trees[0].viewWith(
 			new TreeViewConfiguration({
 				schema: RootNodeSchema,
@@ -491,7 +490,7 @@ describe("Undo and redo", () => {
 		class Schema extends sf.object("Object", { foo: sf.number }) {}
 		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
 		const tree = DefaultTestSharedTreeKind.getFactory().create(runtime, "tree");
-		const view = asTreeViewAlpha(tree.viewWith(new TreeViewConfiguration({ schema: Schema })));
+		const view = asAlpha(tree.viewWith(new TreeViewConfiguration({ schema: Schema })));
 		view.initialize({ foo: 1 });
 		assert.equal(tree.isAttached(), false);
 		let revertible: Revertible | undefined;
@@ -707,10 +706,12 @@ export function createCheckout(json: JsonCompatible[], attachTree: boolean): ITr
 	const tree = sharedTreeFactory.create(runtime, "tree");
 	const runtimeFactory = new MockContainerRuntimeFactory();
 	runtimeFactory.createContainerRuntime(runtime);
-	initialize(tree.kernel.checkout, {
-		schema: jsonSequenceRootSchema,
-		initialTree: json.map(singleJsonCursor),
-	});
+	initialize(tree.kernel.checkout, jsonSequenceRootSchema, () =>
+		initializeSequenceRoot(
+			tree.kernel.checkout,
+			combineChunks(tree.kernel.checkout.forest.chunkField(fieldJsonCursor(json))),
+		),
+	);
 
 	if (attachTree) {
 		tree.connect({
@@ -724,3 +725,14 @@ export function createCheckout(json: JsonCompatible[], attachTree: boolean): ITr
 }
 
 let temp: unknown;
+
+/**
+ * Helper for use with `initialize` when the root is a sequence.
+ */
+function initializeSequenceRoot(checkout: ITreeCheckout, content: TreeChunk): void {
+	const field = { field: rootFieldKey, parent: undefined };
+	assert(checkout.storedSchema.rootFieldSchema.kind === FieldKinds.sequence.identifier);
+	const fieldEditor = checkout.editor.sequenceField(field);
+	// TODO: should do an idempotent edit here.
+	fieldEditor.insert(0, content);
+}

@@ -8,8 +8,8 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { updatePackageJsonFile } from "@fluid-tools/build-infrastructure";
 import {
-	InterdependencyRange,
-	ReleaseVersion,
+	type InterdependencyRange,
+	type ReleaseVersion,
 	detectVersionScheme,
 	getVersionRange,
 	isInterdependencyRange,
@@ -18,7 +18,7 @@ import {
 	isRangeOperator,
 	isWorkspaceRange,
 } from "@fluid-tools/version-tools";
-import { Logger, MonoRepo, Package, type PackageJson } from "@fluidframework/build-tools";
+import { type Logger, MonoRepo, Package, type PackageJson } from "@fluidframework/build-tools";
 import { PackageName } from "@rushstack/node-core-library";
 import { compareDesc, differenceInBusinessDays } from "date-fns";
 import execa from "execa";
@@ -32,14 +32,14 @@ import * as semver from "semver";
 import type { TsConfigJson } from "type-fest";
 import {
 	AllPackagesSelectionCriteria,
-	PackageSelectionCriteria,
-	PackageWithKind,
+	type PackageSelectionCriteria,
+	type PackageWithKind,
 	selectAndFilterPackages,
 } from "../filter.js";
-import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../releaseGroups.js";
-import { DependencyUpdateType } from "./bump.js";
+import { type ReleaseGroup, type ReleasePackage, isReleaseGroup } from "../releaseGroups.js";
+import type { DependencyUpdateType } from "./bump.js";
 import { zip } from "./collections.js";
-import { Context, VersionDetails } from "./context.js";
+import type { Context, VersionDetails } from "./context.js";
 import { indentString } from "./text.js";
 
 /**

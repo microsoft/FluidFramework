@@ -32,6 +32,7 @@ import {
 	type ChangeFamily,
 	type ChangeFamilyEditor,
 	type GraphCommit,
+	type RevisionTag,
 	rootFieldKey,
 } from "../../core/index.js";
 import type {
@@ -67,8 +68,8 @@ describe("SharedTreeCore", () => {
 	it("summarizes without indexes", async () => {
 		const tree = createTree([]);
 		const { summary, stats } = tree.summarizeCore(mockSerializer);
-		assert(summary);
-		assert(stats);
+		assert(summary !== undefined);
+		assert(stats !== undefined);
 		assert.equal(stats.treeNodeCount, 3);
 		assert.equal(stats.blobNodeCount, 1); // EditManager is always summarized
 		assert.equal(stats.handleNodeCount, 0);
@@ -381,25 +382,33 @@ describe("SharedTreeCore", () => {
 		interface EnrichedCommit extends GraphCommit<ModularChangeset> {
 			readonly original?: GraphCommit<ModularChangeset>;
 		}
+
 		class MockResubmitMachine implements ResubmitMachine<DefaultChangeset> {
 			public readonly resubmitQueue: EnrichedCommit[] = [];
 			public readonly sequencingLog: boolean[] = [];
 			public readonly submissionLog: EnrichedCommit[] = [];
 			public readonly resubmissionLog: GraphCommit<DefaultChangeset>[][] = [];
 
-			public prepareForResubmit(toResubmit: readonly GraphCommit<ModularChangeset>[]): void {
+			private prepareForResubmit(toResubmit: readonly GraphCommit<ModularChangeset>[]): void {
 				assert.equal(this.resubmitQueue.length, 0);
 				assert.equal(toResubmit.length, this.submissionLog.length);
 				this.resubmitQueue.push(...Array.from(toResubmit, (c) => ({ ...c, original: c })));
-				this.isInResubmitPhase = true;
 				this.resubmissionLog.push(toResubmit.slice());
 			}
-			public peekNextCommit(): GraphCommit<ModularChangeset> {
-				assert.equal(this.isInResubmitPhase, true);
+
+			public getEnrichedCommit(
+				revision: RevisionTag,
+				getLocalCommits: () => readonly GraphCommit<ModularChangeset>[],
+			): GraphCommit<ModularChangeset> | undefined {
+				if (this.resubmitQueue.length === 0) {
+					this.prepareForResubmit(getLocalCommits());
+				}
 				assert.equal(this.resubmitQueue.length > 0, true);
-				return this.resubmitQueue[0];
+				const commit = this.resubmitQueue[0];
+				assert.equal(commit.revision, revision);
+				return commit;
 			}
-			public isInResubmitPhase: boolean = false;
+
 			public onCommitSubmitted(commit: GraphCommit<ModularChangeset>): void {
 				const toResubmit = this.resubmitQueue.shift();
 				if (toResubmit !== commit) {
@@ -407,8 +416,13 @@ describe("SharedTreeCore", () => {
 				}
 				this.submissionLog.push(commit);
 			}
-			public onSequencedCommitApplied(isLocal: boolean): void {
+
+			public onSequencedCommitApplied(revision: RevisionTag, isLocal: boolean): void {
 				this.sequencingLog.push(isLocal);
+			}
+
+			public onCommitRollback(): void {
+				throw new Error("not implemented");
 			}
 		}
 
@@ -586,7 +600,7 @@ describe("SharedTreeCore", () => {
 
 	interface MockSummarizableEvents extends IEvent {
 		(event: "loaded", listener: (blobContents?: string) => void): void;
-		(event: "summarize" | "summarizeAttached" | "summarizeAsync" | "gcRequested"): void;
+		(event: "summarize" | "summarizeAttached" | "gcRequested"): void;
 	}
 
 	class MockSummarizable
@@ -613,24 +627,14 @@ describe("SharedTreeCore", () => {
 			}
 		}
 
-		public getAttachSummary(
-			stringify: SummaryElementStringifier,
-			fullTree?: boolean | undefined,
-			trackState?: boolean | undefined,
-			telemetryContext?: ITelemetryContext | undefined,
-		): ISummaryTreeWithStats {
+		public summarize(props: {
+			stringify: SummaryElementStringifier;
+			fullTree?: boolean | undefined;
+			trackState?: boolean | undefined;
+			telemetryContext?: ITelemetryContext | undefined;
+		}): ISummaryTreeWithStats {
 			this.emit("summarizeAttached");
-			return this.summarizeCore(stringify);
-		}
-
-		public async summarize(
-			stringify: SummaryElementStringifier,
-			fullTree?: boolean | undefined,
-			trackState?: boolean | undefined,
-			telemetryContext?: ITelemetryContext | undefined,
-		): Promise<ISummaryTreeWithStats> {
-			this.emit("summarizeAsync");
-			return this.summarizeCore(stringify);
+			return this.summarizeCore(props.stringify);
 		}
 
 		private summarizeCore(stringify: SummaryElementStringifier): ISummaryTreeWithStats {
@@ -667,5 +671,5 @@ function getTrunkLength<TEditor extends ChangeFamilyEditor, TChange>(
 		editManager !== undefined,
 		"EditManager in SharedTreeCore has been moved/deleted. Please update glass box tests.",
 	);
-	return editManager.getTrunkChanges().length;
+	return editManager.getTrunkChanges("main").length;
 }

@@ -1,5 +1,72 @@
 # @fluidframework/odsp-driver-definitions
 
+## 2.63.0
+
+Dependency updates only.
+
+## 2.62.0
+
+### Minor Changes
+
+- Move IPersistedCache types to driver-definitions ([#25518](https://github.com/microsoft/FluidFramework/pull/25518)) [54fca68d91](https://github.com/microsoft/FluidFramework/commit/54fca68d91aeb40bdef14b1fe8b8f3c28168b6de)
+
+  In an effort to decouple the driver web cache from the odsp driver a number of types have been moved from `@fluidframework/odsp-driver-definitions` to `@fluidframework/driver-definitions`. The moved types have been deprecated in `@fluidframework/odsp-driver-definitions`, and any usages should be moved to `@fluidframework/driver-definitions`.
+
+  The moved types are:
+
+  - `IEntry`
+  - `IFileEntry`
+  - `ICacheEntry`
+  - `IPersistedCache`
+
+## 2.61.0
+
+Dependency updates only.
+
+## 2.60.0
+
+Dependency updates only.
+
+## 2.53.0
+
+### Minor Changes
+
+- Fixed bug in parsing sensitivity label information from the ODSP join session response ([#25186](https://github.com/microsoft/FluidFramework/pull/25186)) [b74508fd4c9](https://github.com/microsoft/FluidFramework/commit/b74508fd4c9e5414cf457595e6c803e84d715b54)
+
+  Fixes parsing of sensitivity label information in the ODSP join session response. If there had been sensitivity label data present in the ODSP response, this data would have been double-parsed, leading to runtime errors. This issue was so far not hit in practice, because ODSP did not roll out sensitivity labels in the response yet. This bug fix gets odsp-driver ready for that rollout, which is planned to happen soon.
+
+## 2.52.0
+
+Dependency updates only.
+
+## 2.51.0
+
+Dependency updates only.
+
+## 2.50.0
+
+Dependency updates only.
+
+## 2.43.0
+
+Dependency updates only.
+
+## 2.42.0
+
+Dependency updates only.
+
+## 2.41.0
+
+Dependency updates only.
+
+## 2.40.0
+
+Dependency updates only.
+
+## 2.33.0
+
+Dependency updates only.
+
 ## 2.32.0
 
 Dependency updates only.

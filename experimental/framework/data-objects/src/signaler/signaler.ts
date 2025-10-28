@@ -161,12 +161,10 @@ class SignalerClass
 
 	public static readonly Name = "@fluid-example/signaler";
 
-	public static readonly factory = new DataObjectFactory(
-		SignalerClass.Name,
-		SignalerClass,
-		[],
-		{},
-	);
+	public static readonly factory = new DataObjectFactory({
+		type: SignalerClass.Name,
+		ctor: SignalerClass,
+	});
 
 	protected async hasInitialized() {
 		this._signaler = new InternalSignaler(this.runtime);

@@ -1,11 +1,239 @@
 # @fluid-tools/api-markdown-documenter
 
+## 0.23.1
+
+### 🐞 Bug Fixes
+
+- Fixed an issue where HTML content generated within Markdown was not properly escaping its inner content for Markdown.
+    - Markdown in HTML in Markdown is supported by many Markdown processors.
+      However, the libraries we use for converting Markdown to HTML assume that the resulting contents will be used in an HTML context, not a Markdown one.
+      So, they do not escape the text content as needed for a Markdown context.
+      This was causing some textual content in multi-line table cells to not be correctly escaped, and therefore parsed as Markdown content when it would not have been otherwise.
+
+## 0.23.0
+
+`LayoutUtilities.createTypeParametersSection` now returns `undefined` when the item has no type paramters.
+This aligns the behavior of this function with other section creation helpers.
+
+### 🐞 Bug Fixes
+
+- Fixed an issue where HTML headings were being generated with unescaped child content.
+  This caused headings for signatures with generic type parameters to be interpreted like HTML rather than as plain text.
+- Fixed an issue where HTML table cell content was generated with line breaks for formatting.
+  This would break Markdown table syntax.
+  Line breaks are now omitted in this context.
+
+## 0.22.0
+
+### Documentation Domain has been removed
+
+`DocumentationNode` and its implementations have been removed.
+Their usage has been replaced with [mdast](https://github.com/syntax-tree/mdast) directly.
+
+### `toMarkdown` and `toHtml` transformation layers have been removed
+
+The API transformation layer now outputs standard `mdast` Markdown trees directly.
+These can be used as input to both the Markdown and HTML rendering layers.
+
+If you wish to convert your contents to a `hast` representation, please use [mdast-util-to-hast](https://github.com/syntax-tree/mdast-util-to-hast) or another comparable library.
+
+### `HtmlRenderer` has been removed
+
+If you wish to render your contents as HTML, use `mdast-util-to-hast` (or something comparable), then render that tree using [hast-util-to-html](https://github.com/syntax-tree/hast-util-to-html) or another comparable library.
+
+### `DocumentNode` renamed to `ApiDocument`
+
+It is no longer a `unist` node, and is now an interface rather than a class.
+Its "children" property has also been renamed to "contents`.
+
+### `DocumentNode` renamed to `ApiDocument`
+
+It is no longer a `unist` node, and is now an interface rather than a class.
+Its "children" property has also been renamed to "contents`.
+
+## 0.21.0
+
+### Add DocumentationNode -> mdast transformation layer
+
+Adds transformation library for generating [mdast](https://github.com/syntax-tree/mdast) from `DocumentationNode`s.
+
+#### Example
+
+```typescript
+const modelDirectoryPath = "<PATH-TO-YOUR-DIRECTORY-CONTAINING-API-REPORTS>";
+
+// Create the API Model from our API reports
+const apiModel = await loadModel({
+	modelDirectoryPath,
+});
+
+// Transform the API Model to documents
+const documents = transformApiModel({
+	apiModel,
+});
+
+// Convert the documents to Markdown via mdast
+const markdownDocuments = documents.map((document) => documentToMarkdown(document, {}));
+
+// Use the resulting Markdown documents with your favorite mdast-compatible library!
+```
+
+### List parsing
+
+Markdown-like list syntax is now supported in TSDoc comments.
+This support is limited to lists of a single depth (i.e., nested lists are not yet supported).
+
+#### Example
+
+```typescript
+/**
+ * Foo
+ * - bar
+ * - baz
+ */
+export function foo(): string {
+    ...
+}
+```
+
+TSDoc parses the above as a paragraph of content that would otherwise be rendered as `Foo -bar -baz`, since soft line wraps are not treated as line breaks.
+This is true for GitHub-flavored Markdown as well, but certain syntax like lists are special cased.
+
+This library now accounts for list-like syntax, and similarly special-cases it to ensure the output matches the intent of the input.
+
+### `DocumentationNode.singleLine` has been removed
+
+This flag was never more than a hack to make our custom Markdown rendering work out correctly.
+It doesn't make sense in the context of a general-purpose documentation domain, as it is specifically in terms of whether or not the associated content could be rendered on a single line in *Markdown*.
+
+It has been removed and is no longer used by the system.
+
+### `PlainTextNode.text` property removed
+
+`text` was a redundant alias for `value`, which `PlainTextNode` inherits as a literal node.
+This property has now been removed.
+Use `PlainTextNode.value` instead.
+
+### `PlainTextNode` no longer supports unsafe "escaped" text
+
+This type previously supported an unsafe escape hatch for text escaping.
+This support is no longer needed and has been removed.
+
+### `SpanNode` now requires formatting options
+
+This type's formatting options were previously optional, which encouraged using the type as general purpose grouping mechanism for children.
+This resulted in unnecessary hierarchy in the generated trees.
+
+Formatting options are now required when constructing `SpanNode`s.
+
+### `LineBreakNode` removed from `BlockContent`
+
+Block Content items are implicitly separated by a line break, so allowing `LineBreakNode`s in that context is redundant.
+Support for `LineBreakNode`s in `BlockContent` contexts has been removed.
+
+### Update `LinkNode`, `HeadingNode`, and `CodeSpanNode` to take `string`s rather than `PlainTextNode`s
+
+Each of the above types accepted only a single `PlainTextNode` as a child value.
+These have been updated to accept `string`s instead, which greatly simplifies their use.
+
+Their `createFromPlainText` static factory functions have also been removed, as they are now redundant with their constructors.
+
+### Replace `OrderedListNode` and `UnorderedListNode` with a single `ListNode` type
+
+Additionally, the structure of `ListNode` has been updated to utilize `ListItemNode`s as children to make it easier to group child contents within a single list entry.
+
+### `FencedCodeBlockNode` updated to be a literal node that accepts a string
+
+This matches the requirements for fenced code in Markdown and is all that was required by the system.
+
+### `BlockQuoteNode` was removed
+
+This `DocumentationNode` implementation was not used by the library.
+If this type is required, it can be re-introduced via the Documentation Domain's [extensibility model](#new-extensibility-model).
+
+### `DocumentationNodeType` removed
+
+The `DocumentationNodeType` enum has been removed.
+Enumerations of supported node kinds in various contexts is now handled via type unions like `BlockContent` and `PhrasingContent`.
+String literal types makes typing much simpler to reason about, and more inline with `unist` patterns.
+
+### `TextFormatting` no longer permits *disabling* formatting
+
+This type previously allowed formatting to be disabled at lower scopes in the tree.
+E.g., some parent context could set `bold`, and a lower context could *unset* it.
+This functionality was unused, does not align with Markdown nor HTML, and made transformation logic more complicated than it strictly needs to be.
+
+This support has been removed.
+
+Additionally, the `toHtml` transformations no longer accept "rootFormatting" as an argument.
+Contents may be formatted using `SpanNode`s to introduce formatting to the tree instead.
+
 ## 0.20.0
+
+### Add stronger type restrictions to Documentation Domain
+
+The Documentation Domain has been updated to be more restrictive about what kinds of content can appear under specific kinds of nodes.
+Most node kinds in the domain have been updated to better align with Markdown.
+
+System node implementations have also been marked as `@sealed` - we do not support user derivations of these types.
+If something similar to one of these types is required, a custom `DocumentationNode` implementation may be created instead.
+
+#### New extensibility model
+
+A new extensibility model has been added to the Documentation Domain to ensure users can continue to specify custom node kinds.
+Depending on the context(s) in which a custom node is intended to be used, the corresponding type-map can be updated.
+
+##### Example
+
+```typescript
+// Define custom node type
+export class CustomDocumentationNode extends DocumentationParentNodeBase<PhrasingContent> {
+	public readonly type = "custom-node";
+
+	constructor(children) {
+		super(children);
+	}
+}
+
+// Extend the `BlockContentMap` interface to include our custom node kind, so it can be used in `SectionNode`s.
+declare module "@fluid-tools/api-markdown-documenter" {
+	interface BlockContentMap {
+		"custom-node": CustomDocumentationNode;
+	}
+}
+
+// Use the custom node!
+const sectionNode: SectionNode = new SectionNode(
+	[new CustomDocumentationNode([new PlainTextNode("Hello world!")])],
+	HeadingNode.createFromPlainText("Section with custom children!"),
+);
+```
 
 ### Rename "Construct Signature" headings to "Constructor" for interface API items.
 
 Updates default transformation logic for `ApiInterface` items to generate headings that read "Constructor" rather than "Construct Signature" for constructor-like members.
 This better aligns with similar policies for members like interface methods which are labeled "Method" and not "Method Signature", despite the underlying TypeScript AST entry being a "method signature".
+
+### `LayoutUtilities` function updates
+
+- `createSummaryParagraph` has been renamed to `createSummarySection`.
+  - It also now returns a `SectionNode`, rather than a `ParagraphNode` to be consistent with the other functions in `LayoutUtilities`.
+  - It has also been optimized to not create empty sections for doc comments with no summary component.
+
+- `createDeprecationNoticeSection` now returns a `SectionNode`, rather than a `ParagraphNode`.
+
+### Simplify `DocumentationNode` types
+
+Removes:
+
+- `MultiLineDocumentationNode`
+- `SingleLineDocumentationNode`
+- `SingleLineSpanNode`
+
+Updates `DocumentationNode` types that were constrained to single-line nodes to allow any `DocumentationNode` children.
+Rendering to Markdown falls back to HTML syntax in cases where multi-line content appears in relevant contexts (lists).
+
+Also updates `CodeSpanNode` to only allow plain text content, which is in line with how it is used, and how it is constrained in Markdown.
 
 ## 0.19.0
 

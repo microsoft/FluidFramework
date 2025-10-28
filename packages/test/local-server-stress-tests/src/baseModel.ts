@@ -11,18 +11,56 @@ import {
 	type BaseOperation,
 	combineReducersAsync,
 	createWeightedAsyncGenerator,
+	done,
+	isOperationType,
+	type MinimizationTransform,
 } from "@fluid-private/stochastic-test-utils";
 import { AttachState } from "@fluidframework/container-definitions/internal";
 
 import { ddsModelMap } from "./ddsModels.js";
-import { DDSModelOpGenerator, DDSModelOpReducer, type DDSModelOp } from "./ddsOperations";
+import {
+	convertToRealHandles,
+	covertLocalServerStateToDdsState,
+	DDSModelOpGenerator,
+	DDSModelOpReducer,
+	loadAllHandles,
+	type DDSModelOp,
+	type OrderSequentially,
+} from "./ddsOperations";
 import { _dirname } from "./dirname.cjs";
 import { type LocalServerStressState } from "./localServerStressHarness";
 import type { StressDataObjectOperations } from "./stressDataObject.js";
 
-export type StressOperations = StressDataObjectOperations | DDSModelOp;
+export type StressOperations = StressDataObjectOperations | DDSModelOp | OrderSequentially;
+
+const orderSequentiallyReducer = async (
+	state: LocalServerStressState,
+	op: OrderSequentially,
+) => {
+	const { baseModel, taggedHandles } = await loadAllHandles(state);
+	const ddsState = await covertLocalServerStateToDdsState(state);
+	const rollbackError = new Error("rollback");
+	try {
+		state.datastore.orderSequentially(() => {
+			for (const o of op.operations) {
+				baseModel.reducer(ddsState, convertToRealHandles(o, taggedHandles));
+			}
+			if (op.rollback) {
+				// Throwing any error during the orderSequentially callback will trigger a rollback attempt of all the ops we just played.
+				// Since it's not a real error, we'll suppress it later.
+				throw rollbackError;
+			}
+		});
+	} catch (error) {
+		if (error !== rollbackError) {
+			throw error;
+		}
+	}
+};
 
 export const reducer = combineReducersAsync<StressOperations, LocalServerStressState>({
+	enterStagingMode: async (state, op) => state.client.entryPoint.enterStagingMode(),
+	exitStagingMode: async (state, op) => state.client.entryPoint.exitStagingMode(op.commit),
 	createDataStore: async (state, op) => state.datastore.createDataStore(op.tag, op.asChild),
 	createChannel: async (state, op) => {
 		state.datastore.createChannel(op.tag, op.channelType);
@@ -34,6 +72,7 @@ export const reducer = combineReducersAsync<StressOperations, LocalServerStressS
 		// the fact that we assume local server is fast prevents it.
 		void state.datastore.uploadBlob(op.tag, state.random.string(state.random.integer(1, 16))),
 	DDSModelOp: DDSModelOpReducer,
+	orderSequentially: orderSequentiallyReducer,
 });
 
 export function makeGenerator<T extends BaseOperation>(
@@ -57,7 +96,7 @@ export function makeGenerator<T extends BaseOperation>(
 				type: "uploadBlob",
 				tag: state.tag("blob"),
 			}),
-			10,
+			5,
 			// local server doesn't support detached blobs
 			(state) => state.client.container.attachState !== AttachState.Detached,
 		],
@@ -69,10 +108,67 @@ export function makeGenerator<T extends BaseOperation>(
 			}),
 			5,
 		],
+		[
+			async () => ({
+				type: "enterStagingMode",
+			}),
+			5,
+			(state) =>
+				!state.client.entryPoint.inStagingMode() &&
+				state.client.container.attachState !== AttachState.Detached,
+		],
+		[
+			async ({ random }) => ({
+				type: "exitStagingMode",
+				commit: random.bool(),
+			}),
+			25,
+			(state) =>
+				state.client.entryPoint.inStagingMode() &&
+				state.client.container.attachState !== AttachState.Detached,
+		],
 		[DDSModelOpGenerator, 100],
+		[
+			async (state) => {
+				const operations: DDSModelOp[] = [];
+				/**
+				 * unfortunately we can't generate more than a single op here, as each op is generated off
+				 * the current state, and if we generate multiple ops it can result in earlier ops invaliding
+				 * the constrains necessary for later ops. for example, an earlier op might delete a sub-directory
+				 * which a later op sets a key in, but the state and generator don't know that will happen.
+				 */
+				const op = await DDSModelOpGenerator(state);
+				if (op !== done) {
+					operations.push(op);
+				}
+				return {
+					type: "orderSequentially",
+					operations,
+					rollback: state.random.bool(),
+				} satisfies OrderSequentially;
+			},
+			10,
+			(state) => state.client.container.attachState !== "Detached",
+		],
 	]);
 
 	return async (state) => asyncGenerator(state);
 }
 export const saveFailures = { directory: path.join(_dirname, "../src/test/results") };
 export const saveSuccesses = { directory: path.join(_dirname, "../src/test/results") };
+export const saveFluidOps = { directory: path.join(_dirname, "../src/test/results") };
+
+export const ddsModelMinimizers: MinimizationTransform<BaseOperation>[] = [
+	...ddsModelMap.entries(),
+]
+	.flatMap(([channelType, model]) =>
+		model.minimizationTransforms?.map((mt) => ({ channelType, mt })),
+	)
+	.filter((v): v is Exclude<typeof v, undefined> => v !== undefined)
+	.map(({ channelType, mt }) => {
+		return (op: BaseOperation) => {
+			if (isOperationType<DDSModelOp>("DDSModelOp", op) && op.channelType === channelType) {
+				mt(op.op);
+			}
+		};
+	});

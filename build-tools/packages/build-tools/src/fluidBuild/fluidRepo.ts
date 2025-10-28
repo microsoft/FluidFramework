@@ -6,13 +6,9 @@
 import * as path from "path";
 
 import { MonoRepo } from "../common/monoRepo";
-import { Package, Packages } from "../common/npmPackage";
-import { ExecAsyncResult } from "../common/utils";
-import {
-	type IFluidBuildDir,
-	type IFluidBuildDirEntry,
-	type IFluidBuildDirs,
-} from "./fluidBuildConfig";
+import { type Package, Packages } from "../common/npmPackage";
+import type { ExecAsyncResult } from "../common/utils";
+import type { IFluidBuildDir, IFluidBuildDirEntry, IFluidBuildDirs } from "./fluidBuildConfig";
 
 /**
  * @deprecated Should not be used outside the build-tools package.

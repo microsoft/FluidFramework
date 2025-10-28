@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IWholeSummaryPayload,
 	IWholeFlatSummary,
 	IWriteSummaryResponse,
 } from "@fluidframework/server-services-client";
+
 import { convertAllUtf8ToBase64 } from "./utils";
 
 /*

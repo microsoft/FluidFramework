@@ -4,14 +4,16 @@
  */
 
 import { EventEmitter } from "events";
-import {
+
+import type {
 	IContext,
 	IQueuedMessage,
 	ILogger,
 	IContextErrorData,
 } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import { CheckpointManager } from "./checkpointManager";
+
+import type { CheckpointManager } from "./checkpointManager";
 
 export class Context extends EventEmitter implements IContext {
 	private closed = false;

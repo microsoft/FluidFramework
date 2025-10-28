@@ -9,14 +9,17 @@ import { createPresenceManager } from "../presenceManager.js";
 
 import { addControlsTests } from "./broadcastControlsTests.js";
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
+import { assertIdenticalTypes, createInstanceOf } from "./testUtils.js";
 
 import type {
 	BroadcastControlSettings,
-	LatestMap,
+	LatestMapRaw,
 	LatestMapItemUpdatedClientData,
 	Presence,
-} from "@fluidframework/presence/alpha";
-import { StateFactory } from "@fluidframework/presence/alpha";
+	RawValueAccessor,
+	LatestMap,
+} from "@fluidframework/presence/beta";
+import { StateFactory } from "@fluidframework/presence/beta";
 
 const testWorkspaceName = "name:testWorkspaceA";
 
@@ -25,13 +28,13 @@ function createLatestMapManager(
 	presence: Presence,
 	valueControlSettings?: BroadcastControlSettings,
 ) {
-	const states = presence.states.getWorkspace(testWorkspaceName, {
-		fixedMap: StateFactory.latestMap(
-			{ key1: { x: 0, y: 0 }, key2: { ref: "default", someId: 0 } },
-			valueControlSettings,
-		),
+	const workspace = presence.states.getWorkspace(testWorkspaceName, {
+		fixedMap: StateFactory.latestMap({
+			local: { key1: { x: 0, y: 0 }, key2: { ref: "default", someId: 0 } },
+			settings: valueControlSettings,
+		}),
 	});
-	return states.props.fixedMap;
+	return workspace.states.fixedMap;
 }
 
 describe("Presence", () => {
@@ -43,7 +46,7 @@ describe("Presence", () => {
 
 		addControlsTests(createLatestMapManager);
 
-		function setupMapValueManager(): LatestMap<
+		function setupMapValueManager(): LatestMapRaw<
 			{
 				x: number;
 				y: number;
@@ -51,10 +54,10 @@ describe("Presence", () => {
 			string
 		> {
 			const presence = createPresenceManager(new MockEphemeralRuntime());
-			const states = presence.states.getWorkspace(testWorkspaceName, {
-				fixedMap: StateFactory.latestMap({ key1: { x: 0, y: 0 } }),
+			const workspace = presence.states.getWorkspace(testWorkspaceName, {
+				fixedMap: StateFactory.latestMap({ local: { key1: { x: 0, y: 0 } } }),
 			});
-			return states.props.fixedMap;
+			return workspace.states.fixedMap;
 		}
 
 		it("localItemUpdated event is fired with new value when local value is updated", () => {
@@ -87,10 +90,23 @@ describe("Presence", () => {
 			mapVM.local.delete("key1");
 			assert.strictEqual(localRemovalCount, 1);
 		});
+
+		it(".presence provides Presence it was created under", () => {
+			const presence = createPresenceManager(new MockEphemeralRuntime());
+			const workspace = presence.states.getWorkspace(testWorkspaceName, {
+				fixedMap: StateFactory.latestMap({ local: { key1: { x: 0, y: 0 } } }),
+			});
+
+			assert.strictEqual(workspace.states.fixedMap.presence, presence);
+		});
 	});
 });
 
 // ---- test (example) code ----
+
+type TestMapData =
+	| { x: number; y: number; ref?: never; someId?: never }
+	| { ref: string; someId: number; x?: never; y?: never };
 
 /**
  * Check that the code compiles.
@@ -102,14 +118,23 @@ export function checkCompiles(): void {
 		"name:testStatesWorkspaceWithLatestMap",
 		{
 			fixedMap: StateFactory.latestMap({
-				key1: { x: 0, y: 0 },
-				key2: { ref: "default", someId: 0 },
+				local: {
+					key1: { x: 0, y: 0 },
+					key2: { ref: "default", someId: 0 },
+				},
+			}),
+			validatedMap: StateFactory.latestMap({
+				local: {
+					key1: { x: 0, y: 0 },
+					key2: { ref: "default", someId: 0 },
+				},
+				validator: (data) => data as TestMapData,
 			}),
 		},
 	);
 	// Workaround ts(2775): Assertions require every name in the call target to be declared with an explicit type annotation.
 	const workspace: typeof statesWorkspace = statesWorkspace;
-	const props = workspace.props;
+	const props = workspace.states;
 
 	props.fixedMap.local.get("key1");
 	// @ts-expect-error with inferred keys only those named it init are accessible
@@ -129,6 +154,51 @@ export function checkCompiles(): void {
 		console.log(key, value);
 	}
 
+	assertIdenticalTypes(
+		props.validatedMap,
+		createInstanceOf<LatestMap<TestMapData, "key1" | "key2">>(),
+	);
+
+	assertIdenticalTypes(
+		props.fixedMap,
+		createInstanceOf<LatestMapRaw<TestMapData, "key1" | "key2">>(),
+	);
+
+	// Get a reference to one of the remote attendees
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	const attendee2 = [...props.validatedMap.getStateAttendees()].find(
+		(attendee) => attendee !== presence.attendees.getMyself(),
+	)!;
+
+	// Get a remote validated value
+	const latestMapData = props.validatedMap.getRemote(attendee2);
+
+	// Get a value from the validated map
+	const keyValue = latestMapData.get("key2");
+	if (keyValue === undefined) {
+		throw new Error("'key2' not found in LatestMap");
+	}
+
+	const validatedKeyValue = keyValue.value;
+
+	// @ts-expect-error because validatedKeyValue is an accessor, not a value
+	// Type '() =>
+	// { readonly x: number; readonly y: number; readonly ref?: never; readonly someId?: never; } | { readonly ref:
+	// string; readonly someId: number; readonly x?: never; readonly y?: never; } | undefined'
+	// is not assignable to type 'TestMapData | undefined'.
+	assertIdenticalTypes(validatedKeyValue, createInstanceOf<TestMapData | undefined>());
+
+	// The key value should be a function that returns a value.
+	const validatedValue: TestMapData | undefined = validatedKeyValue?.();
+
+	if (validatedValue === undefined) {
+		throw new Error("Value is not valid according to the validator function.");
+	}
+	logClientValue({ attendee: attendee2, key: "key2", value: validatedValue });
+
+	// ----------------------------------
+	// pointers data
+
 	interface PointerData {
 		x: number;
 		y: number;
@@ -136,9 +206,9 @@ export function checkCompiles(): void {
 		tilt?: number;
 	}
 
-	workspace.add("pointers", StateFactory.latestMap<PointerData>({}));
+	workspace.add("pointers", StateFactory.latestMap<PointerData>({ local: {} }));
 
-	const pointers = workspace.props.pointers;
+	const pointers = workspace.states.pointers;
 	const localPointers = pointers.local;
 
 	function logClientValue<T>({
@@ -146,7 +216,7 @@ export function checkCompiles(): void {
 		key,
 		value,
 	}: Pick<
-		LatestMapItemUpdatedClientData<T, string | number>,
+		LatestMapItemUpdatedClientData<T, string | number, RawValueAccessor<T>>,
 		"attendee" | "key" | "value"
 	>): void {
 		console.log(attendee.attendeeId, key, value);
@@ -165,7 +235,9 @@ export function checkCompiles(): void {
 	}
 
 	for (const { attendee, items } of pointers.getRemotes()) {
-		for (const [key, { value }] of items.entries()) logClientValue({ attendee, key, value });
+		for (const [key, { value }] of items.entries()) {
+			logClientValue({ attendee, key, value });
+		}
 	}
 
 	pointers.events.on("remoteItemRemoved", ({ attendee, key }) =>
@@ -173,6 +245,45 @@ export function checkCompiles(): void {
 	);
 
 	pointers.events.on("remoteUpdated", ({ attendee, items }) => {
-		for (const [key, { value }] of items.entries()) logClientValue({ attendee, key, value });
+		for (const [key, { value }] of items.entries()) {
+			logClientValue({ attendee, key, value });
+		}
 	});
+
+	// ----------------------------------
+	// primitive and null value support
+
+	workspace.add(
+		"primitiveMap",
+		StateFactory.latestMap({
+			local: {
+				// eslint-disable-next-line unicorn/no-null
+				null: null,
+				string: "string",
+				number: 0,
+				boolean: true,
+			},
+		}),
+	);
+
+	const localPrimitiveMap = workspace.states.primitiveMap.local;
+
+	// map value types are not matched to specific key
+	localPrimitiveMap.set("string", 1);
+	// latestMap should infer that `true` or `false` is a valid value
+	// without use of `true as const` or explicit specification.
+	// That happened under PR #24752 unexpectedly. Presumably from some
+	// additional inference complication where `& JsonDeserialized<T>`
+	// was used in `LatestMapArguments` that was relaxed in PR #247??. !!! <- to fill in
+	// Caller can always use explicit generic specification to be
+	// completely clear about the types.
+	localPrimitiveMap.set("number", false);
+	// eslint-disable-next-line unicorn/no-null
+	localPrimitiveMap.set("boolean", null);
+	localPrimitiveMap.set("null", "null");
+
+	// @ts-expect-error with inferred keys only those named in init are accessible
+	localPrimitiveMap.set("key3", "value");
+	// @ts-expect-error value of type value is not assignable
+	localPrimitiveMap.set("null", { value: "value" });
 }

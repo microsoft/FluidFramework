@@ -10,11 +10,12 @@ import {
 	TelemetryDataTag,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { ICompressionRuntimeOptions } from "../containerRuntime.js";
+import type { ICompressionRuntimeOptions } from "../compressionDefinitions.js";
+import { isContainerMessageDirtyable } from "../containerRuntime.js";
 import { asBatchMetadata, type IBatchMetadata } from "../metadata.js";
 import type { IPendingMessage } from "../pendingStateManager.js";
 
-import { LocalBatchMessage, IBatchCheckpoint, type LocalBatch } from "./definitions.js";
+import type { LocalBatchMessage, IBatchCheckpoint, LocalBatch } from "./definitions.js";
 import { serializeOp } from "./opSerialization.js";
 import type { BatchStartInfo } from "./remoteMessageProcessor.js";
 
@@ -128,10 +129,12 @@ export class BatchManager {
 	 * Gets the pending batch and clears state for the next batch.
 	 */
 	public popBatch(batchId?: BatchId): LocalBatch {
+		assert(this.pendingBatch[0] !== undefined, 0xb8a /* expected non-empty batch */);
 		const batch: LocalBatch = {
 			messages: this.pendingBatch,
 			referenceSequenceNumber: this.referenceSequenceNumber,
 			hasReentrantOps: this.hasReentrantOps,
+			staged: this.pendingBatch[0].staged,
 		};
 
 		this.pendingBatch = [];
@@ -166,9 +169,16 @@ export class BatchManager {
 			},
 		};
 	}
+
+	/**
+	 * Does this batch current contain user changes ("dirtyable" ops)?
+	 */
+	public containsUserChanges(): boolean {
+		return this.pendingBatch.some((message) => isContainerMessageDirtyable(message.runtimeOp));
+	}
 }
 
-const addBatchMetadata = (batch: LocalBatch, batchId?: BatchId): LocalBatch => {
+export const addBatchMetadata = (batch: LocalBatch, batchId?: BatchId): LocalBatch => {
 	const batchEnd = batch.messages.length - 1;
 
 	const firstMsg = batch.messages[0];

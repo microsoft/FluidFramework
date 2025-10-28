@@ -10,6 +10,7 @@ import {
 	type IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
 import {
+	ContainerRuntime,
 	loadContainerRuntime,
 	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
@@ -22,8 +23,16 @@ import type {
 } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
+// Valid export as per package.json export map
+// eslint-disable-next-line import/no-internal-modules
+import { modifyClusterSize } from "@fluidframework/id-compressor/internal/test-utils";
 import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
-import { RuntimeHeaders, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
+import { type StageControlsAlpha } from "@fluidframework/runtime-definitions/internal";
+import {
+	RuntimeHeaders,
+	toFluidHandleInternal,
+	asLegacyAlpha,
+} from "@fluidframework/runtime-utils/internal";
 import { timeoutAwait } from "@fluidframework/test-utils/internal";
 
 import { ddsModelMap } from "./ddsModels.js";
@@ -45,16 +54,33 @@ export interface CreateChannel {
 	tag: `channel-${number}`;
 }
 
-export type StressDataObjectOperations = UploadBlob | CreateDataStore | CreateChannel;
+export interface EnterStagingMode {
+	type: "enterStagingMode";
+}
+export interface ExitStagingMode {
+	type: "exitStagingMode";
+	commit: boolean;
+}
+
+export type StressDataObjectOperations =
+	| UploadBlob
+	| CreateDataStore
+	| CreateChannel
+	| EnterStagingMode
+	| ExitStagingMode;
 
 export class StressDataObject extends DataObject {
-	public static readonly factory: DataObjectFactory<StressDataObject> = new DataObjectFactory(
-		"StressDataObject",
-		StressDataObject,
-		[...ddsModelMap.values()].map((v) => v.factory),
-		{},
-		[["StressDataObject", new LazyPromise(async () => StressDataObject.factory)]],
-	);
+	public static readonly factory: DataObjectFactory<StressDataObject> = new DataObjectFactory({
+		type: "StressDataObject",
+		ctor: StressDataObject,
+		sharedObjects: [...ddsModelMap.values()].map((v) => v.factory),
+		registryEntries: [
+			["StressDataObject", new LazyPromise(async () => StressDataObject.factory)],
+		],
+		policies: {
+			readonlyInStagingMode: false,
+		},
+	});
 
 	get StressDataObject() {
 		return this;
@@ -114,7 +140,7 @@ export class StressDataObject extends DataObject {
 	}
 
 	public get attached() {
-		return this.runtime.attachState === AttachState.Attached;
+		return this.runtime.attachState !== AttachState.Detached;
 	}
 
 	public async uploadBlob(tag: `blob-${number}`, contents: string) {
@@ -151,7 +177,12 @@ export class StressDataObject extends DataObject {
 	public orderSequentially(act: () => void) {
 		this.context.containerRuntime.orderSequentially(act);
 	}
+
+	public get isDirty(): boolean | undefined {
+		return asLegacyAlpha(this.runtime).isDirty;
+	}
 }
+
 export type ContainerObjects =
 	| { type: "newBlob"; handle: IFluidHandle; tag: `blob-${number}` }
 	| {
@@ -267,16 +298,44 @@ export class DefaultStressDataObject extends StressDataObject {
 		}
 		this._locallyCreatedObjects.push(obj);
 	}
+
+	private stageControls: StageControlsAlpha | undefined;
+	private readonly containerRuntimeExp = asLegacyAlpha(this.context.containerRuntime);
+	public enterStagingMode() {
+		assert(
+			this.containerRuntimeExp.enterStagingMode !== undefined,
+			"enterStagingMode must be defined",
+		);
+		this.stageControls = this.containerRuntimeExp.enterStagingMode();
+	}
+
+	public inStagingMode(): boolean {
+		assert(
+			this.containerRuntimeExp.inStagingMode !== undefined,
+			"inStagingMode must be defined",
+		);
+		return this.containerRuntimeExp.inStagingMode;
+	}
+
+	public exitStagingMode(commit: boolean) {
+		assert(this.stageControls !== undefined, "must have staging mode controls");
+		if (commit) {
+			this.stageControls.commitChanges();
+		} else {
+			this.stageControls.discardChanges();
+		}
+		this.stageControls = undefined;
+	}
 }
 
 export const createRuntimeFactory = (): IRuntimeFactory => {
-	const defaultStressDataObjectFactory = new DataObjectFactory(
-		"DefaultStressDataObject",
-		DefaultStressDataObject,
-		[...ddsModelMap.values()].map((v) => v.factory),
-		{},
-		[[StressDataObject.factory.type, StressDataObject.factory]],
-	);
+	const defaultStressDataObjectFactory = new DataObjectFactory({
+		type: "DefaultStressDataObject",
+		ctor: DefaultStressDataObject,
+		sharedObjects: [...ddsModelMap.values()].map((v) => v.factory),
+
+		registryEntries: [[StressDataObject.factory.type, StressDataObject.factory]],
+	});
 
 	const runtimeOptions: IContainerRuntimeOptionsInternal = {
 		summaryOptions: {
@@ -285,6 +344,9 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 				initialSummarizerDelayMs: 0,
 			} as any,
 		},
+		enableRuntimeIdCompressor: "on",
+		createBlobPayloadPending: true,
+		explicitSchemaControl: true,
 	};
 
 	return {
@@ -312,6 +374,17 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 					return aliasedDefault.get();
 				},
 			});
+			// id compressor isn't made available via the interface right now.
+			// We could revisit exposing the safe part of its API (IIdCompressor, not IIdCompressorCore) in a way
+			// that would avoid this instanceof check, but most customers shouldn't really have a need for it.
+			assert(runtime instanceof ContainerRuntime, "Expected to create a ContainerRuntime");
+			assert(
+				runtime.idCompressor !== undefined,
+				"IdCompressor should be enabled by stress test options.",
+			);
+			// Forcing the cluster size to a low value makes it more likely to generate staging mode scenarios with more
+			// interesting interleaving of id allocation ops and normal ops.
+			modifyClusterSize(runtime.idCompressor, 2);
 
 			if (!existing) {
 				const ds = await runtime.createDataStore(defaultStressDataObjectFactory.type);

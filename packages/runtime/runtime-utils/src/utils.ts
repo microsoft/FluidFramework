@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IDocumentAttributes,
 	ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
@@ -22,6 +22,10 @@ export enum RuntimeHeaders {
 	 * True if the request is coming from an IFluidHandle.
 	 */
 	viaHandle = "viaHandle",
+	/**
+	 * True if the request is coming from a handle with a pending payload.
+	 */
+	payloadPending = "payloadPending",
 }
 
 /**
@@ -73,7 +77,7 @@ export const charSetForEncodingIds =
  * @returns A string - representation of an input
  * @internal
  */
-export function encodeCompactIdToString(idArg: number | string, prefix = "") {
+export function encodeCompactIdToString(idArg: number | string, prefix = ""): string {
 	if (typeof idArg === "string") {
 		return idArg;
 	}

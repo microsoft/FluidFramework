@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import type { IUser, ScopeType } from "@fluidframework/protocol-definitions";
 import { GitManager } from "@fluidframework/server-services-client";
-import {
+import type {
 	ITenant,
 	ITenantManager,
 	ITenantOrderer,
@@ -12,9 +13,9 @@ import {
 	IDb,
 	ITenantConfig,
 } from "@fluidframework/server-services-core";
-import { TestHistorian } from "./testHistorian";
+
 import { TestDb } from "./testCollection";
-import type { IUser, ScopeType } from "@fluidframework/protocol-definitions";
+import { TestHistorian } from "./testHistorian";
 
 /**
  * @internal
@@ -77,6 +78,17 @@ export class TestTenantManager implements ITenantManager {
 			key: "test-tenant-key",
 			customData: {},
 			enableSharedKeyAccess: true,
+			enablePrivateKeyAccess: false,
+		};
+	}
+
+	public async getTenantfromRiddler(id?: string): Promise<ITenantConfig> {
+		return {
+			id: "test-tenant",
+			storage: this.tenant.storage,
+			orderer: this.tenant.orderer,
+			customData: {},
+			enableSharedKeyAccess: false,
 			enablePrivateKeyAccess: false,
 		};
 	}

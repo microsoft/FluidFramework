@@ -3,6 +3,11 @@
  * Licensed under the MIT License.
  */
 
+const tsResolver = require("eslint-import-resolver-typescript");
+
+/**
+ * Base configuration from which all of our exported configs extends.
+ */
 module.exports = {
 	env: {
 		browser: true,
@@ -16,9 +21,9 @@ module.exports = {
 		"plugin:@typescript-eslint/eslint-recommended",
 		"plugin:@typescript-eslint/recommended-type-checked",
 		"plugin:@typescript-eslint/stylistic-type-checked",
-		// import/recommended is the combination of import/errors and import/warnings
-		"plugin:import/recommended",
-		"plugin:import/typescript",
+		// import-x/recommended is the combination of import-x/errors and import-x/warnings
+		"plugin:import-x/recommended",
+		"plugin:import-x/typescript",
 	],
 	globals: {
 		Atomics: "readonly",
@@ -33,16 +38,41 @@ module.exports = {
 		sourceType: "module",
 		project: "./tsconfig.json",
 	},
-	plugins: ["import", "unicorn"],
+	plugins: ["import-x", "unicorn"],
 	reportUnusedDisableDirectives: true,
 	rules: {
+		// These rules were deprecated, then removed in `@typescript-eslint/eslint-plugin` v8.
+		// They are replaced by a set of more specific rules, which have been enabled in the list below.
+		// These explicit disable will need to be removed when this package is updated to v8+ of the plugin.
+		"@typescript-eslint/ban-types": "off",
+		"@typescript-eslint/no-empty-interface": "off",
+
 		// Please keep entries alphabetized within a group
 
-		// @typescript-eslint
+		// #region Fluid Custom Rules
+
+		/**
+		 * Disallow `-` immediately following a JSDoc/TSDoc tag (e.g. `@deprecated - foo`).
+		 */
+		"@fluid-internal/fluid/no-hyphen-after-jsdoc-tag": "error",
+
+		/**
+		 * Disallow file path based links in JSDoc/TSDoc comments.
+		 */
+		"@fluid-internal/fluid/no-file-path-links-in-jsdoc": "error",
+
+		/**
+		 * Disallow the use of Markdown-syntax links in JSDoc/TSDoc comments.
+		 */
+		"@fluid-internal/fluid/no-markdown-links-in-jsdoc": "error",
+
+		// #endregion
+
+		// #region @typescript-eslint
+
 		"@typescript-eslint/adjacent-overload-signatures": "error",
 		"@typescript-eslint/array-type": "error",
 		"@typescript-eslint/await-thenable": "error",
-		"@typescript-eslint/ban-types": "error",
 		"@typescript-eslint/brace-style": "off",
 		"@typescript-eslint/comma-dangle": ["error", "always-multiline"],
 		"@typescript-eslint/comma-spacing": "off",
@@ -61,7 +91,7 @@ module.exports = {
 		"@typescript-eslint/member-delimiter-style": "off",
 		"@typescript-eslint/no-dynamic-delete": "error",
 		"@typescript-eslint/no-empty-function": "off",
-		"@typescript-eslint/no-empty-interface": "error",
+		"@typescript-eslint/no-empty-object-type": "error",
 		"@typescript-eslint/no-explicit-any": "off",
 		"@typescript-eslint/no-extra-semi": "error",
 		"@typescript-eslint/no-extraneous-class": "error",
@@ -87,6 +117,7 @@ module.exports = {
 		"@typescript-eslint/no-unnecessary-qualifier": "error",
 		"@typescript-eslint/no-unnecessary-type-arguments": "error",
 		"@typescript-eslint/no-unnecessary-type-assertion": "error",
+		"@typescript-eslint/no-unsafe-function-type": "error",
 		"@typescript-eslint/no-var-requires": "error",
 		"@typescript-eslint/object-curly-spacing": "off",
 		"@typescript-eslint/prefer-for-of": "error",
@@ -126,6 +157,9 @@ module.exports = {
 			},
 		],
 		"@typescript-eslint/unified-signatures": "error",
+		"@typescript-eslint/no-wrapper-object-types": "error",
+
+		// #endregion
 
 		// eslint-plugin-eslint-comments
 		"eslint-comments/disable-enable-pair": [
@@ -135,21 +169,21 @@ module.exports = {
 			},
 		],
 
-		// #region eslint-plugin-import
+		// #region eslint-plugin-import-x
 
-		"import/no-default-export": "error",
-		"import/no-deprecated": "off",
-		"import/no-extraneous-dependencies": "error",
-		"import/no-internal-modules": "error",
-		"import/no-unassigned-import": "error",
-		"import/no-unresolved": [
+		"import-x/no-default-export": "error",
+		"import-x/no-deprecated": "off",
+		"import-x/no-extraneous-dependencies": "error",
+		"import-x/no-internal-modules": "error",
+		"import-x/no-unassigned-import": "error",
+		"import-x/no-unresolved": [
 			"error",
 			{
 				caseSensitive: true,
 			},
 		],
-		"import/no-unused-modules": "error",
-		"import/order": [
+		"import-x/no-unused-modules": "error",
+		"import-x/order": [
 			"error",
 			{
 				"newlines-between": "always",
@@ -340,15 +374,45 @@ module.exports = {
 		},
 	],
 	settings: {
-		"import/extensions": [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
-		"import/parsers": {
-			"@typescript-eslint/parser": [".ts", ".tsx", ".d.ts"],
+		"import-x/extensions": [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
+		"import-x/parsers": {
+			"@typescript-eslint/parser": [".ts", ".tsx", ".d.ts", ".cts", ".mts"],
 		},
-		"import/resolver": {
-			// See remark in minimal-deprecated.js on the importance of import/resolver key order.
-			node: {
-				extensions: [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
+		"import-x/resolver": {
+			name: "tsResolver",
+			options: {
+				typescript: {
+					extensions: [
+						// `.mts`, `.cts`, `.d.mts`, `.d.cts`, `.mjs`, `.cjs` are not included because `.cjs` and `.mjs` must be used
+						// explicitly in imports
+						".ts",
+						".tsx",
+						".d.ts",
+						".js",
+						".jsx",
+					],
+					conditionNames: [
+						// This supports the test-only conditional export pattern used in merge-tree and id-compressor.
+						"allow-ff-test-exports",
+
+						// Default condition names below, see https://github.com/import-js/eslint-import-resolver-typescript#conditionnames
+						"types",
+						"import",
+
+						// APF: https://angular.io/guide/angular-package-format
+						"esm2020",
+						"es2020",
+						"es2015",
+
+						"require",
+						"node",
+						"node-addons",
+						"browser",
+						"default",
+					],
+				},
 			},
+			resolver: tsResolver, // required
 		},
 	},
 };

@@ -19,7 +19,6 @@ import {
 } from "@fluidframework/test-utils/internal";
 
 import {
-	MockDetachedBlobStorage,
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
 } from "../mockDetachedBlobStorage.js";
@@ -107,10 +106,8 @@ describeCompat("Garbage collection of blobs", "NoCompat", (getTestObjectProvider
 			if (!driverSupportsBlobs(provider.driver)) {
 				this.skip();
 			}
-			const detachedBlobStorage = new MockDetachedBlobStorage();
 			const loader = provider.makeTestLoader({
 				...gcContainerConfig,
-				loaderProps: { detachedBlobStorage },
 			});
 			container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 			defaultDataStore = (await container.getEntryPoint()) as ITestDataObject;

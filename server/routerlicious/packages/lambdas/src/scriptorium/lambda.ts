@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { convertSortedNumberArrayToRanges } from "@fluidframework/server-services-client";
 import {
 	extractBoxcar,
-	ICollection,
-	IContext,
-	IQueuedMessage,
-	IPartitionLambda,
-	ISequencedOperationMessage,
+	type ICollection,
+	type IContext,
+	type IQueuedMessage,
+	type IPartitionLambda,
+	type ISequencedOperationMessage,
 	SequencedOperationType,
 	runWithRetry,
 	isRetryEnabled,
@@ -18,12 +19,12 @@ import {
 	getLumberBaseProperties,
 	Lumberjack,
 	LumberEventName,
-	Lumber,
+	type Lumber,
 	QueuedMessageProperties,
 	CommonProperties,
 } from "@fluidframework/server-services-telemetry";
-import { convertSortedNumberArrayToRanges } from "@fluidframework/server-services-client";
-import { circuitBreakerOptions, LambdaCircuitBreaker } from "../utils";
+
+import { type circuitBreakerOptions, LambdaCircuitBreaker } from "../utils";
 
 enum ScriptoriumStatus {
 	Processing = "Processing",

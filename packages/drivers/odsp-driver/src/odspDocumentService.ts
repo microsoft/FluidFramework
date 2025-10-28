@@ -5,33 +5,33 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
-import { IClient } from "@fluidframework/driver-definitions";
-import {
+import type { IClient } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentDeltaConnection,
 	IDocumentDeltaStorageService,
 	IDocumentService,
 	IDocumentServiceEvents,
 	IDocumentServicePolicies,
 	IDocumentStorageService,
+	IEntry,
 	IResolvedUrl,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import {
+import type {
 	HostStoragePolicy,
-	IEntry,
 	IOdspResolvedUrl,
 	InstrumentedStorageTokenFetcher,
 	TokenFetchOptions,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	ITelemetryLoggerExt,
-	MonitoringContext,
+	type ITelemetryLoggerExt,
+	type MonitoringContext,
 	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { HostStoragePolicyInternal } from "./contracts.js";
-import { EpochTracker } from "./epochTracker.js";
-import { IOdspCache } from "./odspCache.js";
+import type { HostStoragePolicyInternal } from "./contracts.js";
+import type { EpochTracker } from "./epochTracker.js";
+import type { IOdspCache } from "./odspCache.js";
 import type { OdspDelayLoadedDeltaStream } from "./odspDelayLoadedDeltaStream.js";
 import {
 	OdspDeltaStorageService,
@@ -347,7 +347,7 @@ export class OdspDocumentService
 		return this._opsCache;
 	}
 
-	// Called whenever re receive ops through any channel for this document (snapshot, delta connection, delta storage)
+	// Called whenever we receive ops through any channel for this document (snapshot, delta connection, delta storage)
 	// We use it to notify caching layer of how stale is snapshot stored in cache.
 	protected opsReceived(ops: ISequencedDocumentMessage[]): void {
 		// No need for two clients to save same ops

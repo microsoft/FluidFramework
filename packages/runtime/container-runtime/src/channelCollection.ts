@@ -4,7 +4,7 @@
  */
 
 import { AttachState } from "@fluidframework/container-definitions";
-import {
+import type {
 	FluidObject,
 	IDisposable,
 	IRequest,
@@ -17,8 +17,8 @@ import type {
 } from "@fluidframework/core-interfaces/internal";
 import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
-import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
-import {
+import type {
+	ISnapshot,
 	ISnapshotTree,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
@@ -34,24 +34,25 @@ import type {
 	IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	ISummaryTreeWithStats,
-	ITelemetryContext,
-	IGarbageCollectionData,
-	AliasResult,
+	type ISummaryTreeWithStats,
+	type ITelemetryContext,
+	type IGarbageCollectionData,
+	type AliasResult,
 	CreateSummarizerNodeSource,
-	IAttachMessage,
-	IEnvelope,
-	IFluidDataStoreChannel,
-	IFluidDataStoreContext,
-	IFluidDataStoreContextDetached,
-	IFluidDataStoreFactory,
-	IFluidDataStoreRegistry,
-	IFluidParentContext,
-	ISummarizeResult,
-	NamedFluidDataStoreRegistryEntries,
+	type IAttachMessage,
+	type IEnvelope,
+	type IFluidDataStoreChannel,
+	type IFluidDataStoreContext,
+	type IFluidDataStoreContextDetached,
+	type IFluidDataStoreFactory,
+	type IFluidDataStoreRegistry,
+	type IFluidParentContext,
+	type ISummarizeResult,
+	type NamedFluidDataStoreRegistryEntries,
 	channelsTreeName,
-	IInboundSignalMessage,
+	type IInboundSignalMessage,
 	gcDataBlobKey,
+	type MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -73,7 +74,7 @@ import {
 	DataCorruptionError,
 	DataProcessingError,
 	LoggingError,
-	MonitoringContext,
+	type MonitoringContext,
 	createChildLogger,
 	createChildMonitoringContext,
 	extractSafePropertiesFromMessage,
@@ -84,18 +85,18 @@ import { v4 as uuid } from "uuid";
 
 import {
 	DeletedResponseHeaderKey,
-	RuntimeHeaderData,
+	type RuntimeHeaderData,
 	defaultRuntimeHeaderData,
 } from "./containerRuntime.js";
 import {
-	IDataStoreAliasMessage,
+	type IDataStoreAliasMessage,
 	channelToDataStore,
 	isDataStoreAliasMessage,
 } from "./dataStore.js";
 import {
 	FluidDataStoreContext,
-	IFluidDataStoreContextInternal,
-	ILocalDetachedFluidDataStoreContextProps,
+	type IFluidDataStoreContextInternal,
+	type ILocalDetachedFluidDataStoreContextProps,
 	LocalDetachedFluidDataStoreContext,
 	LocalFluidDataStoreContext,
 	RemoteFluidDataStoreContext,
@@ -103,24 +104,23 @@ import {
 } from "./dataStoreContext.js";
 import { DataStoreContexts } from "./dataStoreContexts.js";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
-import { GCNodeType, IGCNodeUpdatedProps, urlToGCNodePath } from "./gc/index.js";
+import { GCNodeType, type IGCNodeUpdatedProps, urlToGCNodePath } from "./gc/index.js";
 import type {
 	ContainerRuntimeAliasMessage,
 	ContainerRuntimeDataStoreOpMessage,
 	OutboundContainerRuntimeAttachMessage,
 } from "./messageTypes.js";
-import { ContainerMessageType, LocalContainerRuntimeMessage } from "./messageTypes.js";
+import { ContainerMessageType, type LocalContainerRuntimeMessage } from "./messageTypes.js";
 import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs.js";
 import {
-	IContainerRuntimeMetadata,
+	type IContainerRuntimeMetadata,
 	nonDataStorePaths,
 	rootHasIsolatedChannels,
 } from "./summary/index.js";
 
 /**
  * True if a tombstoned object should be returned without erroring
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const AllowTombstoneRequestHeaderKey = "allowTombstone"; // Belongs in the enum above, but avoiding the breaking change
 
@@ -138,14 +138,24 @@ type PendingAliasResolve = (success: boolean) => void;
 export type AddressedSignalEnvelope = IEnvelope<ISignalEnvelope["contents"]>;
 
 /**
+ * This version of the interface is private to this the package. It should never be exported under any tag.
+ * It is used to manage interactions within the container-runtime package. If something is needed
+ * cross package, it is likely it is also being used cross layer (ContainerRuntime * DataStoreRuntime).
+ * If that is the case, the change likely needs to be staged directly on IFluidParentContext. Changes
+ * being staged on IFluidParentContext can be added here as well, likely with optionality removed,
+ * to ease interactions within this package.
+ */
+export interface IFluidParentContextPrivate extends IFluidParentContext {
+	readonly isReadOnly: () => boolean;
+	readonly minVersionForCollab: MinimumVersionForCollab;
+}
+
+/**
  * Kin of {@link @fluidframework/runtime-definitions#IFluidParentContext} with alternate
  * submitMessage and submitSignal methods.
- *
- * @internal
- * @privateRemarks Exposed per ChannelCollection testing and API extractor request
  */
-export interface IFluidRootParentContext
-	extends Omit<IFluidParentContext, "submitMessage" | "submitSignal"> {
+export interface IFluidRootParentContextPrivate
+	extends Omit<IFluidParentContextPrivate, "submitMessage" | "submitSignal"> {
 	readonly submitMessage: (
 		containerRuntimeMessage:
 			| ContainerRuntimeDataStoreOpMessage
@@ -159,14 +169,17 @@ export interface IFluidRootParentContext
 type SubmitKeys = "submitMessage" | "submitSignal";
 
 /**
- * Creates a shallow wrapper of {@link IFluidParentContext} or
- * {@link IFluidRootParentContext} with `submitMessage` and `submitSignal`
+ * Creates a shallow wrapper of {@link IFluidParentContextPrivate} or
+ * {@link IFluidRootParentContextPrivate} with `submitMessage` and `submitSignal`
  * methods replaced with the provided overrides.
  */
-export function formParentContext<T extends IFluidParentContext | IFluidRootParentContext>(
-	context: Omit<IFluidParentContext & IFluidRootParentContext, SubmitKeys>,
+export function formParentContext<
+	T extends IFluidParentContextPrivate | IFluidRootParentContextPrivate,
+>(
+	context: Omit<IFluidParentContextPrivate & IFluidRootParentContextPrivate, SubmitKeys>,
 	overrides: Pick<T, SubmitKeys>,
-): Omit<IFluidParentContext & IFluidRootParentContext, SubmitKeys> & Pick<T, SubmitKeys> {
+): Omit<IFluidParentContextPrivate & IFluidRootParentContextPrivate, SubmitKeys> &
+	Pick<T, SubmitKeys> {
 	return {
 		get IFluidDataStoreRegistry() {
 			return context.IFluidDataStoreRegistry;
@@ -192,6 +205,7 @@ export function formParentContext<T extends IFluidParentContext | IFluidRootPare
 		get attachState() {
 			return context.attachState;
 		},
+		isReadOnly: () => context.isReadOnly(),
 		containerRuntime: context.containerRuntime,
 		scope: context.scope,
 		gcThrowOnTombstoneUsage: context.gcThrowOnTombstoneUsage,
@@ -225,22 +239,23 @@ export function formParentContext<T extends IFluidParentContext | IFluidRootPare
 		setChannelDirty: (address: string) => {
 			return context.setChannelDirty(address);
 		},
+		minVersionForCollab: context.minVersionForCollab,
 	};
 }
 
 /**
- * Creates a wrapper of a {@link IFluidParentContext} to be provided to the inner datastore channels.
+ * Creates a wrapper of a {@link IFluidRootParentContextPrivate} to be provided to the inner datastore channels.
  * The wrapper will have the submit methods overwritten with the appropriate id as the destination address.
  *
  * @param id - the id of the channel
- * @param parentContext - the {@link IFluidRootParentContext} to wrap
+ * @param parentContext - the {@link IFluidRootParentContextPrivate} to wrap
  * @returns A wrapped {@link IFluidParentContext}
  */
 function wrapContextForInnerChannel(
 	id: string,
-	parentContext: IFluidRootParentContext,
-): IFluidParentContext {
-	const context = formParentContext<IFluidParentContext>(parentContext, {
+	parentContext: IFluidRootParentContextPrivate,
+): IFluidParentContextPrivate {
+	const context = formParentContext<IFluidParentContextPrivate>(parentContext, {
 		submitMessage: (type: string, content: unknown, localOpMetadata: unknown) => {
 			const fluidDataStoreContent: FluidDataStoreMessage = {
 				content,
@@ -305,7 +320,7 @@ export class ChannelCollection
 
 	constructor(
 		protected readonly baseSnapshot: ISnapshotTree | ISnapshot | undefined,
-		public readonly parentContext: IFluidRootParentContext,
+		public readonly parentContext: IFluidRootParentContextPrivate,
 		baseLogger: ITelemetryBaseLogger,
 		private readonly gcNodeUpdated: (props: IGCNodeUpdatedProps) => void,
 		private readonly isDataStoreDeleted: (nodePath: string) => boolean,
@@ -397,7 +412,7 @@ export class ChannelCollection
 	 */
 	private shouldSendAttachLog = true;
 
-	protected wrapContextForInnerChannel(id: string): IFluidParentContext {
+	protected wrapContextForInnerChannel(id: string): IFluidParentContextPrivate {
 		return wrapContextForInnerChannel(id, this.parentContext);
 	}
 
@@ -416,7 +431,7 @@ export class ChannelCollection
 			const attachMessage = contents as InboundAttachMessage;
 			// We need to process the GC Data for both local and remote attach messages
 			const foundGCData = processAttachMessageGCData(
-				attachMessage.snapshot,
+				attachMessage.snapshot ?? undefined,
 				(nodeId, toPath) => {
 					// nodeId is the relative path under the node being attached. Always starts with "/", but no trailing "/" after an id
 					const fromPath = `/${attachMessage.id}${nodeId === "/" ? "" : nodeId}`;
@@ -552,7 +567,7 @@ export class ChannelCollection
 
 		// If message timestamp doesn't exist, this is called in a detached container. Don't notify GC in that case
 		// because it doesn't run in detached container and doesn't need to know about this route.
-		if (messageTimestampMs) {
+		if (messageTimestampMs !== undefined) {
 			this.parentContext.addedGCOutboundRoute("/", `/${internalId}`, messageTimestampMs);
 		}
 
@@ -660,7 +675,7 @@ export class ChannelCollection
 	}
 
 	public createDetachedDataStore(
-		pkg: Readonly<string[]>,
+		pkg: readonly string[],
 		loadingGroupId?: string,
 	): IFluidDataStoreContextDetached {
 		return this.createContext(
@@ -672,7 +687,7 @@ export class ChannelCollection
 	}
 
 	public createDataStoreContext(
-		pkg: Readonly<string[]>,
+		pkg: readonly string[],
 		loadingGroupId?: string,
 	): IFluidDataStoreContextInternal {
 		return this.createContext(
@@ -685,7 +700,7 @@ export class ChannelCollection
 
 	protected createContext<T extends LocalFluidDataStoreContext>(
 		id: string,
-		pkg: Readonly<string[]>,
+		pkg: readonly string[],
 		contextCtor: new (props: ILocalDetachedFluidDataStoreContextProps) => T,
 		loadingGroupId?: string,
 	): T {
@@ -718,7 +733,9 @@ export class ChannelCollection
 	public get disposed(): boolean {
 		return this.disposeOnce.evaluated;
 	}
-	public readonly dispose = (): void => this.disposeOnce.value;
+	public dispose(): void {
+		return this.disposeOnce.value;
+	}
 
 	public readonly reSubmitContainerMessage = (
 		message:
@@ -726,6 +743,7 @@ export class ChannelCollection
 			| OutboundContainerRuntimeAttachMessage
 			| ContainerRuntimeAliasMessage,
 		localOpMetadata: unknown,
+		squash: boolean | undefined,
 	): void => {
 		switch (message.type) {
 			case ContainerMessageType.Attach:
@@ -734,7 +752,7 @@ export class ChannelCollection
 				return;
 			}
 			case ContainerMessageType.FluidDataStoreOp: {
-				return this.resubmitDataStoreOp(message.contents, localOpMetadata);
+				return this.resubmitDataStoreOp(message.contents, localOpMetadata, squash);
 			}
 			default: {
 				assert(false, 0x907 /* unknown op type */);
@@ -745,6 +763,7 @@ export class ChannelCollection
 	protected readonly resubmitDataStoreOp = (
 		envelope: IEnvelope<FluidDataStoreMessage>,
 		localOpMetadata: unknown,
+		squash: boolean | undefined,
 	): void => {
 		const context = this.contexts.get(envelope.address);
 		// If the data store has been deleted, log an error and throw an error. If there are local changes for a
@@ -758,7 +777,7 @@ export class ChannelCollection
 			});
 		}
 		assert(!!context, 0x160 /* "There should be a store context for the op" */);
-		context.reSubmit(envelope.contents, localOpMetadata);
+		context.reSubmit(envelope.contents, localOpMetadata, squash);
 	};
 
 	public readonly rollbackDataStoreOp = (
@@ -1129,10 +1148,10 @@ export class ChannelCollection
 		context.processSignal(message, local);
 	}
 
-	public setConnectionState(connected: boolean, clientId?: string): void {
+	public setConnectionState(canSendOps: boolean, clientId?: string): void {
 		for (const [fluidDataStoreId, context] of this.contexts) {
 			try {
-				context.setConnectionState(connected, clientId);
+				context.setConnectionState(canSendOps, clientId);
 			} catch (error) {
 				this.mc.logger.sendErrorEvent(
 					{
@@ -1143,8 +1162,59 @@ export class ChannelCollection
 						}),
 						details: JSON.stringify({
 							runtimeConnected: this.parentContext.connected,
-							connected,
+							canSendOps,
 						}),
+					},
+					error,
+				);
+			}
+		}
+	}
+
+	/**
+	 * Enumerates the contexts and calls notifyReadOnlyState on them.
+	 */
+	public notifyReadOnlyState(readonly: boolean): void {
+		for (const [fluidDataStoreId, context] of this.contexts) {
+			try {
+				context.notifyReadOnlyState();
+			} catch (error) {
+				this.mc.logger.sendErrorEvent(
+					{
+						eventName: "SetReadOnlyStateError",
+						...tagCodeArtifacts({
+							fluidDataStoreId,
+						}),
+						details: {
+							runtimeReadonly: this.parentContext.isReadOnly(),
+							readonly,
+						},
+					},
+					error,
+				);
+			}
+		}
+	}
+
+	/**
+	 * Notifies all data store contexts about the current staging mode state.
+	 *
+	 * @param staging - A boolean indicating whether the container is in staging mode.
+	 */
+	public notifyStagingMode(staging: boolean): void {
+		for (const [fluidDataStoreId, context] of this.contexts) {
+			try {
+				context.notifyStagingMode(staging);
+			} catch (error) {
+				this.mc.logger.sendErrorEvent(
+					{
+						eventName: "notifyStagingModeError",
+						...tagCodeArtifacts({
+							fluidDataStoreId,
+						}),
+						details: {
+							staging,
+						},
 					},
 					error,
 				);
@@ -1506,7 +1576,7 @@ export class ChannelCollection
 		const id = requestParser.pathParts[0];
 
 		// Differentiate between requesting the dataStore directly, or one of its children
-		const requestForChild = !requestParser.isLeaf(1);
+		const requestForChild = requestParser.pathParts.length > 1;
 
 		const headerData: RuntimeHeaderData = {};
 		if (typeof request.headers?.[RuntimeHeaders.wait] === "boolean") {
@@ -1566,8 +1636,8 @@ export function getSummaryForDatastores(
 	}
 
 	if (rootHasIsolatedChannels(metadata)) {
-		const datastoresSnapshot = snapshot.trees[channelsTreeName];
-		assert(!!datastoresSnapshot, 0x168 /* Expected tree in snapshot not found */);
+		const datastoresSnapshot: ISnapshotTree | undefined = snapshot.trees[channelsTreeName];
+		assert(datastoresSnapshot !== undefined, 0x168 /* Expected tree in snapshot not found */);
 		return datastoresSnapshot;
 	} else {
 		// back-compat: strip out all non-datastore paths before giving to DataStores object.
@@ -1633,7 +1703,6 @@ export function detectOutboundReferences(
 
 /**
  * @privateRemarks This class is only used for experimentation/testing.
- * @internal
  */
 export class ComposableChannelCollection
 	extends ChannelCollection
@@ -1643,7 +1712,7 @@ export class ComposableChannelCollection
 
 	public constructor(
 		baseSnapshot: ISnapshotTree | ISnapshot | undefined,
-		parentContext: IFluidParentContext,
+		parentContext: IFluidParentContextPrivate,
 		baseLogger: ITelemetryBaseLogger,
 		gcNodeUpdated: (props: IGCNodeUpdatedProps) => void,
 		isDataStoreDeleted: (nodePath: string) => boolean,
@@ -1653,7 +1722,7 @@ export class ComposableChannelCollection
 		super(
 			baseSnapshot,
 			/* [root] parentContext */
-			formParentContext<IFluidRootParentContext>(parentContext, {
+			formParentContext<IFluidRootParentContextPrivate>(parentContext, {
 				submitMessage: (
 					containerRuntimeMessage:
 						| ContainerRuntimeDataStoreOpMessage
@@ -1663,7 +1732,7 @@ export class ComposableChannelCollection
 				): void => {
 					// Note that here our message format is reconfigured.
 					// While `ContainerRuntime*Message`s use `contents`
-					// as `FluidDataStoreMessage`s the content is
+					// as `FluidDataStoreMessage`s, the content is
 					// stored in `content`.
 					parentContext.submitMessage(
 						containerRuntimeMessage.type,
@@ -1694,7 +1763,12 @@ export class ComposableChannelCollection
 		);
 	}
 
-	public reSubmit(type: string, content: unknown, localOpMetadata: unknown): void {
+	public reSubmit(
+		type: string,
+		content: unknown,
+		localOpMetadata: unknown,
+		squash?: boolean,
+	): void {
 		// If the cast is incorrect and type is not one of the three supported,
 		// reSubmitContainerMessage will assert.
 		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Need to force conversion
@@ -1705,7 +1779,7 @@ export class ComposableChannelCollection
 			| ContainerRuntimeDataStoreOpMessage
 			| OutboundContainerRuntimeAttachMessage
 			| ContainerRuntimeAliasMessage;
-		this.reSubmitContainerMessage(message, localOpMetadata);
+		this.reSubmitContainerMessage(message, localOpMetadata, squash);
 	}
 
 	public rollback(type: string, content: unknown, localOpMetadata: unknown): void {
@@ -1719,10 +1793,7 @@ export class ComposableChannelCollection
  *
  * @internal
  */
-export class ChannelCollectionFactory<
-	T extends ComposableChannelCollection = ComposableChannelCollection,
-> implements IFluidDataStoreFactory
-{
+export class ChannelCollectionFactory implements IFluidDataStoreFactory {
 	public readonly type = "ChannelCollectionChannel";
 
 	public IFluidDataStoreRegistry: IFluidDataStoreRegistry;
@@ -1733,14 +1804,11 @@ export class ChannelCollectionFactory<
 		private readonly provideEntryPoint: (
 			runtime: IFluidDataStoreChannel,
 		) => Promise<FluidObject>,
-		private readonly ctor: (
-			...args: ConstructorParameters<typeof ComposableChannelCollection>
-		) => T,
 	) {
 		this.IFluidDataStoreRegistry = new FluidDataStoreRegistry(registryEntries);
 	}
 
-	public get IFluidDataStoreFactory(): ChannelCollectionFactory<T> {
+	public get IFluidDataStoreFactory(): ChannelCollectionFactory {
 		return this;
 	}
 
@@ -1748,7 +1816,21 @@ export class ChannelCollectionFactory<
 		context: IFluidDataStoreContext,
 		_existing: boolean,
 	): Promise<IFluidDataStoreChannel> {
-		const runtime = this.ctor(
+		// when work is done to complete nested datastores
+		// this class should move to a new package
+		// and IFluidDataStoreContext will need to support
+		// all the cross layer needs of the channel context,
+		// and the below assert should be removed.
+		//
+		// for now this will continue to work if both
+		// this factory and the container runtime are
+		// from the same package.
+		assert(
+			context instanceof FluidDataStoreContext,
+			0xb8f /* we don't support the layer boundary here today */,
+		);
+
+		const runtime = new ComposableChannelCollection(
 			context.baseSnapshot,
 			/* parentContext */ context,
 			context.baseLogger,

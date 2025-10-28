@@ -166,39 +166,30 @@ describeCompat(
 			return undefined;
 		};
 
-		const rootDataObjectFactory = new DataObjectFactory(
-			"RootDataObject",
-			RootTestDataObject,
-			[],
-			[],
-			[],
-		);
-		const dataStoreFactory1 = new DataObjectFactory(
-			"TestDataObject1",
-			TestDataObject1,
-			[],
-			[],
-			[],
-			mixinSummaryHandler(getDataObject),
-		);
-		const dataStoreFactory2 = new DataObjectFactory(
-			"TestDataObject2",
-			TestDataObject2,
-			[],
-			[],
-			[],
-			mixinSummaryHandler(getDataObjectAndSendOps),
-		);
-		const dataStoreFactory3 = new DataObjectFactory(
-			"TestDataObject3",
-			class extends DataObject {},
-			[],
-			[],
-			[],
-			mixinSummaryHandler(async () => {
+		const rootDataObjectFactory = new DataObjectFactory({
+			type: "RootDataObject",
+			ctor: RootTestDataObject,
+		});
+
+		const dataStoreFactory1 = new DataObjectFactory({
+			type: "TestDataObject1",
+			ctor: TestDataObject1,
+			runtimeClass: mixinSummaryHandler(getDataObject),
+		});
+
+		const dataStoreFactory2 = new DataObjectFactory({
+			type: "TestDataObject2",
+			ctor: TestDataObject2,
+			runtimeClass: mixinSummaryHandler(getDataObjectAndSendOps),
+		});
+
+		const dataStoreFactory3 = new DataObjectFactory({
+			type: "TestDataObject3",
+			ctor: class extends DataObject {},
+			runtimeClass: mixinSummaryHandler(async () => {
 				throw new Error("Mixed-in summary handler threw!");
 			}),
-		);
+		});
 
 		const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
 			[rootDataObjectFactory.type, Promise.resolve(rootDataObjectFactory)],
@@ -476,7 +467,7 @@ describeCompat(
 						summaryAttempts: 1,
 					},
 					{
-						eventName: "fluid:telemetry:FluidDataStoreContext:DataStoreCreatedInSummarizer",
+						eventName: "fluid:telemetry:FluidDataStoreContext:DataStoreCreatedWhileReadonly",
 						clientType,
 					},
 					{

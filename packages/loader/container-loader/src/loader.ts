@@ -4,31 +4,30 @@
  */
 
 import {
-	IContainer,
-	IFluidCodeDetails,
-	IFluidModule,
-	IHostLoader,
-	ILoader,
-	ILoaderOptions,
-	IProvideFluidCodeDetailsComparer,
+	type IContainer,
+	type IFluidCodeDetails,
+	type IFluidModule,
+	type IHostLoader,
+	type ILoader,
+	type ILoaderOptions,
+	type IProvideFluidCodeDetailsComparer,
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
-import {
+import type {
 	FluidObject,
 	IConfigProviderBase,
 	IRequest,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { IClientDetails } from "@fluidframework/driver-definitions";
-import {
+import type { IClientDetails } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentServiceFactory,
-	IDocumentStorageService,
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	ITelemetryLoggerExt,
-	MonitoringContext,
+	type ITelemetryLoggerExt,
+	type MonitoringContext,
 	PerformanceEvent,
 	createChildMonitoringContext,
 	mixinMonitoringContext,
@@ -39,7 +38,7 @@ import { v4 as uuid } from "uuid";
 import { Container } from "./container.js";
 import { DebugLogger } from "./debugLogger.js";
 import { pkgVersion } from "./packageVersion.js";
-import { ProtocolHandlerBuilder } from "./protocol.js";
+import type { ProtocolHandlerBuilder } from "./protocol.js";
 import type { IPendingContainerState } from "./serializedStateManager.js";
 import {
 	getAttachedContainerStateFromSerializedContainer,
@@ -95,8 +94,7 @@ export class RelativeLoader implements ILoader {
  * {@link @fluidframework/container-definitions#IFluidModuleWithDetails}
  * to have all the code loading modules in one package. #8193
  * Encapsulates a module entry point with corresponding code details.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IFluidModuleWithDetails {
 	/**
@@ -116,8 +114,7 @@ export interface IFluidModuleWithDetails {
  * to have code loading modules in one package. #8193
  * Fluid code loader resolves a code module matching the document schema, i.e. code details, such as
  * a package name and package version range.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
 	/**
@@ -131,8 +128,7 @@ export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComp
 
 /**
  * Services and properties necessary for creating a loader
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ILoaderProps {
 	/**
@@ -171,11 +167,6 @@ export interface ILoaderProps {
 	readonly logger?: ITelemetryBaseLogger;
 
 	/**
-	 * Blobs storage for detached containers.
-	 */
-	readonly detachedBlobStorage?: IDetachedBlobStorage;
-
-	/**
 	 * The configuration provider which may be used to control features.
 	 */
 	readonly configProvider?: IConfigProviderBase;
@@ -189,8 +180,7 @@ export interface ILoaderProps {
 
 /**
  * Services and properties used by and exposed by the loader
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ILoaderServices {
 	/**
@@ -229,12 +219,6 @@ export interface ILoaderServices {
 	readonly subLogger: ITelemetryLoggerExt;
 
 	/**
-	 * Blobs storage for detached containers.
-	 * @deprecated - IDetachedBlobStorage will be removed in a future release without a replacement. Blobs created while detached will be stored in memory to align with attached container behavior. AB#8049
-	 */
-	readonly detachedBlobStorage?: IDetachedBlobStorage;
-
-	/**
 	 * Optional property for allowing the container to use a custom
 	 * protocol implementation for handling the quorum and/or the audience.
 	 */
@@ -242,30 +226,10 @@ export interface ILoaderServices {
 }
 
 /**
- * Subset of IDocumentStorageService which only supports createBlob() and readBlob(). This is used to support
- * blobs in detached containers.
- * @legacy
- * @alpha
- *
- * @deprecated - IDetachedBlobStorage will be removed in a future release without a replacement. Blobs created while detached will be stored in memory to align with attached container behavior. AB#8049
- */
-export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | "readBlob"> & {
-	size: number;
-	/**
-	 * Return an array of all blob IDs present in storage
-	 */
-	getBlobIds(): string[];
-
-	/**
-	 * After the container is attached, the detached blob storage is no longer needed and will be disposed.
-	 */
-	dispose?(): void;
-};
-
-/**
  * Manages Fluid resource loading
- * @legacy
- * @alpha
+ * @legacy @beta
+ *
+ * @remarks The Loader class is deprecated and will be removed in a future release. Use the free-form functions instead (See issue #24450 for more details).
  */
 export class Loader implements IHostLoader {
 	public readonly services: ILoaderServices;
@@ -279,7 +243,6 @@ export class Loader implements IHostLoader {
 			options,
 			scope,
 			logger,
-			detachedBlobStorage,
 			configProvider,
 			protocolHandlerBuilder,
 		} = loaderProps;
@@ -304,7 +267,6 @@ export class Loader implements IHostLoader {
 			options: options ?? {},
 			scope:
 				options?.provideScopeLoader === false ? { ...scope } : { ...scope, ILoader: this },
-			detachedBlobStorage,
 			protocolHandlerBuilder,
 			subLogger: subMc.logger,
 		};

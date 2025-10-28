@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 import * as path from "path";
 
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	AcceptanceCondition,
 	AsyncGenerator,
@@ -18,6 +19,8 @@ import {
 	DDSFuzzModel,
 	DDSFuzzSuiteOptions,
 	DDSFuzzTestState,
+	registerOracle,
+	type DDSFuzzHarnessEvents,
 } from "@fluid-private/test-dds-utils";
 import {
 	IChannelAttributes,
@@ -36,16 +39,19 @@ import {
 } from "@fluidframework/merge-tree/internal";
 
 import {
-	IntervalCollection,
-	toSequencePlace,
-	ISequenceIntervalCollection,
 	toOptionalSequencePlace,
+	toSequencePlace,
+	type IntervalCollection,
+	type ISequenceIntervalCollection,
 } from "../../intervalCollection.js";
 import { SharedStringRevertible, revertSharedStringRevertibles } from "../../revertibles.js";
 import { SharedStringFactory } from "../../sequenceFactory.js";
 import { ISharedString, type SharedStringClass } from "../../sharedString.js";
 import { _dirname } from "../dirname.cjs";
 import { assertEquivalentSharedStrings } from "../intervalTestUtils.js";
+
+import { hasSharedStringOracle, type IChannelWithOracles } from "./oracleUtils.js";
+import { SharedStringOracle } from "./sharedStringOracle.js";
 
 export type RevertibleSharedString = ISharedString & {
 	revertibles: SharedStringRevertible[];
@@ -70,6 +76,14 @@ export interface AddText {
 	type: "addText";
 	index: number;
 	content: string;
+	properties?: PropertySet;
+}
+
+export interface AddPoisonedText {
+	type: "addPoisonedText";
+	index: number;
+	content: string;
+	properties?: PropertySet;
 }
 
 export interface RemoveRange extends RangeSpec {
@@ -239,11 +253,11 @@ function logCurrentState(state: FuzzTestState, loggingInfo: LoggingInfo): void {
 
 type ClientOpState = FuzzTestState;
 
-export function makeReducer(
+export function makeReducer<TState extends FuzzTestState>(
 	loggingInfo?: LoggingInfo,
-): Reducer<Operation | RevertOperation, ClientOpState> {
+): Reducer<Operation, TState> {
 	const withLogging =
-		<T>(baseReducer: Reducer<T, ClientOpState>): Reducer<T, ClientOpState> =>
+		(baseReducer: Reducer<Operation, TState>): Reducer<Operation, TState> =>
 		(state, operation) => {
 			if (loggingInfo !== undefined) {
 				logCurrentState(state, loggingInfo);
@@ -253,9 +267,9 @@ export function makeReducer(
 			baseReducer(state, operation);
 		};
 
-	const reducer = combineReducers<Operation | RevertOperation, ClientOpState>({
-		addText: ({ client }, { index, content }) => {
-			client.channel.insertText(index, content);
+	const reducer = combineReducers<Operation, TState>({
+		addText: ({ client }, { index, content, properties }) => {
+			client.channel.insertText(index, content, properties);
 		},
 		removeRange: ({ client }, { start, end }) => {
 			client.channel.removeRange(start, end);
@@ -457,7 +471,17 @@ export const baseModel: Omit<
 		// makeReducer supports a param for logging output which tracks the provided intervalId over time:
 		// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }
 		makeReducer(),
-	validateConsistency: async (a, b) => assertEquivalentSharedStrings(a.channel, b.channel),
+	validateConsistency: async (a, b) => {
+		if (hasSharedStringOracle(a.channel)) {
+			a.channel.sharedStringOracle.validate();
+		}
+
+		if (hasSharedStringOracle(b.channel)) {
+			b.channel.sharedStringOracle.validate();
+		}
+
+		void assertEquivalentSharedStrings(a.channel, b.channel);
+	},
 	factory: new SharedStringFuzzFactory(),
 	minimizationTransforms: [
 		(op) => {
@@ -475,6 +499,13 @@ export const baseModel: Omit<
 					break;
 				case "removeRange":
 				case "annotateRange":
+					if (op.start > 0) {
+						op.start--;
+					}
+					if (op.end > 0) {
+						op.end--;
+					}
+					break;
 				case "addInterval":
 				case "changeInterval": {
 					const { startPos, endPos, startSide, endSide } = endpointPosAndSide(
@@ -494,22 +525,31 @@ export const baseModel: Omit<
 			}
 		},
 		(op) => {
-			if (
-				op.type !== "removeRange" &&
-				op.type !== "annotateRange" &&
-				op.type !== "addInterval" &&
-				op.type !== "changeInterval"
-			) {
-				return;
-			}
-			const { endPos, endSide } = endpointPosAndSide(op.start, op.end);
+			if (op.type === "removeRange" || op.type === "annotateRange") {
+				if (op.end > 0) {
+					op.end--;
+				}
+			} else if (op.type === "addInterval" || op.type === "changeInterval") {
+				const { endPos, endSide } = endpointPosAndSide(op.start, op.end);
 
-			if (typeof endPos === "number" && endPos > 0) {
-				op.end = toSequencePlace(endPos - 1, endSide);
+				if (typeof endPos === "number" && endPos > 0) {
+					op.end = toSequencePlace(endPos - 1, endSide);
+				}
 			}
 		},
 	],
 };
+
+const oracleEmitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
+
+oracleEmitter.on("clientCreate", (client) => {
+	const channel = client.channel as IChannelWithOracles;
+
+	// Attach SharedString oracle
+	const sharedStringOracle = new SharedStringOracle(channel);
+	channel.sharedStringOracle = sharedStringOracle;
+	registerOracle(sharedStringOracle);
+});
 
 export const defaultFuzzOptions: Partial<DDSFuzzSuiteOptions> = {
 	validationStrategy: { type: "fixedInterval", interval: 10 },
@@ -521,6 +561,8 @@ export const defaultFuzzOptions: Partial<DDSFuzzSuiteOptions> = {
 	},
 	defaultTestCount: 100,
 	saveFailures: { directory: path.join(_dirname, "../../src/test/fuzz/results") },
+	testSquashResubmit: true,
+	emitter: oracleEmitter,
 };
 
 export function makeIntervalOperationGenerator(

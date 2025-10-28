@@ -5,7 +5,7 @@
 
 import * as semver from "semver";
 
-import { ReleaseVersion, VersionBumpType, VersionBumpTypeExtended } from "./bumpTypes";
+import type { ReleaseVersion, VersionBumpType, VersionBumpTypeExtended } from "./bumpTypes";
 import {
 	DEFAULT_PRERELEASE_IDENTIFIER,
 	RC_PRERELEASE_IDENTIFER,

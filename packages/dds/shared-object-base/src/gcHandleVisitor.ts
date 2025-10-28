@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
-import { type ISerializedHandle } from "@fluidframework/runtime-utils/internal";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import type { ISerializedHandle } from "@fluidframework/runtime-utils/internal";
 
 import { FluidSerializer } from "./serializer.js";
 
 /**
  * Implementation of IFluidSerializer used by GC to visit all the handles in the DDS to collect its outbound routes
  *
- * @remarks - This is given to DDS code that typically produces a serialization of the data, which is then ignored.
+ * @remarks This is given to DDS code that typically produces a serialization of the data, which is then ignored.
  * All that is needed is getSerializedRoutes() to get the routes. This strategy could be optimized if needed.
  */
 export class GCHandleVisitor extends FluidSerializer {
@@ -20,10 +20,7 @@ export class GCHandleVisitor extends FluidSerializer {
 		return [...this.visitedHandlePaths];
 	}
 
-	protected bindAndEncodeHandle(
-		handle: IFluidHandleInternal,
-		bind: IFluidHandleInternal,
-	): ISerializedHandle {
+	protected bindAndEncodeHandle(handle: IFluidHandleInternal): ISerializedHandle {
 		this.visitedHandlePaths.add(handle.absolutePath);
 
 		// Just return a dummy value. The serialization itself is not used.

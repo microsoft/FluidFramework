@@ -1,27 +1,27 @@
 # testFunction
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestNamespace](/test-suite-a/testnamespace-namespace/) &gt; [testFunction(testParameter)](/test-suite-a/testnamespace-namespace/testfunction-function)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [TestNamespace](/test-suite-a/testnamespace-namespace/) > [testFunction(testParameter)](/test-suite-a/testnamespace-namespace/testfunction-function)
 
 Test function
 
-## Signature {#testfunction-signature}
+<h2 id="testfunction-signature">Signature</h2>
 
 ```typescript
 function testFunction(testParameter: number): number;
 ```
 
-## Parameters {#testfunction-parameters}
+<h2 id="testfunction-parameters">Parameters</h2>
 
 | Parameter | Type | Description |
-| --- | --- | --- |
-| testParameter | number |  |
+| - | - | - |
+| testParameter | number | |
 
-## Returns {#testfunction-returns}
+<h2 id="testfunction-returns">Returns</h2>
 
 A number
 
-**Return type:** number
+**Return type**: number
 
-## Throws {#testfunction-throws}
+<h2 id="testfunction-throws">Throws</h2>
 
 An Error

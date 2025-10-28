@@ -4,14 +4,15 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
+import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
+import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 
 /**
  * Returns a new IChannelStorageService that resolves the given `path` as root.
  * @internal
  */
 export class ObjectStoragePartition implements IChannelStorageService {
-	constructor(
+	public constructor(
 		private readonly storage: IChannelStorageService,
 		private readonly path: string,
 	) {
@@ -29,5 +30,9 @@ export class ObjectStoragePartition implements IChannelStorageService {
 
 	public async list(path: string): Promise<string[]> {
 		return this.storage.list(`${this.path}/${path}`);
+	}
+
+	public getSnapshotTree(): ISnapshotTree | undefined {
+		return this.storage.getSnapshotTree();
 	}
 }

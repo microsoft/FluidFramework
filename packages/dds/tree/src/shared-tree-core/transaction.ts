@@ -3,18 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { IDisposable, Listenable } from "@fluidframework/core-interfaces";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
 import {
 	findAncestor,
 	type ChangeFamilyEditor,
 	type GraphCommit,
 	type TaggedChange,
 } from "../core/index.js";
-import type { SharedTreeBranch, SharedTreeBranchEvents } from "./branch.js";
 import { getOrCreate } from "../util/index.js";
+
+import type { SharedTreeBranch, SharedTreeBranchEvents } from "./branch.js";
 
 /**
  * Describes the result of a transaction.
@@ -40,7 +42,7 @@ export interface Transactor {
 	 * If a transaction is already in progress when this new transaction starts, then this transaction will be "nested" inside of it,
 	 * i.e. the outer transaction will still be in progress after this new transaction is committed or aborted.
 	 *
-	 * @remarks - Asynchronous transactions are not supported on the root checkout,
+	 * @remarks Asynchronous transactions are not supported on the root checkout,
 	 * since it is always kept up-to-date with the latest remote edits and the results of this rebasing (which might invalidate
 	 * the transaction) is not visible to the application author.
 	 * Instead,
@@ -49,7 +51,7 @@ export interface Transactor {
 	 * 2. run the transaction on the fork
 	 * 3. merge the fork back into the root checkout
 	 *
-	 * @privateRemarks - There is currently no enforcement that asynchronous transactions don't happen on the root checkout.
+	 * @privateRemarks There is currently no enforcement that asynchronous transactions don't happen on the root checkout.
 	 * AB#6488 tracks adding some enforcement to make it more clear to application authors that this is not supported.
 	 */
 	start(): void;

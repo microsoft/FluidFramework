@@ -3,16 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import {
+	assert,
+	DoublyLinkedList,
+	iterateListValuesWhile,
+} from "@fluidframework/core-utils/internal";
 
-import { DoublyLinkedList, iterateListValuesWhile } from "./collections/index.js";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants.js";
 import type {
 	AdjustParams,
 	IMergeTreeAnnotateAdjustMsg,
 	IMergeTreeAnnotateMsg,
 } from "./ops.js";
-import { MapLike, PropertySet, clone, createMap } from "./properties.js";
+import { type MapLike, type PropertySet, clone, createMap } from "./properties.js";
 
 /**
  * Minimally copies properties and the property manager from source to destination.

@@ -1,10 +1,10 @@
 # TestTypeAlias
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestNamespace](/test-suite-a/testnamespace-namespace/) &gt; [TestTypeAlias](/test-suite-a/testnamespace-namespace/testtypealias-typealias/)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [TestNamespace](/test-suite-a/testnamespace-namespace/) > [TestTypeAlias](/test-suite-a/testnamespace-namespace/testtypealias-typealias/)
 
 Test Type-Alias
 
-## Signature {#testtypealias-signature}
+<h2 id="testtypealias-signature">Signature</h2>
 
 ```typescript
 type TestTypeAlias = boolean;

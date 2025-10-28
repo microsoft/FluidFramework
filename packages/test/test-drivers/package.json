@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/test-drivers",
-	"version": "2.33.0",
+	"version": "2.70.0",
 	"description": "A driver abstraction and implementations for testing against server",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -63,34 +63,30 @@
 		"@fluidframework/odsp-driver-definitions": "workspace:~",
 		"@fluidframework/odsp-urlresolver": "workspace:~",
 		"@fluidframework/routerlicious-driver": "workspace:~",
-		"@fluidframework/server-local-server": "^5.0.0",
+		"@fluidframework/server-local-server": "^7.0.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/tinylicious-driver": "workspace:~",
 		"@fluidframework/tool-utils": "workspace:~",
 		"agentkeepalive": "^4.5.0",
-		"axios": "^1.8.4",
 		"semver": "^7.7.1",
-		"uuid": "^9.0.0"
+		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.17.1",
 		"@biomejs/biome": "~1.9.3",
-		"@fluid-tools/build-cli": "^0.55.0",
+		"@fluid-tools/build-cli": "^0.58.3",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.55.0",
-		"@fluidframework/eslint-config-fluid": "^5.7.3",
-		"@microsoft/api-extractor": "7.50.1",
+		"@fluidframework/build-tools": "^0.58.3",
+		"@fluidframework/eslint-config-fluid": "^6.1.0",
+		"@microsoft/api-extractor": "7.52.11",
 		"@types/node": "^18.19.0",
-		"@types/uuid": "^9.0.2",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
-		"eslint": "~8.55.0",
+		"eslint": "~8.57.1",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"disabled": true,
-		"broken": {},
-		"entrypoint": "internal"
+		"disabled": true
 	}
 }

@@ -3,16 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
-import { ISegment } from "./mergeTreeNodes.js";
+import type { ISegment } from "./mergeTreeNodes.js";
 // eslint-disable-next-line import/no-deprecated
-import { IMergeTreeGroupMsg, IMergeTreeOp, MergeTreeDeltaType } from "./ops.js";
-import { PropertySet } from "./properties.js";
+import type { IMergeTreeGroupMsg, IMergeTreeOp, MergeTreeDeltaType } from "./ops.js";
+import type { PropertySet } from "./properties.js";
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type MergeTreeDeltaOperationType =
 	| typeof MergeTreeDeltaType.ANNOTATE
@@ -25,8 +24,7 @@ export type MergeTreeDeltaOperationType =
  * Maintenance events correspond to structural segment changes or acks of pending segments.
  *
  * Note: these values are assigned negative integers to avoid clashing with `MergeTreeDeltaType`.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const MergeTreeMaintenanceType = {
 	/**
@@ -56,23 +54,20 @@ export const MergeTreeMaintenanceType = {
 	ACKNOWLEDGED: -4,
 } as const;
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type MergeTreeMaintenanceType =
 	(typeof MergeTreeMaintenanceType)[keyof typeof MergeTreeMaintenanceType];
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type MergeTreeDeltaOperationTypes =
 	| MergeTreeDeltaOperationType
 	| MergeTreeMaintenanceType;
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IMergeTreeDeltaCallbackArgs<
 	TOperationType extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType,
@@ -94,8 +89,7 @@ export interface IMergeTreeDeltaCallbackArgs<
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IMergeTreeSegmentDelta {
 	/**
@@ -106,7 +100,7 @@ export interface IMergeTreeSegmentDelta {
 	/**
 	 * A property set containing changes to properties on this segment.
 	 *
-	 * @remarks - Deleting a property is represented using `null` as the value.
+	 * @remarks Deleting a property is represented using `null` as the value.
 	 * @example
 	 *
 	 * An annotation change which deleted the property "foo" and set "bar" to 5 would be represented as:
@@ -116,8 +110,7 @@ export interface IMergeTreeSegmentDelta {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IMergeTreeDeltaOpArgs {
 	/**
@@ -130,7 +123,7 @@ export interface IMergeTreeDeltaOpArgs {
 	/**
 	 * The {@link IMergeTreeOp} corresponding to the delta.
 	 *
-	 * @remarks - This is useful for determining the type of change (see {@link (MergeTreeDeltaType:type)}).
+	 * @remarks This is useful for determining the type of change (see {@link (MergeTreeDeltaType:type)}).
 	 */
 	readonly op: IMergeTreeOp;
 
@@ -156,10 +149,9 @@ export type MergeTreeDeltaCallback = (
 ) => void;
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/no-empty-interface
 export interface IMergeTreeMaintenanceCallbackArgs
 	extends IMergeTreeDeltaCallbackArgs<MergeTreeMaintenanceType> {}
 

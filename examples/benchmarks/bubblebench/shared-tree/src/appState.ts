@@ -31,7 +31,7 @@ export class AppState implements IAppState {
 		);
 	}
 
-	public applyEdits() {}
+	public applyEdits(): void {}
 
 	createInitialClientNode(numBubbles: number): IClient {
 		const bubbles: IBubble[] = [];
@@ -50,20 +50,20 @@ export class AppState implements IAppState {
 		return client;
 	}
 
-	public get clients() {
+	public get clients(): Iterable<IClient> {
 		return this.tree.root.clients;
 	}
 
-	public setSize(width?: number, height?: number) {
+	public setSize(width?: number, height?: number): void {
 		this.width = width ?? 640;
 		this.height = height ?? 480;
 	}
 
-	public increaseBubbles() {
+	public increaseBubbles(): void {
 		this.localClient.bubbles.insertAtEnd(makeBubble(this.width, this.height));
 	}
 
-	public decreaseBubbles() {
+	public decreaseBubbles(): void {
 		const bubbles = this.localClient.bubbles;
 		if (bubbles.length > 1) {
 			bubbles.removeAt(bubbles.length - 1);

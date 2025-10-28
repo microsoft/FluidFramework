@@ -7,7 +7,7 @@ import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export interface IOdspUrlParts {
 	siteUrl: string;
@@ -18,7 +18,7 @@ export interface IOdspUrlParts {
 /**
  * Sharing scope of the share links created for a file.
  * @legacy
- * @alpha
+ * @beta
  */
 export enum SharingLinkScope {
 	organization = "organization",
@@ -30,7 +30,7 @@ export enum SharingLinkScope {
 /**
  * View/edit permission role for a sharing link.
  * @legacy
- * @alpha
+ * @beta
  */
 export enum SharingLinkRole {
 	view = "view",
@@ -41,7 +41,7 @@ export enum SharingLinkRole {
  * Defines the permissions scope for a share link requested to be created during the creation the file in ODSP.
  * Providing these properties to the /snapshot api will also create and return the requested kind of sharing link.
  * @legacy
- * @alpha
+ * @beta
  */
 export interface ISharingLinkKind {
 	scope: SharingLinkScope;
@@ -55,7 +55,7 @@ export interface ISharingLinkKind {
 /**
  * Sharing link data received from the /snapshot api response.
  * @legacy
- * @alpha
+ * @beta
  */
 export interface ISharingLink extends ISharingLinkKind {
 	webUrl: string;
@@ -66,7 +66,7 @@ export interface ISharingLink extends ISharingLinkKind {
  * Contains information about either sharing link created while creating a new file or
  * a redeemable share link created when loading an existing file
  * @legacy
- * @alpha
+ * @beta
  */
 export interface ShareLinkInfoType {
 	/**
@@ -95,10 +95,18 @@ export interface ShareLinkInfoType {
 	 * permission then this link can be redeemed for the permissions in the same network call.
 	 */
 	sharingLinkToRedeem?: string;
+
+	/**
+	 * When a sharingLinkToRedeem is used, this parameter can be set to make the request with
+	 * the redemption expire after a certain time period.
+	 * The duration of the redemption is not set by Fluid.
+	 * @defaultValue false
+	 */
+	isRedemptionNonDurable?: boolean;
 }
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export interface IOdspResolvedUrl extends IResolvedUrl, IOdspUrlParts {
 	type: "fluid";
@@ -118,7 +126,7 @@ export interface IOdspResolvedUrl extends IResolvedUrl, IOdspUrlParts {
 	};
 
 	// Tokens are not obtained by the ODSP driver using the resolve flow, the app must provide them.
-	// eslint-disable-next-line @typescript-eslint/ban-types
+	// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/ban-types
 	tokens: {};
 
 	fileName: string;
@@ -161,4 +169,14 @@ export interface IOdspResolvedUrl extends IResolvedUrl, IOdspUrlParts {
 	 * Can be ommited in case it is not necessary for the link handling logic.
 	 */
 	appName?: string;
+
+	/**
+	 * File metadata such as eTag.
+	 */
+	fileMetadata?: {
+		/**
+		 * ETag (entity tag) identifier for a specific version of the file.
+		 */
+		eTag?: string;
+	};
 }

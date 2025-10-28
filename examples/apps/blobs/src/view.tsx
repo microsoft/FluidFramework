@@ -7,11 +7,11 @@ import React, { type FC, useEffect, useState } from "react";
 
 import type { IBlobCollection, IBlobRecord } from "./container/index.js";
 
-const randInt = (max: number) => Math.floor(Math.random() * (max + 1));
+const randInt = (max: number): number => Math.floor(Math.random() * (max + 1));
 
 // This creates an HTML Canvas element, draws some random circles into it, and returns a
 // Blob representing that image.
-const drawAPrettyPictureIntoBlob = async () => {
+const drawAPrettyPictureIntoBlob = async (): Promise<Blob> => {
 	const canvasElm = document.createElement("canvas");
 	canvasElm.width = 200;
 	canvasElm.height = 200;
@@ -27,10 +27,10 @@ const drawAPrettyPictureIntoBlob = async () => {
 	// Annoyingly, canvas.toBlob is a callback-based API rather than returning a Promise.
 	return new Promise<Blob>((resolve, reject) => {
 		canvasElm.toBlob((blob) => {
-			if (blob !== null) {
-				resolve(blob);
-			} else {
+			if (blob === null) {
 				reject(new Error("Couldn't get a blob for the pretty picture"));
+			} else {
+				resolve(blob);
 			}
 		});
 	});
@@ -42,7 +42,7 @@ interface IBlobUrlRecord {
 	url: string;
 }
 
-const idSort = (a: { id: string }, b: { id: string }) =>
+const idSort = (a: { id: string }, b: { id: string }): number =>
 	a.id.localeCompare(b.id, "en", { sensitivity: "base" });
 
 const blobRecordToBlobUrlRecord = ({ id, blob }: IBlobRecord): IBlobUrlRecord => {
@@ -60,11 +60,14 @@ export const BlobCollectionView: FC<IBlobCollectionViewProps> = ({
 	blobCollection,
 }: IBlobCollectionViewProps) => {
 	const [blobUrlRecords, setBlobUrlRecords] = useState(
-		blobCollection.getBlobs().map(blobRecordToBlobUrlRecord).sort(idSort),
+		blobCollection
+			.getBlobs()
+			.map((blobRecord) => blobRecordToBlobUrlRecord(blobRecord))
+			.sort(idSort),
 	);
 
 	useEffect(() => {
-		const onBlobAdded = (blobRecord: IBlobRecord) => {
+		const onBlobAdded = (blobRecord: IBlobRecord): void => {
 			// Retaining the existing blob URLs prevents leaking them or needing to revoke them.
 			// Setting the state to a new array triggers a re-render.
 			setBlobUrlRecords((previousBlobs) =>
@@ -81,7 +84,7 @@ export const BlobCollectionView: FC<IBlobCollectionViewProps> = ({
 		<img key={id} src={url} style={{ border: "1px solid black", margin: "10px" }}></img>
 	));
 
-	const addBlob = () => {
+	const addBlob = (): void => {
 		drawAPrettyPictureIntoBlob().then(blobCollection.addBlob).catch(console.error);
 	};
 
@@ -103,7 +106,7 @@ export const DebugView: FC<IDebugViewProps> = ({ attach }) => {
 	const [showAttach, setShowAttach] = useState<boolean>(attach !== undefined);
 
 	if (attach !== undefined && showAttach) {
-		const onAttachClick = () => {
+		const onAttachClick = (): void => {
 			attach();
 			setShowAttach(false);
 		};

@@ -10,7 +10,7 @@ import {
 	bumpVersionScheme,
 	isInternalVersionScheme,
 } from "@fluid-tools/version-tools";
-import { FluidRepo, Package } from "@fluidframework/build-tools";
+import { FluidRepo, type Package } from "@fluidframework/build-tools";
 import { ux } from "@oclif/core";
 import { command as execCommand } from "execa";
 import { inc } from "semver";

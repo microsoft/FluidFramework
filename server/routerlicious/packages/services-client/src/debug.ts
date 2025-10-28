@@ -4,6 +4,7 @@
  */
 
 import { debug as registerDebug } from "debug";
+
 import { pkgName, pkgVersion } from "./packageVersion";
 
 export const debug = registerDebug("fluid:services-client");

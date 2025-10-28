@@ -25,7 +25,7 @@ import { canBeCoalescedByService } from "@fluidframework/driver-utils/internal";
 import { toIDeltaManagerFull, waitForContainerConnection } from "./containerUtils.js";
 import { debug } from "./debug.js";
 import { isNonEmptyArray, type NonEmptyArray } from "./nonEmptyArrayType.js";
-import { IOpProcessingController } from "./testObjectProvider.js";
+import type { IOpProcessingController } from "./testObjectProvider.js";
 import { timeoutAwait, timeoutPromise } from "./timeoutUtils.js";
 
 const debugOp = debug.extend("ops");
@@ -49,8 +49,7 @@ interface ContainerRecord {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class LoaderContainerTracker implements IOpProcessingController {
 	private readonly containers = new Map<IContainer, ContainerRecord>();
@@ -200,6 +199,9 @@ export class LoaderContainerTracker implements IOpProcessingController {
 		this.lastProposalSeqNum = 0;
 		for (const container of this.containers.keys()) {
 			container.close();
+			// Optional chaining here is because containers made with LTS loaders don't have a dispose method or process
+			// and this package is used with various previous versions of Fluid layers in our compat testing.
+			container.dispose?.();
 		}
 		this.containers.clear();
 
@@ -238,7 +240,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 				break;
 			}
 
-			// Ignore readonly dirty containers, because it can't sent ops and nothing can be done about it being dirty
+			// Ignore readonly dirty containers because they can't send ops and nothing can be done about them being dirty.
 			const dirtyContainers = containersToApply.filter((c) => {
 				const { deltaManager, isDirty } = c;
 				return deltaManager.readOnlyInfo.readonly !== true && isDirty;

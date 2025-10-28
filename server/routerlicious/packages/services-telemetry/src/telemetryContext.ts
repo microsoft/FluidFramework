@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { BaseTelemetryProperties } from "./resources";
+import { BaseTelemetryProperties, type CommonProperties } from "./resources";
 
 /**
  * @internal
@@ -13,6 +13,7 @@ export interface ITelemetryContextProperties {
 	[BaseTelemetryProperties.documentId]: string;
 	[BaseTelemetryProperties.correlationId]: string;
 	[BaseTelemetryProperties.requestSource]: string;
+	[CommonProperties.serviceName]: string;
 }
 
 /**

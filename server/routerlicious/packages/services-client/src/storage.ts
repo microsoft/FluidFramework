@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import * as git from "@fluidframework/gitresources";
-import * as api from "@fluidframework/protocol-definitions";
-import {
+import type * as git from "@fluidframework/gitresources";
+import type * as api from "@fluidframework/protocol-definitions";
+
+import type {
 	IWholeSummaryPayload,
 	IWholeFlatSummary,
 	IWriteSummaryResponse,

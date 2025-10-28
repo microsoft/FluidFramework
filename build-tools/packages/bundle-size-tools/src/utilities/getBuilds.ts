@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { WebApi } from "azure-devops-node-api";
+import type { WebApi } from "azure-devops-node-api";
 
 export interface GetBuildOptions {
 	// The ADO project name

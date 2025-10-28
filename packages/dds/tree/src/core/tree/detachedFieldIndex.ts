@@ -4,8 +4,14 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
-import { type ICodecOptions, type IJsonCodec, noopValidator } from "../../codec/index.js";
+import {
+	type CodecWriteOptions,
+	FluidClientVersion,
+	FormatValidatorNoOp,
+	type IJsonCodec,
+} from "../../codec/index.js";
 import {
 	type IdAllocator,
 	type JsonCompatibleReadOnly,
@@ -22,8 +28,6 @@ import type { RevisionTag, RevisionTagCodec } from "../rebase/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
 
 import type * as Delta from "./delta.js";
-import { makeDetachedNodeToFieldCodec } from "./detachedFieldIndexCodec.js";
-import type { Format } from "./detachedFieldIndexFormat.js";
 import type {
 	DetachedField,
 	DetachedFieldSummaryData,
@@ -31,7 +35,7 @@ import type {
 	Major,
 	Minor,
 } from "./detachedFieldIndexTypes.js";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
+import { makeDetachedFieldIndexCodec } from "./detachedFieldIndexCodecs.js";
 
 /**
  * The tree index records detached field IDs and associates them with a change atom ID.
@@ -54,8 +58,8 @@ export class DetachedFieldIndex {
 		Delta.DetachedNodeId
 	> = new Map();
 
-	private readonly codec: IJsonCodec<DetachedFieldSummaryData, Format>;
-	private readonly options: ICodecOptions;
+	private readonly codec: IJsonCodec<DetachedFieldSummaryData>;
+	private readonly options: CodecWriteOptions;
 
 	/**
 	 * The process for loading `DetachedFieldIndex` data from a summary is split into two steps:
@@ -76,10 +80,13 @@ export class DetachedFieldIndex {
 		private rootIdAllocator: IdAllocator<ForestRootId>,
 		private readonly revisionTagCodec: RevisionTagCodec,
 		private readonly idCompressor: IIdCompressor,
-		options?: ICodecOptions,
+		options?: CodecWriteOptions,
 	) {
-		this.options = options ?? { jsonValidator: noopValidator };
-		this.codec = makeDetachedNodeToFieldCodec(revisionTagCodec, this.options, idCompressor);
+		this.options = options ?? {
+			jsonValidator: FormatValidatorNoOp,
+			minVersionForCollab: FluidClientVersion.v2_0,
+		};
+		this.codec = makeDetachedFieldIndexCodec(revisionTagCodec, this.options, idCompressor);
 	}
 
 	public clone(): DetachedFieldIndex {
@@ -286,7 +293,10 @@ export class DetachedFieldIndex {
 					root: brand<ForestRootId>(root + i),
 					latestRelevantRevision: revision,
 				});
-				setInNestedMap(this.latestRelevantRevisionToFields, revision, root, nodeId);
+				setInNestedMap(this.latestRelevantRevisionToFields, revision, root + i, {
+					major: nodeId.major,
+					minor: nodeId.minor + i,
+				});
 			}
 		}
 		return root;
@@ -328,7 +338,7 @@ export class DetachedFieldIndex {
 	 * Loads the tree index from the given string, this overrides any existing data.
 	 */
 	public loadData(data: JsonCompatibleReadOnly): void {
-		const detachedFieldIndex: DetachedFieldSummaryData = this.codec.decode(data as Format);
+		const detachedFieldIndex: DetachedFieldSummaryData = this.codec.decode(data);
 
 		this.rootIdAllocator = idAllocatorFromMaxId(
 			detachedFieldIndex.maxId,

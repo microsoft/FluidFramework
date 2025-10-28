@@ -1,15 +1,15 @@
-# (event: 'anotherTestCallSignature', listener: (input: number) =&gt; string): number
+# (event: 'anotherTestCallSignature', listener: (input: number) => string): number
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestInterface](/test-suite-a/testinterface-interface/) &gt; [(event: 'anotherTestCallSignature', listener: (input: number) =&gt; string): number](/test-suite-a/testinterface-interface/_call__1-callsignature)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [TestInterface](/test-suite-a/testinterface-interface/) > [(event: 'anotherTestCallSignature', listener: (input: number) => string): number](/test-suite-a/testinterface-interface/_call__1-callsignature)
 
 Another example call signature
 
-## Signature {#\_call\_\_1-signature}
+<h2 id="_call__1-signature">Signature</h2>
 
 ```typescript
 (event: 'anotherTestCallSignature', listener: (input: number) => string): number;
 ```
 
-## Remarks {#\_call\_\_1-remarks}
+<h2 id="_call__1-remarks">Remarks</h2>
 
 Here are some remarks about the event call signature

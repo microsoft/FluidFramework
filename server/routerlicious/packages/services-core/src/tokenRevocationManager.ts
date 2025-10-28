@@ -5,7 +5,7 @@
 
 import {
 	NetworkError,
-	INetworkErrorDetails,
+	type INetworkErrorDetails,
 	isNetworkError,
 } from "@fluidframework/server-services-client";
 

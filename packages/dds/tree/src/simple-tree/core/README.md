@@ -8,4 +8,4 @@ This specifically does not contain any logic specific to field kinds or node kin
 ## Status
 
 More content should be moved into this directory as its disentangled from node kind specific logic.
-`proxyBinding.ts` is a good candidate to work toward moving here to.
+

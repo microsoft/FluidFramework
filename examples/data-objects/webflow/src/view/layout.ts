@@ -4,7 +4,7 @@
  */
 
 // eslint-disable-next-line import/no-nodejs-modules
-import assert from "assert";
+import { strict as assert } from "assert";
 
 import { EventEmitter } from "@fluid-example/example-utils";
 import { MergeTreeMaintenanceType, segmentIsRemoved } from "@fluidframework/merge-tree/legacy";
@@ -339,7 +339,7 @@ export class Layout extends EventEmitter {
 		}
 	}
 
-	// eslint-disable-next-line @typescript-eslint/ban-types
+	// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/ban-types
 	public pushTag<T extends {}>(tag: TagName, props?: T) {
 		const element = this.elementForTag(tag);
 		if (props) {
@@ -353,7 +353,7 @@ export class Layout extends EventEmitter {
 		this.popNode(count);
 	}
 
-	// eslint-disable-next-line @typescript-eslint/ban-types
+	// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/ban-types
 	public emitTag<T extends {}>(tag: TagName, props?: T) {
 		const element = this.elementForTag(tag);
 		if (props) {

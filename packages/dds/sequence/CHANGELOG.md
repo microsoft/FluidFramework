@@ -1,5 +1,115 @@
 # @fluidframework/sequence
 
+## 2.63.0
+
+Dependency updates only.
+
+## 2.62.0
+
+Dependency updates only.
+
+## 2.61.0
+
+Dependency updates only.
+
+## 2.60.0
+
+### Minor Changes
+
+- Remove unnecessary and internal APIs in ISequenceIntervalCollection and related interval types ([#25244](https://github.com/microsoft/FluidFramework/pull/25244)) [15d476ea706](https://github.com/microsoft/FluidFramework/commit/15d476ea7069eb4de317a726733aa8fb9e8486e8)
+
+  The following APIs are now removed:
+
+  - `IInterval.clone`
+  - `IInterval.modify`
+  - `IInterval.union`
+  - `ISerializableInterval`
+  - `SequenceInterval.clone`
+  - `SequenceInterval.modify`
+  - `SequenceInterval.union`
+  - `SequenceInterval.serialize`
+  - `SequenceInterval.addPositionChangeListeners`
+  - `SequenceInterval.removePositionChangeListeners`
+
+  These APIs were never intended for public use. There is no migration path, and any usage is strongly discouraged, as it may result in severe errors or data corruption. Please remove any dependencies on these APIs as soon as possible.
+
+## 2.53.0
+
+Dependency updates only.
+
+## 2.52.0
+
+Dependency updates only.
+
+## 2.51.0
+
+Dependency updates only.
+
+## 2.50.0
+
+Dependency updates only.
+
+## 2.43.0
+
+### Minor Changes
+
+- Deprecate unnecessary and internal APIs in `ISequenceIntervalCollection` and related interval types ([#24792](https://github.com/microsoft/FluidFramework/pull/24792)) [8acc59162ac](https://github.com/microsoft/FluidFramework/commit/8acc59162acb0f12f996d756111ae3cb79ea6104)
+
+  The following APIs are now deprecated and will be removed in a future release:
+
+  - `IInterval.clone`
+  - `IInterval.modify`
+  - `IInterval.union`
+  - `ISerializableInterval`
+  - `SequenceInterval.clone`
+  - `SequenceInterval.modify`
+  - `SequenceInterval.union`
+  - `SequenceInterval.serialize`
+  - `SequenceInterval.addPositionChangeListeners`
+  - `SequenceInterval.removePositionChangeListeners`
+
+  These APIs were never intended for public use. There is no migration path, and any usage is strongly discouraged, as it may result in severe errors or data corruption. Please remove any dependencies on these APIs as soon as possible.
+
+## 2.42.0
+
+Dependency updates only.
+
+## 2.41.0
+
+Dependency updates only.
+
+## 2.40.0
+
+### Minor Changes
+
+- IntervalCollections types (deprecated) have been removed ([#24489](https://github.com/microsoft/FluidFramework/pull/24489)) [a686c353c5](https://github.com/microsoft/FluidFramework/commit/a686c353c5801a4bc90958eee355fcdf30b3fbfa)
+
+  This change removes the following deprecated generic types and provides non-generic alternatives where necessary:
+
+  - `IIntervalCollection` is replaced by `ISequenceIntervalCollection`
+  - `IIntervalCollectionEvent` is replaced by `ISequenceIntervalCollectionEvents`
+  - `IntervalIndex` is replaced by `SequenceIntervalIndex`
+  - `IOverlappingIntervalsIndex` is replaced by `ISequenceOverlappingIntervalsIndex`
+  - `ISharedIntervalCollection` is deprecated without replacement
+
+  These types are no longer required to be generic, and replacing them with non-generic alternatives keeps the typing less complex.
+
+## 2.33.0
+
+### Minor Changes
+
+- Generic types for IntervalCollections have been replaced with non-generic types ([#24411](https://github.com/microsoft/FluidFramework/pull/24411)) [1c743e825ed](https://github.com/microsoft/FluidFramework/commit/1c743e825ed29a81b0e66775ce3553477361d335)
+
+  This change deprecates the following generic types and provides non-generic alternatives where necessary:
+
+  - `IIntervalCollection` is replaced by `ISequenceIntervalCollection`
+  - `IIntervalCollectionEvent` is replaced by `ISequenceIntervalCollectionEvents`
+  - `IntervalIndex` is replaced by `SequenceIntervalIndex`
+  - `IOverlappingIntervalsIndex` is replaced by `ISequenceOverlappingIntervalsIndex`
+  - `ISharedIntervalCollection` is deprecated without replacement
+
+  These types are no longer required to be generic, and replacing them with non-generic alternatives keeps our typing less complex.
+
 ## 2.32.0
 
 Dependency updates only.

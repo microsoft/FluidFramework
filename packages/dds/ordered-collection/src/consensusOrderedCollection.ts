@@ -5,26 +5,31 @@
 
 import { bufferToString } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
-import {
-	MessageType,
-	ISequencedDocumentMessage,
-} from "@fluidframework/driver-definitions/internal";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
+import type {
+	ISummaryTreeWithStats,
+	IRuntimeMessageCollection,
+	IRuntimeMessagesContent,
+	ISequencedMessageEnvelope,
+} from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
-import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base/internal";
+import {
+	type IFluidSerializer,
+	SharedObject,
+} from "@fluidframework/shared-object-base/internal";
 import { v4 as uuid } from "uuid";
 
 import {
-	ConsensusCallback,
+	type ConsensusCallback,
 	ConsensusResult,
-	IConsensusOrderedCollection,
-	IConsensusOrderedCollectionEvents,
-	IOrderedCollection,
+	type IConsensusOrderedCollection,
+	type IConsensusOrderedCollectionEvents,
+	type IOrderedCollection,
 } from "./interfaces.js";
 
 const snapshotFileNameData = "header";
@@ -97,8 +102,7 @@ const idForLocalUnattachedClient = undefined;
  *
  * Generally not used directly. A derived type will pass in a backing data type
  * IOrderedCollection that will define the deterministic add/acquire order and snapshot ability.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 
 // TODO: #22835 Use undefined instead of any (breaking change)
@@ -300,13 +304,23 @@ export class ConsensusOrderedCollection<T = any>
 		}
 	}
 
-	protected processCore(
-		message: ISequencedDocumentMessage,
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
+	 */
+	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+		const { envelope, local, messagesContent } = messagesCollection;
+		for (const messageContent of messagesContent) {
+			this.processMessage(envelope, messageContent, local);
+		}
+	}
+
+	private processMessage(
+		messageEnvelope: ISequencedMessageEnvelope,
+		messageContent: IRuntimeMessagesContent,
 		local: boolean,
-		localOpMetadata: unknown,
 	): void {
-		if (message.type === MessageType.Operation) {
-			const op = message.contents as IConsensusOrderedCollectionOperation<T>;
+		if (messageEnvelope.type === MessageType.Operation) {
+			const op = messageContent.contents as IConsensusOrderedCollectionOperation<T>;
 			let value: IConsensusOrderedCollectionValue<T> | undefined;
 			switch (op.opName) {
 				case "add": {
@@ -319,7 +333,7 @@ export class ConsensusOrderedCollection<T = any>
 				}
 
 				case "acquire": {
-					value = this.acquireCore(op.acquireId, message.clientId ?? undefined);
+					value = this.acquireCore(op.acquireId, messageEnvelope.clientId ?? undefined);
 					break;
 				}
 
@@ -339,7 +353,7 @@ export class ConsensusOrderedCollection<T = any>
 			}
 			if (local) {
 				// Resolve the pending promise for this operation now that we have received an ack for it.
-				const resolve = localOpMetadata as PendingResolve<T>;
+				const resolve = messageContent.localOpMetadata as PendingResolve<T>;
 				resolve(value);
 			}
 		}

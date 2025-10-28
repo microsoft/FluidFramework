@@ -4,8 +4,6 @@
 
 ```ts
 
-export { IMessageRelay }
-
 export { ITelemetryBaseEvent }
 
 export { ITelemetryBaseLogger }

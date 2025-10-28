@@ -4,8 +4,8 @@
  */
 
 import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
-import { IResolvedUrl } from "@fluidframework/driver-definitions/legacy";
-import { SharedString } from "@fluidframework/sequence/legacy";
+import type { IResolvedUrl } from "@fluidframework/driver-definitions/legacy";
+import type { SharedString } from "@fluidframework/sequence/legacy";
 
 /**
  * Interface for interacting with external task data stored in root {@link @fluidframework/map#SharedDirectory}.
@@ -20,7 +20,7 @@ export interface ExternalSnapshotTask {
 /**
  * Events emitted by {@link IAppModel}.
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/no-empty-interface
 export interface IAppModelEvents extends IEvent {}
 
 /**
@@ -216,4 +216,4 @@ export interface IBaseDocument extends IEventProvider<IBaseDocumentEvents> {
 	readonly setLeader: (newLeader: string) => void;
 }
 
-export { assertValidTaskData, ITaskListData, ITaskData } from "./TaskData.js";
+export { assertValidTaskData, type ITaskListData, type ITaskData } from "./TaskData.js";

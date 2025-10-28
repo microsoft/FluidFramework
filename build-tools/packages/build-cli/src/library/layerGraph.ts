@@ -3,17 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import assert from "node:assert";
-import { EOL as newline } from "node:os";
+import { strict as assert } from "node:assert";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
-import { Package } from "@fluidframework/build-tools";
+import type { Package } from "@fluidframework/build-tools";
 import { readJsonSync } from "fs-extra/esm";
 
 import registerDebug from "debug";
 const traceLayerCheck = registerDebug("layer-check");
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Always use LF since that's our repo standard.
+const newline = "\n";
 
 interface ILayerInfo {
 	deps?: string[];
@@ -252,7 +254,7 @@ class PackageNode extends BaseNode {
 	/**
 	 * Packages this package is directly dependent upon
 	 */
-	public get childDependencies(): Readonly<PackageNode[]> {
+	public get childDependencies(): readonly PackageNode[] {
 		return this._childDependencies;
 	}
 
@@ -569,7 +571,6 @@ But some packages in layer A depend on packages in layer B, and likewise some in
 
 			this.padArraysToSameLength(packagesInCell, layersInCell, "&nbsp;");
 			lines.push(`| Packages | Layer Dependencies |`, `| --- | --- |`);
-			// eslint-disable-next-line unicorn/no-array-push-push
 			lines.push(
 				`| ${packagesInCell.join("</br>")} | ${layersInCell.join("</br>")} |${newline}`,
 			);

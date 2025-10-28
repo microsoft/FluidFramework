@@ -4,21 +4,22 @@
  */
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { FluidObject } from "@fluidframework/core-interfaces";
-import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import type { FluidObject } from "@fluidframework/core-interfaces";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
-	AliasResult,
-	IDataStore,
-	IFluidDataStoreChannel,
+	type AliasResult,
+	type IDataStore,
+	type IFluidDataStoreChannel,
+	asLegacyAlpha,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	TelemetryDataTag,
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { ChannelCollection } from "./channelCollection.js";
+import type { ChannelCollection } from "./channelCollection.js";
 import { ContainerMessageType } from "./messageTypes.js";
 
 /**
@@ -78,6 +79,9 @@ class DataStore implements IDataStore {
 	async trySetAlias(alias: string): Promise<AliasResult> {
 		if (alias.includes("/")) {
 			throw new UsageError(`The alias cannot contain slashes: '${alias}'`);
+		}
+		if (asLegacyAlpha(this.parentContext.containerRuntime).inStagingMode === true) {
+			throw new UsageError("Cannot set aliases while in staging mode");
 		}
 
 		switch (this.aliasState) {

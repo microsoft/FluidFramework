@@ -9,7 +9,7 @@ import path from "path";
 
 /* eslint-disable import/no-internal-modules */
 import { CSVFileLogger } from "../logger/csvFileLogger.js";
-import { IFileLogger } from "../logger/fileLogger.js";
+import type { IFileLogger } from "../logger/fileLogger.js";
 import { JSONFileLogger } from "../logger/jsonFileLogger.js";
 /* eslint-enable import/no-internal-modules */
 
@@ -39,10 +39,6 @@ describe("fileLogger", () => {
 		logger.send({ eventName: "event3", category: "category2", prop1: "value3" });
 		logger.send({ eventName: "event4", category: "category2", prop2: "value4" });
 	}
-
-	beforeEach(() => {
-		fs.mkdirSync(outputFolder);
-	});
 
 	afterEach(() => {
 		fs.rmdirSync(outputFolder, { recursive: true });

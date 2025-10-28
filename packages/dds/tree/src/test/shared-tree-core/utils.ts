@@ -13,18 +13,21 @@ import {
 	MockHandle,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import type { ICodecOptions } from "../../codec/index.js";
+import { DependentFormatVersion, type ICodecOptions } from "../../codec/index.js";
 import {
 	RevisionTagCodec,
 	tagChange,
 	TreeStoredSchemaRepository,
 	type GraphCommit,
+	type RevisionTag,
 } from "../../core/index.js";
-import { typeboxValidator } from "../../external-utilities/index.js";
+import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import {
 	DefaultChangeFamily,
 	type DefaultChangeset,
 	type DefaultEditBuilder,
+	type FieldBatchFormatVersion,
+	type ModularChangeFormatVersion,
 	TreeCompressionStrategy,
 	defaultSchemaPolicy,
 	fieldKindConfigurations,
@@ -38,6 +41,13 @@ import {
 	type SharedTreeBranch,
 	SharedTreeCore,
 	type Summarizable,
+	type ChangeEnricherMutableCheckout,
+	NoOpChangeEnricher,
+	type ExplicitCoreCodecVersions,
+	type EditManagerFormatVersion,
+	editManagerFormatVersions,
+	type MessageFormatVersion,
+	messageFormatVersions,
 } from "../../shared-tree-core/index.js";
 import { testIdCompressor } from "../utils.js";
 import { strict as assert, fail } from "node:assert";
@@ -45,8 +55,9 @@ import {
 	SharedObject,
 	type IChannelView,
 	type IFluidSerializer,
+	type ISharedObject,
+	type ISharedObjectHandle,
 } from "@fluidframework/shared-object-base/internal";
-import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type {
 	ISummaryTreeWithStats,
 	IExperimentalIncrementalSummaryContext,
@@ -62,13 +73,31 @@ import type {
 	IFluidLoadable,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { Breakable } from "../../util/index.js";
+import { brand, Breakable } from "../../util/index.js";
 import { mockSerializer } from "../mockSerializer.js";
+import { TestChange } from "../testChange.js";
+// eslint-disable-next-line import/no-internal-modules
+import { dependenciesForChangeFormat } from "../../shared-tree/sharedTreeChangeCodecs.js";
+import {
+	changeFormatVersionForEditManager,
+	changeFormatVersionForMessage,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../shared-tree/sharedTree.js";
 
 const codecOptions: ICodecOptions = {
-	jsonValidator: typeboxValidator,
+	jsonValidator: FormatValidatorBasic,
 };
-const formatVersions = { editManager: 1, message: 1, fieldBatch: 1 };
+const formatVersions: ExplicitCoreCodecVersions & { fieldBatch: FieldBatchFormatVersion } = {
+	editManager: brand(1),
+	message: brand(1),
+	fieldBatch: brand(1),
+};
+
+class MockSharedObjectHandle extends MockHandle<ISharedObject> implements ISharedObjectHandle {
+	public bind(): never {
+		throw new Error("MockSharedObjectHandle.bind() unimplemented.");
+	}
+}
 
 export function createTree<TIndexes extends readonly Summarizable[]>(
 	indexes: TIndexes,
@@ -77,7 +106,9 @@ export function createTree<TIndexes extends readonly Summarizable[]>(
 ): SharedTreeCore<DefaultEditBuilder, DefaultChangeset> {
 	// This could use TestSharedTreeCore then return its kernel instead of using these mocks, but that would depend on far more code than needed (including other mocks).
 
-	const handle = new MockHandle({});
+	// Summarizer requires ISharedObjectHandle. Specifically it looks for `bind` method.
+	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- empty object is sufficient for this mock
+	const handle = new MockSharedObjectHandle({} as ISharedObject);
 	const dummyChannel: IChannelView & IFluidLoadable = {
 		attributes: { snapshotFormatVersion: "", type: "", packageVersion: "" },
 		get handle(): IFluidHandle {
@@ -125,6 +156,51 @@ export function createTreeSharedObject<TIndexes extends readonly Summarizable[]>
 	);
 }
 
+export function makeTestDefaultChangeFamily(options?: {
+	idCompressor?: IIdCompressor;
+	chunkCompressionStrategy?: TreeCompressionStrategy;
+}) {
+	return new DefaultChangeFamily(
+		makeModularChangeCodecFamily(
+			fieldKindConfigurations,
+			new RevisionTagCodec(options?.idCompressor ?? testIdCompressor),
+			makeFieldBatchCodec(codecOptions, formatVersions.fieldBatch),
+			codecOptions,
+			options?.chunkCompressionStrategy ?? TreeCompressionStrategy.Compressed,
+		),
+	);
+}
+
+/**
+ * Use the same codecs as SharedTree but without the SharedTreeFamily wrapper.
+ * This an arbitrary choice that could be revisited.
+ */
+const modularChangeFormatVersionForEditManager: DependentFormatVersion<
+	EditManagerFormatVersion,
+	ModularChangeFormatVersion
+> = DependentFormatVersion.fromPairs(
+	Array.from(editManagerFormatVersions, (e) => [
+		e,
+		dependenciesForChangeFormat.get(changeFormatVersionForEditManager.lookup(e))
+			?.modularChange ?? fail("Unknown change format"),
+	]),
+);
+
+/**
+ * Use the same codecs as SharedTree but without the SharedTreeFamily wrapper.
+ * This an arbitrary choice that could be revisited.
+ */
+const modularChangeFormatVersionForMessage: DependentFormatVersion<
+	MessageFormatVersion,
+	ModularChangeFormatVersion
+> = DependentFormatVersion.fromPairs(
+	Array.from(messageFormatVersions, (m) => [
+		m,
+		dependenciesForChangeFormat.get(changeFormatVersionForMessage.lookup(m))?.modularChange ??
+			fail("Unknown change format"),
+	]),
+);
+
 function createTreeInner(
 	sharedObject: IChannelView & IFluidLoadable,
 	serializer: IFluidSerializer,
@@ -138,15 +214,7 @@ function createTreeInner(
 	enricher?: ChangeEnricherReadonlyCheckout<DefaultChangeset>,
 	editor?: () => DefaultEditBuilder,
 ): [SharedTreeCore<DefaultEditBuilder, DefaultChangeset>, DefaultChangeFamily] {
-	const codec = makeModularChangeCodecFamily(
-		fieldKindConfigurations,
-		new RevisionTagCodec(idCompressor),
-		makeFieldBatchCodec(codecOptions, formatVersions.fieldBatch),
-		codecOptions,
-		chunkCompressionStrategy,
-	);
-	const changeFamily = new DefaultChangeFamily(codec);
-
+	const changeFamily = makeTestDefaultChangeFamily({ idCompressor, chunkCompressionStrategy });
 	return [
 		new SharedTreeCore(
 			new Breakable("createTreeInner"),
@@ -158,6 +226,8 @@ function createTreeInner(
 			changeFamily,
 			codecOptions,
 			formatVersions,
+			modularChangeFormatVersionForEditManager,
+			modularChangeFormatVersionForMessage,
 			idCompressor,
 			schema,
 			defaultSchemaPolicy,
@@ -239,24 +309,25 @@ export class TestSharedTreeCore extends SharedObject {
 			},
 		);
 
+		const commitEnricher = this.kernel.getCommitEnricher("main");
 		this.transaction.events.on("started", () => {
 			if (this.isAttached()) {
-				this.kernel.commitEnricher.startTransaction();
+				commitEnricher.startTransaction();
 			}
 		});
 		this.transaction.events.on("aborting", () => {
 			if (this.isAttached()) {
-				this.kernel.commitEnricher.abortTransaction();
+				commitEnricher.abortTransaction();
 			}
 		});
 		this.transaction.events.on("committing", () => {
 			if (this.isAttached()) {
-				this.kernel.commitEnricher.commitTransaction();
+				commitEnricher.commitTransaction();
 			}
 		});
 		this.transaction.activeBranchEvents.on("afterChange", (event) => {
 			if (event.type === "append" && this.isAttached() && this.transaction.isInProgress()) {
-				this.kernel.commitEnricher.addTransactionCommits(event.newCommits);
+				commitEnricher.addTransactionCommits(event.newCommits);
 			}
 		});
 	}
@@ -267,14 +338,6 @@ export class TestSharedTreeCore extends SharedObject {
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 	): ISummaryTreeWithStats {
 		return this.kernel.summarizeCore(serializer, telemetryContext, incrementalSummaryContext);
-	}
-
-	protected processCore(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	): void {
-		fail("processCore should not be called on SharedTree");
 	}
 
 	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
@@ -308,5 +371,21 @@ export class TestSharedTreeCore extends SharedObject {
 
 	public get editor(): DefaultEditBuilder {
 		return this.kernel.getEditor();
+	}
+}
+
+export class TestChangeEnricher implements ChangeEnricherReadonlyCheckout<TestChange> {
+	public updateChangeEnrichments(change: TestChange, revision: RevisionTag): TestChange {
+		if (TestChange.isNonEmptyChange(change)) {
+			return {
+				inputContext: change.inputContext.map((i) => i * 1000),
+				intentions: change.intentions.map((i) => i * 1000),
+				outputContext: change.outputContext.map((i) => i * 1000),
+			};
+		}
+		return change;
+	}
+	public fork(): ChangeEnricherMutableCheckout<TestChange> {
+		return new NoOpChangeEnricher();
 	}
 }

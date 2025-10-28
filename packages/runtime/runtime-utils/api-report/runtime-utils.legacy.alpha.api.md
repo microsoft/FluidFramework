@@ -4,16 +4,22 @@
 
 ```ts
 
+// @alpha @legacy
+export function asLegacyAlpha(runtime: IContainerRuntimeBase): ContainerRuntimeBaseAlpha;
+
+// @alpha @legacy
+export function asLegacyAlpha(runtime: IFluidDataStoreRuntime): IFluidDataStoreRuntimeAlpha;
+
 // @public
 export function compareFluidHandles(a: IFluidHandle, b: IFluidHandle): boolean;
 
-// @alpha
+// @beta @legacy
 export function convertToSummaryTreeWithStats(snapshot: ITree, fullTree?: boolean): ISummaryTreeWithStats;
 
-// @alpha (undocumented)
+// @beta @legacy
 export const create404Response: (request: IRequest) => IResponse;
 
-// @alpha
+// @beta @legacy
 export abstract class FluidHandleBase<T> implements IFluidHandleInternal<T> {
     // (undocumented)
     get [fluidHandleSymbol](): IFluidHandleErased<T>;
@@ -21,8 +27,6 @@ export abstract class FluidHandleBase<T> implements IFluidHandleInternal<T> {
     abstract absolutePath: string;
     // (undocumented)
     abstract attachGraph(): void;
-    // (undocumented)
-    abstract bind(handle: IFluidHandleInternal): void;
     // (undocumented)
     abstract get(): Promise<T>;
     get IFluidHandle(): IFluidHandleInternal;
@@ -33,7 +37,16 @@ export abstract class FluidHandleBase<T> implements IFluidHandleInternal<T> {
 // @public
 export function isFluidHandle(value: unknown): value is IFluidHandle;
 
-// @alpha
+// @beta @legacy
+export const isFluidHandlePayloadPending: <T>(handle: IFluidHandle<T>) => handle is IFluidHandlePayloadPending<T>;
+
+// @beta @legacy
+export const isLocalFluidHandle: <T>(handle: IFluidHandle<T>) => handle is ILocalFluidHandle<T>;
+
+// @alpha @legacy
+export function lookupTemporaryBlobStorageId(containerRuntime: IContainerRuntime, handle: IFluidHandle): string | undefined;
+
+// @beta @legacy
 export class RequestParser implements IRequest {
     protected constructor(request: Readonly<IRequest>);
     // (undocumented)
@@ -50,7 +63,7 @@ export class RequestParser implements IRequest {
     get url(): string;
 }
 
-// @alpha (undocumented)
+// @beta @legacy (undocumented)
 export abstract class RuntimeFactoryHelper<T = IContainerRuntime> implements IRuntimeFactory {
     hasInitialized(_runtime: T): Promise<void>;
     instantiateFirstTime(_runtime: T): Promise<void>;
@@ -62,7 +75,7 @@ export abstract class RuntimeFactoryHelper<T = IContainerRuntime> implements IRu
     abstract preInitialize(context: IContainerContext, existing: boolean): Promise<IRuntime & T>;
 }
 
-// @alpha
+// @beta @legacy
 export class SummaryTreeBuilder implements ISummaryTreeWithStats {
     constructor(params?: {
         groupId?: string;
@@ -78,13 +91,13 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
     get summary(): ISummaryTree;
 }
 
-// @alpha
+// @beta @legacy
 export function toDeltaManagerInternal(deltaManager: IDeltaManagerErased): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 
-// @alpha
+// @beta @legacy
 export function toFluidHandleErased<T>(handle: IFluidHandleInternal<T>): IFluidHandleErased<T>;
 
-// @alpha
+// @beta @legacy
 export function toFluidHandleInternal<T>(handle: IFluidHandle<T>): IFluidHandleInternal<T>;
 
 // (No @packageDocumentation comment for this package)

@@ -10,19 +10,19 @@ import {
 	SparseMatrix,
 } from "@fluid-experimental/sequence-deprecated";
 import { SharedCell } from "@fluidframework/cell/internal";
-import { IContainerContext } from "@fluidframework/container-definitions/internal";
+import type { IContainerContext } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
-	IContainerRuntimeOptions,
+	type IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
-import { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
+import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import { SharedDirectory, SharedMap } from "@fluidframework/map/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { ConsensusQueue } from "@fluidframework/ordered-collection/internal";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
-import {
+import type {
 	FluidDataStoreRegistryEntry,
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
@@ -33,7 +33,7 @@ import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 import { SharedSummaryBlock } from "@fluidframework/shared-summary-block/internal";
 
-import { ReplayToolContainerEntryPoint } from "./helpers.js";
+import type { ReplayToolContainerEntryPoint } from "./helpers.js";
 import { UnknownChannelFactory } from "./unknownChannel.js";
 
 /** Simple runtime factory that creates a container runtime */

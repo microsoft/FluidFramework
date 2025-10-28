@@ -3,17 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { ICriticalContainerError } from "@fluidframework/container-definitions";
+import type { ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
-	IDeltaQueue,
-	ReadOnlyInfo,
-	IFluidCodeDetails,
+	type IDeltaQueue,
+	type ReadOnlyInfo,
+	type IFluidCodeDetails,
 	isFluidPackage,
-	IConnectionDetails,
+	type IConnectionDetails,
 } from "@fluidframework/container-definitions/internal";
-import { IErrorBase, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import { ConnectionMode, IClientDetails } from "@fluidframework/driver-definitions";
-import {
+import type { IErrorBase, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import type { JsonString } from "@fluidframework/core-interfaces/internal";
+import type { ConnectionMode, IClientDetails } from "@fluidframework/driver-definitions";
+import type {
 	IContainerPackageInfo,
 	IClientConfiguration,
 	IDocumentMessage,
@@ -145,7 +146,9 @@ export interface IConnectionManagerFactoryArgs {
 	 * Called by connection manager for each incoming signal.
 	 * May be called before connectHandler is called (due to initial signals on socket connection)
 	 */
-	readonly signalHandler: (signals: ISignalMessage[]) => void;
+	readonly signalHandler: (
+		signals: ISignalMessage<{ type: never; content: JsonString<unknown> }>[],
+	) => void;
 
 	/**
 	 * Called when connection manager experiences delay in connecting to relay service.

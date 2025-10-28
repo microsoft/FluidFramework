@@ -58,7 +58,7 @@ export class ContactCollection extends DataObject implements IContactCollection 
 	 * initializingFirstTime is run only once by the first client to create the DataObject.  Here we use it to
 	 * initialize the state of the DataObject.
 	 */
-	protected async initializingFirstTime() {
+	protected async initializingFirstTime(): Promise<void> {
 		this.addContact("Alice", "555-1234");
 		this.addContact("Bob", "555-5678");
 		this.addContact("Carol", "555-9999");
@@ -68,7 +68,7 @@ export class ContactCollection extends DataObject implements IContactCollection 
 	 * hasInitialized is run by each client as they load the DataObject.  Here we use it to set up usage of the
 	 * DataObject, by registering an event listener for changes to the contact list.
 	 */
-	protected async hasInitialized() {
+	protected async hasInitialized(): Promise<void> {
 		this.root.on("valueChanged", (changed) => {
 			// When we see the contacts change, we'll emit the contactCollectionChanged event we specified
 			// in our interface.
@@ -76,13 +76,13 @@ export class ContactCollection extends DataObject implements IContactCollection 
 		});
 	}
 
-	public readonly addContact = (name: string, phone: string) => {
+	public readonly addContact = (name: string, phone: string): void => {
 		const id = uuid();
 		this.root.set(id, { name, phone });
 	};
 
 	public readonly getContact = (id: string): IContact | undefined => {
-		const contactData = this.root.get(id);
+		const contactData: IContact | undefined = this.root.get(id);
 		if (contactData === undefined) {
 			return undefined;
 		}
@@ -90,10 +90,12 @@ export class ContactCollection extends DataObject implements IContactCollection 
 		return new Contact(id, contactData.name, contactData.phone);
 	};
 
-	public readonly getContacts = () => {
+	public readonly getContacts = (): IContact[] => {
 		const contactList: IContact[] = [];
 		for (const [id, contactData] of this.root) {
-			contactList.push(new Contact(id, contactData.name, contactData.phone));
+			contactList.push(
+				new Contact(id, (contactData as IContact).name, (contactData as IContact).phone),
+			);
 		}
 		return contactList;
 	};
@@ -103,9 +105,7 @@ export class ContactCollection extends DataObject implements IContactCollection 
  * The DataObjectFactory is used by Fluid Framework to instantiate our DataObject.  We provide it with a unique name
  * and the constructor it will call.  In this scenario, the third and fourth arguments are not used.
  */
-export const ContactCollectionInstantiationFactory = new DataObjectFactory(
-	"contact-collection",
-	ContactCollection,
-	[],
-	{},
-);
+export const ContactCollectionInstantiationFactory = new DataObjectFactory({
+	type: "contact-collection",
+	ctor: ContactCollection,
+});

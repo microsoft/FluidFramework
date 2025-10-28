@@ -3,29 +3,31 @@
  * Licensed under the MIT License.
  */
 
-import { IRef } from "@fluidframework/gitresources";
+import type { IRef } from "@fluidframework/gitresources";
 import {
-	IWholeSummaryPayload,
+	type IWholeSummaryPayload,
 	NetworkError,
-	WholeSummaryTreeEntry,
+	type WholeSummaryTreeEntry,
 } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import { IRepositoryManager } from "../definitions";
+
+import { NullExternalStorageManager } from "../../externalStorageManager";
+import type { IRepositoryManager } from "../definitions";
 import { MemFsManagerFactory } from "../filesystems";
 import { IsomorphicGitManagerFactory } from "../isomorphicgitManager";
-import { NullExternalStorageManager } from "../../externalStorageManager";
-import { IFullGitTree, IWholeSummaryOptions } from "./definitions";
+
+import { Constants } from "./constants";
 import {
 	buildFullGitTreeFromGitTree,
 	convertFullSummaryToWholeSummaryEntries,
 } from "./conversions";
-import { Constants } from "./constants";
-import { readSummary } from "./readWholeSummary";
 import {
-	IWriteSummaryTreeOptions,
+	type IWriteSummaryTreeOptions,
 	writeFullGitTreeAsSummaryTree,
 	writeSummaryTree,
 } from "./coreWriteUtils";
+import type { IFullGitTree, IWholeSummaryOptions } from "./definitions";
+import { readSummary } from "./readWholeSummary";
 
 /**
  * Retrieve a git tree from storage, then write it into the in-memory filesystem.

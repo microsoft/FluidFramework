@@ -99,6 +99,35 @@ export function hasSome<T>(array: readonly T[]): array is [T, ...T[]] {
 }
 
 /**
+ * Returns true if and only if the given iterable has at least one element.
+ */
+export function iterableHasSome<T>(iterable: Iterable<T>): boolean {
+	return iterable[Symbol.iterator]().next().done === false;
+}
+
+/**
+ * Returns the value from the given iterable if it contains exactly one item, otherwise `undefined`.
+ * @remarks
+ * Note that if the iterable itself may contain `undefined` values,
+ * it is not possible to use this to distinguish between an iterable that contains exactly one `undefined` value and an iterable that contains zero or multiple values.
+ */
+export function oneFromIterable<T>(items: Iterable<T>): T | undefined {
+	const iterator = items[Symbol.iterator]();
+	const first = iterator.next();
+	if (first.done === true) {
+		// Empty iterable case.
+		return undefined;
+	}
+	const second = iterator.next();
+	if (second.done === true) {
+		// Single item iterable case.
+		return first.value;
+	}
+	// Multiple item iterable case.
+	return undefined;
+}
+
+/**
  * Returns true if and only if the given array has exactly one element.
  * @param array - The array to check.
  * @remarks
@@ -284,7 +313,11 @@ export function count(iterable: Iterable<unknown>): number {
  * @remarks
  * This does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
- * @alpha
+ *
+ * @privateRemarks
+ * TODO (before promoting to public): consider moving this to a more general location - this isn't SharedTree-specific.
+ *
+ * @beta
  */
 export type JsonCompatible<TExtra = never> =
 	| string
@@ -298,10 +331,15 @@ export type JsonCompatible<TExtra = never> =
 
 /**
  * Use for Json object compatible data.
+ *
  * @remarks
  * This does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
- * @alpha
+ *
+ * @privateRemarks
+ * TODO (before promoting to public): consider moving this to a more general location - this isn't SharedTree-specific.
+ *
+ * @beta
  */
 export type JsonCompatibleObject<TExtra = never> = { [P in string]?: JsonCompatible<TExtra> };
 
@@ -310,6 +348,7 @@ export type JsonCompatibleObject<TExtra = never> = { [P in string]?: JsonCompati
  * @remarks
  * This does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
+ * @alpha
  */
 export type JsonCompatibleReadOnly =
 	| string
@@ -325,6 +364,7 @@ export type JsonCompatibleReadOnly =
  * @remarks
  * This does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
+ * @alpha
  */
 export type JsonCompatibleReadOnlyObject = { readonly [P in string]?: JsonCompatibleReadOnly };
 
@@ -457,21 +497,6 @@ export function invertMap<Key, Value>(input: Map<Key, Value>): Map<Value, Key> {
 		0x88a /* all values in a map must be unique to invert it */,
 	);
 	return result;
-}
-
-/**
- * Returns the value from `set` if it contains exactly one item, otherwise `undefined`.
- */
-export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined {
-	if (set === undefined) {
-		return undefined;
-	}
-	if (set.size !== 1) {
-		return undefined;
-	}
-	for (const item of set) {
-		return item;
-	}
 }
 
 /**

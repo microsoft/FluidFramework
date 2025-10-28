@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { merge } from "lodash";
 import { ProtocolOpHandler } from "@fluidframework/protocol-base";
-import { IClient } from "@fluidframework/protocol-definitions";
+import type { IClient } from "@fluidframework/protocol-definitions";
 import {
 	BroadcasterLambda,
 	CheckpointManager,
@@ -17,35 +16,37 @@ import {
 	SummaryReader,
 	SummaryWriter,
 } from "@fluidframework/server-lambdas";
-import { defaultHash, IGitManager } from "@fluidframework/server-services-client";
+import { defaultHash, type IGitManager } from "@fluidframework/server-services-client";
 import {
 	DefaultServiceConfiguration,
-	IContext,
-	IDeliState,
-	IDatabaseManager,
-	IDocument,
-	IDocumentDetails,
-	IDocumentStorage,
-	IOrderer,
-	IOrdererConnection,
-	IPublisher,
-	IScribe,
-	IServiceConfiguration,
-	ITopic,
-	IWebSocket,
-	ILogger,
-	IDocumentRepository,
-	ICheckpointRepository,
+	type IContext,
+	type IDeliState,
+	type IDatabaseManager,
+	type IDocument,
+	type IDocumentDetails,
+	type IDocumentStorage,
+	type IOrderer,
+	type IOrdererConnection,
+	type IPublisher,
+	type IScribe,
+	type IServiceConfiguration,
+	type ITopic,
+	type IWebSocket,
+	type ILogger,
+	type IDocumentRepository,
+	type ICheckpointRepository,
 	CheckpointService,
 } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
-import { ILocalOrdererSetup } from "./interfaces";
+import { merge } from "lodash";
+
+import type { ILocalOrdererSetup } from "./interfaces";
 import { LocalContext } from "./localContext";
 import { LocalKafka } from "./localKafka";
 import { LocalLambdaController } from "./localLambdaController";
 import { LocalOrdererConnection } from "./localOrdererConnection";
 import { LocalOrdererSetup } from "./localOrdererSetup";
-import { IPubSub, ISubscriber, PubSub, WebSocketSubscriber } from "./pubsub";
+import { type IPubSub, type ISubscriber, PubSub, WebSocketSubscriber } from "./pubsub";
 
 const DefaultScribe: IScribe = {
 	lastClientSummaryHead: undefined,

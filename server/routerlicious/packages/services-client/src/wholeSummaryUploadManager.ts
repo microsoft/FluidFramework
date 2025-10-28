@@ -3,8 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { ISummaryTree, IWholeSummaryPayload, IWholeSummaryPayloadType } from "./storageContracts";
-import { IGitManager, ISummaryUploadManager } from "./storage";
+import type { IGitManager, ISummaryUploadManager } from "./storage";
+import type {
+	ISummaryTree,
+	IWholeSummaryPayload,
+	IWholeSummaryPayloadType,
+} from "./storageContracts";
 import { convertSummaryTreeToWholeSummaryTree } from "./storageUtils";
 
 /**

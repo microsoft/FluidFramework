@@ -6,7 +6,11 @@
 import { strict as assert } from "assert";
 
 import { IRandom } from "@fluid-private/stochastic-test-utils";
-import { type SequencePlace, Side } from "@fluidframework/merge-tree/internal";
+import {
+	DetachedReferencePosition,
+	type SequencePlace,
+	Side,
+} from "@fluidframework/merge-tree/internal";
 import type { TestClient } from "@fluidframework/merge-tree/internal/test";
 
 import {
@@ -207,7 +211,14 @@ export function assertInterval(
 		"unexpected start side",
 	);
 	const actualStart = sharedString.localReferencePositionToPosition(actual.start);
-	assert.equal(actualStart, expectedPositionFromSequencePlace(expectedStart, -1));
+	assert.equal(
+		actualStart,
+		expectedPositionFromSequencePlace(
+			expectedStart,
+			actual.start.canSlideToEndpoint ? sharedString.getLength() : DetachedReferencePosition,
+		),
+		`unexpected start position(${sharedString.getLength()})`,
+	);
 	assert.equal(
 		actual.endSide,
 		typeof expectedEnd === "object" ? expectedEnd.side : Side.Before,

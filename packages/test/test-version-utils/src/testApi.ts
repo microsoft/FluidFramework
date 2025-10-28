@@ -27,6 +27,7 @@ import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 // Data Runtime API
 import * as counter from "@fluidframework/counter/internal";
 import { SharedCounter } from "@fluidframework/counter/internal";
+import { SharedArray, SharedSignal } from "@fluidframework/legacy-dds/internal";
 import * as datastore from "@fluidframework/datastore/internal";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import * as map from "@fluidframework/map/internal";
@@ -137,7 +138,7 @@ export const ContainerRuntimeApi = {
 	BaseContainerRuntimeFactory,
 	ContainerRuntime,
 	/**
-	 * @remarks - The API for constructing this factory has recently changed. Use `createContainerRuntimeFactoryWithDefaultDataStore`
+	 * @remarks The API for constructing this factory has recently changed. Use `createContainerRuntimeFactoryWithDefaultDataStore`
 	 * to construct safely across versions.
 	 */
 	ContainerRuntimeFactoryWithDefaultDataStore,
@@ -163,13 +164,15 @@ export const DataRuntimeApi = {
 		ConsensusRegisterCollection,
 		SharedString,
 		SparseMatrix,
+		SharedArray,
+		SharedSignal,
 	},
 	/**
 	 * Contains all APIs from imported DDS packages.
 	 * Keep in mind that regardless of the DataRuntime version,
 	 * the APIs will be typechecked as if they were from the latest version.
 	 *
-	 * @remarks - Using these APIs in an e2e test puts additional burden on the test author and anyone making
+	 * @remarks Using these APIs in an e2e test puts additional burden on the test author and anyone making
 	 * changes to those APIs in the future, since this will necessitate back-compat logic in the tests.
 	 * Using non-stable APIs in e2e tests for that reason is discouraged.
 	 */
@@ -307,6 +310,8 @@ async function loadDataRuntime(
 				ConsensusRegisterCollection,
 				SharedString,
 				SparseMatrix,
+				SharedArray,
+				SharedSignal,
 			},
 			packages: {
 				datastore,
@@ -475,7 +480,7 @@ export interface CompatApis {
 	driver: ReturnType<typeof getDriverApi>;
 	loader: ReturnType<typeof getLoaderApi>;
 
-	// Cross Version Compat APIs
+	// Cross-Client Compat APIs
 	containerRuntimeForLoading?: ReturnType<typeof getContainerRuntimeApi>;
 	dataRuntimeForLoading?: ReturnType<typeof getDataRuntimeApi>;
 	ddsForLoading?: ReturnType<typeof getDataRuntimeApi>["dds"];

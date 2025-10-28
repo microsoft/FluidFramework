@@ -4,16 +4,16 @@
  */
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
-import { type Jsonable } from "@fluidframework/datastore-definitions/internal";
+import type { Jsonable } from "@fluidframework/datastore-definitions/internal";
 import { compress, decompress } from "lz4js";
 
-import { type Encoder } from "./encoders.js";
+import type { Encoder } from "./encoders.js";
 
 // TODO: document this
 // eslint-disable-next-line jsdoc/require-description
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export function makeLZ4Encoder<T>(): Encoder<Jsonable<T>, string> {
 	return {

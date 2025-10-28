@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ChildProcess, fork } from "node:child_process";
-import { EventEmitter } from "node:events";
+import { type ChildProcess, fork } from "node:child_process";
+import type { EventEmitter } from "node:events";
 import { freemem } from "node:os";
-import { Readable } from "node:stream";
+import type { Readable } from "node:stream";
 import { Worker } from "node:worker_threads";
 
-import { WorkerExecResult, WorkerMessage } from "./worker";
+import type { WorkerExecResult, WorkerMessage } from "./worker";
 
 export interface WorkerExecResultWithOutput extends WorkerExecResult {
 	stdout: string;

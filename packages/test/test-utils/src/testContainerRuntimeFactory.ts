@@ -26,6 +26,7 @@ import {
 import {
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,
+	type MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import { RequestParser, RuntimeFactoryHelper } from "@fluidframework/runtime-utils/internal";
 
@@ -82,6 +83,7 @@ export const createTestContainerRuntimeFactory = (
 					},
 				},
 			},
+			public minVersionForCollab: MinimumVersionForCollab | undefined = undefined,
 			// eslint-disable-next-line import/no-deprecated
 			public requestHandlers: RuntimeRequestHandler[] = [],
 		) {
@@ -161,6 +163,10 @@ export const createTestContainerRuntimeFactory = (
 				}
 				return undefined; // continue search
 			};
+
+			// This usage of `containerRuntimeCtor.loadRuntime`, an `@internal` API, called on past versions of this package,
+			// adds an extra constraint that makes changing that API more difficult than it otherwise would be.
+			// Actual customers / apps should not be dependent on stability of this API, but this code is, at least for now.
 			return containerRuntimeCtor.loadRuntime({
 				context,
 				registryEntries: [
@@ -170,12 +176,11 @@ export const createTestContainerRuntimeFactory = (
 				// eslint-disable-next-line import/no-deprecated
 				requestHandler: buildRuntimeRequestHandler(getDefaultObject, ...this.requestHandlers),
 				provideEntryPoint,
-				// ! This prop is needed for back-compat. Can be removed in 2.0.0-internal.8.0.0
-				initializeEntryPoint: provideEntryPoint,
 				runtimeOptions: this.runtimeOptions,
 				containerScope: context.scope,
 				existing,
-			} as any);
+				minVersionForCollab: this.minVersionForCollab,
+			});
 		}
 	};
 };

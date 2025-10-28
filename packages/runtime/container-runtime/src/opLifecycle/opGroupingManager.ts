@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	createChildLogger,
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-import {
-	type LocalEmptyBatchPlaceholder,
-	type OutboundBatch,
-	type OutboundSingletonBatch,
+import type {
+	LocalEmptyBatchPlaceholder,
+	OutboundBatch,
+	OutboundSingletonBatch,
 } from "./definitions.js";
 
 /**
@@ -46,6 +46,16 @@ export interface OpGroupingManagerConfig {
 	readonly groupedBatchingEnabled: boolean;
 }
 
+/**
+ * This is the type of an empty grouped batch we send over the wire
+ * We also put this in the placeholder for an empty batch in the PendingStateManager.
+ * But most places throughout the ContainerRuntime, this will not be used (just as Grouped Batches in general don't appear outside opLifecycle dir)
+ */
+export interface EmptyGroupedBatch {
+	type: typeof OpGroupingManager.groupedBatchOp;
+	contents: readonly [];
+}
+
 export class OpGroupingManager {
 	static readonly groupedBatchOp = "groupedBatch";
 	private readonly logger: ITelemetryLoggerExt;
@@ -62,7 +72,7 @@ export class OpGroupingManager {
 	 * This is needed as a placeholder if a batch becomes empty on resubmit, but we are tracking batch IDs.
 	 * @param resubmittingBatchId - batch ID of the resubmitting batch
 	 * @param referenceSequenceNumber - reference sequence number
-	 * @returns - The outbound batch as well as the interior placeholder message
+	 * @returns The outbound batch as well as the interior placeholder message
 	 */
 	public createEmptyGroupedBatch(
 		resubmittingBatchId: string,
@@ -75,19 +85,22 @@ export class OpGroupingManager {
 			this.config.groupedBatchingEnabled,
 			0xa00 /* cannot create empty grouped batch when grouped batching is disabled */,
 		);
-		const serializedOp = JSON.stringify({
-			type: OpGroupingManager.groupedBatchOp,
+
+		const emptyGroupedBatch: EmptyGroupedBatch = {
+			type: "groupedBatch",
 			contents: [],
-		});
+		};
+		const serializedOp = JSON.stringify(emptyGroupedBatch);
 
 		const placeholderMessage: LocalEmptyBatchPlaceholder = {
 			metadata: { batchId: resubmittingBatchId },
 			localOpMetadata: { emptyBatch: true },
 			referenceSequenceNumber,
+			runtimeOp: emptyGroupedBatch,
 		};
 		const outboundBatch: OutboundSingletonBatch = {
 			contentSizeInBytes: 0,
-			messages: [{ ...placeholderMessage, contents: serializedOp }],
+			messages: [{ ...placeholderMessage, runtimeOp: undefined, contents: serializedOp }],
 			referenceSequenceNumber,
 		};
 		return { outboundBatch, placeholderMessage };
@@ -99,7 +112,7 @@ export class OpGroupingManager {
 	 *
 	 * If the batch already has only 1 message, it is returned as-is.
 	 *
-	 * @remarks - Remember that a BatchMessage has its content JSON serialized, so the incoming batch message contents
+	 * @remarks Remember that a BatchMessage has its content JSON serialized, so the incoming batch message contents
 	 * must be parsed first, and then the type and contents mentioned above are hidden in that JSON serialization.
 	 */
 	public groupBatch(batch: OutboundBatch): OutboundSingletonBatch {
@@ -119,11 +132,11 @@ export class OpGroupingManager {
 			});
 		}
 		// We expect this will be on the first message, if present at all.
-		let groupedBatchId;
+		let groupedBatchId: unknown;
 		for (const message of batch.messages) {
-			if (message.metadata) {
+			if (message.metadata !== undefined) {
 				const { batch: _batch, batchId, ...rest } = message.metadata;
-				if (batchId) {
+				if (batchId !== undefined) {
 					groupedBatchId = batchId;
 				}
 				assert(Object.keys(rest).length === 0, 0x5dd /* cannot group ops with metadata */);
@@ -133,7 +146,10 @@ export class OpGroupingManager {
 		const serializedContent = JSON.stringify({
 			type: OpGroupingManager.groupedBatchOp,
 			contents: batch.messages.map<IGroupedMessage>((message) => ({
-				contents: message.contents === undefined ? undefined : JSON.parse(message.contents),
+				contents:
+					message.contents === undefined
+						? undefined
+						: (JSON.parse(message.contents) as unknown),
 				metadata: message.metadata,
 				compression: message.compression,
 			})),

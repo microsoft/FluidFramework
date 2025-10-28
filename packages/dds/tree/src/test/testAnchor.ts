@@ -30,7 +30,7 @@ export class TestAnchor {
 	) {}
 
 	/**
-	 * @returns a `TestAnchor` for the node at the given path.
+	 * Returns a `TestAnchor` for the node at the given path.
 	 */
 	public static fromPath(forest: IForestSubscription, path: UpPath): TestAnchor {
 		const cursor = forest.allocateCursor();
@@ -41,7 +41,7 @@ export class TestAnchor {
 	}
 
 	/**
-	 * @returns a `TestAnchor` for the node with the given value.
+	 * Returns a `TestAnchor` for the node with the given value.
 	 * Fails if the value is not found or found multiple times in the tree.
 	 */
 	public static fromValue(forest: IForestSubscription, value: TreeValue): TestAnchor {
@@ -73,7 +73,7 @@ export class TestAnchor {
 	}
 
 	/**
-	 * @returns A cursor that is positioned at the anchor.
+	 * Returns a cursor that is positioned at the anchor.
 	 * The cursor is owned (and therefore must be freed) by the caller.
 	 */
 	public acquireCursor(): ITreeSubscriptionCursor {

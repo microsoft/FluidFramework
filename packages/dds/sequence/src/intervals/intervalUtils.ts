@@ -5,24 +5,13 @@
 
 /* eslint-disable no-bitwise */
 
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import {
-	PropertySet,
-	SlidingPreference,
-	SequencePlace,
-	Side,
-} from "@fluidframework/merge-tree/internal";
+import { PropertySet, SlidingPreference, Side } from "@fluidframework/merge-tree/internal";
 
 /**
  * Basic interval abstraction
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IInterval {
-	/**
-	 * @returns a new interval object with identical semantics.
-	 */
-	clone(): IInterval;
 	/**
 	 * Compares this interval to `b` with standard comparator semantics:
 	 * - returns -1 if this is less than `b`
@@ -44,27 +33,10 @@ export interface IInterval {
 	 */
 	compareEnd(b: IInterval): number;
 	/**
-	 * Modifies one or more of the endpoints of this interval, returning a new interval representing the result.
-	 */
-	modify(
-		label: string,
-		start: SequencePlace | undefined,
-		end: SequencePlace | undefined,
-		op?: ISequencedDocumentMessage,
-		localSeq?: number,
-		useNewSlidingBehavior?: boolean,
-	): IInterval | undefined;
-	/**
 	 * @returns whether this interval overlaps with `b`.
 	 * Intervals are considered to overlap if their intersection is non-empty.
 	 */
 	overlaps(b: IInterval): boolean;
-	/**
-	 * Unions this interval with `b`, returning a new interval.
-	 * The union operates as a convex hull, i.e. if the two intervals are disjoint, the return value includes
-	 * intermediate values between the two intervals.
-	 */
-	union(b: IInterval): IInterval;
 }
 
 /**
@@ -82,8 +54,7 @@ export type IntervalDeltaOpType =
 
 /**
  * Values are used in revertibles.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const IntervalOpType = {
 	...IntervalDeltaOpType,
@@ -91,14 +62,12 @@ export const IntervalOpType = {
 	POSITION_REMOVE: "positionRemove",
 } as const;
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type IntervalOpType = (typeof IntervalOpType)[keyof typeof IntervalOpType];
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export enum IntervalType {
 	Simple = 0x0,
@@ -121,8 +90,7 @@ export enum IntervalType {
 /**
  * Serialized object representation of an interval.
  * This representation is used for ops that create or change intervals.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISerializedInterval {
 	/**
@@ -149,16 +117,9 @@ export interface ISerializedInterval {
 	properties?: PropertySet;
 }
 
-/**
- * @legacy
- * @alpha
- */
 export interface ISerializableInterval extends IInterval {
 	/** Serializable bag of properties associated with the interval. */
 	properties: PropertySet;
-
-	/***/
-	serialize(): ISerializedInterval;
 
 	/**
 	 * Gets the id associated with this interval.
@@ -166,6 +127,18 @@ export interface ISerializableInterval extends IInterval {
 	 * interval.
 	 */
 	getIntervalId(): string;
+
+	/**
+	 * @returns a new interval object with identical semantics.
+	 */
+	clone(): ISerializableInterval;
+
+	/**
+	 * Unions this interval with `b`, returning a new interval.
+	 * The union operates as a convex hull, i.e. if the two intervals are disjoint, the return value includes
+	 * intermediate values between the two intervals.
+	 */
+	union(b: IInterval): ISerializableInterval;
 }
 
 /**
@@ -214,8 +187,7 @@ export type CompressedSerializedInterval =
  * Note that interval stickiness is currently an experimental feature and must
  * be explicitly enabled with the `intervalStickinessEnabled` flag
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const IntervalStickiness = {
 	/**
@@ -247,14 +219,17 @@ export const IntervalStickiness = {
  *
  * Note that interval stickiness is currently an experimental feature and must
  * be explicitly enabled with the `intervalStickinessEnabled` flag
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type IntervalStickiness = (typeof IntervalStickiness)[keyof typeof IntervalStickiness];
 
 export function startReferenceSlidingPreference(
-	stickiness: IntervalStickiness,
+	startPos: number | "start" | "end" | undefined,
+	startSide: Side,
+	endPos: number | "start" | "end" | undefined,
+	endSide: Side,
 ): SlidingPreference {
+	const stickiness = computeStickinessFromSide(startPos, startSide, endPos, endSide);
 	// if any start stickiness, prefer sliding backwards
 	return (stickiness & IntervalStickiness.START) === 0
 		? SlidingPreference.FORWARD
@@ -262,10 +237,34 @@ export function startReferenceSlidingPreference(
 }
 
 export function endReferenceSlidingPreference(
-	stickiness: IntervalStickiness,
+	startPos: number | "start" | "end" | undefined,
+	startSide: Side,
+	endPos: number | "start" | "end" | undefined,
+	endSide: Side,
 ): SlidingPreference {
+	const stickiness = computeStickinessFromSide(startPos, startSide, endPos, endSide);
+
 	// if any end stickiness, prefer sliding forwards
 	return (stickiness & IntervalStickiness.END) === 0
 		? SlidingPreference.BACKWARD
 		: SlidingPreference.FORWARD;
+}
+
+export function computeStickinessFromSide(
+	startPos: number | "start" | "end" | undefined,
+	startSide: Side,
+	endPos: number | "start" | "end" | undefined,
+	endSide: Side,
+): IntervalStickiness {
+	let stickiness: IntervalStickiness = IntervalStickiness.NONE;
+
+	if (startSide === Side.After || startPos === "start") {
+		stickiness |= IntervalStickiness.START;
+	}
+
+	if (endSide === Side.Before || endPos === "end") {
+		stickiness |= IntervalStickiness.END;
+	}
+
+	return stickiness as IntervalStickiness;
 }

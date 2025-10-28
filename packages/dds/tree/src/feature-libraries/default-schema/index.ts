@@ -12,6 +12,8 @@ export {
 	type Forbidden,
 	fieldKinds,
 	fieldKindConfigurations,
+	getCodecTreeForModularChangeFormat,
+	type ModularChangeFormatVersion,
 } from "./defaultFieldKinds.js";
 
 export {
@@ -26,7 +28,12 @@ export {
 	relevantRemovedRoots,
 } from "./defaultEditBuilder.js";
 
-export { SchemaValidationErrors, isNodeInSchema, isFieldInSchema } from "./schemaChecker.js";
+export {
+	SchemaValidationError,
+	isNodeInSchema,
+	isFieldInSchema,
+	throwOutOfSchema,
+} from "./schemaChecker.js";
 
 export { defaultSchemaPolicy } from "./defaultSchema.js";
 

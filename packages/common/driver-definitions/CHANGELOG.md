@@ -1,5 +1,91 @@
 # @fluidframework/driver-definitions
 
+## 2.63.0
+
+Dependency updates only.
+
+## 2.62.0
+
+### Minor Changes
+
+- Move IPersistedCache types to driver-definitions ([#25518](https://github.com/microsoft/FluidFramework/pull/25518)) [54fca68d91](https://github.com/microsoft/FluidFramework/commit/54fca68d91aeb40bdef14b1fe8b8f3c28168b6de)
+
+  In an effort to decouple the driver web cache from the odsp driver a number of types have been moved from `@fluidframework/odsp-driver-definitions` to `@fluidframework/driver-definitions`. The moved types have been deprecated in `@fluidframework/odsp-driver-definitions`, and any usages should be moved to `@fluidframework/driver-definitions`.
+
+  The moved types are:
+
+  - `IEntry`
+  - `IFileEntry`
+  - `ICacheEntry`
+  - `IPersistedCache`
+
+## 2.61.0
+
+Dependency updates only.
+
+## 2.60.0
+
+Dependency updates only.
+
+## 2.53.0
+
+Dependency updates only.
+
+## 2.52.0
+
+Dependency updates only.
+
+## 2.51.0
+
+Dependency updates only.
+
+## 2.50.0
+
+Dependency updates only.
+
+## 2.43.0
+
+### Minor Changes
+
+- The reason parameter on the disconnect event is now optional to allow for clean, non-error disconnections ([#24840](https://github.com/microsoft/FluidFramework/pull/24840)) [82a1c5a1362](https://github.com/microsoft/FluidFramework/commit/82a1c5a1362d3362886bdcc12859ce60a2744bdb)
+
+  To enable better handling of intentional disconnects (for example [`Container.dispose()`](https://fluidframework.com/docs/api/container-loader/container/dispose)), the `reason` parameter of the `disconnect` event on [`IDocumentDeltaConnectionEvents`](https://fluidframework.com/docs/api/driver-definitions/idocumentdeltaconnectionevents) is being deprecated as a required parameter.
+
+  In a future release, the `reason` parameter will become optional.
+
+  **Old signature:**
+
+  ```typescript
+  listener: (reason: IAnyDriverError) => void
+  ```
+
+  **New signature:**
+
+  ```typescript
+  listener: (reason?: IAnyDriverError) => void
+  ```
+
+  Developers with listeners for the `disconnect` event should update their implementations to handle cases where the `reason` parameter is `undefined`.
+  This indicates a clean disconnect, which should not be treated as an error.
+
+  The breaking change is scheduled to be released in version **2.60**.
+
+## 2.42.0
+
+Dependency updates only.
+
+## 2.41.0
+
+Dependency updates only.
+
+## 2.40.0
+
+Dependency updates only.
+
+## 2.33.0
+
+Dependency updates only.
+
 ## 2.32.0
 
 Dependency updates only.

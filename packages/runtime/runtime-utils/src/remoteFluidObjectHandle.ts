@@ -3,11 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { FluidObject, IRequest } from "@fluidframework/core-interfaces";
-import {
-	IFluidHandleContext,
-	type IFluidHandleInternal,
-} from "@fluidframework/core-interfaces/internal";
+import type { FluidObject, IRequest } from "@fluidframework/core-interfaces";
+import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 
 import { responseToException } from "./dataStoreHelpers.js";
@@ -31,10 +28,12 @@ export class RemoteFluidObjectHandle extends FluidHandleBase<FluidObject> {
 	 * Creates a new RemoteFluidObjectHandle when parsing an IFluidHandle.
 	 * @param absolutePath - The absolute path to the handle from the container runtime.
 	 * @param routeContext - The root IFluidHandleContext that has a route to this handle.
+	 * @param payloadPending - Whether the handle may have a pending payload that is not yet available.
 	 */
-	constructor(
+	public constructor(
 		public readonly absolutePath: string,
 		public readonly routeContext: IFluidHandleContext,
+		public readonly payloadPending: boolean,
 	) {
 		super();
 		assert(
@@ -48,10 +47,14 @@ export class RemoteFluidObjectHandle extends FluidHandleBase<FluidObject> {
 			// Add `viaHandle` header to distinguish from requests from non-handle paths.
 			const request: IRequest = {
 				url: this.absolutePath,
-				headers: { [RuntimeHeaders.viaHandle]: true },
+				headers: {
+					[RuntimeHeaders.viaHandle]: true,
+					[RuntimeHeaders.payloadPending]: this.payloadPending,
+				},
 			};
 			this.objectP = this.routeContext.resolveHandle(request).then<FluidObject>((response) => {
 				if (response.mimeType === "fluid/object") {
+					// Responses with mimeType == "fluid/object" are produced by Fluid, and thus they can reasonably be expected to always be a FluidObject
 					const fluidObject: FluidObject = response.value as FluidObject;
 					return fluidObject;
 				}
@@ -63,9 +66,5 @@ export class RemoteFluidObjectHandle extends FluidHandleBase<FluidObject> {
 
 	public attachGraph(): void {
 		return;
-	}
-
-	public bind(handle: IFluidHandleInternal): void {
-		handle.attachGraph();
 	}
 }

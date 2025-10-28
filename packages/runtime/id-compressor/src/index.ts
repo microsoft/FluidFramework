@@ -14,7 +14,7 @@ export {
 	generateStableId,
 	isStableId,
 } from "./utilities.js";
-export {
+export type {
 	IIdCompressorCore,
 	IIdCompressor,
 	SerializedIdCompressor,

@@ -136,14 +136,12 @@ describe("DefaultResubmitMachine", () => {
 			machine.onCommitSubmitted(commit2);
 			currentRevision = revision2;
 			// Simulate the sequencing of commit 1
-			machine.onSequencedCommitApplied(true);
+			machine.onSequencedCommitApplied(commit1.revision, true);
 
 			MockChangeEnricher.resetCounters();
-			assert.equal(machine.isInResubmitPhase, false);
-			machine.prepareForResubmit([commit2]);
-			assert.equal(machine.isInResubmitPhase, true);
+			machine.getEnrichedCommit(commit2.revision, () => [commit2]);
 			machine.onCommitSubmitted(commit2);
-			assert.equal(machine.isInResubmitPhase, false);
+
 			// No new enrichment should be necessary
 			assert.equal(MockChangeEnricher.checkoutsCreated, 0);
 			assert.equal(MockChangeEnricher.commitsEnriched, 0);
@@ -159,51 +157,61 @@ describe("DefaultResubmitMachine", () => {
 			machine.onCommitSubmitted(commit2);
 			currentRevision = revision2;
 			// Simulate the sequencing of a peer commit. This would lead to the rebasing of commits 1 and 2.
-			machine.onSequencedCommitApplied(false);
+			machine.onSequencedCommitApplied(revision0, false);
 			// Simulate the sequencing of commit 1
-			machine.onSequencedCommitApplied(true);
+			machine.onSequencedCommitApplied(commit1.revision, true);
 			const rebased2: GraphCommit<MockEnrichableChange> = {
 				...commit2,
 				change: { ...commit2.change, rebased: true },
 			};
 
 			MockChangeEnricher.resetCounters();
-			assert.equal(machine.isInResubmitPhase, false);
-			machine.prepareForResubmit([rebased2]);
-			assert.equal(machine.isInResubmitPhase, true);
-			const enriched2Resubmit = machine.peekNextCommit();
+			const enriched2Resubmit = machine.getEnrichedCommit(rebased2.revision, () => [rebased2]);
+			assert(enriched2Resubmit !== undefined);
 			machine.onCommitSubmitted(enriched2Resubmit);
-			assert.equal(machine.isInResubmitPhase, false);
+
 			// One enrichment should be necessary
 			assert.equal(MockChangeEnricher.checkoutsCreated, 1);
 			assert.equal(MockChangeEnricher.commitsEnriched, 1);
 			assert.equal(MockChangeEnricher.commitsApplied, 1);
 		});
+	});
 
-		it("tolerates empty resubmit", () => {
-			let currentRevision = revision0;
-			const changeEnricher = new MockChangeEnricher(() => currentRevision);
-			const machine = new DefaultResubmitMachine(inverter, changeEnricher);
-			machine.onCommitSubmitted(commit1);
-			currentRevision = revision1;
-			machine.onCommitSubmitted(commit2);
-			currentRevision = revision2;
-			// Simulate the sequencing of commit 1
-			machine.onSequencedCommitApplied(true);
-			// Simulate the sequencing of a peer commit. This would lead to the rebasing of commit 2.
-			machine.onSequencedCommitApplied(false);
-			// Simulate the sequencing of commit2
-			machine.onSequencedCommitApplied(true);
+	it("can resubmit a subset of commits (skipping the first)", () => {
+		let currentRevision = revision0;
+		const changeEnricher = new MockChangeEnricher(() => currentRevision);
+		const machine = new DefaultResubmitMachine(inverter, changeEnricher);
 
-			MockChangeEnricher.resetCounters();
-			assert.equal(machine.isInResubmitPhase, false);
-			machine.prepareForResubmit([]);
-			assert.equal(machine.isInResubmitPhase, false);
-			// No new enrichment should be necessary
-			assert.equal(MockChangeEnricher.checkoutsCreated, 0);
-			assert.equal(MockChangeEnricher.commitsEnriched, 0);
-			assert.equal(MockChangeEnricher.commitsApplied, 0);
-		});
+		// Submit three commits in order
+		machine.onCommitSubmitted(commit1);
+		currentRevision = revision1;
+		machine.onCommitSubmitted(commit2);
+		currentRevision = revision2;
+		machine.onCommitSubmitted(commit3);
+		currentRevision = revision3;
+
+		MockChangeEnricher.resetCounters();
+
+		// Prepare for resubmit, skipping the first commit
+
+		// Only the provided commits should be resubmitted, in order
+		assert.deepEqual(
+			machine.getEnrichedCommit(commit2.revision, () => [commit2, commit3]),
+			commit2,
+		);
+
+		machine.onCommitSubmitted(commit2);
+
+		assert.deepEqual(
+			machine.getEnrichedCommit(commit3.revision, () => assert.fail()),
+			commit3,
+		);
+		machine.onCommitSubmitted(commit3);
+
+		// No enrichment or checkout should be needed
+		assert.equal(MockChangeEnricher.checkoutsCreated, 0);
+		assert.equal(MockChangeEnricher.commitsEnriched, 0);
+		assert.equal(MockChangeEnricher.commitsApplied, 0);
 	});
 
 	describe("enriches commits for resubmit", () => {
@@ -217,13 +225,9 @@ describe("DefaultResubmitMachine", () => {
 			currentRevision = revision2;
 
 			MockChangeEnricher.resetCounters();
-			assert.equal(machine.isInResubmitPhase, false);
-			machine.prepareForResubmit([commit1, commit2]);
-			assert.equal(machine.isInResubmitPhase, true);
+			machine.getEnrichedCommit(commit1.revision, () => [commit1, commit2]);
 			const enriched1Resubmit = machine.onCommitSubmitted(commit1);
-			assert.equal(machine.isInResubmitPhase, true);
 			const enriched2Resubmit = machine.onCommitSubmitted(commit2);
-			assert.equal(machine.isInResubmitPhase, false);
 			assert.equal(enriched1Resubmit, enriched1);
 			assert.equal(enriched2Resubmit, enriched2);
 			// No new enrichment should be necessary
@@ -232,12 +236,9 @@ describe("DefaultResubmitMachine", () => {
 			assert.equal(MockChangeEnricher.commitsApplied, 0);
 
 			// Verify that the enricher can resubmit those commits again
-			machine.prepareForResubmit([commit1, commit2]);
-			assert.equal(machine.isInResubmitPhase, true);
-			assert.equal(machine.onCommitSubmitted(commit1), enriched1Resubmit);
-			assert.equal(machine.isInResubmitPhase, true);
-			assert.equal(machine.onCommitSubmitted(commit2), enriched2Resubmit);
-			assert.equal(machine.isInResubmitPhase, false);
+			machine.getEnrichedCommit(commit1.revision, () => [commit1, commit2]);
+			machine.onCommitSubmitted(commit1);
+			machine.onCommitSubmitted(commit2);
 		});
 
 		for (const scenario of ["only", "and before"]) {
@@ -250,14 +251,14 @@ describe("DefaultResubmitMachine", () => {
 
 				if (scenario === "and before") {
 					// Simulate the sequencing of a peer commit
-					machine.onSequencedCommitApplied(false);
+					machine.onSequencedCommitApplied(revision0, false);
 				}
 
 				machine.onCommitSubmitted(commit2);
 				currentRevision = revision2;
 
 				// Simulate the sequencing of a peer commit as part of the resubmit phase
-				machine.onSequencedCommitApplied(false);
+				machine.onSequencedCommitApplied(revision3, false);
 
 				// This would lead to the rebasing of commits 1 and 2:
 				const rebased1: GraphCommit<MockEnrichableChange> = {
@@ -270,15 +271,11 @@ describe("DefaultResubmitMachine", () => {
 					change: { ...commit2.change, rebased: true },
 				};
 				MockChangeEnricher.resetCounters();
-				assert.equal(machine.isInResubmitPhase, false);
-				machine.prepareForResubmit([rebased1, rebased2]);
-				assert.equal(machine.isInResubmitPhase, true);
-				const enriched1Resubmit = machine.peekNextCommit();
-				machine.onCommitSubmitted(enriched1Resubmit);
-				assert.equal(machine.isInResubmitPhase, true);
-				const enriched2Resubmit = machine.peekNextCommit();
-				machine.onCommitSubmitted(enriched2Resubmit);
-				assert.equal(machine.isInResubmitPhase, false);
+				const enriched1Resubmit = machine.getEnrichedCommit(rebased1.revision, () => [
+					rebased1,
+					rebased2,
+				]);
+
 				assert.deepEqual(enriched1Resubmit, {
 					change: {
 						inputContext: revision0,
@@ -288,6 +285,12 @@ describe("DefaultResubmitMachine", () => {
 					},
 					revision: revision1,
 				});
+
+				machine.onCommitSubmitted(enriched1Resubmit);
+				const enriched2Resubmit = machine.getEnrichedCommit(rebased2.revision, () =>
+					assert.fail(),
+				);
+
 				assert.deepEqual(enriched2Resubmit, {
 					change: {
 						inputContext: revision1,
@@ -298,20 +301,24 @@ describe("DefaultResubmitMachine", () => {
 					revision: revision2,
 					parent: rebased1,
 				});
+				machine.onCommitSubmitted(enriched2Resubmit);
+
 				// Two enrichments should be necessary, which requires creating a new checkout and rewinding the state
 				assert.equal(MockChangeEnricher.checkoutsCreated, 1);
 				assert.equal(MockChangeEnricher.commitsEnriched, 2);
 				assert.equal(MockChangeEnricher.commitsApplied, 3);
 
 				// Verify that the enricher can resubmit those commits again
-				machine.prepareForResubmit([rebased1, rebased2]);
-				assert.equal(machine.isInResubmitPhase, true);
-				assert.equal(machine.peekNextCommit(), enriched1Resubmit);
+				assert.equal(
+					machine.getEnrichedCommit(rebased1.revision, () => [rebased1, rebased2]),
+					enriched1Resubmit,
+				);
 				machine.onCommitSubmitted(enriched1Resubmit);
-				assert.equal(machine.isInResubmitPhase, true);
-				assert.equal(machine.peekNextCommit(), enriched2Resubmit);
+				assert.equal(
+					machine.getEnrichedCommit(rebased2.revision, () => assert.fail()),
+					enriched2Resubmit,
+				);
 				machine.onCommitSubmitted(enriched2Resubmit);
-				assert.equal(machine.isInResubmitPhase, false);
 			});
 		}
 
@@ -325,7 +332,7 @@ describe("DefaultResubmitMachine", () => {
 			currentRevision = revision2;
 
 			// Simulate the sequencing of a peer commit
-			machine.onSequencedCommitApplied(false);
+			machine.onSequencedCommitApplied(revision0, false);
 
 			// This would lead to the rebasing of commits 1 and 2:
 			const rebased1: GraphCommit<MockEnrichableChange> = {
@@ -342,18 +349,12 @@ describe("DefaultResubmitMachine", () => {
 			currentRevision = revision3;
 
 			MockChangeEnricher.resetCounters();
-			assert.equal(machine.isInResubmitPhase, false);
-			machine.prepareForResubmit([rebased1, rebased2, commit3]);
-			assert.equal(machine.isInResubmitPhase, true);
-			const enriched1Resubmit = machine.peekNextCommit();
-			machine.onCommitSubmitted(enriched1Resubmit);
-			assert.equal(machine.isInResubmitPhase, true);
-			const enriched2Resubmit = machine.peekNextCommit();
-			machine.onCommitSubmitted(enriched2Resubmit);
-			assert.equal(machine.isInResubmitPhase, true);
-			const enriched3Resubmit = machine.peekNextCommit();
-			machine.onCommitSubmitted(enriched3Resubmit);
-			assert.equal(machine.isInResubmitPhase, false);
+			const enriched1Resubmit = machine.getEnrichedCommit(rebased1.revision, () => [
+				rebased1,
+				rebased2,
+				commit3,
+			]);
+
 			assert.deepEqual(enriched1Resubmit, {
 				change: {
 					inputContext: revision0,
@@ -363,6 +364,12 @@ describe("DefaultResubmitMachine", () => {
 				},
 				revision: revision1,
 			});
+
+			machine.onCommitSubmitted(enriched1Resubmit);
+			const enriched2Resubmit = machine.getEnrichedCommit(rebased2.revision, () =>
+				assert.fail(),
+			);
+
 			assert.deepEqual(enriched2Resubmit, {
 				change: {
 					inputContext: revision1,
@@ -373,6 +380,15 @@ describe("DefaultResubmitMachine", () => {
 				revision: revision2,
 				parent: rebased1,
 			});
+
+			machine.onCommitSubmitted(enriched2Resubmit);
+			const enriched3Resubmit = machine.getEnrichedCommit(commit3.revision, () =>
+				assert.fail(),
+			);
+
+			assert.equal(enriched3Resubmit, commit3);
+			machine.onCommitSubmitted(enriched3Resubmit);
+
 			// This commit did not undergo rebasing so its enrichments did not need updating
 			assert.equal(enriched3Resubmit, commit3);
 			// Two enrichments should be necessary, which requires creating a new checkout and rewinding the state
@@ -382,17 +398,76 @@ describe("DefaultResubmitMachine", () => {
 			assert.equal(MockChangeEnricher.commitsApplied, 4);
 
 			// Verify that the enricher can resubmit those commits again
-			machine.prepareForResubmit([rebased1, rebased2, commit3]);
-			assert.equal(machine.isInResubmitPhase, true);
-			assert.equal(machine.peekNextCommit(), enriched1Resubmit);
+			assert.equal(
+				machine.getEnrichedCommit(rebased1.revision, () => [rebased1, rebased2, commit3]),
+				enriched1Resubmit,
+			);
 			machine.onCommitSubmitted(enriched1Resubmit);
-			assert.equal(machine.isInResubmitPhase, true);
-			assert.equal(machine.peekNextCommit(), enriched2Resubmit);
+			assert.equal(
+				machine.getEnrichedCommit(rebased2.revision, () => assert.fail()),
+				enriched2Resubmit,
+			);
 			machine.onCommitSubmitted(enriched2Resubmit);
-			assert.equal(machine.isInResubmitPhase, true);
-			assert.equal(machine.peekNextCommit(), enriched3Resubmit);
+			assert.equal(
+				machine.getEnrichedCommit(commit3.revision, () => assert.fail()),
+				enriched3Resubmit,
+			);
 			machine.onCommitSubmitted(enriched3Resubmit);
-			assert.equal(machine.isInResubmitPhase, false);
+		});
+
+		it("enriches only rebased commits when resubmitting a subset", () => {
+			let currentRevision = revision0;
+			const changeEnricher = new MockChangeEnricher(() => currentRevision);
+			const machine = new DefaultResubmitMachine(inverter, changeEnricher);
+
+			// Submit three commits in order
+			machine.onCommitSubmitted(commit1);
+			currentRevision = revision1;
+			machine.onCommitSubmitted(commit2);
+			currentRevision = revision2;
+			// Simulate a peer commit that causes commit1 and commit2 to be rebased, but not commit3
+			machine.onSequencedCommitApplied(revision0, false);
+
+			const rebased2: GraphCommit<MockEnrichableChange> = {
+				...commit2,
+				change: { ...commit2.change, rebased: true },
+			};
+
+			machine.onCommitSubmitted(commit3);
+			currentRevision = revision3;
+
+			MockChangeEnricher.resetCounters();
+
+			// The rebased commit2 should be enriched
+			const enriched2Resubmit = machine.getEnrichedCommit(rebased2.revision, () => [
+				rebased2,
+				commit3,
+			]);
+
+			assert.deepEqual(enriched2Resubmit, {
+				change: {
+					inputContext: revision1,
+					outputContext: revision2,
+					updateCount: 1,
+					rebased: true,
+				},
+				revision: revision2,
+				parent: commit1,
+			});
+
+			machine.onCommitSubmitted(enriched2Resubmit);
+
+			// commit3 should not be enriched
+			const enriched3Resubmit = machine.getEnrichedCommit(commit3.revision, () =>
+				assert.fail(),
+			);
+			assert.deepEqual(enriched3Resubmit, commit3);
+			machine.onCommitSubmitted(enriched3Resubmit);
+
+			// Only one enrichment and one checkout should be needed
+			assert.equal(MockChangeEnricher.checkoutsCreated, 1);
+			assert.equal(MockChangeEnricher.commitsEnriched, 1);
+			assert.equal(MockChangeEnricher.commitsApplied, 2);
 		});
 	});
 });

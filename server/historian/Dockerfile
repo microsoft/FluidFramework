@@ -44,7 +44,6 @@ WORKDIR $HISTORIAN_ROOT
 COPY package*.json ./
 COPY pnpm*.yaml ./
 COPY .npmrc ./
-COPY lerna.json ./
 COPY scripts/*.* ./scripts/
 COPY .npmrc ./
 

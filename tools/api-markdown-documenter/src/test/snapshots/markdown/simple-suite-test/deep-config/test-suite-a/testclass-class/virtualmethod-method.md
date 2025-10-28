@@ -1,16 +1,16 @@
 # virtualMethod
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestClass](/test-suite-a/testclass-class/) &gt; [virtualMethod()](/test-suite-a/testclass-class/virtualmethod-method)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [TestClass](/test-suite-a/testclass-class/) > [virtualMethod()](/test-suite-a/testclass-class/virtualmethod-method)
 
 Overrides [virtualMethod()](/test-suite-a/testabstractclass-class/virtualmethod-method).
 
-## Signature {#virtualmethod-signature}
+<h2 id="virtualmethod-signature">Signature</h2>
 
 ```typescript
 /** @override */
 protected virtualMethod(): number;
 ```
 
-## Returns {#virtualmethod-returns}
+<h2 id="virtualmethod-returns">Returns</h2>
 
-**Return type:** number
+**Return type**: number

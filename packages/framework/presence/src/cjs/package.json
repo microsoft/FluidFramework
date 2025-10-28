@@ -2,12 +2,13 @@
 	"name": "@fluidframework/presence",
 	"type": "commonjs",
 	"exports": {
+		"./beta": {
+			"types": "./beta.d.ts",
+			"default": "./index.js"
+		},
 		"./alpha": {
 			"types": "./alpha.d.ts",
 			"default": "./index.js"
-		},
-		"./internal/container-definitions/internal": "./container-definitions/index.js",
-		"./internal/exposedInternalTypes": "./exposedInternalTypes.js",
-		"./internal/exposedUtilityTypes": "./exposedUtilityTypes.js"
+		}
 	}
 }
