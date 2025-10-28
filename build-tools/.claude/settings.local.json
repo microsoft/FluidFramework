@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(awk:*)",
+      "Bash(chmod:*)",
+      "Bash(npx tsx:*)",
+      "WebSearch",
+      "Bash(pnpm build:*)",
+      "Bash(pnpm exec mocha:*)",
+      "Bash(pnpm install:*)",
+      "Bash(pnpm run tsc:*)",
+      "Bash(pnpm --filter @fluidframework/build-tools run tsc:*)",
+      "Bash(pnpm --filter @fluid-tools/version-tools run build:*)",
+      "Bash(pnpm --filter @fluidframework/build-tools run format:*)",
+      "Bash(pnpm --filter @fluidframework/build-tools run build:test:*)",
+      "Bash(pnpm --filter @fluidframework/build-tools exec mocha:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
