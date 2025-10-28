@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/local-server-stress-tests",
-	"version": "2.70.0",
+	"version": "2.71.0",
 	"private": true,
 	"description": "Stress tests that can only run against the local server",
 	"homepage": "https://fluidframework.com",
@@ -110,7 +110,9 @@
 				"@fluidframework/sequence#build:test",
 				"@fluidframework/map#build:test",
 				"@fluidframework/matrix#build:test",
-				"@fluidframework/tree#build:test"
+				"@fluidframework/tree#build:test",
+				"@fluidframework/task-manager#build:test",
+				"@fluidframework/legacy-dds#build:test"
 			]
 		}
 	},
