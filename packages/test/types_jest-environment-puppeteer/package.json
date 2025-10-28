@@ -1,6 +1,6 @@
 {
 	"name": "@types/jest-environment-puppeteer",
-	"version": "2.60.0",
+	"version": "2.70.0",
 	"private": true,
 	"description": "TypeScript `globals` definitions fix-up for jest-environment-puppeteer",
 	"homepage": "https://fluidframework.com",
@@ -23,13 +23,11 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",
-		"@fluidframework/build-tools": "^0.57.0",
+		"@fluidframework/build-tools": "^0.58.3",
 		"jest-environment-puppeteer": "^10.1.3",
 		"rimraf": "^4.4.0"
 	},
 	"typeValidation": {
-		"disabled": true,
-		"broken": {},
-		"entrypoint": "internal"
+		"disabled": true
 	}
 }

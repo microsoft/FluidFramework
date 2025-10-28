@@ -29,8 +29,7 @@ import type {
 	IFluidDataStoreRuntime,
 	IFluidDataStoreRuntimeEvents,
 	IDeltaManagerErased,
-	// eslint-disable-next-line import/no-deprecated
-	IFluidDataStoreRuntimeExperimental,
+	IFluidDataStoreRuntimeAlpha,
 } from "@fluidframework/datastore-definitions/internal";
 import {
 	type IClientDetails,
@@ -61,11 +60,11 @@ import {
 	type IInboundSignalMessage,
 	type IRuntimeMessageCollection,
 	type IRuntimeMessagesContent,
-	// eslint-disable-next-line import/no-deprecated
-	type IContainerRuntimeBaseExperimental,
 	notifiesReadOnlyState,
 	encodeHandlesInContainerRuntime,
 	type IFluidDataStorePolicies,
+	type MinimumVersionForCollab,
+	asLegacyAlpha,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -293,6 +292,11 @@ export class FluidDataStoreRuntime
 	private readonly submitMessagesWithoutEncodingHandles: boolean;
 
 	/**
+	 * See `IFluidDataStoreRuntimeInternalConfig.minVersionForCollab`.
+	 */
+	public readonly minVersionForCollab?: MinimumVersionForCollab | undefined;
+
+	/**
 	 * Create an instance of a DataStore runtime.
 	 *
 	 * @param dataStoreContext - Context object for the runtime.
@@ -317,12 +321,23 @@ export class FluidDataStoreRuntime
 			0x30e /* Id cannot contain slashes. DataStoreContext should have validated this. */,
 		);
 
-		this.policies = { ...defaultPolicies, ...policies };
+		this.mc = createChildMonitoringContext({
+			logger: dataStoreContext.baseLogger,
+			namespace: "FluidDataStoreRuntime",
+			properties: {
+				all: { dataStoreId: uuid(), dataStoreVersion: pkgVersion },
+				error: { inStagingMode: () => this.inStagingMode, isDirty: () => this.isDirty },
+			},
+		});
 
 		// Validate that the Runtime is compatible with this DataStore.
 		const { ILayerCompatDetails: runtimeCompatDetails } =
 			dataStoreContext as FluidObject<ILayerCompatDetails>;
-		validateRuntimeCompatibility(runtimeCompatDetails, this.dispose.bind(this));
+		validateRuntimeCompatibility(
+			runtimeCompatDetails,
+			this.dispose.bind(this),
+			this.mc.logger,
+		);
 
 		if (contextSupportsFeature(dataStoreContext, notifiesReadOnlyState)) {
 			this._readonly = dataStoreContext.isReadOnly();
@@ -333,20 +348,14 @@ export class FluidDataStoreRuntime
 			);
 		}
 
+		this.policies = { ...defaultPolicies, ...policies };
+
 		this.submitMessagesWithoutEncodingHandles = contextSupportsFeature(
 			dataStoreContext,
 			encodeHandlesInContainerRuntime,
 		);
 		// We read this property here to avoid a compiler error (unused private member)
 		debugAssert(() => this.submitMessagesWithoutEncodingHandles !== undefined);
-
-		this.mc = createChildMonitoringContext({
-			logger: dataStoreContext.baseLogger,
-			namespace: "FluidDataStoreRuntime",
-			properties: {
-				all: { dataStoreId: uuid(), dataStoreVersion: pkgVersion },
-			},
-		});
 
 		this.id = dataStoreContext.id;
 		this.options = dataStoreContext.options;
@@ -437,29 +446,20 @@ export class FluidDataStoreRuntime
 		this.localChangesTelemetryCount =
 			this.mc.config.getNumber("Fluid.Telemetry.LocalChangesTelemetryCount") ?? 10;
 
-		// Reference these properties to avoid unused private member errors.
-		// They're accessed via IFluidDataStoreRuntimeExperimental interface.
-		// eslint-disable-next-line no-void
-		void [this.inStagingMode, this.isDirty];
+		this.minVersionForCollab = this.dataStoreContext.minVersionForCollab;
 	}
 
 	/**
-	 * Implementation of IFluidDataStoreRuntimeExperimental.inStagingMode
+	 * Implementation of IFluidDataStoreRuntimeAlpha.inStagingMode
 	 */
-	// eslint-disable-next-line import/no-deprecated
-	private get inStagingMode(): IFluidDataStoreRuntimeExperimental["inStagingMode"] {
-		return (
-			// eslint-disable-next-line import/no-deprecated
-			(this.dataStoreContext.containerRuntime as IContainerRuntimeBaseExperimental)
-				?.inStagingMode
-		);
+	private get inStagingMode(): IFluidDataStoreRuntimeAlpha["inStagingMode"] {
+		return asLegacyAlpha(this.dataStoreContext.containerRuntime)?.inStagingMode;
 	}
 
 	/**
-	 * Implementation of IFluidDataStoreRuntimeExperimental.isDirty
+	 * Implementation of IFluidDataStoreRuntimeAlpha.isDirty
 	 */
-	// eslint-disable-next-line import/no-deprecated
-	private get isDirty(): IFluidDataStoreRuntimeExperimental["isDirty"] {
+	private get isDirty(): IFluidDataStoreRuntimeAlpha["isDirty"] {
 		return this.pendingOpCount.value > 0;
 	}
 
@@ -1130,7 +1130,7 @@ export class FluidDataStoreRuntime
 	): void {
 		assert(
 			this.visibilityState === VisibilityState.LocallyVisible,
-			"The data store should be locally visible when generating attach summary",
+			0xc2c /* The data store should be locally visible when generating attach summary */,
 		);
 
 		const visitedContexts = new Set<string>();
@@ -1156,16 +1156,6 @@ export class FluidDataStoreRuntime
 				}
 			}
 		}
-	}
-
-	public submitMessage(
-		type: DataStoreMessageType,
-		// TODO: use something other than `any` here (breaking change)
-		// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
-		content: any,
-		localOpMetadata: unknown,
-	): void {
-		this.submit(type, content, localOpMetadata);
 	}
 
 	/**
@@ -1379,7 +1369,7 @@ export class FluidDataStoreRuntime
 	 * Indicates the given channel is dirty from Summarizer's point of view,
 	 * i.e. it has local changes that need to be included in the summary.
 	 *
-	 * @remarks - If a channel's changes are rolled back or rebased away, we won't
+	 * @remarks If a channel's changes are rolled back or rebased away, we won't
 	 * clear the dirty flag set here.
 	 */
 	private setChannelDirty(address: string): void {

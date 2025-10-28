@@ -371,6 +371,7 @@ export function testPerf() {
 							"peer" as SessionId,
 							brand(T + P + 1),
 							brand(T),
+							"main",
 						);
 						const actual = {
 							rebased: rebaser.rebasedCount,
@@ -448,6 +449,7 @@ export function testPerf() {
 							"peer" as SessionId,
 							brand(T + P + 2),
 							brand(T),
+							"main",
 						);
 						const actual = {
 							rebased: rebaser.rebasedCount,

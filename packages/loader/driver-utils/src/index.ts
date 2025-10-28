@@ -59,3 +59,4 @@ export {
 } from "./adapters/index.js";
 export { getSnapshotTree, isInstanceOfISnapshot } from "./storageUtils.js";
 export { buildGitTreeHierarchy, getGitMode, getGitType } from "./protocol/index.js";
+export { getKeyForCacheEntry, maximumCacheDurationMs } from "./cacheUtils.js";

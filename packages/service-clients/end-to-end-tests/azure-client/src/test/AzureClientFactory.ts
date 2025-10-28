@@ -5,24 +5,22 @@
 
 import {
 	AzureClient,
-	type AzureClientPropsInternal,
 	type AzureLocalConnectionConfig,
 	type AzureRemoteConnectionConfig,
 	type ITelemetryBaseLogger,
-} from "@fluidframework/azure-client/internal";
+} from "@fluidframework/azure-client";
+// eslint-disable-next-line import/no-internal-modules -- TODO consider a test exposure to avoid /internal
+import type { AzureClientPropsInternal } from "@fluidframework/azure-client/internal";
 import {
 	AzureClient as AzureClientLegacy,
 	type AzureLocalConnectionConfig as AzureLocalConnectionConfigLegacy,
 	type AzureRemoteConnectionConfig as AzureRemoteConnectionConfigLegacy,
 	type ITelemetryBaseLogger as ITelemetryBaseLoggerLegacy,
 } from "@fluidframework/azure-client-legacy";
-import type { IRuntimeFactory } from "@fluidframework/container-definitions/internal";
+import type { IRuntimeFactory } from "@fluidframework/container-definitions/legacy";
 import type { IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { ScopeType } from "@fluidframework/driver-definitions/internal";
-import type {
-	CompatibilityMode,
-	ContainerSchema,
-} from "@fluidframework/fluid-static/internal";
+import { ScopeType } from "@fluidframework/driver-definitions/legacy";
+import type { CompatibilityMode, ContainerSchema } from "@fluidframework/fluid-static";
 import {
 	type MockLogger,
 	createChildLogger,
@@ -189,7 +187,7 @@ export function createAzureClientLegacy(
  * currently these are mainly fetched from ephemeralSummaryTrees.ts
  * @param userID - ID for the user creating the container
  * @param userName - Name for the user creating the container
- * @returns - An AxiosResponse containing the container ID(response.data.id)
+ * @returns An AxiosResponse containing the container ID(response.data.id)
  */
 export async function createContainerFromPayload(
 	requestPayload: object,
@@ -259,7 +257,7 @@ export async function createContainerFromPayload(
  * (Tinylicious has the ID stored at a different path than other services)
  *
  * @param response - A container creation response returned by createContainerFromPayload
- * @returns - The ID of the container that was created by createContainerFromPayload
+ * @returns The ID of the container that was created by createContainerFromPayload
  */
 export function getContainerIdFromPayloadResponse(response: AxiosResponse): string {
 	const useAzure = process.env.FLUID_CLIENT === "azure";

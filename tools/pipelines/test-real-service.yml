@@ -2,6 +2,7 @@
 # Licensed under the MIT License.
 
 # test-real-service-e2e pipeline
+# pipeline: https://dev.azure.com/fluidframework/internal/_build?definitionId=56
 
 name: $(Build.BuildId)
 
@@ -29,6 +30,10 @@ resources:
       - main
       - next
       - lts
+  repositories:
+    - repository: ff_pipeline_host
+      type: git
+      name: ff_pipeline_host
 
 variables:
 - template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
@@ -96,6 +101,7 @@ stages:
       testWorkspace: ${{ variables.testWorkspace }}
       artifactBuildId: $(resources.pipeline.client.runID)
       testCommand: test:realsvc:routerlicious:report
+      lockBehavior: sequential
       continueOnError: true
       ${{ if eq(parameters.useR11sPpeEnvironment, true) }}:
         r11sSelfSignedCertSecureFile: wu2-ppe-tls-certificate.pem
@@ -135,6 +141,7 @@ stages:
       timeoutInMinutes: 360
       continueOnError: true
       testCommand: test:realsvc:frs:report
+      lockBehavior: sequential
       r11sSelfSignedCertSecureFile: wu2-tls-certificate.pem
       stageVariables:
         - group: e2e-frs-lock
@@ -160,6 +167,7 @@ stages:
     parameters:
       stageId: e2e_odsp
       stageDisplayName: e2e - odsp
+      odspTenantType: prod
       poolBuild: Small-eastus2
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}

@@ -65,10 +65,25 @@ export type OutboundExtensionMessage<TMessage extends TypedMessage = TypedMessag
  * Brand for value that has not been verified.
  *
  * @remarks
- * Usage:
+ * What element is unverified is left up to the user and should be
+ * coordinated with and documented for associated logic.
  *
- * - Cast any value to `UnverifiedBrand` using `as unknown as UnverifiedBrand<T>`
- * when it is not yet confirmed that value is of type `T`.
+ * One type of unverified data is whether a `string` represents an identifier
+ * known to the system, such as an email address. This unverified email address
+ * could be represented as `string & UnverifiedBrand<EmailAddress>` where
+ * `EmailAddress` is a branded type for email addresses, such as
+ * `string & BrandedType<"EmailAddress">`.
+ *
+ * Another type of unverified data is particular structure of value where little
+ * to no or weak structure is known. An example is data received over the
+ * wire that is expected to be of a certain structure but has not yet been
+ * verified.
+ *
+ * Usage where value (type `U`) is not yet verified to be type `T`:
+ *
+ * - Cast value of type `U` suspected/expected to be `T` but not verified (where
+ * `T extends U`) to `UnverifiedBrand` using `as U & UnverifiedBrand<T>`. An
+ * example base type `U` for an object is `Record<string, unknown>`.
  *
  * - When `T` value is needed, use narrowing type guards to check (preferred)
  * or cast from `UnverifiedBrand` using `as unknown` when "instance" must
@@ -86,8 +101,8 @@ export type OutboundExtensionMessage<TMessage extends TypedMessage = TypedMessag
  * @sealed
  * @internal
  */
-export declare class UnverifiedBrand<T> extends BrandedType<T> {
-	private readonly UnverifiedValue: T;
+export declare class UnverifiedBrand<T> extends BrandedType<UnverifiedBrand<unknown>> {
+	protected readonly UnverifiedValue: T;
 	private constructor();
 }
 
@@ -201,12 +216,39 @@ export interface ContainerExtension<
 	) => void;
 }
 
+// These are exported individual types as this is a type only package and does
+// not support enums with runtime footprint.
 /**
- * Join status for container.
+ * The container is not connected to the service.
+ * @internal
+ */
+export type JoinedStatus_disconnected = "disconnected";
+/**
+ * The container has a connection and read-only operability.
+ * @internal
+ */
+export type JoinedStatus_joinedForReading = "joinedForReading";
+/**
+ * The container has a connection and write operability.
+ * @internal
+ */
+export type JoinedStatus_joinedForWriting = "joinedForWriting";
+
+/**
+ * Joined status for container.
+ *
+ * @remarks
+ * May be:
+ * - {@link JoinedStatus_disconnected|"disconnected"}
+ * - {@link JoinedStatus_joinedForReading|"joinedForReading"}
+ * - {@link JoinedStatus_joinedForWriting|"joinedForWriting"}
  *
  * @internal
  */
-export type JoinedStatus = "disconnected" | "joinedForReading" | "joinedForWriting";
+export type JoinedStatus =
+	| JoinedStatus_disconnected
+	| JoinedStatus_joinedForReading
+	| JoinedStatus_joinedForWriting;
 
 /**
  * Events emitted by the {@link ExtensionHost}.
@@ -219,7 +261,7 @@ export type JoinedStatus = "disconnected" | "joinedForReading" | "joinedForWriti
 export interface ExtensionHostEvents {
 	"disconnected": () => void;
 	"joined": (props: { clientId: ClientConnectionId; canWrite: boolean }) => void;
-	"connectionTypeChanged": (canWrite: boolean) => void;
+	"operabilityChanged": (canWrite: boolean) => void;
 }
 
 /**
@@ -235,16 +277,13 @@ export interface ExtensionHost<TRuntimeProperties extends ExtensionRuntimeProper
 	/**
 	 * Gets the current joined status of the container.
 	 *
-	 * @remarks
-	 * Returns one of three possible {@link JoinedStatus} values:
-	 * - "disconnected": The container is not connected to the service
-	 * - "joinedForReading": The container has a read-only connection
-	 * - "joinedForWriting": The container has a write connection
+	 * @returns The current {@link JoinedStatus} of the container.
 	 *
+	 * @remarks
 	 * Status changes are signaled through :
 	 * - {@link ExtensionHostEvents.disconnected}: Transitioning to Disconnected state
-	 * - {@link ExtensionHostEvents.joined}: Transition to Connected state (either for reading or writing)
-	 * - {@link ExtensionHostEvents.connectionTypeChanged}: When connection type has changed (e.g., write to read)
+	 * - {@link ExtensionHostEvents.joined}: Transition to CatchingUp or Connected state (either for reading or writing)
+	 * - {@link ExtensionHostEvents.operabilityChanged}: When operability has changed (e.g., write to read)
 	 */
 	readonly getJoinedStatus: () => JoinedStatus;
 	readonly getClientId: () => ClientConnectionId | undefined;
@@ -274,6 +313,13 @@ export interface ExtensionHost<TRuntimeProperties extends ExtensionRuntimeProper
 	 */
 	getQuorum: () => IQuorumClients;
 
+	/**
+	 * The collection of all clients as enumerated by the service.
+	 *
+	 * @remarks This may include/exclude those found within the quorum.
+	 * It produces results faster than {@link ExtensionHost.getQuorum}, but
+	 * will be inaccurate if any signals are lost.
+	 */
 	getAudience: () => IAudience;
 }
 

@@ -16,14 +16,16 @@ import {
 	RevisionTagCodec,
 	rootFieldKey,
 	type TaggedChange,
+	type TreeNodeSchemaIdentifier,
 	TreeStoredSchemaRepository,
 } from "../../../core/index.js";
-import { typeboxValidator } from "../../../external-utilities/index.js";
+import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import {
 	Chunker,
 	defaultChunkPolicy,
-	tryShapeFromSchema,
+	tryShapeFromNodeSchema,
 	uniformChunkFromCursor,
+	type ShapeInfo,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -47,6 +49,7 @@ import {
 	MockNodeIdentifierManager,
 	jsonableTreeFromCursor,
 	cursorForJsonableTreeNode,
+	defaultIncrementalEncodingPolicy,
 } from "../../../feature-libraries/index.js";
 import {
 	type ISharedTreeEditor,
@@ -87,11 +90,11 @@ import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index.js";
 
 const options: CodecWriteOptions = {
-	jsonValidator: typeboxValidator,
-	oldestCompatibleClient: FluidClientVersion.v2_0,
+	jsonValidator: FormatValidatorBasic,
+	minVersionForCollab: FluidClientVersion.v2_0,
 };
 
-const fieldBatchCodec = makeFieldBatchCodec({ jsonValidator: typeboxValidator }, 1);
+const fieldBatchCodec = makeFieldBatchCodec({ jsonValidator: FormatValidatorBasic }, 1);
 const sessionId = "beefbeef-beef-4000-8000-000000000001" as SessionId;
 const idCompressor = createIdCompressor(sessionId);
 const revisionTagCodec = new RevisionTagCodec(idCompressor);
@@ -135,7 +138,16 @@ describe("End to end chunked encoding", () => {
 			Number.POSITIVE_INFINITY,
 			Number.POSITIVE_INFINITY,
 			defaultChunkPolicy.uniformChunkNodeCount,
-			tryShapeFromSchema,
+			(type: TreeNodeSchemaIdentifier, shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>) =>
+				tryShapeFromNodeSchema(
+					{
+						schema: treeSchema,
+						policy: defaultSchemaPolicy,
+						shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
+						shapes,
+					},
+					type,
+				),
 		);
 
 		const forest = buildChunkedForest(chunker);
@@ -151,7 +163,7 @@ describe("End to end chunked encoding", () => {
 			fieldKindConfigurations,
 			revisionTagCodec,
 			fieldBatchCodec,
-			{ jsonValidator: typeboxValidator },
+			{ jsonValidator: FormatValidatorBasic },
 		);
 		const dummyEditor = new DefaultEditBuilder(
 			new DefaultChangeFamily(codec),
@@ -190,6 +202,7 @@ describe("End to end chunked encoding", () => {
 			context,
 			options,
 			idCompressor,
+			0 /* initialSequenceNumber */,
 		);
 
 		// This function is declared in the test to have access to the original uniform chunk for comparison.
@@ -223,6 +236,7 @@ describe("End to end chunked encoding", () => {
 			context,
 			options,
 			idCompressor,
+			0 /* initialSequenceNumber */,
 		);
 
 		// This function is declared in the test to have access to the original uniform chunk for comparison.
@@ -251,6 +265,7 @@ describe("End to end chunked encoding", () => {
 				encoderContext,
 				options,
 				testIdCompressor,
+				0 /* initialSequenceNumber */,
 			);
 
 			const { summary } = forestSummarizer.summarize({ stringify: JSON.stringify });
@@ -278,6 +293,7 @@ describe("End to end chunked encoding", () => {
 				encoderContext,
 				options,
 				testIdCompressor,
+				0 /* initialSequenceNumber */,
 			);
 
 			const { summary } = forestSummarizer.summarize({ stringify: JSON.stringify });
@@ -300,6 +316,7 @@ describe("End to end chunked encoding", () => {
 				encoderContext,
 				options,
 				testIdCompressor,
+				0 /* initialSequenceNumber */,
 			);
 
 			const { summary } = forestSummarizer.summarize({ stringify: JSON.stringify });
@@ -379,7 +396,7 @@ describe("End to end chunked encoding", () => {
 
 		it("Initializing tree creates uniform chunks with encoded identifiers", async () => {
 			const factory = configuredSharedTree({
-				jsonValidator: typeboxValidator,
+				jsonValidator: FormatValidatorBasic,
 				forest: ForestTypeOptimized,
 			}).getFactory();
 

@@ -28,7 +28,10 @@ import {
 } from "@fluidframework/core-interfaces/internal";
 import type { SessionSpaceCompressedId } from "@fluidframework/id-compressor/internal";
 import { SharedMap } from "@fluidframework/map/internal";
-import type { IContainerRuntimeBaseExperimental } from "@fluidframework/runtime-definitions/internal";
+import {
+	asLegacyAlpha,
+	type StageControlsInternal,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	encodeHandleForSerialization,
 	isFluidHandle,
@@ -55,8 +58,7 @@ class DataObjectWithStagingMode extends DataObject {
 			? -1
 			: DataObjectWithStagingMode.instanceCount++;
 
-	private readonly containerRuntimeExp: IContainerRuntimeBaseExperimental =
-		this.context.containerRuntime;
+	private readonly containerRuntimeExp = asLegacyAlpha(this.context.containerRuntime);
 	get DataObjectWithStagingMode() {
 		return this;
 	}
@@ -114,7 +116,7 @@ class DataObjectWithStagingMode extends DataObject {
 		return state;
 	}
 
-	public enterStagingMode() {
+	public enterStagingMode(): StageControlsInternal {
 		assert(
 			this.containerRuntimeExp.enterStagingMode !== undefined,
 			"enterStagingMode must be defined",

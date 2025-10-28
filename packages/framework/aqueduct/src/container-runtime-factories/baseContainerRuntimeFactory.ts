@@ -11,7 +11,6 @@ import {
 	FluidDataStoreRegistry,
 	loadContainerRuntime,
 	type IContainerRuntimeOptions,
-	type MinimumVersionForCollab,
 } from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { FluidObject } from "@fluidframework/core-interfaces";
@@ -24,6 +23,7 @@ import {
 import type {
 	IFluidDataStoreRegistry,
 	IProvideFluidDataStoreRegistry,
+	MinimumVersionForCollab,
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils/internal";
@@ -63,8 +63,8 @@ export interface BaseContainerRuntimeFactoryProps {
 	 */
 	provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
 	/**
-	 * The minVersionForCollab passed to the ContainerRuntime when instantiating it.
-	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams} for more details on this property.
+	 * Minimum version of the FF runtime that is required to collaborate on new documents.
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minVersionForCollab} for more details on this property.
 	 */
 	minVersionForCollab?: MinimumVersionForCollab | undefined;
 }

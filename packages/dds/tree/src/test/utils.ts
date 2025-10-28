@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import { emulateProductionBuild } from "@fluidframework/core-utils/internal";
 import type {
 	HasListeners,
 	IEmitter,
@@ -37,7 +38,6 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 import {
 	type ChannelFactoryRegistry,
-	type ITestContainerConfig,
 	type ITestObjectProvider,
 	type SummaryInfo,
 	TestContainerRuntimeFactory,
@@ -48,7 +48,12 @@ import {
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 
-import { type ICodecFamily, type IJsonCodec, withSchemaValidation } from "../codec/index.js";
+import {
+	type FormatVersion,
+	type ICodecFamily,
+	type IJsonCodec,
+	withSchemaValidation,
+} from "../codec/index.js";
 import {
 	type ChangeFamily,
 	type ChangeFamilyEditor,
@@ -99,7 +104,7 @@ import {
 	type TreeNodeSchemaIdentifier,
 	type TreeFieldStoredSchema,
 } from "../core/index.js";
-import { typeboxValidator } from "../external-utilities/index.js";
+import { FormatValidatorBasic } from "../external-utilities/index.js";
 import {
 	Context,
 	type NodeIdentifierManager,
@@ -122,6 +127,8 @@ import {
 	jsonableTreeFromCursor,
 	cursorForMapTreeNode,
 	type FullSchemaPolicy,
+	type IncrementalEncodingPolicy,
+	defaultIncrementalEncodingPolicy,
 } from "../feature-libraries/index.js";
 import {
 	type CheckoutEvents,
@@ -181,7 +188,6 @@ import {
 	MockContainerRuntimeFactoryWithOpBunching,
 	type MockContainerRuntimeWithOpBunching,
 } from "./mocksForOpBunching.js";
-import { configureDebugAsserts } from "@fluidframework/core-utils/internal";
 import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import type {
 	ISharedObjectKind,
@@ -202,7 +208,7 @@ import { initializeForest } from "./feature-libraries/index.js";
  * A SharedObjectKind typed to return `ISharedTree` and configured with a `jsonValidator`.
  */
 export const DefaultTestSharedTreeKind = configuredSharedTree({
-	jsonValidator: typeboxValidator,
+	jsonValidator: FormatValidatorBasic,
 }) as SharedObjectKind<ISharedTree> & ISharedObjectKind<ISharedTree>;
 
 /**
@@ -346,16 +352,9 @@ export class TestTreeProvider {
 		const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 			getRawConfig: (name: string): ConfigTypes => settings[name],
 		});
-		const testContainerConfig: ITestContainerConfig = {
-			loaderProps: {
-				configProvider: configProvider({
-					"Fluid.Container.enableOfflineLoad": true,
-				}),
-			},
-		};
 		const container =
 			this.trees.length === 0
-				? await this.provider.makeTestContainer(testContainerConfig)
+				? await this.provider.makeTestContainer()
 				: await this.provider.loadTestContainer();
 
 		this._containers.push(container);
@@ -529,7 +528,7 @@ export class TestTreeProviderLite {
  * after the spy is no longer needed.
  */
 export function spyOnMethod(
-	// eslint-disable-next-line @typescript-eslint/ban-types
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type, @typescript-eslint/ban-types
 	methodClass: Function,
 	methodName: string,
 	spy: () => void,
@@ -615,7 +614,7 @@ export class SharedTreeTestFactory implements IChannelFactory<ISharedTree> {
 	) {
 		const optionsUpdated: SharedTreeOptionsInternal = {
 			...options,
-			jsonValidator: typeboxValidator,
+			jsonValidator: FormatValidatorBasic,
 		};
 		this.inner = configuredSharedTree(
 			optionsUpdated as SharedTreeOptions,
@@ -656,7 +655,7 @@ export function validateTree(tree: ITreeCheckout, expected: JsonableTree[]): voi
 // that equality of two schemas in tests is achieved by deep-comparing their persisted representations.
 // If the newer format is a superset of the previous format, it can be safely used for comparisons. This is the
 // case with schema format v2.
-const schemaCodec = makeSchemaCodec({ jsonValidator: typeboxValidator }, SchemaVersion.v2);
+const schemaCodec = makeSchemaCodec({ jsonValidator: FormatValidatorBasic }, SchemaVersion.v2);
 
 export function checkRemovedRootsAreSynchronized(trees: readonly ITreeCheckout[]): void {
 	if (trees.length > 1) {
@@ -806,6 +805,7 @@ export function checkoutWithContent(
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
 		forestType?: ForestType;
+		shouldEncodeIncrementally?: IncrementalEncodingPolicy;
 	},
 ): TreeCheckout {
 	const { checkout } = createCheckoutWithContent(content, args);
@@ -819,6 +819,7 @@ function createCheckoutWithContent(
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
 		forestType?: ForestType;
+		shouldEncodeIncrementally?: IncrementalEncodingPolicy;
 	},
 ): { checkout: TreeCheckout; logger: IMockLoggerExt } {
 	const fieldCursor = normalizeNewFieldContent(content.initialTree);
@@ -829,6 +830,7 @@ function createCheckoutWithContent(
 		args?.forestType ?? ForestTypeReference,
 		schema,
 		testIdCompressor,
+		args?.shouldEncodeIncrementally ?? defaultIncrementalEncodingPolicy,
 	);
 	initializeForest(forest, fieldCursor, testRevisionTagCodec, testIdCompressor);
 
@@ -1023,7 +1025,7 @@ const assertDeepEqual = (a: unknown, b: unknown): void => assert.deepEqual(a, b)
  * Constructs a basic suite of round-trip tests for all versions of a codec family.
  * This helper should generally be wrapped in a `describe` block.
  *
- * Encoded data for JSON codecs within `family` will be validated using `typeboxValidator`.
+ * Encoded data for JSON codecs within `family` will be validated using `FormatValidatorBasic`.
  *
  * @privateRemarks It is generally not valid to compare the decoded formats with assert.deepEqual,
  * but since these round trip tests start with the decoded format (not the encoded format),
@@ -1041,8 +1043,10 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 	family: ICodecFamily<TDecoded, TContext>,
 	encodingTestData: EncodingTestData<TDecoded, TEncoded, TContext>,
 	assertEquivalent: (a: TDecoded, b: TDecoded) => void = assertDeepEqual,
+	versions?: FormatVersion[],
 ): void {
-	for (const version of family.getSupportedFormats()) {
+	const versionsToTest = versions ?? family.getSupportedFormats();
+	for (const version of versionsToTest) {
 		describe(`version ${version}`, () => {
 			const codec = family.resolve(version);
 			// A common pattern to avoid validating the same portion of encoded data multiple times
@@ -1052,7 +1056,7 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 			// pattern.
 			const jsonCodec =
 				codec.json.encodedSchema !== undefined
-					? withSchemaValidation(codec.json.encodedSchema, codec.json, typeboxValidator)
+					? withSchemaValidation(codec.json.encodedSchema, codec.json, FormatValidatorBasic)
 					: codec.json;
 			describe("can json roundtrip", () => {
 				for (const includeStringification of [false, true]) {
@@ -1303,8 +1307,8 @@ export function getView<const TSchema extends ImplicitFieldSchema>(
  */
 export const snapshotSessionId = assertIsSessionId("beefbeef-beef-4000-8000-000000000001");
 
-export function createSnapshotCompressor() {
-	return createAlwaysFinalizedIdCompressor(snapshotSessionId);
+export function createSnapshotCompressor(seed?: number) {
+	return createAlwaysFinalizedIdCompressor(snapshotSessionId, undefined, seed);
 }
 
 /**
@@ -1456,13 +1460,14 @@ export function moveWithin(
  * and enable debug asserts otherwise.
  */
 export function configureBenchmarkHooks(): void {
-	let debugBefore: boolean;
-	before(() => {
-		debugBefore = configureDebugAsserts(!isInPerformanceTestingMode);
-	});
-	after(() => {
-		assert.equal(configureDebugAsserts(debugBefore), !isInPerformanceTestingMode);
-	});
+	if (isInPerformanceTestingMode) {
+		before(() => {
+			emulateProductionBuild();
+		});
+		after(() => {
+			emulateProductionBuild(false);
+		});
+	}
 }
 
 export function chunkFromJsonTrees(field: JsonCompatible[]): TreeChunk {

@@ -4,6 +4,11 @@
  */
 
 import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import {
+	FluidErrorTypes,
+	layerIncompatibilityErrorSymbol,
+	type ILayerIncompatibilityError,
+} from "@fluidframework/core-interfaces/internal";
 
 import type { ITelemetryPropertiesExt } from "./telemetryTypes.js";
 
@@ -61,6 +66,20 @@ export interface IFluidErrorBase extends Error {
 	readonly errorInstanceId: string;
 
 	/**
+	 * When present, inner error that caused this error.
+	 *
+	 * @remarks
+	 * This will often be an {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error|Error}, but could be any type.
+	 *
+	 * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error/cause
+	 *
+	 * @privateRemarks
+	 * The "cause" field is added in ES2022. Using it even without that built-in support, is still helpful.
+	 * TODO: remove this declaration (use `Error.cause` property) when targeting ES2022 lib or later.
+	 */
+	cause?: unknown;
+
+	/**
 	 * Get the telemetry properties stashed on this error for logging.
 	 */
 	getTelemetryProperties(): ITelemetryBaseProperties;
@@ -94,5 +113,20 @@ export function isFluidError(error: unknown): error is IFluidErrorBase {
 		typeof (error as Partial<IFluidErrorBase>)?.message === "string" &&
 		hasErrorInstanceId(error) &&
 		hasTelemetryPropFunctions(error)
+	);
+}
+
+/**
+ * Helper that returns whether the provided error is a layer incompatibility error.
+ *
+ * @internal
+ */
+export function isLayerIncompatibilityError(
+	error: unknown,
+): error is ILayerIncompatibilityError {
+	return (
+		isFluidError(error) &&
+		error.errorType === FluidErrorTypes.usageError &&
+		layerIncompatibilityErrorSymbol in error
 	);
 }
