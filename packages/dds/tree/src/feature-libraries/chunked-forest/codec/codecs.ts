@@ -126,8 +126,6 @@ export type FieldBatchCodec = IJsonCodec<
 /**
  * Convert a MinimumVersionForCollab to write version for {@link FieldBatchCodec}.
  * @param clientVersion - The MinimumVersionForCollab to convert.
- * @privateRemarks
- * TODO: makeFieldBatchCodec (and makeVersionDispatchingCodec transitively) should bake in this versionToFormat logic and the resulting codec can then support use with FluidClientVersion directly.
  */
 function clientVersionToFieldBatchVersion(
 	clientVersion: MinimumVersionForCollab,
