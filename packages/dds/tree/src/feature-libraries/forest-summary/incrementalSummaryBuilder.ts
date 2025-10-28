@@ -529,7 +529,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 		chunkDecoder: (encoded: EncodedFieldBatch) => TreeChunk,
 	): TreeChunk {
 		const ChunkLoadProperties = this.loadedChunksMap.get(`${referenceId}`);
-		assert(ChunkLoadProperties !== undefined, "Encoded incremental chunk not found");
+		assert(ChunkLoadProperties !== undefined, 0xc86 /* Encoded incremental chunk not found */);
 		const chunk = chunkDecoder(ChunkLoadProperties.encodedContents);
 
 		// Account for the reference about to be added in `chunkTrackingPropertiesMap`
