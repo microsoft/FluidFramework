@@ -7,13 +7,17 @@ export enum BuildResult {
 	Success,
 	UpToDate,
 	Failed,
+	/**
+	 * Task succeeded by restoring outputs from shared cache instead of executing.
+	 */
+	CachedSuccess,
 }
 
 /**
  * Summarizes a collection of build results into a single build result.
  * @returns The summarized build result.
  * If any failed, failure is returned.
- * If there is at least one success and no failures, success is returned.
+ * If there is at least one success (including cached success) and no failures, success is returned.
  * Otherwise (when there are no results or all are up-to-date) up-to-date is returned.
  */
 export function summarizeBuildResult(results: readonly BuildResult[]): BuildResult {
@@ -23,7 +27,7 @@ export function summarizeBuildResult(results: readonly BuildResult[]): BuildResu
 			return BuildResult.Failed;
 		}
 
-		if (result === BuildResult.Success) {
+		if (result === BuildResult.Success || result === BuildResult.CachedSuccess) {
 			retResult = BuildResult.Success;
 		}
 	}

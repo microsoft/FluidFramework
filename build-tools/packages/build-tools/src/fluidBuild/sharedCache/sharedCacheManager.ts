@@ -174,13 +174,13 @@ export class SharedCacheManager {
 	 *
 	 * @param inputs - The task inputs (for computing cache key)
 	 * @param outputs - The task outputs to store
-	 * @param packageRoot - Absolute path to the package root
+	 * @param packageRoot - Absolute path to the package root (currently unused, reserved for future use)
 	 * @returns Promise that resolves when storage is complete
 	 */
 	async store(
 		inputs: CacheKeyInputs,
 		outputs: TaskOutputs,
-		packageRoot: string,
+		packageRoot: string, // eslint-disable-line @typescript-eslint/no-unused-vars
 	): Promise<void> {
 		// Skip if cache writes are disabled
 		if (this.options.skipCacheWrite) {

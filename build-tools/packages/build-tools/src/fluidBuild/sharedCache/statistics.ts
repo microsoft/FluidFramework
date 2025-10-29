@@ -100,7 +100,7 @@ export async function updateCacheSizeStats(
 	cacheDir: string,
 	stats: CacheStatistics,
 ): Promise<void> {
-	const { readdir, stat } = await import("node:fs/promises");
+	const { readdir } = await import("node:fs/promises");
 	const entriesDir = path.join(cacheDir, "v1", "entries");
 
 	try {

@@ -53,6 +53,7 @@ class BuildGraphContext implements BuildContext {
 	public readonly fluidBuildConfig: IFluidBuildConfig;
 	public readonly repoRoot: string;
 	public readonly gitRepo: GitRepo;
+	public readonly sharedCache?: import("./sharedCache/sharedCacheManager").SharedCacheManager;
 	constructor(
 		public readonly repoPackageMap: Map<string, Package>,
 		readonly buildContext: BuildContext,
@@ -61,6 +62,7 @@ class BuildGraphContext implements BuildContext {
 		this.fluidBuildConfig = buildContext.fluidBuildConfig;
 		this.repoRoot = buildContext.repoRoot;
 		this.gitRepo = buildContext.gitRepo;
+		this.sharedCache = buildContext.sharedCache;
 	}
 }
 
