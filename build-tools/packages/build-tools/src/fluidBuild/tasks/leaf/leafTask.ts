@@ -23,6 +23,7 @@ import {
 import type { BuildContext } from "../../buildContext";
 import { type BuildPackage } from "../../buildGraph";
 import { BuildResult, summarizeBuildResult } from "../../buildResult";
+import { STATUS_SYMBOLS } from "../../buildStatusSymbols";
 import {
 	type GitIgnoreSetting,
 	type GitIgnoreSettingValue,
@@ -327,22 +328,22 @@ export abstract class LeafTask extends Task {
 			let statusCharacter: string = " ";
 			switch (status) {
 				case BuildResult.Success:
-					statusCharacter = chalk.yellowBright("\u2713");
+					statusCharacter = chalk.yellowBright(STATUS_SYMBOLS.SUCCESS);
 					break;
 				case BuildResult.UpToDate:
-					statusCharacter = chalk.cyanBright("\u25CB"); // ○ (empty circle)
+					statusCharacter = chalk.cyanBright(STATUS_SYMBOLS.UP_TO_DATE);
 					break;
 				case BuildResult.Failed:
-					statusCharacter = chalk.redBright("x");
+					statusCharacter = chalk.redBright(STATUS_SYMBOLS.FAILED);
 					break;
 				case BuildResult.CachedSuccess:
-					statusCharacter = chalk.blueBright("\u21E9"); // ⇩ (downward white arrow)
+					statusCharacter = chalk.blueBright(STATUS_SYMBOLS.CACHED_SUCCESS);
 					break;
 				case BuildResult.SuccessWithCacheWrite:
-					statusCharacter = chalk.greenBright("\u21E7"); // ⇧ (upward white arrow)
+					statusCharacter = chalk.greenBright(STATUS_SYMBOLS.SUCCESS_WITH_CACHE_WRITE);
 					break;
 				case BuildResult.LocalCacheHit:
-					statusCharacter = chalk.greenBright("\u25A0"); // ■ (filled square)
+					statusCharacter = chalk.greenBright(STATUS_SYMBOLS.LOCAL_CACHE_HIT);
 					break;
 			}
 

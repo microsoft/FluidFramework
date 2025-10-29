@@ -13,6 +13,7 @@ import { defaultLogger } from "../common/logging";
 import { Timer } from "../common/timer";
 import { type BuildGraph } from "./buildGraph";
 import { BuildResult } from "./buildResult";
+import { STATUS_SYMBOLS } from "./buildStatusSymbols";
 import { commonOptions } from "./commonOptions";
 import { DEFAULT_FLUIDBUILD_CONFIG } from "./fluidBuildConfig";
 import { FluidRepoBuild } from "./fluidRepoBuild";
@@ -326,12 +327,14 @@ function buildResultString(buildResult: BuildResult) {
 
 function displayStatusSymbolLegend() {
 	log("\nStatus symbols:");
-	log(`  ${chalk.yellowBright("\u2713")} Success (executed)`);
-	log(`  ${chalk.cyanBright("\u25CB")} Up-to-date (skipped)`);
-	log(`  ${chalk.redBright("x")} Failed`);
-	log(`  ${chalk.blueBright("\u21E9")} Remote cache hit (downloaded)`);
-	log(`  ${chalk.greenBright("\u21E7")} Success with cache write (uploaded)`);
-	log(`  ${chalk.greenBright("\u25A0")} Local cache hit (donefile)`);
+	log(`  ${chalk.yellowBright(STATUS_SYMBOLS.SUCCESS)} Success (executed)`);
+	log(`  ${chalk.cyanBright(STATUS_SYMBOLS.UP_TO_DATE)} Up-to-date (skipped)`);
+	log(`  ${chalk.redBright(STATUS_SYMBOLS.FAILED)} Failed`);
+	log(`  ${chalk.blueBright(STATUS_SYMBOLS.CACHED_SUCCESS)} Remote cache hit (downloaded)`);
+	log(
+		`  ${chalk.greenBright(STATUS_SYMBOLS.SUCCESS_WITH_CACHE_WRITE)} Success with cache write (uploaded)`,
+	);
+	log(`  ${chalk.greenBright(STATUS_SYMBOLS.LOCAL_CACHE_HIT)} Local cache hit (donefile)`);
 }
 
 main().catch((e) => {
