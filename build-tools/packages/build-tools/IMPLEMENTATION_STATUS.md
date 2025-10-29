@@ -2,7 +2,7 @@
 
 **Started**: 2025-10-28
 **Target Completion**: TBD
-**Current Phase**: Phase 4 (CLI and Configuration) - 33% complete
+**Current Phase**: Phase 4 (CLI and Configuration) - 83% complete
 
 ## Overview
 
@@ -18,10 +18,10 @@ This document tracks implementation progress for the shared cache feature in flu
 | Phase 1 | ✅ Complete | 8 | 8 | 100% |
 | Phase 2 | ✅ Complete | 6 | 6 | 100% |
 | Phase 3 | ✅ Complete | 8 | 8 | 100% |
-| Phase 4 | 🔄 In Progress | 4 | 6 | 67% |
+| Phase 4 | 🔄 In Progress | 5 | 6 | 83% |
 | Phase 5 | ⏳ Pending | 0 | 8 | 0% |
 
-**Overall Progress**: 28/38 tasks (74%)
+**Overall Progress**: 29/38 tasks (76%)
 
 ---
 
@@ -599,13 +599,29 @@ This document tracks implementation progress for the shared cache feature in flu
 - Statistics display after total time, before failure summary
 
 ### Task 4.5: Cache Management Commands (1.5 hours)
-**Status**: ⏳ Pending
+**Status**: ✅ Complete
+**Started**: 2025-10-28
+**Completed**: 2025-10-28
 **Dependencies**: Task 4.1
 **Deliverables**:
-- [ ] --cache-stats flag implementation
-- [ ] --cache-clean flag implementation
-- [ ] --cache-prune flag implementation
-- [ ] --cache-verify flag implementation
+- [x] --cache-stats flag implementation
+- [x] --cache-clean flag implementation
+- [x] --cache-prune flag implementation
+- [x] --cache-verify flag implementation
+
+**Notes**:
+- Added four cache management methods to SharedCacheManager:
+  - `displayStatistics()` - Shows hit/miss counts, cache size, average times
+  - `cleanCache()` - Removes all cache entries and resets statistics
+  - `pruneCache(maxSizeMB, maxAgeDays)` - LRU-based pruning with configurable thresholds
+  - `verifyCache(fix)` - Integrity verification with optional auto-fix
+- Added CLI flags: --cache-stats, --cache-clean, --cache-prune, --cache-verify, --cache-verify-fix
+- Added optional parameters: --cache-prune-size (default: 5000 MB), --cache-prune-age (default: 30 days)
+- All cache management commands exit immediately after execution
+- All commands require --cache-dir to be specified
+- Comprehensive error handling with user-friendly messages
+- Statistics automatically updated after cleanup operations
+- All code formatted with Biome and TypeScript compilation successful
 
 ### Task 4.6: Configuration File Support (1 hour)
 **Status**: ⏳ Pending
@@ -890,6 +906,46 @@ Before considering implementation complete:
   - All code formatted with Biome and TypeScript compilation successful
 
 **Progress**: Phase 4 now at 67% (28/38 tasks overall, 74%)
+
+**Session 6: 2025-10-28 (Continued)**
+
+**Phase 4 Task Completed:**
+- Task 4.5: Cache Management Commands
+  - Implemented `displayStatistics()` method in SharedCacheManager
+    - Displays hit/miss counts, hit rate percentage, cache size, average times
+    - Shows last pruned date if available
+  - Implemented `cleanCache()` method
+    - Removes all cache entries while preserving directory structure
+    - Resets statistics to zero
+    - Recreates empty entries directory
+  - Implemented `pruneCache(maxSizeMB, maxAgeDays)` method
+    - LRU-based pruning with size and age thresholds
+    - Default: 5000 MB (5 GB) max size, 30 days max age
+    - Sorts entries by last access time
+    - Removes oldest entries first until under size limit
+    - Logs each pruned entry with age information
+    - Updates statistics after pruning
+  - Implemented `verifyCache(fix)` method
+    - Verifies integrity of all cache entries
+    - Checks manifest validity and file hashes
+    - Optional auto-fix mode removes corrupted entries
+    - Reports total/valid/corrupted/fixed counts
+    - Updates statistics if entries are fixed
+  - Added CLI flags and parsing:
+    - `--cache-stats` - Display statistics and exit
+    - `--cache-clean` - Clean cache and exit
+    - `--cache-prune` - Prune cache and exit
+    - `--cache-prune-size <MB>` - Max size for pruning (default: 5000)
+    - `--cache-prune-age <days>` - Max age for pruning (default: 30)
+    - `--cache-verify` - Verify integrity and exit
+    - `--cache-verify-fix` - Verify and fix corrupted entries
+  - Integrated into fluidBuild.ts main() function
+    - Cache management commands exit immediately after execution
+    - All commands require --cache-dir to be specified
+    - Comprehensive error handling with user-friendly messages
+  - All code formatted with Biome and TypeScript compilation successful
+
+**Progress**: Phase 4 now at 83% (29/38 tasks overall, 76%)
 
 ---
 

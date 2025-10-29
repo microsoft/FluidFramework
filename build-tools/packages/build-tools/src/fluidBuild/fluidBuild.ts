@@ -59,6 +59,33 @@ async function main() {
 		}
 	}
 
+	// Handle cache management commands (these exit immediately)
+	if (options.cacheStats || options.cacheClean || options.cachePrune || options.cacheVerify) {
+		if (!sharedCache) {
+			error("Cache management commands require --cache-dir to be specified");
+			process.exit(-1);
+		}
+
+		try {
+			if (options.cacheStats) {
+				await sharedCache.displayStatistics();
+			} else if (options.cacheClean) {
+				await sharedCache.cleanCache();
+			} else if (options.cachePrune) {
+				await sharedCache.pruneCache(
+					options.cachePruneMaxSizeMB,
+					options.cachePruneMaxAgeDays,
+				);
+			} else if (options.cacheVerify) {
+				await sharedCache.verifyCache(options.cacheVerifyFix);
+			}
+			process.exit(0);
+		} catch (e) {
+			error(`Cache operation failed: ${(e as Error).message}`);
+			process.exit(-1);
+		}
+	}
+
 	// Load the packages
 	const repo = new FluidRepoBuild({
 		repoRoot: resolvedRoot,

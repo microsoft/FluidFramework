@@ -46,6 +46,34 @@ interface FastBuildOptions extends IPackageMatchedOptions {
 	 * Verify file integrity when restoring from cache
 	 */
 	verifyCacheIntegrity: boolean;
+	/**
+	 * Display cache statistics
+	 */
+	cacheStats: boolean;
+	/**
+	 * Clean all cache entries
+	 */
+	cacheClean: boolean;
+	/**
+	 * Prune old cache entries
+	 */
+	cachePrune: boolean;
+	/**
+	 * Maximum cache size in MB for pruning
+	 */
+	cachePruneMaxSizeMB: number;
+	/**
+	 * Maximum age in days for pruning
+	 */
+	cachePruneMaxAgeDays: number;
+	/**
+	 * Verify cache integrity
+	 */
+	cacheVerify: boolean;
+	/**
+	 * Fix corrupted cache entries during verification
+	 */
+	cacheVerifyFix: boolean;
 }
 
 // defaults
@@ -77,6 +105,13 @@ export const options: FastBuildOptions = {
 	cacheDir: process.env.FLUID_BUILD_CACHE_DIR,
 	skipCacheWrite: false,
 	verifyCacheIntegrity: false,
+	cacheStats: false,
+	cacheClean: false,
+	cachePrune: false,
+	cachePruneMaxSizeMB: 5000, // 5 GB default
+	cachePruneMaxAgeDays: 30, // 30 days default
+	cacheVerify: false,
+	cacheVerifyFix: false,
 };
 
 // This string is duplicated in the readme: update readme if changing this.
@@ -108,6 +143,13 @@ Options:
      --cache-dir <path>          Path to shared cache directory (default: env FLUID_BUILD_CACHE_DIR)
      --skip-cache-write          Read from cache but do not write to it (read-only mode)
      --verify-cache-integrity    Verify file integrity when restoring from cache (adds overhead)
+     --cache-stats               Display cache statistics and exit
+     --cache-clean               Remove all cache entries and exit
+     --cache-prune               Prune old cache entries based on LRU policy and exit
+     --cache-prune-size <MB>     Maximum cache size in MB for pruning (default: 5000)
+     --cache-prune-age <days>    Maximum age in days for pruning (default: 30)
+     --cache-verify              Verify cache integrity and exit
+     --cache-verify-fix          Verify and fix corrupted cache entries
 ${commonOptionString}
 `,
 	);
@@ -301,6 +343,67 @@ export function parseOptions(argv: string[]) {
 
 		if (arg === "--verify-cache-integrity") {
 			options.verifyCacheIntegrity = true;
+			continue;
+		}
+
+		if (arg === "--cache-stats") {
+			options.cacheStats = true;
+			setBuild(false);
+			continue;
+		}
+
+		if (arg === "--cache-clean") {
+			options.cacheClean = true;
+			setBuild(false);
+			continue;
+		}
+
+		if (arg === "--cache-prune") {
+			options.cachePrune = true;
+			setBuild(false);
+			continue;
+		}
+
+		if (arg === "--cache-prune-size") {
+			if (i !== process.argv.length - 1) {
+				const sizeMB = parseInt(process.argv[++i]);
+				if (!isNaN(sizeMB) && sizeMB > 0) {
+					options.cachePruneMaxSizeMB = sizeMB;
+					continue;
+				}
+				errorLog("Argument for --cache-prune-size must be a number > 0");
+			} else {
+				errorLog("Missing argument for --cache-prune-size");
+			}
+			error = true;
+			break;
+		}
+
+		if (arg === "--cache-prune-age") {
+			if (i !== process.argv.length - 1) {
+				const ageDays = parseInt(process.argv[++i]);
+				if (!isNaN(ageDays) && ageDays > 0) {
+					options.cachePruneMaxAgeDays = ageDays;
+					continue;
+				}
+				errorLog("Argument for --cache-prune-age must be a number > 0");
+			} else {
+				errorLog("Missing argument for --cache-prune-age");
+			}
+			error = true;
+			break;
+		}
+
+		if (arg === "--cache-verify") {
+			options.cacheVerify = true;
+			setBuild(false);
+			continue;
+		}
+
+		if (arg === "--cache-verify-fix") {
+			options.cacheVerify = true;
+			options.cacheVerifyFix = true;
+			setBuild(false);
 			continue;
 		}
 

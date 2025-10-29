@@ -499,4 +499,321 @@ export class SharedCacheManager {
 
 		await saveStatistics(this.options.cacheDir, this.statistics);
 	}
+
+	/**
+	 * Display cache statistics to console.
+	 *
+	 * Shows current statistics including hit/miss counts, cache size,
+	 * and average operation times.
+	 */
+	async displayStatistics(): Promise<void> {
+		await this.initialize();
+
+		const hitRate =
+			this.statistics.hitCount + this.statistics.missCount > 0
+				? (
+						(this.statistics.hitCount /
+							(this.statistics.hitCount + this.statistics.missCount)) *
+						100
+					).toFixed(1)
+				: "0.0";
+
+		console.log("\nCache Statistics:");
+		console.log(`  Total Entries: ${this.statistics.totalEntries}`);
+		console.log(`  Total Size: ${(this.statistics.totalSize / 1024 / 1024).toFixed(2)} MB`);
+		console.log(`  Hit Count: ${this.statistics.hitCount} (${hitRate}% hit rate)`);
+		console.log(`  Miss Count: ${this.statistics.missCount}`);
+		console.log(`  Average Restore Time: ${this.statistics.avgRestoreTime.toFixed(1)}ms`);
+		console.log(`  Average Store Time: ${this.statistics.avgStoreTime.toFixed(1)}ms`);
+
+		if (this.statistics.lastPruned) {
+			const prunedDate = new Date(this.statistics.lastPruned).toLocaleString();
+			console.log(`  Last Pruned: ${prunedDate}`);
+		}
+
+		console.log("");
+	}
+
+	/**
+	 * Clean all cache entries.
+	 *
+	 * Removes all cached data but preserves the cache directory structure.
+	 * Statistics are reset to zero.
+	 *
+	 * @returns Promise that resolves when cleaning is complete
+	 */
+	async cleanCache(): Promise<void> {
+		await this.initialize();
+
+		const { rm } = await import("node:fs/promises");
+		const { getCacheEntriesDirectory } = await import("./cacheDirectory.js");
+		const { updateCacheSizeStats } = await import("./statistics.js");
+
+		const entriesDir = getCacheEntriesDirectory(this.options.cacheDir);
+
+		console.log("\nCleaning cache...");
+		console.log(`  Removing all entries from: ${entriesDir}`);
+
+		try {
+			// Remove all entries
+			await rm(entriesDir, { recursive: true, force: true });
+
+			// Recreate entries directory
+			const { mkdir } = await import("node:fs/promises");
+			await mkdir(entriesDir, { recursive: true });
+
+			// Reset statistics
+			this.statistics.totalEntries = 0;
+			this.statistics.totalSize = 0;
+
+			// Save updated statistics
+			await this.persistStatistics();
+
+			console.log("  ✓ Cache cleaned successfully");
+		} catch (error) {
+			console.error(
+				`Error cleaning cache: ${error instanceof Error ? error.message : String(error)}`,
+			);
+			throw error;
+		}
+	}
+
+	/**
+	 * Prune old cache entries based on LRU policy.
+	 *
+	 * Removes least recently used entries until the cache is under the
+	 * specified size limit or age threshold.
+	 *
+	 * @param maxSizeMB - Maximum cache size in megabytes (default: 5000 MB = 5 GB)
+	 * @param maxAgeDays - Maximum age of entries in days (default: 30 days)
+	 * @returns Number of entries pruned
+	 */
+	async pruneCache(maxSizeMB: number = 5000, maxAgeDays: number = 30): Promise<number> {
+		await this.initialize();
+
+		const { readdir, stat, rm } = await import("node:fs/promises");
+		const { getCacheEntriesDirectory } = await import("./cacheDirectory.js");
+		const { updateCacheSizeStats } = await import("./statistics.js");
+
+		const entriesDir = getCacheEntriesDirectory(this.options.cacheDir);
+		const maxSizeBytes = maxSizeMB * 1024 * 1024;
+		const maxAgeMs = maxAgeDays * 24 * 60 * 60 * 1000;
+		const now = Date.now();
+
+		console.log("\nPruning cache...");
+		console.log(`  Max size: ${maxSizeMB} MB`);
+		console.log(`  Max age: ${maxAgeDays} days`);
+
+		try {
+			// Get all cache entries with their access times
+			const entries = await readdir(entriesDir, { withFileTypes: true });
+			const entryInfos: Array<{ name: string; accessTime: number; size: number }> = [];
+
+			for (const entry of entries) {
+				if (!entry.isDirectory()) continue;
+
+				const entryPath = path.join(entriesDir, entry.name);
+				const manifestPath = path.join(entryPath, "manifest.json");
+
+				try {
+					const manifestStat = await stat(manifestPath);
+					const outputsDir = path.join(entryPath, "outputs");
+
+					// Read manifest to get access time
+					const { readManifest } = await import("./manifest.js");
+					const manifest = await readManifest(entryPath);
+
+					if (!manifest) continue;
+
+					// Calculate entry size
+					let entrySize = 0;
+					try {
+						const outputEntries = await readdir(outputsDir, { recursive: true });
+						for (const outputFile of outputEntries) {
+							const filePath = path.join(outputsDir, outputFile);
+							try {
+								const fileStat = await stat(filePath);
+								if (fileStat.isFile()) {
+									entrySize += fileStat.size;
+								}
+							} catch {
+								// Skip files that can't be accessed
+							}
+						}
+					} catch {
+						// Skip if outputs directory doesn't exist
+					}
+
+					entryInfos.push({
+						name: entry.name,
+						accessTime: new Date(manifest.lastAccessedAt).getTime(),
+						size: entrySize,
+					});
+				} catch {
+					// Skip entries with missing or invalid manifests
+				}
+			}
+
+			// Sort by access time (oldest first)
+			entryInfos.sort((a, b) => a.accessTime - b.accessTime);
+
+			let pruned = 0;
+			let currentSize = entryInfos.reduce((sum, e) => sum + e.size, 0);
+
+			// Prune entries that are too old or exceed size limit
+			for (const entry of entryInfos) {
+				const age = now - entry.accessTime;
+				const shouldPruneAge = age > maxAgeMs;
+				const shouldPruneSize = currentSize > maxSizeBytes;
+
+				if (shouldPruneAge || shouldPruneSize) {
+					const entryPath = path.join(entriesDir, entry.name);
+					await rm(entryPath, { recursive: true, force: true });
+					pruned++;
+					currentSize -= entry.size;
+
+					if (shouldPruneAge) {
+						console.log(
+							`  Pruned old entry: ${entry.name.substring(0, 12)}... (${(age / 1000 / 60 / 60 / 24).toFixed(1)} days old)`,
+						);
+					}
+				}
+
+				// Stop if we're under the size limit
+				if (currentSize <= maxSizeBytes) {
+					break;
+				}
+			}
+
+			// Update statistics
+			await updateCacheSizeStats(this.options.cacheDir, this.statistics);
+			this.statistics.lastPruned = new Date().toISOString();
+			await this.persistStatistics();
+
+			console.log(`  ✓ Pruned ${pruned} entries`);
+			console.log(
+				`  ✓ Cache size after pruning: ${(this.statistics.totalSize / 1024 / 1024).toFixed(2)} MB`,
+			);
+
+			return pruned;
+		} catch (error) {
+			console.error(
+				`Error pruning cache: ${error instanceof Error ? error.message : String(error)}`,
+			);
+			throw error;
+		}
+	}
+
+	/**
+	 * Verify integrity of all cache entries.
+	 *
+	 * Checks that all cached files exist and have correct hashes.
+	 * Reports any corrupted entries.
+	 *
+	 * @param fix - If true, remove corrupted entries (default: false)
+	 * @returns Object containing verification results
+	 */
+	async verifyCache(fix: boolean = false): Promise<{
+		total: number;
+		valid: number;
+		corrupted: number;
+		fixed: number;
+	}> {
+		await this.initialize();
+
+		const { readdir, rm } = await import("node:fs/promises");
+		const { getCacheEntriesDirectory } = await import("./cacheDirectory.js");
+		const { updateCacheSizeStats } = await import("./statistics.js");
+
+		const entriesDir = getCacheEntriesDirectory(this.options.cacheDir);
+
+		console.log("\nVerifying cache integrity...");
+
+		let total = 0;
+		let valid = 0;
+		let corrupted = 0;
+		let fixed = 0;
+
+		try {
+			const entries = await readdir(entriesDir, { withFileTypes: true });
+
+			for (const entry of entries) {
+				if (!entry.isDirectory()) continue;
+
+				total++;
+				const entryPath = path.join(entriesDir, entry.name);
+
+				try {
+					// Read manifest
+					const { readManifest } = await import("./manifest.js");
+					const manifest = await readManifest(entryPath);
+
+					if (!manifest) {
+						console.log(`  ✗ ${entry.name.substring(0, 12)}... - Invalid manifest`);
+						corrupted++;
+						if (fix) {
+							await rm(entryPath, { recursive: true, force: true });
+							fixed++;
+						}
+						continue;
+					}
+
+					// Verify all output files
+					const filesToVerify = manifest.outputFiles.map((output) => ({
+						path: path.join(entryPath, "outputs", output.path),
+						hash: output.hash,
+					}));
+
+					const verification = await verifyFilesIntegrity(filesToVerify);
+
+					if (verification.success) {
+						valid++;
+					} else {
+						console.log(
+							`  ✗ ${entry.name.substring(0, 12)}... - ${verification.failedFiles.length} file(s) corrupted`,
+						);
+						corrupted++;
+						if (fix) {
+							await rm(entryPath, { recursive: true, force: true });
+							fixed++;
+						}
+					}
+				} catch (error) {
+					console.log(
+						`  ✗ ${entry.name.substring(0, 12)}... - Error: ${error instanceof Error ? error.message : String(error)}`,
+					);
+					corrupted++;
+					if (fix) {
+						try {
+							await rm(entryPath, { recursive: true, force: true });
+							fixed++;
+						} catch {
+							// Ignore errors when removing corrupted entries
+						}
+					}
+				}
+			}
+
+			// Update statistics if we fixed corrupted entries
+			if (fixed > 0) {
+				await updateCacheSizeStats(this.options.cacheDir, this.statistics);
+				await this.persistStatistics();
+			}
+
+			console.log(`\nVerification complete:`);
+			console.log(`  Total entries: ${total}`);
+			console.log(`  Valid: ${valid}`);
+			console.log(`  Corrupted: ${corrupted}`);
+			if (fix) {
+				console.log(`  Fixed: ${fixed}`);
+			}
+
+			return { total, valid, corrupted, fixed };
+		} catch (error) {
+			console.error(
+				`Error verifying cache: ${error instanceof Error ? error.message : String(error)}`,
+			);
+			throw error;
+		}
+	}
 }
