@@ -3107,34 +3107,6 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 
 			countToProcess = newRenameEntry.length;
 
-			const finalDetachLocationEntry =
-				this.table.newChange.rootNodes.outputDetachLocations.getFirst(
-					baseDetachId,
-					countToProcess,
-				);
-
-			countToProcess = finalDetachLocationEntry.length;
-			if (newRenameEntry.value !== undefined && finalDetachLocationEntry.value !== undefined) {
-				// XXX: Consider moving this into a separate method so this one won't have side effects.
-				// XXX: Consider whether editing the root table here is actually idempotent,
-				// particularly in the case where we are composing inverses.
-
-				// `newChange` had an output detach location for a node which was detached in its input context,
-				// and so is keyed under the root ID (which is `baseDetachId`).
-				// That node is still attached in the input context of the composed change, so it needs to be keyed under
-				// the ID of the composed detach (which is `newRenameEntry.value`).
-				this.table.composedRootNodes.outputDetachLocations.delete(
-					baseDetachId,
-					countToProcess,
-				);
-
-				this.table.composedRootNodes.outputDetachLocations.set(
-					newRenameEntry.value,
-					countToProcess,
-					finalDetachLocationEntry.value,
-				);
-			}
-
 			result = {
 				value: { nodeChange: rootEntry.value, detachId: newRenameEntry.value },
 				length: countToProcess,
@@ -3200,14 +3172,6 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 
 		const baseDetachId = baseRootIdEntry.value;
 
-		const newOutputDetachLocationEntry =
-			this.table.newChange.rootNodes.outputDetachLocations.getFirst(
-				newDetachId,
-				countToProcess,
-			);
-
-		countToProcess = newOutputDetachLocationEntry.length;
-
 		if (baseDetachEntry.value !== undefined) {
 			// The base change moves these nodes.
 			const prevEntry =
@@ -3231,12 +3195,6 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 				{ ...newDetachId, target: CrossFieldTarget.Source },
 				countToProcess,
 				baseDetachEntry.value,
-			);
-
-			this.table.composedRootNodes.outputDetachLocations.set(
-				newDetachId,
-				countToProcess,
-				newOutputDetachLocationEntry.value ?? this.fieldId,
 			);
 
 			this.invalidateBaseFields([baseDetachEntry.value]);
@@ -3263,10 +3221,19 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 				countToProcess,
 				true,
 			);
+		}
 
-			this.table.composedRootNodes.outputDetachLocations.delete(newDetachId, countToProcess);
+		if (newAttachEntry.value === undefined) {
+			const newOutputDetachLocationEntry =
+				this.table.newChange.rootNodes.outputDetachLocations.getFirst(
+					newDetachId,
+					countToProcess,
+				);
+
+			countToProcess = newOutputDetachLocationEntry.length;
+
 			this.table.composedRootNodes.outputDetachLocations.set(
-				baseDetachId,
+				newDetachId,
 				countToProcess,
 				newOutputDetachLocationEntry.value ?? this.fieldId,
 			);
@@ -4143,56 +4110,10 @@ function rebaseRoots(
 	}
 
 	for (const entry of change.rootNodes.outputDetachLocations.entries()) {
-		rebaseOutputDetachLocation(
-			entry.start,
-			entry.length,
-			entry.value,
-			rebasedRoots,
-			change,
-			base,
-		);
+		rebasedRoots.outputDetachLocations.set(entry.start, entry.length, entry.value);
 	}
 
 	return rebasedRoots;
-}
-
-function rebaseOutputDetachLocation(
-	rootId: ChangeAtomId,
-	count: number,
-	fieldId: FieldId,
-	rebasedRoots: RootNodeTable,
-	newChange: ModularChangeset,
-	baseChange: ModularChangeset,
-): void {
-	let countToProcess = count;
-	const baseRenameEntry = firstAttachIdFromDetachId(
-		baseChange.rootNodes,
-		rootId,
-		countToProcess,
-	);
-	countToProcess = baseRenameEntry.length;
-	const rebasedRootId = baseRenameEntry.value;
-
-	// const baseAttachEntry = getFirstAttachField(
-	// 	baseChange.crossFieldKeys,
-	// 	rebasedRootId,
-	// 	countToProcess,
-	// );
-	// countToProcess = baseAttachEntry.length;
-
-	rebasedRoots.outputDetachLocations.set(rebasedRootId, count, fieldId);
-
-	const countRemaining = count - countToProcess;
-	if (countRemaining > 0) {
-		rebaseOutputDetachLocation(
-			offsetChangeAtomId(rootId, countToProcess),
-			countRemaining,
-			fieldId,
-			rebasedRoots,
-			newChange,
-			baseChange,
-		);
-	}
 }
 
 function rebaseRename(
@@ -4343,7 +4264,7 @@ function composeRootTables(
 	}
 
 	for (const entry of change2.rootNodes.outputDetachLocations.entries()) {
-		// XXX: Handle change1's renames
+		// XXX: Handle composition of two detached moves.
 		mergedTable.outputDetachLocations.set(entry.start, entry.length, entry.value);
 	}
 

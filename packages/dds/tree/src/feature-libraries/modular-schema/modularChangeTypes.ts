@@ -94,9 +94,9 @@ export interface RootNodeTable {
 	detachLocations: ChangeAtomIdRangeMap<FieldId>;
 
 	/**
-	 * Maps from either
-	 * - input context detach ID to the field where this change moves (and possible re-detaches) that node.
-	 * - ID of first detach in this changeset of a node to the field where this changeset last detaches that node.
+	 * Maps from the output root ID of a node to the output detach location of that node.
+	 * This is only guaranteed to contain entries for nodes which have an output detach location
+	 * which is different from their location in the input context.
 	 */
 	outputDetachLocations: ChangeAtomIdRangeMap<FieldId>;
 }

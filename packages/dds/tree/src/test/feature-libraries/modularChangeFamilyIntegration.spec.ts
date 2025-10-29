@@ -1472,7 +1472,7 @@ describe("ModularChangeFamily integration", () => {
 					maxId: 2,
 					detachedMoves: [
 						{
-							detachId: detachCellId,
+							detachId,
 							count: 1,
 							newLocation: fieldAId,
 						},
@@ -1528,7 +1528,7 @@ describe("ModularChangeFamily integration", () => {
 					renames: [{ oldId, newId, count: 1, detachLocation: fieldAId }],
 					detachedMoves: [
 						{
-							detachId: oldId,
+							detachId: newId,
 							count: 1,
 							newLocation: fieldAId,
 						},
@@ -1540,6 +1540,63 @@ describe("ModularChangeFamily integration", () => {
 					MarkMaker.rename(1, oldId, { revision: tag1, localId: brand(1) }),
 					MarkMaker.skip(1),
 					MarkMaker.rename(1, { revision: tag1, localId: brand(2) }, newId),
+				]),
+			);
+
+			assertEqual(composed, expected);
+		});
+
+		it("detach and (move and remove)", () => {
+			const [changeReceiver, getChanges] = testChangeReceiver(family);
+			const editor = new DefaultEditBuilder(family, mintRevisionTag, changeReceiver);
+
+			const fieldAPath = { parent: undefined, field: fieldA };
+			editor.sequenceField(fieldAPath).remove(0, 1);
+			editor.move(fieldAPath, 0, 1, fieldAPath, 2);
+			editor.sequenceField(fieldAPath).remove(1, 1);
+
+			const [remove1Untagged, moveUntagged, remove2Untagged] = getChanges();
+			const remove = tagChangeInline(remove1Untagged, tag1);
+			const moveAndRemoveInitial = tagChangeInline(
+				family.compose([makeAnonChange(moveUntagged), makeAnonChange(remove2Untagged)]),
+				tag2,
+			);
+
+			const moveAndRemove = tagChange(
+				family.rebase(
+					moveAndRemoveInitial,
+					remove,
+					revisionMetadataSourceFromInfo([{ revision: tag1 }, { revision: tag2 }]),
+				),
+				tag2,
+			);
+
+			const composed = family.compose([remove, moveAndRemove]);
+
+			const fieldAId = { nodeId: undefined, field: fieldA };
+			const detachId: ChangeAtomId = { revision: tag2, localId: brand(3) };
+			const expected = Change.build(
+				{
+					family,
+					maxId: 3,
+					detachedMoves: [{ detachId, count: 1, newLocation: fieldAId }],
+					revisions: [{ revision: tag1 }, { revision: tag2 }],
+				},
+				Change.field(fieldA, sequence.identifier, [
+					MarkMaker.remove(
+						1,
+						{ revision: tag2, localId: brand(3) },
+						{
+							detachCellId: { revision: tag1, localId: brand(0) },
+							cellRename: { revision: tag2, localId: brand(1) }, // XXX: Is this correct?
+						},
+					),
+					MarkMaker.skip(1),
+					MarkMaker.rename(
+						1,
+						{ revision: tag2, localId: brand(2) },
+						{ revision: tag2, localId: brand(3) },
+					),
 				]),
 			);
 
