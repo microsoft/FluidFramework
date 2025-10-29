@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 #!/usr/bin/env node
 /**
  * Cache Key Stability Test
@@ -58,10 +63,13 @@ function computeCacheKey(inputs: CacheKeyInputs): string {
 		...(inputs.configHashes && {
 			configHashes: Object.keys(inputs.configHashes)
 				.sort()
-				.reduce((acc, key) => {
-					acc[key] = inputs.configHashes![key];
-					return acc;
-				}, {} as Record<string, string>),
+				.reduce(
+					(acc, key) => {
+						acc[key] = inputs.configHashes![key];
+						return acc;
+					},
+					{} as Record<string, string>,
+				),
 		}),
 	};
 
@@ -237,8 +245,7 @@ function testNodeVersionHandling(): boolean {
 	const keyV18 = computeCacheKey(inputsV18);
 	const keyV22 = computeCacheKey(inputsV22);
 
-	const allDifferent =
-		keyV20 !== keyV18 && keyV18 !== keyV22 && keyV20 !== keyV22;
+	const allDifferent = keyV20 !== keyV18 && keyV18 !== keyV22 && keyV20 !== keyV22;
 
 	console.log(`  Current Node: ${process.version}`);
 	console.log(`  Key (v20.15.1): ${keyV20.substring(0, 16)}...`);
@@ -246,9 +253,7 @@ function testNodeVersionHandling(): boolean {
 	console.log(`  Key (v22.0.0):  ${keyV22.substring(0, 16)}...`);
 	console.log(`  All different: ${allDifferent ? "✅" : "❌"}`);
 	console.log(`  Result: ${allDifferent ? "✅ PASS" : "❌ FAIL"}`);
-	console.log(
-		"\n  ℹ️  Note: Different Node versions produce different cache keys",
-	);
+	console.log("\n  ℹ️  Note: Different Node versions produce different cache keys");
 	console.log("     This is intentional to prevent cross-version issues");
 
 	return allDifferent;
@@ -272,9 +277,7 @@ function testPlatformHandling(): boolean {
 	};
 
 	const platforms = ["linux", "darwin", "win32"];
-	const keys = platforms.map((platform) =>
-		computeCacheKey({ ...inputs, platform }),
-	);
+	const keys = platforms.map((platform) => computeCacheKey({ ...inputs, platform }));
 
 	const allDifferent = new Set(keys).size === platforms.length;
 
@@ -284,9 +287,7 @@ function testPlatformHandling(): boolean {
 	});
 	console.log(`  All different: ${allDifferent ? "✅" : "❌"}`);
 	console.log(`  Result: ${allDifferent ? "✅ PASS" : "❌ FAIL"}`);
-	console.log(
-		"\n  ℹ️  Note: Different platforms produce different cache keys",
-	);
+	console.log("\n  ℹ️  Note: Different platforms produce different cache keys");
 	console.log("     This prevents cross-platform compatibility issues");
 
 	return allDifferent;
@@ -356,9 +357,7 @@ function testOptionalFields(): boolean {
 	console.log(`  Without optional fields: ${key2.substring(0, 16)}...`);
 	console.log(`  Different: ${different ? "✅" : "❌"}`);
 	console.log(`  Result: ${different ? "✅ PASS" : "❌ FAIL"}`);
-	console.log(
-		"\n  ℹ️  Note: Presence/absence of optional fields affects cache key",
-	);
+	console.log("\n  ℹ️  Note: Presence/absence of optional fields affects cache key");
 
 	return different;
 }
