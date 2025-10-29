@@ -1,5 +1,13 @@
 # @fluidframework/datastore
 
+## 2.70.0
+
+### Minor Changes
+
+- Remove submitMessage from FluidDataStoreRuntime and MockFluidDataStoreRuntime ([#25755](https://github.com/microsoft/FluidFramework/pull/25755)) [88860f348b](https://github.com/microsoft/FluidFramework/commit/88860f348b0d67f94952d4e2ae227fa0b1f9f942)
+
+  As needed, access `submitMessage` via `IFluidDataStoreContext`/`IFluidParentContext`. See https://github.com/microsoft/FluidFramework/issues/24406 for details.
+
 ## 2.63.0
 
 Dependency updates only.

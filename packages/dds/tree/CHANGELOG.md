@@ -1,5 +1,57 @@
 # @fluidframework/tree
 
+## 2.70.0
+
+### Minor Changes
+
+- All non-structurally named beta schema factory APIs now support node schema metadata ([#25685](https://github.com/microsoft/FluidFramework/pull/25685)) [6d8c0ca181](https://github.com/microsoft/FluidFramework/commit/6d8c0ca181c7ed7c600e56197ed4bc75cfbba3db)
+
+  The "options" parameter which allows providing metadata for `TreeNodeSchema` is now available consistently on `SchemaFactoryBeta`,
+  not just `SchemaFactoryAlpha` and a subset of `SchemaFactoryBeta`.
+
+- A minimal set of branching APIs has been promoted to beta. ([#25744](https://github.com/microsoft/FluidFramework/pull/25744)) [32cc2c75d8](https://github.com/microsoft/FluidFramework/commit/32cc2c75d82c35403caa91e67e81f71baee5d092)
+
+  The following APIs have been promoted to beta in `@fluidframework/tree`:
+
+  - `TreeBranch.fork()`
+  - `TreeBranch.merge()`
+  - `TreeBranch.rebaseOnto()`
+  - `TreeBranch.dispose()`
+  - `TreeView.fork()`
+
+  These APIs enable applications to implement basic local branching flows.
+
+- Promote FluidSerializableAsTree APIs from alpha to beta ([#25693](https://github.com/microsoft/FluidFramework/pull/25693)) [43fbc54d05](https://github.com/microsoft/FluidFramework/commit/43fbc54d05351d06c4bc20d1e6f5ca732775f605)
+
+  `FluidSerializableAsTree` may now be imported from `/beta`.
+
+- Update TableSchema APIs (alpha) to accept SchemaFactoryBeta in addition to SchemaFactoryAlpha ([#25613](https://github.com/microsoft/FluidFramework/pull/25613)) [1bdf44ac5a](https://github.com/microsoft/FluidFramework/commit/1bdf44ac5a93bcd1956e15e54c46a16ad2d1c005)
+
+  Makes the [TableSchema](https://fluidframework.com/docs/api/fluid-framework/tableschema-namespace) APIs more flexible, and prepares them for future promotion to beta themselves.
+
+- Added `Tree.ensureSchema` ([#25740](https://github.com/microsoft/FluidFramework/pull/25740)) [8213407b3f](https://github.com/microsoft/FluidFramework/commit/8213407b3fe93f0e35925b1dcd7e799501cb0e92)
+
+  This helper function allows content to be tagged with a schema type before being inserted into the tree.
+  This allows content that would otherwise be ambiguous to be well-defined, without having to wrap it in a node constructor.
+
+  Example:
+
+  ```typescript
+  const sf = new SchemaFactory("example");
+  class Dog extends sf.object("Dog", { name: sf.string() }) {}
+  class Cat extends sf.object("Cat", { name: sf.string() }) {}
+  class Root extends sf.object("Root", { pet: [Dog, Cat] }) {}
+  // ...
+  const pet = { name: "Max" };
+  view.root.pet = pet; // Error: `pet` is ambiguous - is it a Dog or a Cat?
+  view.root.pet = new Dog(pet); // This works, but has the overhead of creating a Dog node before the insertion actually happens.
+  TreeAlpha.ensureSchema(Dog, pet); // Instead, this tags the `pet` object as a Dog...
+  view.root.pet = pet; // So now there is no error for a normal insertion - it's a Dog.
+  ```
+
+  This function works by leveraging the new `schemaSymbol`, which is also available for use.
+  See its documentation for more information.
+
 ## 2.63.0
 
 ### Minor Changes

@@ -164,7 +164,7 @@ export interface CodecWriteOptions extends ICodecOptions {
  * appropriate one, but depending on API layering this might be less ergonomic.
  * - Context for the object currently being encoded, which might enable more efficient encoding. When used in this fashion, the codec author
  * should be careful to include the context somewhere in the encoded data such that decoding can correctly round-trip.
- * For example, a composed set of codecs could implement a form of [dictionary coding](https://en.wikipedia.org/wiki/Dictionary_coder)
+ * For example, a composed set of codecs could implement a form of {@link https://en.wikipedia.org/wiki/Dictionary_coder | dictionary coding}
  * using a context map which was created by the top-level codec and passed to the inner codecs.
  * This pattern is used:
  * - To avoid repeatedly encoding session ids on commits (only recording it once at the top level)
@@ -227,14 +227,14 @@ export interface IMultiFormatCodec<
  * allows avoiding some duplicate work at encode/decode time, since the vast majority of document usage will not
  * involve mixed format versions.
  *
- * @privateRemarks - This interface currently assumes all codecs in a family require the same encode/decode context,
+ * @privateRemarks This interface currently assumes all codecs in a family require the same encode/decode context,
  * which isn't necessarily true.
  * This may need to be relaxed in the future.
  */
 export interface ICodecFamily<TDecoded, TContext = void> {
 	/**
 	 * @returns a codec that can be used to encode and decode data in the specified format.
-	 * @throws - if the format version is not supported by this family.
+	 * @throws if the format version is not supported by this family.
 	 * @remarks Implementations should typically emit telemetry (either indirectly by throwing a well-known error with
 	 * logged properties or directly using some logger) when a format version is requested that is not supported.
 	 * This ensures that applications can diagnose compatibility issues.

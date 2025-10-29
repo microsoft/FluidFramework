@@ -16,15 +16,13 @@ import {
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
 import { SummaryObject, SummaryType } from "@fluidframework/driver-definitions";
-import {
-	MessageType,
-	ISequencedDocumentMessage,
-} from "@fluidframework/driver-definitions/internal";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import {
 	IExperimentalIncrementalSummaryContext,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
+	IRuntimeMessageCollection,
 	channelsTreeName,
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
@@ -154,25 +152,24 @@ class TestIncrementalSummaryBlobDDS extends SharedObject {
 			this.blobMap.set(blob, blobContent);
 		}
 	}
-	protected processCore(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	) {
-		if (message.type === MessageType.Operation) {
-			const op = message.contents as ICreateBlobOp;
-			switch (op.type) {
-				case "blobStorage": {
-					const blob: IBlob = {
-						value: op.value,
-						seqNumber: message.sequenceNumber,
-					};
-					const blobName = `${this.blobMap.size}`;
-					this.blobMap.set(blobName, blob);
-					break;
+	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+		const { envelope, messagesContent } = messagesCollection;
+		for (const messageContent of messagesContent) {
+			if (envelope.type === MessageType.Operation) {
+				const op = messageContent.contents as ICreateBlobOp;
+				switch (op.type) {
+					case "blobStorage": {
+						const blob: IBlob = {
+							value: op.value,
+							seqNumber: envelope.sequenceNumber,
+						};
+						const blobName = `${this.blobMap.size}`;
+						this.blobMap.set(blobName, blob);
+						break;
+					}
+					default:
+						throw new Error("Unknown operation");
 				}
-				default:
-					throw new Error("Unknown operation");
 			}
 		}
 	}
@@ -374,31 +371,30 @@ class TestIncrementalSummaryTreeDDSClass extends SharedObject {
 		return node;
 	}
 
-	protected processCore(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	) {
-		if (message.type === MessageType.Operation) {
-			const op = message.contents as ICreateTreeNodeOp;
-			switch (op.type) {
-				case "treeOp": {
-					const node: ITreeNode = {
-						children: [],
-						name: op.name,
-						seqNumber: message.sequenceNumber,
-					};
-					const parent = this.findNodeAndUpdateSeqNumber(
-						op.parentPath,
-						this.root,
-						message.sequenceNumber,
-					);
+	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+		const { envelope, messagesContent } = messagesCollection;
+		for (const messageContent of messagesContent) {
+			if (envelope.type === MessageType.Operation) {
+				const op = messageContent.contents as ICreateTreeNodeOp;
+				switch (op.type) {
+					case "treeOp": {
+						const node: ITreeNode = {
+							children: [],
+							name: op.name,
+							seqNumber: envelope.sequenceNumber,
+						};
+						const parent = this.findNodeAndUpdateSeqNumber(
+							op.parentPath,
+							this.root,
+							envelope.sequenceNumber,
+						);
 
-					parent.children.push(node);
-					break;
+						parent.children.push(node);
+						break;
+					}
+					default:
+						throw new Error("Unknown operation");
 				}
-				default:
-					throw new Error("Unknown operation");
 			}
 		}
 	}

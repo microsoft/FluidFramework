@@ -501,8 +501,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
     // (undocumented)
     setConnectionState(connected: boolean, clientId?: string): void;
-    // @deprecated (undocumented)
-    submitMessage(type: MessageType, content: any): null;
     // (undocumented)
     submitSignal(type: string, content: any): null;
     // (undocumented)
@@ -543,6 +541,8 @@ export class MockObjectStorageService implements IChannelStorageService {
     });
     // (undocumented)
     contains(path: string): Promise<boolean>;
+    // (undocumented)
+    getSnapshotTree(): ISnapshotTree;
     // (undocumented)
     list(path: string): Promise<string[]>;
     // (undocumented)
