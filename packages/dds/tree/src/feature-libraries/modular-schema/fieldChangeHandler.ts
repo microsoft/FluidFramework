@@ -233,7 +233,7 @@ export interface FieldChangeEncodingContext {
 	decodeNode(encodedNode: EncodedNodeChangeset): NodeId;
 	decodeRootNodeChange(detachId: ChangeAtomId, encodedNode: EncodedNodeChangeset): void;
 	decodeRootRename(oldId: ChangeAtomId, newId: ChangeAtomId, count: number): void;
-	decodeMoveAndDetach(moveId: ChangeAtomId, detachId: ChangeAtomId, count: number): void;
+	decodeMoveAndDetach(detachId: ChangeAtomId, count: number): void;
 	generateId(): ChangeAtomId;
 }
 

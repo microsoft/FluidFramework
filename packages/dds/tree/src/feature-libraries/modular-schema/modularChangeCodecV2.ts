@@ -315,7 +315,7 @@ export function makeModularChangeCodecV2(
 
 				decodeRootNodeChange: (detachId, encodedNode): void => {},
 				decodeRootRename: (oldId, newId, count): void => {},
-				decodeMoveAndDetach: (moveId, detachId, count): void => {},
+				decodeMoveAndDetach: (detachId, count): void => {},
 
 				generateId: (): ChangeAtomId => ({
 					revision: context.revision,

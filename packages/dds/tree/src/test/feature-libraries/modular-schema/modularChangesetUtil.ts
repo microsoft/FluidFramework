@@ -65,6 +65,7 @@ import {
 	getNodeParent,
 	newRootTable,
 	normalizeFieldId,
+	normalizeNodeId,
 	type RenameDescription,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
@@ -204,6 +205,23 @@ function normalizeNodeIds(change: ModularChangeset): ModularChangeset {
 		for (const [detachId, nodeId] of roots.nodeChanges.entries()) {
 			normalizedRoots.nodeChanges.set(detachId, normalizeNodeChanges(nodeId));
 		}
+
+		for (const entry of roots.detachLocations.entries()) {
+			normalizedRoots.detachLocations.set(
+				entry.start,
+				entry.length,
+				remapFieldId(entry.value),
+			);
+		}
+
+		for (const entry of roots.outputDetachLocations.entries()) {
+			normalizedRoots.outputDetachLocations.set(
+				entry.start,
+				entry.length,
+				remapFieldId(entry.value),
+			);
+		}
+
 		return normalizedRoots;
 	}
 
@@ -730,10 +748,32 @@ export function removeAliases(changeset: ModularChangeset): ModularChangeset {
 		);
 	}
 
+	const updatedRootTable = cloneRootTable(changeset.rootNodes);
+	for (const [rootId, nodeId] of changeset.rootNodes.nodeChanges.entries()) {
+		updatedRootTable.nodeChanges.set(rootId, normalizeNodeId(nodeId, changeset.nodeAliases));
+	}
+
+	for (const entry of changeset.rootNodes.detachLocations.entries()) {
+		updatedRootTable.detachLocations.set(
+			entry.start,
+			entry.length,
+			normalizeFieldId(entry.value, changeset.nodeAliases),
+		);
+	}
+
+	for (const entry of changeset.rootNodes.outputDetachLocations.entries()) {
+		updatedRootTable.outputDetachLocations.set(
+			entry.start,
+			entry.length,
+			normalizeFieldId(entry.value, changeset.nodeAliases),
+		);
+	}
+
 	return {
 		...changeset,
 		nodeToParent: brand(updatedNodeToParent),
 		crossFieldKeys: updatedCrossFieldKeys,
 		nodeAliases: newTupleBTree(),
+		rootNodes: updatedRootTable,
 	};
 }

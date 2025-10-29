@@ -3978,7 +3978,10 @@ export function normalizeFieldId(
 /**
  * @returns The canonical form of nodeId, according to nodeAliases
  */
-function normalizeNodeId(nodeId: NodeId, nodeAliases: ChangeAtomIdBTree<NodeId>): NodeId {
+export function normalizeNodeId(
+	nodeId: NodeId,
+	nodeAliases: ChangeAtomIdBTree<NodeId>,
+): NodeId {
 	let currentId = nodeId;
 	let cycleProbeId: NodeId | undefined = nodeId;
 

@@ -285,8 +285,8 @@ export function makeModularChangeCodecV1(
 					addNodeRename(decodedRootTable, oldId, newId, count, fieldId);
 				},
 
-				decodeMoveAndDetach: (moveId, detachId, count): void => {
-					// XXX
+				decodeMoveAndDetach: (detachId, count): void => {
+					decodedRootTable.outputDetachLocations.set(detachId, count, fieldId);
 				},
 
 				generateId: (): ChangeAtomId => ({
