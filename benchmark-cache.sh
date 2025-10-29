@@ -1,7 +1,10 @@
 #!/bin/bash
 
 # Benchmarking script for Fluid Framework build cache
-# Compares build performance with and without the shared cache
+# Tests the shared cache by comparing:
+#   1. Fresh build with empty shared cache (no local donefiles, no shared cache)
+#   2. Fresh build with populated shared cache (no local donefiles, yes shared cache)
+# Both scenarios clean local donefiles to isolate shared cache performance
 
 set -e
 
@@ -14,7 +17,7 @@ NC='\033[0m' # No Color
 # Configuration
 PROJECT_DIR="${1:-packages/framework/aqueduct}"
 BENCHMARK_RUNS="${2:-5}"
-PREPARE_RUNS="${3:-2}"
+PREPARE_RUNS="${3:-1}"
 
 echo -e "${GREEN}╔══════════════════════════════════════════════════════════╗${NC}"
 echo -e "${GREEN}║   Fluid Framework Build Cache Benchmark                 ║${NC}"
@@ -49,26 +52,6 @@ PROJECT_NAME=$(basename "$PROJECT_DIR")
 echo -e "${YELLOW}Project: ${PROJECT_NAME}${NC}"
 echo ""
 
-# Clean build artifacts
-clean_build() {
-    echo -e "${YELLOW}Cleaning build artifacts...${NC}"
-    rm -rf dist lib *.tsbuildinfo node_modules/.cache 2>/dev/null || true
-    # Clean any build log files
-    rm -rf *.done.build.log 2>/dev/null || true
-}
-
-# Function to disable cache
-disable_cache() {
-    export FLUID_BUILD_CACHE_DISABLED=1
-    echo -e "${YELLOW}Cache disabled (FLUID_BUILD_CACHE_DISABLED=1)${NC}"
-}
-
-# Function to enable cache
-enable_cache() {
-    unset FLUID_BUILD_CACHE_DISABLED
-    echo -e "${YELLOW}Cache enabled${NC}"
-}
-
 echo -e "${GREEN}═══════════════════════════════════════════════════════════${NC}"
 echo -e "${GREEN}Running benchmarks...${NC}"
 echo -e "${GREEN}═══════════════════════════════════════════════════════════${NC}"
@@ -81,25 +64,26 @@ cd ../../..
 # Extract just the package name (e.g., "aqueduct" from "packages/framework/aqueduct")
 PACKAGE_NAME=$(basename "${PROJECT_DIR}")
 
-# Build command - fluid-build can take package name patterns
-BUILD_CMD="pnpm fluid-build --task compile ${PACKAGE_NAME}"
+# Build command - fluid-build uses the shared cache
+BUILD_CMD="/home/tylerbu/code/FluidFramework/fluid-build-cache/build-tools/packages/build-tools/bin/fluid-build build"
 
-# Clean command - runs pnpm clean to clear local cached build artifacts
+# Clean command - removes both donefiles and build artifacts
 CLEAN_CMD="pnpm clean"
 
 # Run hyperfine benchmark
+# Both scenarios clean build artifacts and donefiles to test shared cache impact
 hyperfine \
     --runs "${BENCHMARK_RUNS}" \
     --warmup "${PREPARE_RUNS}" \
     --export-markdown "benchmark-results-${PROJECT_NAME}.md" \
     --export-json "benchmark-results-${PROJECT_NAME}.json" \
     --show-output \
-    --command-name "with-cache" \
+    --command-name "with-shared-cache" \
     --prepare "${CLEAN_CMD}" \
     "${BUILD_CMD}" \
-    --command-name "without-cache" \
-    --prepare "${CLEAN_CMD}" \
-    "FLUID_BUILD_CACHE_DISABLED=1 ${BUILD_CMD}"
+    --command-name "without-shared-cache" \
+    --prepare "${CLEAN_CMD}; export FLUID_BUILD_CACHE_DIR=\$(mktemp -d)" \
+    "${BUILD_CMD}"
 
 echo ""
 echo -e "${GREEN}═══════════════════════════════════════════════════════════${NC}"

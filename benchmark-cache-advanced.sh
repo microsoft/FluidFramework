@@ -133,8 +133,8 @@ echo -e "  ${BLUE}Warmup runs:${NC} ${PREPARE_RUNS}"
 echo -e "  ${BLUE}Output:${NC} ${OUTPUT_DIR}/"
 echo ""
 
-# Build command
-BUILD_CMD="pnpm fluid-build --task ${BUILD_TASK} ${PROJECT_NAME}"
+# Build command - fb build uses the shared cache
+BUILD_CMD="fb build"
 
 # Clean command - runs pnpm clean to clear local cached build artifacts
 CLEAN_CMD="pnpm clean"
@@ -161,8 +161,8 @@ case "$COMPARE_MODE" in
             --prepare "${CLEAN_CMD}" \
             "${BUILD_CMD}" \
             --command-name "without-cache" \
-            --prepare "${CLEAN_CMD}" \
-            "FLUID_BUILD_CACHE_DISABLED=1 ${BUILD_CMD}"
+            --prepare "${CLEAN_CMD}; export FLUID_BUILD_CACHE_PATH=\$(mktemp -d)" \
+            "${BUILD_CMD}"
         ;;
     
     cold-warm)
