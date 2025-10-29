@@ -63,6 +63,9 @@ export class SharedCounter
 
 	private _value: number = 0;
 
+	/**
+	 * Tracks pending local ops that have not been ack'd yet.
+	 */
 	private readonly pendingOps: IIncrementOperation[] = [];
 
 	/**
@@ -88,8 +91,8 @@ export class SharedCounter
 		};
 
 		this.incrementCore(incrementAmount);
+		// We don't need to send the op if we are not attached yet.
 		if (this.isAttached()) {
-			// We don't need to submit the op if we are not attached
 			this.pendingOps.push(op);
 			this.submitLocalMessage(op);
 		}
