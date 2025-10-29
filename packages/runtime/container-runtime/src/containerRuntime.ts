@@ -2839,7 +2839,7 @@ export class ContainerRuntime
 				assert(
 					this.getConnectionState !== undefined &&
 						this.getConnectionState() === ConnectionState.CatchingUp,
-					"connection state mismatch between getConnectionState and setConnectionStatus notification",
+					0xc8d /* connection state mismatch between getConnectionState and setConnectionStatus notification */,
 				);
 
 				// Note: Historically when only `setConnectionState` of `IRuntime`

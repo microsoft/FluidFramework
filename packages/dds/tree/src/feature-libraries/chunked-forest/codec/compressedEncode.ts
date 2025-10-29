@@ -456,7 +456,7 @@ export const incrementalFieldEncoder: FieldEncoder = {
 	): void {
 		assert(
 			context.incrementalEncoder !== undefined,
-			"incremental encoder must be defined to use incrementalFieldEncoder",
+			0xc88 /* incremental encoder must be defined to use incrementalFieldEncoder */,
 		);
 
 		const chunkReferenceIds = context.incrementalEncoder.encodeIncrementalField(

@@ -100,7 +100,7 @@ export function getShouldIncrementallySummarizeAllowedTypes(
 		);
 		assert(
 			allowedTypes !== undefined,
-			"Non object nodes with fields should only have one allowedTypes entry",
+			0xc87 /* Non object nodes with fields should only have one allowedTypes entry */,
 		);
 		return isIncrementalSummaryHintInAllowedTypes(allowedTypes);
 	};

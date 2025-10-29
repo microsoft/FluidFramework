@@ -69,6 +69,10 @@ export interface ConnectionStatusTemplate {
 	 * True if the runtime is currently allowed to send ops.
 	 */
 	canSendOps: boolean;
+	/**
+	 * True if the container is in readonly mode.
+	 */
+	readonly: boolean;
 }
 
 /**
