@@ -65,7 +65,7 @@ cd ../../..
 PACKAGE_NAME=$(basename "${PROJECT_DIR}")
 
 # Build command - fluid-build uses the shared cache
-BUILD_CMD="/home/tylerbu/code/FluidFramework/fluid-build-cache/build-tools/packages/build-tools/bin/fluid-build build"
+BUILD_CMD="/home/tylerbu/code/FluidFramework/fluid-build-cache/build-tools/packages/build-tools/bin/fluid-build --task build"
 
 # Clean command - removes both donefiles and build artifacts
 CLEAN_CMD="pnpm clean"

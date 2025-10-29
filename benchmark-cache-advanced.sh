@@ -133,8 +133,8 @@ echo -e "  ${BLUE}Warmup runs:${NC} ${PREPARE_RUNS}"
 echo -e "  ${BLUE}Output:${NC} ${OUTPUT_DIR}/"
 echo ""
 
-# Build command - fb build uses the shared cache
-BUILD_CMD="fb build"
+# Build command - fluid-build uses the shared cache
+BUILD_CMD="/home/tylerbu/code/FluidFramework/fluid-build-cache/build-tools/packages/build-tools/bin/fluid-build --task build"
 
 # Clean command - runs pnpm clean to clear local cached build artifacts
 CLEAN_CMD="pnpm clean"
