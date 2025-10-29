@@ -622,10 +622,24 @@ export class BuildGraph {
 
 		const hitRate = ((stats.hitCount / totalLookups) * 100).toFixed(1);
 		const cacheSizeMB = (stats.totalSize / 1024 / 1024).toFixed(2);
-		const timeSavedSeconds = (stats.timeSavedMs / 1000).toFixed(1);
+
+		// Format time saved as hours, minutes, seconds
+		const timeSavedMs = stats.timeSavedMs;
+		const hours = Math.floor(timeSavedMs / (1000 * 60 * 60));
+		const minutes = Math.floor((timeSavedMs % (1000 * 60 * 60)) / (1000 * 60));
+		const seconds = Math.floor((timeSavedMs % (1000 * 60)) / 1000);
+
+		let timeSavedStr: string;
+		if (hours > 0) {
+			timeSavedStr = `${hours}h ${minutes}m ${seconds}s`;
+		} else if (minutes > 0) {
+			timeSavedStr = `${minutes}m ${seconds}s`;
+		} else {
+			timeSavedStr = `${seconds}s`;
+		}
 
 		return chalk.magentaBright(
-			`Cache: ${stats.hitCount} hits, ${stats.missCount} misses (${hitRate}% hit rate) | ${stats.totalEntries} entries, ${cacheSizeMB} MB | ${timeSavedSeconds}s saved`,
+			`Cache: ${stats.hitCount} hits, ${stats.missCount} misses (${hitRate}% hit rate) | ${stats.totalEntries} entries, ${cacheSizeMB} MB | ${timeSavedStr} saved`,
 		);
 	}
 
