@@ -1334,7 +1334,7 @@ export class FluidDataStoreRuntime
 	public async applyStashedOp(content: any): Promise<unknown> {
 		assert(
 			!this.localOpActivity,
-			"runtime active must be undefined when entering applyStashedOp",
+			"localOpActivity must be undefined when entering applyStashedOp",
 		);
 		this.localOpActivity = "applyStashed";
 		try {
