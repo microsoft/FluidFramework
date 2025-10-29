@@ -702,7 +702,7 @@ const hasSelectedClientSpec = (op: unknown): op is SelectedClientSpec =>
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
 function mixinClientSelection<TOperation extends BaseOperation>(
-		/* eslint-enable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive
+	/* eslint-enable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag */
 	model: LocalServerStressModel<TOperation>,
 	_: LocalServerStressOptions,
 ): LocalServerStressModel<TOperation> {
