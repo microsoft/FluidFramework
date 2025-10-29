@@ -412,7 +412,7 @@ export class FieldSchemaAlpha<
 		return this.allowedTypesFull.evaluateIdentifiers();
 	}
 
-	public get simpleAllowedTypes(): Map<string, SimpleAllowedTypes> {
+	public get simpleAllowedTypes(): ReadonlyMap<string, SimpleAllowedTypes> {
 		const types = this.allowedTypesFull.evaluate().types;
 		const info = new Map<string, SimpleAllowedTypes>();
 

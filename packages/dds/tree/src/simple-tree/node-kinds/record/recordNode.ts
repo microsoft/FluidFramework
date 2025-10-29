@@ -32,6 +32,7 @@ import {
 	CompatibilityLevel,
 	type TreeNodeSchemaPrivateData,
 	convertAllowedTypes,
+	AnnotatedAllowedTypesInternal,
 } from "../../core/index.js";
 import { getTreeNodeSchemaInitializedData } from "../../createContext.js";
 import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
@@ -260,7 +261,7 @@ export function recordSchema<
 		() => new Set(normalizedTypes.evaluate().map((type) => type.identifier)),
 	);
 	const lazySimpleAllowedTypes = new Lazy(() => {
-		return normalizedTypes.evaluateSimpleAllowedTypes();
+		return AnnotatedAllowedTypesInternal.evaluateSimpleAllowedTypes(normalizedTypes);
 	});
 
 	let privateData: TreeNodeSchemaPrivateData | undefined;

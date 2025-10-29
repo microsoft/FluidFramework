@@ -966,7 +966,8 @@ function buildSimpleAllowedTypesForStoredSchema(
 ): ReadonlyMap<string, SimpleAllowedTypes> {
 	const allowedTypesInfo = new Map<string, SimpleAllowedTypes>();
 	for (const type of types) {
-		allowedTypesInfo.set(type, {});
+		// Stored schemas do not have staged upgrades
+		allowedTypesInfo.set(type, { isStaged: undefined });
 	}
 	return allowedTypesInfo;
 }
@@ -992,7 +993,6 @@ function exportSimpleFieldSchemaStored(schema: TreeFieldStoredSchema): SimpleFie
 	}
 	return {
 		kind,
-		// TODO: Refactor
 		simpleAllowedTypes: buildSimpleAllowedTypesForStoredSchema(schema.types),
 		metadata: {},
 		persistedMetadata: schema.persistedMetadata,

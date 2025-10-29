@@ -89,7 +89,8 @@ function generateAllowedTypes(
 	allowed: ReadonlyMap<string, SimpleAllowedTypes>,
 	context: Context,
 ): AllowedTypes {
-	return [...new Set(allowed.keys())].map(
+	return Array.from(
+		allowed.keys(),
 		(id) => context.get(id) ?? fail(0xb5a /* Missing schema */),
 	);
 }

@@ -47,6 +47,7 @@ import {
 	type TreeNodeSchemaPrivateData,
 	convertAllowedTypes,
 	withBufferedTreeEvents,
+	AnnotatedAllowedTypesInternal,
 } from "../../core/index.js";
 import {
 	type FactoryContent,
@@ -1170,7 +1171,7 @@ export function arraySchema<
 		() => new Set(normalizedTypes.evaluate().map((type) => type.identifier)),
 	);
 	const lazySimpleAllowedTypes = new Lazy(() => {
-		return normalizedTypes.evaluateSimpleAllowedTypes();
+		return AnnotatedAllowedTypesInternal.evaluateSimpleAllowedTypes(normalizedTypes);
 	});
 
 	let privateData: TreeNodeSchemaPrivateData | undefined;

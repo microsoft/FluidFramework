@@ -43,6 +43,7 @@ import {
 	type FlexContent,
 	type TreeNodeSchemaPrivateData,
 	convertAllowedTypes,
+	AnnotatedAllowedTypesInternal,
 } from "../../core/index.js";
 import {
 	unhydratedFlexTreeFromInsertable,
@@ -277,7 +278,7 @@ export function mapSchema<
 		() => new Set(normalizedTypes.evaluate().map((type) => type.identifier)),
 	);
 	const lazySimpleAllowedTypes = new Lazy(() => {
-		return normalizedTypes.evaluateSimpleAllowedTypes();
+		return AnnotatedAllowedTypesInternal.evaluateSimpleAllowedTypes(normalizedTypes);
 	});
 
 	let privateData: TreeNodeSchemaPrivateData | undefined;

@@ -176,7 +176,7 @@ export interface SimpleAllowedTypes {
 	 *
 	 * Undefined if derived from a stored schema.
 	 */
-	readonly isStaged?: boolean;
+	readonly isStaged: boolean | undefined;
 }
 
 /**
