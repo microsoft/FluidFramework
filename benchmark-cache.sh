@@ -15,20 +15,35 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Configuration
-PACKAGE_NAME="aqueduct"  # Package to build (e.g., "aqueduct", "container-runtime", etc.)
-PROJECT_DIR="${1:-packages/framework/aqueduct}"
-BENCHMARK_RUNS="${2:-5}"
+PACKAGE_NAME="${1:-container-runtime}"  # Package to build (e.g., "aqueduct", "container-runtime", etc.)
+BENCHMARK_RUNS="${2:-3}"
 PREPARE_RUNS="${3:-1}"
+
+# Find project directory from package name
+PROJECT_DIR=$(find packages -name "package.json" -type f -exec grep -l "\"name\".*\"@fluidframework/${PACKAGE_NAME}\"" {} \; | head -1 | xargs dirname)
+if [ -z "$PROJECT_DIR" ]; then
+    PROJECT_DIR=$(find packages -name "package.json" -type f -exec grep -l "\"name\".*\"@fluid-experimental/${PACKAGE_NAME}\"" {} \; | head -1 | xargs dirname)
+fi
+if [ -z "$PROJECT_DIR" ]; then
+    PROJECT_DIR=$(find packages -name "package.json" -type f -exec grep -l "\"name\".*\"${PACKAGE_NAME}\"" {} \; | head -1 | xargs dirname)
+fi
 
 echo -e "${GREEN}╔══════════════════════════════════════════════════════════╗${NC}"
 echo -e "${GREEN}║   Fluid Framework Build Cache Benchmark                 ║${NC}"
 echo -e "${GREEN}╚══════════════════════════════════════════════════════════╝${NC}"
 echo ""
 echo -e "${YELLOW}Configuration:${NC}"
+echo -e "  Package: ${PACKAGE_NAME}"
 echo -e "  Project: ${PROJECT_DIR}"
 echo -e "  Benchmark runs: ${BENCHMARK_RUNS}"
 echo -e "  Prepare runs: ${PREPARE_RUNS}"
 echo ""
+
+# Check if project directory was found
+if [ -z "$PROJECT_DIR" ]; then
+    echo -e "${RED}Error: Could not find package '${PACKAGE_NAME}'${NC}"
+    exit 1
+fi
 
 # Check if hyperfine is installed
 if ! command -v hyperfine &> /dev/null; then
@@ -83,8 +98,8 @@ hyperfine \
     --prepare "${CLEAN_CMD}" \
     "${BUILD_CMD}" \
     --command-name "without-shared-cache" \
-    --prepare "${CLEAN_CMD}; export FLUID_BUILD_CACHE_DIR=\$(mktemp -d)" \
-    "${BUILD_CMD}"
+    --prepare "${CLEAN_CMD}" \
+    "FLUID_BUILD_CACHE_DIR=\$(mktemp -d) ${BUILD_CMD}"
 
 echo ""
 echo -e "${GREEN}═══════════════════════════════════════════════════════════${NC}"
