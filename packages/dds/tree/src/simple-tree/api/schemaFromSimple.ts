@@ -13,7 +13,7 @@ import {
 	type FieldProps,
 } from "../fieldSchema.js";
 import type {
-	SimpleAllowedTypes,
+	SimpleAllowedTypesAttributes,
 	SimpleFieldSchema,
 	SimpleNodeSchema,
 	SimpleTreeSchema,
@@ -86,7 +86,7 @@ function generateFieldSchema(
 }
 
 function generateAllowedTypes(
-	allowed: ReadonlyMap<string, SimpleAllowedTypes>,
+	allowed: ReadonlyMap<string, SimpleAllowedTypesAttributes>,
 	context: Context,
 ): AllowedTypes {
 	return Array.from(

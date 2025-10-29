@@ -21,7 +21,7 @@ import {
 } from "../../../simple-tree/index.js";
 import { getJsonValidator } from "./jsonSchemaUtilities.js";
 import type {
-	SimpleAllowedTypes,
+	SimpleAllowedTypesAttributes,
 	SimpleNodeSchema,
 	SimpleTreeSchema,
 	// eslint-disable-next-line import/no-internal-modules
@@ -50,7 +50,7 @@ describe("simpleSchemaToJsonSchema", () => {
 			root: {
 				kind: FieldKind.Required,
 				metadata: {},
-				simpleAllowedTypes: new Map<string, SimpleAllowedTypes>([
+				simpleAllowedTypes: new Map<string, SimpleAllowedTypesAttributes>([
 					[stringSchema.identifier, { isStaged: false }],
 				]),
 			},
@@ -88,7 +88,7 @@ describe("simpleSchemaToJsonSchema", () => {
 			root: {
 				kind: FieldKind.Required,
 				metadata: {},
-				simpleAllowedTypes: new Map<string, SimpleAllowedTypes>([
+				simpleAllowedTypes: new Map<string, SimpleAllowedTypesAttributes>([
 					["test.handle", { isStaged: false }],
 				]),
 			},
@@ -112,7 +112,7 @@ describe("simpleSchemaToJsonSchema", () => {
 		const input: SimpleTreeSchema = {
 			root: {
 				kind: FieldKind.Required,
-				simpleAllowedTypes: new Map<string, SimpleAllowedTypes>([
+				simpleAllowedTypes: new Map<string, SimpleAllowedTypesAttributes>([
 					["test.array", { isStaged: false }],
 				]),
 				metadata: {},
@@ -124,7 +124,7 @@ describe("simpleSchemaToJsonSchema", () => {
 						kind: NodeKind.Array,
 						metadata: {},
 						persistedMetadata: undefined,
-						simpleAllowedTypes: new Map<string, SimpleAllowedTypes>([
+						simpleAllowedTypes: new Map<string, SimpleAllowedTypesAttributes>([
 							[stringSchema.identifier, { isStaged: false }],
 						]),
 					},
@@ -169,7 +169,7 @@ describe("simpleSchemaToJsonSchema", () => {
 		const input: SimpleTreeSchema = {
 			root: {
 				kind: FieldKind.Required,
-				simpleAllowedTypes: new Map<string, SimpleAllowedTypes>([
+				simpleAllowedTypes: new Map<string, SimpleAllowedTypesAttributes>([
 					["test.map", { isStaged: false }],
 				]),
 				metadata: {},
@@ -181,7 +181,7 @@ describe("simpleSchemaToJsonSchema", () => {
 						kind: NodeKind.Map,
 						metadata: {},
 						persistedMetadata: undefined,
-						simpleAllowedTypes: new Map<string, SimpleAllowedTypes>([
+						simpleAllowedTypes: new Map<string, SimpleAllowedTypesAttributes>([
 							[stringSchema.identifier, { isStaged: false }],
 						]),
 					},
@@ -238,7 +238,7 @@ describe("simpleSchemaToJsonSchema", () => {
 		const input: SimpleTreeSchema = {
 			root: {
 				kind: FieldKind.Required,
-				simpleAllowedTypes: new Map<string, SimpleAllowedTypes>([
+				simpleAllowedTypes: new Map<string, SimpleAllowedTypesAttributes>([
 					["test.record", { isStaged: false }],
 				]),
 				metadata: {},
@@ -250,7 +250,7 @@ describe("simpleSchemaToJsonSchema", () => {
 						kind: NodeKind.Record,
 						metadata: {},
 						persistedMetadata: undefined,
-						simpleAllowedTypes: new Map<string, SimpleAllowedTypes>([
+						simpleAllowedTypes: new Map<string, SimpleAllowedTypesAttributes>([
 							[stringSchema.identifier, { isStaged: false }],
 						]),
 					},
@@ -354,7 +354,7 @@ describe("simpleSchemaToJsonSchema", () => {
 			root: {
 				kind: FieldKind.Required,
 				metadata: {},
-				simpleAllowedTypes: new Map<string, SimpleAllowedTypes>([
+				simpleAllowedTypes: new Map<string, SimpleAllowedTypesAttributes>([
 					["test.object", { isStaged: false }],
 				]),
 			},
@@ -370,7 +370,7 @@ describe("simpleSchemaToJsonSchema", () => {
 								"foo",
 								{
 									kind: FieldKind.Optional,
-									simpleAllowedTypes: new Map<string, SimpleAllowedTypes>([
+									simpleAllowedTypes: new Map<string, SimpleAllowedTypesAttributes>([
 										[numberSchema.identifier, { isStaged: false }],
 									]),
 									metadata: { description: "A number representing the concept of Foo." },
@@ -382,7 +382,7 @@ describe("simpleSchemaToJsonSchema", () => {
 								"bar",
 								{
 									kind: FieldKind.Required,
-									simpleAllowedTypes: new Map<string, SimpleAllowedTypes>([
+									simpleAllowedTypes: new Map<string, SimpleAllowedTypesAttributes>([
 										[stringSchema.identifier, { isStaged: false }],
 									]),
 									metadata: { description: "A string representing the concept of Bar." },
@@ -394,7 +394,7 @@ describe("simpleSchemaToJsonSchema", () => {
 								"id",
 								{
 									kind: FieldKind.Identifier,
-									simpleAllowedTypes: new Map<string, SimpleAllowedTypes>([
+									simpleAllowedTypes: new Map<string, SimpleAllowedTypesAttributes>([
 										[stringSchema.identifier, { isStaged: false }],
 									]),
 									metadata: {
@@ -499,7 +499,7 @@ describe("simpleSchemaToJsonSchema", () => {
 			root: {
 				kind: FieldKind.Required,
 				metadata: {},
-				simpleAllowedTypes: new Map<string, SimpleAllowedTypes>([
+				simpleAllowedTypes: new Map<string, SimpleAllowedTypesAttributes>([
 					["test.object", { isStaged: false }],
 				]),
 			},
@@ -515,7 +515,7 @@ describe("simpleSchemaToJsonSchema", () => {
 								"id",
 								{
 									kind: FieldKind.Identifier,
-									simpleAllowedTypes: new Map<string, SimpleAllowedTypes>([
+									simpleAllowedTypes: new Map<string, SimpleAllowedTypesAttributes>([
 										[stringSchema.identifier, { isStaged: false }],
 									]),
 									storedKey: "id",
@@ -559,7 +559,7 @@ describe("simpleSchemaToJsonSchema", () => {
 			root: {
 				kind: FieldKind.Required,
 				metadata: {},
-				simpleAllowedTypes: new Map<string, SimpleAllowedTypes>([
+				simpleAllowedTypes: new Map<string, SimpleAllowedTypesAttributes>([
 					["test.object", { isStaged: false }],
 				]),
 			},
@@ -577,7 +577,7 @@ describe("simpleSchemaToJsonSchema", () => {
 									kind: FieldKind.Required,
 									metadata: {},
 									persistedMetadata: undefined,
-									simpleAllowedTypes: new Map<string, SimpleAllowedTypes>([
+									simpleAllowedTypes: new Map<string, SimpleAllowedTypesAttributes>([
 										[numberSchema.identifier, { isStaged: false }],
 										[stringSchema.identifier, { isStaged: false }],
 									]),
@@ -629,7 +629,7 @@ describe("simpleSchemaToJsonSchema", () => {
 			root: {
 				kind: FieldKind.Required,
 				metadata: {},
-				simpleAllowedTypes: new Map<string, SimpleAllowedTypes>([
+				simpleAllowedTypes: new Map<string, SimpleAllowedTypesAttributes>([
 					["test.recursive-object", { isStaged: false }],
 				]),
 			},
@@ -647,7 +647,7 @@ describe("simpleSchemaToJsonSchema", () => {
 									kind: FieldKind.Optional,
 									metadata: {},
 									persistedMetadata: undefined,
-									simpleAllowedTypes: new Map<string, SimpleAllowedTypes>([
+									simpleAllowedTypes: new Map<string, SimpleAllowedTypesAttributes>([
 										[stringSchema.identifier, { isStaged: false }],
 										["test.recursive-object", { isStaged: false }],
 									]),
