@@ -190,6 +190,57 @@ async function main() {
 		}
 		timer.time("Check install completed");
 
+		// Setup signal handlers for graceful shutdown
+		const cleanup = async (signal: string) => {
+			log(`\n${chalk.yellowBright(`Received ${signal}, cleaning up...`)}`);
+
+			// Persist cache statistics
+			if (sharedCache) {
+				try {
+					await sharedCache.persistStatistics();
+				} catch (e) {
+					warn(`Failed to persist cache statistics: ${(e as Error).message}`);
+				}
+			}
+
+			// Display current stats
+			const totalTime = timer.getTotalTime();
+			const timeInMinutes =
+				totalTime > 60000
+					? ` (${Math.floor(totalTime / 60000)}m ${((totalTime % 60000) / 1000).toFixed(3)}s)`
+					: "";
+			log(`Total time: ${(totalTime / 1000).toFixed(3)}s${timeInMinutes}`);
+
+			// Display task statistics if build graph was created
+			if (buildGraph) {
+				const taskStats = buildGraph.taskStats;
+				const notRunCount =
+					taskStats.leafTotalCount - taskStats.leafUpToDateCount - taskStats.leafBuiltCount;
+				log(
+					chalk.yellowBright(
+						`Tasks: ${taskStats.leafBuiltCount} built, ${taskStats.leafUpToDateCount} up-to-date, ${notRunCount} not run (interrupted)`,
+					),
+				);
+
+				// Display cache statistics if available
+				const cacheStats = buildGraph.cacheStatsSummary;
+				if (cacheStats) {
+					log(cacheStats);
+				}
+
+				// Display failed tasks if any
+				const currentFailureSummary = buildGraph.taskFailureSummary;
+				if (currentFailureSummary !== "") {
+					log(`\n${currentFailureSummary}`);
+				}
+			}
+
+			process.exit(130); // Standard exit code for SIGINT
+		};
+
+		process.on("SIGINT", () => cleanup("SIGINT"));
+		process.on("SIGTERM", () => cleanup("SIGTERM"));
+
 		// Run the build
 		const buildResult = await buildGraph.build(timer);
 		const buildStatus = buildResultString(buildResult);
@@ -221,6 +272,15 @@ async function main() {
 			? ` (${Math.floor(totalTime / 60000)}m ${((totalTime % 60000) / 1000).toFixed(3)}s)`
 			: "";
 	log(`Total time: ${(totalTime / 1000).toFixed(3)}s${timeInMinutes}`);
+
+	// Persist cache statistics on normal exit
+	if (sharedCache) {
+		try {
+			await sharedCache.persistStatistics();
+		} catch (e) {
+			warn(`Failed to persist cache statistics: ${(e as Error).message}`);
+		}
+	}
 
 	// Display cache statistics if available
 	if (buildGraph) {

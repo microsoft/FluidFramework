@@ -604,6 +604,10 @@ export class BuildGraph {
 		return summaryLines.join("\n");
 	}
 
+	public get taskStats() {
+		return this.context.taskStats;
+	}
+
 	public get cacheStatsSummary(): string | undefined {
 		const sharedCache = this.context.sharedCache;
 		if (!sharedCache) {
