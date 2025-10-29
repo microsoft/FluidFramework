@@ -23,7 +23,9 @@ describe("Cache Key", () => {
 				{ path: "src/index.ts", hash: "abc123" },
 				{ path: "src/util.ts", hash: "def456" },
 			],
+			cacheSchemaVersion: 1,
 			nodeVersion: "v20.15.1",
+			arch: "x64",
 			platform: "linux",
 			lockfileHash: "lock123",
 		};
@@ -161,7 +163,9 @@ describe("Cache Key", () => {
 			executable: "tsc",
 			command: "tsc --build",
 			inputHashes: [{ path: "src/index.ts", hash: "abc123" }],
+			cacheSchemaVersion: 1,
 			nodeVersion: "v20.15.1",
+			arch: "x64",
 			platform: "linux",
 			lockfileHash: "lock123",
 		};

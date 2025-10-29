@@ -24,6 +24,7 @@ import type {
 	CacheEntry,
 	CacheKeyInputs,
 	CacheStatistics,
+	GlobalCacheKeyComponents,
 	RestoreResult,
 	SharedCacheOptions,
 	TaskOutputs,
@@ -133,6 +134,17 @@ export class SharedCacheManager {
 	}
 
 	/**
+	 * Get the global cache key components.
+	 *
+	 * These are the components that apply to all tasks and are computed once at startup.
+	 *
+	 * @returns The global cache key components
+	 */
+	getGlobalKeyComponents(): GlobalCacheKeyComponents {
+		return this.options.globalKeyComponents;
+	}
+
+	/**
 	 * Look up a cache entry for the given inputs.
 	 *
 	 * This checks if a task with identical inputs has been executed before
@@ -178,12 +190,14 @@ export class SharedCacheManager {
 				return undefined;
 			}
 
-			// Verify platform and Node.js version compatibility
-			// We only restore caches from the same platform and Node version
-			if (manifest.platform !== process.platform) {
+			// Verify global cache key components match
+			// We only restore caches when all global components are identical
+			if (
+				manifest.cacheSchemaVersion !== this.options.globalKeyComponents.cacheSchemaVersion
+			) {
 				const elapsed = Date.now() - startTime;
 				traceLookup(
-					`MISS: Platform mismatch for ${shortKey} (cached: ${manifest.platform}, current: ${process.platform}) (${elapsed}ms)`,
+					`MISS: Cache schema version mismatch for ${shortKey} (cached: ${manifest.cacheSchemaVersion}, current: ${this.options.globalKeyComponents.cacheSchemaVersion}) (${elapsed}ms)`,
 				);
 				this.statistics.missCount++;
 				traceStats(
@@ -192,10 +206,10 @@ export class SharedCacheManager {
 				return undefined;
 			}
 
-			if (manifest.nodeVersion !== process.version) {
+			if (manifest.nodeVersion !== this.options.globalKeyComponents.nodeVersion) {
 				const elapsed = Date.now() - startTime;
 				traceLookup(
-					`MISS: Node version mismatch for ${shortKey} (cached: ${manifest.nodeVersion}, current: ${process.version}) (${elapsed}ms)`,
+					`MISS: Node version mismatch for ${shortKey} (cached: ${manifest.nodeVersion}, current: ${this.options.globalKeyComponents.nodeVersion}) (${elapsed}ms)`,
 				);
 				this.statistics.missCount++;
 				traceStats(
@@ -204,12 +218,60 @@ export class SharedCacheManager {
 				return undefined;
 			}
 
-			// Verify lockfile matches
-			if (manifest.lockfileHash !== this.options.lockfileHash) {
+			if (manifest.arch !== this.options.globalKeyComponents.arch) {
+				const elapsed = Date.now() - startTime;
+				traceLookup(
+					`MISS: Architecture mismatch for ${shortKey} (cached: ${manifest.arch}, current: ${this.options.globalKeyComponents.arch}) (${elapsed}ms)`,
+				);
+				this.statistics.missCount++;
+				traceStats(
+					`Cache stats: ${this.statistics.hitCount} hits, ${this.statistics.missCount} misses`,
+				);
+				return undefined;
+			}
+
+			if (manifest.platform !== this.options.globalKeyComponents.platform) {
+				const elapsed = Date.now() - startTime;
+				traceLookup(
+					`MISS: Platform mismatch for ${shortKey} (cached: ${manifest.platform}, current: ${this.options.globalKeyComponents.platform}) (${elapsed}ms)`,
+				);
+				this.statistics.missCount++;
+				traceStats(
+					`Cache stats: ${this.statistics.hitCount} hits, ${this.statistics.missCount} misses`,
+				);
+				return undefined;
+			}
+
+			if (manifest.lockfileHash !== this.options.globalKeyComponents.lockfileHash) {
 				const elapsed = Date.now() - startTime;
 				traceLookup(
 					`MISS: Lockfile hash mismatch for ${shortKey} (dependencies changed) (${elapsed}ms)`,
 				);
+				this.statistics.missCount++;
+				traceStats(
+					`Cache stats: ${this.statistics.hitCount} hits, ${this.statistics.missCount} misses`,
+				);
+				return undefined;
+			}
+
+			if (manifest.nodeEnv !== this.options.globalKeyComponents.nodeEnv) {
+				const elapsed = Date.now() - startTime;
+				traceLookup(
+					`MISS: NODE_ENV mismatch for ${shortKey} (cached: ${manifest.nodeEnv ?? "undefined"}, current: ${this.options.globalKeyComponents.nodeEnv ?? "undefined"}) (${elapsed}ms)`,
+				);
+				this.statistics.missCount++;
+				traceStats(
+					`Cache stats: ${this.statistics.hitCount} hits, ${this.statistics.missCount} misses`,
+				);
+				return undefined;
+			}
+
+			if (
+				JSON.stringify(manifest.cacheBustVars) !==
+				JSON.stringify(this.options.globalKeyComponents.cacheBustVars)
+			) {
+				const elapsed = Date.now() - startTime;
+				traceLookup(`MISS: Cache bust variables mismatch for ${shortKey} (${elapsed}ms)`);
 				this.statistics.missCount++;
 				traceStats(
 					`Cache stats: ${this.statistics.hitCount} hits, ${this.statistics.missCount} misses`,
@@ -313,9 +375,13 @@ export class SharedCacheManager {
 				command: inputs.command,
 				exitCode: 0,
 				executionTimeMs: outputs.executionTimeMs,
-				nodeVersion: process.version,
-				platform: process.platform,
-				lockfileHash: this.options.lockfileHash,
+				cacheSchemaVersion: this.options.globalKeyComponents.cacheSchemaVersion,
+				nodeVersion: this.options.globalKeyComponents.nodeVersion,
+				arch: this.options.globalKeyComponents.arch,
+				platform: this.options.globalKeyComponents.platform,
+				lockfileHash: this.options.globalKeyComponents.lockfileHash,
+				nodeEnv: this.options.globalKeyComponents.nodeEnv,
+				cacheBustVars: this.options.globalKeyComponents.cacheBustVars,
 				inputFiles: inputs.inputHashes.map((input) => ({
 					path: input.path,
 					hash: input.hash,

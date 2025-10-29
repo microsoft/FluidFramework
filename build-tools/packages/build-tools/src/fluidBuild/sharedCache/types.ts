@@ -46,12 +46,22 @@ export interface CacheKeyInputs {
 	}>;
 
 	/**
+	 * Cache schema version for forward/backward compatibility
+	 */
+	cacheSchemaVersion: number;
+
+	/**
 	 * Node.js version (from process.version, e.g., "v20.15.1")
 	 *
 	 * Different Node versions may produce different outputs, so they
 	 * are included in the cache key to prevent cross-version issues.
 	 */
 	nodeVersion: string;
+
+	/**
+	 * CPU architecture (from process.arch, e.g., "x64", "arm64")
+	 */
+	arch: string;
 
 	/**
 	 * Platform identifier (from process.platform, e.g., "linux", "darwin", "win32")
@@ -67,6 +77,16 @@ export interface CacheKeyInputs {
 	 * Dependencies affect task output, so lockfile changes invalidate the cache.
 	 */
 	lockfileHash: string;
+
+	/**
+	 * NODE_ENV environment variable (if set)
+	 */
+	nodeEnv?: string;
+
+	/**
+	 * Cache bust variables (FLUID_BUILD_CACHE_BUST*)
+	 */
+	cacheBustVars?: Record<string, string>;
 
 	/**
 	 * Tool version (e.g., TypeScript version for tsc tasks)
@@ -130,9 +150,19 @@ export interface CacheManifest {
 	executionTimeMs: number;
 
 	/**
+	 * Cache schema version used for this execution
+	 */
+	cacheSchemaVersion: number;
+
+	/**
 	 * Node.js version used for this execution
 	 */
 	nodeVersion: string;
+
+	/**
+	 * CPU architecture used for this execution
+	 */
+	arch: string;
 
 	/**
 	 * Platform where this was executed
@@ -143,6 +173,16 @@ export interface CacheManifest {
 	 * Lockfile hash at time of execution
 	 */
 	lockfileHash: string;
+
+	/**
+	 * NODE_ENV at time of execution (if set)
+	 */
+	nodeEnv?: string;
+
+	/**
+	 * Cache bust variables at time of execution (if any)
+	 */
+	cacheBustVars?: Record<string, string>;
 
 	/**
 	 * Input files that were used
@@ -325,6 +365,57 @@ export interface CacheStatistics {
 }
 
 /**
+ * Global cache key components that apply to all tasks.
+ *
+ * These values are computed once at build startup and reused for all cache operations.
+ */
+export interface GlobalCacheKeyComponents {
+	/**
+	 * Cache schema version for forward/backward compatibility
+	 *
+	 * This should be incremented when the cache format changes in an incompatible way.
+	 */
+	cacheSchemaVersion: number;
+
+	/**
+	 * Node.js version (from process.version, e.g., "v20.15.1")
+	 */
+	nodeVersion: string;
+
+	/**
+	 * CPU architecture (from process.arch, e.g., "x64", "arm64")
+	 *
+	 * Different architectures can produce different outputs for native modules.
+	 */
+	arch: string;
+
+	/**
+	 * Platform identifier (from process.platform, e.g., "linux", "darwin", "win32")
+	 */
+	platform: string;
+
+	/**
+	 * Hash of the lockfile (pnpm-lock.yaml)
+	 */
+	lockfileHash: string;
+
+	/**
+	 * NODE_ENV environment variable value (if set)
+	 *
+	 * Some build tools produce different outputs in development vs production mode.
+	 */
+	nodeEnv?: string;
+
+	/**
+	 * Cache bust variables (FLUID_BUILD_CACHE_BUST*)
+	 *
+	 * Environment variables starting with FLUID_BUILD_CACHE_BUST can be used
+	 * to manually invalidate caches without changing code or dependencies.
+	 */
+	cacheBustVars?: Record<string, string>;
+}
+
+/**
  * Options for configuring the shared cache.
  */
 export interface SharedCacheOptions {
@@ -339,9 +430,9 @@ export interface SharedCacheOptions {
 	repoRoot: string;
 
 	/**
-	 * Hash of the lockfile
+	 * Global cache key components
 	 */
-	lockfileHash: string;
+	globalKeyComponents: GlobalCacheKeyComponents;
 
 	/**
 	 * Whether to verify file integrity when restoring from cache

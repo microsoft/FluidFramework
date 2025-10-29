@@ -98,8 +98,16 @@ function validateManifest(manifest: CacheManifest): void {
 	}
 
 	// Validate environment fields
+	if (typeof manifest.cacheSchemaVersion !== "number" || manifest.cacheSchemaVersion < 1) {
+		throw new Error("Manifest missing or invalid cacheSchemaVersion field");
+	}
+
 	if (!manifest.nodeVersion) {
 		throw new Error("Manifest missing nodeVersion field");
+	}
+
+	if (!manifest.arch) {
+		throw new Error("Manifest missing arch field");
 	}
 
 	if (!manifest.platform) {
@@ -196,9 +204,13 @@ export function createManifest(options: {
 	command: string;
 	exitCode: 0;
 	executionTimeMs: number;
+	cacheSchemaVersion: number;
 	nodeVersion: string;
+	arch: string;
 	platform: string;
 	lockfileHash: string;
+	nodeEnv?: string;
+	cacheBustVars?: Record<string, string>;
 	inputFiles: ReadonlyArray<{ path: string; hash: string }>;
 	outputFiles: ReadonlyArray<{ path: string; hash: string; size: number }>;
 	stdout: string;
@@ -215,9 +227,13 @@ export function createManifest(options: {
 		command: options.command,
 		exitCode: options.exitCode,
 		executionTimeMs: options.executionTimeMs,
+		cacheSchemaVersion: options.cacheSchemaVersion,
 		nodeVersion: options.nodeVersion,
+		arch: options.arch,
 		platform: options.platform,
 		lockfileHash: options.lockfileHash,
+		nodeEnv: options.nodeEnv,
+		cacheBustVars: options.cacheBustVars,
 		inputFiles: options.inputFiles,
 		outputFiles: options.outputFiles,
 		stdout: options.stdout,

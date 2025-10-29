@@ -56,10 +56,27 @@ async function main() {
 				warn(`Lockfile not found at ${lockfilePath}, cache disabled`);
 			} else {
 				const lockfileHash = await hashFile(lockfilePath);
+
+				// Collect cache bust environment variables
+				const cacheBustVars: Record<string, string> = {};
+				for (const [key, value] of Object.entries(process.env)) {
+					if (key.startsWith("FLUID_BUILD_CACHE_BUST") && value !== undefined) {
+						cacheBustVars[key] = value;
+					}
+				}
+
 				sharedCache = new SharedCacheManager({
 					cacheDir: cacheConfig.cacheDir,
 					repoRoot: resolvedRoot,
-					lockfileHash,
+					globalKeyComponents: {
+						cacheSchemaVersion: 1,
+						nodeVersion: process.version,
+						arch: process.arch,
+						platform: process.platform,
+						lockfileHash,
+						nodeEnv: process.env.NODE_ENV,
+						cacheBustVars: Object.keys(cacheBustVars).length > 0 ? cacheBustVars : undefined,
+					},
 					verifyIntegrity: cacheConfig.verifyIntegrity,
 					skipCacheWrite: cacheConfig.skipCacheWrite,
 				});

@@ -27,7 +27,9 @@ function createCacheKeyInputs(overrides: Partial<CacheKeyInputs> = {}): CacheKey
 		executable: "tsc",
 		command: "tsc --build",
 		inputHashes: [{ path: "src/index.ts", hash: "abc123" }],
+		cacheSchemaVersion: 1,
 		nodeVersion: process.version,
+		arch: process.arch,
 		platform: process.platform,
 		lockfileHash: "lockfile123",
 		...overrides,
@@ -81,7 +83,13 @@ describe("Cache Statistics", () => {
 			const options: SharedCacheOptions = {
 				cacheDir,
 				repoRoot: tempDir,
-				lockfileHash: "test-lockfile",
+				globalKeyComponents: {
+					cacheSchemaVersion: 1,
+					nodeVersion: process.version,
+					arch: process.arch,
+					platform: process.platform,
+					lockfileHash: "test-lockfile",
+				},
 				skipCacheWrite: false,
 				verifyIntegrity: false,
 			};
@@ -122,7 +130,13 @@ describe("Cache Statistics", () => {
 			const options: SharedCacheOptions = {
 				cacheDir,
 				repoRoot: tempDir,
-				lockfileHash: "test-lockfile",
+				globalKeyComponents: {
+					cacheSchemaVersion: 1,
+					nodeVersion: process.version,
+					arch: process.arch,
+					platform: process.platform,
+					lockfileHash: "test-lockfile",
+				},
 				skipCacheWrite: false,
 				verifyIntegrity: false,
 			};
@@ -143,7 +157,13 @@ describe("Cache Statistics", () => {
 			const options: SharedCacheOptions = {
 				cacheDir,
 				repoRoot: tempDir,
-				lockfileHash: "test-lockfile",
+				globalKeyComponents: {
+					cacheSchemaVersion: 1,
+					nodeVersion: process.version,
+					arch: process.arch,
+					platform: process.platform,
+					lockfileHash: "test-lockfile",
+				},
 				skipCacheWrite: false,
 				verifyIntegrity: false,
 			};
@@ -185,7 +205,13 @@ describe("Cache Statistics", () => {
 			const options: SharedCacheOptions = {
 				cacheDir,
 				repoRoot: tempDir,
-				lockfileHash: "test-lockfile",
+				globalKeyComponents: {
+					cacheSchemaVersion: 1,
+					nodeVersion: process.version,
+					arch: process.arch,
+					platform: process.platform,
+					lockfileHash: "test-lockfile",
+				},
 				skipCacheWrite: false,
 				verifyIntegrity: false,
 			};

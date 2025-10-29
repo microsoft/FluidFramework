@@ -511,15 +511,6 @@ export abstract class LeafTask extends Task {
 				return undefined;
 			}
 
-			// Get lockfile hash
-			const lockfilePath = this.node.pkg.getLockFilePath();
-			if (!lockfilePath) {
-				console.warn(`${this.node.pkg.nameColored}: warning: no lockfile found for cache`);
-				return undefined;
-			}
-
-			const lockfileHash = await this.node.context.fileHashCache.getFileHash(lockfilePath);
-
 			// Hash all input files
 			const inputHashes = await Promise.all(
 				inputFiles.map(async (filePath) => {
@@ -529,16 +520,14 @@ export abstract class LeafTask extends Task {
 				}),
 			);
 
-			// Prepare cache key inputs
+			// Prepare cache key inputs (global components come from SharedCacheManager)
 			const cacheKeyInputs = {
 				packageName: this.node.pkg.name,
 				taskName: this.taskName ?? this.executable,
 				executable: this.executable,
 				command: this.command,
 				inputHashes,
-				nodeVersion: process.version,
-				platform: process.platform,
-				lockfileHash,
+				...sharedCache.getGlobalKeyComponents(),
 			};
 
 			// Look up in cache
@@ -622,14 +611,6 @@ export abstract class LeafTask extends Task {
 				return false;
 			}
 
-			// Get lockfile hash
-			const lockfilePath = this.node.pkg.getLockFilePath();
-			if (!lockfilePath) {
-				return false;
-			}
-
-			const lockfileHash = await this.node.context.fileHashCache.getFileHash(lockfilePath);
-
 			// Hash all input files
 			const inputHashes = await Promise.all(
 				inputFiles.map(async (filePath) => {
@@ -639,16 +620,14 @@ export abstract class LeafTask extends Task {
 				}),
 			);
 
-			// Prepare cache key inputs
+			// Prepare cache key inputs (global components come from SharedCacheManager)
 			const cacheKeyInputs = {
 				packageName: this.node.pkg.name,
 				taskName: this.taskName ?? this.executable,
 				executable: this.executable,
 				command: this.command,
 				inputHashes,
-				nodeVersion: process.version,
-				platform: process.platform,
-				lockfileHash,
+				...sharedCache.getGlobalKeyComponents(),
 			};
 
 			// Prepare task outputs - filter out files that don't exist

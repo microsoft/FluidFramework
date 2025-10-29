@@ -1,0 +1,18 @@
+{
+	"permissions": {
+		"allow": [
+			"Bash(find:*)",
+			"Bash(pnpm build:*)",
+			"Bash(pnpm exec mocha:*)",
+			"Bash(pnpm run build:test:*)",
+			"Bash(pnpm run tsc:*)",
+			"Bash(node -e:*)",
+			"Bash(pnpm run check:biome:*)",
+			"Bash(pnpm run format:biome)",
+			"Bash(git restore:*)",
+			"Bash(pnpm run format:biome:*)"
+		],
+		"deny": [],
+		"ask": []
+	}
+}

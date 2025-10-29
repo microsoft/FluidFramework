@@ -47,12 +47,28 @@ function normalizeInputs(inputs: CacheKeyInputs): Record<string, unknown> {
 		command: inputs.command,
 		// Sort input hashes by path for deterministic ordering
 		inputHashes: [...inputs.inputHashes].sort((a, b) => a.path.localeCompare(b.path)),
+		cacheSchemaVersion: inputs.cacheSchemaVersion,
 		nodeVersion: inputs.nodeVersion,
+		arch: inputs.arch,
 		platform: inputs.platform,
 		lockfileHash: inputs.lockfileHash,
 	};
 
 	// Add optional fields if present (maintaining deterministic order)
+	if (inputs.nodeEnv !== undefined) {
+		normalized.nodeEnv = inputs.nodeEnv;
+	}
+
+	if (inputs.cacheBustVars !== undefined) {
+		// Sort cache bust var keys for deterministic ordering
+		const sortedCacheBustVars: Record<string, string> = {};
+		const keys = Object.keys(inputs.cacheBustVars).sort();
+		for (const key of keys) {
+			sortedCacheBustVars[key] = inputs.cacheBustVars[key];
+		}
+		normalized.cacheBustVars = sortedCacheBustVars;
+	}
+
 	if (inputs.toolVersion !== undefined) {
 		normalized.toolVersion = inputs.toolVersion;
 	}
