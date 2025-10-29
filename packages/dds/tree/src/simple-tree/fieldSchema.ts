@@ -31,7 +31,7 @@ import type {
 } from "./core/index.js";
 import { normalizeAllowedTypes } from "./core/index.js";
 
-import type { SimpleAllowedTypesAttributes, SimpleFieldSchema } from "./simpleSchema.js";
+import type { SimpleAllowedTypeAttributes, SimpleFieldSchema } from "./simpleSchema.js";
 import type { UnsafeUnknownSchema } from "./unsafeUnknownSchema.js";
 import type { InsertableContent } from "./unhydratedFlexTreeFromInsertable.js";
 
@@ -412,9 +412,9 @@ export class FieldSchemaAlpha<
 		return this.allowedTypesFull.evaluateIdentifiers();
 	}
 
-	public get simpleAllowedTypes(): ReadonlyMap<string, SimpleAllowedTypesAttributes> {
+	public get simpleAllowedTypes(): ReadonlyMap<string, SimpleAllowedTypeAttributes> {
 		const types = this.allowedTypesFull.evaluate().types;
-		const info = new Map<string, SimpleAllowedTypesAttributes>();
+		const info = new Map<string, SimpleAllowedTypeAttributes>();
 
 		for (const type of types) {
 			info.set(type.type.identifier, {

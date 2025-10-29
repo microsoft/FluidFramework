@@ -69,7 +69,7 @@ import type {
 import { brand, type JsonCompatibleReadOnlyObject } from "../../../util/index.js";
 import { nullSchema } from "../../leafNodeSchema.js";
 import { arrayNodeStoredSchema } from "../../toStoredSchema.js";
-import type { SimpleAllowedTypesAttributes } from "../../simpleSchema.js";
+import type { SimpleAllowedTypeAttributes } from "../../simpleSchema.js";
 
 /**
  * A covariant base type for {@link (TreeArrayNode:interface)}.
@@ -1211,7 +1211,7 @@ export function arraySchema<
 			return lazyAllowedTypesIdentifiers.value;
 		}
 
-		public static get simpleAllowedTypes(): ReadonlyMap<string, SimpleAllowedTypesAttributes> {
+		public static get simpleAllowedTypes(): ReadonlyMap<string, SimpleAllowedTypeAttributes> {
 			return lazySimpleAllowedTypes.value;
 		}
 

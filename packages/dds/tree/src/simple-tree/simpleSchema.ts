@@ -91,7 +91,7 @@ export interface SimpleArrayNodeSchema<out TCustomMetadata = unknown>
 	 * @remarks Refers to the types by identifier.
 	 * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
 	 */
-	readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypesAttributes>;
+	readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypeAttributes>;
 }
 
 /**
@@ -108,7 +108,7 @@ export interface SimpleMapNodeSchema<out TCustomMetadata = unknown>
 	 * @remarks Refers to the types by identifier.
 	 * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
 	 */
-	readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypesAttributes>;
+	readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypeAttributes>;
 }
 
 /**
@@ -125,7 +125,7 @@ export interface SimpleRecordNodeSchema<out TCustomMetadata = unknown>
 	 * @remarks Refers to the types by identifier.
 	 * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
 	 */
-	readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypesAttributes>;
+	readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypeAttributes>;
 }
 
 /**
@@ -168,7 +168,7 @@ export type SimpleNodeSchema =
  * @alpha
  * @sealed
  */
-export interface SimpleAllowedTypesAttributes {
+export interface SimpleAllowedTypeAttributes {
 	/**
 	 * True if this schema is included as a {@link SchemaStaticsAlpha.staged | staged} schema upgrade,
 	 * allowing the view schema be compatible with stored schema with (post upgrade) or without it (pre-upgrade).
@@ -201,7 +201,7 @@ export interface SimpleFieldSchema {
 	 * @remarks Refers to the types by identifier.
 	 * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
 	 */
-	readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypesAttributes>;
+	readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypeAttributes>;
 
 	/**
 	 * {@inheritDoc FieldSchemaMetadata}

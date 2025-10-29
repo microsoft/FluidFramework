@@ -25,7 +25,7 @@ import {
 	type TreeNodeSchema,
 } from "./treeNodeSchema.js";
 import { schemaAsTreeNodeValid } from "./treeNodeValid.js";
-import type { SimpleAllowedTypesAttributes } from "../simpleSchema.js";
+import type { SimpleAllowedTypeAttributes } from "../simpleSchema.js";
 
 /**
  * Schema for types allowed in some location in a tree (like a field, map entry or array).
@@ -254,12 +254,12 @@ export class AnnotatedAllowedTypesInternal<
 	}
 
 	/**
-	 * Get the {@link SimpleAllowedTypesAttributes} version of the allowed types set.
+	 * Get the {@link SimpleAllowedTypeAttributes} version of the allowed types set.
 	 */
 	public static evaluateSimpleAllowedTypes(
 		annotatedAllowedTypes: AnnotatedAllowedTypes,
-	): ReadonlyMap<string, SimpleAllowedTypesAttributes> {
-		const simpleAllowedTypes = new Map<string, SimpleAllowedTypesAttributes>();
+	): ReadonlyMap<string, SimpleAllowedTypeAttributes> {
+		const simpleAllowedTypes = new Map<string, SimpleAllowedTypeAttributes>();
 		for (const type of annotatedAllowedTypes.evaluate().types) {
 			simpleAllowedTypes.set(type.type.identifier, {
 				isStaged: type.metadata.stagedSchemaUpgrade !== undefined,
