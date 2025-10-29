@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 /**

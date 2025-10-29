@@ -4,15 +4,15 @@
  */
 
 import { strict as assert } from "node:assert";
-import { mkdir, writeFile, rm, readFile } from "node:fs/promises";
-import { join } from "node:path";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { describe, it, beforeEach, afterEach } from "mocha";
+import { join } from "node:path";
+import { afterEach, beforeEach, describe, it } from "mocha";
 import { SharedCacheManager } from "../../fluidBuild/sharedCache/sharedCacheManager.js";
 import type {
 	CacheKeyInputs,
-	TaskOutputs,
 	SharedCacheOptions,
+	TaskOutputs,
 } from "../../fluidBuild/sharedCache/types.js";
 
 /**

@@ -3,9 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "node:path";
 import { existsSync } from "node:fs";
+import * as path from "node:path";
 import registerDebug from "debug";
+import {
+	cacheEntryExists,
+	getCacheEntryPath,
+	initializeCacheDirectory,
+} from "./cacheDirectory.js";
+import { computeCacheKey } from "./cacheKey.js";
+import { formatValidationMessage, validateCacheConfiguration } from "./configValidation.js";
+import {
+	copyFileWithDirs,
+	hashFilesWithSize,
+	verifyFilesIntegrity,
+} from "./fileOperations.js";
+import { createManifest, readManifest, updateManifestAccessTime } from "./manifest.js";
+import { loadStatistics, saveStatistics } from "./statistics.js";
 import type {
 	CacheEntry,
 	CacheKeyInputs,
@@ -14,20 +28,6 @@ import type {
 	SharedCacheOptions,
 	TaskOutputs,
 } from "./types.js";
-import { computeCacheKey } from "./cacheKey.js";
-import {
-	cacheEntryExists,
-	getCacheEntryPath,
-	initializeCacheDirectory,
-} from "./cacheDirectory.js";
-import { createManifest, readManifest, updateManifestAccessTime } from "./manifest.js";
-import {
-	copyFileWithDirs,
-	hashFilesWithSize,
-	verifyFilesIntegrity,
-} from "./fileOperations.js";
-import { loadStatistics, saveStatistics } from "./statistics.js";
-import { validateCacheConfiguration, formatValidationMessage } from "./configValidation.js";
 
 // Debug traces for cache operations
 const traceInit = registerDebug("fluid-build:cache:init");

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import path from "node:path";
 import fs from "node:fs";
+import path from "node:path";
 
 /**
  * Configuration file schema for .fluid-build-cache.json

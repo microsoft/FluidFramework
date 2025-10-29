@@ -5,15 +5,15 @@
 
 import * as assert from "node:assert";
 import * as fs from "node:fs";
-import * as path from "node:path";
 import * as os from "node:os";
+import * as path from "node:path";
 import {
-	validateCacheDirectory,
 	ensureCacheDirectoryExists,
+	formatValidationMessage,
+	validateCacheConfiguration,
+	validateCacheDirectory,
 	validateCacheDirectoryPermissions,
 	validateDiskSpace,
-	validateCacheConfiguration,
-	formatValidationMessage,
 } from "../../fluidBuild/sharedCache/configValidation.js";
 
 describe("configValidation", () => {

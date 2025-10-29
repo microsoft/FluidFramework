@@ -5,18 +5,18 @@
 
 import { strict as assert } from "node:assert";
 import fs from "node:fs";
-import path from "node:path";
 import os from "node:os";
+import path from "node:path";
 import {
-	validateConfigFile,
-	loadConfigFile,
-	findConfigFile,
-	resolveCacheDir,
-	mergeConfiguration,
-	loadCacheConfiguration,
-	ConfigValidationError,
 	type CacheConfigFile,
+	ConfigValidationError,
 	type ConfigurableCacheOptions,
+	findConfigFile,
+	loadCacheConfiguration,
+	loadConfigFile,
+	mergeConfiguration,
+	resolveCacheDir,
+	validateConfigFile,
 } from "../../fluidBuild/sharedCache/configFile.js";
 
 describe("configFile", () => {

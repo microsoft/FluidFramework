@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "node:path";
 import { existsSync } from "node:fs";
+import * as path from "node:path";
 import chalk from "picocolors";
 import { Spinner } from "picospinner";
 
@@ -18,9 +18,9 @@ import { DEFAULT_FLUIDBUILD_CONFIG } from "./fluidBuildConfig";
 import { FluidRepoBuild } from "./fluidRepoBuild";
 import { getFluidBuildConfig, getResolvedFluidRoot } from "./fluidUtils";
 import { options, parseOptions } from "./options";
-import { SharedCacheManager } from "./sharedCache/sharedCacheManager";
-import { hashFile } from "./sharedCache/fileOperations";
 import { loadCacheConfiguration } from "./sharedCache/configFile";
+import { hashFile } from "./sharedCache/fileOperations";
+import { SharedCacheManager } from "./sharedCache/sharedCacheManager";
 
 const { log, errorLog: error, warning: warn } = defaultLogger;
 

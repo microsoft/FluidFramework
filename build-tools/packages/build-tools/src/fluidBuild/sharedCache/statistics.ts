@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import * as path from "node:path";
-import { existsSync } from "node:fs";
-import type { CacheStatistics } from "./types.js";
 import { atomicWriteJson } from "./atomicWrite.js";
+import type { CacheStatistics } from "./types.js";
 
 /**
  * File name for persisted statistics

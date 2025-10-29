@@ -4,8 +4,8 @@
  */
 
 import { readFile } from "node:fs/promises";
-import type { CacheManifest } from "./types.js";
 import { atomicWriteJson } from "./atomicWrite.js";
+import type { CacheManifest } from "./types.js";
 
 /**
  * Write a cache manifest to disk.

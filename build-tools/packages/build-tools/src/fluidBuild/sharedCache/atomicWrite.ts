@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { mkdir, rename, writeFile, unlink } from "node:fs/promises";
-import * as path from "node:path";
 import { randomBytes } from "node:crypto";
+import { mkdir, rename, unlink, writeFile } from "node:fs/promises";
+import * as path from "node:path";
 
 /**
  * Atomically write data to a file.
