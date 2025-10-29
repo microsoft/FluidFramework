@@ -58,13 +58,6 @@ export interface SimpleObjectNodeSchema<out TCustomMetadata = unknown>
 	 * especially if/when TreeNodeSchema for objects provide more maps.
 	 */
 	readonly fields: ReadonlyMap<string, SimpleObjectFieldSchema>;
-
-	/**
-	 * Whether the object node allows unknown optional fields.
-	 *
-	 * @remarks Used for compatibility checks. Not available in all cases.
-	 */
-	readonly allowUnknownOptionalFields?: boolean;
 }
 
 /**
