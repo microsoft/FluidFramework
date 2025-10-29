@@ -1304,7 +1304,7 @@ export class FluidDataStoreRuntime
 		localOpMetadata: unknown,
 	): void {
 		this.verifyNotClosed();
-		assert(!this.localOpActivity, "runtime active must be undefined when entering rollback");
+		assert(!this.localOpActivity, "localOpActivity must be undefined when entering rollback");
 		this.localOpActivity = "rollback";
 		try {
 			// The op being rolled back was not/will not be submitted, so decrement the count.
@@ -1334,7 +1334,7 @@ export class FluidDataStoreRuntime
 	public async applyStashedOp(content: any): Promise<unknown> {
 		assert(
 			!this.localOpActivity,
-			"runtime active must be undefined when entering applyStashedOp",
+			"localOpActivity must be undefined when entering applyStashedOp",
 		);
 		this.localOpActivity = "applyStashed";
 		try {
