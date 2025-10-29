@@ -23,8 +23,8 @@ export { CompressionAlgorithms, disabledCompressionConfig } from "./compressionD
 export type {
 	ContainerRuntimeAliasMessage,
 	ContainerRuntimeDataStoreOpMessage,
-	InternalUtilityTypes,
 	OutboundContainerRuntimeAttachMessage,
+	TypedContainerRuntimeMessage,
 	UnknownContainerRuntimeMessage,
 } from "./messageTypes.js";
 export { ContainerMessageType } from "./messageTypes.js";

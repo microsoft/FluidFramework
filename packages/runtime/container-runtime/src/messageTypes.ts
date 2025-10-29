@@ -62,66 +62,54 @@ export enum ContainerMessageType {
 }
 
 /**
+ * The unpacked runtime message / details to be handled or dispatched by the ContainerRuntime.
+ * Message type are differentiated via a `type` string and contain different contents depending on their type.
+ *
+ * IMPORTANT: when creating one to be serialized, set the properties in the order they appear here.
+ * This way stringified values can be compared.
+ *
  * @internal
  */
-// eslint-disable-next-line @typescript-eslint/no-namespace
-export namespace InternalUtilityTypes {
+export interface TypedContainerRuntimeMessage<TType extends ContainerMessageType, TContents> {
 	/**
-	 * The unpacked runtime message / details to be handled or dispatched by the ContainerRuntime.
-	 * Message type are differentiated via a `type` string and contain different contents depending on their type.
-	 *
-	 * IMPORTANT: when creating one to be serialized, set the properties in the order they appear here.
-	 * This way stringified values can be compared.
+	 * Type of the op, within the ContainerRuntime's domain
 	 */
-	export interface TypedContainerRuntimeMessage<
-		TType extends ContainerMessageType,
-		TContents,
-	> {
-		/**
-		 * Type of the op, within the ContainerRuntime's domain
-		 */
-		type: TType;
-		/**
-		 * Domain-specific contents, interpreted according to the type
-		 */
-		contents: TContents;
-	}
+	type: TType;
+	/**
+	 * Domain-specific contents, interpreted according to the type
+	 */
+	contents: TContents;
 }
 
 /**
  * @internal
  * @privateRemarks exported per ContainerRuntime export for testing purposes
  */
-export type ContainerRuntimeDataStoreOpMessage =
-	InternalUtilityTypes.TypedContainerRuntimeMessage<
-		ContainerMessageType.FluidDataStoreOp,
-		IEnvelope<FluidDataStoreMessage>
-	>;
-export type InboundContainerRuntimeAttachMessage =
-	InternalUtilityTypes.TypedContainerRuntimeMessage<
-		ContainerMessageType.Attach,
-		InboundAttachMessage
-	>;
+export type ContainerRuntimeDataStoreOpMessage = TypedContainerRuntimeMessage<
+	ContainerMessageType.FluidDataStoreOp,
+	IEnvelope<FluidDataStoreMessage>
+>;
+export type InboundContainerRuntimeAttachMessage = TypedContainerRuntimeMessage<
+	ContainerMessageType.Attach,
+	InboundAttachMessage
+>;
 /**
  * @internal
  * @privateRemarks exported per ContainerRuntime export for testing purposes
  */
-export type OutboundContainerRuntimeAttachMessage =
-	InternalUtilityTypes.TypedContainerRuntimeMessage<
-		ContainerMessageType.Attach,
-		IAttachMessage
-	>;
-export type ContainerRuntimeChunkedOpMessage =
-	InternalUtilityTypes.TypedContainerRuntimeMessage<
-		ContainerMessageType.ChunkedOp,
-		IChunkedOp
-	>;
-export type ContainerRuntimeBlobAttachMessage =
-	InternalUtilityTypes.TypedContainerRuntimeMessage<
-		ContainerMessageType.BlobAttach,
-		undefined
-	>;
-export type ContainerRuntimeRejoinMessage = InternalUtilityTypes.TypedContainerRuntimeMessage<
+export type OutboundContainerRuntimeAttachMessage = TypedContainerRuntimeMessage<
+	ContainerMessageType.Attach,
+	IAttachMessage
+>;
+export type ContainerRuntimeChunkedOpMessage = TypedContainerRuntimeMessage<
+	ContainerMessageType.ChunkedOp,
+	IChunkedOp
+>;
+export type ContainerRuntimeBlobAttachMessage = TypedContainerRuntimeMessage<
+	ContainerMessageType.BlobAttach,
+	undefined
+>;
+export type ContainerRuntimeRejoinMessage = TypedContainerRuntimeMessage<
 	ContainerMessageType.Rejoin,
 	undefined
 >;
@@ -129,29 +117,26 @@ export type ContainerRuntimeRejoinMessage = InternalUtilityTypes.TypedContainerR
  * @internal
  * @privateRemarks exported per ContainerRuntime export for testing purposes
  */
-export type ContainerRuntimeAliasMessage = InternalUtilityTypes.TypedContainerRuntimeMessage<
+export type ContainerRuntimeAliasMessage = TypedContainerRuntimeMessage<
 	ContainerMessageType.Alias,
 	IDataStoreAliasMessage
 >;
-export type ContainerRuntimeIdAllocationMessage =
-	InternalUtilityTypes.TypedContainerRuntimeMessage<
-		ContainerMessageType.IdAllocation,
-		IdCreationRange
-	>;
-export type ContainerRuntimeGCMessage = InternalUtilityTypes.TypedContainerRuntimeMessage<
+export type ContainerRuntimeIdAllocationMessage = TypedContainerRuntimeMessage<
+	ContainerMessageType.IdAllocation,
+	IdCreationRange
+>;
+export type ContainerRuntimeGCMessage = TypedContainerRuntimeMessage<
 	ContainerMessageType.GC,
 	GarbageCollectionMessage
 >;
-export type InboundContainerRuntimeDocumentSchemaMessage =
-	InternalUtilityTypes.TypedContainerRuntimeMessage<
-		ContainerMessageType.DocumentSchemaChange,
-		IDocumentSchemaChangeMessageIncoming
-	>;
-export type OutboundContainerRuntimeDocumentSchemaMessage =
-	InternalUtilityTypes.TypedContainerRuntimeMessage<
-		ContainerMessageType.DocumentSchemaChange,
-		IDocumentSchemaChangeMessageOutgoing
-	>;
+export type InboundContainerRuntimeDocumentSchemaMessage = TypedContainerRuntimeMessage<
+	ContainerMessageType.DocumentSchemaChange,
+	IDocumentSchemaChangeMessageIncoming
+>;
+export type OutboundContainerRuntimeDocumentSchemaMessage = TypedContainerRuntimeMessage<
+	ContainerMessageType.DocumentSchemaChange,
+	IDocumentSchemaChangeMessageOutgoing
+>;
 
 /**
  * Represents an unrecognized TypedContainerRuntimeMessage, e.g. a message from a future version of the container runtime.
@@ -172,7 +157,7 @@ export interface UnknownContainerRuntimeMessage {
 }
 
 /**
- * A {@link InternalUtilityTypes.TypedContainerRuntimeMessage} that is received from the server and will be processed by the container runtime.
+ * A {@link TypedContainerRuntimeMessage} that is received from the server and will be processed by the container runtime.
  */
 export type InboundContainerRuntimeMessage =
 	| ContainerRuntimeDataStoreOpMessage
@@ -188,7 +173,7 @@ export type InboundContainerRuntimeMessage =
 	| UnknownContainerRuntimeMessage;
 
 /**
- * A {@link InternalUtilityTypes.TypedContainerRuntimeMessage} that has been generated by the container runtime, eventually to be sent to the ordering service.
+ * A {@link TypedContainerRuntimeMessage} that has been generated by the container runtime, eventually to be sent to the ordering service.
  * These are messages generated by the local runtime, before the outbox's op virtualization step.
  */
 export type LocalContainerRuntimeMessage =
