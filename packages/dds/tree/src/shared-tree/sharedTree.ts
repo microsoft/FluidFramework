@@ -99,7 +99,7 @@ import {
 	FieldKind,
 	type ITreeAlpha,
 	type SimpleObjectFieldSchema,
-	type AllowedTypeInfo,
+	type SimpleAllowedTypes,
 } from "../simple-tree/index.js";
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
@@ -952,12 +952,19 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
 };
 
-function buildSimpleAllowedTypes(types: TreeTypeSet): ReadonlyMap<string, AllowedTypeInfo> {
-	const allowedTypesInfo = new Map<string, AllowedTypeInfo>();
+/**
+ * Build the allowed types for a Stored Schema.
+ *
+ * @remarks Staged upgrades do not apply to stored schemas, so we omit the flag when building {@link SimpleAllowedTypes}.
+ * @param types - The types to create allowed types for.
+ * @returns The allowed types.
+ */
+function buildSimpleAllowedTypesForStoredSchema(
+	types: TreeTypeSet,
+): ReadonlyMap<string, SimpleAllowedTypes> {
+	const allowedTypesInfo = new Map<string, SimpleAllowedTypes>();
 	for (const type of types) {
-		allowedTypesInfo.set(type, {
-			isStaged: false,
-		});
+		allowedTypesInfo.set(type, {});
 	}
 	return allowedTypesInfo;
 }
@@ -984,7 +991,7 @@ function exportSimpleFieldSchemaStored(schema: TreeFieldStoredSchema): SimpleFie
 	return {
 		kind,
 		// TODO: Refactor
-		simpleAllowedTypes: buildSimpleAllowedTypes(schema.types),
+		simpleAllowedTypes: buildSimpleAllowedTypesForStoredSchema(schema.types),
 		metadata: {},
 		persistedMetadata: schema.persistedMetadata,
 	};
@@ -1000,7 +1007,7 @@ function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeS
 	if (arrayTypes !== undefined) {
 		return {
 			kind: NodeKind.Array,
-			simpleAllowedTypes: buildSimpleAllowedTypes(arrayTypes),
+			simpleAllowedTypes: buildSimpleAllowedTypesForStoredSchema(arrayTypes),
 			metadata: {},
 			persistedMetadata: schema.metadata,
 		};
@@ -1019,7 +1026,7 @@ function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeS
 		);
 		return {
 			kind: NodeKind.Map,
-			simpleAllowedTypes: buildSimpleAllowedTypes(schema.mapFields.types),
+			simpleAllowedTypes: buildSimpleAllowedTypesForStoredSchema(schema.mapFields.types),
 			metadata: {},
 			persistedMetadata: schema.metadata,
 		};

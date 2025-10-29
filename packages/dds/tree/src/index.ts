@@ -277,7 +277,7 @@ export {
 	type TreeParsingOptions,
 	type SchemaFactory_base,
 	type NumberKeys,
-	type AllowedTypeInfo,
+	type SimpleAllowedTypes,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
