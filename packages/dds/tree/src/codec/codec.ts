@@ -499,9 +499,12 @@ export const FluidClientVersion = {
 	// then update it to "2.001" once we actually have the opt in working.
 	// v2_1 = v2_0,
 
-	/** Fluid Framework Client 2.52 and newer. */
-	// New formats introduced in 2.52:
-	// - DetachedFieldIndex FormatV2
+	/**
+	 * Fluid Framework Client 2.52 and newer.
+	 *
+	 * New formats introduced in 2.52:
+	 * {@link DetachedFieldIndexFormatVersion.v2}
+	 */
 	v2_52: "2.52.0",
 } as const satisfies Record<string, MinimumVersionForCollab>;
 
