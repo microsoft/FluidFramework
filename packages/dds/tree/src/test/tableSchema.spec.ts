@@ -297,7 +297,7 @@ describe("TableFactory unit tests", () => {
 		});
 
 		// Tables manage to make ids readonly at the type level:
-		// this is a bit surprising since thats not currently implemented for identifiers in general,
+		// this is a bit surprising since that's not currently implemented for identifiers in general,
 		// but works in this case due to how interfaces are used.
 		it("Readonly IDs", () => {
 			const column = new Column({ props: {} });
