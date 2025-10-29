@@ -25,6 +25,7 @@ import {
 	type TreeNodeSchema,
 } from "./treeNodeSchema.js";
 import { schemaAsTreeNodeValid } from "./treeNodeValid.js";
+import type { SimpleAllowedTypes } from "../simpleSchema.js";
 
 /**
  * Schema for types allowed in some location in a tree (like a field, map entry or array).
@@ -133,6 +134,11 @@ export interface AnnotatedAllowedTypes<T = readonly AnnotatedAllowedType[]>
 	 * rather than identifiers where possible since its more type safe and it is possible that two schema with the same identifier exist.
 	 */
 	evaluateIdentifiers(): ReadonlySet<string>;
+
+	/**
+	 * Get the {@link SimpleAllowedTypes} version of the allowed types set.
+	 */
+	evaluateSimpleAllowedTypes(): ReadonlyMap<string, SimpleAllowedTypes>;
 }
 
 /**
@@ -251,6 +257,16 @@ export class AnnotatedAllowedTypesInternal<
 
 	public evaluateIdentifiers(): ReadonlySet<string> {
 		return this.lazyEvaluate.value.identifiers;
+	}
+
+	public evaluateSimpleAllowedTypes(): ReadonlyMap<string, SimpleAllowedTypes> {
+		const simpleAllowedTypes = new Map<string, SimpleAllowedTypes>();
+		for (const type of this.evaluate().types) {
+			simpleAllowedTypes.set(type.type.identifier, {
+				isStaged: type.metadata.stagedSchemaUpgrade !== undefined,
+			});
+		}
+		return simpleAllowedTypes;
 	}
 
 	public static override [Symbol.hasInstance]<

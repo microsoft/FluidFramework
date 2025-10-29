@@ -277,13 +277,7 @@ export function mapSchema<
 		() => new Set(normalizedTypes.evaluate().map((type) => type.identifier)),
 	);
 	const lazySimpleAllowedTypes = new Lazy(() => {
-		const map = new Map<string, SimpleAllowedTypes>();
-		for (const type of normalizedTypes.evaluate()) {
-			map.set(type.identifier, {
-				isStaged: false,
-			});
-		}
-		return map;
+		return normalizedTypes.evaluateSimpleAllowedTypes();
 	});
 
 	let privateData: TreeNodeSchemaPrivateData | undefined;
