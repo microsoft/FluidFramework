@@ -2051,7 +2051,6 @@ describe("ModularChangeFamily integration", () => {
 						detachLocation: fieldAId,
 					},
 				],
-				detachedMoves: [{ detachId: moveInId, count: 1, newLocation: fieldAId }],
 				revisions,
 			},
 			Change.field(fieldA, sequence.identifier, [
@@ -2072,7 +2071,6 @@ describe("ModularChangeFamily integration", () => {
 						detachLocation: fieldAId,
 					},
 				],
-				detachedMoves: [{ detachId: moveInId, count: 1, newLocation: fieldAId }],
 				revisions,
 			},
 			Change.field(fieldA, sequence.identifier, [
