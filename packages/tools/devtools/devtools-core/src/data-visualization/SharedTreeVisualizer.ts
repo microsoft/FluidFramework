@@ -223,7 +223,7 @@ async function visualizeObjectNode(
 	const objectNodeSchemaProperties: Record<string, FieldSchemaProperties> = {};
 	for (const [fieldKey, treeFieldSimpleSchema] of schema.fields) {
 		objectNodeSchemaProperties[fieldKey] = {
-			allowedTypes: treeFieldSimpleSchema.allowedTypesIdentifiers,
+			allowedTypes: new Set(treeFieldSimpleSchema.simpleAllowedTypes.keys()),
 			isRequired: treeFieldSimpleSchema.kind === FieldKind.Required ? true : false,
 		};
 	}
@@ -257,7 +257,7 @@ async function visualizeMapNode(
 	const mapNodeSchemaProperties: Record<string, FieldSchemaProperties> = {};
 	for (const key of Object.keys(tree.fields)) {
 		mapNodeSchemaProperties[key] = {
-			allowedTypes: schema.allowedTypesIdentifiers,
+			allowedTypes: new Set(schema.simpleAllowedTypes.keys()),
 			// Map values are always required. Don't display field requirement information, since that information is redundant.
 			isRequired: undefined,
 		};
@@ -297,7 +297,7 @@ async function visualizeArrayNode(
 	const arrayNodeSchemaProperties: Record<string, FieldSchemaProperties> = {};
 	for (const [i] of children.entries()) {
 		arrayNodeSchemaProperties[i] = {
-			allowedTypes: schema.allowedTypesIdentifiers,
+			allowedTypes: new Set(schema.simpleAllowedTypes.keys()),
 			// Array values are always required. Don't display field requirement information, since that information is redundant.
 			isRequired: undefined,
 		};
