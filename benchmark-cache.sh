@@ -77,8 +77,12 @@ echo ""
 # Navigate back to root for fluid-build
 cd ../../..
 
-# Benchmark command
-BUILD_CMD="pnpm fluid-build --task compile --root ${PROJECT_DIR}"
+# Benchmark command - use package name pattern matching
+# Extract just the package name (e.g., "aqueduct" from "packages/framework/aqueduct")
+PACKAGE_NAME=$(basename "${PROJECT_DIR}")
+
+# Build command - fluid-build can take package name patterns
+BUILD_CMD="pnpm fluid-build --task compile ${PACKAGE_NAME}"
 
 # Run hyperfine benchmark
 hyperfine \
