@@ -196,14 +196,12 @@ export abstract class LeafTask extends Task {
 			// Cache hit! Restore outputs from cache
 			const restoreResult = await this.restoreFromCache(cacheEntry);
 			if (restoreResult.success) {
-				// Replay stdout/stderr from cache to provide consistent output experience
-				if (restoreResult.stdout) {
-					console.log(restoreResult.stdout);
-				}
-				if (restoreResult.stderr) {
-					console.warn(restoreResult.stderr);
-				}
-				return this.execDone(startTime, BuildResult.CachedSuccess);
+				return this.execDone(
+					startTime,
+					BuildResult.CachedSuccess,
+					undefined,
+					cacheEntry.manifest.executionTimeMs,
+				);
 			}
 			// Cache restore failed, fall through to normal execution
 			console.warn(
@@ -312,7 +310,12 @@ export abstract class LeafTask extends Task {
 		return errorMessages;
 	}
 
-	private execDone(startTime: number, status: BuildResult, worker?: boolean) {
+	private execDone(
+		startTime: number,
+		status: BuildResult,
+		worker?: boolean,
+		originalExecutionTimeMs?: number,
+	) {
 		if (!options.showExec) {
 			let statusCharacter: string = " ";
 			switch (status) {
@@ -340,9 +343,14 @@ export abstract class LeafTask extends Task {
 			const elapsedTime = (Date.now() - startTime) / 1000;
 			const workerMsg = worker ? "[worker] " : "";
 			const suffix = this.isIncremental ? "" : " (non-incremental)";
+			let timeSavedMsg = "";
+			if (status === BuildResult.CachedSuccess && originalExecutionTimeMs !== undefined) {
+				const timeSavedSeconds = (originalExecutionTimeMs / 1000 - elapsedTime).toFixed(3);
+				timeSavedMsg = ` (saved ${timeSavedSeconds}s)`;
+			}
 			const statusString = `[${taskNum}/${totalTask}] ${statusCharacter} ${
 				this.node.pkg.nameColored
-			}: ${workerMsg}${this.command} - ${elapsedTime.toFixed(3)}s${suffix}`;
+			}: ${workerMsg}${this.command} - ${elapsedTime.toFixed(3)}s${timeSavedMsg}${suffix}`;
 			log(statusString);
 			if (status === BuildResult.Failed) {
 				this.node.context.failedTaskLines.push(statusString);
