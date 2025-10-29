@@ -703,9 +703,13 @@ export abstract class LeafTask extends Task {
 
 			// Check if any outputs were produced
 			if (existingOutputFiles.length === 0) {
-				console.warn(
-					`${this.node.pkg.nameColored}: warning: cache write skipped - no output files found (expected ${outputFiles.length} files)`,
-				);
+				// Only warn if we expected outputs but they're missing
+				// Some tasks (like linters) don't produce output files by design
+				if (outputFiles.length > 0) {
+					console.warn(
+						`${this.node.pkg.nameColored}: warning: cache write skipped - no output files found (expected ${outputFiles.length} files)`,
+					);
+				}
 				return false;
 			}
 
