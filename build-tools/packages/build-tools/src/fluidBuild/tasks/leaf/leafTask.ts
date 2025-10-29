@@ -210,7 +210,7 @@ export abstract class LeafTask extends Task {
 		}
 
 		if (this.recheckLeafIsUpToDate && !this.forced && (await this.checkLeafIsUpToDate())) {
-			return this.execDone(startTime, BuildResult.UpToDate);
+			return this.execDone(startTime, BuildResult.LocalCacheHit);
 		}
 		const ret = await this.execCore();
 
@@ -324,7 +324,7 @@ export abstract class LeafTask extends Task {
 			let statusCharacter: string = " ";
 			switch (status) {
 				case BuildResult.Success:
-					statusCharacter = chalk.greenBright("\u2713");
+					statusCharacter = chalk.yellowBright("\u2713");
 					break;
 				case BuildResult.UpToDate:
 					statusCharacter = chalk.cyanBright("-");
@@ -337,6 +337,9 @@ export abstract class LeafTask extends Task {
 					break;
 				case BuildResult.SuccessWithCacheWrite:
 					statusCharacter = chalk.greenBright("\u2713\u002B"); // ✓+ (checkmark plus)
+					break;
+				case BuildResult.LocalCacheHit:
+					statusCharacter = chalk.greenBright("\u2302"); // ⌂ (house symbol for local)
 					break;
 			}
 

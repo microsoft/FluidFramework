@@ -15,6 +15,10 @@ export enum BuildResult {
 	 * Task succeeded by executing and outputs were successfully written to cache.
 	 */
 	SuccessWithCacheWrite,
+	/**
+	 * Task was up-to-date based on local donefile cache (no execution or remote cache needed).
+	 */
+	LocalCacheHit,
 }
 
 /**
@@ -34,7 +38,8 @@ export function summarizeBuildResult(results: readonly BuildResult[]): BuildResu
 		if (
 			result === BuildResult.Success ||
 			result === BuildResult.CachedSuccess ||
-			result === BuildResult.SuccessWithCacheWrite
+			result === BuildResult.SuccessWithCacheWrite ||
+			result === BuildResult.LocalCacheHit
 		) {
 			retResult = BuildResult.Success;
 		}

@@ -248,6 +248,8 @@ function buildResultString(buildResult: BuildResult) {
 			return chalk.magentaBright("restored from cache");
 		case BuildResult.SuccessWithCacheWrite:
 			return chalk.greenBright("succeeded and cached");
+		case BuildResult.LocalCacheHit:
+			return chalk.yellowBright("local cache hit");
 	}
 }
 

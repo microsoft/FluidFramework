@@ -101,7 +101,12 @@ export class GroupTask extends Task {
 				return BuildResult.Failed;
 			}
 
-			if (result === BuildResult.Success) {
+			if (
+				result === BuildResult.Success ||
+				result === BuildResult.CachedSuccess ||
+				result === BuildResult.SuccessWithCacheWrite ||
+				result === BuildResult.LocalCacheHit
+			) {
 				retResult = BuildResult.Success;
 			}
 		}
