@@ -223,10 +223,11 @@ export interface FieldChangeEncodingContext {
 	readonly rootNodeChanges: ChangeAtomIdBTree<NodeId>;
 	readonly rootRenames: ChangeAtomIdRangeMap<ChangeAtomId>;
 	encodeNode(nodeId: NodeId): EncodedNodeChangeset;
-	getInputDetachId(
-		id: ChangeAtomId,
+	getInputRootId(
+		outputRootId: ChangeAtomId,
 		count: number,
 	): RangeQueryResult<ChangeAtomId | undefined>;
+
 	isAttachId(id: ChangeAtomId, count: number): RangeQueryResult<boolean>;
 	isDetachId(id: ChangeAtomId, count: number): RangeQueryResult<boolean>;
 

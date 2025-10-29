@@ -159,7 +159,7 @@ export function makeModularChangeCodecV1(
 		fieldToRoots: FieldRootMap,
 		context: ChangeEncodingContext,
 		encodeNode: NodeEncoder,
-		getInputDetachId: ChangeAtomMappingQuery,
+		getInputRootId: ChangeAtomMappingQuery,
 		isAttachId: ChangeAtomIdRangeQuery,
 		isDetachId: ChangeAtomIdRangeQuery,
 	): EncodedFieldChangeMap {
@@ -175,7 +175,7 @@ export function makeModularChangeCodecV1(
 				rootRenames: rootChanges?.renames ?? newChangeAtomIdTransform(),
 
 				encodeNode,
-				getInputDetachId,
+				getInputRootId,
 				isAttachId,
 				isDetachId,
 				decodeNode: () => fail(0xb1e /* Should not decode nodes during field encoding */),
@@ -209,7 +209,7 @@ export function makeModularChangeCodecV1(
 		fieldToRoots: FieldRootMap,
 		context: ChangeEncodingContext,
 		encodeNode: NodeEncoder,
-		getInputDetachId: ChangeAtomMappingQuery,
+		getInputRootId: ChangeAtomMappingQuery,
 		isAttachId: ChangeAtomIdRangeQuery,
 		isDetachId: ChangeAtomIdRangeQuery,
 	): EncodedNodeChangeset {
@@ -224,7 +224,7 @@ export function makeModularChangeCodecV1(
 				fieldToRoots,
 				context,
 				encodeNode,
-				getInputDetachId,
+				getInputRootId,
 				isAttachId,
 				isDetachId,
 			);
@@ -264,7 +264,7 @@ export function makeModularChangeCodecV1(
 				rootRenames: newChangeAtomIdTransform(),
 
 				encodeNode: () => fail(0xb21 /* Should not encode nodes during field decoding */),
-				getInputDetachId: () => fail("Should not query during decoding"),
+				getInputRootId: () => fail("Should not query during decoding"),
 				isAttachId: () => fail("Should not query during decoding"),
 				isDetachId: () => fail("Should not query during decoding"),
 
@@ -519,7 +519,7 @@ export function makeModularChangeCodecV1(
 				return { start: id, value: isDetach, length: renameEntry.length };
 			};
 
-			const getInputDetachId = (
+			const getInputRootId = (
 				id: ChangeAtomId,
 				count: number,
 			): RangeQueryResult<ChangeAtomId | undefined> => {
@@ -536,7 +536,7 @@ export function makeModularChangeCodecV1(
 					fieldToRoots,
 					context,
 					encodeNode,
-					getInputDetachId,
+					getInputRootId,
 					isAttachId,
 					isDetachId,
 				);
@@ -556,7 +556,7 @@ export function makeModularChangeCodecV1(
 					fieldToRoots,
 					context,
 					encodeNode,
-					getInputDetachId,
+					getInputRootId,
 					isAttachId,
 					isDetachId,
 				),

@@ -186,7 +186,7 @@ export function makeModularChangeCodecV2(
 				rootRenames: rootChanges?.renames ?? newChangeAtomIdTransform(),
 
 				encodeNode,
-				getInputDetachId,
+				getInputRootId: getInputDetachId,
 				isAttachId,
 				isDetachId,
 				decodeNode: () => fail(0xb1e /* Should not decode nodes during field encoding */),
@@ -306,7 +306,7 @@ export function makeModularChangeCodecV2(
 				rootRenames: newChangeAtomIdTransform(),
 
 				encodeNode: () => fail(0xb21 /* Should not encode nodes during field decoding */),
-				getInputDetachId: () => fail("Should not query during decoding"),
+				getInputRootId: () => fail("Should not query during decoding"),
 				isAttachId: () => fail("Should not query during decoding"),
 				isDetachId: () => fail("Should not query during decoding"),
 

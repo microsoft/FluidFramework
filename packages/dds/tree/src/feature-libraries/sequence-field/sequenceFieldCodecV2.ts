@@ -473,9 +473,10 @@ function encodeRename(
 ): Encoded.MarkEffect {
 	assert(mark.cellId !== undefined, "Rename should target empty cell");
 
-	const inputDetachId = context.getInputDetachId(mark.idOverride, mark.count).value;
+	const inputDetachId = context.getInputRootId(mark.idOverride, mark.count).value;
 	const isMoveInAndDetach =
-		context.isDetachId(mark.idOverride, mark.count).value ||
+		(context.isDetachId(mark.idOverride, mark.count).value &&
+			!context.isAttachId(mark.idOverride, mark.count).value) ||
 		(inputDetachId !== undefined && !areEqualChangeAtomIds(inputDetachId, mark.cellId));
 
 	if (isMoveInAndDetach) {
@@ -505,7 +506,9 @@ function encodeRename(
 
 	const outputRootId = renamedRootId ?? mark.cellId;
 	const isMoveOutAndAttach = context.isAttachId(outputRootId, mark.count).value;
-	const isMoveOutAndDetach = !areEqualChangeAtomIds(outputRootId, mark.idOverride);
+	const isMoveOutAndDetach =
+		renamedRootId !== undefined && !areEqualChangeAtomIds(renamedRootId, mark.idOverride);
+
 	if (isMoveOutAndAttach || isMoveOutAndDetach) {
 		// Detached nodes which were last at this cell location have been moved.
 		// XXX: mark.idOverride represents detachCellId, so we should represent it using the moveOut's ID and use outputRootId as the finalDetachId.
@@ -551,7 +554,7 @@ function getLengthToSplitMark(mark: Mark, context: FieldChangeEncodingContext): 
 			: mark.count;
 
 	if (mark.cellId !== undefined) {
-		count = context.getInputDetachId(mark.cellId, count).length;
+		count = context.getInputRootId(mark.cellId, count).length;
 	}
 
 	switch (mark.type) {
@@ -634,7 +637,7 @@ function encodeMarkEffect(
 
 			// If the input context ID for these nodes is not the cell ID,
 			// then these nodes are being moved from the location at which they were last detached.
-			const inputId = context.getInputDetachId(attachId, mark.count).value ?? attachId;
+			const inputId = context.getInputRootId(attachId, mark.count).value ?? attachId;
 			const isInitialAttachLocation =
 				mark.cellId === undefined || areEqualChangeAtomIds(mark.cellId, inputId);
 
