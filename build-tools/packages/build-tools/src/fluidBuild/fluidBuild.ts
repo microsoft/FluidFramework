@@ -228,6 +228,11 @@ async function main() {
 					log(cacheStats);
 				}
 
+				// Display status symbol legend if tasks were built
+				if (taskStats.leafBuiltCount > 0) {
+					displayStatusSymbolLegend();
+				}
+
 				// Display failed tasks if any
 				const currentFailureSummary = buildGraph.taskFailureSummary;
 				if (currentFailureSummary !== "") {
@@ -288,6 +293,12 @@ async function main() {
 		if (cacheStats) {
 			log(cacheStats);
 		}
+
+		// Display status symbol legend if tasks were built
+		const taskStats = buildGraph.taskStats;
+		if (taskStats.leafBuiltCount > 0) {
+			displayStatusSymbolLegend();
+		}
 	}
 
 	if (failureSummary !== "") {
@@ -311,6 +322,16 @@ function buildResultString(buildResult: BuildResult) {
 		case BuildResult.LocalCacheHit:
 			return chalk.yellowBright("local cache hit");
 	}
+}
+
+function displayStatusSymbolLegend() {
+	log("\nStatus symbols:");
+	log(`  ${chalk.yellowBright("\u2713")} Success (executed)`);
+	log(`  ${chalk.cyanBright("\u25CB")} Up-to-date (skipped)`);
+	log(`  ${chalk.redBright("x")} Failed`);
+	log(`  ${chalk.blueBright("\u21E9")} Remote cache hit (downloaded)`);
+	log(`  ${chalk.greenBright("\u21E7")} Success with cache write (uploaded)`);
+	log(`  ${chalk.greenBright("\u25A0")} Local cache hit (donefile)`);
 }
 
 main().catch((e) => {

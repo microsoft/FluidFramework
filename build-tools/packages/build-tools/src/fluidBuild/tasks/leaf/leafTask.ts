@@ -330,19 +330,19 @@ export abstract class LeafTask extends Task {
 					statusCharacter = chalk.yellowBright("\u2713");
 					break;
 				case BuildResult.UpToDate:
-					statusCharacter = chalk.cyanBright("-");
+					statusCharacter = chalk.cyanBright("\u25CB"); // ○ (empty circle)
 					break;
 				case BuildResult.Failed:
 					statusCharacter = chalk.redBright("x");
 					break;
 				case BuildResult.CachedSuccess:
-					statusCharacter = chalk.magentaBright("\u21BB"); // ↻ (circled arrow)
+					statusCharacter = chalk.blueBright("\u21E9"); // ⇩ (downward white arrow)
 					break;
 				case BuildResult.SuccessWithCacheWrite:
-					statusCharacter = chalk.greenBright("\u2713\u002B"); // ✓+ (checkmark plus)
+					statusCharacter = chalk.greenBright("\u21E7"); // ⇧ (upward white arrow)
 					break;
 				case BuildResult.LocalCacheHit:
-					statusCharacter = chalk.greenBright("\u2302"); // ⌂ (house symbol for local)
+					statusCharacter = chalk.greenBright("\u25A0"); // ■ (filled square)
 					break;
 			}
 
