@@ -643,4 +643,56 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 	}
 	protected abstract get configFileFullPaths(): string[];
 	protected abstract getToolVersion(): Promise<string>;
+
+	protected override async getCacheInputFiles(): Promise<string[] | undefined> {
+		try {
+			const inputFiles: string[] = [];
+			const pkgDir = this.node.pkg.directory;
+
+			const configFiles = this.configFileFullPaths;
+			for (const configFile of configFiles) {
+				if (existsSync(configFile)) {
+					inputFiles.push(path.relative(pkgDir, configFile));
+				}
+			}
+
+			const tscTasks = [...this.getDependentLeafTasks()].filter(
+				(task) => task instanceof TscTask,
+			) as TscTask[];
+			const ownTscTasks = tscTasks.filter((task) => task.package == this.package);
+			const tasks = (ownTscTasks.length === 0 ? tscTasks : ownTscTasks).sort((a, b) =>
+				a.name.localeCompare(b.name),
+			);
+
+			for (const dep of tasks) {
+				const tsBuildInfo = await dep.readTsBuildInfo();
+				if (tsBuildInfo === undefined) {
+					return undefined;
+				}
+
+				for (const fileName of tsBuildInfo.program.fileNames) {
+					const absolutePath = path.isAbsolute(fileName)
+						? fileName
+						: path.join(dep.package.directory, fileName);
+					const relativePath = path.relative(pkgDir, absolutePath);
+					if (!relativePath.startsWith("..") && !path.isAbsolute(relativePath)) {
+						inputFiles.push(relativePath);
+					}
+				}
+			}
+
+			return inputFiles;
+		} catch (e: any) {
+			this.traceError(`error getting cache input files: ${e.message}`);
+			return undefined;
+		}
+	}
+
+	protected override async getCacheOutputFiles(): Promise<string[] | undefined> {
+		return this.getTaskSpecificOutputFiles();
+	}
+
+	protected getTaskSpecificOutputFiles(): Promise<string[] | undefined> {
+		return Promise.resolve(undefined);
+	}
 }

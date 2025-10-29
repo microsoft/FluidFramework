@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import globby from "globby";
 import { getApiExtractorConfigFilePath, getInstalledPackageVersion } from "../taskUtils.js";
 import { TscDependentTask } from "./tscTask.js";
 
@@ -18,6 +19,24 @@ export class ApiExtractorTask extends TscDependentTask {
 
 	protected get useWorker() {
 		return useWorker(this.command);
+	}
+
+	protected override async getTaskSpecificOutputFiles(): Promise<string[] | undefined> {
+		try {
+			const pkgDir = this.node.pkg.directory;
+			const outputFiles = await globby(
+				["**/api-report/*.api.md", "**/*.api.json", "**/dist/*.d.ts"],
+				{
+					cwd: pkgDir,
+					absolute: false,
+					gitignore: false,
+				},
+			);
+			return outputFiles;
+		} catch (e: any) {
+			this.traceError(`error getting api-extractor output files: ${e.message}`);
+			return undefined;
+		}
 	}
 }
 

@@ -925,6 +925,32 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 			return undefined;
 		}
 	}
+
+	protected override async getCacheInputFiles(): Promise<string[] | undefined> {
+		try {
+			const inputFiles = await this.getInputFiles();
+			const pkgDir = this.node.pkg.directory;
+			return inputFiles.map((f) => {
+				return path.isAbsolute(f) ? path.relative(pkgDir, f) : f;
+			});
+		} catch (e: any) {
+			this.traceError(`error getting cache input files: ${e.message}`);
+			return undefined;
+		}
+	}
+
+	protected override async getCacheOutputFiles(): Promise<string[] | undefined> {
+		try {
+			const outputFiles = await this.getOutputFiles();
+			const pkgDir = this.node.pkg.directory;
+			return outputFiles.map((f) => {
+				return path.isAbsolute(f) ? path.relative(pkgDir, f) : f;
+			});
+		} catch (e: any) {
+			this.traceError(`error getting cache output files: ${e.message}`);
+			return undefined;
+		}
+	}
 }
 
 /**
