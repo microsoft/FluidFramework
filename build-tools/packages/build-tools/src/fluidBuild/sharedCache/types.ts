@@ -369,6 +369,12 @@ export interface CacheStatistics {
 	avgStoreTime: number;
 
 	/**
+	 * Total time saved by cache hits in milliseconds
+	 * (sum of original execution times for all cache hits)
+	 */
+	timeSavedMs: number;
+
+	/**
 	 * When the cache was last pruned (if ever)
 	 */
 	lastPruned?: string; // ISO-8601 timestamp

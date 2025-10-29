@@ -32,6 +32,7 @@ export async function loadStatistics(cacheDir: string): Promise<CacheStatistics>
 			missCount: 0,
 			avgRestoreTime: 0,
 			avgStoreTime: 0,
+			timeSavedMs: 0,
 		};
 	}
 
@@ -64,6 +65,7 @@ export async function loadStatistics(cacheDir: string): Promise<CacheStatistics>
 			missCount: 0,
 			avgRestoreTime: 0,
 			avgStoreTime: 0,
+			timeSavedMs: 0,
 		};
 	}
 }

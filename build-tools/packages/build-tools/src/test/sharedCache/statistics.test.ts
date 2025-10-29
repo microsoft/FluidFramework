@@ -244,6 +244,7 @@ describe("Cache Statistics", () => {
 				missCount: 0,
 				avgRestoreTime: 0,
 				avgStoreTime: 0,
+				timeSavedMs: 0,
 			};
 
 			// Recalculate by scanning directory
@@ -264,6 +265,7 @@ describe("Cache Statistics", () => {
 				missCount: 3,
 				avgRestoreTime: 12.5,
 				avgStoreTime: 18.3,
+				timeSavedMs: 0,
 			};
 
 			await saveStatistics(cacheDir, originalStats);

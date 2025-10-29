@@ -327,14 +327,15 @@ function buildResultString(buildResult: BuildResult) {
 
 function displayStatusSymbolLegend() {
 	log("\nStatus symbols:");
-	log(`  ${chalk.yellowBright(STATUS_SYMBOLS.SUCCESS)} Success (executed)`);
-	log(`  ${chalk.cyanBright(STATUS_SYMBOLS.UP_TO_DATE)} Up-to-date (skipped)`);
-	log(`  ${chalk.redBright(STATUS_SYMBOLS.FAILED)} Failed`);
-	log(`  ${chalk.blueBright(STATUS_SYMBOLS.CACHED_SUCCESS)} Remote cache hit (downloaded)`);
 	log(
-		`  ${chalk.greenBright(STATUS_SYMBOLS.SUCCESS_WITH_CACHE_WRITE)} Success with cache write (uploaded)`,
+		`  ${chalk.yellowBright(STATUS_SYMBOLS.SUCCESS)} Success (executed)              ${chalk.blueBright(STATUS_SYMBOLS.CACHED_SUCCESS)} Remote cache hit (downloaded)`,
 	);
-	log(`  ${chalk.greenBright(STATUS_SYMBOLS.LOCAL_CACHE_HIT)} Local cache hit (donefile)`);
+	log(
+		`  ${chalk.cyanBright(STATUS_SYMBOLS.UP_TO_DATE)} Up-to-date (skipped)            ${chalk.greenBright(STATUS_SYMBOLS.SUCCESS_WITH_CACHE_WRITE)} Cache write (uploaded)`,
+	);
+	log(
+		`  ${chalk.redBright(STATUS_SYMBOLS.FAILED)} Failed                          ${chalk.greenBright(STATUS_SYMBOLS.LOCAL_CACHE_HIT)} Local cache hit (donefile)`,
+	);
 }
 
 main().catch((e) => {

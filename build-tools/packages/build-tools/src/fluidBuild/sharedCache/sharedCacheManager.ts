@@ -69,6 +69,7 @@ export class SharedCacheManager {
 			missCount: 0,
 			avgRestoreTime: 0,
 			avgStoreTime: 0,
+			timeSavedMs: 0,
 		};
 	}
 
@@ -285,11 +286,12 @@ export class SharedCacheManager {
 			// Cache hit!
 			const elapsed = Date.now() - startTime;
 			this.statistics.hitCount++;
+			this.statistics.timeSavedMs += manifest.executionTimeMs;
 			traceLookup(
 				`HIT: Found valid cache entry ${shortKey} with ${manifest.outputFiles.length} files (${elapsed}ms)`,
 			);
 			traceStats(
-				`Cache stats: ${this.statistics.hitCount} hits, ${this.statistics.missCount} misses`,
+				`Cache stats: ${this.statistics.hitCount} hits, ${this.statistics.missCount} misses, ${this.statistics.timeSavedMs}ms saved`,
 			);
 
 			return {
