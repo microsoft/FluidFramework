@@ -18,7 +18,7 @@ module.exports = {
 		"@typescript-eslint/promise-function-async": "off",
 		"@typescript-eslint/no-misused-promises": "off",
 
-		// FIXME: This rule is crashing on this package - disable until fixed
+		// Disabled because the rule is crashing on this package - AB#51780
 		"@typescript-eslint/unbound-method": "off",
 	},
 };

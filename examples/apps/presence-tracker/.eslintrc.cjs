@@ -10,7 +10,7 @@ module.exports = {
 		"../../.eslintrc.cjs",
 	],
 	rules: {
-		// FIXME: This rule is crashing on this package - disable until fixed
+		// Disabled because the rule is crashing on this package - AB#51780
 		"@typescript-eslint/unbound-method": "off",
 	},
 };

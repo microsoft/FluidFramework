@@ -12,7 +12,7 @@ module.exports = {
 		// TODO: Enabling this may require breaking changes.
 		"@typescript-eslint/consistent-indexed-object-style": "off",
 
-		// FIXME: This rule is crashing on this package - disable until fixed
+		// Disabled because the rule is crashing on this package - AB#51780
 		"@typescript-eslint/unbound-method": "off",
 	},
 	overrides: [

@@ -17,7 +17,7 @@ module.exports = {
 		"@typescript-eslint/strict-boolean-expressions": "off",
 		"import/no-deprecated": "off", // This package as a whole is deprecated so it uses deprecated APIs
 
-		// FIXME: This rule is crashing on this package - disable until fixed
+		// Disabled because the rule is crashing on this package - AB#51780
 		"@typescript-eslint/unbound-method": "off",
 	},
 };

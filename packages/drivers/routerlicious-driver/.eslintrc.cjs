@@ -17,7 +17,7 @@ module.exports = {
 		"no-case-declarations": "off",
 		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 
-		// FIXME: This rule is crashing on this package - disable until fixed
+		// Disabled because the rule is crashing on this package - AB#51780
 		"@typescript-eslint/unbound-method": "off",
 	},
 };
