@@ -957,7 +957,7 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 /**
  * Build the allowed types for a Stored Schema.
  *
- * @remarks Staged upgrades do not apply to stored schemas, so we omit the flag when building {@link SimpleAllowedTypes}.
+ * @remarks Staged upgrades do not apply to stored schemas, so we omit the {@link SimpleAllowedTypes.isStaged | staging flag } when building {@link SimpleAllowedTypes}.
  * @param types - The types to create allowed types for.
  * @returns The allowed types.
  */
