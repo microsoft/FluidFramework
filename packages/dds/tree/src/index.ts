@@ -339,4 +339,3 @@ export { JsonAsTree } from "./jsonDomainSchema.js";
 export { FluidSerializableAsTree } from "./serializableDomainSchema.js";
 export { TableSchema, type System_TableSchema } from "./tableSchema.js";
 export { asAlpha } from "./api.js";
-export { toViewCompatibilityTreeSchema } from "./simple-tree/index.js";

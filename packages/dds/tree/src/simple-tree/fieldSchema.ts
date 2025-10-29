@@ -31,7 +31,7 @@ import type {
 } from "./core/index.js";
 import { normalizeAllowedTypes } from "./core/index.js";
 
-import type { AllowedTypeInfo, SimpleFieldSchema } from "./simpleSchema.js";
+import type { SimpleAllowedTypes, SimpleFieldSchema } from "./simpleSchema.js";
 import type { UnsafeUnknownSchema } from "./unsafeUnknownSchema.js";
 import type { InsertableContent } from "./unhydratedFlexTreeFromInsertable.js";
 
@@ -412,9 +412,9 @@ export class FieldSchemaAlpha<
 		return this.allowedTypesFull.evaluateIdentifiers();
 	}
 
-	public get allowedTypesInfo(): Map<string, AllowedTypeInfo> {
+	public get simpleAllowedTypes(): Map<string, SimpleAllowedTypes> {
 		const types = this.allowedTypesFull.evaluate().types;
-		const info = new Map<string, AllowedTypeInfo>();
+		const info = new Map<string, SimpleAllowedTypes>();
 
 		for (const type of types) {
 			info.set(type.type.identifier, {
@@ -423,19 +423,6 @@ export class FieldSchemaAlpha<
 		}
 
 		return info;
-	}
-
-	// TODO: Refactor allowedTypesIdentifiers and readonlyAllowedTypesIdentifiers so that there is an intermediate type containing
-	// the identifier and any other information needed for compatibility checks.
-	public get readonlyAllowedTypesIdentifiers(): ReadonlySet<string> {
-		const annotatedAllowedTypes = this.allowedTypesFull.evaluate().types;
-		const readonlyTypes = new Set<string>();
-		for (const allowedType of annotatedAllowedTypes) {
-			if (allowedType.metadata.stagedSchemaUpgrade !== undefined) {
-				readonlyTypes.add(allowedType.type.identifier);
-			}
-		}
-		return readonlyTypes;
 	}
 
 	protected constructor(

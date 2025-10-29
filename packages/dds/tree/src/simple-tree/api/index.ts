@@ -160,6 +160,4 @@ export {
 
 export { generateSchemaFromSimpleSchema } from "./schemaFromSimple.js";
 export { toSimpleTreeSchema } from "./viewSchemaToSimpleSchema.js";
-export { toViewCompatibilityTreeSchema } from "./viewSchemaToViewCompatibilitySchema.js";
 export type { TreeChangeEvents } from "./treeChangeEvents.js";
-export { toSerializableCompatibilitySchema } from "./serializableCompatibilitySchema.js";

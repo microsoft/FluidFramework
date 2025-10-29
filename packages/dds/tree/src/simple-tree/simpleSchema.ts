@@ -62,7 +62,7 @@ export interface SimpleObjectNodeSchema<out TCustomMetadata = unknown>
 	/**
 	 * Whether the object node allows unknown optional fields.
 	 *
-	 * @remarks Used for compatibility checks (see {@link toViewCompatibilityTreeSchema}). Not available in all cases.
+	 * @remarks Used for compatibility checks. Not available in all cases.
 	 */
 	readonly allowUnknownOptionalFields?: boolean;
 }
@@ -98,12 +98,7 @@ export interface SimpleArrayNodeSchema<out TCustomMetadata = unknown>
 	 * @remarks Refers to the types by identifier.
 	 * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
 	 */
-	readonly allowedTypesIdentifiers: ReadonlySet<string>;
-
-	/**
-	 * Information about the allowed types.
-	 */
-	readonly allowedTypesInfo: ReadonlyMap<string, AllowedTypeInfo>;
+	readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypes>;
 }
 
 /**
@@ -120,12 +115,7 @@ export interface SimpleMapNodeSchema<out TCustomMetadata = unknown>
 	 * @remarks Refers to the types by identifier.
 	 * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
 	 */
-	readonly allowedTypesIdentifiers: ReadonlySet<string>;
-
-	/**
-	 * Information about the allowed types.
-	 */
-	readonly allowedTypesInfo: ReadonlyMap<string, AllowedTypeInfo>;
+	readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypes>;
 }
 
 /**
@@ -142,12 +132,7 @@ export interface SimpleRecordNodeSchema<out TCustomMetadata = unknown>
 	 * @remarks Refers to the types by identifier.
 	 * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
 	 */
-	readonly allowedTypesIdentifiers: ReadonlySet<string>;
-
-	/**
-	 * Information about the allowed types.
-	 */
-	readonly allowedTypesInfo: ReadonlyMap<string, AllowedTypeInfo>;
+	readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypes>;
 }
 
 /**
@@ -185,15 +170,18 @@ export type SimpleNodeSchema =
 	| SimpleRecordNodeSchema;
 
 /**
- * Information about allowed types under a field.
+ * Information about allowed types.
  *
  * @alpha
  * @sealed
  */
-export interface AllowedTypeInfo {
+export interface SimpleAllowedTypes {
 	/**
-	 * True if there is an associated schema upgrade that makes this type read-only.
-	 * Undefined if derived from a stored schema, which has no concept of staged allowed type upgrades.
+	 * True if this schema is included as a {@link SchemaStaticsAlpha.staged | staged} schema upgrade,
+	 * allowing the view schema be compatible with stored schema with (post upgrade) or without it (pre-upgrade).
+	 * New documents and schema upgrades will omit any staged schema.
+	 *
+	 * Undefined if derived from a stored schema.
 	 */
 	readonly isStaged?: boolean;
 }
@@ -215,17 +203,12 @@ export interface SimpleFieldSchema {
 	readonly kind: FieldKind;
 
 	/**
-	 * The types allowed under the field.
+	 * Information about the allowed types under this field.
 	 *
 	 * @remarks Refers to the types by identifier.
 	 * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
 	 */
-	readonly allowedTypesIdentifiers: ReadonlySet<string>;
-
-	/**
-	 * Information about the allowed types under this field.
-	 */
-	readonly allowedTypesInfo: ReadonlyMap<string, AllowedTypeInfo>;
+	readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypes>;
 
 	/**
 	 * {@inheritDoc FieldSchemaMetadata}

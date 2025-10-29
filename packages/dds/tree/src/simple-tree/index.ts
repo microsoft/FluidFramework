@@ -193,7 +193,7 @@ export type {
 	SimpleNodeSchemaBaseAlpha,
 	SimpleObjectFieldSchema,
 	SimpleRecordNodeSchema,
-	AllowedTypeInfo,
+	SimpleAllowedTypes as AllowedTypeInfo,
 } from "./simpleSchema.js";
 export {
 	type ImplicitFieldSchema,
@@ -275,7 +275,3 @@ export {
 	nullSchema,
 } from "./leafNodeSchema.js";
 export type { LeafSchema } from "./leafNodeSchema.js";
-export {
-	toViewCompatibilityTreeSchema,
-	toSerializableCompatibilitySchema,
-} from "./api/index.js";

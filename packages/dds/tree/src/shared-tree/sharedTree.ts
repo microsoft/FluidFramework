@@ -952,7 +952,7 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
 };
 
-function buildAllowedTypesInfo(types: TreeTypeSet): ReadonlyMap<string, AllowedTypeInfo> {
+function buildSimpleAllowedTypes(types: TreeTypeSet): ReadonlyMap<string, AllowedTypeInfo> {
 	const allowedTypesInfo = new Map<string, AllowedTypeInfo>();
 	for (const type of types) {
 		allowedTypesInfo.set(type, {
@@ -984,8 +984,7 @@ function exportSimpleFieldSchemaStored(schema: TreeFieldStoredSchema): SimpleFie
 	return {
 		kind,
 		// TODO: Refactor
-		allowedTypesIdentifiers: schema.types,
-		allowedTypesInfo: buildAllowedTypesInfo(schema.types),
+		simpleAllowedTypes: buildSimpleAllowedTypes(schema.types),
 		metadata: {},
 		persistedMetadata: schema.persistedMetadata,
 	};
@@ -1001,8 +1000,7 @@ function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeS
 	if (arrayTypes !== undefined) {
 		return {
 			kind: NodeKind.Array,
-			allowedTypesIdentifiers: arrayTypes,
-			allowedTypesInfo: buildAllowedTypesInfo(arrayTypes),
+			simpleAllowedTypes: buildSimpleAllowedTypes(arrayTypes),
 			metadata: {},
 			persistedMetadata: schema.metadata,
 		};
@@ -1021,8 +1019,7 @@ function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeS
 		);
 		return {
 			kind: NodeKind.Map,
-			allowedTypesIdentifiers: schema.mapFields.types,
-			allowedTypesInfo: buildAllowedTypesInfo(schema.mapFields.types),
+			simpleAllowedTypes: buildSimpleAllowedTypes(schema.mapFields.types),
 			metadata: {},
 			persistedMetadata: schema.metadata,
 		};

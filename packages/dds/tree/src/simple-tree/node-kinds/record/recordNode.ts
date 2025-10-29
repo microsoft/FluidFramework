@@ -58,7 +58,7 @@ import { prepareForInsertion } from "../../prepareForInsertion.js";
 import { recordLikeDataToFlexContent } from "../common.js";
 import { MapNodeStoredSchema } from "../../../core/index.js";
 import type { NodeSchemaOptionsAlpha } from "../../api/index.js";
-import type { AllowedTypeInfo } from "../../simpleSchema.js";
+import type { SimpleAllowedTypes } from "../../simpleSchema.js";
 
 /**
  * Create a proxy which implements the {@link TreeRecordNode} API.
@@ -259,8 +259,8 @@ export function recordSchema<
 	const lazyAllowedTypesIdentifiers = new Lazy(
 		() => new Set(normalizedTypes.evaluate().map((type) => type.identifier)),
 	);
-	const lazyAllowedTypesInfo = new Lazy(() => {
-		const map = new Map<string, AllowedTypeInfo>();
+	const lazySimpleAllowedTypes = new Lazy(() => {
+		const map = new Map<string, SimpleAllowedTypes>();
 		for (const type of normalizedTypes.evaluate()) {
 			map.set(type.identifier, {
 				isStaged: false,
@@ -357,8 +357,8 @@ export function recordSchema<
 			return lazyAllowedTypesIdentifiers.value;
 		}
 
-		public static get allowedTypesInfo(): ReadonlyMap<string, AllowedTypeInfo> {
-			return lazyAllowedTypesInfo.value;
+		public static get simpleAllowedTypes(): ReadonlyMap<string, SimpleAllowedTypes> {
+			return lazySimpleAllowedTypes.value;
 		}
 
 		protected static override constructorCached: MostDerivedData | undefined = undefined;
