@@ -332,6 +332,7 @@ export class SharedCacheManager {
 		// Skip if cache writes are disabled
 		if (this.options.skipCacheWrite) {
 			traceStore(`Skipping cache write (disabled by --skip-cache-write)`);
+			console.warn(`${inputs.packageName}: cache write skipped (--skip-cache-write enabled)`);
 			return;
 		}
 
@@ -442,10 +443,23 @@ export class SharedCacheManager {
 			await this.persistStatistics();
 		} catch (error) {
 			// Graceful degradation: log error but don't fail the build
+			const errorMessage = error instanceof Error ? error.message : String(error);
+			const errorCode = (error as NodeJS.ErrnoException).code;
+
+			// Provide more specific error messages
+			let reason = errorMessage;
+			if (errorCode === "ENOSPC") {
+				reason = "disk full - no space left on device";
+			} else if (errorCode === "EACCES" || errorCode === "EPERM") {
+				reason = `permission denied accessing cache directory`;
+			} else if (errorCode === "ENOENT") {
+				reason = "cache directory not found or output file missing";
+			} else if (errorMessage.includes("EISDIR")) {
+				reason = "attempting to write to a directory instead of a file";
+			}
+
 			traceError(`Failed to store cache entry: ${error}`);
-			console.warn(
-				`Warning: Failed to store cache entry: ${error instanceof Error ? error.message : String(error)}`,
-			);
+			console.warn(`${inputs.packageName}: warning: cache write failed - ${reason}`);
 		}
 	}
 

@@ -641,6 +641,7 @@ export abstract class LeafTask extends Task {
 	): Promise<boolean> {
 		const sharedCache = this.context.sharedCache;
 		if (!sharedCache) {
+			// No warning - this is expected when cache is not configured
 			return false;
 		}
 
@@ -648,12 +649,14 @@ export abstract class LeafTask extends Task {
 			// Gather input files for cache key computation
 			const inputFiles = await this.getCacheInputFiles();
 			if (!inputFiles) {
+				this.traceError("Cache write skipped: unable to determine input files");
 				return false;
 			}
 
 			// Get output files
 			const outputFiles = await this.getCacheOutputFiles();
 			if (!outputFiles) {
+				this.traceError("Cache write skipped: unable to determine output files");
 				return false;
 			}
 
@@ -697,6 +700,14 @@ export abstract class LeafTask extends Task {
 				const fullPath = this.getPackageFileFullPath(relativePath);
 				return existsSync(fullPath);
 			});
+
+			// Check if any outputs were produced
+			if (existingOutputFiles.length === 0) {
+				console.warn(
+					`${this.node.pkg.nameColored}: warning: cache write skipped - no output files found (expected ${outputFiles.length} files)`,
+				);
+				return false;
+			}
 
 			const taskOutputs = {
 				files: existingOutputFiles.map((relativePath) => ({
