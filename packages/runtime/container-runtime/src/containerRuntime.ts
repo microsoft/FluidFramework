@@ -113,6 +113,7 @@ import type {
 	IDataStore,
 	IFluidDataStoreContextDetached,
 	IFluidDataStoreRegistry,
+	IFluidParentContext,
 	ISummarizeInternalResult,
 	InboundAttachMessage,
 	NamedFluidDataStoreRegistryEntries,
@@ -123,7 +124,6 @@ import type {
 	StageControlsInternal,
 	IContainerRuntimeBaseInternal,
 	MinimumVersionForCollab,
-	IFluidParentContext,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
@@ -180,13 +180,13 @@ import {
 	type IBlobManagerLoadInfo,
 } from "./blobManager/index.js";
 import type {
-	AddressedSignalEnvelope,
+	AddressedUnsequencedSignalEnvelope,
 	IFluidRootParentContextPrivate,
 } from "./channelCollection.js";
 import {
 	ChannelCollection,
-	getSummaryForDatastores,
 	formParentContext,
+	getSummaryForDatastores,
 } from "./channelCollection.js";
 import type { ICompressionRuntimeOptions } from "./compressionDefinitions.js";
 import { CompressionAlgorithms, disabledCompressionConfig } from "./compressionDefinitions.js";
@@ -825,14 +825,14 @@ export class ContainerRuntime
 		IContainerRuntimeBaseInternal,
 		// eslint-disable-next-line import/no-deprecated
 		IContainerRuntimeWithResolveHandle_Deprecated,
-		// If ContainerRuntime stops being exported from this package, this can
-		// be updated to implement IFluidRootParentContextPrivate and leave
-		// submitMessage included.
-		Omit<IFluidParentContext, "submitMessage" | "submitSignal">,
 		IRuntime,
 		IGarbageCollectionRuntime,
 		ISummarizerRuntime,
 		ISummarizerInternalsProvider,
+		// If ContainerRuntime stops being exported from this package, this can
+		// be updated to implement IFluidRootParentContextPrivate and leave
+		// submitMessage included.
+		Omit<IFluidParentContext, "submitMessage" | "submitSignal">,
 		IProvideFluidHandleContext,
 		IProvideLayerCompatDetails
 {
@@ -1651,11 +1651,10 @@ export class ContainerRuntime
 			message: OutboundExtensionMessage<TMessage>,
 		): void => {
 			this.verifyNotClosed();
-			const envelope = createNewSignalEnvelope(
-				`/ext/${id}/${addressChain.join("/")}`,
-				message.type,
-				message.content,
-			);
+			const envelope = {
+				address: `/ext/${id}/${addressChain.join("/")}`,
+				contents: message,
+			} satisfies UnsequencedSignalEnvelope;
 			sequenceAndSubmitSignal(envelope, message.targetClientId);
 		};
 
@@ -1914,15 +1913,11 @@ export class ContainerRuntime
 			// Due to a mismatch between different layers in terms of
 			// what is the interface of passing signals, we need the
 			// downstream stores to wrap the signal.
-			submitSignal: (envelope: AddressedSignalEnvelope, targetClientId?: string): void => {
+			submitSignal: (
+				envelope: AddressedUnsequencedSignalEnvelope,
+				targetClientId?: string,
+			): void => {
 				// verifyNotClosed is called in FluidDataStoreContext, which is *the* expected caller.
-				assert(
-					!envelope.address.startsWith("/"),
-					"Addresses beginning with '/' are reserved for container use",
-				);
-				if (targetClientId === undefined) {
-					this.signalTelemetryManager.applyTrackingToBroadcastSignalEnvelope(envelope);
-				}
 				this.submitSignalFn(envelope, targetClientId);
 			},
 		});
@@ -3792,7 +3787,9 @@ export class ContainerRuntime
 	 */
 	public submitSignal(type: string, content: unknown, targetClientId?: string): void {
 		this.verifyNotClosed();
-		const envelope = createNewSignalEnvelope(undefined /* address */, type, content);
+		const envelope = {
+			contents: { type, content },
+		} satisfies UnsequencedSignalEnvelope;
 		this.submitSignalFn(envelope, targetClientId);
 	}
 
@@ -5358,19 +5355,6 @@ export class ContainerRuntime
 	private get groupedBatchingEnabled(): boolean {
 		return this.sessionSchema.opGroupingEnabled === true;
 	}
-}
-
-function createNewSignalEnvelope(
-	address: string | undefined,
-	type: string,
-	content: unknown,
-): UnsequencedSignalEnvelope {
-	const newEnvelope: UnsequencedSignalEnvelope = {
-		address,
-		contents: { type, content },
-	};
-
-	return newEnvelope;
 }
 
 export function isContainerMessageDirtyable({

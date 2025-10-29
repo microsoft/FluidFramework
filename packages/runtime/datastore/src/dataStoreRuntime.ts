@@ -139,7 +139,8 @@ export enum DataStoreMessageType {
  * Outgoing {@link FluidDataStoreRuntime} message structures.
  * @internal
  *
- * @privateRemarks The types here are required to satisfy {@link @fluidframework/runtime-definitions#FluidDataStoreMessage} interface.
+ * @privateRemarks
+ * The types here are required to satisfy {@link @fluidframework/runtime-definitions#FluidDataStoreMessage} interface.
  */
 export type LocalFluidDataStoreRuntimeMessage =
 	| { type: DataStoreMessageType.ChannelOp; content: IEnvelope }

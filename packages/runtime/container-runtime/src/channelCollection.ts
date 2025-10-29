@@ -28,31 +28,31 @@ import {
 	isInstanceOfISnapshot,
 } from "@fluidframework/driver-utils/internal";
 import type {
+	AliasResult,
 	FluidDataStoreMessage,
-	IRuntimeMessagesContent,
+	IAttachMessage,
+	IEnvelope,
+	IFluidDataStoreChannel,
+	IFluidDataStoreContext,
+	IFluidDataStoreContextDetached,
+	IFluidDataStoreFactory,
+	IFluidDataStoreRegistry,
+	IFluidParentContext,
+	IGarbageCollectionData,
+	IInboundSignalMessage,
 	InboundAttachMessage,
 	IRuntimeMessageCollection,
+	IRuntimeMessagesContent,
+	ISummarizeResult,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
+	MinimumVersionForCollab,
+	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	type ISummaryTreeWithStats,
-	type ITelemetryContext,
-	type IGarbageCollectionData,
-	type AliasResult,
 	CreateSummarizerNodeSource,
-	type IAttachMessage,
-	type IEnvelope,
-	type IFluidDataStoreChannel,
-	type IFluidDataStoreContext,
-	type IFluidDataStoreContextDetached,
-	type IFluidDataStoreFactory,
-	type IFluidDataStoreRegistry,
-	type IFluidParentContext,
-	type ISummarizeResult,
-	type NamedFluidDataStoreRegistryEntries,
 	channelsTreeName,
-	type IInboundSignalMessage,
 	gcDataBlobKey,
-	type MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -133,9 +133,9 @@ type PendingAliasResolve = (success: boolean) => void;
  * `clientBroadcastSignalSequenceNumber` might be added to the envelope by the container runtime.
  * But it should not be provided to start with.
  *
- * @internal
+ * Equivalent to `Required<Omit<ISignalEnvelope, "clientBroadcastSignalSequenceNumber">>`.
  */
-export type AddressedSignalEnvelope = IEnvelope<ISignalEnvelope["contents"]>;
+export type AddressedUnsequencedSignalEnvelope = IEnvelope<ISignalEnvelope["contents"]>;
 
 /**
  * This version of the interface is private to this the package. It should never be exported under any tag.
@@ -163,7 +163,10 @@ export interface IFluidRootParentContextPrivate
 			| ContainerRuntimeAliasMessage,
 		localOpMetadata: unknown,
 	) => void;
-	readonly submitSignal: (envelope: AddressedSignalEnvelope, targetClientId?: string) => void;
+	readonly submitSignal: (
+		envelope: AddressedUnsequencedSignalEnvelope,
+		targetClientId?: string,
+	) => void;
 }
 
 type SubmitKeys = "submitMessage" | "submitSignal";
@@ -1740,7 +1743,10 @@ export class ComposableChannelCollection
 						localOpMetadata,
 					);
 				},
-				submitSignal: (envelope: AddressedSignalEnvelope, targetClientId?: string): void => {
+				submitSignal: (
+					envelope: AddressedUnsequencedSignalEnvelope,
+					targetClientId?: string,
+				): void => {
 					parentContext.submitSignal(
 						envelope.contents.type,
 						{

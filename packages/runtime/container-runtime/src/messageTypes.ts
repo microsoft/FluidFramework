@@ -90,6 +90,7 @@ export namespace InternalUtilityTypes {
 
 /**
  * @internal
+ * @privateRemarks exported per ContainerRuntime export for testing purposes
  */
 export type ContainerRuntimeDataStoreOpMessage =
 	InternalUtilityTypes.TypedContainerRuntimeMessage<
@@ -103,6 +104,7 @@ export type InboundContainerRuntimeAttachMessage =
 	>;
 /**
  * @internal
+ * @privateRemarks exported per ContainerRuntime export for testing purposes
  */
 export type OutboundContainerRuntimeAttachMessage =
 	InternalUtilityTypes.TypedContainerRuntimeMessage<
@@ -125,6 +127,7 @@ export type ContainerRuntimeRejoinMessage = InternalUtilityTypes.TypedContainerR
 >;
 /**
  * @internal
+ * @privateRemarks exported per ContainerRuntime export for testing purposes
  */
 export type ContainerRuntimeAliasMessage = InternalUtilityTypes.TypedContainerRuntimeMessage<
 	ContainerMessageType.Alias,

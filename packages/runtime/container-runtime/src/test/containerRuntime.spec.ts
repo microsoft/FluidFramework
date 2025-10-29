@@ -200,6 +200,8 @@ function stubChannelCollection(
 		.callsFake(containerRuntime.submitMessage.bind(containerRuntime));
 
 	const stub = Sinon.createStubInstance(
+		// createSubInstance does not work with property methods (which are
+		// used for stricter typing); so, override via a subclass here.
 		class TestChannelCollection extends ChannelCollection {
 			// @ts-expect-error -- redefine as instance method for stubbing
 			public reSubmitContainerMessage(
