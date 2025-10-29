@@ -229,6 +229,8 @@ function buildResultString(buildResult: BuildResult) {
 			return chalk.cyanBright("up to date");
 		case BuildResult.CachedSuccess:
 			return chalk.magentaBright("restored from cache");
+		case BuildResult.SuccessWithCacheWrite:
+			return chalk.greenBright("succeeded and cached");
 	}
 }
 

@@ -11,6 +11,10 @@ export enum BuildResult {
 	 * Task succeeded by restoring outputs from shared cache instead of executing.
 	 */
 	CachedSuccess,
+	/**
+	 * Task succeeded by executing and outputs were successfully written to cache.
+	 */
+	SuccessWithCacheWrite,
 }
 
 /**
@@ -27,7 +31,11 @@ export function summarizeBuildResult(results: readonly BuildResult[]): BuildResu
 			return BuildResult.Failed;
 		}
 
-		if (result === BuildResult.Success || result === BuildResult.CachedSuccess) {
+		if (
+			result === BuildResult.Success ||
+			result === BuildResult.CachedSuccess ||
+			result === BuildResult.SuccessWithCacheWrite
+		) {
 			retResult = BuildResult.Success;
 		}
 	}

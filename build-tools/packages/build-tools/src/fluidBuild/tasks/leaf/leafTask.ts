@@ -232,9 +232,13 @@ export abstract class LeafTask extends Task {
 
 		// Write to cache after successful execution
 		const executionTime = Date.now() - startTime;
-		await this.writeToCache(executionTime, ret);
+		const cacheWritten = await this.writeToCache(executionTime, ret);
 
-		return this.execDone(startTime, BuildResult.Success, ret.worker);
+		return this.execDone(
+			startTime,
+			cacheWritten ? BuildResult.SuccessWithCacheWrite : BuildResult.Success,
+			ret.worker,
+		);
 	}
 
 	private async execCore(): Promise<TaskExecResult> {
@@ -330,6 +334,9 @@ export abstract class LeafTask extends Task {
 					break;
 				case BuildResult.CachedSuccess:
 					statusCharacter = chalk.magentaBright("\u21BB"); // ↻ (circled arrow)
+					break;
+				case BuildResult.SuccessWithCacheWrite:
+					statusCharacter = chalk.greenBright("\u2713\u002B"); // ✓+ (checkmark plus)
 					break;
 			}
 
@@ -593,29 +600,32 @@ export abstract class LeafTask extends Task {
 	 * @param executionTimeMs - Time taken to execute the task in milliseconds
 	 * @param execResult - Result from task execution (for stdout/stderr)
 	 */
-	protected async writeToCache(executionTimeMs: number, execResult?: TaskExecResult) {
+	protected async writeToCache(
+		executionTimeMs: number,
+		execResult?: TaskExecResult,
+	): Promise<boolean> {
 		const sharedCache = this.context.sharedCache;
 		if (!sharedCache) {
-			return;
+			return false;
 		}
 
 		try {
 			// Gather input files for cache key computation
 			const inputFiles = await this.getCacheInputFiles();
 			if (!inputFiles) {
-				return;
+				return false;
 			}
 
 			// Get output files
 			const outputFiles = await this.getCacheOutputFiles();
 			if (!outputFiles) {
-				return;
+				return false;
 			}
 
 			// Get lockfile hash
 			const lockfilePath = this.node.pkg.getLockFilePath();
 			if (!lockfilePath) {
-				return;
+				return false;
 			}
 
 			const lockfileHash = await this.node.context.fileHashCache.getFileHash(lockfilePath);
@@ -660,10 +670,12 @@ export abstract class LeafTask extends Task {
 
 			// Store in cache
 			await sharedCache.store(cacheKeyInputs, taskOutputs, this.node.pkg.directory);
+			return true;
 		} catch (error) {
 			console.warn(
 				`${this.node.pkg.nameColored}: warning: cache write failed: ${error instanceof Error ? error.message : String(error)}`,
 			);
+			return false;
 		}
 	}
 
