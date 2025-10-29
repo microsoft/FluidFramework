@@ -1,0 +1,104 @@
+# Fluid Framework Build Cache Benchmark Makefile
+# Quick access to common benchmarking commands
+
+.PHONY: help benchmark benchmark-advanced benchmark-batch analyze install-deps clean-results
+
+# Default target
+help:
+	@echo ""
+	@echo "Fluid Framework Build Cache Benchmarking"
+	@echo "========================================"
+	@echo ""
+	@echo "Available targets:"
+	@echo ""
+	@echo "  make install-deps        Install hyperfine (requires sudo)"
+	@echo "  make benchmark           Run simple benchmark on aqueduct"
+	@echo "  make benchmark-advanced  Run advanced benchmark with options"
+	@echo "  make benchmark-batch     Run batch benchmark on multiple projects"
+	@echo "  make analyze            Analyze benchmark results"
+	@echo "  make clean-results      Clean benchmark results directory"
+	@echo "  make help               Show this help message"
+	@echo ""
+	@echo "Examples:"
+	@echo "  make benchmark PROJECT=packages/runtime/container-runtime"
+	@echo "  make benchmark RUNS=10"
+	@echo "  make benchmark-advanced MODE=incremental RUNS=10"
+	@echo ""
+
+# Variables
+PROJECT ?= packages/framework/aqueduct
+RUNS ?= 5
+WARMUP ?= 2
+MODE ?= standard
+TASK ?= compile
+
+# Install dependencies
+install-deps:
+	@echo "Installing hyperfine..."
+	@if command -v apt-get >/dev/null 2>&1; then \
+		sudo apt-get update && sudo apt-get install -y hyperfine; \
+	elif command -v brew >/dev/null 2>&1; then \
+		brew install hyperfine; \
+	else \
+		echo "Please install hyperfine manually:"; \
+		echo "  https://github.com/sharkdp/hyperfine#installation"; \
+		exit 1; \
+	fi
+
+# Simple benchmark
+benchmark:
+	@./benchmark-cache.sh $(PROJECT) $(RUNS) $(WARMUP)
+
+# Advanced benchmark
+benchmark-advanced:
+	@./benchmark-cache-advanced.sh -p $(PROJECT) -r $(RUNS) -w $(WARMUP) -m $(MODE) -t $(TASK)
+
+# Batch benchmark
+benchmark-batch:
+	@./benchmark-cache-batch.sh $(RUNS)
+
+# Analyze results
+analyze:
+	@if [ -z "$(FILES)" ]; then \
+		python3 analyze-benchmarks.py benchmark-results/*.json --compare; \
+	else \
+		python3 analyze-benchmarks.py $(FILES) --compare; \
+	fi
+
+# Analyze with visualization
+visualize:
+	@python3 analyze-benchmarks.py benchmark-results/*.json --compare --visualize benchmark-comparison.png
+	@echo "Visualization saved to: benchmark-comparison.png"
+
+# Clean results
+clean-results:
+	@echo "Cleaning benchmark results..."
+	@rm -rf benchmark-results/
+	@rm -f benchmark-results-*.md benchmark-results-*.json
+	@rm -f benchmark-comparison.png
+	@echo "Done!"
+
+# Run full benchmark suite
+full-suite:
+	@echo "Running full benchmark suite..."
+	@$(MAKE) benchmark RUNS=10
+	@$(MAKE) benchmark-advanced MODE=cold-warm RUNS=10
+	@$(MAKE) benchmark-advanced MODE=incremental RUNS=10
+	@$(MAKE) benchmark-batch RUNS=5
+	@$(MAKE) analyze
+	@echo ""
+	@echo "Full benchmark suite complete!"
+
+# Quick test (fewer runs for speed)
+quick-test:
+	@$(MAKE) benchmark RUNS=3 WARMUP=1
+
+# Specific projects
+bench-aqueduct:
+	@$(MAKE) benchmark PROJECT=packages/framework/aqueduct RUNS=10
+
+bench-container-runtime:
+	@$(MAKE) benchmark PROJECT=packages/runtime/container-runtime RUNS=10
+
+bench-tree:
+	@$(MAKE) benchmark PROJECT=packages/dds/tree RUNS=10

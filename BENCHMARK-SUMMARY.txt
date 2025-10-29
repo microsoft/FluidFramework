@@ -1,0 +1,175 @@
+╔══════════════════════════════════════════════════════════════════════════╗
+║        Fluid Framework Build Cache Benchmarking Scripts                  ║
+║                                                                          ║
+║  Complete toolkit for measuring and analyzing build cache performance   ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+📦 WHAT YOU GOT:
+─────────────────────────────────────────────────────────────────────────
+
+🔧 THREE BENCHMARK SCRIPTS:
+
+  1️⃣  benchmark-cache.sh
+      Simple, easy-to-use benchmark
+      Usage: ./benchmark-cache.sh [project] [runs] [warmup]
+      Perfect for: Quick tests, CI/CD, daily use
+
+  2️⃣  benchmark-cache-advanced.sh
+      Feature-rich with multiple modes
+      Usage: ./benchmark-cache-advanced.sh -p <project> -r <runs> -m <mode>
+      Modes: standard, cold-warm, incremental
+      Perfect for: Detailed analysis, testing scenarios
+
+  3️⃣  benchmark-cache-batch.sh
+      Benchmark multiple projects at once
+      Usage: ./benchmark-cache-batch.sh [runs]
+      Perfect for: Project comparison, comprehensive testing
+
+🐍 ANALYSIS TOOL:
+
+  4️⃣  analyze-benchmarks.py
+      Analyze and visualize benchmark results
+      Usage: python3 analyze-benchmarks.py results.json
+      Features: Statistical analysis, comparison, visualization
+      Perfect for: Deep analysis, reports, presentations
+
+📚 DOCUMENTATION:
+
+  • BENCHMARK-QUICKSTART.md - Get started in 2 minutes
+  • BENCHMARK-README.md      - Complete reference
+  • BENCHMARK-GUIDE.md       - Detailed how-to guide
+
+─────────────────────────────────────────────────────────────────────────
+
+🚀 QUICK START (3 steps):
+─────────────────────────────────────────────────────────────────────────
+
+  1. Install hyperfine:
+     $ sudo apt install hyperfine        # Linux
+     $ brew install hyperfine             # macOS
+
+  2. Run benchmark:
+     $ ./benchmark-cache.sh
+
+  3. View results:
+     $ cat benchmark-results-aqueduct.md
+
+─────────────────────────────────────────────────────────────────────────
+
+💡 COMMON USE CASES:
+─────────────────────────────────────────────────────────────────────────
+
+  Test cache effectiveness:
+    $ ./benchmark-cache.sh packages/framework/aqueduct 10
+
+  Compare multiple projects:
+    $ ./benchmark-cache-batch.sh 5
+
+  Test incremental builds:
+    $ ./benchmark-cache-advanced.sh -m incremental
+
+  Analyze results:
+    $ python3 analyze-benchmarks.py benchmark-results/*.json --compare
+
+─────────────────────────────────────────────────────────────────────────
+
+📊 WHAT GETS MEASURED:
+─────────────────────────────────────────────────────────────────────────
+
+  ✓ Build time with cache enabled
+  ✓ Build time with cache disabled  
+  ✓ Speedup ratio (how much faster with cache)
+  ✓ Statistical variance and confidence
+  ✓ Cold vs warm cache performance
+  ✓ Incremental build performance
+
+─────────────────────────────────────────────────────────────────────────
+
+📁 OUTPUT FILES:
+─────────────────────────────────────────────────────────────────────────
+
+  All results saved to: benchmark-results/
+  
+  • *.md   - Human-readable markdown reports
+  • *.json - Machine-readable data for analysis
+  
+─────────────────────────────────────────────────────────────────────────
+
+🎯 EXAMPLE WORKFLOW:
+─────────────────────────────────────────────────────────────────────────
+
+  # 1. Quick test of aqueduct
+  ./benchmark-cache.sh
+
+  # 2. Comprehensive test with advanced options
+  ./benchmark-cache-advanced.sh -p packages/framework/aqueduct \
+                                -r 10 \
+                                -m standard
+
+  # 3. Test multiple projects
+  ./benchmark-cache-batch.sh 5
+
+  # 4. Analyze and compare results
+  python3 analyze-benchmarks.py benchmark-results/*.json --compare
+
+  # 5. Generate visualization
+  python3 analyze-benchmarks.py benchmark-results/*.json \
+                                --compare \
+                                --visualize comparison.png
+
+─────────────────────────────────────────────────────────────────────────
+
+❓ NEED HELP?
+─────────────────────────────────────────────────────────────────────────
+
+  Quick reference:
+    $ cat BENCHMARK-QUICKSTART.md
+
+  Full documentation:
+    $ cat BENCHMARK-README.md
+
+  Detailed guide:
+    $ cat BENCHMARK-GUIDE.md
+
+  Script help:
+    $ ./benchmark-cache-advanced.sh --help
+
+─────────────────────────────────────────────────────────────────────────
+
+🔍 EXAMPLE RESULTS:
+─────────────────────────────────────────────────────────────────────────
+
+  Benchmark 1: with-cache
+    Time (mean ± σ):      2.234 s ±  0.125 s
+    Range (min … max):    2.105 s …  2.458 s
+
+  Benchmark 2: without-cache
+    Time (mean ± σ):      4.567 s ±  0.234 s
+    Range (min … max):    4.289 s …  4.892 s
+
+  Summary:
+    ⚡ with-cache ran 2.04 ± 0.15x faster than without-cache
+
+  Good cache performance: 2-5x speedup 🎉
+
+─────────────────────────────────────────────────────────────────────────
+
+✨ BONUS FEATURES:
+─────────────────────────────────────────────────────────────────────────
+
+  • Automatic warmup runs for stability
+  • Statistical analysis (mean, stddev, median, min, max)
+  • Markdown and JSON export
+  • Color-coded output
+  • Progress indicators
+  • Error handling and validation
+  • Customizable project selection
+  • Multiple comparison modes
+  • Batch processing support
+
+─────────────────────────────────────────────────────────────────────────
+
+Created for benchmarking the Fluid Framework build cache with aqueduct
+and other projects using hyperfine.
+
+Happy benchmarking! 🚀
