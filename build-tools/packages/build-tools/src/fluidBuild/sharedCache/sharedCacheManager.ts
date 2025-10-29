@@ -301,8 +301,10 @@ export class SharedCacheManager {
 			// Graceful degradation: treat lookup errors as cache misses
 			const elapsed = Date.now() - startTime;
 			traceError(`Cache lookup error: ${error} (${elapsed}ms)`);
+			// Only warn on unexpected errors (I/O errors, etc.), not normal cache misses
+			// Note: Normal misses are handled above and return early - we only get here on exceptions
 			console.warn(
-				`Warning: Cache lookup failed: ${error instanceof Error ? error.message : String(error)}`,
+				`Warning: Cache lookup failed due to unexpected error: ${error instanceof Error ? error.message : String(error)}`,
 			);
 			this.statistics.missCount++;
 			return undefined;
@@ -488,6 +490,7 @@ export class SharedCacheManager {
 						bytesRestored: 0,
 						restoreTimeMs: Date.now() - restoreStartTime,
 						error: `Integrity verification failed: ${verification.failedFiles.join(", ")}`,
+						isUnexpectedFailure: true,
 					};
 				}
 				traceRestore(
@@ -535,6 +538,7 @@ export class SharedCacheManager {
 				bytesRestored: 0,
 				restoreTimeMs: Date.now() - restoreStartTime,
 				error: error instanceof Error ? error.message : String(error),
+				isUnexpectedFailure: true,
 			};
 		}
 	}

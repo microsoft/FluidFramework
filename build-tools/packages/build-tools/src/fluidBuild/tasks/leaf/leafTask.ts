@@ -204,9 +204,12 @@ export abstract class LeafTask extends Task {
 				);
 			}
 			// Cache restore failed, fall through to normal execution
-			console.warn(
-				`${this.node.pkg.nameColored}: warning: cache restore failed, executing task normally`,
-			);
+			// Only warn on unexpected failures (I/O errors, corruption), not expected issues
+			if (restoreResult.isUnexpectedFailure) {
+				console.warn(
+					`${this.node.pkg.nameColored}: warning: cache restore failed unexpectedly: ${restoreResult.error ?? "unknown error"}`,
+				);
+			}
 		}
 
 		if (this.recheckLeafIsUpToDate && !this.forced && (await this.checkLeafIsUpToDate())) {
@@ -536,8 +539,10 @@ export abstract class LeafTask extends Task {
 			// Look up in cache
 			return await sharedCache.lookup(cacheKeyInputs);
 		} catch (error) {
+			// Only warn on unexpected errors - the lookup itself logs expected cache misses at debug level
+			// We only get here on exceptions during input file hashing or other unexpected issues
 			console.warn(
-				`${this.node.pkg.nameColored}: warning: cache lookup failed: ${error instanceof Error ? error.message : String(error)}`,
+				`${this.node.pkg.nameColored}: warning: cache lookup failed due to unexpected error: ${error instanceof Error ? error.message : String(error)}`,
 			);
 			return undefined;
 		}
@@ -559,28 +564,49 @@ export abstract class LeafTask extends Task {
 	}) {
 		const sharedCache = this.context.sharedCache;
 		if (!sharedCache) {
-			return { success: false, filesRestored: 0, bytesRestored: 0, restoreTimeMs: 0 };
+			return {
+				success: false,
+				filesRestored: 0,
+				bytesRestored: 0,
+				restoreTimeMs: 0,
+				isUnexpectedFailure: false,
+			};
 		}
 
 		try {
 			// Get output file paths
 			const outputFiles = await this.getCacheOutputFiles();
 			if (!outputFiles) {
-				return { success: false, filesRestored: 0, bytesRestored: 0, restoreTimeMs: 0 };
+				return {
+					success: false,
+					filesRestored: 0,
+					bytesRestored: 0,
+					restoreTimeMs: 0,
+					isUnexpectedFailure: false,
+				};
 			}
 
 			// Restore files from cache
 			const result = await sharedCache.restore(cacheEntry, this.node.pkg.directory);
 
 			// Write done file if this task uses one (handled by markCacheRestoreDone)
-			await this.markCacheRestoreDone();
+			if (result.success) {
+				await this.markCacheRestoreDone();
+			}
 
 			return result;
 		} catch (error) {
+			// This is an unexpected error during restore setup/completion
 			console.warn(
-				`${this.node.pkg.nameColored}: warning: cache restore failed: ${error instanceof Error ? error.message : String(error)}`,
+				`${this.node.pkg.nameColored}: warning: cache restore failed unexpectedly: ${error instanceof Error ? error.message : String(error)}`,
 			);
-			return { success: false, filesRestored: 0, bytesRestored: 0, restoreTimeMs: 0 };
+			return {
+				success: false,
+				filesRestored: 0,
+				bytesRestored: 0,
+				restoreTimeMs: 0,
+				isUnexpectedFailure: true,
+			};
 		}
 	}
 
@@ -650,12 +676,13 @@ export abstract class LeafTask extends Task {
 				executionTimeMs,
 			};
 
-			// Store in cache
+			// Store in cache (the sharedCache.store method handles its own warnings)
 			await sharedCache.store(cacheKeyInputs, taskOutputs, this.node.pkg.directory);
 			return true;
 		} catch (error) {
+			// Only warn on unexpected errors during cache write preparation
 			console.warn(
-				`${this.node.pkg.nameColored}: warning: cache write failed: ${error instanceof Error ? error.message : String(error)}`,
+				`${this.node.pkg.nameColored}: warning: cache write failed due to unexpected error: ${error instanceof Error ? error.message : String(error)}`,
 			);
 			return false;
 		}

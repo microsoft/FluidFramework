@@ -246,6 +246,11 @@ export interface CacheEntry {
 	 * The manifest metadata
 	 */
 	manifest: CacheManifest;
+
+	/**
+	 * Whether the lookup encountered an unexpected error (vs normal cache miss)
+	 */
+	isUnexpectedError?: boolean;
 }
 
 /**
@@ -320,6 +325,11 @@ export interface RestoreResult {
 	 * Error message if restoration failed
 	 */
 	error?: string;
+
+	/**
+	 * Whether the failure was unexpected (I/O error, corruption) vs expected (cache miss)
+	 */
+	isUnexpectedFailure?: boolean;
 }
 
 /**
