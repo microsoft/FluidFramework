@@ -604,6 +604,26 @@ export class BuildGraph {
 		return summaryLines.join("\n");
 	}
 
+	public get cacheStatsSummary(): string | undefined {
+		const sharedCache = this.context.sharedCache;
+		if (!sharedCache) {
+			return undefined;
+		}
+
+		const stats = sharedCache.getStatistics();
+		const totalLookups = stats.hitCount + stats.missCount;
+		if (totalLookups === 0) {
+			return undefined;
+		}
+
+		const hitRate = ((stats.hitCount / totalLookups) * 100).toFixed(1);
+		const cacheSizeMB = (stats.totalSize / 1024 / 1024).toFixed(2);
+
+		return chalk.magentaBright(
+			`Cache: ${stats.hitCount} hits, ${stats.missCount} misses (${hitRate}% hit rate) | ${stats.totalEntries} entries, ${cacheSizeMB} MB`,
+		);
+	}
+
 	private getBuildPackage(
 		pkg: Package,
 		globalTaskDefinitions: TaskDefinitions,

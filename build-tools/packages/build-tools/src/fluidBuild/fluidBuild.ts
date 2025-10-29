@@ -110,9 +110,9 @@ async function main() {
 
 	let failureSummary = "";
 	let exitCode = 0;
+	let buildGraph: BuildGraph | undefined;
 	if (options.buildTaskNames.length !== 0) {
 		// build the graph
-		let buildGraph: BuildGraph;
 		const spinner = new Spinner("Creating build graph...");
 		try {
 			// Warning any text output to terminal before spinner is halted
@@ -166,6 +166,14 @@ async function main() {
 			? ` (${Math.floor(totalTime / 60000)}m ${((totalTime % 60000) / 1000).toFixed(3)}s)`
 			: "";
 	log(`Total time: ${(totalTime / 1000).toFixed(3)}s${timeInMinutes}`);
+
+	// Display cache statistics if available
+	if (buildGraph) {
+		const cacheStats = buildGraph.cacheStatsSummary;
+		if (cacheStats) {
+			log(cacheStats);
+		}
+	}
 
 	if (failureSummary !== "") {
 		log(`\n${failureSummary}`);
