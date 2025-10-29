@@ -660,6 +660,13 @@ export abstract class LeafTask extends Task {
 				return false;
 			}
 
+			// Always include the donefile as an output (if this task has one)
+			// This enables sharing build/lint status across workspaces
+			const doneFile = (this as any).doneFile as string | undefined;
+			if (doneFile && !outputFiles.includes(doneFile)) {
+				outputFiles.push(doneFile);
+			}
+
 			// Filter out directories and hash all input files
 			const inputHashes = await Promise.all(
 				inputFiles.map(async (filePath) => {
@@ -703,13 +710,9 @@ export abstract class LeafTask extends Task {
 
 			// Check if any outputs were produced
 			if (existingOutputFiles.length === 0) {
-				// Only warn if we expected outputs but they're missing
-				// Some tasks (like linters) don't produce output files by design
-				if (outputFiles.length > 0) {
-					console.warn(
-						`${this.node.pkg.nameColored}: warning: cache write skipped - no output files found (expected ${outputFiles.length} files)`,
-					);
-				}
+				console.warn(
+					`${this.node.pkg.nameColored}: warning: cache write skipped - no output files found (expected ${outputFiles.length} files)`,
+				);
 				return false;
 			}
 
