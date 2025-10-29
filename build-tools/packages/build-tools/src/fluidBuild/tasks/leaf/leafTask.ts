@@ -517,13 +517,29 @@ export abstract class LeafTask extends Task {
 				return undefined;
 			}
 
-			// Hash all input files
+			// Filter out directories and hash all input files
 			const inputHashes = await Promise.all(
 				inputFiles.map(async (filePath) => {
 					const absolutePath = this.getPackageFileFullPath(filePath);
-					const hash = await this.node.context.fileHashCache.getFileHash(absolutePath);
-					return { path: filePath, hash };
+					try {
+						const stats = await stat(absolutePath);
+						if (!stats.isFile()) {
+							// Skip directories and other non-file entries
+							return null;
+						}
+						const hash = await this.node.context.fileHashCache.getFileHash(absolutePath);
+						return { path: filePath, hash };
+					} catch (error) {
+						// Skip files that can't be accessed (might have been deleted)
+						this.traceError(
+							`Failed to hash input file ${filePath}: ${error instanceof Error ? error.message : String(error)}`,
+						);
+						return null;
+					}
 				}),
+			).then(
+				(results) =>
+					results.filter((r) => r !== null) as Array<{ path: string; hash: string }>,
 			);
 
 			// Prepare cache key inputs (global components come from SharedCacheManager)
@@ -640,13 +656,29 @@ export abstract class LeafTask extends Task {
 				return false;
 			}
 
-			// Hash all input files
+			// Filter out directories and hash all input files
 			const inputHashes = await Promise.all(
 				inputFiles.map(async (filePath) => {
 					const absolutePath = this.getPackageFileFullPath(filePath);
-					const hash = await this.node.context.fileHashCache.getFileHash(absolutePath);
-					return { path: filePath, hash };
+					try {
+						const stats = await stat(absolutePath);
+						if (!stats.isFile()) {
+							// Skip directories and other non-file entries
+							return null;
+						}
+						const hash = await this.node.context.fileHashCache.getFileHash(absolutePath);
+						return { path: filePath, hash };
+					} catch (error) {
+						// Skip files that can't be accessed (might have been deleted)
+						this.traceError(
+							`Failed to hash input file ${filePath}: ${error instanceof Error ? error.message : String(error)}`,
+						);
+						return null;
+					}
 				}),
+			).then(
+				(results) =>
+					results.filter((r) => r !== null) as Array<{ path: string; hash: string }>,
 			);
 
 			// Prepare cache key inputs (global components come from SharedCacheManager)
@@ -1055,6 +1087,8 @@ export abstract class LeafWithGlobInputOutputDoneFileTask extends LeafWithFileSt
 			// file paths returned from getInputFiles and getOutputFiles should always be absolute
 			absolute: true,
 			gitignore: excludeGitIgnoredFiles,
+			// Only return files, not directories
+			onlyFiles: true,
 		});
 		return files;
 	}
