@@ -20,6 +20,7 @@ import { getFluidBuildConfig, getResolvedFluidRoot } from "./fluidUtils";
 import { options, parseOptions } from "./options";
 import { SharedCacheManager } from "./sharedCache/sharedCacheManager";
 import { hashFile } from "./sharedCache/fileOperations";
+import { loadCacheConfiguration } from "./sharedCache/configFile";
 
 const { log, errorLog: error, warning: warn } = defaultLogger;
 
@@ -35,9 +36,19 @@ async function main() {
 		: "";
 	log(`Build Root: ${resolvedRoot}${suffix}`);
 
+	// Load cache configuration with proper precedence: CLI > env > config file > defaults
+	const cacheConfig = loadCacheConfiguration(
+		{
+			cacheDir: options.cacheDir,
+			skipCacheWrite: options.skipCacheWrite ? true : undefined,
+			verifyIntegrity: options.verifyCacheIntegrity ? true : undefined,
+		},
+		resolvedRoot,
+	);
+
 	// Initialize shared cache if cache directory is specified
 	let sharedCache: SharedCacheManager | undefined;
-	if (options.cacheDir) {
+	if (cacheConfig.cacheDir) {
 		try {
 			// Find and hash the lockfile
 			const lockfilePath = path.join(resolvedRoot, "pnpm-lock.yaml");
@@ -46,13 +57,13 @@ async function main() {
 			} else {
 				const lockfileHash = await hashFile(lockfilePath);
 				sharedCache = new SharedCacheManager({
-					cacheDir: options.cacheDir,
+					cacheDir: cacheConfig.cacheDir,
 					repoRoot: resolvedRoot,
 					lockfileHash,
-					verifyIntegrity: options.verifyCacheIntegrity,
-					skipCacheWrite: options.skipCacheWrite,
+					verifyIntegrity: cacheConfig.verifyIntegrity,
+					skipCacheWrite: cacheConfig.skipCacheWrite,
 				});
-				log(`Shared cache enabled: ${options.cacheDir}`);
+				log(`Shared cache enabled: ${cacheConfig.cacheDir}`);
 			}
 		} catch (e) {
 			warn(`Failed to initialize shared cache: ${(e as Error).message}`);
