@@ -633,9 +633,14 @@ export abstract class LeafTask extends Task {
 				lockfileHash,
 			};
 
-			// Prepare task outputs
+			// Prepare task outputs - filter out files that don't exist
+			const existingOutputFiles = outputFiles.filter((relativePath) => {
+				const fullPath = this.getPackageFileFullPath(relativePath);
+				return existsSync(fullPath);
+			});
+
 			const taskOutputs = {
-				files: outputFiles.map((relativePath) => ({
+				files: existingOutputFiles.map((relativePath) => ({
 					sourcePath: this.getPackageFileFullPath(relativePath),
 					relativePath,
 				})),
