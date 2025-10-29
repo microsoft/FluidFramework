@@ -68,7 +68,6 @@ export interface AnnotatedAllowedTypes<T = readonly AnnotatedAllowedType[]> exte
     evaluate(): AllowedTypesFullEvaluated;
     evaluateIdentifiers(): ReadonlySet<string>;
     evaluateSet(): ReadonlySet<TreeNodeSchema>;
-    evaluateSimpleAllowedTypes(): ReadonlyMap<string, SimpleAllowedTypes>;
     readonly metadata: AllowedTypesMetadata;
     readonly types: T;
 }
@@ -330,7 +329,7 @@ export class FieldSchemaAlpha<Kind extends FieldKind = FieldKind, Types extends 
     // (undocumented)
     get persistedMetadata(): JsonCompatibleReadOnlyObject | undefined;
     // (undocumented)
-    get simpleAllowedTypes(): Map<string, SimpleAllowedTypes>;
+    get simpleAllowedTypes(): ReadonlyMap<string, SimpleAllowedTypesAttributes>;
 }
 
 // @alpha @sealed @system
@@ -1386,13 +1385,13 @@ export type SharedTreeOptions = Partial<CodecWriteOptions> & Partial<SharedTreeF
 export type SharedTreeOptionsBeta = ForestOptions;
 
 // @alpha @sealed
-export interface SimpleAllowedTypes {
-    readonly isStaged?: boolean;
+export interface SimpleAllowedTypesAttributes {
+    readonly isStaged: boolean | undefined;
 }
 
 // @alpha @sealed
 export interface SimpleArrayNodeSchema<out TCustomMetadata = unknown> extends SimpleNodeSchemaBaseAlpha<NodeKind.Array, TCustomMetadata> {
-    readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypes>;
+    readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypesAttributes>;
 }
 
 // @alpha @sealed
@@ -1400,7 +1399,7 @@ export interface SimpleFieldSchema {
     readonly kind: FieldKind;
     readonly metadata: FieldSchemaMetadata;
     readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
-    readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypes>;
+    readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypesAttributes>;
 }
 
 // @alpha @sealed
@@ -1410,7 +1409,7 @@ export interface SimpleLeafNodeSchema extends SimpleNodeSchemaBaseAlpha<NodeKind
 
 // @alpha @sealed
 export interface SimpleMapNodeSchema<out TCustomMetadata = unknown> extends SimpleNodeSchemaBaseAlpha<NodeKind.Map, TCustomMetadata> {
-    readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypes>;
+    readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypesAttributes>;
 }
 
 // @alpha
@@ -1434,13 +1433,12 @@ export interface SimpleObjectFieldSchema extends SimpleFieldSchema {
 
 // @alpha @sealed
 export interface SimpleObjectNodeSchema<out TCustomMetadata = unknown> extends SimpleNodeSchemaBaseAlpha<NodeKind.Object, TCustomMetadata> {
-    readonly allowUnknownOptionalFields?: boolean;
     readonly fields: ReadonlyMap<string, SimpleObjectFieldSchema>;
 }
 
 // @alpha @sealed
 export interface SimpleRecordNodeSchema<out TCustomMetadata = unknown> extends SimpleNodeSchemaBaseAlpha<NodeKind.Record, TCustomMetadata> {
-    readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypes>;
+    readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypesAttributes>;
 }
 
 // @alpha
