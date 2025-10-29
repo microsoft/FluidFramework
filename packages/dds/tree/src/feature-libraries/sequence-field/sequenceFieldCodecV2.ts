@@ -178,6 +178,22 @@ function makeMarkEffectDecoder(
 	],
 	MarkEffect
 > {
+	function decodeMoveIn(encoded: Encoded.MoveIn, context: FieldChangeEncodingContext): Attach {
+		const { id, revision } = encoded;
+		const endpoint =
+			encoded.finalEndpoint !== undefined
+				? changeAtomIdCodec.decode(encoded.finalEndpoint, context.baseContext)
+				: undefined;
+
+		const mark: Attach = {
+			type: "Insert",
+			id: endpoint?.localId ?? id,
+			revision: endpoint?.revision ?? decodeRevision(revision, context.baseContext),
+		};
+
+		return mark;
+	}
+
 	const decoderLibrary: DiscriminatedUnionLibrary<
 		Encoded.MarkEffect,
 		/* args */ [
@@ -193,19 +209,7 @@ function makeMarkEffectDecoder(
 			cellId: ChangeAtomId | undefined,
 			context: FieldChangeEncodingContext,
 		): Attach {
-			const { id, revision } = encoded;
-			const endpoint =
-				encoded.finalEndpoint !== undefined
-					? changeAtomIdCodec.decode(encoded.finalEndpoint, context.baseContext)
-					: undefined;
-
-			const mark: Attach = {
-				type: "Insert",
-				id: endpoint?.localId ?? id,
-				revision: endpoint?.revision ?? decodeRevision(revision, context.baseContext),
-			};
-
-			return mark;
+			return decodeMoveIn(encoded, context);
 		},
 		insert(
 			encoded: Encoded.Insert,
@@ -317,10 +321,7 @@ function makeMarkEffectDecoder(
 
 			assert(cellId !== undefined, "Attach and detach should target an empty cell");
 			if (encoded.attach.moveIn !== undefined) {
-				const moveId = getAttachedRootId(
-					this.moveIn(encoded.attach.moveIn, count, cellId, context) as Attach,
-				);
-
+				const moveId = getAttachedRootId(decodeMoveIn(encoded.attach.moveIn, context));
 				context.decodeMoveAndDetach(moveId, detachId, count);
 			} else {
 				context.decodeRootRename(cellId, detachId, count);
