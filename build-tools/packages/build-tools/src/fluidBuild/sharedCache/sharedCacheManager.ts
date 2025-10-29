@@ -26,6 +26,7 @@ import {
 	verifyFilesIntegrity,
 } from "./fileOperations.js";
 import { loadStatistics, saveStatistics } from "./statistics.js";
+import { validateCacheConfiguration, formatValidationMessage } from "./configValidation.js";
 
 /**
  * Main orchestrator for shared cache operations.
@@ -76,6 +77,18 @@ export class SharedCacheManager {
 		}
 
 		try {
+			// Validate cache configuration before initializing
+			const validation = validateCacheConfiguration(this.options.cacheDir, true);
+			if (!validation.valid) {
+				throw new Error(validation.error);
+			}
+
+			// Log any warnings from validation
+			if (validation.warnings && validation.warnings.length > 0) {
+				const warningMsg = formatValidationMessage(validation);
+				console.warn(warningMsg);
+			}
+
 			await initializeCacheDirectory(this.options.cacheDir);
 
 			// Load persisted statistics
@@ -234,6 +247,8 @@ export class SharedCacheManager {
 					hash: output.hash,
 					size: output.size,
 				})),
+				stdout: outputs.stdout,
+				stderr: outputs.stderr,
 			});
 
 			// Copy output files to cache directory
@@ -320,6 +335,8 @@ export class SharedCacheManager {
 				filesRestored: entry.manifest.outputFiles.length,
 				bytesRestored: totalBytes,
 				restoreTimeMs: restoreTime,
+				stdout: entry.manifest.stdout,
+				stderr: entry.manifest.stderr,
 			};
 		} catch (error) {
 			return {

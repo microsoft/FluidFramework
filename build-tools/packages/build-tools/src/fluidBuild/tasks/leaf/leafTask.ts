@@ -196,6 +196,13 @@ export abstract class LeafTask extends Task {
 			// Cache hit! Restore outputs from cache
 			const restoreResult = await this.restoreFromCache(cacheEntry);
 			if (restoreResult.success) {
+				// Replay stdout/stderr from cache to provide consistent output experience
+				if (restoreResult.stdout) {
+					console.log(restoreResult.stdout);
+				}
+				if (restoreResult.stderr) {
+					console.warn(restoreResult.stderr);
+				}
 				return this.execDone(startTime, BuildResult.CachedSuccess);
 			}
 			// Cache restore failed, fall through to normal execution
@@ -538,9 +545,11 @@ export abstract class LeafTask extends Task {
 	 * @param cacheEntry - The cache entry to restore from
 	 * @returns Restore result with success status and statistics
 	 */
-	protected async restoreFromCache(
-		cacheEntry: { cacheKey: string; entryPath: string; manifest: any },
-	) {
+	protected async restoreFromCache(cacheEntry: {
+		cacheKey: string;
+		entryPath: string;
+		manifest: any;
+	}) {
 		const sharedCache = this.context.sharedCache;
 		if (!sharedCache) {
 			return { success: false, filesRestored: 0, bytesRestored: 0, restoreTimeMs: 0 };

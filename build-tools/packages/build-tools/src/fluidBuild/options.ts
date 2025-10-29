@@ -34,6 +34,18 @@ interface FastBuildOptions extends IPackageMatchedOptions {
 	 * When a worker is finished with a task, if this is exceeded, a new worker is spawned.
 	 */
 	workerMemoryLimit: number;
+	/**
+	 * Path to the shared cache directory
+	 */
+	cacheDir?: string;
+	/**
+	 * Skip writing to cache (read-only mode)
+	 */
+	skipCacheWrite: boolean;
+	/**
+	 * Verify file integrity when restoring from cache
+	 */
+	verifyCacheIntegrity: boolean;
 }
 
 // defaults
@@ -62,6 +74,9 @@ export const options: FastBuildOptions = {
 	// Both larger and smaller values have shown to be slower (even with plenty of free ram), and too large of values (4 GiB) on low concurrency runs (4) has resulted in
 	// "build:esnext: Internal uncaught exception: Error: Worker disconnect" likely due to node processes exceeding 4 GiB of memory.
 	workerMemoryLimit: 2 * 1024 * 1024 * 1024,
+	cacheDir: process.env.FLUID_BUILD_CACHE_DIR,
+	skipCacheWrite: false,
+	verifyCacheIntegrity: false,
 };
 
 // This string is duplicated in the readme: update readme if changing this.
@@ -72,24 +87,27 @@ function printUsage() {
 Usage: fluid-build <options> [(<package regexp>|<path>) ...]
     [<package regexp> ...] Regexp to match the package name (default: all packages)
 Options:
-     --all                  Operate on all packages/monorepo (default: client monorepo). See also "-g" or "--releaseGroup".
-  -c --clean                Same as running build script 'clean' on matched packages (all if package regexp is not specified)
-  -d --dep                  Apply actions (clean/force/rebuild) to matched packages and their dependent packages
-     --fix                  Auto fix warning from package check if possible
-  -f --force                Force build and ignore dependency check on matched packages (all if package regexp is not specified)
-  -? --help                 Print this message
-     --install              Run npm install for all packages/monorepo. This skips a package if node_modules already exists: it can not be used to update in response to changes to the package.json.
-     --workerMemoryLimitMB  Memory limit for worker threads in MiB
-  -r --rebuild              Clean and build on matched packages (all if package regexp is not specified)
-     --reinstall            Same as --uninstall --install.
-  -g --releaseGroup         Release group to operate on
-     --root <path>          Root directory of the Fluid repo (default: env _FLUID_ROOT_)
-  -t --task <name>          target to execute (default:build)
-     --symlink              Deprecated. Fix symlink between packages within monorepo (isolate mode). This configures the symlinks to only connect within each lerna managed group of packages. This is the configuration tested by CI and should be kept working.
-     --symlink:full         Deprecated. Fix symlink between packages across monorepo (full mode). This symlinks everything in the repo together. CI does not ensure this configuration is functional, so it may or may not work.
-     --uninstall            Clean all node_modules. This errors if some node_modules folder do not exist. If hitting this limitation, you can do an install first to work around it.
-     --vscode               Output error message to work with default problem matcher in vscode
-     --worker               Reuse worker threads for some tasks, increasing memory use but lowering overhead.
+     --all                       Operate on all packages/monorepo (default: client monorepo). See also "-g" or "--releaseGroup".
+  -c --clean                     Same as running build script 'clean' on matched packages (all if package regexp is not specified)
+  -d --dep                       Apply actions (clean/force/rebuild) to matched packages and their dependent packages
+     --fix                       Auto fix warning from package check if possible
+  -f --force                     Force build and ignore dependency check on matched packages (all if package regexp is not specified)
+  -? --help                      Print this message
+     --install                   Run npm install for all packages/monorepo. This skips a package if node_modules already exists: it can not be used to update in response to changes to the package.json.
+     --workerMemoryLimitMB       Memory limit for worker threads in MiB
+  -r --rebuild                   Clean and build on matched packages (all if package regexp is not specified)
+     --reinstall                 Same as --uninstall --install.
+  -g --releaseGroup              Release group to operate on
+     --root <path>               Root directory of the Fluid repo (default: env _FLUID_ROOT_)
+  -t --task <name>               target to execute (default:build)
+     --symlink                   Deprecated. Fix symlink between packages within monorepo (isolate mode). This configures the symlinks to only connect within each lerna managed group of packages. This is the configuration tested by CI and should be kept working.
+     --symlink:full              Deprecated. Fix symlink between packages across monorepo (full mode). This symlinks everything in the repo together. CI does not ensure this configuration is functional, so it may or may not work.
+     --uninstall                 Clean all node_modules. This errors if some node_modules folder do not exist. If hitting this limitation, you can do an install first to work around it.
+     --vscode                    Output error message to work with default problem matcher in vscode
+     --worker                    Reuse worker threads for some tasks, increasing memory use but lowering overhead.
+     --cache-dir <path>          Path to shared cache directory (default: env FLUID_BUILD_CACHE_DIR)
+     --skip-cache-write          Read from cache but do not write to it (read-only mode)
+     --verify-cache-integrity    Verify file integrity when restoring from cache (adds overhead)
 ${commonOptionString}
 `,
 	);
@@ -264,6 +282,26 @@ export function parseOptions(argv: string[]) {
 			}
 			error = true;
 			break;
+		}
+
+		if (arg === "--cache-dir") {
+			if (i !== process.argv.length - 1) {
+				options.cacheDir = process.argv[++i];
+				continue;
+			}
+			errorLog("Missing argument for --cache-dir");
+			error = true;
+			break;
+		}
+
+		if (arg === "--skip-cache-write") {
+			options.skipCacheWrite = true;
+			continue;
+		}
+
+		if (arg === "--verify-cache-integrity") {
+			options.verifyCacheIntegrity = true;
+			continue;
 		}
 
 		// Package regexp or paths

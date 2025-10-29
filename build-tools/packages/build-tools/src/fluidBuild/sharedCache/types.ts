@@ -162,6 +162,22 @@ export interface CacheManifest {
 	}>;
 
 	/**
+	 * Standard output captured during execution
+	 *
+	 * This allows replaying the output when restoring from cache,
+	 * providing a consistent developer experience.
+	 */
+	stdout: string;
+
+	/**
+	 * Standard error captured during execution
+	 *
+	 * This allows replaying warnings/errors when restoring from cache,
+	 * providing a consistent developer experience.
+	 */
+	stderr: string;
+
+	/**
 	 * When this cache entry was created
 	 */
 	createdAt: string; // ISO-8601 timestamp
@@ -249,6 +265,16 @@ export interface RestoreResult {
 	 * Time taken to restore in milliseconds
 	 */
 	restoreTimeMs: number;
+
+	/**
+	 * Standard output from the original task execution (for replay)
+	 */
+	stdout?: string;
+
+	/**
+	 * Standard error from the original task execution (for replay)
+	 */
+	stderr?: string;
 
 	/**
 	 * Error message if restoration failed

@@ -119,6 +119,15 @@ function validateManifest(manifest: CacheManifest): void {
 		throw new Error("Manifest outputFiles must be an array");
 	}
 
+	// Validate stdout/stderr (should be strings, can be empty)
+	if (typeof manifest.stdout !== "string") {
+		throw new Error("Manifest stdout must be a string");
+	}
+
+	if (typeof manifest.stderr !== "string") {
+		throw new Error("Manifest stderr must be a string");
+	}
+
 	// Validate file entries
 	for (const file of manifest.inputFiles) {
 		if (!file.path || !file.hash) {
@@ -192,6 +201,8 @@ export function createManifest(options: {
 	lockfileHash: string;
 	inputFiles: ReadonlyArray<{ path: string; hash: string }>;
 	outputFiles: ReadonlyArray<{ path: string; hash: string; size: number }>;
+	stdout: string;
+	stderr: string;
 }): CacheManifest {
 	const now = new Date().toISOString();
 
@@ -209,6 +220,8 @@ export function createManifest(options: {
 		lockfileHash: options.lockfileHash,
 		inputFiles: options.inputFiles,
 		outputFiles: options.outputFiles,
+		stdout: options.stdout,
+		stderr: options.stderr,
 		createdAt: now,
 		lastAccessedAt: now,
 	};

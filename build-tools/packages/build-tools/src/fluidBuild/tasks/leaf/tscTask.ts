@@ -463,6 +463,120 @@ export class TscTask extends LeafTask {
 			!parsed.watchOptions
 		);
 	}
+
+	/**
+	 * Get cache input files for TscTask.
+	 * Includes all TypeScript source files that tsc would compile.
+	 */
+	protected async getCacheInputFiles(): Promise<string[] | undefined> {
+		try {
+			const config = this.readTsConfig();
+			if (!config) {
+				return undefined;
+			}
+
+			const configFileFullPath = this.configFileFullPath;
+			if (!configFileFullPath) {
+				return undefined;
+			}
+
+			// Collect all input files:
+			// 1. All source files from TypeScript config
+			const inputFiles = [...config.fileNames];
+
+			// 2. Add the tsconfig.json itself as an input
+			inputFiles.push(configFileFullPath);
+
+			// 3. If there are project references, add those config files too
+			if (config.projectReferences) {
+				for (const ref of config.projectReferences) {
+					inputFiles.push(ref.path);
+				}
+			}
+
+			// Convert to relative paths from package directory
+			const pkgDir = this.node.pkg.directory;
+			return inputFiles.map((f) => path.relative(pkgDir, f));
+		} catch (e) {
+			this.traceError(`Error getting cache input files: ${e}`);
+			return undefined;
+		}
+	}
+
+	/**
+	 * Get cache output files for TscTask.
+	 * Includes all compiled output files (.js, .d.ts, .map files) and .tsbuildinfo.
+	 */
+	protected async getCacheOutputFiles(): Promise<string[] | undefined> {
+		try {
+			const config = this.readTsConfig();
+			if (!config) {
+				return undefined;
+			}
+
+			const outputFiles: string[] = [];
+			const pkgDir = this.node.pkg.directory;
+
+			// 1. Add .tsbuildinfo file if incremental compilation is enabled
+			const tsBuildInfoPath = this.tsBuildInfoFileFullPath;
+			if (tsBuildInfoPath) {
+				outputFiles.push(path.relative(pkgDir, tsBuildInfoPath));
+			}
+
+			// 2. Compute output files based on input files and TypeScript configuration
+			const outDir = config.options.outDir;
+			const rootDir = config.options.rootDir;
+			const declaration = config.options.declaration ?? false;
+			const declarationMap = config.options.declarationMap ?? false;
+			const sourceMap = config.options.sourceMap ?? false;
+
+			// For each source file, compute the corresponding output files
+			for (const sourceFile of config.fileNames) {
+				// Compute output directory
+				let outputDir: string;
+				if (outDir) {
+					if (rootDir) {
+						const relative = path.relative(rootDir, path.dirname(sourceFile));
+						outputDir = path.join(outDir, relative);
+					} else {
+						outputDir = outDir;
+					}
+				} else {
+					outputDir = path.dirname(sourceFile);
+				}
+
+				const parsed = path.parse(sourceFile);
+				const baseName = parsed.name;
+
+				// Only add .js if not noEmit
+				if (!config.options.noEmit) {
+					outputFiles.push(path.relative(pkgDir, path.join(outputDir, `${baseName}.js`)));
+
+					if (sourceMap) {
+						outputFiles.push(
+							path.relative(pkgDir, path.join(outputDir, `${baseName}.js.map`)),
+						);
+					}
+				}
+
+				// Add declaration files
+				if (declaration) {
+					outputFiles.push(path.relative(pkgDir, path.join(outputDir, `${baseName}.d.ts`)));
+
+					if (declarationMap) {
+						outputFiles.push(
+							path.relative(pkgDir, path.join(outputDir, `${baseName}.d.ts.map`)),
+						);
+					}
+				}
+			}
+
+			return outputFiles;
+		} catch (e) {
+			this.traceError(`Error getting cache output files: ${e}`);
+			return undefined;
+		}
+	}
 }
 
 // Base class for tasks that are dependent on a tsc compile

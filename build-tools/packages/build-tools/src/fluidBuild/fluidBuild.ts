@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import * as path from "node:path";
+import { existsSync } from "node:fs";
 import chalk from "picocolors";
 import { Spinner } from "picospinner";
 
@@ -16,6 +18,8 @@ import { DEFAULT_FLUIDBUILD_CONFIG } from "./fluidBuildConfig";
 import { FluidRepoBuild } from "./fluidRepoBuild";
 import { getFluidBuildConfig, getResolvedFluidRoot } from "./fluidUtils";
 import { options, parseOptions } from "./options";
+import { SharedCacheManager } from "./sharedCache/sharedCacheManager";
+import { hashFile } from "./sharedCache/fileOperations";
 
 const { log, errorLog: error, warning: warn } = defaultLogger;
 
@@ -31,11 +35,36 @@ async function main() {
 		: "";
 	log(`Build Root: ${resolvedRoot}${suffix}`);
 
+	// Initialize shared cache if cache directory is specified
+	let sharedCache: SharedCacheManager | undefined;
+	if (options.cacheDir) {
+		try {
+			// Find and hash the lockfile
+			const lockfilePath = path.join(resolvedRoot, "pnpm-lock.yaml");
+			if (!existsSync(lockfilePath)) {
+				warn(`Lockfile not found at ${lockfilePath}, cache disabled`);
+			} else {
+				const lockfileHash = await hashFile(lockfilePath);
+				sharedCache = new SharedCacheManager({
+					cacheDir: options.cacheDir,
+					repoRoot: resolvedRoot,
+					lockfileHash,
+					verifyIntegrity: options.verifyCacheIntegrity,
+					skipCacheWrite: options.skipCacheWrite,
+				});
+				log(`Shared cache enabled: ${options.cacheDir}`);
+			}
+		} catch (e) {
+			warn(`Failed to initialize shared cache: ${(e as Error).message}`);
+		}
+	}
+
 	// Load the packages
 	const repo = new FluidRepoBuild({
 		repoRoot: resolvedRoot,
 		gitRepo: new GitRepo(resolvedRoot),
 		fluidBuildConfig: fluidConfig,
+		sharedCache,
 	});
 
 	timer.time("Package scan completed");
@@ -152,6 +181,8 @@ function buildResultString(buildResult: BuildResult) {
 			return chalk.redBright("failed");
 		case BuildResult.UpToDate:
 			return chalk.cyanBright("up to date");
+		case BuildResult.CachedSuccess:
+			return chalk.magentaBright("restored from cache");
 	}
 }
 
