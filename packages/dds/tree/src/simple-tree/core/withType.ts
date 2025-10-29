@@ -5,6 +5,9 @@
 
 import type { TreeNode } from "./treeNode.js";
 import type { NodeKind, TreeNodeSchemaClass } from "./treeNodeSchema.js";
+// Used by doc links:
+// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
+import type { TreeAlpha } from "../../shared-tree/index.js";
 
 /**
  * The type of a {@link TreeNode}.
@@ -38,6 +41,27 @@ export const typeNameSymbol: unique symbol = Symbol("TreeNode Type");
  * @system @public
  */
 export const typeSchemaSymbol: unique symbol = Symbol("TreeNode Schema");
+
+/**
+ * The intended type of insertable content that is to become a {@link TreeNode}.
+ * @remarks Use the type-safe {@link (TreeAlpha:interface).tagContentSchema} function to tag insertable content with this symbol.
+ *
+ * If a property with this symbol key is present on an object that is inserted into the tree,
+ * the tree will use the schema identifier specified by the value of this property when creating the node.
+ * This is particularly useful for specifying the intended schema of untyped content when it would otherwise be ambiguous.
+ * @example
+ * ```typescript
+ * const sf = new SchemaFactory("example");
+ * class Dog extends sf.object("Dog", { name: sf.string() }) {}
+ * class Cat extends sf.object("Cat", { name: sf.string() }) {}
+ * class Root extends sf.object("Root", { pet: [Dog, Cat] }) {}
+ * // ...
+ * view.root.pet = { name: "Max" }; // Error: ambiguous schema - is it a Dog or a Cat?
+ * view.root.pet = { name: "Max", [contentSchemaSymbol]: "example.Dog" }; // No error - it's a Dog.
+ * ```
+ * @alpha
+ */
+export const contentSchemaSymbol: unique symbol = Symbol("SharedTree Schema");
 
 /**
  * Adds a type symbol to a type for stronger typing.

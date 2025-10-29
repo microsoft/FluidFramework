@@ -608,7 +608,7 @@ export class PendingStateManager implements IDisposable {
 	 * @param sequenceNumber - The sequenceNumber from the server corresponding to the next pending message.
 	 * @param message - [optional] The entire incoming message, for comparing contents with the pending message for extra validation.
 	 * @throws DataProcessingError if the pending message content doesn't match the incoming message content.
-	 * @returns - The localOpMetadata of the next pending message, to be sent to whoever submitted the original message.
+	 * @returns The localOpMetadata of the next pending message, to be sent to whoever submitted the original message.
 	 */
 	private processNextPendingMessage(
 		sequenceNumber: number,

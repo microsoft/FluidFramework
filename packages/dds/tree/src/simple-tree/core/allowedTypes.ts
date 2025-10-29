@@ -61,7 +61,7 @@ export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
  * @privateRemarks
  * Since this is sealed, users are not supposed to create instances of it directly.
  * Making it extend ErasedType could enforce that.
- * @alpha
+ * @beta
  * @sealed
  */
 export interface AnnotatedAllowedType<T = LazyItem<TreeNodeSchema>> {
@@ -78,7 +78,7 @@ export interface AnnotatedAllowedType<T = LazyItem<TreeNodeSchema>> {
 /**
  * {@link AllowedTypesFull} but with the lazy schema references eagerly evaluated.
  * @sealed
- * @alpha
+ * @beta
  */
 export type AllowedTypesFullEvaluated = AllowedTypesFull<
 	readonly AnnotatedAllowedType<TreeNodeSchema>[]
@@ -96,7 +96,7 @@ export function isAnnotatedAllowedTypes(
 
 /**
  * Stores annotations for a set of allowed types.
- * @alpha
+ * @beta
  * @sealed
  */
 export interface AnnotatedAllowedTypes<T = readonly AnnotatedAllowedType[]>
@@ -145,7 +145,7 @@ export interface AnnotatedAllowedTypes<T = readonly AnnotatedAllowedType[]>
  * Stores annotations for a set of allowed types.
  * @remarks
  * Most expressive form of AllowedTypes which any of the implicit types can be normalized to.
- * @alpha
+ * @beta
  * @sealed
  */
 export type AllowedTypesFull<
@@ -154,8 +154,7 @@ export type AllowedTypesFull<
 
 /**
  * Creates an {@link AllowedTypesFull} type from a mixed array of annotated and unannotated allowed types.
- * @alpha
- * @sealed
+ * @system @sealed @beta
  */
 export type AllowedTypesFullFromMixed<
 	T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[],
@@ -269,32 +268,20 @@ export class AnnotatedAllowedTypesInternal<
 		return simpleAllowedTypes;
 	}
 
-	public static override [Symbol.hasInstance]<
-		TThis extends
-			| (abstract new (
-					...args: unknown[]
-			  ) => object)
-			| typeof AnnotatedAllowedTypesInternal,
-	>(
+	public static override [Symbol.hasInstance]<TThis extends { prototype: object }>(
 		this: TThis,
-		value: ErasedBaseType | InstanceTypeRelaxed<TThis> | ImplicitAllowedTypes,
+		value: unknown,
 	): value is InstanceTypeRelaxed<TThis> & AnnotatedAllowedTypesInternal & AllowedTypesFull {
-		return Object.prototype.isPrototypeOf.call(this.prototype, value);
+		return ErasedTypeImplementation[Symbol.hasInstance].call(this, value);
 	}
 
-	public static override narrow<
-		TThis extends
-			| (abstract new (
-					...args: unknown[]
-			  ) => object)
-			| typeof AnnotatedAllowedTypesInternal,
-	>(
+	public static override narrow<TThis extends { prototype: object }>(
 		this: TThis,
 		value: ErasedBaseType | InstanceTypeRelaxed<TThis> | ImplicitAllowedTypes,
 	): asserts value is InstanceTypeRelaxed<TThis> &
 		AnnotatedAllowedTypesInternal &
 		AllowedTypesFull {
-		if (!Object.prototype.isPrototypeOf.call(this.prototype, value)) {
+		if (!ErasedTypeImplementation[Symbol.hasInstance].call(this, value)) {
 			throw new TypeError("Invalid AnnotatedAllowedTypes instance");
 		}
 	}
@@ -388,7 +375,7 @@ export class AnnotatedAllowedTypesInternal<
  * Annotations that apply to a set of allowed types.
  * @remarks
  * Additional optionals may be added to this as non-breaking changes, so implementations of it should be simple object literals with no unlisted members.
- * @alpha
+ * @beta
  * @input
  */
 export interface AllowedTypesMetadata {
@@ -413,7 +400,7 @@ export function isAnnotatedAllowedType(
  * Annotations that apply to an individual allowed type.
  * @remarks
  * Additional optionals may be added to this as non-breaking changes, so implementations of it should be simple object literals with no unlisted members.
- * @alpha
+ * @beta
  * @input
  */
 export interface AllowedTypeMetadata {
@@ -441,7 +428,7 @@ export let createSchemaUpgrade: () => SchemaUpgrade;
  * TODO:#38722 implement runtime schema upgrades.
  * Until then, the class purely behaves mostly as a placeholder.
  * TODO: Consider allowing users to store a name for the upgrade to use in error messages.
- * @sealed @alpha
+ * @sealed @beta
  */
 export class SchemaUpgrade {
 	protected _typeCheck!: MakeNominal;
@@ -489,7 +476,7 @@ export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
 
 /**
  * Removes annotations from a list of allowed types that may contain annotations.
- * @system @alpha
+ * @system @beta
  */
 export type UnannotateAllowedTypesList<
 	T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[],
@@ -499,7 +486,7 @@ export type UnannotateAllowedTypesList<
 
 /**
  * Add annotations to a list of allowed types that may or may not contain annotations.
- * @system @alpha
+ * @system @beta
  */
 export type AnnotateAllowedTypesList<
 	T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[],

@@ -344,7 +344,7 @@ export function mapSchema<
 		public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
 			return (privateData ??= createTreeNodeSchemaPrivateData(
 				this,
-				[info],
+				[normalizedTypes],
 				(storedOptions) =>
 					new MapNodeStoredSchema(
 						{

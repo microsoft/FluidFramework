@@ -565,14 +565,14 @@ describe("Presence", () => {
 					{
 						"type": "Pres:DatastoreUpdate",
 						"content": {
-							"sendTimestamp": 1030,
+							"sendTimestamp": clock.now,
 							"avgLatency": 10,
 							"data": {
 								"system:presence": {
 									"clientToSessionId": {
 										[connectionId2]: {
 											"rev": 0,
-											"timestamp": 1000,
+											"timestamp": initialTime,
 											"value": attendeeId2,
 										},
 									},
@@ -584,12 +584,12 @@ describe("Presence", () => {
 											"items": {
 												"key1": {
 													"rev": 0,
-													"timestamp": 1030,
+													"timestamp": clock.now,
 													"value": toOpaqueJson({ "x": 0, "y": 0, "z": 0 }),
 												},
 												"key2": {
 													"rev": 0,
-													"timestamp": 1030,
+													"timestamp": clock.now,
 													"value": toOpaqueJson({ "x": 0, "y": 0, "z": 0 }),
 												},
 											},
@@ -650,14 +650,14 @@ describe("Presence", () => {
 						{
 							"type": "Pres:DatastoreUpdate",
 							"content": {
-								"sendTimestamp": 1030,
+								"sendTimestamp": clock.now,
 								"avgLatency": 10,
 								"data": {
 									"system:presence": {
 										"clientToSessionId": {
 											[connectionId2]: {
 												"rev": 0,
-												"timestamp": 1000,
+												"timestamp": initialTime,
 												"value": attendeeId2,
 											},
 										},
@@ -669,7 +669,7 @@ describe("Presence", () => {
 												"items": {
 													"key1": {
 														"rev": 1,
-														"timestamp": 1030,
+														"timestamp": clock.now,
 														"value": toOpaqueJson({ "x": 0, "y": 1, "z": 2 }),
 													},
 												},

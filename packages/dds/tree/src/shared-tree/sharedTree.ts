@@ -301,6 +301,7 @@ export class SharedTreeKernel
 		serializer: IFluidSerializer,
 		submitLocalMessage: (content: unknown, localOpMetadata?: unknown) => void,
 		lastSequenceNumber: () => number | undefined,
+		initialSequenceNumber: number,
 		private readonly logger: ITelemetryLoggerExt | undefined,
 		idCompressor: IIdCompressor,
 		optionsParam: SharedTreeOptionsInternal,
@@ -348,6 +349,7 @@ export class SharedTreeKernel
 			encoderContext,
 			options,
 			idCompressor,
+			initialSequenceNumber,
 			options.shouldEncodeIncrementally,
 		);
 		const removedRootsSummarizer = new DetachedFieldIndexSummarizer(removedRoots);
@@ -667,7 +669,7 @@ export const SharedTreeFormatVersion = {
 	/**
 	 * Requires \@fluidframework/tree \>= 2.0.0.
 	 *
-	 * @deprecated - FF does not currently plan on supporting this format long-term.
+	 * @deprecated FF does not currently plan on supporting this format long-term.
 	 * Do not write production documents using this format, as they may not be loadable in the future.
 	 */
 	v1: 1,

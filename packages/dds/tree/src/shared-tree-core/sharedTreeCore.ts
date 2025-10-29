@@ -719,7 +719,7 @@ function scopeStorageService(
 			return service.list(`${scope}${path}`);
 		},
 		getSnapshotTree(): ISnapshotTree | undefined {
-			const snapshotTree = service.getSnapshotTree?.();
+			const snapshotTree = service.getSnapshotTree();
 			if (snapshotTree === undefined) {
 				return undefined;
 			}
