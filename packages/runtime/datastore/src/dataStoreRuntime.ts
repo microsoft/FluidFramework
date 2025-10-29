@@ -1263,8 +1263,11 @@ export class FluidDataStoreRuntime
 	 *
 	 * @privateRemarks
 	 * `type` parameter's type of `DataStoreMessageType` is a covariance exception
-	 * over `string` that `IFluidDataStoreChannel` specifies. (`unreachableCase`
-	 * might be reachable over time without better typing in this area.)
+	 * over `string` that `IFluidDataStoreChannel` specifies. So long as local
+	 * submissions conform to this type all is well. (`unreachableCase` might be
+	 * reachable over time without better typing in this area if a mistake is made.)
+	 * See {@link @fluidframework/runtime-definitions#FluidDataStoreMessage} comment
+	 * for opportunity to resolve this.
 	 */
 	public reSubmit(
 		type: DataStoreMessageType,
@@ -1309,7 +1312,11 @@ export class FluidDataStoreRuntime
 	 *
 	 * @privateRemarks
 	 * `type` parameter's type of `DataStoreMessageType` is a covariance exception
-	 * over `string` that `IFluidDataStoreChannel` specifies.
+	 * over `string` that `IFluidDataStoreChannel` specifies. So long as local
+	 * submissions conform to this type all is well. (`unreachableCase` might be
+	 * reachable over time without better typing in this area if a mistake is made.)
+	 * See {@link @fluidframework/runtime-definitions#FluidDataStoreMessage} comment
+	 * for opportunity to resolve this.
 	 */
 	public rollback(
 		type: DataStoreMessageType,

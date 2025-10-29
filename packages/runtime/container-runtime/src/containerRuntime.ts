@@ -832,6 +832,8 @@ export class ContainerRuntime
 		// If ContainerRuntime stops being exported from this package, this can
 		// be updated to implement IFluidRootParentContextPrivate and leave
 		// submitMessage included.
+		// IFluidParentContextPrivate is also better than IFluidParentContext
+		// and is also internal only; so, not usable here.
 		Omit<IFluidParentContext, "submitMessage" | "submitSignal">,
 		IProvideFluidHandleContext,
 		IProvideLayerCompatDetails
@@ -4927,7 +4929,7 @@ export class ContainerRuntime
 			case ContainerMessageType.FluidDataStoreOp:
 			case ContainerMessageType.Attach:
 			case ContainerMessageType.Alias: {
-				// For Operations, call resubmitDataStoreOp which will find the right store
+				// Call reSubmitContainerMessage which will find the right store
 				// and trigger resubmission on it.
 				this.channelCollection.reSubmitContainerMessage(
 					message,

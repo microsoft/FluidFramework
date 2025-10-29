@@ -137,6 +137,10 @@ export interface IRuntimeMessageCollection {
  * and `rollback` to accept `T` as `message` parameter instead of `type`
  * and `content` parameters that are hard to convince TypeScript must be
  * paired in implementations.
+ * - Caveat to enhanced type safety is that a user that changes their own
+ * `FluidDataStoreMessage` definition over time needs to account for
+ * protocol changes. So `unknown` should continue to be used for incoming
+ * message methods (where messages are not known to originate locally).
  */
 export interface FluidDataStoreMessage {
 	type: string;
