@@ -5,7 +5,6 @@
 
 import path from "node:path";
 import fs from "node:fs";
-import type { SharedCacheOptions } from "./types.js";
 
 /**
  * Configuration file schema for .fluid-build-cache.json
@@ -76,7 +75,7 @@ export class ConfigValidationError extends Error {
  * @param configPath - Path to config file for error messages
  * @returns Validation errors (empty array if valid)
  */
-export function validateConfigFile(config: unknown, configPath: string): string[] {
+export function validateConfigFile(config: unknown): string[] {
 	const errors: string[] = [];
 
 	if (typeof config !== "object" || config === null) {
@@ -165,7 +164,7 @@ export function loadConfigFile(configPath: string): CacheConfigFile | null {
 	}
 
 	// Validate the configuration
-	const errors = validateConfigFile(config, configPath);
+	const errors = validateConfigFile(config);
 	if (errors.length > 0) {
 		throw new ConfigValidationError(
 			`Invalid configuration in ${configPath}:\n  ${errors.join("\n  ")}`,
@@ -185,6 +184,7 @@ export function findConfigFile(startDir: string): string | null {
 	let currentDir = path.resolve(startDir);
 	const root = path.parse(currentDir).root;
 
+	// eslint-disable-next-line no-constant-condition
 	while (true) {
 		const configPath = path.join(currentDir, CONFIG_FILE_NAME);
 		if (fs.existsSync(configPath)) {

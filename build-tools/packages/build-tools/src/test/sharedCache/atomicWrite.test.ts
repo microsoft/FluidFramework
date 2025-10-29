@@ -131,16 +131,7 @@ describe("Atomic Write", () => {
 
 		it("preserves binary data integrity", async () => {
 			const filePath = join(tempDir, "binary.bin");
-			const buffer = Buffer.from([
-				0x00,
-				0x01,
-				0x02,
-				0x03,
-				0xff,
-				0xfe,
-				0xfd,
-				0xfc,
-			]);
+			const buffer = Buffer.from([0x00, 0x01, 0x02, 0x03, 0xff, 0xfe, 0xfd, 0xfc]);
 
 			await atomicWrite(filePath, buffer);
 

@@ -547,25 +547,39 @@ export class TscTask extends LeafTask {
 
 				const parsed = path.parse(sourceFile);
 				const baseName = parsed.name;
+				const ext = parsed.ext;
+
+				// Determine output file extensions based on source file extension
+				let jsExt = ".js";
+				let dtsExt = ".d.ts";
+				if (ext === ".cts") {
+					jsExt = ".cjs";
+					dtsExt = ".d.cts";
+				} else if (ext === ".mts") {
+					jsExt = ".mjs";
+					dtsExt = ".d.mts";
+				}
 
 				// Only add .js if not noEmit
 				if (!config.options.noEmit) {
-					outputFiles.push(path.relative(pkgDir, path.join(outputDir, `${baseName}.js`)));
+					outputFiles.push(path.relative(pkgDir, path.join(outputDir, `${baseName}${jsExt}`)));
 
 					if (sourceMap) {
 						outputFiles.push(
-							path.relative(pkgDir, path.join(outputDir, `${baseName}.js.map`)),
+							path.relative(pkgDir, path.join(outputDir, `${baseName}${jsExt}.map`)),
 						);
 					}
 				}
 
 				// Add declaration files
 				if (declaration) {
-					outputFiles.push(path.relative(pkgDir, path.join(outputDir, `${baseName}.d.ts`)));
+					outputFiles.push(
+						path.relative(pkgDir, path.join(outputDir, `${baseName}${dtsExt}`)),
+					);
 
 					if (declarationMap) {
 						outputFiles.push(
-							path.relative(pkgDir, path.join(outputDir, `${baseName}.d.ts.map`)),
+							path.relative(pkgDir, path.join(outputDir, `${baseName}${dtsExt}.map`)),
 						);
 					}
 				}

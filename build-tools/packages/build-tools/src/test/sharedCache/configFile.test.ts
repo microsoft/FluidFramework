@@ -44,38 +44,38 @@ describe("configFile", () => {
 				maxCacheAgeDays: 30,
 				autoPrune: false,
 			};
-			const errors = validateConfigFile(config, "test.json");
+			const errors = validateConfigFile(config);
 			assert.equal(errors.length, 0);
 		});
 
 		it("should accept empty configuration", () => {
 			const config = {};
-			const errors = validateConfigFile(config, "test.json");
+			const errors = validateConfigFile(config);
 			assert.equal(errors.length, 0);
 		});
 
 		it("should reject non-object configuration", () => {
-			const errors = validateConfigFile("not an object", "test.json");
+			const errors = validateConfigFile("not an object");
 			assert.equal(errors.length, 1);
 			assert.match(errors[0], /must be an object/);
 		});
 
 		it("should reject null configuration", () => {
-			const errors = validateConfigFile(null, "test.json");
+			const errors = validateConfigFile(null);
 			assert.equal(errors.length, 1);
 			assert.match(errors[0], /must be an object/);
 		});
 
 		it("should reject invalid cacheDir type", () => {
 			const config = { cacheDir: 123 };
-			const errors = validateConfigFile(config, "test.json");
+			const errors = validateConfigFile(config);
 			assert.equal(errors.length, 1);
 			assert.match(errors[0], /cacheDir must be a string/);
 		});
 
 		it("should reject empty cacheDir", () => {
 			const config = { cacheDir: "   " };
-			const errors = validateConfigFile(config, "test.json");
+			const errors = validateConfigFile(config);
 			assert.equal(errors.length, 1);
 			assert.match(errors[0], /cacheDir cannot be empty/);
 		});
@@ -86,7 +86,7 @@ describe("configFile", () => {
 				verifyCacheIntegrity: 1,
 				autoPrune: "true",
 			};
-			const errors = validateConfigFile(config, "test.json");
+			const errors = validateConfigFile(config);
 			assert.equal(errors.length, 3);
 			assert.match(errors[0], /skipCacheWrite must be a boolean/);
 			assert.match(errors[1], /verifyCacheIntegrity must be a boolean/);
@@ -98,7 +98,7 @@ describe("configFile", () => {
 				maxCacheSizeMB: "5000",
 				maxCacheAgeDays: true,
 			};
-			const errors = validateConfigFile(config, "test.json");
+			const errors = validateConfigFile(config);
 			assert.equal(errors.length, 2);
 			assert.match(errors[0], /maxCacheSizeMB must be a number/);
 			assert.match(errors[1], /maxCacheAgeDays must be a number/);
@@ -109,7 +109,7 @@ describe("configFile", () => {
 				maxCacheSizeMB: -100,
 				maxCacheAgeDays: 0,
 			};
-			const errors = validateConfigFile(config, "test.json");
+			const errors = validateConfigFile(config);
 			assert.equal(errors.length, 2);
 			assert.match(errors[0], /maxCacheSizeMB must be positive/);
 			assert.match(errors[1], /maxCacheAgeDays must be positive/);
@@ -120,7 +120,7 @@ describe("configFile", () => {
 				maxCacheSizeMB: Number.POSITIVE_INFINITY,
 				maxCacheAgeDays: Number.NEGATIVE_INFINITY,
 			};
-			const errors = validateConfigFile(config, "test.json");
+			const errors = validateConfigFile(config);
 			assert.equal(errors.length, 2);
 			assert.match(errors[0], /maxCacheSizeMB must be finite/);
 			assert.match(errors[1], /maxCacheAgeDays must be finite/);
@@ -132,7 +132,7 @@ describe("configFile", () => {
 				unknownProp: "value",
 				anotherUnknown: 123,
 			};
-			const errors = validateConfigFile(config, "test.json");
+			const errors = validateConfigFile(config);
 			assert.equal(errors.length, 2);
 			assert.match(errors[0], /Unknown property: unknownProp/);
 			assert.match(errors[1], /Unknown property: anotherUnknown/);

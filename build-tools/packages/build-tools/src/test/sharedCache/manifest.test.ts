@@ -466,4 +466,33 @@ describe("Manifest", () => {
 			}, /Failed to read manifest/);
 		});
 	});
+
+	describe("writeManifest in subdirectory", () => {
+		it("writes manifest to a specific file in a directory structure", async () => {
+			const entryDir = join(tempDir, "cache-entry-dir");
+			const manifestPath = join(entryDir, "manifest.json");
+			const manifest = createManifest({
+				cacheKey: "abc123",
+				packageName: "@fluidframework/build-tools",
+				taskName: "compile",
+				executable: "tsc",
+				command: "tsc --build",
+				exitCode: 0,
+				executionTimeMs: 1234,
+				nodeVersion: "v20.15.1",
+				platform: "linux",
+				lockfileHash: "lock123",
+				inputFiles: [],
+				outputFiles: [],
+				stdout: "",
+				stderr: "",
+			});
+
+			await writeManifest(manifestPath, manifest);
+			const read = await readManifest(manifestPath);
+
+			assert.ok(read);
+			assert.deepStrictEqual(read, manifest);
+		});
+	});
 });

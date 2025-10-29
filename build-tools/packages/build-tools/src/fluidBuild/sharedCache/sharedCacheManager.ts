@@ -164,7 +164,8 @@ export class SharedCacheManager {
 			}
 
 			// Read and validate manifest
-			const manifest = await readManifest(entryPath);
+			const manifestPath = path.join(entryPath, "manifest.json");
+			const manifest = await readManifest(manifestPath);
 
 			// Check if manifest exists and is valid
 			if (!manifest) {
@@ -217,7 +218,7 @@ export class SharedCacheManager {
 			}
 
 			// Update access time for LRU tracking
-			await updateManifestAccessTime(entryPath);
+			await updateManifestAccessTime(manifestPath);
 
 			// Cache hit!
 			const elapsed = Date.now() - startTime;
@@ -340,7 +341,8 @@ export class SharedCacheManager {
 
 			// Write manifest (atomically)
 			const { writeManifest } = await import("./manifest.js");
-			await writeManifest(entryPath, manifest);
+			const manifestPath = path.join(entryPath, "manifest.json");
+			await writeManifest(manifestPath, manifest);
 
 			// Update statistics
 			const storeTime = Date.now() - storeStartTime;
@@ -348,11 +350,16 @@ export class SharedCacheManager {
 
 			this.statistics.totalEntries++;
 			this.statistics.totalSize += entrySize;
-			this.statistics.avgStoreTime =
-				(this.statistics.avgStoreTime *
-					(this.statistics.hitCount + this.statistics.missCount - 1) +
-					storeTime) /
-				(this.statistics.hitCount + this.statistics.missCount);
+
+			// Update average store time
+			const previousStores = this.statistics.totalEntries - 1;
+			if (previousStores === 0) {
+				this.statistics.avgStoreTime = storeTime;
+			} else {
+				this.statistics.avgStoreTime =
+					(this.statistics.avgStoreTime * previousStores + storeTime) /
+					this.statistics.totalEntries;
+			}
 
 			traceStore(
 				`Stored cache entry ${shortKey} successfully (${(entrySize / 1024).toFixed(2)} KB, ${storeTime}ms total)`,
@@ -360,6 +367,9 @@ export class SharedCacheManager {
 			traceStats(
 				`Cache stats: ${this.statistics.totalEntries} entries, ${(this.statistics.totalSize / 1024 / 1024).toFixed(2)} MB total`,
 			);
+
+			// Persist statistics to disk
+			await this.persistStatistics();
 		} catch (error) {
 			// Graceful degradation: log error but don't fail the build
 			traceError(`Failed to store cache entry: ${error}`);
@@ -547,7 +557,6 @@ export class SharedCacheManager {
 
 		const { rm } = await import("node:fs/promises");
 		const { getCacheEntriesDirectory } = await import("./cacheDirectory.js");
-		const { updateCacheSizeStats } = await import("./statistics.js");
 
 		const entriesDir = getCacheEntriesDirectory(this.options.cacheDir);
 
@@ -616,7 +625,7 @@ export class SharedCacheManager {
 				const manifestPath = path.join(entryPath, "manifest.json");
 
 				try {
-					const manifestStat = await stat(manifestPath);
+					await stat(manifestPath);
 					const outputsDir = path.join(entryPath, "outputs");
 
 					// Read manifest to get access time
