@@ -32,12 +32,7 @@ import {
  * {@link runBenchmark} configuration.
  */
 interface BenchmarkConfig extends BenchmarkTimingOptions, TableBenchmarkOptions {
-	/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive AB#50920 */
-	/**
-	 * {@inheritDoc @fluid-tools/benchmark#BenchmarkTimingOptions.maxBenchmarkDurationSeconds}
-	 */
 	readonly maxBenchmarkDurationSeconds: number;
-	/* eslint-enable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag */
 }
 
 /**

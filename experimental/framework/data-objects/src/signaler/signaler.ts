@@ -203,4 +203,4 @@ export const Signaler: {
 		readonly registryEntry: NamedFluidDataStoreRegistryEntry;
 	};
 } & SharedObjectKind<ISignaler> = createDataObjectKind(SignalerClass);
-/* eslint-enable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive */
+/* eslint-enable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive AB#50920 */
