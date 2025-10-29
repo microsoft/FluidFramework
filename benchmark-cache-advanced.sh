@@ -134,10 +134,10 @@ echo -e "  ${BLUE}Output:${NC} ${OUTPUT_DIR}/"
 echo ""
 
 # Build command
-BUILD_CMD="pnpm fluid-build --task ${BUILD_TASK} --root ${PROJECT_DIR}"
+BUILD_CMD="pnpm fluid-build --task ${BUILD_TASK} ${PROJECT_NAME}"
 
-# Clean command
-CLEAN_CMD="rm -rf ${PROJECT_DIR}/dist ${PROJECT_DIR}/lib ${PROJECT_DIR}/*.tsbuildinfo ${PROJECT_DIR}/*.done.build.log 2>/dev/null || true"
+# Clean command - runs pnpm clean to clear local cached build artifacts
+CLEAN_CMD="pnpm clean"
 
 # Timestamp for unique filenames
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)

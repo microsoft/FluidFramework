@@ -87,8 +87,8 @@ for project in "${PROJECTS[@]}"; do
     echo -e "${GREEN}═══════════════════════════════════════════════════════════${NC}"
     echo ""
     
-    BUILD_CMD="pnpm fluid-build --task compile --root ${project}"
-    CLEAN_CMD="rm -rf ${project}/dist ${project}/lib ${project}/*.tsbuildinfo ${project}/*.done.build.log 2>/dev/null || true"
+    BUILD_CMD="pnpm fluid-build --task compile ${PROJECT_NAME}"
+    CLEAN_CMD="pnpm clean"
     
     RESULT_FILE="${OUTPUT_DIR}/${PROJECT_NAME}-${TIMESTAMP}"
     

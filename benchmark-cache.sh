@@ -84,6 +84,9 @@ PACKAGE_NAME=$(basename "${PROJECT_DIR}")
 # Build command - fluid-build can take package name patterns
 BUILD_CMD="pnpm fluid-build --task compile ${PACKAGE_NAME}"
 
+# Clean command - runs pnpm clean to clear local cached build artifacts
+CLEAN_CMD="pnpm clean"
+
 # Run hyperfine benchmark
 hyperfine \
     --runs "${BENCHMARK_RUNS}" \
@@ -92,10 +95,10 @@ hyperfine \
     --export-json "benchmark-results-${PROJECT_NAME}.json" \
     --show-output \
     --command-name "with-cache" \
-    --prepare "rm -rf ${PROJECT_DIR}/dist ${PROJECT_DIR}/lib ${PROJECT_DIR}/*.tsbuildinfo ${PROJECT_DIR}/*.done.build.log 2>/dev/null || true" \
+    --prepare "${CLEAN_CMD}" \
     "${BUILD_CMD}" \
     --command-name "without-cache" \
-    --prepare "rm -rf ${PROJECT_DIR}/dist ${PROJECT_DIR}/lib ${PROJECT_DIR}/*.tsbuildinfo ${PROJECT_DIR}/*.done.build.log 2>/dev/null || true; export FLUID_BUILD_CACHE_DISABLED=1" \
+    --prepare "${CLEAN_CMD}" \
     "FLUID_BUILD_CACHE_DISABLED=1 ${BUILD_CMD}"
 
 echo ""
