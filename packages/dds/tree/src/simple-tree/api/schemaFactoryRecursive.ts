@@ -182,7 +182,7 @@ export type ValidateRecursiveSchemaTemplate<T extends TreeNodeSchemaClass> =
 		}[T["kind"]]
 	>;
 
-/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive */
+/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive AB#50920 */
 /**
  * Workaround for "Type instantiation is excessively deep and possibly infinite.ts" errors.
  * @remarks

@@ -910,7 +910,7 @@ describe("Map", () => {
 				this.map2 = createConnectedMap("map2", this.containerRuntimeFactory);
 			}
 
-			/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive */
+			/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive AB#50920 */
 			/**
 			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.sharedObject}
 			 */

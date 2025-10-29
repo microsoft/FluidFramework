@@ -591,7 +591,7 @@ export async function getLatestSnapshotInfo(
 	);
 }
 
-/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive */
+/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive AB#50920 */
 /**
  * Retrieves a snapshot from the storage adapter and transforms it into an ISnapshotTree object.
  *

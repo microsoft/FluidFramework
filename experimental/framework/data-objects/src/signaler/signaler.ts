@@ -190,7 +190,7 @@ class SignalerClass
 	}
 }
 
-/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive */
+/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive AB#50920 */
 /**
  * Implementation of ISignaler for declarative API.
  * @privateRemarks

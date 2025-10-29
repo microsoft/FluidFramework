@@ -191,7 +191,7 @@ export type HarnessOperation =
 	| StashClient
 	| Rollback;
 
-/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive */
+/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive AB#50920 */
 /**
  * Represents a generic fuzz model for testing eventual consistency of a DDS.
  *
@@ -275,7 +275,7 @@ export interface DDSFuzzModel<
 		channelB: Client<TChannelFactory>,
 	) => void | Promise<void>;
 
-	/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive */
+	/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive AB#50920 */
 	/**
 	 * An array of transforms used during fuzz test minimization to reduce test
 	 * cases. See {@link @fluid-private/stochastic-test-utils#MinimizationTransform} for additional context.
@@ -533,7 +533,7 @@ export interface DDSFuzzSuiteOptions {
 	 */
 	containerRuntimeOptions?: IMockContainerRuntimeOptions;
 
-	/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive */
+	/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive AB#50920 */
 	/**
 	 * Whether or not to skip minimization of fuzz failing test cases. This is useful
 	 * when one only cares about the counts or types of errors, and not the
@@ -1099,7 +1099,7 @@ export function setupClientContext(
 	};
 }
 
-/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive */
+/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive AB#50920 */
 /**
  * Mixes in the ability to select a client to perform an operation on.
  * Makes this available to existing generators and reducers in the passed-in model via {@link DDSFuzzTestState.client}

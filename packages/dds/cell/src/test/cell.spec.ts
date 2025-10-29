@@ -502,7 +502,7 @@ describe("Cell", () => {
 				this.cell2 = createConnectedCell("cell2", this.containerRuntimeFactory);
 			}
 
-			/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive */
+			/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive AB#50920 */
 			/**
 			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.sharedObject}
 			 */

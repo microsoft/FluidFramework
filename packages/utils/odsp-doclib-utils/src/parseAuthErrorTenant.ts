@@ -5,7 +5,7 @@
 
 const oAuthBearerScheme = "Bearer";
 
-/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive */
+/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive AB#50920 */
 /**
  * Checks if response headers contains `www-authenticate` header and extracts tenant id that should be
  * used to identify authority which must be used to issue access token for protected resource.

@@ -10,7 +10,7 @@ import type {
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 
-/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive */
+/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive AB#50920 */
 /**
  * Types of test drivers.
  * These values are replicated in {@link @fluid-private/test-version-utils#compatOptions.d.ts}. Ensure that any revisions here are also reflected in test-version-utils.
