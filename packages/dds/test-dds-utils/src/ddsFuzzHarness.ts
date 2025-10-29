@@ -191,6 +191,7 @@ export type HarnessOperation =
 	| StashClient
 	| Rollback;
 
+/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive AB#50920 */
 /**
  * Represents a generic fuzz model for testing eventual consistency of a DDS.
  *
@@ -235,6 +236,7 @@ export interface DDSFuzzModel<
 	TOperation extends BaseOperation,
 	TState extends DDSFuzzTestState<TChannelFactory> = DDSFuzzTestState<TChannelFactory>,
 > {
+	/* eslint-enable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag */
 	/**
 	 * Name for this model. This is used for test case naming, and should generally reflect properties
 	 * about the kinds of operations that are generated.
@@ -273,6 +275,7 @@ export interface DDSFuzzModel<
 		channelB: Client<TChannelFactory>,
 	) => void | Promise<void>;
 
+	/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive AB#50920 */
 	/**
 	 * An array of transforms used during fuzz test minimization to reduce test
 	 * cases. See {@link @fluid-private/stochastic-test-utils#MinimizationTransform} for additional context.
@@ -281,6 +284,7 @@ export interface DDSFuzzModel<
 	 * contents of the operations will remain unchanged.
 	 */
 	minimizationTransforms?: MinimizationTransform<TOperation>[];
+	/* eslint-enable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag */
 }
 
 /**
@@ -529,6 +533,7 @@ export interface DDSFuzzSuiteOptions {
 	 */
 	containerRuntimeOptions?: IMockContainerRuntimeOptions;
 
+	/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive AB#50920 */
 	/**
 	 * Whether or not to skip minimization of fuzz failing test cases. This is useful
 	 * when one only cares about the counts or types of errors, and not the
@@ -541,6 +546,7 @@ export interface DDSFuzzSuiteOptions {
 	 * test case. See {@link @fluid-private/stochastic-test-utils#MinimizationTransform} for additional context.
 	 */
 	skipMinimization?: boolean;
+	/* eslint-enable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag */
 
 	/**
 	 * An optional IdCompressor that will be passed to the constructed MockDataStoreRuntime instance.
@@ -1093,6 +1099,7 @@ export function setupClientContext(
 	};
 }
 
+/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive AB#50920 */
 /**
  * Mixes in the ability to select a client to perform an operation on.
  * Makes this available to existing generators and reducers in the passed-in model via {@link DDSFuzzTestState.client}
@@ -1103,6 +1110,7 @@ export function setupClientContext(
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
 export function mixinClientSelection<
+	/* eslint-enable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag */
 	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
 	TState extends DDSFuzzTestState<TChannelFactory>,
