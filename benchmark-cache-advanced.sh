@@ -13,6 +13,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Default configuration
+PACKAGE_NAME="aqueduct"  # Package to build (e.g., "aqueduct", "container-runtime", etc.)
 PROJECT_DIR="packages/framework/aqueduct"
 BENCHMARK_RUNS=5
 PREPARE_RUNS=2
@@ -134,7 +135,7 @@ echo -e "  ${BLUE}Output:${NC} ${OUTPUT_DIR}/"
 echo ""
 
 # Build command - fluid-build uses the shared cache
-BUILD_CMD="/home/tylerbu/code/FluidFramework/fluid-build-cache/build-tools/packages/build-tools/bin/fluid-build --task build"
+BUILD_CMD="/home/tylerbu/code/FluidFramework/fluid-build-cache/build-tools/packages/build-tools/bin/fluid-build --task build ${PACKAGE_NAME}"
 
 # Clean command - runs pnpm clean to clear local cached build artifacts
 CLEAN_CMD="pnpm clean"

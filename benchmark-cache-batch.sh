@@ -13,6 +13,7 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 # Configuration
+PACKAGE_NAME="aqueduct"  # Package to build (e.g., "aqueduct", "container-runtime", etc.)
 BENCHMARK_RUNS="${1:-5}"
 OUTPUT_DIR="benchmark-results"
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
@@ -87,7 +88,7 @@ for project in "${PROJECTS[@]}"; do
     echo -e "${GREEN}═══════════════════════════════════════════════════════════${NC}"
     echo ""
     
-    BUILD_CMD="pnpm fluid-build --task compile ${PROJECT_NAME}"
+    BUILD_CMD="pnpm fluid-build --task compile ${PACKAGE_NAME}"
     CLEAN_CMD="pnpm clean"
     
     RESULT_FILE="${OUTPUT_DIR}/${PROJECT_NAME}-${TIMESTAMP}"

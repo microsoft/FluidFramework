@@ -15,6 +15,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Configuration
+PACKAGE_NAME="aqueduct"  # Package to build (e.g., "aqueduct", "container-runtime", etc.)
 PROJECT_DIR="${1:-packages/framework/aqueduct}"
 BENCHMARK_RUNS="${2:-5}"
 PREPARE_RUNS="${3:-1}"
@@ -65,7 +66,7 @@ cd ../../..
 PACKAGE_NAME=$(basename "${PROJECT_DIR}")
 
 # Build command - fluid-build uses the shared cache
-BUILD_CMD="/home/tylerbu/code/FluidFramework/fluid-build-cache/build-tools/packages/build-tools/bin/fluid-build --task build"
+BUILD_CMD="/home/tylerbu/code/FluidFramework/fluid-build-cache/build-tools/packages/build-tools/bin/fluid-build --task build ${PACKAGE_NAME}"
 
 # Clean command - removes both donefiles and build artifacts
 CLEAN_CMD="pnpm clean"
