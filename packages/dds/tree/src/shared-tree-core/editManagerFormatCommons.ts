@@ -130,14 +130,16 @@ export const EditManagerFormatVersion = {
 	v4: 4,
 	v5: 5,
 };
-export type EditManagerFormatVersion =
-	(typeof EditManagerFormatVersion)[keyof typeof EditManagerFormatVersion];
+export type EditManagerFormatVersion = Brand<
+	(typeof EditManagerFormatVersion)[keyof typeof EditManagerFormatVersion],
+	"EditManagerFormatVersion"
+>;
 export const editManagerFormatVersions: ReadonlySet<EditManagerFormatVersion> = new Set([
 	EditManagerFormatVersion.v1,
 	EditManagerFormatVersion.v2,
 	EditManagerFormatVersion.v3,
 	EditManagerFormatVersion.v4,
 	EditManagerFormatVersion.v5,
-]);
+] as EditManagerFormatVersion[]);
 
 /* eslint-enable @typescript-eslint/explicit-function-return-type */

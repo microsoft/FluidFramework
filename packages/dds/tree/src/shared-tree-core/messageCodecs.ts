@@ -22,7 +22,7 @@ import type {
 	RevisionTag,
 	SchemaAndPolicy,
 } from "../core/index.js";
-import type { JsonCompatibleReadOnly } from "../util/index.js";
+import { brand, type JsonCompatibleReadOnly } from "../util/index.js";
 
 import type { DecodedMessage } from "./messageTypes.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
@@ -44,7 +44,7 @@ export function clientVersionToMessageFormatVersion(
 	clientVersion: MinimumVersionForCollab,
 ): MessageFormatVersion {
 	// Currently, message codec only writes in version 3.
-	return MessageFormatVersion.v3;
+	return brand(MessageFormatVersion.v3);
 }
 
 export function makeMessageCodec<TChangeset>(

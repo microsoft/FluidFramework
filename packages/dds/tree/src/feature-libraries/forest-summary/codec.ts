@@ -16,6 +16,7 @@ import type { FieldKey, ITreeCursorSynchronous } from "../../core/index.js";
 import type { FieldBatchCodec, FieldBatchEncodingContext } from "../chunked-forest/index.js";
 
 import { Format, ForestFormatVersion } from "./format.js";
+import { brand } from "../../util/index.js";
 
 /**
  * Uses field cursors
@@ -32,7 +33,7 @@ function clientVersionToForestSummaryVersion(
 	clientVersion: MinimumVersionForCollab,
 ): ForestFormatVersion {
 	// Currently, forest summary codec only writes in version 1.
-	return ForestFormatVersion.v1;
+	return brand(ForestFormatVersion.v1);
 }
 
 export function makeForestSummarizerCodec(

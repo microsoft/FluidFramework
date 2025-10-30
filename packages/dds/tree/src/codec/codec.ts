@@ -503,7 +503,7 @@ export const FluidClientVersion = {
 	 * Fluid Framework Client 2.52 and newer.
 	 *
 	 * New formats introduced in 2.52:
-	 * {@link DetachedFieldIndexFormatVersion.v2}
+	 * DetachedFieldIndexFormatVersion.v2
 	 */
 	v2_52: "2.52.0",
 } as const satisfies Record<string, MinimumVersionForCollab>;

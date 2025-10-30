@@ -23,7 +23,7 @@ import type {
 	RevisionTag,
 	SchemaAndPolicy,
 } from "../core/index.js";
-import type { JsonCompatibleReadOnly } from "../util/index.js";
+import { brand, type JsonCompatibleReadOnly } from "../util/index.js";
 
 import type { SummaryData } from "./editManager.js";
 import { makeV1CodecWithVersion } from "./editManagerCodecsV1toV4.js";
@@ -48,7 +48,7 @@ export function clientVersionToEditManagerFormatVersion(
 	clientVersion: MinimumVersionForCollab,
 ): EditManagerFormatVersion {
 	// Currently, edit manager codec only writes in version 3.
-	return EditManagerFormatVersion.v3;
+	return brand(EditManagerFormatVersion.v3);
 }
 
 export function makeEditManagerCodec<TChangeset>(
