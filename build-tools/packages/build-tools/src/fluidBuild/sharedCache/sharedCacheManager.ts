@@ -27,6 +27,7 @@ import type {
 	GlobalCacheKeyComponents,
 	RestoreResult,
 	SharedCacheOptions,
+	StoreResult,
 	TaskOutputs,
 } from "./types.js";
 
@@ -322,24 +323,37 @@ export class SharedCacheManager {
 	 * @param inputs - The task inputs (for computing cache key)
 	 * @param outputs - The task outputs to store
 	 * @param packageRoot - Absolute path to the package root (currently unused, reserved for future use)
-	 * @returns Promise that resolves when storage is complete
+	 * @param lookupWasPerformed - Whether a cache lookup was performed before this store (default: true)
+	 * @returns Promise that resolves with the result of the storage operation
 	 */
 	async store(
 		inputs: CacheKeyInputs,
 		outputs: TaskOutputs,
 		packageRoot: string, // eslint-disable-line @typescript-eslint/no-unused-vars
-	): Promise<void> {
+		lookupWasPerformed: boolean = true,
+	): Promise<StoreResult> {
+		// If no lookup was performed, count this as a miss
+		// (task executed but we didn't check cache first)
+		if (!lookupWasPerformed) {
+			this.statistics.missCount++;
+			traceStats(
+				`Cache stats: ${this.statistics.hitCount} hits, ${this.statistics.missCount} misses (no lookup performed)`,
+			);
+		}
+
 		// Skip if cache writes are disabled
 		if (this.options.skipCacheWrite) {
+			const reason = "--skip-cache-write enabled";
 			traceStore(`Skipping cache write (disabled by --skip-cache-write)`);
-			console.warn(`${inputs.packageName}: cache write skipped (--skip-cache-write enabled)`);
-			return;
+			console.warn(`${inputs.packageName}: cache write skipped (${reason})`);
+			return { success: false, reason };
 		}
 
 		// Only cache successful executions
 		if (outputs.exitCode !== 0) {
+			const reason = `task failed (exit code ${outputs.exitCode})`;
 			traceStore(`Skipping cache write for failed task (exit code ${outputs.exitCode})`);
-			return;
+			return { success: false, reason };
 		}
 
 		const storeStartTime = Date.now();
@@ -359,8 +373,9 @@ export class SharedCacheManager {
 
 			// Check if entry already exists (avoid redundant work)
 			if (existsSync(entryPath)) {
+				const reason = "cache entry already exists";
 				traceStore(`Cache entry ${shortKey} already exists, skipping store`);
-				return;
+				return { success: false, reason };
 			}
 
 			// Hash all output files for integrity verification
@@ -441,6 +456,12 @@ export class SharedCacheManager {
 
 			// Persist statistics to disk
 			await this.persistStatistics();
+
+			return {
+				success: true,
+				filesStored: outputs.files.length,
+				bytesStored: entrySize,
+			};
 		} catch (error) {
 			// Graceful degradation: log error but don't fail the build
 			const errorMessage = error instanceof Error ? error.message : String(error);
@@ -449,17 +470,18 @@ export class SharedCacheManager {
 			// Provide more specific error messages
 			let reason = errorMessage;
 			if (errorCode === "ENOSPC") {
-				reason = "disk full - no space left on device";
+				reason = "disk full";
 			} else if (errorCode === "EACCES" || errorCode === "EPERM") {
-				reason = `permission denied accessing cache directory`;
+				reason = "permission denied";
 			} else if (errorCode === "ENOENT") {
-				reason = "cache directory not found or output file missing";
+				reason = "output file missing";
 			} else if (errorMessage.includes("EISDIR")) {
-				reason = "attempting to write to a directory instead of a file";
+				reason = "invalid file type";
 			}
 
 			traceError(`Failed to store cache entry: ${error}`);
-			console.warn(`${inputs.packageName}: warning: cache write failed - ${reason}`);
+			console.warn(`${inputs.packageName}: cache write failed - ${reason}`);
+			return { success: false, reason };
 		}
 	}
 

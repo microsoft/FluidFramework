@@ -333,6 +333,31 @@ export interface RestoreResult {
 }
 
 /**
+ * Result of storing a cache entry.
+ */
+export interface StoreResult {
+	/**
+	 * Whether storage was successful
+	 */
+	success: boolean;
+
+	/**
+	 * Reason why storage was skipped or failed (if not successful)
+	 */
+	reason?: string;
+
+	/**
+	 * Number of files stored (if successful)
+	 */
+	filesStored?: number;
+
+	/**
+	 * Total size of stored files in bytes (if successful)
+	 */
+	bytesStored?: number;
+}
+
+/**
  * Statistics about cache usage and performance.
  *
  * Used for monitoring cache effectiveness and debugging.

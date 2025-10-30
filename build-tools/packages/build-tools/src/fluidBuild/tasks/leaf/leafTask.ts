@@ -30,6 +30,7 @@ import {
 	gitignoreDefaultValue,
 } from "../../fluidBuildConfig";
 import { options } from "../../options";
+import type { CacheEntry } from "../../sharedCache/types.js";
 import { Task, type TaskExec } from "../task";
 
 const { log } = defaultLogger;
@@ -192,7 +193,9 @@ export abstract class LeafTask extends Task {
 		const startTime = Date.now();
 
 		// Check shared cache before executing
-		const cacheEntry = await this.checkSharedCache();
+		const { entry: cacheEntry, lookupPerformed: lookupWasPerformed } =
+			await this.checkSharedCache();
+
 		if (cacheEntry) {
 			// Cache hit! Restore outputs from cache
 			const restoreResult = await this.restoreFromCache(cacheEntry);
@@ -236,12 +239,14 @@ export abstract class LeafTask extends Task {
 
 		// Write to cache after successful execution
 		const executionTime = Date.now() - startTime;
-		const cacheWritten = await this.writeToCache(executionTime, ret);
+		const cacheWriteResult = await this.writeToCache(executionTime, ret, lookupWasPerformed);
 
 		return this.execDone(
 			startTime,
-			cacheWritten ? BuildResult.SuccessWithCacheWrite : BuildResult.Success,
+			cacheWriteResult.success ? BuildResult.SuccessWithCacheWrite : BuildResult.Success,
 			ret.worker,
+			undefined,
+			cacheWriteResult.reason,
 		);
 	}
 
@@ -323,6 +328,7 @@ export abstract class LeafTask extends Task {
 		status: BuildResult,
 		worker?: boolean,
 		originalExecutionTimeMs?: number,
+		cacheSkipReason?: string,
 	) {
 		if (!options.showExec) {
 			let statusCharacter: string = " ";
@@ -362,9 +368,13 @@ export abstract class LeafTask extends Task {
 				const timeSavedSeconds = (originalExecutionTimeMs / 1000 - elapsedTime).toFixed(3);
 				timeSavedMsg = ` (saved ${timeSavedSeconds}s)`;
 			}
+			let cacheSkipMsg = "";
+			if (cacheSkipReason) {
+				cacheSkipMsg = ` (cache not uploaded: ${cacheSkipReason})`;
+			}
 			const statusString = `[${taskNum}/${totalTask}] ${statusCharacter} ${
 				this.node.pkg.nameColored
-			}: ${workerMsg}${this.command} - ${elapsedTime.toFixed(3)}s${timeSavedMsg}${suffix}`;
+			}: ${workerMsg}${this.command} - ${elapsedTime.toFixed(3)}s${timeSavedMsg}${suffix}${cacheSkipMsg}`;
 			log(statusString);
 			if (status === BuildResult.Failed) {
 				this.node.context.failedTaskLines.push(statusString);
@@ -502,12 +512,15 @@ export abstract class LeafTask extends Task {
 	 * This method computes the cache key based on task inputs and queries
 	 * the shared cache to see if a matching entry exists.
 	 *
-	 * @returns A cache entry if found, undefined otherwise
+	 * @returns Object with cache entry (if found) and whether lookup was performed
 	 */
-	protected async checkSharedCache() {
+	protected async checkSharedCache(): Promise<{
+		entry: CacheEntry | undefined;
+		lookupPerformed: boolean;
+	}> {
 		const sharedCache = this.context.sharedCache;
 		if (!sharedCache) {
-			return undefined;
+			return { entry: undefined, lookupPerformed: false };
 		}
 
 		try {
@@ -515,7 +528,7 @@ export abstract class LeafTask extends Task {
 			const inputFiles = await this.getCacheInputFiles();
 			if (!inputFiles) {
 				// Task doesn't support cache input detection
-				return undefined;
+				return { entry: undefined, lookupPerformed: false };
 			}
 
 			// Filter out directories and hash all input files
@@ -554,14 +567,15 @@ export abstract class LeafTask extends Task {
 			};
 
 			// Look up in cache
-			return await sharedCache.lookup(cacheKeyInputs);
+			const entry = await sharedCache.lookup(cacheKeyInputs);
+			return { entry, lookupPerformed: true };
 		} catch (error) {
 			// Only warn on unexpected errors - the lookup itself logs expected cache misses at debug level
 			// We only get here on exceptions during input file hashing or other unexpected issues
 			console.warn(
 				`${this.node.pkg.nameColored}: warning: cache lookup failed due to unexpected error: ${error instanceof Error ? error.message : String(error)}`,
 			);
-			return undefined;
+			return { entry: undefined, lookupPerformed: false };
 		}
 	}
 
@@ -634,15 +648,17 @@ export abstract class LeafTask extends Task {
 	 *
 	 * @param executionTimeMs - Time taken to execute the task in milliseconds
 	 * @param execResult - Result from task execution (for stdout/stderr)
+	 * @param lookupWasPerformed - Whether a cache lookup was performed before execution
 	 */
 	protected async writeToCache(
 		executionTimeMs: number,
 		execResult?: TaskExecResult,
-	): Promise<boolean> {
+		lookupWasPerformed: boolean = true,
+	): Promise<{ success: boolean; reason?: string }> {
 		const sharedCache = this.context.sharedCache;
 		if (!sharedCache) {
 			// No warning - this is expected when cache is not configured
-			return false;
+			return { success: false };
 		}
 
 		try {
@@ -650,14 +666,14 @@ export abstract class LeafTask extends Task {
 			const inputFiles = await this.getCacheInputFiles();
 			if (!inputFiles) {
 				this.traceError("Cache write skipped: unable to determine input files");
-				return false;
+				return { success: false, reason: "unable to determine input files" };
 			}
 
 			// Get output files
 			const outputFiles = await this.getCacheOutputFiles();
 			if (!outputFiles) {
 				this.traceError("Cache write skipped: unable to determine output files");
-				return false;
+				return { success: false, reason: "unable to determine output files" };
 			}
 
 			// Always include the donefile as an output (if this task has one)
@@ -710,10 +726,11 @@ export abstract class LeafTask extends Task {
 
 			// Check if any outputs were produced
 			if (existingOutputFiles.length === 0) {
+				const reason = "no output files found";
 				console.warn(
-					`${this.node.pkg.nameColored}: warning: cache write skipped - no output files found (expected ${outputFiles.length} files)`,
+					`${this.node.pkg.nameColored}: cache write skipped - ${reason} (expected ${outputFiles.length} files)`,
 				);
-				return false;
+				return { success: false, reason };
 			}
 
 			const taskOutputs = {
@@ -727,15 +744,21 @@ export abstract class LeafTask extends Task {
 				executionTimeMs,
 			};
 
-			// Store in cache (the sharedCache.store method handles its own warnings)
-			await sharedCache.store(cacheKeyInputs, taskOutputs, this.node.pkg.directory);
-			return true;
+			// Store in cache
+			const storeResult = await sharedCache.store(
+				cacheKeyInputs,
+				taskOutputs,
+				this.node.pkg.directory,
+				lookupWasPerformed,
+			);
+			return storeResult;
 		} catch (error) {
 			// Only warn on unexpected errors during cache write preparation
+			const reason = error instanceof Error ? error.message : String(error);
 			console.warn(
-				`${this.node.pkg.nameColored}: warning: cache write failed due to unexpected error: ${error instanceof Error ? error.message : String(error)}`,
+				`${this.node.pkg.nameColored}: cache write failed due to unexpected error: ${reason}`,
 			);
-			return false;
+			return { success: false, reason };
 		}
 	}
 
