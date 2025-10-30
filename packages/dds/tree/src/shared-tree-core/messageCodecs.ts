@@ -129,12 +129,12 @@ export function makeMessageCodecs<TChangeset>(
 			case MessageFormatVersion.v3:
 			case MessageFormatVersion.v4:
 				return [
-					version,
+					version === MessageFormatVersion.undefined ? undefined : version,
 					makeV1ToV4CodecWithVersion(
 						changeCodec,
 						revisionTagCodec,
 						options,
-						version ?? MessageFormatVersion.v1,
+						version === MessageFormatVersion.undefined ? MessageFormatVersion.v1 : version,
 					),
 				];
 			case MessageFormatVersion.v5:
