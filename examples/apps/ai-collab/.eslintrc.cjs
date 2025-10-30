@@ -47,7 +47,10 @@ module.exports = {
 			files: ["src/actions/task.ts"],
 			rules: {
 				// This file runs on server side
-				"import-x/no-nodejs-modules": ["error", { allow: ["node:fs", "node:path", "node:url"] }],
+				"import-x/no-nodejs-modules": [
+					"error",
+					{ allow: ["node:fs", "node:path", "node:url"] },
+				],
 			},
 		},
 	],
