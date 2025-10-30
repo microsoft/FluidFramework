@@ -76,6 +76,7 @@ import type {
 import {
 	TreeCompressionStrategy,
 	cursorForJsonableTreeField,
+	emptyChunk,
 	defaultIncrementalEncodingPolicy,
 	fieldKinds,
 	jsonableTreeFromFieldCursor,
@@ -448,9 +449,9 @@ describe("compressedEncode", () => {
 			};
 			const referenceIds: ChunkReferenceId[] = [brand(1), brand(2)];
 			const mockIncrementalDecoder: IncrementalDecoder = {
-				getEncodedIncrementalChunk: (referenceId: ChunkReferenceId): EncodedFieldBatch => {
+				decodeIncrementalChunk: (referenceId, chunkDecoder) => {
 					assert(referenceIds.includes(referenceId));
-					return emptyBatch;
+					return emptyChunk;
 				},
 			};
 			const context = new EncoderContext(
@@ -488,7 +489,7 @@ describe("compressedEncode", () => {
 				(error: Error) =>
 					validateAssertionError(
 						error,
-						"incremental encoding must be enabled to use IncrementalFieldShape",
+						"incremental encoder must be defined to use incrementalFieldEncoder",
 					),
 			);
 		});
