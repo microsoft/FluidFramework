@@ -545,6 +545,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	public constructor(
 		runtime: IFluidDataStoreRuntime,
 		id: string,
+		// eslint-disable-next-line @typescript-eslint/prefer-readonly -- false positive; modified in changeWriteFormat()
 		private writeFormat: WriteFormat,
 		options: SharedTreeOptions<typeof writeFormat> = {}
 	) {
