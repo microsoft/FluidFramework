@@ -28,6 +28,9 @@ module.exports = {
 		"max-len": "off",
 		"no-bitwise": "off",
 		"no-case-declarations": "off",
+
+		// Disabled because the rule is crashing on this package - AB#51780
+		"@typescript-eslint/unbound-method": "off",
 	},
 	parserOptions: {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
