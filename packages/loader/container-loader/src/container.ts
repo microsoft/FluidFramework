@@ -2417,11 +2417,10 @@ export class Container
 		if (protocolHandlerShouldProcessSignal(message)) {
 			this.protocolHandler.processSignal(message);
 		} else {
-			// Use signalAudience to determine local
 			const local =
 				// Check against signal audience to detect current signals
 				// including very early signals before reaching "Connected".
-				message.clientId === this.signalAudience?.getSelf()?.clientId ||
+				message.clientId === this.signalAudience.getSelf()?.clientId ||
 				// and use "regular" audience to detect signals from past
 				// connection bouncing slowly back from service. This may never
 				// happen, but is kept as it was used historically as the only
