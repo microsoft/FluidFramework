@@ -1,0 +1,1001 @@
+{
+  "type": "tree",
+  "tree": {
+    "type": "tree",
+    "indexes": {
+      "type": "tree",
+      "entries": [
+        {
+          "type": "tree",
+          "EditManager": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "String": {
+                "type": "blob",
+                "content": {
+                  "trunk": [
+                    {
+                      "change": [
+                        {
+                          "schema": {
+                            "new": {
+                              "version": 1,
+                              "nodes": {
+                                "com.fluidframework.leaf.string": {
+                                  "leaf": 1
+                                },
+                                "test trees.Recursive Map": {
+                                  "map": {
+                                    "kind": "Optional",
+                                    "types": [
+                                      "test trees.Recursive Map",
+                                      "test trees.String Array"
+                                    ]
+                                  }
+                                },
+                                "test trees.String Array": {
+                                  "object": {
+                                    "": {
+                                      "kind": "Sequence",
+                                      "types": [
+                                        "com.fluidframework.leaf.string"
+                                      ]
+                                    }
+                                  }
+                                }
+                              },
+                              "root": {
+                                "kind": "Optional",
+                                "types": [
+                                  "test trees.Recursive Map",
+                                  "test trees.String Array"
+                                ]
+                              }
+                            },
+                            "old": {
+                              "version": 1,
+                              "nodes": {},
+                              "root": {
+                                "kind": "Forbidden",
+                                "types": []
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "data": {
+                            "maxId": 1,
+                            "changes": [
+                              {
+                                "fieldKey": "rootFieldKey",
+                                "fieldKind": "Optional",
+                                "change": {
+                                  "r": {
+                                    "e": true,
+                                    "d": 0,
+                                    "s": 1
+                                  }
+                                }
+                              }
+                            ],
+                            "builds": {
+                              "builds": [
+                                [
+                                  [
+                                    [
+                                      1,
+                                      0
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "trees": {
+                                "version": 1,
+                                "identifiers": [
+                                  "FieldA",
+                                  "FieldB",
+                                  "FieldC"
+                                ],
+                                "shapes": [
+                                  {
+                                    "c": {
+                                      "type": "test trees.String Array",
+                                      "value": false,
+                                      "fields": [
+                                        [
+                                          "",
+                                          2
+                                        ]
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "c": {
+                                      "type": "test trees.Recursive Map",
+                                      "value": false,
+                                      "extraFields": 4
+                                    }
+                                  },
+                                  {
+                                    "a": 3
+                                  },
+                                  {
+                                    "c": {
+                                      "type": "com.fluidframework.leaf.string",
+                                      "value": true
+                                    }
+                                  },
+                                  {
+                                    "a": 5
+                                  },
+                                  {
+                                    "d": 0
+                                  }
+                                ],
+                                "data": [
+                                  [
+                                    1,
+                                    [
+                                      0,
+                                      [
+                                        1,
+                                        [
+                                          0,
+                                          [
+                                            1,
+                                            [
+                                              0,
+                                              [
+                                                0,
+                                                [
+                                                  "1",
+                                                  "2",
+                                                  "3"
+                                                ]
+                                              ],
+                                              1,
+                                              [
+                                                0,
+                                                [
+                                                  "4",
+                                                  "5",
+                                                  "6"
+                                                ]
+                                              ],
+                                              2,
+                                              [
+                                                0,
+                                                [
+                                                  "7",
+                                                  "8",
+                                                  "9"
+                                                ]
+                                              ]
+                                            ]
+                                          ],
+                                          1,
+                                          [
+                                            1,
+                                            [
+                                              0,
+                                              [
+                                                0,
+                                                [
+                                                  "10",
+                                                  "11",
+                                                  "12"
+                                                ]
+                                              ],
+                                              1,
+                                              [
+                                                0,
+                                                [
+                                                  "13",
+                                                  "14",
+                                                  "15"
+                                                ]
+                                              ],
+                                              2,
+                                              [
+                                                0,
+                                                [
+                                                  "16",
+                                                  "17",
+                                                  "18"
+                                                ]
+                                              ]
+                                            ]
+                                          ],
+                                          2,
+                                          [
+                                            1,
+                                            [
+                                              0,
+                                              [
+                                                0,
+                                                [
+                                                  "19",
+                                                  "20",
+                                                  "21"
+                                                ]
+                                              ],
+                                              1,
+                                              [
+                                                0,
+                                                [
+                                                  "22",
+                                                  "23",
+                                                  "24"
+                                                ]
+                                              ],
+                                              2,
+                                              [
+                                                0,
+                                                [
+                                                  "25",
+                                                  "26",
+                                                  "27"
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      1,
+                                      [
+                                        1,
+                                        [
+                                          0,
+                                          [
+                                            1,
+                                            [
+                                              0,
+                                              [
+                                                0,
+                                                [
+                                                  "28",
+                                                  "29",
+                                                  "30"
+                                                ]
+                                              ],
+                                              1,
+                                              [
+                                                0,
+                                                [
+                                                  "31",
+                                                  "32",
+                                                  "33"
+                                                ]
+                                              ],
+                                              2,
+                                              [
+                                                0,
+                                                [
+                                                  "34",
+                                                  "35",
+                                                  "36"
+                                                ]
+                                              ]
+                                            ]
+                                          ],
+                                          1,
+                                          [
+                                            1,
+                                            [
+                                              0,
+                                              [
+                                                0,
+                                                [
+                                                  "37",
+                                                  "38",
+                                                  "39"
+                                                ]
+                                              ],
+                                              1,
+                                              [
+                                                0,
+                                                [
+                                                  "40",
+                                                  "41",
+                                                  "42"
+                                                ]
+                                              ],
+                                              2,
+                                              [
+                                                0,
+                                                [
+                                                  "43",
+                                                  "44",
+                                                  "45"
+                                                ]
+                                              ]
+                                            ]
+                                          ],
+                                          2,
+                                          [
+                                            1,
+                                            [
+                                              0,
+                                              [
+                                                0,
+                                                [
+                                                  "46",
+                                                  "47",
+                                                  "48"
+                                                ]
+                                              ],
+                                              1,
+                                              [
+                                                0,
+                                                [
+                                                  "49",
+                                                  "50",
+                                                  "51"
+                                                ]
+                                              ],
+                                              2,
+                                              [
+                                                0,
+                                                [
+                                                  "52",
+                                                  "53",
+                                                  "54"
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ],
+                                      2,
+                                      [
+                                        1,
+                                        [
+                                          0,
+                                          [
+                                            1,
+                                            [
+                                              0,
+                                              [
+                                                0,
+                                                [
+                                                  "55",
+                                                  "56",
+                                                  "57"
+                                                ]
+                                              ],
+                                              1,
+                                              [
+                                                0,
+                                                [
+                                                  "58",
+                                                  "59",
+                                                  "60"
+                                                ]
+                                              ],
+                                              2,
+                                              [
+                                                0,
+                                                [
+                                                  "61",
+                                                  "62",
+                                                  "63"
+                                                ]
+                                              ]
+                                            ]
+                                          ],
+                                          1,
+                                          [
+                                            1,
+                                            [
+                                              0,
+                                              [
+                                                0,
+                                                [
+                                                  "64",
+                                                  "65",
+                                                  "66"
+                                                ]
+                                              ],
+                                              1,
+                                              [
+                                                0,
+                                                [
+                                                  "67",
+                                                  "68",
+                                                  "69"
+                                                ]
+                                              ],
+                                              2,
+                                              [
+                                                0,
+                                                [
+                                                  "70",
+                                                  "71",
+                                                  "72"
+                                                ]
+                                              ]
+                                            ]
+                                          ],
+                                          2,
+                                          [
+                                            1,
+                                            [
+                                              0,
+                                              [
+                                                0,
+                                                [
+                                                  "73",
+                                                  "74",
+                                                  "75"
+                                                ]
+                                              ],
+                                              1,
+                                              [
+                                                0,
+                                                [
+                                                  "76",
+                                                  "77",
+                                                  "78"
+                                                ]
+                                              ],
+                                              2,
+                                              [
+                                                0,
+                                                [
+                                                  "79",
+                                                  "80",
+                                                  "81"
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "schema": {
+                            "new": {
+                              "version": 1,
+                              "nodes": {
+                                "com.fluidframework.leaf.string": {
+                                  "leaf": 1
+                                },
+                                "test trees.Recursive Map": {
+                                  "map": {
+                                    "kind": "Optional",
+                                    "types": [
+                                      "test trees.Recursive Map",
+                                      "test trees.String Array"
+                                    ]
+                                  }
+                                },
+                                "test trees.String Array": {
+                                  "object": {
+                                    "": {
+                                      "kind": "Sequence",
+                                      "types": [
+                                        "com.fluidframework.leaf.string"
+                                      ]
+                                    }
+                                  }
+                                }
+                              },
+                              "root": {
+                                "kind": "Value",
+                                "types": [
+                                  "test trees.Recursive Map",
+                                  "test trees.String Array"
+                                ]
+                              }
+                            },
+                            "old": {
+                              "version": 1,
+                              "nodes": {
+                                "com.fluidframework.leaf.string": {
+                                  "leaf": 1
+                                },
+                                "test trees.Recursive Map": {
+                                  "map": {
+                                    "kind": "Optional",
+                                    "types": [
+                                      "test trees.Recursive Map",
+                                      "test trees.String Array"
+                                    ]
+                                  }
+                                },
+                                "test trees.String Array": {
+                                  "object": {
+                                    "": {
+                                      "kind": "Sequence",
+                                      "types": [
+                                        "com.fluidframework.leaf.string"
+                                      ]
+                                    }
+                                  }
+                                }
+                              },
+                              "root": {
+                                "kind": "Optional",
+                                "types": [
+                                  "test trees.Recursive Map",
+                                  "test trees.String Array"
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      ],
+                      "revision": 3,
+                      "sequenceNumber": 2,
+                      "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
+                    }
+                  ],
+                  "branches": [],
+                  "version": 3
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        },
+        {
+          "type": "tree",
+          "Schema": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "SchemaString": {
+                "type": "blob",
+                "content": {
+                  "version": 1,
+                  "nodes": {
+                    "com.fluidframework.leaf.string": {
+                      "leaf": 1
+                    },
+                    "test trees.Recursive Map": {
+                      "map": {
+                        "kind": "Optional",
+                        "types": [
+                          "test trees.Recursive Map",
+                          "test trees.String Array"
+                        ]
+                      }
+                    },
+                    "test trees.String Array": {
+                      "object": {
+                        "": {
+                          "kind": "Sequence",
+                          "types": [
+                            "com.fluidframework.leaf.string"
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "root": {
+                    "kind": "Value",
+                    "types": [
+                      "test trees.Recursive Map",
+                      "test trees.String Array"
+                    ]
+                  }
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        },
+        {
+          "type": "tree",
+          "Forest": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "ForestTree": {
+                "type": "blob",
+                "content": {
+                  "keys": [
+                    "rootFieldKey"
+                  ],
+                  "fields": {
+                    "version": 1,
+                    "identifiers": [
+                      "FieldA",
+                      "FieldB",
+                      "FieldC"
+                    ],
+                    "shapes": [
+                      {
+                        "c": {
+                          "type": "test trees.String Array",
+                          "value": false,
+                          "fields": [
+                            [
+                              "",
+                              2
+                            ]
+                          ]
+                        }
+                      },
+                      {
+                        "c": {
+                          "type": "test trees.Recursive Map",
+                          "value": false,
+                          "extraFields": 4
+                        }
+                      },
+                      {
+                        "a": 3
+                      },
+                      {
+                        "c": {
+                          "type": "com.fluidframework.leaf.string",
+                          "value": true
+                        }
+                      },
+                      {
+                        "a": 5
+                      },
+                      {
+                        "d": 0
+                      }
+                    ],
+                    "data": [
+                      [
+                        1,
+                        [
+                          0,
+                          [
+                            1,
+                            [
+                              0,
+                              [
+                                1,
+                                [
+                                  0,
+                                  [
+                                    0,
+                                    [
+                                      "1",
+                                      "2",
+                                      "3"
+                                    ]
+                                  ],
+                                  1,
+                                  [
+                                    0,
+                                    [
+                                      "4",
+                                      "5",
+                                      "6"
+                                    ]
+                                  ],
+                                  2,
+                                  [
+                                    0,
+                                    [
+                                      "7",
+                                      "8",
+                                      "9"
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              1,
+                              [
+                                1,
+                                [
+                                  0,
+                                  [
+                                    0,
+                                    [
+                                      "10",
+                                      "11",
+                                      "12"
+                                    ]
+                                  ],
+                                  1,
+                                  [
+                                    0,
+                                    [
+                                      "13",
+                                      "14",
+                                      "15"
+                                    ]
+                                  ],
+                                  2,
+                                  [
+                                    0,
+                                    [
+                                      "16",
+                                      "17",
+                                      "18"
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              2,
+                              [
+                                1,
+                                [
+                                  0,
+                                  [
+                                    0,
+                                    [
+                                      "19",
+                                      "20",
+                                      "21"
+                                    ]
+                                  ],
+                                  1,
+                                  [
+                                    0,
+                                    [
+                                      "22",
+                                      "23",
+                                      "24"
+                                    ]
+                                  ],
+                                  2,
+                                  [
+                                    0,
+                                    [
+                                      "25",
+                                      "26",
+                                      "27"
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          1,
+                          [
+                            1,
+                            [
+                              0,
+                              [
+                                1,
+                                [
+                                  0,
+                                  [
+                                    0,
+                                    [
+                                      "28",
+                                      "29",
+                                      "30"
+                                    ]
+                                  ],
+                                  1,
+                                  [
+                                    0,
+                                    [
+                                      "31",
+                                      "32",
+                                      "33"
+                                    ]
+                                  ],
+                                  2,
+                                  [
+                                    0,
+                                    [
+                                      "34",
+                                      "35",
+                                      "36"
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              1,
+                              [
+                                1,
+                                [
+                                  0,
+                                  [
+                                    0,
+                                    [
+                                      "37",
+                                      "38",
+                                      "39"
+                                    ]
+                                  ],
+                                  1,
+                                  [
+                                    0,
+                                    [
+                                      "40",
+                                      "41",
+                                      "42"
+                                    ]
+                                  ],
+                                  2,
+                                  [
+                                    0,
+                                    [
+                                      "43",
+                                      "44",
+                                      "45"
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              2,
+                              [
+                                1,
+                                [
+                                  0,
+                                  [
+                                    0,
+                                    [
+                                      "46",
+                                      "47",
+                                      "48"
+                                    ]
+                                  ],
+                                  1,
+                                  [
+                                    0,
+                                    [
+                                      "49",
+                                      "50",
+                                      "51"
+                                    ]
+                                  ],
+                                  2,
+                                  [
+                                    0,
+                                    [
+                                      "52",
+                                      "53",
+                                      "54"
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ],
+                          2,
+                          [
+                            1,
+                            [
+                              0,
+                              [
+                                1,
+                                [
+                                  0,
+                                  [
+                                    0,
+                                    [
+                                      "55",
+                                      "56",
+                                      "57"
+                                    ]
+                                  ],
+                                  1,
+                                  [
+                                    0,
+                                    [
+                                      "58",
+                                      "59",
+                                      "60"
+                                    ]
+                                  ],
+                                  2,
+                                  [
+                                    0,
+                                    [
+                                      "61",
+                                      "62",
+                                      "63"
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              1,
+                              [
+                                1,
+                                [
+                                  0,
+                                  [
+                                    0,
+                                    [
+                                      "64",
+                                      "65",
+                                      "66"
+                                    ]
+                                  ],
+                                  1,
+                                  [
+                                    0,
+                                    [
+                                      "67",
+                                      "68",
+                                      "69"
+                                    ]
+                                  ],
+                                  2,
+                                  [
+                                    0,
+                                    [
+                                      "70",
+                                      "71",
+                                      "72"
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              2,
+                              [
+                                1,
+                                [
+                                  0,
+                                  [
+                                    0,
+                                    [
+                                      "73",
+                                      "74",
+                                      "75"
+                                    ]
+                                  ],
+                                  1,
+                                  [
+                                    0,
+                                    [
+                                      "76",
+                                      "77",
+                                      "78"
+                                    ]
+                                  ],
+                                  2,
+                                  [
+                                    0,
+                                    [
+                                      "79",
+                                      "80",
+                                      "81"
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  },
+                  "version": 1
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        },
+        {
+          "type": "tree",
+          "DetachedFieldIndex": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "DetachedFieldIndexBlob": {
+                "type": "blob",
+                "content": {
+                  "version": 1,
+                  "data": [],
+                  "maxId": 0
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
