@@ -75,7 +75,7 @@ function makeSchemaChangeCodecV1(
 	options: CodecWriteOptions,
 	schemaWriteVersion: SchemaVersion,
 ): IJsonCodec<SchemaChange, EncodedSchemaChange> {
-	const schemaCodec = makeSchemaCodec(options);
+	const schemaCodec = makeSchemaCodec(options, schemaWriteVersion);
 	const schemaChangeCodec: IJsonCodec<SchemaChange, EncodedSchemaChange> = {
 		encode: (schemaChange) => {
 			assert(

@@ -103,6 +103,7 @@ import {
 	type FieldKindIdentifier,
 	type TreeNodeSchemaIdentifier,
 	type TreeFieldStoredSchema,
+	SchemaVersion,
 } from "../core/index.js";
 import { FormatValidatorBasic } from "../external-utilities/index.js";
 import {
@@ -656,10 +657,13 @@ export function validateTree(tree: ITreeCheckout, expected: JsonableTree[]): voi
 // If the newer format is a superset of the previous format, it can be safely used for comparisons. This is the
 // case with schema format v2.
 // TODO: Using currentVersion here means that it will choose schema format v1 instead of v2.
-const schemaCodec = makeSchemaCodec({
-	jsonValidator: FormatValidatorBasic,
-	minVersionForCollab: currentVersion,
-});
+const schemaCodec = makeSchemaCodec(
+	{
+		jsonValidator: FormatValidatorBasic,
+		minVersionForCollab: currentVersion,
+	},
+	SchemaVersion.v2,
+);
 
 export function checkRemovedRootsAreSynchronized(trees: readonly ITreeCheckout[]): void {
 	if (trees.length > 1) {

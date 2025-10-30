@@ -27,6 +27,7 @@ export {
 	type SummaryElementParser,
 	type SummaryElementStringifier,
 	type ClonableSchemaAndPolicy,
+	type SharedTreCoreOptionsInternal,
 } from "./sharedTreeCore.js";
 
 export type { ResubmitMachine } from "./resubmitMachine.js";
@@ -42,8 +43,10 @@ export {
 	makeEditManagerCodec,
 	getCodecTreeForEditManagerFormatWithChange,
 	type EditManagerFormatVersion,
+	type EditManagerCodecOptions,
 	editManagerFormatVersions,
 	clientVersionToEditManagerFormatVersion,
+	editManagerFormatVersionSelectorForSharedBranches,
 } from "./editManagerCodecs.js";
 export { EditManagerSummarizer } from "./editManagerSummarizer.js";
 export {
@@ -65,4 +68,5 @@ export {
 	messageFormatVersions,
 	getCodecTreeForMessageFormatWithChange,
 	clientVersionToMessageFormatVersion,
+	messageFormatVersionSelectorForSharedBranches,
 } from "./messageCodecs.js";

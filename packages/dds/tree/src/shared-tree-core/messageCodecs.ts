@@ -41,9 +41,32 @@ export interface MessageEncodingContext {
  */
 export function clientVersionToMessageFormatVersion(
 	clientVersion: MinimumVersionForCollab,
+	writeVersionOverride?: MessageFormatVersion,
 ): MessageFormatVersion {
-	// Currently, message codec only writes in version 3.
-	return brand(MessageVersion.v3);
+	// Currently, version 3 is the only approved format for writing in production.
+	return writeVersionOverride ?? brand(MessageVersion.v3);
+}
+
+export interface MessageCodecOptions {
+	readonly messageFormatSelector?: (
+		minVersionForCollab: MinimumVersionForCollab,
+	) => MessageFormatVersion;
+}
+
+function messageFormatVersionFromOptions(
+	options: MessageCodecOptions & CodecWriteOptions,
+): MessageFormatVersion {
+	const selector = options.messageFormatSelector ?? clientVersionToMessageFormatVersion;
+	return selector(options.minVersionForCollab);
+}
+
+/**
+ * Returns the version that should be used for testing shared branches.
+ */
+export function messageFormatVersionSelectorForSharedBranches(
+	clientVersion: MinimumVersionForCollab,
+): MessageFormatVersion {
+	return brand(MessageVersion.v5);
 }
 
 export function makeMessageCodec<TChangeset>(
@@ -55,7 +78,7 @@ export function makeMessageCodec<TChangeset>(
 		EncodedRevisionTag,
 		ChangeEncodingContext
 	>,
-	options: CodecWriteOptions,
+	options: MessageCodecOptions & CodecWriteOptions,
 ): IJsonCodec<
 	DecodedMessage<TChangeset>,
 	JsonCompatibleReadOnly,
@@ -68,10 +91,8 @@ export function makeMessageCodec<TChangeset>(
 		revisionTagCodec,
 		options,
 	);
-	return makeVersionDispatchingCodec(family, {
-		...options,
-		writeVersion: clientVersionToMessageFormatVersion(options.minVersionForCollab),
-	});
+	const writeVersion = messageFormatVersionFromOptions(options);
+	return makeVersionDispatchingCodec(family, { ...options, writeVersion });
 }
 
 /**
@@ -101,14 +122,21 @@ export function makeMessageCodecs<TChangeset>(
 			dependentChangeFormatVersion.lookup(version),
 		).json;
 		switch (version) {
-			case undefined:
+			case MessageVersion.v0:
 			case MessageVersion.v1:
 			case MessageVersion.v2:
 			case MessageVersion.v3:
 			case MessageVersion.v4:
 				return [
-					version,
-					makeV1ToV4CodecWithVersion(changeCodec, revisionTagCodec, options, version ?? 1),
+					// The v0 message format version is equivalent to v1 except that the version field is omitted.
+					version === MessageVersion.v0 ? undefined : version,
+					makeV1ToV4CodecWithVersion(
+						changeCodec,
+						revisionTagCodec,
+						options,
+						// The v0 message format version is equivalent to v1 except that the version field is omitted.
+						version === MessageVersion.v0 ? undefined : version,
+					),
 				];
 			case MessageVersion.v5:
 				return [
@@ -126,15 +154,46 @@ export function makeMessageCodecs<TChangeset>(
  * The format version for the message.
  */
 export enum MessageVersion {
+	/**
+	 * NOTE: this is written as `undefined` rather than `0` in the wire format.
+	 * Introduced and retired prior to 2.0.
+	 * Reading capability is currently maintained for backwards compatibility, but it could be removed in the future.
+	 * Writing capability need not be maintained.
+	 */
+	v0 = 0,
+	/**
+	 * Introduced and retired prior to 2.0.
+	 * Reading capability is currently maintained for backwards compatibility, but it could be removed in the future.
+	 * Writing capability need not be maintained.
+	 */
 	v1 = 1,
+	/**
+	 * Introduced and retired prior to 2.0.
+	 * Reading capability is currently maintained for backwards compatibility, but it could be removed in the future.
+	 * Writing capability need not be maintained.
+	 */
 	v2 = 2,
+	/**
+	 * Introduced prior to 2.0 and used beyond.
+	 * Reading capability is currently maintained for backwards compatibility, but it could be removed in the future.
+	 * Writing capability needs to be maintained.
+	 */
 	v3 = 3,
+	/**
+	 * Was inadvertently released in 2.43.0 (through usages of configuredSharedTree) and remained available as a write format until 2.71.
+	 * Reading capability must be maintained for backwards compatibility.
+	 * Writing capability need not be maintained.
+	 */
 	v4 = 4,
+	/**
+	 * Not yet released.
+	 * Only used for testing shared branches.
+	 */
 	v5 = 5,
 }
 export type MessageFormatVersion = Brand<undefined | MessageVersion, "MessageFormatVersion">;
 export const messageFormatVersions: ReadonlySet<MessageFormatVersion> = new Set([
-	brand(undefined),
+	brand(MessageVersion.v0),
 	brand(MessageVersion.v1),
 	brand(MessageVersion.v2),
 	brand(MessageVersion.v3),

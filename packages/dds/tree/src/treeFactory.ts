@@ -26,8 +26,12 @@ import {
 } from "./shared-tree/index.js";
 import { SharedTreeFactoryType, SharedTreeAttributes } from "./sharedTreeAttributes.js";
 import type { ITree } from "./simple-tree/index.js";
-import { Breakable } from "./util/index.js";
+import { Breakable, copyProperty } from "./util/index.js";
 import { FluidClientVersion } from "./codec/index.js";
+import {
+	editManagerFormatVersionSelectorForSharedBranches,
+	messageFormatVersionSelectorForSharedBranches,
+} from "./shared-tree-core/index.js";
 
 /**
  * {@link ITreePrivate} extended with ISharedObject.
@@ -170,12 +174,34 @@ export function configuredSharedTreeBetaLegacy(
 export function configuredSharedTree(
 	options: SharedTreeOptions,
 ): ISharedObjectKind<ITree> & SharedObjectKind<ITree> {
+	const internalOptions = resolveInternalOptions(options);
 	const sharedObjectOptions: SharedObjectOptions<ITree> = {
 		type: SharedTreeFactoryType,
 		attributes: SharedTreeAttributes,
 		telemetryContextPrefix: "fluid_sharedTree_",
-		factory: treeKernelFactory(options),
+		factory: treeKernelFactory(internalOptions),
 	};
 
 	return makeSharedObjectKind<ITree>(sharedObjectOptions);
 }
+
+export function resolveInternalOptions(options: SharedTreeOptions): SharedTreeOptionsInternal {
+	const internal: SharedTreeOptionsInternal = {
+		...resolveSharedBranchesOptions(options.enableSharedBranches),
+	};
+	copyProperty(options, "forest", internal);
+	copyProperty(options, "jsonValidator", internal);
+	copyProperty(options, "minVersionForCollab", internal);
+	copyProperty(options, "treeEncodeType", internal);
+	return internal;
+}
+
+function resolveSharedBranchesOptions(
+	enableSharedBranches: boolean | undefined,
+): SharedTreeOptionsInternal {
+	return enableSharedBranches === true ? sharedBranchesOptions : {};
+}
+const sharedBranchesOptions: SharedTreeOptionsInternal = {
+	messageFormatSelector: messageFormatVersionSelectorForSharedBranches,
+	editManagerFormatSelector: editManagerFormatVersionSelectorForSharedBranches,
+};

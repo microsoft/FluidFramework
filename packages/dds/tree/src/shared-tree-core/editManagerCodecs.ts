@@ -42,9 +42,33 @@ export interface EditManagerEncodingContext {
  */
 export function clientVersionToEditManagerFormatVersion(
 	clientVersion: MinimumVersionForCollab,
+	writeVersionOverride?: EditManagerFormatVersion,
 ): EditManagerFormatVersion {
-	// Currently, edit manager codec only writes in version 3.
-	return brand(EditManagerVersion.v3);
+	// Currently, version 3 is the only approved format for writing in production.
+	return writeVersionOverride ?? brand(EditManagerVersion.v3);
+}
+
+/**
+ * Returns the version that should be used for testing shared branches.
+ */
+export function editManagerFormatVersionSelectorForSharedBranches(
+	clientVersion: MinimumVersionForCollab,
+): EditManagerFormatVersion {
+	return brand(EditManagerVersion.v5);
+}
+
+export interface EditManagerCodecOptions {
+	readonly editManagerFormatSelector?: (
+		minVersionForCollab: MinimumVersionForCollab,
+	) => EditManagerFormatVersion;
+}
+
+function editManagerFormatVersionFromOptions(
+	options: EditManagerCodecOptions & CodecWriteOptions,
+): EditManagerFormatVersion {
+	const selector =
+		options.editManagerFormatSelector ?? clientVersionToEditManagerFormatVersion;
+	return selector(options.minVersionForCollab);
 }
 
 export function makeEditManagerCodec<TChangeset>(
@@ -56,7 +80,7 @@ export function makeEditManagerCodec<TChangeset>(
 		EncodedRevisionTag,
 		ChangeEncodingContext
 	>,
-	options: CodecWriteOptions,
+	options: EditManagerCodecOptions & CodecWriteOptions,
 ): IJsonCodec<
 	SummaryData<TChangeset>,
 	JsonCompatibleReadOnly,
@@ -69,10 +93,8 @@ export function makeEditManagerCodec<TChangeset>(
 		revisionTagCodec,
 		options,
 	);
-	return makeVersionDispatchingCodec(family, {
-		...options,
-		writeVersion: clientVersionToEditManagerFormatVersion(options.minVersionForCollab),
-	});
+	const writeVersion = editManagerFormatVersionFromOptions(options);
+	return makeVersionDispatchingCodec(family, { ...options, writeVersion });
 }
 
 export function makeEditManagerCodecs<TChangeset>(
@@ -121,10 +143,34 @@ export function makeEditManagerCodecs<TChangeset>(
  * The format version for the EditManager.
  */
 export enum EditManagerVersion {
+	/**
+	 * Introduced and retired prior to 2.0.
+	 * Reading capability is currently maintained for backwards compatibility, but it could be removed in the future.
+	 * Writing capability need not be maintained.
+	 */
 	v1 = 1,
+	/**
+	 * Introduced and retired prior to 2.0.
+	 * Reading capability is currently maintained for backwards compatibility, but it could be removed in the future.
+	 * Writing capability need not be maintained.
+	 */
 	v2 = 2,
+	/**
+	 * Introduced prior to 2.0 and used beyond.
+	 * Reading capability is currently maintained for backwards compatibility, but it could be removed in the future.
+	 * Writing capability needs to be maintained.
+	 */
 	v3 = 3,
+	/**
+	 * Was inadvertently released in 2.43.0 (through usages of configuredSharedTree) and remained available as a write format until 2.71.
+	 * Reading capability must be maintained for backwards compatibility.
+	 * Writing capability need not be maintained.
+	 */
 	v4 = 4,
+	/**
+	 * Not yet released.
+	 * Only used for testing shared branches.
+	 */
 	v5 = 5,
 }
 export type EditManagerFormatVersion = Brand<EditManagerVersion, "EditManagerFormatVersion">;

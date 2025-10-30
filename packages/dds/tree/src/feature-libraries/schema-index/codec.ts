@@ -53,16 +53,20 @@ export function getCodecTreeForSchemaFormat(
 /**
  * Create a schema codec.
  * @param options - Specifies common codec options, including `minVersionForCollab` and which `validator` to use.
- * @param writeVersion - The schema write version.
+ * @param writeVersionOverride - The schema version to write. If not provided, the version will be derived from `minVersionForCollab`.
  * @returns The composed codec.
  *
  * @privateRemarks We should consider using the Shared Tree format version instead as it may be more valuable for application authors than the schema version.
  */
-export function makeSchemaCodec(options: CodecWriteOptions): IJsonCodec<TreeStoredSchema> {
+export function makeSchemaCodec(
+	options: CodecWriteOptions,
+	writeVersionOverride?: SchemaVersion,
+): IJsonCodec<TreeStoredSchema> {
 	const family = makeSchemaCodecs(options);
 	return makeVersionDispatchingCodec(family, {
 		...options,
-		writeVersion: clientVersionToSchemaVersion(options.minVersionForCollab),
+		writeVersion:
+			writeVersionOverride ?? clientVersionToSchemaVersion(options.minVersionForCollab),
 	});
 }
 
