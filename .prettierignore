@@ -24,6 +24,7 @@ build-tools/packages/build-cli/README.md
 build-tools/packages/version-tools/README.md
 **/src/**/test/types/*.generated.ts
 **/src/packageVersion.ts
+**/src/layerGenerationState.ts
 **/build-tools/CHANGELOG.md
 **/*.done.build.log
 
