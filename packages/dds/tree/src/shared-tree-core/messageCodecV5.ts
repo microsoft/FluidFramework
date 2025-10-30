@@ -12,7 +12,7 @@ import type {
 	EncodedRevisionTag,
 	RevisionTag,
 } from "../core/index.js";
-import type { JsonCompatibleReadOnly } from "../util/index.js";
+import { brand, type JsonCompatibleReadOnly } from "../util/index.js";
 
 import { Message } from "./messageFormatV5.js";
 import type { DecodedMessage } from "./messageTypes.js";
@@ -68,14 +68,14 @@ export function makeV5CodecWithVersion<TChangeset>(
 							originatorId: message.sessionId,
 							changeset: changeCodec.encode(message.commit.change, changeContext),
 							branchId: encodeBranchId(context.idCompressor, message.branchId),
-							version: MessageFormatVersion.v5,
+							version: brand(MessageFormatVersion.v5),
 						} satisfies Message & JsonCompatibleReadOnly;
 					}
 					case "branch": {
 						return {
 							originatorId: message.sessionId,
 							branchId: encodeBranchId(context.idCompressor, message.branchId),
-							version: MessageFormatVersion.v5,
+							version: brand(MessageFormatVersion.v5),
 						} satisfies Message & JsonCompatibleReadOnly;
 					}
 					default:

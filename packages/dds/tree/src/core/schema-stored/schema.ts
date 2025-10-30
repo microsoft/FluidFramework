@@ -39,7 +39,7 @@ export const SchemaFormatVersion = {
 	 * Adds persisted metadata to the node schema and field schema.
 	 */
 	v2: 2,
-};
+} as const;
 export type SchemaFormatVersion = Brand<
 	(typeof SchemaFormatVersion)[keyof typeof SchemaFormatVersion],
 	"SchemaFormatVersion"

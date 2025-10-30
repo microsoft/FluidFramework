@@ -15,7 +15,7 @@ export const MessageFormatVersion = {
 	v3: 3,
 	v4: 4,
 	v5: 5,
-};
+} as const;
 export type MessageFormatVersion = Brand<
 	(typeof MessageFormatVersion)[keyof typeof MessageFormatVersion],
 	"MessageFormatVersion"

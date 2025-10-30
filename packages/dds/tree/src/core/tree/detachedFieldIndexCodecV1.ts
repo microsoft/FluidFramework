@@ -18,6 +18,7 @@ import type { FormatV1 } from "./detachedFieldIndexFormatV1.js";
 import type { DetachedFieldSummaryData, Major } from "./detachedFieldIndexTypes.js";
 import { makeDetachedFieldIndexCodecFromMajorCodec } from "./detachedFieldIndexCodecCommon.js";
 import { DetachedFieldIndexFormatVersion } from "./detachedFieldIndexFormatCommon.js";
+import { brand } from "../../util/index.js";
 
 class MajorCodec implements IJsonCodec<Major, EncodedRevisionTag> {
 	public constructor(
@@ -75,7 +76,7 @@ export function makeDetachedNodeToFieldCodecV1(
 	return makeDetachedFieldIndexCodecFromMajorCodec(
 		options,
 		majorCodec,
-		DetachedFieldIndexFormatVersion.v1,
+		brand(DetachedFieldIndexFormatVersion.v1),
 		RevisionTagSchema,
 	);
 }

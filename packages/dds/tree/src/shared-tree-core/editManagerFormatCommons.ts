@@ -129,7 +129,7 @@ export const EditManagerFormatVersion = {
 	v3: 3,
 	v4: 4,
 	v5: 5,
-};
+} as const;
 export type EditManagerFormatVersion = Brand<
 	(typeof EditManagerFormatVersion)[keyof typeof EditManagerFormatVersion],
 	"EditManagerFormatVersion"

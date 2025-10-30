@@ -15,7 +15,7 @@ import type { ForestRootId } from "./detachedFieldIndexTypes.js";
 export const DetachedFieldIndexFormatVersion = {
 	v1: 1,
 	v2: 2,
-};
+} as const;
 export type DetachedFieldIndexFormatVersion = Brand<
 	(typeof DetachedFieldIndexFormatVersion)[keyof typeof DetachedFieldIndexFormatVersion],
 	"DetachedFieldIndexFormatVersion"

@@ -9,6 +9,7 @@ import { type TSchema, Type } from "@sinclair/typebox";
 import { type EncodedRevisionTag, RevisionTagSchema, SessionIdSchema } from "../core/index.js";
 import type { JsonCompatibleReadOnly } from "../util/index.js";
 import type { EncodedBranchId } from "./branch.js";
+import type { MessageFormatVersion } from "./messageFormat.js";
 
 /**
  * The format of messages that SharedTree sends and receives.
@@ -35,7 +36,7 @@ export interface Message {
 	 * This was not set historically and was added before making any breaking changes to the format.
 	 * For that reason, absence of a 'version' field is synonymous with version 1.
 	 */
-	readonly version?: number;
+	readonly version?: MessageFormatVersion;
 }
 
 // Return type is intentionally derived.
