@@ -1,0 +1,24 @@
+{
+  "root": {
+    "kind": 1,
+    "simpleAllowedTypes": {
+      "test.array": {
+        "isStaged": false
+      }
+    }
+  },
+  "definitions": {
+    "com.fluidframework.leaf.string": {
+      "kind": 3,
+      "leafKind": 1
+    },
+    "test.array": {
+      "kind": 1,
+      "simpleAllowedTypes": {
+        "com.fluidframework.leaf.string": {
+          "isStaged": false
+        }
+      }
+    }
+  }
+}

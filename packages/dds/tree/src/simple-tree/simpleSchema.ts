@@ -58,6 +58,13 @@ export interface SimpleObjectNodeSchema<out TCustomMetadata = unknown>
 	 * especially if/when TreeNodeSchema for objects provide more maps.
 	 */
 	readonly fields: ReadonlyMap<string, SimpleObjectFieldSchema>;
+
+	/**
+	 * Whether the object node allows unknown optional fields.
+	 *
+	 * @remarks Used for compatibility checks (see {@link toViewCompatibilityTreeSchema}). Not available in all cases.
+	 */
+	readonly allowUnknownOptionalFields?: boolean;
 }
 
 /**
@@ -163,18 +170,15 @@ export type SimpleNodeSchema =
 	| SimpleRecordNodeSchema;
 
 /**
- * Information about allowed types.
+ * Information about allowed types under a field.
  *
  * @alpha
  * @sealed
  */
 export interface SimpleAllowedTypeAttributes {
 	/**
-	 * True if this schema is included as a {@link SchemaStaticsAlpha.staged | staged} schema upgrade,
-	 * allowing the view schema be compatible with stored schema with (post upgrade) or without it (pre-upgrade).
-	 * New documents and schema upgrades will omit any staged schema.
-	 *
-	 * Undefined if derived from a stored schema.
+	 * True if there is an associated schema upgrade that makes this type read-only.
+	 * Undefined if derived from a stored schema, which has no concept of staged allowed type upgrades.
 	 */
 	readonly isStaged: boolean | undefined;
 }
@@ -196,7 +200,7 @@ export interface SimpleFieldSchema {
 	readonly kind: FieldKind;
 
 	/**
-	 * Information about the allowed types under this field.
+	 * The types allowed under the field.
 	 *
 	 * @remarks Refers to the types by identifier.
 	 * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.

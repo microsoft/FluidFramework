@@ -1055,6 +1055,7 @@ export interface SimpleObjectFieldSchema extends SimpleFieldSchema {
 
 // @alpha @sealed
 export interface SimpleObjectNodeSchema<out TCustomMetadata = unknown> extends SimpleNodeSchemaBaseAlpha<NodeKind.Object, TCustomMetadata> {
+    readonly allowUnknownOptionalFields?: boolean;
     readonly fields: ReadonlyMap<string, SimpleObjectFieldSchema>;
 }
 
@@ -1310,6 +1311,9 @@ export namespace TableSchema {
         readonly row: TRow;
     }): System_TableSchema.TableSchemaBase<TScope, TCell, TColumn, TRow>;
 }
+
+// @alpha
+export function toViewCompatibilityTreeSchema(schema: TreeSchema, copySchemaObjects: boolean): SimpleTreeSchema;
 
 // @alpha
 export function trackDirtyNodes(view: TreeViewAlpha<ImplicitFieldSchema>, dirty: DirtyTreeMap): () => void;
