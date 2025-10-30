@@ -14,7 +14,7 @@ import {
 	loadContainerRuntime,
 	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
-// eslint-disable-next-line import/no-deprecated
+// eslint-disable-next-line import-x/no-deprecated
 import type { IContainerRuntimeWithResolveHandle_Deprecated } from "@fluidframework/container-runtime-definitions/internal";
 import type {
 	IFluidHandle,
@@ -207,7 +207,7 @@ export class DefaultStressDataObject extends StressDataObject {
 	private readonly _locallyCreatedObjects: ContainerObjects[] = [];
 	public async getContainerObjects(): Promise<readonly Readonly<ContainerObjects>[]> {
 		const containerObjects: Readonly<ContainerObjects>[] = [...this._locallyCreatedObjects];
-		const containerRuntime = // eslint-disable-next-line import/no-deprecated
+		const containerRuntime = // eslint-disable-next-line import-x/no-deprecated
 			this.context.containerRuntime as IContainerRuntimeWithResolveHandle_Deprecated;
 		for (const [url, entry] of this.containerObjectMap as any as [
 			string,

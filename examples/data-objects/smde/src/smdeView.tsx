@@ -16,7 +16,7 @@ import SimpleMDE from "simplemde";
 
 import { SmdeDataObject } from "./smde.js";
 
-// eslint-disable-next-line import-x/no-internal-modules, import/no-unassigned-import
+// eslint-disable-next-line import-x/no-internal-modules, import-x/no-unassigned-import
 import "simplemde/dist/simplemde.min.css";
 
 class SmdeView {

@@ -49,7 +49,7 @@ module.exports = {
 			rules: {
 				// Some deprecated APIs are permissible in tests; use `warn` to keep them visible
 				"import/no-deprecated": "warn",
-				"import/no-internal-modules": [
+				"import-x/no-internal-modules": [
 					"error",
 					{
 						allow: importInternalModulesAllowedForTest,

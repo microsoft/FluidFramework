@@ -54,12 +54,12 @@ export type {
 	ReplaceIEventThisPlaceHolder,
 	FluidObject, // Linked in doc comment
 	FluidObjectProviderKeys, // Used by FluidObject
-	/* eslint-disable import/export -- The event APIs are known to conflict, and this is intended as the exports via `@fluidframework/core-interfaces` are preferred over the deprecated ones from `@fluidframework/tree`. */
+	/* eslint-disable import-x/export -- The event APIs are known to conflict, and this is intended as the exports via `@fluidframework/core-interfaces` are preferred over the deprecated ones from `@fluidframework/tree`. */
 	Listeners,
 	IsListener,
 	Listenable,
 	Off,
-	/* eslint-enable import/export */
+	/* eslint-enable import-x/export */
 } from "@fluidframework/core-interfaces";
 export type { ErasedBaseType } from "@fluidframework/core-interfaces/internal";
 

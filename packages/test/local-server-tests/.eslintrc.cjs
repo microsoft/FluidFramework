@@ -10,7 +10,7 @@ module.exports = {
 	],
 	rules: {
 		"@typescript-eslint/strict-boolean-expressions": "off", // requires strictNullChecks=true in tsconfig
-		"import/no-nodejs-modules": "off",
+		"import-x/no-nodejs-modules": "off",
 		"import/no-extraneous-dependencies": [
 			"error",
 			{

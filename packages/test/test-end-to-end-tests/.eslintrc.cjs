@@ -17,7 +17,7 @@ module.exports = {
 		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 
 		// This library is used in the browser, so we don't want dependencies on most node libraries.
-		"import/no-nodejs-modules": ["error"],
+		"import-x/no-nodejs-modules": ["error"],
 		"@typescript-eslint/no-restricted-imports": [
 			"error",
 			{
@@ -66,7 +66,7 @@ module.exports = {
 			files: ["*.spec.ts", "src/test/**"],
 			rules: {
 				// Test files are run in node only so additional node libraries can be used.
-				"import/no-nodejs-modules": ["error", { allow: ["assert"] }],
+				"import-x/no-nodejs-modules": ["error", { allow: ["assert"] }],
 			},
 		},
 		{

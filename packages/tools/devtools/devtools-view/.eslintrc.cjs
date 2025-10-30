@@ -47,9 +47,9 @@ module.exports = {
 			plugins: ["jest"],
 			extends: ["plugin:jest/recommended"],
 			rules: {
-				"import/no-nodejs-modules": "off",
+				"import-x/no-nodejs-modules": "off",
 				"unicorn/prefer-module": "off",
-				"import/no-internal-modules": "off",
+				"import-x/no-internal-modules": "off",
 			},
 		},
 		{
@@ -60,7 +60,7 @@ module.exports = {
 				"import/no-default-export": "off",
 
 				// Fine for tests
-				"import/no-nodejs-modules": "off",
+				"import-x/no-nodejs-modules": "off",
 				"import/no-extraneous-dependencies": "off",
 			},
 		},

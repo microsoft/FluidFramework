@@ -18,7 +18,7 @@ import {
 	defaultSchemaPolicy,
 	makeSchemaCodec,
 } from "../../../feature-libraries/index.js";
-/* eslint-disable-next-line import/no-internal-modules */
+/* eslint-disable-next-line import-x/no-internal-modules */
 import { Format as FormatV1 } from "../../../feature-libraries/schema-index/formatV1.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { Format as FormatV2 } from "../../../feature-libraries/schema-index/formatV2.js";

@@ -34,7 +34,7 @@ module.exports = {
 			plugins: ["jest"],
 			extends: ["plugin:jest/recommended"],
 			rules: {
-				"import/no-nodejs-modules": "off",
+				"import-x/no-nodejs-modules": "off",
 				"unicorn/prefer-module": "off",
 			},
 		},

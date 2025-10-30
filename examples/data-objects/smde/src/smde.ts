@@ -17,7 +17,7 @@ import {
 import { reservedTileLabelsKey } from "@fluidframework/sequence/internal";
 import { ReferenceType, SharedString } from "@fluidframework/sequence/legacy";
 
-// eslint-disable-next-line import-x/no-internal-modules, import/no-unassigned-import
+// eslint-disable-next-line import-x/no-internal-modules, import-x/no-unassigned-import
 import "simplemde/dist/simplemde.min.css";
 
 /**

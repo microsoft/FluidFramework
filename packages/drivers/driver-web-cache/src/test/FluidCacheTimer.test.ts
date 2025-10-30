@@ -13,7 +13,7 @@ import { openDB } from "idb";
 import { FluidCache } from "../FluidCache.js";
 import { FluidDriverCacheDBName } from "../FluidCacheIndexedDb.js";
 
-// eslint-disable-next-line import/no-unassigned-import, @typescript-eslint/no-require-imports, import/no-internal-modules
+// eslint-disable-next-line import-x/no-unassigned-import, @typescript-eslint/no-require-imports, import-x/no-internal-modules
 require("fake-indexeddb/auto");
 
 const mockPartitionKey = "FAKEPARTITIONKEY";

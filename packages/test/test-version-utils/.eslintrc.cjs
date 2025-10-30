@@ -11,7 +11,7 @@ module.exports = {
 	rules: {
 		"@typescript-eslint/strict-boolean-expressions": "off", // requires strictNullChecks=true in tsconfig
 		"import/no-deprecated": "off", // This package tests deprecated DDSes like SparseMatrix
-		"import/no-nodejs-modules": "off",
+		"import-x/no-nodejs-modules": "off",
 	},
 	parserOptions: {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],

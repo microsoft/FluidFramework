@@ -42,7 +42,7 @@ module.exports = {
 		"guard-for-in": "off",
 		"import/no-duplicates": "off",
 		"import/no-extraneous-dependencies": "off",
-		"import/no-internal-modules": "off",
+		"import-x/no-internal-modules": "off",
 		"max-len": "off",
 		"no-bitwise": "off",
 		"no-new-func": "off",
