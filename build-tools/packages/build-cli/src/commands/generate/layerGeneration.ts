@@ -11,6 +11,9 @@ import { Flags } from "@oclif/core";
 import { PackageCommand } from "../../BasePackageCommand.js";
 import type { PackageSelectionDefault } from "../../flags.js";
 
+// Approximate month as 33 days to add some buffer and avoid over-counting months in longer spans.
+export const daysInMonthApproximation = 33;
+
 export default class UpdateGenerationCommand extends PackageCommand<
 	typeof UpdateGenerationCommand
 > {
@@ -187,7 +190,7 @@ export function maybeGetNewGeneration(
 		throw new Error("Current date is older that previous release date");
 	}
 	const daysBetweenReleases = Math.round(timeDiff / (1000 * 60 * 60 * 24));
-	const monthsBetweenReleases = Math.floor(daysBetweenReleases / 30);
+	const monthsBetweenReleases = Math.floor(daysBetweenReleases / daysInMonthApproximation);
 	log.verbose(`Previous release date: ${previousReleaseDate}, Today: ${today}`);
 	log.verbose(
 		`Time between releases: ${daysBetweenReleases} day(s) or ~${monthsBetweenReleases} month(s)`,

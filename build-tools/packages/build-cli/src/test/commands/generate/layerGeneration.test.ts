@@ -11,6 +11,7 @@ import type { Logger } from "@fluidframework/build-tools";
 import { describe, it } from "mocha";
 
 import UpdateGenerationCommand, {
+	daysInMonthApproximation,
 	formatDateForLayerFile,
 	generateLayerFileContent,
 	maybeGetNewGeneration,
@@ -49,11 +50,11 @@ describe("generate:layerGeneration", () => {
 	it("should update generation when time since last release is 1+ months", () => {
 		const mockLogger = createMockLogger();
 		const previousGeneration = 5;
-		const monthsSincePreviousRelease = 1;
+		const monthsSincePreviousRelease = 1; // More than 1 month
 
 		// Create a date monthsSincePreviousRelease months ago
 		const oldDate = new Date();
-		oldDate.setMonth(oldDate.getMonth() - monthsSincePreviousRelease);
+		oldDate.setDate(oldDate.getDate() - monthsSincePreviousRelease * daysInMonthApproximation);
 		const oldDateString = formatDateForLayerFile(oldDate);
 		const fileContent = generateLayerFileContent(previousGeneration, oldDateString, "1.0.0");
 		const result = maybeGetNewGeneration(
@@ -70,11 +71,11 @@ describe("generate:layerGeneration", () => {
 	it("should not update generation when time since last release is < 1 month", () => {
 		const mockLogger = createMockLogger();
 		const previousGeneration = 5;
-		const daysSincePreviousRelease = 20;
+		const daysSincePreviousRelease = 31; // Less than approx. 1 month
 
 		// Create a date daysSincePreviousRelease days ago
 		const oldDate = new Date();
-		oldDate.setMonth(oldDate.getDate() - daysSincePreviousRelease);
+		oldDate.setDate(oldDate.getDate() - daysSincePreviousRelease);
 		const oldDateString = formatDateForLayerFile(oldDate);
 		const fileContent = generateLayerFileContent(previousGeneration, oldDateString, "1.0.0");
 		const result = maybeGetNewGeneration(
@@ -126,7 +127,7 @@ describe("generate:layerGeneration", () => {
 			const mockLogger = createMockLogger();
 			const previousGeneration = 5;
 			const oldDate = new Date();
-			oldDate.setMonth(oldDate.getMonth() - testCase.monthsAgo);
+			oldDate.setDate(oldDate.getDate() - testCase.monthsAgo * daysInMonthApproximation);
 			const oldDateString = formatDateForLayerFile(oldDate);
 			const fileContent = generateLayerFileContent(previousGeneration, oldDateString, "1.0.0");
 			const result = maybeGetNewGeneration(
