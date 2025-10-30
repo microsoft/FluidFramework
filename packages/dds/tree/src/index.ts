@@ -179,7 +179,6 @@ export {
 	type AllowedTypeMetadata,
 	type AllowedTypesMetadata,
 	type UnannotateAllowedTypesList,
-	type SchemaStaticsAlpha,
 	type AnnotateAllowedTypesList,
 	type AllowedTypesFull,
 	type AllowedTypesFullFromMixed,
