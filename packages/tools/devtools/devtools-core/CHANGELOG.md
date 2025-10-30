@@ -1,5 +1,38 @@
 # @fluidframework/devtools-core
 
+## 2.70.0
+
+### Minor Changes
+
+- Promote core devtools APIs from alpha to beta ([#25695](https://github.com/microsoft/FluidFramework/pull/25695)) [7c8e203249](https://github.com/microsoft/FluidFramework/commit/7c8e20324935717d8f7b599c3ec2a1b570b96ba1)
+
+  The primary devtools APIs may now be imported from `/beta`. This includes:
+
+  - **`initializeDevtools`** - Initialize the devtools singleton
+  - **`tryGetFluidDevtools`** - Get the existing devtools instance if initialized
+  - **`IFluidDevtools`** - Main devtools interface for registering containers
+  - **`ContainerDevtoolsProps`** - Properties for registering containers with devtools
+
+  For example:
+
+  ```typescript
+  import {
+    initializeDevtools,
+    tryGetFluidDevtools,
+    type IFluidDevtools,
+    type ContainerDevtoolsProps,
+  } from "@fluidframework/devtools-core/beta";
+
+  // Initialize devtools
+  const devtools = initializeDevtools();
+
+  // Register a container
+  devtools.registerContainerDevtools({
+    containerKey: "my-container",
+    container: myContainer,
+  });
+  ```
+
 ## 2.63.0
 
 Dependency updates only.

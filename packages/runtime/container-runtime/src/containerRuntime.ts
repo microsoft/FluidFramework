@@ -827,6 +827,7 @@ export class ContainerRuntime
 		IProvideFluidHandleContext,
 		IProvideLayerCompatDetails
 {
+	/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive AB#50920 */
 	/**
 	 * Load the stores from a snapshot and returns the runtime.
 	 * @param params - An object housing the runtime properties.
@@ -855,6 +856,7 @@ export class ContainerRuntime
 			registry: new FluidDataStoreRegistry(params.registryEntries),
 		});
 	}
+	/* eslint-enable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag */
 
 	/**
 	 * Load the stores from a snapshot and returns the runtime.
@@ -2839,7 +2841,7 @@ export class ContainerRuntime
 				assert(
 					this.getConnectionState !== undefined &&
 						this.getConnectionState() === ConnectionState.CatchingUp,
-					"connection state mismatch between getConnectionState and setConnectionStatus notification",
+					0xc8d /* connection state mismatch between getConnectionState and setConnectionStatus notification */,
 				);
 
 				// Note: Historically when only `setConnectionState` of `IRuntime`

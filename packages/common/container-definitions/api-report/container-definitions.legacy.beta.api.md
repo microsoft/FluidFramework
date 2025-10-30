@@ -70,6 +70,7 @@ export interface ConnectionStatusTemplate {
     canSendOps: boolean;
     // (undocumented)
     connectionState: ConnectionState;
+    readonly: boolean;
 }
 
 // @beta @legacy
