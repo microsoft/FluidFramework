@@ -19,6 +19,7 @@ import {
 	type TreeChunk,
 } from "../../../core/index.js";
 import {
+	brand,
 	brandedNumberType,
 	type Brand,
 	type JsonCompatibleReadOnly,
@@ -131,7 +132,7 @@ function clientVersionToFieldBatchVersion(
 	clientVersion: MinimumVersionForCollab,
 ): FieldBatchFormatVersion {
 	// Currently, field batch codec only writes in version 1.
-	return FieldBatchFormatVersion.v1;
+	return brand(FieldBatchFormatVersion.v1);
 }
 
 export function makeFieldBatchCodec(options: CodecWriteOptions): FieldBatchCodec {

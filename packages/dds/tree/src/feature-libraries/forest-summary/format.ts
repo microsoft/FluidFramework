@@ -7,6 +7,7 @@ import { type Static, Type } from "@sinclair/typebox";
 
 import { Versioned } from "../../codec/index.js";
 import { schemaFormatV1 } from "../../core/index.js";
+import type { Brand } from "../../util/index.js";
 
 /**
  * The format version for the forest.
@@ -14,8 +15,10 @@ import { schemaFormatV1 } from "../../core/index.js";
 export const ForestFormatVersion = {
 	v1: 1,
 };
-export type ForestFormatVersion =
-	(typeof ForestFormatVersion)[keyof typeof ForestFormatVersion];
+export type ForestFormatVersion = Brand<
+	(typeof ForestFormatVersion)[keyof typeof ForestFormatVersion],
+	"ForestFormatVersion"
+>;
 
 export const Format = Type.Object(
 	{

@@ -7,6 +7,7 @@ import { fail } from "@fluidframework/core-utils/internal";
 
 import { DiscriminatedUnionDispatcher } from "../../codec/index.js";
 import {
+	type Brand,
 	type JsonCompatibleReadOnlyObject,
 	type MakeNominal,
 	brand,
@@ -39,8 +40,10 @@ export const SchemaFormatVersion = {
 	 */
 	v2: 2,
 };
-export type SchemaFormatVersion =
-	(typeof SchemaFormatVersion)[keyof typeof SchemaFormatVersion];
+export type SchemaFormatVersion = Brand<
+	(typeof SchemaFormatVersion)[keyof typeof SchemaFormatVersion],
+	"SchemaFormatVersion"
+>;
 
 type FieldSchemaFormat = FieldSchemaFormatV1 | FieldSchemaFormatV2;
 

@@ -40,7 +40,7 @@ export function clientVersionToSchemaVersion(
 	clientVersion: MinimumVersionForCollab,
 ): SchemaFormatVersion {
 	// Currently, the schema codec only writes in version 1.
-	return SchemaFormatVersion.v1;
+	return brand(SchemaFormatVersion.v1);
 }
 
 export function getCodecTreeForSchemaFormat(

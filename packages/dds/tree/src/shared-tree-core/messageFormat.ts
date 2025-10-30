@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import type { Brand } from "../util/index.js";
+
 /**
  * The format version for the message.
  */
@@ -44,8 +46,10 @@ export const MessageFormatVersion = {
 	 */
 	v5: 5,
 };
-export type MessageFormatVersion =
-	(typeof MessageFormatVersion)[keyof typeof MessageFormatVersion];
+export type MessageFormatVersion = Brand<
+	(typeof MessageFormatVersion)[keyof typeof MessageFormatVersion],
+	"MessageFormatVersion"
+>;
 export const messageFormatVersions: ReadonlySet<MessageFormatVersion> = new Set(
-	Object.values(MessageFormatVersion),
+	Object.values(MessageFormatVersion) as MessageFormatVersion[],
 );

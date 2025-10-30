@@ -21,6 +21,7 @@ import { makeDetachedNodeToFieldCodecV1 } from "./detachedFieldIndexCodecV1.js";
 import { makeDetachedNodeToFieldCodecV2 } from "./detachedFieldIndexCodecV2.js";
 import type { DetachedFieldSummaryData } from "./detachedFieldIndexTypes.js";
 import { DetachedFieldIndexFormatVersion } from "./detachedFieldIndexFormatCommon.js";
+import { brand } from "../../util/index.js";
 
 /**
  * Convert a MinimumVersionForCollab to a version for detached field codecs.
@@ -31,8 +32,8 @@ function clientVersionToDetachedFieldVersion(
 	clientVersion: MinimumVersionForCollab,
 ): DetachedFieldIndexFormatVersion {
 	return clientVersion < FluidClientVersion.v2_52
-		? DetachedFieldIndexFormatVersion.v1
-		: DetachedFieldIndexFormatVersion.v2;
+		? brand(DetachedFieldIndexFormatVersion.v1)
+		: brand(DetachedFieldIndexFormatVersion.v2);
 }
 
 export function makeDetachedFieldIndexCodec(

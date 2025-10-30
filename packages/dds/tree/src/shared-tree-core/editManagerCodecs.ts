@@ -23,7 +23,7 @@ import type {
 	RevisionTag,
 	SchemaAndPolicy,
 } from "../core/index.js";
-import type { JsonCompatibleReadOnly } from "../util/index.js";
+import { brand, type JsonCompatibleReadOnly } from "../util/index.js";
 
 import type { SummaryData } from "./editManager.js";
 import { makeV1CodecWithVersion } from "./editManagerCodecsV1toV4.js";
@@ -49,7 +49,7 @@ export function clientVersionToEditManagerFormatVersion(
 	writeVersionOverride?: EditManagerFormatVersion,
 ): EditManagerFormatVersion {
 	// Currently, version 3 is the only approved format for writing in production.
-	return writeVersionOverride ?? EditManagerFormatVersion.v3;
+	return writeVersionOverride ?? brand(EditManagerFormatVersion.v3);
 }
 
 /**
@@ -58,7 +58,7 @@ export function clientVersionToEditManagerFormatVersion(
 export function editManagerFormatVersionSelectorForSharedBranches(
 	clientVersion: MinimumVersionForCollab,
 ): EditManagerFormatVersion {
-	return EditManagerFormatVersion.v5;
+	return brand(EditManagerFormatVersion.v5);
 }
 
 export interface EditManagerCodecOptions {

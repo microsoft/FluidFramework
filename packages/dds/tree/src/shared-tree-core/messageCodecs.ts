@@ -22,7 +22,7 @@ import type {
 	RevisionTag,
 	SchemaAndPolicy,
 } from "../core/index.js";
-import type { JsonCompatibleReadOnly } from "../util/index.js";
+import { brand, type JsonCompatibleReadOnly } from "../util/index.js";
 
 import type { DecodedMessage } from "./messageTypes.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
@@ -45,7 +45,7 @@ export function clientVersionToMessageFormatVersion(
 	writeVersionOverride?: MessageFormatVersion,
 ): MessageFormatVersion {
 	// Currently, version 3 is the only approved format for writing in production.
-	return writeVersionOverride ?? MessageFormatVersion.v3;
+	return writeVersionOverride ?? brand(MessageFormatVersion.v3);
 }
 
 export interface MessageCodecOptions {
@@ -67,7 +67,7 @@ function messageFormatVersionFromOptions(
 export function messageFormatVersionSelectorForSharedBranches(
 	clientVersion: MinimumVersionForCollab,
 ): MessageFormatVersion {
-	return MessageFormatVersion.v5;
+	return brand(MessageFormatVersion.v5);
 }
 
 export function makeMessageCodec<TChangeset>(
@@ -134,7 +134,9 @@ export function makeMessageCodecs<TChangeset>(
 						changeCodec,
 						revisionTagCodec,
 						options,
-						version === MessageFormatVersion.undefined ? MessageFormatVersion.v1 : version,
+						brand(
+							version === MessageFormatVersion.undefined ? MessageFormatVersion.v1 : version,
+						),
 					),
 				];
 			case MessageFormatVersion.v5:
