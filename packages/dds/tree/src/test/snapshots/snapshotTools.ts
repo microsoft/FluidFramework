@@ -89,12 +89,15 @@ export function useSnapshotDirectory(dirPath: string = "files"): void {
 	assert(normalizedDir.startsWith(snapshotsFolder));
 
 	if (regenerateSnapshots) {
-		if (existsSync(normalizedDir)) {
-			console.log(`removing snapshot directory: ${normalizedDir}`);
-			rmSync(normalizedDir, { recursive: true, force: true });
+		if (existsSync(snapshotsFolder)) {
+			console.log(`removing snapshot directory: ${snapshotsFolder}`);
+			rmSync(snapshotsFolder, { recursive: true, force: true });
 		}
-		mkdirSync(normalizedDir, { recursive: true });
 	}
+
+	before((): void => {
+		mkdirSync(normalizedDir, { recursive: true });
+	});
 
 	beforeEach(function (): void {
 		currentTestName = this.currentTest?.title ?? assert.fail();
