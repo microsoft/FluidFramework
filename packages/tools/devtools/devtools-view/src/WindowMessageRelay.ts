@@ -13,6 +13,7 @@ import {
 	isDevtoolsMessage,
 } from "@fluidframework/devtools-core/internal";
 
+/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive AB#50920 */
 /**
  * Message relay used by a devtools view rendered in the same page as the application to communicate with the
  * {@link @fluid-tools/client-debuger#IFluidDevtools}.
@@ -29,6 +30,7 @@ import {
  * @internal
  */
 export class WindowMessageRelay
+	/* eslint-enable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag */
 	extends TypedEventEmitter<IMessageRelayEvents>
 	implements IMessageRelay
 {

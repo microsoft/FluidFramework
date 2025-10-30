@@ -28,7 +28,7 @@ import type { ISharedCounter, ISharedCounterEvents } from "./interfaces.js";
 /**
  * Describes the operation (op) format for incrementing the {@link SharedCounter}.
  */
-interface IIncrementOperation {
+export interface IIncrementOperation {
 	type: "increment";
 	incrementAmount: number;
 }
