@@ -51,7 +51,6 @@ import {
 	ForestTypeReference,
 	getBranch,
 	type ITreePrivate,
-	SharedTreeFormatVersion,
 	Tree,
 	type TreeCheckout,
 } from "../../shared-tree/index.js";
@@ -95,7 +94,6 @@ import {
 } from "../utils.js";
 import {
 	configuredSharedTree,
-	resolveInternalOptions,
 	SharedTree as SharedTreeKind,
 	type ISharedTree,
 } from "../../treeFactory.js";
@@ -2549,11 +2547,10 @@ describe("SharedTree", () => {
 			"based on a commit outside the collab window",
 		] as const) {
 			it(subCase, async () => {
-				const options = resolveInternalOptions({ enableSharedBranches: true });
 				const provider = await TestTreeProvider.create(
 					1,
 					SummarizeType.onDemand,
-					new SharedTreeTestFactory(() => {}, undefined, options),
+					new SharedTreeTestFactory(() => {}, undefined, { enableSharedBranches: true }),
 				);
 				const tree1 = provider.trees[0];
 				const config = new TreeViewConfiguration({

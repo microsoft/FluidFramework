@@ -185,10 +185,11 @@ export function configuredSharedTree(
 	return makeSharedObjectKind<ITree>(sharedObjectOptions);
 }
 
-export function resolveInternalOptions(options: SharedTreeOptions): SharedTreeOptionsInternal {
+function resolveInternalOptions(options: SharedTreeOptions): SharedTreeOptionsInternal {
 	const internal: SharedTreeOptionsInternal = {
 		...resolveSharedBranchesOptions(options.enableSharedBranches),
 	};
+	copyProperty(options, "disposeForksAfterTransaction", internal);
 	copyProperty(options, "forest", internal);
 	copyProperty(options, "jsonValidator", internal);
 	copyProperty(options, "minVersionForCollab", internal);

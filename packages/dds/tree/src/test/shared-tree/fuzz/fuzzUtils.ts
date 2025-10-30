@@ -42,7 +42,7 @@ import {
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 import type {
-	SharedTreeOptionsInternal,
+	SharedTreeOptions,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../shared-tree/sharedTree.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
@@ -161,7 +161,7 @@ export class SharedTreeFuzzTestFactory extends SharedTreeTestFactory {
 	public constructor(
 		protected override readonly onCreate: (tree: ISharedTree) => void,
 		protected override readonly onLoad?: (tree: ISharedTree) => void,
-		options: SharedTreeOptionsInternal = {},
+		options: SharedTreeOptions = {},
 	) {
 		super(onCreate, onLoad, {
 			...options,

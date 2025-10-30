@@ -143,7 +143,6 @@ import {
 	independentView,
 	SchematizingSimpleTreeView,
 	type ForestOptions,
-	type SharedTreeOptionsInternal,
 	type SharedTreeOptions,
 	buildConfiguredForest,
 	type ForestType,
@@ -611,14 +610,14 @@ export class SharedTreeTestFactory implements IChannelFactory<ISharedTree> {
 	public constructor(
 		protected readonly onCreate: (tree: ISharedTree) => void,
 		protected readonly onLoad?: (tree: ISharedTree) => void,
-		options: SharedTreeOptionsInternal = {},
+		options: SharedTreeOptions = {},
 	) {
-		const optionsUpdated: SharedTreeOptionsInternal = {
+		const optionsUpdated: SharedTreeOptions = {
 			...options,
 			jsonValidator: FormatValidatorBasic,
 		};
 		this.inner = configuredSharedTree(
-			optionsUpdated as SharedTreeOptions,
+			optionsUpdated,
 		).getFactory() as IChannelFactory<ISharedTree>;
 	}
 

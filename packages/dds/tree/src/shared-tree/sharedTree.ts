@@ -71,7 +71,6 @@ import {
 	clientVersionToEditManagerFormatVersion,
 	clientVersionToMessageFormatVersion,
 	type ClonableSchemaAndPolicy,
-	type EditManagerCodecOptions,
 	type EditManagerFormatVersion,
 	getCodecTreeForEditManagerFormatWithChange,
 	getCodecTreeForMessageFormatWithChange,
@@ -698,6 +697,7 @@ export interface SharedTreeOptions
 	 * This feature is not yet complete and should not be used in production.
 	 */
 	readonly enableSharedBranches?: boolean;
+	readonly disposeForksAfterTransaction?: boolean;
 }
 
 export interface SharedTreeOptionsInternal
