@@ -118,6 +118,23 @@ export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFie
  * No other own `own` or `enumerable` properties are included on object nodes unless the user of the node manually adds custom session only state.
  * This allows a majority of general purpose JavaScript object processing operations (like `for...in`, `Reflect.ownKeys()` and `Object.entries()`) to enumerate all the children.
  *
+ * Field Assignment and Deletion
+ * Assigning to a field updates the tree value as long as it is still valid based on the schema.
+ * - For required fields, assigning `undefined` is invalid, and will throw.
+ * - For optional fields, assigning `undefined` removes the field's contents, and marks it as empty (non-enumerable and value set to undefined).
+ *
+ * Example:
+ * ```ts
+ * const Foo = schemaFactory.object("Foo", {bar: schemaFactory.optional(schemaFactory.number)});
+ * const node = new Foo({bar: 1})
+ *
+ * // This clears the field, is non-enumerable, and value is undefined.
+ * delete node.bar;
+ *
+ * // This is equivalent to the delete example.
+ * node.bar = undefined
+ * ```
+ *
  * The API for fields is defined by {@link ObjectFromSchemaRecord}.
  * @public
  */
@@ -275,27 +292,17 @@ function createProxyHandler(
 					: false;
 			}
 
-			const innerNode = getInnerNode(proxy);
-
-			const innerSchema = innerNode.context.schema.nodeSchema.get(brand(schema.identifier));
-			assert(
-				innerSchema instanceof ObjectNodeStoredSchema,
-				0xc18 /* Expected ObjectNodeStoredSchema */,
-			);
-
-			setField(
-				innerNode.getBoxed(fieldInfo.storedKey),
-				fieldInfo.schema,
-				value,
-				innerSchema.getFieldSchema(fieldInfo.storedKey),
-			);
+			applyFieldChange(schema, { kind: "proxy", node: proxy }, fieldInfo, value);
 			return true;
 		},
 		deleteProperty(target, propertyKey): boolean {
-			// TODO: supporting delete when it makes sense (custom local fields, and optional field) could be added as a feature in the future.
-			throw new UsageError(
-				`Object nodes do not support the delete operator. Optional fields can be assigned to undefined instead.`,
-			);
+			const fieldInfo = schema.flexKeyMap.get(propertyKey);
+			if (fieldInfo === undefined) {
+				return allowAdditionalProperties ? Reflect.deleteProperty(target, propertyKey) : false;
+			}
+
+			applyFieldChange(schema, { kind: "target", node: target }, fieldInfo, undefined);
+			return true;
 		},
 		has: (target, propertyKey) => {
 			return (
@@ -749,4 +756,30 @@ function getFieldProperty(
 		return (data as Record<string, InsertableContent>)[key as string];
 	}
 	return undefined;
+}
+
+function applyFieldChange(
+	schema: ObjectNodeSchemaPrivate,
+	from: { kind: "proxy"; node: TreeNode } | { kind: "target"; node: object },
+	fieldInfo: { storedKey: FieldKey; schema: FieldSchema },
+	value: InsertableContent | undefined,
+): void {
+	const proxy =
+		from.kind === "proxy"
+			? from.node
+			: (targetToProxy.get(from.node) ?? fail("missing proxy"));
+	const inner = getInnerNode(proxy);
+	const storedSchema = inner.context.schema.nodeSchema.get(brand(schema.identifier));
+	assert(storedSchema instanceof ObjectNodeStoredSchema, "Expected ObjectNodeStoredSchema");
+
+	if (value === undefined && inner.tryGetField(fieldInfo.storedKey) === undefined) {
+		return;
+	}
+
+	setField(
+		inner.getBoxed(fieldInfo.storedKey),
+		fieldInfo.schema,
+		value,
+		storedSchema.getFieldSchema(fieldInfo.storedKey),
+	);
 }
