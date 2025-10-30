@@ -16,7 +16,7 @@ import {
 	type BranchableTree,
 	type TreeBranchFork,
 	type TreeViewAlpha,
-	// eslint-disable-next-line import/no-internal-modules -- This package depends on the branching APIs in Tree which are currently alpha
+	// eslint-disable-next-line import-x/no-internal-modules -- This package depends on the branching APIs in Tree which are currently alpha
 } from "@fluidframework/tree/alpha";
 import type { z } from "zod";
 
