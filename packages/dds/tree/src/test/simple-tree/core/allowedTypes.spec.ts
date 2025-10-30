@@ -569,7 +569,7 @@ describe("allowedTypes", () => {
 		});
 	});
 
-	// If derived data is computed based on a allowed type array, then modifications to that array would cause the derived data to become invalid.
+	// If derived data is computed based on an allowed type array, then modifications to that array would cause the derived data to become invalid.
 	// As there is no invalidation mechanism, this would lead to incorrect behavior, and is prevented by freezing the arrays when the derived data is computed.
 	// Note that cases where adding to the array would not produce invalid data are not required to freeze the array: more cases could be made to allow mutations by deriving data at a later point.
 	// If done, these tests may need updates to instead test that modifying the arrays does not expose incorrect derived data.
