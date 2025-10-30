@@ -12,7 +12,6 @@ import {
 	type IJsonCodec,
 } from "../../codec/index.js";
 import {
-	areEqualChangeAtomIdOpts,
 	areEqualChangeAtomIds,
 	type ChangeAtomId,
 	type ChangeEncodingContext,
@@ -83,10 +82,11 @@ export function makeV2CodecHelpers(
 		decoderLibrary,
 
 		encodeMarkEffect(mark: Mark, context: FieldChangeEncodingContext): Encoded.MarkEffect {
-			return encodeMarkEffect(
+			return encodeMarkEffectV2(
 				mark,
 				context,
-				(revision) => encodeRevision(revision, context.baseContext, revisionTagCodec),
+				(revision) =>
+					encodeRevisionWithContext(revision, context.baseContext, revisionTagCodec),
 				changeAtomIdCodec,
 			);
 		},
@@ -391,8 +391,7 @@ export function makeV2Codec(
 	JsonCompatibleReadOnly,
 	FieldChangeEncodingContext
 > {
-	const { decodeMarkEffect, encodeMarkEffect, changeAtomIdCodec } =
-		makeV2CodecHelpers(revisionTagCodec);
+	const { decodeMarkEffect, changeAtomIdCodec } = makeV2CodecHelpers(revisionTagCodec);
 
 	return {
 		encode: (
@@ -402,9 +401,10 @@ export function makeV2Codec(
 			encodeSequenceChangeset(
 				changeset,
 				context,
-				(revision) => encodeRevision(revision, context.baseContext, revisionTagCodec),
+				(revision) =>
+					encodeRevisionWithContext(revision, context.baseContext, revisionTagCodec),
 				changeAtomIdCodec,
-				encodeMarkEffect,
+				encodeMarkEffectV2,
 			),
 		decode: (
 			changeset: Encoded.Changeset<NodeChangeSchema>,
@@ -618,7 +618,7 @@ type EncodeMarkEffect = (
 	>,
 ) => Encoded.MarkEffect;
 
-function encodeMarkEffect(
+function encodeMarkEffectV2(
 	mark: Mark,
 	context: FieldChangeEncodingContext,
 	encodeRevision: (revision: RevisionTag | undefined) => EncodedRevisionTag | undefined,
@@ -715,7 +715,7 @@ function encodeMarkEffect(
 	}
 }
 
-export function encodeRevision(
+export function encodeRevisionWithContext(
 	revision: RevisionTag | undefined,
 	context: ChangeEncodingContext,
 	revisionTagCodec: IJsonCodec<

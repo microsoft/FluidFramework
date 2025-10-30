@@ -21,7 +21,7 @@ import {
 import { Changeset as ChangesetSchema, type Encoded } from "./formatV3.js";
 import {
 	decodeSequenceChangeset,
-	encodeRevision,
+	encodeRevisionWithContext,
 	encodeSequenceChangeset,
 	makeV2CodecHelpers,
 } from "./sequenceFieldCodecV2.js";
@@ -111,7 +111,8 @@ export function makeV3Codec(
 			encodeSequenceChangeset(
 				changeset,
 				context,
-				(revision) => encodeRevision(revision, context.baseContext, revisionTagCodec),
+				(revision) =>
+					encodeRevisionWithContext(revision, context.baseContext, revisionTagCodec),
 				atomIdCodec,
 				encodeMarkEffect,
 			),
