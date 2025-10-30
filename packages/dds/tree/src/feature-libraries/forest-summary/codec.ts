@@ -15,8 +15,7 @@ import {
 import type { FieldKey, ITreeCursorSynchronous } from "../../core/index.js";
 import type { FieldBatchCodec, FieldBatchEncodingContext } from "../chunked-forest/index.js";
 
-import { Format } from "./format.js";
-import { brand, type Brand } from "../../util/index.js";
+import { Format, ForestFormatVersion } from "./format.js";
 
 /**
  * Uses field cursors
@@ -33,7 +32,7 @@ function clientVersionToForestSummaryVersion(
 	clientVersion: MinimumVersionForCollab,
 ): ForestFormatVersion {
 	// Currently, forest summary codec only writes in version 1.
-	return brand(ForestVersion.v1);
+	return ForestFormatVersion.v1;
 }
 
 export function makeForestSummarizerCodec(
@@ -45,7 +44,7 @@ export function makeForestSummarizerCodec(
 	// This needs to be updated to support multiple versions.
 	// The second version will be used to enable incremental summarization.
 	const writeVersion = clientVersionToForestSummaryVersion(options.minVersionForCollab);
-	return makeVersionedValidatedCodec(options, new Set([ForestVersion.v1]), Format, {
+	return makeVersionedValidatedCodec(options, new Set([ForestFormatVersion.v1]), Format, {
 		encode: (data: FieldSet, context: FieldBatchEncodingContext): Format => {
 			const keys: FieldKey[] = [];
 			const fields: ITreeCursorSynchronous[] = [];
@@ -67,13 +66,6 @@ export function makeForestSummarizerCodec(
 	});
 }
 
-/**
- * The format version for the forest.
- */
-export enum ForestVersion {
-	v1 = 1,
-}
-export type ForestFormatVersion = Brand<ForestVersion, "ForestFormatVersion">;
 export function getCodecTreeForForestFormat(
 	clientVersion: MinimumVersionForCollab,
 ): CodecTree {

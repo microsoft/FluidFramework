@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 // Allow importing from this specific file which is being tested:
 
 import {
-	SchemaVersion,
+	SchemaFormatVersion,
 	type FieldKindIdentifier,
 	type TreeStoredSchema,
 } from "../../../core/index.js";
@@ -38,8 +38,8 @@ const codecOptions: CodecWriteOptions = {
 };
 
 const schemaCodecs = makeSchemaCodecs(codecOptions);
-const codecV1 = makeSchemaCodec(codecOptions, SchemaVersion.v1);
-const codecV2 = makeSchemaCodec(codecOptions, SchemaVersion.v2);
+const codecV1 = makeSchemaCodec(codecOptions, SchemaFormatVersion.v1);
+const codecV2 = makeSchemaCodec(codecOptions, SchemaFormatVersion.v2);
 
 const schema2 = toInitialSchema(SchemaFactory.optional(JsonAsTree.Primitive));
 

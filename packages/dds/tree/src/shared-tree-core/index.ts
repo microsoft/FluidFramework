@@ -42,12 +42,14 @@ export {
 export {
 	makeEditManagerCodec,
 	getCodecTreeForEditManagerFormatWithChange,
-	type EditManagerFormatVersion,
 	type EditManagerCodecOptions,
-	editManagerFormatVersions,
 	clientVersionToEditManagerFormatVersion,
 	editManagerFormatVersionSelectorForSharedBranches,
 } from "./editManagerCodecs.js";
+export {
+	EditManagerFormatVersion,
+	editManagerFormatVersions,
+} from "./editManagerFormatCommons.js";
 export { EditManagerSummarizer } from "./editManagerSummarizer.js";
 export {
 	EditManager,
@@ -64,9 +66,8 @@ export type {
 } from "./editManagerFormatCommons.js";
 
 export {
-	type MessageFormatVersion,
-	messageFormatVersions,
 	getCodecTreeForMessageFormatWithChange,
 	clientVersionToMessageFormatVersion,
 	messageFormatVersionSelectorForSharedBranches,
 } from "./messageCodecs.js";
+export { MessageFormatVersion, messageFormatVersions } from "./messageFormat.js";

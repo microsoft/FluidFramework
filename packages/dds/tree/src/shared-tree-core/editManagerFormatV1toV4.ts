@@ -8,6 +8,7 @@ import { type ObjectOptions, type TSchema, Type } from "@sinclair/typebox";
 
 import { SessionIdSchema } from "../core/index.js";
 import {
+	EditManagerFormatVersion,
 	type EncodedSummarySessionBranch,
 	SequencedCommit,
 	SummarySessionBranch,
@@ -21,17 +22,17 @@ const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 export interface EncodedEditManager<TChangeset> {
 	readonly trunk: readonly Readonly<SequencedCommit<TChangeset>>[];
 	readonly branches: readonly [SessionId, Readonly<EncodedSummarySessionBranch<TChangeset>>][];
-	readonly version: 1 | 2 | 3 | 4;
+	readonly version: EditManagerFormatVersion;
 }
 
 export const EncodedEditManager = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 	Type.Object(
 		{
 			version: Type.Union([
-				Type.Literal(1),
-				Type.Literal(2),
-				Type.Literal(3),
-				Type.Literal(4),
+				Type.Literal(EditManagerFormatVersion.v1),
+				Type.Literal(EditManagerFormatVersion.v2),
+				Type.Literal(EditManagerFormatVersion.v3),
+				Type.Literal(EditManagerFormatVersion.v4),
 			]),
 			trunk: Type.Array(SequencedCommit(tChange)),
 			branches: Type.Array(Type.Tuple([SessionIdSchema, SummarySessionBranch(tChange)])),

@@ -103,7 +103,7 @@ import {
 	type FieldKindIdentifier,
 	type TreeNodeSchemaIdentifier,
 	type TreeFieldStoredSchema,
-	SchemaVersion,
+	SchemaFormatVersion,
 } from "../core/index.js";
 import { FormatValidatorBasic } from "../external-utilities/index.js";
 import {
@@ -661,7 +661,7 @@ const schemaCodec = makeSchemaCodec(
 		jsonValidator: FormatValidatorBasic,
 		minVersionForCollab: currentVersion,
 	},
-	SchemaVersion.v2,
+	SchemaFormatVersion.v2,
 );
 
 export function checkRemovedRootsAreSynchronized(trees: readonly ITreeCheckout[]): void {

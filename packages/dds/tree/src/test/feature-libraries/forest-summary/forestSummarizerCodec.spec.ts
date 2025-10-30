@@ -23,7 +23,9 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/forest-summary/codec.js";
 // eslint-disable-next-line import/no-internal-modules
-import { type Format, version } from "../../../feature-libraries/forest-summary/format.js";
+import { ForestFormatVersion } from "../../../feature-libraries/forest-summary/format.js";
+// eslint-disable-next-line import/no-internal-modules
+import type { Format } from "../../../feature-libraries/forest-summary/format.js";
 import {
 	TreeCompressionStrategy,
 	cursorForJsonableTreeField,
@@ -65,7 +67,7 @@ const validData: [string, FieldSet, Format | undefined][] = [
 		"no entry",
 		new Map(),
 		{
-			version,
+			version: ForestFormatVersion.v1,
 			keys: [],
 			fields: fieldBatchCodec.encode([], context),
 		},
@@ -74,7 +76,7 @@ const validData: [string, FieldSet, Format | undefined][] = [
 		"single entry",
 		new Map([[rootFieldKey, testFieldChunk.cursor()]]),
 		{
-			version,
+			version: ForestFormatVersion.v1,
 			keys: [rootFieldKey],
 			fields: fieldBatchCodec.encode([testFieldChunk.cursor()], context),
 		},

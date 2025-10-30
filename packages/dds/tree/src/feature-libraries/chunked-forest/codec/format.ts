@@ -13,19 +13,19 @@ import {
 	IdentifierOrIndex,
 	ShapeIndex,
 } from "./formatGeneric.js";
-import type { Brand } from "../../../util/index.js";
 
 /**
  * The format version for the field batch.
  */
-export enum FieldBatchVersion {
-	v1 = 1,
-}
-export type FieldBatchFormatVersion = Brand<FieldBatchVersion, "FieldBatchFormatVersion">;
+export const FieldBatchFormatVersion = {
+	v1: 1,
+};
+export type FieldBatchFormatVersion =
+	(typeof FieldBatchFormatVersion)[keyof typeof FieldBatchFormatVersion];
 
 // Compatible versions used for format/version validation.
 // TODO: A proper version update policy will need to be documented.
-export const validVersions = new Set([FieldBatchVersion.v1]);
+export const validVersions = new Set([FieldBatchFormatVersion.v1]);
 
 /**
  * Top level length is implied from length of data array.
@@ -215,7 +215,7 @@ export type EncodedAnyShape = Static<typeof EncodedAnyShape>;
 export type EncodedIncrementalChunkShape = Static<typeof EncodedIncrementalChunkShape>;
 
 export const EncodedFieldBatch = EncodedFieldBatchGeneric(
-	FieldBatchVersion.v1,
+	FieldBatchFormatVersion.v1,
 	EncodedChunkShape,
 );
 export type EncodedFieldBatch = Static<typeof EncodedFieldBatch>;

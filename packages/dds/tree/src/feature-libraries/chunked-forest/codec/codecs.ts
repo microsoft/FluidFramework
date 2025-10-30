@@ -19,7 +19,6 @@ import {
 	type TreeChunk,
 } from "../../../core/index.js";
 import {
-	brand,
 	brandedNumberType,
 	type Brand,
 	type JsonCompatibleReadOnly,
@@ -32,12 +31,7 @@ import {
 
 import { decode } from "./chunkDecoding.js";
 import type { FieldBatch } from "./fieldBatch.js";
-import {
-	EncodedFieldBatch,
-	FieldBatchVersion,
-	validVersions,
-	type FieldBatchFormatVersion,
-} from "./format.js";
+import { EncodedFieldBatch, validVersions, FieldBatchFormatVersion } from "./format.js";
 import { schemaCompressedEncode } from "./schemaBasedEncode.js";
 import { uncompressedEncode } from "./uncompressedEncode.js";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
@@ -132,14 +126,12 @@ export type FieldBatchCodec = IJsonCodec<
 /**
  * Convert a MinimumVersionForCollab to write version for {@link FieldBatchCodec}.
  * @param clientVersion - The MinimumVersionForCollab to convert.
- * @privateRemarks
- * TODO: makeFieldBatchCodec (and makeVersionDispatchingCodec transitively) should bake in this versionToFormat logic and the resulting codec can then support use with FluidClientVersion directly.
  */
 function clientVersionToFieldBatchVersion(
 	clientVersion: MinimumVersionForCollab,
 ): FieldBatchFormatVersion {
 	// Currently, field batch codec only writes in version 1.
-	return brand(FieldBatchVersion.v1);
+	return FieldBatchFormatVersion.v1;
 }
 
 export function makeFieldBatchCodec(options: CodecWriteOptions): FieldBatchCodec {
