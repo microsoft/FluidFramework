@@ -18,6 +18,13 @@ module.exports = {
 
 		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 
+		"import-x/no-unresolved": [
+			"error",
+			{
+				ignore: ["^@fluidframework/.*/internal/test(-utils)?$"],
+			},
+		],
+
 		// This package is build with noUnusedLocals disabled for a specific use case (see note in tsconfig.json),
 		// but should reject other cases using this rule:
 		"@typescript-eslint/no-unused-vars": [

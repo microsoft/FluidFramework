@@ -9,9 +9,7 @@ import { Box } from "@mui/material";
 import { Inter } from "next/font/google";
 import Image from "next/image";
 import { SnackbarProvider } from "notistack";
-
 import bgImg from "/public/msft-bg.webp"; // eslint-disable-line import-x/no-unresolved
-
 import React from "react";
 
 const inter = Inter({ subsets: ["latin"] });
