@@ -203,7 +203,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.58.3",
 		"@fluidframework/container-loader-previous": "npm:@fluidframework/container-loader@2.63.0",
-		"@fluidframework/eslint-config-fluid": "^6.1.0",
+		"@fluidframework/eslint-config-fluid": "^7.0.0",
 		"@microsoft/api-extractor": "7.52.11",
 		"@types/debug": "^4.1.5",
 		"@types/double-ended-queue": "^2.1.0",
