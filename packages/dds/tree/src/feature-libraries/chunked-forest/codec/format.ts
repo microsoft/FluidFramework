@@ -13,6 +13,7 @@ import {
 	IdentifierOrIndex,
 	ShapeIndex,
 } from "./formatGeneric.js";
+import type { Brand } from "../../../util/index.js";
 
 /**
  * The format version for the field batch.
@@ -20,8 +21,10 @@ import {
 export const FieldBatchFormatVersion = {
 	v1: 1,
 };
-export type FieldBatchFormatVersion =
-	(typeof FieldBatchFormatVersion)[keyof typeof FieldBatchFormatVersion];
+export type FieldBatchFormatVersion = Brand<
+	(typeof FieldBatchFormatVersion)[keyof typeof FieldBatchFormatVersion],
+	"FieldBatchFormatVersion"
+>;
 
 // Compatible versions used for format/version validation.
 // TODO: A proper version update policy will need to be documented.
