@@ -15,19 +15,13 @@ module.exports = {
 		"@typescript-eslint/no-use-before-define": "off",
 		"@typescript-eslint/strict-boolean-expressions": "off",
 		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
-		"import-x/no-unresolved": [
-			"error",
-			{
-				ignore: ["^@fluidframework/.*/internal/test(-utils)?$"],
-			},
-		],
 	},
 	settings: {
-		"import-x/extensions": [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
-		"import-x/parsers": {
+		"import/extensions": [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
+		"import/parsers": {
 			"@typescript-eslint/parser": [".ts", ".tsx", ".d.ts"],
 		},
-		"import-x/resolver": {
+		"import/resolver": {
 			typescript: {
 				extensions: [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
 				conditionNames: [

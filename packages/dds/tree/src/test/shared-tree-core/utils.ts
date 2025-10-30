@@ -76,12 +76,12 @@ import type {
 import { brand, Breakable } from "../../util/index.js";
 import { mockSerializer } from "../mockSerializer.js";
 import { TestChange } from "../testChange.js";
-// eslint-disable-next-line import-x/no-internal-modules
+// eslint-disable-next-line import/no-internal-modules
 import { dependenciesForChangeFormat } from "../../shared-tree/sharedTreeChangeCodecs.js";
 import {
 	changeFormatVersionForEditManager,
 	changeFormatVersionForMessage,
-	// eslint-disable-next-line import-x/no-internal-modules
+	// eslint-disable-next-line import/no-internal-modules
 } from "../../shared-tree/sharedTree.js";
 
 const codecOptions: ICodecOptions = {

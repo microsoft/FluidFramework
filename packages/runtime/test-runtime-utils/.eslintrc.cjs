@@ -25,7 +25,7 @@ module.exports = {
 		{
 			files: ["src/test/**"],
 			rules: {
-				"import-x/no-nodejs-modules": "off",
+				"import/no-nodejs-modules": "off",
 			},
 		},
 	],

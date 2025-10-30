@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import {
 	independentInitializedView,
 	independentInitializedViewInternal,
-	// eslint-disable-next-line import-x/no-internal-modules
+	// eslint-disable-next-line import/no-internal-modules
 } from "../../shared-tree/independentView.js";
 import {
 	extractPersistedSchema,

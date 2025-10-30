@@ -9,7 +9,9 @@ import { Box } from "@mui/material";
 import { Inter } from "next/font/google";
 import Image from "next/image";
 import { SnackbarProvider } from "notistack";
-import bgImg from "/public/msft-bg.webp"; // eslint-disable-line import-x/no-unresolved
+
+import bgImg from "/public/msft-bg.webp"; // eslint-disable-line import/no-unresolved
+
 import React from "react";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -18,7 +20,7 @@ const inter = Inter({ subsets: ["latin"] });
  * A root page layout used with NextJS.
  * Note that because this layout includes the base <html> and <body> tags, it should only be used once per page.
  */
-// eslint-disable-next-line import-x/no-default-export -- NextJS uses default exports
+// eslint-disable-next-line import/no-default-export -- NextJS uses default exports
 export default function RootLayout({
 	children,
 }: Readonly<{

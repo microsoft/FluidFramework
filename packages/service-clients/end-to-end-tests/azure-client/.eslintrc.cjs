@@ -48,8 +48,8 @@ module.exports = {
 			files: ["*.spec.ts", "*.test.ts", "**/test/**"],
 			rules: {
 				// Some deprecated APIs are permissible in tests; use `warn` to keep them visible
-				"import-x/no-deprecated": "warn",
-				"import-x/no-internal-modules": [
+				"import/no-deprecated": "warn",
+				"import/no-internal-modules": [
 					"error",
 					{
 						allow: importInternalModulesAllowedForTest,

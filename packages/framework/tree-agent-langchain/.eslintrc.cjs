@@ -10,7 +10,7 @@ module.exports = {
 	},
 	rules: {
 		// Allow reaching into FluidFramework package paths that end with alpha, beta, legacy, or internal
-		"import-x/no-internal-modules": [
+		"import/no-internal-modules": [
 			"error",
 			{
 				allow: [
@@ -30,7 +30,7 @@ module.exports = {
 			},
 			rules: {
 				// Test files can import from submodules for testing purposes
-				"import-x/no-internal-modules": [
+				"import/no-internal-modules": [
 					"error",
 					{
 						allow: [
@@ -43,7 +43,7 @@ module.exports = {
 					},
 				],
 				// Allow unresolved for intentionally reaching into alpha/internal of other packages during integration tests
-				"import-x/no-unresolved": "off",
+				"import/no-unresolved": "off",
 				"@typescript-eslint/no-unsafe-assignment": "off",
 				"@typescript-eslint/no-unsafe-call": "off",
 				"@typescript-eslint/no-unsafe-member-access": "off",

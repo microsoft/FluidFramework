@@ -14,7 +14,7 @@ module.exports = {
 			files: ["*.spec.ts", "src/test/**"],
 			rules: {
 				// Test files can import from submodules for testing purposes
-				"import-x/no-internal-modules": [
+				"import/no-internal-modules": [
 					"error",
 					{
 						allow: ["*/index.js"],

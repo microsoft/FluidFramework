@@ -33,7 +33,7 @@ module.exports = {
 		"no-restricted-imports": ["error", "@fluentui/react"],
 
 		// Allow unassigned imports for testing-library/jest-dom
-		"import-x/no-unassigned-import": [
+		"import/no-unassigned-import": [
 			"error",
 			{
 				allow: ["@testing-library/jest-dom"],
@@ -47,9 +47,9 @@ module.exports = {
 			plugins: ["jest"],
 			extends: ["plugin:jest/recommended"],
 			rules: {
-				"import-x/no-nodejs-modules": "off",
+				"import/no-nodejs-modules": "off",
 				"unicorn/prefer-module": "off",
-				"import-x/no-internal-modules": "off",
+				"import/no-internal-modules": "off",
 			},
 		},
 		{
@@ -57,11 +57,11 @@ module.exports = {
 			files: ["src/test/screenshot/**"],
 			rules: {
 				// Default exports are used by "Storybook" modules to describe test scenarios
-				"import-x/no-default-export": "off",
+				"import/no-default-export": "off",
 
 				// Fine for tests
-				"import-x/no-nodejs-modules": "off",
-				"import-x/no-extraneous-dependencies": "off",
+				"import/no-nodejs-modules": "off",
+				"import/no-extraneous-dependencies": "off",
 			},
 		},
 	],

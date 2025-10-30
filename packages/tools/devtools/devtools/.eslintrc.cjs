@@ -20,7 +20,7 @@ module.exports = {
 			// Overrides for test files
 			files: ["*.spec.ts", "*.test.ts", "src/test/**"],
 			rules: {
-				"import-x/no-nodejs-modules": "off",
+				"import/no-nodejs-modules": "off",
 				"unicorn/prefer-module": "off",
 			},
 		},

@@ -21,7 +21,7 @@ module.exports = {
 			// Rules only for test files
 			files: ["*.spec.ts", "src/test/**"],
 			rules: {
-				"import-x/no-internal-modules": [
+				"import/no-internal-modules": [
 					"error",
 					{
 						"allow": ["@fluidframework/*/internal{,/**}"],

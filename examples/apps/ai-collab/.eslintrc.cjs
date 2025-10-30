@@ -15,7 +15,7 @@ module.exports = {
 		project: ["./tsconfig.json"],
 	},
 	rules: {
-		"import-x/no-internal-modules": [
+		"import/no-internal-modules": [
 			"error",
 			{
 				allow: [
@@ -39,7 +39,7 @@ module.exports = {
 		],
 		// This is an example/test app; all its dependencies are dev dependencies so as not to pollute the lockfile
 		// with prod dependencies that aren't actually shipped. So don't complain when importing from dev dependencies.
-		"import-x/no-extraneous-dependencies": ["error", { devDependencies: true }],
+		"import/no-extraneous-dependencies": ["error", { devDependencies: true }],
 	},
 	overrides: [
 		{
@@ -47,10 +47,7 @@ module.exports = {
 			files: ["src/actions/task.ts"],
 			rules: {
 				// This file runs on server side
-				"import-x/no-nodejs-modules": [
-					"error",
-					{ allow: ["node:fs", "node:path", "node:url"] },
-				],
+				"import/no-nodejs-modules": ["error", { allow: ["node:fs", "node:path", "node:url"] }],
 			},
 		},
 	],
