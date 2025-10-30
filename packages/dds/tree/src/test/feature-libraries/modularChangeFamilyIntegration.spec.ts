@@ -2155,7 +2155,8 @@ describe("ModularChangeFamily integration", () => {
 			],
 		};
 
-		makeEncodingTestSuite(family.codecs, encodingTestData, assertModularChangesetsEqual);
+		// XXX: Make sure we don't need to support versions older than 3.
+		makeEncodingTestSuite(family.codecs, encodingTestData, assertModularChangesetsEqual, 3);
 	});
 });
 

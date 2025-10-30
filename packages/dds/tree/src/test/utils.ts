@@ -1043,10 +1043,19 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 	family: ICodecFamily<TDecoded, TContext>,
 	encodingTestData: EncodingTestData<TDecoded, TEncoded, TContext>,
 	assertEquivalent: (a: TDecoded, b: TDecoded) => void = assertDeepEqual,
-	versions?: FormatVersion[],
+	minVersion?: FormatVersion,
+	maxVersion?: FormatVersion,
 ): void {
-	const versionsToTest = versions ?? family.getSupportedFormats();
+	const versionsToTest = family.getSupportedFormats();
 	for (const version of versionsToTest) {
+		if (minVersion !== undefined && (version === undefined || version < minVersion)) {
+			continue;
+		}
+
+		if (maxVersion !== undefined && version !== undefined && version > maxVersion) {
+			continue;
+		}
+
 		describe(`version ${version}`, () => {
 			const codec = family.resolve(version);
 			// A common pattern to avoid validating the same portion of encoded data multiple times

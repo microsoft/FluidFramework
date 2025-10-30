@@ -211,10 +211,11 @@ export function testCodec() {
 			family,
 			testCases,
 			assertEquivalentSummaryDataIgnoreOriginator,
-			[1, 2, 3, 4],
+			undefined,
+			4,
 		);
 
-		makeEncodingTestSuite(family, testCases, undefined, [5]);
+		makeEncodingTestSuite(family, testCases, undefined, 5);
 
 		// TODO: testing EditManagerSummarizer class itself, specifically for attachment and normal summaries.
 		// TODO: format compatibility tests to detect breaking of existing documents.
