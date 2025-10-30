@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/app-integration-live-schema-upgrade",
-	"version": "2.70.0",
+	"version": "2.71.0",
 	"private": true,
 	"description": "Example application that demonstrates how to add a data object to a live container.",
 	"homepage": "https://fluidframework.com",
@@ -60,7 +60,7 @@
 		"@types/jest-environment-puppeteer": "workspace:~",
 		"@types/node": "^18.19.0",
 		"cross-env": "^7.0.3",
-		"eslint": "~8.57.0",
+		"eslint": "~8.57.1",
 		"expect-puppeteer": "^9.0.2",
 		"html-webpack-plugin": "^5.6.0",
 		"jest": "^29.6.2",
@@ -89,8 +89,6 @@
 		}
 	},
 	"typeValidation": {
-		"disabled": true,
-		"broken": {},
-		"entrypoint": "internal"
+		"disabled": true
 	}
 }

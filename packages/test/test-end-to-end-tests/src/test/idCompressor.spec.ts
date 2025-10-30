@@ -28,13 +28,13 @@ import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { delay } from "@fluidframework/core-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
-import { type ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	IIdCompressor,
 	SessionSpaceCompressedId,
 	StableId,
 } from "@fluidframework/id-compressor";
 import { ISharedMap } from "@fluidframework/map/internal";
+import type { IRuntimeMessageCollection } from "@fluidframework/runtime-definitions/internal";
 import {
 	DataObjectFactoryType,
 	ITestContainerConfig,
@@ -642,13 +642,18 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		sharedMapContainer2.set("key", "first");
 
 		let invokedCount = 0;
-		const superProcessCore = (sharedMapContainer1 as any).processCore.bind(
-			sharedMapContainer1,
-		);
-		(sharedMapContainer1 as any).processCore = (
-			message: ISequencedDocumentMessage,
-			local: boolean,
-			localOpMetadata: unknown,
+
+		// This hack overrides the processMessagesCore function in SharedMap. While creating this type isn't
+		// type safe, it's slightly better than casting to any.
+		type ISharedMapWithPrivates = ISharedMap & {
+			processMessagesCore: (messageCollection: IRuntimeMessageCollection) => void;
+		};
+
+		const superProcessMessagesCore = (
+			sharedMapContainer1 as ISharedMapWithPrivates
+		).processMessagesCore.bind(sharedMapContainer1);
+		(sharedMapContainer1 as ISharedMapWithPrivates).processMessagesCore = (
+			messageCollection: IRuntimeMessageCollection,
 		) => {
 			if (invokedCount === 0) {
 				// Force reentrancy during first op processing to cause batch manager rebase (which should skip rebasing allocation ops)
@@ -657,7 +662,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 				simulateAllocation(sharedMapContainer1);
 				sharedMapContainer1.set("key", "reentrant2");
 			}
-			superProcessCore(message, local, localOpMetadata);
+			superProcessMessagesCore(messageCollection);
 			invokedCount++;
 		};
 

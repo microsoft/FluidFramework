@@ -197,6 +197,15 @@ export function chunkFieldSingle(
 	policy: ChunkCompressor,
 ): TreeChunk {
 	const chunks = chunkField(cursor, policy);
+	return combineChunks(chunks);
+}
+
+/**
+ * Create a single TreeChunk from an array of TreeChunks.
+ * @remarks
+ * This takes ownership of the provided TreeChunk references, and returns an owned referenced.
+ */
+export function combineChunks(chunks: TreeChunk[]): TreeChunk {
 	if (chunks.length === 1) {
 		return chunks[0] ?? oob();
 	}

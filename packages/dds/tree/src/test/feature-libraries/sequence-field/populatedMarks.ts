@@ -23,7 +23,7 @@ export type PopulatedMark = Populated<CellMark<Populated<MarkEffect>>>;
 /**
  * Generates a list of marks with all fields populated.
  *
- * @remarks - New objects are generated every time this function is called. This is to ensure that stable IDs are
+ * @remarks New objects are generated every time this function is called. This is to ensure that stable IDs are
  * generated when appropriate.
  */
 export function generatePopulatedMarks(idCompressor: IIdCompressor): PopulatedMark[] {

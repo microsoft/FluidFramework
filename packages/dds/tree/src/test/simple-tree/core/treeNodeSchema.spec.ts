@@ -87,7 +87,7 @@ const schema = new SchemaFactory("com.example");
 	}
 
 	// Class that implements both TreeNodeSchemaNonClass and TreeNodeSchemaNonClass
-	class CustomizedBoth extends objectSchema("B", { x: [schema.number] }, true, false) {
+	class CustomizedBoth extends objectSchema("B", { x: [schema.number] }, true, {}) {
 		public customized = true;
 	}
 

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/ai-collab",
-	"version": "2.70.0",
+	"version": "2.71.0",
 	"private": true,
 	"description": "Example app that showcases the experimental package for AI collaboration in Fluid-based applications.",
 	"homepage": "https://fluidframework.com",
@@ -54,7 +54,7 @@
 		"@mui/material": "^6.2.1",
 		"@types/react": "^18.3.11",
 		"@types/react-dom": "^18.3.0",
-		"eslint": "~8.57.0",
+		"eslint": "~8.57.1",
 		"fluid-framework": "workspace:~",
 		"mui": "^0.0.1",
 		"next": "^14.2.27",
@@ -69,8 +69,6 @@
 		"uuid": "^11.1.0"
 	},
 	"typeValidation": {
-		"disabled": true,
-		"broken": {},
-		"entrypoint": "legacy"
+		"disabled": true
 	}
 }

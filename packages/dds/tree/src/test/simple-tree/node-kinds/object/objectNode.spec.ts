@@ -355,13 +355,8 @@ describeHydration(
 					foo: schemaFactory.optional(schemaFactory.number),
 				}) {}
 				const n = init(Schema, { foo: 0 });
-				assert.throws(
-					() => {
-						// Since we do not have exactOptionalPropertyTypes enabled, this compiles, but should error at runtime:
-						delete n.foo;
-					},
-					validateUsageError(/delete operator/),
-				);
+				delete n.foo;
+				assert.equal(n.foo, undefined);
 			});
 
 			it("assigning identifier errors", () => {

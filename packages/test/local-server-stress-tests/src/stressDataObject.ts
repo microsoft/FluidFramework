@@ -14,7 +14,7 @@ import {
 	loadContainerRuntime,
 	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
-// eslint-disable-next-line import-x/no-deprecated
+// eslint-disable-next-line import/no-deprecated
 import type { IContainerRuntimeWithResolveHandle_Deprecated } from "@fluidframework/container-runtime-definitions/internal";
 import type {
 	IFluidHandle,
@@ -22,20 +22,17 @@ import type {
 	IFluidLoadable,
 } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
-import type {
-	IChannel,
-	// eslint-disable-next-line import-x/no-deprecated
-	IFluidDataStoreRuntimeExperimental,
-} from "@fluidframework/datastore-definitions/internal";
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 // Valid export as per package.json export map
-// eslint-disable-next-line import-x/no-internal-modules
+// eslint-disable-next-line import/no-internal-modules
 import { modifyClusterSize } from "@fluidframework/id-compressor/internal/test-utils";
 import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
+import { type StageControlsAlpha } from "@fluidframework/runtime-definitions/internal";
 import {
+	RuntimeHeaders,
+	toFluidHandleInternal,
 	asLegacyAlpha,
-	type StageControlsAlpha,
-} from "@fluidframework/runtime-definitions/internal";
-import { RuntimeHeaders, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
+} from "@fluidframework/runtime-utils/internal";
 import { timeoutAwait } from "@fluidframework/test-utils/internal";
 
 import { ddsModelMap } from "./ddsModels.js";
@@ -182,8 +179,7 @@ export class StressDataObject extends DataObject {
 	}
 
 	public get isDirty(): boolean | undefined {
-		// eslint-disable-next-line import-x/no-deprecated
-		return (this.runtime as IFluidDataStoreRuntimeExperimental).isDirty;
+		return asLegacyAlpha(this.runtime).isDirty;
 	}
 }
 
@@ -211,7 +207,7 @@ export class DefaultStressDataObject extends StressDataObject {
 	private readonly _locallyCreatedObjects: ContainerObjects[] = [];
 	public async getContainerObjects(): Promise<readonly Readonly<ContainerObjects>[]> {
 		const containerObjects: Readonly<ContainerObjects>[] = [...this._locallyCreatedObjects];
-		const containerRuntime = // eslint-disable-next-line import-x/no-deprecated
+		const containerRuntime = // eslint-disable-next-line import/no-deprecated
 			this.context.containerRuntime as IContainerRuntimeWithResolveHandle_Deprecated;
 		for (const [url, entry] of this.containerObjectMap as any as [
 			string,

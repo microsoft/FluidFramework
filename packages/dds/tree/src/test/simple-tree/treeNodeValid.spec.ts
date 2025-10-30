@@ -93,7 +93,6 @@ describe("TreeNodeValid", () => {
 			}
 
 			public static readonly childTypes: ReadonlySet<TreeNodeSchema> = new Set();
-			public static readonly childAnnotatedAllowedTypes = [];
 
 			public override get [typeNameSymbol](): string {
 				throw new Error("Method not implemented.");
@@ -174,7 +173,6 @@ describe("TreeNodeValid", () => {
 			public static readonly info = numberSchema;
 			public static readonly implicitlyConstructable: false;
 			public static readonly childTypes: ReadonlySet<TreeNodeSchema> = new Set();
-			public static readonly childAnnotatedAllowedTypes = [];
 
 			public static override buildRawNode<T2>(
 				this: typeof TreeNodeValid<T2>,
@@ -240,7 +238,6 @@ describe("TreeNodeValid", () => {
 			public static readonly info = numberSchema;
 			public static readonly implicitlyConstructable: false;
 			public static readonly childTypes: ReadonlySet<TreeNodeSchema> = new Set();
-			public static readonly childAnnotatedAllowedTypes = [];
 
 			public static override buildRawNode<T2>(
 				this: typeof TreeNodeValid<T2>,

@@ -8,7 +8,11 @@ module.exports = {
 	parserOptions: {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
-	rules: {},
+	rules: {
+		// FIXME: temporarily disabled because of crashes in typescript-eslint on destructuring in promise chains.
+		// See: channelCollection.ts:1070
+		"@typescript-eslint/unbound-method": "off",
+	},
 	overrides: [
 		{
 			// Rules only for test files

@@ -1004,6 +1004,7 @@ export abstract class FluidDataStoreContext
 		validateDatastoreCompatibility(
 			maybeDataStoreCompatDetails.ILayerCompatDetails,
 			this.dispose.bind(this),
+			this.mc.logger,
 		);
 
 		// And now mark the runtime active

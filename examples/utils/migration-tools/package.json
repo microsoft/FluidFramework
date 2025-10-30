@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/migration-tools",
-	"version": "2.70.0",
+	"version": "2.71.0",
 	"private": true,
 	"description": "Tools for migrating data",
 	"homepage": "https://fluidframework.com",
@@ -89,13 +89,11 @@
 		"@microsoft/api-extractor": "7.52.11",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
-		"eslint": "~8.57.0",
+		"eslint": "~8.57.1",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"disabled": true,
-		"broken": {},
-		"entrypoint": "internal"
+		"disabled": true
 	}
 }
