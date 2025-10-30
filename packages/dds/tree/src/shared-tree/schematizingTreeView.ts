@@ -71,6 +71,7 @@ import {
 
 import { canInitialize, initialize, initializerFromChunk } from "./schematizeTree.js";
 import type { ITreeCheckout, TreeCheckout } from "./treeCheckout.js";
+import type { TreeBranchAlpha } from "../simple-tree/index.js";
 
 /**
  * Creating multiple tree views from the same checkout is not supported. This slot is used to detect if one already
@@ -513,15 +514,16 @@ export class SchematizingSimpleTreeView<
 
 	// #region Branching
 
-	public fork(): ReturnType<TreeBranch["fork"]> & SchematizingSimpleTreeView<TRootSchema> {
+	public fork(): ReturnType<TreeBranchAlpha["fork"]> &
+		SchematizingSimpleTreeView<TRootSchema> {
 		return this.checkout.branch().viewWith(this.config);
 	}
 
-	public merge(context: TreeBranch, disposeMerged = true): void {
+	public merge(context: TreeBranchAlpha, disposeMerged = true): void {
 		this.checkout.merge(getCheckout(context), disposeMerged);
 	}
 
-	public rebaseOnto(context: TreeBranch): void {
+	public rebaseOnto(context: TreeBranchAlpha): void {
 		getCheckout(context).rebase(this.checkout);
 	}
 
