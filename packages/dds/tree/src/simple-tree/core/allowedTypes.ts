@@ -4,7 +4,7 @@
  */
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { assert, Lazy } from "@fluidframework/core-utils/internal";
+import { Lazy } from "@fluidframework/core-utils/internal";
 
 import {
 	type ErasedBaseType,
@@ -332,7 +332,7 @@ export class AnnotatedAllowedTypesInternal<
 	public static create<const T extends readonly AnnotatedAllowedType[]>(
 		types: T,
 		metadata: AllowedTypesMetadata = {},
-	): AnnotatedAllowedTypesInternal<T> & AllowedTypesFull<T> {
+	): AnnotatedAllowedTypesInternal<Readonly<T>> & AllowedTypesFull<Readonly<T>> {
 		const result = new AnnotatedAllowedTypesInternal(types, metadata);
 		return result as typeof result & UnannotateAllowedTypesList<T>;
 	}
@@ -340,7 +340,8 @@ export class AnnotatedAllowedTypesInternal<
 	public static createUnannotated<const T extends AllowedTypes>(
 		types: T,
 		metadata: AllowedTypesMetadata = {},
-	): AnnotatedAllowedTypesInternal & T {
+	): AnnotatedAllowedTypesInternal & Readonly<T> {
+		Object.freeze(types);
 		const annotatedTypes: AnnotatedAllowedType[] = types.map(normalizeToAnnotatedAllowedType);
 		const result = AnnotatedAllowedTypesInternal.create(annotatedTypes, metadata);
 		return result as typeof result & T;
@@ -349,6 +350,7 @@ export class AnnotatedAllowedTypesInternal<
 	public static createMixed<
 		const T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[],
 	>(types: T, metadata: AllowedTypesMetadata = {}): AllowedTypesFullFromMixed<T> {
+		Object.freeze(types);
 		const annotatedTypes: AnnotatedAllowedType[] = types.map(normalizeToAnnotatedAllowedType);
 		const result = AnnotatedAllowedTypesInternal.create(annotatedTypes, metadata);
 		return result as AllowedTypesFullFromMixed<T>;
@@ -524,14 +526,9 @@ export function normalizeAllowedTypesInternal(
 	// Adding this cache improved the performance of the "large recursive union" test (which mostly just constructs a TreeConfiguration) by ~5 times.
 	// This cache is strictly a performance optimization: it is not required for correctness.
 	return getOrCreate(cachedNormalize, type, () => {
-		// Due to more specific internal type, the above does not narrow sufficiently, so more narrowing is needed.
-		// It is possible this will give a false error if a TreeNodeSchema which matches this check is used.
-		assert(
-			!("types" in type && "metadata" in type),
-			0xc7d /* invalid AnnotatedAllowedTypes */,
-		);
-
-		const annotatedTypes: AnnotatedAllowedType[] = (isReadonlyArray(type) ? type : [type]).map(
+		const inputArray = isReadonlyArray(type) ? type : [type];
+		Object.freeze(inputArray);
+		const annotatedTypes: AnnotatedAllowedType[] = inputArray.map(
 			normalizeToAnnotatedAllowedType,
 		);
 
@@ -637,8 +634,8 @@ export type TreeNodeFromImplicitAllowedTypes<
  * This type exists only to be linked from documentation to provide a single linkable place to document some details of
  * "Input" types and how they handle schema.
  *
- * When a schema is used to describe data which is an input into an API, the API is {@link https://en.wikipedia.org/wiki/Covariance_and_contravariance_(computer_science | contravariant}) over the schema.
- * (See also, {@link https://www.typescriptlang.org/docs/handbook/2/generics.html#variance-annotations | TypeScript Variance Annotations}).
+ * When a schema is used to describe data which is an input into an API, the API is {@link https://en.wikipedia.org/wiki/Type_variance | contravariant}) over the schema.
+ * (See also {@link https://www.typescriptlang.org/docs/handbook/2/generics.html#variance-annotations | TypeScript Variance Annotations}).
  *
  * Since these schema are expressed using TypeScript types, it is possible for the user of the API to provide non-exact values of these types which has implications that depended on the variance.
  *

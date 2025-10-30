@@ -568,4 +568,40 @@ describe("allowedTypes", () => {
 			type X7 = InsertableTreeFieldFromImplicitField<typeof Canvas.info.stuff>;
 		});
 	});
+
+	// If derived data is computed based on an allowed type array, then modifications to that array would cause the derived data to become invalid.
+	// As there is no invalidation mechanism, this would lead to incorrect behavior, and is prevented by freezing the arrays when the derived data is computed.
+	// These are glass box tests: they are testing that the cases where the code currently derives data from the arrays results in the arrays being frozen.
+	// Future changes could be made to delay both the freezing and the computation of the derived data:
+	// if such changes are made these tests will need to be updated.
+	// If done, these tests may need updates to instead test that modifying the arrays does not expose incorrect derived data.
+	describe("freezes inputs producing derived data", () => {
+		it("AnnotatedAllowedTypesInternal.create", () => {
+			const input = [{ type: stringSchema, metadata: {} }];
+			const result = AnnotatedAllowedTypesInternal.create(input);
+			assert(Object.isFrozen(input));
+			assert.throws(() => {
+				// @ts-expect-error Array should be readonly, so this error is good.
+				result.push(stringSchema);
+			}, "TypeError: result.push is not a function");
+		});
+
+		it("normalizeAllowedTypes", () => {
+			const input = [stringSchema];
+			const _ = normalizeAllowedTypes(input);
+			assert(Object.isFrozen(input));
+		});
+
+		it("AnnotatedAllowedTypesInternal.createUnannotated", () => {
+			const input = [stringSchema];
+			const _ = AnnotatedAllowedTypesInternal.createUnannotated(input);
+			assert(Object.isFrozen(input));
+		});
+
+		it("AnnotatedAllowedTypesInternal.createMixed", () => {
+			const input = [stringSchema];
+			const _ = AnnotatedAllowedTypesInternal.createMixed(input);
+			assert(Object.isFrozen(input));
+		});
+	});
 });
