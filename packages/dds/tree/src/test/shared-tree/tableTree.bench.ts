@@ -32,9 +32,6 @@ import {
  * {@link runBenchmark} configuration.
  */
 interface BenchmarkConfig extends BenchmarkTimingOptions, TableBenchmarkOptions {
-	/**
-	 * {@inheritDoc @fluid-tools/benchmark#BenchmarkTimingOptions.maxBenchmarkDurationSeconds}
-	 */
 	readonly maxBenchmarkDurationSeconds: number;
 }
 

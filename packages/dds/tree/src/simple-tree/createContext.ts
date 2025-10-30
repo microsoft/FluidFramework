@@ -9,7 +9,6 @@ import { getOrCreate } from "../util/index.js";
 import {
 	Context,
 	getTreeNodeSchemaPrivateData,
-	normalizeAndEvaluateAnnotatedAllowedTypes,
 	UnhydratedContext,
 	type TreeNodeSchema,
 	type TreeNodeSchemaInitializedData,
@@ -50,8 +49,6 @@ export function getTreeNodeSchemaInitializedData(
 	return {
 		...handler,
 		context: getUnhydratedContext(schema),
-		childAnnotatedAllowedTypes: data.childAnnotatedAllowedTypes.map(
-			normalizeAndEvaluateAnnotatedAllowedTypes,
-		),
+		childAllowedTypes: data.childAllowedTypes.map((t) => t.evaluate()),
 	};
 }

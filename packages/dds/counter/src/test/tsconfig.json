@@ -4,6 +4,8 @@
 		"rootDir": "./",
 		"outDir": "../../lib/test",
 		"types": ["mocha", "node"],
+		"declaration": true,
+		"declarationMap": true,
 	},
 	"include": ["./**/*"],
 	"references": [

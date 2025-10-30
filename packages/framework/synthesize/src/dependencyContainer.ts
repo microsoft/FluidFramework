@@ -36,7 +36,7 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
 	 * Add a new provider
 	 * @param type - Name of the Type T being provided
 	 * @param provider - A provider that will resolve the T correctly when asked
-	 * @throws - If passing a type that's already registered
+	 * @throws If passing a type that's already registered
 	 */
 	public register<T extends keyof TMap = keyof TMap>(
 		type: T,

@@ -16,20 +16,20 @@ import type {
 	IChannelStorageService,
 	IDeltaConnection,
 } from "@fluidframework/datastore-definitions/internal";
-import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type {
 	IExperimentalIncrementalSummaryContext,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
+	IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import type { IFluidSerializer } from "../serializer.js";
 import { SharedObject } from "../sharedObject.js";
 
-/* eslint-disable-next-line @typescript-eslint/ban-types --
+/* eslint-disable-next-line @typescript-eslint/ban-types, @typescript-eslint/no-unsafe-function-type --
 	Trying to use specific function signatures here instead of Function makes it so some of the properties of
-	OverridableType below (summarizeCore, loadCore, processCore) end up not typed correctly */
+	OverridableType below (summarizeCore, loadCore, processMessagesCore) end up not typed correctly */
 type Overridable<T> = T extends Function | string | number | undefined | []
 	? T
 	: {
@@ -64,11 +64,9 @@ type OverridableType = Overridable<{
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined,
 	) => ISummaryTreeWithStats;
 	loadCore: (this: SharedObject, services: IChannelStorageService) => Promise<void>;
-	processCore: (
+	processMessagesCore: (
 		this: SharedObject,
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
+		messagesCollection: IRuntimeMessageCollection,
 	) => void;
 	onDisconnect: (this: SharedObject) => void;
 	applyStashedOp: (this: SharedObject, content: unknown) => void;
@@ -82,7 +80,7 @@ function createTestSharedObject(overrides: OverridableType): {
 	class TestSharedObject extends SharedObject {
 		protected summarizeCore = overrides?.summarizeCore?.bind(this);
 		protected loadCore = overrides?.loadCore?.bind(this);
-		protected processCore = overrides?.processCore?.bind(this);
+		protected processMessagesCore = overrides?.processMessagesCore?.bind(this);
 		protected onDisconnect = overrides?.onDisconnect?.bind(this);
 		protected applyStashedOp = overrides?.applyStashedOp?.bind(this);
 		protected didAttach =

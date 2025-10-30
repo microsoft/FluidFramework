@@ -487,7 +487,7 @@ export interface ISequenceIntervalCollection
 	 * @param start - interval start position (inclusive)
 	 * @param end - interval end position (exclusive)
 	 * @param props - properties of the interval
-	 * @returns - the created interval
+	 * @returns the created interval
 	 * @remarks See documentation on {@link SequenceInterval} for comments on
 	 * interval endpoint semantics: there are subtleties with how the current
 	 * half-open behavior is represented.
@@ -626,7 +626,7 @@ export interface ISequenceIntervalCollection
 	): void;
 
 	/**
-	 * @deprecated - Users must manually attach the corresponding interval index to utilize this functionality, for instance:
+	 * @deprecated Users must manually attach the corresponding interval index to utilize this functionality, for instance:
 	 *
 	 * ```typescript
 	 * const overlappingIntervalsIndex = createOverlappingIntervalsIndex(sharedString);
@@ -645,7 +645,7 @@ export interface ISequenceIntervalCollection
 	map(fn: (interval: SequenceInterval) => void): void;
 
 	/**
-	 * @deprecated - due to the forthcoming change where the endpointIndex will no longer be
+	 * @deprecated due to the forthcoming change where the endpointIndex will no longer be
 	 * automatically added to the collection. Users are advised to independently attach the
 	 * index to the collection and utilize the API accordingly, for instance:
 	 * ```typescript
@@ -658,7 +658,7 @@ export interface ISequenceIntervalCollection
 	previousInterval(pos: number): SequenceInterval | undefined;
 
 	/**
-	 * @deprecated - due to the forthcoming change where the endpointIndex will no longer be
+	 * @deprecated due to the forthcoming change where the endpointIndex will no longer be
 	 * automatically added to the collection. Users are advised to independently attach the
 	 * index to the collection and utilize the API accordingly, for instance:
 	 * ```typescript

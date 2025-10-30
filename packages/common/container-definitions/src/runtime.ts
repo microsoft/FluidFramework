@@ -26,7 +26,6 @@ import type {
 	ISnapshotFetchOptions,
 	FetchSource,
 	IDocumentStorageServicePolicies,
-	ISummaryHandle,
 } from "@fluidframework/driver-definitions/internal";
 
 import type { IAudience } from "./audience.js";
@@ -59,6 +58,96 @@ export enum AttachState {
 }
 
 /**
+ * Defines the connection status of the container.
+ *
+ * @legacy @beta
+ * @sealed
+ */
+export interface ConnectionStatusTemplate {
+	connectionState: ConnectionState;
+	/**
+	 * True if the runtime is currently allowed to send ops.
+	 */
+	canSendOps: boolean;
+	/**
+	 * True if the container is in readonly mode.
+	 */
+	readonly: boolean;
+}
+
+/**
+ * Status for an establishing connection.
+ *
+ * @legacy @beta
+ * @sealed
+ */
+export interface ConnectionStatusEstablishingConnection extends ConnectionStatusTemplate {
+	connectionState: ConnectionState.EstablishingConnection;
+	canSendOps: false;
+}
+
+/**
+ * Status for an in-progress connection that is catching up to latest op state.
+ *
+ * @legacy @beta
+ * @sealed
+ */
+export interface ConnectionStatusCatchingUp extends ConnectionStatusTemplate {
+	connectionState: ConnectionState.CatchingUp;
+	/**
+	 * The ID of the client connection that is connecting.
+	 */
+	pendingClientConnectionId: string;
+	canSendOps: false;
+}
+
+/**
+ * Status for a full connection.
+ *
+ * @legacy @beta
+ * @sealed
+ */
+export interface ConnectionStatusConnected extends ConnectionStatusTemplate {
+	connectionState: ConnectionState.Connected;
+	/**
+	 * The ID of the client connection that is connected.
+	 */
+	clientConnectionId: string;
+	canSendOps: boolean;
+}
+
+/**
+ * Status for a disconnected connection.
+ *
+ * @legacy @beta
+ * @sealed
+ */
+export interface ConnectionStatusDisconnected extends ConnectionStatusTemplate {
+	connectionState: ConnectionState.Disconnected;
+	canSendOps: false;
+	/**
+	 * The ID of the client connection that was most recently connecting (catching up).
+	 */
+	priorPendingClientConnectionId: string | undefined;
+	/**
+	 * The ID of the client connection that was most recently connected.
+	 */
+	priorConnectedClientConnectionId: string | undefined;
+}
+
+/**
+ * Connection status of the container.
+ *
+ * @legacy @beta
+ * @sealed
+ */
+export type ConnectionStatus =
+	| ConnectionStatusEstablishingConnection
+	| ConnectionStatusCatchingUp
+	| ConnectionStatusConnected
+	| ConnectionStatusDisconnected;
+
+/**
  * The IRuntime represents an instantiation of a code package within a Container.
  * Primarily held by the ContainerContext to be able to interact with the running instance of the Container.
  *
@@ -69,8 +158,23 @@ export interface IRuntime extends IDisposable {
 	 * Notifies the runtime of a change in the connection state
 	 * @param canSendOps - true if the runtime is allowed to send ops
 	 * @param clientId - the ID of the client that is connecting or disconnecting
+	 *
+	 * @remarks
+	 * This is deprecated when used with `@fluidframework/container-loader` v2.63
+	 * and later. Implement {@link IRuntime.setConnectionStatus}. Then this method
+	 * will not be called, when using newer container-loader.
+	 *
+	 * Note: when {@link IRuntime.setConnectionStatus} is implemented, there will
+	 * not be a call exactly when Container loads as happens currently without it.
 	 */
 	setConnectionState(canSendOps: boolean, clientId?: string);
+
+	/**
+	 * Notifies the runtime of a change in the connection state.
+	 *
+	 * @remarks This supersedes {@link IRuntime.setConnectionState}.
+	 */
+	setConnectionStatus?(status: ConnectionStatus): void;
 
 	/**
 	 * Processes the given op (message)
@@ -144,28 +248,9 @@ export interface IBatchMessage {
  */
 export interface IContainerStorageService {
 	/**
-	 * Whether or not the object has been disposed.
-	 * If true, the object should be considered invalid, and its other state should be disregarded.
-	 *
-	 * @deprecated - This API is deprecated and will be removed in a future release. No replacement is planned as
-	 * it is unused in the Runtime layer.
-	 */
-	readonly disposed?: boolean;
-
-	/**
-	 * Dispose of the object and its resources.
-	 * @param error - Optional error indicating the reason for the disposal, if the object was
-	 * disposed as the result of an error.
-	 *
-	 * @deprecated - This API is deprecated and will be removed in a future release. No replacement is planned as
-	 * it is unused in the Runtime layer.
-	 */
-	dispose?(error?: Error): void;
-
-	/**
 	 * Policies implemented/instructed by driver.
 	 *
-	 * @deprecated - This will be removed in a future release. The Runtime layer only needs `maximumCacheDurationMs`
+	 * @deprecated This will be removed in a future release. The Runtime layer only needs `maximumCacheDurationMs`
 	 * policy which is added as a separate property.
 	 */
 	readonly policies?: IDocumentStorageServicePolicies | undefined;
@@ -230,15 +315,6 @@ export interface IContainerStorageService {
 	 * Returns the uploaded summary handle.
 	 */
 	uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
-
-	/**
-	 * Retrieves the commit that matches the packfile handle. If the packfile has already been committed and the
-	 * server has deleted it this call may result in a broken promise.
-	 *
-	 * @deprecated - This API is deprecated and will be removed in a future release. No replacement is planned as
-	 * it is unused in the Runtime and below layers.
-	 */
-	downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
 }
 
 /**
@@ -302,6 +378,16 @@ export interface IContainerContext {
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	readonly quorum: IQuorumClients;
 	readonly audience: IAudience;
+	/**
+	 * Signal-based audience provides a view of the audience that only relies
+	 * on system signals which will be updated more quickly than
+	 * {@link IContainerContext#audience} that relies on ops for write clients.
+	 * Being signal-based the write members are inherently less reliable than
+	 * {@link IContainerContext#audience}.
+	 *
+	 * @system
+	 */
+	readonly signalAudience?: IAudience;
 	readonly loader: ILoader;
 	// The logger implementation, which would support tagged events, should be provided by the loader.
 	readonly taggedLogger: ITelemetryBaseLogger;
@@ -330,7 +416,7 @@ export interface IContainerContext {
 	updateDirtyContainerState(dirty: boolean): void;
 
 	/**
-	 * @deprecated - This has been deprecated. It was used internally and there is no replacement.
+	 * @deprecated This has been deprecated. It was used internally and there is no replacement.
 	 */
 	readonly supportedFeatures?: ReadonlyMap<string, unknown>;
 

@@ -30,7 +30,7 @@ import type { SessionSpaceCompressedId } from "@fluidframework/id-compressor/int
 import { SharedMap } from "@fluidframework/map/internal";
 import {
 	asLegacyAlpha,
-	type StageControlsExperimental,
+	type StageControlsInternal,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	encodeHandleForSerialization,
@@ -116,7 +116,7 @@ class DataObjectWithStagingMode extends DataObject {
 		return state;
 	}
 
-	public enterStagingMode() {
+	public enterStagingMode(): StageControlsInternal {
 		assert(
 			this.containerRuntimeExp.enterStagingMode !== undefined,
 			"enterStagingMode must be defined",
@@ -619,8 +619,7 @@ describe("Staging Mode", () => {
 			const reSubmitSquashedSpy = sinon.spy(rootMap, "reSubmitSquashed" as keyof SharedObject);
 			const reSubmitCoreSpy = sinon.spy(rootMap, "reSubmitCore" as keyof SharedObject);
 
-			const stagingControls =
-				clients.original.dataObject.enterStagingMode() as StageControlsExperimental;
+			const stagingControls = clients.original.dataObject.enterStagingMode();
 			clients.original.dataObject.makeEdit("branch-only");
 
 			if (disconnectBeforeCommit) {

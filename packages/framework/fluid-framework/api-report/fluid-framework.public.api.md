@@ -528,6 +528,7 @@ export interface LeafSchema<Name extends string, T extends TreeLeafValue> extend
 // @public @sealed
 export interface Listenable<TListeners extends object> {
     off<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): void;
+    // (undocumented)
     on<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off;
 }
 

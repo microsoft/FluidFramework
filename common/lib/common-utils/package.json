@@ -118,7 +118,7 @@
 		"ts-node": "^10.9.1",
 		"typescript": "~5.4.5"
 	},
-	"packageManager": "pnpm@10.17.1+sha512.17c560fca4867ae9473a3899ad84a88334914f379be46d455cbf92e5cf4b39d34985d452d2583baf19967fa76cb5c17bc9e245529d0b98745721aa7200ecaf7a",
+	"packageManager": "pnpm@10.18.3+sha512.bbd16e6d7286fd7e01f6b3c0b3c932cda2965c06a908328f74663f10a9aea51f1129eea615134bf992831b009eabe167ecb7008b597f40ff9bc75946aadfb08d",
 	"fluidBuild": {
 		"branchReleaseTypes": {
 			"main": "minor",

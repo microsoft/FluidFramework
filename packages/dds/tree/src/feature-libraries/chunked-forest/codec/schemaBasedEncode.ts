@@ -35,6 +35,7 @@ import { type EncodedFieldBatch, type EncodedValueShape, SpecialField } from "./
 import type { IncrementalEncoder } from "./codecs.js";
 import { NodeShapeBasedEncoder } from "./nodeEncoder.js";
 import { defaultIncrementalEncodingPolicy } from "./incrementalEncodingPolicy.js";
+import { oneFromIterable } from "../../../util/index.js";
 
 /**
  * Encode data from `fieldBatch` in into an `EncodedChunk`.
@@ -87,7 +88,7 @@ export function getFieldEncoder(
 	storedSchema: StoredSchemaCollection,
 ): FieldEncoder {
 	const kind = context.fieldShapes.get(field.kind) ?? fail(0xb52 /* missing FieldKind */);
-	const type = oneFromSet(field.types);
+	const type = oneFromIterable(field.types);
 	const nodeEncoder =
 		type !== undefined ? nodeBuilder.nodeEncoderFromSchema(type) : anyNodeEncoder;
 	if (kind.multiplicity === Multiplicity.Single) {
@@ -169,18 +170,6 @@ export function getNodeEncoder(
 		return shape;
 	}
 	fail(0xb54 /* unsupported node kind */);
-}
-
-export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined {
-	if (set === undefined) {
-		return undefined;
-	}
-	if (set.size !== 1) {
-		return undefined;
-	}
-	for (const item of set) {
-		return item;
-	}
 }
 
 function valueShapeFromSchema(schema: ValueSchema | undefined): undefined | EncodedValueShape {

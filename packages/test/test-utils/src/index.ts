@@ -70,5 +70,3 @@ export {
 } from "./testContainerRuntimeFactoryWithDefaultDataStore.js";
 
 export { TestFluidObjectInternal } from "./testFluidObjectInternal.js";
-
-export { isUsageError } from "./errors.js";

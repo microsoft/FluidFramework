@@ -334,8 +334,8 @@ export class MapProperty extends IndexedCollectionBaseProperty {
 	 * If .get resolves to a ReferenceProperty, it will return the property that the ReferenceProperty
 	 * refers to.
 	 * @param {Object} in_options - parameter object
-	 * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS]- -
-	 * How should this function behave during reference resolution?
+	 * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS] - How
+	 * should this function behave during reference resolution?
 	 *
 	 * @return {BaseProperty | undefined} The entry in the collection or undefined
 	 * if none could be found

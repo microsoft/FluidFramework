@@ -128,3 +128,58 @@ export interface IThrottlingWarning extends IErrorBase {
 	readonly errorType: typeof FluidErrorTypes.throttlingError;
 	readonly retryAfterSeconds: number;
 }
+
+/**
+ * Symbol used to identify an error of type {@link ILayerIncompatibilityError}.
+ * @legacy @alpha
+ */
+export const layerIncompatibilityErrorSymbol: unique symbol = Symbol(
+	"LayerIncompatibilityError",
+);
+
+/**
+ * Usage error indicating that two Fluid layers are incompatible. For instance, if the Loader layer is
+ * not compatible with the Runtime layer, the container will be disposed with this error.
+ * @legacy @alpha
+ */
+export interface ILayerIncompatibilityError extends IErrorBase {
+	/**
+	 * {@inheritDoc IErrorBase.errorType}
+	 */
+	readonly errorType: typeof FluidErrorTypes.usageError;
+
+	/**
+	 * Symbol used to identify this error as a layer incompatibility error.
+	 */
+	readonly [layerIncompatibilityErrorSymbol]: true;
+	/**
+	 * The layer that is reporting the incompatibility.
+	 */
+	readonly layer: string;
+	/**
+	 * The layer that is incompatible with the reporting layer.
+	 */
+	readonly incompatibleLayer: string;
+	/**
+	 * The package version of the reporting layer.
+	 */
+	readonly layerVersion: string;
+	/**
+	 * The package version of the incompatible layer.
+	 */
+	readonly incompatibleLayerVersion: string;
+	/**
+	 * The number of months of compatibility requirements between the two layers as per the layer compatibility policy.
+	 */
+	readonly compatibilityRequirementsInMonths: number;
+	/**
+	 * The minimum actual difference in months between the release of the two layers.
+	 * Note that for layers with package versions older than 2.63.0, the actual difference may be higher than this value
+	 * because the difference reported is capped as per 2.63.0 where the compatibility enforcement was introduced.
+	 */
+	readonly actualDifferenceInMonths: number;
+	/**
+	 * Additional details about the incompatibility to be used for debugging purposes.
+	 */
+	readonly details: string;
+}

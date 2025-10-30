@@ -11,6 +11,9 @@ module.exports = {
 	rules: {
 		// TODO: Enabling this may require breaking changes.
 		"@typescript-eslint/consistent-indexed-object-style": "off",
+
+		// Disabled because the rule is crashing on this package - AB#51780
+		"@typescript-eslint/unbound-method": "off",
 	},
 	overrides: [
 		{

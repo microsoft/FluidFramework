@@ -20,7 +20,7 @@ export type {
 } from "./channel.js";
 export type {
 	IFluidDataStoreRuntime,
-	IFluidDataStoreRuntimeExperimental,
+	IFluidDataStoreRuntimeAlpha,
 	IFluidDataStoreRuntimeEvents,
 	IFluidDataStoreRuntimeInternalConfig,
 	IDeltaManagerErased,

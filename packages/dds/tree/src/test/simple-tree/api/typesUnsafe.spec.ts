@@ -21,6 +21,7 @@ type _check = requireTrue<areSafelyAssignable<MapInlined, ReadonlyMap<string, nu
 // UnannotateAllowedTypeUnsafe
 {
 	type num = UnannotateAllowedTypeUnsafe<typeof numberSchema>;
+	// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 	allowUnused<requireTrue<areSafelyAssignable<num, typeof numberSchema>>>;
 
 	const annotatedAllowedType = {
@@ -29,5 +30,6 @@ type _check = requireTrue<areSafelyAssignable<MapInlined, ReadonlyMap<string, nu
 	} satisfies AnnotatedAllowedTypeUnsafe;
 
 	type annotated = UnannotateAllowedTypeUnsafe<typeof annotatedAllowedType>;
+	// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 	allowUnused<requireTrue<areSafelyAssignable<annotated, typeof numberSchema>>>;
 }

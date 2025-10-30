@@ -10,7 +10,7 @@ import type { SimpleNodeSchemaBase } from "./simpleNodeSchemaBase.js";
 import type { TreeNode } from "./treeNode.js";
 import type { InternalTreeNode, Unhydrated } from "./types.js";
 import type { UnionToIntersection } from "../../util/index.js";
-import type { ImplicitAllowedTypes, AllowedTypesFullEvaluated } from "./allowedTypes.js";
+import type { AllowedTypesFullEvaluated, AllowedTypesFull } from "./allowedTypes.js";
 import type { Context } from "./context.js";
 import type { FieldKey, NodeData, TreeNodeStoredSchema } from "../../core/index.js";
 import type { UnhydratedFlexTreeField } from "./unhydratedFlexTree.js";
@@ -379,16 +379,11 @@ export interface TreeNodeSchemaPrivateData {
 	 * In this case "field" includes anything that is a field in the internal (flex-tree) abstraction layer.
 	 * This includes the content field for arrays, and all the fields for map nodes.
 	 * If this node does not have fields (and thus is a leaf), the array will be empty.
-	 *
-	 * This set cannot be used before the schema in it have been defined:
-	 * more specifically, when using lazy schema references (for example to make foreword references to schema which have not yet been defined),
-	 * users must wait until after the schema are defined to access this array.
-	 *
 	 * @privateRemarks
 	 * If this is stabilized, it will live alongside the childTypes property on {@link TreeNodeSchemaCore}.
 	 * @system
 	 */
-	readonly childAnnotatedAllowedTypes: readonly ImplicitAllowedTypes[];
+	readonly childAllowedTypes: readonly AllowedTypesFull[];
 
 	/**
 	 * Idempotent initialization function that pre-caches data and can dereference lazy schema references.
@@ -422,7 +417,7 @@ export interface TreeNodeSchemaInitializedData {
 	 * If this is stabilized, it will live alongside the childTypes property on {@link TreeNodeSchemaCore}.
 	 * @system
 	 */
-	readonly childAnnotatedAllowedTypes: readonly AllowedTypesFullEvaluated[];
+	readonly childAllowedTypes: readonly AllowedTypesFullEvaluated[];
 
 	/**
 	 * A {@link Context} which can be used for unhydrated nodes of this schema.

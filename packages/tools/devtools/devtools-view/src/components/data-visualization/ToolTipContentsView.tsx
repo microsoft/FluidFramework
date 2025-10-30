@@ -16,7 +16,7 @@ export interface ToolTipContentsViewProps {
 /**
  * Component to render the contents of a {@link ToolTipContentsViewProps}.
  * @param props - {@link ToolTipContentsViewProps}
- * @returns - a key-value pair of items as a list if `Record<string, VisualChildNode>`, a string otherwise.
+ * @returns a key-value pair of items as a list if `Record<string, VisualChildNode>`, a string otherwise.
  */
 export function ToolTipContentsView(props: ToolTipContentsViewProps): React.ReactElement {
 	const { contents } = props;

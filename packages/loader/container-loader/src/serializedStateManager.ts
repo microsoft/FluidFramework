@@ -598,7 +598,7 @@ export async function getLatestSnapshotInfo(
  * @param storageAdapter - The storage adapter providing methods to retrieve the snapshot.
  * @param supportGetSnapshotApi - a boolean indicating whether to use the fetchISnapshot or fetchISnapshotTree.
  * @param specifiedVersion - An optional version string specifying the version of the snapshot tree to fetch.
- * @returns - An ISnapshotTree and its version.
+ * @returns An ISnapshotTree and its version.
  */
 async function getSnapshot(
 	mc: MonitoringContext,
@@ -622,7 +622,7 @@ async function getSnapshot(
  * @param mc - The monitoring context.
  * @param storageAdapter - The storage adapter providing a getSnapshot method to retrieve the ISnapshot and version.
  * @param specifiedVersion - An optional version string specifying the version of the snapshot tree to fetch.
- * @returns - The fetched snapshot tree and its version.
+ * @returns The fetched snapshot tree and its version.
  */
 export async function fetchISnapshot(
 	mc: MonitoringContext,
@@ -658,7 +658,7 @@ export async function fetchISnapshot(
  * @param mc - The monitoring context.
  * @param storageAdapter - The storage adapter providing methods to retrieve the ISnapshotTree and version.
  * @param specifiedVersion - An optional version string specifying the version of the snapshot tree to fetch.
- * @returns - The fetched snapshot tree and its version.
+ * @returns The fetched snapshot tree and its version.
  */
 export async function fetchISnapshotTree(
 	mc: MonitoringContext,

@@ -30,6 +30,7 @@ export type Listeners<T extends object> = {
 	[P in (string | symbol) & keyof T as IsListener<T[P]> extends true ? P : never]: T[P];
 };
 
+/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive AB#50920 */
 /**
  * An object which allows the registration of listeners so that subscribers can be notified when an event happens.
  * @param TListeners - All the {@link Listeners | events} that this subscribable supports
@@ -47,6 +48,7 @@ export type Listeners<T extends object> = {
  * @sealed @public
  */
 export interface Listenable<TListeners extends object> {
+	/* eslint-enable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive
 	/**
 	 * Register an event listener.
 	 * @param eventName - The name of the event.

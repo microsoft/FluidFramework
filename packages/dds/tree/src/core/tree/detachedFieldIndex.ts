@@ -293,7 +293,10 @@ export class DetachedFieldIndex {
 					root: brand<ForestRootId>(root + i),
 					latestRelevantRevision: revision,
 				});
-				setInNestedMap(this.latestRelevantRevisionToFields, revision, root, nodeId);
+				setInNestedMap(this.latestRelevantRevisionToFields, revision, root + i, {
+					major: nodeId.major,
+					minor: nodeId.minor + i,
+				});
 			}
 		}
 		return root;

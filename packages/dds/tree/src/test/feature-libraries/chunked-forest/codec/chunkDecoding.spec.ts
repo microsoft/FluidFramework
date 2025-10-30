@@ -426,10 +426,10 @@ describe("chunkDecoding", () => {
 			chunksMap: Map<ChunkReferenceId, EncodedFieldBatch>,
 		): IncrementalDecoder {
 			return {
-				getEncodedIncrementalChunk: (referenceId: ChunkReferenceId): EncodedFieldBatch => {
+				decodeIncrementalChunk: (referenceId, chunkDecoder) => {
 					const batch = chunksMap.get(referenceId);
 					assert(batch !== undefined, `Chunk with reference ID ${referenceId} not found`);
-					return batch;
+					return chunkDecoder(batch);
 				},
 			};
 		}

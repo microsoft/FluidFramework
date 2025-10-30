@@ -17,6 +17,7 @@ import type {
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import type { ICompressionRuntimeOptions } from "../../compressionDefinitions.js";
 import { CompressionAlgorithms } from "../../compressionDefinitions.js";
@@ -1091,6 +1092,57 @@ describe("Outbox", () => {
 			);
 			assert.strictEqual(state.opsResubmitted, opsResubmitted, "unexpected opsResubmitted");
 		}
+
+		it("should not assert when flushing while reentrant with empty batches", () => {
+			const outbox = getOutbox({
+				context: getMockContext(),
+				opGroupingConfig: {
+					groupedBatchingEnabled: true,
+				},
+			});
+
+			// Mark context as reentrant
+			state.isReentrant = true;
+
+			// Flush with no messages - should not throw
+			assert.doesNotThrow(() => {
+				outbox.flush();
+			}, "Should not assert when flushing empty batches while reentrant");
+
+			validateCounts(0, 0, 0);
+		});
+
+		it("should assert when flushing while reentrant with non-empty batches", () => {
+			const outbox = getOutbox({
+				context: getMockContext(),
+				opGroupingConfig: {
+					groupedBatchingEnabled: true,
+				},
+			});
+
+			const messages = [createMessage(ContainerMessageType.FluidDataStoreOp, "0")];
+
+			// Submit a message (not reentrant)
+			state.isReentrant = false;
+			outbox.submit(messages[0]);
+
+			// Now mark context as reentrant and try to flush - should throw
+			state.isReentrant = true;
+
+			assert.throws(
+				() => outbox.flush(),
+				(error: Error) => {
+					return validateAssertionError(
+						error,
+						"Flushing must not happen while incoming changes are being processed",
+					);
+				},
+				"Should assert when flushing non-empty batches while reentrant",
+			);
+
+			// Verify nothing was submitted
+			validateCounts(0, 0, 0);
+		});
 
 		it("batch has reentrant ops, but grouped batching is off", () => {
 			const outbox = getOutbox({

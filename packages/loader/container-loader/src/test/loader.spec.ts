@@ -26,7 +26,7 @@ import { Container } from "../container.js";
 import { Loader } from "../loader.js";
 import type { IPendingDetachedContainerState } from "../serializedStateManager.js";
 
-import { failProxy, failSometimeProxy } from "./failProxy.js";
+import { AbsentProperty, failProxy, failSometimeProxy } from "./failProxy.js";
 import {
 	createTestCodeLoaderProxy,
 	createTestDocumentServiceFactoryProxy,
@@ -35,7 +35,7 @@ import {
 const documentServiceFactoryFailProxy = failSometimeProxy<
 	IDocumentServiceFactory & IProvideLayerCompatDetails
 >({
-	ILayerCompatDetails: undefined,
+	ILayerCompatDetails: AbsentProperty,
 });
 
 describe("loader unit test", () => {
@@ -189,5 +189,25 @@ describe("loader unit test", () => {
 			scope: {},
 			subLogger: logger.logger,
 		});
+	});
+
+	it("can attach with `IRuntime` only implementing `setConnectionState`", async () => {
+		const resolvedUrl: IResolvedUrl = {
+			id: "none",
+			endpoints: {},
+			tokens: {},
+			type: "fluid",
+			url: "none",
+		};
+		const urlResolver = failSometimeProxy<IUrlResolver>({
+			resolve: async () => resolvedUrl,
+		});
+		const loader = new Loader({
+			codeLoader: createTestCodeLoaderProxy({ runtimeWithout_setConnectionStatus: true }),
+			documentServiceFactory: createTestDocumentServiceFactoryProxy(resolvedUrl),
+			urlResolver,
+		});
+		const container = await loader.createDetachedContainer({ package: "none" });
+		await container.attach({ url: "none" });
 	});
 });

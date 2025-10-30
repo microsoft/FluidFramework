@@ -131,6 +131,7 @@ class RouterliciousRestWrapper extends RestWrapper {
 		private readonly getAuthorizationHeader: AuthorizationHeaderGetter,
 		private readonly useRestLess: boolean,
 		baseurl?: string,
+		// eslint-disable-next-line @typescript-eslint/prefer-readonly -- false positive, modified in getToken()
 		private tokenP?: Promise<ITokenResponse>,
 		defaultQueryString: QueryStringType = {},
 	) {

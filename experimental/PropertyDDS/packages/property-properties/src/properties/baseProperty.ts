@@ -688,7 +688,7 @@ export abstract class BaseProperty {
 	/**
 	 * Return a JSON representation of the properties and its children.
 	 */
-	protected _toJson(): Object {
+	protected _toJson(): object {
 		var json = {
 			id: this.getId(),
 			context: this._context,
@@ -1063,6 +1063,7 @@ export abstract class BaseProperty {
 	 * @returns Returns BaseProperty.BREAK_TRAVERSAL if the traversal has been interrupted, otherwise `undefined`.
 	 * @private
 	 */
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 	_traverse(in_callback: Function, in_pathFromTraversalStart: string): string | undefined {
 		return undefined;
 	}

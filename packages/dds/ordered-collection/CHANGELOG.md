@@ -1,5 +1,15 @@
 # @fluidframework/ordered-collection
 
+## 2.70.0
+
+### Minor Changes
+
+- Deprecated property processCore has been removed from SharedObject ([#25749](https://github.com/microsoft/FluidFramework/pull/25749)) [a33a2e370f](https://github.com/microsoft/FluidFramework/commit/a33a2e370fbb95b565f39c2a14abc7716bc01980)
+
+  The deprecated property `processCore` has been removed from `SharedObject`.
+
+  Please see [this github issue](https://github.com/microsoft/FluidFramework/issues/25176) for more details.
+
 ## 2.63.0
 
 Dependency updates only.

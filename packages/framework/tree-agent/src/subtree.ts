@@ -17,9 +17,9 @@ import { TreeAlpha } from "@fluidframework/tree/alpha";
 import type {
 	UnsafeUnknownSchema,
 	ReadableField,
-	TreeBranch,
 	TreeRecordNode,
 	ReadSchema,
+	TreeBranchAlpha,
 } from "@fluidframework/tree/alpha";
 
 import { getNodeOnBranch } from "./getNodeOnBranch.js";
@@ -37,7 +37,7 @@ export class Subtree<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema> {
 		}
 	}
 
-	public get branch(): TreeBranch {
+	public get branch(): TreeBranchAlpha {
 		return this.viewOrNode instanceof TreeNode
 			? (TreeAlpha.branch(this.viewOrNode) ?? fail("Node cannot be raw."))
 			: this.viewOrNode;

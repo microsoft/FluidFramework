@@ -9,12 +9,7 @@ import { strict as assert } from "node:assert";
 
 import { SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
 
-import {
-	getFriendlyName,
-	unqualifySchema,
-	findNamedSchemas,
-	isNamedSchema,
-} from "../utils.js";
+import { getFriendlyName, unqualifySchema, findSchemas, isNamedSchema } from "../utils.js";
 
 const sf = new SchemaFactoryAlpha("test.scope");
 class TestObject extends sf.object("TestObject", { value: sf.string }) {}
@@ -216,7 +211,7 @@ describe("findNamedSchemas", () => {
 		}) {}
 
 		const identifiers: string[] = [];
-		for (const s of findNamedSchemas(Root)) {
+		for (const s of findSchemas(Root, (schema) => isNamedSchema(schema.identifier))) {
 			identifiers.push((s as { identifier: string }).identifier);
 		}
 		assert.equal(identifiers.length, new Set(identifiers).size);

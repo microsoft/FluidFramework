@@ -6,7 +6,9 @@
 import type { IErrorBase, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import {
 	FluidErrorTypes,
+	layerIncompatibilityErrorSymbol,
 	type IGenericError,
+	type ILayerIncompatibilityError,
 	type IUsageError,
 } from "@fluidframework/core-interfaces/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
@@ -210,6 +212,54 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
 			return dataProcessingError;
 		}
 		return normalizedError;
+	}
+}
+
+/**
+ * Error indicating that two Fluid layers are incompatible.
+ * See {@link @fluidframework/core-interfaces#ILayerIncompatibilityError} for more details.
+ *
+ * @internal
+ */
+export class LayerIncompatibilityError
+	extends UsageError
+	implements ILayerIncompatibilityError
+{
+	public [layerIncompatibilityErrorSymbol] = true as const;
+	public readonly layer: string;
+	public readonly layerVersion: string;
+	public readonly incompatibleLayer: string;
+	public readonly incompatibleLayerVersion: string;
+	public readonly compatibilityRequirementsInMonths: number;
+	public readonly actualDifferenceInMonths: number;
+	public readonly details: string;
+
+	public constructor(
+		message: string,
+		incompatibilityProps: {
+			layer: string;
+			layerVersion: string;
+			incompatibleLayer: string;
+			incompatibleLayerVersion: string;
+			compatibilityRequirementsInMonths: number;
+			actualDifferenceInMonths: number;
+			details: string;
+		},
+		telemetryProps?: ITelemetryBaseProperties,
+	) {
+		super(message, {
+			...incompatibilityProps,
+			...telemetryProps,
+			layerIncompatibilityError: true,
+		});
+		this.layer = incompatibilityProps.layer;
+		this.layerVersion = incompatibilityProps.layerVersion;
+		this.incompatibleLayer = incompatibilityProps.incompatibleLayer;
+		this.incompatibleLayerVersion = incompatibilityProps.incompatibleLayerVersion;
+		this.compatibilityRequirementsInMonths =
+			incompatibilityProps.compatibilityRequirementsInMonths;
+		this.actualDifferenceInMonths = incompatibilityProps.actualDifferenceInMonths;
+		this.details = incompatibilityProps.details;
 	}
 }
 

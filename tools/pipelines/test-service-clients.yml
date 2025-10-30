@@ -57,6 +57,7 @@ stages:
       artifactBuildId: $(resources.pipeline.client.runID)
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:
+        FLUID_TEST_SCALE: true # run longer duration tests
         FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains createTestLogger impl to inject
         FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
         azure__fluid__relay__service__tenantId: $(azure-fluid-relay-service-tenantId)
@@ -74,6 +75,7 @@ stages:
       artifactBuildId: $(resources.pipeline.client.runID)
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:
+        FLUID_TEST_SCALE: true # run longer duration tests
         FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains createTestLogger impl to inject
         FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
         # Disable colorization for tinylicious logs (not useful when printing to a file)
@@ -91,6 +93,7 @@ stages:
       artifactBuildId: $(resources.pipeline.client.runID)
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:
+        FLUID_TEST_SCALE: true # run longer duration tests
         FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains createTestLogger impl to inject
         FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
         odsp__client__clientId: $(odsp-client-clientId)

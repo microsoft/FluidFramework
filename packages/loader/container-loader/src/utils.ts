@@ -381,6 +381,12 @@ export function getDetachedContainerStateFromSerializedContainer(
  * This is the inverse of the JSON.stringify call in {@link SerializedStateManager.getPendingLocalState}
  */
 export function getAttachedContainerStateFromSerializedContainer(
+	serializedContainer: string,
+): IPendingContainerState;
+export function getAttachedContainerStateFromSerializedContainer(
+	serializedContainer: string | undefined,
+): IPendingContainerState | undefined;
+export function getAttachedContainerStateFromSerializedContainer(
 	serializedContainer: string | undefined,
 ): IPendingContainerState | undefined {
 	return serializedContainer === undefined

@@ -101,11 +101,13 @@ function verifyClientsSendOpsToEachOther(state: DDSFuzzTestState<SharedNothingFa
 	containerRuntimeFactory.processAllMessages();
 	for (const client of clients) {
 		// Send an op from each client, synchronize, and verify that each other client processed one more message.
-		const processCoreCallsByClient = clients.map(({ channel }) => channel.processCoreCalls);
+		const processMessagesByClient = clients.map(
+			({ channel }) => channel.processMessagesCoreCalls,
+		);
 		client.channel.noop();
 		containerRuntimeFactory.processAllMessages();
 		for (const [i, { channel }] of clients.entries()) {
-			assert.equal(channel.processCoreCalls, processCoreCallsByClient[i] + 1);
+			assert.equal(channel.processMessagesCoreCalls, processMessagesByClient[i] + 1);
 		}
 	}
 }
@@ -223,19 +225,19 @@ describe("DDS Fuzz Harness", () => {
 					"loadCore",
 					"noop",
 					"noop",
-					"processCore",
-					"processCore",
+					"processMessagesCore",
+					"processMessagesCore",
 					"noop",
 					"noop",
-					"processCore",
-					"processCore",
+					"processMessagesCore",
+					"processMessagesCore",
 				]);
 				assert.deepEqual(finalState.clients[1].channel.methodCalls, [
 					"loadCore",
-					"processCore",
-					"processCore",
-					"processCore",
-					"processCore",
+					"processMessagesCore",
+					"processMessagesCore",
+					"processMessagesCore",
+					"processMessagesCore",
 				]);
 				assert.equal(processedOperations.length, 6);
 			});
@@ -550,12 +552,12 @@ describe("DDS Fuzz Harness", () => {
 			// original client
 			assert.strictEqual(clientCreates[1].channel.applyStashedOpCalls, 0);
 			assert.strictEqual(clientCreates[1].channel.noopCalls, 2);
-			assert.strictEqual(clientCreates[1].channel.processCoreCalls, 0);
+			assert.strictEqual(clientCreates[1].channel.processMessagesCoreCalls, 0);
 
 			// client loaded from stash
 			assert.strictEqual(clientCreates[2].channel.applyStashedOpCalls, 2);
 			assert.strictEqual(clientCreates[2].channel.noopCalls, 5);
-			assert.strictEqual(clientCreates[2].channel.processCoreCalls, 0);
+			assert.strictEqual(clientCreates[2].channel.processMessagesCoreCalls, 0);
 		});
 
 		it("stashable clients changes can be restored on new client with saved ops", async () => {
@@ -601,7 +603,7 @@ describe("DDS Fuzz Harness", () => {
 			// original client
 			assert.strictEqual(clientCreates[1].channel.applyStashedOpCalls, 0);
 			assert.strictEqual(clientCreates[1].channel.noopCalls, 2);
-			assert.strictEqual(clientCreates[1].channel.processCoreCalls, 0);
+			assert.strictEqual(clientCreates[1].channel.processMessagesCoreCalls, 0);
 
 			// client loaded from stash
 			assert.strictEqual(
@@ -610,7 +612,7 @@ describe("DDS Fuzz Harness", () => {
 				"3 should be saved, and 2 should be stashed",
 			);
 			assert.strictEqual(clientCreates[2].channel.noopCalls, 10);
-			assert.strictEqual(clientCreates[2].channel.processCoreCalls, 9);
+			assert.strictEqual(clientCreates[2].channel.processMessagesCoreCalls, 9);
 		});
 	});
 

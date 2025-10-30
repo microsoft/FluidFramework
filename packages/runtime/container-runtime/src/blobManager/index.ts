@@ -11,6 +11,7 @@ export {
 	type ICreateBlobResponseWithTTL,
 	type IPendingBlobs,
 	isBlobPath,
+	type SerializableLocalBlobRecord,
 } from "./blobManager.js";
 export {
 	blobsTreeName,

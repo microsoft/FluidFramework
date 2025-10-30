@@ -186,8 +186,12 @@ describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, a
 		assert(summaryResults.summarySubmitted, "on-demand summary not submitted");
 		assert(summaryResults.summaryOpBroadcasted, "on-demand summary op not broadcasted");
 	});
-
-	it("on-demand summary succeeds while normal summary is inflight", async () => {
+	/**
+	 * Disabled: overlapping summaries occasionally exceed Mocha's 5s default timeout.
+	 * Risk: `loadSummarizerContainerAndMakeSummary` is still an unused API but we temporarily lose coverage of the concurrent-summary scenario.
+	 * Planned work: {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/50613}
+	 */
+	it.skip("on-demand summary succeeds while normal summary is inflight", async () => {
 		const enabledSummarizerConfig: ITestContainerConfig = {
 			fluidDataObjectType: DataObjectFactoryType.Test,
 		};

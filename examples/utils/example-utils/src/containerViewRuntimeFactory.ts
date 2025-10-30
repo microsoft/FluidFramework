@@ -43,6 +43,7 @@ export interface IFluidMountableViewEntryPoint {
 	getMountableDefaultView(path?: string): Promise<IFluidMountableView>;
 }
 
+/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive AB#50920 */
 /**
  * The ContainerViewRuntimeFactory is an example utility built to support binding a single model to a single view
  * within the container.  For more-robust implementation of binding views within the container, check out the examples
@@ -50,6 +51,7 @@ export interface IFluidMountableViewEntryPoint {
  * @internal
  */
 export class ContainerViewRuntimeFactory<T> extends BaseContainerRuntimeFactory {
+	/* eslint-enable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag */
 	constructor(
 		private readonly dataStoreFactory: IFluidDataStoreFactory,
 		viewCallback: ViewCallback<T>,

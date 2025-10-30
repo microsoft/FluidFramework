@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/devtools-browser-extension",
-	"version": "2.70.0",
+	"version": "2.71.0",
 	"private": true,
 	"description": "A browser extension for visualizing Fluid Framework stats and operations",
 	"homepage": "https://fluidframework.com",
@@ -95,7 +95,7 @@
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^6.0.0",
+		"@fluidframework/eslint-config-fluid": "^7.0.0",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
@@ -119,8 +119,8 @@
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"dotenv-webpack": "^7.0.3",
-		"eslint": "~8.55.0",
-		"eslint-config-prettier": "~9.0.0",
+		"eslint": "~8.57.1",
+		"eslint-config-prettier": "~10.1.8",
 		"eslint-plugin-chai-expect": "~3.0.0",
 		"expect-puppeteer": "^9.0.2",
 		"good-fences": "^1.1.1",
@@ -143,8 +143,6 @@
 		"webpack-cli": "^5.1.4"
 	},
 	"typeValidation": {
-		"disabled": true,
-		"broken": {},
-		"entrypoint": "internal"
+		"disabled": true
 	}
 }

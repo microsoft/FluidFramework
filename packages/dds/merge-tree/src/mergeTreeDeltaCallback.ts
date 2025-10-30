@@ -100,7 +100,7 @@ export interface IMergeTreeSegmentDelta {
 	/**
 	 * A property set containing changes to properties on this segment.
 	 *
-	 * @remarks - Deleting a property is represented using `null` as the value.
+	 * @remarks Deleting a property is represented using `null` as the value.
 	 * @example
 	 *
 	 * An annotation change which deleted the property "foo" and set "bar" to 5 would be represented as:
@@ -123,7 +123,7 @@ export interface IMergeTreeDeltaOpArgs {
 	/**
 	 * The {@link IMergeTreeOp} corresponding to the delta.
 	 *
-	 * @remarks - This is useful for determining the type of change (see {@link (MergeTreeDeltaType:type)}).
+	 * @remarks This is useful for determining the type of change (see {@link (MergeTreeDeltaType:type)}).
 	 */
 	readonly op: IMergeTreeOp;
 
@@ -151,7 +151,7 @@ export type MergeTreeDeltaCallback = (
 /**
  * @legacy @beta
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/no-empty-interface
 export interface IMergeTreeMaintenanceCallbackArgs
 	extends IMergeTreeDeltaCallbackArgs<MergeTreeMaintenanceType> {}
 

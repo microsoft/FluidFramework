@@ -18,7 +18,7 @@ import { pkgVersion } from "./packageVersion.js";
 /**
  * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link ISharedMatrix}.
  * @legacy @beta
- * @deprecated - Use `SharedMatrix.getFactory` instead.
+ * @deprecated Use `SharedMatrix.getFactory` instead.
  */
 export class SharedMatrixFactory implements IChannelFactory<ISharedMatrix> {
 	public static Type = "https://graph.microsoft.com/types/sharedmatrix";

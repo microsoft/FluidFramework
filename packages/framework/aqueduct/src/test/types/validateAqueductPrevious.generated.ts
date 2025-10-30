@@ -247,7 +247,6 @@ declare type old_as_current_for_Interface_BaseContainerRuntimeFactoryProps = req
  * typeValidation.broken:
  * "Interface_BaseContainerRuntimeFactoryProps": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_BaseContainerRuntimeFactoryProps = requireAssignableTo<TypeOnly<current.BaseContainerRuntimeFactoryProps>, TypeOnly<old.BaseContainerRuntimeFactoryProps>>
 
 /*
@@ -266,7 +265,6 @@ declare type old_as_current_for_Interface_ContainerRuntimeFactoryWithDefaultData
  * typeValidation.broken:
  * "Interface_ContainerRuntimeFactoryWithDefaultDataStoreProps": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_ContainerRuntimeFactoryWithDefaultDataStoreProps = requireAssignableTo<TypeOnly<current.ContainerRuntimeFactoryWithDefaultDataStoreProps>, TypeOnly<old.ContainerRuntimeFactoryWithDefaultDataStoreProps>>
 
 /*
@@ -285,6 +283,7 @@ declare type old_as_current_for_Interface_DataObjectFactoryProps = requireAssign
  * typeValidation.broken:
  * "Interface_DataObjectFactoryProps": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_DataObjectFactoryProps = requireAssignableTo<TypeOnly<current.DataObjectFactoryProps<never>>, TypeOnly<old.DataObjectFactoryProps<never>>>
 
 /*
@@ -321,4 +320,5 @@ declare type old_as_current_for_Interface_IDataObjectProps = requireAssignableTo
  * typeValidation.broken:
  * "Interface_IDataObjectProps": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IDataObjectProps = requireAssignableTo<TypeOnly<current.IDataObjectProps>, TypeOnly<old.IDataObjectProps>>

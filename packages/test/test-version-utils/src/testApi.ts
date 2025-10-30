@@ -138,7 +138,7 @@ export const ContainerRuntimeApi = {
 	BaseContainerRuntimeFactory,
 	ContainerRuntime,
 	/**
-	 * @remarks - The API for constructing this factory has recently changed. Use `createContainerRuntimeFactoryWithDefaultDataStore`
+	 * @remarks The API for constructing this factory has recently changed. Use `createContainerRuntimeFactoryWithDefaultDataStore`
 	 * to construct safely across versions.
 	 */
 	ContainerRuntimeFactoryWithDefaultDataStore,
@@ -172,7 +172,7 @@ export const DataRuntimeApi = {
 	 * Keep in mind that regardless of the DataRuntime version,
 	 * the APIs will be typechecked as if they were from the latest version.
 	 *
-	 * @remarks - Using these APIs in an e2e test puts additional burden on the test author and anyone making
+	 * @remarks Using these APIs in an e2e test puts additional burden on the test author and anyone making
 	 * changes to those APIs in the future, since this will necessitate back-compat logic in the tests.
 	 * Using non-stable APIs in e2e tests for that reason is discouraged.
 	 */
