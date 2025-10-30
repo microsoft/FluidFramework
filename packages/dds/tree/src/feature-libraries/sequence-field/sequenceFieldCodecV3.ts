@@ -24,6 +24,7 @@ import {
 	encodeRevisionWithContext,
 	encodeSequenceChangeset,
 	makeV2CodecHelpers,
+	tryGetEncodedCellRename,
 } from "./sequenceFieldCodecV2.js";
 import type { Changeset, Mark, MarkEffect, Rename } from "./types.js";
 
@@ -50,18 +51,17 @@ export function makeV3Codec(
 		mark: Mark,
 		context: FieldChangeEncodingContext,
 	): Encoded.MarkEffect {
-		const type = mark.type;
-		switch (type) {
-			// XXX: Some renames should be encoded as attach and detach
-			case "Rename":
-				return {
-					rename: {
-						idOverride: atomIdCodec.encode(mark.idOverride, context.baseContext),
-					},
-				};
-			default:
-				return encodeV2MarkEffect(mark, context);
+		const encoded = encodeV2MarkEffect(mark, context);
+		const encodedRenameId = tryGetEncodedCellRename(encoded);
+		if (encodedRenameId !== undefined) {
+			return {
+				rename: {
+					idOverride: encodedRenameId,
+				},
+			};
 		}
+
+		return encoded;
 	}
 
 	function decodeMarkEffect(
@@ -89,7 +89,6 @@ export function makeV3Codec(
 			cellId: ChangeAtomId | undefined,
 			context: FieldChangeEncodingContext,
 		): Rename {
-			// XXX: Handle root renames
 			return {
 				type: "Rename",
 				idOverride: atomIdCodec.decode(encoded.idOverride, context.baseContext),
