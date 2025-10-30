@@ -43,7 +43,7 @@ const debuggerAttached = inspector.url() !== undefined;
 /**
  * Set this to a high number when debugging to avoid timeouts from debugging time.
  */
-const timeoutMultiplier = debuggerAttached ? 1000 : useAzure ? 3 : 1;
+const timeoutMultiplier = debuggerAttached ? 1000 : useAzure ? 5 : 1;
 
 /**
  * Sets the timeout for the given test context.
@@ -338,6 +338,7 @@ describe(`Presence with AzureClient`, () => {
 				 * Timeout for child processes to connect to container ({@link ConnectedEvent})
 				 */
 				const childConnectTimeoutMs = 1000 * numClients * timeoutMultiplier;
+				const testCaseTimeoutMs = childConnectTimeoutMs + 1000;
 
 				let children: ChildProcess[];
 				let childErrorPromise: Promise<never>;
@@ -348,6 +349,8 @@ describe(`Presence with AzureClient`, () => {
 				const workspaceId = "presenceTestWorkspace";
 
 				beforeEach(async function usingLatestStateObject_beforeEach(): Promise<void> {
+					setTestTimeout(this, testCaseTimeoutMs);
+
 					({ children, childErrorPromise } = await forkChildProcesses(
 						this.currentTest?.title ?? "",
 						numClients,
@@ -423,6 +426,7 @@ describe(`Presence with AzureClient`, () => {
 				 * Timeout for child processes to connect to container ({@link ConnectedEvent})
 				 */
 				const childConnectTimeoutMs = 1000 * numClients * timeoutMultiplier;
+				const testCaseTimeoutMs = childConnectTimeoutMs + 1000;
 
 				let children: ChildProcess[];
 				let childErrorPromise: Promise<never>;
@@ -436,6 +440,8 @@ describe(`Presence with AzureClient`, () => {
 				const value2 = { name: "Bob", score: 200 };
 
 				beforeEach(async function usingLatestMapStateObject_beforeEach(): Promise<void> {
+					setTestTimeout(this, testCaseTimeoutMs);
+
 					({ children, childErrorPromise } = await forkChildProcesses(
 						this.currentTest?.title ?? "",
 						numClients,
