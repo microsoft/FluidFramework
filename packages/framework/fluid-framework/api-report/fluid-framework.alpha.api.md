@@ -1434,6 +1434,7 @@ export interface SimpleObjectFieldSchema extends SimpleFieldSchema {
 
 // @alpha @sealed
 export interface SimpleObjectNodeSchema<out TCustomMetadata = unknown> extends SimpleNodeSchemaBaseAlpha<NodeKind.Object, TCustomMetadata> {
+    readonly allowUnknownOptionalFields?: boolean;
     readonly fields: ReadonlyMap<string, SimpleObjectFieldSchema>;
 }
 
@@ -1700,6 +1701,9 @@ export interface Tagged<V, T extends string = string> {
 
 // @public
 export type TelemetryBaseEventPropertyType = string | number | boolean | undefined;
+
+// @alpha
+export function toViewCompatibilityTreeSchema(schema: TreeSchema, copySchemaObjects: boolean): SimpleTreeSchema;
 
 // @alpha
 export function trackDirtyNodes(view: TreeViewAlpha<ImplicitFieldSchema>, dirty: DirtyTreeMap): () => void;
