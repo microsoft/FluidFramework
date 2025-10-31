@@ -13,6 +13,7 @@ import {
 	type FieldProps,
 } from "../fieldSchema.js";
 import type {
+	SimpleAllowedTypeAttributes,
 	SimpleFieldSchema,
 	SimpleNodeSchema,
 	SimpleTreeSchema,
@@ -65,7 +66,7 @@ function generateFieldSchema(
 	context: Context,
 	storedKey: string | undefined,
 ): FieldSchemaAlpha {
-	const allowed = generateAllowedTypes(simple.allowedTypesIdentifiers, context);
+	const allowed = generateAllowedTypes(simple.simpleAllowedTypes, context);
 	const props: Omit<FieldProps, "defaultProvider"> = {
 		metadata: simple.metadata,
 		key: storedKey,
@@ -84,8 +85,14 @@ function generateFieldSchema(
 	}
 }
 
-function generateAllowedTypes(allowed: ReadonlySet<string>, context: Context): AllowedTypes {
-	return [...allowed].map((id) => context.get(id) ?? fail(0xb5a /* Missing schema */));
+function generateAllowedTypes(
+	allowed: ReadonlyMap<string, SimpleAllowedTypeAttributes>,
+	context: Context,
+): AllowedTypes {
+	return Array.from(
+		allowed.keys(),
+		(id) => context.get(id) ?? fail(0xb5a /* Missing schema */),
+	);
 }
 
 function generateNode(
@@ -104,21 +111,17 @@ function generateNode(
 			return factory.objectAlpha(id, fields, { metadata: schema.metadata });
 		}
 		case NodeKind.Array:
-			return factory.arrayAlpha(
-				id,
-				generateAllowedTypes(schema.allowedTypesIdentifiers, context),
-				{ metadata: schema.metadata },
-			);
+			return factory.arrayAlpha(id, generateAllowedTypes(schema.simpleAllowedTypes, context), {
+				metadata: schema.metadata,
+			});
 		case NodeKind.Map:
-			return factory.mapAlpha(
-				id,
-				generateAllowedTypes(schema.allowedTypesIdentifiers, context),
-				{ metadata: schema.metadata },
-			);
+			return factory.mapAlpha(id, generateAllowedTypes(schema.simpleAllowedTypes, context), {
+				metadata: schema.metadata,
+			});
 		case NodeKind.Record:
 			return factory.recordAlpha(
 				id,
-				generateAllowedTypes(schema.allowedTypesIdentifiers, context),
+				generateAllowedTypes(schema.simpleAllowedTypes, context),
 				{ metadata: schema.metadata },
 			);
 		case NodeKind.Leaf:
