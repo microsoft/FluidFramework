@@ -13923,6 +13923,9 @@ importers:
       '@fluidframework/core-utils':
         specifier: workspace:~
         version: link:../../common/core-utils
+      '@fluidframework/counter':
+        specifier: workspace:~
+        version: link:../../dds/counter
       '@fluidframework/datastore':
         specifier: workspace:~
         version: link:../../runtime/datastore
