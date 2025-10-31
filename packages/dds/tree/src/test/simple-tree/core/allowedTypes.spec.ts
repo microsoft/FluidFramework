@@ -589,7 +589,7 @@ describe("allowedTypes", () => {
 			type Item = TreeNode & ObjectFromSchemaRecord<typeof itemFields>;
 			type ItemSchema = TreeNodeSchema<string, NodeKind.Object, Item>;
 
-			// ItemSchema is rather under-specified, so its unclear if it should allow insertion at all (its logically a union of many possible schema, though not expressed as a union directly).
+			// ItemSchema is rather under-specified, so it's unclear if it should allow insertion at all (it's logically a union of many possible schema, though not expressed as a union directly).
 			// Currently it allows insertion of `Item`:
 			type ItemInsertable = InsertableTreeNodeFromAllowedTypes<[ItemSchema]>;
 			allowUnused<requireTrue<areSafelyAssignable<ItemInsertable, Item>>>();
@@ -618,7 +618,7 @@ describe("allowedTypes", () => {
 			type Item = TreeNode & ObjectFromSchemaRecord<typeof itemFields>;
 			type ItemSchema = TreeNodeSchema<string, NodeKind.Object, Item>;
 
-			// ItemSchema is rather under-specified, so its unclear if it should allow insertion at all (its logically a union of many possible schema, though not expressed as a union directly).
+			// ItemSchema is rather under-specified, so it's unclear if it should allow insertion at all (it's logically a union of many possible schema, though not expressed as a union directly).
 			// Currently it allows insertion of `Item`:
 			type ItemInsertable = InsertableTypedNode<ItemSchema>;
 			allowUnused<requireTrue<areSafelyAssignable<ItemInsertable, Item>>>();
