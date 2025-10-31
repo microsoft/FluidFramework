@@ -781,7 +781,7 @@ describe("allowedTypes", () => {
 				allowUnused<requireAssignableTo<TreeNodeSchemaCoreCase, never>>();
 			}
 
-			// Use of SchemaToPair included to easy debugging.
+			// Use of SchemaToPair included to ease debugging.
 			{
 				type Text1Case = SchemaToPair<typeof Text1>;
 				type TextUnionCase = SchemaToPair<typeof Text1 | typeof Text2>;
