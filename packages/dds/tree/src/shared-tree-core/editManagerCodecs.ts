@@ -10,6 +10,7 @@ import {
 	type CodecTree,
 	type CodecWriteOptions,
 	type DependentFormatVersion,
+	FluidClientVersion,
 	type FormatVersion,
 	type ICodecFamily,
 	type ICodecOptions,
@@ -48,8 +49,9 @@ export function clientVersionToEditManagerFormatVersion(
 	clientVersion: MinimumVersionForCollab,
 	writeVersionOverride?: EditManagerFormatVersion,
 ): EditManagerFormatVersion {
-	// Currently, version 3 is the only approved format for writing in production.
-	return writeVersionOverride ?? brand(EditManagerFormatVersion.v3);
+	return (writeVersionOverride ?? clientVersion < FluidClientVersion.v2_43)
+		? brand(EditManagerFormatVersion.v3)
+		: brand(EditManagerFormatVersion.v4);
 }
 
 /**

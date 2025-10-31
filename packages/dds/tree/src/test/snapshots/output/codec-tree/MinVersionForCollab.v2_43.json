@@ -16,15 +16,15 @@
     },
     {
       "name": "EditManager",
-      "version": 3,
+      "version": 4,
       "children": [
         {
           "name": "SharedTreeChange",
-          "version": 3,
+          "version": 4,
           "children": [
             {
               "name": "ModularChange",
-              "version": 3,
+              "version": 4,
               "children": [
                 {
                   "name": "FieldKind:NodeKey",
@@ -40,7 +40,7 @@
                 },
                 {
                   "name": "FieldKind:Sequence",
-                  "version": 2
+                  "version": 3
                 },
                 {
                   "name": "FieldKind:Forbidden",
@@ -68,15 +68,15 @@
     },
     {
       "name": "Message",
-      "version": 3,
+      "version": 4,
       "children": [
         {
           "name": "SharedTreeChange",
-          "version": 3,
+          "version": 4,
           "children": [
             {
               "name": "ModularChange",
-              "version": 3,
+              "version": 4,
               "children": [
                 {
                   "name": "FieldKind:NodeKey",
@@ -92,7 +92,7 @@
                 },
                 {
                   "name": "FieldKind:Sequence",
-                  "version": 2
+                  "version": 3
                 },
                 {
                   "name": "FieldKind:Forbidden",
