@@ -8,6 +8,7 @@ import { fail, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	type CodecTree,
 	type CodecWriteOptions,
+	FluidClientVersion,
 	type ICodecFamily,
 	type ICodecOptions,
 	type IJsonCodec,
@@ -39,8 +40,9 @@ import type { MinimumVersionForCollab } from "@fluidframework/runtime-definition
 export function clientVersionToSchemaVersion(
 	clientVersion: MinimumVersionForCollab,
 ): SchemaFormatVersion {
-	// Currently, the schema codec only writes in version 1.
-	return brand(SchemaFormatVersion.v1);
+	return clientVersion < FluidClientVersion.v2_43
+		? brand(SchemaFormatVersion.v1)
+		: brand(SchemaFormatVersion.v2);
 }
 
 export function getCodecTreeForSchemaFormat(
