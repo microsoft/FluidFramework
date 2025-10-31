@@ -115,7 +115,7 @@ export function makeEditManagerCodecs<TChangeset>(
 					makeV5CodecWithVersion(changeCodec, revisionTagCodec, options, version),
 				];
 			default:
-				unreachableCase(version as never);
+				unreachableCase(version);
 		}
 	});
 	return makeCodecFamily(registry);

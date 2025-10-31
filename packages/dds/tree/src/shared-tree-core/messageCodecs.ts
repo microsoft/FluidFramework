@@ -119,7 +119,7 @@ export function makeMessageCodecs<TChangeset>(
 			case MessageFormatVersion.v5:
 				return [version, makeV5CodecWithVersion(changeCodec, revisionTagCodec, options)];
 			default:
-				unreachableCase(version as never);
+				unreachableCase(version);
 		}
 	});
 	return makeCodecFamily(registry);

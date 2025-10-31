@@ -22,7 +22,11 @@ const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 export interface EncodedEditManager<TChangeset> {
 	readonly trunk: readonly Readonly<SequencedCommit<TChangeset>>[];
 	readonly branches: readonly [SessionId, Readonly<EncodedSummarySessionBranch<TChangeset>>][];
-	readonly version: EditManagerFormatVersion;
+	readonly version:
+		| typeof EditManagerFormatVersion.v1
+		| typeof EditManagerFormatVersion.v2
+		| typeof EditManagerFormatVersion.v3
+		| typeof EditManagerFormatVersion.v4;
 }
 
 export const EncodedEditManager = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>

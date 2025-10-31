@@ -66,7 +66,10 @@ export const EncodedRootsForRevision = <Schema extends TSchema>(tRevisionTag: Sc
 	]);
 export type EncodedRootsForRevision = Static<ReturnType<typeof EncodedRootsForRevision>>;
 
-export const Format = <TVersion extends number, TRevisionTagSchema extends TSchema>(
+export const Format = <
+	TVersion extends DetachedFieldIndexFormatVersion,
+	TRevisionTagSchema extends TSchema,
+>(
 	tVersion: TVersion,
 	tRevisionTag: TRevisionTagSchema,
 	// Return type is intentionally derived.
