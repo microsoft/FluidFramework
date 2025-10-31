@@ -3,6 +3,18 @@
   "version": "null",
   "children": [
     {
+      "name": "Forest",
+      "version": 1
+    },
+    {
+      "name": "Schema",
+      "version": 2
+    },
+    {
+      "name": "DetachedFieldIndex",
+      "version": 1
+    },
+    {
       "name": "EditManager",
       "version": 3,
       "children": [
@@ -105,18 +117,6 @@
           ]
         }
       ]
-    },
-    {
-      "name": "Forest",
-      "version": 1
-    },
-    {
-      "name": "Schema",
-      "version": 2
-    },
-    {
-      "name": "DetachedFieldIndex",
-      "version": 1
     },
     {
       "name": "FieldBatch",
