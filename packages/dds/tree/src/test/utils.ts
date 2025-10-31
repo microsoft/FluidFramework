@@ -1043,16 +1043,11 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 	family: ICodecFamily<TDecoded, TContext>,
 	encodingTestData: EncodingTestData<TDecoded, TEncoded, TContext>,
 	assertEquivalent: (a: TDecoded, b: TDecoded) => void = assertDeepEqual,
-	minVersion?: FormatVersion,
-	maxVersion?: FormatVersion,
+	versionRange?: [FormatVersion, FormatVersion],
 ): void {
 	const versionsToTest = family.getSupportedFormats();
 	for (const version of versionsToTest) {
-		if (minVersion !== undefined && (version === undefined || version < minVersion)) {
-			continue;
-		}
-
-		if (maxVersion !== undefined && version !== undefined && version > maxVersion) {
+		if (versionRange !== undefined && !isVersionInRange(version, versionRange)) {
 			continue;
 		}
 
@@ -1117,6 +1112,16 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 			}
 		});
 	}
+}
+
+function isVersionInRange(
+	version: FormatVersion,
+	range: [min: FormatVersion, max: FormatVersion],
+): boolean {
+	const [min, max] = range;
+	const isVersionHighEnough = min === undefined || (version !== undefined && version >= min);
+	const isVersionLowEnough = max === undefined || version === undefined || version <= max;
+	return isVersionHighEnough && isVersionLowEnough;
 }
 
 /**

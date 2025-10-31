@@ -121,6 +121,13 @@ export function assertModularChangesetsEqual(a: ModularChangeset, b: ModularChan
 	assertEqual(aNormalized, bNormalized);
 }
 
+export function assertModularChangesetsEqualIgnoreRootLocations(
+	actual: ModularChangeset,
+	expected: ModularChangeset,
+): void {
+	assertModularChangesetsEqual(stripRootLocations(actual), stripRootLocations(expected));
+}
+
 export function normalizeChangeset(change: ModularChangeset): ModularChangeset {
 	return normalizeRangeMaps(normalizeNodeIds(removeAliases(change)));
 }
@@ -776,4 +783,11 @@ export function removeAliases(changeset: ModularChangeset): ModularChangeset {
 		nodeAliases: newTupleBTree(),
 		rootNodes: updatedRootTable,
 	};
+}
+
+function stripRootLocations(change: ModularChangeset): ModularChangeset {
+	const updatedRootTable = cloneRootTable(change.rootNodes);
+	updatedRootTable.detachLocations.clear();
+	updatedRootTable.outputDetachLocations.clear();
+	return { ...change, rootNodes: updatedRootTable };
 }

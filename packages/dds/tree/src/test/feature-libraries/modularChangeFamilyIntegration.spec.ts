@@ -65,6 +65,7 @@ import { MarkMaker } from "./sequence-field/testEdits.js";
 import {
 	assertEqual,
 	assertModularChangesetsEqual,
+	assertModularChangesetsEqualIgnoreRootLocations,
 	Change,
 	normalizeDelta,
 	removeAliases,
@@ -2156,7 +2157,20 @@ describe("ModularChangeFamily integration", () => {
 		};
 
 		// XXX: Make sure we don't need to support versions older than 3.
-		makeEncodingTestSuite(family.codecs, encodingTestData, assertModularChangesetsEqual, 3);
+		makeEncodingTestSuite(
+			family.codecs,
+			encodingTestData,
+			assertModularChangesetsEqual,
+			[3, 100],
+		);
+
+		// In the detached root format, we no longer encode information about root locations.
+		makeEncodingTestSuite(
+			family.codecs,
+			encodingTestData,
+			assertModularChangesetsEqualIgnoreRootLocations,
+			[101, undefined],
+		);
 	});
 });
 

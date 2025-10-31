@@ -207,15 +207,19 @@ export function testCodec() {
 		);
 
 		// Versions 1 through 4 do not encode the summary originator ID.
+		makeEncodingTestSuite(family, testCases, assertEquivalentSummaryDataIgnoreOriginator, [
+			undefined,
+			4,
+		]);
+
 		makeEncodingTestSuite(
 			family,
 			testCases,
 			assertEquivalentSummaryDataIgnoreOriginator,
-			undefined,
-			4,
+			[101, 101],
 		);
 
-		makeEncodingTestSuite(family, testCases, undefined, 5);
+		makeEncodingTestSuite(family, testCases, undefined, [5, 100]);
 
 		// TODO: testing EditManagerSummarizer class itself, specifically for attachment and normal summaries.
 		// TODO: format compatibility tests to detect breaking of existing documents.
