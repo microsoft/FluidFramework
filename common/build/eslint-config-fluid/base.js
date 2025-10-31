@@ -186,12 +186,9 @@ module.exports = {
 			{
 				"groups": [
 					"builtin",
-					"external",
-					"type",
-					"internal",
-					["parent", "sibling", "index"],
+					["internal", "parent", "sibling", "index", "external"],
 				],
-				"newlines-between": "always",
+				"newlines-between": "ignore",
 				"distinctGroup": false,
 				"alphabetize": {
 					order: "asc",
@@ -376,6 +373,7 @@ module.exports = {
 			files: ["**/types/*validate*Previous*.ts"],
 			rules: {
 				"@typescript-eslint/comma-spacing": "off",
+				"import-x/order": "off",
 			},
 		},
 	],
