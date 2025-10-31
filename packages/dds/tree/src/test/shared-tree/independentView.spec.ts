@@ -7,8 +7,8 @@ import { strict as assert } from "node:assert";
 
 import {
 	independentInitializedView,
-	independentTreeAlpha,
-	independentTreeBeta,
+	createIndependentTreeAlpha,
+	createIndependentTreeBeta,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../shared-tree/independentView.js";
 import {
@@ -47,9 +47,9 @@ describe("independentView", () => {
 		});
 	});
 
-	describe("independentTreeAlpha", () => {
+	describe("createIndependentTreeAlpha", () => {
 		it("uninitialized: minimal", () => {
-			const tree = independentTreeAlpha({
+			const tree = createIndependentTreeAlpha({
 				forest: ForestTypeExpensiveDebug,
 				idCompressor: testIdCompressor,
 			});
@@ -78,7 +78,7 @@ describe("independentView", () => {
 		});
 
 		it("uninitialized: staged schema upgrade", () => {
-			const tree = independentTreeAlpha({
+			const tree = createIndependentTreeAlpha({
 				forest: ForestTypeExpensiveDebug,
 				idCompressor: testIdCompressor,
 			});
@@ -166,7 +166,7 @@ describe("independentView", () => {
 
 		it("initialized", () => {
 			const config = new TreeViewConfigurationAlpha({ schema: SchemaFactory.number });
-			const tree = independentTreeAlpha({
+			const tree = createIndependentTreeAlpha({
 				forest: ForestTypeExpensiveDebug,
 				jsonValidator: ajvValidator,
 				content: {
@@ -184,7 +184,7 @@ describe("independentView", () => {
 
 		it("oddly allowed jsonValidator", () => {
 			const config = new TreeViewConfigurationAlpha({ schema: SchemaFactory.number });
-			const tree = independentTreeAlpha({
+			const tree = createIndependentTreeAlpha({
 				forest: ForestTypeExpensiveDebug,
 				// This does nothing, and is not part of the allowed input type.
 				// Usually this would fail with "Object literal may only specify known properties"
@@ -198,8 +198,8 @@ describe("independentView", () => {
 		});
 	});
 
-	it("independentTreeBeta", () => {
-		const tree = independentTreeBeta();
+	it("createIndependentTreeBeta", () => {
+		const tree = createIndependentTreeBeta();
 		const view = tree.viewWith(
 			new TreeViewConfigurationAlpha({ schema: SchemaFactory.number }),
 		);
@@ -209,7 +209,7 @@ describe("independentView", () => {
 	});
 
 	it("staged schema example", () => {
-		const tree = independentTreeBeta();
+		const tree = createIndependentTreeBeta();
 
 		const stagedConfig = new TreeViewConfiguration({
 			schema: SchemaFactoryAlpha.types([

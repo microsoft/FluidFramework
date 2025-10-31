@@ -11,7 +11,7 @@ This allows for multiple views (in sequence, not concurrently) to be created to 
 For `IndependentTreeAlpha`, this also provides access to `exportVerbose` and `exportSimpleSchema` from [`ITreeAlpha`](https://fluidframework.com/docs/api/tree/itreealpha-interface).
 
 ```typescript
-const tree = independentTreeBeta();
+const tree = createIndependentTreeBeta();
 
 const stagedConfig = new TreeViewConfiguration({
 	schema: SchemaFactoryAlpha.types([

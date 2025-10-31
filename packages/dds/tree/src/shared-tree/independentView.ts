@@ -69,7 +69,7 @@ export function independentView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
 	options: ForestOptions & { idCompressor?: IIdCompressor | undefined },
 ): TreeViewAlpha<TSchema> {
-	return independentTreeAlpha(options).viewWith(config) as TreeViewAlpha<TSchema>;
+	return createIndependentTreeAlpha(options).viewWith(config) as TreeViewAlpha<TSchema>;
 }
 
 /**
@@ -88,7 +88,7 @@ export function independentInitializedView<const TSchema extends ImplicitFieldSc
 	options: ForestOptions & ICodecOptions,
 	content: ViewContent,
 ): TreeViewAlpha<TSchema> {
-	return independentTreeAlpha({ ...options, content }).viewWith(
+	return createIndependentTreeAlpha({ ...options, content }).viewWith(
 		config,
 	) as TreeViewAlpha<TSchema>;
 }
@@ -103,7 +103,7 @@ export function independentInitializedView<const TSchema extends ImplicitFieldSc
  *
  * @example
  * ```typescript
- * const tree = independentTreeBeta();
+ * const tree = createIndependentTreeBeta();
  *
  * const stagedConfig = new TreeViewConfiguration({
  * 	schema: SchemaFactoryAlpha.types([
@@ -142,14 +142,14 @@ export function independentInitializedView<const TSchema extends ImplicitFieldSc
  * Something like https://github.com/microsoft/FluidFramework/pull/25422 might be a better long term stable/public solution.
  * @beta
  */
-export function independentTreeBeta<const TSchema extends ImplicitFieldSchema>(
+export function createIndependentTreeBeta<const TSchema extends ImplicitFieldSchema>(
 	options?: ForestOptions,
 ): ViewableTree {
-	return independentTreeAlpha<TSchema>(options);
+	return createIndependentTreeAlpha<TSchema>(options);
 }
 
 /**
- * Alpha extensions to {@link independentTreeBeta}.
+ * Alpha extensions to {@link createIndependentTreeBeta}.
  *
  * @param options - Configuration options for the independent tree.
  * This can be used to create an uninitialized tree, or `content` can be provided to create an initialized tree.
@@ -164,7 +164,7 @@ export function independentTreeBeta<const TSchema extends ImplicitFieldSchema>(
  * If keeping the option here, maybe a separate function of overload would be better? Or maybe flatten ViewContent inline to deduplicate the idCompressor options?
  * @alpha
  */
-export function independentTreeAlpha<const TSchema extends ImplicitFieldSchema>(
+export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSchema>(
 	options?: ForestOptions &
 		(
 			| ({ idCompressor?: IIdCompressor | undefined } & { content?: undefined })

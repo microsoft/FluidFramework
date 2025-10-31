@@ -133,6 +133,9 @@ export interface ContainerSchema {
     readonly initialObjects: Record<string, SharedObjectKind>;
 }
 
+// @beta
+export function createIndependentTreeBeta<const TSchema extends ImplicitFieldSchema>(options?: ForestOptions): ViewableTree;
+
 // @public @sealed @system
 interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider"> {
 }
@@ -571,9 +574,6 @@ export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
 
 // @public
 export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
-
-// @beta
-export function independentTreeBeta<const TSchema extends ImplicitFieldSchema>(options?: ForestOptions): ViewableTree;
 
 // @public
 export type InitialObjects<T extends ContainerSchema> = {

@@ -97,6 +97,9 @@ export function configuredSharedTreeBeta(options: SharedTreeOptionsBeta): Shared
 // @beta @legacy
 export function configuredSharedTreeBetaLegacy(options: SharedTreeOptionsBeta): ISharedObjectKind<ITree> & SharedObjectKind<ITree>;
 
+// @beta
+export function createIndependentTreeBeta<const TSchema extends ImplicitFieldSchema>(options?: ForestOptions): ViewableTree;
+
 // @public @sealed @system
 interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider"> {
 }
@@ -216,9 +219,6 @@ export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
 
 // @public
 export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
-
-// @beta
-export function independentTreeBeta<const TSchema extends ImplicitFieldSchema>(options?: ForestOptions): ViewableTree;
 
 // @public @system
 type _InlineTrick = 0;

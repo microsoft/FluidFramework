@@ -60,8 +60,8 @@ export {
 	independentInitializedView,
 	type ViewContent,
 	independentView,
-	independentTreeBeta,
-	independentTreeAlpha,
+	createIndependentTreeBeta,
+	createIndependentTreeAlpha,
 } from "./independentView.js";
 
 export type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
