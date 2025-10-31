@@ -2323,7 +2323,10 @@ describe("SharedTree", () => {
 			// Create and initialize the runtime factory
 			const runtime = new MockSharedTreeRuntime();
 
-			const tree = configuredSharedTree({}).create(runtime);
+			// Enable schema format v2
+			const tree = configuredSharedTree({
+				minVersionForCollab: FluidClientVersion.v2_43,
+			}).create(runtime);
 			const schemaFactory = new SchemaFactoryAlpha("com.example");
 
 			// A schema with node and field persisted metadata

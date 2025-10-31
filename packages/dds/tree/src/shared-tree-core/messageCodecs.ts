@@ -134,13 +134,14 @@ export function makeMessageCodecs<TChangeset>(
 						changeCodec,
 						revisionTagCodec,
 						options,
-						brand(
-							version === MessageFormatVersion.undefined ? MessageFormatVersion.v1 : version,
-						),
+						version === MessageFormatVersion.undefined ? MessageFormatVersion.v1 : version,
 					),
 				];
 			case MessageFormatVersion.v5:
-				return [version, makeV5CodecWithVersion(changeCodec, revisionTagCodec, options)];
+				return [
+					version,
+					makeV5CodecWithVersion(changeCodec, revisionTagCodec, options, version),
+				];
 			default:
 				unreachableCase(version);
 		}

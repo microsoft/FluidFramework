@@ -26,9 +26,9 @@ import {
 	mintRevisionTag,
 	testIdCompressor,
 	testRevisionTagCodec,
+	validateUsageError,
 } from "../utils.js";
 import { currentVersion, DependentFormatVersion } from "../../codec/index.js";
-import { brand } from "../../util/index.js";
 import { MessageFormatVersion } from "../../shared-tree-core/index.js";
 
 const commit1 = {
@@ -223,7 +223,7 @@ describe("message codec", () => {
 				revision,
 				originatorId,
 				changeset: {},
-				version: brand(MessageFormatVersion.v1),
+				version: MessageFormatVersion.v1,
 			} satisfies Message);
 			const actual = codec.decode(JSON.parse(encoded), { idCompressor: testIdCompressor });
 			assert.deepEqual(actual, {
@@ -239,6 +239,21 @@ describe("message codec", () => {
 				sessionId: originatorId,
 				branchId: "main",
 			} satisfies DecodedMessage<unknown>);
+		});
+
+		it("rejects messages with invalid versions", () => {
+			const revision = 1 as EncodedRevisionTag;
+			const originatorId = createSessionId();
+			const encoded = JSON.stringify({
+				revision,
+				originatorId,
+				changeset: {},
+				version: -1,
+			} satisfies Message);
+			assert.throws(
+				() => codec.decode(JSON.parse(encoded), { idCompressor: testIdCompressor }),
+				validateUsageError(/Unsupported version -1 encountered while decoding data/),
+			);
 		});
 	});
 });
