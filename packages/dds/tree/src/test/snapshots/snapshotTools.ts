@@ -73,6 +73,10 @@ let currentTestFile: string | undefined;
 // Simple filter to avoid tests with a name that would accidentally be parsed as directory traversal or other confusing things.
 const nameCheck = new RegExp(/^[^"/\\]+$/);
 
+/**
+ * The folder where snapshot files are stored.
+ * This folder should contain all snapshots and only snapshots.
+ */
 const snapshotsFolder = path.join(testSrcPath, "snapshots", "output");
 assert(existsSync(snapshotsFolder));
 
@@ -85,10 +89,13 @@ assert(existsSync(snapshotsFolder));
  */
 export function useSnapshotDirectory(dirPath: string = "files"): void {
 	const normalizedDir = path.join(snapshotsFolder, dirPath);
-	// Basic sanity check to avoid bugs like accidentally recursively deleting everything under `/` if something went wrong (like dirPath navigated up directories a lot).
+	// Basic sanity check to avoid accidentally creating snapshots outside of the blessed folder.
 	assert(normalizedDir.startsWith(snapshotsFolder));
 
 	if (regenerateSnapshots) {
+		// This whole function is run (once per call to useSnapshotDirectory) during the test discovery phase.
+		// Snapshots are generated during the test execution phase (after the discovery phase),
+		// so the removal of the directory here is not interleaved with the (re)generation of the snapshots.
 		if (existsSync(snapshotsFolder)) {
 			console.log(`removing snapshot directory: ${snapshotsFolder}`);
 			rmSync(snapshotsFolder, { recursive: true, force: true });
@@ -96,16 +103,19 @@ export function useSnapshotDirectory(dirPath: string = "files"): void {
 	}
 
 	before((): void => {
+		// This hook is run during the test execution phase.
 		mkdirSync(normalizedDir, { recursive: true });
 	});
 
 	beforeEach(function (): void {
+		// This hook is run during the test execution phase.
 		currentTestName = this.currentTest?.title ?? assert.fail();
 		// .replace removes variant prefixes like "[CJS] ".
 		currentTestFile = path.join(normalizedDir, currentTestName.replace(/^\[.*?] /g, ""));
 	});
 
 	afterEach(() => {
+		// This hook is run during the test execution phase.
 		currentTestFile = undefined;
 		currentTestName = undefined;
 	});
