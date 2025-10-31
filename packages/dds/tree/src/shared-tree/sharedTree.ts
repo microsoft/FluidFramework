@@ -39,6 +39,7 @@ import {
 	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
 	type TreeStoredSchemaSubscription,
+	type TreeTypeSet,
 	getCodecTreeForDetachedFieldIndexFormat,
 	makeDetachedFieldIndex,
 	moveToDetachedField,
@@ -95,6 +96,7 @@ import {
 	FieldKind,
 	type ITreeAlpha,
 	type SimpleObjectFieldSchema,
+	type SimpleAllowedTypeAttributes,
 } from "../simple-tree/index.js";
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
@@ -878,6 +880,24 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	messageFormatSelector: clientVersionToMessageFormatVersion,
 };
 
+/**
+ * Build the allowed types for a Stored Schema.
+ *
+ * @remarks Staged upgrades do not apply to stored schemas, so we omit the {@link SimpleAllowedTypeAttributes.isStaged | staging flag } when building {@link SimpleAllowedTypeAttributes}.
+ * @param types - The types to create allowed types for.
+ * @returns The allowed types.
+ */
+function buildSimpleAllowedTypeAttributesForStoredSchema(
+	types: TreeTypeSet,
+): ReadonlyMap<string, SimpleAllowedTypeAttributes> {
+	const allowedTypesInfo = new Map<string, SimpleAllowedTypeAttributes>();
+	for (const type of types) {
+		// Stored schemas do not have staged upgrades
+		allowedTypesInfo.set(type, { isStaged: undefined });
+	}
+	return allowedTypesInfo;
+}
+
 function exportSimpleFieldSchemaStored(schema: TreeFieldStoredSchema): SimpleFieldSchema {
 	let kind: FieldKind;
 	switch (schema.kind) {
@@ -899,7 +919,7 @@ function exportSimpleFieldSchemaStored(schema: TreeFieldStoredSchema): SimpleFie
 	}
 	return {
 		kind,
-		allowedTypesIdentifiers: schema.types,
+		simpleAllowedTypes: buildSimpleAllowedTypeAttributesForStoredSchema(schema.types),
 		metadata: {},
 		persistedMetadata: schema.persistedMetadata,
 	};
@@ -915,7 +935,7 @@ function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeS
 	if (arrayTypes !== undefined) {
 		return {
 			kind: NodeKind.Array,
-			allowedTypesIdentifiers: arrayTypes,
+			simpleAllowedTypes: buildSimpleAllowedTypeAttributesForStoredSchema(arrayTypes),
 			metadata: {},
 			persistedMetadata: schema.metadata,
 		};
@@ -934,7 +954,9 @@ function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeS
 		);
 		return {
 			kind: NodeKind.Map,
-			allowedTypesIdentifiers: schema.mapFields.types,
+			simpleAllowedTypes: buildSimpleAllowedTypeAttributesForStoredSchema(
+				schema.mapFields.types,
+			),
 			metadata: {},
 			persistedMetadata: schema.metadata,
 		};

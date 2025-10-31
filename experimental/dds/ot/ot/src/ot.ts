@@ -10,7 +10,6 @@ import {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
-import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	ISummaryTreeWithStats,
 	type IRuntimeMessageCollection,
@@ -107,22 +106,6 @@ export abstract class SharedOT<TState, TOp> extends SharedObject {
 	}
 
 	protected onDisconnect() {}
-
-	protected processCore(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	): void {
-		this.processMessage(
-			message,
-			{
-				contents: message.contents,
-				localOpMetadata,
-				clientSequenceNumber: message.clientSequenceNumber,
-			},
-			local,
-		);
-	}
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}

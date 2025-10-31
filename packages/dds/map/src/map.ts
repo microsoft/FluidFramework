@@ -9,10 +9,7 @@ import type {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
-import {
-	MessageType,
-	type ISequencedDocumentMessage,
-} from "@fluidframework/driver-definitions/internal";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type {
 	ISummaryTreeWithStats,
@@ -286,22 +283,6 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 	 */
 	protected applyStashedOp(content: unknown): void {
 		this.kernel.tryApplyStashedOp(content as IMapOperation);
-	}
-
-	protected processCore(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	): void {
-		this.processMessage(
-			message,
-			{
-				contents: message.contents,
-				localOpMetadata,
-				clientSequenceNumber: message.clientSequenceNumber,
-			},
-			local,
-		);
 	}
 
 	/**

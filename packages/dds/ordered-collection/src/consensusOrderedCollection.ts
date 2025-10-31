@@ -10,10 +10,7 @@ import type {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
-import {
-	MessageType,
-	type ISequencedDocumentMessage,
-} from "@fluidframework/driver-definitions/internal";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 import type {
 	ISummaryTreeWithStats,
 	IRuntimeMessageCollection,
@@ -307,22 +304,6 @@ export class ConsensusOrderedCollection<T = any>
 		}
 	}
 
-	protected processCore(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	): void {
-		this.processMessage(
-			message,
-			{
-				contents: message.contents,
-				localOpMetadata,
-				clientSequenceNumber: message.clientSequenceNumber,
-			},
-			local,
-		);
-	}
-
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
 	 */
@@ -454,5 +435,17 @@ export class ConsensusOrderedCollection<T = any>
 
 	protected applyStashedOp(): void {
 		throw new Error("not implemented");
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.rollback}
+	 * @sealed
+	 */
+	protected rollback(content: unknown, localOpMetadata: unknown): void {
+		assert(typeof localOpMetadata === "function", "localOpMetadata should be a function");
+		// A resolve function is passed as the localOpMetadata on this.submitLocalMessage().
+		// On rollback we resolve with undefined and the promises will handle it appropriately.
+		const resolve = localOpMetadata as PendingResolve<T>;
+		resolve(undefined);
 	}
 }

@@ -12,10 +12,7 @@ import type {
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions/internal";
 import { FileMode, MessageType, TreeEntry } from "@fluidframework/driver-definitions/internal";
-import type {
-	ISequencedDocumentMessage,
-	ITree,
-} from "@fluidframework/driver-definitions/internal";
+import type { ITree } from "@fluidframework/driver-definitions/internal";
 import type {
 	ISummaryTreeWithStats,
 	IRuntimeMessageCollection,
@@ -134,22 +131,6 @@ export class SharedSignalClass<T extends SerializableTypeForSharedSignal = any>
 	 * Callback on disconnect
 	 */
 	protected onDisconnect(): void {}
-
-	protected processCore(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	): void {
-		this.processMessage(
-			message,
-			{
-				contents: message.contents,
-				localOpMetadata,
-				clientSequenceNumber: message.clientSequenceNumber,
-			},
-			local,
-		);
-	}
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}

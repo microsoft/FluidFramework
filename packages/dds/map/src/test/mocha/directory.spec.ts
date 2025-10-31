@@ -1802,14 +1802,17 @@ describe("Directory", () => {
 				assert(fooSubDir);
 				const fooSubDirIterator = fooSubDir.entries();
 				const fooSubDirResult1 = fooSubDirIterator.next();
+				assert(fooSubDirResult1.value !== undefined, "Iterator result should have a value");
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.equal(fooSubDirResult1.value[0], "testKey");
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.equal(fooSubDirResult1.value[1], "testValue");
-				assert.equal(fooSubDirResult1.done, false);
 				const fooSubDirResult2 = fooSubDirIterator.next();
+				assert(fooSubDirResult2.value !== undefined, "Iterator result should have a value");
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.equal(fooSubDirResult2.value[0], "testKey2");
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				assert.equal(fooSubDirResult2.value[1], "testValue2");
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.equal(fooSubDirResult2.value[1], "testValue2");
 				assert.equal(fooSubDirResult2.done, false);
@@ -1832,12 +1835,17 @@ describe("Directory", () => {
 				assert(fooSubDir2);
 				const fooSubDir2Iterator = fooSubDir2.entries();
 				const fooSubDir2Result1 = fooSubDir2Iterator.next();
+				assert(fooSubDir2Result1.value !== undefined, "Iterator result should have a value");
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.equal(fooSubDir2Result1.value[0], "testKey");
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.equal(fooSubDir2Result1.value[1], "testValue");
-				assert.equal(fooSubDir2Result1.done, false);
 				const fooSubDir2Result2 = fooSubDir2Iterator.next();
+				assert(fooSubDir2Result2.value !== undefined, "Iterator result should have a value");
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				assert.equal(fooSubDir2Result2.value[0], "testKey2");
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				assert.equal(fooSubDir2Result2.value[1], "testValue2");
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.equal(fooSubDir2Result2.value[0], "testKey2");
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -1910,6 +1918,7 @@ describe("Directory", () => {
 				this.directory2 = createConnectedDirectory("directory2", this.containerRuntimeFactory);
 			}
 
+			/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive AB#50920 */
 			/**
 			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.sharedObject}
 			 */
@@ -1989,6 +1998,7 @@ describe("Directory", () => {
 					toFluidHandleInternal(subMap2.handle).absolutePath,
 				);
 			}
+			/* eslint-enable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag */
 		}
 
 		runGCTests(GCSharedDirectoryProvider);

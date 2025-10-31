@@ -60,7 +60,6 @@ import {
 	type ISharedObject,
 	type ISharedObjectHandle,
 } from "@fluidframework/shared-object-base/internal";
-import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type {
 	ISummaryTreeWithStats,
 	IExperimentalIncrementalSummaryContext,
@@ -336,14 +335,6 @@ export class TestSharedTreeCore extends SharedObject {
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 	): ISummaryTreeWithStats {
 		return this.kernel.summarizeCore(serializer, telemetryContext, incrementalSummaryContext);
-	}
-
-	protected processCore(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	): void {
-		fail("processCore should not be called on SharedTree");
 	}
 
 	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {

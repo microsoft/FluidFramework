@@ -864,22 +864,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		}
 	}
 
-	protected processCore(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	): void {
-		this.processMessage(
-			message,
-			{
-				contents: message.contents,
-				localOpMetadata,
-				clientSequenceNumber: message.clientSequenceNumber,
-			},
-			local,
-		);
-	}
-
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
 	 */

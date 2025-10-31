@@ -117,6 +117,9 @@ export const ArrayNodeSchema: {
 // @alpha
 export function asAlpha<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): TreeViewAlpha<TSchema>;
 
+// @beta
+export function asBeta<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): TreeViewBeta<TSchema>;
+
 // @alpha @deprecated
 export function asTreeViewAlpha<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): TreeViewAlpha<TSchema>;
 
@@ -204,6 +207,9 @@ export interface ContainerSchema {
     readonly dynamicObjectTypes?: readonly SharedObjectKind[];
     readonly initialObjects: Record<string, SharedObjectKind>;
 }
+
+// @alpha
+export const contentSchemaSymbol: unique symbol;
 
 // @alpha
 export function createIdentifierIndex<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): IdentifierIndex;
@@ -322,6 +328,8 @@ export class FieldSchemaAlpha<Kind extends FieldKind = FieldKind, Types extends 
     get allowedTypesIdentifiers(): ReadonlySet<string>;
     // (undocumented)
     get persistedMetadata(): JsonCompatibleReadOnlyObject | undefined;
+    // (undocumented)
+    get simpleAllowedTypes(): ReadonlyMap<string, SimpleAllowedTypeAttributes>;
 }
 
 // @alpha @sealed @system
@@ -970,6 +978,7 @@ export interface LeafSchema<Name extends string, T extends TreeLeafValue> extend
 // @public @sealed
 export interface Listenable<TListeners extends object> {
     off<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): void;
+    // (undocumented)
     on<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off;
 }
 
@@ -1377,16 +1386,21 @@ export type SharedTreeOptions = Partial<CodecWriteOptions> & Partial<SharedTreeF
 export type SharedTreeOptionsBeta = ForestOptions;
 
 // @alpha @sealed
+export interface SimpleAllowedTypeAttributes {
+    readonly isStaged: boolean | undefined;
+}
+
+// @alpha @sealed
 export interface SimpleArrayNodeSchema<out TCustomMetadata = unknown> extends SimpleNodeSchemaBaseAlpha<NodeKind.Array, TCustomMetadata> {
-    readonly allowedTypesIdentifiers: ReadonlySet<string>;
+    readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypeAttributes>;
 }
 
 // @alpha @sealed
 export interface SimpleFieldSchema {
-    readonly allowedTypesIdentifiers: ReadonlySet<string>;
     readonly kind: FieldKind;
     readonly metadata: FieldSchemaMetadata;
     readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
+    readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypeAttributes>;
 }
 
 // @alpha @sealed
@@ -1396,7 +1410,7 @@ export interface SimpleLeafNodeSchema extends SimpleNodeSchemaBaseAlpha<NodeKind
 
 // @alpha @sealed
 export interface SimpleMapNodeSchema<out TCustomMetadata = unknown> extends SimpleNodeSchemaBaseAlpha<NodeKind.Map, TCustomMetadata> {
-    readonly allowedTypesIdentifiers: ReadonlySet<string>;
+    readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypeAttributes>;
 }
 
 // @alpha
@@ -1425,7 +1439,7 @@ export interface SimpleObjectNodeSchema<out TCustomMetadata = unknown> extends S
 
 // @alpha @sealed
 export interface SimpleRecordNodeSchema<out TCustomMetadata = unknown> extends SimpleNodeSchemaBaseAlpha<NodeKind.Record, TCustomMetadata> {
-    readonly allowedTypesIdentifiers: ReadonlySet<string>;
+    readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypeAttributes>;
 }
 
 // @alpha
@@ -1736,7 +1750,7 @@ export const Tree: Tree;
 
 // @alpha @sealed @system
 export interface TreeAlpha {
-    branch(node: TreeNode): TreeBranch | undefined;
+    branch(node: TreeNode): TreeBranchAlpha | undefined;
     child(node: TreeNode, key: string | number): TreeNode | TreeLeafValue | undefined;
     children(node: TreeNode): Iterable<[propertyKey: string | number, child: TreeNode | TreeLeafValue]>;
     create<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(schema: UnsafeUnknownSchema extends TSchema ? ImplicitFieldSchema : TSchema & ImplicitFieldSchema, data: InsertableField<TSchema>): Unhydrated<TSchema extends ImplicitFieldSchema ? TreeFieldFromImplicitField<TSchema> : TreeNode | TreeLeafValue | undefined>;
@@ -1753,6 +1767,7 @@ export interface TreeAlpha {
     importConcise<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(schema: UnsafeUnknownSchema extends TSchema ? ImplicitFieldSchema : TSchema & ImplicitFieldSchema, data: ConciseTree | undefined): Unhydrated<TSchema extends ImplicitFieldSchema ? TreeFieldFromImplicitField<TSchema> : TreeNode | TreeLeafValue | undefined>;
     importVerbose<const TSchema extends ImplicitFieldSchema>(schema: TSchema, data: VerboseTree | undefined, options?: TreeParsingOptions): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
     key2(node: TreeNode): string | number | undefined;
+    tagContentSchema<TSchema extends TreeNodeSchema, TContent extends InsertableField<TSchema>>(schema: TSchema, content: TContent): TContent;
     trackObservations<TResult>(onInvalidation: () => void, trackDuring: () => TResult): ObservationResults<TResult>;
     trackObservationsOnce<TResult>(onInvalidation: () => void, trackDuring: () => TResult): ObservationResults<TResult>;
 }
@@ -1800,14 +1815,20 @@ export interface TreeBeta {
 // @beta
 export const TreeBeta: TreeBeta;
 
-// @alpha @sealed
+// @beta @sealed
 export interface TreeBranch extends IDisposable {
     dispose(error?: Error): void;
-    readonly events: Listenable<TreeBranchEvents>;
     fork(): TreeBranch;
-    hasRootSchema<TSchema extends ImplicitFieldSchema>(schema: TSchema): this is TreeViewAlpha<TSchema>;
     merge(branch: TreeBranch, disposeMerged?: boolean): void;
     rebaseOnto(branch: TreeBranch): void;
+}
+
+// @alpha @sealed
+export interface TreeBranchAlpha extends TreeBranch {
+    readonly events: Listenable<TreeBranchEvents>;
+    // (undocumented)
+    fork(): TreeBranchAlpha;
+    hasRootSchema<TSchema extends ImplicitFieldSchema>(schema: TSchema): this is TreeViewAlpha<TSchema>;
     runTransaction<TSuccessValue, TFailureValue>(transaction: () => TransactionCallbackStatus<TSuccessValue, TFailureValue>, params?: RunTransactionParams): TransactionResultExt<TSuccessValue, TFailureValue>;
     runTransaction(transaction: () => VoidTransactionCallbackStatus | void, params?: RunTransactionParams): TransactionResult;
 }
@@ -1987,7 +2008,7 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 }
 
 // @alpha @sealed
-export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> extends Omit<TreeView<ReadSchema<TSchema>>, "root" | "initialize">, TreeBranch {
+export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> extends Omit<TreeViewBeta<ReadSchema<TSchema>>, "root" | "initialize" | "fork">, TreeBranchAlpha {
     // (undocumented)
     readonly events: Listenable<TreeViewEvents & TreeBranchEvents>;
     // (undocumented)
@@ -1997,6 +2018,12 @@ export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | Unsa
     // (undocumented)
     get root(): ReadableField<TSchema>;
     set root(newRoot: InsertableField<TSchema>);
+}
+
+// @beta @sealed
+export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema> extends TreeView<TSchema>, TreeBranch {
+    // (undocumented)
+    fork(): ReturnType<TreeBranch["fork"]> & TreeViewBeta<TSchema>;
 }
 
 // @public @sealed

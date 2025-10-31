@@ -51,9 +51,6 @@ class SharedNothing extends SharedObject {
 		this.applyStashedOpCalls++;
 		this.methodCalls.push("applyStashedOp");
 	}
-	protected processCore(): void {
-		throw new Error("processCore should not be called on SharedNothing");
-	}
 	protected processMessagesCore(): void {
 		this.processMessagesCoreCalls++;
 		this.methodCalls.push("processMessagesCore");

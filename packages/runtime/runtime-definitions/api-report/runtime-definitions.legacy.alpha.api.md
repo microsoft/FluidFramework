@@ -19,11 +19,6 @@ export interface AttributionInfo {
 // @beta @legacy
 export type AttributionKey = OpAttributionKey | DetachedAttributionKey | LocalAttributionKey;
 
-// @beta @sealed @deprecated @legacy
-export interface CommitStagedChangesOptionsExperimental {
-    squash?: boolean;
-}
-
 // @alpha @sealed @legacy
 export interface ContainerRuntimeBaseAlpha extends IContainerRuntimeBase {
     enterStagingMode(): StageControlsAlpha;
@@ -113,12 +108,6 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
     (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): any;
     // (undocumented)
     (event: "dispose", listener: () => void): any;
-}
-
-// @beta @sealed @deprecated @legacy
-export interface IContainerRuntimeBaseExperimental extends IContainerRuntimeBase {
-    enterStagingMode?(): StageControlsExperimental;
-    readonly inStagingMode?: boolean;
 }
 
 // @beta @legacy
@@ -435,12 +424,6 @@ export type PackagePath = readonly string[];
 // @alpha @sealed @legacy
 export interface StageControlsAlpha {
     readonly commitChanges: () => void;
-    readonly discardChanges: () => void;
-}
-
-// @beta @sealed @deprecated @legacy
-export interface StageControlsExperimental {
-    readonly commitChanges: (options?: Partial<CommitStagedChangesOptionsExperimental>) => void;
     readonly discardChanges: () => void;
 }
 

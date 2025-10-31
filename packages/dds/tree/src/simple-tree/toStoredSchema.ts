@@ -139,7 +139,10 @@ export function convertField(
 	if (schema instanceof FieldSchemaAlpha) {
 		types = convertAllowedTypes(schema.allowedTypes, options);
 	} else {
-		types = schema.allowedTypesIdentifiers as TreeTypeSet;
+		const allowedTypesIdentifiers: ReadonlySet<string> = new Set(
+			schema.simpleAllowedTypes.keys(),
+		);
+		types = allowedTypesIdentifiers as TreeTypeSet;
 	}
 	return { kind, types, persistedMetadata: schema.persistedMetadata };
 }
@@ -175,7 +178,10 @@ export function getStoredSchema(
 		}
 		case NodeKind.Map:
 		case NodeKind.Record: {
-			const types = schema.allowedTypesIdentifiers as TreeTypeSet;
+			const allowedTypesIdentifiers: ReadonlySet<string> = new Set(
+				schema.simpleAllowedTypes.keys(),
+			);
+			const types = allowedTypesIdentifiers as TreeTypeSet;
 			return new MapNodeStoredSchema(
 				{
 					kind: FieldKinds.optional.identifier,
@@ -187,7 +193,10 @@ export function getStoredSchema(
 			);
 		}
 		case NodeKind.Array: {
-			const types = schema.allowedTypesIdentifiers as TreeTypeSet;
+			const allowedTypesIdentifiers: ReadonlySet<string> = new Set(
+				schema.simpleAllowedTypes.keys(),
+			);
+			const types = allowedTypesIdentifiers as TreeTypeSet;
 			return arrayNodeStoredSchema(types, schema.persistedMetadata);
 		}
 		case NodeKind.Object: {

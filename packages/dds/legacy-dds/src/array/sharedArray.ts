@@ -11,10 +11,7 @@ import type {
 	IChannelFactory,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
-import type {
-	ISequencedDocumentMessage,
-	ITree,
-} from "@fluidframework/driver-definitions/internal";
+import type { ITree } from "@fluidframework/driver-definitions/internal";
 import { FileMode, MessageType, TreeEntry } from "@fluidframework/driver-definitions/internal";
 import type {
 	ISummaryTreeWithStats,
@@ -561,22 +558,6 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 
 	private getEntryForId(entryId: string): SharedArrayEntry<T> {
 		return this.idToEntryMap.get(entryId) as SharedArrayEntry<T>;
-	}
-
-	protected processCore(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	): void {
-		this.processMessage(
-			message,
-			{
-				contents: message.contents,
-				localOpMetadata,
-				clientSequenceNumber: message.clientSequenceNumber,
-			},
-			local,
-		);
 	}
 
 	/**
