@@ -140,8 +140,10 @@ describe("Ops on Reconnect", () => {
 			(message: ISequencedDocumentMessage) => {
 				if (message.type === ContainerMessageType.FluidDataStoreOp) {
 					const envelope = message.contents as IEnvelope<FluidDataStoreMessage>;
-					// explicitly using `any` even if IEnvelope default is later changed to unknown.
-					// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments
+					// The processing here appears far into the weeds. It is unclear if
+					// there is value using less `any`. Typing seems wrong even if the
+					// SharedString message, for example, is an IMergeTreeInsertMsg.
+					// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments -- explicitly using `any` even if IEnvelope default is later changed to unknown
 					const { address, contents } = envelope.contents.content as IEnvelope<any>;
 					const batch = (message.metadata as { batch?: unknown } | undefined)?.batch;
 					let value1: string | number;

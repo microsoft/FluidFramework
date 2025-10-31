@@ -152,10 +152,24 @@ export interface IFluidParentContextPrivate extends IFluidParentContext {
 
 /**
  * Kin of {@link @fluidframework/runtime-definitions#IFluidParentContext} with alternate
- * submitMessage and submitSignal methods.
+ * `submitMessage` and `submitSignal` methods that are typed specifically for the
+ * root context (aka {@link ContainerRuntime} provided context).
+ *
+ * @privateRemarks
+ * These replacements might be able to get cleaned up if the future suggestions
+ * found in {@link @fluidframework/runtime-definitions#FluidDataStoreMessage}
+ * `@privateRemarks` section are implemented.
  */
 export interface IFluidRootParentContextPrivate
 	extends Omit<IFluidParentContextPrivate, "submitMessage" | "submitSignal"> {
+	/**
+	 * Submits the message to be sent to other clients.
+	 * @param containerRuntimeMessage - The message.
+	 * @param localOpMetadata - The local metadata associated with the message.
+	 * This is kept locally and not sent to the server. This will be sent back
+	 * when this message is received back from the server. This is also sent if
+	 * we are asked to resubmit the message.
+	 */
 	readonly submitMessage: (
 		containerRuntimeMessage:
 			| ContainerRuntimeDataStoreOpMessage
@@ -163,6 +177,11 @@ export interface IFluidRootParentContextPrivate
 			| ContainerRuntimeAliasMessage,
 		localOpMetadata: unknown,
 	) => void;
+	/**
+	 * Submits the signal to be sent to other clients.
+	 * @param envelope - {@link IEnvelope} containing the signal address and contents.
+	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
+	 */
 	readonly submitSignal: (
 		envelope: AddressedUnsequencedSignalEnvelope,
 		targetClientId?: string,
@@ -1701,7 +1720,7 @@ export function detectOutboundReferences(
 	}
 }
 
-// =====================================================================
+// #region Experimentation
 // The code below here is for experimentation (and one test) only.
 
 /**
@@ -1848,4 +1867,6 @@ export class ChannelCollectionFactory implements IFluidDataStoreFactory {
 
 		return runtime;
 	}
+
+	// #endregion Experimentation
 }
