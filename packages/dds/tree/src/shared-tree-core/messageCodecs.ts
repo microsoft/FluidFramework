@@ -9,6 +9,7 @@ import {
 	type CodecTree,
 	type CodecWriteOptions,
 	type DependentFormatVersion,
+	FluidClientVersion,
 	type FormatVersion,
 	type ICodecFamily,
 	type ICodecOptions,
@@ -44,8 +45,9 @@ export function clientVersionToMessageFormatVersion(
 	clientVersion: MinimumVersionForCollab,
 	writeVersionOverride?: MessageFormatVersion,
 ): MessageFormatVersion {
-	// Currently, version 3 is the only approved format for writing in production.
-	return writeVersionOverride ?? brand(MessageFormatVersion.v3);
+	return (writeVersionOverride ?? clientVersion < FluidClientVersion.v2_43)
+		? brand(MessageFormatVersion.v3)
+		: brand(MessageFormatVersion.v4);
 }
 
 export interface MessageCodecOptions {
@@ -134,13 +136,14 @@ export function makeMessageCodecs<TChangeset>(
 						changeCodec,
 						revisionTagCodec,
 						options,
-						brand(
-							version === MessageFormatVersion.undefined ? MessageFormatVersion.v1 : version,
-						),
+						version === MessageFormatVersion.undefined ? MessageFormatVersion.v1 : version,
 					),
 				];
 			case MessageFormatVersion.v5:
-				return [version, makeV5CodecWithVersion(changeCodec, revisionTagCodec, options)];
+				return [
+					version,
+					makeV5CodecWithVersion(changeCodec, revisionTagCodec, options, version),
+				];
 			default:
 				unreachableCase(version);
 		}

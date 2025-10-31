@@ -29,7 +29,11 @@ export function makeV1ToV4CodecWithVersion<TChangeset>(
 		ChangeEncodingContext
 	>,
 	options: ICodecOptions,
-	version: MessageFormatVersion,
+	version:
+		| typeof MessageFormatVersion.v1
+		| typeof MessageFormatVersion.v2
+		| typeof MessageFormatVersion.v3
+		| typeof MessageFormatVersion.v4,
 ): IJsonCodec<
 	DecodedMessage<TChangeset>,
 	JsonCompatibleReadOnly,
