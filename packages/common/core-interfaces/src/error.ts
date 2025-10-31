@@ -49,7 +49,11 @@ export const FluidErrorTypesAlpha = {
 	...FluidErrorTypes,
 	/**
 	 * Error indicating that two Fluid layers are incompatible. For instance, if the Loader layer is
-	 * not compatible with the Runtime layer, this error type will be used.
+	 * not compatible with the Runtime layer, the container create / load will fail with an error of this type.
+	 * In most cases, the layer compatibility validation happens during container load / create causing it to
+	 * fail with this error type.
+	 * In some cases such as for the Runtime and DataStore layer compatibility, the incompatibility may be detected
+	 * during data store loads. In such cases, the data store load will fail with this error type.
 	 */
 	layerIncompatibilityError: "layerIncompatibilityError",
 } as const;
@@ -149,7 +153,7 @@ export interface IThrottlingWarning extends IErrorBase {
 }
 
 /**
- * Usage error indicating that two Fluid layers are incompatible. For instance, if the Loader layer is
+ * Layer incompatibility error indicating that two Fluid layers are incompatible. For instance, if the Loader layer is
  * not compatible with the Runtime layer, the container will be disposed with this error.
  * @legacy @alpha
  */
