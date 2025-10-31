@@ -1,0 +1,148 @@
+{
+  "type": "tree",
+  "tree": {
+    "type": "tree",
+    "indexes": {
+      "type": "tree",
+      "entries": [
+        {
+          "type": "tree",
+          "EditManager": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "String": {
+                "type": "blob",
+                "content": {
+                  "trunk": [
+                    {
+                      "change": [
+                        {
+                          "schema": {
+                            "new": {
+                              "version": 1,
+                              "nodes": {
+                                "com.fluidframework.leaf.number": {
+                                  "leaf": 0
+                                }
+                              },
+                              "root": {
+                                "kind": "Optional",
+                                "types": [
+                                  "com.fluidframework.leaf.number"
+                                ]
+                              }
+                            },
+                            "old": {
+                              "version": 1,
+                              "nodes": {},
+                              "root": {
+                                "kind": "Forbidden",
+                                "types": []
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "data": {
+                            "maxId": 0,
+                            "changes": [
+                              {
+                                "fieldKey": "rootFieldKey",
+                                "fieldKind": "Optional",
+                                "change": {
+                                  "r": {
+                                    "e": true,
+                                    "d": 0
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ],
+                      "revision": 2,
+                      "sequenceNumber": 2,
+                      "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
+                    }
+                  ],
+                  "branches": [],
+                  "version": 3
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        },
+        {
+          "type": "tree",
+          "Schema": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "SchemaString": {
+                "type": "blob",
+                "content": {
+                  "version": 1,
+                  "nodes": {
+                    "com.fluidframework.leaf.number": {
+                      "leaf": 0
+                    }
+                  },
+                  "root": {
+                    "kind": "Optional",
+                    "types": [
+                      "com.fluidframework.leaf.number"
+                    ]
+                  }
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        },
+        {
+          "type": "tree",
+          "Forest": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "ForestTree": {
+                "type": "blob",
+                "content": {
+                  "keys": [],
+                  "fields": {
+                    "version": 1,
+                    "identifiers": [],
+                    "shapes": [],
+                    "data": []
+                  },
+                  "version": 1
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        },
+        {
+          "type": "tree",
+          "DetachedFieldIndex": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "DetachedFieldIndexBlob": {
+                "type": "blob",
+                "content": {
+                  "version": 1,
+                  "data": [],
+                  "maxId": -1
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

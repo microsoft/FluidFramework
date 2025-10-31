@@ -1,6 +1,6 @@
 {
   "name": "SharedTree",
-  "version": 100,
+  "version": "null",
   "children": [
     {
       "name": "Forest",
@@ -16,15 +16,15 @@
     },
     {
       "name": "EditManager",
-      "version": 5,
+      "version": 3,
       "children": [
         {
           "name": "SharedTreeChange",
-          "version": 4,
+          "version": 3,
           "children": [
             {
               "name": "ModularChange",
-              "version": 4,
+              "version": 3,
               "children": [
                 {
                   "name": "FieldKind:NodeKey",
@@ -40,7 +40,7 @@
                 },
                 {
                   "name": "FieldKind:Sequence",
-                  "version": 3
+                  "version": 2
                 },
                 {
                   "name": "FieldKind:Forbidden",
@@ -58,7 +58,7 @@
               "children": [
                 {
                   "name": "Schema",
-                  "version": 1
+                  "version": 2
                 }
               ]
             }
@@ -68,15 +68,15 @@
     },
     {
       "name": "Message",
-      "version": 5,
+      "version": 3,
       "children": [
         {
           "name": "SharedTreeChange",
-          "version": 4,
+          "version": 3,
           "children": [
             {
               "name": "ModularChange",
-              "version": 4,
+              "version": 3,
               "children": [
                 {
                   "name": "FieldKind:NodeKey",
@@ -92,7 +92,7 @@
                 },
                 {
                   "name": "FieldKind:Sequence",
-                  "version": 3
+                  "version": 2
                 },
                 {
                   "name": "FieldKind:Forbidden",
@@ -110,7 +110,7 @@
               "children": [
                 {
                   "name": "Schema",
-                  "version": 1
+                  "version": 2
                 }
               ]
             }

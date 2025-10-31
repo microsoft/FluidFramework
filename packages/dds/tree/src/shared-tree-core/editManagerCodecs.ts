@@ -46,9 +46,33 @@ export interface EditManagerEncodingContext {
  */
 export function clientVersionToEditManagerFormatVersion(
 	clientVersion: MinimumVersionForCollab,
+	writeVersionOverride?: EditManagerFormatVersion,
 ): EditManagerFormatVersion {
-	// Currently, edit manager codec only writes in version 3.
-	return brand(EditManagerFormatVersion.v3);
+	// Currently, version 3 is the only approved format for writing in production.
+	return writeVersionOverride ?? brand(EditManagerFormatVersion.v3);
+}
+
+/**
+ * Returns the version that should be used for testing shared branches.
+ */
+export function editManagerFormatVersionSelectorForSharedBranches(
+	clientVersion: MinimumVersionForCollab,
+): EditManagerFormatVersion {
+	return brand(EditManagerFormatVersion.v5);
+}
+
+export interface EditManagerCodecOptions {
+	readonly editManagerFormatSelector?: (
+		minVersionForCollab: MinimumVersionForCollab,
+	) => EditManagerFormatVersion;
+}
+
+function editManagerFormatVersionFromOptions(
+	options: EditManagerCodecOptions & CodecWriteOptions,
+): EditManagerFormatVersion {
+	const selector =
+		options.editManagerFormatSelector ?? clientVersionToEditManagerFormatVersion;
+	return selector(options.minVersionForCollab);
 }
 
 export function makeEditManagerCodec<TChangeset>(
@@ -60,7 +84,7 @@ export function makeEditManagerCodec<TChangeset>(
 		EncodedRevisionTag,
 		ChangeEncodingContext
 	>,
-	options: CodecWriteOptions,
+	options: EditManagerCodecOptions & CodecWriteOptions,
 ): IJsonCodec<
 	SummaryData<TChangeset>,
 	JsonCompatibleReadOnly,
@@ -73,10 +97,8 @@ export function makeEditManagerCodec<TChangeset>(
 		revisionTagCodec,
 		options,
 	);
-	return makeVersionDispatchingCodec(family, {
-		...options,
-		writeVersion: clientVersionToEditManagerFormatVersion(options.minVersionForCollab),
-	});
+	const writeVersion = editManagerFormatVersionFromOptions(options);
+	return makeVersionDispatchingCodec(family, { ...options, writeVersion });
 }
 
 export function makeEditManagerCodecs<TChangeset>(

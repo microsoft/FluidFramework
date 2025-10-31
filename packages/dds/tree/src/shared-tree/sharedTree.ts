@@ -71,11 +71,12 @@ import {
 	clientVersionToEditManagerFormatVersion,
 	clientVersionToMessageFormatVersion,
 	type ClonableSchemaAndPolicy,
-	EditManagerFormatVersion,
 	getCodecTreeForEditManagerFormatWithChange,
 	getCodecTreeForMessageFormatWithChange,
+	type SharedTreCoreOptionsInternal,
 	MessageFormatVersion,
 	SharedTreeCore,
+	EditManagerFormatVersion,
 } from "../shared-tree-core/index.js";
 import {
 	type ITree,
@@ -208,7 +209,10 @@ export class SharedTreeKernel
 		idCompressor: IIdCompressor,
 		optionsParam: SharedTreeOptionsInternal,
 	) {
-		const options = { ...defaultSharedTreeOptions, ...optionsParam };
+		const options: Required<SharedTreeOptionsInternal> = {
+			...defaultSharedTreeOptions,
+			...optionsParam,
+		};
 		if (options.minVersionForCollab < FluidClientVersion.v2_0) {
 			throw new UsageError("SharedTree requires minVersionForCollab of at least 2.0.0");
 		}
@@ -694,11 +698,11 @@ export function getCodecTreeForSharedTreeFormat(
 	clientVersion: MinimumVersionForCollab,
 ): CodecTree {
 	const children: CodecTree[] = [];
-	children.push(getCodecTreeForEditManagerFormat(clientVersion));
-	children.push(getCodecTreeForMessageFormat(clientVersion));
 	children.push(getCodecTreeForForestFormat(clientVersion));
 	children.push(getCodecTreeForSchemaFormat(clientVersion));
 	children.push(getCodecTreeForDetachedFieldIndexFormat(clientVersion));
+	children.push(getCodecTreeForEditManagerFormat(clientVersion));
+	children.push(getCodecTreeForMessageFormat(clientVersion));
 	children.push(getCodecTreeForFieldBatchFormat(clientVersion));
 	return {
 		name: "SharedTree",
@@ -717,12 +721,21 @@ export type SharedTreeOptionsBeta = ForestOptions;
  * Configuration options for SharedTree.
  * @alpha @input
  */
-export type SharedTreeOptions = Partial<CodecWriteOptions> &
-	Partial<SharedTreeFormatOptions> &
-	SharedTreeOptionsBeta;
+export interface SharedTreeOptions
+	extends Partial<CodecWriteOptions>,
+		Partial<SharedTreeFormatOptions>,
+		SharedTreeOptionsBeta {
+	/**
+	 * Experimental feature flag to enable shared branches.
+	 * This feature is not yet complete and should not be used in production.
+	 * Defaults to false.
+	 */
+	readonly enableSharedBranches?: boolean;
+}
 
 export interface SharedTreeOptionsInternal
-	extends Omit<SharedTreeOptions, "treeEncodeType">,
+	extends Partial<SharedTreCoreOptionsInternal>,
+		Partial<ForestOptions>,
 		Partial<SharedTreeFormatOptionsInternal> {
 	disposeForksAfterTransaction?: boolean;
 	/**
@@ -732,6 +745,7 @@ export interface SharedTreeOptionsInternal
 	 */
 	shouldEncodeIncrementally?: IncrementalEncodingPolicy;
 }
+
 /**
  * Configuration options for SharedTree's internal tree storage.
  * @beta @input
@@ -753,18 +767,6 @@ export interface SharedTreeFormatOptions {
 	 * default: TreeCompressionStrategy.Compressed
 	 */
 	treeEncodeType: TreeCompressionStrategy;
-	/**
-	 * The format version SharedTree should use to persist documents.
-	 *
-	 * This option has compatibility implications for applications using SharedTree.
-	 * Each version documents a required minimum version of \@fluidframework/tree.
-	 * If this minimum version fails to be met, the SharedTree may fail to load.
-	 * To be safe, application authors should verify that they have saturated this version
-	 * of \@fluidframework/tree in their ecosystem before changing the format version.
-	 *
-	 * This option defaults to SharedTreeFormatVersion.v2.
-	 */
-	formatVersion: SharedTreeFormatVersion[keyof SharedTreeFormatVersion];
 }
 
 export interface SharedTreeFormatOptionsInternal
@@ -870,9 +872,10 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	minVersionForCollab: FluidClientVersion.v2_0,
 	forest: ForestTypeReference,
 	treeEncodeType: TreeCompressionStrategy.Compressed,
-	formatVersion: SharedTreeFormatVersion.v3,
 	disposeForksAfterTransaction: true,
 	shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
+	editManagerFormatSelector: clientVersionToEditManagerFormatVersion,
+	messageFormatSelector: clientVersionToMessageFormatVersion,
 };
 
 function exportSimpleFieldSchemaStored(schema: TreeFieldStoredSchema): SimpleFieldSchema {

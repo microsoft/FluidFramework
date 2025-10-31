@@ -7,7 +7,11 @@ import { strict as assert } from "node:assert";
 
 // Allow importing from this specific file which is being tested:
 
-import type { FieldKindIdentifier, TreeStoredSchema } from "../../../core/index.js";
+import {
+	SchemaFormatVersion,
+	type FieldKindIdentifier,
+	type TreeStoredSchema,
+} from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import {
 	allowsRepoSuperset,
@@ -27,6 +31,7 @@ import { JsonAsTree } from "../../../jsonDomainSchema.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeSchemaCodecs } from "../../../feature-libraries/schema-index/index.js";
 import { currentVersion, type CodecWriteOptions } from "../../../codec/index.js";
+import { brand } from "../../../util/index.js";
 
 const codecOptions: CodecWriteOptions = {
 	jsonValidator: FormatValidatorBasic,
@@ -34,8 +39,8 @@ const codecOptions: CodecWriteOptions = {
 };
 
 const schemaCodecs = makeSchemaCodecs(codecOptions);
-const codecV1 = makeSchemaCodec(codecOptions);
-const codecV2 = makeSchemaCodec(codecOptions);
+const codecV1 = makeSchemaCodec(codecOptions, brand(SchemaFormatVersion.v1));
+const codecV2 = makeSchemaCodec(codecOptions, brand(SchemaFormatVersion.v2));
 
 const schema2 = toInitialSchema(SchemaFactory.optional(JsonAsTree.Primitive));
 

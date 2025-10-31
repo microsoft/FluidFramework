@@ -51,10 +51,14 @@ import { BranchCommitEnricher } from "./branchCommitEnricher.js";
 import { type ChangeEnricherReadonlyCheckout, NoOpChangeEnricher } from "./changeEnricher.js";
 import { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
 import { EditManager, minimumPossibleSequenceNumber } from "./editManager.js";
-import { makeEditManagerCodec } from "./editManagerCodecs.js";
+import { makeEditManagerCodec, type EditManagerCodecOptions } from "./editManagerCodecs.js";
 import type { EditManagerFormatVersion, SeqNumber } from "./editManagerFormatCommons.js";
 import { EditManagerSummarizer } from "./editManagerSummarizer.js";
-import { type MessageEncodingContext, makeMessageCodec } from "./messageCodecs.js";
+import {
+	type MessageCodecOptions,
+	type MessageEncodingContext,
+	makeMessageCodec,
+} from "./messageCodecs.js";
 import type { DecodedMessage } from "./messageTypes.js";
 import type { ResubmitMachine } from "./resubmitMachine.js";
 import type { MessageFormatVersion } from "./messageFormat.js";
@@ -65,6 +69,11 @@ const summarizablesTreeKey = "indexes";
 export interface ClonableSchemaAndPolicy extends SchemaAndPolicy {
 	schema: TreeStoredSchemaRepository;
 }
+
+export interface SharedTreeCoreOptionsInternal
+	extends CodecWriteOptions,
+		EditManagerCodecOptions,
+		MessageCodecOptions {}
 
 /**
  * Generic shared tree, which needs to be configured with indexes, field kinds and other configuration.
@@ -120,7 +129,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		logger: ITelemetryBaseLogger | undefined,
 		summarizables: readonly Summarizable[],
 		protected readonly changeFamily: ChangeFamily<TEditor, TChange>,
-		options: CodecWriteOptions,
+		options: SharedTreeCoreOptionsInternal,
 		changeFormatVersionForEditManager: DependentFormatVersion<EditManagerFormatVersion>,
 		changeFormatVersionForMessage: DependentFormatVersion<MessageFormatVersion>,
 		protected readonly idCompressor: IIdCompressor,

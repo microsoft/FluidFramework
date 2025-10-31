@@ -8,6 +8,7 @@ import { fail, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	type CodecTree,
 	type CodecWriteOptions,
+	FluidClientVersion,
 	type ICodecFamily,
 	type ICodecOptions,
 	type IJsonCodec,
@@ -39,8 +40,9 @@ import type { MinimumVersionForCollab } from "@fluidframework/runtime-definition
 export function clientVersionToSchemaVersion(
 	clientVersion: MinimumVersionForCollab,
 ): SchemaFormatVersion {
-	// Currently, the schema codec only writes in version 1.
-	return brand(SchemaFormatVersion.v1);
+	return clientVersion < FluidClientVersion.v2_43
+		? brand(SchemaFormatVersion.v1)
+		: brand(SchemaFormatVersion.v2);
 }
 
 export function getCodecTreeForSchemaFormat(
@@ -52,16 +54,20 @@ export function getCodecTreeForSchemaFormat(
 /**
  * Create a schema codec.
  * @param options - Specifies common codec options, including `minVersionForCollab` and which `validator` to use.
- * @param writeVersion - The schema write version.
+ * @param writeVersionOverride - The schema version to write. If not provided, the version will be derived from `minVersionForCollab`.
  * @returns The composed codec.
  *
  * @privateRemarks We should consider using the Shared Tree format version instead as it may be more valuable for application authors than the schema version.
  */
-export function makeSchemaCodec(options: CodecWriteOptions): IJsonCodec<TreeStoredSchema> {
+export function makeSchemaCodec(
+	options: CodecWriteOptions,
+	writeVersionOverride?: SchemaFormatVersion,
+): IJsonCodec<TreeStoredSchema> {
 	const family = makeSchemaCodecs(options);
 	return makeVersionDispatchingCodec(family, {
 		...options,
-		writeVersion: clientVersionToSchemaVersion(options.minVersionForCollab),
+		writeVersion:
+			writeVersionOverride ?? clientVersionToSchemaVersion(options.minVersionForCollab),
 	});
 }
 

@@ -51,7 +51,6 @@ import {
 	ForestTypeReference,
 	getBranch,
 	type ITreePrivate,
-	SharedTreeFormatVersion,
 	Tree,
 	type TreeCheckout,
 } from "../../shared-tree/index.js";
@@ -95,6 +94,7 @@ import {
 } from "../utils.js";
 import {
 	configuredSharedTree,
+	resolveOptions,
 	SharedTree as SharedTreeKind,
 	type ISharedTree,
 } from "../../treeFactory.js";
@@ -1640,7 +1640,7 @@ describe("SharedTree", () => {
 					2,
 					configuredSharedTree({
 						jsonValidator: FormatValidatorBasic,
-						formatVersion: SharedTreeFormatVersion.vSharedBranches,
+						enableSharedBranches: true,
 					}).getFactory(),
 				);
 
@@ -2323,10 +2323,7 @@ describe("SharedTree", () => {
 			// Create and initialize the runtime factory
 			const runtime = new MockSharedTreeRuntime();
 
-			// Enable Shared Tree format v5, which corresponds to schema format v2. Create a Shared Tree instance.
-			const tree = configuredSharedTree({
-				formatVersion: SharedTreeFormatVersion.v5,
-			}).create(runtime);
+			const tree = configuredSharedTree({}).create(runtime);
 			const schemaFactory = new SchemaFactoryAlpha("com.example");
 
 			// A schema with node and field persisted metadata
@@ -2507,7 +2504,7 @@ describe("SharedTree", () => {
 			2,
 			configuredSharedTree({
 				jsonValidator: FormatValidatorBasic,
-				formatVersion: SharedTreeFormatVersion.vSharedBranches,
+				enableSharedBranches: true,
 			}).getFactory(),
 		);
 		const tree1 = provider.trees[0];
@@ -2551,12 +2548,11 @@ describe("SharedTree", () => {
 			"based on a commit outside the collab window",
 		] as const) {
 			it(subCase, async () => {
+				const internalOption = resolveOptions({ enableSharedBranches: true });
 				const provider = await TestTreeProvider.create(
 					1,
 					SummarizeType.onDemand,
-					new SharedTreeTestFactory(() => {}, undefined, {
-						formatVersion: SharedTreeFormatVersion.vSharedBranches,
-					}),
+					new SharedTreeTestFactory(() => {}, undefined, internalOption),
 				);
 				const tree1 = provider.trees[0];
 				const config = new TreeViewConfiguration({

@@ -103,6 +103,7 @@ import {
 	type FieldKindIdentifier,
 	type TreeNodeSchemaIdentifier,
 	type TreeFieldStoredSchema,
+	SchemaFormatVersion,
 } from "../core/index.js";
 import { FormatValidatorBasic } from "../external-utilities/index.js";
 import {
@@ -142,11 +143,10 @@ import {
 	independentView,
 	SchematizingSimpleTreeView,
 	type ForestOptions,
-	type SharedTreeOptionsInternal,
-	type SharedTreeOptions,
 	buildConfiguredForest,
 	type ForestType,
 	ForestTypeReference,
+	type SharedTreeOptionsInternal,
 } from "../shared-tree/index.js";
 import {
 	type ImplicitFieldSchema,
@@ -182,7 +182,11 @@ import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
 import type { Transactor } from "../shared-tree-core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { FieldChangeDelta } from "../feature-libraries/modular-schema/index.js";
-import { configuredSharedTree, type ISharedTree } from "../treeFactory.js";
+import {
+	configuredSharedTree,
+	configuredSharedTreeInternal,
+	type ISharedTree,
+} from "../treeFactory.js";
 import { JsonAsTree } from "../jsonDomainSchema.js";
 import {
 	MockContainerRuntimeFactoryWithOpBunching,
@@ -616,8 +620,8 @@ export class SharedTreeTestFactory implements IChannelFactory<ISharedTree> {
 			...options,
 			jsonValidator: FormatValidatorBasic,
 		};
-		this.inner = configuredSharedTree(
-			optionsUpdated as SharedTreeOptions,
+		this.inner = configuredSharedTreeInternal(
+			optionsUpdated,
 		).getFactory() as IChannelFactory<ISharedTree>;
 	}
 
@@ -656,10 +660,13 @@ export function validateTree(tree: ITreeCheckout, expected: JsonableTree[]): voi
 // If the newer format is a superset of the previous format, it can be safely used for comparisons. This is the
 // case with schema format v2.
 // TODO: Using currentVersion here means that it will choose schema format v1 instead of v2.
-const schemaCodec = makeSchemaCodec({
-	jsonValidator: FormatValidatorBasic,
-	minVersionForCollab: currentVersion,
-});
+const schemaCodec = makeSchemaCodec(
+	{
+		jsonValidator: FormatValidatorBasic,
+		minVersionForCollab: currentVersion,
+	},
+	brand(SchemaFormatVersion.v2),
+);
 
 export function checkRemovedRootsAreSynchronized(trees: readonly ITreeCheckout[]): void {
 	if (trees.length > 1) {

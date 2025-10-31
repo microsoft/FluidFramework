@@ -42,9 +42,32 @@ export interface MessageEncodingContext {
  */
 export function clientVersionToMessageFormatVersion(
 	clientVersion: MinimumVersionForCollab,
+	writeVersionOverride?: MessageFormatVersion,
 ): MessageFormatVersion {
-	// Currently, message codec only writes in version 3.
-	return brand(MessageFormatVersion.v3);
+	// Currently, version 3 is the only approved format for writing in production.
+	return writeVersionOverride ?? brand(MessageFormatVersion.v3);
+}
+
+export interface MessageCodecOptions {
+	readonly messageFormatSelector?: (
+		minVersionForCollab: MinimumVersionForCollab,
+	) => MessageFormatVersion;
+}
+
+function messageFormatVersionFromOptions(
+	options: MessageCodecOptions & CodecWriteOptions,
+): MessageFormatVersion {
+	const selector = options.messageFormatSelector ?? clientVersionToMessageFormatVersion;
+	return selector(options.minVersionForCollab);
+}
+
+/**
+ * Returns the version that should be used for testing shared branches.
+ */
+export function messageFormatVersionSelectorForSharedBranches(
+	clientVersion: MinimumVersionForCollab,
+): MessageFormatVersion {
+	return brand(MessageFormatVersion.v5);
 }
 
 export function makeMessageCodec<TChangeset>(
@@ -56,7 +79,7 @@ export function makeMessageCodec<TChangeset>(
 		EncodedRevisionTag,
 		ChangeEncodingContext
 	>,
-	options: CodecWriteOptions,
+	options: MessageCodecOptions & CodecWriteOptions,
 ): IJsonCodec<
 	DecodedMessage<TChangeset>,
 	JsonCompatibleReadOnly,
@@ -69,10 +92,8 @@ export function makeMessageCodec<TChangeset>(
 		revisionTagCodec,
 		options,
 	);
-	return makeVersionDispatchingCodec(family, {
-		...options,
-		writeVersion: clientVersionToMessageFormatVersion(options.minVersionForCollab),
-	});
+	const writeVersion = messageFormatVersionFromOptions(options);
+	return makeVersionDispatchingCodec(family, { ...options, writeVersion });
 }
 
 /**
@@ -108,12 +129,14 @@ export function makeMessageCodecs<TChangeset>(
 			case MessageFormatVersion.v3:
 			case MessageFormatVersion.v4:
 				return [
-					version,
+					version === MessageFormatVersion.undefined ? undefined : version,
 					makeV1ToV4CodecWithVersion(
 						changeCodec,
 						revisionTagCodec,
 						options,
-						version ?? MessageFormatVersion.v1,
+						brand(
+							version === MessageFormatVersion.undefined ? MessageFormatVersion.v1 : version,
+						),
 					),
 				];
 			case MessageFormatVersion.v5:
