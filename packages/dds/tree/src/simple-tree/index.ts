@@ -74,6 +74,7 @@ export {
 	type ITreeConfigurationOptions,
 	SchemaFactory,
 	SchemaFactoryBeta,
+	type SchemaStaticsBeta,
 	SchemaFactoryAlpha,
 	type ObjectSchemaOptionsAlpha,
 	type ObjectSchemaOptions,

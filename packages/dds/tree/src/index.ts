@@ -93,6 +93,7 @@ export {
 	type TreeViewEvents,
 	SchemaFactory,
 	SchemaFactoryBeta,
+	SchemaStaticsBeta,
 	SchemaFactoryAlpha,
 	type ObjectSchemaOptionsAlpha,
 	type ObjectSchemaOptions,
