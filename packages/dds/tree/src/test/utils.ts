@@ -659,7 +659,6 @@ export function validateTree(tree: ITreeCheckout, expected: JsonableTree[]): voi
 // that equality of two schemas in tests is achieved by deep-comparing their persisted representations.
 // If the newer format is a superset of the previous format, it can be safely used for comparisons. This is the
 // case with schema format v2.
-// TODO: Using currentVersion here means that it will choose schema format v1 instead of v2.
 const schemaCodec = makeSchemaCodec(
 	{
 		jsonValidator: FormatValidatorBasic,
