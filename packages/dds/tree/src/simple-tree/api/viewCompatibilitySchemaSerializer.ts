@@ -230,13 +230,9 @@ function deserializeNodeSchema(
  */
 function deserializeContainerNode(
 	serializedContainerSchema: JsonCompatibleObject,
-):
-	| SimpleLeafNodeSchema
-	| SimpleArrayNodeSchema
-	| SimpleMapNodeSchema
-	| SimpleRecordNodeSchema {
+): SimpleArrayNodeSchema | SimpleMapNodeSchema | SimpleRecordNodeSchema {
 	return {
-		kind: NodeKind.Record,
+		kind: serializedContainerSchema.kind as NodeKind.Array | NodeKind.Map | NodeKind.Record,
 		simpleAllowedTypes: deserializeSimpleAllowedTypes(
 			serializedContainerSchema.simpleAllowedTypes as JsonCompatibleObject,
 		),
