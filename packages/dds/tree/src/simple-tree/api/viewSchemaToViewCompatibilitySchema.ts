@@ -18,16 +18,13 @@ import { copySimpleNodeSchema, SimpleSchemaCopyMode } from "./viewSchemaToSimple
 /**
  * Convert a stored schema to a SimpleSchema and preserve information needed for compatibility testing.
  *
+ * @remarks This method always copies the schema objects to plain JavaScript objects.
  * @param schema - The stored schema to convert.
- * @param copySchemaObjects - If true, copies the contents of the schema into new objects.
  * @returns The converted SimpleTreeSchema.
  *
  * @alpha
  */
-export function toViewCompatibilityTreeSchema(
-	schema: TreeSchema,
-	copySchemaObjects: boolean,
-): SimpleTreeSchema {
+export function toViewCompatibilityTreeSchema(schema: TreeSchema): SimpleTreeSchema {
 	const definitions = new Map<string, SimpleNodeSchema>();
 
 	// Walk the node definitions and convert them one by one. Recurse into fields used in compatibility checks.
@@ -45,21 +42,22 @@ export function toViewCompatibilityTreeSchema(
 		);
 
 		// Read properties that are needed for compatibility and copy them to a SimpleNodeSchema.
-		const simpleNodeSchema = copySchemaObjects
-			? copySimpleNodeSchema(nodeSchema, true, SimpleSchemaCopyMode.ViewCompatibilitySchema)
-			: nodeSchema;
+		const simpleNodeSchema = copySimpleNodeSchema(
+			nodeSchema,
+			true,
+			SimpleSchemaCopyMode.ViewCompatibilitySchema,
+		);
 		definitions.set(nodeSchema.identifier, simpleNodeSchema);
 	}
 
 	return {
-		root: copySchemaObjects
-			? {
-					kind: schema.root.kind,
-					simpleAllowedTypes: schema.root.simpleAllowedTypes,
-					metadata: schema.root.metadata,
-					persistedMetadata: schema.root.persistedMetadata,
-				}
-			: schema.root, // TODO: Convert the root field
+		root: {
+			kind: schema.root.kind,
+			simpleAllowedTypes: schema.root.simpleAllowedTypes,
+			// Don't include metadata or persistedMetadata in view compatibility schema.
+			metadata: {},
+			persistedMetadata: undefined,
+		},
 		definitions,
 	};
 }

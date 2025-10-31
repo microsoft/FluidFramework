@@ -60,15 +60,7 @@ describe("getSimpleSchema", () => {
 			assert.equal(actual.definitions.get(Schema.identifier), Schema);
 		});
 
-		it("toViewCompatibilityTreeSchema", () => {
-			const treeView = new TreeViewConfigurationAlpha({ schema: root });
-			const actual = toViewCompatibilityTreeSchema(treeView, false);
-
-			assert.deepEqual(actual, expected);
-
-			assert.equal(actual.root, root);
-			assert.equal(actual.definitions.get(Schema.identifier), Schema);
-		});
+		// There is no non-copying form of {@link toViewCompatibilityTreeSchema}.
 	});
 
 	describe("Field Schema", () => {
@@ -97,12 +89,12 @@ describe("getSimpleSchema", () => {
 
 		it("toViewCompatibilityTreeSchema", () => {
 			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
-			const actual = toViewCompatibilityTreeSchema(treeView, true);
+			const actual = toViewCompatibilityTreeSchema(treeView);
 
 			const expected: SimpleTreeSchema = {
 				root: {
 					kind: FieldKind.Optional,
-					metadata: { description: "An optional string." },
+					metadata: {},
 					simpleAllowedTypes: new Map([
 						["com.fluidframework.leaf.string", { isStaged: false }],
 					]),
@@ -116,16 +108,15 @@ describe("getSimpleSchema", () => {
 
 		it("view compatibility schema - Field Schema", () => {
 			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
-			const actual = serializeCompatibilitySchema(
-				toViewCompatibilityTreeSchema(treeView, true),
-			);
+			const actual = serializeCompatibilitySchema(toViewCompatibilityTreeSchema(treeView));
 			takeJsonSnapshot(actual);
 		});
 
 		it("Roundtrip view compatibility schema serialization - Field Schema", () => {
 			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
-			const actual = deserializeCompatibilitySchema(serializeCompatibilitySchema(treeView));
-			assert.deepEqual(actual, treeView);
+			const expected = toViewCompatibilityTreeSchema(treeView);
+			const actual = deserializeCompatibilitySchema(serializeCompatibilitySchema(expected));
+			assert.deepEqual(actual, expected);
 		});
 	});
 
@@ -152,7 +143,7 @@ describe("getSimpleSchema", () => {
 
 		it("toViewCompatibilityTreeSchema", () => {
 			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
-			const actual = toViewCompatibilityTreeSchema(treeView, true);
+			const actual = toViewCompatibilityTreeSchema(treeView);
 
 			const expected: SimpleTreeSchema = {
 				root: {
@@ -171,9 +162,7 @@ describe("getSimpleSchema", () => {
 
 		it("view compatibility schema - Leaf node", () => {
 			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
-			const actual = serializeCompatibilitySchema(
-				toViewCompatibilityTreeSchema(treeView, true),
-			);
+			const actual = serializeCompatibilitySchema(toViewCompatibilityTreeSchema(treeView));
 			takeJsonSnapshot(actual);
 		});
 	});
@@ -205,7 +194,7 @@ describe("getSimpleSchema", () => {
 
 		it("toViewCompatibilityTreeSchema", () => {
 			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
-			const actual = toViewCompatibilityTreeSchema(treeView, true);
+			const actual = toViewCompatibilityTreeSchema(treeView);
 
 			const expected: SimpleTreeSchema = {
 				root: {
@@ -228,9 +217,7 @@ describe("getSimpleSchema", () => {
 
 		it("view compatibility schema - Union root", () => {
 			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
-			const actual = serializeCompatibilitySchema(
-				toViewCompatibilityTreeSchema(treeView, true),
-			);
+			const actual = serializeCompatibilitySchema(toViewCompatibilityTreeSchema(treeView));
 			takeJsonSnapshot(actual);
 		});
 	});
@@ -270,7 +257,7 @@ describe("getSimpleSchema", () => {
 
 		it("toViewCompatibilityTreeSchema", () => {
 			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
-			const actual = toViewCompatibilityTreeSchema(treeView, true);
+			const actual = toViewCompatibilityTreeSchema(treeView);
 
 			const expected: SimpleTreeSchema = {
 				root: {
@@ -300,9 +287,7 @@ describe("getSimpleSchema", () => {
 
 		it("view compatibility schema - Array schema", () => {
 			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
-			const actual = serializeCompatibilitySchema(
-				toViewCompatibilityTreeSchema(treeView, true),
-			);
+			const actual = serializeCompatibilitySchema(toViewCompatibilityTreeSchema(treeView));
 			takeJsonSnapshot(actual);
 		});
 	});
@@ -342,7 +327,7 @@ describe("getSimpleSchema", () => {
 
 		it("toViewCompatibilityTreeSchema", () => {
 			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
-			const actual = toViewCompatibilityTreeSchema(treeView, true);
+			const actual = toViewCompatibilityTreeSchema(treeView);
 
 			const expected: SimpleTreeSchema = {
 				root: {
@@ -372,9 +357,7 @@ describe("getSimpleSchema", () => {
 
 		it("view compatibility schema - Map schema", () => {
 			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
-			const actual = serializeCompatibilitySchema(
-				toViewCompatibilityTreeSchema(treeView, true),
-			);
+			const actual = serializeCompatibilitySchema(toViewCompatibilityTreeSchema(treeView));
 			takeJsonSnapshot(actual);
 		});
 	});
@@ -414,7 +397,7 @@ describe("getSimpleSchema", () => {
 
 		it("toViewCompatibilityTreeSchema", () => {
 			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
-			const actual = toViewCompatibilityTreeSchema(treeView, true);
+			const actual = toViewCompatibilityTreeSchema(treeView);
 
 			const expected: SimpleTreeSchema = {
 				root: {
@@ -444,9 +427,7 @@ describe("getSimpleSchema", () => {
 
 		it("view compatibility schema - Record schema", () => {
 			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
-			const actual = serializeCompatibilitySchema(
-				toViewCompatibilityTreeSchema(treeView, true),
-			);
+			const actual = serializeCompatibilitySchema(toViewCompatibilityTreeSchema(treeView));
 			takeJsonSnapshot(actual);
 		});
 	});
@@ -513,7 +494,7 @@ describe("getSimpleSchema", () => {
 
 		it("toViewCompatibilityTreeSchema", () => {
 			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
-			const actual = toViewCompatibilityTreeSchema(treeView, true);
+			const actual = toViewCompatibilityTreeSchema(treeView);
 
 			const expected: SimpleTreeSchema = {
 				root: {
@@ -568,9 +549,7 @@ describe("getSimpleSchema", () => {
 
 		it("view compatibility schema - Object schema", () => {
 			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
-			const actual = serializeCompatibilitySchema(
-				toViewCompatibilityTreeSchema(treeView, true),
-			);
+			const actual = serializeCompatibilitySchema(toViewCompatibilityTreeSchema(treeView));
 			takeJsonSnapshot(actual);
 		});
 	});
@@ -659,15 +638,13 @@ describe("getSimpleSchema", () => {
 				]),
 			};
 
-			const actual = toViewCompatibilityTreeSchema(treeView, true);
+			const actual = toViewCompatibilityTreeSchema(treeView);
 			assert.deepEqual(actual, expected);
 		});
 
 		it("view compatibility schema - Object schema including an identifier field", () => {
 			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
-			const actual = serializeCompatibilitySchema(
-				toViewCompatibilityTreeSchema(treeView, true),
-			);
+			const actual = serializeCompatibilitySchema(toViewCompatibilityTreeSchema(treeView));
 			takeJsonSnapshot(actual);
 		});
 	});
@@ -725,7 +702,7 @@ describe("getSimpleSchema", () => {
 			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
 
 			// Must enable copy so deep equality passes.
-			const actual = toViewCompatibilityTreeSchema(treeView, true);
+			const actual = toViewCompatibilityTreeSchema(treeView);
 
 			const expected: SimpleTreeSchema = {
 				root: {
@@ -769,9 +746,7 @@ describe("getSimpleSchema", () => {
 
 		it("view compatibility schema - Object schema including a union field", () => {
 			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
-			const actual = serializeCompatibilitySchema(
-				toViewCompatibilityTreeSchema(treeView, true),
-			);
+			const actual = serializeCompatibilitySchema(toViewCompatibilityTreeSchema(treeView));
 			takeJsonSnapshot(actual);
 		});
 	});
@@ -825,7 +800,7 @@ describe("getSimpleSchema", () => {
 
 		it("toViewCompatibilityTreeSchema", () => {
 			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
-			const actual = toViewCompatibilityTreeSchema(treeView, true);
+			const actual = toViewCompatibilityTreeSchema(treeView);
 
 			const expected: SimpleTreeSchema = {
 				root: {
@@ -868,9 +843,7 @@ describe("getSimpleSchema", () => {
 
 		it("view compatibility schema - Recursive object schema", () => {
 			const treeView = new TreeViewConfigurationAlpha({ schema: Schema });
-			const actual = serializeCompatibilitySchema(
-				toViewCompatibilityTreeSchema(treeView, true),
-			);
+			const actual = serializeCompatibilitySchema(toViewCompatibilityTreeSchema(treeView));
 			takeJsonSnapshot(actual);
 		});
 	});

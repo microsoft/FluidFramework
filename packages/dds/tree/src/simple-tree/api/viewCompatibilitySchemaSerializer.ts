@@ -326,6 +326,7 @@ function deserializeSimpleFieldSchema(
 		simpleAllowedTypes: deserializeSimpleAllowedTypes(
 			serializedField.simpleAllowedTypes as JsonCompatibleObject,
 		),
+		persistedMetadata: undefined,
 		metadata: {},
 	};
 }

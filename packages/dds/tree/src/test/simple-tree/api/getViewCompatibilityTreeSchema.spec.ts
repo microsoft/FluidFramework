@@ -39,22 +39,21 @@ describe("getViewCompatibilityTreeSchema", () => {
 			};
 
 			const treeView = new TreeViewConfigurationAlpha({ schema: root });
-			const actual = toViewCompatibilityTreeSchema(treeView, true);
+			const actual = toViewCompatibilityTreeSchema(treeView);
 			assert.deepEqual(actual.root.simpleAllowedTypes, expected.root.simpleAllowedTypes);
 		});
 
 		it("view compatibility schema - simpleAllowedTypes", () => {
 			const treeView = new TreeViewConfigurationAlpha({ schema: root });
-			const actual = serializeCompatibilitySchema(
-				toViewCompatibilityTreeSchema(treeView, true),
-			);
+			const actual = serializeCompatibilitySchema(toViewCompatibilityTreeSchema(treeView));
 			takeJsonSnapshot(actual);
 		});
 
 		it("Roundtrip view compatibility schema serialization - simpleAllowedTypes", () => {
 			const treeView = new TreeViewConfigurationAlpha({ schema: root });
-			const actual = deserializeCompatibilitySchema(serializeCompatibilitySchema(treeView));
-			assert.deepEqual(actual, treeView);
+			const expected = toViewCompatibilityTreeSchema(treeView);
+			const actual = deserializeCompatibilitySchema(serializeCompatibilitySchema(expected));
+			assert.deepEqual(actual, expected);
 		});
 	});
 });
