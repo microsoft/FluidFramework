@@ -170,7 +170,7 @@ export type SimpleNodeSchema =
  */
 export interface SimpleAllowedTypeAttributes {
 	/**
-	 * True if this schema is included as a {@link SchemaStaticsAlpha.staged | staged} schema upgrade,
+	 * True if this schema is included as a {@link SchemaStaticsBeta.staged | staged} schema upgrade,
 	 * allowing the view schema be compatible with stored schema with (post upgrade) or without it (pre-upgrade).
 	 * New documents and schema upgrades will omit any staged schema.
 	 *
