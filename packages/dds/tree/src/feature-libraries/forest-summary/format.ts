@@ -14,7 +14,7 @@ import type { Brand } from "../../util/index.js";
  */
 export const ForestFormatVersion = {
 	v1: 1,
-};
+} as const;
 export type ForestFormatVersion = Brand<
 	(typeof ForestFormatVersion)[keyof typeof ForestFormatVersion],
 	"ForestFormatVersion"

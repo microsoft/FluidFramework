@@ -20,7 +20,7 @@ import type { Brand } from "../../../util/index.js";
  */
 export const FieldBatchFormatVersion = {
 	v1: 1,
-};
+} as const;
 export type FieldBatchFormatVersion = Brand<
 	(typeof FieldBatchFormatVersion)[keyof typeof FieldBatchFormatVersion],
 	"FieldBatchFormatVersion"

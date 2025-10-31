@@ -98,7 +98,7 @@ const validV1Data: readonly [string, FormatV1][] = [
 	[
 		"empty data",
 		{
-			version: 1,
+			version: brand(DetachedFieldIndexFormatVersion.v1),
 			data: [],
 			maxId: brand(-1),
 		},
@@ -106,7 +106,7 @@ const validV1Data: readonly [string, FormatV1][] = [
 	[
 		"revision with a single entry",
 		{
-			version: 1,
+			version: brand(DetachedFieldIndexFormatVersion.v1),
 			data: [[brand(finalizedTag), 0, brand(1)]],
 			maxId: brand(-1),
 		},
@@ -114,7 +114,7 @@ const validV1Data: readonly [string, FormatV1][] = [
 	[
 		"revision with multiple entries",
 		{
-			version: 1,
+			version: brand(DetachedFieldIndexFormatVersion.v1),
 			data: [
 				[
 					brand(finalizedTag),
@@ -129,11 +129,14 @@ const validV1Data: readonly [string, FormatV1][] = [
 	],
 ];
 const validV2Data: readonly [string, FormatV2][] = [
-	...validV1Data.map(([name, data]): [string, FormatV2] => [name, { ...data, version: 2 }]),
+	...validV1Data.map(([name, data]): [string, FormatV2] => [
+		name,
+		{ ...data, version: brand(DetachedFieldIndexFormatVersion.v2) },
+	]),
 	[
 		"revision represented as a StableId",
 		{
-			version: 2,
+			version: brand(DetachedFieldIndexFormatVersion.v2),
 			data: [[testIdCompressor.decompress(mintedTag), 0, brand(1)]],
 			maxId: brand(-1),
 		},

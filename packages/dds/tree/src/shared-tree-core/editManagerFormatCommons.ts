@@ -153,7 +153,7 @@ export const EditManagerFormatVersion = {
 	 * Only used for testing shared branches.
 	 */
 	v5: 5,
-};
+} as const;
 export type EditManagerFormatVersion = Brand<
 	(typeof EditManagerFormatVersion)[keyof typeof EditManagerFormatVersion],
 	"EditManagerFormatVersion"

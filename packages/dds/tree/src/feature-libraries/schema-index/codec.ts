@@ -99,7 +99,7 @@ export function encodeRepo(
 		case SchemaFormatVersion.v2:
 			return encodeRepoV2(repo) as JsonCompatible;
 		default:
-			unreachableCase(version as never);
+			unreachableCase(version);
 	}
 }
 

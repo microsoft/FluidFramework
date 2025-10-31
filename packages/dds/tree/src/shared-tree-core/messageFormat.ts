@@ -45,7 +45,7 @@ export const MessageFormatVersion = {
 	 * Only used for testing shared branches.
 	 */
 	v5: 5,
-};
+} as const;
 export type MessageFormatVersion = Brand<
 	(typeof MessageFormatVersion)[keyof typeof MessageFormatVersion],
 	"MessageFormatVersion"

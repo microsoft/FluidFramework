@@ -15,7 +15,7 @@ const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 
 export interface EncodedEditManager<TChangeset> {
-	readonly version: EditManagerFormatVersion;
+	readonly version: typeof EditManagerFormatVersion.v5;
 	readonly originator: SessionId;
 	readonly main: EncodedSharedBranch<TChangeset>;
 	readonly branches?: readonly EncodedSharedBranch<TChangeset>[];
