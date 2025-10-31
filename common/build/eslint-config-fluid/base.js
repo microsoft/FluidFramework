@@ -186,7 +186,15 @@ module.exports = {
 		"import-x/order": [
 			"error",
 			{
+				"groups": [
+					"builtin",
+					"external",
+					"type",
+					"internal",
+					["parent", "sibling", "index"],
+				],
 				"newlines-between": "always",
+				"distinctGroup": false,
 				"alphabetize": {
 					order: "asc",
 					// Sorting is case-sensitive by default, which is the same as Biome. To avoid
