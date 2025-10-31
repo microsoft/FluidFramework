@@ -131,11 +131,12 @@ describe(`Presence with AzureClient`, () => {
 			const allAttendeesFullyJoinedTimeoutMs = (2000 + 300 * numClients) * timeoutMultiplier;
 
 			for (const writeClients of [numClients, 1]) {
-				it(`announces 'attendeeConnected' when remote client joins session [${numClients} clients, ${writeClients} writers]`, async function () {
+				it(`announces 'attendeeConnected' when remote client joins session [${numClients} clients, ${writeClients} writers]`, async function testAnnouncesAttendeeConnected() {
 					setTestTimeout(this, childConnectTimeoutMs + allAttendeesJoinedTimeoutMs + 1000);
 
 					// Setup
 					const { children, childErrorPromise } = await forkChildProcesses(
+						this.test?.title ?? "",
 						numClients,
 						afterCleanUp,
 					);
@@ -153,7 +154,7 @@ describe(`Presence with AzureClient`, () => {
 					);
 				});
 
-				it(`announces 'attendeeDisconnected' when remote client disconnects [${numClients} clients, ${writeClients} writers]`, async function () {
+				it(`announces 'attendeeDisconnected' when remote client disconnects [${numClients} clients, ${writeClients} writers]`, async function testAnnouncesAttendeeDisconnected() {
 					if (useAzure && numClients > 50) {
 						// Even with increased timeouts, more than 50 clients can be too large for AFR.
 						// This may be due to slow responses/inactivity from the clients that are
@@ -173,6 +174,7 @@ describe(`Presence with AzureClient`, () => {
 
 					// Setup
 					const { children, childErrorPromise } = await forkChildProcesses(
+						this.test?.title ?? "",
 						numClients,
 						afterCleanUp,
 					);
@@ -345,8 +347,9 @@ describe(`Presence with AzureClient`, () => {
 				const testValue = "testValue";
 				const workspaceId = "presenceTestWorkspace";
 
-				beforeEach(async () => {
+				beforeEach(async function usingLatestStateObject_beforeEach(): Promise<void> {
 					({ children, childErrorPromise } = await forkChildProcesses(
+						this.currentTest?.title ?? "",
 						numClients,
 						afterCleanUp,
 					));
@@ -432,8 +435,9 @@ describe(`Presence with AzureClient`, () => {
 				const value1 = { name: "Alice", score: 100 };
 				const value2 = { name: "Bob", score: 200 };
 
-				beforeEach(async () => {
+				beforeEach(async function usingLatestMapStateObject_beforeEach(): Promise<void> {
 					({ children, childErrorPromise } = await forkChildProcesses(
+						this.currentTest?.title ?? "",
 						numClients,
 						afterCleanUp,
 					));
