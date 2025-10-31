@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import type { JsonCompatible, JsonCompatibleObject } from "../../util/index.js";
 import type { TreeSchema } from "./configuration.js";
 import { toViewCompatibilityTreeSchema } from "./viewSchemaToViewCompatibilitySchema.js";
