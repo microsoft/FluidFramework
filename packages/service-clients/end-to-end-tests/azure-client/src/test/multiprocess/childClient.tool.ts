@@ -40,7 +40,6 @@ import type {
 	EventEntry,
 } from "./messageTypes.js";
 
-const connectTimeoutMs = 10_000;
 const testLabel = process.argv[2];
 // Identifier given to child process
 const process_id = process.argv[3];
@@ -61,6 +60,10 @@ const containerSchema = {
 		_unused: TestDataObject,
 	},
 } as const satisfies ContainerSchema;
+
+function log(...data: unknown[]): void {
+	console.log(`[${testLabel}] [${new Date().toISOString()}] [${process_id}]`, ...data);
+}
 
 function telemetryEventInterestLevel(eventName: string): "none" | "basic" | "details" {
 	if (eventName.includes(":Signal") || eventName.includes(":Join")) {
@@ -83,7 +86,7 @@ function selectiveVerboseLog(event: ITelemetryBaseEvent, logLevel?: LogLevel): v
 	if (interest === "details") {
 		content.details = event.details;
 	}
-	console.log(`[${testLabel}] [${process_id}] [${logLevel ?? LogLevel.default}]`, content);
+	log(`[${logLevel ?? LogLevel.default}]`, content);
 }
 
 /**
@@ -96,6 +99,7 @@ const getOrCreateContainer = async (params: {
 	user: UserIdAndName;
 	scopes?: ScopeType[];
 	createScopes?: ScopeType[];
+	connectTimeoutMs: number;
 }): Promise<{
 	container: IFluidContainer<typeof containerSchema>;
 	services: AzureContainerServices;
@@ -105,7 +109,7 @@ const getOrCreateContainer = async (params: {
 }> => {
 	let container: IFluidContainer<typeof containerSchema>;
 	let { containerId } = params;
-	const { logger, onDisconnected, user, scopes, createScopes } = params;
+	const { logger, onDisconnected, user, scopes, createScopes, connectTimeoutMs } = params;
 	const connectionProps: AzureRemoteConnectionConfig | AzureLocalConnectionConfig = useAzure
 		? {
 				tenantId,
@@ -164,7 +168,7 @@ function createSendFunction(): (msg: MessageToParent) => void {
 		const sendFn = process.send.bind(process);
 		if (verbosity.includes("msgs")) {
 			return (msg: MessageToParent) => {
-				console.log(`[${testLabel}] [${process_id}] Sending`, msg);
+				log(`Sending`, msg);
 				sendFn(msg);
 			};
 		}
@@ -381,7 +385,7 @@ class MessageHandler {
 				eventCategory: "messageReceived",
 				eventName: msg.command,
 			});
-			console.log(`[${testLabel}] [${process_id}] Received`, msg);
+			log(`Received`, msg);
 		}
 
 		if (msg.command === "ping") {
@@ -478,7 +482,10 @@ class MessageHandler {
 			this.presence = presence;
 
 			// wait for 'ConnectionState.Connected'
-			await connected;
+			await connected.catch((error) => {
+				(error as Error).message += `\nLog: ${JSON.stringify(this.log)}`;
+				throw error;
+			});
 
 			// Acknowledge connection before sending current attendee information
 			this.send({
@@ -519,9 +526,7 @@ class MessageHandler {
 						connectedCount++;
 					}
 				}
-				console.log(
-					`[${testLabel}] [${process_id}] Report: ${attendees.size} attendees, ${connectedCount} connected`,
-				);
+				log(`Report: ${attendees.size} attendees, ${connectedCount} connected`);
 			} else {
 				this.send({ event: "error", error: `${process_id} is not connected to presence` });
 			}
