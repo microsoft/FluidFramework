@@ -70,6 +70,7 @@ export type IDeltaManagerErased = ErasedType<"@fluidframework/container-definiti
 
 // @beta @sealed @legacy
 export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRuntimeEvents>, IDisposable {
+    readonly activeLocalOperationActivity?: "applyStashed" | "rollback" | undefined;
     addChannel(channel: IChannel): void;
     readonly attachState: AttachState;
     bindChannel(channel: IChannel): void;
