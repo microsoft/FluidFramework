@@ -6,6 +6,7 @@
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { normalizeFieldSchema, type ImplicitFieldSchema } from "../fieldSchema.js";
 import type {
+	SimpleAllowedTypeAttributes,
 	SimpleArrayNodeSchema,
 	SimpleFieldSchema,
 	SimpleLeafNodeSchema,
@@ -31,6 +32,7 @@ import { LeafNodeSchema } from "../leafNodeSchema.js";
  *
  * @param schema - The schema to convert
  * @param copySchemaObjects - If true, TreeNodeSchema and FieldSchema are copied into plain JavaScript objects. Either way, custom metadata is referenced and not copied.
+ * @param isViewSchema - If true (default), properties used by view schema but not part of stored schema (for example, `isStaged` on allowed types) are preserved in the output.
  *
  * @remarks
  * Given that the Schema types used in {@link ImplicitFieldSchema} already implement the {@link SimpleNodeSchema} interfaces, there are limited use-cases for this function.
@@ -45,6 +47,7 @@ import { LeafNodeSchema } from "../leafNodeSchema.js";
 export function toSimpleTreeSchema(
 	schema: ImplicitFieldSchema,
 	copySchemaObjects: boolean,
+	isViewSchema: boolean = true,
 ): SimpleTreeSchema {
 	const normalizedSchema = normalizeFieldSchema(schema);
 	const definitions = new Map<string, SimpleNodeSchema>();
@@ -60,7 +63,7 @@ export function toSimpleTreeSchema(
 				0xb60 /* Invalid schema */,
 			);
 			const outSchema = copySchemaObjects
-				? copySimpleNodeSchema(nodeSchema, SimpleSchemaCopyMode.SimpleSchema)
+				? copySimpleNodeSchema(nodeSchema, isViewSchema, SimpleSchemaCopyMode.SimpleSchema)
 				: nodeSchema;
 			definitions.set(nodeSchema.identifier, outSchema);
 		},
@@ -69,7 +72,10 @@ export function toSimpleTreeSchema(
 	return {
 		root: copySchemaObjects
 			? ({
-					simpleAllowedTypes: normalizedSchema.simpleAllowedTypes,
+					simpleAllowedTypes: normalizeSimpleAllowedTypes(
+						normalizedSchema.simpleAllowedTypes,
+						isViewSchema,
+					),
 					kind: normalizedSchema.kind,
 					metadata: normalizedSchema.metadata,
 					persistedMetadata: normalizedSchema.persistedMetadata,
@@ -90,12 +96,34 @@ export enum SimpleSchemaCopyMode {
 }
 
 /**
+ * Normalizes the {@link SimpleAllowedTypeAttributes} by either preserving or omitting view-specific schema properties.
+ * @param simpleAllowedTypes - The simple allowed types to normalize.
+ * @param isViewSchema - If true, properties used by view schema but not part of stored schema (for example, `isStaged` on allowed types) are preserved in the output.
+ * @returns The normalized simple allowed types.
+ */
+function normalizeSimpleAllowedTypes(
+	simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypeAttributes>,
+	isViewSchema: boolean,
+): ReadonlyMap<string, SimpleAllowedTypeAttributes> {
+	if (isViewSchema) {
+		return simpleAllowedTypes;
+	} else {
+		const normalized = new Map<string, SimpleAllowedTypeAttributes>();
+		for (const [identifier, attributes] of simpleAllowedTypes.entries()) {
+			normalized.set(identifier, { ...attributes, isStaged: undefined });
+		}
+		return normalized;
+	}
+}
+
+/**
  * Copies a {@link SimpleNodeSchema} into a new plain JavaScript object.
  *
  * @remarks Caches the result on the input schema for future calls.
  */
 export function copySimpleNodeSchema(
 	schema: SimpleNodeSchema,
+	isViewSchema: boolean,
 	copyMode: SimpleSchemaCopyMode,
 ): SimpleNodeSchema {
 	const kind = schema.kind;
@@ -105,9 +133,9 @@ export function copySimpleNodeSchema(
 		case NodeKind.Array:
 		case NodeKind.Map:
 		case NodeKind.Record:
-			return copySimpleSchemaWithAllowedTypes(schema, copyMode);
+			return copySimpleSchemaWithAllowedTypes(schema, isViewSchema, copyMode);
 		case NodeKind.Object:
-			return copySimpleObjectSchema(schema, copyMode);
+			return copySimpleObjectSchema(schema, isViewSchema, copyMode);
 		default:
 			unreachableCase(kind);
 	}
@@ -140,6 +168,7 @@ function copySimpleLeafSchema(
 
 function copySimpleSchemaWithAllowedTypes(
 	schema: SimpleMapNodeSchema | SimpleArrayNodeSchema | SimpleRecordNodeSchema,
+	isViewSchema: boolean,
 	copyMode: SimpleSchemaCopyMode,
 ): SimpleMapNodeSchema | SimpleArrayNodeSchema | SimpleRecordNodeSchema {
 	switch (copyMode) {
@@ -153,7 +182,10 @@ function copySimpleSchemaWithAllowedTypes(
 		case SimpleSchemaCopyMode.ViewCompatibilitySchema:
 			return {
 				kind: schema.kind,
-				simpleAllowedTypes: schema.simpleAllowedTypes,
+				simpleAllowedTypes: normalizeSimpleAllowedTypes(
+					schema.simpleAllowedTypes,
+					isViewSchema,
+				),
 				// Don't include metadata or persistedMetadata in view compatibility schema.
 				metadata: {},
 				persistedMetadata: undefined,
@@ -165,6 +197,7 @@ function copySimpleSchemaWithAllowedTypes(
 
 function copySimpleObjectSchema(
 	schema: SimpleObjectNodeSchema,
+	isViewSchema: boolean,
 	copyMode: SimpleSchemaCopyMode,
 ): SimpleObjectNodeSchema {
 	const fields: Map<string, SimpleObjectFieldSchema> = new Map();
@@ -176,7 +209,10 @@ function copySimpleObjectSchema(
 			case SimpleSchemaCopyMode.SimpleSchema:
 				simpleField = {
 					kind: field.kind,
-					simpleAllowedTypes: field.simpleAllowedTypes,
+					simpleAllowedTypes: normalizeSimpleAllowedTypes(
+						field.simpleAllowedTypes,
+						isViewSchema,
+					),
 					metadata: field.metadata,
 					persistedMetadata: field.persistedMetadata,
 					storedKey: field.storedKey,
@@ -186,7 +222,10 @@ function copySimpleObjectSchema(
 			case SimpleSchemaCopyMode.ViewCompatibilitySchema:
 				simpleField = {
 					kind: field.kind,
-					simpleAllowedTypes: field.simpleAllowedTypes,
+					simpleAllowedTypes: normalizeSimpleAllowedTypes(
+						field.simpleAllowedTypes,
+						isViewSchema,
+					),
 					// Don't include metadata or persistedMetadata in view compatibility schema.
 					metadata: {},
 					persistedMetadata: undefined,

@@ -35,7 +35,7 @@ describe("getViewCompatibilityTreeSchema", () => {
 			const treeView = new TreeViewConfigurationAlpha({ schema: root });
 			const actual = toViewCompatibilityTreeSchema(treeView, true);
 			assert.deepEqual(actual.root.simpleAllowedTypes, expected.root.simpleAllowedTypes);
-	});
+		});
 
 		it("view compatibility schema - simpleAllowedTypes", () => {
 			const treeView = new TreeViewConfigurationAlpha({ schema: root });

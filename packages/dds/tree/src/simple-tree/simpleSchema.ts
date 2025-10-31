@@ -177,8 +177,11 @@ export type SimpleNodeSchema =
  */
 export interface SimpleAllowedTypeAttributes {
 	/**
-	 * True if there is an associated schema upgrade that makes this type read-only.
-	 * Undefined if derived from a stored schema, which has no concept of staged allowed type upgrades.
+	 * True if this schema is included as a {@link SchemaStaticsAlpha.staged | staged} schema upgrade,
+	 * allowing the view schema be compatible with stored schema with (post upgrade) or without it (pre-upgrade).
+	 * New documents and schema upgrades will omit any staged schema.
+	 *
+	 * Undefined if derived from a stored schema.
 	 */
 	readonly isStaged: boolean | undefined;
 }
@@ -200,7 +203,7 @@ export interface SimpleFieldSchema {
 	readonly kind: FieldKind;
 
 	/**
-	 * The types allowed under the field.
+	 * Information about the allowed types under this field.
 	 *
 	 * @remarks Refers to the types by identifier.
 	 * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.

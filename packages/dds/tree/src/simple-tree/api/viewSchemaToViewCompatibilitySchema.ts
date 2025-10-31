@@ -46,7 +46,7 @@ export function toViewCompatibilityTreeSchema(
 
 		// Read properties that are needed for compatibility and copy them to a SimpleNodeSchema.
 		const simpleNodeSchema = copySchemaObjects
-			? copySimpleNodeSchema(nodeSchema, SimpleSchemaCopyMode.ViewCompatibilitySchema)
+			? copySimpleNodeSchema(nodeSchema, true, SimpleSchemaCopyMode.ViewCompatibilitySchema)
 			: nodeSchema;
 		definitions.set(nodeSchema.identifier, simpleNodeSchema);
 	}
