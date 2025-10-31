@@ -994,8 +994,6 @@ export type SharedTreeFormatVersion = typeof SharedTreeFormatVersion;
 
 // @alpha @input
 export interface SharedTreeOptions extends Partial<CodecWriteOptions>, Partial<SharedTreeFormatOptions>, SharedTreeOptionsBeta {
-    // (undocumented)
-    readonly disposeForksAfterTransaction?: boolean;
     readonly enableSharedBranches?: boolean;
 }
 

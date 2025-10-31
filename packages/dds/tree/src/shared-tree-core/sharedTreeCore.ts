@@ -70,7 +70,7 @@ export interface ClonableSchemaAndPolicy extends SchemaAndPolicy {
 	schema: TreeStoredSchemaRepository;
 }
 
-export interface SharedTreCoreOptionsInternal
+export interface SharedTreeCoreOptionsInternal
 	extends CodecWriteOptions,
 		EditManagerCodecOptions,
 		MessageCodecOptions {}
@@ -129,7 +129,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		logger: ITelemetryBaseLogger | undefined,
 		summarizables: readonly Summarizable[],
 		protected readonly changeFamily: ChangeFamily<TEditor, TChange>,
-		options: SharedTreCoreOptionsInternal,
+		options: SharedTreeCoreOptionsInternal,
 		changeFormatVersionForEditManager: DependentFormatVersion<EditManagerFormatVersion>,
 		changeFormatVersionForMessage: DependentFormatVersion<MessageFormatVersion>,
 		protected readonly idCompressor: IIdCompressor,

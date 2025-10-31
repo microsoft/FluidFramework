@@ -143,10 +143,10 @@ import {
 	independentView,
 	SchematizingSimpleTreeView,
 	type ForestOptions,
-	type SharedTreeOptions,
 	buildConfiguredForest,
 	type ForestType,
 	ForestTypeReference,
+	type SharedTreeOptionsInternal,
 } from "../shared-tree/index.js";
 import {
 	type ImplicitFieldSchema,
@@ -182,7 +182,11 @@ import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
 import type { Transactor } from "../shared-tree-core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { FieldChangeDelta } from "../feature-libraries/modular-schema/index.js";
-import { configuredSharedTree, type ISharedTree } from "../treeFactory.js";
+import {
+	configuredSharedTree,
+	configuredSharedTreeInternal,
+	type ISharedTree,
+} from "../treeFactory.js";
 import { JsonAsTree } from "../jsonDomainSchema.js";
 import {
 	MockContainerRuntimeFactoryWithOpBunching,
@@ -610,13 +614,13 @@ export class SharedTreeTestFactory implements IChannelFactory<ISharedTree> {
 	public constructor(
 		protected readonly onCreate: (tree: ISharedTree) => void,
 		protected readonly onLoad?: (tree: ISharedTree) => void,
-		options: SharedTreeOptions = {},
+		options: SharedTreeOptionsInternal = {},
 	) {
-		const optionsUpdated: SharedTreeOptions = {
+		const optionsUpdated: SharedTreeOptionsInternal = {
 			...options,
 			jsonValidator: FormatValidatorBasic,
 		};
-		this.inner = configuredSharedTree(
+		this.inner = configuredSharedTreeInternal(
 			optionsUpdated,
 		).getFactory() as IChannelFactory<ISharedTree>;
 	}

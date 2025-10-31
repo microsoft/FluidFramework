@@ -728,9 +728,9 @@ export interface SharedTreeOptions
 	/**
 	 * Experimental feature flag to enable shared branches.
 	 * This feature is not yet complete and should not be used in production.
+	 * Defaults to false.
 	 */
 	readonly enableSharedBranches?: boolean;
-	readonly disposeForksAfterTransaction?: boolean;
 }
 
 export interface SharedTreeOptionsInternal
@@ -744,9 +744,6 @@ export interface SharedTreeOptionsInternal
 	 * See {@link IncrementalEncodingPolicy}.
 	 */
 	shouldEncodeIncrementally?: IncrementalEncodingPolicy;
-	readonly messageFormatSelector?: (
-		minVersionForCollab: MinimumVersionForCollab,
-	) => MessageFormatVersion;
 }
 
 /**

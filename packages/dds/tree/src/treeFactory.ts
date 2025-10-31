@@ -174,22 +174,27 @@ export function configuredSharedTreeBetaLegacy(
 export function configuredSharedTree(
 	options: SharedTreeOptions,
 ): ISharedObjectKind<ITree> & SharedObjectKind<ITree> {
-	const internalOptions = resolveInternalOptions(options);
+	const internalOptions = resolveOptions(options);
+	return configuredSharedTreeInternal(internalOptions);
+}
+
+export function configuredSharedTreeInternal(
+	options: SharedTreeOptionsInternal,
+): ISharedObjectKind<ITree> & SharedObjectKind<ITree> {
 	const sharedObjectOptions: SharedObjectOptions<ITree> = {
 		type: SharedTreeFactoryType,
 		attributes: SharedTreeAttributes,
 		telemetryContextPrefix: "fluid_sharedTree_",
-		factory: treeKernelFactory(internalOptions),
+		factory: treeKernelFactory(options),
 	};
 
 	return makeSharedObjectKind<ITree>(sharedObjectOptions);
 }
 
-function resolveInternalOptions(options: SharedTreeOptions): SharedTreeOptionsInternal {
+export function resolveOptions(options: SharedTreeOptions): SharedTreeOptionsInternal {
 	const internal: SharedTreeOptionsInternal = {
 		...resolveSharedBranchesOptions(options.enableSharedBranches),
 	};
-	copyProperty(options, "disposeForksAfterTransaction", internal);
 	copyProperty(options, "forest", internal);
 	copyProperty(options, "jsonValidator", internal);
 	copyProperty(options, "minVersionForCollab", internal);
