@@ -9,7 +9,6 @@ import {
 	allowUnused,
 	evaluateLazySchema,
 	SchemaFactory,
-	SchemaFactoryAlpha,
 	TreeBeta,
 	TreeViewConfiguration,
 	type NodeKind,
@@ -110,7 +109,7 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 			// -------------
 			// Library using an Item
 
-			class Container extends sf.array("Container", SchemaFactoryAlpha.types(ItemTypes)) {}
+			class Container extends sf.array("Container", ItemTypes) {}
 
 			// -------------
 			// Library defining an item
@@ -124,7 +123,8 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 
 			// If we don't do anything special, the insertable type is never, so a cast is required to insert content.
 			// See example using customizeSchemaTyping for how to avoid this.
-			container.insertAtStart(new TextItem({ text: "", location: { x: 0, y: 0 } })); // TODO: Why is `as never` not required?
+			// TODO: See `SchemaUnionToIntersection` test for why `as never` is currently not required here.
+			container.insertAtStart(new TextItem({ text: "", location: { x: 0, y: 0 } }));
 
 			type Input = Parameters<typeof container.insertAtStart>[0];
 			allowUnused<requireAssignableTo<Input, never>>();
