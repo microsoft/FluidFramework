@@ -168,4 +168,7 @@ export {
 	getShouldIncrementallySummarizeAllowedTypes,
 	incrementalSummaryHint,
 } from "./incrementalAllowedTypes.js";
-export { toSerializableCompatibilitySchema } from "./serializableCompatibilitySchema.js";
+export {
+	serializeCompatibilitySchema,
+	deserializeCompatibilitySchema,
+} from "./viewCompatibilitySchemaSerializer.js";

@@ -4,10 +4,11 @@
  */
 
 import {
+	deserializeCompatibilitySchema,
 	FieldKind,
 	SchemaFactoryAlpha,
+	serializeCompatibilitySchema,
 	stringSchema,
-	toSerializableCompatibilitySchema,
 	toViewCompatibilityTreeSchema,
 	TreeViewConfigurationAlpha,
 	type SimpleTreeSchema,
@@ -44,8 +45,16 @@ describe("getViewCompatibilityTreeSchema", () => {
 
 		it("view compatibility schema - simpleAllowedTypes", () => {
 			const treeView = new TreeViewConfigurationAlpha({ schema: root });
-			const actual = toSerializableCompatibilitySchema(treeView);
+			const actual = serializeCompatibilitySchema(
+				toViewCompatibilityTreeSchema(treeView, true),
+			);
 			takeJsonSnapshot(actual);
+		});
+
+		it("Roundtrip view compatibility schema serialization - simpleAllowedTypes", () => {
+			const treeView = new TreeViewConfigurationAlpha({ schema: root });
+			const actual = deserializeCompatibilitySchema(serializeCompatibilitySchema(treeView));
+			assert.deepEqual(actual, treeView);
 		});
 	});
 });
