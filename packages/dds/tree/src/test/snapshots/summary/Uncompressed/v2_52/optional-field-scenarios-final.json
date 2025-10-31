@@ -390,21 +390,27 @@
               "SchemaString": {
                 "type": "blob",
                 "content": {
-                  "version": 1,
+                  "version": 2,
                   "nodes": {
                     "com.fluidframework.leaf.number": {
-                      "leaf": 0
+                      "kind": {
+                        "leaf": 0
+                      }
                     },
                     "com.fluidframework.leaf.string": {
-                      "leaf": 1
+                      "kind": {
+                        "leaf": 1
+                      }
                     },
                     "optional-field-scenarios.Map": {
-                      "map": {
-                        "kind": "Optional",
-                        "types": [
-                          "com.fluidframework.leaf.number",
-                          "com.fluidframework.leaf.string"
-                        ]
+                      "kind": {
+                        "map": {
+                          "kind": "Optional",
+                          "types": [
+                            "com.fluidframework.leaf.number",
+                            "com.fluidframework.leaf.string"
+                          ]
+                        }
                       }
                     }
                   },

@@ -154,24 +154,28 @@
               "SchemaString": {
                 "type": "blob",
                 "content": {
-                  "version": 1,
+                  "version": 2,
                   "nodes": {
                     "test trees.Array<[\"test trees.Recursive Map\"]>": {
-                      "object": {
-                        "": {
-                          "kind": "Sequence",
-                          "types": [
-                            "test trees.Recursive Map"
-                          ]
+                      "kind": {
+                        "object": {
+                          "": {
+                            "kind": "Sequence",
+                            "types": [
+                              "test trees.Recursive Map"
+                            ]
+                          }
                         }
                       }
                     },
                     "test trees.Recursive Map": {
-                      "map": {
-                        "kind": "Optional",
-                        "types": [
-                          "test trees.Array<[\"test trees.Recursive Map\"]>"
-                        ]
+                      "kind": {
+                        "map": {
+                          "kind": "Optional",
+                          "types": [
+                            "test trees.Array<[\"test trees.Recursive Map\"]>"
+                          ]
+                        }
                       }
                     }
                   },

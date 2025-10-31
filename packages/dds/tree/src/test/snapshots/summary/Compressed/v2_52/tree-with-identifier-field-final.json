@@ -188,20 +188,24 @@
               "SchemaString": {
                 "type": "blob",
                 "content": {
-                  "version": 1,
+                  "version": 2,
                   "nodes": {
                     "com.example.parent": {
-                      "object": {
-                        "identifier": {
-                          "kind": "Identifier",
-                          "types": [
-                            "com.fluidframework.leaf.string"
-                          ]
+                      "kind": {
+                        "object": {
+                          "identifier": {
+                            "kind": "Identifier",
+                            "types": [
+                              "com.fluidframework.leaf.string"
+                            ]
+                          }
                         }
                       }
                     },
                     "com.fluidframework.leaf.string": {
-                      "leaf": 1
+                      "kind": {
+                        "leaf": 1
+                      }
                     }
                   },
                   "root": {

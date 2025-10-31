@@ -83,10 +83,12 @@
               "SchemaString": {
                 "type": "blob",
                 "content": {
-                  "version": 1,
+                  "version": 2,
                   "nodes": {
                     "com.fluidframework.leaf.number": {
-                      "leaf": 0
+                      "kind": {
+                        "leaf": 0
+                      }
                     }
                   },
                   "root": {

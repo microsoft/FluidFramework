@@ -46,7 +46,7 @@
               "children": [
                 {
                   "name": "Schema",
-                  "version": 1
+                  "version": 2
                 }
               ]
             }
@@ -98,7 +98,7 @@
               "children": [
                 {
                   "name": "Schema",
-                  "version": 1
+                  "version": 2
                 }
               ]
             }
@@ -112,7 +112,7 @@
     },
     {
       "name": "Schema",
-      "version": 1
+      "version": 2
     },
     {
       "name": "DetachedFieldIndex",

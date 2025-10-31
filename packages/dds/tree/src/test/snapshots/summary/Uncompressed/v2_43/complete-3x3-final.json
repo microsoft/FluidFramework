@@ -891,27 +891,33 @@
               "SchemaString": {
                 "type": "blob",
                 "content": {
-                  "version": 1,
+                  "version": 2,
                   "nodes": {
                     "com.fluidframework.leaf.string": {
-                      "leaf": 1
+                      "kind": {
+                        "leaf": 1
+                      }
                     },
                     "test trees.Recursive Map": {
-                      "map": {
-                        "kind": "Optional",
-                        "types": [
-                          "test trees.Recursive Map",
-                          "test trees.String Array"
-                        ]
+                      "kind": {
+                        "map": {
+                          "kind": "Optional",
+                          "types": [
+                            "test trees.Recursive Map",
+                            "test trees.String Array"
+                          ]
+                        }
                       }
                     },
                     "test trees.String Array": {
-                      "object": {
-                        "": {
-                          "kind": "Sequence",
-                          "types": [
-                            "com.fluidframework.leaf.string"
-                          ]
+                      "kind": {
+                        "object": {
+                          "": {
+                            "kind": "Sequence",
+                            "types": [
+                              "com.fluidframework.leaf.string"
+                            ]
+                          }
                         }
                       }
                     }

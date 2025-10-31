@@ -104,18 +104,22 @@
               "SchemaString": {
                 "type": "blob",
                 "content": {
-                  "version": 1,
+                  "version": 2,
                   "nodes": {
                     "com.fluidframework.leaf.handle": {
-                      "leaf": 3
+                      "kind": {
+                        "leaf": 3
+                      }
                     },
                     "has-handle.HandleObject": {
-                      "object": {
-                        "handleField": {
-                          "kind": "Optional",
-                          "types": [
-                            "com.fluidframework.leaf.handle"
-                          ]
+                      "kind": {
+                        "object": {
+                          "handleField": {
+                            "kind": "Optional",
+                            "types": [
+                              "com.fluidframework.leaf.handle"
+                            ]
+                          }
                         }
                       }
                     }

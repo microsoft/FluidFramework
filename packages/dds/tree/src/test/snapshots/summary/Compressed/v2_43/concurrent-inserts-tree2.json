@@ -338,18 +338,22 @@
               "SchemaString": {
                 "type": "blob",
                 "content": {
-                  "version": 1,
+                  "version": 2,
                   "nodes": {
                     "com.fluidframework.leaf.string": {
-                      "leaf": 1
+                      "kind": {
+                        "leaf": 1
+                      }
                     },
                     "concurrent-inserts.Array<[\"com.fluidframework.leaf.string\"]>": {
-                      "object": {
-                        "": {
-                          "kind": "Sequence",
-                          "types": [
-                            "com.fluidframework.leaf.string"
-                          ]
+                      "kind": {
+                        "object": {
+                          "": {
+                            "kind": "Sequence",
+                            "types": [
+                              "com.fluidframework.leaf.string"
+                            ]
+                          }
                         }
                       }
                     }
