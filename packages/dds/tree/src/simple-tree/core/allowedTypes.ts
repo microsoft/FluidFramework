@@ -57,7 +57,7 @@ export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
 /**
  * Stores annotations for an individual allowed type.
  * @remarks
- * Create using APIs on {@link SchemaFactoryAlpha}, like {@link SchemaStaticsAlpha.staged}.
+ * Create using APIs on {@link SchemaStaticsBeta}, like {@link SchemaStaticsBeta.staged}.
  * @privateRemarks
  * Since this is sealed, users are not supposed to create instances of it directly.
  * Making it extend ErasedType could enforce that.
@@ -412,7 +412,7 @@ export interface AllowedTypeMetadata {
 	readonly custom?: unknown;
 
 	/**
-	 * If defined, indicates that an allowed type is {@link SchemaStaticsAlpha.staged | staged}.
+	 * If defined, indicates that an allowed type is {@link SchemaStaticsBeta.staged | staged}.
 	 */
 	readonly stagedSchemaUpgrade?: SchemaUpgrade;
 }
@@ -425,7 +425,7 @@ export let createSchemaUpgrade: () => SchemaUpgrade;
 /**
  * Unique token used to upgrade schemas and determine if a particular upgrade has been completed.
  * @remarks
- * Create using {@link SchemaStaticsAlpha.staged}.
+ * Create using {@link SchemaStaticsBeta.staged}.
  * @privateRemarks
  * TODO:#38722 implement runtime schema upgrades.
  * Until then, the class purely behaves mostly as a placeholder.
