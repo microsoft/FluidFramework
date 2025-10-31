@@ -16,6 +16,7 @@ import {
 	FieldKind,
 	SchemaFactory,
 	SchemaFactoryAlpha,
+	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
 } from "../../simple-tree/index.js";
 import { ForestTypeExpensiveDebug, TreeAlpha } from "../../shared-tree/index.js";
@@ -205,5 +206,41 @@ describe("independentView", () => {
 		view.initialize(42);
 		assert.equal(view.root, 42);
 		view.dispose();
+	});
+
+	it("staged schema example", () => {
+		const tree = independentTreeBeta();
+
+		const stagedConfig = new TreeViewConfiguration({
+			schema: SchemaFactoryAlpha.types([
+				SchemaFactory.number,
+				SchemaFactoryAlpha.staged(SchemaFactory.string),
+			]),
+		});
+		const afterConfig = new TreeViewConfigurationAlpha({
+			schema: [SchemaFactory.number, SchemaFactory.string],
+		});
+
+		// Initialize tree
+		{
+			const view = tree.viewWith(stagedConfig);
+			view.initialize(1);
+			view.dispose();
+		}
+
+		// Do schema upgrade
+		{
+			const view = tree.viewWith(afterConfig);
+			view.upgradeSchema();
+			view.root = "A";
+			view.dispose();
+		}
+
+		// Can still view tree with staged schema
+		{
+			const view = tree.viewWith(stagedConfig);
+			assert.equal(view.root, "A");
+			view.dispose();
+		}
 	});
 });

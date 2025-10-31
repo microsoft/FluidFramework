@@ -100,6 +100,43 @@ export function independentInitializedView<const TSchema extends ImplicitFieldSc
  * Such a tree can never experience collaboration or be persisted to to a Fluid Container.
  *
  * This can be useful for testing, as well as use-cases like working on local files instead of documents stored in some Fluid service.
+ *
+ * @example
+ * ```typescript
+ * const tree = independentTreeBeta();
+ *
+ * const stagedConfig = new TreeViewConfiguration({
+ * 	schema: SchemaFactoryAlpha.types([
+ * 		SchemaFactory.number,
+ * 		SchemaFactoryAlpha.staged(SchemaFactory.string),
+ * 	]),
+ * });
+ * const afterConfig = new TreeViewConfigurationAlpha({
+ * 	schema: [SchemaFactory.number, SchemaFactory.string],
+ * });
+ *
+ * // Initialize tree
+ * {
+ * 	const view = tree.viewWith(stagedConfig);
+ * 	view.initialize(1);
+ * 	view.dispose();
+ * }
+ *
+ * // Do schema upgrade
+ * {
+ * 	const view = tree.viewWith(afterConfig);
+ * 	view.upgradeSchema();
+ * 	view.root = "A";
+ * 	view.dispose();
+ * }
+ *
+ * // Can still view tree with staged schema
+ * {
+ * 	const view = tree.viewWith(stagedConfig);
+ * 	assert.equal(view.root, "A");
+ * 	view.dispose();
+ * }
+ * ```
  * @privateRemarks
  * Before stabilizing this as public, consider if we can instead just expose a better way to create regular Fluid service based SharedTrees for tests.
  * Something like https://github.com/microsoft/FluidFramework/pull/25422 might be a better long term stable/public solution.
@@ -112,16 +149,12 @@ export function independentTreeBeta<const TSchema extends ImplicitFieldSchema>(
 }
 
 /**
- * Create a {@link ViewableTree} that is not tied to any Fluid runtimes or services.
+ * Alpha extensions to {@link independentTreeBeta}.
  *
  * @param options - Configuration options for the independent tree.
  * This can be used to create an uninitialized tree, or `content` can be provided to create an initialized tree.
  * If content is provided, the idCompressor is a required part of it: otherwise it is optional and provided at the top level.
  *
- * @remarks
- * Such a tree can never experience collaboration or be persisted to to a Fluid Container.
- *
- * This can be useful for testing, as well as use-cases like working on local files instead of documents stored in some Fluid service.
  * @privateRemarks
  * TODO: Support more of {@link ITreeAlpha}, including branching APIs to allow for merges.
  * TODO: Better unify this logic with SharedTreeKernel and SharedTreeCore.
