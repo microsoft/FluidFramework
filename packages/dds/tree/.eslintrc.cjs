@@ -58,7 +58,7 @@ module.exports = {
 		"@typescript-eslint/no-unsafe-call": "off",
 		"@typescript-eslint/no-unsafe-member-access": "off",
 
-		"import/order": "off",
+		"import-x/order": "off",
 
 		"jsdoc/multiline-blocks": "off",
 
@@ -109,11 +109,11 @@ module.exports = {
 		},
 	],
 	settings: {
-		"import/extensions": [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
-		"import/parsers": {
+		"import-x/extensions": [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
+		"import-x/parsers": {
 			"@typescript-eslint/parser": [".ts", ".tsx", ".d.ts"],
 		},
-		"import/resolver": {
+		"import-x/resolver": {
 			typescript: {
 				extensions: [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
 				conditionNames: [

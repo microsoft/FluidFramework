@@ -46,7 +46,7 @@ module.exports = {
 
 			@fluid-private/test-end-to-end-tests: Error: Circularity detected while resolving configuration: /home/tylerbu/code/release-1/common/build/build-common/tsconfig.base.json
 			@fluid-private/test-end-to-end-tests: Occurred while linting /home/tylerbu/code/release-1/packages/test/test-end-to-end-tests/src/mocking.ts:6
-			@fluid-private/test-end-to-end-tests: Rule: "import/no-deprecated"
+			@fluid-private/test-end-to-end-tests: Rule: "import-x/no-deprecated"
 			@fluid-private/test-end-to-end-tests:     at Be (/home/tylerbu/code/release-1/node_modules/.pnpm/get-tsconfig@4.7.2/node_modules/get-tsconfig/dist/index.cjs:3:9255)
 			@fluid-private/test-end-to-end-tests:     at ie (/home/tylerbu/code/release-1/node_modules/.pnpm/get-tsconfig@4.7.2/node_modules/get-tsconfig/dist/index.cjs:3:10245)
 			@fluid-private/test-end-to-end-tests:     at Be (/home/tylerbu/code/release-1/node_modules/.pnpm/get-tsconfig@4.7.2/node_modules/get-tsconfig/dist/index.cjs:3:9365)
@@ -58,7 +58,7 @@ module.exports = {
 			@fluid-private/test-end-to-end-tests:     at ExportMap.for (/home/tylerbu/code/release-1/node_modules/.pnpm/eslint-plugin-i@2.29.0_j7h7oj6rrhtikhzta4fgkou42e/node_modules/eslint-plugin-i/lib/ExportMap.js:798:201)
 			@fluid-private/test-end-to-end-tests:     at ExportMap.get (/home/tylerbu/code/release-1/node_modules/.pnpm/eslint-plugin-i@2.29.0_j7h7oj6rrhtikhzta4fgkou42e/node_modules/eslint-plugin-i/lib/ExportMap.js:792:465)
 		 */
-		"import/no-deprecated": "off",
+		"import-x/no-deprecated": "off",
 	},
 	overrides: [
 		{

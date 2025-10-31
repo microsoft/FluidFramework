@@ -40,7 +40,7 @@ const lintConfig = {
 	rules: {
 		/**
 		 * Allow Fluid Framework examples to import from unstable and legacy APIs.
-		 * https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/no-internal-modules.md
+		 * https://github.com/import-js/eslint-plugin-import-x/blob/main/docs/rules/no-internal-modules.md
 		 */
 		"import-x/no-internal-modules": [
 			"error",

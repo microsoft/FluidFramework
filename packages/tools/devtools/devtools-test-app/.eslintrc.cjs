@@ -21,7 +21,7 @@ module.exports = {
 
 		// Disabled because they conflict with Prettier.
 		"unicorn/no-nested-ternary": "off",
-		"import/no-extraneous-dependencies": "off",
+		"import-x/no-extraneous-dependencies": "off",
 
 		// TODO: AB#18875 - Re-enable react/no-deprecated once we replace uses of the deprecated ReactDOM.render()
 		// with the new React 18 createRoot().

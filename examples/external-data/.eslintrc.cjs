@@ -25,7 +25,7 @@ module.exports = {
 			files: ["tests/**"],
 			rules: {
 				// Fine for tests to import from dev dependencies
-				"import/no-extraneous-dependencies": ["error", { devDependencies: true }],
+				"import-x/no-extraneous-dependencies": ["error", { devDependencies: true }],
 
 				// Since the "tests" directory is adjacent to "src", and this package (intentionally) does not expose
 				// a single exports roll-up, reaching into "src" is required.

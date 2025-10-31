@@ -43,7 +43,7 @@ module.exports = {
 					},
 				],
 				// Allow unresolved for intentionally reaching into alpha/internal of other packages during integration tests
-				"import/no-unresolved": "off",
+				"import-x/no-unresolved": "off",
 				"@typescript-eslint/no-unsafe-assignment": "off",
 				"@typescript-eslint/no-unsafe-call": "off",
 				"@typescript-eslint/no-unsafe-member-access": "off",
