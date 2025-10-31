@@ -12,11 +12,9 @@ import {
 
 import type { ICodecOptions } from "../codec/index.js";
 import {
-	type ITreeCursorSynchronous,
 	type RevisionTag,
 	RevisionTagCodec,
 	SchemaVersion,
-	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
 } from "../core/index.js";
 import {
@@ -34,11 +32,23 @@ import type {
 	TreeViewConfiguration,
 	ImplicitFieldSchema,
 	TreeViewAlpha,
+	ITreeAlpha,
+	ViewableTree,
+	TreeView,
+	ReadSchema,
+	VerboseTree,
+	SimpleTreeSchema,
 } from "../simple-tree/index.js";
-import { type JsonCompatibleReadOnly, type JsonCompatible, Breakable } from "../util/index.js";
+import {
+	type JsonCompatibleReadOnly,
+	type JsonCompatible,
+	Breakable,
+	oneFromIterable,
+} from "../util/index.js";
 import {
 	buildConfiguredForest,
 	defaultSharedTreeOptions,
+	exportSimpleSchema,
 	type ForestOptions,
 } from "./sharedTree.js";
 import { createTreeCheckout } from "./treeCheckout.js";
@@ -59,30 +69,9 @@ export function independentView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
 	options: ForestOptions & { idCompressor?: IIdCompressor | undefined },
 ): TreeViewAlpha<TSchema> {
-	const breaker = new Breakable("independentView");
-	const idCompressor: IIdCompressor = options.idCompressor ?? createIdCompressor();
-	const mintRevisionTag = (): RevisionTag => idCompressor.generateCompressedId();
-	const revisionTagCodec = new RevisionTagCodec(idCompressor);
-	const schema = new TreeStoredSchemaRepository();
-	const forest = buildConfiguredForest(
-		breaker,
-		options.forest ?? defaultSharedTreeOptions.forest,
-		schema,
-		idCompressor,
-		defaultIncrementalEncodingPolicy,
-	);
-	const checkout = createTreeCheckout(idCompressor, mintRevisionTag, revisionTagCodec, {
-		forest,
-		schema,
-		breaker,
-	});
-	const out: TreeViewAlpha<TSchema> = new SchematizingSimpleTreeView<TSchema>(
-		checkout,
-		config,
-		createNodeIdentifierManager(idCompressor),
-	);
-	return out;
+	return independentTreeAlpha(options).viewWith(config) as TreeViewAlpha<TSchema>;
 }
+
 /**
  * Create an initialized {@link TreeView} that is not tied to any {@link ITree} instance.
  *
@@ -99,52 +88,57 @@ export function independentInitializedView<const TSchema extends ImplicitFieldSc
 	options: ForestOptions & ICodecOptions,
 	content: ViewContent,
 ): TreeViewAlpha<TSchema> {
-	const idCompressor: IIdCompressor = content.idCompressor;
-	const fieldBatchCodec = makeFieldBatchCodec(options, 1);
-	const schemaCodec = makeSchemaCodec(options, SchemaVersion.v1);
-
-	const schema = schemaCodec.decode(content.schema as Format);
-	const context: FieldBatchEncodingContext = {
-		encodeType: TreeCompressionStrategy.Compressed,
-		idCompressor,
-		originatorId: idCompressor.localSessionId, // Is this right? If so, why is is needed?
-		schema: { schema, policy: defaultSchemaPolicy },
-	};
-
-	const fieldCursors = fieldBatchCodec.decode(content.tree as JsonCompatibleReadOnly, context);
-	assert(fieldCursors.length === 1, 0xa5b /* must have exactly 1 field in batch */);
-
-	return independentInitializedViewInternal(
+	return independentTreeAlpha({ ...options, content }).viewWith(
 		config,
-		options,
-		schema,
-		// Checked above.
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		fieldCursors[0]!,
-		idCompressor,
-	);
+	) as TreeViewAlpha<TSchema>;
 }
 
 /**
- * {@link independentInitializedView} but using internal types instead of persisted data formats.
+ * Create a {@link ViewableTree} that is not tied to any Fluid runtimes or services.
+ *
+ * @remarks
+ * Such a tree can never experience collaboration or be persisted to to a Fluid Container.
+ *
+ * This can be useful for testing, as well as use-cases like working on local files instead of documents stored in some Fluid service.
+ * @beta
  */
-export function independentInitializedViewInternal<const TSchema extends ImplicitFieldSchema>(
-	config: TreeViewConfiguration<TSchema>,
-	options: ForestOptions & ICodecOptions,
-	schema: TreeStoredSchema,
-	rootFieldCursor: ITreeCursorSynchronous,
-	idCompressor: IIdCompressor,
-): SchematizingSimpleTreeView<TSchema> {
-	const breaker = new Breakable("independentInitializedView");
-	const revisionTagCodec = new RevisionTagCodec(idCompressor);
+export function independentTreeBeta<const TSchema extends ImplicitFieldSchema>(
+	options?: ForestOptions,
+): ViewableTree {
+	return independentTreeAlpha<TSchema>(options);
+}
+
+/**
+ * Create a {@link ViewableTree} that is not tied to any Fluid runtimes or services.
+ *
+ * @remarks
+ * Such a tree can never experience collaboration or be persisted to to a Fluid Container.
+ *
+ * This can be useful for testing, as well as use-cases like working on local files instead of documents stored in some Fluid service.
+ * @privateRemarks
+ * TODO: Support more of {@link ITreeAlpha}, including branching APIs to allow for merges.
+ * TODO: Better unify this logic with SharedTreeKernel and SharedTreeCore.
+ * @alpha
+ */
+export function independentTreeAlpha<const TSchema extends ImplicitFieldSchema>(
+	options?: ForestOptions &
+		(
+			| ({ idCompressor?: IIdCompressor | undefined } & { content?: undefined })
+			| (ICodecOptions & { content: ViewContent } & { idCompressor?: undefined })
+		),
+): ViewableTree & Pick<ITreeAlpha, "exportVerbose" | "exportSimpleSchema"> {
+	const breaker = new Breakable("independentView");
+	const idCompressor: IIdCompressor =
+		options?.idCompressor ?? options?.idCompressor ?? createIdCompressor();
 	const mintRevisionTag = (): RevisionTag => idCompressor.generateCompressedId();
+	const revisionTagCodec = new RevisionTagCodec(idCompressor);
 
 	// To ensure the forest is in schema when constructed, start it with an empty schema and set the schema repository content later.
 	const schemaRepository = new TreeStoredSchemaRepository();
 
 	const forest = buildConfiguredForest(
 		breaker,
-		options.forest ?? defaultSharedTreeOptions.forest,
+		options?.forest ?? defaultSharedTreeOptions.forest,
 		schemaRepository,
 		idCompressor,
 		defaultIncrementalEncodingPolicy,
@@ -156,18 +150,55 @@ export function independentInitializedViewInternal<const TSchema extends Implici
 		breaker,
 	});
 
-	initialize(
-		checkout,
-		schema,
-		initializerFromChunk(checkout, () =>
-			combineChunks(checkout.forest.chunkField(rootFieldCursor)),
-		),
-	);
-	return new SchematizingSimpleTreeView<TSchema>(
-		checkout,
-		config,
-		createNodeIdentifierManager(idCompressor),
-	);
+	if (options?.content !== undefined) {
+		const schemaCodec = makeSchemaCodec(options, SchemaVersion.v1);
+		const fieldBatchCodec = makeFieldBatchCodec(options, 1);
+		const newSchema = schemaCodec.decode(options.content.schema as Format);
+
+		const context: FieldBatchEncodingContext = {
+			encodeType: TreeCompressionStrategy.Compressed,
+			idCompressor,
+			originatorId: idCompressor.localSessionId, // Is this right? If so, why is is needed?
+			schema: { schema: newSchema, policy: defaultSchemaPolicy },
+		};
+		const fieldCursors = fieldBatchCodec.decode(
+			options.content.tree as JsonCompatibleReadOnly,
+			context,
+		);
+		assert(fieldCursors.length === 1, 0xa5b /* must have exactly 1 field in batch */);
+
+		const fieldCursor = oneFromIterable(fieldCursors);
+		assert(fieldCursor !== undefined, "expected exactly one field in batch");
+
+		initialize(
+			checkout,
+			newSchema,
+			initializerFromChunk(checkout, () =>
+				combineChunks(checkout.forest.chunkField(fieldCursor)),
+			),
+		);
+	}
+
+	return {
+		viewWith<TRoot extends ImplicitFieldSchema>(
+			config: TreeViewConfiguration<TRoot>,
+		): TreeView<TRoot> {
+			const out: TreeViewAlpha<TSchema> = new SchematizingSimpleTreeView<TSchema>(
+				checkout,
+				config as TreeViewConfiguration as TreeViewConfiguration<ReadSchema<TSchema>>,
+				createNodeIdentifierManager(idCompressor),
+			);
+			return out as unknown as TreeView<TRoot>;
+		},
+
+		exportVerbose(): VerboseTree | undefined {
+			return checkout.exportVerbose();
+		},
+
+		exportSimpleSchema(): SimpleTreeSchema {
+			return exportSimpleSchema(checkout.storedSchema);
+		},
+	};
 }
 
 /**

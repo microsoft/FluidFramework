@@ -73,6 +73,8 @@ export {
 	type ObservationResults,
 	type TreeIdentifierUtils,
 	independentView,
+	independentTreeBeta,
+	independentTreeAlpha,
 	ForestTypeOptimized,
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,

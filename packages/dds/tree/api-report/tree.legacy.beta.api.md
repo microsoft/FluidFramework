@@ -217,6 +217,9 @@ export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
 // @public
 export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
 
+// @beta
+export function independentTreeBeta<const TSchema extends ImplicitFieldSchema>(options?: ForestOptions): ViewableTree;
+
 // @public @system
 type _InlineTrick = 0;
 
