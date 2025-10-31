@@ -100,6 +100,9 @@ export function independentInitializedView<const TSchema extends ImplicitFieldSc
  * Such a tree can never experience collaboration or be persisted to to a Fluid Container.
  *
  * This can be useful for testing, as well as use-cases like working on local files instead of documents stored in some Fluid service.
+ * @privateRemarks
+ * Before stabilizing this as public, consider if we can instead just expose a better way to create regular Fluid service based SharedTrees for tests.
+ * Something like https://github.com/microsoft/FluidFramework/pull/25422 might be a better long term stable/public solution.
  * @beta
  */
 export function independentTreeBeta<const TSchema extends ImplicitFieldSchema>(
@@ -111,6 +114,10 @@ export function independentTreeBeta<const TSchema extends ImplicitFieldSchema>(
 /**
  * Create a {@link ViewableTree} that is not tied to any Fluid runtimes or services.
  *
+ * @param options - Configuration options for the independent tree.
+ * This can be used to create an uninitialized tree, or `content` can be provided to create an initialized tree.
+ * If content is provided, the idCompressor is a required part of it: otherwise it is optional and provided at the top level.
+ *
  * @remarks
  * Such a tree can never experience collaboration or be persisted to to a Fluid Container.
  *
@@ -118,6 +125,10 @@ export function independentTreeBeta<const TSchema extends ImplicitFieldSchema>(
  * @privateRemarks
  * TODO: Support more of {@link ITreeAlpha}, including branching APIs to allow for merges.
  * TODO: Better unify this logic with SharedTreeKernel and SharedTreeCore.
+ *
+ * Before further stabilizing: consider better ways to handle initialized vs uninitialized trees.
+ * Perhaps it would be better to not allow initialize here at all, but expose the ability to load compressed tree content and stored schema via ITree or TreeView?
+ * If keeping the option here, maybe a separate function of overload would be better? Or maybe flatten ViewContent inline to deduplicate the idCompressor options?
  * @alpha
  */
 export function independentTreeAlpha<const TSchema extends ImplicitFieldSchema>(
