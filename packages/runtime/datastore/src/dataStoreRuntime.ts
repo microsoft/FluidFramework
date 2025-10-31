@@ -1318,7 +1318,7 @@ export class FluidDataStoreRuntime
 	 * See {@link @fluidframework/runtime-definitions#FluidDataStoreMessage} comment
 	 * for opportunity to resolve this.
 	 */
-	public rollback(
+	public rollback?(
 		type: DataStoreMessageType,
 		// TODO: use something other than `any` here (breaking change)
 		// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any

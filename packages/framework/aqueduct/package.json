@@ -156,8 +156,7 @@
 	"typeValidation": {
 		"broken": {
 			"Interface_DataObjectFactoryProps": {
-				"backCompat": false,
-				"forwardCompat": false
+				"backCompat": false
 			},
 			"Interface_IDataObjectProps": {
 				"backCompat": false
