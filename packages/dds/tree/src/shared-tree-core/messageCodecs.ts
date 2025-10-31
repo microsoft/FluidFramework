@@ -45,9 +45,11 @@ export function clientVersionToMessageFormatVersion(
 	clientVersion: MinimumVersionForCollab,
 	writeVersionOverride?: MessageFormatVersion,
 ): MessageFormatVersion {
-	return (writeVersionOverride ?? clientVersion < FluidClientVersion.v2_43)
-		? brand(MessageFormatVersion.v3)
-		: brand(MessageFormatVersion.v4);
+	const compatibleVersion: MessageFormatVersion =
+		clientVersion < FluidClientVersion.v2_43
+			? brand(MessageFormatVersion.v3)
+			: brand(MessageFormatVersion.v4);
+	return writeVersionOverride ?? compatibleVersion;
 }
 
 export interface MessageCodecOptions {

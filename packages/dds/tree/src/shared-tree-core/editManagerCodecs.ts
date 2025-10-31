@@ -49,9 +49,11 @@ export function clientVersionToEditManagerFormatVersion(
 	clientVersion: MinimumVersionForCollab,
 	writeVersionOverride?: EditManagerFormatVersion,
 ): EditManagerFormatVersion {
-	return (writeVersionOverride ?? clientVersion < FluidClientVersion.v2_43)
-		? brand(EditManagerFormatVersion.v3)
-		: brand(EditManagerFormatVersion.v4);
+	const compatibleVersion: EditManagerFormatVersion =
+		clientVersion < FluidClientVersion.v2_43
+			? brand(EditManagerFormatVersion.v3)
+			: brand(EditManagerFormatVersion.v4);
+	return writeVersionOverride ?? compatibleVersion;
 }
 
 /**
