@@ -129,7 +129,7 @@ export function independentTreeAlpha<const TSchema extends ImplicitFieldSchema>(
 ): ViewableTree & Pick<ITreeAlpha, "exportVerbose" | "exportSimpleSchema"> {
 	const breaker = new Breakable("independentView");
 	const idCompressor: IIdCompressor =
-		options?.idCompressor ?? options?.idCompressor ?? createIdCompressor();
+		options?.idCompressor ?? options?.content?.idCompressor ?? createIdCompressor();
 	const mintRevisionTag = (): RevisionTag => idCompressor.generateCompressedId();
 	const revisionTagCodec = new RevisionTagCodec(idCompressor);
 
