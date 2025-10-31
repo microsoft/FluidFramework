@@ -44,7 +44,34 @@ describe("generate:layerGeneration", () => {
 		assert.strictEqual(result, undefined);
 	});
 
-	it("should update generation when time since last release is 1+ months", () => {
+	it("should not change generation when only patch version has changed", () => {
+		const mockLogger = createMockLogger();
+		const previousGeneration = 5;
+		const previousVersion = "2.0.0";
+		const currentVersion = "2.0.1"; // Only patch change
+
+		// Create a date 2 months ago (should normally trigger increment)
+		const oldDate = new Date();
+		oldDate.setDate(oldDate.getDate() - 2 * daysInMonthApproximation);
+		const oldDateString = formatDateForLayerFile(oldDate);
+		const fileContent = generateLayerFileContent(
+			previousGeneration,
+			oldDateString,
+			previousVersion,
+		);
+
+		const result = maybeGetNewGeneration(
+			"layerGenerationState.ts",
+			fileContent,
+			minimumCompatWindowMonths,
+			currentVersion,
+			mockLogger,
+		);
+
+		assert.strictEqual(result, undefined);
+	});
+
+	it("should update generation when time since last release is 1+ months with minor version change", () => {
 		const mockLogger = createMockLogger();
 		const previousGeneration = 5;
 		const monthsSincePreviousRelease = 1; // More than 1 month
@@ -58,7 +85,28 @@ describe("generate:layerGeneration", () => {
 			"layerGenerationState.ts",
 			fileContent,
 			minimumCompatWindowMonths,
-			"2.0.0",
+			"1.1.0", // Minor version change
+			mockLogger,
+		);
+
+		assert.strictEqual(result, previousGeneration + monthsSincePreviousRelease);
+	});
+
+	it("should update generation when time since last release is 1+ months with major version change", () => {
+		const mockLogger = createMockLogger();
+		const previousGeneration = 5;
+		const monthsSincePreviousRelease = 2; // 2 months
+
+		// Create a date monthsSincePreviousRelease months ago
+		const oldDate = new Date();
+		oldDate.setDate(oldDate.getDate() - monthsSincePreviousRelease * daysInMonthApproximation);
+		const oldDateString = formatDateForLayerFile(oldDate);
+		const fileContent = generateLayerFileContent(previousGeneration, oldDateString, "1.0.0");
+		const result = maybeGetNewGeneration(
+			"layerGenerationState.ts",
+			fileContent,
+			minimumCompatWindowMonths,
+			"2.0.0", // Major version change
 			mockLogger,
 		);
 
@@ -79,7 +127,7 @@ describe("generate:layerGeneration", () => {
 			"layerGenerationState.ts",
 			fileContent,
 			minimumCompatWindowMonths,
-			"2.0.0",
+			"1.1.0", // Minor version change but not enough time elapsed
 			mockLogger,
 		);
 
@@ -103,7 +151,7 @@ describe("generate:layerGeneration", () => {
 			"layerGenerationState.ts",
 			fileContent,
 			minimumCompatWindowMonths,
-			"2.0.0",
+			"2.0.0", // Major version change
 			mockLogger,
 		);
 
@@ -111,13 +159,45 @@ describe("generate:layerGeneration", () => {
 	});
 
 	it("should calculate generation increment correctly for various time periods", () => {
+		// Previous version is older than the currentVersion in all test cases
+		const previousVersion = "1.0.0";
 		const testCases = [
-			{ monthsAgo: 1, expectedIncrement: 1, minimumCompatWindowMonths: 3 },
-			{ monthsAgo: 2, expectedIncrement: 2, minimumCompatWindowMonths: 3 },
-			{ monthsAgo: 3, expectedIncrement: 2, minimumCompatWindowMonths: 3 }, // Capped at 2
-			{ monthsAgo: 6, expectedIncrement: 2, minimumCompatWindowMonths: 3 }, // Capped at 2
-			{ monthsAgo: 4, expectedIncrement: 4, minimumCompatWindowMonths: 6 }, // Not capped
-			{ monthsAgo: 8, expectedIncrement: 5, minimumCompatWindowMonths: 6 }, // Capped at 5
+			{
+				monthsAgo: 1,
+				expectedIncrement: 1,
+				minimumCompatWindowMonths: 3,
+				currentVersion: "1.1.0",
+			},
+			{
+				monthsAgo: 2,
+				expectedIncrement: 2,
+				minimumCompatWindowMonths: 3,
+				currentVersion: "1.2.0",
+			},
+			{
+				monthsAgo: 3,
+				expectedIncrement: 2,
+				minimumCompatWindowMonths: 3,
+				currentVersion: "2.0.0",
+			}, // Capped at 2
+			{
+				monthsAgo: 6,
+				expectedIncrement: 2,
+				minimumCompatWindowMonths: 3,
+				currentVersion: "2.1.0",
+			}, // Capped at 2
+			{
+				monthsAgo: 4,
+				expectedIncrement: 4,
+				minimumCompatWindowMonths: 6,
+				currentVersion: "1.3.0",
+			}, // Not capped
+			{
+				monthsAgo: 8,
+				expectedIncrement: 5,
+				minimumCompatWindowMonths: 6,
+				currentVersion: "3.0.0",
+			}, // Capped at 5
 		];
 
 		for (const testCase of testCases) {
@@ -126,12 +206,16 @@ describe("generate:layerGeneration", () => {
 			const oldDate = new Date();
 			oldDate.setDate(oldDate.getDate() - testCase.monthsAgo * daysInMonthApproximation);
 			const oldDateString = formatDateForLayerFile(oldDate);
-			const fileContent = generateLayerFileContent(previousGeneration, oldDateString, "1.0.0");
+			const fileContent = generateLayerFileContent(
+				previousGeneration,
+				oldDateString,
+				previousVersion,
+			);
 			const result = maybeGetNewGeneration(
 				"layerGenerationState.ts",
 				fileContent,
 				testCase.minimumCompatWindowMonths,
-				"2.0.0",
+				testCase.currentVersion,
 				mockLogger,
 			);
 
@@ -197,7 +281,7 @@ export const pkgVersion = "1.0.0";
 					"layerGenerationState.ts",
 					fileContent,
 					minimumCompatWindowMonths,
-					"2.0.0",
+					"2.0.0", // Major version change
 					mockLogger,
 				),
 			/Current date is older that previous release date/,

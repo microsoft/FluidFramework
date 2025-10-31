@@ -8,6 +8,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { Logger, Package } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
+import { diff } from "semver";
 import { PackageCommand } from "../../BasePackageCommand.js";
 import type { PackageSelectionDefault } from "../../flags.js";
 
@@ -172,12 +173,13 @@ export function maybeGetNewGeneration(
 	}
 
 	const previousPkgVersion = match[3];
-	if (previousPkgVersion === currentPkgVersion) {
-		log.verbose(
-			`Package version has not changed (still ${currentPkgVersion}); skipping generation update.`,
-		);
+	const result = diff(currentPkgVersion, previousPkgVersion);
+	// Only "minor" or "major" version changes trigger generation updates.
+	if (result === null || (result !== "minor" && result !== "major")) {
+		log.verbose(`No minor or major release since last update; skipping generation update.`);
 		return undefined;
 	}
+
 	log.verbose(
 		`Previous package version: ${previousPkgVersion}, Current package version: ${currentPkgVersion}`,
 	);
