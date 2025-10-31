@@ -57,6 +57,7 @@ export interface ConnectCommand {
 	 * If not provided, a new Fluid container will be created.
 	 */
 	containerId?: string;
+	connectTimeoutMs: number;
 }
 
 /**

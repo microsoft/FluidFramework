@@ -107,7 +107,10 @@ function convertNodeSchema(
 
 function convertArrayNodeSchema(schema: SimpleArrayNodeSchema): JsonArrayNodeSchema {
 	const allowedTypes: JsonSchemaRef[] = [];
-	schema.allowedTypesIdentifiers.forEach((type) => {
+	const allowedTypesIdentifiers: ReadonlySet<string> = new Set(
+		schema.simpleAllowedTypes.keys(),
+	);
+	allowedTypesIdentifiers.forEach((type) => {
 		allowedTypes.push(createSchemaRef(type));
 	});
 
@@ -206,7 +209,10 @@ function convertRecordLikeNodeSchema(
 	schema: SimpleRecordNodeSchema | SimpleMapNodeSchema,
 ): JsonMapNodeSchema | JsonRecordNodeSchema {
 	const allowedTypes: JsonSchemaRef[] = [];
-	schema.allowedTypesIdentifiers.forEach((type) => {
+	const allowedTypesIdentifiers: ReadonlySet<string> = new Set(
+		schema.simpleAllowedTypes.keys(),
+	);
+	allowedTypesIdentifiers.forEach((type) => {
 		allowedTypes.push(createSchemaRef(type));
 	});
 
