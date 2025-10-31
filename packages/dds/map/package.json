@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/map",
-	"version": "2.70.0",
+	"version": "2.70.1",
 	"description": "Distributed map",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -156,7 +156,7 @@
 		"@fluidframework/build-tools": "^0.58.3",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^6.1.0",
-		"@fluidframework/map-previous": "npm:@fluidframework/map@2.63.0",
+		"@fluidframework/map-previous": "npm:@fluidframework/map@2.70.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.52.11",
 		"@types/mocha": "^10.0.10",

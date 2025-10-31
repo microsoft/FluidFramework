@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/tinylicious-client",
-	"version": "2.70.0",
+	"version": "2.70.1",
 	"description": "A tool to enable creation and loading of Fluid containers using the Tinylicious service",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -109,7 +109,7 @@
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^6.1.0",
 		"@fluidframework/test-utils": "workspace:~",
-		"@fluidframework/tinylicious-client-previous": "npm:@fluidframework/tinylicious-client@2.63.0",
+		"@fluidframework/tinylicious-client-previous": "npm:@fluidframework/tinylicious-client@2.70.0",
 		"@microsoft/api-extractor": "7.52.11",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
