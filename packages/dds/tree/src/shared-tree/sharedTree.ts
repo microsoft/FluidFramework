@@ -698,11 +698,11 @@ export function getCodecTreeForSharedTreeFormat(
 	clientVersion: MinimumVersionForCollab,
 ): CodecTree {
 	const children: CodecTree[] = [];
-	children.push(getCodecTreeForEditManagerFormat(clientVersion));
-	children.push(getCodecTreeForMessageFormat(clientVersion));
 	children.push(getCodecTreeForForestFormat(clientVersion));
 	children.push(getCodecTreeForSchemaFormat(clientVersion));
 	children.push(getCodecTreeForDetachedFieldIndexFormat(clientVersion));
+	children.push(getCodecTreeForEditManagerFormat(clientVersion));
+	children.push(getCodecTreeForMessageFormat(clientVersion));
 	children.push(getCodecTreeForFieldBatchFormat(clientVersion));
 	return {
 		name: "SharedTree",
