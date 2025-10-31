@@ -35,7 +35,7 @@ export const MessageFormatVersion = {
 	 */
 	v3: 3,
 	/**
-	 * Was inadvertently released in 2.43.0 (through usages of configuredSharedTree) remains available.
+	 * Was inadvertently released in 2.43.0 (through usages of configuredSharedTree) and remains available.
 	 * Reading capability must be maintained for backwards compatibility.
 	 * Writing capability needs to be maintained.
 	 * @privateRemarks TODO: stop writing this version.
