@@ -58,6 +58,7 @@ interface ChildProcess extends AnyChildProcess {
  * @returns A collection of child processes and a promise that rejects on the first child error.
  */
 export async function forkChildProcesses(
+	testLabel: string,
 	numProcesses: number,
 	cleanUpAccumulator: (() => void)[],
 ): Promise<{
@@ -72,6 +73,7 @@ export async function forkChildProcesses(
 	const childErrorPromises: Promise<never>[] = [];
 	for (let i = 0; i < numProcesses; i++) {
 		const child = fork("./lib/test/multiprocess/childClient.tool.js", [
+			testLabel,
 			`child ${i}` /* identifier passed to child process */,
 			childLoggingVerbosity /* console logging verbosity */,
 		]);
@@ -348,6 +350,10 @@ export async function connectAndListenForAttendees(
 		readyTimeoutMs: childConnectTimeoutMs,
 	});
 
+	// These actions are not awaited. They are here to provide additional logging.
+	// It is up to the caller to await attendeeIdPromises if desired. This can mean
+	// An "error" message is output, but the caller does not care about attendee
+	// ids and proceeds.
 	Promise.all(connectResult.attendeeIdPromises)
 		.then(() => console.log("All attendees connected."))
 		.catch((error) => {
