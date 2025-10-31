@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assertIdenticalTypes, replaceBigInt } from "./testUtils.js";
 
 import type {
 	ErasedType,
@@ -24,6 +23,8 @@ import type {
 	OpaqueJsonSerializable,
 	OpaqueJsonDeserialized,
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
+
+import { assertIdenticalTypes, replaceBigInt } from "./testUtils.js";
 
 /* eslint-disable jsdoc/require-jsdoc */
 /* eslint-disable unicorn/no-null */
@@ -767,8 +768,7 @@ export const opaqueSerializableUnknown =
 export const opaqueDeserializedUnknown =
 	opaqueDeserializedObject as OpaqueJsonDeserialized<unknown>;
 export const opaqueSerializableAndDeserializedUnknown =
-	opaqueSerializableAndDeserializedObject as OpaqueJsonSerializable<unknown> &
-		OpaqueJsonDeserialized<unknown>;
+	opaqueSerializableAndDeserializedObject;
 
 export const objectWithOpaqueSerializableUnknown = {
 	opaque: opaqueSerializableUnknown,
