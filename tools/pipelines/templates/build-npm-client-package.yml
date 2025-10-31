@@ -199,7 +199,8 @@ extends:
               buildDirectory: '${{ parameters.buildDirectory }}'
               checks: '${{ parameters.checks }}'
               # Install all dependencies, not just the root ones
-              dependencyInstallCommand: pnpm install --frozen-lockfile
+              # Run dedupe after to make sure the lockfile is stable
+              dependencyInstallCommand: pnpm install --frozen-lockfile && pnpm dedupe
 
 
       # Install / Build / Test Stage
