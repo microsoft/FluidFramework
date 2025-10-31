@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import type { IClient } from "@fluidframework/driver-definitions";
 import type { ISocketStorageDiscovery } from "@fluidframework/odsp-driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+
 import { type SinonFakeTimers, type SinonStub, stub, useFakeTimers } from "sinon";
 
 import type { OdspFluidDataStoreLocator } from "../contractsPublic.js";

@@ -15,6 +15,7 @@ import type {
 	ISocketStorageDiscovery,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+
 import { stub, type SinonStub } from "sinon";
 import type { Socket } from "socket.io-client";
 

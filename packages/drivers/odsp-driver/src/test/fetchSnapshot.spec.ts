@@ -19,6 +19,7 @@ import {
 	MockLogger,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
+
 import { stub } from "sinon";
 
 import { convertToCompactSnapshot } from "../compactSnapshotWriter.js";

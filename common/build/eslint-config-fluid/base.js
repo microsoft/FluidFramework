@@ -184,11 +184,41 @@ module.exports = {
 		"import-x/order": [
 			"error",
 			{
+				// Import ordering groups per import-x documentation:
+				// https://github.com/antfu/eslint-plugin-import-x/blob/master/docs/rules/order.md
+				// Groups define the order of import categories. Default includes:
+				// "builtin", "external", "internal", "parent", "sibling", "index", "object", "type"
+				// FluidFramework convention: @fluid* packages come before external npm packages
 				"groups": [
-					"builtin",
-					["internal", "parent", "sibling", "index", "external"],
+					"builtin",    // Node.js built-in modules
+					"internal",   // Internal @fluid* scoped packages (configured via pathGroups below)
+					"external",   // External npm packages (non-@fluid packages)
+					"parent",     // Parent directory imports (../)
+					"sibling",    // Same directory imports (./)
+					"index",      // Index file imports
 				],
-				"newlines-between": "ignore",
+				// pathGroups maps specific import patterns to groups using minimatch
+				// All @fluid* scoped packages are treated as internal modules
+				// https://github.com/antfu/eslint-plugin-import-x/blob/master/docs/rules/order.md#pathgroups-array-of-objects
+				"pathGroups": [
+					{
+						// Use brace expansion to match all @fluid* scoped packages in a single pattern
+						// This ensures they're all treated as one unified internal group
+						"pattern": "@{fluid-example,fluid-experimental,fluid-internal,fluid-private,fluid-tools,fluidframework}/**",
+						"group": "internal"
+					}
+				],
+				// pathGroupsExcludedImportTypes controls which import types are excluded from pathGroup matching
+				// Default: ["builtin", "external", "object"] - we override to allow external packages to be reclassified as internal
+				// https://github.com/antfu/eslint-plugin-import-x/blob/master/docs/rules/order.md#pathgroupsexcludedimporttypes-array
+				"pathGroupsExcludedImportTypes": [],
+				// newlines-between enforces blank lines between import groups
+				// Options: "ignore" | "always" | "always-and-inside-groups" | "never"
+				// https://github.com/antfu/eslint-plugin-import-x/blob/master/docs/rules/order.md#newlines-between
+				"newlines-between": "always",
+				// distinctGroup controls whether pathGroups with position create separate groups
+				// Set to false to keep imports within same group rather than creating new groups
+				// https://github.com/antfu/eslint-plugin-import-x/blob/master/docs/rules/order.md#distinctgroup-boolean
 				"distinctGroup": false,
 				"alphabetize": {
 					order: "asc",

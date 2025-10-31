@@ -9,6 +9,7 @@ import { strict as assert } from "node:assert";
 
 import type { IRequest } from "@fluidframework/core-interfaces";
 import type { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
+
 import { stub } from "sinon";
 
 import { SharingLinkHeader } from "../contractsPublic.js";

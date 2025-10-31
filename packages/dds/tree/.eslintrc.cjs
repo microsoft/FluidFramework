@@ -58,8 +58,6 @@ module.exports = {
 		"@typescript-eslint/no-unsafe-call": "off",
 		"@typescript-eslint/no-unsafe-member-access": "off",
 
-		"import-x/order": "off",
-
 		"jsdoc/multiline-blocks": "off",
 
 		// Set to a warning to encourage adding docs :)

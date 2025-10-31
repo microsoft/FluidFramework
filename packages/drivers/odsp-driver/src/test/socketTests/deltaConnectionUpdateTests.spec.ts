@@ -15,6 +15,7 @@ import {
 	type ITelemetryLoggerExt,
 	MockLogger,
 } from "@fluidframework/telemetry-utils/internal";
+
 import { type SinonFakeTimers, type SinonStub, stub, useFakeTimers } from "sinon";
 import type { Socket } from "socket.io-client";
 
