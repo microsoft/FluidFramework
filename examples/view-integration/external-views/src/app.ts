@@ -17,12 +17,11 @@ import {
 	createDetachedContainer,
 	loadExistingContainer,
 } from "@fluidframework/container-loader/legacy";
-import type { Presence } from "@fluidframework/presence/beta";
 import { createElement } from "react";
 // eslint-disable-next-line import/no-internal-modules
 import { createRoot } from "react-dom/client";
 
-import { DiceRollerContainerRuntimeFactory, type IDiceRoller } from "./container/index.js";
+import { DiceRollerContainerRuntimeFactory, type EntryPoint } from "./container/index.js";
 import { renderCursorPresence } from "./cursor.js";
 import { DiceRollerView } from "./view.js";
 
@@ -78,10 +77,7 @@ if (location.hash.length === 0) {
 	});
 }
 
-const { diceRoller, presence } = (await container.getEntryPoint()) as {
-	diceRoller: IDiceRoller;
-	presence: Presence;
-};
+const { diceRoller, presence } = (await container.getEntryPoint()) as EntryPoint;
 
 // Render view
 const appDiv = document.getElementById("app") as HTMLDivElement;

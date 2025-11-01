@@ -19,7 +19,7 @@ import type {
 	IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions/legacy";
 
-import type { IDiceRoller, IDiceRollerEvents } from "./interface.js";
+import type { EntryPoint, IDiceRoller, IDiceRollerEvents } from "./interface.js";
 
 // This key is where we store the value in the ISharedMap.
 const diceValueKey = "dice-value";
@@ -72,7 +72,9 @@ export class DiceRollerFactory implements IFluidDataStoreFactory {
 		context: IFluidDataStoreContext,
 		existing: boolean,
 	): Promise<IFluidDataStoreChannel> {
-		const provideEntryPoint = async (entryPointRuntime: IFluidDataStoreRuntime) => {
+		const provideEntryPoint = async (
+			entryPointRuntime: IFluidDataStoreRuntime,
+		): Promise<EntryPoint> => {
 			const map = (await entryPointRuntime.getChannel(mapId)) as ISharedMap;
 			return {
 				diceRoller: new DiceRoller(map),
