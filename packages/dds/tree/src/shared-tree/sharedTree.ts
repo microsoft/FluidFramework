@@ -24,6 +24,7 @@ import {
 	DependentFormatVersion,
 	FluidClientVersion,
 	FormatValidatorNoOp,
+	type ICodecOptions,
 } from "../codec/index.js";
 import {
 	type FieldKey,
@@ -528,9 +529,14 @@ export function exportSimpleSchema(storedSchema: TreeStoredSchema): SimpleTreeSc
  */
 export function persistedToSimpleSchema(
 	persisted: JsonCompatible,
-	options: CodecWriteOptions,
+	options: ICodecOptions,
 ): SimpleTreeSchema {
-	const schemaCodec = makeSchemaCodec(options);
+	// Any version can be passed down to makeSchemaCodec here.
+	// We only use the decode part, which always dispatches to the correct codec based on the version in the data, not the version passed to `makeSchemaCodec`.
+	const schemaCodec = makeSchemaCodec({
+		...options,
+		minVersionForCollab: FluidClientVersion.v2_0,
+	});
 	const stored = schemaCodec.decode(persisted as FormatV1);
 	return exportSimpleSchema(stored);
 }

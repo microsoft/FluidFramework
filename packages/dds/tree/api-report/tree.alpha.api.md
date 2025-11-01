@@ -753,7 +753,7 @@ export interface ObservationResults<TResult> {
 export type Off = Off_2;
 
 // @alpha
-export function persistedToSimpleSchema(persisted: JsonCompatible, options: CodecWriteOptions): SimpleTreeSchema;
+export function persistedToSimpleSchema(persisted: JsonCompatible, options: ICodecOptions): SimpleTreeSchema;
 
 // @beta @system
 export type PopUnion<Union, AsOverloadedFunction = UnionToIntersection<Union extends unknown ? (f: Union) => void : never>> = AsOverloadedFunction extends (a: infer First) => void ? First : never;
