@@ -288,7 +288,8 @@ module.exports = {
 		},
 
 		// Independent packages
-		"build": "common/build",
+		"build-common": "common/build/build-common",
+		"eslint-plugin-fluid": "common/build/eslint-plugin-fluid",
 		"common-utils": "common/lib/common-utils",
 		"protocol-def": "common/lib/protocol-definitions",
 
