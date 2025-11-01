@@ -177,7 +177,7 @@ export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSc
     idCompressor?: IIdCompressor | undefined;
 } & {
     content?: undefined;
-}) | (ICodecOptions & {
+}) | (CodecWriteOptions & {
     content: ViewContent;
 } & {
     idCompressor?: undefined;
