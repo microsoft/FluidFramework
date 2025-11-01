@@ -56,9 +56,6 @@
         "@fluid-internal/fluid/no-unchecked-record-access": [
             "error"
         ],
-        "@rushstack/no-new-null": [
-            "warn"
-        ],
         "@rushstack/typedef-var": [
             "off"
         ],
@@ -816,6 +813,17 @@
                         "message": "Importing from a parent index file tends to cause cyclic dependencies. Import from a more specific sibling file instead."
                     }
                 ]
+            }
+        ],
+        "@typescript-eslint/no-restricted-types": [
+            "warn",
+            {
+                "types": {
+                    "null": {
+                        "message": "Use 'undefined' instead of 'null'",
+                        "fixWith": "undefined"
+                    }
+                }
             }
         ],
         "@typescript-eslint/no-shadow": [

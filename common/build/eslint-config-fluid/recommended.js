@@ -22,7 +22,17 @@ module.exports = {
 	plugins: ["eslint-plugin-tsdoc"],
 	rules: {
 		// RECOMMENDED RULES
-		"@rushstack/no-new-null": "error",
+		"@typescript-eslint/no-restricted-types": [
+			"error",
+			{
+				types: {
+					null: {
+						message: "Use 'undefined' instead of 'null'",
+						fixWith: "undefined",
+					},
+				},
+			},
+		],
 		"no-empty": "error",
 		"no-void": "error",
 		"require-atomic-updates": "error",
