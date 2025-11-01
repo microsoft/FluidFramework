@@ -51,6 +51,7 @@ export enum Mode {
 }
 
 export interface IWorkerArgs {
+	name: string;
 	folder: string;
 	mode: Mode;
 	snapFreq?: number;
@@ -74,10 +75,12 @@ class ConcurrencyLimiter {
 			assert(this.limit >= 0);
 		}
 
-		const p = worker().then(() => {
+		const p = worker().finally(() => {
 			this.limit++;
 			if (this.deferred) {
 				assert(this.limit === 0);
+				// This will allow other processing to proceed even on error.
+				// To end early, check for error and reject deferred.
 				this.deferred.resolve();
 				this.deferred = undefined;
 			}
@@ -137,7 +140,12 @@ export async function processOneNode(args: IWorkerArgs) {
 	// replayArgs.overlappingContainers = 1;
 
 	try {
+		const start = performance.now();
 		const errors = await new ReplayTool(replayArgs).Go();
+		const end = performance.now();
+		console.log(
+			`${args.name} processed with ${errors.length} errors in ${((end - start) / 1000).toFixed(2)} seconds`,
+		);
 		if (errors.length !== 0) {
 			throw new Error(`Errors\n ${errors.join("\n")}`);
 		}
@@ -185,12 +193,13 @@ export async function processContent(mode: Mode, concurrently = true) {
 			testSummaries = true;
 		}
 
-		const data: IWorkerArgs = {
+		const data = {
+			name: node.name,
 			folder,
 			mode,
 			snapFreq,
 			testSummaries,
-		};
+		} as const satisfies IWorkerArgs;
 
 		switch (mode) {
 			case Mode.Validate:
@@ -218,7 +227,7 @@ export async function processContent(mode: Mode, concurrently = true) {
  * from multiple old versions, process snapshot from each of these versions.
  */
 async function processNodeForValidate(
-	data: IWorkerArgs,
+	data: Readonly<IWorkerArgs>,
 	concurrently: boolean,
 	limiter: ConcurrencyLimiter,
 ) {
@@ -235,8 +244,12 @@ async function processNodeForValidate(
 			continue;
 		}
 
-		data.initializeFromSnapshotsDir = `${srcSnapshotsDir}/${node.name}`;
-		await processNode(data, concurrently, limiter);
+		const subData = {
+			...data,
+			name: `${data.name}-${node.name}`,
+			initializeFromSnapshotsDir: `${srcSnapshotsDir}/${node.name}`,
+		};
+		await processNode(subData, concurrently, limiter);
 	}
 }
 
@@ -248,7 +261,7 @@ async function processNodeForValidate(
  * - Update the package version of the current snapshots.
  */
 async function processNodeForUpdatingSnapshots(
-	data: IWorkerArgs,
+	data: Readonly<IWorkerArgs>,
 	concurrently: boolean,
 	limiter: ConcurrencyLimiter,
 ) {
@@ -297,7 +310,7 @@ async function processNodeForUpdatingSnapshots(
  * generate snapshot files and write them to the current snapshots dir.
  */
 async function processNodeForNewSnapshots(
-	data: IWorkerArgs,
+	data: Readonly<IWorkerArgs>,
 	concurrently: boolean,
 	limiter: ConcurrencyLimiter,
 ) {
@@ -311,10 +324,10 @@ async function processNodeForNewSnapshots(
 	fs.mkdirSync(currentSnapshotsDir, { recursive: true });
 
 	// For new snapshots, testSummaries should be set because summaries should be generated as per the original file.
-	data.testSummaries = true;
+	const dataSummaries = { ...data, testSummaries: true };
 
 	// Process the current folder which will write the generated snapshots to current snapshots dir.
-	await processNode(data, concurrently, limiter);
+	await processNode(dataSummaries, concurrently, limiter);
 
 	const versionFileName = `${currentSnapshotsDir}/snapshotVersion.json`;
 	// Write the versions file to the current snapshots dir.
@@ -323,7 +336,7 @@ async function processNodeForNewSnapshots(
 	});
 
 	// Write the metadata file.
-	writeMetadataFile(data.folder);
+	writeMetadataFile(dataSummaries.folder);
 }
 
 /**
@@ -335,7 +348,7 @@ async function processNodeForNewSnapshots(
  * 3. Validates that the snapshot matches with the corresponding snapshot in current version.
  * 4. Loads a document with snapshot in current version. Repeats steps 2 and 3.
  */
-async function processNodeForBackCompat(data: IWorkerArgs) {
+async function processNodeForBackCompat(data: Readonly<IWorkerArgs>) {
 	const messagesFile = `${data.folder}/messages.json`;
 	if (!fs.existsSync(messagesFile)) {
 		throw new Error(`messages.json doesn't exist in ${data.folder}`);
@@ -381,7 +394,7 @@ async function processNodeForBackCompat(data: IWorkerArgs) {
  * the threads. If concurrently if false, directly processes the snapshots.
  */
 async function processNode(
-	workerData: IWorkerArgs,
+	workerData: Readonly<IWorkerArgs>,
 	concurrently: boolean,
 	limiter: ConcurrencyLimiter,
 ) {
