@@ -33,14 +33,17 @@ import type { Multiplicity } from "./multiplicity.js";
 /**
  * The format version for the schema.
  */
-export enum SchemaVersion {
-	v1 = 1,
+export const SchemaFormatVersion = {
+	v1: 1,
 	/**
 	 * Adds persisted metadata to the node schema and field schema.
 	 */
-	v2 = 2,
-}
-export type SchemaFormatVersion = Brand<SchemaVersion, "SchemaFormatVersion">;
+	v2: 2,
+} as const;
+export type SchemaFormatVersion = Brand<
+	(typeof SchemaFormatVersion)[keyof typeof SchemaFormatVersion],
+	"SchemaFormatVersion"
+>;
 
 type FieldSchemaFormat = FieldSchemaFormatV1 | FieldSchemaFormatV2;
 

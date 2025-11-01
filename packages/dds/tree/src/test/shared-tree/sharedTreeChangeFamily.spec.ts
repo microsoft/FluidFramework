@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
-import type { ICodecOptions } from "../../codec/index.js";
+import { currentVersion, type CodecWriteOptions } from "../../codec/index.js";
 import {
 	type DeltaDetachedNodeId,
 	type TreeStoredSchema,
@@ -43,7 +43,10 @@ import {
 } from "../utils.js";
 
 const dataChanges: ModularChangeset[] = [];
-const codecOptions: ICodecOptions = { jsonValidator: ajvValidator };
+const codecOptions: CodecWriteOptions = {
+	jsonValidator: ajvValidator,
+	minVersionForCollab: currentVersion,
+};
 const fieldBatchCodec = {
 	encode: () => assert.fail("Unexpected encode"),
 	decode: () => assert.fail("Unexpected decode"),

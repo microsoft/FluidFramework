@@ -1,0 +1,126 @@
+{
+  "name": "SharedTree",
+  "version": "null",
+  "children": [
+    {
+      "name": "Forest",
+      "version": 1
+    },
+    {
+      "name": "Schema",
+      "version": 2
+    },
+    {
+      "name": "DetachedFieldIndex",
+      "version": 1
+    },
+    {
+      "name": "EditManager",
+      "version": 4,
+      "children": [
+        {
+          "name": "SharedTreeChange",
+          "version": 4,
+          "children": [
+            {
+              "name": "ModularChange",
+              "version": 4,
+              "children": [
+                {
+                  "name": "FieldKind:NodeKey",
+                  "version": 1
+                },
+                {
+                  "name": "FieldKind:Value",
+                  "version": 2
+                },
+                {
+                  "name": "FieldKind:Optional",
+                  "version": 2
+                },
+                {
+                  "name": "FieldKind:Sequence",
+                  "version": 3
+                },
+                {
+                  "name": "FieldKind:Forbidden",
+                  "version": 1
+                },
+                {
+                  "name": "FieldKind:Identifier",
+                  "version": 1
+                }
+              ]
+            },
+            {
+              "name": "SchemaChange",
+              "version": 1,
+              "children": [
+                {
+                  "name": "Schema",
+                  "version": 2
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Message",
+      "version": 4,
+      "children": [
+        {
+          "name": "SharedTreeChange",
+          "version": 4,
+          "children": [
+            {
+              "name": "ModularChange",
+              "version": 4,
+              "children": [
+                {
+                  "name": "FieldKind:NodeKey",
+                  "version": 1
+                },
+                {
+                  "name": "FieldKind:Value",
+                  "version": 2
+                },
+                {
+                  "name": "FieldKind:Optional",
+                  "version": 2
+                },
+                {
+                  "name": "FieldKind:Sequence",
+                  "version": 3
+                },
+                {
+                  "name": "FieldKind:Forbidden",
+                  "version": 1
+                },
+                {
+                  "name": "FieldKind:Identifier",
+                  "version": 1
+                }
+              ]
+            },
+            {
+              "name": "SchemaChange",
+              "version": 1,
+              "children": [
+                {
+                  "name": "Schema",
+                  "version": 2
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "FieldBatch",
+      "version": 1
+    }
+  ]
+}

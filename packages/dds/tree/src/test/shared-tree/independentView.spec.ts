@@ -21,7 +21,7 @@ import {
 } from "../../simple-tree/index.js";
 import { ForestTypeExpensiveDebug, TreeAlpha } from "../../shared-tree/index.js";
 import { ajvValidator } from "../codec/index.js";
-import { FluidClientVersion } from "../../codec/index.js";
+import { currentVersion, FluidClientVersion } from "../../codec/index.js";
 import { testIdCompressor } from "../utils.js";
 
 describe("independentView", () => {
@@ -34,6 +34,7 @@ describe("independentView", () => {
 				{
 					forest: ForestTypeExpensiveDebug,
 					jsonValidator: ajvValidator,
+					minVersionForCollab: currentVersion,
 				},
 				{
 					schema: extractPersistedSchema(config.schema, FluidClientVersion.v2_0, () => true),
@@ -165,14 +166,16 @@ describe("independentView", () => {
 		});
 
 		it("initialized", () => {
+			const minVersionForCollab = FluidClientVersion.v2_0;
 			const config = new TreeViewConfigurationAlpha({ schema: SchemaFactory.number });
 			const tree = createIndependentTreeAlpha({
 				forest: ForestTypeExpensiveDebug,
 				jsonValidator: ajvValidator,
+				minVersionForCollab,
 				content: {
-					schema: extractPersistedSchema(config.schema, FluidClientVersion.v2_0, () => true),
+					schema: extractPersistedSchema(config.schema, minVersionForCollab, () => true),
 					tree: TreeAlpha.exportCompressed(1, {
-						minVersionForCollab: FluidClientVersion.v2_0,
+						minVersionForCollab,
 					}),
 					idCompressor: testIdCompressor,
 				},

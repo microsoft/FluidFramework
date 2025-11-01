@@ -28,7 +28,8 @@ import {
 	testRevisionTagCodec,
 	validateUsageError,
 } from "../utils.js";
-import { DependentFormatVersion } from "../../codec/index.js";
+import { currentVersion, DependentFormatVersion } from "../../codec/index.js";
+import { MessageFormatVersion } from "../../shared-tree-core/index.js";
 
 const commit1 = {
 	revision: mintRevisionTag(),
@@ -159,6 +160,7 @@ describe("message codec", () => {
 			testRevisionTagCodec,
 			{
 				jsonValidator: FormatValidatorBasic,
+				minVersionForCollab: currentVersion,
 			},
 		);
 
@@ -221,7 +223,7 @@ describe("message codec", () => {
 				revision,
 				originatorId,
 				changeset: {},
-				version: 1,
+				version: MessageFormatVersion.v1,
 			} satisfies Message);
 			const actual = codec.decode(JSON.parse(encoded), { idCompressor: testIdCompressor });
 			assert.deepEqual(actual, {

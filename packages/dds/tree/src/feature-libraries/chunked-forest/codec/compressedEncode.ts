@@ -33,8 +33,8 @@ import {
 	type EncodedFieldBatch,
 	type EncodedNestedArrayShape,
 	type EncodedValueShape,
+	FieldBatchFormatVersion,
 	SpecialField,
-	version,
 } from "./format.js";
 import type { IncrementalEncoder } from "./codecs.js";
 
@@ -57,7 +57,7 @@ export function compressedEncode(
 		anyFieldEncoder.encodeField(cursor, context, buffer);
 		batchBuffer.push(buffer);
 	}
-	return updateShapesAndIdentifiersEncoding(version, batchBuffer);
+	return updateShapesAndIdentifiersEncoding(FieldBatchFormatVersion.v1, batchBuffer);
 }
 
 export type BufferFormat = BufferFormatGeneric<EncodedChunkShape>;

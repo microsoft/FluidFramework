@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import type { SessionId } from "@fluidframework/id-compressor";
 
-import type { ICodecOptions } from "../../codec/index.js";
+import { currentVersion, type CodecWriteOptions } from "../../codec/index.js";
 import { TreeStoredSchemaRepository } from "../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { decode } from "../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
@@ -36,7 +36,10 @@ import { brand, newTupleBTree } from "../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { newCrossFieldKeyTable } from "../../feature-libraries/modular-schema/modularChangeTypes.js";
 
-const codecOptions: ICodecOptions = { jsonValidator: ajvValidator };
+const codecOptions: CodecWriteOptions = {
+	jsonValidator: ajvValidator,
+	minVersionForCollab: currentVersion,
+};
 
 describe("sharedTreeChangeCodec", () => {
 	it("passes down the context's schema to the fieldBatchCodec", () => {

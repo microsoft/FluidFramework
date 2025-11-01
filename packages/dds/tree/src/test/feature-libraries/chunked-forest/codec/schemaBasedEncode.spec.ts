@@ -75,6 +75,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../simple-tree/toStoredSchema.js";
 import { numberSchema, SchemaFactory, stringSchema } from "../../../../simple-tree/index.js";
+import { currentVersion } from "../../../../codec/index.js";
 
 const anyNodeShape = new NodeShapeBasedEncoder(undefined, undefined, [], anyFieldEncoder);
 const onlyTypeShape = new NodeShapeBasedEncoder(undefined, false, [], undefined);
@@ -456,7 +457,10 @@ describe("schemaBasedEncoding", () => {
 					idCompressor,
 				};
 				idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange());
-				const codec = makeFieldBatchCodec({ jsonValidator: ajvValidator }, 1);
+				const codec = makeFieldBatchCodec({
+					jsonValidator: ajvValidator,
+					minVersionForCollab: currentVersion,
+				});
 				// End to end test
 				// rootFieldSchema is not being used in encoding, so we currently have some limitations. Schema based optimizations for root case don't trigger.
 				const encoded = codec.encode([cursorForJsonableTreeField(tree)], fieldBatchContext);

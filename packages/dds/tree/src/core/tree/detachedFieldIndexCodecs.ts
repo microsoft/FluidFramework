@@ -4,6 +4,7 @@
  */
 
 import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 
 import {
 	type CodecTree,
@@ -16,12 +17,24 @@ import {
 } from "../../codec/index.js";
 import type { RevisionTagCodec } from "../rebase/index.js";
 
-import { version1 } from "./detachedFieldIndexFormatV1.js";
-import { version2 } from "./detachedFieldIndexFormatV2.js";
 import { makeDetachedNodeToFieldCodecV1 } from "./detachedFieldIndexCodecV1.js";
 import { makeDetachedNodeToFieldCodecV2 } from "./detachedFieldIndexCodecV2.js";
 import type { DetachedFieldSummaryData } from "./detachedFieldIndexTypes.js";
-import type { Brand } from "../../util/index.js";
+import { DetachedFieldIndexFormatVersion } from "./detachedFieldIndexFormatCommon.js";
+import { brand } from "../../util/index.js";
+
+/**
+ * Convert a MinimumVersionForCollab to a version for detached field codecs.
+ * @param clientVersion - The MinimumVersionForCollab to convert.
+ * @returns The detached field codec version that corresponds to the provided MinimumVersionForCollab.
+ */
+function clientVersionToDetachedFieldVersion(
+	clientVersion: MinimumVersionForCollab,
+): DetachedFieldIndexFormatVersion {
+	return clientVersion < FluidClientVersion.v2_52
+		? brand(DetachedFieldIndexFormatVersion.v1)
+		: brand(DetachedFieldIndexFormatVersion.v2);
+}
 
 export function makeDetachedFieldIndexCodec(
 	revisionTagCodec: RevisionTagCodec,
@@ -29,9 +42,10 @@ export function makeDetachedFieldIndexCodec(
 	idCompressor: IIdCompressor,
 ): IJsonCodec<DetachedFieldSummaryData> {
 	const family = makeDetachedFieldIndexCodecFamily(revisionTagCodec, options, idCompressor);
-	const writeVersion =
-		options.minVersionForCollab < FluidClientVersion.v2_52 ? version1 : version2;
-	return makeVersionDispatchingCodec(family, { ...options, writeVersion });
+	return makeVersionDispatchingCodec(family, {
+		...options,
+		writeVersion: clientVersionToDetachedFieldVersion(options.minVersionForCollab),
+	});
 }
 
 export function makeDetachedFieldIndexCodecFamily(
@@ -40,14 +54,22 @@ export function makeDetachedFieldIndexCodecFamily(
 	idCompressor: IIdCompressor,
 ): ICodecFamily<DetachedFieldSummaryData> {
 	return makeCodecFamily([
-		[version1, makeDetachedNodeToFieldCodecV1(revisionTagCodec, options, idCompressor)],
-		[version2, makeDetachedNodeToFieldCodecV2(revisionTagCodec, options, idCompressor)],
+		[
+			DetachedFieldIndexFormatVersion.v1,
+			makeDetachedNodeToFieldCodecV1(revisionTagCodec, options, idCompressor),
+		],
+		[
+			DetachedFieldIndexFormatVersion.v2,
+			makeDetachedNodeToFieldCodecV2(revisionTagCodec, options, idCompressor),
+		],
 	]);
 }
 
-export type DetachedFieldIndexFormatVersion = Brand<1 | 2, "DetachedFieldIndexFormatVersion">;
 export function getCodecTreeForDetachedFieldIndexFormat(
-	version: DetachedFieldIndexFormatVersion,
+	clientVersion: MinimumVersionForCollab,
 ): CodecTree {
-	return { name: "DetachedFieldIndex", version };
+	return {
+		name: "DetachedFieldIndex",
+		version: clientVersionToDetachedFieldVersion(clientVersion),
+	};
 }

@@ -71,11 +71,11 @@ function createForestSummarizer(args: {
 		forestType,
 		shouldEncodeIncrementally,
 	} = args;
-	const fieldBatchCodec = makeFieldBatchCodec({ jsonValidator: FormatValidatorBasic }, 1);
 	const options: CodecWriteOptions = {
 		jsonValidator: FormatValidatorBasic,
 		minVersionForCollab: FluidClientVersion.v2_0,
 	};
+	const fieldBatchCodec = makeFieldBatchCodec(options);
 	const checkout = checkoutWithContent(initialContent, {
 		forestType,
 		shouldEncodeIncrementally,

@@ -10,11 +10,11 @@ import {
 	createIdCompressor,
 } from "@fluidframework/id-compressor/internal";
 
-import type { ICodecOptions } from "../codec/index.js";
+import type { CodecWriteOptions } from "../codec/index.js";
 import {
 	type RevisionTag,
 	RevisionTagCodec,
-	SchemaVersion,
+	SchemaFormatVersion,
 	TreeStoredSchemaRepository,
 } from "../core/index.js";
 import {
@@ -44,6 +44,7 @@ import {
 	type JsonCompatible,
 	Breakable,
 	oneFromIterable,
+	brand,
 } from "../util/index.js";
 import {
 	buildConfiguredForest,
@@ -85,7 +86,7 @@ export function independentView<const TSchema extends ImplicitFieldSchema>(
  */
 export function independentInitializedView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
-	options: ForestOptions & ICodecOptions,
+	options: ForestOptions & CodecWriteOptions,
 	content: ViewContent,
 ): TreeViewAlpha<TSchema> {
 	return createIndependentTreeAlpha({ ...options, content }).viewWith(
@@ -168,7 +169,7 @@ export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSc
 	options?: ForestOptions &
 		(
 			| ({ idCompressor?: IIdCompressor | undefined } & { content?: undefined })
-			| (ICodecOptions & { content: ViewContent } & { idCompressor?: undefined })
+			| (CodecWriteOptions & { content: ViewContent } & { idCompressor?: undefined })
 		),
 ): ViewableTree & Pick<ITreeAlpha, "exportVerbose" | "exportSimpleSchema"> {
 	const breaker = new Breakable("independentView");
@@ -195,8 +196,8 @@ export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSc
 	});
 
 	if (options?.content !== undefined) {
-		const schemaCodec = makeSchemaCodec(options, SchemaVersion.v1);
-		const fieldBatchCodec = makeFieldBatchCodec(options, 1);
+		const schemaCodec = makeSchemaCodec(options, brand(SchemaFormatVersion.v1));
+		const fieldBatchCodec = makeFieldBatchCodec(options);
 		const newSchema = schemaCodec.decode(options.content.schema as Format);
 
 		const context: FieldBatchEncodingContext = {

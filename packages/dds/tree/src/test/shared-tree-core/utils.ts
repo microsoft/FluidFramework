@@ -13,7 +13,11 @@ import {
 	MockHandle,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { DependentFormatVersion, type ICodecOptions } from "../../codec/index.js";
+import {
+	currentVersion,
+	DependentFormatVersion,
+	type CodecWriteOptions,
+} from "../../codec/index.js";
 import {
 	RevisionTagCodec,
 	tagChange,
@@ -26,7 +30,6 @@ import {
 	DefaultChangeFamily,
 	type DefaultChangeset,
 	type DefaultEditBuilder,
-	type FieldBatchFormatVersion,
 	type ModularChangeFormatVersion,
 	TreeCompressionStrategy,
 	defaultSchemaPolicy,
@@ -43,7 +46,6 @@ import {
 	type Summarizable,
 	type ChangeEnricherMutableCheckout,
 	NoOpChangeEnricher,
-	type ExplicitCoreCodecVersions,
 	type EditManagerFormatVersion,
 	editManagerFormatVersions,
 	type MessageFormatVersion,
@@ -73,7 +75,7 @@ import type {
 	IFluidLoadable,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { brand, Breakable } from "../../util/index.js";
+import { Breakable } from "../../util/index.js";
 import { mockSerializer } from "../mockSerializer.js";
 import { TestChange } from "../testChange.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -84,13 +86,9 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../shared-tree/sharedTree.js";
 
-const codecOptions: ICodecOptions = {
+const codecOptions: CodecWriteOptions = {
 	jsonValidator: FormatValidatorBasic,
-};
-const formatVersions: ExplicitCoreCodecVersions & { fieldBatch: FieldBatchFormatVersion } = {
-	editManager: brand(1),
-	message: brand(1),
-	fieldBatch: brand(1),
+	minVersionForCollab: currentVersion,
 };
 
 class MockSharedObjectHandle extends MockHandle<ISharedObject> implements ISharedObjectHandle {
@@ -164,7 +162,7 @@ export function makeTestDefaultChangeFamily(options?: {
 		makeModularChangeCodecFamily(
 			fieldKindConfigurations,
 			new RevisionTagCodec(options?.idCompressor ?? testIdCompressor),
-			makeFieldBatchCodec(codecOptions, formatVersions.fieldBatch),
+			makeFieldBatchCodec(codecOptions),
 			codecOptions,
 			options?.chunkCompressionStrategy ?? TreeCompressionStrategy.Compressed,
 		),
@@ -225,7 +223,6 @@ function createTreeInner(
 			summarizables,
 			changeFamily,
 			codecOptions,
-			formatVersions,
 			modularChangeFormatVersionForEditManager,
 			modularChangeFormatVersionForMessage,
 			idCompressor,

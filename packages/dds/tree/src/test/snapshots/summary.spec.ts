@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { FluidClientVersion } from "../../codec/index.js";
 import { TreeCompressionStrategy } from "../../feature-libraries/index.js";
-import { SharedTreeFormatVersion, type SharedTreeOptions } from "../../shared-tree/index.js";
+import type { SharedTreeOptions } from "../../shared-tree/index.js";
 
 import { generateTestTrees } from "./snapshotTestScenarios.js";
 import { useSnapshotDirectory } from "./snapshotTools.js";
@@ -17,13 +18,13 @@ describe("snapshot tests", () => {
 	]) {
 		// Friendly description of tree encoding type
 		const treeEncodeKey = TreeCompressionStrategy[treeEncodeType];
-		for (const formatVersionKey of Object.keys(SharedTreeFormatVersion)) {
-			describe(`Using TreeCompressionStrategy.${treeEncodeKey} and SharedTreeFormatVersion.${formatVersionKey}`, () => {
-				useSnapshotDirectory(`summary/${treeEncodeKey}/${formatVersionKey}`);
+		for (const versionKey of Object.keys(FluidClientVersion)) {
+			describe(`Using TreeCompressionStrategy.${treeEncodeKey} and FluidClientVersion.${versionKey}`, () => {
+				useSnapshotDirectory(`summary/${treeEncodeKey}/${versionKey}`);
 				const options: SharedTreeOptions = {
 					treeEncodeType,
-					formatVersion:
-						SharedTreeFormatVersion[formatVersionKey as keyof typeof SharedTreeFormatVersion],
+					minVersionForCollab:
+						FluidClientVersion[versionKey as keyof typeof FluidClientVersion],
 				};
 				const testTrees = generateTestTrees(options);
 

@@ -23,9 +23,11 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import type { FormatV1 } from "../../../core/tree/detachedFieldIndexFormatV1.js";
 // eslint-disable-next-line import/no-internal-modules
-import { version2, type FormatV2 } from "../../../core/tree/detachedFieldIndexFormatV2.js";
+import type { FormatV2 } from "../../../core/tree/detachedFieldIndexFormatV2.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { DetachedFieldSummaryData } from "../../../core/tree/detachedFieldIndexTypes.js";
+// eslint-disable-next-line import/no-internal-modules
+import { DetachedFieldIndexFormatVersion } from "../../../core/tree/detachedFieldIndexFormatCommon.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import {
 	type IdAllocator,
@@ -96,7 +98,7 @@ const validV1Data: readonly [string, FormatV1][] = [
 	[
 		"empty data",
 		{
-			version: 1,
+			version: brand(DetachedFieldIndexFormatVersion.v1),
 			data: [],
 			maxId: brand(-1),
 		},
@@ -104,7 +106,7 @@ const validV1Data: readonly [string, FormatV1][] = [
 	[
 		"revision with a single entry",
 		{
-			version: 1,
+			version: brand(DetachedFieldIndexFormatVersion.v1),
 			data: [[brand(finalizedTag), 0, brand(1)]],
 			maxId: brand(-1),
 		},
@@ -112,7 +114,7 @@ const validV1Data: readonly [string, FormatV1][] = [
 	[
 		"revision with multiple entries",
 		{
-			version: 1,
+			version: brand(DetachedFieldIndexFormatVersion.v1),
 			data: [
 				[
 					brand(finalizedTag),
@@ -127,11 +129,14 @@ const validV1Data: readonly [string, FormatV1][] = [
 	],
 ];
 const validV2Data: readonly [string, FormatV2][] = [
-	...validV1Data.map(([name, data]): [string, FormatV2] => [name, { ...data, version: 2 }]),
+	...validV1Data.map(([name, data]): [string, FormatV2] => [
+		name,
+		{ ...data, version: brand(DetachedFieldIndexFormatVersion.v2) },
+	]),
 	[
 		"revision represented as a StableId",
 		{
-			version: 2,
+			version: brand(DetachedFieldIndexFormatVersion.v2),
 			data: [[testIdCompressor.decompress(mintedTag), 0, brand(1)]],
 			maxId: brand(-1),
 		},
@@ -213,7 +218,7 @@ function generateTestCases(
 		},
 		{
 			name: "Unfinalized id",
-			validFor: new Set([version2]),
+			validFor: new Set([DetachedFieldIndexFormatVersion.v2]),
 			data: {
 				maxId,
 				data: new Map([[unfinalizedRevision, new Map([[0, { root: brand(1) }]])]]),

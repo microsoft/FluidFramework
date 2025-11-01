@@ -94,7 +94,7 @@ const options: CodecWriteOptions = {
 	minVersionForCollab: FluidClientVersion.v2_0,
 };
 
-const fieldBatchCodec = makeFieldBatchCodec({ jsonValidator: FormatValidatorBasic }, 1);
+const fieldBatchCodec = makeFieldBatchCodec(options);
 const sessionId = "beefbeef-beef-4000-8000-000000000001" as SessionId;
 const idCompressor = createIdCompressor(sessionId);
 const revisionTagCodec = new RevisionTagCodec(idCompressor);

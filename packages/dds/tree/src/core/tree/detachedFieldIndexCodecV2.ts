@@ -9,14 +9,12 @@ import type { IIdCompressor, StableId } from "@fluidframework/id-compressor";
 import type { ICodecOptions, IJsonCodec } from "../../codec/index.js";
 import type { EncodedRevisionTag, RevisionTagCodec, RevisionTag } from "../rebase/index.js";
 
-import {
-	type FormatV2,
-	StableOrFinalRevisionTag,
-	version2,
-} from "./detachedFieldIndexFormatV2.js";
+import { type FormatV2, StableOrFinalRevisionTag } from "./detachedFieldIndexFormatV2.js";
 import type { DetachedFieldSummaryData, Major } from "./detachedFieldIndexTypes.js";
 import { makeDetachedFieldIndexCodecFromMajorCodec } from "./detachedFieldIndexCodecCommon.js";
 import { isStableId } from "@fluidframework/id-compressor/internal";
+import { DetachedFieldIndexFormatVersion } from "./detachedFieldIndexFormatCommon.js";
+import { brand } from "../../util/index.js";
 
 class MajorCodec implements IJsonCodec<Major> {
 	public constructor(
@@ -66,7 +64,7 @@ export function makeDetachedNodeToFieldCodecV2(
 	return makeDetachedFieldIndexCodecFromMajorCodec(
 		options,
 		majorCodec,
-		version2,
+		brand(DetachedFieldIndexFormatVersion.v2),
 		StableOrFinalRevisionTag,
 	);
 }

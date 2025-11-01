@@ -300,13 +300,11 @@ export function createTreeCheckout(
 		jsonValidator: FormatValidatorNoOp,
 		minVersionForCollab: FluidClientVersion.v2_0,
 	};
-	const defaultFieldBatchVersion = 1;
 	const changeFamily =
 		args?.changeFamily ??
 		new SharedTreeChangeFamily(
 			revisionTagCodec,
-			args?.fieldBatchCodec ??
-				makeFieldBatchCodec(defaultCodecOptions, defaultFieldBatchVersion),
+			args?.fieldBatchCodec ?? makeFieldBatchCodec(defaultCodecOptions),
 			defaultCodecOptions,
 			args?.chunkCompressionStrategy,
 			idCompressor,
