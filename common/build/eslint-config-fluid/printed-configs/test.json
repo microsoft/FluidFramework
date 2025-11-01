@@ -10,7 +10,8 @@
         "SharedArrayBuffer": "readonly"
     },
     "ignorePatterns": [
-        "**/packageVersion.ts"
+        "**/packageVersion.ts",
+        "**/layerGenerationState.ts"
     ],
     "parserOptions": {
         "ecmaFeatures": {
