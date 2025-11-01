@@ -7,20 +7,6 @@
 
 import { strict as assert } from "node:assert";
 
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import type {
-	InternalUtilityTypes,
-	JsonDeserialized,
-	JsonSerializable,
-	JsonSerializableOptions,
-	JsonTypeWith,
-	NonNullJsonObjectWith,
-	OpaqueJsonDeserialized,
-	OpaqueJsonSerializable,
-	SerializationErrorPerNonPublicProperties,
-	SerializationErrorPerUndefinedArrayElement,
-} from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
-
 import {
 	assertIdenticalTypes,
 	createInstanceOf,
@@ -227,6 +213,19 @@ import {
 	jsonStringOfUnknown,
 } from "./testValues.js";
 
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type {
+	InternalUtilityTypes,
+	JsonDeserialized,
+	JsonSerializable,
+	JsonSerializableOptions,
+	JsonTypeWith,
+	NonNullJsonObjectWith,
+	OpaqueJsonDeserialized,
+	OpaqueJsonSerializable,
+	SerializationErrorPerNonPublicProperties,
+	SerializationErrorPerUndefinedArrayElement,
+} from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
 /**
  * Defined using `JsonSerializable` type filter tests `JsonSerializable` at call site.

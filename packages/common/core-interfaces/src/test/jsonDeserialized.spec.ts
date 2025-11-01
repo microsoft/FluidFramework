@@ -7,15 +7,6 @@
 
 import { strict as assert } from "node:assert";
 
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import type {
-	InternalUtilityTypes,
-	JsonDeserialized,
-	JsonTypeWith,
-	NonNullJsonObjectWith,
-	OpaqueJsonDeserialized,
-} from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
-
 import type { AnyLocations } from "./testUtils.js";
 import {
 	assertIdenticalTypes,
@@ -237,6 +228,14 @@ import {
 	jsonStringOfUnknown,
 } from "./testValues.js";
 
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type {
+	InternalUtilityTypes,
+	JsonDeserialized,
+	JsonTypeWith,
+	NonNullJsonObjectWith,
+	OpaqueJsonDeserialized,
+} from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
 /**
  * Defined using `JsonDeserialized` type filter tests `JsonDeserialized` at call site.

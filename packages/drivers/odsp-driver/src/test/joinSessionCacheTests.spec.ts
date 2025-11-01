@@ -15,7 +15,6 @@ import type {
 	ISocketStorageDiscovery,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
-
 import { stub, type SinonStub } from "sinon";
 import type { Socket } from "socket.io-client";
 
@@ -27,7 +26,7 @@ import { getJoinSessionCacheKey } from "../odspUtils.js";
 import { SocketIOClientStatic } from "../socketModule.js";
 import { fetchJoinSession } from "../vroom.js";
 
-// eslint-disable-next-line import-x/no-internal-modules
+// eslint-disable-next-line import/no-internal-modules
 import { ClientSocketMock } from "./socketTests/socketMock.js";
 
 describe("expose joinSessionInfo Tests", () => {

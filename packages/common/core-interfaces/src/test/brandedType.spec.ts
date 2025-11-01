@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { BrandedType } from "@fluidframework/core-interfaces/internal";
-
 import { createInstanceOf } from "./testUtils.js";
 import type { BrandedString } from "./testValues.js";
 import {
@@ -15,6 +13,7 @@ import {
 } from "./testValues.js";
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports -- incorrect rule: misunderstands `declare`d types.
+import type { BrandedType } from "@fluidframework/core-interfaces/internal";
 
 function parameterAcceptedAs<T>(_t: T): void {
 	// Do nothing.  Used to verify type compatibility.

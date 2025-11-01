@@ -10,7 +10,6 @@
  */
 
 import { constants } from "@fluid-experimental/property-common";
-
 import { expect } from "chai";
 
 import { TypeIdHelper } from "../../helpers/typeidHelper.js";
