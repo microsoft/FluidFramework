@@ -184,38 +184,8 @@ module.exports = {
 		"import-x/order": [
 			"error",
 			{
-				"newlines-between": "always",
-				"alphabetize": {
-					order: "asc",
-					// Sorting is case-sensitive by default, which is the same as Biome. To avoid
-					// another huge set of changes to order things case-insensitively, we'll just
-					// use the rule with this config for now. This decision should be considered
-					// pragmatic and not a statement of preference, and we should revisit this.
-					caseInsensitive: false,
-				},
-				"groups": [
-					"builtin",
-					"internal",
-					"external",
-					"parent",
-					"sibling",
-					"index",
-				],
-				"pathGroups": [
-					{
-						"pattern": "@fluidframework/**",
-						"group": "internal",
-					},
-					{
-						"pattern": "@fluid-*/**",
-						"group": "internal",
-					},
-					{
-						"pattern": "@fluid-internal/**",
-						"group": "internal",
-					},
-				],
-				"pathGroupsExcludedImportTypes": ["builtin"],
+				"newlines-between": "ignore",
+				"groups": [["builtin", "external", "internal", "parent", "sibling", "index"]],
 			},
 		],
 
