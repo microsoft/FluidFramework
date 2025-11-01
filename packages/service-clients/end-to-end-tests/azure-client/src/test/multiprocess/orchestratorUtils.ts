@@ -154,6 +154,7 @@ export async function executeDebugReports(
 function composeConnectMessage(
 	id: string | number,
 	scopes: ScopeType[] = [ScopeType.DocRead],
+	connectTimeoutMs: number,
 ): ConnectCommand {
 	return {
 		command: "connect",
@@ -163,6 +164,7 @@ function composeConnectMessage(
 		},
 		scopes,
 		createScopes: [ScopeType.DocWrite, ScopeType.DocRead],
+		connectTimeoutMs,
 	};
 }
 
@@ -257,6 +259,7 @@ export async function connectChildProcesses(
 		const connectContainerCreator = composeConnectMessage(
 			0,
 			writeClients > 0 ? [ScopeType.DocWrite, ScopeType.DocRead] : [ScopeType.DocRead],
+			/* connectTimeoutMs */ readyTimeoutMs,
 		);
 		firstChild.send(connectContainerCreator);
 	}
@@ -266,7 +269,10 @@ export async function connectChildProcesses(
 			durationMs: readyTimeoutMs,
 			errorMsg: "did not receive 'connected' from child process",
 		},
-	);
+	).catch(async (error) => {
+		await executeDebugReports([firstChild]);
+		throw error;
+	});
 
 	const attendeeIdPromises: Promise<AttendeeId>[] = [];
 	for (const [index, child] of childProcesses.entries()) {
@@ -277,6 +283,7 @@ export async function connectChildProcesses(
 		const message = composeConnectMessage(
 			index,
 			index < writeClients ? [ScopeType.DocWrite, ScopeType.DocRead] : [ScopeType.DocRead],
+			/* connectTimeoutMs */ readyTimeoutMs,
 		);
 		message.containerId = containerId;
 		attendeeIdPromises.push(

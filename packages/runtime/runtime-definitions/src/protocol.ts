@@ -14,7 +14,8 @@ import type {
  * An envelope wraps the contents with the intended target
  * @legacy @beta
  */
-export interface IEnvelope {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
+export interface IEnvelope<TContents = any> {
 	/**
 	 * The target for the envelope
 	 */
@@ -23,8 +24,7 @@ export interface IEnvelope {
 	/**
 	 * The contents of the envelope
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
-	contents: any;
+	contents: TContents;
 }
 
 /**
@@ -120,6 +120,31 @@ export interface IRuntimeMessageCollection {
 	 * The contents of the messages in the collection
 	 */
 	readonly messagesContent: readonly IRuntimeMessagesContent[];
+}
+
+/**
+ * Outgoing {@link IFluidDataStoreChannel} message structures.
+ * @internal
+ *
+ * @privateRemarks
+ * Future use opportunity:
+ * - Change {@link IFluidDataStoreChannel} and {@link IFluidParentContext},
+ * to have a generic specifying `T extends FluidDataStoreMessage` and uses
+ * `T["type"]` and `T["content"]` to qualify message related methods,
+ * preferably where `submitMessage`, `reSubmit`, and `rollback` have
+ * overloads to ensure callers pair values correctly.
+ * - A further improvement would be to reshape `submitMessage`, `reSubmit`,
+ * and `rollback` to accept `T` as `message` parameter instead of `type`
+ * and `content` parameters that are hard to convince TypeScript must be
+ * paired in implementations.
+ * - Caveat to enhanced type safety is that a user that changes their own
+ * `FluidDataStoreMessage` definition over time needs to account for
+ * protocol changes. So `unknown` should continue to be used for incoming
+ * message methods (where messages are not known to originate locally).
+ */
+export interface FluidDataStoreMessage {
+	type: string;
+	content: unknown;
 }
 
 /**

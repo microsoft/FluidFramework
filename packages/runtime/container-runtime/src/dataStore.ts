@@ -25,6 +25,8 @@ import { ContainerMessageType } from "./messageTypes.js";
 /**
  * Interface for an op to be used for assigning an
  * alias to a datastore
+ * @internal
+ * @privateRemarks exported per ContainerRuntime export for testing purposes
  */
 export interface IDataStoreAliasMessage {
 	/**
@@ -144,7 +146,10 @@ class DataStore implements IDataStore {
 		}
 
 		const aliased = await this.ackBasedPromise<boolean>((resolve) => {
-			this.parentContext.submitMessage(ContainerMessageType.Alias, message, resolve);
+			this.parentContext.submitMessage(
+				{ type: ContainerMessageType.Alias, contents: message },
+				resolve,
+			);
 		})
 			.catch((error) => {
 				this.logger.sendErrorEvent(

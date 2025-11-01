@@ -317,7 +317,7 @@ describe("DetachedFieldIndex Codecs", () => {
 					if (validFor !== undefined && version !== undefined && !validFor.has(version)) {
 						continue;
 					}
-					const dir = path.join("detached-field-index", name, `V${version}`);
+					const dir = path.join("detached-field-index", name);
 					useSnapshotDirectory(dir);
 					it(`version ${version}`, () => {
 						const codec = family.resolve(version);
