@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-const tsResolver = require("eslint-import-resolver-typescript");
-
 /**
  * Base configuration from which all of our exported configs extends.
  */
@@ -186,15 +184,8 @@ module.exports = {
 		"import-x/order": [
 			"error",
 			{
-				"newlines-between": "always",
-				"alphabetize": {
-					order: "asc",
-					// Sorting is case-sensitive by default, which is the same as Biome. To avoid
-					// another huge set of changes to order things case-insensitively, we'll just
-					// use the rule with this config for now. This decision should be considered
-					// pragmatic and not a statement of preference, and we should revisit this.
-					caseInsensitive: false,
-				},
+				"newlines-between": "ignore",
+				"groups": [["builtin", "external", "internal", "parent", "sibling", "index"]],
 			},
 		],
 
@@ -370,6 +361,7 @@ module.exports = {
 			files: ["**/types/*validate*Previous*.ts"],
 			rules: {
 				"@typescript-eslint/comma-spacing": "off",
+				"import-x/order": "off",
 			},
 		},
 	],
@@ -379,40 +371,36 @@ module.exports = {
 			"@typescript-eslint/parser": [".ts", ".tsx", ".d.ts", ".cts", ".mts"],
 		},
 		"import-x/resolver": {
-			name: "tsResolver",
-			options: {
-				typescript: {
-					extensions: [
-						// `.mts`, `.cts`, `.d.mts`, `.d.cts`, `.mjs`, `.cjs` are not included because `.cjs` and `.mjs` must be used
-						// explicitly in imports
-						".ts",
-						".tsx",
-						".d.ts",
-						".js",
-						".jsx",
-					],
-					conditionNames: [
-						// This supports the test-only conditional export pattern used in merge-tree and id-compressor.
-						"allow-ff-test-exports",
+			typescript: {
+				extensions: [
+					// `.mts`, `.cts`, `.d.mts`, `.d.cts`, `.mjs`, `.cjs` are not included because `.cjs` and `.mjs` must be used
+					// explicitly in imports
+					".ts",
+					".tsx",
+					".d.ts",
+					".js",
+					".jsx",
+				],
+				conditionNames: [
+					// This supports the test-only conditional export pattern used in merge-tree and id-compressor.
+					"allow-ff-test-exports",
 
-						// Default condition names below, see https://github.com/import-js/eslint-import-resolver-typescript#conditionnames
-						"types",
-						"import",
+					// Default condition names below, see https://github.com/import-js/eslint-import-resolver-typescript#conditionnames
+					"types",
+					"import",
 
-						// APF: https://angular.io/guide/angular-package-format
-						"esm2020",
-						"es2020",
-						"es2015",
+					// APF: https://angular.io/guide/angular-package-format
+					"esm2020",
+					"es2020",
+					"es2015",
 
-						"require",
-						"node",
-						"node-addons",
-						"browser",
-						"default",
-					],
-				},
+					"require",
+					"node",
+					"node-addons",
+					"browser",
+					"default",
+				],
 			},
-			resolver: tsResolver, // required
 		},
 	},
 };
