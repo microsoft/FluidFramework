@@ -86,6 +86,5 @@ fluid-framework
 @fluid-experimental/property-common
 @fluid-experimental/property-changeset
 @fluid-example/table-document
-@fluidframework/eslint-config-fluid
 @fluidframework/azure-service-utils
 @fluidframework/azure-local-service
