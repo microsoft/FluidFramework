@@ -5,8 +5,7 @@
 
 import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import {
-	FluidErrorTypes,
-	layerIncompatibilityErrorSymbol,
+	FluidErrorTypesAlpha,
 	type ILayerIncompatibilityError,
 } from "@fluidframework/core-interfaces/internal";
 
@@ -125,8 +124,6 @@ export function isLayerIncompatibilityError(
 	error: unknown,
 ): error is ILayerIncompatibilityError {
 	return (
-		isFluidError(error) &&
-		error.errorType === FluidErrorTypes.usageError &&
-		layerIncompatibilityErrorSymbol in error
+		isFluidError(error) && error.errorType === FluidErrorTypesAlpha.layerIncompatibilityError
 	);
 }
