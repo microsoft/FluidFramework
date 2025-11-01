@@ -8,19 +8,22 @@ import { strict as assert } from "node:assert";
 import { expect } from "chai";
 import * as chai from "chai";
 import assertArrays from "chai-arrays";
-import { describe, it } from "mocha";
+import { after, before, describe, it } from "mocha";
 import * as semver from "semver";
-import { simpleGit } from "simple-git";
 
 import { loadBuildProject, setDependencyRange } from "../buildProject.js";
 import { findGitRootSync } from "../git.js";
-import type { ReleaseGroupName, WorkspaceName } from "../types.js";
+import type {
+	IReleaseGroup,
+	IWorkspace,
+	ReleaseGroupName,
+	WorkspaceName,
+} from "../types.js";
 
 import { testRepoRoot } from "./init.js";
+import { setupTestRepo } from "./testUtils.js";
 
 chai.use(assertArrays);
-
-const git = simpleGit(testRepoRoot);
 
 describe("loadBuildProject", () => {
 	describe("testRepo", () => {
@@ -111,21 +114,40 @@ describe("loadBuildProject", () => {
 });
 
 describe("setDependencyRange", () => {
-	const repo = loadBuildProject(testRepoRoot);
-	const main = repo.releaseGroups.get("main" as ReleaseGroupName);
-	assert(main !== undefined);
-	const mainPackages = new Set(main.packages);
+	let testRepoRoot: string;
+	let cleanup: () => Promise<void>;
+	let repo: ReturnType<typeof loadBuildProject>;
+	let main: IReleaseGroup;
+	let mainPackages: Set<IReleaseGroup["packages"][number]>;
+	let group2: IReleaseGroup;
+	let group2Packages: Set<IReleaseGroup["packages"][number]>;
+	let mainWorkspace: IWorkspace;
+	let mainWorkspacePackages: Set<IWorkspace["packages"][number]>;
 
-	const group2 = repo.releaseGroups.get("group2" as ReleaseGroupName);
-	assert(group2 !== undefined);
-	const group2Packages = new Set(group2.packages);
+	before(async () => {
+		const setup = await setupTestRepo();
+		testRepoRoot = setup.testRepoRoot;
+		cleanup = setup.cleanup;
 
-	const mainWorkspace = repo.workspaces.get("main" as WorkspaceName);
-	assert(mainWorkspace !== undefined);
-	const mainWorkspacePackages = new Set(mainWorkspace.packages);
+		repo = loadBuildProject(testRepoRoot);
+		main = repo.releaseGroups.get("main" as ReleaseGroupName);
+		assert(main !== undefined);
+		mainPackages = new Set(main.packages);
 
-	afterEach(async () => {
-		await git.checkout(["HEAD", "--", testRepoRoot]);
+		group2 = repo.releaseGroups.get("group2" as ReleaseGroupName);
+		assert(group2 !== undefined);
+		group2Packages = new Set(group2.packages);
+
+		mainWorkspace = repo.workspaces.get("main" as WorkspaceName);
+		assert(mainWorkspace !== undefined);
+		mainWorkspacePackages = new Set(mainWorkspace.packages);
+	});
+
+	after(async () => {
+		await cleanup();
+	});
+
+	afterEach(() => {
 		repo.reload();
 	});
 
