@@ -170,7 +170,7 @@
 		"@fluid-tools/markdown-magic": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.58.3",
-		"@fluidframework/eslint-config-fluid": "^8.0.0",
+		"@fluidframework/eslint-config-fluid": "workspace:^",
 		"@fluidframework/test-tools": "^1.0.195075",
 		"@microsoft/api-extractor": "7.52.11",
 		"@vvago/vale": "^3.11.2",
@@ -372,7 +372,7 @@
 			"oclif>@aws-sdk/client-cloudfront": "npm:empty-npm-package@1.0.0",
 			"oclif>@aws-sdk/client-s3": "npm:empty-npm-package@1.0.0",
 			"axios@<0.30.0": "^0.30.0",
-			"@fluidframework/eslint-config-fluid": "workspace:*"
+			"@fluidframework/eslint-config-fluid": "workspace:^8.0.0"
 		},
 		"peerDependencyComments": [
 			"The react-split-pane package used by devtools-view has a peer dependency on React 16, but it doesn't seem to be maintained and it works fine with React 18. TODO: AB#18876",
