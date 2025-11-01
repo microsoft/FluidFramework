@@ -198,6 +198,7 @@ export type {
 	SimpleNodeSchemaBaseAlpha,
 	SimpleObjectFieldSchema,
 	SimpleRecordNodeSchema,
+	SimpleAllowedTypeAttributes,
 } from "./simpleSchema.js";
 export {
 	type ImplicitFieldSchema,

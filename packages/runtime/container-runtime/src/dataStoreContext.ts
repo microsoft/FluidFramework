@@ -41,34 +41,35 @@ import {
 	readAndParse,
 } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import {
-	type ISummaryTreeWithStats,
-	type ITelemetryContext,
-	type IGarbageCollectionData,
-	type CreateChildSummarizerNodeFn,
-	type CreateChildSummarizerNodeParam,
-	type FluidDataStoreRegistryEntry,
-	type IContainerRuntimeBase,
-	type IDataStore,
-	type IFluidDataStoreChannel,
-	type IFluidDataStoreContext,
-	type IFluidDataStoreContextDetached,
-	type IFluidDataStoreRegistry,
-	type IGarbageCollectionDetailsBase,
-	type IProvideFluidDataStoreFactory,
-	type ISummarizeInternalResult,
-	type ISummarizeResult,
-	type ISummarizerNodeWithGC,
-	type SummarizeInternalFn,
-	channelsTreeName,
-	type IInboundSignalMessage,
-	type IPendingMessagesState,
-	type IRuntimeMessageCollection,
-	type IFluidDataStoreFactory,
-	type PackagePath,
-	type IRuntimeStorageService,
-	type MinimumVersionForCollab,
+import type {
+	FluidDataStoreMessage,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
+	IGarbageCollectionData,
+	CreateChildSummarizerNodeFn,
+	CreateChildSummarizerNodeParam,
+	FluidDataStoreRegistryEntry,
+	IContainerRuntimeBase,
+	IDataStore,
+	IFluidDataStoreChannel,
+	IFluidDataStoreContext,
+	IFluidDataStoreContextDetached,
+	IFluidDataStoreRegistry,
+	IGarbageCollectionDetailsBase,
+	IProvideFluidDataStoreFactory,
+	ISummarizeInternalResult,
+	ISummarizeResult,
+	ISummarizerNodeWithGC,
+	SummarizeInternalFn,
+	IInboundSignalMessage,
+	IPendingMessagesState,
+	IRuntimeMessageCollection,
+	IFluidDataStoreFactory,
+	PackagePath,
+	IRuntimeStorageService,
+	MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
+import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
 	isSnapshotFetchRequiredForLoadingGroupId,
@@ -1095,23 +1096,22 @@ export abstract class FluidDataStoreContext
 	}
 
 	public reSubmit(
-		type: string,
-		contents: unknown,
+		message: FluidDataStoreMessage,
 		localOpMetadata: unknown,
-		squash: boolean,
+		squash?: boolean,
 	): void {
 		assert(!!this.channel, 0x14b /* "Channel must exist when resubmitting ops" */);
-		this.channel.reSubmit(type, contents, localOpMetadata, squash);
+		this.channel.reSubmit(message.type, message.content, localOpMetadata, squash);
 	}
 
-	public rollback(type: string, contents: unknown, localOpMetadata: unknown): void {
+	public rollback(message: FluidDataStoreMessage, localOpMetadata: unknown): void {
 		if (!this.channel) {
 			throw new Error("Channel must exist when rolling back ops");
 		}
 		if (!this.channel.rollback) {
 			throw new Error("Channel doesn't support rollback");
 		}
-		this.channel.rollback(type, contents, localOpMetadata);
+		this.channel.rollback(message.type, message.content, localOpMetadata);
 	}
 
 	public async applyStashedOp(contents: unknown): Promise<unknown> {

@@ -32,6 +32,7 @@ import {
 	CompatibilityLevel,
 	type TreeNodeSchemaPrivateData,
 	convertAllowedTypes,
+	AnnotatedAllowedTypesInternal,
 } from "../../core/index.js";
 import { getTreeNodeSchemaInitializedData } from "../../createContext.js";
 import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
@@ -58,6 +59,7 @@ import { prepareForInsertion } from "../../prepareForInsertion.js";
 import { recordLikeDataToFlexContent } from "../common.js";
 import { MapNodeStoredSchema } from "../../../core/index.js";
 import type { NodeSchemaOptionsAlpha } from "../../api/index.js";
+import type { SimpleAllowedTypeAttributes } from "../../simpleSchema.js";
 
 /**
  * Create a proxy which implements the {@link TreeRecordNode} API.
@@ -258,6 +260,9 @@ export function recordSchema<
 	const lazyAllowedTypesIdentifiers = new Lazy(
 		() => new Set(normalizedTypes.evaluate().map((type) => type.identifier)),
 	);
+	const lazySimpleAllowedTypes = new Lazy(() => {
+		return AnnotatedAllowedTypesInternal.evaluateSimpleAllowedTypes(normalizedTypes);
+	});
 
 	let privateData: TreeNodeSchemaPrivateData | undefined;
 
@@ -345,6 +350,10 @@ export function recordSchema<
 
 		public static get allowedTypesIdentifiers(): ReadonlySet<string> {
 			return lazyAllowedTypesIdentifiers.value;
+		}
+
+		public static get simpleAllowedTypes(): ReadonlyMap<string, SimpleAllowedTypeAttributes> {
+			return lazySimpleAllowedTypes.value;
 		}
 
 		protected static override constructorCached: MostDerivedData | undefined = undefined;

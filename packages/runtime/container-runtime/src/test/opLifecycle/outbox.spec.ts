@@ -1286,8 +1286,14 @@ describe("Outbox", () => {
 			const dirtyableMessage: LocalBatchMessage = {
 				runtimeOp: {
 					type: ContainerMessageType.FluidDataStoreOp,
-					contents: { address: "", contents: {} },
-				} satisfies Partial<LocalContainerRuntimeMessage> as LocalContainerRuntimeMessage,
+					contents: {
+						address: "",
+						contents: {
+							type: "op",
+							content: { address: "test-address", contents: "test-contents" },
+						},
+					},
+				} satisfies LocalContainerRuntimeMessage,
 				referenceSequenceNumber: 1,
 				metadata: undefined,
 				localOpMetadata: {},
