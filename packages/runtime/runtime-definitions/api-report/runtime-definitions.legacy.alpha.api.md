@@ -117,9 +117,9 @@ export interface IDataStore {
 }
 
 // @beta @legacy
-export interface IEnvelope {
+export interface IEnvelope<TContents = any> {
     address: string;
-    contents: any;
+    contents: TContents;
 }
 
 // @beta @legacy
@@ -144,11 +144,11 @@ export interface IFluidDataStoreChannel extends IDisposable {
     processSignal(message: IInboundSignalMessage, local: boolean): void;
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
-    reSubmit(type: string, content: any, localOpMetadata: unknown, squash?: boolean): any;
+    reSubmit(type: string, content: any, localOpMetadata: unknown, squash?: boolean): void;
     rollback?(type: string, content: any, localOpMetadata: unknown): void;
     // (undocumented)
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
-    setConnectionState(connected: boolean, clientId?: string): any;
+    setConnectionState(connected: boolean, clientId?: string): void;
     summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
     updateUsedRoutes(usedRoutes: string[]): void;
 }
