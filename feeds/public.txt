@@ -84,5 +84,6 @@ fluid-framework
 @fluid-experimental/property-dds
 @fluid-experimental/property-common
 @fluid-experimental/property-changeset
+@fluidframework/eslint-config-fluid
 @fluidframework/azure-service-utils
 @fluidframework/azure-local-service

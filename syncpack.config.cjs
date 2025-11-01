@@ -119,8 +119,12 @@ module.exports = {
 			label: "Must use tilde dependency ranges",
 			dependencies: [
 				"@biomejs/biome",
-				"eslint-plugin-*",
+				"@rushstack/eslint-*",
+				"@typescript-eslint/*",
+				"eslint-config-*",
 				"eslint-config-prettier",
+				"eslint-import-resolver-typescript",
+				"eslint-plugin-*",
 				"eslint",
 				"less",
 				"prettier",
