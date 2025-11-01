@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import-x/no-internal-modules
 import { type ITaskData, assertValidTaskData } from "../src/model-interface/index.js";
 
 /**
