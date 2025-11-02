@@ -58,6 +58,8 @@ module.exports = {
 		"@typescript-eslint/no-unsafe-call": "off",
 		"@typescript-eslint/no-unsafe-member-access": "off",
 
+		"import/order": "off",
+
 		"jsdoc/multiline-blocks": "off",
 
 		// Set to a warning to encourage adding docs :)
@@ -106,4 +108,33 @@ module.exports = {
 			},
 		},
 	],
+	settings: {
+		"import/extensions": [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
+		"import/parsers": {
+			"@typescript-eslint/parser": [".ts", ".tsx", ".d.ts"],
+		},
+		"import/resolver": {
+			typescript: {
+				extensions: [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
+				conditionNames: [
+					"allow-ff-test-exports",
+
+					// Default condition names below, see https://www.npmjs.com/package/eslint-import-resolver-typescript#conditionnames
+					"types",
+					"import",
+
+					// APF: https://angular.io/guide/angular-package-format
+					"esm2020",
+					"es2020",
+					"es2015",
+
+					"require",
+					"node",
+					"node-addons",
+					"browser",
+					"default",
+				],
+			},
+		},
+	},
 };
