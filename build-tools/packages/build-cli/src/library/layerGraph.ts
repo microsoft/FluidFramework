@@ -394,7 +394,7 @@ export class LayerGraph {
 			}
 			packageLocations.get(pkg.name)!.push(pkg.directory);
 		}
-		const duplicates = Array.from(packageCounts.entries()).filter(([_, count]) => count > 1);
+		const duplicates = [...packageCounts.entries()].filter(([_, count]) => count > 1);
 		if (duplicates.length > 0 && this.logger) {
 			this.logger.verbose(
 				`Found ${duplicates.length} duplicate package(s) in workspace enumeration:`,
