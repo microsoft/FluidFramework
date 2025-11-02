@@ -388,10 +388,11 @@ export class LayerGraph {
 		const packageCounts = new Map<string, number>();
 		const packageLocations = new Map<string, string[]>();
 		for (const pkg of packages) {
-			packageCounts.set(pkg.name, (packageCounts.get(pkg.name) || 0) + 1);
+			packageCounts.set(pkg.name, (packageCounts.get(pkg.name) ?? 0) + 1);
 			if (!packageLocations.has(pkg.name)) {
 				packageLocations.set(pkg.name, []);
 			}
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			packageLocations.get(pkg.name)!.push(pkg.directory);
 		}
 		const duplicates = [...packageCounts.entries()].filter(([_, count]) => count > 1);
@@ -401,7 +402,7 @@ export class LayerGraph {
 			);
 			for (const [name, count] of duplicates) {
 				this.logger.verbose(`  ${name} appears ${count} times`);
-				const locations = packageLocations.get(name) || [];
+				const locations = packageLocations.get(name) ?? [];
 				for (const loc of locations) {
 					this.logger.verbose(`    - ${loc}`);
 				}
