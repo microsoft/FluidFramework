@@ -8,8 +8,8 @@
 
 const importInternalModulesAllowed = [
 	// Allow import of Fluid Framework external API exports.
-	"@fluidframework/*/{beta,alpha,legacy}",
-	"fluid-framework/{beta,alpha,legacy}",
+	"@fluidframework/*/{beta,alpha,legacy,legacy/alpha}",
+	"fluid-framework/{beta,alpha,legacy,legacy/alpha}",
 
 	// Experimental package APIs and exports are unknown, so allow any imports from them.
 	"@fluid-experimental/**",

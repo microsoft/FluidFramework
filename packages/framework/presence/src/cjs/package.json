@@ -9,6 +9,10 @@
 		"./alpha": {
 			"types": "./alpha.d.ts",
 			"default": "./index.js"
+		},
+		"./legacy/alpha": {
+			"types": "./legacy.alpha.d.ts",
+			"default": "./index.js"
 		}
 	}
 }

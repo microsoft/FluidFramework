@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-export {
+export type {
+	EntryPoint,
 	IDiceRoller,
 	IDiceRollerEvents,
 } from "./diceRoller/index.js";

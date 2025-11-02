@@ -3,20 +3,56 @@
  * Licensed under the MIT License.
  */
 
+import type { ILayerCompatSupportRequirements } from "@fluid-internal/client-utils";
 import type {
 	ContainerExtension,
 	ContainerExtensionFactory,
+	ExtensionInstantiationResult,
+	ExtensionRuntimeProperties as GenericExtensionRuntimeProperties,
 	InboundExtensionMessage,
 } from "@fluidframework/container-runtime-definitions/internal";
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { IFluidContainer } from "@fluidframework/fluid-static";
 import { isInternalFluidContainer } from "@fluidframework/fluid-static/internal";
+import type {
+	ExtensionCompatibilityDetails,
+	FluidDataStoreContextInternal,
+	IFluidDataStoreContext,
+} from "@fluidframework/runtime-definitions/internal";
 
 import type { ExtensionHost, ExtensionRuntimeProperties } from "./internalTypes.js";
+import { pkgVersion } from "./packageVersion.js";
 import type { Presence, PresenceWithNotifications } from "./presence.js";
 import type { PresenceExtensionInterface } from "./presenceManager.js";
 import { createPresenceManager } from "./presenceManager.js";
 import type { SignalMessages } from "./protocol.js";
+
+const presenceCompatibility = {
+	generation: 1,
+	version: pkgVersion,
+	capabilities: new Set([]),
+} as const satisfies ExtensionCompatibilityDetails;
+
+// Compatibility infrastructure was added in 2.71.0. Once version is bumped,
+// this can be used to accept instances from 2.71.0 and newer (up to current).
+// const minimalCompatiblePackageVersion = "2.71.0-0";
+
+function assertCompatibilityInvariants(compatibility: ExtensionCompatibilityDetails): void {
+	assert(
+		compatibility.generation === presenceCompatibility.generation,
+		"Presence compatibility generation mismatch.",
+	);
+	assert(compatibility.version.startsWith("2."), "Registered version is not major version 2.");
+	assert(
+		Number.parseFloat(compatibility.version.slice(2)) <
+			Number.parseFloat(presenceCompatibility.version.slice(2)),
+		"Registered version is not less than the current version.",
+	);
+	assert(
+		presenceCompatibility.capabilities.size === 0,
+		"Presence capabilities should be empty.",
+	);
+}
 
 /**
  * Common Presence manager for a container
@@ -24,11 +60,15 @@ import type { SignalMessages } from "./protocol.js";
 class ContainerPresenceManager
 	implements
 		ContainerExtension<ExtensionRuntimeProperties>,
-		InstanceType<
-			ContainerExtensionFactory<PresenceWithNotifications, ExtensionRuntimeProperties>
+		ReturnType<
+			ContainerExtensionFactory<
+				PresenceWithNotifications,
+				ExtensionRuntimeProperties
+			>["instantiateExtension"]
 		>
 {
 	// ContainerExtensionFactory return elements
+	public readonly compatibility = presenceCompatibility;
 	public readonly interface: PresenceWithNotifications;
 	public readonly extension = this;
 
@@ -43,11 +83,25 @@ class ContainerPresenceManager
 		});
 	}
 
+	public handleVersionOrCapabilitiesMismatch<_TRequestedInterface>(
+		ourExistingInstantiation: Readonly<
+			ExtensionInstantiationResult<PresenceWithNotifications, ExtensionRuntimeProperties, []>
+		>,
+		newCompatibilityRequest: ExtensionCompatibilityDetails,
+	): never {
+		assert(
+			ourExistingInstantiation.compatibility === presenceCompatibility,
+			"Presence extension called without own compatibility details",
+		);
+		assertCompatibilityInvariants(newCompatibilityRequest);
+		// There have not yet been any changes that would require action to upgrade.
+		// But also mixed runtime versions are not yet expected.
+		fail("Presence is only expected to be accessed with a single version.");
+	}
+
 	public onNewUse(): void {
 		// No-op
 	}
-
-	public static readonly extensionId = "dis:bb89f4c0-80fd-4f0c-8469-4f2848ee7f4a";
 
 	public processSignal(
 		addressChain: string[],
@@ -57,6 +111,48 @@ class ContainerPresenceManager
 		this.manager.processSignal(addressChain, message, local);
 	}
 }
+
+const extensionId = "dis:bb89f4c0-80fd-4f0c-8469-4f2848ee7f4a";
+
+const ContainerPresenceFactory = {
+	hostRequirements: {
+		minSupportedGeneration: 1,
+		requiredFeatures: [],
+	} as const satisfies ILayerCompatSupportRequirements,
+
+	instanceExpectations: presenceCompatibility,
+
+	resolvePriorInstantiation(
+		existingInstantiation: ExtensionInstantiationResult<
+			unknown,
+			GenericExtensionRuntimeProperties,
+			unknown[]
+		>,
+	): never {
+		// Validate assumptions about existing instance
+		assertCompatibilityInvariants(existingInstantiation.compatibility);
+		// There have not yet been any changes that would require action to upgrade.
+		// But also mixed runtime versions are not yet expected.
+		fail("Presence is only expected to be accessed with a single version.");
+	},
+
+	instantiateExtension(host: ExtensionHost): ContainerPresenceManager {
+		return new ContainerPresenceManager(host);
+	},
+
+	[Symbol.hasInstance]: (instance: unknown): instance is ContainerPresenceManager => {
+		return (
+			instance instanceof ContainerPresenceManager
+			// typeof instance === "object" &&
+			// instance !== null &&
+			// "extension" in instance &&
+			// instance.extension instanceof ContainerPresenceManager
+		);
+	},
+} as const satisfies ContainerExtensionFactory<
+	PresenceWithNotifications,
+	ExtensionRuntimeProperties
+>;
 
 /**
  * Acquire a {@link Presence} from a Fluid Container
@@ -79,10 +175,25 @@ export function getPresenceAlpha(fluidContainer: IFluidContainer): PresenceWithN
 		isInternalFluidContainer(fluidContainer),
 		0xa2f /* IFluidContainer was not recognized. Only Containers generated by the Fluid Framework are supported. */,
 	);
-
-	const presence = fluidContainer.acquireExtension(
-		ContainerPresenceManager.extensionId,
-		ContainerPresenceManager,
-	);
+	const presence = fluidContainer.acquireExtension(extensionId, ContainerPresenceFactory);
 	return presence;
+}
+
+function assertContextHasExtensionProvider(
+	context: IFluidDataStoreContext,
+): asserts context is FluidDataStoreContextInternal {
+	assert(
+		"getExtension" in context,
+		"Data store context does not implement ContainerExtensionProvider",
+	);
+}
+
+/**
+ * Get {@link Presence} from a Fluid Data Store Context
+ *
+ * @legacy @alpha
+ */
+export function getPresenceFromDataStoreContext(context: IFluidDataStoreContext): Presence {
+	assertContextHasExtensionProvider(context);
+	return context.getExtension(extensionId, ContainerPresenceFactory);
 }

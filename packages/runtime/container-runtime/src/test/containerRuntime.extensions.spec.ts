@@ -6,14 +6,21 @@
 import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
-import type { IContainerContext } from "@fluidframework/container-definitions/internal";
+import type {
+	IContainerContext,
+	IRuntime,
+} from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-definitions/internal";
 import type {
 	ContainerExtension,
+	ContainerExtensionFactory,
 	ContainerExtensionId,
+	ExtensionCompatibilityDetails,
 	ExtensionHost,
 	ExtensionHostEvents,
+	ExtensionInstantiationResult,
 	ExtensionRuntimeProperties,
+	IContainerRuntimeInternal,
 } from "@fluidframework/container-runtime-definitions/internal";
 import type { Listenable } from "@fluidframework/core-interfaces";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
@@ -32,7 +39,14 @@ interface TestExtensionRuntimeProperties extends ExtensionRuntimeProperties {
 	SignalMessages: { type: string; content: unknown };
 }
 
+const extensionCompatibilityDetails = {
+	generation: 1,
+	version: "1.0.0",
+	capabilities: new Set<string>([]),
+} as const satisfies ExtensionCompatibilityDetails;
+
 class TestExtension implements ContainerExtension<TestExtensionRuntimeProperties> {
+	public readonly compatibility = extensionCompatibilityDetails;
 	public readonly interface: {
 		connectedToService: boolean;
 		events: Listenable<ExtensionHostEvents>;
@@ -49,16 +63,68 @@ class TestExtension implements ContainerExtension<TestExtensionRuntimeProperties
 		};
 	}
 
+	public handleVersionOrCapabilitiesMismatch<_TRequestedInterface>(
+		_thisExistingInstantiation: Readonly<
+			ExtensionInstantiationResult<TestExtension, TestExtensionRuntimeProperties, []>
+		>,
+		_newCompatibilityRequest: ExtensionCompatibilityDetails,
+	): never {
+		throw new Error("compat mismatch with TestExtension is not expected");
+	}
+
 	public onNewUse(): void {
 		// No-op
 	}
 }
 
-const TestExtensionFactory = class extends TestExtension {
-	constructor(host: ExtensionHost<TestExtensionRuntimeProperties>) {
-		super(host);
+class TestExtensionFactoryClass
+	implements
+		ContainerExtensionFactory<
+			{ connectedToService: boolean; events: Listenable<ExtensionHostEvents> },
+			TestExtensionRuntimeProperties
+		>
+{
+	public readonly hostRequirements = {
+		minSupportedGeneration: 1,
+		requiredFeatures: [],
+	};
+	public readonly instanceExpectations = extensionCompatibilityDetails;
+
+	public resolvePriorInstantiation(
+		existingEntry: ExtensionInstantiationResult<
+			unknown,
+			ExtensionRuntimeProperties,
+			unknown[]
+		>,
+	): ExtensionInstantiationResult<
+		{ connectedToService: boolean; events: Listenable<ExtensionHostEvents> },
+		TestExtensionRuntimeProperties,
+		[]
+	> {
+		throw new Error("compat mismatch with TestExtension is not expected");
 	}
-};
+
+	public instantiateExtension(
+		host: ExtensionHost<TestExtensionRuntimeProperties>,
+	): ExtensionInstantiationResult<
+		{ connectedToService: boolean; events: Listenable<ExtensionHostEvents> },
+		TestExtensionRuntimeProperties,
+		[]
+	> {
+		return new TestExtension(host);
+	}
+
+	[Symbol.hasInstance](
+		instance: unknown,
+	): instance is ExtensionInstantiationResult<
+		{ connectedToService: boolean; events: Listenable<ExtensionHostEvents> },
+		TestExtensionRuntimeProperties,
+		[]
+	> {
+		return instance instanceof TestExtension;
+	}
+}
+const TestExtensionFactory = new TestExtensionFactoryClass();
 
 class MockContext implements IContainerContext {
 	public readonly deltaManager = new MockDeltaManager();
@@ -117,7 +183,7 @@ class MockContext implements IContainerContext {
 }
 
 async function createRuntimeWithMockContext(isReadonly: boolean = false): Promise<{
-	runtime: ContainerRuntime;
+	runtime: IContainerRuntimeInternal & Required<IRuntime>;
 	context: MockContext;
 }> {
 	const context = new MockContext(isReadonly);
@@ -131,7 +197,7 @@ async function createRuntimeWithMockContext(isReadonly: boolean = false): Promis
 }
 
 async function createRuntimeWithoutConnectionState(isReadonly: boolean = false): Promise<{
-	runtime: ContainerRuntime;
+	runtime: IContainerRuntimeInternal & Required<IRuntime>;
 	context: MockContext;
 }> {
 	const context = new MockContext(isReadonly);
@@ -148,20 +214,20 @@ async function createRuntimeWithoutConnectionState(isReadonly: boolean = false):
 }
 
 function updateConnectionState(
-	runtime: ContainerRuntime,
+	runtime: IContainerRuntimeInternal & Required<IRuntime>,
 	context: MockContext,
 	connectionState: ConnectionState.EstablishingConnection | ConnectionState.Disconnected,
 	clientId?: undefined,
 ): void;
 function updateConnectionState(
-	runtime: ContainerRuntime,
+	runtime: IContainerRuntimeInternal & Required<IRuntime>,
 	context: MockContext,
 	connectionState: ConnectionState.CatchingUp | ConnectionState.Connected,
 	clientId: string,
 ): void;
 
 function updateConnectionState(
-	runtime: ContainerRuntime,
+	runtime: IContainerRuntimeInternal & Required<IRuntime>,
 	context: MockContext,
 	connectionState: ConnectionState,
 	clientId?: string | undefined,
@@ -244,7 +310,7 @@ function setupExtensionEventListeners(extensionInterface: {
 	return events;
 }
 describe("Runtime", () => {
-	let runtime: ContainerRuntime;
+	let runtime: IContainerRuntimeInternal & Required<IRuntime>;
 	let context: MockContext;
 	describe("Container Runtime", () => {
 		describe("Container Extension", () => {
@@ -299,7 +365,7 @@ describe("Runtime", () => {
 				});
 
 				describe("fallback behavior when getConnectionState is undefined", () => {
-					let fallbackRuntime: ContainerRuntime;
+					let fallbackRuntime: IContainerRuntimeInternal & Required<IRuntime>;
 					let fallbackContext: MockContext;
 					let fallbackExtension: {
 						connectedToService: boolean;

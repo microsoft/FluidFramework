@@ -29,6 +29,7 @@ import {
 } from "@fluidframework/driver-utils/internal";
 import type {
 	AliasResult,
+	ContainerExtensionProvider,
 	FluidDataStoreMessage,
 	IAttachMessage,
 	IEnvelope,
@@ -95,7 +96,7 @@ import {
 } from "./dataStore.js";
 import {
 	FluidDataStoreContext,
-	type IFluidDataStoreContextInternal,
+	type IFluidDataStoreContextPrivate,
 	type ILocalDetachedFluidDataStoreContextProps,
 	LocalDetachedFluidDataStoreContext,
 	LocalFluidDataStoreContext,
@@ -145,7 +146,9 @@ export type AddressedUnsequencedSignalEnvelope = IEnvelope<ISignalEnvelope["cont
  * being staged on IFluidParentContext can be added here as well, likely with optionality removed,
  * to ease interactions within this package.
  */
-export interface IFluidParentContextPrivate extends IFluidParentContext {
+export interface IFluidParentContextPrivate
+	extends IFluidParentContext,
+		ContainerExtensionProvider {
 	readonly isReadOnly: () => boolean;
 	readonly minVersionForCollab: MinimumVersionForCollab;
 }
@@ -262,6 +265,7 @@ export function formParentContext<
 			return context.setChannelDirty(address);
 		},
 		minVersionForCollab: context.minVersionForCollab,
+		getExtension: context.getExtension.bind(context),
 	};
 }
 
@@ -711,7 +715,7 @@ export class ChannelCollection
 	public createDataStoreContext(
 		pkg: readonly string[],
 		loadingGroupId?: string,
-	): IFluidDataStoreContextInternal {
+	): IFluidDataStoreContextPrivate {
 		return this.createContext(
 			this.createDataStoreId(),
 			pkg,
@@ -1017,7 +1021,7 @@ export class ChannelCollection
 		id: string,
 		requestHeaderData: RuntimeHeaderData,
 		originalRequest: IRequest,
-	): Promise<IFluidDataStoreContextInternal> {
+	): Promise<IFluidDataStoreContextPrivate> {
 		const headerData = { ...defaultRuntimeHeaderData, ...requestHeaderData };
 		if (
 			this.checkAndLogIfDeleted(
@@ -1053,7 +1057,7 @@ export class ChannelCollection
 	public async getDataStoreIfAvailable(
 		id: string,
 		requestHeaderData: RuntimeHeaderData,
-	): Promise<IFluidDataStoreContextInternal | undefined> {
+	): Promise<IFluidDataStoreContextPrivate | undefined> {
 		// If the data store has been deleted, log an error and return undefined.
 		if (
 			this.checkAndLogIfDeleted(

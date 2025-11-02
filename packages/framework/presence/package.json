@@ -32,6 +32,16 @@
 				"types": "./dist/alpha.d.ts",
 				"default": "./dist/index.js"
 			}
+		},
+		"./legacy/alpha": {
+			"import": {
+				"types": "./lib/legacy.alpha.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/legacy.alpha.d.ts",
+				"default": "./dist/index.js"
+			}
 		}
 	},
 	"files": [
@@ -42,15 +52,19 @@
 	],
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "flub generate entrypoints --outFileLegacyBeta legacy --outDir ./dist",
-		"api-extractor:esnext": "flub generate entrypoints --outFileLegacyBeta legacy --outDir ./lib",
+		"api-extractor:commonjs": "flub generate entrypoints --outFileLegacyAlpha legacy.alpha --outDir ./dist",
+		"api-extractor:esnext": "flub generate entrypoints --outFileLegacyAlpha legacy.alpha --outDir ./lib",
 		"build": "fluid-build . --task build",
+		"build:api-reports": "concurrently \"npm:build:api-reports:*\"",
+		"build:api-reports:current": "api-extractor run --local --config api-extractor/api-extractor.current.json",
+		"build:api-reports:legacy": "api-extractor run --local --config api-extractor/api-extractor.legacy.json",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
 		"build:esnext": "npm run build:esnext:main && npm run build:esnext:experimental",
 		"build:esnext:experimental": "tsc --project ./tsconfig.json",
 		"build:esnext:main": "tsc --project ./tsconfig.main.json",
+		"build:genver": "gen-version",
 		"build:test": "npm run build:test:esm && npm run build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
@@ -60,8 +74,10 @@
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
 		"check:exports:cjs:alpha": "api-extractor run --config api-extractor/api-extractor-lint-alpha.cjs.json",
 		"check:exports:cjs:beta": "api-extractor run --config api-extractor/api-extractor-lint-beta.cjs.json",
+		"check:exports:cjs:legacy.alpha": "api-extractor run --config api-extractor/api-extractor-lint-legacy.alpha.cjs.json",
 		"check:exports:esm:alpha": "api-extractor run --config api-extractor/api-extractor-lint-alpha.esm.json",
 		"check:exports:esm:beta": "api-extractor run --config api-extractor/api-extractor-lint-beta.esm.json",
+		"check:exports:esm:legacy.alpha": "api-extractor run --config api-extractor/api-extractor-lint-legacy.alpha.esm.json",
 		"check:format": "npm run check:biome",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",

@@ -48,11 +48,11 @@ import type {
 	IGarbageCollectionData,
 	CreateChildSummarizerNodeFn,
 	CreateChildSummarizerNodeParam,
+	FluidDataStoreContextInternal,
 	FluidDataStoreRegistryEntry,
 	IContainerRuntimeBase,
 	IDataStore,
 	IFluidDataStoreChannel,
-	IFluidDataStoreContext,
 	IFluidDataStoreContextDetached,
 	IFluidDataStoreRegistry,
 	IGarbageCollectionDetailsBase,
@@ -68,6 +68,8 @@ import type {
 	PackagePath,
 	IRuntimeStorageService,
 	MinimumVersionForCollab,
+	ContainerExtensionId,
+	ContainerExtensionExpectations,
 } from "@fluidframework/runtime-definitions/internal";
 import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -134,7 +136,7 @@ export interface ISnapshotDetails {
  * This interface is used for context's parent - ChannelCollection.
  * It should not be exposed to any other users of context.
  */
-export interface IFluidDataStoreContextInternal extends IFluidDataStoreContext {
+export interface IFluidDataStoreContextPrivate extends FluidDataStoreContextInternal {
 	getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
 
 	getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
@@ -249,11 +251,7 @@ class ContextDeltaManagerProxy extends BaseDeltaManagerProxy {
  */
 export abstract class FluidDataStoreContext
 	extends TypedEventEmitter<IFluidDataStoreContextEvents>
-	implements
-		IFluidDataStoreContextInternal,
-		IFluidDataStoreContext,
-		IDisposable,
-		IProvideLayerCompatDetails
+	implements IFluidDataStoreContextPrivate, IDisposable, IProvideLayerCompatDetails
 {
 	public get packagePath(): PackagePath {
 		assert(this.pkg !== undefined, 0x139 /* "Undefined package path" */);
@@ -1221,6 +1219,14 @@ export abstract class FluidDataStoreContext
 		signal?: AbortSignal,
 	): Promise<IFluidHandleInternal<ArrayBufferLike>> {
 		return this.parentContext.uploadBlob(blob, signal);
+	}
+
+	public getExtension<TInterface, TUseContext extends unknown[] = []>(
+		id: ContainerExtensionId,
+		requirements: ContainerExtensionExpectations,
+		...context: TUseContext
+	): TInterface {
+		return this.parentContext.getExtension(id, requirements, ...context);
 	}
 }
 
