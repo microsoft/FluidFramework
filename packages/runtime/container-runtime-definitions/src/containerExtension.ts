@@ -370,7 +370,7 @@ export interface ExtensionHost<TRuntimeProperties extends ExtensionRuntimeProper
  * Factory method to create an extension instance.
  *
  * Any such method provided to {@link ContainerExtensionStore.acquireExtension}
- * must use the same value for a given {@link ContainerExtensionId} so that an
+ * must use the same value for a given {@link @fluidframework/runtime-definitions#ContainerExtensionId} so that an
  * `instanceof` check may be performed at runtime.
  *
  * @typeParam T - Type of extension to create
