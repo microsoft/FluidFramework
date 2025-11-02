@@ -7,7 +7,6 @@ import { strict as assert } from "node:assert";
 
 import {
 	independentInitializedView,
-	independentInitializedViewInternal,
 	createIndependentTreeAlpha,
 	createIndependentTreeBeta,
 	// eslint-disable-next-line import-x/no-internal-modules

@@ -67,8 +67,6 @@ import type { Partial } from "@sinclair/typebox";
 import { isLazy } from "../simple-tree/core/index.js";
 import { fieldCursorFromInsertable, testIdCompressor } from "./utils.js";
 import { FormatValidatorBasic } from "../external-utilities/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { independentInitializedViewInternal } from "../shared-tree/independentView.js";
 import type { ICodecOptions } from "../codec/index.js";
 
 interface TestSimpleTree {
