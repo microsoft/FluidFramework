@@ -698,7 +698,8 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
  * Internal extension to {@link IFluidDataStoreContext} for use across FluidFramework packages.
  *
  * @remarks
- * Important: this interface does cross layer boundaries and must uses should follow `@legacy` patterns.
+ * Important: this interface does cross layer boundaries and must follow `@legacy`
+ * layer compatibility patterns.
  * This is meant to be a staging ground ahead of adding properties to {@link IFluidDataStoreContext}.
  *
  * @internal

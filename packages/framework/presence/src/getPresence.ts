@@ -33,16 +33,14 @@ const presenceCompatibility = {
 	capabilities: new Set([]),
 } as const satisfies ExtensionCompatibilityDetails;
 
+// Compatibility infrastructure was added in 2.71.0. Once version is bumped,
+// this can be used to accept instances from 2.71.0 and newer (up to current).
 // const minimalCompatiblePackageVersion = "2.71.0-0";
 
 function assertCompatibilityInvariants(compatibility: ExtensionCompatibilityDetails): void {
 	assert(
 		compatibility.generation === presenceCompatibility.generation,
 		"Presence compatibility generation mismatch.",
-	);
-	assert(
-		compatibility.generation === presenceCompatibility.generation,
-		"ContainerPresenceManager.resolvePriorInstantiation needs to account for new compatibility generation.",
 	);
 	assert(compatibility.version.startsWith("2."), "Registered version is not major version 2.");
 	assert(

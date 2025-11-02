@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+// Re-export selected types from runtime-definitions internal module
+// that are core to more complete container runtime extensions types
+// maintained here.
 export type {
 	ContainerExtensionId,
 	ExtensionCompatibilityDetails,

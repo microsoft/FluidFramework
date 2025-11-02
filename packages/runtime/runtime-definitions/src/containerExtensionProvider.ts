@@ -72,7 +72,7 @@ export interface ContainerExtensionExpectations {
  *
  * @remarks
  * A string known to all clients working with a certain ContainerExtension and unique
- * among ContainerExtensions. Not `/` may be used in the string. Recommend using
+ * among ContainerExtensions. No `/` may be used in the string. Recommend using
  * concatenation of: type of unique identifier, `:` (required), and unique identifier.
  *
  * @example Examples
