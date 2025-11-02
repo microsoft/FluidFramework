@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-unassigned-import
+// eslint-disable-next-line import-x/no-unassigned-import
 import "ses";
 
 import type { AsynchronousEditor } from "@fluidframework/tree-agent/alpha";

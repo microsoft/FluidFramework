@@ -12,7 +12,7 @@ import { ConnectionState } from "@fluidframework/container-loader";
 import {
 	IContainerCreateProps,
 	IContainerLoadProps,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/container-loader/internal/test/container";
 import { assert } from "@fluidframework/core-utils/internal";
 import {

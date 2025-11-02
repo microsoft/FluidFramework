@@ -18,7 +18,7 @@ import {
 } from "../../core/index.js";
 import { cursorToJsonObject, fieldJsonCursor } from "../json/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { optional } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 import {
 	DefaultEditBuilder,
@@ -31,9 +31,9 @@ import {
 import {
 	type SharedTreeMutableChangeEnricher,
 	SharedTreeReadonlyChangeEnricher,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree/sharedTreeChangeEnricher.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { SharedTreeChange } from "../../shared-tree/sharedTreeChangeTypes.js";
 import {
 	type IdAllocator,
@@ -42,7 +42,7 @@ import {
 	disposeSymbol,
 	idAllocatorFromMaxId,
 } from "../../util/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { Change } from "../feature-libraries/optional-field/optionalFieldUtils.js";
 import {
 	buildTestForest,

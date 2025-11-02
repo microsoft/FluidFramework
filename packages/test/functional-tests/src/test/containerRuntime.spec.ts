@@ -15,17 +15,17 @@ import {
 	ICriticalContainerError,
 	IRuntime,
 } from "@fluidframework/container-definitions/internal";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { ConnectionManager } from "@fluidframework/container-loader/internal/test/connectionManager";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { IConnectionManagerFactoryArgs } from "@fluidframework/container-loader/internal/test/contracts";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { DeltaManager } from "@fluidframework/container-loader/internal/test/deltaManager";
 import {
 	ContainerMessageType,
 	loadContainerRuntime,
 } from "@fluidframework/container-runtime/internal";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { DeltaScheduler } from "@fluidframework/container-runtime/internal/test/deltaScheduler";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { IClient } from "@fluidframework/driver-definitions";

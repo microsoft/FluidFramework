@@ -53,7 +53,7 @@ import {
 } from "./operationTypes.js";
 
 import { getInnerNode } from "../../../simple-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { isObjectNodeSchema } from "../../../simple-tree/node-kinds/index.js";
 import {
 	SchemaFactory,

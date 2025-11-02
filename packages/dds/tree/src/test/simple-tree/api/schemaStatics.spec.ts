@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import {
 	schemaStatics,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/schemaStatics.js";
 import { allowUnused, SchemaFactoryAlpha } from "../../../simple-tree/index.js";
 import type {

@@ -5,7 +5,7 @@
 
 import type { Static, TSchema } from "@sinclair/typebox";
 // This export is documented as supported in typebox's documentation.
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { TypeCompiler } from "@sinclair/typebox/compiler";
 
 import { toFormatValidator, type JsonValidator } from "../codec/index.js";

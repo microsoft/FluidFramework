@@ -7,8 +7,11 @@ import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/exam
 import React from "react";
 import ReactDOM from "react-dom";
 
+// eslint-disable-next-line import-x/no-internal-modules
 import { BaseDocumentContainerRuntimeFactory } from "../src/model/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
 import type { IAppModel, ITaskList } from "../src/model-interface/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
 import { TaskListView } from "../src/view/index.js";
 
 /**

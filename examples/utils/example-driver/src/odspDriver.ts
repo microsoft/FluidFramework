@@ -6,14 +6,14 @@
 import {
 	getDriveId,
 	getDriveItemByRootFileName,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/odsp-doclib-utils/internal";
 import {
 	createOdspCreateContainerRequest,
 	createOdspUrl,
 	OdspDocumentServiceFactory,
 	OdspDriverUrlResolver,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/odsp-driver/internal";
 
 import type { ExampleDriver } from "./interfaces.js";

@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import type { JsonString } from "@fluidframework/core-interfaces/internal";
+import { JsonStringify } from "@fluidframework/core-interfaces/internal";
+
 import { assertIdenticalTypes, createInstanceOf, parameterAcceptedAs } from "./testUtils.js";
 import type { ConstHeterogenousEnum, NumericEnum } from "./testValues.js";
 import {
@@ -13,9 +16,6 @@ import {
 	jsonStringOfBigInt,
 	jsonStringOfUnknown,
 } from "./testValues.js";
-
-import type { JsonString } from "@fluidframework/core-interfaces/internal";
-import { JsonStringify } from "@fluidframework/core-interfaces/internal";
 
 const jsonStringOfLiteral = JsonStringify("literal");
 

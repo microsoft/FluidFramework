@@ -26,7 +26,7 @@ import {
 	type InsertableTreeFieldFromImplicitField,
 	type TreeFieldFromImplicitField,
 	areImplicitFieldSchemaEqual,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/fieldSchema.js";
 
 import type {

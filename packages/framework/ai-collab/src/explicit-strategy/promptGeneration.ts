@@ -18,7 +18,7 @@ import {
 	type TreeNode,
 	KeyEncodingOptions,
 } from "@fluidframework/tree/internal";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { createZodJsonValidator } from "typechat/zod";
 
 import { objectIdKey, type TreeEdit } from "./agentEditTypes.js";

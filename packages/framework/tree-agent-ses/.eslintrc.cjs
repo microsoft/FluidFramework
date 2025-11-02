@@ -10,7 +10,7 @@ module.exports = {
 	},
 	rules: {
 		// Allow reaching into FluidFramework package paths that end with alpha, beta, legacy, or internal
-		"import/no-internal-modules": [
+		"import-x/no-internal-modules": [
 			"error",
 			{
 				allow: [
@@ -29,7 +29,7 @@ module.exports = {
 				project: ["./src/test/tsconfig.json"],
 			},
 			rules: {
-				"import/no-internal-modules": [
+				"import-x/no-internal-modules": [
 					"error",
 					{
 						allow: [
@@ -41,7 +41,7 @@ module.exports = {
 						],
 					},
 				],
-				"import/no-unresolved": "off",
+				"import-x/no-unresolved": "off",
 				"@typescript-eslint/no-unsafe-assignment": "off",
 				"@typescript-eslint/no-unsafe-call": "off",
 				"@typescript-eslint/no-unsafe-member-access": "off",

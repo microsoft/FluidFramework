@@ -25,13 +25,13 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { cloneGCData } from "../gc/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { ValidateSummaryResult } from "../summary/summarizerNode/index.js";
 import {
 	type IRootSummarizerNodeWithGC,
 	type SummarizerNodeWithGC,
 	createRootSummarizerNodeWithGC,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../summary/summarizerNode/summarizerNodeWithGc.js";
 
 type SummarizerNodeWithPrivates = ISummarizerNodeWithGC & {

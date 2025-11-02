@@ -6,10 +6,10 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { assert } from "@fluidframework/core-utils/legacy";
-// eslint-disable-next-line import/no-internal-modules -- #26905: `merge-tree` internals used in examples
+// eslint-disable-next-line import-x/no-internal-modules -- #26905: `merge-tree` internals used in examples
 import { createInsertSegmentOp } from "@fluidframework/merge-tree/internal";
 import { IMergeTreeDeltaOp } from "@fluidframework/merge-tree/legacy";
-// eslint-disable-next-line import/no-internal-modules -- #26904: `sequence` internals used in examples
+// eslint-disable-next-line import-x/no-internal-modules -- #26904: `sequence` internals used in examples
 import { reservedRangeLabelsKey } from "@fluidframework/sequence/internal";
 import {
 	ISegment,

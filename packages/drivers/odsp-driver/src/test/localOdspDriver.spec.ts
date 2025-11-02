@@ -18,14 +18,14 @@ import {
 } from "@fluidframework/odsp-driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
-/* eslint-disable import/no-internal-modules */
+/* eslint-disable import-x/no-internal-modules */
 import { LocalOdspDocumentService } from "../localOdspDriver/localOdspDocumentService.js";
 import { LocalOdspDocumentServiceFactory } from "../localOdspDriver/localOdspDocumentServiceFactory.js";
 import { LocalOdspDocumentStorageService } from "../localOdspDriver/localOdspDocumentStorageManager.js";
 
 import { _dirname } from "./dirname.cjs";
 
-/* eslint-enable import/no-internal-modules */
+/* eslint-enable import-x/no-internal-modules */
 
 describe("Local Odsp driver", () => {
 	// TODO: add end-to-end test

@@ -9,7 +9,7 @@ import {
 	dataStoreNodePathOnly,
 	shouldAllowGcSweep,
 	urlToGCNodePath,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../gc/gcHelpers.js";
 import type { GCFeatureMatrix } from "../../gc/index.js";
 

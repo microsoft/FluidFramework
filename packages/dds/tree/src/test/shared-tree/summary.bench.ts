@@ -24,7 +24,7 @@ import {
 
 import { TestTreeProviderLite, configureBenchmarkHooks, testIdCompressor } from "../utils.js";
 import { TreeViewConfiguration, type ImplicitFieldSchema } from "../../simple-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { TreeSimpleContentTyped } from "../feature-libraries/flex-tree/utils.js";
 import {
 	LinkedList,

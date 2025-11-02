@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 // Allow importing from these specific files which are being tested:
-/* eslint-disable-next-line import/no-internal-modules */
+/* eslint-disable-next-line import-x/no-internal-modules */
 import { findAncestor, findCommonAncestor } from "../../core/rebase/index.js";
 
 interface Node {

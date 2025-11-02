@@ -7,7 +7,7 @@ import { expect } from "chai";
 import { createSandbox } from "sinon";
 
 // Allow directly importing the content which this test suite is testing:
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { runDevtoolsScript } from "../devtools/DevtoolsScriptContent.js";
 
 import { stubGlobals } from "./Utilities.js";

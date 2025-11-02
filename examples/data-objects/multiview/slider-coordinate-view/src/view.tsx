@@ -6,7 +6,7 @@
 import type { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
 import React from "react";
 
-// eslint-disable-next-line import/no-unassigned-import
+// eslint-disable-next-line import-x/no-unassigned-import
 import "./style.css";
 
 interface ISliderCoordinateViewProps {

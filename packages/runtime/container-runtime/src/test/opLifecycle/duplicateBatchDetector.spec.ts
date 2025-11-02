@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type { ITelemetryContext } from "@fluidframework/runtime-definitions/internal";
 
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { DuplicateBatchDetector } from "../../opLifecycle/duplicateBatchDetector.js";
 import type { BatchStartInfo } from "../../opLifecycle/index.js";
 

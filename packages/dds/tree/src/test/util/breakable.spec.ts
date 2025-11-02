@@ -11,7 +11,7 @@ import {
 	throwIfBroken,
 	breakingMethod,
 	breakingClass,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../util/breakable.js";
 import { validateUsageError } from "../utils.js";
 

@@ -11,16 +11,16 @@ import {
 } from "@fluidframework/container-runtime/internal";
 import {
 	IContainerRuntime,
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	IContainerRuntimeWithResolveHandle_Deprecated,
 } from "@fluidframework/container-runtime-definitions/internal";
 import { FluidObject, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	RuntimeRequestHandler,
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler/internal";
 import {
@@ -84,7 +84,7 @@ export const createTestContainerRuntimeFactory = (
 				},
 			},
 			public minVersionForCollab: MinimumVersionForCollab | undefined = undefined,
-			// eslint-disable-next-line import/no-deprecated
+			// eslint-disable-next-line import-x/no-deprecated
 			public requestHandlers: RuntimeRequestHandler[] = [],
 		) {
 			super();
@@ -134,7 +134,7 @@ export const createTestContainerRuntimeFactory = (
 						["default", Promise.resolve(this.dataStoreFactory)],
 						[this.type, Promise.resolve(this.dataStoreFactory)],
 					],
-					// eslint-disable-next-line import/no-deprecated
+					// eslint-disable-next-line import-x/no-deprecated
 					buildRuntimeRequestHandler(
 						backCompat_DefaultRouteRequestHandler("default"),
 						...this.requestHandlers,
@@ -155,7 +155,7 @@ export const createTestContainerRuntimeFactory = (
 				const parser = RequestParser.create(request);
 				if (parser.pathParts.length === 0) {
 					// This cast is safe as loadContainerRuntime is called below
-					// eslint-disable-next-line import/no-deprecated
+					// eslint-disable-next-line import-x/no-deprecated
 					return (runtime as IContainerRuntimeWithResolveHandle_Deprecated).resolveHandle({
 						url: `/default${parser.query}`,
 						headers: request.headers,
@@ -173,7 +173,7 @@ export const createTestContainerRuntimeFactory = (
 					["default", Promise.resolve(this.dataStoreFactory)],
 					[this.type, Promise.resolve(this.dataStoreFactory)],
 				],
-				// eslint-disable-next-line import/no-deprecated
+				// eslint-disable-next-line import-x/no-deprecated
 				requestHandler: buildRuntimeRequestHandler(getDefaultObject, ...this.requestHandlers),
 				provideEntryPoint,
 				runtimeOptions: this.runtimeOptions,

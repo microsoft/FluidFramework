@@ -119,8 +119,12 @@ module.exports = {
 			label: "Must use tilde dependency ranges",
 			dependencies: [
 				"@biomejs/biome",
-				"eslint-plugin-*",
+				"@rushstack/eslint-*",
+				"@typescript-eslint/*",
+				"eslint-config-*",
 				"eslint-config-prettier",
+				"eslint-import-resolver-typescript",
+				"eslint-plugin-*",
 				"eslint",
 				"less",
 				"prettier",
@@ -202,7 +206,8 @@ module.exports = {
 				"@fluidframework/build-common",
 				"@fluidframework/build-tools",
 				"@fluidframework/common-utils",
-				"@fluidframework/eslint-config-fluid",
+				// Temporarily disabled while eslint-config-fluid is part of the client release group
+				// "@fluidframework/eslint-config-fluid",
 				"@fluidframework/protocol-definitions",
 				"@fluidframework/test-tools",
 			],

@@ -27,11 +27,11 @@ import {
 	allowsTreeSuperset,
 	allowsValueSuperset,
 	// Allow importing from this specific file which is being tested:
-	/* eslint-disable-next-line import/no-internal-modules */
+	/* eslint-disable-next-line import-x/no-internal-modules */
 } from "../../../feature-libraries/modular-schema/comparison.js";
 import { brand } from "../../../util/index.js";
 import { fieldSchema } from "../../utils.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { withEditor } from "../../../feature-libraries/modular-schema/fieldKindWithEditor.js";
 
 describe("Schema Comparison", () => {

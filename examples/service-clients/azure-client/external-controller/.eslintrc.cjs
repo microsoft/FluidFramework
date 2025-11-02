@@ -8,7 +8,7 @@ module.exports = {
 	rules: {
 		// Demoted to warning as a workaround to layer-check challenges. Tracked by:
 		// https://github.com/microsoft/FluidFramework/issues/10226
-		"import/no-extraneous-dependencies": "warn",
+		"import-x/no-extraneous-dependencies": "warn",
 
 		// Incompatible with prettier
 		// TODO: this can be removed once the eslint config is updated to version 5.4.0 or greater.

@@ -7,6 +7,19 @@
 
 import { strict as assert } from "node:assert";
 
+import type {
+	JsonString,
+	JsonStringifyOptions,
+} from "@fluidframework/core-interfaces/internal";
+import { JsonParse, JsonStringify } from "@fluidframework/core-interfaces/internal";
+import type {
+	JsonDeserialized,
+	JsonSerializable,
+	JsonTypeWith,
+	NonNullJsonObjectWith,
+	OpaqueJsonDeserialized,
+} from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
+
 import { assertIdenticalTypes, createInstanceOf } from "./testUtils.js";
 import type {
 	BrandedString,
@@ -220,19 +233,6 @@ import {
 	jsonStringOfBigInt,
 	jsonStringOfUnknown,
 } from "./testValues.js";
-
-import type {
-	JsonString,
-	JsonStringifyOptions,
-} from "@fluidframework/core-interfaces/internal";
-import { JsonParse, JsonStringify } from "@fluidframework/core-interfaces/internal";
-import type {
-	JsonDeserialized,
-	JsonSerializable,
-	JsonTypeWith,
-	NonNullJsonObjectWith,
-	OpaqueJsonDeserialized,
-} from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
 /**
  * Defined combining known API for `JsonStringify` and `JsonParse` - effectively

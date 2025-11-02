@@ -56,7 +56,7 @@ import {
 	type NodeRange,
 	type ForkMergeOperation,
 } from "./operationTypes.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { SchematizingSimpleTreeView } from "../../../shared-tree/schematizingTreeView.js";
 import { getInnerNode } from "../../../simple-tree/index.js";
 import {

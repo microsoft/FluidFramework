@@ -13,7 +13,7 @@ import {
 } from "../../../simple-tree/index.js";
 import type {
 	ValidateRecursiveSchema,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/schemaFactoryRecursive.js";
 import { getView, validateUsageError } from "../../utils.js";
 

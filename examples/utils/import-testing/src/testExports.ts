@@ -51,7 +51,7 @@ import {
 } from "@fluidframework/tree";
 import { SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
 import type { FixRecursiveArraySchema, ObjectNodeSchema } from "@fluidframework/tree/alpha";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { requireAssignableTo } from "@fluidframework/tree/internal";
 
 // Due to limitation of the TypeScript compiler, errors like the following can be produced when exporting types from another package:

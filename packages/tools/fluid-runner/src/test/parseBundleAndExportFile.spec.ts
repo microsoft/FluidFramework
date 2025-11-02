@@ -10,7 +10,7 @@ import path from "path";
 import { parseBundleAndExportFile } from "../parseBundleAndExportFile.js";
 
 import { _dirname } from "./dirname.cjs";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { executeResult } from "./sampleCodeLoaders/sampleCodeLoader.js";
 
 describe("parseBundleAndExportFile", () => {

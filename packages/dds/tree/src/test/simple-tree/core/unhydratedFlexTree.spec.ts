@@ -17,12 +17,12 @@ import { brand } from "../../../util/index.js";
 import {
 	UnhydratedFlexTreeNode,
 	type UnhydratedOptionalField,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/core/unhydratedFlexTree.js";
 import { SchemaFactory, stringSchema } from "../../../simple-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { unhydratedFlexTreeFromCursor } from "../../../simple-tree/api/create.js";
 import { expectEqualCursors } from "../../utils.js";
 

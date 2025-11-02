@@ -5,15 +5,15 @@
 
 import { strict as assert } from "node:assert";
 
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import {
 	SharedTree,
 	SchemaFactory,
 	TreeViewConfiguration,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/tree/internal";
 import { OpenAI } from "openai";
 
@@ -32,7 +32,7 @@ import {
 	type PlanningPromptCompleted,
 	type PlanningPromptStarted,
 	EventFlowDebugNames,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../explicit-strategy/debugEvents.js";
 
 const sf = new SchemaFactory("TestApp");

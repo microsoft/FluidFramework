@@ -15,7 +15,7 @@ import {
 	createTinyliciousTestCreateNewRequest,
 } from "@fluidframework/tinylicious-driver/test-utils";
 import { createElement } from "react";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { createRoot } from "react-dom/client";
 
 import {

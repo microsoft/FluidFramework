@@ -11,10 +11,10 @@ import { singleJsonCursor } from "../../json/index.js";
 import {
 	conciseFromCursor,
 	replaceConciseTreeHandles,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/conciseTree.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
 
 describe("simple-tree conciseTree", () => {

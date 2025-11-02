@@ -13,7 +13,7 @@ import {
 	restrictiveStoredSchemaGenerationOptions,
 	toInitialSchema,
 	toStoredSchema,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/toStoredSchema.js";
 import { FieldKinds } from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";

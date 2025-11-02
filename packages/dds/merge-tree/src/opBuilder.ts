@@ -7,10 +7,10 @@ import type { ISegment, Marker } from "./mergeTreeNodes.js";
 import {
 	type IMergeTreeAnnotateMsg,
 	type IMergeTreeDeltaOp,
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	type IMergeTreeGroupMsg,
 	type IMergeTreeInsertMsg,
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	type IMergeTreeObliterateMsg,
 	type IMergeTreeRemoveMsg,
 	MergeTreeDeltaType,
@@ -114,7 +114,7 @@ export function createRemoveRangeOp(start: number, end: number): IMergeTreeRemov
  *
  * @internal
  */
-// eslint-disable-next-line import/no-deprecated
+// eslint-disable-next-line import-x/no-deprecated
 export function createObliterateRangeOp(start: number, end: number): IMergeTreeObliterateMsg {
 	return {
 		pos1: start,
@@ -186,7 +186,7 @@ export function createInsertOp(pos: number, segSpec: unknown): IMergeTreeInsertM
  *
  * @internal
  */
-// eslint-disable-next-line import/no-deprecated
+// eslint-disable-next-line import-x/no-deprecated
 export function createGroupOp(...ops: IMergeTreeDeltaOp[]): IMergeTreeGroupMsg {
 	return {
 		ops,

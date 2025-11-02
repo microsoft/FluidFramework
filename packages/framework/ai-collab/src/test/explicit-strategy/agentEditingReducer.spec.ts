@@ -5,9 +5,9 @@
 
 import { strict as assert, fail } from "node:assert";
 
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import {
 	getSimpleSchema,
@@ -19,7 +19,7 @@ import {
 	type SimpleTreeSchema,
 	type TreeNode,
 	type ITree,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/tree/internal";
 
 import type {
@@ -37,11 +37,11 @@ import {
 	applyAgentEdit,
 	getRangeInfo,
 	getSchemaIdentifier,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../explicit-strategy/agentEditReducer.js";
 import {
 	typeField,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../explicit-strategy/agentEditTypes.js";
 import type {
 	Insert,
@@ -50,9 +50,9 @@ import type {
 	Range,
 	Remove,
 	TreeEdit,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../explicit-strategy/agentEditTypes.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { IdGenerator } from "../../explicit-strategy/idGenerator.js";
 
 import { validateUsageError } from "./utils.js";

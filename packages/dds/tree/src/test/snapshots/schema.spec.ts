@@ -4,7 +4,7 @@
  */
 
 import { encodeTreeSchema } from "../../feature-libraries/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { supportedSchemaFormats } from "../feature-libraries/schema-index/codecUtil.js";
 import { testTrees } from "../testTrees.js";
 

@@ -53,7 +53,7 @@ import type { SimpleObjectNodeSchema } from "../simpleSchema.js";
 import { SchemaFactoryBeta } from "./schemaFactoryBeta.js";
 
 // These imports prevent a large number of type references in the API reports from showing up as *_2.
-/* eslint-disable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars, import/no-duplicates */
+/* eslint-disable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars, import-x/no-duplicates */
 import type {
 	FieldProps,
 	FieldSchemaAlpha,
@@ -63,7 +63,7 @@ import type {
 import type { LeafSchema } from "../leafNodeSchema.js";
 import type { SimpleLeafNodeSchema } from "../simpleSchema.js";
 import type { FieldSchemaAlphaUnsafe } from "./typesUnsafe.js";
-/* eslint-enable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars, import/no-duplicates */
+/* eslint-enable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars, import-x/no-duplicates */
 
 /**
  * Stateless APIs exposed via {@link SchemaFactoryAlpha} as both instance properties and as statics.

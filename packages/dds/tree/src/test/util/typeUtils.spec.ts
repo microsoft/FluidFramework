@@ -16,7 +16,7 @@ import type {
 	RestrictiveStringRecord,
 	UnionToIntersection,
 	// Allow importing from this specific file which is being tested:
-	/* eslint-disable-next-line import/no-internal-modules */
+	/* eslint-disable-next-line import-x/no-internal-modules */
 } from "../../util/typeUtils.js";
 
 // These tests currently just cover the type checking, so its all compile time.

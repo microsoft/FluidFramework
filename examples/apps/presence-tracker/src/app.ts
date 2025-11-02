@@ -5,9 +5,9 @@
 
 import {
 	getPresence,
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	getPresenceViaDataObject,
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	ExperimentalPresenceManager,
 } from "@fluidframework/presence/alpha";
 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
@@ -27,7 +27,7 @@ import { renderControlPanel, renderFocusPresence, renderMousePresence } from "./
 const containerSchema = {
 	initialObjects: {
 		// Optional Presence Manager object placed within container schema for experimental presence access
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated
 		presence: ExperimentalPresenceManager,
 	},
 } satisfies ContainerSchema;
@@ -66,7 +66,7 @@ async function start() {
 	const useDataObject = new URLSearchParams(location.search).has("useDataObject");
 	const presence = useDataObject
 		? // Retrieve a reference to the presence APIs via the data object.
-			// eslint-disable-next-line import/no-deprecated
+			// eslint-disable-next-line import-x/no-deprecated
 			getPresenceViaDataObject(container.initialObjects.presence)
 		: getPresence(container);
 
