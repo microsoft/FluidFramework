@@ -29,7 +29,7 @@ import {
 	type ConciseTree,
 	TreeAlpha,
 	KeyEncodingOptions,
-	type CodecWriteOptions,
+	type ICodecOptions,
 } from "@fluidframework/tree/alpha";
 import { TreeBeta } from "@fluidframework/tree/beta";
 import { type Static, Type } from "@sinclair/typebox";
@@ -252,10 +252,7 @@ export function rejectHandles(key: string, value: unknown): unknown {
 	return value;
 }
 
-const options: ForestOptions & CodecWriteOptions = {
-	jsonValidator: FormatValidatorBasic,
-	minVersionForCollab: compatVersion,
-};
+const options: ForestOptions & ICodecOptions = { jsonValidator: FormatValidatorBasic };
 
 const File = Type.Object({
 	tree: Type.Unsafe<JsonCompatible<IFluidHandle>>(),

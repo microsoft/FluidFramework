@@ -10,7 +10,11 @@ import {
 	createIdCompressor,
 } from "@fluidframework/id-compressor/internal";
 
-import type { CodecWriteOptions, ICodecOptions } from "../codec/index.js";
+import {
+	FluidClientVersion,
+	type CodecWriteOptions,
+	type ICodecOptions,
+} from "../codec/index.js";
 import {
 	type ITreeCursorSynchronous,
 	type RevisionTag,
@@ -95,12 +99,18 @@ export function independentView<const TSchema extends ImplicitFieldSchema>(
  */
 export function independentInitializedView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
-	options: ForestOptions & CodecWriteOptions,
+	options: ForestOptions & ICodecOptions,
 	content: ViewContent,
 ): TreeViewAlpha<TSchema> {
 	const idCompressor: IIdCompressor = content.idCompressor;
-	const fieldBatchCodec = makeFieldBatchCodec(options);
-	const schemaCodec = makeSchemaCodec(options);
+	// Any version can be passed down to `makeFieldBatchCodec` and `makeSchemaCodec` here.
+	// We only use the decode part, which always dispatches to the correct codec based on the version in the data, not the `minVersionForCollab`.
+	const writeOptions: CodecWriteOptions = {
+		...options,
+		minVersionForCollab: FluidClientVersion.v2_0,
+	};
+	const fieldBatchCodec = makeFieldBatchCodec(writeOptions);
+	const schemaCodec = makeSchemaCodec(writeOptions);
 
 	const schema = schemaCodec.decode(content.schema as Format);
 	const context: FieldBatchEncodingContext = {
