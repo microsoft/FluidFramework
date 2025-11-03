@@ -1019,7 +1019,13 @@ function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeS
 		for (const [storedKey, field] of schema.objectNodeFields) {
 			fields.set(storedKey, { ...exportSimpleFieldSchemaStored(field), storedKey });
 		}
-		return { kind: NodeKind.Object, fields, metadata: {}, persistedMetadata: schema.metadata };
+		return {
+			kind: NodeKind.Object,
+			fields,
+			allowUnknownOptionalFields: undefined,
+			metadata: {},
+			persistedMetadata: schema.metadata,
+		};
 	}
 	if (schema instanceof MapNodeStoredSchema) {
 		assert(

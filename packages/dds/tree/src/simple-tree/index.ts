@@ -281,7 +281,6 @@ export {
 } from "./leafNodeSchema.js";
 export type { LeafSchema } from "./leafNodeSchema.js";
 export {
-	toViewCompatibilityTreeSchema,
 	serializeCompatibilitySchema,
 	deserializeCompatibilitySchema,
 } from "./api/index.js";

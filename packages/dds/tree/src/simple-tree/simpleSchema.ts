@@ -62,9 +62,9 @@ export interface SimpleObjectNodeSchema<out TCustomMetadata = unknown>
 	/**
 	 * Whether the object node allows unknown optional fields.
 	 *
-	 * @remarks Used for compatibility checks (see {@link toViewCompatibilityTreeSchema}). Not available in all cases.
+	 * @remarks Only populated for view schemas. Relevant for compatibility checking scenarios.
 	 */
-	readonly allowUnknownOptionalFields?: boolean;
+	readonly allowUnknownOptionalFields: boolean | undefined;
 }
 
 /**
