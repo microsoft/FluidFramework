@@ -487,6 +487,10 @@ describe("allowedTypes", () => {
 		});
 	});
 
+	/**
+	 * Insertable types behave contravariantly to their schema, requiring special handling of unions.
+	 * See {@link Input} for documentation and details.
+	 */
 	describe("insertable", () => {
 		it("unsound union properties", () => {
 			const schemaFactory = new SchemaFactory("demo");
@@ -581,7 +585,7 @@ describe("allowedTypes", () => {
 			class Text2 extends sf.object("TextItem2", { text: sf.string }) {}
 
 			type Text1Or2 = InsertableTreeNodeFromAllowedTypes<(typeof Text1 | typeof Text2)[]>;
-			// If the schema is unknown, we cannot guarantee that the input matches either schema,
+			// If exact the schema is not known, we cannot guarantee that the input matches either schema,
 			// and only allow input valid in both, which is `never`:
 			allowUnused<requireAssignableTo<Text1Or2, never>>();
 
@@ -610,7 +614,7 @@ describe("allowedTypes", () => {
 			class Text2 extends sf.object("TextItem2", { text: sf.string }) {}
 
 			type Text1Or2 = InsertableTypedNode<typeof Text1 | typeof Text2>;
-			// If the schema is unknown, we cannot guarantee that the input matches either schema,
+			// If exact the schema is not known, we cannot guarantee that the input matches either schema,
 			// and only allow input valid in both, which is `never`:
 			allowUnused<requireAssignableTo<Text1Or2, never>>();
 
@@ -670,7 +674,7 @@ describe("allowedTypes", () => {
 			class Text2 extends sf.object("TextItem2", { text: sf.string }) {}
 
 			type Text1Or2 = SchemaUnionToIntersection<typeof Text1 | typeof Text2>;
-			// If the schema is unknown, we cannot guarantee that the input matches either schema,
+			// If exact the schema is not known, we cannot guarantee that the input matches either schema,
 			// and only allow input valid in both, which is `never`:
 			allowUnused<requireAssignableTo<Text1Or2, never>>();
 
@@ -710,7 +714,7 @@ describe("allowedTypes", () => {
 					requireTrue<areSafelyAssignable<ItemSchemaNonClassCase, ItemSchemaNonClass>>
 				>();
 
-				// @ts-expect-error This case is a messy type: thats not the input or never: clearly undesired behavior.
+				// @ts-expect-error This case is a messy type: that's not the input or never: clearly undesired behavior.
 				allowUnused<requireTrue<areSafelyAssignable<ItemSchemaCase, ItemSchema>>>();
 				// @ts-expect-error This case is a messy type: should be never: clearly undesired behavior.
 				allowUnused<requireTrue<areSafelyAssignable<ItemSchemaOrTextCase, never>>>();
