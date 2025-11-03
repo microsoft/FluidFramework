@@ -418,7 +418,7 @@ stages:
             script: |
               set -eu -o pipefail
 
-              ${{ if ne(parameters.odspTenantType, 'none') }}:
+              if [[ "${{ parameters.odspTenantType }}" != "none" ]]; then
                 SETUP_OUTPUT=$(node -e "
                   (async () => {
                     try {
@@ -438,13 +438,14 @@ stages:
                   })();
                 ")
 
-              # Parse the JSON output and set environment variables
-              export tenant__reservationId=$(echo "$SETUP_OUTPUT" | jq -r '.reservationId')
-              ${{ if eq(parameters.odspTenantType, 'dogfood') }}:
-                export login__odspdf__test__tenants=$(echo "$SETUP_OUTPUT" | jq -r '.userPass')
-              ${{ elseif eq(parameters.odspTenantType, 'prod') }}:
-                export login__odsp__test__tenants=$(echo "$SETUP_OUTPUT" | jq -r '.userPass')
-
+                # Parse the JSON output and set environment variables
+                export tenant__reservationId=$(echo "$SETUP_OUTPUT" | jq -r '.reservationId')
+                if [[ "${{ parameters.odspTenantType }}" == "dogfood" ]]; then
+                  export login__odspdf__test__tenants=$(echo "$SETUP_OUTPUT" | jq -r '.userPass')
+                elif [[ "${{ parameters.odspTenantType }}" == "prod" ]]; then
+                  export login__odsp__test__tenants=$(echo "$SETUP_OUTPUT" | jq -r '.userPass')
+                fi
+              fi
 
               pnpm exec ${{ parameters.testCommand }} -- ${{ variant.flags }}
 
