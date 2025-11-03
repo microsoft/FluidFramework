@@ -504,6 +504,9 @@ export const FluidClientVersion = {
 	 *
 	 * New formats introduced in 2.43:
 	 * - SchemaFormatVersion.v2
+	 * - MessageFormatVersion.v4
+	 * - EditManagerFormatVersion.v4
+	 * - Sequence format version 3
 	 */
 	v2_43: "2.43.0",
 
