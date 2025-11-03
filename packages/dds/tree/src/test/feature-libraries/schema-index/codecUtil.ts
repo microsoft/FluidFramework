@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { SchemaVersion } from "../../../core/index.js";
+import type { SchemaFormatVersion } from "../../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeSchemaCodecs } from "../../../feature-libraries/schema-index/index.js";
 import { ajvValidator } from "../../codec/index.js";
@@ -13,4 +13,4 @@ import { ajvValidator } from "../../codec/index.js";
  */
 export const supportedSchemaFormats = Array.from(
 	makeSchemaCodecs({ jsonValidator: ajvValidator }).getSupportedFormats(),
-).filter((format) => format !== undefined) as SchemaVersion[];
+).filter((format) => format !== undefined) as SchemaFormatVersion[];

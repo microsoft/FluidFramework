@@ -78,7 +78,6 @@ import {
 	TreeCompressionStrategy,
 	type FieldBatch,
 	type FieldBatchEncodingContext,
-	fluidVersionToFieldBatchCodecWriteVersion,
 	type LocalNodeIdentifier,
 	type FlexTreeSequenceField,
 	type FlexTreeNode,
@@ -845,8 +844,10 @@ export const TreeAlpha: TreeAlpha = {
 		options: { idCompressor?: IIdCompressor } & Pick<CodecWriteOptions, "minVersionForCollab">,
 	): JsonCompatible<IFluidHandle> {
 		const schema = tryGetSchema(node) ?? fail(0xacf /* invalid input */);
-		const format = fluidVersionToFieldBatchCodecWriteVersion(options.minVersionForCollab);
-		const codec = makeFieldBatchCodec({ jsonValidator: FormatValidatorNoOp }, format);
+		const codec = makeFieldBatchCodec({
+			jsonValidator: FormatValidatorNoOp,
+			minVersionForCollab: options.minVersionForCollab,
+		});
 		const cursor = borrowFieldCursorFromTreeNodeOrValue(node);
 		const batch: FieldBatch = [cursor];
 		// If none provided, create a compressor which will not compress anything.
@@ -873,7 +874,7 @@ export const TreeAlpha: TreeAlpha = {
 		compressedData: JsonCompatible<IFluidHandle>,
 		options: {
 			idCompressor?: IIdCompressor;
-		} & ICodecOptions,
+		} & CodecWriteOptions,
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
 		const config = new TreeViewConfigurationAlpha({ schema });
 		const content: ViewContent = {
