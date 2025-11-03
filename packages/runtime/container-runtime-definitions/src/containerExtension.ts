@@ -5,7 +5,6 @@
 
 import type { ILayerCompatDetails } from "@fluid-internal/client-utils";
 import type { IAudience } from "@fluidframework/container-definitions/internal";
-// eslint-disable-next-line @typescript-eslint/consistent-type-imports -- BrandedType is a class declaration only
 import type {
 	BrandedType,
 	InternalUtilityTypes,
@@ -17,6 +16,12 @@ import type {
 	TypedMessage,
 } from "@fluidframework/core-interfaces/internal";
 import type { IQuorumClients } from "@fluidframework/driver-definitions/internal";
+import type {
+	ContainerExtensionId,
+	ContainerExtensionExpectations,
+	ExtensionCompatibilityDetails,
+	UnknownExtensionInstantiation,
+} from "@fluidframework/runtime-definitions/internal";
 
 /**
  * While connected, the id of a client within a session.
@@ -181,6 +186,26 @@ export interface ExtensionRuntimeProperties {
 }
 
 /**
+ * Collection of properties resulting from instantiating an extension via its
+ * factory.
+ *
+ * @remarks
+ * All of the members are mutable to allow for handling version or capability
+ * mismatches via replacement of interface or extension instances. That is the
+ * only time mutation is expected to occur.
+ *
+ * @internal
+ */
+export interface ExtensionInstantiationResult<
+	TInterface,
+	TRuntimeProperties extends ExtensionRuntimeProperties,
+	TUseContext extends unknown[],
+> extends UnknownExtensionInstantiation {
+	interface: TInterface;
+	extension: ContainerExtension<TRuntimeProperties, TUseContext>;
+}
+
+/**
  * Defines requirements for a component to register with container as an extension.
  *
  * @internal
@@ -189,6 +214,24 @@ export interface ContainerExtension<
 	TRuntimeProperties extends ExtensionRuntimeProperties,
 	TUseContext extends unknown[] = [],
 > {
+	/**
+	 * Called when a new request is made for an extension with different version
+	 * or capabilities than were registered for this extension instance.
+	 *
+	 * @typeParam TInterface - interface type of new request
+	 *
+	 * @param thisExistingInstantiation - registration of this extension in store
+	 * @param newCompatibilityRequest - compatibility details of the new request
+	 */
+	handleVersionOrCapabilitiesMismatch<TRequestedInterface>(
+		thisExistingInstantiation: Readonly<
+			ExtensionInstantiationResult<unknown, TRuntimeProperties, TUseContext>
+		>,
+		newCompatibilityRequest: ExtensionCompatibilityDetails,
+	): Readonly<
+		ExtensionInstantiationResult<TRequestedInterface, TRuntimeProperties, TUseContext>
+	>;
+
 	/**
 	 * Notifies the extension of a new use context.
 	 *
@@ -327,53 +370,45 @@ export interface ExtensionHost<TRuntimeProperties extends ExtensionRuntimeProper
  * Factory method to create an extension instance.
  *
  * Any such method provided to {@link ContainerExtensionStore.acquireExtension}
- * must use the same value for a given {@link ContainerExtensionId} so that an
+ * must use the same value for a given {@link @fluidframework/runtime-definitions#ContainerExtensionId} so that an
  * `instanceof` check may be performed at runtime.
  *
  * @typeParam T - Type of extension to create
  * @typeParam TRuntimeProperties - Extension runtime properties
  * @typeParam TUseContext - Array of custom use context passed to factory or onNewUse
  *
- * @param host - Host runtime for extension to work against
- * @param useContext - Custom use context for extension.
- * @returns Record providing:
- * `interface` instance (type `T`) that is provided to caller of
- * {@link ContainerExtensionStore.acquireExtension} and
- * `extension` store/runtime uses to interact with extension.
- *
  * @internal
  */
-export type ContainerExtensionFactory<
-	T,
+export interface ContainerExtensionFactory<
+	TInterface,
 	TRuntimeProperties extends ExtensionRuntimeProperties,
 	TUseContext extends unknown[] = [],
-> = new (
-	host: ExtensionHost<TRuntimeProperties>,
-	...useContext: TUseContext
-) => {
-	readonly interface: T;
-	readonly extension: ContainerExtension<TRuntimeProperties, TUseContext>;
-};
+> extends ContainerExtensionExpectations {
+	resolvePriorInstantiation(
+		priorInstantiation: UnknownExtensionInstantiation,
+	): Readonly<ExtensionInstantiationResult<TInterface, TRuntimeProperties, TUseContext>>;
 
-/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive AB#50920 */
-/**
- * Unique identifier for extension
- *
- * @remarks
- * A string known to all clients working with a certain ContainerExtension and unique
- * among ContainerExtensions. Not `/` may be used in the string. Recommend using
- * concatenation of: type of unique identifier, `:` (required), and unique identifier.
- *
- * @example Examples
- * ```typescript
- *   "guid:g0fl001d-1415-5000-c00l-g0fa54g0b1g1"
- *   "name:@foo-scope_bar:v1"
- * ```
- *
- * @internal
- */
-export type ContainerExtensionId = `${string}:${string}`;
-/* eslint-enable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag */
+	/**
+	 * @param host - Host runtime for extension to work against
+	 * @param useContext - Custom use context for extension.
+	 * @returns Record providing:
+	 * `interface` instance (type `T`) that is provided to caller of
+	 * {@link ContainerExtensionStore.acquireExtension} and
+	 * `extension` store/runtime uses to interact with extension.
+	 */
+	instantiateExtension(
+		host: ExtensionHost<TRuntimeProperties>,
+		...useContext: TUseContext
+	): ExtensionInstantiationResult<TInterface, TRuntimeProperties, TUseContext>;
+
+	/**
+	 * Determines if an `ExtensionInstantiationResult` came from `instantiateExtension`.
+	 * Called by the semantics of the instanceof operator.
+	 */
+	[Symbol.hasInstance]: (
+		instance: unknown,
+	) => instance is ExtensionInstantiationResult<TInterface, TRuntimeProperties, TUseContext>;
+}
 
 /**
  * @sealed
@@ -385,15 +420,16 @@ export interface ContainerExtensionStore {
 	 *
 	 * @param id - Identifier for the requested extension
 	 * @param factory - Factory to create the extension if not found
+	 * @param context - Custom use context for extension
 	 * @returns The extension
 	 */
 	acquireExtension<
-		T,
+		TInterface,
 		TRuntimeProperties extends ExtensionRuntimeProperties,
 		TUseContext extends unknown[] = [],
 	>(
 		id: ContainerExtensionId,
-		factory: ContainerExtensionFactory<T, TRuntimeProperties, TUseContext>,
+		factory: ContainerExtensionFactory<TInterface, TRuntimeProperties, TUseContext>,
 		...context: TUseContext
-	): T;
+	): TInterface;
 }

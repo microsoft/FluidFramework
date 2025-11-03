@@ -28,6 +28,7 @@ import { v4 as uuid } from "uuid";
 
 import {
 	DiceRollerContainerRuntimeFactory,
+	type EntryPoint,
 	type IDiceRoller,
 } from "../src/container/index.js";
 import { DiceRollerView } from "../src/view.js";
@@ -75,7 +76,7 @@ async function createContainerAndRenderInElement(element: HTMLDivElement): Promi
 		});
 	}
 
-	const diceRoller = (await container.getEntryPoint()) as IDiceRoller;
+	const { diceRoller } = (await container.getEntryPoint()) as EntryPoint;
 	const render = (diceRoller: IDiceRoller) => {
 		const appRoot = createRoot(element);
 		appRoot.render(createElement(DiceRollerView, { diceRoller }));

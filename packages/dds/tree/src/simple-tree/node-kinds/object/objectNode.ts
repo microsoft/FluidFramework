@@ -767,10 +767,13 @@ function applyFieldChange(
 	const proxy =
 		from.kind === "proxy"
 			? from.node
-			: (targetToProxy.get(from.node) ?? fail("missing proxy"));
+			: (targetToProxy.get(from.node) ?? fail(0xc95 /* missing proxy */));
 	const inner = getInnerNode(proxy);
 	const storedSchema = inner.context.schema.nodeSchema.get(brand(schema.identifier));
-	assert(storedSchema instanceof ObjectNodeStoredSchema, "Expected ObjectNodeStoredSchema");
+	assert(
+		storedSchema instanceof ObjectNodeStoredSchema,
+		0xc96 /* Expected ObjectNodeStoredSchema */,
+	);
 
 	if (value === undefined && inner.tryGetField(fieldInfo.storedKey) === undefined) {
 		return;

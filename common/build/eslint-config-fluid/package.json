@@ -1,7 +1,6 @@
 {
 	"name": "@fluidframework/eslint-config-fluid",
-	"version": "2.71.0",
-	"private": true,
+	"version": "8.1.0",
 	"description": "Shareable ESLint config for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {

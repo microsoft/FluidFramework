@@ -17,6 +17,7 @@ import {
 import { ajvValidator } from "../../../codec/index.js";
 import { testTrees } from "../../../cursorTestSuite.js";
 import { testIdCompressor } from "../../../utils.js";
+import { currentVersion } from "../../../../codec/index.js";
 
 describe("uncompressedEncode", () => {
 	// TODO: test non size 1 batches
@@ -29,7 +30,10 @@ describe("uncompressedEncode", () => {
 					originatorId: testIdCompressor.localSessionId,
 					idCompressor: testIdCompressor,
 				};
-				const codec = makeFieldBatchCodec({ jsonValidator: ajvValidator }, 1);
+				const codec = makeFieldBatchCodec({
+					jsonValidator: ajvValidator,
+					minVersionForCollab: currentVersion,
+				});
 				const result = codec.encode([input], context);
 				const decoded = codec.decode(result, context);
 				const decodedJson = decoded.map(jsonableTreeFromFieldCursor);
