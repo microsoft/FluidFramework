@@ -355,6 +355,7 @@ export type ContainerExtensionFactory<
 	readonly extension: ContainerExtension<TRuntimeProperties, TUseContext>;
 };
 
+/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive AB#50920 */
 /**
  * Unique identifier for extension
  *
@@ -372,6 +373,7 @@ export type ContainerExtensionFactory<
  * @internal
  */
 export type ContainerExtensionId = `${string}:${string}`;
+/* eslint-enable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag */
 
 /**
  * @sealed
