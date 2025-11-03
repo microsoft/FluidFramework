@@ -486,6 +486,21 @@ export function transformObjectMap<
 }
 
 /**
+ * Transform the values of a Map using the provided transform function.
+ * @param map - The map to transform.
+ * @param transformValue - A method for transforming values in the map.
+ * @returns A new map with the transformed values.
+ */
+export function transformMapValues<Key, InputValue, OutputValue>(
+	map: ReadonlyMap<Key, InputValue>,
+	transformValue: (value: InputValue, key: Key) => OutputValue,
+): Map<Key, OutputValue> {
+	return new Map(
+		Array.from(map.entries()).map(([key, value]) => [key, transformValue(value, key)]),
+	);
+}
+
+/**
  * Make an inverted copy of a map.
  *
  * @returns a map which can look up the keys from the values of the original map.

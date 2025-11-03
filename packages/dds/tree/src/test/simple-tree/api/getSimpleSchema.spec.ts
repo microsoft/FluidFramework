@@ -21,7 +21,7 @@ import {
 import { ValueSchema } from "../../../core/index.js";
 
 import {
-	removeMetadataFromSimpleTreeSchema,
+	copySimpleTreeSchemaWithoutMetadata,
 	toSimpleTreeSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/api/viewSchemaToSimpleSchema.js";
@@ -93,8 +93,9 @@ describe("getSimpleSchema", () => {
 		});
 
 		it("Roundtrip serialization - Field Schema", () => {
-			const expected = removeMetadataFromSimpleTreeSchema(toSimpleTreeSchema(Schema, true));
-			const actual = deserializeCompatibilitySchema(serializeCompatibilitySchema(expected));
+			const simpleTree = toSimpleTreeSchema(Schema, true);
+			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
+			const actual = deserializeCompatibilitySchema(serializeCompatibilitySchema(simpleTree));
 			assert.deepEqual(actual, expected);
 		});
 	});
@@ -126,8 +127,9 @@ describe("getSimpleSchema", () => {
 		});
 
 		it("Roundtrip serialization - Leaf node", () => {
-			const expected = removeMetadataFromSimpleTreeSchema(toSimpleTreeSchema(Schema, true));
-			const actual = deserializeCompatibilitySchema(serializeCompatibilitySchema(expected));
+			const simpleTree = toSimpleTreeSchema(Schema, true);
+			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
+			const actual = deserializeCompatibilitySchema(serializeCompatibilitySchema(simpleTree));
 			assert.deepEqual(actual, expected);
 		});
 	});
@@ -163,8 +165,9 @@ describe("getSimpleSchema", () => {
 		});
 
 		it("Roundtrip serialization - Field Schema", () => {
-			const expected = removeMetadataFromSimpleTreeSchema(toSimpleTreeSchema(Schema, true));
-			const actual = deserializeCompatibilitySchema(serializeCompatibilitySchema(expected));
+			const simpleTree = toSimpleTreeSchema(Schema, true);
+			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
+			const actual = deserializeCompatibilitySchema(serializeCompatibilitySchema(simpleTree));
 			assert.deepEqual(actual, expected);
 		});
 	});
@@ -208,8 +211,9 @@ describe("getSimpleSchema", () => {
 		});
 
 		it("Roundtrip serialization - Array Schema", () => {
-			const expected = removeMetadataFromSimpleTreeSchema(toSimpleTreeSchema(Schema, true));
-			const actual = deserializeCompatibilitySchema(serializeCompatibilitySchema(expected));
+			const simpleTree = toSimpleTreeSchema(Schema, true);
+			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
+			const actual = deserializeCompatibilitySchema(serializeCompatibilitySchema(simpleTree));
 			assert.deepEqual(actual, expected);
 		});
 	});
@@ -253,8 +257,9 @@ describe("getSimpleSchema", () => {
 		});
 
 		it("Roundtrip serialization - Map schema", () => {
-			const expected = removeMetadataFromSimpleTreeSchema(toSimpleTreeSchema(Schema, true));
-			const actual = deserializeCompatibilitySchema(serializeCompatibilitySchema(expected));
+			const simpleTree = toSimpleTreeSchema(Schema, true);
+			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
+			const actual = deserializeCompatibilitySchema(serializeCompatibilitySchema(simpleTree));
 			assert.deepEqual(actual, expected);
 		});
 	});
@@ -298,8 +303,9 @@ describe("getSimpleSchema", () => {
 		});
 
 		it("Roundtrip serialization - Record schema", () => {
-			const expected = removeMetadataFromSimpleTreeSchema(toSimpleTreeSchema(Schema, true));
-			const actual = deserializeCompatibilitySchema(serializeCompatibilitySchema(expected));
+			const simpleTree = toSimpleTreeSchema(Schema, true);
+			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
+			const actual = deserializeCompatibilitySchema(serializeCompatibilitySchema(simpleTree));
 			assert.deepEqual(actual, expected);
 		});
 	});
@@ -371,8 +377,9 @@ describe("getSimpleSchema", () => {
 		});
 
 		it("Roundtrip serialization - Object schema", () => {
-			const expected = removeMetadataFromSimpleTreeSchema(toSimpleTreeSchema(Schema, true));
-			const actual = deserializeCompatibilitySchema(serializeCompatibilitySchema(expected));
+			const simpleTree = toSimpleTreeSchema(Schema, true);
+			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
+			const actual = deserializeCompatibilitySchema(serializeCompatibilitySchema(simpleTree));
 			assert.deepEqual(actual, expected);
 		});
 	});
@@ -430,8 +437,9 @@ describe("getSimpleSchema", () => {
 		});
 
 		it("Roundtrip serialization - Object schema including an identifier field", () => {
-			const expected = removeMetadataFromSimpleTreeSchema(toSimpleTreeSchema(Schema, true));
-			const actual = deserializeCompatibilitySchema(serializeCompatibilitySchema(expected));
+			const simpleTree = toSimpleTreeSchema(Schema, true);
+			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
+			const actual = deserializeCompatibilitySchema(serializeCompatibilitySchema(simpleTree));
 			assert.deepEqual(actual, expected);
 		});
 	});
@@ -492,8 +500,9 @@ describe("getSimpleSchema", () => {
 		});
 
 		it("Roundtrip serialization - Object schema including a union field", () => {
-			const expected = removeMetadataFromSimpleTreeSchema(toSimpleTreeSchema(Schema, true));
-			const actual = deserializeCompatibilitySchema(serializeCompatibilitySchema(expected));
+			const simpleTree = toSimpleTreeSchema(Schema, true);
+			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
+			const actual = deserializeCompatibilitySchema(serializeCompatibilitySchema(simpleTree));
 			assert.deepEqual(actual, expected);
 		});
 	});
@@ -552,8 +561,9 @@ describe("getSimpleSchema", () => {
 		});
 
 		it("Roundtrip serialization - Recursive object schema", () => {
-			const expected = removeMetadataFromSimpleTreeSchema(toSimpleTreeSchema(Schema, true));
-			const actual = deserializeCompatibilitySchema(serializeCompatibilitySchema(expected));
+			const simpleTree = toSimpleTreeSchema(Schema, true);
+			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
+			const actual = deserializeCompatibilitySchema(serializeCompatibilitySchema(simpleTree));
 			assert.deepEqual(actual, expected);
 		});
 	});
@@ -587,8 +597,9 @@ describe("getSimpleSchema", () => {
 		});
 
 		it("Roundtrip serialization - simpleAllowedTypes", () => {
-			const expected = removeMetadataFromSimpleTreeSchema(toSimpleTreeSchema(root, true));
-			const actual = deserializeCompatibilitySchema(serializeCompatibilitySchema(expected));
+			const simpleTree = toSimpleTreeSchema(root, true);
+			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
+			const actual = deserializeCompatibilitySchema(serializeCompatibilitySchema(simpleTree));
 			assert.deepEqual(actual, expected);
 		});
 	});

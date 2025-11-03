@@ -145,12 +145,13 @@ function copySimpleObjectSchema(schema: SimpleObjectNodeSchema): SimpleObjectNod
 }
 
 /**
- * Removes all metadata and persistedMetadata from a SimpleTreeSchema. This is useful for comparing deserialized view schemas with in-memory schemas.
+ * Creates a copy of a SimpleTreeSchema without metadata fields. This is useful for comparing deserialized view schemas with in-memory schemas.
  * metadata and persistedMetadata are not relevant for schema compatibility checks and are not serialized by the Simple Schema serializer (TODO: link).
- * @param schema - The SimpleTreeSchema to remove metadata from.
- * @returns A new SimpleTreeSchema without metadata and persistedMetadata.
+ * @param schema - The SimpleTreeSchema to remove fields from.
+ * @param fieldsToRemove - An object specifying which fields to remove.
+ * @returns A new SimpleTreeSchema without the specified fields.
  */
-export function removeMetadataFromSimpleTreeSchema(
+export function copySimpleTreeSchemaWithoutMetadata(
 	schema: SimpleTreeSchema,
 ): SimpleTreeSchema {
 	const definitions = new Map<string, SimpleNodeSchema>();
@@ -162,7 +163,11 @@ export function removeMetadataFromSimpleTreeSchema(
 			case NodeKind.Map:
 			case NodeKind.Record:
 			case NodeKind.Leaf: {
-				const outputNodeSchema = { ...nodeSchema, metadata: {}, persistedMetadata: undefined };
+				const outputNodeSchema = {
+					...nodeSchema,
+					metadata: {},
+					persistedMetadata: undefined,
+				};
 				definitions.set(identifier, outputNodeSchema);
 				break;
 			}

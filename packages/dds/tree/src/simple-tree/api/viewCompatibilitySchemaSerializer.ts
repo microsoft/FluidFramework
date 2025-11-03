@@ -6,6 +6,7 @@
 import {
 	isJsonObject,
 	objectToMap,
+	transformMapValues,
 	type JsonCompatible,
 	type JsonCompatibleObject,
 } from "../../util/index.js";
@@ -366,19 +367,4 @@ function mapToRecord<Key, Value>(map: ReadonlyMap<Key, Value>): Record<string, V
 	}
 
 	return resultObject;
-}
-
-/**
- * Transform the values of a Map using the provided transform function.
- * @param map - The map to transform.
- * @param transformValue - A method for transforming values in the map.
- * @returns A new map with the transformed values.
- */
-function transformMapValues<Key, InputValue, OutputValue>(
-	map: Map<Key, InputValue>,
-	transformValue: (value: InputValue, key: Key) => OutputValue,
-): Map<Key, OutputValue> {
-	return new Map(
-		Array.from(map.entries()).map(([key, value]) => [key, transformValue(value, key)]),
-	);
 }
