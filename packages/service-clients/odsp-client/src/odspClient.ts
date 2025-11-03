@@ -26,7 +26,6 @@ import {
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
 	isInternalFluidContainer,
-	type IFluidContainerInternal,
 } from "@fluidframework/fluid-static/internal";
 import {
 	OdspDocumentServiceFactory,
