@@ -32,7 +32,8 @@ import {
 	type InvertNodeManager,
 	type CrossFieldKeyRange,
 	CrossFieldTarget,
-	supportChangeHandlingBackCompat,
+	type RebaseVersion,
+	type RebaseRevisionMetadata,
 } from "../modular-schema/index.js";
 
 import type { OptionalChangeset, Replace } from "./optionalFieldChangeTypes.js";
@@ -98,13 +99,21 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		rebaseChild: NodeChangeRebaser,
 		_genId: IdAllocator,
 		nodeManager: RebaseNodeManager,
+		_metadata: RebaseRevisionMetadata,
+		rebaseVersion: RebaseVersion,
 	): OptionalChangeset => {
 		const rebased: Mutable<OptionalChangeset> = {};
 
 		const rebasedChild = rebaseChild(newChange.childChange, overChange.childChange);
 		const overDetach = getEffectiveDetachId(overChange);
 		if (overDetach !== undefined) {
-			nodeManager.rebaseOverDetach(overDetach, 1, newChange.nodeDetach, rebasedChild);
+			const isPin = areEqualChangeAtomIdOpts(
+				newChange.nodeDetach,
+				newChange.valueReplace?.src,
+			);
+
+			const nodeDetach = rebaseVersion < 2 && !isPin ? undefined : newChange.nodeDetach;
+			nodeManager.rebaseOverDetach(overDetach, 1, nodeDetach, rebasedChild);
 		}
 
 		const overAttach = overChange.valueReplace?.src;
@@ -148,12 +157,6 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			nodeManager.addDetach(rebasedDetachId, 1);
 		}
 
-		assert(
-			!supportChangeHandlingBackCompat ||
-				rebased.nodeDetach === undefined ||
-				areEqualChangeAtomIdOpts(rebased.nodeDetach, rebased.valueReplace?.src),
-			"When supporting older clients, nodeDetach should only be used for pins",
-		);
 		return rebased;
 	},
 
@@ -220,14 +223,6 @@ function compose(
 
 	const composedDetach = composeNodeDetaches(change1, change2, nodeManager);
 	const composedReplace = composeReplaces(change1, change2);
-	if (
-		supportChangeHandlingBackCompat &&
-		composedReplace !== undefined &&
-		composedDetach !== undefined
-	) {
-		(composedReplace as Mutable<Replace>).dst = composedDetach;
-	}
-
 	const composedChildChange = getComposedChildChanges(
 		change1,
 		change2,
@@ -245,11 +240,7 @@ function compose(
 		return makeChangeset(undefined, undefined, composedChildChange);
 	}
 
-	return makeChangeset(
-		composedReplace,
-		supportChangeHandlingBackCompat ? undefined : composedDetach,
-		composedChildChange,
-	);
+	return makeChangeset(composedReplace, composedDetach, composedChildChange);
 }
 
 function composeNodeDetaches(

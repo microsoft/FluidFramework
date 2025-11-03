@@ -80,7 +80,6 @@ import {
 	type FieldChangeHandler,
 	NodeAttachState,
 	type RebaseRevisionMetadata,
-	supportChangeHandlingBackCompat,
 } from "./fieldChangeHandler.js";
 import { type FieldKindWithEditor, withEditor } from "./fieldKindWithEditor.js";
 import { convertGenericChange, genericFieldKind } from "./genericFieldKind.js";
@@ -102,6 +101,7 @@ import {
 	type NodeId,
 	type NodeLocation,
 	rangeQueryChangeAtomIdMap,
+	type RebaseVersion,
 	type RootNodeTable,
 	setInChangeAtomIdMap,
 } from "./modularChangeTypes.js";
@@ -966,14 +966,22 @@ export class ModularChangeFamily
 		const rebasedNodeToParent: ChangeAtomIdBTree<NodeLocation> = brand(
 			change.nodeToParent.clone(),
 		);
+
+		const rebaseVersion = Math.max(
+			change.rebaseVersion,
+			over.change.rebaseVersion,
+		) as RebaseVersion;
+
 		const rebasedRootNodes = rebaseRoots(
 			change,
 			over.change,
 			affectedBaseFields,
 			nodesToRebase,
 			rebasedNodeToParent,
+			rebaseVersion,
 		);
 		const crossFieldTable: RebaseTable = {
+			rebaseVersion,
 			entries: newDetachedEntryMap(),
 			newChange: change,
 			baseChange: over.change,
@@ -1177,6 +1185,7 @@ export class ModularChangeFamily
 			genId,
 			new RebaseNodeManagerI(crossFieldTable, fieldId),
 			metadata,
+			crossFieldTable.rebaseVersion,
 		);
 
 		const rebasedFieldChange: FieldChange = {
@@ -1301,6 +1310,7 @@ export class ModularChangeFamily
 				genId,
 				new RebaseNodeManagerI(crossFieldTable, context.fieldId, allowInval),
 				rebaseMetadata,
+				crossFieldTable.rebaseVersion,
 			),
 		);
 	}
@@ -1402,6 +1412,7 @@ export class ModularChangeFamily
 					renamedRoot,
 					baseNodeId,
 					baseDetachLocation,
+					table.rebaseVersion,
 				);
 
 				// We need to make sure the rebased changeset includes the detach location,
@@ -1495,6 +1506,7 @@ export class ModularChangeFamily
 				genId,
 				manager,
 				revisionMetadata,
+				crossFieldTable.rebaseVersion,
 			);
 
 			const rebasedFieldChange: FieldChange = {
@@ -2580,6 +2592,8 @@ interface InvertContext {
 }
 
 interface RebaseTable {
+	readonly rebaseVersion: RebaseVersion;
+
 	// Entries are keyed on attach ID
 	readonly entries: CrossFieldMap<RebaseDetachedNodeEntry>;
 	readonly baseChange: ModularChangeset;
@@ -2634,6 +2648,10 @@ function newComposeTable(
 	pendingCompositions: PendingCompositions,
 ): ComposeTable {
 	return {
+		rebaseVersion: Math.max(
+			baseChange.rebaseVersion,
+			newChange.rebaseVersion,
+		) as RebaseVersion,
 		entries: newDetachedEntryMap(),
 		baseChange,
 		newChange,
@@ -2651,6 +2669,8 @@ function newComposeTable(
 }
 
 interface ComposeTable {
+	readonly rebaseVersion: RebaseVersion;
+
 	// Entries are keyed on detach ID
 	readonly entries: ChangeAtomIdRangeMap<DetachedNodeEntry>;
 	readonly baseChange: ModularChangeset;
@@ -2742,6 +2762,7 @@ class InvertNodeManagerI implements InvertNodeManager {
 					attachEntry.value,
 					nodeChange,
 					this.fieldId,
+					this.table.change.rebaseVersion,
 				);
 			}
 		}
@@ -2934,6 +2955,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 					baseAttachId,
 					nodeChange,
 					this.fieldId,
+					this.table.rebaseVersion,
 				);
 			}
 
@@ -3032,9 +3054,10 @@ function assignRootChange(
 	detachId: ChangeAtomId,
 	nodeId: NodeId,
 	detachLocation: FieldId | undefined,
+	rebaseVersion: RebaseVersion,
 ): void {
 	assert(
-		!supportChangeHandlingBackCompat || detachLocation !== undefined,
+		rebaseVersion >= 2 || detachLocation !== undefined,
 		"All root changes need a detach location to support compatibility with older client versions",
 	);
 
@@ -3287,6 +3310,7 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 					baseDetachId,
 					newChanges,
 					this.fieldId,
+					this.table.rebaseVersion,
 				);
 			}
 		}
@@ -3390,6 +3414,7 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 
 function makeModularChangeset(
 	props: {
+		rebaseVersion?: RebaseVersion;
 		fieldChanges?: FieldChangeMap;
 		nodeChanges?: ChangeAtomIdBTree<NodeChangeset>;
 		rootNodes?: RootNodeTable;
@@ -3408,6 +3433,7 @@ function makeModularChangeset(
 	},
 ): ModularChangeset {
 	const changeset: Mutable<ModularChangeset> = {
+		rebaseVersion: props.rebaseVersion ?? 1,
 		fieldChanges: props.fieldChanges ?? new Map(),
 		nodeChanges: props.nodeChanges ?? newTupleBTree(),
 		rootNodes: props.rootNodes ?? newRootTable(),
@@ -4078,6 +4104,7 @@ function rebaseRoots(
 	affectedBaseFields: TupleBTree<FieldIdKey, boolean>,
 	nodesToRebase: [newChangeset: NodeId, baseChangeset: NodeId][],
 	rebasedNodeToParent: ChangeAtomIdBTree<NodeLocation>,
+	rebaseVersion: RebaseVersion,
 ): RootNodeTable {
 	const rebasedRoots = newRootTable();
 	for (const renameEntry of change.rootNodes.oldToNewId.entries()) {
@@ -4108,6 +4135,7 @@ function rebaseRoots(
 				renamedDetachId,
 				nodeId,
 				change.rootNodes.detachLocations.getFirst(detachId, 1).value,
+				rebaseVersion,
 			);
 		}
 	}
@@ -4261,6 +4289,7 @@ function composeRootTables(
 					nodeId2,
 					change1.rootNodes.detachLocations.getFirst(detachId1, 1).value ??
 						change2.rootNodes.detachLocations.getFirst(detachId2, 1).value,
+					Math.max(change1.rebaseVersion, change2.rebaseVersion) as RebaseVersion,
 				);
 			}
 		}
@@ -4369,6 +4398,7 @@ function invertRootTable(change: ModularChangeset, isRollback: boolean): RootNod
 				renamedId,
 				nodeId,
 				change.rootNodes.detachLocations.getFirst(detachId, 1).value,
+				change.rebaseVersion,
 			);
 		}
 	}

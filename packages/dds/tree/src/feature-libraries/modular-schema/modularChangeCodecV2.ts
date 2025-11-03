@@ -80,7 +80,6 @@ import type {
 	EncodedRevisionInfo,
 } from "./modularChangeFormatV1.js";
 import {
-	supportChangeHandlingBackCompat,
 	type FieldChangeEncodingContext,
 	type FieldChangeHandler,
 } from "./fieldChangeHandler.js";
@@ -666,6 +665,7 @@ export function makeModularChangeCodecV2(
 			};
 
 			const decoded: Mutable<ModularChangeset> = {
+				rebaseVersion: 2,
 				fieldChanges: decodeFieldChangesFromJson(
 					encodedChange.fieldChanges,
 					undefined,

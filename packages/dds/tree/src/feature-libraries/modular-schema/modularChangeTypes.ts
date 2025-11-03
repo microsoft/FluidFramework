@@ -24,7 +24,11 @@ import type { TreeChunk } from "../chunked-forest/index.js";
 
 import type { CrossFieldTarget } from "./crossFieldQueries.js";
 
+export type RebaseVersion = 1 | 2;
+
 export interface ModularChangeset extends HasFieldChanges {
+	readonly rebaseVersion: RebaseVersion;
+
 	/**
 	 * The numerically highest `ChangesetLocalId` used in this changeset.
 	 * If undefined then this changeset contains no IDs.

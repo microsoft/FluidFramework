@@ -75,6 +75,7 @@ describe("sharedTreeChangeCodec", () => {
 		};
 		const changeA: SequenceField.Changeset = [];
 		const dummyModularChangeSet: ModularChangeset = {
+			rebaseVersion: 1,
 			rootNodes: newRootTable(),
 			nodeChanges: newTupleBTree(),
 			fieldChanges: new Map([

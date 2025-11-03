@@ -604,6 +604,7 @@ export function makeModularChangeCodecV1(
 			};
 
 			const decoded: Mutable<ModularChangeset> = {
+				rebaseVersion: 1,
 				fieldChanges: decodeFieldChangesFromJson(
 					encodedChange.changes,
 					undefined,

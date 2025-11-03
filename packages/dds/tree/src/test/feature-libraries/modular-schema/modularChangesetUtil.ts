@@ -41,6 +41,7 @@ import {
 	type FieldId,
 	type NodeChangeset,
 	type NodeLocation,
+	type RebaseVersion,
 	type RootNodeTable,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeTypes.js";
@@ -333,6 +334,7 @@ function areEqualFieldIds(a: FieldId, b: FieldId): boolean {
 
 export function empty(): ModularChangeset {
 	return {
+		rebaseVersion: 1,
 		fieldChanges: new Map(),
 		nodeChanges: newTupleBTree(),
 		rootNodes: newRootTable(),
@@ -514,6 +516,7 @@ function newField(
 }
 
 interface BuildArgs {
+	rebaseVersion?: RebaseVersion;
 	family: ModularChangeFamily;
 	maxId?: number;
 	revisions?: RevisionInfo[];
@@ -571,6 +574,7 @@ function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): Modular
 
 	assert(args.maxId === undefined || args.maxId >= idAllocator.getMaxId());
 	const result: Mutable<ModularChangeset> = {
+		rebaseVersion: args.rebaseVersion ?? 1,
 		nodeChanges,
 		fieldChanges,
 		rootNodes,

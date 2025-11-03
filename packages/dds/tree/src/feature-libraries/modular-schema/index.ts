@@ -43,7 +43,6 @@ export {
 	NodeAttachState,
 	type FieldChangeEncodingContext,
 	type NestedChangesIndices,
-	supportChangeHandlingBackCompat,
 } from "./fieldChangeHandler.js";
 export {
 	type CrossFieldKey,
@@ -56,6 +55,7 @@ export {
 	type NodeExistsConstraint,
 	type NodeId,
 	type ChangeAtomIdBTree,
+	type RebaseVersion,
 	getFromChangeAtomIdMap,
 	setInChangeAtomIdMap,
 	rangeQueryChangeAtomIdMap,

@@ -84,9 +84,6 @@ describe("Fuzz - Top-Level", () => {
 			},
 			reconnectProbability: 0.1,
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
-			skip: [
-				...[30], //  0x92a
-			],
 		};
 		createDDSFuzzSuite(optimizedForestTreeModel, options);
 	});
