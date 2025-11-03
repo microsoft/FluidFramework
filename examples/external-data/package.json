@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/app-integration-external-data",
-	"version": "2.71.0",
+	"version": "2.72.0",
 	"private": true,
 	"description": "Integrating an external data source with Fluid data.",
 	"homepage": "https://fluidframework.com",
@@ -19,8 +19,8 @@
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
-		"eslint": "eslint --format stylish src tests",
-		"eslint:fix": "eslint --format stylish src tests --fix",
+		"eslint": "eslint --quiet --format stylish src tests",
+		"eslint:fix": "eslint --quiet --format stylish src tests --fix",
 		"format": "npm run format:biome",
 		"format:biome": "biome check . --write",
 		"good-fences": "gf",

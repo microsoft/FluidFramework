@@ -235,14 +235,14 @@ function getOrCreateType(
 					// TODO: Remove when AI better
 					if (
 						Array.from(
-							field.allowedTypesIdentifiers,
+							new Set(field.simpleAllowedTypes.keys()),
 							(n) => definitionMap.get(n) ?? fail("Unknown definition"),
 						).some((n) => n.kind === NodeKind.Array)
 					) {
 						continue;
 					}
 					modifyFieldSet.add(key);
-					for (const type of field.allowedTypesIdentifiers) {
+					for (const type of field.simpleAllowedTypes.keys()) {
 						modifyTypeSet.add(type);
 					}
 				}
@@ -270,7 +270,7 @@ function getOrCreateType(
 			}
 			case NodeKind.Array: {
 				for (const [name] of Array.from(
-					nodeSchema.allowedTypesIdentifiers,
+					nodeSchema.simpleAllowedTypes.keys(),
 					(n): [string, SimpleNodeSchema] => [
 						n,
 						definitionMap.get(n) ?? fail("Unknown definition"),
@@ -287,7 +287,7 @@ function getOrCreateType(
 						insertSet,
 						modifyFieldSet,
 						modifyTypeSet,
-						nodeSchema.allowedTypesIdentifiers,
+						new Set(nodeSchema.simpleAllowedTypes.keys()),
 					),
 				);
 			}
@@ -332,7 +332,7 @@ function getOrCreateTypeForField(
 				insertSet,
 				modifyFieldSet,
 				modifyTypeSet,
-				fieldSchema.allowedTypesIdentifiers,
+				new Set(fieldSchema.simpleAllowedTypes.keys()),
 			);
 		}
 		case FieldKind.Optional: {
@@ -344,7 +344,7 @@ function getOrCreateTypeForField(
 					insertSet,
 					modifyFieldSet,
 					modifyTypeSet,
-					fieldSchema.allowedTypesIdentifiers,
+					new Set(fieldSchema.simpleAllowedTypes.keys()),
 				),
 			]);
 		}

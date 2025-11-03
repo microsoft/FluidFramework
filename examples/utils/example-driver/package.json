@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/example-driver",
-	"version": "2.71.0",
+	"version": "2.72.0",
 	"private": true,
 	"description": "Simplified drivers used by examples in the FluidFramework repo.",
 	"homepage": "https://fluidframework.com",
@@ -35,8 +35,8 @@
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\"",
-		"eslint": "eslint --format stylish src",
-		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
+		"eslint": "eslint --quiet --format stylish src",
+		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
 		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",

@@ -487,6 +487,10 @@ describe("allowedTypes", () => {
 		});
 	});
 
+	/**
+	 * Insertable types behave contravariantly to their schema, requiring special handling of unions.
+	 * See {@link Input} for documentation and details.
+	 */
 	describe("insertable", () => {
 		it("unsound union properties", () => {
 			const schemaFactory = new SchemaFactory("demo");
@@ -581,7 +585,7 @@ describe("allowedTypes", () => {
 			class Text2 extends sf.object("TextItem2", { text: sf.string }) {}
 
 			type Text1Or2 = InsertableTreeNodeFromAllowedTypes<(typeof Text1 | typeof Text2)[]>;
-			// If the schema is unknown, we cannot guarantee that the input matches either schema,
+			// If the exact schema is not known, we cannot guarantee that the input matches either schema,
 			// and only allow input valid in both, which is `never`:
 			allowUnused<requireAssignableTo<Text1Or2, never>>();
 
@@ -589,7 +593,7 @@ describe("allowedTypes", () => {
 			type Item = TreeNode & ObjectFromSchemaRecord<typeof itemFields>;
 			type ItemSchema = TreeNodeSchema<string, NodeKind.Object, Item>;
 
-			// ItemSchema is rather under-specified, so its unclear if it should allow insertion at all (its logically a union of many possible schema, though not expressed as a union directly).
+			// ItemSchema is rather under-specified, so it's unclear if it should allow insertion at all (it's logically a union of many possible schema, though not expressed as a union directly).
 			// Currently it allows insertion of `Item`:
 			type ItemInsertable = InsertableTreeNodeFromAllowedTypes<[ItemSchema]>;
 			allowUnused<requireTrue<areSafelyAssignable<ItemInsertable, Item>>>();
@@ -610,7 +614,7 @@ describe("allowedTypes", () => {
 			class Text2 extends sf.object("TextItem2", { text: sf.string }) {}
 
 			type Text1Or2 = InsertableTypedNode<typeof Text1 | typeof Text2>;
-			// If the schema is unknown, we cannot guarantee that the input matches either schema,
+			// If the exact schema is not known, we cannot guarantee that the input matches either schema,
 			// and only allow input valid in both, which is `never`:
 			allowUnused<requireAssignableTo<Text1Or2, never>>();
 
@@ -618,7 +622,7 @@ describe("allowedTypes", () => {
 			type Item = TreeNode & ObjectFromSchemaRecord<typeof itemFields>;
 			type ItemSchema = TreeNodeSchema<string, NodeKind.Object, Item>;
 
-			// ItemSchema is rather under-specified, so its unclear if it should allow insertion at all (its logically a union of many possible schema, though not expressed as a union directly).
+			// ItemSchema is rather under-specified, so it's unclear if it should allow insertion at all (it's logically a union of many possible schema, though not expressed as a union directly).
 			// Currently it allows insertion of `Item`:
 			type ItemInsertable = InsertableTypedNode<ItemSchema>;
 			allowUnused<requireTrue<areSafelyAssignable<ItemInsertable, Item>>>();
@@ -670,7 +674,7 @@ describe("allowedTypes", () => {
 			class Text2 extends sf.object("TextItem2", { text: sf.string }) {}
 
 			type Text1Or2 = SchemaUnionToIntersection<typeof Text1 | typeof Text2>;
-			// If the schema is unknown, we cannot guarantee that the input matches either schema,
+			// If the exact schema is not known, we cannot guarantee that the input matches either schema,
 			// and only allow input valid in both, which is `never`:
 			allowUnused<requireAssignableTo<Text1Or2, never>>();
 
@@ -700,21 +704,26 @@ describe("allowedTypes", () => {
 					TreeNodeSchemaCore<string, NodeKind, boolean>
 				>;
 
+				// These work as desired
 				allowUnused<requireTrue<areSafelyAssignable<Text1Case, typeof Text1>>>();
 				allowUnused<requireAssignableTo<TextUnionCase, never>>();
 
+				// These are under-specified schema which pass through UnionToIntersection unchanged: likely undesired behavior but hard to fix cleanly.
 				allowUnused<requireTrue<areSafelyAssignable<ItemSchemaClassCase, ItemSchemaClass>>>();
-				// @ts-expect-error This case is a messy type
-				allowUnused<requireTrue<areSafelyAssignable<ItemSchemaNonClassCase, ItemSchema>>>();
-				// @ts-expect-error This case is a messy type
+				allowUnused<
+					requireTrue<areSafelyAssignable<ItemSchemaNonClassCase, ItemSchemaNonClass>>
+				>();
+
+				// @ts-expect-error This case is a messy type: that's not the input or never: clearly undesired behavior.
 				allowUnused<requireTrue<areSafelyAssignable<ItemSchemaCase, ItemSchema>>>();
-				// @ts-expect-error This case is a messy type
+				// @ts-expect-error This case is a messy type: should be never: clearly undesired behavior.
 				allowUnused<requireTrue<areSafelyAssignable<ItemSchemaOrTextCase, never>>>();
-				// @ts-expect-error This case is a messy type
+				// @ts-expect-error This case is a messy type: should be never: clearly undesired behavior.
 				allowUnused<requireTrue<areSafelyAssignable<ItemSchemaClassOrTextCase, never>>>();
-				// @ts-expect-error This case is a messy type
+				// @ts-expect-error This case is a messy type: should be never: clearly undesired behavior.
 				allowUnused<requireAssignableTo<ItemSchemaNonClassOrTextCase, never>>();
 
+				// Generic cases: likely all of these should give never when used for input type generation as they are under-specified, but none do:
 				allowUnused<
 					requireAssignableTo<TreeNodeSchemaCase, TreeNodeSchemaNonClass & TreeNodeSchemaClass>
 				>();
@@ -763,12 +772,12 @@ describe("allowedTypes", () => {
 				// It is unclear if this should be the desired behavior or not. Might be too restrictive? It likely should be the same as the above two.
 				allowUnused<requireAssignableTo<ItemSchemaCase, never>>();
 
-				// These being never at good.
+				// These being never is good.
 				allowUnused<requireAssignableTo<ItemSchemaOrTextCase, never>>();
 				allowUnused<requireAssignableTo<ItemSchemaClassOrTextCase, never>>();
 				allowUnused<requireAssignableTo<ItemSchemaNonClassOrTextCase, never>>();
 
-				// These three should likely behave the same: they currently do not.
+				// These three should likely all behave the same: they currently do not.
 				allowUnused<requireAssignableTo<TreeNodeSchemaCase, never>>();
 				allowUnused<
 					requireTrue<areSafelyAssignable<TreeNodeSchemaNonClassCase, TreeNodeSchemaNonClass>>
@@ -776,7 +785,7 @@ describe("allowedTypes", () => {
 				allowUnused<requireAssignableTo<TreeNodeSchemaCoreCase, never>>();
 			}
 
-			// Use of SchemaToPair included to easy debugging.
+			// Use of SchemaToPair included to ease debugging.
 			{
 				type Text1Case = SchemaToPair<typeof Text1>;
 				type TextUnionCase = SchemaToPair<typeof Text1 | typeof Text2>;
@@ -794,6 +803,42 @@ describe("allowedTypes", () => {
 					TreeNodeSchemaCore<string, NodeKind, boolean>
 				>;
 			}
+		});
+	});
+
+	// If derived data is computed based on an allowed type array, then modifications to that array would cause the derived data to become invalid.
+	// As there is no invalidation mechanism, this would lead to incorrect behavior, and is prevented by freezing the arrays when the derived data is computed.
+	// These are glass box tests: they are testing that the cases where the code currently derives data from the arrays results in the arrays being frozen.
+	// Future changes could be made to delay both the freezing and the computation of the derived data:
+	// if such changes are made these tests will need to be updated.
+	// If done, these tests may need updates to instead test that modifying the arrays does not expose incorrect derived data.
+	describe("freezes inputs producing derived data", () => {
+		it("AnnotatedAllowedTypesInternal.create", () => {
+			const input = [{ type: stringSchema, metadata: {} }];
+			const result = AnnotatedAllowedTypesInternal.create(input);
+			assert(Object.isFrozen(input));
+			assert.throws(() => {
+				// @ts-expect-error Array should be readonly, so this error is good.
+				result.push(stringSchema);
+			}, "TypeError: result.push is not a function");
+		});
+
+		it("normalizeAllowedTypes", () => {
+			const input = [stringSchema];
+			const _ = normalizeAllowedTypes(input);
+			assert(Object.isFrozen(input));
+		});
+
+		it("AnnotatedAllowedTypesInternal.createUnannotated", () => {
+			const input = [stringSchema];
+			const _ = AnnotatedAllowedTypesInternal.createUnannotated(input);
+			assert(Object.isFrozen(input));
+		});
+
+		it("AnnotatedAllowedTypesInternal.createMixed", () => {
+			const input = [stringSchema];
+			const _ = AnnotatedAllowedTypesInternal.createMixed(input);
+			assert(Object.isFrozen(input));
 		});
 	});
 });

@@ -58,6 +58,7 @@ interface ChildProcess extends AnyChildProcess {
  * @returns A collection of child processes and a promise that rejects on the first child error.
  */
 export async function forkChildProcesses(
+	testLabel: string,
 	numProcesses: number,
 	cleanUpAccumulator: (() => void)[],
 ): Promise<{
@@ -72,6 +73,7 @@ export async function forkChildProcesses(
 	const childErrorPromises: Promise<never>[] = [];
 	for (let i = 0; i < numProcesses; i++) {
 		const child = fork("./lib/test/multiprocess/childClient.tool.js", [
+			testLabel,
 			`child ${i}` /* identifier passed to child process */,
 			childLoggingVerbosity /* console logging verbosity */,
 		]);
@@ -152,6 +154,7 @@ export async function executeDebugReports(
 function composeConnectMessage(
 	id: string | number,
 	scopes: ScopeType[] = [ScopeType.DocRead],
+	connectTimeoutMs: number,
 ): ConnectCommand {
 	return {
 		command: "connect",
@@ -161,6 +164,7 @@ function composeConnectMessage(
 		},
 		scopes,
 		createScopes: [ScopeType.DocWrite, ScopeType.DocRead],
+		connectTimeoutMs,
 	};
 }
 
@@ -255,6 +259,7 @@ export async function connectChildProcesses(
 		const connectContainerCreator = composeConnectMessage(
 			0,
 			writeClients > 0 ? [ScopeType.DocWrite, ScopeType.DocRead] : [ScopeType.DocRead],
+			/* connectTimeoutMs */ readyTimeoutMs,
 		);
 		firstChild.send(connectContainerCreator);
 	}
@@ -264,7 +269,10 @@ export async function connectChildProcesses(
 			durationMs: readyTimeoutMs,
 			errorMsg: "did not receive 'connected' from child process",
 		},
-	);
+	).catch(async (error) => {
+		await executeDebugReports([firstChild]);
+		throw error;
+	});
 
 	const attendeeIdPromises: Promise<AttendeeId>[] = [];
 	for (const [index, child] of childProcesses.entries()) {
@@ -275,6 +283,7 @@ export async function connectChildProcesses(
 		const message = composeConnectMessage(
 			index,
 			index < writeClients ? [ScopeType.DocWrite, ScopeType.DocRead] : [ScopeType.DocRead],
+			/* connectTimeoutMs */ readyTimeoutMs,
 		);
 		message.containerId = containerId;
 		attendeeIdPromises.push(
@@ -348,6 +357,10 @@ export async function connectAndListenForAttendees(
 		readyTimeoutMs: childConnectTimeoutMs,
 	});
 
+	// These actions are not awaited. They are here to provide additional logging.
+	// It is up to the caller to await attendeeIdPromises if desired. This can mean
+	// An "error" message is output, but the caller does not care about attendee
+	// ids and proceeds.
 	Promise.all(connectResult.attendeeIdPromises)
 		.then(() => console.log("All attendees connected."))
 		.catch((error) => {

@@ -8,8 +8,11 @@ import { strict as assert } from "node:assert";
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
 import {
+	type ITreeCursorSynchronous,
 	type JsonableTree,
 	ObjectNodeStoredSchema,
+	type RevisionTag,
+	RevisionTagCodec,
 	type TreeNodeSchemaIdentifier,
 	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
@@ -18,13 +21,22 @@ import {
 import {
 	FieldKinds,
 	type FullSchemaPolicy,
+	combineChunks,
+	createNodeIdentifierManager,
 	cursorForJsonableTreeField,
+	defaultIncrementalEncodingPolicy,
 	defaultSchemaPolicy,
 	jsonableTreeFromFieldCursor,
 } from "../feature-libraries/index.js";
 import {
+	buildConfiguredForest,
+	createTreeCheckout,
+	defaultSharedTreeOptions,
 	ForestTypeExpensiveDebug,
-	type SchematizingSimpleTreeView,
+	initialize,
+	initializerFromChunk,
+	SchematizingSimpleTreeView,
+	type ForestOptions,
 } from "../shared-tree/index.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
@@ -45,17 +57,17 @@ import {
 	toInitialSchema,
 	restrictiveStoredSchemaGenerationOptions,
 	permissiveStoredSchemaGenerationOptions,
+	type TreeViewConfiguration,
 } from "../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { fieldJsonCursor } from "./json/jsonCursor.js";
-import { brand } from "../util/index.js";
+import { brand, Breakable } from "../util/index.js";
 import type { Partial } from "@sinclair/typebox";
 // eslint-disable-next-line import/no-internal-modules
 import { isLazy } from "../simple-tree/core/index.js";
 import { fieldCursorFromInsertable, testIdCompressor } from "./utils.js";
 import { FormatValidatorBasic } from "../external-utilities/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { independentInitializedViewInternal } from "../shared-tree/independentView.js";
+import type { ICodecOptions } from "../codec/index.js";
 
 interface TestSimpleTree {
 	readonly name: string;
@@ -617,6 +629,51 @@ export function testDocumentIndependentView(
 			idCompressor,
 		);
 	return view as TreeView<ImplicitFieldSchema> as SchematizingSimpleTreeView<UnsafeUnknownSchema>;
+}
+
+/**
+ * {@link independentInitializedView} but using internal types instead of persisted data formats.
+ */
+function independentInitializedViewInternal<const TSchema extends ImplicitFieldSchema>(
+	config: TreeViewConfiguration<TSchema>,
+	options: ForestOptions & ICodecOptions,
+	schema: TreeStoredSchema,
+	rootFieldCursor: ITreeCursorSynchronous,
+	idCompressor: IIdCompressor,
+): SchematizingSimpleTreeView<TSchema> {
+	const breaker = new Breakable("independentInitializedView");
+	const revisionTagCodec = new RevisionTagCodec(idCompressor);
+	const mintRevisionTag = (): RevisionTag => idCompressor.generateCompressedId();
+
+	// To ensure the forest is in schema when constructed, start it with an empty schema and set the schema repository content later.
+	const schemaRepository = new TreeStoredSchemaRepository();
+
+	const forest = buildConfiguredForest(
+		breaker,
+		options.forest ?? defaultSharedTreeOptions.forest,
+		schemaRepository,
+		idCompressor,
+		defaultIncrementalEncodingPolicy,
+	);
+
+	const checkout = createTreeCheckout(idCompressor, mintRevisionTag, revisionTagCodec, {
+		forest,
+		schema: schemaRepository,
+		breaker,
+	});
+
+	initialize(
+		checkout,
+		schema,
+		initializerFromChunk(checkout, () =>
+			combineChunks(checkout.forest.chunkField(rootFieldCursor)),
+		),
+	);
+	return new SchematizingSimpleTreeView<TSchema>(
+		checkout,
+		config,
+		createNodeIdentifierManager(idCompressor),
+	);
 }
 
 // TODO: integrate data sources for wide and deep trees from ops size testing and large data generators for cursor performance testing.

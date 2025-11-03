@@ -73,6 +73,8 @@ export {
 	type ObservationResults,
 	type TreeIdentifierUtils,
 	independentView,
+	createIndependentTreeBeta,
+	createIndependentTreeAlpha,
 	ForestTypeOptimized,
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
@@ -280,6 +282,7 @@ export {
 	type TreeParsingOptions,
 	type SchemaFactory_base,
 	type NumberKeys,
+	type SimpleAllowedTypeAttributes,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
