@@ -10,11 +10,15 @@ import {
 	createIdCompressor,
 } from "@fluidframework/id-compressor/internal";
 
-import type { ICodecOptions } from "../codec/index.js";
+import {
+	FluidClientVersion,
+	type CodecWriteOptions,
+	type ICodecOptions,
+} from "../codec/index.js";
 import {
 	type RevisionTag,
 	RevisionTagCodec,
-	SchemaVersion,
+	SchemaFormatVersion,
 	TreeStoredSchemaRepository,
 } from "../core/index.js";
 import {
@@ -44,6 +48,7 @@ import {
 	type JsonCompatible,
 	Breakable,
 	oneFromIterable,
+	brand,
 } from "../util/index.js";
 import {
 	buildConfiguredForest,
@@ -195,8 +200,14 @@ export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSc
 	});
 
 	if (options?.content !== undefined) {
-		const schemaCodec = makeSchemaCodec(options, SchemaVersion.v1);
-		const fieldBatchCodec = makeFieldBatchCodec(options, 1);
+		// Any version can be passed down to `makeSchemaCodec` and `makeFieldBatchCodec` here.
+		// We only use the decode part, which always dispatches to the correct codec based on the version in the data, not `minVersionForCollab`.
+		const writeOptions: CodecWriteOptions = {
+			...options,
+			minVersionForCollab: FluidClientVersion.v2_0,
+		};
+		const schemaCodec = makeSchemaCodec(writeOptions, brand(SchemaFormatVersion.v1));
+		const fieldBatchCodec = makeFieldBatchCodec(writeOptions);
 		const newSchema = schemaCodec.decode(options.content.schema as Format);
 
 		const context: FieldBatchEncodingContext = {
