@@ -21,11 +21,7 @@ import type {
 } from "@fluidframework/core-interfaces";
 import type { IClient } from "@fluidframework/driver-definitions";
 import type { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
-import type {
-	ContainerAttachProps,
-	ContainerSchema,
-	IFluidContainer,
-} from "@fluidframework/fluid-static";
+import type { ContainerAttachProps, ContainerSchema } from "@fluidframework/fluid-static";
 import {
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
@@ -47,6 +43,7 @@ import type {
 	OdspConnectionConfig,
 	OdspContainerAttachProps,
 	OdspContainerServices as IOdspContainerServices,
+	IOdspFluidContainer,
 } from "./interfaces.js";
 import { OdspContainerServices } from "./odspContainerServices.js";
 import type { IOdspTokenProvider } from "./token.js";
@@ -117,7 +114,7 @@ export class OdspClient {
 	public async createContainer<T extends ContainerSchema>(
 		containerSchema: T,
 	): Promise<{
-		container: IFluidContainer<T>;
+		container: IOdspFluidContainer<T>;
 		services: IOdspContainerServices;
 	}> {
 		const loaderProps = this.getLoaderProps(containerSchema);
@@ -130,11 +127,14 @@ export class OdspClient {
 			},
 		});
 
-		const fluidContainer = await this.createFluidContainer(container, this.connectionConfig);
+		const fluidContainer = await this.createFluidContainer<T>(
+			container,
+			this.connectionConfig,
+		);
 
 		const services = await this.getContainerServices(container);
 
-		return { container: fluidContainer as IFluidContainer<T>, services };
+		return { container: fluidContainer, services };
 	}
 
 	/**
@@ -168,7 +168,7 @@ export class OdspClient {
 		id: string,
 		containerSchema: T,
 	): Promise<{
-		container: IFluidContainer<T>;
+		container: IOdspFluidContainer<T>;
 		services: IOdspContainerServices;
 	}> {
 		const loaderProps = this.getLoaderProps(containerSchema);
@@ -180,11 +180,11 @@ export class OdspClient {
 		});
 		const container = await loadExistingContainer({ ...loaderProps, request: { url } });
 
-		const fluidContainer = await createFluidContainer({
+		const fluidContainer = await createFluidContainer<T>({
 			container,
 		});
 		const services = await this.getContainerServices(container);
-		return { container: fluidContainer as IFluidContainer<T>, services };
+		return { container: fluidContainer, services };
 	}
 
 	private getLoaderProps(schema: ContainerSchema): ILoaderProps {
@@ -220,10 +220,10 @@ export class OdspClient {
 		};
 	}
 
-	private async createFluidContainer(
+	private async createFluidContainer<T extends ContainerSchema>(
 		container: IContainer,
 		connection: OdspConnectionConfig,
-	): Promise<IFluidContainer> {
+	): Promise<IOdspFluidContainer<T>> {
 		/**
 		 * See {@link FluidContainer.attach}
 		 */
@@ -254,7 +254,7 @@ export class OdspClient {
 			 */
 			return resolvedUrl.itemId;
 		};
-		const fluidContainer = await createFluidContainer({ container });
+		const fluidContainer = await createFluidContainer<T>({ container });
 		fluidContainer.attach = attach;
 		return fluidContainer;
 	}

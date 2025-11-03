@@ -47,6 +47,7 @@ export {
 	gcTreeKey,
 } from "./garbageCollectionDefinitions.js";
 export type {
+	FluidDataStoreMessage,
 	IAttachMessage,
 	IEnvelope,
 	IInboundSignalMessage,
@@ -86,8 +87,8 @@ export type { MinimumVersionForCollab } from "./compatibilityDefinitions.js";
 export {
 	type ContainerRuntimeBaseAlpha,
 	type StageControlsAlpha,
-	type CommitStagedChangesOptionsExperimental,
-	type IContainerRuntimeBaseExperimental,
-	type StageControlsExperimental,
+	type CommitStagedChangesOptionsInternal,
+	type IContainerRuntimeBaseInternal,
+	type StageControlsInternal,
 	asLegacyAlpha,
 } from "./stagingMode.js";

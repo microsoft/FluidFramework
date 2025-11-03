@@ -6,6 +6,7 @@
 export {
 	typeNameSymbol,
 	typeSchemaSymbol,
+	contentSchemaSymbol,
 	type WithType,
 	type TreeNodeSchema,
 	type AnnotatedAllowedType,
@@ -135,7 +136,9 @@ export {
 	type UnannotateAllowedTypesListUnsafe,
 	type AnnotateAllowedTypesListUnsafe,
 	type TreeViewAlpha,
+	type TreeViewBeta,
 	type TreeBranch,
+	type TreeBranchAlpha,
 	type TreeBranchEvents,
 	getPropertyKeyFromStoredKey,
 	getStoredKey,
@@ -180,6 +183,8 @@ export {
 	type SchemaStaticsAlpha,
 	KeyEncodingOptions,
 	type TreeParsingOptions,
+	incrementalSummaryHint,
+	getShouldIncrementallySummarizeAllowedTypes,
 	type SchemaFactory_base,
 } from "./api/index.js";
 export type {
@@ -193,6 +198,7 @@ export type {
 	SimpleNodeSchemaBaseAlpha,
 	SimpleObjectFieldSchema,
 	SimpleRecordNodeSchema,
+	SimpleAllowedTypeAttributes,
 } from "./simpleSchema.js";
 export {
 	type ImplicitFieldSchema,

@@ -91,7 +91,7 @@ export interface SimpleArrayNodeSchema<out TCustomMetadata = unknown>
 	 * @remarks Refers to the types by identifier.
 	 * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
 	 */
-	readonly allowedTypesIdentifiers: ReadonlySet<string>;
+	readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypeAttributes>;
 }
 
 /**
@@ -108,7 +108,7 @@ export interface SimpleMapNodeSchema<out TCustomMetadata = unknown>
 	 * @remarks Refers to the types by identifier.
 	 * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
 	 */
-	readonly allowedTypesIdentifiers: ReadonlySet<string>;
+	readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypeAttributes>;
 }
 
 /**
@@ -125,7 +125,7 @@ export interface SimpleRecordNodeSchema<out TCustomMetadata = unknown>
 	 * @remarks Refers to the types by identifier.
 	 * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
 	 */
-	readonly allowedTypesIdentifiers: ReadonlySet<string>;
+	readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypeAttributes>;
 }
 
 /**
@@ -163,6 +163,23 @@ export type SimpleNodeSchema =
 	| SimpleRecordNodeSchema;
 
 /**
+ * Information about allowed types.
+ *
+ * @alpha
+ * @sealed
+ */
+export interface SimpleAllowedTypeAttributes {
+	/**
+	 * True if this schema is included as a {@link SchemaStaticsAlpha.staged | staged} schema upgrade,
+	 * allowing the view schema be compatible with stored schema with (post upgrade) or without it (pre-upgrade).
+	 * New documents and schema upgrades will omit any staged schema.
+	 *
+	 * Undefined if derived from a stored schema.
+	 */
+	readonly isStaged: boolean | undefined;
+}
+
+/**
  * A simple, shallow representation of a schema for a field.
  *
  * @remarks This definition is incomplete, and references child types by identifiers.
@@ -179,12 +196,12 @@ export interface SimpleFieldSchema {
 	readonly kind: FieldKind;
 
 	/**
-	 * The types allowed under the field.
+	 * Information about the allowed types under this field.
 	 *
 	 * @remarks Refers to the types by identifier.
 	 * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
 	 */
-	readonly allowedTypesIdentifiers: ReadonlySet<string>;
+	readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypeAttributes>;
 
 	/**
 	 * {@inheritDoc FieldSchemaMetadata}

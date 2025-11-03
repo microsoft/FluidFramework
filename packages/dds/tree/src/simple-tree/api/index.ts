@@ -19,7 +19,9 @@ export type {
 	TreeViewEvents,
 	SchemaCompatibilityStatus,
 	TreeViewAlpha,
+	TreeViewBeta,
 	TreeBranch,
+	TreeBranchAlpha,
 	TreeBranchEvents,
 	ITreeAlpha,
 } from "./tree.js";
@@ -161,3 +163,7 @@ export {
 export { generateSchemaFromSimpleSchema } from "./schemaFromSimple.js";
 export { toSimpleTreeSchema } from "./viewSchemaToSimpleSchema.js";
 export type { TreeChangeEvents } from "./treeChangeEvents.js";
+export {
+	getShouldIncrementallySummarizeAllowedTypes,
+	incrementalSummaryHint,
+} from "./incrementalAllowedTypes.js";

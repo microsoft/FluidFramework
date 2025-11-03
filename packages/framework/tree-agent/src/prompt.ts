@@ -19,6 +19,7 @@ import {
 	communize,
 	unqualifySchema,
 	type SchemaDetails,
+	findSchemas,
 } from "./utils.js";
 
 /**
@@ -33,7 +34,6 @@ export function getPrompt<TRoot extends ImplicitFieldSchema>(args: {
 	const { field, schema } = subtree;
 	const arrayInterfaceName = "TreeArray";
 	const mapInterfaceName = "TreeMap";
-	const simpleSchema = getSimpleSchema(schema);
 	// Inspect the schema to determine what kinds of nodes are possible - this will affect how much information we need to include in the prompt.
 	const rootTypes = [...normalizeFieldSchema(schema).allowedTypeSet];
 	const rootTypeUnion = `${rootTypes.map((t) => getFriendlyName(t)).join(" | ")}`;
@@ -41,15 +41,15 @@ export function getPrompt<TRoot extends ImplicitFieldSchema>(args: {
 	let hasArrays = false;
 	let hasMaps = false;
 	let exampleObjectName: string | undefined;
-	for (const [definition, nodeSchema] of simpleSchema.definitions) {
-		if (nodeSchema.kind !== NodeKind.Leaf) {
+	for (const s of findSchemas(schema)) {
+		if (s.kind !== NodeKind.Leaf) {
 			nodeTypeUnion =
 				nodeTypeUnion === undefined
-					? unqualifySchema(definition)
-					: `${nodeTypeUnion} | ${unqualifySchema(definition)}`;
+					? getFriendlyName(s)
+					: `${nodeTypeUnion} | ${getFriendlyName(s)}`;
 		}
 
-		switch (nodeSchema.kind) {
+		switch (s.kind) {
 			case NodeKind.Array: {
 				hasArrays = true;
 				break;
@@ -59,14 +59,14 @@ export function getPrompt<TRoot extends ImplicitFieldSchema>(args: {
 				break;
 			}
 			case NodeKind.Object: {
-				exampleObjectName ??= unqualifySchema(definition);
+				exampleObjectName ??= getFriendlyName(s);
 				break;
 			}
 			// No default
 		}
 	}
 
-	const { domainTypes } = generateEditTypesForPrompt(schema, simpleSchema);
+	const { domainTypes } = generateEditTypesForPrompt(schema, getSimpleSchema(schema));
 	for (const [key, value] of Object.entries(domainTypes)) {
 		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 		delete domainTypes[key];
@@ -79,8 +79,15 @@ export function getPrompt<TRoot extends ImplicitFieldSchema>(args: {
 	const stringified = stringifyTree(field);
 	const details: SchemaDetails = { hasHelperMethods: false };
 	const typescriptSchemaTypes = getZodSchemaAsTypeScript(domainTypes, details);
+	const exampleTypeName =
+		nodeTypeUnion === undefined
+			? undefined
+			: nodeTypeUnion
+					.split("|")
+					.map((part) => part.trim())
+					.find((part) => part.length > 0);
 
-	const create =
+	const createDocs =
 		exampleObjectName === undefined
 			? ""
 			: `\n	/**
@@ -102,7 +109,7 @@ export function getPrompt<TRoot extends ImplicitFieldSchema>(args: {
 	create: Record<string, <T extends TreeData>(input: T) => T>;\n`;
 
 	const isDocs =
-		exampleObjectName === undefined
+		exampleTypeName === undefined
 			? ""
 			: `\n	/**
 	 * A collection of type-guard functions for data in the tree.
@@ -111,9 +118,31 @@ export function getPrompt<TRoot extends ImplicitFieldSchema>(args: {
 	 * Call the corresponding function to check if a node is of that specific type.
 	 * This is useful when working with nodes that could be one of multiple types.
 	 *
-	 * ${`Example: Check if a node is a ${exampleObjectName} with \`if (context.is.${exampleObjectName}(node)) {}\``}
+	 * ${`Example: Check if a node is a ${exampleTypeName} with \`if (context.is.${exampleTypeName}(node)) {}\``}
 	 */
-	is: Record<string, <T extends TreeData>(input: unknown) => input is T>;\n`;
+	is: Record<string, <T extends TreeData>(data: unknown) => data is T>;
+	
+	/**
+	 * Checks if the provided data is an array.
+	 * @remarks
+	 * DO NOT use \`Array.isArray\` to check if tree data is an array - use this function instead.
+	 * 
+	 * This function will also work for native JavaScript arrays.
+	 *
+	 * ${`Example: \`if (context.isArray(node)) {}\``}
+	 */
+	isArray(data: any): boolean;
+	
+	/**
+	 * Checks if the provided data is a map.
+	 * @remarks
+	 * DO NOT use \`instanceof Map\` to check if tree data is a map - use this function instead.
+	 * 
+	 * This function will also work for native JavaScript Map instances.
+	 *
+	 * ${`Example: \`if (context.isMap(node)) {}\``}
+	 */
+	isMap(data: any): boolean;\n`;
 
 	const context = `\`\`\`typescript
 	${nodeTypeUnion === undefined ? "" : `type TreeData = ${nodeTypeUnion};\n\n`}	/**
@@ -130,7 +159,7 @@ export function getPrompt<TRoot extends ImplicitFieldSchema>(args: {
 	 * Example: Read the current root with \`const currentRoot = context.root;\`
 	 *${rootTypes.length > 0 ? ` Example: Replace the entire root with \`context.root = context.create.${getFriendlyName(rootTypes[0] ?? oob())}({ });\`\n	 *` : ""}/
 	root: ReadableField<TSchema>;
-	${create}
+	${createDocs}
 	${isDocs}
 	/**
 	 * Returns the parent object/array/map of the given object/array/map, if there is one.
