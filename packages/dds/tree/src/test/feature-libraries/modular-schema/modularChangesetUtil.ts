@@ -22,11 +22,12 @@ import {
 	chunkFieldSingle,
 	cursorForJsonableTreeField,
 	defaultChunkPolicy,
-	fieldKinds,
+	fieldKinds as defaultFieldKinds,
 	jsonableTreeFromFieldCursor,
 	type ComposeNodeManager,
 	type FieldChangeHandler,
 	type FieldChangeMap,
+	type FieldKindWithEditor,
 	type ModularChangeFamily,
 	type ModularChangeset,
 	type NodeId,
@@ -132,11 +133,17 @@ export function assertModularChangesetsEqualIgnoreRebaseVersion(
 	);
 }
 
-export function normalizeChangeset(change: ModularChangeset): ModularChangeset {
-	return normalizeRangeMaps(normalizeNodeIds(removeAliases(change)));
+export function normalizeChangeset(
+	change: ModularChangeset,
+	fieldKinds?: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+): ModularChangeset {
+	return normalizeRangeMaps(normalizeNodeIds(removeAliases(change), fieldKinds));
 }
 
-function normalizeNodeIds(change: ModularChangeset): ModularChangeset {
+function normalizeNodeIds(
+	change: ModularChangeset,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = defaultFieldKinds,
+): ModularChangeset {
 	const idAllocator = idAllocatorFromMaxId();
 
 	const idRemappings: ChangeAtomIdMap<NodeId> = new Map();
