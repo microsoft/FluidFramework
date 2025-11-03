@@ -34,7 +34,8 @@ function freezeObjectMethods<T>(object: T, methods: (keyof T)[]): void {
  * not prevent it from being mutated.
  *
  * @param object - The object to freeze.
- * @param filter - A function which returns true for objects which should be frozen and false for objects which should be ignored.
+ * @param filter - A function which returns true for objects which should be frozen and false for objects
+ * which should be ignored.
  * deepFreeze will not recurse into ignored objects.
  * If undefined, all reachable objects will be frozen.
  *

@@ -12,7 +12,8 @@ import type { RequestParser } from "@fluidframework/runtime-utils/internal";
  * if it does not apply. These handlers are called in series, so there may be other handlers before or after.
  * A handler should only return error if the request is for a route the handler owns, and there is a problem with
  * the route, or fulling the specific request.
- * @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+ * @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0".
+ * Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
  *
  * @legacy
  * @beta

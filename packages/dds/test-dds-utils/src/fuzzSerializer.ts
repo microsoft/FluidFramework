@@ -68,7 +68,8 @@ export class DDSFuzzSerializer extends FluidSerializer {
 	 * Encodes the given IFluidHandle into a JSON-serializable form,
 	 * also binding it to another node to ensure it attaches at the right time.
 	 * @param handle - The IFluidHandle to serialize.
-	 * @param bind - The binding context for the handle (the handle will become attached whenever this context is attached).
+	 * @param bind - The binding context for the handle (the handle will become attached whenever
+	 * this context is attached).
 	 * @returns The serialized handle.
 	 */
 	protected bindAndEncodeHandle(

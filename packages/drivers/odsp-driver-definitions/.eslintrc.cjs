@@ -9,4 +9,12 @@ module.exports = {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
 	rules: {},
+	overrides: [
+		{
+			files: ["src/test/types/*"],
+			rules: {
+				"max-len": "off",
+			},
+		},
+	],
 };

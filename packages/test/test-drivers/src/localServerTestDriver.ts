@@ -34,7 +34,8 @@ export class LocalServerTestDriver implements ITestDriver {
 	 * LocalServerTestDriver constructor
 	 * @param api - driver API
 	 * @param maxOpsBeforeSummary - tells how many ops service allows to be sequenced before requiring a summary.
-	 * If a test submits more ops, connection will disconnec with nack and error message "Submit a summary before inserting additional operations"
+	 * If a test submits more ops, connection will disconnec with nack and error message
+	 * "Submit a summary before inserting additional operations".
 	 */
 	constructor(
 		private readonly api: LocalDriverApiType = LocalDriverApi,

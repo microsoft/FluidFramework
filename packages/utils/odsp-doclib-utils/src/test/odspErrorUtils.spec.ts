@@ -128,6 +128,7 @@ describe("OdspErrorUtils", () => {
 			);
 			assert.equal(
 				// TODO: use a real type here
+				// eslint-disable-next-line max-len
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 				(networkError as any).retryAfterSeconds,
 				undefined,

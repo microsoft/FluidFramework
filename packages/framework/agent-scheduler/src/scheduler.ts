@@ -140,7 +140,8 @@ export class AgentScheduler
 	) {
 		super();
 		this.logger = createChildLogger({ logger: runtime.logger });
-		// We are expecting this class to have many listeners, so we suppress noisy "MaxListenersExceededWarning" logging.
+		// We are expecting this class to have many listeners,
+		// so we suppress noisy "MaxListenersExceededWarning" logging.
 		super.setMaxListeners(0);
 		this._handle = new FluidObjectHandle(this, "", this.runtime.objectsRoutingContext);
 	}

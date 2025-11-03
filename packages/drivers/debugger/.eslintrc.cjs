@@ -12,4 +12,12 @@ module.exports = {
 		"import/no-nodejs-modules": "off",
 		"no-inner-declarations": "off",
 	},
+	overrides: [
+		{
+			files: ["src/test/types/*"],
+			rules: {
+				"max-len": "off",
+			},
+		},
+	],
 };

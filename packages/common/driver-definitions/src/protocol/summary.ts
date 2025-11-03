@@ -97,16 +97,19 @@ export type SummaryTypeNoHandle = SummaryType.Tree | SummaryType.Blob | SummaryT
  * Special characters include '/'. '/' is used as a separator between different parts of the path as a way to traverse
  * different nodes in the previous summary/snapshot tree.
  *
- * Note, our algorithms use encodeURIComponent and decodeURIComponent to handle special characters in the path. If a string
- * causes this path to fail, the id will be invalid.
+ * Note, our algorithms use encodeURIComponent and decodeURIComponent to handle special characters in the path.
+ * If a string causes this path to fail, the id will be invalid.
  *
  * @example
  * To illustrate, if a DataStore did not change since last summary, the framework runtime will use a handle for the
  * entire DataStore instead of re-sending the entire subtree. The same concept applies for a DDS.
- * An example of a handle string generated when the DDS did not change would be: '/.channels/<DataStoreId>/.channels/<DDSId>'.
+ * An example of a handle string generated when the DDS did not change would be:
+ * '/.channels/<DataStoreId>/.channels/<DDSId>'.
  * An example of a handle string generated when the DataStore did not change would be: '/.channels/<DataStoreId>'.
- * An example of a handle string generated when the DDS blob did not change would be: `/.channels/<DataStoreId>/.channels/<DDSId>/<BlobId>`.
- * An example of a handle string generated when the DataStore .attributes blob did not change would be: `/.channels/<DataStoreId>/.attributes`.
+ * An example of a handle string generated when the DDS blob did not change would be:
+ * `/.channels/<DataStoreId>/.channels/<DDSId>/<BlobId>`.
+ * An example of a handle string generated when the DataStore .attributes blob did not change would be:
+ * `/.channels/<DataStoreId>/.attributes`.
  * @public
  */
 export interface ISummaryHandle {
@@ -169,7 +172,8 @@ export interface ISummaryTree {
 	/**
 	 * The object containing all the tree's {@link SummaryObject} children.
 	 *
-	 * @param path - The key to store the SummaryObject at in the current summary tree being generated. Should not contain any "/" characters and should not change when encodeURIComponent is called on it.
+	 * @param path - The key to store the SummaryObject at in the current summary tree being generated.
+	 * Should not contain any "/" characters and should not change when encodeURIComponent is called on it.
 	 */
 	tree: { [path: string]: SummaryObject };
 

@@ -31,7 +31,8 @@ import type {
 import type { ContainerExtensionStore } from "./containerExtension.js";
 
 /**
- * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+ * @deprecated Will be removed in future major release.
+ * Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
  * @legacy @beta
  */
 export interface IContainerRuntimeWithResolveHandle_Deprecated extends IContainerRuntime {
@@ -207,7 +208,8 @@ export interface IContainerRuntimeInternal extends IContainerRuntime, ContainerE
 	 * @returns The storage ID if found and the blob is not pending, undefined otherwise.
 	 * @remarks
 	 * This method provides access to the BlobManager's storage ID lookup functionality.
-	 * For blobs with pending payloads (localId exists but upload hasn't finished), this is expected to return undefined.
+	 * For blobs with pending payloads (localId exists but upload hasn't finished),
+	 * this is expected to return undefined.
 	 * Consumers should use the observability APIs on the handle (handle.payloadState, payloadShared event)
 	 * to understand/wait for storage ID availability.
 	 * Similarly, when the runtime is detached, this will return undefined as no blobs have been uploaded to storage.

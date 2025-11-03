@@ -75,5 +75,11 @@ module.exports = {
 				"@typescript-eslint/no-restricted-imports": "off",
 			},
 		},
+		{
+			files: ["src/test/types/*"],
+			rules: {
+				"max-len": "off",
+			},
+		},
 	],
 };

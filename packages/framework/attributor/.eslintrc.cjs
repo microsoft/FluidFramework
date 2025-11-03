@@ -33,5 +33,11 @@ module.exports = {
 				"unicorn/prefer-module": "off",
 			},
 		},
+		{
+			files: ["src/test/types/*"],
+			rules: {
+				"max-len": "off",
+			},
+		},
 	],
 };

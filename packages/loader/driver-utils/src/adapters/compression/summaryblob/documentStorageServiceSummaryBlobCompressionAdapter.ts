@@ -403,9 +403,9 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	}
 
 	/**
-	 * This method loads the snapshot tree from the server. It also checks, if the compression markup blob is present
-	 * and setups the compression flag accordingly. It also identifies the blobs that are not compressed and do not contain
-	 * algorithm byte prefix and store them.
+	 * This method loads the snapshot tree from the server.
+	 * It also checks, if the compression markup blob is present and setups the compression flag accordingly.
+	 * It also identifies the blobs that are not compressed and do not contain algorithm byte prefix and store them.
 	 * @param version - The version of the snapshot tree to load.
 	 * @param scenarioName - The scenario name of the snapshot tree to load.
 	 * @returns The snapshot tree.

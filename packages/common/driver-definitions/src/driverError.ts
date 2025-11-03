@@ -119,15 +119,17 @@ export type DriverErrorTypes = (typeof DriverErrorTypes)[keyof typeof DriverErro
  * any or unknown in various function signatures that pass errors around.
  *
  * "Any" in the interface name is a nod to the fact that errorType has lost its type constraint.
- * It will be either {@link @fluidframework/driver-definitions#(DriverErrorTypes:variable)} or the specific driver's specialized error type enum,
+ * It will be either {@link @fluidframework/driver-definitions#(DriverErrorTypes:variable)}
+ * or the specific driver's specialized error type enum,
  * but we can't reference a specific driver's error type enum in this code.
  * @legacy @beta
  */
 export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
 	readonly errorType: string;
 	/**
-	 * This property is used predominantly for socket io errors. It captures the underlying socket event name which resulted in the error.
-	 * i.e. connect_error, connect_document_error etc.
+	 * This property is used predominantly for socket io errors.
+	 * It captures the underlying socket event name which resulted in the error
+	 * (e.g. connect_error, connect_document_error, etc.)
 	 */
 	scenarioName?: string;
 }

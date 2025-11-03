@@ -98,9 +98,9 @@ export const mochaHooks = {
 	async beforeAll() {
 		// Code in our tests will call the global `getTestLogger` function to get a logger to use.
 
-		// First we call the version of that function that was (potentially) injected dynamicaly to get the logger that it
-		// provides and wrap it with a more intelligent logger which adds test-run-related context to all events logged
-		// through it. See the documentation on `FluidTestRunLogger` for details.
+		// First we call the version of that function that was (potentially) injected dynamicaly to get the logger
+		// that it provides and wrap it with a more intelligent logger which adds test-run-related context to all
+		// events logged through it. See the documentation on `FluidTestRunLogger` for details.
 		let originalLogger: ITelemetryBufferedLogger;
 
 		if (process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER === undefined) {
@@ -122,10 +122,11 @@ export const mochaHooks = {
 		testLogger = new FluidTestRunLogger(originalLogger);
 
 		// Then we redefine `getTestLogger` so it returns the wrapper logger.
-		// NOTE: if we have other global mocha hooks defined somewhere, they include a `beforeEach` hook, and the module in
-		// which they are defined gets loaded before this one, then if that `beforeEach` hook calls `getTestLogger` the logger
-		// it will get will still have a lot of the test-run-related context, but not the name of the current test, because
-		// it will run before the `beforeEach` hook in this file which sets that.
+		// NOTE: if we have other global mocha hooks defined somewhere, they include a `beforeEach` hook,
+		// and the module in which they are defined gets loaded before this one, then if that `beforeEach` hook
+		// calls `getTestLogger` the logger it will get will still have a lot of the test-run-related context,
+		// but not the name of the current test, because it will run before the `beforeEach` hook in this file
+		// which sets that.
 		_global.getTestLogger = () => testLogger;
 	},
 	beforeEach(this: Mocha.Context) {
@@ -169,8 +170,9 @@ export const mochaHooks = {
 		console.error = error;
 		console.warn = warn;
 
-		// Clear the current test from the logger. Important so if anything calls `getTestLogger` outside the context of a
-		// test (e.g. during a `before` or `after` hook), it doesn't log events with the name of the last test that ran.
+		// Clear the current test from the logger.
+		// Important so if anything calls `getTestLogger` outside the context of a test
+		// (e.g. during a `before` or `after` hook), it doesn't log events with the name of the last test that ran.
 		testLogger.clearCurrentTest();
 	},
 	async afterAll(this: Mocha.Context) {

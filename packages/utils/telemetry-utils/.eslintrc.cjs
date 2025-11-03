@@ -8,4 +8,16 @@ module.exports = {
 	parserOptions: {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
+	rules: {
+		// Many uses. Could be cleaned up at some point.
+		"max-len": "off",
+	},
+	overrides: [
+		{
+			files: ["src/test/types/*"],
+			rules: {
+				"max-len": "off",
+			},
+		},
+	],
 };

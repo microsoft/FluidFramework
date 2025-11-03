@@ -119,8 +119,10 @@ class RouterliciousRestWrapper extends RestWrapper {
 
 	/**
 	 * A locally maintained map which saves the number of retries for any REST api call made through restWrapper.
-	 * It uses the href of the request url as a key against which it saves the retry counts. Retries are only counted in case of failures.
-	 * This feature is added to enable FRS to have more telemetry insights into whether the requests are being retried from same client or multiple.
+	 * It uses the href of the request url as a key against which it saves the retry counts.
+	 * Retries are only counted in case of failures.
+	 * This feature is added to enable FRS to have more telemetry insights into whether the requests are being
+	 * retried from same client or multiple.
 	 */
 	private readonly retryCounter = new Map<string, number>();
 
@@ -143,7 +145,8 @@ class RouterliciousRestWrapper extends RestWrapper {
 		canRetry = true,
 	): Promise<IR11sResponse<T>> {
 		if (requestConfig.params) {
-			// delete the retry param, if any. We do this to ensure there is no retry added by any of callers, which would conflict with the one we maintain here in the retryCounter map.
+			// delete the retry param, if any. We do this to ensure there is no retry added by any of callers,
+			// which would conflict with the one we maintain here in the retryCounter map.
 			delete requestConfig.params.retry;
 		}
 
@@ -175,7 +178,7 @@ class RouterliciousRestWrapper extends RestWrapper {
 			const perfStart = performanceNow();
 			const result = await fetch(completeRequestUrl, fetchRequestConfig).catch(
 				async (error) => {
-					// on failure, add the request entry into the retryCounter map to count the subsequent retries, if any
+					// on failure, add the request entry into the retryCounter map to count the subsequent retries
 					this.retryCounter.set(requestKey, requestRetryCount ? requestRetryCount + 1 : 1);
 
 					const telemetryProps = {
@@ -194,7 +197,8 @@ class RouterliciousRestWrapper extends RestWrapper {
 					// a network error with no status code (e.g. err:ERR_CONN_REFUSED or err:ERR_FAILED) and
 					// the error message will start with NetworkError as defined in restWrapper.ts
 					// If there exists a self-signed SSL certificates error, throw a NonRetryableError
-					// TODO: instead of relying on string matching, filter error based on the error code like we do for websocket connections
+					// TODO: instead of relying on string matching, filter error based on the error code like we
+					// do for websocket connections
 					const err = errorMessage.includes("failed, reason: self signed certificate")
 						? new NonRetryableError(
 								errorMessage,

@@ -98,14 +98,18 @@ export function encodeHandleForSerialization(handle: IFluidHandleInternal): ISer
 }
 
 /**
- * Setting to opt into compatibility with handles from before {@link fluidHandleSymbol} existed (Fluid Framework client 2.0.0-rc.3.0.0 and earlier).
+ * Setting to opt into compatibility with handles from before {@link fluidHandleSymbol} existed
+ * (Fluid Framework client 2.0.0-rc.3.0.0 and earlier).
  *
  * Some code which uses this library might dynamically load multiple versions of it,
  * as well as old or duplicated versions of packages which produce or implement handles.
- * To correctly interoperate with this old packages and object produced by them, the old in-memory format for handles, without the symbol, are explicitly supported.
+ * To correctly interoperate with this old packages and object produced by them,
+ * the old in-memory format for handles, without the symbol, are explicitly supported.
  *
- * This setting mostly exists as a way to easily find any code that only exists to provide this compatibility and clarify how to remove that compatibility.
- * At some point this might be removed or turned into an actual configuration option, but for now its really just documentation.
+ * This setting mostly exists as a way to easily find any code that only exists to provide this
+ * compatibility and clarify how to remove that compatibility.
+ * At some point this might be removed or turned into an actual configuration option,
+ * but for now its really just documentation.
  */
 const enableBackwardsCompatibility = true;
 
@@ -125,8 +129,9 @@ export function isFluidHandle(value: unknown): value is IFluidHandle {
 	}
 	// If enableBackwardsCompatibility, run check for FluidHandles predating use of fluidHandleSymbol.
 	if (enableBackwardsCompatibility && IFluidHandle in value) {
-		// Since this check can have false positives, make it a bit more robust by checking value[IFluidHandle][IFluidHandle]
-		// Type assertion is needed for backward compatibility with old FluidHandle format
+		// Since this check can have false positives, make it a bit more robust by checking
+		// value[IFluidHandle][IFluidHandle].
+		// Type assertion is needed for backward compatibility with old FluidHandle format.
 		const inner = value[IFluidHandle] as IFluidHandle;
 		if (typeof inner !== "object" || inner === null) {
 			return false;

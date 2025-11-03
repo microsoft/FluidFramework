@@ -63,6 +63,12 @@ module.exports = {
 				"import/no-extraneous-dependencies": "off",
 			},
 		},
+		{
+			files: ["src/test/types/*"],
+			rules: {
+				"max-len": "off",
+			},
+		},
 	],
 	settings: {
 		react: {

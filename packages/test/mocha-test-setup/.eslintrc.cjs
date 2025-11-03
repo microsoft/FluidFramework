@@ -5,4 +5,12 @@
 
 module.exports = {
 	extends: ["@fluidframework/eslint-config-fluid/minimal-deprecated"],
+	overrides: [
+		{
+			files: ["src/test/types/*"],
+			rules: {
+				"max-len": "off",
+			},
+		},
+	],
 };

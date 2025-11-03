@@ -35,6 +35,7 @@ describe("LocalChannelStorageService", () => {
 					path: "foo",
 					type: TreeEntry.Blob,
 					value: {
+						// eslint-disable-next-line max-len
 						// eslint-disable-next-line unicorn/text-encoding-identifier-case -- `utf8` not supported by this API
 						encoding: "utf-8",
 						contents: "bar",
@@ -64,6 +65,7 @@ describe("LocalChannelStorageService", () => {
 								path: "foo",
 								type: TreeEntry.Blob,
 								value: {
+									// eslint-disable-next-line max-len
 									// eslint-disable-next-line unicorn/text-encoding-identifier-case -- `utf8` not supported by this API
 									encoding: "utf-8",
 									contents: "bar",

@@ -15,6 +15,9 @@ module.exports = {
 	rules: {
 		// TODO: Enabling this may require breaking changes.
 		"@typescript-eslint/consistent-indexed-object-style": "off",
+
+		// TODO: enable
+		"max-len": "off", // Turning it off as we get rid of eslint-config-prettier
 	},
 	overrides: [
 		{
@@ -27,6 +30,12 @@ module.exports = {
 						"allow": ["@fluidframework/*/internal{,/**}"],
 					},
 				],
+			},
+		},
+		{
+			files: ["src/test/types/*"],
+			rules: {
+				"max-len": "off",
 			},
 		},
 	],

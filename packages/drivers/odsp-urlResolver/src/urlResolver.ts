@@ -65,7 +65,8 @@ const isOdspUrl = (url: URL): boolean => {
 };
 
 /**
- * This class helps to resolve Fluid URLs from Office and OneNote. Construct the resolver class and invoke its resolve function to retrieve the content parameters.
+ * This class helps to resolve Fluid URLs from Office and OneNote.
+ * Construct the resolver class and invoke its resolve function to retrieve the content parameters.
  * @internal
  */
 export class FluidAppOdspUrlResolver implements IUrlResolver {

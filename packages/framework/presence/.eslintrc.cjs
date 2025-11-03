@@ -38,5 +38,11 @@ module.exports = {
 				"import/no-nodejs-modules": ["error", { allow: ["node:assert"] }],
 			},
 		},
+		{
+			files: ["src/test/types/*"],
+			rules: {
+				"max-len": "off",
+			},
+		},
 	],
 };

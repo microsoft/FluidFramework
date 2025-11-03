@@ -570,7 +570,8 @@ const PropertyError = {
 	 * methods: ReferenceProperty.set / setValue, ReferenceMapProperty.insert / set / setValue / setValues,
 	 * ReferenceArrayProperty.enqueue / push / unshift / insert / insertRange / set / setRange / setValue / setValues
 	 *
-	 * The provided value (or values) must be a valid property (an instance of BaseProperty), be undefined or a string (a path).
+	 * The provided value (or values) must be a valid property (an instance of BaseProperty),
+	 * be undefined or a string (a path).
 	 */
 	PROPERTY_OR_UNDEFINED:
 		"PR-060: Parameter for setting a Reference should be a path to a property, a property or undefined. This is not valid: ",
@@ -904,10 +905,11 @@ const PropertyError = {
 	/**
 	 * methods: Property.getRelativePath
 	 *
-	 * In cases where you have more than one repository reference property pointing to the same repository, finding a path
-	 * between a properties in different repositories can lead to more than one valid results. In that case, .getRelativePath
-	 * will return the first valid path it finds. If you want to control how which path is used, you should construct the
-	 * string path by concatenating the absolute path for the prop in the nested repository and the relative path between your
+	 * In cases where you have more than one repository reference property pointing to the same repository,
+	 * finding a path between a properties in different repositories can lead to more than one valid results.
+	 * In that case, .getRelativePath will return the first valid path it finds.
+	 * If you want to control how which path is used, you should construct the string path by concatenating
+	 * the absolute path for the prop in the nested repository and the relative path between your
 	 * repository reference and the target property.
 	 */
 	MORE_THAN_ONE_PATH: "PR-169: More than one paths exist between ",
@@ -915,8 +917,9 @@ const PropertyError = {
 	/**
 	 * methods: Property.getRelativePath
 	 *
-	 * getRelativePath takes one parameter: the property from which the path will start. This must be an instance of
-	 * BaseProperty. The method will return the path from that property to the property on which it was called ('this')
+	 * getRelativePath takes one parameter: the property from which the path will start.
+	 * This must be an instance of BaseProperty.
+	 * The method will return the path from that property to the property on which it was called ('this')
 	 */
 	IN_FROMPROPERTY_MUST_BE_PROPERTY:
 		"PR-170: getRelativePath parameter error: in_fromProperty must be a property",
@@ -1600,8 +1603,9 @@ const UtilsError = {
 	/**
 	 * methods: Utils.traverseChangesetRecursively
 	 *
-	 * Your changeset contains an operator other than MODIFY, INSERT or REMOVE. If you created the changeset youserlf,
-	 * check that you only use valid operators. Otherwise, this is an internal error. Please contact the development team.
+	 * Your changeset contains an operator other than MODIFY, INSERT or REMOVE.
+	 * If you created the changeset yourself, check that you only use valid operators.
+	 * Otherwise, this is an internal error. Please contact the development team.
 	 */
 	UNKNOWN_OPERATOR: "UT-004: ArrayChangeSetIterator: unknown operator ",
 

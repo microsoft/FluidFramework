@@ -12,4 +12,12 @@ module.exports = {
 		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 		"import/no-nodejs-modules": "off",
 	},
+	overrides: [
+		{
+			files: ["src/test/types/*"],
+			rules: {
+				"max-len": "off",
+			},
+		},
+	],
 };

@@ -90,7 +90,8 @@ export function generateToken(
 
 /**
  * Generates an arbitrary ("random") {@link IInsecureUser} by generating a
- * random UUID for its {@link @fluidframework/protocol-definitions#IUser.id | id} and {@link IInsecureUser.name | name} properties.
+ * random UUID for its {@link @fluidframework/protocol-definitions#IUser.id | id} and
+ * {@link IInsecureUser.name | name} properties.
  */
 export function generateUser(): IInsecureUser {
 	const randomUser = {

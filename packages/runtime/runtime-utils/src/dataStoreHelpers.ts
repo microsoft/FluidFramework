@@ -46,7 +46,8 @@ export function exceptionToResponse(error: unknown): IResponse {
 		};
 	}
 
-	// Both error generation, and accessing the stack value are expensive operations, so we only create an error if necessary, and then defer accessing the stack value until it is needed.
+	// Both error generation, and accessing the stack value are expensive operations,
+	// so we only create an error if necessary, and then defer accessing the stack value until it is needed.
 	const errWithStack =
 		typeof error === "object" && error !== null && "stack" in error
 			? (error as { stack: string })
@@ -71,9 +72,11 @@ export function exceptionToResponse(error: unknown): IResponse {
  */
 export function responseToException(response: IResponse, request: IRequest): Error {
 	// As of 2025-08-20 the code seems to assume `response.value` is always a string.
-	// This type assertion just encodes that assumption as we move to stricter linting rules, but it might need to be revisited.
+	// This type assertion just encodes that assumption as we move to stricter linting rules,
+	// but it might need to be revisited.
 	const message = response.value as string;
-	// Both error generation, and accessing the stack value are expensive operations, so we only create an error if necessary, and then defer accessing the stack value until it is needed.
+	// Both error generation, and accessing the stack value are expensive operations,
+	// so we only create an error if necessary, and then defer accessing the stack value until it is needed.
 	const errWithStack = "stack" in response ? response : generateErrorWithStack();
 	const responseErr: Error & IResponseException = {
 		errorFromRequestFluidObject: true,
@@ -118,7 +121,8 @@ export function createResponseError(
 	// Omit query string which could contain personal data unfit for logging
 	const urlNoQuery = request.url?.split("?")[0];
 
-	// Both error generation, and accessing the stack value are expensive operations, so we only create an error if necessary, and then defer accessing the stack value until it is needed.
+	// Both error generation, and accessing the stack value are expensive operations,
+	// so we only create an error if necessary, and then defer accessing the stack value until it is needed.
 	const errWithStack = generateErrorWithStack();
 
 	return {

@@ -14,5 +14,11 @@ module.exports = {
 			files: ["*.spec.ts", "src/test/**"],
 			rules: {},
 		},
+		{
+			files: ["src/test/types/*"],
+			rules: {
+				"max-len": "off",
+			},
+		},
 	],
 };

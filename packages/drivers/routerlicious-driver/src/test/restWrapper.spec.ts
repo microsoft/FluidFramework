@@ -193,7 +193,8 @@ describe("RouterliciousDriverRestWrapper", () => {
 				})
 				.reply(500);
 
-			// Fourth request is emulated to have predefined query params, which should also continue to exist along with retry=1
+			// Fourth request is emulated to have predefined query params,
+			// which should also continue to exist along with retry=1
 			nock(testHost)
 				.get(/.*/)
 				.query((q) => {

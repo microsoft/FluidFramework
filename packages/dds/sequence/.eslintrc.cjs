@@ -12,6 +12,7 @@ module.exports = {
 		"@typescript-eslint/no-use-before-define": "off",
 		"@typescript-eslint/strict-boolean-expressions": "off",
 		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+		"max-len": "off", // Many hits when moving away from eslint-config-prettier. Should be addressed at some point.
 	},
 	settings: {
 		"import/extensions": [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
@@ -42,4 +43,12 @@ module.exports = {
 			},
 		},
 	},
+	overrides: [
+		{
+			files: ["src/test/types/*"],
+			rules: {
+				"max-len": "off",
+			},
+		},
+	],
 };

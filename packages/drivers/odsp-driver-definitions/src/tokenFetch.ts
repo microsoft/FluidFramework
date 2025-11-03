@@ -55,7 +55,8 @@ export interface TokenFetchOptions {
 	 * Request that will be made using the fetched token.
 	 * - url: full request url, including query params
 	 * - method: method type
-	 * Request info may be encoded into the returned token that the receiver can use to validate that caller is allowed to make specific call.
+	 * Request info may be encoded into the returned token that the receiver can use to validate that
+	 * caller is allowed to make specific call.
 	 */
 	readonly request?: { url: string; method: "GET" | "POST" | "PATCH" | "DELETE" | "PUT" };
 }

@@ -25,5 +25,11 @@ module.exports = {
 				"import/no-nodejs-modules": "off",
 			},
 		},
+		{
+			files: ["src/test/types/*"],
+			rules: {
+				"max-len": "off",
+			},
+		},
 	],
 };

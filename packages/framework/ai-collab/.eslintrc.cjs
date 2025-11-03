@@ -26,5 +26,11 @@ module.exports = {
 				],
 			},
 		},
+		{
+			files: ["src/test/types/*"],
+			rules: {
+				"max-len": "off",
+			},
+		},
 	],
 };

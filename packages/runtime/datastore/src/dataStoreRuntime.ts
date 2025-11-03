@@ -546,7 +546,8 @@ export class FluidDataStoreRuntime
 
 	/**
 	 * Validate user provided channel ID
-	 * Channel ID has limitations. "/" is not allowed as IDs in storage can not have slashes - we parse tree paths and use "/" as separator.
+	 * Channel ID has limitations. "/" is not allowed as IDs in storage can not have slashes.
+	 * We parse tree paths and use "/" as separator.
 	 * IDs cannot start with "_" as it could result in collision of IDs with auto-assigned (by FF) short IDs.
 	 * @param id - channel ID.
 	 */
@@ -608,7 +609,8 @@ export class FluidDataStoreRuntime
 						this.dataStoreContext.containerRuntime.generateDocumentUniqueId?.() ?? uuid();
 					id = typeof res === "number" ? encodeCompactIdToString(2 * res + 1, "_") : res;
 				} else {
-					// container is detached, only one client observes content, no way to hit collisions with other clients.
+					// Container is detached, only one client observes content.
+					// No way to hit collisions with other clients.
 					id = encodeCompactIdToString(2 * this.contexts.size, "_");
 				}
 			}
@@ -1094,7 +1096,8 @@ export class FluidDataStoreRuntime
 	}
 
 	/**
-	 * Get the GC Data for the initial state being attached so remote clients can learn of this DataStore's outbound routes
+	 * Get the GC Data for the initial state being attached so remote clients can learn of this
+	 * DataStore's outbound routes.
 	 */
 	public getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData {
 		const gcDataBuilder = new GCDataBuilder();
@@ -1106,7 +1109,8 @@ export class FluidDataStoreRuntime
 					// Incorporate the GC Data for this context
 					gcDataBuilder.prefixAndAddNodes(contextId, contextGCData.gcNodes);
 				}
-				// else: Rehydrating detached container case. GC doesn't run until the container is attached, so nothing to do here.
+				// else: Rehydrating detached container case. GC doesn't run until the container is attached,
+				// so nothing to do here.
 			},
 		);
 		this.updateGCNodes(gcDataBuilder);
@@ -1174,6 +1178,7 @@ export class FluidDataStoreRuntime
 	public submitMessage(
 		type: DataStoreMessageType,
 		// TODO: use something other than `any` here (breaking change)
+		// eslint-disable-next-line max-len
 		// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
 		content: any,
 		localOpMetadata: unknown,
@@ -1277,6 +1282,7 @@ export class FluidDataStoreRuntime
 	public reSubmit(
 		type: DataStoreMessageType,
 		// TODO: use something other than `any` here (breaking change)
+		// eslint-disable-next-line max-len
 		// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
 		content: any,
 		localOpMetadata: unknown,
@@ -1285,7 +1291,8 @@ export class FluidDataStoreRuntime
 		this.verifyNotClosed();
 
 		// The op being resubmitted was not / will not be submitted, so decrement the count.
-		// The calls below may result in one or more ops submitted again, which will increment the count (or not if nothing needs to be submitted anymore).
+		// The calls below may result in one or more ops submitted again, which will increment the count
+		// (or not if nothing needs to be submitted anymore).
 		--this.pendingOpCount.value;
 
 		switch (type) {
@@ -1317,6 +1324,7 @@ export class FluidDataStoreRuntime
 	public rollback?(
 		type: DataStoreMessageType,
 		// TODO: use something other than `any` here (breaking change)
+		// eslint-disable-next-line max-len
 		// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
 		content: any,
 		localOpMetadata: unknown,
@@ -1343,10 +1351,12 @@ export class FluidDataStoreRuntime
 	}
 
 	// TODO: use something other than `any` here
-	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
+	// eslint-disable-next-line max-len
+		// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
 	public async applyStashedOp(content: any): Promise<unknown> {
 		// The op being applied may have been submitted in a previous session, so we increment the count here.
-		// Either the ack will arrive and be processed, or that previous session's connection will end, at which point the op will be resubmitted.
+		// Either the ack will arrive and be processed, or that previous session's connection will end,
+		// at which point the op will be resubmitted.
 		++this.pendingOpCount.value;
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -1405,6 +1415,7 @@ export class FluidDataStoreRuntime
 
 		// back-compat, to be removed in the future.
 		// Added in "2.0.0-rc.2.0.0" timeframe.
+		// eslint-disable-next-line max-len
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
 		(this.dataStoreContext as any).once?.("attaching", () => {
 			this.setAttachState(AttachState.Attaching);
@@ -1412,6 +1423,7 @@ export class FluidDataStoreRuntime
 
 		// back-compat, to be removed in the future.
 		// Added in "2.0.0-rc.2.0.0" timeframe.
+		// eslint-disable-next-line max-len
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
 		(this.dataStoreContext as any).once?.("attached", () => {
 			this.setAttachState(AttachState.Attached);
@@ -1464,7 +1476,7 @@ export class FluidDataStoreRuntime
 				 * 1) Before attachGraph() is called - When a data store is created and bound in an attached container.
 				 * 2) After attachGraph() is called - When a detached container is attached.
 				 *
-				 * The basic idea is that all local object should become locally visible before they are globally visible.
+				 * The idea is that all local object should become locally visible before they are globally visible.
 				 */
 				this.attachGraph();
 

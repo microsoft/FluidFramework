@@ -457,7 +457,8 @@ async function getSingleOpBatch(
 			// Otherwise, the storage gave us back an empty set of ops but we were expecting a non-empty set.
 
 			if (lastSuccessTime === undefined) {
-				// Take timestamp of the first time server responded successfully, even though it wasn't with the ops we asked for.
+				// Take timestamp of the first time server responded successfully,
+				// even though it wasn't with the ops we asked for.
 				// If we keep getting empty responses we'll eventually fail out below.
 				lastSuccessTime = performanceNow();
 			} else if (performanceNow() - lastSuccessTime > 30000) {
@@ -511,7 +512,8 @@ async function getSingleOpBatch(
 
 		waitTime = calculateMaxWaitTime(waitTime, lastError);
 
-		// If we get here something has gone wrong - either got an unexpected empty set of messages back or a real error.
+		// If we get here something has gone wrong - either got an unexpected empty set of messages back
+		// or a real error.
 		// Either way we will wait a little bit before retrying.
 		await new Promise<void>((resolve) => {
 			setTimeout(resolve, waitTime);

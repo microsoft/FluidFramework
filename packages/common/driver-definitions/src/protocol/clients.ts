@@ -62,7 +62,8 @@ export interface IClientDetails {
 }
 
 /**
- * Represents a client connected to a Fluid service, including associated user details, permissions, and connection mode.
+ * Represents a client connected to a Fluid service, including associated user details, permissions,
+ * and connection mode.
  * @public
  */
 export interface IClient {

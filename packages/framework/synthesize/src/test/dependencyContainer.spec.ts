@@ -124,7 +124,8 @@ describe("someObjectlicious", () => {
 
 				const s = dc.synthesize<IFluidLoadable>({ IFluidLoadable }, undefined);
 				const loadable_promise = s.IFluidLoadable;
-				// This stacking of promises is done in order to make sure that the loadable_promise would have been executed by the time the assertion is done
+				// This stacking of promises is done in order to make sure that the loadable_promise would have been
+				// executed by the time the assertion is done
 				await Promise.resolve().then(async () => {
 					assert(!lazyPromiseFlag, "Optional IFluidLoadable was correctly lazy loaded");
 					const loadable = await loadable_promise;
@@ -201,7 +202,8 @@ describe("someObjectlicious", () => {
 					IFluidLoadable,
 				});
 				const loadable_promise = s.IFluidLoadable;
-				// This stacking of promises is done in order to make sure that the loadable_promise would have been executed by the time the assertion is done
+				// This stacking of promises is done in order to make sure that the loadable_promise would have
+				// been executed by the time the assertion is done
 				await Promise.resolve().then(async () => {
 					assert(!lazyPromiseFlag, "Required IFluidLoadable was correctly lazy loaded");
 					const loadable = await loadable_promise;

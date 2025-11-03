@@ -166,14 +166,15 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 	/**
 	 * Named differently as the algorithm is a little more involved.
 	 *
-	 * We want to strip the tree if it has a groupId that is not in the loadingGroupIds or if it doesn't have a descendent or ancestor
-	 * that has a groupId that is in the loadingGroupIds.
+	 * We want to strip the tree if it has a groupId that is not in the loadingGroupIds or if it doesn't have
+	 * a descendent or ancestor that has a groupId that is in the loadingGroupIds.
 	 *
 	 * We keep the tree in the opposite case.
 	 *
 	 * @param tree - the tree to strip of any data that is not in the loadingGroupIds
 	 * @param loadingGroupIds - the set of groupIds that are being loaded
-	 * @param ancestorGroupIdInLoadingGroup - whether the ancestor of the tree has a groupId that is in the loadingGroupIds
+	 * @param ancestorGroupIdInLoadingGroup - whether the ancestor of the tree has a groupId that is
+	 * in the loadingGroupIds
 	 * @returns whether or not it or descendant has a groupId that is in the loadingGroupIds
 	 */
 	private async filterTreeByLoadingGroupIds(

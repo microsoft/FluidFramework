@@ -359,7 +359,8 @@ describe("DDS Fuzz Harness", () => {
 						op !== done && op.type === "changeConnectionState",
 				);
 			assert(changeConnectionStateOps.length > 0);
-			// As long as a single client was chosen twice, there should be some 'disconnect' and some 'reconnect' operations.
+			// As long as a single client was chosen twice, there should be some 'disconnect'
+			// and some 'reconnect' operations.
 			assert(changeConnectionStateOps.some((op) => op.connected));
 			assert(changeConnectionStateOps.some((op) => !op.connected));
 		});
@@ -883,8 +884,8 @@ describe("DDS Fuzz Harness", () => {
 				],
 				{
 					env: {
-						// These flags help ensure nothing extraneous is logged to the console in the child test process,
-						// ensuring the output is valid JSON.
+						// These flags help ensure nothing extraneous is logged to the console in the
+						// child test process, ensuring the output is valid JSON.
 						FLUID_TEST_VERBOSE: undefined,
 						SILENT_TEST_OUTPUT: "1",
 					},

@@ -25,4 +25,12 @@ module.exports = {
 		"@typescript-eslint/no-import-type-side-effects": "error",
 		// #endregion
 	},
+	overrides: [
+		{
+			files: ["src/test/types/*"],
+			rules: {
+				"max-len": "off",
+			},
+		},
+	],
 };

@@ -121,7 +121,8 @@ export interface IFluidDataStoreRuntime
 	 * could be useful technique to have customized solutions without introducing a number of data structures
 	 * that all have same implementation.
 	 *
-	 * This is also useful for scenarios like SharedTree DDS, where schema is provided at creation and stored in a summary.
+	 * This is also useful for scenarios like SharedTree DDS, where schema is provided at creation and stored
+	 * in a summary.
 	 *
 	 * The channel type should be present in the registry, otherwise the runtime would reject
 	 * the channel. The runtime used to create the channel object should be same to which
@@ -178,7 +179,8 @@ export interface IFluidDataStoreRuntime
 
 /**
  * @experimental
- * @deprecated - These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
+ * @deprecated - These APIs are unstable, and can be changed at will.
+ * They should only be used with direct agreement with the Fluid Framework.
  * @legacy @beta
  * @sealed
  */

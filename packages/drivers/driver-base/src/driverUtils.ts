@@ -92,7 +92,8 @@ export function getW3CData(url: string, initiatorType: string) {
 
 /**
  * An implementation of Promise.race that gives you the winner of the promise race.
- * If one of the promises is rejected before any other is resolved, this method will return the error/reason from that rejection.
+ * If one of the promises is rejected before any other is resolved,
+ * this method will return the error/reason from that rejection.
  * @internal
  */
 export async function promiseRaceWithWinner<T>(

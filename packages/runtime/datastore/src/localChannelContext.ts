@@ -144,7 +144,8 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 	/**
 	 * For crafting the DataStore attach op. Only to be called when the channel is loaded (if applicable).
 	 *
-	 * Synchronously generates the channel's attach summary to be joined with the same from the DataStore's other channels
+	 * Synchronously generates the channel's attach summary to be joined with the same from the DataStore's
+	 * other channels.
 	 */
 	public getAttachSummary(telemetryContext?: ITelemetryContext): ISummarizeResult {
 		assert(

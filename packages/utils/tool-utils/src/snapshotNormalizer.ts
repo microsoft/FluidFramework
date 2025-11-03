@@ -106,9 +106,10 @@ function getDeepSortedObject<T extends object>(obj: T): T {
 function getNormalizedBlobContent(blobContent: string, blobName: string): string {
 	let content = blobContent;
 	if (blobName.startsWith(gcBlobPrefix)) {
-		// The following code parses JSON and makes some assumptions about the type of data within. There does not appear to
-		// be a better type than `any` to use here, so the lint rules are disabled.
+		// The following code parses JSON and makes some assumptions about the type of data within.
+		// There does not appear to be a better type than `any` to use here, so the lint rules are disabled.
 
+		// eslint-disable-next-line max-len
 		/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
 
 		// GC blobs may contain `unreferencedTimestampMs` for node that became unreferenced. This is the timestamp
@@ -123,9 +124,10 @@ function getNormalizedBlobContent(blobContent: string, blobName: string): string
 	}
 
 	/**
-	 * The legacy catch-up ops blob in merge tree DDS contains sequenced messages. These ops used to have metadata property.
-	 * However, we stopped sending the metadata property to DDS because it was a Runtime layer concept. Remove the metadata
-	 * property from the ops because latest snapshots won't have the metadata property.
+	 * The legacy catch-up ops blob in merge tree DDS contains sequenced messages.
+	 * These ops used to have metadata property.
+	 * However, we stopped sending the metadata property to DDS because it was a Runtime layer concept.
+	 * Remove the metadata property from the ops because latest snapshots won't have the metadata property.
 	 */
 	if (blobName === legacyCatchUpBlobName) {
 		try {
@@ -156,7 +158,8 @@ function getNormalizedBlobContent(blobContent: string, blobName: string): string
 		if (metadata.summaryCount !== undefined) {
 			metadata.summaryCount = 0;
 		}
-		// "telemetryDocumentId" is not a deterministic property (random guid), so we need to set it to something consistent
+		// "telemetryDocumentId" is not a deterministic property (random guid),
+		// so we need to set it to something consistent
 		if (metadata.telemetryDocumentId !== undefined) {
 			metadata.telemetryDocumentId = "x";
 		}
@@ -180,6 +183,7 @@ function getNormalizedBlobContent(blobContent: string, blobName: string): string
 		// Do nothing
 	}
 
+	// eslint-disable-next-line max-len
 	/* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
 
 	return content;
@@ -269,7 +273,8 @@ function normalizeEntry(
 	switch (entry.type) {
 		case TreeEntry.Blob: {
 			let contents = entry.value.contents;
-			// If this blob has to be normalized, it's a GC or legacy catchup blob, parse and sort the blob contents first.
+			// If this blob has to be normalized, it's a GC or legacy catchup blob.
+			// Parse and sort the blob contents first.
 			if (
 				(config?.blobsToNormalize?.includes(entry.path) ?? false) ||
 				entry.path.startsWith(gcBlobPrefix) ||

@@ -17,5 +17,11 @@ module.exports = {
 				"prefer-arrow-callback": "off",
 			},
 		},
+		{
+			files: ["src/test/types/*"],
+			rules: {
+				"max-len": "off",
+			},
+		},
 	],
 };

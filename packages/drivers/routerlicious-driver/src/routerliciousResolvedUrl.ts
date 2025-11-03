@@ -9,14 +9,16 @@ import type { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
  * Routerlicious extends the resolved url with additional properties to control Routerlicious-specific behaviors.
  *
  * @privateRemarks
- * {@link isRouterliciousResolvedUrl} can be used to detect whether an {@link @fluidframework/driver-definitions#IResolvedUrl}
+ * {@link isRouterliciousResolvedUrl} can be used to detect whether an
+ * {@link @fluidframework/driver-definitions#IResolvedUrl}
  * is an IRouterliciousResolvedUrl.
  *
  * @legacy @beta
  */
 export interface IRouterliciousResolvedUrl extends IResolvedUrl {
 	/**
-	 * A flag to facilitate type narrowing from {@link @fluidframework/driver-definitions#IResolvedUrl} to IRouterliciousResolvedUrl.
+	 * A flag to facilitate type narrowing from {@link @fluidframework/driver-definitions#IResolvedUrl}
+	 * to IRouterliciousResolvedUrl.
 	 */
 	routerliciousResolvedUrl: true;
 	/**

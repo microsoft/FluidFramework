@@ -242,8 +242,8 @@ export interface IContainerStorageService {
 }
 
 /**
- * IContainerContext is fundamentally just the set of things that an IRuntimeFactory (and IRuntime) will consume from the
- * loader layer.
+ * IContainerContext is fundamentally just the set of things that an IRuntimeFactory (and IRuntime)
+ * will consume from the loader layer.
  * It gets passed into the {@link (IRuntimeFactory:interface).instantiateRuntime} call.
  *
  * @privateremarks

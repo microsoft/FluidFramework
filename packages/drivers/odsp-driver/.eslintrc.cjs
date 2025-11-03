@@ -13,6 +13,7 @@ module.exports = {
 		"@typescript-eslint/no-non-null-assertion": "off",
 		"@typescript-eslint/no-use-before-define": "off",
 		"@typescript-eslint/strict-boolean-expressions": "off",
+		"max-len": "off",
 
 		// This library uses and serializes "utf-8".
 		"unicorn/text-encoding-identifier-case": "off",
@@ -40,6 +41,12 @@ module.exports = {
 
 				// Fine for tests to use `__dirname`
 				"unicorn/prefer-module": "off",
+			},
+		},
+		{
+			files: ["src/test/types/*"],
+			rules: {
+				"max-len": "off",
 			},
 		},
 	],

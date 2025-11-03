@@ -9,4 +9,12 @@ module.exports = {
 		// TODO: Enabling this may require breaking changes.
 		"@typescript-eslint/consistent-indexed-object-style": "off",
 	},
+	overrides: [
+		{
+			files: ["src/test/types/*"],
+			rules: {
+				"max-len": "off",
+			},
+		},
+	],
 };

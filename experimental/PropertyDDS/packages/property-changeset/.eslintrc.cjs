@@ -38,6 +38,7 @@ module.exports = {
 		"@typescript-eslint/unbound-method": "off",
 		"eqeqeq": "off",
 		"import/no-internal-modules": "off",
+		"max-len": "off",
 		"no-case-declarations": "off",
 		"no-inner-declarations": "off",
 		"no-multi-spaces": "off",

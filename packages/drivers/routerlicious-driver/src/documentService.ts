@@ -265,8 +265,10 @@ export class DocumentService
 		// Retry with new token on authorization error; otherwise, allow container layer to handle.
 		try {
 			const connection = await connect();
-			// Enable single-commit summaries via driver policy based on the enable_single_commit_summary flag which maybe provided by the service during connection.
-			// summarizeProtocolTree flag is used by the loader layer to attach protocol tree along with the summary required in the single-commit summaries.
+			// Enable single-commit summaries via driver policy based on the enable_single_commit_summary flag which
+			// maybe provided by the service during connection.
+			// summarizeProtocolTree flag is used by the loader layer to attach protocol tree along with the summary
+			// required in the single-commit summaries.
 			const shouldSummarizeProtocolTree = (connection as R11sDocumentDeltaConnection).details
 				?.supportedFeatures?.enable_single_commit_summary
 				? true

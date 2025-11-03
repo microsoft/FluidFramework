@@ -10,6 +10,9 @@ module.exports = {
 	},
 	rules: {
 		"@typescript-eslint/strict-boolean-expressions": "off",
+
+		// TODO: enable
+		"max-len": "off", // Turning it off as we get rid of eslint-config-prettier
 	},
 	overrides: [
 		{
@@ -21,6 +24,12 @@ module.exports = {
 					"error",
 					{ allow: ["node:assert", "node:crypto", "node:fs", "node:path"] },
 				],
+			},
+		},
+		{
+			files: ["src/test/types/*"],
+			rules: {
+				"max-len": "off",
 			},
 		},
 	],

@@ -45,7 +45,8 @@ export type ExtensionMessage<
 				TMessage & {
 					/**
 					 * Client ID of the singular client the message is being (or has been) sent to.
-					 * May only be specified when IConnect.supportedFeatures['submit_signals_v2'] is true, will throw otherwise.
+					 * May only be specified when IConnect.supportedFeatures['submit_signals_v2'] is true,
+					 * will throw otherwise.
 					 */
 					targetClientId?: ClientConnectionId;
 				}

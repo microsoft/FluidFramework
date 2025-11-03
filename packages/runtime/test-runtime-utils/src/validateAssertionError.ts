@@ -28,7 +28,8 @@ export function validateAssertionError(
 	expectedErrorMsg: string | RegExp,
 ): boolean {
 	// Asserts with custom debugMessageBuilder put extra content on the second line of the message, even when tagged.
-	// Thus extract the first line, which will be the assert tag if there is one, and replace it with the message from the shortCodeMap.
+	// Thus extract the first line, which will be the assert tag if there is one,
+	// and replace it with the message from the shortCodeMap.
 	const split = error.message.split("\n");
 	const possibleShortCode = split[0].trim();
 	if (possibleShortCode in shortCodeMap) {

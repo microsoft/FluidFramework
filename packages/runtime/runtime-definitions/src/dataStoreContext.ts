@@ -58,8 +58,10 @@ export enum FlushMode {
 	/**
 	 * In Immediate flush mode the runtime will immediately send all operations to the driver layer.
 	 *
-	 * @deprecated This option will be removed in the next major version and should not be used. Use {@link FlushMode.TurnBased} instead, which is the default.
-	 * See https://github.com/microsoft/FluidFramework/tree/main/packages/runtime/container-runtime/src/opLifecycle#how-batching-works
+	 * @deprecated This option will be removed in the next major version and should not be used.
+	 * Use {@link FlushMode.TurnBased} instead, which is the default. See:
+	 *
+	 * https://github.com/microsoft/FluidFramework/tree/main/packages/runtime/container-runtime/src/opLifecycle
 	 */
 	Immediate,
 
@@ -127,13 +129,15 @@ export type VisibilityState = (typeof VisibilityState)[keyof typeof VisibilitySt
 export interface IContainerRuntimeBaseEvents extends IEvent {
 	/**
 	 * Indicates the beginning of an incoming batch of ops
-	 * @param op - The first op in the batch. Can be inspected to learn about the sequence numbers relevant for this batch.
+	 * @param op - The first op in the batch.
+	 * Can be inspected to learn about the sequence numbers relevant for this batch.
 	 */
 	(event: "batchBegin", listener: (op: Omit<ISequencedDocumentMessage, "contents">) => void);
 	/**
 	 * Indicates the end of an incoming batch of ops
 	 * @param error - If an error occurred while processing the batch, it is provided here.
-	 * @param op - The last op in the batch. Can be inspected to learn about the sequence numbers relevant for this batch.
+	 * @param op - The last op in the batch.
+	 * Can be inspected to learn about the sequence numbers relevant for this batch.
 	 */
 	(
 		event: "batchEnd",
@@ -196,7 +200,8 @@ export interface IDataStore {
 }
 
 /**
- * A reduced set of functionality of {@link @fluidframework/container-runtime-definitions#IContainerRuntime} that a data store context/data store runtime will need.
+ * A reduced set of functionality of {@link @fluidframework/container-runtime-definitions#IContainerRuntime} that a
+ * data store context/data store runtime will need.
  * @privateRemarks
  * TODO: this should be merged into IFluidDataStoreContext
  * @legacy @beta
@@ -214,7 +219,8 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * If the callback throws an error, the container will close and the error will be logged.
 	 *
 	 * @remarks
-	 * `orderSequentially` may enter staging mode for the duration of the function. This is necessary for rolling back certain op types.
+	 * `orderSequentially` may enter staging mode for the duration of the function. This is necessary for rolling
+	 * back certain op types.
 	 */
 	orderSequentially(callback: () => void): void;
 
@@ -255,8 +261,8 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	/**
 	 * Returns the aliased data store's entryPoint, given the alias.
 	 * @param alias - The alias for the data store.
-	 * @returns The data store's entry point ({@link @fluidframework/core-interfaces#IFluidHandle}) if it exists and is aliased.
-	 * Returns undefined if no data store has been assigned the given alias.
+	 * @returns The data store's entry point ({@link @fluidframework/core-interfaces#IFluidHandle}) if it exists
+	 * and is aliased. Returns undefined if no data store has been assigned the given alias.
 	 */
 	getAliasedDataStoreEntryPoint(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
 
@@ -411,16 +417,18 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	 * Ask the DDS to resubmit a message. This can happen for several reasons, such as:
 	 *
 	 * - We reconnected and discovered the original message was never acked.
-	 * - The original message was submitted from a reentrant state that is impossible for other clients to interpret correctly
+	 * - The original message was submitted from a reentrant state that is impossible for other clients to interpret
+	 * correctly
 	 * - The original message was never sent on the wire and subsequent ops have been inbounded
 	 * @param type - The type of the original message.
 	 * @param content - The content of the original message.
 	 * @param localOpMetadata - The local metadata associated with the original message.
-	 * @param squash - If true, the DDS should avoid resubmitting any "unnecessary intermediate state" created by this message.
-	 * This includes any content which this message created but has since been changed or removed by subsequent messages.
-	 * For example, if this message (call it A) inserts content into a DDS that a subsequent op (call it B) removes,
-	 * resubmission of this message (call it A') should avoid inserting that content, and resubmission of the subsequent op that removed it (B') would
-	 * account for the fact that A' never inserted content.
+	 * @param squash - If true, the DDS should avoid resubmitting any "unnecessary intermediate state" created by this
+	 * message. This includes any content which this message created but has since been changed or removed by
+	 * subsequent messages. For example, if this message (call it A) inserts content into a DDS that a subsequent op
+	 * (call it B) removes, resubmission of this message (call it A') should avoid inserting that content, and
+	 * resubmission of the subsequent op that removed it (B') would account for the fact that A' never inserted
+	 * content.
 	 *
 	 * @privateRemarks
 	 * See remarks about squashing contract on `CommitStagedChangesOptionsExperimental`.
@@ -476,13 +484,15 @@ export interface IPendingMessagesState {
  * Context for an {@link IDataStore} like object.
  * @remarks
  * This context does NOT represent common information provided to all channels under a specific parent.
- * Each implementation of {@link IFluidDataStoreChannel} will receive its own instance of this context that contains specifically the data it needs.
+ * Each implementation of {@link IFluidDataStoreChannel} will receive its own instance of this context that contains
+ * specifically the data it needs.
  *
  * This layout is temporary, as {@link IFluidParentContext} and {@link IFluidDataStoreContext} will converge.
  * Therefore the semantics of these two interfaces is not really distinct.
  *
  * @privateRemarks
- * In addition to the use for datastores via IFluidDataStoreContext, this is implemented by ContainerRuntime to provide context to the ChannelCollection.
+ * In addition to the use for datastores via IFluidDataStoreContext, this is implemented by ContainerRuntime to provide
+ * context to the ChannelCollection.
  *
  * @legacy @beta
  */
@@ -619,7 +629,8 @@ export interface IFluidParentContext
 /**
  * A path which selects a {@link (IFluidDataStoreFactory:interface)} within a hierarchial registry.
  * @remarks
- * Each string in the array is the "identifier" to pick a specific {@link NamedFluidDataStoreRegistryEntry2} within a {@link NamedFluidDataStoreRegistryEntries}.
+ * Each string in the array is the "identifier" to pick a specific {@link NamedFluidDataStoreRegistryEntry2} within a
+ * {@link NamedFluidDataStoreRegistryEntries}.
  *
  * Due to some usages joining this array with "/", it is recommended to avoid using "/" in the strings.
  * @legacy @beta
@@ -648,7 +659,8 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 	/**
 	 * The {@link PackagePath} of the data store as per the package factory.
 	 * @remarks
-	 * This defines what {@link (IFluidDataStoreFactory:interface)} would be used to create the {@link IDataStore.entryPoint} of the {@link IDataStore}.
+	 * This defines what {@link (IFluidDataStoreFactory:interface)} would be used to create the
+	 * {@link IDataStore.entryPoint} of the {@link IDataStore}.
 	 */
 	readonly packagePath: PackagePath;
 	readonly baseSnapshot: ISnapshotTree | undefined;
@@ -656,8 +668,9 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 	/**
 	 * @deprecated 0.16 Issue #1635, #3631
 	 */
-	// Seems like this can be removed now; the issues mentioned in the @deprecated tag are about _createDataStoreWithProps
-	// which we finally removed in FF 2.20 (https://github.com/microsoft/FluidFramework/pull/22996).
+	// Seems like this can be removed now; the issues mentioned in the @deprecated tag are about
+	// _createDataStoreWithProps which we finally removed in FF 2.20
+	// (https://github.com/microsoft/FluidFramework/pull/22996).
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
 	readonly createProps?: any;
 
@@ -672,9 +685,9 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 	/**
 	 * Synchronously creates a detached child data store.
 	 *
-	 * The `createChildDataStore` method allows for the synchronous creation of a detached child data store. This is particularly
-	 * useful in scenarios where immediate availability of the child data store is required, such as during the initialization
-	 * of a parent data store, or when creation is in response to synchronous user input.
+	 * The `createChildDataStore` method allows for the synchronous creation of a detached child data store. This is
+	 * particularly useful in scenarios where immediate availability of the child data store is required, such as
+	 * during the initialization of a parent data store, or when creation is in response to synchronous user input.
 	 *
 	 * In order for this function to succeed:
 	 * 1. The parent data store's factory must also be an `IFluidDataStoreRegistry`.
@@ -682,7 +695,8 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 	 * 3. The parent data store's registry must synchronously provide the child factory via the `getSync` method.
 	 * 4. The child factory must implement the `createDataStore` method.
 	 *
-	 * These invariants ensure that the child data store can also be created by a remote client running the same code as this client.
+	 * These invariants ensure that the child data store can also be created by a remote client running the same code
+	 * as this client.
 	 *
 	 * @param childFactory - The factory of the data store to be created.
 	 * @returns The created data store channel.

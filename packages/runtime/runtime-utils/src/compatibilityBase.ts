@@ -58,7 +58,8 @@ export type MinimumMinorSemanticVersion = `${bigint}.${bigint}.0` | `${bigint}.0
 
 /**
  * String in a valid semver format of a specific version at least specifying minor.
- * Unlike {@link @fluidframework/runtime-definitions#MinimumVersionForCollab}, this type allows any bigint for the major version.
+ * Unlike {@link @fluidframework/runtime-definitions#MinimumVersionForCollab},
+ * this type allows any bigint for the major version.
  * Used as a more generic type that allows major versions other than 1 or 2.
  *
  * @internal
@@ -101,16 +102,17 @@ export function getConfigsForMinVersionForCollab<T extends Record<SemanticVersio
 		const config = configMap[key as keyof T];
 		// Sort the versions in ascending order so we can short circuit the loop.
 		const versions = Object.keys(config).sort(compare);
-		// For each config, we iterate over the keys and check if minVersionForCollab is greater than or equal to the version.
-		// If so, we set it as the default value for the option. At the end of the loop we should have the most recent default
-		// value that is compatible with the version specified as the minVersionForCollab.
+		// For each config, we iterate over the keys and check if minVersionForCollab is greater than or
+		// equal to the version.
+		// If so, we set it as the default value for the option. At the end of the loop we should have the
+		// most recent default value that is compatible with the version specified as the minVersionForCollab.
 		for (const version of versions) {
 			if (gte(minVersionForCollab, version)) {
 				// Type assertion is safe as version is a key from the config object
 				defaultConfigs[key] = config[version as MinimumMinorSemanticVersion];
 			} else {
-				// If the minVersionForCollab is less than the version, we break out of the loop since we don't need to check
-				// any later versions.
+				// If the minVersionForCollab is less than the version, we break out of the loop since
+				// we don't need to check any later versions.
 				break;
 			}
 		}
@@ -136,7 +138,8 @@ export function checkValidMinVersionForCollabVerbose(
 	return {
 		isValidSemver,
 
-		// We have to check if the value is a valid semver before calling gte/lte, otherwise they will throw when parsing the version.
+		// We have to check if the value is a valid semver before calling gte/lte,
+		// otherwise they will throw when parsing the version.
 		isGteLowestMinVersion:
 			isValidSemver && gte(minVersionForCollab, lowestMinVersionForCollab),
 		isLtePkgVersion: isValidSemver && lte(minVersionForCollab, pkgVersion),
@@ -145,7 +148,8 @@ export function checkValidMinVersionForCollabVerbose(
 
 /**
  * Checks if the minVersionForCollab is valid.
- * A valid minVersionForCollab is a MinimumVersionForCollab that is at least `lowestMinVersionForCollab` and less than or equal to the current package version.
+ * A valid minVersionForCollab is a MinimumVersionForCollab that is at least `lowestMinVersionForCollab`
+ * and less than or equal to the current package version.
  *
  * @internal
  */
@@ -176,7 +180,8 @@ export function semanticVersionToMinimumVersionForCollab(
 			`Version ${minVersionForCollab} is not a valid MinimumVersionForCollab. ` +
 				`It must be in a valid semver format, at least ${lowestMinVersionForCollab}, ` +
 				`and less than or equal to the current package version ${pkgVersion}. ` +
-				`Details: { isValidSemver: ${isValidSemver}, isGteLowestMinVersion: ${isGteLowestMinVersion}, isLtePkgVersion: ${isLtePkgVersion} }`,
+				`Details: { isValidSemver: ${isValidSemver}, isGteLowestMinVersion: ${isGteLowestMinVersion}, ` +
+				`isLtePkgVersion: ${isLtePkgVersion} }`,
 		);
 	}
 
@@ -220,8 +225,8 @@ export function getValidationForRuntimeOptions<T extends Record<string, unknown>
 }
 
 /**
- * Helper function to map ContainerRuntimeOptionsInternal config values to
- * minVersionForCollab in, e.g., {@link @fluidframework/container-runtime#runtimeOptionsAffectingDocSchemaConfigValidationMap}.
+ * Helper function to map ContainerRuntimeOptionsInternal config values to minVersionForCollab in, e.g.,
+ * {@link @fluidframework/container-runtime#runtimeOptionsAffectingDocSchemaConfigValidationMap}.
  *
  * @internal
  */
@@ -239,7 +244,8 @@ export function configValueToMinVersionForCollab<
 		// It iterates through each entry in `configValueToRequiredVersionMap`. If `possibleConfigValue` shares at
 		// least one key-value pair with the input `configValue`, its associated `versionRequired` is collected into
 		// `matchingVersions`. After checking all entries, the highest among the collected versions is returned.
-		// This represents the overall minimum version required to support the features implied by the input `configValue`.
+		// This represents the overall minimum version required to support the features implied by the input
+		// `configValue`.
 		const matchingVersions: SemanticVersion[] = [];
 		for (const [
 			possibleConfigValue,

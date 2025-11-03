@@ -84,6 +84,7 @@ async function safeRequestCore(requestCallback: () => Promise<Response>): Promis
 		// TODO: narrow to a real error type here
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 		if ((error as any)?.response?.status) {
+			// eslint-disable-next-line max-len
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 			response = (error as any).response;
 		} else {

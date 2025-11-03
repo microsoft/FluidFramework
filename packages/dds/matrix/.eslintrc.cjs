@@ -12,6 +12,7 @@ module.exports = {
 	rules: {
 		"@typescript-eslint/no-shadow": "off",
 		"space-before-function-paren": "off", // Off because it conflicts with typescript-formatter
+		"max-len": "off", // Many hits when moving away from eslint-config-prettier. Should be addressed at some point.
 		// #region TODO: remove these once eslint-config-fluid has been updated to 5.8.0
 		"@typescript-eslint/consistent-type-exports": [
 			"error",
@@ -31,6 +32,12 @@ module.exports = {
 			rules: {
 				// Test files are run in node only so additional node libraries can be used.
 				"import/no-nodejs-modules": ["error", { allow: ["node:assert", "node:path"] }],
+			},
+		},
+		{
+			files: ["src/test/types/*"],
+			rules: {
+				"max-len": "off",
 			},
 		},
 	],

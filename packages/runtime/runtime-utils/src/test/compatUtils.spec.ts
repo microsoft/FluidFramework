@@ -22,6 +22,7 @@ import { pkgVersion } from "../packageVersion.js";
 
 describe("compatibilityBase", () => {
 	describe("getConfigsForMinVersionForCollab", () => {
+		// eslint-disable-next-line max-len
 		// eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- type required for ConfigMap processing
 		type ITestConfigMap = {
 			featureA: string;

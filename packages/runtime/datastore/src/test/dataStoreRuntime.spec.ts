@@ -322,7 +322,8 @@ describe("FluidDataStoreRuntime.isDirty tracking", () => {
 		const runtime = createRuntime("resubmitChannel");
 		assert.strictEqual(runtime.isDirty, false, "Runtime should start clean");
 
-		// Simulate a channel context with a reSubmit method that chooses not to submit anything, for internals of runtime.reSubmit call below
+		// Simulate a channel context with a reSubmit method that chooses not to submit anything,
+		// for internals of runtime.reSubmit call below
 		sinon.stub(runtime, "contexts").get(() => new Map([["foo", { reSubmit: () => {} }]]));
 
 		// Initial local op

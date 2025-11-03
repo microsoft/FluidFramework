@@ -219,7 +219,8 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
  */
 export interface IDocumentServiceEvents extends IEvent {
 	/**
-	 * This event is used to communicate any metadata related to the container. We might have received metadata from the service.
+	 * This event is used to communicate any metadata related to the container.
+	 * We might have received metadata from the service.
 	 * Read more info on this event from here `IContainer.containerMetadata`.
 	 */
 	(event: "metadataUpdate", listener: (metadata: Record<string, string>) => void);
@@ -233,9 +234,10 @@ export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
 	/**
 	 * @param reason - The reason for the disconnection.
 	 * Note: this parameter will also accept undefined in a future release to support clean disconnections.
-	 * When `reason` is provided, it indicates an error that caused the disconnection. When `undefined`, it represents
-	 * a clean, intentional disconnect that should not be treated as an error.
-	 * Signature will change from `(reason: IAnyDriverError) => void` to `(reason: IAnyDriverError | undefined) => void`.
+	 * When `reason` is provided, it indicates an error that caused the disconnection.
+	 * When `undefined`, it represents a clean, intentional disconnect that should not be treated as an error.
+	 * Signature will change from `(reason: IAnyDriverError) => void` to
+	 * `(reason: IAnyDriverError | undefined) => void`.
 	 * Update your listener implementations to handle cases where `reason` is undefined.
 	 */
 	(event: "disconnect", listener: (reason: IAnyDriverError) => void);

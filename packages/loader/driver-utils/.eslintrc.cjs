@@ -20,5 +20,11 @@ module.exports = {
 				"import/no-nodejs-modules": "off", // Node libraries are OK for test files.
 			},
 		},
+		{
+			files: ["src/test/types/*"],
+			rules: {
+				"max-len": "off",
+			},
+		},
 	],
 };

@@ -15,4 +15,12 @@ module.exports = {
 		"@typescript-eslint/promise-function-async": "off",
 		"@typescript-eslint/no-misused-promises": "off",
 	},
+	overrides: [
+		{
+			files: ["src/test/types/*"],
+			rules: {
+				"max-len": "off",
+			},
+		},
+	],
 };

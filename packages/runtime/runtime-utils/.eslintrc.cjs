@@ -11,4 +11,12 @@ module.exports = {
 	rules: {
 		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 	},
+	overrides: [
+		{
+			files: ["src/test/types/*"],
+			rules: {
+				"max-len": "off",
+			},
+		},
+	],
 };

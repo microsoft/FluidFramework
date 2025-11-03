@@ -33,11 +33,14 @@ export interface FluidAppInsightsLoggerConfig {
 	 */
 	filtering: {
 		/**
-		 * Determines whether all telemetry events are sent or not sent by default and whether filters will exclude matching telemetry events or include them.
+		 * Determines whether all telemetry events are sent or not sent by default and whether filters will exclude
+		 * matching telemetry events or include them.
 		 *
-		 * "inclusive" mode means all logs are NOT SENT by default and only the events that match at least one or more specified filters WILL be sent (included).
+		 * "inclusive" mode means all logs are NOT SENT by default and only the events that match at least one or
+		 * more specified filters WILL be sent (included).
 		 *
-		 * "exclusive" mode means all logs ARE SENT by default and only the events that match at least one or more specified filters WILL NOT be sent (excluded).
+		 * "exclusive" mode means all logs ARE SENT by default and only the events that match at least one or
+		 * more specified filters WILL NOT be sent (excluded).
 		 */
 		mode: "inclusive" | "exclusive";
 		/**
@@ -49,7 +52,8 @@ export interface FluidAppInsightsLoggerConfig {
 		 *
 		 * 1. There must not be any two filters with the same `namespacePattern`.
 		 *
-		 * 2. All {@link NamespaceFilter} must not have any defined `namespacePatternException` that is not a child of the parent `namespacePattern`
+		 * 2. All {@link NamespaceFilter} must not have any defined `namespacePatternException` that is not
+		 * a child of the parent `namespacePattern`
 		 */
 		filters?: TelemetryFilter[];
 	};
@@ -92,21 +96,27 @@ export interface NamespaceFilter {
 /**
  * Object used with an {@link FluidAppInsightsLoggerConfig}
  * to define a filter with logic for matching it to telemetry events.
- * Filters can include either a category, namespace or both types of filters; a valid filter must have at least one defined.
+ * Filters can include either a category, namespace or both types of filters;
+ * a valid filter must have at least one defined.
  * Not definining the `categories` filter array is the same as providing an array with all possible categories.
  *
  * Events must satisify the following rules for a telemetry filter:
  *
- * 1. The event must match the requirements of the most specific relevant filter to it. This takes precedence over a more generic filter.
- * The less categories and longer the namespace within a filter, the more specific it is. Definining no categories is equivalant to defining all categories.
+ * 1. The event must match the requirements of the most specific relevant filter to it.
+ * This takes precedence over a more generic filter.
+ * The less categories and longer the namespace within a filter, the more specific it is.
+ * Definining no categories is equivalant to defining all categories.
  *
  * 2. If a {@link TelemetryFilter} specifies both `categories` and a `namespace`, the event must match both.
  *
  * 3. If only `categories` or a `namespace` is provided, the event should just match the with whatever was defined.
  *
- * 4. If a `namespace` pattern exception is specified in the {@link TelemetryFilter}, the event should not match the exception pattern.
+ * 4. If a `namespace` pattern exception is specified in the {@link TelemetryFilter},
+ * the event should not match the exception pattern.
  * @example
- * With the following configuration, an event `{ namespace: "A.B.C", categories: ["generic"] }` will not be sent despite matching the first, less specific filter because it did not match the second filter which was the most relevant and specific
+ * With the following configuration, an event `{ namespace: "A.B.C", categories: ["generic"] }` will not be
+ * sent despite matching the first, less specific filter because it did not match the second filter which was
+ * the most relevant and specific
  * ```
  * const logger = new FluidAppInsightsLogger(appInsightsClient, {
  *			filtering: {
@@ -205,14 +215,17 @@ class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 	/**
 	 * Checks if a given telemetry event conforms to any of the provided {@link TelemetryFilter} rules.
 	 *
-	 * 1. The event must match the requirements of the most specific relevant filter to it. This takes precedence over a more generic filter.
-	 * The less categories and longer the namespace within a filter, the more specific it is. Definining no categories is equivalant to defining all categories.
+	 * 1. The event must match the requirements of the most specific relevant filter to it.
+	 * This takes precedence over a more generic filter.
+	 * The less categories and longer the namespace within a filter, the more specific it is.
+	 * Definining no categories is equivalant to defining all categories.
 	 *
 	 * 2. If a {@link TelemetryFilter} specifies both `categories` and a `namespace`, the event must match both.
 	 *
 	 * 3. If only `categories` or a `namespace` is provided, the event should match either one of them.
 	 *
-	 * 4. If a `namespace` pattern exception is specified in the {@link TelemetryFilter}, the event should not match the exception pattern.
+	 * 4. If a `namespace` pattern exception is specified in the {@link TelemetryFilter}, the event should
+	 * not match the exception pattern.
 	 *
 	 * @param event - The telemetry event to check against the filters.
 	 *
@@ -240,8 +253,8 @@ class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 					}
 
 					if (doesFilterCategoriesMatch) {
-						// The most specific, relevant filter matches so no need to attempt to evaluate against other filters
-						// as long as the events namespace does not match any defined namespace exception.
+						// The most specific, relevant filter matches so no need to attempt to evaluate against other
+						// filters as long as the events namespace does not match any defined namespace exception.
 						if (filter.namespacePatternExceptions !== undefined) {
 							for (const patternException of filter.namespacePatternExceptions) {
 								if (event.eventName.startsWith(patternException)) {
@@ -282,9 +295,11 @@ class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 	}
 
 	/**
-	 * Checks an array of telemetry filters for any issues, merges redundant filters, and returns a fully validated array.
+	 * Checks an array of telemetry filters for any issues, merges redundant filters,
+	 * and returns a fully validated array.
 	 *
-	 * @throws An Error if there are two filters with duplicate namespace patterns or a filter with a pattern exception that is not a child of the parent pattern.
+	 * @throws An Error if there are two filters with duplicate namespace patterns or a filter with a
+	 * pattern exception that is not a child of the parent pattern.
 	 */
 	private validateFilters(filters: TelemetryFilter[]): void {
 		const uniqueFilterNamespaces = new Set<string>();
@@ -305,8 +320,9 @@ class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 					}
 				}
 			} else if ("categories" in filter && filter.categories !== undefined) {
-				// These are filters that only contain "categories". For the purpose of this validation logic, we are treating filters
-				// that does not contain a defined namespace as the the same as a blank "" namespace pattern (which will match any event).
+				// These are filters that only contain "categories".
+				// For the purpose of this validation logic, we are treating filters that do not contain a defined
+				// namespace the same as a blank "" namespace pattern (which will match any event).
 				if (uniqueFilterNamespaces.has("")) {
 					throw new Error("Cannot have multiple filters that only define categories");
 				}

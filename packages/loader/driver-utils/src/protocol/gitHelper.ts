@@ -54,7 +54,8 @@ export function getGitType(value: SummaryObject): "blob" | "tree" {
 }
 
 /**
- * NOTE: Renamed from `buildHierarchy` to `buildGitTreeHierarchy`. There is usage of this function in loader and driver layer.
+ * NOTE: Renamed from `buildHierarchy` to `buildGitTreeHierarchy`.
+ * There is usage of this function in loader and driver layer.
  * Build a tree hierarchy base on a flat tree
  *
  * @param flatTree - a flat tree

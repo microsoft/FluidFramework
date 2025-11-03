@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable max-len */
+
 import { strict as assert } from "node:assert";
 
 import { ApplicationInsights, type IEventTelemetry } from "@microsoft/applicationinsights-web";
@@ -720,3 +722,5 @@ describe("Telemetry Filter - Category & Namespace Combination Filtering", () => 
 		assert.strictEqual(actualSentEvent5.length, 1);
 	});
 });
+
+/* eslint-enable max-len */

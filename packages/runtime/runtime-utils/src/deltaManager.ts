@@ -18,12 +18,14 @@ import type {
 export function toDeltaManagerInternal(
 	deltaManager: IDeltaManagerErased,
 ): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
-	// Type assertion is safe as IDeltaManagerErased is specifically designed to be a type-erased version of IDeltaManager
+	// Type assertion is safe as IDeltaManagerErased is specifically designed to be a
+	// type-erased version of IDeltaManager
 	return deltaManager as unknown as IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 }
 
 /**
- * Casts the the internal API for delta manager into the public type erased API for returning from public APIs that should not have access to any of its members.
+ * Casts the the internal API for delta manager into the public type erased API for returning from public APIs
+ * that should not have access to any of its members.
  * @internal
  */
 export function toDeltaManagerErased(

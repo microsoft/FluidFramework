@@ -12,7 +12,8 @@ import type {
 
 /**
  * Types of test drivers.
- * These values are replicated in {@link @fluid-private/test-version-utils#compatOptions.d.ts}. Ensure that any revisions here are also reflected in test-version-utils.
+ * These values are replicated in {@link @fluid-private/test-version-utils#compatOptions.d.ts}.
+ * Ensure that any revisions here are also reflected in test-version-utils.
  * @internal
  */
 export type TestDriverTypes =
@@ -25,7 +26,8 @@ export type TestDriverTypes =
 
 /**
  * Types of Routerlicious endpoints.
- * These values are replicated in {@link @fluid-private/test-version-utils#compatOptions.d.ts}. Ensure that any revisions here are also reflected in test-version-utils.
+ * These values are replicated in {@link @fluid-private/test-version-utils#compatOptions.d.ts}.
+ * Ensure that any revisions here are also reflected in test-version-utils.
  * @internal
  */
 export type RouterliciousEndpoint = "frs" | "frsCanary" | "r11s" | "docker";

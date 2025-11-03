@@ -241,7 +241,8 @@ export interface IDeltaManagerFull<T = ISequencedDocumentMessage, U = IDocumentM
 }
 
 /**
- * Type guard to check if the given deltaManager is of type {@link @fluidframework/container-definitions#IDeltaManagerFull}.
+ * Type guard to check if the given deltaManager is of type
+ * {@link @fluidframework/container-definitions#IDeltaManagerFull}.
  * @internal
  */
 export function isIDeltaManagerFull(

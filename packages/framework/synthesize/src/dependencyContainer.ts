@@ -176,6 +176,7 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
 					if (provider && typeof provider === "function") {
 						return (
 							Promise.resolve(this[IFluidDependencySynthesizer])
+								// eslint-disable-next-line max-len
 								// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call
 								.then(async (fds): Promise<any> => provider(fds))
 								// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access

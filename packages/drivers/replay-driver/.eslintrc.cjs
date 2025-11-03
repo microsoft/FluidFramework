@@ -9,4 +9,12 @@ module.exports = {
 		"@typescript-eslint/strict-boolean-expressions": "off",
 		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 	},
+	overrides: [
+		{
+			files: ["src/test/types/*"],
+			rules: {
+				"max-len": "off",
+			},
+		},
+	],
 };

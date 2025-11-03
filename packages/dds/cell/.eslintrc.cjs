@@ -12,4 +12,12 @@ module.exports = {
 		// TODO: consider re-enabling once we have addressed how this rule conflicts with our error codes.
 		"unicorn/numeric-separators-style": "off",
 	},
+	overrides: [
+		{
+			files: ["src/test/types/*"],
+			rules: {
+				"max-len": "off",
+			},
+		},
+	],
 };

@@ -50,5 +50,11 @@ module.exports = {
 				"@typescript-eslint/strict-boolean-expressions": "off",
 			},
 		},
+		{
+			files: ["src/test/types/*"],
+			rules: {
+				"max-len": "off",
+			},
+		},
 	],
 };

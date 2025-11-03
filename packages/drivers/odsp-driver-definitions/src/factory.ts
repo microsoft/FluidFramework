@@ -16,7 +16,8 @@ export interface ISnapshotOptions {
 	 * Maximum Data size (in bytes)
 	 *
 	 * @remarks
-	 * If specified, SPO will fail snapshot request with 413 error (see {@link @fluidframework/odsp-driver-definitions#(OdspErrorTypes:variable).snapshotTooBig})
+	 * If specified, SPO will fail snapshot request with 413 error (see
+	 * {@link @fluidframework/odsp-driver-definitions#(OdspErrorTypes:variable).snapshotTooBig})
 	 * if snapshot is bigger in size than specified limit.
 	 */
 	mds?: number;
@@ -86,7 +87,8 @@ export interface ICollabSessionOptions {
 	/**
 	 * Value indicating the client display name for current session.
 	 * This name will be used in attribution associated with edits made during session.
-	 * This is optional and used only when collab session is being joined by client acting in app-only mode (i.e. without user context).
+	 * This is optional and used only when collab session is being joined by client acting in app-only mode
+	 * (i.e. without user context).
 	 * If not specified client display name is extracted from the access token that is used to join session.
 	 */
 	displayName?: string;
@@ -170,8 +172,8 @@ export interface HostStoragePolicy {
 	enableSingleRequestForShareLinkWithCreate?: boolean;
 
 	/**
-	 * True if host does not want the storage service to use the prefetch cache to get the snapshot. Undefined will be treated
-	 * as false. This is if the host wants to do some A/B testing.
+	 * True if host does not want the storage service to use the prefetch cache to get the snapshot.
+	 * Undefined will be treated as false. This is if the host wants to do some A/B testing.
 	 */
 	avoidPrefetchSnapshotCache?: boolean;
 }

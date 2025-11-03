@@ -275,7 +275,8 @@ describe("SharedArray", () => {
 				containerRuntimeFactory.processAllMessages();
 
 				// Verify that the first and second client have converged.
-				// Note: The expected order of elements is not deterministic in this case and depends on the DDS merge policy.
+				// Note: The expected order of elements is not deterministic in this case
+				// and depends on the DDS merge policy.
 				const actualRemoteSharedArray = [...remoteSharedArray.get()];
 				const actualSharedArray = [...sharedArray.get()];
 				verifyEntries(
@@ -304,7 +305,8 @@ describe("SharedArray", () => {
 
 				containerRuntimeFactory.processAllMessages();
 
-				// Verify that the first and second client have the correct values and length and that they have converged.
+				// Verify that the first and second client have the correct values and length and
+				// that they have converged.
 				const actualRemoteSharedArray = [...remoteSharedArray.get()];
 				const actualSharedArray = [...sharedArray.get()];
 				verifyEntries(
@@ -340,7 +342,8 @@ describe("SharedArray", () => {
 
 				containerRuntimeFactory.processAllMessages();
 
-				// Verify that the first and second client have the correct values and length and that they have converged.
+				// Verify that the first and second client have the correct values and length
+				// and that they have converged.
 				const actualRemoteSharedArray = [...remoteSharedArray.get()];
 				const actualSharedArray = [...sharedArray.get()];
 				verifyEntries(
@@ -385,7 +388,8 @@ describe("SharedArray", () => {
 
 				containerRuntimeFactory.processAllMessages();
 
-				// Verify that the first and second client have the correct values and length and that they have converged.
+				// Verify that the first and second client have the correct values and length
+				// and that they have converged.
 				const actualRemoteSharedArray = [...remoteSharedArray.get()];
 				const actualSharedArray = [...sharedArray.get()];
 				verifyEntries(
@@ -419,7 +423,8 @@ describe("SharedArray", () => {
 				containerRuntimeFactory.processAllMessages();
 
 				// Verify that the first and second client have converged.
-				// Note: Here the expected output is not deterministic as either the first client's or the second client's change will win as per the DDS merge policy.
+				// Note: Here the expected output is not deterministic as either the first client's or the second
+				// client's change will win as per the DDS merge policy.
 				const actualRemoteSharedArray = [...remoteSharedArray.get()];
 				const actualSharedArray = [...sharedArray.get()];
 				verifyEntries(

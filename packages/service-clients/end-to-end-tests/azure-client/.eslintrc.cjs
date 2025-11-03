@@ -57,6 +57,12 @@ module.exports = {
 				],
 			},
 		},
+		{
+			files: ["src/test/types/*"],
+			rules: {
+				"max-len": "off",
+			},
+		},
 	],
 	parserOptions: {
 		project: ["./src/test/tsconfig.json"],

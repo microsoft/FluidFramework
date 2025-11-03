@@ -41,5 +41,11 @@ module.exports = {
 				"@typescript-eslint/no-unused-expressions": "off",
 			},
 		},
+		{
+			files: ["src/test/types/*"],
+			rules: {
+				"max-len": "off",
+			},
+		},
 	],
 };

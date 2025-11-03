@@ -173,6 +173,7 @@ function convertSummaryToISnapshot(
 				);
 			}
 			default: {
+				// eslint-disable-next-line max-len
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 				unreachableCase(summaryObject, `Unknown tree type ${(summaryObject as any).type}`);
 			}

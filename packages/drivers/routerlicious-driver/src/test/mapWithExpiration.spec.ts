@@ -62,7 +62,10 @@ describe("MapWithExpiration", () => {
 		}
 	}
 
-	/** Asserts that actual.get returns the same value as expected for all keys (and elsewhere we assert that .keys matches) */
+	/**
+	 * Asserts that actual.get returns the same value as expected for all keys
+	 * (and elsewhere we assert that .keys matches)
+	 */
 	function assertGet(
 		actual: MapWithExpiration<number, string>,
 		expected: Map<number, string>,

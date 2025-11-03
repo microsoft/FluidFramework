@@ -11,6 +11,7 @@ module.exports = {
 	rules: {
 		"@typescript-eslint/no-use-before-define": "off",
 		"@typescript-eslint/strict-boolean-expressions": "off",
+		"max-len": "off", // Many hits when moving away from eslint-config-prettier. Should be addressed at some point.
 
 		// TODO: consider re-enabling once we have addressed how this rule conflicts with our error codes.
 		"unicorn/numeric-separators-style": "off",
@@ -22,6 +23,12 @@ module.exports = {
 			rules: {
 				// Allow tests (which only run in Node.js) use `__dirname`
 				"unicorn/prefer-module": "off",
+			},
+		},
+		{
+			files: ["src/test/types/*"],
+			rules: {
+				"max-len": "off",
 			},
 		},
 	],

@@ -11,4 +11,12 @@ module.exports = {
 	rules: {
 		"@typescript-eslint/strict-boolean-expressions": "off",
 	},
+	overrides: [
+		{
+			files: ["src/test/types/*"],
+			rules: {
+				"max-len": "off",
+			},
+		},
+	],
 };

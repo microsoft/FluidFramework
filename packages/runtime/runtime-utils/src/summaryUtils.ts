@@ -213,7 +213,8 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
 
 	/**
 	 * Add a blob to the summary tree. This blob will be stored at the given key in the summary tree.
-	 * @param key - The key to store the blob at in the current summary tree being generated. Should not contain any "/" characters.
+	 * @param key - The key to store the blob at in the current summary tree being generated.
+	 * Should not contain any "/" characters.
 	 * @param content - The content of the blob to be added to the summary tree.
 	 */
 	public addBlob(key: string, content: string | Uint8Array): void {
@@ -232,11 +233,18 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
 	}
 
 	/**
-	 * Adds an {@link @fluidframework/driver-definitions#ISummaryHandle} that references a subtree, blob, or attachment in a previous summary.
+	 * Adds an {@link @fluidframework/driver-definitions#ISummaryHandle} that references a subtree,
+	 * blob, or attachment in a previous summary.
 	 *
-	 * @param key - The key to store the handle at in the current summary tree being generated. Should not contain any "/" characters.
-	 * @param handleType - the type of {@link @fluidframework/driver-definitions#SummaryObject} besides a SummaryHandle, i.e. {@link @fluidframework/driver-definitions#SummaryType.Tree}, {@link @fluidframework/driver-definitions#SummaryType.Blob}, {@link @fluidframework/driver-definitions#SummaryType.Attachment}
-	 * @param handle - The path pointing to the part of the previous summary being used to duplicate the data. Use {@link @fluidframework/driver-definitions#ISummaryHandle.handle} to help generate proper handle strings. Should not contain any "/" characters.
+	 * @param key - The key to store the handle at in the current summary tree being generated.
+	 * Should not contain any "/" characters.
+	 * @param handleType - the type of {@link @fluidframework/driver-definitions#SummaryObject} besides a SummaryHandle,
+	 * i.e. {@link @fluidframework/driver-definitions#SummaryType.Tree},
+	 * {@link @fluidframework/driver-definitions#SummaryType.Blob},
+	 * {@link @fluidframework/driver-definitions#SummaryType.Attachment}
+	 * @param handle - The path pointing to the part of the previous summary being used to duplicate the data.
+	 * Use {@link @fluidframework/driver-definitions#ISummaryHandle.handle} to help generate proper handle strings.
+	 * Should not contain any "/" characters.
 	 */
 	public addHandle(
 		key: string,
@@ -253,9 +261,12 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
 
 	/**
 	 * Adds a child and updates the stats accordingly.
-	 * @param key - The key to store the handle at in the current summary tree being generated. Should not contain any "/" characters.
+	 * @param key - The key to store the handle at in the current summary tree being generated.
+	 * Should not contain any "/" characters.
 	 * The key should be unique within the current summary tree, and not transform when encodeURIComponent is called.
-	 * @param summarizeResult - Similar to {@link @fluidframework/runtime-definitions#ISummaryTreeWithStats}. The provided summary can be either a {@link @fluidframework/driver-definitions#ISummaryHandle} or {@link @fluidframework/driver-definitions#ISummaryTree}.
+	 * @param summarizeResult - Similar to {@link @fluidframework/runtime-definitions#ISummaryTreeWithStats}.
+	 * The provided summary can be either a {@link @fluidframework/driver-definitions#ISummaryHandle} or
+	 * {@link @fluidframework/driver-definitions#ISummaryTree}.
 	 */
 	public addWithStats(key: string, summarizeResult: ISummarizeResult): void {
 		this.summaryTree[key] = summarizeResult.summary;
@@ -263,7 +274,8 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
 	}
 
 	/**
-	 * Adds an {@link @fluidframework/driver-definitions#ISummaryAttachment} to the summary. This blob needs to already be uploaded to storage.
+	 * Adds an {@link @fluidframework/driver-definitions#ISummaryAttachment} to the summary.
+	 * This blob needs to already be uploaded to storage.
 	 * @param id - The id of the uploaded attachment to be added to the summary tree.
 	 */
 	public addAttachment(id: string): void {
@@ -373,7 +385,8 @@ export function convertSnapshotTreeToSummaryTree(
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const content: ArrayBufferLike = snapshot.blobsContents[id]!;
 			if (content !== undefined) {
-				// Cannot change "utf-8" to "utf8" as this encoding value is stored in summaries and would be a breaking change which needs to be done first before changing to utf8.
+				// Cannot change "utf-8" to "utf8" as this encoding value is stored in summaries and would be a breaking
+				// change which needs to be done first before changing to utf8.
 				// eslint-disable-next-line unicorn/text-encoding-identifier-case -- External on-disk format is 'utf-8'.
 				decoded = bufferToString(content, "utf-8");
 			}
@@ -411,7 +424,8 @@ export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree {
 		switch (value.type) {
 			case SummaryType.Blob: {
 				let parsedContent: string;
-				// Cannot change "utf-8" to "utf8" as this encoding value is stored in summaries and would be a breaking change which needs to be done first before changing to utf8.
+				// Cannot change "utf-8" to "utf8" as this encoding value is stored in summaries and would be a
+				// breaking change which needs to be done first before changing to utf8.
 				// eslint-disable-next-line unicorn/text-encoding-identifier-case -- external contract uses 'utf-8'.
 				let encoding: "utf-8" | "base64" = "utf-8";
 				if (typeof value.content === "string") {
@@ -457,7 +471,8 @@ export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree {
  *
  * @param snapshot - The snapshot from the attach message
  * @param addedGCOutboundRoute - Callback to notify GC of a new outbound route.
- * IMPORTANT: addedGCOutboundRoute's param nodeId is "/" for the attaching node itself, or "/<id>" for its children.
+ * IMPORTANT: addedGCOutboundRoute's param nodeId is "/" for the attaching node itself,
+ * or "/<id>" for its children.
  *
  * @returns true if it found/processed GC Data, false otherwise
  *
@@ -476,7 +491,8 @@ export function processAttachMessageGCData(
 	}
 
 	assert(
-		// Cannot change "utf-8" to "utf8" as this encoding value is stored in summaries and would be a breaking change which needs to be done first before changing to utf8.
+		// Cannot change "utf-8" to "utf8" as this encoding value is stored in summaries and would be a
+		// breaking change which needs to be done first before changing to utf8.
 		// eslint-disable-next-line unicorn/text-encoding-identifier-case  -- external contract uses 'utf-8'.
 		gcDataEntry.type === TreeEntry.Blob && gcDataEntry.value.encoding === "utf-8",
 		0x8ff /* GC data should be a utf-8-encoded blob */,

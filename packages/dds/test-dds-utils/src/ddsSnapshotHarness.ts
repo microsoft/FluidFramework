@@ -7,7 +7,8 @@ import { strict as assert } from "node:assert";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
-// Simple filter to avoid tests with a name that would accidentally be parsed as directory traversal or other confusing things.
+// Simple filter to avoid tests with a name that would accidentally be parsed as directory
+// traversal or other confusing things.
 const nameCheck = new RegExp(/^[^"/\\]+$/);
 const regenerateSnapshots = process.argv.includes("--snapshot");
 
@@ -49,7 +50,8 @@ export function createSnapshotSuite(snapshotFolderPath: string): ISnapshotSuite 
 
 	function useSnapshotSubdirectory(dirPath: string = "/"): void {
 		const normalizedDir = path.join(snapshotFolderPath, dirPath);
-		// Basic sanity check to avoid bugs like accidentally recursively deleting everything under `/` if something went wrong (like dirPath navigated up directories a lot).
+		// Basic sanity check to avoid bugs like accidentally recursively deleting everything under `/`
+		// if something went wrong (like dirPath navigated up directories a lot).
 		assert(normalizedDir.startsWith(snapshotFolderPath));
 
 		if (regenerateSnapshots) {

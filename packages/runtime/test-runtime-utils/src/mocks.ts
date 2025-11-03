@@ -256,7 +256,8 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		this.dataStoreRuntime.idCompressor.finalizeCreationRange(range);
 	}
 
-	// This enables manual control over flush mode, allowing operations like rollback to be executed in a controlled environment.
+	// This enables manual control over flush mode, allowing operations like rollback to be executed
+	// in a controlled environment.
 	#manualFlushCalls: number = 0;
 
 	public async runWithManualFlush(act: () => void | Promise<void>) {
@@ -461,7 +462,8 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 	}
 
 	private submitInternal(message: IInternalMockRuntimeMessage, clientSequenceNumber: number) {
-		// Here, we should instead push to the DeltaManager. And the DeltaManager will push things into the factory's messages
+		// Here we should instead push to the DeltaManager.
+		// And the DeltaManager will push things into the factory's messages.
 		this.deltaManager.outbound.push([
 			{
 				clientSequenceNumber,
@@ -625,7 +627,8 @@ export class MockContainerRuntimeFactory {
 			JSON.stringify(this.messages.shift()),
 		) as ISequencedDocumentMessage;
 
-		// TODO: Determine if this needs to be adapted for handling server-generated messages (which have null clientId and referenceSequenceNumber of -1).
+		// TODO: Determine if this needs to be adapted for handling server-generated messages
+		// (which have null clientId and referenceSequenceNumber of -1).
 		this.minSeq.set(message.clientId as string, message.referenceSequenceNumber);
 		if (
 			this.runtimeOptions.flushMode === FlushMode.Immediate ||

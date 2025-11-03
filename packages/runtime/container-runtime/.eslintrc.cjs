@@ -22,5 +22,11 @@ module.exports = {
 				"import/no-nodejs-modules": ["error", { allow: ["node:assert", "node:crypto"] }],
 			},
 		},
+		{
+			files: ["src/test/types/*"],
+			rules: {
+				"max-len": "off",
+			},
+		},
 	],
 };

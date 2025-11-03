@@ -263,6 +263,7 @@ export class ConsensusRegisterCollection<T>
 		for (const key of Object.keys(dataObj)) {
 			assert(
 				dataObj[key].atomic?.value.type !== "Shared",
+				// eslint-disable-next-line max-len
 				0x06d /* "SharedObjects contained in ConsensusRegisterCollection can no longer be deserialized as of 0.17" */,
 			);
 
