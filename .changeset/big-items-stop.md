@@ -18,5 +18,5 @@ For migration purposes, the mapping from `SharedTreeFormatVersion` to `minVersio
 * `SharedTreeFormatVersion.v5`: `minVersionForCollab: FluidClientVersion.v2_43`
 * `SharedTreeFormatVersion.vSharedBranches`: `minVersionForCollab: FluidClientVersion.v2_43` + `SharedTreeOptions.enableSharedBranches`
 
-The values for witch there is no supported equivalent `minVersionForCollab` were never given official support.
+The values for which there is no supported equivalent `minVersionForCollab` were never given official support.
 [Contact](https://github.com/microsoft/FluidFramework/issues) the Fluid Framework team if you need help migrating away from them.
