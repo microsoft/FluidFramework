@@ -35,7 +35,7 @@ Any other kinds of test files should be documented when created by adding them t
 Code showing how to use an API can be included in tests.
 Such tests should mention that they are an "example" somewhere in the file name, suite or test name.
 These are not intended to serve as tests for the APIs, but are written as tests to ensure the examples stay up to date.
-If there is a corresponding `spec` file, the examples should be included within it: only when the examples don't cleanly correspond to a particular source file should a separate `examples` file be created. When created, the file should be places in the `src/test` directory's sub colder which corresponds to the most nested it can be while still including all the relevant APIs. For example an example of using `src/thing/foo` with `src/thing/bar` would belong in `src/test/thing` and could be named something like `fooWithBar.example.ts`.
+If there is a corresponding `spec` file, the examples should be included within it: only when the examples don't cleanly correspond to a particular source file should a separate `examples` file be created. When created, the file should be places in the `src/test` directory's sub folder which corresponds to the most nested it can be while still including all the relevant APIs. For example an example of using `src/thing/foo` with `src/thing/bar` would belong in `src/test/thing` and could be named something like `fooWithBar.example.ts`.
 
 ## Test Tagging
 
