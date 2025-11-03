@@ -65,7 +65,7 @@ import { MarkMaker } from "./sequence-field/testEdits.js";
 import {
 	assertEqual,
 	assertModularChangesetsEqual,
-	assertModularChangesetsEqualIgnoreRootLocations,
+	assertModularChangesetsEqualIgnoreRebaseVersion,
 	Change,
 	normalizeDelta,
 	removeAliases,
@@ -2168,7 +2168,7 @@ describe("ModularChangeFamily integration", () => {
 		makeEncodingTestSuite(
 			family.codecs,
 			encodingTestData,
-			assertModularChangesetsEqualIgnoreRootLocations,
+			assertModularChangesetsEqualIgnoreRebaseVersion,
 			[101, undefined],
 		);
 	});

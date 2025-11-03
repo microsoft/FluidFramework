@@ -122,11 +122,14 @@ export function assertModularChangesetsEqual(a: ModularChangeset, b: ModularChan
 	assertEqual(aNormalized, bNormalized);
 }
 
-export function assertModularChangesetsEqualIgnoreRootLocations(
+export function assertModularChangesetsEqualIgnoreRebaseVersion(
 	actual: ModularChangeset,
 	expected: ModularChangeset,
 ): void {
-	assertModularChangesetsEqual(stripRootLocations(actual), stripRootLocations(expected));
+	assertModularChangesetsEqual(
+		upgradeToRebaseVersionV2(actual),
+		upgradeToRebaseVersionV2(expected),
+	);
 }
 
 export function normalizeChangeset(change: ModularChangeset): ModularChangeset {
@@ -789,9 +792,9 @@ export function removeAliases(changeset: ModularChangeset): ModularChangeset {
 	};
 }
 
-function stripRootLocations(change: ModularChangeset): ModularChangeset {
+function upgradeToRebaseVersionV2(change: ModularChangeset): ModularChangeset {
 	const updatedRootTable = cloneRootTable(change.rootNodes);
 	updatedRootTable.detachLocations.clear();
 	updatedRootTable.outputDetachLocations.clear();
-	return { ...change, rootNodes: updatedRootTable };
+	return { ...change, rebaseVersion: 2, rootNodes: updatedRootTable };
 }
