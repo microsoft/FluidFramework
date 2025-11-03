@@ -151,6 +151,7 @@ stages:
       testWorkspace: ${{ variables.testWorkspace }}
       artifactBuildId: $(resources.pipeline.client.runID)
       continueOnError: true
+      timeoutInMinutes: 360
       testCommand: test:realsvc:r11s:docker
       stageVariables:
         - group: container-registry-info
