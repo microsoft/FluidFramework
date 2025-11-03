@@ -392,7 +392,7 @@ export class LayerGraph {
 			if (!packageLocations.has(pkg.name)) {
 				packageLocations.set(pkg.name, []);
 			}
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- Code above guarantees the key exists
 			packageLocations.get(pkg.name)!.push(pkg.directory);
 		}
 		const duplicates = [...packageCounts.entries()].filter(([_, count]) => count > 1);
