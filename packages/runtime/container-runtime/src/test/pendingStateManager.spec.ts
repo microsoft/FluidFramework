@@ -16,7 +16,10 @@ import {
 	MessageType,
 	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import type { IEnvelope } from "@fluidframework/runtime-definitions/internal";
+import type {
+	FluidDataStoreMessage,
+	IEnvelope,
+} from "@fluidframework/runtime-definitions/internal";
 import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import type Deque from "double-ended-queue";
 import Sinon from "sinon";
@@ -74,6 +77,14 @@ type StubbedRuntimeStateHandler = {
 		ReturnType<IRuntimeStateHandler[K]>
 	>;
 };
+
+const testAddressedDataStoreMessage = {
+	address: "test-address",
+	contents: {
+		type: "op",
+		content: "test-content",
+	},
+} as const satisfies IEnvelope<FluidDataStoreMessage>;
 
 describe("Pending State Manager", () => {
 	const sandbox = Sinon.createSandbox();
@@ -1213,7 +1224,7 @@ describe("Pending State Manager", () => {
 						{
 							runtimeOp: {
 								type: ContainerMessageType.FluidDataStoreOp,
-								contents: {} as IEnvelope,
+								contents: testAddressedDataStoreMessage,
 							},
 							referenceSequenceNumber: RefSeqInitial_10,
 							metadata: undefined, // Single message batch has no batch metadata
@@ -1230,7 +1241,7 @@ describe("Pending State Manager", () => {
 							Array.from<unknown, LocalBatchMessage>({ length: secondBatchSize }, (_, i) => ({
 								runtimeOp: {
 									type: ContainerMessageType.FluidDataStoreOp,
-									contents: {} as IEnvelope,
+									contents: testAddressedDataStoreMessage,
 								},
 								referenceSequenceNumber: RefSeqInitial_10,
 								localOpMetadata: `SECOND_BATCH_MSG${i + 1}`,
@@ -1309,7 +1320,7 @@ describe("Pending State Manager", () => {
 					{
 						runtimeOp: {
 							type: ContainerMessageType.FluidDataStoreOp,
-							contents: {} as IEnvelope,
+							contents: testAddressedDataStoreMessage,
 						},
 						referenceSequenceNumber: 13,
 						metadata: undefined,
@@ -1324,7 +1335,7 @@ describe("Pending State Manager", () => {
 					{
 						runtimeOp: {
 							type: ContainerMessageType.FluidDataStoreOp,
-							contents: {} as IEnvelope,
+							contents: testAddressedDataStoreMessage,
 						},
 						referenceSequenceNumber: 12,
 						metadata: undefined,
@@ -1383,7 +1394,7 @@ describe("Pending State Manager", () => {
 					{
 						runtimeOp: {
 							type: ContainerMessageType.FluidDataStoreOp,
-							contents: {} as IEnvelope,
+							contents: testAddressedDataStoreMessage,
 						},
 						referenceSequenceNumber: 15,
 						metadata: undefined,
@@ -1401,7 +1412,7 @@ describe("Pending State Manager", () => {
 					{
 						runtimeOp: {
 							type: ContainerMessageType.FluidDataStoreOp,
-							contents: {} as IEnvelope,
+							contents: testAddressedDataStoreMessage,
 						},
 						referenceSequenceNumber: 15,
 						metadata: undefined,
@@ -1427,7 +1438,7 @@ describe("Pending State Manager", () => {
 					{
 						runtimeOp: {
 							type: ContainerMessageType.FluidDataStoreOp,
-							contents: {} as IEnvelope,
+							contents: testAddressedDataStoreMessage,
 						},
 						referenceSequenceNumber: 16,
 						metadata: undefined,

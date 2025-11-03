@@ -45,20 +45,22 @@ import {
 	type IDocumentAttributes,
 	SummaryType,
 } from "@fluidframework/driver-definitions/internal";
+import type {
+	FluidDataStoreMessage,
+	ISummaryTreeWithStats,
+	FluidDataStoreRegistryEntry,
+	IFluidDataStoreContext,
+	IFluidDataStoreFactory,
+	IFluidDataStoreRegistry,
+	NamedFluidDataStoreRegistryEntries,
+	IRuntimeMessageCollection,
+	ISequencedMessageEnvelope,
+	ITelemetryContext,
+	ISummarizeInternalResult,
+} from "@fluidframework/runtime-definitions/internal";
 import {
-	type ISummaryTreeWithStats,
-	type FluidDataStoreRegistryEntry,
 	FlushMode,
 	FlushModeExperimental,
-	type IFluidDataStoreContext,
-	type IFluidDataStoreFactory,
-	type IFluidDataStoreRegistry,
-	type NamedFluidDataStoreRegistryEntries,
-	type IRuntimeMessageCollection,
-	type ISequencedMessageEnvelope,
-	type IEnvelope,
-	type ITelemetryContext,
-	type ISummarizeInternalResult,
 } from "@fluidframework/runtime-definitions/internal";
 import { defaultMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import {
@@ -121,17 +123,31 @@ type ContainerRuntime_WithPrivates = Patch<
 	{ flush: (resubmitInfo?: BatchResubmitInfo) => void; channelCollection: ChannelCollection }
 >;
 
+const testDataStoreMessage = {
+	type: "op",
+	content: { address: "test-address", contents: "test-contents" },
+} as const satisfies FluidDataStoreMessage;
+
+function genTestDataStoreMessage(contents: unknown): FluidDataStoreMessage {
+	return {
+		type: "op",
+		content: { address: "test-address", contents },
+	};
+}
+
 function submitDataStoreOp(
 	runtime: Pick<ContainerRuntime, "submitMessage">,
 	id: string,
-	contents: unknown,
+	contents: FluidDataStoreMessage,
 	localOpMetadata?: unknown,
-) {
+): void {
 	runtime.submitMessage(
-		ContainerMessageType.FluidDataStoreOp,
 		{
-			address: id,
-			contents,
+			type: ContainerMessageType.FluidDataStoreOp,
+			contents: {
+				address: id,
+				contents,
+			},
 		},
 		localOpMetadata,
 	);
@@ -141,7 +157,7 @@ const changeConnectionState = (
 	runtime: Omit<ContainerRuntime, "submit">,
 	connected: boolean,
 	clientId: string,
-) => {
+): void => {
 	const audience = runtime.getAudience() as MockAudience;
 	audience.setCurrentClientId(clientId);
 
@@ -180,24 +196,30 @@ function stubChannelCollection(
 ): Sinon.SinonStubbedInstance<ChannelCollection> {
 	// Pass data store op right back to ContainerRuntime
 	const reSubmitFake = sandbox
-		.stub<[type: string, content: unknown, localOpMetadata: unknown, squash: boolean], void>()
-		.callsFake((type: string, content: unknown, localOpMetadata: unknown, squash: boolean) => {
-			const envelope = content as IEnvelope;
-			submitDataStoreOp(
-				containerRuntime,
-				envelope.address,
-				envelope.contents,
-				localOpMetadata,
-			);
-		});
+		.stub<Parameters<ChannelCollection["reSubmitContainerMessage"]>, void>()
+		.callsFake(containerRuntime.submitMessage.bind(containerRuntime));
 
-	const stub = Sinon.createStubInstance(ChannelCollection, {
-		setConnectionState: sandbox.stub(),
-		reSubmit: reSubmitFake,
-		rollback: sandbox.stub(),
-		notifyStagingMode: sandbox.stub(),
-		dispose: sandbox.stub(),
-	});
+	const stub = Sinon.createStubInstance(
+		// createSubInstance does not work with property methods (which are
+		// used for stricter typing); so, override via a subclass here.
+		class TestChannelCollection extends ChannelCollection {
+			// @ts-expect-error -- redefine as instance method for stubbing
+			public reSubmitContainerMessage(
+				..._args: Parameters<ChannelCollection["reSubmitContainerMessage"]>
+			): void {}
+			// @ts-expect-error -- redefine as instance method for stubbing
+			public rollbackDataStoreOp(
+				..._args: Parameters<ChannelCollection["rollbackDataStoreOp"]>
+			) {}
+		},
+		{
+			setConnectionState: sandbox.stub(),
+			reSubmitContainerMessage: reSubmitFake,
+			rollbackDataStoreOp: sandbox.stub(),
+			notifyStagingMode: sandbox.stub(),
+			dispose: sandbox.stub(),
+		},
+	);
 
 	containerRuntime.channelCollection = stub;
 	return stub;
@@ -401,7 +423,7 @@ describe("Runtime", () => {
 				changeConnectionState(containerRuntime, false, mockClientId);
 
 				// Not connected, so nothing is submitted on flush - just queued in PendingStateManager
-				submitDataStoreOp(containerRuntime, "1", "test", { emptyBatch: true });
+				submitDataStoreOp(containerRuntime, "1", testDataStoreMessage, { emptyBatch: true });
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 				(containerRuntime as any).flush();
 				changeConnectionState(containerRuntime, true, mockClientId);
@@ -446,11 +468,11 @@ describe("Runtime", () => {
 					changeConnectionState(containerRuntime, false, mockClientId);
 
 					// Not connected, so nothing is submitted on flush - just queued in PendingStateManager
-					submitDataStoreOp(containerRuntime, "1", "test");
+					submitDataStoreOp(containerRuntime, "1", testDataStoreMessage);
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 					(containerRuntime as any).flush();
 
-					submitDataStoreOp(containerRuntime, "2", "test");
+					submitDataStoreOp(containerRuntime, "2", testDataStoreMessage);
 					changeConnectionState(containerRuntime, true, mockClientId);
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 					(containerRuntime as any).flush();
@@ -461,7 +483,7 @@ describe("Runtime", () => {
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 					assert.strictEqual(submittedOps[1].contents.address, "2");
 
-					function batchIdMatchesUnsentFormat(batchId?: string) {
+					function batchIdMatchesUnsentFormat(batchId?: string): boolean {
 						return (
 							batchId !== undefined &&
 							batchId.length === "00000000-0000-0000-0000-000000000000_[-1]".length &&
@@ -527,7 +549,7 @@ describe("Runtime", () => {
 					});
 
 					// Submit the first message
-					submitDataStoreOp(containerRuntime, "1", "testMessage1");
+					submitDataStoreOp(containerRuntime, "1", testDataStoreMessage);
 					assert.strictEqual(submittedOps.length, 0, "No ops submitted yet");
 
 					// Bump lastSequenceNumber and trigger the "op" event artificially to simulate processing a non-runtime op
@@ -551,7 +573,10 @@ describe("Runtime", () => {
 
 					// Submit the second message
 					// When [skipSafetyFlushDuringProcessStack: TRUE], this will trigger a flush via Outbox.maybeFlushPartialBatch
-					submitDataStoreOp(containerRuntime, "2", "testMessage2");
+					submitDataStoreOp(containerRuntime, "2", {
+						type: "op",
+						content: { address: "test-address", contents: "test-contents2" },
+					});
 					assert.equal(
 						submittedOps.length,
 						1,
@@ -607,7 +632,7 @@ describe("Runtime", () => {
 				// This would throw a DataProcessingError from codepath "outboxSequenceNumberCoherencyCheck"
 				// if we didn't schedule a flush after the idAllocation op submitted during the reconnect.
 				// (On account of the two ID Allocation ops having different refSeqs but being in the same batch)
-				submitDataStoreOp(containerRuntime, "someDS", { id: id2 });
+				submitDataStoreOp(containerRuntime, "someDS", genTestDataStoreMessage({ id: id2 }));
 
 				// Let the Outbox flush so we can check submittedOps length
 				await Promise.resolve();
@@ -785,9 +810,9 @@ describe("Runtime", () => {
 
 					it("Batching property set properly", () => {
 						containerRuntime.orderSequentially(() => {
-							submitDataStoreOp(containerRuntime, "1", "test");
-							submitDataStoreOp(containerRuntime, "2", "test");
-							submitDataStoreOp(containerRuntime, "3", "test");
+							submitDataStoreOp(containerRuntime, "1", testDataStoreMessage);
+							submitDataStoreOp(containerRuntime, "2", testDataStoreMessage);
+							submitDataStoreOp(containerRuntime, "3", testDataStoreMessage);
 						});
 						// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 						(containerRuntime as any).flush();
@@ -818,17 +843,17 @@ describe("Runtime", () => {
 						changeConnectionState(containerRuntime, false, fakeClientId);
 
 						containerRuntime.orderSequentially(() => {
-							submitDataStoreOp(containerRuntime, "1", "test");
-							submitDataStoreOp(containerRuntime, "2", "test");
-							submitDataStoreOp(containerRuntime, "3", "test");
+							submitDataStoreOp(containerRuntime, "1", testDataStoreMessage);
+							submitDataStoreOp(containerRuntime, "2", testDataStoreMessage);
+							submitDataStoreOp(containerRuntime, "3", testDataStoreMessage);
 						});
 						// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 						(containerRuntime as any).flush();
 
 						containerRuntime.orderSequentially(() => {
-							submitDataStoreOp(containerRuntime, "4", "test");
-							submitDataStoreOp(containerRuntime, "5", "test");
-							submitDataStoreOp(containerRuntime, "6", "test");
+							submitDataStoreOp(containerRuntime, "4", testDataStoreMessage);
+							submitDataStoreOp(containerRuntime, "5", testDataStoreMessage);
+							submitDataStoreOp(containerRuntime, "6", testDataStoreMessage);
 						});
 						// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 						(containerRuntime as any).flush();
@@ -941,7 +966,7 @@ describe("Runtime", () => {
 						const stageControls = containerRuntime.enterStagingMode();
 
 						containerRuntime.orderSequentially(() => {
-							submitDataStoreOp(containerRuntime, "1", "test");
+							submitDataStoreOp(containerRuntime, "1", testDataStoreMessage);
 						});
 						assert.strictEqual(
 							submittedOpsCount,
@@ -967,7 +992,7 @@ describe("Runtime", () => {
 
 							assert.throws(() => {
 								containerRuntime.orderSequentially(() => {
-									submitDataStoreOp(containerRuntime, "1", "test");
+									submitDataStoreOp(containerRuntime, "1", testDataStoreMessage);
 									stageControls.commitChanges();
 								});
 							});
@@ -980,7 +1005,7 @@ describe("Runtime", () => {
 
 							assert.doesNotThrow(() => {
 								containerRuntime.orderSequentially(() => {
-									submitDataStoreOp(containerRuntime, "1", "test");
+									submitDataStoreOp(containerRuntime, "1", testDataStoreMessage);
 									stageControls.discardChanges();
 								});
 							});
@@ -1457,14 +1482,7 @@ describe("Runtime", () => {
 				patched.channelCollection = {
 					setConnectionState: (_connected: boolean, _clientId?: string) => {},
 					// Pass data store op right back to ContainerRuntime
-					reSubmit: (type: string, envelope: IEnvelope, localOpMetadata: unknown) => {
-						submitDataStoreOp(
-							containerRuntime,
-							envelope.address,
-							envelope.contents,
-							localOpMetadata,
-						);
-					},
+					reSubmitContainerMessage: containerRuntime.submitMessage.bind(containerRuntime),
 				} satisfies Partial<ChannelCollection>;
 
 				return patched;
@@ -1475,14 +1493,14 @@ describe("Runtime", () => {
 
 				changeConnectionState(patchedContainerRuntime, false, mockClientId);
 
-				submitDataStoreOp(patchedContainerRuntime, "1", "test");
-				submitDataStoreOp(patchedContainerRuntime, "2", "test");
+				submitDataStoreOp(patchedContainerRuntime, "1", testDataStoreMessage);
+				submitDataStoreOp(patchedContainerRuntime, "2", testDataStoreMessage);
 				patchedContainerRuntime.submit({
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
 					type: "FUTURE_TYPE" as any,
 					contents: "3",
 				});
-				submitDataStoreOp(patchedContainerRuntime, "4", "test");
+				submitDataStoreOp(patchedContainerRuntime, "4", testDataStoreMessage);
 
 				assert.strictEqual(
 					submittedOps.length,
@@ -1682,7 +1700,10 @@ describe("Runtime", () => {
 
 			it("modifying op content after submit does not reflect in PendingStateManager", () => {
 				const content = { prop1: 1 };
-				submitDataStoreOp(containerRuntime, "1", content);
+				submitDataStoreOp(containerRuntime, "1", {
+					type: "op",
+					content: { address: "test", contents: content },
+				});
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 				(containerRuntime as any).flush();
 
@@ -1696,7 +1717,8 @@ describe("Runtime", () => {
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 					JSON.parse(state?.pendingStates?.[0].content).contents.contents,
 					{
-						prop1: 1,
+						type: "op",
+						content: { address: "test", contents: { prop1: 1 } },
 					},
 					"content of pending local message has changed",
 				);
@@ -1958,7 +1980,10 @@ describe("Runtime", () => {
 
 			it("summary fails before generate if there are pending ops", async () => {
 				// Submit an op and yield for it to be flushed from outbox to pending state manager.
-				submitDataStoreOp(containerRuntime, "fakeId", "fakeContents");
+				submitDataStoreOp(containerRuntime, "fakeId", {
+					type: "op",
+					content: { address: "fakeAddress", contents: "fakeContents" },
+				});
 				await yieldEventLoop();
 
 				const summarizeResultP = containerRuntime.submitSummary({
@@ -1991,7 +2016,10 @@ describe("Runtime", () => {
 					const boundFn = fn.bind(containerRuntime);
 					return async (...args: unknown[]) => {
 						// Submit an op and yield for it to be flushed from outbox to pending state manager.
-						submitDataStoreOp(containerRuntime, "fakeId", "fakeContents");
+						submitDataStoreOp(containerRuntime, "fakeId", {
+							type: "op",
+							content: { address: "fakeAddress", contents: "fakeContents" },
+						});
 						await yieldEventLoop();
 
 						return boundFn(...args);
@@ -3222,7 +3250,7 @@ describe("Runtime", () => {
 
 				// Submit op so message is queued in PendingStateManager
 				// This is needed to increase reconnect count
-				submitDataStoreOp(containerRuntime, "1", "test");
+				submitDataStoreOp(containerRuntime, "1", testDataStoreMessage);
 
 				// Disconnect + Reconnect
 				changeConnectionState(containerRuntime, false, mockClientId);
@@ -3274,7 +3302,7 @@ describe("Runtime", () => {
 				// so that message is queued in PendingStateManager and reconnect count is increased.
 				stubChannelCollection(containerRuntime);
 				// Send and process an initial signal to prime the system.
-				submitDataStoreOp(containerRuntime, "1", "test");
+				submitDataStoreOp(containerRuntime, "1", testDataStoreMessage);
 				sendSignals(1); // 1st signal (#1)
 				processSubmittedSignals(1);
 
@@ -4291,7 +4319,7 @@ describe("Runtime", () => {
 				const channelCollectionStub = stubChannelCollection(containerRuntime);
 
 				// Won't be resubmitted when exiting staging mode
-				submitDataStoreOp(containerRuntime, "1", "pre-staging", "LOCAL_OP_METADATA");
+				submitDataStoreOp(containerRuntime, "1", genTestDataStoreMessage("pre-staging"));
 
 				const controls = containerRuntime.enterStagingMode();
 				assert(
@@ -4303,7 +4331,8 @@ describe("Runtime", () => {
 				// but not the staged op (even with flush)
 				assert.equal(submittedOps.length, 1, "Pre-staging op expected to be submitted");
 
-				submitDataStoreOp(containerRuntime, "2", "staged-op", "LOCAL_OP_METADATA");
+				const stagedOpContents = genTestDataStoreMessage("staged-op");
+				submitDataStoreOp(containerRuntime, "2", stagedOpContents, "LOCAL_OP_METADATA");
 				containerRuntime.flush();
 				assert.equal(submittedOps.length, 1, "Only expected the 1 pre-staging op");
 
@@ -4311,13 +4340,15 @@ describe("Runtime", () => {
 				controls.commitChanges();
 
 				assert(
-					channelCollectionStub.reSubmit.calledOnce,
+					channelCollectionStub.reSubmitContainerMessage.calledOnce,
 					"Expected reSubmit to be called once. Prestaging op should not be resubmitted",
 				);
 				assert(
-					channelCollectionStub.reSubmit.calledWithExactly(
-						"component",
-						{ address: "2", contents: "staged-op" },
+					channelCollectionStub.reSubmitContainerMessage.calledWithExactly(
+						{
+							type: ContainerMessageType.FluidDataStoreOp,
+							contents: { address: "2", contents: stagedOpContents },
+						},
 						"LOCAL_OP_METADATA",
 						/* squash: */ false, // False by default on commitChanges
 					),
@@ -4341,7 +4372,12 @@ describe("Runtime", () => {
 				const channelCollectionStub = stubChannelCollection(containerRuntime);
 
 				// Won't be rolled back when exiting staging mode
-				submitDataStoreOp(containerRuntime, "1", "pre-staging", "LOCAL_OP_METADATA");
+				submitDataStoreOp(
+					containerRuntime,
+					"1",
+					genTestDataStoreMessage("pre-staging"),
+					"LOCAL_OP_METADATA",
+				);
 
 				const controls = containerRuntime.enterStagingMode();
 
@@ -4349,19 +4385,20 @@ describe("Runtime", () => {
 				// but not the staged op (even with flush)
 				assert.equal(submittedOps.length, 1, "Pre-staging op expected to be submitted");
 
-				submitDataStoreOp(containerRuntime, "2", "staged-op", "LOCAL_OP_METADATA");
-				submitDataStoreOp(containerRuntime, "3", "staged-op", "LOCAL_OP_METADATA");
+				const stagedOpContents = genTestDataStoreMessage("staged-op");
+				submitDataStoreOp(containerRuntime, "2", stagedOpContents, "LOCAL_OP_METADATA");
+				submitDataStoreOp(containerRuntime, "3", stagedOpContents, "LOCAL_OP_METADATA");
 				containerRuntime.flush();
 				assert.equal(submittedOps.length, 1, "No more ops expected while staged");
 
 				controls.discardChanges();
 
 				assert.deepEqual(
-					channelCollectionStub.rollback.getCalls().map((call) => call.args),
+					channelCollectionStub.rollbackDataStoreOp.getCalls().map((call) => call.args),
 					[
 						// LIFO order for rolling back
-						["component", { address: "3", contents: "staged-op" }, "LOCAL_OP_METADATA"],
-						["component", { address: "2", contents: "staged-op" }, "LOCAL_OP_METADATA"],
+						[{ address: "3", contents: stagedOpContents }, "LOCAL_OP_METADATA"],
+						[{ address: "2", contents: stagedOpContents }, "LOCAL_OP_METADATA"],
 						// Doesn't rollback the op from before staging mode
 					],
 					"Unexpected args for rollback",
@@ -4383,8 +4420,18 @@ describe("Runtime", () => {
 
 				const controls = containerRuntime.enterStagingMode();
 
-				submitDataStoreOp(containerRuntime, "1", "staged-op", "LOCAL_OP_METADATA");
-				submitDataStoreOp(containerRuntime, "2", "staged-op", "LOCAL_OP_METADATA");
+				submitDataStoreOp(
+					containerRuntime,
+					"1",
+					genTestDataStoreMessage("staged-op"),
+					"LOCAL_OP_METADATA",
+				);
+				submitDataStoreOp(
+					containerRuntime,
+					"2",
+					genTestDataStoreMessage("staged-op"),
+					"LOCAL_OP_METADATA",
+				);
 				assert.equal(containerRuntime.isDirty, true, "Runtime should be dirty (from Outbox)");
 				containerRuntime.flush();
 				assert.equal(containerRuntime.isDirty, true, "Runtime should be dirty (from PSM)");
