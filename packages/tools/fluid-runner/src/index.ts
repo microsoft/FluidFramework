@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-internal-modules */
+/* eslint-disable import/no-internal-modules, import-x/no-internal-modules */
 export type { ICodeLoaderBundle, IFluidFileConverter } from "./codeLoaderBundle.js";
 export {
 	createContainerAndExecute,

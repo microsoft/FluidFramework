@@ -9,7 +9,7 @@ import path from "path";
 
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
-/* eslint-disable import/no-internal-modules */
+/* eslint-disable import/no-internal-modules, import-x/no-internal-modules */
 import { createContainerAndExecute, exportFile } from "../exportFile.js";
 import { getSnapshotFileContent } from "../utils.js";
 

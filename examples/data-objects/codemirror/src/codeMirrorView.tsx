@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-internal-modules -- #26904: `sequence` internals used in examples
+// eslint-disable-next-line import/no-internal-modules, import-x/no-internal-modules -- #26904: `sequence` internals used in examples
 import { getTextAndMarkers, reservedTileLabelsKey } from "@fluidframework/sequence/internal";
 import {
 	Marker,
@@ -16,7 +16,7 @@ import {
 import CodeMirror from "codemirror";
 import React, { useEffect, useRef } from "react";
 
-/* eslint-disable import/no-unassigned-import, import/no-internal-modules */
+/* eslint-disable import/no-unassigned-import, import-x/no-unassigned-import, import/no-internal-modules, import-x/no-internal-modules */
 import "codemirror/lib/codemirror.css";
 import "codemirror/mode/javascript/javascript.js";
 import "./style.css";

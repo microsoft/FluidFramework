@@ -4,7 +4,7 @@
  */
 
 // These imports are grouped manually to ensure that the imports are in the correct order.
-/* eslint-disable import/order */
+/* eslint-disable import/order, import-x/order */
 
 /**
  * @fileoverview Declaration of the PropertyFactory class.
