@@ -25,6 +25,8 @@ import type { ContainerAttachProps, ContainerSchema } from "@fluidframework/flui
 import {
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
+	isInternalFluidContainer,
+	type IFluidContainerInternal,
 } from "@fluidframework/fluid-static/internal";
 import {
 	OdspDocumentServiceFactory,
@@ -147,7 +149,7 @@ export class OdspClient {
 		serializedContainer: string,
 		containerSchema: T,
 	): Promise<{
-		container: IFluidContainer<T>;
+		container: IOdspFluidContainer<T>;
 		services: IOdspContainerServices;
 	}> {
 		const loaderProps = this.getLoaderProps(containerSchema);
@@ -157,11 +159,18 @@ export class OdspClient {
 			serializedState: serializedContainer,
 		});
 
-		const fluidContainer = await this.createFluidContainer(container, this.connectionConfig);
+		const fluidContainer = await this.createFluidContainer<T>(
+			container,
+			this.connectionConfig,
+		);
+		// Perform type guard to access internal APIs exposed by OdspFluidContainer.
+		if (!isInternalFluidContainer(fluidContainer)) {
+			throw new Error("Fluid container is not internal");
+		}
 
 		const services = await this.getContainerServices(container);
 
-		return { container: fluidContainer as IFluidContainer<T>, services };
+		return { container: fluidContainer, services };
 	}
 
 	public async getContainer<T extends ContainerSchema>(
@@ -183,6 +192,10 @@ export class OdspClient {
 		const fluidContainer = await createFluidContainer<T>({
 			container,
 		});
+		// Perform type guard to access internal APIs exposed by OdspFluidContainer.
+		if (!isInternalFluidContainer(fluidContainer)) {
+			throw new Error("Fluid container is not internal");
+		}
 		const services = await this.getContainerServices(container);
 		return { container: fluidContainer, services };
 	}
@@ -254,7 +267,14 @@ export class OdspClient {
 			 */
 			return resolvedUrl.itemId;
 		};
-		const fluidContainer = await createFluidContainer<T>({ container });
+		const fluidContainer = await createFluidContainer<T>({
+			container,
+		});
+		// Perform type guard to access internal APIs exposed by OdspFluidContainer.
+		if (!isInternalFluidContainer(fluidContainer)) {
+			throw new Error("Fluid container is not internal");
+		}
+		// Assign custom attach method
 		fluidContainer.attach = attach;
 		return fluidContainer;
 	}
