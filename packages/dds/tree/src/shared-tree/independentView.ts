@@ -10,7 +10,11 @@ import {
 	createIdCompressor,
 } from "@fluidframework/id-compressor/internal";
 
-import type { CodecWriteOptions } from "../codec/index.js";
+import {
+	FluidClientVersion,
+	type CodecWriteOptions,
+	type ICodecOptions,
+} from "../codec/index.js";
 import {
 	type RevisionTag,
 	RevisionTagCodec,
@@ -86,7 +90,7 @@ export function independentView<const TSchema extends ImplicitFieldSchema>(
  */
 export function independentInitializedView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
-	options: ForestOptions & CodecWriteOptions,
+	options: ForestOptions & ICodecOptions,
 	content: ViewContent,
 ): TreeViewAlpha<TSchema> {
 	return createIndependentTreeAlpha({ ...options, content }).viewWith(
@@ -169,7 +173,7 @@ export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSc
 	options?: ForestOptions &
 		(
 			| ({ idCompressor?: IIdCompressor | undefined } & { content?: undefined })
-			| (CodecWriteOptions & { content: ViewContent } & { idCompressor?: undefined })
+			| (ICodecOptions & { content: ViewContent } & { idCompressor?: undefined })
 		),
 ): ViewableTree & Pick<ITreeAlpha, "exportVerbose" | "exportSimpleSchema"> {
 	const breaker = new Breakable("independentView");
@@ -196,8 +200,14 @@ export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSc
 	});
 
 	if (options?.content !== undefined) {
-		const schemaCodec = makeSchemaCodec(options, brand(SchemaFormatVersion.v1));
-		const fieldBatchCodec = makeFieldBatchCodec(options);
+		// Any version can be passed down to `makeSchemaCodec` and `makeFieldBatchCodec` here.
+		// We only use the decode part, which always dispatches to the correct codec based on the version in the data, not `minVersionForCollab`.
+		const writeOptions: CodecWriteOptions = {
+			...options,
+			minVersionForCollab: FluidClientVersion.v2_0,
+		};
+		const schemaCodec = makeSchemaCodec(writeOptions, brand(SchemaFormatVersion.v1));
+		const fieldBatchCodec = makeFieldBatchCodec(writeOptions);
 		const newSchema = schemaCodec.decode(options.content.schema as Format);
 
 		const context: FieldBatchEncodingContext = {
