@@ -23,13 +23,13 @@ import {
 	independentInitializedView,
 	FormatValidatorBasic,
 	type ForestOptions,
+	type ICodecOptions,
 	type JsonCompatible,
 	type VerboseTree,
 	type ViewContent,
 	type ConciseTree,
 	TreeAlpha,
 	KeyEncodingOptions,
-	type ICodecOptions,
 } from "@fluidframework/tree/alpha";
 import { TreeBeta } from "@fluidframework/tree/beta";
 import { type Static, Type } from "@sinclair/typebox";
