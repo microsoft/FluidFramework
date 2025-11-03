@@ -1060,9 +1060,7 @@ export class MockFluidDataStoreRuntime
 		return this.containerRuntime.dirty();
 	}
 
-	public submitSignal(type: string, content: any) {
-		return null;
-	}
+	public submitSignal: IFluidDataStoreRuntime["submitSignal"] = () => null;
 
 	public processMessages(messageCollection: IRuntimeMessageCollection) {
 		if (this.disposed) {
