@@ -2499,7 +2499,14 @@ describe("SharedTree", () => {
 		view.initialize(10);
 
 		assert.deepEqual(tree.exportVerbose(), 10);
-		assert.deepEqual(tree.exportSimpleSchema(), toSimpleTreeSchema(numberSchema, true));
+		assert.deepEqual(
+			tree.exportSimpleSchema(),
+			toSimpleTreeSchema(
+				numberSchema,
+				true,
+				false /* Don't process this schema as a view schema (exclude isStaged from simpleAllowedTypes). */,
+			),
+		);
 	});
 
 	it("supports multiple shared branches", () => {

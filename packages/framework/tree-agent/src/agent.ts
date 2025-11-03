@@ -8,14 +8,14 @@ import type {
 	TreeFieldFromImplicitField,
 	TreeNodeSchema,
 } from "@fluidframework/tree";
-import { TreeNode } from "@fluidframework/tree";
+import { NodeKind, TreeNode } from "@fluidframework/tree";
 import type {
 	ReadableField,
 	FactoryContentObject,
 	InsertableContent,
 	ReadSchema,
 } from "@fluidframework/tree/alpha";
-import { ObjectNodeSchema, Tree } from "@fluidframework/tree/alpha";
+import { ObjectNodeSchema, Tree, TreeAlpha } from "@fluidframework/tree/alpha";
 
 import type {
 	SharedTreeChatModel,
@@ -29,12 +29,12 @@ import type {
 import { getPrompt, stringifyTree } from "./prompt.js";
 import { Subtree } from "./subtree.js";
 import {
-	constructNode,
-	getFriendlyName,
 	llmDefault,
 	type TreeView,
-	findNamedSchemas,
+	findSchemas,
 	toErrorString,
+	unqualifySchema,
+	isNamedSchema,
 } from "./utils.js";
 
 /**
@@ -173,11 +173,12 @@ export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
  * Creates an unhydrated node of the given schema with the given value.
  * @remarks If the schema is an object with {@link llmDefault | default values}, this function populates the node with those defaults.
  */
-function constructTreeNode(schema: TreeNodeSchema, value: FactoryContentObject): TreeNode {
+function constructTreeNode(schema: TreeNodeSchema, content: FactoryContentObject): TreeNode {
+	let toInsert = content;
 	if (schema instanceof ObjectNodeSchema) {
-		const inputWithDefaults: Record<string, InsertableContent | undefined> = {};
+		const contentWithDefaults: Record<string, InsertableContent | undefined> = {};
 		for (const [key, field] of schema.fields) {
-			if (value[key] === undefined) {
+			if (content[key] === undefined) {
 				if (
 					typeof field.metadata.custom === "object" &&
 					field.metadata.custom !== null &&
@@ -187,17 +188,19 @@ function constructTreeNode(schema: TreeNodeSchema, value: FactoryContentObject):
 					if (typeof defaulter === "function") {
 						const defaultValue: unknown = defaulter();
 						if (defaultValue !== undefined) {
-							inputWithDefaults[key] = defaultValue;
+							contentWithDefaults[key] = defaultValue;
 						}
 					}
 				}
 			} else {
-				inputWithDefaults[key] = value[key];
+				contentWithDefaults[key] = content[key];
 			}
 		}
-		return constructNode(schema, inputWithDefaults);
+		toInsert = contentWithDefaults;
 	}
-	return constructNode(schema, value);
+
+	// Cast to never because tagContentSchema is typed to only accept InsertableContent, but we know that 'toInsert' (either the original content or contentWithDefaults) produces valid content for the schema.
+	return TreeAlpha.tagContentSchema(schema, toInsert as never);
 }
 
 /**
@@ -298,8 +301,8 @@ function bindEditorToSubtree<TSchema extends ImplicitFieldSchema>(
 	// Stick the tree schema constructors on an object passed to the function so that the LLM can create new nodes.
 	const create: Record<string, (input: FactoryContentObject) => TreeNode> = {};
 	const is: Record<string, <T extends TreeNode>(input: unknown) => input is T> = {};
-	for (const schema of findNamedSchemas(tree.schema)) {
-		const name = getFriendlyName(schema);
+	for (const schema of findSchemas(tree.schema, (s) => isNamedSchema(s.identifier))) {
+		const name = unqualifySchema(schema.identifier);
 		create[name] = (input: FactoryContentObject) => constructTreeNode(schema, input);
 		is[name] = <T extends TreeNode>(input: unknown): input is T => Tree.is(input, schema);
 	}
@@ -313,6 +316,26 @@ function bindEditorToSubtree<TSchema extends ImplicitFieldSchema>(
 		},
 		create,
 		is,
+		isArray(node) {
+			if (Array.isArray(node)) {
+				return true;
+			}
+			if (node instanceof TreeNode) {
+				const schema = Tree.schema(node);
+				return schema.kind === NodeKind.Array;
+			}
+			return false;
+		},
+		isMap(node) {
+			if (node instanceof Map) {
+				return true;
+			}
+			if (node instanceof TreeNode) {
+				const schema = Tree.schema(node);
+				return schema.kind === NodeKind.Map;
+			}
+			return false;
+		},
 		parent: (child: TreeNode): TreeNode | undefined => Tree.parent(child),
 		key: (child: TreeNode): string | number => Tree.key(child),
 	} satisfies Context<TSchema>;

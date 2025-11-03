@@ -59,6 +59,12 @@ export {
 	isFluidCodeDetails,
 } from "./fluidPackage.js";
 export type {
+	ConnectionStatus,
+	ConnectionStatusCatchingUp,
+	ConnectionStatusConnected,
+	ConnectionStatusDisconnected,
+	ConnectionStatusEstablishingConnection,
+	ConnectionStatusTemplate,
 	IBatchMessage,
 	IContainerContext,
 	IProvideRuntimeFactory,

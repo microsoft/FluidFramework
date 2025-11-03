@@ -14,6 +14,9 @@ module.exports = {
 	rules: {
 		"import/no-nodejs-modules": ["error"],
 		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+
+		// Disabled because the rule is crashing on this package - AB#51780
+		"@typescript-eslint/unbound-method": "off",
 	},
 	overrides: [
 		{

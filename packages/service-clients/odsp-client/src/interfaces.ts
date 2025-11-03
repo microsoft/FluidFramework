@@ -10,7 +10,13 @@ import type {
 	IEventProvider,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import type { IMember, IServiceAudience } from "@fluidframework/fluid-static";
+import type {
+	ContainerAttachProps,
+	ContainerSchema,
+	IFluidContainer,
+	IMember,
+	IServiceAudience,
+} from "@fluidframework/fluid-static";
 
 import type { IOdspTokenProvider } from "./token.js";
 
@@ -62,7 +68,6 @@ export interface OdspClientProps {
 }
 
 /**
- * @legacy
  * @beta
  */
 export interface OdspContainerAttachProps {
@@ -91,6 +96,26 @@ export interface IOdspContainerServicesEvents extends IEvent {
 	 * Emitted when the sensitivity label of the container changes.
 	 */
 	(event: "sensitivityLabelChanged", listener: (sensitivityLabelsInfo: string) => void): void;
+}
+
+/**
+ * ODSP version of the IFluidContainer interface.
+ * @beta
+ */
+export interface IOdspFluidContainer<
+	TContainerSchema extends ContainerSchema = ContainerSchema,
+> extends IFluidContainer<TContainerSchema> {
+	/**
+	 * A newly created container starts detached from the collaborative service.
+	 * Calling `attach()` uploads the new container to the service and connects to the collaborative service.
+	 *
+	 * This function is the same as the IFluidContainer.attach function, but has ODSP specific function signatures.
+	 *
+	 * @param props - Optional properties to pass to the attach function.
+	 *
+	 * @returns A promise which resolves when the attach is complete, with the string identifier of the container.
+	 */
+	attach(props?: ContainerAttachProps<OdspContainerAttachProps>): Promise<string>;
 }
 
 /**
