@@ -1,6 +1,6 @@
 # @fluidframework/eslint-config-fluid Changelog
 
-## [8.1.0]
+## [8.1.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v8.1.0)
 
 ### import-x/order rule simplified
 
@@ -14,7 +14,7 @@ The TypeScript resolver configuration has been updated to work correctly with th
 
 The `@fluid-internal/fluid/no-hyphen-after-jsdoc-tag` rule has been temporarily disabled pending resolution of ADO work item 29535.
 
-## [8.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v8.0_0)
+## [8.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v8.0.0)
 
 ### eslint-plugin-import replaced by eslint-plugin-import-x
 
