@@ -33,6 +33,16 @@
 				"default": "./dist/index.js"
 			}
 		},
+		"./legacy/alpha": {
+			"import": {
+				"types": "./lib/legacy.alpha.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/legacy.alpha.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
 		"./internal": {
 			"import": {
 				"types": "./lib/internal.d.ts",
@@ -52,8 +62,8 @@
 	"types": "lib/public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "flub generate entrypoints --outFileLegacyBeta legacy --outDir ./dist",
-		"api-extractor:esnext": "flub generate entrypoints --outFileLegacyBeta legacy --outDir ./lib --node10TypeCompat",
+		"api-extractor:commonjs": "flub generate entrypoints --outFileLegacyBeta legacy --outFileLegacyAlpha legacy.alpha --outDir ./dist",
+		"api-extractor:esnext": "flub generate entrypoints --outFileLegacyBeta legacy --outFileLegacyAlpha legacy.alpha --outDir ./lib --node10TypeCompat",
 		"build": "fluid-build . --task build",
 		"build:api-reports": "concurrently \"npm:build:api-reports:*\"",
 		"build:api-reports:current": "api-extractor run --local --config api-extractor/api-extractor.current.json",
@@ -71,8 +81,10 @@
 		"check:exports": "concurrently \"npm:check:exports:*\"",
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
 		"check:exports:cjs:legacy": "api-extractor run --config api-extractor/api-extractor-lint-legacy.cjs.json",
+		"check:exports:cjs:legacy.alpha": "api-extractor run --config api-extractor/api-extractor-lint-legacy.alpha.cjs.json",
 		"check:exports:cjs:public": "api-extractor run --config api-extractor/api-extractor-lint-public.cjs.json",
 		"check:exports:esm:legacy": "api-extractor run --config api-extractor/api-extractor-lint-legacy.esm.json",
+		"check:exports:esm:legacy.alpha": "api-extractor run --config api-extractor/api-extractor-lint-legacy.alpha.esm.json",
 		"check:exports:esm:public": "api-extractor run --config api-extractor/api-extractor-lint-public.esm.json",
 		"check:format": "npm run check:biome",
 		"ci:build": "npm run build:compile",
