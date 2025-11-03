@@ -40,17 +40,20 @@ const presenceCompatibility = {
 function assertCompatibilityInvariants(compatibility: ExtensionCompatibilityDetails): void {
 	assert(
 		compatibility.generation === presenceCompatibility.generation,
-		"Presence compatibility generation mismatch.",
+		0xc97 /* Presence compatibility generation mismatch. */,
 	);
-	assert(compatibility.version.startsWith("2."), "Registered version is not major version 2.");
+	assert(
+		compatibility.version.startsWith("2."),
+		0xc98 /* Registered version is not major version 2. */,
+	);
 	assert(
 		Number.parseFloat(compatibility.version.slice(2)) <
 			Number.parseFloat(presenceCompatibility.version.slice(2)),
-		"Registered version is not less than the current version.",
+		0xc99 /* Registered version is not less than the current version. */,
 	);
 	assert(
 		presenceCompatibility.capabilities.size === 0,
-		"Presence capabilities should be empty.",
+		0xc9a /* Presence capabilities should be empty. */,
 	);
 }
 
@@ -91,7 +94,7 @@ class ContainerPresenceManager
 	): never {
 		assert(
 			ourExistingInstantiation.compatibility === presenceCompatibility,
-			"Presence extension called without own compatibility details",
+			0xc9b /* Presence extension called without own compatibility details */,
 		);
 		assertCompatibilityInvariants(newCompatibilityRequest);
 		// There have not yet been any changes that would require action to upgrade.
@@ -184,7 +187,7 @@ function assertContextHasExtensionProvider(
 ): asserts context is FluidDataStoreContextInternal {
 	assert(
 		"getExtension" in context,
-		"Data store context does not implement ContainerExtensionProvider",
+		0xc9c /* Data store context does not implement ContainerExtensionProvider */,
 	);
 }
 
