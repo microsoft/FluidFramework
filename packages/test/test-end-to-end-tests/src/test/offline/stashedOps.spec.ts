@@ -1660,14 +1660,16 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			"Expect the upload hasn't completed yet",
 		);
 
+		// Second container loads with the pending state
 		const container2 = await loader.resolve({ url }, pendingState);
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 
-		// TODO: We've not yet decided where to expose sharePendingBlobs(), so for now casting and reaching.
-		// Replace with calling the proper API when available.
-		// Share the pending blob so container1 will be able to find it.
-		await (dataStore2.context.containerRuntime as any).blobManager.sharePendingBlobs();
+		// Third container verifies that it can access the blob despite not being the original uploader or having the pending state
+		const container3 = await loader.resolve({ url });
+		const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
+		const map3 = await dataStore3.getSharedObject<ISharedMap>(mapId);
+
 		await provider.ensureSynchronized();
 		assert.strictEqual(
 			bufferToString(await map1.get("blob handle").get(), "utf8"),
@@ -1675,6 +1677,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 		assert.strictEqual(
 			bufferToString(await map2.get("blob handle").get(), "utf8"),
+			"blob contents",
+		);
+		assert.strictEqual(
+			bufferToString(await map3.get("blob handle").get(), "utf8"),
 			"blob contents",
 		);
 	});
@@ -1710,13 +1716,16 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			"Expect none of the uploads have completed yet",
 		);
 
+		// Second container loads with the pending state
 		const container2 = await loader.resolve({ url }, pendingState);
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
-		// TODO: We've not yet decided where to expose sharePendingBlobs(), so for now casting and reaching.
-		// Replace with calling the proper API when available.
-		// Share the pending blob so container1 will be able to find it.
-		await (dataStore2.context.containerRuntime as any).blobManager.sharePendingBlobs();
+
+		// Third container verifies that it can access the blobs despite not being the original uploader or having the pending state
+		const container3 = await loader.resolve({ url });
+		const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
+		const map3 = await dataStore3.getSharedObject<ISharedMap>(mapId);
+
 		await provider.ensureSynchronized();
 		for (let i = 1; i <= 3; i++) {
 			assert.strictEqual(
@@ -1725,6 +1734,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			);
 			assert.strictEqual(
 				bufferToString(await map2.get(`blob handle ${i}`).get(), "utf8"),
+				`blob contents ${i}`,
+			);
+			assert.strictEqual(
+				bufferToString(await map3.get(`blob handle ${i}`).get(), "utf8"),
 				`blob contents ${i}`,
 			);
 		}
@@ -1743,34 +1756,40 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const pendingState = await container.container.getPendingLocalState();
 		container.container.close();
 
-		const container3 = await loadContainerOffline(
+		// Second container loads offline with the pending state
+		const container2 = await loadContainerOffline(
 			testContainerConfig,
 			provider,
 			{ url },
 			pendingState,
 		);
-		const dataStore3 = (await container3.container.getEntryPoint()) as ITestFluidObject;
-		const map3 = await dataStore3.getSharedObject<ISharedMap>(mapId);
+		const dataStore2 = (await container2.container.getEntryPoint()) as ITestFluidObject;
+		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 
 		// blob is accessible offline
 		assert.strictEqual(
-			bufferToString(await map3.get("blob handle 1").get(), "utf8"),
+			bufferToString(await map2.get("blob handle 1").get(), "utf8"),
 			"blob contents 1",
 		);
-		container3.connect();
-		await waitForContainerConnection(container3.container);
-		// TODO: We've not yet decided where to expose sharePendingBlobs(), so for now casting and reaching.
-		// Replace with calling the proper API when available.
-		// Share the pending blob so container1 will be able to find it.
-		await (dataStore3.context.containerRuntime as any).blobManager.sharePendingBlobs();
+		container2.connect();
+		await waitForContainerConnection(container2.container);
+
+		// Third container verifies that it can access the blob despite not being the original uploader or having the pending state
+		const container3 = await loader.resolve({ url });
+		const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
+		const map3 = await dataStore3.getSharedObject<ISharedMap>(mapId);
 		await provider.ensureSynchronized();
 
 		assert.strictEqual(
-			bufferToString(await map3.get("blob handle 1").get(), "utf8"),
+			bufferToString(await map1.get("blob handle 1").get(), "utf8"),
 			"blob contents 1",
 		);
 		assert.strictEqual(
-			bufferToString(await map1.get("blob handle 1").get(), "utf8"),
+			bufferToString(await map2.get("blob handle 1").get(), "utf8"),
+			"blob contents 1",
+		);
+		assert.strictEqual(
+			bufferToString(await map3.get("blob handle 1").get(), "utf8"),
 			"blob contents 1",
 		);
 	});
@@ -1788,19 +1807,25 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const pendingState = await container.container.getPendingLocalState();
 		container.container.close();
 
-		const container3 = await loader.resolve({ url }, pendingState);
+		// Second container loads with the pending state
+		const container2 = await loader.resolve({ url }, pendingState);
+		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
+
+		// Third container verifies that it can access the blob despite not being the original uploader or having the pending state
+		const container3 = await loader.resolve({ url });
 		const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
 		const map3 = await dataStore3.getSharedObject<ISharedMap>(mapId);
 
-		// TODO: We've not yet decided where to expose sharePendingBlobs(), so for now casting and reaching.
-		// Replace with calling the proper API when available.
-		// Share the pending blob so container1 will be able to find it.
-		await (dataStore3.context.containerRuntime as any).blobManager.sharePendingBlobs();
 		await provider.ensureSynchronized();
 
 		// Blob is uploaded and accessible by all clients
 		assert.strictEqual(
 			bufferToString(await map1.get("blob handle 1").get(), "utf8"),
+			"blob contents 1",
+		);
+		assert.strictEqual(
+			bufferToString(await map2.get("blob handle 1").get(), "utf8"),
 			"blob contents 1",
 		);
 		assert.strictEqual(

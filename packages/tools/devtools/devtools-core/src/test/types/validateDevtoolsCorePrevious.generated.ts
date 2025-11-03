@@ -43,51 +43,6 @@ declare type current_as_old_for_Function_initializeDevtools = requireAssignableT
 declare type current_as_old_for_Function_tryGetFluidDevtools = requireAssignableTo<TypeOnly<typeof current.tryGetFluidDevtools>, TypeOnly<typeof old.tryGetFluidDevtools>>
 
 /*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_ContainerDevtoolsProps": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_ContainerDevtoolsProps = requireAssignableTo<TypeOnly<old.ContainerDevtoolsProps>, TypeOnly<current.ContainerDevtoolsProps>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_ContainerDevtoolsProps": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_ContainerDevtoolsProps = requireAssignableTo<TypeOnly<current.ContainerDevtoolsProps>, TypeOnly<old.ContainerDevtoolsProps>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_ContainerRuntimeProps": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_ContainerRuntimeProps = requireAssignableTo<TypeOnly<old.ContainerRuntimeProps>, TypeOnly<current.ContainerRuntimeProps>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_FluidDevtoolsProps": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_FluidDevtoolsProps = requireAssignableTo<TypeOnly<old.FluidDevtoolsProps>, TypeOnly<current.FluidDevtoolsProps>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_FluidDevtoolsProps": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_FluidDevtoolsProps = requireAssignableTo<TypeOnly<current.FluidDevtoolsProps>, TypeOnly<old.FluidDevtoolsProps>>
-
-/*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under

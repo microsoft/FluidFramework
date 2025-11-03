@@ -11,12 +11,14 @@ import type {
 	IChannelFactory,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
-import type {
-	ISequencedDocumentMessage,
-	ITree,
-} from "@fluidframework/driver-definitions/internal";
+import type { ITree } from "@fluidframework/driver-definitions/internal";
 import { FileMode, MessageType, TreeEntry } from "@fluidframework/driver-definitions/internal";
-import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import type {
+	ISummaryTreeWithStats,
+	IRuntimeMessageCollection,
+	IRuntimeMessagesContent,
+	ISequencedMessageEnvelope,
+} from "@fluidframework/runtime-definitions/internal";
 import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
@@ -559,21 +561,23 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	}
 
 	/**
-	 * Process a shared array operation
-	 *
-	 * @param message - the message to prepare
-	 * @param local - whether the message was sent by the local client
-	 * @param _localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
-	 * For messages from a remote client, this will be undefined.
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
 	 */
-	protected processCore(
-		message: ISequencedDocumentMessage,
+	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+		const { envelope, local, messagesContent } = messagesCollection;
+		for (const messageContent of messagesContent) {
+			this.processMessage(envelope, messageContent, local);
+		}
+	}
+
+	private processMessage(
+		messageEnvelope: ISequencedMessageEnvelope,
+		messageContent: IRuntimeMessagesContent,
 		local: boolean,
-		_localOpMetadata: unknown,
 	): void {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-		if (message.type === MessageType.Operation) {
-			const op = message.contents as ISharedArrayOperation<T>;
+		if (messageEnvelope.type === MessageType.Operation) {
+			const op = messageContent.contents as ISharedArrayOperation<T>;
 			switch (op.type) {
 				case OperationType.insertEntry: {
 					this.handleInsertOp<SerializableTypeForSharedArray>(

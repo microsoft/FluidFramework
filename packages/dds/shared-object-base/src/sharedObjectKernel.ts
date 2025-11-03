@@ -203,10 +203,6 @@ class SharedObjectFromKernel<
 		this.#kernel.applyStashedOp(content);
 	}
 
-	protected override processCore(): void {
-		fail("processCore should not be called");
-	}
-
 	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
 		this.#kernel.processMessagesCore(messagesCollection);
 	}
