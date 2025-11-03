@@ -8,7 +8,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { Logger, Package } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
-import { diff } from "semver";
+import { diff, parse } from "semver";
 import { PackageCommand } from "../../BasePackageCommand.js";
 import type { PackageSelectionDefault } from "../../flags.js";
 
@@ -173,9 +173,23 @@ export function maybeGetNewGeneration(
 	}
 
 	const previousPkgVersion = match[3];
-	const result = diff(currentPkgVersion, previousPkgVersion);
+	const parsedCurrent = parse(currentPkgVersion);
+	if (parsedCurrent === null) {
+		throw new Error(`Current package version ${currentPkgVersion} is not a valid semver`);
+	}
+
 	// Only "minor" or "major" version changes trigger generation updates.
-	if (result === null || (result !== "minor" && result !== "major")) {
+	// The extra check for patch > 0 is to handle scenarios where the generation was not updated on a minor release
+	// due to time constraints, and a patch is subsequently released. In that case, we don't want to update generation
+	// on the patch. For example:
+	// - 1.0.0 -> 1.1.0 - No generation update due to time constraints. The previousPkgVersion is still 1.0.0.
+	// - 1.1.0 -> 1.1.1 - The generation should not update even though the version changed, because it's only a patch.
+	let result: string | null;
+	if (
+		parsedCurrent.patch > 0 ||
+		(result = diff(currentPkgVersion, previousPkgVersion)) === null ||
+		(result !== "minor" && result !== "major")
+	) {
 		log.verbose(`No minor or major release since last update; skipping generation update.`);
 		return undefined;
 	}
