@@ -585,7 +585,7 @@ describe("allowedTypes", () => {
 			class Text2 extends sf.object("TextItem2", { text: sf.string }) {}
 
 			type Text1Or2 = InsertableTreeNodeFromAllowedTypes<(typeof Text1 | typeof Text2)[]>;
-			// If exact the schema is not known, we cannot guarantee that the input matches either schema,
+			// If the exact schema is not known, we cannot guarantee that the input matches either schema,
 			// and only allow input valid in both, which is `never`:
 			allowUnused<requireAssignableTo<Text1Or2, never>>();
 
@@ -614,7 +614,7 @@ describe("allowedTypes", () => {
 			class Text2 extends sf.object("TextItem2", { text: sf.string }) {}
 
 			type Text1Or2 = InsertableTypedNode<typeof Text1 | typeof Text2>;
-			// If exact the schema is not known, we cannot guarantee that the input matches either schema,
+			// If the exact schema is not known, we cannot guarantee that the input matches either schema,
 			// and only allow input valid in both, which is `never`:
 			allowUnused<requireAssignableTo<Text1Or2, never>>();
 
@@ -674,7 +674,7 @@ describe("allowedTypes", () => {
 			class Text2 extends sf.object("TextItem2", { text: sf.string }) {}
 
 			type Text1Or2 = SchemaUnionToIntersection<typeof Text1 | typeof Text2>;
-			// If exact the schema is not known, we cannot guarantee that the input matches either schema,
+			// If the exact schema is not known, we cannot guarantee that the input matches either schema,
 			// and only allow input valid in both, which is `never`:
 			allowUnused<requireAssignableTo<Text1Or2, never>>();
 
