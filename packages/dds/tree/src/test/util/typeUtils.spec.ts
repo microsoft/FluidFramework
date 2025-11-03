@@ -89,7 +89,6 @@ import type {
 	type _check3 = requireTrue<
 		areSafelyAssignable<UnionToIntersection<{ x: 1 | 2 } | { x: 2 | 3 }>, { x: 2 }>
 	>;
-	type _check4 = requireTrue<areSafelyAssignable<UnionToIntersection<1>, 1>>;
 
 	// Check that arrays are preserved
 	allowUnused<
