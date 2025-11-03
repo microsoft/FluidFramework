@@ -11,7 +11,7 @@ import { getOrCreate } from "./utils.js";
 /**
  * Key in a {@link BrandedMapSubset}.
  * @remarks
- * `TContent` is used as part of the brand to strongly associate the key type with the type of value it looks up.
+ * `TContent` is used as part of the brand to strongly associate the key type with the type of the values it looks up.
  *
  * Due to the `TContent` type parameter being invariant (which it has to be since keys are used to both read and write data),
  * generic collections end up needing to constrain their key's `TContent` to `any`.
