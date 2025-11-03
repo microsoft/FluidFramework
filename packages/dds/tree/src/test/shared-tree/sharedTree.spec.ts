@@ -29,6 +29,7 @@ import {
 	type ChangeFamily,
 	type ChangeFamilyEditor,
 	EmptyKey,
+	ValueSchema,
 } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import {
@@ -70,10 +71,9 @@ import {
 	type ITree,
 	toInitialSchema,
 	NodeKind,
-	type SimpleObjectFieldSchema,
-	type SimpleNodeSchema,
 	type SimpleTreeSchema,
-	type SimpleAllowedTypeAttributes,
+	FieldKind,
+	type SimpleLeafNodeSchema,
 } from "../../simple-tree/index.js";
 import { brand } from "../../util/index.js";
 import {
@@ -122,7 +122,6 @@ import { simpleTreeNodeSlot } from "../../simple-tree/core/treeNodeKernel.js";
 import type { TreeSimpleContent } from "../feature-libraries/flex-tree/utils.js";
 import { FluidClientVersion } from "../../codec/index.js";
 import { asAlpha } from "../../api.js";
-import { unreachableCase } from "@fluidframework/core-utils/internal";
 
 const enableSchemaValidation = true;
 
@@ -2490,71 +2489,6 @@ describe("SharedTree", () => {
 		);
 	});
 
-	function removeIsStagedFromAllowedTypes(
-		simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypeAttributes>,
-	): ReadonlyMap<string, SimpleAllowedTypeAttributes> {
-		const output = new Map<string, SimpleAllowedTypeAttributes>();
-		for (const [typeIdentifier, attributes] of simpleAllowedTypes.entries()) {
-			const { isStaged, ...rest } = attributes;
-			output.set(typeIdentifier, { ...rest, isStaged: undefined });
-		}
-		return output;
-	}
-
-	function removeIsStagedFromSimpleTreeSchema(schema: SimpleTreeSchema): SimpleTreeSchema {
-		const definitions = new Map<string, SimpleNodeSchema>();
-
-		for (const [identifier, nodeSchema] of schema.definitions.entries()) {
-			const kind = nodeSchema.kind;
-			switch (kind) {
-				case NodeKind.Leaf: {
-					definitions.set(identifier, nodeSchema);
-					break;
-				}
-				case NodeKind.Array:
-				case NodeKind.Map:
-				case NodeKind.Record: {
-					const outputNodeSchema = {
-						...nodeSchema,
-						simpleAllowedTypes: removeIsStagedFromAllowedTypes(nodeSchema.simpleAllowedTypes),
-					};
-					definitions.set(identifier, outputNodeSchema);
-					break;
-				}
-				case NodeKind.Object: {
-					const outputFields = new Map<string, SimpleObjectFieldSchema>();
-					for (const [propertyKey, fieldSchema] of nodeSchema.fields.entries()) {
-						const outputField: SimpleObjectFieldSchema = {
-							...fieldSchema,
-							simpleAllowedTypes: removeIsStagedFromAllowedTypes(
-								fieldSchema.simpleAllowedTypes,
-							),
-						};
-						outputFields.set(propertyKey, outputField);
-					}
-					const outputNodeSchema = {
-						...nodeSchema,
-						fields: outputFields,
-					};
-					definitions.set(identifier, outputNodeSchema);
-					break;
-				}
-				default:
-					unreachableCase(kind);
-			}
-		}
-
-		return {
-			root: {
-				kind: schema.root.kind,
-				simpleAllowedTypes: removeIsStagedFromAllowedTypes(schema.root.simpleAllowedTypes),
-				metadata: {},
-				persistedMetadata: undefined,
-			},
-			definitions,
-		};
-	}
-
 	it("exportVerbose & exportSimpleSchema", () => {
 		const tree = treeTestFactory();
 		assert.deepEqual(tree.exportVerbose(), undefined);
@@ -2570,10 +2504,29 @@ describe("SharedTree", () => {
 		view.initialize(10);
 
 		assert.deepEqual(tree.exportVerbose(), 10);
-		const schemaWithoutIsStaged = removeIsStagedFromSimpleTreeSchema(
-			toSimpleTreeSchema(numberSchema, true),
-		);
-		assert.deepEqual(tree.exportSimpleSchema(), schemaWithoutIsStaged);
+
+		const expected: SimpleTreeSchema = {
+			root: {
+				kind: FieldKind.Required,
+				simpleAllowedTypes: new Map([
+					["com.fluidframework.leaf.number", { isStaged: undefined }],
+				]),
+				metadata: {},
+				persistedMetadata: undefined,
+			},
+			definitions: new Map([
+				[
+					"com.fluidframework.leaf.number",
+					{
+						kind: NodeKind.Leaf,
+						leafKind: ValueSchema.Number,
+						metadata: {},
+						persistedMetadata: undefined,
+					} satisfies SimpleLeafNodeSchema,
+				],
+			]),
+		};
+		assert.deepEqual(tree.exportSimpleSchema(), expected);
 	});
 
 	it("supports multiple shared branches", () => {
