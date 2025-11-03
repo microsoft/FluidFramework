@@ -212,7 +212,7 @@ export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSc
 		assert(fieldCursors.length === 1, 0xa5b /* must have exactly 1 field in batch */);
 
 		const fieldCursor = oneFromIterable(fieldCursors);
-		assert(fieldCursor !== undefined, "expected exactly one field in batch");
+		assert(fieldCursor !== undefined, 0xc94 /* expected exactly one field in batch */);
 
 		initialize(
 			checkout,
