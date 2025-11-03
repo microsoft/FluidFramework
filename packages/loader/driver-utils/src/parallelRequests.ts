@@ -55,10 +55,10 @@ export class ParallelRequests<T> {
 	private requests = 0;
 	private readonly knewTo: boolean;
 
-	private get working() {
+	private get working(): boolean {
 		return this.workingState === "working";
 	}
-	public get canceled() {
+	public get canceled(): boolean {
 		return this.workingState === "canceled";
 	}
 
@@ -81,14 +81,14 @@ export class ParallelRequests<T> {
 		this.knewTo = to !== undefined;
 	}
 
-	public cancel() {
+	public cancel(): void {
 		if (this.working) {
 			this.workingState = "canceled";
 			this.endEvent.resolve();
 		}
 	}
 
-	public async run(concurrency: number) {
+	public async run(concurrency: number): Promise<void> {
 		assert(concurrency > 0, 0x102 /* "invalid level of concurrency" */);
 		assert(this.working, 0x103 /* "trying to parallel run while not working" */);
 
@@ -101,7 +101,7 @@ export class ParallelRequests<T> {
 		return this.endEvent.promise;
 	}
 
-	private done() {
+	private done(): void {
 		// We should satisfy request fully.
 		assert(this.to !== undefined, 0x104 /* "undefined end point for parallel fetch" */);
 		assert(
@@ -114,14 +114,14 @@ export class ParallelRequests<T> {
 		}
 	}
 
-	private fail(error) {
+	private fail(error: unknown): void {
 		if (this.working) {
 			this.workingState = "done";
 			this.endEvent.reject(error);
 		}
 	}
 
-	private dispatch() {
+	private dispatch(): void {
 		while (this.working) {
 			const value = this.results.get(this.nextToDeliver);
 			if (value === undefined) {
@@ -158,16 +158,14 @@ export class ParallelRequests<T> {
 		}
 	}
 
-	private getNextChunk() {
+	private getNextChunk(): { from: number; to: number } | undefined {
 		if (!this.working) {
 			return undefined;
 		}
 
 		const from = this.latestRequested;
-		if (this.to !== undefined) {
-			if (this.to <= from) {
-				return undefined;
-			}
+		if (this.to !== undefined && this.to <= from) {
+			return undefined;
 		}
 
 		// this.latestRequested
@@ -183,7 +181,7 @@ export class ParallelRequests<T> {
 		return { from, to: this.latestRequested };
 	}
 
-	private addRequest() {
+	private addRequest(): void {
 		const chunk = this.getNextChunk();
 		if (chunk === undefined) {
 			return;
@@ -191,7 +189,7 @@ export class ParallelRequests<T> {
 		this.addRequestCore(chunk.from, chunk.to).catch(this.fail.bind(this));
 	}
 
-	private async addRequestCore(fromArg: number, toArg: number) {
+	private async addRequestCore(fromArg: number, toArg: number): Promise<void> {
 		assert(this.working, 0x10a /* "cannot add parallel request while not working" */);
 
 		let from = fromArg;
@@ -237,7 +235,7 @@ export class ParallelRequests<T> {
 				// If it pops into our view a lot, we would need to reconsider how we approach it.
 				// Note that this is not visible to user other than potentially not hitting 100% of
 				// what we can in perf domain.
-				if (payload.length !== 0) {
+				if (payload.length > 0) {
 					this.logger.sendErrorEvent({
 						eventName: "ParallelRequests_GotExtra",
 						from,
@@ -255,7 +253,25 @@ export class ParallelRequests<T> {
 				const length = payload.length;
 				let fullChunk = requestedLength <= length; // we can possible get more than we asked.
 
-				if (length !== 0) {
+				if (length === 0) {
+					// 1. empty (partial) chunks should not be returned by various caching / adapter layers -
+					//    they should fall back to next layer. This might be important invariant to hold to ensure
+					//    that we are less likely have bugs where such layer would keep returning empty partial
+					//    result on each call.
+					// 2. Current invariant is that callback does retries until it gets something,
+					//    with the goal of failing if zero data is retrieved in given amount of time.
+					//    This is very specific property of storage / ops, so this logic is not here, but given only
+					//    one user of this class, we assert that to catch issues earlier.
+					// These invariant can be relaxed if needed.
+					assert(
+						!partial,
+						0x10f /* "empty/partial chunks should not be returned by caching" */,
+					);
+					assert(
+						!this.knewTo,
+						0x110 /* "callback should retry until valid fetch before it learns new boundary" */,
+					);
+				} else {
 					// We can get more than we asked for!
 					// This can screw up logic in dispatch!
 					// So push only batch size, and keep the rest for later - if conditions are favorable, we
@@ -274,24 +290,6 @@ export class ParallelRequests<T> {
 					const data = payload.splice(0, requestedLength);
 					this.results.set(from, data);
 					from += data.length;
-				} else {
-					// 1. empty (partial) chunks should not be returned by various caching / adapter layers -
-					//    they should fall back to next layer. This might be important invariant to hold to ensure
-					//    that we are less likely have bugs where such layer would keep returning empty partial
-					//    result on each call.
-					// 2. Current invariant is that callback does retries until it gets something,
-					//    with the goal of failing if zero data is retrieved in given amount of time.
-					//    This is very specific property of storage / ops, so this logic is not here, but given only
-					//    one user of this class, we assert that to catch issues earlier.
-					// These invariant can be relaxed if needed.
-					assert(
-						!partial,
-						0x10f /* "empty/partial chunks should not be returned by caching" */,
-					);
-					assert(
-						!this.knewTo,
-						0x110 /* "callback should retry until valid fetch before it learns new boundary" */,
-					);
 				}
 
 				if (!partial && !fullChunk) {
@@ -319,7 +317,7 @@ export class ParallelRequests<T> {
 				if (to === this.latestRequested) {
 					// we can go after full chunk at the end if we received partial chunk, or more than asked
 					// Also if we got more than we asked to, we can actually use those ops!
-					while (payload.length !== 0) {
+					while (payload.length > 0) {
 						const data = payload.splice(0, requestedLength);
 						this.results.set(from, data);
 						from += data.length;
@@ -354,21 +352,21 @@ export class Queue<T> implements IStream<T> {
 	private deferred: Deferred<IStreamResult<T>> | undefined;
 	private done = false;
 
-	public pushValue(value: T) {
+	public pushValue(value: T): void {
 		this.pushCore(Promise.resolve({ done: false, value }));
 	}
 
-	public pushError(error: any) {
+	public pushError(error: unknown): void {
 		this.pushCore(Promise.reject(error));
 		this.done = true;
 	}
 
-	public pushDone() {
+	public pushDone(): void {
 		this.pushCore(Promise.resolve({ done: true }));
 		this.done = true;
 	}
 
-	protected pushCore(value: Promise<IStreamResult<T>>) {
+	protected pushCore(value: Promise<IStreamResult<T>>): void {
 		assert(!this.done, 0x112 /* "cannot push onto queue if done" */);
 		if (this.deferred) {
 			assert(this.queue.length === 0, 0x113 /* "deferred queue should be empty" */);
@@ -395,7 +393,7 @@ const waitForOnline = async (): Promise<void> => {
 	// Only wait if we have a strong signal that we're offline - otherwise assume we're online.
 	if (globalThis.navigator?.onLine === false && globalThis.addEventListener !== undefined) {
 		return new Promise<void>((resolve) => {
-			const resolveAndRemoveListener = () => {
+			const resolveAndRemoveListener = (): void => {
 				resolve();
 				globalThis.removeEventListener("online", resolveAndRemoveListener);
 			};
@@ -444,7 +442,7 @@ async function getSingleOpBatch(
 
 			// If we got messages back, return them.  Return regardless of whether we got messages back if we didn't
 			// specify a "to", since we don't have an expectation of how many to receive.
-			if (messages.length !== 0 || !strongTo) {
+			if (messages.length > 0 || !strongTo) {
 				// Report this event if we waited to fetch ops due to being offline or throttling.
 				telemetryEvent?.end({
 					duration: totalRetryAfterTime,
@@ -613,7 +611,7 @@ export function requestOps(
 	// waits (up to 10 seconds) and fetches (can take infinite amount of time).
 	// While every such case should be improved and take into account signal (and thus cancel immediately),
 	// it is beneficial to have catch-all
-	const listener = (event: Event) => {
+	const listener = (_event: Event): void => {
 		manager.cancel();
 	};
 	if (signal !== undefined) {
@@ -660,6 +658,7 @@ export function requestOps(
 }
 
 /**
+ * Create an empty IStream of messages.
  * @internal
  */
 export const emptyMessageStream: IStream<ISequencedDocumentMessage[]> = {
@@ -669,6 +668,7 @@ export const emptyMessageStream: IStream<ISequencedDocumentMessage[]> = {
 };
 
 /**
+ * Create a stream interface that yields the given message array once, then completes.
  * @internal
  */
 export function streamFromMessages(
@@ -676,18 +676,20 @@ export function streamFromMessages(
 ): IStream<ISequencedDocumentMessage[]> {
 	let messages: Promise<ISequencedDocumentMessage[]> | undefined = messagesArg;
 	return {
-		read: async () => {
+		read: async (): Promise<IStreamResult<ISequencedDocumentMessage[]>> => {
 			if (messages === undefined) {
 				return { done: true };
 			}
-			const value = await messages;
-			messages = undefined;
+			const pending = messages;
+			messages = undefined; // set synchronously to avoid require-atomic-updates warning
+			const value = await pending;
 			return value.length === 0 ? { done: true } : { done: false, value };
 		},
 	};
 }
 
 /**
+ * Wrap an IStream with an observer callback invoked on every read result.
  * @internal
  */
 export function streamObserver<T>(
@@ -695,7 +697,7 @@ export function streamObserver<T>(
 	handler: (value: IStreamResult<T>) => void,
 ): IStream<T> {
 	return {
-		read: async () => {
+		read: async (): Promise<IStreamResult<T>> => {
 			const value = await stream.read();
 			handler(value);
 			return value;

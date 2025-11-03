@@ -10,7 +10,7 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 
 /**
- * Tells if message was sent by container runtime
+ * Tell whether a message was sent by the container runtime.
  * @privateRemarks ADO #1385: To be moved to container-definitions
  * @returns whether the message is a runtime message
  * @internal
@@ -20,6 +20,7 @@ export function isRuntimeMessage(message: { type: string }): boolean {
 }
 
 /**
+ * Determine whether a message may be coalesced by the service.
  * @privateRemarks ADO #1385: To be moved to packages/protocol-base/src/protocol.ts
  * @internal
  */
