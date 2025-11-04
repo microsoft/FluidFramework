@@ -1,6 +1,6 @@
 services:
   proxy:
-    platform: linux/amd64/v3
+    platform: linux/amd64
     image: nginx:latest
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf

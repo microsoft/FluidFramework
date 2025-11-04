@@ -1,6 +1,6 @@
 services:
   proxy:
-    platform: linux/amd64/v3
+    platform: linux/amd64
     image: nginx:latest
     depends_on:
       alfred:
@@ -25,6 +25,9 @@ services:
       - NODE_ENV=development
       - IS_FLUID_SERVER=true
     restart: always
+    # FIXME: DO NOT MERGE WITH THIS VOLUME
+    volumes:
+      - ./routerlicious/packages/routerlicious/config/config.json:/usr/src/server/packages/routerlicious/config/config.json
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/healthz/startup", "--max-time", "3"]
       interval: 5s
