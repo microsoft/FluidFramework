@@ -9,7 +9,7 @@ Generate commands are used to create/update code, docs, readmes, etc.
 * [`flub generate changelog`](#flub-generate-changelog)
 * [`flub generate changeset`](#flub-generate-changeset)
 * [`flub generate entrypoints`](#flub-generate-entrypoints)
-* [`flub generate layerGeneration`](#flub-generate-layergeneration)
+* [`flub generate layerCompatGeneration`](#flub-generate-layercompatgeneration)
 * [`flub generate node10Entrypoints`](#flub-generate-node10entrypoints)
 * [`flub generate packlist`](#flub-generate-packlist)
 * [`flub generate releaseNotes`](#flub-generate-releasenotes)
@@ -269,24 +269,24 @@ DESCRIPTION
 
 _See code: [src/commands/generate/entrypoints.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/entrypoints.ts)_
 
-## `flub generate layerGeneration`
+## `flub generate layerCompatGeneration`
 
 Updates the generation and release date for layer compatibility.
 
 ```
 USAGE
-  $ flub generate layerGeneration [-v | --quiet] [--generationDir <value>] [--generationFileName <value>]
-    [--minimumCompatWindowMonths <value>] [--concurrency <value>] [--branch <value> [--changed | [--all | --dir
-    <value>... | --packages | -g client|server|azure|build-tools|gitrest|historian|all... | --releaseGroupRoot
+  $ flub generate layerCompatGeneration [-v | --quiet] [--generationDir <value>] [--outFile <value>] [--minimumCompatWindowMonths
+    <value>] [--concurrency <value>] [--branch <value> [--changed | [--all | --dir <value>... | --packages | -g
+    client|server|azure|build-tools|gitrest|historian|all... | --releaseGroupRoot
     client|server|azure|build-tools|gitrest|historian|all...]]] [--private] [--scope <value>... | --skipScope
     <value>...]
 
 FLAGS
   --concurrency=<value>                [default: 25] The number of tasks to execute concurrently.
   --generationDir=<value>              [default: ./src] The directory where the generation file is located.
-  --generationFileName=<value>         [default: layerGenerationState.ts] The file name for the generation file.
   --minimumCompatWindowMonths=<value>  [default: 3] The minimum compatibility window in months that is supported across
                                        all Fluid layers.
+  --outFile=<value>                    [default: layerGenerationState.ts] Output the results to this file.
 
 PACKAGE SELECTION FLAGS
   -g, --releaseGroup=<option>...      Run on all child packages within the specified release groups. This does not
@@ -321,7 +321,7 @@ DESCRIPTION
   Updates the generation and release date for layer compatibility.
 ```
 
-_See code: [src/commands/generate/layerGeneration.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/layerGeneration.ts)_
+_See code: [src/commands/generate/layerCompatGeneration.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/layerCompatGeneration.ts)_
 
 ## `flub generate node10Entrypoints`
 
