@@ -26,7 +26,7 @@ Note that the fact that this approach is always possible does not make it the be
 If there is a corresponding `spec` file which is sufficiently large in scope, the tests should be placed within it:
 only when the tests don't cleanly correspond to a particular source file should a separate `integration` file be created.
 When created, the file should be placed in the `src/test` directory's sub folder which is the most nested it can be while still including all the relevant APIs.
-For example an example of using `src/thing/foo` with `src/thing/bar` would belong in `src/test/thing` and could be named something like `fooWithBar.example.ts`.
+For example tests and examples of using `src/thing/foo` with `src/thing/bar` would belong in `src/test/thing` and could be named something like `fooWithBar.integration.ts`.
 
 Any other kinds of test files should be documented when created by adding them to this list.
 
