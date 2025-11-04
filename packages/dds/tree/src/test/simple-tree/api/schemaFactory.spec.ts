@@ -27,10 +27,19 @@ import {
 	type TreeFieldFromImplicitField,
 	TreeViewConfigurationAlpha,
 	SchemaFactoryBeta,
+	allowUnused,
+	type InsertableTreeFieldFromImplicitField,
 } from "../../../simple-tree/index.js";
 import {
 	// Import directly to get the non-type import to allow testing of the package only instanceof
 	TreeNode,
+	type AllowedTypes,
+	type AllowedTypesFull,
+	type AnnotatedAllowedType,
+	type AnnotatedAllowedTypes,
+	type InsertableTreeNodeFromAllowedTypes,
+	type InsertableTreeNodeFromImplicitAllowedTypes,
+	type UnannotateAllowedTypesList,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/core/index.js";
 import {
@@ -46,7 +55,9 @@ import {
 import {
 	brand,
 	type areSafelyAssignable,
+	type IsUnion,
 	type requireAssignableTo,
+	type requireFalse,
 	type requireTrue,
 } from "../../../util/index.js";
 
@@ -93,6 +104,42 @@ import { EmptyKey } from "../../../core/index.js";
 
 		type FromArray = TreeNodeFromImplicitAllowedTypes<[typeof Note, typeof Note]>;
 		type _check5 = requireTrue<areSafelyAssignable<FromArray, Note>>;
+	}
+	// TreeNodeFromImplicitAllowedTypes with a class
+	{
+		class NoteCustomized extends schema.object("Note", { text: schema.string }) {
+			public test: boolean = false;
+		}
+
+		type _check = requireAssignableTo<typeof NoteCustomized, TreeNodeSchema>;
+		type _checkNodeType = requireAssignableTo<
+			typeof NoteCustomized,
+			TreeNodeSchema<string, NodeKind, NoteCustomized>
+		>;
+
+		type Instance = InstanceType<typeof NoteCustomized>;
+		type _checkInstance = requireTrue<areSafelyAssignable<Instance, NoteCustomized>>;
+
+		type Test = TreeNodeFromImplicitAllowedTypes<typeof NoteCustomized>;
+		type _check2 = requireTrue<areSafelyAssignable<Test, NoteCustomized>>;
+
+		type _check3 = requireTrue<
+			areSafelyAssignable<
+				TreeNodeFromImplicitAllowedTypes<[typeof NoteCustomized]>,
+				NoteCustomized
+			>
+		>;
+		type _check4 = requireTrue<
+			areSafelyAssignable<
+				TreeNodeFromImplicitAllowedTypes<[() => typeof NoteCustomized]>,
+				NoteCustomized
+			>
+		>;
+
+		type FromArray = TreeNodeFromImplicitAllowedTypes<
+			[typeof NoteCustomized, typeof NoteCustomized]
+		>;
+		type _check5 = requireTrue<areSafelyAssignable<FromArray, NoteCustomized>>;
 	}
 
 	// TreeFieldFromImplicitField
@@ -372,7 +419,44 @@ describe("schemaFactory", () => {
 			);
 		});
 
-		it("Node schema metadata", () => {
+		it("Node schema metadata - beta", () => {
+			const factory = new SchemaFactoryBeta("");
+
+			const fooMetadata = {
+				description: "An object called Foo",
+				custom: {
+					baz: true,
+				},
+			} as const;
+
+			class Foo extends factory.object(
+				"Foo",
+				{ bar: factory.number },
+				{ metadata: fooMetadata },
+			) {}
+
+			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
+			const description = Foo.metadata.description;
+			type _check1 = requireTrue<areSafelyAssignable<typeof description, string | undefined>>;
+
+			const custom = Foo.metadata.custom;
+
+			// Currently it is impossible to have required custom metadata: it always includes undefined as an option.
+			// TODO: having a way to make metadata required would be nice.
+
+			type _check2 = requireTrue<
+				areSafelyAssignable<typeof custom, { baz: true } | undefined>
+			>;
+			assert(custom !== undefined);
+
+			const baz = custom.baz;
+			type _check3 = requireTrue<areSafelyAssignable<typeof baz, true>>;
+
+			// This must be checked after the types are checked to avoid it narrowing and making the type checks above not test anything.
+			assert.deepEqual(Foo.metadata, fooMetadata);
+		});
+
+		it("Node schema metadata - alpha", () => {
 			const factory = new SchemaFactoryAlpha("");
 
 			const fooMetadata = {
@@ -380,7 +464,7 @@ describe("schemaFactory", () => {
 				custom: {
 					baz: true,
 				},
-			};
+			} as const;
 
 			class Foo extends factory.objectAlpha(
 				"Foo",
@@ -388,13 +472,25 @@ describe("schemaFactory", () => {
 				{ metadata: fooMetadata },
 			) {}
 
-			assert.deepEqual(Foo.metadata, fooMetadata);
-
 			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
 			const description = Foo.metadata.description;
-			const baz = Foo.metadata.custom.baz;
-			type _check1 = requireTrue<areSafelyAssignable<typeof description, string>>;
-			type _check2 = requireTrue<areSafelyAssignable<typeof baz, boolean>>;
+			type _check1 = requireTrue<areSafelyAssignable<typeof description, string | undefined>>;
+
+			const custom = Foo.metadata.custom;
+
+			// Currently it is impossible to have required custom metadata: it always includes undefined as an option.
+			// TODO: having a way to make metadata required would be nice.
+
+			type _check2 = requireTrue<
+				areSafelyAssignable<typeof custom, { baz: true } | undefined>
+			>;
+			assert(custom !== undefined);
+
+			const baz = custom.baz;
+			type _check3 = requireTrue<areSafelyAssignable<typeof baz, true>>;
+
+			// This must be checked after the types are checked to avoid it narrowing and making the type checks above not test anything.
+			assert.deepEqual(Foo.metadata, fooMetadata);
 		});
 
 		it("Field schema metadata", () => {
@@ -1343,13 +1439,16 @@ describe("schemaFactory", () => {
 		const schemaFactory = new SchemaFactoryAlpha("staged tests");
 
 		class TestObject extends schemaFactory.objectAlpha("TestObject", {
-			foo: [SchemaFactoryAlpha.number, SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string)],
+			foo: SchemaFactoryAlpha.types([
+				SchemaFactoryAlpha.number,
+				SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+			]),
 		}) {}
 
 		it("allows forward references", () => {
 			const schemaFactoryAlpha = new SchemaFactoryAlpha("test");
 			class A extends schemaFactoryAlpha.objectAlpha("A", {
-				foo: SchemaFactoryAlpha.staged(() => B),
+				foo: SchemaFactoryAlpha.types([SchemaFactoryAlpha.staged(() => B)]),
 			}) {}
 
 			class B extends schemaFactoryAlpha.objectAlpha("B", {}) {}
@@ -1374,7 +1473,7 @@ describe("schemaFactory", () => {
 				// Adds staged support for B.
 				// Currently this requires wrapping the root field with `SchemaFactoryAlpha.required`:
 				// this is normally implicitly included, but is currently required while the "staged" APIs are `@alpha`.
-				schema: SchemaFactoryAlpha.required([A, SchemaFactoryAlpha.staged(B)]),
+				schema: SchemaFactoryAlpha.types([A, SchemaFactoryAlpha.staged(B)]),
 			});
 
 			// Only supports documents with A and B: can be used to upgrade schema to add B.
@@ -1423,10 +1522,83 @@ describe("schemaFactory", () => {
 		});
 
 		describe("in maps", () => {
-			class TestMap extends schemaFactory.mapAlpha("TestMap", [
-				SchemaFactoryAlpha.number,
-				SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
-			]) {}
+			it("typing", () => {
+				const allowedTypes = SchemaFactoryAlpha.types([
+					SchemaFactoryAlpha.number,
+					SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+				]);
+
+				allowUnused<requireAssignableTo<typeof allowedTypes, AllowedTypes>>();
+				allowUnused<
+					requireAssignableTo<
+						typeof allowedTypes,
+						readonly [typeof SchemaFactoryAlpha.number, typeof SchemaFactoryAlpha.string]
+					>
+				>();
+
+				allowUnused<requireAssignableTo<typeof allowedTypes, AnnotatedAllowedTypes>>();
+				allowUnused<
+					requireAssignableTo<
+						typeof allowedTypes,
+						UnannotateAllowedTypesList<
+							readonly [typeof SchemaFactoryAlpha.number, typeof SchemaFactoryAlpha.string]
+						>
+					>
+				>();
+				allowUnused<
+					requireAssignableTo<
+						typeof allowedTypes,
+						AnnotatedAllowedTypes<
+							readonly [
+								AnnotatedAllowedType<typeof SchemaFactoryAlpha.number>,
+								AnnotatedAllowedType<typeof SchemaFactoryAlpha.string>,
+							]
+						>
+					>
+				>();
+
+				allowUnused<
+					requireAssignableTo<
+						typeof allowedTypes,
+						AllowedTypesFull<
+							readonly [
+								AnnotatedAllowedType<typeof SchemaFactoryAlpha.number>,
+								AnnotatedAllowedType<typeof SchemaFactoryAlpha.string>,
+							]
+						>
+					>
+				>();
+
+				{
+					type InField = InsertableTreeFieldFromImplicitField<typeof allowedTypes>;
+					allowUnused<requireAssignableTo<InField, number | string>>();
+					allowUnused<requireAssignableTo<number | string, InField>>();
+				}
+
+				{
+					type InAllowedTypes = InsertableTreeNodeFromImplicitAllowedTypes<
+						typeof allowedTypes
+					>;
+					allowUnused<requireAssignableTo<InAllowedTypes, number | string>>();
+					allowUnused<requireAssignableTo<number | string, InAllowedTypes>>();
+				}
+
+				{
+					type InAllowedTypes = InsertableTreeNodeFromAllowedTypes<typeof allowedTypes>;
+					allowUnused<requireAssignableTo<InAllowedTypes, number | string>>();
+					allowUnused<requireAssignableTo<number | string, InAllowedTypes>>();
+				}
+
+				allowUnused<requireFalse<IsUnion<typeof allowedTypes>>>();
+			});
+
+			class TestMap extends schemaFactory.mapAlpha(
+				"TestMap",
+				SchemaFactoryAlpha.types([
+					SchemaFactoryAlpha.number,
+					SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+				]),
+			) {}
 
 			it("are permitted when unhydrated", () => {
 				const testMap = new TestMap({ foo: "test" });
@@ -1467,10 +1639,13 @@ describe("schemaFactory", () => {
 		});
 
 		describe("in records", () => {
-			class TestRecord extends schemaFactory.recordAlpha("TestRecord", [
-				SchemaFactoryAlpha.number,
-				SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
-			]) {}
+			class TestRecord extends schemaFactory.recordAlpha(
+				"TestRecord",
+				SchemaFactoryAlpha.types([
+					SchemaFactoryAlpha.number,
+					SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+				]),
+			) {}
 
 			it("are permitted when unhydrated", () => {
 				const testRecord = new TestRecord({ foo: "test" });
@@ -1514,10 +1689,13 @@ describe("schemaFactory", () => {
 			/**
 			 * Allows numbers, and staged to allow strings.
 			 */
-			class TestArray extends schemaFactory.arrayAlpha("TestArray", [
-				SchemaFactoryAlpha.number,
-				SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
-			]) {}
+			class TestArray extends schemaFactory.arrayAlpha(
+				"TestArray",
+				SchemaFactoryAlpha.types([
+					SchemaFactoryAlpha.number,
+					SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+				]),
+			) {}
 
 			it("are permitted when unhydrated", () => {
 				const testArray = new TestArray(["test"]);

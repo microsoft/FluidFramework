@@ -16,11 +16,6 @@ export interface AttributionInfo {
 // @beta @legacy
 export type AttributionKey = OpAttributionKey | DetachedAttributionKey | LocalAttributionKey;
 
-// @beta @sealed @deprecated @legacy (undocumented)
-export interface CommitStagedChangesOptionsExperimental {
-    squash?: boolean;
-}
-
 // @beta @legacy (undocumented)
 export type CreateChildSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn, getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
 getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>) => ISummarizerNodeWithGC;
@@ -77,7 +72,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
     // (undocumented)
     readonly clientDetails: IClientDetails;
     createDataStore(pkg: string | PackagePath, loadingGroupId?: string): Promise<IDataStore>;
-    createDetachedDataStore(pkg: Readonly<string[]>, loadingGroupId?: string): IFluidDataStoreContextDetached;
+    createDetachedDataStore(pkg: readonly string[], loadingGroupId?: string): IFluidDataStoreContextDetached;
     // (undocumented)
     readonly disposed: boolean;
     generateDocumentUniqueId(): number | string;
@@ -106,14 +101,6 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
     (event: "dispose", listener: () => void): any;
 }
 
-// @beta @sealed @deprecated @legacy (undocumented)
-export interface IContainerRuntimeBaseExperimental extends IContainerRuntimeBase {
-    // (undocumented)
-    enterStagingMode?(): StageControlsExperimental;
-    // (undocumented)
-    readonly inStagingMode?: boolean;
-}
-
 // @beta @legacy
 export interface IDataStore {
     readonly entryPoint: IFluidHandleInternal<FluidObject>;
@@ -121,9 +108,9 @@ export interface IDataStore {
 }
 
 // @beta @legacy
-export interface IEnvelope {
+export interface IEnvelope<TContents = any> {
     address: string;
-    contents: any;
+    contents: TContents;
 }
 
 // @beta @legacy
@@ -148,11 +135,11 @@ export interface IFluidDataStoreChannel extends IDisposable {
     processSignal(message: IInboundSignalMessage, local: boolean): void;
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
-    reSubmit(type: string, content: any, localOpMetadata: unknown, squash?: boolean): any;
+    reSubmit(type: string, content: any, localOpMetadata: unknown, squash?: boolean): void;
     rollback?(type: string, content: any, localOpMetadata: unknown): void;
     // (undocumented)
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
-    setConnectionState(connected: boolean, clientId?: string): any;
+    setConnectionState(connected: boolean, clientId?: string): void;
     summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
     updateUsedRoutes(usedRoutes: string[]): void;
 }
@@ -237,6 +224,7 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     readonly isReadOnly?: () => boolean;
     readonly loadingGroupId?: string;
     makeLocallyVisible(): void;
+    readonly minVersionForCollab?: MinimumVersionForCollab;
     // (undocumented)
     readonly options: Record<string | number, any>;
     readonly scope: FluidObject;
@@ -301,25 +289,7 @@ export interface IRuntimeMessagesContent {
 
 // @beta @legacy
 export interface IRuntimeStorageService {
-    // @deprecated (undocumented)
-    createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
-    // @deprecated
-    dispose?(error?: Error): void;
-    // @deprecated
-    readonly disposed?: boolean;
-    // @deprecated (undocumented)
-    downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
-    // @deprecated (undocumented)
-    getSnapshot?(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot>;
-    // @deprecated (undocumented)
-    getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
-    // @deprecated (undocumented)
-    getVersions(versionId: string | null, count: number, scenarioName?: string, fetchSource?: FetchSource): Promise<IVersion[]>;
-    // @deprecated (undocumented)
-    readonly policies?: IDocumentStorageServicePolicies | undefined;
     readBlob(id: string): Promise<ArrayBufferLike>;
-    // @deprecated (undocumented)
-    uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
 }
 
 // @beta @legacy
@@ -441,12 +411,6 @@ export interface OpAttributionKey {
 
 // @beta @legacy
 export type PackagePath = readonly string[];
-
-// @beta @sealed @deprecated @legacy (undocumented)
-export interface StageControlsExperimental {
-    readonly commitChanges: (options?: Partial<CommitStagedChangesOptionsExperimental>) => void;
-    readonly discardChanges: () => void;
-}
 
 // @beta @legacy (undocumented)
 export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext) => Promise<ISummarizeInternalResult>;

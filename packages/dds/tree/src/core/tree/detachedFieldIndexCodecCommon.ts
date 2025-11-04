@@ -12,6 +12,7 @@ import { hasSingle } from "../../util/index.js";
 
 import {
 	Format,
+	type DetachedFieldIndexFormatVersion,
 	type EncodedRootsForRevision,
 	type RootRanges,
 } from "./detachedFieldIndexFormatCommon.js";
@@ -27,7 +28,7 @@ import type { Static, TSchema } from "@sinclair/typebox";
 export function makeDetachedFieldIndexCodecFromMajorCodec<
 	TEncodedRevisionTag,
 	TEncodedRevisionTagSchema extends TSchema,
-	TVersion extends number,
+	TVersion extends DetachedFieldIndexFormatVersion,
 >(
 	options: ICodecOptions,
 	majorCodec: IJsonCodec<Major, TEncodedRevisionTag>,

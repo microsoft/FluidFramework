@@ -11,8 +11,9 @@
 "use strict";
 
 const getFluidTestMochaConfig = require("@fluid-internal/mocha-test-setup/mocharc-common");
-const packageDir = __dirname;
-const config = getFluidTestMochaConfig(packageDir);
+const config = getFluidTestMochaConfig(__dirname);
+// These tests have their own custom programmatic way to run them which does not follow our existing conventions for test filtering, so disable the default.
+delete config.spec;
 config["reporter"] = "json";
 config["forbid-only"] = false;
 delete config["reporter-options"];

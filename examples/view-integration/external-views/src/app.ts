@@ -3,6 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import {
+	createExampleDriver,
+	getSpecifiedServiceFromWebpack,
+} from "@fluid-example/example-driver";
 import type {
 	ICodeDetailsLoader,
 	IContainer,
@@ -13,22 +17,22 @@ import {
 	createDetachedContainer,
 	loadExistingContainer,
 } from "@fluidframework/container-loader/legacy";
-import { createRouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/legacy";
-import {
-	createInsecureTinyliciousTestTokenProvider,
-	createInsecureTinyliciousTestUrlResolver,
-	createTinyliciousTestCreateNewRequest,
-} from "@fluidframework/tinylicious-driver/test-utils";
 import { createElement } from "react";
 // eslint-disable-next-line import/no-internal-modules
 import { createRoot } from "react-dom/client";
 
-import { DiceRollerContainerRuntimeFactory, type IDiceRoller } from "./container/index.js";
+import { DiceRollerContainerRuntimeFactory, type EntryPoint } from "./container/index.js";
+import { renderCursorPresence } from "./cursor.js";
 import { DiceRollerView } from "./view.js";
 
-const urlResolver = createInsecureTinyliciousTestUrlResolver();
-const tokenProvider = createInsecureTinyliciousTestTokenProvider();
-const documentServiceFactory = createRouterliciousDocumentServiceFactory(tokenProvider);
+const service = getSpecifiedServiceFromWebpack();
+const {
+	urlResolver,
+	documentServiceFactory,
+	createCreateNewRequest,
+	createLoadExistingRequest,
+} = await createExampleDriver(service);
+
 const codeLoader: ICodeDetailsLoader = {
 	load: async (details: IFluidCodeDetails): Promise<IFluidModuleWithDetails> => {
 		return {
@@ -42,33 +46,46 @@ let id: string;
 let container: IContainer;
 
 if (location.hash.length === 0) {
+	// Some services support or require specifying the container id at attach time (local, odsp). For
+	// services that do not (t9s), the passed id will be ignored.
+	id = Date.now().toString();
+	const createNewRequest = createCreateNewRequest(id);
 	container = await createDetachedContainer({
 		codeDetails: { package: "1.0" },
 		urlResolver,
 		documentServiceFactory,
 		codeLoader,
 	});
-	await container.attach(createTinyliciousTestCreateNewRequest());
-	if (container.resolvedUrl === undefined) {
-		throw new Error("Resolved Url unexpectedly missing!");
+	await container.attach(createNewRequest);
+	// For most services, the id on the resolvedUrl is the authoritative source for the container id
+	// (regardless of whether the id passed in createCreateNewRequest is respected or not). However,
+	// for odsp the id is a hashed combination of drive and container ID which we can't use. Instead,
+	// we retain the id we generated above.
+	if (service !== "odsp") {
+		if (container.resolvedUrl === undefined) {
+			throw new Error("Resolved Url unexpectedly missing!");
+		}
+		id = container.resolvedUrl.id;
 	}
-	id = container.resolvedUrl.id;
 } else {
 	id = location.hash.substring(1);
 	container = await loadExistingContainer({
-		request: { url: id },
+		request: await createLoadExistingRequest(id),
 		urlResolver,
 		documentServiceFactory,
 		codeLoader,
 	});
 }
 
-const diceRoller = (await container.getEntryPoint()) as IDiceRoller;
+const { diceRoller, presence } = (await container.getEntryPoint()) as EntryPoint;
 
 // Render view
 const appDiv = document.getElementById("app") as HTMLDivElement;
 const appRoot = createRoot(appDiv);
 appRoot.render(createElement(DiceRollerView, { diceRoller }));
+
+const cursorContentDiv = document.getElementById("cursor-position") as HTMLDivElement;
+renderCursorPresence(presence, cursorContentDiv);
 
 // Update url and tab title
 location.hash = id;

@@ -37,7 +37,6 @@ import {
 	buildContext,
 	getFieldEncoder,
 	getNodeEncoder,
-	oneFromSet,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/schemaBasedEncode.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -46,6 +45,7 @@ import {
 	TreeCompressionStrategy,
 	cursorForJsonableTreeField,
 	defaultSchemaPolicy,
+	emptyChunk,
 	jsonableTreeFromFieldCursor,
 } from "../../../../feature-libraries/index.js";
 import { type JsonCompatibleReadOnly, brand } from "../../../../util/index.js";
@@ -64,7 +64,6 @@ import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { assertIsSessionId, testIdCompressor } from "../../../utils.js";
 import {
 	SpecialField,
-	version,
 	type EncodedFieldBatch,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/format.js";
@@ -76,6 +75,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../simple-tree/toStoredSchema.js";
 import { numberSchema, SchemaFactory, stringSchema } from "../../../../simple-tree/index.js";
+import { currentVersion } from "../../../../codec/index.js";
 
 const anyNodeShape = new NodeShapeBasedEncoder(undefined, undefined, [], anyFieldEncoder);
 const onlyTypeShape = new NodeShapeBasedEncoder(undefined, false, [], undefined);
@@ -93,12 +93,6 @@ const identifierShape = new NodeShapeBasedEncoder(
 );
 
 describe("schemaBasedEncoding", () => {
-	it("oneFromSet", () => {
-		assert.equal(oneFromSet(undefined), undefined);
-		assert.equal(oneFromSet(new Set([5])), 5);
-		assert.equal(oneFromSet(new Set([1, 2])), undefined);
-	});
-
 	describe("getFieldEncoder", () => {
 		it("monomorphic-value", () => {
 			const context = new EncoderContext(
@@ -347,8 +341,8 @@ describe("schemaBasedEncoding", () => {
 			}) {}
 			const testReferenceId: ChunkReferenceId = brand(123);
 			const mockIncrementalEncoder: IncrementalEncoder = {
-				shouldEncodeFieldIncrementally: (
-					nodeIdentifier: TreeNodeSchemaIdentifier,
+				shouldEncodeIncrementally: (
+					nodeIdentifier: TreeNodeSchemaIdentifier | undefined,
 					fieldKey: FieldKey,
 				): boolean => {
 					return (
@@ -365,14 +359,9 @@ describe("schemaBasedEncoding", () => {
 				},
 			};
 			const mockIncrementalDecoder: IncrementalDecoder = {
-				getEncodedIncrementalChunk: (referenceId: ChunkReferenceId): EncodedFieldBatch => {
+				decodeIncrementalChunk: (referenceId, chunkDecoder) => {
 					assert(referenceId === testReferenceId);
-					return {
-						version,
-						identifiers: [],
-						shapes: [{ a: 0 }],
-						data: [[0, []]],
-					} satisfies EncodedFieldBatch;
+					return emptyChunk;
 				},
 			};
 
@@ -468,7 +457,10 @@ describe("schemaBasedEncoding", () => {
 					idCompressor,
 				};
 				idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange());
-				const codec = makeFieldBatchCodec({ jsonValidator: ajvValidator }, 1);
+				const codec = makeFieldBatchCodec({
+					jsonValidator: ajvValidator,
+					minVersionForCollab: currentVersion,
+				});
 				// End to end test
 				// rootFieldSchema is not being used in encoding, so we currently have some limitations. Schema based optimizations for root case don't trigger.
 				const encoded = codec.encode([cursorForJsonableTreeField(tree)], fieldBatchContext);

@@ -14,8 +14,7 @@ import {
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 import { EmptyKey, rootFieldKey, type NormalizedUpPath } from "../../core/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { typeboxValidator } from "../../external-utilities/typeboxValidator.js";
+import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import {
 	TreeCompressionStrategy,
 	jsonableTreeFromFieldCursor,
@@ -73,7 +72,7 @@ const nodesCountDeep = [
 
 // TODO: ADO#7111 Schema should be fixed to enable schema based encoding.
 const factory = configuredSharedTree({
-	jsonValidator: typeboxValidator,
+	jsonValidator: FormatValidatorBasic,
 	treeEncodeType: TreeCompressionStrategy.Uncompressed,
 }).getFactory();
 

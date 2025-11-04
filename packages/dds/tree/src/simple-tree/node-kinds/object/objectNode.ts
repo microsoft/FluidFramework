@@ -38,11 +38,9 @@ import {
 	type InternalTreeNode,
 	type TreeNode,
 	type UnhydratedFlexTreeNode,
-	getOrCreateInnerNode,
+	getInnerNode,
 	type NodeSchemaMetadata,
 	type ImplicitAllowedTypes,
-	type ImplicitAnnotatedAllowedTypes,
-	unannotateImplicitAllowedTypes,
 	TreeNodeValid,
 	type MostDerivedData,
 	type TreeNodeSchemaInitializedData,
@@ -63,7 +61,6 @@ import type {
 	ObjectNodeSchema,
 	ObjectNodeSchemaInternalData,
 	ObjectNodeSchemaPrivate,
-	UnannotateSchemaRecord,
 } from "./objectNodeTypes.js";
 import { prepareForInsertion } from "../../prepareForInsertion.js";
 import {
@@ -72,11 +69,10 @@ import {
 	getExplicitStoredKey,
 	type TreeFieldFromImplicitField,
 	type InsertableTreeFieldFromImplicitField,
-	FieldSchema,
+	type FieldSchema,
 	FieldSchemaAlpha,
 	normalizeFieldSchema,
 	FieldKind,
-	type ImplicitAnnotatedFieldSchema,
 	type FieldProps,
 	type ContextualFieldProvider,
 	extractFieldProvider,
@@ -91,6 +87,7 @@ import {
 	type InsertableContent,
 } from "../../unhydratedFlexTreeFromInsertable.js";
 import { convertField, convertFieldKind } from "../../toStoredSchema.js";
+import type { ObjectSchemaOptionsAlpha } from "../../api/index.js";
 
 /**
  * Generates the properties for an ObjectNode from its field schema object.
@@ -102,7 +99,7 @@ import { convertField, convertFieldKind } from "../../toStoredSchema.js";
  */
 export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> =
 	RestrictiveStringRecord<ImplicitFieldSchema> extends T
-		? // eslint-disable-next-line @typescript-eslint/ban-types
+		? // eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/ban-types
 			{}
 		: {
 				-readonly [Property in keyof T]: Property extends string
@@ -120,6 +117,23 @@ export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFie
  * Non-empty fields are enumerable and empty optional fields are non-enumerable own properties with the value `undefined`.
  * No other own `own` or `enumerable` properties are included on object nodes unless the user of the node manually adds custom session only state.
  * This allows a majority of general purpose JavaScript object processing operations (like `for...in`, `Reflect.ownKeys()` and `Object.entries()`) to enumerate all the children.
+ *
+ * Field Assignment and Deletion
+ * Assigning to a field updates the tree value as long as it is still valid based on the schema.
+ * - For required fields, assigning `undefined` is invalid, and will throw.
+ * - For optional fields, assigning `undefined` removes the field's contents, and marks it as empty (non-enumerable and value set to undefined).
+ *
+ * Example:
+ * ```ts
+ * const Foo = schemaFactory.object("Foo", {bar: schemaFactory.optional(schemaFactory.number)});
+ * const node = new Foo({bar: 1})
+ *
+ * // This clears the field, is non-enumerable, and value is undefined.
+ * delete node.bar;
+ *
+ * // This is equivalent to the delete example.
+ * node.bar = undefined
+ * ```
  *
  * The API for fields is defined by {@link ObjectFromSchemaRecord}.
  * @public
@@ -195,18 +209,6 @@ export type InsertableObjectFromSchemaRecord<
 		>;
 
 /**
- * Helper used to remove annotations from a schema record and produce insertable objects,
- *
- * @privateRemarks
- * This calls {@link InsertableObjectFromSchemaRecord} in order to produce the insertable objects.
- *
- * @system @alpha
- */
-export type InsertableObjectFromAnnotatedSchemaRecord<
-	T extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
-> = InsertableObjectFromSchemaRecord<UnannotateSchemaRecord<T>>;
-
-/**
  * Maps from simple field keys ("property" keys) to information about the field.
  *
  * @remarks
@@ -222,9 +224,7 @@ export type SimpleKeyMap = ReadonlyMap<
 /**
  * Caches the mappings from property keys to stored keys for the provided object field schemas in {@link simpleKeyToFlexKeyCache}.
  */
-function createFlexKeyMapping(
-	fields: Record<string, ImplicitAnnotatedFieldSchema>,
-): SimpleKeyMap {
+function createFlexKeyMapping(fields: Record<string, ImplicitFieldSchema>): SimpleKeyMap {
 	const keyMap: Map<string | symbol, { storedKey: FieldKey; schema: FieldSchema }> = new Map();
 	for (const [propertyKey, fieldSchema] of Object.entries(fields)) {
 		const schema = normalizeFieldSchema(fieldSchema);
@@ -261,7 +261,7 @@ function createProxyHandler(
 		get(target, propertyKey, proxy): unknown {
 			const fieldInfo = schema.flexKeyMap.get(propertyKey);
 			if (fieldInfo !== undefined) {
-				const flexNode = getOrCreateInnerNode(proxy);
+				const flexNode = getInnerNode(proxy);
 				debugAssert(() => !flexNode.context.isDisposed() || "FlexTreeNode is disposed");
 				const field = flexNode.tryGetField(fieldInfo.storedKey);
 				if (field !== undefined) {
@@ -292,27 +292,17 @@ function createProxyHandler(
 					: false;
 			}
 
-			const innerNode = getOrCreateInnerNode(proxy);
-
-			const innerSchema = innerNode.context.schema.nodeSchema.get(brand(schema.identifier));
-			assert(
-				innerSchema instanceof ObjectNodeStoredSchema,
-				0xc18 /* Expected ObjectNodeStoredSchema */,
-			);
-
-			setField(
-				innerNode.getBoxed(fieldInfo.storedKey),
-				fieldInfo.schema,
-				value,
-				innerSchema.getFieldSchema(fieldInfo.storedKey),
-			);
+			applyFieldChange(schema, { kind: "proxy", node: proxy }, fieldInfo, value);
 			return true;
 		},
 		deleteProperty(target, propertyKey): boolean {
-			// TODO: supporting delete when it makes sense (custom local fields, and optional field) could be added as a feature in the future.
-			throw new UsageError(
-				`Object nodes do not support the delete operator. Optional fields can be assigned to undefined instead.`,
-			);
+			const fieldInfo = schema.flexKeyMap.get(propertyKey);
+			if (fieldInfo === undefined) {
+				return allowAdditionalProperties ? Reflect.deleteProperty(target, propertyKey) : false;
+			}
+
+			applyFieldChange(schema, { kind: "target", node: target }, fieldInfo, undefined);
+			return true;
 		},
 		has: (target, propertyKey) => {
 			return (
@@ -339,7 +329,7 @@ function createProxyHandler(
 			// If a refactoring is done to associated flex tree data with the target not the proxy, this extra map could be removed,
 			// and the design would be more compatible with proxyless nodes.
 			const proxy = targetToProxy.get(target) ?? fail(0xadd /* missing proxy */);
-			const field = getOrCreateInnerNode(proxy).tryGetField(fieldInfo.storedKey);
+			const field = getInnerNode(proxy).tryGetField(fieldInfo.storedKey);
 
 			const p: PropertyDescriptor = {
 				value: field === undefined ? undefined : tryGetTreeNodeForField(field),
@@ -404,10 +394,9 @@ export class ObjectFieldSchema<
 	public constructor(
 		kind: Kind,
 		allowedTypes: Types,
-		annotatedTypes: ImplicitAnnotatedAllowedTypes,
 		props: FieldProps<TCustomMetadata> & { readonly key: string },
 	) {
-		super(kind, allowedTypes, annotatedTypes, props);
+		super(kind, allowedTypes, props);
 		this.storedKey = props.key;
 	}
 }
@@ -427,16 +416,14 @@ abstract class CustomObjectNodeBase<
  */
 export function objectSchema<
 	TName extends string,
-	const T extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
+	const T extends RestrictiveStringRecord<ImplicitFieldSchema>,
 	const ImplicitlyConstructable extends boolean,
 	const TCustomMetadata = unknown,
 >(
 	identifier: TName,
 	info: T,
 	implicitlyConstructable: ImplicitlyConstructable,
-	allowUnknownOptionalFields: boolean,
-	metadata?: NodeSchemaMetadata<TCustomMetadata>,
-	persistedMetadata?: JsonCompatibleReadOnlyObject | undefined,
+	nodeOptions: ObjectSchemaOptionsAlpha<TCustomMetadata>,
 ): ObjectNodeSchema<TName, T, ImplicitlyConstructable, TCustomMetadata> &
 	ObjectNodeSchemaInternalData &
 	TreeNodeSchemaCorePrivate {
@@ -466,22 +453,17 @@ export function objectSchema<
 	let handler: ProxyHandler<object>;
 	let customizable: boolean;
 
-	class CustomObjectNode extends CustomObjectNodeBase<UnannotateSchemaRecord<T>> {
+	class CustomObjectNode extends CustomObjectNodeBase<T> {
 		public static readonly fields: ReadonlyMap<
 			string,
 			FieldSchemaAlpha & SimpleObjectFieldSchema
 		> = new Map(
 			Array.from(flexKeyMap, ([key, value]) => [
 				key as string,
-				new ObjectFieldSchema(
-					value.schema.kind,
-					value.schema.allowedTypes,
-					(value.schema as FieldSchemaAlpha).annotatedAllowedTypes,
-					{
-						...value.schema.props,
-						key: getStoredKey(key as string, value.schema),
-					},
-				),
+				new ObjectFieldSchema(value.schema.kind, value.schema.allowedTypes, {
+					...value.schema.props,
+					key: getStoredKey(key as string, value.schema),
+				}),
 			]),
 		);
 		public static readonly flexKeyMap: SimpleKeyMap = flexKeyMap;
@@ -495,7 +477,8 @@ export function objectSchema<
 			]),
 		);
 		public static readonly identifierFieldKeys: readonly FieldKey[] = identifierFieldKeys;
-		public static readonly allowUnknownOptionalFields: boolean = allowUnknownOptionalFields;
+		public static readonly allowUnknownOptionalFields: boolean =
+			nodeOptions.allowUnknownOptionalFields ?? false;
 
 		public static override prepareInstance<T2>(
 			this: typeof TreeNodeValid<T2>,
@@ -585,9 +568,10 @@ export function objectSchema<
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;
 		}
-		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
+		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> =
+			nodeOptions.metadata ?? {};
 		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
-			persistedMetadata;
+			nodeOptions.persistedMetadata;
 
 		// eslint-disable-next-line import/no-deprecated
 		public get [typeNameSymbol](): TName {
@@ -600,10 +584,7 @@ export function objectSchema<
 		public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
 			return (privateData ??= createTreeNodeSchemaPrivateData(
 				this,
-				Array.from(
-					flexKeyMap.values(),
-					({ schema }) => normalizeFieldSchema(schema).annotatedAllowedTypes,
-				),
+				Array.from(CustomObjectNode.fields.values(), (schema) => schema.allowedTypesFull),
 				(storedOptions) => {
 					const fields: Map<FieldKey, TreeFieldStoredSchema> = new Map();
 					for (const fieldSchema of flexKeyMap.values()) {
@@ -616,30 +597,16 @@ export function objectSchema<
 							convertField(fieldSchema.schema, storedOptions),
 						);
 					}
-					return new ObjectNodeStoredSchema(fields, persistedMetadata);
+					return new ObjectNodeStoredSchema(fields, nodeOptions.persistedMetadata);
 				},
 			));
 		}
 	}
 	type Output = typeof CustomObjectNode &
 		(new (
-			input: InsertableObjectFromAnnotatedSchemaRecord<T> | InternalTreeNode,
-		) => TreeObjectNode<UnannotateSchemaRecord<T>, TName>);
+			input: InsertableObjectFromSchemaRecord<T> | InternalTreeNode,
+		) => TreeObjectNode<T, TName>);
 	return CustomObjectNode as Output;
-}
-
-/**
- * Removes annotations from a schema record.
- */
-export function unannotateSchemaRecord<
-	Schema extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
->(schemaRecord: Schema): UnannotateSchemaRecord<Schema> {
-	return Object.fromEntries(
-		Object.entries(schemaRecord).map(([key, schema]) => [
-			key,
-			schema instanceof FieldSchema ? schema : unannotateImplicitAllowedTypes(schema),
-		]),
-	) as UnannotateSchemaRecord<Schema>;
 }
 
 const targetToProxy: WeakMap<object, TreeNode> = new WeakMap();
@@ -651,7 +618,7 @@ const targetToProxy: WeakMap<object, TreeNode> = new WeakMap();
  */
 function assertUniqueKeys<
 	const Name extends number | string,
-	const Fields extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
+	const Fields extends RestrictiveStringRecord<ImplicitFieldSchema>,
 >(schemaName: Name, fields: Fields): void {
 	// Verify that there are no duplicates among the explicitly specified stored keys.
 	const explicitStoredKeys = new Set<string>();
@@ -789,4 +756,33 @@ function getFieldProperty(
 		return (data as Record<string, InsertableContent>)[key as string];
 	}
 	return undefined;
+}
+
+function applyFieldChange(
+	schema: ObjectNodeSchemaPrivate,
+	from: { kind: "proxy"; node: TreeNode } | { kind: "target"; node: object },
+	fieldInfo: { storedKey: FieldKey; schema: FieldSchema },
+	value: InsertableContent | undefined,
+): void {
+	const proxy =
+		from.kind === "proxy"
+			? from.node
+			: (targetToProxy.get(from.node) ?? fail(0xc95 /* missing proxy */));
+	const inner = getInnerNode(proxy);
+	const storedSchema = inner.context.schema.nodeSchema.get(brand(schema.identifier));
+	assert(
+		storedSchema instanceof ObjectNodeStoredSchema,
+		0xc96 /* Expected ObjectNodeStoredSchema */,
+	);
+
+	if (value === undefined && inner.tryGetField(fieldInfo.storedKey) === undefined) {
+		return;
+	}
+
+	setField(
+		inner.getBoxed(fieldInfo.storedKey),
+		fieldInfo.schema,
+		value,
+		storedSchema.getFieldSchema(fieldInfo.storedKey),
+	);
 }

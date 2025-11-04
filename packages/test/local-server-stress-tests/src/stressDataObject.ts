@@ -22,22 +22,17 @@ import type {
 	IFluidLoadable,
 } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
-import type {
-	IChannel,
-	// eslint-disable-next-line import/no-deprecated
-	IFluidDataStoreRuntimeExperimental,
-} from "@fluidframework/datastore-definitions/internal";
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 // Valid export as per package.json export map
 // eslint-disable-next-line import/no-internal-modules
 import { modifyClusterSize } from "@fluidframework/id-compressor/internal/test-utils";
 import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
-import type {
-	// eslint-disable-next-line import/no-deprecated
-	IContainerRuntimeBaseExperimental,
-	// eslint-disable-next-line import/no-deprecated
-	StageControlsExperimental,
-} from "@fluidframework/runtime-definitions/internal";
-import { RuntimeHeaders, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
+import { type StageControlsAlpha } from "@fluidframework/runtime-definitions/internal";
+import {
+	RuntimeHeaders,
+	toFluidHandleInternal,
+	asLegacyAlpha,
+} from "@fluidframework/runtime-utils/internal";
 import { timeoutAwait } from "@fluidframework/test-utils/internal";
 
 import { ddsModelMap } from "./ddsModels.js";
@@ -145,7 +140,7 @@ export class StressDataObject extends DataObject {
 	}
 
 	public get attached() {
-		return this.runtime.attachState === AttachState.Attached;
+		return this.runtime.attachState !== AttachState.Detached;
 	}
 
 	public async uploadBlob(tag: `blob-${number}`, contents: string) {
@@ -184,8 +179,7 @@ export class StressDataObject extends DataObject {
 	}
 
 	public get isDirty(): boolean | undefined {
-		// eslint-disable-next-line import/no-deprecated
-		return (this.runtime as IFluidDataStoreRuntimeExperimental).isDirty;
+		return asLegacyAlpha(this.runtime).isDirty;
 	}
 }
 
@@ -305,11 +299,8 @@ export class DefaultStressDataObject extends StressDataObject {
 		this._locallyCreatedObjects.push(obj);
 	}
 
-	// eslint-disable-next-line import/no-deprecated
-	private stageControls: StageControlsExperimental | undefined;
-	// eslint-disable-next-line import/no-deprecated
-	private readonly containerRuntimeExp: IContainerRuntimeBaseExperimental =
-		this.context.containerRuntime;
+	private stageControls: StageControlsAlpha | undefined;
+	private readonly containerRuntimeExp = asLegacyAlpha(this.context.containerRuntime);
 	public enterStagingMode() {
 		assert(
 			this.containerRuntimeExp.enterStagingMode !== undefined,
@@ -355,6 +346,7 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 		},
 		enableRuntimeIdCompressor: "on",
 		createBlobPayloadPending: true,
+		explicitSchemaControl: true,
 	};
 
 	return {

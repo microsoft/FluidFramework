@@ -99,43 +99,37 @@ export interface ITreeAlpha extends ITree {
 	 * To get the schema using property keys, use {@link getSimpleSchema} on the view schema.
 	 */
 	exportSimpleSchema(): SimpleTreeSchema;
+
+	/**
+	 * Creates a fork of the current state of the main branch.
+	 * This new branch will be shared with and editable by all clients.
+	 */
+	createSharedBranch(): string;
+
+	/**
+	 * Returns a list of all shared branches that currently exist on this tree.
+	 * Any one of them can be checked out using {@link ITreeAlpha.viewSharedBranchWith}.
+	 */
+	getSharedBranchIds(): string[];
+
+	/**
+	 * Returns a view of the tree on the specified shared branch, using the provided schema.
+	 * See {@link ViewableTree.viewWith}.
+	 */
+	viewSharedBranchWith<TRoot extends ImplicitFieldSchema>(
+		branchId: string,
+		config: TreeViewConfiguration<TRoot>,
+	): TreeView<TRoot>;
 }
 
 /**
  * A collection of functionality associated with a (version-control-style) branch of a SharedTree.
  * @remarks A `TreeBranch` allows for the {@link TreeBranch.fork | creation of branches} and for those branches to later be {@link TreeBranch.merge | merged}.
  *
- * The `TreeBranch` for a specific {@link TreeNode} may be acquired by calling `TreeAlpha.branch`.
- *
- * A branch does not necessarily know the schema of its SharedTree - to convert a branch to a {@link TreeViewAlpha | view with a schema}, use {@link TreeBranch.hasRootSchema | hasRootSchema()}.
- *
  * The branch associated directly with the {@link ITree | SharedTree} is the "main" branch, and all other branches fork (directly or transitively) from that main branch.
- * @sealed @alpha
+ * @sealed @beta
  */
 export interface TreeBranch extends IDisposable {
-	/**
-	 * Events for the branch
-	 */
-	readonly events: Listenable<TreeBranchEvents>;
-
-	/**
-	 * Returns true if this branch has the given schema as its root schema.
-	 * @remarks This is a type guard which allows this branch to become strongly typed as a {@link TreeViewAlpha | view} of the given schema.
-	 *
-	 * To succeed, the given schema must be invariant to the schema of the view - it must include exactly the same allowed types.
-	 * For example, a schema of `Foo | Bar` will not match a view schema of `Foo`, and likewise a schema of `Foo` will not match a view schema of `Foo | Bar`.
-	 * @example
-	 * ```typescript
-	 * if (branch.hasRootSchema(MySchema)) {
-	 *   const { root } = branch; // `branch` is now a TreeViewAlpha<MySchema>
-	 *   // ...
-	 * }
-	 * ```
-	 */
-	hasRootSchema<TSchema extends ImplicitFieldSchema>(
-		schema: TSchema,
-	): this is TreeViewAlpha<TSchema>;
-
 	/**
 	 * Fork a new branch off of this branch which is based off of this branch's current state.
 	 * @remarks Any changes to the tree on the new branch will not apply to this branch until the new branch is e.g. {@link TreeBranch.merge | merged} back into this branch.
@@ -165,6 +159,54 @@ export interface TreeBranch extends IDisposable {
 	 * The {@link TreeBranch | main branch} cannot be rebased onto another branch - attempting to do so will throw an error.
 	 */
 	rebaseOnto(branch: TreeBranch): void;
+
+	/**
+	 * Dispose of this branch, cleaning up any resources associated with it.
+	 * @param error - Optional error indicating the reason for the disposal, if the object was disposed as the result of an error.
+	 * @remarks Branches can also be automatically disposed when {@link TreeBranch.merge | they are merged} into another branch.
+	 *
+	 * Disposing branches is important to avoid consuming memory unnecessarily.
+	 * In particular, the SharedTree retains all sequenced changes made to the tree since the "most-behind" branch was created or last {@link TreeBranch.rebaseOnto | rebased}.
+	 *
+	 * The {@link TreeBranch | main branch} cannot be disposed - attempting to do so will have no effect.
+	 */
+	dispose(error?: Error): void;
+}
+
+/**
+ * {@link TreeBranch} with alpha-level APIs.
+ * @remarks
+ * The `TreeBranch` for a specific {@link TreeNode} may be acquired by calling `TreeAlpha.branch`.
+ *
+ * A branch does not necessarily know the schema of its SharedTree - to convert a branch to a {@link TreeViewAlpha | view with a schema}, use {@link TreeBranchAlpha.hasRootSchema | hasRootSchema()}.
+ * @sealed @alpha
+ */
+export interface TreeBranchAlpha extends TreeBranch {
+	/**
+	 * Events for the branch
+	 */
+	readonly events: Listenable<TreeBranchEvents>;
+
+	/**
+	 * Returns true if this branch has the given schema as its root schema.
+	 * @remarks This is a type guard which allows this branch to become strongly typed as a {@link TreeViewAlpha | view} of the given schema.
+	 *
+	 * To succeed, the given schema must be invariant to the schema of the view - it must include exactly the same allowed types.
+	 * For example, a schema of `Foo | Bar` will not match a view schema of `Foo`, and likewise a schema of `Foo` will not match a view schema of `Foo | Bar`.
+	 * @example
+	 * ```typescript
+	 * if (branch.hasRootSchema(MySchema)) {
+	 *   const { root } = branch; // `branch` is now a TreeViewAlpha<MySchema>
+	 *   // ...
+	 * }
+	 * ```
+	 */
+	hasRootSchema<TSchema extends ImplicitFieldSchema>(
+		schema: TSchema,
+	): this is TreeViewAlpha<TSchema>;
+
+	// Override the base fork method to return the alpha variant.
+	fork(): TreeBranchAlpha;
 
 	/**
 	 * Run a transaction which applies one or more edits to the tree as a single atomic unit.
@@ -240,28 +282,17 @@ export interface TreeBranch extends IDisposable {
 		transaction: () => VoidTransactionCallbackStatus | void,
 		params?: RunTransactionParams,
 	): TransactionResult;
-
-	/**
-	 * Dispose of this branch, cleaning up any resources associated with it.
-	 * @param error - Optional error indicating the reason for the disposal, if the object was disposed as the result of an error.
-	 * @remarks Branches can also be automatically disposed when {@link TreeBranch.merge | they are merged} into another branch.
-	 *
-	 * Disposing branches is important to avoid consuming memory unnecessarily.
-	 * In particular, the SharedTree retains all sequenced changes made to the tree since the "most-behind" branch was created or last {@link TreeBranch.rebaseOnto | rebased}.
-	 *
-	 * The {@link TreeBranch | main branch} cannot be disposed - attempting to do so will have no effect.
-	 */
-	dispose(error?: Error): void;
 }
 
 /**
  * An editable view of a (version control style) branch of a shared tree based on some schema.
  *
- * This schema--known as the view schema--may or may not align the stored schema of the document.
+ * @remarks
+ * This schema (known as the view schema) may or may not align with the stored schema of the document.
  * Information about discrepancies between the two schemas is available via {@link TreeView.compatibility | compatibility}.
  *
- * Application authors are encouraged to read [schema-evolution.md](../../docs/user-facing/schema-evolution.md) and
- * choose a schema compatibility policy that aligns with their application's needs.
+ * Application authors are encouraged to read {@link https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/docs/user-facing/schema-evolution.md | schema-evolution.md}
+ * and choose a schema compatibility policy that aligns with their application's needs.
  *
  * @privateRemarks
  * From an API design perspective, `upgradeSchema` could be merged into `viewWith` and/or `viewWith` could return errors explicitly on incompatible documents.
@@ -300,18 +331,25 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 	readonly compatibility: SchemaCompatibilityStatus;
 
 	/**
-	 * When the schemas are not an exact match and {@link SchemaCompatibilityStatus.canUpgrade} is true,
+	 * When {@link SchemaCompatibilityStatus.canUpgrade} is true,
 	 * this can be used to modify the stored schema to make it match the view schema.
-	 * This will update the compatibility state, and allow access to `root`.
-	 * Beware that this may impact other clients' ability to view the document depending on the application's schema compatibility policy!
 	 * @remarks
-	 * It is an error to call this when {@link SchemaCompatibilityStatus.canUpgrade} is false, and a no-op when the stored and view schema are already an exact match.
+	 * This will update the {@link TreeView.compatibility}, allowing access to `root`.
+	 * Beware that this may impact other clients' ability to view the document: see {@link SchemaCompatibilityStatus.canView} for more information.
+	 *
+	 * It is an error to call this when {@link SchemaCompatibilityStatus.canUpgrade} is false.
+	 * {@link SchemaCompatibilityStatus.canUpgrade} being true does not mean that an upgrade is required, nor that an upgrade will have any effect.
 	 * @privateRemarks
 	 * In the future, more upgrade options could be provided here.
 	 * Some options that could be added:
 	 * - check the actual document contents (not just the schema) and attempt an atomic document update if the data is compatible.
 	 * - apply converters and upgrade the document.
 	 * - apply converters to lazily to adapt the document to the requested view schema (with optional lazy schema updates or transparent conversions on write).
+	 * - update only a specific change (add an optional field, or apply a staged upgrade)
+	 * - update persistedMetadata or not
+	 *
+	 * As persisted metadata becomes more supported, how it interacts with isEquivalent and upgradeSchema should be clarified:
+	 * for now the docs are being left somewhat vague to allow flexibility in this area.
 	 */
 	upgradeSchema(): void;
 
@@ -342,24 +380,37 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
  */
 export interface TreeViewAlpha<
 	in out TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema,
-> extends Omit<TreeView<ReadSchema<TSchema>>, "root" | "initialize">,
-		TreeBranch {
+> extends Omit<TreeViewBeta<ReadSchema<TSchema>>, "root" | "initialize" | "fork">,
+		TreeBranchAlpha {
 	get root(): ReadableField<TSchema>;
 
 	set root(newRoot: InsertableField<TSchema>);
 
-	readonly events: Listenable<TreeViewEvents & TreeBranchEvents>;
-
 	initialize(content: InsertableField<TSchema>): void;
 
-	// Override the base branch method to return a typed view rather than merely a branch.
+	readonly events: Listenable<TreeViewEvents & TreeBranchEvents>;
+
+	// Override the base fork method to return a TreeViewAlpha.
 	fork(): ReturnType<TreeBranch["fork"]> & TreeViewAlpha<TSchema>;
+}
+
+/**
+ * {@link TreeView} with additional beta APIs.
+ * @sealed @beta
+ */
+export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema>
+	extends TreeView<TSchema>,
+		TreeBranch {
+	// Override the base branch method to return a typed view rather than merely a branch.
+	fork(): ReturnType<TreeBranch["fork"]> & TreeViewBeta<TSchema>;
 }
 
 /**
  * Information about a view schema's compatibility with the document's stored schema.
  *
  * See SharedTree's README for more information about choosing a compatibility policy.
+ * @privateRemarks
+ * See {@link SchemaCompatibilityTester} for the implementation of this compatibility checking.
  * @sealed @public
  */
 export interface SchemaCompatibilityStatus {
@@ -374,38 +425,41 @@ export interface SchemaCompatibilityStatus {
 	 *
 	 * - schema repository `A` has extra schema which schema `B` doesn't have, but they are unused (i.e. not reachable from the root schema)
 	 *
-	 * - field in schema `A` has allowed field members which the corresponding field in schema `B` does not have, but those types are not constructible (ex: an object node type containing a required field with no allowed types)
+	 * - field in schema `A` has allowed field members which the corresponding field in schema `B` does not have, but those types are not constructible (for example: an object node type containing a required field with no allowed types)
 	 *
 	 * These cases are typically not interesting to applications.
+	 *
+	 * Note that other content in the stored schema that does not impact document compatibility, like {@link NodeSchemaOptionsAlpha.persistedMetadata}, does not affect this field.
+	 *
+	 * For the computation of this equivalence, {@link SchemaStaticsAlpha.staged | staged} schemas are not included.
+	 * If there are any unknown optional fields, even if allowed by {@link ObjectSchemaOptions.allowUnknownOptionalFields}, `isEquivalent` will be false.
 	 */
 	readonly isEquivalent: boolean;
 
 	/**
 	 * Whether the current view schema is sufficiently compatible with the stored schema to allow viewing tree data.
 	 * If false, {@link TreeView.root} will throw upon access.
-	 *
-	 * Currently, this field is true iff `isEquivalent` is true.
-	 * Do not rely on this:
-	 * there are near-term plans to extend support for viewing documents when the stored schema contains additional optional fields not present in the view schema.
-	 * The other two types of backward-compatible changes (field relaxations and addition of allowed field types) will eventually be supported as well,
-	 * likely through out-of-schema content adapters that the application can provide alongside their view schema.
-	 *
-	 * Be aware that even with these SharedTree limitations fixed, application logic may not correctly tolerate the documents allowable by the stored schema!
-	 * Application authors are encouraged to read docs/user-facing/schema-evolution.md and choose a schema compatibility policy that
-	 * aligns with their application's needs.
-	 *
 	 * @remarks
+	 * If the view schema does not opt into supporting any additional cases, then `canView` is only true when `isEquivalent` is also true.
+	 * The view schema can however opt into supporting additional cases, and thus can also view documents with stored schema which would be equivalent, except for the following discrepancies:
+	 *
+	 * - An object node with {@link ObjectSchemaOptions.allowUnknownOptionalFields} to set to true that has additional optional fields in the stored schema beyond those mentioned in its view schema.
+	 *
+	 * - An additional type allowed at a location in the stored schema where it is {@link SchemaStaticsAlpha.staged | staged} in the view schema.
+	 *
+	 * In these cases `canUpgrade` and `isEquivalent` will be false.
+	 *
 	 * When the documents allowed by the view schema is a strict superset of those by the stored schema,
-	 * this is false because writes to the document using the view schema could make the document violate its stored schema.
+	 * `canView` is false because writes to the document using the view schema could make the document violate its stored schema.
 	 * In this case, the stored schema could be updated to match the provided view schema, allowing read-write access to the tree.
 	 * See {@link SchemaCompatibilityStatus.canUpgrade}.
 	 *
-	 * Future version of SharedTree may provide readonly access to the document in this case because that would be safe,
+	 * Future versions of SharedTree may provide readonly access to the document in this case because that would be safe,
 	 * but this is not currently supported.
 	 *
 	 * @privateRemarks
 	 * A necessary condition for this to be true is that the documents allowed by the view schema are a subset of those allowed by the stored schema.
-	 * This is not sufficient: the simple-tree layer's read APIs do not tolerate out-of-schema data.
+	 * This is not sufficient: the simple-tree layer's read APIs only tolerate very specific cases beyond their schema (unknown optional fields).
 	 * For example, if the view schema for a node has a required `Point` field but the stored schema has an optional `Point` field,
 	 * read APIs on the view schema do not work correctly when the document has a node with a missing `Point` field.
 	 * Similar issues happen when the view schema has a field with less allowed types than the stored schema and the document actually leverages those types.
@@ -413,8 +467,15 @@ export interface SchemaCompatibilityStatus {
 	readonly canView: boolean;
 
 	/**
-	 * True iff the view schema supports all possible documents permitted by the stored schema.
+	 * True when {@link TreeView.upgradeSchema} can add support for all content required to be supported by the view schema.
+	 * @remarks
 	 * When true, it is valid to call {@link TreeView.upgradeSchema} (though if the stored schema is already an exact match, this is a no-op).
+	 *
+	 * When adding optional fields to schema which previously were marked with {@link ObjectSchemaOptions.allowUnknownOptionalFields}
+	 * the schema upgrade (assuming no other changes are included) will allow the previous version to view.
+	 * Even this case must still must be done with caution however as only clients with the newly added field will be able to do future upgrades.
+	 * Thus if a version of an application is shipped that adds an unknown optional field, all future versions should include it, even if its no longer used,
+	 * to ensure that documents containing it can still be upgraded.
 	 */
 	readonly canUpgrade: boolean;
 
@@ -516,6 +577,8 @@ export interface TreeViewEvents {
 /**
  * Retrieve the {@link TreeViewAlpha | alpha API} for a {@link TreeView}.
  * @alpha
+ * @deprecated Use {@link asAlpha} instead.
+ * @privateRemarks Despite being deprecated, this function should be used within the tree package (outside of tests) rather than `asAlpha` in order to avoid circular import dependencies.
  */
 export function asTreeViewAlpha<TSchema extends ImplicitFieldSchema>(
 	view: TreeView<TSchema>,

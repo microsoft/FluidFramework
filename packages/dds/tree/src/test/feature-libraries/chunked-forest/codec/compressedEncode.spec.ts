@@ -21,7 +21,7 @@ import type {
 	TreeNodeSchemaIdentifier,
 	Value,
 } from "../../../../core/index.js";
-import { typeboxValidator } from "../../../../external-utilities/index.js";
+import { FormatValidatorBasic } from "../../../../external-utilities/index.js";
 import {
 	decode,
 	readValue,
@@ -56,7 +56,7 @@ import {
 	EncodedFieldBatch,
 	type EncodedValueShape,
 	validVersions,
-	version,
+	FieldBatchFormatVersion,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/format.js";
 import type {
@@ -76,6 +76,8 @@ import type {
 import {
 	TreeCompressionStrategy,
 	cursorForJsonableTreeField,
+	emptyChunk,
+	defaultIncrementalEncodingPolicy,
 	fieldKinds,
 	jsonableTreeFromFieldCursor,
 } from "../../../../feature-libraries/index.js";
@@ -139,7 +141,7 @@ describe("compressedEncode", () => {
 					testIdCompressor,
 					undefined /* incrementalEncoder */,
 				);
-				const codec = makeFieldBatchCodec({ jsonValidator: typeboxValidator }, context);
+				const codec = makeFieldBatchCodec({ jsonValidator: FormatValidatorBasic }, context);
 				const result = codec.encode(input, {
 					encodeType: TreeCompressionStrategy.Compressed,
 					idCompressor: testIdCompressor,
@@ -178,7 +180,9 @@ describe("compressedEncode", () => {
 				const buffer: BufferFormat<EncodedChunkShape> = [];
 				encodeValue(value, shape, buffer);
 				assert.deepEqual(buffer, encoded);
-				const processed = updateShapesAndIdentifiersEncoding(version, [buffer]);
+				const processed = updateShapesAndIdentifiersEncoding(FieldBatchFormatVersion.v1, [
+					buffer,
+				]);
 				assert(processed.data.length === 1);
 				const stream = { data: processed.data[0], offset: 0 };
 				const decoded = readValue(stream, shape, {
@@ -421,7 +425,7 @@ describe("compressedEncode", () => {
 			chunkReferenceIds: ChunkReferenceId[],
 		): IncrementalEncoder {
 			return {
-				shouldEncodeFieldIncrementally: () => true,
+				shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
 				encodeIncrementalField: () => chunkReferenceIds,
 			};
 		}
@@ -439,17 +443,11 @@ describe("compressedEncode", () => {
 		});
 
 		it("non-empty", () => {
-			const emptyBatch: EncodedFieldBatch = {
-				version,
-				identifiers: [],
-				shapes: [{ a: 0 }],
-				data: [[0, []]],
-			};
 			const referenceIds: ChunkReferenceId[] = [brand(1), brand(2)];
 			const mockIncrementalDecoder: IncrementalDecoder = {
-				getEncodedIncrementalChunk: (referenceId: ChunkReferenceId): EncodedFieldBatch => {
+				decodeIncrementalChunk: (referenceId, chunkDecoder) => {
 					assert(referenceIds.includes(referenceId));
-					return emptyBatch;
+					return emptyChunk;
 				},
 			};
 			const context = new EncoderContext(
@@ -487,7 +485,7 @@ describe("compressedEncode", () => {
 				(error: Error) =>
 					validateAssertionError(
 						error,
-						"incremental encoding must be enabled to use IncrementalFieldShape",
+						"incremental encoder must be defined to use incrementalFieldEncoder",
 					),
 			);
 		});

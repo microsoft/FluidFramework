@@ -5,7 +5,7 @@
 
 import type { OdspTestDriver } from "@fluid-private/test-drivers";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import type { IPersistedCache } from "@fluidframework/odsp-driver-definitions/internal";
+import type { IPersistedCache } from "@fluidframework/driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	getUnexpectedLogErrorException,

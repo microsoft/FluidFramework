@@ -596,6 +596,24 @@ declare type current_as_old_for_Interface_ISummaryConfigurationHeuristics = requ
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Interface_ISummaryConfigurationWithSummaryOnRequest": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_ISummaryConfigurationWithSummaryOnRequest = requireAssignableTo<TypeOnly<old.ISummaryConfigurationWithSummaryOnRequest>, TypeOnly<current.ISummaryConfigurationWithSummaryOnRequest>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_ISummaryConfigurationWithSummaryOnRequest": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_ISummaryConfigurationWithSummaryOnRequest = requireAssignableTo<TypeOnly<current.ISummaryConfigurationWithSummaryOnRequest>, TypeOnly<old.ISummaryConfigurationWithSummaryOnRequest>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Interface_ISummaryNackMessage": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_ISummaryNackMessage = requireAssignableTo<TypeOnly<old.ISummaryNackMessage>, TypeOnly<current.ISummaryNackMessage>>
@@ -770,24 +788,6 @@ declare type old_as_current_for_TypeAlias_ISummaryConfiguration = requireAssigna
  * "TypeAlias_ISummaryConfiguration": {"backCompat": false}
  */
 declare type current_as_old_for_TypeAlias_ISummaryConfiguration = requireAssignableTo<TypeOnly<current.ISummaryConfiguration>, TypeOnly<old.ISummaryConfiguration>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_MinimumVersionForCollab": {"forwardCompat": false}
- */
-declare type old_as_current_for_TypeAlias_MinimumVersionForCollab = requireAssignableTo<TypeOnly<old.MinimumVersionForCollab>, TypeOnly<current.MinimumVersionForCollab>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_MinimumVersionForCollab": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAlias_MinimumVersionForCollab = requireAssignableTo<TypeOnly<current.MinimumVersionForCollab>, TypeOnly<old.MinimumVersionForCollab>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
