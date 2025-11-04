@@ -20,13 +20,18 @@ export type ForestFormatVersion = Brand<
 	"ForestFormatVersion"
 >;
 
-export const Format = Type.Object(
-	{
-		version: Type.Literal(ForestFormatVersion.v1),
-		keys: Type.Array(schemaFormatV1.FieldKeySchema),
-		fields: Versioned,
-	},
-	{ additionalProperties: false },
-);
+export const Format = <TVersion extends ForestFormatVersion>(
+	tVersion: TVersion = ForestFormatVersion.v1 as TVersion,
+	// Return type is intentionally derived.
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+) =>
+	Type.Object(
+		{
+			version: Type.Literal(tVersion),
+			keys: Type.Array(schemaFormatV1.FieldKeySchema),
+			fields: Versioned,
+		},
+		{ additionalProperties: false },
+	);
 
-export type Format = Static<typeof Format>;
+export type Format = Static<ReturnType<typeof Format>>;

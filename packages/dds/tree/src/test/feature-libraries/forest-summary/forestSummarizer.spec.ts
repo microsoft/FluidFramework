@@ -73,7 +73,7 @@ function createForestSummarizer(args: {
 	} = args;
 	const options: CodecWriteOptions = {
 		jsonValidator: FormatValidatorBasic,
-		minVersionForCollab: FluidClientVersion.v2_0,
+		minVersionForCollab: FluidClientVersion.v2_72,
 	};
 	const fieldBatchCodec = makeFieldBatchCodec(options);
 	const checkout = checkoutWithContent(initialContent, {

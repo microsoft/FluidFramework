@@ -517,6 +517,11 @@ export const FluidClientVersion = {
 	 * - DetachedFieldIndexFormatVersion.v2
 	 */
 	v2_52: "2.52.0",
+
+	/** Fluid Framework Client 2.72 and newer. */
+	// New formats introduced in 2.72:
+	// - FieldBatchFormatVersion v2
+	v2_72: "2.72.0",
 } as const satisfies Record<string, MinimumVersionForCollab>;
 
 /**

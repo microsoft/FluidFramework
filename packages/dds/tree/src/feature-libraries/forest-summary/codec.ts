@@ -45,7 +45,7 @@ export function makeForestSummarizerCodec(
 	// This needs to be updated to support multiple versions.
 	// The second version will be used to enable incremental summarization.
 	const writeVersion = clientVersionToForestSummaryVersion(options.minVersionForCollab);
-	return makeVersionedValidatedCodec(options, new Set([ForestFormatVersion.v1]), Format, {
+	return makeVersionedValidatedCodec(options, new Set([ForestFormatVersion.v1]), Format(), {
 		encode: (data: FieldSet, context: FieldBatchEncodingContext): Format => {
 			const keys: FieldKey[] = [];
 			const fields: ITreeCursorSynchronous[] = [];
