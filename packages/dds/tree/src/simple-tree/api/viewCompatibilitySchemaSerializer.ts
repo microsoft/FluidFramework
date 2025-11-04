@@ -150,6 +150,7 @@ function serializeSimpleAllowedTypes(
 	const serializableAllowedTypes: JsonCompatibleObject = {};
 	for (const [identifier, attributes] of simpleAllowedTypes) {
 		serializableAllowedTypes[identifier] = {
+			// The type of SimpleAllowedTypeAttributes is not assignable to JsonCompatibleObject, so we splat its fields here.
 			...attributes,
 		};
 	}

@@ -125,7 +125,7 @@ function copySimpleObjectSchema(schema: SimpleObjectNodeSchema): SimpleObjectNod
 		const simpleField = {
 			kind: field.kind,
 			simpleAllowedTypes: field.simpleAllowedTypes,
-			metadata: {},
+			metadata: field.metadata,
 			persistedMetadata: field.persistedMetadata,
 			storedKey: field.storedKey,
 		};
