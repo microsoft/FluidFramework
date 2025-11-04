@@ -49,14 +49,14 @@ interface ItemExtensions {
  * An Item node.
  * @remarks
  * Open polymorphic collection which libraries can provide additional implementations of, similar to TypeScript interfaces.
- * Implementations should declare schema who's nodes extends this interface, and have the schema statically implement ItemSchema.
+ * Implementations should declare schema whose nodes extends this interface, and have the schema statically implement ItemSchema.
  */
 type Item = TreeNode & ItemExtensions & ObjectFromSchemaRecord<typeof itemFields>;
 
 /**
  * Details about the type all item schema must provide.
  * @remarks
- * This pattern can be used for for things like generating insert content menus which can describe and create any of the allowed child types.
+ * This pattern can be used for things like generating insert content menus which can describe and create any of the allowed child types.
  */
 interface ItemStatic {
 	readonly description: string;
@@ -563,7 +563,7 @@ export namespace Component {
 	 * @remarks
 	 * This allows the schema to reference items from the configuration, which could include themselves recursively.
 	 *
-	 * The execution of this function may node evaluate `lazyConfiguration` (doing so will error):
+	 * The execution of this function may not evaluate `lazyConfiguration` (doing so will error):
 	 * instead the returned `TComponent` can capture the `lazyConfiguration` and evaluate it at a later time (after all components have been composed).
 	 */
 	export type Factory<TConfig, TComponent> = (lazyConfiguration: () => TConfig) => TComponent;
