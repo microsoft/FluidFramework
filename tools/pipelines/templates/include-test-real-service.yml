@@ -441,11 +441,14 @@ stages:
                 # Parse the JSON output and set environment variables
                 export tenant__reservationId=$(echo "$SETUP_OUTPUT" | jq -r '.reservationId')
                 if [[ "${{ parameters.odspTenantType }}" == "dogfood" ]]; then
-                  export login__odspdf__test__tenants=$(echo "$SETUP_OUTPUT" | jq -r '.userPass')
+                  export login__odspdf__test__tenants=$(echo "$SETUP_OUTPUT" | jq -c '.userPass')
                 elif [[ "${{ parameters.odspTenantType }}" == "prod" ]]; then
-                  export login__odsp__test__tenants=$(echo "$SETUP_OUTPUT" | jq -r '.userPass')
+                  export login__odsp__test__tenants=$(echo "$SETUP_OUTPUT" | jq -c '.userPass')
                 fi
               fi
+
+              echo "Leased tenant with reservation ID: $tenant__reservationId"
+              echo "ODSP tenant credentials: $login__odsp__test__tenants"
 
               pnpm run ${{ parameters.testCommand }} -- ${{ variant.flags }}
 
