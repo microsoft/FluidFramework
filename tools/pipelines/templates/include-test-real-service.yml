@@ -447,7 +447,7 @@ stages:
                 fi
               fi
 
-              pnpm exec ${{ parameters.testCommand }} -- ${{ variant.flags }}
+              pnpm run ${{ parameters.testCommand }} -- ${{ variant.flags }}
 
 
         - ${{ if eq(parameters.skipTestResultPublishing, false) }}:
