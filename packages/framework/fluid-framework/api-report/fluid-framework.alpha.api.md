@@ -231,6 +231,9 @@ interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider
 }
 
 // @alpha
+export function deserializeSimpleSchema(serializedSchema: JsonCompatible): SimpleTreeSchema;
+
+// @alpha
 export interface DirtyTreeMap {
     // (undocumented)
     get(node: TreeNode): DirtyTreeStatus | undefined;
@@ -1353,6 +1356,9 @@ export class SchemaUpgrade {
 // @public @system
 type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
 
+// @alpha
+export function serializeSimpleSchema(simpleSchema: SimpleTreeSchema): JsonCompatible;
+
 // @public @sealed
 export interface SharedObjectKind<out TSharedObject = unknown> extends ErasedType<readonly ["SharedObjectKind", TSharedObject]> {
     is(value: IFluidLoadable): value is IFluidLoadable & TSharedObject;
@@ -1434,7 +1440,7 @@ export interface SimpleObjectFieldSchema extends SimpleFieldSchema {
 
 // @alpha @sealed
 export interface SimpleObjectNodeSchema<out TCustomMetadata = unknown> extends SimpleNodeSchemaBaseAlpha<NodeKind.Object, TCustomMetadata> {
-    readonly allowUnknownOptionalFields?: boolean;
+    readonly allowUnknownOptionalFields: boolean | undefined;
     readonly fields: ReadonlyMap<string, SimpleObjectFieldSchema>;
 }
 
@@ -1701,9 +1707,6 @@ export interface Tagged<V, T extends string = string> {
 
 // @public
 export type TelemetryBaseEventPropertyType = string | number | boolean | undefined;
-
-// @alpha
-export function toViewCompatibilityTreeSchema(schema: TreeSchema, copySchemaObjects: boolean): SimpleTreeSchema;
 
 // @alpha
 export function trackDirtyNodes(view: TreeViewAlpha<ImplicitFieldSchema>, dirty: DirtyTreeMap): () => void;
