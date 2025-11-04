@@ -145,7 +145,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.58.3",
 		"@fluidframework/container-definitions": "workspace:~",
-		"@fluidframework/counter-previous": "npm:@fluidframework/counter@2.70.0",
+		"@fluidframework/counter-previous": "npm:@fluidframework/counter@2.71.0",
 		"@fluidframework/eslint-config-fluid": "^7.0.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.52.11",

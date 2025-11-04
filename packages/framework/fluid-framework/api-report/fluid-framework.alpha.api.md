@@ -374,6 +374,7 @@ type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
 // @alpha
 export const FluidClientVersion: {
     readonly v2_0: "2.0.0";
+    readonly v2_43: "2.43.0";
     readonly v2_52: "2.52.0";
 };
 
@@ -1377,7 +1378,6 @@ export const SharedTree: SharedObjectKind<ITree>;
 
 // @alpha @input
 export interface SharedTreeFormatOptions {
-    formatVersion: SharedTreeFormatVersion[keyof SharedTreeFormatVersion];
     treeEncodeType: TreeCompressionStrategy;
 }
 
@@ -1394,7 +1394,9 @@ export const SharedTreeFormatVersion: {
 export type SharedTreeFormatVersion = typeof SharedTreeFormatVersion;
 
 // @alpha @input
-export type SharedTreeOptions = Partial<CodecWriteOptions> & Partial<SharedTreeFormatOptions> & SharedTreeOptionsBeta;
+export interface SharedTreeOptions extends Partial<CodecWriteOptions>, Partial<SharedTreeFormatOptions>, SharedTreeOptionsBeta {
+    readonly enableSharedBranches?: boolean;
+}
 
 // @beta @input
 export type SharedTreeOptionsBeta = ForestOptions;
