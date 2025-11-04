@@ -43,9 +43,8 @@ import type {
 } from "../fieldSchema.js";
 import type { LeafSchema } from "../leafNodeSchema.js";
 import type { SimpleLeafNodeSchema } from "../simpleSchema.js";
-import type { PreventExtraProperties, RestrictiveStringRecord } from "../../util/index.js";
-import type { Insertable } from "../unsafeUnknownSchema.js";
 /* eslint-enable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars, import/no-duplicates */
+import type { PreventExtraProperties, RestrictiveStringRecord } from "../../util/index.js";
 
 /**
  * {@link SchemaFactory} with additional beta APIs.
@@ -91,7 +90,7 @@ export class SchemaFactoryBeta<
 		true,
 		T,
 		never,
-		TCustomMetadata
+		TOptions extends ObjectSchemaOptions<infer TCustomMetadata> ? TCustomMetadata : unknown
 	> {
 		// TODO: make type safe
 		return objectSchema(
@@ -105,7 +104,9 @@ export class SchemaFactoryBeta<
 			TreeObjectNode<T, ScopedSchemaName<TScope, Name>, TOptions>,
 			object & InsertableObjectFromSchemaRecord<T>,
 			true,
-			T
+			T,
+			never,
+			TOptions extends ObjectSchemaOptions<infer TCustomMetadata> ? TCustomMetadata : unknown
 		>;
 	}
 

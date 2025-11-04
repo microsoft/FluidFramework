@@ -124,7 +124,7 @@ export interface StrictTypes<
  * This can be done using {@link Customizer.simplified}.
  * 4. Making fields readonly (for the current client).
  * This can be done using {@link Customizer.custom} with `{ readWrite: never; }`.
- * 5. Opting into more [compleat and less sound](https://en.wikipedia.org/wiki/Soundness#Relation_to_completeness) typing.
+ * 5. Opting into more {@link https://en.wikipedia.org/wiki/Soundness#Relation_to_completeness|compleat and less sound} typing.
  * {@link Customizer.relaxed} is an example of this.
  *
  * For this customization to be used, the resulting schema must be used as `ImplicitAllowedTypes`.
