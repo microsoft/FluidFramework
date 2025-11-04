@@ -19,7 +19,9 @@ export type {
 	TreeViewEvents,
 	SchemaCompatibilityStatus,
 	TreeViewAlpha,
+	TreeViewBeta,
 	TreeBranch,
+	TreeBranchAlpha,
 	TreeBranchEvents,
 	ITreeAlpha,
 } from "./tree.js";

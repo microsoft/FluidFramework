@@ -89,7 +89,9 @@ export class SchemaFactoryBeta<
 		TreeObjectNode<T, ScopedSchemaName<TScope, Name>, TOptions>,
 		object & InsertableObjectFromSchemaRecord<T>,
 		true,
-		T
+		T,
+		never,
+		TCustomMetadata
 	> {
 		// TODO: make type safe
 		return objectSchema(
@@ -121,7 +123,9 @@ export class SchemaFactoryBeta<
 		System_Unsafe.TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>,
 		object & System_Unsafe.InsertableObjectFromSchemaRecordUnsafe<T>,
 		false,
-		T
+		T,
+		never,
+		TCustomMetadata
 	> {
 		type TScopedName = ScopedSchemaName<TScope, Name>;
 		return this.object(

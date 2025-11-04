@@ -16,7 +16,7 @@ import type { TreeNode, TreeLeafValue } from "@fluidframework/tree";
  * To convert a TreeNode to this type use {@link toPropTreeNode} or {@link toPropTreeRecord}.
  * @alpha
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-interface, @typescript-eslint/no-empty-object-type
 export interface PropTreeNode<T extends TreeNode> extends ErasedType<[T, "PropTreeNode"]> {}
 
 /**

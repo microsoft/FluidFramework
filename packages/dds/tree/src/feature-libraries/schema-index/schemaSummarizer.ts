@@ -17,6 +17,7 @@ import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import type { IJsonCodec } from "../../codec/index.js";
 import {
 	type MutableTreeStoredSchema,
+	type SchemaFormatVersion,
 	type TreeStoredSchema,
 	schemaDataIsEmpty,
 } from "../../core/index.js";
@@ -108,7 +109,7 @@ export class SchemaSummarizer implements Summarizable {
  */
 export function encodeTreeSchema(
 	schema: TreeStoredSchema,
-	writeVersion: number,
+	writeVersion: SchemaFormatVersion,
 ): JsonCompatible {
 	return encodeRepo(schema, writeVersion);
 }

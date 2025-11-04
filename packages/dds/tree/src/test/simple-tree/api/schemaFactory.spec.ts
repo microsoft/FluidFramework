@@ -424,7 +424,7 @@ describe("schemaFactory", () => {
 			);
 		});
 
-		it("Node schema metadata", () => {
+		it("Node schema metadata - beta", () => {
 			const factory = new SchemaFactoryBeta("");
 
 			const fooMetadata = {
@@ -432,7 +432,7 @@ describe("schemaFactory", () => {
 				custom: {
 					baz: true,
 				},
-			};
+			} as const;
 
 			class Foo extends factory.object(
 				"Foo",
@@ -440,13 +440,62 @@ describe("schemaFactory", () => {
 				{ metadata: fooMetadata },
 			) {}
 
+			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
+			const description = Foo.metadata.description;
+			type _check1 = requireTrue<areSafelyAssignable<typeof description, string | undefined>>;
+
+			const custom = Foo.metadata.custom;
+
+			// Currently it is impossible to have required custom metadata: it always includes undefined as an option.
+			// TODO: having a way to make metadata required would be nice.
+
+			type _check2 = requireTrue<
+				areSafelyAssignable<typeof custom, { baz: true } | undefined>
+			>;
+			assert(custom !== undefined);
+
+			const baz = custom.baz;
+			type _check3 = requireTrue<areSafelyAssignable<typeof baz, true>>;
+
+			// This must be checked after the types are checked to avoid it narrowing and making the type checks above not test anything.
 			assert.deepEqual(Foo.metadata, fooMetadata);
+		});
+
+		it("Node schema metadata - alpha", () => {
+			const factory = new SchemaFactoryAlpha("");
+
+			const fooMetadata = {
+				description: "An object called Foo",
+				custom: {
+					baz: true,
+				},
+			} as const;
+
+			class Foo extends factory.objectAlpha(
+				"Foo",
+				{ bar: factory.number },
+				{ metadata: fooMetadata },
+			) {}
 
 			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
 			const description = Foo.metadata.description;
-			const baz = Foo.metadata.custom.baz;
-			type _check1 = requireTrue<areSafelyAssignable<typeof description, string>>;
-			type _check2 = requireTrue<areSafelyAssignable<typeof baz, boolean>>;
+			type _check1 = requireTrue<areSafelyAssignable<typeof description, string | undefined>>;
+
+			const custom = Foo.metadata.custom;
+
+			// Currently it is impossible to have required custom metadata: it always includes undefined as an option.
+			// TODO: having a way to make metadata required would be nice.
+
+			type _check2 = requireTrue<
+				areSafelyAssignable<typeof custom, { baz: true } | undefined>
+			>;
+			assert(custom !== undefined);
+
+			const baz = custom.baz;
+			type _check3 = requireTrue<areSafelyAssignable<typeof baz, true>>;
+
+			// This must be checked after the types are checked to avoid it narrowing and making the type checks above not test anything.
+			assert.deepEqual(Foo.metadata, fooMetadata);
 		});
 
 		it("Field schema metadata", () => {
