@@ -281,6 +281,6 @@ export {
 } from "./leafNodeSchema.js";
 export type { LeafSchema } from "./leafNodeSchema.js";
 export {
-	serializeCompatibilitySchema,
-	deserializeCompatibilitySchema,
+	serializeSimpleSchema,
+	deserializeSimpleSchema,
 } from "./api/index.js";

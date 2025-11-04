@@ -30,11 +30,13 @@ import type { ValueSchema } from "../../core/index.js";
 /**
  * Converts a view schema to a serializable format for compatibility testing.
  * @remarks The JSON-compatible schema returned from this method is only intended for use in snapshots/comparisons of view schemas.
- * It is not possible to reconstruct a full view schema from the serialized format.
+ * It is not possible to reconstruct a full view schema (including metadata and persistedMetadata) from the serialized format.
  * @param treeSchema - The tree schema to convert.
  * @returns A serializable representation of the view schema.
+ *
+ * @alpha
  */
-export function serializeCompatibilitySchema(simpleSchema: SimpleTreeSchema): JsonCompatible {
+export function serializeSimpleSchema(simpleSchema: SimpleTreeSchema): JsonCompatible {
 	// Convert types to serializable forms
 	const serializableDefinitions = new Map<string, JsonCompatible>();
 
@@ -55,10 +57,10 @@ export function serializeCompatibilitySchema(simpleSchema: SimpleTreeSchema): Js
  * Deserializes a JSON-compatible schema into a view schema for compatibility testing.
  * @param serializedSchema - The serialized schema to deserialize.
  * @returns A deserialized view schema.
+ *
+ * @alpha
  */
-export function deserializeCompatibilitySchema(
-	serializedSchema: JsonCompatible,
-): SimpleTreeSchema {
+export function deserializeSimpleSchema(serializedSchema: JsonCompatible): SimpleTreeSchema {
 	assert(isJsonObject(serializedSchema), "Expected object for serializedSchema");
 	const serializedSchemaAsObject = serializedSchema as JsonCompatibleObject;
 

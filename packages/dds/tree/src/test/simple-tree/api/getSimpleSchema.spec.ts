@@ -5,12 +5,12 @@
 
 import { strict as assert } from "node:assert";
 import {
-	deserializeCompatibilitySchema,
+	deserializeSimpleSchema,
 	FieldKind,
 	NodeKind,
 	SchemaFactory,
 	SchemaFactoryAlpha,
-	serializeCompatibilitySchema,
+	serializeSimpleSchema,
 	stringSchema,
 	type SimpleLeafNodeSchema,
 	type SimpleNodeSchema,
@@ -88,14 +88,14 @@ describe("getSimpleSchema", () => {
 		});
 
 		it("serialized - Field Schema", () => {
-			const actual = serializeCompatibilitySchema(toSimpleTreeSchema(Schema, true));
+			const actual = serializeSimpleSchema(toSimpleTreeSchema(Schema, true));
 			takeJsonSnapshot(actual);
 		});
 
 		it("Roundtrip serialization - Field Schema", () => {
 			const simpleTree = toSimpleTreeSchema(Schema, true);
 			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
-			const actual = deserializeCompatibilitySchema(serializeCompatibilitySchema(simpleTree));
+			const actual = deserializeSimpleSchema(serializeSimpleSchema(simpleTree));
 			assert.deepEqual(actual, expected);
 		});
 	});
@@ -122,14 +122,14 @@ describe("getSimpleSchema", () => {
 		});
 
 		it("serialized - Leaf node", () => {
-			const actual = serializeCompatibilitySchema(toSimpleTreeSchema(Schema, true));
+			const actual = serializeSimpleSchema(toSimpleTreeSchema(Schema, true));
 			takeJsonSnapshot(actual);
 		});
 
 		it("Roundtrip serialization - Leaf node", () => {
 			const simpleTree = toSimpleTreeSchema(Schema, true);
 			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
-			const actual = deserializeCompatibilitySchema(serializeCompatibilitySchema(simpleTree));
+			const actual = deserializeSimpleSchema(serializeSimpleSchema(simpleTree));
 			assert.deepEqual(actual, expected);
 		});
 	});
@@ -160,14 +160,14 @@ describe("getSimpleSchema", () => {
 		});
 
 		it("serialized - Union root", () => {
-			const actual = serializeCompatibilitySchema(toSimpleTreeSchema(Schema, true));
+			const actual = serializeSimpleSchema(toSimpleTreeSchema(Schema, true));
 			takeJsonSnapshot(actual);
 		});
 
 		it("Roundtrip serialization - Field Schema", () => {
 			const simpleTree = toSimpleTreeSchema(Schema, true);
 			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
-			const actual = deserializeCompatibilitySchema(serializeCompatibilitySchema(simpleTree));
+			const actual = deserializeSimpleSchema(serializeSimpleSchema(simpleTree));
 			assert.deepEqual(actual, expected);
 		});
 	});
@@ -206,14 +206,14 @@ describe("getSimpleSchema", () => {
 		});
 
 		it("serialized - Array schema", () => {
-			const actual = serializeCompatibilitySchema(toSimpleTreeSchema(Schema, true));
+			const actual = serializeSimpleSchema(toSimpleTreeSchema(Schema, true));
 			takeJsonSnapshot(actual);
 		});
 
 		it("Roundtrip serialization - Array Schema", () => {
 			const simpleTree = toSimpleTreeSchema(Schema, true);
 			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
-			const actual = deserializeCompatibilitySchema(serializeCompatibilitySchema(simpleTree));
+			const actual = deserializeSimpleSchema(serializeSimpleSchema(simpleTree));
 			assert.deepEqual(actual, expected);
 		});
 	});
@@ -252,14 +252,14 @@ describe("getSimpleSchema", () => {
 		});
 
 		it("serialized - Map schema", () => {
-			const actual = serializeCompatibilitySchema(toSimpleTreeSchema(Schema, true));
+			const actual = serializeSimpleSchema(toSimpleTreeSchema(Schema, true));
 			takeJsonSnapshot(actual);
 		});
 
 		it("Roundtrip serialization - Map schema", () => {
 			const simpleTree = toSimpleTreeSchema(Schema, true);
 			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
-			const actual = deserializeCompatibilitySchema(serializeCompatibilitySchema(simpleTree));
+			const actual = deserializeSimpleSchema(serializeSimpleSchema(simpleTree));
 			assert.deepEqual(actual, expected);
 		});
 	});
@@ -298,14 +298,14 @@ describe("getSimpleSchema", () => {
 		});
 
 		it("serialized - Record schema", () => {
-			const actual = serializeCompatibilitySchema(toSimpleTreeSchema(Schema, true));
+			const actual = serializeSimpleSchema(toSimpleTreeSchema(Schema, true));
 			takeJsonSnapshot(actual);
 		});
 
 		it("Roundtrip serialization - Record schema", () => {
 			const simpleTree = toSimpleTreeSchema(Schema, true);
 			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
-			const actual = deserializeCompatibilitySchema(serializeCompatibilitySchema(simpleTree));
+			const actual = deserializeSimpleSchema(serializeSimpleSchema(simpleTree));
 			assert.deepEqual(actual, expected);
 		});
 	});
@@ -372,14 +372,14 @@ describe("getSimpleSchema", () => {
 		});
 
 		it("serialized - Object schema", () => {
-			const actual = serializeCompatibilitySchema(toSimpleTreeSchema(Schema, true));
+			const actual = serializeSimpleSchema(toSimpleTreeSchema(Schema, true));
 			takeJsonSnapshot(actual);
 		});
 
 		it("Roundtrip serialization - Object schema", () => {
 			const simpleTree = toSimpleTreeSchema(Schema, true);
 			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
-			const actual = deserializeCompatibilitySchema(serializeCompatibilitySchema(simpleTree));
+			const actual = deserializeSimpleSchema(serializeSimpleSchema(simpleTree));
 			assert.deepEqual(actual, expected);
 		});
 	});
@@ -432,14 +432,14 @@ describe("getSimpleSchema", () => {
 		});
 
 		it("serialized - Object schema including an identifier field", () => {
-			const actual = serializeCompatibilitySchema(toSimpleTreeSchema(Schema, true));
+			const actual = serializeSimpleSchema(toSimpleTreeSchema(Schema, true));
 			takeJsonSnapshot(actual);
 		});
 
 		it("Roundtrip serialization - Object schema including an identifier field", () => {
 			const simpleTree = toSimpleTreeSchema(Schema, true);
 			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
-			const actual = deserializeCompatibilitySchema(serializeCompatibilitySchema(simpleTree));
+			const actual = deserializeSimpleSchema(serializeSimpleSchema(simpleTree));
 			assert.deepEqual(actual, expected);
 		});
 	});
@@ -495,14 +495,14 @@ describe("getSimpleSchema", () => {
 		});
 
 		it("serialized - Object schema including a union field", () => {
-			const actual = serializeCompatibilitySchema(toSimpleTreeSchema(Schema, true));
+			const actual = serializeSimpleSchema(toSimpleTreeSchema(Schema, true));
 			takeJsonSnapshot(actual);
 		});
 
 		it("Roundtrip serialization - Object schema including a union field", () => {
 			const simpleTree = toSimpleTreeSchema(Schema, true);
 			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
-			const actual = deserializeCompatibilitySchema(serializeCompatibilitySchema(simpleTree));
+			const actual = deserializeSimpleSchema(serializeSimpleSchema(simpleTree));
 			assert.deepEqual(actual, expected);
 		});
 	});
@@ -556,14 +556,14 @@ describe("getSimpleSchema", () => {
 		});
 
 		it("serialized - Recursive object schema", () => {
-			const actual = serializeCompatibilitySchema(toSimpleTreeSchema(Schema, true));
+			const actual = serializeSimpleSchema(toSimpleTreeSchema(Schema, true));
 			takeJsonSnapshot(actual);
 		});
 
 		it("Roundtrip serialization - Recursive object schema", () => {
 			const simpleTree = toSimpleTreeSchema(Schema, true);
 			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
-			const actual = deserializeCompatibilitySchema(serializeCompatibilitySchema(simpleTree));
+			const actual = deserializeSimpleSchema(serializeSimpleSchema(simpleTree));
 			assert.deepEqual(actual, expected);
 		});
 	});
@@ -592,14 +592,14 @@ describe("getSimpleSchema", () => {
 		});
 
 		it("serialized - simpleAllowedTypes", () => {
-			const actual = serializeCompatibilitySchema(toSimpleTreeSchema(root, true));
+			const actual = serializeSimpleSchema(toSimpleTreeSchema(root, true));
 			takeJsonSnapshot(actual);
 		});
 
 		it("Roundtrip serialization - simpleAllowedTypes", () => {
 			const simpleTree = toSimpleTreeSchema(root, true);
 			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
-			const actual = deserializeCompatibilitySchema(serializeCompatibilitySchema(simpleTree));
+			const actual = deserializeSimpleSchema(serializeSimpleSchema(simpleTree));
 			assert.deepEqual(actual, expected);
 		});
 	});

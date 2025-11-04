@@ -168,6 +168,6 @@ export {
 	incrementalSummaryHint,
 } from "./incrementalAllowedTypes.js";
 export {
-	serializeCompatibilitySchema,
-	deserializeCompatibilitySchema,
+	serializeSimpleSchema,
+	deserializeSimpleSchema,
 } from "./viewCompatibilitySchemaSerializer.js";
