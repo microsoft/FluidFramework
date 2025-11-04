@@ -22,6 +22,25 @@ import { validateUsageError } from "./utils.js";
 import { getOrAddInMap, type requireAssignableTo } from "../util/index.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
+/**
+ * Examples and tests for open polymorphism design patterns for schema.
+ * @remarks
+ * Open polymorphism means polymorphism (where a value has one of multiple types) where the set of allowed types can be extended arbitrarily.
+ * This is the same idea behind TypeScript interfaces, but for {@link TreeNodeSchema}.
+ *
+ * Contrast this with "closed" polymorphism, where the set of allowed types is fixed and cannot be extended.
+ * Closed polymorphism in TypeScript can be expressed with {@link https://en.wikipedia.org/wiki/Union_type|union types}.
+ * In tree schema, closed polymorphism is expressed with {@link AllowedTypes}.
+ *
+ * Tree's stored schema do not support open polymorphism: all possible implementations must be explicitly listed.
+ * View schema however can emulate it by carefully controlling evaluation order:
+ * the source code can be structured in an open polymorphism style which at runtime evaluate into closed polymorphism by having each implementation register itself into a central {@link AllowedTypes}.
+ * There are a few ways to do this, some of which are demonstrated below.
+ */
+
+/**
+ * Schema factory these tests.
+ */
 const sf = new SchemaFactory("test");
 
 /**
