@@ -104,6 +104,7 @@ const fieldB: FieldKey = brand("FieldB");
 const fieldC: FieldKey = brand("FieldC");
 const fieldD: FieldKey = brand("FieldD");
 
+const tag0: RevisionTag = mintRevisionTag();
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
 const tag3: RevisionTag = mintRevisionTag();
@@ -1598,6 +1599,68 @@ describe("ModularChangeFamily integration", () => {
 						{ revision: tag2, localId: brand(2) },
 						{ revision: tag2, localId: brand(3) },
 					),
+				]),
+			);
+
+			assertEqual(composed, expected);
+		});
+
+		it("detached move and reattach", () => {
+			const fieldAId = { nodeId: undefined, field: fieldA };
+			const oldId: ChangeAtomId = { revision: tag0, localId: brand(0) };
+			const newId: ChangeAtomId = { revision: tag1, localId: brand(0) };
+			const cellId1: ChangeAtomId = { revision: tag1, localId: brand(1) };
+			const cellId2: ChangeAtomId = { revision: tag1, localId: brand(2) };
+			const detachedMove = Change.build(
+				{
+					family,
+					maxId: 2,
+					revisions: [{ revision: tag1 }],
+					renames: [
+						{
+							oldId,
+							count: 1,
+							newId,
+							detachLocation: fieldAId,
+						},
+					],
+					detachedMoves: [{ detachId: newId, count: 1, newLocation: fieldAId }],
+				},
+				Change.field(fieldA, sequence.identifier, [
+					MarkMaker.rename(1, oldId, cellId1),
+					MarkMaker.rename(1, cellId2, newId),
+				]),
+			);
+
+			const attachId: ChangeAtomId = { revision: tag2, localId: brand(0) };
+			const reattach = Change.build(
+				{
+					family,
+					maxId: 0,
+					revisions: [{ revision: tag2 }],
+					renames: [{ oldId: newId, count: 1, newId: attachId, detachLocation: fieldAId }],
+				},
+				Change.field(fieldA, sequence.identifier, [
+					MarkMaker.tomb(cellId1.revision, cellId1.localId, 1),
+					MarkMaker.insert(1, newId, { revision: attachId.revision, id: attachId.localId }),
+				]),
+			);
+
+			const composed = family.compose([
+				tagChange(detachedMove, tag1),
+				tagChange(reattach, tag2),
+			]);
+
+			const expected = Change.build(
+				{
+					family,
+					maxId: 2,
+					revisions: [{ revision: tag1 }, { revision: tag2 }],
+					renames: [{ oldId, count: 1, newId: attachId, detachLocation: fieldAId }],
+				},
+				Change.field(fieldA, sequence.identifier, [
+					MarkMaker.rename(1, oldId, cellId1),
+					MarkMaker.insert(1, cellId2, { revision: attachId.revision, id: attachId.localId }),
 				]),
 			);
 
