@@ -10,7 +10,7 @@ import {
 	type JsonCompatible,
 	type JsonCompatibleObject,
 } from "../../util/index.js";
-import { fail, unreachableCase, assert } from "@fluidframework/core-utils/internal";
+import { fail, unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
 	SimpleAllowedTypeAttributes,
 	SimpleArrayNodeSchema,
@@ -26,6 +26,7 @@ import type {
 import { NodeKind } from "../core/index.js";
 import type { FieldKind } from "../fieldSchema.js";
 import type { ValueSchema } from "../../core/index.js";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Converts a view schema to a serializable format for compatibility testing.
@@ -38,16 +39,16 @@ import type { ValueSchema } from "../../core/index.js";
  */
 export function serializeSimpleSchema(simpleSchema: SimpleTreeSchema): JsonCompatible {
 	// Convert types to serializable forms
-	const serializableDefinitions = new Map<string, JsonCompatible>();
+	const serializableDefinitions: Record<string, JsonCompatible> = {};
 
 	for (const [identifier, schema] of simpleSchema.definitions) {
 		const serializableDefinition = serializeNodeSchema(schema);
-		serializableDefinitions.set(identifier, serializableDefinition);
+		serializableDefinitions[identifier] = serializableDefinition;
 	}
 
 	const serializedSchema = {
 		root: serializeField(simpleSchema.root),
-		definitions: mapToRecord(serializableDefinitions),
+		definitions: serializableDefinitions,
 	} as unknown as JsonCompatible;
 
 	return serializedSchema;
@@ -57,33 +58,40 @@ export function serializeSimpleSchema(simpleSchema: SimpleTreeSchema): JsonCompa
  * Deserializes a JSON-compatible schema into a view schema for compatibility testing.
  * @param serializedSchema - The serialized schema to deserialize.
  * @returns A deserialized view schema.
+ * @throws Will throw a usage error if the serialized schema is not in the expected format.
  *
  * @alpha
  */
 export function deserializeSimpleSchema(serializedSchema: JsonCompatible): SimpleTreeSchema {
-	assert(isJsonObject(serializedSchema), "Expected object for serializedSchema");
+	if (!isJsonObject(serializedSchema)) {
+		throw new UsageError("Expected object for serializedSchema");
+	}
+
 	const serializedSchemaAsObject = serializedSchema as JsonCompatibleObject;
 
-	assert(
-		isJsonObject(serializedSchemaAsObject.root ?? fail("Expected root field")),
-		"Expected object for root field schema",
-	);
+	if (
+		serializedSchemaAsObject.root === undefined ||
+		!isJsonObject(serializedSchemaAsObject.root)
+	) {
+		throw new UsageError("Expected object for root field schema");
+	}
 	const serializedRoot = serializedSchemaAsObject.root as JsonCompatibleObject;
 
-	assert(
-		isJsonObject(serializedSchemaAsObject.definitions ?? fail("Expected definitions field")),
-		"Expected object for definitions field",
-	);
+	if (
+		serializedSchemaAsObject.definitions === undefined ||
+		!isJsonObject(serializedSchemaAsObject.definitions)
+	) {
+		throw new UsageError("Expected object for definitions field");
+	}
 	const serializedDefinitions = serializedSchemaAsObject.definitions as JsonCompatibleObject;
 
 	return {
 		root: deserializeSimpleFieldSchema(serializedRoot),
 		definitions: new Map(
 			transformMapValues(objectToMap(serializedDefinitions), (value, key) => {
-				assert(
-					isJsonObject(value ?? fail(`Expected node schema for definition ${key}`)),
-					"Expected object for node schema in definitions",
-				);
+				if (value === undefined || !isJsonObject(value)) {
+					throw new UsageError(`Expected node schema for definition ${key}`);
+				}
 				return deserializeNodeSchema(value as JsonCompatibleObject);
 			}),
 		),
@@ -283,11 +291,14 @@ function deserializeObjectNode(
  * Deserializes a map of object fields from a JSON-compatible object.
  * @param serializedFields - The serialized fields.
  * @returns A map of the deserialized object fields.
+ * @throws Will throw a usage error if the serialized fields are not in the expected format.
  */
 function deserializeObjectFields(
 	serializedFields: JsonCompatible,
 ): ReadonlyMap<string, SimpleObjectFieldSchema> {
-	assert(isJsonObject(serializedFields), "Expected object for serializedFields");
+	if (!isJsonObject(serializedFields)) {
+		throw new UsageError("Expected object for serializedFields");
+	}
 
 	const fields = new Map<string, SimpleObjectFieldSchema>();
 	for (const [fieldKey, fieldSchema] of Object.entries(
@@ -335,11 +346,14 @@ function deserializeSimpleFieldSchema(
  * Deserializes a simple allowed types map from a JSON-compatible object.
  * @param serializedAllowedTypes - The serialized simple allowed types.
  * @returns A map of the deserialized simple allowed types.
+ * @throws Will throw a usage error if the serialized allowed types are not in the expected format.
  */
 function deserializeSimpleAllowedTypes(
 	serializedAllowedTypes: JsonCompatible,
 ): ReadonlyMap<string, SimpleAllowedTypeAttributes> {
-	assert(isJsonObject(serializedAllowedTypes), "Expected object for simpleAllowedTypes");
+	if (!isJsonObject(serializedAllowedTypes)) {
+		throw new UsageError("Expected object for serializedAllowedTypes");
+	}
 	const untypedMap = objectToMap(serializedAllowedTypes as JsonCompatibleObject);
 
 	const simpleAllowedTypes = transformMapValues(untypedMap, (value) => {
@@ -349,25 +363,4 @@ function deserializeSimpleAllowedTypes(
 	});
 
 	return simpleAllowedTypes;
-}
-
-/**
- * Convert a Map to a Record for serialization.
- * @remarks This is needed because the JSON serializer does not support Maps.
- * It is possible that the keys may not be stringify-able types, so this method is a best-effort implementation and its output
- * should only be used in snapshots or debugging scenarios.
- * @param map - The Map to convert.
- * @returns A Record with the contents of the Map.
- */
-function mapToRecord<Key, Value>(map: ReadonlyMap<Key, Value>): Record<string, Value> {
-	const resultObject: Record<string, Value> = {};
-	const sortedKeys = Array.from(map.keys()).sort();
-
-	for (const key of sortedKeys) {
-		const value =
-			map.get(key) ?? fail("Invalid map: key present in keys() but not found in map.");
-		resultObject[`${key}`] = value;
-	}
-
-	return resultObject;
 }
