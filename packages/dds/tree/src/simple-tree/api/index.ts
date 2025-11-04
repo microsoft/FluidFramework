@@ -170,4 +170,4 @@ export {
 export {
 	serializeSimpleSchema,
 	deserializeSimpleSchema,
-} from "./viewCompatibilitySchemaSerializer.js";
+} from "./simpleSchemaSerializer.js";
