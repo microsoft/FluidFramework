@@ -1,5 +1,64 @@
 # @fluidframework/runtime-definitions
 
+## 2.71.0
+
+Dependency updates only.
+
+## 2.70.0
+
+### Minor Changes
+
+- Deprecated properties have been removed from IRuntimeStorageService and IContainerStorageService ([#25708](https://github.com/microsoft/FluidFramework/pull/25708)) [82c936ed28](https://github.com/microsoft/FluidFramework/commit/82c936ed285c7e450d5e907a531ce71178f57819)
+
+  The following deprecated properties have been removed from `IRuntimeStorageService`:
+
+  - `createBlob`
+  - `dispose`
+  - `disposed`
+  - `downloadSummary`
+  - `getSnapshot`
+  - `getSnapshotTree`
+  - `getVersions`
+  - `policies`
+  - `uploadSummaryWithContext`
+
+  The following deprecated properties have been removed from `IContainerStorageService`:
+
+  - `dispose`
+  - `disposed`
+  - `downloadSummary`
+
+  Please see [this Github issue](https://github.com/microsoft/FluidFramework/issues/25069) for more details.
+
+## 2.63.0
+
+Dependency updates only.
+
+## 2.62.0
+
+Dependency updates only.
+
+## 2.61.0
+
+### Minor Changes
+
+- `minVersionForCollab` is now available on `IFluidDataStoreContext` ([#25130](https://github.com/microsoft/FluidFramework/pull/25130)) [2566772d24](https://github.com/microsoft/FluidFramework/commit/2566772d24a9bcffbb613c6b88517145c2d0ea32)
+
+  `minVersionForCollab` is now passed down from the `ContainerRuntime` to the Datastore layer where it is made available for
+  `SharedObject` construction.
+  DDSes may optionally consume this value and use it to determine which sets of feature flags should be enabled.
+
+  #### Public type changes
+
+  - **@fluidframework/datastore: `FluidDataStoreRuntime`** - Exposes `minVersionForCollab`.
+  - **@fluidframework/runtime-definitions: `IFluidDataStoreContext`** - Exposes optional member `minVersionForCollab`.
+    See `FluidDataStoreContext` for an example implementation.
+  - **@fluidframework/test-runtime-utils: `MockFluidDataStoreContext`, `MockFluidDataStoreRuntime`** - Exposes `minVersionForCollab`
+    either via a getter or as a readonly field.
+
+  Note that the new implementations are optional fields and in some cases accept `undefined`.
+  This is needed for layer compatibility, and in a future release these members will no longer be optional.
+
 ## 2.60.0
 
 Dependency updates only.

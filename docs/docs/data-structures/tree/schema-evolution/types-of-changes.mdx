@@ -1,0 +1,162 @@
+---
+title: Types of Schema Changes
+sidebar_position: 2
+---
+
+# Types of Schema Changes
+
+Understanding which types of schema changes are safe versus breaking is crucial for evolving your [SharedTree](../index.mdx) schemas without disrupting existing applications.
+
+All the examples below are modifying this schema:
+```typescript
+class Note extends factory.object("Note", {
+    id: factory.string,
+    text: factory.string,
+    color: factory.optional([factory.string, factory.number]),
+}) {}
+```
+
+## Compatible Changes
+
+The following changes are [backwards compatible](./index.mdx#backwards-compatibility).
+However, it's important that applications carefully review whether the change is [forwards compatible](./index.mdx#forwards-compatibility) inherently or if a [staged rollout](./index.mdx#staged-rollouts) is necessary.
+
+### Adding Optional Fields
+
+BC | FC
+---| ---
+✅ | ❌
+
+```typescript
+class Note extends factory.object("Note", {
+    id: factory.string,
+    text: factory.string,
+    color: factory.optional([factory.string, factory.number]),
+    height: factory.optional(factory.number), // New optional field
+}) {}
+```
+
+To ensure [forwards compatibility](./index.mdx#understanding-compatibility), use [`allowUnknownOptionalFields`](../../../api/fluid-framework/objectschemaoptions-interface.md#allowunknownoptionalfields-propertysignature) to handle new optional fields added by newer clients.
+Note that this needs to already be set on the old clients before the field is added.
+If it's not already set, then this degenerates into an un-forwards compatible change and requires a [staged rollout](./index.mdx#staged-rollouts) - because the app has to stage the enabling of allowUnknownOptionalFields.
+
+```typescript
+class Note extends factory.object("Note", {
+    id: factory.string,
+    text: factory.string,
+    color: factory.optional([factory.string, factory.number]),
+    // Existing optional fields
+}, { allowUnknownOptionalFields: true }) {}
+```
+
+### Making Required Fields Optional
+
+BC | FC
+---| ---
+✅ | ❌
+
+**Note**: There is currently no way to make this change in a [forwards compatible](./index.mdx#forwards-compatibility) way.
+
+```typescript
+class Note extends factory.object("Note", {
+    id: factory.string,
+    text: factory.optional(factory.string), // previously required
+    color: factory.optional([factory.string, factory.number]),
+}) {}
+```
+
+### Adding New Allowed Types
+
+BC | FC
+---| ---
+✅ | ❌
+
+```typescript
+class Note extends factory.object("Note", {
+    id: factory.string,
+    text: [factory.string, factory.array(factory.string)],
+    color: factory.optional([factory.string, factory.number]),
+}) {}
+```
+
+To achieve [forwards compatibility](./index.mdx#forwards-compatibility), staged allowed types can be used to [roll out](./index.mdx#staged-rollouts) support for reading before writing, allowing older clients to read data created with new types.
+See [Rolling Out New Allowed Types](./allowed-types-rollout.mdx) for details.
+
+## Incompatible Changes
+
+These changes are not supported because they would otherwise make newer clients unable to open older documents and older clients unable to open newer documents.
+
+### Removing Fields
+
+```typescript
+// Breaking: Removing field
+class Note extends factory.object("Note", {
+    id: factory.string,
+    // text: factory.string, // REMOVED
+    color: factory.optional([factory.string, factory.number]),
+}) {}
+```
+
+Backward compatibility: this change prevents newer clients from opening documents created with the old schema,
+because those documents will have the `text` field, which such clients are not equipped to read,
+and require the `text` field on new `Note` instances, which such clients are not equipped to write.
+
+Forward compatibility: this change prevents older clients from opening documents created with the new schema,
+because those documents will be missing the `text` field such clients want to read and write.
+
+### Making Optional Fields Required
+
+```typescript
+// Breaking: Making optional field required
+class Note extends factory.object("Note", {
+    id: factory.string,
+    text: factory.string,
+    color: [factory.string, factory.number], // Was optional, now required - BREAKING!
+}) {}
+```
+
+Backward compatibility: this change prevents newer clients from opening documents created with the old schema,
+because those documents may not have the `color` field, which such clients are expecting to be populated.
+
+Forward compatibility: this change prevents older clients from opening documents created with the new schema,
+because those documents will require the `color` field on new `Note` instances, which such clients are not guaranteed to write and expect to be able to clear.
+
+### Changing Field Types
+
+```typescript
+// Breaking: Changing field type
+class Note extends factory.object("Note", {
+    id: factory.number, // Was factory.string - BREAKING!
+    text: factory.string,
+    color: factory.optional([factory.string, factory.number]),
+}) {}
+```
+
+Backward compatibility: this change prevents newer clients from opening documents created with the old schema,
+because those documents will use the `string` type for the `id` field, which such clients read and write as `number`.
+
+Forward compatibility: this change prevents older clients from opening documents created with the new schema,
+because those documents will use the `number` type for the `id` field, which such clients read and write as `string`.
+
+### Removing Allowed Types
+
+```typescript
+// Breaking: Removing allowed type
+class Note extends factory.object("Note", {
+    id: factory.string,
+    text: factory.string,
+    color: factory.optional([factory.string]), // removed factory.number
+}) {}
+```
+
+Backward compatibility: this change prevents newer clients from opening documents created with the old schema,
+because those documents can use the `number` type for the `color` field, which such clients read and write as `string`.
+
+Forward compatibility: this change prevents older clients from opening documents created with the new schema,
+because those documents will only use the `string` type for the `id` field, which such clients can write as `number`.
+
+## See Also
+
+- [Schema Evolution](./index.mdx) - Overview and upgrade process
+- [Schema Definition](../schema-definition.mdx) - How to define schemas
+- [Node Types](../node-types.mdx) - Understanding different node types

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assertIdenticalTypes } from "./testUtils.js";
+import { assertIdenticalTypes, replaceBigInt } from "./testUtils.js";
 
 import type {
 	ErasedType,
@@ -13,6 +13,7 @@ import type {
 import { fluidHandleSymbol } from "@fluidframework/core-interfaces";
 import type {
 	BrandedType,
+	JsonString,
 	ReadonlyNonNullJsonObjectWith,
 } from "@fluidframework/core-interfaces/internal";
 import type {
@@ -646,7 +647,8 @@ export const readonlySetOfRecords: ReadonlySet<StringRecordOfPoints> = setOfReco
 // #region Branded types
 
 export const brandedNumber = 0 as number & BrandedType<"zero">;
-export const brandedString = "encoding" as string & BrandedType<"encoded">;
+export type BrandedString = string & BrandedType<"encoded">;
+export const brandedString = "encoding" as BrandedString;
 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 export const brandedObject = {} as object & BrandedType<"its a secret">;
 export const brandedObjectWithString = objectWithString as typeof objectWithString &
@@ -680,7 +682,6 @@ assertIdenticalTypes(brandedStringAliasRecordOfBooleans, brandedStringRecordOfBo
 export const brandedStringIndexOfNumbers: { [x: string & BrandedType<"encoded">]: number } = {
 	[brandedString]: 5,
 };
-export type BrandedString = string & BrandedType<"encoded">;
 export const brandedStringAliasIndexOfNumbers: { [x: BrandedString]: number } =
 	brandedStringIndexOfNumbers;
 // @ts-expect-error - while the same, aliased index is not treated as same (just confirm)
@@ -746,7 +747,7 @@ export const objectWithFluidHandle = {
 	handle: fluidHandleToNumber,
 };
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/no-empty-interface
 interface TestErasedType<T> extends ErasedType<readonly ["TestCustomType", T]> {}
 
 export const erasedType = 0 as unknown as TestErasedType<number>;
@@ -797,6 +798,18 @@ export const opaqueSerializableInRecursiveStructure: DirectoryOfValues<
 		item2: { items: { subItem1: {} } },
 	},
 };
+/**
+ * This type represents the deserialized form of {@link opaqueSerializableInRecursiveStructure}
+ */
+export interface DeserializedOpaqueSerializableInRecursiveStructure {
+	items: {
+		[x: string | number]:
+			| OpaqueJsonDeserialized<DirectoryOfValues<OpaqueJsonSerializable<unknown>>>
+			| {
+					value?: OpaqueJsonDeserialized<unknown>;
+			  };
+	};
+}
 
 export const opaqueDeserializedInRecursiveStructure: DirectoryOfValues<
 	OpaqueJsonDeserialized<unknown>
@@ -815,6 +828,20 @@ export const opaqueSerializableAndDeserializedInRecursiveStructure: DirectoryOfV
 		item2: { items: { subItem1: {} } },
 	},
 };
+/**
+ * This type represents the deserialized form of {@link opaqueSerializableAndDeserializedInRecursiveStructure}
+ */
+export interface DeserializedOpaqueSerializableAndDeserializedInRecursiveStructure {
+	items: {
+		[x: string | number]:
+			| OpaqueJsonDeserialized<
+					DirectoryOfValues<OpaqueJsonSerializable<unknown> & OpaqueJsonDeserialized<unknown>>
+			  >
+			| {
+					value?: OpaqueJsonDeserialized<unknown>;
+			  };
+	};
+}
 
 export const opaqueSerializableObjectRequiringBigintSupport =
 	objectWithBigint as unknown as OpaqueJsonSerializable<typeof objectWithBigint, [bigint]>;
@@ -841,6 +868,21 @@ export const opaqueSerializableAndDeserializedObjectExpectingBigintSupport =
 		[bigint]
 	> &
 		OpaqueJsonDeserialized<typeof objectWithReadonlyArrayOfNumbers, [bigint]>;
+
+export const jsonStringOfString = JSON.stringify(string) as JsonString<string>;
+export const jsonStringOfObjectWithArrayOfNumbers = JSON.stringify(
+	objectWithArrayOfNumbers,
+) as JsonString<typeof objectWithArrayOfNumbers>;
+export const jsonStringOfStringRecordOfNumbers = JSON.stringify(
+	stringRecordOfNumbers,
+) as JsonString<typeof stringRecordOfNumbers>;
+export const jsonStringOfStringRecordOfNumberOrUndefined = JSON.stringify(
+	stringRecordOfNumberOrUndefined,
+) as JsonString<typeof stringRecordOfNumberOrUndefined>;
+export const jsonStringOfBigInt = JSON.stringify(bigint, replaceBigInt) as JsonString<bigint>;
+export const jsonStringOfUnknown = JSON.stringify({
+	unknown: "you don't know me",
+}) as JsonString<unknown>;
 
 // #endregion
 

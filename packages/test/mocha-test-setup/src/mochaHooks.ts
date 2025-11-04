@@ -137,7 +137,16 @@ export const mochaHooks = {
 		}
 
 		ensureTestRunLoggerIsInitialized(testLogger);
-		testLogger.setCurrentTest(this.currentTest?.fullTitle() ?? "");
+
+		let testTitle = "";
+		if (this.currentTest !== undefined) {
+			if (testVariant !== undefined) {
+				this.currentTest.title = `[${testVariant}] ${this.currentTest.title}`;
+			}
+			testTitle = this.currentTest.fullTitle();
+		}
+		testLogger.setCurrentTest(testTitle);
+
 		testLogger.send({
 			category: "generic",
 			eventName: "fluid:telemetry:Test_start",

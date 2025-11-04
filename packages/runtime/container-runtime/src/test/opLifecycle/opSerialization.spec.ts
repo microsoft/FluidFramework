@@ -67,18 +67,21 @@ describe("opSerialization", () => {
 
 			const op: LocalContainerRuntimeMessage = {
 				type: ContainerMessageType.FluidDataStoreOp,
-				contents: { address: "123", contents: { hereIsAHandle: mockHandle } },
+				contents: {
+					address: "123",
+					contents: { type: "op", content: { address: "test", contents: mockHandle } },
+				},
 			};
 
 			const serialized = serializeOp(op);
 
 			assert(
-				!serialized.includes("foo"),
+				!serialized.content.includes("foo"),
 				"Serialized op should not include the handle's properties besides the path",
 			);
 			assert(
-				serialized.includes("__fluid_handle__") &&
-					serialized.includes(mockHandle.absolutePath),
+				serialized.content.includes("__fluid_handle__") &&
+					serialized.content.includes(mockHandle.absolutePath),
 				"Serialized op should include the handle's path and encoded form",
 			);
 		});
@@ -89,7 +92,11 @@ describe("opSerialization", () => {
 				contents: {
 					address: "123",
 					contents: {
-						alreadyEncodedHandle: encodeHandleForSerialization(new MockHandle({})),
+						type: "op",
+						content: {
+							address: "test",
+							contents: encodeHandleForSerialization(new MockHandle({})),
+						},
 					},
 				},
 			};

@@ -169,15 +169,6 @@ declare type old_as_current_for_Interface_IFluidDataStoreRuntimeEvents = require
 declare type current_as_old_for_Interface_IFluidDataStoreRuntimeEvents = requireAssignableTo<TypeOnly<current.IFluidDataStoreRuntimeEvents>, TypeOnly<old.IFluidDataStoreRuntimeEvents>>
 
 /*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_IFluidDataStoreRuntimeExperimental": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_IFluidDataStoreRuntimeExperimental = requireAssignableTo<TypeOnly<current.IFluidDataStoreRuntimeExperimental>, TypeOnly<old.IFluidDataStoreRuntimeExperimental>>
-
-/*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under

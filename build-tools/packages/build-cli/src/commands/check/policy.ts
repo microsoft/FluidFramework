@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 import * as fs from "node:fs";
 import { EOL as newline } from "node:os";
 import * as path from "node:path";
+import process from "node:process";
 import { Flags } from "@oclif/core";
 
 import {
@@ -378,12 +379,12 @@ async function runFinalHandlers(
 
 async function readStdin(): Promise<string> {
 	return new Promise((resolve) => {
-		const stdin = process.openStdin();
+		const { stdin } = process;
 		stdin.setEncoding("utf8");
 
 		let data = "";
 		stdin.on("data", (chunk) => {
-			data += chunk;
+			data += chunk.toString("utf8");
 		});
 
 		stdin.on("end", () => {

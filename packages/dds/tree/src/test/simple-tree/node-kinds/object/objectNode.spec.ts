@@ -24,19 +24,16 @@ import {
 	type FieldSchema,
 	type ImplicitAllowedTypes,
 	type ImplicitFieldSchema,
-	type ImplicitAnnotatedFieldSchema,
 	type InsertableTreeFieldFromImplicitField,
 	type InsertableTreeNodeFromAllowedTypes,
 	type InsertableTypedNode,
 	type NodeFromSchema,
 	unhydratedFlexTreeFromInsertable,
 } from "../../../../simple-tree/index.js";
-import {
-	type FieldHasDefault,
-	type InsertableObjectFromSchemaRecord,
-	type InsertableObjectFromAnnotatedSchemaRecord,
-	type ObjectFromSchemaRecord,
-	unannotateSchemaRecord,
+import type {
+	FieldHasDefault,
+	InsertableObjectFromSchemaRecord,
+	ObjectFromSchemaRecord,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../simple-tree/node-kinds/object/objectNode.js";
 import { describeHydration, hydrate, pretty } from "../../utils.js";
@@ -52,8 +49,12 @@ import type {
 import { getView, validateUsageError } from "../../../utils.js";
 import { Tree } from "../../../../shared-tree/index.js";
 import { FieldKinds } from "../../../../feature-libraries/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { createField, UnhydratedFlexTreeNode } from "../../../../simple-tree/core/index.js";
+
+import {
+	createField,
+	UnhydratedFlexTreeNode,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../../simple-tree/core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { getUnhydratedContext } from "../../../../simple-tree/createContext.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -92,41 +93,8 @@ const schemaFactory = new SchemaFactory("Test");
 
 	// Empty case
 	{
-		// eslint-disable-next-line @typescript-eslint/ban-types
+		// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/ban-types
 		type result = InsertableObjectFromSchemaRecord<{}>;
-		type _check = requireAssignableTo<result, Record<string, never>>;
-	}
-}
-
-// InsertableObjectFromAnnotatedSchemaRecord
-{
-	const schemaFactoryAlpha = new SchemaFactoryAlpha("Test");
-	class Note extends schemaFactoryAlpha.objectAlpha("Note", {}) {}
-
-	// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-	type Info = {
-		readonly stuff: readonly [typeof Note];
-	};
-
-	type Desired = InsertableTypedNode<typeof Note>;
-
-	{
-		type result = InsertableObjectFromAnnotatedSchemaRecord<Info>["stuff"];
-		type _check = requireTrue<areSafelyAssignable<result, Desired>>;
-	}
-
-	// Generic case
-	{
-		type result = InsertableObjectFromAnnotatedSchemaRecord<
-			RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>
-		>;
-		type _check = requireAssignableTo<result, never>;
-	}
-
-	// Empty case
-	{
-		// eslint-disable-next-line @typescript-eslint/ban-types
-		type result = InsertableObjectFromAnnotatedSchemaRecord<{}>;
 		type _check = requireAssignableTo<result, Record<string, never>>;
 	}
 }
@@ -206,7 +174,7 @@ const schemaFactory = new SchemaFactory("Test");
 	// Generic case
 	{
 		type result = ObjectFromSchemaRecord<RestrictiveStringRecord<ImplicitFieldSchema>>;
-		// eslint-disable-next-line @typescript-eslint/ban-types
+		// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/ban-types
 		type _check = requireTrue<areSafelyAssignable<{}, result>>;
 
 		type _check3 = requireTrue<isAssignableTo<{ x: unknown }, result>>;
@@ -214,9 +182,9 @@ const schemaFactory = new SchemaFactory("Test");
 
 	// Empty case
 	{
-		// eslint-disable-next-line @typescript-eslint/ban-types
+		// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/ban-types
 		type result = ObjectFromSchemaRecord<{}>;
-		// eslint-disable-next-line @typescript-eslint/ban-types
+		// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/ban-types
 		type _check = requireTrue<areSafelyAssignable<{}, result>>;
 		type _check2 = requireFalse<isAssignableTo<result, { x: unknown }>>;
 
@@ -235,7 +203,7 @@ describeHydration(
 					// constructor is a special case, since one is built in on the derived type.
 					// Check that it is exposed as expected based on type:
 					const x = n.constructor;
-					// eslint-disable-next-line @typescript-eslint/ban-types
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type, @typescript-eslint/ban-types
 					type check_ = requireAssignableTo<typeof x, Function>;
 					assert.equal(x, Schema);
 				});
@@ -299,7 +267,7 @@ describeHydration(
 				const a = hydrate([Schema, Other], { constructor: 5 });
 				const b = hydrate([Schema, Other], { other: 6 });
 
-				// eslint-disable-next-line @typescript-eslint/ban-types
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type, @typescript-eslint/ban-types
 				type check_ = requireAssignableTo<typeof a.constructor, number | Function>;
 				assert.equal(a.constructor, 5);
 				assert.equal(b.constructor, Other);
@@ -387,13 +355,8 @@ describeHydration(
 					foo: schemaFactory.optional(schemaFactory.number),
 				}) {}
 				const n = init(Schema, { foo: 0 });
-				assert.throws(
-					() => {
-						// Since we do not have exactOptionalPropertyTypes enabled, this compiles, but should error at runtime:
-						delete n.foo;
-					},
-					validateUsageError(/delete operator/),
-				);
+				delete n.foo;
+				assert.equal(n.foo, undefined);
 			});
 
 			it("assigning identifier errors", () => {
@@ -617,7 +580,7 @@ describeHydration(
 			{
 				type TestObject = ObjectNodeSchema<
 					"x",
-					RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
+					RestrictiveStringRecord<ImplicitFieldSchema>,
 					false
 				>;
 				type _check1 = requireAssignableTo<TestObject, TreeNodeSchema>;
@@ -679,7 +642,9 @@ describeHydration(
 				type Create<T extends RecordX> = (data: RecordX extends T ? never : T) => unknown;
 
 				// Two identical interfaces
+				// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 				interface X1<T extends RecordX = RecordX> extends Create<T> {}
+				// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 				interface X2<T extends RecordX = RecordX> extends Create<T> {}
 
 				// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
@@ -980,56 +945,6 @@ describeHydration(
 				a: SchemaFactory.required(SchemaFactory.number, { key: "b" }),
 				b: SchemaFactory.required(SchemaFactory.number, { key: "a" }),
 			}) {}
-		});
-
-		describe("unannotateSchemaRecord", () => {
-			const stringSchema = schemaFactory.string;
-			const numberSchema = schemaFactory.number;
-
-			it("returns the same FieldSchema if no annotations are present", () => {
-				const schemaRecord = {
-					foo: SchemaFactory.optional(stringSchema),
-				};
-				const result = unannotateSchemaRecord(schemaRecord);
-				assert.deepStrictEqual(result, schemaRecord);
-			});
-
-			it("unannotates annotated allowed types", () => {
-				const schemaRecord = {
-					bar: {
-						metadata: {},
-						types: [
-							{ metadata: {}, type: stringSchema },
-							{ metadata: {}, type: numberSchema },
-						],
-					},
-				};
-				const result = unannotateSchemaRecord(schemaRecord);
-				assert.deepStrictEqual(result, {
-					bar: [stringSchema, numberSchema],
-				});
-			});
-
-			it("handles mixed FieldSchema and annotated types", () => {
-				const fieldSchema = SchemaFactory.optional(stringSchema);
-				const schemaRecord = {
-					foo: fieldSchema,
-					bar: {
-						metadata: {},
-						types: [{ metadata: {}, type: stringSchema }],
-					},
-				};
-				const result = unannotateSchemaRecord(schemaRecord);
-				assert.deepStrictEqual(result, {
-					foo: fieldSchema,
-					bar: [stringSchema],
-				});
-			});
-
-			it("handles empty schema record", () => {
-				const result = unannotateSchemaRecord({});
-				assert.deepStrictEqual(result, {});
-			});
 		});
 	},
 );

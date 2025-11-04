@@ -9,11 +9,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import { hasSingle } from "../util/index.js";
 
-import {
-	normalizeFieldSchema,
-	FieldKind,
-	type ImplicitAnnotatedFieldSchema,
-} from "./fieldSchema.js";
+import { normalizeFieldSchema, FieldKind, type ImplicitFieldSchema } from "./fieldSchema.js";
 import {
 	CompatibilityLevel,
 	getKernel,
@@ -21,6 +17,7 @@ import {
 	isTreeNode,
 	type TreeNode,
 	type TreeNodeSchema,
+	contentSchemaSymbol,
 	type Unhydrated,
 	UnhydratedFlexTreeNode,
 } from "./core/index.js";
@@ -54,7 +51,7 @@ import { getUnhydratedContext } from "./createContext.js";
  */
 export function unhydratedFlexTreeFromInsertable<TIn extends InsertableContent | undefined>(
 	data: TIn,
-	allowedTypes: ImplicitAnnotatedFieldSchema,
+	allowedTypes: ImplicitFieldSchema,
 ): TIn extends undefined ? undefined : UnhydratedFlexTreeNode {
 	const normalizedFieldSchema = normalizeFieldSchema(allowedTypes);
 
@@ -129,16 +126,28 @@ For class-based schema, this can be done by replacing an expression like "{foo: 
 
 /**
  * Returns all types for which the data is schema-compatible.
+ * @remarks This will respect the {@link contentSchemaSymbol} property on data to disambiguate types - if present, only that type will be returned.
  */
 export function getPossibleTypes(
 	allowedTypes: ReadonlySet<TreeNodeSchema>,
 	data: FactoryContent,
 ): TreeNodeSchema[] {
 	assert(data !== undefined, 0x889 /* undefined cannot be used as FactoryContent. */);
+	const type =
+		typeof data === "object" && data !== null
+			? (data as Partial<{ [contentSchemaSymbol]: string }>)[contentSchemaSymbol]
+			: undefined;
 
 	let best = CompatibilityLevel.None;
 	const possibleTypes: TreeNodeSchema[] = [];
 	for (const schema of allowedTypes) {
+		if (type !== undefined) {
+			if (schema.identifier === type) {
+				return [schema];
+			} else {
+				continue;
+			}
+		}
 		const handler = getTreeNodeSchemaPrivateData(schema).idempotentInitialize();
 		const level = handler.shallowCompatibilityTest(data);
 		if (level > best) {

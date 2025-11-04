@@ -70,15 +70,6 @@ declare type old_as_current_for_Interface_AttributionInfo = requireAssignableTo<
 declare type current_as_old_for_Interface_AttributionInfo = requireAssignableTo<TypeOnly<current.AttributionInfo>, TypeOnly<old.AttributionInfo>>
 
 /*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_CommitStagedChangesOptionsExperimental": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_CommitStagedChangesOptionsExperimental = requireAssignableTo<TypeOnly<current.CommitStagedChangesOptionsExperimental>, TypeOnly<old.CommitStagedChangesOptionsExperimental>>
-
-/*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -131,15 +122,6 @@ declare type current_as_old_for_Interface_IContainerRuntimeBase = requireAssigna
  * "Interface_IContainerRuntimeBaseEvents": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_IContainerRuntimeBaseEvents = requireAssignableTo<TypeOnly<current.IContainerRuntimeBaseEvents>, TypeOnly<old.IContainerRuntimeBaseEvents>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_IContainerRuntimeBaseExperimental": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_IContainerRuntimeBaseExperimental = requireAssignableTo<TypeOnly<current.IContainerRuntimeBaseExperimental>, TypeOnly<old.IContainerRuntimeBaseExperimental>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -644,15 +626,6 @@ declare type old_as_current_for_Interface_OpAttributionKey = requireAssignableTo
  * "Interface_OpAttributionKey": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_OpAttributionKey = requireAssignableTo<TypeOnly<current.OpAttributionKey>, TypeOnly<old.OpAttributionKey>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_StageControlsExperimental": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_StageControlsExperimental = requireAssignableTo<TypeOnly<current.StageControlsExperimental>, TypeOnly<old.StageControlsExperimental>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

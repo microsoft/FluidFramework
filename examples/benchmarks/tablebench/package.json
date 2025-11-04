@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/tablebench",
-	"version": "2.61.0",
+	"version": "2.72.0",
 	"private": true,
 	"description": "Table focused benchmarks",
 	"homepage": "https://fluidframework.com",
@@ -27,8 +27,8 @@
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
-		"eslint": "eslint --format stylish src",
-		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
+		"eslint": "eslint --quiet --format stylish src",
+		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
 		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
@@ -63,13 +63,13 @@
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/benchmark": "^0.51.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.58.1",
-		"@fluidframework/eslint-config-fluid": "^6.0.0",
+		"@fluidframework/build-tools": "^0.58.3",
+		"@fluidframework/eslint-config-fluid": "^7.0.0",
 		"@fluidframework/id-compressor": "workspace:~",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
 		"cross-env": "^7.0.3",
-		"eslint": "~8.55.0",
+		"eslint": "~8.57.1",
 		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
 		"rimraf": "^4.4.0",
@@ -83,8 +83,6 @@
 		"webpack-merge": "^6.0.1"
 	},
 	"typeValidation": {
-		"disabled": true,
-		"broken": {},
-		"entrypoint": "internal"
+		"disabled": true
 	}
 }

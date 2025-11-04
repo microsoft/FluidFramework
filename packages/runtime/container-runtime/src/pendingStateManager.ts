@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IDisposable,
 	IFluidHandle,
 	ITelemetryBaseLogger,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import {
 	type ITelemetryLoggerExt,
@@ -50,7 +50,7 @@ export interface IPendingMessage {
 	 * Serialized copy of runtimeOp
 	 */
 	content: string;
-	stagedHandleCache: ReadonlySet<IFluidHandle> | undefined;
+	stagedHandleCache?: ReadonlySet<IFluidHandle> | undefined;
 	/**
 	 * The original runtime op that was submitted to the ContainerRuntime
 	 * Unless this pending message came from stashed content, in which case this is undefined at first and then deserialized from the contents string
@@ -165,6 +165,8 @@ function buildPendingMessageContent(message: InboundSequencedContainerRuntimeMes
 }
 
 function typesOfKeys<T extends object>(obj: T): Record<keyof T, string> {
+	// TODO: Fix this violation and remove the disable
+	// eslint-disable-next-line unicorn/no-array-reduce
 	return Object.keys(obj).reduce((acc, key) => {
 		acc[key] = typeof obj[key];
 		return acc;
@@ -179,7 +181,10 @@ function scrubAndStringify(
 
 	// For these known/expected keys, we can either drill into the object (for contents)
 	// or just use the value as-is (since it's not personal info)
-	scrubbed.contents = message.contents && typesOfKeys(message.contents);
+	scrubbed.contents =
+		typeof message.contents === "object" && message.contents !== null
+			? typesOfKeys(message.contents)
+			: undefined;
 	scrubbed.type = message.type;
 
 	return JSON.stringify(scrubbed);
@@ -626,7 +631,7 @@ export class PendingStateManager implements IDisposable {
 	 * @param sequenceNumber - The sequenceNumber from the server corresponding to the next pending message.
 	 * @param message - [optional] The entire incoming message, for comparing contents with the pending message for extra validation.
 	 * @throws DataProcessingError if the pending message content doesn't match the incoming message content.
-	 * @returns - The localOpMetadata of the next pending message, to be sent to whoever submitted the original message.
+	 * @returns The localOpMetadata of the next pending message, to be sent to whoever submitted the original message.
 	 */
 	private processNextPendingMessage(
 		sequenceNumber: number,
@@ -756,7 +761,7 @@ export class PendingStateManager implements IDisposable {
 					pendingMessageBatchMetadata: asBatchMetadata(pendingMessage.opMetadata)?.batch,
 					messageBatchMetadata: asBatchMetadata(firstMessage?.metadata)?.batch,
 				},
-				messageDetails: firstMessage && extractSafePropertiesFromMessage(firstMessage),
+				messageDetails: extractSafePropertiesFromMessage(firstMessage),
 			});
 		}
 	}
@@ -820,9 +825,10 @@ export class PendingStateManager implements IDisposable {
 			assert(batchMetadataFlag !== false, 0x41b /* We cannot process batches in chunks */);
 
 			// The next message starts a batch (possibly single-message), and we'll need its batchId.
-			const batchId = pendingMessage.batchInfo.ignoreBatchId
-				? undefined
-				: getEffectiveBatchId(pendingMessage);
+			const batchId =
+				pendingMessage.batchInfo.ignoreBatchId === true
+					? undefined
+					: getEffectiveBatchId(pendingMessage);
 
 			const staged = pendingMessage.batchInfo.staged;
 

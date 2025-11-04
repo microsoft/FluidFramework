@@ -13,6 +13,7 @@ import type {
 	IChannelFactory,
 	IChannelServices,
 	IFluidDataStoreRuntime,
+	IFluidDataStoreRuntimeInternalConfig,
 } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor/internal";
 import type {
@@ -20,6 +21,7 @@ import type {
 	ITelemetryContext,
 	IExperimentalIncrementalSummaryContext,
 	IRuntimeMessageCollection,
+	MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
@@ -140,6 +142,15 @@ class SharedObjectFromKernel<
 			logger: this.logger,
 			idCompressor: runtime.idCompressor,
 			lastSequenceNumber: () => this.deltaManager.lastSequenceNumber,
+			initialSequenceNumber: this.deltaManager.initialSequenceNumber,
+
+			// This cast is needed since IFluidDataStoreRuntimeInternalConfig does not extend IFluidDataStoreRuntime directly. This pattern
+			// allows us to avoid breaking changes to IFluidDataStoreRuntime by hiding internal members in a separate interface, but comes
+			// at the cost of less compile-time enforcement. For example, if the runtime did not implement `minVersionForCollab` and the
+			// member was still optional (e.g., during the deprecation window where backwards-compatibility is maintained), the compiler
+			// would emit an error.
+			minVersionForCollab: (runtime as IFluidDataStoreRuntimeInternalConfig)
+				.minVersionForCollab,
 		};
 	}
 
@@ -190,10 +201,6 @@ class SharedObjectFromKernel<
 
 	protected override applyStashedOp(content: unknown): void {
 		this.#kernel.applyStashedOp(content);
-	}
-
-	protected override processCore(): void {
-		fail("processCore should not be called");
 	}
 
 	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
@@ -289,6 +296,16 @@ export interface KernelArgs {
 	 * {@inheritdoc @fluidframework/container-definitions#IDeltaManager.lastSequenceNumber}
 	 */
 	readonly lastSequenceNumber: () => number;
+	/**
+	 * {@inheritdoc @fluidframework/container-definitions#IDeltaManager.initialSequenceNumber}
+	 */
+	readonly initialSequenceNumber: number;
+	/**
+	 * Minimum version of the FF runtime that is required to collaborate on new documents. Used so that a
+	 * compatible set of feature flags and formats can be enabled in the SharedObject implementation.
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minVersionForCollab} for more details.
+	 */
+	readonly minVersionForCollab: MinimumVersionForCollab | undefined;
 }
 
 /**

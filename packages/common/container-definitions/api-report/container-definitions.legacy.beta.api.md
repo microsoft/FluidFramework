@@ -26,6 +26,53 @@ export namespace ConnectionState {
 // @public
 export type ConnectionState = ConnectionState.Disconnected | ConnectionState.EstablishingConnection | ConnectionState.CatchingUp | ConnectionState.Connected;
 
+// @beta @sealed @legacy
+export type ConnectionStatus = ConnectionStatusEstablishingConnection | ConnectionStatusCatchingUp | ConnectionStatusConnected | ConnectionStatusDisconnected;
+
+// @beta @sealed @legacy
+export interface ConnectionStatusCatchingUp extends ConnectionStatusTemplate {
+    // (undocumented)
+    canSendOps: false;
+    // (undocumented)
+    connectionState: ConnectionState.CatchingUp;
+    pendingClientConnectionId: string;
+}
+
+// @beta @sealed @legacy
+export interface ConnectionStatusConnected extends ConnectionStatusTemplate {
+    // (undocumented)
+    canSendOps: boolean;
+    clientConnectionId: string;
+    // (undocumented)
+    connectionState: ConnectionState.Connected;
+}
+
+// @beta @sealed @legacy
+export interface ConnectionStatusDisconnected extends ConnectionStatusTemplate {
+    // (undocumented)
+    canSendOps: false;
+    // (undocumented)
+    connectionState: ConnectionState.Disconnected;
+    priorConnectedClientConnectionId: string | undefined;
+    priorPendingClientConnectionId: string | undefined;
+}
+
+// @beta @sealed @legacy
+export interface ConnectionStatusEstablishingConnection extends ConnectionStatusTemplate {
+    // (undocumented)
+    canSendOps: false;
+    // (undocumented)
+    connectionState: ConnectionState.EstablishingConnection;
+}
+
+// @beta @sealed @legacy
+export interface ConnectionStatusTemplate {
+    canSendOps: boolean;
+    // (undocumented)
+    connectionState: ConnectionState;
+    readonly: boolean;
+}
+
 // @beta @legacy
 export const ContainerErrorTypes: {
     readonly clientSessionExpiredError: "clientSessionExpiredError";
@@ -40,7 +87,7 @@ export const ContainerErrorTypes: {
 export type ContainerErrorTypes = (typeof ContainerErrorTypes)[keyof typeof ContainerErrorTypes];
 
 // @beta @legacy
-export interface ContainerWarning extends IErrorBase_2 {
+export interface ContainerWarning extends IErrorBase {
     logged?: boolean;
 }
 
@@ -157,6 +204,8 @@ export interface IContainerContext {
     // (undocumented)
     readonly quorum: IQuorumClients;
     readonly scope: FluidObject;
+    // @system
+    readonly signalAudience?: IAudience;
     readonly snapshotWithContents?: ISnapshot;
     // (undocumented)
     readonly storage: IContainerStorageService;
@@ -209,12 +258,6 @@ export type IContainerPolicies = {
 // @beta @legacy
 export interface IContainerStorageService {
     createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
-    // @deprecated
-    dispose?(error?: Error): void;
-    // @deprecated
-    readonly disposed?: boolean;
-    // @deprecated
-    downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
     getSnapshot?(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot>;
     getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
     getVersions(versionId: string | null, count: number, scenarioName?: string, fetchSource?: FetchSource): Promise<IVersion[]>;
@@ -226,7 +269,7 @@ export interface IContainerStorageService {
 }
 
 // @public
-export type ICriticalContainerError = IErrorBase_2;
+export type ICriticalContainerError = IErrorBase;
 
 // @beta @sealed @legacy
 export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>, IDeltaSender {
@@ -259,7 +302,7 @@ export interface IDeltaManagerEvents extends IEvent {
     (event: "disconnect", listener: (reason: string, error?: IAnyDriverError) => void): any;
     (event: "readonly", listener: (readonly: boolean, readonlyConnectionReason?: {
         reason: string;
-        error?: IErrorBase_2;
+        error?: IErrorBase;
     }) => void): any;
 }
 
@@ -290,7 +333,14 @@ export interface IDeltaSender {
     flush(): void;
 }
 
-export { IErrorBase }
+// @public
+export interface IErrorBase extends Partial<Error> {
+    readonly errorType: string;
+    getTelemetryProperties?(): ITelemetryBaseProperties;
+    readonly message: string;
+    readonly name?: string;
+    readonly stack?: string;
+}
 
 // @beta @legacy
 export interface IFluidBrowserPackage extends IFluidPackage {
@@ -420,6 +470,7 @@ export interface IRuntime extends IDisposable {
     processSignal(message: any, local: boolean): any;
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
     setConnectionState(canSendOps: boolean, clientId?: string): any;
+    setConnectionStatus?(status: ConnectionStatus): void;
 }
 
 // @beta @legacy (undocumented)
@@ -454,7 +505,12 @@ export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
     };
 }
 
-export { IThrottlingWarning }
+// @beta @legacy
+export interface IThrottlingWarning extends IErrorBase {
+    readonly errorType: typeof FluidErrorTypes.throttlingError;
+    // (undocumented)
+    readonly retryAfterSeconds: number;
+}
 
 // @beta @legacy
 export enum LoaderHeader {
