@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/eslint-config-fluid",
-	"version": "8.1.0",
+	"version": "2.72.0",
 	"description": "Shareable ESLint config for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -13,7 +13,7 @@
 	"main": "index.js",
 	"scripts": {
 		"build": "npm run print-config && npm run build:readme && npm run prettier",
-		"build:readme": "markdown-magic --files \"**/*.md\"",
+		"build:readme:disabled": "markdown-magic --files \"**/*.md\"",
 		"cleanup-printed-configs": "node ./scripts/cleanup-printed-configs.js ./printed-configs",
 		"format": "npm run prettier:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
@@ -49,7 +49,6 @@
 		"eslint-plugin-unused-imports": "~4.2.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/markdown-magic": "file:../../../tools/markdown-magic",
 		"@fluidframework/build-common": "^2.0.3",
 		"concurrently": "^8.2.1",
 		"eslint": "~8.57.1",
