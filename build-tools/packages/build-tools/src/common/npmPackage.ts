@@ -13,8 +13,8 @@ import sortPackageJson from "sort-package-json";
 
 import type { SetRequired, PackageJson as StandardPackageJson } from "type-fest";
 
-import type { IFluidCompatibilityMetadata } from "../fluidBuild/fluidCompatMetadata";
 import type { IFluidBuildConfig } from "../fluidBuild/fluidBuildConfig";
+import type { IFluidCompatibilityMetadata } from "../fluidBuild/fluidCompatMetadata";
 import { options } from "../fluidBuild/options";
 import { defaultLogger } from "./logging";
 import type { MonoRepo, PackageManager } from "./monoRepo";
