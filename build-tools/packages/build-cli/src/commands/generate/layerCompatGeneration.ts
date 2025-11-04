@@ -159,7 +159,7 @@ export const generation = ${generation};
  * but capped at (minimumCompatWindowMonths - 1) to maintain compatibility requirements.
  *
  * @param currentPkgVersion - The current package version to compare against the stored version
- * @param fluidCompatMetadata - The existing fluid compatibility metadata from the previous generation
+ * @param fluidCompatMetadata - The existing Fluid compatibility metadata from the previous generation
  * @param minimumCompatWindowMonths - The maximum number of months of compatibility to maintain across layers
  * @param log - Logger instance for verbose output about the calculation process
  * @returns The new generation number if an update is needed, or undefined if no update is required

@@ -54,7 +54,7 @@ export type FluidPackageJson = {
 
 	/**
 	 * The metadata used for Fluid compatibility tracking and validation.
-	 * This is auto generated and updated by build-tools.
+	 * This is auto generated and updated during builds.
 	 */
 	fluidCompatMetadata?: IFluidCompatibilityMetadata;
 };
