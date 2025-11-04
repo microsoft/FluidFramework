@@ -1666,6 +1666,58 @@ describe("ModularChangeFamily integration", () => {
 
 			assertEqual(composed, expected);
 		});
+
+		it("(move and detach) and reattach", () => {
+			const fieldAId = { nodeId: undefined, field: fieldA };
+			const detachId: ChangeAtomId = { revision: tag1, localId: brand(0) };
+			const cellId1: ChangeAtomId = { revision: tag1, localId: brand(1) };
+			const cellId2: ChangeAtomId = { revision: tag1, localId: brand(2) };
+			const detachAndMove = Change.build(
+				{
+					family,
+					maxId: 2,
+					revisions: [{ revision: tag1 }],
+					detachedMoves: [{ detachId, count: 1, newLocation: fieldAId }],
+				},
+				Change.field(fieldA, sequence.identifier, [
+					MarkMaker.remove(1, detachId, { detachCellId: cellId1 }),
+					MarkMaker.rename(1, cellId2, detachId),
+				]),
+			);
+
+			const attachId: ChangeAtomId = { revision: tag2, localId: brand(0) };
+			const reattach = Change.build(
+				{
+					family,
+					maxId: 0,
+					revisions: [{ revision: tag2 }],
+					renames: [{ oldId: detachId, count: 1, newId: attachId, detachLocation: fieldAId }],
+				},
+				Change.field(fieldA, sequence.identifier, [
+					MarkMaker.tomb(cellId1.revision, cellId1.localId, 1),
+					MarkMaker.insert(1, detachId, { revision: attachId.revision, id: attachId.localId }),
+				]),
+			);
+
+			const composed = family.compose([
+				tagChange(detachAndMove, tag1),
+				tagChange(reattach, tag2),
+			]);
+
+			const expected = Change.build(
+				{
+					family,
+					maxId: 2,
+					revisions: [{ revision: tag1 }, { revision: tag2 }],
+				},
+				Change.field(fieldA, sequence.identifier, [
+					MarkMaker.remove(1, attachId, { detachCellId: cellId1 }),
+					MarkMaker.insert(1, cellId2, { revision: attachId.revision, id: attachId.localId }),
+				]),
+			);
+
+			assertEqual(composed, expected);
+		});
 	});
 
 	describe("invert", () => {

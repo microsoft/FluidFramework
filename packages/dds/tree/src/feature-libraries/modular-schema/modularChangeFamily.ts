@@ -4352,14 +4352,14 @@ function composeRename(
 			change1.rootNodes,
 			change2.rootNodes.detachLocations.getFirst(oldId, countToProcess).value,
 		);
+	}
 
-		const attachEntry = getFirstAttachField(change2.crossFieldKeys, newId, countToProcess);
-		countToProcess = attachEntry.length;
-		if (attachEntry.value !== undefined) {
-			// We should delete any output detach location `change1` may have had for these nodes,
-			// since they are attached in the output context of the composed change.
-			mergedTable.outputDetachLocations.delete(oldId, countToProcess);
-		}
+	const attachEntry = getFirstAttachField(change2.crossFieldKeys, newId, countToProcess);
+	countToProcess = attachEntry.length;
+	if (attachEntry.value !== undefined) {
+		// We should delete any output detach location `change1` may have had for these nodes,
+		// since they are attached in the output context of the composed change.
+		mergedTable.outputDetachLocations.delete(oldId, countToProcess);
 	}
 
 	if (countToProcess < count) {
