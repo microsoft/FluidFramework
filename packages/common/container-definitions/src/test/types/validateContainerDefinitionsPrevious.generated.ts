@@ -52,6 +52,51 @@ declare type old_as_current_for_Enum_LoaderHeader = requireAssignableTo<TypeOnly
 declare type current_as_old_for_Enum_LoaderHeader = requireAssignableTo<TypeOnly<current.LoaderHeader>, TypeOnly<old.LoaderHeader>>
 
 /*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_ConnectionStatusCatchingUp": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_ConnectionStatusCatchingUp = requireAssignableTo<TypeOnly<current.ConnectionStatusCatchingUp>, TypeOnly<old.ConnectionStatusCatchingUp>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_ConnectionStatusConnected": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_ConnectionStatusConnected = requireAssignableTo<TypeOnly<current.ConnectionStatusConnected>, TypeOnly<old.ConnectionStatusConnected>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_ConnectionStatusDisconnected": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_ConnectionStatusDisconnected = requireAssignableTo<TypeOnly<current.ConnectionStatusDisconnected>, TypeOnly<old.ConnectionStatusDisconnected>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_ConnectionStatusEstablishingConnection": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_ConnectionStatusEstablishingConnection = requireAssignableTo<TypeOnly<current.ConnectionStatusEstablishingConnection>, TypeOnly<old.ConnectionStatusEstablishingConnection>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_ConnectionStatusTemplate": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_ConnectionStatusTemplate = requireAssignableTo<TypeOnly<current.ConnectionStatusTemplate>, TypeOnly<old.ConnectionStatusTemplate>>
+
+/*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -211,7 +256,6 @@ declare type old_as_current_for_Interface_IContainerContext = requireAssignableT
  * typeValidation.broken:
  * "Interface_IContainerContext": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IContainerContext = requireAssignableTo<TypeOnly<current.IContainerContext>, TypeOnly<old.IContainerContext>>
 
 /*
@@ -266,7 +310,6 @@ declare type old_as_current_for_Interface_IContainerStorageService = requireAssi
  * typeValidation.broken:
  * "Interface_IContainerStorageService": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IContainerStorageService = requireAssignableTo<TypeOnly<current.IContainerStorageService>, TypeOnly<old.IContainerStorageService>>
 
 /*
@@ -709,6 +752,15 @@ declare type old_as_current_for_TypeAlias_ConnectionState = requireAssignableTo<
  * "TypeAlias_ConnectionState": {"backCompat": false}
  */
 declare type current_as_old_for_TypeAlias_ConnectionState = requireAssignableTo<TypeOnly<current.ConnectionState>, TypeOnly<old.ConnectionState>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_ConnectionStatus": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_ConnectionStatus = requireAssignableTo<TypeOnly<current.ConnectionStatus>, TypeOnly<old.ConnectionStatus>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

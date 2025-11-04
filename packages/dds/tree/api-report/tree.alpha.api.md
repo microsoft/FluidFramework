@@ -173,6 +173,20 @@ export const contentSchemaSymbol: unique symbol;
 export function createIdentifierIndex<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): IdentifierIndex;
 
 // @alpha
+export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSchema>(options?: ForestOptions & (({
+    idCompressor?: IIdCompressor | undefined;
+} & {
+    content?: undefined;
+}) | (ICodecOptions & {
+    content: ViewContent;
+} & {
+    idCompressor?: undefined;
+}))): ViewableTree & Pick<ITreeAlpha, "exportVerbose" | "exportSimpleSchema">;
+
+// @beta
+export function createIndependentTreeBeta<const TSchema extends ImplicitFieldSchema>(options?: ForestOptions): ViewableTree;
+
+// @alpha
 export function createSimpleTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey extends TreeIndexKey, TValue>(view: TreeView<TFieldSchema>, indexer: (schema: TreeNodeSchema) => string | undefined, getValue: (nodes: TreeIndexNodes<TreeNode>) => TValue, isKeyValid: (key: TreeIndexKey) => key is TKey): SimpleTreeIndex<TKey, TValue>;
 
 // @alpha
@@ -274,6 +288,8 @@ export class FieldSchemaAlpha<Kind extends FieldKind = FieldKind, Types extends 
     get allowedTypesIdentifiers(): ReadonlySet<string>;
     // (undocumented)
     get persistedMetadata(): JsonCompatibleReadOnlyObject | undefined;
+    // (undocumented)
+    get simpleAllowedTypes(): ReadonlyMap<string, SimpleAllowedTypeAttributes>;
 }
 
 // @alpha @sealed @system
@@ -304,6 +320,7 @@ type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
 // @alpha
 export const FluidClientVersion: {
     readonly v2_0: "2.0.0";
+    readonly v2_43: "2.43.0";
     readonly v2_52: "2.52.0";
 };
 
@@ -982,7 +999,6 @@ type ScopedSchemaName<TScope extends string | undefined, TName extends number | 
 
 // @alpha @input
 export interface SharedTreeFormatOptions {
-    formatVersion: SharedTreeFormatVersion[keyof SharedTreeFormatVersion];
     treeEncodeType: TreeCompressionStrategy;
 }
 
@@ -999,22 +1015,29 @@ export const SharedTreeFormatVersion: {
 export type SharedTreeFormatVersion = typeof SharedTreeFormatVersion;
 
 // @alpha @input
-export type SharedTreeOptions = Partial<CodecWriteOptions> & Partial<SharedTreeFormatOptions> & SharedTreeOptionsBeta;
+export interface SharedTreeOptions extends Partial<CodecWriteOptions>, Partial<SharedTreeFormatOptions>, SharedTreeOptionsBeta {
+    readonly enableSharedBranches?: boolean;
+}
 
 // @beta @input
 export type SharedTreeOptionsBeta = ForestOptions;
 
 // @alpha @sealed
+export interface SimpleAllowedTypeAttributes {
+    readonly isStaged: boolean | undefined;
+}
+
+// @alpha @sealed
 export interface SimpleArrayNodeSchema<out TCustomMetadata = unknown> extends SimpleNodeSchemaBaseAlpha<NodeKind.Array, TCustomMetadata> {
-    readonly allowedTypesIdentifiers: ReadonlySet<string>;
+    readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypeAttributes>;
 }
 
 // @alpha @sealed
 export interface SimpleFieldSchema {
-    readonly allowedTypesIdentifiers: ReadonlySet<string>;
     readonly kind: FieldKind;
     readonly metadata: FieldSchemaMetadata;
     readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
+    readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypeAttributes>;
 }
 
 // @alpha @sealed
@@ -1024,7 +1047,7 @@ export interface SimpleLeafNodeSchema extends SimpleNodeSchemaBaseAlpha<NodeKind
 
 // @alpha @sealed
 export interface SimpleMapNodeSchema<out TCustomMetadata = unknown> extends SimpleNodeSchemaBaseAlpha<NodeKind.Map, TCustomMetadata> {
-    readonly allowedTypesIdentifiers: ReadonlySet<string>;
+    readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypeAttributes>;
 }
 
 // @alpha
@@ -1053,7 +1076,7 @@ export interface SimpleObjectNodeSchema<out TCustomMetadata = unknown> extends S
 
 // @alpha @sealed
 export interface SimpleRecordNodeSchema<out TCustomMetadata = unknown> extends SimpleNodeSchemaBaseAlpha<NodeKind.Record, TCustomMetadata> {
-    readonly allowedTypesIdentifiers: ReadonlySet<string>;
+    readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypeAttributes>;
 }
 
 // @alpha
