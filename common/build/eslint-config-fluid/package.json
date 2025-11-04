@@ -12,7 +12,7 @@
 	"author": "Microsoft and contributors",
 	"main": "index.js",
 	"scripts": {
-		"build": "npm run print-config && npm run build:readme && npm run prettier",
+		"build": "npm run print-config && npm run prettier",
 		"build:readme:disabled": "markdown-magic --files \"**/*.md\"",
 		"cleanup-printed-configs": "node ./scripts/cleanup-printed-configs.js ./printed-configs",
 		"format": "npm run prettier:fix",
@@ -53,7 +53,7 @@
 		"concurrently": "^8.2.1",
 		"eslint": "~8.57.1",
 		"mocha-multi-reporters": "^1.5.1",
-		"prettier": "~3.0.3",
+		"prettier": "~3.6.2",
 		"sort-json": "^2.0.1",
 		"typescript": "~5.4.5"
 	},
