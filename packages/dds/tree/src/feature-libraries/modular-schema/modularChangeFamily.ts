@@ -4244,13 +4244,13 @@ function composeRootTables(
 	removedCrossFieldKeys: CrossFieldRangeTable<boolean>,
 	pendingCompositions: PendingCompositions,
 ): RootNodeTable {
-	const mergedTable = cloneRootTable(change1.rootNodes);
+	const composedTable = cloneRootTable(change1.rootNodes);
 
 	for (const renameEntry of change2.rootNodes.oldToNewId.entries()) {
 		composeRename(
 			change1,
 			change2,
-			mergedTable,
+			composedTable,
 			renameEntry.start,
 			renameEntry.value,
 			renameEntry.length,
@@ -4283,7 +4283,7 @@ function composeRootTables(
 				);
 			} else {
 				assignRootChange(
-					mergedTable,
+					composedTable,
 					composedNodeToParent,
 					detachId1,
 					nodeId2,
@@ -4295,11 +4295,65 @@ function composeRootTables(
 		}
 	}
 
-	for (const entry of change2.rootNodes.outputDetachLocations.entries()) {
-		mergedTable.outputDetachLocations.set(entry.start, entry.length, entry.value);
+	for (const outputDetachEntry of change1.rootNodes.outputDetachLocations.entries()) {
+		composeOutputDetachLocation(
+			outputDetachEntry.start,
+			outputDetachEntry.length,
+			outputDetachEntry.value,
+			change2,
+			composedTable,
+		);
 	}
 
-	return mergedTable;
+	for (const entry of change2.rootNodes.outputDetachLocations.entries()) {
+		composedTable.outputDetachLocations.set(entry.start, entry.length, entry.value);
+	}
+
+	return composedTable;
+}
+
+function composeOutputDetachLocation(
+	outputDetachId1: ChangeAtomId,
+	count: number,
+	detachLocation: FieldId,
+	change2: ModularChangeset,
+	composedTable: RootNodeTable,
+): void {
+	let countToProcess = count;
+	const renameEntry = firstAttachIdFromDetachId(
+		change2.rootNodes,
+		outputDetachId1,
+		countToProcess,
+	);
+	countToProcess = renameEntry.length;
+
+	const attachEntry = getFirstAttachField(
+		change2.crossFieldKeys,
+		renameEntry.value,
+		countToProcess,
+	);
+	countToProcess = attachEntry.length;
+
+	composedTable.outputDetachLocations.delete(outputDetachId1, countToProcess);
+
+	if (attachEntry.value === undefined) {
+		// We update the key for the detach location to the renamed ID of the root in the composed output context.
+		composedTable.outputDetachLocations.set(renameEntry.value, countToProcess, detachLocation);
+	} else {
+		// These nodes are attached by `change2` and thus attached in the composed output context,
+		// so there should be no output detach location.
+	}
+
+	const countRemaining = count - countToProcess;
+	if (countRemaining > 0) {
+		composeOutputDetachLocation(
+			offsetChangeAtomId(outputDetachId1, countToProcess),
+			countRemaining,
+			detachLocation,
+			change2,
+			composedTable,
+		);
+	}
 }
 
 function composeRename(
@@ -4352,14 +4406,6 @@ function composeRename(
 			change1.rootNodes,
 			change2.rootNodes.detachLocations.getFirst(oldId, countToProcess).value,
 		);
-	}
-
-	const attachEntry = getFirstAttachField(change2.crossFieldKeys, newId, countToProcess);
-	countToProcess = attachEntry.length;
-	if (attachEntry.value !== undefined) {
-		// We should delete any output detach location `change1` may have had for these nodes,
-		// since they are attached in the output context of the composed change.
-		mergedTable.outputDetachLocations.delete(oldId, countToProcess);
 	}
 
 	if (countToProcess < count) {
@@ -4497,6 +4543,14 @@ export function addNodeRename(
 	count: number,
 	detachLocation: FieldId | undefined,
 ): void {
+	if (detachLocation !== undefined) {
+		table.detachLocations.set(oldId, count, detachLocation);
+	}
+
+	if (areEqualChangeAtomIds(oldId, newId)) {
+		return;
+	}
+
 	for (const entry of table.oldToNewId.getAll2(oldId, count)) {
 		assert(
 			entry.value === undefined ||
@@ -4515,11 +4569,6 @@ export function addNodeRename(
 
 	table.oldToNewId.set(oldId, count, newId);
 	table.newToOldId.set(newId, count, oldId);
-
-	if (detachLocation !== undefined) {
-		// XXX: Invalidate field?
-		table.detachLocations.set(oldId, count, detachLocation);
-	}
 }
 
 /**
