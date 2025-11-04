@@ -26,6 +26,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/api/viewSchemaToSimpleSchema.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
+import { HasUnknownOptionalFields } from "../../testTrees.js";
 
 const simpleString: SimpleLeafNodeSchema = {
 	leafKind: ValueSchema.String,
@@ -571,7 +572,7 @@ describe("getSimpleSchema", () => {
 	describe("With staged schema upgrades", () => {
 		const leafSchema = stringSchema;
 		const schemaFactory = new SchemaFactoryAlpha("test");
-		const root = schemaFactory.optional(
+		const schema = schemaFactory.optional(
 			// Staged allowed types are read-only for the sake of schema migrations
 			schemaFactory.types([schemaFactory.staged(leafSchema)]),
 		);
@@ -587,17 +588,61 @@ describe("getSimpleSchema", () => {
 				definitions: new Map([[leafSchema.identifier, leafSchema]]),
 			};
 
-			const actual = toSimpleTreeSchema(root, true);
+			const actual = toSimpleTreeSchema(schema, true);
 			assert.deepEqual(actual.root.simpleAllowedTypes, expected.root.simpleAllowedTypes);
 		});
 
 		it("serialized - simpleAllowedTypes", () => {
-			const actual = serializeSimpleSchema(toSimpleTreeSchema(root, true));
+			const actual = serializeSimpleSchema(toSimpleTreeSchema(schema, true));
 			takeJsonSnapshot(actual);
 		});
 
 		it("Roundtrip serialization - simpleAllowedTypes", () => {
-			const simpleTree = toSimpleTreeSchema(root, true);
+			const simpleTree = toSimpleTreeSchema(schema, true);
+			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
+			const actual = deserializeSimpleSchema(serializeSimpleSchema(simpleTree));
+			assert.deepEqual(actual, expected);
+		});
+	});
+
+	describe("With allowUnknownOptionalFields in object schema", () => {
+		const schema = HasUnknownOptionalFields;
+
+		it("Should preserve allowUnknownOptionalFields when converting to SimpleTreeSchema", () => {
+			const expected: SimpleTreeSchema = {
+				root: {
+					kind: FieldKind.Required,
+					simpleAllowedTypes: new Map([
+						["test.hasUnknownOptionalFields", { isStaged: false }],
+					]),
+					metadata: {},
+					persistedMetadata: undefined,
+				},
+				definitions: new Map([
+					[
+						"test.hasUnknownOptionalFields",
+						{
+							kind: NodeKind.Object,
+							metadata: {},
+							persistedMetadata: undefined,
+							allowUnknownOptionalFields: true,
+							fields: new Map([]),
+						},
+					],
+				]),
+			};
+
+			const actual = toSimpleTreeSchema(schema, true);
+			assert.deepEqual(actual, expected);
+		});
+
+		it("serialized - allowUnknownOptionalFields", () => {
+			const actual = serializeSimpleSchema(toSimpleTreeSchema(schema, true));
+			takeJsonSnapshot(actual);
+		});
+
+		it("Roundtrip serialization - allowUnknownOptionalFields", () => {
+			const simpleTree = toSimpleTreeSchema(schema, true);
 			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
 			const actual = deserializeSimpleSchema(serializeSimpleSchema(simpleTree));
 			assert.deepEqual(actual, expected);
