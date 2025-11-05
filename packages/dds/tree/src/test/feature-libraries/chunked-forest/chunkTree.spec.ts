@@ -9,6 +9,7 @@ import {
 	CursorLocationType,
 	EmptyKey,
 	type FieldKey,
+	type JsonableTree,
 	type TreeNodeSchemaIdentifier,
 	type Value,
 	mapCursorField,
@@ -23,7 +24,9 @@ import {
 	type ShapeInfo,
 	basicOnlyChunkPolicy,
 	chunkField,
+	chunkFieldSingle,
 	chunkRange,
+	combineChunks,
 	defaultChunkPolicy,
 	insertValues,
 	polymorphic,
@@ -355,6 +358,181 @@ describe("chunkTree", () => {
 				idCompressor: undefined,
 			});
 			assert.equal(chunks.length, 0);
+		});
+
+		it("single node field", () => {
+			const trees: JsonableTree[] = [{ type: brand(numberSchema.identifier), value: 42 }];
+			const cursor = cursorForJsonableTreeField(trees);
+			const chunks = chunkField(cursor, {
+				policy: basicOnlyChunkPolicy,
+				idCompressor: undefined,
+			});
+			assert.equal(chunks.length, 1);
+			assert(chunks[0] instanceof BasicChunk);
+			assertChunkCursorEquals(chunks[0], trees);
+		});
+
+		it("multiple nodes field", () => {
+			const length = 3;
+			const fieldData = numberSequenceField(length);
+			const cursor = cursorForJsonableTreeField(fieldData);
+			const chunks = chunkField(cursor, {
+				policy: basicOnlyChunkPolicy,
+				idCompressor: undefined,
+			});
+			assert.equal(chunks.length, length);
+			chunks.forEach((chunk, index) => {
+				assert(chunk instanceof BasicChunk);
+				assertChunkCursorEquals(chunk, [fieldData[index]]);
+			});
+		});
+
+		it("respects chunk policy for sequence chunking", () => {
+			const policy: ChunkPolicy = {
+				sequenceChunkSplitThreshold: 2,
+				sequenceChunkInlineThreshold: Number.POSITIVE_INFINITY,
+				uniformChunkNodeCount: 0,
+				shapeFromSchema: () => polymorphic,
+			};
+
+			const fieldData = numberSequenceField(4);
+			const cursor = cursorForJsonableTreeField(fieldData);
+			const chunks = chunkField(cursor, { policy, idCompressor: undefined });
+			assert.equal(chunks.length, policy.sequenceChunkSplitThreshold);
+			assert(chunks[0] instanceof SequenceChunk);
+			assert(chunks[1] instanceof SequenceChunk);
+
+			// Verify the chunked content matches the original
+			const allChunks = new SequenceChunk(chunks);
+			assertChunkCursorEquals(allChunks, fieldData);
+		});
+
+		it("preserves cursor position", () => {
+			const fieldData = numberSequenceField(2);
+			const cursor = cursorForJsonableTreeField(fieldData);
+			const originalMode = cursor.mode;
+
+			chunkField(cursor, {
+				policy: basicOnlyChunkPolicy,
+				idCompressor: undefined,
+			});
+
+			// Cursor should be back to its original position and mode
+			assert.equal(cursor.mode, originalMode);
+		});
+
+		it("adds refs to existing chunks", () => {
+			const basicChunk = new BasicChunk(brand(numberSchema.identifier), new Map(), 1);
+			assert(!basicChunk.isShared());
+			const cursor = basicChunk.cursor();
+
+			const chunks = chunkField(cursor, {
+				policy: defaultChunkPolicy,
+				idCompressor: undefined,
+			});
+
+			assert.equal(chunks.length, 1);
+			assert.equal(chunks[0], basicChunk);
+			assert(basicChunk.isShared());
+		});
+	});
+
+	describe("chunkFieldSingle", () => {
+		it("empty field", () => {
+			const chunk = chunkFieldSingle(emptyChunk.cursor(), {
+				policy: defaultChunkPolicy,
+				idCompressor: undefined,
+			});
+			assert(chunk instanceof SequenceChunk);
+			assert.equal(chunk.topLevelLength, 0);
+			assert.equal(chunk.subChunks.length, 0);
+		});
+
+		it("single node field", () => {
+			const trees: JsonableTree[] = [{ type: brand(numberSchema.identifier), value: 42 }];
+			const cursor = cursorForJsonableTreeField(trees);
+			const chunk = chunkFieldSingle(cursor, {
+				policy: basicOnlyChunkPolicy,
+				idCompressor: undefined,
+			});
+			assert(chunk instanceof BasicChunk);
+			assertChunkCursorEquals(chunk, trees);
+		});
+
+		it("multiple nodes field", () => {
+			const length = 3;
+			const fieldData = numberSequenceField(length);
+			const cursor = cursorForJsonableTreeField(fieldData);
+			const chunk = chunkFieldSingle(cursor, {
+				policy: basicOnlyChunkPolicy,
+				idCompressor: undefined,
+			});
+			assert(chunk instanceof SequenceChunk);
+			assert.equal(chunk.topLevelLength, length);
+			assertChunkCursorEquals(chunk, fieldData);
+		});
+
+		it("large field with chunking policy returns nested sequence chunk", () => {
+			const policy: ChunkPolicy = {
+				sequenceChunkSplitThreshold: 2,
+				sequenceChunkInlineThreshold: Number.POSITIVE_INFINITY,
+				uniformChunkNodeCount: 0,
+				shapeFromSchema: () => polymorphic,
+			};
+
+			const length = 5;
+			const fieldData = numberSequenceField(length);
+			const cursor = cursorForJsonableTreeField(fieldData);
+			const chunk = chunkFieldSingle(cursor, { policy, idCompressor: undefined });
+
+			assert(chunk instanceof SequenceChunk);
+			assert.equal(chunk.topLevelLength, length);
+			assert.equal(chunk.subChunks.length, policy.sequenceChunkSplitThreshold);
+			assertChunkCursorEquals(chunk, fieldData);
+		});
+	});
+
+	describe("combineChunks", () => {
+		it("empty array", () => {
+			const chunk = combineChunks([]);
+			assert(chunk instanceof SequenceChunk);
+			assert.equal(chunk.topLevelLength, 0);
+			assert.equal(chunk.subChunks.length, 0);
+		});
+
+		it("single chunk", () => {
+			const basicChunk = new BasicChunk(brand(numberSchema.identifier), new Map(), 42);
+			const result = combineChunks([basicChunk]);
+			assert.equal(result, basicChunk);
+		});
+
+		it("multiple chunks", () => {
+			const chunk1 = new BasicChunk(brand(numberSchema.identifier), new Map(), 1);
+			const chunk2 = new BasicChunk(brand(numberSchema.identifier), new Map(), 2);
+			const chunk3 = new BasicChunk(brand(numberSchema.identifier), new Map(), 3);
+
+			const result = combineChunks([chunk1, chunk2, chunk3]);
+			assert(result instanceof SequenceChunk);
+			assert.equal(result.topLevelLength, 3);
+			assert.equal(result.subChunks.length, 3);
+			assert.equal(result.subChunks[0], chunk1);
+			assert.equal(result.subChunks[1], chunk2);
+			assert.equal(result.subChunks[2], chunk3);
+		});
+
+		it("mixed chunks", () => {
+			const basicChunk = new BasicChunk(brand(numberSchema.identifier), new Map(), 1);
+			const sequenceChunk = new SequenceChunk([
+				new BasicChunk(brand(numberSchema.identifier), new Map(), 2),
+				new BasicChunk(brand(numberSchema.identifier), new Map(), 3),
+			]);
+
+			const result = combineChunks([basicChunk, sequenceChunk]);
+			assert(result instanceof SequenceChunk);
+			assert.equal(result.topLevelLength, 3);
+			assert.equal(result.subChunks.length, 2);
+			assert.equal(result.subChunks[0], basicChunk);
+			assert.equal(result.subChunks[1], sequenceChunk);
 		});
 	});
 
