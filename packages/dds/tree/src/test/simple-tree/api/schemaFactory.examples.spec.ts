@@ -10,13 +10,13 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/in
 
 import {
 	type ITree,
+	SchemaFactoryAlpha,
 	treeNodeApi as Tree,
 	TreeViewConfiguration,
 	type TreeView,
 	customizeSchemaTyping,
 	type GetTypes,
 	type Customizer,
-	SchemaFactoryAlpha,
 } from "../../../simple-tree/index.js";
 import { DefaultTestSharedTreeKind, getView } from "../../utils.js";
 import {

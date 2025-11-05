@@ -165,7 +165,6 @@ export {
 	type TransactionResultSuccess,
 	type TransactionResultFailed,
 	rollback,
-	Component,
 	generateSchemaFromSimpleSchema,
 	replaceConciseTreeHandles,
 	replaceHandles,

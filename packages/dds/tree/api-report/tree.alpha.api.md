@@ -169,13 +169,6 @@ export interface CommitMetadata {
 // @alpha
 export function comparePersistedSchema(persisted: JsonCompatible, view: ImplicitFieldSchema, options: ICodecOptions): Omit<SchemaCompatibilityStatus, "canInitialize">;
 
-// @alpha
-export namespace Component {
-    export type ComponentSchemaCollection<TConfig, TSchema> = (lazyConfiguration: () => TConfig) => LazyArray<TSchema>;
-    export function composeComponentSchema<TConfig, TItem>(allComponents: readonly ComponentSchemaCollection<TConfig, TItem>[], lazyConfiguration: () => TConfig): (() => TItem)[];
-    export type LazyArray<T> = readonly (() => T)[];
-}
-
 // @beta
 export type ConciseTree<THandle = IFluidHandle> = Exclude<TreeLeafValue, IFluidHandle> | THandle | ConciseTree<THandle>[] | {
     [key: string]: ConciseTree<THandle>;
