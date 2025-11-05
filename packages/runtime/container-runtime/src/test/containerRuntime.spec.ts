@@ -4440,6 +4440,230 @@ describe("Runtime", () => {
 
 				assert.equal(containerRuntime.isDirty, false, "Runtime should not be dirty anymore");
 			});
+
+			describe("Checkpoints", () => {
+				it("can create and track checkpoints", () => {
+					stubChannelCollection(containerRuntime);
+					const controls = containerRuntime.enterStagingMode();
+
+					assert.equal(controls.checkpointCount, 0, "Should start with 0 checkpoints");
+
+					// Add a message before creating checkpoint (empty checkpoints not created)
+					submitDataStoreOp(containerRuntime, "1", genTestDataStoreMessage("op-1"));
+					controls.checkpoint();
+					assert.equal(controls.checkpointCount, 1, "Should have 1 checkpoint");
+
+					submitDataStoreOp(containerRuntime, "2", genTestDataStoreMessage("op-2"));
+					controls.checkpoint();
+					assert.equal(controls.checkpointCount, 2, "Should have 2 checkpoints");
+					controls.discardChanges();
+				});
+				it("rollbackCheckpoint rolls back changes made after checkpoint", () => {
+					const channelCollectionStub = stubChannelCollection(containerRuntime);
+					const controls = containerRuntime.enterStagingMode();
+
+					// Make changes before checkpoint
+					submitDataStoreOp(
+						containerRuntime,
+						"1",
+						genTestDataStoreMessage("before-checkpoint"),
+					);
+
+					// Create checkpoint
+					controls.checkpoint();
+
+					// Make changes after checkpoint
+					submitDataStoreOp(
+						containerRuntime,
+						"2",
+						genTestDataStoreMessage("after-checkpoint-1"),
+					);
+					submitDataStoreOp(
+						containerRuntime,
+						"3",
+						genTestDataStoreMessage("after-checkpoint-2"),
+					);
+
+					// Discard checkpoint - should only rollback ops 2 and 3
+					controls.rollbackCheckpoint();
+
+					// Should have rolled back ops 2 and 3 in LIFO order
+					const rollbackCalls = channelCollectionStub.rollbackDataStoreOp.getCalls();
+					assert.equal(rollbackCalls.length, 2, "Should rollback 2 ops");
+					assert.equal(rollbackCalls[0].args[0].address, "3", "Should rollback op 3 first");
+					assert.equal(rollbackCalls[1].args[0].address, "2", "Should rollback op 2 second");
+
+					// Commit should only submit op 1
+					controls.commitChanges();
+					assert.equal(submittedOps.length, 1, "Should only submit op 1");
+				});
+
+				it("rollbackCheckpoint works with flushed messages", () => {
+					const channelCollectionStub = stubChannelCollection(containerRuntime);
+					const controls = containerRuntime.enterStagingMode();
+
+					// Add an initial message and create checkpoint
+					submitDataStoreOp(containerRuntime, "0", genTestDataStoreMessage("op-0"));
+					controls.checkpoint();
+
+					// Make more changes and flush to PSM
+					submitDataStoreOp(containerRuntime, "1", genTestDataStoreMessage("op-1"));
+					containerRuntime.flush(); // Move to PSM
+
+					submitDataStoreOp(containerRuntime, "2", genTestDataStoreMessage("op-2"));
+					// Don't flush - op 2 stays in outbox
+
+					// Discard checkpoint - should rollback both ops 1 and 2 (everything after the checkpoint)
+					controls.rollbackCheckpoint();
+
+					const rollbackCalls = channelCollectionStub.rollbackDataStoreOp.getCalls();
+					assert.equal(rollbackCalls.length, 2, "Should rollback both ops");
+
+					controls.discardChanges();
+				});
+				it("multiple checkpoints work correctly (nested)", () => {
+					const channelCollectionStub = stubChannelCollection(containerRuntime);
+					const controls = containerRuntime.enterStagingMode();
+
+					submitDataStoreOp(containerRuntime, "1", genTestDataStoreMessage("op-1"));
+					controls.checkpoint(); // Checkpoint 1
+
+					submitDataStoreOp(containerRuntime, "2", genTestDataStoreMessage("op-2"));
+					controls.checkpoint(); // Checkpoint 2
+
+					submitDataStoreOp(containerRuntime, "3", genTestDataStoreMessage("op-3"));
+					controls.checkpoint(); // Checkpoint 3
+
+					submitDataStoreOp(containerRuntime, "4", genTestDataStoreMessage("op-4"));
+
+					// Discard checkpoint 3 - should only rollback op 4
+					controls.rollbackCheckpoint();
+					assert.equal(
+						channelCollectionStub.rollbackDataStoreOp.getCalls().length,
+						1,
+						"Should rollback 1 op",
+					);
+
+					// Discard checkpoint 2 - should rollback op 3
+					controls.rollbackCheckpoint();
+					assert.equal(
+						channelCollectionStub.rollbackDataStoreOp.getCalls().length,
+						2,
+						"Should rollback 2 ops total",
+					);
+
+					// Commit should have ops 1 and 2
+					controls.commitChanges();
+					assert.equal(submittedOps.length, 2, "Should submit 2 ops");
+				});
+
+				it("discarding checkpoint with no new changes is safe", () => {
+					stubChannelCollection(containerRuntime);
+					const controls = containerRuntime.enterStagingMode();
+					submitDataStoreOp(containerRuntime, "1", genTestDataStoreMessage("op-1"));
+					controls.checkpoint();
+
+					// No new ops added
+
+					// Should not throw
+					assert.doesNotThrow(() => controls.rollbackCheckpoint());
+
+					controls.commitChanges();
+					assert.equal(submittedOps.length, 1, "Should submit the op before checkpoint");
+				});
+
+				it("cannot discard checkpoint when none exist", () => {
+					const controls = containerRuntime.enterStagingMode();
+
+					// Should not throw
+					assert.doesNotThrow(
+						() => controls.rollbackCheckpoint(),
+						"Should not throw when no checkpoint exists",
+					);
+
+					controls.discardChanges();
+				});
+
+				it("does not create empty checkpoints", () => {
+					stubChannelCollection(containerRuntime);
+					const controls = containerRuntime.enterStagingMode();
+
+					// Create checkpoint without any messages - should not create a checkpoint
+					controls.checkpoint();
+					assert.equal(controls.checkpointCount, 0, "Should not create empty checkpoint");
+
+					// Add a message and checkpoint - should create a checkpoint
+					submitDataStoreOp(containerRuntime, "1", genTestDataStoreMessage("op-1"));
+					controls.checkpoint();
+					assert.equal(controls.checkpointCount, 1, "Should create checkpoint with message");
+
+					controls.discardChanges();
+				});
+				it("checkpoint count decreases after rollbackCheckpoint", () => {
+					stubChannelCollection(containerRuntime);
+					const controls = containerRuntime.enterStagingMode();
+					// Create checkpoints with actual messages so they're not empty
+					submitDataStoreOp(containerRuntime, "1", genTestDataStoreMessage("op-1"));
+					controls.checkpoint();
+					submitDataStoreOp(containerRuntime, "2", genTestDataStoreMessage("op-2"));
+					controls.checkpoint();
+					assert.equal(controls.checkpointCount, 2, "Should have 2 checkpoints");
+
+					controls.rollbackCheckpoint();
+					assert.equal(controls.checkpointCount, 1, "Should have 1 checkpoint after discard");
+
+					controls.rollbackCheckpoint();
+					assert.equal(
+						controls.checkpointCount,
+						0,
+						"Should have 0 checkpoints after second discard",
+					);
+
+					controls.discardChanges();
+				});
+				it("does not create duplicate checkpoints when no changes made", () => {
+					stubChannelCollection(containerRuntime);
+					const controls = containerRuntime.enterStagingMode();
+
+					// Add a message and create first checkpoint
+					submitDataStoreOp(containerRuntime, "1", genTestDataStoreMessage("op-1"));
+					controls.checkpoint();
+					assert.equal(controls.checkpointCount, 1, "Should have 1 checkpoint");
+
+					// Try to create another checkpoint without adding new messages
+					controls.checkpoint();
+					assert.equal(
+						controls.checkpointCount,
+						1,
+						"Should still have 1 checkpoint, not create duplicate",
+					);
+
+					// Add another message and checkpoint - should create a new checkpoint
+					submitDataStoreOp(containerRuntime, "2", genTestDataStoreMessage("op-2"));
+					controls.checkpoint();
+					assert.equal(controls.checkpointCount, 2, "Should have 2 checkpoints now");
+
+					controls.discardChanges();
+				});
+				it("checkpoint flushes outbox", () => {
+					stubChannelCollection(containerRuntime);
+					const controls = containerRuntime.enterStagingMode();
+
+					submitDataStoreOp(containerRuntime, "1", genTestDataStoreMessage("op-1"));
+
+					// Before checkpoint, op is in outbox
+					assert.equal(submittedOps.length, 0, "Op should not be submitted yet");
+
+					controls.checkpoint();
+
+					// After checkpoint, op should be flushed to PSM (but not submitted to service)
+					// We can verify this indirectly - the PSM message count should be non-zero
+					assert.equal(submittedOps.length, 0, "Op still shouldn't be submitted to service");
+
+					controls.commitChanges();
+					assert.equal(submittedOps.length, 1, "Op should be submitted after commit");
+				});
+			});
 		});
 	});
 });

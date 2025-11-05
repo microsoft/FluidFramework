@@ -47,6 +47,7 @@ export interface StageControlsInternal extends StageControlsAlpha {
  * Controls for managing staged changes in alpha staging mode.
  *
  * Provides methods to either commit or discard changes made while in staging mode.
+ * Additionally supports creating checkpoints within staging mode for granular rollback control.
  *
  * @legacy @alpha
  * @sealed
@@ -62,6 +63,87 @@ export interface StageControlsAlpha {
 	 * Exit staging mode and discard any changes made while in staging mode.
 	 */
 	readonly discardChanges: () => void;
+
+	/**
+	 * Creates a checkpoint at the current state within staging mode.
+	 *
+	 * Checkpoints allow you to mark specific points in your staged changes that you can
+	 * selectively rollback to using {@link StageControlsAlpha.rollbackCheckpoint | rollbackCheckpoint()}.
+	 * Checkpoints are managed as a stack (LIFO) - rolling back always affects the
+	 * most recently created checkpoint.
+	 *
+	 * @remarks
+	 * - Empty checkpoints (no messages since entering staging mode) are not created
+	 * - Duplicate checkpoints (no new messages since last checkpoint) are not created
+	 * - Checkpoints only track changes within the current staging session
+	 * - All checkpoints are discarded when exiting staging mode via
+	 * {@link StageControlsAlpha.commitChanges | commitChanges()} or
+	 * {@link StageControlsAlpha.discardChanges | discardChanges()}
+	 *
+	 * @example
+	 * ```typescript
+	 * const controls = runtime.enterStagingMode();
+	 *
+	 * // Make some changes
+	 * map.set("key1", "value1");
+	 * controls.checkpoint(); // Checkpoint 1
+	 *
+	 * // Make more changes
+	 * map.set("key2", "value2");
+	 * controls.checkpoint(); // Checkpoint 2
+	 *
+	 * // Make even more changes
+	 * map.set("key3", "value3");
+	 *
+	 * // Rollback to checkpoint 2 (discards key3)
+	 * controls.rollbackCheckpoint();
+	 *
+	 * // Rollback to checkpoint 1 (discards key2)
+	 * controls.rollbackCheckpoint();
+	 *
+	 * // Commit key1 to the service
+	 * controls.commitChanges();
+	 * ```
+	 */
+	readonly checkpoint: () => void;
+
+	/**
+	 * The number of active checkpoints in the checkpoint stack.
+	 *
+	 * @remarks
+	 * Returns 0 when no checkpoints have been created or all have been rolled back.
+	 */
+	readonly checkpointCount: number;
+
+	/**
+	 * Rolls back all changes made since the most recent checkpoint and removes that checkpoint.
+	 *
+	 * This method operates on a stack (LIFO) - it always rolls back to the most recently
+	 * created checkpoint. The checkpoint is removed from the stack after rollback.
+	 *
+	 * @remarks
+	 * - If no checkpoints exist, this method does nothing (no-op)
+	 * - Changes are rolled back in reverse order (LIFO)
+	 * - The container remains in staging mode after rollback
+	 * - Only changes made after the checkpoint are discarded; changes before the checkpoint remain
+	 *
+	 * @example
+	 * ```typescript
+	 * const controls = runtime.enterStagingMode();
+	 *
+	 * map.set("a", "1");
+	 * controls.checkpoint();
+	 *
+	 * map.set("b", "2");
+	 * map.set("c", "3");
+	 *
+	 * // Rollback sets for "b" and "c", keeps "a"
+	 * controls.rollbackCheckpoint();
+	 *
+	 * controls.commitChanges(); // Only commits "a"
+	 * ```
+	 */
+	readonly rollbackCheckpoint: () => void;
 }
 
 /**

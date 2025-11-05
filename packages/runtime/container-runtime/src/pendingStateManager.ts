@@ -922,6 +922,32 @@ export class PendingStateManager implements IDisposable {
 			0xb89 /* Shouldn't be any more staged messages */,
 		);
 	}
+
+	/**
+	 * Pops a specific number of staged messages from the back, invoking the callback on each in LIFO order.
+	 * Used for checkpoint rollback where we only want to rollback messages added since the checkpoint.
+	 */
+	public popStagedMessagesUpToCount(
+		count: number,
+		callback: (
+			stagedMessage: IPendingMessage & { runtimeOp: LocalContainerRuntimeMessage },
+		) => void,
+	): void {
+		let popped = 0;
+		while (!this.pendingMessages.isEmpty() && popped < count) {
+			const stagedMessage = this.pendingMessages.peekBack();
+			if (stagedMessage?.batchInfo.staged === true) {
+				this.pendingMessages.pop();
+				popped++;
+
+				if (hasTypicalRuntimeOp(stagedMessage)) {
+					callback(stagedMessage);
+				}
+			} else {
+				break; // no more staged messages
+			}
+		}
+	}
 }
 
 /**
