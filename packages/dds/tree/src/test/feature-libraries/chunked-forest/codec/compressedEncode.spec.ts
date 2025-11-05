@@ -25,13 +25,13 @@ import { FormatValidatorBasic } from "../../../../external-utilities/index.js";
 import {
 	decode,
 	readValue,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
 import {
 	type BufferFormat,
 	IdentifierToken,
 	updateShapesAndIdentifiersEncoding,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
 import {
 	EncoderContext,
@@ -49,7 +49,7 @@ import {
 	compressedEncode,
 	encodeValue,
 	incrementalFieldEncoder,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";
 import {
 	type EncodedChunkShape,
@@ -57,17 +57,17 @@ import {
 	type EncodedValueShape,
 	validVersions,
 	FieldBatchFormatVersion,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/format.js";
 import type {
 	ChunkReferenceId,
 	IncrementalDecoder,
 	IncrementalEncoder,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/index.js";
 import {
 	NodeShapeBasedEncoder,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/nodeEncoder.js";
 import type {
 	FieldBatch,

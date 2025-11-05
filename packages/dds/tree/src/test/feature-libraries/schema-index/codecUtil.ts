@@ -4,7 +4,7 @@
  */
 
 import type { SchemaFormatVersion } from "../../../core/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { makeSchemaCodecs } from "../../../feature-libraries/schema-index/index.js";
 import { ajvValidator } from "../../codec/index.js";
 

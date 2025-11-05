@@ -14,14 +14,14 @@ import {
 } from "@fluidframework/container-runtime/internal";
 import type {
 	IContainerRuntime,
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	IContainerRuntimeWithResolveHandle_Deprecated,
 } from "@fluidframework/container-runtime-definitions/internal";
 import type { FluidObject, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import {
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	type RuntimeRequestHandler,
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler/internal";
 import type {
@@ -109,7 +109,7 @@ export class ContainerRuntimeFactoryWithDefaultDataStore
 	 */
 	private readonly runtimeOptions?: IContainerRuntimeOptions;
 
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	private readonly requestHandlers: readonly RuntimeRequestHandler[];
 
 	/**
@@ -132,7 +132,7 @@ export class ContainerRuntimeFactoryWithDefaultDataStore
 			const parser = RequestParser.create(request);
 			if (parser.pathParts.length === 0) {
 				// This cast is safe as loadContainerRuntime is called in the base class
-				// eslint-disable-next-line import/no-deprecated
+				// eslint-disable-next-line import-x/no-deprecated
 				return (runtime as IContainerRuntimeWithResolveHandle_Deprecated).resolveHandle({
 					url: `/${defaultDataStoreId}${parser.query}`,
 					headers: request.headers,
@@ -169,7 +169,7 @@ export class ContainerRuntimeFactoryWithDefaultDataStore
 			runtimeOptions: this.runtimeOptions,
 			registryEntries: this.registryEntries,
 			containerScope: context.scope,
-			// eslint-disable-next-line import/no-deprecated
+			// eslint-disable-next-line import-x/no-deprecated
 			requestHandler: buildRuntimeRequestHandler(...this.requestHandlers),
 			provideEntryPoint: this.provideEntryPoint,
 			minVersionForCollab: this.minVersionForCollab,

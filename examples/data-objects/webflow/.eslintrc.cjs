@@ -18,7 +18,7 @@ module.exports = {
 		"@typescript-eslint/no-use-before-define": "off",
 		"@typescript-eslint/prefer-nullish-coalescing": "off", // requires strictNullChecks
 		"@typescript-eslint/strict-boolean-expressions": "off",
-		"import/no-internal-modules": [
+		"import-x/no-internal-modules": [
 			"error",
 			{
 				// package hasn't converted to barrel files (which may not be a bad thing)
@@ -40,7 +40,7 @@ module.exports = {
 		{
 			files: ["*.spec.ts", "src/test/**"],
 			rules: {
-				"import/no-internal-modules": [
+				"import-x/no-internal-modules": [
 					"error",
 					{ allow: importInternalModulesAllowedForTest },
 				],
