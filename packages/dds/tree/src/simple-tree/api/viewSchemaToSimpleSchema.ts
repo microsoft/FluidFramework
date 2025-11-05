@@ -146,7 +146,9 @@ function copySimpleObjectSchema(schema: SimpleObjectNodeSchema): SimpleObjectNod
 
 /**
  * Creates a copy of a SimpleTreeSchema without metadata fields. This is useful for comparing deserialized view schemas with in-memory schemas.
- * metadata and persistedMetadata are not relevant for schema compatibility checks and are not serialized by the Simple Schema serializer (TODO: link).
+ * metadata and persistedMetadata are not relevant for schema compatibility checks and are not serialized by the Simple Schema serializer.
+ * @see {@link simpleSchemaSerializer.ts} for the serialization logic.
+ *
  * @param schema - The SimpleTreeSchema to remove fields from.
  * @param fieldsToRemove - An object specifying which fields to remove.
  * @returns A new SimpleTreeSchema without the specified fields.

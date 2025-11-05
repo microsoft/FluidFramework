@@ -133,7 +133,7 @@ function serializeLeafNode(schema: SimpleLeafNodeSchema): JsonCompatibleObject {
 }
 
 /**
- * Converts a container node schema to a serializable object.
+ * Converts a container node schema (a simple schema that is a Map, Array, or Record) to a serializable object.
  * @param schema - The container node schema to convert.
  * @returns A serializable representation of the container node schema. Includes the `kind` for disambiguation between different
  * container kinds.
@@ -248,6 +248,7 @@ function deserializeContainerNode(
 		simpleAllowedTypes: deserializeSimpleAllowedTypes(
 			serializedContainerSchema.simpleAllowedTypes as JsonCompatibleObject,
 		),
+		// We cannot serialize persistedMetadata or metadata, so we explicitly set them to empty values.
 		persistedMetadata: undefined,
 		metadata: {},
 	};
@@ -264,6 +265,7 @@ function deserializeLeafNode(
 	return {
 		kind: NodeKind.Leaf,
 		leafKind: (serializedLeafSchema.leafKind ?? fail("Missing leafKind")) as ValueSchema,
+		// We cannot serialize persistedMetadata or metadata, so we explicitly set them to empty values.
 		persistedMetadata: undefined,
 		metadata: {},
 	};
@@ -273,15 +275,24 @@ function deserializeLeafNode(
  * Deserializes a object node schema from a JSON-compatible object.
  * @param serializedObjectSchema - The serialized object node schema.
  * @returns The deserialized object node schema.
+ * @throws Will throw a usage error if the serialized object schema is not in the expected format.
  */
 function deserializeObjectNode(
 	serializedObjectSchema: JsonCompatibleObject,
 ): SimpleObjectNodeSchema {
+	if (serializedObjectSchema.fields === undefined) {
+		throw new UsageError("Expected fields for object node schema");
+	}
+
 	return {
 		kind: NodeKind.Object,
 		fields: deserializeObjectFields(serializedObjectSchema.fields ?? fail("Missing fields")),
-		allowUnknownOptionalFields: (serializedObjectSchema.allowUnknownOptionalFields ??
-			fail("Missing allowUnknownOptionalFields")) as boolean,
+		// It is possible for allowUnknownOptionalFields to be undefined. This happens when serializing a Simple Schema derived
+		// from a stored schema.
+		allowUnknownOptionalFields: serializedObjectSchema.allowUnknownOptionalFields as
+			| boolean
+			| undefined,
+		// We cannot serialize persistedMetadata or metadata, so we explicitly set them to empty values.
 		persistedMetadata: undefined,
 		metadata: {},
 	};
@@ -337,6 +348,7 @@ function deserializeSimpleFieldSchema(
 		simpleAllowedTypes: deserializeSimpleAllowedTypes(
 			serializedField.simpleAllowedTypes as JsonCompatibleObject,
 		),
+		// We cannot serialize persistedMetadata or metadata, so we explicitly set them to empty values.
 		persistedMetadata: undefined,
 		metadata: {},
 	};
