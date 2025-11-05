@@ -28,13 +28,13 @@ import {
 	createFieldSchema,
 	FieldKind,
 	getDefaultProvider,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/fieldSchema.js";
 import {
 	getPossibleTypes,
 	unhydratedFlexTreeFromInsertable,
 	type InsertableContent,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/unhydratedFlexTreeFromInsertable.js";
 import { brand } from "../../util/index.js";
 import {
@@ -42,11 +42,11 @@ import {
 	type FlexTreeHydratedContextMinimal,
 } from "../../feature-libraries/index.js";
 import { validateUsageError } from "../utils.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { contentSchemaSymbol, UnhydratedFlexTreeNode } from "../../simple-tree/core/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { getUnhydratedContext } from "../../simple-tree/createContext.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { prepareContentForHydration } from "../../simple-tree/prepareForInsertion.js";
 import { hydrate } from "./utils.js";
 

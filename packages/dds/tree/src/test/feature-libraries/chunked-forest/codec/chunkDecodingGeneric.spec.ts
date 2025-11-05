@@ -8,24 +8,24 @@ import { strict as assert, fail } from "node:assert";
 import { type Static, Type } from "@sinclair/typebox";
 
 import { DiscriminatedUnionDispatcher, unionOptions } from "../../../../codec/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { ChunkedCursor } from "../../../../core/index.js";
 import {
 	type ChunkDecoder,
 	type StreamCursor,
 	getChecked,
 	readStreamNumber,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities.js";
 import {
 	DecoderContext,
 	decode,
 	readStreamIdentifier,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkDecodingGeneric.js";
 import {
 	EncodedFieldBatchGeneric,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/formatGeneric.js";
 import type { TreeChunk } from "../../../../feature-libraries/index.js";
 import { ReferenceCountedBase } from "../../../../util/index.js";
