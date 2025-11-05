@@ -445,10 +445,10 @@ stages:
                 elif [[ "${{ parameters.odspTenantType }}" == "prod" ]]; then
                   export login__odsp__test__tenants=$(echo "$SETUP_OUTPUT" | jq -c '.userPass')
                 fi
+                echo "$SETUP_OUTPUT"
+                echo "Leased tenant with reservation ID: $tenant__reservationId"
+                echo "ODSP tenant credentials: $login__odsp__test__tenants"
               fi
-
-              echo "Leased tenant with reservation ID: $tenant__reservationId"
-              echo "ODSP tenant credentials: $login__odsp__test__tenants"
 
               pnpm run ${{ parameters.testCommand }} -- ${{ variant.flags }}
 
