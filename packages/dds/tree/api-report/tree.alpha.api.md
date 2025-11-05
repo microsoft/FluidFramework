@@ -173,6 +173,20 @@ export const contentSchemaSymbol: unique symbol;
 export function createIdentifierIndex<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): IdentifierIndex;
 
 // @alpha
+export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSchema>(options?: ForestOptions & (({
+    idCompressor?: IIdCompressor | undefined;
+} & {
+    content?: undefined;
+}) | (ICodecOptions & {
+    content: ViewContent;
+} & {
+    idCompressor?: undefined;
+}))): ViewableTree & Pick<ITreeAlpha, "exportVerbose" | "exportSimpleSchema">;
+
+// @beta
+export function createIndependentTreeBeta<const TSchema extends ImplicitFieldSchema>(options?: ForestOptions): ViewableTree;
+
+// @alpha
 export function createSimpleTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey extends TreeIndexKey, TValue>(view: TreeView<TFieldSchema>, indexer: (schema: TreeNodeSchema) => string | undefined, getValue: (nodes: TreeIndexNodes<TreeNode>) => TValue, isKeyValid: (key: TreeIndexKey) => key is TKey): SimpleTreeIndex<TKey, TValue>;
 
 // @alpha
@@ -309,6 +323,7 @@ type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
 // @alpha
 export const FluidClientVersion: {
     readonly v2_0: "2.0.0";
+    readonly v2_43: "2.43.0";
     readonly v2_52: "2.52.0";
 };
 
@@ -990,7 +1005,6 @@ export function serializeSimpleSchema(simpleSchema: SimpleTreeSchema): JsonCompa
 
 // @alpha @input
 export interface SharedTreeFormatOptions {
-    formatVersion: SharedTreeFormatVersion[keyof SharedTreeFormatVersion];
     treeEncodeType: TreeCompressionStrategy;
 }
 
@@ -1007,7 +1021,9 @@ export const SharedTreeFormatVersion: {
 export type SharedTreeFormatVersion = typeof SharedTreeFormatVersion;
 
 // @alpha @input
-export type SharedTreeOptions = Partial<CodecWriteOptions> & Partial<SharedTreeFormatOptions> & SharedTreeOptionsBeta;
+export interface SharedTreeOptions extends Partial<CodecWriteOptions>, Partial<SharedTreeFormatOptions>, SharedTreeOptionsBeta {
+    readonly enableSharedBranches?: boolean;
+}
 
 // @beta @input
 export type SharedTreeOptionsBeta = ForestOptions;

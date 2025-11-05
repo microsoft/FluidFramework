@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/devtools-browser-extension",
-	"version": "2.71.0",
+	"version": "2.72.0",
 	"private": true,
 	"description": "A browser extension for visualizing Fluid Framework stats and operations",
 	"homepage": "https://fluidframework.com",
@@ -24,8 +24,8 @@
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"clean": "rimraf --glob coverage dist lib nyc \"**/*.tsbuildinfo\" \"**/*.build.log\"",
-		"eslint": "eslint src",
-		"eslint:fix": "eslint src --fix",
+		"eslint": "eslint --quiet src",
+		"eslint:fix": "eslint --quiet src --fix",
 		"format": "npm run format:biome",
 		"format-and-build": "npm run format && npm run build",
 		"format-and-compile": "npm run format && npm run build:compile",

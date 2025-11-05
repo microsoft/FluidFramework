@@ -33,7 +33,7 @@ import { DecoderContext } from "../../../../feature-libraries/chunked-forest/cod
 import {
 	type EncodedChunkShape,
 	SpecialField,
-	version,
+	FieldBatchFormatVersion,
 	type EncodedFieldBatch,
 	type EncodedNodeShape,
 	// eslint-disable-next-line import/no-internal-modules
@@ -95,7 +95,7 @@ describe("chunkDecoding", () => {
 		it("minimal", () => {
 			const result = decode(
 				{
-					version,
+					version: FieldBatchFormatVersion.v1,
 					identifiers: [],
 					shapes: [{ a: 0 }],
 					data: [[0, []]],
@@ -444,7 +444,7 @@ describe("chunkDecoding", () => {
 				fields: [],
 			};
 			return {
-				version,
+				version: FieldBatchFormatVersion.v1,
 				identifiers: [],
 				shapes: [
 					{
@@ -458,7 +458,7 @@ describe("chunkDecoding", () => {
 		it("empty", () => {
 			const referenceId = brand<ChunkReferenceId>(0);
 			const emptyBatch: EncodedFieldBatch = {
-				version,
+				version: FieldBatchFormatVersion.v1,
 				identifiers: [],
 				shapes: [{ a: 0 }],
 				data: [[0, []]],
@@ -506,7 +506,7 @@ describe("chunkDecoding", () => {
 			const nodeIdentifier: TreeNodeSchemaIdentifier = brand("identifier");
 			// The encoded incremental chunk contains a nested array with another incremental chunk.
 			const batch1: EncodedFieldBatch = {
-				version,
+				version: FieldBatchFormatVersion.v1,
 				identifiers: [],
 				shapes: [
 					{

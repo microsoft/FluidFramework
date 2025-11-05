@@ -442,7 +442,10 @@ export class ConsensusOrderedCollection<T = any>
 	 * @sealed
 	 */
 	protected rollback(content: unknown, localOpMetadata: unknown): void {
-		assert(typeof localOpMetadata === "function", "localOpMetadata should be a function");
+		assert(
+			typeof localOpMetadata === "function",
+			0xc93 /* localOpMetadata should be a function */,
+		);
 		// A resolve function is passed as the localOpMetadata on this.submitLocalMessage().
 		// On rollback we resolve with undefined and the promises will handle it appropriately.
 		const resolve = localOpMetadata as PendingResolve<T>;

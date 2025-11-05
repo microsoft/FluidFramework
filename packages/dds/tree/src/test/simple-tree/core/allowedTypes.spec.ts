@@ -17,9 +17,14 @@ import {
 	type InsertableTreeFieldFromImplicitField,
 	type InsertableTypedNode,
 	type LazyItem,
+	type NodeKind,
+	type ObjectFromSchemaRecord,
 	type TreeLeafValue,
 	type TreeNode,
 	type TreeNodeSchema,
+	type TreeNodeSchemaClass,
+	type TreeNodeSchemaCore,
+	type TreeNodeSchemaNonClass,
 } from "../../../simple-tree/index.js";
 import type {
 	areSafelyAssignable,
@@ -27,6 +32,7 @@ import type {
 	requireAssignableTo,
 	requireFalse,
 	requireTrue,
+	UnionToIntersection,
 } from "../../../util/index.js";
 
 import {
@@ -481,6 +487,10 @@ describe("allowedTypes", () => {
 		});
 	});
 
+	/**
+	 * Insertable types behave contravariantly to their schema, requiring special handling of unions.
+	 * See {@link Input} for documentation and details.
+	 */
 	describe("insertable", () => {
 		it("unsound union properties", () => {
 			const schemaFactory = new SchemaFactory("demo");
@@ -566,6 +576,233 @@ describe("allowedTypes", () => {
 
 			type X6 = InsertableObjectFromSchemaRecord<typeof Canvas.info>;
 			type X7 = InsertableTreeFieldFromImplicitField<typeof Canvas.info.stuff>;
+		});
+
+		it("InsertableTreeNodeFromAllowedTypes with arrays of Unions", () => {
+			const sf = new SchemaFactory("test");
+
+			class Text1 extends sf.object("TextItem", { text: sf.string }) {}
+			class Text2 extends sf.object("TextItem2", { text: sf.string }) {}
+
+			type Text1Or2 = InsertableTreeNodeFromAllowedTypes<(typeof Text1 | typeof Text2)[]>;
+			// If the exact schema is not known, we cannot guarantee that the input matches either schema,
+			// and only allow input valid in both, which is `never`:
+			allowUnused<requireAssignableTo<Text1Or2, never>>();
+
+			const itemFields = { data: sf.number };
+			type Item = TreeNode & ObjectFromSchemaRecord<typeof itemFields>;
+			type ItemSchema = TreeNodeSchema<string, NodeKind.Object, Item>;
+
+			// ItemSchema is rather under-specified, so it's unclear if it should allow insertion at all (it's logically a union of many possible schema, though not expressed as a union directly).
+			// Currently it allows insertion of `Item`:
+			type ItemInsertable = InsertableTreeNodeFromAllowedTypes<[ItemSchema]>;
+			allowUnused<requireTrue<areSafelyAssignable<ItemInsertable, Item>>>();
+
+			// Item or Text1 is even more under-specified, and this time as an explicit union.
+			// This case is expected to resolve to never, but currently does not!
+			type ItemOrText = InsertableTreeNodeFromAllowedTypes<(ItemSchema | typeof Text1)[]>;
+			// TODO: Current unexpected behavior: Item is allowed. See SchemaUnionToIntersection test below for more details.
+			allowUnused<requireTrue<areSafelyAssignable<ItemOrText, Item>>>();
+			// @ts-expect-error Expected, but not working:
+			allowUnused<requireAssignableTo<ItemOrText, never>>();
+		});
+
+		it("InsertableTypedNode with Unions", () => {
+			const sf = new SchemaFactory("test");
+
+			class Text1 extends sf.object("TextItem", { text: sf.string }) {}
+			class Text2 extends sf.object("TextItem2", { text: sf.string }) {}
+
+			type Text1Or2 = InsertableTypedNode<typeof Text1 | typeof Text2>;
+			// If the exact schema is not known, we cannot guarantee that the input matches either schema,
+			// and only allow input valid in both, which is `never`:
+			allowUnused<requireAssignableTo<Text1Or2, never>>();
+
+			const itemFields = { data: sf.number };
+			type Item = TreeNode & ObjectFromSchemaRecord<typeof itemFields>;
+			type ItemSchema = TreeNodeSchema<string, NodeKind.Object, Item>;
+
+			// ItemSchema is rather under-specified, so it's unclear if it should allow insertion at all (it's logically a union of many possible schema, though not expressed as a union directly).
+			// Currently it allows insertion of `Item`:
+			type ItemInsertable = InsertableTypedNode<ItemSchema>;
+			allowUnused<requireTrue<areSafelyAssignable<ItemInsertable, Item>>>();
+
+			type ItemOrText = InsertableTypedNode<ItemSchema | typeof Text1>;
+			// TODO: Current unexpected behavior: Item is allowed. See SchemaUnionToIntersection test below for more details.
+			allowUnused<requireTrue<areSafelyAssignable<ItemOrText, Item>>>();
+			// @ts-expect-error Expected, but not working:
+			allowUnused<requireAssignableTo<ItemOrText, never>>();
+
+			type TextSchemaIntersection = UnionToIntersection<typeof Text1 | typeof Text2>;
+			allowUnused<requireAssignableTo<TextSchemaIntersection, never>>();
+
+			type ItemAndTextSchema = UnionToIntersection<ItemSchema | typeof Text1>;
+			// @ts-expect-error Expected, but not working:
+			allowUnused<requireAssignableTo<ItemAndTextSchema, never>>();
+
+			// ItemSchema is logically a union of many possible schema, though not expressed as a union directly,
+			// and thus currently this resolves to `ItemSchema` itself:
+			type ItemSchemaIntersection = UnionToIntersection<ItemSchema>;
+			allowUnused<requireAssignableTo<ItemSchemaIntersection, ItemSchema>>();
+		});
+
+		// TODO: UnionToIntersection doesn't behave great with schema for the purpose of producing insertable types.
+		// Consider replacing its use in such contexts with something like SchemaUnionToIntersection defined here.
+		// Doing this change could break some code, so it might be best to do it after adding custom schema derived types so that impacted users have a supported migration path.
+		// See https://github.com/microsoft/FluidFramework/pull/23084 for custom schema derived types.
+		it("SchemaUnionToIntersection", () => {
+			/**
+			 * A version of UnionToIntersection that works better for generating {@link Input} types from schema.
+			 * @remarks
+			 * This still has a lot of unsolved issues and open questions, but generally seems like an improvement
+			 * (or at least stricter and more consistent).
+			 */
+			type SchemaUnionToIntersection<T> = UnionToIntersection<SchemaToPair<T>> extends [
+				infer s,
+				infer X,
+			]
+				? s
+				: never;
+
+			type SchemaToPair<T> = T extends TreeNodeSchema<string, NodeKind, infer Node>
+				? [T, Node]
+				: [never, never];
+
+			const sf = new SchemaFactory("test");
+
+			class Text1 extends sf.object("TextItem", { text: sf.string }) {}
+			class Text2 extends sf.object("TextItem2", { text: sf.string }) {}
+
+			type Text1Or2 = SchemaUnionToIntersection<typeof Text1 | typeof Text2>;
+			// If the exact schema is not known, we cannot guarantee that the input matches either schema,
+			// and only allow input valid in both, which is `never`:
+			allowUnused<requireAssignableTo<Text1Or2, never>>();
+
+			const itemFields = { data: sf.number };
+			type Item = TreeNode & ObjectFromSchemaRecord<typeof itemFields>;
+			type ItemSchema = TreeNodeSchema<string, NodeKind.Object, Item>;
+			type ItemSchemaClass = TreeNodeSchemaClass<string, NodeKind.Object, Item>;
+			type ItemSchemaNonClass = TreeNodeSchemaNonClass<string, NodeKind.Object, Item>;
+
+			// UnionToIntersection
+			{
+				type Text1Case = UnionToIntersection<typeof Text1>;
+				type TextUnionCase = UnionToIntersection<typeof Text1 | typeof Text2>;
+
+				type ItemSchemaClassCase = UnionToIntersection<ItemSchemaClass>;
+				type ItemSchemaNonClassCase = UnionToIntersection<ItemSchemaNonClass>;
+				type ItemSchemaCase = UnionToIntersection<ItemSchema>;
+				type ItemSchemaOrTextCase = UnionToIntersection<ItemSchema | typeof Text1>;
+				type ItemSchemaClassOrTextCase = UnionToIntersection<ItemSchemaClass | typeof Text1>;
+				type ItemSchemaNonClassOrTextCase = UnionToIntersection<
+					ItemSchemaNonClass | typeof Text1
+				>;
+
+				type TreeNodeSchemaCase = UnionToIntersection<TreeNodeSchema>;
+				type TreeNodeSchemaNonClassCase = UnionToIntersection<TreeNodeSchemaNonClass>;
+				type TreeNodeSchemaCoreCase = UnionToIntersection<
+					TreeNodeSchemaCore<string, NodeKind, boolean>
+				>;
+
+				// These work as desired
+				allowUnused<requireTrue<areSafelyAssignable<Text1Case, typeof Text1>>>();
+				allowUnused<requireAssignableTo<TextUnionCase, never>>();
+
+				// These are under-specified schema which pass through UnionToIntersection unchanged: likely undesired behavior but hard to fix cleanly.
+				allowUnused<requireTrue<areSafelyAssignable<ItemSchemaClassCase, ItemSchemaClass>>>();
+				allowUnused<
+					requireTrue<areSafelyAssignable<ItemSchemaNonClassCase, ItemSchemaNonClass>>
+				>();
+
+				// @ts-expect-error This case is a messy type: that's not the input or never: clearly undesired behavior.
+				allowUnused<requireTrue<areSafelyAssignable<ItemSchemaCase, ItemSchema>>>();
+				// @ts-expect-error This case is a messy type: should be never: clearly undesired behavior.
+				allowUnused<requireTrue<areSafelyAssignable<ItemSchemaOrTextCase, never>>>();
+				// @ts-expect-error This case is a messy type: should be never: clearly undesired behavior.
+				allowUnused<requireTrue<areSafelyAssignable<ItemSchemaClassOrTextCase, never>>>();
+				// @ts-expect-error This case is a messy type: should be never: clearly undesired behavior.
+				allowUnused<requireAssignableTo<ItemSchemaNonClassOrTextCase, never>>();
+
+				// Generic cases: likely all of these should give never when used for input type generation as they are under-specified, but none do:
+				allowUnused<
+					requireAssignableTo<TreeNodeSchemaCase, TreeNodeSchemaNonClass & TreeNodeSchemaClass>
+				>();
+				allowUnused<
+					requireTrue<areSafelyAssignable<TreeNodeSchemaNonClassCase, TreeNodeSchemaNonClass>>
+				>();
+				allowUnused<
+					requireTrue<
+						areSafelyAssignable<
+							TreeNodeSchemaCoreCase,
+							TreeNodeSchemaCore<string, NodeKind, boolean>
+						>
+					>
+				>();
+			}
+
+			// SchemaUnionToIntersection
+			{
+				type Text1Case = SchemaUnionToIntersection<typeof Text1>;
+				type TextUnionCase = SchemaUnionToIntersection<typeof Text1 | typeof Text2>;
+
+				type ItemSchemaClassCase = SchemaUnionToIntersection<ItemSchemaClass>;
+				type ItemSchemaNonClassCase = SchemaUnionToIntersection<ItemSchemaNonClass>;
+				type ItemSchemaCase = SchemaUnionToIntersection<ItemSchema>;
+				type ItemSchemaOrTextCase = SchemaUnionToIntersection<ItemSchema | typeof Text1>;
+				type ItemSchemaClassOrTextCase = SchemaUnionToIntersection<
+					ItemSchemaClass | typeof Text1
+				>;
+				type ItemSchemaNonClassOrTextCase = SchemaUnionToIntersection<
+					ItemSchemaNonClass | typeof Text1
+				>;
+
+				type TreeNodeSchemaCase = SchemaUnionToIntersection<TreeNodeSchema>;
+				type TreeNodeSchemaNonClassCase = SchemaUnionToIntersection<TreeNodeSchemaNonClass>;
+				type TreeNodeSchemaCoreCase = SchemaUnionToIntersection<
+					TreeNodeSchemaCore<string, NodeKind, boolean>
+				>;
+
+				allowUnused<requireTrue<areSafelyAssignable<Text1Case, typeof Text1>>>();
+				allowUnused<requireAssignableTo<TextUnionCase, never>>();
+
+				// It is unclear if these should be the desired behavior or not. Might be too permissive.
+				allowUnused<requireTrue<areSafelyAssignable<ItemSchemaClassCase, ItemSchemaClass>>>();
+				allowUnused<requireAssignableTo<ItemSchemaNonClassCase, ItemSchemaNonClassCase>>();
+
+				// It is unclear if this should be the desired behavior or not. Might be too restrictive? It likely should be the same as the above two.
+				allowUnused<requireAssignableTo<ItemSchemaCase, never>>();
+
+				// These being never is good.
+				allowUnused<requireAssignableTo<ItemSchemaOrTextCase, never>>();
+				allowUnused<requireAssignableTo<ItemSchemaClassOrTextCase, never>>();
+				allowUnused<requireAssignableTo<ItemSchemaNonClassOrTextCase, never>>();
+
+				// These three should likely all behave the same: they currently do not.
+				allowUnused<requireAssignableTo<TreeNodeSchemaCase, never>>();
+				allowUnused<
+					requireTrue<areSafelyAssignable<TreeNodeSchemaNonClassCase, TreeNodeSchemaNonClass>>
+				>();
+				allowUnused<requireAssignableTo<TreeNodeSchemaCoreCase, never>>();
+			}
+
+			// Use of SchemaToPair included to ease debugging.
+			{
+				type Text1Case = SchemaToPair<typeof Text1>;
+				type TextUnionCase = SchemaToPair<typeof Text1 | typeof Text2>;
+
+				type ItemSchemaClassCase = SchemaToPair<ItemSchemaClass>;
+				type ItemSchemaNonClassCase = SchemaToPair<ItemSchemaNonClass>;
+				type ItemSchemaCase = SchemaToPair<ItemSchema>;
+				type ItemSchemaOrTextCase = SchemaToPair<ItemSchema | typeof Text1>;
+				type ItemSchemaClassOrTextCase = SchemaToPair<ItemSchemaClass | typeof Text1>;
+				type ItemSchemaNonClassOrTextCase = SchemaToPair<ItemSchemaNonClass | typeof Text1>;
+
+				type TreeNodeSchemaCase = SchemaToPair<TreeNodeSchema>;
+				type TreeNodeSchemaNonClassCase = SchemaToPair<TreeNodeSchemaNonClass>;
+				type TreeNodeSchemaCoreCase = SchemaToPair<
+					TreeNodeSchemaCore<string, NodeKind, boolean>
+				>;
+			}
 		});
 	});
 
