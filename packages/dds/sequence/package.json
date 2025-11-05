@@ -169,7 +169,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.58.3",
 		"@fluidframework/container-definitions": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^8.1.0",
+		"@fluidframework/eslint-config-fluid": "workspace:^",
 		"@fluidframework/sequence-previous": "npm:@fluidframework/sequence@2.71.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.52.11",
