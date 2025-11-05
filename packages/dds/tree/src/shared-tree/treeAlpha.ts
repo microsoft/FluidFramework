@@ -290,7 +290,7 @@ export interface TreeAlpha {
 	 * @remarks
 	 * This currently does not support input containing
 	 * {@link ObjectSchemaOptions.allowUnknownOptionalFields| unknown optional fields} but does support
-	 * {@link SchemaStaticsAlpha.staged | staged} allowed types.
+	 * {@link SchemaStaticsBeta.staged | staged} allowed types.
 	 * Non-empty default values for fields are currently not supported (must be provided in the input).
 	 * The content will be validated against the schema and an error will be thrown if out of schema.
 	 */
