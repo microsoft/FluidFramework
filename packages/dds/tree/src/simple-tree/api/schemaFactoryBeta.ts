@@ -62,8 +62,7 @@ import type { RestrictiveStringRecord } from "../../util/index.js";
 
 /**
  * Stateless APIs exposed via {@link SchemaFactoryBeta} as both instance properties and as statics.
- * @remarks
- * See {@link SchemaStatics} for why this is useful.
+ * @see {@link SchemaStatics} for why this is useful.
  * @system @sealed @beta
  */
 export interface SchemaStaticsBeta {
