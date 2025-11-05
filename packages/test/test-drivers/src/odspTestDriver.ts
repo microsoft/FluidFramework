@@ -102,8 +102,8 @@ export function getOdspCredentials(
 	const creds: { username: string; password: string }[] = [];
 	const loginTenants =
 		odspEndpointName === "odsp"
-			? process.env.login__odsp__test__tenants
-			: process.env.login__odspdf__test__tenants;
+			? JSON.stringify(process.env.login__odsp__test__tenants)
+			: JSON.stringify(process.env.login__odspdf__test__tenants);
 
 	if (loginTenants !== undefined) {
 		/**
