@@ -188,18 +188,6 @@ module.exports = {
 			packages: ["**"],
 			isIgnored: true,
 		},
-
-		// Prettier is ignored while the eslint-config-fluid is in the client release group. This can be removed once
-		// eslint-config-fluid is back on its own, or we otherwise unify on a single prettier version.
-		{
-			label:
-				"Allow multiple versions of prettier while eslint-config-fluid is in the client release group",
-			dependencies: ["prettier"],
-			dependencyTypes: ["dev", "prod"],
-			packages: ["**"],
-			isIgnored: true,
-		},
-
 		// Workaround for this private internal package. Can be removed once our types wrapper around
 		// the package is no longer needed - see https://github.com/argos-ci/jest-puppeteer/issues/568.
 		{
