@@ -107,6 +107,7 @@ module.exports = {
 	ignorePatterns: [
 		// Don't lint generated packageVersion files.
 		"**/packageVersion.ts",
+		"**/layerGenerationState.ts",
 	],
 	rules: {
 		/**
