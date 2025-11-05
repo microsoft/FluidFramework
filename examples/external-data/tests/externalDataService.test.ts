@@ -13,11 +13,8 @@ import {
 	ExternalDataSource,
 	type MockWebhook,
 	initializeExternalDataService,
-	// eslint-disable-next-line import-x/no-internal-modules
 } from "../src/mock-external-data-service/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
 import { externalDataServicePort } from "../src/mock-external-data-service-interface/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
 import { type ITaskData, assertValidTaskData } from "../src/model-interface/index.js";
 
 import { closeServer, delay } from "./utilities.js";

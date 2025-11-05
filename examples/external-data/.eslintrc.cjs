@@ -31,7 +31,7 @@ module.exports = {
 				// a single exports roll-up, reaching into "src" is required.
 				"import-x/no-internal-modules": [
 					"error",
-					{ allow: importInternalModulesAllowedForTest.concat(["*/src/*/*.js"]) },
+					{ allow: importInternalModulesAllowedForTest.concat(["**/src/*/*.js"]) },
 				],
 
 				// Fine for tests to use node.js modules.
