@@ -2,6 +2,12 @@
 
 set -eu -o pipefail
 
+# DOCKER_COMPOSE_FILE should be passed as an environment variable from the pipeline
+if [ -z "${DOCKER_COMPOSE_FILE:-}" ]; then
+	echo "ERROR: DOCKER_COMPOSE_FILE environment variable is not set"
+	exit 1
+fi
+
 echo "Waiting for services to be ready..."
 
 # Wait for each service endpoint with timeout
@@ -13,7 +19,7 @@ timeout=30
 while ! curl -sf "http://localhost:3001/healthz/startup" > /dev/null 2>&1; do
 	if [ $timeout -le 0 ]; then
 		echo "ERROR: Historian service failed to become ready"
-		docker-compose -f $(Build.SourcesDirectory)/FluidFramework/server/docker-compose.yml logs historian
+		docker-compose -f "${DOCKER_COMPOSE_FILE}" logs historian
 		exit 1
 	fi
 	echo "  Still waiting... ($timeout seconds remaining)"
@@ -27,7 +33,7 @@ timeout=30
 while ! curl -sf "http://localhost:3002/healthz/ping" > /dev/null 2>&1; do
 	if [ $timeout -le 0 ]; then
 		echo "ERROR: Nexus service failed to become ready"
-		docker-compose -f $(Build.SourcesDirectory)/FluidFramework/server/docker-compose.yml logs nexus
+		docker-compose -f "${DOCKER_COMPOSE_FILE}" logs nexus
 		exit 1
 	fi
 	echo "  Still waiting... ($timeout seconds remaining)"
@@ -41,7 +47,7 @@ timeout=30
 while ! curl -sf "http://localhost:3003/healthz/startup" > /dev/null 2>&1; do
 	if [ $timeout -le 0 ]; then
 		echo "ERROR: Alfred service failed to become ready"
-		docker-compose -f $(Build.SourcesDirectory)/FluidFramework/server/docker-compose.yml logs alfred
+		docker-compose -f "${DOCKER_COMPOSE_FILE}" logs alfred
 		exit 1
 	fi
 	echo "  Still waiting... ($timeout seconds remaining)"

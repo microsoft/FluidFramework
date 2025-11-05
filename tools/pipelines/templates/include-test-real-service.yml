@@ -281,6 +281,8 @@ stages:
             inputs:
               targetType: 'filePath'
               filePath: $(Build.SourcesDirectory)/FluidFramework/scripts/wait-for-docker-services.sh
+            env:
+              DOCKER_COMPOSE_FILE: $(Build.SourcesDirectory)/FluidFramework/server/docker-compose.yml
 
         - task: Bash@3
           displayName: Install base dependencies
@@ -419,7 +421,7 @@ stages:
             timeoutInMinutes: 3
             continueOnError: true
             inputs:
-              key: '"compat-version-installs" | "$(Agent.OS)" | "${{ parameters.testCommand }}" | "${{ variant.name }}" | $(compatVersionCacheKey)'
+              key: '"compat-version-installs" | "$(Agent.OS)" | "${{ parameters.testCommand }}" | "${{ variant.name }}" | "$(compatVersionCacheKey)"'
               path: $(compatVersionInstallsPath)
 
         # Only check out tenants from the tenant pool if we are running tests against ODSP
