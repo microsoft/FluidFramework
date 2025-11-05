@@ -252,9 +252,6 @@ importers:
         specifier: ~4.2.0
         version: 4.2.0(@typescript-eslint/eslint-plugin@7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.4.5))(eslint@8.57.1)(typescript@5.4.5))(eslint@8.57.1)
     devDependencies:
-      '@fluid-tools/markdown-magic':
-        specifier: file:../../../tools/markdown-magic
-        version: link:../../../tools/markdown-magic
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -268,8 +265,8 @@ importers:
         specifier: ^1.5.1
         version: 1.5.1(mocha@10.8.2)
       prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
+        specifier: ~3.6.2
+        version: 3.6.2
       sort-json:
         specifier: ^2.0.1
         version: 2.0.1
@@ -509,8 +506,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
       prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
+        specifier: ~3.6.2
+        version: 3.6.2
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -12013,8 +12010,8 @@ importers:
         specifier: ^1.5.1
         version: 1.5.1(mocha@10.8.2)
       prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
+        specifier: ~3.6.2
+        version: 3.6.2
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -12113,8 +12110,8 @@ importers:
         specifier: ^1.5.1
         version: 1.5.1(mocha@10.8.2)
       prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
+        specifier: ~3.6.2
+        version: 3.6.2
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -12189,8 +12186,8 @@ importers:
         specifier: ^1.5.1
         version: 1.5.1(mocha@10.8.2)
       prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
+        specifier: ~3.6.2
+        version: 3.6.2
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -25678,13 +25675,13 @@ packages:
     engines: {node: '>=10.13.0'}
     hasBin: true
 
-  prettier@3.0.3:
-    resolution: {integrity: sha512-L/4pUDMxcNa8R/EthV08Zt42WBO4h1rarVtK0K+QJG0X187OLo7l699jWw0GKuwzkPQ//jMFA/8Xm6Fh3J/DAg==}
+  prettier@3.2.5:
+    resolution: {integrity: sha512-3/GWa9aOC0YeD7LUfvOG2NiDyhOWRvt1k+rcKhOuYnMY24iiCphgneUfJDyFXd6rZCAnuLBv6UeAULtrhT/F4A==}
     engines: {node: '>=14'}
     hasBin: true
 
-  prettier@3.2.5:
-    resolution: {integrity: sha512-3/GWa9aOC0YeD7LUfvOG2NiDyhOWRvt1k+rcKhOuYnMY24iiCphgneUfJDyFXd6rZCAnuLBv6UeAULtrhT/F4A==}
+  prettier@3.6.2:
+    resolution: {integrity: sha512-I7AIg5boAr5R0FFtJ6rCfD+LFsWHp81dolrFD8S79U9tb8Az2nGrJncnMSnys+bpQJfRUzqs9hnA81OAA3hCuQ==}
     engines: {node: '>=14'}
     hasBin: true
 
@@ -40979,9 +40976,9 @@ snapshots:
 
   prettier@2.8.8: {}
 
-  prettier@3.0.3: {}
-
   prettier@3.2.5: {}
+
+  prettier@3.6.2: {}
 
   pretty-error@4.0.0:
     dependencies:
