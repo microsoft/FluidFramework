@@ -125,6 +125,7 @@ module.exports = {
 				"eslint-config-prettier",
 				"eslint-import-resolver-typescript",
 				"eslint-plugin-*",
+				"eslint-config-prettier",
 				"eslint",
 				"less",
 				"prettier",
