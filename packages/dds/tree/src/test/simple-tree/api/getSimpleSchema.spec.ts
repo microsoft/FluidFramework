@@ -23,7 +23,7 @@ import { ValueSchema } from "../../../core/index.js";
 import {
 	copySimpleTreeSchemaWithoutMetadata,
 	toSimpleTreeSchema,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/viewSchemaToSimpleSchema.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 import { HasUnknownOptionalFields } from "../../testTrees.js";
@@ -45,7 +45,7 @@ const simpleNumber: SimpleLeafNodeSchema = {
 describe("getSimpleSchema", () => {
 	useSnapshotDirectory("get-simple-schema");
 
-	describe("non-copying", () => {
+	it("non-copying", () => {
 		const Schema = stringSchema;
 		const root = SchemaFactoryAlpha.optional(Schema);
 
@@ -54,14 +54,12 @@ describe("getSimpleSchema", () => {
 			definitions: new Map([[Schema.identifier, Schema]]),
 		};
 
-		it("toSimpleTreeSchema", () => {
-			const actual = toSimpleTreeSchema(root, false);
+		const actual = toSimpleTreeSchema(root, false);
 
-			assert.deepEqual(actual, expected);
+		assert.deepEqual(actual, expected);
 
-			assert.equal(actual.root, root);
-			assert.equal(actual.definitions.get(Schema.identifier), Schema);
-		});
+		assert.equal(actual.root, root);
+		assert.equal(actual.definitions.get(Schema.identifier), Schema);
 	});
 
 	describe("Field Schema", () => {

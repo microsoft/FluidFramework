@@ -62,7 +62,7 @@ export interface SimpleObjectNodeSchema<out TCustomMetadata = unknown>
 	/**
 	 * Whether the object node allows unknown optional fields.
 	 *
-	 * See {@link ObjectSchemaOptions.allowUnknownOptionalFields} for the API where this field is set as part of authoring a schema.
+	 * @see {@link ObjectSchemaOptions.allowUnknownOptionalFields} for the API where this field is set as part of authoring a schema.
 	 *
 	 * @remarks Only populated for view schemas, undefined otherwise. Relevant for compatibility checking scenarios.
 	 */

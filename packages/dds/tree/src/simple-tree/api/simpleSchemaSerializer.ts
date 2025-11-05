@@ -6,11 +6,14 @@
 import {
 	isJsonObject,
 	objectToMap,
-	transformMapValues,
 	type JsonCompatible,
 	type JsonCompatibleObject,
 } from "../../util/index.js";
-import { fail, unreachableCase } from "@fluidframework/core-utils/internal";
+import {
+	fail,
+	unreachableCase,
+	transformMapValues,
+} from "@fluidframework/core-utils/internal";
 import type {
 	SimpleAllowedTypeAttributes,
 	SimpleArrayNodeSchema,

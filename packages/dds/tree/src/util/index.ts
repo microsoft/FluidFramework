@@ -96,7 +96,6 @@ export {
 	copyPropertyIfDefined as copyProperty,
 	getOrAddInMap,
 	iterableHasSome,
-	transformMapValues,
 } from "./utils.js";
 export { ReferenceCountedBase, type ReferenceCounted } from "./referenceCounting.js";
 
