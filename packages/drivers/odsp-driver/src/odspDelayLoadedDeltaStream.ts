@@ -35,6 +35,7 @@ import {
 	type MonitoringContext,
 	normalizeError,
 } from "@fluidframework/telemetry-utils/internal";
+
 import { v4 as uuid } from "uuid";
 
 import { policyLabelsUpdatesSignalType } from "./contracts.js";

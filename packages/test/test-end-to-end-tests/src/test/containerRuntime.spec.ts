@@ -14,7 +14,7 @@ import {
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import semverGt from "semver/functions/gt.js";
 
 import { pkgVersion } from "../packageVersion.js";

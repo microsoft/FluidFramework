@@ -55,7 +55,7 @@ export interface IImportExportModel<ImportType, ExportType> {
  * A migratable model must have an observable version, which is used to determine if migration is required and to
  * identify the source and destination container codes.
  *
- * It must also support import/export, as this is the mechanism that MigrationTool and Migrator use to perform the
+ * It must also support import-x/export, as this is the mechanism that MigrationTool and Migrator use to perform the
  * migration.
  *
  * Lastly, it should provide dispose capabilities for two purposes: (1) The Migrator will spawn a temporary model

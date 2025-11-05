@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/client-utils",
-	"version": "2.71.0",
+	"version": "2.72.0",
 	"description": "Not intended for use outside the Fluid Framework.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -93,8 +93,8 @@
 		"ci:build:api-reports:node:legacy": "api-extractor run --config api-extractor/api-extractor-report-node.legacy.json",
 		"ci:build:docs": "api-extractor run --config api-extractor/api-extractor-model-browser.json",
 		"clean": "rimraf --glob _api-extractor-temp dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
-		"eslint": "eslint --format stylish src",
-		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
+		"eslint": "eslint --quiet --format stylish src",
+		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
 		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
@@ -143,12 +143,12 @@
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.17.1",
 		"@biomejs/biome": "~1.9.3",
-		"@fluid-internal/client-utils-previous": "npm:@fluid-internal/client-utils@2.63.0",
+		"@fluid-internal/client-utils-previous": "npm:@fluid-internal/client-utils@2.71.0",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "^0.58.3",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.58.3",
-		"@fluidframework/eslint-config-fluid": "^7.0.0",
+		"@fluidframework/eslint-config-fluid": "workspace:^",
 		"@microsoft/api-extractor": "7.52.11",
 		"@types/base64-js": "^1.3.0",
 		"@types/jest": "29.5.3",

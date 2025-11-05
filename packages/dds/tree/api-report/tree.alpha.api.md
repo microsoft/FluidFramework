@@ -33,7 +33,7 @@ export type AllowedTypesFullEvaluated = AllowedTypesFull<readonly AnnotatedAllow
 // @beta @sealed @system
 export type AllowedTypesFullFromMixed<T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]> = UnannotateAllowedTypesList<T> & AnnotatedAllowedTypes<AnnotateAllowedTypesList<T>>;
 
-// @alpha @sealed @system
+// @beta @sealed @system
 export type AllowedTypesFullFromMixedUnsafe<T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[]> = UnannotateAllowedTypesListUnsafe<T> & AnnotatedAllowedTypes<AnnotateAllowedTypesListUnsafe<T>>;
 
 // @alpha @sealed @system
@@ -52,7 +52,7 @@ export type AnnotateAllowedTypesList<T extends readonly (AnnotatedAllowedType | 
     [I in keyof T]: T[I] extends AnnotatedAllowedType<unknown> ? T[I] : AnnotatedAllowedType<T[I]>;
 };
 
-// @alpha @sealed @system
+// @beta @sealed @system
 export type AnnotateAllowedTypesListUnsafe<T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[]> = {
     [I in keyof T]: T[I] extends AnnotatedAllowedTypeUnsafe ? T[I] : AnnotatedAllowedTypeUnsafe<T[I]>;
 };
@@ -72,11 +72,11 @@ export interface AnnotatedAllowedTypes<T = readonly AnnotatedAllowedType[]> exte
     readonly types: T;
 }
 
-// @alpha @sealed @system
+// @beta @sealed @system
 export interface AnnotatedAllowedTypesUnsafe extends AnnotatedAllowedTypes<LazyItem<System_Unsafe.TreeNodeSchemaUnsafe>> {
 }
 
-// @alpha @sealed @system
+// @beta @sealed @system
 export interface AnnotatedAllowedTypeUnsafe<T = Unenforced<LazyItem<TreeNodeSchema>>> extends AnnotatedAllowedType<T> {
 }
 
@@ -171,6 +171,20 @@ export const contentSchemaSymbol: unique symbol;
 
 // @alpha
 export function createIdentifierIndex<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): IdentifierIndex;
+
+// @alpha
+export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSchema>(options?: ForestOptions & (({
+    idCompressor?: IIdCompressor | undefined;
+} & {
+    content?: undefined;
+}) | (ICodecOptions & {
+    content: ViewContent;
+} & {
+    idCompressor?: undefined;
+}))): ViewableTree & Pick<ITreeAlpha, "exportVerbose" | "exportSimpleSchema">;
+
+// @beta
+export function createIndependentTreeBeta<const TSchema extends ImplicitFieldSchema>(options?: ForestOptions): ViewableTree;
 
 // @alpha
 export function createSimpleTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey extends TreeIndexKey, TValue>(view: TreeView<TFieldSchema>, indexer: (schema: TreeNodeSchema) => string | undefined, getValue: (nodes: TreeIndexNodes<TreeNode>) => TValue, isKeyValid: (key: TreeIndexKey) => key is TKey): SimpleTreeIndex<TKey, TValue>;
@@ -274,6 +288,8 @@ export class FieldSchemaAlpha<Kind extends FieldKind = FieldKind, Types extends 
     get allowedTypesIdentifiers(): ReadonlySet<string>;
     // (undocumented)
     get persistedMetadata(): JsonCompatibleReadOnlyObject | undefined;
+    // (undocumented)
+    get simpleAllowedTypes(): ReadonlyMap<string, SimpleAllowedTypeAttributes>;
 }
 
 // @alpha @sealed @system
@@ -304,6 +320,7 @@ type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
 // @alpha
 export const FluidClientVersion: {
     readonly v2_0: "2.0.0";
+    readonly v2_43: "2.43.0";
     readonly v2_52: "2.52.0";
 };
 
@@ -920,14 +937,6 @@ export class SchemaFactoryAlpha<out TScope extends string | undefined = string |
     static readonly requiredRecursive: <const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider"> | undefined) => FieldSchemaAlphaUnsafe<FieldKind.Required, T, TCustomMetadata>;
     readonly requiredRecursive: <const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider"> | undefined) => FieldSchemaAlphaUnsafe<FieldKind.Required, T, TCustomMetadata>;
     scopedFactoryAlpha<const T extends TName, TNameInner extends number | string = string>(name: T): SchemaFactoryAlpha<ScopedSchemaName<TScope, T>, TNameInner>;
-    static staged: <const T extends LazyItem<TreeNodeSchema>>(t: T | AnnotatedAllowedType<T>) => AnnotatedAllowedType<T>;
-    staged: <const T extends LazyItem<TreeNodeSchema>>(t: T | AnnotatedAllowedType<T>) => AnnotatedAllowedType<T>;
-    static stagedRecursive: <const T extends unknown>(t: T) => AnnotatedAllowedTypeUnsafe<UnannotateAllowedTypeUnsafe<T>>;
-    stagedRecursive: <const T extends unknown>(t: T) => AnnotatedAllowedTypeUnsafe<UnannotateAllowedTypeUnsafe<T>>;
-    static types: <const T extends readonly (LazyItem<TreeNodeSchema> | AnnotatedAllowedType<LazyItem<TreeNodeSchema>>)[]>(t: T, metadata?: AllowedTypesMetadata | undefined) => AllowedTypesFullFromMixed<T>;
-    types: <const T extends readonly (LazyItem<TreeNodeSchema> | AnnotatedAllowedType<LazyItem<TreeNodeSchema>>)[]>(t: T, metadata?: AllowedTypesMetadata | undefined) => AllowedTypesFullFromMixed<T>;
-    static typesRecursive: <const T extends readonly unknown[]>(t: T, metadata?: AllowedTypesMetadata | undefined) => AllowedTypesFullFromMixedUnsafe<T>;
-    typesRecursive: <const T extends readonly unknown[]>(t: T, metadata?: AllowedTypesMetadata | undefined) => AllowedTypesFullFromMixedUnsafe<T>;
 }
 
 // @beta
@@ -941,6 +950,14 @@ export class SchemaFactoryBeta<out TScope extends string | undefined = string | 
         readonly [x: string]: System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>;
     }, false, T, undefined, TCustomMetadata>;
     scopedFactory<const T extends TName, TNameInner extends number | string = string>(name: T): SchemaFactoryBeta<ScopedSchemaName<TScope, T>, TNameInner>;
+    static staged: <const T extends LazyItem<TreeNodeSchema>>(t: T | AnnotatedAllowedType<T>) => AnnotatedAllowedType<T>;
+    staged: <const T extends LazyItem<TreeNodeSchema>>(t: T | AnnotatedAllowedType<T>) => AnnotatedAllowedType<T>;
+    static stagedRecursive: <const T extends unknown>(t: T) => AnnotatedAllowedTypeUnsafe<UnannotateAllowedTypeUnsafe<T>>;
+    stagedRecursive: <const T extends unknown>(t: T) => AnnotatedAllowedTypeUnsafe<UnannotateAllowedTypeUnsafe<T>>;
+    static types: <const T extends readonly (LazyItem<TreeNodeSchema> | AnnotatedAllowedType<LazyItem<TreeNodeSchema>>)[]>(t: T, metadata?: AllowedTypesMetadata | undefined) => AllowedTypesFullFromMixed<T>;
+    types: <const T extends readonly (LazyItem<TreeNodeSchema> | AnnotatedAllowedType<LazyItem<TreeNodeSchema>>)[]>(t: T, metadata?: AllowedTypesMetadata | undefined) => AllowedTypesFullFromMixed<T>;
+    static typesRecursive: <const T extends readonly unknown[]>(t: T, metadata?: AllowedTypesMetadata | undefined) => AllowedTypesFullFromMixedUnsafe<T>;
+    typesRecursive: <const T extends readonly unknown[]>(t: T, metadata?: AllowedTypesMetadata | undefined) => AllowedTypesFullFromMixedUnsafe<T>;
 }
 
 // @public @sealed @system
@@ -963,8 +980,8 @@ export interface SchemaStatics {
     readonly string: LeafSchema<"string", string>;
 }
 
-// @alpha @sealed @system
-export interface SchemaStaticsAlpha {
+// @beta @sealed @system
+export interface SchemaStaticsBeta {
     readonly staged: <const T extends LazyItem<TreeNodeSchema>>(t: T | AnnotatedAllowedType<T>) => AnnotatedAllowedType<T>;
     stagedRecursive: <const T extends Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>>(t: T) => AnnotatedAllowedTypeUnsafe<UnannotateAllowedTypeUnsafe<T>>;
     readonly types: <const T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]>(t: T, metadata?: AllowedTypesMetadata) => AllowedTypesFullFromMixed<T>;
@@ -982,7 +999,6 @@ type ScopedSchemaName<TScope extends string | undefined, TName extends number | 
 
 // @alpha @input
 export interface SharedTreeFormatOptions {
-    formatVersion: SharedTreeFormatVersion[keyof SharedTreeFormatVersion];
     treeEncodeType: TreeCompressionStrategy;
 }
 
@@ -999,22 +1015,29 @@ export const SharedTreeFormatVersion: {
 export type SharedTreeFormatVersion = typeof SharedTreeFormatVersion;
 
 // @alpha @input
-export type SharedTreeOptions = Partial<CodecWriteOptions> & Partial<SharedTreeFormatOptions> & SharedTreeOptionsBeta;
+export interface SharedTreeOptions extends Partial<CodecWriteOptions>, Partial<SharedTreeFormatOptions>, SharedTreeOptionsBeta {
+    readonly enableSharedBranches?: boolean;
+}
 
 // @beta @input
 export type SharedTreeOptionsBeta = ForestOptions;
 
 // @alpha @sealed
+export interface SimpleAllowedTypeAttributes {
+    readonly isStaged: boolean | undefined;
+}
+
+// @alpha @sealed
 export interface SimpleArrayNodeSchema<out TCustomMetadata = unknown> extends SimpleNodeSchemaBaseAlpha<NodeKind.Array, TCustomMetadata> {
-    readonly allowedTypesIdentifiers: ReadonlySet<string>;
+    readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypeAttributes>;
 }
 
 // @alpha @sealed
 export interface SimpleFieldSchema {
-    readonly allowedTypesIdentifiers: ReadonlySet<string>;
     readonly kind: FieldKind;
     readonly metadata: FieldSchemaMetadata;
     readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
+    readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypeAttributes>;
 }
 
 // @alpha @sealed
@@ -1024,7 +1047,7 @@ export interface SimpleLeafNodeSchema extends SimpleNodeSchemaBaseAlpha<NodeKind
 
 // @alpha @sealed
 export interface SimpleMapNodeSchema<out TCustomMetadata = unknown> extends SimpleNodeSchemaBaseAlpha<NodeKind.Map, TCustomMetadata> {
-    readonly allowedTypesIdentifiers: ReadonlySet<string>;
+    readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypeAttributes>;
 }
 
 // @alpha
@@ -1053,7 +1076,7 @@ export interface SimpleObjectNodeSchema<out TCustomMetadata = unknown> extends S
 
 // @alpha @sealed
 export interface SimpleRecordNodeSchema<out TCustomMetadata = unknown> extends SimpleNodeSchemaBaseAlpha<NodeKind.Record, TCustomMetadata> {
-    readonly allowedTypesIdentifiers: ReadonlySet<string>;
+    readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypeAttributes>;
 }
 
 // @alpha
@@ -1662,14 +1685,14 @@ export type UnannotateAllowedTypesList<T extends readonly (AnnotatedAllowedType 
     [I in keyof T]: T[I] extends AnnotatedAllowedType<infer X> ? X : T[I];
 };
 
-// @alpha @sealed @system
+// @beta @sealed @system
 export type UnannotateAllowedTypesListUnsafe<T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[]> = {
     readonly [I in keyof T]: T[I] extends {
         type: infer X;
     } ? X : T[I];
 };
 
-// @alpha @sealed @system
+// @beta @sealed @system
 export type UnannotateAllowedTypeUnsafe<T extends Unenforced<AnnotatedAllowedTypeUnsafe | LazyItem<System_Unsafe.TreeNodeSchemaUnsafe>>> = T extends AnnotatedAllowedTypeUnsafe<infer X> ? X : T;
 
 // @public

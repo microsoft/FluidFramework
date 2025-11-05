@@ -41,34 +41,37 @@ import {
 	readAndParse,
 } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import {
-	type ISummaryTreeWithStats,
-	type ITelemetryContext,
-	type IGarbageCollectionData,
-	type CreateChildSummarizerNodeFn,
-	type CreateChildSummarizerNodeParam,
-	type FluidDataStoreRegistryEntry,
-	type IContainerRuntimeBase,
-	type IDataStore,
-	type IFluidDataStoreChannel,
-	type IFluidDataStoreContext,
-	type IFluidDataStoreContextDetached,
-	type IFluidDataStoreRegistry,
-	type IGarbageCollectionDetailsBase,
-	type IProvideFluidDataStoreFactory,
-	type ISummarizeInternalResult,
-	type ISummarizeResult,
-	type ISummarizerNodeWithGC,
-	type SummarizeInternalFn,
-	channelsTreeName,
-	type IInboundSignalMessage,
-	type IPendingMessagesState,
-	type IRuntimeMessageCollection,
-	type IFluidDataStoreFactory,
-	type PackagePath,
-	type IRuntimeStorageService,
-	type MinimumVersionForCollab,
+import type {
+	FluidDataStoreMessage,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
+	IGarbageCollectionData,
+	CreateChildSummarizerNodeFn,
+	CreateChildSummarizerNodeParam,
+	FluidDataStoreContextInternal,
+	FluidDataStoreRegistryEntry,
+	IContainerRuntimeBase,
+	IDataStore,
+	IFluidDataStoreChannel,
+	IFluidDataStoreContextDetached,
+	IFluidDataStoreRegistry,
+	IGarbageCollectionDetailsBase,
+	IProvideFluidDataStoreFactory,
+	ISummarizeInternalResult,
+	ISummarizeResult,
+	ISummarizerNodeWithGC,
+	SummarizeInternalFn,
+	IInboundSignalMessage,
+	IPendingMessagesState,
+	IRuntimeMessageCollection,
+	IFluidDataStoreFactory,
+	PackagePath,
+	IRuntimeStorageService,
+	MinimumVersionForCollab,
+	ContainerExtensionId,
+	ContainerExtensionExpectations,
 } from "@fluidframework/runtime-definitions/internal";
+import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
 	isSnapshotFetchRequiredForLoadingGroupId,
@@ -92,7 +95,7 @@ import {
 	validateDatastoreCompatibility,
 } from "./runtimeLayerCompatState.js";
 import {
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	type ReadFluidDataStoreAttributes,
 	type WriteFluidDataStoreAttributes,
 	dataStoreAttributesBlobName,
@@ -133,7 +136,7 @@ export interface ISnapshotDetails {
  * This interface is used for context's parent - ChannelCollection.
  * It should not be exposed to any other users of context.
  */
-export interface IFluidDataStoreContextInternal extends IFluidDataStoreContext {
+export interface IFluidDataStoreContextPrivate extends FluidDataStoreContextInternal {
 	getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
 
 	getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
@@ -248,11 +251,7 @@ class ContextDeltaManagerProxy extends BaseDeltaManagerProxy {
  */
 export abstract class FluidDataStoreContext
 	extends TypedEventEmitter<IFluidDataStoreContextEvents>
-	implements
-		IFluidDataStoreContextInternal,
-		IFluidDataStoreContext,
-		IDisposable,
-		IProvideLayerCompatDetails
+	implements IFluidDataStoreContextPrivate, IDisposable, IProvideLayerCompatDetails
 {
 	public get packagePath(): PackagePath {
 		assert(this.pkg !== undefined, 0x139 /* "Undefined package path" */);
@@ -1095,23 +1094,22 @@ export abstract class FluidDataStoreContext
 	}
 
 	public reSubmit(
-		type: string,
-		contents: unknown,
+		message: FluidDataStoreMessage,
 		localOpMetadata: unknown,
-		squash: boolean,
+		squash?: boolean,
 	): void {
 		assert(!!this.channel, 0x14b /* "Channel must exist when resubmitting ops" */);
-		this.channel.reSubmit(type, contents, localOpMetadata, squash);
+		this.channel.reSubmit(message.type, message.content, localOpMetadata, squash);
 	}
 
-	public rollback(type: string, contents: unknown, localOpMetadata: unknown): void {
+	public rollback(message: FluidDataStoreMessage, localOpMetadata: unknown): void {
 		if (!this.channel) {
 			throw new Error("Channel must exist when rolling back ops");
 		}
 		if (!this.channel.rollback) {
 			throw new Error("Channel doesn't support rollback");
 		}
-		this.channel.rollback(type, contents, localOpMetadata);
+		this.channel.rollback(message.type, message.content, localOpMetadata);
 	}
 
 	public async applyStashedOp(contents: unknown): Promise<unknown> {
@@ -1222,6 +1220,14 @@ export abstract class FluidDataStoreContext
 	): Promise<IFluidHandleInternal<ArrayBufferLike>> {
 		return this.parentContext.uploadBlob(blob, signal);
 	}
+
+	public getExtension<TInterface, TUseContext extends unknown[] = []>(
+		id: ContainerExtensionId,
+		requirements: ContainerExtensionExpectations,
+		...context: TUseContext
+	): TInterface {
+		return this.parentContext.getExtension(id, requirements, ...context);
+	}
 }
 
 /**
@@ -1309,7 +1315,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 
 		if (!!tree && tree.blobs[dataStoreAttributesBlobName] !== undefined) {
 			// Need to get through snapshot and use that to populate extraBlobs
-			// eslint-disable-next-line import/no-deprecated
+			// eslint-disable-next-line import-x/no-deprecated
 			const attributes = await readAndParse<ReadFluidDataStoreAttributes>(
 				this.storage,
 				tree.blobs[dataStoreAttributesBlobName],
@@ -1488,7 +1494,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 	// eslint-disable-next-line unicorn/consistent-function-scoping -- Property is defined once; no need to extract inner lambda
 	private readonly initialSnapshotDetailsP = new LazyPromise<ISnapshotDetails>(async () => {
 		let snapshot = this.snapshotTree;
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated
 		let attributes: ReadFluidDataStoreAttributes;
 		let isRootDataStore = false;
 		if (snapshot !== undefined) {

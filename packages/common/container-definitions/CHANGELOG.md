@@ -1,5 +1,9 @@
 # @fluidframework/container-definitions
 
+## 2.71.0
+
+Dependency updates only.
+
 ## 2.70.0
 
 ### Minor Changes

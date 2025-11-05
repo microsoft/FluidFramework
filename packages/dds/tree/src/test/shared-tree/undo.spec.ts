@@ -32,7 +32,7 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 import { strict as assert } from "node:assert";
 import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { initialize } from "../../shared-tree/schematizeTree.js";
 import { combineChunks, FieldKinds } from "../../feature-libraries/index.js";
 import { asAlpha } from "../../api.js";

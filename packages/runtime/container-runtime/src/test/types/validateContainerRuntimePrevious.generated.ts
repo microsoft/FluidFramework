@@ -697,7 +697,6 @@ declare type old_as_current_for_Interface_LoadContainerRuntimeParams = requireAs
  * typeValidation.broken:
  * "Interface_LoadContainerRuntimeParams": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_LoadContainerRuntimeParams = requireAssignableTo<TypeOnly<current.LoadContainerRuntimeParams>, TypeOnly<old.LoadContainerRuntimeParams>>
 
 /*
@@ -789,26 +788,6 @@ declare type old_as_current_for_TypeAlias_ISummaryConfiguration = requireAssigna
  * "TypeAlias_ISummaryConfiguration": {"backCompat": false}
  */
 declare type current_as_old_for_TypeAlias_ISummaryConfiguration = requireAssignableTo<TypeOnly<current.ISummaryConfiguration>, TypeOnly<old.ISummaryConfiguration>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_MinimumVersionForCollab": {"forwardCompat": false}
- */
-// @ts-expect-error compatibility expected to be broken
-declare type old_as_current_for_TypeAlias_MinimumVersionForCollab = requireAssignableTo<TypeOnly<old.MinimumVersionForCollab>, TypeOnly<current.MinimumVersionForCollab>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_MinimumVersionForCollab": {"backCompat": false}
- */
-// @ts-expect-error compatibility expected to be broken
-declare type current_as_old_for_TypeAlias_MinimumVersionForCollab = requireAssignableTo<TypeOnly<current.MinimumVersionForCollab>, TypeOnly<old.MinimumVersionForCollab>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

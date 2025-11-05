@@ -75,6 +75,8 @@ trigger:
     - biome.jsonc
     - BREAKING.md
     - common/build/build-common
+    # TODO: Can be removed once eslint-config-fluid is removed from the client release group
+    - common/build/eslint-config-fluid
     - ClientRequirements.md
     - CODE_OF_CONDUCT.md
     - CONTRIBUTING.md
@@ -136,6 +138,8 @@ pr:
     - biome.jsonc
     - BREAKING.md
     - common/build/build-common
+     # TODO: Can be removed once eslint-config-fluid is removed from the client release group
+    - common/build/eslint-config-fluid
     - ClientRequirements.md
     - CODE_OF_CONDUCT.md
     - CONTRIBUTING.md
