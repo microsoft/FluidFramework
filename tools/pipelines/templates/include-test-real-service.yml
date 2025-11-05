@@ -438,6 +438,10 @@ stages:
                   })();
                 ")
 
+                # DEBUG
+                echo "$SETUP_OUTPUT" | jq -r '.reservationId'
+                echo "$SETUP_OUTPUT" | jq -c '.userPass'
+
                 # Parse the JSON output and set environment variables
                 export tenant__reservationId=$(echo "$SETUP_OUTPUT" | jq -r '.reservationId')
                 if [[ "${{ parameters.odspTenantType }}" == "dogfood" ]]; then
