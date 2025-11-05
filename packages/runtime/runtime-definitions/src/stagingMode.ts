@@ -44,106 +44,114 @@ export interface StageControlsInternal extends StageControlsAlpha {
 }
 
 /**
- * Controls for managing staged changes in alpha staging mode.
+ * Controls for managing staged changes in staging mode.
  *
- * Provides methods to either commit or discard changes made while in staging mode.
- * Additionally supports creating checkpoints within staging mode for granular rollback control.
+ * Staging mode lets you make changes locally before committing or discarding them.
+ * You can also create checkpoints and rollback to them.
+ *
+ * @example Stateful editor with async validation
+ * ```typescript
+ * class DraftFormEditor {
+ *   private controls = this.runtime.enterStagingMode();
+ *
+ *   async updateField(name: string, value: string) {
+ *     this.map.set(name, value);
+ *
+ *     if (this.controls.hasChangesSinceCheckpoint) {
+ *       this.controls.checkpoint();
+ *     }
+ *
+ *     try {
+ *       await this.validateWithServer(name, value);
+ *     } catch (error) {
+ *       if (this.controls.hasChangesSinceCheckpoint) {
+ *         this.controls.rollbackToCheckpoint();
+ *       }
+ *       throw error;
+ *     }
+ *   }
+ *
+ *   undo() {
+ *     if (this.controls.hasChangesSinceCheckpoint) {
+ *       this.controls.rollbackToCheckpoint();
+ *     }
+ *   }
+ *
+ *   save() {
+ *     this.controls.commitChanges();
+ *   }
+ *
+ *   dispose() {
+ *     this.controls.discardChanges();
+ *   }
+ * }
+ * ```
  *
  * @legacy @alpha
  * @sealed
  */
 export interface StageControlsAlpha {
 	/**
-	 * Exit staging mode and commit to any changes made while in staging mode.
-	 * This will cause them to be sent to the ordering service, and subsequent changes
-	 * made by this container will additionally flow freely to the ordering service.
+	 * Exit staging mode and send all changes to the service.
 	 */
 	readonly commitChanges: () => void;
+
 	/**
-	 * Exit staging mode and discard any changes made while in staging mode.
+	 * Exit staging mode and undo all changes.
 	 */
 	readonly discardChanges: () => void;
 
 	/**
-	 * Creates a checkpoint at the current state within staging mode.
+	 * Create a checkpoint you can rollback to later.
 	 *
-	 * Checkpoints allow you to mark specific points in your staged changes that you can
-	 * selectively rollback to using {@link StageControlsAlpha.rollbackCheckpoint | rollbackCheckpoint()}.
-	 * Checkpoints are managed as a stack (LIFO) - rolling back always affects the
-	 * most recently created checkpoint.
-	 *
-	 * @remarks
-	 * - Empty checkpoints (no messages since entering staging mode) are not created
-	 * - Duplicate checkpoints (no new messages since last checkpoint) are not created
-	 * - Checkpoints only track changes within the current staging session
-	 * - All checkpoints are discarded when exiting staging mode via
-	 * {@link StageControlsAlpha.commitChanges | commitChanges()} or
-	 * {@link StageControlsAlpha.discardChanges | discardChanges()}
+	 * Use this to mark save points so you can undo back to them with  rollbackToCheckpoint.
+	 * Empty checkpoints (no changes since last checkpoint) are automatically skipped.
 	 *
 	 * @example
 	 * ```typescript
-	 * const controls = runtime.enterStagingMode();
+	 * async updateField(name: string, value: string) {
+	 *   this.map.set(name, value);
 	 *
-	 * // Make some changes
-	 * map.set("key1", "value1");
-	 * controls.checkpoint(); // Checkpoint 1
+	 *   if (this.controls.hasChangesSinceCheckpoint) {
+	 *     this.controls.checkpoint(); // Save after each field
+	 *   }
 	 *
-	 * // Make more changes
-	 * map.set("key2", "value2");
-	 * controls.checkpoint(); // Checkpoint 2
-	 *
-	 * // Make even more changes
-	 * map.set("key3", "value3");
-	 *
-	 * // Rollback to checkpoint 2 (discards key3)
-	 * controls.rollbackCheckpoint();
-	 *
-	 * // Rollback to checkpoint 1 (discards key2)
-	 * controls.rollbackCheckpoint();
-	 *
-	 * // Commit key1 to the service
-	 * controls.commitChanges();
+	 *   try {
+	 *     await this.validateWithServer(name, value);
+	 *   } catch (error) {
+	 *     if (this.controls.hasChangesSinceCheckpoint) {
+	 *       this.controls.rollbackToCheckpoint();
+	 *     }
+	 *     throw error;
+	 *   }
+	 * }
 	 * ```
 	 */
 	readonly checkpoint: () => void;
 
 	/**
-	 * The number of active checkpoints in the checkpoint stack.
+	 * Whether any changes have been made since the last checkpoint (or since entering staging mode).
 	 *
-	 * @remarks
-	 * Returns 0 when no checkpoints have been created or all have been rolled back.
+	 * Use this to check if checkpoint or rollbackToCheckpoint will have an effect.
+	 *
 	 */
-	readonly checkpointCount: number;
+	readonly hasChangesSinceCheckpoint: boolean;
 
 	/**
-	 * Rolls back all changes made since the most recent checkpoint and removes that checkpoint.
+	 * Undo all changes back to the most recent checkpoint.
 	 *
-	 * This method operates on a stack (LIFO) - it always rolls back to the most recently
-	 * created checkpoint. The checkpoint is removed from the stack after rollback.
+	 * The checkpoint is removed after rollback. Always check hasChangesSinceCheckpoint first.
 	 *
-	 * @remarks
-	 * - If no checkpoints exist, this method does nothing (no-op)
-	 * - Changes are rolled back in reverse order (LIFO)
-	 * - The container remains in staging mode after rollback
-	 * - Only changes made after the checkpoint are discarded; changes before the checkpoint remain
+	 * @throws Error if no checkpoint exists.
 	 *
 	 * @example
 	 * ```typescript
-	 * const controls = runtime.enterStagingMode();
-	 *
-	 * map.set("a", "1");
-	 * controls.checkpoint();
-	 *
-	 * map.set("b", "2");
-	 * map.set("c", "3");
-	 *
-	 * // Rollback sets for "b" and "c", keeps "a"
-	 * controls.rollbackCheckpoint();
-	 *
-	 * controls.commitChanges(); // Only commits "a"
+	 * if (controls.hasChangesSinceCheckpoint) {
+	 *   controls.rollbackToCheckpoint();
+	 * }
 	 * ```
 	 */
-	readonly rollbackCheckpoint: () => void;
+	readonly rollbackToCheckpoint: () => void;
 }
 
 /**
@@ -159,19 +167,59 @@ export interface IContainerRuntimeBaseInternal extends ContainerRuntimeBaseAlpha
 }
 
 /**
- * Alpha interface for container runtime base supporting staging mode.
+ * Alpha interface for container runtime with staging mode support.
  *
  * @legacy @alpha
  * @sealed
  */
 export interface ContainerRuntimeBaseAlpha extends IContainerRuntimeBase {
 	/**
-	 * Enters staging mode, allowing changes to be staged before being committed or discarded.
-	 * @returns Controls for committing or discarding staged changes.
+	 * Enter staging mode to queue changes locally before committing or discarding them.
+	 *
+	 * @returns Controls for managing staged changes. See {@link StageControlsAlpha}.
+	 *
+	 * @example
+	 * ```typescript
+	 * class DraftFormEditor {
+	 *   private controls = this.runtime.enterStagingMode();
+	 *
+	 *   async updateField(name: string, value: string) {
+	 *     this.map.set(name, value);
+	 *
+	 *     if (this.controls.hasChangesSinceCheckpoint) {
+	 *       this.controls.checkpoint();
+	 *     }
+	 *
+	 *     try {
+	 *       await this.validateWithServer(name, value);
+	 *     } catch (error) {
+	 *       if (this.controls.hasChangesSinceCheckpoint) {
+	 *         this.controls.rollbackToCheckpoint();
+	 *       }
+	 *       throw error;
+	 *     }
+	 *   }
+	 *
+	 *   undo() {
+	 *     if (this.controls.hasChangesSinceCheckpoint) {
+	 *       this.controls.rollbackToCheckpoint();
+	 *     }
+	 *   }
+	 *
+	 *   save() {
+	 *     this.controls.commitChanges();
+	 *   }
+	 *
+	 *   dispose() {
+	 *     this.controls.discardChanges();
+	 *   }
+	 * }
+	 * ```
 	 */
 	enterStagingMode(): StageControlsAlpha;
+
 	/**
-	 * Indicates whether the container is currently in staging mode.
+	 * Whether the container is currently in staging mode.
 	 */
 	readonly inStagingMode: boolean;
 }

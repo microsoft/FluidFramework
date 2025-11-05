@@ -3560,10 +3560,10 @@ export class ContainerRuntime
 			try {
 				return callback();
 			} catch (error) {
-				if (checkpointCreated) {
+				if (checkpointCreated && this.stageControls?.hasChangesSinceCheckpoint) {
 					// This will throw and close the container if rollback fails
 					try {
-						this.stageControls?.rollbackCheckpoint();
+						this.stageControls?.rollbackToCheckpoint();
 						stageControls?.discardChanges();
 						stageControls = undefined;
 					} catch (error_) {
@@ -3660,6 +3660,13 @@ export class ContainerRuntime
 		// We flush the outbox on each checkpoint, so we only need to track PSM message count
 		const checkpointStack: number[] = [];
 
+		// Capture the initial pending message count when entering staging mode
+		// This represents the baseline before any staging mode changes
+		const initialPendingMessageCount = this.pendingStateManager.pendingMessagesCount;
+
+		// Capture 'this' for use in getters
+		const self = this;
+
 		const stageControls: StageControlsInternal = {
 			discardChanges: () =>
 				exitStagingMode(() => {
@@ -3695,21 +3702,31 @@ export class ContainerRuntime
 					checkpointStack.push(psmMessageCount);
 				}
 			},
-			get checkpointCount(): number {
-				return checkpointStack.length;
-			},
-			rollbackCheckpoint: () => {
-				if (checkpointStack.length === 0) {
-					return;
+			get hasChangesSinceCheckpoint(): boolean {
+				// Check if there are unflushed messages in the outbox
+				if (self.outbox.mainBatchMessageCount !== 0) {
+					return true;
 				}
-				const checkpointMessageCount = checkpointStack.pop();
-				assert(checkpointMessageCount !== undefined, "Checkpoint should be defined"); // Rollback to the checkpoint by popping and rolling back messages added since the checkpoint
+
+				const currentCount = self.pendingStateManager.pendingMessagesCount;
+				const lastCheckpoint = checkpointStack[checkpointStack.length - 1];
+
+				// If no checkpoints exist, compare against the initial count when entering staging mode
+				// If checkpoints exist, compare against the last checkpoint
+				const baselineCount = lastCheckpoint ?? initialPendingMessageCount;
+				return currentCount !== baselineCount;
+			},
+			rollbackToCheckpoint: () => {
+				if (checkpointStack.length === 0) {
+					throw new LoggingError("No checkpoint exists to rollback to", {
+						checkpointCount: 0,
+					});
+				}
+				const checkpointMessageCount = checkpointStack.pop()!;
 				try {
 					// Flush the outbox to ensure all messages are in PSM before rolling back
 					// NOTE: We can't use this.flush() here, because orderSequentially uses StagingMode and in the rollback case we'll hit assert 0x24c
-					this.outbox.flush();
-
-					// Calculate how many messages were added since the checkpoint
+					this.outbox.flush(); // Calculate how many messages were added since the checkpoint
 					const currentPsmCount = this.pendingStateManager.pendingMessagesCount;
 					const messagesToRollback = currentPsmCount - checkpointMessageCount;
 
