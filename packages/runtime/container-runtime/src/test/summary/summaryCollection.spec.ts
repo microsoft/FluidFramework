@@ -5,16 +5,16 @@
 
 import { strict as assert } from "node:assert";
 
-import { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import {
-	IDocumentMessage,
+	type IDocumentMessage,
 	MessageType,
-	ISequencedDocumentMessage,
+	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils/internal";
 
-import { ISummaryOpMessage, SummaryCollection } from "../../summary/index.js";
+import { type ISummaryOpMessage, SummaryCollection } from "../../summary/index.js";
 
 const summaryOp: ISummaryOpMessage = {
 	clientId: "cliendId",

@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import type { ListNode } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import type { IMergeTreeOptions } from "@fluidframework/merge-tree/internal";
+import { IMergeTreeOptions } from "@fluidframework/merge-tree/internal";
 
 import type {
 	IntervalCollection,
@@ -15,14 +16,31 @@ import {
 	ISerializedInterval,
 	IntervalDeltaOpType,
 	SerializedIntervalDelta,
+	type SequenceIntervalClass,
 } from "./intervals/index.js";
 
-export interface IMapMessageLocalMetadata {
+export interface IntervalAddLocalMetadata {
+	type: typeof IntervalDeltaOpType.ADD;
 	localSeq: number;
-	previous?: ISerializedInterval;
-	intervalId: string;
+	endpointChangesNode?: ListNode<IntervalAddLocalMetadata | IntervalChangeLocalMetadata>;
+	interval: SequenceIntervalClass;
 }
-
+export interface IntervalChangeLocalMetadata {
+	type: typeof IntervalDeltaOpType.CHANGE;
+	localSeq: number;
+	endpointChangesNode?: ListNode<IntervalChangeLocalMetadata | IntervalChangeLocalMetadata>;
+	interval: SequenceIntervalClass;
+}
+export interface IntervalDeleteLocalMetadata {
+	type: typeof IntervalDeltaOpType.DELETE;
+	localSeq: number;
+	endpointChangesNode?: undefined;
+	interval?: undefined;
+}
+export type IntervalMessageLocalMetadata =
+	| IntervalAddLocalMetadata
+	| IntervalChangeLocalMetadata
+	| IntervalDeleteLocalMetadata;
 /**
  * Optional flags that configure options for sequence DDSs
  * @internal
@@ -74,7 +92,7 @@ export interface IIntervalCollectionOperation {
 		params: ISerializedInterval,
 		local: boolean,
 		message: ISequencedDocumentMessage | undefined,
-		localOpMetadata: IMapMessageLocalMetadata | undefined,
+		localOpMetadata: IntervalMessageLocalMetadata | undefined,
 	): void;
 }
 

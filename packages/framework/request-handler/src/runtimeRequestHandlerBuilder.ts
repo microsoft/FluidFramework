@@ -7,7 +7,7 @@ import type { IContainerRuntime } from "@fluidframework/container-runtime-defini
 import type { IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { RequestParser, create404Response } from "@fluidframework/runtime-utils/internal";
 
-// eslint-disable-next-line import/no-deprecated
+// eslint-disable-next-line import-x/no-deprecated
 import type { RuntimeRequestHandler } from "./requestHandlers.js";
 
 /**
@@ -15,10 +15,10 @@ import type { RuntimeRequestHandler } from "./requestHandlers.js";
  * The provided handlers sequentially applied until one is able to satisfy the request.
  */
 class RuntimeRequestHandlerBuilder {
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	private readonly handlers: RuntimeRequestHandler[] = [];
 
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	public pushHandler(...handlers: RuntimeRequestHandler[]): void {
 		if (handlers !== undefined) {
 			this.handlers.push(...handlers);
@@ -48,7 +48,7 @@ class RuntimeRequestHandlerBuilder {
  * @internal
  */
 export function buildRuntimeRequestHandler(
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	...handlers: RuntimeRequestHandler[]
 ): (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse> {
 	const builder = new RuntimeRequestHandlerBuilder();

@@ -49,7 +49,7 @@ module.exports = {
 			script: false,
 		},
 		"compile": {
-			dependsOn: ["commonjs", "build:esnext", "api", "build:test", "build:copy"],
+			dependsOn: ["commonjs", "build:esnext", "build:test", "build:copy"],
 			script: false,
 		},
 		"commonjs": {
@@ -77,12 +77,11 @@ module.exports = {
 		// Generic build:test script should be replaced by :esm or :cjs specific versions.
 		// "tsc" would be nice to eliminate from here, but plenty of packages still focus
 		// on CommonJS.
-		"build:test": ["typetests:gen", "tsc", "api-extractor:commonjs", "api-extractor:esnext"],
-		"build:test:cjs": ["typetests:gen", "tsc", "api-extractor:commonjs"],
-		"build:test:esm": ["typetests:gen", "build:esnext", "api-extractor:esnext"],
+		"build:test": ["typetests:gen", "tsc"],
+		"build:test:cjs": ["typetests:gen", "tsc"],
+		"build:test:esm": ["typetests:gen", "build:esnext"],
 		"api": {
 			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
-			// dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
 			script: false,
 		},
 		"api-extractor:commonjs": ["tsc"],
@@ -329,6 +328,9 @@ module.exports = {
 		// Exclusion per handler
 		handlerExclusions: {
 			"fluid-build-tasks-eslint": [
+				// There are no built files, but a tsconfig.json is present to simplify the
+				// eslint config.
+				"azure/packages/azure-local-service/package.json",
 				// eslint doesn't really depend on build. Doing so just slows down a package build.
 				"^packages/test/snapshots/package.json",
 				"^packages/test/test-utils/package.json",
@@ -346,6 +348,9 @@ module.exports = {
 				"experimental/PropertyDDS/packages/property-query/test/get_config.js",
 				"server/routerlicious/packages/tinylicious/src/index.ts",
 
+				// minified DOMPurify is not a source file, so it doesn't need a header.
+				"docs/static/dompurify/purify.min.js",
+
 				// Type test files can be excluded since they're generated and known to have the correct header.
 				// This can be removed once the whole repo uses build-tools v0.35.0+.
 				/.*\/validate.*\.generated\.ts/,
@@ -353,6 +358,7 @@ module.exports = {
 			"no-js-file-extensions": [
 				// PropertyDDS uses .js files which should be renamed eventually.
 				"experimental/PropertyDDS/.*",
+				"azure/packages/azure-local-service/index.js",
 				"build-tools/packages/build-cli/bin/dev.js",
 				"build-tools/packages/build-cli/bin/run.js",
 				"build-tools/packages/build-cli/test/helpers/init.js",
@@ -370,6 +376,7 @@ module.exports = {
 				"docs/local-api-rollup.js",
 				// Avoids MIME-type issues in the browser.
 				"docs/static/trusted-types-policy.js",
+				"docs/static/dompurify/purify.min.js",
 				"docs/static/js/add-code-copy-button.js",
 				"examples/data-objects/monaco/loaders/blobUrl.js",
 				"examples/data-objects/monaco/loaders/compile.js",
@@ -412,7 +419,6 @@ module.exports = {
 			"npm-package-json-test-scripts": [
 				"common/build/eslint-config-fluid/package.json",
 				"packages/test/mocha-test-setup/package.json",
-				"examples/apps/attributable-map/package.json",
 			],
 			"npm-package-json-test-scripts-split": [
 				"server/",
@@ -423,10 +429,6 @@ module.exports = {
 				"packages/tools/devtools/devtools-view/package.json",
 			],
 			"npm-package-exports-apis-linted": [
-				// Rollout suppressions - enable only after tools are updated to support policy
-				// as new build-tools will have the concurrently fluid-build support it uses.
-				"^common/",
-
 				// Packages that violate the API linting rules
 				// ae-missing-release-tags, ae-incompatible-release-tags
 				"^examples/data-objects/table-document/",

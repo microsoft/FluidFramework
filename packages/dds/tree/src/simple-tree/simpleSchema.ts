@@ -4,9 +4,9 @@
  */
 
 import type { ValueSchema } from "../core/index.js";
-
-import type { NodeKind } from "./core/index.js";
-import type { FieldKind, FieldSchemaMetadata, NodeSchemaMetadata } from "./schemaTypes.js";
+import type { JsonCompatibleReadOnlyObject } from "../util/index.js";
+import type { NodeKind, SimpleNodeSchemaBase } from "./core/index.js";
+import type { FieldKind, FieldSchemaMetadata } from "./fieldSchema.js";
 
 /*
  * TODO:
@@ -14,27 +14,29 @@ import type { FieldKind, FieldSchemaMetadata, NodeSchemaMetadata } from "./schem
  */
 
 /**
- * Base interface for {@link TreeNodeSchema} and {@link SimpleNodeSchema} types.
- * Once simple schema is stable this doesn't have a reason to be kept `@system`, but it could be.
+ * A {@link SimpleNodeSchema} containing fields for alpha features.
+ *
  * @system
- * @public
+ * @alpha
  * @sealed
  */
-export interface SimpleNodeSchemaBase<
+export interface SimpleNodeSchemaBaseAlpha<
 	out TNodeKind extends NodeKind,
 	out TCustomMetadata = unknown,
-> {
+> extends SimpleNodeSchemaBase<TNodeKind, TCustomMetadata> {
 	/**
-	 * The {@link NodeKind}.
-	 *
-	 * @remarks can be used to type-switch between implementations.
+	 * Persisted metadata for this node schema.
+	 * @remarks
+	 * While this can be stored in the document, not all versions / configurations will do so.
+	 * Additionally, this is not part of {@link TreeView.compatibility|schema compatibility}, so different clients
+	 * (even within the same collaborative session) may see different `persistedMetadata` for the same node.
+	 * Specified using {@link NodeSchemaOptionsAlpha.persistedMetadata}.
+	 * @privateRemarks
+	 * How/when this gets updated in documents,
+	 * and how to read it from documents should be documented here when this feature is more mature and these questions have good answers.
+	 * If this does end up getting reflected in some compatibility value, that should also be documented.
 	 */
-	readonly kind: TNodeKind;
-
-	/**
-	 * User-provided {@link NodeSchemaMetadata} for this schema.
-	 */
-	readonly metadata: NodeSchemaMetadata<TCustomMetadata>;
+	readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined;
 }
 
 /**
@@ -44,7 +46,7 @@ export interface SimpleNodeSchemaBase<
  * @sealed
  */
 export interface SimpleObjectNodeSchema<out TCustomMetadata = unknown>
-	extends SimpleNodeSchemaBase<NodeKind.Object, TCustomMetadata> {
+	extends SimpleNodeSchemaBaseAlpha<NodeKind.Object, TCustomMetadata> {
 	/**
 	 * Schemas for each of the object's fields, keyed off of schema's keys.
 	 * @remarks
@@ -82,14 +84,14 @@ export interface SimpleObjectFieldSchema extends SimpleFieldSchema {
  * @sealed
  */
 export interface SimpleArrayNodeSchema<out TCustomMetadata = unknown>
-	extends SimpleNodeSchemaBase<NodeKind.Array, TCustomMetadata> {
+	extends SimpleNodeSchemaBaseAlpha<NodeKind.Array, TCustomMetadata> {
 	/**
 	 * The types allowed in the array.
 	 *
 	 * @remarks Refers to the types by identifier.
 	 * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
 	 */
-	readonly allowedTypesIdentifiers: ReadonlySet<string>;
+	readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypeAttributes>;
 }
 
 /**
@@ -99,14 +101,31 @@ export interface SimpleArrayNodeSchema<out TCustomMetadata = unknown>
  * @sealed
  */
 export interface SimpleMapNodeSchema<out TCustomMetadata = unknown>
-	extends SimpleNodeSchemaBase<NodeKind.Map, TCustomMetadata> {
+	extends SimpleNodeSchemaBaseAlpha<NodeKind.Map, TCustomMetadata> {
 	/**
 	 * The types allowed as values in the map.
 	 *
 	 * @remarks Refers to the types by identifier.
 	 * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
 	 */
-	readonly allowedTypesIdentifiers: ReadonlySet<string>;
+	readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypeAttributes>;
+}
+
+/**
+ * A {@link SimpleNodeSchema} for a map node.
+ *
+ * @alpha
+ * @sealed
+ */
+export interface SimpleRecordNodeSchema<out TCustomMetadata = unknown>
+	extends SimpleNodeSchemaBaseAlpha<NodeKind.Record, TCustomMetadata> {
+	/**
+	 * The types allowed as values in the record.
+	 *
+	 * @remarks Refers to the types by identifier.
+	 * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
+	 */
+	readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypeAttributes>;
 }
 
 /**
@@ -115,7 +134,7 @@ export interface SimpleMapNodeSchema<out TCustomMetadata = unknown>
  * @alpha
  * @sealed
  */
-export interface SimpleLeafNodeSchema extends SimpleNodeSchemaBase<NodeKind.Leaf> {
+export interface SimpleLeafNodeSchema extends SimpleNodeSchemaBaseAlpha<NodeKind.Leaf> {
 	/**
 	 * The kind of leaf node.
 	 */
@@ -140,7 +159,25 @@ export type SimpleNodeSchema =
 	| SimpleLeafNodeSchema
 	| SimpleMapNodeSchema
 	| SimpleArrayNodeSchema
-	| SimpleObjectNodeSchema;
+	| SimpleObjectNodeSchema
+	| SimpleRecordNodeSchema;
+
+/**
+ * Information about allowed types.
+ *
+ * @alpha
+ * @sealed
+ */
+export interface SimpleAllowedTypeAttributes {
+	/**
+	 * True if this schema is included as a {@link SchemaStaticsAlpha.staged | staged} schema upgrade,
+	 * allowing the view schema be compatible with stored schema with (post upgrade) or without it (pre-upgrade).
+	 * New documents and schema upgrades will omit any staged schema.
+	 *
+	 * Undefined if derived from a stored schema.
+	 */
+	readonly isStaged: boolean | undefined;
+}
 
 /**
  * A simple, shallow representation of a schema for a field.
@@ -159,17 +196,25 @@ export interface SimpleFieldSchema {
 	readonly kind: FieldKind;
 
 	/**
-	 * The types allowed under the field.
+	 * Information about the allowed types under this field.
 	 *
 	 * @remarks Refers to the types by identifier.
 	 * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
 	 */
-	readonly allowedTypesIdentifiers: ReadonlySet<string>;
+	readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypeAttributes>;
 
 	/**
 	 * {@inheritDoc FieldSchemaMetadata}
 	 */
 	readonly metadata: FieldSchemaMetadata;
+
+	/**
+	 * Persisted metadata for this field schema.
+	 * @remarks
+	 * Like {@link SimpleNodeSchemaBaseAlpha.persistedMetadata} but for fields.
+	 * Set via {@link FieldPropsAlpha.persistedMetadata}.
+	 */
+	readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
 }
 
 /**
@@ -190,7 +235,11 @@ export interface SimpleTreeSchema {
 	/**
 	 * The complete set of node schema definitions recursively referenced by the tree's {@link SimpleTreeSchema.root}.
 	 *
-	 * @remarks the keys are the schemas' {@link TreeNodeSchemaCore.identifier | identifiers}.
+	 * @remarks
+	 * The keys are the schemas' {@link TreeNodeSchemaCore.identifier | identifiers}.
+	 *
+	 * Information about if a schema is {@link SchemaStaticsAlpha.staged | staged} or not is not available as the "Simple Schema" layer of abstraction: they are included unconditionally.
+	 * Options for filtering out staged schemas from view schema are available in {@link extractPersistedSchema}.
 	 */
 	readonly definitions: ReadonlyMap<string, SimpleNodeSchema>;
 }

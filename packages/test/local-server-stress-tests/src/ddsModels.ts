@@ -3,18 +3,20 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable import-x/no-internal-modules */
 import { done, type AsyncGenerator } from "@fluid-private/stochastic-test-utils";
 import { DDSFuzzModel, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
+import { baseCounterModel } from "@fluidframework/counter/internal/test";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
-// eslint-disable-next-line import/no-internal-modules
+import { baseSharedArrayModel } from "@fluidframework/legacy-dds/internal/test";
 import { baseMapModel, baseDirModel } from "@fluidframework/map/internal/test";
-// eslint-disable-next-line import/no-internal-modules
 import { baseSharedMatrixModel } from "@fluidframework/matrix/internal/test";
 import {
 	baseSharedStringModel,
 	baseIntervalModel,
-	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/sequence/internal/test";
+import { baseTaskManagerModel } from "@fluidframework/task-manager/internal/test";
+import { baseTreeModel } from "@fluidframework/tree/internal/test";
 
 function repeatFactoryAsync<T, TState = void>(
 	factory: () => AsyncGenerator<T, TState>,
@@ -68,4 +70,8 @@ export const ddsModelMap = generateSubModelMap(
 	baseSharedStringModel,
 	baseIntervalModel,
 	baseSharedMatrixModel,
+	baseTreeModel,
+	baseSharedArrayModel,
+	baseTaskManagerModel,
+	baseCounterModel,
 );

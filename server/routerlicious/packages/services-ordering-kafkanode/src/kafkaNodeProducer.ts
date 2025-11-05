@@ -8,9 +8,9 @@ import * as util from "util";
 import { NetworkError } from "@fluidframework/server-services-client";
 import {
 	BoxcarType,
-	IBoxcarMessage,
-	IPendingBoxcar,
-	IProducer,
+	type IBoxcarMessage,
+	type IPendingBoxcar,
+	type IProducer,
 	PendingBoxcar,
 	MaxBatchSize,
 	MaxKafkaMessageSize,

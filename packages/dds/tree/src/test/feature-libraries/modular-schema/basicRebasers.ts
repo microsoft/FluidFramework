@@ -15,7 +15,7 @@ import {
 	type FieldChangeRebaser,
 	FieldKindWithEditor,
 	referenceFreeFieldChangeRebaser,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import type { Mutable } from "../../../util/index.js";
 import { makeValueCodec } from "../../codec/index.js";
@@ -29,6 +29,7 @@ import { makeValueCodec } from "../../codec/index.js";
 export function lastWriteWinsRebaser<TChange>(data: {
 	noop: TChange;
 	invert: (changes: TChange) => TChange;
+	mute: (changes: TChange) => TChange;
 }): FieldChangeRebaser<TChange> {
 	const compose = (_change1: TChange, change2: TChange) => change2;
 	const rebase = (change: TChange, _over: TChange) => change;
@@ -69,6 +70,9 @@ export function replaceRebaser<T>(): FieldChangeRebaser<ReplaceOp<T>> {
 		},
 		invert: (changes: ReplaceOp<T>) => {
 			return changes === 0 ? 0 : { old: changes.new, new: changes.old };
+		},
+		mute: (_change: ReplaceOp<T>) => {
+			return 0;
 		},
 	});
 }

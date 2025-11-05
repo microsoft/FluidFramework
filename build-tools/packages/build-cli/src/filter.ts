@@ -5,9 +5,9 @@
 
 import path from "node:path";
 import { type MonoRepo, Package } from "@fluidframework/build-tools";
-import { type PackageSelectionDefault, filterFlags, selectionFlags } from "./flags.js";
-import { Context } from "./library/index.js";
-import { ReleaseGroup, knownReleaseGroups } from "./releaseGroups.js";
+import type { PackageSelectionDefault, filterFlags, selectionFlags } from "./flags.js";
+import type { Context } from "./library/index.js";
+import { type ReleaseGroup, knownReleaseGroups } from "./releaseGroups.js";
 
 /**
  * The criteria that should be used for selecting package-like objects from a collection.

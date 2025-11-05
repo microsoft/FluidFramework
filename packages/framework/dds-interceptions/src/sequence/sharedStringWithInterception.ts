@@ -4,9 +4,9 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import * as MergeTree from "@fluidframework/merge-tree/internal";
-import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
-import { SharedString } from "@fluidframework/sequence/internal";
+import type * as MergeTree from "@fluidframework/merge-tree/internal";
+import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
+import type { SharedString } from "@fluidframework/sequence/internal";
 
 /**
  * - Create a new object from the passed SharedString.
@@ -31,7 +31,7 @@ export function createSharedStringWithInterception(
 	context: IFluidDataStoreContext,
 	propertyInterceptionCallback: (props?: MergeTree.PropertySet) => MergeTree.PropertySet,
 ): SharedString {
-	const sharedStringWithInterception = Object.create(sharedString);
+	const sharedStringWithInterception = Object.create(sharedString) as SharedString;
 
 	// executingCallback keeps track of whether a method on this wrapper object is called recursively
 	// from the propertyInterceptionCallback.
@@ -284,5 +284,5 @@ export function createSharedStringWithInterception(
 		});
 	};
 
-	return sharedStringWithInterception as SharedString;
+	return sharedStringWithInterception;
 }

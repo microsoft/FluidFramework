@@ -3,13 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
+
 import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
 import { describe, it, after, afterEach, before, beforeEach } from "mocha";
 import { useFakeTimers, type SinonFakeTimers } from "sinon";
 
-import type { NotificationsWorkspace } from "../index.js";
+import type { NotificationsWorkspace, PresenceWithNotifications } from "../index.js";
 import { Notifications, StateFactory } from "../index.js";
-import type { createPresenceManager } from "../presenceManager.js";
+import { toOpaqueJson } from "../internalUtils.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import {
@@ -23,9 +25,10 @@ describe("Presence", () => {
 	describe("batching", () => {
 		let runtime: MockEphemeralRuntime;
 		let logger: EventAndErrorTrackingLogger;
-		const initialTime = 1000;
+		const initialTime = 500;
+		const testStartTime = 1010;
 		let clock: SinonFakeTimers;
-		let presence: ReturnType<typeof createPresenceManager>;
+		let presence: PresenceWithNotifications;
 
 		before(async () => {
 			clock = useFakeTimers();
@@ -35,12 +38,22 @@ describe("Presence", () => {
 			logger = new EventAndErrorTrackingLogger();
 			runtime = new MockEphemeralRuntime(logger);
 
-			// Note that while the initialTime is set to 1000, the prepareConnectedPresence call advances
-			// it to 1010 so all tests start at that time.
 			clock.setSystemTime(initialTime);
 
 			// Set up the presence connection.
-			presence = prepareConnectedPresence(runtime, attendeeId2, connectionId2, clock, logger);
+			presence = prepareConnectedPresence(
+				runtime,
+				attendeeId2,
+				connectionId2,
+				clock,
+				logger,
+			).presence;
+
+			// Note that while the initialTime was set to 500, the prepareConnectedPresence call advances
+			// it. Set a consistent start time for all tests.
+			const deltaToStart = testStartTime - clock.now;
+			assert(deltaToStart >= 0);
+			clock.tick(deltaToStart);
 		});
 
 		afterEach(() => {
@@ -68,7 +81,7 @@ describe("Presence", () => {
 										"clientToSessionId": {
 											[connectionId2]: {
 												"rev": 0,
-												"timestamp": 1000,
+												"timestamp": initialTime,
 												"value": attendeeId2,
 											},
 										},
@@ -78,9 +91,9 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 0,
 												"timestamp": 1010,
-												"value": {
+												"value": toOpaqueJson({
 													"num": 0,
-												},
+												}),
 											},
 										},
 									},
@@ -99,7 +112,7 @@ describe("Presence", () => {
 										"clientToSessionId": {
 											[connectionId2]: {
 												"rev": 0,
-												"timestamp": 1000,
+												"timestamp": initialTime,
 												"value": attendeeId2,
 											},
 										},
@@ -109,9 +122,9 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 1,
 												"timestamp": 1020,
-												"value": {
+												"value": toOpaqueJson({
 													"num": 42,
-												},
+												}),
 											},
 										},
 									},
@@ -130,7 +143,7 @@ describe("Presence", () => {
 										"clientToSessionId": {
 											[connectionId2]: {
 												"rev": 0,
-												"timestamp": 1000,
+												"timestamp": initialTime,
 												"value": attendeeId2,
 											},
 										},
@@ -140,9 +153,9 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 2,
 												"timestamp": 1020,
-												"value": {
+												"value": toOpaqueJson({
 													"num": 84,
-												},
+												}),
 											},
 										},
 									},
@@ -174,7 +187,7 @@ describe("Presence", () => {
 				assertFinalExpectations(runtime, logger);
 			});
 
-			it("sets timer for default allowableUpdateLatency", async () => {
+			it("sets timer for default allowableUpdateLatencyMs", async () => {
 				runtime.signalsExpected.push([
 					{
 						type: "Pres:DatastoreUpdate",
@@ -186,7 +199,7 @@ describe("Presence", () => {
 									"clientToSessionId": {
 										[connectionId2]: {
 											"rev": 0,
-											"timestamp": 1000,
+											"timestamp": initialTime,
 											"value": attendeeId2,
 										},
 									},
@@ -196,9 +209,9 @@ describe("Presence", () => {
 										[attendeeId2]: {
 											"rev": 0,
 											"timestamp": 1010,
-											"value": {
+											"value": toOpaqueJson({
 												"num": 0,
-											},
+											}),
 										},
 									},
 								},
@@ -221,7 +234,7 @@ describe("Presence", () => {
 				clock.tick(100); // Time is now 1110
 			});
 
-			it("batches signals sent within default allowableUpdateLatency", async () => {
+			it("batches signals sent within default allowableUpdateLatencyMs", async () => {
 				runtime.signalsExpected.push(
 					[
 						{
@@ -234,7 +247,7 @@ describe("Presence", () => {
 										"clientToSessionId": {
 											[connectionId2]: {
 												"rev": 0,
-												"timestamp": 1000,
+												"timestamp": initialTime,
 												"value": attendeeId2,
 											},
 										},
@@ -244,9 +257,9 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 3,
 												"timestamp": 1060,
-												"value": {
+												"value": toOpaqueJson({
 													"num": 22,
-												},
+												}),
 											},
 										},
 									},
@@ -265,7 +278,7 @@ describe("Presence", () => {
 										"clientToSessionId": {
 											[connectionId2]: {
 												"rev": 0,
-												"timestamp": 1000,
+												"timestamp": initialTime,
 												"value": attendeeId2,
 											},
 										},
@@ -275,9 +288,9 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 6,
 												"timestamp": 1140,
-												"value": {
+												"value": toOpaqueJson({
 													"num": 90,
-												},
+												}),
 											},
 										},
 									},
@@ -329,7 +342,7 @@ describe("Presence", () => {
 				clock.tick(30); // Time is now 1180
 			});
 
-			it("batches signals sent within a specified allowableUpdateLatency", async () => {
+			it("batches signals sent within a specified allowableUpdateLatencyMs", async () => {
 				runtime.signalsExpected.push(
 					[
 						{
@@ -342,7 +355,7 @@ describe("Presence", () => {
 										"clientToSessionId": {
 											[connectionId2]: {
 												"rev": 0,
-												"timestamp": 1000,
+												"timestamp": initialTime,
 												"value": attendeeId2,
 											},
 										},
@@ -352,9 +365,9 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 2,
 												"timestamp": 1100,
-												"value": {
+												"value": toOpaqueJson({
 													"num": 34,
-												},
+												}),
 											},
 										},
 									},
@@ -373,7 +386,7 @@ describe("Presence", () => {
 										"clientToSessionId": {
 											[connectionId2]: {
 												"rev": 0,
-												"timestamp": 1000,
+												"timestamp": initialTime,
 												"value": attendeeId2,
 											},
 										},
@@ -383,9 +396,9 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 5,
 												"timestamp": 1220,
-												"value": {
+												"value": toOpaqueJson({
 													"num": 90,
-												},
+												}),
 											},
 										},
 									},
@@ -448,7 +461,7 @@ describe("Presence", () => {
 										"clientToSessionId": {
 											[connectionId2]: {
 												"rev": 0,
-												"timestamp": 1000,
+												"timestamp": initialTime,
 												"value": attendeeId2,
 											},
 										},
@@ -458,18 +471,18 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 0,
 												"timestamp": 1010,
-												"value": {
+												"value": toOpaqueJson({
 													"num": 0,
-												},
+												}),
 											},
 										},
 										"immediateUpdate": {
 											[attendeeId2]: {
 												"rev": 0,
 												"timestamp": 1010,
-												"value": {
+												"value": toOpaqueJson({
 													"num": 0,
-												},
+												}),
 											},
 										},
 									},
@@ -488,7 +501,7 @@ describe("Presence", () => {
 										"clientToSessionId": {
 											[connectionId2]: {
 												"rev": 0,
-												"timestamp": 1000,
+												"timestamp": initialTime,
 												"value": attendeeId2,
 											},
 										},
@@ -498,18 +511,18 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 2,
 												"timestamp": 1100,
-												"value": {
+												"value": toOpaqueJson({
 													"num": 34,
-												},
+												}),
 											},
 										},
 										"immediateUpdate": {
 											[attendeeId2]: {
 												"rev": 1,
 												"timestamp": 1110,
-												"value": {
+												"value": toOpaqueJson({
 													"num": 56,
-												},
+												}),
 											},
 										},
 									},
@@ -562,7 +575,7 @@ describe("Presence", () => {
 										"clientToSessionId": {
 											[connectionId2]: {
 												"rev": 0,
-												"timestamp": 1000,
+												"timestamp": initialTime,
 												"value": attendeeId2,
 											},
 										},
@@ -572,18 +585,18 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 2,
 												"timestamp": 1050,
-												"value": {
+												"value": toOpaqueJson({
 													"num": 34,
-												},
+												}),
 											},
 										},
 										"note": {
 											[attendeeId2]: {
 												"rev": 1,
 												"timestamp": 1020,
-												"value": {
+												"value": toOpaqueJson({
 													"message": "will be queued",
-												},
+												}),
 											},
 										},
 									},
@@ -600,7 +613,11 @@ describe("Presence", () => {
 								"data": {
 									"system:presence": {
 										"clientToSessionId": {
-											[connectionId2]: { "rev": 0, "timestamp": 1000, "value": attendeeId2 },
+											[connectionId2]: {
+												"rev": 0,
+												"timestamp": initialTime,
+												"value": attendeeId2,
+											},
 										},
 									},
 									"s:name:testStateWorkspace": {
@@ -608,7 +625,7 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 2,
 												"timestamp": 1060,
-												"value": { "message": "final message" },
+												"value": toOpaqueJson({ "message": "final message" }),
 											},
 										},
 									},
@@ -666,7 +683,7 @@ describe("Presence", () => {
 									"clientToSessionId": {
 										[connectionId2]: {
 											"rev": 0,
-											"timestamp": 1000,
+											"timestamp": initialTime,
 											"value": attendeeId2,
 										},
 									},
@@ -676,9 +693,9 @@ describe("Presence", () => {
 										[attendeeId2]: {
 											"rev": 2,
 											"timestamp": 1050,
-											"value": {
+											"value": toOpaqueJson({
 												"num": 34,
-											},
+											}),
 										},
 									},
 								},
@@ -687,9 +704,9 @@ describe("Presence", () => {
 										[attendeeId2]: {
 											"rev": 2,
 											"timestamp": 1060,
-											"value": {
+											"value": toOpaqueJson({
 												"message": "final message",
-											},
+											}),
 										},
 									},
 								},
@@ -747,7 +764,11 @@ describe("Presence", () => {
 								"data": {
 									"system:presence": {
 										"clientToSessionId": {
-											[connectionId2]: { "rev": 0, "timestamp": 1000, "value": attendeeId2 },
+											[connectionId2]: {
+												"rev": 0,
+												"timestamp": initialTime,
+												"value": attendeeId2,
+											},
 										},
 									},
 									"n:name:testNotificationWorkspace": {
@@ -755,7 +776,7 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 0,
 												"timestamp": 0,
-												"value": { "name": "newId", "args": [77] },
+												"value": toOpaqueJson({ "name": "newId", "args": [77] }),
 												"ignoreUnmonitored": true,
 											},
 										},
@@ -773,7 +794,11 @@ describe("Presence", () => {
 								"data": {
 									"system:presence": {
 										"clientToSessionId": {
-											[connectionId2]: { "rev": 0, "timestamp": 1000, "value": attendeeId2 },
+											[connectionId2]: {
+												"rev": 0,
+												"timestamp": initialTime,
+												"value": attendeeId2,
+											},
 										},
 									},
 									"n:name:testNotificationWorkspace": {
@@ -781,7 +806,7 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 0,
 												"timestamp": 0,
-												"value": { "name": "newId", "args": [88] },
+												"value": toOpaqueJson({ "name": "newId", "args": [88] }),
 												"ignoreUnmonitored": true,
 											},
 										},
@@ -793,7 +818,7 @@ describe("Presence", () => {
 				);
 
 				// Configure a notifications workspace
-				// eslint-disable-next-line @typescript-eslint/ban-types
+				// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/ban-types
 				const notificationsWorkspace: NotificationsWorkspace<{}> =
 					presence.notifications.getWorkspace("name:testNotificationWorkspace", {});
 
@@ -837,7 +862,7 @@ describe("Presence", () => {
 										"clientToSessionId": {
 											[connectionId2]: {
 												"rev": 0,
-												"timestamp": 1000,
+												"timestamp": initialTime,
 												"value": attendeeId2,
 											},
 										},
@@ -847,9 +872,9 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 3,
 												"timestamp": 1040,
-												"value": {
+												"value": toOpaqueJson({
 													"num": 56,
-												},
+												}),
 											},
 										},
 									},
@@ -858,10 +883,10 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 0,
 												"timestamp": 0,
-												"value": {
+												"value": toOpaqueJson({
 													"name": "newId",
 													"args": [99],
-												},
+												}),
 												"ignoreUnmonitored": true,
 											},
 										},
@@ -881,7 +906,7 @@ describe("Presence", () => {
 										"clientToSessionId": {
 											[connectionId2]: {
 												"rev": 0,
-												"timestamp": 1000,
+												"timestamp": initialTime,
 												"value": attendeeId2,
 											},
 										},
@@ -891,10 +916,10 @@ describe("Presence", () => {
 											[attendeeId2]: {
 												"rev": 0,
 												"timestamp": 0,
-												"value": {
+												"value": toOpaqueJson({
 													"name": "newId",
 													"args": [111],
-												},
+												}),
 												"ignoreUnmonitored": true,
 											},
 										},
@@ -913,7 +938,7 @@ describe("Presence", () => {
 					}),
 				}); // will be queued, deadline is 1110
 
-				// eslint-disable-next-line @typescript-eslint/ban-types
+				// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/ban-types
 				const notificationsWorkspace: NotificationsWorkspace<{}> =
 					presence.notifications.getWorkspace("name:testNotificationWorkspace", {});
 

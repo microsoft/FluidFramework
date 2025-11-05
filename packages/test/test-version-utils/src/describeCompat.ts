@@ -5,7 +5,7 @@
 
 import type { OdspTestDriver } from "@fluid-private/test-drivers";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import type { IPersistedCache } from "@fluidframework/odsp-driver-definitions/internal";
+import type { IPersistedCache } from "@fluidframework/driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	getUnexpectedLogErrorException,
@@ -30,6 +30,7 @@ import {
 import {
 	getVersionedTestObjectProviderFromApis,
 	getCompatVersionedTestObjectProviderFromApis,
+	getDriverInformationWhenNoProviderIsAvailable,
 } from "./compatUtils.js";
 import {
 	getContainerRuntimeApi,
@@ -99,8 +100,14 @@ function createCompatSuite(
 						});
 						logger.sendErrorEvent(
 							{
+								// Note: TestObjectProvider already adds driverType and driverEndpointName to logs that go through it.
+								// In this code path we could not create the provider so we have to do things by hand.
+								...getDriverInformationWhenNoProviderIsAvailable(
+									driver,
+									odspEndpointName,
+									r11sEndpointName,
+								),
 								eventName: "TestObjectProviderLoadFailed",
-								driverType: driver,
 							},
 							error,
 						);

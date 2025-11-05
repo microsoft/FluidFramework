@@ -9,8 +9,8 @@ import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	type CodecWriteOptions,
 	FluidClientVersion,
+	FormatValidatorNoOp,
 	type IJsonCodec,
-	noopValidator,
 } from "../../codec/index.js";
 import {
 	type IdAllocator,
@@ -28,8 +28,6 @@ import type { RevisionTag, RevisionTagCodec } from "../rebase/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
 
 import type * as Delta from "./delta.js";
-import { makeDetachedNodeToFieldCodec } from "./detachedFieldIndexCodec.js";
-import type { Format } from "./detachedFieldIndexFormat.js";
 import type {
 	DetachedField,
 	DetachedFieldSummaryData,
@@ -37,6 +35,7 @@ import type {
 	Major,
 	Minor,
 } from "./detachedFieldIndexTypes.js";
+import { makeDetachedFieldIndexCodec } from "./detachedFieldIndexCodecs.js";
 
 /**
  * The tree index records detached field IDs and associates them with a change atom ID.
@@ -59,7 +58,7 @@ export class DetachedFieldIndex {
 		Delta.DetachedNodeId
 	> = new Map();
 
-	private readonly codec: IJsonCodec<DetachedFieldSummaryData, Format>;
+	private readonly codec: IJsonCodec<DetachedFieldSummaryData>;
 	private readonly options: CodecWriteOptions;
 
 	/**
@@ -84,11 +83,10 @@ export class DetachedFieldIndex {
 		options?: CodecWriteOptions,
 	) {
 		this.options = options ?? {
-			jsonValidator: noopValidator,
-			oldestCompatibleClient: FluidClientVersion.v2_0,
+			jsonValidator: FormatValidatorNoOp,
+			minVersionForCollab: FluidClientVersion.v2_0,
 		};
-		// TODO: this should take in CodecWriteOptions, and use it to pick the write version.
-		this.codec = makeDetachedNodeToFieldCodec(revisionTagCodec, this.options, idCompressor);
+		this.codec = makeDetachedFieldIndexCodec(revisionTagCodec, this.options, idCompressor);
 	}
 
 	public clone(): DetachedFieldIndex {
@@ -295,7 +293,10 @@ export class DetachedFieldIndex {
 					root: brand<ForestRootId>(root + i),
 					latestRelevantRevision: revision,
 				});
-				setInNestedMap(this.latestRelevantRevisionToFields, revision, root, nodeId);
+				setInNestedMap(this.latestRelevantRevisionToFields, revision, root + i, {
+					major: nodeId.major,
+					minor: nodeId.minor + i,
+				});
 			}
 		}
 		return root;
@@ -337,7 +338,7 @@ export class DetachedFieldIndex {
 	 * Loads the tree index from the given string, this overrides any existing data.
 	 */
 	public loadData(data: JsonCompatibleReadOnly): void {
-		const detachedFieldIndex: DetachedFieldSummaryData = this.codec.decode(data as Format);
+		const detachedFieldIndex: DetachedFieldSummaryData = this.codec.decode(data);
 
 		this.rootIdAllocator = idAllocatorFromMaxId(
 			detachedFieldIndex.maxId,

@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	ISummaryAck,
 	ISummaryNack,
 	ISequencedDocumentAugmentedMessage,
 	ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
-import { IScribe, ISequencedOperationMessage } from "@fluidframework/server-services-core";
+import type { IScribe, ISequencedOperationMessage } from "@fluidframework/server-services-core";
 
 /**
  * @internal

@@ -102,6 +102,8 @@ export {
 	cursorChunk,
 	tryGetChunk,
 	type ChunkedCursor,
+	type DetachedFieldIndexFormatVersion,
+	getCodecTreeForDetachedFieldIndexFormat,
 } from "./tree/index.js";
 
 export {
@@ -138,16 +140,18 @@ export {
 	storedEmptyFieldSchema,
 	type StoredSchemaCollection,
 	schemaFormatV1,
+	schemaFormatV2,
 	LeafNodeStoredSchema,
 	ObjectNodeStoredSchema,
 	MapNodeStoredSchema,
 	decodeFieldSchema,
-	encodeFieldSchema,
+	encodeFieldSchemaV1,
+	encodeFieldSchemaV2,
 	storedSchemaDecodeDispatcher,
 	type SchemaAndPolicy,
 	Multiplicity,
 	type SchemaPolicy,
-	SchemaVersion,
+	SchemaFormatVersion,
 } from "./schema-stored/index.js";
 
 export {
@@ -190,10 +194,12 @@ export {
 	revisionMetadataSourceFromInfo,
 	type RevisionInfo,
 	type EncodedRevisionTag,
+	type EncodedStableId,
 	type EncodedChangeAtomId,
 	taggedAtomId,
 	taggedOptAtomId,
 	offsetChangeAtomId,
+	StableIdSchema,
 	subtractChangeAtomIds,
 	replaceAtomRevisions,
 	replaceChange,
@@ -203,6 +209,7 @@ export {
 	type ChangeAtomIdRangeMap,
 	newChangeAtomIdRangeMap,
 	compareRevisions,
+	diffHistories,
 } from "./rebase/index.js";
 
 export {

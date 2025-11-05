@@ -3,13 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
-import { IDocumentService, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
+import type {
+	IDocumentService,
+	IResolvedUrl,
+} from "@fluidframework/driver-definitions/internal";
 import { UsageError } from "@fluidframework/driver-utils/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
-import { ICacheAndTracker } from "../epochTracker.js";
+import type { ICacheAndTracker } from "../epochTracker.js";
 import { OdspDocumentServiceFactoryCore } from "../odspDocumentServiceFactoryCore.js";
 import { createOdspLogger, getOdspResolvedUrl } from "../odspUtils.js";
 

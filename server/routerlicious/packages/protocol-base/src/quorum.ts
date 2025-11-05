@@ -4,7 +4,7 @@
  */
 
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import {
+import type {
 	ICommittedProposal,
 	IQuorum,
 	IQuorumClients,

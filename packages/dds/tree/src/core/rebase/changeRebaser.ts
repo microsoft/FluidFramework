@@ -12,7 +12,7 @@ import type { RevisionTag } from "./types.js";
  *
  * This interface is used to provide rebase policy to `Rebaser`.
  *
- * The implementation must ensure TChangeset forms a [group](https://en.wikipedia.org/wiki/Group_(mathematics)) where:
+ * The implementation must ensure TChangeset forms a {@link https://en.wikipedia.org/wiki/Group_(mathematics | group}) where:
  * - `compose([])` is the identity element.
  * - associativity is defined as `compose([...a, ...b])` is equal to
  * `compose([compose(a), compose(b)])` for all `a` and `b`.
@@ -96,8 +96,6 @@ export interface ChangeRebaser<TChangeset> {
 	): TChangeset;
 }
 
-/**
- */
 export interface TaggedChange<TChangeset, TTag = RevisionTag | undefined> {
 	readonly revision: TTag;
 	/**
@@ -127,16 +125,12 @@ export function mapTaggedChange<TIn, TOut>(
  */
 export type RevisionIndexer = (tag: RevisionTag) => number | undefined;
 
-/**
- */
 export interface RevisionMetadataSource {
 	readonly getIndex: RevisionIndexer;
 	readonly tryGetInfo: (tag: RevisionTag | undefined) => RevisionInfo | undefined;
 	readonly hasRollback: (tag: RevisionTag) => boolean;
 }
 
-/**
- */
 export interface RevisionInfo {
 	readonly revision: RevisionTag;
 	/**

@@ -42,19 +42,28 @@ export interface MapTreeNodeViewGeneric<TNode> extends NodeData {
 	 * This is the subset of map needed to view the tree.
 	 * Theoretically `Symbol.iterator` and "keys" are redundant.
 	 */
-	readonly fields: Pick<
-		Map<FieldKey, MapTreeFieldViewGeneric<TNode>>,
-		typeof Symbol.iterator | "get"
-	>;
+	readonly fields: MinimalFieldMap<MapTreeFieldViewGeneric<TNode>>;
+}
+
+/**
+ * A minimal map for the fields of a {@link MapTreeNodeViewGeneric}.
+ * @remarks
+ * Subset of map, so can be implemented by `Map<FieldKey, TField>`.
+ */
+export interface MinimalFieldMap<TField> {
+	[Symbol.iterator]: () => Iterator<[FieldKey, TField]>;
+	get: (key: FieldKey) => TField | undefined;
 }
 
 /**
  * A field in {@link MapTreeNodeViewGeneric}.
+ * @remarks
+ * Subset of array, so can be implemented by `TNode[]`.
  */
-export type MapTreeFieldViewGeneric<TNode> = Pick<
-	readonly TNode[],
-	typeof Symbol.iterator | "length"
->;
+export interface MapTreeFieldViewGeneric<TNode> {
+	readonly [Symbol.iterator]: () => Iterator<TNode>;
+	readonly length: number;
+}
 
 /**
  * Like {@link MapTree} but with the minimal properties needed for reading.

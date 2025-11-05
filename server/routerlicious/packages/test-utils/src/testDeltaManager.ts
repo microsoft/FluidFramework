@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IDeltaService } from "@fluidframework/server-services-core";
+import type { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import type { IDeltaService } from "@fluidframework/server-services-core";
 
 /**
  * @internal

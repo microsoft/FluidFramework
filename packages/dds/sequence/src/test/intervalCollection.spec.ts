@@ -2365,6 +2365,11 @@ describe("the start and end positions of intervals are updated in response to ed
 					expectedTextAfterRemoval,
 					"unexpected text",
 				);
+				assert.strictEqual(
+					initial,
+					collection.getIntervalById(intervalId),
+					"the interval instance should survive reconnect",
+				);
 
 				// Verify that the interval was updated correctly in response to removal.
 				assertInterval(clients[0].sharedString, intervalId, expected);
@@ -2388,6 +2393,11 @@ describe("the start and end positions of intervals are updated in response to ed
 				clients[0].containerRuntime.connected = true;
 				containerRuntimeFactory.processAllMessages();
 				await assertConsistent(clients);
+				assert.strictEqual(
+					initial,
+					collection.getIntervalById(intervalId),
+					"the interval instance should survive reconnect",
+				);
 
 				// Verify that the interval was updated correctly in response to removal.
 				assertInterval(clients[0].sharedString, intervalId, expected);
@@ -2411,6 +2421,11 @@ describe("the start and end positions of intervals are updated in response to ed
 				clients[1].containerRuntime.connected = true;
 				containerRuntimeFactory.processAllMessages();
 				await assertConsistent(clients);
+				assert.strictEqual(
+					initial,
+					collection.getIntervalById(intervalId),
+					"the interval instance should survive reconnect",
+				);
 
 				// Verify that the interval was updated correctly in response to removal.
 				assertInterval(clients[0].sharedString, intervalId, expected);

@@ -232,22 +232,30 @@ Generates type declaration entrypoints for Fluid Framework API levels (/alpha, /
 ```
 USAGE
   $ flub generate entrypoints [-v | --quiet] [--mainEntrypoint <value>] [--outDir <value>] [--outFilePrefix <value>]
-    [--outFileAlpha <value>] [--outFileBeta <value>] [--outFileLegacy <value>] [--outFilePublic <value>]
-    [--outFileSuffix <value>] [--node10TypeCompat]
+    [--outFileAlpha <value>] [--outFileBeta <value>] [--outFilePublic <value>] [--outFileLegacyAlpha <value>]
+    [--outFileLegacyBeta <value>] [--outFileLegacyPublic <value>] [--outFileSuffix <value>] [--node10TypeCompat]
 
 FLAGS
-  --mainEntrypoint=<value>  [default: ./src/index.ts] Main entrypoint file containing all untrimmed exports.
-  --node10TypeCompat        Optional generation of Node10 resolution compatible type entrypoints matching others.
-  --outDir=<value>          [default: ./lib] Directory to emit entrypoint declaration files.
-  --outFileAlpha=<value>    [default: alpha] Base file name for alpha entrypoint declaration files.
-  --outFileBeta=<value>     [default: beta] Base file name for beta entrypoint declaration files.
-  --outFileLegacy=<value>   [default: legacy] Base file name for legacy entrypoint declaration files.
-  --outFilePrefix=<value>   File name prefix for emitting entrypoint declaration files. Pattern of
-                            '{@unscopedPackageName}' within value will be replaced with the unscoped name of this
-                            package.
-  --outFilePublic=<value>   [default: public] Base file name for public entrypoint declaration files.
-  --outFileSuffix=<value>   [default: .d.ts] File name suffix including extension for emitting entrypoint declaration
-                            files.
+  --mainEntrypoint=<value>       [default: ./src/index.ts] Main entrypoint file containing all untrimmed exports.
+  --node10TypeCompat             Optional generation of Node10 resolution compatible type entrypoints matching others.
+  --outDir=<value>               [default: ./lib] Directory to emit entrypoint declaration files.
+  --outFileAlpha=<value>         [default: alpha] Base file name for alpha entrypoint declaration files. To opt out of
+                                 generating this entrypoint, set to `none`.
+  --outFileBeta=<value>          [default: beta] Base file name for beta entrypoint declaration files. To opt out of
+                                 generating this entrypoint, set to `none`.
+  --outFileLegacyAlpha=<value>   Base file name for legacyAlpha entrypoint declaration files. To opt into generating
+                                 this entrypoint, set to a value other than `none`.
+  --outFileLegacyBeta=<value>    Base file name for legacyBeta entrypoint declaration files. To opt into generating this
+                                 entrypoint, set to a value other than `none`.
+  --outFileLegacyPublic=<value>  Base file name for legacyPublic entrypoint declaration files. To opt into generating
+                                 this entrypoint, set to a value other than `none`.
+  --outFilePrefix=<value>        File name prefix for emitting entrypoint declaration files. Pattern of
+                                 '{@unscopedPackageName}' within value will be replaced with the unscoped name of this
+                                 package.
+  --outFilePublic=<value>        [default: public] Base file name for public entrypoint declaration files. To opt out of
+                                 generating this entrypoint, set to `none`.
+  --outFileSuffix=<value>        [default: .d.ts] File name suffix including extension for emitting entrypoint
+                                 declaration files.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
@@ -379,17 +387,17 @@ Generates type tests for a package or group of packages.
 
 ```
 USAGE
-  $ flub generate typetests [-v | --quiet] [--entrypoint public|alpha|beta|internal|legacy] [--outDir <value>]
-    [--outFile <value>] [--publicFallback] [--concurrency <value>] [--branch <value> [--changed | [--all | --dir
-    <value>... | --packages | -g client|server|azure|build-tools|gitrest|historian|all... | --releaseGroupRoot
-    client|server|azure|build-tools|gitrest|historian|all...]]] [--private] [--scope <value>... | --skipScope
-    <value>...]
+  $ flub generate typetests [-v | --quiet] [--entrypoint public|alpha|beta|internal|legacyPublic|legacyBeta|legacyAlpha]
+    [--outDir <value>] [--outFile <value>] [--publicFallback] [--concurrency <value>] [--branch <value> [--changed |
+    [--all | --dir <value>... | --packages | -g client|server|azure|build-tools|gitrest|historian|all... |
+    --releaseGroupRoot client|server|azure|build-tools|gitrest|historian|all...]]] [--private] [--scope <value>... |
+    --skipScope <value>...]
 
 FLAGS
   --concurrency=<value>  [default: 25] The number of tasks to execute concurrently.
   --entrypoint=<option>  What entrypoint to generate tests for. Use "public" for the default entrypoint. If this flag is
                          provided it will override the typeValidation.entrypoint setting in the package's package.json.
-                         <options: public|alpha|beta|internal|legacy>
+                         <options: public|alpha|beta|internal|legacyPublic|legacyBeta|legacyAlpha>
   --outDir=<value>       [default: ./src/test/types] Where to emit the type tests file.
   --outFile=<value>      [default: validate{@unscopedPackageName}Previous.generated.ts] File name for the generated type
                          tests. The pattern '{@unscopedPackageName}' within the value will be replaced with the unscoped

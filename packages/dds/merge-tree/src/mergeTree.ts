@@ -6,12 +6,17 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable no-bitwise */
 
-import { assert, Heap, IComparer } from "@fluidframework/core-utils/internal";
+import {
+	assert,
+	Heap,
+	type IComparer,
+	DoublyLinkedList,
+	type ListNode,
+} from "@fluidframework/core-utils/internal";
 import { DataProcessingError, UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { IAttributionCollectionSerializer } from "./attributionCollection.js";
-import { Client } from "./client.js";
-import { DoublyLinkedList, ListNode } from "./collections/index.js";
+import type { IAttributionCollectionSerializer } from "./attributionCollection.js";
+import type { Client } from "./client.js";
 import {
 	NonCollabClient,
 	TreeMaintenanceSequenceNumber,
@@ -20,16 +25,16 @@ import {
 import { EndOfTreeSegment, StartOfTreeSegment } from "./endOfTreeSegment.js";
 import {
 	LocalReferenceCollection,
-	LocalReferencePosition,
+	type LocalReferencePosition,
 	SlidingPreference,
 	anyLocalReferencePosition,
 	filterLocalReferencePositions,
 } from "./localReference.js";
 import {
-	IMergeTreeDeltaOpArgs,
-	IMergeTreeSegmentDelta,
-	MergeTreeDeltaCallback,
-	MergeTreeMaintenanceCallback,
+	type IMergeTreeDeltaOpArgs,
+	type IMergeTreeSegmentDelta,
+	type MergeTreeDeltaCallback,
+	type MergeTreeMaintenanceCallback,
 	MergeTreeMaintenanceType,
 } from "./mergeTreeDeltaCallback.js";
 import {
@@ -42,14 +47,14 @@ import {
 } from "./mergeTreeNodeWalk.js";
 import {
 	CollaborationWindow,
-	IMergeNode,
-	ISegmentAction,
-	ISegmentChanges,
-	InsertContext,
+	type IMergeNode,
+	type ISegmentAction,
+	type ISegmentChanges,
+	type InsertContext,
 	Marker,
 	MaxNodesInBlock,
 	MergeBlock,
-	SegmentGroup,
+	type SegmentGroup,
 	assertSegmentLeaf,
 	assignChild,
 	getMinSeqPerspective,
@@ -69,10 +74,10 @@ import {
 	createRemoveRangeOp,
 } from "./opBuilder.js";
 import {
-	IMergeTreeDeltaOp,
-	IRelativePosition,
+	type IRelativePosition,
 	MergeTreeDeltaType,
 	ReferenceType,
+	type IMergeTreeOp,
 } from "./ops.js";
 import { PartialSequenceLengths } from "./partialLengths.js";
 import {
@@ -83,10 +88,10 @@ import {
 	RemoteObliteratePerspective,
 	allAckedChangesPerspective,
 } from "./perspective.js";
-import { PropertySet, createMap, extend, extendIfUndefined } from "./properties.js";
+import { type PropertySet, createMap, extend, extendIfUndefined } from "./properties.js";
 import {
 	DetachedReferencePosition,
-	ReferencePosition,
+	type ReferencePosition,
 	refGetTileLabels,
 	refHasTileLabel,
 	refTypeIncludesFlag,
@@ -94,7 +99,7 @@ import {
 import { SegmentGroupCollection } from "./segmentGroupCollection.js";
 import {
 	assertRemoved,
-	ISegmentInsideObliterateInfo,
+	type ISegmentInsideObliterateInfo,
 	isInsideObliterate,
 	isMergeNodeInfo,
 	isRemoved,
@@ -210,8 +215,7 @@ function ackSegment(
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IMergeTreeOptions {
 	catchUpBlobName?: string;
@@ -395,7 +399,7 @@ function getSlideToSegment(
 	slidingPreference: SlidingPreference = SlidingPreference.FORWARD,
 	perspective: Perspective,
 	cache?: Map<ISegmentLeaf, { seg?: ISegmentLeaf }>,
-	useNewSlidingBehavior: boolean = false,
+	canSlideToEndpoint: boolean = false,
 ): [ISegmentLeaf | undefined, "start" | "end" | undefined] {
 	if (
 		!segment ||
@@ -443,7 +447,7 @@ function getSlideToSegment(
 	//
 	// in both of these cases detached may be substituted for one of the special
 	// endpoint segments, if such behavior is enabled
-	if (!useNewSlidingBehavior) {
+	if (!canSlideToEndpoint) {
 		if (slidingPreference === SlidingPreference.BACKWARD) {
 			forwardExcursion(segment, goFurtherToFindSlideToSegment);
 		} else {
@@ -469,15 +473,17 @@ function getSlideToSegment(
  * @internal
  */
 export function getSlideToSegoff(
-	segoff: { segment: ISegmentInternal | undefined; offset: number | undefined },
+	segoff: { segment: ISegmentInternal; offset: number } | undefined,
 	slidingPreference: SlidingPreference = SlidingPreference.FORWARD,
 	perspective: Perspective = allAckedChangesPerspective,
-	useNewSlidingBehavior: boolean = false,
-): {
-	segment: ISegmentInternal | undefined;
-	offset: number | undefined;
-} {
-	if (!isSegmentLeaf(segoff.segment)) {
+	canSlideToEndpoint: boolean = false,
+):
+	| {
+			segment: ISegmentInternal;
+			offset: number;
+	  }
+	| undefined {
+	if (!isSegmentLeaf(segoff?.segment)) {
 		return segoff;
 	}
 	const [segment, _] = getSlideToSegment(
@@ -485,13 +491,16 @@ export function getSlideToSegoff(
 		slidingPreference,
 		perspective,
 		undefined,
-		useNewSlidingBehavior,
+		canSlideToEndpoint,
 	);
 	if (segment === segoff.segment) {
 		return segoff;
 	}
-	const offset =
-		segment && segment.ordinal < segoff.segment.ordinal ? segment.cachedLength - 1 : 0;
+	if (segment === undefined) {
+		return undefined;
+	}
+
+	const offset = segment.ordinal < segoff.segment.ordinal ? segment.cachedLength - 1 : 0;
 	return {
 		segment,
 		offset,
@@ -705,7 +714,7 @@ export class MergeTree {
 
 	/**
 	 * Compute the net length of this segment leaf from some perspective.
-	 * @returns - Undefined if the segment has been removed and its removal is common knowledge to all collaborators (and therefore
+	 * @returns Undefined if the segment has been removed and its removal is common knowledge to all collaborators (and therefore
 	 * may not even be present on clients that have loaded from a summary beyond this point). Otherwise, the length of the segment.
 	 */
 	public leafLength(
@@ -849,10 +858,12 @@ export class MergeTree {
 	public getContainingSegment(
 		pos: number,
 		perspective: Perspective,
-	): {
-		segment: ISegmentLeaf | undefined;
-		offset: number | undefined;
-	} {
+	):
+		| {
+				segment: ISegmentLeaf;
+				offset: number;
+		  }
+		| undefined {
 		assert(
 			perspective.localSeq === undefined ||
 				perspective.clientId === this.collabWindow.clientId,
@@ -868,6 +879,9 @@ export class MergeTree {
 			return false;
 		};
 		this.nodeMap(perspective, leaf, undefined, pos, pos + 1);
+		if (segment === undefined || offset === undefined) {
+			return undefined;
+		}
 		return { segment, offset };
 	}
 
@@ -1260,10 +1274,11 @@ export class MergeTree {
 	): Marker | undefined {
 		let foundMarker: Marker | undefined;
 
-		const { segment } = this.getContainingSegment(startPos, this.localPerspective);
-		if (!isSegmentLeaf(segment)) {
+		const segoff = this.getContainingSegment(startPos, this.localPerspective);
+		if (!isSegmentLeaf(segoff?.segment)) {
 			return undefined;
 		}
+		const { segment } = segoff;
 
 		depthFirstNodeWalk(
 			segment.parent,
@@ -1529,7 +1544,7 @@ export class MergeTree {
 
 		if (isSegmentLeaf(segmentInfo?.segment)) {
 			const segmentPosition = this.getPosition(segmentInfo.segment, this.localPerspective);
-			return segmentPosition + segmentInfo.offset!;
+			return segmentPosition + segmentInfo.offset;
 		} else {
 			if (remoteClientPosition === this.getLength(remotePerspective)) {
 				return this.getLength(this.localPerspective);
@@ -2085,14 +2100,9 @@ export class MergeTree {
 		const createRefFromSequencePlace = (
 			place: InteriorSequencePlace,
 		): LocalReferencePosition => {
-			const { segment: placeSeg, offset: placeOffset } = this.getContainingSegment(
-				place.pos,
-				perspective,
-			);
-			assert(
-				isSegmentLeaf(placeSeg) && placeOffset !== undefined,
-				0xa3f /* segments cannot be undefined */,
-			);
+			const segOff = this.getContainingSegment(place.pos, perspective);
+			assert(isSegmentLeaf(segOff?.segment), 0xa3f /* segments cannot be undefined */);
+			const { segment: placeSeg, offset: placeOffset } = segOff;
 			return this.createLocalReferencePosition(
 				placeSeg,
 				placeOffset,
@@ -2375,7 +2385,15 @@ export class MergeTree {
 	/**
 	 * Revert an unacked local op
 	 */
-	public rollback(op: IMergeTreeDeltaOp, localOpMetadata: SegmentGroup): void {
+	public rollback(op: IMergeTreeOp, localOpMetadata: SegmentGroup | SegmentGroup[]): void {
+		if (op.type === MergeTreeDeltaType.GROUP) {
+			assert(Array.isArray(localOpMetadata), 0xbe2 /* metadata must be array for group ops */);
+			for (let i = op.ops.length - 1; i >= 0; i--) {
+				this.rollback(op.ops[i], localOpMetadata[i]);
+			}
+			return;
+		}
+
 		const rollbackStamp: OperationStamp = {
 			seq: TreeMaintenanceSequenceNumber,
 			clientId: NonCollabClient,
@@ -2393,31 +2411,31 @@ export class MergeTree {
 					segmentSegmentGroup === pendingSegmentGroup,
 					0x3ee /* Unexpected segmentGroup in segment */,
 				);
-
 				assert(
-					isRemoved(segment) &&
-						segment.removes[0].clientId === this.collabWindow.clientId &&
-						segment.removes[0].type === "setRemove",
+					isRemoved(segment) && segment.removes[0].type === "setRemove",
 					0x39d /* Rollback segment removedClientId does not match local client */,
 				);
-				// This also removes obliterates, but that should be ok as we can only remove a segment once.
-				// If we were able to remove it locally, that also means there are no remote removals (since rollback is synchronous).
-				removeRemovalInfo(segment);
+				// if a peer client concurrently deleted the segment, don't revive it on rollback
+				if (segment.removes[0].clientId === this.collabWindow.clientId) {
+					// This also removes obliterates, but that should be ok as we can only remove a segment once.
+					// If we were able to remove it locally, that also means there are no remote removals (since rollback is synchronous).
+					removeRemovalInfo(segment);
 
-				this.blockUpdatePathLengths(segment.parent, rollbackStamp);
+					this.blockUpdatePathLengths(segment.parent, rollbackStamp);
 
-				// Note: optional chaining short-circuits:
-				// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining#short-circuiting
-				this.mergeTreeDeltaCallback?.(
-					{
-						op: createInsertSegmentOp(this.findRollbackPosition(segment), segment),
-						rollback: true,
-					},
-					{
-						operation: MergeTreeDeltaType.INSERT,
-						deltaSegments: [{ segment }],
-					},
-				);
+					// Note: optional chaining short-circuits:
+					// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining#short-circuiting
+					this.mergeTreeDeltaCallback?.(
+						{
+							op: createInsertSegmentOp(this.findRollbackPosition(segment), segment),
+							rollback: true,
+						},
+						{
+							operation: MergeTreeDeltaType.INSERT,
+							deltaSegments: [{ segment }],
+						},
+					);
+				}
 			});
 		} else if (
 			op.type === MergeTreeDeltaType.INSERT ||

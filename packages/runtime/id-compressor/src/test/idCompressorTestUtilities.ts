@@ -6,9 +6,9 @@
 import { strict as assert } from "node:assert";
 
 import {
-	BaseFuzzTestState,
-	Generator,
-	SaveInfo,
+	type BaseFuzzTestState,
+	type Generator,
+	type SaveInfo,
 	createWeightedGenerator,
 	interleave,
 	makeRandom,
@@ -16,27 +16,27 @@ import {
 	repeat,
 	take,
 } from "@fluid-private/stochastic-test-utils";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 
 import { IdCompressor } from "../idCompressor.js";
 import {
 	type IIdCompressor,
 	type IIdCompressorCore,
-	IdCreationRange,
-	OpSpaceCompressedId,
-	SerializedIdCompressorWithNoSession,
-	SerializedIdCompressorWithOngoingSession,
-	SessionId,
-	SessionSpaceCompressedId,
-	StableId,
+	type IdCreationRange,
+	type OpSpaceCompressedId,
+	type SerializedIdCompressorWithNoSession,
+	type SerializedIdCompressorWithOngoingSession,
+	type SessionId,
+	type SessionSpaceCompressedId,
+	type StableId,
 	createIdCompressor,
 } from "../index.js";
 import { SessionSpaceNormalizer } from "../sessionSpaceNormalizer.js";
 import { assertIsSessionId, createSessionId, localIdFromGenCount } from "../utilities.js";
 
 import {
-	FinalCompressedId,
-	ReadonlyIdCompressor,
+	type FinalCompressedId,
+	type ReadonlyIdCompressor,
 	fail,
 	getOrCreate,
 	incrementStableId,
@@ -730,12 +730,15 @@ export function roundtrip(
 	const capacity: number = getClusterSize(compressor);
 	if (withSession) {
 		const serialized = compressor.serialize(withSession);
-		const roundtripped = IdCompressor.deserialize(serialized);
+		const roundtripped = IdCompressor.deserialize({ serialized });
 		modifyClusterSize(roundtripped, capacity);
 		return [serialized, roundtripped];
 	} else {
 		const nonLocalSerialized = compressor.serialize(withSession);
-		const roundtripped = IdCompressor.deserialize(nonLocalSerialized, createSessionId());
+		const roundtripped = IdCompressor.deserialize({
+			serialized: nonLocalSerialized,
+			newSessionId: createSessionId(),
+		});
 		modifyClusterSize(roundtripped, capacity);
 		return [nonLocalSerialized, roundtripped];
 	}
@@ -1063,13 +1066,16 @@ export function createAlwaysFinalizedIdCompressor(
 export function createAlwaysFinalizedIdCompressor(
 	sessionId: SessionId,
 	logger?: ITelemetryBaseLogger,
+	seed?: number,
 ): IIdCompressor & IIdCompressorCore;
 export function createAlwaysFinalizedIdCompressor(
 	sessionIdOrLogger?: SessionId | ITelemetryBaseLogger,
 	loggerOrUndefined?: ITelemetryBaseLogger,
+	seed?: number,
 ): IIdCompressor & IIdCompressorCore {
+	const random = seed === undefined ? makeRandom() : makeRandom(seed);
 	const sessionId =
-		typeof sessionIdOrLogger === "string" ? sessionIdOrLogger : createSessionId();
+		typeof sessionIdOrLogger === "string" ? sessionIdOrLogger : (random.uuid4() as SessionId);
 	const logger =
 		(loggerOrUndefined ?? typeof sessionIdOrLogger === "object")
 			? (sessionIdOrLogger as ITelemetryBaseLogger)
@@ -1077,7 +1083,7 @@ export function createAlwaysFinalizedIdCompressor(
 	// This local session is unused, but it needs to not collide with the GhostSession, so allocate a random one.
 	// This causes the compressor to serialize non-deterministically even when provided an explicit SessionId.
 	// This can be fixed in the future if needed.
-	const compressor = createIdCompressor(createSessionId(), logger);
+	const compressor = createIdCompressor(random.uuid4() as SessionId, logger);
 	// Permanently put the compressor in a ghost session
 	(compressor as IdCompressor).startGhostSession(sessionId);
 	return compressor;

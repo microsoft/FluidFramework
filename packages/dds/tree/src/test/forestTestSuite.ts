@@ -29,10 +29,9 @@ import {
 	moveToDetachedField,
 	rootFieldKey,
 } from "../core/index.js";
-import { typeboxValidator } from "../external-utilities/index.js";
+import { FormatValidatorBasic } from "../external-utilities/index.js";
 import {
 	cursorForJsonableTreeField,
-	initializeForest,
 	jsonableTreeFromCursor,
 } from "../feature-libraries/index.js";
 import {
@@ -57,12 +56,13 @@ import {
 	numberSchema,
 	SchemaFactory,
 	stringSchema,
-	toStoredSchema,
+	toInitialSchema,
 } from "../simple-tree/index.js";
 import { jsonSequenceRootSchema } from "./sequenceRootUtils.js";
 import { cursorToJsonObject, fieldJsonCursor, singleJsonCursor } from "./json/index.js";
 import { JsonAsTree } from "../jsonDomainSchema.js";
 import { FluidClientVersion } from "../codec/index.js";
+import { initializeForest } from "./feature-libraries/index.js";
 
 /**
  * Configuration for the forest test suite.
@@ -85,7 +85,7 @@ const buildId = { minor: 42 };
 const buildId2 = { minor: 442 };
 const detachId = { minor: 43 };
 
-const optionalArraySchema = toStoredSchema(SchemaFactory.optional(JsonAsTree.Array));
+const optionalArraySchema = toInitialSchema(SchemaFactory.optional(JsonAsTree.Array));
 
 /**
  * Generic forest test suite
@@ -103,7 +103,7 @@ export function testForest(config: ForestTestConfiguration): void {
 
 	// Use Json Cursor to insert and extract some Json data
 	describe("insert and extract json", () => {
-		// eslint-disable-next-line @typescript-eslint/ban-types
+		// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/ban-types
 		const testCases: [string, {} | number][] = [
 			["primitive", 5],
 			["array", [1, 2, 3]],
@@ -115,7 +115,7 @@ export function testForest(config: ForestTestConfiguration): void {
 				const schemaFactory = new SchemaFactory("forest test suite");
 
 				const rootSchema = schemaFactory.optional([JsonAsTree.Array]);
-				const schema = new TreeStoredSchemaRepository(toStoredSchema(rootSchema));
+				const schema = new TreeStoredSchemaRepository(toInitialSchema(rootSchema));
 
 				const forest = factory(schema);
 
@@ -433,7 +433,7 @@ export function testForest(config: ForestTestConfiguration): void {
 			idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
 			testRevisionTagCodec,
 			testIdCompressor,
-			{ jsonValidator: typeboxValidator, oldestCompatibleClient: FluidClientVersion.v2_0 },
+			{ jsonValidator: FormatValidatorBasic, minVersionForCollab: FluidClientVersion.v2_0 },
 		);
 		const delta: DeltaFieldMap = new Map<FieldKey, DeltaFieldChanges>([
 			[rootFieldKey, [mark]],
@@ -1083,7 +1083,7 @@ export function testForest(config: ForestTestConfiguration): void {
 	testGeneralPurposeTreeCursor(
 		"forest cursor",
 		(data): ITreeCursor => {
-			const forest = factory(new TreeStoredSchemaRepository(toStoredSchema(testTreeSchema)));
+			const forest = factory(new TreeStoredSchemaRepository(toInitialSchema(testTreeSchema)));
 			initializeForest(
 				forest,
 				cursorForJsonableTreeField([data]),

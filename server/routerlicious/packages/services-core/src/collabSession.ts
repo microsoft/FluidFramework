@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISignalClient } from "@fluidframework/protocol-definitions";
+import type { ISignalClient } from "@fluidframework/protocol-definitions";
 
 /**
  * Client information used for tracking a collaboration session.
@@ -48,6 +48,14 @@ export interface ICollaborationSessionTelemetryProperties {
 	 * The maximum number of clients that have been connected to the session at the same time.
 	 */
 	maxConcurrentClients: number;
+	/**
+	 * Total number of operations emitted by all clients in this session.
+	 */
+	sessionOpCount?: number;
+	/**
+	 * Total number of signals emitted by all clients in this session.
+	 */
+	sessionSignalCount?: number;
 }
 
 /**
@@ -130,6 +138,18 @@ export interface ICollaborationSessionManager {
 	 * Get a list of all active sessions.
 	 */
 	getAllSessions(): Promise<ICollaborationSession[]>;
+	/**
+	 * Iterate over all active sessions, calling the provided callback for each session.
+	 *
+	 * @remarks
+	 * This is useful for cases where the number of sessions is large and you want to process
+	 * them in smaller batches to avoid memory issues or timeouts.
+	 *
+	 * The callback should be designed to handle each session independently and not rely on the order of processing.
+	 *
+	 * @param callback - Function to call for each session.
+	 */
+	iterateAllSessions<T>(callback: (session: ICollaborationSession) => Promise<T>): Promise<T[]>;
 }
 
 /**
@@ -171,11 +191,16 @@ export interface ICollaborationSessionTracker {
 	 * @param client - Information about the unique client leaving/ending the session.
 	 * @param sessionInfo - Information to identify the document session being joined/started.
 	 * @param otherConnectedClients - Optional list of other clients currently connected to the document session.
+	 * @param clientMetrics - Optional client-specific metrics to add to session totals.
 	 */
 	endClientSession(
 		client: Omit<ICollaborationSessionClient, "joinedTime">,
 		sessionId: Pick<ICollaborationSession, "tenantId" | "documentId">,
 		knownConnectedClients?: ISignalClient[],
+		clientMetrics?: {
+			opCount?: number;
+			signalCount?: number;
+		},
 	): Promise<void>;
 	/**
 	 * Remove all currently tracked sessions that are no longer active and should have expired based on the session timeout.

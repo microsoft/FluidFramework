@@ -5,18 +5,19 @@
 
 import { strict as assert } from "node:assert";
 
-import {
+import type {
 	IDeltaManager,
 	IBatchMessage,
 	IContainerContext,
 } from "@fluidframework/container-definitions/internal";
 import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
-import {
+import type {
 	IDocumentMessage,
 	MessageType,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import type { ICompressionRuntimeOptions } from "../../compressionDefinitions.js";
 import { CompressionAlgorithms } from "../../compressionDefinitions.js";
@@ -27,12 +28,12 @@ import {
 } from "../../messageTypes.js";
 import { asBatchMetadata, asEmptyBatchLocalOpMetadata } from "../../metadata.js";
 import {
-	OutboundBatchMessage,
-	BatchSequenceNumbers,
-	OpCompressor,
+	type OutboundBatchMessage,
+	type BatchSequenceNumbers,
+	type OpCompressor,
 	OpGroupingManager,
 	type OpGroupingManagerConfig,
-	OpSplitter,
+	type OpSplitter,
 	type OutboundSingletonBatch,
 	Outbox,
 	type LocalBatchMessage,
@@ -41,10 +42,10 @@ import {
 	serializeOp,
 	type LocalEmptyBatchPlaceholder,
 } from "../../opLifecycle/index.js";
-import {
+import type {
 	PendingMessageResubmitData,
 	PendingStateManager,
-	type IPendingMessage,
+	IPendingMessage,
 } from "../../pendingStateManager.js";
 
 function typeFromBatchedOp(message: LocalBatchMessage): string {
@@ -1092,6 +1093,57 @@ describe("Outbox", () => {
 			assert.strictEqual(state.opsResubmitted, opsResubmitted, "unexpected opsResubmitted");
 		}
 
+		it("should not assert when flushing while reentrant with empty batches", () => {
+			const outbox = getOutbox({
+				context: getMockContext(),
+				opGroupingConfig: {
+					groupedBatchingEnabled: true,
+				},
+			});
+
+			// Mark context as reentrant
+			state.isReentrant = true;
+
+			// Flush with no messages - should not throw
+			assert.doesNotThrow(() => {
+				outbox.flush();
+			}, "Should not assert when flushing empty batches while reentrant");
+
+			validateCounts(0, 0, 0);
+		});
+
+		it("should assert when flushing while reentrant with non-empty batches", () => {
+			const outbox = getOutbox({
+				context: getMockContext(),
+				opGroupingConfig: {
+					groupedBatchingEnabled: true,
+				},
+			});
+
+			const messages = [createMessage(ContainerMessageType.FluidDataStoreOp, "0")];
+
+			// Submit a message (not reentrant)
+			state.isReentrant = false;
+			outbox.submit(messages[0]);
+
+			// Now mark context as reentrant and try to flush - should throw
+			state.isReentrant = true;
+
+			assert.throws(
+				() => outbox.flush(),
+				(error: Error) => {
+					return validateAssertionError(
+						error,
+						"Flushing must not happen while incoming changes are being processed",
+					);
+				},
+				"Should assert when flushing non-empty batches while reentrant",
+			);
+
+			// Verify nothing was submitted
+			validateCounts(0, 0, 0);
+		});
+
 		it("batch has reentrant ops, but grouped batching is off", () => {
 			const outbox = getOutbox({
 				context: getMockContext(),
@@ -1136,7 +1188,7 @@ describe("Outbox", () => {
 			validateCounts(0, 0, 2);
 		});
 
-		it("batch has a single reentrant op - don't rebase", () => {
+		it("batch has a single reentrant op", () => {
 			const outbox = getOutbox({
 				context: getMockContext(),
 				opGroupingConfig: {
@@ -1152,7 +1204,7 @@ describe("Outbox", () => {
 
 			outbox.flush();
 
-			validateCounts(1, 1, 0);
+			validateCounts(0, 0, 1);
 		});
 
 		it("should group the batch", () => {
@@ -1234,8 +1286,14 @@ describe("Outbox", () => {
 			const dirtyableMessage: LocalBatchMessage = {
 				runtimeOp: {
 					type: ContainerMessageType.FluidDataStoreOp,
-					contents: { address: "", contents: {} },
-				} satisfies Partial<LocalContainerRuntimeMessage> as LocalContainerRuntimeMessage,
+					contents: {
+						address: "",
+						contents: {
+							type: "op",
+							content: { address: "test-address", contents: "test-contents" },
+						},
+					},
+				} satisfies LocalContainerRuntimeMessage,
 				referenceSequenceNumber: 1,
 				metadata: undefined,
 				localOpMetadata: {},

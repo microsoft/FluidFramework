@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { StatsCompilation } from "webpack";
+import type { StatsCompilation } from "webpack";
 
 /**
  * A map of bundles friendly names to their relevant metrics

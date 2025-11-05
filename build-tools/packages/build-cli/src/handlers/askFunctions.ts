@@ -5,13 +5,13 @@
 
 import { type VersionBumpType, bumpVersionScheme } from "@fluid-tools/version-tools";
 import { rawlist } from "@inquirer/prompts";
-import { Machine } from "jssm";
+import type { Machine } from "jssm";
 
 import { getDefaultBumpTypeForBranch } from "../library/index.js";
-import { CommandLogger } from "../logging.js";
-import { MachineState } from "../machines/index.js";
-import { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler.js";
-import { StateHandlerFunction } from "./stateHandlers.js";
+import type { CommandLogger } from "../logging.js";
+import type { MachineState } from "../machines/index.js";
+import type { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler.js";
+import type { StateHandlerFunction } from "./stateHandlers.js";
 
 /**
  * Determines the release type based on context, or by asking the user if needed.

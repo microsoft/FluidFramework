@@ -3,50 +3,71 @@
  * Licensed under the MIT License.
  */
 
-import { Lazy } from "@fluidframework/core-utils/internal";
-import type {
-	FlexibleNodeContent,
-	FlexTreeNode,
-	FlexTreeOptionalField,
-	OptionalFieldEditBuilder,
+import { assert, Lazy } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
+import {
+	FieldKinds,
+	isTreeValue,
+	type FlexibleNodeContent,
+	type FlexTreeNode,
+	type FlexTreeOptionalField,
+	type OptionalFieldEditBuilder,
 } from "../../../feature-libraries/index.js";
-import { getTreeNodeForField } from "../../getTreeNodeForField.js";
+import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
+import { createFieldSchema, FieldKind } from "../../fieldSchema.js";
 import {
-	createFieldSchema,
-	FieldKind,
-	normalizeAllowedTypes,
-	unannotateImplicitAllowedTypes,
-	type ImplicitAllowedTypes,
-	type ImplicitAnnotatedAllowedTypes,
-	type InsertableTreeNodeFromImplicitAllowedTypes,
-	type NodeSchemaMetadata,
-	type TreeNodeFromImplicitAllowedTypes,
-	type UnannotateImplicitAllowedTypes,
-} from "../../schemaTypes.js";
-import {
+	CompatibilityLevel,
 	getKernel,
 	type InnerNode,
 	NodeKind,
 	type TreeNodeSchema,
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	typeNameSymbol,
 	type TreeNode,
 	typeSchemaSymbol,
-	type Context,
-	getOrCreateInnerNode,
+	getInnerNode,
 	type InternalTreeNode,
 	type UnhydratedFlexTreeNode,
+	normalizeAllowedTypes,
+	type ImplicitAllowedTypes,
+	type InsertableTreeNodeFromImplicitAllowedTypes,
+	type NodeSchemaMetadata,
+	type TreeNodeFromImplicitAllowedTypes,
+	TreeNodeValid,
+	type MostDerivedData,
+	type TreeNodeSchemaInitializedData,
+	type TreeNodeSchemaCorePrivate,
+	privateDataSymbol,
+	createTreeNodeSchemaPrivateData,
+	type FlexContent,
+	type TreeNodeSchemaPrivateData,
+	convertAllowedTypes,
+	AnnotatedAllowedTypesInternal,
 } from "../../core/index.js";
 import {
-	mapTreeFromNodeData,
+	unhydratedFlexTreeFromInsertable,
 	type FactoryContent,
 	type InsertableContent,
-} from "../../toMapTree.js";
+} from "../../unhydratedFlexTreeFromInsertable.js";
 import { prepareForInsertion } from "../../prepareForInsertion.js";
-import { brand, count, type RestrictiveStringRecord } from "../../../util/index.js";
-import { TreeNodeValid, type MostDerivedData } from "../../treeNodeValid.js";
-import { getUnhydratedContext } from "../../createContext.js";
-import type { MapNodeCustomizableSchema, MapNodePojoEmulationSchema } from "./mapNodeTypes.js";
+import {
+	brand,
+	count,
+	isReadonlyArray,
+	type JsonCompatibleReadOnlyObject,
+	type RestrictiveStringRecord,
+} from "../../../util/index.js";
+import { getTreeNodeSchemaInitializedData } from "../../createContext.js";
+import type {
+	MapNodeCustomizableSchema,
+	MapNodePojoEmulationSchema,
+	MapNodeSchema,
+} from "./mapNodeTypes.js";
+import { recordLikeDataToFlexContent } from "../common.js";
+import { MapNodeStoredSchema } from "../../../core/index.js";
+import type { NodeSchemaOptionsAlpha } from "../../api/index.js";
+import type { SimpleAllowedTypeAttributes } from "../../simpleSchema.js";
 
 /**
  * A map of string keys to tree objects.
@@ -155,7 +176,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 	}
 
 	private get innerNode(): InnerNode {
-		return getOrCreateInnerNode(this);
+		return getInnerNode(this);
 	}
 
 	private editor(key: string): OptionalFieldEditBuilder<FlexibleNodeContent> {
@@ -172,14 +193,14 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		for (const key of node.keys()) {
 			yield [
 				key,
-				getTreeNodeForField(node.getBoxed(key)) as TreeNodeFromImplicitAllowedTypes<T>,
+				tryGetTreeNodeForField(node.getBoxed(key)) as TreeNodeFromImplicitAllowedTypes<T>,
 			];
 		}
 	}
 	public get(key: string): TreeNodeFromImplicitAllowedTypes<T> {
 		const node = this.innerNode;
 		const field = node.getBoxed(brand(key));
-		return getTreeNodeForField(field) as TreeNodeFromImplicitAllowedTypes<T>;
+		return tryGetTreeNodeForField(field) as TreeNodeFromImplicitAllowedTypes<T>;
 	}
 	public has(key: string): boolean {
 		return this.innerNode.tryGetField(brand(key)) !== undefined;
@@ -191,10 +212,19 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 	public set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypes<T>): this {
 		const kernel = getKernel(this);
 		const node = this.innerNode;
+		const innerSchema = this.innerNode.context.schema.nodeSchema.get(
+			brand(kernel.schema.identifier),
+		);
+		assert(
+			innerSchema instanceof MapNodeStoredSchema,
+			0xc17 /* Expected MapNodeStoredSchema */,
+		);
+
 		const mapTree = prepareForInsertion(
 			value as InsertableContent | undefined,
 			createFieldSchema(FieldKind.Optional, kernel.schema.info as ImplicitAllowedTypes),
 			node.context,
+			innerSchema.mapFields,
 		);
 
 		const field = node.getBoxed(brand(key));
@@ -215,8 +245,8 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		callbackFn: (value: TreeNodeFromImplicitAllowedTypes<T>, key: string, map: TThis) => void,
 		thisArg?: unknown,
 	): void {
-		for (const field of getOrCreateInnerNode(this).boxedIterator()) {
-			const node = getTreeNodeForField(field) as TreeNodeFromImplicitAllowedTypes<T>;
+		for (const field of getInnerNode(this)) {
+			const node = tryGetTreeNodeForField(field) as TreeNodeFromImplicitAllowedTypes<T>;
 			callbackFn.call(thisArg, node, field.key, this);
 		}
 	}
@@ -228,11 +258,12 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
  *
  * @param base - base schema type to extend.
  * @param useMapPrototype - should this type emulate a ES6 Map object (by faking its prototype with a proxy).
+ * @param persistedMetadata - Optional persisted metadata for the object node schema.
  */
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function mapSchema<
 	TName extends string,
-	const T extends ImplicitAnnotatedAllowedTypes,
+	const T extends ImplicitAllowedTypes,
 	const ImplicitlyConstructable extends boolean,
 	const TCustomMetadata = unknown,
 >(
@@ -240,21 +271,20 @@ export function mapSchema<
 	info: T,
 	implicitlyConstructable: ImplicitlyConstructable,
 	useMapPrototype: boolean,
-	metadata?: NodeSchemaMetadata<TCustomMetadata>,
+	nodeOptions: NodeSchemaOptionsAlpha<TCustomMetadata> = {},
 ) {
-	const lazyChildTypes = new Lazy(() =>
-		normalizeAllowedTypes(unannotateImplicitAllowedTypes(info)),
-	);
+	const normalizedTypes = normalizeAllowedTypes(info);
 	const lazyAllowedTypesIdentifiers = new Lazy(
-		() => new Set([...lazyChildTypes.value].map((type) => type.identifier)),
+		() => new Set(normalizedTypes.evaluate().map((type) => type.identifier)),
 	);
+	const lazySimpleAllowedTypes = new Lazy(() => {
+		return AnnotatedAllowedTypesInternal.evaluateSimpleAllowedTypes(normalizedTypes);
+	});
 
-	let unhydratedContext: Context;
+	let privateData: TreeNodeSchemaPrivateData | undefined;
+	const persistedMetadata = nodeOptions.persistedMetadata;
 
-	class Schema
-		extends CustomMapNodeBase<UnannotateImplicitAllowedTypes<T>>
-		implements TreeMapNode<UnannotateImplicitAllowedTypes<T>>
-	{
+	class Schema extends CustomMapNodeBase<T> implements TreeMapNode<T> {
 		public static override prepareInstance<T2>(
 			this: typeof TreeNodeValid<T2>,
 			instance: TreeNodeValid<T2>,
@@ -271,22 +301,25 @@ export function mapSchema<
 			instance: TreeNodeValid<T2>,
 			input: T2,
 		): UnhydratedFlexTreeNode {
-			return mapTreeFromNodeData(
-				input as FactoryContent,
-				this as unknown as ImplicitAllowedTypes,
-			);
+			return unhydratedFlexTreeFromInsertable(input as FactoryContent, this as typeof Schema);
 		}
 
 		public static get allowedTypesIdentifiers(): ReadonlySet<string> {
 			return lazyAllowedTypesIdentifiers.value;
 		}
 
+		public static get simpleAllowedTypes(): ReadonlyMap<string, SimpleAllowedTypeAttributes> {
+			return lazySimpleAllowedTypes.value;
+		}
+
 		protected static override constructorCached: MostDerivedData | undefined = undefined;
 
-		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): Context {
-			const schema = this as unknown as TreeNodeSchema;
-			unhydratedContext = getUnhydratedContext(schema);
-			return unhydratedContext;
+		protected static override oneTimeSetup(): TreeNodeSchemaInitializedData {
+			const schema = this as MapNodeSchema;
+			return getTreeNodeSchemaInitializedData(this, {
+				shallowCompatibilityTest,
+				toFlexContent: (data: FactoryContent): FlexContent => mapToFlexContent(data, schema),
+			});
 		}
 
 		public static readonly identifier = identifier;
@@ -294,16 +327,35 @@ export function mapSchema<
 		public static readonly implicitlyConstructable: ImplicitlyConstructable =
 			implicitlyConstructable;
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
-			return lazyChildTypes.value;
+			return normalizedTypes.evaluateSet();
 		}
-		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
+		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> =
+			nodeOptions.metadata ?? {};
+		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
+			persistedMetadata;
 
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated
 		public get [typeNameSymbol](): TName {
 			return identifier;
 		}
 		public get [typeSchemaSymbol](): typeof schemaErased {
 			return Schema.constructorCached?.constructor as unknown as typeof schemaErased;
+		}
+
+		public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
+			return (privateData ??= createTreeNodeSchemaPrivateData(
+				this,
+				[normalizedTypes],
+				(storedOptions) =>
+					new MapNodeStoredSchema(
+						{
+							kind: FieldKinds.optional.identifier,
+							types: convertAllowedTypes(info, storedOptions),
+							persistedMetadata,
+						},
+						persistedMetadata,
+					),
+			));
 		}
 	}
 	const schemaErased: MapNodeCustomizableSchema<
@@ -312,7 +364,8 @@ export function mapSchema<
 		ImplicitlyConstructable,
 		TCustomMetadata
 	> &
-		MapNodePojoEmulationSchema<TName, T, ImplicitlyConstructable, TCustomMetadata> = Schema;
+		MapNodePojoEmulationSchema<TName, T, ImplicitlyConstructable, TCustomMetadata> &
+		TreeNodeSchemaCorePrivate = Schema;
 	return schemaErased;
 }
 
@@ -323,3 +376,47 @@ export function mapSchema<
 export type MapNodeInsertableData<T extends ImplicitAllowedTypes> =
 	| Iterable<readonly [string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>
 	| RestrictiveStringRecord<InsertableTreeNodeFromImplicitAllowedTypes<T>>;
+
+/**
+ * {@link TreeNodeSchemaInitializedData.shallowCompatibilityTest} for Map nodes.
+ */
+function shallowCompatibilityTest(data: FactoryContent): CompatibilityLevel {
+	if (isTreeValue(data)) {
+		return CompatibilityLevel.None;
+	}
+
+	if (isReadonlyArray(data)) {
+		// Arrays are iterable, so type checking does allow constructing a MapNode from an array if the array's type is key values pairs for the map.
+		return CompatibilityLevel.Low;
+	}
+
+	if (Symbol.iterator in data) {
+		return CompatibilityLevel.Normal;
+	}
+
+	// When not unioned with an ObjectNode, allow objects to be used to create maps.
+	return CompatibilityLevel.Low;
+}
+
+/**
+ * {@link TreeNodeSchemaInitializedData.toFlexContent} for Map nodes.
+ *
+ * Transforms data under a Map schema.
+ * @param data - The tree data to be transformed. Must be an iterable or Record like object.
+ * @param schema - The schema to comply with.
+ */
+function mapToFlexContent(data: FactoryContent, schema: MapNodeSchema): FlexContent {
+	if (!(typeof data === "object" && data !== null)) {
+		throw new UsageError(`Input data is incompatible with Map schema: ${data}`);
+	}
+
+	const fieldsIterator = (
+		Symbol.iterator in data
+			? // Support iterables of key value pairs (including Map objects)
+				data
+			: // Support record objects for JSON style Map data
+				Object.entries(data)
+	) as Iterable<readonly [string, InsertableContent]>;
+
+	return recordLikeDataToFlexContent(fieldsIterator, schema);
+}

@@ -16,30 +16,24 @@ import type { ISharedArrayOperation } from "./sharedArrayOperations.js";
  * It can be used as a generic constraint (`extends SerializableTypeForSharedArray`) but is
  * *never* meant to be a concrete/real type on its own.
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type SerializableTypeForSharedArray = boolean | number | string | object | IFluidHandle;
-
-/**
- *
- * @typeParam T - The type of the object to make readonly
- *
- * @legacy
- * @alpha
- */
-export type FullyReadonly<T> = {
-	readonly [P in keyof T]: FullyReadonly<T[P]>;
-};
 
 /**
  * Interface defining the events that can be emitted by the SharedArray DDS
  * and the events that can be listened to by the SharedArray DDS
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISharedArrayEvents extends ISharedObjectEvents {
+	/**
+	 *
+	 * @param event - The event name.
+	 * @param listener - An event listener.
+	 *
+	 * @eventProperty
+	 */
 	(
 		event: "valueChanged",
 		listener: (
@@ -49,6 +43,13 @@ export interface ISharedArrayEvents extends ISharedObjectEvents {
 		) => void,
 	): void;
 
+	/**
+	 *
+	 * @param event - The event name.
+	 * @param listener - An event listener.
+	 *
+	 * @eventProperty
+	 */
 	(event: "revertible", listener: (revertible: IRevertible) => void): void;
 }
 
@@ -59,15 +60,17 @@ export interface ISharedArrayEvents extends ISharedObjectEvents {
  *
  * @typeParam T - The type of the SharedArray
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISharedArray<T extends SerializableTypeForSharedArray>
 	extends ISharedObject<ISharedArrayEvents> {
-	get(): FullyReadonly<T[]>;
+	get(): readonly T[];
 	insert<TWrite>(index: number, value: Serializable<TWrite> & T): void;
 	delete(index: number): void;
 	move(oldIndex: number, newIndex: number): void;
+	toggle(entryId: string): void;
+	toggleMove(oldEntryId: string, newEntryId: string): void;
+	insertBulkAfter<TWrite>(ref: T | undefined, values: (Serializable<TWrite> & T)[]): void;
 }
 
 /**
@@ -154,8 +157,7 @@ export interface SnapshotFormat<T> {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IRevertible {
 	revert(): void;

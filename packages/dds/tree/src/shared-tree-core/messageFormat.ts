@@ -3,44 +3,54 @@
  * Licensed under the MIT License.
  */
 
-import type { SessionId } from "@fluidframework/id-compressor";
-import { type TSchema, Type } from "@sinclair/typebox";
-
-import { type EncodedRevisionTag, RevisionTagSchema, SessionIdSchema } from "../core/index.js";
-import type { JsonCompatibleReadOnly } from "../util/index.js";
+import type { Brand } from "../util/index.js";
 
 /**
- * The format of messages that SharedTree sends and receives.
+ * The format version for the message.
  */
-export interface Message {
+export const MessageFormatVersion = {
 	/**
-	 * The revision tag for the change in this message
+	 * NOTE: this is written as `undefined` rather than `0` in the wire format.
+	 * Introduced and retired prior to 2.0.
+	 * Reading capability is currently maintained for backwards compatibility, but it could be removed in the future.
+	 * Writing capability need not be maintained.
 	 */
-	readonly revision: EncodedRevisionTag;
+	undefined: 0,
 	/**
-	 * The stable ID that identifies the originator of the message.
+	 * Introduced and retired prior to 2.0.
+	 * Reading capability is currently maintained for backwards compatibility, but it could be removed in the future.
+	 * Writing capability need not be maintained.
 	 */
-	readonly originatorId: SessionId;
+	v1: 1,
 	/**
-	 * The changeset to be applied.
+	 * Introduced and retired prior to 2.0.
+	 * Reading capability is currently maintained for backwards compatibility, but it could be removed in the future.
+	 * Writing capability need not be maintained.
 	 */
-	readonly changeset: JsonCompatibleReadOnly;
-
+	v2: 2,
 	/**
-	 * The version of the message. This controls how the message is encoded.
-	 *
-	 * This was not set historically and was added before making any breaking changes to the format.
-	 * For that reason, absence of a 'version' field is synonymous with version 1.
+	 * Introduced prior to 2.0 and used beyond.
+	 * Reading capability is currently maintained for backwards compatibility, but it could be removed in the future.
+	 * Writing capability needs to be maintained.
 	 */
-	readonly version?: number;
-}
-
-// Return type is intentionally derived.
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-export const Message = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
-	Type.Object({
-		revision: RevisionTagSchema,
-		originatorId: SessionIdSchema,
-		changeset: tChange,
-		version: Type.Optional(Type.Number()),
-	});
+	v3: 3,
+	/**
+	 * Was inadvertently released in 2.43.0 (through usages of configuredSharedTree) and remains available.
+	 * Reading capability must be maintained for backwards compatibility.
+	 * Writing capability needs to be maintained.
+	 * @privateRemarks TODO: stop writing this version.
+	 */
+	v4: 4,
+	/**
+	 * Not yet released.
+	 * Only used for testing shared branches.
+	 */
+	v5: 5,
+} as const;
+export type MessageFormatVersion = Brand<
+	(typeof MessageFormatVersion)[keyof typeof MessageFormatVersion],
+	"MessageFormatVersion"
+>;
+export const messageFormatVersions: ReadonlySet<MessageFormatVersion> = new Set(
+	Object.values(MessageFormatVersion) as MessageFormatVersion[],
+);

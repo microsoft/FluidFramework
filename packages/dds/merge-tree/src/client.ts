@@ -6,29 +6,34 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { type IEventThisPlaceHolder, IFluidHandle } from "@fluidframework/core-interfaces";
-import { assert, unreachableCase, isObject } from "@fluidframework/core-utils/internal";
+import type { IEventThisPlaceHolder, IFluidHandle } from "@fluidframework/core-interfaces";
 import {
+	assert,
+	unreachableCase,
+	isObject,
+	type DoublyLinkedList,
+} from "@fluidframework/core-utils/internal";
+import type {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
 import {
 	MessageType,
-	ISequencedDocumentMessage,
+	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
-import { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	LoggingError,
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { MergeTreeTextHelper, type IMergeTreeTextHelper } from "./MergeTreeTextHelper.js";
-import { DoublyLinkedList, RedBlackTree } from "./collections/index.js";
+import { RedBlackTree } from "./collections/index.js";
 import { NonCollabClient, SquashClient, UniversalSequenceNumber } from "./constants.js";
-import { LocalReferencePosition, SlidingPreference } from "./localReference.js";
+import { type LocalReferencePosition, SlidingPreference } from "./localReference.js";
 import {
 	MergeTree,
 	errorIfOptionNotTrue,
@@ -43,14 +48,15 @@ import type {
 } from "./mergeTreeDeltaCallback.js";
 import { walkAllChildSegments } from "./mergeTreeNodeWalk.js";
 import {
-	CollaborationWindow,
-	ISegment,
-	ISegmentAction,
-	ISegmentPrivate,
-	Marker,
-	SegmentGroup,
+	type CollaborationWindow,
+	type ISegment,
+	type ISegmentAction,
+	type ISegmentPrivate,
+	type Marker,
+	type SegmentGroup,
 	compareStrings,
 	isSegmentLeaf,
+	type ISegmentInternal,
 	type ISegmentLeaf,
 	type ObliterateInfo,
 } from "./mergeTreeNodes.js";
@@ -65,17 +71,17 @@ import {
 	createRemoveRangeOp,
 } from "./opBuilder.js";
 import {
-	IJSONSegment,
-	IMergeTreeAnnotateMsg,
-	IMergeTreeDeltaOp,
-	// eslint-disable-next-line import/no-deprecated
-	IMergeTreeGroupMsg,
-	IMergeTreeInsertMsg,
-	// eslint-disable-next-line import/no-deprecated
-	IMergeTreeObliterateMsg,
-	IMergeTreeOp,
-	IMergeTreeRemoveMsg,
-	IRelativePosition,
+	type IJSONSegment,
+	type IMergeTreeAnnotateMsg,
+	type IMergeTreeDeltaOp,
+	// eslint-disable-next-line import-x/no-deprecated
+	type IMergeTreeGroupMsg,
+	type IMergeTreeInsertMsg,
+	// eslint-disable-next-line import-x/no-deprecated
+	type IMergeTreeObliterateMsg,
+	type IMergeTreeOp,
+	type IMergeTreeRemoveMsg,
+	type IRelativePosition,
 	MergeTreeDeltaType,
 	ReferenceType,
 	type AdjustParams,
@@ -83,13 +89,13 @@ import {
 	type IMergeTreeObliterateSidedMsg,
 } from "./ops.js";
 import {
+	createLocalReconnectingPerspective,
 	LocalReconnectingPerspective,
-	LocalSquashPerspective,
 	PriorPerspective,
 	type Perspective,
 } from "./perspective.js";
-import { PropertySet, type MapLike } from "./properties.js";
-import { DetachedReferencePosition, ReferencePosition } from "./referencePositions.js";
+import type { PropertySet, MapLike } from "./properties.js";
+import { DetachedReferencePosition, type ReferencePosition } from "./referencePositions.js";
 import {
 	isInserted,
 	isRemoved,
@@ -130,7 +136,10 @@ export interface IIntegerRange {
  * @internal
  */
 export interface IClientEvents {
-	(event: "normalize", listener: (target: IEventThisPlaceHolder) => void): void;
+	(
+		event: "normalize",
+		listener: (squash: boolean, target: IEventThisPlaceHolder) => void,
+	): void;
 	(
 		event: "delta",
 		listener: (
@@ -207,6 +216,13 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			}
 			policy.attach(this);
 		}
+	}
+
+	public get endOfTree(): ISegmentInternal {
+		return this._mergeTree.endOfTree;
+	}
+	public get startOfTree(): ISegmentInternal {
+		return this._mergeTree.startOfTree;
 	}
 
 	/**
@@ -307,9 +323,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	public obliterateRangeLocal(
 		start: number | InteriorSequencePlace,
 		end: number | InteriorSequencePlace,
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated
 	): IMergeTreeObliterateMsg | IMergeTreeObliterateSidedMsg {
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated
 		let obliterateOp: IMergeTreeObliterateMsg | IMergeTreeObliterateSidedMsg;
 		if (this._mergeTree.options?.mergeTreeEnableSidedObliterate) {
 			obliterateOp = createObliterateRangeOpSided(start, end);
@@ -656,7 +672,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @throws LoggingError if the range is invalid
 	 */
 	private getValidSidedRange(
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated
 		op: IMergeTreeObliterateSidedMsg | IMergeTreeObliterateMsg,
 		perspective: Perspective,
 	): {
@@ -736,7 +752,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			| IMergeTreeAnnotateAdjustMsg
 			| IMergeTreeInsertMsg
 			| IMergeTreeRemoveMsg
-			// eslint-disable-next-line import/no-deprecated
+			// eslint-disable-next-line import-x/no-deprecated
 			| IMergeTreeObliterateMsg,
 		perspective: Perspective,
 	): IIntegerRange {
@@ -875,20 +891,23 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			oldSegment !== undefined && oldOffset !== undefined,
 			0xb61 /* Invalid old reference */,
 		);
-		const useNewSlidingBehavior = true;
+		const canSlideToEndpoint = true;
 		// Destructuring segment + offset is convenient and segment is reassigned
-		// eslint-disable-next-line prefer-const
-		let { segment: newSegment, offset: newOffset } = getSlideToSegoff(
+
+		const segOff = getSlideToSegoff(
 			{ segment: oldSegment, offset: oldOffset },
 			slidePreference,
 			reconnectingPerspective,
-			useNewSlidingBehavior,
+			canSlideToEndpoint,
 		);
 
-		newSegment ??=
-			slidePreference === SlidingPreference.FORWARD
-				? this._mergeTree.endOfTree
-				: this._mergeTree.startOfTree;
+		const { segment: newSegment, offset: newOffset } = segOff ?? {
+			segment:
+				slidePreference === SlidingPreference.FORWARD
+					? this._mergeTree.endOfTree
+					: this._mergeTree.startOfTree,
+			offset: 0,
+		};
 
 		assert(
 			isSegmentLeaf(newSegment) && newOffset !== undefined,
@@ -915,9 +934,12 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		end: RebasedObliterateEndpoint;
 	} {
 		const { currentSeq, clientId } = this.getCollabWindow();
-		const reconnectingPerspective = new (
-			squash ? LocalSquashPerspective : LocalReconnectingPerspective
-		)(currentSeq, clientId, obliterateInfo.stamp.localSeq! - 1);
+		const reconnectingPerspective = createLocalReconnectingPerspective(
+			currentSeq,
+			clientId,
+			obliterateInfo.stamp.localSeq! - 1,
+			squash,
+		);
 
 		const newStart = this.rebaseSidedLocalReference(
 			obliterateInfo.start,
@@ -1005,7 +1027,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 						(lastRemove.type === "sliceRemove" &&
 							lastRemove.localSeq === segmentGroup.localSeq) ||
 							opstampUtils.isSquashedOp(lastRemove),
-						"Last remove should be the obliterate that is being resubmitted.",
+						0xbad /* Last remove should be the obliterate that is being resubmitted. */,
 					);
 
 					// The original obliterate affected this segment, but it has since been removed.
@@ -1082,7 +1104,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 						(lastRemove.type === "sliceRemove" &&
 							lastRemove.localSeq === segmentGroup.localSeq) ||
 							opstampUtils.isSquashedOp(lastRemove),
-						"Last remove should be the obliterate that is being resubmitted.",
+						0xbae /* Last remove should be the obliterate that is being resubmitted. */,
 					);
 
 					if (!opstampUtils.isSquashedOp(lastRemove)) {
@@ -1192,7 +1214,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 						assert(
 							removeInfo.removes.length === 1 ||
 								opstampUtils.isAcked(removeInfo.removes[removeInfo.removes.length - 2]),
-							"Expected only one local remove",
+							0xbaf /* Expected only one local remove */,
 						);
 						this.squashInsertion(segment);
 						break;
@@ -1252,6 +1274,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					segments: [],
 					localSeq: segmentGroup.localSeq,
 					refSeq: this.getCollabWindow().currentSeq,
+					previousProps: segmentGroup.previousProps?.slice(0),
 				};
 
 				segment.segmentGroups.enqueue(newSegmentGroup);
@@ -1473,7 +1496,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					this.cachedObliterateRebases.set(localSeq, { start, end });
 				}
 			}
-			this.emit("normalize", this);
+			this.emit("normalize", squash, this);
 
 			this._mergeTree.normalizeSegmentsOnRebase();
 			this.lastNormalization = {
@@ -1572,7 +1595,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		return loader.initialize(storage);
 	}
 
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	localTransaction(groupOp: IMergeTreeGroupMsg): void {
 		for (const op of groupOp.ops) {
 			const opArgs: IMergeTreeDeltaOpArgs = {
@@ -1612,10 +1635,12 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		pos: number,
 		sequenceArgs?: Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId">,
 		localSeq?: number,
-	): {
-		segment: T | undefined;
-		offset: number | undefined;
-	} {
+	):
+		| {
+				segment: T;
+				offset: number;
+		  }
+		| undefined {
 		let perspective: Perspective;
 		const clientId =
 			sequenceArgs === undefined
@@ -1630,20 +1655,17 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			perspective = new PriorPerspective(refSeq, clientId);
 		}
 
-		return this._mergeTree.getContainingSegment(pos, perspective) as {
-			segment: T | undefined;
-			offset: number | undefined;
-		};
+		return this._mergeTree.getContainingSegment(pos, perspective) as
+			| {
+					segment: T;
+					offset: number;
+			  }
+			| undefined;
 	}
 
 	getPropertiesAtPosition(pos: number): PropertySet | undefined {
-		let propertiesAtPosition: PropertySet | undefined;
 		const segoff = this.getContainingSegment(pos);
-		const seg = segoff.segment;
-		if (seg) {
-			propertiesAtPosition = seg.properties;
-		}
-		return propertiesAtPosition;
+		return segoff?.segment?.properties;
 	}
 
 	getRangeExtentsOfPosition(pos: number): {
@@ -1654,7 +1676,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		let posAfterEnd: number | undefined;
 
 		const segoff = this.getContainingSegment(pos);
-		const seg = segoff.segment;
+		const seg = segoff?.segment;
 		if (seg) {
 			posStart = this.getPosition(seg);
 			posAfterEnd = posStart + seg.cachedLength;

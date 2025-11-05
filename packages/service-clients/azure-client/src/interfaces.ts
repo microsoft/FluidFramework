@@ -3,13 +3,19 @@
  * Licensed under the MIT License.
  */
 
+import type { IRuntimeFactory } from "@fluidframework/container-definitions/internal";
 import type {
 	IConfigProviderBase,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import type { IUser } from "@fluidframework/driver-definitions";
 import type { ICompressionStorageConfig } from "@fluidframework/driver-utils";
-import type { IMember, IServiceAudience } from "@fluidframework/fluid-static";
+import type {
+	CompatibilityMode,
+	ContainerSchema,
+	IMember,
+	IServiceAudience,
+} from "@fluidframework/fluid-static";
 import type { ITokenProvider } from "@fluidframework/routerlicious-driver";
 
 /**
@@ -32,6 +38,23 @@ export interface AzureClientProps {
 	readonly configProvider?: IConfigProviderBase;
 
 	readonly summaryCompression?: boolean | ICompressionStorageConfig;
+}
+
+/**
+ * Internal only {@link AzureClientProps}.
+ * @internal
+ */
+export interface AzureClientPropsInternal extends AzureClientProps {
+	/**
+	 * Optional override for the container runtime factory used by the client.
+	 */
+	readonly createContainerRuntimeFactory?: ({
+		schema,
+		compatibilityMode,
+	}: {
+		schema: ContainerSchema;
+		compatibilityMode: CompatibilityMode;
+	}) => IRuntimeFactory;
 }
 
 /**

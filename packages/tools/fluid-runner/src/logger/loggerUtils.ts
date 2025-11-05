@@ -6,12 +6,12 @@
 import * as fs from "fs";
 
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { CSVFileLogger } from "./csvFileLogger.js";
-import { IFileLogger, ITelemetryOptions, OutputFormat } from "./fileLogger.js";
+import { type IFileLogger, type ITelemetryOptions, OutputFormat } from "./fileLogger.js";
 import { JSONFileLogger } from "./jsonFileLogger.js";
 
 /**

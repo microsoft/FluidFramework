@@ -37,7 +37,11 @@ export interface GeneralDatastoreMessageContent {
 	};
 }
 
-type DatastoreMessageContent = SystemDatastore & GeneralDatastoreMessageContent;
+/**
+ * Combined datastore structure for messages.
+ */
+export type DatastoreMessageContent = SystemDatastore & GeneralDatastoreMessageContent;
+
 type AcknowledgmentId = string;
 
 /**
@@ -50,7 +54,16 @@ interface DatastoreUpdateMessage {
 		sendTimestamp: number;
 		avgLatency: number;
 		acknowledgementId?: AcknowledgmentId;
+		/**
+		 * When present (always true), this message contains complete data
+		 * for all attendees in the system.
+		 */
 		isComplete?: true;
+		/**
+		 * List of client connection ids for which this message will satisfy
+		 * their join catch up responses.
+		 */
+		joinResponseFor?: ClientConnectionId[];
 		data: DatastoreMessageContent;
 	};
 }

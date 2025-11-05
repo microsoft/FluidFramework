@@ -1,10 +1,10 @@
 # TestEmptyInterface
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestEmptyInterface](/test-suite-a/testemptyinterface-interface)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [TestEmptyInterface](/test-suite-a/testemptyinterface-interface)
 
 An empty interface
 
-## Signature {#testemptyinterface-signature}
+<h2 id="testemptyinterface-signature">Signature</h2>
 
 ```typescript
 export interface TestEmptyInterface

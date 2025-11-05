@@ -44,7 +44,7 @@ import {
 } from "../../util/index.js";
 
 import { BasicChunk, BasicChunkCursor, type SiblingsOrKey } from "./basicChunk.js";
-import { type IChunker, basicChunkTree, chunkFieldSingle, chunkTree } from "./chunkTree.js";
+import { type IChunker, basicChunkTree, chunkField, chunkTree } from "./chunkTree.js";
 
 function makeRoot(): BasicChunk {
 	return new BasicChunk(aboveRootPlaceholder, new Map());
@@ -90,8 +90,8 @@ export class ChunkedForest implements IEditableForest {
 		return new ChunkedForest(this.roots, schema, this.chunker.clone(schema), anchors);
 	}
 
-	public chunkField(cursor: ITreeCursorSynchronous): TreeChunk {
-		return chunkFieldSingle(cursor, { idCompressor: this.idCompressor, policy: this.chunker });
+	public chunkField(cursor: ITreeCursorSynchronous): TreeChunk[] {
+		return chunkField(cursor, { idCompressor: this.idCompressor, policy: this.chunker });
 	}
 
 	public forgetAnchor(anchor: Anchor): void {

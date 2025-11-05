@@ -3,15 +3,17 @@
  * Licensed under the MIT License.
  */
 
-export { SharedArray } from "./sharedArray.js";
-export { SharedArrayFactory } from "./sharedArrayFactory.js";
+export {
+	SharedArrayFactory,
+	SharedArray,
+	SharedArrayBuilder,
+} from "./sharedArrayFactory.js";
 export { SharedArrayRevertible } from "./sharedArrayRevertible.js";
 export type {
 	SerializableTypeForSharedArray,
 	ISharedArray,
 	ISharedArrayEvents,
 	ISharedArrayRevertible,
-	FullyReadonly,
 	IRevertible,
 } from "./interfaces.js";
 export type {
@@ -20,7 +22,7 @@ export type {
 	IDeleteOperation,
 	IMoveOperation,
 	ISharedArrayRevertibleOperation,
-	OperationType,
 	IToggleMoveOperation,
 	IToggleOperation,
 } from "./sharedArrayOperations.js";
+export { OperationType } from "./sharedArrayOperations.js";

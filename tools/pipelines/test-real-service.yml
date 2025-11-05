@@ -2,6 +2,7 @@
 # Licensed under the MIT License.
 
 # test-real-service-e2e pipeline
+# pipeline: https://dev.azure.com/fluidframework/internal/_build?definitionId=56
 
 name: $(Build.BuildId)
 
@@ -29,6 +30,10 @@ resources:
       - main
       - next
       - lts
+  repositories:
+    - repository: ff_pipeline_host
+      type: git
+      name: ff_pipeline_host
 
 variables:
 - template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
@@ -42,10 +47,10 @@ variables:
   value: 'EndToEndTests'
   readonly: true
 # This is a test pipeline, not a build one, so we don't need to run CodeQL tasks
-- name: DisableCodeQL
+# Note that using this variable only works for non-1ES-template pipelines.
+- name: Codeql.SkipTaskAutoInjection
   value: true
 
-lockBehavior: sequential
 stages:
 
   - template: /tools/pipelines/templates/include-test-real-service.yml@self
@@ -61,7 +66,7 @@ stages:
       uploadTestPassRateTelemetry: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:
-        FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+        FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains createTestLogger impl to inject
         FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
 
   # end-to-end tests tinylicious
@@ -80,7 +85,7 @@ stages:
       uploadTestPassRateTelemetry: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:
-        FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+        FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains createTestLogger impl to inject
         FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
         # Disable colorization for tinylicious logs (not useful when printing to a file)
         logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
@@ -96,6 +101,7 @@ stages:
       testWorkspace: ${{ variables.testWorkspace }}
       artifactBuildId: $(resources.pipeline.client.runID)
       testCommand: test:realsvc:routerlicious:report
+      lockBehavior: sequential
       continueOnError: true
       ${{ if eq(parameters.useR11sPpeEnvironment, true) }}:
         r11sSelfSignedCertSecureFile: wu2-ppe-tls-certificate.pem
@@ -120,7 +126,7 @@ stages:
           fluid__test__driver__r11s: $(automation-fluid-test-driver-r11s-ppe)
         ${{ else }}:
           fluid__test__driver__r11s: $(automation-fluid-test-driver-r11s)
-        FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+        FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains createTestLogger impl to inject
         FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
 
   # end-to-end tests AFR
@@ -135,6 +141,7 @@ stages:
       timeoutInMinutes: 360
       continueOnError: true
       testCommand: test:realsvc:frs:report
+      lockBehavior: sequential
       r11sSelfSignedCertSecureFile: wu2-tls-certificate.pem
       stageVariables:
         - group: e2e-frs-lock
@@ -152,7 +159,7 @@ stages:
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:
         fluid__test__driver__frs: $(automation-fluid-test-driver-frs)
-        FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+        FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains createTestLogger impl to inject
         FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
 
   # end-to-end tests odsp
@@ -160,6 +167,7 @@ stages:
     parameters:
       stageId: e2e_odsp
       stageDisplayName: e2e - odsp
+      odspTenantType: prod
       poolBuild: Small-eastus2
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
@@ -167,8 +175,6 @@ stages:
       timeoutInMinutes: 360
       continueOnError: true
       testCommand: test:realsvc:odsp:report
-      stageVariables:
-        - group: e2e-odsp-lock
       splitTestVariants:
         - name: Non-compat
           flags: --compatVersion=0 --tenantIndex=0
@@ -185,7 +191,5 @@ stages:
       uploadTestPassRateTelemetry: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:
-        login__microsoft__clientId: $(login-microsoft-clientId)
-        login__odsp__test__tenants: $(automation-e2e-login-odsp-test-tenants)
-        FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+        FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains createTestLogger impl to inject
         FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'

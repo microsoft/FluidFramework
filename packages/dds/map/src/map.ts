@@ -9,14 +9,14 @@ import type {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
-import {
-	MessageType,
-	type ISequencedDocumentMessage,
-} from "@fluidframework/driver-definitions/internal";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
+	IRuntimeMessageCollection,
+	IRuntimeMessagesContent,
+	ISequencedMessageEnvelope,
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
@@ -253,12 +253,14 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 		const newFormat = json as IMapSerializationFormat;
 		if (Array.isArray(newFormat.blobs)) {
 			this.kernel.populateFromSerializable(newFormat.content);
-			await Promise.all(
-				newFormat.blobs.map(async (value) => {
-					const content = await readAndParse<IMapDataObjectSerializable>(storage, value);
-					this.kernel.populateFromSerializable(content);
-				}),
+			const blobContents = await Promise.all(
+				newFormat.blobs.map(async (blobName) =>
+					readAndParse<IMapDataObjectSerializable>(storage, blobName),
+				),
 			);
+			for (const blobContent of blobContents) {
+				this.kernel.populateFromSerializable(blobContent);
+			}
 		} else {
 			this.kernel.populateFromSerializable(json as IMapDataObjectSerializable);
 		}
@@ -273,7 +275,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
 	 */
 	protected override reSubmitCore(content: unknown, localOpMetadata: unknown): void {
-		this.kernel.trySubmitMessage(content as IMapOperation, localOpMetadata);
+		this.kernel.tryResubmitMessage(content as IMapOperation, localOpMetadata);
 	}
 
 	/**
@@ -284,20 +286,27 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 	}
 
 	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processCore}
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
 	 */
-	protected processCore(
-		message: ISequencedDocumentMessage,
+	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+		const { envelope, local, messagesContent } = messagesCollection;
+		for (const messageContent of messagesContent) {
+			this.processMessage(envelope, messageContent, local);
+		}
+	}
+
+	private processMessage(
+		messageEnvelope: ISequencedMessageEnvelope,
+		messageContent: IRuntimeMessagesContent,
 		local: boolean,
-		localOpMetadata: unknown,
 	): void {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-		if (message.type === MessageType.Operation) {
+		if (messageEnvelope.type === MessageType.Operation) {
 			assert(
 				this.kernel.tryProcessMessage(
-					message.contents as IMapOperation,
+					messageContent.contents as IMapOperation,
 					local,
-					localOpMetadata,
+					messageContent.localOpMetadata,
 				),
 				0xab2 /* Map received an unrecognized op, possibly from a newer version */,
 			);

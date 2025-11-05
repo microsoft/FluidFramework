@@ -1,15 +1,15 @@
 # testInterfaceMethod
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestInterface](/test-suite-a/testinterface-interface/) &gt; [testInterfaceMethod()](/test-suite-a/testinterface-interface/testinterfacemethod-methodsignature)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [TestInterface](/test-suite-a/testinterface-interface/) > [testInterfaceMethod()](/test-suite-a/testinterface-interface/testinterfacemethod-methodsignature)
 
 Test interface method
 
-## Signature {#testinterfacemethod-signature}
+<h2 id="testinterfacemethod-signature">Signature</h2>
 
 ```typescript
 testInterfaceMethod(): void;
 ```
 
-## Remarks {#testinterfacemethod-remarks}
+<h2 id="testinterfacemethod-remarks">Remarks</h2>
 
 Here are some remarks about the method

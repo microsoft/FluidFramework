@@ -11,6 +11,7 @@ import { MockContainerRuntimeForReconnection } from "@fluidframework/test-runtim
 
 import { ISequenceIntervalCollection } from "../intervalCollection.js";
 import { createOverlappingIntervalsIndex } from "../intervalIndex/index.js";
+import { SequenceIntervalClass } from "../intervals/index.js";
 import { SharedString } from "../sequenceFactory.js";
 
 export interface Client {
@@ -154,8 +155,12 @@ export const assertSequenceIntervals = (
 		intervalCollection.attachIndex(overlappingIntervalsIndex);
 		const overlapping = overlappingIntervalsIndex.findOverlappingIntervals("start", "end");
 		assert.deepEqual(
-			actual.map((i) => i.serialize()),
-			overlapping.map((i) => i.serialize()),
+			actual
+				.filter((i): i is SequenceIntervalClass => i instanceof SequenceIntervalClass)
+				.map((i) => i.serialize()),
+			overlapping
+				.filter((i): i is SequenceIntervalClass => i instanceof SequenceIntervalClass)
+				.map((i) => i.serialize()),
 			"Interval search returned inconsistent results",
 		);
 		intervalCollection.detachIndex(overlappingIntervalsIndex);

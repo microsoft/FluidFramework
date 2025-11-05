@@ -1,10 +1,10 @@
 # testFunctionReturningInlineType
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [testFunctionReturningInlineType()](/test-suite-a/testfunctionreturninginlinetype-function)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [testFunctionReturningInlineType()](/test-suite-a/testfunctionreturninginlinetype-function)
 
 Test function that returns an inline type
 
-## Signature {#testfunctionreturninginlinetype-signature}
+<h2 id="testfunctionreturninginlinetype-signature">Signature</h2>
 
 ```typescript
 export declare function testFunctionReturningInlineType(): {
@@ -13,8 +13,8 @@ export declare function testFunctionReturningInlineType(): {
 };
 ```
 
-## Returns {#testfunctionreturninginlinetype-returns}
+<h2 id="testfunctionreturninginlinetype-returns">Returns</h2>
 
 An inline type
 
-**Return type:** {     foo: number;     bar: [TestEnum](/test-suite-a/testenum-enum/); }
+**Return type**: {     foo: number;     bar: [TestEnum](/test-suite-a/testenum-enum/); }

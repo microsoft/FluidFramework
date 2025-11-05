@@ -1,17 +1,17 @@
 # testClassProperty
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestClass](/test-suite-a/testclass-class/) &gt; [testClassProperty](/test-suite-a/testclass-class/testclassproperty-property)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [TestClass](/test-suite-a/testclass-class/) > [testClassProperty](/test-suite-a/testclass-class/testclassproperty-property)
 
 Test class property
 
-## Signature {#testclassproperty-signature}
+<h2 id="testclassproperty-signature">Signature</h2>
 
 ```typescript
 readonly testClassProperty: TTypeParameterB;
 ```
 
-**Type:** TTypeParameterB
+**Type**: TTypeParameterB
 
-## Remarks {#testclassproperty-remarks}
+<h2 id="testclassproperty-remarks">Remarks</h2>
 
 Here are some remarks about the property

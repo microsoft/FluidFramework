@@ -1,10 +1,10 @@
 # Foo
 
-[Packages](/) &gt; [test-suite-b](/test-suite-b/) &gt; [Foo](/test-suite-b/foo-interface)
+[Packages](/) > [test-suite-b](/test-suite-b/) > [Foo](/test-suite-b/foo-interface)
 
 Bar
 
-## Signature {#foo-signature}
+<h2 id="foo-signature">Signature</h2>
 
 ```typescript
 export interface Foo
@@ -13,23 +13,23 @@ export interface Foo
 ## Properties
 
 | Property | Type | Description |
-| --- | --- | --- |
+| - | - | - |
 | [bar](/test-suite-b/foo-interface#bar-propertysignature) | [TestEnum](/test-suite-a/testenum-enum) | Test Enum |
 
 ## Property Details
 
-### bar {#bar-propertysignature}
+<h3 id="bar-propertysignature">bar</h3>
 
 Test Enum
 
-#### Signature {#bar-signature}
+<h4 id="bar-signature">Signature</h4>
 
 ```typescript
 bar: TestEnum;
 ```
 
-**Type:** [TestEnum](/test-suite-a/testenum-enum)
+**Type**: [TestEnum](/test-suite-a/testenum-enum)
 
-#### Remarks {#bar-remarks}
+<h4 id="bar-remarks">Remarks</h4>
 
 Here are some remarks about the enum

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-internal-modules */
+/* eslint-disable import-x/no-internal-modules */
 
 import { strict as assert } from "node:assert";
 
@@ -49,8 +49,14 @@ import {
 	readonlyTreeWithContent,
 	rootFieldAnchor,
 } from "./utils.js";
-import { numberSchema, SchemaFactory, stringSchema } from "../../../simple-tree/index.js";
-import { getStoredSchema, toStoredSchema } from "../../../simple-tree/toStoredSchema.js";
+import {
+	numberSchema,
+	SchemaFactory,
+	stringSchema,
+	getStoredSchema,
+	toInitialSchema,
+	restrictiveStoredSchemaGenerationOptions,
+} from "../../../simple-tree/index.js";
 import { singleJsonCursor } from "../../json/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
 
@@ -64,7 +70,7 @@ class TestLazyField extends LazyField {}
 
 describe("LazyField", () => {
 	it("LazyField implementations do not allow edits to detached trees", () => {
-		const schema = toStoredSchema(JsonAsTree.JsonObject);
+		const schema = toInitialSchema(JsonAsTree.JsonObject);
 		const forest = forestWithContent({
 			schema,
 			initialTree: singleJsonCursor({}),
@@ -132,7 +138,7 @@ describe("LazyField", () => {
 		class Struct extends factory.object("Struct", {
 			foo: factory.number,
 		}) {}
-		const schema = toStoredSchema(Struct);
+		const schema = toInitialSchema(Struct);
 
 		const { context, cursor } = readonlyTreeWithContent({
 			schema: Struct,
@@ -167,7 +173,7 @@ describe("LazyField", () => {
 
 	it("Disposes when context is disposed", () => {
 		const factory = new SchemaFactory("LazyField");
-		const schema = toStoredSchema(factory.number);
+		const schema = toInitialSchema(factory.number);
 		const forest = forestWithContent({
 			schema,
 			initialTree: fieldCursorFromInsertable(SchemaFactory.number, 5),
@@ -190,15 +196,15 @@ describe("LazyField", () => {
 	it("Disposes when parent is disposed", () => {
 		const factory = new SchemaFactory("LazyField");
 		class Holder extends factory.object("holder", { f: factory.number }) {}
-		const schema = toStoredSchema(Holder);
+		const schema = toInitialSchema(Holder);
 		const forest = forestWithContent({
 			schema,
 			initialTree: fieldCursorFromInsertable(Holder, { f: 5 }),
 		});
 		const context = getReadonlyContext(forest, Holder);
 
-		const holder = [...context.root.boxedIterator()][0];
-		assert(holder.schema === Holder.identifier);
+		const holder = [...context.root][0];
+		assert(holder.type === Holder.identifier);
 		const field = holder.getBoxed(brand("f"));
 		assert(field instanceof LazyField);
 
@@ -214,15 +220,15 @@ describe("LazyField", () => {
 	it("Disposes when context then parent is disposed", () => {
 		const factory = new SchemaFactory("LazyField");
 		class Holder extends factory.object("holder", { f: factory.number }) {}
-		const schema = toStoredSchema(Holder);
+		const schema = toInitialSchema(Holder);
 		const forest = forestWithContent({
 			schema,
 			initialTree: fieldCursorFromInsertable(Holder, { f: 5 }),
 		});
 		const context = getReadonlyContext(forest, Holder);
 
-		const holder = [...context.root.boxedIterator()][0];
-		assert(holder.schema === Holder.identifier);
+		const holder = [...context.root][0];
+		assert(holder.type === Holder.identifier);
 		const field = holder.getBoxed(brand("f"));
 		assert(field instanceof LazyField);
 
@@ -300,7 +306,7 @@ describe("LazyField", () => {
 	describe("LazyOptionalField", () => {
 		const builder = new SchemaFactory("test");
 		const schema = builder.optional(builder.number);
-		const storedSchema = toStoredSchema(schema);
+		const storedSchema = toInitialSchema(schema);
 		const rootSchema = storedSchema.rootFieldSchema;
 
 		describe("Field with value", () => {
@@ -316,7 +322,7 @@ describe("LazyField", () => {
 
 			it("boxedAt", () => {
 				const boxedResult = field.boxedAt(0) ?? assert.fail();
-				assert.equal(boxedResult.schema, numberSchema.identifier);
+				assert.equal(boxedResult.type, numberSchema.identifier);
 				assert.equal(boxedResult.value, 42);
 			});
 
@@ -365,32 +371,29 @@ describe("LazyField", () => {
 				schema: SchemaFactory.optional(JsonAsTree.Tree),
 				initialTree: 5,
 			});
-			assert(view.flexTree.is(FieldKinds.optional));
-			assert.equal(view.flexTree.content, 5);
-			view.flexTree.editor.set(
-				mapTreeFromCursor(singleJsonCursor(6)),
-				view.flexTree.length === 0,
-			);
-			assert.equal(view.flexTree.content, 6);
-			view.flexTree.editor.set(undefined, view.flexTree.length === 0);
-			assert.equal(view.flexTree.content, undefined);
-			view.flexTree.editor.set(
+			assert(view.root.is(FieldKinds.optional));
+			assert.equal(view.root.content, 5);
+			view.root.editor.set(mapTreeFromCursor(singleJsonCursor(6)), view.root.length === 0);
+			assert.equal(view.root.content, 6);
+			view.root.editor.set(undefined, view.root.length === 0);
+			assert.equal(view.root.content, undefined);
+			view.root.editor.set(
 				mapTreeFromCursor(
 					cursorForJsonableTreeNode({
 						type: brand(numberSchema.identifier),
 						value: 7,
 					}),
 				),
-				view.flexTree.length === 0,
+				view.root.length === 0,
 			);
-			assert.equal(view.flexTree.content, 7);
+			assert.equal(view.root.content, 7);
 		});
 	});
 
 	describe("LazyValueField", () => {
 		const builder = new SchemaFactory("test");
 		const schema = builder.required(builder.string);
-		const schemaStored = toStoredSchema(schema);
+		const schemaStored = toInitialSchema(schema);
 		const rootSchema = schemaStored.rootFieldSchema;
 		const initialTree = "Hello world";
 
@@ -407,7 +410,7 @@ describe("LazyField", () => {
 
 		it("boxedAt", () => {
 			const boxedResult = field.boxedAt(0) ?? assert.fail();
-			assert.equal(boxedResult.schema, stringSchema.identifier);
+			assert.equal(boxedResult.type, stringSchema.identifier);
 			assert.equal(boxedResult.value, initialTree);
 		});
 
@@ -427,16 +430,16 @@ describe("LazyField", () => {
 				schema,
 				initialTree: "X",
 			});
-			assert(view.flexTree.is(FieldKinds.required));
-			assert.equal(view.flexTree.content, "X");
-			view.flexTree.editor.set(mapTreeFromCursor(singleJsonCursor("Y")));
-			assert.equal(view.flexTree.content, "Y");
+			assert(view.root.is(FieldKinds.required));
+			assert.equal(view.root.content, "X");
+			view.root.editor.set(mapTreeFromCursor(singleJsonCursor("Y")));
+			assert.equal(view.root.content, "Y");
 			const zCursor = cursorForJsonableTreeNode({
 				type: brand(stringSchema.identifier),
 				value: "Z",
 			});
-			view.flexTree.editor.set(mapTreeFromCursor(zCursor));
-			assert.equal(view.flexTree.content, "Z");
+			view.root.editor.set(mapTreeFromCursor(zCursor));
+			assert.equal(view.root.content, "Z");
 		});
 	});
 
@@ -444,10 +447,16 @@ describe("LazyField", () => {
 		const rootSchema: TreeFieldStoredSchema = {
 			kind: FieldKinds.sequence.identifier,
 			types: new Set([brand(numberSchema.identifier)]),
+			persistedMetadata: undefined,
 		};
 		const schema: TreeStoredSchema = {
 			rootFieldSchema: rootSchema,
-			nodeSchema: new Map([[brand(numberSchema.identifier), getStoredSchema(numberSchema)]]),
+			nodeSchema: new Map([
+				[
+					brand(numberSchema.identifier),
+					getStoredSchema(numberSchema, restrictiveStoredSchemaGenerationOptions),
+				],
+			]),
 		};
 
 		/**
@@ -493,15 +502,15 @@ describe("LazyField", () => {
 		it("boxedAt", () => {
 			const sequence = testSequence([37, 42]);
 			const boxedResult0 = sequence.boxedAt(0) ?? assert.fail();
-			assert.equal(boxedResult0.schema, numberSchema.identifier);
+			assert.equal(boxedResult0.type, numberSchema.identifier);
 			assert.equal(boxedResult0.value, 37);
 
 			const boxedResult1 = sequence.boxedAt(1) ?? assert.fail();
-			assert.equal(boxedResult1.schema, numberSchema.identifier);
+			assert.equal(boxedResult1.type, numberSchema.identifier);
 			assert.equal(boxedResult1.value, 42);
 
 			const boxedResultNeg1 = sequence.boxedAt(-1) ?? assert.fail();
-			assert.equal(boxedResultNeg1.schema, numberSchema.identifier);
+			assert.equal(boxedResultNeg1.type, numberSchema.identifier);
 			assert.equal(boxedResultNeg1.value, 42);
 
 			assert.equal(sequence.boxedAt(2), undefined);
@@ -517,12 +526,6 @@ describe("LazyField", () => {
 			const sequence = testSequence([1, 2]);
 			const mapResult = sequence.map((value) => (value as number) * 2);
 			assert.deepEqual(mapResult, [2, 4]);
-		});
-
-		it("asArray", () => {
-			const sequence = testSequence([37, 42]);
-			const array = [...sequence];
-			assert.deepEqual(array, [37, 42]);
 		});
 	});
 });

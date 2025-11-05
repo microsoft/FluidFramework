@@ -12,10 +12,10 @@ import type {
 
 /**
  * An envelope wraps the contents with the intended target
- * @legacy
- * @alpha
+ * @legacy @beta
  */
-export interface IEnvelope {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
+export interface IEnvelope<TContents = any> {
 	/**
 	 * The target for the envelope
 	 */
@@ -24,14 +24,12 @@ export interface IEnvelope {
 	/**
 	 * The contents of the envelope
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
-	contents: any;
+	contents: TContents;
 }
 
 /**
  * Represents ISignalMessage with its type.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IInboundSignalMessage<TMessage extends TypedMessage = TypedMessage>
 	extends ISignalMessage<TMessage> {
@@ -41,8 +39,7 @@ export interface IInboundSignalMessage<TMessage extends TypedMessage = TypedMess
 /**
  * Message send by client attaching local data structure.
  * Contains snapshot of data structure which is the current state of this data structure.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IAttachMessage {
 	/**
@@ -66,8 +63,7 @@ export interface IAttachMessage {
  * but it should not be used when creating a new attach op.
  * Older versions of attach messages could have null snapshots,
  * so this gives correct typings for writing backward compatible code.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type InboundAttachMessage = Omit<IAttachMessage, "snapshot"> & {
 	// eslint-disable-next-line @rushstack/no-new-null -- TODO: breaking change; protocol might even explicitly use null
@@ -79,8 +75,7 @@ export type InboundAttachMessage = Omit<IAttachMessage, "snapshot"> & {
  * It is the same as ISequencedDocumentMessage, but without the contents and clientSequenceNumbers
  * which are sent separately. The contents are modified at multiple layers in the stack so having it
  * separate doesn't require packing and unpacking the entire message.
- * @alpha
- * @legacy
+ * @legacy @beta
  */
 export type ISequencedMessageEnvelope = Omit<
 	ISequencedDocumentMessage,
@@ -89,8 +84,7 @@ export type ISequencedMessageEnvelope = Omit<
 
 /**
  * These are the contents of a runtime message as it is processed throughout the stack.
- * @alpha
- * @legacy
+ * @legacy @beta
  * @sealed
  */
 export interface IRuntimeMessagesContent {
@@ -110,8 +104,7 @@ export interface IRuntimeMessagesContent {
 
 /**
  * A collection of messages that are processed by the runtime.
- * @alpha
- * @legacy
+ * @legacy @beta
  * @sealed
  */
 export interface IRuntimeMessageCollection {
@@ -127,4 +120,41 @@ export interface IRuntimeMessageCollection {
 	 * The contents of the messages in the collection
 	 */
 	readonly messagesContent: readonly IRuntimeMessagesContent[];
+}
+
+/**
+ * Outgoing {@link IFluidDataStoreChannel} message structures.
+ * @internal
+ *
+ * @privateRemarks
+ * Future use opportunity:
+ * - Change {@link IFluidDataStoreChannel} and {@link IFluidParentContext},
+ * to have a generic specifying `T extends FluidDataStoreMessage` and uses
+ * `T["type"]` and `T["content"]` to qualify message related methods,
+ * preferably where `submitMessage`, `reSubmit`, and `rollback` have
+ * overloads to ensure callers pair values correctly.
+ * - A further improvement would be to reshape `submitMessage`, `reSubmit`,
+ * and `rollback` to accept `T` as `message` parameter instead of `type`
+ * and `content` parameters that are hard to convince TypeScript must be
+ * paired in implementations.
+ * - Caveat to enhanced type safety is that a user that changes their own
+ * `FluidDataStoreMessage` definition over time needs to account for
+ * protocol changes. So `unknown` should continue to be used for incoming
+ * message methods (where messages are not known to originate locally).
+ */
+export interface FluidDataStoreMessage {
+	type: string;
+	content: unknown;
+}
+
+/**
+ * Interface to provide access to snapshot blobs to DataStore layer.
+ *
+ * @legacy @beta
+ */
+export interface IRuntimeStorageService {
+	/**
+	 * Reads the object with the given ID, returns content in arrayBufferLike
+	 */
+	readBlob(id: string): Promise<ArrayBufferLike>;
 }

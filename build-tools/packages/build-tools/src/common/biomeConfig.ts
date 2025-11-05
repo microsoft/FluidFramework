@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "node:assert/strict";
+import { strict as assert } from "node:assert/strict";
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import ignore from "ignore";

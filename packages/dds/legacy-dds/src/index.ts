@@ -11,7 +11,7 @@ export type {
 } from "./signal/index.js";
 export { SharedSignal } from "./signal/index.js";
 export { SharedSignalFactory } from "./signal/index.js";
-export { SharedArray } from "./array/index.js";
+export { SharedArray, SharedArrayBuilder, OperationType } from "./array/index.js";
 export { SharedArrayFactory } from "./array/index.js";
 export { SharedArrayRevertible } from "./array/index.js";
 export type {
@@ -22,12 +22,10 @@ export type {
 } from "./array/index.js";
 export type {
 	ISharedArrayOperation,
-	FullyReadonly,
 	IDeleteOperation,
 	IInsertOperation,
 	IMoveOperation,
 	ISharedArrayRevertibleOperation,
-	OperationType,
 	IToggleMoveOperation,
 	IToggleOperation,
 } from "./array/index.js";

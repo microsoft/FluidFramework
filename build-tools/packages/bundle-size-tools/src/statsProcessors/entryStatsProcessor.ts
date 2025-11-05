@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { BundleMetric, WebpackStatsProcessor } from "../BundleBuddyTypes";
+import type { BundleMetric, WebpackStatsProcessor } from "../BundleBuddyTypes";
 
 export interface EntryStatsProcessorOptions {
 	// Custom callback to customize what text will be used as the metric name

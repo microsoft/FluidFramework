@@ -13,35 +13,32 @@ import {
 } from "@fluidframework/container-loader/internal";
 import { createLocalOdspDocumentServiceFactory } from "@fluidframework/odsp-driver/internal";
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { IFluidFileConverter } from "./codeLoaderBundle.js";
+import type { IFluidFileConverter } from "./codeLoaderBundle.js";
 import { FakeUrlResolver } from "./fakeUrlResolver.js";
-/* eslint-disable import/no-internal-modules */
-import { ITelemetryOptions } from "./logger/fileLogger.js";
+/* eslint-disable import-x/no-internal-modules */
+import type { ITelemetryOptions } from "./logger/fileLogger.js";
 import { createLogger, getTelemetryFileValidationError } from "./logger/loggerUtils.js";
 import { getArgsValidationError, getSnapshotFileContent, timeoutPromise } from "./utils.js";
-/* eslint-enable import/no-internal-modules */
+/* eslint-enable import-x/no-internal-modules */
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type IExportFileResponse = IExportFileResponseSuccess | IExportFileResponseFailure;
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IExportFileResponseSuccess {
 	success: true;
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IExportFileResponseFailure {
 	success: false;

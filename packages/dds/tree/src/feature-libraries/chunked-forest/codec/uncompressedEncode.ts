@@ -12,10 +12,10 @@ import type { FluidSerializableReadOnly } from "../../valueUtilities.js";
 
 import type { FieldBatch } from "./fieldBatch.js";
 import {
+	FieldBatchFormatVersion,
 	type EncodedFieldBatch,
-	type EncodedNestedArray,
-	type EncodedTreeShape,
-	version,
+	type EncodedNestedArrayShape,
+	type EncodedNodeShape,
 } from "./format.js";
 import type { ShapeIndex } from "./formatGeneric.js";
 
@@ -30,10 +30,10 @@ import type { ShapeIndex } from "./formatGeneric.js";
 export function uncompressedEncode(batch: FieldBatch): EncodedFieldBatch {
 	const rootFields = batch.map(encodeSequence);
 	return {
-		version,
+		version: FieldBatchFormatVersion.v1,
 		identifiers: [],
 		// A single shape used to encode all fields.
-		shapes: [{ c: anyTreeShape }, { a: anyArray }],
+		shapes: [{ c: anyNodeShape }, { a: anyArray }],
 		// Wrap up each field as an indicator to use the above shape, and its encoded data.
 		data: rootFields.map((data) => [arrayIndex, data]),
 	};
@@ -42,11 +42,11 @@ export function uncompressedEncode(batch: FieldBatch): EncodedFieldBatch {
 const treeIndex: ShapeIndex = 0;
 const arrayIndex: ShapeIndex = 1;
 
-const anyTreeShape: EncodedTreeShape = {
+const anyNodeShape: EncodedNodeShape = {
 	extraFields: arrayIndex,
 };
 
-const anyArray: EncodedNestedArray = treeIndex;
+const anyArray: EncodedNestedArrayShape = treeIndex;
 
 /**
  * Encode a field using the hard coded shape above.

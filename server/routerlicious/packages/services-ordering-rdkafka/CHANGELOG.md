@@ -1,5 +1,13 @@
 # @fluidframework/server-services-ordering-rdkafka
 
+## 6.0.0
+
+### Major Changes
+
+-   Added pause and resume methods for lambdas ([#22730](https://github.com/microsoft/FluidFramework/pull/22730)) [256bf0899c](https://github.com/microsoft/FluidFramework/commit/256bf0899c041914da3236b3a1c9d8ecc85d3b34)
+
+    Added pause and resume methods for context, documentContext, partition, partitionManager, kakfaRunner, rdKafkaConsumer, and lambda. They are used to pause/resume the incoming messages during various circuitBreaker states.
+
 ## 5.0.0
 
 Dependency updates only.

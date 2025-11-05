@@ -4,9 +4,9 @@
  */
 
 import { fromBase64ToUtf8 } from "@fluid-internal/client-utils";
-import { IRequest } from "@fluidframework/core-interfaces";
+import type { IRequest } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IContainerPackageInfo,
 	IResolvedUrl,
 	IUrlResolver,
@@ -18,7 +18,7 @@ import {
 	isOdcUrl,
 	isSpoUrl,
 } from "@fluidframework/odsp-driver/internal";
-import { IOdspUrlParts } from "@fluidframework/odsp-driver-definitions/internal";
+import type { IOdspUrlParts } from "@fluidframework/odsp-driver-definitions/internal";
 
 const fluidOfficeAndOneNoteServers = new Set([
 	"dev.fluidpreview.office.net",

@@ -7,10 +7,15 @@ import { strict as assert } from "node:assert";
 
 import {
 	createFromCursor,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/create.js";
 
-import { SchemaFactory } from "../../../simple-tree/index.js";
+import {
+	convertField,
+	normalizeFieldSchema,
+	restrictiveStoredSchemaGenerationOptions,
+	SchemaFactory,
+} from "../../../simple-tree/index.js";
 import { validateUsageError } from "../../utils.js";
 import { singleJsonCursor } from "../../json/index.js";
 
@@ -18,13 +23,28 @@ describe("simple-tree create", () => {
 	describe("createFromCursor", () => {
 		it("Success", () => {
 			const cursor = singleJsonCursor("Hello world");
-			createFromCursor(SchemaFactory.string, cursor);
+			createFromCursor(
+				SchemaFactory.string,
+				cursor,
+				convertField(
+					normalizeFieldSchema(SchemaFactory.string),
+					restrictiveStoredSchemaGenerationOptions,
+				),
+			);
 		});
 
 		it("Failure: unknown schema", () => {
 			const cursor = singleJsonCursor("Hello world");
 			assert.throws(
-				() => createFromCursor(SchemaFactory.number, cursor),
+				() =>
+					createFromCursor(
+						SchemaFactory.number,
+						cursor,
+						convertField(
+							normalizeFieldSchema(SchemaFactory.number),
+							restrictiveStoredSchemaGenerationOptions,
+						),
+					),
 				validateUsageError(
 					`Failed to parse tree due to occurrence of type "com.fluidframework.leaf.string" which is not defined in this context.`,
 				),
@@ -36,7 +56,12 @@ describe("simple-tree create", () => {
 			class Obj extends factory.object("Obj", { x: SchemaFactory.string }) {}
 			const cursor = singleJsonCursor("Hello world");
 			assert.throws(
-				() => createFromCursor(Obj, cursor),
+				() =>
+					createFromCursor(
+						Obj,
+						cursor,
+						convertField(normalizeFieldSchema(Obj), restrictiveStoredSchemaGenerationOptions),
+					),
 				validateUsageError(/does not conform to schema/),
 			);
 		});

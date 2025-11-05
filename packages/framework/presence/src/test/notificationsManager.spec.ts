@@ -6,18 +6,21 @@
 import { strict as assert, fail } from "node:assert";
 
 import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
-import { useFakeTimers, type SinonFakeTimers } from "sinon";
+import type { SinonFakeTimers } from "sinon";
+import { useFakeTimers } from "sinon";
 
 import type {
 	Attendee,
 	ClientConnectionId,
 	NotificationsManager,
 	NotificationsWorkspace,
+	PresenceWithNotifications,
 } from "../index.js";
 import { Notifications } from "../index.js";
-import type { createPresenceManager } from "../presenceManager.js";
+import { toOpaqueJson } from "../internalUtils.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
+import type { ProcessSignalFunction } from "./testUtils.js";
 import {
 	assertFinalExpectations,
 	assertIdenticalTypes,
@@ -38,8 +41,9 @@ describe("Presence", () => {
 		let logger: EventAndErrorTrackingLogger;
 		const initialTime = 1000;
 		let clock: SinonFakeTimers;
-		let presence: ReturnType<typeof createPresenceManager>;
-		// eslint-disable-next-line @typescript-eslint/ban-types
+		let presence: PresenceWithNotifications;
+		let processSignal: ProcessSignalFunction;
+		// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/ban-types
 		let notificationsWorkspace: NotificationsWorkspace<{}>;
 
 		before(async () => {
@@ -51,12 +55,18 @@ describe("Presence", () => {
 			runtime = new MockEphemeralRuntime(logger);
 
 			// We are configuring the runtime to be in a connected state, so ensure it looks connected
-			runtime.connected = true;
+			runtime.joined = true;
 
 			clock.setSystemTime(initialTime);
 
 			// Set up the presence connection
-			presence = prepareConnectedPresence(runtime, "attendeeId-2", "client2", clock, logger);
+			({ presence, processSignal } = prepareConnectedPresence(
+				runtime,
+				"attendeeId-2",
+				"client2",
+				clock,
+				logger,
+			));
 
 			// Get a notifications workspace
 			notificationsWorkspace = presence.notifications.getWorkspace(
@@ -84,7 +94,8 @@ describe("Presence", () => {
 			notificationsWorkspace.add(
 				"testEvents",
 				Notifications<
-					// Below explicit generic specification should not be required.
+					// Below explicit generic specification should not be required
+					// when default handler is specified.
 					{
 						newId: (id: number) => void;
 					},
@@ -126,12 +137,16 @@ describe("Presence", () => {
 				{
 					type: "Pres:DatastoreUpdate",
 					content: {
-						"sendTimestamp": 1020,
+						"sendTimestamp": clock.now,
 						"avgLatency": 10,
 						"data": {
 							"system:presence": {
 								"clientToSessionId": {
-									[connectionId2]: { "rev": 0, "timestamp": 1000, "value": attendeeId2 },
+									[connectionId2]: {
+										"rev": 0,
+										"timestamp": initialTime,
+										"value": attendeeId2,
+									},
 								},
 							},
 							"n:name:testNotificationWorkspace": {
@@ -139,7 +154,7 @@ describe("Presence", () => {
 									[attendeeId2]: {
 										"rev": 0,
 										"timestamp": 0,
-										"value": { "name": "newId", "args": [42] },
+										"value": toOpaqueJson({ "name": "newId", "args": [42] }),
 										"ignoreUnmonitored": true,
 									},
 								},
@@ -179,12 +194,16 @@ describe("Presence", () => {
 				{
 					type: "Pres:DatastoreUpdate",
 					content: {
-						"sendTimestamp": 1020,
+						"sendTimestamp": clock.now,
 						"avgLatency": 10,
 						"data": {
 							"system:presence": {
 								"clientToSessionId": {
-									[connectionId2]: { "rev": 0, "timestamp": 1000, "value": attendeeId2 },
+									[connectionId2]: {
+										"rev": 0,
+										"timestamp": initialTime,
+										"value": attendeeId2,
+									},
 								},
 							},
 							"n:name:testNotificationWorkspace": {
@@ -192,7 +211,7 @@ describe("Presence", () => {
 									[attendeeId2]: {
 										"rev": 0,
 										"timestamp": 0,
-										"value": { "name": "newId", "args": [42] },
+										"value": toOpaqueJson({ "name": "newId", "args": [42] }),
 										"ignoreUnmonitored": true,
 									},
 								},
@@ -253,7 +272,7 @@ describe("Presence", () => {
 			];
 
 			// Processing this signal should trigger the testEvents.newId event listeners
-			presence.processSignal(
+			processSignal(
 				[],
 				{
 					type: "Pres:DatastoreUpdate",
@@ -271,7 +290,7 @@ describe("Presence", () => {
 									[attendeeId3]: {
 										"rev": 0,
 										"timestamp": 0,
-										"value": { "name": "newId", "args": [42] },
+										"value": toOpaqueJson({ "name": "newId", "args": [42] }),
 										"ignoreUnmonitored": true,
 									},
 								},
@@ -331,7 +350,7 @@ describe("Presence", () => {
 			});
 
 			// Processing this signal should trigger the testEvents.newId event listeners
-			presence.processSignal(
+			processSignal(
 				[],
 				{
 					type: "Pres:DatastoreUpdate",
@@ -349,7 +368,7 @@ describe("Presence", () => {
 									[attendeeId3]: {
 										"rev": 0,
 										"timestamp": 0,
-										"value": { "name": "oldId", "args": [41] },
+										"value": toOpaqueJson({ "name": "oldId", "args": [41] }),
 										"ignoreUnmonitored": true,
 									},
 								},
@@ -397,7 +416,7 @@ describe("Presence", () => {
 			testEvents.notifications.off("newId", newIdEventHandler);
 
 			// Processing this signal should trigger the testEvents.newId event listeners
-			presence.processSignal(
+			processSignal(
 				[],
 				{
 					type: "Pres:DatastoreUpdate",
@@ -415,7 +434,7 @@ describe("Presence", () => {
 									[attendeeId3]: {
 										"rev": 0,
 										"timestamp": 0,
-										"value": { "name": "newId", "args": [43] },
+										"value": toOpaqueJson({ "name": "newId", "args": [43] }),
 										"ignoreUnmonitored": true,
 									},
 								},
@@ -469,7 +488,7 @@ describe("Presence", () => {
 			disconnect();
 
 			// Act
-			presence.processSignal(
+			processSignal(
 				[],
 				{
 					type: "Pres:DatastoreUpdate",
@@ -487,7 +506,7 @@ describe("Presence", () => {
 									[attendeeId3]: {
 										"rev": 0,
 										"timestamp": 0,
-										"value": { "name": "newId", "args": [44] },
+										"value": toOpaqueJson({ "name": "newId", "args": [44] }),
 										"ignoreUnmonitored": true,
 									},
 								},

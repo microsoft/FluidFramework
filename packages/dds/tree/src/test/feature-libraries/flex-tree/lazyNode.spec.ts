@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-internal-modules */
+/* eslint-disable import-x/no-internal-modules */
 
 import { strict as assert, fail } from "node:assert";
 
@@ -129,7 +129,7 @@ describe("LazyNode", () => {
 
 function fieldToMapTree(field: FlexTreeField): MapTree[] {
 	const results: MapTree[] = [];
-	for (const child of field.boxedIterator()) {
+	for (const child of field) {
 		results.push(nodeToMapTree(child));
 	}
 	return results;
@@ -137,9 +137,9 @@ function fieldToMapTree(field: FlexTreeField): MapTree[] {
 
 function nodeToMapTree(node: FlexTreeNode): MapTree {
 	const fields: Map<FieldKey, MapTree[]> = new Map();
-	for (const field of node.boxedIterator()) {
+	for (const field of node) {
 		fields.set(field.key, fieldToMapTree(field));
 	}
 
-	return { fields, type: node.schema, value: node.value };
+	return { fields, type: node.type, value: node.value };
 }

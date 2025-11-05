@@ -8,6 +8,8 @@ import {
 	FieldKind,
 	NodeKind,
 	SchemaFactory,
+	SchemaFactoryAlpha,
+	stringSchema,
 	type SimpleLeafNodeSchema,
 	type SimpleNodeSchema,
 	type SimpleObjectFieldSchema,
@@ -15,27 +17,27 @@ import {
 	type SimpleTreeSchema,
 } from "../../../simple-tree/index.js";
 import { ValueSchema } from "../../../core/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { toSimpleTreeSchema } from "../../../simple-tree/api/viewSchemaToSimpleSchema.js";
-// eslint-disable-next-line import/no-internal-modules
-import { schemaStatics } from "../../../simple-tree/api/schemaFactory.js";
 
 const simpleString: SimpleLeafNodeSchema = {
 	leafKind: ValueSchema.String,
 	kind: NodeKind.Leaf,
 	metadata: {},
+	persistedMetadata: undefined,
 };
 
 const simpleNumber: SimpleLeafNodeSchema = {
 	leafKind: ValueSchema.Number,
 	kind: NodeKind.Leaf,
 	metadata: {},
+	persistedMetadata: undefined,
 };
 
 describe("getSimpleSchema", () => {
 	it("non-copying", () => {
-		const Schema = schemaStatics.string;
-		const root = schemaStatics.optional(Schema);
+		const Schema = stringSchema;
+		const root = SchemaFactoryAlpha.optional(Schema);
 
 		const actual = toSimpleTreeSchema(root, false);
 
@@ -61,7 +63,8 @@ describe("getSimpleSchema", () => {
 			root: {
 				kind: FieldKind.Optional,
 				metadata: { description: "An optional string." },
-				allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+				simpleAllowedTypes: new Map([["com.fluidframework.leaf.string", { isStaged: false }]]),
+				persistedMetadata: undefined,
 			},
 			definitions: new Map([["com.fluidframework.leaf.string", simpleString]]),
 		};
@@ -77,7 +80,8 @@ describe("getSimpleSchema", () => {
 			root: {
 				kind: FieldKind.Required,
 				metadata: {},
-				allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+				simpleAllowedTypes: new Map([["com.fluidframework.leaf.string", { isStaged: false }]]),
+				persistedMetadata: undefined,
 			},
 			definitions: new Map([["com.fluidframework.leaf.string", simpleString]]),
 		};
@@ -93,9 +97,10 @@ describe("getSimpleSchema", () => {
 			root: {
 				kind: FieldKind.Required,
 				metadata: {},
-				allowedTypesIdentifiers: new Set([
-					"com.fluidframework.leaf.number",
-					"com.fluidframework.leaf.string",
+				persistedMetadata: undefined,
+				simpleAllowedTypes: new Map([
+					["com.fluidframework.leaf.number", { isStaged: false }],
+					["com.fluidframework.leaf.string", { isStaged: false }],
 				]),
 			},
 			definitions: new Map([
@@ -116,15 +121,19 @@ describe("getSimpleSchema", () => {
 			root: {
 				kind: FieldKind.Required,
 				metadata: {},
-				allowedTypesIdentifiers: new Set(["test.array"]),
+				persistedMetadata: undefined,
+				simpleAllowedTypes: new Map([["test.array", { isStaged: false }]]),
 			},
 			definitions: new Map<string, SimpleNodeSchema>([
 				[
 					"test.array",
 					{
 						kind: NodeKind.Array,
-						allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+						simpleAllowedTypes: new Map([
+							["com.fluidframework.leaf.string", { isStaged: false }],
+						]),
 						metadata: {},
+						persistedMetadata: undefined,
 					},
 				],
 				["com.fluidframework.leaf.string", simpleString],
@@ -142,7 +151,8 @@ describe("getSimpleSchema", () => {
 			root: {
 				kind: FieldKind.Required,
 				metadata: {},
-				allowedTypesIdentifiers: new Set(["test.map"]),
+				persistedMetadata: undefined,
+				simpleAllowedTypes: new Map([["test.map", { isStaged: false }]]),
 			},
 			definitions: new Map<string, SimpleNodeSchema>([
 				[
@@ -150,7 +160,40 @@ describe("getSimpleSchema", () => {
 					{
 						kind: NodeKind.Map,
 						metadata: {},
-						allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+						persistedMetadata: undefined,
+						simpleAllowedTypes: new Map([
+							["com.fluidframework.leaf.string", { isStaged: false }],
+						]),
+					},
+				],
+				["com.fluidframework.leaf.string", simpleString],
+			]),
+		};
+		assert.deepEqual(actual, expected);
+	});
+
+	it("Record schema", () => {
+		const schemaFactory = new SchemaFactoryAlpha("test");
+		class Schema extends schemaFactory.record("record", schemaFactory.string) {}
+
+		const actual = toSimpleTreeSchema(Schema, true);
+		const expected: SimpleTreeSchema = {
+			root: {
+				kind: FieldKind.Required,
+				metadata: {},
+				persistedMetadata: undefined,
+				simpleAllowedTypes: new Map([["test.record", { isStaged: false }]]),
+			},
+			definitions: new Map<string, SimpleNodeSchema>([
+				[
+					"test.record",
+					{
+						kind: NodeKind.Record,
+						metadata: {},
+						persistedMetadata: undefined,
+						simpleAllowedTypes: new Map([
+							["com.fluidframework.leaf.string", { isStaged: false }],
+						]),
 					},
 				],
 				["com.fluidframework.leaf.string", simpleString],
@@ -172,7 +215,8 @@ describe("getSimpleSchema", () => {
 			root: {
 				kind: FieldKind.Required,
 				metadata: {},
-				allowedTypesIdentifiers: new Set(["test.object"]),
+				persistedMetadata: undefined,
+				simpleAllowedTypes: new Map([["test.object", { isStaged: false }]]),
 			},
 			definitions: new Map<string, SimpleNodeSchema>([
 				[
@@ -180,13 +224,17 @@ describe("getSimpleSchema", () => {
 					{
 						kind: NodeKind.Object,
 						metadata: {},
+						persistedMetadata: undefined,
 						fields: new Map<string, SimpleObjectFieldSchema>([
 							[
 								"foo",
 								{
 									kind: FieldKind.Optional,
 									metadata: {},
-									allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.number"]),
+									persistedMetadata: undefined,
+									simpleAllowedTypes: new Map([
+										["com.fluidframework.leaf.number", { isStaged: false }],
+									]),
 									storedKey: "foo",
 								},
 							],
@@ -195,7 +243,10 @@ describe("getSimpleSchema", () => {
 								{
 									kind: FieldKind.Required,
 									metadata: {},
-									allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+									persistedMetadata: undefined,
+									simpleAllowedTypes: new Map([
+										["com.fluidframework.leaf.string", { isStaged: false }],
+									]),
 									storedKey: "bar",
 								},
 							],
@@ -221,7 +272,8 @@ describe("getSimpleSchema", () => {
 			root: {
 				kind: FieldKind.Required,
 				metadata: {},
-				allowedTypesIdentifiers: new Set(["test.object"]),
+				persistedMetadata: undefined,
+				simpleAllowedTypes: new Map([["test.object", { isStaged: false }]]),
 			},
 			definitions: new Map<string, SimpleNodeSchema>([
 				[
@@ -229,13 +281,17 @@ describe("getSimpleSchema", () => {
 					{
 						kind: NodeKind.Object,
 						metadata: {},
+						persistedMetadata: undefined,
 						fields: new Map([
 							[
 								"id",
 								{
 									kind: FieldKind.Identifier,
 									metadata: {},
-									allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+									persistedMetadata: undefined,
+									simpleAllowedTypes: new Map([
+										["com.fluidframework.leaf.string", { isStaged: false }],
+									]),
 									storedKey: "id",
 								},
 							],
@@ -261,7 +317,8 @@ describe("getSimpleSchema", () => {
 			root: {
 				kind: FieldKind.Required,
 				metadata: {},
-				allowedTypesIdentifiers: new Set(["test.object"]),
+				persistedMetadata: undefined,
+				simpleAllowedTypes: new Map([["test.object", { isStaged: false }]]),
 			},
 			definitions: new Map<string, SimpleNodeSchema>([
 				[
@@ -269,15 +326,17 @@ describe("getSimpleSchema", () => {
 					{
 						kind: NodeKind.Object,
 						metadata: {},
+						persistedMetadata: undefined,
 						fields: new Map([
 							[
 								"foo",
 								{
 									kind: FieldKind.Required,
 									metadata: {},
-									allowedTypesIdentifiers: new Set([
-										"com.fluidframework.leaf.number",
-										"com.fluidframework.leaf.string",
+									persistedMetadata: undefined,
+									simpleAllowedTypes: new Map([
+										["com.fluidframework.leaf.number", { isStaged: false }],
+										["com.fluidframework.leaf.string", { isStaged: false }],
 									]),
 									storedKey: "foo",
 								},
@@ -304,7 +363,8 @@ describe("getSimpleSchema", () => {
 			root: {
 				kind: FieldKind.Required,
 				metadata: {},
-				allowedTypesIdentifiers: new Set(["test.recursive-object"]),
+				persistedMetadata: undefined,
+				simpleAllowedTypes: new Map([["test.recursive-object", { isStaged: false }]]),
 			},
 			definitions: new Map<string, SimpleNodeSchema>([
 				[
@@ -312,15 +372,17 @@ describe("getSimpleSchema", () => {
 					{
 						kind: NodeKind.Object,
 						metadata: {},
+						persistedMetadata: undefined,
 						fields: new Map([
 							[
 								"foo",
 								{
 									kind: FieldKind.Optional,
 									metadata: {},
-									allowedTypesIdentifiers: new Set([
-										"com.fluidframework.leaf.string",
-										"test.recursive-object",
+									persistedMetadata: undefined,
+									simpleAllowedTypes: new Map([
+										["com.fluidframework.leaf.string", { isStaged: false }],
+										["test.recursive-object", { isStaged: false }],
 									]),
 									storedKey: "foo",
 								},

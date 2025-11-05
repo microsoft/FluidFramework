@@ -13,7 +13,7 @@ import {
 	TreeStoredSchemaRepository,
 	rootFieldKey,
 } from "../../../core/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { Context } from "../../../feature-libraries/flex-tree/context.js";
 import {
 	defaultSchemaPolicy,
@@ -25,7 +25,7 @@ import {
 	forestWithContent,
 } from "../../utils.js";
 import {
-	toStoredSchema,
+	toInitialSchema,
 	type ImplicitFieldSchema,
 	type InsertableContent,
 	type InsertableField,
@@ -39,7 +39,7 @@ export function getReadonlyContext(
 	return new Context(
 		defaultSchemaPolicy,
 		new MockTreeCheckout(forest, {
-			schema: new TreeStoredSchemaRepository(toStoredSchema(schema)),
+			schema: new TreeStoredSchemaRepository(toInitialSchema(schema)),
 		}),
 		new MockNodeIdentifierManager(),
 	);
@@ -59,7 +59,7 @@ export function contextWithContentReadonly(content: TreeSimpleContent): Context 
 	);
 	const forest = forestWithContent({
 		initialTree: cursor,
-		schema: toStoredSchema(content.schema),
+		schema: toInitialSchema(content.schema),
 	});
 	return getReadonlyContext(forest, content.schema);
 }

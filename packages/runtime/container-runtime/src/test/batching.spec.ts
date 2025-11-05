@@ -5,12 +5,15 @@
 
 import { strict as assert } from "node:assert";
 
-import { AttachState, ICriticalContainerError } from "@fluidframework/container-definitions";
-import { IContainerContext } from "@fluidframework/container-definitions/internal";
+import {
+	AttachState,
+	type ICriticalContainerError,
+} from "@fluidframework/container-definitions";
+import type { IContainerContext } from "@fluidframework/container-definitions/internal";
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import {
 	MessageType,
-	ISequencedDocumentMessage,
+	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	MockLogger,
@@ -23,10 +26,11 @@ import {
 	MockQuorumClients,
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
-import { SinonFakeTimers, createSandbox, useFakeTimers } from "sinon";
+import { type SinonFakeTimers, createSandbox, useFakeTimers } from "sinon";
 
 import type { ChannelCollection } from "../channelCollection.js";
 import { ContainerRuntime } from "../containerRuntime.js";
+import { FluidDataStoreRegistry } from "../dataStoreRegistry.js";
 import { ContainerMessageType } from "../messageTypes.js";
 
 describe("Runtime batching", () => {
@@ -76,9 +80,9 @@ describe("Runtime batching", () => {
 
 	beforeEach(async () => {
 		mockDeltaManager = new MockDeltaManager();
-		containerRuntime = await ContainerRuntime.loadRuntime({
+		containerRuntime = await ContainerRuntime.loadRuntime2({
 			context: getMockContext(mockDeltaManager) as IContainerContext,
-			registryEntries: [],
+			registry: new FluidDataStoreRegistry([]),
 			existing: false,
 			runtimeOptions: {},
 			provideEntryPoint: mockProvideEntryPoint,

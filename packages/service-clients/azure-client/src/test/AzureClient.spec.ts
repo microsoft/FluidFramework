@@ -18,7 +18,7 @@ import { isInternalFluidContainer } from "@fluidframework/fluid-static/internal"
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import { SchemaFactory, SharedTree, TreeViewConfiguration } from "fluid-framework";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { SharedMap } from "fluid-framework/legacy";
 import { v4 as uuid } from "uuid";
 

@@ -14,7 +14,7 @@ import type {
 	IFluidHandle,
 	IFluidLoadable,
 } from "@fluidframework/core-interfaces";
-// eslint-disable-next-line import/no-deprecated
+// eslint-disable-next-line import-x/no-deprecated
 import type { IProvideFluidHandle } from "@fluidframework/core-interfaces/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import type { ISharedObject, SharedObject } from "@fluidframework/shared-object-base/internal";
@@ -92,7 +92,7 @@ export type VisualizeChildData = (data: unknown) => Promise<VisualChildNode>;
 /**
  * Utility type for a union of things that can be visualized.
  */
-export type VisualizableFluidObject = ISharedObject | DataObject | TreeDataObject<unknown>;
+export type VisualizableFluidObject = ISharedObject | DataObject | TreeDataObject;
 
 /**
  * Specifies renderers for different {@link @fluidframework/shared-object-base#ISharedObject} types.
@@ -255,7 +255,8 @@ export class DataVisualizerGraph
 			objectId = getKeyForFluidObject(rootSharedObject);
 			visualizationFunction = visualizeDataObject;
 		} else if (isTreeDataObj) {
-			rootSharedObject = visualizableObject.sharedTree as unknown as ISharedObject;
+			rootSharedObject = (visualizableObject as unknown as { readonly tree: ISharedObject })
+				.tree;
 			objectId = getKeyForFluidObject(rootSharedObject);
 			visualizationFunction = visualizeTreeDataObject;
 		} else {
@@ -493,7 +494,7 @@ export async function visualizeChildData(
 		};
 	}
 
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	if ((data as IProvideFluidHandle)?.IFluidHandle !== undefined) {
 		// If we encounter a Fluid handle, register it for future rendering, and return a node with its ID.
 		const handle = data as IFluidHandle;
@@ -565,22 +566,19 @@ function isDataObject(value: unknown): value is DataObject {
  * Tries to use `instanceof` because we decided that a version mix-up with
  * {@link @fluidframework/aqueduct#} is unlikely between devtools and end-user applications, and we don't support it anyway.
  * In addition, we check for the presence of key properties that make a `TreeDataObject` unique:
- * - {@link TreeDataObject#sharedTree | sharedTree} getter
- * - {@link TreeDataObject#treeView | treeView} getter
- * - {@link TreeDataObject#initializeInternal | initializeInternal} method
+ * - `TreeDataObject.tree` getter
+ * - `TreeDataObject.treeView` getter
+ * - `TreeDataObject.initializeInternal` method
  */
-function isTreeDataObject(value: unknown): value is TreeDataObject<unknown> {
+function isTreeDataObject(value: unknown): value is TreeDataObject {
 	if (
 		value instanceof TreeDataObject ||
-		(typeof (value as TreeDataObject<unknown>).initializeInternal === "function" &&
-			Object.getOwnPropertyDescriptor(Object.getPrototypeOf(value), "sharedTree")?.get !==
-				undefined)
+		(typeof (value as TreeDataObject).initializeInternal === "function" &&
+			Object.getOwnPropertyDescriptor(Object.getPrototypeOf(value), "tree")?.get !== undefined)
 	) {
-		const tree = (value as TreeDataObject<unknown>).sharedTree;
+		const tree = (value as { readonly tree?: ISharedObject }).tree;
 		if (tree === undefined) {
-			throw new Error(
-				"TreeDataObject must have a `sharedTree` property, but it was undefined.",
-			);
+			throw new Error("TreeDataObject must have a `tree` property, but it was undefined.");
 		}
 
 		return true;

@@ -3,39 +3,39 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { IFluidHandle, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	BaseSegment,
 	Client,
-	IJSONSegment,
-	IMergeTreeDeltaCallbackArgs,
-	IMergeTreeDeltaOpArgs,
-	IMergeTreeMaintenanceCallbackArgs,
-	ISegment,
+	type IJSONSegment,
+	type IMergeTreeDeltaCallbackArgs,
+	type IMergeTreeDeltaOpArgs,
+	type IMergeTreeMaintenanceCallbackArgs,
+	type ISegment,
 	MergeTreeDeltaType,
 	MergeTreeMaintenanceType,
 	segmentIsRemoved,
 	type IMergeTreeInsertMsg,
 	type IMergeTreeRemoveMsg,
 } from "@fluidframework/merge-tree/internal";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import {
 	ObjectStoragePartition,
 	SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils/internal";
-import { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { HandleCache } from "./handlecache.js";
 import { Handle, HandleTable, isHandleValid } from "./handletable.js";
 import { deserializeBlob } from "./serialization.js";
-import { VectorUndoProvider } from "./undoprovider.js";
+import type { VectorUndoProvider } from "./undoprovider.js";
 
 const enum SnapshotPath {
 	segments = "segments",
@@ -125,7 +125,6 @@ export class PermutationSegment extends BaseSegment {
 	}
 }
 
-// eslint-disable-next-line import/no-deprecated
 export class PermutationVector extends Client {
 	private handleTable = new HandleTable<never>(); // Tracks available storage handles for rows.
 	public readonly handleCache = new HandleCache(this);
@@ -201,15 +200,16 @@ export class PermutationVector extends Client {
 		posToAdjust: number,
 		op: ISequencedDocumentMessage,
 	): { pos: number | undefined; handle: Handle } {
-		const { segment, offset } = this.getContainingSegment<PermutationSegment>(posToAdjust, {
+		const segOff = this.getContainingSegment<PermutationSegment>(posToAdjust, {
 			referenceSequenceNumber: op.referenceSequenceNumber,
 			clientId: op.clientId,
 		});
 
 		assert(
-			segment !== undefined && offset !== undefined,
-			"segment must be available for operations in the collab window",
+			segOff !== undefined,
+			0xbac /* segment must be available for operations in the collab window */,
 		);
+		const { segment, offset } = segOff;
 
 		if (segmentIsRemoved(segment)) {
 			// this case is tricky. the segment which the row or column data is remove
@@ -471,7 +471,7 @@ export function reinsertSegmentIntoVector(
 
 	// (Re)insert the removed number of rows at the original position.
 	const op = vector.insertSegmentLocal(pos, original);
-	const inserted = vector.getContainingSegment(pos).segment as PermutationSegment;
+	const inserted = vector.getContainingSegment(pos)?.segment as PermutationSegment;
 
 	// we reuse the original handle here
 	// so if cells exist, they can be found, and re-inserted

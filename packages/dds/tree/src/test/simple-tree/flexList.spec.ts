@@ -10,8 +10,8 @@ import {
 	isLazy,
 	markEager,
 	// Allow importing from this specific file which is being tested:
-	/* eslint-disable-next-line import/no-internal-modules */
-} from "../../simple-tree/flexList.js";
+	/* eslint-disable-next-line import-x/no-internal-modules */
+} from "../../simple-tree/core/flexList.js";
 import type { areSafelyAssignable, requireTrue } from "../../util/index.js";
 
 // Test FlexListToUnion

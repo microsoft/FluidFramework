@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IWholeFlatSummary } from "@fluidframework/server-services-client";
+import type { IWholeFlatSummary } from "@fluidframework/server-services-client";
 
 import { Constants } from "./constants";
 import { buildFullGitTreeFromGitTree, convertFullGitTreeToFullSummaryTree } from "./conversions";
-import { ISummaryVersion, IWholeSummaryOptions } from "./definitions";
+import type { ISummaryVersion, IWholeSummaryOptions } from "./definitions";
 
 /**
  * Retrieve the summary version (commit) for a given sha.

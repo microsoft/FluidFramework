@@ -4,10 +4,10 @@
  */
 
 import {
-	IThrottler,
-	ILogger,
+	type IThrottler,
+	type ILogger,
 	ThrottlingError,
-	IUsageData,
+	type IUsageData,
 	httpUsageStorageId,
 } from "@fluidframework/server-services-core";
 import {
@@ -15,7 +15,7 @@ import {
 	Lumberjack,
 	ThrottlingTelemetryProperties,
 } from "@fluidframework/server-services-telemetry";
-import { RequestHandler, Request, Response, NextFunction } from "express";
+import type { RequestHandler, Request, Response, NextFunction } from "express";
 import safeStringify from "json-stringify-safe";
 
 /**
@@ -131,7 +131,11 @@ export function throttle(
 			throttler.incrementCount(throttleId, throttleOptions.weight, usageId, httpUsageData);
 		} catch (e) {
 			if (e instanceof ThrottlingError) {
-				return res.status(e.code).json(e);
+				return res.status(e.code).json({
+					message: e.message,
+					code: e.code,
+					retryAfter: e.retryAfter,
+				});
 			} else {
 				logger?.error(`Throttle increment failed: ${safeStringify(e, undefined, 2)}`, {
 					messageMetaData: {

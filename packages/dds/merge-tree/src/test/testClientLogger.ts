@@ -5,21 +5,21 @@
 
 import { strict as assert } from "node:assert";
 
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { DoublyLinkedList } from "@fluidframework/core-utils/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 
-import { DoublyLinkedList } from "../collections/index.js";
 import { UnassignedSequenceNumber } from "../constants.js";
-import { IMergeTreeOptions } from "../index.js";
+import type { IMergeTreeOptions } from "../index.js";
 import {
-	IMergeTreeDeltaOpArgs,
+	type IMergeTreeDeltaOpArgs,
 	MergeTreeMaintenanceType,
 	type IMergeTreeMaintenanceCallbackArgs,
 } from "../mergeTreeDeltaCallback.js";
 import { depthFirstNodeWalk } from "../mergeTreeNodeWalk.js";
-import { IMergeNode, Marker, seqLTE, type ISegmentPrivate } from "../mergeTreeNodes.js";
-import { IMergeTreeOp, MergeTreeDeltaType } from "../ops.js";
-import { PropertySet, matchProperties } from "../properties.js";
+import { type IMergeNode, Marker, seqLTE, type ISegmentPrivate } from "../mergeTreeNodes.js";
+import { type IMergeTreeOp, MergeTreeDeltaType } from "../ops.js";
+import { type PropertySet, matchProperties } from "../properties.js";
 import type { IHasInsertionInfo, IHasRemovalInfo } from "../segmentInfos.js";
 import type { RemoveOperationStamp } from "../stamps.js";
 import { TextSegment, TextSegmentGranularity } from "../textSegment.js";

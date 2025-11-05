@@ -3,30 +3,32 @@
  * Licensed under the MIT License.
  */
 
-import * as git from "@fluidframework/gitresources";
-import {
+import type * as git from "@fluidframework/gitresources";
+import { ScopeType } from "@fluidframework/protocol-definitions";
+import type {
 	ICreateRefParamsExternal,
 	IPatchRefParamsExternal,
 } from "@fluidframework/server-services-client";
-import {
+import type {
 	IStorageNameRetriever,
 	IThrottler,
 	IRevokedTokenChecker,
 	IDocumentManager,
-	type IDenyList,
+	IDenyList,
 } from "@fluidframework/server-services-core";
+import { validateRequestParams } from "@fluidframework/server-services-shared";
 import {
 	denyListMiddleware,
-	IThrottleMiddlewareOptions,
+	type IThrottleMiddlewareOptions,
 	throttle,
 } from "@fluidframework/server-services-utils";
-import { validateRequestParams } from "@fluidframework/server-services-shared";
 import { Router } from "express";
-import * as nconf from "nconf";
+import type * as nconf from "nconf";
 import winston from "winston";
-import { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "../../services";
-import * as utils from "../utils";
+
+import type { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "../../services";
 import { Constants } from "../../utils";
+import * as utils from "../utils";
 
 export function create(
 	config: nconf.Provider,
@@ -42,6 +44,8 @@ export function create(
 	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever,
 ): Router {
 	const router: Router = Router();
+
+	const maxTokenLifetimeSec = config.get("maxTokenLifetimeSec");
 
 	const tenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
 		throttleIdPrefix: (req) => req.params.tenantId,
@@ -147,7 +151,7 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/refs",
 		validateRequestParams("tenantId"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyToken(revokedTokenChecker),
+		utils.verifyToken(revokedTokenChecker, [ScopeType.DocRead], maxTokenLifetimeSec),
 		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const refsP = getRefs(request.params.tenantId, request.get("Authorization"));
@@ -159,7 +163,7 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/refs/*",
 		validateRequestParams("tenantId", 0),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyToken(revokedTokenChecker),
+		utils.verifyToken(revokedTokenChecker, [ScopeType.DocRead], maxTokenLifetimeSec),
 		(request, response, next) => {
 			const refP = getRef(
 				request.params.tenantId,
@@ -174,7 +178,11 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/refs",
 		validateRequestParams("tenantId"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyToken(revokedTokenChecker),
+		utils.verifyToken(
+			revokedTokenChecker,
+			[ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
+			maxTokenLifetimeSec,
+		),
 		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const refP = createRef(
@@ -190,7 +198,11 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/refs/*",
 		validateRequestParams("tenantId", 0),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyToken(revokedTokenChecker),
+		utils.verifyToken(
+			revokedTokenChecker,
+			[ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
+			maxTokenLifetimeSec,
+		),
 		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const refP = updateRef(
@@ -207,7 +219,11 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/refs/*",
 		validateRequestParams("tenantId", 0),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyToken(revokedTokenChecker),
+		utils.verifyToken(
+			revokedTokenChecker,
+			[ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
+			maxTokenLifetimeSec,
+		),
 		// Skip documentDenyListCheck, as it is not needed for delete operations
 		denyListMiddleware(denyList, true /* skipDocumentDenyListCheck */),
 		(request, response, next) => {

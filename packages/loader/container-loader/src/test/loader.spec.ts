@@ -3,22 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import assert from "node:assert";
+import { strict as assert } from "node:assert";
 
-import { stringToBuffer, type IProvideLayerCompatDetails } from "@fluid-internal/client-utils";
+import type { IProvideLayerCompatDetails } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import {
-	IRuntime,
-	type IRuntimeFactory,
-} from "@fluidframework/container-definitions/internal";
 import { FluidErrorTypes, type ConfigTypes } from "@fluidframework/core-interfaces/internal";
-import { SummaryType } from "@fluidframework/driver-definitions";
-import {
-	IDocumentService,
+import type {
 	IDocumentServiceFactory,
-	type IDocumentStorageService,
-	type IResolvedUrl,
-	type IUrlResolver,
+	IResolvedUrl,
+	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	isFluidError,
@@ -30,54 +23,26 @@ import {
 import { v4 as uuid } from "uuid";
 
 import { Container } from "../container.js";
-import { Loader, type ICodeDetailsLoader } from "../loader.js";
+import { Loader } from "../loader.js";
 import type { IPendingDetachedContainerState } from "../serializedStateManager.js";
 
-import { failProxy, failSometimeProxy } from "./failProxy.js";
+import { AbsentProperty, failProxy, failSometimeProxy } from "./failProxy.js";
+import {
+	createTestCodeLoaderProxy,
+	createTestDocumentServiceFactoryProxy,
+} from "./testProxies.js";
 
-const createCodeLoader = (props?: { createDetachedBlob?: boolean }): ICodeDetailsLoader => ({
-	load: async () => {
-		return {
-			details: {
-				package: "none",
-			},
-			module: {
-				fluidExport: {
-					IRuntimeFactory: {
-						get IRuntimeFactory(): IRuntimeFactory {
-							return this;
-						},
-						async instantiateRuntime(context, existing): Promise<IRuntime> {
-							if (existing === false && props?.createDetachedBlob === true) {
-								await context.storage.createBlob(stringToBuffer("whatever", "utf8"));
-							}
-
-							return failSometimeProxy<IRuntime & IProvideLayerCompatDetails>({
-								createSummary: () => ({
-									tree: {},
-									type: SummaryType.Tree,
-								}),
-								setAttachState: () => {},
-								getPendingLocalState: () => ({
-									pending: [],
-								}),
-								ILayerCompatDetails: undefined,
-								disposed: false,
-								setConnectionState: () => {},
-							});
-						},
-					},
-				},
-			},
-		};
-	},
+const documentServiceFactoryFailProxy = failSometimeProxy<
+	IDocumentServiceFactory & IProvideLayerCompatDetails
+>({
+	ILayerCompatDetails: AbsentProperty,
 });
 
 describe("loader unit test", () => {
 	it("rehydrateDetachedContainerFromSnapshot with invalid format", async () => {
 		const loader = new Loader({
 			codeLoader: failProxy(),
-			documentServiceFactory: failProxy(),
+			documentServiceFactory: documentServiceFactoryFailProxy,
 			urlResolver: failProxy(),
 		});
 
@@ -96,8 +61,8 @@ describe("loader unit test", () => {
 
 	it("rehydrateDetachedContainerFromSnapshot with valid format", async () => {
 		const loader = new Loader({
-			codeLoader: createCodeLoader(),
-			documentServiceFactory: failProxy(),
+			codeLoader: createTestCodeLoaderProxy(),
+			documentServiceFactory: documentServiceFactoryFailProxy,
 			urlResolver: failProxy(),
 		});
 		const detached = await loader.createDetachedContainer({ package: "none" });
@@ -106,14 +71,14 @@ describe("loader unit test", () => {
 		assert.strictEqual(parsedState.attached, false);
 		assert.strictEqual(parsedState.hasAttachmentBlobs, false);
 		assert.strictEqual(Object.keys(parsedState.snapshotBlobs).length, 4);
-		assert.ok(parsedState.baseSnapshot);
+		assert(parsedState.baseSnapshot !== undefined);
 		await loader.rehydrateDetachedContainerFromSnapshot(detachedContainerState);
 	});
 
 	it("rehydrateDetachedContainerFromSnapshot with valid format and attachment blobs", async () => {
 		const loader = new Loader({
-			codeLoader: createCodeLoader({ createDetachedBlob: true }),
-			documentServiceFactory: failProxy(),
+			codeLoader: createTestCodeLoaderProxy({ createDetachedBlob: true }),
+			documentServiceFactory: documentServiceFactoryFailProxy,
 			urlResolver: failProxy(),
 		});
 		const detached = await loader.createDetachedContainer({ package: "none" });
@@ -122,14 +87,14 @@ describe("loader unit test", () => {
 		assert.strictEqual(parsedState.attached, false);
 		assert.strictEqual(parsedState.hasAttachmentBlobs, true);
 		assert.strictEqual(Object.keys(parsedState.snapshotBlobs).length, 4);
-		assert.ok(parsedState.baseSnapshot);
+		assert(parsedState.baseSnapshot !== undefined);
 		await loader.rehydrateDetachedContainerFromSnapshot(detachedContainerState);
 	});
 
 	it("serialize and rehydrateDetachedContainerFromSnapshot while attaching", async () => {
 		const loader = new Loader({
-			codeLoader: createCodeLoader(),
-			documentServiceFactory: failProxy(),
+			codeLoader: createTestCodeLoaderProxy(),
+			documentServiceFactory: documentServiceFactoryFailProxy,
 			urlResolver: failProxy(),
 			configProvider: {
 				getRawConfig: (name): ConfigTypes =>
@@ -151,7 +116,7 @@ describe("loader unit test", () => {
 		assert.strictEqual(parsedState.hasAttachmentBlobs, false);
 		assert.strictEqual(Object.keys(parsedState.snapshotBlobs).length, 4);
 		assert.deepStrictEqual(parsedState.pendingRuntimeState, { pending: [] });
-		assert.ok(parsedState.baseSnapshot);
+		assert(parsedState.baseSnapshot !== undefined);
 		await loader.rehydrateDetachedContainerFromSnapshot(detachedContainerState);
 	});
 
@@ -164,18 +129,8 @@ describe("loader unit test", () => {
 			url: "none",
 		};
 		const loader = new Loader({
-			codeLoader: createCodeLoader({ createDetachedBlob: true }),
-			documentServiceFactory: failSometimeProxy<IDocumentServiceFactory>({
-				createContainer: async () =>
-					failSometimeProxy<IDocumentService>({
-						policies: {},
-						resolvedUrl,
-						connectToStorage: async () =>
-							failSometimeProxy<IDocumentStorageService>({
-								createBlob: async () => ({ id: uuid() }),
-							}),
-					}),
-			}),
+			codeLoader: createTestCodeLoaderProxy({ createDetachedBlob: true }),
+			documentServiceFactory: createTestDocumentServiceFactoryProxy(resolvedUrl),
 			urlResolver: failSometimeProxy<IUrlResolver>({
 				resolve: async () => resolvedUrl,
 			}),
@@ -199,7 +154,7 @@ describe("loader unit test", () => {
 		assert.strictEqual(parsedState.attached, false);
 		assert.strictEqual(parsedState.hasAttachmentBlobs, true);
 		assert.strictEqual(Object.keys(parsedState.snapshotBlobs).length, 4);
-		assert.ok(parsedState.baseSnapshot);
+		assert(parsedState.baseSnapshot !== undefined);
 		await loader.rehydrateDetachedContainerFromSnapshot(detachedContainerState);
 	});
 
@@ -228,11 +183,31 @@ describe("loader unit test", () => {
 		// - Container.connectionStateHandler.connectionState - crash, as Container.connectionStateHandler is undefined (not setup yet).
 		new Container({
 			urlResolver: failProxy(),
-			documentServiceFactory: failProxy(),
-			codeLoader: createCodeLoader(),
+			documentServiceFactory: documentServiceFactoryFailProxy,
+			codeLoader: createTestCodeLoaderProxy(),
 			options: {},
 			scope: {},
 			subLogger: logger.logger,
 		});
+	});
+
+	it("can attach with `IRuntime` only implementing `setConnectionState`", async () => {
+		const resolvedUrl: IResolvedUrl = {
+			id: "none",
+			endpoints: {},
+			tokens: {},
+			type: "fluid",
+			url: "none",
+		};
+		const urlResolver = failSometimeProxy<IUrlResolver>({
+			resolve: async () => resolvedUrl,
+		});
+		const loader = new Loader({
+			codeLoader: createTestCodeLoaderProxy({ runtimeWithout_setConnectionStatus: true }),
+			documentServiceFactory: createTestDocumentServiceFactoryProxy(resolvedUrl),
+			urlResolver,
+		});
+		const container = await loader.createDetachedContainer({ package: "none" });
+		await container.attach({ url: "none" });
 	});
 });

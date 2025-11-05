@@ -16,8 +16,6 @@ pr:
 - release/*
 
 variables:
-- name: skipComponentGovernanceDetection
-  value: true
 - name: pnpmStorePath
   value: $(Pipeline.Workspace)/.pnpm-store
 - group: ado-feeds

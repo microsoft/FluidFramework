@@ -9,13 +9,13 @@ import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	GCNodeType,
 	GarbageCollector,
-	IGarbageCollectionRuntime,
-	IGarbageCollectionSnapshotData,
-	IGarbageCollectionState,
-	IGarbageCollector,
+	type IGarbageCollectionRuntime,
+	type IGarbageCollectionSnapshotData,
+	type IGarbageCollectionState,
+	type IGarbageCollector,
 	type IGCRuntimeOptions,
 } from "../../gc/index.js";
-import { ContainerRuntimeGCMessage } from "../../messageTypes.js";
+import type { ContainerRuntimeGCMessage } from "../../messageTypes.js";
 import { pkgVersion } from "../../packageVersion.js";
 
 import { parseNothing } from "./gcUnitTestHelpers.js";

@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import type { IContainerExperimental } from "@fluidframework/container-loader/internal";
+import { asLegacyAlpha, type ContainerAlpha } from "@fluidframework/container-loader/internal";
 import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime/internal";
 import type {
 	IFluidHandle,
@@ -143,7 +143,6 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 						},
 					}),
 					configProvider: configProvider({
-						"Fluid.Container.enableOfflineLoad": true,
 						"Fluid.Container.enableOfflineSnapshotRefresh": true,
 						"Fluid.Container.UseLoadingGroupIdForSnapshotFetch":
 							testConfig.useLoadingGroupIdForSnapshotFetch,
@@ -169,8 +168,9 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 			map.set(`${i}`, i++);
 			// first container that will be stashed. It could have saved, pending or remote ops
 			// at the moment of stashing.
-			const container1: IContainerExperimental =
-				await provider.loadTestContainer(testContainerConfig);
+			const container1: ContainerAlpha = asLegacyAlpha(
+				await provider.loadTestContainer(testContainerConfig),
+			);
 			await waitForContainerConnection(container1);
 			const dataStore1 = (await container1.getEntryPoint()) as ITestFluidObject;
 			const map1 = await dataStore1.getSharedObject<ISharedMap>(mapId);
@@ -209,7 +209,8 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 				await provider.ensureSynchronized(container);
 			}
 
-			const pendingOps = await container1.closeAndGetPendingLocalState?.();
+			const pendingOps = await container1.getPendingLocalState();
+			container1.close();
 			assert.ok(pendingOps);
 
 			if (testConfig.summaryWhileOffline) {
@@ -220,7 +221,7 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 			// container loaded from previous pending state. The snapshot should refresh
 			// in case a summary has already happened. Such snapshot could be the first one to
 			// have a data store with groupId
-			let container2: IContainerExperimental;
+			let container2: ContainerAlpha;
 			if (testConfig.loadOffline) {
 				const offlineObject = await loadContainerOffline(
 					testContainerConfig,
@@ -230,7 +231,7 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 				);
 				container2 = offlineObject.container;
 			} else {
-				container2 = await loader.resolve({ url }, pendingOps);
+				container2 = asLegacyAlpha(await loader.resolve({ url }, pendingOps));
 			}
 			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 			const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
@@ -270,9 +271,12 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 				groupIdDataObject2.root.set(`${j}`, j++);
 			}
 
-			const pendingOps2 = await container2.closeAndGetPendingLocalState?.();
+			const pendingOps2 = await container2.getPendingLocalState();
+			container2.close();
 			// first container which loads from a snapshot with groupId
-			const container3: IContainerExperimental = await loader.resolve({ url }, pendingOps2);
+			const container3: ContainerAlpha = asLegacyAlpha(
+				await loader.resolve({ url }, pendingOps2),
+			);
 			const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
 			const map3 = await dataStore3.getSharedObject<ISharedMap>(mapId);
 			const groupIdDataObject3 = await getDataStoreWithGroupId(dataStore3, groupId);
@@ -288,9 +292,12 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 			map3.set(`${i}`, i++);
 			groupIdDataObject3.root.set(`${j}`, j++);
 
-			const pendingOps3 = await container3.closeAndGetPendingLocalState?.();
+			const pendingOps3 = await container3.getPendingLocalState();
+			container3.close();
 			// container created just for validation.
-			const container4: IContainerExperimental = await loader.resolve({ url }, pendingOps3);
+			const container4: ContainerAlpha = asLegacyAlpha(
+				await loader.resolve({ url }, pendingOps3),
+			);
 			const dataStore4 = (await container4.getEntryPoint()) as ITestFluidObject;
 			const map4 = await dataStore4.getSharedObject<ISharedMap>(mapId);
 			const groupIdDataObject4 = await getDataStoreWithGroupId(dataStore4, groupId);

@@ -19,21 +19,16 @@ import {
 	IFluidCodeDetails,
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
-import { ConnectionState } from "@fluidframework/container-loader";
+import { ConnectionState } from "@fluidframework/container-loader/internal";
 import {
-	IContainerExperimental,
+	asLegacyAlpha,
+	ContainerAlpha,
 	ILoaderProps,
 	Loader,
 	waitContainerToCatchUp,
 } from "@fluidframework/container-loader/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import {
-	ConfigTypes,
-	IConfigProviderBase,
-	IErrorBase,
-	IRequest,
-	IRequestHeader,
-} from "@fluidframework/core-interfaces";
+import { IErrorBase, IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import { IClient } from "@fluidframework/driver-definitions";
 import {
@@ -54,7 +49,6 @@ import {
 } from "@fluidframework/driver-utils/internal";
 import { DataCorruptionError } from "@fluidframework/telemetry-utils/internal";
 import {
-	ITestContainerConfig,
 	ITestObjectProvider,
 	LoaderContainerTracker,
 	LocalCodeLoader,
@@ -324,19 +318,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 		assert.strictEqual(runCount, 1);
 	});
 
-	it("closeAndGetPendingLocalState() called on container", async () => {
-		const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
-			getRawConfig: (name: string): ConfigTypes => settings[name],
-		});
-
-		const testContainerConfig: ITestContainerConfig = {
-			loaderProps: {
-				configProvider: configProvider({
-					"Fluid.Container.enableOfflineLoad": true,
-				}),
-			},
-		};
-
+	it("getPendingLocalState() called on container", async () => {
 		const runtimeFactory = (_?: unknown) =>
 			new TestContainerRuntimeFactory(TestDataObjectType, getDataStoreFactory());
 
@@ -346,9 +328,11 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 			runtimeFactory,
 		);
 
-		const container: IContainerExperimental =
-			await localTestObjectProvider.makeTestContainer(testContainerConfig);
-		const pendingString = await container.closeAndGetPendingLocalState?.();
+		const container: ContainerAlpha = asLegacyAlpha(
+			await localTestObjectProvider.makeTestContainer(),
+		);
+		const pendingString = await container.getPendingLocalState();
+		container.close();
 		assert.ok(pendingString);
 		const pendingLocalState: { url?: string } = JSON.parse(pendingString);
 		assert.strictEqual(container.closed, true);

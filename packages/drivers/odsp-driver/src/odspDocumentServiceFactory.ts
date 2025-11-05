@@ -3,15 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
-import {
-	HostStoragePolicy,
+import type {
+	IDocumentServiceFactory,
 	IPersistedCache,
+} from "@fluidframework/driver-definitions/internal";
+import type {
+	HostStoragePolicy,
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
 
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { LocalOdspDocumentServiceFactory } from "./localOdspDriver/localOdspDocumentServiceFactory.js";
 import { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore.js";
 
@@ -19,7 +21,7 @@ import { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore
  * Factory for creating the sharepoint document service. Use this if you want to
  * use the sharepoint implementation.
  * @legacy
- * @alpha
+ * @beta
  */
 export class OdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore {
 	constructor(
@@ -39,7 +41,7 @@ export class OdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore {
  * content directly.
  *
  * @legacy
- * @alpha
+ * @beta
  */
 export function createLocalOdspDocumentServiceFactory(
 	localSnapshot: Uint8Array | string,

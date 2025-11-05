@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { AzureMember, IAzureAudience } from "@fluidframework/azure-client";
+import type { AzureMember, IAzureAudience } from "@fluidframework/azure-client";
 import type { LatestRaw, Presence } from "@fluidframework/presence/beta";
 
-import { ICustomUserDetails } from "./app.js";
-import { IDiceRollerController } from "./controller.js";
+import type { IDiceRollerController } from "./controller.js";
+import type { ICustomUserDetails } from "./fluid.js";
 import type { DiceValues } from "./presence.js";
 
 function makeDiceRollerView(diceRoller: IDiceRollerController): HTMLDivElement {

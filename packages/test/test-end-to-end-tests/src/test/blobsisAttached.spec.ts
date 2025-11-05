@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
@@ -13,7 +13,7 @@ import {
 	IHostLoader,
 	IRuntime,
 } from "@fluidframework/container-definitions/internal";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { type IPendingRuntimeState } from "@fluidframework/container-runtime/internal/test/containerRuntime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -22,6 +22,7 @@ import type {
 	ISharedDirectory,
 	SharedDirectory,
 } from "@fluidframework/map/internal";
+import { isFluidHandlePayloadPending } from "@fluidframework/runtime-utils/internal";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -51,6 +52,7 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 				fluidDataObjectType: DataObjectFactoryType.Test,
 				registry,
 				runtimeOptions: {
+					explicitSchemaControl: true,
 					createBlobPayloadPending,
 				},
 			};
@@ -126,7 +128,7 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 						assert.fail("Should succeed");
 					}
 					const pendingState = (await runtimeOf(dataStore1).getPendingLocalState({
-						notifyImminentClosure: true,
+						notifyImminentClosure: false,
 					})) as IPendingRuntimeState | undefined;
 					assert.strictEqual(pendingState?.pendingAttachmentBlobs, undefined);
 				});
@@ -137,12 +139,12 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 					const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
 					const map = await dataStore1.getSharedObject<ISharedMap>(mapId);
 
-					const blob = await dataStore1.runtime.uploadBlob(
+					const blobHandle = await dataStore1.runtime.uploadBlob(
 						stringToBuffer(testString, "utf-8"),
 					);
-					assert.strictEqual(blob.isAttached, false);
-					map.set(testKey, blob);
-					assert.strictEqual(blob.isAttached, true);
+					assert.strictEqual(blobHandle.isAttached, false);
+					map.set(testKey, blobHandle);
+					assert.strictEqual(blobHandle.isAttached, true);
 				});
 
 				it("blob is attached after usage in directory", async function () {
@@ -151,25 +153,25 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 					const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
 					const directory = await dataStore1.getSharedObject<SharedDirectory>(directoryId);
 
-					const blob = await dataStore1.runtime.uploadBlob(
+					const blobHandle = await dataStore1.runtime.uploadBlob(
 						stringToBuffer(testString, "utf-8"),
 					);
-					assert.strictEqual(blob.isAttached, false);
-					directory.set(testKey, blob);
-					assert.strictEqual(blob.isAttached, true);
+					assert.strictEqual(blobHandle.isAttached, false);
+					directory.set(testKey, blobHandle);
+					assert.strictEqual(blobHandle.isAttached, true);
 				});
 
 				it("removes pending blob when waiting for blob to be attached", async function () {
 					const testString = "this is a test string";
 					const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
 					const map = await dataStore1.getSharedObject<ISharedMap>(mapId);
-					const blob = await dataStore1.runtime.uploadBlob(
+					const blobHandle = await dataStore1.runtime.uploadBlob(
 						stringToBuffer(testString, "utf-8"),
 					);
 					const pendingStateP: any = runtimeOf(dataStore1).getPendingLocalState({
-						notifyImminentClosure: true,
+						notifyImminentClosure: false,
 					});
-					map.set("key", blob);
+					map.set("key", blobHandle);
 					const pendingState = await pendingStateP;
 					assert.strictEqual(pendingState?.pendingAttachmentBlobs, undefined);
 				});
@@ -180,10 +182,20 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 					const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
 
 					const map = await dataStore1.getSharedObject<ISharedMap>(mapId);
-					const blob = await dataStore1.runtime.uploadBlob(
+					const blobHandle = await dataStore1.runtime.uploadBlob(
 						stringToBuffer(testString, "utf-8"),
 					);
-					map.set(testKey, blob);
+					map.set(testKey, blobHandle);
+					if (
+						isFluidHandlePayloadPending(blobHandle) &&
+						blobHandle.payloadState !== "shared"
+					) {
+						// The payloadShared event is emitted after the blobAttach op is acked,
+						// so if we await all of them we expect to see no pending blobs.
+						await new Promise<void>((resolve) => {
+							blobHandle.events.on("payloadShared", resolve);
+						});
+					}
 					const pendingState = (await runtimeOf(dataStore1).getPendingLocalState()) as
 						| IPendingRuntimeState
 						| undefined;
@@ -195,8 +207,20 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 					const map = await dataStore1.getSharedObject<ISharedMap>(mapId);
 					const lots = 10;
 					for (let i = 0; i < lots; i++) {
-						const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(`${i}`, "utf-8"));
-						map.set(`${i}`, blob);
+						const blobHandle = await dataStore1.runtime.uploadBlob(
+							stringToBuffer(`${i}`, "utf-8"),
+						);
+						map.set(`${i}`, blobHandle);
+						if (
+							isFluidHandlePayloadPending(blobHandle) &&
+							blobHandle.payloadState !== "shared"
+						) {
+							// The payloadShared event is emitted after the blobAttach op is acked,
+							// so if we await all of them we expect to see no pending blobs.
+							await new Promise<void>((resolve) => {
+								blobHandle.events.on("payloadShared", resolve);
+							});
+						}
 					}
 					const pendingState = (await runtimeOf(dataStore1).getPendingLocalState()) as
 						| IPendingRuntimeState

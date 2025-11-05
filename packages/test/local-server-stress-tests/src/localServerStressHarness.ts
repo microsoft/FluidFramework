@@ -34,13 +34,16 @@ import {
 import {
 	AttachState,
 	type ICodeDetailsLoader,
-	type IContainer,
 	type IFluidCodeDetails,
 } from "@fluidframework/container-definitions/internal";
 import {
+	asLegacyAlpha,
 	ConnectionState,
 	createDetachedContainer,
 	loadExistingContainer,
+	loadFrozenContainerFromPendingState,
+	type ContainerAlpha,
+	PendingLocalStateStore,
 } from "@fluidframework/container-loader/internal";
 import type { ConfigTypes, FluidObject, IErrorBase } from "@fluidframework/core-interfaces";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
@@ -65,6 +68,7 @@ import {
 } from "@fluidframework/test-utils/internal";
 
 import { saveFluidOps } from "./baseModel.js";
+import { validateConsistencyOfAllDDS } from "./ddsOperations.js";
 import {
 	createRuntimeFactory,
 	StressDataObject,
@@ -73,7 +77,7 @@ import {
 import { makeUnreachableCodePathProxy } from "./utils.js";
 
 export interface Client {
-	container: IContainer;
+	container: ContainerAlpha;
 	tag: `client-${number}`;
 	entryPoint: DefaultStressDataObject;
 }
@@ -83,6 +87,7 @@ export interface Client {
  */
 export interface LocalServerStressState extends BaseFuzzTestState {
 	localDeltaConnectionServer: ILocalDeltaConnectionServer;
+	pendingLocalStateStore: PendingLocalStateStore<`client-${number}` | undefined>;
 	codeLoader: ICodeDetailsLoader;
 	validationClient: Client;
 	random: IRandom;
@@ -116,6 +121,7 @@ interface Attach {
 interface AddClient {
 	type: "addClient";
 	clientTag: `client-${number}`;
+	fromClientTag: `client-${number}` | undefined;
 }
 
 /**
@@ -161,7 +167,7 @@ export interface LocalServerStressModel<TOperation extends BaseOperation> {
 	 * Equivalence validation function, which should verify that the provided clients contain the same data.
 	 * This is run at each synchronization point for all connected clients (as disconnected clients won't
 	 * necessarily have the same set of ops applied).
-	 * @throws - An informative error if the clients don't have equivalent data.
+	 * @throws An informative error if the clients don't have equivalent data.
 	 */
 	validateConsistency: (clientA: Client, clientB: Client) => void | Promise<void>;
 
@@ -402,7 +408,7 @@ function mixinAddRemoveClient<TOperation extends BaseOperation>(
 		return async (
 			state: LocalServerStressState,
 		): Promise<TOperation | AddClient | RemoveClient | typeof done> => {
-			const { clients, random, validationClient } = state;
+			const { clients, random, validationClient, pendingLocalStateStore } = state;
 			if (
 				options.clientJoinOptions !== undefined &&
 				validationClient.container.attachState !== AttachState.Detached &&
@@ -418,9 +424,14 @@ function mixinAddRemoveClient<TOperation extends BaseOperation>(
 				if (clients.length < options.clientJoinOptions.maxNumberOfClients) {
 					const url = await validationClient.container.getAbsoluteUrl("");
 					assert(url !== undefined, "url for client must exist");
+					const fromClientTag =
+						random.bool() && pendingLocalStateStore.size > 0
+							? random.pick([...pendingLocalStateStore.keys()])
+							: undefined;
 					return {
 						type: "addClient",
 						clientTag: state.tag("client"),
+						fromClientTag,
 					} satisfies AddClient;
 				}
 			}
@@ -439,26 +450,75 @@ function mixinAddRemoveClient<TOperation extends BaseOperation>(
 		TOperation | AddClient | RemoveClient,
 		LocalServerStressState
 	> = async (state, op) => {
+		const {
+			localDeltaConnectionServer,
+			codeLoader,
+			clients,
+			seed,
+			validationClient,
+			pendingLocalStateStore,
+		} = state;
 		if (isOperationType<AddClient>("addClient", op)) {
-			const url = await state.validationClient.container.getAbsoluteUrl("");
+			const url = await validationClient.container.getAbsoluteUrl("");
 			assert(url !== undefined, "url of container must be available");
 			const newClient = await loadClient(
-				state.localDeltaConnectionServer,
-				state.codeLoader,
+				localDeltaConnectionServer,
+				codeLoader,
 				op.clientTag,
 				url,
-				state.seed,
+				seed,
 				options,
+				pendingLocalStateStore.get(op.fromClientTag),
 			);
-			state.clients.push(newClient);
+			pendingLocalStateStore.delete(op.fromClientTag);
+			clients.push(newClient);
 			return state;
 		}
 		if (isOperationType<RemoveClient>("removeClient", op)) {
-			const removed = state.clients.splice(
-				state.clients.findIndex((c) => c.tag === op.clientTag),
+			const removed = clients.splice(
+				clients.findIndex((c) => c.tag === op.clientTag),
 				1,
+			)[0];
+
+			// AB#46464: Add support for serializing pending state while in staging mode
+			if (removed.entryPoint.inStagingMode()) {
+				removed.entryPoint.exitStagingMode(true);
+			}
+
+			// in order to validate we need to disconnect to ensure
+			// no changes arrive between capturing the state and validating
+			// the state against the source container
+			removed.container.disconnect();
+
+			const pendingLocalState = await removed.container.getPendingLocalState();
+			pendingLocalStateStore.set(removed.tag, pendingLocalState);
+
+			const url = await removed.container.getAbsoluteUrl("");
+			assert(url !== undefined, "url of container must be available");
+
+			const frozenContainer = asLegacyAlpha(
+				await loadFrozenContainerFromPendingState({
+					codeLoader,
+					pendingLocalState,
+					request: { url },
+					urlResolver: new LocalResolver(),
+					documentServiceFactory: new LocalDocumentServiceFactory(localDeltaConnectionServer),
+				}),
 			);
-			removed[0].container.dispose();
+
+			const { DefaultStressDataObject }: FluidObject<DefaultStressDataObject> | undefined =
+				(await frozenContainer.getEntryPoint()) ?? {};
+			assert(DefaultStressDataObject !== undefined, "must have entrypoint");
+
+			await validateConsistencyOfAllDDS(removed, {
+				container: frozenContainer,
+				entryPoint: DefaultStressDataObject,
+				tag: `client-${Number.NaN}`,
+			});
+
+			frozenContainer.dispose();
+			removed.container.dispose();
+
 			return state;
 		}
 		return model.reducer(state, op);
@@ -501,6 +561,7 @@ function mixinAttach<TOperation extends BaseOperation>(
 				return {
 					type: "addClient",
 					clientTag: state.tag("client"),
+					fromClientTag: undefined,
 				} satisfies AddClient;
 			}),
 			baseGenerator,
@@ -630,16 +691,18 @@ function mixinSynchronization<TOperation extends BaseOperation>(
 const hasSelectedClientSpec = (op: unknown): op is SelectedClientSpec =>
 	(op as SelectedClientSpec).clientTag !== undefined;
 
+/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive AB#50920 */
 /**
  * Mixes in the ability to select a client to perform an operation on.
  * Makes this available to existing generators and reducers in the passed-in model via {@link LocalServerStressState.client}
- * and {@link  @fluid-private/test-dds-utils#LocalServerStressTestState.channel}.
+ * and {@link @fluid-private/test-dds-utils#LocalServerStressTestState.channel}.
  *
  * @remarks This exists purely for convenience, as "pick a client to perform an operation on" is a common concern.
  * @privateRemarks This is currently file-exported for testing purposes, but it could be reasonable to
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
 function mixinClientSelection<TOperation extends BaseOperation>(
+	/* eslint-enable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag */
 	model: LocalServerStressModel<TOperation>,
 	_: LocalServerStressOptions,
 ): LocalServerStressModel<TOperation> {
@@ -758,16 +821,18 @@ async function createDetachedClient(
 	seed: number,
 	options: LocalServerStressOptions,
 ): Promise<Client> {
-	const container = await createDetachedContainer({
-		codeLoader,
-		documentServiceFactory: new LocalDocumentServiceFactory(localDeltaConnectionServer),
-		urlResolver: new LocalResolver(),
-		codeDetails,
-		logger: createStressLogger(seed),
-		configProvider: {
-			getRawConfig: (name) => options.configurations?.[name],
-		},
-	});
+	const container = asLegacyAlpha(
+		await createDetachedContainer({
+			codeLoader,
+			documentServiceFactory: new LocalDocumentServiceFactory(localDeltaConnectionServer),
+			urlResolver: new LocalResolver(),
+			codeDetails,
+			logger: createStressLogger(seed),
+			configProvider: {
+				getRawConfig: (name) => options.configurations?.[name],
+			},
+		}),
+	);
 
 	const maybe: FluidObject<DefaultStressDataObject> | undefined =
 		await container.getEntryPoint();
@@ -788,21 +853,25 @@ async function loadClient(
 	url: string,
 	seed: number,
 	options: LocalServerStressOptions,
+	pendingLocalState?: string,
 ): Promise<Client> {
-	const container = await timeoutAwait(
-		loadExistingContainer({
-			documentServiceFactory: new LocalDocumentServiceFactory(localDeltaConnectionServer),
-			request: { url },
-			urlResolver: new LocalResolver(),
-			codeLoader,
-			logger: createStressLogger(seed),
-			configProvider: {
-				getRawConfig: (name) => options.configurations?.[name],
+	const container = asLegacyAlpha(
+		await timeoutAwait(
+			loadExistingContainer({
+				documentServiceFactory: new LocalDocumentServiceFactory(localDeltaConnectionServer),
+				request: { url },
+				urlResolver: new LocalResolver(),
+				codeLoader,
+				logger: createStressLogger(seed),
+				configProvider: {
+					getRawConfig: (name) => options.configurations?.[name],
+				},
+				pendingLocalState,
+			}),
+			{
+				errorMsg: `Timed out waiting for client to load ${tag}`,
 			},
-		}),
-		{
-			errorMsg: `Timed out waiting for client to load ${tag}`,
-		},
+		),
 	);
 
 	const maybe: FluidObject<DefaultStressDataObject> | undefined = await timeoutAwait(
@@ -823,9 +892,7 @@ async function loadClient(
 async function synchronizeClients(connectedClients: Client[]) {
 	return timeoutPromise((resolve, reject) => {
 		const rejectHandler = (error?: IErrorBase | undefined) => {
-			const client = connectedClients.find(
-				(c) => c.container.closed || c.container.disposed === true,
-			);
+			const client = connectedClients.find((c) => c.container.closed || c.container.disposed);
 			if (client !== undefined) {
 				reject(
 					wrapError(
@@ -858,7 +925,7 @@ async function synchronizeClients(connectedClients: Client[]) {
 		// resolveHandler
 		//
 		// const timeout = setInterval(() => {
-		// resolveHandler();
+		// 	resolveHandler();
 		// }, 1000);
 		const off = () => {
 			// clearInterval(timeout);
@@ -898,7 +965,8 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 	const codeDetails: IFluidCodeDetails = {
 		package: "local-server-stress-tests",
 	};
-	const codeLoader = new LocalCodeLoader([[codeDetails, createRuntimeFactory()]]);
+	const runtimeFactory = createRuntimeFactory();
+	const codeLoader = new LocalCodeLoader([[codeDetails, runtimeFactory]]);
 	const tagCount: Partial<Record<string, number>> = {};
 	// we reserve prefix-0 for initialization objects
 	const tag: LocalServerStressState["tag"] = (prefix) =>
@@ -917,6 +985,7 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 	const initialState: LocalServerStressState = {
 		clients: [detachedClient],
 		localDeltaConnectionServer: server,
+		pendingLocalStateStore: new PendingLocalStateStore(),
 		codeLoader,
 		random,
 		validationClient: detachedClient,
@@ -941,6 +1010,7 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 			async () => finalSynchronization,
 		),
 	);
+
 	const reducer: AsyncReducer<
 		TOperation | typeof finalSynchronization,
 		LocalServerStressState
@@ -1005,12 +1075,22 @@ async function maybeSaveFluidOpsTofile(
 		return;
 	}
 
+	// No ops were sequenced - we never attached!
+	if (finalState.validationClient.container.attachState !== AttachState.Attached) {
+		await saveOpsToFile(`${saveInfo.saveFluidOps.path}`, []);
+		return;
+	}
+
+	assert(
+		finalState.validationClient.container.resolvedUrl !== undefined,
+		"Attached Container must have a URL",
+	);
+
 	const documentServiceFactory = new LocalDocumentServiceFactory(
 		finalState.localDeltaConnectionServer,
 	);
 	const documentService = await documentServiceFactory.createDocumentService(
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		finalState.validationClient.container.resolvedUrl!,
+		finalState.validationClient.container.resolvedUrl,
 	);
 	const deltaStorage = await documentService.connectToDeltaStorage();
 	const ops = deltaStorage.fetchMessages(0, undefined);
@@ -1133,9 +1213,11 @@ export function createLocalServerStressSuite<TOperation extends BaseOperation>(
 		...providedOptions,
 	};
 
-	const only = new Set(options.only);
-	const skip = new Set(options.skip);
 	const replay = options.replay;
+	// replay supersedes only and skip, and only supersedes skip
+	// this allows all to be specified even if the seeds overlap
+	const only = new Set(replay === undefined ? options.only : undefined);
+	const skip = new Set(replay === undefined && only.size === 0 ? options.skip : undefined);
 	Object.assign(options, { only, skip });
 	assert(isInternalOptions(options));
 
@@ -1262,7 +1344,13 @@ const getFullModel = <TOperation extends BaseOperation>(
 	ddsModel: LocalServerStressModel<TOperation>,
 	options: LocalServerStressOptions,
 ): LocalServerStressModel<
-	TOperation | AddClient | RemoveClient | Attach | Synchronize | ChangeConnectionState
+	| TOperation
+	// AB#45905: Refactor nested mixin structure for better readability
+	| AddClient
+	| RemoveClient
+	| Attach
+	| Synchronize
+	| ChangeConnectionState
 > =>
 	mixinAttach(
 		mixinSynchronization(

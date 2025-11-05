@@ -6,7 +6,7 @@
 import type { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { v4 as uuid } from "uuid";
 
-import type { IFluidTelemetry } from "../index.js";
+import type { IFluidTelemetry } from "../common/index.js";
 
 import {
 	type IFluidContainerSystemEventName,

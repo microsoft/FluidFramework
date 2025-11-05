@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	JsonDeserialized,
-	JsonSerializable,
-} from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
+import type { OpaqueJsonDeserialized } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
 /**
  * Collection of value types that are not intended to be used/imported
@@ -18,6 +15,8 @@ import type {
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace InternalTypes {
 	/**
+	 * Metadata for a value state.
+	 *
 	 * @system
 	 */
 	export interface ValueStateMetadata {
@@ -26,20 +25,50 @@ export namespace InternalTypes {
 	}
 
 	/**
+	 * Represents a state that may have a value.
+	 * And it includes standard metadata.
+	 *
+	 * @remarks
+	 * See {@link InternalTypes.ValueRequiredState}.
+	 *
 	 * @system
 	 */
 	export interface ValueOptionalState<TValue> extends ValueStateMetadata {
-		value?: JsonDeserialized<TValue>;
+		value?: OpaqueJsonDeserialized<TValue>;
+
+		// Uncomment this property and rebuild to check more thoroughly
+		// for incompatibilities between this non-validatable state
+		// and ValidatableOptionalState.
+		// validatedValue?: never;
 	}
 
 	/**
+	 * Represents a state that must have a value.
+	 * And it includes standard metadata.
+	 *
+	 * @remarks
+	 * The value is wrapped in `OpaqueJsonDeserialized` as uses are expected
+	 * to involve generic or unknown types that will be filtered. It is here
+	 * mostly as a convenience to the many such uses that would otherwise
+	 * need to specify some wrapper themselves.
+	 *
+	 * For known cases, construct a custom interface that extends
+	 * {@link InternalTypes.ValueStateMetadata}.
+	 *
 	 * @system
 	 */
 	export interface ValueRequiredState<TValue> extends ValueStateMetadata {
-		value: JsonDeserialized<TValue>;
+		value: OpaqueJsonDeserialized<TValue>;
+
+		// Uncomment this property and rebuild to check more thoroughly
+		// for incompatibilities between this non-validatable state
+		// and ValidatableOptionalState.
+		// validatedValue?: never;
 	}
 
 	/**
+	 * A directory of values, where each value may be an optional state or another directory.
+	 *
 	 * @system
 	 */
 	export interface ValueDirectory<T> {
@@ -53,11 +82,15 @@ export namespace InternalTypes {
 	}
 
 	/**
+	 * Convenience type for a required state or a directory of values.
+	 *
 	 * @system
 	 */
 	export type ValueDirectoryOrState<T> = ValueRequiredState<T> | ValueDirectory<T>;
 
 	/**
+	 * Collection of optional values in a "map" structure.
+	 *
 	 * @system
 	 */
 	export interface MapValueState<T, Keys extends string | number> {
@@ -71,6 +104,8 @@ export namespace InternalTypes {
 	}
 
 	/**
+	 * Opaque type representing internal state datastore.
+	 *
 	 * @system
 	 */
 	export declare class StateDatastoreHandle<TKey, TValue extends ValueDirectoryOrState<any>> {
@@ -117,10 +152,12 @@ export namespace InternalTypes {
 	});
 
 	/**
+	 * Structure of a generic notification "value".
+	 *
 	 * @system
 	 */
 	export interface NotificationType {
 		name: string;
-		args: (JsonSerializable<unknown> & JsonDeserialized<unknown>)[];
+		args: unknown[];
 	}
 }

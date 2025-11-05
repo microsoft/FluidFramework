@@ -33,11 +33,11 @@ import {
 	type NodeId,
 	type RebaseRevisionMetadata,
 	setInCrossFieldMap,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
+import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
 import type { DetachedCellMark } from "../../../feature-libraries/sequence-field/helperTypes.js";
 import {
 	type CellId,
@@ -45,21 +45,21 @@ import {
 	type HasMarkFields,
 	MarkListFactory,
 	type MoveId,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/sequence-field/index.js";
-import {
-	areInputCellsEmpty,
 	cloneMark,
 	extractMarkEffect,
 	getInputLength,
-	isActiveReattach,
 	isDetach,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/sequence-field/index.js";
+import {
+	areInputCellsEmpty,
+	isActiveReattach,
 	isNewAttach,
 	isTombstone,
 	markEmptiesCells,
 	omitMarkEffect,
 	splitMark,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/sequence-field/utils.js";
 import {
 	type IdAllocator,
@@ -84,7 +84,7 @@ import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 import {
 	type MarkEffect,
 	NoopMarkType,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/sequence-field/types.js";
 
 export function assertWrappedChangesetsEqual(

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IChannelAttributes,
 	IChannelFactory,
 	IFluidDataStoreRuntime,
@@ -79,14 +79,12 @@ export class SharedSummaryBlockFactory implements IChannelFactory<ISharedSummary
 
 /**
  * {@inheritDoc ISharedSummaryBlock}
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const SharedSummaryBlock = createSharedObjectKind(SharedSummaryBlockFactory);
 
 /**
  * {@inheritDoc ISharedSummaryBlock}
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type SharedSummaryBlock = ISharedSummaryBlock;

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { AsyncPriorityQueue } from "async";
+import type { AsyncPriorityQueue } from "async";
 import chalk from "picocolors";
 import { Spinner } from "picospinner";
 import * as semver from "semver";
@@ -12,21 +12,23 @@ import * as assert from "assert";
 import registerDebug from "debug";
 import type { GitRepo } from "../common/gitRepo";
 import { defaultLogger } from "../common/logging";
-import { Package } from "../common/npmPackage";
-import { Timer } from "../common/timer";
+import type { Package } from "../common/npmPackage";
+import type { Timer } from "../common/timer";
 import type { BuildContext } from "./buildContext";
+import { BuildResult, summarizeBuildResult } from "./buildResult";
 import { FileHashCache } from "./fileHashCache";
 import type { IFluidBuildConfig } from "./fluidBuildConfig";
 import {
-	TaskDefinition,
-	TaskDefinitions,
-	TaskDefinitionsOnDisk,
+	type TaskDefinition,
+	type TaskDefinitions,
+	type TaskDefinitionsOnDisk,
+	type TaskFileDependencies,
 	getDefaultTaskDefinition,
 	getTaskDefinitions,
 	normalizeGlobalTaskDefinitions,
 } from "./fluidTaskDefinitions";
 import { options } from "./options";
-import { Task, TaskExec } from "./tasks/task";
+import { Task, type TaskExec } from "./tasks/task";
 import { TaskFactory } from "./tasks/taskFactory";
 import { WorkerPool } from "./tasks/workers/workerPool";
 
@@ -35,26 +37,6 @@ const traceTaskDepTask = registerDebug("fluid-build:task:init:dep:task");
 const traceGraph = registerDebug("fluid-build:graph");
 
 const { log } = defaultLogger;
-
-export enum BuildResult {
-	Success,
-	UpToDate,
-	Failed,
-}
-
-export function summarizeBuildResult(results: BuildResult[]) {
-	let retResult = BuildResult.UpToDate;
-	for (const result of results) {
-		if (result === BuildResult.Failed) {
-			return BuildResult.Failed;
-		}
-
-		if (result === BuildResult.Success) {
-			retResult = BuildResult.Success;
-		}
-	}
-	return retResult;
-}
 
 class TaskStats {
 	public leafTotalCount = 0;
@@ -158,6 +140,7 @@ export class BuildPackage {
 				before: [],
 				children: [],
 				after: [],
+				files: undefined,
 			};
 		}
 		return undefined;
@@ -172,16 +155,27 @@ export class BuildPackage {
 			this.targetTasks.set(taskName, task);
 			return task;
 		}
-		return this.createScriptTask(taskName, pendingInitDep);
+		return this.createScriptTask(taskName, pendingInitDep, config?.files);
 	}
 
-	private createScriptTask(taskName: string, pendingInitDep: Task[]) {
+	private createScriptTask(
+		taskName: string,
+		pendingInitDep: Task[],
+		files: TaskFileDependencies | undefined,
+	) {
 		const command = this.pkg.getScript(taskName);
 		if (command !== undefined && !command.startsWith("fluid-build ")) {
 			// Find the script task (without the lifecycle task)
 			let scriptTask = this.scriptTasks.get(taskName);
 			if (scriptTask === undefined) {
-				scriptTask = TaskFactory.Create(this, command, this.context, pendingInitDep, taskName);
+				scriptTask = TaskFactory.Create(
+					this,
+					command,
+					this.context,
+					pendingInitDep,
+					taskName,
+					files,
+				);
 				pendingInitDep.push(scriptTask);
 				this.tasks.push(scriptTask);
 				this.scriptTasks.set(taskName, scriptTask);
@@ -221,7 +215,14 @@ export class BuildPackage {
 			throw new Error(`${this.pkg.nameColored}: '${taskName}' must be a script task`);
 		}
 
-		const task = TaskFactory.Create(this, command, this.context, pendingInitDep, taskName);
+		const task = TaskFactory.Create(
+			this,
+			command,
+			this.context,
+			pendingInitDep,
+			taskName,
+			config?.files,
+		);
 		pendingInitDep.push(task);
 		this.tasks.push(task);
 		this.scriptTasks.set(taskName, task);
@@ -254,7 +255,7 @@ export class BuildPackage {
 			return existing;
 		}
 
-		return this.createScriptTask(taskName, pendingInitDep);
+		return this.createScriptTask(taskName, pendingInitDep, config?.files);
 	}
 
 	public getDependsOnTasks(task: Task, taskName: string, pendingInitDep: Task[]) {

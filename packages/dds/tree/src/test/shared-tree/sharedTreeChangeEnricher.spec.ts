@@ -17,8 +17,8 @@ import {
 	tagChange,
 } from "../../core/index.js";
 import { cursorToJsonObject, fieldJsonCursor } from "../json/index.js";
-import { typeboxValidator } from "../../external-utilities/index.js";
-// eslint-disable-next-line import/no-internal-modules
+import { FormatValidatorBasic } from "../../external-utilities/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
 import { optional } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 import {
 	DefaultEditBuilder,
@@ -27,14 +27,13 @@ import {
 	ModularEditBuilder,
 	type TreeChunk,
 	fieldKinds,
-	initializeForest,
 } from "../../feature-libraries/index.js";
 import {
 	type SharedTreeMutableChangeEnricher,
 	SharedTreeReadonlyChangeEnricher,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree/sharedTreeChangeEnricher.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { SharedTreeChange } from "../../shared-tree/sharedTreeChangeTypes.js";
 import {
 	type IdAllocator,
@@ -43,7 +42,7 @@ import {
 	disposeSymbol,
 	idAllocatorFromMaxId,
 } from "../../util/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { Change } from "../feature-libraries/optional-field/optionalFieldUtils.js";
 import {
 	buildTestForest,
@@ -55,6 +54,7 @@ import {
 } from "../utils.js";
 import { FluidClientVersion } from "../../codec/index.js";
 import { jsonSequenceRootSchema } from "../sequenceRootUtils.js";
+import { initializeForest } from "../feature-libraries/index.js";
 
 const content: JsonCompatible = { x: 42 };
 
@@ -93,7 +93,7 @@ export function setupEnricher() {
 		idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
 		testRevisionTagCodec,
 		testIdCompressor,
-		{ jsonValidator: typeboxValidator, oldestCompatibleClient: FluidClientVersion.v2_0 },
+		{ jsonValidator: FormatValidatorBasic, minVersionForCollab: FluidClientVersion.v2_0 },
 	);
 	const schema = new TreeStoredSchemaRepository(jsonSequenceRootSchema);
 	const forest = buildTestForest({ additionalAsserts: true, schema });

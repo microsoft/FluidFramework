@@ -4,15 +4,16 @@
  */
 
 import { performanceNow } from "@fluid-internal/client-utils";
-import {
+import type {
 	ITelemetryBaseLogger,
 	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IResolvedUrl,
 	ISnapshot,
 	IContainerPackageInfo,
+	ICacheEntry,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	type AuthorizationError,
@@ -28,17 +29,16 @@ import {
 	throwOdspNetworkError,
 } from "@fluidframework/odsp-doclib-utils/internal";
 import {
-	ICacheEntry,
-	IOdspResolvedUrl,
-	IOdspUrlParts,
-	ISharingLinkKind,
-	InstrumentedStorageTokenFetcher,
-	InstrumentedTokenFetcher,
+	type IOdspResolvedUrl,
+	type IOdspUrlParts,
+	type ISharingLinkKind,
+	type InstrumentedStorageTokenFetcher,
+	type InstrumentedTokenFetcher,
 	OdspErrorTypes,
 	authHeaderFromTokenResponse,
-	OdspResourceTokenFetchOptions,
-	TokenFetchOptions,
-	TokenFetcher,
+	type OdspResourceTokenFetchOptions,
+	type TokenFetchOptions,
+	type TokenFetcher,
 	isTokenFromCache,
 	snapshotKey,
 	tokenFromResponse,
@@ -47,7 +47,7 @@ import {
 import {
 	type IConfigProvider,
 	type IFluidErrorBase,
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	PerformanceEvent,
 	TelemetryDataTag,
 	createChildLogger,
@@ -55,15 +55,15 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { storeLocatorInOdspUrl } from "./odspFluidFileLink.js";
-// eslint-disable-next-line import/no-deprecated
-import { ISnapshotContents } from "./odspPublicUtils.js";
+// eslint-disable-next-line import-x/no-deprecated
+import type { ISnapshotContents } from "./odspPublicUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 
 export const getWithRetryForTokenRefreshRepeat = "getWithRetryForTokenRefreshRepeat";
 
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export interface IOdspResponse<T> {
 	content: T;
@@ -341,7 +341,7 @@ export function getOdspResolvedUrl(resolvedUrl: IResolvedUrl): IOdspResolvedUrl 
  * Type narrowing utility to determine if the provided {@link @fluidframework/driver-definitions#IResolvedUrl}
  * is an {@link @fluidframework/odsp-driver-definitions#IOdspResolvedUrl}.
  * @legacy
- * @alpha
+ * @beta
  */
 export function isOdspResolvedUrl(resolvedUrl: IResolvedUrl): resolvedUrl is IOdspResolvedUrl {
 	return "odspResolvedUrl" in resolvedUrl && resolvedUrl.odspResolvedUrl === true;
@@ -467,10 +467,11 @@ export function createCacheSnapshotKey(
 ): ICacheEntry {
 	const cacheEntry: ICacheEntry = {
 		type: snapshotWithLoadingGroupId ? snapshotWithLoadingGroupIdKey : snapshotKey,
-		key: odspResolvedUrl.fileVersion ?? "",
+		key: "",
 		file: {
 			resolvedUrl: odspResolvedUrl,
 			docId: odspResolvedUrl.hashedDocumentId,
+			fileVersion: odspResolvedUrl.fileVersion,
 		},
 	};
 	return cacheEntry;
@@ -531,7 +532,7 @@ export function getJoinSessionCacheKey(odspResolvedUrl: IOdspResolvedUrl): strin
  * @param obj - obj whose type needs to be identified.
  */
 export function isInstanceOfISnapshot(
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	obj: ISnapshotContents | ISnapshot | undefined,
 ): obj is ISnapshot {
 	return obj !== undefined && "snapshotFormatV" in obj && obj.snapshotFormatV === 1;

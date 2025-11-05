@@ -4,35 +4,17 @@
  */
 
 import type { RestrictiveStringRecord } from "../../util/index.js";
-import type { NodeKind, TreeNodeSchema, WithType, TreeNode } from "../core/index.js";
+import type {
+	NodeKind,
+	TreeNodeSchema,
+	WithType,
+	TreeNode,
+	ImplicitAllowedTypes,
+	InsertableTreeNodeFromImplicitAllowedTypes,
+	TreeNodeSchemaClass,
+} from "../core/index.js";
 import type { InsertableObjectFromSchemaRecord } from "../node-kinds/index.js";
-import {
-	type FieldKind,
-	type FieldProps,
-	createFieldSchema,
-	type ImplicitAllowedTypes,
-	type ImplicitFieldSchema,
-	type InsertableTreeNodeFromImplicitAllowedTypes,
-} from "../schemaTypes.js";
-
-import type { FieldSchemaAlphaUnsafe, System_Unsafe } from "./typesUnsafe.js";
-
-export function createFieldSchemaUnsafe<
-	Kind extends FieldKind,
-	Types extends System_Unsafe.ImplicitAllowedTypesUnsafe,
-	TCustomMetadata = unknown,
->(
-	kind: Kind,
-	allowedTypes: Types,
-	props?: FieldProps<TCustomMetadata>,
-): FieldSchemaAlphaUnsafe<Kind, Types, TCustomMetadata> {
-	// At runtime, we still want this to be a FieldSchema instance, but we can't satisfy its extends clause, so just return it as an FieldSchemaUnsafe
-	return createFieldSchema(
-		kind,
-		allowedTypes as ImplicitAllowedTypes & Types,
-		props,
-	) as FieldSchemaAlphaUnsafe<Kind, Types, TCustomMetadata>;
-}
+import type { ImplicitFieldSchema } from "../fieldSchema.js";
 
 /**
  * Compile time check for validity of a recursive schema.
@@ -155,47 +137,52 @@ export function createFieldSchemaUnsafe<
  * TODO: this currently does not reject `any`, but ideally should.
  * @public
  */
-export type ValidateRecursiveSchema<
-	// Recursive types should always be using TreeNodeSchemaClass (not TreeNodeSchemaNonClass) as thats part of the requirements for the type to work across compilation boundaries correctly.
-	T extends ValidateRecursiveSchemaTemplate<T>,
-> = true;
+export type ValidateRecursiveSchema<T extends ValidateRecursiveSchemaTemplate<T>> = true;
 
 /**
  * Validation logic used by {@link ValidateRecursiveSchema}.
+ * @privateRemarks
+ * Recursive types should always be using TreeNodeSchemaClass (not TreeNodeSchemaNonClass) as that's part of the requirements for the type to work across compilation boundaries correctly.
  * @system @public
  */
-export type ValidateRecursiveSchemaTemplate<T extends TreeNodeSchema> = TreeNodeSchema<
-	// Name: This validator places no restrictions on the name other than that it's a string (as required by TreeNodeSchemaClass).
-	string,
-	// NodeKind: These are the NodeKinds which currently can be used recursively.
-	NodeKind.Array | NodeKind.Map | NodeKind.Object,
-	// TNode: The produced node API. This is pretty minimal validation: more could be added if similar to how TInsertable works below if needed.
-	TreeNode & WithType<T["identifier"], T["kind"]>,
-	// TInsertable: What can be passed to the constructor. This should be enough to catch most issues with incorrect schema.
-	// These match whats defined in the recursive methods on `SchemaFactory` except they do not use `Unenforced`.
-	{
-		[NodeKind.Object]: T["info"] extends RestrictiveStringRecord<ImplicitFieldSchema>
-			? InsertableObjectFromSchemaRecord<T["info"]>
-			: unknown;
-		[NodeKind.Array]: T["info"] extends ImplicitAllowedTypes
-			? Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T["info"]>>
-			: unknown;
-		[NodeKind.Map]: T["info"] extends ImplicitAllowedTypes
-			? Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T["info"]>]>
-			: unknown;
-		[NodeKind.Leaf]: unknown;
-	}[T["kind"]],
-	// ImplicitlyConstructable: recursive types are currently not implicitly constructable.
-	false,
-	// Info: What's passed to the method to create the schema. Constraining these here should be about as effective as if the actual constraints existed on the actual method itself.
-	{
-		[NodeKind.Object]: RestrictiveStringRecord<ImplicitFieldSchema>;
-		[NodeKind.Array]: ImplicitAllowedTypes;
-		[NodeKind.Map]: ImplicitAllowedTypes;
-		[NodeKind.Leaf]: unknown;
-	}[T["kind"]]
->;
+export type ValidateRecursiveSchemaTemplate<T extends TreeNodeSchemaClass> =
+	TreeNodeSchemaClass<
+		// Name: This validator places no restrictions on the name other than that it's a string (as required by TreeNodeSchemaClass).
+		string,
+		// NodeKind: These are the NodeKinds which currently can be used recursively.
+		NodeKind.Array | NodeKind.Map | NodeKind.Object | NodeKind.Record,
+		// TNode: The produced node API. This is pretty minimal validation: more could be added if similar to how TInsertable works below if needed.
+		TreeNode & WithType<T["identifier"], T["kind"]>,
+		// TInsertable: What can be passed to the constructor. This should be enough to catch most issues with incorrect schema.
+		// These match whats defined in the recursive methods on `SchemaFactory` except they do not use `Unenforced`.
+		{
+			[NodeKind.Object]: T["info"] extends RestrictiveStringRecord<ImplicitFieldSchema>
+				? InsertableObjectFromSchemaRecord<T["info"]>
+				: unknown;
+			[NodeKind.Array]: T["info"] extends ImplicitAllowedTypes
+				? Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T["info"]>>
+				: unknown;
+			[NodeKind.Map]: T["info"] extends ImplicitAllowedTypes
+				? Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T["info"]>]>
+				: unknown;
+			[NodeKind.Record]: {
+				readonly [P in string]: InsertableTreeNodeFromImplicitAllowedTypes<T>;
+			};
+			[NodeKind.Leaf]: unknown;
+		}[T["kind"]],
+		// ImplicitlyConstructable: recursive types are currently not implicitly constructable.
+		false,
+		// Info: What's passed to the method to create the schema. Constraining these here should be about as effective as if the actual constraints existed on the actual method itself.
+		{
+			[NodeKind.Object]: RestrictiveStringRecord<ImplicitFieldSchema>;
+			[NodeKind.Array]: ImplicitAllowedTypes;
+			[NodeKind.Map]: ImplicitAllowedTypes;
+			[NodeKind.Record]: ImplicitAllowedTypes;
+			[NodeKind.Leaf]: unknown;
+		}[T["kind"]]
+	>;
 
+/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive AB#50920 */
 /**
  * Workaround for "Type instantiation is excessively deep and possibly infinite.ts" errors.
  * @remarks
@@ -251,8 +238,9 @@ export type ValidateRecursiveSchemaTemplate<T extends TreeNodeSchema> = TreeNode
  * This uses ValidateRecursiveSchemaTemplate since it was found to evaluate enough of the type to work.
  * @internal
  */
-export type FixRecursiveRecursionLimit<T extends TreeNodeSchema> =
+export type FixRecursiveRecursionLimit<T extends TreeNodeSchemaClass> =
 	T extends ValidateRecursiveSchemaTemplate<T> ? undefined : undefined;
+/* eslint-enable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag */
 
 /**
  * Does nothing with the provided value, but appears to use it to make unused locals warnings and errors go away.
@@ -297,6 +285,6 @@ export function allowUnused<T>(t?: T): void {}
  * }
  * ```
  *
- * @alpha
+ * @beta
  */
 export type FixRecursiveArraySchema<T> = T extends TreeNodeSchema ? undefined : undefined;

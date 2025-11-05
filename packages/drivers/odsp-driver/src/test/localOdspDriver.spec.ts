@@ -6,26 +6,26 @@
 import { strict as assert } from "node:assert";
 import fs from "node:fs";
 
-import { IClient, SummaryType } from "@fluidframework/driver-definitions";
-import {
+import { type IClient, SummaryType } from "@fluidframework/driver-definitions";
+import type {
 	DriverError,
 	IStream,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	IOdspResolvedUrl,
+	type IOdspResolvedUrl,
 	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
-/* eslint-disable import/no-internal-modules */
+/* eslint-disable import-x/no-internal-modules */
 import { LocalOdspDocumentService } from "../localOdspDriver/localOdspDocumentService.js";
 import { LocalOdspDocumentServiceFactory } from "../localOdspDriver/localOdspDocumentServiceFactory.js";
 import { LocalOdspDocumentStorageService } from "../localOdspDriver/localOdspDocumentStorageManager.js";
 
 import { _dirname } from "./dirname.cjs";
 
-/* eslint-enable import/no-internal-modules */
+/* eslint-enable import-x/no-internal-modules */
 
 describe("Local Odsp driver", () => {
 	// TODO: add end-to-end test

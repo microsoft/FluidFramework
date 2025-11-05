@@ -7,8 +7,8 @@
 
 import { strict as assert } from "node:assert";
 
-import { IRequest } from "@fluidframework/core-interfaces";
-import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
+import type { IRequest } from "@fluidframework/core-interfaces";
+import type { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
 import { stub } from "sinon";
 
 import { SharingLinkHeader } from "../contractsPublic.js";
@@ -353,6 +353,41 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 		assert(
 			resolvedUrl.shareLinkInfo?.sharingLinkToRedeem !== undefined,
 			"Sharing link should be set in resolved url",
+		);
+	});
+
+	it("isNonDurableRedeem should be set when isNonDurableRedeem header is set", async () => {
+		const url = new URL(sharelink);
+		const resolvedUrl = await mockGetFileLink(Promise.resolve(sharelink), async () => {
+			storeLocatorInOdspUrl(url, { siteUrl, driveId, itemId, dataStorePath });
+			return urlResolverWithShareLinkFetcher.resolve({
+				url: url.toString(),
+				headers: {
+					[SharingLinkHeader.isSharingLinkToRedeem]: true,
+					[SharingLinkHeader.isRedemptionNonDurable]: true,
+				},
+			});
+		});
+		assert(
+			resolvedUrl.shareLinkInfo?.isRedemptionNonDurable === true,
+			"isRedemptionNonDurable should be set in shareLinkInfo of resolved url",
+		);
+	});
+
+	it("isNonDurableRedeem should not be set when isSharingLinkToRedeem header is not set", async () => {
+		const url = new URL(sharelink);
+		const resolvedUrl = await mockGetFileLink(Promise.resolve(sharelink), async () => {
+			storeLocatorInOdspUrl(url, { siteUrl, driveId, itemId, dataStorePath });
+			return urlResolverWithShareLinkFetcher.resolve({
+				url: url.toString(),
+				headers: {
+					[SharingLinkHeader.isRedemptionNonDurable]: true,
+				},
+			});
+		});
+		assert(
+			resolvedUrl.shareLinkInfo?.isRedemptionNonDurable === undefined,
+			"isRedemptionNonDurable should not be set in shareLinkInfo and shareLinkInfo should be undefined",
 		);
 	});
 

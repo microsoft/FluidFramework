@@ -154,8 +154,13 @@ export function createLocalReconnectingPerspective(
 	refSeq: number,
 	clientId: number,
 	localSeq: number,
+	squash: boolean = false,
 ): Perspective {
-	return new LocalReconnectingPerspective(refSeq, clientId, localSeq);
+	return new (squash ? LocalSquashPerspective : LocalReconnectingPerspective)(
+		refSeq,
+		clientId,
+		localSeq,
+	);
 }
 
 /**

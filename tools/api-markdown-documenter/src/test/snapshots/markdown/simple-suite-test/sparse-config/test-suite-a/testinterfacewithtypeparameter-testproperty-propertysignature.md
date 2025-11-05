@@ -2,14 +2,14 @@
 
 A test interface property using generic type parameter
 
-### Signature {#testproperty-signature}
+<h3 id="testproperty-signature">Signature</h3>
 
 ```typescript
 testProperty: T;
 ```
 
-**Type:** T
+**Type**: T
 
-### Remarks {#testproperty-remarks}
+<h3 id="testproperty-remarks">Remarks</h3>
 
 Here are some remarks about the property

@@ -5,6 +5,7 @@
 
 const oAuthBearerScheme = "Bearer";
 
+/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive AB#50920 */
 /**
  * Checks if response headers contains `www-authenticate` header and extracts tenant id that should be
  * used to identify authority which must be used to issue access token for protected resource.
@@ -22,6 +23,7 @@ const oAuthBearerScheme = "Bearer";
  * ```
  */
 export function parseAuthErrorTenant(responseHeader: Headers): string | undefined {
+	/* eslint-enable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag */
 	const authHeaderData = responseHeader.get("www-authenticate");
 	if (!authHeaderData) {
 		return undefined;
@@ -35,16 +37,17 @@ export function parseAuthErrorTenant(responseHeader: Headers): string | undefine
 
 	let tenantId: string | undefined;
 	authHeaderData
-		.substring(indexOfBearerInfo + oAuthBearerScheme.length)
+		.slice(Math.max(0, indexOfBearerInfo + oAuthBearerScheme.length))
 		.split(",")
 		.map((section) => {
 			if (!tenantId) {
 				const nameValuePair = section.split("=");
 				// values can be encoded and contain '=' symbol inside so it is possible to have more than one
-				if (nameValuePair.length >= 2) {
-					if (nameValuePair[0].trim().toLowerCase() === "realm") {
-						tenantId = JSON.parse(nameValuePair[1].trim());
-					}
+				if (nameValuePair.length >= 2 && nameValuePair[0].trim().toLowerCase() === "realm") {
+					// TODO: this is assigning an object to a string.
+					// If this is intentional, we should document what's going on here.
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+					tenantId = JSON.parse(nameValuePair[1].trim());
 				}
 			}
 		});

@@ -20,6 +20,24 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Class_AsyncLocalStorageAbortControllerContext": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Class_AsyncLocalStorageAbortControllerContext = requireAssignableTo<TypeOnly<old.AsyncLocalStorageAbortControllerContext>, TypeOnly<current.AsyncLocalStorageAbortControllerContext>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Class_AsyncLocalStorageAbortControllerContext": {"backCompat": false}
+ */
+declare type current_as_old_for_Class_AsyncLocalStorageAbortControllerContext = requireAssignableTo<TypeOnly<current.AsyncLocalStorageAbortControllerContext>, TypeOnly<old.AsyncLocalStorageAbortControllerContext>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Class_AsyncLocalStorageContextProvider": {"forwardCompat": false}
  */
 declare type old_as_current_for_Class_AsyncLocalStorageContextProvider = requireAssignableTo<TypeOnly<old.AsyncLocalStorageContextProvider<never>>, TypeOnly<current.AsyncLocalStorageContextProvider<never>>>
@@ -58,7 +76,6 @@ declare type current_as_old_for_Class_AsyncLocalStorageTelemetryContext = requir
  * typeValidation.broken:
  * "Class_AsyncLocalStorageTimeoutContext": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_AsyncLocalStorageTimeoutContext = requireAssignableTo<TypeOnly<old.AsyncLocalStorageTimeoutContext>, TypeOnly<current.AsyncLocalStorageTimeoutContext>>
 
 /*
@@ -69,6 +86,24 @@ declare type old_as_current_for_Class_AsyncLocalStorageTimeoutContext = requireA
  * "Class_AsyncLocalStorageTimeoutContext": {"backCompat": false}
  */
 declare type current_as_old_for_Class_AsyncLocalStorageTimeoutContext = requireAssignableTo<TypeOnly<current.AsyncLocalStorageTimeoutContext>, TypeOnly<old.AsyncLocalStorageTimeoutContext>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Class_DenyList": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Class_DenyList = requireAssignableTo<TypeOnly<old.DenyList>, TypeOnly<current.DenyList>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Class_DenyList": {"backCompat": false}
+ */
+declare type current_as_old_for_Class_DenyList = requireAssignableTo<TypeOnly<current.DenyList>, TypeOnly<old.DenyList>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -165,6 +200,24 @@ declare type current_as_old_for_Class_RedisClientConnectionManager = requireAssi
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Class_ResponseSizeMiddleware": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Class_ResponseSizeMiddleware = requireAssignableTo<TypeOnly<old.ResponseSizeMiddleware>, TypeOnly<current.ResponseSizeMiddleware>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Class_ResponseSizeMiddleware": {"backCompat": false}
+ */
+declare type current_as_old_for_Class_ResponseSizeMiddleware = requireAssignableTo<TypeOnly<current.ResponseSizeMiddleware>, TypeOnly<old.ResponseSizeMiddleware>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Class_ScheduledJob": {"forwardCompat": false}
  */
 declare type old_as_current_for_Class_ScheduledJob = requireAssignableTo<TypeOnly<old.ScheduledJob>, TypeOnly<current.ScheduledJob>>
@@ -237,6 +290,15 @@ declare type current_as_old_for_Class_WinstonLumberjackEngine = requireAssignabl
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "ClassStatics_AsyncLocalStorageAbortControllerContext": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_AsyncLocalStorageAbortControllerContext = requireAssignableTo<TypeOnly<typeof current.AsyncLocalStorageAbortControllerContext>, TypeOnly<typeof old.AsyncLocalStorageAbortControllerContext>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "ClassStatics_AsyncLocalStorageContextProvider": {"backCompat": false}
  */
 declare type current_as_old_for_ClassStatics_AsyncLocalStorageContextProvider = requireAssignableTo<TypeOnly<typeof current.AsyncLocalStorageContextProvider>, TypeOnly<typeof old.AsyncLocalStorageContextProvider>>
@@ -258,6 +320,15 @@ declare type current_as_old_for_ClassStatics_AsyncLocalStorageTelemetryContext =
  * "ClassStatics_AsyncLocalStorageTimeoutContext": {"backCompat": false}
  */
 declare type current_as_old_for_ClassStatics_AsyncLocalStorageTimeoutContext = requireAssignableTo<TypeOnly<typeof current.AsyncLocalStorageTimeoutContext>, TypeOnly<typeof old.AsyncLocalStorageTimeoutContext>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_DenyList": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_DenyList = requireAssignableTo<TypeOnly<typeof current.DenyList>, TypeOnly<typeof old.DenyList>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -303,6 +374,15 @@ declare type current_as_old_for_ClassStatics_InMemoryApiCounters = requireAssign
  * "ClassStatics_RedisClientConnectionManager": {"backCompat": false}
  */
 declare type current_as_old_for_ClassStatics_RedisClientConnectionManager = requireAssignableTo<TypeOnly<typeof current.RedisClientConnectionManager>, TypeOnly<typeof old.RedisClientConnectionManager>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_ResponseSizeMiddleware": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_ResponseSizeMiddleware = requireAssignableTo<TypeOnly<typeof current.ResponseSizeMiddleware>, TypeOnly<typeof old.ResponseSizeMiddleware>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -372,6 +452,15 @@ declare type current_as_old_for_Function_alternativeMorganLoggerMiddleware = req
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Function_configureGlobalAbortControllerContext": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_configureGlobalAbortControllerContext = requireAssignableTo<TypeOnly<typeof current.configureGlobalAbortControllerContext>, TypeOnly<typeof old.configureGlobalAbortControllerContext>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Function_configureGlobalTelemetryContext": {"backCompat": false}
  */
 declare type current_as_old_for_Function_configureGlobalTelemetryContext = requireAssignableTo<TypeOnly<typeof current.configureGlobalTelemetryContext>, TypeOnly<typeof old.configureGlobalTelemetryContext>>
@@ -408,6 +497,15 @@ declare type current_as_old_for_Function_deleteSummarizedOps = requireAssignable
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Function_denyListMiddleware": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_denyListMiddleware = requireAssignableTo<TypeOnly<typeof current.denyListMiddleware>, TypeOnly<typeof old.denyListMiddleware>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Function_executeApiWithMetric": {"backCompat": false}
  */
 declare type current_as_old_for_Function_executeApiWithMetric = requireAssignableTo<TypeOnly<typeof current.executeApiWithMetric>, TypeOnly<typeof old.executeApiWithMetric>>
@@ -420,6 +518,15 @@ declare type current_as_old_for_Function_executeApiWithMetric = requireAssignabl
  * "Function_executeOnInterval": {"backCompat": false}
  */
 declare type current_as_old_for_Function_executeOnInterval = requireAssignableTo<TypeOnly<typeof current.executeOnInterval>, TypeOnly<typeof old.executeOnInterval>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_extractTokenFromHeader": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_extractTokenFromHeader = requireAssignableTo<TypeOnly<typeof current.extractTokenFromHeader>, TypeOnly<typeof old.extractTokenFromHeader>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -489,6 +596,15 @@ declare type current_as_old_for_Function_getHostIp = requireAssignableTo<TypeOnl
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Function_getJtiClaimFromAccessToken": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_getJtiClaimFromAccessToken = requireAssignableTo<TypeOnly<typeof current.getJtiClaimFromAccessToken>, TypeOnly<typeof old.getJtiClaimFromAccessToken>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Function_getNumberFromConfig": {"backCompat": false}
  */
 declare type current_as_old_for_Function_getNumberFromConfig = requireAssignableTo<TypeOnly<typeof current.getNumberFromConfig>, TypeOnly<typeof old.getNumberFromConfig>>
@@ -519,6 +635,33 @@ declare type current_as_old_for_Function_getRandomName = requireAssignableTo<Typ
  * "Function_getTelemetryContextPropertiesWithHttpInfo": {"backCompat": false}
  */
 declare type current_as_old_for_Function_getTelemetryContextPropertiesWithHttpInfo = requireAssignableTo<TypeOnly<typeof current.getTelemetryContextPropertiesWithHttpInfo>, TypeOnly<typeof old.getTelemetryContextPropertiesWithHttpInfo>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_getValidAccessToken": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_getValidAccessToken = requireAssignableTo<TypeOnly<typeof current.getValidAccessToken>, TypeOnly<typeof old.getValidAccessToken>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_isKeylessFluidAccessClaimEnabled": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_isKeylessFluidAccessClaimEnabled = requireAssignableTo<TypeOnly<typeof current.isKeylessFluidAccessClaimEnabled>, TypeOnly<typeof old.isKeylessFluidAccessClaimEnabled>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_isTokenValid": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_isTokenValid = requireAssignableTo<TypeOnly<typeof current.isTokenValid>, TypeOnly<typeof old.isTokenValid>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -741,6 +884,15 @@ declare type current_as_old_for_Interface_IWinstonConfig = requireAssignableTo<T
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Variable_bindAbortControllerContext": {"backCompat": false}
+ */
+declare type current_as_old_for_Variable_bindAbortControllerContext = requireAssignableTo<TypeOnly<typeof current.bindAbortControllerContext>, TypeOnly<typeof old.bindAbortControllerContext>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Variable_bindCorrelationId": {"backCompat": false}
  */
 declare type current_as_old_for_Variable_bindCorrelationId = requireAssignableTo<TypeOnly<typeof current.bindCorrelationId>, TypeOnly<typeof old.bindCorrelationId>>
@@ -807,6 +959,15 @@ declare type current_as_old_for_Variable_getRedisClusterRetryStrategy = requireA
  * "Variable_getThrottleConfig": {"backCompat": false}
  */
 declare type current_as_old_for_Variable_getThrottleConfig = requireAssignableTo<TypeOnly<typeof current.getThrottleConfig>, TypeOnly<typeof old.getThrottleConfig>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Variable_logHttpMetrics": {"backCompat": false}
+ */
+declare type current_as_old_for_Variable_logHttpMetrics = requireAssignableTo<TypeOnly<typeof current.logHttpMetrics>, TypeOnly<typeof old.logHttpMetrics>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
