@@ -5,7 +5,7 @@
 
 // This is a node powered CLI application, so using node makes sense:
 /* eslint-disable unicorn/no-process-exit */
-/* eslint-disable import/no-nodejs-modules */
+/* eslint-disable import-x/no-nodejs-modules */
 
 import { readFileSync, writeFileSync } from "node:fs";
 

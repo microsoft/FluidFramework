@@ -23,7 +23,6 @@ export {
 	type FieldBatchCodec,
 	makeFieldBatchCodec,
 	type FieldBatchEncodingContext,
-	fluidVersionToFieldBatchCodecWriteVersion,
 	type IncrementalEncoderDecoder,
 	type ChunkReferenceId,
 	type IncrementalEncodingPolicy,
