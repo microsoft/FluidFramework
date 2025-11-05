@@ -61,6 +61,8 @@ const orderSequentiallyReducer = async (
 export const reducer = combineReducersAsync<StressOperations, LocalServerStressState>({
 	enterStagingMode: async (state, op) => state.client.entryPoint.enterStagingMode(),
 	exitStagingMode: async (state, op) => state.client.entryPoint.exitStagingMode(op.commit),
+	createCheckpoint: async (state, op) => state.client.entryPoint.createCheckpoint(),
+	rollbackCheckpoint: async (state, op) => state.client.entryPoint.rollbackCheckpoint(),
 	createDataStore: async (state, op) => state.datastore.createDataStore(op.tag, op.asChild),
 	createChannel: async (state, op) => {
 		state.datastore.createChannel(op.tag, op.channelType);
@@ -125,6 +127,25 @@ export function makeGenerator<T extends BaseOperation>(
 			25,
 			(state) =>
 				state.client.entryPoint.inStagingMode() &&
+				state.client.container.attachState !== AttachState.Detached,
+		],
+		[
+			async () => ({
+				type: "createCheckpoint",
+			}),
+			5,
+			(state) =>
+				state.client.entryPoint.inStagingMode() &&
+				state.client.container.attachState !== AttachState.Detached,
+		],
+		[
+			async () => ({
+				type: "rollbackCheckpoint",
+			}),
+			10,
+			(state) =>
+				state.client.entryPoint.inStagingMode() &&
+				state.client.entryPoint.getCheckpointCount() > 0 &&
 				state.client.container.attachState !== AttachState.Detached,
 		],
 		[DDSModelOpGenerator, 100],

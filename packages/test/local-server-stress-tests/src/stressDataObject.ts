@@ -62,12 +62,22 @@ export interface ExitStagingMode {
 	commit: boolean;
 }
 
+export interface CreateCheckpoint {
+	type: "createCheckpoint";
+}
+
+export interface RollbackCheckpoint {
+	type: "rollbackCheckpoint";
+}
+
 export type StressDataObjectOperations =
 	| UploadBlob
 	| CreateDataStore
 	| CreateChannel
 	| EnterStagingMode
-	| ExitStagingMode;
+	| ExitStagingMode
+	| CreateCheckpoint
+	| RollbackCheckpoint;
 
 export class StressDataObject extends DataObject {
 	public static readonly factory: DataObjectFactory<StressDataObject> = new DataObjectFactory({
@@ -325,6 +335,26 @@ export class DefaultStressDataObject extends StressDataObject {
 			this.stageControls.discardChanges();
 		}
 		this.stageControls = undefined;
+	}
+
+	public createCheckpoint() {
+		assert(this.stageControls !== undefined, "must have staging mode controls to checkpoint");
+		this.stageControls.checkpoint();
+	}
+
+	public rollbackCheckpoint() {
+		assert(
+			this.stageControls !== undefined,
+			"must have staging mode controls to rollback checkpoint",
+		);
+		this.stageControls.rollbackCheckpoint();
+	}
+
+	public getCheckpointCount(): number {
+		if (this.stageControls === undefined) {
+			return 0;
+		}
+		return this.stageControls.checkpointCount;
 	}
 }
 

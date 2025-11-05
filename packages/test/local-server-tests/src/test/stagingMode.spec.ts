@@ -680,4 +680,302 @@ describe("Staging Mode", () => {
 			"Should not be able to set an alias in staging mode",
 		);
 	});
+
+	describe("Checkpoints", () => {
+		it("can create and rollback to checkpoint", async () => {
+			const deltaConnectionServer = LocalDeltaConnectionServer.create();
+			const clients = await createClients(deltaConnectionServer);
+
+			const stagingControls = clients.original.dataObject.enterStagingMode();
+
+			// Make initial changes
+			clients.original.dataObject.makeEdit("before-checkpoint");
+
+			// Create checkpoint
+			stagingControls.checkpoint();
+			assert.equal(stagingControls.checkpointCount, 1, "Should have 1 checkpoint");
+
+			// Make changes after checkpoint
+			clients.original.dataObject.makeEdit("after-checkpoint");
+
+			assert.equal(
+				hasEdit(clients.original, "before-checkpoint"),
+				true,
+				"Should have before-checkpoint edit",
+			);
+			assert.equal(
+				hasEdit(clients.original, "after-checkpoint"),
+				true,
+				"Should have after-checkpoint edit",
+			);
+
+			// Rollback to checkpoint
+			stagingControls.rollbackCheckpoint();
+			assert.equal(
+				stagingControls.checkpointCount,
+				0,
+				"Should have 0 checkpoints after rollback",
+			);
+
+			assert.equal(
+				hasEdit(clients.original, "before-checkpoint"),
+				true,
+				"Should still have before-checkpoint edit",
+			);
+			assert.equal(
+				hasEdit(clients.original, "after-checkpoint"),
+				false,
+				"Should not have after-checkpoint edit after rollback",
+			);
+
+			// Commit the remaining changes
+			stagingControls.commitChanges();
+			await waitForSave(clients);
+
+			assertConsistent(clients, "states should match after commit");
+			assert.equal(
+				hasEdit(clients.loaded, "before-checkpoint"),
+				true,
+				"Loaded client should have before-checkpoint edit",
+			);
+			assert.equal(
+				hasEdit(clients.loaded, "after-checkpoint"),
+				false,
+				"Loaded client should not have after-checkpoint edit",
+			);
+		});
+
+		it("supports nested checkpoints", async () => {
+			const deltaConnectionServer = LocalDeltaConnectionServer.create();
+			const clients = await createClients(deltaConnectionServer);
+
+			const stagingControls = clients.original.dataObject.enterStagingMode();
+
+			clients.original.dataObject.makeEdit("edit-1");
+			stagingControls.checkpoint();
+
+			clients.original.dataObject.makeEdit("edit-2");
+			stagingControls.checkpoint();
+
+			clients.original.dataObject.makeEdit("edit-3");
+			stagingControls.checkpoint();
+
+			clients.original.dataObject.makeEdit("edit-4");
+
+			assert.equal(stagingControls.checkpointCount, 3, "Should have 3 checkpoints");
+
+			// Rollback checkpoint 3 (removes edit-4)
+			stagingControls.rollbackCheckpoint();
+			assert.equal(
+				hasEdit(clients.original, "edit-4"),
+				false,
+				"Should not have edit-4 after first rollback",
+			);
+			assert.equal(stagingControls.checkpointCount, 2, "Should have 2 checkpoints");
+
+			// Rollback checkpoint 2 (removes edit-3)
+			stagingControls.rollbackCheckpoint();
+			assert.equal(
+				hasEdit(clients.original, "edit-3"),
+				false,
+				"Should not have edit-3 after second rollback",
+			);
+			assert.equal(stagingControls.checkpointCount, 1, "Should have 1 checkpoint");
+
+			// Commit remaining changes (edit-1 and edit-2)
+			stagingControls.commitChanges();
+			await waitForSave(clients);
+
+			assertConsistent(clients, "states should match after commit");
+			assert.equal(hasEdit(clients.loaded, "edit-1"), true, "Should have edit-1");
+			assert.equal(hasEdit(clients.loaded, "edit-2"), true, "Should have edit-2");
+			assert.equal(hasEdit(clients.loaded, "edit-3"), false, "Should not have edit-3");
+			assert.equal(hasEdit(clients.loaded, "edit-4"), false, "Should not have edit-4");
+		});
+
+		it("checkpoint with DDS creation and rollback", async () => {
+			const deltaConnectionServer = LocalDeltaConnectionServer.create();
+			const clients = await createClients(deltaConnectionServer);
+
+			const stagingControls = clients.original.dataObject.enterStagingMode();
+
+			clients.original.dataObject.makeEdit("before-dds");
+			stagingControls.checkpoint();
+
+			clients.original.dataObject.addDDS("checkpoint-dds");
+			clients.original.dataObject.makeEdit("after-dds");
+
+			// Rollback should remove both the DDS and the edit
+			stagingControls.rollbackCheckpoint();
+
+			assert.equal(
+				hasEdit(clients.original, "before-dds"),
+				true,
+				"Should have before-dds edit",
+			);
+			assert.equal(
+				hasEdit(clients.original, "checkpoint-dds"),
+				false,
+				"Should not have checkpoint-dds after rollback",
+			);
+			assert.equal(
+				hasEdit(clients.original, "after-dds"),
+				false,
+				"Should not have after-dds edit after rollback",
+			);
+
+			stagingControls.commitChanges();
+			await waitForSave(clients);
+
+			await assertDeepConsistent(clients, "states should match after commit");
+		});
+
+		it("checkpoints work with remote changes", async () => {
+			const deltaConnectionServer = LocalDeltaConnectionServer.create();
+			const clients = await createClients(deltaConnectionServer);
+
+			const stagingControls = clients.original.dataObject.enterStagingMode();
+
+			clients.original.dataObject.makeEdit("local-1");
+			stagingControls.checkpoint();
+
+			// Remote client makes changes
+			clients.loaded.dataObject.makeEdit("remote-1");
+			await waitForSave([clients.loaded]);
+			await catchUp(clients, await waitForSave([clients.loaded]));
+
+			clients.original.dataObject.makeEdit("local-2");
+
+			// Rollback local changes after checkpoint
+			stagingControls.rollbackCheckpoint();
+
+			assert.equal(hasEdit(clients.original, "local-1"), true, "Should have local-1");
+			assert.equal(hasEdit(clients.original, "remote-1"), true, "Should have remote-1");
+			assert.equal(hasEdit(clients.original, "local-2"), false, "Should not have local-2");
+
+			stagingControls.commitChanges();
+			await waitForSave(clients);
+
+			assertConsistent(clients, "states should match after commit");
+			assert.equal(hasEdit(clients.loaded, "local-1"), true, "Should have local-1");
+			assert.equal(hasEdit(clients.loaded, "remote-1"), true, "Should have remote-1");
+			assert.equal(hasEdit(clients.loaded, "local-2"), false, "Should not have local-2");
+		});
+
+		it("rollbackCheckpoint with no checkpoints is a no-op", async () => {
+			const deltaConnectionServer = LocalDeltaConnectionServer.create();
+			const clients = await createClients(deltaConnectionServer);
+
+			const stagingControls = clients.original.dataObject.enterStagingMode();
+			clients.original.dataObject.makeEdit("some-edit");
+
+			// Rollback without creating checkpoint should be a no-op
+			assert.doesNotThrow(
+				() => stagingControls.rollbackCheckpoint(),
+				"Should not throw when no checkpoints exist",
+			);
+
+			assert.equal(hasEdit(clients.original, "some-edit"), true, "Should still have the edit");
+
+			stagingControls.commitChanges();
+			await waitForSave(clients);
+
+			assertConsistent(clients, "states should match after commit");
+		});
+
+		it("does not create empty checkpoints", async () => {
+			const deltaConnectionServer = LocalDeltaConnectionServer.create();
+			const clients = await createClients(deltaConnectionServer);
+
+			const stagingControls = clients.original.dataObject.enterStagingMode();
+
+			// Try to create checkpoint without any changes
+			stagingControls.checkpoint();
+			assert.equal(stagingControls.checkpointCount, 0, "Should not create empty checkpoint");
+
+			// Make a change and create checkpoint
+			clients.original.dataObject.makeEdit("edit-1");
+			stagingControls.checkpoint();
+			assert.equal(
+				stagingControls.checkpointCount,
+				1,
+				"Should create checkpoint with changes",
+			);
+
+			stagingControls.commitChanges();
+			await waitForSave(clients);
+
+			assertConsistent(clients, "states should match after commit");
+		});
+
+		it("does not create duplicate checkpoints", async () => {
+			const deltaConnectionServer = LocalDeltaConnectionServer.create();
+			const clients = await createClients(deltaConnectionServer);
+
+			const stagingControls = clients.original.dataObject.enterStagingMode();
+
+			clients.original.dataObject.makeEdit("edit-1");
+			stagingControls.checkpoint();
+			assert.equal(stagingControls.checkpointCount, 1, "Should have 1 checkpoint");
+
+			// Try to create another checkpoint without new changes
+			stagingControls.checkpoint();
+			assert.equal(
+				stagingControls.checkpointCount,
+				1,
+				"Should not create duplicate checkpoint",
+			);
+
+			// Make another change and create checkpoint
+			clients.original.dataObject.makeEdit("edit-2");
+			stagingControls.checkpoint();
+			assert.equal(stagingControls.checkpointCount, 2, "Should have 2 checkpoints now");
+
+			stagingControls.commitChanges();
+			await waitForSave(clients);
+
+			assertConsistent(clients, "states should match after commit");
+		});
+
+		it("checkpoints work while disconnected", async () => {
+			const deltaConnectionServer = LocalDeltaConnectionServer.create();
+			const clients = await createClients(deltaConnectionServer);
+
+			const stagingControls = clients.original.dataObject.enterStagingMode();
+
+			clients.original.dataObject.makeEdit("before-disconnect");
+			stagingControls.checkpoint();
+
+			await ensureDisconnected(clients.original);
+
+			clients.original.dataObject.makeEdit("while-disconnected");
+
+			// Rollback while disconnected
+			stagingControls.rollbackCheckpoint();
+
+			assert.equal(
+				hasEdit(clients.original, "before-disconnect"),
+				true,
+				"Should have before-disconnect edit",
+			);
+			assert.equal(
+				hasEdit(clients.original, "while-disconnected"),
+				false,
+				"Should not have while-disconnected edit after rollback",
+			);
+
+			await ensureConnected(clients.original);
+
+			stagingControls.commitChanges();
+			await waitForSave(clients);
+
+			assertConsistent(clients, "states should match after commit");
+			assert.equal(hasEdit(clients.loaded, "before-disconnect"), true, "Should have edit");
+			assert.equal(
+				hasEdit(clients.loaded, "while-disconnected"),
+				false,
+				"Should not have edit",
+			);
+		});
+	});
 });
