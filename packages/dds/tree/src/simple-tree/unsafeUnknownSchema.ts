@@ -35,6 +35,9 @@ export const UnsafeUnknownSchema: unique symbol = Symbol("UnsafeUnknownSchema");
  * Any APIs which use this must produce UsageErrors when out of schema data is encountered, and never produce unrecoverable errors,
  * or silently accept invalid data.
  * This is currently only type exported from the package: the symbol is just used as a way to get a named type.
+ *
+ * TODO: This takes a very different approach than `customizeSchemaTyping` which applies to allowed types.
+ * Maybe generalize that to apply to field schema as well and replace this with it?
  * @alpha
  */
 export type UnsafeUnknownSchema = typeof UnsafeUnknownSchema;
@@ -44,13 +47,11 @@ export type UnsafeUnknownSchema = typeof UnsafeUnknownSchema;
  *
  * @see {@link Input}
  * @remarks
- * Extended version of {@link InsertableTreeNodeFromImplicitAllowedTypes} that also allows {@link (UnsafeUnknownSchema:type)}.
+ * Alias of {@link InsertableTreeNodeFromImplicitAllowedTypes} with a shorter name.
  * @alpha
  */
-export type Insertable<TSchema extends ImplicitAllowedTypes | UnsafeUnknownSchema> =
-	TSchema extends ImplicitAllowedTypes
-		? InsertableTreeNodeFromImplicitAllowedTypes<TSchema>
-		: InsertableContent;
+export type Insertable<TSchema extends ImplicitAllowedTypes> =
+	InsertableTreeNodeFromImplicitAllowedTypes<TSchema>;
 
 /**
  * Content which could be inserted into a field within a tree.

@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	allowUnused,
@@ -11,6 +12,7 @@ import {
 	SchemaFactory,
 	TreeBeta,
 	TreeViewConfiguration,
+	customizeSchemaTyping,
 	type NodeKind,
 	type ObjectFromSchemaRecord,
 	type TreeNode,
@@ -20,7 +22,6 @@ import {
 import { Tree } from "../shared-tree/index.js";
 import { validateUsageError } from "./utils.js";
 import { getOrAddInMap, type requireAssignableTo } from "../util/index.js";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Examples and tests for open polymorphism design patterns for schema.
@@ -538,6 +539,211 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 			[appConfig.composed.getComponent(comboComponent).blank],
 			{ location: { x: 0, y: 0 } },
 		);
+	});
+
+	it("safer editing API with customizeSchemaTyping", () => {
+		const ItemTypes: ItemSchema[] = [];
+		class Container extends sf.object("Container", {
+			// Here we force the insertable type to be `Item`, allowing for a potentially unsafe (runtime checked against the schema registrations) insertion of any Item type.
+			// This avoids the issue from the first example where the insertable type is `never`.
+			child: sf.optional(customizeSchemaTyping(ItemTypes).simplified<Item>()),
+		}) {}
+
+		ItemTypes.push(TextItem);
+
+		const container = new Container({ child: undefined });
+		const container2 = new Container({ child: TextItem.default() });
+
+		// Enabled by customizeSchemaTyping
+		container.child = TextItem.default();
+		container.child = undefined;
+
+		// Allowed at compile time, but not allowed by schema:
+		class DisallowedItem
+			extends sf.object("DisallowedItem", { ...itemFields })
+			implements Item
+		{
+			public foo(): void {}
+		}
+
+		// Invalid TreeNodes are rejected at runtime even if allowed at compile time:
+		assert.throws(
+			() => {
+				container.child = new DisallowedItem({ location: { x: 0, y: 0 } });
+			},
+			validateUsageError(/Invalid schema/),
+		);
+
+		// Invalid insertable content is rejected.
+		// Different use of customizeSchemaTyping could have allowed this at compile time by not including TreeNode in Item.
+		assert.throws(
+			() => {
+				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+				container.child = {} as Item;
+			},
+			validateUsageError(/incompatible with all of the types allowed by the schema/),
+		);
+	});
+
+	// Example component design pattern which avoids the mutable static registry and instead composes declarative components.
+	it("components", () => {
+		/**
+		 * Example application component interface.
+		 */
+		interface MyAppComponent {
+			itemTypes(lazyConfig: () => MyAppConfig): LazyItems;
+		}
+
+		type LazyItems = readonly (() => ItemSchema)[];
+
+		function composeComponents(allComponents: readonly MyAppComponent[]): MyAppConfig {
+			const lazyConfig = () => config;
+			const ItemTypes = allComponents.flatMap(
+				(component): LazyItems => component.itemTypes(lazyConfig),
+			);
+
+			const config: MyAppConfig = { ItemTypes };
+
+			return config;
+		}
+
+		interface MyAppConfig {
+			readonly ItemTypes: LazyItems;
+		}
+
+		function createContainer(config: MyAppConfig): ItemSchema {
+			class Container extends sf.array("Container", config.ItemTypes) {}
+			class ContainerItem extends sf.object("ContainerItem", {
+				...itemFields,
+				container: Container,
+			}) {
+				public static readonly description = "Text";
+				public static default(): TextItem {
+					return new TextItem({ text: "", location: { x: 0, y: 0 } });
+				}
+
+				public foo(): void {}
+			}
+
+			return ContainerItem;
+		}
+
+		const containerComponent: MyAppComponent = {
+			itemTypes(lazyConfig: () => MyAppConfig): LazyItems {
+				return [() => createContainer(lazyConfig())];
+			},
+		};
+
+		const textComponent: MyAppComponent = {
+			itemTypes(): LazyItems {
+				return [() => TextItem];
+			},
+		};
+
+		const appConfig = composeComponents([containerComponent, textComponent]);
+
+		const treeConfig = new TreeViewConfiguration({
+			schema: appConfig.ItemTypes,
+			enableSchemaValidation: true,
+			preventAmbiguity: true,
+		});
+	});
+
+	it("generic components system", () => {
+		// App specific //
+
+		/**
+		 * Subset of `MyAppConfig` which is available while composing components.
+		 */
+		interface MyAppConfigPartial {
+			/**
+			 * {@link AllowedTypes} containing all ItemSchema contributed by components.
+			 */
+			readonly allowedItemTypes: ComponentMinimal.LazyArray<ItemSchema>;
+		}
+
+		/**
+		 * Example configuration type for an application.
+		 *
+		 * Contains a collection of schema to demonstrate how ComponentSchemaCollection works for schema dependency inversions.
+		 */
+		interface MyAppConfig extends MyAppConfigPartial {
+			/**
+			 * Set of all ItemSchema contributed by components.
+			 * @remarks
+			 * Same content as {@link MyAppConfig.allowedItemTypes}, but normalized into a Set.
+			 */
+			readonly items: ReadonlySet<ItemSchema>;
+		}
+
+		/**
+		 * Example component type for an application.
+		 *
+		 * Represents functionality provided by a code library to power a component withing the application.
+		 *
+		 * This example uses ComponentSchemaCollection to allow the component to define schema which reference collections of schema from the application configuration.
+		 * This makes it possible to implement the "open polymorphism" pattern, including handling recursive cases.
+		 */
+		interface MyAppComponent {
+			readonly itemTypes: ComponentMinimal.ComponentSchemaCollection<
+				MyAppConfigPartial,
+				ItemSchema
+			>;
+		}
+
+		/**
+		 * The application specific compose logic.
+		 *
+		 * Information from the components can be aggregated into the configuration.
+		 */
+		function composeComponents(allComponents: readonly MyAppComponent[]): MyAppConfig {
+			const lazyConfig = () => config;
+			const ItemTypes = ComponentMinimal.composeComponentSchema(
+				allComponents.map((c) => c.itemTypes),
+				lazyConfig,
+			);
+			const config: MyAppConfigPartial = {
+				allowedItemTypes: ItemTypes,
+			};
+			const items = new Set(ItemTypes.map(evaluateLazySchema));
+			return { ...config, items };
+		}
+
+		// An example simple component
+		const textComponent: MyAppComponent = {
+			itemTypes: (): ComponentMinimal.LazyArray<ItemSchema> => [() => TextItem],
+		};
+
+		// An example component which references schema from the configuration and can be recursive through it.
+		const containerComponent: MyAppComponent = {
+			itemTypes: (
+				lazyConfig: () => MyAppConfigPartial,
+			): ComponentMinimal.LazyArray<ItemSchema> => [() => createContainer(lazyConfig())],
+		};
+		function createContainer(config: MyAppConfigPartial): ItemSchema {
+			class Container extends sf.array("Container", config.allowedItemTypes) {}
+			class ContainerItem extends sf.object("ContainerItem", {
+				...itemFields,
+				container: Container,
+			}) {
+				public static readonly description = "Text";
+				public static default(): TextItem {
+					return new TextItem({ text: "", location: { x: 0, y: 0 } });
+				}
+
+				public foo(): void {}
+			}
+
+			return ContainerItem;
+		}
+
+		const appConfig = composeComponents([containerComponent, textComponent]);
+
+		const treeConfig = new TreeViewConfiguration({
+			schema: appConfig.allowedItemTypes,
+			enableSchemaValidation: true,
+			preventAmbiguity: true,
+		});
 	});
 });
 

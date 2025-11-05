@@ -18,6 +18,7 @@ import {
 } from "../../core/index.js";
 import type { FieldKey } from "../../../core/index.js";
 import type { SimpleObjectFieldSchema, SimpleObjectNodeSchema } from "../../simpleSchema.js";
+import type { ObjectSchemaOptionsAlpha } from "../../api/index.js";
 
 /**
  * A schema for {@link TreeObjectNode}s.
@@ -29,18 +30,21 @@ export interface ObjectNodeSchema<
 	in out T extends
 		RestrictiveStringRecord<ImplicitFieldSchema> = RestrictiveStringRecord<ImplicitFieldSchema>,
 	ImplicitlyConstructable extends boolean = boolean,
-	out TCustomMetadata = unknown,
+	TOptions extends ObjectSchemaOptionsAlpha = ObjectSchemaOptionsAlpha,
+	TCustomMetadataInferred = TOptions extends ObjectSchemaOptionsAlpha<infer TCustomMetadataX>
+		? TCustomMetadataX
+		: unknown,
 > extends TreeNodeSchemaClass<
 			TName,
 			NodeKind.Object,
-			TreeObjectNode<T, TName>,
+			TreeObjectNode<T, TName, TOptions>,
 			InsertableObjectFromSchemaRecord<T>,
 			ImplicitlyConstructable,
 			T,
 			never,
-			TCustomMetadata
+			TCustomMetadataInferred
 		>,
-		SimpleObjectNodeSchema<TCustomMetadata> {
+		SimpleObjectNodeSchema<TCustomMetadataInferred> {
 	/**
 	 * From property keys to the associated schema.
 	 */

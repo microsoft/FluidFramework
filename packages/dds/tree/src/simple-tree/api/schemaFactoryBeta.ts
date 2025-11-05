@@ -22,12 +22,12 @@ import {
 	type TreeRecordNode,
 } from "../node-kinds/index.js";
 import {
-	defaultSchemaFactoryObjectOptions,
 	SchemaFactory,
 	scoped,
 	structuralName,
 	type NodeSchemaOptions,
 	type ObjectSchemaOptions,
+	type ObjectSchemaOptionsAlpha,
 	type ScopedSchemaName,
 } from "./schemaFactory.js";
 import type { System_Unsafe, TreeRecordNodeUnsafe } from "./typesUnsafe.js";
@@ -43,8 +43,8 @@ import type {
 } from "../fieldSchema.js";
 import type { LeafSchema } from "../leafNodeSchema.js";
 import type { SimpleLeafNodeSchema } from "../simpleSchema.js";
-import type { RestrictiveStringRecord } from "../../util/index.js";
 /* eslint-enable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars, import/no-duplicates */
+import type { PreventExtraProperties, RestrictiveStringRecord } from "../../util/index.js";
 
 /**
  * {@link SchemaFactory} with additional beta APIs.
@@ -77,25 +77,37 @@ export class SchemaFactoryBeta<
 	public override object<
 		const Name extends TName,
 		const T extends RestrictiveStringRecord<ImplicitFieldSchema>,
-		const TCustomMetadata = unknown,
+		const TOptions extends ObjectSchemaOptions = ObjectSchemaOptions,
 	>(
 		name: Name,
 		fields: T,
-		options?: ObjectSchemaOptions<TCustomMetadata>,
+		options?: PreventExtraProperties<TOptions, ObjectSchemaOptions>,
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Object,
-		TreeObjectNode<T, ScopedSchemaName<TScope, Name>>,
+		TreeObjectNode<T, ScopedSchemaName<TScope, Name>, TOptions>,
 		object & InsertableObjectFromSchemaRecord<T>,
 		true,
 		T,
 		never,
-		TCustomMetadata
+		TOptions extends ObjectSchemaOptions<infer TCustomMetadata> ? TCustomMetadata : unknown
 	> {
-		return objectSchema(scoped<TScope, TName, Name>(this, name), fields, true, {
-			...defaultSchemaFactoryObjectOptions,
-			...(options ?? {}),
-		});
+		// TODO: make type safe
+		return objectSchema(
+			scoped<TScope, TName, Name>(this, name),
+			fields,
+			true,
+			options as PreventExtraProperties<TOptions, ObjectSchemaOptionsAlpha>,
+		) as TreeNodeSchemaClass<
+			ScopedSchemaName<TScope, Name>,
+			NodeKind.Object,
+			TreeObjectNode<T, ScopedSchemaName<TScope, Name>, TOptions>,
+			object & InsertableObjectFromSchemaRecord<T>,
+			true,
+			T,
+			never,
+			TOptions extends ObjectSchemaOptions<infer TCustomMetadata> ? TCustomMetadata : unknown
+		>;
 	}
 
 	public override objectRecursive<

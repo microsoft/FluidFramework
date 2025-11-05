@@ -29,6 +29,7 @@ import {
 	isArrayNodeSchema,
 	type InsertableField,
 	withBufferedTreeEvents,
+	type DefaultTreeNodeFromImplicitAllowedTypes,
 } from "./simple-tree/index.js";
 
 // Future improvement TODOs:
@@ -151,6 +152,33 @@ export namespace System_TableSchema {
 		TSchemaFactory extends SchemaFactoryBeta = SchemaFactoryBeta,
 		TCell extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 	> = OptionsWithSchemaFactory<TSchemaFactory> & OptionsWithCellSchema<TCell>;
+
+	// export function createColumnSchemaX<const TPropsSchema extends ImplicitFieldSchema>(
+	// 	propsSchema: TPropsSchema,
+	// ): void {
+	// 	const columnFields = {
+	// 		props: propsSchema,
+	// 	} as const;
+
+	// 	const factory = new SchemaFactory("test");
+
+	// 	class _Column extends relaxObject(factory.object("Column", columnFields)) {}
+	// }
+
+	// export function createColumnSchemaX2<
+	// 	const TPropsSchema extends TreeNodeSchema & {
+	// 		[CustomizedTyping]: StrictTypes<TPropsSchema>;
+	// 	},
+	// >(propsSchema: TPropsSchema): void {
+	// 	const columnFields = {
+	// 		props: propsSchema,
+	// 	} as const;
+
+	// 	const factory = new SchemaFactory("test");
+	// 	const base = factory.object("Column", columnFields);
+
+	// 	class _Column extends base {}
+	// }
 
 	/**
 	 * Factory for creating column schema.
@@ -568,6 +596,9 @@ export namespace System_TableSchema {
 		type ColumnValueType = TreeNodeFromImplicitAllowedTypes<TColumnSchema>;
 		type RowValueType = TreeNodeFromImplicitAllowedTypes<TRowSchema>;
 
+		type ColumnValueTypeInternal = DefaultTreeNodeFromImplicitAllowedTypes<TColumnSchema>;
+		type RowValueTypeInternal = DefaultTreeNodeFromImplicitAllowedTypes<TRowSchema>;
+
 		/**
 		 * {@link Table} fields.
 		 * @remarks Extracted for re-use in returned type signature defined later in this function.
@@ -585,6 +616,8 @@ export namespace System_TableSchema {
 			extends schemaFactory.object("Table", tableFields, {
 				// Will make it easier to evolve this schema in the future.
 				allowUnknownOptionalFields: true,
+				supportReadonlyFields: true,
+				supportCustomizedFields: true,
 			})
 			implements TableSchema.Table<TInputScope, TCellSchema, TColumnSchema, TRowSchema>
 		{
@@ -616,7 +649,7 @@ export namespace System_TableSchema {
 					return undefined;
 				}
 
-				return row.getCell(column);
+				return (row as RowValueTypeInternal).getCell(column as ColumnValueTypeInternal);
 			}
 
 			public insertColumns({
@@ -697,7 +730,7 @@ export namespace System_TableSchema {
 				const row = this._getRow(rowOrId);
 				const column = this._getColumn(columnOrId);
 
-				row.setCell(column, cell);
+				(row as RowValueTypeInternal).setCell(column as ColumnValueTypeInternal, cell);
 			}
 
 			public removeColumns(
@@ -760,7 +793,9 @@ export namespace System_TableSchema {
 							for (const row of this.rows) {
 								// TypeScript is unable to narrow the row type correctly here, hence the cast.
 								// See: https://github.com/microsoft/TypeScript/issues/52144
-								(row as RowValueType).removeCell(columnToRemove);
+								(row as RowValueTypeInternal).removeCell(
+									columnToRemove as ColumnValueTypeInternal,
+								);
 							}
 
 							// We have already validated that all of the columns exist above, so this is safe.
@@ -825,12 +860,14 @@ export namespace System_TableSchema {
 				const row = this._getRow(rowOrIdOrIndex);
 				const column = this._getColumn(columnOrIdOrIndex);
 
-				const cell: CellValueType | undefined = row.getCell(column.id);
+				const cell: CellValueType | undefined = (row as RowValueTypeInternal).getCell(
+					(column as ColumnValueTypeInternal).id,
+				);
 				if (cell === undefined) {
 					return undefined;
 				}
 
-				row.removeCell(column.id);
+				(row as RowValueTypeInternal).removeCell((column as ColumnValueTypeInternal).id);
 				return cell;
 			}
 
@@ -841,7 +878,7 @@ export namespace System_TableSchema {
 				for (const row of this.rows) {
 					// TypeScript is unable to narrow the row type correctly here, hence the cast.
 					// See: https://github.com/microsoft/TypeScript/issues/52144
-					(row as RowValueType).removeCell(column);
+					(row as RowValueTypeInternal).removeCell(column as ColumnValueTypeInternal);
 				}
 			}
 
@@ -917,9 +954,9 @@ export namespace System_TableSchema {
 					const columnId = columnOrIdOrIndex;
 					// TypeScript is unable to narrow the types correctly here, hence the casts.
 					// See: https://github.com/microsoft/TypeScript/issues/52144
-					return this.columns.find((col) => (col as ColumnValueType).id === columnId) as
-						| ColumnValueType
-						| undefined;
+					return this.columns.find(
+						(col) => (col as ColumnValueTypeInternal).id === columnId,
+					) as ColumnValueType | undefined;
 				}
 
 				// If the user provided a node, ensure it actually exists in this table.
@@ -969,7 +1006,7 @@ export namespace System_TableSchema {
 				}
 
 				throw new UsageError(
-					`The specified column node with ID "${columnOrIdOrIndex.id}" does not exist in the table.`,
+					`The specified column node with ID "${(columnOrIdOrIndex as ColumnValueTypeInternal).id}" does not exist in the table.`,
 				);
 			}
 
@@ -994,7 +1031,7 @@ export namespace System_TableSchema {
 					const rowId = rowOrIdOrIndex;
 					// TypeScript is unable to narrow the types correctly here, hence the casts.
 					// See: https://github.com/microsoft/TypeScript/issues/52144
-					return this.rows.find((row) => (row as RowValueType).id === rowId) as
+					return this.rows.find((row) => (row as RowValueTypeInternal).id === rowId) as
 						| RowValueType
 						| undefined;
 				}
@@ -1035,7 +1072,7 @@ export namespace System_TableSchema {
 				}
 
 				throw new UsageError(
-					`The specified row node with ID "${rowOrIdOrIndex.id}" does not exist in the table.`,
+					`The specified row node with ID "${(rowOrIdOrIndex as RowValueTypeInternal).id}" does not exist in the table.`,
 				);
 			}
 

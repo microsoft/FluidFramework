@@ -4,13 +4,21 @@
  */
 
 export {
-	type FieldHasDefault,
-	type InsertableObjectFromSchemaRecord,
-	type ObjectFromSchemaRecord,
 	objectSchema,
 	setField,
-	type TreeObjectNode,
-	type SimpleKeyMap,
+} from "./objectNode.js";
+export type {
+	FieldHasDefault,
+	InsertableObjectFromSchemaRecord,
+	ObjectFromSchemaRecord,
+	TreeObjectNode,
+	SimpleKeyMap,
+	AssignableTreeFieldFromImplicitField,
+	ApplyKindAssignment,
+	ObjectSchemaTypingOptions,
+	AssignableTreeFieldFromImplicitFieldDefault,
+	TreeFieldFromImplicitFieldDefault,
+	ObjectFromSchemaRecordRelaxed,
 } from "./objectNode.js";
 export {
 	isObjectNodeSchema,

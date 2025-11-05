@@ -244,6 +244,17 @@ export {
 	type NodeSchemaOptions,
 	type NodeSchemaOptionsAlpha,
 	type NodeSchemaMetadata,
+	type AssignableTreeFieldFromImplicitField,
+	type ApplyKindAssignment,
+	type Customizer,
+	type GetTypes,
+	type StrictTypes,
+	type CustomTypes,
+	type CustomizedSchemaTyping,
+	CustomizedTyping,
+	type DefaultInsertableTreeNodeFromImplicitAllowedTypes,
+	customizeSchemaTyping,
+	type SchemaUnionToIntersection,
 	type SchemaStatics,
 	type ITreeAlpha,
 	type TransactionConstraint,
@@ -283,6 +294,11 @@ export {
 	type SchemaFactory_base,
 	type NumberKeys,
 	type SimpleAllowedTypeAttributes,
+	type DefaultTreeNodeFromImplicitAllowedTypes,
+	type ObjectFromSchemaRecordRelaxed,
+	type ObjectSchemaTypingOptions,
+	type AssignableTreeFieldFromImplicitFieldDefault,
+	type TreeFieldFromImplicitFieldDefault,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
@@ -323,6 +339,7 @@ export type {
 	JsonCompatibleObject,
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnlyObject,
+	PreventExtraProperties,
 } from "./util/index.js";
 export { cloneWithReplacements } from "./util/index.js";
 

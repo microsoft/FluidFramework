@@ -8,13 +8,13 @@ import {
 	arraySchema,
 	type MapNodeCustomizableSchema,
 	mapSchema,
+	type ObjectFromSchemaRecordRelaxed,
 	type ObjectNodeSchema,
 	objectSchema,
 	type RecordNodeCustomizableSchema,
 	recordSchema,
 } from "../node-kinds/index.js";
 import {
-	defaultSchemaFactoryObjectOptions,
 	scoped,
 	type NodeSchemaOptionsAlpha,
 	type ObjectSchemaOptionsAlpha,
@@ -22,7 +22,7 @@ import {
 } from "./schemaFactory.js";
 import { schemaStatics } from "./schemaStatics.js";
 import type { ImplicitFieldSchema } from "../fieldSchema.js";
-import type { RestrictiveStringRecord } from "../../util/index.js";
+import type { PreventExtraProperties, RestrictiveStringRecord } from "../../util/index.js";
 import type {
 	NodeKind,
 	TreeNodeSchema,
@@ -33,6 +33,7 @@ import type {
 	WithType,
 	AllowedTypesMetadata,
 	AllowedTypesFullFromMixed,
+	TreeNode,
 } from "../core/index.js";
 import {
 	normalizeToAnnotatedAllowedType,
@@ -200,12 +201,12 @@ export class SchemaFactoryAlpha<
 	public objectAlpha<
 		const Name extends TName,
 		const T extends RestrictiveStringRecord<ImplicitFieldSchema>,
-		const TCustomMetadata = unknown,
+		const TOptions extends ObjectSchemaOptionsAlpha = ObjectSchemaOptionsAlpha,
 	>(
 		name: Name,
 		fields: T,
-		options?: ObjectSchemaOptionsAlpha<TCustomMetadata>,
-	): ObjectNodeSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> & {
+		options?: PreventExtraProperties<TOptions, ObjectSchemaOptionsAlpha>,
+	): ObjectNodeSchema<ScopedSchemaName<TScope, Name>, T, true, TOptions> & {
 		/**
 		 * Typing checking workaround: not for for actual use.
 		 * @remarks
@@ -218,10 +219,7 @@ export class SchemaFactoryAlpha<
 		 */
 		readonly createFromInsertable: unknown;
 	} {
-		return objectSchema(scoped<TScope, TName, Name>(this, name), fields, true, {
-			...defaultSchemaFactoryObjectOptions,
-			...(options ?? {}),
-		});
+		return objectSchema(scoped<TScope, TName, Name>(this, name), fields, true, options);
 	}
 
 	/**
@@ -230,11 +228,11 @@ export class SchemaFactoryAlpha<
 	public override objectRecursive<
 		const Name extends TName,
 		const T extends RestrictiveStringRecord<System_Unsafe.ImplicitFieldSchemaUnsafe>,
-		const TCustomMetadata = unknown,
+		const TOptions extends ObjectSchemaOptionsAlpha = ObjectSchemaOptionsAlpha,
 	>(
 		name: Name,
 		t: T,
-		options?: ObjectSchemaOptionsAlpha<TCustomMetadata>,
+		options?: PreventExtraProperties<TOptions, ObjectSchemaOptionsAlpha>,
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Object,
@@ -243,9 +241,15 @@ export class SchemaFactoryAlpha<
 		false,
 		T,
 		never,
-		TCustomMetadata
+		TOptions extends ObjectSchemaOptionsAlpha<infer TCustomMetadataX>
+			? TCustomMetadataX
+			: unknown
 	> &
-		SimpleObjectNodeSchema<TCustomMetadata> &
+		SimpleObjectNodeSchema<
+			TOptions extends ObjectSchemaOptionsAlpha<infer TCustomMetadataX>
+				? TCustomMetadataX
+				: unknown
+		> &
 		// We can't just use non generic `ObjectNodeSchema` here since "Base constructors must all have the same return type".
 		// We also can't just use generic `ObjectNodeSchema` here and not `TreeNodeSchemaClass` since that doesn't work with unsafe recursive types.
 		// ObjectNodeSchema<
@@ -270,13 +274,15 @@ export class SchemaFactoryAlpha<
 			false,
 			T,
 			never,
-			TCustomMetadata
+			TOptions extends ObjectSchemaOptionsAlpha<infer TCustomMetadataX>
+				? TCustomMetadataX
+				: unknown
 		> &
 			ObjectNodeSchema<
 				ScopedSchemaName<TScope, Name>,
 				RestrictiveStringRecord<ImplicitFieldSchema>,
 				false,
-				TCustomMetadata
+				TOptions
 			>;
 	}
 
@@ -558,4 +564,38 @@ export class SchemaFactoryAlpha<
 	>(name: T): SchemaFactoryAlpha<ScopedSchemaName<TScope, T>, TNameInner> {
 		return new SchemaFactoryAlpha(scoped<TScope, TName, T>(this, name));
 	}
+}
+
+/**
+ * Convert an object node to a version with a relaxed types for its fields.
+ * @remarks
+ * This can help get TypeScript to allow sub-classing it in generic contexts.
+ * This must be to the class from the SchemaFactory then subclassed.
+ * @alpha
+ */
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+export function relaxObject<const T extends TreeNodeSchemaClass<string, NodeKind.Object>>(
+	t: T,
+) {
+	return t as T extends TreeNodeSchemaClass<
+		infer Name,
+		NodeKind.Object,
+		TreeNode,
+		infer TInsertable,
+		infer ImplicitlyConstructable,
+		infer Info extends RestrictiveStringRecord<ImplicitFieldSchema>,
+		infer TConstructorExtra,
+		infer TCustomMetadata
+	>
+		? TreeNodeSchemaClass<
+				Name,
+				NodeKind.Object,
+				TreeNode & WithType<Name, NodeKind.Object, T> & ObjectFromSchemaRecordRelaxed<Info>,
+				TInsertable,
+				ImplicitlyConstructable,
+				Info,
+				TConstructorExtra,
+				TCustomMetadata
+			>
+		: T;
 }

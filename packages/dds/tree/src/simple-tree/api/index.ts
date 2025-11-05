@@ -37,7 +37,11 @@ export {
 	type SchemaFactory_base,
 } from "./schemaFactory.js";
 export { SchemaFactoryBeta } from "./schemaFactoryBeta.js";
-export { SchemaFactoryAlpha, type SchemaStaticsAlpha } from "./schemaFactoryAlpha.js";
+export {
+	SchemaFactoryAlpha,
+	type SchemaStaticsAlpha,
+	relaxObject,
+} from "./schemaFactoryAlpha.js";
 export type {
 	ValidateRecursiveSchema,
 	FixRecursiveArraySchema,
@@ -99,6 +103,7 @@ export type {
 	AllowedTypesFullFromMixedUnsafe,
 	UnannotateAllowedTypesListUnsafe,
 	AnnotateAllowedTypesListUnsafe,
+	customizeSchemaTypingUnsafe,
 } from "./typesUnsafe.js";
 
 export {

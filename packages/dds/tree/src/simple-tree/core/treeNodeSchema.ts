@@ -606,6 +606,8 @@ export type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchemaC
  * One special case this makes is if the result of NodeFromSchema contains TreeNode, this must be an under constrained schema, so the result is set to never.
  * Note that applying UnionToIntersection on the result of NodeFromSchema<T> does not work since it breaks booleans.
  *
+ * Some internal code may use second parameter to opt out of contravariant behavior, but this is not a stable API.
+ *
  * @public
  */
 export type InsertableTypedNode<
