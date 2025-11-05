@@ -100,3 +100,5 @@ extends:
     taskLint: false
     taskTest:
       - test
+    # Disabled while eslint-config-fluid is part of the client release group
+    taskPack: false

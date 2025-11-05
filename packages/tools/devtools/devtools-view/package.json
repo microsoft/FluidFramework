@@ -88,7 +88,7 @@
 		"@fluidframework/build-tools": "^0.58.3",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^8.1.0",
+		"@fluidframework/eslint-config-fluid": "workspace:^",
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@microsoft/api-extractor": "7.52.11",
 		"@testing-library/dom": "^10.4.0",

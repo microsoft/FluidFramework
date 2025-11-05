@@ -123,7 +123,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.58.3",
 		"@fluidframework/core-utils": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^8.1.0",
+		"@fluidframework/eslint-config-fluid": "workspace:^",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
 		"@langchain/anthropic": "^0.3.24",
@@ -140,7 +140,7 @@
 		"eslint-config-prettier": "~10.1.8",
 		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
-		"prettier": "~3.0.3",
+		"prettier": "~3.6.2",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.4.5"
 	},
