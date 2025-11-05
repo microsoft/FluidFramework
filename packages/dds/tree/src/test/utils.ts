@@ -177,10 +177,10 @@ import {
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { Client } from "@fluid-private/test-dds-utils";
 import { cursorToJsonObject, fieldJsonCursor, singleJsonCursor } from "./json/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
 import type { Transactor } from "../shared-tree-core/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { FieldChangeDelta } from "../feature-libraries/modular-schema/index.js";
 import {
 	configuredSharedTree,
@@ -197,12 +197,12 @@ import type {
 	ISharedObjectKind,
 	SharedObjectKind,
 } from "@fluidframework/shared-object-base/internal";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { ObjectForest } from "../feature-libraries/object-forest/objectForest.js";
 import {
 	allowsFieldSuperset,
 	allowsTreeSuperset,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../feature-libraries/modular-schema/index.js";
 import { initializeForest } from "./feature-libraries/index.js";
 

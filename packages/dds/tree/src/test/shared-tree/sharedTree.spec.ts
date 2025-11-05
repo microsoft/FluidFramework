@@ -33,7 +33,7 @@ import {
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import {
 	ChunkedForest,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/chunked-forest/chunkedForest.js";
 import {
 	flexTreeSlot,
@@ -43,7 +43,7 @@ import {
 } from "../../feature-libraries/index.js";
 import {
 	ObjectForest,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/object-forest/objectForest.js";
 import {
 	ForestTypeExpensiveDebug,
@@ -56,7 +56,7 @@ import {
 } from "../../shared-tree/index.js";
 import {
 	SchematizingSimpleTreeView,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree/schematizingTreeView.js";
 import type { EditManager } from "../../shared-tree-core/index.js";
 import {
@@ -109,11 +109,11 @@ import { JsonAsTree } from "../../jsonDomainSchema.js";
 import {
 	toSimpleTreeSchema,
 	TreeBeta,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/api/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { simpleTreeNodeSlot } from "../../simple-tree/core/treeNodeKernel.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { TreeSimpleContent } from "../feature-libraries/flex-tree/utils.js";
 import { FluidClientVersion } from "../../codec/index.js";
 import { asAlpha } from "../../api.js";

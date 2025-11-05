@@ -196,7 +196,7 @@
 		"@fluidframework/build-tools": "^0.58.3",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^7.0.0",
+		"@fluidframework/eslint-config-fluid": "^8.1.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
 		"@fluidframework/tree-previous": "npm:@fluidframework/tree@2.71.0",

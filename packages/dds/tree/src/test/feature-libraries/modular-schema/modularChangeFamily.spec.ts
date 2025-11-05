@@ -86,20 +86,20 @@ import {
 	type FieldChangeMap,
 	type FieldId,
 	type NodeChangeset,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeTypes.js";
 import {
 	getFieldKind,
 	intoDelta,
 	updateRefreshers,
 	relevantRemovedRoots as relevantDetachedTreesImplementation,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import type {
 	EncodedNodeChangeset,
 	FieldChangeDelta,
 	FieldChangeEncodingContext,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import { deepFreeze as deepFreezeBase } from "@fluidframework/test-runtime-utils/internal";
 import { BTree } from "@tylerbu/sorted-btree-es6";

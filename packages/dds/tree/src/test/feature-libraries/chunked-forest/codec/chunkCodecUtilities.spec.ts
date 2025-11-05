@@ -12,7 +12,7 @@ import {
 	jsonMinimizingFilter,
 	readStream,
 	readStreamNumber,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities.js";
 import { makeArray } from "../../../../util/index.js";
 

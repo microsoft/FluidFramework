@@ -13,18 +13,18 @@ import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import {
 	chunkField,
 	defaultChunkPolicy,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { TreeChunk } from "../../../feature-libraries/chunked-forest/index.js";
 import {
 	type FieldSet,
 	makeForestSummarizerCodec,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/forest-summary/codec.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { ForestFormatVersion } from "../../../feature-libraries/forest-summary/format.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { Format } from "../../../feature-libraries/forest-summary/format.js";
 import {
 	TreeCompressionStrategy,

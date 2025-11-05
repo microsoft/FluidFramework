@@ -15,7 +15,7 @@ import {
 	type FieldChangeRebaser,
 	FieldKindWithEditor,
 	referenceFreeFieldChangeRebaser,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import type { Mutable } from "../../../util/index.js";
 import { makeValueCodec } from "../../codec/index.js";
