@@ -216,7 +216,10 @@ export namespace System_TableSchema {
 					throw new UsageError(`Column with ID "${this.id}" is not contained in a table.`);
 				}
 
-				const result = [];
+				const result: {
+					rowId: string;
+					cell: CellValueType;
+				}[] = [];
 				for (const row of tableNode.rows) {
 					const cell = row.getCell(this.id);
 					if (cell !== undefined) {
@@ -226,7 +229,7 @@ export namespace System_TableSchema {
 							);
 						}
 
-						result.push({ rowId: row.id, cell: cell as CellValueType });
+						result.push({ rowId: row.id, cell });
 					}
 				}
 				return result;
