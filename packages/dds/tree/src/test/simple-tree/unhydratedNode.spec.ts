@@ -21,17 +21,17 @@ import type {
 	ConstantFieldProvider,
 	ContextualFieldProvider,
 	FieldProvider,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/fieldSchema.js";
 import { hydrate } from "./utils.js";
 import { TreeStatus } from "../../feature-libraries/index.js";
 import { validateUsageError } from "../utils.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { UnhydratedFlexTreeNode } from "../../simple-tree/core/unhydratedFlexTree.js";
 import { singleJsonCursor } from "../json/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { unhydratedFlexTreeFromCursor } from "../../simple-tree/api/create.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { getUnhydratedContext } from "../../simple-tree/createContext.js";
 
 describe("Unhydrated nodes", () => {

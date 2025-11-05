@@ -14,7 +14,7 @@ import {
 	MessageType,
 	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/legacy";
-// eslint-disable-next-line import/no-internal-modules -- TODO consider a test exposure to avoid /internal
+// eslint-disable-next-line import-x/no-internal-modules -- TODO consider a test exposure to avoid /internal
 import { isTreeContainerSchema } from "@fluidframework/fluid-static/internal";
 import {
 	type ContainerSchema,

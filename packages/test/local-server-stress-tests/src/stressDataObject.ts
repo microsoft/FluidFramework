@@ -14,7 +14,7 @@ import {
 	loadContainerRuntime,
 	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
-// eslint-disable-next-line import/no-deprecated
+// eslint-disable-next-line import-x/no-deprecated
 import type { IContainerRuntimeWithResolveHandle_Deprecated } from "@fluidframework/container-runtime-definitions/internal";
 import type {
 	IFluidHandle,
@@ -24,7 +24,7 @@ import type {
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 // Valid export as per package.json export map
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { modifyClusterSize } from "@fluidframework/id-compressor/internal/test-utils";
 import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import { type StageControlsAlpha } from "@fluidframework/runtime-definitions/internal";
@@ -207,7 +207,7 @@ export class DefaultStressDataObject extends StressDataObject {
 	private readonly _locallyCreatedObjects: ContainerObjects[] = [];
 	public async getContainerObjects(): Promise<readonly Readonly<ContainerObjects>[]> {
 		const containerObjects: Readonly<ContainerObjects>[] = [...this._locallyCreatedObjects];
-		const containerRuntime = // eslint-disable-next-line import/no-deprecated
+		const containerRuntime = // eslint-disable-next-line import-x/no-deprecated
 			this.context.containerRuntime as IContainerRuntimeWithResolveHandle_Deprecated;
 		for (const [url, entry] of this.containerObjectMap as any as [
 			string,

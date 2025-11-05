@@ -5,9 +5,9 @@
 
 import { strict as assert } from "node:assert";
 
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import {
 	SchemaFactory,
@@ -15,17 +15,17 @@ import {
 	SharedTree,
 	TreeViewConfiguration,
 	KeyEncodingOptions,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/tree/internal";
 
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { objectIdKey } from "../../explicit-strategy/agentEditTypes.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { IdGenerator } from "../../explicit-strategy/idGenerator.js";
 import {
 	getPromptFriendlyTreeSchema,
 	toDecoratedJson,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../explicit-strategy/promptGeneration.js";
 
 const demoSf = new SchemaFactory("agentSchema");
