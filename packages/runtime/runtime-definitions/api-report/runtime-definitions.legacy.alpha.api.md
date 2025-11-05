@@ -423,14 +423,11 @@ export type PackagePath = readonly string[];
 
 // @alpha @sealed @legacy
 export interface StageControlsAlpha {
-    // (undocumented)
     readonly checkpoint: () => void;
-    // (undocumented)
-    readonly checkpoints: number;
+    readonly checkpointCount: number;
     readonly commitChanges: () => void;
     readonly discardChanges: () => void;
-    // (undocumented)
-    readonly discardCheckpoint: () => void;
+    readonly rollbackCheckpoint: () => void;
 }
 
 // @beta @legacy (undocumented)

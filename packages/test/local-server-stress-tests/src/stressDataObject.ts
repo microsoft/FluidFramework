@@ -62,12 +62,12 @@ export interface ExitStagingMode {
 	commit: boolean;
 }
 
-export interface CreateCheckpoint {
-	type: "createCheckpoint";
+export interface StagingModeCreateCheckpoint {
+	type: "stagingModeCreateCheckpoint";
 }
 
-export interface RollbackCheckpoint {
-	type: "rollbackCheckpoint";
+export interface StagingModeRollbackCheckpoint {
+	type: "stagingModeRollbackCheckpoint";
 }
 
 export type StressDataObjectOperations =
@@ -76,8 +76,8 @@ export type StressDataObjectOperations =
 	| CreateChannel
 	| EnterStagingMode
 	| ExitStagingMode
-	| CreateCheckpoint
-	| RollbackCheckpoint;
+	| StagingModeCreateCheckpoint
+	| StagingModeRollbackCheckpoint;
 
 export class StressDataObject extends DataObject {
 	public static readonly factory: DataObjectFactory<StressDataObject> = new DataObjectFactory({
