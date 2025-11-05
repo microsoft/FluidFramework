@@ -3560,23 +3560,27 @@ export class ContainerRuntime
 			try {
 				return callback();
 			} catch (error) {
-				if (checkpointCreated && this.stageControls?.hasChangesSinceCheckpoint) {
-					// This will throw and close the container if rollback fails
-					try {
-						this.stageControls?.rollbackToCheckpoint();
-						stageControls?.discardChanges();
-						stageControls = undefined;
-					} catch (error_) {
-						const error2 = wrapError(error_, (message) => {
-							return DataProcessingError.create(
-								`RollbackError: ${message}`,
-								"checkpointRollback",
-								undefined,
-							) as DataProcessingError;
-						});
-						this.closeFn(error2);
-						throw error2;
+				if (checkpointCreated) {
+					// Rollback if there are changes since the checkpoint
+					if (this.stageControls?.hasChangesSinceCheckpoint) {
+						// This will throw and close the container if rollback fails
+						try {
+							this.stageControls.rollbackToCheckpoint();
+						} catch (error_) {
+							const error2 = wrapError(error_, (message) => {
+								return DataProcessingError.create(
+									`RollbackError: ${message}`,
+									"checkpointRollback",
+									undefined,
+								) as DataProcessingError;
+							});
+							this.closeFn(error2);
+							throw error2;
+						}
 					}
+					// Always discard staging mode if we created it
+					stageControls?.discardChanges();
+					stageControls = undefined;
 				} else {
 					this.closeFn(
 						wrapError(

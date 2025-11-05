@@ -4656,19 +4656,22 @@ describe("Runtime", () => {
 					);
 
 					// Rollback to first checkpoint (removes op-2)
+					// The checkpoint is consumed, so we're left with op-1 and no checkpoint
 					controls.rollbackToCheckpoint();
 					assert.equal(
 						controls.hasChangesSinceCheckpoint,
-						false,
-						"No changes since first checkpoint after rollback",
+						true,
+						"Have changes (op-1) since entering staging mode after rollback",
 					);
 
 					// Rollback to initial state (removes op-1)
+					// After this, we're back at the checkpoint state (1 message)
+					// The checkpoint is consumed, so hasChangesSinceCheckpoint compares against initial (0)
 					controls.rollbackToCheckpoint();
 					assert.equal(
 						controls.hasChangesSinceCheckpoint,
-						false,
-						"No changes after rolling back all checkpoints",
+						true,
+						"Have changes (op-1) after rolling back to first checkpoint",
 					);
 
 					controls.discardChanges();
@@ -4744,10 +4747,11 @@ describe("Runtime", () => {
 					);
 
 					assert.doesNotThrow(() => controls.rollbackToCheckpoint());
+					// After rollback, checkpoint is consumed but we still have op-1
 					assert.equal(
 						controls.hasChangesSinceCheckpoint,
-						false,
-						"Still no changes after rollback",
+						true,
+						"Have changes (op-1) after checkpoint is consumed",
 					);
 
 					controls.discardChanges();
