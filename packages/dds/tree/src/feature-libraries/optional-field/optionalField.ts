@@ -236,8 +236,7 @@ function compose(
 		change1.nodeDetach !== undefined &&
 		areEqualChangeAtomIdOpts(change1.nodeDetach, change2.valueReplace?.src)
 	) {
-		nodeManager.composeDetachAttach(change1.nodeDetach, change1.nodeDetach, 1, false);
-		return makeChangeset(undefined, undefined, composedChildChange);
+		nodeManager.composeDetachAttach(change1.nodeDetach, change1.nodeDetach, 1, true);
 	}
 
 	return makeChangeset(composedReplace, composedDetach, composedChildChange);
