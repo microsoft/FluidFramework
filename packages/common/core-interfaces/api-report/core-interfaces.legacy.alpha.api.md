@@ -7,6 +7,12 @@
 // @public
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
 
+// @beta @sealed @system
+export abstract class ErasedBaseType<out Name = unknown> {
+    protected constructor();
+    protected abstract brand(dummy: never): Name;
+}
+
 // @public @sealed
 export abstract class ErasedType<out Name = unknown> {
     static [Symbol.hasInstance](value: never): value is never;
@@ -27,6 +33,19 @@ export const FluidErrorTypes: {
 
 // @beta @legacy (undocumented)
 export type FluidErrorTypes = (typeof FluidErrorTypes)[keyof typeof FluidErrorTypes];
+
+// @alpha @legacy
+export const FluidErrorTypesAlpha: {
+    readonly layerIncompatibilityError: "layerIncompatibilityError";
+    readonly genericError: "genericError";
+    readonly throttlingError: "throttlingError";
+    readonly dataCorruptionError: "dataCorruptionError";
+    readonly dataProcessingError: "dataProcessingError";
+    readonly usageError: "usageError";
+};
+
+// @alpha @legacy (undocumented)
+export type FluidErrorTypesAlpha = (typeof FluidErrorTypesAlpha)[keyof typeof FluidErrorTypesAlpha];
 
 // @public
 export const fluidHandleSymbol: unique symbol;
@@ -291,6 +310,18 @@ export interface IFluidLoadable extends IProvideFluidLoadable {
     readonly handle: IFluidHandle;
 }
 
+// @alpha @legacy
+export interface ILayerIncompatibilityError extends IErrorBase {
+    readonly actualDifferenceInMonths: number;
+    readonly compatibilityRequirementsInMonths: number;
+    readonly details: string;
+    readonly errorType: typeof FluidErrorTypesAlpha.layerIncompatibilityError;
+    readonly incompatibleLayer: string;
+    readonly incompatibleLayerVersion: string;
+    readonly layer: string;
+    readonly layerVersion: string;
+}
+
 // @beta @legacy
 export interface ILocalFluidHandle<T> extends IFluidHandlePayloadPending<T> {
     readonly events: Listenable<IFluidHandleEvents & ILocalFluidHandleEvents>;
@@ -387,6 +418,7 @@ export interface IThrottlingWarning extends IErrorBase {
 // @public @sealed
 export interface Listenable<TListeners extends object> {
     off<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): void;
+    // (undocumented)
     on<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off;
 }
 

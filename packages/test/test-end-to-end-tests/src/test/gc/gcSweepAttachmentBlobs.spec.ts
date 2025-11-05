@@ -15,17 +15,17 @@ import {
 } from "@fluidframework/container-runtime/internal";
 import {
 	blobsTreeName,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/container-runtime/internal/test/blobManager";
 import {
 	ISweepMessage,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/container-runtime/internal/test/gc";
 import {
 	ISummarizer,
 	RetriableSummaryError,
 	defaultMaxAttemptsForSubmitFailures,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/container-runtime/internal/test/summary";
 import type { ISummarizeEventProps } from "@fluidframework/container-runtime-definitions/internal";
 import { delay } from "@fluidframework/core-utils/internal";
@@ -67,7 +67,7 @@ function validateBlobStateInSummary(
 	expectDelete: boolean,
 	expectGCStateHandle: boolean,
 ) {
-	const shouldShouldNot = expectDelete ? "should" : "should not";
+	const shouldShouldNot = expectDelete ? "should not" : "should";
 
 	// Validate that the blob tree should not be in the summary since there should be no attachment blobs.
 	const blobsTree = summaryTree.tree[blobsTreeName] as ISummaryTree;

@@ -7,7 +7,7 @@ import { IConstellation, ICoordinate } from "@fluid-example/multiview-coordinate
 import { SliderCoordinateView } from "@fluid-example/multiview-slider-coordinate-view";
 import React from "react";
 
-// eslint-disable-next-line import/no-unassigned-import
+// eslint-disable-next-line import-x/no-unassigned-import
 import "./style.css";
 
 interface IStarViewProps {

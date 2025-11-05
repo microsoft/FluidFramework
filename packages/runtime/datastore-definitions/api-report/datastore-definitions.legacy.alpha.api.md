@@ -42,7 +42,7 @@ export interface IChannelServices {
 // @beta @legacy
 export interface IChannelStorageService {
     contains(path: string): Promise<boolean>;
-    getSnapshotTree?(): ISnapshotTree | undefined;
+    getSnapshotTree(): ISnapshotTree | undefined;
     list(path: string): Promise<string[]>;
     readBlob(path: string): Promise<ArrayBufferLike>;
 }
@@ -105,6 +105,14 @@ export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRu
     waitAttached(): Promise<void>;
 }
 
+// @alpha @sealed @legacy (undocumented)
+export interface IFluidDataStoreRuntimeAlpha extends IFluidDataStoreRuntime {
+    // (undocumented)
+    readonly inStagingMode: boolean;
+    // (undocumented)
+    readonly isDirty: boolean;
+}
+
 // @beta @legacy
 export interface IFluidDataStoreRuntimeEvents extends IEvent {
     // (undocumented)
@@ -123,14 +131,6 @@ export interface IFluidDataStoreRuntimeEvents extends IEvent {
     (event: "connected", listener: (clientId: string) => void): any;
     // (undocumented)
     (event: "readonly", listener: (isReadOnly: boolean) => void): any;
-}
-
-// @beta @sealed @deprecated @legacy (undocumented)
-export interface IFluidDataStoreRuntimeExperimental extends IFluidDataStoreRuntime {
-    // (undocumented)
-    readonly inStagingMode?: boolean;
-    // (undocumented)
-    readonly isDirty?: boolean;
 }
 
 // @beta @legacy (undocumented)

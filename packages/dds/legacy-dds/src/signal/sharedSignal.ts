@@ -4,7 +4,7 @@
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
+import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
@@ -12,11 +12,13 @@ import type {
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions/internal";
 import { FileMode, MessageType, TreeEntry } from "@fluidframework/driver-definitions/internal";
+import type { ITree } from "@fluidframework/driver-definitions/internal";
 import type {
-	ISequencedDocumentMessage,
-	ITree,
-} from "@fluidframework/driver-definitions/internal";
-import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+	ISummaryTreeWithStats,
+	IRuntimeMessageCollection,
+	IRuntimeMessagesContent,
+	ISequencedMessageEnvelope,
+} from "@fluidframework/runtime-definitions/internal";
 import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
@@ -119,7 +121,7 @@ export class SharedSignalClass<T extends SerializableTypeForSharedSignal = any>
 	 * Load share signal from snapshot
 	 *
 	 * @param _storage - the storage to get the snapshot from
-	 * @returns - promise that resolved when the load is completed
+	 * @returns promise that resolved when the load is completed
 	 */
 	protected async loadCore(_storage: IChannelStorageService): Promise<void> {}
 
@@ -131,20 +133,22 @@ export class SharedSignalClass<T extends SerializableTypeForSharedSignal = any>
 	protected onDisconnect(): void {}
 
 	/**
-	 * Process a shared signal operation
-	 *
-	 * @param message - the message to prepare
-	 * @param local - whether the message was sent by the local client
-	 * @param _localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
-	 * For messages from a remote client, this will be undefined.
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
 	 */
-	protected processCore(
-		message: ISequencedDocumentMessage,
+	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+		const { envelope, local, messagesContent } = messagesCollection;
+		for (const messageContent of messagesContent) {
+			this.processMessage(envelope, messageContent, local);
+		}
+	}
+
+	private processMessage(
+		messageEnvelope: ISequencedMessageEnvelope,
+		messageContent: IRuntimeMessagesContent,
 		local: boolean,
-		_localOpMetadata: unknown,
 	): void {
-		if ((message.type as MessageType) === MessageType.Operation && !local) {
-			const op = message.contents as ISignalOperation<T>;
+		if ((messageEnvelope.type as MessageType) === MessageType.Operation && !local) {
+			const op = messageContent.contents as ISignalOperation<T>;
 
 			switch (op.type) {
 				case "signal": {
@@ -158,12 +162,25 @@ export class SharedSignalClass<T extends SerializableTypeForSharedSignal = any>
 			}
 		}
 	}
-
 	private notifyCore(op: ISignalOperation<T>, isLocal: boolean): void {
 		this.emit("notify", op.metadata, isLocal);
 	}
 
+	// Nothing to roll back. Allowing other DDSs to handle rollback if necessary.
+	public rollback(content: unknown, _localOpMetadata: unknown): void {
+		return;
+	}
+
 	protected applyStashedOp(_content: unknown): void {
-		throw new Error("Not implemented");
+		const op = _content as ISignalOperation<T>;
+
+		switch (op.type) {
+			case "signal": {
+				break;
+			}
+			default: {
+				unreachableCase(op as never);
+			}
+		}
 	}
 }

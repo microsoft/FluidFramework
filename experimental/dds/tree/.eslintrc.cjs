@@ -23,7 +23,7 @@ module.exports = {
 		'@typescript-eslint/no-shadow': 'off',
 		'no-shadow': 'off',
 		'@typescript-eslint/no-unsafe-return': 'off',
-		'import/no-deprecated': 'off',
+		'import-x/no-deprecated': 'off',
 		'@fluid-internal/fluid/no-unchecked-record-access': 'off',
 	},
 	overrides: [
@@ -34,20 +34,20 @@ module.exports = {
 				'@typescript-eslint/no-unused-expressions': 'off',
 
 				// Dev dependencies and internal modules may be used in test code
-				'import/no-extraneous-dependencies': [
+				'import-x/no-extraneous-dependencies': [
 					'error',
 					{
 						devDependencies: true,
 					},
 				],
-				'import/no-internal-modules': 'off',
+				'import-x/no-internal-modules': 'off',
 			},
 		},
 		{
 			files: ['**/test/**', 'src/index.ts'],
 			rules: {
 				// Test code and the main package export shouldn't be linted for unused exports
-				'import/no-unused-modules': 'off',
+				'import-x/no-unused-modules': 'off',
 			},
 		},
 	],

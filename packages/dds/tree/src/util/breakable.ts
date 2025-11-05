@@ -31,9 +31,17 @@ export class Breakable {
 	 */
 	public use(): void {
 		if (this.brokenBy !== undefined) {
-			throw new UsageError(
+			const error = new UsageError(
 				`Invalid use of ${this.name} after it was put into an invalid state by another error.\nOriginal Error:\n${this.brokenBy}`,
 			);
+
+			// This "cause" field is added in ES2022, but using if even without that built in support, it is still helpful.
+			// See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error/cause
+			// TODO: remove this cast when targeting ES2022 lib or later.
+			(error as { cause?: unknown }).cause =
+				(this.brokenBy as { cause?: unknown }).cause ?? this.brokenBy;
+
+			throw error;
 		}
 	}
 
@@ -163,10 +171,10 @@ export function throwIfBroken<
 	return replacementMethod as Target;
 }
 
-// eslint-disable-next-line @typescript-eslint/ban-types
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type, @typescript-eslint/ban-types
 type PossiblyNamedFunction = Function & { displayName?: undefined | string };
 
-// eslint-disable-next-line @typescript-eslint/ban-types
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type, @typescript-eslint/ban-types
 function nameFunctionFrom(toName: Function, nameFrom: Function): void {
 	(toName as PossiblyNamedFunction).displayName =
 		(nameFrom as PossiblyNamedFunction).displayName ?? nameFrom.name;
@@ -175,13 +183,13 @@ function nameFunctionFrom(toName: Function, nameFrom: Function): void {
 const isBreakerSymbol: unique symbol = Symbol("isBreaker");
 
 // Accepting any function like value is desired and safe here as this does not call the provided function.
-// eslint-disable-next-line @typescript-eslint/ban-types
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type, @typescript-eslint/ban-types
 function markBreaker(f: Function): void {
 	(f as unknown as Record<typeof isBreakerSymbol, true>)[isBreakerSymbol] = true;
 }
 
 // Accepting any function like value is desired and safe here as this does not call the provided function.
-// eslint-disable-next-line @typescript-eslint/ban-types
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type, @typescript-eslint/ban-types
 function isBreaker(f: Function): boolean {
 	return isBreakerSymbol in (f as unknown as Record<typeof isBreakerSymbol, true>);
 }

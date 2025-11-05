@@ -8,8 +8,11 @@ import { strict as assert } from "node:assert";
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
 import {
+	type ITreeCursorSynchronous,
 	type JsonableTree,
 	ObjectNodeStoredSchema,
+	type RevisionTag,
+	RevisionTagCodec,
 	type TreeNodeSchemaIdentifier,
 	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
@@ -18,13 +21,22 @@ import {
 import {
 	FieldKinds,
 	type FullSchemaPolicy,
+	combineChunks,
+	createNodeIdentifierManager,
 	cursorForJsonableTreeField,
+	defaultIncrementalEncodingPolicy,
 	defaultSchemaPolicy,
 	jsonableTreeFromFieldCursor,
 } from "../feature-libraries/index.js";
 import {
+	buildConfiguredForest,
+	createTreeCheckout,
+	defaultSharedTreeOptions,
 	ForestTypeExpensiveDebug,
-	type SchematizingSimpleTreeView,
+	initialize,
+	initializerFromChunk,
+	SchematizingSimpleTreeView,
+	type ForestOptions,
 } from "../shared-tree/index.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
@@ -45,18 +57,17 @@ import {
 	toInitialSchema,
 	restrictiveStoredSchemaGenerationOptions,
 	permissiveStoredSchemaGenerationOptions,
+	type TreeViewConfiguration,
 } from "../simple-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { fieldJsonCursor } from "./json/jsonCursor.js";
-import { brand } from "../util/index.js";
+import { brand, Breakable } from "../util/index.js";
 import type { Partial } from "@sinclair/typebox";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { isLazy } from "../simple-tree/core/index.js";
 import { fieldCursorFromInsertable, testIdCompressor } from "./utils.js";
-// eslint-disable-next-line import/no-internal-modules
-import { typeboxValidator } from "../external-utilities/typeboxValidator.js";
-// eslint-disable-next-line import/no-internal-modules
-import { independentInitializedViewInternal } from "../shared-tree/independentView.js";
+import { FormatValidatorBasic } from "../external-utilities/index.js";
+import type { ICodecOptions } from "../codec/index.js";
 
 interface TestSimpleTree {
 	readonly name: string;
@@ -133,15 +144,15 @@ function test(name: string, schemaData: TreeStoredSchema, data: JsonableTree[]):
 
 const factory = new SchemaFactoryAlpha("test");
 export class Minimal extends factory.objectAlpha("minimal", {}) {}
-export class Minimal2 extends factory.objectAlpha("minimal2", {}) {}
-export class HasMinimalValueField extends factory.objectAlpha("hasMinimalValueField", {
+export class Minimal2 extends factory.object("minimal2", {}) {}
+export class HasMinimalValueField extends factory.object("hasMinimalValueField", {
 	field: Minimal,
 }) {}
-export class HasRenamedField extends factory.objectAlpha("hasRenamedField", {
+export class HasRenamedField extends factory.object("hasRenamedField", {
 	field: factory.required(Minimal, { key: "stored-name" }),
 }) {}
 
-export class HasDescriptions extends factory.objectAlpha(
+export class HasDescriptions extends factory.object(
 	"hasDescriptions",
 	{
 		field: factory.required(Minimal, { metadata: { description: "the field" } }),
@@ -149,7 +160,7 @@ export class HasDescriptions extends factory.objectAlpha(
 	{ metadata: { description: "root object" } },
 ) {}
 
-export class HasAllMetadata extends factory.objectAlpha(
+export class HasAllMetadata extends factory.object(
 	"hasDescriptions",
 	{
 		field: factory.required(Minimal, {
@@ -163,19 +174,19 @@ export class HasAllMetadata extends factory.objectAlpha(
 	},
 ) {}
 
-export class HasAmbiguousField extends factory.objectAlpha("hasAmbiguousField", {
+export class HasAmbiguousField extends factory.object("hasAmbiguousField", {
 	field: [Minimal, Minimal2],
 }) {}
-export class HasNumericValueField extends factory.objectAlpha("hasNumericValueField", {
+export class HasNumericValueField extends factory.object("hasNumericValueField", {
 	field: factory.number,
 }) {}
-export class HasPolymorphicValueField extends factory.objectAlpha("hasPolymorphicValueField", {
+export class HasPolymorphicValueField extends factory.object("hasPolymorphicValueField", {
 	field: [factory.number, Minimal],
 }) {}
-export class HasOptionalField extends factory.objectAlpha("hasOptionalField", {
+export class HasOptionalField extends factory.object("hasOptionalField", {
 	field: factory.optional(factory.number),
 }) {}
-export class HasIdentifierField extends factory.objectAlpha("hasIdentifierField", {
+export class HasIdentifierField extends factory.object("hasIdentifierField", {
 	field: factory.identifier,
 }) {}
 
@@ -382,7 +393,10 @@ export class HasUnknownOptionalFieldsV2 extends factory.objectRecursive(
 ) {}
 
 export class HasStagedAllowedTypes extends factory.objectAlpha("hasStagedAllowedTypes", {
-	x: [SchemaFactoryAlpha.number, SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string)],
+	x: SchemaFactoryAlpha.types([
+		SchemaFactoryAlpha.number,
+		SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+	]),
 }) {}
 
 export class HasStagedAllowedTypesAfterUpdate extends factory.objectAlpha(
@@ -392,28 +406,40 @@ export class HasStagedAllowedTypesAfterUpdate extends factory.objectAlpha(
 	},
 ) {}
 
-class MapWithStaged extends factory.mapAlpha("MapWithStaged", [
-	SchemaFactoryAlpha.number,
-	SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
-]) {}
+class MapWithStaged extends factory.mapAlpha(
+	"MapWithStaged",
+	SchemaFactoryAlpha.types([
+		SchemaFactoryAlpha.number,
+		SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+	]),
+) {}
 
-class ArrayWithStaged extends factory.arrayAlpha("ArrayWithStaged", [
-	SchemaFactoryAlpha.number,
-	SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
-]) {}
+class ArrayWithStaged extends factory.arrayAlpha(
+	"ArrayWithStaged",
+	SchemaFactoryAlpha.types([
+		SchemaFactoryAlpha.number,
+		SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+	]),
+) {}
 
 const multiStageCUpgrade = SchemaFactoryAlpha.staged(ArrayWithStaged);
 
 class NestedMultiStage extends factory.object("NestedMultiStage", {
-	a: SchemaFactoryAlpha.optional(SchemaFactoryAlpha.staged(SchemaFactoryAlpha.number)),
-	b: SchemaFactoryAlpha.required([
-		SchemaFactoryAlpha.staged({
-			type: () => MapWithStaged,
-			metadata: {},
-		}),
-		SchemaFactoryAlpha.null,
-	]),
-	c: SchemaFactoryAlpha.required([multiStageCUpgrade, SchemaFactoryAlpha.null]),
+	a: SchemaFactoryAlpha.optional(
+		SchemaFactoryAlpha.types([SchemaFactoryAlpha.staged(SchemaFactoryAlpha.number)]),
+	),
+	b: SchemaFactoryAlpha.required(
+		SchemaFactoryAlpha.types([
+			SchemaFactoryAlpha.staged({
+				type: () => MapWithStaged,
+				metadata: {},
+			}),
+			SchemaFactoryAlpha.null,
+		]),
+	),
+	c: SchemaFactoryAlpha.required(
+		SchemaFactoryAlpha.types([multiStageCUpgrade, SchemaFactoryAlpha.null]),
+	),
 }) {}
 
 // TODO: AB#45711: add recursive staged schema tests documents
@@ -498,7 +524,7 @@ export const testDocuments: readonly TestDocument[] = [
 	{
 		ambiguous: false,
 		name: "Staged in root",
-		schema: SchemaFactoryAlpha.required([
+		schema: SchemaFactoryAlpha.types([
 			SchemaFactoryAlpha.number,
 			SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
 		]),
@@ -511,7 +537,7 @@ export const testDocuments: readonly TestDocument[] = [
 	{
 		ambiguous: false,
 		name: "Staged node in root",
-		schema: SchemaFactoryAlpha.required([
+		schema: SchemaFactoryAlpha.types([
 			SchemaFactoryAlpha.number,
 			SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
 		]),
@@ -596,13 +622,58 @@ export function testDocumentIndependentView(
 			config,
 			{
 				forest: ForestTypeExpensiveDebug,
-				jsonValidator: typeboxValidator,
+				jsonValidator: FormatValidatorBasic,
 			},
 			new TreeStoredSchemaRepository(document.schemaData),
 			cursor,
 			idCompressor,
 		);
 	return view as TreeView<ImplicitFieldSchema> as SchematizingSimpleTreeView<UnsafeUnknownSchema>;
+}
+
+/**
+ * {@link independentInitializedView} but using internal types instead of persisted data formats.
+ */
+function independentInitializedViewInternal<const TSchema extends ImplicitFieldSchema>(
+	config: TreeViewConfiguration<TSchema>,
+	options: ForestOptions & ICodecOptions,
+	schema: TreeStoredSchema,
+	rootFieldCursor: ITreeCursorSynchronous,
+	idCompressor: IIdCompressor,
+): SchematizingSimpleTreeView<TSchema> {
+	const breaker = new Breakable("independentInitializedView");
+	const revisionTagCodec = new RevisionTagCodec(idCompressor);
+	const mintRevisionTag = (): RevisionTag => idCompressor.generateCompressedId();
+
+	// To ensure the forest is in schema when constructed, start it with an empty schema and set the schema repository content later.
+	const schemaRepository = new TreeStoredSchemaRepository();
+
+	const forest = buildConfiguredForest(
+		breaker,
+		options.forest ?? defaultSharedTreeOptions.forest,
+		schemaRepository,
+		idCompressor,
+		defaultIncrementalEncodingPolicy,
+	);
+
+	const checkout = createTreeCheckout(idCompressor, mintRevisionTag, revisionTagCodec, {
+		forest,
+		schema: schemaRepository,
+		breaker,
+	});
+
+	initialize(
+		checkout,
+		schema,
+		initializerFromChunk(checkout, () =>
+			combineChunks(checkout.forest.chunkField(rootFieldCursor)),
+		),
+	);
+	return new SchematizingSimpleTreeView<TSchema>(
+		checkout,
+		config,
+		createNodeIdentifierManager(idCompressor),
+	);
 }
 
 // TODO: integrate data sources for wide and deep trees from ops size testing and large data generators for cursor performance testing.

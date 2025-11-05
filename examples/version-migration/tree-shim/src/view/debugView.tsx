@@ -5,7 +5,7 @@
 
 import React, { useEffect, useState } from "react";
 
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { InventoryList } from "../model/inventoryList.js";
 import type { IInventoryListAppModel } from "../modelInterfaces.js";
 

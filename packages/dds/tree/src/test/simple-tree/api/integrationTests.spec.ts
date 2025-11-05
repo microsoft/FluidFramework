@@ -13,7 +13,7 @@ import {
 } from "../../../simple-tree/index.js";
 import type {
 	ValidateRecursiveSchema,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/schemaFactoryRecursive.js";
 import { getView, validateUsageError } from "../../utils.js";
 
@@ -71,7 +71,10 @@ describe("simple-tree API integration tests", () => {
 		it("errors assigning staged nodes before upgrade, shallow in object", () => {
 			const schemaFactoryAlpha = new SchemaFactoryAlpha("shared tree tests");
 			class StagedSchema extends schemaFactoryAlpha.objectAlpha("TestObject", {
-				foo: [SchemaFactoryAlpha.number, SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string)],
+				foo: SchemaFactoryAlpha.types([
+					SchemaFactoryAlpha.number,
+					SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+				]),
 			}) {}
 
 			const view = getView(new TreeViewConfiguration({ schema: StagedSchema }));
@@ -84,7 +87,7 @@ describe("simple-tree API integration tests", () => {
 
 		it("errors assigning staged nodes before upgrade, in root", () => {
 			const config = new TreeViewConfigurationAlpha({
-				schema: SchemaFactoryAlpha.required([
+				schema: SchemaFactoryAlpha.types([
 					SchemaFactoryAlpha.number,
 					SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
 				]),
@@ -105,7 +108,10 @@ describe("simple-tree API integration tests", () => {
 		it("errors assigning staged nodes before upgrade, deep", () => {
 			const schemaFactoryAlpha = new SchemaFactoryAlpha("shared tree tests");
 			class StagedSchema extends schemaFactoryAlpha.objectAlpha("TestObject", {
-				foo: [SchemaFactoryAlpha.number, SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string)],
+				foo: SchemaFactoryAlpha.types([
+					SchemaFactoryAlpha.number,
+					SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+				]),
 			}) {}
 
 			const view = getView(new TreeViewConfiguration({ schema: StagedSchema }));

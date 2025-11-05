@@ -16,7 +16,8 @@ import type {
 	ITelemetryBaseEvent,
 	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
-import type { IThrottlingWarning } from "@fluidframework/core-interfaces/internal";
+import { JsonParse } from "@fluidframework/core-interfaces/internal";
+import type { IThrottlingWarning, JsonString } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { ConnectionMode } from "@fluidframework/driver-definitions";
 import {
@@ -210,7 +211,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	private initSequenceNumber: number = 0;
 
 	private readonly _inbound: DeltaQueue<ISequencedDocumentMessage>;
-	private readonly _inboundSignal: DeltaQueue<ISignalMessage>;
+	private readonly _inboundSignal: DeltaQueue<
+		ISignalMessage<{ type: never; content: JsonString<unknown> }>
+	>;
 
 	private _closed = false;
 	private _disposed = false;
@@ -433,7 +436,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 					this.close(normalizeError(error));
 				}
 			},
-			signalHandler: (signals: ISignalMessage[]) => {
+			signalHandler: (
+				signals: ISignalMessage<{ type: never; content: JsonString<unknown> }>[],
+			) => {
 				for (const signal of signals) {
 					this._inboundSignal.push(signal);
 				}
@@ -474,14 +479,16 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		});
 
 		// Inbound signal queue
-		this._inboundSignal = new DeltaQueue<ISignalMessage>((message) => {
+		this._inboundSignal = new DeltaQueue<
+			ISignalMessage<{ type: never; content: JsonString<unknown> }>
+		>((message) => {
 			if (this.handler === undefined) {
 				throw new Error("Attempted to process an inbound signal without a handler attached");
 			}
 
 			this.handler.processSignal({
 				...message,
-				content: JSON.parse(message.content as string),
+				content: JsonParse(message.content),
 			});
 		});
 

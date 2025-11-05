@@ -90,7 +90,7 @@ export function checkInitialWriteStorageAccessBaselinePerformance(
 	const _baseline = testMode.enableLowIoWrite
 		? initialWriteStorageAccessBaselinePerformanceLowIo
 		: initialWriteStorageAccessBaselinePerformance;
-	const baseline = { ..._baseline };
+	const baseline = { ..._baseline, mkdir: _baseline.mkdir ?? 0 };
 	if (testMode.repoPerDocEnabled) {
 		// repoPerDoc adds a small amount of overhead for `mkdir`.
 		baseline.mkdir += 2;
@@ -104,7 +104,7 @@ export function checkFullStorageAccessBaselinePerformance(
 	const _baseline = testMode.enableLowIoWrite
 		? fullTestStorageAccessBaselinePerformanceLowIo
 		: fullTestStorageAccessBaselinePerformance;
-	const baseline = { ..._baseline };
+	const baseline = { ..._baseline, mkdir: _baseline.mkdir ?? 0 };
 	if (testMode.repoPerDocEnabled) {
 		// repoPerDoc adds a small amount of overhead for `mkdir`.
 		baseline.mkdir += 2;

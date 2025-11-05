@@ -4,6 +4,12 @@
 
 ```ts
 
+// @alpha @legacy
+export function asLegacyAlpha(runtime: IContainerRuntimeBase): ContainerRuntimeBaseAlpha;
+
+// @alpha @legacy
+export function asLegacyAlpha(runtime: IFluidDataStoreRuntime): IFluidDataStoreRuntimeAlpha;
+
 // @public
 export function compareFluidHandles(a: IFluidHandle, b: IFluidHandle): boolean;
 
@@ -36,6 +42,9 @@ export const isFluidHandlePayloadPending: <T>(handle: IFluidHandle<T>) => handle
 
 // @beta @legacy
 export const isLocalFluidHandle: <T>(handle: IFluidHandle<T>) => handle is ILocalFluidHandle<T>;
+
+// @alpha @legacy
+export function lookupTemporaryBlobStorageId(containerRuntime: IContainerRuntime, handle: IFluidHandle): string | undefined;
 
 // @beta @legacy
 export class RequestParser implements IRequest {
