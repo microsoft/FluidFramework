@@ -419,7 +419,7 @@ stages:
             timeoutInMinutes: 3
             continueOnError: true
             inputs:
-              key: '"compat-version-installs" | "$(Agent.OS)" | "${{ parameters.testCommand }}" | "${{ variant.name }}" | "$(compatVersionCacheKey)"'
+              key: '"compat-version-installs" | "$(Agent.OS)" | "${{ parameters.testCommand }}" | "${{ variant.name }}" | $(compatVersionCacheKey)'
               path: $(compatVersionInstallsPath)
 
         # Only check out tenants from the tenant pool if we are running tests against ODSP
