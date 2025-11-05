@@ -13,7 +13,9 @@ import {
 	loadExistingContainer,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
+import type { IContainerRuntimeInternal } from "@fluidframework/container-runtime-definitions/internal";
 import type {
+	FluidObject,
 	IConfigProviderBase,
 	IRequest,
 	ITelemetryBaseLogger,
@@ -232,6 +234,37 @@ export class OdspClient {
 	}
 
 	private async getContainerServices(container: IContainer): Promise<IOdspContainerServices> {
-		return new OdspContainerServices(container);
+		const runtimeInternal = await this.getRuntimeInternal(container);
+		// Get the resolved URL for ODSP-specific URL building
+		const resolvedUrl = container.resolvedUrl;
+		const odspResolvedUrl =
+			resolvedUrl && isOdspResolvedUrl(resolvedUrl) ? resolvedUrl : undefined;
+		return new OdspContainerServices(container, odspResolvedUrl, runtimeInternal);
 	}
+
+	private async getRuntimeInternal(
+		container: IContainer,
+	): Promise<IContainerRuntimeInternal | undefined> {
+		const entryPoint = await container.getEntryPoint();
+		if (
+			entryPoint !== undefined &&
+			typeof (entryPoint as IMaybeFluidObjectWithContainerRuntime).IStaticEntryPoint
+				?.extensionStore === "function"
+		) {
+			// If the container has a static entry point with an extension store, use that to get the runtime
+			return (entryPoint as IMaybeFluidObjectWithContainerRuntime).IStaticEntryPoint
+				.extensionStore;
+		}
+	}
+}
+
+/**
+ * Unclear if this is the best way to go about accessing the runtime internal from the entry point.
+ * We need it for IContainerRuntimeInternal.lookupTemporaryBlobStorageId,
+ * and fluid-static guarantees this exists on the container's entry point, but it is not exposed publicly.
+ */
+interface IMaybeFluidObjectWithContainerRuntime extends FluidObject {
+	IStaticEntryPoint: {
+		extensionStore: IContainerRuntimeInternal;
+	};
 }
