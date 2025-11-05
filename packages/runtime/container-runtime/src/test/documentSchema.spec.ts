@@ -5,10 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
-import {
-	defaultMinVersionForCollab,
-	type SemanticVersion,
-} from "@fluidframework/runtime-utils/internal";
+import { defaultMinVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import type { SemanticVersion } from "@fluidframework/runtime-utils/internal";
 import {
 	createMockLoggerExt,
 	type IMockLoggerExt,

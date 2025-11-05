@@ -63,14 +63,15 @@ export {
 } from "./deltaManager.js";
 export {
 	configValueToMinVersionForCollab,
-	defaultMinVersionForCollab,
 	getValidationForRuntimeOptions,
 	getConfigsForMinVersionForCollab,
 	isValidMinVersionForCollab,
 	semanticVersionToMinimumVersionForCollab,
+	lowestMinVersionForCollab,
 } from "./compatibilityBase.js";
 export type {
 	ConfigMap,
+	ConfigMapEntry,
 	ConfigValidationMap,
 	MinimumMinorSemanticVersion,
 	SemanticVersion,

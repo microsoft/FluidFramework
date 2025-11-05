@@ -21,6 +21,7 @@ import type { IIdCompressorCore } from "@fluidframework/id-compressor/internal";
 import {
 	CreateChildSummarizerNodeFn,
 	CreateChildSummarizerNodeParam,
+	defaultMinVersionForCollab,
 	IContainerRuntimeBase,
 	IFluidDataStoreContext,
 	IFluidDataStoreRegistry,
@@ -28,7 +29,6 @@ import {
 	type IRuntimeStorageService,
 	type MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
-import { defaultMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import {
 	ITelemetryLoggerExt,
 	createChildLogger,

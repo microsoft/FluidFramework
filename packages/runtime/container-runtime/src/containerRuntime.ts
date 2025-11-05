@@ -109,6 +109,7 @@ import {
 	FlushMode,
 	FlushModeExperimental,
 	channelsTreeName,
+	defaultMinVersionForCollab,
 	gcTreeKey,
 } from "@fluidframework/runtime-definitions/internal";
 import type {
@@ -137,7 +138,6 @@ import {
 	addSummarizeResultToSummary,
 	calculateStats,
 	create404Response,
-	defaultMinVersionForCollab,
 	exceptionToResponse,
 	GCDataBuilder,
 	isValidMinVersionForCollab,

@@ -4,14 +4,17 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import {
+	defaultMinVersionForCollab,
+	type MinimumVersionForCollab,
+} from "@fluidframework/runtime-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { compare, gt, gte, lte, valid } from "semver-ts";
 
 import { pkgVersion } from "./packageVersion.js";
 
 /**
- * The lowest supported value of {@link MinimumVersionForCollab}.
+ * The lowest supported value of {@link @fluidframework/runtime-definitions#MinimumVersionForCollab}.
  * @remarks
  * In each new major version, this may be bumped to indicate which version of the Fluid Framework client libraries are no longer supported for collaboration.
  * @privateRemarks
@@ -55,22 +58,27 @@ export type MinimumMinorSemanticVersion = `${bigint}.${bigint}.0` | `${bigint}.0
 export type SemanticVersion = `${bigint}.${bigint}.${bigint}`;
 
 /**
- * Converts a record into a configuration map that associates each key with with an instance of its value type that based on a {@link MinimumSemanticVersion}.
+ * Converts a record into a configuration map that associates each key with with an instance of its value type that based on a {@link MinimumMinorSemanticVersion}.
  * @remarks
- * For a given input {@link MinimumVersionForCollab},
- * the corresponding configuration values can be found by using the entry in the inner objects with the highest {@link MinimumSemanticVersion}
- * that does not exceed the given {@link MinimumVersionForCollab}.
+ * For a given input {@link @fluidframework/runtime-definitions#MinimumVersionForCollab},
+ * the corresponding configuration values can be found by using the entry in the inner objects with the highest {@link MinimumMinorSemanticVersion}
+ * that does not exceed the given {@link @fluidframework/runtime-definitions#MinimumVersionForCollab}.
  *
- * Use {@link getConfigsForCompatMode} to retrieve the configuration for a given a {@link MinimumVersionForCollab}.
+ * Use {@link getConfigsForMinVersionForCollab} to retrieve the configuration for a given a {@link @fluidframework/runtime-definitions#MinimumVersionForCollab}.
  *
- * See the remarks on {@link MinimumSemanticVersion} for some limitation on how ConfigMaps must handle versioning.
+ * See the remarks on {@link MinimumMinorSemanticVersion} for some limitation on how ConfigMaps must handle versioning.
+ * @internal
  */
 export type ConfigMap<T extends Record<string, unknown>> = {
 	readonly [K in keyof T]-?: ConfigMapEntry<T[K]>;
 };
 
+/**
+ * Entry in {@link ConfigMap} associating {@link MinimumMinorSemanticVersion} with configuration values that became supported in that version.
+ * @internal
+ */
 export interface ConfigMapEntry<T> {
-	[version: MinimumSemanticVersion]: T;
+	[version: MinimumMinorSemanticVersion]: T;
 	// Require an entry for the defaultMinVersionForCollab:
 	// this ensures that all versions of lowestMinVersionForCollab or later have a specified value in the ConfigMap.
 	[lowestMinVersionForCollab]: T;
@@ -78,6 +86,7 @@ export interface ConfigMapEntry<T> {
 
 /**
  * Generic type for runtimeOptionsAffectingDocSchemaConfigValidationMap
+ * @internal
  */
 export type ConfigValidationMap<T extends Record<string, unknown>> = {
 	readonly [K in keyof T]-?: (configValue: T[K]) => SemanticVersion | undefined;
@@ -94,20 +103,16 @@ export function getConfigsForMinVersionForCollab<T extends Record<SemanticVersio
 ): Partial<T> {
 	const defaultConfigs: Partial<T> = {};
 	// Iterate over configMap to get default values for each option.
-	for (const key of Object.keys(configMap)) {
-		// Type assertion is safe as key comes from Object.keys(configMap)
-		const config = configMap[key as keyof T];
-		// Sort the versions in ascending order so we can short circuit the loop.
-		const versions = Object.keys(config).sort(compare);
+	for (const [key, config] of Object.entries(configMap)) {
+		// Sort the versions in descending order to find the largest compatible entry.
+		const versions = (Object.entries(config) as [MinimumMinorSemanticVersion, unknown][]).sort(
+			(a, b) => compare(b[0], a[0]),
+		);
 		// For each config, we iterate over the keys and check if minVersionForCollab is greater than or equal to the version.
 		// If so, we set it as the default value for the option.
 		for (const [version, value] of versions) {
 			if (gte(minVersionForCollab, version)) {
-				// Type assertion is safe as version is a key from the config object
-				defaultConfigs[key] = config[version as MinimumMinorSemanticVersion];
-			} else {
-				// If the minVersionForCollab is less than the version, we break out of the loop since we don't need to check
-				// any later versions.
+				defaultConfigs[key] = value;
 				break;
 			}
 		}

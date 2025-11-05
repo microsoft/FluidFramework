@@ -5,11 +5,13 @@
 
 import { strict as assert } from "node:assert";
 
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import {
+	defaultMinVersionForCollab,
+	type MinimumVersionForCollab,
+} from "@fluidframework/runtime-definitions/internal";
 import { isFluidError } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	defaultMinVersionForCollab,
 	getConfigsForMinVersionForCollab,
 	getValidationForRuntimeOptions,
 	type ConfigMap,
@@ -258,7 +260,7 @@ describe("compatibilityBase", () => {
 				["a4", "8.0.0"],
 			]),
 			featureB: configValueToMinVersionForCollab([
-				[false, "0.0.0-defaults"],
+				[false, "0.0.0"],
 				[true, "3.0.0"],
 			]),
 			featureC: configValueToMinVersionForCollab([

@@ -59,10 +59,10 @@ import type {
 	ISummarizeInternalResult,
 } from "@fluidframework/runtime-definitions/internal";
 import {
+	defaultMinVersionForCollab,
 	FlushMode,
 	FlushModeExperimental,
 } from "@fluidframework/runtime-definitions/internal";
-import { defaultMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import {
 	type IFluidErrorBase,
 	MockLogger,
@@ -3907,8 +3907,8 @@ describe("Runtime", () => {
 				]);
 			});
 
-			it('minVersionForCollab = 2.0.0-defaults ("default")', async () => {
-				const minVersionForCollab = "2.0.0-defaults";
+			it('minVersionForCollab = 1.999.0 ("default")', async () => {
+				const minVersionForCollab = "1.999.0";
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime2({
 					context: getMockContext({ logger }) as IContainerContext,

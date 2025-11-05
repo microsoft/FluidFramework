@@ -352,14 +352,7 @@ export interface LoadContainerRuntimeParams {
     runtimeOptions?: IContainerRuntimeOptions;
 }
 
-<<<<<<< HEAD:packages/runtime/container-runtime/api-report/container-runtime.legacy.alpha.api.md
-// @alpha @legacy @input
-export type MinimumVersionForCollab = `1.0.0` | `1.4.0` | typeof defaultMinVersionForCollab | `2.${bigint}.0`;
-
-// @alpha @deprecated @legacy (undocumented)
-=======
 // @beta @deprecated @legacy (undocumented)
->>>>>>> b0c2ef1993343a6595ee6d982430bfdce87a985d:packages/runtime/container-runtime/api-report/container-runtime.legacy.beta.api.md
 export type OmitAttributesVersions<T> = Omit<T, "snapshotFormatVersion" | "summaryFormatVersion">;
 
 // @beta @legacy (undocumented)
