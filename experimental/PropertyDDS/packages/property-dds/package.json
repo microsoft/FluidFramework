@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-dds",
-	"version": "2.71.0",
+	"version": "2.72.0",
 	"description": "definition of the property distributed data store",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -83,7 +83,7 @@
 		"@fluidframework/build-tools": "^0.58.3",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/container-runtime": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^7.0.0",
+		"@fluidframework/eslint-config-fluid": "^8.1.0",
 		"@fluidframework/local-driver": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/server-local-server": "^7.0.0",

@@ -6,7 +6,7 @@
 import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
-import type { ICodecFamily, ICodecOptions } from "../codec/index.js";
+import type { CodecWriteOptions, ICodecFamily } from "../codec/index.js";
 import {
 	type ChangeEncodingContext,
 	type ChangeFamily,
@@ -60,7 +60,7 @@ export class SharedTreeChangeFamily
 	public constructor(
 		revisionTagCodec: RevisionTagCodec,
 		fieldBatchCodec: FieldBatchCodec,
-		codecOptions: ICodecOptions,
+		codecOptions: CodecWriteOptions,
 		chunkCompressionStrategy?: TreeCompressionStrategyPrivate,
 		private readonly idCompressor?: IIdCompressor,
 	) {

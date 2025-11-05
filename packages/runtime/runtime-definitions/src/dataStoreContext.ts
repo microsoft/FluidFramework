@@ -28,6 +28,7 @@ import type {
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import type { MinimumVersionForCollab } from "./compatibilityDefinitions.js";
+import type { ContainerExtensionProvider } from "./containerExtensionProvider.js";
 import type {
 	IFluidDataStoreFactory,
 	IProvideFluidDataStoreFactory,
@@ -692,6 +693,20 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 		childFactory: T,
 	): ReturnType<Exclude<T["createDataStore"], undefined>>;
 }
+
+/**
+ * Internal extension to {@link IFluidDataStoreContext} for use across FluidFramework packages.
+ *
+ * @remarks
+ * Important: this interface does cross layer boundaries and must follow `@legacy`
+ * layer compatibility patterns.
+ * This is meant to be a staging ground ahead of adding properties to {@link IFluidDataStoreContext}.
+ *
+ * @internal
+ */
+export interface FluidDataStoreContextInternal
+	extends IFluidDataStoreContext,
+		ContainerExtensionProvider {}
 
 /**
  * @legacy @beta

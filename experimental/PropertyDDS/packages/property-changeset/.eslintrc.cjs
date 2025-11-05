@@ -42,7 +42,7 @@ module.exports = {
 		"@typescript-eslint/strict-boolean-expressions": "off",
 		"@typescript-eslint/unbound-method": "off",
 		"eqeqeq": "off",
-		"import/no-internal-modules": "off",
+		"import-x/no-internal-modules": "off",
 		"no-case-declarations": "off",
 		"no-inner-declarations": "off",
 		"no-multi-spaces": "off",

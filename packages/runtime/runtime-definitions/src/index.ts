@@ -11,8 +11,16 @@ export type {
 	OpAttributionKey,
 } from "./attribution.js";
 export type {
+	ContainerExtensionId,
+	ContainerExtensionProvider,
+	ContainerExtensionExpectations,
+	ExtensionCompatibilityDetails,
+	UnknownExtensionInstantiation,
+} from "./containerExtensionProvider.js";
+export type {
 	AliasResult,
 	CreateChildSummarizerNodeFn,
+	FluidDataStoreContextInternal,
 	IContainerRuntimeBase,
 	IContainerRuntimeBaseEvents,
 	IDataStore,

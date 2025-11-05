@@ -173,13 +173,13 @@ export class SharedCounter
 			if (local) {
 				const pendingOp = this.pendingOps.shift();
 				const messageId = messageContent.localOpMetadata;
-				assert(typeof messageId === "number", "localOpMetadata should be a number");
+				assert(typeof messageId === "number", 0xc8e /* localOpMetadata should be a number */);
 				assert(
 					pendingOp !== undefined &&
 						pendingOp.messageId === messageId &&
 						pendingOp.type === op.type &&
 						pendingOp.incrementAmount === op.incrementAmount,
-					"local op mismatch",
+					0xc8f /* local op mismatch */,
 				);
 			} else {
 				switch (op.type) {
@@ -215,14 +215,17 @@ export class SharedCounter
 	 */
 	protected rollback(content: unknown, localOpMetadata: unknown): void {
 		assertIsIncrementOp(content);
-		assert(typeof localOpMetadata === "number", "localOpMetadata should be a number");
+		assert(
+			typeof localOpMetadata === "number",
+			0xc90 /* localOpMetadata should be a number */,
+		);
 		const pendingOp = this.pendingOps.pop();
 		assert(
 			pendingOp !== undefined &&
 				pendingOp.messageId === localOpMetadata &&
 				pendingOp.type === content.type &&
 				pendingOp.incrementAmount === content.incrementAmount,
-			"op to rollback mismatch with pending op",
+			0xc91 /* op to rollback mismatch with pending op */,
 		);
 		// To rollback the optimistic increment we can increment by the opposite amount.
 		// This will also emit another incremented event with the opposite amount.
@@ -238,6 +241,6 @@ function assertIsIncrementOp(op: unknown): asserts op is IIncrementOperation {
 			"incrementAmount" in op &&
 			op.type === "increment" &&
 			typeof op.incrementAmount === "number",
-		"invalid increment op format",
+		0xc92 /* invalid increment op format */,
 	);
 }

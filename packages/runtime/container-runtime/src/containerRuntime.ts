@@ -7,7 +7,12 @@ import type {
 	ILayerCompatDetails,
 	IProvideLayerCompatDetails,
 } from "@fluid-internal/client-utils";
-import { createEmitter, Trace, TypedEventEmitter } from "@fluid-internal/client-utils";
+import {
+	checkLayerCompatibility,
+	createEmitter,
+	Trace,
+	TypedEventEmitter,
+} from "@fluid-internal/client-utils";
 import type {
 	IAudience,
 	ISelf,
@@ -34,11 +39,12 @@ import type {
 	ContainerExtensionId,
 	ExtensionHost,
 	ExtensionHostEvents,
+	ExtensionInstantiationResult,
 	ExtensionRuntimeProperties,
 	IContainerRuntime,
 	IContainerRuntimeEvents,
 	IContainerRuntimeInternal,
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	IContainerRuntimeWithResolveHandle_Deprecated,
 	JoinedStatus,
 	OutboundExtensionMessage,
@@ -124,6 +130,7 @@ import type {
 	StageControlsInternal,
 	IContainerRuntimeBaseInternal,
 	MinimumVersionForCollab,
+	ContainerExtensionExpectations,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
@@ -154,7 +161,7 @@ import {
 	GenericError,
 	LoggingError,
 	PerformanceEvent,
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	TaggedLoggerAdapter,
 	UsageError,
 	createChildLogger,
@@ -256,6 +263,7 @@ import {
 import { BatchRunCounter, RunCounter } from "./runCounter.js";
 import {
 	runtimeCompatDetailsForLoader,
+	runtimeCoreCompatDetails,
 	validateLoaderCompatibility,
 } from "./runtimeLayerCompatState.js";
 import { SignalTelemetryManager } from "./signalTelemetryProcessing.js";
@@ -316,11 +324,19 @@ import { Throttler, formExponentialFn } from "./throttler.js";
  * A {@link ContainerExtension}'s factory function as stored in extension map.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- `any` required to allow typed factory to be assignable per ContainerExtension.processSignal
-type ExtensionEntry = ContainerExtensionFactory<unknown, any, unknown[]> extends new (
-	...args: any[]
-) => infer T
-	? T
-	: never;
+type ExtensionEntry = ExtensionInstantiationResult<unknown, any, unknown[]>;
+
+/**
+ * ContainerRuntime's compatibility details that is exposed to Container Extensions.
+ */
+const containerRuntimeCompatDetailsForContainerExtensions = {
+	...runtimeCoreCompatDetails,
+	/**
+	 * The features supported by the ContainerRuntime's ContainerExtensionStore
+	 * implementation.
+	 */
+	supportedFeatures: new Set<string>(),
+} as const satisfies ILayerCompatDetails;
 
 /**
  * Creates an error object to be thrown / passed to Container's close fn in case of an unknown message type.
@@ -823,7 +839,7 @@ export class ContainerRuntime
 	implements
 		IContainerRuntimeInternal,
 		IContainerRuntimeBaseInternal,
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated
 		IContainerRuntimeWithResolveHandle_Deprecated,
 		IRuntime,
 		IGarbageCollectionRuntime,
@@ -910,7 +926,7 @@ export class ContainerRuntime
 		const backCompatContext: IContainerContext | OldContainerContextWithLogger = context;
 		const passLogger =
 			backCompatContext.taggedLogger ??
-			// eslint-disable-next-line import/no-deprecated
+			// eslint-disable-next-line import-x/no-deprecated
 			new TaggedLoggerAdapter((backCompatContext as OldContainerContextWithLogger).logger);
 		const logger = createChildLogger({
 			logger: passLogger,
@@ -5326,8 +5342,67 @@ export class ContainerRuntime
 		factory: ContainerExtensionFactory<T, TRuntimeProperties, TUseContext>,
 		...useContext: TUseContext
 	): T {
+		return this.acquireExtensionInternal(
+			/* injectionPermitted */ true,
+			id,
+			factory,
+			...useContext,
+		);
+	}
+
+	public getExtension<
+		T,
+		TRuntimeProperties extends ExtensionRuntimeProperties,
+		TUseContext extends unknown[],
+	>(
+		id: ContainerExtensionId,
+		requirements: ContainerExtensionExpectations,
+		...useContext: TUseContext
+	): T {
+		// Temporarily allow injection for extensions.
+		// `requirements` are expected to be a factory as well.
+		return this.acquireExtensionInternal(
+			/* injectionPermitted */ true,
+			id,
+			requirements as ContainerExtensionFactory<T, TRuntimeProperties, TUseContext>,
+			...useContext,
+		);
+	}
+
+	private acquireExtensionInternal<
+		T,
+		TRuntimeProperties extends ExtensionRuntimeProperties,
+		TUseContext extends unknown[],
+	>(
+		injectionPermitted: boolean,
+		id: ContainerExtensionId,
+		factory: ContainerExtensionFactory<T, TRuntimeProperties, TUseContext>,
+		...useContext: TUseContext
+	): T {
+		const compatCheckResult = checkLayerCompatibility(
+			factory.hostRequirements,
+			containerRuntimeCompatDetailsForContainerExtensions,
+		);
+		if (!compatCheckResult.isCompatible) {
+			throw new UsageError("Extension is not compatible with ContainerRuntime", {
+				errorDetails: JSON.stringify({
+					containerRuntimeVersion:
+						containerRuntimeCompatDetailsForContainerExtensions.pkgVersion,
+					containerRuntimeGeneration:
+						containerRuntimeCompatDetailsForContainerExtensions.generation,
+					minSupportedGeneration: factory.hostRequirements.minSupportedGeneration,
+					isGenerationCompatible: compatCheckResult.isGenerationCompatible,
+					unsupportedFeatures: compatCheckResult.unsupportedFeatures,
+				}),
+			});
+		}
+
 		let entry = this.extensions.get(id);
 		if (entry === undefined) {
+			if (!injectionPermitted) {
+				throw new Error(`Extension ${id} not found`);
+			}
+
 			const audience = this.signalAudience;
 			const runtime = {
 				getJoinedStatus: this.getJoinedStatus.bind(this),
@@ -5344,13 +5419,42 @@ export class ContainerRuntime
 				getAudience: audience ? () => audience : this.getAudience.bind(this),
 				supportedFeatures: this.ILayerCompatDetails.supportedFeatures,
 			} satisfies ExtensionHost<TRuntimeProperties>;
-			entry = new factory(runtime, ...useContext);
+			entry = factory.instantiateExtension(runtime, ...useContext);
 			this.extensions.set(id, entry);
 		} else {
-			assert(
-				entry instanceof factory,
-				0xba1 /* Extension entry is not of the expected type */,
-			);
+			const { extension, compatibility } = entry;
+			if (
+				// Check short-circuit (re-use) for same instance which must be
+				// same version and capabilities.
+				!(entry instanceof factory) &&
+				// Check version and capabilities if different instance. If
+				// version matches and existing has all capabilities of
+				// requested, then allow direct reuse.
+				(compatibility.version !== factory.instanceExpectations.version ||
+					[...factory.instanceExpectations.capabilities].some(
+						(cap) => !compatibility.capabilities.has(cap),
+					))
+			) {
+				// eslint-disable-next-line unicorn/prefer-ternary -- operations are significant and deserve own blocks
+				if (
+					!injectionPermitted ||
+					gt(compatibility.version, factory.instanceExpectations.version)
+				) {
+					// This is an attempt to acquire an older version of an
+					// extension that is already acquired OR updating (form of
+					// injection) is not permitted.
+					entry = extension.handleVersionOrCapabilitiesMismatch(
+						entry,
+						factory.instanceExpectations,
+					);
+				} else {
+					// This is an attempt to acquire a newer or more capable
+					// version of an extension that is already acquired. Replace
+					// existing with new.
+					entry = factory.resolvePriorInstantiation(entry);
+				}
+			}
+			// eslint-disable-next-line unicorn/consistent-destructuring -- 'entry' may have been update and thus use of 'extension' would be incorrect
 			entry.extension.onNewUse(...useContext);
 		}
 		return entry.interface as T;
