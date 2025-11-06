@@ -22,7 +22,7 @@ import {
 } from "@fluidframework/tree/internal";
 import { SharedTreeSemanticAgent, type TreeView } from "@fluidframework/tree-agent/alpha";
 import { ChatAnthropic } from "@langchain/anthropic";
-import type { BaseChatModel } from "@langchain/core/language_models/chat_models"; // eslint-disable-line import/no-internal-modules
+import type { BaseChatModel } from "@langchain/core/language_models/chat_models"; // eslint-disable-line import-x/no-internal-modules
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { ChatOpenAI } from "@langchain/openai";
 

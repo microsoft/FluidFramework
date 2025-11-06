@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import {
+	type MockContainerRuntime,
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
 	type MockContainerRuntimeForReconnection,
@@ -302,6 +303,138 @@ describe("SharedCounter", () => {
 			// Verify that the value is incremented in both the clients.
 			assert.equal(testCounter.value, -20, "Value not incremented in first client");
 			assert.equal(testCounter2.value, -20, "Value not incremented in second client");
+		});
+	});
+
+	describe("SharedCounter Rollback", () => {
+		let counterFactory: IChannelFactory;
+		let containerRuntimeFactory: MockContainerRuntimeFactory;
+		let containerRuntime1: MockContainerRuntime;
+		let dataStoreRuntime1: MockFluidDataStoreRuntime;
+		let dataStoreRuntime2: MockFluidDataStoreRuntime;
+		let containerRuntime2: MockContainerRuntime;
+		let counter1: ISharedCounter;
+		let counter2: ISharedCounter;
+
+		beforeEach(() => {
+			counterFactory = SharedCounter.getFactory();
+			containerRuntimeFactory = new MockContainerRuntimeFactory({
+				flushMode: 1, // turn based,
+			});
+			dataStoreRuntime1 = new MockFluidDataStoreRuntime({ clientId: "1" });
+			dataStoreRuntime2 = new MockFluidDataStoreRuntime({ clientId: "2" });
+			containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+			containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+			counter1 = counterFactory.create(dataStoreRuntime1, "counter1") as ISharedCounter;
+			counter2 = counterFactory.create(dataStoreRuntime2, "counter2") as ISharedCounter;
+			counter1.connect({
+				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
+				objectStorage: new MockStorage(),
+			});
+			counter2.connect({
+				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
+				objectStorage: new MockStorage(),
+			});
+		});
+
+		it("can rollback increment ops", () => {
+			counter1.increment(10);
+			assert.equal(counter1.value, 10, "counter1 should have optimistically incremented");
+
+			containerRuntime1.rollback?.();
+			containerRuntime1.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			assert.equal(counter1.value, 0, "counter1 should have rolled back the increment");
+		});
+
+		it("can fire increment event during rollback", () => {
+			let eventFireCount = 0;
+			counter1.on("incremented", (incrementAmount: number, newValue: number) => {
+				eventFireCount++;
+				if (eventFireCount === 1) {
+					assert.deepEqual(
+						[incrementAmount, newValue],
+						[10, 10],
+						"should fire incremented event optimistically",
+					);
+				} else if (eventFireCount === 2) {
+					assert.deepEqual(
+						[incrementAmount, newValue],
+						[-10, 0],
+						"should fire incremented event post-rollback with negated increment amount",
+					);
+				}
+			});
+
+			counter1.increment(10);
+			assert.equal(counter1.value, 10, "counter1 should have optimistically incremented");
+
+			containerRuntime1.rollback?.();
+			containerRuntime1.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			assert.equal(counter1.value, 0, "counter1 should have rolled back the increment");
+			assert.equal(eventFireCount, 2, "incremented event should fire exactly twice");
+		});
+
+		it("can rollback multiple increment ops", () => {
+			counter2.increment(10);
+			containerRuntime2.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			counter1.increment(10);
+			counter1.increment(-50);
+			assert.equal(counter1.value, -30, "counter1 should have optimistically incremented");
+
+			containerRuntime1.rollback?.();
+			containerRuntime1.flush();
+			containerRuntimeFactory.processAllMessages();
+			assert.equal(counter1.value, 10, "counter1 should have rolled back all increments");
+		});
+
+		it("can rollback only some increment ops", () => {
+			counter1.increment(10);
+			counter1.increment(20);
+			assert.equal(counter1.value, 30, "counter1 should have optimistically incremented");
+
+			containerRuntime1.flushSomeMessages(1);
+			containerRuntime1.rollback?.();
+			containerRuntime1.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			assert.equal(
+				counter1.value,
+				10,
+				"counter1 should decrement only the rolled back increment",
+			);
+		});
+
+		it("can rollback across remote ops", () => {
+			counter1.increment(10);
+			counter2.increment(20);
+
+			containerRuntime2.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			assert.equal(
+				counter1.value,
+				30,
+				"counter1 should have optimistically incremented including remote increment",
+			);
+			assert.equal(counter2.value, 20);
+
+			containerRuntime1.rollback?.();
+			containerRuntime1.flush();
+			containerRuntime2.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			assert.equal(counter1.value, 20, "counter1 should have rolled back its increment");
+			assert.equal(
+				counter2.value,
+				20,
+				"counter2 should have never processed rolled back increment op from counter1",
+			);
 		});
 	});
 });

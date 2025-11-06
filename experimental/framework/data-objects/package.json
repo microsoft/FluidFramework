@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/data-objects",
-	"version": "2.71.0",
+	"version": "2.72.0",
 	"description": "A collection of ready to use Fluid Data Objects",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -40,8 +40,8 @@
 		"check:exports:esm:index": "api-extractor run --config api-extractor/api-extractor-lint-index.esm.json",
 		"check:format": "npm run check:biome",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",
-		"eslint": "eslint --format stylish src",
-		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
+		"eslint": "eslint --quiet --format stylish src",
+		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
 		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
@@ -64,7 +64,7 @@
 		"@fluid-tools/build-cli": "^0.58.3",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.58.3",
-		"@fluidframework/eslint-config-fluid": "^6.1.0",
+		"@fluidframework/eslint-config-fluid": "workspace:^",
 		"@microsoft/api-extractor": "7.52.11",
 		"@types/node": "^18.19.0",
 		"concurrently": "^8.2.1",
