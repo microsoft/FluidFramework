@@ -55,13 +55,6 @@ export const defaultOptions: Partial<DDSFuzzSuiteOptions> = {
 	clientJoinOptions: {
 		maxNumberOfClients: 6,
 		clientAddProbability: 0.05,
-		// ConsensusOrderedCollection does not support stashed ops
-		stashableClientProbability: 0,
-	},
-	detachedStartOptions: {
-		numOpsBeforeAttach: 5,
-		// Prevents stashed ops scenarios
-		rehydrateDisabled: true,
 	},
 	defaultTestCount: 100,
 	saveFailures: { directory: path.join(_dirname, "../../src/test/results") },
