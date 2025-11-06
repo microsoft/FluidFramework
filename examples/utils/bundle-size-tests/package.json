@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/bundle-size-tests",
-	"version": "2.63.0",
+	"version": "2.72.0",
 	"private": true,
 	"description": "A package for understanding the bundle size of Fluid Framework",
 	"homepage": "https://fluidframework.com",
@@ -21,8 +21,8 @@
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"clean": "rimraf --glob build dist lib bundleAnalysis \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
-		"eslint": "eslint --format stylish src",
-		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
+		"eslint": "eslint --quiet --format stylish src",
+		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
 		"explore:tree": "fluid-build . --task webpack && source-map-explorer ./build/sharedTree.js --html bundleAnalysis/reportTree.html",
 		"format": "npm run format:biome",
 		"format:biome": "biome check . --write",
@@ -58,11 +58,11 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.58.3",
 		"@fluidframework/bundle-size-tools": "^0.57.0",
-		"@fluidframework/eslint-config-fluid": "^6.0.0",
+		"@fluidframework/eslint-config-fluid": "workspace:^",
 		"@mixer/webpack-bundle-compare": "^0.1.0",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
-		"eslint": "~8.55.0",
+		"eslint": "~8.57.1",
 		"mocha": "^10.8.2",
 		"puppeteer": "^23.6.0",
 		"rimraf": "^4.4.0",
@@ -94,8 +94,6 @@
 		}
 	},
 	"typeValidation": {
-		"disabled": true,
-		"broken": {},
-		"entrypoint": "internal"
+		"disabled": true
 	}
 }

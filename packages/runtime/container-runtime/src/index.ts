@@ -21,16 +21,15 @@ export {
 export type { ICompressionRuntimeOptions } from "./compressionDefinitions.js";
 export { CompressionAlgorithms, disabledCompressionConfig } from "./compressionDefinitions.js";
 export type {
-	/**
-	 * @deprecated Import from `@fluidframework/runtime-definitions/legacy` instead.
-	 */
-	MinimumVersionForCollab,
-} from "@fluidframework/runtime-definitions/internal";
-export {
-	ContainerMessageType,
-	type UnknownContainerRuntimeMessage,
+	ContainerRuntimeAliasMessage,
+	ContainerRuntimeDataStoreOpMessage,
+	OutboundContainerRuntimeAttachMessage,
+	TypedContainerRuntimeMessage,
+	UnknownContainerRuntimeMessage,
 } from "./messageTypes.js";
+export { ContainerMessageType } from "./messageTypes.js";
 export type { IBlobManagerLoadInfo } from "./blobManager/index.js";
+export type { IDataStoreAliasMessage } from "./dataStore.js";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
 export {
 	detectOutboundReferences,
@@ -113,6 +112,7 @@ export {
 	type ISummaryConfigurationHeuristics,
 	type ISummaryConfigurationDisableSummarizer,
 	type ISummaryConfigurationDisableHeuristics,
+	type ISummaryConfigurationWithSummaryOnRequest,
 	type ISummaryConfiguration,
 	DefaultSummaryConfiguration,
 } from "./summary/index.js";

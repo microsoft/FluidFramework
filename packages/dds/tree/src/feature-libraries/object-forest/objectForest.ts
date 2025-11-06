@@ -49,7 +49,7 @@ import {
 	type Breakable,
 	type WithBreakable,
 } from "../../util/index.js";
-import { chunkFieldSingle, defaultChunkPolicy } from "../chunked-forest/index.js";
+import { chunkField, defaultChunkPolicy } from "../chunked-forest/index.js";
 import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
 import { type CursorWithNode, SynchronousCursor } from "../treeCursorUtils.js";
 import {
@@ -128,8 +128,8 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 		return new ObjectForest(this.breaker, schema, anchors, this.additionalAsserts, this.roots);
 	}
 
-	public chunkField(cursor: ITreeCursorSynchronous): TreeChunk {
-		return chunkFieldSingle(cursor, { idCompressor: undefined, policy: defaultChunkPolicy });
+	public chunkField(cursor: ITreeCursorSynchronous): TreeChunk[] {
+		return chunkField(cursor, { idCompressor: undefined, policy: defaultChunkPolicy });
 	}
 
 	public forgetAnchor(anchor: Anchor): void {

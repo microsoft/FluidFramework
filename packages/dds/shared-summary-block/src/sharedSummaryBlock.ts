@@ -9,9 +9,11 @@ import type {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
-import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
-import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import type {
+	ISummaryTreeWithStats,
+	IRuntimeMessageCollection,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	type IFluidSerializer,
 	SharedObject,
@@ -99,9 +101,9 @@ export class SharedSummaryBlockClass extends SharedObject implements ISharedSumm
 	protected onDisconnect(): void {}
 
 	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processCore}
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
 	 */
-	protected processCore(message: ISequencedDocumentMessage, local: boolean): void {
+	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
 		throw new Error("shared summary block should not generate any ops.");
 	}
 

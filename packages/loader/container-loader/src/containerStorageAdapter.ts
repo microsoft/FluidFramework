@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
+import { bufferToString } from "@fluid-internal/client-utils";
 import type {
 	ISnapshotTreeWithBlobContents,
 	IContainerStorageService,
 } from "@fluidframework/container-definitions/internal";
 import type { IDisposable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import type {
 	FetchSource,
 	IDocumentService,
@@ -72,6 +72,11 @@ export class ContainerStorageAdapter
 	}
 
 	/**
+	 * ArrayBufferLikes  containing blobs from a snapshot
+	 */
+	private readonly blobContents: { [id: string]: ArrayBufferLike } = {};
+
+	/**
 	 * An adapter that ensures we're using detachedBlobStorage up until we connect to a real service, and then
 	 * after connecting to a real service augments it with retry and combined summary tree enforcement.
 	 * @param detachedBlobStorage - The detached blob storage to use up until we connect to a real service
@@ -84,10 +89,6 @@ export class ContainerStorageAdapter
 	public constructor(
 		detachedBlobStorage: MemoryDetachedBlobStorage | undefined,
 		private readonly logger: ITelemetryLoggerExt,
-		/**
-		 * ArrayBufferLikes or utf8 encoded strings, containing blobs from a snapshot
-		 */
-		private readonly blobContents: { [id: string]: ArrayBufferLike | string } = {},
 		private loadingGroupIdSnapshotsFromPendingState:
 			| Record<string, SerializedSnapshotInfo>
 			| undefined,
@@ -143,9 +144,9 @@ export class ContainerStorageAdapter
 		);
 	}
 
-	public loadSnapshotFromSnapshotBlobs(snapshotBlobs: ISerializableBlobContents): void {
-		for (const [id, value] of Object.entries(snapshotBlobs)) {
-			this.blobContents[id] = value;
+	public cacheSnapshotBlobs(snapshotBlobs: Map<string, ArrayBuffer>): void {
+		for (const [id, value] of snapshotBlobs.entries()) {
+			this.blobContents[id] ??= value;
 		}
 	}
 
@@ -220,10 +221,6 @@ export class ContainerStorageAdapter
 	public async readBlob(id: string): Promise<ArrayBufferLike> {
 		const maybeBlob = this.blobContents[id];
 		if (maybeBlob !== undefined) {
-			if (typeof maybeBlob === "string") {
-				const blob = stringToBuffer(maybeBlob, "utf8");
-				return blob;
-			}
 			return maybeBlob;
 		}
 		return this._storageService.readBlob(id);
@@ -249,16 +246,6 @@ export class ContainerStorageAdapter
 
 	public async createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse> {
 		return this._storageService.createBlob(file);
-	}
-
-	/**
-	 * {@link IRuntimeStorageService.downloadSummary}.
-	 *
-	 * @deprecated - This API is deprecated and will be removed in a future release. No replacement is planned as
-	 * it is unused in the Runtime and below layers.
-	 */
-	public async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
-		return this._storageService.downloadSummary(handle);
 	}
 }
 

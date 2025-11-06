@@ -26,8 +26,12 @@ import {
 } from "./shared-tree/index.js";
 import { SharedTreeFactoryType, SharedTreeAttributes } from "./sharedTreeAttributes.js";
 import type { ITree } from "./simple-tree/index.js";
-import { Breakable } from "./util/index.js";
+import { Breakable, copyProperty } from "./util/index.js";
 import { FluidClientVersion } from "./codec/index.js";
+import {
+	editManagerFormatVersionSelectorForSharedBranches,
+	messageFormatVersionSelectorForSharedBranches,
+} from "./shared-tree-core/index.js";
 
 /**
  * {@link ITreePrivate} extended with ISharedObject.
@@ -49,16 +53,30 @@ function treeKernelFactory(
 		if (args.idCompressor === undefined) {
 			throw new UsageError("IdCompressor must be enabled to use SharedTree");
 		}
-		const adjustedOptions = { ...options };
-		// TODO: get default from runtime once something like runtime.oldestCompatibleClient exists.
-		// Using default of 2.0 since that is the oldest version that supports SharedTree.
-		adjustedOptions.oldestCompatibleClient ??= FluidClientVersion.v2_0;
+
+		const { minVersionForCollab, ...otherOptions } = options;
+
+		const adjustedOptions = {
+			...otherOptions,
+			// Cases:
+			// A. If options specifies minVersionForCollab, it takes precedence over args.minVersionForCollab.
+			// This value is set when:
+			// - A customer using the declarative SharedTree API specifies the setting at the Shared Tree level.
+			//   There is currently no way to set it via the declarative API, but it could be added in the future.
+			// - treeKernelFactory is invoked in a fuzz test with a specific minVersionForCollab
+			// B. Otherwise, we use args.minVersionForCollab, which is propagated from the ContainerRuntime.
+			// C. If neither specifies it, we fall back to a default value default of 2.0 since that is the oldest version that supports SharedTree.
+			minVersionForCollab:
+				minVersionForCollab ?? args.minVersionForCollab ?? FluidClientVersion.v2_0,
+		};
+
 		return new SharedTreeKernel(
 			new Breakable("SharedTree"),
 			args.sharedObject,
 			args.serializer,
 			args.submitLocalMessage,
 			args.lastSequenceNumber,
+			args.initialSequenceNumber,
 			args.logger,
 			args.idCompressor,
 			adjustedOptions,
@@ -156,6 +174,13 @@ export function configuredSharedTreeBetaLegacy(
 export function configuredSharedTree(
 	options: SharedTreeOptions,
 ): ISharedObjectKind<ITree> & SharedObjectKind<ITree> {
+	const internalOptions = resolveOptions(options);
+	return configuredSharedTreeInternal(internalOptions);
+}
+
+export function configuredSharedTreeInternal(
+	options: SharedTreeOptionsInternal,
+): ISharedObjectKind<ITree> & SharedObjectKind<ITree> {
 	const sharedObjectOptions: SharedObjectOptions<ITree> = {
 		type: SharedTreeFactoryType,
 		attributes: SharedTreeAttributes,
@@ -165,3 +190,24 @@ export function configuredSharedTree(
 
 	return makeSharedObjectKind<ITree>(sharedObjectOptions);
 }
+
+export function resolveOptions(options: SharedTreeOptions): SharedTreeOptionsInternal {
+	const internal: SharedTreeOptionsInternal = {
+		...resolveSharedBranchesOptions(options.enableSharedBranches),
+	};
+	copyProperty(options, "forest", internal);
+	copyProperty(options, "jsonValidator", internal);
+	copyProperty(options, "minVersionForCollab", internal);
+	copyProperty(options, "treeEncodeType", internal);
+	return internal;
+}
+
+function resolveSharedBranchesOptions(
+	enableSharedBranches: boolean | undefined,
+): SharedTreeOptionsInternal {
+	return enableSharedBranches === true ? sharedBranchesOptions : {};
+}
+const sharedBranchesOptions: SharedTreeOptionsInternal = {
+	messageFormatSelector: messageFormatVersionSelectorForSharedBranches,
+	editManagerFormatSelector: editManagerFormatVersionSelectorForSharedBranches,
+};

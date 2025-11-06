@@ -16,7 +16,7 @@ import {
 	rootFieldKey,
 } from "../../../core/index.js";
 // This import is targeting the code being tested
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { getDetachedFieldContainingPath } from "../../../core/tree/pathTree.js";
 import { brand } from "../../../util/index.js";
 

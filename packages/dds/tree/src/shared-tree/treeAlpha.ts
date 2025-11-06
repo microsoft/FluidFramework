@@ -44,7 +44,7 @@ import {
 	unhydratedFlexTreeFromInsertable,
 	getOrCreateNodeFromInnerNode,
 	getOrCreateNodeFromInnerUnboxedNode,
-	getOrCreateInnerNode,
+	getInnerNode,
 	NodeKind,
 	tryGetTreeNodeForField,
 	isObjectNodeSchema,
@@ -58,6 +58,8 @@ import {
 	importConcise,
 	exportConcise,
 	borrowCursorFromTreeNodeOrValue,
+	contentSchemaSymbol,
+	type TreeNodeSchema,
 } from "../simple-tree/index.js";
 import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
 import {
@@ -76,15 +78,16 @@ import {
 	TreeCompressionStrategy,
 	type FieldBatch,
 	type FieldBatchEncodingContext,
-	fluidVersionToFieldBatchCodecWriteVersion,
 	type LocalNodeIdentifier,
 	type FlexTreeSequenceField,
 	type FlexTreeNode,
 	type Observer,
 	withObservation,
 } from "../feature-libraries/index.js";
+import type { TreeBranchAlpha } from "../simple-tree/index.js";
 import { independentInitializedView, type ViewContent } from "./independentView.js";
 import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
+import { isFluidHandle } from "@fluidframework/runtime-utils";
 
 const identifier: TreeIdentifierUtils = (node: TreeNode): string | undefined => {
 	const nodeIdentifier = getIdentifierFromNode(node, "uncompressed");
@@ -227,7 +230,7 @@ export interface TreeAlpha {
 	 * This does not fork a new branch, but rather retrieves the _existing_ branch for the node.
 	 * To create a new branch, use e.g. {@link TreeBranch.fork | `myBranch.fork()`}.
 	 */
-	branch(node: TreeNode): TreeBranch | undefined;
+	branch(node: TreeNode): TreeBranchAlpha | undefined;
 
 	/**
 	 * Construct tree content that is compatible with the field defined by the provided `schema`.
@@ -287,7 +290,7 @@ export interface TreeAlpha {
 	 * @remarks
 	 * This currently does not support input containing
 	 * {@link ObjectSchemaOptions.allowUnknownOptionalFields| unknown optional fields} but does support
-	 * {@link SchemaStaticsAlpha.staged | staged} allowed types.
+	 * {@link SchemaStaticsBeta.staged | staged} allowed types.
 	 * Non-empty default values for fields are currently not supported (must be provided in the input).
 	 * The content will be validated against the schema and an error will be thrown if out of schema.
 	 */
@@ -331,10 +334,7 @@ export interface TreeAlpha {
 	 */
 	exportCompressed(
 		tree: TreeNode | TreeLeafValue,
-		options: { idCompressor?: IIdCompressor } & Pick<
-			CodecWriteOptions,
-			"oldestCompatibleClient"
-		>,
+		options: { idCompressor?: IIdCompressor } & Pick<CodecWriteOptions, "minVersionForCollab">,
 	): JsonCompatible<IFluidHandle>;
 
 	/**
@@ -522,6 +522,35 @@ export interface TreeAlpha {
 		onInvalidation: () => void,
 		trackDuring: () => TResult,
 	): ObservationResults<TResult>;
+
+	/**
+	 * Ensures that the provided content will be interpreted as the given schema when inserting into the tree.
+	 * @returns `content`, for convenience.
+	 * @remarks
+	 * If applicable, this will tag the given content with a {@link contentSchemaSymbol | special property} that indicates its intended schema.
+	 * The `content` will be interpreted as the given `schema` when later inserted into the tree.
+	 *
+	 * This does not validate that the content actually conforms to the given schema (such validation will be done at insert time).
+	 * If the content is not compatible with the tagged schema, an error will be thrown when the content is inserted.
+	 *
+	 * This is particularly useful when the content's schema cannot be inferred from its structure alone because it is compatible with multiple schemas.
+	 * @example
+	 * ```typescript
+	 * const sf = new SchemaFactory("example");
+	 * class Dog extends sf.object("Dog", { name: sf.string() }) {}
+	 * class Cat extends sf.object("Cat", { name: sf.string() }) {}
+	 * class Root extends sf.object("Root", { pet: [Dog, Cat] }) {}
+	 * // ...
+	 * const pet = { name: "Max" };
+	 * view.root.pet = pet; // Error: ambiguous schema - is it a Dog or a Cat?
+	 * TreeAlpha.ensureSchema(Dog, pet); // Tags `pet` as a Dog.
+	 * view.root.pet = pet; // No error - it's a Dog.
+	 * ```
+	 */
+	tagContentSchema<TSchema extends TreeNodeSchema, TContent extends InsertableField<TSchema>>(
+		schema: TSchema,
+		content: TContent,
+	): TContent;
 }
 
 /**
@@ -726,7 +755,7 @@ export const TreeAlpha: TreeAlpha = {
 		return result;
 	},
 
-	branch(node: TreeNode): TreeBranch | undefined {
+	branch(node: TreeNode): TreeBranchAlpha | undefined {
 		const kernel = getKernel(node);
 		if (!kernel.isHydrated()) {
 			return undefined;
@@ -812,14 +841,13 @@ export const TreeAlpha: TreeAlpha = {
 
 	exportCompressed(
 		node: TreeNode | TreeLeafValue,
-		options: { idCompressor?: IIdCompressor } & Pick<
-			CodecWriteOptions,
-			"oldestCompatibleClient"
-		>,
+		options: { idCompressor?: IIdCompressor } & Pick<CodecWriteOptions, "minVersionForCollab">,
 	): JsonCompatible<IFluidHandle> {
 		const schema = tryGetSchema(node) ?? fail(0xacf /* invalid input */);
-		const format = fluidVersionToFieldBatchCodecWriteVersion(options.oldestCompatibleClient);
-		const codec = makeFieldBatchCodec({ jsonValidator: FormatValidatorNoOp }, format);
+		const codec = makeFieldBatchCodec({
+			jsonValidator: FormatValidatorNoOp,
+			minVersionForCollab: options.minVersionForCollab,
+		});
 		const cursor = borrowFieldCursorFromTreeNodeOrValue(node);
 		const batch: FieldBatch = [cursor];
 		// If none provided, create a compressor which will not compress anything.
@@ -846,7 +874,7 @@ export const TreeAlpha: TreeAlpha = {
 		compressedData: JsonCompatible<IFluidHandle>,
 		options: {
 			idCompressor?: IIdCompressor;
-		} & ICodecOptions,
+		} & CodecWriteOptions,
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
 		const config = new TreeViewConfigurationAlpha({ schema });
 		const content: ViewContent = {
@@ -881,7 +909,7 @@ export const TreeAlpha: TreeAlpha = {
 		node: TreeNode,
 		propertyKey: string | number,
 	): TreeNode | TreeLeafValue | undefined => {
-		const flexNode = getOrCreateInnerNode(node);
+		const flexNode = getInnerNode(node);
 		debugAssert(
 			() => !flexNode.context.isDisposed() || "The provided tree node has been disposed.",
 		);
@@ -951,7 +979,7 @@ export const TreeAlpha: TreeAlpha = {
 	},
 
 	children(node: TreeNode): [propertyKey: string | number, child: TreeNode | TreeLeafValue][] {
-		const flexNode = getOrCreateInnerNode(node);
+		const flexNode = getInnerNode(node);
 		debugAssert(
 			() => !flexNode.context.isDisposed() || "The provided tree node has been disposed.",
 		);
@@ -1008,6 +1036,21 @@ export const TreeAlpha: TreeAlpha = {
 			}
 		}
 		return result;
+	},
+
+	tagContentSchema<TSchema extends TreeNodeSchema, TNode extends InsertableField<TSchema>>(
+		schema: TSchema,
+		node: TNode,
+	): TNode {
+		if (typeof node === "object" && node !== null && !isFluidHandle(node)) {
+			Reflect.defineProperty(node, contentSchemaSymbol, {
+				configurable: false,
+				enumerable: false,
+				writable: true,
+				value: schema.identifier,
+			});
+		}
+		return node;
 	},
 };
 

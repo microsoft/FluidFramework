@@ -9,7 +9,7 @@ import type { Covariant } from "./typeCheck.js";
 
 /**
  * Constructs a "Branded" type, adding a type-checking only field to `ValueType`.
- *
+ * @remarks
  * Two usages of `Brand` should never use the same `Name`.
  * If they do, the resulting types will be assignable which defeats the point of this type.
  *
@@ -18,11 +18,17 @@ import type { Covariant } from "./typeCheck.js";
  * `Type 'Name1' is not assignable to type 'Name2'.`
  *
  * These branded types are not opaque: A `Brand<A, B>` can still be used as a `A`.
+ *
+ * @example Simple usage:
+ * ```typescript
+ * export type StrongId = Brand<string, "tree.StrongId">;
+ * const x: StrongId = brand("myId");
+ * ```
  */
 export type Brand<ValueType, Name> = ValueType & BrandedType<ValueType, Name>;
 
 /**
- * Helper for {@link Brand}.
+ * Implementation detail for {@link Brand}.
  *
  * See `MakeNominal` for some more details.
  *

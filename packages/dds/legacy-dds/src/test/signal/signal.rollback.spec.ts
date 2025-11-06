@@ -11,9 +11,9 @@ import {
 	type MockContainerRuntime,
 } from "@fluidframework/test-runtime-utils/internal";
 
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { ISharedSignal } from "../../signal/interfaces.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { SharedSignalFactory } from "../../signal/sharedSignalFactory.js";
 
 interface RollbackTestSetup {

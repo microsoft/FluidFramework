@@ -5,7 +5,7 @@
 
 // This is a node powered CLI application, so using node makes sense:
 /* eslint-disable unicorn/no-process-exit */
-/* eslint-disable import/no-nodejs-modules */
+/* eslint-disable import-x/no-nodejs-modules */
 
 import { readFileSync, writeFileSync } from "node:fs";
 
@@ -159,7 +159,7 @@ export function exportContent(destination: string, tree: List): JsonCompatible {
 		case "compressed": {
 			return TreeAlpha.exportCompressed(tree, {
 				...options,
-				oldestCompatibleClient: compatVersion,
+				minVersionForCollab: compatVersion,
 			}) as JsonCompatible;
 		}
 		case "snapshot": {
@@ -167,7 +167,7 @@ export function exportContent(destination: string, tree: List): JsonCompatible {
 			const idCompressor = createIdCompressor();
 			const file: File = {
 				tree: TreeAlpha.exportCompressed(tree, {
-					oldestCompatibleClient: compatVersion,
+					minVersionForCollab: compatVersion,
 					idCompressor,
 				}),
 

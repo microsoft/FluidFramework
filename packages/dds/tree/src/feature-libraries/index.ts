@@ -33,6 +33,7 @@ export {
 	makeSchemaCodec,
 	makeSchemaCodecs,
 	getCodecTreeForSchemaFormat,
+	clientVersionToSchemaVersion,
 } from "./schema-index/index.js";
 export {
 	stackTreeNodeCursor,
@@ -107,9 +108,11 @@ export {
 	getCodecTreeForFieldBatchFormat,
 	makeTreeChunker,
 	makeFieldBatchCodec,
-	fluidVersionToFieldBatchCodecWriteVersion,
 	type FieldBatchEncodingContext,
 	emptyChunk,
+	combineChunks,
+	type IncrementalEncodingPolicy,
+	defaultIncrementalEncodingPolicy,
 } from "./chunked-forest/index.js";
 
 export {
@@ -200,7 +203,6 @@ export {
 	makeSchemaChangeCodecs,
 	EncodedSchemaChange,
 	getCodecTreeForSchemaChangeFormat,
-	type SchemaChangeFormatVersion,
 } from "./schema-edits/index.js";
 
 export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily.js";

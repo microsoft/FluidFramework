@@ -16,7 +16,6 @@ import {
 	ValueSchema,
 	Multiplicity,
 	identifierFieldKindIdentifier,
-	type FieldKey,
 } from "../../../core/index.js";
 import type { FullSchemaPolicy } from "../../modular-schema/index.js";
 
@@ -35,6 +34,8 @@ import type { FieldBatch } from "./fieldBatch.js";
 import { type EncodedFieldBatch, type EncodedValueShape, SpecialField } from "./format.js";
 import type { IncrementalEncoder } from "./codecs.js";
 import { NodeShapeBasedEncoder } from "./nodeEncoder.js";
+import { defaultIncrementalEncodingPolicy } from "./incrementalEncodingPolicy.js";
+import { oneFromIterable } from "../../../util/index.js";
 
 /**
  * Encode data from `fieldBatch` in into an `EncodedChunk`.
@@ -87,7 +88,7 @@ export function getFieldEncoder(
 	storedSchema: StoredSchemaCollection,
 ): FieldEncoder {
 	const kind = context.fieldShapes.get(field.kind) ?? fail(0xb52 /* missing FieldKind */);
-	const type = oneFromSet(field.types);
+	const type = oneFromIterable(field.types);
 	const nodeEncoder =
 		type !== undefined ? nodeBuilder.nodeEncoderFromSchema(type) : anyNodeEncoder;
 	if (kind.multiplicity === Multiplicity.Single) {
@@ -134,14 +135,11 @@ export function getNodeEncoder(
 		// consider moving some optional and sequence fields to extra fields if they are commonly empty
 		// to reduce encoded size.
 
-		const shouldEncodeFieldIncrementallyLocal = (
-			nodeIdentifier: TreeNodeSchemaIdentifier,
-			fieldKey: FieldKey,
-		): boolean =>
-			incrementalEncoder?.shouldEncodeFieldIncrementally(nodeIdentifier, fieldKey) ?? false;
+		const shouldEncodeIncrementally =
+			incrementalEncoder?.shouldEncodeIncrementally ?? defaultIncrementalEncodingPolicy;
 		const objectNodeFields: KeyedFieldEncoder[] = [];
 		for (const [key, field] of schema.objectNodeFields ?? []) {
-			const fieldEncoder = shouldEncodeFieldIncrementallyLocal(schemaName, key)
+			const fieldEncoder = shouldEncodeIncrementally(schemaName, key)
 				? incrementalFieldEncoder
 				: fieldBuilder.fieldEncoderFromSchema(field);
 			objectNodeFields.push({
@@ -172,18 +170,6 @@ export function getNodeEncoder(
 		return shape;
 	}
 	fail(0xb54 /* unsupported node kind */);
-}
-
-export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined {
-	if (set === undefined) {
-		return undefined;
-	}
-	if (set.size !== 1) {
-		return undefined;
-	}
-	for (const item of set) {
-		return item;
-	}
 }
 
 function valueShapeFromSchema(schema: ValueSchema | undefined): undefined | EncodedValueShape {

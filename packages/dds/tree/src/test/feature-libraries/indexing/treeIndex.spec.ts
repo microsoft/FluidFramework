@@ -21,7 +21,7 @@ import {
 } from "../../../core/index.js";
 import { brand, disposeSymbol, getOrCreate } from "../../../util/index.js";
 import {
-	getOrCreateInnerNode,
+	getInnerNode,
 	SchemaFactory,
 	TreeViewConfiguration,
 	type TreeNode,
@@ -127,7 +127,7 @@ describe("tree indexes", () => {
 						[
 							key,
 							nodes.map((f) => {
-								const flexNode: FlexTreeNode = getOrCreateInnerNode(f);
+								const flexNode: FlexTreeNode = getInnerNode(f);
 								assert(flexNode.isHydrated());
 								return getOrCreate(
 									anchorIds,
@@ -294,7 +294,7 @@ describe("tree indexes", () => {
 							[
 								key,
 								nodes.map((f) => {
-									const flexNode: FlexTreeNode = getOrCreateInnerNode(f);
+									const flexNode: FlexTreeNode = getInnerNode(f);
 									assert(flexNode.isHydrated());
 									return getOrCreate(
 										anchorIds,

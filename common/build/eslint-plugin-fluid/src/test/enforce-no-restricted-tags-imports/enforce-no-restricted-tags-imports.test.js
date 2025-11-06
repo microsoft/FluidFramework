@@ -5,27 +5,9 @@
 
 const assert = require("assert");
 const path = require("path");
-const { ESLint } = require("eslint");
-const plugin = require("../../../index.js");
+const { createESLintInstance, eslintVersion } = require("../eslintConfigHelper.cjs");
 
-describe("ESLint Rule Tests", function () {
-	function createESLintInstance(config) {
-		return new ESLint({
-			overrideConfigFile: true,
-			overrideConfig: [{
-				files: ["**/*.ts"],
-				languageOptions: {
-					parser: require("@typescript-eslint/parser"),
-					parserOptions: config.parserOptions,
-				},
-				plugins: {
-					"@fluid-internal/fluid": plugin,
-					...config.plugins,
-				},
-				rules: config.rules,
-			}],
-		});
-	}
+describe(`ESLint Rule Tests (eslint ${eslintVersion})`, function () {
 
 	it("Should report an error for restricted tag imports", async function () {
 		const eslint = createESLintInstance({
@@ -37,9 +19,6 @@ describe("ESLint Rule Tests", function () {
 						exceptions: { "@alpha": ["./exceptionFile.ts"] },
 					},
 				],
-			},
-			parserOptions: {
-				project: path.join(__dirname, "../example/tsconfig.json"),
 			},
 		});
 		const filesToLint = ["fileWithImports.ts", "mockModule.ts"].map((file) =>
