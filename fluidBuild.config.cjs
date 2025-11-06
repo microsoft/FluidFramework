@@ -288,8 +288,7 @@ module.exports = {
 		},
 
 		// Independent packages
-		"build-common": "common/build/build-common",
-		"eslint-plugin-fluid": "common/build/eslint-plugin-fluid",
+		"build": "common/build",
 		"common-utils": "common/lib/common-utils",
 		"protocol-def": "common/lib/protocol-definitions",
 
@@ -485,9 +484,6 @@ module.exports = {
 				"^build-tools/packages/build-infrastructure/src/test/data/testRepo/",
 			],
 			"npm-private-packages": [
-				// TODO: Temporarily disabled for this package while it's a part of the client release group.
-				"^common/build/eslint-config-fluid/",
-
 				// test packages
 				"^build-tools/packages/build-infrastructure/src/test/data/testRepo/",
 			],
