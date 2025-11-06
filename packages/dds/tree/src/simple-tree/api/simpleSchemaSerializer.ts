@@ -32,7 +32,7 @@ import type { ValueSchema } from "../../core/index.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
- * Converts a view schema to a serializable format for compatibility testing.
+ * Converts a simple schema (view or stored) to a serializable format for compatibility testing.
  * @remarks The JSON-compatible schema returned from this method is only intended for use in snapshots/comparisons of view schemas.
  * It is not possible to reconstruct a full view schema (including metadata and persistedMetadata) from the serialized format.
  * @param treeSchema - The tree schema to convert.
