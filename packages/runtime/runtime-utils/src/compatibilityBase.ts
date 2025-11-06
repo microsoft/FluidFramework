@@ -39,11 +39,11 @@ export const defaultMinVersionForCollab =
  * In each new major version, this may be bumped to indicate which version of the Fluid Framework client libraries are no longer supported for collaboration.
  * @privateRemarks
  * At the time this was defined (and also at the time 2.0 was released), all version of 1.x below 1.4 were no longer supported.
- * Therefor it makes sense to not support any version below 1.4.0.
- * Supporting 1.4 is sufficient to support all 1.x versions which are still maintained were maintained when this constant could have been first used.
+ * Therefore it makes sense to not support any version below 1.4.0.
+ * Supporting 1.4 is sufficient to support all 1.x versions which were maintained at the time this constant was introduced.
  *
  * Future major versions will have to decide which versions of every supported major (including 1.x if still supported) they want to support:
- * continuing to support what ever version of 1.x is the oldest supported one at the time of the major release, would make sense for 3.0.
+ * continuing to support whatever version of 1.x is the oldest supported one at the time of the major release, would make sense for 3.0.
  *
  * @privateRemarks
  * Exported for use in tests.
