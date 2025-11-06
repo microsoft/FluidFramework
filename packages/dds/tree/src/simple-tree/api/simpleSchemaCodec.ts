@@ -10,7 +10,6 @@ import {
 	type JsonCompatibleObject,
 } from "../../util/index.js";
 import {
-	fail,
 	unreachableCase,
 	transformMapValues,
 } from "@fluidframework/core-utils/internal";
@@ -258,11 +257,16 @@ function decodeContainerNode(
  * Decodes a leaf node schema from a JSON-compatible object.
  * @param encodedLeafSchema - The encoded leaf node schema.
  * @returns The decoded leaf node schema.
+ * @throws Will throw a usage error if the encoded leaf schema is not in the expected format.
  */
 function decodeLeafNode(encodedLeafSchema: JsonCompatibleObject): SimpleLeafNodeSchema {
+	if (encodedLeafSchema.leafKind === undefined) {
+		throw new UsageError("Expected leafKind for leaf node schema");
+	}
+
 	return {
 		kind: NodeKind.Leaf,
-		leafKind: (encodedLeafSchema.leafKind ?? fail("Missing leafKind")) as ValueSchema,
+		leafKind: encodedLeafSchema.leafKind as ValueSchema,
 		// We cannot encode persistedMetadata or metadata, so we explicitly set them to empty values.
 		persistedMetadata: undefined,
 		metadata: {},
@@ -282,7 +286,7 @@ function decodeObjectNode(encodedObjectSchema: JsonCompatibleObject): SimpleObje
 
 	return {
 		kind: NodeKind.Object,
-		fields: decodeObjectFields(encodedObjectSchema.fields ?? fail("Missing fields")),
+		fields: decodeObjectFields(encodedObjectSchema.fields),
 		// It is possible for allowUnknownOptionalFields to be undefined. This happens when serializing a Simple Schema derived
 		// from a stored schema.
 		allowUnknownOptionalFields: encodedObjectSchema.allowUnknownOptionalFields as
