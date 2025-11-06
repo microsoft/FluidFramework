@@ -34,7 +34,7 @@ async function createContainerAndRenderInElement(element: HTMLElement) {
 		model = createResponse.model;
 		id = await createResponse.attach();
 	} else {
-		id = location.hash.substring(1);
+		id = location.hash.slice(1);
 		model = await sessionStorageModelLoader.loadExisting(id);
 	}
 

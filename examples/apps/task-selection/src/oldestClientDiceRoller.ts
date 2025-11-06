@@ -8,7 +8,7 @@ import { OldestClientObserver } from "@fluid-experimental/oldest-client-observer
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import { assert } from "@fluidframework/core-utils/legacy";
 
-import { IDiceRoller } from "./interface.js";
+import type { IDiceRoller } from "./interface.js";
 
 // The root is map-like, so we'll use this key for storing the value.
 const diceValueKey = "diceValue";

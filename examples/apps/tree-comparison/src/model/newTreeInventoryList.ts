@@ -4,10 +4,10 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	type ITree,
-	NodeFromSchema,
+	type NodeFromSchema,
 	SchemaFactory,
 	Tree,
 	TreeViewConfiguration,
@@ -166,6 +166,7 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 			}
 
 			// Search for deleted inventory items to update our collection
+			// eslint-disable-next-line unicorn/prefer-set-has
 			const currentInventoryIds = this.inventoryItemList.map((inventoryItemNode) => {
 				return inventoryItemNode.id;
 			});
