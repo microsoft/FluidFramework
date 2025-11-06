@@ -20,14 +20,14 @@ export type ForestFormatVersion = Brand<
 	"ForestFormatVersion"
 >;
 
-const FormatGeneric = <TVersion extends ForestFormatVersion>(
-	tVersion: TVersion,
+const FormatGeneric = (
+	version: ForestFormatVersion,
 	// Return type is intentionally derived.
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 ) =>
 	Type.Object(
 		{
-			version: Type.Literal(tVersion),
+			version: Type.Literal(version),
 			keys: Type.Array(schemaFormatV1.FieldKeySchema),
 			fields: Versioned,
 		},

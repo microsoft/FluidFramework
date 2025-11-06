@@ -40,14 +40,14 @@ const EncodedFieldBatchBase = Type.Object(
 
 /**
  * Format for encoding a tree chunk.
- * @param version - format version. Must be changed if there is any change to the generic schema, or the `shape` schema.
+ * @param version - format version.
+ * Must be changed if the previously existing decode logic will not correctly handle the new encoding.
+ * If adding a new encoding version which does not use this format,
+ * this parameter should be retyped to be a union of the subset of FieldBatchFormatVersion values which this supports.
  * @param shape - schema for union of shape format, see {@link DiscriminatedUnionDispatcher}.
  */
-export const EncodedFieldBatchGeneric = <
-	TShapeSchema extends TSchema,
-	TVersion extends FieldBatchFormatVersion,
->(
-	version: TVersion,
+export const EncodedFieldBatchGeneric = <TShapeSchema extends TSchema>(
+	version: FieldBatchFormatVersion,
 	shape: TShapeSchema,
 	// Return type is intentionally derived.
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -63,10 +63,8 @@ export const EncodedFieldBatchGeneric = <
 		{ additionalProperties: false },
 	);
 
-export interface EncodedFieldBatchGeneric<
-	TEncodedShape,
-	TVersion extends FieldBatchFormatVersion = FieldBatchFormatVersion,
-> extends Static<typeof EncodedFieldBatchBase> {
+export interface EncodedFieldBatchGeneric<TEncodedShape>
+	extends Static<typeof EncodedFieldBatchBase> {
 	shapes: TEncodedShape[];
-	version: TVersion;
+	version: FieldBatchFormatVersion;
 }
