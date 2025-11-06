@@ -84,10 +84,6 @@ module.exports = {
 		project: "./tsconfig.json",
 	},
 	plugins: [
-		// Plugin documentation: https://www.npmjs.com/package/@rushstack/eslint-plugin
-		"@rushstack/eslint-plugin",
-		// Plugin documentation: https://www.npmjs.com/package/@rushstack/eslint-plugin-security
-		"@rushstack/eslint-plugin-security",
 		// Plugin documentation: https://www.npmjs.com/package/@typescript-eslint/eslint-plugin
 		"@typescript-eslint/eslint-plugin",
 		// Plugin documentation: https://www.npmjs.com/package/eslint-plugin-jsdoc
@@ -128,21 +124,10 @@ module.exports = {
 		"@fluid-internal/fluid/no-unchecked-record-access": "error",
 
 		/**
-		 * Replaced @rushstack/no-new-null with @typescript-eslint/no-restricted-types.
-		 * The @rushstack rules are documented in the package README:
-		 * {@link https://www.npmjs.com/package/@rushstack/eslint-plugin}
+		 * The unicorn rules are documented in here:
+		 * {@link https://github.com/sindresorhus/eslint-plugin-unicorn}
 		 */
-		"@typescript-eslint/no-restricted-types": [
-			"warn",
-			{
-				types: {
-					null: {
-						message: "Use 'undefined' instead of 'null'",
-						fixWith: "undefined",
-					},
-				},
-			},
-		],
+		"unicorn/no-null": "warn",
 
 		/**
 		 * RATIONALE: Harmless.
@@ -236,10 +221,6 @@ module.exports = {
 
 		// #region DISABLED INTENTIONALLY
 
-		/**
-		 * Disabled because we don't require that all variable declarations be explicitly typed.
-		 */
-		"@rushstack/typedef-var": "off",
 		"@typescript-eslint/explicit-function-return-type": "off",
 		"@typescript-eslint/explicit-member-accessibility": "off",
 

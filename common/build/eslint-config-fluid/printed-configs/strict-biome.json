@@ -29,8 +29,6 @@
         "promise",
         "jsdoc",
         "@typescript-eslint",
-        "@rushstack/security",
-        "@rushstack",
         "unicorn",
         "tsdoc"
     ],
@@ -97,9 +95,6 @@
             "off"
         ],
         "@next/eslint-plugin-next/no-unwanted-polyfillio": [
-            "off"
-        ],
-        "@rushstack/typedef-var": [
             "off"
         ],
         "@stylistic/array-bracket-newline": [
@@ -894,17 +889,6 @@
                         "message": "Importing from a parent index file tends to cause cyclic dependencies. Import from a more specific sibling file instead."
                     }
                 ]
-            }
-        ],
-        "@typescript-eslint/no-restricted-types": [
-            "error",
-            {
-                "types": {
-                    "null": {
-                        "message": "Use 'undefined' instead of 'null'",
-                        "fixWith": "undefined"
-                    }
-                }
             }
         ],
         "@typescript-eslint/no-shadow": [
