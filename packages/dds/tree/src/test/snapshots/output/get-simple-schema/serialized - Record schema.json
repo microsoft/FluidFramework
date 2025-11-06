@@ -1,4 +1,5 @@
 {
+  "version": 1,
   "root": {
     "kind": 1,
     "simpleAllowedTypes": {
@@ -9,14 +10,18 @@
   },
   "definitions": {
     "com.fluidframework.leaf.string": {
-      "kind": 3,
-      "leafKind": 1
+      "leaf": {
+        "kind": 3,
+        "leafKind": 1
+      }
     },
     "test.record": {
-      "kind": 4,
-      "simpleAllowedTypes": {
-        "com.fluidframework.leaf.string": {
-          "isStaged": false
+      "record": {
+        "kind": 4,
+        "simpleAllowedTypes": {
+          "com.fluidframework.leaf.string": {
+            "isStaged": false
+          }
         }
       }
     }

@@ -9,10 +9,7 @@ import {
 	type JsonCompatible,
 	type JsonCompatibleObject,
 } from "../../util/index.js";
-import {
-	unreachableCase,
-	transformMapValues,
-} from "@fluidframework/core-utils/internal";
+import { unreachableCase, transformMapValues } from "@fluidframework/core-utils/internal";
 import type {
 	SimpleAllowedTypeAttributes,
 	SimpleArrayNodeSchema,
@@ -29,6 +26,13 @@ import { NodeKind } from "../core/index.js";
 import type { FieldKind } from "../fieldSchema.js";
 import type { ValueSchema } from "../../core/index.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import * as Format from "../simpleSchemaFormatV1.js";
+import {
+	DiscriminatedUnionDispatcher,
+	extractJsonValidator,
+	FormatValidatorNoOp,
+	type FormatValidator,
+} from "../../codec/index.js";
 
 /**
  * Encodes a simple schema (view or stored) into a serializable format.
@@ -39,19 +43,20 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
  *
  * @alpha
  */
-export function encodeSimpleSchema(simpleSchema: SimpleTreeSchema): JsonCompatible {
+export function encodeSimpleSchema(simpleSchema: SimpleTreeSchema): JsonCompatibleObject {
 	// Convert types to serializable forms
-	const encodedDefinitions: Record<string, JsonCompatible> = {};
+	const encodedDefinitions: Format.SimpleSchemaDefinitionsFormat = {};
 
 	for (const [identifier, schema] of simpleSchema.definitions) {
 		const encodedDefinition = encodeNodeSchema(schema);
 		encodedDefinitions[identifier] = encodedDefinition;
 	}
 
-	const encodedSchema = {
+	const encodedSchema: Format.SimpleTreeSchemaFormat = {
+		version: Format.SimpleSchemaFormatVersion.v1,
 		root: encodeField(simpleSchema.root),
 		definitions: encodedDefinitions,
-	} as unknown as JsonCompatible;
+	};
 
 	return encodedSchema;
 }
@@ -59,39 +64,34 @@ export function encodeSimpleSchema(simpleSchema: SimpleTreeSchema): JsonCompatib
 /**
  * Decodes a JSON-compatible schema into a simple schema.
  * @param encodedSchema - The encoded schema to decode.
+ * @param validator - The format validator to use to validate the encoded schema.
  * @returns A decoded simple schema.
  * @throws Will throw a usage error if the encoded schema is not in the expected format.
  *
  * @alpha
  */
-export function decodeSimpleSchema(encodedSchema: JsonCompatible): SimpleTreeSchema {
-	if (!isJsonObject(encodedSchema)) {
-		throw new UsageError("Expected object for encodedSchema");
+export function decodeSimpleSchema(
+	encodedSchema: JsonCompatibleObject,
+	validator?: FormatValidator,
+): SimpleTreeSchema {
+	const effectiveValidator = validator ?? FormatValidatorNoOp;
+	const compiledValidator = extractJsonValidator(effectiveValidator).compile(
+		Format.SimpleTreeSchemaFormat,
+	);
+	if (!compiledValidator.check(encodedSchema)) {
+		throw new UsageError(
+			"The provided simple schema is not valid according to the schema format.",
+		);
 	}
-
-	const encodedSchemaAsObject = encodedSchema as JsonCompatibleObject;
-
-	if (encodedSchemaAsObject.root === undefined || !isJsonObject(encodedSchemaAsObject.root)) {
-		throw new UsageError("Expected object for root field schema");
-	}
-	const encodedRoot = encodedSchemaAsObject.root as JsonCompatibleObject;
-
-	if (
-		encodedSchemaAsObject.definitions === undefined ||
-		!isJsonObject(encodedSchemaAsObject.definitions)
-	) {
-		throw new UsageError("Expected object for definitions field");
-	}
-	const encodedDefinitions = encodedSchemaAsObject.definitions as JsonCompatibleObject;
 
 	return {
-		root: decodeSimpleFieldSchema(encodedRoot),
+		root: decodeSimpleFieldSchema(encodedSchema.root),
 		definitions: new Map(
-			transformMapValues(objectToMap(encodedDefinitions), (value, key) => {
+			transformMapValues(objectToMap(encodedSchema.definitions), (value, key) => {
 				if (value === undefined || !isJsonObject(value)) {
 					throw new UsageError(`Expected node schema for definition ${key}`);
 				}
-				return decodeNodeSchema(value as JsonCompatibleObject);
+				return decodeNodeSchema(value);
 			}),
 		),
 	};
@@ -102,17 +102,19 @@ export function decodeSimpleSchema(encodedSchema: JsonCompatible): SimpleTreeSch
  * @param schema - The node schema to convert.
  * @returns A serializable representation of the node schema.
  */
-function encodeNodeSchema(schema: SimpleNodeSchema): JsonCompatibleObject {
+function encodeNodeSchema(schema: SimpleNodeSchema): Format.SimpleNodeSchemaUnionFormat {
 	const kind = schema.kind;
 	switch (kind) {
 		case NodeKind.Leaf:
-			return encodeLeafNode(schema);
+			return { leaf: encodeLeafNode(schema) };
 		case NodeKind.Array:
+			return { array: encodeContainerNode(schema) };
 		case NodeKind.Map:
+			return { map: encodeContainerNode(schema) };
 		case NodeKind.Record:
-			return encodeContainerNode(schema);
+			return { record: encodeContainerNode(schema) };
 		case NodeKind.Object:
-			return encodeObjectNode(schema);
+			return { object: encodeObjectNode(schema) };
 		default: {
 			unreachableCase(kind);
 		}
@@ -124,7 +126,7 @@ function encodeNodeSchema(schema: SimpleNodeSchema): JsonCompatibleObject {
  * @param schema - The leaf node schema to convert.
  * @returns A serializable representation of the leaf node schema.
  */
-function encodeLeafNode(schema: SimpleLeafNodeSchema): JsonCompatibleObject {
+function encodeLeafNode(schema: SimpleLeafNodeSchema): Format.SimpleLeafNodeSchemaFormat {
 	return {
 		kind: schema.kind,
 		leafKind: schema.leafKind,
@@ -139,7 +141,10 @@ function encodeLeafNode(schema: SimpleLeafNodeSchema): JsonCompatibleObject {
  */
 function encodeContainerNode(
 	schema: SimpleArrayNodeSchema | SimpleMapNodeSchema | SimpleRecordNodeSchema,
-): JsonCompatibleObject {
+):
+	| Format.SimpleArrayNodeSchemaFormat
+	| Format.SimpleMapNodeSchemaFormat
+	| Format.SimpleRecordNodeSchemaFormat {
 	return {
 		kind: schema.kind,
 		simpleAllowedTypes: encodeSimpleAllowedTypes(schema.simpleAllowedTypes),
@@ -153,15 +158,14 @@ function encodeContainerNode(
  */
 function encodeSimpleAllowedTypes(
 	simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypeAttributes>,
-): JsonCompatibleObject {
-	const serializableAllowedTypes: JsonCompatibleObject = {};
+): Format.SimpleAllowedTypesFormat {
+	const encodedAllowedTypes: Format.SimpleAllowedTypesFormat = {};
 	for (const [identifier, attributes] of simpleAllowedTypes) {
-		serializableAllowedTypes[identifier] = {
-			// The type of SimpleAllowedTypeAttributes is not assignable to JsonCompatibleObject, so we splat its fields here.
-			...attributes,
+		encodedAllowedTypes[identifier] = {
+			isStaged: attributes.isStaged,
 		};
 	}
-	return serializableAllowedTypes;
+	return encodedAllowedTypes;
 }
 
 /**
@@ -169,15 +173,17 @@ function encodeSimpleAllowedTypes(
  * @param schema - The object node schema to convert.
  * @returns A serializable representation of the object node schema.
  */
-function encodeObjectNode(schema: SimpleObjectNodeSchema): JsonCompatibleObject {
-	const serializableFields: Record<string, JsonCompatible> = {};
+function encodeObjectNode(
+	schema: SimpleObjectNodeSchema,
+): Format.SimpleObjectNodeSchemaFormat {
+	const encodedFields: Format.SimpleObjectFieldSchemasFormat = {};
 	for (const [fieldKey, fieldSchema] of schema.fields) {
-		serializableFields[fieldKey] = encodeObjectField(fieldSchema);
+		encodedFields[fieldKey] = encodeObjectField(fieldSchema);
 	}
 
 	return {
 		kind: schema.kind,
-		fields: serializableFields,
+		fields: encodedFields,
 		allowUnknownOptionalFields: schema.allowUnknownOptionalFields,
 	};
 }
@@ -187,10 +193,11 @@ function encodeObjectNode(schema: SimpleObjectNodeSchema): JsonCompatibleObject 
  * @param fieldSchema - The object field schema to convert.
  * @returns A serializable representation of the object field schema.
  */
-function encodeObjectField(fieldSchema: SimpleObjectFieldSchema): JsonCompatibleObject {
-	const serializableField = encodeField(fieldSchema);
-	serializableField.storedKey = fieldSchema.storedKey;
-	return serializableField;
+function encodeObjectField(
+	fieldSchema: SimpleObjectFieldSchema,
+): Format.SimpleObjectFieldSchemaFormat {
+	const encodedField = encodeField(fieldSchema);
+	return { ...encodedField, storedKey: fieldSchema.storedKey };
 }
 
 /**
@@ -198,12 +205,28 @@ function encodeObjectField(fieldSchema: SimpleObjectFieldSchema): JsonCompatible
  * @param fieldSchema - The field schema to convert.
  * @returns A serializable representation of the field schema.
  */
-function encodeField(fieldSchema: SimpleFieldSchema): JsonCompatibleObject {
+function encodeField(fieldSchema: SimpleFieldSchema): Format.SimpleFieldSchemaFormat {
 	return {
 		kind: fieldSchema.kind,
 		simpleAllowedTypes: encodeSimpleAllowedTypes(fieldSchema.simpleAllowedTypes),
 	};
 }
+
+const decodeNodeSchemaDispatcher: DiscriminatedUnionDispatcher<
+	Format.SimpleNodeSchemaUnionFormat,
+	[],
+	| SimpleLeafNodeSchema
+	| SimpleArrayNodeSchema
+	| SimpleMapNodeSchema
+	| SimpleRecordNodeSchema
+	| SimpleObjectNodeSchema
+> = new DiscriminatedUnionDispatcher({
+	leaf: decodeLeafNode,
+	array: decodeContainerNode,
+	map: decodeContainerNode,
+	record: decodeContainerNode,
+	object: decodeObjectNode,
+});
 
 /**
  * Decodes a node schema from a JSON-compatible object.
@@ -211,27 +234,14 @@ function encodeField(fieldSchema: SimpleFieldSchema): JsonCompatibleObject {
  * @returns The decoded node schema.
  */
 function decodeNodeSchema(
-	encodedNodeSchema: JsonCompatibleObject,
+	encodedNodeSchema: Format.SimpleNodeSchemaUnionFormat,
 ):
 	| SimpleLeafNodeSchema
 	| SimpleArrayNodeSchema
 	| SimpleMapNodeSchema
 	| SimpleRecordNodeSchema
 	| SimpleObjectNodeSchema {
-	const kind = encodedNodeSchema.kind as NodeKind;
-
-	switch (kind) {
-		case NodeKind.Array:
-		case NodeKind.Map:
-		case NodeKind.Record:
-			return decodeContainerNode(encodedNodeSchema);
-		case NodeKind.Leaf:
-			return decodeLeafNode(encodedNodeSchema);
-		case NodeKind.Object:
-			return decodeObjectNode(encodedNodeSchema);
-		default:
-			unreachableCase(kind);
-	}
+	return decodeNodeSchemaDispatcher.dispatch(encodedNodeSchema);
 }
 
 /**
@@ -240,13 +250,14 @@ function decodeNodeSchema(
  * @returns The decoded container node schema.
  */
 function decodeContainerNode(
-	encodedContainerSchema: JsonCompatibleObject,
+	encodedContainerSchema:
+		| Format.SimpleArrayNodeSchemaFormat
+		| Format.SimpleMapNodeSchemaFormat
+		| Format.SimpleRecordNodeSchemaFormat,
 ): SimpleArrayNodeSchema | SimpleMapNodeSchema | SimpleRecordNodeSchema {
 	return {
 		kind: encodedContainerSchema.kind as NodeKind.Array | NodeKind.Map | NodeKind.Record,
-		simpleAllowedTypes: decodeSimpleAllowedTypes(
-			encodedContainerSchema.simpleAllowedTypes as JsonCompatibleObject,
-		),
+		simpleAllowedTypes: decodeSimpleAllowedTypes(encodedContainerSchema.simpleAllowedTypes),
 		// We cannot encode persistedMetadata or metadata, so we explicitly set them to empty values.
 		persistedMetadata: undefined,
 		metadata: {},
@@ -259,7 +270,9 @@ function decodeContainerNode(
  * @returns The decoded leaf node schema.
  * @throws Will throw a usage error if the encoded leaf schema is not in the expected format.
  */
-function decodeLeafNode(encodedLeafSchema: JsonCompatibleObject): SimpleLeafNodeSchema {
+function decodeLeafNode(
+	encodedLeafSchema: Format.SimpleLeafNodeSchemaFormat,
+): SimpleLeafNodeSchema {
 	if (encodedLeafSchema.leafKind === undefined) {
 		throw new UsageError("Expected leafKind for leaf node schema");
 	}
@@ -279,7 +292,9 @@ function decodeLeafNode(encodedLeafSchema: JsonCompatibleObject): SimpleLeafNode
  * @returns The decoded object node schema.
  * @throws Will throw a usage error if the encoded object schema is not in the expected format.
  */
-function decodeObjectNode(encodedObjectSchema: JsonCompatibleObject): SimpleObjectNodeSchema {
+function decodeObjectNode(
+	encodedObjectSchema: Format.SimpleObjectNodeSchemaFormat,
+): SimpleObjectNodeSchema {
 	if (encodedObjectSchema.fields === undefined) {
 		throw new UsageError("Expected fields for object node schema");
 	}
@@ -289,9 +304,7 @@ function decodeObjectNode(encodedObjectSchema: JsonCompatibleObject): SimpleObje
 		fields: decodeObjectFields(encodedObjectSchema.fields),
 		// It is possible for allowUnknownOptionalFields to be undefined. This happens when serializing a Simple Schema derived
 		// from a stored schema.
-		allowUnknownOptionalFields: encodedObjectSchema.allowUnknownOptionalFields as
-			| boolean
-			| undefined,
+		allowUnknownOptionalFields: encodedObjectSchema.allowUnknownOptionalFields,
 		// We cannot encode persistedMetadata or metadata, so we explicitly set them to empty values when decoding.
 		persistedMetadata: undefined,
 		metadata: {},
@@ -305,7 +318,7 @@ function decodeObjectNode(encodedObjectSchema: JsonCompatibleObject): SimpleObje
  * @throws Will throw a usage error if the encoded fields are not in the expected format.
  */
 function decodeObjectFields(
-	encodedFields: JsonCompatible,
+	encodedFields: Format.SimpleObjectFieldSchemasFormat,
 ): ReadonlyMap<string, SimpleObjectFieldSchema> {
 	if (!isJsonObject(encodedFields)) {
 		throw new UsageError("Expected object for encodedFields");

@@ -199,7 +199,7 @@ export function createSimpleTreeIndex<TFieldSchema extends ImplicitFieldSchema, 
 export function createSimpleTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey extends TreeIndexKey, TValue, TSchema extends TreeNodeSchema>(view: TreeView<TFieldSchema>, indexer: Map<TreeNodeSchema, string>, getValue: (nodes: TreeIndexNodes<NodeFromSchema<TSchema>>) => TValue, isKeyValid: (key: TreeIndexKey) => key is TKey, indexableSchema: readonly TSchema[]): SimpleTreeIndex<TKey, TValue>;
 
 // @alpha
-export function decodeSimpleSchema(encodedSchema: JsonCompatible): SimpleTreeSchema;
+export function decodeSimpleSchema(encodedSchema: JsonCompatibleObject, validator?: FormatValidator): SimpleTreeSchema;
 
 // @public @sealed @system
 interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider"> {
@@ -217,7 +217,7 @@ export interface DirtyTreeMap {
 export type DirtyTreeStatus = "new" | "changed" | "moved";
 
 // @alpha
-export function encodeSimpleSchema(simpleSchema: SimpleTreeSchema): JsonCompatible;
+export function encodeSimpleSchema(simpleSchema: SimpleTreeSchema): JsonCompatibleObject;
 
 // @beta
 export function enumFromStrings<TScope extends string, const Members extends readonly string[]>(factory: SchemaFactory<TScope>, members: Members): (<TValue extends Members[number]>(value: TValue) => TValue extends unknown ? TreeNode & {

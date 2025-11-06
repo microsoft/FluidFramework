@@ -1,4 +1,5 @@
 {
+  "version": 1,
   "root": {
     "kind": 1,
     "simpleAllowedTypes": {
@@ -9,30 +10,36 @@
   },
   "definitions": {
     "com.fluidframework.leaf.number": {
-      "kind": 3,
-      "leafKind": 0
+      "leaf": {
+        "kind": 3,
+        "leafKind": 0
+      }
     },
     "com.fluidframework.leaf.string": {
-      "kind": 3,
-      "leafKind": 1
+      "leaf": {
+        "kind": 3,
+        "leafKind": 1
+      }
     },
     "test.object": {
-      "kind": 2,
-      "fields": {
-        "foo": {
-          "kind": 1,
-          "simpleAllowedTypes": {
-            "com.fluidframework.leaf.number": {
-              "isStaged": false
+      "object": {
+        "kind": 2,
+        "fields": {
+          "foo": {
+            "kind": 1,
+            "simpleAllowedTypes": {
+              "com.fluidframework.leaf.number": {
+                "isStaged": false
+              },
+              "com.fluidframework.leaf.string": {
+                "isStaged": false
+              }
             },
-            "com.fluidframework.leaf.string": {
-              "isStaged": false
-            }
-          },
-          "storedKey": "foo"
-        }
-      },
-      "allowUnknownOptionalFields": false
+            "storedKey": "foo"
+          }
+        },
+        "allowUnknownOptionalFields": false
+      }
     }
   }
 }
