@@ -935,6 +935,8 @@ function exportSimpleFieldSchemaStored(schema: TreeFieldStoredSchema): SimpleFie
  * Export a {@link SimpleNodeSchema} from a {@link TreeNodeStoredSchema}.
  * @privateRemarks
  * TODO: Persist node metadata once schema FormatV2 is supported.
+ * Note on SimpleNodeSchema construction: In the persisted format `persistedMetadata` is just called `metadata` whereas the `metadata`
+ * field on SimpleNodeSchema is not persisted.
  */
 function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeSchema {
 	const arrayTypes = tryStoredSchemaAsArray(schema);
