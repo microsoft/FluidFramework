@@ -971,6 +971,64 @@ describe("Staging Mode", () => {
 			);
 		});
 
+		it("checkpoints survive disconnect/reconnect and resubmit", async () => {
+			const deltaConnectionServer = LocalDeltaConnectionServer.create();
+			const clients = await createClients(deltaConnectionServer);
+
+			const stagingControls = clients.original.dataObject.enterStagingMode();
+
+			clients.original.dataObject.makeEdit("before-checkpoint");
+			const checkpoint = stagingControls.checkpoint();
+			clients.original.dataObject.makeEdit("after-checkpoint");
+
+			// Disconnect and reconnect to trigger resubmit of ops
+			await ensureDisconnected(clients.original);
+			await ensureConnected(clients.original);
+
+			// Make another edit after reconnect
+			clients.original.dataObject.makeEdit("after-reconnect");
+
+			// Checkpoint should still be valid and rollback should work
+			assert.equal(checkpoint.isValid, true, "Checkpoint should remain valid after resubmit");
+			checkpoint.rollback();
+
+			assert.equal(
+				hasEdit(clients.original, "before-checkpoint"),
+				true,
+				"Should have edit before checkpoint",
+			);
+			assert.equal(
+				hasEdit(clients.original, "after-checkpoint"),
+				false,
+				"Should not have edit after checkpoint (rolled back)",
+			);
+			assert.equal(
+				hasEdit(clients.original, "after-reconnect"),
+				false,
+				"Should not have edit after reconnect (rolled back)",
+			);
+
+			stagingControls.commitChanges();
+			await waitForSave(clients);
+
+			assertConsistent(clients, "states should match after commit");
+			assert.equal(
+				hasEdit(clients.loaded, "before-checkpoint"),
+				true,
+				"Should have edit before checkpoint",
+			);
+			assert.equal(
+				hasEdit(clients.loaded, "after-checkpoint"),
+				false,
+				"Should not have edit after checkpoint",
+			);
+			assert.equal(
+				hasEdit(clients.loaded, "after-reconnect"),
+				false,
+				"Should not have edit after reconnect",
+			);
+		});
+
 		it("checkpoint.isValid reflects validity state", async () => {
 			const deltaConnectionServer = LocalDeltaConnectionServer.create();
 			const clients = await createClients(deltaConnectionServer);

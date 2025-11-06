@@ -898,23 +898,26 @@ export class PendingStateManager implements IDisposable {
 
 	/**
 	 * Pops staged messages from the back, invoking the callback on each in LIFO order.
-	 * Used for checkpoint rollback where we want to rollback to a specific message, or for discarding all staged changes.
+	 * Used for checkpoint rollback where we want to rollback to a specific batch, or for discarding all staged changes.
 	 *
 	 * @param callback - Called for each popped message that has a typical runtime op
-	 * @param afterReference - Optional reference message to rollback to (this message is kept, everything after it is removed). If undefined, removes all staged messages.
+	 * @param afterBatchId - Optional batch ID to rollback to (this batch is kept, everything after it is removed). If undefined, removes all staged messages.
 	 */
 	public popStagedBatches(
 		callback: (
 			stagedMessage: IPendingMessage & { runtimeOp: LocalContainerRuntimeMessage },
 		) => void,
-		afterReference?: IPendingMessage,
+		afterBatchId?: string,
 	): void {
 		while (!this.pendingMessages.isEmpty()) {
 			const stagedMessage = this.pendingMessages.peekBack();
 
-			// Stop if we've reached the reference message
-			if (stagedMessage === afterReference) {
-				break;
+			// Stop if we've reached the checkpoint batch ID
+			if (afterBatchId !== undefined && stagedMessage !== undefined) {
+				const messageBatchId = getEffectiveBatchId(stagedMessage);
+				if (messageBatchId === afterBatchId) {
+					break;
+				}
 			}
 
 			// Stop if we hit a non-staged message
@@ -930,8 +933,8 @@ export class PendingStateManager implements IDisposable {
 			}
 		}
 
-		// Verify no staged messages remain (when reference is undefined, we should have removed all)
-		if (afterReference === undefined) {
+		// Verify no staged messages remain (when afterBatchId is undefined, we should have removed all)
+		if (afterBatchId === undefined) {
 			assert(
 				this.pendingMessages.toArray().every((m) => m.batchInfo.staged !== true),
 				0xb89 /* Shouldn't be any more staged messages */,

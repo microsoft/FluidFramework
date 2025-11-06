@@ -17,7 +17,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import { DoublyLinkedList } from "@fluidframework/core-utils/internal";
 import type { PendingStateManager } from "./pendingStateManager.js";
-import type { Outbox } from "./opLifecycle/index.js";
+import { getEffectiveBatchId, type Outbox } from "./opLifecycle/index.js";
 import type { ChannelCollection } from "./channelCollection.js";
 import type { LocalContainerRuntimeMessage } from "./messageTypes.js";
 
@@ -80,11 +80,8 @@ export class StagingModeManager {
 		flushFn();
 
 		// Track checkpoints for rollback support
-		// Each checkpoint stores a reference to the last pending message at that point
-		type CheckpointReference = ReturnType<
-			StagingModeDependencies["pendingStateManager"]["getLastPendingMessage"]
-		>;
-		const checkpointList = new DoublyLinkedList<CheckpointReference>();
+		// Each checkpoint stores the batch ID of the last batch at that point
+		const checkpointList = new DoublyLinkedList<string | undefined>();
 
 		const exitStagingMode = (discardOrCommit: () => void): void => {
 			try {
@@ -138,7 +135,12 @@ export class StagingModeManager {
 				// Get reference to the last pending message (or undefined if none)
 				const lastMessage = this.dependencies.pendingStateManager.getLastPendingMessage();
 
-				return this.createCheckpoint(checkpointList, lastMessage);
+				return this.createCheckpoint(
+					checkpointList,
+					lastMessage?.batchInfo.staged === true
+						? getEffectiveBatchId(lastMessage)
+						: undefined,
+				);
 			},
 		};
 
@@ -152,20 +154,16 @@ export class StagingModeManager {
 	 * Create a checkpoint that can be rolled back to later.
 	 *
 	 * @param checkpointList - List tracking all active checkpoints
-	 * @param messageReference - Reference to the last pending message at checkpoint time (or undefined if no messages yet)
+	 * @param batchId - Batch ID of the last batch at checkpoint time (or undefined if no messages yet)
 	 * @returns Checkpoint object with rollback and dispose capabilities
 	 */
 	private createCheckpoint(
-		checkpointList: DoublyLinkedList<
-			ReturnType<StagingModeDependencies["pendingStateManager"]["getLastPendingMessage"]>
-		>,
-		messageReference: ReturnType<
-			StagingModeDependencies["pendingStateManager"]["getLastPendingMessage"]
-		>,
+		checkpointList: DoublyLinkedList<string | undefined>,
+		batchId: string | undefined,
 	): StageCheckpointAlpha {
 		// Add checkpoint to the list and store the node
-		// We store a reference to the last pending message at this checkpoint
-		const { last: checkpointNode } = checkpointList.push(messageReference);
+		// We store the batch ID of the last batch at this checkpoint
+		const { last: checkpointNode } = checkpointList.push(batchId);
 
 		// Capture dependencies for use in checkpoint methods
 		const deps = this.dependencies;
@@ -190,11 +188,11 @@ export class StagingModeManager {
 					// Flush the outbox to ensure all messages are in PSM before rolling back
 					deps.outbox.flush();
 
-					// Rollback all messages added after the checkpoint reference
-					// This uses reference comparison - much more robust than counts!
+					// Rollback all messages added after the checkpoint batch ID
+					// This uses batch ID comparison - stable across resubmit!
 					deps.pendingStateManager.popStagedBatches(({ runtimeOp, localOpMetadata }) => {
 						deps.rollbackStagedChange(runtimeOp, localOpMetadata);
-					}, messageReference);
+					}, batchId);
 
 					deps.updateDocumentDirtyState();
 				} catch (error) {
@@ -229,9 +227,13 @@ export class StagingModeManager {
 				}
 
 				// Check if any messages have been added since the checkpoint
-				// by comparing the current last message with the checkpoint's reference
+				// by comparing the current last batch ID with the checkpoint's batch ID
 				const currentLastMessage = deps.pendingStateManager.getLastPendingMessage();
-				return currentLastMessage !== messageReference;
+				const currentLastBatchId =
+					currentLastMessage?.batchInfo.staged === true
+						? getEffectiveBatchId(currentLastMessage)
+						: undefined;
+				return currentLastBatchId !== batchId;
 			},
 		};
 

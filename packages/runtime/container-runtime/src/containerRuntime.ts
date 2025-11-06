@@ -4840,9 +4840,7 @@ export class ContainerRuntime
 		);
 
 		const resubmitInfo = {
-			// Only include Batch ID if "Offline Load" feature is enabled
-			// It's only needed to identify batches across container forks arising from misuse of offline load.
-			batchId: this.batchIdTrackingEnabled ? batchId : undefined,
+			batchId,
 			staged,
 		};
 
