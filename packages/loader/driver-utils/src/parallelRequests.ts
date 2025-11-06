@@ -359,7 +359,7 @@ export class Queue<T> implements IStream<T> {
 	}
 
 	public pushError(error: any) {
-		this.pushCore(Promise.reject(error));
+		this.pushCore(Promise.reject(error instanceof Error ? error : new Error(String(error))));
 		this.done = true;
 	}
 

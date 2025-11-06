@@ -504,7 +504,8 @@ export class DocumentDeltaConnection
 					const normalizedError = this.addPropsToError(failError);
 					this.logger.sendErrorEvent({ eventName: "CloseSocketError" }, normalizedError);
 				}
-				reject(err);
+				const errorToReject = err instanceof Error ? err : new Error(JSON.stringify(err));
+				reject(errorToReject);
 			};
 
 			const failConnection = (err: IAnyDriverError) => {
@@ -514,7 +515,8 @@ export class DocumentDeltaConnection
 					const normalizedError = this.addPropsToError(failError);
 					this.logger.sendErrorEvent({ eventName: "FailConnectionError" }, normalizedError);
 				}
-				reject(err);
+				const errorToReject = err instanceof Error ? err : new Error(JSON.stringify(err));
+				reject(errorToReject);
 			};
 
 			// Immediately set the connection timeout.

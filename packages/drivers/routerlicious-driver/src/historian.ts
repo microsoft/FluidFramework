@@ -82,7 +82,9 @@ export class Historian implements IHistorian {
 							propsToLog: {},
 							requestUrl: "",
 						}
-					: Promise.reject<IR11sResponse<IGitCommitDetails[]>>(error),
+					: Promise.reject<IR11sResponse<IGitCommitDetails[]>>(
+							error instanceof Error ? error : new Error(String(error)),
+						),
 			);
 	}
 

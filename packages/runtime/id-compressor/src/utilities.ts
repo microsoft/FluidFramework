@@ -135,7 +135,7 @@ export function compareBigints<T extends bigint>(a: T, b: T): number {
 }
 
 export function genCountFromLocalId(localId: LocalCompressedId): number {
-	return -localId;
+	return -(localId as number);
 }
 
 export function localIdFromGenCount(genCount: number): LocalCompressedId {

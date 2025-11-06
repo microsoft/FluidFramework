@@ -71,7 +71,7 @@ export const serverListenAndHandle = async <T>(
 					.finally(() => httpServer.fullyClose())
 					.then(
 						(result) => innerResolve(result),
-						(error) => innerReject(error),
+						(error) => innerReject(error instanceof Error ? error : new Error(String(error))),
 					);
 			});
 			outerResolve(async () => innerP);
@@ -85,6 +85,6 @@ export const endResponse = async (response: http.ServerResponse): Promise<void> 
 		try {
 			response.end(resolve);
 		} catch (error) {
-			reject(error);
+			reject(error instanceof Error ? error : new Error(String(error)));
 		}
 	});

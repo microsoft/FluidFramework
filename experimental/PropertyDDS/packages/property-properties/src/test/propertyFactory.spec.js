@@ -3927,7 +3927,7 @@ describe("Async validation", function () {
 				try {
 					resolve(PropertyFactory.inheritsFrom(child, ancestor));
 				} catch (error) {
-					reject(error);
+					reject(error instanceof Error ? error : new Error(String(error)));
 				}
 			}, 0);
 		});

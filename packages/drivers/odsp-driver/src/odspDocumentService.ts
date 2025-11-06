@@ -335,7 +335,8 @@ export class OdspDocumentService
 				write: async (key: string, opsData: string): Promise<void> => {
 					return this.cache.persistedCache.put({ ...opsKey, key }, opsData);
 				},
-				read: async (key: string) => this.cache.persistedCache.get({ ...opsKey, key }),
+				read: async (key: string): Promise<string | undefined> =>
+					this.cache.persistedCache.get({ ...opsKey, key }) as Promise<string | undefined>,
 				remove: (): void => {
 					this.cache.persistedCache.removeEntries().catch(() => {});
 				},
