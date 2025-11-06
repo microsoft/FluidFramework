@@ -15,7 +15,7 @@ module.exports = {
 	},
 	extends: [
 		"eslint:recommended",
-		"plugin:eslint-comments/recommended",
+		"plugin:@eslint-community/eslint-comments/recommended",
 		"plugin:@typescript-eslint/eslint-recommended",
 		"plugin:@typescript-eslint/recommended-type-checked",
 		"plugin:@typescript-eslint/stylistic-type-checked",
@@ -160,8 +160,8 @@ module.exports = {
 
 		// #endregion
 
-		// eslint-plugin-eslint-comments
-		"eslint-comments/disable-enable-pair": [
+		// @eslint-community/eslint-plugin-eslint-comments
+		"@eslint-community/eslint-comments/disable-enable-pair": [
 			"error",
 			{
 				allowWholeFile: true,
