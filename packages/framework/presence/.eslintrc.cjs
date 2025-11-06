@@ -34,6 +34,9 @@ module.exports = {
 			rules: {
 				"@typescript-eslint/no-explicit-any": "error",
 
+				// FIXME: Is this the right fix? There are lots of errors here.
+				"@fluid-internal/fluid/no-unchecked-record-access": "off",
+
 				// Test files are run in node only so additional node libraries can be used.
 				"import-x/no-nodejs-modules": ["error", { allow: ["node:assert"] }],
 			},

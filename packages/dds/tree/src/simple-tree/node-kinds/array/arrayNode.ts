@@ -1376,6 +1376,7 @@ function arrayChildToFlexTree(
  */
 function arrayToFlexContent(data: FactoryContent, schema: ArrayNodeSchema): FlexContent {
 	if (!(typeof data === "object" && data !== null && Symbol.iterator in data)) {
+		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		throw new UsageError(`Input data is incompatible with Array schema: ${data}`);
 	}
 
