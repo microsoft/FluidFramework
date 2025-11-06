@@ -197,6 +197,9 @@ importers:
 
   common/build/eslint-config-fluid:
     dependencies:
+      '@eslint-community/eslint-plugin-eslint-comments':
+        specifier: ~4.5.0
+        version: 4.5.0(eslint@8.57.1)
       '@fluid-internal/eslint-plugin-fluid':
         specifier: ^0.4.0
         version: 0.4.0(eslint@8.57.1)(typescript@5.4.5)
@@ -224,9 +227,6 @@ importers:
       eslint-import-resolver-typescript:
         specifier: ~4.4.4
         version: 4.4.4(eslint-plugin-import-x@4.16.1(@typescript-eslint/utils@8.46.2(eslint@8.57.1)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint@8.57.1))(eslint@8.57.1)
-      eslint-plugin-eslint-comments:
-        specifier: ~3.2.0
-        version: 3.2.0(eslint@8.57.1)
       eslint-plugin-import-x:
         specifier: ~4.16.1
         version: 4.16.1(@typescript-eslint/utils@8.46.2(eslint@8.57.1)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint@8.57.1)
@@ -17265,6 +17265,12 @@ packages:
     resolution: {integrity: sha512-c6EW+aA1w2rjqOMjbL93nZlwxp6c1Ln06vTYs5FjRRhmJXK8V/OrSXdT+pUr4aRYgjCgu8/OkiZr0tzeVrRSbw==}
     engines: {node: '>=20.11.0'}
 
+  '@eslint-community/eslint-plugin-eslint-comments@4.5.0':
+    resolution: {integrity: sha512-MAhuTKlr4y/CE3WYX26raZjy+I/kS2PLKSzvfmDCGrBLTFHOYwqROZdr4XwPgXwX3K9rjzMr4pSmUWGnzsUyMg==}
+    engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
+    peerDependencies:
+      eslint: ^6.0.0 || ^7.0.0 || ^8.0.0 || ^9.0.0
+
   '@eslint-community/eslint-utils@4.9.0':
     resolution: {integrity: sha512-ayVFHdtZ+hsq1t2Dy24wCmGXGe4q9Gu3smhLYALJrr473ZH27MsnSL+LKUlimp4BWJqMDMLmPpx/Q9R3OAlL4g==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
@@ -22117,12 +22123,6 @@ packages:
     engines: {node: 10.* || 12.* || >= 14.*}
     peerDependencies:
       eslint: '>=2.0.0 <= 8.x'
-
-  eslint-plugin-eslint-comments@3.2.0:
-    resolution: {integrity: sha512-0jkOl0hfojIHHmEHgmNdqv4fmh7300NdpA9FFpF7zaoLvB/QeXOGNLIo86oAveJFrfB1p05kC8hpEMHM8DwWVQ==}
-    engines: {node: '>=6.5.0'}
-    peerDependencies:
-      eslint: '>=4.19.1'
 
   eslint-plugin-import-x@4.16.1:
     resolution: {integrity: sha512-vPZZsiOKaBAIATpFE2uMI4w5IRwdv/FpQ+qZZMR4E+PeOcM4OeoEbqxRMnywdxP19TyB/3h6QBB0EWon7letSQ==}
@@ -28857,6 +28857,12 @@ snapshots:
       comment-parser: 1.4.1
       esquery: 1.6.0
       jsdoc-type-pratt-parser: 5.1.1
+
+  '@eslint-community/eslint-plugin-eslint-comments@4.5.0(eslint@8.57.1)':
+    dependencies:
+      escape-string-regexp: 4.0.0
+      eslint: 8.57.1
+      ignore: 5.3.2
 
   '@eslint-community/eslint-utils@4.9.0(eslint@8.57.1)':
     dependencies:
@@ -36372,12 +36378,6 @@ snapshots:
   eslint-plugin-chai-expect@3.0.0(eslint@8.57.1):
     dependencies:
       eslint: 8.57.1
-
-  eslint-plugin-eslint-comments@3.2.0(eslint@8.57.1):
-    dependencies:
-      escape-string-regexp: 1.0.5
-      eslint: 8.57.1
-      ignore: 5.3.2
 
   eslint-plugin-import-x@4.16.1(@typescript-eslint/utils@8.46.2(eslint@8.57.1)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint@8.57.1):
     dependencies:
