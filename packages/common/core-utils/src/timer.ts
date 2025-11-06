@@ -260,7 +260,6 @@ export interface IPromiseTimer extends ITimer {
  * resolves when it times out.
  * @internal
  */
-// eslint-disable-next-line @typescript-eslint/no-misused-promises
 export class PromiseTimer implements IPromiseTimer {
 	private deferred: Deferred<IPromiseTimerResult> | undefined;
 	private readonly timer: Timer;
