@@ -20,9 +20,7 @@ import { testRepoRoot as originalTestRepoRoot } from "./init.js";
  * This is required for tests that need to use git operations like `git add` or detect changes.
  * @returns An object containing the path to the temporary test repo and a cleanup function
  */
-export async function setupTestRepo(
-	initGit: boolean = false,
-): Promise<{
+export async function setupTestRepo(initGit: boolean = false): Promise<{
 	testRepoRoot: string;
 	cleanup: () => Promise<void>;
 }> {

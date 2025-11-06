@@ -13,12 +13,7 @@ import * as semver from "semver";
 
 import { loadBuildProject, setDependencyRange } from "../buildProject.js";
 import { findGitRootSync } from "../git.js";
-import type {
-	IReleaseGroup,
-	IWorkspace,
-	ReleaseGroupName,
-	WorkspaceName,
-} from "../types.js";
+import type { IReleaseGroup, IWorkspace, ReleaseGroupName, WorkspaceName } from "../types.js";
 
 import { testRepoRoot } from "./init.js";
 import { setupTestRepo } from "./testUtils.js";
