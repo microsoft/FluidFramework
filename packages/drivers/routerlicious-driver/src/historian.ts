@@ -82,8 +82,8 @@ export class Historian implements IHistorian {
 							propsToLog: {},
 							requestUrl: "",
 						}
-					// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
-					: Promise.reject<IR11sResponse<IGitCommitDetails[]>>(error),
+					: // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+						Promise.reject<IR11sResponse<IGitCommitDetails[]>>(error),
 			);
 	}
 
