@@ -4857,8 +4857,8 @@ importers:
         specifier: ^0.59.0
         version: 0.59.0(@types/node@18.19.86)
       '@fluidframework/bundle-size-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(webpack-cli@5.1.4)
+        specifier: ^0.59.0
+        version: 0.59.0(webpack-cli@5.1.4)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:^
         version: link:../../../common/build/eslint-config-fluid
@@ -17932,9 +17932,6 @@ packages:
     engines: {node: '>=20.15.1'}
     hasBin: true
 
-  '@fluidframework/bundle-size-tools@0.57.0':
-    resolution: {integrity: sha512-kPKm02xhVgwXX7X+UbvhsX3N/QO4Tc88fr7Xe6suXyzP3MCovFRkaktVM8i684g83oi9cL51fnTYES5q8r99sg==}
-
   '@fluidframework/bundle-size-tools@0.59.0':
     resolution: {integrity: sha512-TvFFbMOyBwd0ePr+R/WoD7tmDCTyDQVRi+NV2JxC3PlslaoB8u6C2u9CsAHeAQWEp6iL6WZ/rlMjRsOJdDN6Zg==}
 
@@ -30443,20 +30440,6 @@ snapshots:
       - react-devtools-core
       - supports-color
       - utf-8-validate
-
-  '@fluidframework/bundle-size-tools@0.57.0(webpack-cli@5.1.4)':
-    dependencies:
-      azure-devops-node-api: 11.2.0
-      jszip: 3.10.1
-      msgpack-lite: 0.1.26
-      pako: 2.1.0
-      typescript: 5.4.5
-      webpack: 5.97.1(webpack-cli@5.1.4)
-    transitivePeerDependencies:
-      - '@swc/core'
-      - esbuild
-      - uglify-js
-      - webpack-cli
 
   '@fluidframework/bundle-size-tools@0.59.0(webpack-cli@5.1.4)':
     dependencies:
