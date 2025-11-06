@@ -69,7 +69,7 @@ module.exports = {
 		es2024: false,
 		node: true,
 	},
-	extends: ["./base", "plugin:eslint-comments/recommended", "prettier"],
+	extends: ["./base", "plugin:@eslint-community/eslint-comments/recommended", "prettier"],
 	globals: {
 		Atomics: "readonly",
 		SharedArrayBuffer: "readonly",
