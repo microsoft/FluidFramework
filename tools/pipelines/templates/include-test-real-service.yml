@@ -436,22 +436,45 @@ stages:
                       process.exit(1);
                     }
                   })();
-                ")
+                " 2>/dev/null)  # Redirect stderr to avoid mixing error messages with JSON
 
-                # DEBUG
-                echo "$SETUP_OUTPUT" | jq -r '.reservationId'
-                echo "$SETUP_OUTPUT" | jq -c '.userPass'
+                # DEBUG - Check what we actually got
+                echo "Raw SETUP_OUTPUT length: ${#SETUP_OUTPUT}"
+                echo "Raw SETUP_OUTPUT content: '$SETUP_OUTPUT'"
 
-                # Parse the JSON output and set environment variables
-                export tenant__reservationId=$(echo "$SETUP_OUTPUT" | jq -r '.reservationId')
-                if [[ "${{ parameters.odspTenantType }}" == "dogfood" ]]; then
-                  export login__odspdf__test__tenants=$(echo "$SETUP_OUTPUT" | jq -c '.userPass')
-                elif [[ "${{ parameters.odspTenantType }}" == "prod" ]]; then
-                  export login__odsp__test__tenants=$(echo "$SETUP_OUTPUT" | jq -c '.userPass')
+                # Validate JSON before processing
+                if ! echo "$SETUP_OUTPUT" | jq . > /dev/null 2>&1; then
+                  echo "ERROR: SETUP_OUTPUT is not valid JSON!"
+                  echo "First 200 characters: ${SETUP_OUTPUT:0:200}"
+                  exit 1
                 fi
-                echo "$SETUP_OUTPUT"
-                echo "Leased tenant with reservation ID: $tenant__reservationId"
-                echo "ODSP tenant credentials: $login__odsp__test__tenants"
+
+                # Now safely parse the JSON
+                RESERVATION_ID=$(echo "$SETUP_OUTPUT" | jq -r '.reservationId // "null"')
+                USER_PASS=$(echo "$SETUP_OUTPUT" | jq -c '.userPass // "null"')
+
+                echo "Parsed reservationId: '$RESERVATION_ID'"
+                echo "Parsed userPass: '$USER_PASS'"
+
+                # Only set variables if parsing succeeded
+                if [[ "$RESERVATION_ID" != "null" && "$RESERVATION_ID" != "" ]]; then
+                  export tenant__reservationId="$RESERVATION_ID"
+
+                  # Set Azure DevOps variables for cleanup task
+                  echo "##vso[task.setvariable variable=stringBearerToken]$RESERVATION_ID"
+                  echo "##vso[task.setvariable variable=tenantCreds]$USER_PASS"
+
+                  if [[ "${{ parameters.odspTenantType }}" == "dogfood" ]]; then
+                    export login__odspdf__test__tenants="$USER_PASS"
+                  elif [[ "${{ parameters.odspTenantType }}" == "prod" ]]; then
+                    export login__odsp__test__tenants="$USER_PASS"
+                  fi
+
+                  echo "Successfully set up tenant with reservation ID: $tenant__reservationId"
+                else
+                  echo "ERROR: Failed to parse reservationId from setup output"
+                  exit 1
+                fi
               fi
 
               pnpm run ${{ parameters.testCommand }} -- ${{ variant.flags }}
