@@ -47,8 +47,6 @@
 			// This configuration is used to format the @fluid-experimental/tree package, which uses different settings than
 			// most projects. This override is needed to ensure that the formatter is applied correctly when run from the root
 			// of the repo.
-			//
-			// This configuration should be kept up-to-date with the settings in `experimental/dds/tree/biome.jsonc`.
 			"includes": ["experimental/dds/tree/**"],
 			"formatter": {
 				"lineWidth": 120
