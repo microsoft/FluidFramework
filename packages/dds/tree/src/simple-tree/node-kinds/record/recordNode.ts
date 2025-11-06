@@ -11,7 +11,7 @@ import { type JsonCompatibleReadOnlyObject, brand } from "../../../util/index.js
 import {
 	type TreeNodeSchema,
 	NodeKind,
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	typeNameSymbol,
 	typeSchemaSymbol,
 	type UnhydratedFlexTreeNode,
@@ -32,6 +32,7 @@ import {
 	CompatibilityLevel,
 	type TreeNodeSchemaPrivateData,
 	convertAllowedTypes,
+	AnnotatedAllowedTypesInternal,
 } from "../../core/index.js";
 import { getTreeNodeSchemaInitializedData } from "../../createContext.js";
 import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
@@ -57,6 +58,8 @@ import {
 import { prepareForInsertion } from "../../prepareForInsertion.js";
 import { recordLikeDataToFlexContent } from "../common.js";
 import { MapNodeStoredSchema } from "../../../core/index.js";
+import type { NodeSchemaOptionsAlpha } from "../../api/index.js";
+import type { SimpleAllowedTypeAttributes } from "../../simpleSchema.js";
 
 /**
  * Create a proxy which implements the {@link TreeRecordNode} API.
@@ -77,7 +80,7 @@ function createRecordNodeProxy(
 					case typeSchemaSymbol: {
 						return schema;
 					}
-					// eslint-disable-next-line import/no-deprecated
+					// eslint-disable-next-line import-x/no-deprecated
 					case typeNameSymbol: {
 						return schema.identifier;
 					}
@@ -227,15 +230,7 @@ export interface RecordSchemaOptions<
 
 	readonly implicitlyConstructable: TImplicitlyConstructable;
 
-	/**
-	 * Optional ephemeral metadata for the object node schema.
-	 */
-	readonly metadata?: NodeSchemaMetadata<TCustomMetadata>;
-
-	/**
-	 * Optional persisted metadata for the object node schema.
-	 */
-	readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
+	readonly nodeOptions?: NodeSchemaOptionsAlpha<TCustomMetadata>;
 }
 
 /**
@@ -258,19 +253,16 @@ export function recordSchema<
 		TCustomMetadata
 	>,
 ) {
-	const {
-		identifier,
-		info,
-		customizable,
-		implicitlyConstructable,
-		metadata,
-		persistedMetadata,
-	} = options;
+	const { identifier, info, customizable, implicitlyConstructable, nodeOptions } = options;
+	const persistedMetadata = nodeOptions?.persistedMetadata;
 
 	const normalizedTypes = normalizeAllowedTypes(info);
 	const lazyAllowedTypesIdentifiers = new Lazy(
 		() => new Set(normalizedTypes.evaluate().map((type) => type.identifier)),
 	);
+	const lazySimpleAllowedTypes = new Lazy(() => {
+		return AnnotatedAllowedTypesInternal.evaluateSimpleAllowedTypes(normalizedTypes);
+	});
 
 	let privateData: TreeNodeSchemaPrivateData | undefined;
 
@@ -360,6 +352,10 @@ export function recordSchema<
 			return lazyAllowedTypesIdentifiers.value;
 		}
 
+		public static get simpleAllowedTypes(): ReadonlyMap<string, SimpleAllowedTypeAttributes> {
+			return lazySimpleAllowedTypes.value;
+		}
+
 		protected static override constructorCached: MostDerivedData | undefined = undefined;
 
 		public static readonly identifier = identifier;
@@ -369,11 +365,12 @@ export function recordSchema<
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return normalizedTypes.evaluateSet();
 		}
-		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
+		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> =
+			nodeOptions?.metadata ?? {};
 		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
 			persistedMetadata;
 
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated
 		public get [typeNameSymbol](): TName {
 			return identifier;
 		}
@@ -393,7 +390,7 @@ export function recordSchema<
 		public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
 			return (privateData ??= createTreeNodeSchemaPrivateData(
 				this,
-				[info],
+				[normalizedTypes],
 				(storedOptions) =>
 					new MapNodeStoredSchema(
 						{

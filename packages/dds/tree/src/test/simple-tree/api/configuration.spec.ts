@@ -18,7 +18,7 @@ import { independentView } from "../../../shared-tree/index.js";
 import {
 	TreeViewConfiguration,
 	checkUnion,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/configuration.js";
 
 const schema = new SchemaFactory("com.example");

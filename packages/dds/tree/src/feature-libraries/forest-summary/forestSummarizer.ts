@@ -33,7 +33,7 @@ import type {
 	SummaryElementStringifier,
 } from "../../shared-tree-core/index.js";
 import { idAllocatorFromMaxId, type JsonCompatible } from "../../util/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { chunkFieldSingle, defaultChunkPolicy } from "../chunked-forest/chunkTree.js";
 import {
 	defaultIncrementalEncodingPolicy,
@@ -78,6 +78,7 @@ export class ForestSummarizer implements Summarizable {
 		private readonly encoderContext: FieldBatchEncodingContext,
 		options: CodecWriteOptions,
 		private readonly idCompressor: IIdCompressor,
+		initialSequenceNumber: number,
 		shouldEncodeIncrementally: IncrementalEncodingPolicy = defaultIncrementalEncodingPolicy,
 	) {
 		// TODO: this should take in CodecWriteOptions, and use it to pick the write version.
@@ -87,6 +88,7 @@ export class ForestSummarizer implements Summarizable {
 				TreeCompressionStrategyExtended.CompressedIncremental /* enableIncrementalSummary */,
 			(cursor: ITreeCursorSynchronous) => this.forest.chunkField(cursor),
 			shouldEncodeIncrementally,
+			initialSequenceNumber,
 		);
 	}
 

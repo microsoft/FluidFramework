@@ -10,7 +10,8 @@
         "SharedArrayBuffer": "readonly"
     },
     "ignorePatterns": [
-        "**/packageVersion.ts"
+        "**/packageVersion.ts",
+        "**/layerGenerationState.ts"
     ],
     "parserOptions": {
         "ecmaFeatures": {
@@ -21,8 +22,8 @@
         "sourceType": "module"
     },
     "plugins": [
+        "@eslint-community/eslint-comments",
         "import-x",
-        "eslint-comments",
         "@fluid-internal/fluid",
         "unused-imports",
         "promise",
@@ -41,6 +42,24 @@
         "@babel/semi": [
             "off"
         ],
+        "@eslint-community/eslint-comments/disable-enable-pair": [
+            "error",
+            {
+                "allowWholeFile": true
+            }
+        ],
+        "@eslint-community/eslint-comments/no-aggregating-enable": [
+            "error"
+        ],
+        "@eslint-community/eslint-comments/no-duplicate-disable": [
+            "error"
+        ],
+        "@eslint-community/eslint-comments/no-unlimited-disable": [
+            "error"
+        ],
+        "@eslint-community/eslint-comments/no-unused-enable": [
+            "error"
+        ],
         "@eslint-community/eslint-plugin-mysticatea/no-this-in-static": [
             "off"
         ],
@@ -48,7 +67,7 @@
             "error"
         ],
         "@fluid-internal/fluid/no-hyphen-after-jsdoc-tag": [
-            "error"
+            "off"
         ],
         "@fluid-internal/fluid/no-markdown-links-in-jsdoc": [
             "error"
@@ -1145,24 +1164,6 @@
             "off",
             "smart"
         ],
-        "eslint-comments/disable-enable-pair": [
-            "error",
-            {
-                "allowWholeFile": true
-            }
-        ],
-        "eslint-comments/no-aggregating-enable": [
-            "error"
-        ],
-        "eslint-comments/no-duplicate-disable": [
-            "error"
-        ],
-        "eslint-comments/no-unlimited-disable": [
-            "error"
-        ],
-        "eslint-comments/no-unused-enable": [
-            "error"
-        ],
         "eslint-plugin-mysticatea/no-this-in-static": [
             "off"
         ],
@@ -1304,12 +1305,17 @@
         "import-x/order": [
             "error",
             {
-                "newlines-between": "always",
-                "alphabetize": {
-                    "order": "asc",
-                    "caseInsensitive": false,
-                    "orderImportKind": "ignore"
-                },
+                "newlines-between": "ignore",
+                "groups": [
+                    [
+                        "builtin",
+                        "external",
+                        "internal",
+                        "parent",
+                        "sibling",
+                        "index"
+                    ]
+                ],
                 "distinctGroup": true,
                 "sortTypesGroup": false,
                 "named": false,
@@ -2663,49 +2669,16 @@
             ]
         },
         "import-x/resolver": {
-            "name": "tsResolver",
-            "options": {
-                "typescript": {
-                    "extensions": [
-                        ".ts",
-                        ".tsx",
-                        ".d.ts",
-                        ".js",
-                        ".jsx"
-                    ],
-                    "conditionNames": [
-                        "allow-ff-test-exports",
-                        "types",
-                        "import",
-                        "esm2020",
-                        "es2020",
-                        "es2015",
-                        "require",
-                        "node",
-                        "node-addons",
-                        "browser",
-                        "default"
-                    ]
-                }
-            },
-            "resolver": {
-                "DEFAULT_CONFIGS": [
-                    "tsconfig.json",
-                    "jsconfig.json"
+            "typescript": {
+                "extensions": [
+                    ".ts",
+                    ".tsx",
+                    ".d.ts",
+                    ".js",
+                    ".jsx"
                 ],
-                "DEFAULT_IGNORE": "**/node_modules/**",
-                "DEFAULT_JSCONFIG": "jsconfig.json",
-                "DEFAULT_TRY_PATHS": [
-                    "",
-                    "tsconfig.json",
-                    "jsconfig.json"
-                ],
-                "DEFAULT_TSCONFIG": "tsconfig.json",
-                "IMPORT_RESOLVER_NAME": "eslint-import-resolver-typescript",
-                "JS_EXT_PATTERN": {},
-                "MATCH_ALL": "**",
-                "TSCONFIG_NOT_FOUND_REGEXP": {},
-                "defaultConditionNames": [
+                "conditionNames": [
+                    "allow-ff-test-exports",
                     "types",
                     "import",
                     "esm2020",
@@ -2716,74 +2689,8 @@
                     "node-addons",
                     "browser",
                     "default"
-                ],
-                "defaultExtensionAlias": {
-                    ".js": [
-                        ".ts",
-                        ".tsx",
-                        ".d.ts",
-                        ".js"
-                    ],
-                    ".ts": [
-                        ".ts",
-                        ".d.ts",
-                        ".js"
-                    ],
-                    ".jsx": [
-                        ".tsx",
-                        ".d.ts",
-                        ".jsx"
-                    ],
-                    ".tsx": [
-                        ".tsx",
-                        ".d.ts",
-                        ".jsx",
-                        ".js"
-                    ],
-                    ".cjs": [
-                        ".cts",
-                        ".d.cts",
-                        ".cjs"
-                    ],
-                    ".cts": [
-                        ".cts",
-                        ".d.cts",
-                        ".cjs"
-                    ],
-                    ".mjs": [
-                        ".mts",
-                        ".d.mts",
-                        ".mjs"
-                    ],
-                    ".mts": [
-                        ".mts",
-                        ".d.mts",
-                        ".mjs"
-                    ]
-                },
-                "defaultExtensions": [
-                    ".ts",
-                    ".tsx",
-                    ".d.ts",
-                    ".js",
-                    ".jsx",
-                    ".json",
-                    ".node"
-                ],
-                "defaultMainFields": [
-                    "types",
-                    "typings",
-                    "fesm2020",
-                    "fesm2015",
-                    "esm2020",
-                    "es2020",
-                    "module",
-                    "jsnext:main",
-                    "main"
-                ],
-                "interfaceVersion": 2
-            },
-            "typescript": true
+                ]
+            }
         },
         "jsdoc": {
             "mode": "typescript",
