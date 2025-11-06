@@ -214,9 +214,8 @@ export class DefaultStressDataObject extends StressDataObject {
 	 * will also be in  these the containerObjectMap, but are not necessarily usable
 	 * as they could be detached, in which can only this instance can access them.
 	 */
-	private readonly _locallyCreatedObjects: ContainerObjects[] = [];
 	public async getContainerObjects(): Promise<readonly Readonly<ContainerObjects>[]> {
-		const containerObjects: Readonly<ContainerObjects>[] = [...this._locallyCreatedObjects];
+		const containerObjects: Readonly<ContainerObjects>[] = [];
 		const containerRuntime = // eslint-disable-next-line import-x/no-deprecated
 			this.context.containerRuntime as IContainerRuntimeWithResolveHandle_Deprecated;
 		for (const [url, entry] of this.containerObjectMap as any as [
@@ -306,7 +305,6 @@ export class DefaultStressDataObject extends StressDataObject {
 				this.containerObjectMap.set(handle.absolutePath, { tag: obj.tag, type: obj.type });
 			}
 		}
-		this._locallyCreatedObjects.push(obj);
 	}
 
 	private stageControls: StageControlsAlpha | undefined;
