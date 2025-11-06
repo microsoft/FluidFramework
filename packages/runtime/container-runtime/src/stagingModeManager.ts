@@ -35,10 +35,7 @@ const defaultStagingCommitOptions = {
 export interface StagingModeDependencies {
 	readonly pendingStateManager: Pick<
 		PendingStateManager,
-		| "pendingMessagesCount"
-		| "popStagedBatches"
-		| "replayPendingStates"
-		| "popStagedMessagesUpToCount"
+		"popStagedBatches" | "replayPendingStates" | "getLastPendingMessage"
 	>;
 	readonly outbox: Pick<Outbox, "flush" | "mainBatchMessageCount">;
 	readonly channelCollection: Pick<ChannelCollection, "notifyStagingMode">;
@@ -83,7 +80,11 @@ export class StagingModeManager {
 		flushFn();
 
 		// Track checkpoints for rollback support
-		const checkpointList = new DoublyLinkedList<number>();
+		// Each checkpoint stores a reference to the last pending message at that point
+		type CheckpointReference = ReturnType<
+			StagingModeDependencies["pendingStateManager"]["getLastPendingMessage"]
+		>;
+		const checkpointList = new DoublyLinkedList<CheckpointReference>();
 
 		const exitStagingMode = (discardOrCommit: () => void): void => {
 			try {
@@ -130,11 +131,15 @@ export class StagingModeManager {
 					});
 				});
 			},
-			checkpoint: () =>
-				this.createCheckpoint(
-					checkpointList,
-					this.dependencies.outbox.flush.bind(this.dependencies.outbox),
-				),
+			checkpoint: () => {
+				// Flush outbox to ensure all messages are in PSM
+				this.dependencies.outbox.flush();
+
+				// Get reference to the last pending message (or undefined if none)
+				const lastMessage = this.dependencies.pendingStateManager.getLastPendingMessage();
+
+				return this.createCheckpoint(checkpointList, lastMessage);
+			},
 		};
 
 		this.stageControls = stageControls;
@@ -147,20 +152,20 @@ export class StagingModeManager {
 	 * Create a checkpoint that can be rolled back to later.
 	 *
 	 * @param checkpointList - List tracking all active checkpoints
-	 * @param flushFn - Function to flush the outbox before creating checkpoint
+	 * @param messageReference - Reference to the last pending message at checkpoint time (or undefined if no messages yet)
 	 * @returns Checkpoint object with rollback and dispose capabilities
 	 */
 	private createCheckpoint(
-		checkpointList: DoublyLinkedList<number>,
-		flushFn: () => void,
+		checkpointList: DoublyLinkedList<
+			ReturnType<StagingModeDependencies["pendingStateManager"]["getLastPendingMessage"]>
+		>,
+		messageReference: ReturnType<
+			StagingModeDependencies["pendingStateManager"]["getLastPendingMessage"]
+		>,
 	): StageCheckpointAlpha {
-		// Flush the outbox to ensure all messages are in the PendingStateManager
-		flushFn();
-
-		const psmMessageCount = this.dependencies.pendingStateManager.pendingMessagesCount;
-
 		// Add checkpoint to the list and store the node
-		const { last: checkpointNode } = checkpointList.push(psmMessageCount);
+		// We store a reference to the last pending message at this checkpoint
+		const { last: checkpointNode } = checkpointList.push(messageReference);
 
 		// Capture dependencies for use in checkpoint methods
 		const deps = this.dependencies;
@@ -170,10 +175,7 @@ export class StagingModeManager {
 			rollback: () => {
 				// Check if this checkpoint is still in the list
 				if (checkpointNode.list === undefined) {
-					throw new LoggingError("Cannot rollback an invalid checkpoint", {
-						messageCount: psmMessageCount,
-						listLength: checkpointList.length,
-					});
+					throw new LoggingError("Cannot rollback an invalid checkpoint");
 				}
 
 				// Invalidate all checkpoints created after this one
@@ -186,20 +188,13 @@ export class StagingModeManager {
 
 				try {
 					// Flush the outbox to ensure all messages are in PSM before rolling back
-					flushFn();
+					deps.outbox.flush();
 
-					// Calculate how many messages were added since the checkpoint
-					const currentPsmCount = deps.pendingStateManager.pendingMessagesCount;
-					const messagesToRollback = currentPsmCount - psmMessageCount;
-
-					if (messagesToRollback > 0) {
-						deps.pendingStateManager.popStagedMessagesUpToCount(
-							messagesToRollback,
-							({ runtimeOp, localOpMetadata }) => {
-								deps.rollbackStagedChange(runtimeOp, localOpMetadata);
-							},
-						);
-					}
+					// Rollback all messages added after the checkpoint reference
+					// This uses reference comparison - much more robust than counts!
+					deps.pendingStateManager.popStagedBatches(({ runtimeOp, localOpMetadata }) => {
+						deps.rollbackStagedChange(runtimeOp, localOpMetadata);
+					}, messageReference);
 
 					deps.updateDocumentDirtyState();
 				} catch (error) {
@@ -215,6 +210,10 @@ export class StagingModeManager {
 				}
 			},
 			dispose: () => {
+				// Check if this checkpoint is still in the list
+				if (checkpointNode.list === undefined) {
+					throw new LoggingError("Cannot dispose an invalid checkpoint");
+				}
 				// Remove only this checkpoint from the list
 				// Other checkpoints (before and after) remain valid
 				checkpointNode.remove();
@@ -229,8 +228,10 @@ export class StagingModeManager {
 					return true;
 				}
 
-				const currentCount = deps.pendingStateManager.pendingMessagesCount;
-				return currentCount !== psmMessageCount;
+				// Check if any messages have been added since the checkpoint
+				// by comparing the current last message with the checkpoint's reference
+				const currentLastMessage = deps.pendingStateManager.getLastPendingMessage();
+				return currentLastMessage !== messageReference;
 			},
 		};
 

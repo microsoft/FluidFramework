@@ -897,56 +897,54 @@ export class PendingStateManager implements IDisposable {
 	}
 
 	/**
-	 * Pops all staged batches, invoking the callback on each constituent op in order (LIFO)
+	 * Pops staged messages from the back, invoking the callback on each in LIFO order.
+	 * Used for checkpoint rollback where we want to rollback to a specific message, or for discarding all staged changes.
+	 *
+	 * @param callback - Called for each popped message that has a typical runtime op
+	 * @param afterReference - Optional reference message to rollback to (this message is kept, everything after it is removed). If undefined, removes all staged messages.
 	 */
 	public popStagedBatches(
 		callback: (
-			// callback will only be given staged messages with a valid runtime op (i.e. not empty batch and not an initial message with only serialized content)
 			stagedMessage: IPendingMessage & { runtimeOp: LocalContainerRuntimeMessage },
 		) => void,
+		afterReference?: IPendingMessage,
 	): void {
 		while (!this.pendingMessages.isEmpty()) {
 			const stagedMessage = this.pendingMessages.peekBack();
-			if (stagedMessage?.batchInfo.staged === true) {
-				this.pendingMessages.pop();
 
-				if (hasTypicalRuntimeOp(stagedMessage)) {
-					callback(stagedMessage);
-				}
-			} else {
-				break; // no more staged messages
+			// Stop if we've reached the reference message
+			if (stagedMessage === afterReference) {
+				break;
+			}
+
+			// Stop if we hit a non-staged message
+			if (stagedMessage?.batchInfo.staged !== true) {
+				break;
+			}
+
+			// Pop the message
+			this.pendingMessages.pop();
+
+			if (hasTypicalRuntimeOp(stagedMessage)) {
+				callback(stagedMessage);
 			}
 		}
-		assert(
-			this.pendingMessages.toArray().every((m) => m.batchInfo.staged !== true),
-			0xb89 /* Shouldn't be any more staged messages */,
-		);
+
+		// Verify no staged messages remain (when reference is undefined, we should have removed all)
+		if (afterReference === undefined) {
+			assert(
+				this.pendingMessages.toArray().every((m) => m.batchInfo.staged !== true),
+				0xb89 /* Shouldn't be any more staged messages */,
+			);
+		}
 	}
 
 	/**
-	 * Pops a specific number of staged messages from the back, invoking the callback on each in LIFO order.
-	 * Used for checkpoint rollback where we only want to rollback messages added since the checkpoint.
+	 * Gets a reference to the last pending message in the queue, or undefined if the queue is empty.
+	 * This reference can be used later to determine if any messages have been added since.
 	 */
-	public popStagedMessagesUpToCount(
-		count: number,
-		callback: (
-			stagedMessage: IPendingMessage & { runtimeOp: LocalContainerRuntimeMessage },
-		) => void,
-	): void {
-		let popped = 0;
-		while (!this.pendingMessages.isEmpty() && popped < count) {
-			const stagedMessage = this.pendingMessages.peekBack();
-			if (stagedMessage?.batchInfo.staged === true) {
-				this.pendingMessages.pop();
-				popped++;
-
-				if (hasTypicalRuntimeOp(stagedMessage)) {
-					callback(stagedMessage);
-				}
-			} else {
-				break; // no more staged messages
-			}
-		}
+	public getLastPendingMessage(): IPendingMessage | undefined {
+		return this.pendingMessages.peekBack();
 	}
 }
 

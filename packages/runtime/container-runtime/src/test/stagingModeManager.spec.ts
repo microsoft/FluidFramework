@@ -11,25 +11,22 @@ import type { LocalContainerRuntimeMessage } from "../messageTypes.js";
 describe("StagingModeManager", () => {
 	let sandbox: Sinon.SinonSandbox;
 	let dependencies: StagingModeDependencies;
-	let mockPendingMessagesCount: { value: number };
 	let mockMainBatchMessageCount: { value: number };
+	let mockLastStagedMessage: { value: object | undefined };
 
 	beforeEach(() => {
 		sandbox = Sinon.createSandbox();
 
 		// Use objects to allow mutation of readonly properties in tests
-		mockPendingMessagesCount = { value: 0 };
 		mockMainBatchMessageCount = { value: 0 };
+		mockLastStagedMessage = { value: undefined };
 
 		// Create minimal mocks for each dependency using Pick types
 		dependencies = {
 			pendingStateManager: {
-				get pendingMessagesCount() {
-					return mockPendingMessagesCount.value;
-				},
 				popStagedBatches: sandbox.stub(),
 				replayPendingStates: sandbox.stub(),
-				popStagedMessagesUpToCount: sandbox.stub(),
+				getLastPendingMessage: sandbox.stub().callsFake(() => mockLastStagedMessage.value),
 			} as unknown as StagingModeDependencies["pendingStateManager"],
 			outbox: {
 				flush: sandbox.stub(),
@@ -277,24 +274,33 @@ describe("StagingModeManager", () => {
 		});
 
 		it("checkpoint.hasChangesSince should be false when no changes", () => {
-			mockPendingMessagesCount.value = 5;
+			const msg1 = { id: 1 };
+			mockLastStagedMessage.value = msg1;
+
 			const manager = new StagingModeManager(dependencies);
 			const controls = manager.enterStagingMode(() => {});
 			const checkpoint = controls.checkpoint();
+
+			// Last message is still the same
 			assert.equal(checkpoint.hasChangesSince, false);
 		});
 
 		it("checkpoint.hasChangesSince should be true when messages added", () => {
-			mockPendingMessagesCount.value = 5;
+			const msg1 = { id: 1 };
+			mockLastStagedMessage.value = msg1;
+
 			const manager = new StagingModeManager(dependencies);
 			const controls = manager.enterStagingMode(() => {});
 			const checkpoint = controls.checkpoint();
-			mockPendingMessagesCount.value = 10;
+
+			// Simulate messages being added after checkpoint
+			const msg2 = { id: 2 };
+			mockLastStagedMessage.value = msg2;
+
 			assert.equal(checkpoint.hasChangesSince, true);
 		});
 
 		it("checkpoint.hasChangesSince should be true when outbox has messages", () => {
-			mockPendingMessagesCount.value = 5;
 			mockMainBatchMessageCount.value = 0;
 			const manager = new StagingModeManager(dependencies);
 			const controls = manager.enterStagingMode(() => {});
@@ -319,31 +325,38 @@ describe("StagingModeManager", () => {
 			assert.throws(() => checkpoint.dispose(), /Cannot dispose an invalid checkpoint/);
 		});
 
-		it("checkpoint.rollback should call popStagedMessagesUpToCount", () => {
-			mockPendingMessagesCount.value = 5;
+		it("checkpoint.rollback should call popStagedMessagesAfter with correct reference", () => {
+			const msg1 = { id: 1 };
+			mockLastStagedMessage.value = msg1;
+
 			const manager = new StagingModeManager(dependencies);
 			const controls = manager.enterStagingMode(() => {});
 			const checkpoint = controls.checkpoint();
-			mockPendingMessagesCount.value = 10;
+
+			// Simulate messages being added after checkpoint
+			const msg2 = { id: 2 };
+			mockLastStagedMessage.value = msg2;
+
 			checkpoint.rollback();
 			assert(
-				(
-					dependencies.pendingStateManager.popStagedMessagesUpToCount as Sinon.SinonStub
-				).calledWith(5),
-				"popStagedMessagesUpToCount should be called with correct count",
+				(dependencies.pendingStateManager.popStagedBatches as Sinon.SinonStub).calledWith(
+					Sinon.match.func,
+					msg1,
+				),
+				"popStagedBatches should be called with callback and checkpoint message reference",
 			);
 		});
-
 		it("multiple checkpoints should work independently", () => {
-			mockPendingMessagesCount.value = 0;
 			const manager = new StagingModeManager(dependencies);
 			const controls = manager.enterStagingMode(() => {});
 
+			const msg1 = { id: 1 };
+			mockLastStagedMessage.value = msg1;
 			const checkpoint1 = controls.checkpoint();
-			mockPendingMessagesCount.value = 5;
 
+			const msg2 = { id: 2 };
+			mockLastStagedMessage.value = msg2;
 			const checkpoint2 = controls.checkpoint();
-			mockPendingMessagesCount.value = 10;
 
 			assert.equal(checkpoint1.isValid, true);
 			assert.equal(checkpoint2.isValid, true);
@@ -354,15 +367,16 @@ describe("StagingModeManager", () => {
 		});
 
 		it("rolling back earlier checkpoint should invalidate later ones", () => {
-			mockPendingMessagesCount.value = 0;
 			const manager = new StagingModeManager(dependencies);
 			const controls = manager.enterStagingMode(() => {});
 
+			const msg1 = { id: 1 };
+			mockLastStagedMessage.value = msg1;
 			const checkpoint1 = controls.checkpoint();
-			mockPendingMessagesCount.value = 5;
 
+			const msg2 = { id: 2 };
+			mockLastStagedMessage.value = msg2;
 			const checkpoint2 = controls.checkpoint();
-			mockPendingMessagesCount.value = 10;
 
 			checkpoint1.rollback();
 			assert.equal(checkpoint1.isValid, false);
@@ -401,16 +415,12 @@ describe("StagingModeManager", () => {
 		});
 
 		it("should call closeFn when checkpoint rollback throws", () => {
-			mockPendingMessagesCount.value = 0;
 			const manager = new StagingModeManager(dependencies);
 			const controls = manager.enterStagingMode(() => {});
 			const checkpoint = controls.checkpoint();
 
-			// Simulate messages being added after checkpoint
-			mockPendingMessagesCount.value = 5;
-
-			// Make popStagedMessagesUpToCount throw
-			(dependencies.pendingStateManager.popStagedMessagesUpToCount as Sinon.SinonStub).throws(
+			// Make popStagedBatches throw
+			(dependencies.pendingStateManager.popStagedBatches as Sinon.SinonStub).throws(
 				new Error("Test error"),
 			);
 

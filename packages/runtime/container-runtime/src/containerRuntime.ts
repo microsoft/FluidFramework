@@ -3624,7 +3624,7 @@ export class ContainerRuntime
 	 * either to be discarded or committed later (via the Stage Controls returned from enterStagingMode).
 	 */
 	public get inStagingMode(): boolean {
-		return this.stagingModeManager.inStagingMode;
+		return this.stagingModeManager?.inStagingMode ?? false;
 	}
 
 	/**
@@ -3637,10 +3637,6 @@ export class ContainerRuntime
 		if (this.attachState === AttachState.Detached) {
 			throw new UsageError("Cannot enter staging mode while Detached");
 		}
-
-		// Make sure Outbox is empty before entering staging mode,
-		// since we mark whole batches as "staged" or not to indicate whether to submit them.
-		this.flush();
 
 		// Delegate to the staging mode manager
 		return this.stagingModeManager.enterStagingMode(() => this.flush());
