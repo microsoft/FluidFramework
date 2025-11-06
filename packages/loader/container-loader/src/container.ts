@@ -410,6 +410,7 @@ export class Container
 
 					const onClosed = (err?: ICriticalContainerError): void => {
 						// pre-0.58 error message: containerClosedWithoutErrorDuringLoad
+						// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
 						reject(err ?? new GenericError("Container closed without error during load"));
 					};
 					container.on("closed", onClosed);
