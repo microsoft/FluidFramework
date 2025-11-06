@@ -31,7 +31,8 @@ interface IServiceEndpoint {
 const dockerConfig = (driverPolicies?: IRouterliciousDriverPolicies) => ({
 	serviceEndpoint: {
 		deltaStreamUrl: "http://localhost:3002",
-		hostUrl: "http://localhost:3000",
+		// The 'hostUrl' value doesn't seem to matter for this driver.
+		hostUrl: "this value is unused",
 		ordererUrl: "http://localhost:3003",
 		deltaStorageUrl: "http://localhost:3001",
 	},

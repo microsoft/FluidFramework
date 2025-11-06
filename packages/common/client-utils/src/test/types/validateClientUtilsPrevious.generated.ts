@@ -281,6 +281,24 @@ declare type current_as_old_for_TypeAlias_EventEmitterEventType = requireAssigna
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "TypeAlias_FluidLayer": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_FluidLayer = requireAssignableTo<TypeOnly<old.FluidLayer>, TypeOnly<current.FluidLayer>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_FluidLayer": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_FluidLayer = requireAssignableTo<TypeOnly<current.FluidLayer>, TypeOnly<old.FluidLayer>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "TypeAlias_IsoBuffer": {"forwardCompat": false}
  */
 declare type old_as_current_for_TypeAlias_IsoBuffer = requireAssignableTo<TypeOnly<old.IsoBuffer>, TypeOnly<current.IsoBuffer>>

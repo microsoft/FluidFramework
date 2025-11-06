@@ -15,13 +15,13 @@ module.exports = {
 	},
 	extends: [
 		"eslint:recommended",
-		"plugin:eslint-comments/recommended",
+		"plugin:@eslint-community/eslint-comments/recommended",
 		"plugin:@typescript-eslint/eslint-recommended",
 		"plugin:@typescript-eslint/recommended-type-checked",
 		"plugin:@typescript-eslint/stylistic-type-checked",
-		// import/recommended is the combination of import/errors and import/warnings
-		"plugin:import/recommended",
-		"plugin:import/typescript",
+		// import-x/recommended is the combination of import-x/errors and import-x/warnings
+		"plugin:import-x/recommended",
+		"plugin:import-x/typescript",
 	],
 	globals: {
 		Atomics: "readonly",
@@ -36,7 +36,7 @@ module.exports = {
 		sourceType: "module",
 		project: "./tsconfig.json",
 	},
-	plugins: ["import", "unicorn"],
+	plugins: ["import-x", "unicorn"],
 	reportUnusedDisableDirectives: true,
 	rules: {
 		// These rules were deprecated, then removed in `@typescript-eslint/eslint-plugin` v8.
@@ -51,8 +51,9 @@ module.exports = {
 
 		/**
 		 * Disallow `-` immediately following a JSDoc/TSDoc tag (e.g. `@deprecated - foo`).
+		 * FIXME: https://dev.azure.com/fluidframework/internal/_workitems/edit/29535
 		 */
-		"@fluid-internal/fluid/no-hyphen-after-jsdoc-tag": "error",
+		"@fluid-internal/fluid/no-hyphen-after-jsdoc-tag": "off",
 
 		/**
 		 * Disallow file path based links in JSDoc/TSDoc comments.
@@ -159,40 +160,33 @@ module.exports = {
 
 		// #endregion
 
-		// eslint-plugin-eslint-comments
-		"eslint-comments/disable-enable-pair": [
+		// @eslint-community/eslint-plugin-eslint-comments
+		"@eslint-community/eslint-comments/disable-enable-pair": [
 			"error",
 			{
 				allowWholeFile: true,
 			},
 		],
 
-		// #region eslint-plugin-import
+		// #region eslint-plugin-import-x
 
-		"import/no-default-export": "error",
-		"import/no-deprecated": "off",
-		"import/no-extraneous-dependencies": "error",
-		"import/no-internal-modules": "error",
-		"import/no-unassigned-import": "error",
-		"import/no-unresolved": [
+		"import-x/no-default-export": "error",
+		"import-x/no-deprecated": "off",
+		"import-x/no-extraneous-dependencies": "error",
+		"import-x/no-internal-modules": "error",
+		"import-x/no-unassigned-import": "error",
+		"import-x/no-unresolved": [
 			"error",
 			{
 				caseSensitive: true,
 			},
 		],
-		"import/no-unused-modules": "error",
-		"import/order": [
+		"import-x/no-unused-modules": "error",
+		"import-x/order": [
 			"error",
 			{
-				"newlines-between": "always",
-				"alphabetize": {
-					order: "asc",
-					// Sorting is case-sensitive by default, which is the same as Biome. To avoid
-					// another huge set of changes to order things case-insensitively, we'll just
-					// use the rule with this config for now. This decision should be considered
-					// pragmatic and not a statement of preference, and we should revisit this.
-					caseInsensitive: false,
-				},
+				"newlines-between": "ignore",
+				"groups": [["builtin", "external", "internal", "parent", "sibling", "index"]],
 			},
 		],
 
@@ -368,18 +362,45 @@ module.exports = {
 			files: ["**/types/*validate*Previous*.ts"],
 			rules: {
 				"@typescript-eslint/comma-spacing": "off",
+				"import-x/order": "off",
 			},
 		},
 	],
 	settings: {
-		"import/extensions": [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
-		"import/parsers": {
-			"@typescript-eslint/parser": [".ts", ".tsx", ".d.ts"],
+		"import-x/extensions": [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
+		"import-x/parsers": {
+			"@typescript-eslint/parser": [".ts", ".tsx", ".d.ts", ".cts", ".mts"],
 		},
-		"import/resolver": {
-			// See remark in minimal-deprecated.js on the importance of import/resolver key order.
-			node: {
-				extensions: [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
+		"import-x/resolver": {
+			typescript: {
+				extensions: [
+					// `.mts`, `.cts`, `.d.mts`, `.d.cts`, `.mjs`, `.cjs` are not included because `.cjs` and `.mjs` must be used
+					// explicitly in imports
+					".ts",
+					".tsx",
+					".d.ts",
+					".js",
+					".jsx",
+				],
+				conditionNames: [
+					// This supports the test-only conditional export pattern used in merge-tree and id-compressor.
+					"allow-ff-test-exports",
+
+					// Default condition names below, see https://github.com/import-js/eslint-import-resolver-typescript#conditionnames
+					"types",
+					"import",
+
+					// APF: https://angular.io/guide/angular-package-format
+					"esm2020",
+					"es2020",
+					"es2015",
+
+					"require",
+					"node",
+					"node-addons",
+					"browser",
+					"default",
+				],
 			},
 		},
 	},

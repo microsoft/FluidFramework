@@ -12,7 +12,7 @@ import {
 import { expect } from "chai";
 import { createSandbox } from "sinon";
 
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { runBackgroundScript } from "../background/BackgroundScriptContent.js";
 import { type DevToolsInitMessage, extensionViewMessageSource } from "../messaging/index.js";
 

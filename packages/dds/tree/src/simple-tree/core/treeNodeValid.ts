@@ -25,7 +25,7 @@ import {
 } from "./treeNodeKernel.js";
 import type { InternalTreeNode } from "./types.js";
 import { typeSchemaSymbol } from "./withType.js";
-import type { ImplicitAllowedTypes } from "./allowedTypes.js";
+import type { AllowedTypesFull } from "./allowedTypes.js";
 import type { SimpleNodeSchemaBase } from "./simpleNodeSchemaBase.js";
 
 /**
@@ -259,7 +259,7 @@ export function isClassBasedSchema(
  */
 export function createTreeNodeSchemaPrivateData(
 	schema: TreeNodeSchemaCore<string, NodeKind, boolean>,
-	childAnnotatedAllowedTypes: readonly ImplicitAllowedTypes[],
+	childAllowedTypes: readonly AllowedTypesFull[],
 	toStored: TreeNodeSchemaPrivateData["toStored"],
 ): TreeNodeSchemaPrivateData {
 	const schemaValid = schemaAsTreeNodeValid(schema);
@@ -269,7 +269,7 @@ export function createTreeNodeSchemaPrivateData(
 
 	return {
 		idempotentInitialize: () => schemaValid.oneTimeInitialize().oneTimeInitialized,
-		childAnnotatedAllowedTypes,
+		childAllowedTypes,
 		toStored,
 	};
 }

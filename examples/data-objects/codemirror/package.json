@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/codemirror",
-	"version": "2.63.0",
+	"version": "2.72.0",
 	"private": true,
 	"description": "Simple markdown editor",
 	"homepage": "https://fluidframework.com",
@@ -31,8 +31,8 @@
 		"check:format": "npm run check:biome",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"dev": "npm run webpack:dev",
-		"eslint": "eslint --format stylish src",
-		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
+		"eslint": "eslint --quiet --format stylish src",
+		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
 		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
@@ -68,13 +68,13 @@
 		"@fluid-example/webpack-fluid-loader": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.58.3",
-		"@fluidframework/eslint-config-fluid": "^6.0.0",
+		"@fluidframework/eslint-config-fluid": "workspace:^",
 		"@types/codemirror": "5.60.7",
 		"@types/node": "^18.19.0",
 		"@types/react": "^18.3.11",
 		"copyfiles": "^2.4.1",
 		"css-loader": "^7.1.2",
-		"eslint": "~8.55.0",
+		"eslint": "~8.57.1",
 		"rimraf": "^4.4.0",
 		"style-loader": "^4.0.0",
 		"ts-loader": "^9.5.1",
@@ -95,8 +95,6 @@
 		}
 	},
 	"typeValidation": {
-		"disabled": true,
-		"broken": {},
-		"entrypoint": "internal"
+		"disabled": true
 	}
 }

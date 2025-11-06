@@ -7,7 +7,12 @@ import { strict as assert } from "node:assert";
 
 import type { SessionId } from "@fluidframework/id-compressor";
 
-import { type ICodecOptions, type IJsonCodec, makeCodecFamily } from "../../../codec/index.js";
+import {
+	type CodecWriteOptions,
+	currentVersion,
+	type IJsonCodec,
+	makeCodecFamily,
+} from "../../../codec/index.js";
 import {
 	type FieldChangeHandler,
 	genericFieldKind,
@@ -81,20 +86,20 @@ import {
 	type FieldChangeMap,
 	type FieldId,
 	type NodeChangeset,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeTypes.js";
 import {
 	getFieldKind,
 	intoDelta,
 	updateRefreshers,
 	relevantRemovedRoots as relevantDetachedTreesImplementation,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import type {
 	EncodedNodeChangeset,
 	FieldChangeDelta,
 	FieldChangeEncodingContext,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import { deepFreeze as deepFreezeBase } from "@fluidframework/test-runtime-utils/internal";
 import { BTree } from "@tylerbu/sorted-btree-es6";
@@ -176,14 +181,15 @@ const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Ma
 	[singleNodeField, valueField].map((field) => [field.identifier, field]),
 );
 
-const codecOptions: ICodecOptions = {
+const codecOptions: CodecWriteOptions = {
 	jsonValidator: ajvValidator,
+	minVersionForCollab: currentVersion,
 };
 
 const codec = makeModularChangeCodecFamily(
 	new Map([[1, fieldKindConfiguration]]),
 	testRevisionTagCodec,
-	makeFieldBatchCodec(codecOptions, 1),
+	makeFieldBatchCodec(codecOptions),
 	codecOptions,
 );
 const family = new ModularChangeFamily(fieldKinds, codec);

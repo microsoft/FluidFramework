@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { allowUnused } from "../../simple-tree/index.js";
 import type {
 	areSafelyAssignable,
 	requireAssignableTo,
@@ -15,7 +16,7 @@ import type {
 	RestrictiveStringRecord,
 	UnionToIntersection,
 	// Allow importing from this specific file which is being tested:
-	/* eslint-disable-next-line import/no-internal-modules */
+	/* eslint-disable-next-line import-x/no-internal-modules */
 } from "../../util/typeUtils.js";
 
 // These tests currently just cover the type checking, so its all compile time.
@@ -88,5 +89,25 @@ import type {
 	type _check3 = requireTrue<
 		areSafelyAssignable<UnionToIntersection<{ x: 1 | 2 } | { x: 2 | 3 }>, { x: 2 }>
 	>;
-	type _check4 = requireTrue<areSafelyAssignable<UnionToIntersection<1>, 1>>;
+
+	// Check that arrays are preserved
+	allowUnused<
+		requireTrue<areSafelyAssignable<UnionToIntersection<readonly [1 | 2]>, readonly [1 | 2]>>
+	>();
+
+	// Check that intersections are preserved
+	allowUnused<
+		requireTrue<
+			areSafelyAssignable<UnionToIntersection<{ a: 1 } & { b: 2 }>, { a: 1 } & { b: 2 }>
+		>
+	>();
+
+	// Check intersections of unions behave as if intersection was distributed over union
+	{
+		type intersectedUnion = ({ a: 1 } | { b: 2 }) & { foo: 1 };
+		type converted = UnionToIntersection<intersectedUnion>;
+		allowUnused<
+			requireTrue<areSafelyAssignable<converted, { a: 1 } & { b: 2 } & { foo: 1 }>>
+		>();
+	}
 }

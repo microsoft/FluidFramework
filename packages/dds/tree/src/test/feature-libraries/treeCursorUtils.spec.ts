@@ -20,9 +20,9 @@ import {
 	stackTreeFieldCursor,
 	stackTreeNodeCursor,
 	// Allow importing from this specific file which is being tested:
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/treeCursorUtils.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { adapter } from "../../feature-libraries/treeTextCursor.js";
 import { brand } from "../../util/index.js";
 import { expectEqualFieldPaths, expectEqualPaths } from "../utils.js";

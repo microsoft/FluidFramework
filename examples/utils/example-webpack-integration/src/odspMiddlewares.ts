@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-nodejs-modules
+// eslint-disable-next-line import-x/no-nodejs-modules
 import process from "node:process";
 
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { OdspTokenManager } from "@fluidframework/tool-utils/internal";
 import type { Middleware, Request, Response } from "webpack-dev-server";
 
