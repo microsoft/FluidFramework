@@ -20,7 +20,7 @@ parameters:
 # Variables to be set in the stage that runs tests
 - name: stageVariables
   type: object
-  default:
+  default: {}
 
 # If true, the stage that uploads pipeline telemetry to Kusto will include a task to upload
 # test pass rate telemetry.
@@ -49,7 +49,7 @@ parameters:
 
 - name: env
   type: object
-  default:
+  default: {}
 
 - name: splitTestVariants
   type: object
@@ -80,6 +80,7 @@ parameters:
   type: string
   default: ""
 
+# If provided, this value is passed directly to the "condition" key of the stage in this file.
 - name: condition
   type: string
   default: true
@@ -97,12 +98,6 @@ parameters:
 - name: skipTestResultPublishing
   type: boolean
   default: false
-
-# Custom steps specified by the "caller" of this template, for any additional things that need to be done
-# after the steps in this template complete.
-- name: additionalSteps
-  type: stepList
-  default: []
 
 # If true, the versions of our packages installed for compat testing will be cached.
 - name: cacheCompatVersionsInstalls
@@ -125,6 +120,25 @@ parameters:
   values:
     - none
     - sequential
+
+# if true, the FluidFramework repo will be checked out and a docker-compose env will be spun up for testing
+- name: runAgainstDocker
+  type: boolean
+  default: false
+
+# Tags for docker environment setup
+- name: alfredImageTag
+  type: string
+  default: 'latest'
+- name: historianImageTag
+  type: string
+  default: 'latest'
+- name: gitrestImageTag
+  type: string
+  default: 'latest'
+- name: gitsshImageTag
+  type: string
+  default: 'latest'
 
 stages:
 - stage: ${{ parameters.stageId}}
@@ -152,8 +166,16 @@ stages:
         # basic ANSI color support though, so force that in the pipeline
         - name: FORCE_COLOR
           value: 1
+        - name: pipelineHostPath
+          ${{ if eq(parameters.runAgainstDocker, true) }}:
+            # Running against docker means we'll check out the FluidFramework repo as well as ff_pipeline_host
+            # When multiple repos are checked out, they are checked out to $(Build.SourcesDirectory)/<REPO_NAME>
+            value: $(Build.SourcesDirectory)/ff_pipeline_host
+          ${{ else }}:
+            value: $(Build.SourcesDirectory)
+
         - name: testPackageDir
-          value: '$(Build.SourcesDirectory)/node_modules/${{ parameters.testPackage }}'
+          value: '${{ variables.pipelineHostPath }}/node_modules/${{ parameters.testPackage }}'
         - name: testPackageFilePattern
           value: ${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-[0-9]*.tgz
         # Note that this path must match the path that the packed packages are saved to in the build pipeline.
@@ -164,7 +186,6 @@ stages:
           value: true
         - name: artifactPipeline
           value: Build - client packages
-
         steps:
         # Setup
         - checkout: ff_pipeline_host
@@ -208,6 +229,7 @@ stages:
               Pipeline Parameters:
                 poolBuild=${{ parameters.poolBuild }}
                 testPackage=${{ parameters.testPackage }}
+                runAgainstDocker=${{ parameters.runAgainstDocker }}
 
               Pipeline Variables:
                 isTestBranch=${{ variables.isTestBranch }}
@@ -219,20 +241,54 @@ stages:
                 testFileTarName=${{ parameters.testFileTarName }}
                 artifactPipeline=${{ variables.artifactPipeline }}
                 artifactBuildId=${{ parameters.artifactBuildId }}
+                pipelineHostPath=${{ variables.pipelineHostPath }}
               "
 
         - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
         - template: /tools/pipelines/templates/include-install-pnpm.yml@self
           parameters:
-            buildDirectory: $(Build.SourcesDirectory)
+            buildDirectory: ${{ variables.pipelineHostPath }}
 
         - template: /tools/pipelines/templates/include-setup-npmrc-for-download.yml@self
+
+        # Set up Docker environment if running against docker
+        - ${{ if eq(parameters.runAgainstDocker, true) }}:
+          # Checks out FluidFramework repo
+          - checkout: self
+            clean: true
+          - task: Docker@2
+            displayName: 'Login to container registry'
+            inputs:
+              containerRegistry: 'Fluid Container Registry'
+              command: 'login'
+          - task: DockerCompose@1
+            displayName: 'Start routerlicious environment in docker'
+            inputs:
+              containerregistrytype: 'Container Registry'
+              dockerComposeFile: $(Build.SourcesDirectory)/FluidFramework/server/docker-compose.yml
+              action: 'Run a Docker Compose command'
+              dockerComposeCommand: 'up -d --wait'
+              projectName: 'routerlicious'
+            env:
+              REGISTRY_URL: fluidcr.azurecr.io/build
+              ALFRED_IMAGE_TAG: ${{ parameters.alfredImageTag }}
+              HISTORIAN_IMAGE_TAG: ${{ parameters.historianImageTag }}
+              GITREST_IMAGE_TAG: ${{ parameters.gitrestImageTag }}
+              GITSSH_IMAGE_TAG: ${{ parameters.gitsshImageTag }}
+          - task: Bash@3
+            displayName: 'Wait for services to be ready'
+            inputs:
+              targetType: 'filePath'
+              filePath: $(Build.SourcesDirectory)/FluidFramework/scripts/wait-for-docker-services.sh
+            env:
+              DOCKER_COMPOSE_FILE: $(Build.SourcesDirectory)/FluidFramework/server/docker-compose.yml
 
         - task: Bash@3
           displayName: Install base dependencies
           inputs:
             targetType: 'inline'
+            workingDirectory: ${{ variables.pipelineHostPath }}
             script: |
               set -eu -o pipefail
               pnpm install
@@ -262,7 +318,7 @@ stages:
           displayName: Initialize
           inputs:
             targetType: 'inline'
-            workingDirectory: $(Build.SourcesDirectory)
+            workingDirectory: ${{ variables.pipelineHostPath }}
             script: |
               set -eu -o pipefail
               if [[ `ls -1 ${{ variables.testPackagePathPattern }} | wc -l` -eq 1 ]]; then
@@ -274,13 +330,14 @@ stages:
               fi
         # Install test package
         - task: Bash@3
-          displayName: 'pnpm install'
+          displayName: 'pnpm install test package'
           # ADO feeds have latency on the order of minutes before packages are available downstream. See:
           # https://learn.microsoft.com/en-us/azure/devops/artifacts/concepts/upstream-sources?view=azure-devops#upstream-sources-health-status
           # This pipeline installs packages which were published very recently relative to its runtime, hence the rather high retry count here.
           retryCountOnTaskFailure: 10
           inputs:
             targetType: 'inline'
+            workingDirectory: ${{ variables.pipelineHostPath }}
             script: 'pnpm install $(Initialize.testPackageTgz)'
 
         # Download Test Files & Install Extra Dependencies
@@ -310,8 +367,8 @@ stages:
           - task: Bash@3
             displayName: Unpack test files
             inputs:
-              workingDirectory: $(Build.SourcesDirectory)/node_modules/${{ parameters.testPackage }}
               targetType: 'inline'
+              workingDirectory: ${{ variables.pipelineHostPath }}/node_modules/${{ parameters.testPackage }}
               script: |
                 set -eu -o pipefail
 
@@ -328,15 +385,15 @@ stages:
 
           - template: /tools/pipelines/templates/include-copy-dev-dependencies.yml@self
             parameters:
-              sourcePackageLocation: $(Build.SourcesDirectory)/node_modules/${{ parameters.testPackage }}
-              destPackageLocation: $(Build.SourcesDirectory)
+              sourcePackageLocation: ${{ variables.pipelineHostPath }}/node_modules/${{ parameters.testPackage }}
+              destPackageLocation: ${{ variables.pipelineHostPath }}
 
         - ${{ if eq(parameters.cacheCompatVersionsInstalls, true) }}:
           - task: Bash@3
             displayName: Compute compat versions install location and version
             inputs:
               targetType: 'inline'
-              workingDirectory: $(Build.SourcesDirectory)/node_modules/@fluid-private/test-end-to-end-tests
+              workingDirectory: ${{ variables.pipelineHostPath }}/node_modules/@fluid-private/test-end-to-end-tests
               # Using import.meta.resolve to compute this is more resilient to different install tree types.
               # Also note that test-version-utils is esm-only, so cannot be loaded with require.
               script: |
@@ -364,7 +421,7 @@ stages:
             timeoutInMinutes: 3
             continueOnError: true
             inputs:
-              key: '"compat-version-installs" | "$(Agent.OS)" | "${{ parameters.testCommand }}" | "${{ variant.name }}" |  $(compatVersionCacheKey)'
+              key: '"compat-version-installs" | "$(Agent.OS)" | "${{ parameters.testCommand }}" | "${{ variant.name }}" | "$(compatVersionCacheKey)"'
               path: $(compatVersionInstallsPath)
 
         # Only check out tenants from the tenant pool if we are running tests against ODSP
@@ -413,7 +470,7 @@ stages:
               login__odsp__test__tenants: $(tenantCreds)
           inputs:
             command: 'custom'
-            workingDir: $(Build.SourcesDirectory)/node_modules/${{ parameters.testPackage }}
+            workingDir: ${{ variables.pipelineHostPath }}/node_modules/${{ parameters.testPackage }}
             customCommand: 'run ${{ parameters.testCommand }} -- ${{ variant.flags }}'
 
         - ${{ if eq(parameters.skipTestResultPublishing, false) }}:
@@ -455,7 +512,7 @@ stages:
           - task: PublishPipelineArtifact@1
             displayName: Publish Artifact - Tinylicious Log
             inputs:
-              targetPath: '$(Build.SourcesDirectory)/node_modules/${{ parameters.testPackage }}/tinylicious.log'
+              targetPath: '${{ variables.pipelineHostPath }}/node_modules/${{ parameters.testPackage }}/tinylicious.log'
               artifactName: 'tinyliciousLog_attempt-$(System.JobAttempt)'
               publishLocation: 'pipeline'
             condition: always()
@@ -494,7 +551,17 @@ stages:
         #   parameters:
         #     buildDirectory: ${{ variables.testPackageDir }}
 
-        - ${{ parameters.additionalSteps }}
+        # Stop the docker environment if running against it
+        - ${{ if eq(parameters.runAgainstDocker, true) }}:
+          - task: DockerCompose@1
+            displayName: 'Stop routerlicious environment in docker'
+            condition: always()
+            inputs:
+              containerregistrytype: 'Container Registry'
+              dockerComposeFile: $(Build.SourcesDirectory)/FluidFramework/server/docker-compose.yml
+              action: 'Run a Docker Compose command'
+              dockerComposeCommand: 'down'
+              projectName: 'routerlicious'
 
         - template: /tools/pipelines/templates/include-upload-npm-logs.yml@self
 
