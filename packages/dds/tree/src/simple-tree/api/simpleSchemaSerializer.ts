@@ -32,7 +32,7 @@ import type { ValueSchema } from "../../core/index.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
- * Converts a simple schema (view or stored) to a serializable format for compatibility testing.
+ * Converts a simple schema (view or stored) to a serializable format.
  * @remarks The JSON-compatible schema returned from this method is only intended for use in snapshots/comparisons of view schemas.
  * It is not possible to reconstruct a full view schema (including metadata and persistedMetadata) from the serialized format.
  * @param treeSchema - The tree schema to convert.
@@ -58,9 +58,9 @@ export function serializeSimpleSchema(simpleSchema: SimpleTreeSchema): JsonCompa
 }
 
 /**
- * Deserializes a JSON-compatible schema into a view schema for compatibility testing.
+ * Deserializes a JSON-compatible schema into a simple schema.
  * @param serializedSchema - The serialized schema to deserialize.
- * @returns A deserialized view schema.
+ * @returns A deserialized simple schema.
  * @throws Will throw a usage error if the serialized schema is not in the expected format.
  *
  * @alpha
