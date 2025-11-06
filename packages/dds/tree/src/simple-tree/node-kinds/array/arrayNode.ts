@@ -575,6 +575,7 @@ const TreeNodeWithArrayFeatures = (() => {
  */
 /* eslint-disable @typescript-eslint/explicit-member-accessibility, @typescript-eslint/no-explicit-any */
 // prettier-ignore
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 declare abstract class NodeWithArrayFeatures<Input, T>
 	extends TreeNodeValid<Input>
 	implements Pick<readonly T[], (typeof arrayPrototypeKeys)[number]>

@@ -666,6 +666,7 @@ function objectToFlexContent(
 		Symbol.iterator in data ||
 		isFluidHandle(data)
 	) {
+		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		throw new UsageError(`Input data is incompatible with Object schema: ${data}`);
 	}
 
