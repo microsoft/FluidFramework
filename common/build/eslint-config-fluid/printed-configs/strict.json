@@ -858,6 +858,17 @@
                 ]
             }
         ],
+        "@typescript-eslint/no-restricted-types": [
+            "error",
+            {
+                "types": {
+                    "null": {
+                        "message": "Use 'undefined' instead of 'null'",
+                        "fixWith": "undefined"
+                    }
+                }
+            }
+        ],
         "@typescript-eslint/no-shadow": [
             "error",
             {
@@ -1983,7 +1994,7 @@
             "error"
         ],
         "unicorn/no-null": [
-            "error"
+            "off"
         ],
         "unicorn/no-object-as-default-parameter": [
             "error"

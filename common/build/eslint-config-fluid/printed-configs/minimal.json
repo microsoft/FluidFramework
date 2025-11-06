@@ -829,6 +829,17 @@
                 ]
             }
         ],
+        "@typescript-eslint/no-restricted-types": [
+            "error",
+            {
+                "types": {
+                    "null": {
+                        "message": "Use 'undefined' instead of 'null'",
+                        "fixWith": "undefined"
+                    }
+                }
+            }
+        ],
         "@typescript-eslint/no-shadow": [
             "error",
             {
@@ -1828,9 +1839,6 @@
         ],
         "unicorn/no-new-buffer": [
             "error"
-        ],
-        "unicorn/no-null": [
-            "warn"
         ],
         "unicorn/number-literal-case": [
             "off"

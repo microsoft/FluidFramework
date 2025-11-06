@@ -61,6 +61,11 @@ module.exports = {
 		"unicorn/no-nested-ternary": "off",
 
 		/**
+		 * Disabled in favor of "@typescript-eslint/no-restricted-types, which is more effective.
+		 */
+		"unicorn/no-null": "off",
+
+		/**
 		 * Disabled due to false positives / disruptive behavior of auto-fix.
 		 * See {@link https://github.com/sindresorhus/eslint-plugin-unicorn/issues/2018}.
 		 * We may consider re-enabling once the above issue has been resolved.

@@ -124,12 +124,6 @@ module.exports = {
 		"@fluid-internal/fluid/no-unchecked-record-access": "error",
 
 		/**
-		 * The unicorn rules are documented in here:
-		 * {@link https://github.com/sindresorhus/eslint-plugin-unicorn}
-		 */
-		"unicorn/no-null": "warn",
-
-		/**
 		 * RATIONALE: Harmless.
 		 *
 		 * Our guideline is to only use leading underscores on private members when required to avoid a conflict
