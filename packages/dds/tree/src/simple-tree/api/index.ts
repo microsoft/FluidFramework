@@ -168,6 +168,6 @@ export {
 	incrementalSummaryHint,
 } from "./incrementalAllowedTypes.js";
 export {
-	serializeSimpleSchema,
-	deserializeSimpleSchema,
-} from "./simpleSchemaSerializer.js";
+	encodeSimpleSchema,
+	decodeSimpleSchema,
+} from "./simpleSchemaCodec.js";

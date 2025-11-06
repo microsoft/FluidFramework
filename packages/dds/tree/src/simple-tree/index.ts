@@ -281,6 +281,6 @@ export {
 } from "./leafNodeSchema.js";
 export type { LeafSchema } from "./leafNodeSchema.js";
 export {
-	serializeSimpleSchema,
-	deserializeSimpleSchema,
+	encodeSimpleSchema,
+	decodeSimpleSchema,
 } from "./api/index.js";
