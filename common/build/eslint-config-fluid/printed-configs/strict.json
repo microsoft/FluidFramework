@@ -22,8 +22,8 @@
         "sourceType": "module"
     },
     "plugins": [
-        "import-x",
         "@eslint-community/eslint-comments",
+        "import-x",
         "@fluid-internal/fluid",
         "unused-imports",
         "promise",
