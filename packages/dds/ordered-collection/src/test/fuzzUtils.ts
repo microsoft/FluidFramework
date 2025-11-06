@@ -130,7 +130,6 @@ function makeReducer(): Reducer<ConsensusOrderedCollectionOperation, FuzzTestSta
 			});
 		},
 		acquire: ({ client }, { resultType }) => {
-			// Fire and forget - the fuzz framework handles sequencing
 			client.channel
 				.acquire(async (value) => {
 					return resultType;
