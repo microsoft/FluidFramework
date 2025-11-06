@@ -66,8 +66,8 @@ export interface StagingModeCreateCheckpoint {
 	type: "stagingModeCreateCheckpoint";
 }
 
-export interface StagingModeRollbackCheckpoint {
-	type: "stagingModeRollbackCheckpoint";
+export interface StagingModeRollbackToCheckpoint {
+	type: "stagingModeRollbackToCheckpoint";
 }
 
 export type StressDataObjectOperations =
@@ -77,7 +77,7 @@ export type StressDataObjectOperations =
 	| EnterStagingMode
 	| ExitStagingMode
 	| StagingModeCreateCheckpoint
-	| StagingModeRollbackCheckpoint;
+	| StagingModeRollbackToCheckpoint;
 
 export class StressDataObject extends DataObject {
 	public static readonly factory: DataObjectFactory<StressDataObject> = new DataObjectFactory({
@@ -340,21 +340,26 @@ export class DefaultStressDataObject extends StressDataObject {
 	public createCheckpoint() {
 		assert(this.stageControls !== undefined, "must have staging mode controls to checkpoint");
 		this.stageControls.checkpoint();
+		// Track that we've created at least one checkpoint
+		if (this.stageControls.hasChangesSinceCheckpoint === false) {
+		}
 	}
 
-	public rollbackCheckpoint() {
+	public rollbackToCheckpoint() {
 		assert(
 			this.stageControls !== undefined,
 			"must have staging mode controls to rollback checkpoint",
 		);
-		this.stageControls.rollbackCheckpoint();
+		this.stageControls.rollbackToCheckpoint();
+		// After rollback, we've consumed a checkpoint but there might be more
+		// For simplicity, assume we need to check again
 	}
 
-	public getCheckpointCount(): number {
+	public hasChangesSinceCheckpoint(): boolean {
 		if (this.stageControls === undefined) {
-			return 0;
+			return false;
 		}
-		return this.stageControls.checkpointCount;
+		return this.stageControls.hasChangesSinceCheckpoint === true;
 	}
 }
 

@@ -251,6 +251,7 @@ import {
 	RemoteMessageProcessor,
 	type OutboundBatch,
 	type BatchResubmitInfo,
+	type IBatchCheckpoint,
 } from "./opLifecycle/index.js";
 import { pkgVersion } from "./packageVersion.js";
 import {
@@ -3541,46 +3542,42 @@ export class ContainerRuntime
 	 * {@inheritDoc @fluidframework/runtime-definitions#IContainerRuntimeBase.orderSequentially}
 	 */
 	public orderSequentially<T>(callback: () => T): T {
+		let checkpoint: IBatchCheckpoint | undefined;
 		let stageControls: StageControlsInternal | undefined;
-		let checkpointCreated = false;
 		if (this.mc.config.getBoolean("Fluid.ContainerRuntime.EnableRollback") === true) {
 			if (!this.batchRunner.running && !this.inStagingMode) {
 				stageControls = this.enterStagingMode();
 			}
-			// Create a checkpoint to enable rollback if needed
-			// Note: we are only checkpointing the mainBatch for two reasons:
+			// Note: we are not touching any batches other than mainBatch here, for two reasons:
 			// 1. It would not help, as other batches are flushed independently from main batch.
 			// 2. There is no way to undo process of data store creation, blob creation, ID compressor ops, or other things tracked by other batches.
-			if (this.inStagingMode) {
-				this.stageControls?.checkpoint();
-				checkpointCreated = true;
-			}
+			checkpoint = this.outbox.getBatchCheckpoints().mainBatch;
 		}
 		const result = this.batchRunner.run(() => {
 			try {
 				return callback();
 			} catch (error) {
-				if (checkpointCreated) {
-					// Rollback if there are changes since the checkpoint
-					if (this.stageControls?.hasChangesSinceCheckpoint) {
-						// This will throw and close the container if rollback fails
-						try {
-							this.stageControls.rollbackToCheckpoint();
-						} catch (error_) {
-							const error2 = wrapError(error_, (message) => {
-								return DataProcessingError.create(
-									`RollbackError: ${message}`,
-									"checkpointRollback",
-									undefined,
-								) as DataProcessingError;
-							});
-							this.closeFn(error2);
-							throw error2;
-						}
+				if (checkpoint) {
+					// This will throw and close the container if rollback fails
+					try {
+						checkpoint.rollback((message: LocalBatchMessage) =>
+							// These changes are staged since we entered staging mode above
+							this.rollbackStagedChange(message.runtimeOp, message.localOpMetadata),
+						);
+						this.updateDocumentDirtyState();
+						stageControls?.discardChanges();
+						stageControls = undefined;
+					} catch (error_) {
+						const error2 = wrapError(error_, (message) => {
+							return DataProcessingError.create(
+								`RollbackError: ${message}`,
+								"checkpointRollback",
+								undefined,
+							) as DataProcessingError;
+						});
+						this.closeFn(error2);
+						throw error2;
 					}
-					// Always discard staging mode if we created it
-					stageControls?.discardChanges();
-					stageControls = undefined;
 				} else {
 					this.closeFn(
 						wrapError(
@@ -3720,30 +3717,28 @@ export class ContainerRuntime
 				const baselineCount = lastCheckpoint ?? initialPendingMessageCount;
 				return currentCount !== baselineCount;
 			},
-			rollbackToCheckpoint: () => {
-				if (checkpointStack.length === 0) {
-					throw new LoggingError("No checkpoint exists to rollback to", {
-						checkpointCount: 0,
-					});
+			rollbackToCheckpoint() {
+				if (!this.hasChangesSinceCheckpoint) {
+					throw new UsageError("hasChangesSinceCheckpoint must be true to rollback");
 				}
 				const checkpointMessageCount = checkpointStack.pop()!;
 				try {
 					// Flush the outbox to ensure all messages are in PSM before rolling back
 					// NOTE: We can't use this.flush() here, because orderSequentially uses StagingMode and in the rollback case we'll hit assert 0x24c
-					this.outbox.flush(); // Calculate how many messages were added since the checkpoint
-					const currentPsmCount = this.pendingStateManager.pendingMessagesCount;
+					self.outbox.flush(); // Calculate how many messages were added since the checkpoint
+					const currentPsmCount = self.pendingStateManager.pendingMessagesCount;
 					const messagesToRollback = currentPsmCount - checkpointMessageCount;
 
 					if (messagesToRollback > 0) {
-						this.pendingStateManager.popStagedMessagesUpToCount(
+						self.pendingStateManager.popStagedMessagesUpToCount(
 							messagesToRollback,
 							({ runtimeOp, localOpMetadata }) => {
-								this.rollbackStagedChange(runtimeOp, localOpMetadata);
+								self.rollbackStagedChange(runtimeOp, localOpMetadata);
 							},
 						);
 					}
 
-					this.updateDocumentDirtyState();
+					self.updateDocumentDirtyState();
 				} catch (error) {
 					const error2 = wrapError(error, (message) => {
 						return DataProcessingError.create(
@@ -3752,7 +3747,7 @@ export class ContainerRuntime
 							undefined,
 						) as DataProcessingError;
 					});
-					this.closeFn(error2);
+					self.closeFn(error2);
 					throw error2;
 				}
 			},

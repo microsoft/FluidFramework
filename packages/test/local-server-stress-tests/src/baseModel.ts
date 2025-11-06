@@ -62,8 +62,8 @@ export const reducer = combineReducersAsync<StressOperations, LocalServerStressS
 	enterStagingMode: async (state, op) => state.client.entryPoint.enterStagingMode(),
 	exitStagingMode: async (state, op) => state.client.entryPoint.exitStagingMode(op.commit),
 	stagingModeCreateCheckpoint: async (state, op) => state.client.entryPoint.createCheckpoint(),
-	stagingModeRollbackCheckpoint: async (state, op) =>
-		state.client.entryPoint.rollbackCheckpoint(),
+	stagingModeRollbackToCheckpoint: async (state, op) =>
+		state.client.entryPoint.rollbackToCheckpoint(),
 	createDataStore: async (state, op) => state.datastore.createDataStore(op.tag, op.asChild),
 	createChannel: async (state, op) => {
 		state.datastore.createChannel(op.tag, op.channelType);
@@ -137,12 +137,10 @@ export function makeGenerator<T extends BaseOperation>(
 		],
 		[
 			async () => ({
-				type: "stagingModeRollbackCheckpoint",
+				type: "stagingModeRollbackToCheckpoint",
 			}),
 			10,
-			(state) =>
-				state.client.entryPoint.inStagingMode() &&
-				state.client.entryPoint.getCheckpointCount() > 0,
+			(state) => state.client.entryPoint.hasChangesSinceCheckpoint(),
 		],
 		[DDSModelOpGenerator, 100],
 		[
