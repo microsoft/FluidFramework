@@ -40,21 +40,22 @@ import { timeoutAwait } from "@fluidframework/test-utils/internal";
 
 import { ddsModelMap } from "./ddsModels.js";
 import { makeUnreachableCodePathProxy } from "./utils.js";
+import type { Tagged } from "./localServerStressHarness.js";
 
 export interface UploadBlob {
 	type: "uploadBlob";
-	tag: `blob-${number}`;
+	tag: Tagged<"blob">;
 }
 export interface CreateDataStore {
 	type: "createDataStore";
 	asChild: boolean;
-	tag: `datastore-${number}`;
+	tag: Tagged<"datastore">;
 }
 
 export interface CreateChannel {
 	type: "createChannel";
 	channelType: string;
-	tag: `channel-${number}`;
+	tag: Tagged<"channel">;
 }
 
 export interface EnterStagingMode {
@@ -67,12 +68,12 @@ export interface ExitStagingMode {
 
 export interface StagingModeCreateCheckpoint {
 	type: "stagingModeCreateCheckpoint";
-	tag: `checkpoint-${number}`;
+	tag: Tagged<"checkpoint">;
 }
 
 export interface StagingModeRollbackToCheckpoint {
 	type: "stagingModeRollbackToCheckpoint";
-	tag: `checkpoint-${number}`;
+	tag: Tagged<"checkpoint">;
 }
 
 export type StressDataObjectOperations =
@@ -158,7 +159,7 @@ export class StressDataObject extends DataObject {
 		return this.runtime.attachState !== AttachState.Detached;
 	}
 
-	public async uploadBlob(tag: `blob-${number}`, contents: string) {
+	public async uploadBlob(tag: Tagged<"blob">, contents: string) {
 		const handle = await this.runtime.uploadBlob(stringToBuffer(contents, "utf-8"));
 		this.defaultStressObject.registerLocallyCreatedObject({
 			type: "newBlob",
@@ -167,12 +168,12 @@ export class StressDataObject extends DataObject {
 		});
 	}
 
-	public createChannel(tag: `channel-${number}`, type: string) {
+	public createChannel(tag: Tagged<"channel">, type: string) {
 		this.runtime.createChannel(tag, type);
 		this.channelNameMap.set(tag, type);
 	}
 
-	public async createDataStore(tag: `datastore-${number}`, asChild: boolean) {
+	public async createDataStore(tag: Tagged<"datastore">, asChild: boolean) {
 		const dataStore = await this.context.containerRuntime.createDataStore(
 			asChild
 				? [...this.context.packagePath, StressDataObject.factory.type]
@@ -199,10 +200,10 @@ export class StressDataObject extends DataObject {
 }
 
 export type ContainerObjects =
-	| { type: "newBlob"; handle: IFluidHandle; tag: `blob-${number}` }
+	| { type: "newBlob"; handle: IFluidHandle; tag: Tagged<"blob"> }
 	| {
 			type: "stressDataObject";
-			tag: `datastore-${number}`;
+			tag: Tagged<"datastore">;
 			handle: IFluidHandle;
 			stressDataObject: StressDataObject;
 	  };
@@ -313,7 +314,7 @@ export class DefaultStressDataObject extends StressDataObject {
 	}
 
 	private stageControls: StageControlsAlpha | undefined;
-	private checkpoints = new Map<`checkpoint-${number}`, StageCheckpointAlpha>();
+	private readonly checkpoints = new Map<Tagged<"checkpoint">, StageCheckpointAlpha>();
 	private readonly containerRuntimeExp = asLegacyAlpha(this.context.containerRuntime);
 	public enterStagingMode() {
 		assert(
@@ -342,13 +343,13 @@ export class DefaultStressDataObject extends StressDataObject {
 		this.checkpoints.clear();
 	}
 
-	public createCheckpoint(tag: `checkpoint-${number}`) {
+	public createCheckpoint(tag: Tagged<"checkpoint">) {
 		assert(this.stageControls !== undefined, "must have staging mode controls to checkpoint");
 		const checkpoint = this.stageControls.checkpoint();
 		this.checkpoints.set(tag, checkpoint);
 	}
 
-	public rollbackToCheckpoint(tag: `checkpoint-${number}`) {
+	public rollbackToCheckpoint(tag: Tagged<"checkpoint">) {
 		assert(
 			this.stageControls !== undefined,
 			"must have staging mode controls to rollback checkpoint",
@@ -357,7 +358,7 @@ export class DefaultStressDataObject extends StressDataObject {
 		assert(checkpoint !== undefined, `checkpoint ${tag} not found`);
 		checkpoint.rollback();
 		// Remove this checkpoint and all checkpoints created after it (they're now invalid)
-		const checkpointsToRemove: `checkpoint-${number}`[] = [];
+		const checkpointsToRemove: Tagged<"checkpoint">[] = [];
 		for (const [key, cp] of this.checkpoints.entries()) {
 			if (cp.isValid === false) {
 				checkpointsToRemove.push(key);
@@ -368,8 +369,8 @@ export class DefaultStressDataObject extends StressDataObject {
 		}
 	}
 
-	public getValidCheckpointTags(): `checkpoint-${number}`[] {
-		const validTags: `checkpoint-${number}`[] = [];
+	public getValidCheckpointTags(): Tagged<"checkpoint">[] {
+		const validTags: Tagged<"checkpoint">[] = [];
 		for (const [tag, checkpoint] of this.checkpoints.entries()) {
 			if (checkpoint.isValid === true) {
 				validTags.push(tag);

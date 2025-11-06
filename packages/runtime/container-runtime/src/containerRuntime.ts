@@ -68,7 +68,6 @@ import type {
 import {
 	assert,
 	Deferred,
-	DoublyLinkedList,
 	Lazy,
 	LazyPromise,
 	PromiseCache,
@@ -132,7 +131,6 @@ import type {
 	IContainerRuntimeBaseInternal,
 	MinimumVersionForCollab,
 	ContainerExtensionExpectations,
-	StageCheckpointAlpha,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
@@ -269,6 +267,7 @@ import {
 	validateLoaderCompatibility,
 } from "./runtimeLayerCompatState.js";
 import { SignalTelemetryManager } from "./signalTelemetryProcessing.js";
+import { StagingModeManager } from "./stagingModeManager.js";
 // These types are imported as types here because they are present in summaryDelayLoadedModule, which is loaded dynamically when required.
 import {
 	aliasBlobName,
@@ -561,8 +560,6 @@ export const defaultRuntimeHeaderData: Required<RuntimeHeaderData> = {
 	viaHandle: false,
 	allowTombstone: false,
 };
-
-const defaultStagingCommitOptions = { squash: false };
 
 /**
  * @deprecated
@@ -1466,6 +1463,7 @@ export class ContainerRuntime
 	private readonly duplicateBatchDetector: DuplicateBatchDetector | undefined;
 	private readonly outbox: Outbox;
 	private readonly garbageCollector: IGarbageCollector;
+	private readonly stagingModeManager: StagingModeManager;
 
 	private readonly channelCollection: ChannelCollection;
 	private readonly remoteMessageProcessor: RemoteMessageProcessor;
@@ -2037,6 +2035,17 @@ export class ContainerRuntime
 			}),
 			reSubmit: this.reSubmit.bind(this),
 			opReentrancy: () => this.dataModelChangeRunner.running,
+		});
+
+		// Initialize the staging mode manager with all its dependencies
+		this.stagingModeManager = new StagingModeManager({
+			pendingStateManager: this.pendingStateManager,
+			outbox: this.outbox,
+			channelCollection: this.channelCollection,
+			submitIdAllocationOpIfNeeded: this.submitIdAllocationOpIfNeeded.bind(this),
+			rollbackStagedChange: this.rollbackStagedChange.bind(this),
+			updateDocumentDirtyState: this.updateDocumentDirtyState.bind(this),
+			closeFn: this.closeFn,
 		});
 
 		this._quorum = quorum;
@@ -3609,15 +3618,13 @@ export class ContainerRuntime
 		return result;
 	}
 
-	private stageControls: StageControlsInternal | undefined;
-
 	/**
 	 * If true, the ContainerRuntime is not submitting any new ops to the ordering service.
 	 * Ops submitted to the ContainerRuntime while in Staging Mode will be queued in the PendingStateManager,
 	 * either to be discarded or committed later (via the Stage Controls returned from enterStagingMode).
 	 */
 	public get inStagingMode(): boolean {
-		return this.stageControls !== undefined;
+		return this.stagingModeManager.inStagingMode;
 	}
 
 	/**
@@ -3627,9 +3634,6 @@ export class ContainerRuntime
 	 * @returns Controls for exiting Staging Mode.
 	 */
 	public enterStagingMode = (): StageControlsInternal => {
-		if (this.stageControls !== undefined) {
-			throw new UsageError("Already in staging mode");
-		}
 		if (this.attachState === AttachState.Detached) {
 			throw new UsageError("Cannot enter staging mode while Detached");
 		}
@@ -3638,151 +3642,8 @@ export class ContainerRuntime
 		// since we mark whole batches as "staged" or not to indicate whether to submit them.
 		this.flush();
 
-		const exitStagingMode = (discardOrCommit: () => void): void => {
-			try {
-				// Final flush of any last staged changes
-				// NOTE: We can't use this.flush() here, because orderSequentially uses StagingMode and in the rollback case we'll hit assert 0x24c
-				this.outbox.flush();
-
-				this.stageControls = undefined;
-
-				// Invalidate all remaining checkpoints by removing them from the list
-				while (checkpointList.first !== undefined) {
-					checkpointList.first.remove();
-				}
-
-				// During Staging Mode, we avoid submitting any ID Allocation ops (apart from resubmitting pre-staging ops).
-				// Now that we've exited, we need to submit an ID Allocation op for any IDs that were generated while in Staging Mode.
-				this.submitIdAllocationOpIfNeeded({ staged: false });
-				discardOrCommit();
-
-				this.channelCollection.notifyStagingMode(false);
-			} catch (error) {
-				const normalizedError = normalizeError(error);
-				this.closeFn(normalizedError);
-				throw normalizedError;
-			}
-		}; // Track checkpoints for rollback support
-		// Use a doubly linked list so checkpoint objects can track if they're still valid
-		const checkpointList = new DoublyLinkedList<number>();
-
-		// Capture 'this' for use in getters
-		const self = this;
-
-		const stageControls: StageControlsInternal = {
-			discardChanges: () =>
-				exitStagingMode(() => {
-					// Pop all staged batches from the PSM and roll them back in LIFO order
-					this.pendingStateManager.popStagedBatches(({ runtimeOp, localOpMetadata }) => {
-						this.rollbackStagedChange(runtimeOp, localOpMetadata);
-					});
-					this.updateDocumentDirtyState();
-				}),
-			commitChanges: (options) => {
-				const { squash } = { ...defaultStagingCommitOptions, ...options };
-				exitStagingMode(() => {
-					// Replay all staged batches in typical FIFO order.
-					// We'll be out of staging mode so they'll be sent to the service finally.
-					this.pendingStateManager.replayPendingStates({
-						committingStagedBatches: true,
-						squash,
-					});
-				});
-			},
-			checkpoint: () => {
-				// Flush the outbox to ensure all messages are in the PendingStateManager
-				// This simplifies rollback - we only need to track PSM state
-				// NOTE: We can't use this.flush() here, because orderSequentially uses StagingMode and in the rollback case we'll hit assert 0x24c
-				this.outbox.flush();
-
-				const psmMessageCount = this.pendingStateManager.pendingMessagesCount;
-
-				// Add checkpoint to the list and store the node
-				const { last: checkpointNode } = checkpointList.push(psmMessageCount);
-
-				// Create the checkpoint object
-				const checkpoint: StageCheckpointAlpha = {
-					rollback: () => {
-						// Check if this checkpoint is still in the list
-						if (checkpointNode.list === undefined) {
-							throw new LoggingError("Cannot rollback an invalid checkpoint", {
-								messageCount: psmMessageCount,
-								listLength: checkpointList.length,
-							});
-						}
-
-						while (checkpointNode.next !== undefined) {
-							checkpointNode.next.remove();
-						}
-
-						// Remove this checkpoint itself
-						checkpointNode.remove();
-
-						try {
-							// Flush the outbox to ensure all messages are in PSM before rolling back
-							// NOTE: We can't use this.flush() here, because orderSequentially uses StagingMode and in the rollback case we'll hit assert 0x24c
-							self.outbox.flush();
-
-							// Calculate how many messages were added since the checkpoint
-							const currentPsmCount = self.pendingStateManager.pendingMessagesCount;
-							const messagesToRollback = currentPsmCount - psmMessageCount;
-
-							if (messagesToRollback > 0) {
-								self.pendingStateManager.popStagedMessagesUpToCount(
-									messagesToRollback,
-									({ runtimeOp, localOpMetadata }) => {
-										self.rollbackStagedChange(runtimeOp, localOpMetadata);
-									},
-								);
-							}
-
-							self.updateDocumentDirtyState();
-						} catch (error) {
-							const error2 = wrapError(error, (message) => {
-								return DataProcessingError.create(
-									`RollbackError: ${message}`,
-									"checkpointRollback",
-									undefined,
-								) as DataProcessingError;
-							});
-							self.closeFn(error2);
-							throw error2;
-						}
-					},
-					dispose: () => {
-						if (checkpointNode.list === undefined) {
-							throw new LoggingError("Cannot dispose an invalid checkpoint", {
-								messageCount: psmMessageCount,
-								listLength: checkpointList.length,
-							});
-						}
-						// Remove only this checkpoint from the list
-						// Other checkpoints (before and after) remain valid
-						checkpointNode.remove();
-					},
-					get isValid(): boolean {
-						// Checkpoint is valid if it's still in the list
-						return checkpointNode.list !== undefined;
-					},
-					get hasChangesSince(): boolean {
-						// Check if there are unflushed messages in the outbox
-						if (self.outbox.mainBatchMessageCount !== 0) {
-							return true;
-						}
-
-						const currentCount = self.pendingStateManager.pendingMessagesCount;
-						return currentCount !== psmMessageCount;
-					},
-				};
-
-				return checkpoint;
-			},
-		};
-
-		this.stageControls = stageControls;
-		this.channelCollection.notifyStagingMode(true);
-
-		return this.stageControls;
+		// Delegate to the staging mode manager
+		return this.stagingModeManager.enterStagingMode(() => this.flush());
 	};
 
 	/**
