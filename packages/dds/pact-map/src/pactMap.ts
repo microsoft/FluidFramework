@@ -10,12 +10,14 @@ import type {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
-import {
-	MessageType,
-	type ISequencedDocumentMessage,
-} from "@fluidframework/driver-definitions/internal";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
-import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import type {
+	ISummaryTreeWithStats,
+	IRuntimeMessageCollection,
+	IRuntimeMessagesContent,
+	ISequencedMessageEnvelope,
+} from "@fluidframework/runtime-definitions/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
 	SharedObject,
@@ -388,30 +390,43 @@ export class PactMapClass<T = unknown>
 	}
 
 	/**
-	 * Process a PactMap operation
-	 *
-	 * @param message - the message to prepare
-	 * @param local - whether the message was sent by the local client
-	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
-	 * For messages from a remote client, this will be undefined.
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
 	 */
-	protected processCore(
-		message: ISequencedDocumentMessage,
+	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+		const { envelope, local, messagesContent } = messagesCollection;
+		for (const messageContent of messagesContent) {
+			this.processMessage(envelope, messageContent, local);
+		}
+	}
+
+	private processMessage(
+		messageEnvelope: ISequencedMessageEnvelope,
+		messageContent: IRuntimeMessagesContent,
 		local: boolean,
-		localOpMetadata: unknown,
 	): void {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-		if (message.type === MessageType.Operation) {
-			const op = message.contents as IPactMapOperation<T>;
+		if (messageEnvelope.type === MessageType.Operation) {
+			const op = messageContent.contents as IPactMapOperation<T>;
 
 			switch (op.type) {
 				case "set": {
-					this.incomingOp.emit("set", op.key, op.value, op.refSeq, message.sequenceNumber);
+					this.incomingOp.emit(
+						"set",
+						op.key,
+						op.value,
+						op.refSeq,
+						messageEnvelope.sequenceNumber,
+					);
 					break;
 				}
 
 				case "accept": {
-					this.incomingOp.emit("accept", op.key, message.clientId, message.sequenceNumber);
+					this.incomingOp.emit(
+						"accept",
+						op.key,
+						messageEnvelope.clientId,
+						messageEnvelope.sequenceNumber,
+					);
 					break;
 				}
 

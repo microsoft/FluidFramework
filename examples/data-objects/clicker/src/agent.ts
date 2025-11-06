@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-internal-modules -- #26908: `core-interfaces` internal used in examples
+// eslint-disable-next-line import-x/no-internal-modules -- #26908: `core-interfaces` internal used in examples
 import { IFluidRunnable } from "@fluidframework/core-interfaces/internal";
 import { SharedCounter } from "@fluidframework/counter/legacy";
 

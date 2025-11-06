@@ -49,6 +49,7 @@ import {
 } from "@fluidframework/test-utils/internal";
 
 import {
+	currentVersion,
 	type FormatVersion,
 	type ICodecFamily,
 	type IJsonCodec,
@@ -99,10 +100,10 @@ import {
 	type NormalizedFieldUpPath,
 	type ExclusiveMapTree,
 	type MapTree,
-	SchemaVersion,
 	type FieldKindIdentifier,
 	type TreeNodeSchemaIdentifier,
 	type TreeFieldStoredSchema,
+	SchemaFormatVersion,
 } from "../core/index.js";
 import { FormatValidatorBasic } from "../external-utilities/index.js";
 import {
@@ -142,11 +143,10 @@ import {
 	independentView,
 	SchematizingSimpleTreeView,
 	type ForestOptions,
-	type SharedTreeOptionsInternal,
-	type SharedTreeOptions,
 	buildConfiguredForest,
 	type ForestType,
 	ForestTypeReference,
+	type SharedTreeOptionsInternal,
 } from "../shared-tree/index.js";
 import {
 	type ImplicitFieldSchema,
@@ -177,12 +177,16 @@ import {
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { Client } from "@fluid-private/test-dds-utils";
 import { cursorToJsonObject, fieldJsonCursor, singleJsonCursor } from "./json/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
 import type { Transactor } from "../shared-tree-core/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { FieldChangeDelta } from "../feature-libraries/modular-schema/index.js";
-import { configuredSharedTree, type ISharedTree } from "../treeFactory.js";
+import {
+	configuredSharedTree,
+	configuredSharedTreeInternal,
+	type ISharedTree,
+} from "../treeFactory.js";
 import { JsonAsTree } from "../jsonDomainSchema.js";
 import {
 	MockContainerRuntimeFactoryWithOpBunching,
@@ -193,12 +197,12 @@ import type {
 	ISharedObjectKind,
 	SharedObjectKind,
 } from "@fluidframework/shared-object-base/internal";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { ObjectForest } from "../feature-libraries/object-forest/objectForest.js";
 import {
 	allowsFieldSuperset,
 	allowsTreeSuperset,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../feature-libraries/modular-schema/index.js";
 import { initializeForest } from "./feature-libraries/index.js";
 
@@ -528,7 +532,7 @@ export class TestTreeProviderLite {
  * after the spy is no longer needed.
  */
 export function spyOnMethod(
-	// eslint-disable-next-line @typescript-eslint/ban-types
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type, @typescript-eslint/ban-types
 	methodClass: Function,
 	methodName: string,
 	spy: () => void,
@@ -616,8 +620,8 @@ export class SharedTreeTestFactory implements IChannelFactory<ISharedTree> {
 			...options,
 			jsonValidator: FormatValidatorBasic,
 		};
-		this.inner = configuredSharedTree(
-			optionsUpdated as SharedTreeOptions,
+		this.inner = configuredSharedTreeInternal(
+			optionsUpdated,
 		).getFactory() as IChannelFactory<ISharedTree>;
 	}
 
@@ -655,7 +659,13 @@ export function validateTree(tree: ITreeCheckout, expected: JsonableTree[]): voi
 // that equality of two schemas in tests is achieved by deep-comparing their persisted representations.
 // If the newer format is a superset of the previous format, it can be safely used for comparisons. This is the
 // case with schema format v2.
-const schemaCodec = makeSchemaCodec({ jsonValidator: FormatValidatorBasic }, SchemaVersion.v2);
+const schemaCodec = makeSchemaCodec(
+	{
+		jsonValidator: FormatValidatorBasic,
+		minVersionForCollab: currentVersion,
+	},
+	brand(SchemaFormatVersion.v2),
+);
 
 export function checkRemovedRootsAreSynchronized(trees: readonly ITreeCheckout[]): void {
 	if (trees.length > 1) {

@@ -117,7 +117,7 @@ export interface Insert {
 export interface SetField {
 	type: "set";
 	/**
-	 * @privateRemarks - Optional fields use {@link ClearField} to mean "remove the field's contents" rather than
+	 * @privateRemarks Optional fields use {@link ClearField} to mean "remove the field's contents" rather than
 	 * a `SetField` with undefined value, hence why this property is required.
 	 */
 	value: GeneratedFuzzNode;

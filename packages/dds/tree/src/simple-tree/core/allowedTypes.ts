@@ -4,7 +4,7 @@
  */
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { assert, Lazy } from "@fluidframework/core-utils/internal";
+import { Lazy } from "@fluidframework/core-utils/internal";
 
 import {
 	type ErasedBaseType,
@@ -25,6 +25,7 @@ import {
 	type TreeNodeSchema,
 } from "./treeNodeSchema.js";
 import { schemaAsTreeNodeValid } from "./treeNodeValid.js";
+import type { SimpleAllowedTypeAttributes } from "../simpleSchema.js";
 
 /**
  * Schema for types allowed in some location in a tree (like a field, map entry or array).
@@ -56,11 +57,11 @@ export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
 /**
  * Stores annotations for an individual allowed type.
  * @remarks
- * Create using APIs on {@link SchemaFactoryAlpha}, like {@link SchemaStaticsAlpha.staged}.
+ * Create using APIs on {@link SchemaStaticsBeta}, like {@link SchemaStaticsBeta.staged}.
  * @privateRemarks
  * Since this is sealed, users are not supposed to create instances of it directly.
  * Making it extend ErasedType could enforce that.
- * @alpha
+ * @beta
  * @sealed
  */
 export interface AnnotatedAllowedType<T = LazyItem<TreeNodeSchema>> {
@@ -77,7 +78,7 @@ export interface AnnotatedAllowedType<T = LazyItem<TreeNodeSchema>> {
 /**
  * {@link AllowedTypesFull} but with the lazy schema references eagerly evaluated.
  * @sealed
- * @alpha
+ * @beta
  */
 export type AllowedTypesFullEvaluated = AllowedTypesFull<
 	readonly AnnotatedAllowedType<TreeNodeSchema>[]
@@ -95,7 +96,7 @@ export function isAnnotatedAllowedTypes(
 
 /**
  * Stores annotations for a set of allowed types.
- * @alpha
+ * @beta
  * @sealed
  */
 export interface AnnotatedAllowedTypes<T = readonly AnnotatedAllowedType[]>
@@ -139,7 +140,7 @@ export interface AnnotatedAllowedTypes<T = readonly AnnotatedAllowedType[]>
  * Stores annotations for a set of allowed types.
  * @remarks
  * Most expressive form of AllowedTypes which any of the implicit types can be normalized to.
- * @alpha
+ * @beta
  * @sealed
  */
 export type AllowedTypesFull<
@@ -148,8 +149,7 @@ export type AllowedTypesFull<
 
 /**
  * Creates an {@link AllowedTypesFull} type from a mixed array of annotated and unannotated allowed types.
- * @alpha
- * @sealed
+ * @system @sealed @beta
  */
 export type AllowedTypesFullFromMixed<
 	T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[],
@@ -253,32 +253,35 @@ export class AnnotatedAllowedTypesInternal<
 		return this.lazyEvaluate.value.identifiers;
 	}
 
-	public static override [Symbol.hasInstance]<
-		TThis extends
-			| (abstract new (
-					...args: unknown[]
-			  ) => object)
-			| typeof AnnotatedAllowedTypesInternal,
-	>(
-		this: TThis,
-		value: ErasedBaseType | InstanceTypeRelaxed<TThis> | ImplicitAllowedTypes,
-	): value is InstanceTypeRelaxed<TThis> & AnnotatedAllowedTypesInternal & AllowedTypesFull {
-		return Object.prototype.isPrototypeOf.call(this.prototype, value);
+	/**
+	 * Get the {@link SimpleAllowedTypeAttributes} version of the allowed types set.
+	 */
+	public static evaluateSimpleAllowedTypes(
+		annotatedAllowedTypes: AnnotatedAllowedTypes,
+	): ReadonlyMap<string, SimpleAllowedTypeAttributes> {
+		const simpleAllowedTypes = new Map<string, SimpleAllowedTypeAttributes>();
+		for (const type of annotatedAllowedTypes.evaluate().types) {
+			simpleAllowedTypes.set(type.type.identifier, {
+				isStaged: type.metadata.stagedSchemaUpgrade !== undefined,
+			});
+		}
+		return simpleAllowedTypes;
 	}
 
-	public static override narrow<
-		TThis extends
-			| (abstract new (
-					...args: unknown[]
-			  ) => object)
-			| typeof AnnotatedAllowedTypesInternal,
-	>(
+	public static override [Symbol.hasInstance]<TThis extends { prototype: object }>(
+		this: TThis,
+		value: unknown,
+	): value is InstanceTypeRelaxed<TThis> & AnnotatedAllowedTypesInternal & AllowedTypesFull {
+		return ErasedTypeImplementation[Symbol.hasInstance].call(this, value);
+	}
+
+	public static override narrow<TThis extends { prototype: object }>(
 		this: TThis,
 		value: ErasedBaseType | InstanceTypeRelaxed<TThis> | ImplicitAllowedTypes,
 	): asserts value is InstanceTypeRelaxed<TThis> &
 		AnnotatedAllowedTypesInternal &
 		AllowedTypesFull {
-		if (!Object.prototype.isPrototypeOf.call(this.prototype, value)) {
+		if (!ErasedTypeImplementation[Symbol.hasInstance].call(this, value)) {
 			throw new TypeError("Invalid AnnotatedAllowedTypes instance");
 		}
 	}
@@ -345,7 +348,7 @@ export class AnnotatedAllowedTypesInternal<
 	public static create<const T extends readonly AnnotatedAllowedType[]>(
 		types: T,
 		metadata: AllowedTypesMetadata = {},
-	): AnnotatedAllowedTypesInternal<T> & AllowedTypesFull<T> {
+	): AnnotatedAllowedTypesInternal<Readonly<T>> & AllowedTypesFull<Readonly<T>> {
 		const result = new AnnotatedAllowedTypesInternal(types, metadata);
 		return result as typeof result & UnannotateAllowedTypesList<T>;
 	}
@@ -353,7 +356,8 @@ export class AnnotatedAllowedTypesInternal<
 	public static createUnannotated<const T extends AllowedTypes>(
 		types: T,
 		metadata: AllowedTypesMetadata = {},
-	): AnnotatedAllowedTypesInternal & T {
+	): AnnotatedAllowedTypesInternal & Readonly<T> {
+		Object.freeze(types);
 		const annotatedTypes: AnnotatedAllowedType[] = types.map(normalizeToAnnotatedAllowedType);
 		const result = AnnotatedAllowedTypesInternal.create(annotatedTypes, metadata);
 		return result as typeof result & T;
@@ -362,6 +366,7 @@ export class AnnotatedAllowedTypesInternal<
 	public static createMixed<
 		const T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[],
 	>(types: T, metadata: AllowedTypesMetadata = {}): AllowedTypesFullFromMixed<T> {
+		Object.freeze(types);
 		const annotatedTypes: AnnotatedAllowedType[] = types.map(normalizeToAnnotatedAllowedType);
 		const result = AnnotatedAllowedTypesInternal.create(annotatedTypes, metadata);
 		return result as AllowedTypesFullFromMixed<T>;
@@ -372,7 +377,7 @@ export class AnnotatedAllowedTypesInternal<
  * Annotations that apply to a set of allowed types.
  * @remarks
  * Additional optionals may be added to this as non-breaking changes, so implementations of it should be simple object literals with no unlisted members.
- * @alpha
+ * @beta
  * @input
  */
 export interface AllowedTypesMetadata {
@@ -397,7 +402,7 @@ export function isAnnotatedAllowedType(
  * Annotations that apply to an individual allowed type.
  * @remarks
  * Additional optionals may be added to this as non-breaking changes, so implementations of it should be simple object literals with no unlisted members.
- * @alpha
+ * @beta
  * @input
  */
 export interface AllowedTypeMetadata {
@@ -407,7 +412,7 @@ export interface AllowedTypeMetadata {
 	readonly custom?: unknown;
 
 	/**
-	 * If defined, indicates that an allowed type is {@link SchemaStaticsAlpha.staged | staged}.
+	 * If defined, indicates that an allowed type is {@link SchemaStaticsBeta.staged | staged}.
 	 */
 	readonly stagedSchemaUpgrade?: SchemaUpgrade;
 }
@@ -420,12 +425,12 @@ export let createSchemaUpgrade: () => SchemaUpgrade;
 /**
  * Unique token used to upgrade schemas and determine if a particular upgrade has been completed.
  * @remarks
- * Create using {@link SchemaStaticsAlpha.staged}.
+ * Create using {@link SchemaStaticsBeta.staged}.
  * @privateRemarks
  * TODO:#38722 implement runtime schema upgrades.
  * Until then, the class purely behaves mostly as a placeholder.
  * TODO: Consider allowing users to store a name for the upgrade to use in error messages.
- * @sealed @alpha
+ * @sealed @beta
  */
 export class SchemaUpgrade {
 	protected _typeCheck!: MakeNominal;
@@ -473,7 +478,7 @@ export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
 
 /**
  * Removes annotations from a list of allowed types that may contain annotations.
- * @system @alpha
+ * @system @beta
  */
 export type UnannotateAllowedTypesList<
 	T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[],
@@ -483,7 +488,7 @@ export type UnannotateAllowedTypesList<
 
 /**
  * Add annotations to a list of allowed types that may or may not contain annotations.
- * @system @alpha
+ * @system @beta
  */
 export type AnnotateAllowedTypesList<
 	T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[],
@@ -537,14 +542,9 @@ export function normalizeAllowedTypesInternal(
 	// Adding this cache improved the performance of the "large recursive union" test (which mostly just constructs a TreeConfiguration) by ~5 times.
 	// This cache is strictly a performance optimization: it is not required for correctness.
 	return getOrCreate(cachedNormalize, type, () => {
-		// Due to more specific internal type, the above does not narrow sufficiently, so more narrowing is needed.
-		// It is possible this will give a false error if a TreeNodeSchema which matches this check is used.
-		assert(
-			!("types" in type && "metadata" in type),
-			0xc7d /* invalid AnnotatedAllowedTypes */,
-		);
-
-		const annotatedTypes: AnnotatedAllowedType[] = (isReadonlyArray(type) ? type : [type]).map(
+		const inputArray = isReadonlyArray(type) ? type : [type];
+		Object.freeze(inputArray);
+		const annotatedTypes: AnnotatedAllowedType[] = inputArray.map(
 			normalizeToAnnotatedAllowedType,
 		);
 
@@ -650,8 +650,8 @@ export type TreeNodeFromImplicitAllowedTypes<
  * This type exists only to be linked from documentation to provide a single linkable place to document some details of
  * "Input" types and how they handle schema.
  *
- * When a schema is used to describe data which is an input into an API, the API is [contravariant](https://en.wikipedia.org/wiki/Covariance_and_contravariance_(computer_science)) over the schema.
- * (See also, [TypeScript Variance Annotations](https://www.typescriptlang.org/docs/handbook/2/generics.html#variance-annotations)).
+ * When a schema is used to describe data which is an input into an API, the API is {@link https://en.wikipedia.org/wiki/Type_variance | contravariant}) over the schema.
+ * (See also {@link https://www.typescriptlang.org/docs/handbook/2/generics.html#variance-annotations | TypeScript Variance Annotations}).
  *
  * Since these schema are expressed using TypeScript types, it is possible for the user of the API to provide non-exact values of these types which has implications that depended on the variance.
  *

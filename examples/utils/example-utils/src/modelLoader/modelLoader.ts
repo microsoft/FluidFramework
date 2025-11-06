@@ -4,7 +4,7 @@
  */
 
 import { type IContainer, LoaderHeader } from "@fluidframework/container-definitions/legacy";
-// eslint-disable-next-line import/no-internal-modules -- #26907: `container-loader` internal `loadContainerPaused` used in examples
+// eslint-disable-next-line import-x/no-internal-modules -- #26907: `container-loader` internal `loadContainerPaused` used in examples
 import { loadContainerPaused } from "@fluidframework/container-loader/internal";
 import {
 	createDetachedContainer,
