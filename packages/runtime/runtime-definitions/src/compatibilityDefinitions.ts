@@ -6,9 +6,9 @@
 /**
  * Oldest version of Fluid Framework client packages to support collaborating with.
  * @remarks
- * String in a semver format of indicating a specific version of the Fluid Framework client package, or the special case of {@link @fluidframework/runtime-utils#defaultMinVersionForCollab}.
+ * String in a semver format indicating a specific version of the Fluid Framework client package, or the special case of {@link @fluidframework/runtime-utils#defaultMinVersionForCollab}.
  *
- * When specifying a given `MinimumVersionForCollab`, any version which is greater then or equal to the specified version will be considered compatible.
+ * When specifying a given `MinimumVersionForCollab`, any version which is greater than or equal to the specified version will be considered compatible.
  *
  * Must be at least {@link @fluidframework/runtime-utils#lowestMinVersionForCollab} and cannot exceed the current version.
  *
@@ -19,7 +19,7 @@
  * Since this type is marked with `@input`, it can be generalized to allow more cases in the future as a non-breaking change.
  *
  * TODO: before stabilizing this further, some restrictions should be considered (since once stabilized, this can be relaxed, but not more constrained).
- * For example it might make sense to constrain this so something like `"1.4.0" | typeof defaultMinVersionForCollab | 2.${bigint}.0"`.
+ * For example it might make sense to constrain this to something like `"1.4.0" | typeof defaultMinVersionForCollab | 2.${bigint}.0"`.
  *
  * @input
  * @legacy @beta
