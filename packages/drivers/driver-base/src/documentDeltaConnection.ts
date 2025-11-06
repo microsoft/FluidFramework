@@ -504,8 +504,8 @@ export class DocumentDeltaConnection
 					const normalizedError = this.addPropsToError(failError);
 					this.logger.sendErrorEvent({ eventName: "CloseSocketError" }, normalizedError);
 				}
-				const errorToReject = err instanceof Error ? err : new Error(JSON.stringify(err));
-				reject(errorToReject);
+				// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+				reject(err);
 			};
 
 			const failConnection = (err: IAnyDriverError) => {
@@ -515,8 +515,8 @@ export class DocumentDeltaConnection
 					const normalizedError = this.addPropsToError(failError);
 					this.logger.sendErrorEvent({ eventName: "FailConnectionError" }, normalizedError);
 				}
-				const errorToReject = err instanceof Error ? err : new Error(JSON.stringify(err));
-				reject(errorToReject);
+				// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+				reject(err);
 			};
 
 			// Immediately set the connection timeout.

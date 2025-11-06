@@ -135,7 +135,8 @@ export function compareBigints<T extends bigint>(a: T, b: T): number {
 }
 
 export function genCountFromLocalId(localId: LocalCompressedId): number {
-	return -(localId as number);
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-unary-minus
+	return -localId;
 }
 
 export function localIdFromGenCount(genCount: number): LocalCompressedId {
