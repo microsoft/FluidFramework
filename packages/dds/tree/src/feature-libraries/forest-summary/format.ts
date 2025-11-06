@@ -7,7 +7,7 @@ import { type Static, Type } from "@sinclair/typebox";
 
 import { Versioned } from "../../codec/index.js";
 import { schemaFormatV1 } from "../../core/index.js";
-import type { Brand } from "../../util/index.js";
+import { brand, type Brand } from "../../util/index.js";
 
 /**
  * The format version for the forest.
@@ -20,8 +20,8 @@ export type ForestFormatVersion = Brand<
 	"ForestFormatVersion"
 >;
 
-export const Format = <TVersion extends ForestFormatVersion>(
-	tVersion: TVersion = ForestFormatVersion.v1 as TVersion,
+const FormatGeneric = <TVersion extends ForestFormatVersion>(
+	tVersion: TVersion,
 	// Return type is intentionally derived.
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 ) =>
@@ -34,4 +34,5 @@ export const Format = <TVersion extends ForestFormatVersion>(
 		{ additionalProperties: false },
 	);
 
-export type Format = Static<ReturnType<typeof Format>>;
+export const Format = FormatGeneric(brand<ForestFormatVersion>(ForestFormatVersion.v1));
+export type Format = Static<typeof Format>;
