@@ -72,7 +72,7 @@
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^8.1.0",
+		"@fluidframework/eslint-config-fluid": "workspace:^",
 		"@fluidframework/id-compressor": "workspace:~",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/matrix": "workspace:~",
