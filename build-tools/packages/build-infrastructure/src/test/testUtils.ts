@@ -38,6 +38,8 @@ export async function setupTestRepo(initGit: boolean = false): Promise<{
 		// Initialize a git repository and commit all files
 		const git = simpleGit(testRepoRoot);
 		await git.init();
+		await git.addConfig("user.name", "Test User");
+		await git.addConfig("user.email", "test@example.com");
 		await git.add(".");
 		await git.commit("Initial commit");
 	}

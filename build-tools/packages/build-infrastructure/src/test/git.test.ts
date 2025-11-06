@@ -88,9 +88,9 @@ describe("getChangedSinceRef: local", () => {
 	});
 
 	afterEach(async () => {
-		await git.reset(["HEAD", "--", testRepoRoot]);
-		await git.checkout(["HEAD", "--", testRepoRoot]);
-		await git.clean(CleanOptions.FORCE, [testRepoRoot]);
+		await git.reset(["HEAD", "--", "."]);
+		await git.checkout(["HEAD", "--", "."]);
+		await git.clean(CleanOptions.FORCE, ["."]);
 	});
 
 	it("returns correct files", async () => {
