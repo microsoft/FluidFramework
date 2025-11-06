@@ -648,8 +648,7 @@
             "error"
         ],
         "@typescript-eslint/comma-dangle": [
-            "off",
-            "always-multiline"
+            "off"
         ],
         "@typescript-eslint/comma-spacing": [
             "off"
@@ -910,9 +909,6 @@
         "@typescript-eslint/no-use-before-define": [
             "off"
         ],
-        "@typescript-eslint/no-var-requires": [
-            "error"
-        ],
         "@typescript-eslint/no-wrapper-object-types": [
             "error"
         ],
@@ -965,12 +961,7 @@
             "error"
         ],
         "@typescript-eslint/quotes": [
-            0,
-            "double",
-            {
-                "allowTemplateLiterals": true,
-                "avoidEscape": true
-            }
+            0
         ],
         "@typescript-eslint/require-await": [
             "off"
@@ -985,19 +976,13 @@
             "error"
         ],
         "@typescript-eslint/semi": [
-            "off",
-            "always"
+            "off"
         ],
         "@typescript-eslint/space-before-blocks": [
             "off"
         ],
         "@typescript-eslint/space-before-function-paren": [
-            "off",
-            {
-                "anonymous": "never",
-                "asyncArrow": "always",
-                "named": "never"
-            }
+            "off"
         ],
         "@typescript-eslint/space-infix-ops": [
             "off"
