@@ -68,6 +68,7 @@ import type {
 import {
 	assert,
 	Deferred,
+	DoublyLinkedList,
 	Lazy,
 	LazyPromise,
 	PromiseCache,
@@ -131,6 +132,7 @@ import type {
 	IContainerRuntimeBaseInternal,
 	MinimumVersionForCollab,
 	ContainerExtensionExpectations,
+	StageCheckpointAlpha,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
@@ -3644,6 +3646,11 @@ export class ContainerRuntime
 
 				this.stageControls = undefined;
 
+				// Invalidate all remaining checkpoints by removing them from the list
+				while (checkpointList.first !== undefined) {
+					checkpointList.first.remove();
+				}
+
 				// During Staging Mode, we avoid submitting any ID Allocation ops (apart from resubmitting pre-staging ops).
 				// Now that we've exited, we need to submit an ID Allocation op for any IDs that were generated while in Staging Mode.
 				this.submitIdAllocationOpIfNeeded({ staged: false });
@@ -3655,15 +3662,9 @@ export class ContainerRuntime
 				this.closeFn(normalizedError);
 				throw normalizedError;
 			}
-		};
-
-		// Track checkpoints for rollback support
-		// We flush the outbox on each checkpoint, so we only need to track PSM message count
-		const checkpointStack: number[] = [];
-
-		// Capture the initial pending message count when entering staging mode
-		// This represents the baseline before any staging mode changes
-		const initialPendingMessageCount = this.pendingStateManager.pendingMessagesCount;
+		}; // Track checkpoints for rollback support
+		// Use a doubly linked list so checkpoint objects can track if they're still valid
+		const checkpointList = new DoublyLinkedList<number>();
 
 		// Capture 'this' for use in getters
 		const self = this;
@@ -3694,62 +3695,87 @@ export class ContainerRuntime
 				// NOTE: We can't use this.flush() here, because orderSequentially uses StagingMode and in the rollback case we'll hit assert 0x24c
 				this.outbox.flush();
 
-				// Don't create empty checkpoints - only push if there are messages to potentially roll back
 				const psmMessageCount = this.pendingStateManager.pendingMessagesCount;
-				// Also don't create duplicate checkpoints - if the count matches the last checkpoint,
-				// there are no new changes since the last checkpoint
-				const lastCheckpoint = checkpointStack[checkpointStack.length - 1];
-				if (psmMessageCount > 0 && psmMessageCount !== lastCheckpoint) {
-					checkpointStack.push(psmMessageCount);
-				}
-			},
-			get hasChangesSinceCheckpoint(): boolean {
-				// Check if there are unflushed messages in the outbox
-				if (self.outbox.mainBatchMessageCount !== 0) {
-					return true;
-				}
 
-				const currentCount = self.pendingStateManager.pendingMessagesCount;
-				const lastCheckpoint = checkpointStack[checkpointStack.length - 1];
+				// Add checkpoint to the list and store the node
+				const { last: checkpointNode } = checkpointList.push(psmMessageCount);
 
-				// If no checkpoints exist, compare against the initial count when entering staging mode
-				// If checkpoints exist, compare against the last checkpoint
-				const baselineCount = lastCheckpoint ?? initialPendingMessageCount;
-				return currentCount !== baselineCount;
-			},
-			rollbackToCheckpoint() {
-				if (!this.hasChangesSinceCheckpoint) {
-					throw new UsageError("hasChangesSinceCheckpoint must be true to rollback");
-				}
-				const checkpointMessageCount = checkpointStack.pop()!;
-				try {
-					// Flush the outbox to ensure all messages are in PSM before rolling back
-					// NOTE: We can't use this.flush() here, because orderSequentially uses StagingMode and in the rollback case we'll hit assert 0x24c
-					self.outbox.flush(); // Calculate how many messages were added since the checkpoint
-					const currentPsmCount = self.pendingStateManager.pendingMessagesCount;
-					const messagesToRollback = currentPsmCount - checkpointMessageCount;
+				// Create the checkpoint object
+				const checkpoint: StageCheckpointAlpha = {
+					rollback: () => {
+						// Check if this checkpoint is still in the list
+						if (checkpointNode.list === undefined) {
+							throw new LoggingError("Cannot rollback an invalid checkpoint", {
+								messageCount: psmMessageCount,
+								listLength: checkpointList.length,
+							});
+						}
 
-					if (messagesToRollback > 0) {
-						self.pendingStateManager.popStagedMessagesUpToCount(
-							messagesToRollback,
-							({ runtimeOp, localOpMetadata }) => {
-								self.rollbackStagedChange(runtimeOp, localOpMetadata);
-							},
-						);
-					}
+						while (checkpointNode.next !== undefined) {
+							checkpointNode.next.remove();
+						}
 
-					self.updateDocumentDirtyState();
-				} catch (error) {
-					const error2 = wrapError(error, (message) => {
-						return DataProcessingError.create(
-							`RollbackError: ${message}`,
-							"checkpointRollback",
-							undefined,
-						) as DataProcessingError;
-					});
-					self.closeFn(error2);
-					throw error2;
-				}
+						// Remove this checkpoint itself
+						checkpointNode.remove();
+
+						try {
+							// Flush the outbox to ensure all messages are in PSM before rolling back
+							// NOTE: We can't use this.flush() here, because orderSequentially uses StagingMode and in the rollback case we'll hit assert 0x24c
+							self.outbox.flush();
+
+							// Calculate how many messages were added since the checkpoint
+							const currentPsmCount = self.pendingStateManager.pendingMessagesCount;
+							const messagesToRollback = currentPsmCount - psmMessageCount;
+
+							if (messagesToRollback > 0) {
+								self.pendingStateManager.popStagedMessagesUpToCount(
+									messagesToRollback,
+									({ runtimeOp, localOpMetadata }) => {
+										self.rollbackStagedChange(runtimeOp, localOpMetadata);
+									},
+								);
+							}
+
+							self.updateDocumentDirtyState();
+						} catch (error) {
+							const error2 = wrapError(error, (message) => {
+								return DataProcessingError.create(
+									`RollbackError: ${message}`,
+									"checkpointRollback",
+									undefined,
+								) as DataProcessingError;
+							});
+							self.closeFn(error2);
+							throw error2;
+						}
+					},
+					dispose: () => {
+						if (checkpointNode.list === undefined) {
+							throw new LoggingError("Cannot dispose an invalid checkpoint", {
+								messageCount: psmMessageCount,
+								listLength: checkpointList.length,
+							});
+						}
+						// Remove only this checkpoint from the list
+						// Other checkpoints (before and after) remain valid
+						checkpointNode.remove();
+					},
+					get isValid(): boolean {
+						// Checkpoint is valid if it's still in the list
+						return checkpointNode.list !== undefined;
+					},
+					get hasChangesSince(): boolean {
+						// Check if there are unflushed messages in the outbox
+						if (self.outbox.mainBatchMessageCount !== 0) {
+							return true;
+						}
+
+						const currentCount = self.pendingStateManager.pendingMessagesCount;
+						return currentCount !== psmMessageCount;
+					},
+				};
+
+				return checkpoint;
 			},
 		};
 

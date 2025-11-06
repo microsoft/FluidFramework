@@ -44,36 +44,102 @@ export interface StageControlsInternal extends StageControlsAlpha {
 }
 
 /**
+ * Represents a checkpoint that can be rolled back to.
+ *
+ * Created by {@link StageControlsAlpha.checkpoint}. Checkpoints allow you to undo changes
+ * made after the checkpoint was created while preserving earlier changes.
+ *
+ * @legacy @alpha
+ * @sealed
+ */
+export interface StageCheckpointAlpha {
+	/**
+	 * Roll back all changes to this checkpoint.
+	 *
+	 * Undoes all operations made after this checkpoint was created and invalidates this checkpoint
+	 * and any checkpoints created after it.
+	 *
+	 * @throws Error if this checkpoint is no longer valid (e.g., invalidated by rolling back to an earlier checkpoint).
+	 *
+	 * @example
+	 * ```typescript
+	 * const checkpoint = controls.checkpoint();
+	 * this.map.set("key", "value");
+	 * checkpoint.rollback(); // Undoes the map.set
+	 * ```
+	 */
+	rollback(): void;
+
+	/**
+	 * Remove this checkpoint without rolling back changes.
+	 *
+	 * Useful when you no longer need a checkpoint but want to keep the changes made after it.
+	 * Only this specific checkpoint becomes invalid - later checkpoints remain valid.
+	 *
+	 * @throws Error if this checkpoint is no longer valid.
+	 *
+	 * @example
+	 * ```typescript
+	 * const cp1 = controls.checkpoint();
+	 * this.map.set("key", "value");
+	 * const cp2 = controls.checkpoint();
+	 *
+	 * cp1.dispose(); // cp2 remains valid
+	 * cp2.rollback(); // Still works, undoes both changes
+	 * ```
+	 */
+	dispose(): void;
+
+	/**
+	 * Whether this checkpoint is still valid and can be rolled back to.
+	 *
+	 * A checkpoint becomes invalid when you roll back to an earlier checkpoint or call `dispose()` on it.
+	 *
+	 * @example
+	 * ```typescript
+	 * const cp1 = controls.checkpoint();
+	 * const cp2 = controls.checkpoint();
+	 *
+	 * cp1.rollback(); // Invalidates cp2
+	 * console.log(cp2.isValid); // false
+	 * ```
+	 */
+	readonly isValid: boolean;
+
+	/**
+	 * Whether any changes have been made since this checkpoint was created.
+	 *
+	 * @example
+	 * ```typescript
+	 * const checkpoint = controls.checkpoint();
+	 * console.log(checkpoint.hasChangesSince); // false
+	 * this.map.set("key", "value");
+	 * console.log(checkpoint.hasChangesSince); // true
+	 * ```
+	 */
+	readonly hasChangesSince: boolean;
+}
+
+/**
  * Controls for managing staged changes in staging mode.
  *
  * Staging mode lets you make changes locally before committing or discarding them.
- * You can also create checkpoints and rollback to them.
+ * You can create checkpoints to rollback specific changes.
  *
- * @example Stateful editor with async validation
+ * @example Async validation with checkpoints
  * ```typescript
  * class DraftFormEditor {
  *   private controls = this.runtime.enterStagingMode();
  *
  *   async updateField(name: string, value: string) {
  *     this.map.set(name, value);
- *
- *     if (this.controls.hasChangesSinceCheckpoint) {
- *       this.controls.checkpoint();
- *     }
+ *     const checkpoint = this.controls.checkpoint();
  *
  *     try {
  *       await this.validateWithServer(name, value);
  *     } catch (error) {
- *       if (this.controls.hasChangesSinceCheckpoint) {
- *         this.controls.rollbackToCheckpoint();
- *       }
+ *       checkpoint.rollback(); // Rolls back only this field
  *       throw error;
- *     }
- *   }
- *
- *   undo() {
- *     if (this.controls.hasChangesSinceCheckpoint) {
- *       this.controls.rollbackToCheckpoint();
  *     }
  *   }
  *
@@ -81,7 +147,7 @@ export interface StageControlsInternal extends StageControlsAlpha {
  *     this.controls.commitChanges();
  *   }
  *
- *   dispose() {
+ *   cancel() {
  *     this.controls.discardChanges();
  *   }
  * }
@@ -104,54 +170,19 @@ export interface StageControlsAlpha {
 	/**
 	 * Create a checkpoint you can rollback to later.
 	 *
-	 * Use this to mark save points so you can undo back to them with  rollbackToCheckpoint.
-	 * Empty checkpoints (no changes since last checkpoint) are automatically skipped.
+	 * Returns a {@link StageCheckpointAlpha} object. The checkpoint remains valid until you
+	 * roll back to it or to an earlier checkpoint.
+	 *
+	 * @returns A checkpoint object that can be used to rollback to this point.
 	 *
 	 * @example
 	 * ```typescript
-	 * async updateField(name: string, value: string) {
-	 *   this.map.set(name, value);
-	 *
-	 *   if (this.controls.hasChangesSinceCheckpoint) {
-	 *     this.controls.checkpoint(); // Save after each field
-	 *   }
-	 *
-	 *   try {
-	 *     await this.validateWithServer(name, value);
-	 *   } catch (error) {
-	 *     if (this.controls.hasChangesSinceCheckpoint) {
-	 *       this.controls.rollbackToCheckpoint();
-	 *     }
-	 *     throw error;
-	 *   }
-	 * }
+	 * const checkpoint = controls.checkpoint();
+	 * this.map.set("key", "value");
+	 * checkpoint.rollback(); // Undoes the map.set
 	 * ```
 	 */
-	readonly checkpoint: () => void;
-
-	/**
-	 * Whether any changes have been made since the last checkpoint (or since entering staging mode).
-	 *
-	 * Use this to check if checkpoint or rollbackToCheckpoint will have an effect.
-	 *
-	 */
-	readonly hasChangesSinceCheckpoint: boolean;
-
-	/**
-	 * Undo all changes back to the most recent checkpoint.
-	 *
-	 * The checkpoint is removed after rollback. Always check hasChangesSinceCheckpoint first.
-	 *
-	 * @throws Error if no checkpoint exists.
-	 *
-	 * @example
-	 * ```typescript
-	 * if (controls.hasChangesSinceCheckpoint) {
-	 *   controls.rollbackToCheckpoint();
-	 * }
-	 * ```
-	 */
-	readonly rollbackToCheckpoint: () => void;
+	readonly checkpoint: () => StageCheckpointAlpha;
 }
 
 /**
@@ -185,24 +216,13 @@ export interface ContainerRuntimeBaseAlpha extends IContainerRuntimeBase {
 	 *
 	 *   async updateField(name: string, value: string) {
 	 *     this.map.set(name, value);
-	 *
-	 *     if (this.controls.hasChangesSinceCheckpoint) {
-	 *       this.controls.checkpoint();
-	 *     }
+	 *     const checkpoint = this.controls.checkpoint();
 	 *
 	 *     try {
 	 *       await this.validateWithServer(name, value);
 	 *     } catch (error) {
-	 *       if (this.controls.hasChangesSinceCheckpoint) {
-	 *         this.controls.rollbackToCheckpoint();
-	 *       }
+	 *       checkpoint.rollback();
 	 *       throw error;
-	 *     }
-	 *   }
-	 *
-	 *   undo() {
-	 *     if (this.controls.hasChangesSinceCheckpoint) {
-	 *       this.controls.rollbackToCheckpoint();
 	 *     }
 	 *   }
 	 *

@@ -38,7 +38,7 @@ describe("Local Server Stress", () => {
 			"Fluid.Container.enableOfflineFull": true,
 			"Fluid.ContainerRuntime.EnableRollback": true,
 		},
-		// skipMinimization: true,
+		skipMinimization: true,
 		// Use skip, replay, and only properties to control which seeds run.
 		skip: [
 			19, // Task queues are not the same size

@@ -27,7 +27,10 @@ import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 // eslint-disable-next-line import-x/no-internal-modules
 import { modifyClusterSize } from "@fluidframework/id-compressor/internal/test-utils";
 import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
-import { type StageControlsAlpha } from "@fluidframework/runtime-definitions/internal";
+import {
+	type StageCheckpointAlpha,
+	type StageControlsAlpha,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	RuntimeHeaders,
 	toFluidHandleInternal,
@@ -64,10 +67,12 @@ export interface ExitStagingMode {
 
 export interface StagingModeCreateCheckpoint {
 	type: "stagingModeCreateCheckpoint";
+	tag: `checkpoint-${number}`;
 }
 
 export interface StagingModeRollbackToCheckpoint {
 	type: "stagingModeRollbackToCheckpoint";
+	tag: `checkpoint-${number}`;
 }
 
 export type StressDataObjectOperations =
@@ -308,6 +313,7 @@ export class DefaultStressDataObject extends StressDataObject {
 	}
 
 	private stageControls: StageControlsAlpha | undefined;
+	private checkpoints = new Map<`checkpoint-${number}`, StageCheckpointAlpha>();
 	private readonly containerRuntimeExp = asLegacyAlpha(this.context.containerRuntime);
 	public enterStagingMode() {
 		assert(
@@ -333,31 +339,56 @@ export class DefaultStressDataObject extends StressDataObject {
 			this.stageControls.discardChanges();
 		}
 		this.stageControls = undefined;
+		this.checkpoints.clear();
 	}
 
-	public createCheckpoint() {
+	public createCheckpoint(tag: `checkpoint-${number}`) {
 		assert(this.stageControls !== undefined, "must have staging mode controls to checkpoint");
-		this.stageControls.checkpoint();
-		// Track that we've created at least one checkpoint
-		if (this.stageControls.hasChangesSinceCheckpoint === false) {
-		}
+		const checkpoint = this.stageControls.checkpoint();
+		this.checkpoints.set(tag, checkpoint);
 	}
 
-	public rollbackToCheckpoint() {
+	public rollbackToCheckpoint(tag: `checkpoint-${number}`) {
 		assert(
 			this.stageControls !== undefined,
 			"must have staging mode controls to rollback checkpoint",
 		);
-		this.stageControls.rollbackToCheckpoint();
-		// After rollback, we've consumed a checkpoint but there might be more
-		// For simplicity, assume we need to check again
+		const checkpoint = this.checkpoints.get(tag);
+		assert(checkpoint !== undefined, `checkpoint ${tag} not found`);
+		checkpoint.rollback();
+		// Remove this checkpoint and all checkpoints created after it (they're now invalid)
+		const checkpointsToRemove: `checkpoint-${number}`[] = [];
+		for (const [key, cp] of this.checkpoints.entries()) {
+			if (cp.isValid === false) {
+				checkpointsToRemove.push(key);
+			}
+		}
+		for (const key of checkpointsToRemove) {
+			this.checkpoints.delete(key);
+		}
+	}
+
+	public getValidCheckpointTags(): `checkpoint-${number}`[] {
+		const validTags: `checkpoint-${number}`[] = [];
+		for (const [tag, checkpoint] of this.checkpoints.entries()) {
+			if (checkpoint.isValid === true) {
+				validTags.push(tag);
+			}
+		}
+		return validTags;
 	}
 
 	public hasChangesSinceCheckpoint(): boolean {
-		if (this.stageControls === undefined) {
+		if (this.stageControls === undefined || this.checkpoints.size === 0) {
 			return false;
 		}
-		return this.stageControls.hasChangesSinceCheckpoint === true;
+		// Check if any valid checkpoint has changes since it was created
+		for (const checkpoint of this.checkpoints.values()) {
+			if (checkpoint.isValid === true && checkpoint.hasChangesSince === true) {
+				return true;
+			}
+		}
+		return false;
 	}
 }
 
