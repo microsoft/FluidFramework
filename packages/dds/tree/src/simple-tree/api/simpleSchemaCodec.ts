@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	isJsonObject,
-	objectToMap,
-	type JsonCompatible,
-	type JsonCompatibleObject,
-} from "../../util/index.js";
+import { objectToMap, type JsonCompatibleReadOnly } from "../../util/index.js";
 import { unreachableCase, transformMapValues } from "@fluidframework/core-utils/internal";
 import type {
 	SimpleAllowedTypeAttributes,
@@ -43,7 +38,7 @@ import {
  *
  * @alpha
  */
-export function encodeSimpleSchema(simpleSchema: SimpleTreeSchema): JsonCompatibleObject {
+export function encodeSimpleSchema(simpleSchema: SimpleTreeSchema): JsonCompatibleReadOnly {
 	// Convert types to serializable forms
 	const encodedDefinitions: Format.SimpleSchemaDefinitionsFormat = {};
 
@@ -71,7 +66,7 @@ export function encodeSimpleSchema(simpleSchema: SimpleTreeSchema): JsonCompatib
  * @alpha
  */
 export function decodeSimpleSchema(
-	encodedSchema: JsonCompatibleObject,
+	encodedSchema: JsonCompatibleReadOnly,
 	validator?: FormatValidator,
 ): SimpleTreeSchema {
 	const effectiveValidator = validator ?? FormatValidatorNoOp;
@@ -88,9 +83,6 @@ export function decodeSimpleSchema(
 		root: decodeSimpleFieldSchema(encodedSchema.root),
 		definitions: new Map(
 			transformMapValues(objectToMap(encodedSchema.definitions), (value, key) => {
-				if (value === undefined || !isJsonObject(value)) {
-					throw new UsageError(`Expected node schema for definition ${key}`);
-				}
 				return decodeNodeSchema(value);
 			}),
 		),
@@ -268,15 +260,10 @@ function decodeContainerNode(
  * Decodes a leaf node schema from a JSON-compatible object.
  * @param encodedLeafSchema - The encoded leaf node schema.
  * @returns The decoded leaf node schema.
- * @throws Will throw a usage error if the encoded leaf schema is not in the expected format.
  */
 function decodeLeafNode(
 	encodedLeafSchema: Format.SimpleLeafNodeSchemaFormat,
 ): SimpleLeafNodeSchema {
-	if (encodedLeafSchema.leafKind === undefined) {
-		throw new UsageError("Expected leafKind for leaf node schema");
-	}
-
 	return {
 		kind: NodeKind.Leaf,
 		leafKind: encodedLeafSchema.leafKind as ValueSchema,
@@ -290,15 +277,10 @@ function decodeLeafNode(
  * Decodes a object node schema from a JSON-compatible object.
  * @param encodedObjectSchema - The encoded object node schema.
  * @returns The decoded object node schema.
- * @throws Will throw a usage error if the encoded object schema is not in the expected format.
  */
 function decodeObjectNode(
 	encodedObjectSchema: Format.SimpleObjectNodeSchemaFormat,
 ): SimpleObjectNodeSchema {
-	if (encodedObjectSchema.fields === undefined) {
-		throw new UsageError("Expected fields for object node schema");
-	}
-
 	return {
 		kind: NodeKind.Object,
 		fields: decodeObjectFields(encodedObjectSchema.fields),
@@ -315,20 +297,13 @@ function decodeObjectNode(
  * Decodes a map of object fields from a JSON-compatible object.
  * @param encodedFields - The encoded fields.
  * @returns A map of the decoded object fields.
- * @throws Will throw a usage error if the encoded fields are not in the expected format.
  */
 function decodeObjectFields(
 	encodedFields: Format.SimpleObjectFieldSchemasFormat,
 ): ReadonlyMap<string, SimpleObjectFieldSchema> {
-	if (!isJsonObject(encodedFields)) {
-		throw new UsageError("Expected object for encodedFields");
-	}
-
 	const fields = new Map<string, SimpleObjectFieldSchema>();
-	for (const [fieldKey, fieldSchema] of Object.entries(
-		encodedFields as JsonCompatibleObject,
-	)) {
-		fields.set(fieldKey, decodeObjectField(fieldSchema as JsonCompatibleObject));
+	for (const [fieldKey, fieldSchema] of Object.entries(encodedFields)) {
+		fields.set(fieldKey, decodeObjectField(fieldSchema));
 	}
 	return fields;
 }
@@ -338,11 +313,13 @@ function decodeObjectFields(
  * @param encodedField - The encoded field schema.
  * @returns The decoded simple object field schema.
  */
-function decodeObjectField(encodedField: JsonCompatibleObject): SimpleObjectFieldSchema {
+function decodeObjectField(
+	encodedField: Format.SimpleObjectFieldSchemaFormat,
+): SimpleObjectFieldSchema {
 	const baseField = decodeSimpleFieldSchema(encodedField);
 	return {
 		...baseField,
-		storedKey: encodedField.storedKey as string,
+		storedKey: encodedField.storedKey,
 	};
 }
 
@@ -351,12 +328,12 @@ function decodeObjectField(encodedField: JsonCompatibleObject): SimpleObjectFiel
  * @param encodedField - The encoded field schema.
  * @returns The decoded simple field schema.
  */
-function decodeSimpleFieldSchema(encodedField: JsonCompatibleObject): SimpleFieldSchema {
+function decodeSimpleFieldSchema(
+	encodedField: Format.SimpleFieldSchemaFormat,
+): SimpleFieldSchema {
 	return {
 		kind: encodedField.kind as FieldKind,
-		simpleAllowedTypes: decodeSimpleAllowedTypes(
-			encodedField.simpleAllowedTypes as JsonCompatibleObject,
-		),
+		simpleAllowedTypes: decodeSimpleAllowedTypes(encodedField.simpleAllowedTypes),
 		// We cannot encode persistedMetadata or metadata, so we explicitly set them to empty values when decoding.
 		persistedMetadata: undefined,
 		metadata: {},
@@ -367,19 +344,15 @@ function decodeSimpleFieldSchema(encodedField: JsonCompatibleObject): SimpleFiel
  * Decodes a simple allowed types map from a JSON-compatible object.
  * @param encodedAllowedTypes - The encoded simple allowed types.
  * @returns A map of the decoded simple allowed types.
- * @throws Will throw a usage error if the encoded allowed types are not in the expected format.
  */
 function decodeSimpleAllowedTypes(
-	encodedAllowedTypes: JsonCompatible,
+	encodedAllowedTypes: Format.SimpleAllowedTypesFormat,
 ): ReadonlyMap<string, SimpleAllowedTypeAttributes> {
-	if (!isJsonObject(encodedAllowedTypes)) {
-		throw new UsageError("Expected object for encodedAllowedTypes");
-	}
-	const untypedMap = objectToMap(encodedAllowedTypes as JsonCompatibleObject);
+	const untypedMap = objectToMap(encodedAllowedTypes);
 
 	const simpleAllowedTypes = transformMapValues(untypedMap, (value) => {
 		return {
-			isStaged: (value as JsonCompatibleObject).isStaged as boolean | undefined,
+			isStaged: value.isStaged,
 		} satisfies SimpleAllowedTypeAttributes;
 	});
 
