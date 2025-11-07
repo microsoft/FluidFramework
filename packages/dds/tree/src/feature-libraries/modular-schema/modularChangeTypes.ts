@@ -105,7 +105,8 @@ export interface RootNodeTable {
 	outputDetachLocations: ChangeAtomIdRangeMap<FieldId>;
 }
 
-export type ChangeAtomIdBTree<V> = TupleBTree<[RevisionTag | undefined, ChangesetLocalId], V>;
+export type ChangeAtomIdBTree<V> = TupleBTree<ChangeAtomIdKey, V>;
+export type ChangeAtomIdKey = [RevisionTag | undefined, ChangesetLocalId];
 
 export function getFromChangeAtomIdMap<T>(
 	map: ChangeAtomIdBTree<T>,
