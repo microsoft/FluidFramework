@@ -429,17 +429,17 @@ stages:
                         accessToken: process.env.SYSTEM_ACCESSTOKEN,
                         odspEndpoint: '${{ parameters.odspTenantType }}'
                       });
-                      console.log(JSON.stringify(result));
-                    }
+                      fs.writeFileSync('/tmp/setup_result.json', result);
                     catch (e) {
                       console.error('Error during tenant setup: ', e);
+                      fs.unlinkSync('/tmp/setup_result.json');
                       process.exit(1);
                     }
                   })();
                 ")
 
-                # Extract just the JSON line (the last line should be the JSON)
-                JSON_OUTPUT=$(echo "$SETUP_OUTPUT" | tail -n 1)
+                # Read JSON from temp file
+                JSON_OUTPUT=$(cat /tmp/setup_result.json)
 
                 echo "JSON result:"
                 echo "$JSON_OUTPUT"
@@ -470,6 +470,8 @@ stages:
                   echo "ERROR: Failed to parse reservationId from setup output"
                   exit 1
                 fi
+                # Clean up temp file
+                rm -f /tmp/setup_result.json
               fi
 
               pnpm run ${{ parameters.testCommand }} -- ${{ variant.flags }}
