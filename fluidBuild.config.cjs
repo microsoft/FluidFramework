@@ -70,6 +70,7 @@ module.exports = {
 		},
 		"build:copy": [],
 		"build:genver": [],
+		"layerGeneration:gen": [],
 		"typetests:gen": [],
 		"ts2esm": [],
 		"tsc": tscDependsOn,
@@ -102,7 +103,7 @@ module.exports = {
 		// With most packages in client building ESM first, there is ideally just "build:esnext" dependency.
 		// The package's local 'api-extractor.json' may use the entrypoint from either CJS or ESM,
 		// therefore we need to require both before running api-extractor.
-		"build:docs": ["tsc", "build:esnext"],
+		"build:docs": ["tsc", "build:esnext", "layerGeneration:gen"],
 		"ci:build:docs": ["tsc", "build:esnext"],
 		"build:readme": {
 			dependsOn: ["compile"],
