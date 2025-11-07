@@ -1889,7 +1889,7 @@
             }
         ],
         "unicorn/import-style": [
-            "error"
+            "off"
         ],
         "unicorn/new-for-builtins": [
             "error"
@@ -2057,7 +2057,7 @@
             "error"
         ],
         "unicorn/prefer-at": [
-            "off"
+            "warn"
         ],
         "unicorn/prefer-blob-reading-methods": [
             "error"
@@ -2153,10 +2153,10 @@
             "error"
         ],
         "unicorn/prefer-string-raw": [
-            "error"
+            "warn"
         ],
         "unicorn/prefer-string-replace-all": [
-            "off"
+            "warn"
         ],
         "unicorn/prefer-string-slice": [
             "error"
@@ -2168,7 +2168,7 @@
             "error"
         ],
         "unicorn/prefer-structured-clone": [
-            "error"
+            "warn"
         ],
         "unicorn/prefer-switch": [
             "error"
