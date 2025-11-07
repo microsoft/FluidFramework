@@ -240,12 +240,12 @@ export function createSimpleTreeIndex<TFieldSchema extends ImplicitFieldSchema, 
 // @alpha
 export function createSimpleTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey extends TreeIndexKey, TValue, TSchema extends TreeNodeSchema>(view: TreeView<TFieldSchema>, indexer: Map<TreeNodeSchema, string>, getValue: (nodes: TreeIndexNodes<NodeFromSchema<TSchema>>) => TValue, isKeyValid: (key: TreeIndexKey) => key is TKey, indexableSchema: readonly TSchema[]): SimpleTreeIndex<TKey, TValue>;
 
+// @alpha
+export function decodeSimpleSchema(encodedSchema: JsonCompatibleReadOnly, validator?: FormatValidator): SimpleTreeSchema;
+
 // @public @sealed @system
 interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider"> {
 }
-
-// @alpha
-export function deserializeSimpleSchema(serializedSchema: JsonCompatible): SimpleTreeSchema;
 
 // @alpha
 export interface DirtyTreeMap {
@@ -257,6 +257,9 @@ export interface DirtyTreeMap {
 
 // @alpha
 export type DirtyTreeStatus = "new" | "changed" | "moved";
+
+// @alpha
+export function encodeSimpleSchema(simpleSchema: SimpleTreeSchema): JsonCompatibleReadOnly;
 
 // @beta
 export function enumFromStrings<TScope extends string, const Members extends readonly string[]>(factory: SchemaFactory<TScope>, members: Members): (<TValue extends Members[number]>(value: TValue) => TValue extends unknown ? TreeNode & {
@@ -1370,9 +1373,6 @@ export class SchemaUpgrade {
 
 // @public @system
 type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
-
-// @alpha
-export function serializeSimpleSchema(simpleSchema: SimpleTreeSchema): JsonCompatible;
 
 // @public @sealed
 export interface SharedObjectKind<out TSharedObject = unknown> extends ErasedType<readonly ["SharedObjectKind", TSharedObject]> {
