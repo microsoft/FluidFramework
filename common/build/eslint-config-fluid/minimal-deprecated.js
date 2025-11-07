@@ -69,7 +69,7 @@ module.exports = {
 		es2024: false,
 		node: true,
 	},
-	extends: ["./base", "plugin:eslint-comments/recommended", "prettier"],
+	extends: ["./base", "prettier"],
 	globals: {
 		Atomics: "readonly",
 		SharedArrayBuffer: "readonly",
@@ -154,7 +154,7 @@ module.exports = {
 		/**
 		 * Encourages minimal disabling of eslint rules, while still permitting whole-file exclusions.
 		 */
-		"eslint-comments/disable-enable-pair": [
+		"@eslint-community/eslint-comments/disable-enable-pair": [
 			"error",
 			{
 				allowWholeFile: true,
