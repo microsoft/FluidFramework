@@ -1615,8 +1615,8 @@ export class ContainerRuntime
 			logger: this.baseLogger,
 			namespace: "ContainerRuntime",
 			properties: {
-				all: {
-					inStagingMode: this.inStagingMode,
+				error: {
+					inStagingMode: () => this.inStagingMode,
 				},
 			},
 		});
@@ -2041,7 +2041,7 @@ export class ContainerRuntime
 		this.stagingModeManager = new StagingModeManager({
 			pendingStateManager: this.pendingStateManager,
 			outbox: this.outbox,
-			channelCollection: this.channelCollection,
+			getChannelCollection: () => this.channelCollection,
 			submitIdAllocationOpIfNeeded: this.submitIdAllocationOpIfNeeded.bind(this),
 			rollbackStagedChange: this.rollbackStagedChange.bind(this),
 			updateDocumentDirtyState: this.updateDocumentDirtyState.bind(this),

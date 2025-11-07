@@ -13,6 +13,7 @@ describe("StagingModeManager", () => {
 	let dependencies: StagingModeDependencies;
 	let mockMainBatchMessageCount: { value: number };
 	let mockLastStagedMessage: { value: object | undefined };
+	let mockChannelCollection: { notifyStagingMode: Sinon.SinonStub };
 
 	beforeEach(() => {
 		sandbox = Sinon.createSandbox();
@@ -20,6 +21,7 @@ describe("StagingModeManager", () => {
 		// Use objects to allow mutation of readonly properties in tests
 		mockMainBatchMessageCount = { value: 0 };
 		mockLastStagedMessage = { value: undefined };
+		mockChannelCollection = { notifyStagingMode: sandbox.stub() };
 
 		// Create minimal mocks for each dependency using Pick types
 		dependencies = {
@@ -34,9 +36,7 @@ describe("StagingModeManager", () => {
 					return mockMainBatchMessageCount.value;
 				},
 			} as unknown as StagingModeDependencies["outbox"],
-			channelCollection: {
-				notifyStagingMode: sandbox.stub(),
-			} as unknown as StagingModeDependencies["channelCollection"],
+			getChannelCollection: () => mockChannelCollection,
 			submitIdAllocationOpIfNeeded: sandbox.stub(),
 			rollbackStagedChange: sandbox.stub(),
 			updateDocumentDirtyState: sandbox.stub(),
@@ -86,9 +86,7 @@ describe("StagingModeManager", () => {
 			const manager = new StagingModeManager(dependencies);
 			manager.enterStagingMode(() => {});
 			assert(
-				(
-					dependencies.channelCollection.notifyStagingMode as Sinon.SinonStub
-				).calledOnceWithExactly(true),
+				mockChannelCollection.notifyStagingMode.calledOnceWithExactly(true),
 				"notifyStagingMode should be called with true",
 			);
 		});
@@ -163,9 +161,7 @@ describe("StagingModeManager", () => {
 			const controls = manager.enterStagingMode(() => {});
 			controls.discardChanges();
 			assert(
-				(dependencies.channelCollection.notifyStagingMode as Sinon.SinonStub).calledWith(
-					false,
-				),
+				mockChannelCollection.notifyStagingMode.calledWith(false),
 				"notifyStagingMode should be called with false",
 			);
 		});
@@ -225,9 +221,7 @@ describe("StagingModeManager", () => {
 			const controls = manager.enterStagingMode(() => {});
 			controls.commitChanges();
 			assert(
-				(dependencies.channelCollection.notifyStagingMode as Sinon.SinonStub).calledWith(
-					false,
-				),
+				mockChannelCollection.notifyStagingMode.calledWith(false),
 				"notifyStagingMode should be called with false",
 			);
 		});
@@ -274,7 +268,11 @@ describe("StagingModeManager", () => {
 		});
 
 		it("checkpoint.hasChangesSince should be false when no changes", () => {
-			const msg1 = { id: 1 };
+			const msg1 = {
+				localOpMetadata: {},
+				opMetadata: { batchId: "batch1" },
+				batchInfo: { staged: true, clientId: "client1", batchStartCsn: 1, length: 1 },
+			};
 			mockLastStagedMessage.value = msg1;
 
 			const manager = new StagingModeManager(dependencies);
@@ -286,7 +284,11 @@ describe("StagingModeManager", () => {
 		});
 
 		it("checkpoint.hasChangesSince should be true when messages added", () => {
-			const msg1 = { id: 1 };
+			const msg1 = {
+				localOpMetadata: {},
+				opMetadata: { batchId: "batch1" },
+				batchInfo: { staged: true, clientId: "client1", batchStartCsn: 1, length: 1 },
+			};
 			mockLastStagedMessage.value = msg1;
 
 			const manager = new StagingModeManager(dependencies);
@@ -294,7 +296,11 @@ describe("StagingModeManager", () => {
 			const checkpoint = controls.checkpoint();
 
 			// Simulate messages being added after checkpoint
-			const msg2 = { id: 2 };
+			const msg2 = {
+				localOpMetadata: {},
+				opMetadata: { batchId: "batch2" },
+				batchInfo: { staged: true, clientId: "client1", batchStartCsn: 2, length: 1 },
+			};
 			mockLastStagedMessage.value = msg2;
 
 			assert.equal(checkpoint.hasChangesSince, true);
@@ -326,7 +332,11 @@ describe("StagingModeManager", () => {
 		});
 
 		it("checkpoint.rollback should call popStagedMessagesAfter with correct reference", () => {
-			const msg1 = { id: 1 };
+			const msg1 = {
+				localOpMetadata: {},
+				opMetadata: { batchId: "batch1" },
+				batchInfo: { staged: true, clientId: "client1", batchStartCsn: 1, length: 1 },
+			};
 			mockLastStagedMessage.value = msg1;
 
 			const manager = new StagingModeManager(dependencies);
@@ -334,27 +344,39 @@ describe("StagingModeManager", () => {
 			const checkpoint = controls.checkpoint();
 
 			// Simulate messages being added after checkpoint
-			const msg2 = { id: 2 };
+			const msg2 = {
+				localOpMetadata: {},
+				opMetadata: { batchId: "batch2" },
+				batchInfo: { staged: true, clientId: "client1", batchStartCsn: 2, length: 1 },
+			};
 			mockLastStagedMessage.value = msg2;
 
 			checkpoint.rollback();
 			assert(
 				(dependencies.pendingStateManager.popStagedBatches as Sinon.SinonStub).calledWith(
 					Sinon.match.func,
-					msg1,
+					"batch1",
 				),
-				"popStagedBatches should be called with callback and checkpoint message reference",
+				"popStagedBatches should be called with callback and checkpoint batch ID",
 			);
 		});
 		it("multiple checkpoints should work independently", () => {
 			const manager = new StagingModeManager(dependencies);
 			const controls = manager.enterStagingMode(() => {});
 
-			const msg1 = { id: 1 };
+			const msg1 = {
+				localOpMetadata: {},
+				opMetadata: { batchId: "batch1" },
+				batchInfo: { staged: true, clientId: "client1", batchStartCsn: 1, length: 1 },
+			};
 			mockLastStagedMessage.value = msg1;
 			const checkpoint1 = controls.checkpoint();
 
-			const msg2 = { id: 2 };
+			const msg2 = {
+				localOpMetadata: {},
+				opMetadata: { batchId: "batch2" },
+				batchInfo: { staged: true, clientId: "client1", batchStartCsn: 2, length: 1 },
+			};
 			mockLastStagedMessage.value = msg2;
 			const checkpoint2 = controls.checkpoint();
 
@@ -370,11 +392,19 @@ describe("StagingModeManager", () => {
 			const manager = new StagingModeManager(dependencies);
 			const controls = manager.enterStagingMode(() => {});
 
-			const msg1 = { id: 1 };
+			const msg1 = {
+				localOpMetadata: {},
+				opMetadata: { batchId: "batch1" },
+				batchInfo: { staged: true, clientId: "client1", batchStartCsn: 1, length: 1 },
+			};
 			mockLastStagedMessage.value = msg1;
 			const checkpoint1 = controls.checkpoint();
 
-			const msg2 = { id: 2 };
+			const msg2 = {
+				localOpMetadata: {},
+				opMetadata: { batchId: "batch2" },
+				batchInfo: { staged: true, clientId: "client1", batchStartCsn: 2, length: 1 },
+			};
 			mockLastStagedMessage.value = msg2;
 			const checkpoint2 = controls.checkpoint();
 

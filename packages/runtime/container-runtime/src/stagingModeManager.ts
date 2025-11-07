@@ -38,7 +38,7 @@ export interface StagingModeDependencies {
 		"popStagedBatches" | "replayPendingStates" | "getLastPendingMessage"
 	>;
 	readonly outbox: Pick<Outbox, "flush" | "mainBatchMessageCount">;
-	readonly channelCollection: Pick<ChannelCollection, "notifyStagingMode">;
+	readonly getChannelCollection: () => Pick<ChannelCollection, "notifyStagingMode">;
 	readonly submitIdAllocationOpIfNeeded: (options: { staged: boolean }) => void;
 	readonly rollbackStagedChange: (
 		runtimeOp: LocalContainerRuntimeMessage,
@@ -99,7 +99,7 @@ export class StagingModeManager {
 				this.dependencies.submitIdAllocationOpIfNeeded({ staged: false });
 				discardOrCommit();
 
-				this.dependencies.channelCollection.notifyStagingMode(false);
+				this.dependencies.getChannelCollection().notifyStagingMode(false);
 			} catch (error) {
 				const normalizedError = normalizeError(error);
 				this.dependencies.closeFn(normalizedError);
@@ -145,7 +145,7 @@ export class StagingModeManager {
 		};
 
 		this.stageControls = stageControls;
-		this.dependencies.channelCollection.notifyStagingMode(true);
+		this.dependencies.getChannelCollection().notifyStagingMode(true);
 
 		return this.stageControls;
 	}
