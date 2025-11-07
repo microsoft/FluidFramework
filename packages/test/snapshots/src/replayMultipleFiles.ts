@@ -50,8 +50,17 @@ export enum Mode {
 	UpdateSnapshots, // Update the current snapshot files.
 }
 
+/**
+ * Arguments capturing a unit of snapshot work.
+ *
+ * @remarks
+ * When running in worker thread, this interface is used as the type for
+ * `workerData` and must be passable as such.
+ */
 export interface IWorkerArgs {
+	/** Name of the snapshot test */
 	name: string;
+	/** Snapshot folder */
 	folder: string;
 	mode: Mode;
 	snapFreq?: number;
@@ -59,13 +68,34 @@ export interface IWorkerArgs {
 	initializeFromSnapshotsDir?: string;
 }
 
+/**
+ * Limits the number of concurrent promises being processed.
+ *
+ * @remarks
+ * Up to `limit` number of promises can be processed concurrently. Once limit
+ * is reached, if more work is added, the `addWork` call will wait until one
+ * of the existing promises complete.
+ *
+ * Currently all workers are handled independently, so if one of the workers
+ * fails, the other workers will continue to be scheduled and processed.
+ */
 class ConcurrencyLimiter {
 	private readonly promises: Promise<void>[] = [];
 	private deferred: Deferred<void> | undefined;
 
 	constructor(private limit: number) {}
 
-	async addWork(worker: () => Promise<void>) {
+	/**
+	 * Adds work to be processed.
+	 *
+	 * @remarks
+	 * Callers must await the returned promise before calling `addWork` another time.
+	 *
+	 * Work is guaranteed to have started when the returned promise resolves.
+	 *
+	 * `waitAll` must be awaited on to ensure all work is complete.
+	 */
+	async addWork(worker: () => Promise<void>): Promise<void> {
 		this.limit--;
 		if (this.limit < 0) {
 			assert(this.deferred === undefined);
@@ -155,6 +185,17 @@ export async function processOneNode(args: IWorkerArgs) {
 	}
 }
 
+/**
+ * Processes the content of snapshot folders.
+ *
+ * @param mode - test mode
+ * @param concurrently - when true (default), process multiple snapshot folders
+ * concurrently. Full processing is time intensive but folders are independent,
+ * so concurrency helps speed up overall test time. Ideally individual folders
+ * would be their own test case, mocha does not have direct support for running
+ * any in parallel that aren't broken up into separate files. With this
+ * concurrency implementation, progress is shown logging each case as it completes.
+ */
 export async function processContent(mode: Mode, concurrently = true) {
 	const limiter = new ConcurrencyLimiter(numberOfThreads);
 
@@ -397,7 +438,7 @@ async function processNode(
 	workerData: Readonly<IWorkerArgs>,
 	concurrently: boolean,
 	limiter: ConcurrencyLimiter,
-) {
+): Promise<void> {
 	// "worker_threads" does not resolve without --experimental-worker flag on command line
 	let threads: typeof import("worker_threads");
 	try {
