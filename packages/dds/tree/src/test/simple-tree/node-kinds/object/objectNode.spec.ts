@@ -34,7 +34,7 @@ import type {
 	FieldHasDefault,
 	InsertableObjectFromSchemaRecord,
 	ObjectFromSchemaRecord,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../simple-tree/node-kinds/object/objectNode.js";
 import { describeHydration, hydrate, pretty } from "../../utils.js";
 import { brand } from "../../../../util/index.js";
@@ -53,11 +53,11 @@ import { FieldKinds } from "../../../../feature-libraries/index.js";
 import {
 	createField,
 	UnhydratedFlexTreeNode,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../simple-tree/core/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { getUnhydratedContext } from "../../../../simple-tree/createContext.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { createTreeNodeFromInner } from "../../../../simple-tree/core/treeNodeKernel.js";
 
 const schemaFactory = new SchemaFactory("Test");
@@ -355,13 +355,8 @@ describeHydration(
 					foo: schemaFactory.optional(schemaFactory.number),
 				}) {}
 				const n = init(Schema, { foo: 0 });
-				assert.throws(
-					() => {
-						// Since we do not have exactOptionalPropertyTypes enabled, this compiles, but should error at runtime:
-						delete n.foo;
-					},
-					validateUsageError(/delete operator/),
-				);
+				delete n.foo;
+				assert.equal(n.foo, undefined);
 			});
 
 			it("assigning identifier errors", () => {

@@ -1044,14 +1044,6 @@ export class MockFluidDataStoreRuntime
 		return null;
 	}
 
-	/**
-	 * @deprecated Use `IFluidDataStoreContext.submitMessage` instead.
-	 * @see https://github.com/microsoft/FluidFramework/issues/24406
-	 */
-	public submitMessage(type: MessageType, content: any) {
-		return null;
-	}
-
 	private submitMessageInternal(messageContent: any, localOpMetadata: unknown): number {
 		assert(
 			this.containerRuntime !== undefined,
@@ -1068,9 +1060,7 @@ export class MockFluidDataStoreRuntime
 		return this.containerRuntime.dirty();
 	}
 
-	public submitSignal(type: string, content: any) {
-		return null;
-	}
+	public submitSignal: IFluidDataStoreRuntime["submitSignal"] = () => null;
 
 	public processMessages(messageCollection: IRuntimeMessageCollection) {
 		if (this.disposed) {

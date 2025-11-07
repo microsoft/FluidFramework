@@ -28,6 +28,7 @@ import type {
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import type { MinimumVersionForCollab } from "./compatibilityDefinitions.js";
+import type { ContainerExtensionProvider } from "./containerExtensionProvider.js";
 import type {
 	IFluidDataStoreFactory,
 	IProvideFluidDataStoreFactory,
@@ -400,7 +401,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	 * @param clientId - ID of the client. It's old ID when in disconnected state and
 	 * it's new client ID when we are connecting or connected.
 	 */
-	setConnectionState(connected: boolean, clientId?: string);
+	setConnectionState(connected: boolean, clientId?: string): void;
 
 	/**
 	 * Notifies this object about changes in the readonly state
@@ -426,7 +427,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	 * See remarks about squashing contract on `CommitStagedChangesOptionsExperimental`.
 	 */
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
-	reSubmit(type: string, content: any, localOpMetadata: unknown, squash?: boolean);
+	reSubmit(type: string, content: any, localOpMetadata: unknown, squash?: boolean): void;
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
 	applyStashedOp(content: any): Promise<unknown>;
@@ -482,7 +483,8 @@ export interface IPendingMessagesState {
  * Therefore the semantics of these two interfaces is not really distinct.
  *
  * @privateRemarks
- * In addition to the use for datastores via IFluidDataStoreContext, this is implemented by ContainerRuntime to provide context to the ChannelCollection.
+ * In addition to the use for datastores via IFluidDataStoreContext, this is
+ * partially implemented by ContainerRuntime to provide context to the ChannelCollection.
  *
  * @legacy @beta
  */
@@ -691,6 +693,20 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 		childFactory: T,
 	): ReturnType<Exclude<T["createDataStore"], undefined>>;
 }
+
+/**
+ * Internal extension to {@link IFluidDataStoreContext} for use across FluidFramework packages.
+ *
+ * @remarks
+ * Important: this interface does cross layer boundaries and must follow `@legacy`
+ * layer compatibility patterns.
+ * This is meant to be a staging ground ahead of adding properties to {@link IFluidDataStoreContext}.
+ *
+ * @internal
+ */
+export interface FluidDataStoreContextInternal
+	extends IFluidDataStoreContext,
+		ContainerExtensionProvider {}
 
 /**
  * @legacy @beta

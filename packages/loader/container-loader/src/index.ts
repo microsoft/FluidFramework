@@ -54,3 +54,4 @@ export type {
 	QuorumClientsSnapshot,
 	QuorumProposalsSnapshot,
 } from "./protocol/index.js";
+export { PendingLocalStateStore } from "./pendingLocalStateStore.js";

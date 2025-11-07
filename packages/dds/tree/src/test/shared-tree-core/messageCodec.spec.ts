@@ -13,11 +13,11 @@ import type {
 	ChangeEncodingContext,
 } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { makeMessageCodec, makeMessageCodecs } from "../../shared-tree-core/messageCodecs.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { Message } from "../../shared-tree-core/messageFormatV1ToV4.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { DecodedMessage } from "../../shared-tree-core/messageTypes.js";
 import { TestChange } from "../testChange.js";
 import {
@@ -28,7 +28,8 @@ import {
 	testRevisionTagCodec,
 	validateUsageError,
 } from "../utils.js";
-import { DependentFormatVersion } from "../../codec/index.js";
+import { currentVersion, DependentFormatVersion } from "../../codec/index.js";
+import { MessageFormatVersion } from "../../shared-tree-core/index.js";
 
 const commit1 = {
 	revision: mintRevisionTag(),
@@ -159,6 +160,7 @@ describe("message codec", () => {
 			testRevisionTagCodec,
 			{
 				jsonValidator: FormatValidatorBasic,
+				minVersionForCollab: currentVersion,
 			},
 		);
 
@@ -221,7 +223,7 @@ describe("message codec", () => {
 				revision,
 				originatorId,
 				changeset: {},
-				version: 1,
+				version: MessageFormatVersion.v1,
 			} satisfies Message);
 			const actual = codec.decode(JSON.parse(encoded), { idCompressor: testIdCompressor });
 			assert.deepEqual(actual, {

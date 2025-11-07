@@ -33,11 +33,11 @@ import {
 import {
 	allowUnused,
 	type ValidateRecursiveSchema,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/schemaFactoryRecursive.js";
 import type {
 	System_Unsafe,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/typesUnsafe.js";
 import { SharedTree } from "../../../treeFactory.js";
 import type {
@@ -1377,7 +1377,7 @@ describe("SchemaFactory Recursive methods", () => {
 	 * Currently this collection of test cases covers one specific edge case: schema which do not use explicit sub-classing.
 	 * Our current guidance says this pattern is not supported for recursive schema.
 	 *
-	 * These patterns also [break type safety in .d.ts generation](https://github.com/microsoft/TypeScript/issues/55832):
+	 * These patterns also {@link https://github.com/microsoft/TypeScript/issues/55832 | break type safety in .d.ts generation}:
 	 * this is one of the reasons they are not supported.
 	 * The import-testing package has test coverage for this aspect.
 	 * They also have poorer error quality and IntelliSense (for example the compiler and IntelliSense disagree on which are valid).

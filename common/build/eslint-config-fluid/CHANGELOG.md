@@ -1,6 +1,29 @@
 # @fluidframework/eslint-config-fluid Changelog
 
-## [8.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v8.0_0)
+## [9.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v9.0_0)
+
+### eslint-plugin-eslint-comments replaced by @eslint-community/eslint-plugin-eslint-comments
+
+The package now uses rules from
+[@eslint-community/eslint-plugin-eslint-comments](https://eslint-community.github.io/eslint-plugin-eslint-comments/)
+v4.5.0 instead of eslint-plugin-eslint-comments v3.2.0. Integrating this change will require renaming eslint disable
+comments and overrides, but the changes are mechanical.
+
+## [8.1.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v8.1.0)
+
+### import-x/order rule simplified
+
+The `import-x/order` rule configuration has been simplified to use basic grouping without alphabetization or newlines-between settings. This provides more flexibility in import ordering while still maintaining consistent grouping of import types.
+
+### Resolver configuration updated
+
+The TypeScript resolver configuration has been updated to work correctly with the repository's build setup. The resolver no longer requires explicit name and options wrapping, and uses the resolver directly.
+
+### no-hyphen-after-jsdoc-tag rule disabled
+
+The `@fluid-internal/fluid/no-hyphen-after-jsdoc-tag` rule has been temporarily disabled pending resolution of ADO work item 29535.
+
+## [8.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v8.0.0)
 
 ### eslint-plugin-import replaced by eslint-plugin-import-x
 

@@ -175,7 +175,6 @@ declare type old_as_current_for_Class_MockFluidDataStoreContext = requireAssigna
  * typeValidation.broken:
  * "Class_MockFluidDataStoreContext": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_MockFluidDataStoreContext = requireAssignableTo<TypeOnly<current.MockFluidDataStoreContext>, TypeOnly<old.MockFluidDataStoreContext>>
 
 /*
@@ -221,7 +220,6 @@ declare type current_as_old_for_Class_MockHandle = requireAssignableTo<TypeOnly<
  * typeValidation.broken:
  * "Class_MockObjectStorageService": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_MockObjectStorageService = requireAssignableTo<TypeOnly<old.MockObjectStorageService>, TypeOnly<current.MockObjectStorageService>>
 
 /*
@@ -258,7 +256,6 @@ declare type current_as_old_for_Class_MockQuorumClients = requireAssignableTo<Ty
  * typeValidation.broken:
  * "Class_MockSharedObjectServices": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_MockSharedObjectServices = requireAssignableTo<TypeOnly<old.MockSharedObjectServices>, TypeOnly<current.MockSharedObjectServices>>
 
 /*
@@ -367,7 +364,6 @@ declare type current_as_old_for_ClassStatics_MockDeltaQueue = requireAssignableT
  * typeValidation.broken:
  * "ClassStatics_MockFluidDataStoreContext": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_MockFluidDataStoreContext = requireAssignableTo<TypeOnly<typeof current.MockFluidDataStoreContext>, TypeOnly<typeof old.MockFluidDataStoreContext>>
 
 /*

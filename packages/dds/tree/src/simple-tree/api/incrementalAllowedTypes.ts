@@ -19,7 +19,7 @@ import { assert } from "@fluidframework/core-utils/internal";
  * @remarks
  * See {@link getShouldIncrementallySummarizeAllowedTypes} for more details.
  *
- * Use {@link SchemaStaticsAlpha.types} to add this metadata to allowed types in a schema.
+ * Use {@link SchemaStaticsBeta.types} to add this metadata to allowed types in a schema.
  * @example
  * ```typescript
  * const sf = new SchemaFactoryAlpha("IncrementalSummarization");
@@ -100,7 +100,7 @@ export function getShouldIncrementallySummarizeAllowedTypes(
 		);
 		assert(
 			allowedTypes !== undefined,
-			"Non object nodes with fields should only have one allowedTypes entry",
+			0xc87 /* Non object nodes with fields should only have one allowedTypes entry */,
 		);
 		return isIncrementalSummaryHintInAllowedTypes(allowedTypes);
 	};

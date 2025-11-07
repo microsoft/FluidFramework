@@ -19,11 +19,6 @@ export interface AttributionInfo {
 // @beta @legacy
 export type AttributionKey = OpAttributionKey | DetachedAttributionKey | LocalAttributionKey;
 
-// @beta @sealed @deprecated @legacy
-export interface CommitStagedChangesOptionsExperimental {
-    squash?: boolean;
-}
-
 // @alpha @sealed @legacy
 export interface ContainerRuntimeBaseAlpha extends IContainerRuntimeBase {
     enterStagingMode(): StageControlsAlpha;
@@ -115,12 +110,6 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
     (event: "dispose", listener: () => void): any;
 }
 
-// @beta @sealed @deprecated @legacy
-export interface IContainerRuntimeBaseExperimental extends IContainerRuntimeBase {
-    enterStagingMode?(): StageControlsExperimental;
-    readonly inStagingMode?: boolean;
-}
-
 // @beta @legacy
 export interface IDataStore {
     readonly entryPoint: IFluidHandleInternal<FluidObject>;
@@ -128,9 +117,9 @@ export interface IDataStore {
 }
 
 // @beta @legacy
-export interface IEnvelope {
+export interface IEnvelope<TContents = any> {
     address: string;
-    contents: any;
+    contents: TContents;
 }
 
 // @beta @legacy
@@ -155,11 +144,11 @@ export interface IFluidDataStoreChannel extends IDisposable {
     processSignal(message: IInboundSignalMessage, local: boolean): void;
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
-    reSubmit(type: string, content: any, localOpMetadata: unknown, squash?: boolean): any;
+    reSubmit(type: string, content: any, localOpMetadata: unknown, squash?: boolean): void;
     rollback?(type: string, content: any, localOpMetadata: unknown): void;
     // (undocumented)
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
-    setConnectionState(connected: boolean, clientId?: string): any;
+    setConnectionState(connected: boolean, clientId?: string): void;
     summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
     updateUsedRoutes(usedRoutes: string[]): void;
 }
@@ -435,12 +424,6 @@ export type PackagePath = readonly string[];
 // @alpha @sealed @legacy
 export interface StageControlsAlpha {
     readonly commitChanges: () => void;
-    readonly discardChanges: () => void;
-}
-
-// @beta @sealed @deprecated @legacy
-export interface StageControlsExperimental {
-    readonly commitChanges: (options?: Partial<CommitStagedChangesOptionsExperimental>) => void;
     readonly discardChanges: () => void;
 }
 

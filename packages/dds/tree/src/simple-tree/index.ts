@@ -74,6 +74,7 @@ export {
 	type ITreeConfigurationOptions,
 	SchemaFactory,
 	SchemaFactoryBeta,
+	type SchemaStaticsBeta,
 	SchemaFactoryAlpha,
 	type ObjectSchemaOptionsAlpha,
 	type ObjectSchemaOptions,
@@ -180,7 +181,6 @@ export {
 	type TreeChangeEvents,
 	type NodeSchemaOptions,
 	type NodeSchemaOptionsAlpha,
-	type SchemaStaticsAlpha,
 	KeyEncodingOptions,
 	type TreeParsingOptions,
 	incrementalSummaryHint,
@@ -198,6 +198,7 @@ export type {
 	SimpleNodeSchemaBaseAlpha,
 	SimpleObjectFieldSchema,
 	SimpleRecordNodeSchema,
+	SimpleAllowedTypeAttributes,
 } from "./simpleSchema.js";
 export {
 	type ImplicitFieldSchema,
@@ -279,3 +280,7 @@ export {
 	nullSchema,
 } from "./leafNodeSchema.js";
 export type { LeafSchema } from "./leafNodeSchema.js";
+export {
+	encodeSimpleSchema,
+	decodeSimpleSchema,
+} from "./api/index.js";

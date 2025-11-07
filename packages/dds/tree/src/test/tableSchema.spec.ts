@@ -23,7 +23,7 @@ import type {
 } from "../util/index.js";
 import { validateUsageError } from "./utils.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshots/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { describeHydration } from "./simple-tree/utils.js";
 
 const schemaFactory = new SchemaFactoryAlpha("test");
@@ -293,6 +293,28 @@ describe("TableFactory unit tests", () => {
 			const _table = new MyTable({
 				columns: [{ id: "column-0", props: { label: "Column 0" } }],
 				rows: [{ id: "row-0", props: { label: "Row 0" }, cells: {} }],
+			});
+		});
+
+		// Tables manage to make ids readonly at the type level:
+		// this is a bit surprising since that's not currently implemented for identifiers in general,
+		// but works in this case due to how interfaces are used.
+		it("Readonly IDs", () => {
+			const column = new Column({ props: {} });
+			// Read
+			const _columnId = column.id;
+			assert.throws(() => {
+				// Write
+				// @ts-expect-error id is readonly
+				column.id = "column-1";
+			});
+			const row = new Row({ cells: {} });
+			// Read
+			const _rowId = row.id;
+			assert.throws(() => {
+				// Write
+				// @ts-expect-error id is readonly
+				row.id = "row-1";
 			});
 		});
 	});

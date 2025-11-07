@@ -1,6 +1,6 @@
 {
 	"name": "build-tools-release-group-root",
-	"version": "0.59.0",
+	"version": "0.61.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -165,6 +165,13 @@
 				"type-fest",
 				"typescript"
 			]
-		}
+		},
+		"onlyBuiltDependencies": [
+			"@biomejs/biome",
+			"core-js",
+			"es5-ext",
+			"sharp",
+			"unrs-resolver"
+		]
 	}
 }
