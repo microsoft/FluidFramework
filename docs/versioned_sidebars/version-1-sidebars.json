@@ -38,7 +38,7 @@
 			"link": { "type": "doc", "id": "concepts/architecture" }
 		},
 		{ "type": "doc", "id": "faq" },
-		{ "type": "doc", "id": "migration" },
+		{ "type": "link", "label": "Migration", "href": "/docs/migration" },
 		{ "type": "doc", "id": "glossary" },
 		{
 			"type": "doc",
