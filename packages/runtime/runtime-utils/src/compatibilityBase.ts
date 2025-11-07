@@ -42,8 +42,8 @@ export const defaultMinVersionForCollab =
  * Therefore it makes sense to not support any version below 1.4.0.
  * Supporting 1.4 is sufficient to support all 1.x versions which were maintained at the time this constant was introduced.
  *
- * Future major versions will have to decide which versions of every supported major (including 1.x if still supported) they want to support:
- * continuing to support whatever version of 1.x is the oldest supported one at the time of the major release, would make sense for 3.0.
+ * Future major versions will have to decide which versions of every supported major (including 1.x if still supported) they want to support.
+ * Continuing to support whatever version of 1.x is the oldest supported one at the time of the major release, would make sense for 3.0.
  *
  * @privateRemarks
  * Exported for use in tests.
