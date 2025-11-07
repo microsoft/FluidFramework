@@ -4543,10 +4543,6 @@ export function addNodeRename(
 	count: number,
 	detachLocation: FieldId | undefined,
 ): void {
-	if (detachLocation !== undefined) {
-		table.detachLocations.set(oldId, count, detachLocation);
-	}
-
 	if (areEqualChangeAtomIds(oldId, newId)) {
 		return;
 	}
@@ -4569,6 +4565,10 @@ export function addNodeRename(
 
 	table.oldToNewId.set(oldId, count, newId);
 	table.newToOldId.set(newId, count, oldId);
+
+	if (detachLocation !== undefined) {
+		table.detachLocations.set(oldId, count, detachLocation);
+	}
 }
 
 /**
@@ -4613,6 +4613,8 @@ function appendNodeRename(
 		detachLocation,
 	);
 
+	tryRemoveDetachLocation(composedTable, newId, countToProcess);
+
 	if (countToProcess < count) {
 		const countRemaining = count - countToProcess;
 		appendNodeRename(
@@ -4623,6 +4625,34 @@ function appendNodeRename(
 			change1Table,
 			detachLocation,
 		);
+	}
+}
+
+function tryRemoveDetachLocation(
+	roots: RootNodeTable,
+	rootId: ChangeAtomId,
+	count: number,
+): void {
+	let countProcessed = count;
+	const renameEntry = roots.oldToNewId.getFirst(rootId, countProcessed);
+	countProcessed = renameEntry.length;
+
+	const outputDetachEntry = roots.outputDetachLocations.getFirst(rootId, countProcessed);
+	countProcessed = outputDetachEntry.length;
+
+	const nodeChange = roots.nodeChanges.get([rootId.revision, rootId.localId]);
+
+	if (
+		nodeChange === undefined &&
+		renameEntry.value === undefined &&
+		outputDetachEntry.value === undefined
+	) {
+		roots.detachLocations.delete(rootId, countProcessed);
+	}
+
+	const countRemaining = count - countProcessed;
+	if (countRemaining > 0) {
+		tryRemoveDetachLocation(roots, offsetChangeAtomId(rootId, countProcessed), countRemaining);
 	}
 }
 
