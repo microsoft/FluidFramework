@@ -140,7 +140,7 @@ describe("Presence", () => {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
 			camera.events.on("localUpdated", (update) => {
 				localUpdateCount++;
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.deepStrictEqual(update.value, { x: 1, y: 2, z: 3 });
 			});
 
