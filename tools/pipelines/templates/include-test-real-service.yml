@@ -436,22 +436,17 @@ stages:
                       process.exit(1);
                     }
                   })();
-                " 2>/dev/null)  # Redirect stderr to avoid mixing error messages with JSON
+                ")
 
-                # DEBUG - Check what we actually got
-                echo "Raw SETUP_OUTPUT length: ${#SETUP_OUTPUT}"
-                echo "Raw SETUP_OUTPUT content: '$SETUP_OUTPUT'"
+                # Extract just the JSON line (the last line should be the JSON)
+                JSON_OUTPUT=$(echo "$SETUP_OUTPUT" | tail -n 1)
 
-                # Validate JSON before processing
-                if ! echo "$SETUP_OUTPUT" | jq . > /dev/null 2>&1; then
-                  echo "ERROR: SETUP_OUTPUT is not valid JSON!"
-                  echo "First 200 characters: ${SETUP_OUTPUT:0:200}"
-                  exit 1
-                fi
+                echo "JSON result:"
+                echo "$JSON_OUTPUT"
 
                 # Now safely parse the JSON
-                RESERVATION_ID=$(echo "$SETUP_OUTPUT" | jq -r '.reservationId // "null"')
-                USER_PASS=$(echo "$SETUP_OUTPUT" | jq -c '.userPass // "null"')
+                RESERVATION_ID=$(echo "$JSON_OUTPUT" | jq -r '.reservationId // "null"')
+                USER_PASS=$(echo "$JSON_OUTPUT" | jq -c '.userPass // "null"')
 
                 echo "Parsed reservationId: '$RESERVATION_ID'"
                 echo "Parsed userPass: '$USER_PASS'"
