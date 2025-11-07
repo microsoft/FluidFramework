@@ -446,7 +446,7 @@ stages:
 
                 # Now safely parse the JSON
                 RESERVATION_ID=$(echo "$JSON_OUTPUT" | jq -r '.reservationId // "null"')
-                USER_PASS=$(echo "$JSON_OUTPUT" | jq -c '.userPass // "null"')
+                USER_PASS=$(echo "$JSON_OUTPUT" | jq '.userPass // "null"')
 
                 echo "Parsed reservationId: '$RESERVATION_ID'"
                 echo "Parsed userPass: '$USER_PASS'"
