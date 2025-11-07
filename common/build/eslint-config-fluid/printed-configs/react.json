@@ -2096,7 +2096,7 @@
             }
         ],
         "unicorn/import-style": [
-            2
+            0
         ],
         "unicorn/new-for-builtins": [
             2
@@ -2264,7 +2264,7 @@
             2
         ],
         "unicorn/prefer-at": [
-            0
+            1
         ],
         "unicorn/prefer-blob-reading-methods": [
             2
@@ -2360,10 +2360,10 @@
             2
         ],
         "unicorn/prefer-string-raw": [
-            2
+            1
         ],
         "unicorn/prefer-string-replace-all": [
-            0
+            1
         ],
         "unicorn/prefer-string-slice": [
             2
@@ -2375,7 +2375,7 @@
             2
         ],
         "unicorn/prefer-structured-clone": [
-            2
+            1
         ],
         "unicorn/prefer-switch": [
             2
