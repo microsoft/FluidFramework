@@ -286,3 +286,98 @@ export class BiomeConfigReader {
 		return new BiomeConfigReader(configFile, allConfigs, mergedConfig, files);
 	}
 }
+
+/**
+ * A class used to simplify access to a Biome v2 config. In Biome v2, the config system changed significantly:
+ * - The `extends` directive is no longer used - configs with `root: false` automatically inherit from parent configs
+ * - `include`/`ignore` properties were removed from `files`, `formatter`, and `linter` sections
+ * - VCS integration with `.gitignore` is used for file filtering
+ *
+ * This class provides a simpler API for Biome v2 that discovers the config hierarchy automatically
+ * and relies on Git and VCS integration for file enumeration.
+ */
+export class BiomeConfigReaderV2 {
+	public get closestConfig(): string {
+		assert(
+			this.configPath !== undefined,
+			"BiomeConfigReaderV2.configPath must be initialized before getting the closestConfig.",
+		);
+		return this.configPath;
+	}
+
+	public readonly directory: string;
+
+	private constructor(
+		public readonly configPath: string,
+		public readonly config: BiomeConfigRaw,
+		public readonly formattedFiles: string[],
+	) {
+		this.directory = path.dirname(configPath);
+	}
+
+	/**
+	 * Create a BiomeConfigReaderV2 instance rooted in the provided directory.
+	 *
+	 * @param directoryOrConfigFile - A path to a directory or a Biome config file. If a directory is provided, then the
+	 * closest Biome configuration will be loaded and used.
+	 * @param gitRepo - A GitRepo instance that is used to enumerate files.
+	 * @returns A BiomeConfigReaderV2 instance with the loaded config and formatted files.
+	 *
+	 * @remarks
+	 * In Biome v2, config discovery works differently:
+	 * - Configs with `root: false` automatically inherit from parent configs found by walking up the directory tree
+	 * - The VCS integration (via `.gitignore`) handles file filtering
+	 * - There's no need to manually merge configs or handle `extends` directives
+	 *
+	 * This implementation simply loads the closest config and uses Git to enumerate files, respecting .gitignore.
+	 */
+	public static async create(
+		directoryOrConfigFile: string,
+		gitRepo: GitRepo,
+	): Promise<BiomeConfigReaderV2> {
+		/**
+		 * The repo root-relative path to the directory being used as the Biome working directory.
+		 */
+		let directory: string;
+		let configFile: string;
+		if ((await stat(directoryOrConfigFile)).isFile()) {
+			configFile = directoryOrConfigFile;
+			directory = path.relative(
+				gitRepo.resolvedRoot,
+				path.dirname(directoryOrConfigFile),
+			);
+		} else {
+			configFile = await getClosestBiomeConfigPath(directoryOrConfigFile);
+			directory = path.relative(gitRepo.resolvedRoot, directoryOrConfigFile);
+		}
+
+		// Load the config without following extends - Biome v2 handles inheritance automatically
+		const config = await loadRawBiomeConfig(configFile);
+
+		// Get all git-tracked files in the directory
+		// In Biome v2, file filtering is handled by .gitignore through VCS integration
+		const gitLsFiles = await gitRepo.getFiles(directory);
+
+		// Biome v2 formats various file types by default (JS, TS, JSON, etc.)
+		// We filter to common formattable file extensions
+		const formattableExtensions = new Set([
+			".js",
+			".jsx",
+			".ts",
+			".tsx",
+			".json",
+			".jsonc",
+			".css",
+			".html",
+		]);
+
+		const formattedFiles = gitLsFiles
+			.filter((file) => {
+				const ext = path.extname(file);
+				return formattableExtensions.has(ext);
+			})
+			.map((file) => path.resolve(gitRepo.resolvedRoot, file));
+
+		return new BiomeConfigReaderV2(configFile, config, formattedFiles);
+	}
+}
