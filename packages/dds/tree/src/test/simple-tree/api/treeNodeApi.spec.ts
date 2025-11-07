@@ -58,9 +58,9 @@ import {
 	nullSchema,
 	numberSchema,
 	stringSchema,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/leafNodeSchema.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { tryGetSchema } from "../../../simple-tree/api/treeNodeApi.js";
 import {
 	testDocumentIndependentView,
@@ -80,16 +80,16 @@ import {
 	createField,
 	UnhydratedContext,
 	UnhydratedFlexTreeNode,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/core/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
 import {
 	createTreeNodeFromInner,
 	getInnerNode,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/core/treeNodeKernel.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { fieldCursorFromVerbose } from "../../../simple-tree/api/verboseTree.js";
 
 const schema = new SchemaFactoryAlpha("com.example");

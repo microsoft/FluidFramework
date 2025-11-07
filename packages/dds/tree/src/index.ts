@@ -95,6 +95,7 @@ export {
 	type TreeViewEvents,
 	SchemaFactory,
 	SchemaFactoryBeta,
+	type SchemaStaticsBeta,
 	SchemaFactoryAlpha,
 	type ObjectSchemaOptionsAlpha,
 	type ObjectSchemaOptions,
@@ -181,7 +182,6 @@ export {
 	type AllowedTypeMetadata,
 	type AllowedTypesMetadata,
 	type UnannotateAllowedTypesList,
-	type SchemaStaticsAlpha,
 	type AnnotateAllowedTypesList,
 	type AllowedTypesFull,
 	type AllowedTypesFullFromMixed,
@@ -283,6 +283,8 @@ export {
 	type SchemaFactory_base,
 	type NumberKeys,
 	type SimpleAllowedTypeAttributes,
+	encodeSimpleSchema,
+	decodeSimpleSchema,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,

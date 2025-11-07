@@ -11,7 +11,7 @@ import {
 	valueChangeHandler,
 	valueFieldEditor,
 	// Allow import from file being tested.
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/default-schema/defaultFieldKinds.js";
 import type {
 	CrossFieldManager,
@@ -20,9 +20,9 @@ import type {
 import {
 	type NodeId,
 	rebaseRevisionMetadataFromInfo,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { OptionalChangeset } from "../../../feature-libraries/optional-field/index.js";
 import { brand, fakeIdAllocator, idAllocatorFromMaxId } from "../../../util/index.js";
 import { defaultRevisionMetadataFromChanges, mintRevisionTag } from "../../utils.js";
@@ -31,7 +31,7 @@ import {
 	assertEqual,
 	assertTaggedEqual,
 	tagChangeInline,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../optional-field/optionalFieldUtils.js";
 import { TestNodeId } from "../../testNodeId.js";
 

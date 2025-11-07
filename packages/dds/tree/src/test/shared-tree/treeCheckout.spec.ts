@@ -45,7 +45,7 @@ import {
 	viewCheckout,
 } from "../utils.js";
 import { brand } from "../../util/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
 import {
 	getInnerNode,
@@ -57,7 +57,7 @@ import {
 	type InsertableTreeFieldFromImplicitField,
 	type TreeBranch,
 } from "../../simple-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { stringSchema } from "../../simple-tree/leafNodeSchema.js";
 import { asAlpha } from "../../api.js";
 

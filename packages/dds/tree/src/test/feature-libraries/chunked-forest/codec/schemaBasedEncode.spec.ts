@@ -12,7 +12,7 @@ import type {
 	TreeFieldStoredSchema,
 	TreeNodeSchemaIdentifier,
 } from "../../../../core/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { IdentifierToken } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
 import {
 	type FieldBatchEncodingContext,
@@ -20,7 +20,7 @@ import {
 	type ChunkReferenceId,
 	type IncrementalEncoder,
 	type IncrementalDecoder,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/codecs.js";
 import {
 	AnyShape,
@@ -29,17 +29,17 @@ import {
 	type NodeEncoder,
 	anyFieldEncoder,
 	incrementalFieldEncoder,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { NodeShapeBasedEncoder } from "../../../../feature-libraries/chunked-forest/codec/nodeEncoder.js";
 import {
 	buildContext,
 	getFieldEncoder,
 	getNodeEncoder,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/schemaBasedEncode.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { FieldKinds, fieldKinds } from "../../../../feature-libraries/default-schema/index.js";
 import {
 	TreeCompressionStrategy,
@@ -65,14 +65,14 @@ import { assertIsSessionId, testIdCompressor } from "../../../utils.js";
 import {
 	SpecialField,
 	type EncodedFieldBatch,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/format.js";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
 	getStoredSchema,
 	restrictiveStoredSchemaGenerationOptions,
 	toInitialSchema,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../simple-tree/toStoredSchema.js";
 import { numberSchema, SchemaFactory, stringSchema } from "../../../../simple-tree/index.js";
 import { currentVersion } from "../../../../codec/index.js";
