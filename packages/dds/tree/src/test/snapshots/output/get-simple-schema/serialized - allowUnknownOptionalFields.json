@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "root": {
+    "kind": 1,
+    "simpleAllowedTypes": {
+      "test.hasUnknownOptionalFields": {
+        "isStaged": false
+      }
+    }
+  },
+  "definitions": {
+    "test.hasUnknownOptionalFields": {
+      "object": {
+        "kind": 2,
+        "fields": {},
+        "allowUnknownOptionalFields": true
+      }
+    }
+  }
+}
