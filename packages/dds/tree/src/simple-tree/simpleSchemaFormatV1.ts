@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { Type, type ObjectOptions, type Static } from "@sinclair/typebox";
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
