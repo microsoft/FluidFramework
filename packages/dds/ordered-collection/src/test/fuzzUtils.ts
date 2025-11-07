@@ -131,7 +131,7 @@ function makeReducer(): Reducer<ConsensusOrderedCollectionOperation, FuzzTestSta
 		},
 		acquire: ({ client }, { resultType }) => {
 			client.channel
-				.acquire(async (value) => {
+				.acquire(async (_value) => {
 					return resultType;
 				})
 				.catch((error) => {
