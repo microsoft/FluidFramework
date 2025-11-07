@@ -296,6 +296,18 @@ function normalizeRangeMaps(change: ModularChangeset): ModularChangeset {
 		areEqualChangeAtomIds,
 	);
 
+	normalized.rootNodes.detachLocations = normalizeRangeMap(
+		change.rootNodes.detachLocations,
+		areEqualChangeAtomIds,
+		areEqualFieldIds,
+	);
+
+	normalized.rootNodes.outputDetachLocations = normalizeRangeMap(
+		change.rootNodes.outputDetachLocations,
+		areEqualChangeAtomIds,
+		areEqualFieldIds,
+	);
+
 	return normalized;
 }
 
