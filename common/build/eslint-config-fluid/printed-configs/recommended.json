@@ -22,8 +22,8 @@
         "sourceType": "module"
     },
     "plugins": [
+        "@eslint-community/eslint-comments",
         "import-x",
-        "eslint-comments",
         "@fluid-internal/fluid",
         "unused-imports",
         "promise",
@@ -41,6 +41,24 @@
         ],
         "@babel/semi": [
             "off"
+        ],
+        "@eslint-community/eslint-comments/disable-enable-pair": [
+            "error",
+            {
+                "allowWholeFile": true
+            }
+        ],
+        "@eslint-community/eslint-comments/no-aggregating-enable": [
+            "error"
+        ],
+        "@eslint-community/eslint-comments/no-duplicate-disable": [
+            "error"
+        ],
+        "@eslint-community/eslint-comments/no-unlimited-disable": [
+            "error"
+        ],
+        "@eslint-community/eslint-comments/no-unused-enable": [
+            "error"
         ],
         "@fluid-internal/fluid/no-file-path-links-in-jsdoc": [
             "error"
@@ -1073,24 +1091,6 @@
         "eqeqeq": [
             "error",
             "smart"
-        ],
-        "eslint-comments/disable-enable-pair": [
-            "error",
-            {
-                "allowWholeFile": true
-            }
-        ],
-        "eslint-comments/no-aggregating-enable": [
-            "error"
-        ],
-        "eslint-comments/no-duplicate-disable": [
-            "error"
-        ],
-        "eslint-comments/no-unlimited-disable": [
-            "error"
-        ],
-        "eslint-comments/no-unused-enable": [
-            "error"
         ],
         "flowtype/boolean-style": [
             "off"

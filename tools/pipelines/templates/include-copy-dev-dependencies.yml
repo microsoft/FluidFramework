@@ -40,7 +40,8 @@ steps:
           '@microsoft/api-extractor',
           '@fluid-tools/build-cli',
           '@fluidframework/build-common',
-          '@fluidframework/build-tools'
+          '@fluidframework/build-tools',
+          '@fluidframework/eslint-config-fluid'
         ]);
         for (const [k, v] of Object.entries(devDependencies)) {
           if (!pkg.devDependencies[k] && !avoidCopying.has(k)) {
