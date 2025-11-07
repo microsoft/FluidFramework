@@ -595,23 +595,23 @@ export namespace System_TableSchema {
 			}
 
 			public getColumn(indexOrId: number | string): ColumnValueType | undefined {
-				return this._tryGetColumn(indexOrId);
+				return this.#tryGetColumn(indexOrId);
 			}
 
 			public getRow(indexOrId: number | string): RowValueType | undefined {
-				return this._tryGetRow(indexOrId);
+				return this.#tryGetRow(indexOrId);
 			}
 
 			public getCell(
 				key: TableSchema.CellKey<TColumnSchema, TRowSchema>,
 			): CellValueType | undefined {
 				const { column: columnOrIdOrIndex, row: rowOrIdOrIndex } = key;
-				const row = this._tryGetRow(rowOrIdOrIndex);
+				const row = this.#tryGetRow(rowOrIdOrIndex);
 				if (row === undefined) {
 					return undefined;
 				}
 
-				const column = this._tryGetColumn(columnOrIdOrIndex);
+				const column = this.#tryGetColumn(columnOrIdOrIndex);
 				if (column === undefined) {
 					return undefined;
 				}
@@ -663,7 +663,7 @@ export namespace System_TableSchema {
 						// eslint-disable-next-line @typescript-eslint/no-explicit-any
 						const keys: string[] = Object.keys((newRow as any).cells);
 						for (const key of keys) {
-							if (!this._containsColumnWithId(key)) {
+							if (!this.#containsColumnWithId(key)) {
 								throw new UsageError(
 									`Attempted to insert row a cell under column ID "${key}", but the table does not contain a column with that ID.`,
 								);
@@ -694,8 +694,8 @@ export namespace System_TableSchema {
 			}: TableSchema.SetCellParameters<TCellSchema, TColumnSchema, TRowSchema>): void {
 				const { column: columnOrId, row: rowOrId } = key;
 
-				const row = this._getRow(rowOrId);
-				const column = this._getColumn(columnOrId);
+				const row = this.#getRow(rowOrId);
+				const column = this.#getColumn(columnOrId);
 
 				row.setCell(column, cell);
 			}
@@ -714,9 +714,9 @@ export namespace System_TableSchema {
 						return [];
 					}
 
-					Table._assertValidRange({ index: startIndex, count: _count }, this.columns);
+					assertValidRange({ index: startIndex, count: _count }, this.columns);
 
-					this._applyEditsInBatch(() => {
+					this.#applyEditsInBatch(() => {
 						const columnsToRemove = this.columns.slice(
 							startIndex,
 							startIndex + _count,
@@ -724,7 +724,7 @@ export namespace System_TableSchema {
 
 						// First, remove all cells that correspond to each column from each row:
 						for (const column of columnsToRemove) {
-							this._removeCells(column);
+							this.#removeCells(column);
 						}
 
 						// Second, remove the column nodes:
@@ -749,10 +749,10 @@ export namespace System_TableSchema {
 					// This improves user-facing error experience.
 					const columnsToRemove: ColumnValueType[] = [];
 					for (const columnOrIdToRemove of indexOrColumns) {
-						columnsToRemove.push(this._getColumn(columnOrIdToRemove));
+						columnsToRemove.push(this.#getColumn(columnOrIdToRemove));
 					}
 
-					this._applyEditsInBatch(() => {
+					this.#applyEditsInBatch(() => {
 						// Note, throwing an error within a transaction will abort the entire transaction.
 						// So if we throw an error here for any column, no columns will be removed.
 						for (const columnToRemove of columnsToRemove) {
@@ -803,10 +803,10 @@ export namespace System_TableSchema {
 				// This improves user-facing error experience.
 				const rowsToRemove: RowValueType[] = [];
 				for (const rowToRemove of indexOrRows) {
-					rowsToRemove.push(this._getRow(rowToRemove));
+					rowsToRemove.push(this.#getRow(rowToRemove));
 				}
 
-				this._applyEditsInBatch(() => {
+				this.#applyEditsInBatch(() => {
 					// Note, throwing an error within a transaction will abort the entire transaction.
 					// So if we throw an error here for any row, no rows will be removed.
 					for (const rowToRemove of rowsToRemove) {
@@ -822,8 +822,8 @@ export namespace System_TableSchema {
 				key: TableSchema.CellKey<TColumnSchema, TRowSchema>,
 			): CellValueType | undefined {
 				const { column: columnOrIdOrIndex, row: rowOrIdOrIndex } = key;
-				const row = this._getRow(rowOrIdOrIndex);
-				const column = this._getColumn(columnOrIdOrIndex);
+				const row = this.#getRow(rowOrIdOrIndex);
+				const column = this.#getColumn(columnOrIdOrIndex);
 
 				const cell: CellValueType | undefined = row.getCell(column.id);
 				if (cell === undefined) {
@@ -837,33 +837,11 @@ export namespace System_TableSchema {
 			/**
 			 * Removes the cell corresponding with the specified column from each row in the table.
 			 */
-			private _removeCells(column: ColumnValueType): void {
+			#removeCells(column: ColumnValueType): void {
 				for (const row of this.rows) {
 					// TypeScript is unable to narrow the row type correctly here, hence the cast.
 					// See: https://github.com/microsoft/TypeScript/issues/52144
 					(row as RowValueType).removeCell(column);
-				}
-			}
-
-			private static _assertValidRange<T>(
-				range: { index: number; count: number },
-				array: readonly T[],
-			): void {
-				const { index, count } = range;
-				if (index < 0 || index >= array.length) {
-					throw new UsageError(
-						`Start index out of bounds. Expected index to be on [0, ${array.length - 1}], but got ${index}.`,
-					);
-				}
-				if (count < 0) {
-					throw new UsageError(`Expected non-negative count. Got ${count}.`);
-				}
-
-				const end = index + count; // exclusive
-				if (end > array.length) {
-					throw new UsageError(
-						`End index out of bounds. Expected end to be on [${index}, ${array.length}], but got ${end}.`,
-					);
 				}
 			}
 
@@ -876,7 +854,7 @@ export namespace System_TableSchema {
 			 * Transactions are not supported for unhydrated trees, so we cannot run a transaction in that case.
 			 * But since there are no collaborators, this is not an issue.
 			 */
-			private _applyEditsInBatch(applyEdits: () => void): void {
+			#applyEditsInBatch(applyEdits: () => void): void {
 				const branch = TreeAlpha.branch(this);
 
 				// Ensure events are paused until all of the edits are applied.
@@ -901,7 +879,7 @@ export namespace System_TableSchema {
 			 * Returns `undefined` if there is no match.
 			 * @remarks Searches for a match based strictly on the ID and returns that result.
 			 */
-			private _tryGetColumn(
+			#tryGetColumn(
 				columnOrIdOrIndex: ColumnValueType | string | number,
 			): ColumnValueType | undefined {
 				if (typeof columnOrIdOrIndex === "number") {
@@ -935,10 +913,8 @@ export namespace System_TableSchema {
 			 * @throws Throws a `UsageError` if there is no match.
 			 * @remarks Searches for a match based strictly on the ID and returns that result.
 			 */
-			private _getColumn(
-				columnOrIdOrIndex: ColumnValueType | string | number,
-			): ColumnValueType {
-				const column = this._tryGetColumn(columnOrIdOrIndex);
+			#getColumn(columnOrIdOrIndex: ColumnValueType | string | number): ColumnValueType {
+				const column = this.#tryGetColumn(columnOrIdOrIndex);
 				if (column === undefined) {
 					Table._throwMissingColumnError(columnOrIdOrIndex);
 				}
@@ -948,8 +924,8 @@ export namespace System_TableSchema {
 			/**
 			 * Checks if a Column with the specified ID exists in the table.
 			 */
-			private _containsColumnWithId(columnId: string): boolean {
-				return this._tryGetColumn(columnId) !== undefined;
+			#containsColumnWithId(columnId: string): boolean {
+				return this.#tryGetColumn(columnId) !== undefined;
 			}
 
 			/**
@@ -978,9 +954,7 @@ export namespace System_TableSchema {
 			 * Returns `undefined` if there is no match.
 			 * @remarks Searches for a match based strictly on the ID and returns that result.
 			 */
-			private _tryGetRow(
-				rowOrIdOrIndex: RowValueType | string | number,
-			): RowValueType | undefined {
+			#tryGetRow(rowOrIdOrIndex: RowValueType | string | number): RowValueType | undefined {
 				if (typeof rowOrIdOrIndex === "number") {
 					if (rowOrIdOrIndex < 0 || rowOrIdOrIndex >= this.rows.length) {
 						return undefined;
@@ -1012,8 +986,8 @@ export namespace System_TableSchema {
 			 * @throws Throws a `UsageError` if there is no match.
 			 * @remarks Searches for a match based strictly on the ID and returns that result.
 			 */
-			private _getRow(rowOrIdOrIndex: RowValueType | string | number): RowValueType {
-				const row = this._tryGetRow(rowOrIdOrIndex);
+			#getRow(rowOrIdOrIndex: RowValueType | string | number): RowValueType {
+				const row = this.#tryGetRow(rowOrIdOrIndex);
 				if (row === undefined) {
 					Table._throwMissingRowError(rowOrIdOrIndex);
 				}
@@ -1043,7 +1017,7 @@ export namespace System_TableSchema {
 				range: { index: number; count: number },
 				array: TreeArrayNode<TNodeSchema>,
 			): TreeNodeFromImplicitAllowedTypes<TNodeSchema>[] {
-				Table._assertValidRange(range, array);
+				assertValidRange(range, array);
 
 				const { index, count } = range;
 				const end = index + count; // exclusive
@@ -1129,6 +1103,29 @@ export namespace System_TableSchema {
 	> = ReturnType<typeof createTableSchema<TScope, TCell, TColumn, TRow>>;
 
 	// #endregion
+}
+
+// TODO: this should be deduplicated with the similar validation logic in ArrayNode.
+function assertValidRange<T>(
+	range: { index: number; count: number },
+	array: readonly T[],
+): void {
+	const { index, count } = range;
+	if (index < 0 || index >= array.length) {
+		throw new UsageError(
+			`Start index out of bounds. Expected index to be on [0, ${array.length - 1}], but got ${index}.`,
+		);
+	}
+	if (count < 0) {
+		throw new UsageError(`Expected non-negative count. Got ${count}.`);
+	}
+
+	const end = index + count; // exclusive
+	if (end > array.length) {
+		throw new UsageError(
+			`End index out of bounds. Expected end to be on [${index}, ${array.length}], but got ${end}.`,
+		);
+	}
 }
 
 /**
