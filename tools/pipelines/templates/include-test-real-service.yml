@@ -430,7 +430,7 @@ stages:
                         odspEndpoint: '${{ parameters.odspTenantType }}'
                       });
                       fs.writeFileSync('/tmp/setup_result.json', result);
-                    catch (e) {
+                    } catch (e) {
                       console.error('Error during tenant setup: ', e);
                       fs.unlinkSync('/tmp/setup_result.json');
                       process.exit(1);
