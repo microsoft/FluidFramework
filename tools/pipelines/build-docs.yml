@@ -182,7 +182,7 @@ stages:
             workingDirectory: $(Build.SourcesDirectory)/docs
             script: |
               set -eu -o pipefail
-              # Ensure its easy to tell which workspace this is running in by inspecting the logs
+              # Ensure it's easy to tell which workspace this is running in by inspecting the logs
               pwd
               pnpm i --frozen-lockfile
 
