@@ -1,5 +1,9 @@
 # @fluidframework/tinylicious-client
 
+## 2.72.0
+
+Dependency updates only.
+
 ## 2.71.0
 
 Dependency updates only.
@@ -130,7 +134,6 @@ Dependency updates only.
   sealed to indicate they are not to be implemented externally to Fluid Framework and not changed.
 
   Updated APIs:
-
   - [ITinyliciousAudience](https://fluidframework.com/docs/api/v2/tinylicious-client/itinyliciousaudience-typealias) sealed
   - [TinyliciousClient](https://fluidframework.com/docs/api/v2/tinylicious-client/tinyliciousclient-class) sealed
   - [TinyliciousClientProps](https://fluidframework.com/docs/api/v2/tinylicious-client/tinyliciousclientprops-interface) sealed
@@ -146,7 +149,6 @@ Dependency updates only.
 - Updated server dependencies ([#21514](https://github.com/microsoft/FluidFramework/pull/21514)) [9629f1d93a](https://github.com/microsoft/FluidFramework/commit/9629f1d93a7e412c0cb2f65cc21da0c95ff8981d)
 
   The following Fluid server dependencies have been updated to the latest version, 5.0.0. [See the full changelog.](https://github.com/microsoft/FluidFramework/blob/main/server/routerlicious/RELEASE_NOTES/5.0.0.md)
-
   - @fluidframework/gitresources
   - @fluidframework/server-kafka-orderer
   - @fluidframework/server-lambdas
@@ -185,7 +187,6 @@ Dependency updates only.
 ### Minor Changes
 
 - Rename `AzureMember.userName` to `AzureMember.name` and `IMember.userId` to `IMember.id` [96872186d0](https://github.com/microsoft/FluidFramework/commit/96872186d0d0f245c1fece7d19b3743e501679b6)
-
   1. Renamed `AzureMember.userName` to `AzureMember.name` to establish uniform naming across odsp-client and azure-client.
   2. Renamed `IMember.userId` to `IMember.id` to align with the properties received from AFR.
 
@@ -200,7 +201,6 @@ Dependency updates only.
   TypeScript types and implementation code.
 
   This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
-
   - `"moduleResolution": "Node16"` with `"module": "Node16"`
   - `"moduleResolution": "Bundler"` with `"module": "ESNext"`
 
@@ -231,7 +231,6 @@ Dependency updates only.
 - Updated server dependencies ([#19122](https://github.com/microsoft/FluidFramework/issues/19122)) [25366b4229](https://github.com/microsoft/FluidFramework/commits/25366b422918cb43685c5f328b50450749592902)
 
   The following Fluid server dependencies have been updated to the latest version, 3.0.0. [See the full changelog.](https://github.com/microsoft/FluidFramework/releases/tag/server_v3.0.0)
-
   - @fluidframework/gitresources
   - @fluidframework/server-kafka-orderer
   - @fluidframework/server-lambdas
@@ -267,7 +266,6 @@ Dependency updates only.
   Several FluidStatic classes were unnecessarily exposed and were deprecated in an earlier release. They have been replaced with creation functions. This helps us
   keep implementations decoupled from usage which is easier to maintain and extend. It has very minimal impact on the
   public surface area of downstream packages. The removed classes are as follows:
-
   - `AzureAudience` (use `IAzureAudience` instead)
   - `TinyliciousAudience` (use `ITinyliciousAudience` instead)
   - `DOProviderContainerRuntimeFactory`
@@ -283,7 +281,6 @@ Dependency updates only.
   Several FluidStatic classes were unnecessarily exposed. They have been replaced with creation functions. This helps us
   keep implementations decoupled from usage which is easier to maintain and extend. It has very minimal impact on the
   public surface area of downstream packages. The deprecated classes are as follows:
-
   - `AzureAudience` (use `IAzureAudience` instead)
   - `TinyliciousAudience` (use `ITinyliciousAudience` instead)
   - `DOProviderContainerRuntimeFactory`
@@ -309,7 +306,6 @@ Dependency updates only.
 - Dependencies on @fluidframework/protocol-definitions package updated to 3.0.0 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
   This included the following changes from the protocol-definitions release:
-
   - Updating signal interfaces for some planned improvements. The intention is split the interface between signals
     submitted by clients to the server and the resulting signals sent from the server to clients.
     - A new optional type member is available on the ISignalMessage interface and a new ISentSignalMessage interface has
@@ -320,7 +316,6 @@ Dependency updates only.
 - Server upgrade: dependencies on Fluid server packages updated to 2.0.1 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
   Dependencies on the following Fluid server package have been updated to version 2.0.1:
-
   - @fluidframework/gitresources: 2.0.1
   - @fluidframework/server-kafka-orderer: 2.0.1
   - @fluidframework/server-lambdas: 2.0.1
