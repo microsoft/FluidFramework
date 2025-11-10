@@ -237,11 +237,15 @@ Note: generating the API documentation for the new "current" version will fail i
 
 ##### Links
 
-Generally, it is recommended to include file extensions in links when possible.
+When linking to other documents in the site, use file paths rather than fully qualified URLs.
+Our site is configured to open external web links in a new window/tab.
+Navigating between pages on our site should generally result in navigation within the same active window/tab.
+
+It is also recommended to include file extensions in links when possible.
 E.g., prefer `[foo](./foo.mdx)` over `[foo](./foo)`.
 
--   Docusaurus applies a different resolution strategy for relative _file path_ links than it does for URL links.
-    See: <https://docusaurus.io/docs/markdown-features/links>
+Docusaurus applies a different resolution strategy for relative _file path_ links than it does for URL links.
+See: <https://docusaurus.io/docs/markdown-features/links>
 
 #### Assets
 
