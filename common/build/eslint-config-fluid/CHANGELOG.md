@@ -1,5 +1,14 @@
 # @fluidframework/eslint-config-fluid Changelog
 
+## [9.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v9.0_0)
+
+### eslint-plugin-eslint-comments replaced by @eslint-community/eslint-plugin-eslint-comments
+
+The package now uses rules from
+[@eslint-community/eslint-plugin-eslint-comments](https://eslint-community.github.io/eslint-plugin-eslint-comments/)
+v4.5.0 instead of eslint-plugin-eslint-comments v3.2.0. Integrating this change will require renaming eslint disable
+comments and overrides, but the changes are mechanical.
+
 ## [8.1.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v8.1.0)
 
 ### import-x/order rule simplified
