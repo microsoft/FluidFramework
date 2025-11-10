@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
+import { strict as assert, fail } from "node:assert";
 
 import {
 	generateSchemaFromSimpleSchema,
@@ -12,10 +12,15 @@ import {
 	toInitialSchema,
 	type ImplicitFieldSchema,
 	type ValidateRecursiveSchema,
+	type SimpleObjectNodeSchema,
 } from "../../../simple-tree/index.js";
 import { exportSimpleSchema } from "../../../shared-tree/index.js";
 import { testTreeSchema } from "../../cursorTestSuite.js";
-import { testSimpleTrees } from "../../testTrees.js";
+import {
+	HasStagedAllowedTypes,
+	HasUnknownOptionalFields,
+	testSimpleTrees,
+} from "../../testTrees.js";
 
 describe("schemaFromSimple", () => {
 	function roundtrip(root: ImplicitFieldSchema): void {
@@ -67,6 +72,45 @@ describe("schemaFromSimple", () => {
 		}
 		it("test schema union", () => {
 			roundtrip(testTreeSchema);
+		});
+	});
+
+	describe("compatibility fields", () => {
+		it("handles allowUnknownOptionalFields", () => {
+			const root = HasUnknownOptionalFields;
+			const simpleSchema = getSimpleSchema(root);
+			const simpleObjectSchema = simpleSchema.definitions.get(
+				"test.hasUnknownOptionalFields",
+			) as SimpleObjectNodeSchema;
+			assert.equal(simpleObjectSchema.allowUnknownOptionalFields, true);
+
+			const viewSchema = generateSchemaFromSimpleSchema(simpleSchema);
+			const objectViewSchema = viewSchema.definitions.get(
+				"test.hasUnknownOptionalFields",
+			) as SimpleObjectNodeSchema;
+			assert.equal(objectViewSchema.allowUnknownOptionalFields, true);
+		});
+
+		it("handles staged allowed types", () => {
+			const root = HasStagedAllowedTypes;
+			const simpleSchema = getSimpleSchema(root);
+			const simpleObjectSchema = simpleSchema.definitions.get(
+				"test.hasStagedAllowedTypes",
+			) as SimpleObjectNodeSchema;
+			const simpleFieldX = simpleObjectSchema.fields.get("x") ?? fail("missing field x");
+			assert.equal(
+				simpleFieldX.simpleAllowedTypes.get("com.fluidframework.leaf.string")?.isStaged,
+				true,
+			);
+
+			const viewSchema = generateSchemaFromSimpleSchema(simpleSchema);
+			const objectViewSchema = viewSchema.definitions.get(
+				"test.hasStagedAllowedTypes",
+			) as SimpleObjectNodeSchema;
+			const viewFieldX = objectViewSchema.fields.get("x") ?? fail("missing field x");
+			const allowedType = viewFieldX.simpleAllowedTypes.get("com.fluidframework.leaf.string");
+			assert(allowedType !== undefined, "missing allowed type");
+			assert.equal(allowedType.isStaged, true);
 		});
 	});
 });
