@@ -122,7 +122,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       eslint:
         specifier: ~8.57.1
@@ -168,7 +168,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@microsoft/api-extractor':
         specifier: 7.52.11
@@ -313,7 +313,7 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/tools/devtools/devtools
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/odsp-client':
         specifier: workspace:~
@@ -464,7 +464,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
@@ -591,7 +591,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
@@ -718,7 +718,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
@@ -878,7 +878,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
@@ -1032,7 +1032,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
@@ -1180,7 +1180,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
@@ -1313,7 +1313,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
@@ -1410,7 +1410,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@types/mocha':
         specifier: ^10.0.10
@@ -1513,7 +1513,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
@@ -1634,7 +1634,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
@@ -1743,7 +1743,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../../common/build/eslint-config-fluid
       '@types/react':
         specifier: ^18.3.11
@@ -1804,7 +1804,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
@@ -1916,7 +1916,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
@@ -2019,7 +2019,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
@@ -2134,7 +2134,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@types/express':
         specifier: ^4.17.21
@@ -2237,7 +2237,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/id-compressor':
         specifier: workspace:~
@@ -2337,7 +2337,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@testing-library/dom':
         specifier: ^10.4.0
@@ -2458,7 +2458,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
@@ -2573,7 +2573,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
@@ -2700,7 +2700,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@types/codemirror':
         specifier: 5.60.7
@@ -2773,7 +2773,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
@@ -2879,7 +2879,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
@@ -2991,7 +2991,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@types/react':
         specifier: ^18.3.11
@@ -3076,7 +3076,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../../common/build/eslint-config-fluid
       eslint:
         specifier: ~8.57.1
@@ -3110,7 +3110,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../../common/build/eslint-config-fluid
       '@types/react':
         specifier: ^18.3.11
@@ -3189,7 +3189,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
@@ -3286,7 +3286,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../../common/build/eslint-config-fluid
       eslint:
         specifier: ~8.57.1
@@ -3317,7 +3317,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../../common/build/eslint-config-fluid
       eslint:
         specifier: ~8.57.1
@@ -3348,7 +3348,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../../common/build/eslint-config-fluid
       '@types/react':
         specifier: ^18.3.11
@@ -3385,7 +3385,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../../common/build/eslint-config-fluid
       '@types/react':
         specifier: ^18.3.11
@@ -3422,7 +3422,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../../common/build/eslint-config-fluid
       '@types/react':
         specifier: ^18.3.11
@@ -3531,7 +3531,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@types/node':
         specifier: ^18.19.0
@@ -3627,7 +3627,7 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/runtime/datastore-definitions
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/map':
         specifier: workspace:~
@@ -3742,7 +3742,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/runtime-utils':
         specifier: workspace:~
@@ -3845,7 +3845,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
@@ -3972,7 +3972,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
@@ -4108,7 +4108,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/runtime-utils':
         specifier: workspace:~
@@ -4298,7 +4298,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
@@ -4449,7 +4449,7 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/tools/devtools/devtools
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../../common/build/eslint-config-fluid
       '@fluidframework/fluid-static':
         specifier: workspace:~
@@ -4603,7 +4603,7 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/tools/devtools/devtools
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../../common/build/eslint-config-fluid
       '@fluidframework/fluid-static':
         specifier: workspace:~
@@ -4748,7 +4748,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../../common/build/eslint-config-fluid
       '@types/node':
         specifier: ^18.19.0
@@ -4860,7 +4860,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(webpack-cli@5.1.4)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@mixer/webpack-bundle-compare':
         specifier: ^0.1.0
@@ -4951,7 +4951,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       copyfiles:
         specifier: ^2.4.1
@@ -5066,7 +5066,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@microsoft/api-extractor':
         specifier: 7.52.11
@@ -5118,7 +5118,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@types/node':
         specifier: ^18.19.0
@@ -5164,7 +5164,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@types/mocha':
         specifier: ^10.0.10
@@ -5285,7 +5285,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@microsoft/api-extractor':
         specifier: 7.52.11
@@ -5406,7 +5406,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@types/express':
         specifier: ^4.17.21
@@ -5515,7 +5515,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
@@ -5666,7 +5666,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
@@ -5844,7 +5844,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
@@ -6004,7 +6004,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
@@ -6134,7 +6134,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
@@ -6282,7 +6282,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
@@ -6406,7 +6406,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
@@ -6939,7 +6939,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../../common/build/eslint-config-fluid
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
@@ -7030,7 +7030,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../../../common/build/eslint-config-fluid
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
@@ -7118,7 +7118,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
@@ -7251,7 +7251,7 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/runtime/container-runtime
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
@@ -7357,7 +7357,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@microsoft/api-extractor':
         specifier: 7.52.11
@@ -7424,7 +7424,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@microsoft/api-extractor':
         specifier: 7.52.11
@@ -7494,7 +7494,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@microsoft/api-extractor':
         specifier: 7.52.11
@@ -7609,7 +7609,7 @@ importers:
         specifier: npm:@fluidframework/container-definitions@2.71.0
         version: '@fluidframework/container-definitions@2.71.0'
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@microsoft/api-extractor':
         specifier: 7.52.11
@@ -7651,7 +7651,7 @@ importers:
         specifier: npm:@fluidframework/core-interfaces@2.71.0
         version: '@fluidframework/core-interfaces@2.71.0'
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@microsoft/api-extractor':
         specifier: 7.52.11
@@ -7717,7 +7717,7 @@ importers:
         specifier: npm:@fluidframework/core-utils@2.71.0
         version: '@fluidframework/core-utils@2.71.0'
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@microsoft/api-extractor':
         specifier: 7.52.11
@@ -7790,7 +7790,7 @@ importers:
         specifier: npm:@fluidframework/driver-definitions@2.71.0
         version: '@fluidframework/driver-definitions@2.71.0'
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@microsoft/api-extractor':
         specifier: 7.52.11
@@ -7863,7 +7863,7 @@ importers:
         specifier: workspace:~
         version: link:../../common/container-definitions
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
@@ -7960,7 +7960,7 @@ importers:
         specifier: npm:@fluidframework/counter@2.71.0
         version: '@fluidframework/counter@2.71.0'
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
@@ -8048,7 +8048,7 @@ importers:
         specifier: workspace:~
         version: link:../../common/container-definitions
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
@@ -8151,7 +8151,7 @@ importers:
         specifier: workspace:~
         version: link:../../common/container-definitions
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
@@ -8263,7 +8263,7 @@ importers:
         specifier: workspace:~
         version: link:../../common/container-definitions
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/map-previous':
         specifier: npm:@fluidframework/map@2.71.0
@@ -8387,7 +8387,7 @@ importers:
         specifier: workspace:~
         version: link:../../common/container-definitions
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/matrix-previous':
         specifier: npm:@fluidframework/matrix@2.71.0
@@ -8508,7 +8508,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/merge-tree-previous':
         specifier: npm:@fluidframework/merge-tree@2.71.0
@@ -8614,7 +8614,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/ordered-collection-previous':
         specifier: npm:@fluidframework/ordered-collection@2.71.0
@@ -8708,7 +8708,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
@@ -8799,7 +8799,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/register-collection-previous':
         specifier: npm:@fluidframework/register-collection@2.71.0
@@ -8914,7 +8914,7 @@ importers:
         specifier: workspace:~
         version: link:../../common/container-definitions
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/sequence-previous':
         specifier: npm:@fluidframework/sequence@2.71.0
@@ -9032,7 +9032,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/shared-object-base-previous':
         specifier: npm:@fluidframework/shared-object-base@2.71.0
@@ -9135,7 +9135,7 @@ importers:
         specifier: workspace:~
         version: link:../../common/container-definitions
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/shared-summary-block-previous':
         specifier: npm:@fluidframework/shared-summary-block@2.71.0
@@ -9244,7 +9244,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/task-manager-previous':
         specifier: npm:@fluidframework/task-manager@2.71.0
@@ -9353,7 +9353,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@microsoft/api-extractor':
         specifier: 7.52.11
@@ -9483,7 +9483,7 @@ importers:
         specifier: workspace:~
         version: link:../../loader/container-loader
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
@@ -9592,7 +9592,7 @@ importers:
         specifier: npm:@fluidframework/debugger@2.71.0
         version: '@fluidframework/debugger@2.71.0'
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@microsoft/api-extractor':
         specifier: 7.52.11
@@ -9659,7 +9659,7 @@ importers:
         specifier: npm:@fluidframework/driver-base@2.71.0
         version: '@fluidframework/driver-base@2.71.0(debug@4.4.3)'
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@microsoft/api-extractor':
         specifier: 7.52.11
@@ -9741,7 +9741,7 @@ importers:
         specifier: npm:@fluidframework/driver-web-cache@2.71.0
         version: '@fluidframework/driver-web-cache@2.71.0'
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@microsoft/api-extractor':
         specifier: 7.52.11
@@ -9811,7 +9811,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/file-driver-previous':
         specifier: npm:@fluidframework/file-driver@2.71.0
@@ -9905,7 +9905,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/local-driver-previous':
         specifier: npm:@fluidframework/local-driver@2.71.0
@@ -10008,7 +10008,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/odsp-driver-previous':
         specifier: npm:@fluidframework/odsp-driver@2.71.0
@@ -10078,7 +10078,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/odsp-driver-definitions-previous':
         specifier: npm:@fluidframework/odsp-driver-definitions@2.71.0
@@ -10145,7 +10145,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/odsp-urlresolver-previous':
         specifier: npm:@fluidframework/odsp-urlresolver@2.71.0
@@ -10221,7 +10221,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/replay-driver-previous':
         specifier: npm:@fluidframework/replay-driver@2.71.0
@@ -10312,7 +10312,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/routerlicious-driver-previous':
         specifier: npm:@fluidframework/routerlicious-driver@2.71.0
@@ -10403,7 +10403,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/routerlicious-urlresolver-previous':
         specifier: npm:@fluidframework/routerlicious-urlresolver@2.71.0
@@ -10488,7 +10488,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/tinylicious-driver-previous':
         specifier: npm:@fluidframework/tinylicious-driver@2.71.0
@@ -10585,7 +10585,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@microsoft/api-extractor':
         specifier: 7.52.11
@@ -10658,7 +10658,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/id-compressor':
         specifier: workspace:~
@@ -10779,7 +10779,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@microsoft/api-extractor':
         specifier: 7.52.11
@@ -10882,7 +10882,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/merge-tree':
         specifier: workspace:~
@@ -11164,7 +11164,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@microsoft/api-extractor':
         specifier: 7.52.11
@@ -11225,7 +11225,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
@@ -11325,7 +11325,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@microsoft/api-extractor':
         specifier: 7.52.11
@@ -11419,7 +11419,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/fluid-static-previous':
         specifier: npm:@fluidframework/fluid-static@2.71.0
@@ -11504,7 +11504,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@microsoft/api-extractor':
         specifier: 7.52.11
@@ -11595,7 +11595,7 @@ importers:
         specifier: workspace:~
         version: link:../../common/driver-definitions
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
@@ -11692,7 +11692,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/tinylicious-client':
         specifier: workspace:~
@@ -11783,7 +11783,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/request-handler-previous':
         specifier: npm:@fluidframework/request-handler@2.71.0
@@ -11862,7 +11862,7 @@ importers:
         specifier: workspace:~
         version: link:../../runtime/datastore
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/runtime-utils':
         specifier: workspace:~
@@ -11950,7 +11950,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/id-compressor':
         specifier: workspace:~
@@ -12056,7 +12056,7 @@ importers:
         specifier: workspace:~
         version: link:../../common/core-utils
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/runtime-utils':
         specifier: workspace:~
@@ -12144,7 +12144,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/tree':
         specifier: workspace:~
@@ -12229,7 +12229,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
@@ -12347,7 +12347,7 @@ importers:
         specifier: npm:@fluidframework/container-loader@2.71.0
         version: '@fluidframework/container-loader@2.71.0'
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@microsoft/api-extractor':
         specifier: 7.52.11
@@ -12450,7 +12450,7 @@ importers:
         specifier: npm:@fluidframework/driver-utils@2.71.0
         version: '@fluidframework/driver-utils@2.71.0(debug@4.4.3)'
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@microsoft/api-extractor':
         specifier: 7.52.11
@@ -12526,7 +12526,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@microsoft/api-extractor':
         specifier: 7.52.11
@@ -12632,7 +12632,7 @@ importers:
         specifier: npm:@fluidframework/container-runtime@2.71.0
         version: '@fluidframework/container-runtime@2.71.0(debug@4.4.3)'
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
@@ -12723,7 +12723,7 @@ importers:
         specifier: npm:@fluidframework/container-runtime-definitions@2.71.0
         version: '@fluidframework/container-runtime-definitions@2.71.0'
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@microsoft/api-extractor':
         specifier: 7.52.11
@@ -12805,7 +12805,7 @@ importers:
         specifier: npm:@fluidframework/datastore@2.71.0
         version: '@fluidframework/datastore@2.71.0(debug@4.4.3)'
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
@@ -12893,7 +12893,7 @@ importers:
         specifier: npm:@fluidframework/datastore-definitions@2.71.0
         version: '@fluidframework/datastore-definitions@2.71.0'
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@microsoft/api-extractor':
         specifier: 7.52.11
@@ -12960,7 +12960,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/id-compressor-previous':
         specifier: npm:@fluidframework/id-compressor@2.71.0
@@ -13039,7 +13039,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/runtime-definitions-previous':
         specifier: npm:@fluidframework/runtime-definitions@2.71.0
@@ -13118,7 +13118,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/runtime-utils-previous':
         specifier: npm:@fluidframework/runtime-utils@2.71.0
@@ -13236,7 +13236,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-runtime-utils-previous':
         specifier: npm:@fluidframework/test-runtime-utils@2.71.0
@@ -13333,7 +13333,7 @@ importers:
         specifier: workspace:~
         version: link:../../runtime/container-runtime
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
@@ -13493,7 +13493,7 @@ importers:
         specifier: workspace:~
         version: link:../../../common/driver-definitions
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../../common/build/eslint-config-fluid
       '@types/mocha':
         specifier: ^10.0.10
@@ -13599,7 +13599,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../../common/build/eslint-config-fluid
       '@types/mocha':
         specifier: ^10.0.10
@@ -13687,7 +13687,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-utils':
         specifier: workspace:~
@@ -13790,7 +13790,7 @@ importers:
         specifier: workspace:~
         version: link:../../runtime/container-runtime-definitions
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-utils':
         specifier: workspace:~
@@ -13880,7 +13880,7 @@ importers:
         specifier: workspace:~
         version: link:../../common/driver-definitions
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/id-compressor':
         specifier: workspace:~
@@ -14024,7 +14024,7 @@ importers:
         specifier: workspace:~
         version: link:../../loader/driver-utils
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/id-compressor':
         specifier: workspace:~
@@ -14163,7 +14163,7 @@ importers:
         specifier: workspace:~
         version: link:../../loader/driver-utils
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/id-compressor':
         specifier: workspace:~
@@ -14263,7 +14263,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@microsoft/api-extractor':
         specifier: 7.52.11
@@ -14375,7 +14375,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@types/mocha':
         specifier: ^10.0.10
@@ -14439,7 +14439,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@microsoft/api-extractor':
         specifier: 7.52.11
@@ -14509,7 +14509,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@microsoft/api-extractor':
         specifier: 7.52.11
@@ -14606,7 +14606,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@microsoft/api-extractor':
         specifier: 7.52.11
@@ -14811,7 +14811,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/protocol-definitions':
         specifier: ^3.2.0
@@ -14869,7 +14869,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@microsoft/api-extractor':
         specifier: 7.52.11
@@ -15002,7 +15002,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@types/mocha':
         specifier: ^10.0.10
@@ -15126,7 +15126,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-utils-previous':
         specifier: npm:@fluidframework/test-utils@2.71.0
@@ -15289,7 +15289,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@microsoft/api-extractor':
         specifier: 7.52.11
@@ -15386,7 +15386,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       concurrently:
         specifier: ^8.2.1
@@ -15435,7 +15435,7 @@ importers:
         specifier: npm:@fluidframework/devtools@2.71.0
         version: '@fluidframework/devtools@2.71.0'
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../../common/build/eslint-config-fluid
       '@microsoft/api-extractor':
         specifier: 7.52.11
@@ -15538,7 +15538,7 @@ importers:
         specifier: workspace:~
         version: link:../../../runtime/container-runtime-definitions
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../../common/build/eslint-config-fluid
       '@fluidframework/runtime-utils':
         specifier: workspace:~
@@ -15758,7 +15758,7 @@ importers:
         specifier: npm:@fluidframework/devtools-core@2.71.0
         version: '@fluidframework/devtools-core@2.71.0'
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../../common/build/eslint-config-fluid
       '@fluidframework/id-compressor':
         specifier: workspace:~
@@ -15912,7 +15912,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../../common/build/eslint-config-fluid
       '@fluidframework/test-utils':
         specifier: workspace:~
@@ -16081,7 +16081,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../../common/build/eslint-config-fluid
       '@fluidframework/shared-object-base':
         specifier: workspace:~
@@ -16253,7 +16253,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@types/node':
         specifier: ^18.19.0
@@ -16323,7 +16323,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/fluid-runner-previous':
         specifier: npm:@fluidframework/fluid-runner@2.71.0
@@ -16468,7 +16468,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@types/json-stable-stringify':
         specifier: ^1.0.32
@@ -16535,7 +16535,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/odsp-doclib-utils-previous':
         specifier: npm:@fluidframework/odsp-doclib-utils@2.71.0
@@ -16620,7 +16620,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/telemetry-utils-previous':
         specifier: npm:@fluidframework/telemetry-utils@2.71.0
@@ -16714,7 +16714,7 @@ importers:
         specifier: ^0.60.0
         version: 0.60.0(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/tool-utils-previous':
         specifier: npm:@fluidframework/tool-utils@2.71.0

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/driver-web-cache",
-	"version": "2.72.0",
+	"version": "2.73.0",
 	"description": "Implementation of the driver caching API for a web browser",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -103,7 +103,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.60.0",
 		"@fluidframework/driver-web-cache-previous": "npm:@fluidframework/driver-web-cache@2.71.0",
-		"@fluidframework/eslint-config-fluid": "workspace:^",
+		"@fluidframework/eslint-config-fluid": "workspace:~",
 		"@microsoft/api-extractor": "7.52.11",
 		"@types/jest": "29.5.3",
 		"@types/node": "^18.19.0",
