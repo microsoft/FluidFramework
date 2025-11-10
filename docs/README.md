@@ -237,8 +237,6 @@ Note: generating the API documentation for the new "current" version will fail i
 
 ##### Links
 
-##### Prefer relative file paths
-
 As a general rule, links between documents on the site should:
 - Use relative file paths
     - Enhances the IDE experience.
