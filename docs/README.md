@@ -237,15 +237,19 @@ Note: generating the API documentation for the new "current" version will fail i
 
 ##### Links
 
-When linking to other documents in the site, use file paths rather than fully qualified URLs.
-Our site is configured to open external web links in a new window/tab.
-Navigating between pages on our site should generally result in navigation within the same active window/tab.
+##### Prefer relative file paths
 
-It is also recommended to include file extensions in links when possible.
-E.g., prefer `[foo](./foo.mdx)` over `[foo](./foo)`.
+As a general rule, links between documents on the site should:
+- Use relative file paths
+    - Enhances the IDE experience.
+- Specify the `.md`/`.mdx` file extension
+    - Docusaurus applies a different resolution strategy for relative _file path_ links than it does for URL links. See: <https://docusaurus.io/docs/markdown-features/links>
 
-Docusaurus applies a different resolution strategy for relative _file path_ links than it does for URL links.
-See: <https://docusaurus.io/docs/markdown-features/links>
+Links between documents on the site *should not*:
+- Use fully qualified URLs (e.g., `[foo](https://fluidframework.com/docs/foo)`)
+    - Docusaurus will treat such links as *external*, which will result in new windows/tabs being opened in the user's browser when clicked.
+- Use *absolute* document paths relative to the site root (e.g., `[foo](/docs/foo.mdx)`)
+    - These work just fine as far as Docusaurus is concerned, but they break the ability to navigate through links in an IDE.
 
 #### Assets
 
