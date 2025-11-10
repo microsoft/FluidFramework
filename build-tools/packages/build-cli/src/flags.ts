@@ -55,8 +55,8 @@ export const releaseGroupFlag = Flags.custom<ReleaseGroup>({
  * A re-usable CLI flag to parse release group names.
  */
 export const releaseGroupNameFlag = Flags.custom<ReleaseGroupName>({
-	required: true,
 	description: "The name of a release group.",
+	char: "g",
 	parse: async (input) => {
 		return input as ReleaseGroupName;
 	},

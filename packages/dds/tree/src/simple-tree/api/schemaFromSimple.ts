@@ -106,9 +106,12 @@ function generateNode(
 			for (const [key, field] of schema.fields) {
 				fields[key] = generateFieldSchema(field, context, field.storedKey);
 			}
-			// Here allowUnknownOptionalFields is implicitly defaulting. This is a subjective policy choice:
-			// users of this code are expected to handle what ever choice this code makes for cases like this.
-			return factory.objectAlpha(id, fields, { metadata: schema.metadata });
+			// Here allowUnknownOptionalFields is implicitly defaulting in the case where the input schema does not explicitly specify the value.
+			// This is a subjective policy choice: users of this code are expected to handle what ever choice this code makes for cases like this.
+			return factory.objectAlpha(id, fields, {
+				metadata: schema.metadata,
+				allowUnknownOptionalFields: schema.allowUnknownOptionalFields ?? false,
+			});
 		}
 		case NodeKind.Array:
 			return factory.arrayAlpha(id, generateAllowedTypes(schema.simpleAllowedTypes, context), {

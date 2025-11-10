@@ -9,6 +9,7 @@ Generate commands are used to create/update code, docs, readmes, etc.
 * [`flub generate changelog`](#flub-generate-changelog)
 * [`flub generate changeset`](#flub-generate-changeset)
 * [`flub generate entrypoints`](#flub-generate-entrypoints)
+* [`flub generate layerCompatGeneration`](#flub-generate-layercompatgeneration)
 * [`flub generate node10Entrypoints`](#flub-generate-node10entrypoints)
 * [`flub generate packlist`](#flub-generate-packlist)
 * [`flub generate releaseNotes`](#flub-generate-releasenotes)
@@ -267,6 +268,60 @@ DESCRIPTION
 ```
 
 _See code: [src/commands/generate/entrypoints.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/entrypoints.ts)_
+
+## `flub generate layerCompatGeneration`
+
+Updates the generation and release date for layer compatibility.
+
+```
+USAGE
+  $ flub generate layerCompatGeneration [-v | --quiet] [--generationDir <value>] [--outFile <value>] [--minimumCompatWindowMonths
+    <value>] [--concurrency <value>] [--branch <value> [--changed | [--all | --dir <value>... | --packages | -g
+    client|server|azure|build-tools|gitrest|historian|all... | --releaseGroupRoot
+    client|server|azure|build-tools|gitrest|historian|all...]]] [--private] [--scope <value>... | --skipScope
+    <value>...]
+
+FLAGS
+  --concurrency=<value>                [default: 25] The number of tasks to execute concurrently.
+  --generationDir=<value>              [default: ./src] The directory where the generation file is located.
+  --minimumCompatWindowMonths=<value>  [default: 3] The minimum compatibility window in months that is supported across
+                                       all Fluid layers.
+  --outFile=<value>                    [default: layerGenerationState.ts] Output the results to this file.
+
+PACKAGE SELECTION FLAGS
+  -g, --releaseGroup=<option>...      Run on all child packages within the specified release groups. This does not
+                                      include release group root packages. To include those, use the --releaseGroupRoot
+                                      argument. Cannot be used with --all.
+                                      <options: client|server|azure|build-tools|gitrest|historian|all>
+      --all                           Run on all packages and release groups. Cannot be used with --dir, --packages,
+                                      --releaseGroup, or --releaseGroupRoot.
+      --branch=<value>                [default: main] Select only packages that have been changed when compared to this
+                                      base branch. Can only be used with --changed.
+      --changed                       Select packages that have changed when compared to a base branch. Use the --branch
+                                      option to specify a different base branch. Cannot be used with --all.
+      --dir=<value>...                Run on the package in this directory. Cannot be used with --all.
+      --packages                      Run on all independent packages in the repo. Cannot be used with --all.
+      --releaseGroupRoot=<option>...  Run on the root package of the specified release groups. This does not include any
+                                      child packages within the release group. To include those, use the --releaseGroup
+                                      argument. Cannot be used with --all.
+                                      <options: client|server|azure|build-tools|gitrest|historian|all>
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+PACKAGE FILTER FLAGS
+  --[no-]private          Only include private packages. Use --no-private to exclude private packages instead.
+  --scope=<value>...      Package scopes to filter to. If provided, only packages whose scope matches the flag will be
+                          included. Cannot be used with --skipScope.
+  --skipScope=<value>...  Package scopes to filter out. If provided, packages whose scope matches the flag will be
+                          excluded. Cannot be used with --scope.
+
+DESCRIPTION
+  Updates the generation and release date for layer compatibility.
+```
+
+_See code: [src/commands/generate/layerCompatGeneration.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/layerCompatGeneration.ts)_
 
 ## `flub generate node10Entrypoints`
 

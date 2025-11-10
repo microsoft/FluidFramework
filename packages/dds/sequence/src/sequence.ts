@@ -20,9 +20,9 @@ import {
 	IJSONSegment,
 	IMergeTreeAnnotateMsg,
 	IMergeTreeDeltaOp,
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	IMergeTreeGroupMsg,
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	IMergeTreeObliterateMsg,
 	IMergeTreeOp,
 	IMergeTreeRemoveMsg,
@@ -345,7 +345,7 @@ export interface ISharedSegmentSequence<T extends ISegment>
 	 * release, as group ops are redundant with the native batching capabilities
 	 * of the runtime
 	 */
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	groupOperation(groupOp: IMergeTreeGroupMsg): void;
 
 	getRangeExtentsOfPosition(pos: number): {
@@ -431,7 +431,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				}
 
 				case MergeTreeDeltaType.OBLITERATE: {
-					// eslint-disable-next-line import/no-deprecated
+					// eslint-disable-next-line import-x/no-deprecated
 					const lastRem = ops[ops.length - 1] as IMergeTreeObliterateMsg;
 					if (lastRem?.pos1 === r.position) {
 						assert(lastRem.pos2 !== undefined, 0x874 /* pos2 should not be undefined here */);
@@ -574,7 +574,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		this.guardReentrancy(() => this.client.obliterateRangeLocal(start, end));
 	}
 
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	public groupOperation(groupOp: IMergeTreeGroupMsg): void {
 		this.guardReentrancy(() => this.client.localTransaction(groupOp));
 	}

@@ -8,13 +8,13 @@ import { strict as assert } from "node:assert";
 import { compareArrays } from "@fluidframework/core-utils/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { BasicChunk } from "../../../../feature-libraries/chunked-forest/basicChunk.js";
 import {
 	type ChunkDecoder,
 	type StreamCursor,
 	readStream,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities.js";
 import {
 	InlineArrayDecoder,
@@ -26,9 +26,9 @@ import {
 	deaggregateChunks,
 	decode,
 	readValue,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { DecoderContext } from "../../../../feature-libraries/chunked-forest/codec/chunkDecodingGeneric.js";
 import {
 	type EncodedChunkShape,
@@ -36,18 +36,18 @@ import {
 	FieldBatchFormatVersion,
 	type EncodedFieldBatch,
 	type EncodedNodeShape,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/format.js";
 import type {
 	ChunkReferenceId,
 	IncrementalDecoder,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/codecs.js";
 import {
 	emptyChunk,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/emptyChunk.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { SequenceChunk } from "../../../../feature-libraries/chunked-forest/sequenceChunk.js";
 import type { TreeChunk } from "../../../../feature-libraries/index.js";
 import { type ReferenceCountedBase, brand } from "../../../../util/index.js";

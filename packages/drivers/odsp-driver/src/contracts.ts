@@ -9,7 +9,7 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 import type { HostStoragePolicy } from "@fluidframework/odsp-driver-definitions/internal";
 
-// eslint-disable-next-line import/no-deprecated
+// eslint-disable-next-line import-x/no-deprecated
 import type { ISnapshotContents } from "./odspPublicUtils.js";
 
 /**
@@ -234,7 +234,7 @@ export interface IFlushOpsResponse {
  * @deprecated This will be replaced with ISnapshotCachedEntry2 which wraps the new ISnapshot interface.
  * For now, to support back compat from cache, we need to keep it for now.
  */
-// eslint-disable-next-line import/no-deprecated
+// eslint-disable-next-line import-x/no-deprecated
 export interface ISnapshotCachedEntry extends ISnapshotContents {
 	cacheEntryTime: number;
 }

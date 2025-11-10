@@ -18,7 +18,7 @@ import * as React from "react";
 
 import { DefaultView } from "./defaultView.js";
 
-// eslint-disable-next-line import/no-unassigned-import
+// eslint-disable-next-line import-x/no-unassigned-import
 import "./style.css";
 
 const simpleCoordinateComponentId = "simpleCoordinate";

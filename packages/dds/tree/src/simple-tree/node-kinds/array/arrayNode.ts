@@ -16,7 +16,7 @@ import { FieldKinds, isTreeValue } from "../../../feature-libraries/index.js";
 import {
 	CompatibilityLevel,
 	type WithType,
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	typeNameSymbol,
 	NodeKind,
 	type TreeNode,
@@ -1266,7 +1266,7 @@ export function arraySchema<
 		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
 			persistedMetadata;
 
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated
 		public get [typeNameSymbol](): TName {
 			return identifier;
 		}

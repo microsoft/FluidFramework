@@ -58,6 +58,15 @@ export interface SimpleObjectNodeSchema<out TCustomMetadata = unknown>
 	 * especially if/when TreeNodeSchema for objects provide more maps.
 	 */
 	readonly fields: ReadonlyMap<string, SimpleObjectFieldSchema>;
+
+	/**
+	 * Whether the object node allows unknown optional fields.
+	 *
+	 * @see {@link ObjectSchemaOptions.allowUnknownOptionalFields} for the API where this field is set as part of authoring a schema.
+	 *
+	 * @remarks Only populated for view schemas, undefined otherwise. Relevant for compatibility checking scenarios.
+	 */
+	readonly allowUnknownOptionalFields: boolean | undefined;
 }
 
 /**
@@ -163,14 +172,14 @@ export type SimpleNodeSchema =
 	| SimpleRecordNodeSchema;
 
 /**
- * Information about allowed types.
+ * Information about allowed types under a field.
  *
  * @alpha
  * @sealed
  */
 export interface SimpleAllowedTypeAttributes {
 	/**
-	 * True if this schema is included as a {@link SchemaStaticsAlpha.staged | staged} schema upgrade,
+	 * True if this schema is included as a {@link SchemaStaticsBeta.staged | staged} schema upgrade,
 	 * allowing the view schema be compatible with stored schema with (post upgrade) or without it (pre-upgrade).
 	 * New documents and schema upgrades will omit any staged schema.
 	 *
@@ -238,7 +247,7 @@ export interface SimpleTreeSchema {
 	 * @remarks
 	 * The keys are the schemas' {@link TreeNodeSchemaCore.identifier | identifiers}.
 	 *
-	 * Information about if a schema is {@link SchemaStaticsAlpha.staged | staged} or not is not available as the "Simple Schema" layer of abstraction: they are included unconditionally.
+	 * Information about if a schema is {@link SchemaStaticsBeta.staged | staged} or not is not available as the "Simple Schema" layer of abstraction: they are included unconditionally.
 	 * Options for filtering out staged schemas from view schema are available in {@link extractPersistedSchema}.
 	 */
 	readonly definitions: ReadonlyMap<string, SimpleNodeSchema>;

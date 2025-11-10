@@ -21,7 +21,7 @@ parameters:
 
 resources:
   pipelines:
-  - pipeline: client   # Name of the pipeline resource
+  - pipeline: client
     source: Build - client packages
     branch: main # Default branch for manual/scheduled triggers if none is selected
     trigger:
@@ -30,6 +30,18 @@ resources:
       - main
       - next
       - lts
+  - pipeline: routerlicious
+    source: server-routerlicious
+    branch: main # Default branch for manual/scheduled triggers if none is selected
+  - pipeline: historian
+    source: server-historian
+    branch: main # Default branch for manual/scheduled triggers if none is selected
+  - pipeline: gitrest
+    source: server-gitrest
+    branch: main # Default branch for manual/scheduled triggers if none is selected
+  - pipeline: gitssh
+    source: server-gitssh
+    branch: main # Default branch for manual/scheduled triggers if none is selected
   repositories:
     - repository: ff_pipeline_host
       type: git
@@ -126,6 +138,46 @@ stages:
           fluid__test__driver__r11s: $(automation-fluid-test-driver-r11s-ppe)
         ${{ else }}:
           fluid__test__driver__r11s: $(automation-fluid-test-driver-r11s)
+        FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains createTestLogger impl to inject
+        FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
+
+  # end-to-end tests docker
+  - template: templates/include-test-real-service.yml
+    parameters:
+      stageId: e2e_docker
+      stageDisplayName: e2e - docker
+      poolBuild: Large-eastus2 # Need Large pool for full-compat matrix
+      testPackage: ${{ variables.testPackage }}
+      testWorkspace: ${{ variables.testWorkspace }}
+      artifactBuildId: $(resources.pipeline.client.runID)
+      continueOnError: true
+      timeoutInMinutes: 360
+      testCommand: test:realsvc:r11s:docker
+      stageVariables:
+        - group: container-registry-info
+      splitTestVariants:
+        - name: Non-compat
+          flags: --compatVersion=0
+        - name: N-1
+          flags: --compatVersion=-1
+        - name: LTS
+          flags: --compatVersion=LTS
+        - name: Cross-Client
+          flags: --compatVersion=CROSS_CLIENT
+      cacheCompatVersionsInstalls: true
+      uploadTestPassRateTelemetry: true
+      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
+
+      # Checks out the FluidFramework source so we can run the docker service
+      runAgainstDocker: true
+
+      # Docker tags to use when constructing the docker environment
+      alfredImageTag: 0.0.$(resources.pipeline.routerlicious.runID)
+      historianImageTag: 0.0.$(resources.pipeline.historian.runID)
+      gitrestImageTag: 0.0.$(resources.pipeline.gitrest.runID)
+      gitsshImageTag: 0.0.$(resources.pipeline.gitssh.runID)
+
+      env:
         FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains createTestLogger impl to inject
         FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
 

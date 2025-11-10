@@ -10,7 +10,7 @@ import { encodeTreeSchema, makeSchemaCodec } from "../../feature-libraries/index
 import {
 	clientVersionToSchemaVersion,
 	type FormatV1,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/schema-index/index.js";
 import { brand, type JsonCompatible } from "../../util/index.js";
 import type { SchemaUpgrade } from "../core/index.js";
