@@ -510,11 +510,9 @@ export class ConnectionManager implements IConnectionManager {
 
 		this.props.establishConnectionHandler(reason);
 
-		let connection: IDocumentDeltaConnection | undefined;
-
 		if (docService.policies?.storageOnly === true) {
-			connection = new FrozenDeltaStream();
-			this.setupNewSuccessfulConnection(connection, "read", reason);
+			const frozenDeltaStreamConnection = new FrozenDeltaStream();
+			this.setupNewSuccessfulConnection(frozenDeltaStreamConnection, "read", reason);
 			assert(this.pendingConnection === undefined, 0x2b3 /* "logic error" */);
 			return;
 		}
@@ -522,6 +520,7 @@ export class ConnectionManager implements IConnectionManager {
 		let delayMs = InitialReconnectDelayInMs;
 		let connectRepeatCount = 0;
 		const connectStartTime = performanceNow();
+
 		let lastError: unknown;
 
 		const abortController = new AbortController();
@@ -534,6 +533,7 @@ export class ConnectionManager implements IConnectionManager {
 		};
 
 		// This loop will keep trying to connect until successful, with a delay between each iteration.
+		let connection: IDocumentDeltaConnection | undefined;
 		while (connection === undefined) {
 			if (this._disposed) {
 				throw new Error("Attempting to connect a closed DeltaManager");
