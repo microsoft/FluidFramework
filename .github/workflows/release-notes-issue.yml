@@ -29,7 +29,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Check out the repo and set up node and pnpm.
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # ratchet:actions/checkout@v4
+      # release notes: https://github.com/actions/checkout/releases/tag/v4.3.0
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # ratchet:actions/checkout@v4
         with:
           fetch-depth: "100"
           persist-credentials: false

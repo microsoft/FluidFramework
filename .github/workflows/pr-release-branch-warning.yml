@@ -21,7 +21,8 @@ jobs:
       pull-requests: write  # for marocchino/sticky-pull-request-comment to create or update PR comment
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # ratchet:actions/checkout@v4
+      # release notes: https://github.com/actions/checkout/releases/tag/v4.3.0
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # ratchet:actions/checkout@v4
         with:
           persist-credentials: false
           submodules: false
