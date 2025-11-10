@@ -1,5 +1,9 @@
 # @fluid-example/import-testing
 
+## 2.72.0
+
+Dependency updates only.
+
 ## 2.71.0
 
 Dependency updates only.

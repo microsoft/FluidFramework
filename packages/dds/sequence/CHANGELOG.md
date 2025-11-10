@@ -1,5 +1,9 @@
 # @fluidframework/sequence
 
+## 2.72.0
+
+Dependency updates only.
+
 ## 2.71.0
 
 Dependency updates only.
@@ -27,7 +31,6 @@ Dependency updates only.
 - Remove unnecessary and internal APIs in ISequenceIntervalCollection and related interval types ([#25244](https://github.com/microsoft/FluidFramework/pull/25244)) [15d476ea706](https://github.com/microsoft/FluidFramework/commit/15d476ea7069eb4de317a726733aa8fb9e8486e8)
 
   The following APIs are now removed:
-
   - `IInterval.clone`
   - `IInterval.modify`
   - `IInterval.union`
@@ -64,7 +67,6 @@ Dependency updates only.
 - Deprecate unnecessary and internal APIs in `ISequenceIntervalCollection` and related interval types ([#24792](https://github.com/microsoft/FluidFramework/pull/24792)) [8acc59162ac](https://github.com/microsoft/FluidFramework/commit/8acc59162acb0f12f996d756111ae3cb79ea6104)
 
   The following APIs are now deprecated and will be removed in a future release:
-
   - `IInterval.clone`
   - `IInterval.modify`
   - `IInterval.union`
@@ -93,7 +95,6 @@ Dependency updates only.
 - IntervalCollections types (deprecated) have been removed ([#24489](https://github.com/microsoft/FluidFramework/pull/24489)) [a686c353c5](https://github.com/microsoft/FluidFramework/commit/a686c353c5801a4bc90958eee355fcdf30b3fbfa)
 
   This change removes the following deprecated generic types and provides non-generic alternatives where necessary:
-
   - `IIntervalCollection` is replaced by `ISequenceIntervalCollection`
   - `IIntervalCollectionEvent` is replaced by `ISequenceIntervalCollectionEvents`
   - `IntervalIndex` is replaced by `SequenceIntervalIndex`
@@ -109,7 +110,6 @@ Dependency updates only.
 - Generic types for IntervalCollections have been replaced with non-generic types ([#24411](https://github.com/microsoft/FluidFramework/pull/24411)) [1c743e825ed](https://github.com/microsoft/FluidFramework/commit/1c743e825ed29a81b0e66775ce3553477361d335)
 
   This change deprecates the following generic types and provides non-generic alternatives where necessary:
-
   - `IIntervalCollection` is replaced by `ISequenceIntervalCollection`
   - `IIntervalCollectionEvent` is replaced by `ISequenceIntervalCollectionEvents`
   - `IntervalIndex` is replaced by `SequenceIntervalIndex`
@@ -171,7 +171,6 @@ Dependency updates only.
   ```
 
   The following properties are removed from `ISegment` and its implementations:
-
   - clientId
   - index
   - localMovedSeq
@@ -188,7 +187,6 @@ Dependency updates only.
   - wasMovedOnInsert
 
   Additionally, the following types are also removed:
-
   - IMergeNodeCommon
   - IMoveInfo
   - IRemovalInfo
@@ -216,7 +214,6 @@ Dependency updates only.
   ```
 
   The following properties are deprecated on ISegment and its implementations:
-
   - clientId
   - index
   - localMovedSeq
@@ -233,7 +230,6 @@ Dependency updates only.
   - wasMovedOnInsert
 
   Additionally, the following types are also deprecated, and will become internal (i.e. users of the Fluid Framework will not have access to them):
-
   - IMergeNodeCommon
   - IMoveInfo
   - IRemovalInfo
@@ -252,7 +248,6 @@ Dependency updates only.
   As part of ongoing improvements, several internal types and related APIs have been removed. These types are unnecessary for any supported scenarios and could lead to errors if used. Since directly using these types would likely result in errors, these changes are not likely to impact any Fluid Framework consumers.
 
   Removed types:
-
   - IMergeTreeTextHelper
   - MergeNode
   - ObliterateInfo
@@ -264,12 +259,10 @@ Dependency updates only.
   In addition to removing the above types, they are no longer exposed through the following interfaces and their implementations: `ISegment`, `ReferencePosition`, and `ISerializableInterval`.
 
   Removed functions:
-
   - addProperties
   - ack
 
   Removed properties:
-
   - propertyManager
   - segmentGroups
 
@@ -283,7 +276,6 @@ Dependency updates only.
   An adjustment is a modification applied to a property value within a specified range. Adjustments can be used to increment or decrement property values dynamically. They are particularly useful in scenarios where property values need to be updated based on user interactions or other events. For example, in a rich text editor, adjustments can be used for modifying indentation levels or font sizes, where multiple users could apply differing numerical adjustments.
 
   ### Key Features and Use Cases:
-
   - **Adjustments with Constraints**: Adjustments can include optional minimum and maximum constraints to ensure the final value falls within specified bounds. This is particularly useful for maintaining consistent formatting in rich text editors.
   - **Consistent Property Changes**: The feature ensures that property changes are consistent, managing both local and remote changes effectively. This is essential for collaborative rich text editing where multiple users may be making adjustments simultaneously.
   - **Rich Text Formatting**: Adjustments can be used to modify text properties such as font size, indentation, or other formatting attributes dynamically based on user actions.
@@ -305,7 +297,6 @@ Dependency updates only.
   The `Client` class in the merge-tree package has been removed. Types that directly or indirectly expose the merge-tree `Client` class have also been removed.
 
   The removed types were not meant to be used directly, and direct usage was not supported:
-
   - AttributionPolicy
   - IClientEvents
   - IMergeTreeAttributionOptions
@@ -313,7 +304,6 @@ Dependency updates only.
   - SharedStringClass
 
   Some classes that referenced the `Client` class have been transitioned to interfaces. Direct instantiation of these classes was not supported or necessary for any supported scenario, so the change to an interface should not impact usage. This applies to the following types:
-
   - SequenceInterval
   - SequenceEvent
   - SequenceDeltaEvent
@@ -335,7 +325,6 @@ Dependency updates only.
   To reduce exposure of the `Client` class in the merge-tree package, several types have been deprecated. These types directly or indirectly expose the merge-tree `Client` class.
 
   Most of these types are not meant to be used directly, and direct use is not supported:
-
   - AttributionPolicy
   - IClientEvents
   - IMergeTreeAttributionOptions
@@ -343,7 +332,6 @@ Dependency updates only.
   - SharedStringClass
 
   Some of the deprecations are class constructors. In those cases, we plan to replace the class with an interface which has an equivalent API. Direct instantiation of these classes is not currently supported or necessary for any supported scenario, so the change to an interface should not impact usage. This applies to the following types:
-
   - SequenceInterval
   - SequenceEvent
   - SequenceDeltaEvent
@@ -361,7 +349,6 @@ Dependency updates only.
 
   The `PropertyManager` class, along with the `propertyManager` properties and `addProperties` functions on segments and intervals, are not intended for external use.
   These elements will be removed in a future release for the following reasons:
-
   - There are no scenarios where they need to be used directly.
   - Using them directly will cause eventual consistency problems.
   - Upcoming features will require modifications to these mechanisms.
@@ -413,7 +400,6 @@ Dependency updates only.
   TypeScript types and implementation code.
 
   This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
-
   - `"moduleResolution": "Node16"` with `"module": "Node16"`
   - `"moduleResolution": "Bundler"` with `"module": "ESNext"`
 
@@ -440,7 +426,6 @@ Dependency updates only.
 - Updated server dependencies ([#19122](https://github.com/microsoft/FluidFramework/issues/19122)) [25366b4229](https://github.com/microsoft/FluidFramework/commits/25366b422918cb43685c5f328b50450749592902)
 
   The following Fluid server dependencies have been updated to the latest version, 3.0.0. [See the full changelog.](https://github.com/microsoft/FluidFramework/releases/tag/server_v3.0.0)
-
   - @fluidframework/gitresources
   - @fluidframework/server-kafka-orderer
   - @fluidframework/server-lambdas
@@ -512,7 +497,6 @@ Dependency updates only.
   limitation of serialization.
 
   Additional modifications:
-
   - `Jsonable`'s `TReplacement` parameter default has also been changed from `void` to `never`, which now disallows
     `void`.
   - Unrecognized primitive types like `symbol` are now filtered to `never` instead of `{}`.
@@ -532,7 +516,6 @@ Dependency updates only.
 
   The following APIs have been removed or marked internal in merge-tree and sequence. This functionality was never
   intended for public export.
-
   - `BaseSegment.ack`
   - `Client`
   - `CollaborationWindow`
@@ -568,12 +551,10 @@ Dependency updates only.
 - sequence: Remove support for combining ops [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
 
   In sequence, removed the following APIs:
-
   - the `combiningOp` argument from `SharedSegmentSequence.annotateRange` and `SharedString.annotateMarker`
   - the function `SharedString.annotateMarkerNotifyConsensus`
 
   In merge-tree, removed the following APIs:
-
   - `ICombiningOp`
   - the `combiningOp` field from `IMergeTreeAnnotateMsg`
   - the `op` argument from `BaseSegment.addProperties`, `PropertiesManager.addProperties`, and `ReferencePosition.addProperties`
@@ -584,7 +565,6 @@ Dependency updates only.
 - sequence: Removed several APIs [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
 
   The following APIs have been removed:
-
   - `Client.getStackContext`
   - `SharedSegmentSequence.getStackContext`
   - `IntervalType.Nest`
@@ -683,7 +663,6 @@ Dependency updates only.
   included in the object passed to `change`, but is instead passed as the first parameter to `change`.
 
   Examples:
-
   - Change interval endpoints: `change(intervalId, { start: 3, end: 4 })`
   - Change interval properties: `change(intervalId, { props: { a: c } })`
 
@@ -691,7 +670,6 @@ Dependency updates only.
 
   The following classes and functions have been deprecated. The functionality has poor test coverage and is largely
   unused. They will be removed in a future release.
-
   - IntervalType.Nest
   - internedSpaces
   - RangeStackMap
@@ -714,7 +692,6 @@ Dependency updates only.
 - Dependencies on @fluidframework/protocol-definitions package updated to 3.0.0 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
   This included the following changes from the protocol-definitions release:
-
   - Updating signal interfaces for some planned improvements. The intention is split the interface between signals
     submitted by clients to the server and the resulting signals sent from the server to clients.
     - A new optional type member is available on the ISignalMessage interface and a new ISentSignalMessage interface has
@@ -725,7 +702,6 @@ Dependency updates only.
 - Server upgrade: dependencies on Fluid server packages updated to 2.0.1 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
   Dependencies on the following Fluid server package have been updated to version 2.0.1:
-
   - @fluidframework/gitresources: 2.0.1
   - @fluidframework/server-kafka-orderer: 2.0.1
   - @fluidframework/server-lambdas: 2.0.1
@@ -784,7 +760,6 @@ Dependency updates only.
 
   The **@fluidframework/common-definitions** package is being deprecated, so the following interfaces and types are now
   imported from the **@fluidframework/core-interfaces** package:
-
   - interface IDisposable
   - interface IErrorEvent
   - interface IErrorEvent
@@ -846,7 +821,6 @@ Dependency updates only.
 - Some interval-related APIs are deprecated ([#16573](https://github.com/microsoft/FluidFramework/issues/16573)) [82de148126](https://github.com/microsoft/FluidFramework/commits/82de14812617e4d305bdb621737a0d94a5392d25)
 
   The following APIs are now deprecated from `IntervalCollection`:
-
   - `findOverlappingIntervals` and `gatherIterationResults` - these functions are moved to
     the `OverlappingIntervalsIndex`. Users are advised to independently attach the index to the collection and utilize the
     API accordingly, for instance:

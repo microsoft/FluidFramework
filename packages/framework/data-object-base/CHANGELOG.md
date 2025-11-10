@@ -1,5 +1,9 @@
 # @fluidframework/data-object-base
 
+## 2.72.0
+
+Dependency updates only.
+
 ## 2.71.0
 
 Dependency updates only.
@@ -147,7 +151,6 @@ Dependency updates only.
   TypeScript types and implementation code.
 
   This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
-
   - `"moduleResolution": "Node16"` with `"module": "Node16"`
   - `"moduleResolution": "Bundler"` with `"module": "ESNext"`
 
@@ -186,7 +189,6 @@ Dependency updates only.
 - data-object-base: Removed IFluidRouter from DataObject interfaces and classes [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
 
   The `IFluidRouter` property has been removed from a number of DataObject related classes:
-
   - `PureDataObject`
   - `LazyLoadedDataObject`
   - `TestFluidObject`
@@ -220,7 +222,6 @@ Dependency updates only.
 - aqueduct: ContainerRuntimeFactory constructors have changed [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
   The following class constructors have been changed to allow for better flexible in arguments passed:
-
   - `BaseContainerRuntimeFactory`
   - `ContainerRuntimeFactoryWithDefaultDataStore`
   - `RuntimeFactory`
@@ -250,7 +251,6 @@ Dependency updates only.
 - DEPRECATED: container-runtime: requestHandlers are deprecated [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
   The concept of `requestHandlers` has been deprecated. Please migrate all usage of the following APIs to the new `entryPoint` pattern:
-
   - `requestHandler` property in `ContainerRuntime.loadRuntime(...)`
   - `RuntimeRequestHandler`
   - `RuntimeRequestHandlerBuilder`
@@ -267,7 +267,6 @@ Dependency updates only.
 - test-utils: provideEntryPoint is required [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
   The optional `provideEntryPoint` method has become required on a number of constructors. A value will need to be provided to the following classes:
-
   - `BaseContainerRuntimeFactory`
   - `RuntimeFactory`
   - `ContainerRuntime` (constructor and `loadRuntime`)
@@ -300,7 +299,6 @@ Dependency updates only.
 
   The **@fluidframework/common-definitions** package is being deprecated, so the following interfaces and types are now
   imported from the **@fluidframework/core-interfaces** package:
-
   - interface IDisposable
   - interface IErrorEvent
   - interface IErrorEvent
@@ -334,7 +332,6 @@ Dependency updates only.
 - `initializeEntryPoint` will become required [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
 
   The optional `initializeEntryPoint` method has been added to a number of constructors. **This method argument will become required in an upcoming release** and a value will need to be provided to the following classes:
-
   - `BaseContainerRuntimeFactory`
   - `ContainerRuntimeFactoryWithDefaultDataStore`
   - `RuntimeFactory`

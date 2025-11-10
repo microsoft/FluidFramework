@@ -1,5 +1,9 @@
 # @fluidframework/runtime-definitions
 
+## 2.72.0
+
+Dependency updates only.
+
 ## 2.71.0
 
 Dependency updates only.
@@ -11,7 +15,6 @@ Dependency updates only.
 - Deprecated properties have been removed from IRuntimeStorageService and IContainerStorageService ([#25708](https://github.com/microsoft/FluidFramework/pull/25708)) [82c936ed28](https://github.com/microsoft/FluidFramework/commit/82c936ed285c7e450d5e907a531ce71178f57819)
 
   The following deprecated properties have been removed from `IRuntimeStorageService`:
-
   - `createBlob`
   - `dispose`
   - `disposed`
@@ -23,7 +26,6 @@ Dependency updates only.
   - `uploadSummaryWithContext`
 
   The following deprecated properties have been removed from `IContainerStorageService`:
-
   - `dispose`
   - `disposed`
   - `downloadSummary`
@@ -49,7 +51,6 @@ Dependency updates only.
   DDSes may optionally consume this value and use it to determine which sets of feature flags should be enabled.
 
   #### Public type changes
-
   - **@fluidframework/datastore: `FluidDataStoreRuntime`** - Exposes `minVersionForCollab`.
   - **@fluidframework/runtime-definitions: `IFluidDataStoreContext`** - Exposes optional member `minVersionForCollab`.
     See `FluidDataStoreContext` for an example implementation.
@@ -76,7 +77,6 @@ Dependency updates only.
   Added an interface `IRuntimeStorageService` which will replace `IDocumentStorageService` in the `DataStore` layer. This is exposed by the `Runtime` layer to the `DataStore` layer. This new interface will only contain properties that are needed and used by the `DataStore` layer.
 
   The following properties from `IRuntimeStorageService` are deprecated as they are not needed by the `DataStore` layer. These be removed in a future release:
-
   - `disposed`
   - `dispose`
   - `policies`
@@ -130,7 +130,6 @@ Dependency updates only.
 - The process and processDocumentSchemaOp functions have been removed ([#24018](https://github.com/microsoft/FluidFramework/pull/24018)) [bc35d543d5](https://github.com/microsoft/FluidFramework/commit/bc35d543d58c7e4bf28944b09d645cc26bf28a29)
 
   `process` has been replaced by `processMessages` from the following:
-
   - `FluidDataStoreRuntime`
   - `IDeltaHandler`
   - `IFluidDataStoreChannel`
@@ -166,7 +165,6 @@ Dependency updates only.
   parameter.
 
   These changes were originally announced in version 0.25.0. See the following issues for more details:
-
   - [#1537](https://github.com/microsoft/FluidFramework/issues/1537)
   - [#2931](https://github.com/microsoft/FluidFramework/pull/2931)
 
@@ -197,7 +195,6 @@ Dependency updates only.
   Synchronous creation relies on both the factory and the datastore to support it. This means that asynchronous operations, such as resolving handles, some browser API calls, consensus-based operations, or other asynchronous tasks, cannot be performed during the creation flow. Therefore, synchronous child datastore creation is best limited to scenarios where the existing asynchronous process cannot be used, such as when a new datastore must be created in direct response to synchronous user input.
 
   #### Key Benefits
-
   - **Synchronous Creation**: Allows for the immediate creation of child datastores without waiting for asynchronous operations.
   - **Strong Typing**: Ensures type safety and better developer experience by leveraging TypeScript's type system.
 
@@ -249,7 +246,6 @@ Dependency updates only.
   The 'batchBegin'/'batchEnd' events on ContainerRuntime indicate when a batch is beginning or finishing being processed. The `contents` property on the event argument `op` is not useful or relevant when reasoning over incoming changes at the batch level. Accordingly, it has been removed from the `op` event argument.
 
 - "Remove `IFluidParentContext.ensureNoDataModelChanges` and its implementations ([#22842](https://github.com/microsoft/FluidFramework/pull/22842)) [3aff19a462](https://github.com/microsoft/FluidFramework/commit/3aff19a4622a242e906286c14dfcfa6523175132)
-
   - `IFluidParentContext.ensureNoDataModelChanges` has been removed. [prior deprecation commit](https://github.com/microsoft/FluidFramework/commit/c9d156264bdfa211a3075bdf29cde442ecea234c)
   - `MockFluidDataStoreContext.ensureNoDataModelChanges` has also been removed.
 
@@ -262,7 +258,6 @@ Dependency updates only.
   Similarly, `IDeltaManager.outbound` contained functionality that could break core runtime features such as generation of batches and chunking. Data loss or corruption could occur when `IDeltaManger.inbound.pause()` or `IDeltaManager.inbound.resume()` were called.
 
   #### Alternatives
-
   - Alternatives to `IDeltaManager.inbound.on("op", ...)` are `IDeltaManager.on("op", ...)`
   - Alternatives to calling `IDeltaManager.inbound.pause`, `IDeltaManager.outbound.pause` for `IContainer` disconnect use `IContainer.disconnect`.
   - Alternatives to calling `IDeltaManager.inbound.resume`, `IDeltaManager.outbound.resume` for `IContainer` reconnect use `IContainer.connect`.
@@ -309,12 +304,10 @@ Dependency updates only.
   disabled or controlled:
 
   GC runtime options removed:
-
   - `gcDisableThrowOnTombstoneLoad`
   - `disableDataStoreSweep`
 
   GC configs removed:
-
   - `"Fluid.GarbageCollection.DisableTombstone"`
   - `"Fluid.GarbageCollection.ThrowOnTombstoneUsage"`
   - `"Fluid.GarbageCollection.DisableDataStoreSweep"`
@@ -337,7 +330,6 @@ Dependency updates only.
 
   Access to these now less public types should not be required for users of the `@public` "declarative API" exposed in the `fluid-framework` package, but can still be accessed for those who need them under the `/legacy` import paths.
   The full list of such types is:
-
   - `SharedTree` as exported from `@fluidframwork/tree`: It is still exported as `@public` from `fluid-framework` as `SharedObjectKind`.
   - `ISharedObjectKind`: See new `SharedObjectKind` type for use in `@public` APIs.
     `ISharedObject`
@@ -355,7 +347,6 @@ Dependency updates only.
   - `IProvideFluidHandleContext`
 
   Removed APIs:
-
   - `DataObjectClass`: Usages replaced with `SharedObjectKind`.
   - `LoadableObjectClass`: Replaced with `SharedObjectKind`.
   - `LoadableObjectClassRecord`: Replaced with `Record<string, SharedObjectKind>`.
@@ -408,7 +399,6 @@ Dependency updates only.
   TypeScript types and implementation code.
 
   This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
-
   - `"moduleResolution": "Node16"` with `"module": "Node16"`
   - `"moduleResolution": "Bundler"` with `"module": "ESNext"`
 
@@ -434,7 +424,6 @@ Dependency updates only.
 
   There is no replacement given in terms of immediate programmatic access to this data.
   The expected use pattern is something like this:
-
   - Some code creates a concrete implementation of `ITelemetryContext` and passes it around
   - Callers use the "write" functions on the interface to build up the context
   - The originator uses a function like `serialize` (on the concrete impl, not exposed on the interface any longer)
@@ -444,26 +433,21 @@ Dependency updates only.
 - container-runtime: New feature: ID compression for DataStores & DDSs ([#19859](https://github.com/microsoft/FluidFramework/issues/19859)) [51f0d3db73](https://github.com/microsoft/FluidFramework/commits/51f0d3db737800e1c30ea5e3952d38ff30ffc7da)
 
   ### Key changes
-
   1. A new API IContainerRuntimeBase.generateDocumentUniqueId() is exposed. This API will opportunistically generate IDs in short format (non-negative numbers). If it can't achieve that, it will return UUID strings. UUIDs generated will have low entropy in groups and will compress well. It can be leveraged anywhere in container where container unique IDs are required. I.e. any place that uses uuid() and stores data in container is likely candidate to start leveraging this API.
   2. Data store internal IDs (IDs that are auto generated by FF system) will opportunistically be generated in shorter form. Data stores created in detached container will always have short IDs, data stores created in attached container will opportunistically be short (by using newly added IContainerRuntimeBase.generateDocumentUniqueId() capability)
   3. Similar DDS names will be opportunistically short (same considerations for detached DDS vs. attached DDS)
 
   ### Implementation details
-
   1. Container level ID Compressor can now be enabled with delay. With such setting, only new IContainerRuntimeBase.generateDocumentUniqueId() is exposed (ID Compressor is not exposed in such case, as leveraging any of its other capabilities requires future container sessions to load ID Compressor on container load, for correctness reasons). Once Container establishes connection and any changes are made in container, newly added API will start generating more compact IDs (in most cases).
 
   ### Breaking changes
-
   1. DDS names can no longer start with "\_" symbol - this is reserved for FF needs. I've validated that's not an issue for AzureClient (it only creates root object by name, everything else is referred by handle). Our main internal partners almost never use named DDSs (I can find only 4 instances in Loop).
 
   ### Backward compatibility considerations
-
   1. Data store internal IDs could collide with earlier used names data stores. Earlier versions of FF framework (before DataStore aliasing feature was added) allowed customers to supply IDs for data stores. And thus, files created with earlier versions of framework could have data store IDs that will be similar to names FF will use for newly created data stores ("A", ... "Z", "a"..."z", "AA", etc.). While such collision is possible, it's very unlikely (almost impossible) if user-provided names were at least 4-5 characters long.
   2. If application runs to these problems, or wants to reduce risks, consider disabling ID compressor via IContainerRuntimeOptions.enableRuntimeIdCompressor = "off".
 
   ### Minor changes
-
   1. IContainerRuntime.createDetachedRootDataStore() is removed. Please use IContainerRuntime.createDetachedDataStore and IDataStore.trySetAlias() instead
   2. IContainerRuntimeOptions.enableRuntimeIdCompressor has been changes from boolean to tri-state.
 
@@ -502,7 +486,6 @@ Dependency updates only.
 - Updated server dependencies ([#19122](https://github.com/microsoft/FluidFramework/issues/19122)) [25366b4229](https://github.com/microsoft/FluidFramework/commits/25366b422918cb43685c5f328b50450749592902)
 
   The following Fluid server dependencies have been updated to the latest version, 3.0.0. [See the full changelog.](https://github.com/microsoft/FluidFramework/releases/tag/server_v3.0.0)
-
   - @fluidframework/gitresources
   - @fluidframework/server-kafka-orderer
   - @fluidframework/server-lambdas
@@ -555,7 +538,6 @@ Dependency updates only.
 - container-runtime: Removed request pattern from ContainerRuntime, IRuntime, and IContainerRuntimeBase [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
 
   The `request(...)` method and `IFluidRouter` property have been removed from the following places:
-
   - `ContainerRuntime`
   - `IRuntime`
   - `IContainerRuntimeBase`
@@ -610,7 +592,6 @@ Dependency updates only.
 - Dependencies on @fluidframework/protocol-definitions package updated to 3.0.0 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
   This included the following changes from the protocol-definitions release:
-
   - Updating signal interfaces for some planned improvements. The intention is split the interface between signals
     submitted by clients to the server and the resulting signals sent from the server to clients.
     - A new optional type member is available on the ISignalMessage interface and a new ISentSignalMessage interface has
@@ -626,7 +607,6 @@ Dependency updates only.
 - DEPRECATED: resolveHandle and IFluidHandleContext deprecated on IContainerRuntime [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
   The `resolveHandle(...)` and `get IFluidHandleContext()` methods have been deprecated on the following interfaces:
-
   - `IContainerRuntime`
   - `IContainerRuntimeBase`
 
@@ -643,7 +623,6 @@ Dependency updates only.
 - Server upgrade: dependencies on Fluid server packages updated to 2.0.1 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
   Dependencies on the following Fluid server package have been updated to version 2.0.1:
-
   - @fluidframework/gitresources: 2.0.1
   - @fluidframework/server-kafka-orderer: 2.0.1
   - @fluidframework/server-lambdas: 2.0.1
@@ -668,7 +647,6 @@ Dependency updates only.
 - test-utils: provideEntryPoint is required [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
   The optional `provideEntryPoint` method has become required on a number of constructors. A value will need to be provided to the following classes:
-
   - `BaseContainerRuntimeFactory`
   - `RuntimeFactory`
   - `ContainerRuntime` (constructor and `loadRuntime`)
@@ -690,7 +668,6 @@ Dependency updates only.
 ### Minor Changes
 
 - Upcoming: The type of the logger property/param in various APIs will be changing ([#17350](https://github.com/microsoft/FluidFramework/issues/17350)) [27284bcda3](https://github.com/microsoft/FluidFramework/commits/27284bcda3d63cc4306cf76806f8a075db0db60f)
-
   - @fluidframework/runtime-definitions
     - `IFluidDataStoreRuntime.logger` will be re-typed as `ITelemetryBaseLogger`
   - @fluidframework/odsp-driver
@@ -711,7 +688,6 @@ Dependency updates only.
 
   The **@fluidframework/common-definitions** package is being deprecated, so the following interfaces and types are now
   imported from the **@fluidframework/core-interfaces** package:
-
   - interface IDisposable
   - interface IErrorEvent
   - interface IErrorEvent
@@ -745,7 +721,6 @@ Dependency updates only.
 - Request APIs deprecated from many places [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
 
   The `request` API (associated with the `IFluidRouter` interface) has been deprecated on a number of classes and interfaces. The following are impacted:
-
   - `IRuntime` and `ContainerRuntime`
   - `IFluidDataStoreRuntime` and `FluidDataStoreRuntime`
   - `IFluidDataStoreChannel`
@@ -759,7 +734,6 @@ Dependency updates only.
   More information of the migration off the request pattern, and current status of its removal, is documented in [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md).
 
 - IContainer's and IDataStore's IFluidRouter capabilities are deprecated. [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
-
   - The `request` function taking an arbitrary URL and headers is deprecated
   - However, an overload taking only `{ url: "/" }` is not, for back-compat purposes during the migration
     from the request pattern to using entryPoint.
@@ -845,7 +819,6 @@ Dependency updates only.
 - GC interfaces removed from runtime-definitions [8b242fdc79](https://github.com/microsoft/FluidFramework/commits/8b242fdc796714cf1da9ad3f90d02efb122af0c2)
 
   The following interfaces available in `@fluidframework/runtime-definitions` were deprecated in 2.0.0-internal.4.1.0 and are now removed.
-
   - `IGarbageCollectionNodeData`
   - `IGarbageCollectionState`
   - `IGarbageCollectionSnapshotData`
@@ -862,7 +835,6 @@ Dependency updates only.
 - GC interfaces removed from runtime-definitions ([#14750](https://github.com/microsoft/FluidFramework/pull-requests/14750)) [60274eacab](https://github.com/microsoft/FluidFramework/commits/60274eacabf14d42f52f6ad1c2f64356e64ba1a2)
 
   The following interfaces available in `@fluidframework/runtime-definitions` are internal implementation details and have been deprecated for public use. They will be removed in an upcoming release.
-
   - `IGarbageCollectionNodeData`
   - `IGarbageCollectionState`
   - `IGarbageCollectionSnapshotData`
