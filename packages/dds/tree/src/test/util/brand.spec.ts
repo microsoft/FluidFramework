@@ -7,7 +7,7 @@ import type { ErasedType } from "@fluidframework/core-interfaces";
 import {
 	type Brand,
 	brand,
-	brandConstant,
+	brandConst,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import-x/no-internal-modules */
 } from "../../util/brand.js";
@@ -54,11 +54,11 @@ export type T5 = Brand<{ test: number }, E5>;
 // Check strong typing
 type _check1 = requireFalse<isAssignableTo<E4, E5>> | requireFalse<isAssignableTo<T4, T5>>;
 
-// brandConstant
+// brandConst
 {
-	const constant = brandConstant(42)<T1>();
+	const constant = brandConst(42)<T1>();
 	allowUnused<requireTrue<areSafelyAssignable<typeof constant, 42 & T1>>>();
 
 	// @ts-expect-error incompatible constant value
-	const invalidConstant = brandConstant("x")<T1>();
+	const invalidConstant = brandConst("x")<T1>();
 }

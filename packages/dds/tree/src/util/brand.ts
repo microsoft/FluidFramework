@@ -104,6 +104,11 @@ export type NameFromBranded<T extends BrandedType<unknown, unknown>> = T extends
  * Adds a type {@link Brand} to a value.
  *
  * Only do this when specifically allowed by the requirements of the type being converted to.
+ * @remarks
+ * This infers the branded type from context so it can very easily be used to a semantically invalid conversion.
+ * Treat this like "as" casts: they are an indicator that the user/reader must ensure the conversion is valid.
+ *
+ * If branding a constant, and wanting to preserve the exact typing of the constant, use {@link brandConst} instead.
  * @privateRemarks
  * Leaving `T` unconstrained here allows for better type inference when branding unions.
  * For example when assigning `brand(number)` a number to an optional branded number field,
@@ -130,12 +135,12 @@ export function brand<T>(
  * This is intended for use when branding constants.
  * @example
  * ```typescript
- * const requiredIdentifier = brandConstant("Value")<FieldKindIdentifier>();
+ * const requiredIdentifier = brandConst("Value")<FieldKindIdentifier>();
  * ```
  * @privateRemarks
  * The dummy parameter is used to produce a compile error in the event where the value being branded is incompatible with the branded type.
  */
-export function brandConstant<const T>(
+export function brandConst<const T>(
 	value: T,
 ): <T2 extends BrandedType<unknown, unknown>>(
 	...dummy: T extends (T2 extends BrandedType<infer ValueType, unknown> ? ValueType : never)
