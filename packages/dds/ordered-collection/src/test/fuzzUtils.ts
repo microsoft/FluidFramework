@@ -151,6 +151,16 @@ function assertEqualConsensusOrderedCollections(
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
 	const bData = (b as any).data;
 	assert.deepEqual(aData, bData, "Internal data properties should be equal");
+
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+	const aJobTracking = (a as any).jobTracking.entries();
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+	const bJobTracking = (b as any).jobTracking.entries();
+	assert.deepEqual(
+		aJobTracking,
+		bJobTracking,
+		"Internal job tracking properties should be equal",
+	);
 }
 
 /**
