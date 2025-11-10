@@ -117,3 +117,30 @@ export function brand<T>(
 ): T {
 	return value as T;
 }
+
+/**
+ * Adds a type {@link Brand} to a value, while preserving the exact type of the value being branded.
+ * @remarks
+ * This takes in the type to brand to as a required type parameter, unlike {@link brand} which infers it from context.
+ * This also preserves the exact type of the value being branded.
+ * TypeScript has no way to take an explicit type parameter and infer another in a single generic context.
+ * To work around this, two generic contexts are used, first a function to infer the parameter type,
+ * and a second function (returned) to take the explicit type parameter.
+ *
+ * This is intended for use when branding constants.
+ * @example
+ * ```typescript
+ * const requiredIdentifier = brandConstant("Value")<FieldKindIdentifier>();
+ * ```
+ * @privateRemarks
+ * The dummy parameter is used to produce a compile error in the event where the value being branded is incompatible with the branded type.
+ */
+export function brandConstant<const T>(
+	value: T,
+): <T2 extends BrandedType<unknown, unknown>>(
+	...dummy: T extends (T2 extends BrandedType<infer ValueType, unknown> ? ValueType : never)
+		? []
+		: [never]
+) => T2 & T {
+	return <T2>() => value as T2 & T;
+}

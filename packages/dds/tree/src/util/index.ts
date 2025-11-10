@@ -9,6 +9,7 @@ export {
 	BrandedType,
 	type NameFromBranded,
 	type ValueFromBranded,
+	brandConstant,
 } from "./brand.js";
 export { brandedNumberType, brandedStringType } from "./typeboxBrand.js";
 export {
