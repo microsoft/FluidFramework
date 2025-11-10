@@ -3427,8 +3427,8 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 				);
 			}
 
-			// Note that while change2 should already have this key, if change1 may have a rollback for the same ID in a different location.
-			// In that case change1's attach should be canceled out by a detach from change2.
+			// Note that while change2 should already have this key, change1 may have a rollback for the same ID in a different location.
+			// In that case, change1's attach should be canceled out by a detach from change2.
 			// Here we make sure that the composed change has the correct location (this field) for the attach ID.
 			this.table.movedCrossFieldKeys.set(
 				{ target: CrossFieldTarget.Destination, ...newAttachId },
