@@ -10,11 +10,11 @@ Data on a [SharedTree](./index.mdx) is stored as a [node](./nodes.mdx) of one of
 A [leaf](../../api/fluid-framework/nodekind-enum.md#leaf-enummember) node represents an atomic value, while a [TreeNode](../../api/fluid-framework/treenode-class.md) represents an object or collection.
 The following leaf node types are available:
 
--   [**boolean**](../../api/fluid-framework/schemafactory-class.md#boolean-property): Works identically to a JavaScript boolean.
--   [**number**](../../api/fluid-framework/schemafactory-class.md#number-property): Works identically to a JavaScript number except does not support -0, NaN or Infinity.
--   [**string**](../../api/fluid-framework/schemafactory-class.md#string-property): Works identically to a JavaScript string except for not supporting unpaired UTF-16 surrogate pairs.
--   [**null**](../../api/fluid-framework/schemafactory-class.md#null-property): Works identically to a JavaScript null.
--   [**FluidHandle**](../../api/fluid-framework/schemafactory-class.md#handle-property): A handle to a Fluid DDS or Data Object in the current container. For more information about handles see [Handles](../../concepts/handles.mdx).
+-   [**boolean**](../../api/fluid-framework/schemastatics-interface.md#boolean-propertysignature): Works identically to a JavaScript boolean.
+-   [**number**](../../api/fluid-framework/schemastatics-interface.md#number-propertysignature): Works identically to a JavaScript number except does not support -0, NaN or Infinity.
+-   [**string**](../../api/fluid-framework/schemastatics-interface.md#string-propertysignature): Works identically to a JavaScript string except for not supporting unpaired UTF-16 surrogate pairs.
+-   [**null**](../../api/fluid-framework/schemastatics-interface.md#null-propertysignature): Works identically to a JavaScript null.
+-   [**FluidHandle**](../../api/fluid-framework/schemastatics-interface.md#handle-propertysignature): A handle to a Fluid DDS or Data Object in the current container. For more information about handles see [Handles](../../concepts/handles.mdx).
 
 ## TreeNodes
 
@@ -27,8 +27,8 @@ The object node's fields can be node types.
 A `SharedTree` can have many object nodes at various places in the tree and they do not all have to conform to the same schema.
 Your schema can specify different properties for different object nodes.
 The schema also specifies whether a child property is
-[required](../../api/fluid-framework/schemafactory-class.md#required-property),
-[optional](../../api/fluid-framework/schemafactory-class.md#optional-property)
+[required](../../api/fluid-framework/schemastatics-interface.md#required-propertysignature),
+[optional](../../api/fluid-framework/schemastatics-interface.md#optional-propertysignature)
 or an [identifier](../../api/fluid-framework/schemafactory-class.md#identifier-property),
 as well as what types of nodes are allowed in the field.
 For example, a property could be either number or string.
