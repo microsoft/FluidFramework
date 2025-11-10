@@ -169,7 +169,7 @@ module.exports = {
 		},
 	},
 
-	multiCommandExecutables: ["oclif", "syncpack"],
+	multiCommandExecutables: ["node", "oclif", "syncpack"],
 	declarativeTasks: {
 		// fluid-build lowercases the executable name, so we need to use buildversion instead of buildVersion.
 		"flub check buildversion": {
@@ -202,6 +202,12 @@ module.exports = {
 				"{azure,examples,experimental,packages}/*/*/*/*/*.md",
 				"tools/markdown-magic/**/*.md",
 			],
+			gitignore: ["input", "output"],
+		},
+		// eslint-config-fluid specific declarative task to print configs
+		"node scripts/print-configs.cjs printed-configs": {
+			inputGlobs: ["scripts/print-configs.cjs", "src/**/*.ts", "src/**/*.tsx", "*.js"],
+			outputGlobs: ["printed-configs/*.json"],
 			gitignore: ["input", "output"],
 		},
 		"oclif manifest": {
