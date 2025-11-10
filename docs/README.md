@@ -241,6 +241,7 @@ As a general rule, links between documents on the site should:
 
 -   Use relative file paths
     -   Enhances the IDE experience.
+    -   Gives us better / earlier broken link detection.
 -   Specify the `.md`/`.mdx` file extension
     -   Docusaurus applies a different resolution strategy for relative _file path_ links than it does for URL links. See: <https://docusaurus.io/docs/markdown-features/links>
 
