@@ -11,7 +11,7 @@ If your deployment strategy takes time to roll out, you'll want to ensure Fluid 
 
 ### Specifying compatibility mode
 
-In Fluid Framework 2.x, the [createContainer](./api/azure-client/azureclient-class.md#createcontainer-method) and getContainer APIs on [AzureClient](./api/azure-client/) and [TinyliciousClient](./api/tinylicious-client/index.md) have a new parameter compatibilityMode which may be set to "1" or "2". When set to "1", the 2.x client can safely collaborate with 1.x clients.
+In Fluid Framework 2.x, the [createContainer](./api/azure-client/azureclient-class.md#createcontainer-method) and getContainer APIs on [AzureClient](./api/azure-client/index.md) and [TinyliciousClient](./api/tinylicious-client/index.md) have a new parameter compatibilityMode which may be set to "1" or "2". When set to "1", the 2.x client can safely collaborate with 1.x clients.
 
 ```ts
 const azureClient = new AzureClient(/* ... */);
