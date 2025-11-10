@@ -26,7 +26,9 @@ import {
 	IFluidDataStoreRegistry,
 	IGarbageCollectionDetailsBase,
 	type IRuntimeStorageService,
+	type MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
+import { defaultMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import {
 	ITelemetryLoggerExt,
 	createChildLogger,
@@ -36,8 +38,7 @@ import { v4 as uuid } from "uuid";
 import { MockDeltaManager } from "./mockDeltas.js";
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	public isLocalDataStore: boolean = true;
@@ -76,6 +77,11 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	public createProps?: any;
 	public scope: FluidObject = undefined as any;
 
+	/**
+	 * {@inheritdoc @fluidframework/runtime-definitions#IFluidDataStoreContext.minVersionForCollab}
+	 */
+	public minVersionForCollab: MinimumVersionForCollab = defaultMinVersionForCollab;
+
 	constructor(
 		public readonly id: string = uuid(),
 		public readonly existing: boolean = false,
@@ -113,11 +119,11 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 		return undefined as any as IAudience;
 	}
 
-	public submitMessage(type: string, content: any, localOpMetadata: unknown): void {
+	public submitMessage(): void {
 		// No-op for mock context
 	}
 
-	public submitSignal(type: string, content: any): void {
+	public submitSignal(): void {
 		throw new Error("Method not implemented.");
 	}
 

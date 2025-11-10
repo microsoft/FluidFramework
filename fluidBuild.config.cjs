@@ -49,7 +49,7 @@ module.exports = {
 			script: false,
 		},
 		"compile": {
-			dependsOn: ["commonjs", "build:esnext", "api", "build:test", "build:copy"],
+			dependsOn: ["commonjs", "build:esnext", "build:test", "build:copy"],
 			script: false,
 		},
 		"commonjs": {
@@ -77,12 +77,11 @@ module.exports = {
 		// Generic build:test script should be replaced by :esm or :cjs specific versions.
 		// "tsc" would be nice to eliminate from here, but plenty of packages still focus
 		// on CommonJS.
-		"build:test": ["typetests:gen", "tsc", "api-extractor:commonjs", "api-extractor:esnext"],
-		"build:test:cjs": ["typetests:gen", "tsc", "api-extractor:commonjs"],
-		"build:test:esm": ["typetests:gen", "build:esnext", "api-extractor:esnext"],
+		"build:test": ["typetests:gen", "tsc"],
+		"build:test:cjs": ["typetests:gen", "tsc"],
+		"build:test:esm": ["typetests:gen", "build:esnext"],
 		"api": {
 			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
-			// dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
 			script: false,
 		},
 		"api-extractor:commonjs": ["tsc"],
@@ -289,7 +288,8 @@ module.exports = {
 		},
 
 		// Independent packages
-		"build": "common/build",
+		"build-common": "common/build/build-common",
+		"eslint-plugin-fluid": "common/build/eslint-plugin-fluid",
 		"common-utils": "common/lib/common-utils",
 		"protocol-def": "common/lib/protocol-definitions",
 
@@ -430,10 +430,6 @@ module.exports = {
 				"packages/tools/devtools/devtools-view/package.json",
 			],
 			"npm-package-exports-apis-linted": [
-				// Rollout suppressions - enable only after tools are updated to support policy
-				// as new build-tools will have the concurrently fluid-build support it uses.
-				"^common/",
-
 				// Packages that violate the API linting rules
 				// ae-missing-release-tags, ae-incompatible-release-tags
 				"^examples/data-objects/table-document/",
@@ -489,6 +485,9 @@ module.exports = {
 				"^build-tools/packages/build-infrastructure/src/test/data/testRepo/",
 			],
 			"npm-private-packages": [
+				// TODO: Temporarily disabled for this package while it's a part of the client release group.
+				"^common/build/eslint-config-fluid/",
+
 				// test packages
 				"^build-tools/packages/build-infrastructure/src/test/data/testRepo/",
 			],

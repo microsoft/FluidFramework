@@ -9,16 +9,10 @@ import type { AzureClient } from "@fluidframework/azure-client";
 import { ConnectionState } from "@fluidframework/container-loader";
 import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
-import { TreeViewConfiguration, SchemaFactory, type TreeView } from "@fluidframework/tree";
-import {
-	allowUnused,
-	asTreeViewAlpha,
-	SharedTree,
-	Tree,
-	TreeStatus,
-	type Revertible,
-	type ValidateRecursiveSchema,
-} from "@fluidframework/tree/internal";
+import type { Revertible, TreeView, ValidateRecursiveSchema } from "@fluidframework/tree";
+import { SchemaFactory, Tree, TreeStatus, TreeViewConfiguration } from "@fluidframework/tree";
+import { allowUnused, asAlpha } from "@fluidframework/tree/alpha";
+import { SharedTree } from "@fluidframework/tree/legacy";
 import type { AxiosResponse } from "axios";
 
 import {
@@ -222,7 +216,7 @@ for (const testOpts of testMatrix) {
 				it("can handle undo/redo and transactions", async () => {
 					const { container } = await client.createContainer(schema, "2");
 					await container.attach();
-					const view = asTreeViewAlpha(
+					const view = asAlpha(
 						container.initialObjects.tree1.viewWith(
 							new TreeViewConfiguration({ schema: User, enableSchemaValidation: true }),
 						),

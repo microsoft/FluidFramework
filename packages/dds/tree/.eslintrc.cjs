@@ -10,7 +10,12 @@ module.exports = {
 	},
 	rules: {
 		"@typescript-eslint/no-namespace": "off",
+
+		// This library leverages empty, derived interface definitions to capture concepts
+		// in a nicely reusable way.
 		"@typescript-eslint/no-empty-interface": "off",
+		"@typescript-eslint/no-empty-object-type": "off",
+
 		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 
 		// This package is build with noUnusedLocals disabled for a specific use case (see note in tsconfig.json),
@@ -100,13 +105,6 @@ module.exports = {
 			rules: {
 				"@typescript-eslint/no-unused-vars": ["off"],
 				"@typescript-eslint/explicit-function-return-type": "off",
-			},
-		},
-		// TODO: Remove this override once this config has been updated to extend at least the "recommended" base config.
-		{
-			files: ["src/test/**/*.generated.ts*"],
-			rules: {
-				"@typescript-eslint/no-explicit-any": ["off"],
 			},
 		},
 	],

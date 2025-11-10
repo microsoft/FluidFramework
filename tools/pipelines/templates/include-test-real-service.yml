@@ -20,7 +20,7 @@ parameters:
 # Variables to be set in the stage that runs tests
 - name: stageVariables
   type: object
-  default:
+  default: {}
 
 # If true, the stage that uploads pipeline telemetry to Kusto will include a task to upload
 # test pass rate telemetry.
@@ -49,7 +49,7 @@ parameters:
 
 - name: env
   type: object
-  default:
+  default: {}
 
 - name: splitTestVariants
   type: object
@@ -80,6 +80,7 @@ parameters:
   type: string
   default: ""
 
+# If provided, this value is passed directly to the "condition" key of the stage in this file.
 - name: condition
   type: string
   default: true
@@ -98,21 +99,51 @@ parameters:
   type: boolean
   default: false
 
-# Custom steps specified by the "caller" of this template, for any additional things that need to be done
-# after the steps in this template complete.
-- name: additionalSteps
-  type: stepList
-  default: []
-
 # If true, the versions of our packages installed for compat testing will be cached.
 - name: cacheCompatVersionsInstalls
   type: boolean
   default: false
 
+# If tests need to run against an ODSP tenant, specify the type of tenant here. Steps will be injected to lease one for the duration of the test.
+- name: odspTenantType
+  type: string
+  default: none
+  values:
+    - none
+    - prod
+    - dogfood
+
+# lockBehavior of the stage (if any).
+- name: lockBehavior
+  type: string
+  default: none
+  values:
+    - none
+    - sequential
+
+# if true, the FluidFramework repo will be checked out and a docker-compose env will be spun up for testing
+- name: runAgainstDocker
+  type: boolean
+  default: false
+
+# Tags for docker environment setup
+- name: alfredImageTag
+  type: string
+  default: 'latest'
+- name: historianImageTag
+  type: string
+  default: 'latest'
+- name: gitrestImageTag
+  type: string
+  default: 'latest'
+- name: gitsshImageTag
+  type: string
+  default: 'latest'
+
 stages:
 - stage: ${{ parameters.stageId}}
-  ${{ if in(parameters.stageId, 'e2e_routerlicious', 'e2e_frs', 'stress_tests_odsp', 'stress_tests_odspdf', 'stress_tests_frs', 'stress_tests_frs_canary') }}:
-    lockBehavior: sequential
+  ${{ if ne(parameters.lockBehavior, 'none') }}:
+    lockBehavior: ${{ parameters.lockBehavior }}
   condition: ${{ parameters.condition }}
   displayName: ${{ parameters.stageDisplayName }}
   dependsOn: ${{ parameters.stageDependencies }}
@@ -135,8 +166,16 @@ stages:
         # basic ANSI color support though, so force that in the pipeline
         - name: FORCE_COLOR
           value: 1
+        - name: pipelineHostPath
+          ${{ if eq(parameters.runAgainstDocker, true) }}:
+            # Running against docker means we'll check out the FluidFramework repo as well as ff_pipeline_host
+            # When multiple repos are checked out, they are checked out to $(Build.SourcesDirectory)/<REPO_NAME>
+            value: $(Build.SourcesDirectory)/ff_pipeline_host
+          ${{ else }}:
+            value: $(Build.SourcesDirectory)
+
         - name: testPackageDir
-          value: '${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}'
+          value: '${{ variables.pipelineHostPath }}/node_modules/${{ parameters.testPackage }}'
         - name: testPackageFilePattern
           value: ${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-[0-9]*.tgz
         # Note that this path must match the path that the packed packages are saved to in the build pipeline.
@@ -147,10 +186,9 @@ stages:
           value: true
         - name: artifactPipeline
           value: Build - client packages
-
         steps:
         # Setup
-        - checkout: none
+        - checkout: ff_pipeline_host
           clean: true
 
         # Install self-signed cert for R11s deployment in local cert store
@@ -191,6 +229,7 @@ stages:
               Pipeline Parameters:
                 poolBuild=${{ parameters.poolBuild }}
                 testPackage=${{ parameters.testPackage }}
+                runAgainstDocker=${{ parameters.runAgainstDocker }}
 
               Pipeline Variables:
                 isTestBranch=${{ variables.isTestBranch }}
@@ -202,11 +241,57 @@ stages:
                 testFileTarName=${{ parameters.testFileTarName }}
                 artifactPipeline=${{ variables.artifactPipeline }}
                 artifactBuildId=${{ parameters.artifactBuildId }}
+                pipelineHostPath=${{ variables.pipelineHostPath }}
               "
 
         - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
+        - template: /tools/pipelines/templates/include-install-pnpm.yml@self
+          parameters:
+            buildDirectory: ${{ variables.pipelineHostPath }}
+
         - template: /tools/pipelines/templates/include-setup-npmrc-for-download.yml@self
+
+        # Set up Docker environment if running against docker
+        - ${{ if eq(parameters.runAgainstDocker, true) }}:
+          # Checks out FluidFramework repo
+          - checkout: self
+            clean: true
+          - task: Docker@2
+            displayName: 'Login to container registry'
+            inputs:
+              containerRegistry: 'Fluid Container Registry'
+              command: 'login'
+          - task: DockerCompose@1
+            displayName: 'Start routerlicious environment in docker'
+            inputs:
+              containerregistrytype: 'Container Registry'
+              dockerComposeFile: $(Build.SourcesDirectory)/FluidFramework/server/docker-compose.yml
+              action: 'Run a Docker Compose command'
+              dockerComposeCommand: 'up -d --wait'
+              projectName: 'routerlicious'
+            env:
+              REGISTRY_URL: fluidcr.azurecr.io/build
+              ALFRED_IMAGE_TAG: ${{ parameters.alfredImageTag }}
+              HISTORIAN_IMAGE_TAG: ${{ parameters.historianImageTag }}
+              GITREST_IMAGE_TAG: ${{ parameters.gitrestImageTag }}
+              GITSSH_IMAGE_TAG: ${{ parameters.gitsshImageTag }}
+          - task: Bash@3
+            displayName: 'Wait for services to be ready'
+            inputs:
+              targetType: 'filePath'
+              filePath: $(Build.SourcesDirectory)/FluidFramework/scripts/wait-for-docker-services.sh
+            env:
+              DOCKER_COMPOSE_FILE: $(Build.SourcesDirectory)/FluidFramework/server/docker-compose.yml
+
+        - task: Bash@3
+          displayName: Install base dependencies
+          inputs:
+            targetType: 'inline'
+            workingDirectory: ${{ variables.pipelineHostPath }}
+            script: |
+              set -eu -o pipefail
+              pnpm install
 
         # Download artifact
         - task: DownloadPipelineArtifact@2
@@ -229,26 +314,13 @@ stages:
             # preferTriggeringPipeline: true
 
         - task: Bash@3
-          displayName: Create test directory
-          inputs:
-            targetType: 'inline'
-            script: |
-              set -eu -o pipefail
-
-              mkdir ${{ parameters.testWorkspace }}
-
-        - task: Bash@3
           name: Initialize
           displayName: Initialize
           inputs:
             targetType: 'inline'
-            workingDirectory: ${{ parameters.testWorkspace }}
+            workingDirectory: ${{ variables.pipelineHostPath }}
             script: |
               set -eu -o pipefail
-
-              echo Initialize package
-              npm init --yes
-
               if [[ `ls -1 ${{ variables.testPackagePathPattern }} | wc -l` -eq 1 ]]; then
                 echo "##vso[task.setvariable variable=testPackageTgz;isOutput=true]`ls ${{ variables.testPackagePathPattern }}`"
               else
@@ -256,18 +328,17 @@ stages:
                 echo "##vso[task.logissue type=error]Test package '${{ parameters.testPackage }}' not found, or there are more than one found"
                 exit -1
               fi
-
-        # Install test and logger packages
+        # Install test package
         - task: Bash@3
-          displayName: 'npm install'
+          displayName: 'pnpm install test package'
           # ADO feeds have latency on the order of minutes before packages are available downstream. See:
           # https://learn.microsoft.com/en-us/azure/devops/artifacts/concepts/upstream-sources?view=azure-devops#upstream-sources-health-status
           # This pipeline installs packages which were published very recently relative to its runtime, hence the rather high retry count here.
           retryCountOnTaskFailure: 10
           inputs:
-            workingDirectory: ${{ parameters.testWorkspace }}
             targetType: 'inline'
-            script: 'npm install $(Initialize.testPackageTgz) ${{ parameters.loggerPackage }}'
+            workingDirectory: ${{ variables.pipelineHostPath }}
+            script: 'pnpm install $(Initialize.testPackageTgz)'
 
         # Download Test Files & Install Extra Dependencies
         # These steps are intended to include extra dependencies that are not available as
@@ -296,8 +367,8 @@ stages:
           - task: Bash@3
             displayName: Unpack test files
             inputs:
-              workingDirectory: ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}
               targetType: 'inline'
+              workingDirectory: ${{ variables.pipelineHostPath }}/node_modules/${{ parameters.testPackage }}
               script: |
                 set -eu -o pipefail
 
@@ -312,42 +383,49 @@ stages:
                 tar --extract --verbose --file $TAR_PATH ./dist/test
                 tar --extract --verbose --file $TAR_PATH ./src/test
 
-          - task: Bash@3
-            displayName: Copy devDependencies
-            inputs:
-              workingDirectory: ${{ parameters.testWorkspace }}
-              targetType: 'inline'
-              script: |
-                set -eu -o pipefail
-
-                testPkgJsonPath=${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/package.json
-                pkgJsonPath=${{ parameters.testWorkspace }}/package.json
-                node -e "
-                  const { devDependencies } = require('$testPkgJsonPath');
-                  const pkg = require('$pkgJsonPath');
-                  pkg.devDependencies=devDependencies;
-                  require('fs').writeFileSync('$pkgJsonPath', JSON.stringify(pkg));
-                "
-
-          - task: Bash@3
-            displayName: 'npm install - extra dependencies for test files'
-            retryCountOnTaskFailure: 10
-            inputs:
-              workingDirectory: ${{ parameters.testWorkspace }}
-              targetType: 'inline'
-              script: 'npm install'
+          - template: /tools/pipelines/templates/include-copy-dev-dependencies.yml@self
+            parameters:
+              sourcePackageLocation: ${{ variables.pipelineHostPath }}/node_modules/${{ parameters.testPackage }}
+              destPackageLocation: ${{ variables.pipelineHostPath }}
 
         - ${{ if eq(parameters.cacheCompatVersionsInstalls, true) }}:
+          - task: Bash@3
+            displayName: Compute compat versions install location and version
+            inputs:
+              targetType: 'inline'
+              workingDirectory: ${{ variables.pipelineHostPath }}/node_modules/@fluid-private/test-end-to-end-tests
+              # Using import.meta.resolve to compute this is more resilient to different install tree types.
+              # Also note that test-version-utils is esm-only, so cannot be loaded with require.
+              script: |
+                set -eu -o pipefail
+                node --input-type=module -e "
+                  import { createRequire } from 'module';
+                  const require = createRequire(import.meta.url);
+                  const path = require('path');
+                  const versionUtilsIndexUrl = await import.meta.resolve('@fluid-private/test-version-utils');
+                  const basePath = new URL(versionUtilsIndexUrl.replace('/lib/index.js', '')).pathname;
+                  const legacyModulesPath = path.join(basePath, 'node_modules', '.legacy');
+                  console.log('Resolved @fluid-private/test-version-utils legacy modules to ' + legacyModulesPath);
+                  console.log('##vso[task.setvariable variable=compatVersionInstallsPath]' + legacyModulesPath);
+                  const packageJsonPath = path.join(basePath, 'package.json');
+                  const packageJson = require(packageJsonPath);
+                  const packageVersion = packageJson.version;
+                  const [major, minor] = packageVersion.split('.');
+                  const cacheKey = 'major:' + major + ',minor:' + minor;
+                  console.log('Computed compat version cache key: ' + cacheKey);
+                  console.log('##vso[task.setvariable variable=compatVersionCacheKey;]'+ cacheKey);
+                "
+
           - task: Cache@2
             displayName: Cache compat versions install location
             timeoutInMinutes: 3
             continueOnError: true
             inputs:
-              key: '"compat-version-installs" | "$(Agent.OS)" | "${{ parameters.testCommand }}" | "${{ variant.name }}"'
-              path: ${{ parameters.testWorkspace }}/node_modules/@fluid-private/test-version-utils/node_modules/.legacy/
+              key: '"compat-version-installs" | "$(Agent.OS)" | "${{ parameters.testCommand }}" | "${{ variant.name }}" | "$(compatVersionCacheKey)"'
+              path: $(compatVersionInstallsPath)
 
         # Only check out tenants from the tenant pool if we are running tests against ODSP
-        - ${{ if eq(parameters.stageId, 'e2e_odsp') }}:
+        - ${{ if ne(parameters.odspTenantType, 'none') }}:
           # Retrieve a tenant from the tenant pool
           - task: AzureCLI@2
             displayName: 'Log in to retrieve tenant credentials'
@@ -367,13 +445,12 @@ stages:
             env:
               SYSTEM_ACCESSTOKEN: $(System.AccessToken)
             inputs:
-              workingDirectory: ${{ parameters.testWorkspace }}
               targetType: 'inline'
               script: |
                 set -eu -o pipefail
 
                 # Increase the maximum time to wait for a tenant to 1 hour to accommodate multiple test runs at the same time.
-                npx --package=@ff-internal/trips-setup@0.0.5 -- trips-setup --waitTime=3600 --accessToken=$SYSTEM_ACCESSTOKEN
+                pnpm exec trips-setup --waitTime=3600 --accessToken=$SYSTEM_ACCESSTOKEN --odspEndpoint=${{ parameters.odspTenantType }}
                 echo "##vso[task.setvariable variable=tenantSetupSuccess;]true"
 
         # run the test
@@ -381,14 +458,19 @@ stages:
           displayName: '[test] ${{ parameters.testCommand }} ${{ variant.flags }}'
           continueOnError: ${{ parameters.continueOnError }}
           env:
-            ${{ if ne(parameters.stageId, 'e2e_odsp') }}:
-              ${{ parameters.env }}
-            ${{ if eq(parameters.stageId, 'e2e_odsp') }}:
-              login__odsp__test__tenants: $(tenantCreds)
+            ${{ each pair in parameters.env }}:
+              ${{ pair.key }}: ${{ pair.value }}
+            # ODSP tenant setup script injects the values here (appClientId, tenantCreds).
+            # The e2e test workload references the keys (login__*).
+            ${{ if eq(parameters.odspTenantType, 'dogfood') }}:
               login__microsoft__clientId: $(appClientId)
+              login__odspdf__test__tenants: $(tenantCreds)
+            ${{ elseif eq(parameters.odspTenantType, 'prod') }}:
+              login__microsoft__clientId: $(appClientId)
+              login__odsp__test__tenants: $(tenantCreds)
           inputs:
             command: 'custom'
-            workingDir: ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}
+            workingDir: ${{ variables.pipelineHostPath }}/node_modules/${{ parameters.testPackage }}
             customCommand: 'run ${{ parameters.testCommand }} -- ${{ variant.flags }}'
 
         - ${{ if eq(parameters.skipTestResultPublishing, false) }}:
@@ -430,14 +512,14 @@ stages:
           - task: PublishPipelineArtifact@1
             displayName: Publish Artifact - Tinylicious Log
             inputs:
-              targetPath: '${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/tinylicious.log'
+              targetPath: '${{ variables.pipelineHostPath }}/node_modules/${{ parameters.testPackage }}/tinylicious.log'
               artifactName: 'tinyliciousLog_attempt-$(System.JobAttempt)'
               publishLocation: 'pipeline'
             condition: always()
             continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
 
-        # Only release tenants that were checked out from the tenant pool for ODSP tests
-        - ${{ if eq(parameters.stageId, 'e2e_odsp') }}:
+        # Only release tenants that were checked out from the tenant pool for ODSP/ODSPDF tests
+        - ${{ if ne(parameters.odspTenantType, 'none') }}:
           # Login to release tenant credentials
           # Currently, some of the compat tests run for longer than 60 minutes and exceed the average token lifetime:
           # https://learn.microsoft.com/en-us/entra/identity-platform/configurable-token-lifetimes#access-tokens
@@ -461,8 +543,7 @@ stages:
               targetType: 'inline'
               script: |
                 set -eu -o pipefail
-
-                npx --package=@ff-internal/trips-setup@0.0.5 -- trips-cleanup --reservationId=$(stringBearerToken)
+                pnpm exec trips-cleanup --reservationId=$(stringBearerToken) --odspEndpoint=${{ parameters.odspTenantType }}
             condition: eq(variables['tenantSetupSuccess'], 'true')
 
         # Log Test Failures
@@ -470,7 +551,17 @@ stages:
         #   parameters:
         #     buildDirectory: ${{ variables.testPackageDir }}
 
-        - ${{ parameters.additionalSteps }}
+        # Stop the docker environment if running against it
+        - ${{ if eq(parameters.runAgainstDocker, true) }}:
+          - task: DockerCompose@1
+            displayName: 'Stop routerlicious environment in docker'
+            condition: always()
+            inputs:
+              containerregistrytype: 'Container Registry'
+              dockerComposeFile: $(Build.SourcesDirectory)/FluidFramework/server/docker-compose.yml
+              action: 'Run a Docker Compose command'
+              dockerComposeCommand: 'down'
+              projectName: 'routerlicious'
 
         - template: /tools/pipelines/templates/include-upload-npm-logs.yml@self
 
@@ -479,4 +570,4 @@ stages:
     stageId: ${{ parameters.stageId }}
     uploadTestPassRateTelemetry: ${{ parameters.uploadTestPassRateTelemetry }}
     pipelineIdentifierForTelemetry: ${{ parameters.pipelineIdentifierForTelemetry }}
-    testWorkspace: ${{ parameters.testWorkspace }}
+    testWorkspace: $(Build.SourcesDirectory)

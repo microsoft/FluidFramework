@@ -39,7 +39,7 @@ export function create(
 	singleUseTokenCache: ICache,
 	storage: IDocumentStorage,
 	deltaService: IDeltaService,
-	producer: IProducer,
+	producer: IProducer | undefined,
 	appTenants: IAlfredTenant[],
 	documentRepository: IDocumentRepository,
 	documentDeleteService: IDocumentDeleteService,

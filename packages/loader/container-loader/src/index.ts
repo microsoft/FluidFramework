@@ -4,21 +4,31 @@
  */
 
 export { ConnectionState } from "./connectionState.js";
-export { IContainerExperimental, waitContainerToCatchUp } from "./container.js";
+export { type ContainerAlpha, waitContainerToCatchUp, asLegacyAlpha } from "./container.js";
+export { createFrozenDocumentServiceFactory } from "./frozenServices.js";
 export {
 	createDetachedContainer,
 	loadExistingContainer,
 	rehydrateDetachedContainer,
-	ICreateAndLoadContainerProps,
-	ICreateDetachedContainerProps,
-	ILoadExistingContainerProps,
-	IRehydrateDetachedContainerProps,
+	loadFrozenContainerFromPendingState,
+	loadSummarizerContainerAndMakeSummary,
+	type ICreateAndLoadContainerProps,
+	type ICreateDetachedContainerProps,
+	type ILoadExistingContainerProps,
+	type ILoadSummarizerContainerProps,
+	type IRehydrateDetachedContainerProps,
+	type ILoadFrozenContainerFromPendingStateProps,
 } from "./createAndLoadContainerUtils.js";
+export type {
+	LoadSummarizerSummaryResult,
+	OnDemandSummaryResults,
+	SummaryStage,
+} from "./summarizerResultTypes.js";
 export {
-	ICodeDetailsLoader,
-	IFluidModuleWithDetails,
-	ILoaderProps,
-	ILoaderServices,
+	type ICodeDetailsLoader,
+	type IFluidModuleWithDetails,
+	type ILoaderProps,
+	type ILoaderServices,
 	Loader,
 } from "./loader.js";
 export {
@@ -32,15 +42,16 @@ export {
 	isLocationRedirectionError,
 	resolveWithLocationRedirectionHandling,
 } from "./location-redirection-utilities/index.js";
-export { IProtocolHandler, ProtocolHandlerBuilder } from "./protocol.js";
+export type { IProtocolHandler, ProtocolHandlerBuilder } from "./protocol.js";
 export {
 	tryParseCompatibleResolvedUrl,
-	IParsedUrl,
+	type IParsedUrl,
 } from "./utils.js";
-export {
+export type {
 	IBaseProtocolHandler,
 	IScribeProtocolState,
 	IQuorumSnapshot,
 	QuorumClientsSnapshot,
 	QuorumProposalsSnapshot,
 } from "./protocol/index.js";
+export { PendingLocalStateStore } from "./pendingLocalStateStore.js";

@@ -4,17 +4,17 @@
  */
 
 import React from "react";
-import RGL, { WidthProvider, Layout } from "react-grid-layout";
+import RGL, { WidthProvider, type Layout } from "react-grid-layout";
 
-import { IDataObjectGrid, IDataObjectGridItem } from "./dataObjectGrid.js";
+import type { IDataObjectGrid, IDataObjectGridItem } from "./dataObjectGrid.js";
 import {
-	IDataObjectGridItemEntry,
+	type IDataObjectGridItemEntry,
 	dataObjectRegistry,
 	type ISingleHandleItem,
 } from "./dataObjectRegistry.js";
 import { DataObjectGridToolbar } from "./toolbar.js";
 
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import "react-grid-layout/css/styles.css";
 import "./dataObjectGridView.css";
 

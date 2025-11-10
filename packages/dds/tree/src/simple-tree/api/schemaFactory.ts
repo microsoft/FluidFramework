@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, debugAssert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -28,7 +28,6 @@ import type {
 	TreeNodeSchemaBoth,
 	UnhydratedFlexTreeNode,
 	NodeSchemaMetadata,
-	UnannotateImplicitAllowedTypes,
 	ImplicitAllowedTypes,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 } from "../core/index.js";
@@ -51,7 +50,6 @@ import {
 	type InsertableObjectFromSchemaRecord,
 	type TreeMapNode,
 	type TreeObjectNode,
-	type UnannotateSchemaRecord,
 } from "../node-kinds/index.js";
 import {
 	FieldKind,
@@ -96,12 +94,13 @@ export function schemaFromValue(value: TreeValue): TreeNodeSchema {
 }
 
 /**
- * Options when declaring an {@link SchemaFactory.object|object node}'s schema
+ * Options when declaring an {@link SchemaFactory.object|object node}'s schema.
  *
- * @alpha
+ * @input
+ * @beta
  */
-export interface SchemaFactoryObjectOptions<TCustomMetadata = unknown>
-	extends NodeSchemaOptionsAlpha<TCustomMetadata> {
+export interface ObjectSchemaOptions<TCustomMetadata = unknown>
+	extends NodeSchemaOptions<TCustomMetadata> {
 	/**
 	 * Allow nodes typed with this object node schema to contain optional fields that are not present in the schema declaration.
 	 * Such nodes can come into existence either via import APIs (see remarks) or by way of collaboration with another client
@@ -147,15 +146,25 @@ export interface SchemaFactoryObjectOptions<TCustomMetadata = unknown>
 	 * It's only when application code reaches into a node
 	 * (either by accessing its fields, spreading it, or some other means) that this problem arises.
 	 */
-	allowUnknownOptionalFields?: boolean;
+	readonly allowUnknownOptionalFields?: boolean;
 }
+
+/**
+ * Options when declaring an {@link SchemaFactory.object|object node}'s schema
+ *
+ * @input
+ * @alpha
+ */
+export interface ObjectSchemaOptionsAlpha<TCustomMetadata = unknown>
+	extends ObjectSchemaOptions<TCustomMetadata>,
+		NodeSchemaOptionsAlpha<TCustomMetadata> {}
 
 /**
  * Default options for Object node schema creation.
  * @remarks Omits parameters that are not relevant for common use cases.
  */
 export const defaultSchemaFactoryObjectOptions: Required<
-	Omit<SchemaFactoryObjectOptions, "metadata" | "persistedMetadata">
+	Pick<ObjectSchemaOptions, "allowUnknownOptionalFields">
 > = {
 	allowUnknownOptionalFields: false,
 };
@@ -172,6 +181,33 @@ export type ScopedSchemaName<
 // > = `${TScope extends undefined ? "" : `${TScope}.`}${TName}`;
 
 const schemaStaticsPublic: SchemaStatics = schemaStatics;
+
+/**
+ * Create a class with `Statics` as both static properties and member properties.
+ * @privateRemarks
+ * An attempt was made to let this take in a base class so it could be used again on SchemaFactoryAlpha.
+ * This was unsuccessful, mostly due to issues with trying to manipulate constructor types.
+ */
+function classWithStatics<Statics extends object>(
+	statics: Statics,
+): Statics & (new () => Statics) {
+	// eslint-disable-next-line @typescript-eslint/no-extraneous-class
+	class WithStatics {}
+
+	Object.assign(WithStatics.prototype, statics);
+	Object.assign(WithStatics, statics);
+	return WithStatics as Statics & (new () => Statics);
+}
+
+/**
+ * Base class for SchemaFactory, exposes {@link SchemaStatics} as both static properties and member properties.
+ * @remarks
+ * Do not use this directly, use {@link SchemaFactory} instead.
+ * @privateRemarks
+ * Exported only as a workaround for {@link https://github.com/microsoft/TypeScript/issues/59550} and {@link https://github.com/microsoft/rushstack/issues/4429}.
+ * @system @public
+ */
+export const SchemaFactory_base = classWithStatics(schemaStaticsPublic);
 
 // TODO:
 // SchemaFactory.array references should link to the correct overloads, however the syntax for this does not seems to work currently for methods unless the they are not qualified with the class.
@@ -209,7 +245,7 @@ const schemaStaticsPublic: SchemaStatics = schemaStatics;
  *
  * 4. Additional static members added to schema should pick relatively unique keys to reduce the risk of colliding with implementation details what are not exposed in the API.
  *
- * 5. If exporting the schema from a package which uses API-Extractor, export the base class and derived class separately to work around [a known limitation](https://github.com/microsoft/rushstack/issues/4429).
+ * 5. If exporting the schema from a package which uses API-Extractor, export the base class and derived class separately to work around {@link https://github.com/microsoft/rushstack/issues/4429 | a known limitation}.
  *
  * Note:
  * POJO stands for Plain Old JavaScript Object.
@@ -257,7 +293,7 @@ const schemaStaticsPublic: SchemaStatics = schemaStatics;
  *
  * 8. IntelliSense: Shows internal type generation logic: `object & TreeNode & ObjectFromSchemaRecord<{}> & WithType<"test.x">`.
  *
- * 9. Recursion: Unsupported: [Generated `.d.ts` files replace recursive references with `any`](https://github.com/microsoft/TypeScript/issues/55832),
+ * 9. Recursion: Unsupported: {@link https://github.com/microsoft/TypeScript/issues/55832 | Generated `.d.ts` files replace recursive references with `any`},
  * breaking the use of recursive schema across compilation boundaries.
  *
  * Note that while "POJO Emulation" nodes act a lot like POJO objects, they are not true POJO objects:
@@ -288,8 +324,7 @@ const schemaStaticsPublic: SchemaStatics = schemaStatics;
 export class SchemaFactory<
 	out TScope extends string | undefined = string | undefined,
 	TName extends number | string = string,
-> implements SchemaStatics
-{
+> extends SchemaFactory_base {
 	/**
 	 * TODO:
 	 * If users of this generate the same name because two different schema with the same identifier were used,
@@ -338,73 +373,9 @@ export class SchemaFactory<
 		 * ```
 		 */
 		public readonly scope: TScope,
-	) {}
-
-	private scoped<Name extends TName | string>(name: Name): ScopedSchemaName<TScope, Name> {
-		return (
-			this.scope === undefined ? `${name}` : `${this.scope}.${name}`
-		) as ScopedSchemaName<TScope, Name>;
+	) {
+		super();
 	}
-
-	/**
-	 * {@inheritDoc SchemaStatics.string}
-	 */
-	public readonly string = schemaStaticsPublic.string;
-
-	/**
-	 * {@inheritDoc SchemaStatics.number}
-	 */
-	public readonly number = schemaStaticsPublic.number;
-
-	/**
-	 * {@inheritDoc SchemaStatics.boolean}
-	 */
-	public readonly boolean = schemaStaticsPublic.boolean;
-
-	/**
-	 * {@inheritDoc SchemaStatics.null}
-	 */
-	public readonly null = schemaStaticsPublic.null;
-
-	/**
-	 * {@inheritDoc SchemaStatics.handle}
-	 */
-	public readonly handle = schemaStaticsPublic.handle;
-
-	/**
-	 * {@inheritDoc SchemaStatics.leaves}
-	 */
-	public readonly leaves = schemaStaticsPublic.leaves;
-
-	/**
-	 * {@inheritDoc SchemaStatics.string}
-	 */
-	public static readonly string = schemaStaticsPublic.string;
-
-	/**
-	 * {@inheritDoc SchemaStatics.number}
-	 */
-	public static readonly number = schemaStaticsPublic.number;
-
-	/**
-	 * {@inheritDoc SchemaStatics.boolean}
-	 */
-	public static readonly boolean = schemaStaticsPublic.boolean;
-
-	/**
-	 * {@inheritDoc SchemaStatics.null}
-	 */
-	public static readonly null = schemaStaticsPublic.null;
-
-	/**
-	 * {@inheritDoc SchemaStatics.handle}
-	 */
-	public static readonly handle = schemaStaticsPublic.handle;
-
-	/**
-	 * {@inheritDoc SchemaStatics.leaves}
-	 */
-	public static readonly leaves = schemaStaticsPublic.leaves;
 
 	/**
 	 * Define a {@link TreeNodeSchemaClass} for a {@link TreeObjectNode}.
@@ -426,36 +397,9 @@ export class SchemaFactory<
 		true,
 		T
 	> {
-		// The compiler can't infer that UnannotateSchemaRecord<T> is equal to T so we have to do a bunch of typing to make the error go away.
-		const object: TreeNodeSchemaClass<
-			ScopedSchemaName<TScope, Name>,
-			NodeKind.Object,
-			TreeObjectNode<UnannotateSchemaRecord<T>, ScopedSchemaName<TScope, Name>>,
-			object & InsertableObjectFromSchemaRecord<UnannotateSchemaRecord<T>>,
-			true,
-			T
-		> = objectSchema(
-			this.scoped(name),
-			fields,
-			true,
-			defaultSchemaFactoryObjectOptions.allowUnknownOptionalFields,
-		);
-
-		return object as TreeNodeSchemaClass<
-			ScopedSchemaName<TScope, Name>,
-			NodeKind.Object,
-			TreeObjectNode<RestrictiveStringRecord<ImplicitFieldSchema>>,
-			unknown,
-			true,
-			T
-		> as TreeNodeSchemaClass<
-			ScopedSchemaName<TScope, Name>,
-			NodeKind.Object,
-			TreeObjectNode<T, ScopedSchemaName<TScope, Name>>,
-			object & InsertableObjectFromSchemaRecord<T>,
-			true,
-			T
-		>;
+		return objectSchema(scoped(this, name), fields, true, {
+			...defaultSchemaFactoryObjectOptions,
+		});
 	}
 
 	/**
@@ -527,15 +471,17 @@ export class SchemaFactory<
 	 * This seems like a TypeScript bug getting variance backwards for overload return types since it's erroring when the relation between the overload
 	 * and the implementation is type safe, and forcing an unsafe typing instead.
 	 */
-	public map<const T extends ImplicitAllowedTypes>(
+	public map<const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
 		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | readonly TreeNodeSchema[]),
 		allowedTypes?: T,
+		options?: NodeSchemaOptions<TCustomMetadata>,
 	): TreeNodeSchema<string, NodeKind.Map, TreeMapNode<T>, MapNodeInsertableData<T>, true, T> {
 		if (allowedTypes === undefined) {
 			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
 			const fullName = structuralName("Map", types);
+			debugAssert(() => options === undefined || "No options for structural types");
 			return this.getStructuralType(fullName, types, () =>
-				this.namedMap(fullName, nameOrAllowedTypes as T, false, true),
+				this.namedMap(fullName, nameOrAllowedTypes as T, false, true, {}),
 			) as TreeNodeSchemaBoth<
 				string,
 				NodeKind.Map,
@@ -543,7 +489,8 @@ export class SchemaFactory<
 				MapNodeInsertableData<T>,
 				true,
 				T,
-				undefined
+				undefined,
+				TCustomMetadata
 			>;
 		}
 		// To actually have type safety, assign to the type this method should return before implicitly up-casting when returning.
@@ -554,8 +501,9 @@ export class SchemaFactory<
 			MapNodeInsertableData<T>,
 			true,
 			T,
-			undefined
-		> = this.namedMap(nameOrAllowedTypes as TName, allowedTypes, true, true);
+			undefined,
+			TCustomMetadata
+		> = this.namedMap(nameOrAllowedTypes as TName, allowedTypes, true, true, options ?? {});
 		return out;
 	}
 
@@ -568,11 +516,13 @@ export class SchemaFactory<
 		Name extends TName | string,
 		const T extends ImplicitAllowedTypes,
 		const ImplicitlyConstructable extends boolean,
+		const TCustomMetadata = unknown,
 	>(
 		name: Name,
 		allowedTypes: T,
 		customizable: boolean,
 		implicitlyConstructable: ImplicitlyConstructable,
+		options: NodeSchemaOptionsAlpha<TCustomMetadata>,
 	): TreeNodeSchemaBoth<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Map,
@@ -580,45 +530,17 @@ export class SchemaFactory<
 		MapNodeInsertableData<T>,
 		ImplicitlyConstructable,
 		T,
-		undefined
+		undefined,
+		TCustomMetadata
 	> {
-		// The compiler can't infer that UnannotateImplicitAllowedTypes<T> is equal to T so we have to do a bunch of typing to make the error go away.
-		const map: TreeNodeSchemaBoth<
-			ScopedSchemaName<TScope, Name>,
-			NodeKind.Map,
-			TreeMapNode<UnannotateImplicitAllowedTypes<T>> &
-				WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>,
-			MapNodeInsertableData<UnannotateImplicitAllowedTypes<T>>,
-			ImplicitlyConstructable,
-			T,
-			undefined
-		> = mapSchema(
-			this.scoped(name),
+		return mapSchema(
+			scoped(this, name),
 			allowedTypes,
 			implicitlyConstructable,
 			// The current policy is customizable nodes don't get fake prototypes.
 			!customizable,
-			undefined,
+			options ?? {},
 		);
-
-		return map as TreeNodeSchemaBoth<
-			ScopedSchemaName<TScope, Name>,
-			NodeKind.Map,
-			TreeMapNode<UnannotateImplicitAllowedTypes<T>> &
-				WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>,
-			MapNodeInsertableData<ImplicitAllowedTypes>,
-			ImplicitlyConstructable,
-			T,
-			undefined
-		> as TreeNodeSchemaBoth<
-			ScopedSchemaName<TScope, Name>,
-			NodeKind.Map,
-			TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>,
-			MapNodeInsertableData<T>,
-			ImplicitlyConstructable,
-			T,
-			undefined
-		>;
 	}
 
 	/**
@@ -669,7 +591,7 @@ export class SchemaFactory<
 	>;
 
 	/**
-	 * Define (and add to this library) a {@link TreeNodeSchemaClass} for a {@link (TreeArrayNode:interface)}.
+	 * Define a {@link TreeNodeSchemaClass} for a {@link (TreeArrayNode:interface)}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
 	 * @param allowedTypes - The types that may appear in the array.
@@ -700,22 +622,25 @@ export class SchemaFactory<
 	 * @privateRemarks
 	 * This should return TreeNodeSchemaBoth: see note on "map" implementation for details.
 	 */
-	public array<const T extends ImplicitAllowedTypes>(
+	public array<const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
 		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | readonly TreeNodeSchema[]),
 		allowedTypes?: T,
+		options?: NodeSchemaOptions<TCustomMetadata>,
 	): TreeNodeSchema<
 		ScopedSchemaName<TScope, string>,
 		NodeKind.Array,
 		TreeArrayNode<T>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 		true,
-		T
+		T,
+		TCustomMetadata
 	> {
 		if (allowedTypes === undefined) {
 			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
 			const fullName = structuralName("Array", types);
+			debugAssert(() => options === undefined || "No options for structural types");
 			return this.getStructuralType(fullName, types, () =>
-				this.namedArray(fullName, nameOrAllowedTypes as T, false, true),
+				this.namedArray(fullName, nameOrAllowedTypes as T, false, true, {}),
 			) as TreeNodeSchemaClass<
 				ScopedSchemaName<TScope, string>,
 				NodeKind.Array,
@@ -723,9 +648,11 @@ export class SchemaFactory<
 				Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 				true,
 				T,
-				undefined
+				undefined,
+				TCustomMetadata
 			>;
 		}
+
 		const out: TreeNodeSchemaBoth<
 			ScopedSchemaName<TScope, string>,
 			NodeKind.Array,
@@ -733,8 +660,9 @@ export class SchemaFactory<
 			Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 			true,
 			T,
-			undefined
-		> = this.namedArray(nameOrAllowedTypes as TName, allowedTypes, true, true);
+			undefined,
+			TCustomMetadata
+		> = this.namedArray(nameOrAllowedTypes as TName, allowedTypes, true, true, options ?? {});
 		return out;
 	}
 
@@ -780,11 +708,13 @@ export class SchemaFactory<
 		Name extends TName | string,
 		const T extends ImplicitAllowedTypes,
 		const ImplicitlyConstructable extends boolean,
+		const TCustomMetadata = unknown,
 	>(
 		name: Name,
 		allowedTypes: T,
 		customizable: boolean,
 		implicitlyConstructable: ImplicitlyConstructable,
+		options: NodeSchemaOptionsAlpha<TCustomMetadata>,
 	): TreeNodeSchemaBoth<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Array,
@@ -792,65 +722,17 @@ export class SchemaFactory<
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 		ImplicitlyConstructable,
 		T,
-		undefined
+		undefined,
+		TCustomMetadata
 	> {
-		const array = arraySchema(
-			this.scoped(name),
+		return arraySchema(
+			scoped(this, name),
 			allowedTypes,
 			implicitlyConstructable,
 			customizable,
+			options,
 		);
-
-		return array as TreeNodeSchemaBoth<
-			ScopedSchemaName<TScope, Name>,
-			NodeKind.Array,
-			TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, string>, NodeKind.Array>,
-			Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-			ImplicitlyConstructable,
-			T,
-			undefined
-		>;
 	}
-
-	/**
-	 * {@inheritDoc SchemaStatics.optional}
-	 */
-	public readonly optional = schemaStaticsPublic.optional;
-
-	/**
-	 * {@inheritDoc SchemaStatics.required}
-	 */
-	public readonly required = schemaStaticsPublic.required;
-
-	/**
-	 * {@inheritDoc SchemaStatics.optionalRecursive}
-	 */
-	public readonly optionalRecursive = schemaStaticsPublic.optionalRecursive;
-
-	/**
-	 * {@inheritDoc SchemaStatics.requiredRecursive}
-	 */
-	public readonly requiredRecursive = schemaStaticsPublic.requiredRecursive;
-
-	/**
-	 * {@inheritDoc SchemaStatics.optional}
-	 */
-	public static readonly optional = schemaStaticsPublic.optional;
-
-	/**
-	 * {@inheritDoc SchemaStatics.required}
-	 */
-	public static readonly required = schemaStaticsPublic.required;
-
-	/**
-	 * {@inheritDoc SchemaStatics.optionalRecursive}
-	 */
-	public static readonly optionalRecursive = schemaStaticsPublic.optionalRecursive;
-
-	/**
-	 * {@inheritDoc SchemaStatics.requiredRecursive}
-	 */
-	public static readonly requiredRecursive = schemaStaticsPublic.requiredRecursive;
 
 	/**
 	 * A special readonly field which holds an identifier string for an object node.
@@ -954,6 +836,7 @@ export class SchemaFactory<
 			allowedTypes as T & ImplicitAllowedTypes,
 			true,
 			false,
+			{},
 		);
 
 		return RecursiveArray as TreeNodeSchemaClass<
@@ -1002,6 +885,7 @@ export class SchemaFactory<
 			// Setting this (implicitlyConstructable) to true seems to work ok currently, but not for other node kinds.
 			// Supporting this could be fragile and might break other future changes, so it's being kept as false for now.
 			false,
+			{},
 		);
 
 		return MapSchema as TreeNodeSchemaClass<
@@ -1063,6 +947,16 @@ export function structuralName<const T extends string>(
 	return `${collectionName}<${inner}>`;
 }
 
+export function scoped<
+	TScope extends string | undefined,
+	TName extends number | string,
+	Name extends TName | string,
+>(factory: SchemaFactory<TScope, TName>, name: Name): ScopedSchemaName<TScope, Name> {
+	return (
+		factory.scope === undefined ? `${name}` : `${factory.scope}.${name}`
+	) as ScopedSchemaName<TScope, Name>;
+}
+
 /**
  * Used to allocate default identifiers for unhydrated nodes when no context is available.
  * @remarks
@@ -1077,7 +971,7 @@ const globalIdentifierAllocator: IIdCompressor = createIdCompressor();
  * @typeParam TCustomMetadata - Custom metadata properties to associate with the Node Schema.
  * See {@link NodeSchemaMetadata.custom}.
  *
- * @sealed
+ * @input
  * @public
  */
 export interface NodeSchemaOptions<out TCustomMetadata = unknown> {
@@ -1085,8 +979,7 @@ export interface NodeSchemaOptions<out TCustomMetadata = unknown> {
 	 * Optional metadata to associate with the Node Schema.
 	 *
 	 * @remarks
-	 * Note: this metadata is not persisted nor made part of the collaborative state; it is strictly client-local.
-	 * Different clients in the same collaborative session may see different metadata for the same field.
+	 * This specifies {@link SimpleNodeSchemaBase.metadata} which has more details about its use.
 	 */
 	readonly metadata?: NodeSchemaMetadata<TCustomMetadata> | undefined;
 }
@@ -1097,12 +990,15 @@ export interface NodeSchemaOptions<out TCustomMetadata = unknown> {
  * @typeParam TCustomMetadata - Custom metadata properties to associate with the Node Schema.
  * See {@link NodeSchemaMetadata.custom}.
  *
+ * @input
  * @alpha
  */
 export interface NodeSchemaOptionsAlpha<out TCustomMetadata = unknown>
 	extends NodeSchemaOptions<TCustomMetadata> {
 	/**
 	 * The persisted metadata for this schema element.
+	 * @remarks
+	 * This gets exposed via {@link SimpleNodeSchemaBaseAlpha.persistedMetadata}.
 	 */
 	readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
 }

@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	DataProcessingError,
 	LoggingError,
 	extractSafePropertiesFromMessage,
@@ -16,18 +16,18 @@ import Deque from "double-ended-queue";
 import { v4 as uuid } from "uuid";
 
 import { isContainerMessageDirtyable } from "./containerRuntime.js";
-import {
-	type InboundContainerRuntimeMessage,
-	type InboundSequencedContainerRuntimeMessage,
-	type LocalContainerRuntimeMessage,
+import type {
+	InboundContainerRuntimeMessage,
+	InboundSequencedContainerRuntimeMessage,
+	LocalContainerRuntimeMessage,
 } from "./messageTypes.js";
 import { asBatchMetadata, asEmptyBatchLocalOpMetadata } from "./metadata.js";
 import {
-	EmptyGroupedBatch,
-	LocalBatchMessage,
+	type EmptyGroupedBatch,
+	type LocalBatchMessage,
 	getEffectiveBatchId,
-	BatchStartInfo,
-	InboundMessageResult,
+	type BatchStartInfo,
+	type InboundMessageResult,
 	serializeOp,
 	type LocalEmptyBatchPlaceholder,
 	type BatchResubmitInfo,
@@ -160,6 +160,8 @@ function buildPendingMessageContent(message: InboundSequencedContainerRuntimeMes
 }
 
 function typesOfKeys<T extends object>(obj: T): Record<keyof T, string> {
+	// TODO: Fix this violation and remove the disable
+	// eslint-disable-next-line unicorn/no-array-reduce
 	return Object.keys(obj).reduce((acc, key) => {
 		acc[key] = typeof obj[key];
 		return acc;
@@ -174,7 +176,10 @@ function scrubAndStringify(
 
 	// For these known/expected keys, we can either drill into the object (for contents)
 	// or just use the value as-is (since it's not personal info)
-	scrubbed.contents = message.contents && typesOfKeys(message.contents);
+	scrubbed.contents =
+		typeof message.contents === "object" && message.contents !== null
+			? typesOfKeys(message.contents)
+			: undefined;
 	scrubbed.type = message.type;
 
 	return JSON.stringify(scrubbed);
@@ -603,7 +608,7 @@ export class PendingStateManager implements IDisposable {
 	 * @param sequenceNumber - The sequenceNumber from the server corresponding to the next pending message.
 	 * @param message - [optional] The entire incoming message, for comparing contents with the pending message for extra validation.
 	 * @throws DataProcessingError if the pending message content doesn't match the incoming message content.
-	 * @returns - The localOpMetadata of the next pending message, to be sent to whoever submitted the original message.
+	 * @returns The localOpMetadata of the next pending message, to be sent to whoever submitted the original message.
 	 */
 	private processNextPendingMessage(
 		sequenceNumber: number,
@@ -733,7 +738,7 @@ export class PendingStateManager implements IDisposable {
 					pendingMessageBatchMetadata: asBatchMetadata(pendingMessage.opMetadata)?.batch,
 					messageBatchMetadata: asBatchMetadata(firstMessage?.metadata)?.batch,
 				},
-				messageDetails: firstMessage && extractSafePropertiesFromMessage(firstMessage),
+				messageDetails: extractSafePropertiesFromMessage(firstMessage),
 			});
 		}
 	}
@@ -797,9 +802,10 @@ export class PendingStateManager implements IDisposable {
 			assert(batchMetadataFlag !== false, 0x41b /* We cannot process batches in chunks */);
 
 			// The next message starts a batch (possibly single-message), and we'll need its batchId.
-			const batchId = pendingMessage.batchInfo.ignoreBatchId
-				? undefined
-				: getEffectiveBatchId(pendingMessage);
+			const batchId =
+				pendingMessage.batchInfo.ignoreBatchId === true
+					? undefined
+					: getEffectiveBatchId(pendingMessage);
 
 			const staged = pendingMessage.batchInfo.staged;
 
@@ -873,8 +879,10 @@ export class PendingStateManager implements IDisposable {
 			this.stateHandler.reSubmitBatch(batch, { batchId, staged, squash });
 		}
 
-		// pending ops should no longer depend on previous sequenced local ops after resubmit
-		this.savedOps = [];
+		if (!committingStagedBatches) {
+			// pending ops should no longer depend on previous sequenced local ops after resubmitting all pending messages (does not apply if only replaying the staged messages)
+			this.savedOps = [];
+		}
 
 		// We replayPendingStates on read connections too - we expect these to get nack'd though, and to then reconnect
 		// on a write connection and replay again. This filters out the replay that happens on the read connection so

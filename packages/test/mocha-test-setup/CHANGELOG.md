@@ -1,5 +1,37 @@
 # @fluid-internal/mocha-test-setup
 
+## 2.72.0
+
+Dependency updates only.
+
+## 2.71.0
+
+Dependency updates only.
+
+## 2.70.0
+
+Dependency updates only.
+
+## 2.63.0
+
+Dependency updates only.
+
+## 2.62.0
+
+Dependency updates only.
+
+## 2.61.0
+
+Dependency updates only.
+
+## 2.60.0
+
+Dependency updates only.
+
+## 2.53.0
+
+Dependency updates only.
+
 ## 2.52.0
 
 Dependency updates only.
@@ -115,7 +147,6 @@ Dependency updates only.
   TypeScript types and implementation code.
 
   This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
-
   - `"moduleResolution": "Node16"` with `"module": "Node16"`
   - `"moduleResolution": "Bundler"` with `"module": "ESNext"`
 
@@ -152,7 +183,6 @@ Dependency updates only.
   Several FluidStatic classes were unnecessarily exposed. They have been replaced with creation functions. This helps us
   keep implementations decoupled from usage which is easier to maintain and extend. It has very minimal impact on the
   public surface area of downstream packages. The deprecated classes are as follows:
-
   - `AzureAudience` (use `IAzureAudience` instead)
   - `TinyliciousAudience` (use `ITinyliciousAudience` instead)
   - `DOProviderContainerRuntimeFactory`
@@ -195,7 +225,6 @@ Dependency updates only.
 
   The **@fluidframework/common-definitions** package is being deprecated, so the following interfaces and types are now
   imported from the **@fluidframework/core-interfaces** package:
-
   - interface IDisposable
   - interface IErrorEvent
   - interface IErrorEvent

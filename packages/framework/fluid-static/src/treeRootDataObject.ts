@@ -13,7 +13,6 @@ import type { IRuntimeFactory } from "@fluidframework/container-definitions/inte
 import {
 	FluidDataStoreRegistry,
 	type IContainerRuntimeOptions,
-	type MinimumVersionForCollab,
 } from "@fluidframework/container-runtime/internal";
 import type {
 	IContainerRuntime,
@@ -26,7 +25,10 @@ import type {
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
-import type { IFluidDataStoreRegistry } from "@fluidframework/runtime-definitions/internal";
+import type {
+	IFluidDataStoreRegistry,
+	MinimumVersionForCollab,
+} from "@fluidframework/runtime-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import { compatibilityModeRuntimeOptions } from "./compatibilityConfiguration.js";
@@ -200,7 +202,7 @@ class TreeRootDataObjectFactory extends TreeDataObjectFactory<TreeRootDataObject
  * The root data object's registry and shared objects are configured based on the provided
  * SharedTree and optionally data store registry.
  *
- * @legacy @alpha
+ * @legacy @beta
  */
 export function createTreeContainerRuntimeFactory(props: {
 	/**

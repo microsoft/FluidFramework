@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IBatchMessage } from "@fluidframework/container-definitions/internal";
-import {
+import type { IBatchMessage } from "@fluidframework/container-definitions/internal";
+import type {
 	ITelemetryBaseLogger,
-	type ITelemetryBaseProperties,
+	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import {
@@ -17,27 +17,30 @@ import {
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { ICompressionRuntimeOptions } from "../compressionDefinitions.js";
-import { PendingMessageResubmitData, PendingStateManager } from "../pendingStateManager.js";
+import type { ICompressionRuntimeOptions } from "../compressionDefinitions.js";
+import type {
+	PendingMessageResubmitData,
+	PendingStateManager,
+} from "../pendingStateManager.js";
 
 import {
 	BatchManager,
-	BatchSequenceNumbers,
+	type BatchSequenceNumbers,
 	sequenceNumbersMatch,
 	type BatchId,
 } from "./batchManager.js";
-import {
+import type {
 	LocalBatchMessage,
 	IBatchCheckpoint,
-	type OutboundBatchMessage,
-	type OutboundSingletonBatch,
-	type LocalBatch,
-	type OutboundBatch,
+	OutboundBatchMessage,
+	OutboundSingletonBatch,
+	LocalBatch,
+	OutboundBatch,
 } from "./definitions.js";
-import { OpCompressor } from "./opCompressor.js";
-import { OpGroupingManager } from "./opGroupingManager.js";
+import type { OpCompressor } from "./opCompressor.js";
+import type { OpGroupingManager } from "./opGroupingManager.js";
 import { serializeOp } from "./opSerialization.js";
-import { OpSplitter } from "./opSplitter.js";
+import type { OpSplitter } from "./opSplitter.js";
 
 export interface IOutboxConfig {
 	readonly compressionOptions: ICompressionRuntimeOptions;
@@ -249,7 +252,7 @@ export class Outbox {
 	 * message as the first message. If flushing partial batch is not enabled, we will throw (except for reentrant ops).
 	 * This would indicate we expected this case to be precluded by logic elsewhere.
 	 *
-	 * @remarks - To detect batch interruption, we compare both the reference sequence number
+	 * @remarks To detect batch interruption, we compare both the reference sequence number
 	 * (i.e. last message processed by DeltaManager) and the client sequence number of the
 	 * last message processed by the ContainerRuntime. In the absence of op reentrancy, this
 	 * pair will remain stable during a single JS turn during which the batch is being built up.
@@ -362,6 +365,16 @@ export class Outbox {
 	 * @param resubmitInfo - Key information when flushing a resubmitted batch. Undefined means this is not resubmit.
 	 */
 	public flush(resubmitInfo?: BatchResubmitInfo): void {
+		// We have nothing to flush if all batchManagers are empty, and we we're not needing to resubmit an empty batch placeholder
+		if (
+			this.idAllocationBatch.empty &&
+			this.blobAttachBatch.empty &&
+			this.mainBatch.empty &&
+			resubmitInfo?.batchId === undefined
+		) {
+			return;
+		}
+
 		assert(
 			!this.isContextReentrant(),
 			0xb7b /* Flushing must not happen while incoming changes are being processed */,
@@ -536,7 +549,7 @@ export class Outbox {
 	/**
 	 * As necessary and enabled, groups / compresses / chunks the given batch.
 	 *
-	 * @remarks - If chunking happens, a side effect here is that 1 or more chunks are queued immediately for sending in next JS turn.
+	 * @remarks If chunking happens, a side effect here is that 1 or more chunks are queued immediately for sending in next JS turn.
 	 *
 	 * @param localBatch - Local Batch to be virtualized - i.e. transformed into an Outbound Batch
 	 * @param groupingEnabled - If true, Grouped batching is enabled.

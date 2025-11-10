@@ -1,5 +1,51 @@
 # @fluidframework/odsp-driver
 
+## 2.72.0
+
+Dependency updates only.
+
+## 2.71.0
+
+Dependency updates only.
+
+## 2.70.0
+
+Dependency updates only.
+
+## 2.63.0
+
+Dependency updates only.
+
+## 2.62.0
+
+### Minor Changes
+
+- Move IPersistedCache types to driver-definitions ([#25518](https://github.com/microsoft/FluidFramework/pull/25518)) [54fca68d91](https://github.com/microsoft/FluidFramework/commit/54fca68d91aeb40bdef14b1fe8b8f3c28168b6de)
+
+  In an effort to decouple the driver web cache from the odsp driver a number of types have been moved from `@fluidframework/odsp-driver-definitions` to `@fluidframework/driver-definitions`. The moved types have been deprecated in `@fluidframework/odsp-driver-definitions`, and any usages should be moved to `@fluidframework/driver-definitions`.
+
+  The moved types are:
+  - `IEntry`
+  - `IFileEntry`
+  - `ICacheEntry`
+  - `IPersistedCache`
+
+## 2.61.0
+
+Dependency updates only.
+
+## 2.60.0
+
+Dependency updates only.
+
+## 2.53.0
+
+### Minor Changes
+
+- Fixed bug in parsing sensitivity label information from the ODSP join session response ([#25186](https://github.com/microsoft/FluidFramework/pull/25186)) [b74508fd4c9](https://github.com/microsoft/FluidFramework/commit/b74508fd4c9e5414cf457595e6c803e84d715b54)
+
+  Fixes parsing of sensitivity label information in the ODSP join session response. If there had been sensitivity label data present in the ODSP response, this data would have been double-parsed, leading to runtime errors. This issue was so far not hit in practice, because ODSP did not roll out sensitivity labels in the response yet. This bug fix gets odsp-driver ready for that rollout, which is planned to happen soon.
+
 ## 2.52.0
 
 ### Minor Changes
@@ -142,7 +188,6 @@ Dependency updates only.
   TypeScript types and implementation code.
 
   This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
-
   - `"moduleResolution": "Node16"` with `"module": "Node16"`
   - `"moduleResolution": "Bundler"` with `"module": "ESNext"`
 
@@ -211,7 +256,6 @@ Dependency updates only.
 - Updated server dependencies ([#19122](https://github.com/microsoft/FluidFramework/issues/19122)) [25366b4229](https://github.com/microsoft/FluidFramework/commits/25366b422918cb43685c5f328b50450749592902)
 
   The following Fluid server dependencies have been updated to the latest version, 3.0.0. [See the full changelog.](https://github.com/microsoft/FluidFramework/releases/tag/server_v3.0.0)
-
   - @fluidframework/gitresources
   - @fluidframework/server-kafka-orderer
   - @fluidframework/server-lambdas
@@ -265,7 +309,6 @@ Dependency updates only.
 - Dependencies on @fluidframework/protocol-definitions package updated to 3.0.0 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
   This included the following changes from the protocol-definitions release:
-
   - Updating signal interfaces for some planned improvements. The intention is split the interface between signals
     submitted by clients to the server and the resulting signals sent from the server to clients.
     - A new optional type member is available on the ISignalMessage interface and a new ISentSignalMessage interface has
@@ -280,7 +323,6 @@ Dependency updates only.
 - Server upgrade: dependencies on Fluid server packages updated to 2.0.1 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
   Dependencies on the following Fluid server package have been updated to version 2.0.1:
-
   - @fluidframework/gitresources: 2.0.1
   - @fluidframework/server-kafka-orderer: 2.0.1
   - @fluidframework/server-lambdas: 2.0.1
@@ -311,7 +353,6 @@ Dependency updates only.
 ### Minor Changes
 
 - Upcoming: The type of the logger property/param in various APIs will be changing ([#17350](https://github.com/microsoft/FluidFramework/issues/17350)) [27284bcda3](https://github.com/microsoft/FluidFramework/commits/27284bcda3d63cc4306cf76806f8a075db0db60f)
-
   - @fluidframework/runtime-definitions
     - `IFluidDataStoreRuntime.logger` will be re-typed as `ITelemetryBaseLogger`
   - @fluidframework/odsp-driver
@@ -332,7 +373,6 @@ Dependency updates only.
 
   The **@fluidframework/common-definitions** package is being deprecated, so the following interfaces and types are now
   imported from the **@fluidframework/core-interfaces** package:
-
   - interface IDisposable
   - interface IErrorEvent
   - interface IErrorEvent

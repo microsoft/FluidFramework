@@ -13,6 +13,7 @@ import {
 	replaceHandles,
 	type TreeEncodingOptions,
 	type HandleConverter,
+	KeyEncodingOptions,
 } from "./customTree.js";
 
 /**
@@ -27,7 +28,7 @@ import {
  * @privateRemarks
  * This can store all possible simple trees,
  * but it can not store all possible trees representable by our internal representations like FlexTree and JsonableTree.
- * @alpha
+ * @beta
  */
 export type ConciseTree<THandle = IFluidHandle> =
 	| Exclude<TreeLeafValue, IFluidHandle>
@@ -46,7 +47,7 @@ export function conciseFromCursor(
 	options: TreeEncodingOptions,
 ): ConciseTree {
 	const config: Required<TreeEncodingOptions> = {
-		useStoredKeys: false,
+		keys: KeyEncodingOptions.usePropertyKeys,
 		...options,
 	};
 

@@ -6,7 +6,8 @@
 import type { AsyncPriorityQueue } from "async";
 
 import type { BuildContext } from "../buildContext";
-import { type BuildPackage, BuildResult } from "../buildGraph";
+import { type BuildPackage } from "../buildGraph";
+import { BuildResult } from "../buildResult";
 import type { LeafTask } from "./leaf/leafTask";
 import { Task, type TaskExec } from "./task";
 

@@ -4,16 +4,22 @@
 
 ```ts
 
+// @alpha @legacy
+export function asLegacyAlpha(runtime: IContainerRuntimeBase): ContainerRuntimeBaseAlpha;
+
+// @alpha @legacy
+export function asLegacyAlpha(runtime: IFluidDataStoreRuntime): IFluidDataStoreRuntimeAlpha;
+
 // @public
 export function compareFluidHandles(a: IFluidHandle, b: IFluidHandle): boolean;
 
-// @alpha @legacy
+// @beta @legacy
 export function convertToSummaryTreeWithStats(snapshot: ITree, fullTree?: boolean): ISummaryTreeWithStats;
 
-// @alpha @legacy (undocumented)
+// @beta @legacy
 export const create404Response: (request: IRequest) => IResponse;
 
-// @alpha @legacy
+// @beta @legacy
 export abstract class FluidHandleBase<T> implements IFluidHandleInternal<T> {
     // (undocumented)
     get [fluidHandleSymbol](): IFluidHandleErased<T>;
@@ -31,13 +37,16 @@ export abstract class FluidHandleBase<T> implements IFluidHandleInternal<T> {
 // @public
 export function isFluidHandle(value: unknown): value is IFluidHandle;
 
-// @alpha @legacy
+// @beta @legacy
 export const isFluidHandlePayloadPending: <T>(handle: IFluidHandle<T>) => handle is IFluidHandlePayloadPending<T>;
 
-// @alpha @legacy
+// @beta @legacy
 export const isLocalFluidHandle: <T>(handle: IFluidHandle<T>) => handle is ILocalFluidHandle<T>;
 
 // @alpha @legacy
+export function lookupTemporaryBlobStorageId(containerRuntime: IContainerRuntime, handle: IFluidHandle): string | undefined;
+
+// @beta @legacy
 export class RequestParser implements IRequest {
     protected constructor(request: Readonly<IRequest>);
     // (undocumented)
@@ -54,7 +63,7 @@ export class RequestParser implements IRequest {
     get url(): string;
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export abstract class RuntimeFactoryHelper<T = IContainerRuntime> implements IRuntimeFactory {
     hasInitialized(_runtime: T): Promise<void>;
     instantiateFirstTime(_runtime: T): Promise<void>;
@@ -66,7 +75,7 @@ export abstract class RuntimeFactoryHelper<T = IContainerRuntime> implements IRu
     abstract preInitialize(context: IContainerContext, existing: boolean): Promise<IRuntime & T>;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export class SummaryTreeBuilder implements ISummaryTreeWithStats {
     constructor(params?: {
         groupId?: string;
@@ -82,13 +91,13 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
     get summary(): ISummaryTree;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export function toDeltaManagerInternal(deltaManager: IDeltaManagerErased): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 
-// @alpha @legacy
+// @beta @legacy
 export function toFluidHandleErased<T>(handle: IFluidHandleInternal<T>): IFluidHandleErased<T>;
 
-// @alpha @legacy
+// @beta @legacy
 export function toFluidHandleInternal<T>(handle: IFluidHandle<T>): IFluidHandleInternal<T>;
 
 // (No @packageDocumentation comment for this package)

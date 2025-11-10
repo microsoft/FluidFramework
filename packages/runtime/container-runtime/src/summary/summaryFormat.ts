@@ -5,27 +5,26 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
-import {
+import type {
 	ISnapshotTree,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import {
-	ISummaryTreeWithStats,
+	type ISummaryTreeWithStats,
 	channelsTreeName,
 	gcTreeKey,
 	type IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
 
 import { blobsTreeName } from "../blobManager/index.js";
-import { IGCMetadata } from "../gc/index.js";
+import type { IGCMetadata } from "../gc/index.js";
 
-import { IDocumentSchema } from "./documentSchema.js";
+import type { IDocumentSchema } from "./documentSchema.js";
 
 /**
- * @deprecated - This interface will no longer be exported in the future(AB#8004).
- * @legacy
- * @alpha
+ * @deprecated This interface will no longer be exported in the future(AB#8004).
+ * @legacy @beta
  */
 export type OmitAttributesVersions<T> = Omit<
 	T,
@@ -33,9 +32,8 @@ export type OmitAttributesVersions<T> = Omit<
 >;
 
 /**
- * @deprecated - This interface will no longer be exported in the future(AB#8004).
- * @legacy
- * @alpha
+ * @deprecated This interface will no longer be exported in the future(AB#8004).
+ * @legacy @beta
  */
 export interface IFluidDataStoreAttributes0 {
 	readonly snapshotFormatVersion?: undefined;
@@ -50,9 +48,8 @@ export interface IFluidDataStoreAttributes0 {
 }
 
 /**
- * @deprecated - This interface will no longer be exported in the future(AB#8004).
- * @legacy
- * @alpha
+ * @deprecated This interface will no longer be exported in the future(AB#8004).
+ * @legacy @beta
  */
 export interface IFluidDataStoreAttributes1
 	extends OmitAttributesVersions<IFluidDataStoreAttributes0> {
@@ -61,9 +58,8 @@ export interface IFluidDataStoreAttributes1
 }
 
 /**
- * @deprecated - This interface will no longer be exported in the future(AB#8004).
- * @legacy
- * @alpha
+ * @deprecated This interface will no longer be exported in the future(AB#8004).
+ * @legacy @beta
  */
 export interface IFluidDataStoreAttributes2
 	extends OmitAttributesVersions<IFluidDataStoreAttributes1> {
@@ -85,10 +81,9 @@ export interface IFluidDataStoreAttributes2
  * store like the package, snapshotFormatVersion to take different decisions based on a particular
  * snapshotFormatVersion.
  *
- * @deprecated - This interface will no longer be exported in the future(AB#8004).
+ * @deprecated This interface will no longer be exported in the future(AB#8004).
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  *
  */
 export type ReadFluidDataStoreAttributes =
@@ -131,7 +126,7 @@ export function hasIsolatedChannels(attributes: ReadFluidDataStoreAttributes): b
 export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGCMetadata {
 	readonly summaryFormatVersion: 1;
 	/**
-	 * @deprecated - used by old (prior to 2.0 RC3) runtimes
+	 * @deprecated used by old (prior to 2.0 RC3) runtimes
 	 */
 	readonly message?: ISummaryMetadataMessage;
 	/**

@@ -49,7 +49,7 @@ import {
 
 export function create(
 	config: Provider,
-	producer: core.IProducer,
+	producer: core.IProducer | undefined,
 	tenantManager: core.ITenantManager,
 	storage: core.IDocumentStorage,
 	tenantThrottlers: Map<string, core.IThrottler>,
@@ -72,15 +72,6 @@ export function create(
 		"alfred:jwtTokenCache:enable",
 		config,
 	);
-
-	function handlePatchRootSuccess(request: Request, opBuilder: (request: Request) => any[]) {
-		const tenantId = request.params.tenantId;
-		const documentId = request.params.id;
-		const clientId = (sillyname() as string).toLowerCase().split(" ").join("-");
-		sendJoin(tenantId, documentId, clientId, producer);
-		sendOp(request, tenantId, documentId, clientId, producer, opBuilder);
-		sendLeave(tenantId, documentId, clientId, producer);
-	}
 
 	router.get(
 		"/ping",
@@ -125,6 +116,25 @@ export function create(
 		denyListMiddleware(denyList),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response) => {
+			// Check if the patchRoot API is enabled
+			const patchRootEnabled = config.get("alfred:api:patchRoot") ?? true;
+			if (!patchRootEnabled) {
+				response.status(501).json({
+					error: "patchRoot API is not implemented",
+					message: "The PATCH /root endpoint is disabled on this server",
+				});
+				return;
+			}
+
+			// Check if producer is available (should not happen if config is consistent)
+			if (!producer) {
+				response.status(501).json({
+					error: "patchRoot API is not implemented",
+					message: "Producer not available for patchRoot operations",
+				});
+				return;
+			}
+
 			const maxTokenLifetimeSec = config.get("auth:maxTokenLifetimeSec") as number;
 			const isTokenExpiryEnabled = config.get("auth:enableTokenExpiration") as boolean;
 			const validP = verifyRequest(
@@ -143,7 +153,7 @@ export function create(
 				undefined,
 				undefined,
 				200,
-				() => handlePatchRootSuccess(request, mapSetBuilder),
+				() => handlePatchRootSuccess(request, mapSetBuilder, producer),
 			);
 		},
 	);
@@ -202,7 +212,7 @@ export function create(
 						"Error handling broadcast-signal",
 						{
 							tenantId: request.params.tenantId,
-							documentId: request.params.documentId,
+							documentId: request.params.id,
 						},
 						error,
 					),
@@ -221,6 +231,19 @@ function mapSetBuilder(request: Request): any[] {
 	}
 
 	return ops;
+}
+
+function handlePatchRootSuccess(
+	request: Request,
+	opBuilder: (request: Request) => any[],
+	producer: core.IProducer,
+) {
+	const tenantId = request.params.tenantId;
+	const documentId = request.params.id;
+	const clientId = (sillyname() as string).toLowerCase().split(" ").join("-");
+	sendJoin(tenantId, documentId, clientId, producer);
+	sendOp(request, tenantId, documentId, clientId, producer, opBuilder);
+	sendLeave(tenantId, documentId, clientId, producer);
 }
 
 function sendJoin(
@@ -429,14 +452,11 @@ async function handleBroadcastSignal(
 	}
 
 	const serverUrl: string = config.get("worker:serverUrl");
-	const document = await storage?.getDocument(tenantId, documentId);
-	if (!document?.session?.isSessionAlive) {
+	const document = await storage.getDocument(tenantId, documentId);
+
+	if (!document?.session?.isSessionAlive || document?.scheduledDeletionTime) {
 		Lumberjack.error("Document not found", { tenantId, documentId });
 		throw new NetworkError(404, "Document not found");
-	}
-	if (!document.session.isSessionActive) {
-		Lumberjack.warning("Document session not active", { tenantId, documentId });
-		throw new NetworkError(410, "Document session not active");
 	}
 	if (document.session.ordererUrl !== serverUrl) {
 		Lumberjack.info("Redirecting broadcast-signal to correct cluster", {

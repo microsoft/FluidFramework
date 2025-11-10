@@ -17,9 +17,8 @@ import * as utils from "@fluidframework/server-services-utils";
 import { RedisClientConnectionManager } from "@fluidframework/server-services-utils";
 import { Emitter as RedisEmitter } from "@socket.io/redis-emitter";
 import type { Provider } from "nconf";
-import * as winston from "winston";
 
-import { Constants } from "../utils";
+import { Constants, configureThrottler } from "../utils";
 
 import type { IAlfredResourcesCustomizations } from "./customizations";
 import { AlfredRunner } from "./runner";
@@ -38,7 +37,7 @@ export class AlfredResources implements core.IResources {
 
 	constructor(
 		public config: Provider,
-		public producer: core.IProducer,
+		public producer: core.IProducer | undefined,
 		public redisConfig: any,
 		public tenantManager: core.ITenantManager,
 		public restTenantThrottlers: Map<string, core.IThrottler>,
@@ -76,7 +75,7 @@ export class AlfredResources implements core.IResources {
 	}
 
 	public async dispose(): Promise<void> {
-		const producerClosedP = this.producer.close();
+		const producerClosedP = this.producer ? this.producer.close() : Promise.resolve();
 		const mongoClosedP = this.mongoManager.close();
 		const tokenRevocationManagerP = this.tokenRevocationManager
 			? this.tokenRevocationManager.close()
@@ -105,39 +104,46 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		config: Provider,
 		customizations?: IAlfredResourcesCustomizations,
 	): Promise<AlfredResources> {
-		// Producer used to publish messages
-		const kafkaEndpoint = config.get("kafka:lib:endpoint");
-		const kafkaLibrary = config.get("kafka:lib:name");
-		const kafkaClientId = config.get("alfred:kafkaClientId");
-		const topic = config.get("alfred:topic");
-		const kafkaProducerPollIntervalMs = config.get("kafka:lib:producerPollIntervalMs");
-		const kafkaNumberOfPartitions = config.get("kafka:lib:numberOfPartitions");
-		const kafkaReplicationFactor = config.get("kafka:lib:replicationFactor");
-		const kafkaMaxBatchSize = config.get("kafka:lib:maxBatchSize");
-		const kafkaSslCACertFilePath: string = config.get("kafka:lib:sslCACertFilePath");
-		const kafkaProducerGlobalAdditionalConfig = config.get(
-			"kafka:lib:producerGlobalAdditionalConfig",
-		);
-		const eventHubConnString: string = config.get("kafka:lib:eventHubConnString");
-		const oauthBearerConfig = config.get("kafka:lib:oauthBearerConfig");
+		// Check if patchRoot API is enabled to determine if we need a producer
+		const patchRootEnabled = config.get("alfred:api:patchRoot") ?? true;
+
+		let producer: core.IProducer | undefined;
+		if (patchRootEnabled) {
+			// Producer used to publish messages
+			const kafkaEndpoint = config.get("kafka:lib:endpoint");
+			const kafkaLibrary = config.get("kafka:lib:name");
+			const kafkaClientId = config.get("alfred:kafkaClientId");
+			const topic = config.get("alfred:topic");
+			const kafkaProducerPollIntervalMs = config.get("kafka:lib:producerPollIntervalMs");
+			const kafkaNumberOfPartitions = config.get("kafka:lib:numberOfPartitions");
+			const kafkaReplicationFactor = config.get("kafka:lib:replicationFactor");
+			const kafkaMaxBatchSize = config.get("kafka:lib:maxBatchSize");
+			const kafkaSslCACertFilePath: string = config.get("kafka:lib:sslCACertFilePath");
+			const kafkaProducerGlobalAdditionalConfig = config.get(
+				"kafka:lib:producerGlobalAdditionalConfig",
+			);
+			const eventHubConnString: string = config.get("kafka:lib:eventHubConnString");
+			const oauthBearerConfig = config.get("kafka:lib:oauthBearerConfig");
+
+			producer = services.createProducer(
+				kafkaLibrary,
+				kafkaEndpoint,
+				kafkaClientId,
+				topic,
+				false,
+				kafkaProducerPollIntervalMs,
+				kafkaNumberOfPartitions,
+				kafkaReplicationFactor,
+				kafkaMaxBatchSize,
+				kafkaSslCACertFilePath,
+				eventHubConnString,
+				kafkaProducerGlobalAdditionalConfig,
+				oauthBearerConfig,
+			);
+		}
+
 		// List of Redis client connection managers that need to be closed on dispose
 		const redisClientConnectionManagers: utils.IRedisClientConnectionManager[] = [];
-
-		const producer = services.createProducer(
-			kafkaLibrary,
-			kafkaEndpoint,
-			kafkaClientId,
-			topic,
-			false,
-			kafkaProducerPollIntervalMs,
-			kafkaNumberOfPartitions,
-			kafkaReplicationFactor,
-			kafkaMaxBatchSize,
-			kafkaSslCACertFilePath,
-			eventHubConnString,
-			kafkaProducerGlobalAdditionalConfig,
-			oauthBearerConfig,
-		);
 
 		const redisConfig = config.get("redis");
 		const authEndpoint = config.get("auth:endpoint");
@@ -301,36 +307,21 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 				redisParamsForThrottling,
 			);
 
-		const configureThrottler = (
-			throttleConfig: Partial<utils.IThrottleConfig>,
-		): core.IThrottler => {
-			const throttlerHelper = new services.ThrottlerHelper(
-				redisThrottleAndUsageStorageManager,
-				throttleConfig.maxPerMs,
-				throttleConfig.maxBurst,
-				throttleConfig.minCooldownIntervalInMs,
-			);
-			return new services.Throttler(
-				throttlerHelper,
-				throttleConfig.minThrottleIntervalInMs,
-				winston,
-				throttleConfig.maxInMemoryCacheSize,
-				throttleConfig.maxInMemoryCacheAgeInMs,
-				throttleConfig.enableEnhancedTelemetry,
-			);
-		};
-
 		// Per-tenant Rest API Throttlers
 		const restApiTenantThrottleConfig = utils.getThrottleConfig(
 			config.get("alfred:throttling:restCallsPerTenant:generalRestCall"),
 		);
-		const restTenantThrottler = configureThrottler(restApiTenantThrottleConfig);
+		const restTenantThrottler = configureThrottler(
+			restApiTenantThrottleConfig,
+			redisThrottleAndUsageStorageManager,
+		);
 
 		const restApiTenantCreateDocThrottleConfig = utils.getThrottleConfig(
 			config.get("alfred:throttling:restCallsPerTenant:createDoc"),
 		);
 		const restTenantCreateDocThrottler = configureThrottler(
 			restApiTenantCreateDocThrottleConfig,
+			redisThrottleAndUsageStorageManager,
 		);
 
 		const restApiTenantGetDeltasThrottleConfig = utils.getThrottleConfig(
@@ -338,6 +329,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		);
 		const restTenantGetDeltasThrottler = configureThrottler(
 			restApiTenantGetDeltasThrottleConfig,
+			redisThrottleAndUsageStorageManager,
 		);
 
 		const restApiTenantGetSessionThrottleConfig = utils.getThrottleConfig(
@@ -345,6 +337,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		);
 		const restTenantGetSessionThrottler = configureThrottler(
 			restApiTenantGetSessionThrottleConfig,
+			redisThrottleAndUsageStorageManager,
 		);
 
 		const restTenantThrottlers = new Map<string, core.IThrottler>();
@@ -360,17 +353,26 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		const restApiCreateDocThrottleConfig = utils.getThrottleConfig(
 			config.get("alfred:throttling:restCallsPerCluster:createDoc"),
 		);
-		const restCreateDocThrottler = configureThrottler(restApiCreateDocThrottleConfig);
+		const restCreateDocThrottler = configureThrottler(
+			restApiCreateDocThrottleConfig,
+			redisThrottleAndUsageStorageManager,
+		);
 
 		const restApiGetDeltasThrottleConfig = utils.getThrottleConfig(
 			config.get("alfred:throttling:restCallsPerCluster:getDeltas"),
 		);
-		const restGetDeltasThrottler = configureThrottler(restApiGetDeltasThrottleConfig);
+		const restGetDeltasThrottler = configureThrottler(
+			restApiGetDeltasThrottleConfig,
+			redisThrottleAndUsageStorageManager,
+		);
 
 		const restApiGetSessionThrottleConfig = utils.getThrottleConfig(
 			config.get("alfred:throttling:restCallsPerCluster:getSession"),
 		);
-		const restGetSessionThrottler = configureThrottler(restApiGetSessionThrottleConfig);
+		const restGetSessionThrottler = configureThrottler(
+			restApiGetSessionThrottleConfig,
+			redisThrottleAndUsageStorageManager,
+		);
 
 		const restClusterThrottlers = new Map<string, core.IThrottler>();
 		restClusterThrottlers.set(Constants.createDocThrottleIdPrefix, restCreateDocThrottler);

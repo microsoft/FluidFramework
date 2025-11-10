@@ -26,7 +26,12 @@ import {
 	ReferenceType,
 	segmentIsRemoved,
 } from "@fluidframework/merge-tree/internal";
-import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import type {
+	ISummaryTreeWithStats,
+	IRuntimeMessageCollection,
+	IRuntimeMessagesContent,
+	ISequencedMessageEnvelope,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	ObjectStoragePartition,
 	SummaryTreeBuilder,
@@ -73,8 +78,7 @@ interface ISetOpMetadata {
 
 /**
  * Events emitted by Shared Matrix.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISharedMatrixEvents<T> extends IEvent {
 	/**
@@ -117,8 +121,7 @@ interface CellLastWriteTrackerItem {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 // Changing this to `unknown` would be a breaking change.
 // TODO: if possible, transition ISharedMatrix to not use `any`.
@@ -240,8 +243,7 @@ interface PendingCellChanges<T> {
  * matrix data and physically stores data in Z-order to leverage CPU caches and
  * prefetching when reading in either row or column major order.  (See README.md
  * for more details.)
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 // Changing this to `unknown` would be a breaking change.
 // TODO: if possible, transition SharedMatrix to not use `any`.
@@ -999,11 +1001,28 @@ export class SharedMatrix<T = any>
 		);
 	}
 
-	protected processCore(
-		msg: ISequencedDocumentMessage,
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
+	 */
+	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+		const { envelope, local, messagesContent } = messagesCollection;
+		for (const messageContent of messagesContent) {
+			this.processMessage(envelope, messageContent, local);
+		}
+	}
+
+	private processMessage(
+		messageEnvelope: ISequencedMessageEnvelope,
+		messageContent: IRuntimeMessagesContent,
 		local: boolean,
-		localOpMetadata: unknown,
 	): void {
+		// Reconstruct the ISequencedDocumentMessage which is needed by merge tree client.
+		const msg: ISequencedDocumentMessage = {
+			...messageEnvelope,
+			contents: messageContent.contents,
+			clientSequenceNumber: messageContent.clientSequenceNumber,
+		};
+		const localOpMetadata = messageContent.localOpMetadata;
 		if (local) {
 			const recordedRefSeq = this.inFlightRefSeqs.shift();
 			assert(recordedRefSeq !== undefined, 0x8ba /* No pending recorded refSeq found */);
@@ -1016,7 +1035,7 @@ export class SharedMatrix<T = any>
 			// assert(recordedRefSeq <= message.referenceSequenceNumber, "RefSeq mismatch");
 		}
 
-		const contents = msg.contents as MatrixSetOrVectorOp<T>;
+		const contents = messageContent.contents as MatrixSetOrVectorOp<T>;
 		const target = contents.target;
 
 		switch (target) {

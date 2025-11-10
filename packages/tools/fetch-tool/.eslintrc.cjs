@@ -10,7 +10,7 @@ module.exports = {
 	],
 	rules: {
 		// This library is used in the browser, so we don't want dependencies on most node libraries.
-		"import/no-nodejs-modules": ["error", { allow: ["child_process", "fs", "util"] }],
+		"import-x/no-nodejs-modules": ["error", { allow: ["child_process", "fs", "util"] }],
 
 		// #region TODO: remove these once this config has been updated to use our "recommended" base instead of our deprecated minimal one.
 		"@typescript-eslint/consistent-type-exports": [

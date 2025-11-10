@@ -7,11 +7,11 @@ import { strict as assert } from "assert";
 import * as fs from "fs";
 import path from "path";
 
-/* eslint-disable import/no-internal-modules */
+/* eslint-disable import-x/no-internal-modules */
 import { CSVFileLogger } from "../logger/csvFileLogger.js";
 import type { IFileLogger } from "../logger/fileLogger.js";
 import { JSONFileLogger } from "../logger/jsonFileLogger.js";
-/* eslint-enable import/no-internal-modules */
+/* eslint-enable import-x/no-internal-modules */
 
 import { _dirname } from "./dirname.cjs";
 
@@ -39,10 +39,6 @@ describe("fileLogger", () => {
 		logger.send({ eventName: "event3", category: "category2", prop1: "value3" });
 		logger.send({ eventName: "event4", category: "category2", prop2: "value4" });
 	}
-
-	beforeEach(() => {
-		fs.mkdirSync(outputFolder);
-	});
 
 	afterEach(() => {
 		fs.rmdirSync(outputFolder, { recursive: true });

@@ -110,7 +110,7 @@ export interface ContainerSchema {
  * It includes both the kind of `SharedTree` that will be initially available upon `Container` creation, as well
  * as the types of objects that may be dynamically created throughout the lifetime of the `Container`.
  *
- * @legacy @alpha
+ * @legacy @beta
  */
 export interface TreeContainerSchema extends ContainerSchema {
 	// TODO: longer term, it would be better to not have to fit into the `initialObjects` model for tree-based containers.

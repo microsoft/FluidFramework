@@ -8,24 +8,24 @@ import { strict as assert, fail } from "node:assert";
 import { type Static, Type } from "@sinclair/typebox";
 
 import { DiscriminatedUnionDispatcher, unionOptions } from "../../../../codec/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { ChunkedCursor } from "../../../../core/index.js";
 import {
 	type ChunkDecoder,
 	type StreamCursor,
 	getChecked,
 	readStreamNumber,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities.js";
 import {
 	DecoderContext,
 	decode,
 	readStreamIdentifier,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkDecodingGeneric.js";
 import {
 	EncodedFieldBatchGeneric,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/formatGeneric.js";
 import type { TreeChunk } from "../../../../feature-libraries/index.js";
 import { ReferenceCountedBase } from "../../../../util/index.js";
@@ -123,14 +123,24 @@ const idDecodingContext = {
 
 describe("chunkDecodingGeneric", () => {
 	it("DecoderContext", () => {
-		const cache = new DecoderContext(["a", "b"], [], idDecodingContext);
+		const cache = new DecoderContext(
+			["a", "b"],
+			[],
+			idDecodingContext,
+			undefined /* incrementalDecoder */,
+		);
 		assert.equal(cache.identifier("X"), "X");
 		assert.equal(cache.identifier(0), "a");
 		assert.equal(cache.identifier(1), "b");
 	});
 
 	it("readStreamIdentifier", () => {
-		const cache = new DecoderContext(["a", "b"], [], idDecodingContext);
+		const cache = new DecoderContext(
+			["a", "b"],
+			[],
+			idDecodingContext,
+			undefined /* incrementalDecoder */,
+		);
 		const stream: StreamCursor = { data: ["X", 0, 1], offset: 0 };
 		assert.equal(readStreamIdentifier(stream, cache), "X");
 		assert.equal(stream.offset, 1);
@@ -147,7 +157,12 @@ describe("chunkDecodingGeneric", () => {
 			shapes: [{ a: 0 }],
 			data: [[0, 5]],
 		};
-		const cache = new DecoderContext(encoded.identifiers, encoded.shapes, idDecodingContext);
+		const cache = new DecoderContext(
+			encoded.identifiers,
+			encoded.shapes,
+			idDecodingContext,
+			undefined /* incrementalDecoder */,
+		);
 		const chunks = decode(decoderLibrary, cache, encoded, rootDecoder);
 		assert(chunks.length === 1);
 		const chunk = chunks[0];
@@ -162,7 +177,12 @@ describe("chunkDecodingGeneric", () => {
 			shapes: [{ b: "content" }],
 			data: [[0]],
 		};
-		const cache = new DecoderContext(encoded.identifiers, encoded.shapes, idDecodingContext);
+		const cache = new DecoderContext(
+			encoded.identifiers,
+			encoded.shapes,
+			idDecodingContext,
+			undefined /* incrementalDecoder */,
+		);
 		const chunks = decode(decoderLibrary, cache, encoded, rootDecoder);
 		assert(chunks.length === 1);
 		const chunk = chunks[0];

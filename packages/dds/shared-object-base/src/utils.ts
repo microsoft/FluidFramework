@@ -4,10 +4,16 @@
  */
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import { assert, isObject } from "@fluidframework/core-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+import {
+	isFluidHandle,
+	SummaryTreeBuilder,
+	toFluidHandleInternal,
+} from "@fluidframework/runtime-utils/internal";
 
+import { isISharedObjectHandle } from "./handle.js";
 import type { IFluidSerializer } from "./serializer.js";
 
 /**
@@ -39,8 +45,7 @@ export function serializeHandles(
  * @param context - The handle context for the container
  * @param bind - Bind any other handles we find in the object against this given handle.
  * @returns The fully-plain object
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export function makeHandlesSerializable(
 	value: unknown,
@@ -58,8 +63,7 @@ export function makeHandlesSerializable(
  * @param serializer - The serializer that knows how to convert serializable-form handles into handle objects
  * @param context - The handle context for the container
  * @returns The mostly-plain object with handle objects within
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export function parseHandles(value: unknown, serializer: IFluidSerializer): unknown {
 	return serializer.decode(value);
@@ -86,16 +90,34 @@ export function createSingleBlobSummary(
  *
  * @internal
  */
-export function bindHandles<T = unknown>(
-	value: T,
-	serializer: IFluidSerializer,
-	bind: IFluidHandle,
-): T {
-	// N.B. AB#7316 this could be made more efficient by writing an ad hoc
-	// implementation that doesn't clone at all. Today the distinction between
-	// this function and `encode` is purely semantic -- encoding both serializes
-	// handles and binds them, but sometimes we only wish to do the latter
-	serializer.encode(value, bind);
+export function bindHandles<T = unknown>(value: T, bind: IFluidHandle): T {
+	const nodesToProcess: unknown[] = [value];
+	const visitedNodes = new Set<unknown>();
+
+	assert(isISharedObjectHandle(bind), 0xc85 /* bind must be an ISharedObjectHandle */);
+
+	while (nodesToProcess.length > 0) {
+		const node = nodesToProcess.pop();
+
+		if (isFluidHandle(node)) {
+			visitedNodes.add(node);
+			bind.bind(toFluidHandleInternal(node));
+		} else if (Array.isArray(node) && !visitedNodes.has(node)) {
+			visitedNodes.add(node);
+			for (const item of node) {
+				if (isObject(item)) {
+					nodesToProcess.push(item);
+				}
+			}
+		} else if (isObject(node) && !visitedNodes.has(node)) {
+			visitedNodes.add(node);
+			for (const val of Object.values(node)) {
+				if (isObject(val)) {
+					nodesToProcess.push(val);
+				}
+			}
+		}
+	}
 
 	// Return the input value so this function can be swapped in for makeHandlesSerializable
 	return value;

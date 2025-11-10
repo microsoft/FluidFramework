@@ -3,12 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import type { ErasedType } from "@fluidframework/core-interfaces/internal";
 import { IsoBuffer, bufferToString } from "@fluid-internal/client-utils";
 import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { Static, TAnySchema, TSchema } from "@sinclair/typebox";
 
 import type { ChangeEncodingContext } from "../core/index.js";
 import type { JsonCompatibleReadOnly } from "../util/index.js";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 
 /**
  * Translates decoded data to encoded data.
@@ -35,13 +37,61 @@ export interface IDecoder<TDecoded, TEncoded, TContext> {
 /**
  * Validates data complies with some particular schema.
  * Implementations are typically created by a {@link JsonValidator}.
- * @alpha @input
  */
 export interface SchemaValidationFunction<Schema extends TSchema> {
 	/**
 	 * Returns whether the data matches a schema.
 	 */
 	check(data: unknown): data is Static<Schema>;
+}
+
+/**
+ * A kind of validator for SharedTree's internal data formats.
+ * @remarks
+ * Assuming no data corruption or type confusion, such validation should never fail.
+ * Any client version compatibility issues should instead be detected by the data format versioning which Shared Tree does internally independent of data format validation.
+ * However, persisted data can sometimes be corrupted, bugs can produce invalid data, or users can mix up which data is compatible with which APIs.
+ * In such cases, a format validator can help catch issues.
+ *
+ * Current options are {@link FormatValidatorNoOp} and {@link FormatValidatorBasic}.
+ * @privateRemarks
+ * Implement using {@link toFormatValidator}.
+ * Consume using {@link extractJsonValidator}.
+ *
+ * Exposing this as the stable API entry point (instead of {@link JsonValidator}) means that we avoid leaking the reference to TypeBox to the API surface.
+ * Additionally, if we adopt non JSON formats, we can just update the validators as needed without breaking the API.
+ * This also allows us to avoid stabilizing or documenting how handles interact with JSON validation since that is not exposed through this type.
+ * @sealed @alpha
+ */
+export interface FormatValidator extends ErasedType<"FormatValidator"> {}
+
+/**
+ * A {@link JsonValidator} implementation which performs no validation and accepts all data as valid.
+ * @privateRemarks Having this as an option unifies opting out of validation with selection of
+ * validators, simplifying code performing validation.
+ */
+const noopValidator: JsonValidator = {
+	compile: <Schema extends TSchema>() => ({ check: (data): data is Static<Schema> => true }),
+};
+
+/**
+ * A {@link FormatValidator} which does no validation.
+ * @alpha
+ */
+export const FormatValidatorNoOp = toFormatValidator(noopValidator);
+
+/**
+ * Type erase a {@link JsonValidator} to a {@link FormatValidator}.
+ */
+export function toFormatValidator(factory: JsonValidator): FormatValidator {
+	return factory as unknown as FormatValidator;
+}
+
+/**
+ * Un-type-erase the {@link FormatValidator}.
+ */
+export function extractJsonValidator(input: FormatValidator | JsonValidator): JsonValidator {
+	return input as unknown as JsonValidator;
 }
 
 /**
@@ -69,19 +119,21 @@ export interface JsonValidator {
  */
 export interface ICodecOptions {
 	/**
-	 * {@link JsonValidator} which SharedTree uses to validate persisted data it reads & writes
+	 * {@link FormatValidator} which SharedTree uses to validate persisted data it reads & writes
 	 * matches the expected encoded format (i.e. the wire format for ops and summaries).
-	 *
-	 * See {@link noopValidator} and {@link typeboxValidator} for out-of-the-box implementations.
+	 * @remarks
+	 * See {@link FormatValidatorNoOp} and {@link FormatValidatorBasic} for out-of-the-box implementations.
 	 *
 	 * This option is not "on-by-default" because JSON schema validation comes with a small but noticeable
 	 * runtime performance cost, and popular schema validation libraries have relatively large bundle size.
 	 *
-	 * SharedTree users are still encouraged to use a non-trivial validator (i.e. not `noopValidator`)
+	 * SharedTree users are still encouraged to use a non-trivial validator (i.e. not `FormatValidatorNoOp`)
 	 * whenever reasonable: it gives better fail-fast behavior when unexpected encoded data is found,
 	 * which reduces the risk of unrecoverable data corruption.
+	 * @privateRemarks
+	 * This property should probably be renamed to `validator` before stabilizing the API.
 	 */
-	readonly jsonValidator: JsonValidator;
+	readonly jsonValidator: FormatValidator;
 }
 
 /**
@@ -100,7 +152,7 @@ export interface CodecWriteOptions extends ICodecOptions {
 	 * Note that versions older than this should not result in data corruption if they access the data:
 	 * the data's format should be versioned and if they can't handle the format they should error.
 	 */
-	readonly oldestCompatibleClient: FluidClientVersion;
+	readonly minVersionForCollab: MinimumVersionForCollab;
 }
 
 /**
@@ -112,7 +164,7 @@ export interface CodecWriteOptions extends ICodecOptions {
  * appropriate one, but depending on API layering this might be less ergonomic.
  * - Context for the object currently being encoded, which might enable more efficient encoding. When used in this fashion, the codec author
  * should be careful to include the context somewhere in the encoded data such that decoding can correctly round-trip.
- * For example, a composed set of codecs could implement a form of [dictionary coding](https://en.wikipedia.org/wiki/Dictionary_coder)
+ * For example, a composed set of codecs could implement a form of {@link https://en.wikipedia.org/wiki/Dictionary_coder | dictionary coding}
  * using a context map which was created by the top-level codec and passed to the inner codecs.
  * This pattern is used:
  * - To avoid repeatedly encoding session ids on commits (only recording it once at the top level)
@@ -175,14 +227,14 @@ export interface IMultiFormatCodec<
  * allows avoiding some duplicate work at encode/decode time, since the vast majority of document usage will not
  * involve mixed format versions.
  *
- * @privateRemarks - This interface currently assumes all codecs in a family require the same encode/decode context,
+ * @privateRemarks This interface currently assumes all codecs in a family require the same encode/decode context,
  * which isn't necessarily true.
  * This may need to be relaxed in the future.
  */
 export interface ICodecFamily<TDecoded, TContext = void> {
 	/**
 	 * @returns a codec that can be used to encode and decode data in the specified format.
-	 * @throws - if the format version is not supported by this family.
+	 * @throws if the format version is not supported by this family.
 	 * @remarks Implementations should typically emit telemetry (either indirectly by throwing a well-known error with
 	 * logged properties or directly using some logger) when a format version is requested that is not supported.
 	 * This ensures that applications can diagnose compatibility issues.
@@ -203,6 +255,52 @@ export interface ICodecFamily<TDecoded, TContext = void> {
  * Undefined is tolerated to enable the scenario where data was not initially versioned.
  */
 export type FormatVersion = number | undefined;
+
+/**
+ * A format version which is dependent on some parent format version.
+ */
+export interface DependentFormatVersion<
+	TParentVersion extends FormatVersion = FormatVersion,
+	TChildVersion extends FormatVersion = FormatVersion,
+> {
+	/**
+	 * Looks up the child format version for a given parent format version.
+	 * @param parent - The parent format version.
+	 * @returns The corresponding child format version.
+	 */
+	lookup(parent: TParentVersion): TChildVersion;
+}
+
+export class UniqueDependentFormatVersion<TChildVersion extends FormatVersion>
+	implements DependentFormatVersion<FormatVersion, TChildVersion>
+{
+	public constructor(private readonly child: TChildVersion) {}
+	public lookup(_parent: FormatVersion): TChildVersion {
+		return this.child;
+	}
+}
+
+export class MappedDependentFormatVersion<
+	TParentVersion extends FormatVersion = FormatVersion,
+	TChildVersion extends FormatVersion = FormatVersion,
+> implements DependentFormatVersion<TParentVersion, TChildVersion>
+{
+	public constructor(private readonly map: ReadonlyMap<TParentVersion, TChildVersion>) {}
+	public lookup(parent: TParentVersion): TChildVersion {
+		return this.map.get(parent) ?? fail(0xc73 /* Unknown parent version */);
+	}
+}
+
+export const DependentFormatVersion = {
+	fromUnique: <TChildVersion extends FormatVersion>(child: TChildVersion) =>
+		new UniqueDependentFormatVersion(child),
+	fromMap: <TParentVersion extends FormatVersion, TChildVersion extends FormatVersion>(
+		map: ReadonlyMap<TParentVersion, TChildVersion>,
+	) => new MappedDependentFormatVersion(map),
+	fromPairs: <TParentVersion extends FormatVersion, TChildVersion extends FormatVersion>(
+		pairs: Iterable<[TParentVersion, TChildVersion]>,
+	) => new MappedDependentFormatVersion(new Map(pairs)),
+};
 
 /**
  * Creates a codec family from a registry of codecs.
@@ -326,12 +424,12 @@ export function withSchemaValidation<
 >(
 	schema: EncodedSchema,
 	codec: IJsonCodec<TInMemoryFormat, TEncodedFormat, TValidate, TContext>,
-	validator?: JsonValidator,
+	validator?: JsonValidator | FormatValidator,
 ): IJsonCodec<TInMemoryFormat, TEncodedFormat, TValidate, TContext> {
 	if (!validator) {
 		return codec;
 	}
-	const compiledFormat = validator.compile(schema);
+	const compiledFormat = extractJsonValidator(validator).compile(schema);
 	return {
 		encode: (obj: TInMemoryFormat, context: TContext): TEncodedFormat => {
 			const encoded = codec.encode(obj, context);
@@ -369,16 +467,6 @@ export function withSchemaValidation<
  * For example, document if there is an encoding efficiency improvement of oping into that version or newer.
  * Versions with no notable impact can be omitted.
  *
- * These use numeric values for easy threshold comparisons.
- * Without zero padding, version 2.10 is treated as 2.1, which is numerically less than 2.2.
- * Adding leading zeros to the minor version ensures correct comparisons.
- * For example, version 2.20.0 is encoded as 2.020, and version 2.2.0 is encoded as 2.002.
- * For example FF 2.20.0 is encoded as 2.020 and FF 2.2.0 is encoded as 2.002.
- *
- * Three digits was selected as that will likely be enough, while two digits could easily be too few.
- * If three digits ends up being too few, minor releases of 1000 and higher
- * could still be handled using something like 2.999_00001 without having to change the lower releases.
- *
  * This scheme assumes a single version will always be enough to communicate compatibility.
  * For this to work, compatibility has to be strictly increasing.
  * If this is violated (for example a subset of incompatible features from 3.x that are not in 3.0 are back ported to 2.x),
@@ -390,7 +478,7 @@ export function withSchemaValidation<
  * For example, if needed, would adding more leading zeros to the minor version break things.
  * @alpha
  */
-export enum FluidClientVersion {
+export const FluidClientVersion = {
 	/**
 	 * Fluid Framework Client 1.4 and newer.
 	 * @remarks
@@ -400,8 +488,10 @@ export enum FluidClientVersion {
 	 */
 	// v1_4 = 1.004,
 
-	/** Fluid Framework Client 2.0 and newer. */
-	v2_0 = 2.0,
+	/**
+	 * Fluid Framework Client 2.0 and newer.
+	 */
+	v2_0: "2.0.0",
 
 	/** Fluid Framework Client 2.1 and newer. */
 	// If we think we might want to start allowing opting into something that landed in 2.1 (without opting into something newer),
@@ -409,22 +499,25 @@ export enum FluidClientVersion {
 	// then update it to "2.001" once we actually have the opt in working.
 	// v2_1 = v2_0,
 
-	/** Fluid Framework Client 2.52 and newer. */
-	// New formats introduced in 2.52:
-	// - DetachedFieldIndex FormatV2
-	v2_52 = 2.052,
+	/**
+	 * Fluid Framework Client 2.43 and newer.
+	 *
+	 * New formats introduced in 2.43:
+	 * - SchemaFormatVersion.v2
+	 * - MessageFormatVersion.v4
+	 * - EditManagerFormatVersion.v4
+	 * - Sequence format version 3
+	 */
+	v2_43: "2.43.0",
 
 	/**
-	 * Enable unreleased and unfinished features.
-	 * @remarks
-	 * Using this value can result in documents which can not be opened in future versions of the framework.
-	 * It can also result in data corruption by enabling unfinished features which may not handle all cases correctly.
+	 * Fluid Framework Client 2.52 and newer.
 	 *
-	 * This can be used with specific APIs when the caller has knowledge of what specific features those APIs will be opted into with it.
-	 * This is useful for testing features before they are released, but should not be used in production code.
+	 * New formats introduced in 2.52:
+	 * - DetachedFieldIndexFormatVersion.v2
 	 */
-	EnableUnstableFeatures = Number.POSITIVE_INFINITY,
-}
+	v2_52: "2.52.0",
+} as const satisfies Record<string, MinimumVersionForCollab>;
 
 /**
  * An up to date version which includes all the important stable features.
@@ -435,4 +528,18 @@ export enum FluidClientVersion {
  * Update as needed.
  * TODO: Consider using packageVersion.ts to keep this current.
  */
-export const currentVersion: FluidClientVersion = FluidClientVersion.v2_0;
+export const currentVersion: MinimumVersionForCollab = FluidClientVersion.v2_0;
+
+export interface CodecTree {
+	readonly name: string;
+	readonly version: FormatVersion;
+	readonly children?: readonly CodecTree[];
+}
+
+export function jsonableCodecTree(tree: CodecTree): JsonCompatibleReadOnly {
+	return {
+		name: tree.name,
+		version: tree.version ?? "null",
+		children: tree.children?.map(jsonableCodecTree),
+	};
+}

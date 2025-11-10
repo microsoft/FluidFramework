@@ -6,15 +6,21 @@
 import { strict as assert, fail } from "node:assert";
 
 import type {
+	FieldKey,
+	ITreeCursorSynchronous,
+	TreeChunk,
 	TreeFieldStoredSchema,
 	TreeNodeSchemaIdentifier,
 } from "../../../../core/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { IdentifierToken } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
 import {
 	type FieldBatchEncodingContext,
 	makeFieldBatchCodec,
-	// eslint-disable-next-line import/no-internal-modules
+	type ChunkReferenceId,
+	type IncrementalEncoder,
+	type IncrementalDecoder,
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/codecs.js";
 import {
 	AnyShape,
@@ -22,23 +28,24 @@ import {
 	type FieldEncoder,
 	type NodeEncoder,
 	anyFieldEncoder,
-	// eslint-disable-next-line import/no-internal-modules
+	incrementalFieldEncoder,
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { NodeShapeBasedEncoder } from "../../../../feature-libraries/chunked-forest/codec/nodeEncoder.js";
 import {
 	buildContext,
 	getFieldEncoder,
 	getNodeEncoder,
-	oneFromSet,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/schemaBasedEncode.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { FieldKinds, fieldKinds } from "../../../../feature-libraries/default-schema/index.js";
 import {
 	TreeCompressionStrategy,
 	cursorForJsonableTreeField,
 	defaultSchemaPolicy,
+	emptyChunk,
 	jsonableTreeFromFieldCursor,
 } from "../../../../feature-libraries/index.js";
 import { type JsonCompatibleReadOnly, brand } from "../../../../util/index.js";
@@ -55,16 +62,20 @@ import {
 import { checkFieldEncode, checkNodeEncode } from "./checkEncode.js";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { assertIsSessionId, testIdCompressor } from "../../../utils.js";
-// eslint-disable-next-line import/no-internal-modules
-import { SpecialField } from "../../../../feature-libraries/chunked-forest/codec/format.js";
+import {
+	SpecialField,
+	type EncodedFieldBatch,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../../feature-libraries/chunked-forest/codec/format.js";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
 	getStoredSchema,
 	restrictiveStoredSchemaGenerationOptions,
 	toInitialSchema,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../simple-tree/toStoredSchema.js";
-import { numberSchema, stringSchema } from "../../../../simple-tree/index.js";
+import { numberSchema, SchemaFactory, stringSchema } from "../../../../simple-tree/index.js";
+import { currentVersion } from "../../../../codec/index.js";
 
 const anyNodeShape = new NodeShapeBasedEncoder(undefined, undefined, [], anyFieldEncoder);
 const onlyTypeShape = new NodeShapeBasedEncoder(undefined, false, [], undefined);
@@ -82,12 +93,6 @@ const identifierShape = new NodeShapeBasedEncoder(
 );
 
 describe("schemaBasedEncoding", () => {
-	it("oneFromSet", () => {
-		assert.equal(oneFromSet(undefined), undefined);
-		assert.equal(oneFromSet(new Set([5])), 5);
-		assert.equal(oneFromSet(new Set([1, 2])), undefined);
-	});
-
 	describe("getFieldEncoder", () => {
 		it("monomorphic-value", () => {
 			const context = new EncoderContext(
@@ -95,6 +100,7 @@ describe("schemaBasedEncoding", () => {
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
+				undefined /* incrementalEncoder */,
 			);
 			const log: string[] = [];
 			const fieldEncoder = getFieldEncoder(
@@ -124,6 +130,7 @@ describe("schemaBasedEncoding", () => {
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
+				undefined /* incrementalEncoder */,
 			);
 			const log: string[] = [];
 			const fieldEncoder = getFieldEncoder(
@@ -149,6 +156,7 @@ describe("schemaBasedEncoding", () => {
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
+				undefined /* incrementalEncoder */,
 			);
 			const log: string[] = [];
 			const fieldEncoder = getFieldEncoder(
@@ -167,7 +175,7 @@ describe("schemaBasedEncoding", () => {
 				{ nodeSchema: new Map() },
 			);
 			// There are multiple choices about how this case should be optimized, but the current implementation does this:
-			assert.equal(fieldEncoder.shape, context.nestedArrayEncoder(onlyTypeShape));
+			assert.equal(fieldEncoder.shape, context.nestedArrayEncoder(onlyTypeShape).shape);
 			assert.deepEqual(checkFieldEncode(fieldEncoder, context, []), [0]);
 			assert.deepEqual(
 				checkFieldEncode(fieldEncoder, context, [{ type: brand(Minimal.identifier) }]),
@@ -188,6 +196,7 @@ describe("schemaBasedEncoding", () => {
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
+				undefined /* incrementalEncoder */,
 			);
 			const log: string[] = [];
 			const storedSchema: TreeFieldStoredSchema = {
@@ -233,6 +242,7 @@ describe("schemaBasedEncoding", () => {
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
+				undefined /* incrementalEncoder */,
 			);
 			const nodeEncoder = getNodeEncoder(
 				{ fieldEncoderFromSchema: () => fail() },
@@ -251,6 +261,7 @@ describe("schemaBasedEncoding", () => {
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
+				undefined /* incrementalEncoder */,
 			);
 			const log: TreeFieldStoredSchema[] = [];
 			const nodeEncoder = getNodeEncoder(
@@ -289,6 +300,7 @@ describe("schemaBasedEncoding", () => {
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
+				undefined /* incrementalEncoder */,
 			);
 			const log: TreeFieldStoredSchema[] = [];
 			const nodeEncoder = getNodeEncoder(
@@ -320,6 +332,84 @@ describe("schemaBasedEncoding", () => {
 			});
 			assert.deepEqual(bufferFull, [[new IdentifierToken("extra"), [5]]]);
 		});
+
+		it("incrementalEncoder", () => {
+			const factory = new SchemaFactory("test");
+			class HasOptionalFields extends factory.object("hasOptionalField", {
+				field: factory.optional(factory.number),
+				incrementalField: factory.optional(factory.number),
+			}) {}
+			const testReferenceId: ChunkReferenceId = brand(123);
+			const mockIncrementalEncoder: IncrementalEncoder = {
+				shouldEncodeIncrementally: (
+					nodeIdentifier: TreeNodeSchemaIdentifier | undefined,
+					fieldKey: FieldKey,
+				): boolean => {
+					return (
+						nodeIdentifier === HasOptionalFields.identifier && fieldKey === "incrementalField"
+					);
+				},
+				encodeIncrementalField: (
+					cursor: ITreeCursorSynchronous,
+					chunkEncoder: (chunk: TreeChunk) => EncodedFieldBatch,
+				): ChunkReferenceId[] => {
+					const fieldKey = cursor.getFieldKey();
+					assert(fieldKey === "incrementalField", "should only encode incremental fields");
+					return [testReferenceId]; // Return mock reference IDs
+				},
+			};
+			const mockIncrementalDecoder: IncrementalDecoder = {
+				decodeIncrementalChunk: (referenceId, chunkDecoder) => {
+					assert(referenceId === testReferenceId);
+					return emptyChunk;
+				},
+			};
+
+			// Create context with the mock incremental encoder
+			const context = new EncoderContext(
+				() => fail(),
+				() => fail(),
+				fieldKinds,
+				testIdCompressor,
+				mockIncrementalEncoder,
+			);
+
+			const log: TreeFieldStoredSchema[] = [];
+			const nodeEncoder = getNodeEncoder(
+				{
+					fieldEncoderFromSchema(field: TreeFieldStoredSchema): FieldEncoder {
+						log.push(field);
+						return context.nestedArrayEncoder(numericShape);
+					},
+				},
+				toInitialSchema(HasOptionalFields),
+				brand(HasOptionalFields.identifier),
+				mockIncrementalEncoder,
+			);
+
+			const expectedNodeEncoder = new NodeShapeBasedEncoder(
+				brand(HasOptionalFields.identifier),
+				false,
+				[
+					{ key: brand("field"), encoder: context.nestedArrayEncoder(numericShape) },
+					{ key: brand("incrementalField"), encoder: incrementalFieldEncoder },
+				],
+				undefined,
+			);
+
+			// Verify that the node encoder is created with incremental field encoder for the "extra" field
+			assert.deepEqual(nodeEncoder, expectedNodeEncoder);
+
+			const buffer = checkNodeEncode(
+				nodeEncoder,
+				context,
+				{
+					type: brand(HasOptionalFields.identifier),
+				},
+				mockIncrementalDecoder,
+			);
+			assert.deepEqual(buffer, [0, [testReferenceId]]);
+		});
 	});
 
 	it("recursiveType", () => {
@@ -327,6 +417,7 @@ describe("schemaBasedEncoding", () => {
 			toInitialSchema(RecursiveType),
 			defaultSchemaPolicy,
 			testIdCompressor,
+			undefined /* incrementalEncoder */,
 		);
 		const nodeEncoder = context.nodeEncoderFromSchema(brand(RecursiveType.identifier));
 		const bufferEmpty = checkNodeEncode(nodeEncoder, context, {
@@ -351,7 +442,12 @@ describe("schemaBasedEncoding", () => {
 				const storedSchema = schemaData;
 				const tree = treeFactory(idCompressor);
 				// Check with checkFieldEncode
-				const context = buildContext(storedSchema, defaultSchemaPolicy, idCompressor);
+				const context = buildContext(
+					storedSchema,
+					defaultSchemaPolicy,
+					idCompressor,
+					undefined /* incrementalEncoder */,
+				);
 				checkFieldEncode(anyFieldEncoder, context, tree, idCompressor);
 
 				const fieldBatchContext: FieldBatchEncodingContext = {
@@ -361,7 +457,10 @@ describe("schemaBasedEncoding", () => {
 					idCompressor,
 				};
 				idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange());
-				const codec = makeFieldBatchCodec({ jsonValidator: ajvValidator }, 1);
+				const codec = makeFieldBatchCodec({
+					jsonValidator: ajvValidator,
+					minVersionForCollab: currentVersion,
+				});
 				// End to end test
 				// rootFieldSchema is not being used in encoding, so we currently have some limitations. Schema based optimizations for root case don't trigger.
 				const encoded = codec.encode([cursorForJsonableTreeField(tree)], fieldBatchContext);

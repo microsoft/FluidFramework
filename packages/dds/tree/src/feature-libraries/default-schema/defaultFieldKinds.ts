@@ -32,6 +32,8 @@ import {
 import { sequenceFieldChangeHandler } from "../sequence-field/index.js";
 
 import { noChangeCodecFamily } from "./noChangeCodecs.js";
+import type { CodecTree } from "../../codec/index.js";
+import { brand, type Brand } from "../../util/index.js";
 
 /**
  * ChangeHandler that only handles no-op / identity changes.
@@ -105,8 +107,7 @@ export const required = new FieldKindWithEditor(
 		// Which direction is allowed is a subjective policy choice.
 		(other.kind === sequence.identifier ||
 			other.kind === requiredIdentifier ||
-			other.kind === optional.identifier ||
-			other.kind === nodeKey.identifier) &&
+			other.kind === optional.identifier) &&
 		allowsTreeSchemaIdentifierSuperset(types, other.types),
 	new Set(),
 );
@@ -125,28 +126,6 @@ export const sequence = new FieldKindWithEditor(
 		allowsTreeSchemaIdentifierSuperset(types, other.types),
 	// TODO: add normalizer/importers for handling ops from other kinds.
 	new Set([]),
-);
-
-const nodeKeyIdentifier = "NodeKey";
-
-/**
- * Exactly one identifier.
- *
- * TODO: this is almost the same as identifier, but apparently unused.
- * Confirm if this is truly unused since before the document format was stabilized, and remove if possible.
- * @deprecated Superseded by {@link identifier}.
- */
-export const nodeKey = new FieldKindWithEditor(
-	nodeKeyIdentifier,
-	Multiplicity.Single,
-	noChangeHandler,
-	(types, other) =>
-		(other.kind === sequence.identifier ||
-			other.kind === requiredIdentifier ||
-			other.kind === optional.identifier ||
-			other.kind === nodeKeyIdentifier) &&
-		allowsTreeSchemaIdentifierSuperset(types, other.types),
-	new Set(),
 );
 
 const identifierFieldIdentifier = "Identifier";
@@ -205,11 +184,13 @@ export const forbidden = new FieldKindWithEditor(
 	new Set(),
 );
 
-export const fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration> = new Map([
+export const fieldKindConfigurations: ReadonlyMap<
+	ModularChangeFormatVersion,
+	FieldKindConfiguration
+> = new Map([
 	[
-		1,
+		brand(1),
 		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
-			[nodeKey.identifier, { kind: nodeKey, formatVersion: 1 }],
 			[required.identifier, { kind: required, formatVersion: 1 }],
 			[optional.identifier, { kind: optional, formatVersion: 1 }],
 			[sequence.identifier, { kind: sequence, formatVersion: 1 }],
@@ -218,9 +199,8 @@ export const fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration
 		]),
 	],
 	[
-		2,
+		brand(2),
 		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
-			[nodeKey.identifier, { kind: nodeKey, formatVersion: 1 }],
 			[required.identifier, { kind: required, formatVersion: 2 }],
 			[optional.identifier, { kind: optional, formatVersion: 2 }],
 			[sequence.identifier, { kind: sequence, formatVersion: 1 }],
@@ -229,9 +209,8 @@ export const fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration
 		]),
 	],
 	[
-		3,
+		brand(3),
 		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
-			[nodeKey.identifier, { kind: nodeKey, formatVersion: 1 }],
 			[required.identifier, { kind: required, formatVersion: 2 }],
 			[optional.identifier, { kind: optional, formatVersion: 2 }],
 			[sequence.identifier, { kind: sequence, formatVersion: 2 }],
@@ -240,9 +219,8 @@ export const fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration
 		]),
 	],
 	[
-		4,
+		brand(4),
 		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
-			[nodeKey.identifier, { kind: nodeKey, formatVersion: 1 }],
 			[required.identifier, { kind: required, formatVersion: 2 }],
 			[optional.identifier, { kind: optional, formatVersion: 2 }],
 			[sequence.identifier, { kind: sequence, formatVersion: 3 }],
@@ -252,6 +230,25 @@ export const fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration
 	],
 ]);
 
+export type ModularChangeFormatVersion = Brand<1 | 2 | 3 | 4, "ModularChangeFormatVersion">;
+export function getCodecTreeForModularChangeFormat(
+	version: ModularChangeFormatVersion,
+): CodecTree {
+	const dependencies =
+		fieldKindConfigurations.get(version) ?? fail(0xc7c /* Unknown modular change format */);
+	const children: CodecTree[] = Array.from(dependencies.entries()).map(
+		([key, { formatVersion }]) => ({
+			name: `FieldKind:${key}`,
+			version: formatVersion,
+		}),
+	);
+	return {
+		name: "ModularChange",
+		version,
+		children,
+	};
+}
+
 /**
  * All supported field kinds.
  *
@@ -260,7 +257,7 @@ export const fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration
  * code which uses this should be audited for compatibility considerations.
  */
 export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map(
-	[required, optional, sequence, nodeKey, identifier, forbidden].map((s) => [s.identifier, s]),
+	[required, optional, sequence, identifier, forbidden].map((s) => [s.identifier, s]),
 );
 
 // Create named Aliases for nicer intellisense.

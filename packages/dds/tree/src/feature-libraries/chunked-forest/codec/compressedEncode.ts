@@ -11,6 +11,7 @@ import {
 	type FieldKey,
 	type FieldKindIdentifier,
 	type ITreeCursorSynchronous,
+	type TreeChunk,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	type Value,
@@ -32,12 +33,13 @@ import {
 	type EncodedFieldBatch,
 	type EncodedNestedArrayShape,
 	type EncodedValueShape,
+	FieldBatchFormatVersion,
 	SpecialField,
-	version,
 } from "./format.js";
+import type { IncrementalEncoder } from "./codecs.js";
 
 /**
- * Encode data from `FieldBatch` into an `EncodedChunk`.
+ * Encode data from `FieldBatch` into an `EncodedFieldBatch`.
  *
  * Optimized for encoded size and encoding performance.
  *
@@ -55,7 +57,7 @@ export function compressedEncode(
 		anyFieldEncoder.encodeField(cursor, context, buffer);
 		batchBuffer.push(buffer);
 	}
-	return updateShapesAndIdentifiersEncoding(version, batchBuffer);
+	return updateShapesAndIdentifiersEncoding(FieldBatchFormatVersion.v1, batchBuffer);
 }
 
 export type BufferFormat = BufferFormatGeneric<EncodedChunkShape>;
@@ -221,8 +223,8 @@ export const anyNodeEncoder: NodeEncoder = {
 		outputBuffer: BufferFormat,
 	): void {
 		// TODO: Fast path uniform chunk content.
-		const shape = context.nodeEncoderFromSchema(cursor.type);
-		AnyShape.encodeNode(cursor, context, outputBuffer, shape);
+		const nodeEncoder = context.nodeEncoderFromSchema(cursor.type);
+		AnyShape.encodeNode(cursor, context, outputBuffer, nodeEncoder);
 	},
 
 	shape: AnyShape.instance,
@@ -348,21 +350,47 @@ export class InlineArrayEncoder
 }
 
 /**
+ * Encodes the shape for a nested array as {@link EncodedNestedArrayShape} shape.
+ */
+export class NestedArrayShape extends ShapeGeneric<EncodedChunkShape> {
+	/**
+	 * @param innerShape - The shape of each item in this nested array.
+	 */
+	public constructor(public readonly innerShape: Shape) {
+		super();
+	}
+
+	public encodeShape(
+		identifiers: DeduplicationTable<string>,
+		shapes: DeduplicationTable<Shape>,
+	): EncodedChunkShape {
+		const shape: EncodedNestedArrayShape =
+			shapes.valueToIndex.get(this.innerShape) ??
+			fail(0xb4f /* index for shape not found in table */);
+		return {
+			a: shape,
+		};
+	}
+
+	public countReferencedShapesAndIdentifiers(
+		identifiers: Counter<string>,
+		shapeDiscovered: (shape: Shape) => void,
+	): void {
+		shapeDiscovered(this.innerShape);
+	}
+}
+
+/**
  * Encodes a field as a nested array with the {@link EncodedNestedArrayShape} shape.
  * @remarks
- * The fact this is also a Shape is an implementation detail of the encoder: that allows the shape it uses to be itself,
+ * The fact this is also exposes a Shape is an implementation detail: it allows the shape it uses to be itself
  * which is an easy way to keep all the related code together without extra objects.
  */
-export class NestedArrayEncoder
-	extends ShapeGeneric<EncodedChunkShape>
-	implements FieldEncoder
-{
-	public readonly shape: Shape;
-
-	public constructor(public readonly inner: NodeEncoder) {
-		super();
-		this.shape = this;
-	}
+export class NestedArrayEncoder implements FieldEncoder {
+	public constructor(
+		public readonly innerEncoder: NodeEncoder,
+		public readonly shape: NestedArrayShape = new NestedArrayShape(innerEncoder.shape),
+	) {}
 
 	public encodeField(
 		cursor: ITreeCursorSynchronous,
@@ -374,7 +402,7 @@ export class NestedArrayEncoder
 		const length = cursor.getFieldLength();
 		forEachNode(cursor, () => {
 			const before = buffer.length;
-			this.inner.encodeNode(cursor, context, buffer);
+			this.innerEncoder.encodeNode(cursor, context, buffer);
 			allNonZeroSize &&= buffer.length - before !== 0;
 		});
 		if (buffer.length === 0) {
@@ -389,26 +417,57 @@ export class NestedArrayEncoder
 			outputBuffer.push(buffer);
 		}
 	}
+}
 
+/**
+ * Encodes the shape for an incremental chunk as {@link EncodedIncrementalChunkShape} shape.
+ */
+export class IncrementalChunkShape extends ShapeGeneric<EncodedChunkShape> {
 	public encodeShape(
 		identifiers: DeduplicationTable<string>,
 		shapes: DeduplicationTable<Shape>,
 	): EncodedChunkShape {
-		const shape: EncodedNestedArrayShape =
-			shapes.valueToIndex.get(this.inner.shape) ??
-			fail(0xb4f /* index for shape not found in table */);
 		return {
-			a: shape,
+			e: 0 /* EncodedIncrementalChunkShape */,
 		};
 	}
 
 	public countReferencedShapesAndIdentifiers(
 		identifiers: Counter<string>,
 		shapeDiscovered: (shape: Shape) => void,
-	): void {
-		shapeDiscovered(this.inner.shape);
+	): void {}
+
+	public get shape(): this {
+		return this;
 	}
 }
+
+/**
+ * Encodes an incremental field whose tree chunks are encoded separately and referenced by their {@link ChunkReferenceId}.
+ * The shape of the content of this field is {@link NestedArrayShape}.
+ * The inner items of the array have shape {@link IncrementalChunkShape} and are {@link ChunkReferenceId}s
+ * of the encoded chunks.
+ */
+export const incrementalFieldEncoder: FieldEncoder = {
+	encodeField(
+		cursor: ITreeCursorSynchronous,
+		context: EncoderContext,
+		outputBuffer: BufferFormat,
+	): void {
+		assert(
+			context.incrementalEncoder !== undefined,
+			0xc88 /* incremental encoder must be defined to use incrementalFieldEncoder */,
+		);
+
+		const chunkReferenceIds = context.incrementalEncoder.encodeIncrementalField(
+			cursor,
+			(chunk: TreeChunk) => compressedEncode([chunk.cursor()], context),
+		);
+		outputBuffer.push(chunkReferenceIds);
+	},
+
+	shape: new NestedArrayShape(new IncrementalChunkShape() /* innerShape */),
+};
 
 /**
  * Encode `value` with `shape` into `outputBuffer`.
@@ -448,6 +507,7 @@ export function encodeValue(
 /**
  * Provides common contextual information during encoding, like schema and policy settings.
  * Also, provides a cache to avoid duplicating equivalent shapes during a batch of encode operations.
+ * @remarks
  * To avoid Shape duplication, any Shapes used in the encoding should either be:
  * - Singletons defined in a static scope.
  * - Cached in this object for future reuse such that all equivalent Shapes are deduplicated.
@@ -461,6 +521,12 @@ export class EncoderContext implements NodeEncodeBuilder, FieldEncodeBuilder {
 		private readonly fieldEncoderFromPolicy: FieldEncoderPolicy,
 		public readonly fieldShapes: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 		public readonly idCompressor: IIdCompressor,
+		/**
+		 * To be used to encode incremental chunks, if any.
+		 * @remarks
+		 * See {@link IncrementalEncoder} for more information.
+		 */
+		public readonly incrementalEncoder: IncrementalEncoder | undefined,
 	) {}
 
 	public nodeEncoderFromSchema(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {

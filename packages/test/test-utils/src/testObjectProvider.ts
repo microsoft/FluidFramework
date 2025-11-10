@@ -15,10 +15,7 @@ import {
 	Loader,
 	waitContainerToCatchUp as waitContainerToCatchUp_original,
 } from "@fluidframework/container-loader/internal";
-import {
-	type IContainerRuntimeOptionsInternal,
-	type MinimumVersionForCollab,
-} from "@fluidframework/container-runtime/internal";
+import { type IContainerRuntimeOptionsInternal } from "@fluidframework/container-runtime/internal";
 import {
 	IRequestHeader,
 	ITelemetryBaseEvent,
@@ -33,6 +30,7 @@ import {
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import { isOdspResolvedUrl } from "@fluidframework/odsp-driver/internal";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import {
 	type ITelemetryGenericEventExt,
 	createChildLogger,
@@ -57,8 +55,7 @@ const defaultCodeDetails: IFluidCodeDetails = {
 /**
  * Exposes fine-grained control over the Container's inbound and outbound op queues
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IOpProcessingController {
 	/**
@@ -270,8 +267,8 @@ export interface ITestContainerConfig {
 	loaderProps?: Partial<ILoaderProps>;
 
 	/**
-	 * The minVersionForCollab passed to the ContainerRuntime when instantiating it.
-	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams} for more details on this property.
+	 * Minimum version of the FF runtime that is required to collaborate on new documents.
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minVersionForCollab} for more details.
 	 */
 	minVersionForCollab?: MinimumVersionForCollab | undefined;
 }

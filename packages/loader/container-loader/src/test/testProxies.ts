@@ -15,14 +15,14 @@ import type {
 } from "@fluidframework/container-definitions/internal";
 import {
 	SummaryType,
-	IDocumentServiceFactory,
+	type IDocumentServiceFactory,
 	type IDocumentService,
 	type IDocumentStorageService,
 	type IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
 import { v4 as uuid } from "uuid";
 
-import { failSometimeProxy } from "./failProxy.js";
+import { AbsentProperty, failSometimeProxy } from "./failProxy.js";
 
 export function createTestDocumentServiceFactoryProxy(
 	resolvedUrl: IResolvedUrl,
@@ -38,13 +38,14 @@ export function createTestDocumentServiceFactoryProxy(
 						createBlob: async () => ({ id: uuid() }),
 					}),
 			}),
-		ILayerCompatDetails: compatibilityDetails,
+		ILayerCompatDetails: compatibilityDetails ?? AbsentProperty,
 	});
 }
 
 export function createTestCodeLoaderProxy(props?: {
 	createDetachedBlob?: boolean;
 	layerCompatDetails?: ILayerCompatDetails;
+	runtimeWithout_setConnectionStatus?: true;
 }): ICodeDetailsLoader {
 	return {
 		load: async () => {
@@ -73,8 +74,15 @@ export function createTestCodeLoaderProxy(props?: {
 										pending: [],
 									}),
 									disposed: false,
-									setConnectionState: () => {},
-									ILayerCompatDetails: props?.layerCompatDetails,
+									setConnectionState: props?.runtimeWithout_setConnectionStatus
+										? () => {}
+										: AbsentProperty,
+									setConnectionStatus: props?.runtimeWithout_setConnectionStatus
+										? AbsentProperty
+										: () => {
+												throw new Error("call not expected");
+											},
+									ILayerCompatDetails: props?.layerCompatDetails ?? AbsentProperty,
 								});
 							},
 						},

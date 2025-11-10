@@ -12,8 +12,8 @@ import {
 } from "@fluid-internal/client-utils";
 import {
 	AttachState,
-	IAudience,
-	ICriticalContainerError,
+	type IAudience,
+	type ICriticalContainerError,
 } from "@fluidframework/container-definitions";
 import type {
 	ContainerWarning,
@@ -32,44 +32,44 @@ import type {
 	ReadOnlyInfo,
 	ILoader,
 	ILoaderOptions,
+	IContainerStorageService,
 } from "@fluidframework/container-definitions/internal";
 import { isFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import {
-	FluidObject,
-	IEvent,
-	IRequest,
-	ITelemetryBaseProperties,
+	type FluidObject,
+	type IEvent,
+	type IRequest,
+	type ITelemetryBaseProperties,
 	LogLevel,
 } from "@fluidframework/core-interfaces";
-import { type ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
+import type { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
 import { assert, isPromiseLike, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
-	IClient,
-	IClientDetails,
-	IQuorumClients,
-	ISequencedClient,
-	ISummaryTree,
+	type IClient,
+	type IClientDetails,
+	type IQuorumClients,
+	type ISequencedClient,
+	type ISummaryTree,
 	SummaryType,
 } from "@fluidframework/driver-definitions";
 import {
-	IDocumentService,
-	IDocumentServiceFactory,
-	IDocumentStorageService,
-	IResolvedUrl,
-	ISnapshot,
-	IThrottlingWarning,
-	IUrlResolver,
-	ICommittedProposal,
-	IDocumentAttributes,
-	IDocumentMessage,
-	IQuorumProposals,
-	ISequencedProposal,
-	ISnapshotTree,
-	ISummaryContent,
-	IVersion,
+	type IDocumentService,
+	type IDocumentServiceFactory,
+	type IResolvedUrl,
+	type ISnapshot,
+	type IThrottlingWarning,
+	type IUrlResolver,
+	type ICommittedProposal,
+	type IDocumentAttributes,
+	type IDocumentMessage,
+	type IQuorumProposals,
+	type ISequencedProposal,
+	type ISnapshotTree,
+	type ISummaryContent,
+	type IVersion,
 	MessageType,
-	ISequencedDocumentMessage,
-	ISignalMessage,
+	type ISequencedDocumentMessage,
+	type ISignalMessage,
 	type ConnectionMode,
 } from "@fluidframework/driver-definitions/internal";
 import {
@@ -84,11 +84,11 @@ import {
 } from "@fluidframework/driver-utils/internal";
 import {
 	type TelemetryEventCategory,
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	EventEmitterWithErrorHandling,
 	GenericError,
-	IFluidErrorBase,
-	MonitoringContext,
+	type IFluidErrorBase,
+	type MonitoringContext,
 	PerformanceEvent,
 	UsageError,
 	connectedEventName,
@@ -105,27 +105,27 @@ import structuredClone from "@ungap/structured-clone";
 import { v4 as uuid } from "uuid";
 
 import {
-	AttachProcessProps,
-	AttachmentData,
+	type AttachProcessProps,
+	type AttachmentData,
 	runRetriableAttachProcess,
 } from "./attachment.js";
 import { Audience } from "./audience.js";
 import { ConnectionManager } from "./connectionManager.js";
 import { ConnectionState } from "./connectionState.js";
 import {
-	IConnectionStateHandler,
+	type IConnectionStateHandler,
 	createConnectionStateHandler,
 } from "./connectionStateHandler.js";
 import { ContainerContext } from "./containerContext.js";
 import { ContainerStorageAdapter } from "./containerStorageAdapter.js";
 import {
-	IConnectionDetailsInternal,
-	IConnectionManagerFactoryArgs,
-	IConnectionStateChangeReason,
+	type IConnectionDetailsInternal,
+	type IConnectionManagerFactoryArgs,
+	type IConnectionStateChangeReason,
 	ReconnectMode,
 	getPackageName,
 } from "./contracts.js";
-import { DeltaManager, IConnectionArgs } from "./deltaManager.js";
+import { DeltaManager, type IConnectionArgs } from "./deltaManager.js";
 import type { ILoaderServices } from "./loader.js";
 import { RelativeLoader } from "./loader.js";
 import {
@@ -139,12 +139,14 @@ import {
 } from "./memoryBlobStorage.js";
 import { NoopHeuristic } from "./noopHeuristic.js";
 import { pkgVersion } from "./packageVersion.js";
-import { IQuorumSnapshot } from "./protocol/index.js";
+import type { IQuorumSnapshot } from "./protocol/index.js";
 import {
-	IProtocolHandler,
+	type InternalProtocolHandlerBuilder,
 	ProtocolHandler,
-	ProtocolHandlerBuilder,
+	type ProtocolHandlerBuilder,
+	type ProtocolHandlerInternal,
 	protocolHandlerShouldProcessSignal,
+	wrapProtocolHandlerBuilder,
 } from "./protocol.js";
 import { initQuorumValuesFromCodeDetails } from "./quorum.js";
 import {
@@ -153,14 +155,15 @@ import {
 	SerializedStateManager,
 } from "./serializedStateManager.js";
 import {
-	ISnapshotTreeWithBlobContents,
 	combineAppAndProtocolSummary,
 	combineSnapshotTreeAndSnapshotBlobs,
 	getDetachedContainerStateFromSerializedContainer,
 	getDocumentAttributes,
 	getProtocolSnapshotTree,
-	getSnapshotTreeAndBlobsFromSerializedContainer,
+	getISnapshotFromSerializedContainer,
 	runSingle,
+	convertISnapshotToSnapshotWithBlobs,
+	convertSnapshotInfoToSnapshot,
 } from "./utils.js";
 
 const detachedContainerRefSeqNumber = 0;
@@ -224,8 +227,7 @@ export interface IContainerCreateProps extends ILoaderServices {
  * but it maybe still behind.
  *
  * @throws an error beginning with `"Container closed"` if the container is closed before it catches up.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export async function waitContainerToCatchUp(container: IContainer): Promise<boolean> {
 	// Make sure we stop waiting if container is closed.
@@ -333,7 +335,7 @@ interface IContainerLifecycleEvents extends IEvent {
 
 export class Container
 	extends EventEmitterWithErrorHandling<IContainerEvents>
-	implements IContainer, IContainerExperimental
+	implements IContainer, ContainerAlpha
 {
 	/**
 	 * Load an existing container.
@@ -448,7 +450,8 @@ export class Container
 	private readonly scope: FluidObject;
 	private readonly subLogger: ITelemetryLoggerExt;
 	private readonly detachedBlobStorage: MemoryDetachedBlobStorage | undefined;
-	private readonly protocolHandlerBuilder: ProtocolHandlerBuilder;
+	private readonly protocolHandlerBuilder: InternalProtocolHandlerBuilder;
+	private readonly signalAudience = new Audience();
 	private readonly client: IClient;
 
 	private readonly mc: MonitoringContext;
@@ -508,12 +511,19 @@ export class Container
 			// Ideally, we should supply pendingLocalState?.clientId here as well, not in constructor, but it does not matter (at least today)
 			this.connectionStateHandler.initProtocol(this.protocolHandler);
 
-			// Propagate current connection state through the system.
-			const readonly = this.readOnlyInfo.readonly ?? false;
 			// This call does not look like needed any more, with delaying all connection-related events past loaded phase.
 			// Yet, there could be some customer code that would break if we do not deliver it.
 			// Will be removed in further PRs with proper changeset.
-			this.setContextConnectedState(false /* connected */, readonly);
+			const runtime = this._runtime;
+			if (
+				runtime !== undefined &&
+				// Check for older runtime that may need this call
+				!("setConnectionStatus" in runtime) &&
+				runtime.disposed === false
+			) {
+				runtime.setConnectionState(false /* canSendOps */, this.clientId);
+			}
+
 			// Deliver delayed calls to DeltaManager - we ignored "connect" events while loading.
 			const cm = this._deltaManager.connectionManager;
 			if (cm.connected) {
@@ -550,8 +560,8 @@ export class Container
 		}
 		return this._runtime;
 	}
-	private _protocolHandler: IProtocolHandler | undefined;
-	private get protocolHandler(): IProtocolHandler {
+	private _protocolHandler: ProtocolHandlerInternal | undefined;
+	private get protocolHandler(): ProtocolHandlerInternal {
 		if (this._protocolHandler === undefined) {
 			throw new Error("Attempted to access protocolHandler before it was defined");
 		}
@@ -760,6 +770,7 @@ export class Container
 		validateDriverCompatibility(
 			maybeDriverCompatDetails.ILayerCompatDetails,
 			(error) => {} /* disposeFn */, // There is nothing to dispose here, so just ignore the error.
+			subLogger,
 		);
 
 		this.connectionTransitionTimes[ConnectionState.Disconnected] = performanceNow();
@@ -776,20 +787,22 @@ export class Container
 		// Tracking alternative ways to handle this in AB#4129.
 		this.options = { ...options };
 		this.scope = scope;
-		this.protocolHandlerBuilder =
+		this.protocolHandlerBuilder = wrapProtocolHandlerBuilder(
 			protocolHandlerBuilder ??
-			((
-				attributes: IDocumentAttributes,
-				quorumSnapshot: IQuorumSnapshot,
-				sendProposal: (key: string, value: unknown) => number,
-			): ProtocolHandler =>
-				new ProtocolHandler(
-					attributes,
-					quorumSnapshot,
-					sendProposal,
-					new Audience(),
-					(clientId: string) => this.clientsWhoShouldHaveLeft.has(clientId),
-				));
+				((
+					attributes: IDocumentAttributes,
+					quorumSnapshot: IQuorumSnapshot,
+					sendProposal: (key: string, value: unknown) => number,
+				): ProtocolHandlerInternal =>
+					new ProtocolHandler(
+						attributes,
+						quorumSnapshot,
+						sendProposal,
+						new Audience(),
+						(clientId: string) => this.clientsWhoShouldHaveLeft.has(clientId),
+					)),
+			this.signalAudience,
+		);
 
 		// Note that we capture the createProps here so we can replicate the creation call when we want to clone.
 		this.clone = async (
@@ -963,18 +976,17 @@ export class Container
 		this.storageAdapter = new ContainerStorageAdapter(
 			this.detachedBlobStorage,
 			this.mc.logger,
-			pendingLocalState?.snapshotBlobs,
 			pendingLocalState?.loadedGroupIdSnapshots,
 			addProtocolSummaryIfMissing,
 			enableSummarizeProtocolTree,
 		);
 
 		const offlineLoadEnabled =
-			(this.isInteractiveClient &&
-				this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad")) ??
-			options.enableOfflineLoad === true;
+			this.isInteractiveClient &&
+			(this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ??
+				this.mc.config.getBoolean("Fluid.Container.enableOfflineFull") ??
+				options.enableOfflineLoad !== false);
 		this.serializedStateManager = new SerializedStateManager(
-			pendingLocalState,
 			this.subLogger,
 			this.storageAdapter,
 			offlineLoadEnabled,
@@ -1077,6 +1089,7 @@ export class Container
 				this._protocolHandler?.close();
 
 				this.connectionStateHandler.dispose();
+				this.serializedStateManager.dispose();
 			} catch (newError) {
 				this.mc.logger.sendErrorEvent({ eventName: "ContainerCloseException" }, newError);
 			}
@@ -1123,6 +1136,7 @@ export class Container
 				this._protocolHandler?.close();
 
 				this.connectionStateHandler.dispose();
+				this.serializedStateManager.dispose();
 
 				const maybeError = error === undefined ? undefined : new Error(error.message);
 				this._runtime?.dispose(maybeError);
@@ -1201,16 +1215,14 @@ export class Container
 				this.captureProtocolSummary(),
 			);
 
-		const { baseSnapshot, snapshotBlobs } =
-			getSnapshotTreeAndBlobsFromSerializedContainer(combinedSummary);
+		const snapshot = getISnapshotFromSerializedContainer(combinedSummary);
 		const pendingRuntimeState =
 			attachingData === undefined ? undefined : this.runtime.getPendingLocalState();
 		assert(!isPromiseLike(pendingRuntimeState), 0x8e3 /* should not be a promise */);
 
 		const detachedContainerState: IPendingDetachedContainerState = {
 			attached: false,
-			baseSnapshot,
-			snapshotBlobs,
+			...convertISnapshotToSnapshotWithBlobs(snapshot),
 			pendingRuntimeState,
 			hasAttachmentBlobs:
 				this.detachedBlobStorage !== undefined && this.detachedBlobStorage.size > 0,
@@ -1302,7 +1314,6 @@ export class Container
 
 					let attachP = runRetriableAttachProcess({
 						initialAttachmentData: this.attachmentData,
-						offlineLoadEnabled: this.serializedStateManager.offlineLoadEnabled,
 						detachedBlobStorage: this.detachedBlobStorage,
 						setAttachmentData,
 						createAttachmentSummary,
@@ -1593,10 +1604,9 @@ export class Container
 		const timings: Record<string, number> = { phase1: performanceNow() };
 		this.service = await this.createDocumentService(resolvedUrl, { mode: "load" });
 
-		// Except in cases where it has stashed ops or requested by feature gate, the container will connect in "read" mode
+		// Except in cases where its requested by feature gate, the container will connect in "read" mode
 		const mode =
-			this.mc.config.getBoolean("Fluid.Container.ForceWriteConnection") === true ||
-			(pendingLocalState?.savedOps.length ?? 0) > 0
+			this.mc.config.getBoolean("Fluid.Container.ForceWriteConnection") === true
 				? "write"
 				: "read";
 		const connectionArgs: IConnectionArgs = {
@@ -1620,14 +1630,13 @@ export class Container
 		timings.phase2 = performanceNow();
 
 		// Fetch specified snapshot.
-		const { baseSnapshot, version } =
-			await this.serializedStateManager.fetchSnapshot(specifiedVersion);
+		const {
+			snapshot: baseSnapshot,
+			version,
+			attributes,
+		} = await this.serializedStateManager.fetchSnapshot(specifiedVersion, pendingLocalState);
 		const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(baseSnapshot);
 		this._loadedFromVersion = version;
-		const attributes: IDocumentAttributes = await getDocumentAttributes(
-			this.storageAdapter,
-			baseSnapshotTree,
-		);
 
 		// If we saved ops, we will replay them and don't need DeltaManager to fetch them
 		const lastProcessedSequenceNumber =
@@ -1801,18 +1810,20 @@ export class Container
 				0x250 /* "serialized container with attachment blobs must be rehydrated with detached blob storage" */,
 			);
 		}
-		const snapshotTreeWithBlobContents: ISnapshotTreeWithBlobContents =
-			combineSnapshotTreeAndSnapshotBlobs(baseSnapshot, snapshotBlobs);
-		this.storageAdapter.loadSnapshotFromSnapshotBlobs(snapshotBlobs);
-		const attributes = await getDocumentAttributes(
-			this.storageAdapter,
-			snapshotTreeWithBlobContents,
-		);
+
+		const snapshot = convertSnapshotInfoToSnapshot({
+			baseSnapshot,
+			snapshotBlobs,
+			snapshotSequenceNumber: 0,
+		});
+
+		this.storageAdapter.cacheSnapshotBlobs(snapshot.blobContents);
+		const attributes = await getDocumentAttributes(this.storageAdapter, snapshot.snapshotTree);
 
 		await this.attachDeltaManagerOpHandler(attributes);
 
 		// Initialize the protocol handler
-		const baseTree = getProtocolSnapshotTree(snapshotTreeWithBlobContents);
+		const baseTree = getProtocolSnapshotTree(snapshot.snapshotTree);
 		const qValues = await readAndParse<[string, ICommittedProposal][]>(
 			this.storageAdapter,
 			baseTree.blobs.quorumValues,
@@ -1829,8 +1840,9 @@ export class Container
 
 		await this.instantiateRuntime(
 			codeDetails,
-			snapshotTreeWithBlobContents,
+			combineSnapshotTreeAndSnapshotBlobs(snapshot),
 			pendingRuntimeState,
+			snapshot,
 		);
 
 		this.setLoaded();
@@ -1838,7 +1850,7 @@ export class Container
 
 	private async initializeProtocolStateFromSnapshot(
 		attributes: IDocumentAttributes,
-		storage: IDocumentStorageService,
+		storage: IContainerStorageService,
 		snapshot: ISnapshotTree | undefined,
 	): Promise<void> {
 		const quorumSnapshot: IQuorumSnapshot = {
@@ -2070,10 +2082,7 @@ export class Container
 
 		deltaManager.on("readonly", (readonly) => {
 			if (this.loaded) {
-				this.setContextConnectedState(
-					this.connectionState === ConnectionState.Connected,
-					readonly,
-				);
+				this.setConnectionStatus(readonly);
 			}
 			this.emit("readonly", readonly);
 		});
@@ -2175,7 +2184,19 @@ export class Container
 			const clientId = this.connectionStateHandler.clientId;
 			assert(clientId !== undefined, 0x96e /* there has to be clientId */);
 			this.protocolHandler.audience.setCurrentClientId(clientId);
+			this.signalAudience.setCurrentClientId(clientId);
+		} else if (this.connectionState === ConnectionState.CatchingUp) {
+			// Signal-based Audience does not wait for ops. So provide clientId
+			// as soon as possible.
+			const clientId = this.connectionStateHandler.pendingClientId;
+			assert(clientId !== undefined, 0xc89 /* catching up without clientId */);
+			this.signalAudience.setCurrentClientId(clientId);
 		}
+
+		this.setConnectionStatus(
+			/* readonly */ this.readOnlyInfo.readonly ?? false,
+			/* onlyCallSetConnectionStateIfConnectedOrDisconnected */ true,
+		);
 
 		// We communicate only transitions to Connected & Disconnected states, skipping all other states.
 		// This can be changed in the future, for example we likely should add "CatchingUp" event on Container.
@@ -2188,7 +2209,6 @@ export class Container
 
 		// Both protocol and context should not be undefined if we got so far.
 
-		this.setContextConnectedState(connected, this.readOnlyInfo.readonly ?? false);
 		this.protocolHandler.setConnectionState(connected, this.clientId);
 		raiseConnectedEvent(
 			this.mc.logger,
@@ -2350,7 +2370,15 @@ export class Container
 		if (protocolHandlerShouldProcessSignal(message)) {
 			this.protocolHandler.processSignal(message);
 		} else {
-			const local = this.clientId === message.clientId;
+			const local =
+				// Check against signal audience to detect current signals
+				// including very early signals before reaching "Connected".
+				message.clientId === this.signalAudience.getSelf()?.clientId ||
+				// and use "regular" audience to detect signals from past
+				// connection bouncing slowly back from service. This may never
+				// happen, but is kept as it was used historically as the only
+				// check.
+				message.clientId === this.clientId;
 			this.runtime.processSignal(message, local);
 		}
 	}
@@ -2401,6 +2429,7 @@ export class Container
 				storage: this.storageAdapter,
 				quorum: this.protocolHandler.quorum,
 				audience: this.protocolHandler.audience,
+				signalAudience: this.signalAudience,
 				loader,
 				submitFn: (type, contents, batch, metadata) =>
 					this.submitContainerMessage(type, contents, batch, metadata),
@@ -2434,7 +2463,10 @@ export class Container
 
 			// Validate that the Runtime is compatible with this Loader.
 			const maybeRuntimeCompatDetails = runtime as FluidObject<ILayerCompatDetails>;
-			validateRuntimeCompatibility(maybeRuntimeCompatDetails.ILayerCompatDetails);
+			validateRuntimeCompatibility(
+				maybeRuntimeCompatDetails.ILayerCompatDetails,
+				this.mc.logger,
+			);
 
 			this._runtime = runtime;
 			this._lifecycleEvents.emit("runtimeInstantiated");
@@ -2454,18 +2486,92 @@ export class Container
 	};
 
 	/**
-	 * Set the connected state of the ContainerContext
-	 * This controls the "connected" state of the ContainerRuntime as well
-	 * @param connected - Is the container currently connected?
+	 * Send the connected status to the runtime.
 	 * @param readonly - Is the container in readonly mode?
+	 * @param onlyCallSetConnectionStateIfConnectedOrDisconnected - If true, only
+	 * call older `setConnectionState` on the runtime if the connection state is
+	 * either Connected or Disconnected. This exists to preserve older behavior
+	 * where the runtime was only notified of these two states.
 	 */
-	private setContextConnectedState(connected: boolean, readonly: boolean): void {
+	private setConnectionStatus(
+		readonly: boolean,
+		onlyCallSetConnectionStateIfConnectedOrDisconnected: boolean = false,
+	): void {
 		if (this._runtime?.disposed === false && this.loaded) {
-			this.runtime.setConnectionState(
-				connected &&
-					!readonly /* container can send ops if connected to service and not in readonly mode */,
-				this.clientId,
-			);
+			const setConnectionStatus = this.runtime.setConnectionStatus?.bind(this.runtime);
+			if (setConnectionStatus === undefined) {
+				if (
+					!onlyCallSetConnectionStateIfConnectedOrDisconnected ||
+					this.connectionState === ConnectionState.Connected ||
+					this.connectionState === ConnectionState.Disconnected
+				) {
+					this.runtime.setConnectionState(
+						this.connectionState === ConnectionState.Connected &&
+							!readonly /* container can send ops if connected to service and not in readonly mode */,
+						this.clientId,
+					);
+				}
+			} else {
+				const pendingClientConnectionId = this.connectionStateHandler.pendingClientId;
+				const connectionState = this.connectionState;
+				switch (connectionState) {
+					case ConnectionState.EstablishingConnection: {
+						setConnectionStatus({
+							connectionState,
+							canSendOps: false,
+							readonly,
+						});
+
+						break;
+					}
+					case ConnectionState.CatchingUp: {
+						// When catching up, we have a pending clientId, but it
+						// is not usable for ops. Send clientId with canSendOps false.
+						assert(
+							pendingClientConnectionId !== undefined,
+							0xc8a /* catching up without clientId */,
+						);
+						setConnectionStatus({
+							connectionState,
+							pendingClientConnectionId,
+							canSendOps: false,
+							readonly,
+						});
+
+						break;
+					}
+					case ConnectionState.Connected: {
+						// When connected, we have an active clientId. Pass it along
+						// with canSendOps true/false based on readonly.
+						const clientConnectionId = this.clientId;
+						assert(clientConnectionId !== undefined, 0xc8b /* connected without clientId */);
+						assert(
+							clientConnectionId === pendingClientConnectionId,
+							0xc8c /* connected with different clientId than pending */,
+						);
+						setConnectionStatus({
+							connectionState,
+							clientConnectionId,
+							canSendOps: !readonly,
+							readonly,
+						});
+
+						break;
+					}
+					case ConnectionState.Disconnected: {
+						setConnectionStatus({
+							connectionState,
+							priorPendingClientConnectionId: pendingClientConnectionId,
+							priorConnectedClientConnectionId: this.clientId,
+							canSendOps: false,
+							readonly,
+						});
+
+						break;
+					}
+					// No default
+				}
+			}
 		}
 	}
 
@@ -2512,14 +2618,22 @@ export class Container
 
 /**
  * IContainer interface that includes experimental features still under development.
- * @internal
+ * @alpha @legacy @sealed
  */
-export interface IContainerExperimental extends IContainer {
+export interface ContainerAlpha extends IContainer {
 	/**
 	 * Get pending state from container. WARNING: misuse of this API can result in duplicate op
 	 * submission and potential document corruption. The blob returned MUST be deleted if and when this
 	 * container emits a "connected" event.
 	 * @returns serialized blob that can be passed to Loader.resolve()
 	 */
-	getPendingLocalState?(): Promise<string>;
+	getPendingLocalState(): Promise<string>;
+}
+
+/**
+ * Converts types to their alpha counterparts to expose alpha functionality.
+ * @legacy @alpha
+ */
+export function asLegacyAlpha(base: IContainer): ContainerAlpha {
+	return base as ContainerAlpha;
 }

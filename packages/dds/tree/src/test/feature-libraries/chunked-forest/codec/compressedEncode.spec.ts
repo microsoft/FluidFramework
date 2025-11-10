@@ -6,7 +6,10 @@
 import { strict as assert, fail } from "node:assert";
 
 import { compareArrays } from "@fluidframework/core-utils/internal";
-import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
+import {
+	MockHandle,
+	validateAssertionError,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	type ICodecOptions,
@@ -18,24 +21,26 @@ import type {
 	TreeNodeSchemaIdentifier,
 	Value,
 } from "../../../../core/index.js";
-import { typeboxValidator } from "../../../../external-utilities/index.js";
+import { FormatValidatorBasic } from "../../../../external-utilities/index.js";
 import {
 	decode,
 	readValue,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
 import {
 	type BufferFormat,
 	IdentifierToken,
 	updateShapesAndIdentifiersEncoding,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
 import {
 	EncoderContext,
 	type FieldEncoder,
 	type FieldEncodeBuilder,
+	IncrementalChunkShape,
 	InlineArrayEncoder,
 	NestedArrayEncoder,
+	NestedArrayShape,
 	type NodeEncoder,
 	type NodeEncodeBuilder,
 	anyFieldEncoder,
@@ -43,19 +48,26 @@ import {
 	asNodesEncoder,
 	compressedEncode,
 	encodeValue,
-	// eslint-disable-next-line import/no-internal-modules
+	incrementalFieldEncoder,
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";
 import {
 	type EncodedChunkShape,
 	EncodedFieldBatch,
 	type EncodedValueShape,
 	validVersions,
-	version,
-	// eslint-disable-next-line import/no-internal-modules
+	FieldBatchFormatVersion,
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/format.js";
+import type {
+	ChunkReferenceId,
+	IncrementalDecoder,
+	IncrementalEncoder,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../../feature-libraries/chunked-forest/codec/index.js";
 import {
 	NodeShapeBasedEncoder,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/nodeEncoder.js";
 import type {
 	FieldBatch,
@@ -64,6 +76,8 @@ import type {
 import {
 	TreeCompressionStrategy,
 	cursorForJsonableTreeField,
+	emptyChunk,
+	defaultIncrementalEncodingPolicy,
 	fieldKinds,
 	jsonableTreeFromFieldCursor,
 } from "../../../../feature-libraries/index.js";
@@ -125,8 +139,9 @@ describe("compressedEncode", () => {
 						anyFieldEncoder,
 					fieldKinds,
 					testIdCompressor,
+					undefined /* incrementalEncoder */,
 				);
-				const codec = makeFieldBatchCodec({ jsonValidator: typeboxValidator }, context);
+				const codec = makeFieldBatchCodec({ jsonValidator: FormatValidatorBasic }, context);
 				const result = codec.encode(input, {
 					encodeType: TreeCompressionStrategy.Compressed,
 					idCompressor: testIdCompressor,
@@ -165,7 +180,9 @@ describe("compressedEncode", () => {
 				const buffer: BufferFormat<EncodedChunkShape> = [];
 				encodeValue(value, shape, buffer);
 				assert.deepEqual(buffer, encoded);
-				const processed = updateShapesAndIdentifiersEncoding(version, [buffer]);
+				const processed = updateShapesAndIdentifiersEncoding(FieldBatchFormatVersion.v1, [
+					buffer,
+				]);
 				assert(processed.data.length === 1);
 				const stream = { data: processed.data[0], offset: 0 };
 				const decoded = readValue(stream, shape, {
@@ -184,6 +201,7 @@ describe("compressedEncode", () => {
 			() => fail(),
 			fieldKinds,
 			testIdCompressor,
+			undefined /* incrementalEncoder */,
 		);
 		const buffer = checkNodeEncode(anyNodeEncoder, context, { type: brand("foo") });
 		assert.deepEqual(buffer, [anyNodeShape, new IdentifierToken("foo"), false, []]);
@@ -196,6 +214,7 @@ describe("compressedEncode", () => {
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
+				undefined /* incrementalEncoder */,
 			);
 			const buffer = checkFieldEncode(InlineArrayEncoder.empty, context, []);
 			assert(compareArrays(buffer, []));
@@ -207,6 +226,7 @@ describe("compressedEncode", () => {
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
+				undefined /* incrementalEncoder */,
 			);
 			const shape = new InlineArrayEncoder(1, asNodesEncoder(onlyTypeShape));
 			const buffer = checkFieldEncode(shape, context, [{ type: brand("foo") }]);
@@ -219,6 +239,7 @@ describe("compressedEncode", () => {
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
+				undefined /* incrementalEncoder */,
 			);
 			const shape = new InlineArrayEncoder(2, asNodesEncoder(onlyTypeShape));
 			const buffer = checkFieldEncode(shape, context, [
@@ -234,6 +255,7 @@ describe("compressedEncode", () => {
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
+				undefined /* incrementalEncoder */,
 			);
 			const shapeInner = new InlineArrayEncoder(2, asNodesEncoder(onlyTypeShape));
 			const shapeOuter = new InlineArrayEncoder(2, shapeInner);
@@ -259,6 +281,7 @@ describe("compressedEncode", () => {
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
+				undefined /* incrementalEncoder */,
 			);
 			const buffer = checkFieldEncode(new NestedArrayEncoder(onlyTypeShape), context, []);
 			assert.deepEqual(buffer, [0]);
@@ -270,6 +293,7 @@ describe("compressedEncode", () => {
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
+				undefined /* incrementalEncoder */,
 			);
 			const shape = new NestedArrayEncoder(onlyTypeShape);
 			const buffer = checkFieldEncode(shape, context, [{ type: brand("foo") }]);
@@ -282,6 +306,7 @@ describe("compressedEncode", () => {
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
+				undefined /* incrementalEncoder */,
 			);
 			const shape = new NestedArrayEncoder(onlyTypeShape);
 			const buffer = checkFieldEncode(shape, context, [
@@ -298,6 +323,7 @@ describe("compressedEncode", () => {
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
+				undefined /* incrementalEncoder */,
 			);
 			const buffer = checkFieldEncode(new NestedArrayEncoder(constantFooShape), context, [
 				{ type: brand("foo") },
@@ -311,6 +337,7 @@ describe("compressedEncode", () => {
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
+				undefined /* incrementalEncoder */,
 			);
 			const buffer = checkFieldEncode(new NestedArrayEncoder(constantFooShape), context, [
 				{ type: brand("foo") },
@@ -328,6 +355,7 @@ describe("compressedEncode", () => {
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
+				undefined /* incrementalEncoder */,
 			);
 			const buffer = checkFieldEncode(anyFieldEncoder, context, []);
 			// For size purposes, this should remain true
@@ -347,6 +375,7 @@ describe("compressedEncode", () => {
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
+				undefined /* incrementalEncoder */,
 			);
 			const buffer = checkFieldEncode(anyFieldEncoder, context, [{ type: brand("foo") }]);
 			// Should use anyNodeEncoder, which will lookup the shape from context:
@@ -359,6 +388,7 @@ describe("compressedEncode", () => {
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
+				undefined /* incrementalEncoder */,
 			);
 			const buffer = checkFieldEncode(anyFieldEncoder, context, [
 				{ type: brand("foo") },
@@ -366,9 +396,103 @@ describe("compressedEncode", () => {
 			]);
 			// Should use nestedArray, which will lookup the shape from context:
 			assert.deepEqual(buffer, [
-				context.nestedArrayEncoder(anyNodeEncoder),
+				context.nestedArrayEncoder(anyNodeEncoder).shape,
 				[onlyTypeShape, new IdentifierToken("foo"), onlyTypeShape, new IdentifierToken("bar")],
 			]);
+		});
+	});
+
+	describe("IncrementalChunkShape", () => {
+		const incrementalChunkShape = new IncrementalChunkShape();
+
+		it("encodes shape correctly", () => {
+			const identifiers = new Map();
+			const shapes = new Map();
+			const encodedShape = incrementalChunkShape.encodeShape(
+				{ valueToIndex: identifiers, indexToValue: [] },
+				{ valueToIndex: shapes, indexToValue: [] },
+			);
+			assert.deepEqual(encodedShape, { e: 0 });
+		});
+
+		it("shape property returns itself", () => {
+			assert.equal(incrementalChunkShape.shape, incrementalChunkShape);
+		});
+	});
+
+	describe("incrementalFieldEncoder", () => {
+		function createMockIncrementalEncoder(
+			chunkReferenceIds: ChunkReferenceId[],
+		): IncrementalEncoder {
+			return {
+				shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
+				encodeIncrementalField: () => chunkReferenceIds,
+			};
+		}
+		it("empty", () => {
+			const context = new EncoderContext(
+				() => fail(),
+				() => fail(),
+				fieldKinds,
+				testIdCompressor,
+				createMockIncrementalEncoder([]),
+			);
+
+			const buffer = checkFieldEncode(incrementalFieldEncoder, context, []);
+			assert.deepEqual(buffer, [[]]);
+		});
+
+		it("non-empty", () => {
+			const referenceIds: ChunkReferenceId[] = [brand(1), brand(2)];
+			const mockIncrementalDecoder: IncrementalDecoder = {
+				decodeIncrementalChunk: (referenceId, chunkDecoder) => {
+					assert(referenceIds.includes(referenceId));
+					return emptyChunk;
+				},
+			};
+			const context = new EncoderContext(
+				() => fail(),
+				() => fail(),
+				fieldKinds,
+				testIdCompressor,
+				createMockIncrementalEncoder(referenceIds),
+			);
+
+			const buffer = checkFieldEncode(
+				incrementalFieldEncoder,
+				context,
+				[],
+				undefined /* idCompressor */,
+				mockIncrementalDecoder,
+			);
+
+			assert.deepEqual(buffer, [referenceIds]);
+		});
+
+		it("fails without incremental encoder", () => {
+			const context = new EncoderContext(
+				() => fail(),
+				() => fail(),
+				fieldKinds,
+				testIdCompressor,
+				undefined /* incrementalEncoder */,
+			);
+
+			assert.throws(
+				() => {
+					checkFieldEncode(incrementalFieldEncoder, context, [{ type: brand("foo") }]);
+				},
+				(error: Error) =>
+					validateAssertionError(
+						error,
+						"incremental encoder must be defined to use incrementalFieldEncoder",
+					),
+			);
+		});
+
+		it("has correct shape", () => {
+			assert(incrementalFieldEncoder.shape instanceof NestedArrayShape);
+			assert(incrementalFieldEncoder.shape.innerShape instanceof IncrementalChunkShape);
 		});
 	});
 });

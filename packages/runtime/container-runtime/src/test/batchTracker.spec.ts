@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "@fluid-internal/client-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { BatchTracker } from "../batchTracker.js";
@@ -30,7 +30,7 @@ describe("Runtime", () => {
 
 		emitter.emit("batchBegin", batchMessage(1));
 		ticks += 20;
-		emitter.emit("batchEnd", new Error(), batchMessage(8));
+		emitter.emit("batchEnd", new Error("test error"), batchMessage(8));
 
 		mockLogger.assertMatch([
 			{

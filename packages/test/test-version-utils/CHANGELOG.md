@@ -1,5 +1,43 @@
 # @fluid-private/test-version-utils
 
+## 2.72.0
+
+Dependency updates only.
+
+## 2.71.0
+
+Dependency updates only.
+
+## 2.70.0
+
+### Minor Changes
+
+- Removed deprecated export of MinimumVersionForCollab from @fluidframework/container-runtime ([#25309](https://github.com/microsoft/FluidFramework/pull/25309)) [776cb1ce31](https://github.com/microsoft/FluidFramework/commit/776cb1ce31176e1eb07ba2723c2d51e6f4cc379f)
+
+  Removed the deprecated re-export of MinimumVersionForCollab from @fluidframework/container-runtime.
+  This type should now be imported from @fluidframework/runtime-definitions.
+  See the [Fluid Framework 2.52.0 release notes](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.52.0) for details.
+
+## 2.63.0
+
+Dependency updates only.
+
+## 2.62.0
+
+Dependency updates only.
+
+## 2.61.0
+
+Dependency updates only.
+
+## 2.60.0
+
+Dependency updates only.
+
+## 2.53.0
+
+Dependency updates only.
+
 ## 2.52.0
 
 Dependency updates only.
@@ -123,7 +161,6 @@ Dependency updates only.
 - Updated server dependencies ([#19122](https://github.com/microsoft/FluidFramework/issues/19122)) [25366b4229](https://github.com/microsoft/FluidFramework/commits/25366b422918cb43685c5f328b50450749592902)
 
   The following Fluid server dependencies have been updated to the latest version, 3.0.0. [See the full changelog.](https://github.com/microsoft/FluidFramework/releases/tag/server_v3.0.0)
-
   - @fluidframework/gitresources
   - @fluidframework/server-kafka-orderer
   - @fluidframework/server-lambdas

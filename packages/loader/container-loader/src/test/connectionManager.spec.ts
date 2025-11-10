@@ -10,12 +10,12 @@ import {
 	MockDocumentService,
 } from "@fluid-private/test-loader-utils";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import { IClient } from "@fluidframework/driver-definitions";
+import type { IClient } from "@fluidframework/driver-definitions";
 import {
 	DriverErrorTypes,
-	IAnyDriverError,
-	IDocumentService,
-	INack,
+	type IAnyDriverError,
+	type IDocumentService,
+	type INack,
 	NackErrorType,
 } from "@fluidframework/driver-definitions/internal";
 import { NonRetryableError, RetryableError } from "@fluidframework/driver-utils/internal";
@@ -23,7 +23,7 @@ import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { stub, type SinonFakeTimers, useFakeTimers } from "sinon";
 
 import { ConnectionManager } from "../connectionManager.js";
-import { IConnectionManagerFactoryArgs, ReconnectMode } from "../contracts.js";
+import { type IConnectionManagerFactoryArgs, ReconnectMode } from "../contracts.js";
 import { pkgVersion } from "../packageVersion.js";
 
 describe("connectionManager", () => {

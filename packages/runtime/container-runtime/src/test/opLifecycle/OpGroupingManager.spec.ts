@@ -11,7 +11,7 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 
 import { ContainerMessageType } from "../../index.js";
 import {
-	OutboundBatchMessage,
+	type OutboundBatchMessage,
 	OpGroupingManager,
 	isGroupedBatch,
 	type OutboundBatch,
@@ -41,7 +41,7 @@ describe("OpGroupingManager", () => {
 		let metadata: { flag?: boolean; batchId?: string } | undefined = opHasMetadata
 			? { flag: true }
 			: undefined;
-		metadata = batchId ? { ...metadata, batchId } : metadata;
+		metadata = batchId === undefined ? metadata : { ...metadata, batchId };
 		return {
 			metadata,
 			type: ContainerMessageType.FluidDataStoreOp,

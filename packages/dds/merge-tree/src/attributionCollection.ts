@@ -4,18 +4,17 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	AttributionKey,
 	DetachedAttributionKey,
 	OpAttributionKey,
 } from "@fluidframework/runtime-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { ISegment } from "./mergeTreeNodes.js";
+import type { ISegment } from "./mergeTreeNodes.js";
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface SequenceOffsets {
 	/**
@@ -36,8 +35,7 @@ export interface SequenceOffsets {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface SerializedAttributionCollection extends SequenceOffsets {
 	channels?: { [name: string]: SequenceOffsets };
@@ -46,8 +44,7 @@ export interface SerializedAttributionCollection extends SequenceOffsets {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IAttributionCollectionSpec<T> {
 	// eslint-disable-next-line @rushstack/no-new-null
@@ -58,8 +55,7 @@ export interface IAttributionCollectionSpec<T> {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  * @sealed
  */
 export interface IAttributionCollectionSerializer {
@@ -81,8 +77,7 @@ export interface IAttributionCollectionSerializer {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IAttributionCollection<T> {
 	/**
@@ -100,7 +95,7 @@ export interface IAttributionCollection<T> {
 	 * Example: If the Attribution Offsets in the segment is [0, 10, 20, 30, 40] and request is for (startOffset: 5, endOffset: 25),
 	 * then result would be [(offset: 0, key: key1), (offset:10, key: key2), (offset:20, key: key3)].
 	 * @param channel - When specified, gets attribution keys associated with a particular channel.
-	 * @returns - undefined if the provided channel is not found or list of attribution keys along with
+	 * @returns undefined if the provided channel is not found or list of attribution keys along with
 	 * the corresponding offset start boundary.
 	 */
 	getKeysInOffsetRange(

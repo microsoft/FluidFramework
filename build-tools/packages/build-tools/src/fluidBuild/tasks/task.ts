@@ -8,7 +8,8 @@ import { type AsyncPriorityQueue, priorityQueue } from "async";
 import * as assert from "assert";
 import registerDebug from "debug";
 import type { BuildContext } from "../buildContext";
-import { type BuildPackage, BuildResult } from "../buildGraph";
+import { type BuildPackage } from "../buildGraph";
+import { BuildResult } from "../buildResult";
 import { options } from "../options";
 import type { LeafTask } from "./leaf/leafTask";
 

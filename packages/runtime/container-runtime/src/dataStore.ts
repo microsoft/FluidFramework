@@ -4,28 +4,29 @@
  */
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { FluidObject } from "@fluidframework/core-interfaces";
-import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import type { FluidObject } from "@fluidframework/core-interfaces";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
-	AliasResult,
-	IDataStore,
-	IFluidDataStoreChannel,
-	// eslint-disable-next-line import/no-deprecated
-	type IContainerRuntimeBaseExperimental,
+	type AliasResult,
+	type IDataStore,
+	type IFluidDataStoreChannel,
+	asLegacyAlpha,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	TelemetryDataTag,
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { ChannelCollection } from "./channelCollection.js";
+import type { ChannelCollection } from "./channelCollection.js";
 import { ContainerMessageType } from "./messageTypes.js";
 
 /**
  * Interface for an op to be used for assigning an
  * alias to a datastore
+ * @internal
+ * @privateRemarks exported per ContainerRuntime export for testing purposes
  */
 export interface IDataStoreAliasMessage {
 	/**
@@ -80,9 +81,7 @@ class DataStore implements IDataStore {
 		if (alias.includes("/")) {
 			throw new UsageError(`The alias cannot contain slashes: '${alias}'`);
 		}
-		// eslint-disable-next-line import/no-deprecated
-		const runtime = this.parentContext.containerRuntime as IContainerRuntimeBaseExperimental;
-		if (runtime.inStagingMode === true) {
+		if (asLegacyAlpha(this.parentContext.containerRuntime).inStagingMode === true) {
 			throw new UsageError("Cannot set aliases while in staging mode");
 		}
 
@@ -147,7 +146,10 @@ class DataStore implements IDataStore {
 		}
 
 		const aliased = await this.ackBasedPromise<boolean>((resolve) => {
-			this.parentContext.submitMessage(ContainerMessageType.Alias, message, resolve);
+			this.parentContext.submitMessage(
+				{ type: ContainerMessageType.Alias, contents: message },
+				resolve,
+			);
 		})
 			.catch((error) => {
 				this.logger.sendErrorEvent(

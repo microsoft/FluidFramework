@@ -13,12 +13,22 @@ import {
 	IdentifierOrIndex,
 	ShapeIndex,
 } from "./formatGeneric.js";
+import type { Brand } from "../../../util/index.js";
 
-export const version = 1;
+/**
+ * The format version for the field batch.
+ */
+export const FieldBatchFormatVersion = {
+	v1: 1,
+} as const;
+export type FieldBatchFormatVersion = Brand<
+	(typeof FieldBatchFormatVersion)[keyof typeof FieldBatchFormatVersion],
+	"FieldBatchFormatVersion"
+>;
 
 // Compatible versions used for format/version validation.
 // TODO: A proper version update policy will need to be documented.
-export const validVersions = new Set([version]);
+export const validVersions = new Set([FieldBatchFormatVersion.v1]);
 
 /**
  * Top level length is implied from length of data array.
@@ -46,6 +56,12 @@ export const EncodedInlineArrayShape = Type.Object(
  * Used for polymorphism.
  */
 export const EncodedAnyShape = Type.Literal(0);
+
+/**
+ * Encoded content is a {@link ChunkReferenceId}.
+ * This represents the shape of a chunk that is encoded separately and is referenced by its {@link ChunkReferenceId}.
+ */
+export const EncodedIncrementalChunkShape = Type.Literal(0);
 
 /**
  * Content of the encoded field is specified by the Shape referenced by the ShapeIndex.
@@ -185,6 +201,10 @@ export const EncodedChunkShape = Type.Object(
 		 * {@link EncodedAnyShape} union member.
 		 */
 		d: Type.Optional(EncodedAnyShape),
+		/**
+		 * {@link EncodedIncrementalChunkShape} union member.
+		 */
+		e: Type.Optional(EncodedIncrementalChunkShape),
 	},
 	unionOptions,
 );
@@ -195,6 +215,10 @@ export type EncodedNestedArrayShape = Static<typeof EncodedNestedArrayShape>;
 export type EncodedInlineArrayShape = Static<typeof EncodedInlineArrayShape>;
 export type EncodedNodeShape = Static<typeof EncodedNodeShape>;
 export type EncodedAnyShape = Static<typeof EncodedAnyShape>;
+export type EncodedIncrementalChunkShape = Static<typeof EncodedIncrementalChunkShape>;
 
-export const EncodedFieldBatch = EncodedFieldBatchGeneric(version, EncodedChunkShape);
+export const EncodedFieldBatch = EncodedFieldBatchGeneric(
+	FieldBatchFormatVersion.v1,
+	EncodedChunkShape,
+);
 export type EncodedFieldBatch = Static<typeof EncodedFieldBatch>;

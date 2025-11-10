@@ -84,7 +84,7 @@ describe("ConsensusRegisterCollection", () => {
 
 		describe("API", () => {
 			it("Can create a collection", () => {
-				assert.ok(crc);
+				assert(crc !== undefined);
 			});
 
 			it("Can add and remove data", async () => {
@@ -366,7 +366,7 @@ describe("ConsensusRegisterCollection", () => {
 			public async deleteOutboundRoutes() {
 				const subCollectionId = `subCollection-${this.subCollectionCount}`;
 				const deletedHandle = this.collection1.read(subCollectionId) as IFluidHandleInternal;
-				assert(deletedHandle, "Route must be added before deleting");
+				assert(deletedHandle !== undefined, "Route must be added before deleting");
 
 				// Delete the last handle that was added.
 				await this.writeAndProcessMsg(subCollectionId, "nonHandleValue");

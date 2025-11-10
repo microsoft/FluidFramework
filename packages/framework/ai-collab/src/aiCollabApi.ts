@@ -4,7 +4,7 @@
  */
 
 import type { TreeNode } from "@fluidframework/tree";
-// eslint-disable-next-line import/no-named-as-default
+// eslint-disable-next-line import-x/no-named-as-default
 import type OpenAI from "openai";
 
 import type { Diff } from "./diffTypes.js";

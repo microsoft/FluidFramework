@@ -12,6 +12,7 @@ import {
 	type IJsonCodec,
 	type IMultiFormatCodec,
 	type SchemaValidationFunction,
+	extractJsonValidator,
 	makeCodecFamily,
 	withSchemaValidation,
 } from "../../codec/index.js";
@@ -39,7 +40,10 @@ import {
 	chunkFieldSingle,
 	defaultChunkPolicy,
 } from "../chunked-forest/index.js";
-import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
+import {
+	TreeCompressionStrategy,
+	type TreeCompressionStrategyPrivate,
+} from "../treeCompressionUtils.js";
 
 import type { FieldChangeEncodingContext, FieldChangeHandler } from "./fieldChangeHandler.js";
 import type {
@@ -77,7 +81,7 @@ export function makeModularChangeCodecFamily(
 	>,
 	fieldsCodec: FieldBatchCodec,
 	codecOptions: ICodecOptions,
-	chunkCompressionStrategy: TreeCompressionStrategy = TreeCompressionStrategy.Compressed,
+	chunkCompressionStrategy: TreeCompressionStrategyPrivate = TreeCompressionStrategy.Compressed,
 ): ICodecFamily<ModularChangeset, ChangeEncodingContext> {
 	return makeCodecFamily(
 		Array.from(fieldKindConfigurations.entries(), ([version, fieldKinds]) => [
@@ -117,7 +121,7 @@ function makeModularChangeCodec(
 	>,
 	fieldsCodec: FieldBatchCodec,
 	codecOptions: ICodecOptions,
-	chunkCompressionStrategy: TreeCompressionStrategy = TreeCompressionStrategy.Compressed,
+	chunkCompressionStrategy: TreeCompressionStrategyPrivate = TreeCompressionStrategy.Compressed,
 ): ModularChangeCodec {
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	const getMapEntry = ({ kind, formatVersion }: FieldKindConfigurationEntry) => {
@@ -125,7 +129,7 @@ function makeModularChangeCodec(
 		return {
 			codec,
 			compiledSchema: codec.json.encodedSchema
-				? codecOptions.jsonValidator.compile(codec.json.encodedSchema)
+				? extractJsonValidator(codecOptions.jsonValidator).compile(codec.json.encodedSchema)
 				: undefined,
 		};
 	};
@@ -213,6 +217,7 @@ function makeModularChangeCodec(
 		context: FieldChangeEncodingContext,
 	): EncodedNodeChangeset {
 		const encodedChange: EncodedNodeChangeset = {};
+		// Note: revert constraints are ignored for now because they would only be needed if we supported reverting changes made by peers.
 		const { fieldChanges, nodeExistsConstraint } = change;
 
 		if (fieldChanges !== undefined) {

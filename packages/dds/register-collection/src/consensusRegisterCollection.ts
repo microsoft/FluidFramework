@@ -10,11 +10,13 @@ import {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 import {
-	MessageType,
-	ISequencedDocumentMessage,
-} from "@fluidframework/driver-definitions/internal";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+	ISummaryTreeWithStats,
+	IRuntimeMessageCollection,
+	IRuntimeMessagesContent,
+	ISequencedMessageEnvelope,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	IFluidSerializer,
 	SharedObject,
@@ -120,8 +122,7 @@ interface IConsensusRegisterCollectionInternalEvents {
 
 /**
  * {@inheritDoc IConsensusRegisterCollection}
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class ConsensusRegisterCollection<T>
 	extends SharedObject<IConsensusRegisterCollectionEvents>
@@ -273,25 +274,35 @@ export class ConsensusRegisterCollection<T>
 
 	protected onDisconnect() {}
 
-	protected processCore(
-		message: ISequencedDocumentMessage,
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
+	 */
+	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+		const { envelope, local, messagesContent } = messagesCollection;
+		for (const messageContent of messagesContent) {
+			this.processMessage(envelope, messageContent, local);
+		}
+	}
+
+	private processMessage(
+		messageEnvelope: ISequencedMessageEnvelope,
+		messageContent: IRuntimeMessagesContent,
 		local: boolean,
-		localOpMetadata: unknown,
-	) {
-		if (message.type === MessageType.Operation) {
-			const op = message.contents as IIncomingRegisterOperation<T>;
+	): void {
+		if (messageEnvelope.type === MessageType.Operation) {
+			const op = messageContent.contents as IIncomingRegisterOperation<T>;
 			switch (op.type) {
 				case "write": {
 					// backward compatibility: File at rest written with runtime <= 0.13 do not have refSeq
 					// when the refSeq property didn't exist
 					if (op.refSeq === undefined) {
-						op.refSeq = message.referenceSequenceNumber;
+						op.refSeq = messageEnvelope.referenceSequenceNumber;
 					}
 					// Message can be delivered with delay - e.g. resubmitted on reconnect.
 					// Use the refSeq from when the op was created, not when it was transmitted
 					const refSeqWhenCreated = op.refSeq;
 					assert(
-						refSeqWhenCreated <= message.referenceSequenceNumber,
+						refSeqWhenCreated <= messageEnvelope.referenceSequenceNumber,
 						0x06e /* "Message's reference sequence number < op's reference sequence number!" */,
 					);
 
@@ -302,16 +313,20 @@ export class ConsensusRegisterCollection<T>
 						op.key,
 						value,
 						refSeqWhenCreated,
-						message.sequenceNumber,
+						messageEnvelope.sequenceNumber,
 						local,
 					);
 					if (local) {
 						// Resolve the pending promise for this operation now that we have received an ack for it.
 						assert(
-							typeof localOpMetadata === "number",
-							"Expect localOpMetadata to be a number",
+							typeof messageContent.localOpMetadata === "number",
+							0xc0e /* Expect localOpMetadata to be a number */,
 						);
-						this.internalEvents.emit("pendingMessageAck", localOpMetadata, isWinner);
+						this.internalEvents.emit(
+							"pendingMessageAck",
+							messageContent.localOpMetadata,
+							isWinner,
+						);
 					}
 					break;
 				}
@@ -409,7 +424,10 @@ export class ConsensusRegisterCollection<T>
 		// We don't need to do anything to roll back CRC, it's safe to just drop
 		// the op on the floor since we don't modify the DDS until the ack.
 		// We emit an internal event so we know to resolve the pending promise.
-		assert(typeof localOpMetadata === "number", "Expect localOpMetadata to be a number");
+		assert(
+			typeof localOpMetadata === "number",
+			0xc0f /* Expect localOpMetadata to be a number */,
+		);
 		this.internalEvents.emit("pendingMessageRollback", localOpMetadata);
 	}
 

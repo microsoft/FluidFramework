@@ -4,13 +4,13 @@
  */
 
 // TODO: Update import once TreeDataObject is exported in our non-internal package.
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { TreeDataObject, TreeDataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { SharedString } from "@fluidframework/sequence/legacy";
 import { SharedTree, TreeViewConfiguration, type TreeView } from "@fluidframework/tree/legacy";
 import { v4 as uuid } from "uuid";
 
-import { TodoItem, TodoList } from "./index.js";
+import { TodoItem, TodoList } from "./schema.js";
 
 /**
  * Props used when creating a new todo item.

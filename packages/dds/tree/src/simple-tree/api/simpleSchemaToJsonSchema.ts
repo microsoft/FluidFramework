@@ -37,6 +37,7 @@ import {
 	ObjectNodeSchema,
 } from "../node-kinds/index.js";
 import { LeafNodeSchema } from "../leafNodeSchema.js";
+import { KeyEncodingOptions } from "./customTree.js";
 
 /**
  * Generates a JSON Schema representation from a simple tree schema.
@@ -45,8 +46,6 @@ import { LeafNodeSchema } from "../leafNodeSchema.js";
  *
  * This cannot handle the case where the root is undefined since undefined is not a concept in JSON.
  * This also cannot handle {@link SchemaStatics.handle} since they also are not supported in JSON.
- *
- * @internal
  */
 export function toJsonSchema(
 	schema: TreeSchema,
@@ -62,6 +61,7 @@ export function toJsonSchema(
 	// TODO: deduplicate field handling logic from convertObjectNodeSchema: at least include metadata's description.
 	// TODO: maybe account for consider schema.kind, or just take in ImplicitAllowedTypes
 	// TODO: handle case where allowedTypes is empty.
+	// TODO: handle staged types in a controllable way.
 	return hasSingle(allowedTypes)
 		? {
 				...allowedTypes[0],
@@ -107,7 +107,10 @@ function convertNodeSchema(
 
 function convertArrayNodeSchema(schema: SimpleArrayNodeSchema): JsonArrayNodeSchema {
 	const allowedTypes: JsonSchemaRef[] = [];
-	schema.allowedTypesIdentifiers.forEach((type) => {
+	const allowedTypesIdentifiers: ReadonlySet<string> = new Set(
+		schema.simpleAllowedTypes.keys(),
+	);
+	allowedTypesIdentifiers.forEach((type) => {
 		allowedTypes.push(createSchemaRef(type));
 	});
 
@@ -160,7 +163,10 @@ export function convertObjectNodeSchema(
 	const properties: Record<string, JsonFieldSchema> = {};
 	const required: string[] = [];
 	for (const [propertyKey, fieldSchema] of schema.fields) {
-		const key = options.useStoredKeys ? fieldSchema.storedKey : propertyKey;
+		const key =
+			options.keys === KeyEncodingOptions.usePropertyKeys
+				? propertyKey
+				: fieldSchema.storedKey;
 		const allowedTypes: JsonSchemaRef[] = [];
 		for (const allowedType of fieldSchema.allowedTypesIdentifiers) {
 			allowedTypes.push(createSchemaRef(allowedType));
@@ -190,6 +196,7 @@ export function convertObjectNodeSchema(
 		_treeNodeSchemaKind: NodeKind.Object,
 		properties,
 		required,
+		// TODO: support unknown optional fields (only when using "allStoredKeys", and constrain the content to be in schema somehow)
 		additionalProperties: false,
 	};
 
@@ -202,7 +209,10 @@ function convertRecordLikeNodeSchema(
 	schema: SimpleRecordNodeSchema | SimpleMapNodeSchema,
 ): JsonMapNodeSchema | JsonRecordNodeSchema {
 	const allowedTypes: JsonSchemaRef[] = [];
-	schema.allowedTypesIdentifiers.forEach((type) => {
+	const allowedTypesIdentifiers: ReadonlySet<string> = new Set(
+		schema.simpleAllowedTypes.keys(),
+	);
+	allowedTypesIdentifiers.forEach((type) => {
 		allowedTypes.push(createSchemaRef(type));
 	});
 

@@ -38,8 +38,13 @@ export const defaultMinVersionForCollab =
  * Today we use "1.0.0", because our policy supports N/N-1 & N/N-2, which includes
  * all minor versions of N. Though LTS starts at 1.4.0, we should stay consistent
  * with our policy and allow all 1.x versions to be compatible with 2.x.
+ *
+ * @privateRemarks
+ * Exported for use in tests.
+ *
+ * @internal
  */
-const lowestMinVersionForCollab = "1.0.0" as const satisfies MinimumVersionForCollab;
+export const lowestMinVersionForCollab = "1.0.0" as const satisfies MinimumVersionForCollab;
 
 /**
  * String in a valid semver format specifying bottom of a minor version
@@ -68,9 +73,7 @@ export type SemanticVersion =
  * @internal
  */
 export type ConfigMap<T extends Record<string, unknown>> = {
-	[K in keyof T]-?: {
-		[version: MinimumMinorSemanticVersion]: T[K];
-	};
+	[K in keyof T]-?: Record<MinimumMinorSemanticVersion, T[K]>;
 };
 
 /**
@@ -94,6 +97,7 @@ export function getConfigsForMinVersionForCollab<T extends Record<SemanticVersio
 	const defaultConfigs: Partial<T> = {};
 	// Iterate over configMap to get default values for each option.
 	for (const key of Object.keys(configMap)) {
+		// Type assertion is safe as key comes from Object.keys(configMap)
 		const config = configMap[key as keyof T];
 		// Sort the versions in ascending order so we can short circuit the loop.
 		const versions = Object.keys(config).sort(compare);
@@ -102,6 +106,7 @@ export function getConfigsForMinVersionForCollab<T extends Record<SemanticVersio
 		// value that is compatible with the version specified as the minVersionForCollab.
 		for (const version of versions) {
 			if (gte(minVersionForCollab, version)) {
+				// Type assertion is safe as version is a key from the config object
 				defaultConfigs[key] = config[version as MinimumMinorSemanticVersion];
 			} else {
 				// If the minVersionForCollab is less than the version, we break out of the loop since we don't need to check
@@ -114,6 +119,31 @@ export function getConfigsForMinVersionForCollab<T extends Record<SemanticVersio
 }
 
 /**
+ * Returns detailed information about the validity of a minVersionForCollab.
+ * @param minVersionForCollab - The minVersionForCollab to validate.
+ * @returns An object containing the validity information.
+ *
+ * @internal
+ */
+export function checkValidMinVersionForCollabVerbose(
+	minVersionForCollab: MinimumVersionForCollab,
+): {
+	isValidSemver: boolean;
+	isGteLowestMinVersion: boolean;
+	isLtePkgVersion: boolean;
+} {
+	const isValidSemver = valid(minVersionForCollab) !== null;
+	return {
+		isValidSemver,
+
+		// We have to check if the value is a valid semver before calling gte/lte, otherwise they will throw when parsing the version.
+		isGteLowestMinVersion:
+			isValidSemver && gte(minVersionForCollab, lowestMinVersionForCollab),
+		isLtePkgVersion: isValidSemver && lte(minVersionForCollab, pkgVersion),
+	};
+}
+
+/**
  * Checks if the minVersionForCollab is valid.
  * A valid minVersionForCollab is a MinimumVersionForCollab that is at least `lowestMinVersionForCollab` and less than or equal to the current package version.
  *
@@ -122,11 +152,35 @@ export function getConfigsForMinVersionForCollab<T extends Record<SemanticVersio
 export function isValidMinVersionForCollab(
 	minVersionForCollab: MinimumVersionForCollab,
 ): boolean {
-	return (
-		valid(minVersionForCollab) !== null &&
-		gte(minVersionForCollab, lowestMinVersionForCollab) &&
-		lte(minVersionForCollab, pkgVersion)
-	);
+	const { isValidSemver, isGteLowestMinVersion, isLtePkgVersion } =
+		checkValidMinVersionForCollabVerbose(minVersionForCollab);
+	return isValidSemver && isGteLowestMinVersion && isLtePkgVersion;
+}
+
+/**
+ * Converts a SemanticVersion to a MinimumVersionForCollab.
+ * @param semanticVersion - The version to convert.
+ * @returns The version as a MinimumVersionForCollab.
+ * @throws UsageError if the version is not a valid MinimumVersionForCollab.
+ *
+ * @internal
+ */
+export function semanticVersionToMinimumVersionForCollab(
+	semanticVersion: SemanticVersion,
+): MinimumVersionForCollab {
+	const minVersionForCollab = semanticVersion as MinimumVersionForCollab;
+	const { isValidSemver, isGteLowestMinVersion, isLtePkgVersion } =
+		checkValidMinVersionForCollabVerbose(minVersionForCollab);
+	if (!(isValidSemver && isGteLowestMinVersion && isLtePkgVersion)) {
+		throw new UsageError(
+			`Version ${minVersionForCollab} is not a valid MinimumVersionForCollab. ` +
+				`It must be in a valid semver format, at least ${lowestMinVersionForCollab}, ` +
+				`and less than or equal to the current package version ${pkgVersion}. ` +
+				`Details: { isValidSemver: ${isValidSemver}, isGteLowestMinVersion: ${isGteLowestMinVersion}, isLtePkgVersion: ${isLtePkgVersion} }`,
+		);
+	}
+
+	return minVersionForCollab;
 }
 
 /**
@@ -145,6 +199,7 @@ export function getValidationForRuntimeOptions<T extends Record<string, unknown>
 		return;
 	}
 	// Iterate through each runtime option passed in by the user
+	// Type assertion is safe as entries come from runtimeOptions object
 	for (const [passedRuntimeOption, passedRuntimeOptionValue] of Object.entries(
 		runtimeOptions,
 	) as [keyof T & string, T[keyof T & string]][]) {

@@ -27,6 +27,8 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
+import type { MinimumVersionForCollab } from "./compatibilityDefinitions.js";
+import type { ContainerExtensionProvider } from "./containerExtensionProvider.js";
 import type {
 	IFluidDataStoreFactory,
 	IProvideFluidDataStoreFactory,
@@ -51,8 +53,7 @@ import type {
 
 /**
  * Runtime flush mode handling
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export enum FlushMode {
 	/**
@@ -81,7 +82,7 @@ export enum FlushModeExperimental {
 	 * This feature requires a version of the loader which supports reference sequence numbers. If an older version of
 	 * the loader is used, the runtime will fall back on FlushMode.TurnBased.
 	 *
-	 * @experimental - Not ready for use
+	 * @experimental Not ready for use
 	 */
 	Async = 2,
 }
@@ -89,8 +90,7 @@ export enum FlushModeExperimental {
 /**
  * This tells the visibility state of a Fluid object. It basically tracks whether the object is not visible, visible
  * locally within the container only or visible globally to all clients.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const VisibilityState = {
 	/**
@@ -117,14 +117,12 @@ export const VisibilityState = {
 	GloballyVisible: "GloballyVisible",
 };
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type VisibilityState = (typeof VisibilityState)[keyof typeof VisibilityState];
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  * @sealed
  */
 export interface IContainerRuntimeBaseEvents extends IEvent {
@@ -162,8 +160,7 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
  * and will be garbage collected. The current datastore cannot be aliased to a different value.
  *
  * 'AlreadyAliased' - the datastore has already been previously bound to another alias name.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
 
@@ -179,8 +176,7 @@ export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
  * @privateRemarks
  * TODO: These docs should define what a "data store" is, and not do so by just referencing "data store".
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IDataStore {
 	/**
@@ -204,8 +200,7 @@ export interface IDataStore {
  * A reduced set of functionality of {@link @fluidframework/container-runtime-definitions#IContainerRuntime} that a data store context/data store runtime will need.
  * @privateRemarks
  * TODO: this should be merged into IFluidDataStoreContext
- * @legacy
- * @alpha
+ * @legacy @beta
  * @sealed
  */
 export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeBaseEvents> {
@@ -254,7 +249,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/README.md | README}.
 	 */
 	createDetachedDataStore(
-		pkg: Readonly<string[]>,
+		pkg: readonly string[],
 		loadingGroupId?: string,
 	): IFluidDataStoreContextDetached;
 
@@ -314,71 +309,13 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 }
 
 /**
- * @experimental
- * @deprecated - These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
- * @legacy
- * @alpha
- * @sealed
- */
-export interface CommitStagedChangesOptionsExperimental {
-	/**
-	 * If true, intermediate states created by changes made while in staging mode will be "squashed" out of the
-	 * ops which were created during staging mode.
-	 * Defaults to false.
-	 * @remarks
-	 * The squash parameter is analogous to `git squash` but differs in a notable way: ops created by a client exiting staging mode
-	 * are not necessarily coalesced into a single op or something like it.
-	 * It still does have the desirable property that "unnecessary changes" (such as inserting some content then removing it) will
-	 * be removed from the set of submitted ops, which means it helps reduce network traffic and the chance of unwanted data being
-	 * persisted--even if only temporarily--in the document.
-	 *
-	 * By not attempting to reduce the set of changes to a single op a la `git squash`, we can better preserve the ordering of
-	 * changes that remote clients see such that they better align with the client which submitted the changes.
-	 */
-	squash?: boolean;
-}
-
-/**
- * @experimental
- * @deprecated - These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
- * @legacy
- * @alpha
- * @sealed
- */
-export interface StageControlsExperimental {
-	/**
-	 * Exit staging mode and commit to any changes made while in staging mode.
-	 * This will cause them to be sent to the ordering service, and subsequent changes
-	 * made by this container will additionally flow freely to the ordering service.
-	 * @param options - Options when committing changes.
-	 */
-	readonly commitChanges: (options?: Partial<CommitStagedChangesOptionsExperimental>) => void;
-	/**
-	 * Exit staging mode and discard any changes made while in staging mode.
-	 */
-	readonly discardChanges: () => void;
-}
-
-/**
- * @experimental
- * @deprecated - These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
- * @legacy
- * @alpha
- * @sealed
- */
-export interface IContainerRuntimeBaseExperimental extends IContainerRuntimeBase {
-	enterStagingMode?(): StageControlsExperimental;
-	readonly inStagingMode?: boolean;
-}
-/**
  * These policies can be set by the author of the data store via its data store runtime to influence behaviors.
  *
  * @remarks
  * Policies allow data store authors to define specific behaviors or constraints for their data stores.
  * These settings can impact how the data store interacts with the runtime and other components.
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IFluidDataStorePolicies {
 	/**
@@ -396,8 +333,7 @@ export interface IFluidDataStorePolicies {
  *
  * Functionality include attach, snapshot, op/signal processing, request routes, expose an entryPoint,
  * and connection state notifications
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IFluidDataStoreChannel extends IDisposable {
 	/**
@@ -465,7 +401,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	 * @param clientId - ID of the client. It's old ID when in disconnected state and
 	 * it's new client ID when we are connecting or connected.
 	 */
-	setConnectionState(connected: boolean, clientId?: string);
+	setConnectionState(connected: boolean, clientId?: string): void;
 
 	/**
 	 * Notifies this object about changes in the readonly state
@@ -491,7 +427,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	 * See remarks about squashing contract on `CommitStagedChangesOptionsExperimental`.
 	 */
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
-	reSubmit(type: string, content: any, localOpMetadata: unknown, squash?: boolean);
+	reSubmit(type: string, content: any, localOpMetadata: unknown, squash?: boolean): void;
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
 	applyStashedOp(content: any): Promise<unknown>;
@@ -517,8 +453,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type CreateChildSummarizerNodeFn = (
 	summarizeInternal: SummarizeInternalFn,
@@ -548,10 +483,10 @@ export interface IPendingMessagesState {
  * Therefore the semantics of these two interfaces is not really distinct.
  *
  * @privateRemarks
- * In addition to the use for datastores via IFluidDataStoreContext, this is implemented by ContainerRuntime to provide context to the ChannelCollection.
+ * In addition to the use for datastores via IFluidDataStoreContext, this is
+ * partially implemented by ContainerRuntime to provide context to the ChannelCollection.
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IFluidParentContext
 	extends IProvideFluidHandleContext,
@@ -565,6 +500,12 @@ export interface IFluidParentContext
 	 * the context should also consider themselves readonly.
 	 */
 	readonly isReadOnly?: () => boolean;
+	/**
+	 * Minimum version of the FF runtime that is required to collaborate on new documents.
+	 * Consumed by {@link @fluidframework/container-runtime#FluidDataStoreContext}.
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minVersionForCollab} for more details.
+	 */
+	readonly minVersionForCollab?: MinimumVersionForCollab;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	readonly storage: IRuntimeStorageService;
 	readonly baseLogger: ITelemetryBaseLogger;
@@ -683,8 +624,7 @@ export interface IFluidParentContext
  * Each string in the array is the "identifier" to pick a specific {@link NamedFluidDataStoreRegistryEntry2} within a {@link NamedFluidDataStoreRegistryEntries}.
  *
  * Due to some usages joining this array with "/", it is recommended to avoid using "/" in the strings.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type PackagePath = readonly string[];
 
@@ -694,8 +634,7 @@ export type PackagePath = readonly string[];
  * @remarks
  * This context is provided to the implementation of {@link IFluidDataStoreChannel} which powers the datastore.
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IFluidDataStoreContext extends IFluidParentContext {
 	readonly id: string;
@@ -756,8 +695,21 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 }
 
 /**
- * @legacy
- * @alpha
+ * Internal extension to {@link IFluidDataStoreContext} for use across FluidFramework packages.
+ *
+ * @remarks
+ * Important: this interface does cross layer boundaries and must follow `@legacy`
+ * layer compatibility patterns.
+ * This is meant to be a staging ground ahead of adding properties to {@link IFluidDataStoreContext}.
+ *
+ * @internal
+ */
+export interface FluidDataStoreContextInternal
+	extends IFluidDataStoreContext,
+		ContainerExtensionProvider {}
+
+/**
+ * @legacy @beta
  */
 export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {
 	/**

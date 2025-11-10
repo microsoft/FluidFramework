@@ -108,7 +108,7 @@ steps:
       ls -1 $TEST_PACKAGE_PATH_PATTERN
 
       if [[ `ls -1 $TEST_PACKAGE_PATH_PATTERN | wc -l` -eq 1 ]]; then
-        npm install $(ls $TEST_PACKAGE_PATH_PATTERN)
+        pnpm install $(ls $TEST_PACKAGE_PATH_PATTERN)
       else
         echo "##vso[task.logissue type=error]Test package '${{ parameters.testPackageName }}' not found, or more than one possible match found. See messages above."
         exit -1

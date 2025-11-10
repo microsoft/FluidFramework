@@ -8,7 +8,6 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { type FlexTreeNode, isFlexTreeNode } from "../../feature-libraries/index.js";
 
-import { markEager } from "./flexList.js";
 import { inPrototypeChain, privateToken, TreeNode } from "./treeNode.js";
 import { UnhydratedFlexTreeNode } from "./unhydratedFlexTree.js";
 import {
@@ -26,7 +25,7 @@ import {
 } from "./treeNodeKernel.js";
 import type { InternalTreeNode } from "./types.js";
 import { typeSchemaSymbol } from "./withType.js";
-import type { ImplicitAnnotatedAllowedTypes } from "./allowedTypes.js";
+import type { AllowedTypesFull } from "./allowedTypes.js";
 import type { SimpleNodeSchemaBase } from "./simpleNodeSchemaBase.js";
 
 /**
@@ -209,8 +208,6 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 		return result;
 	}
 }
-// Class objects are functions (callable), so we need a strong way to distinguish between `schema` and `() => schema` when used as a `LazyItem`.
-markEager(TreeNodeValid);
 
 /**
  * Data cached about the most derived type in a schema's class hierarchy.
@@ -262,7 +259,7 @@ export function isClassBasedSchema(
  */
 export function createTreeNodeSchemaPrivateData(
 	schema: TreeNodeSchemaCore<string, NodeKind, boolean>,
-	childAnnotatedAllowedTypes: readonly ImplicitAnnotatedAllowedTypes[],
+	childAllowedTypes: readonly AllowedTypesFull[],
 	toStored: TreeNodeSchemaPrivateData["toStored"],
 ): TreeNodeSchemaPrivateData {
 	const schemaValid = schemaAsTreeNodeValid(schema);
@@ -272,7 +269,7 @@ export function createTreeNodeSchemaPrivateData(
 
 	return {
 		idempotentInitialize: () => schemaValid.oneTimeInitialize().oneTimeInitialized,
-		childAnnotatedAllowedTypes,
+		childAllowedTypes,
 		toStored,
 	};
 }

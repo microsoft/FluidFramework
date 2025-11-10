@@ -30,8 +30,7 @@ export type DocumentSchemaValueType = string | string[] | true | number | undefi
  * undefined - ID compressor is not loaded.
  * While IContainerRuntime.generateDocumentUniqueId() is available, it will produce long IDs that are do not compress well.
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type IdCompressorMode = "on" | "delayed" | undefined;
 
@@ -343,7 +342,7 @@ function checkRuntimeCompatibility(
 	} else {
 		for (const [name, value] of Object.entries(documentSchema.runtime)) {
 			const validator = documentSchemaSupportedConfigs[name] as IProperty | undefined;
-			if (validator === undefined || !validator.validate(value)) {
+			if (!(validator?.validate(value) ?? false)) {
 				unknownProperty = `runtime/${name}`;
 			}
 		}
@@ -741,7 +740,7 @@ export class DocumentsSchemaController {
 	 * @param contents - contents of the messages
 	 * @param local - whether op is local
 	 * @param sequenceNumber - sequence number of the op
-	 * @returns - true if schema was accepted, otherwise false (rejected due to failed CAS)
+	 * @returns true if schema was accepted, otherwise false (rejected due to failed CAS)
 	 */
 	public processDocumentSchemaMessages(
 		contents: IDocumentSchemaChangeMessageIncoming[],
@@ -810,7 +809,7 @@ export class DocumentsSchemaController {
  */
 function isDevBuild(version: string): boolean {
 	const parsed = parse(version);
-	return parsed !== null && parsed.prerelease.includes("test");
+	return parsed?.prerelease.includes("test") ?? false;
 }
 
 /* eslint-enable jsdoc/check-indentation */

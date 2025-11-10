@@ -35,7 +35,6 @@ import {
 	FieldKind,
 	FieldSchemaAlpha,
 	normalizeFieldSchema,
-	type ImplicitAnnotatedFieldSchema,
 	type ImplicitFieldSchema,
 } from "./fieldSchema.js";
 import type { SimpleFieldSchema, SimpleNodeSchema } from "./simpleSchema.js";
@@ -55,23 +54,23 @@ export const permissiveStoredSchemaGenerationOptions: StoredSchemaGenerationOpti
 };
 
 /**
- * Converts a {@link ImplicitAnnotatedFieldSchema} into a {@link TreeStoredSchema} for use in schema upgrades.
+ * Converts a {@link ImplicitFieldSchema} into a {@link TreeStoredSchema} for use in schema upgrades.
  *
  * TODO: once upgrades are more flexible, this should take in more options, including the old schema and specific upgrades to enable.
  */
-export function toUpgradeSchema(root: ImplicitAnnotatedFieldSchema): TreeStoredSchema {
+export function toUpgradeSchema(root: ImplicitFieldSchema): TreeStoredSchema {
 	return toStoredSchema(root, restrictiveStoredSchemaGenerationOptions);
 }
 
 /**
- * Converts a {@link ImplicitAnnotatedFieldSchema} into a {@link TreeStoredSchema} for use as initial document schema.
+ * Converts a {@link ImplicitFieldSchema} into a {@link TreeStoredSchema} for use as initial document schema.
  */
-export function toInitialSchema(root: ImplicitAnnotatedFieldSchema): TreeStoredSchema {
+export function toInitialSchema(root: ImplicitFieldSchema): TreeStoredSchema {
 	return toStoredSchema(root, restrictiveStoredSchemaGenerationOptions);
 }
 
 /**
- * Converts a {@link ImplicitAnnotatedFieldSchema} into a {@link TreeStoredSchema} to used for unhydrated nodes.
+ * Converts a {@link ImplicitFieldSchema} into a {@link TreeStoredSchema} to used for unhydrated nodes.
  * @remarks
  * This allows as much as possible, relying on further validation when inserting the content.
  *
@@ -80,7 +79,7 @@ export function toInitialSchema(root: ImplicitAnnotatedFieldSchema): TreeStoredS
 export const toUnhydratedSchema = permissiveStoredSchemaGenerationOptions;
 
 /**
- * Converts a {@link ImplicitAnnotatedFieldSchema} into a {@link TreeStoredSchema}.
+ * Converts a {@link ImplicitFieldSchema} into a {@link TreeStoredSchema}.
  *
  * @privateRemarks
  * TODO:#38722 When runtime schema upgrades are implemented, this will need to be updated to check if
@@ -90,7 +89,7 @@ export const toUnhydratedSchema = permissiveStoredSchemaGenerationOptions;
  * Throws a `UsageError` if multiple schemas are encountered with the same identifier.
  */
 export function toStoredSchema(
-	root: ImplicitAnnotatedFieldSchema,
+	root: ImplicitFieldSchema,
 	options: StoredSchemaGenerationOptions,
 ): TreeStoredSchema {
 	const cache = getOrCreate(viewToStoredCache, options, () => new WeakMap());
@@ -138,9 +137,12 @@ export function convertField(
 	let types: TreeTypeSet;
 	// eslint-disable-next-line unicorn/prefer-ternary
 	if (schema instanceof FieldSchemaAlpha) {
-		types = convertAllowedTypes(schema.annotatedAllowedTypesNormalized, options);
+		types = convertAllowedTypes(schema.allowedTypes, options);
 	} else {
-		types = schema.allowedTypesIdentifiers as TreeTypeSet;
+		const allowedTypesIdentifiers: ReadonlySet<string> = new Set(
+			schema.simpleAllowedTypes.keys(),
+		);
+		types = allowedTypesIdentifiers as TreeTypeSet;
 	}
 	return { kind, types, persistedMetadata: schema.persistedMetadata };
 }
@@ -161,9 +163,6 @@ export const convertFieldKind: ReadonlyMap<FieldKind, FlexFieldKind> = new Map<
  * Converts a {@link TreeNodeSchema} into a {@link TreeNodeStoredSchema}.
  * @privateRemarks
  * TODO: Persist node metadata once schema FormatV2 is supported.
- *
- * TODO: AB#43548: Using a stored schema for unhydrated flex trees does not handle schema evolution features like "allowUnknownOptionalFields".
- * Usage of this and the conversion which wrap it should be audited and reduced.
  */
 export function getStoredSchema(
 	schema: SimpleNodeSchema,
@@ -179,7 +178,10 @@ export function getStoredSchema(
 		}
 		case NodeKind.Map:
 		case NodeKind.Record: {
-			const types = schema.allowedTypesIdentifiers as TreeTypeSet;
+			const allowedTypesIdentifiers: ReadonlySet<string> = new Set(
+				schema.simpleAllowedTypes.keys(),
+			);
+			const types = allowedTypesIdentifiers as TreeTypeSet;
 			return new MapNodeStoredSchema(
 				{
 					kind: FieldKinds.optional.identifier,
@@ -191,7 +193,10 @@ export function getStoredSchema(
 			);
 		}
 		case NodeKind.Array: {
-			const types = schema.allowedTypesIdentifiers as TreeTypeSet;
+			const allowedTypesIdentifiers: ReadonlySet<string> = new Set(
+				schema.simpleAllowedTypes.keys(),
+			);
+			const types = allowedTypesIdentifiers as TreeTypeSet;
 			return arrayNodeStoredSchema(types, schema.persistedMetadata);
 		}
 		case NodeKind.Object: {

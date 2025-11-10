@@ -142,6 +142,18 @@ export function generateRuntimeOptions(
 		}
 	});
 
+	// Override explicitSchemaControl to enabled if createBlobPayloadPending is enabled
+	pairwiseOptions.map((options) => {
+		if (options.createBlobPayloadPending) {
+			(
+				options as {
+					// Remove readonly modifier to allow overriding
+					-readonly [P in keyof ContainerRuntimeOptionsInternal]: ContainerRuntimeOptionsInternal[P];
+				}
+			).explicitSchemaControl = true;
+		}
+	});
+
 	return pairwiseOptions;
 }
 

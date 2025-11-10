@@ -18,10 +18,14 @@ import {
 	ISnapshotTree,
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
+
 import { compress, decompress } from "lz4js";
 
 import { DocumentStorageServiceProxy } from "../../../documentStorageServiceProxy.js";
-import { ICompressionStorageConfig, SummaryCompressionAlgorithm } from "../index.js";
+import {
+	SummaryCompressionAlgorithm,
+	type ICompressionStorageConfig,
+} from "../compressionTypes.js";
 
 /**
  * @internal

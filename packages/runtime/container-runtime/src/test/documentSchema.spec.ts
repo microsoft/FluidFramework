@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import {
 	defaultMinVersionForCollab,
-	SemanticVersion,
+	type SemanticVersion,
 } from "@fluidframework/runtime-utils/internal";
 import {
 	createMockLoggerExt,
@@ -25,7 +25,7 @@ import {
 } from "../summary/index.js";
 
 function boolToProp(b: boolean | undefined) {
-	return b ? true : undefined;
+	return b === true ? true : undefined;
 }
 
 function arrayToProp(arr: string[]) {

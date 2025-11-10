@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import type { WebApi } from "azure-devops-node-api";
 import type JSZip from "jszip";
 import type { StatsCompilation } from "webpack";

@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import assert from "node:assert";
+import { strict as assert } from "node:assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { AttachState, IAudience } from "@fluidframework/container-definitions/";
-import {
+import type { AttachState, IAudience } from "@fluidframework/container-definitions/";
+import type {
 	IContainer,
 	IContainerEvents,
 	IDeltaManager,
 	IDeltaManagerEvents,
 	ReadOnlyInfo,
 } from "@fluidframework/container-definitions/internal";
-import { IClient } from "@fluidframework/driver-definitions";
-import {
+import type { IClient } from "@fluidframework/driver-definitions";
+import type {
 	IResolvedUrl,
 	IDocumentMessage,
 	ISequencedDocumentMessage,
@@ -47,14 +47,14 @@ class MockContainer
 		IDocumentMessage
 	>;
 	resolvedUrl?: IResolvedUrl | undefined;
-	attachState?: AttachState | undefined;
-	closed?: boolean | undefined = false;
-	isDirty?: boolean | undefined;
-	connectionState?: ConnectionState | undefined;
+	attachState?: AttachState;
+	closed?: boolean = false;
+	isDirty?: boolean;
+	connectionState?: ConnectionState;
 	connected?: boolean | undefined;
-	audience?: IAudience | undefined;
+	audience?: IAudience;
 	clientId?: string | undefined;
-	readOnlyInfo?: ReadOnlyInfo | undefined;
+	readOnlyInfo?: ReadOnlyInfo;
 
 	get mockDeltaManager(): MockDeltaManager {
 		return this.deltaManager as unknown as MockDeltaManager;

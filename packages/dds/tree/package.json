@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/tree",
-	"version": "2.53.0",
+	"version": "2.72.0",
 	"description": "Distributed tree",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -66,12 +66,12 @@
 		"./internal/test": {
 			"allow-ff-test-exports": {
 				"import": {
-					"types": "./lib/test/index.d.ts",
-					"default": "./lib/test/index.js"
+					"types": "./lib/test/testExports.d.ts",
+					"default": "./lib/test/testExports.js"
 				},
 				"require": {
-					"types": "./dist/test/index.d.ts",
-					"default": "./dist/test/index.js"
+					"types": "./dist/test/testExports.d.ts",
+					"default": "./dist/test/testExports.js"
 				}
 			}
 		}
@@ -80,8 +80,8 @@
 	"types": "lib/public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "flub generate entrypoints --outDir ./dist",
-		"api-extractor:esnext": "flub generate entrypoints --outDir ./lib --node10TypeCompat",
+		"api-extractor:commonjs": "flub generate entrypoints --outFileLegacyBeta legacy --outDir ./dist",
+		"api-extractor:esnext": "flub generate entrypoints --outFileLegacyBeta legacy --outDir ./lib --node10TypeCompat",
 		"bench": "mocha --timeout 999999 --perfMode --parentProcess --fgrep @Benchmark --fgrep @ExecutionTime --reporter @fluid-tools/benchmark/dist/MochaReporter.js",
 		"bench:profile": "mocha --v8-prof --v8-logfile=profile.log --v8-no-logfile-per-isolate --timeout 999999 --perfMode --fgrep @Benchmark --fgrep @ExecutionTime --reporter @fluid-tools/benchmark/dist/MochaReporter.js && node --prof-process profile.log > profile.txt && rimraf profile.log && echo See results in profile.txt",
 		"build": "fluid-build . --task build",
@@ -116,8 +116,8 @@
 		"clean": "rimraf --glob dist lib {alpha,beta,internal,legacy}.d.ts \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"depcruise": "depcruise src/ --ignore-known",
 		"depcruise:regen-known-issues": "depcruise-baseline src",
-		"eslint": "eslint --format stylish src",
-		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
+		"eslint": "eslint --quiet --format stylish src",
+		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
 		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
@@ -130,9 +130,11 @@
 		"test:customBenchmarks:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:customBenchmarks",
 		"test:memory": "mocha --perfMode --config ./src/test/memory/.mocharc.cjs",
 		"test:memory-profiling:report": "mocha --config ./src/test/memory/.mocharc.cjs",
-		"test:mocha": "npm run test:mocha:esm && echo skipping cjs to avoid overhead - npm run test:mocha:cjs",
-		"test:mocha:cjs": "cross-env MOCHA_SPEC=dist/test mocha",
+		"test:mocha": "echo skipping non-smoke cjs to avoid overhead && npm run test:mocha:cjs -- --fgrep @Smoke && npm run test:mocha:prod -- --fgrep @Smoke && npm run test:mocha:esm",
+		"test:mocha:cjs": "cross-env FLUID_TEST_MODULE_SYSTEM=CJS mocha",
 		"test:mocha:esm": "mocha",
+		"test:mocha:prod": "mocha --emulateProduction",
+		"test:mocha:prod-help": "echo run tests simulating production configurations as much as possible.",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"test:snapshots:regen": "pnpm test:mocha:esm --snapshot",
 		"test:stress": "cross-env FUZZ_TEST_COUNT=20 FUZZ_STRESS_RUN=normal mocha --ignore \"lib/test/memory/**/*\" --recursive \"lib/test/**/*.spec.js\"",
@@ -178,6 +180,7 @@
 		"@tylerbu/sorted-btree-es6": "^1.8.0",
 		"@types/ungap__structured-clone": "^1.2.0",
 		"@ungap/structured-clone": "^1.2.0",
+		"semver-ts": "^1.0.3",
 		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
@@ -188,31 +191,31 @@
 		"@fluid-private/test-dds-utils": "workspace:~",
 		"@fluid-private/test-drivers": "workspace:~",
 		"@fluid-tools/benchmark": "^0.51.0",
-		"@fluid-tools/build-cli": "^0.57.0",
+		"@fluid-tools/build-cli": "^0.60.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.57.0",
+		"@fluidframework/build-tools": "^0.60.0",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^5.7.4",
+		"@fluidframework/eslint-config-fluid": "workspace:^",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
-		"@fluidframework/tree-previous": "npm:@fluidframework/tree@2.52.0",
-		"@microsoft/api-extractor": "7.52.8",
+		"@fluidframework/tree-previous": "npm:@fluidframework/tree@2.71.0",
+		"@microsoft/api-extractor": "7.52.11",
 		"@types/diff": "^3.5.1",
 		"@types/easy-table": "^0.0.32",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
 		"ajv": "^8.12.0",
 		"ajv-formats": "^3.0.1",
-		"c8": "^8.0.1",
+		"c8": "^10.1.3",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
-		"dependency-cruiser": "^14.1.0",
+		"dependency-cruiser": "^17.1.0",
 		"diff": "^3.5.0",
 		"easy-table": "^1.1.1",
-		"eslint": "~8.55.0",
-		"eslint-config-prettier": "~9.0.0",
+		"eslint": "~8.57.1",
+		"eslint-config-prettier": "~10.1.8",
 		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
 		"rimraf": "^4.4.0",
