@@ -178,6 +178,7 @@ export interface IFluidDataStoreRuntime
 	/**
 	 * Indicates the current local operation activity being performed by the data store runtime.
 	 *
+	 * @remarks
 	 * This property allows consumers to know when the runtime itself is actively making changes to data store DDSes.
 	 * When this property is not `undefined`, consumers should expect to see state modifications initiated by the runtime
 	 * rather than by the consumer directly:
