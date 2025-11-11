@@ -47,7 +47,7 @@ const configsToPrint = [
 	},
 ];
 
-async function printConfig(filePath, configPath) {
+async function generateConfig(filePath, configPath) {
 	console.log(`Printing config for ${filePath} using ${configPath}`);
 	const eslint = new ESLint({
 		overrideConfigFile: configPath,
@@ -73,6 +73,12 @@ async function printConfig(filePath, configPath) {
 
 (async () => {
 	const args = process.argv.slice(2);
+	
+	if (args.length !== 1) {
+		console.error("Usage: node print-configs.cjs <output-directory>");
+		process.exit(1);
+	}
+	
 	const outputPath = args[0];
 	const writePromises = [];
 	const expectedFiles = new Set();
@@ -88,7 +94,7 @@ async function printConfig(filePath, configPath) {
 			// File doesn't exist yet, which is OK - we'll create it
 		}
 
-		const newContent = await printConfig(sourceFilePath, configPath);
+		const newContent = await generateConfig(sourceFilePath, configPath);
 
 		// Only write the file if the content has changed
 		if (newContent !== originalContent) {
