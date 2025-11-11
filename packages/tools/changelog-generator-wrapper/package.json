@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/changelog-generator-wrapper",
-	"version": "2.72.0",
+	"version": "2.73.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -36,7 +36,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/eslint-config-fluid": "workspace:^",
+		"@fluidframework/eslint-config-fluid": "workspace:~",
 		"concurrently": "^8.2.1",
 		"eslint": "~8.57.1",
 		"rimraf": "^4.4.0"

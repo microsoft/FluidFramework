@@ -1,5 +1,9 @@
 # @fluidframework/devtools-core
 
+## 2.72.0
+
+Dependency updates only.
+
 ## 2.71.0
 
 Dependency updates only.
@@ -11,7 +15,6 @@ Dependency updates only.
 - Promote core devtools APIs from alpha to beta ([#25695](https://github.com/microsoft/FluidFramework/pull/25695)) [7c8e203249](https://github.com/microsoft/FluidFramework/commit/7c8e20324935717d8f7b599c3ec2a1b570b96ba1)
 
   The primary devtools APIs may now be imported from `/beta`. This includes:
-
   - **`initializeDevtools`** - Initialize the devtools singleton
   - **`tryGetFluidDevtools`** - Get the existing devtools instance if initialized
   - **`IFluidDevtools`** - Main devtools interface for registering containers
@@ -133,12 +136,10 @@ Dependency updates only.
 
   APIs that were never intended for direct consumer use have been marked as `@system`.
   These are:
-
   - HasContainerKey
 
   APIs that were not intended to be extended by consumers have been marked as `@sealed`.
   These are:
-
   - ContainerDevtoolsProps
   - DevtoolsProps
   - HasContainerKey
@@ -159,7 +160,6 @@ Dependency updates only.
   Similarly, `IDeltaManager.outbound` contained functionality that could break core runtime features such as generation of batches and chunking. Data loss or corruption could occur when `IDeltaManger.inbound.pause()` or `IDeltaManager.inbound.resume()` were called.
 
   #### Alternatives
-
   - Alternatives to `IDeltaManager.inbound.on("op", ...)` are `IDeltaManager.on("op", ...)`
   - Alternatives to calling `IDeltaManager.inbound.pause`, `IDeltaManager.outbound.pause` for `IContainer` disconnect use `IContainer.disconnect`.
   - Alternatives to calling `IDeltaManager.inbound.resume`, `IDeltaManager.outbound.resume` for `IContainer` reconnect use `IContainer.connect`.
@@ -207,7 +207,6 @@ Dependency updates only.
   TypeScript types and implementation code.
 
   This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
-
   - `"moduleResolution": "Node16"` with `"module": "Node16"`
   - `"moduleResolution": "Bundler"` with `"module": "ESNext"`
 
@@ -246,7 +245,6 @@ Dependency updates only.
   limitation of serialization.
 
   Additional modifications:
-
   - `Jsonable`'s `TReplacement` parameter default has also been changed from `void` to `never`, which now disallows
     `void`.
   - Unrecognized primitive types like `symbol` are now filtered to `never` instead of `{}`.
@@ -284,7 +282,6 @@ Dependency updates only.
 - Dependencies on @fluidframework/protocol-definitions package updated to 3.0.0 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
   This included the following changes from the protocol-definitions release:
-
   - Updating signal interfaces for some planned improvements. The intention is split the interface between signals
     submitted by clients to the server and the resulting signals sent from the server to clients.
     - A new optional type member is available on the ISignalMessage interface and a new ISentSignalMessage interface has
@@ -295,7 +292,6 @@ Dependency updates only.
 - Server upgrade: dependencies on Fluid server packages updated to 2.0.1 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
   Dependencies on the following Fluid server package have been updated to version 2.0.1:
-
   - @fluidframework/gitresources: 2.0.1
   - @fluidframework/server-kafka-orderer: 2.0.1
   - @fluidframework/server-lambdas: 2.0.1
@@ -320,7 +316,6 @@ Dependency updates only.
 - test-utils: provideEntryPoint is required [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
   The optional `provideEntryPoint` method has become required on a number of constructors. A value will need to be provided to the following classes:
-
   - `BaseContainerRuntimeFactory`
   - `RuntimeFactory`
   - `ContainerRuntime` (constructor and `loadRuntime`)
@@ -353,7 +348,6 @@ Dependency updates only.
 
   The **@fluidframework/common-definitions** package is being deprecated, so the following interfaces and types are now
   imported from the **@fluidframework/core-interfaces** package:
-
   - interface IDisposable
   - interface IErrorEvent
   - interface IErrorEvent

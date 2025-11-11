@@ -280,3 +280,7 @@ export {
 	nullSchema,
 } from "./leafNodeSchema.js";
 export type { LeafSchema } from "./leafNodeSchema.js";
+export {
+	encodeSimpleSchema,
+	decodeSimpleSchema,
+} from "./api/index.js";
