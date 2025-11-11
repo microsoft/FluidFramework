@@ -16,8 +16,8 @@ import {
 	ValueSchema,
 	Multiplicity,
 	identifierFieldKindIdentifier,
+	type SchemaPolicy,
 } from "../../../core/index.js";
-import type { FullSchemaPolicy } from "../../modular-schema/index.js";
 
 import {
 	EncoderContext,
@@ -49,7 +49,7 @@ import { oneFromIterable } from "../../../util/index.js";
  */
 export function schemaCompressedEncode(
 	schema: StoredSchemaCollection,
-	policy: FullSchemaPolicy,
+	policy: SchemaPolicy,
 	fieldBatch: FieldBatch,
 	idCompressor: IIdCompressor,
 	incrementalEncoder?: IncrementalEncoder,
@@ -62,7 +62,7 @@ export function schemaCompressedEncode(
 
 export function buildContext(
 	storedSchema: StoredSchemaCollection,
-	policy: FullSchemaPolicy,
+	policy: SchemaPolicy,
 	idCompressor: IIdCompressor,
 	incrementalEncoder?: IncrementalEncoder,
 ): EncoderContext {
