@@ -107,8 +107,7 @@ export const required = new FieldKindWithEditor(
 		// Which direction is allowed is a subjective policy choice.
 		(other.kind === sequence.identifier ||
 			other.kind === requiredIdentifier ||
-			other.kind === optional.identifier ||
-			other.kind === nodeKey.identifier) &&
+			other.kind === optional.identifier) &&
 		allowsTreeSchemaIdentifierSuperset(types, other.types),
 	new Set(),
 );
@@ -127,28 +126,6 @@ export const sequence = new FieldKindWithEditor(
 		allowsTreeSchemaIdentifierSuperset(types, other.types),
 	// TODO: add normalizer/importers for handling ops from other kinds.
 	new Set([]),
-);
-
-const nodeKeyIdentifier = "NodeKey";
-
-/**
- * Exactly one identifier.
- *
- * TODO: this is almost the same as identifier, but apparently unused.
- * Confirm if this is truly unused since before the document format was stabilized, and remove if possible.
- * @deprecated Superseded by {@link identifier}.
- */
-export const nodeKey = new FieldKindWithEditor(
-	nodeKeyIdentifier,
-	Multiplicity.Single,
-	noChangeHandler,
-	(types, other) =>
-		(other.kind === sequence.identifier ||
-			other.kind === requiredIdentifier ||
-			other.kind === optional.identifier ||
-			other.kind === nodeKeyIdentifier) &&
-		allowsTreeSchemaIdentifierSuperset(types, other.types),
-	new Set(),
 );
 
 const identifierFieldIdentifier = "Identifier";
@@ -214,7 +191,6 @@ export const fieldKindConfigurations: ReadonlyMap<
 	[
 		brand(1),
 		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
-			[nodeKey.identifier, { kind: nodeKey, formatVersion: 1 }],
 			[required.identifier, { kind: required, formatVersion: 1 }],
 			[optional.identifier, { kind: optional, formatVersion: 1 }],
 			[sequence.identifier, { kind: sequence, formatVersion: 1 }],
@@ -225,7 +201,6 @@ export const fieldKindConfigurations: ReadonlyMap<
 	[
 		brand(2),
 		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
-			[nodeKey.identifier, { kind: nodeKey, formatVersion: 1 }],
 			[required.identifier, { kind: required, formatVersion: 2 }],
 			[optional.identifier, { kind: optional, formatVersion: 2 }],
 			[sequence.identifier, { kind: sequence, formatVersion: 1 }],
@@ -236,7 +211,6 @@ export const fieldKindConfigurations: ReadonlyMap<
 	[
 		brand(3),
 		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
-			[nodeKey.identifier, { kind: nodeKey, formatVersion: 1 }],
 			[required.identifier, { kind: required, formatVersion: 2 }],
 			[optional.identifier, { kind: optional, formatVersion: 2 }],
 			[sequence.identifier, { kind: sequence, formatVersion: 2 }],
@@ -247,7 +221,6 @@ export const fieldKindConfigurations: ReadonlyMap<
 	[
 		brand(4),
 		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
-			[nodeKey.identifier, { kind: nodeKey, formatVersion: 1 }],
 			[required.identifier, { kind: required, formatVersion: 2 }],
 			[optional.identifier, { kind: optional, formatVersion: 2 }],
 			[sequence.identifier, { kind: sequence, formatVersion: 3 }],
@@ -284,7 +257,7 @@ export function getCodecTreeForModularChangeFormat(
  * code which uses this should be audited for compatibility considerations.
  */
 export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map(
-	[required, optional, sequence, nodeKey, identifier, forbidden].map((s) => [s.identifier, s]),
+	[required, optional, sequence, identifier, forbidden].map((s) => [s.identifier, s]),
 );
 
 // Create named Aliases for nicer intellisense.
