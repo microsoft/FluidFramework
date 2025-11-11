@@ -9,7 +9,7 @@ on:
         description: 'Run in dry-run mode (no branches will be deleted)'
         required: false
         type: boolean
-        default: false
+        default: true
 
 permissions:
   contents: read
@@ -21,13 +21,13 @@ jobs:
     name: Cleanup old branches
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # ratchet:actions/checkout@v2
-      - name: Run delete-old-branches-action
-        uses: beatlabs/delete-old-branches-action@db61ade054731e37b5740e23336445fbc75ccd7b # ratchet:beatlabs/delete-old-branches-action@v0.0.9
+      - name: Run remove-stale-branches action
+        uses: fpicalausa/remove-stale-branches@v2.4.0
         with:
-          repo_token: ${{ github.token }}
-          date: '6 months ago'
-          dry_run: ${{ inputs.dry_run }}
-          exclude_open_pr_branches: true
-          extra_protected_branch_regex: ^release/.*
+          github-token: ${{ github.token }}
+          days-before-branch-stale: 180
+          days-before-branch-delete: 0
+          dry-run: ${{ inputs.dry_run }}
+          exempt-branches-regex: ^(main|lts|next|release/.*)$
+          exempt-protected-branches: false
+          ignore-branches-with-open-prs: true
