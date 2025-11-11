@@ -106,6 +106,7 @@ jobs:
     name: 🔗 Broken Link Check
     needs: build_site
     steps:
+      # release notes: https://github.com/actions/checkout/releases/tag/v4.3.0
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # ratchet:actions/checkout@v4
         with:
           submodules: false
