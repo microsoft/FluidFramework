@@ -385,10 +385,15 @@ function separateEffectsForMove(
 		case "Rename":
 			return { remains: mark };
 		case "Insert": {
-			const follows: Detach = {
+			const follows: Mutable<Detach> = {
 				type: "Remove",
 				id: mark.id,
 			};
+
+			if (mark.detachCellId !== undefined) {
+				follows.detachCellId = mark.detachCellId;
+			}
+
 			const remains: Attach = {
 				type: "Insert",
 				id: mark.id,

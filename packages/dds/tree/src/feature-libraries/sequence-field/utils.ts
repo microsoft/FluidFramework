@@ -567,7 +567,10 @@ function tryMergeEffects(
 		}
 		case "Insert": {
 			const lhsInsert = lhs as Attach;
-			if ((lhsInsert.id as number) + lhsCount === rhs.id) {
+			if (
+				(lhsInsert.id as number) + lhsCount === rhs.id &&
+				areMergeableChangeAtoms(lhsInsert.detachCellId, lhsCount, rhs.detachCellId)
+			) {
 				return lhsInsert;
 			}
 			break;
@@ -624,6 +627,10 @@ export function splitMarkEffect<TEffect extends MarkEffect>(
 				...effect,
 				id: (effect.id as number) + length,
 			};
+
+			if (effect.detachCellId !== undefined) {
+				(effect2 as Attach).detachCellId = splitDetachEvent(effect.detachCellId, length);
+			}
 			return [effect1, effect2];
 		}
 		case "Remove": {

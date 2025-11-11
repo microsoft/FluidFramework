@@ -73,6 +73,10 @@ export interface HasRevisionTag {
  */
 export interface Attach extends HasMoveId, HasRevisionTag {
 	type: "Insert";
+
+	// XXX: Deduplicate with the field on Detach
+	// XXX: Use this ID as main ID when serializing
+	detachCellId?: ChangeAtomId;
 }
 
 export interface HasMoveFields extends HasMoveId, HasRevisionTag {

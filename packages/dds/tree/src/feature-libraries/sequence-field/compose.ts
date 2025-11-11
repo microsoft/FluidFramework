@@ -39,6 +39,7 @@ import {
 	compareCellPositionsUsingTombstones,
 	extractMarkEffect,
 	getAttachedRootId,
+	getDetachOutputCellId,
 	getDetachedRootId,
 	getInputCellId,
 	getMovedNodeId,
@@ -154,10 +155,18 @@ function composeMarksIgnoreChild(
 			baseMark.count,
 		);
 
-		// XXX: This currently has a side effect of removing the detach cross-field key for `baseMark` and so must be called.
-		moveEffects.getNewChangesForBaseDetach(getAttachedRootId(baseMark), baseMark.count);
+		const pinId = getAttachedRootId(baseMark);
 
-		return newMark;
+		// XXX: This currently has a side effect of removing the detach cross-field key for `baseMark` and so must be called.
+		moveEffects.getNewChangesForBaseDetach(pinId, baseMark.count);
+
+		return newMark.type === "Remove"
+			? {
+					...newMark,
+					detachCellId: baseMark.detachCellId ?? pinId,
+					cellRename: getDetachOutputCellId(newMark),
+				}
+			: newMark;
 	} else if (!markHasCellEffect(newMark)) {
 		if (isAttach(newMark) && isAttach(baseMark)) {
 			// When composing two inserts, the second insert (which is a pin) should take precedence.
@@ -168,7 +177,9 @@ function composeMarksIgnoreChild(
 				baseMark.count,
 			);
 
-			return { cellId: baseMark.cellId, ...newMark };
+			const composed = { cellId: baseMark.cellId, ...newMark };
+			delete composed.detachCellId;
+			return composed;
 		}
 		return updateBaseMarkId(moveEffects, baseMark);
 	} else if (areInputCellsEmpty(baseMark)) {
@@ -202,6 +213,11 @@ function composeMarksIgnoreChild(
 		// The composition has no net effect but we preserve the second change's intention to pin the nodes here.
 		const composedMark = { ...newMark };
 		delete composedMark.cellId;
+		const baseDetachCellId = baseMark.detachCellId ?? detachId;
+		if (!areEqualChangeAtomIds(baseDetachCellId, attachId)) {
+			composedMark.detachCellId = baseDetachCellId;
+		}
+
 		return composedMark;
 	}
 }
