@@ -75,16 +75,17 @@ async function printConfig(filePath, configPath) {
 	const args = process.argv.slice(2);
 	const outputPath = args[0];
 	const writePromises = [];
+	const expectedFiles = new Set();
 
 	for (const { name, configPath, sourceFilePath } of configsToPrint) {
 		const outputFilePath = path.join(outputPath, `${name}.json`);
+		expectedFiles.add(`${name}.json`);
+		
 		let originalContent = "";
 		try {
 			originalContent = await fs.readFile(outputFilePath, "utf8");
 		} catch (err) {
-			console.error(`Error reading file ${outputFilePath}:`, err);
-			// It's OK to continue because we might be outputting a new file.
-			continue;
+			// File doesn't exist yet, which is OK - we'll create it
 		}
 
 		const newContent = await printConfig(sourceFilePath, configPath);
@@ -93,6 +94,19 @@ async function printConfig(filePath, configPath) {
 		if (newContent !== originalContent) {
 			writePromises.push(fs.writeFile(outputFilePath, newContent));
 		}
+	}
+
+	// Remove any files in the output directory that aren't in the expected list
+	try {
+		const existingFiles = await fs.readdir(outputPath);
+		for (const file of existingFiles) {
+			if (file.endsWith(".json") && !expectedFiles.has(file)) {
+				console.log(`Removing unexpected file: ${file}`);
+				await fs.unlink(path.join(outputPath, file));
+			}
+		}
+	} catch (err) {
+		// Output directory might not exist yet, which is OK
 	}
 
 	await Promise.all(writePromises);
