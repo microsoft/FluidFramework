@@ -133,7 +133,7 @@ export type FieldBatchCodec = IJsonCodec<
 function clientVersionToFieldBatchVersion(
 	clientVersion: MinimumVersionForCollab,
 ): FieldBatchFormatVersion {
-	return clientVersion < FluidClientVersion.v2_72
+	return clientVersion < FluidClientVersion.v2_73
 		? brand(FieldBatchFormatVersion.v1)
 		: brand(FieldBatchFormatVersion.v2);
 }

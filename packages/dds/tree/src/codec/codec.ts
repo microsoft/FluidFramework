@@ -519,12 +519,12 @@ export const FluidClientVersion = {
 	v2_52: "2.52.0",
 
 	/**
-	 * Fluid Framework Client 2.72 and newer.
+	 * Fluid Framework Client 2.73 and newer.
 	 * @remarks
-	 * New formats introduced in 2.72:
+	 * New formats introduced in 2.73:
 	 * - FieldBatchFormatVersion v2
 	 */
-	v2_72: "2.72.0",
+	v2_73: "2.73.0",
 } as const satisfies Record<string, MinimumVersionForCollab>;
 
 /**
