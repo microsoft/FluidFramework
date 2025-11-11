@@ -126,6 +126,7 @@ import {
 	getPackageName,
 } from "./contracts.js";
 import { DeltaManager, type IConnectionArgs } from "./deltaManager.js";
+import type { ILoaderServices } from "./loader.js";
 import { RelativeLoader } from "./loader.js";
 import {
 	validateDriverCompatibility,
@@ -142,7 +143,6 @@ import type { IQuorumSnapshot } from "./protocol/index.js";
 import {
 	type InternalProtocolHandlerBuilder,
 	ProtocolHandler,
-	type ProtocolHandlerBuilder,
 	type ProtocolHandlerInternal,
 	protocolHandlerShouldProcessSignal,
 	wrapProtocolHandlerBuilder,
@@ -173,6 +173,7 @@ const savedContainerEvent = "saved";
 const packageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
 /**
+ * @remarks Export for testing only
  * @internal
  */
 export interface IContainerLoadProps {
@@ -196,9 +197,10 @@ export interface IContainerLoadProps {
 }
 
 /**
+ * @remarks Export for testing only
  * @internal
  */
-export interface IContainerCreateProps {
+export interface IContainerCreateProps extends ILoaderServices {
 	/**
 	 * Disables the Container from reconnecting if false, allows reconnect otherwise.
 	 */
@@ -207,47 +209,6 @@ export interface IContainerCreateProps {
 	 * Client details provided in the override will be merged over the default client.
 	 */
 	readonly clientDetailsOverride?: IClientDetails;
-
-	/**
-	 * The url resolver used by the loader for resolving external urls
-	 * into Fluid urls such that the container specified by the
-	 * external url can be loaded.
-	 */
-	readonly urlResolver: IUrlResolver;
-	/**
-	 * The document service factory take the Fluid url provided
-	 * by the resolved url and constructs all the necessary services
-	 * for communication with the container's server.
-	 */
-	readonly documentServiceFactory: IDocumentServiceFactory;
-	/**
-	 * The code loader handles loading the necessary code
-	 * for running a container once it is loaded.
-	 */
-	readonly codeLoader: ICodeDetailsLoader;
-
-	/**
-	 * A property bag of options used by various layers
-	 * to control features
-	 */
-	readonly options: ILoaderOptions;
-
-	/**
-	 * Scope is provided to all container and is a set of shared
-	 * services for container's to integrate with their host environment.
-	 */
-	readonly scope: FluidObject;
-
-	/**
-	 * The logger downstream consumers should construct their loggers from
-	 */
-	readonly subLogger: ITelemetryLoggerExt;
-
-	/**
-	 * Optional property for allowing the container to use a custom
-	 * protocol implementation for handling the quorum and/or the audience.
-	 */
-	readonly protocolHandlerBuilder?: ProtocolHandlerBuilder;
 }
 
 /**

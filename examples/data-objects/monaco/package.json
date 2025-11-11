@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/monaco",
-	"version": "2.72.0",
+	"version": "2.73.0",
 	"private": true,
 	"description": "Monaco code editor",
 	"homepage": "https://fluidframework.com",
@@ -51,7 +51,7 @@
 		"@fluid-example/webpack-fluid-loader": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.60.0",
-		"@fluidframework/eslint-config-fluid": "workspace:^",
+		"@fluidframework/eslint-config-fluid": "workspace:~",
 		"@types/react": "^18.3.11",
 		"css-loader": "^7.1.2",
 		"eslint": "~8.57.1",
