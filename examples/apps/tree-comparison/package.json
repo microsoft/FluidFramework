@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/tree-comparison",
-	"version": "2.72.0",
+	"version": "2.73.0",
 	"private": true,
 	"description": "Comparing API usage in legacy SharedTree and new SharedTree.",
 	"homepage": "https://fluidframework.com",
@@ -61,7 +61,7 @@
 		"@fluid-tools/build-cli": "^0.60.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.60.0",
-		"@fluidframework/eslint-config-fluid": "workspace:^",
+		"@fluidframework/eslint-config-fluid": "workspace:~",
 		"@fluidframework/test-tools": "^1.0.195075",
 		"@types/jest": "29.5.3",
 		"@types/jest-environment-puppeteer": "workspace:~",
