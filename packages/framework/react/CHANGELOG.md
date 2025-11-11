@@ -1,5 +1,9 @@
 # @fluidframework/react
 
+## 2.72.0
+
+Dependency updates only.
+
 ## 2.71.0
 
 Dependency updates only.
@@ -25,7 +29,6 @@ Dependency updates only.
   Now all the APIs are `@alpha`, which also amounts to making no guarantees but makes it possible to promote APIs to `@beta` in the future to offer some stability.
 
   To accommodate this change, all users of this package will need to adjust:
-
   - Package dependencies from `"@fluid-experimental/tree-react-api"` to `"@fluidframework/react"`.
   - Imports from `"@fluid-experimental/tree-react-api"` to `"@fluidframework/react/alpha"`.
 
@@ -222,7 +225,6 @@ Dependency updates only.
   The experimental tree data object in `tree-react-api` has been simplified in a way that is incompatible with its previous version, which used `SharedDirectory` at the root.
   The library now leverages a new data object that uses the `SharedTree` directly at the root.
   In addition to breaking compatibility with existing documents, these changes include some related simplifications to the APIs which are also breaking:
-
   - Removes the `key` property from the data object configuration.
     This key was used to inform where the SharedTree was parented beneath the root SharedDirectory, so it no longer serves a purpose.
   - Inlined the `ITreeDataObject` interface into `IReactTreeDataObject`.
