@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/app-integration-external-controller",
-	"version": "2.72.0",
+	"version": "2.73.0",
 	"private": true,
 	"description": "Minimal Fluid Container & Data Object sample to implement a collaborative dice roller as a standalone app.",
 	"homepage": "https://fluidframework.com",
@@ -57,7 +57,7 @@
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/devtools": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "workspace:^",
+		"@fluidframework/eslint-config-fluid": "workspace:~",
 		"@fluidframework/fluid-static": "workspace:~",
 		"@fluidframework/local-driver": "workspace:~",
 		"@fluidframework/server-local-server": "^7.0.0",
