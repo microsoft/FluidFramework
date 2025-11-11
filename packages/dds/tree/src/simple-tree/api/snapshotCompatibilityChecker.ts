@@ -21,11 +21,11 @@ import { toSimpleTreeSchema } from "./viewSchemaToSimpleSchema.js";
 export type JsonViewSchema = JsonCompatibleReadOnly;
 
 /**
- * Checks the compatibility of the view schema which created the document against the view schema being used to open it.
+ * Checks the compatibility of the view schema that created the document against the view schema being used to open it.
  *
  * @param viewWhichCreatedDocument - The view schema which was used to create the document.
  * @param view - The view schema being used to read the document.
- * @returns - The compatibility status.
+ * @returns The compatibility status.
  *
  * @alpha
  */
