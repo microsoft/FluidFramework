@@ -1,5 +1,9 @@
 # @fluid-experimental/presence
 
+## 2.72.0
+
+Dependency updates only.
+
 ## 2.71.0
 
 Dependency updates only.
@@ -93,7 +97,6 @@ Dependency updates only.
 ### Minor Changes
 
 - Latest and LatestMap support more types ([#24417](https://github.com/microsoft/FluidFramework/pull/24417)) [619af0b05e2](https://github.com/microsoft/FluidFramework/commit/619af0b05e23c469feb754e93351b7edca1a74a4)
-
   - `Latest` (`StateFactory.latest`) permits `null` so that nullable types may be used.
   - `LatestMap` (`StateFactory.latestMap`) permits `boolean`, `number`, `string`, and `null`.
 
@@ -214,7 +217,6 @@ Dependency updates only.
 
   The [presence value managers](https://fluidframework.com/docs/build/presence#value-managers) now raise events for local
   value changes. The new events are as follows:
-
   - LatestValueManager
     - `localUpdated` raised when `local` is assigned
   - LatestMapValueManager
@@ -308,7 +310,6 @@ Dependency updates only.
   #### Package scope advanced from `@fluid-experimental` ([#23073](https://github.com/microsoft/FluidFramework/pull/23073))
 
   To update existing:
-
   - package.json: replace `@fluid-experimental/presence` with `@fluidframework/presence`
   - code imports: replace `@fluid-experimental/presence` with `@fluidframework/presence/alpha`
 

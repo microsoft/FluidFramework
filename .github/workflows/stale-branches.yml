@@ -2,7 +2,14 @@
 # that aren't protected and haven't been committed to in over 6 months.
 
 name: Delete Stale Branches
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Run in dry-run mode (no branches will be deleted)'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -21,6 +28,6 @@ jobs:
         with:
           repo_token: ${{ github.token }}
           date: '6 months ago'
-          dry_run: false
+          dry_run: ${{ inputs.dry_run }}
           exclude_open_pr_branches: true
           extra_protected_branch_regex: ^release/.*
