@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "node:events";
 import { strict as assert } from "node:assert";
 import * as path from "node:path";
 
@@ -29,6 +28,7 @@ import type { IConsensusOrderedCollection, IOrderedCollection } from "../interfa
 import { ConsensusResult } from "../interfaces.js";
 
 import { _dirname } from "./dirname.cjs";
+import { createEmitter } from "@fluid-internal/client-utils";
 
 /**
  * Config options for generating ConsensusOrderedCollection operations
@@ -48,6 +48,10 @@ const valueConfigs: Required<ConsensusOrderedCollectionValueConfig> = {
 	valuePoolSize: 3,
 	valueStringLength: 5,
 };
+
+interface ResolveEvent {
+	resolve: (callbackId: string, result: ConsensusResult) => void;
+}
 
 /**
  * Default options for ConsensusOrderedCollection fuzz testing
@@ -140,7 +144,7 @@ function makeOperationGenerator(): Generator<
 
 function makeReducer(): Reducer<ConsensusOrderedCollectionOperation, FuzzTestState> {
 	const pendingCallbacks = new Map<string, string>();
-	const callbackResolver = new EventEmitter();
+	const callbackResolver = createEmitter<ResolveEvent>();
 
 	const reducer = combineReducers<ConsensusOrderedCollectionOperation, FuzzTestState>({
 		add: ({ client }, { value }) => {
