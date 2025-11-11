@@ -237,11 +237,21 @@ Note: generating the API documentation for the new "current" version will fail i
 
 ##### Links
 
-Generally, it is recommended to include file extensions in links when possible.
-E.g., prefer `[foo](./foo.mdx)` over `[foo](./foo)`.
+As a general rule, links between documents on the site should:
 
--   Docusaurus applies a different resolution strategy for relative _file path_ links than it does for URL links.
-    See: <https://docusaurus.io/docs/markdown-features/links>
+-   Use relative file paths
+    -   Enhances the IDE experience.
+    -   Gives us better / earlier broken link detection.
+-   Specify the `.md`/`.mdx` file extension
+    -   Docusaurus applies a different resolution strategy for relative _file path_ links than it does for URL links. See: <https://docusaurus.io/docs/markdown-features/links>
+
+**Avoid** using fully qualified URLs (e.g., `[foo](https://fluidframework.com/docs/foo)`).
+
+-   Docusaurus will treat such links as _external_, which will result in new windows/tabs being opened in the user's browser when clicked.
+
+**Avoid** using _absolute_ document paths relative to the site root (e.g., `[foo](/docs/foo.mdx)`)
+
+-   While these work just fine as far as Docusaurus is concerned, but they break the ability to navigate through links in an IDE.
 
 #### Assets
 
