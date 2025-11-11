@@ -1486,7 +1486,7 @@ export namespace System_TableSchema {
     // @system
     export type CreateColumnOptionsBase<TSchemaFactory extends SchemaFactoryBeta = SchemaFactoryBeta, TCell extends ImplicitAllowedTypes = ImplicitAllowedTypes> = OptionsWithSchemaFactory<TSchemaFactory> & OptionsWithCellSchema<TCell>;
     // @system
-    export function createColumnSchema<const TInputScope extends string | undefined, const TCellSchema extends ImplicitAllowedTypes, const TPropsSchema extends ImplicitFieldSchema>(inputSchemaFactory: SchemaFactoryBeta<TInputScope>, cellSchema: TCellSchema, propsSchema: TPropsSchema): TreeNodeSchemaClass<ScopedSchemaName<ScopedSchemaName<TInputScope, "table">, "Column">, NodeKind.Object, TreeNode & TableSchema.Column<TCellSchema, TPropsSchema> & WithType<ScopedSchemaName<ScopedSchemaName<TInputScope, "table">, "Column">, NodeKind, unknown>, object & {
+    export function createColumnSchema<const TInputScope extends string | undefined, const TCellSchema extends ImplicitAllowedTypes, const TPropsSchema extends ImplicitFieldSchema>(inputSchemaFactory: SchemaFactoryBeta<TInputScope>, propsSchema: TPropsSchema): TreeNodeSchemaClass<ScopedSchemaName<ScopedSchemaName<TInputScope, "table">, "Column">, NodeKind.Object, TreeNode & TableSchema.Column<TCellSchema, TPropsSchema> & WithType<ScopedSchemaName<ScopedSchemaName<TInputScope, "table">, "Column">, NodeKind, unknown>, object & {
         readonly id?: string | undefined;
     } & (FieldHasDefault<TPropsSchema> extends true ? {
         props?: InsertableTreeFieldFromImplicitField<TPropsSchema> | undefined;
@@ -1499,7 +1499,7 @@ export namespace System_TableSchema {
     // @system
     export type CreateRowOptionsBase<TSchemaFactory extends SchemaFactoryBeta = SchemaFactoryBeta, TCell extends ImplicitAllowedTypes = ImplicitAllowedTypes> = OptionsWithSchemaFactory<TSchemaFactory> & OptionsWithCellSchema<TCell>;
     // @sealed
-    export function createRowSchema<const TInputScope extends string | undefined, const TCellSchema extends ImplicitAllowedTypes, const TPropsSchema extends ImplicitFieldSchema>(inputSchemaFactory: SchemaFactoryBeta<TInputScope>, cellSchema: TCellSchema, propsSchema: TPropsSchema): TreeNodeSchemaClass<ScopedSchemaName<ScopedSchemaName<TInputScope, "table">, "Row">, NodeKind.Object, TreeNode & TableSchema.Row<TCellSchema, TPropsSchema> & WithType<ScopedSchemaName<ScopedSchemaName<TInputScope, "table">, "Row">, NodeKind, unknown>, object & {
+    export function createRowSchema<const TInputScope extends string | undefined, const TCellSchema extends ImplicitAllowedTypes, const TPropsSchema extends ImplicitFieldSchema>(inputSchemaFactory: SchemaFactoryBeta<TInputScope>, cellSchema: TCellSchema, propsSchema: TPropsSchema): TreeNodeSchemaClass<ScopedSchemaName<ScopedSchemaName<TInputScope, "table">, "Row">, NodeKind.Object, TreeNode & Row<TCellSchema, TPropsSchema> & WithType<ScopedSchemaName<ScopedSchemaName<TInputScope, "table">, "Row">, NodeKind, unknown>, object & {
         readonly id?: string | undefined;
         readonly cells: (InsertableTypedNode_2<TreeNodeSchemaClass<ScopedSchemaName<ScopedSchemaName<TInputScope, "table">, "Row.cells">, NodeKind.Record, TreeRecordNode_2<TCellSchema> & WithType<ScopedSchemaName<ScopedSchemaName<TInputScope, "table">, "Row.cells">, NodeKind.Record, unknown>, RecordNodeInsertableData_2<TCellSchema>, true, TCellSchema, undefined, unknown>> | undefined) & InsertableTypedNode_2<TreeNodeSchemaClass<ScopedSchemaName<ScopedSchemaName<TInputScope, "table">, "Row.cells">, NodeKind.Record, TreeRecordNode_2<TCellSchema> & WithType<ScopedSchemaName<ScopedSchemaName<TInputScope, "table">, "Row.cells">, NodeKind.Record, unknown>, RecordNodeInsertableData_2<TCellSchema>, true, TCellSchema, undefined, unknown>>;
     } & (FieldHasDefault<TPropsSchema> extends true ? {
@@ -1536,6 +1536,19 @@ export namespace System_TableSchema {
     // @system
     export interface OptionsWithSchemaFactory<TSchemaFactory extends SchemaFactoryBeta> {
         readonly schemaFactory: TSchemaFactory;
+    }
+    // @sealed @system
+    export interface Row<TCell extends ImplicitAllowedTypes, TProps extends ImplicitFieldSchema = ImplicitFieldSchema> extends TableSchema.Row<TCell, TProps> {
+        getCell(column: TableSchema.Column<TCell>): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
+        getCell(columnId: string): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
+        getCells(): readonly {
+            columnId: string;
+            cell: TreeNodeFromImplicitAllowedTypes<TCell>;
+        }[];
+        removeCell(column: TableSchema.Column<TCell>): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
+        removeCell(columnId: string): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
+        setCell(column: TableSchema.Column<TCell>, value: InsertableTreeNodeFromImplicitAllowedTypes<TCell>): void;
+        setCell(columnId: string, value: InsertableTreeNodeFromImplicitAllowedTypes<TCell>): void;
     }
     // @sealed @system
     export type RowSchemaBase<TScope extends string | undefined = string | undefined, TCellSchema extends ImplicitAllowedTypes = ImplicitAllowedTypes, TPropsSchema extends ImplicitFieldSchema = ImplicitFieldSchema> = ReturnType<typeof createRowSchema<TScope, TCellSchema, TPropsSchema>>;
@@ -1636,10 +1649,6 @@ export namespace TableSchema {
     }
     // @sealed
     export interface Column<TCell extends ImplicitAllowedTypes, TProps extends ImplicitFieldSchema = ImplicitFieldSchema> {
-        getCells(): readonly {
-            rowId: string;
-            cell: TreeNodeFromImplicitAllowedTypes<TCell>;
-        }[];
         readonly id: string;
         get props(): TreeFieldFromImplicitField<TProps>;
         set props(value: InsertableTreeFieldFromImplicitField<TProps>);
@@ -1658,19 +1667,9 @@ export namespace TableSchema {
     }
     // @sealed
     export interface Row<TCell extends ImplicitAllowedTypes, TProps extends ImplicitFieldSchema = ImplicitFieldSchema> {
-        getCell(column: Column<TCell>): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
-        getCell(columnId: string): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
-        getCells(): readonly {
-            columnId: string;
-            cell: TreeNodeFromImplicitAllowedTypes<TCell>;
-        }[];
         readonly id: string;
         get props(): TreeFieldFromImplicitField<TProps>;
         set props(value: InsertableTreeFieldFromImplicitField<TProps>);
-        removeCell(column: Column<TCell>): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
-        removeCell(columnId: string): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
-        setCell(column: Column<TCell>, value: InsertableTreeNodeFromImplicitAllowedTypes<TCell>): void;
-        setCell(columnId: string, value: InsertableTreeNodeFromImplicitAllowedTypes<TCell>): void;
     }
     export function row<const TScope extends string | undefined, const TCell extends ImplicitAllowedTypes>(params: System_TableSchema.CreateRowOptionsBase<SchemaFactoryBeta<TScope>, TCell>): System_TableSchema.RowSchemaBase<TScope, TCell, System_TableSchema.DefaultPropsType>;
     export function row<const TScope extends string | undefined, const TCell extends ImplicitAllowedTypes, const TProps extends ImplicitFieldSchema>(params: System_TableSchema.CreateRowOptionsBase<SchemaFactoryBeta<TScope>, TCell> & {

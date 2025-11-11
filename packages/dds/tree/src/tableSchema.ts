@@ -6,7 +6,7 @@
 import { fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { Tree, TreeAlpha } from "./shared-tree/index.js";
+import { TreeAlpha } from "./shared-tree/index.js";
 import {
 	type FieldHasDefault,
 	type ImplicitAllowedTypes,
@@ -26,7 +26,6 @@ import {
 	type InternalTreeNode,
 	SchemaFactory,
 	type ImplicitFieldSchema,
-	isArrayNodeSchema,
 	type InsertableField,
 	withBufferedTreeEvents,
 } from "./simple-tree/index.js";
@@ -45,52 +44,9 @@ import {
 const tableSchemaFactorySubScope = "table";
 
 /**
- * Gets the table containing the provided row/column node, if the node is part of a table.
- * @remarks Assumes that the table is the grandparent of the row/column node.
- */
-function getParentTable(
-	rowOrColumnNode: TreeNode,
-):
-	| (TreeNode &
-			TableSchema.Table<
-				string | undefined,
-				ImplicitAllowedTypes,
-				System_TableSchema.ColumnSchemaBase,
-				System_TableSchema.RowSchemaBase
-			>)
-	| undefined {
-	const rowListNode = Tree.parent(rowOrColumnNode);
-	if (rowListNode === undefined || !isArrayNodeSchema(Tree.schema(rowListNode))) {
-		return undefined;
-	}
-	const tableNode = Tree.parent(rowListNode);
-	if (tableNode === undefined || !isTableNode(tableNode)) {
-		return undefined;
-	}
-
-	return tableNode;
-}
-
-/**
  * A private symbol put on table schema to help identify them.
  */
 const tableSchemaSymbol: unique symbol = Symbol("tableNode");
-
-/**
- * Type-guard to determine if a node is a table node.
- * @remarks Uses {@link tableSchemaSymbol} to identify table nodes.
- */
-function isTableNode(
-	node: TreeNode,
-): node is TreeNode &
-	TableSchema.Table<
-		string | undefined,
-		ImplicitAllowedTypes,
-		System_TableSchema.ColumnSchemaBase,
-		System_TableSchema.RowSchemaBase
-	> {
-	return tableSchemaSymbol in Tree.schema(node);
-}
 
 /**
  * Not intended for use outside of this package.
@@ -161,15 +117,9 @@ export namespace System_TableSchema {
 		const TInputScope extends string | undefined,
 		const TCellSchema extends ImplicitAllowedTypes,
 		const TPropsSchema extends ImplicitFieldSchema,
-	>(
-		inputSchemaFactory: SchemaFactoryBeta<TInputScope>,
-		cellSchema: TCellSchema,
-		propsSchema: TPropsSchema,
-	) {
+	>(inputSchemaFactory: SchemaFactoryBeta<TInputScope>, propsSchema: TPropsSchema) {
 		const schemaFactory = inputSchemaFactory.scopedFactory(tableSchemaFactorySubScope);
 		type Scope = ScopedSchemaName<TInputScope, typeof tableSchemaFactorySubScope>;
-
-		type CellValueType = TreeNodeFromImplicitAllowedTypes<TCellSchema>;
 
 		// Note: `columnFields` is broken into two parts to work around a TypeScript bug
 		// that results in broken `.d.ts` output.
@@ -205,36 +155,7 @@ export namespace System_TableSchema {
 				// Will make it easier to evolve this schema in the future.
 				allowUnknownOptionalFields: true,
 			})
-			implements TableSchema.Column<TCellSchema, TPropsSchema>
-		{
-			public getCells(): {
-				rowId: string;
-				cell: CellValueType;
-			}[] {
-				const tableNode = getParentTable(this);
-				if (tableNode === undefined) {
-					throw new UsageError(`Column with ID "${this.id}" is not contained in a table.`);
-				}
-
-				const result: {
-					rowId: string;
-					cell: CellValueType;
-				}[] = [];
-				for (const row of tableNode.rows) {
-					const cell = row.getCell(this.id);
-					if (cell !== undefined) {
-						if (!Tree.is(cell, cellSchema)) {
-							throw new UsageError(
-								"Parent table contains a cell with incompatible with this column.",
-							);
-						}
-
-						result.push({ rowId: row.id, cell });
-					}
-				}
-				return result;
-			}
-		}
+			implements TableSchema.Column<TCellSchema, TPropsSchema> {}
 
 		type ColumnValueType = TreeNode &
 			TableSchema.Column<TCellSchema, TPropsSchema> &
@@ -318,6 +239,70 @@ export namespace System_TableSchema {
 	// #region Row
 
 	/**
+	 * A row in a table.
+	 * @typeParam TCell - The type of the cells in the {@link TableSchema.Table}.
+	 * @typeParam TProps - Additional properties to associate with the row.
+	 * @privateRemarks Internal/System counterpart to the public-facing row interface.
+	 * Exposes internal methods needed for table operations (publicly exposed via {@link TableSchema.Table}).
+	 * @sealed @system @alpha
+	 */
+	export interface Row<
+		TCell extends ImplicitAllowedTypes,
+		TProps extends ImplicitFieldSchema = ImplicitFieldSchema,
+	> extends TableSchema.Row<TCell, TProps> {
+		/**
+		 * Gets the cell in the specified column.
+		 * @returns The cell if it exists, otherwise undefined.
+		 * @privateRemarks TODO: throw if the column does not belong to the same table as the row.
+		 */
+		getCell(
+			column: TableSchema.Column<TCell>,
+		): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
+		/**
+		 * Gets the cell in the specified column, denoted by column ID.
+		 * @returns The cell if it exists, otherwise undefined.
+		 */
+		getCell(columnId: string): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
+
+		/**
+		 * Gets all of the populated cells in the row, keyed by their associated column IDs.
+		 */
+		getCells(): readonly {
+			columnId: string;
+			cell: TreeNodeFromImplicitAllowedTypes<TCell>;
+		}[];
+
+		/**
+		 * Sets the cell in the specified column.
+		 * @remarks To remove a cell, call {@link System_TableSchema.Row.(removeCell:1)} instead.
+		 * @privateRemarks TODO: Throw an error if the column does not exist in the table.
+		 */
+		setCell(
+			column: TableSchema.Column<TCell>,
+			value: InsertableTreeNodeFromImplicitAllowedTypes<TCell>,
+		): void;
+		/**
+		 * Sets the cell in the specified column, denoted by column ID.
+		 * @remarks To remove a cell, call {@link System_TableSchema.Row.(removeCell:2)} instead.
+		 */
+		setCell(columnId: string, value: InsertableTreeNodeFromImplicitAllowedTypes<TCell>): void;
+
+		/**
+		 * Removes the cell in the specified column.
+		 * @returns The cell if it exists, otherwise undefined.
+		 * @privateRemarks TODO: Throw if the column does not belong to the same table as the row.
+		 */
+		removeCell(
+			column: TableSchema.Column<TCell>,
+		): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
+		/**
+		 * Removes the cell in the specified column, denoted by column ID.
+		 * @returns The cell if it exists, otherwise undefined.
+		 */
+		removeCell(columnId: string): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
+	}
+
+	/**
 	 * Base options for creating table row schema.
 	 * @remarks Includes parameters common to all row factory overloads.
 	 * @system @alpha
@@ -368,7 +353,7 @@ export namespace System_TableSchema {
 		} as const;
 
 		/**
-		 * {@link Row} fields.
+		 * {@link RowSchema} fields.
 		 * @remarks Extracted for re-use in returned type signature defined later in this function.
 		 * The implicit typing is intentional.
 		 * Note: ideally we would add a satisfies clause here to ensure that this satisfies
@@ -383,12 +368,12 @@ export namespace System_TableSchema {
 		/**
 		 * The Row schema - this is a map of Cells where the key is the column id
 		 */
-		class Row
+		class RowSchema
 			extends schemaFactory.object("Row", rowFields, {
 				// Will make it easier to evolve this schema in the future.
 				allowUnknownOptionalFields: true,
 			})
-			implements TableSchema.Row<TCellSchema, TPropsSchema>
+			implements Row<TCellSchema, TPropsSchema>
 		{
 			public getCell(
 				columnOrId: TableSchema.Column<TCellSchema> | string,
@@ -454,7 +439,7 @@ export namespace System_TableSchema {
 		}
 
 		type RowValueType = TreeNode &
-			TableSchema.Row<TCellSchema, TPropsSchema> &
+			Row<TCellSchema, TPropsSchema> &
 			WithType<ScopedSchemaName<Scope, "Row">>;
 
 		// Note: ideally this type would just leverage `InsertableObjectFromSchemaRecord<typeof rowFields>`,
@@ -494,14 +479,14 @@ export namespace System_TableSchema {
 		type RowSchemaModifiedType = Omit<
 			// Use mapped type to omit the constructor
 			{
-				[Property in keyof typeof Row]: (typeof Row)[Property];
+				[Property in keyof typeof RowSchema]: (typeof RowSchema)[Property];
 			},
 			"createFromInsertable"
 		> &
 			(new (
 				parameters: InternalTreeNode | RowInsertableType,
-			) => Row) & {
-				createFromInsertable(parameters: RowInsertableType): Row;
+			) => RowSchema) & {
+				createFromInsertable(parameters: RowInsertableType): RowSchema;
 			};
 
 		// Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
@@ -516,7 +501,7 @@ export namespace System_TableSchema {
 			/* TInsertable */ object & RowInsertableType,
 			/* ImplicitlyConstructable */ true,
 			/* Info */ typeof rowFields
-		> = Row as RowSchemaModifiedType;
+		> = RowSchema as RowSchemaModifiedType;
 
 		return RowSchemaType;
 	}
@@ -1256,6 +1241,7 @@ export namespace TableSchema {
 	 * @sealed @alpha
 	 */
 	export interface Column<
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Reserving this for future use.
 		TCell extends ImplicitAllowedTypes,
 		TProps extends ImplicitFieldSchema = ImplicitFieldSchema,
 	> {
@@ -1274,15 +1260,6 @@ export namespace TableSchema {
 		 */
 		get props(): TreeFieldFromImplicitField<TProps>;
 		set props(value: InsertableTreeFieldFromImplicitField<TProps>);
-
-		/**
-		 * Gets all of the populated cells in the column, keyed by their associated row IDs.
-		 * @throws Throws an error if the  column is not in a table.
-		 */
-		getCells(): readonly {
-			rowId: string;
-			cell: TreeNodeFromImplicitAllowedTypes<TCell>;
-		}[];
 	}
 
 	/**
@@ -1326,7 +1303,7 @@ export namespace TableSchema {
 	}: System_TableSchema.CreateColumnOptionsBase & {
 		readonly props?: ImplicitFieldSchema;
 	}): TreeNodeSchema {
-		return System_TableSchema.createColumnSchema(schemaFactory, cell, props);
+		return System_TableSchema.createColumnSchema(schemaFactory, props);
 	}
 
 	// #endregion
@@ -1341,6 +1318,7 @@ export namespace TableSchema {
 	 * @sealed @alpha
 	 */
 	export interface Row<
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Reserving this for future use.
 		TCell extends ImplicitAllowedTypes,
 		TProps extends ImplicitFieldSchema = ImplicitFieldSchema,
 	> {
@@ -1349,53 +1327,6 @@ export namespace TableSchema {
 		 * @remarks Uniquely identifies the node within the entire tree, not just the table.
 		 */
 		readonly id: string;
-
-		/**
-		 * Gets the cell in the specified column.
-		 * @returns The cell if it exists, otherwise undefined.
-		 * @privateRemarks TODO: throw if the column does not belong to the same table as the row.
-		 */
-		getCell(column: Column<TCell>): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
-		/**
-		 * Gets the cell in the specified column, denoted by column ID.
-		 * @returns The cell if it exists, otherwise undefined.
-		 */
-		getCell(columnId: string): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
-
-		/**
-		 * Gets all of the populated cells in the row, keyed by their associated column IDs.
-		 */
-		getCells(): readonly {
-			columnId: string;
-			cell: TreeNodeFromImplicitAllowedTypes<TCell>;
-		}[];
-
-		/**
-		 * Sets the cell in the specified column.
-		 * @remarks To remove a cell, call {@link TableSchema.Row.(removeCell:1)} instead.
-		 * @privateRemarks TODO: Throw an error if the column does not exist in the table.
-		 */
-		setCell(
-			column: Column<TCell>,
-			value: InsertableTreeNodeFromImplicitAllowedTypes<TCell>,
-		): void;
-		/**
-		 * Sets the cell in the specified column, denoted by column ID.
-		 * @remarks To remove a cell, call {@link TableSchema.Row.(removeCell:2)} instead.
-		 */
-		setCell(columnId: string, value: InsertableTreeNodeFromImplicitAllowedTypes<TCell>): void;
-
-		/**
-		 * Removes the cell in the specified column.
-		 * @returns The cell if it exists, otherwise undefined.
-		 * @privateRemarks TODO: Throw if the column does not belong to the same table as the row.
-		 */
-		removeCell(column: Column<TCell>): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
-		/**
-		 * Removes the cell in the specified column, denoted by column ID.
-		 * @returns The cell if it exists, otherwise undefined.
-		 */
-		removeCell(columnId: string): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
 
 		/**
 		 * The row's properties.

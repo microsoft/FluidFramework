@@ -97,51 +97,6 @@ describe("TableFactory unit tests", () => {
 			const column = new MyColumn({ id: "column-0", props: "Column 0" });
 			assert.equal(column.props, "Column 0");
 		});
-
-		it("getCells", () => {
-			const table = initializeTree(Table, Table.empty());
-
-			// Calling `getCells` on a column that has not been inserted into the table throws an error.
-			const column0 = new Column({ id: "column-0", props: {} });
-			assert.throws(
-				() => column0.getCells(),
-				validateUsageError(/Column with ID "column-0" is not contained in a table./),
-			);
-
-			table.insertColumns({ columns: [column0] });
-
-			// No rows or cells have been inserted yet.
-			assert.equal(column0.getCells().length, 0);
-
-			table.insertRows({
-				rows: [
-					{ id: "row-0", cells: {} },
-					{ id: "row-1", cells: {} },
-					{ id: "row-2", cells: {} },
-				],
-			});
-			table.setCell({
-				key: {
-					column: column0,
-					row: "row-0",
-				},
-				cell: { value: "0-0" },
-			});
-			table.setCell({
-				key: {
-					column: column0,
-					row: "row-2",
-				},
-				cell: { value: "2-0" },
-			});
-
-			const cells = column0.getCells();
-			assert.equal(cells.length, 2);
-			assert.equal(cells[0].rowId, "row-0");
-			assertEqualTrees(cells[0].cell, { value: "0-0" });
-			assert.equal(cells[1].rowId, "row-2");
-			assertEqualTrees(cells[1].cell, { value: "2-0" });
-		});
 	});
 
 	describeHydration("Row Schema", (initializeTree) => {
