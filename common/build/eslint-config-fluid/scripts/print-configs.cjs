@@ -80,6 +80,7 @@ async function generateConfig(filePath, configPath) {
 	}
 
 	const outputPath = args[0];
+	await fs.mkdir(outputPath, { recursive: true });
 	const writePromises = [];
 	const expectedFiles = new Set();
 
