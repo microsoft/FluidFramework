@@ -125,15 +125,11 @@ async function generateConfig(filePath: string, configPath: string): Promise<str
 	}
 
 	// Remove any files in the output directory that aren't in the expected list
-	try {
-		const existingFiles = await fs.readdir(outputPath);
-		for (const file of existingFiles) {
-			if (file.endsWith(".json") && !expectedFiles.has(file)) {
-				console.log(`Removing unexpected file: ${file}`);
-				await fs.unlink(path.join(outputPath, file));
-			}
+	const existingFiles = await fs.readdir(outputPath);
+	for (const file of existingFiles) {
+		if (file.endsWith(".json") && !expectedFiles.has(file)) {
+			console.log(`Removing unexpected file: ${file}`);
+			await fs.unlink(path.join(outputPath, file));
 		}
-	} catch (err) {
-		// Output directory might not exist yet, which is OK
 	}
 })();
