@@ -20,7 +20,8 @@
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"print-configs": "node scripts/print-configs.cjs printed-configs",
-		"test": "echo TODO: add tests"
+		"test": "echo TODO: add tests",
+		"tsc": "npm run build"
 	},
 	"dependencies": {
 		"@eslint-community/eslint-plugin-eslint-comments": "~4.5.0",
