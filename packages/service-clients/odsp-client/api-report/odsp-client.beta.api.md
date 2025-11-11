@@ -7,7 +7,7 @@
 // @beta
 export type IOdspAudience = IServiceAudience<OdspMember>;
 
-// @beta
+// @beta @sealed
 export interface IOdspContainerServicesEvents extends IEvent {
     (event: "readOnlyStateChanged", listener: (readonly: boolean) => void): void;
     (event: "sensitivityLabelChanged", listener: (sensitivityLabelsInfo: string) => void): void;
@@ -60,7 +60,7 @@ export interface OdspContainerAttachProps {
     filePath: string | undefined;
 }
 
-// @beta
+// @beta @sealed
 export interface OdspContainerServices extends IEventProvider<IOdspContainerServicesEvents>, IDisposable {
     audience: IOdspAudience;
     getReadOnlyState(): boolean | undefined;

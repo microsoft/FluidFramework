@@ -86,6 +86,7 @@ export interface OdspContainerAttachProps {
  * Events emitted by the ODSP container service to notify consumers of select
  * container changes.
  * @beta
+ * @sealed
  */
 export interface IOdspContainerServicesEvents extends IEvent {
 	/**
@@ -125,6 +126,7 @@ export interface IOdspFluidContainer<
  * how the data is handled within the FluidContainer itself, i.e. which data objects or DDSes to
  * use, will not be included here but rather on the FluidContainer class itself.
  * @beta
+ * @sealed
  */
 export interface OdspContainerServices
 	extends IEventProvider<IOdspContainerServicesEvents>,

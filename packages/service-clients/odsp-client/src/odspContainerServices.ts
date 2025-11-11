@@ -22,46 +22,48 @@ export class OdspContainerServices
 	extends TypedEventEmitter<IOdspContainerServicesEvents>
 	implements IOdspContainerServices, IDisposable
 {
-	private _disposed = false;
+	#disposed = false;
+	readonly #container: IContainer;
 
 	public readonly audience: IOdspAudience;
 
-	public constructor(private readonly container: IContainer) {
+	public constructor(container: IContainer) {
 		super();
-		this.container.on("readonly", this.readonlyEventHandler);
-		this.container.on("metadataUpdate", this.metadataUpdateEventHandler);
+		this.#container = container;
+		this.#container.on("readonly", this.#readonlyEventHandler);
+		this.#container.on("metadataUpdate", this.#metadataUpdateEventHandler);
 		this.audience = createServiceAudience({
-			container,
+			container: this.#container,
 			createServiceMember: createOdspAudienceMember,
 		});
 	}
 
-	private readonly readonlyEventHandler = (readonly: boolean): void => {
+	readonly #readonlyEventHandler = (readonly: boolean): void => {
 		this.emit("readOnlyStateChanged", readonly);
 	};
 
-	private readonly metadataUpdateEventHandler = (metadata: Record<string, string>): void => {
+	readonly #metadataUpdateEventHandler = (metadata: Record<string, string>): void => {
 		if (metadata?.sensitivityLabelsInfo !== undefined) {
 			this.emit("sensitivityLabelChanged", metadata.sensitivityLabelsInfo);
 		}
 	};
 
 	public get disposed(): boolean {
-		return this._disposed;
+		return this.#disposed;
 	}
 
 	public dispose(): void {
-		if (this._disposed) {
+		if (this.#disposed) {
 			return;
 		}
 
-		this._disposed = true;
-		this.container.off("readonly", this.readonlyEventHandler);
-		this.container.off("metadataUpdate", this.metadataUpdateEventHandler);
+		this.#disposed = true;
+		this.#container.off("readonly", this.#readonlyEventHandler);
+		this.#container.off("metadataUpdate", this.#metadataUpdateEventHandler);
 		this.removeAllListeners();
 	}
 
 	public getReadOnlyState(): boolean | undefined {
-		return this.container.readOnlyInfo.readonly;
+		return this.#container.readOnlyInfo.readonly;
 	}
 }
