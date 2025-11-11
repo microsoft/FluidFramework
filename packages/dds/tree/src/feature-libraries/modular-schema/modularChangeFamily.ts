@@ -3083,6 +3083,11 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 			countToProcess,
 		);
 
+		if (areEqualChangeAtomIds(inputEntry.value, baseRenameTo)) {
+			// The base change does not rename this node.
+			return { value: undefined, length: countToProcess };
+		}
+
 		countToProcess = inputEntry.length;
 		const inputId = inputEntry.value;
 
