@@ -123,11 +123,11 @@ jobs:
           submodules: false
 
       # install and configure node, pnpm and the changeset tools
-      # release notes: https://github.com/pnpm/action-setup/releases/tag/v4.0.0
-      - uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # ratchet:pnpm/action-setup@v4
+      # release notes: https://github.com/pnpm/action-setup/releases/tag/v4.2.0
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # ratchet:pnpm/action-setup@v4
 
-      # release notes: https://github.com/actions/setup-node/releases/tag/v4.0.3
-      - uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # ratchet:actions/setup-node@v4
+      # release notes: https://github.com/actions/setup-node/releases/tag/v6.0.0
+      - uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # ratchet:actions/setup-node@v6
         with:
           node-version-file: .nvmrc
           cache: "pnpm"
