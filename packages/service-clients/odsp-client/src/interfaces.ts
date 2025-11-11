@@ -138,9 +138,21 @@ export interface OdspContainerServices
 
 	/**
 	 * Gets the read-only state of the container, if available.
+	 * This is not available until the container is in the "Connected" state.
+	 * @remarks
+	 * In the case that the read-only state cannot be determined, wait for the "readOnlyStateChanged" event to be emitted.
 	 * @returns The read-only state (true when readonly, false when editable), or undefined if not available.
 	 */
 	getReadOnlyState(): boolean | undefined;
+	/**
+	 * Gets the sensitivity labels info of the container, if available.
+	 * This is not available until the container is in the "Connected" state, and will only be available
+	 * if sensitivity labels have been applied to the container.
+	 * @remarks
+	 * In the case that the sensitivity labels info are expected but cannot be determined, wait for the "sensitivityLabelChanged" event to be emitted.
+	 * @returns The sensitivity labels info string, or undefined if not available.
+	 */
+	getSensitivityLabelsInfo(): string | undefined;
 }
 
 /**

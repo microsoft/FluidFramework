@@ -43,7 +43,7 @@ export class OdspContainerServices
 	};
 
 	readonly #metadataUpdateEventHandler = (metadata: Record<string, string>): void => {
-		if (metadata?.sensitivityLabelsInfo !== undefined) {
+		if (metadata.sensitivityLabelsInfo !== undefined) {
 			this.emit("sensitivityLabelChanged", metadata.sensitivityLabelsInfo);
 		}
 	};
@@ -65,5 +65,9 @@ export class OdspContainerServices
 
 	public getReadOnlyState(): boolean | undefined {
 		return this.#container.readOnlyInfo.readonly;
+	}
+
+	public getSensitivityLabelsInfo(): string | undefined {
+		return this.#container.containerMetadata.sensitivityLabelsInfo;
 	}
 }

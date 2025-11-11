@@ -64,6 +64,7 @@ export interface OdspContainerAttachProps {
 export interface OdspContainerServices extends IEventProvider<IOdspContainerServicesEvents>, IDisposable {
     audience: IOdspAudience;
     getReadOnlyState(): boolean | undefined;
+    getSensitivityLabelsInfo(): string | undefined;
 }
 
 // @beta
