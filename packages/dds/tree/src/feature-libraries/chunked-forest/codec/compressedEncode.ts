@@ -57,7 +57,7 @@ export function compressedEncode(
 		anyFieldEncoder.encodeField(cursor, context, buffer);
 		batchBuffer.push(buffer);
 	}
-	return updateShapesAndIdentifiersEncoding(FieldBatchFormatVersion.v1, batchBuffer);
+	return updateShapesAndIdentifiersEncoding(context.version, batchBuffer);
 }
 
 export type BufferFormat = BufferFormatGeneric<EncodedChunkShape>;
@@ -458,6 +458,10 @@ export const incrementalFieldEncoder: FieldEncoder = {
 			context.incrementalEncoder !== undefined,
 			0xc88 /* incremental encoder must be defined to use incrementalFieldEncoder */,
 		);
+		assert(
+			context.version >= FieldBatchFormatVersion.v2,
+			"Unsupported FieldBatchFormatVersion for incremental encoding; must be v2 or higher",
+		);
 
 		const chunkReferenceIds = context.incrementalEncoder.encodeIncrementalField(
 			cursor,
@@ -527,6 +531,7 @@ export class EncoderContext implements NodeEncodeBuilder, FieldEncodeBuilder {
 		 * See {@link IncrementalEncoder} for more information.
 		 */
 		public readonly incrementalEncoder: IncrementalEncoder | undefined,
+		public readonly version: FieldBatchFormatVersion,
 	) {}
 
 	public nodeEncoderFromSchema(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {

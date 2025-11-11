@@ -46,6 +46,7 @@ import {
 	type EncodedNestedArrayShape,
 	type EncodedNodeShape,
 	type EncodedValueShape,
+	FieldBatchFormatVersion,
 	SpecialField,
 } from "./format.js";
 import type { IncrementalDecoder } from "./codecs.js";
@@ -246,6 +247,10 @@ export class IncrementalChunkDecoder implements ChunkDecoder {
 		);
 
 		const chunkDecoder = (batch: EncodedFieldBatch): TreeChunk => {
+			assert(
+				batch.version >= FieldBatchFormatVersion.v2,
+				"Unsupported FieldBatchFormatVersion for incremental chunks; must be v2 or higher",
+			);
 			const context = new DecoderContext(
 				batch.identifiers,
 				batch.shapes,
