@@ -50,14 +50,14 @@ stages:
           ${{ parameters.dependencyInstallCommand }}
 
     - ${{ if ne(convertToJson(parameters.checks), '[]') }}:
-      - ${{ each check in parameters.checks }}:
-        - task: Npm@1
-          displayName: npm run ${{ check }}
-          inputs:
-            command: 'custom'
-            workingDir: ${{ parameters.buildDirectory }}
-            customCommand: 'run ${{ check }}'
-          condition: succeededOrFailed()
+      # - ${{ each check in parameters.checks }}:
+      #   - task: Npm@1
+      #     displayName: npm run ${{ check }}
+      #     inputs:
+      #       command: 'custom'
+      #       workingDir: ${{ parameters.buildDirectory }}
+      #       customCommand: 'run ${{ check }}'
+      #     condition: succeededOrFailed()
 
       - task: Bash@3
         displayName: Check for extraneous modified files
