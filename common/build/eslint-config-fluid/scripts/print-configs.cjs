@@ -3,6 +3,15 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * @fileoverview Script to print the resolved ESLint configurations for various configurations and source file types.
+ *
+ * To add new configurations to print, add them to the `configsToPrint` array.
+ *
+ * For clarity, all the async file operations are done sequentially rather than collecting promises and using
+ * `Promise.all`. This makes the code easier to read and is acceptable as this script is not performance critical.
+ */
+
 const fs = require("node:fs/promises");
 const path = require("node:path");
 
@@ -47,6 +56,9 @@ const configsToPrint = [
 	},
 ];
 
+/**
+ * Generates the applied ESLint config for a specific file and config path.
+ */
 async function generateConfig(filePath, configPath) {
 	console.log(`Printing config for ${filePath} using ${configPath}`);
 	const eslint = new ESLint({
@@ -81,7 +93,6 @@ async function generateConfig(filePath, configPath) {
 
 	const outputPath = args[0];
 	await fs.mkdir(outputPath, { recursive: true });
-	const writePromises = [];
 	const expectedFiles = new Set();
 
 	for (const { name, configPath, sourceFilePath } of configsToPrint) {
@@ -99,7 +110,7 @@ async function generateConfig(filePath, configPath) {
 
 		// Only write the file if the content has changed
 		if (newContent !== originalContent) {
-			writePromises.push(fs.writeFile(outputFilePath, newContent));
+			await fs.writeFile(outputFilePath, newContent);
 		}
 	}
 
@@ -115,6 +126,4 @@ async function generateConfig(filePath, configPath) {
 	} catch (err) {
 		// Output directory might not exist yet, which is OK
 	}
-
-	await Promise.all(writePromises);
 })();
