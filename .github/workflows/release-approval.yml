@@ -79,8 +79,8 @@ jobs:
       - name: "workflow_dispatch: Load commit_sha"
         id: workflow_dispatch_load_commit_sha
         if: github.event_name == 'workflow_dispatch'
-        # release notes: https://github.com/actions/github-script/releases/tag/v7.0.1
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # ratchet:actions/github-script@v7.0.1
+        # release notes: https://github.com/actions/github-script/releases/tag/v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # ratchet:actions/github-script@v8
         env:
           PR_NUMBER: ${{ steps.workflow_dispatch_load_pr.outputs.pr_num }}
         with:
@@ -107,7 +107,7 @@ jobs:
       # workflow is not directly triggered by the PR.
       - name: Set commit status as pending
         # release notes: https://github.com/myrotvorets/set-commit-status-action/releases/tag/v2.0.1
-        uses: myrotvorets/set-commit-status-action@3730c0a348a2ace3c110851bed53331bc6406e9f # ratchet:myrotvorets/set-commit-status-action@v2.0.1
+        uses: myrotvorets/set-commit-status-action@3730c0a348a2ace3c110851bed53331bc6406e9f # ratchet:myrotvorets/set-commit-status-action@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           sha: ${{ needs.metadata.outputs.commit_sha }}
@@ -169,7 +169,7 @@ jobs:
       - name: Set commit status as success
         if: steps.check-pr.outcome == 'success'
         # release notes: https://github.com/myrotvorets/set-commit-status-action/releases/tag/v2.0.1
-        uses: myrotvorets/set-commit-status-action@3730c0a348a2ace3c110851bed53331bc6406e9f # ratchet:myrotvorets/set-commit-status-action@v2.0.1
+        uses: myrotvorets/set-commit-status-action@3730c0a348a2ace3c110851bed53331bc6406e9f # ratchet:myrotvorets/set-commit-status-action@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           sha: ${{ needs.metadata.outputs.commit_sha }}
@@ -179,7 +179,7 @@ jobs:
       - name: Set commit status as failure
         if: steps.check-pr.outcome != 'success'
         # release notes: https://github.com/myrotvorets/set-commit-status-action/releases/tag/v2.0.1
-        uses: myrotvorets/set-commit-status-action@3730c0a348a2ace3c110851bed53331bc6406e9f # ratchet:myrotvorets/set-commit-status-action@v2.0.1
+        uses: myrotvorets/set-commit-status-action@3730c0a348a2ace3c110851bed53331bc6406e9f # ratchet:myrotvorets/set-commit-status-action@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           sha: ${{ needs.metadata.outputs.commit_sha }}
