@@ -3083,8 +3083,15 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 			countToProcess,
 		);
 
-		if (areEqualChangeAtomIds(inputEntry.value, baseRenameTo)) {
-			// The base change does not rename this node.
+		const attachEntry = getFirstAttachField(
+			this.table.baseChange.crossFieldKeys,
+			baseRenameTo,
+			countToProcess,
+		);
+
+		countToProcess = attachEntry.length;
+		if (attachEntry.value !== undefined) {
+			// These nodes are attached in the output context of the base changeset.
 			return { value: undefined, length: countToProcess };
 		}
 
