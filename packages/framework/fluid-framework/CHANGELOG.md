@@ -1,5 +1,27 @@
 # fluid-framework
 
+## 2.72.0
+
+### Minor Changes
+
+- `formatVersion` removed from the options passed to `configuredSharedTree` ([#25752](https://github.com/microsoft/FluidFramework/pull/25752)) [df533906e3](https://github.com/microsoft/FluidFramework/commit/df533906e3a8e5d54024009704ca0c0eedb95e95)
+
+  Note: this change may break users of alpha APIs. See below for details.
+
+  `SharedTreeOptions` (which is passed to `configuredSharedTree`) no longer includes a `formatVersion: SharedTreeFormatVersion[keyof SharedTreeFormatVersion]` field.
+  The concept of `SharedTreeFormatVersion` has been removed altogether.
+  Instead, users are expected to leverage the already existing `minVersionForCollab` field.
+
+  For migration purposes, the mapping from `SharedTreeFormatVersion` to `minVersionForCollab` is as follows:
+  - `SharedTreeFormatVersion.v1`: no supported equivalent
+  - `SharedTreeFormatVersion.v2`: no supported equivalent
+  - `SharedTreeFormatVersion.v3`: `minVersionForCollab: FluidClientVersion.v2_0`
+  - `SharedTreeFormatVersion.v5`: `minVersionForCollab: FluidClientVersion.v2_43`
+  - `SharedTreeFormatVersion.vSharedBranches`: `minVersionForCollab: FluidClientVersion.v2_43` + `SharedTreeOptions.enableSharedBranches`
+
+  The values for which there is no supported equivalent `minVersionForCollab` were never given official support.
+  [Contact](https://github.com/microsoft/FluidFramework/issues) the Fluid Framework team if you need help migrating away from them.
+
 ## 2.71.0
 
 ### Minor Changes
@@ -61,7 +83,6 @@
 - A minimal set of branching APIs has been promoted to beta. ([#25744](https://github.com/microsoft/FluidFramework/pull/25744)) [32cc2c75d8](https://github.com/microsoft/FluidFramework/commit/32cc2c75d82c35403caa91e67e81f71baee5d092)
 
   The following APIs have been promoted to beta in `@fluidframework/tree`:
-
   - `TreeBranch.fork()`
   - `TreeBranch.merge()`
   - `TreeBranch.rebaseOnto()`
@@ -186,7 +207,6 @@
   The `@alpha` API `JsonValidator` has been removed: its replacement `FormatValidator` must now be used.
 
   As part of this:
-
   - `typeboxValidator` has been replaced with `FormatValidatorBasic`.
   - `noopValidator` has been replaced with `FormatValidatorNoOp`.
 
@@ -342,7 +362,6 @@ Dependency updates only.
   The APIs that operate on batches should be used instead.
 
   Specifically:
-
   - `insertColumn`
     - Use `insertColumns` instead
   - `insertRow`
@@ -362,7 +381,6 @@ Dependency updates only.
 - Remove unnecessary and internal APIs in ISequenceIntervalCollection and related interval types ([#25244](https://github.com/microsoft/FluidFramework/pull/25244)) [15d476ea706](https://github.com/microsoft/FluidFramework/commit/15d476ea7069eb4de317a726733aa8fb9e8486e8)
 
   The following APIs are now removed:
-
   - `IInterval.clone`
   - `IInterval.modify`
   - `IInterval.union`
@@ -508,7 +526,6 @@ Dependency updates only.
 - Allow edits in arrays to be concurrent to dependent edits of transactions with violated constraints ([#25191](https://github.com/microsoft/FluidFramework/pull/25191)) [ef64bae6ab2](https://github.com/microsoft/FluidFramework/commit/ef64bae6ab2848c67d778d14ad56ae021f54ac7a)
 
   Before this release, making concurrent edits to an array could lead to assertion error `0x8a2` being thrown if the following conditions were met:
-
   - Some edit `e1` was a transaction with a constraint that turned out to be violated by edits concurrent to (and sequenced before) `e1`
   - Some edit `e2` was dependent on `e1` (from before the violation of its constraint)
   - Some edit `e3` was concurrent to and sequenced after both `e1` and `e2`
@@ -558,7 +575,6 @@ Dependency updates only.
   (This is the case when nodes are removed before attaching and there is a local branch that forks from a commit that made such a removal or from an earlier commit. This is also the case when retaining `Revertible` objects for those commits).
 
   After this release, the behavior depends on the `CodecWriteOptions.oldestCompatibleClient` value:
-
   - For values < `FluidClientVersion.v2_52`, the behavior is the same.
   - For values >= `FluidClientVersion.v2_52`, the attach will succeed, but use a newer storage format.
 
@@ -654,7 +670,6 @@ Dependency updates only.
   We recommend updating your code to be more tolerant of unknown node kinds going forward.
 
   Also see alternative options for schema-agnostic tree traversal if needed:
-
   - [Tree.parent](https://fluidframework.com/docs/api/fluid-framework/treenodeapi-interface#parent-methodsignature)
   - [TreeAlpha.child](https://fluidframework.com/docs/api/fluid-framework/treealpha-interface#child-methodsignature)
   - [TreeAlpha.children](https://fluidframework.com/docs/api/fluid-framework/treealpha-interface#children-methodsignature)
@@ -1066,7 +1081,6 @@ Dependency updates only.
 
   Table trees created using `TableSchema` offer various APIs to make working with tabular data easy.
   These include:
-
   - Insertion and removal of columns, rows, and cells.
   - Cell access by column/row.
 
@@ -1212,7 +1226,6 @@ Dependency updates only.
   You can retrieve the long identifier with `TreeAlpha.identifier(node)`, where `node` is a `TreeNode`. The long identifier is a stable, compressible UUID generated by the tree.
   In cases where the node does not yet have an identifier assigned, this will return `undefined`.
   These cases include:
-
   - The node does not contain an identifier field.
   - The node is a non-hydrated node with a user provided identifier. Note that if it is a non-hydrated node without an identifier provided, it will throw an error.
 
@@ -1223,7 +1236,6 @@ Dependency updates only.
   to get the original valid long `identifier` back.
   In the cases where it's not possible to shorten the `identifier`, it will return `undefined`.
   These cases include:
-
   - A compressible long identifier, but it is unrecognized by the tree that the node belongs to. This can occur if the identifier is not generated from the tree.
   - An identifier which is not compressible by the tree. This can occur if the node's identifier was a user provided string.
 
@@ -1233,7 +1245,6 @@ Dependency updates only.
   If the method returns a valid long identifier, this identifier can be passed into `TreeAlpha.identifier.shorten` to get the original `identifier` back.
   In the cases where it's not possible to lengthen the `identifier`, this method will throw an error.
   These cases include:
-
   - An unrecognized short identifier. This can occur if the identifier is not generated from the tree.
 
   #### TreeAlpha.identifier.getShort
@@ -1254,7 +1265,6 @@ Dependency updates only.
 
   In cases where the node provided does not contain an identifier that is recognized or compressible by the tree that the node belongs to, this method will return undefined.
   This will occur in the following cases:
-
   - The node is an non-hydrated node with a user provided identifier. Note that if it is an non-hydrated node without an identifier provided, it will throw an error.
   - The node does not contain an identifier field.
   - The node contains a compressible long identifier, but it is unrecognized by the tree that the node belongs to. This can occur if the identifier is not generated from the tree.
@@ -1389,7 +1399,6 @@ Dependency updates only.
 
   [TreeNodes](https://fluidframework.com/docs/api/fluid-framework/treenode-class) which are [deleted](https://fluidframework.com/docs/api/fluid-framework/treestatus-enum#deleted-enummember) were not handled correctly.
   This has been improved in two ways:
-
   1. Accessing fields of deleted nodes now consistently throws a usage error indicating that doing so is invalid.
      Previously, this would throw an assertion error, which was a bug.
   2. When a `TreeNode` is deleted, but that node still exists within the [`ITree`](https://fluidframework.com/docs/api/driver-definitions/itree-interface), then becomes accessible again later, a new `TreeNode` is now allocated instead of trying to reuse the deleted one.
@@ -1399,7 +1408,6 @@ Dependency updates only.
 - Generic types for IntervalCollections have been replaced with non-generic types ([#24411](https://github.com/microsoft/FluidFramework/pull/24411)) [1c743e825ed](https://github.com/microsoft/FluidFramework/commit/1c743e825ed29a81b0e66775ce3553477361d335)
 
   This change deprecates the following generic types and provides non-generic alternatives where necessary:
-
   - `IIntervalCollection` is replaced by `ISequenceIntervalCollection`
   - `IIntervalCollectionEvent` is replaced by `ISequenceIntervalCollectionEvents`
   - `IntervalIndex` is replaced by `SequenceIntervalIndex`
@@ -1467,7 +1475,6 @@ Dependency updates only.
   As a side effect of this work, some schema which violated the documented allowed patterns specified by [SchemaFactory](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#schemafactory-remarks) but used to work (as long as they were not package exported) no longer compile.
 
   The specific case known to break is when:
-
   1. An Object node schema is co-recursive with an Array node schema.
   2. The Array does not declare a named subclass.
   3. The schema reference from the Object to the Array is not using the [lazy syntax](https://fluidframework.com/docs/api/fluid-framework/lazyitem-typealias).
@@ -1517,7 +1524,6 @@ Dependency updates only.
   trunk commits and 100 peer commits, the performance increases by 97%.
 
   Some example scenarios where the performance will be improved:
-
   - A client makes some local changes and another client simultaneously makes a large number of changes in a single JavaScript turn.
     For example, a client is typing into a canvas while another client pastes a large amount of content into a table.
   - A client makes a local branch with some changes and rebases it into the trunk. For example, an AI agent makes changes
@@ -1538,7 +1544,6 @@ Dependency updates only.
   Additionally an alpha `ObjectNodeSchema` object is added to enable support for `schema instanceof ObjectNodeSchema` to safely narrow `TreeNodeSchema` to this new type.
 
   In support of this work, several typing details were fixed including:
-
   - `info` field of `[typeSchemaSymbol]` type brand on recursive object schema was specified to match non-recursive variants.
   - Type of field metadata was correctly plumbed through `optionalReclusive` and `requiredRecursive`.
   - When fields object provided to [SchemaFactory.object](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#object-method) is typed as `RestrictiveStringRecord<ImplicitFieldSchema>` the resulting [TreeObjectNode](https://fluidframework.com/docs/api/fluid-framework/treeobjectnode-typealias) no longer gets a `Record<string, TreeNode | TreeLeafValue>` signature which could incorrectly conflict with custom members added to the object. Instead `{}` is used to provide no information about felids on the type when the schema provides no information about them. Additionally this case is explicitly made non-constructable: the constructor takes in `never` instead of a `Record<string,never>` which could be erroneously satisfied with an empty object due to how TypeScript assignability rules consider records to have all allowed fields, but also allow objects missing those fields to be assigned to them.
@@ -1565,7 +1570,6 @@ Dependency updates only.
   The various import and export [`VerboseTree`](https://fluidframework.com/docs/api/fluid-framework/verbosetree-typealias) and [`ConciseTree`](https://fluidframework.com/docs/api/fluid-framework/concisetree-typealias) APIs no longer include `valueConverter` options.
   Instead the resulting tree can be further processed to do any desired replacements.
   The following `@alpha` APIs have been added to assist with this:
-
   1. `cloneWithReplacements`
   2. `replaceHandles`
   3. `replaceConciseTreeHandles`
@@ -1616,7 +1620,6 @@ Dependency updates only.
   For example, with 10 local ops + 10 incoming ops, the performance increases by 70%; with 100 local ops + 100 incoming ops, the performance increases by 94%.
 
   This will help improve performance in the following scenarios:
-
   - A client makes a large number of changes in a single JS turn. For example, copy pasting large data like a table.
   - A client has a large number of local changes. For example, slow clients whose changes are slow to ack or clients with
     a local branch with large number of changes.
@@ -1693,7 +1696,6 @@ Dependency updates only.
   These properties will not be used by the system by default, but can be used to associate common application-specific properties with Node Schema.
 
   #### `SchemaFactoryAlpha` Updates
-
   - `object` and `objectRecursive`, `arrayRecursive`, and `mapRecursive` now support `metadata` in their `options` parameter.
   - (new) `arrayAlpha` - Variant of `array` that accepts an options parameter which supports `metadata`
   - (new) `mapAlpha` - Variant of `map` that accepts an options parameter which supports `metadata`
@@ -1746,7 +1748,6 @@ Dependency updates only.
   One of these checks verifies that the view schema (defined in application's code) aligns with the document schema (determined by the document data at rest).
   This helps to ensure that clients running incompatible versions of the application's code don't collaborate at the same time on some document, which could cause data loss or disrupt application invariants.
   One general solution application authors can perform is to stage the rollout of a feature which changes document schema into multiple phases:
-
   1. Release an application version which understands documents written with the new format but doesn't attempt to upgrade any documents
   2. Wait for this application version to saturate in the app's ecosystem
   3. Release an application version which upgrades documents to start leveraging the new format.
@@ -1863,7 +1864,6 @@ Dependency updates only.
   As part of ongoing improvements, several internal types and related APIs have been removed. These types are unnecessary for any supported scenarios and could lead to errors if used. Since directly using these types would likely result in errors, these changes are not likely to impact any Fluid Framework consumers.
 
   Removed types:
-
   - IMergeTreeTextHelper
   - MergeNode
   - ObliterateInfo
@@ -1875,12 +1875,10 @@ Dependency updates only.
   In addition to removing the above types, they are no longer exposed through the following interfaces and their implementations: `ISegment`, `ReferencePosition`, and `ISerializableInterval`.
 
   Removed functions:
-
   - addProperties
   - ack
 
   Removed properties:
-
   - propertyManager
   - segmentGroups
 
@@ -1963,7 +1961,6 @@ Dependency updates only.
   An adjustment is a modification applied to a property value within a specified range. Adjustments can be used to increment or decrement property values dynamically. They are particularly useful in scenarios where property values need to be updated based on user interactions or other events. For example, in a rich text editor, adjustments can be used for modifying indentation levels or font sizes, where multiple users could apply differing numerical adjustments.
 
   ### Key Features and Use Cases:
-
   - **Adjustments with Constraints**: Adjustments can include optional minimum and maximum constraints to ensure the final value falls within specified bounds. This is particularly useful for maintaining consistent formatting in rich text editors.
   - **Consistent Property Changes**: The feature ensures that property changes are consistent, managing both local and remote changes effectively. This is essential for collaborative rich text editing where multiple users may be making adjustments simultaneously.
   - **Rich Text Formatting**: Adjustments can be used to modify text properties such as font size, indentation, or other formatting attributes dynamically based on user actions.
@@ -1985,7 +1982,6 @@ Dependency updates only.
   The `Client` class in the merge-tree package has been removed. Types that directly or indirectly expose the merge-tree `Client` class have also been removed.
 
   The removed types were not meant to be used directly, and direct usage was not supported:
-
   - AttributionPolicy
   - IClientEvents
   - IMergeTreeAttributionOptions
@@ -1993,7 +1989,6 @@ Dependency updates only.
   - SharedStringClass
 
   Some classes that referenced the `Client` class have been transitioned to interfaces. Direct instantiation of these classes was not supported or necessary for any supported scenario, so the change to an interface should not impact usage. This applies to the following types:
-
   - SequenceInterval
   - SequenceEvent
   - SequenceDeltaEvent
@@ -2018,7 +2013,6 @@ Dependency updates only.
   `independentView` has also been added, which is similar but handles the case of creating a new view without an existing schema or tree.
 
   Together these APIs address several use-cases:
-
   1. Using SharedTree as an in-memory non-collaborative datastore.
   2. Importing and exporting data from a SharedTree to and from other services or storage locations (such as locally saved files).
   3. Testing various scenarios without relying on a service.
@@ -2513,7 +2507,6 @@ Dependency updates only.
 
   The `PropertyManager` class, along with the `propertyManager` properties and `addProperties` functions on segments and intervals, are not intended for external use.
   These elements will be removed in a future release for the following reasons:
-
   - There are no scenarios where they need to be used directly.
   - Using them directly will cause eventual consistency problems.
   - Upcoming features will require modifications to these mechanisms.
@@ -2616,7 +2609,6 @@ Dependency updates only.
   The runtime behavior is unaffected: any code which worked and still compiles is fine and does not need changes.
 
   `Tree.schema` was changed to mitigate two different issues:
-
   1. It tried to give a more specific type based on the type of the passed in value.
      When the type of the input is not known precisely (for example it is a union of node types like `Foo | Bar`, or `TreeNode` or even `TreeNode | TreeLeafValue`), this was fine since schema are covariant over their node type.
      However when the input was more specific that the schema type, for example the type is simply `0`, this would result in unsound typing, since the create function could actually return values that did not conform with that schema (for example `schema.create(1)` for the number schema typed with `0` would return `1` with type `0`).
@@ -2743,7 +2735,6 @@ Dependency updates only.
   ```
 
   Skipping the constructor causes the following problems:
-
   1. `TreeViewConfiguration` does validation in its constructor, so skipping it also skips the validation which leads to much less friendly error messages for invalid schema.
   2. Skipping the constructor also discards any default values for options like `enableSchemaValidation`.
      This means that code written in that style would break if more options were added. Since such changes are planned,
@@ -2778,7 +2769,6 @@ Dependency updates only.
   already the case, but the documentation was not clear.
 
   Updated APIs:
-
   - [IDirectory](https://fluidframework.com/docs/api/v2/fluid-framework/idirectory-interface) sealed
   - [IDirectoryEvents](https://fluidframework.com/docs/api/v2/fluid-framework/idirectoryevents-interface) sealed
   - [IDirectoryValueChanged](https://fluidframework.com/docs/api/v2/fluid-framework/idirectoryvaluechanged-interface) sealed and path property is readonly
@@ -2803,7 +2793,6 @@ Dependency updates only.
 
   Several cases of invalid usage patterns for tree APIs have gained improved error reporting, as well as improved documentation on the APIs detailing what usage is supported.
   These improvements include:
-
   - Unsupported usages of schema classes: using more than one schema class derived from a single SchemaFactory generated base class. This used to hit internal asserts, but now has a descriptive user-facing UsageError. Most of this work was done in [9fb3dcf](https://github.com/microsoft/FluidFramework/commit/9fb3dcf491a7f0d66f4abbdc64ab97ccabef4707).
   - Improved detection of when prior exception may have left SharedTree in an invalid state.
     These cases now report a UsageError including a reference to the prior exception. This was mainly done in [9fb3dcf](https://github.com/microsoft/FluidFramework/commit/9fb3dcf491a7f0d66f4abbdc64ab97ccabef4707) and [b77d530](https://github.com/microsoft/FluidFramework/commit/b77d530b9252201c40a90d1a2a6315f76f1a4a4b).
@@ -2822,7 +2811,6 @@ Dependency updates only.
 
   Access to these now less public types should not be required for users of the `@public` "declarative API" exposed in the `fluid-framework` package, but can still be accessed for those who need them under the `/legacy` import paths.
   The full list of such types is:
-
   - `SharedTree` as exported from `@fluidframwork/tree`: It is still exported as `@public` from `fluid-framework` as `SharedObjectKind`.
   - `ISharedObjectKind`: See new `SharedObjectKind` type for use in `@public` APIs.
     `ISharedObject`
@@ -2840,7 +2828,6 @@ Dependency updates only.
   - `IProvideFluidHandleContext`
 
   Removed APIs:
-
   - `DataObjectClass`: Usages replaced with `SharedObjectKind`.
   - `LoadableObjectClass`: Replaced with `SharedObjectKind`.
   - `LoadableObjectClassRecord`: Replaced with `Record<string, SharedObjectKind>`.
@@ -2864,7 +2851,6 @@ Dependency updates only.
 - fluid-framework: Remove some types from `@public` that are not needed ([#21326](https://github.com/microsoft/FluidFramework/pull/21326)) [b629cb80b0](https://github.com/microsoft/FluidFramework/commit/b629cb80b0e5ecdc750270807f77a0e30fab4559)
 
   Mark the following APIs `@alpha` instead of `@public`:
-
   - IBranchOrigin
   - ISequencedDocumentMessage
   - ISignalMessage
@@ -2879,7 +2865,6 @@ Dependency updates only.
 - fluid-framework: Remove several types from `@public` scope ([#21142](https://github.com/microsoft/FluidFramework/pull/21142)) [983e9f09f7](https://github.com/microsoft/FluidFramework/commit/983e9f09f7b10fef9ffa1e9af86166f0ccda7e14)
 
   The following types have been moved from `@public` to `@alpha`:
-
   - `IFluidSerializer`
   - `ISharedObjectEvents`
   - `IChannelServices`
@@ -2903,7 +2888,6 @@ Dependency updates only.
 
   The stable public API surface for Tree has been reduced.
   Several types have been moved into InternalTypes, indicating that they are not fully stable nor intended to be referenced by users of Tree.
-
   - NodeBuilderData
   - FieldHasDefault
   - TreeNodeSchemaNonClass
@@ -2930,7 +2914,6 @@ Dependency updates only.
   - TreeApi
 
   Additionally a few more types which could not be moved due to technically limitations have been documented that they should be treated similarly.
-
   - TreeNodeApi
   - TreeNodeSchemaCore
   - All \*Unsafe type (use for construction of recursive schema).
@@ -3006,7 +2989,6 @@ Dependency updates only.
 - Make several driver types no longer public [b7ad7d0b55](https://github.com/microsoft/FluidFramework/commit/b7ad7d0b55884dd8954abf7c398e518838b9bda0)
 
   Move the following types from `@public` to `@alpha`:
-
   - ITokenClaims
   - IDocumentMessage
   - IClientConfiguration
@@ -3017,7 +2999,6 @@ Dependency updates only.
   `DriverErrorTypes` is no longer exported from the `fluid-framework` package.
 
 - Rename `AzureMember.userName` to `AzureMember.name` and `IMember.userId` to `IMember.id` [96872186d0](https://github.com/microsoft/FluidFramework/commit/96872186d0d0f245c1fece7d19b3743e501679b6)
-
   1. Renamed `AzureMember.userName` to `AzureMember.name` to establish uniform naming across odsp-client and azure-client.
   2. Renamed `IMember.userId` to `IMember.id` to align with the properties received from AFR.
 
@@ -3041,7 +3022,6 @@ Dependency updates only.
   TypeScript types and implementation code.
 
   This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
-
   - `"moduleResolution": "Node16"` with `"module": "Node16"`
   - `"moduleResolution": "Bundler"` with `"module": "ESNext"`
 
@@ -3148,7 +3128,6 @@ Dependency updates only.
   Several FluidStatic classes were unnecessarily exposed and were deprecated in an earlier release. They have been replaced with creation functions. This helps us
   keep implementations decoupled from usage which is easier to maintain and extend. It has very minimal impact on the
   public surface area of downstream packages. The removed classes are as follows:
-
   - `AzureAudience` (use `IAzureAudience` instead)
   - `TinyliciousAudience` (use `ITinyliciousAudience` instead)
   - `DOProviderContainerRuntimeFactory`
@@ -3164,7 +3143,6 @@ Dependency updates only.
   Several FluidStatic classes were unnecessarily exposed. They have been replaced with creation functions. This helps us
   keep implementations decoupled from usage which is easier to maintain and extend. It has very minimal impact on the
   public surface area of downstream packages. The deprecated classes are as follows:
-
   - `AzureAudience` (use `IAzureAudience` instead)
   - `TinyliciousAudience` (use `ITinyliciousAudience` instead)
   - `DOProviderContainerRuntimeFactory`

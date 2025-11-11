@@ -247,6 +247,22 @@ const schema = new SchemaFactory("com.example");
 
 			type _check4 = requireAssignableTo<UnannotateAllowedTypesList<[A]>, [A]>;
 		}
+		// Can assign to ImplicitAllowedTypes
+		{
+			type A = UnannotateAllowedTypesList<(AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]>;
+			// @ts-expect-error TODO: AB#53315
+			type _check1 = requireAssignableTo<A, ImplicitAllowedTypes>;
+		}
+	}
+
+	// AllowedTypesFullFromMixed
+	{
+		// Can assign to ImplicitAllowedTypes
+		{
+			type A = AllowedTypesFullFromMixed<(AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]>;
+			// @ts-expect-error TODO: AB#53315
+			type _check1 = requireAssignableTo<A, ImplicitAllowedTypes>;
+		}
 	}
 }
 
