@@ -73,12 +73,12 @@ async function generateConfig(filePath, configPath) {
 
 (async () => {
 	const args = process.argv.slice(2);
-	
+
 	if (args.length !== 1) {
 		console.error("Usage: node print-configs.cjs <output-directory>");
 		process.exit(1);
 	}
-	
+
 	const outputPath = args[0];
 	const writePromises = [];
 	const expectedFiles = new Set();
@@ -86,7 +86,7 @@ async function generateConfig(filePath, configPath) {
 	for (const { name, configPath, sourceFilePath } of configsToPrint) {
 		const outputFilePath = path.join(outputPath, `${name}.json`);
 		expectedFiles.add(`${name}.json`);
-		
+
 		let originalContent = "";
 		try {
 			originalContent = await fs.readFile(outputFilePath, "utf8");
