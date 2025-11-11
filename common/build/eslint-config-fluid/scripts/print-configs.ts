@@ -70,7 +70,7 @@ const configsToPrint: ConfigToPrint[] = [
  * Generates the applied ESLint config for a specific file and config path.
  */
 async function generateConfig(filePath: string, configPath: string): Promise<string> {
-	console.log(`Printing config for ${filePath} using ${configPath}`);
+	console.log(`Generating config for ${filePath} using ${configPath}`);
 	const eslint = new ESLint({
 		overrideConfigFile: configPath,
 	});
