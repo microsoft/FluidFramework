@@ -441,15 +441,9 @@ stages:
                 # Read JSON from temp file
                 JSON_OUTPUT=$(cat /tmp/setup_result.json)
 
-                echo "JSON result:"
-                echo "$JSON_OUTPUT"
-
                 # Now safely parse the JSON
                 RESERVATION_ID=$(echo "$JSON_OUTPUT" | jq -r '.reservationId // "null"')
                 USER_PASS=$(echo "$JSON_OUTPUT" | jq '.userPass // "null"')
-
-                echo "Parsed reservationId: '$RESERVATION_ID'"
-                echo "Parsed userPass: '$USER_PASS'"
 
                 # Only set variables if parsing succeeded
                 if [[ "$RESERVATION_ID" != "null" && "$RESERVATION_ID" != "" ]]; then
@@ -465,9 +459,9 @@ stages:
                     export login__odsp__test__tenants="$USER_PASS"
                   fi
 
-                  echo "Successfully set up tenant with reservation ID: $tenant__reservationId"
+                  echo "Successfully set up tenant with reservation ID: "
                   printenv tenant__reservationId
-                  echo "successfully set up credentials: $login__odsp__test__tenants"
+                  echo "successfully set up credentials: "
                   printenv login__odsp__test__tenants
                 else
                   echo "ERROR: Failed to parse reservationId from setup output"
