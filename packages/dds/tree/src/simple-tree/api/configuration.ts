@@ -207,8 +207,15 @@ export class TreeViewConfiguration<
 	 */
 	public constructor(props: ITreeViewConfiguration<TSchema>) {
 		if (this.constructor === TreeViewConfiguration) {
+			// Ensure all TreeViewConfiguration instances are actually TreeViewConfigurationAlpha, allowing `asAlpha` to work correctly.
+			// If everything in TreeViewConfigurationAlpha is stabilized and this is removed, the `!` on the properties above should be removed to restore better type safety.
 			return new TreeViewConfigurationAlpha(props);
 		}
+		assert(
+			// The type cast here is needed to avoid this assert narrowing "this" to never, breaking the code below.
+			(this.constructor as unknown) === TreeViewConfigurationAlpha,
+			"Invalid configuration class constructed.",
+		);
 
 		const config = { ...defaultTreeConfigurationOptions, ...props };
 		this.schema = config.schema;
@@ -256,6 +263,8 @@ export class TreeViewConfiguration<
 
 /**
  * {@link TreeViewConfiguration} extended with some alpha APIs.
+ * @remarks
+ * See {@link (asAlpha:2)} for an API to downcast from {@link TreeViewConfiguration} to this type.
  * @sealed @alpha
  */
 export class TreeViewConfigurationAlpha<
