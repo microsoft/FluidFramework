@@ -25,7 +25,7 @@ import type {
 } from "@fluid-private/test-dds-utils";
 
 import { ConsensusQueueFactory } from "../consensusOrderedCollectionFactory.js";
-import type { IConsensusOrderedCollection } from "../interfaces.js";
+import type { IConsensusOrderedCollection, IOrderedCollection } from "../interfaces.js";
 import { ConsensusResult } from "../interfaces.js";
 
 import { _dirname } from "./dirname.cjs";
@@ -200,21 +200,29 @@ function assertEqualConsensusOrderedCollections(
 	a: IConsensusOrderedCollection,
 	b: IConsensusOrderedCollection,
 ): void {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
-	const aData = (a as any).data;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
-	const bData = (b as any).data;
-	assert.deepEqual(aData, bData, "Internal data properties should be equal");
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+	const aData = (a as any).data as IOrderedCollection<string>;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+	const bData = (b as any).data as IOrderedCollection<string>;
+	assert.equal(aData.size, bData.size, "Data sizes should be equal");
+	assert.deepEqual(aData.asArray(), bData.asArray(), "Data contents should be equal");
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-	const aJobTracking = (a as any).jobTracking.entries();
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-	const bJobTracking = (b as any).jobTracking.entries();
-	assert.deepEqual(
-		aJobTracking,
-		bJobTracking,
-		"Internal job tracking properties should be equal",
-	);
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+	const aJobTracking = (a as any).jobTracking as Map<
+		string,
+		{ value: string; clientId: string | undefined }
+	>;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+	const bJobTracking = (b as any).jobTracking as Map<
+		string,
+		{ value: string; clientId: string | undefined }
+	>;
+
+	assert.equal(aJobTracking.size, bJobTracking.size, "Job tracking sizes should be equal");
+	for (const [key, aJob] of aJobTracking.entries()) {
+		const bJob = bJobTracking.get(key);
+		assert.deepEqual(aJob, bJob, `Job tracking entry for key ${key} should be equal`);
+	}
 }
 
 /**
