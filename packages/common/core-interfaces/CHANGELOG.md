@@ -1,5 +1,14 @@
 # @fluidframework/core-interfaces
 
+## 2.72.0
+
+### Minor Changes
+
+- Added a new Fluid error type layerIncompatibilityError ([#25784](https://github.com/microsoft/FluidFramework/pull/25784)) [01d568b4bc](https://github.com/microsoft/FluidFramework/commit/01d568b4bcbff38a0ee4b614bad1dfb0c400a360)
+
+  A new Fluid error type `layerIncompatibilityError` is added to `FluidErrorTypesAlpha` as @legacy @alpha. This will be moved to `FluidErrorTypes` as @legacy @beta in a future legacy breaking release.
+  It will also be added to `ContainerErrorTypes` since it extends `FluidErrorTypes`.
+
 ## 2.71.0
 
 Dependency updates only.
@@ -159,7 +168,6 @@ Dependency updates only.
 
   Access to these now less public types should not be required for users of the `@public` "declarative API" exposed in the `fluid-framework` package, but can still be accessed for those who need them under the `/legacy` import paths.
   The full list of such types is:
-
   - `SharedTree` as exported from `@fluidframwork/tree`: It is still exported as `@public` from `fluid-framework` as `SharedObjectKind`.
   - `ISharedObjectKind`: See new `SharedObjectKind` type for use in `@public` APIs.
     `ISharedObject`
@@ -177,7 +185,6 @@ Dependency updates only.
   - `IProvideFluidHandleContext`
 
   Removed APIs:
-
   - `DataObjectClass`: Usages replaced with `SharedObjectKind`.
   - `LoadableObjectClass`: Replaced with `SharedObjectKind`.
   - `LoadableObjectClassRecord`: Replaced with `Record<string, SharedObjectKind>`.
@@ -213,7 +220,6 @@ Dependency updates only.
 - core-interfaces: Code details and package API surface removed [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
 
   The code details and package API surface was deprecated in @fluidframework/core-interfaces in 0.53 and has now been removed. Please import them from @fluidframework/container-definitions instead. These include:
-
   - IFluidCodeDetails
   - IFluidCodeDetailsComparer
   - IFluidCodeDetailsConfig
@@ -230,7 +236,6 @@ Dependency updates only.
   TypeScript types and implementation code.
 
   This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
-
   - `"moduleResolution": "Node16"` with `"module": "Node16"`
   - `"moduleResolution": "Bundler"` with `"module": "ESNext"`
 
@@ -327,7 +332,6 @@ Dependency updates only.
 - test-utils: provideEntryPoint is required [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
   The optional `provideEntryPoint` method has become required on a number of constructors. A value will need to be provided to the following classes:
-
   - `BaseContainerRuntimeFactory`
   - `RuntimeFactory`
   - `ContainerRuntime` (constructor and `loadRuntime`)
@@ -361,7 +365,6 @@ Dependency updates only.
 - Cleaning up duplicate or misnamed telemetry types ([#17149](https://github.com/microsoft/FluidFramework/issues/17149)) [f9236942fa](https://github.com/microsoft/FluidFramework/commits/f9236942faf03cde860bfcbc7c28f8fbd81d3868)
 
   We have two sets of telemetry-related interfaces:
-
   - The "Base" ones
     - These have a very bare API surface
     - They are used on public API surfaces to transmit logs across layers
@@ -371,14 +374,12 @@ Dependency updates only.
     - They are used for instrumenting our code, and then normalize and pass off the logs via the Base interface
 
   There are two problems with the given state of the world:
-
   1. The "Base" ones were not named consistently, so the distinction was not as apparent as it could be
   2. The internal ones were copied to `@fluidframework/telemetry-utils` and futher extended, but the original duplicates remain.
 
   This change addresses these by adding "Base" to the name of each base type, and deprecating the old duplicate internal types.
 
   Additionally, the following types were adjusted:
-
   - `TelemetryEventCategory` is moving from `@fluidframework/core-interfaces` to `@fluidframework/telemetry-utils`
   - Several types modeling "tagged" telemetry properties are deprecated in favor of a generic type `Tagged<V>`
 
@@ -390,7 +391,6 @@ Dependency updates only.
 
   The **@fluidframework/common-definitions** package is being deprecated, so the following interfaces and types are now
   imported from the **@fluidframework/core-interfaces** package:
-
   - interface IDisposable
   - interface IErrorEvent
   - interface IErrorEvent
