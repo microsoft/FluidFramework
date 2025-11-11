@@ -40,10 +40,7 @@ export const TableView: React.FC<{ tableModel: TableDataObject }> = ({ tableMode
 	const [draggedColumnIndex, setDraggedColumnIndex] = useState<number | undefined>(undefined);
 
 	const table = tableModel.treeView.root;
-
 	useTree(table);
-
-	const rows = [...table.rows];
 
 	const handleAppendNewRow = (): void => {
 		table.insertRows({
@@ -95,7 +92,7 @@ export const TableView: React.FC<{ tableModel: TableDataObject }> = ({ tableMode
 						onColumnDrop={handleColumnDrop}
 					/>
 					<TableBody>
-						{rows.map((row, index) => (
+						{table.rows.map((row, index) => (
 							<TableRowView
 								key={row.id}
 								table={table}
