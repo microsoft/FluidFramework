@@ -114,8 +114,8 @@ jobs:
           status: pending
           context: Check PR approval
 
-      # release notes: https://github.com/actions/checkout/releases/tag/v4.1.7
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # ratchet:actions/checkout@v4
+      # release notes: https://github.com/actions/checkout/releases/tag/v5.0.0
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # ratchet:actions/checkout@v5
         with:
           # The default ref when triggered by the workflow_run event is the default branch -- main
           # This means the build-tools from the main branch will always be used.

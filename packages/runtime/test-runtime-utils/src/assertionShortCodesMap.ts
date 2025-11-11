@@ -1201,7 +1201,6 @@ export const shortCodeMap = {
 	"0x907": "unknown op type",
 	"0x908": "unknon type of op",
 	"0x909": "should not be called",
-	"0x90e": "Unknown format version",
 	"0x911": "Invalid operation on a disposed TreeCheckout",
 	"0x916": "invalid value",
 	"0x921": "Expected a leaf schema.",

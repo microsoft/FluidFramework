@@ -1,5 +1,9 @@
 # @fluid-private/test-end-to-end-tests
 
+## 2.72.0
+
+Dependency updates only.
+
 ## 2.71.0
 
 Dependency updates only.
@@ -129,7 +133,6 @@ Dependency updates only.
   Similarly, `IDeltaManager.outbound` contained functionality that could break core runtime features such as generation of batches and chunking. Data loss or corruption could occur when `IDeltaManger.inbound.pause()` or `IDeltaManager.inbound.resume()` were called.
 
   #### Alternatives
-
   - Alternatives to `IDeltaManager.inbound.on("op", ...)` are `IDeltaManager.on("op", ...)`
   - Alternatives to calling `IDeltaManager.inbound.pause`, `IDeltaManager.outbound.pause` for `IContainer` disconnect use `IContainer.disconnect`.
   - Alternatives to calling `IDeltaManager.inbound.resume`, `IDeltaManager.outbound.resume` for `IContainer` reconnect use `IContainer.connect`.
@@ -193,7 +196,6 @@ Dependency updates only.
 - Updated server dependencies ([#19122](https://github.com/microsoft/FluidFramework/issues/19122)) [25366b4229](https://github.com/microsoft/FluidFramework/commits/25366b422918cb43685c5f328b50450749592902)
 
   The following Fluid server dependencies have been updated to the latest version, 3.0.0. [See the full changelog.](https://github.com/microsoft/FluidFramework/releases/tag/server_v3.0.0)
-
   - @fluidframework/gitresources
   - @fluidframework/server-kafka-orderer
   - @fluidframework/server-lambdas
@@ -295,7 +297,6 @@ Dependency updates only.
 - GC interfaces removed from runtime-definitions ([#14750](https://github.com/microsoft/FluidFramework/pull-requests/14750)) [60274eacab](https://github.com/microsoft/FluidFramework/commits/60274eacabf14d42f52f6ad1c2f64356e64ba1a2)
 
   The following interfaces available in `@fluidframework/runtime-definitions` are internal implementation details and have been deprecated for public use. They will be removed in an upcoming release.
-
   - `IGarbageCollectionNodeData`
   - `IGarbageCollectionState`
   - `IGarbageCollectionSnapshotData`
@@ -315,7 +316,6 @@ Dependency updates only.
 
   This option will change a couple of expectations around message structure and runtime layer expectations. Only enable this option after testing
   and verifying that the following expectation changes won't have any effects:
-
   - batch messages observed at the runtime layer will not match messages seen at the loader layer
   - messages within the same batch will have the same sequence number
   - client sequence numbers on batch messages can only be used to order messages with the same sequenceNumber
@@ -334,7 +334,6 @@ Dependency updates only.
   The `@fluidframework/garbage-collector` package is deprecated with the following functions, interfaces, and types in it.
   These are internal implementation details and have been deprecated for public use. They will be removed in an upcoming
   release.
-
   - `cloneGCData`
   - `concatGarbageCollectionData`
   - `concatGarbageCollectionStates`
