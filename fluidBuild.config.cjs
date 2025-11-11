@@ -45,6 +45,9 @@ module.exports = {
 				"build:docs",
 				"build:manifest",
 				"build:readme",
+
+				// task to generate printed eslint configs; used in eslint-config-fluid only.
+				"^print-configs",
 			],
 			script: false,
 		},
@@ -169,7 +172,7 @@ module.exports = {
 		},
 	},
 
-	multiCommandExecutables: ["node", "oclif", "syncpack"],
+	multiCommandExecutables: ["oclif", "syncpack", "tsx"],
 	declarativeTasks: {
 		// fluid-build lowercases the executable name, so we need to use buildversion instead of buildVersion.
 		"flub check buildversion": {
@@ -205,8 +208,8 @@ module.exports = {
 			gitignore: ["input", "output"],
 		},
 		// eslint-config-fluid specific declarative task to print configs
-		"node scripts/print-configs.cjs printed-configs": {
-			inputGlobs: ["scripts/print-configs.cjs", "src/**/*.ts", "src/**/*.tsx", "*.js"],
+		"tsx scripts/print-configs.ts printed-configs": {
+			inputGlobs: ["scripts/print-configs.ts", "src/**/*.ts", "src/**/*.tsx", "*.js"],
 			outputGlobs: ["printed-configs/*.json"],
 			gitignore: ["input", "output"],
 		},

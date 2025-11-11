@@ -4,7 +4,7 @@
  */
 
 /**
- * @fileoverview Script to print the resolved ESLint configurations for various configurations and source file types.
+ * Script to print the resolved ESLint configurations for various configurations and source file types.
  *
  * To add new configurations to print, add them to the `configsToPrint` array.
  *
@@ -12,13 +12,23 @@
  * `Promise.all`. This makes the code easier to read and is acceptable as this script is not performance critical.
  */
 
-const fs = require("node:fs/promises");
-const path = require("node:path");
+import fs from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const { ESLint } = require("eslint");
-const sortJson = require("sort-json");
+import { ESLint } from "eslint";
+import sortJson from "sort-json";
 
-const configsToPrint = [
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+interface ConfigToPrint {
+	name: string;
+	configPath: string;
+	sourceFilePath: string;
+}
+
+const configsToPrint: ConfigToPrint[] = [
 	{
 		name: "default",
 		configPath: path.join(__dirname, "..", "index.js"),
@@ -59,7 +69,7 @@ const configsToPrint = [
 /**
  * Generates the applied ESLint config for a specific file and config path.
  */
-async function generateConfig(filePath, configPath) {
+async function generateConfig(filePath: string, configPath: string): Promise<string> {
 	console.log(`Printing config for ${filePath} using ${configPath}`);
 	const eslint = new ESLint({
 		overrideConfigFile: configPath,
@@ -67,7 +77,7 @@ async function generateConfig(filePath, configPath) {
 
 	const config = await eslint.calculateConfigForFile(filePath);
 	// Remove the parser property because it's an absolute path and will vary based on the local environment.
-	delete config.parser;
+	delete (config as { parser?: unknown }).parser;
 
 	// Generate the new content with sorting applied
 	// Sorting at all is desirable as otherwise changes in the order of common config references may cause large diffs
@@ -87,13 +97,13 @@ async function generateConfig(filePath, configPath) {
 	const args = process.argv.slice(2);
 
 	if (args.length !== 1) {
-		console.error("Usage: node print-configs.cjs <output-directory>");
+		console.error("Usage: node print-configs.ts <output-directory>");
 		process.exit(1);
 	}
 
 	const outputPath = args[0];
 	await fs.mkdir(outputPath, { recursive: true });
-	const expectedFiles = new Set();
+	const expectedFiles = new Set<string>();
 
 	for (const { name, configPath, sourceFilePath } of configsToPrint) {
 		const outputFilePath = path.join(outputPath, `${name}.json`);
