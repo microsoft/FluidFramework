@@ -64,7 +64,7 @@ a diff to review as part of a PR -- just like we do with API reports for code ch
 | `format` | `npm run prettier:fix` |
 | `prettier` | `prettier --check .` |
 | `prettier:fix` | `prettier --write .` |
-| `print-configs` | `node scripts/print-configs.cjs printed-configs` |
+| `print-configs` | `tsx scripts/print-configs.ts printed-configs` |
 | `test` | `echo TODO: add tests in @fluidframework/eslint-config-fluid` |
 | `tsc` | `npm run build` |
 
