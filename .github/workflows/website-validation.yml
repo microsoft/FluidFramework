@@ -26,8 +26,8 @@ jobs:
     runs-on: ubuntu-latest
     name: Build site
     steps:
-      # release notes: https://github.com/actions/checkout/releases/tag/v4.3.0
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # ratchet:actions/checkout@v4
+      # release notes: https://github.com/actions/checkout/releases/tag/v5.0.0
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # ratchet:actions/checkout@v5
         with:
           submodules: false
       - uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # ratchet:pnpm/action-setup@v4
@@ -56,8 +56,8 @@ jobs:
     runs-on: ubuntu-latest
     name: pnpm lint
     steps:
-      # release notes: https://github.com/actions/checkout/releases/tag/v4.3.0
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # ratchet:actions/checkout@v4
+      # release notes: https://github.com/actions/checkout/releases/tag/v5.0.0
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # ratchet:actions/checkout@v5
         with:
           submodules: false
       - uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # ratchet:pnpm/action-setup@v4
@@ -77,8 +77,8 @@ jobs:
     name: 🧪 Website Tests
     needs: build_site
     steps:
-      # release notes: https://github.com/actions/checkout/releases/tag/v4.3.0
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # ratchet:actions/checkout@v4
+      # release notes: https://github.com/actions/checkout/releases/tag/v5.0.0
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # ratchet:actions/checkout@v5
         with:
           submodules: false
       - uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # ratchet:pnpm/action-setup@v4
@@ -106,8 +106,8 @@ jobs:
     name: 🔗 Broken Link Check
     needs: build_site
     steps:
-      # release notes: https://github.com/actions/checkout/releases/tag/v4.3.0
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # ratchet:actions/checkout@v4
+      # release notes: https://github.com/actions/checkout/releases/tag/v5.0.0
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # ratchet:actions/checkout@v5
         with:
           submodules: false
       - uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # ratchet:pnpm/action-setup@v4
