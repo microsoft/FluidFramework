@@ -4710,10 +4710,11 @@ function tryRemoveDetachLocation(
 	const outputDetachEntry = roots.outputDetachLocations.getFirst(rootId, countProcessed);
 	countProcessed = outputDetachEntry.length;
 
-	const nodeChange = roots.nodeChanges.get([rootId.revision, rootId.localId]);
+	const nodeChangeEntry = rangeQueryChangeAtomIdMap(roots.nodeChanges, rootId, countProcessed);
+	countProcessed = nodeChangeEntry.length;
 
 	if (
-		nodeChange === undefined &&
+		nodeChangeEntry.value === undefined &&
 		renameEntry.value === undefined &&
 		outputDetachEntry.value === undefined
 	) {
