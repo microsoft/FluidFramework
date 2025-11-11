@@ -251,7 +251,7 @@ As a general rule, links between documents on the site should:
 
 **Avoid** using _absolute_ document paths relative to the site root (e.g., `[foo](/docs/foo.mdx)`)
 
--   While these work just fine as far as Docusaurus is concerned, but they break the ability to navigate through links in an IDE.
+-   While these work just fine as far as Docusaurus is concerned, they break the ability to navigate through links in an IDE.
 
 #### Assets
 
