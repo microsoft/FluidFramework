@@ -45,9 +45,6 @@ module.exports = {
 				"build:docs",
 				"build:manifest",
 				"build:readme",
-
-				// task to generate printed eslint configs; used in eslint-config-fluid only.
-				"^print-configs",
 			],
 			script: false,
 		},
@@ -133,7 +130,14 @@ module.exports = {
 		"check:prettier": [],
 		// ADO #7297: Review why the direct dependency on 'build:esm:test' is necessary.
 		//            Should 'compile' be enough?  compile -> build:test -> build:test:esm
-		"eslint": ["compile", "build:test:esm"],
+		"eslint": [
+			// Task to generate printed eslint configs; used in eslint-config-fluid only. This config ensures that the printed
+			// configs are updated when a package that depends on the config builds its eslint target.
+			"^print-configs",
+
+			"compile",
+			"build:test:esm",
+		],
 		"good-fences": [],
 		"format:biome": [],
 		"format:prettier": [],
