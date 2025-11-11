@@ -382,13 +382,16 @@ export class SchemaFactory<
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
 	 * @param fields - Schema for fields of the object node's schema. Defines what children can be placed under each key.
+	 * @param options - Additional options for the schema.
 	 */
 	public object<
 		const Name extends TName,
 		const T extends RestrictiveStringRecord<ImplicitFieldSchema>,
+		const TCustomMetadata = unknown,
 	>(
 		name: Name,
 		fields: T,
+		options?: NodeSchemaOptions<TCustomMetadata>,
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Object,
@@ -444,15 +447,21 @@ export class SchemaFactory<
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
 	 * @param allowedTypes - The types that may appear as values in the map.
+	 * @param options - Additional options for the schema.
 	 *
 	 * @example
 	 * ```typescript
 	 * class NamedMap extends factory.map("name", factory.number) {}
 	 * ```
 	 */
-	public map<Name extends TName, const T extends ImplicitAllowedTypes>(
+	public map<
+		Name extends TName,
+		const T extends ImplicitAllowedTypes,
+		const TCustomMetadata = unknown,
+	>(
 		name: Name,
 		allowedTypes: T,
+		options?: NodeSchemaOptions<TCustomMetadata>,
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Map,
@@ -460,7 +469,8 @@ export class SchemaFactory<
 		MapNodeInsertableData<T>,
 		true,
 		T,
-		undefined
+		undefined,
+		TCustomMetadata
 	>;
 
 	/**
@@ -595,6 +605,7 @@ export class SchemaFactory<
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
 	 * @param allowedTypes - The types that may appear in the array.
+	 * @param options - Additional options for the schema.
 	 *
 	 * @example
 	 * ```typescript
@@ -603,9 +614,14 @@ export class SchemaFactory<
 	 *
 	 * {@label NAMED}
 	 */
-	public array<const Name extends TName, const T extends ImplicitAllowedTypes>(
+	public array<
+		const Name extends TName,
+		const T extends ImplicitAllowedTypes,
+		const TCustomMetadata = unknown,
+	>(
 		name: Name,
 		allowedTypes: T,
+		options?: NodeSchemaOptions<TCustomMetadata>,
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Array,
@@ -613,7 +629,8 @@ export class SchemaFactory<
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 		true,
 		T,
-		undefined
+		undefined,
+		TCustomMetadata
 	>;
 
 	/**
@@ -830,7 +847,8 @@ export class SchemaFactory<
 	public arrayRecursive<
 		const Name extends TName,
 		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
-	>(name: Name, allowedTypes: T) {
+		const TCustomMetadata = unknown,
+	>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>) {
 		const RecursiveArray = this.namedArray(
 			name,
 			allowedTypes as T & ImplicitAllowedTypes,
@@ -877,7 +895,8 @@ export class SchemaFactory<
 	public mapRecursive<
 		Name extends TName,
 		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
-	>(name: Name, allowedTypes: T) {
+		const TCustomMetadata = unknown,
+	>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>) {
 		const MapSchema = this.namedMap(
 			name,
 			allowedTypes as T & ImplicitAllowedTypes,
@@ -885,7 +904,7 @@ export class SchemaFactory<
 			// Setting this (implicitlyConstructable) to true seems to work ok currently, but not for other node kinds.
 			// Supporting this could be fragile and might break other future changes, so it's being kept as false for now.
 			false,
-			{},
+			options ?? {},
 		);
 
 		return MapSchema as TreeNodeSchemaClass<
@@ -918,7 +937,8 @@ export class SchemaFactory<
 			  },
 			false,
 			T,
-			undefined
+			undefined,
+			TCustomMetadata
 		>;
 	}
 }
