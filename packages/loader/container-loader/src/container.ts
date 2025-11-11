@@ -143,7 +143,6 @@ import type { IQuorumSnapshot } from "./protocol/index.js";
 import {
 	type InternalProtocolHandlerBuilder,
 	ProtocolHandler,
-	type ProtocolHandlerBuilder,
 	type ProtocolHandlerInternal,
 	protocolHandlerShouldProcessSignal,
 	wrapProtocolHandlerBuilder,

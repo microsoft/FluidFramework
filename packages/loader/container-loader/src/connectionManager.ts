@@ -519,8 +519,8 @@ export class ConnectionManager implements IConnectionManager {
 		this.props.establishConnectionHandler(reason);
 
 		if (docService.policies?.storageOnly === true) {
-			const noDeltaStreamConnection = new FrozenDeltaStream();
-			this.setupNewSuccessfulConnection(noDeltaStreamConnection, "read", reason);
+			const frozenDeltaStreamConnection = new FrozenDeltaStream();
+			this.setupNewSuccessfulConnection(frozenDeltaStreamConnection, "read", reason);
 			assert(this.pendingConnection === undefined, 0x2b3 /* "logic error" */);
 			return;
 		}
