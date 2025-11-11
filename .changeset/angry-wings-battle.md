@@ -9,13 +9,17 @@ of schema migrations.
 
 New APIs:
 
-- `checkCompatibility`
-- `parseCompatibilitySchema`
-- `snapshotCompatibilitySchema`
+- `checkCompatibility` - Checks the compatibility of the view schema which created the document against the view schema
+being used to open it.
+- `parseCompatibilitySchema` - Parse a JSON representation of a tree schema into a concrete schema.
+- `snapshotCompatibilitySchema` - Returns a JSON representation of the tree schema for snapshot compatibility checking.
 
 #### Example: Current view schema vs. historical view schema
 
-When introducing a new initial schema, the application author persists a snapshot using `snapshotCompatibilitySchema`:
+An application author is developing an app that has a schema for storing 2D Points.
+They wish to maintain backwards compatibility in future versions and avoid changing their view schema in a way that breaks
+this behavior.
+When introducing a new initial schema, they persists a snapshot using `snapshotCompatibilitySchema`:
 
 ```ts
 const schemaFactory = new SchemaFactory("test");
