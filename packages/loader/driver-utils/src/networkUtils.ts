@@ -39,5 +39,8 @@ export function logNetworkFailure(
 
 	// non-retryable errors are fatal and should be logged as errors
 	newEvent.category = canRetryOnError(error) ? "generic" : "error";
+	// Cast to preserve existing behavior: sendTelemetryEvent expects Error | undefined, but logNetworkFailure
+	// accepts unknown for broader compatibility. This cast was added to satisfy strict linting; revisit if
+	// we want to tighten the signature or add runtime type checking.
 	logger.sendTelemetryEvent(newEvent, error as Error | undefined);
 }

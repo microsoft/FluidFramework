@@ -18,6 +18,7 @@ import {
 	ISummaryBlob,
 	ISummaryHandle,
 	ISummaryTree,
+	SummaryObject,
 	SummaryType,
 } from "@fluidframework/driver-definitions";
 import {
@@ -63,13 +64,14 @@ function cloneSummary(): ISummaryTree {
  */
 function generateSummaryWithContent(contentSize: number) {
 	const summary = cloneSummary();
-	const header = (
+	const header: SummaryObject | undefined = (
 		(
 			((summary.tree[".channels"] as ISummaryTree).tree.rootDOId as ISummaryTree).tree[
 				".channels"
 			] as ISummaryTree
 		).tree["7a99532d-94ec-43ac-8a53-d9f978ad4ae9"] as ISummaryTree
 	).tree.header;
+	assert(header !== undefined, "header must exist");
 	let contentString = "";
 	while (contentString.length < contentSize) {
 		if (contentString.length + 10 > contentSize) {
@@ -85,13 +87,14 @@ function generateSummaryWithContent(contentSize: number) {
 
 function generateSummaryWithBinaryContent(startsWith: number, contentSize: number) {
 	const summary = cloneSummary();
-	const header = (
+	const header: SummaryObject | undefined = (
 		(
 			((summary.tree[".channels"] as ISummaryTree).tree.rootDOId as ISummaryTree).tree[
 				".channels"
 			] as ISummaryTree
 		).tree["7a99532d-94ec-43ac-8a53-d9f978ad4ae9"] as ISummaryTree
 	).tree.header;
+	assert(header !== undefined, "header must exist");
 	const content = new Uint8Array(contentSize);
 	content[0] = startsWith;
 	for (let i = 1; i < contentSize; i = i + 10) {
@@ -130,9 +133,11 @@ class InternalTestStorage implements IDocumentStorageService {
 		throw new Error("Method not implemented.");
 	}
 	async readBlob(id: string): Promise<ArrayBufferLike> {
-		return id === misotestid
-			? new TextEncoder().encode(abcContent)
-			: getHeaderContent(this._uploadedSummary!);
+		if (id === misotestid) {
+			const encoded = new TextEncoder().encode(abcContent);
+			return encoded.buffer.slice(encoded.byteOffset, encoded.byteOffset + encoded.byteLength);
+		}
+		return getHeaderContent(this._uploadedSummary!);
 	}
 	async uploadSummaryWithContext(
 		summary: ISummaryTree,
@@ -591,8 +596,16 @@ async function checkEncDecConfigurable(
 			`The origin and the downloaded blob starting with ${startsWith} are not the same \n\n\n${blobStr}\n\n${originBlob}`,
 		);
 	} else {
+		// originBlob might be Uint8Array, convert to ArrayBufferLike if needed
+		const originBuffer: ArrayBufferLike =
+			originBlob instanceof Uint8Array
+				? originBlob.buffer.slice(
+						originBlob.byteOffset,
+						originBlob.byteOffset + originBlob.byteLength,
+					)
+				: originBlob;
 		assert(
-			compareTwoBlobs(blob, originBlob),
+			compareTwoBlobs(blob, originBuffer),
 			`The origin and the downloaded blob are not the same \n\n\n${blob.byteLength}\n\n${originBlob.byteLength}.
 			The first bytes are ${blob[0]} and ${originBlob[0]}`,
 		);
@@ -620,8 +633,10 @@ function getHeaderContent(summary: ISummaryTree) {
 	return getHeader(summary)["content"];
 }
 
-function getHeader(summary: ISummaryTree) {
-	return getHeaderHolder(summary).tree.header;
+function getHeader(summary: ISummaryTree): SummaryObject {
+	const header: SummaryObject | undefined = getHeaderHolder(summary).tree.header;
+	assert(header !== undefined, "header must exist");
+	return header;
 }
 
 function getHeaderHolder(summary: ISummaryTree) {

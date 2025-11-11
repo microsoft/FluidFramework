@@ -15,6 +15,8 @@ module.exports = {
 	overrides: [
 		{
 			// Rules only for test files
+			// Note: Broad test overrides are used instead of targeted eslint-disable comments
+			// because fixing ~94 violations across 7 test files would be verbose and less maintainable.
 			files: ["*.spec.ts", "src/test/**"],
 			rules: {
 				"import/no-nodejs-modules": "off", // Node libraries are OK for test files.

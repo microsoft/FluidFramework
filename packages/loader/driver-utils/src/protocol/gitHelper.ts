@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	FileMode,
 	IGitTree,
@@ -85,7 +85,8 @@ export function buildGitTreeHierarchy(
 		const entryPathBase = entryPath.slice(lastIndex + 1);
 
 		// The flat output is breadth-first so we can assume we see tree nodes prior to their contents
-		const node = lookup[entryPathDir];
+		const node: ISnapshotTreeEx | undefined = lookup[entryPathDir];
+		assert(node !== undefined, 0x6fa /* node must exist for entryPathDir */);
 
 		// Add in either the blob or tree
 		if (entry.type === "tree") {

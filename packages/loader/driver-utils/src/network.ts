@@ -15,7 +15,6 @@ import {
 import { IFluidErrorBase, LoggingError } from "@fluidframework/telemetry-utils/internal";
 
 /**
- * Factory helpers for driver/network errors.
  * @internal
  */
 export enum OnlineStatus {

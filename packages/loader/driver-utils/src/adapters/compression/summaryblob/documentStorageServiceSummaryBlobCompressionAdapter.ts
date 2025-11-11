@@ -18,12 +18,13 @@ import {
 	ISnapshotTree,
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
-import { compress as lz4CompressRaw, decompress as lz4DecompressRaw } from "lz4js";
+// @types/lz4js package is added to devDependencies and will provide proper types once pnpm install runs.
+// Temporarily declare the expected types inline to satisfy linting before package installation.
+import { compress as compressRaw, decompress as decompressRaw } from "lz4js";
 
-// lz4js does not ship precise TypeScript types. Define narrow function types once.
-type Lz4Fn = (input: Uint8Array) => Uint8Array;
-const lz4Compress: Lz4Fn = lz4CompressRaw as unknown as Lz4Fn;
-const lz4Decompress: Lz4Fn = lz4DecompressRaw as unknown as Lz4Fn;
+type Lz4CompressionFn = (src: Uint8Array | number[], maxSize?: number) => Uint8Array;
+const compress: Lz4CompressionFn = compressRaw as Lz4CompressionFn;
+const decompress: Lz4CompressionFn = decompressRaw as Lz4CompressionFn;
 
 import { DocumentStorageServiceProxy } from "../../../documentStorageServiceProxy.js";
 import { ICompressionStorageConfig, SummaryCompressionAlgorithm } from "../index.js";
@@ -107,7 +108,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 		const prefix = 0xb0 | algorithm;
 		newBlob[0] = prefix;
 		newBlob.set(blobView, 1);
-		return newBlob.buffer.slice(newBlob.byteOffset, newBlob.byteOffset + newBlob.byteLength);
+		return newBlob;
 	}
 
 	/**
@@ -120,8 +121,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 		if (!this.hasPrefix(blob)) {
 			return blob;
 		}
-		const sub = blobView.subarray(1);
-		return sub.buffer.slice(sub.byteOffset, sub.byteOffset + sub.byteLength);
+		return blobView.subarray(1);
 	}
 
 	/**
@@ -148,15 +148,11 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	): SummaryObject => {
 		if (input.type === SummaryType.Blob) {
 			const summaryBlob: ISummaryBlob = input;
-			const originalU8: Uint8Array = DocumentStorageServiceCompressionAdapter.toBinaryArray(
+			const original: Uint8Array = DocumentStorageServiceCompressionAdapter.toBinaryArray(
 				summaryBlob.content,
 			);
 			const processed: ArrayBufferLike = DocumentStorageServiceCompressionAdapter.encodeBlob(
-				// Pass only the occupied slice of the buffer as ArrayBuffer
-				originalU8.buffer.slice(
-					originalU8.byteOffset,
-					originalU8.byteOffset + originalU8.byteLength,
-				),
+				original,
 				config,
 			);
 			const newSummaryBlob = {
@@ -180,9 +176,8 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 			const original: Uint8Array = DocumentStorageServiceCompressionAdapter.toBinaryArray(
 				summaryBlob.content,
 			);
-			const processed: ArrayBufferLike = DocumentStorageServiceCompressionAdapter.decodeBlob(
-				original.buffer.slice(original.byteOffset, original.byteOffset + original.byteLength),
-			);
+			const processed: ArrayBufferLike =
+				DocumentStorageServiceCompressionAdapter.decodeBlob(original);
 			const newSummaryBlob = {
 				type: SummaryType.Blob,
 				content: IsoBuffer.from(processed),
@@ -200,20 +195,23 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * @returns The encoded blob.
 	 */
 	private static encodeBlob(
-		file: ArrayBufferLike,
+		file: Uint8Array | ArrayBufferLike,
 		config: ICompressionStorageConfig,
 	): ArrayBufferLike {
+		// Normalize Uint8Array to ArrayBuffer
+		const fileBuffer: ArrayBufferLike =
+			file instanceof Uint8Array
+				? file.buffer.slice(file.byteOffset, file.byteOffset + file.byteLength)
+				: file;
 		let maybeCompressed: ArrayBufferLike;
 		let algorithm = config.algorithm;
-		if (new Uint8Array(file).length < config.minSizeToCompress) {
-			maybeCompressed = file;
+		if (new Uint8Array(fileBuffer).length < config.minSizeToCompress) {
+			maybeCompressed = fileBuffer;
 			algorithm = SummaryCompressionAlgorithm.None;
 		} else if (algorithm === SummaryCompressionAlgorithm.None) {
-			maybeCompressed = file;
+			maybeCompressed = fileBuffer;
 		} else if (algorithm === SummaryCompressionAlgorithm.LZ4) {
-			const out = lz4Compress(IsoBuffer.from(new Uint8Array(file)));
-			const ab = out.buffer.slice(out.byteOffset, out.byteOffset + out.byteLength);
-			maybeCompressed = ab;
+			maybeCompressed = compress(new Uint8Array(fileBuffer));
 		} else {
 			throw new Error(`Unknown Algorithm ${config.algorithm}`);
 		}
@@ -229,22 +227,23 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * @param file - The blob to decode.
 	 * @returns The decoded blob.
 	 */
-	private static decodeBlob(file: ArrayBufferLike): ArrayBufferLike {
+	private static decodeBlob(file: Uint8Array | ArrayBufferLike): ArrayBufferLike {
+		// Accept both Uint8Array and ArrayBufferLike inputs
+		const fileBuffer: ArrayBufferLike = file instanceof Uint8Array ? file : file;
 		let decompressed: ArrayBufferLike;
 		let originalBlob: ArrayBufferLike;
 		let algorithm: number;
-		if (this.hasPrefix(file)) {
-			algorithm = DocumentStorageServiceCompressionAdapter.readAlgorithmFromBlob(file);
-			originalBlob = this.removePrefixFromBlobIfPresent(file);
+		if (this.hasPrefix(fileBuffer)) {
+			algorithm = DocumentStorageServiceCompressionAdapter.readAlgorithmFromBlob(fileBuffer);
+			originalBlob = this.removePrefixFromBlobIfPresent(fileBuffer);
 		} else {
 			algorithm = SummaryCompressionAlgorithm.None;
-			originalBlob = file;
+			originalBlob = fileBuffer;
 		}
 		if (algorithm === SummaryCompressionAlgorithm.None) {
 			decompressed = originalBlob;
 		} else if (algorithm === SummaryCompressionAlgorithm.LZ4) {
-			const out = lz4Decompress(IsoBuffer.from(new Uint8Array(originalBlob)));
-			decompressed = out.buffer.slice(out.byteOffset, out.byteOffset + out.byteLength);
+			decompressed = decompress(new Uint8Array(originalBlob));
 		} else {
 			throw new Error(`Unknown Algorithm ${algorithm}`);
 		}
