@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "node:events";
 import { strict as assert } from "node:assert";
 import * as path from "node:path";
 
@@ -16,6 +17,7 @@ import {
 	makeRandom,
 	takeAsync as take,
 } from "@fluid-private/stochastic-test-utils";
+import { v4 as uuid } from "uuid";
 import type {
 	DDSFuzzModel,
 	DDSFuzzSuiteOptions,
@@ -69,13 +71,20 @@ export interface AddOperation {
 
 export interface AcquireOperation {
 	type: "acquire";
-	resultType: ConsensusResult;
+}
+
+export interface ResolveOperation {
+	type: "resolve";
+	result: ConsensusResult;
 }
 
 /**
  * Represents ConsensusOrderedCollection operation types for fuzz testing
  */
-export type ConsensusOrderedCollectionOperation = AddOperation | AcquireOperation;
+export type ConsensusOrderedCollectionOperation =
+	| AddOperation
+	| AcquireOperation
+	| ResolveOperation;
 
 function makeOperationGenerator(): Generator<
 	ConsensusOrderedCollectionOperation,
@@ -103,7 +112,13 @@ function makeOperationGenerator(): Generator<
 	async function acquire(state: OpSelectionState): Promise<AcquireOperation> {
 		return {
 			type: "acquire",
-			resultType: state.random.pick([ConsensusResult.Complete, ConsensusResult.Release]),
+		};
+	}
+
+	async function resolve(state: OpSelectionState): Promise<ResolveOperation> {
+		return {
+			type: "resolve",
+			result: state.random.pick([ConsensusResult.Complete, ConsensusResult.Release]),
 		};
 	}
 
@@ -113,6 +128,7 @@ function makeOperationGenerator(): Generator<
 	>([
 		[add, 1],
 		[acquire, 1],
+		[resolve, 1],
 	]);
 
 	return async (state: FuzzTestState) =>
@@ -123,16 +139,54 @@ function makeOperationGenerator(): Generator<
 }
 
 function makeReducer(): Reducer<ConsensusOrderedCollectionOperation, FuzzTestState> {
+	const pendingCallbacks = new Map<string, string>();
+	const callbackResolver = new EventEmitter();
+
 	const reducer = combineReducers<ConsensusOrderedCollectionOperation, FuzzTestState>({
 		add: ({ client }, { value }) => {
 			client.channel.add(value).catch((error) => {
 				throw error;
 			});
 		},
-		acquire: ({ client }, { resultType }) => {
-			client.channel
-				.acquire(async (_value) => {
-					return resultType;
+		acquire: ({ client }) => {
+			const callback = async (value: string): Promise<ConsensusResult> => {
+				const callbackId = uuid();
+				pendingCallbacks.set(callbackId, value);
+				return new Promise<ConsensusResult>((resolve) => {
+					const onCallbackResolve = (id: string, result: ConsensusResult): void => {
+						if (id === callbackId) {
+							callbackResolver.off("resolve", onCallbackResolve);
+							resolve(result);
+						}
+					};
+					callbackResolver.on("resolve", onCallbackResolve);
+				});
+			};
+			client.channel.acquire(callback).catch((error) => {
+				throw error;
+			});
+		},
+		resolve: ({ client }, { result }) => {
+			new Promise<string>((resolve) => {
+				if (result === ConsensusResult.Complete) {
+					client.channel.once("localComplete", (value: string) => {
+						resolve(value);
+					});
+				} else {
+					client.channel.once("localRelease", (value: string) => {
+						resolve(value);
+					});
+				}
+			})
+				.then((resolvedValue: string) => {
+					const [callbackId, value] = pendingCallbacks.entries().next().value as [
+						string,
+						string,
+					];
+					if (callbackId !== undefined && resolvedValue === value) {
+						pendingCallbacks.delete(callbackId);
+						callbackResolver.emit("resolve", callbackId, result);
+					}
 				})
 				.catch((error) => {
 					throw error;

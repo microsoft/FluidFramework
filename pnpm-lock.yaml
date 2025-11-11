@@ -14044,6 +14044,9 @@ importers:
       '@fluidframework/matrix':
         specifier: workspace:~
         version: link:../../dds/matrix
+      '@fluidframework/ordered-collection':
+        specifier: workspace:~
+        version: link:../../dds/ordered-collection
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../runtime/runtime-definitions

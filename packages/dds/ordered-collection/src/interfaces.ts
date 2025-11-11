@@ -70,6 +70,15 @@ export interface IConsensusOrderedCollectionEvents<T> extends ISharedObjectEvent
 	(event: "complete", listener: (value: T) => void): this;
 
 	/**
+	 * Event fires when locally acquired item has a pending complete.
+	 * The `complete` event will fire when the complete is ack'd and processed by all clients.
+	 * This event is currently for testing purposes only.
+	 *
+	 * @internal
+	 */
+	(event: "localComplete", listener: (value: T) => void): this;
+
+	/**
 	 * Event fires when locally acquired item is being released back to the queue.
 	 * Please note that release process is asynchronous, so it takes a while for it to happen
 	 * ("add" event will be fired as result of it)

@@ -174,6 +174,7 @@ export class ConsensusOrderedCollection<T = any>
 		switch (res) {
 			case ConsensusResult.Complete: {
 				await this.complete(result.acquireId);
+				this.emit("localComplete", result.value);
 				break;
 			}
 			case ConsensusResult.Release: {
