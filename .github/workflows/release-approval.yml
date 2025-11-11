@@ -21,8 +21,8 @@ on:
         required: true
 
 permissions:
-  actions: read  # Needed to download artifacts from the release-branches workflow
-  pull-requests: read  # Needed to read the PR details, such as the head commit SHA and the PR number.
+  actions: read # Needed to download artifacts from the release-branches workflow
+  pull-requests: read # Needed to read the PR details, such as the head commit SHA and the PR number.
 
 jobs:
   metadata:
@@ -37,8 +37,8 @@ jobs:
       ### These steps run on workflow_run event only ###
       - name: Download metadata
         if: github.event_name == 'workflow_run'
-        # release notes: https://github.com/dawidd6/action-download-artifact/releases/tag/v6
-        uses: dawidd6/action-download-artifact@bf251b5aa9c2f7eeb574a96ee720e24f801b7c11 # ratchet:dawidd6/action-download-artifact@v6
+        # release notes: https://github.com/dawidd6/action-download-artifact/releases/tag/v11
+        uses: dawidd6/action-download-artifact@ac66b43f0e6a346234dd65d4d0c8fbb31cb316e5 # ratchet:dawidd6/action-download-artifact@v11
         with:
           workflow: release-branches.yml
           run_id: ${{ github.event.workflow_run.id }}
@@ -115,7 +115,7 @@ jobs:
           context: Check PR approval
 
       # release notes: https://github.com/actions/checkout/releases/tag/v4.1.7
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # ratchet:actions/checkout@v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # ratchet:actions/checkout@v4
         with:
           # The default ref when triggered by the workflow_run event is the default branch -- main
           # This means the build-tools from the main branch will always be used.

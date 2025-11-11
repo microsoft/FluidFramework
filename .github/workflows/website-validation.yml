@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Build site
     steps:
-      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # ratchet:actions/checkout@v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # ratchet:actions/checkout@v4
         with:
           submodules: false
       - uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # ratchet:pnpm/action-setup@v4
@@ -43,8 +43,8 @@ jobs:
         run: |
           ./validateHashes.sh
       - name: Upload site artifact
-        # release notes: https://github.com/actions/upload-artifact/releases/tag/v4.4.3
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # ratchet:actions/upload-artifact@v4
+        # release notes: https://github.com/actions/upload-artifact/releases/tag/v5.0.0
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # ratchet:actions/upload-artifact@v5
         with:
           name: fluidframework-site
           path: docs/build
@@ -55,7 +55,7 @@ jobs:
     runs-on: ubuntu-latest
     name: pnpm lint
     steps:
-      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # ratchet:actions/checkout@v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # ratchet:actions/checkout@v4
         with:
           submodules: false
       - uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # ratchet:pnpm/action-setup@v4
@@ -86,8 +86,8 @@ jobs:
           cache-dependency-path: docs/pnpm-lock.yaml
 
       - name: Download site artifact
-         # release notes: https://github.com/actions/download-artifact/releases/tag/v4.1.8
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # ratchet:actions/download-artifact@v4
+        # release notes: https://github.com/actions/download-artifact/releases/tag/v4.1.8
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # ratchet:actions/download-artifact@v4
         with:
           name: fluidframework-site
           path: docs/build
@@ -116,8 +116,8 @@ jobs:
         run: mkdir -p ./results
 
       - name: Download site artifact
-         # release notes: https://github.com/actions/download-artifact/releases/tag/v4.1.8
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # ratchet:actions/download-artifact@v4
+        # release notes: https://github.com/actions/download-artifact/releases/tag/v4.1.8
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # ratchet:actions/download-artifact@v4
         with:
           name: fluidframework-site
           path: docs/build
@@ -139,8 +139,8 @@ jobs:
           cat ./results/linkcheck-output.txt | tee -a ./results/linkcheck
           echo -e "\n\`\`\`" | tee -a ./results/linkcheck
       - name: Upload results artifact
-        # release notes: https://github.com/actions/upload-artifact/releases/tag/v4.4.3
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # ratchet:actions/upload-artifact@v4
+        # release notes: https://github.com/actions/upload-artifact/releases/tag/v5.0.0
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # ratchet:actions/upload-artifact@v5
         with:
           name: website-validation-results
           path: ./docs/results

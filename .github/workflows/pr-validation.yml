@@ -22,7 +22,9 @@ jobs:
       - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
         with:
           persist-credentials: false
-      - uses: mszostok/codeowners-validator@7f3f5e28c6d7b8dfae5731e54ce2272ca384592f # ratchet:mszostok/codeowners-validator@v0.7.4
+
+      # release notes: https://github.com/mszostok/codeowners-validator/releases/tag/v0.7.4
+      - uses: mszostok/codeowners-validator@7f3f5e28c6d7b8dfae5731e54ce2272ca384592f # ratchet:mszostok/codeowners-validator@v0
         with:
           github_access_token: "${{ secrets.GITHUB_TOKEN }}"
           checks: "files,duppatterns,syntax"
@@ -34,7 +36,8 @@ jobs:
     name: PR template placeholder content
     runs-on: ubuntu-latest
     steps:
-      - uses: sitezen/pr-comment-checker@f1e956fac00c6d1163d15841886ae80b7ae58ecb # ratchet:sitezen/pr-comment-checker@v1.0.1
+      # release notes: https://github.com/sitezen/pr-comment-checker/releases/tag/v1.0.1
+      - uses: sitezen/pr-comment-checker@f1e956fac00c6d1163d15841886ae80b7ae58ecb # ratchet:sitezen/pr-comment-checker@v1
         with:
           pr_description_should_not_contain: |
             Feel free to remove or alter parts of this template that do not offer value for your specific change
