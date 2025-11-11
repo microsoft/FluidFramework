@@ -97,7 +97,7 @@ async function generateConfig(filePath: string, configPath: string): Promise<str
 	const args = process.argv.slice(2);
 
 	if (args.length !== 1) {
-		console.error("Usage: node print-configs.ts <output-directory>");
+		console.error("Usage: tsx print-configs.ts <output-directory>");
 		process.exit(1);
 	}
 
