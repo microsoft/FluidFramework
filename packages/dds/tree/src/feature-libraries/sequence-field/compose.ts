@@ -6,6 +6,7 @@
 import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
 
 import {
+	areEqualChangeAtomIdOpts,
 	areEqualChangeAtomIds,
 	type ChangeAtomId,
 	type RevisionMetadataSource,
@@ -128,6 +129,9 @@ function composeMarksIgnoreChild(
 	}
 
 	if (isRename(baseMark) && isRename(newMark)) {
+		if (areEqualChangeAtomIdOpts(baseMark.cellId, newMark.idOverride)) {
+			return createNoopMark(baseMark.count, undefined, baseMark.cellId);
+		}
 		return { ...baseMark, idOverride: newMark.idOverride };
 	} else if (isRename(baseMark)) {
 		assert(isAttach(newMark), 0x9f1 /* Unexpected mark type */);
