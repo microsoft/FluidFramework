@@ -72,3 +72,13 @@ stages:
               echo "##vso[task.logissue type=error]Build should not create extraneous files"
               exit -1;
             fi
+
+      # Prune the pnpm store before it's cached. This removes any deps that are not used by the current build.
+      - task: Bash@3
+        displayName: Prune pnpm store
+        inputs:
+          targetType: inline
+          workingDirectory: '${{ parameters.buildDirectory }}'
+          script: |
+            set -eu -o pipefail
+            pnpm store prune
