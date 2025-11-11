@@ -283,4 +283,8 @@ export type { LeafSchema } from "./leafNodeSchema.js";
 export {
 	encodeSimpleSchema,
 	decodeSimpleSchema,
+	snapshotCompatibilitySchema,
+	parseCompatibilitySchema,
+	checkCompatibility,
+	type JsonViewSchema,
 } from "./api/index.js";

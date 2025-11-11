@@ -285,6 +285,10 @@ export {
 	type SimpleAllowedTypeAttributes,
 	encodeSimpleSchema,
 	decodeSimpleSchema,
+	snapshotCompatibilitySchema,
+	parseCompatibilitySchema,
+	checkCompatibility,
+	type JsonViewSchema,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
