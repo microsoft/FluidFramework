@@ -120,6 +120,11 @@ export function getOdspCredentials(
 			for (const account of output) {
 				const username = account.UserPrincipalName;
 				const password = account.Password;
+				if (username === undefined || password === undefined) {
+					throw new Error(
+						`username or password should not be undefined when getting odsp credentials - user: ${username}, pass: ${password}`,
+					);
+				}
 				if (requestedUserName === undefined || requestedUserName === username) {
 					creds.push({ username, password });
 				}
