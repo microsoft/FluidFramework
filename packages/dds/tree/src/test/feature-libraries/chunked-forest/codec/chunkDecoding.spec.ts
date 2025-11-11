@@ -95,17 +95,19 @@ describe("chunkDecoding", () => {
 		// Smoke test for top level decode function.
 		// All real functionality should be tested in more specific tests.
 		for (const version of validVersions) {
-			it("minimal", () => {
-				const result = decode(
-					{
-						version: brand(version),
-						identifiers: [],
-						shapes: [{ a: 0 }],
-						data: [[0, []]],
-					},
-					idDecodingContext,
-				);
-				assert.deepEqual(result, [emptyChunk]);
+			describe(`FieldBatchFormatVersion ${version}`, () => {
+				it("minimal", () => {
+					const result = decode(
+						{
+							version: brand(version),
+							identifiers: [],
+							shapes: [{ a: 0 }],
+							data: [[0, []]],
+						},
+						idDecodingContext,
+					);
+					assert.deepEqual(result, [emptyChunk]);
+				});
 			});
 		}
 	});

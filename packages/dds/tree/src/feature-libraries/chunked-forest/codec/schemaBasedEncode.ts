@@ -47,20 +47,20 @@ import { brand, oneFromIterable } from "../../../util/index.js";
 /**
  * Encode data from `fieldBatch` in into an `EncodedChunk` using {@link FieldBatchFormatVersion.v1}.
  * @remarks See {@link schemaCompressedEncode} for more details.
+ * This version does not support incremental encoding.
  */
 export function schemaCompressedEncodeV1(
 	schema: StoredSchemaCollection,
 	policy: FullSchemaPolicy,
 	fieldBatch: FieldBatch,
 	idCompressor: IIdCompressor,
-	incrementalEncoder: IncrementalEncoder | undefined,
 ): EncodedFieldBatchV1 {
 	return schemaCompressedEncode(
 		schema,
 		policy,
 		fieldBatch,
 		idCompressor,
-		incrementalEncoder,
+		undefined /* incrementalEncoder */,
 		brand(FieldBatchFormatVersion.v1),
 	);
 }
@@ -68,6 +68,7 @@ export function schemaCompressedEncodeV1(
 /**
  * Encode data from `fieldBatch` in into an `EncodedChunk` using {@link FieldBatchFormatVersion.v2}.
  * @remarks See {@link schemaCompressedEncode} for more details.
+ * Incremental encoding is supported from this version onwards.
  */
 export function schemaCompressedEncodeV2(
 	schema: StoredSchemaCollection,

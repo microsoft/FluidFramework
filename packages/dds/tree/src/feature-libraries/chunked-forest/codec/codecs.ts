@@ -178,6 +178,7 @@ export function makeFieldBatchCodec(options: CodecWriteOptions): FieldBatchCodec
 				);
 			}
 			let encoded: EncodedFieldBatch;
+			let incrementalEncoder: IncrementalEncoder | undefined;
 			switch (context.encodeType) {
 				case TreeCompressionStrategy.Uncompressed:
 					encoded = uncompressedEncodeFn(data);
@@ -187,6 +188,8 @@ export function makeFieldBatchCodec(options: CodecWriteOptions): FieldBatchCodec
 						writeVersion >= FieldBatchFormatVersion.v2,
 						"Unsupported FieldBatchFormatVersion for incremental encoding; must be v2 or higher",
 					);
+					// Incremental encoding is only supported for CompressedIncremental.
+					incrementalEncoder = context.incrementalEncoderDecoder;
 				case TreeCompressionStrategy.Compressed:
 					// eslint-disable-next-line unicorn/prefer-ternary
 					if (context.schema !== undefined) {
@@ -195,10 +198,7 @@ export function makeFieldBatchCodec(options: CodecWriteOptions): FieldBatchCodec
 							context.schema.policy,
 							data,
 							context.idCompressor,
-							// Incremental encoding is only supported for CompressedIncremental.
-							context.encodeType === TreeCompressionStrategyExtended.CompressedIncremental
-								? context.incrementalEncoderDecoder
-								: undefined,
+							incrementalEncoder,
 						);
 					} else {
 						// TODO: consider enabling a somewhat compressed but not schema accelerated encode.
