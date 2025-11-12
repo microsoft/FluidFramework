@@ -175,5 +175,4 @@ export {
 	snapshotCompatibilitySchema,
 	parseCompatibilitySchema,
 	checkCompatibility,
-	type JsonViewSchema,
 } from "./snapshotCompatibilityChecker.js";

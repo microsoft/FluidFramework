@@ -286,5 +286,4 @@ export {
 	snapshotCompatibilitySchema,
 	parseCompatibilitySchema,
 	checkCompatibility,
-	type JsonViewSchema,
 } from "./api/index.js";

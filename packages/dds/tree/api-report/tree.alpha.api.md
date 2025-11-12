@@ -636,9 +636,6 @@ export type JsonTreeSchema = JsonFieldSchema & {
     readonly $defs: Record<JsonSchemaId, JsonNodeSchema>;
 };
 
-// @alpha
-export type JsonViewSchema = JsonCompatibleReadOnly;
-
 // @beta @input
 export enum KeyEncodingOptions {
     allStoredKeys = "allStoredKeys",
@@ -779,7 +776,7 @@ export interface ObservationResults<TResult> {
 export type Off = Off_2;
 
 // @alpha
-export function parseCompatibilitySchema(config: JsonViewSchema): TreeViewConfiguration;
+export function parseCompatibilitySchema(config: JsonCompatibleReadOnly): TreeViewConfiguration;
 
 // @alpha
 export function persistedToSimpleSchema(persisted: JsonCompatible, options: ICodecOptions): SimpleTreeSchema;
@@ -1110,7 +1107,7 @@ export function singletonSchema<TScope extends string, TName extends string | nu
 }, Record<string, never>, true, Record<string, never>, undefined>;
 
 // @alpha
-export function snapshotCompatibilitySchema(config: TreeViewConfiguration): JsonViewSchema;
+export function snapshotCompatibilitySchema(config: TreeViewConfiguration): JsonCompatibleReadOnly;
 
 // @alpha @system
 export namespace System_TableSchema {
