@@ -69,6 +69,9 @@ importers:
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
+      '@types/sort-json':
+        specifier: ^2.0.3
+        version: 2.0.3
       concurrently:
         specifier: ^8.2.1
         version: 8.2.2
@@ -387,6 +390,9 @@ packages:
 
   '@types/normalize-package-data@2.4.1':
     resolution: {integrity: sha512-Gj7cI7z+98M282Tqmp2K5EIsoouUEzbBJhQQzDE3jSIRk6r9gsz0oUokqIUR4u1R3dMHo0pDHM7sNOHyhulypw==}
+
+  '@types/sort-json@2.0.3':
+    resolution: {integrity: sha512-Y5eKfh99uPF5tMJ68rODj63fqXPSEI0l2BldzKmc6wFsFknO+2lQvgrbbOpsyJXYr6YJBsTLHBEyh0Z2j83+rg==}
 
   '@typescript-eslint/eslint-plugin@7.18.0':
     resolution: {integrity: sha512-94EQTWZ40mzBc42ATNIBimBEDltSJ9RQHCC8vc/PDbxi4k8dVwUAv4o98dk50M1zB+JGFxp43FP7f8+FP8R6Sw==}
@@ -2330,6 +2336,8 @@ snapshots:
   '@types/estree@1.0.8': {}
 
   '@types/normalize-package-data@2.4.1': {}
+
+  '@types/sort-json@2.0.3': {}
 
   '@typescript-eslint/eslint-plugin@7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.4.5))(eslint@8.57.1)(typescript@5.4.5)':
     dependencies:
