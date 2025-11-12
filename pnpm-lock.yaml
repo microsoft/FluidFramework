@@ -255,9 +255,6 @@ importers:
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
-      '@fluidframework/eslint-config-fluid-previous':
-        specifier: npm:@fluidframework/eslint-config-fluid@2.72.0
-        version: 'link:'
       concurrently:
         specifier: ^8.2.1
         version: 8.2.2
