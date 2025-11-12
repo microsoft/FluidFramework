@@ -98,6 +98,8 @@ export function exportCompatibilitySchemaSnapshot(
  * ```ts
  * const oldViewSchema = importCompatibilitySchemaSnapshot(fs.readFileSync("Point2D.json"));
  * ```
+ * @privateRemarks We construct a TreeViewConfiguration here with the default parameters. The default set of validation parameters are
+ * fine for a schema produced by {@link generateSchemaFromSimpleSchema}.
  *
  * @alpha
  */
