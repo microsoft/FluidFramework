@@ -514,7 +514,7 @@ export async function setVersion(
 	const cmds: [string, string[], execa.Options | undefined][] = [];
 	let options: execa.Options | undefined;
 
-	// Run npm version in each package to set its version in package.json. Also regenerates packageVersion.ts and layerGenerationState.ts if needed.
+	// Run npm version in each package to set its version in package.json. Also regenerates packageVersion.ts if needed.
 	if (releaseGroupOrPackage instanceof MonoRepo) {
 		options = {
 			cwd: releaseGroupOrPackage.repoPath,
@@ -534,7 +534,6 @@ export async function setVersion(
 				options,
 			],
 			["pnpm", ["-r", "run", "build:genver"], options],
-			["pnpm", ["-r", "run", "layerGeneration:gen"], options],
 		);
 	} else {
 		options = {
@@ -549,9 +548,6 @@ export async function setVersion(
 		]);
 		if (releaseGroupOrPackage.getScript("build:genver") !== undefined) {
 			cmds.push([`npm`, ["run", "build:genver"], options]);
-		}
-		if (releaseGroupOrPackage.getScript("layerGeneration:gen") !== undefined) {
-			cmds.push([`npm`, ["run", "layerGeneration:gen"], options]);
 		}
 	}
 
