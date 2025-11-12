@@ -2,7 +2,14 @@
 
 This package contains a shared ESLint config used by all the packages in the Fluid Framework repo.
 
-It exports the following shared ESLint configs:
+It exports the following shared ESLint configs for both ESLint 8 (eslintrc format) and ESLint 9 (flat config format).
+
+## ESLint Version Compatibility
+
+This package supports both **ESLint 8.57.0+** and **ESLint 9.x**:
+
+- **ESLint 8**: Use the traditional exports (e.g., `@fluidframework/eslint-config-fluid`)
+- **ESLint 9**: Use the flat config exports (e.g., `@fluidframework/eslint-config-fluid/flat`)
 
 ## Configurations
 
@@ -13,7 +20,26 @@ It is also the default library export.
 
 This configuration is recommended for all libraries in the repository, though use of the [strict](#strict) config is preferred whenever reasonable.
 
-Imported via `@fluidframework/eslint-config-fluid` (or `@fluidframework/eslint-config-fluid/recommended`).
+**ESLint 8 (eslintrc):**
+
+```js
+module.exports = {
+	extends: ["@fluidframework/eslint-config-fluid"],
+	// or: "@fluidframework/eslint-config-fluid/recommended"
+};
+```
+
+**ESLint 9 (flat config):**
+
+```js
+import fluidConfig from "@fluidframework/eslint-config-fluid/flat";
+// or: "@fluidframework/eslint-config-fluid/flat/recommended"
+
+export default [
+	...fluidConfig,
+	// your custom config
+];
+```
 
 ### Strict
 
@@ -22,13 +48,49 @@ Recommended for highest code quality enforcement.
 
 In particular, use of this config is encouraged for libraries with public facing APIs, and those used as external-facing examples (e.g. those mentioned on `fluidframework.com`).
 
-Imported via `@fluidframework/eslint-config-fluid/strict`.
+**ESLint 8 (eslintrc):**
+
+```js
+module.exports = {
+	extends: ["@fluidframework/eslint-config-fluid/strict"],
+};
+```
+
+**ESLint 9 (flat config):**
+
+```js
+import fluidStrictConfig from "@fluidframework/eslint-config-fluid/flat/strict";
+
+export default [
+	...fluidStrictConfig,
+	// your custom config
+];
+```
 
 ### Strict-Biome
 
 A version of the "strict" config that disables rules that are supported by Biome's "recommended" lint config.
 This config is intended to be used in projects that use both eslint and Biome for linting.
 This config is considered experimental.
+
+**ESLint 8 (eslintrc):**
+
+```js
+module.exports = {
+	extends: ["@fluidframework/eslint-config-fluid/strict-biome"],
+};
+```
+
+**ESLint 9 (flat config):**
+
+```js
+import fluidStrictBiomeConfig from "@fluidframework/eslint-config-fluid/flat/strict-biome";
+
+export default [
+	...fluidStrictBiomeConfig,
+	// your custom config
+];
+```
 
 ## Changing the lint config
 
@@ -48,6 +110,9 @@ don't make any changes other than upgrading deps, because the dependency upgrade
 ESLint provides a way to print the config that would apply to a file (`--print-config`), so we use this capability to
 print out the applied config as a JSON file. As we make changes to the config, we can print out the config again and get
 a diff to review as part of a PR -- just like we do with API reports for code changes.
+
+We now generate printed configs for both ESLint 8 (in `printed-configs/eslint8/`) and ESLint 9 (in `printed-configs/eslint9/`)
+to track changes across both configuration formats.
 
 <!-- AUTO-GENERATED-CONTENT:START (PACKAGE_SCRIPTS) -->
 
