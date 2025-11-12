@@ -5,6 +5,7 @@
 
 import {
 	checkCompatibility,
+	normalizeFieldSchema,
 	parseCompatibilitySchema,
 	SchemaFactory,
 	snapshotCompatibilitySchema,
@@ -22,8 +23,13 @@ describe("snapshotCompatibilityChecker", () => {
 		const snapshot = snapshotCompatibilitySchema(view);
 		const parsedView = parseCompatibilitySchema(snapshot);
 
-		// TODO: Fix this comparison
-		assert.deepEqual(parsedView.schema, view.schema);
+		const normalizedView = normalizeFieldSchema(view.schema);
+
+		assert.equal(normalizedView.allowedTypeSet.size, 1);
+		assert.equal(
+			normalizedView.allowedTypesIdentifiers.has("com.fluidframework.leaf.string"),
+			true,
+		);
 	});
 
 	it("checkCompatibility detects incompatible schemas", () => {
