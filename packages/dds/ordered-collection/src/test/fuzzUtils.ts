@@ -14,7 +14,7 @@ import {
 	combineReducers,
 	createWeightedAsyncGenerator as createWeightedGenerator,
 	makeRandom,
-	takeAsync as take,
+	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import { v4 as uuid } from "uuid";
 import type {
@@ -75,11 +75,14 @@ export interface AddOperation {
 
 export interface AcquireOperation {
 	type: "acquire";
+	pendingCallbacks: Map<string, string>;
 }
 
 export interface ResolveOperation {
 	type: "resolve";
 	result: ConsensusResult;
+	pendingCallbacks: Map<string, string>;
+	callbackId: string;
 }
 
 /**
@@ -96,6 +99,7 @@ function makeOperationGenerator(): Generator<
 > {
 	type OpSelectionState = FuzzTestState & {
 		itemValue: string;
+		pendingCallbacks: Map<string, string>;
 	};
 
 	const valuePoolRandom = makeRandom(0);
@@ -116,6 +120,7 @@ function makeOperationGenerator(): Generator<
 	async function acquire(state: OpSelectionState): Promise<AcquireOperation> {
 		return {
 			type: "acquire",
+			pendingCallbacks: state.pendingCallbacks,
 		};
 	}
 
@@ -123,6 +128,8 @@ function makeOperationGenerator(): Generator<
 		return {
 			type: "resolve",
 			result: state.random.pick([ConsensusResult.Complete, ConsensusResult.Release]),
+			pendingCallbacks: state.pendingCallbacks,
+			callbackId: state.random.pick([...state.pendingCallbacks.keys()]),
 		};
 	}
 
@@ -132,18 +139,18 @@ function makeOperationGenerator(): Generator<
 	>([
 		[add, 1],
 		[acquire, 1],
-		[resolve, 1],
+		[resolve, 1, (state) => state.pendingCallbacks.size > 0],
 	]);
 
 	return async (state: FuzzTestState) =>
 		clientBaseOperationGenerator({
 			...state,
 			itemValue: state.random.pick(valuePool),
+			pendingCallbacks: new Map<string, string>(),
 		});
 }
 
 function makeReducer(): Reducer<ConsensusOrderedCollectionOperation, FuzzTestState> {
-	const pendingCallbacks = new Map<string, string>();
 	const callbackResolver = createEmitter<ResolveEvent>();
 
 	const reducer = combineReducers<ConsensusOrderedCollectionOperation, FuzzTestState>({
@@ -152,7 +159,7 @@ function makeReducer(): Reducer<ConsensusOrderedCollectionOperation, FuzzTestSta
 				throw error;
 			});
 		},
-		acquire: ({ client }) => {
+		acquire: ({ client }, { pendingCallbacks }) => {
 			const callback = async (value: string): Promise<ConsensusResult> => {
 				const callbackId = uuid();
 				pendingCallbacks.set(callbackId, value);
@@ -170,7 +177,7 @@ function makeReducer(): Reducer<ConsensusOrderedCollectionOperation, FuzzTestSta
 				throw error;
 			});
 		},
-		resolve: ({ client }, { result }) => {
+		resolve: ({ client }, { result, pendingCallbacks, callbackId }) => {
 			new Promise<string>((resolve) => {
 				if (result === ConsensusResult.Complete) {
 					client.channel.once("localComplete", (value: string) => {
@@ -183,11 +190,8 @@ function makeReducer(): Reducer<ConsensusOrderedCollectionOperation, FuzzTestSta
 				}
 			})
 				.then((resolvedValue: string) => {
-					const [callbackId, value] = pendingCallbacks.entries().next().value as [
-						string,
-						string,
-					];
-					if (callbackId !== undefined && resolvedValue === value) {
+					const value = pendingCallbacks.get(callbackId);
+					if (resolvedValue === value) {
 						pendingCallbacks.delete(callbackId);
 						callbackResolver.emit("resolve", callbackId, result);
 					}
@@ -238,7 +242,7 @@ export const baseConsensusOrderedCollectionModel: DDSFuzzModel<
 	FuzzTestState
 > = {
 	workloadName: "default configuration",
-	generatorFactory: () => take(100, makeOperationGenerator()),
+	generatorFactory: () => takeAsync(100, makeOperationGenerator()),
 	reducer: makeReducer(),
 	validateConsistency: (a, b) => assertEqualConsensusOrderedCollections(a.channel, b.channel),
 	factory: new ConsensusQueueFactory(),
