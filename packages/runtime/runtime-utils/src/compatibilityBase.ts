@@ -11,8 +11,8 @@ import { compare, gt, gte, lte, valid } from "semver-ts";
 import { pkgVersion } from "./packageVersion.js";
 
 /**
- * Our policy is to support N/N-1 compatibility by default, where N is the most
- * recent public major release of the runtime.
+ * Our policy is to support major versions N and N-1, where N is most
+ * recent public major release of the Fluid Framework Client.
  * Therefore, if the customer does not provide a minVersionForCollab, we will
  * default to use N-1.
  *
@@ -68,13 +68,33 @@ export type SemanticVersion =
 	| `${bigint}.${bigint}.${bigint}-${string}`;
 
 /**
- * Generic type for runtimeOptionsAffectingDocSchemaConfigMap
+ * Converts a record into a configuration map that associates each key with with an instance of its value type that based on a {@link MinimumMinorSemanticVersion}.
+ * @remarks
+ * For a given input {@link @fluidframework/runtime-definitions#MinimumVersionForCollab},
+ * the corresponding configuration values can be found by using the entry in the inner objects with the highest {@link MinimumMinorSemanticVersion}
+ * that does not exceed the given {@link @fluidframework/runtime-definitions#MinimumVersionForCollab}.
  *
+ * Use {@link getConfigsForMinVersionForCollab} to retrieve the configuration for a given a {@link @fluidframework/runtime-definitions#MinimumVersionForCollab}.
+ *
+ * See the remarks on {@link MinimumMinorSemanticVersion} for some limitation on how ConfigMaps must handle versioning.
  * @internal
  */
 export type ConfigMap<T extends Record<string, unknown>> = {
-	[K in keyof T]-?: Record<MinimumMinorSemanticVersion, T[K]>;
+	readonly [K in keyof T]-?: ConfigMapEntry<T[K]>;
 };
+
+/**
+ * Entry in {@link ConfigMap} associating {@link MinimumMinorSemanticVersion} with configuration values that became supported in that version.
+ * @remarks
+ * All entries must at least provide an entry for {@link lowestMinVersionForCollab}
+ * @internal
+ */
+export interface ConfigMapEntry<T> {
+	[version: MinimumMinorSemanticVersion]: T;
+	// Require an entry for the defaultMinVersionForCollab:
+	// this ensures that all versions of lowestMinVersionForCollab or later have a specified value in the ConfigMap.
+	[lowestMinVersionForCollab]: T;
+}
 
 /**
  * Generic type for runtimeOptionsAffectingDocSchemaConfigValidationMap
@@ -82,7 +102,7 @@ export type ConfigMap<T extends Record<string, unknown>> = {
  * @internal
  */
 export type ConfigValidationMap<T extends Record<string, unknown>> = {
-	[K in keyof T]-?: (configValue: T[K]) => SemanticVersion | undefined;
+	readonly [K in keyof T]-?: (configValue: T[K]) => SemanticVersion | undefined;
 };
 
 /**
@@ -92,30 +112,27 @@ export type ConfigValidationMap<T extends Record<string, unknown>> = {
  */
 export function getConfigsForMinVersionForCollab<T extends Record<SemanticVersion, unknown>>(
 	minVersionForCollab: SemanticVersion,
-	configMap: ConfigMap<T>,
+	configMap: ConfigMap<T> & Record<string, ConfigMapEntry<T[keyof T]>>,
 ): Partial<T> {
+	semanticVersionToMinimumVersionForCollab(minVersionForCollab);
 	const defaultConfigs: Partial<T> = {};
 	// Iterate over configMap to get default values for each option.
-	for (const key of Object.keys(configMap)) {
-		// Type assertion is safe as key comes from Object.keys(configMap)
-		const config = configMap[key as keyof T];
-		// Sort the versions in ascending order so we can short circuit the loop.
-		const versions = Object.keys(config).sort(compare);
+	for (const [key, config] of Object.entries(configMap)) {
+		// Sort the versions in descending order to find the largest compatible entry.
+		const versions = (Object.entries(config) as [MinimumMinorSemanticVersion, unknown][]).sort(
+			(a, b) => compare(b[0], a[0]),
+		);
 		// For each config, we iterate over the keys and check if minVersionForCollab is greater than or equal to the version.
-		// If so, we set it as the default value for the option. At the end of the loop we should have the most recent default
-		// value that is compatible with the version specified as the minVersionForCollab.
-		for (const version of versions) {
+		// If so, we set it as the default value for the option.
+		for (const [version, value] of versions) {
 			if (gte(minVersionForCollab, version)) {
-				// Type assertion is safe as version is a key from the config object
-				defaultConfigs[key] = config[version as MinimumMinorSemanticVersion];
-			} else {
-				// If the minVersionForCollab is less than the version, we break out of the loop since we don't need to check
-				// any later versions.
+				defaultConfigs[key] = value;
 				break;
 			}
 		}
+		assert(key in defaultConfigs, "missing config map entry");
 	}
-	return defaultConfigs;
+	return defaultConfigs as T;
 }
 
 /**
@@ -125,9 +142,7 @@ export function getConfigsForMinVersionForCollab<T extends Record<SemanticVersio
  *
  * @internal
  */
-export function checkValidMinVersionForCollabVerbose(
-	minVersionForCollab: MinimumVersionForCollab,
-): {
+export function checkValidMinVersionForCollabVerbose(minVersionForCollab: SemanticVersion): {
 	isValidSemver: boolean;
 	isGteLowestMinVersion: boolean;
 	isLtePkgVersion: boolean;
@@ -150,8 +165,8 @@ export function checkValidMinVersionForCollabVerbose(
  * @internal
  */
 export function isValidMinVersionForCollab(
-	minVersionForCollab: MinimumVersionForCollab,
-): boolean {
+	minVersionForCollab: SemanticVersion,
+): minVersionForCollab is MinimumVersionForCollab {
 	const { isValidSemver, isGteLowestMinVersion, isLtePkgVersion } =
 		checkValidMinVersionForCollabVerbose(minVersionForCollab);
 	return isValidSemver && isGteLowestMinVersion && isLtePkgVersion;
@@ -167,7 +182,7 @@ export function isValidMinVersionForCollab(
  */
 export function semanticVersionToMinimumVersionForCollab(
 	semanticVersion: SemanticVersion,
-): MinimumVersionForCollab {
+): asserts semanticVersion is MinimumVersionForCollab {
 	const minVersionForCollab = semanticVersion as MinimumVersionForCollab;
 	const { isValidSemver, isGteLowestMinVersion, isLtePkgVersion } =
 		checkValidMinVersionForCollabVerbose(minVersionForCollab);
@@ -179,8 +194,6 @@ export function semanticVersionToMinimumVersionForCollab(
 				`Details: { isValidSemver: ${isValidSemver}, isGteLowestMinVersion: ${isGteLowestMinVersion}, isLtePkgVersion: ${isLtePkgVersion} }`,
 		);
 	}
-
-	return minVersionForCollab;
 }
 
 /**
