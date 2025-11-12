@@ -91,6 +91,7 @@ export {
 	totalBlobSizePropertyName,
 } from "./summary.js";
 export type { MinimumVersionForCollab } from "./compatibilityDefinitions.js";
+export { defaultMinVersionForCollab } from "./compatibilityDefinitions.js";
 
 export {
 	type ContainerRuntimeBaseAlpha,

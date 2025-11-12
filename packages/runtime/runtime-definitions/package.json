@@ -120,7 +120,20 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Interface_IFluidDataStoreContextDetached": {
+				"forwardCompat": false
+			},
+			"Interface_IFluidDataStoreContext": {
+				"forwardCompat": false
+			},
+			"Interface_IFluidParentContext": {
+				"forwardCompat": false
+			},
+			"TypeAlias_MinimumVersionForCollab": {
+				"forwardCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }

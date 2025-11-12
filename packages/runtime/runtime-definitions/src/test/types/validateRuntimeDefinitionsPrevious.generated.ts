@@ -205,6 +205,7 @@ declare type current_as_old_for_Interface_IFluidDataStoreChannel = requireAssign
  * typeValidation.broken:
  * "Interface_IFluidDataStoreContext": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_IFluidDataStoreContext = requireAssignableTo<TypeOnly<old.IFluidDataStoreContext>, TypeOnly<current.IFluidDataStoreContext>>
 
 /*
@@ -223,6 +224,7 @@ declare type current_as_old_for_Interface_IFluidDataStoreContext = requireAssign
  * typeValidation.broken:
  * "Interface_IFluidDataStoreContextDetached": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_IFluidDataStoreContextDetached = requireAssignableTo<TypeOnly<old.IFluidDataStoreContextDetached>, TypeOnly<current.IFluidDataStoreContextDetached>>
 
 /*
@@ -295,6 +297,7 @@ declare type current_as_old_for_Interface_IFluidDataStoreRegistry = requireAssig
  * typeValidation.broken:
  * "Interface_IFluidParentContext": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_IFluidParentContext = requireAssignableTo<TypeOnly<old.IFluidParentContext>, TypeOnly<current.IFluidParentContext>>
 
 /*
@@ -763,6 +766,7 @@ declare type current_as_old_for_TypeAlias_ISequencedMessageEnvelope = requireAss
  * typeValidation.broken:
  * "TypeAlias_MinimumVersionForCollab": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_TypeAlias_MinimumVersionForCollab = requireAssignableTo<TypeOnly<old.MinimumVersionForCollab>, TypeOnly<current.MinimumVersionForCollab>>
 
 /*

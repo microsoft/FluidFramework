@@ -42,6 +42,9 @@ export enum CreateSummarizerNodeSource {
 }
 
 // @beta @legacy
+export const defaultMinVersionForCollab = "1.999.0";
+
+// @beta @legacy
 export interface DetachedAttributionKey {
     id: 0;
     // (undocumented)
@@ -389,7 +392,7 @@ export interface LocalAttributionKey {
 }
 
 // @beta @legacy @input
-export type MinimumVersionForCollab = `${1 | 2}.${bigint}.${bigint}` | `${1 | 2}.${bigint}.${bigint}-${string}`;
+export type MinimumVersionForCollab = `1.0.0` | `1.4.0` | typeof defaultMinVersionForCollab | `2.${bigint}.0`;
 
 // @beta @legacy
 export type NamedFluidDataStoreRegistryEntries = Iterable<NamedFluidDataStoreRegistryEntry2>;

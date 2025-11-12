@@ -4,36 +4,28 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import {
+	defaultMinVersionForCollab,
+	type MinimumVersionForCollab,
+} from "@fluidframework/runtime-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { compare, gt, gte, lte, valid } from "semver-ts";
 
 import { pkgVersion } from "./packageVersion.js";
 
 /**
- * Our policy is to support N/N-1 compatibility by default, where N is the most
- * recent public major release of the runtime.
- * Therefore, if the customer does not provide a minVersionForCollab, we will
- * default to use N-1.
+ * The lowest supported value of {@link @fluidframework/runtime-definitions#MinimumVersionForCollab}.
+ * @remarks
+ * In each new major version, this may be bumped to indicate which version of the Fluid Framework client libraries are no longer supported for collaboration.
+ * @privateRemarks
+ * At the time this was defined (and also at the time 2.0 was released), all version of 1.x below 1.4 were no longer supported.
+ * Therefor it makes sense to not support any version below 1.4.0.
+ * Supporting 1.4 is sufficient to support all 1.x versions which are still maintained were maintained when this constant could have been first used.
  *
- * However, this is not consistent with today's behavior. Some options (i.e.
- * batching, compression) are enabled by default despite not being compatible
- * with 1.x clients. Since the policy was introduced during 2.x's lifespan,
- * N/N-1 compatibility by **default** will be in effect starting with 3.0.
- * Importantly though, N/N-2 compatibility is still guaranteed with the proper
- * configurations set.
+ * Future major versions will have to decide which versions of 1.x (if any) they want to support:
+ * continuing to support what ever version of 1.x is the oldest supported one at the time of the major release, would make sense for 3.0.
  *
- * Further to distinguish unspecified `minVersionForCollab` from a specified
- * version and allow `enableExplicitSchemaControl` to default to `true` for
- * any 2.0.0+ version, we will use a special value of `2.0.0-defaults`, which
- * is semantically less than 2.0.0.
  *
- * @internal
- */
-export const defaultMinVersionForCollab =
-	"2.0.0-defaults" as const satisfies MinimumVersionForCollab;
-
-/**
  * We don't want allow a version before the major public release of the LTS version.
  * Today we use "1.0.0", because our policy supports N/N-1 & N/N-2, which includes
  * all minor versions of N. Though LTS starts at 1.4.0, we should stay consistent
@@ -63,26 +55,41 @@ export type MinimumMinorSemanticVersion = `${bigint}.${bigint}.0` | `${bigint}.0
  *
  * @internal
  */
-export type SemanticVersion =
-	| `${bigint}.${bigint}.${bigint}`
-	| `${bigint}.${bigint}.${bigint}-${string}`;
+export type SemanticVersion = `${bigint}.${bigint}.${bigint}`;
 
 /**
- * Generic type for runtimeOptionsAffectingDocSchemaConfigMap
+ * Converts a record into a configuration map that associates each key with with an instance of its value type that based on a {@link MinimumMinorSemanticVersion}.
+ * @remarks
+ * For a given input {@link @fluidframework/runtime-definitions#MinimumVersionForCollab},
+ * the corresponding configuration values can be found by using the entry in the inner objects with the highest {@link MinimumMinorSemanticVersion}
+ * that does not exceed the given {@link @fluidframework/runtime-definitions#MinimumVersionForCollab}.
  *
+ * Use {@link getConfigsForMinVersionForCollab} to retrieve the configuration for a given a {@link @fluidframework/runtime-definitions#MinimumVersionForCollab}.
+ *
+ * See the remarks on {@link MinimumMinorSemanticVersion} for some limitation on how ConfigMaps must handle versioning.
  * @internal
  */
 export type ConfigMap<T extends Record<string, unknown>> = {
-	[K in keyof T]-?: Record<MinimumMinorSemanticVersion, T[K]>;
+	readonly [K in keyof T]-?: ConfigMapEntry<T[K]>;
 };
 
 /**
+ * Entry in {@link ConfigMap} associating {@link MinimumMinorSemanticVersion} with configuration values that became supported in that version.
+ * @internal
+ */
+export interface ConfigMapEntry<T> {
+	[version: MinimumMinorSemanticVersion]: T;
+	// Require an entry for the defaultMinVersionForCollab:
+	// this ensures that all versions of lowestMinVersionForCollab or later have a specified value in the ConfigMap.
+	[lowestMinVersionForCollab]: T;
+}
+
+/**
  * Generic type for runtimeOptionsAffectingDocSchemaConfigValidationMap
- *
  * @internal
  */
 export type ConfigValidationMap<T extends Record<string, unknown>> = {
-	[K in keyof T]-?: (configValue: T[K]) => SemanticVersion | undefined;
+	readonly [K in keyof T]-?: (configValue: T[K]) => SemanticVersion | undefined;
 };
 
 /**
@@ -92,30 +99,26 @@ export type ConfigValidationMap<T extends Record<string, unknown>> = {
  */
 export function getConfigsForMinVersionForCollab<T extends Record<SemanticVersion, unknown>>(
 	minVersionForCollab: SemanticVersion,
-	configMap: ConfigMap<T>,
+	configMap: ConfigMap<T> & Record<string, ConfigMapEntry<T[keyof T]>>,
 ): Partial<T> {
 	const defaultConfigs: Partial<T> = {};
 	// Iterate over configMap to get default values for each option.
-	for (const key of Object.keys(configMap)) {
-		// Type assertion is safe as key comes from Object.keys(configMap)
-		const config = configMap[key as keyof T];
-		// Sort the versions in ascending order so we can short circuit the loop.
-		const versions = Object.keys(config).sort(compare);
+	for (const [key, config] of Object.entries(configMap)) {
+		// Sort the versions in descending order to find the largest compatible entry.
+		const versions = (Object.entries(config) as [MinimumMinorSemanticVersion, unknown][]).sort(
+			(a, b) => compare(b[0], a[0]),
+		);
 		// For each config, we iterate over the keys and check if minVersionForCollab is greater than or equal to the version.
-		// If so, we set it as the default value for the option. At the end of the loop we should have the most recent default
-		// value that is compatible with the version specified as the minVersionForCollab.
-		for (const version of versions) {
+		// If so, we set it as the default value for the option.
+		for (const [version, value] of versions) {
 			if (gte(minVersionForCollab, version)) {
-				// Type assertion is safe as version is a key from the config object
-				defaultConfigs[key] = config[version as MinimumMinorSemanticVersion];
-			} else {
-				// If the minVersionForCollab is less than the version, we break out of the loop since we don't need to check
-				// any later versions.
+				defaultConfigs[key] = value;
 				break;
 			}
 		}
+		assert(key in defaultConfigs, "missing config map entry");
 	}
-	return defaultConfigs;
+	return defaultConfigs as T;
 }
 
 /**
