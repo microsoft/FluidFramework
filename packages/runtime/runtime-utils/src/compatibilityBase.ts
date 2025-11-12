@@ -108,22 +108,28 @@ export type ConfigValidationMap<T extends Record<string, unknown>> = {
 /**
  * Returns a default configuration given minVersionForCollab and configuration version map.
  *
+ * @privateRemarks
+ * The extra `Record` type for the `configMap` is just used to allow the body of this function to be more type-safe due to limitations of generic types in TypeScript.
+ * It should have no impact on the user of this function.
  * @internal
  */
 export function getConfigsForMinVersionForCollab<T extends Record<SemanticVersion, unknown>>(
 	minVersionForCollab: MinimumVersionForCollab,
-	configMap: ConfigMap<T> & Record<string, ConfigMapEntry<T[keyof T]>>,
+	configMap: ConfigMap<T> & Record<keyof T, unknown>,
 ): T {
 	semanticVersionToMinimumVersionForCollab(minVersionForCollab);
 	const defaultConfigs: Partial<T> = {};
 	// Iterate over configMap to get default values for each option.
 	for (const [key, config] of Object.entries(configMap)) {
+		const entries: [string, unknown][] = Object.entries(config); // Assigning this to a typed variable to convert the "any" into unknown.
+		// Validate and strongly type the versions from the configMap.
+		const versions: [MinimumVersionForCollab, unknown][] = entries.map(([version, value]) => {
+			semanticVersionToMinimumVersionForCollab(version);
+			return [version, value];
+		});
 		// Sort the versions in descending order to find the largest compatible entry.
-		// TODO: runtime enforcing a sorted order, and valid MinimumVersionForCollab might be a good idea.
-		// For now tolerate any order.
-		const versions = (Object.entries(config) as [MinimumMinorSemanticVersion, unknown][]).sort(
-			(a, b) => compare(b[0], a[0]),
-		);
+		// TODO: Enforcing a sorted order might be a good idea. For now tolerates any order.
+		versions.sort((a, b) => compare(b[0], a[0]));
 		// For each config, we iterate over the keys and check if minVersionForCollab is greater than or equal to the version.
 		// If so, we set it as the default value for the option.
 		for (const [version, value] of versions) {
@@ -134,6 +140,7 @@ export function getConfigsForMinVersionForCollab<T extends Record<SemanticVersio
 		}
 		assert(key in defaultConfigs, "missing config map entry");
 	}
+	// We have populated very key, so casting away the Partial is now safe:
 	return defaultConfigs as T;
 }
 
@@ -187,7 +194,7 @@ export function isValidMinVersionForCollab(
  * @internal
  */
 export function semanticVersionToMinimumVersionForCollab(
-	semanticVersion: SemanticVersion,
+	semanticVersion: string,
 ): asserts semanticVersion is MinimumVersionForCollab {
 	const minVersionForCollab = semanticVersion as MinimumVersionForCollab;
 	const { isValidSemver, isGteLowestMinVersion, isLtePkgVersion } =
