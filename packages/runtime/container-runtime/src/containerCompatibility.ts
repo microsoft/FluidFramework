@@ -10,7 +10,7 @@ import {
 import {
 	configValueToMinVersionForCollab,
 	getConfigsForMinVersionForCollab,
-	getValidationForRuntimeOptions,
+	validateRuntimeOptions,
 	type ConfigMap,
 	type ConfigValidationMap,
 } from "@fluidframework/runtime-utils/internal";
@@ -213,9 +213,7 @@ export function getMinVersionForCollabDefaults(
 	return getConfigsForMinVersionForCollab(
 		minVersionForCollab,
 		runtimeOptionsAffectingDocSchemaConfigMap,
-		// This is a bad cast away from Partial that getConfigsForCompatMode provides.
-		// ConfigMap should be restructured to provide RuntimeOptionsAffectingDocSchema guarantee.
-	) as RuntimeOptionsAffectingDocSchema;
+	);
 }
 
 /**
@@ -227,9 +225,9 @@ export function validateRuntimeOptions(
 	minVersionForCollab: MinimumVersionForCollab,
 	runtimeOptions: Partial<ContainerRuntimeOptionsInternal>,
 ): void {
-	getValidationForRuntimeOptions<RuntimeOptionsAffectingDocSchema>(
+	validateRuntimeOptions<RuntimeOptionsAffectingDocSchema>(
 		minVersionForCollab,
-		runtimeOptions as Partial<RuntimeOptionsAffectingDocSchema>,
+		runtimeOptions,
 		runtimeOptionsAffectingDocSchemaConfigValidationMap,
 	);
 }

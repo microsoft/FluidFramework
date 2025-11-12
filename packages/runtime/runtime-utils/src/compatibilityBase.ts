@@ -111,13 +111,16 @@ export type ConfigValidationMap<T extends Record<string, unknown>> = {
  * @internal
  */
 export function getConfigsForMinVersionForCollab<T extends Record<SemanticVersion, unknown>>(
-	minVersionForCollab: SemanticVersion,
+	minVersionForCollab: MinimumVersionForCollab,
 	configMap: ConfigMap<T> & Record<string, ConfigMapEntry<T[keyof T]>>,
-): Partial<T> {
+): T {
+	semanticVersionToMinimumVersionForCollab(minVersionForCollab);
 	const defaultConfigs: Partial<T> = {};
 	// Iterate over configMap to get default values for each option.
 	for (const [key, config] of Object.entries(configMap)) {
 		// Sort the versions in descending order to find the largest compatible entry.
+		// TODO: runtime enforcing a sorted order, and valid MinimumVersionForCollab might be a good idea.
+		// For now tolerate any order.
 		const versions = (Object.entries(config) as [MinimumMinorSemanticVersion, unknown][]).sort(
 			(a, b) => compare(b[0], a[0]),
 		);
@@ -173,6 +176,10 @@ export function isValidMinVersionForCollab(
 
 /**
  * Converts a SemanticVersion to a MinimumVersionForCollab.
+ * @remarks
+ * This is more strict than the type constraints imposed by `MinimumVersionForCollab`.
+ * Currently there is no type which is used to separate valid and possibly MinimumVersionForCollab values:
+ * thus users that care about strict validation may want to call this on a `MinimumVersionForCollab` value.
  * @param semanticVersion - The version to convert.
  * @returns The version as a MinimumVersionForCollab.
  * @throws UsageError if the version is not a valid MinimumVersionForCollab.
@@ -200,7 +207,7 @@ export function semanticVersionToMinimumVersionForCollab(
  *
  * @internal
  */
-export function getValidationForRuntimeOptions<T extends Record<string, unknown>>(
+export function validateRuntimeOptions<T extends Record<string, unknown>>(
 	minVersionForCollab: SemanticVersion,
 	runtimeOptions: Partial<T>,
 	validationMap: ConfigValidationMap<T>,

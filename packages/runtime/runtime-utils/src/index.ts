@@ -64,7 +64,7 @@ export {
 export {
 	configValueToMinVersionForCollab,
 	defaultMinVersionForCollab,
-	getValidationForRuntimeOptions,
+	validateRuntimeOptions,
 	getConfigsForMinVersionForCollab,
 	isValidMinVersionForCollab,
 	semanticVersionToMinimumVersionForCollab,
