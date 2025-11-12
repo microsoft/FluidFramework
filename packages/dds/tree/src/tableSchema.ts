@@ -28,6 +28,7 @@ import {
 	type ImplicitFieldSchema,
 	type InsertableField,
 	withBufferedTreeEvents,
+	type TreeRecordNode,
 } from "./simple-tree/index.js";
 
 // Future improvement TODOs:
@@ -243,7 +244,7 @@ export namespace System_TableSchema {
 	 * @typeParam TCell - The type of the cells in the {@link TableSchema.Table}.
 	 * @typeParam TProps - Additional properties to associate with the row.
 	 * @privateRemarks Internal/System counterpart to the public-facing row interface.
-	 * Exposes internal methods needed for table operations (publicly exposed via {@link TableSchema.Table}).
+	 * Exposes internal properties needed for table operations (publicly exposed via {@link TableSchema.Table}).
 	 * @sealed @system @alpha
 	 */
 	export interface Row<
@@ -251,55 +252,13 @@ export namespace System_TableSchema {
 		TProps extends ImplicitFieldSchema = ImplicitFieldSchema,
 	> extends TableSchema.Row<TCell, TProps> {
 		/**
-		 * Gets the cell in the specified column.
-		 * @returns The cell if it exists, otherwise undefined.
-		 * @privateRemarks TODO: throw if the column does not belong to the same table as the row.
+		 * The row's cells.
+		 * @remarks This is a user-defined schema that can be used to store additional information about the row.
+		 * @privateRemarks
+		 * Note: these docs are duplicated on the inline type definitions in {@link System_TableSchema.createRowSchema}.
+		 * If you update the docs here, please also update the inline type definitions.
 		 */
-		getCell(
-			column: TableSchema.Column<TCell>,
-		): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
-		/**
-		 * Gets the cell in the specified column, denoted by column ID.
-		 * @returns The cell if it exists, otherwise undefined.
-		 */
-		getCell(columnId: string): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
-
-		/**
-		 * Gets all of the populated cells in the row, keyed by their associated column IDs.
-		 */
-		getCells(): readonly {
-			columnId: string;
-			cell: TreeNodeFromImplicitAllowedTypes<TCell>;
-		}[];
-
-		/**
-		 * Sets the cell in the specified column.
-		 * @remarks To remove a cell, call {@link System_TableSchema.Row.(removeCell:1)} instead.
-		 * @privateRemarks TODO: Throw an error if the column does not exist in the table.
-		 */
-		setCell(
-			column: TableSchema.Column<TCell>,
-			value: InsertableTreeNodeFromImplicitAllowedTypes<TCell>,
-		): void;
-		/**
-		 * Sets the cell in the specified column, denoted by column ID.
-		 * @remarks To remove a cell, call {@link System_TableSchema.Row.(removeCell:2)} instead.
-		 */
-		setCell(columnId: string, value: InsertableTreeNodeFromImplicitAllowedTypes<TCell>): void;
-
-		/**
-		 * Removes the cell in the specified column.
-		 * @returns The cell if it exists, otherwise undefined.
-		 * @privateRemarks TODO: Throw if the column does not belong to the same table as the row.
-		 */
-		removeCell(
-			column: TableSchema.Column<TCell>,
-		): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
-		/**
-		 * Removes the cell in the specified column, denoted by column ID.
-		 * @returns The cell if it exists, otherwise undefined.
-		 */
-		removeCell(columnId: string): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
+		readonly cells: TreeRecordNode<TCell>;
 	}
 
 	/**
@@ -373,7 +332,7 @@ export namespace System_TableSchema {
 				// Will make it easier to evolve this schema in the future.
 				allowUnknownOptionalFields: true,
 			})
-			implements Row<TCellSchema, TPropsSchema>
+			implements TableSchema.Row<TCellSchema, TPropsSchema>
 		{
 			public getCell(
 				columnOrId: TableSchema.Column<TCellSchema> | string,
@@ -439,7 +398,7 @@ export namespace System_TableSchema {
 		}
 
 		type RowValueType = TreeNode &
-			Row<TCellSchema, TPropsSchema> &
+			TableSchema.Row<TCellSchema, TPropsSchema> &
 			WithType<ScopedSchemaName<Scope, "Row">>;
 
 		// Note: ideally this type would just leverage `InsertableObjectFromSchemaRecord<typeof rowFields>`,
@@ -553,6 +512,9 @@ export namespace System_TableSchema {
 		type ColumnValueType = TreeNodeFromImplicitAllowedTypes<TColumnSchema>;
 		type RowValueType = TreeNodeFromImplicitAllowedTypes<TRowSchema>;
 
+		// Internal version of RowValueType that exposes the `cells` property for use within Table methods.
+		type RowValueInternalType = RowValueType & Row<TCellSchema>;
+
 		/**
 		 * {@link Table} fields.
 		 * @remarks Extracted for re-use in returned type signature defined later in this function.
@@ -601,7 +563,7 @@ export namespace System_TableSchema {
 					return undefined;
 				}
 
-				return row.getCell(column);
+				return (row as RowValueInternalType).cells[column.id];
 			}
 
 			public insertColumns({
@@ -682,7 +644,7 @@ export namespace System_TableSchema {
 				const row = this._getRow(rowOrId);
 				const column = this._getColumn(columnOrId);
 
-				row.setCell(column, cell);
+				(row as RowValueInternalType).cells[column.id] = cell as CellValueType;
 			}
 
 			public removeColumns(
@@ -745,7 +707,10 @@ export namespace System_TableSchema {
 							for (const row of this.rows) {
 								// TypeScript is unable to narrow the row type correctly here, hence the cast.
 								// See: https://github.com/microsoft/TypeScript/issues/52144
-								(row as RowValueType).removeCell(columnToRemove);
+								this.removeCell({
+									column: columnToRemove,
+									row: row as RowValueType,
+								});
 							}
 
 							// We have already validated that all of the columns exist above, so this is safe.
@@ -807,15 +772,16 @@ export namespace System_TableSchema {
 				key: TableSchema.CellKey<TColumnSchema, TRowSchema>,
 			): CellValueType | undefined {
 				const { column: columnOrIdOrIndex, row: rowOrIdOrIndex } = key;
-				const row = this._getRow(rowOrIdOrIndex);
+				const row = this._getRow(rowOrIdOrIndex) as RowValueInternalType;
 				const column = this._getColumn(columnOrIdOrIndex);
 
-				const cell: CellValueType | undefined = row.getCell(column.id);
+				const cell: CellValueType | undefined = row.cells[column.id];
 				if (cell === undefined) {
 					return undefined;
 				}
 
-				row.removeCell(column.id);
+				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+				delete row.cells[column.id];
 				return cell;
 			}
 
@@ -826,7 +792,10 @@ export namespace System_TableSchema {
 				for (const row of this.rows) {
 					// TypeScript is unable to narrow the row type correctly here, hence the cast.
 					// See: https://github.com/microsoft/TypeScript/issues/52144
-					(row as RowValueType).removeCell(column);
+					this.removeCell({
+						column,
+						row: row as RowValueType,
+					});
 				}
 			}
 

@@ -46,7 +46,7 @@ export const TableRowView: React.FC<TableRowViewProps> = ({
 }) => {
 	useTree(table);
 
-	const row = table.rows[rowIndex];
+	const row = table.getRow(rowIndex) ?? fail("Row not found");
 
 	return (
 		<TableRow
@@ -68,16 +68,27 @@ export const TableRowView: React.FC<TableRowViewProps> = ({
 					/>
 				</span>
 			</TableCell>
-			{table.columns.map((col) => {
-				const cell = row.getCell(col);
-				const hint = col.props?.hint ?? "text";
+			{table.columns.map((column) => {
+				const cell = table.getCell({
+					column,
+					row,
+				});
+				const hint = column.props?.hint ?? "text";
 
 				return (
-					<TableCell key={col.id} className="custom-cell">
+					<TableCell key={column.id} className="custom-cell">
 						<TableCellView
 							cell={cell}
 							hint={hint}
-							onUpdateCell={(newValue) => row.setCell(col, newValue)}
+							onUpdateCell={(newValue) =>
+								table.setCell({
+									key: {
+										column,
+										row,
+									},
+									cell: newValue,
+								})
+							}
 						/>
 					</TableCell>
 				);

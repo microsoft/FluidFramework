@@ -126,45 +126,6 @@ describe("TableFactory unit tests", () => {
 			const column = initializeTree(MyRow, { id: "row-0", cells: {}, props: "Row 0" });
 			assert.equal(column.props, "Row 0");
 		});
-
-		it("getCells", () => {
-			const table = initializeTree(Table, Table.empty());
-
-			const row = new Row({ id: "row-0", cells: {} });
-			table.insertRows({ rows: [row] });
-
-			// No columns or cells have been inserted yet.
-			assert.equal(row.getCells().length, 0);
-
-			table.insertColumns({
-				columns: [
-					{ id: "column-0", props: { label: "Column 0" } },
-					{ id: "column-1", props: { label: "Column 0" } },
-					{ id: "column-2", props: { label: "Column 0" } },
-				],
-			});
-			table.setCell({
-				key: {
-					row: row.id,
-					column: "column-0",
-				},
-				cell: { value: "0-0" },
-			});
-			table.setCell({
-				key: {
-					row: row.id,
-					column: "column-2",
-				},
-				cell: { value: "0-2" },
-			});
-
-			const cells = row.getCells();
-			assert.equal(cells.length, 2);
-			assert.equal(cells[0].columnId, "column-0");
-			assertEqualTrees(cells[0].cell, { value: "0-0" });
-			assert.equal(cells[1].columnId, "column-2");
-			assertEqualTrees(cells[1].cell, { value: "0-2" });
-		});
 	});
 
 	describe("Table Schema", () => {
