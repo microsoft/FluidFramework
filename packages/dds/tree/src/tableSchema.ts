@@ -26,7 +26,6 @@ import {
 	type InternalTreeNode,
 	SchemaFactory,
 	type ImplicitFieldSchema,
-	type InsertableField,
 	withBufferedTreeEvents,
 	type TreeRecordNode,
 } from "./simple-tree/index.js";
@@ -287,9 +286,6 @@ export namespace System_TableSchema {
 	) {
 		const schemaFactory = inputSchemaFactory.scopedFactory(tableSchemaFactorySubScope);
 		type Scope = ScopedSchemaName<TInputScope, typeof tableSchemaFactorySubScope>;
-
-		type CellValueType = TreeNodeFromImplicitAllowedTypes<TCellSchema>;
-		type CellInsertableType = InsertableTreeNodeFromImplicitAllowedTypes<TCellSchema>;
 
 		// Note: `rowFields` is broken into two parts to work around a TypeScript bug
 		// that results in broken `.d.ts` output.
