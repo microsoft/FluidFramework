@@ -459,10 +459,6 @@ stages:
                     export login__odsp__test__tenants="$USER_PASS"
                   fi
 
-                  echo "Successfully set up tenant with reservation ID: "
-                  printenv tenant__reservationId
-                  echo "successfully set up credentials: "
-                  printenv login__odsp__test__tenants
                 else
                   echo "ERROR: Failed to parse reservationId from setup output"
                   exit 1

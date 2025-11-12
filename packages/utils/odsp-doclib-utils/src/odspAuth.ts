@@ -171,7 +171,7 @@ export async function fetchTokens(
 		try {
 			throwOdspNetworkError(
 				// pre-0.58 error message: unableToGetAccessToken
-				`Unable to get access token. user: ${credentials.grant_type === "password" ? credentials.username : "n/a"}`,
+				`Unable to get access token. response: ${JSON.stringify(parsedResponse)}`,
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				parsedResponse.error === "invalid_grant" ? 401 : response.status,
 				response,
