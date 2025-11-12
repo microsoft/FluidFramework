@@ -104,7 +104,7 @@ export {
 	defaultChunkPolicy,
 	type FieldBatch,
 	type FieldBatchCodec,
-	type FieldBatchFormatVersion,
+	FieldBatchFormatVersion,
 	getCodecTreeForFieldBatchFormat,
 	makeTreeChunker,
 	makeFieldBatchCodec,
