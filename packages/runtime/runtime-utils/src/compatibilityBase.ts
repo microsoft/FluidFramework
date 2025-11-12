@@ -114,7 +114,6 @@ export function getConfigsForMinVersionForCollab<T extends Record<SemanticVersio
 	minVersionForCollab: SemanticVersion,
 	configMap: ConfigMap<T> & Record<string, ConfigMapEntry<T[keyof T]>>,
 ): Partial<T> {
-	semanticVersionToMinimumVersionForCollab(minVersionForCollab);
 	const defaultConfigs: Partial<T> = {};
 	// Iterate over configMap to get default values for each option.
 	for (const [key, config] of Object.entries(configMap)) {

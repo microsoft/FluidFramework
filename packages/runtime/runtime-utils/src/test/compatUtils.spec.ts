@@ -24,12 +24,12 @@ describe("compatibilityBase", () => {
 	describe("getConfigsForMinVersionForCollab", () => {
 		// eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- type required for ConfigMap processing
 		type ITestConfigMap = {
-			featureA: string;
-			featureB: string;
-			featureC: string;
-			featureD: string;
-			featureE: string;
-			featureF: string;
+			featureA: string | undefined;
+			featureB: string | undefined;
+			featureC: string | undefined;
+			featureD: string | undefined;
+			featureE: string | undefined;
+			featureF: string | undefined;
 		};
 		const testConfigMap: ConfigMap<ITestConfigMap> = {
 			featureA: {
@@ -40,18 +40,21 @@ describe("compatibilityBase", () => {
 				"1.0.0": "a0",
 			},
 			featureB: {
+				"0.5.0": undefined,
 				"1.0.0": "b1",
 				"3.0.0": "b2",
 				"9.0.0": "b4",
 				"6.0.0": "b3",
 			},
 			featureC: {
+				"0.5.0": undefined,
 				"1.0.0": "c1",
 				"4.0.0": "c2",
 				"10.0.0": "c4",
 				"7.0.0": "c3",
 			},
 			featureD: {
+				"0.0.0": undefined,
 				"5.5.0": "d3",
 				"0.1.0": "d1",
 				"2.5.0": "d2",
@@ -59,6 +62,7 @@ describe("compatibilityBase", () => {
 				"1.0.0": "d0",
 			},
 			featureE: {
+				"0.0.0": undefined,
 				"3.5.0": "e2",
 				"9.5.0": "e4",
 				"6.5.0": "e3",
@@ -71,6 +75,7 @@ describe("compatibilityBase", () => {
 				"1.5.0": "f1",
 				"10.5.0": "f4",
 				"7.5.0": "f3",
+				"0.0.0": undefined,
 			},
 		};
 
@@ -82,8 +87,8 @@ describe("compatibilityBase", () => {
 				minVersionForCollab: "0.5.0",
 				expectedConfig: {
 					featureA: "a1",
-					featureB: "b1",
-					featureC: "c0",
+					featureB: undefined,
+					featureC: undefined,
 					featureD: "d1",
 					featureE: undefined,
 					featureF: undefined,
@@ -92,22 +97,22 @@ describe("compatibilityBase", () => {
 			{
 				minVersionForCollab: "1.0.0",
 				expectedConfig: {
-					featureA: "a1",
+					featureA: "a0",
 					featureB: "b1",
 					featureC: "c1",
-					featureD: "d1",
-					featureE: "e1",
-					// featureF: undefined,
+					featureD: "d0",
+					featureE: "e1.5",
+					featureF: "f0",
 				},
 			},
 			{
 				minVersionForCollab: "1.5.0",
 				expectedConfig: {
-					featureA: "a1",
+					featureA: "a0",
 					featureB: "b1",
 					featureC: "c1",
-					featureD: "d1",
-					featureE: "e1",
+					featureD: "d0",
+					featureE: "e1.5",
 					featureF: "f1",
 				},
 			},
@@ -117,8 +122,8 @@ describe("compatibilityBase", () => {
 					featureA: "a2",
 					featureB: "b1",
 					featureC: "c1",
-					featureD: "d1",
-					featureE: "e1",
+					featureD: "d0",
+					featureE: "e1.5",
 					featureF: "f1",
 				},
 			},
@@ -128,8 +133,8 @@ describe("compatibilityBase", () => {
 					featureA: "a2",
 					featureB: "b1",
 					featureC: "c1",
-					featureD: "d1",
-					featureE: "e1",
+					featureD: "d0",
+					featureE: "e1.5",
 					featureF: "f1",
 				},
 			},
@@ -140,7 +145,7 @@ describe("compatibilityBase", () => {
 					featureB: "b1",
 					featureC: "c1",
 					featureD: "d2",
-					featureE: "e1",
+					featureE: "e1.5",
 					featureF: "f1",
 				},
 			},
@@ -151,7 +156,7 @@ describe("compatibilityBase", () => {
 					featureB: "b2",
 					featureC: "c1",
 					featureD: "d2",
-					featureE: "e1",
+					featureE: "e1.5",
 					featureF: "f1",
 				},
 			},
