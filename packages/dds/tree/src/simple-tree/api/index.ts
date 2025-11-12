@@ -172,7 +172,7 @@ export {
 	decodeSimpleSchema,
 } from "./simpleSchemaCodec.js";
 export {
-	snapshotCompatibilitySchema,
-	parseCompatibilitySchema,
+	exportCompatibilitySchemaSnapshot,
+	importCompatibilitySchemaSnapshot,
 	checkCompatibility,
 } from "./snapshotCompatibilityChecker.js";

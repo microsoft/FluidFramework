@@ -11,15 +11,15 @@ New APIs:
 
 - `checkCompatibility` - Checks the compatibility of the view schema which created the document against the view schema
 being used to open it.
-- `parseCompatibilitySchema` - Parse a JSON representation of a tree schema into a concrete schema.
-- `snapshotCompatibilitySchema` - Returns a JSON representation of the tree schema for snapshot compatibility checking.
+- `importCompatibilitySchemaSnapshot` - Parse a JSON representation of a tree schema into a concrete schema.
+- `exportCompatibilitySchemaSnapshot` - Returns a JSON representation of the tree schema for snapshot compatibility checking.
 
 #### Example: Current view schema vs. historical view schema
 
 An application author is developing an app that has a schema for storing 2D Points.
 They wish to maintain backwards compatibility in future versions and avoid changing their view schema in a way that breaks
 this behavior.
-When introducing a new initial schema, they persists a snapshot using `snapshotCompatibilitySchema`:
+When introducing a new initial schema, they persists a snapshot using `exportCompatibilitySchemaSnapshot`:
 
 ```ts
 const schemaFactory = new SchemaFactory("test");
@@ -29,14 +29,14 @@ class Point2D extends schemaFactory.object("Point", {
 }) {}
 
 const viewSchema = new TreeViewConfiguration({ schema: Point2D });
-fs.writeFileSync("Point2D.json", snapshotCompatibilitySchema(viewSchema));
+fs.writeFileSync("Point2D.json", exportCompatibilitySchemaSnapshot(viewSchema));
 ```
 
 Next they create a regression test to ensure that the current view schema can read content written by the original view
 schema (`SchemaCompatibilityStatus.canUpgrade`). Initially `currentViewSchema === Point2D`:
 
 ```ts
-const oldViewSchema = parseCompatibilitySchema(fs.readFileSync("Point2D.json"));
+const oldViewSchema = importCompatibilitySchemaSnapshot(fs.readFileSync("Point2D.json"));
 
 // Check to see if the document created by the historical view schema can be opened with the current view schema
 const compatibilityStatus = checkCompatibility(oldViewSchema, currentViewSchema);

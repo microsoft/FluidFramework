@@ -31,7 +31,7 @@ import { toSimpleTreeSchema } from "./viewSchemaToSimpleSchema.js";
  *	   // The current schema has a new optional field that was not present on Point2D
  *	   z: factory.optional(factory.number),
  * }) {}
- * const oldViewSchema = parseCompatibilitySchema(fs.readFileSync("Point2D.json"));
+ * const oldViewSchema = importCompatibilitySchemaSnapshot(fs.readFileSync("Point2D.json"));
  *
  * // Check to see if the document created by the historical view schema can be opened with the current view schema
  * const compatibilityStatus = checkCompatibility(oldViewSchema, currentViewSchema);
@@ -63,7 +63,7 @@ export function checkCompatibility(
 
 /**
  * Returns a JSON representation of the tree schema for snapshot compatibility checking.
- * @param config - The schema to snapshot.
+ * @param config - The schema to snapshot. Only the schema field of the `TreeViewConfiguration` is used.
  * @returns The JSON representation of the schema.
  *
  * @example This example creates and persists a snapshot of a Point2D schema.
@@ -75,13 +75,13 @@ export function checkCompatibility(
  *     y: factory.number,
  * }) {}
  * const viewSchema = new TreeViewConfiguration({ schema: Point2D });
- * fs.writeFileSync("Point2D.json", snapshotCompatibilitySchema(viewSchema));
+ * fs.writeFileSync("Point2D.json", exportCompatibilitySchemaSnapshot(viewSchema));
  * ```
  *
  * @alpha
  */
-export function snapshotCompatibilitySchema(
-	config: TreeViewConfiguration,
+export function exportCompatibilitySchemaSnapshot(
+	config: Pick<TreeViewConfiguration, "schema">,
 ): JsonCompatibleReadOnly {
 	const simpleSchema = toSimpleTreeSchema(config.schema, true);
 	return encodeSimpleSchema(simpleSchema);
@@ -90,18 +90,18 @@ export function snapshotCompatibilitySchema(
 /**
  * Parse a JSON representation of a tree schema into a concrete schema.
  * @param config - The JSON representation of the schema.
- * @returns The schema.
+ * @returns The schema. Only the schema field of the {@link TreeViewConfiguration} is populated.
  * @throws Will throw a usage error if the encoded schema is not in the expected format.
  *
  * @example This example loads and parses a snapshot of a Point2D schema.
  *
  * ```ts
- * const oldViewSchema = parseCompatibilitySchema(fs.readFileSync("Point2D.json"));
+ * const oldViewSchema = importCompatibilitySchemaSnapshot(fs.readFileSync("Point2D.json"));
  * ```
  *
  * @alpha
  */
-export function parseCompatibilitySchema(
+export function importCompatibilitySchemaSnapshot(
 	config: JsonCompatibleReadOnly,
 ): TreeViewConfiguration {
 	const simpleSchema = decodeSimpleSchema(config);

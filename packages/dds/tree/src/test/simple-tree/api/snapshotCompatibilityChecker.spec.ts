@@ -6,9 +6,9 @@
 import {
 	checkCompatibility,
 	normalizeFieldSchema,
-	parseCompatibilitySchema,
+	importCompatibilitySchemaSnapshot,
 	SchemaFactory,
-	snapshotCompatibilitySchema,
+	exportCompatibilitySchemaSnapshot,
 	TreeViewConfiguration,
 	type SchemaCompatibilityStatus,
 } from "../../../simple-tree/index.js";
@@ -20,8 +20,8 @@ describe("snapshotCompatibilityChecker", () => {
 		const Schema = factory.optional(factory.string, {});
 
 		const view = new TreeViewConfiguration({ schema: Schema });
-		const snapshot = snapshotCompatibilitySchema(view);
-		const parsedView = parseCompatibilitySchema(snapshot);
+		const snapshot = exportCompatibilitySchemaSnapshot(view);
+		const parsedView = importCompatibilitySchemaSnapshot(snapshot);
 
 		const normalizedView = normalizeFieldSchema(view.schema);
 

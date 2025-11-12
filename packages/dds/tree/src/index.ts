@@ -285,8 +285,8 @@ export {
 	type SimpleAllowedTypeAttributes,
 	encodeSimpleSchema,
 	decodeSimpleSchema,
-	snapshotCompatibilitySchema,
-	parseCompatibilitySchema,
+	exportCompatibilitySchemaSnapshot,
+	importCompatibilitySchemaSnapshot,
 	checkCompatibility,
 } from "./simple-tree/index.js";
 export {

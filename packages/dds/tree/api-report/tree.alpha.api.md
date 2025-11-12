@@ -236,6 +236,9 @@ export function enumFromStrings<TScope extends string, const Members extends rea
 // @alpha
 export function evaluateLazySchema<T extends TreeNodeSchema>(value: LazyItem<T>): T;
 
+// @alpha
+export function exportCompatibilitySchemaSnapshot(config: Pick<TreeViewConfiguration, "schema">): JsonCompatibleReadOnly;
+
 // @public @system
 type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
 
@@ -416,6 +419,9 @@ export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
 
 // @public
 export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
+
+// @alpha
+export function importCompatibilitySchemaSnapshot(config: JsonCompatibleReadOnly): TreeViewConfiguration;
 
 // @alpha
 export function independentInitializedView<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options: ForestOptions & ICodecOptions, content: ViewContent): TreeViewAlpha<TSchema>;
@@ -776,9 +782,6 @@ export interface ObservationResults<TResult> {
 export type Off = Off_2;
 
 // @alpha
-export function parseCompatibilitySchema(config: JsonCompatibleReadOnly): TreeViewConfiguration;
-
-// @alpha
 export function persistedToSimpleSchema(persisted: JsonCompatible, options: ICodecOptions): SimpleTreeSchema;
 
 // @beta @system
@@ -1105,9 +1108,6 @@ export interface SimpleTreeSchema {
 export function singletonSchema<TScope extends string, TName extends string | number>(factory: SchemaFactory<TScope, TName>, name: TName): TreeNodeSchemaClass<ScopedSchemaName<TScope, TName>, NodeKind.Object, TreeNode & {
     readonly value: TName;
 }, Record<string, never>, true, Record<string, never>, undefined>;
-
-// @alpha
-export function snapshotCompatibilitySchema(config: TreeViewConfiguration): JsonCompatibleReadOnly;
 
 // @alpha @system
 export namespace System_TableSchema {
