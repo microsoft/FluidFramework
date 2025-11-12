@@ -72,5 +72,8 @@
 		"onlyBuiltDependencies": [
 			"unrs-resolver"
 		]
+	},
+	"typeValidation": {
+		"disabled": true
 	}
 }
