@@ -332,70 +332,7 @@ export namespace System_TableSchema {
 				// Will make it easier to evolve this schema in the future.
 				allowUnknownOptionalFields: true,
 			})
-			implements TableSchema.Row<TCellSchema, TPropsSchema>
-		{
-			public getCell(
-				columnOrId: TableSchema.Column<TCellSchema> | string,
-			): CellValueType | undefined {
-				const columnId = typeof columnOrId === "string" ? columnOrId : columnOrId.id;
-				// Unlike most objects, RecordNodes don't have the default inherited object properties, so this is safe
-				return this.cells[columnId];
-			}
-
-			public setCell(
-				columnOrId: TableSchema.Column<TCellSchema> | string,
-				value: CellInsertableType | undefined,
-			): void {
-				// TODO: throw if column does not exist in the owning table.
-
-				if (value === undefined) {
-					this.removeCell(columnOrId);
-				} else {
-					const columnId = typeof columnOrId === "string" ? columnOrId : columnOrId.id;
-
-					// TypeScript is unable to narrow the types correctly here, hence the casts.
-					// See: https://github.com/microsoft/TypeScript/issues/52144
-					this.cells[columnId] = TreeAlpha.create(
-						cellSchema,
-						value as InsertableField<TCellSchema>,
-					) as CellValueType;
-				}
-			}
-
-			public removeCell(
-				columnOrId: TableSchema.Column<TCellSchema> | string,
-			): CellValueType | undefined {
-				// TODO: throw if column does not exist in the owning table.
-
-				const columnId = typeof columnOrId === "string" ? columnOrId : columnOrId.id;
-
-				const cell: CellValueType | undefined = this.getCell(columnId);
-				if (cell === undefined) {
-					return undefined;
-				}
-
-				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- The record's values are non-optional, so setting `undefined` as a means to remove the cell is not supported.
-				delete this.cells[columnId];
-
-				return cell;
-			}
-
-			public getCells(): {
-				columnId: string;
-				cell: CellValueType;
-			}[] {
-				const result = [];
-				for (const [columnId, cell] of Object.entries(this.cells)) {
-					if (cell !== undefined) {
-						result.push({
-							columnId,
-							cell,
-						});
-					}
-				}
-				return result;
-			}
-		}
+			implements TableSchema.Row<TCellSchema, TPropsSchema> {}
 
 		type RowValueType = TreeNode &
 			TableSchema.Row<TCellSchema, TPropsSchema> &
