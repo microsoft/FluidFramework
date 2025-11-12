@@ -28,8 +28,8 @@ class Point2D extends schemaFactory.object("Point", {
 	y: factory.number,
 }) {}
 
-const storedAsView = new TreeViewConfiguration({ schema: Point2D });
-fs.writeFileSync("Point2D.json", snapshotCompatibilitySchema(storedAsView));
+const viewSchema = new TreeViewConfiguration({ schema: Point2D });
+fs.writeFileSync("Point2D.json", snapshotCompatibilitySchema(viewSchema));
 ```
 
 Next they create a regression test to ensure that the current view schema can read content written by the original view
