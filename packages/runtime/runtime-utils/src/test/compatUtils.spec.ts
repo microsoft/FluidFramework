@@ -10,7 +10,7 @@ import { isFluidError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	getConfigsForMinVersionForCollab,
-	validateRuntimeOptions,
+	validateConfigMapOverrides,
 	type ConfigMap,
 	type SemanticVersion,
 	type ConfigValidationMap,
@@ -342,7 +342,7 @@ describe("compatibilityBase", () => {
 		for (const test of compatibleCases) {
 			it(`does not throw for compatible options: ${JSON.stringify(test)}`, () => {
 				assert.doesNotThrow(() => {
-					validateRuntimeOptions(
+					validateConfigMapOverrides(
 						test.minVersionForCollab,
 						test.runtimeOptions,
 						testConfigValidationMap,
@@ -354,7 +354,7 @@ describe("compatibilityBase", () => {
 			it(`throws for incompatible options: ${JSON.stringify({ minVersionForCollab: test.minVersionForCollab, runtimeOptions: test.runtimeOptions })}`, () => {
 				assert.throws(
 					() => {
-						validateRuntimeOptions(
+						validateConfigMapOverrides(
 							test.minVersionForCollab,
 							test.runtimeOptions,
 							testConfigValidationMap,

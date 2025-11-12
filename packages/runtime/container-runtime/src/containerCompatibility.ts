@@ -10,7 +10,7 @@ import {
 import {
 	configValueToMinVersionForCollab,
 	getConfigsForMinVersionForCollab,
-	validateRuntimeOptions,
+	validateConfigMapOverrides,
 	type ConfigMap,
 	type ConfigValidationMap,
 } from "@fluidframework/runtime-utils/internal";
@@ -225,7 +225,7 @@ export function validateRuntimeOptions(
 	minVersionForCollab: MinimumVersionForCollab,
 	runtimeOptions: Partial<ContainerRuntimeOptionsInternal>,
 ): void {
-	validateRuntimeOptions<RuntimeOptionsAffectingDocSchema>(
+	validateConfigMapOverrides<RuntimeOptionsAffectingDocSchema>(
 		minVersionForCollab,
 		runtimeOptions,
 		runtimeOptionsAffectingDocSchemaConfigValidationMap,

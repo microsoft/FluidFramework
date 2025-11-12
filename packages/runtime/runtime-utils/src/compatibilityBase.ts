@@ -203,25 +203,36 @@ export function semanticVersionToMinimumVersionForCollab(
 }
 
 /**
- * Generic function to validate runtime options against the minVersionForCollab.
+ * Validates the given `overrides`.
  *
+ * No-op when minVersionForCollab is set to defaultMinVersionForCollab.
+ *
+ * Otherwise this checks that for keys which are in both the `validationMap` and the `overrides`,
+ * that the `validationMap` function for that key either returns undefined or a version less than or equal to `minVersionForCollab`.
+ * @privateRemarks
+ * This design seems odd, and might want to be revisited.
+ * Currently it only permits opting out of features, not into them (unless validationMap returns undefined),
+ * and the handling of defaultMinVersionForCollab and undefined versions seems questionable.
+ * Also ignoring of extra keys in overrides might be bad since it seems like overrides is supposed to be validated.
  * @internal
  */
-export function validateRuntimeOptions<T extends Record<string, unknown>>(
+export function validateConfigMapOverrides<T extends Record<string, unknown>>(
 	minVersionForCollab: SemanticVersion,
-	runtimeOptions: Partial<T>,
+	overrides: Partial<T>,
 	validationMap: ConfigValidationMap<T>,
 ): void {
 	if (minVersionForCollab === defaultMinVersionForCollab) {
 		// If the minVersionForCollab is set to the default value, then we will not validate the runtime options
 		// This is to avoid disruption to users who have not yet set the minVersionForCollab value explicitly.
+		// TODO: This also skips validation for users which explicitly request defaultMinVersionForCollab which seems like a bug.
 		return;
 	}
 	// Iterate through each runtime option passed in by the user
 	// Type assertion is safe as entries come from runtimeOptions object
-	for (const [passedRuntimeOption, passedRuntimeOptionValue] of Object.entries(
-		runtimeOptions,
-	) as [keyof T & string, T[keyof T & string]][]) {
+	for (const [passedRuntimeOption, passedRuntimeOptionValue] of Object.entries(overrides) as [
+		keyof T & string,
+		T[keyof T & string],
+	][]) {
 		// Skip if passedRuntimeOption is not in validation map
 		if (!(passedRuntimeOption in validationMap)) {
 			continue;
