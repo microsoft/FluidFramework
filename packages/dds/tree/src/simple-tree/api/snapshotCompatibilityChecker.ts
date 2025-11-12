@@ -91,6 +91,7 @@ export function snapshotCompatibilitySchema(
  * Parse a JSON representation of a tree schema into a concrete schema.
  * @param config - The JSON representation of the schema.
  * @returns The schema.
+ * @throws Will throw a usage error if the encoded schema is not in the expected format.
  *
  * @example This example loads and parses a snapshot of a Point2D schema.
  *
