@@ -70,6 +70,7 @@ module.exports = {
 		},
 		"build:copy": [],
 		"build:genver": [],
+		"layerGeneration:gen": [],
 		"typetests:gen": [],
 		"ts2esm": [],
 		"tsc": tscDependsOn,
