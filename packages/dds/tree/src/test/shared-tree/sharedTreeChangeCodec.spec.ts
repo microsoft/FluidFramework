@@ -12,7 +12,7 @@ import { TreeStoredSchemaRepository } from "../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { decode } from "../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { uncompressedEncode } from "../../feature-libraries/chunked-forest/codec/uncompressedEncode.js";
+import { uncompressedEncodeV1 } from "../../feature-libraries/chunked-forest/codec/uncompressedEncode.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { EncodedFieldBatch } from "../../feature-libraries/chunked-forest/index.js";
 import {
@@ -47,7 +47,7 @@ describe("sharedTreeChangeCodec", () => {
 			encode: (data: FieldBatch, context: FieldBatchEncodingContext): EncodedFieldBatch => {
 				// Checks that the context's schema matches the schema passed into the sharedTreeChangeCodec.
 				assert.equal(context.schema?.schema, dummyTestSchema);
-				return uncompressedEncode(data);
+				return uncompressedEncodeV1(data);
 			},
 			decode: (data: EncodedFieldBatch, context: FieldBatchEncodingContext): FieldBatch => {
 				return decode(data, {

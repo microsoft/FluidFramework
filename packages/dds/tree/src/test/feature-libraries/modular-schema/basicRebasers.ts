@@ -7,17 +7,21 @@ import { strict as assert } from "node:assert";
 import { type TUnsafe, Type } from "@sinclair/typebox";
 
 import { makeCodecFamily } from "../../../codec/index.js";
-import { makeDetachedNodeId, Multiplicity } from "../../../core/index.js";
+import {
+	makeDetachedNodeId,
+	Multiplicity,
+	type FieldKindIdentifier,
+} from "../../../core/index.js";
 import {
 	type FieldChangeDelta,
 	type FieldChangeEncodingContext,
 	type FieldChangeHandler,
 	type FieldChangeRebaser,
-	FieldKindWithEditor,
+	FlexFieldKind,
 	referenceFreeFieldChangeRebaser,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
-import type { Mutable } from "../../../util/index.js";
+import { brandConst, type Mutable } from "../../../util/index.js";
 import { makeValueCodec } from "../../codec/index.js";
 
 /**
@@ -106,8 +110,8 @@ export const valueHandler = {
 	getCrossFieldKeys: (_change) => [],
 } satisfies FieldChangeHandler<ValueChangeset>;
 
-export const valueField = new FieldKindWithEditor(
-	"Value",
+export const valueField = new FlexFieldKind(
+	brandConst("Value")<FieldKindIdentifier>(),
 	Multiplicity.Single,
 	valueHandler,
 	(a, b) => false,

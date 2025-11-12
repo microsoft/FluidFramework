@@ -16,8 +16,8 @@ import {
 	ValueSchema,
 	Multiplicity,
 	identifierFieldKindIdentifier,
+	type SchemaPolicy,
 } from "../../../core/index.js";
-import type { FullSchemaPolicy } from "../../modular-schema/index.js";
 
 import {
 	EncoderContext,
@@ -31,11 +31,61 @@ import {
 	incrementalFieldEncoder,
 } from "./compressedEncode.js";
 import type { FieldBatch } from "./fieldBatch.js";
-import { type EncodedFieldBatch, type EncodedValueShape, SpecialField } from "./format.js";
+import {
+	type EncodedFieldBatch,
+	type EncodedFieldBatchV1,
+	type EncodedFieldBatchV2,
+	type EncodedValueShape,
+	FieldBatchFormatVersion,
+	SpecialField,
+} from "./format.js";
 import type { IncrementalEncoder } from "./codecs.js";
 import { NodeShapeBasedEncoder } from "./nodeEncoder.js";
 import { defaultIncrementalEncodingPolicy } from "./incrementalEncodingPolicy.js";
-import { oneFromIterable } from "../../../util/index.js";
+import { brand, oneFromIterable } from "../../../util/index.js";
+
+/**
+ * Encode data from `fieldBatch` in into an `EncodedChunk` using {@link FieldBatchFormatVersion.v1}.
+ * @remarks See {@link schemaCompressedEncode} for more details.
+ * This version does not support incremental encoding.
+ */
+export function schemaCompressedEncodeV1(
+	schema: StoredSchemaCollection,
+	policy: FullSchemaPolicy,
+	fieldBatch: FieldBatch,
+	idCompressor: IIdCompressor,
+): EncodedFieldBatchV1 {
+	return schemaCompressedEncode(
+		schema,
+		policy,
+		fieldBatch,
+		idCompressor,
+		undefined /* incrementalEncoder */,
+		brand(FieldBatchFormatVersion.v1),
+	);
+}
+
+/**
+ * Encode data from `fieldBatch` in into an `EncodedChunk` using {@link FieldBatchFormatVersion.v2}.
+ * @remarks See {@link schemaCompressedEncode} for more details.
+ * Incremental encoding is supported from this version onwards.
+ */
+export function schemaCompressedEncodeV2(
+	schema: StoredSchemaCollection,
+	policy: FullSchemaPolicy,
+	fieldBatch: FieldBatch,
+	idCompressor: IIdCompressor,
+	incrementalEncoder: IncrementalEncoder | undefined,
+): EncodedFieldBatchV2 {
+	return schemaCompressedEncode(
+		schema,
+		policy,
+		fieldBatch,
+		idCompressor,
+		incrementalEncoder,
+		brand(FieldBatchFormatVersion.v2),
+	);
+}
 
 /**
  * Encode data from `fieldBatch` in into an `EncodedChunk`.
@@ -47,24 +97,26 @@ import { oneFromIterable } from "../../../util/index.js";
  * Optimized for encoded size and encoding performance.
  * TODO: This function should eventually also take in the root FieldSchema to more efficiently compress the nodes.
  */
-export function schemaCompressedEncode(
+function schemaCompressedEncode(
 	schema: StoredSchemaCollection,
-	policy: FullSchemaPolicy,
+	policy: SchemaPolicy,
 	fieldBatch: FieldBatch,
 	idCompressor: IIdCompressor,
-	incrementalEncoder?: IncrementalEncoder,
+	incrementalEncoder: IncrementalEncoder | undefined,
+	version: FieldBatchFormatVersion,
 ): EncodedFieldBatch {
 	return compressedEncode(
 		fieldBatch,
-		buildContext(schema, policy, idCompressor, incrementalEncoder),
+		buildContext(schema, policy, idCompressor, incrementalEncoder, version),
 	);
 }
 
 export function buildContext(
 	storedSchema: StoredSchemaCollection,
-	policy: FullSchemaPolicy,
+	policy: SchemaPolicy,
 	idCompressor: IIdCompressor,
-	incrementalEncoder?: IncrementalEncoder,
+	incrementalEncoder: IncrementalEncoder | undefined,
+	version: FieldBatchFormatVersion,
 ): EncoderContext {
 	const context: EncoderContext = new EncoderContext(
 		(fieldBuilder: FieldEncodeBuilder, schemaName: TreeNodeSchemaIdentifier) =>
@@ -74,6 +126,7 @@ export function buildContext(
 		policy.fieldKinds,
 		idCompressor,
 		incrementalEncoder,
+		version,
 	);
 	return context;
 }
