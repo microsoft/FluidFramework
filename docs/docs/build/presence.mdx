@@ -110,7 +110,7 @@ function logOthersPositions(positionTracker: Latest<PointXY>): void {
 #### LatestMap, LatestMapRaw use
 
 A change to the `local` property automatically initiates a broadcast of updates to other attendees.
-`local` is a [StateMap](https://fluidframework.com/docs/api/presence/statemap-interface) that mimics `Map` though it only supports `string | number` as property keys.
+`local` is a [StateMap](../api/presence/statemap-interface.md) that mimics `Map` though it only supports `string | number` as property keys.
 
 ```typescript
 function updateCounter(counterTracker: LatestMap<number, string>, counterName: string, value: number): void {
