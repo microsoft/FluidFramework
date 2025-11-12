@@ -9,6 +9,7 @@ import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	CursorLocationType,
 	type FieldKey,
+	type FieldKindData,
 	type FieldKindIdentifier,
 	type ITreeCursorSynchronous,
 	type TreeChunk,
@@ -18,7 +19,6 @@ import {
 	forEachNode,
 } from "../../../core/index.js";
 import { getOrCreate } from "../../../util/index.js";
-import type { FlexFieldKind } from "../../modular-schema/index.js";
 
 import type { Counter, DeduplicationTable } from "./chunkCodecUtilities.js";
 import {
@@ -523,7 +523,7 @@ export class EncoderContext implements NodeEncodeBuilder, FieldEncodeBuilder {
 	public constructor(
 		private readonly nodeEncoderFromPolicy: NodeEncoderPolicy,
 		private readonly fieldEncoderFromPolicy: FieldEncoderPolicy,
-		public readonly fieldShapes: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+		public readonly fieldShapes: ReadonlyMap<FieldKindIdentifier, FieldKindData>,
 		public readonly idCompressor: IIdCompressor,
 		/**
 		 * To be used to encode incremental chunks, if any.
