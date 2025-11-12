@@ -3072,6 +3072,13 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		return { start: id, value: attachEntry.value !== undefined, length: countToProcess };
 	}
 
+	public getBaseRename(
+		id: ChangeAtomId,
+		count: number,
+	): RangeQueryResult<ChangeAtomId | undefined> {
+		return this.table.baseChange.rootNodes.oldToNewId.getFirst(id, count);
+	}
+
 	public getNewRenameForBaseRename(
 		baseRenameTo: ChangeAtomId,
 		count: number,

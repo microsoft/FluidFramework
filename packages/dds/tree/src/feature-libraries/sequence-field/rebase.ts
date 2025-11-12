@@ -321,6 +321,7 @@ function rebaseMarkIgnoreChild(
 		assert(currMark.type !== "Rename", "XXX");
 		return withCellId(currMark, undefined);
 	} else if (isRename(baseMark)) {
+		// XXX: Why does it matter whether currMark is a noop?
 		if (isNoopMark(currMark)) {
 			const newRenameId = moveEffects.getNewRenameForBaseRename(
 				baseMark.idOverride,
@@ -337,7 +338,26 @@ function rebaseMarkIgnoreChild(
 			}
 		}
 
-		// XXX: Is this right if currMark is a rename?
+		if (currMark.type === "Rename") {
+			const doesBaseMoveAndAttach = moveEffects.doesBaseAttachNodes(
+				baseMark.idOverride,
+				baseMark.count,
+			).value;
+
+			assert(baseMark.cellId !== undefined, "Rename should target empty cells");
+			const baseRootRename = moveEffects.getBaseRename(baseMark.cellId, baseMark.count).value;
+			const doesBaseMoveAndDetach =
+				baseRootRename !== undefined &&
+				!areEqualChangeAtomIds(baseRootRename, baseMark.idOverride);
+
+			if (doesBaseMoveAndAttach || doesBaseMoveAndDetach) {
+				// `newMark` represents a node-targeting rename.
+				// The base changeset has moved the node which was last detached from the cell,
+				// so we should remove the rename from this location.
+				return { cellId: baseMark.idOverride, count: baseMark.count };
+			}
+		}
+
 		return withCellId(currMark, getOutputCellId(baseMark));
 	} else {
 		return currMark;

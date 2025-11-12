@@ -862,6 +862,13 @@ function newRebaseManager(): TestRebaseManager {
 			throw new Error("Function not implemented.");
 		},
 
+		getBaseRename(
+			id: ChangeAtomId,
+			count: number,
+		): RangeQueryResult<ChangeAtomId | undefined> {
+			throw new Error("Function not implemented.");
+		},
+
 		getNewRenameForBaseRename(
 			baseRenameTo: ChangeAtomId,
 			count: number,

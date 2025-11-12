@@ -716,6 +716,7 @@ describe("ModularChangeFamily integration", () => {
 							detachLocation: undefined,
 						},
 					],
+					revisions: [{ revision: tag2 }],
 				},
 				Change.field(fieldA, sequence.identifier, [
 					MarkMaker.revive(1, origId, { revision: tag2 }),
@@ -745,6 +746,73 @@ describe("ModularChangeFamily integration", () => {
 				Change.field(fieldA, sequence.identifier, [
 					MarkMaker.remove(1, { revision: tag3, localId: brand(0) }),
 					MarkMaker.tomb(tag1, brand(1), 1),
+				]),
+			);
+
+			assertEqual(rebased, expected);
+		});
+
+		it("rename over move", () => {
+			const fieldAId = { nodeId: undefined, field: fieldA };
+			const origId: ChangeAtomId = { revision: tag1, localId: brand(0) };
+			const newId: ChangeAtomId = { revision: tag3, localId: brand(0) };
+			const rename = Change.build(
+				{
+					family,
+					maxId: 1,
+					renames: [
+						{
+							oldId: origId,
+							newId,
+							count: 1,
+							detachLocation: fieldAId,
+						},
+					],
+					revisions: [{ revision: tag3 }],
+				},
+				Change.field(fieldA, sequence.identifier, [MarkMaker.rename(1, origId, newId)]),
+			);
+
+			const moveId: ChangeAtomId = { revision: tag2, localId: brand(0) };
+			const move = Change.build(
+				{
+					family,
+					maxId: 0,
+					renames: [
+						{
+							oldId: origId,
+							newId: moveId,
+							count: 1,
+							detachLocation: fieldAId,
+						},
+					],
+					revisions: [{ revision: tag2 }],
+				},
+				Change.field(fieldA, sequence.identifier, [
+					MarkMaker.rename(1, origId, moveId),
+					MarkMaker.revive(
+						1,
+						{ revision: tag2, localId: brand(1) },
+						{ revision: moveId.revision, id: moveId.localId },
+					),
+				]),
+			);
+
+			const rebased = family.rebase(
+				tagChange(rename, tag3),
+				tagChange(move, tag2),
+				revisionMetadataSourceFromInfo([{ revision: tag2 }, { revision: tag3 }]),
+			);
+
+			const expected = Change.build(
+				{
+					family,
+					maxId: 1,
+					revisions: [{ revision: tag3 }],
+				},
+				Change.field(fieldA, sequence.identifier, [
+					MarkMaker.tomb(moveId.revision, moveId.localId),
+					MarkMaker.remove(1, newId),
 				]),
 			);
 

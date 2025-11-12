@@ -171,6 +171,11 @@ export interface RebaseNodeManager {
 	doesBaseAttachNodes(id: ChangeAtomId, count: number): RangeQueryResult<boolean>;
 
 	/**
+	 * Returns the root ID the base change renames `id` to, if any.
+	 */
+	getBaseRename(id: ChangeAtomId, count: number): RangeQueryResult<ChangeAtomId | undefined>;
+
+	/**
 	 * Given a detached node ID in the base changeset's output context,
 	 * returns the ID the rebased changeset renames that ID to, if any.
 	 */
