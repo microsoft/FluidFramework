@@ -8786,6 +8786,9 @@ importers:
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
+      '@fluid-private/stochastic-test-utils':
+        specifier: workspace:~
+        version: link:../../test/stochastic-test-utils
       '@fluid-private/test-dds-utils':
         specifier: workspace:~
         version: link:../test-dds-utils
@@ -14041,6 +14044,9 @@ importers:
       '@fluidframework/matrix':
         specifier: workspace:~
         version: link:../../dds/matrix
+      '@fluidframework/register-collection':
+        specifier: workspace:~
+        version: link:../../dds/register-collection
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../runtime/runtime-definitions
