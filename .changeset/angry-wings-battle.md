@@ -4,7 +4,7 @@
 ---
 Schema snapshot compatibility checker
 
-This change adds alpha APIs for creating snapshots of v;iew schemas and testing their compatibility for the purposes
+This change adds alpha APIs for creating snapshots of view schema and testing their compatibility for the purposes
 of schema migrations.
 
 New APIs:
