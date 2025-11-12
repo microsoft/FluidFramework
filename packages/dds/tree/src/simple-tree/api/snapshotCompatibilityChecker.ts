@@ -25,11 +25,11 @@ import { toSimpleTreeSchema } from "./viewSchemaToSimpleSchema.js";
  * // Build the current view schema
  * const schemaFactory = new SchemaFactory("test");
  * class Point3D extends schemaFactory.object("Point", {
- *    x: factory.number,
- *    y: factory.number,
+ *     x: factory.number,
+ *     y: factory.number,
  *
- *	  // The current schema has a new optional field that was not present on Point2D
- *	  z: factory.optional(factory.number),
+ *	   // The current schema has a new optional field that was not present on Point2D
+ *	   z: factory.optional(factory.number),
  * }) {}
  * const oldViewSchema = parseCompatibilitySchema(fs.readFileSync("Point2D.json"));
  *
@@ -71,8 +71,8 @@ export function checkCompatibility(
  * ```ts
  * const schemaFactory = new SchemaFactory("test");
  * class Point2D extends schemaFactory.object("Point", {
- *    x: factory.number,
- *    y: factory.number,
+ *     x: factory.number,
+ *     y: factory.number,
  * }) {}
  * const viewSchema = new TreeViewConfiguration({ schema: Point2D });
  * fs.writeFileSync("Point2D.json", snapshotCompatibilitySchema(viewSchema));
