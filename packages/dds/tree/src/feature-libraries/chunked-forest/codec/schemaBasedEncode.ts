@@ -51,7 +51,7 @@ import { brand, oneFromIterable } from "../../../util/index.js";
  */
 export function schemaCompressedEncodeV1(
 	schema: StoredSchemaCollection,
-	policy: FullSchemaPolicy,
+	policy: SchemaPolicy,
 	fieldBatch: FieldBatch,
 	idCompressor: IIdCompressor,
 ): EncodedFieldBatchV1 {
@@ -72,7 +72,7 @@ export function schemaCompressedEncodeV1(
  */
 export function schemaCompressedEncodeV2(
 	schema: StoredSchemaCollection,
-	policy: FullSchemaPolicy,
+	policy: SchemaPolicy,
 	fieldBatch: FieldBatch,
 	idCompressor: IIdCompressor,
 	incrementalEncoder: IncrementalEncoder | undefined,
