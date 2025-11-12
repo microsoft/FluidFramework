@@ -29,7 +29,7 @@ describe("compatibilityBase", () => {
 			featureC: string;
 			featureD: string;
 			featureE: string;
-			featureF: string;
+			featureF: number;
 		};
 		const testConfigMap: ConfigMap<ITestConfigMap> = {
 			featureA: {
@@ -65,11 +65,11 @@ describe("compatibilityBase", () => {
 				"1.0.0": "e1.5",
 			},
 			featureF: {
-				"1.0.0": "f0",
-				"2.45.0": "f2",
-				"1.5.0": "f1",
-				"2.71.0": "f4",
-				"2.65.0": "f3",
+				"1.0.0": 0,
+				"2.45.0": 2,
+				"1.5.0": 1,
+				"2.71.0": 4,
+				"2.65.0": 3,
 			},
 		};
 
@@ -85,7 +85,7 @@ describe("compatibilityBase", () => {
 					featureC: "c1",
 					featureD: "d0",
 					featureE: "e1.5",
-					featureF: "f0",
+					featureF: 0,
 				},
 			},
 			{
@@ -96,7 +96,7 @@ describe("compatibilityBase", () => {
 					featureC: "c1",
 					featureD: "d0",
 					featureE: "e1.5",
-					featureF: "f1",
+					featureF: 1,
 				},
 			},
 			{
@@ -107,7 +107,7 @@ describe("compatibilityBase", () => {
 					featureC: "c1",
 					featureD: "d0",
 					featureE: "e1.5",
-					featureF: "f1",
+					featureF: 1,
 				},
 			},
 			{
@@ -118,7 +118,7 @@ describe("compatibilityBase", () => {
 					featureC: "c1",
 					featureD: "d0",
 					featureE: "e1.5",
-					featureF: "f1",
+					featureF: 1,
 				},
 			},
 			{
@@ -129,7 +129,7 @@ describe("compatibilityBase", () => {
 					featureC: "c1",
 					featureD: "d2",
 					featureE: "e1.5",
-					featureF: "f1",
+					featureF: 1,
 				},
 			},
 			{
@@ -140,7 +140,7 @@ describe("compatibilityBase", () => {
 					featureC: "c1",
 					featureD: "d2",
 					featureE: "e1.5",
-					featureF: "f1",
+					featureF: 1,
 				},
 			},
 			{
@@ -151,7 +151,7 @@ describe("compatibilityBase", () => {
 					featureC: "c1",
 					featureD: "d2",
 					featureE: "e2",
-					featureF: "f1",
+					featureF: 1,
 				},
 			},
 			{
@@ -162,7 +162,7 @@ describe("compatibilityBase", () => {
 					featureC: "c2",
 					featureD: "d2",
 					featureE: "e2",
-					featureF: "f2",
+					featureF: 2,
 				},
 			},
 			{
@@ -173,7 +173,7 @@ describe("compatibilityBase", () => {
 					featureC: "c2",
 					featureD: "d3",
 					featureE: "e2",
-					featureF: "f2",
+					featureF: 2,
 				},
 			},
 			{
@@ -184,7 +184,7 @@ describe("compatibilityBase", () => {
 					featureC: "c3",
 					featureD: "d3",
 					featureE: "e2",
-					featureF: "f2",
+					featureF: 2,
 				},
 			},
 			{
@@ -195,7 +195,7 @@ describe("compatibilityBase", () => {
 					featureC: "c3",
 					featureD: "d3",
 					featureE: "e2",
-					featureF: "f2",
+					featureF: 2,
 				},
 			},
 			{
@@ -206,7 +206,7 @@ describe("compatibilityBase", () => {
 					featureC: "c3",
 					featureD: "d4",
 					featureE: "e2",
-					featureF: "f2",
+					featureF: 2,
 				},
 			},
 			{
@@ -217,7 +217,7 @@ describe("compatibilityBase", () => {
 					featureC: "c4",
 					featureD: "d4",
 					featureE: "e4",
-					featureF: "f4",
+					featureF: 4,
 				},
 			},
 		];
