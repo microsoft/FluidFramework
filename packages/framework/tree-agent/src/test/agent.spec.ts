@@ -16,7 +16,7 @@ import {
 	TreeViewConfiguration,
 } from "@fluidframework/tree/alpha";
 
-import { SharedTreeSemanticAgent, bindEditor } from "../agent.js";
+import { createContext, SharedTreeSemanticAgent } from "../agent.js";
 import type { EditResult, SharedTreeChatModel } from "../api.js";
 
 const sf = new SchemaFactory(undefined);
@@ -495,57 +495,47 @@ context.root = context.create.Gradient({ startColor: white, endColor: white });`
 		assert.ok(!context.includes("Parent"));
 	});
 
-	describe("bindEditor", () => {
-		interface TestContext {
-			root: string;
-		}
-
-		it("binds a synchronous editor and returns a void runner", () => {
-			const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
-			view.initialize("Initial");
-			const syncEditor = (context, _code): void => {
-				(context as unknown as TestContext).root = "SyncEdit";
-			};
-			const run = bindEditor(view, syncEditor);
-			const result = run("ignored");
-			assert.equal(view.root, "SyncEdit");
-			assert.equal(result, undefined, "Synchronous runner should return void");
+	it("runs custom editors", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
+		view.initialize("Content");
+		const model: SharedTreeChatModel = {
+			editToolName,
+			async query({ edit }) {
+				const result = await edit("Code");
+				assert(result.type === "success", result.message);
+				return "Done";
+			},
+		};
+		const agent = new SharedTreeSemanticAgent(model, view, {
+			editor: async (tree, js) => {
+				const context = createContext(tree);
+				assert.equal(context.root, "Content");
+				assert.equal(js, "Code");
+				context.root = "Edited";
+			},
 		});
+		const response = await agent.query("Query");
+		assert.equal(response, "Done");
+		assert.equal(view.root, "Edited");
+	});
 
-		it("binds an asynchronous editor and returns a Promise runner", async () => {
-			const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
-			view.initialize("Initial");
-			const asyncEditor = async (context, _code): Promise<void> => {
-				(context as unknown as TestContext).root = "AsyncEdit";
-			};
-			const run = bindEditor(view, asyncEditor);
-			const promise = run("ignored");
-			assert.ok(typeof (promise as unknown as { then?: unknown }).then === "function");
-			await promise;
-			assert.equal(view.root, "AsyncEdit");
+	it("catches errors from custom editors", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
+		view.initialize("Content");
+		const model: SharedTreeChatModel = {
+			editToolName,
+			async query({ edit }) {
+				const result = await edit("Code");
+				assert(result.type === "editingError", "Expected editingError from editor");
+				return "Done";
+			},
+		};
+		const agent = new SharedTreeSemanticAgent(model, view, {
+			editor: async () => {
+				throw new Error("Boom");
+			},
 		});
-
-		it("propagates synchronous errors", () => {
-			const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
-			view.initialize("Initial");
-			const syncErrorEditor = (_context, _code): void => {
-				throw new Error("syncBoom");
-			};
-			const run = bindEditor(view, syncErrorEditor);
-			assert.throws(() => run("ignored"), /syncBoom/);
-			assert.equal(view.root, "Initial", "Tree should not have changed after error");
-		});
-
-		it("propagates asynchronous errors (Promise rejection)", async () => {
-			const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
-			view.initialize("Initial");
-			const asyncErrorEditor = async (): Promise<void> => {
-				throw new Error("asyncBoom");
-			};
-			const run = bindEditor(view, asyncErrorEditor);
-			const promise = run("ignored");
-			await assert.rejects(promise, /asyncBoom/);
-			assert.equal(view.root, "Initial", "Tree should not have changed after async error");
-		});
+		const response = await agent.query("Query");
+		assert.equal(response, "Done");
 	});
 });
