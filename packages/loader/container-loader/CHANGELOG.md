@@ -1,5 +1,9 @@
 # @fluidframework/container-loader
 
+## 2.72.0
+
+Dependency updates only.
+
 ## 2.71.0
 
 Dependency updates only.
@@ -214,7 +218,6 @@ Dependency updates only.
   Similarly, `IDeltaManager.outbound` contained functionality that could break core runtime features such as generation of batches and chunking. Data loss or corruption could occur when `IDeltaManger.inbound.pause()` or `IDeltaManager.inbound.resume()` were called.
 
   #### Alternatives
-
   - Alternatives to `IDeltaManager.inbound.on("op", ...)` are `IDeltaManager.on("op", ...)`
   - Alternatives to calling `IDeltaManager.inbound.pause`, `IDeltaManager.outbound.pause` for `IContainer` disconnect use `IContainer.disconnect`.
   - Alternatives to calling `IDeltaManager.inbound.resume`, `IDeltaManager.outbound.resume` for `IContainer` reconnect use `IContainer.connect`.
@@ -273,12 +276,10 @@ Dependency updates only.
 - Audience & connection sequencing improvements [96872186d0](https://github.com/microsoft/FluidFramework/commit/96872186d0d0f245c1fece7d19b3743e501679b6)
 
   Here are breaking changes in Audience behavior:
-
   1. IAudience no longer implements EventEmmiter. If you used addListener() or removeListener(), please replace with on() & off() respectively.
   2. IAudience interface implements getSelf() method and "selfChanged" event.
   3. IContainerContext.audience is no longer optional
   4. "connected" events are now raised (various API surfaces - IContainer, IContainerRuntime, IFluidDataStoreRuntime, etc.) a bit later in reconnection sequence for "read" connections - only after client receives its own "join" signal and caught up on ops, which makes it symmetrical with "write" connections.
-
   - If this change in behavior breaks some scenario, please let us know immediately, but you can revert that behavior using the following feature gates:
     - "Fluid.Container.DisableCatchUpBeforeDeclaringConnected"
     - "Fluid.Container.DisableJoinSignalWait"
@@ -298,7 +299,6 @@ Dependency updates only.
   TypeScript types and implementation code.
 
   This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
-
   - `"moduleResolution": "Node16"` with `"module": "Node16"`
   - `"moduleResolution": "Bundler"` with `"module": "ESNext"`
 
@@ -371,7 +371,6 @@ Dependency updates only.
 - Updated server dependencies ([#19122](https://github.com/microsoft/FluidFramework/issues/19122)) [25366b4229](https://github.com/microsoft/FluidFramework/commits/25366b422918cb43685c5f328b50450749592902)
 
   The following Fluid server dependencies have been updated to the latest version, 3.0.0. [See the full changelog.](https://github.com/microsoft/FluidFramework/releases/tag/server_v3.0.0)
-
   - @fluidframework/gitresources
   - @fluidframework/server-kafka-orderer
   - @fluidframework/server-lambdas
@@ -474,7 +473,6 @@ Dependency updates only.
 - Dependencies on @fluidframework/protocol-definitions package updated to 3.0.0 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
   This included the following changes from the protocol-definitions release:
-
   - Updating signal interfaces for some planned improvements. The intention is split the interface between signals
     submitted by clients to the server and the resulting signals sent from the server to clients.
     - A new optional type member is available on the ISignalMessage interface and a new ISentSignalMessage interface has
@@ -485,7 +483,6 @@ Dependency updates only.
 - DEPRECATED: container-loader: Various request related APIs have been deprecated [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
   Please remove all calls to the following functions and instead use the new `entryPoint` pattern:
-
   - `requestFluidObject`
   - `requestResolvedObjectFromContainer`
   - `getDefaultObjectFromContainer`
@@ -507,7 +504,6 @@ Dependency updates only.
 - Server upgrade: dependencies on Fluid server packages updated to 2.0.1 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
   Dependencies on the following Fluid server package have been updated to version 2.0.1:
-
   - @fluidframework/gitresources: 2.0.1
   - @fluidframework/server-kafka-orderer: 2.0.1
   - @fluidframework/server-lambdas: 2.0.1
@@ -532,7 +528,6 @@ Dependency updates only.
 - test-utils: provideEntryPoint is required [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
   The optional `provideEntryPoint` method has become required on a number of constructors. A value will need to be provided to the following classes:
-
   - `BaseContainerRuntimeFactory`
   - `RuntimeFactory`
   - `ContainerRuntime` (constructor and `loadRuntime`)
@@ -580,7 +575,6 @@ Dependency updates only.
 
   The **@fluidframework/common-definitions** package is being deprecated, so the following interfaces and types are now
   imported from the **@fluidframework/core-interfaces** package:
-
   - interface IDisposable
   - interface IErrorEvent
   - interface IErrorEvent
@@ -631,7 +625,6 @@ Dependency updates only.
   Loader container caching will now be off by default and the ability to control it is deprecated. Loader caching is deprecated and will be removed in a future release, as well as all caching functionality of containers. Please try not to rely on caching and inform us if you cannot do so.
 
   If you run into trouble with this behavior, please report it ASAP to the FluidFramework team and use the following options (available in this release only) to unblock you:
-
   - set `ILoaderProps.options.cache` to `true` when constructing a `Loader` object (see the `ILoaderOptions` interface)
   - set `[LoaderHeader.cache]` header to `true` when requesting a container
 
@@ -758,7 +751,6 @@ Dependency updates only.
 - Container-loader deprecations ([#14891](https://github.com/microsoft/FluidFramework/pull-requests/14891)) [961e96f3c9](https://github.com/microsoft/FluidFramework/commits/961e96f3c92d1dcf9575e56c703fe1779af5442d)
 
   The following types in the @fluidframework/container-loader package are not used by, or necessary to use our public api, so will be removed from export in the next major release:
-
   - IContainerLoadOptions
   - IContainerConfig
   - IPendingContainerState

@@ -1,5 +1,9 @@
 # @fluidframework/aqueduct
 
+## 2.72.0
+
+Dependency updates only.
+
 ## 2.71.0
 
 Dependency updates only.
@@ -117,7 +121,6 @@ Dependency updates only.
   parameter.
 
   These changes were originally announced in version 0.25.0. See the following issues for more details:
-
   - [#1537](https://github.com/microsoft/FluidFramework/issues/1537)
   - [#2931](https://github.com/microsoft/FluidFramework/pull/2931)
 
@@ -134,12 +137,10 @@ Dependency updates only.
   The class `ContainerRuntime` is deprecated and will no longer be exported starting in version 2.20.0.
 
   There are two possible migration paths to stop using `ContainerRuntime`:
-
   - When using it as a type, replace it with an interface like `IContainerRuntime`
   - When using the static function `ContainerRuntime.loadRuntime` replace it with the free function `loadContainerRuntime`.
 
   `BaseContainerRuntimeFactory` has some changes as well, since it exposed `ContainerRuntime` in several function signatures:
-
   - `instantiateFirstTime` - Takes the wider type `IContainerRuntime` instead of `ContainerRuntime`
   - `instantiateFromExisting` - Takes the wider type `IContainerRuntime` instead of `ContainerRuntime`
   - `preInitialize` - deprecated as well, since it returns `ContainerRuntime`
@@ -163,7 +164,6 @@ Dependency updates only.
   Similarly, `IDeltaManager.outbound` contained functionality that could break core runtime features such as generation of batches and chunking. Data loss or corruption could occur when `IDeltaManger.inbound.pause()` or `IDeltaManager.inbound.resume()` were called.
 
   #### Alternatives
-
   - Alternatives to `IDeltaManager.inbound.on("op", ...)` are `IDeltaManager.on("op", ...)`
   - Alternatives to calling `IDeltaManager.inbound.pause`, `IDeltaManager.outbound.pause` for `IContainer` disconnect use `IContainer.disconnect`.
   - Alternatives to calling `IDeltaManager.inbound.resume`, `IDeltaManager.outbound.resume` for `IContainer` reconnect use `IContainer.connect`.
@@ -211,7 +211,6 @@ Dependency updates only.
   TypeScript types and implementation code.
 
   This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
-
   - `"moduleResolution": "Node16"` with `"module": "Node16"`
   - `"moduleResolution": "Bundler"` with `"module": "ESNext"`
 
@@ -272,7 +271,6 @@ Dependency updates only.
 - data-object-base: Removed IFluidRouter from DataObject interfaces and classes [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
 
   The `IFluidRouter` property has been removed from a number of DataObject related classes:
-
   - `PureDataObject`
   - `LazyLoadedDataObject`
   - `TestFluidObject`
@@ -290,7 +288,6 @@ Dependency updates only.
 - aqueduct: Removed requestHandler utilities [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
 
   The following `requestHandler` utilities have been removed:
-
   - `makeModelRequestHandler`
   - `defaultFluidObjectRequestHandler`
   - `defaultRouteRequestHandler`
@@ -332,7 +329,6 @@ Dependency updates only.
 - aqueduct: ContainerRuntimeFactory constructors have changed [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
   The following class constructors have been changed to allow for better flexible in arguments passed:
-
   - `BaseContainerRuntimeFactory`
   - `ContainerRuntimeFactoryWithDefaultDataStore`
   - `RuntimeFactory`
@@ -362,7 +358,6 @@ Dependency updates only.
 - DEPRECATED: container-runtime: requestHandlers are deprecated [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
   The concept of `requestHandlers` has been deprecated. Please migrate all usage of the following APIs to the new `entryPoint` pattern:
-
   - `requestHandler` property in `ContainerRuntime.loadRuntime(...)`
   - `RuntimeRequestHandler`
   - `RuntimeRequestHandlerBuilder`
@@ -379,7 +374,6 @@ Dependency updates only.
 - DEPRECATED: container-loader: Various request related APIs have been deprecated [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
   Please remove all calls to the following functions and instead use the new `entryPoint` pattern:
-
   - `requestFluidObject`
   - `requestResolvedObjectFromContainer`
   - `getDefaultObjectFromContainer`
@@ -397,7 +391,6 @@ Dependency updates only.
 - test-utils: provideEntryPoint is required [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
   The optional `provideEntryPoint` method has become required on a number of constructors. A value will need to be provided to the following classes:
-
   - `BaseContainerRuntimeFactory`
   - `RuntimeFactory`
   - `ContainerRuntime` (constructor and `loadRuntime`)
@@ -448,7 +441,6 @@ Dependency updates only.
 
   The **@fluidframework/common-definitions** package is being deprecated, so the following interfaces and types are now
   imported from the **@fluidframework/core-interfaces** package:
-
   - interface IDisposable
   - interface IErrorEvent
   - interface IErrorEvent
@@ -482,7 +474,6 @@ Dependency updates only.
 - `initializeEntryPoint` will become required [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
 
   The optional `initializeEntryPoint` method has been added to a number of constructors. **This method argument will become required in an upcoming release** and a value will need to be provided to the following classes:
-
   - `BaseContainerRuntimeFactory`
   - `ContainerRuntimeFactoryWithDefaultDataStore`
   - `RuntimeFactory`
@@ -526,7 +517,6 @@ Dependency updates only.
 ### Major Changes
 
 - The following functions and classes were deprecated in previous releases and have been removed: [8b242fdc79](https://github.com/microsoft/FluidFramework/commits/8b242fdc796714cf1da9ad3f90d02efb122af0c2)
-
   - `PureDataObject.getFluidObjectFromDirectory`
   - `IProvideContainerRuntime` and its `IContainerRuntime` member.
   - `ContainerRuntime`'s `IProvideContainerRuntime` has also been removed.

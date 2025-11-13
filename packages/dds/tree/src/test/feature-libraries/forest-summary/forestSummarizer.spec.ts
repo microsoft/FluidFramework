@@ -49,7 +49,7 @@ import {
 	TreeViewConfigurationAlpha,
 } from "../../../simple-tree/index.js";
 import { fieldJsonCursor } from "../../json/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { forestSummaryContentKey } from "../../../feature-libraries/forest-summary/incrementalSummaryBuilder.js";
 import type { FieldKey, TreeNodeSchemaIdentifier } from "../../../core/index.js";
 
@@ -73,7 +73,7 @@ function createForestSummarizer(args: {
 	} = args;
 	const options: CodecWriteOptions = {
 		jsonValidator: FormatValidatorBasic,
-		minVersionForCollab: FluidClientVersion.v2_0,
+		minVersionForCollab: FluidClientVersion.v2_73,
 	};
 	const fieldBatchCodec = makeFieldBatchCodec(options);
 	const checkout = checkoutWithContent(initialContent, {

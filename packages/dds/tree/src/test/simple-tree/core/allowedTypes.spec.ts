@@ -54,7 +54,7 @@ import {
 	type NumberKeys,
 	type TreeNodeFromImplicitAllowedTypes,
 	type UnannotateAllowedTypesList,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/core/allowedTypes.js";
 import { validateUsageError } from "../../utils.js";
 
@@ -246,6 +246,22 @@ const schema = new SchemaFactory("com.example");
 			>;
 
 			type _check4 = requireAssignableTo<UnannotateAllowedTypesList<[A]>, [A]>;
+		}
+		// Can assign to ImplicitAllowedTypes
+		{
+			type A = UnannotateAllowedTypesList<(AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]>;
+			// @ts-expect-error TODO: AB#53315
+			type _check1 = requireAssignableTo<A, ImplicitAllowedTypes>;
+		}
+	}
+
+	// AllowedTypesFullFromMixed
+	{
+		// Can assign to ImplicitAllowedTypes
+		{
+			type A = AllowedTypesFullFromMixed<(AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]>;
+			// @ts-expect-error TODO: AB#53315
+			type _check1 = requireAssignableTo<A, ImplicitAllowedTypes>;
 		}
 	}
 }

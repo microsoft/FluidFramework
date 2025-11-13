@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { EncodedFieldBatch } from "../../../../feature-libraries/chunked-forest/codec/format.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../../snapshots/index.js";
 

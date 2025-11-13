@@ -6,7 +6,7 @@
 import { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { TestObjectProvider, timeoutAwait } from "@fluidframework/test-utils/internal";
-// eslint-disable-next-line import/no-extraneous-dependencies
+// eslint-disable-next-line import-x/no-extraneous-dependencies
 import { Context } from "mocha";
 
 import { ExpectedEvents, createExpectsTest } from "./itExpects.js";

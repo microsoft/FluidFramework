@@ -5,19 +5,19 @@
 
 import { AzureClient } from "@fluidframework/azure-client";
 // TODO: Fix this once the tree-only mode API has been stabilized.
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { AzureClientPropsInternal } from "@fluidframework/azure-client/internal";
 import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools/beta";
 import {
 	createTreeContainerRuntimeFactory,
 	isTreeContainerSchema,
 	// TODO: Fix this once the tree-only mode API has been stabilized.
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/fluid-static/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/legacy";
 import type { IFluidContainer } from "fluid-framework";
 import React from "react";
-// eslint-disable-next-line import/no-internal-modules -- This is the pattern prescribed by React
+// eslint-disable-next-line import-x/no-internal-modules -- This is the pattern prescribed by React
 import { createRoot } from "react-dom/client";
 
 import {

@@ -19,7 +19,7 @@ import {
 	basicChunkTree,
 	defaultChunkPolicy,
 	makeTreeChunker,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree.js";
 import {
 	buildChunkedForest,
@@ -39,7 +39,7 @@ import { Canada, generateCanada } from "./canada.js";
 import { CitmCatalog, generateCitmJson } from "./citm.js";
 import { clone } from "./jsObjectUtil.js";
 import { generateTwitterJsonByByteSize } from "./twitter.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { toInitialSchema } from "../../../simple-tree/toStoredSchema.js";
 import { cursorToJsonObject, singleJsonCursor } from "../../json/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
