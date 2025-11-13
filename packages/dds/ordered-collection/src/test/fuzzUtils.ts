@@ -124,11 +124,14 @@ function makeOperationGenerator(): Generator<
 		});
 }
 
+// Track async errors that occur during fire-and-forget operations
+let pendingAsyncError: Error | undefined;
+
 function makeReducer(): Reducer<ConsensusOrderedCollectionOperation, FuzzTestState> {
 	const reducer = combineReducers<ConsensusOrderedCollectionOperation, FuzzTestState>({
 		add: ({ client }, { value }) => {
-			client.channel.add(value).catch((error) => {
-				throw error;
+			client.channel.add(value).catch((error: Error) => {
+				pendingAsyncError = error;
 			});
 		},
 		acquire: ({ client }, { result }) => {
@@ -136,8 +139,8 @@ function makeReducer(): Reducer<ConsensusOrderedCollectionOperation, FuzzTestSta
 				.acquire(async (_value: string): Promise<ConsensusResult> => {
 					return result;
 				})
-				.catch((error) => {
-					throw error;
+				.catch((error: Error) => {
+					pendingAsyncError = error;
 				});
 		},
 	});
@@ -184,6 +187,12 @@ export const baseConsensusOrderedCollectionModel: DDSFuzzModel<
 	workloadName: "default configuration",
 	generatorFactory: () => takeAsync(100, makeOperationGenerator()),
 	reducer: makeReducer(),
-	validateConsistency: (a, b) => assertEqualConsensusOrderedCollections(a.channel, b.channel),
+	validateConsistency: (a, b) => {
+		// Check if any async errors occurred during fire-and-forget operations
+		if (pendingAsyncError !== undefined) {
+			throw pendingAsyncError;
+		}
+		assertEqualConsensusOrderedCollections(a.channel, b.channel);
+	},
 	factory: new ConsensusQueueFactory(),
 };
