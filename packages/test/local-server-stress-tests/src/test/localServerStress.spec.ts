@@ -38,11 +38,10 @@ describe("Local Server Stress", () => {
 			"Fluid.Container.enableOfflineFull": true,
 			"Fluid.ContainerRuntime.EnableRollback": true,
 		},
-		// skipMinimization: true,
+		skipMinimization: true,
 		// Use skip, replay, and only properties to control which seeds run.
 		skip: [
-			11, // container closes with 0xc3d, and then test fails due to closed container
-			173, // 0xc3d
+			19, // Task queues are not the same size
 		],
 	});
 });

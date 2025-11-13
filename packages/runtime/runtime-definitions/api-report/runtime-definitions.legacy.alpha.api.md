@@ -422,7 +422,16 @@ export interface OpAttributionKey {
 export type PackagePath = readonly string[];
 
 // @alpha @sealed @legacy
+export interface StageCheckpointAlpha {
+    dispose(): void;
+    readonly hasChangesSince: boolean;
+    readonly isValid: boolean;
+    rollback(): void;
+}
+
+// @alpha @sealed @legacy
 export interface StageControlsAlpha {
+    readonly checkpoint: () => StageCheckpointAlpha;
     readonly commitChanges: () => void;
     readonly discardChanges: () => void;
 }

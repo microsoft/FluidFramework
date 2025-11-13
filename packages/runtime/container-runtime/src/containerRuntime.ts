@@ -243,7 +243,6 @@ import {
 	type BatchStartInfo,
 	DuplicateBatchDetector,
 	ensureContentsDeserialized,
-	type IBatchCheckpoint,
 	OpCompressor,
 	OpDecompressor,
 	OpGroupingManager,
@@ -252,6 +251,7 @@ import {
 	RemoteMessageProcessor,
 	type OutboundBatch,
 	type BatchResubmitInfo,
+	type IBatchCheckpoint,
 } from "./opLifecycle/index.js";
 import { pkgVersion } from "./packageVersion.js";
 import {
@@ -267,6 +267,7 @@ import {
 	validateLoaderCompatibility,
 } from "./runtimeLayerCompatState.js";
 import { SignalTelemetryManager } from "./signalTelemetryProcessing.js";
+import { StagingModeManager } from "./stagingModeManager.js";
 // These types are imported as types here because they are present in summaryDelayLoadedModule, which is loaded dynamically when required.
 import {
 	aliasBlobName,
@@ -559,8 +560,6 @@ export const defaultRuntimeHeaderData: Required<RuntimeHeaderData> = {
 	viaHandle: false,
 	allowTombstone: false,
 };
-
-const defaultStagingCommitOptions = { squash: false };
 
 /**
  * @deprecated
@@ -1464,6 +1463,7 @@ export class ContainerRuntime
 	private readonly duplicateBatchDetector: DuplicateBatchDetector | undefined;
 	private readonly outbox: Outbox;
 	private readonly garbageCollector: IGarbageCollector;
+	private readonly stagingModeManager: StagingModeManager;
 
 	private readonly channelCollection: ChannelCollection;
 	private readonly remoteMessageProcessor: RemoteMessageProcessor;
@@ -1615,8 +1615,8 @@ export class ContainerRuntime
 			logger: this.baseLogger,
 			namespace: "ContainerRuntime",
 			properties: {
-				all: {
-					inStagingMode: this.inStagingMode,
+				error: {
+					inStagingMode: () => this.inStagingMode,
 				},
 			},
 		});
@@ -2035,6 +2035,17 @@ export class ContainerRuntime
 			}),
 			reSubmit: this.reSubmit.bind(this),
 			opReentrancy: () => this.dataModelChangeRunner.running,
+		});
+
+		// Initialize the staging mode manager with all its dependencies
+		this.stagingModeManager = new StagingModeManager({
+			pendingStateManager: this.pendingStateManager,
+			outbox: this.outbox,
+			getChannelCollection: () => this.channelCollection,
+			submitIdAllocationOpIfNeeded: this.submitIdAllocationOpIfNeeded.bind(this),
+			rollbackStagedChange: this.rollbackStagedChange.bind(this),
+			updateDocumentDirtyState: this.updateDocumentDirtyState.bind(this),
+			closeFn: this.closeFn,
 		});
 
 		this._quorum = quorum;
@@ -3607,15 +3618,13 @@ export class ContainerRuntime
 		return result;
 	}
 
-	private stageControls: StageControlsInternal | undefined;
-
 	/**
 	 * If true, the ContainerRuntime is not submitting any new ops to the ordering service.
 	 * Ops submitted to the ContainerRuntime while in Staging Mode will be queued in the PendingStateManager,
 	 * either to be discarded or committed later (via the Stage Controls returned from enterStagingMode).
 	 */
 	public get inStagingMode(): boolean {
-		return this.stageControls !== undefined;
+		return this.stagingModeManager?.inStagingMode ?? false;
 	}
 
 	/**
@@ -3625,64 +3634,12 @@ export class ContainerRuntime
 	 * @returns Controls for exiting Staging Mode.
 	 */
 	public enterStagingMode = (): StageControlsInternal => {
-		if (this.stageControls !== undefined) {
-			throw new UsageError("Already in staging mode");
-		}
 		if (this.attachState === AttachState.Detached) {
 			throw new UsageError("Cannot enter staging mode while Detached");
 		}
 
-		// Make sure Outbox is empty before entering staging mode,
-		// since we mark whole batches as "staged" or not to indicate whether to submit them.
-		this.flush();
-
-		const exitStagingMode = (discardOrCommit: () => void): void => {
-			try {
-				// Final flush of any last staged changes
-				// NOTE: We can't use this.flush() here, because orderSequentially uses StagingMode and in the rollback case we'll hit assert 0x24c
-				this.outbox.flush();
-
-				this.stageControls = undefined;
-
-				// During Staging Mode, we avoid submitting any ID Allocation ops (apart from resubmitting pre-staging ops).
-				// Now that we've exited, we need to submit an ID Allocation op for any IDs that were generated while in Staging Mode.
-				this.submitIdAllocationOpIfNeeded({ staged: false });
-				discardOrCommit();
-
-				this.channelCollection.notifyStagingMode(false);
-			} catch (error) {
-				const normalizedError = normalizeError(error);
-				this.closeFn(normalizedError);
-				throw normalizedError;
-			}
-		};
-
-		const stageControls: StageControlsInternal = {
-			discardChanges: () =>
-				exitStagingMode(() => {
-					// Pop all staged batches from the PSM and roll them back in LIFO order
-					this.pendingStateManager.popStagedBatches(({ runtimeOp, localOpMetadata }) => {
-						this.rollbackStagedChange(runtimeOp, localOpMetadata);
-					});
-					this.updateDocumentDirtyState();
-				}),
-			commitChanges: (options) => {
-				const { squash } = { ...defaultStagingCommitOptions, ...options };
-				exitStagingMode(() => {
-					// Replay all staged batches in typical FIFO order.
-					// We'll be out of staging mode so they'll be sent to the service finally.
-					this.pendingStateManager.replayPendingStates({
-						committingStagedBatches: true,
-						squash,
-					});
-				});
-			},
-		};
-
-		this.stageControls = stageControls;
-		this.channelCollection.notifyStagingMode(true);
-
-		return this.stageControls;
+		// Delegate to the staging mode manager
+		return this.stagingModeManager.enterStagingMode(() => this.flush());
 	};
 
 	/**
@@ -4883,9 +4840,7 @@ export class ContainerRuntime
 		);
 
 		const resubmitInfo = {
-			// Only include Batch ID if "Offline Load" feature is enabled
-			// It's only needed to identify batches across container forks arising from misuse of offline load.
-			batchId: this.batchIdTrackingEnabled ? batchId : undefined,
+			batchId,
 			staged,
 		};
 

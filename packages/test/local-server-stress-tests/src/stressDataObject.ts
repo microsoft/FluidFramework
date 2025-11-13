@@ -27,7 +27,10 @@ import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 // eslint-disable-next-line import-x/no-internal-modules
 import { modifyClusterSize } from "@fluidframework/id-compressor/internal/test-utils";
 import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
-import { type StageControlsAlpha } from "@fluidframework/runtime-definitions/internal";
+import {
+	type StageCheckpointAlpha,
+	type StageControlsAlpha,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	RuntimeHeaders,
 	toFluidHandleInternal,
@@ -37,21 +40,22 @@ import { timeoutAwait } from "@fluidframework/test-utils/internal";
 
 import { ddsModelMap } from "./ddsModels.js";
 import { makeUnreachableCodePathProxy } from "./utils.js";
+import type { Tagged } from "./localServerStressHarness.js";
 
 export interface UploadBlob {
 	type: "uploadBlob";
-	tag: `blob-${number}`;
+	tag: Tagged<"blob">;
 }
 export interface CreateDataStore {
 	type: "createDataStore";
 	asChild: boolean;
-	tag: `datastore-${number}`;
+	tag: Tagged<"datastore">;
 }
 
 export interface CreateChannel {
 	type: "createChannel";
 	channelType: string;
-	tag: `channel-${number}`;
+	tag: Tagged<"channel">;
 }
 
 export interface EnterStagingMode {
@@ -62,12 +66,24 @@ export interface ExitStagingMode {
 	commit: boolean;
 }
 
+export interface StagingModeCreateCheckpoint {
+	type: "stagingModeCreateCheckpoint";
+	tag: Tagged<"checkpoint">;
+}
+
+export interface StagingModeRollbackToCheckpoint {
+	type: "stagingModeRollbackToCheckpoint";
+	tag: Tagged<"checkpoint">;
+}
+
 export type StressDataObjectOperations =
 	| UploadBlob
 	| CreateDataStore
 	| CreateChannel
 	| EnterStagingMode
-	| ExitStagingMode;
+	| ExitStagingMode
+	| StagingModeCreateCheckpoint
+	| StagingModeRollbackToCheckpoint;
 
 export class StressDataObject extends DataObject {
 	public static readonly factory: DataObjectFactory<StressDataObject> = new DataObjectFactory({
@@ -143,7 +159,7 @@ export class StressDataObject extends DataObject {
 		return this.runtime.attachState !== AttachState.Detached;
 	}
 
-	public async uploadBlob(tag: `blob-${number}`, contents: string) {
+	public async uploadBlob(tag: Tagged<"blob">, contents: string) {
 		const handle = await this.runtime.uploadBlob(stringToBuffer(contents, "utf-8"));
 		this.defaultStressObject.registerLocallyCreatedObject({
 			type: "newBlob",
@@ -152,12 +168,12 @@ export class StressDataObject extends DataObject {
 		});
 	}
 
-	public createChannel(tag: `channel-${number}`, type: string) {
+	public createChannel(tag: Tagged<"channel">, type: string) {
 		this.runtime.createChannel(tag, type);
 		this.channelNameMap.set(tag, type);
 	}
 
-	public async createDataStore(tag: `datastore-${number}`, asChild: boolean) {
+	public async createDataStore(tag: Tagged<"datastore">, asChild: boolean) {
 		const dataStore = await this.context.containerRuntime.createDataStore(
 			asChild
 				? [...this.context.packagePath, StressDataObject.factory.type]
@@ -184,10 +200,10 @@ export class StressDataObject extends DataObject {
 }
 
 export type ContainerObjects =
-	| { type: "newBlob"; handle: IFluidHandle; tag: `blob-${number}` }
+	| { type: "newBlob"; handle: IFluidHandle; tag: Tagged<"blob"> }
 	| {
 			type: "stressDataObject";
-			tag: `datastore-${number}`;
+			tag: Tagged<"datastore">;
 			handle: IFluidHandle;
 			stressDataObject: StressDataObject;
 	  };
@@ -204,9 +220,8 @@ export class DefaultStressDataObject extends StressDataObject {
 	 * will also be in  these the containerObjectMap, but are not necessarily usable
 	 * as they could be detached, in which can only this instance can access them.
 	 */
-	private readonly _locallyCreatedObjects: ContainerObjects[] = [];
 	public async getContainerObjects(): Promise<readonly Readonly<ContainerObjects>[]> {
-		const containerObjects: Readonly<ContainerObjects>[] = [...this._locallyCreatedObjects];
+		const containerObjects: Readonly<ContainerObjects>[] = [];
 		const containerRuntime = // eslint-disable-next-line import-x/no-deprecated
 			this.context.containerRuntime as IContainerRuntimeWithResolveHandle_Deprecated;
 		for (const [url, entry] of this.containerObjectMap as any as [
@@ -296,10 +311,10 @@ export class DefaultStressDataObject extends StressDataObject {
 				this.containerObjectMap.set(handle.absolutePath, { tag: obj.tag, type: obj.type });
 			}
 		}
-		this._locallyCreatedObjects.push(obj);
 	}
 
 	private stageControls: StageControlsAlpha | undefined;
+	private readonly checkpoints = new Map<Tagged<"checkpoint">, StageCheckpointAlpha>();
 	private readonly containerRuntimeExp = asLegacyAlpha(this.context.containerRuntime);
 	public enterStagingMode() {
 		assert(
@@ -325,6 +340,56 @@ export class DefaultStressDataObject extends StressDataObject {
 			this.stageControls.discardChanges();
 		}
 		this.stageControls = undefined;
+		this.checkpoints.clear();
+	}
+
+	public createCheckpoint(tag: Tagged<"checkpoint">) {
+		assert(this.stageControls !== undefined, "must have staging mode controls to checkpoint");
+		const checkpoint = this.stageControls.checkpoint();
+		this.checkpoints.set(tag, checkpoint);
+	}
+
+	public rollbackToCheckpoint(tag: Tagged<"checkpoint">) {
+		assert(
+			this.stageControls !== undefined,
+			"must have staging mode controls to rollback checkpoint",
+		);
+		const checkpoint = this.checkpoints.get(tag);
+		assert(checkpoint !== undefined, `checkpoint ${tag} not found`);
+		checkpoint.rollback();
+		// Remove this checkpoint and all checkpoints created after it (they're now invalid)
+		const checkpointsToRemove: Tagged<"checkpoint">[] = [];
+		for (const [key, cp] of this.checkpoints.entries()) {
+			if (cp.isValid === false) {
+				checkpointsToRemove.push(key);
+			}
+		}
+		for (const key of checkpointsToRemove) {
+			this.checkpoints.delete(key);
+		}
+	}
+
+	public getValidCheckpointTags(): Tagged<"checkpoint">[] {
+		const validTags: Tagged<"checkpoint">[] = [];
+		for (const [tag, checkpoint] of this.checkpoints.entries()) {
+			if (checkpoint.isValid === true) {
+				validTags.push(tag);
+			}
+		}
+		return validTags;
+	}
+
+	public hasChangesSinceCheckpoint(): boolean {
+		if (this.stageControls === undefined || this.checkpoints.size === 0) {
+			return false;
+		}
+		// Check if any valid checkpoint has changes since it was created
+		for (const checkpoint of this.checkpoints.values()) {
+			if (checkpoint.isValid === true && checkpoint.hasChangesSince === true) {
+				return true;
+			}
+		}
+		return false;
 	}
 }
 

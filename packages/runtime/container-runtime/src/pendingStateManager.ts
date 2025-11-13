@@ -897,30 +897,57 @@ export class PendingStateManager implements IDisposable {
 	}
 
 	/**
-	 * Pops all staged batches, invoking the callback on each constituent op in order (LIFO)
+	 * Pops staged messages from the back, invoking the callback on each in LIFO order.
+	 * Used for checkpoint rollback where we want to rollback to a specific batch, or for discarding all staged changes.
+	 *
+	 * @param callback - Called for each popped message that has a typical runtime op
+	 * @param afterBatchId - Optional batch ID to rollback to (this batch is kept, everything after it is removed). If undefined, removes all staged messages.
 	 */
 	public popStagedBatches(
 		callback: (
-			// callback will only be given staged messages with a valid runtime op (i.e. not empty batch and not an initial message with only serialized content)
 			stagedMessage: IPendingMessage & { runtimeOp: LocalContainerRuntimeMessage },
 		) => void,
+		afterBatchId?: string,
 	): void {
 		while (!this.pendingMessages.isEmpty()) {
 			const stagedMessage = this.pendingMessages.peekBack();
-			if (stagedMessage?.batchInfo.staged === true) {
-				this.pendingMessages.pop();
 
-				if (hasTypicalRuntimeOp(stagedMessage)) {
-					callback(stagedMessage);
+			// Stop if we've reached the checkpoint batch ID
+			if (afterBatchId !== undefined && stagedMessage !== undefined) {
+				const messageBatchId = getEffectiveBatchId(stagedMessage);
+				if (messageBatchId === afterBatchId) {
+					break;
 				}
-			} else {
-				break; // no more staged messages
+			}
+
+			// Stop if we hit a non-staged message
+			if (stagedMessage?.batchInfo.staged !== true) {
+				break;
+			}
+
+			// Pop the message
+			this.pendingMessages.pop();
+
+			if (hasTypicalRuntimeOp(stagedMessage)) {
+				callback(stagedMessage);
 			}
 		}
-		assert(
-			this.pendingMessages.toArray().every((m) => m.batchInfo.staged !== true),
-			0xb89 /* Shouldn't be any more staged messages */,
-		);
+
+		// Verify no staged messages remain (when afterBatchId is undefined, we should have removed all)
+		if (afterBatchId === undefined) {
+			assert(
+				this.pendingMessages.toArray().every((m) => m.batchInfo.staged !== true),
+				0xb89 /* Shouldn't be any more staged messages */,
+			);
+		}
+	}
+
+	/**
+	 * Gets a reference to the last pending message in the queue, or undefined if the queue is empty.
+	 * This reference can be used later to determine if any messages have been added since.
+	 */
+	public getLastPendingMessage(): IPendingMessage | undefined {
+		return this.pendingMessages.peekBack();
 	}
 }
 

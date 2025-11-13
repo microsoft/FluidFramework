@@ -231,6 +231,83 @@ function assertSignalContentIsAString(
 	assert(typeof content === "string", "Signal content expected to be a string");
 }
 
+/**
+ * Helper function to validate that a batchId matches the unsent format (ends with "_[-1]")
+ */
+function assertBatchIdMatchesUnsentFormat(batchId: string | undefined, message: string): void {
+	assert(batchIdMatchesUnsentFormat(batchId), message);
+}
+
+/**
+ * Helper function to validate that a batchId matches the unsent format with length check
+ */
+function batchIdMatchesUnsentFormat(batchId?: string): boolean {
+	return (
+		typeof batchId === "string" &&
+		batchId.length === "00000000-0000-0000-0000-000000000000_[-1]".length &&
+		batchId.endsWith("_[-1]")
+	);
+}
+
+/**
+ * Validates the structure of a batch in the submitted ops metadata array.
+ * A batch should have:
+ * - Start marker (batch: true) with batchId
+ * - Middle messages with undefined metadata
+ * - End marker (batch: false) without batchId
+ *
+ * @param submittedOpsMetadata - Array of submitted op metadata
+ * @param startIndex - Index where the batch starts
+ * @param batchSize - Total size of the batch (including start and end markers)
+ */
+function assertBatchStructure(
+	submittedOpsMetadata: unknown[],
+	startIndex: number,
+	batchSize: number,
+): void {
+	assert(batchSize >= 1, `Batch size must be at least 1, got ${batchSize}`);
+
+	const endIndex = startIndex + batchSize - 1;
+
+	// Validate start marker
+	const startMetadata = submittedOpsMetadata[startIndex];
+	assert.strictEqual(
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+		(startMetadata as any)?.batch,
+		true,
+		`Message at index ${startIndex} should be batch start`,
+	);
+	assertBatchIdMatchesUnsentFormat(
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+		(startMetadata as any)?.batchId,
+		`Batch start at index ${startIndex} should have unsent batchId format`,
+	);
+
+	// Validate middle messages (if any)
+	for (let i = startIndex + 1; i < endIndex; i++) {
+		assert.strictEqual(
+			submittedOpsMetadata[i],
+			undefined,
+			`Message at index ${i} (middle of batch) should not hold batch info`,
+		);
+	}
+
+	// Validate end marker
+	const endMetadata = submittedOpsMetadata[endIndex];
+	assert.strictEqual(
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+		(endMetadata as any)?.batch,
+		false,
+		`Message at index ${endIndex} should be batch end`,
+	);
+	assert.strictEqual(
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+		(endMetadata as any)?.batchId,
+		undefined,
+		`Batch end at index ${endIndex} should not have batchId`,
+	);
+}
+
 describe("Runtime", () => {
 	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 		getRawConfig: (name: string): ConfigTypes => settings[name],
@@ -483,14 +560,6 @@ describe("Runtime", () => {
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 					assert.strictEqual(submittedOps[1].contents.address, "2");
 
-					function batchIdMatchesUnsentFormat(batchId?: string): boolean {
-						return (
-							batchId !== undefined &&
-							batchId.length === "00000000-0000-0000-0000-000000000000_[-1]".length &&
-							batchId.endsWith("_[-1]")
-						);
-					}
-
 					if (enableBatchIdTracking === true) {
 						assert(
 							batchIdMatchesUnsentFormat(
@@ -504,16 +573,26 @@ describe("Runtime", () => {
 								// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 								submittedOps[1].metadata?.batchId as string | undefined,
 							),
-							"expected unsent batchId format (0)",
+							"expected unsent batchId format (1)",
 						);
 					} else {
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-						assert(submittedOps[0].metadata?.batchId === undefined, "Expected no batchId (0)");
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-						assert(submittedOps[1].metadata?.batchId === undefined, "Expected no batchId (1)");
+						// batchId is now always added, even when enableBatchIdTracking is undefined
+						assert(
+							batchIdMatchesUnsentFormat(
+								// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+								submittedOps[0].metadata?.batchId as string | undefined,
+							),
+							"expected unsent batchId format (0)",
+						);
+						assert(
+							batchIdMatchesUnsentFormat(
+								// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+								submittedOps[1].metadata?.batchId as string | undefined,
+							),
+							"expected unsent batchId format (1)",
+						);
 					}
 				});
-
 			// NOTE: This test is examining a case that only occurs with an old Loader that doesn't tell ContainerRuntime when processing system ops.
 			// In other words, when the MockDeltaManager bumps its lastSequenceNumber, ContainerRuntime.process would be called in the current code, but not with legacy loader.
 			for (const skipSafetyFlushDuringProcessStack of [true, undefined]) {
@@ -818,23 +897,7 @@ describe("Runtime", () => {
 						(containerRuntime as any).flush();
 
 						assert.strictEqual(submittedOpsMetadata.length, 3, "3 messages should be sent");
-						assert.strictEqual(
-							// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-							submittedOpsMetadata[0].batch,
-							true,
-							"first message should be the batch start",
-						);
-						assert.strictEqual(
-							submittedOpsMetadata[1],
-							undefined,
-							"second message should not hold batch info",
-						);
-						assert.strictEqual(
-							// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-							submittedOpsMetadata[2].batch,
-							false,
-							"third message should be the batch end",
-						);
+						assertBatchStructure(submittedOpsMetadata, 0, 3);
 					});
 
 					it("Resubmitting batch preserves original batches", async () => {
@@ -864,25 +927,13 @@ describe("Runtime", () => {
 
 						assert.strictEqual(submittedOpsMetadata.length, 6, "6 messages should be sent");
 
-						const expectedBatchMetadata = [
-							{ batch: true },
-							undefined,
-							{ batch: false },
-							{ batch: true },
-							undefined,
-							{ batch: false },
-						];
-
-						assert.deepStrictEqual(
-							submittedOpsMetadata,
-							expectedBatchMetadata,
-							"batch metadata does not match",
-						);
+						// Verify batch structure - each batch has 3 messages
+						assertBatchStructure(submittedOpsMetadata, 0, 3); // First batch: messages 0-2
+						assertBatchStructure(submittedOpsMetadata, 3, 3); // Second batch: messages 3-5
 					});
 				});
 			}
 		});
-
 		describe("orderSequentially with rollback", () => {
 			for (const flushMode of [
 				FlushMode.TurnBased,
@@ -4439,6 +4490,87 @@ describe("Runtime", () => {
 				controls.discardChanges();
 
 				assert.equal(containerRuntime.isDirty, false, "Runtime should not be dirty anymore");
+			});
+
+			describe("Checkpoint integration", () => {
+				it("checkpoint.rollback() rolls back changes made after checkpoint", () => {
+					const channelCollectionStub = stubChannelCollection(containerRuntime);
+					const controls = containerRuntime.enterStagingMode();
+
+					submitDataStoreOp(containerRuntime, "1", genTestDataStoreMessage("op-1"));
+					const cp = controls.checkpoint();
+
+					submitDataStoreOp(containerRuntime, "2", genTestDataStoreMessage("op-2"));
+					submitDataStoreOp(containerRuntime, "3", genTestDataStoreMessage("op-3"));
+
+					cp.rollback();
+
+					// Should have rolled back ops 2 and 3 in LIFO order
+					const rollbackCalls = channelCollectionStub.rollbackDataStoreOp.getCalls();
+					assert.equal(rollbackCalls.length, 2, "Should rollback 2 ops");
+					assert.equal(rollbackCalls[0].args[0].address, "3", "Should rollback op 3 first");
+					assert.equal(rollbackCalls[1].args[0].address, "2", "Should rollback op 2 second");
+
+					controls.commitChanges();
+					assert.equal(submittedOps.length, 1, "Should only submit op 1");
+				});
+
+				it("example: async batch processing with checkpoint objects", () => {
+					stubChannelCollection(containerRuntime);
+					const controls = containerRuntime.enterStagingMode();
+
+					// Simulate async processing with checkpoints
+					const checkpoints: {
+						id: number;
+						checkpoint: ReturnType<typeof controls.checkpoint>;
+					}[] = [];
+
+					// Process records
+					for (let i = 1; i <= 5; i++) {
+						submitDataStoreOp(
+							containerRuntime,
+							i.toString(),
+							genTestDataStoreMessage(`op-${i}`),
+						);
+						const cp = controls.checkpoint();
+						checkpoints.push({ id: i, checkpoint: cp });
+					}
+
+					// All checkpoints should be valid
+					assert.equal(
+						checkpoints.every((c) => c.checkpoint.isValid),
+						true,
+						"All should be valid",
+					);
+
+					// Simulate async decision to rollback batch 3
+					const batch3 = checkpoints.find((c) => c.id === 3);
+					assert(batch3 !== undefined);
+					batch3.checkpoint.rollback();
+
+					// Batches 3, 4, 5 should be invalid (rolled back)
+					assert.equal(checkpoints[2].checkpoint.isValid, false, "Batch 3 should be invalid");
+					assert.equal(checkpoints[3].checkpoint.isValid, false, "Batch 4 should be invalid");
+					assert.equal(checkpoints[4].checkpoint.isValid, false, "Batch 5 should be invalid");
+
+					// Batches 1, 2 should still be valid
+					assert.equal(checkpoints[0].checkpoint.isValid, true, "Batch 1 should be valid");
+					assert.equal(checkpoints[1].checkpoint.isValid, true, "Batch 2 should be valid");
+
+					// Verify batches 1 and 2 still have changes since their checkpoints
+					assert.equal(
+						checkpoints[0].checkpoint.hasChangesSince,
+						true,
+						"Batch 1 should have changes (op 2 and 3)",
+					);
+					assert.equal(
+						checkpoints[1].checkpoint.hasChangesSince,
+						true,
+						"Batch 2 should have changes (op 3)",
+					);
+					controls.commitChanges();
+					assert.equal(submittedOps.length, 3, "Should submit ops 1, 2, and 3");
+				});
 			});
 		});
 	});

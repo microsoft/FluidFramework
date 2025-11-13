@@ -61,6 +61,10 @@ const orderSequentiallyReducer = async (
 export const reducer = combineReducersAsync<StressOperations, LocalServerStressState>({
 	enterStagingMode: async (state, op) => state.client.entryPoint.enterStagingMode(),
 	exitStagingMode: async (state, op) => state.client.entryPoint.exitStagingMode(op.commit),
+	stagingModeCreateCheckpoint: async (state, op) =>
+		state.client.entryPoint.createCheckpoint(op.tag),
+	stagingModeRollbackToCheckpoint: async (state, op) =>
+		state.client.entryPoint.rollbackToCheckpoint(op.tag),
 	createDataStore: async (state, op) => state.datastore.createDataStore(op.tag, op.asChild),
 	createChannel: async (state, op) => {
 		state.datastore.createChannel(op.tag, op.channelType);
@@ -123,9 +127,26 @@ export function makeGenerator<T extends BaseOperation>(
 				commit: random.bool(),
 			}),
 			25,
-			(state) =>
-				state.client.entryPoint.inStagingMode() &&
-				state.client.container.attachState !== AttachState.Detached,
+			(state) => state.client.entryPoint.inStagingMode(),
+		],
+		[
+			async (state) => ({
+				type: "stagingModeCreateCheckpoint",
+				tag: state.tag("checkpoint"),
+			}),
+			5,
+			(state) => state.client.entryPoint.inStagingMode(),
+		],
+		[
+			async (state) => {
+				const validTags = state.client.entryPoint.getValidCheckpointTags();
+				return {
+					type: "stagingModeRollbackToCheckpoint",
+					tag: state.random.pick(validTags),
+				};
+			},
+			10,
+			(state) => state.client.entryPoint.getValidCheckpointTags().length > 0,
 		],
 		[DDSModelOpGenerator, 100],
 		[

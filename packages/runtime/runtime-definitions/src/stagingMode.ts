@@ -44,24 +44,145 @@ export interface StageControlsInternal extends StageControlsAlpha {
 }
 
 /**
- * Controls for managing staged changes in alpha staging mode.
+ * Represents a checkpoint that can be rolled back to.
  *
- * Provides methods to either commit or discard changes made while in staging mode.
+ * Created by {@link StageControlsAlpha.checkpoint}. Checkpoints allow you to undo changes
+ * made after the checkpoint was created while preserving earlier changes.
+ *
+ * @legacy @alpha
+ * @sealed
+ */
+export interface StageCheckpointAlpha {
+	/**
+	 * Roll back all changes to this checkpoint.
+	 *
+	 * Undoes all operations made after this checkpoint was created and invalidates this checkpoint
+	 * and any checkpoints created after it.
+	 *
+	 * @throws Error if this checkpoint is no longer valid (e.g., invalidated by rolling back to an earlier checkpoint).
+	 *
+	 * @example
+	 * ```typescript
+	 * const checkpoint = controls.checkpoint();
+	 * this.map.set("key", "value");
+	 * checkpoint.rollback(); // Undoes the map.set
+	 * ```
+	 */
+	rollback(): void;
+
+	/**
+	 * Remove this checkpoint without rolling back changes.
+	 *
+	 * Useful when you no longer need a checkpoint but want to keep the changes made after it.
+	 * Only this specific checkpoint becomes invalid - later checkpoints remain valid.
+	 *
+	 * @throws Error if this checkpoint is no longer valid.
+	 *
+	 * @example
+	 * ```typescript
+	 * const cp1 = controls.checkpoint();
+	 * this.map.set("key", "value");
+	 * const cp2 = controls.checkpoint();
+	 *
+	 * cp1.dispose(); // cp2 remains valid
+	 * cp2.rollback(); // Still works, undoes both changes
+	 * ```
+	 */
+	dispose(): void;
+
+	/**
+	 * Whether this checkpoint is still valid and can be rolled back to.
+	 *
+	 * A checkpoint becomes invalid when you roll back to an earlier checkpoint or call `dispose()` on it.
+	 *
+	 * @example
+	 * ```typescript
+	 * const cp1 = controls.checkpoint();
+	 * const cp2 = controls.checkpoint();
+	 *
+	 * cp1.rollback(); // Invalidates cp2
+	 * console.log(cp2.isValid); // false
+	 * ```
+	 */
+	readonly isValid: boolean;
+
+	/**
+	 * Whether any changes have been made since this checkpoint was created.
+	 *
+	 * @example
+	 * ```typescript
+	 * const checkpoint = controls.checkpoint();
+	 * console.log(checkpoint.hasChangesSince); // false
+	 * this.map.set("key", "value");
+	 * console.log(checkpoint.hasChangesSince); // true
+	 * ```
+	 */
+	readonly hasChangesSince: boolean;
+}
+
+/**
+ * Controls for managing staged changes in staging mode.
+ *
+ * Staging mode lets you make changes locally before committing or discarding them.
+ * You can create checkpoints to rollback specific changes.
+ *
+ * @example Async validation with checkpoints
+ * ```typescript
+ * class DraftFormEditor {
+ *   private controls = this.runtime.enterStagingMode();
+ *
+ *   async updateField(name: string, value: string) {
+ *     this.map.set(name, value);
+ *     const checkpoint = this.controls.checkpoint();
+ *
+ *     try {
+ *       await this.validateWithServer(name, value);
+ *     } catch (error) {
+ *       checkpoint.rollback(); // Rolls back only this field
+ *       throw error;
+ *     }
+ *   }
+ *
+ *   save() {
+ *     this.controls.commitChanges();
+ *   }
+ *
+ *   cancel() {
+ *     this.controls.discardChanges();
+ *   }
+ * }
+ * ```
  *
  * @legacy @alpha
  * @sealed
  */
 export interface StageControlsAlpha {
 	/**
-	 * Exit staging mode and commit to any changes made while in staging mode.
-	 * This will cause them to be sent to the ordering service, and subsequent changes
-	 * made by this container will additionally flow freely to the ordering service.
+	 * Exit staging mode and send all changes to the service.
 	 */
 	readonly commitChanges: () => void;
+
 	/**
-	 * Exit staging mode and discard any changes made while in staging mode.
+	 * Exit staging mode and undo all changes.
 	 */
 	readonly discardChanges: () => void;
+
+	/**
+	 * Create a checkpoint you can rollback to later.
+	 *
+	 * Returns a {@link StageCheckpointAlpha} object. The checkpoint remains valid until you
+	 * roll back to it or to an earlier checkpoint.
+	 *
+	 * @returns A checkpoint object that can be used to rollback to this point.
+	 *
+	 * @example
+	 * ```typescript
+	 * const checkpoint = controls.checkpoint();
+	 * this.map.set("key", "value");
+	 * checkpoint.rollback(); // Undoes the map.set
+	 * ```
+	 */
+	readonly checkpoint: () => StageCheckpointAlpha;
 }
 
 /**
@@ -77,19 +198,48 @@ export interface IContainerRuntimeBaseInternal extends ContainerRuntimeBaseAlpha
 }
 
 /**
- * Alpha interface for container runtime base supporting staging mode.
+ * Alpha interface for container runtime with staging mode support.
  *
  * @legacy @alpha
  * @sealed
  */
 export interface ContainerRuntimeBaseAlpha extends IContainerRuntimeBase {
 	/**
-	 * Enters staging mode, allowing changes to be staged before being committed or discarded.
-	 * @returns Controls for committing or discarding staged changes.
+	 * Enter staging mode to queue changes locally before committing or discarding them.
+	 *
+	 * @returns Controls for managing staged changes. See {@link StageControlsAlpha}.
+	 *
+	 * @example
+	 * ```typescript
+	 * class DraftFormEditor {
+	 *   private controls = this.runtime.enterStagingMode();
+	 *
+	 *   async updateField(name: string, value: string) {
+	 *     this.map.set(name, value);
+	 *     const checkpoint = this.controls.checkpoint();
+	 *
+	 *     try {
+	 *       await this.validateWithServer(name, value);
+	 *     } catch (error) {
+	 *       checkpoint.rollback();
+	 *       throw error;
+	 *     }
+	 *   }
+	 *
+	 *   save() {
+	 *     this.controls.commitChanges();
+	 *   }
+	 *
+	 *   dispose() {
+	 *     this.controls.discardChanges();
+	 *   }
+	 * }
+	 * ```
 	 */
 	enterStagingMode(): StageControlsAlpha;
+
 	/**
-	 * Indicates whether the container is currently in staging mode.
+	 * Whether the container is currently in staging mode.
 	 */
 	readonly inStagingMode: boolean;
 }

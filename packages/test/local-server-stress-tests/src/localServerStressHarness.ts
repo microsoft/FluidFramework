@@ -76,9 +76,11 @@ import {
 } from "./stressDataObject.js";
 import { makeUnreachableCodePathProxy } from "./utils.js";
 
+export type Tagged<T extends string> = `${T}-${number}`;
+
 export interface Client {
 	container: ContainerAlpha;
-	tag: `client-${number}`;
+	tag: Tagged<"client">;
 	entryPoint: DefaultStressDataObject;
 }
 
@@ -87,7 +89,7 @@ export interface Client {
  */
 export interface LocalServerStressState extends BaseFuzzTestState {
 	localDeltaConnectionServer: ILocalDeltaConnectionServer;
-	pendingLocalStateStore: PendingLocalStateStore<`client-${number}` | undefined>;
+	pendingLocalStateStore: PendingLocalStateStore<Tagged<"client"> | undefined>;
 	codeLoader: ICodeDetailsLoader;
 	validationClient: Client;
 	random: IRandom;
@@ -96,16 +98,16 @@ export interface LocalServerStressState extends BaseFuzzTestState {
 	datastore: StressDataObject;
 	channel: IChannel;
 	seed: number;
-	tag<T extends string>(prefix: T): `${T}-${number}`;
+	tag<T extends string>(prefix: T): Tagged<T>;
 }
 
 /**
  * @internal
  */
 interface SelectedClientSpec {
-	clientTag: `client-${number}`;
-	datastoreTag: `datastore-${number}`;
-	channelTag: `channel-${number}`;
+	clientTag: Tagged<"client">;
+	datastoreTag: Tagged<"datastore">;
+	channelTag: Tagged<"channel">;
 }
 
 /**
@@ -120,8 +122,8 @@ interface Attach {
  */
 interface AddClient {
 	type: "addClient";
-	clientTag: `client-${number}`;
-	fromClientTag: `client-${number}` | undefined;
+	clientTag: Tagged<"client">;
+	fromClientTag: Tagged<"client"> | undefined;
 }
 
 /**
@@ -129,7 +131,7 @@ interface AddClient {
  */
 interface RemoveClient {
 	type: "removeClient";
-	clientTag: `client-${number}`;
+	clientTag: Tagged<"client">;
 }
 
 /**
@@ -733,7 +735,7 @@ function mixinClientSelection<TOperation extends BaseOperation>(
 						...baseOp,
 						clientTag: client.tag,
 						datastoreTag: entry.tag,
-						channelTag: channel.id as `channel-${number}`,
+						channelTag: channel.id as Tagged<"channel">,
 					} satisfies SelectedClientSpec);
 		};
 	};
@@ -817,7 +819,7 @@ async function createDetachedClient(
 	localDeltaConnectionServer: ILocalDeltaConnectionServer,
 	codeLoader: ICodeDetailsLoader,
 	codeDetails: IFluidCodeDetails,
-	tag: `client-${number}`,
+	tag: Tagged<"client">,
 	seed: number,
 	options: LocalServerStressOptions,
 ): Promise<Client> {
@@ -849,7 +851,7 @@ async function createDetachedClient(
 async function loadClient(
 	localDeltaConnectionServer: ILocalDeltaConnectionServer,
 	codeLoader: ICodeDetailsLoader,
-	tag: `client-${number}`,
+	tag: Tagged<"client">,
 	url: string,
 	seed: number,
 	options: LocalServerStressOptions,
