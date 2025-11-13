@@ -1,9 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { TreeNodeSchema, TreeNodeSchemaClass } from "@fluidframework/tree";
 import type { ZodType, ZodTypeAny, ZodTypeDef, infer as ZodInfer } from "zod";
 
