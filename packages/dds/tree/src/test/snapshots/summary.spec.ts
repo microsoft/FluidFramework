@@ -18,12 +18,19 @@ describe("snapshot tests", () => {
 		// Friendly description of tree encoding type
 		const treeEncodeKey = TreeCompressionStrategy[treeEncodeType];
 		for (const formatVersionKey of Object.keys(SharedTreeFormatVersion)) {
+			const formatVersion =
+				SharedTreeFormatVersion[formatVersionKey as keyof typeof SharedTreeFormatVersion];
+
+			if (formatVersion <= 2) {
+				// These versions are no longer supported.
+				continue;
+			}
+
 			describe(`Using TreeCompressionStrategy.${treeEncodeKey} and SharedTreeFormatVersion.${formatVersionKey}`, () => {
 				useSnapshotDirectory(`summary/${treeEncodeKey}/${formatVersionKey}`);
 				const options: SharedTreeOptions = {
 					treeEncodeType,
-					formatVersion:
-						SharedTreeFormatVersion[formatVersionKey as keyof typeof SharedTreeFormatVersion],
+					formatVersion,
 				};
 				const testTrees = generateTestTrees(options);
 
