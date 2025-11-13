@@ -1,6 +1,7 @@
 ---
 "@fluidframework/tree": minor
-"__section": feature
+"fluid-framework": minor
+"__section": tree
 ---
 Schema snapshot compatibility checker
 

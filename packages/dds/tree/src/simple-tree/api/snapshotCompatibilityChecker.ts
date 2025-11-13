@@ -13,7 +13,7 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
 import { toSimpleTreeSchema } from "./viewSchemaToSimpleSchema.js";
 
 /**
- * Checks the compatibility of the view schema that created the document against the view schema being used to open it.
+ * Compute the compatibility of using `view` to {@link ViewableTree.viewWith | view a tree} who's {@link ITreeAlpha.exportSimpleSchema | stored schema} could be derived from `viewWhichCreatedStoredSchema` via either {@link TreeView.initialize} or {@link TreeView.upgradeSchema}.
  *
  * @remarks See {@link SchemaCompatibilityStatus} for details on the compatibility results.
  *
@@ -31,26 +31,35 @@ import { toSimpleTreeSchema } from "./viewSchemaToSimpleSchema.js";
  *	   // The current schema has a new optional field that was not present on Point2D
  *	   z: factory.optional(factory.number),
  * }) {}
+ * // This snapshot is assumed to be the same as Point3D, except missing `z`.
  * const oldViewSchema = importCompatibilitySchemaSnapshot(fs.readFileSync("Point2D.json"));
  *
  * // Check to see if the document created by the historical view schema can be opened with the current view schema
- * const compatibilityStatus = checkCompatibility(oldViewSchema, currentViewSchema);
+ * const backwardsCompatibilityStatus = checkCompatibility(oldViewSchema, currentViewSchema);
  *
  * // z is not present in Point2D, so the schema must be upgraded
- * assert.equal(compatibilityStatus.canView, false);
+ * assert.equal(backwardsCompatibilityStatus.canView, false);
  *
  * // The schema can be upgraded to add the new optional field
- * assert.equal(compatibilityStatus.canUpgrade, true);
+ * assert.equal(backwardsCompatibilityStatus.canUpgrade, true);
+ *
+ * // Test what the old version of the application would do with a tree using the new schema:
+ * const forwardsCompatibilityStatus = checkCompatibility(currentViewSchema, oldViewSchema);
+ *
+ * // If the old schema set allowUnknownOptionalFields, this would be true, but since it did not,
+ * // this assert will fail, detecting the forwards compatibility break:
+ * // this means these two versions of the application cannot collaborate on content using these schema.
+ * assert.equal(forwardsCompatibilityStatus.canView, true);
  * ```
  *
- * @param viewWhichCreatedDocument - The view schema which was used to create the document.
- * @param view - The view schema being used to read the document.
+ * @param viewWhichCreatedStoredSchema- From which to derive the stored schema, as if it initialized or upgraded a tree via {@link TreeView}.
+ * @param view - The view being tested to see if it could view tree created or initialized using `viewWhichCreatedStoredSchema`.
  * @returns The compatibility status.
  *
  * @alpha
  */
 export function checkCompatibility(
-	viewWhichCreatedDocument: TreeViewConfiguration,
+	viewWhichCreatedStoredSchema: TreeViewConfiguration,
 	view: TreeViewConfiguration,
 ): Omit<SchemaCompatibilityStatus, "canInitialize"> {
 	const viewAsAlpha = new TreeViewConfigurationAlpha({ schema: view.schema });
@@ -62,7 +71,7 @@ export function checkCompatibility(
 }
 
 /**
- * Returns a JSON representation of the tree schema for snapshot compatibility checking.
+ * Returns a JSON compatible representation of the tree schema for snapshot compatibility checking.
  * @param config - The schema to snapshot. Only the schema field of the `TreeViewConfiguration` is used.
  * @returns The JSON representation of the schema.
  *
@@ -88,7 +97,7 @@ export function exportCompatibilitySchemaSnapshot(
 }
 
 /**
- * Parse a JSON representation of a tree schema into a concrete schema.
+ * Parse the format exported by {@link exportCompatibilitySchemaSnapshot} into a schema.
  * @param config - The JSON representation of the schema.
  * @returns The schema. Only the schema field of the {@link TreeViewConfiguration} is populated.
  * @throws Will throw a usage error if the encoded schema is not in the expected format.
