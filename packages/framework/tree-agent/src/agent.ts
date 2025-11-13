@@ -186,6 +186,7 @@ function constructTreeNode(schema: TreeNodeSchema, content: FactoryContentObject
 				) {
 					const defaulter = field.metadata.custom[llmDefault];
 					if (typeof defaulter === "function") {
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 						const defaultValue: unknown = defaulter();
 						if (defaultValue !== undefined) {
 							contentWithDefaults[key] = defaultValue;
@@ -248,6 +249,7 @@ async function applyTreeFunction<TSchema extends ImplicitFieldSchema>(
 export const defaultEditor: AsynchronousEditor = async (context, code) => {
 	// eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
 	const fn = new Function("context", code);
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 	await fn(context);
 };
 

@@ -345,8 +345,8 @@ describe("Create New Utils Tests", () => {
 		);
 
 		// Extract the Base64 encoded value of `nav`
-		const base64Value = odspResolvedUrl.shareLinkInfo.createLink.link.webUrl.match(
-			/nav=([^&]*)/,
+		const base64Value = /nav=([^&]*)/.exec(
+			odspResolvedUrl.shareLinkInfo.createLink.link.webUrl,
 		)?.[1] as string;
 		// Decode the Base64 value to UTF-8, \r�� is being stored at the end of the string so we slice it off
 		const decodedValue = fromBase64ToUtf8(base64Value).slice(0, -3);

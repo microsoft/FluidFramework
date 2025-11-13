@@ -75,6 +75,7 @@ describeCompat("SharedCell", "FullCompat", (getTestObjectProvider, apis) => {
 		assert.equal(
 			userValue,
 			expectedValue,
+			// eslint-disable-next-line @typescript-eslint/no-base-to-string
 			`Incorrect value ${userValue} instead of ${expectedValue} in container ${index}`,
 		);
 	}
@@ -147,6 +148,7 @@ describeCompat("SharedCell", "FullCompat", (getTestObjectProvider, apis) => {
 			assert.equal(
 				newValue,
 				newCellValue,
+				// eslint-disable-next-line @typescript-eslint/no-base-to-string
 				`Incorrect value for changed in container 1: ${newValue}`,
 			);
 			user1ValueChangedCount = user1ValueChangedCount + 1;
@@ -155,6 +157,7 @@ describeCompat("SharedCell", "FullCompat", (getTestObjectProvider, apis) => {
 			assert.equal(
 				newValue,
 				newCellValue,
+				// eslint-disable-next-line @typescript-eslint/no-base-to-string
 				`Incorrect value for changed in container 2: ${newValue}`,
 			);
 			user2ValueChangedCount = user2ValueChangedCount + 1;
@@ -163,6 +166,7 @@ describeCompat("SharedCell", "FullCompat", (getTestObjectProvider, apis) => {
 			assert.equal(
 				newValue,
 				newCellValue,
+				// eslint-disable-next-line @typescript-eslint/no-base-to-string
 				`Incorrect value for changed in container 3: ${newValue}`,
 			);
 			user3ValueChangedCount = user3ValueChangedCount + 1;

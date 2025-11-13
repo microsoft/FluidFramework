@@ -32,6 +32,7 @@ export class SharedDelta extends SharedOT<Delta, Delta> {
 
 	public get text() {
 		return this.state.reduce((s, delta) => {
+			// eslint-disable-next-line @typescript-eslint/no-base-to-string
 			return `${s}${delta.insert?.toString()}`;
 		}, "");
 	}
