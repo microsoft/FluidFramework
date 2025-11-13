@@ -45,6 +45,11 @@ export interface EditResult {
 }
 
 // @alpha
+export type ExposableKeys<T> = {
+    [K in keyof T]?: T[K] extends (...args: any[]) => any ? never : K;
+}[keyof T];
+
+// @alpha
 export interface ExposedMethods {
     // (undocumented)
     expose<const K extends string & keyof MethodKeys<InstanceType<S>>, S extends BindableSchema & Ctor<{
@@ -54,7 +59,21 @@ export interface ExposedMethods {
 }
 
 // @alpha
+export interface ExposedProperties {
+    // (undocumented)
+    exposeProperty<S extends BindableSchema & Ctor<any>, K extends string & ExposableKeys<InstanceType<S>>, TZ extends ZodTypeAny>(schema: S, name: K, def: {
+        schema: TZ;
+        description?: string;
+    } & ReadOnlyRequirement<InstanceType<S>, K> & TypeMatchOrError<InstanceType<S>[K], infer<TZ>>): void;
+    // (undocumented)
+    instanceOf<T extends TreeNodeSchemaClass>(schema: T): ZodType<InstanceType<T>, ZodTypeDef, InstanceType<T>>;
+}
+
+// @alpha
 export const exposeMethodsSymbol: unique symbol;
+
+// @alpha
+export const exposePropertiesSymbol: unique symbol;
 
 // @alpha
 export interface FunctionDef<Args extends readonly Arg[], Return extends z.ZodTypeAny, Rest extends z.ZodTypeAny | null = null> {
@@ -75,6 +94,15 @@ export interface IExposedMethods {
 }
 
 // @alpha
+export interface IExposedProperties {
+    // (undocumented)
+    [exposePropertiesSymbol]?(properties: ExposedProperties): void;
+}
+
+// @alpha
+export type IfEquals<X, Y, A = true, B = false> = (<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y ? 1 : 2 ? A : B;
+
+// @alpha
 export type Infer<T> = T extends FunctionDef<infer Args, infer Return, infer Rest> ? z.infer<z.ZodFunction<z.ZodTuple<ArgsTuple<Args>, Rest>, Return>> : never;
 
 // @alpha
@@ -89,6 +117,37 @@ export interface Logger {
 export type MethodKeys<T> = {
     [K in keyof T]: T[K] extends (...args: any[]) => any ? K : never;
 };
+
+// @alpha
+export class PropertyDef {
+    constructor(name: string, description: string | undefined, schema: ZodTypeAny, readOnly: boolean);
+    // (undocumented)
+    readonly description: string | undefined;
+    // (undocumented)
+    readonly name: string;
+    // (undocumented)
+    readonly readOnly: boolean;
+    // (undocumented)
+    readonly schema: ZodTypeAny;
+}
+
+// @alpha
+export type ReadonlyKeys<T> = {
+    [P in keyof T]-?: IfEquals<{
+        [Q in P]: T[P];
+    }, {
+        -readonly [Q in P]: T[P];
+    }, never, P>;
+}[keyof T];
+
+// @alpha
+export type ReadOnlyRequirement<TObj, K extends keyof TObj> = {
+    [P in K]-?: P extends ReadonlyKeys<TObj> ? {
+        readOnly: true;
+    } : {
+        readOnly?: false;
+    };
+}[K];
 
 // @alpha
 export interface SemanticAgentOptions {
@@ -123,5 +182,12 @@ export type SynchronousEditor = (context: Record<string, unknown>, code: string)
 
 // @alpha
 export type TreeView<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema> = Pick<TreeViewAlpha<TRoot>, "root" | "fork" | "merge" | "rebaseOnto" | "schema" | "events"> & TreeBranchAlpha;
+
+// @alpha
+export type TypeMatchOrError<Expected, Received> = [Received] extends [Expected] ? unknown : {
+    __error__: "Zod schema value type does not match the property's declared type";
+    expected: Expected;
+    received: Received;
+};
 
 ```

@@ -22,7 +22,7 @@ export const exposePropertiesSymbol: unique symbol = Symbol.for(
  * Set of property keys from `T` that are not methods.
  * @alpha
  */
-type ExposableKeys<T> = {
+export type ExposableKeys<T> = {
 	[K in keyof T]?: T[K] extends (...args: any[]) => any ? never : K;
 }[keyof T];
 
@@ -32,7 +32,7 @@ type ExposableKeys<T> = {
  * - If X and Y are different, it evaluates to B.
  * @alpha
  */
-type IfEquals<X, Y, A = true, B = false> = (<T>() => T extends X ? 1 : 2) extends <
+export type IfEquals<X, Y, A = true, B = false> = (<T>() => T extends X ? 1 : 2) extends <
 	T,
 >() => T extends Y ? 1 : 2
 	? A
@@ -42,7 +42,7 @@ type IfEquals<X, Y, A = true, B = false> = (<T>() => T extends X ? 1 : 2) extend
  * Produces a union of keys of `T` which are readonly.
  * @alpha
  */
-type ReadonlyKeys<T> = {
+export type ReadonlyKeys<T> = {
 	[P in keyof T]-?: IfEquals<{ [Q in P]: T[P] }, { -readonly [Q in P]: T[P] }, never, P>;
 }[keyof T];
 
@@ -50,7 +50,7 @@ type ReadonlyKeys<T> = {
  * Type to enforce `readOnly: true` for readonly properties.
  * @alpha
  */
-type ReadOnlyRequirement<TObj, K extends keyof TObj> = {
+export type ReadOnlyRequirement<TObj, K extends keyof TObj> = {
 	[P in K]-?: P extends ReadonlyKeys<TObj> ? { readOnly: true } : { readOnly?: false };
 }[K];
 
@@ -58,7 +58,7 @@ type ReadOnlyRequirement<TObj, K extends keyof TObj> = {
  * Emits compile-time error when there is a type mismatch.
  * @alpha
  */
-type TypeMatchOrError<Expected, Received> = [Received] extends [Expected]
+export type TypeMatchOrError<Expected, Received> = [Received] extends [Expected]
 	? unknown
 	: {
 			__error__: "Zod schema value type does not match the property's declared type";
@@ -68,8 +68,9 @@ type TypeMatchOrError<Expected, Received> = [Received] extends [Expected]
 
 /**
  * A property definition class that describes the structure of the property
+ * @alpha
  */
-export class PropertyWrapper {
+export class PropertyDef {
 	public constructor(
 		public readonly name: string,
 		public readonly description: string | undefined,
@@ -118,7 +119,7 @@ export interface IExposedProperties {
 }
 
 class ExposedPropertiesI implements ExposedProperties {
-	private readonly properties: Record<string, PropertyWrapper> = {};
+	private readonly properties: Record<string, PropertyDef> = {};
 	private readonly referencedTypes = new Set<TreeNodeSchema>();
 
 	public constructor(private readonly schemaClass: BindableSchema) {}
@@ -136,7 +137,7 @@ class ExposedPropertiesI implements ExposedProperties {
 		if (schema !== this.schemaClass) {
 			throw new Error('Must expose properties on the "this" schema class');
 		}
-		this.properties[name] = new PropertyWrapper(
+		this.properties[name] = new PropertyDef(
 			name,
 			def.description,
 			def.schema,
@@ -152,7 +153,7 @@ class ExposedPropertiesI implements ExposedProperties {
 	}
 
 	public static getExposedProperties(schemaClass: BindableSchema): {
-		properties: Record<string, PropertyWrapper>;
+		properties: Record<string, PropertyDef>;
 		referencedTypes: Set<TreeNodeSchema>;
 	} {
 		const exposed = new ExposedPropertiesI(schemaClass);
@@ -173,7 +174,7 @@ class ExposedPropertiesI implements ExposedProperties {
  * @returns A record of property names and their corresponding Zod types.
  */
 export function getExposedProperties(schemaClass: BindableSchema): {
-	properties: Record<string, PropertyWrapper>;
+	properties: Record<string, PropertyDef>;
 	referencedTypes: Set<TreeNodeSchema>;
 } {
 	return ExposedPropertiesI.getExposedProperties(schemaClass);

@@ -40,8 +40,12 @@ export {
 } from "./methodBinding.js";
 export type {
 	exposePropertiesSymbol,
-	PropertyWrapper,
+	PropertyDef,
 	ExposedProperties,
 	IExposedProperties,
-	getExposedProperties,
+	ExposableKeys,
+	ReadOnlyRequirement,
+	ReadonlyKeys,
+	TypeMatchOrError,
+	IfEquals,
 } from "./propertyBinding.js";

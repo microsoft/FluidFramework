@@ -29,7 +29,7 @@ import { NodeKind, normalizeFieldSchema } from "@fluidframework/tree/internal";
 import { z } from "zod";
 
 import { FunctionWrapper } from "./methodBinding.js";
-import { PropertyWrapper } from "./propertyBinding.js";
+import { PropertyDef } from "./propertyBinding.js";
 
 /**
  * Subset of Map interface.
@@ -438,9 +438,9 @@ export function getZodSchemaAsTypeScript(
 	}
 
 	function appendBoundProperties(type: z.ZodType): void {
-		const property = (type as unknown as { property?: PropertyWrapper }).property;
+		const property = (type as unknown as { property?: PropertyDef }).property;
 
-		if (!(property instanceof PropertyWrapper)) {
+		if (!(property instanceof PropertyDef)) {
 			if (type.description !== undefined && type.description !== "") {
 				append(` // ${type.description}`);
 			}
