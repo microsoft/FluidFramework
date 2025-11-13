@@ -921,12 +921,12 @@ async function synchronizeClients(connectedClients: Client[]) {
 				// The first allows any ops generated during the processing of ops to be submitted.
 				// The second allows for the processing of those ops.
 				// TODO: AB#53704: Support async reducers in DDS Fuzz models to avoid this workaround.
-				setImmediate(() => {
-					setImmediate(() => {
+				setTimeout(() => {
+					setTimeout(() => {
 						resolve();
 						off();
-					});
-				});
+					}, 0);
+				}, 0);
 			}
 		};
 		// if you hit timeout issues in the
