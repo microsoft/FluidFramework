@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-nodejs-modules */
+/* eslint-disable import-x/no-nodejs-modules */
 
 import { strict as assert } from "node:assert";
 import { mkdirSync, readFileSync } from "node:fs";
@@ -249,7 +249,7 @@ function runTest(
 ): void {
 	const itFn = options.only.has(seed) ? it.only : options.skip.has(seed) ? it.skip : it;
 	itFn(`seed ${seed}`, async () => {
-		const inCi = !!process.env.TF_BUILD;
+		const inCi = process.env.TF_BUILD !== undefined;
 		await runTestForSeed(model, options, seed, inCi ? undefined : saveInfo);
 	});
 }

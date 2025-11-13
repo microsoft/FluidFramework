@@ -9,7 +9,6 @@ import { getOrCreate } from "../util/index.js";
 import {
 	Context,
 	getTreeNodeSchemaPrivateData,
-	normalizeAnnotatedAllowedTypes,
 	UnhydratedContext,
 	type TreeNodeSchema,
 	type TreeNodeSchemaInitializedData,
@@ -34,7 +33,7 @@ export function getUnhydratedContext(schema: ImplicitFieldSchema): Context {
 		);
 		return new Context(
 			flexContext,
-			Context.schemaMapFromRootSchema(normalized.annotatedAllowedTypesNormalized),
+			Context.schemaMapFromRootSchema(normalized.allowedTypesFull.evaluate()),
 		);
 	});
 }
@@ -50,8 +49,6 @@ export function getTreeNodeSchemaInitializedData(
 	return {
 		...handler,
 		context: getUnhydratedContext(schema),
-		childAnnotatedAllowedTypes: data.childAnnotatedAllowedTypes.map(
-			normalizeAnnotatedAllowedTypes,
-		),
+		childAllowedTypes: data.childAllowedTypes.map((t) => t.evaluate()),
 	};
 }

@@ -7,20 +7,19 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 
 import {
-	type FluidClientVersion,
-	type ICodecOptions,
+	type CodecTree,
+	type CodecWriteOptions,
 	type IJsonCodec,
 	makeVersionedValidatedCodec,
 } from "../../../codec/index.js";
 import {
 	CursorLocationType,
-	type FieldKey,
 	type ITreeCursorSynchronous,
 	type SchemaAndPolicy,
 	type TreeChunk,
-	type TreeNodeSchemaIdentifier,
 } from "../../../core/index.js";
 import {
+	brand,
 	brandedNumberType,
 	type Brand,
 	type JsonCompatibleReadOnly,
@@ -33,9 +32,11 @@ import {
 
 import { decode } from "./chunkDecoding.js";
 import type { FieldBatch } from "./fieldBatch.js";
-import { EncodedFieldBatch, validVersions } from "./format.js";
+import { EncodedFieldBatch, validVersions, FieldBatchFormatVersion } from "./format.js";
 import { schemaCompressedEncode } from "./schemaBasedEncode.js";
 import { uncompressedEncode } from "./uncompressedEncode.js";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import type { IncrementalEncodingPolicy } from "./incrementalEncodingPolicy.js";
 
 /**
  * Reference ID for a chunk that is incrementally encoded.
@@ -54,14 +55,10 @@ const ChunkReferenceId = brandedNumberType<ChunkReferenceId>({ multipleOf: 1, mi
  */
 export interface IncrementalEncoder {
 	/**
-	 * Returns whether a field should be incrementally encoded.
-	 * @param nodeIdentifier - The identifier of the node containing the field.
-	 * @param fieldKey - The key of the field to check.
+	 * Returns whether a node / field should be incrementally encoded.
+	 * @remarks See {@link IncrementalEncodingPolicy}.
 	 */
-	shouldEncodeFieldIncrementally(
-		nodeIdentifier: TreeNodeSchemaIdentifier,
-		fieldKey: FieldKey,
-	): boolean;
+	shouldEncodeIncrementally: IncrementalEncodingPolicy;
 	/**
 	 * Called to encode an incremental field at the cursor.
 	 * The chunks for this field are encoded separately from the main buffer.
@@ -85,11 +82,15 @@ export interface IncrementalEncoder {
  */
 export interface IncrementalDecoder {
 	/**
-	 * Called to get the encoded contents of an chunk in an incremental field with the given reference ID.
-	 * @param referenceId - The reference ID of the chunk to retrieve.
-	 * @returns The encoded contents of the chunk.
+	 * Called to decode an incremental chunk with the given reference ID.
+	 * @param referenceId - The reference ID of the chunk to decode.
+	 * @param chunkDecoder - A function that decodes the chunk.
+	 * @returns The decoded chunk.
 	 */
-	getEncodedIncrementalChunk: (referenceId: ChunkReferenceId) => EncodedFieldBatch;
+	decodeIncrementalChunk(
+		referenceId: ChunkReferenceId,
+		chunkDecoder: (encoded: EncodedFieldBatch) => TreeChunk,
+	): TreeChunk;
 }
 /**
  * Combines the properties of {@link IncrementalEncoder} and {@link IncrementalDecoder}.
@@ -119,21 +120,23 @@ export type FieldBatchCodec = IJsonCodec<
 >;
 
 /**
- * Get the write version for {@link makeFieldBatchCodec} based on the `oldestCompatibleClient` version.
+ * Get the write version for {@link makeFieldBatchCodec} based on the `minVersionForCollab` version.
  * @privateRemarks
  * TODO: makeFieldBatchCodec (and makeVersionDispatchingCodec transitively) should bake in this versionToFormat logic and the resulting codec can then support use with FluidClientVersion directly.
  */
-export function fluidVersionToFieldBatchCodecWriteVersion(
-	oldestCompatibleClient: FluidClientVersion,
-): number {
-	// There is currently on only 1 version.
-	return 1;
+/**
+ * Convert a MinimumVersionForCollab to write version for {@link FieldBatchCodec}.
+ * @param clientVersion - The MinimumVersionForCollab to convert.
+ */
+function clientVersionToFieldBatchVersion(
+	clientVersion: MinimumVersionForCollab,
+): FieldBatchFormatVersion {
+	// Currently, field batch codec only writes in version 1.
+	return brand(FieldBatchFormatVersion.v1);
 }
 
-export function makeFieldBatchCodec(
-	options: ICodecOptions,
-	writeVersion: number,
-): FieldBatchCodec {
+export function makeFieldBatchCodec(options: CodecWriteOptions): FieldBatchCodec {
+	const writeVersion = clientVersionToFieldBatchVersion(options.minVersionForCollab);
 	// Note: it's important that the decode function is schema-agnostic for this strategy/layering to work, since
 	// the schema that an op was encoded in doesn't necessarily match the current schema for the document (e.g. if
 	// decode is being run on a client that just submitted a schema change, but the op is from another client who has
@@ -196,4 +199,10 @@ export function makeFieldBatchCodec(
 			).map((chunk) => chunk.cursor());
 		},
 	});
+}
+
+export function getCodecTreeForFieldBatchFormat(
+	clientVersion: MinimumVersionForCollab,
+): CodecTree {
+	return { name: "FieldBatch", version: clientVersionToFieldBatchVersion(clientVersion) };
 }

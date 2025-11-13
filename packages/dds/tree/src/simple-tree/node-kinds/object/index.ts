@@ -5,7 +5,6 @@
 
 export {
 	type FieldHasDefault,
-	type InsertableObjectFromAnnotatedSchemaRecord,
 	type InsertableObjectFromSchemaRecord,
 	type ObjectFromSchemaRecord,
 	objectSchema,
@@ -17,5 +16,4 @@ export {
 	isObjectNodeSchema,
 	ObjectNodeSchema,
 	type ObjectNodeSchemaPrivate,
-	type UnannotateSchemaRecord,
 } from "./objectNodeTypes.js";

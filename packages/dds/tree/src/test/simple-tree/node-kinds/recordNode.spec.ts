@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import { describeHydration } from "../utils.js";
 import {
 	SchemaFactoryAlpha,
+	TreeBeta,
 	type ConciseTree,
 	type NodeFromSchema,
 	type NodeKind,
@@ -16,7 +17,7 @@ import {
 	type TreeNodeSchema,
 } from "../../../simple-tree/index.js";
 import { validateUsageError } from "../../utils.js";
-import { Tree, TreeAlpha } from "../../../shared-tree/index.js";
+import { Tree } from "../../../shared-tree/index.js";
 
 const schemaFactory = new SchemaFactoryAlpha("RecordNodeTest");
 const PojoEmulationNumberRecord = schemaFactory.record(schemaFactory.number);
@@ -27,7 +28,7 @@ class CustomizableNumberRecord extends schemaFactory.record("Record", schemaFact
  * Fails if they are not equivalent.
  */
 function assertEqualTrees(actual: TreeNode, expected: ConciseTree): void {
-	const actualVerbose = TreeAlpha.exportConcise(actual);
+	const actualVerbose = TreeBeta.exportConcise(actual);
 	assert.deepEqual(actualVerbose, expected);
 }
 
@@ -227,6 +228,13 @@ describe("RecordNode", () => {
 
 				record.baz = 4;
 				assert.equal(record.baz, 4);
+			});
+
+			it("setting value to undefined behaves as a delete", () => {
+				const record = init(schemaType, { foo: 1 });
+				assert.equal(record.foo, 1);
+				(record as Record<string, number | undefined>).foo = undefined;
+				assert.equal(record.foo, undefined);
 			});
 
 			it("can delete values", () => {

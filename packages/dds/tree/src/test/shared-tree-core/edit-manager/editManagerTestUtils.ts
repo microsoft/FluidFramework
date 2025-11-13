@@ -140,7 +140,7 @@ export function rebaseLocalEditsOverTrunkEdits<TChange>(
 	const run = () => {
 		// If bunchCommits is true, send all trunk edit commits to the EditManager together.
 		if (bunchCommits) {
-			manager.addSequencedChanges(trunkEdits, trunkSessionId, brand(1), brand(0));
+			manager.addSequencedChanges(trunkEdits, trunkSessionId, brand(1), brand(0), "main");
 		} else {
 			for (let iChange = 0; iChange < trunkEditCount; iChange++) {
 				const commit = trunkEdits[iChange];
@@ -149,6 +149,7 @@ export function rebaseLocalEditsOverTrunkEdits<TChange>(
 					commit.sessionId,
 					brand(iChange + 1),
 					brand(iChange),
+					"main",
 				);
 			}
 		}
@@ -235,6 +236,7 @@ export function rebasePeerEditsOverTrunkEdits<TChange>(
 			"trunk" as SessionId,
 			brand(iChange + 1),
 			brand(iChange),
+			"main",
 		);
 	}
 	const peerSessionId = "peer" as SessionId;
@@ -254,6 +256,7 @@ export function rebasePeerEditsOverTrunkEdits<TChange>(
 				peerSessionId,
 				brand(trunkEditCount + 1),
 				brand(0),
+				"main",
 			);
 		} else {
 			for (let iChange = 0; iChange < peerEditCount; iChange++) {
@@ -263,6 +266,7 @@ export function rebasePeerEditsOverTrunkEdits<TChange>(
 					commit.sessionId,
 					brand(iChange + trunkEditCount + 1),
 					brand(0),
+					"main",
 				);
 			}
 		}
@@ -347,6 +351,7 @@ export function rebaseAdvancingPeerEditsOverTrunkEdits<TChange>(
 			"trunk" as SessionId,
 			brand(iChange + 1),
 			brand(iChange),
+			"main",
 		);
 	}
 	const peerEdits = makeArray(editCount, () => {
@@ -365,6 +370,7 @@ export function rebaseAdvancingPeerEditsOverTrunkEdits<TChange>(
 				commit.sessionId,
 				brand(iChange + editCount + 1),
 				brand(iChange),
+				"main",
 			);
 		}
 	};
@@ -448,7 +454,13 @@ export function rebaseConcurrentPeerEdits<TChange>(
 	const run = () => {
 		for (let iChange = 0; iChange < peerEdits.length; iChange++) {
 			const commit = peerEdits[iChange];
-			manager.addSequencedChanges([commit], commit.sessionId, brand(iChange + 1), brand(0));
+			manager.addSequencedChanges(
+				[commit],
+				commit.sessionId,
+				brand(iChange + 1),
+				brand(0),
+				"main",
+			);
 		}
 	};
 	return defer ? run : run();

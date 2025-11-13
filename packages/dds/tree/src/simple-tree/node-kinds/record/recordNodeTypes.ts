@@ -11,10 +11,8 @@ import type {
 	WithType,
 	TreeNode,
 	ImplicitAllowedTypes,
-	ImplicitAnnotatedAllowedTypes,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	TreeNodeFromImplicitAllowedTypes,
-	UnannotateImplicitAllowedTypes,
 } from "../../core/index.js";
 
 import type { SimpleRecordNodeSchema } from "../../simpleSchema.js";
@@ -28,7 +26,23 @@ import type { RestrictiveStringRecord } from "../../../util/index.js";
  * Therefore code assigning to these fields must explicitly construct nodes using the schema's constructor or create method,
  * or using some other method like {@link (TreeAlpha:interface).create}.
  *
- * @alpha
+ * Field Assignment and Deletion
+ *
+ * Unlike JavaScript's `Record` type, assigning `undefined` to a key in {@link TreeRecordNode} behaves like a `delete` operation,
+ * removing the field's contents.
+ *
+ * This is to stay consistent with {@link TreeObjectNode} behavior.
+ *
+ * Example:
+ * ```ts
+ * const Numbers = schemaFactory.record("Numbers", schemaFactory.number);
+ * const record = new Numbers({ a:1, b:2 });
+ *
+ * // This is equivalent to delete record.a, and removes the entry.
+ * record.a = undefined
+ * ```
+ *
+ * @beta
  */
 export interface TreeRecordNode<
 	TAllowedTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes,
@@ -44,7 +58,7 @@ export interface TreeRecordNode<
 
 /**
  * Content which can be used to construct a Record node, explicitly or implicitly.
- * @system @alpha
+ * @system @beta
  */
 export type RecordNodeInsertableData<T extends ImplicitAllowedTypes> = RestrictiveStringRecord<
 	InsertableTreeNodeFromImplicitAllowedTypes<T>
@@ -56,18 +70,17 @@ export type RecordNodeInsertableData<T extends ImplicitAllowedTypes> = Restricti
  */
 export interface RecordNodeCustomizableSchema<
 	out TName extends string = string,
-	in out T extends ImplicitAnnotatedAllowedTypes = ImplicitAnnotatedAllowedTypes,
+	in out T extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 	out ImplicitlyConstructable extends boolean = true,
 	out TCustomMetadata = unknown,
 > extends TreeNodeSchemaClass<
 			/* Name */ TName,
 			/* Kind */ NodeKind.Record,
-			/* TNode */ TreeRecordNode<UnannotateImplicitAllowedTypes<T>> &
-				WithType<TName, NodeKind.Record, T>,
-			/* TInsertable */ RecordNodeInsertableData<UnannotateImplicitAllowedTypes<T>>,
+			/* TNode */ TreeRecordNode<T> & WithType<TName, NodeKind.Record, T>,
+			/* TInsertable */ RecordNodeInsertableData<T>,
 			/* ImplicitlyConstructable */ ImplicitlyConstructable,
 			/* Info */ T,
-			/* TConstructorExtra */ never,
+			/* TConstructorExtra */ undefined,
 			/* TCustomMetadata */ TCustomMetadata
 		>,
 		SimpleRecordNodeSchema<TCustomMetadata> {}
@@ -78,18 +91,17 @@ export interface RecordNodeCustomizableSchema<
  */
 export interface RecordNodePojoEmulationSchema<
 	out TName extends string = string,
-	in out T extends ImplicitAnnotatedAllowedTypes = ImplicitAnnotatedAllowedTypes,
+	in out T extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 	out ImplicitlyConstructable extends boolean = true,
 	out TCustomMetadata = unknown,
 > extends TreeNodeSchemaNonClass<
 			/* Name */ TName,
 			/* Kind */ NodeKind.Record,
-			/* TNode */ TreeRecordNode<UnannotateImplicitAllowedTypes<T>> &
-				WithType<TName, NodeKind.Record, T>,
-			/* TInsertable */ RecordNodeInsertableData<UnannotateImplicitAllowedTypes<T>>,
+			/* TNode */ TreeRecordNode<T> & WithType<TName, NodeKind.Record, T>,
+			/* TInsertable */ RecordNodeInsertableData<T>,
 			/* ImplicitlyConstructable */ ImplicitlyConstructable,
 			/* Info */ T,
-			/* TConstructorExtra */ never,
+			/* TConstructorExtra */ undefined,
 			/* TCustomMetadata */ TCustomMetadata
 		>,
 		SimpleRecordNodeSchema<TCustomMetadata> {}
@@ -104,7 +116,7 @@ export interface RecordNodePojoEmulationSchema<
  */
 export type RecordNodeSchema<
 	TName extends string = string,
-	T extends ImplicitAnnotatedAllowedTypes = ImplicitAnnotatedAllowedTypes,
+	T extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 	ImplicitlyConstructable extends boolean = true,
 	TCustomMetadata = unknown,
 > =

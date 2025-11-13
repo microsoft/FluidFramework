@@ -21,9 +21,9 @@ import {
 	FieldKind,
 	getDefaultProvider,
 	type ConstantFieldProvider,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/fieldSchema.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { UnhydratedFlexTreeNode } from "../../../simple-tree/core/index.js";
 
 const schema = new SchemaFactory("com.example");

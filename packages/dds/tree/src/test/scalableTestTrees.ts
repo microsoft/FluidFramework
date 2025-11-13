@@ -30,7 +30,7 @@ import {
 
 import type {
 	TreeSimpleContent,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "./feature-libraries/flex-tree/utils.js";
 import { fieldCursorFromInsertable, type TreeStoredContentStrict } from "./utils.js";
 

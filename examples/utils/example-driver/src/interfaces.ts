@@ -7,7 +7,7 @@ import type { IRequest } from "@fluidframework/core-interfaces";
 import type {
 	IDocumentServiceFactory,
 	IUrlResolver,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/driver-definitions/internal";
 
 /**

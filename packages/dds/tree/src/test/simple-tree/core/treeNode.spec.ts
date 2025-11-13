@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import {
 	TreeNode,
 	inPrototypeChain,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/core/treeNode.js";
 
 import {

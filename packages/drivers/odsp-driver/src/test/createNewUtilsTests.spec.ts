@@ -10,9 +10,9 @@ import { type ISummaryTree, SummaryType } from "@fluidframework/driver-definitio
 import type {
 	ISnapshot,
 	IDocumentAttributes,
+	IFileEntry,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	type IFileEntry,
 	type IOdspResolvedUrl,
 	type ISharingLinkKind,
 	SharingLinkRole,

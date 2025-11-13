@@ -42,7 +42,7 @@ const loadV1 = async (
 		return {};
 	}
 	let redirectTableEntries: [string, string][] = [];
-	const tableId = blobsTree.blobs[redirectTableBlobName];
+	const tableId: string | undefined = blobsTree.blobs[redirectTableBlobName];
 	if (tableId) {
 		redirectTableEntries = await readAndParse(context.storage, tableId);
 	}

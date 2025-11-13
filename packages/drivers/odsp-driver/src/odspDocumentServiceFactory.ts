@@ -3,15 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import type { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
+import type {
+	IDocumentServiceFactory,
+	IPersistedCache,
+} from "@fluidframework/driver-definitions/internal";
 import type {
 	HostStoragePolicy,
-	IPersistedCache,
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
 
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { LocalOdspDocumentServiceFactory } from "./localOdspDriver/localOdspDocumentServiceFactory.js";
 import { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore.js";
 

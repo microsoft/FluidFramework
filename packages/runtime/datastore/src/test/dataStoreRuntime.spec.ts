@@ -10,7 +10,7 @@ import type { FluidObject, IErrorBase } from "@fluidframework/core-interfaces";
 import type {
 	IChannel,
 	IFluidDataStoreRuntime,
-	IFluidDataStoreRuntimeExperimental,
+	IFluidDataStoreRuntimeAlpha,
 } from "@fluidframework/datastore-definitions/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import type {
@@ -40,7 +40,7 @@ type Patch<T, U> = Omit<T, keyof U> & U;
 // testing purposes. The patching is in no way type safe and is not recommended.
 type FluidDataStoreRuntime_ForTesting = Patch<
 	FluidDataStoreRuntime,
-	IFluidDataStoreRuntimeExperimental & {
+	IFluidDataStoreRuntimeAlpha & {
 		contexts: Map<unknown, unknown>;
 		submit(type: DataStoreMessageType, content: unknown, localOpMetadata?: unknown): void;
 	}
@@ -195,6 +195,22 @@ describe("FluidDataStoreRuntime Tests", () => {
 			(e: IErrorBase) =>
 				e.errorType === ContainerErrorTypes.usageError &&
 				e.message === `Id cannot contain slashes: ${invalidId}`,
+		);
+	});
+
+	it("getChannel - Channel Not Found case is distinguishable from other errors", async () => {
+		// IMPORTANT:
+		// If this string ever changes, it may break error handling in other places that depend on this exact text
+		// Why would anyone depend on an error message for control flow?
+		// Because it's a new use case and haven't added an API for this yet (See AB#50886)
+		const CHANNEL_NOT_FOUND = "Channel does not exist";
+
+		const dataStoreRuntime = createRuntime(dataStoreContext, sharedObjectRegistry);
+
+		await assert.rejects(
+			dataStoreRuntime.getChannel("nonExistentChannel"),
+			(error: Error) => error.message === CHANNEL_NOT_FOUND,
+			"Error message must be specific so that it can be handled differently from other errors",
 		);
 	});
 

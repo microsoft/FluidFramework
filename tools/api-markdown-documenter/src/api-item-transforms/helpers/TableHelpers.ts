@@ -16,9 +16,7 @@ import {
 	type ApiVariable,
 } from "@microsoft/api-extractor-model";
 import type { DocSection } from "@microsoft/tsdoc";
-import { toHtml } from "hast-util-to-html";
-import type { Html, PhrasingContent, Table, TableCell } from "mdast";
-import { toHast } from "mdast-util-to-hast";
+import type { PhrasingContent, Table, TableCell } from "mdast";
 
 import type { Section } from "../../mdast/index.js";
 import {
@@ -30,7 +28,7 @@ import {
 } from "../../utilities/index.js";
 import { transformTsdoc } from "../TsdocNodeTransforms.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
-import { getLinkForApiItem } from "../utilities/index.js";
+import { getLinkForApiItem, mdastToHtml } from "../utilities/index.js";
 
 import { createExcerptSpanWithHyperlinks } from "./Helpers.js";
 import { createTableFromItems } from "./TableCreation.js";
@@ -787,18 +785,17 @@ function createTableCellFromTsdocSection(
 
 	// `mdast` does not allow block content in table cells, but we want to be able to include things like fenced code blocks, etc. in our table cells.
 	// To accommodate this, we convert the contents to HTML and put that inside the table cell.
-	const htmlTrees = transformed.map((node) => toHast(node));
-	const htmlNodes: Html[] = htmlTrees.map((node) => ({
-		type: "html",
-		// In order for the Markdown syntax to be correct, the body of the cell must not contain any newlines.
-		// In some circumstances, `hast-util-to-html` seems to insert newlines presumably for formatting purposes,
-		// though it is unclear exactly what scenarios cause this behavior.
-		// Remove any such newlines here.
-		value: toHtml(node).replace(/\r?\n/g, "" /* omit newlines */),
-	}));
+	const htmlElements = transformed.map((node) => mdastToHtml(node));
+	const htmlString = htmlElements.join("").trim().replace(/\r?\n/g, "" /* omit newlines */);
+
 	return {
 		type: "tableCell",
-		children: htmlNodes,
+		children: [
+			{
+				type: "html",
+				value: htmlString,
+			},
+		],
 	};
 }
 

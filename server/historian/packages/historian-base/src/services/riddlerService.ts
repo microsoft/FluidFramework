@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	ITenantConfig,
-	ITenantConfigManager,
-	ICache,
-	IInvalidTokenError,
-} from "@fluidframework/server-services-core";
+import type { ITokenClaims } from "@fluidframework/protocol-definitions";
 import {
 	BasicRestWrapper,
 	isNetworkError,
@@ -16,18 +11,25 @@ import {
 	type RestWrapper,
 	validateTokenClaimsExpiration,
 } from "@fluidframework/server-services-client";
-import { v4 as uuid } from "uuid";
+import type {
+	ITenantConfig,
+	ITenantConfigManager,
+	ICache,
+	IInvalidTokenError,
+} from "@fluidframework/server-services-core";
 import {
 	BaseTelemetryProperties,
 	Lumberjack,
 	getGlobalTelemetryContext,
 } from "@fluidframework/server-services-telemetry";
+import { logHttpMetrics } from "@fluidframework/server-services-utils";
+import { decode } from "jsonwebtoken";
+import { v4 as uuid } from "uuid";
+
 import { getRequestErrorTranslator } from "../utils";
+
 import type { ITenantService } from "./definitions";
 import type { RedisTenantCache } from "./redisTenantCache";
-import { logHttpMetrics } from "@fluidframework/server-services-utils";
-import type { ITokenClaims } from "@fluidframework/protocol-definitions";
-import { decode } from "jsonwebtoken";
 
 export class RiddlerService implements ITenantService, ITenantConfigManager {
 	private readonly restWrapper: RestWrapper;

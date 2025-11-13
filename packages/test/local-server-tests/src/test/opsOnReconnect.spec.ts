@@ -24,7 +24,11 @@ import {
 	LocalResolver,
 } from "@fluidframework/local-driver/internal";
 import { SharedDirectory, type ISharedMap, SharedMap } from "@fluidframework/map/internal";
-import { FlushMode, IEnvelope } from "@fluidframework/runtime-definitions/internal";
+import {
+	type FluidDataStoreMessage,
+	FlushMode,
+	IEnvelope,
+} from "@fluidframework/runtime-definitions/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 import {
 	ILocalDeltaConnectionServer,
@@ -135,19 +139,22 @@ describe("Ops on Reconnect", () => {
 			"op",
 			(message: ISequencedDocumentMessage) => {
 				if (message.type === ContainerMessageType.FluidDataStoreOp) {
-					const envelope = message.contents as IEnvelope;
-					const address = envelope.contents.content.address;
-					const content = envelope.contents.content.contents;
+					const envelope = message.contents as IEnvelope<FluidDataStoreMessage>;
+					// The processing here appears far into the weeds. It is unclear if
+					// there is value using less `any`. Typing seems wrong even if the
+					// SharedString message, for example, is an IMergeTreeInsertMsg.
+					// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments -- explicitly using `any` even if IEnvelope default is later changed to unknown
+					const { address, contents } = envelope.contents.content as IEnvelope<any>;
 					const batch = (message.metadata as { batch?: unknown } | undefined)?.batch;
 					let value1: string | number;
 					let value2: string;
 					// Add special handling for SharedString. SharedMap and SharedDirectory content structure is same.
 					if (address === stringId) {
-						value1 = content.pos1;
-						value2 = content.seg;
+						value1 = contents.pos1;
+						value2 = contents.seg;
 					} else {
-						value1 = content.key;
-						value2 = content.value.value;
+						value1 = contents.key;
+						value2 = contents.value.value;
 					}
 					receivedValues.push([value1, value2, batch]);
 				}

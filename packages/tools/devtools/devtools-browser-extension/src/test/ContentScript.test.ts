@@ -13,7 +13,7 @@ import { expect } from "chai";
 import { createSandbox } from "sinon";
 
 import type { Globals } from "../Globals.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { runContentScript } from "../content/ContentScriptContent.js";
 import { extensionViewMessageSource } from "../messaging/index.js";
 

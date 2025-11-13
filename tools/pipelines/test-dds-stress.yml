@@ -18,6 +18,11 @@ resources:
       - release/*
       - main
       - next
+  repositories:
+  - repository: ff_pipeline_host
+    type: git
+    name: ff_pipeline_host
+
 
 variables:
 - template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self

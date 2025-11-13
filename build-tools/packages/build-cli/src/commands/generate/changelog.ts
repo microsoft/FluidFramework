@@ -4,7 +4,6 @@
  */
 
 import { readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
 import {
 	type VersionBumpType,
 	bumpVersionScheme,
@@ -17,7 +16,9 @@ import { inc } from "semver";
 import { CleanOptions } from "simple-git";
 
 import { checkFlags, releaseGroupFlag, semverFlag } from "../../flags.js";
-import { BaseCommand, DEFAULT_CHANGESET_PATH, loadChangesets } from "../../library/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { canonicalizeChangesets } from "../../library/changesets.js";
+import { BaseCommand } from "../../library/index.js";
 import { isReleaseGroup } from "../../releaseGroups.js";
 
 async function replaceInFile(
@@ -54,11 +55,8 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 		},
 	];
 
-	private bumpType?: VersionBumpType;
-
-	private async processPackage(pkg: Package): Promise<void> {
+	private async processPackage(pkg: Package, bumpType: VersionBumpType): Promise<void> {
 		const { directory, version: pkgVersion } = pkg;
-		const bumpType = this.bumpType ?? "patch";
 
 		// This is the version that the changesets tooling calculates by default. It does a bump of the highest semver type
 		// in the changesets on the current version. We search for that version in the generated changelog and replace it
@@ -83,49 +81,6 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 		);
 	}
 
-	/**
-	 * Removes any custom metadata from all changesets and writes the resulting changes back to the source files. This
-	 * metadata needs to be removed prior to running `changeset version` from the \@changesets/cli package. If it is not,
-	 * then the custom metadata is interpreted as change metadata and the changeset tools fail.
-	 *
-	 * For more information about the custom metadata we use in our changesets, see
-	 * https://github.com/microsoft/FluidFramework/wiki/Changesets#custom-metadata
-	 *
-	 * **Note that this is a lossy action!** The metadata is completely removed. Changesets are typically in source
-	 * control so changes can usually be reverted.
-	 */
-	private async canonicalizeChangesets(releaseGroupRootDir: string): Promise<void> {
-		const changesetDir = path.join(releaseGroupRootDir, DEFAULT_CHANGESET_PATH);
-		const changesets = await loadChangesets(changesetDir, this.logger);
-
-		// Determine the highest bump type and save it for later - it determines the changesets-calculated version.
-		const bumpTypes: Set<VersionBumpType> = new Set();
-		for (const changeset of changesets) {
-			for (const bumpType of changeset.changeTypes) {
-				bumpTypes.add(bumpType);
-			}
-		}
-		this.bumpType = bumpTypes.has("major")
-			? "major"
-			: bumpTypes.has("minor")
-				? "minor"
-				: "patch";
-
-		const toWrite: Promise<void>[] = [];
-		for (const changeset of changesets) {
-			// Filter out properties that start with __
-			const metadata = Object.entries(changeset.metadata)
-				.filter(([key]) => !key.startsWith("__"))
-				.map(([packageName, bump]) => {
-					return `"${packageName}": ${bump}`;
-				});
-			const output = `---\n${metadata.join("\n")}\n---\n\n${changeset.summary}\n\n${changeset.body}\n`;
-			this.info(`Writing canonical changeset: ${changeset.sourceFile}`);
-			toWrite.push(writeFile(changeset.sourceFile, output));
-		}
-		await Promise.all(toWrite);
-	}
-
 	public async run(): Promise<void> {
 		const context = await this.getContext();
 
@@ -147,7 +102,7 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 
 		// Strips additional custom metadata from the source files before we call `changeset version`,
 		// because the changeset tools - like @changesets/cli - only work on canonical changesets.
-		await this.canonicalizeChangesets(releaseGroupRoot);
+		const bumpType = await canonicalizeChangesets(releaseGroupRoot, this.logger);
 
 		// The `changeset version` command applies the changesets to the changelogs
 		ux.action.start("Running `changeset version`");
@@ -179,7 +134,7 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 		ux.action.start("Processing changelog updates");
 		const processPromises: Promise<void>[] = [];
 		for (const pkg of packagesToCheck) {
-			processPromises.push(this.processPackage(pkg));
+			processPromises.push(this.processPackage(pkg, bumpType));
 		}
 		const results = await Promise.allSettled(processPromises);
 		const failures = results.filter((p) => p.status === "rejected");

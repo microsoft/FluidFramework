@@ -4,6 +4,7 @@
  */
 
 import type { IHeader } from "@fluidframework/gitresources";
+import { ScopeType } from "@fluidframework/protocol-definitions";
 import type {
 	IStorageNameRetriever,
 	IThrottler,
@@ -11,19 +12,19 @@ import type {
 	IDocumentManager,
 	IDenyList,
 } from "@fluidframework/server-services-core";
+import { validateRequestParams } from "@fluidframework/server-services-shared";
 import {
 	denyListMiddleware,
 	type IThrottleMiddlewareOptions,
 	throttle,
 } from "@fluidframework/server-services-utils";
-import { validateRequestParams } from "@fluidframework/server-services-shared";
 import { Router } from "express";
 import type * as nconf from "nconf";
 import winston from "winston";
+
 import type { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "../../services";
-import * as utils from "../utils";
 import { Constants } from "../../utils";
-import { ScopeType } from "@fluidframework/protocol-definitions";
+import * as utils from "../utils";
 
 export function create(
 	config: nconf.Provider,

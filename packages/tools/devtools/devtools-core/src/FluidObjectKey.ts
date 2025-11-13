@@ -12,7 +12,7 @@ const visualizerIdMap = new WeakMap<object, number>();
  *
  * @remarks
  * The key is tied to the object identity, not the object's contents; modifying the object will not cause it to get a different key.
- * Adopted from the {@link @fluid-experimental/tree-react-api#objectIdNumber} function.
+ * Adopted from the {@link @fluidframework/react#objectIdNumber} function.
  */
 export function getKeyForFluidObject(visualizerNode: object): string {
 	const id = visualizerIdMap.get(visualizerNode);

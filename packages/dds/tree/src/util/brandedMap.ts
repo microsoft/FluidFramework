@@ -11,10 +11,12 @@ import { getOrCreate } from "./utils.js";
 /**
  * Key in a {@link BrandedMapSubset}.
  * @remarks
+ * `TContent` is used as part of the brand to strongly associate the key type with the type of the values it looks up.
+ *
  * Due to the `TContent` type parameter being invariant (which it has to be since keys are used to both read and write data),
  * generic collections end up needing to constrain their key's `TContent` to `any`.
  */
-export type BrandedKey<TKey, TContent> = TKey & Invariant<TContent>;
+export type BrandedKey<TKey, TContent> = Brand<TKey, ["BrandedKey", Invariant<TContent>]>;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type BrandedKeyContent<TKey extends BrandedKey<unknown, any>> = TKey extends BrandedKey<

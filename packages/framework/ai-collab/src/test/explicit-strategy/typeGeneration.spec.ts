@@ -5,18 +5,18 @@
 
 import { strict as assert } from "node:assert";
 
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import {
 	SchemaFactory,
 	SharedTree,
 	TreeViewConfiguration,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/tree/internal";
 
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { doesNodeContainArraySchema } from "../../explicit-strategy/typeGeneration.js";
 
 const factory = SharedTree.getFactory();

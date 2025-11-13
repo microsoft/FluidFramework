@@ -18,7 +18,7 @@ import type {
 } from "../../../util/index.js";
 import {
 	objectSchema,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/node-kinds/index.js";
 
 import type {
@@ -29,7 +29,7 @@ import type {
 	TreeNodeSchema,
 	NodeKind,
 	TreeNodeSchemaClass,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/core/treeNodeSchema.js";
 
 import type { TreeValue } from "../../../core/index.js";
@@ -87,7 +87,7 @@ const schema = new SchemaFactory("com.example");
 	}
 
 	// Class that implements both TreeNodeSchemaNonClass and TreeNodeSchemaNonClass
-	class CustomizedBoth extends objectSchema("B", { x: [schema.number] }, true, false) {
+	class CustomizedBoth extends objectSchema("B", { x: [schema.number] }, true, {}) {
 		public customized = true;
 	}
 

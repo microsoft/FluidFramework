@@ -47,7 +47,7 @@ describe("PactMap", () => {
 
 		describe("APIs", () => {
 			it("Can create a PactMap", () => {
-				assert.ok(pactMap, "Could not create a PactMap");
+				assert(pactMap !== undefined, "Could not create a PactMap");
 			});
 		});
 	});
@@ -62,7 +62,7 @@ describe("PactMap", () => {
 		});
 
 		it("Can create the PactMap", async () => {
-			assert.ok(pactMap, "Could not create PactMap");
+			assert(pactMap !== undefined, "Could not create PactMap");
 		});
 
 		it("Can set a value and read it from all clients", async () => {
@@ -126,8 +126,8 @@ describe("PactMap", () => {
 		});
 
 		it("Can create the PactMaps", async () => {
-			assert.ok(pactMap1, "Could not create pactMap1");
-			assert.ok(pactMap2, "Could not create pactMap2");
+			assert(pactMap1 !== undefined, "Could not create pactMap1");
+			assert(pactMap2 !== undefined, "Could not create pactMap2");
 		});
 
 		it("Can set a value and read it from all clients", async () => {

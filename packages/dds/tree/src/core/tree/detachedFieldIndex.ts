@@ -9,8 +9,8 @@ import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	type CodecWriteOptions,
 	FluidClientVersion,
+	FormatValidatorNoOp,
 	type IJsonCodec,
-	noopValidator,
 } from "../../codec/index.js";
 import {
 	type IdAllocator,
@@ -83,8 +83,8 @@ export class DetachedFieldIndex {
 		options?: CodecWriteOptions,
 	) {
 		this.options = options ?? {
-			jsonValidator: noopValidator,
-			oldestCompatibleClient: FluidClientVersion.v2_0,
+			jsonValidator: FormatValidatorNoOp,
+			minVersionForCollab: FluidClientVersion.v2_0,
 		};
 		this.codec = makeDetachedFieldIndexCodec(revisionTagCodec, this.options, idCompressor);
 	}
@@ -293,7 +293,10 @@ export class DetachedFieldIndex {
 					root: brand<ForestRootId>(root + i),
 					latestRelevantRevision: revision,
 				});
-				setInNestedMap(this.latestRelevantRevisionToFields, revision, root, nodeId);
+				setInNestedMap(this.latestRelevantRevisionToFields, revision, root + i, {
+					major: nodeId.major,
+					minor: nodeId.minor + i,
+				});
 			}
 		}
 		return root;

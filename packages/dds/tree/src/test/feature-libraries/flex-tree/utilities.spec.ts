@@ -15,7 +15,7 @@ import {
 	detachedFieldSlot,
 	treeStatusFromAnchorCache,
 	treeStatusFromDetachedField,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/flex-tree/utilities.js";
 import { TreeStatus } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";

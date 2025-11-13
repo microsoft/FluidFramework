@@ -14,7 +14,7 @@ import {
 } from "./dataObjectRegistry.js";
 import { DataObjectGridToolbar } from "./toolbar.js";
 
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import "react-grid-layout/css/styles.css";
 import "./dataObjectGridView.css";
 

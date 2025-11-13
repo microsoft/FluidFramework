@@ -10,8 +10,8 @@ module.exports = {
 	],
 	rules: {
 		"@typescript-eslint/strict-boolean-expressions": "off", // requires strictNullChecks=true in tsconfig
-		"import/no-nodejs-modules": "off",
-		"import/no-extraneous-dependencies": [
+		"import-x/no-nodejs-modules": "off",
+		"import-x/no-extraneous-dependencies": [
 			"error",
 			{
 				// This package is only used to run its tests. It's ok for the src/utils.ts to import from devDependencies, in

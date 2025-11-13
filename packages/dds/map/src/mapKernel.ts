@@ -14,7 +14,7 @@ import type {
 	IMapClearOperation,
 	IMapDeleteOperation,
 	IMapSetOperation,
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	ISerializableValue,
 	ISerializedValue,
 } from "./internalInterfaces.js";
@@ -63,7 +63,7 @@ export type IMapOperation = IMapSetOperation | IMapDeleteOperation | IMapClearOp
  * | JSON.stringify}, direct result from
  * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse | JSON.parse}.
  */
-// eslint-disable-next-line import/no-deprecated
+// eslint-disable-next-line import-x/no-deprecated
 export type IMapDataObjectSerializable = Record<string, ISerializableValue>;
 
 /**

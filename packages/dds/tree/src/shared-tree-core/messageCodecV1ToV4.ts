@@ -18,6 +18,7 @@ import type { JsonCompatibleReadOnly } from "../util/index.js";
 import { Message } from "./messageFormatV1ToV4.js";
 import type { DecodedMessage } from "./messageTypes.js";
 import type { MessageEncodingContext } from "./messageCodecs.js";
+import type { MessageFormatVersion } from "./messageFormat.js";
 
 export function makeV1ToV4CodecWithVersion<TChangeset>(
 	changeCodec: ChangeFamilyCodec<TChangeset>,
@@ -28,7 +29,11 @@ export function makeV1ToV4CodecWithVersion<TChangeset>(
 		ChangeEncodingContext
 	>,
 	options: ICodecOptions,
-	version: 1 | 2 | 3 | 4,
+	version:
+		| typeof MessageFormatVersion.v1
+		| typeof MessageFormatVersion.v2
+		| typeof MessageFormatVersion.v3
+		| typeof MessageFormatVersion.v4,
 ): IJsonCodec<
 	DecodedMessage<TChangeset>,
 	JsonCompatibleReadOnly,
@@ -45,8 +50,11 @@ export function makeV1ToV4CodecWithVersion<TChangeset>(
 		Message(changeCodec.encodedSchema ?? Type.Any()),
 		{
 			encode: (decoded: DecodedMessage<TChangeset>, context: MessageEncodingContext) => {
-				assert(decoded.type === "commit", "Only commit messages are supported");
-				assert(decoded.branchId === "main", "Only commit messages to main are supported");
+				assert(decoded.type === "commit", 0xc68 /* Only commit messages are supported */);
+				assert(
+					decoded.branchId === "main",
+					0xc69 /* Only commit messages to main are supported */,
+				);
 				const { commit, sessionId: originatorId } = decoded;
 				const message: Message = {
 					revision: revisionTagCodec.encode(commit.revision, {

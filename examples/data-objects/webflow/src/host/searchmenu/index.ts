@@ -8,7 +8,7 @@ import { debug } from "../debug.js";
 
 import { View } from "./view.js";
 
-// eslint-disable-next-line import/no-unassigned-import
+// eslint-disable-next-line import-x/no-unassigned-import
 import "./index.css";
 
 interface ISearchMenuProps {

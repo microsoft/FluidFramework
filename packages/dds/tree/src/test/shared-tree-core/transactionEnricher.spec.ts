@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { TransactionEnricher } from "../../shared-tree-core/transactionEnricher.js";
 import { TestChange, TestChangeRebaser } from "../testChange.js";
 import type { RevisionTag } from "../../core/index.js";

@@ -12,8 +12,7 @@
 
 parameters:
 # Location for the .npmrc file.
-# NOTE: Do not override the default value. It's a parameter just for reusability.
-- name: npmrcLocation
+- name: userNpmrcDirectory
   type: string
   default: $(Agent.TempDirectory)/global-download-npmrc
 
@@ -43,8 +42,8 @@ steps:
     script: |
       set -eu -o pipefail
 
-      mkdir -p ${{ parameters.npmrcLocation }}
-      cd ${{ parameters.npmrcLocation }}
+      mkdir -p ${{ parameters.userNpmrcDirectory }}
+      cd ${{ parameters.userNpmrcDirectory }}
 
       echo "Generating .npmrc"
 
@@ -57,14 +56,14 @@ steps:
   displayName: 'Authenticate to internal ADO feeds'
   retryCountOnTaskFailure: 1
   inputs:
-    workingFile: ${{ parameters.npmrcLocation }}/.npmrc
+    workingFile: ${{ parameters.userNpmrcDirectory }}/.npmrc
 
 - task: Bash@3
   displayName: Use the authenticated .npmrc file globally
   inputs:
     targetType: 'inline'
     script: |
-      TARGET_FILE=${{ parameters.npmrcLocation }}/.npmrc
+      TARGET_FILE=${{ parameters.userNpmrcDirectory }}/.npmrc
 
       # Configure the copied file to be the default user-level .npmrc file, so all invocations of npm use it.
       # Particularly relevant for the ones that occur when we install older version for compat tests.

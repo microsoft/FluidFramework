@@ -10,7 +10,7 @@ module.exports = {
 	},
 	rules: {
 		// Allow reaching into FluidFramework package paths that end with alpha, beta, legacy, or internal
-		"import/no-internal-modules": [
+		"import-x/no-internal-modules": [
 			"error",
 			{
 				allow: [
@@ -30,7 +30,7 @@ module.exports = {
 			},
 			rules: {
 				// Test files can import from submodules for testing purposes
-				"import/no-internal-modules": [
+				"import-x/no-internal-modules": [
 					"error",
 					{
 						allow: [

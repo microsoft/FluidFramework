@@ -23,11 +23,11 @@ export class ClientManager implements IClientManager {
 		private readonly redisClientConnectionManager: IRedisClientConnectionManager,
 		parameters?: IRedisParameters,
 	) {
-		if (parameters?.expireAfterSeconds) {
+		if (parameters?.expireAfterSeconds !== undefined) {
 			this.expireAfterSeconds = parameters.expireAfterSeconds;
 		}
 
-		if (parameters?.prefix) {
+		if (parameters?.prefix !== undefined) {
 			this.prefix = parameters.prefix;
 		}
 
@@ -68,13 +68,11 @@ export class ClientManager implements IClientManager {
 			.getRedisClient()
 			.hgetall(this.getKey(tenantId, documentId));
 		const clients: ISignalClient[] = [];
-		if (dbClients) {
-			for (const clientId of Object.keys(dbClients)) {
-				clients.push({
-					clientId,
-					client: JSON.parse(dbClients[clientId]),
-				});
-			}
+		for (const clientId of Object.keys(dbClients)) {
+			clients.push({
+				clientId,
+				client: JSON.parse(dbClients[clientId]),
+			});
 		}
 		return clients;
 	}

@@ -18,7 +18,7 @@ import type {
 	SharedString,
 } from "@fluidframework/sequence/internal";
 // This is not in sequence's public API, but an e2e test in this file sniffs the summary.
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { ISerializedIntervalCollectionV2 } from "@fluidframework/sequence/internal/test/intervalCollection";
 import {
 	ChannelFactoryRegistry,

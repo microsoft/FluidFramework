@@ -25,7 +25,7 @@ import type {
 	requireTrue,
 	UnionToIntersection,
 } from "../../../util/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { asIndex } from "../../../simple-tree/node-kinds/index.js";
 import { TestTreeProviderLite, validateUsageError } from "../../utils.js";
 
@@ -71,6 +71,18 @@ describe("ArrayNode", () => {
 			n.insertAtStart(3);
 			assert.equal(n.y, 3);
 			assert.deepEqual(thisList, [n, n]);
+		});
+
+		it("does not pass Array.isArray", () => {
+			const array = init(CustomizableNumberArray, [1, 2, 3]);
+			assert.equal(Array.isArray(array), false);
+		});
+	});
+
+	describeHydration("pojo-emulation", (init) => {
+		it("passes Array.isArray", () => {
+			const array = init(PojoEmulationNumberArray, [1, 2, 3]);
+			assert.equal(Array.isArray(array), true);
 		});
 	});
 

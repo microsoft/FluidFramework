@@ -8,10 +8,10 @@
 import { EventEmitter } from "@fluid-example/example-utils";
 import { assert } from "@fluidframework/core-utils/legacy";
 import {
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	createGroupOp,
 	createRemoveRangeOp,
-	// eslint-disable-next-line import/no-internal-modules -- #26905: `merge-tree` internals used in examples
+	// eslint-disable-next-line import-x/no-internal-modules -- #26905: `merge-tree` internals used in examples
 } from "@fluidframework/merge-tree/internal";
 import { IMergeTreeDeltaOp } from "@fluidframework/merge-tree/legacy";
 import {
@@ -39,12 +39,12 @@ import { schema } from "./fluidSchema.js";
 import { create as createSelection } from "./selection.js";
 export const IRichTextEditor: keyof IProvideRichTextEditor = "IRichTextEditor";
 
-/* eslint-disable import/no-internal-modules, import/no-unassigned-import */
+/* eslint-disable import-x/no-internal-modules, import-x/no-unassigned-import */
 import "prosemirror-example-setup/style/style.css";
 import "prosemirror-menu/style/menu.css";
 import "prosemirror-view/style/prosemirror.css";
 import "./style.css";
-/* eslint-enable import/no-internal-modules, import/no-unassigned-import */
+/* eslint-enable import-x/no-internal-modules, import-x/no-unassigned-import */
 
 export interface IProvideRichTextEditor {
 	readonly IRichTextEditor: IRichTextEditor;
@@ -281,7 +281,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 						operations = operations.concat(sliceOperations);
 					}
 
-					// eslint-disable-next-line import/no-deprecated
+					// eslint-disable-next-line import-x/no-deprecated
 					const groupOp = createGroupOp(...operations);
 					this.text.groupOperation(groupOp);
 
@@ -346,7 +346,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 						operations = operations.concat(sliceOperations);
 					}
 
-					// eslint-disable-next-line import/no-deprecated
+					// eslint-disable-next-line import-x/no-deprecated
 					const groupOp = createGroupOp(...operations);
 					this.text.groupOperation(groupOp);
 

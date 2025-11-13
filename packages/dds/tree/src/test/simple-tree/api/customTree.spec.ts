@@ -19,9 +19,9 @@ import {
 	KeyEncodingOptions,
 	replaceHandles,
 	tryStoredSchemaAsArray,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/customTree.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
 import { singleJsonCursor } from "../../json/index.js";
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";

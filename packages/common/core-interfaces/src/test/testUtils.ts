@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { InternalUtilityTypes } from "../exposedInternalUtilityTypes.js";
-
 import type {
 	JsonDeserialized,
 	JsonTypeToOpaqueJson,
@@ -15,6 +13,8 @@ import type {
 	OpaqueJsonDeserialized,
 	OpaqueJsonSerializable,
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
+
+import type { InternalUtilityTypes } from "../exposedInternalUtilityTypes.js";
 
 /**
  * Use to compile-time assert types of two variables are identical.
@@ -28,6 +28,13 @@ export function assertIdenticalTypes<const T, const U>(
 	_expected: U & InternalUtilityTypes.IfSameType<T, U>,
 ): InternalUtilityTypes.IfSameType<T, U> {
 	return undefined as InternalUtilityTypes.IfSameType<T, U>;
+}
+
+/**
+ * Use to verify that a parameter is accepted as a specific type.
+ */
+export function parameterAcceptedAs<T>(_: T): void {
+	// Do nothing.  Used to verify type compatibility.
 }
 
 /**

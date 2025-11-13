@@ -11,9 +11,9 @@ import {
 	type MockContainerRuntime,
 } from "@fluidframework/test-runtime-utils/internal";
 
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { ISharedSignal } from "../../signal/interfaces.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { SharedSignalFactory } from "../../signal/sharedSignalFactory.js";
 
 interface RollbackTestSetup {
@@ -26,7 +26,11 @@ function setupRollbackTest(): RollbackTestSetup {
 	const containerRuntimeFactory = new MockContainerRuntimeFactory({ flushMode: 1 }); // TurnBased
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId: "1" });
 	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-	const sharedSignal = signalFactory.create(dataStoreRuntime, "shared-signal-1");
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- TODO: improve typing
+	const sharedSignal: ISharedSignal<number> = signalFactory.create(
+		dataStoreRuntime,
+		"shared-signal-1",
+	);
 	dataStoreRuntime.setAttachState(AttachState.Attached);
 	sharedSignal.connect({
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),

@@ -178,7 +178,7 @@ export function computeTombstoneTimeout(
 	sessionExpiryTimeoutMs: number | undefined,
 ): number | undefined {
 	const bufferMs = oneDayMs;
-	return (
-		sessionExpiryTimeoutMs && sessionExpiryTimeoutMs + maxSnapshotCacheExpiryMs + bufferMs
-	);
+	return sessionExpiryTimeoutMs === undefined
+		? undefined
+		: sessionExpiryTimeoutMs + maxSnapshotCacheExpiryMs + bufferMs;
 }

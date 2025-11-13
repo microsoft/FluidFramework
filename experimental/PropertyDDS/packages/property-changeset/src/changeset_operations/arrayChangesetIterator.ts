@@ -8,6 +8,7 @@
  */
 
 import { constants } from "@fluid-experimental/property-common";
+
 import isNumber from "lodash/isNumber.js";
 import isString from "lodash/isString.js";
 

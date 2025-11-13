@@ -11,7 +11,7 @@ import {
 	compliesWithMultiplicity,
 	isFieldInSchema,
 	isNodeInSchema,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/default-schema/schemaChecker.js";
 import {
 	cursorForJsonableTreeNode,

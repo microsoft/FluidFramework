@@ -15,7 +15,7 @@ import {
 } from "../../core/index.js";
 import { cursorForMapTreeNode } from "../../feature-libraries/index.js";
 // Allow importing from this specific file which is being tested:
-/* eslint-disable-next-line import/no-internal-modules */
+/* eslint-disable-next-line import-x/no-internal-modules */
 import { buildForest } from "../../feature-libraries/object-forest/index.js";
 import { Breakable, type JsonCompatible, brand } from "../../util/index.js";
 import { testForest } from "../forestTestSuite.js";

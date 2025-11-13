@@ -59,7 +59,8 @@ a diff to review as part of a PR -- just like we do with API reports for code ch
 | Script | Description |
 |--------|-------------|
 | `build` | `npm run print-config` |
-| `build:readme` | `markdown-magic --files "**/*.md"` |
+| `build:readme:disabled` | `markdown-magic --files "**/*.md"` |
+| `clean` | `rimraf --glob dist` |
 | `cleanup-printed-configs` | Clean up the printed configs. Removes the `parser` property and sorts the JSON. |
 | `format` | `npm run prettier:fix` |
 | `prettier` | `prettier --check .` |
@@ -73,6 +74,7 @@ a diff to review as part of a PR -- just like we do with API reports for code ch
 | `print-config:strict-biome` | `eslint --config ./strict-biome.js --print-config ./src/file.ts > ./printed-configs/strict-biome.json` |
 | `print-config:test` | Print the eslint config for test files (`eslint --config index.js --print-config src/test/file.ts`). |
 | `test` | `echo TODO: add tests in @fluidframework/eslint-config-fluid` |
+| `tsc` | `npm run build` |
 
 <!-- prettier-ignore-end -->
 

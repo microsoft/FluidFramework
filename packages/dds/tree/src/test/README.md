@@ -22,8 +22,21 @@ Assuming all code has such tests, and only relies of documented behavior of the 
 In practice, testing of this type will not cover all cases: this is expected.
 When a testing gap is found and determined worth covering (for example due to a bug, new code, or audit of coverage), it should always be possible to address it by adding more tests following this pattern (for example regression tests can always be implemented as a `spec` test for the code which contained the bug).
 Note that the fact that this approach is always possible does not make it the best approach: using spec tests in this way should be the first option considered, but if a better testing approach is found, it can be used instead as long as it is documented appropriately.
+- `integration`: Tests for using multiple APIs together.
+If there is a corresponding `spec` file which is sufficiently large in scope, the tests should be placed within it:
+only when the tests don't cleanly correspond to a particular source file should a separate `integration` file be created.
+When created, the file should be placed in the `src/test` directory's sub folder which is the most nested it can be while still including all the relevant APIs.
+For example tests and examples of using `src/thing/foo` with `src/thing/bar` would belong in `src/test/thing` and could be named something like `fooWithBar.integration.ts`.
+If it is not entirely clear exactly what tests belong in a given `integration` file based on just the file name, a doc comment should be included at the top explaining the scope.
 
 Any other kinds of test files should be documented when created by adding them to this list.
+
+## Examples
+
+Code showing how to use an API can be included in tests.
+Such tests should mention that they are an "example" somewhere in the file name, suite or test name.
+These are not intended to serve as tests for the APIs, but are written as tests to ensure the examples stay up to date.
+If there is a corresponding `spec` file, the examples should be included within it: only when the examples don't cleanly correspond to a particular source file should a separate `examples` file be created. When created, the file should be places in the `src/test` directory's sub folder which corresponds to the most nested it can be while still including all the relevant APIs. For example an example of using `src/thing/foo` with `src/thing/bar` would belong in `src/test/thing` and could be named something like `fooWithBar.example.ts`.
 
 ## Test Tagging
 

@@ -29,7 +29,7 @@ import {
 	nullSchema,
 	numberSchema,
 	stringSchema,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/leafNodeSchema.js";
 
 const adapter: CursorAdapter<JsonCompatible> = {

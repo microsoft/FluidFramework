@@ -5,6 +5,14 @@
 
 import type { IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
+import type {
+	IFluidDataStoreRuntime,
+	IFluidDataStoreRuntimeAlpha,
+} from "@fluidframework/datastore-definitions/internal";
+import type {
+	ContainerRuntimeBaseAlpha,
+	IContainerRuntimeBase,
+} from "@fluidframework/runtime-definitions/internal";
 import { generateErrorWithStack } from "@fluidframework/telemetry-utils/internal";
 
 interface IResponseException extends Error {
@@ -130,4 +138,24 @@ export function createResponseError(
 		},
 		headers,
 	};
+}
+
+/**
+ * Converts types to their alpha counterparts to expose alpha functionality.
+ * @legacy @alpha
+ */
+export function asLegacyAlpha(runtime: IContainerRuntimeBase): ContainerRuntimeBaseAlpha;
+/**
+ * Converts types to their alpha counterparts to expose alpha functionality.
+ * @legacy @alpha
+ */
+export function asLegacyAlpha(runtime: IFluidDataStoreRuntime): IFluidDataStoreRuntimeAlpha;
+/**
+ * Converts types to their alpha counterparts to expose alpha functionality.
+ * @legacy @alpha
+ */
+export function asLegacyAlpha(
+	runtime: IFluidDataStoreRuntime | IContainerRuntimeBase,
+): unknown {
+	return runtime;
 }

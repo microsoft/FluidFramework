@@ -14,7 +14,7 @@ import { TableHeaderView } from "./tableHeaderView.js";
 import { TableRowView } from "./tableRowView.js";
 import { useTree } from "./utilities.js";
 
-// eslint-disable-next-line import/no-unassigned-import
+// eslint-disable-next-line import-x/no-unassigned-import
 import "./tableView.css";
 
 /**

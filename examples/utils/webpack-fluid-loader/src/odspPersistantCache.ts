@@ -7,8 +7,8 @@ import {
 	ICacheEntry,
 	IFileEntry,
 	IPersistedCache,
-	getKeyForCacheEntry,
-} from "@fluidframework/odsp-driver-definitions/internal";
+} from "@fluidframework/driver-definitions/internal";
+import { getKeyForCacheEntry } from "@fluidframework/driver-utils/internal";
 
 export class OdspPersistentCache implements IPersistedCache {
 	private readonly cache = new Map<string, any>();

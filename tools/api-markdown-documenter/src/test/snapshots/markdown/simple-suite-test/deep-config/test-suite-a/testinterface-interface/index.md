@@ -2,7 +2,9 @@
 
 [Packages](/) > [test-suite-a](/test-suite-a/) > [TestInterface](/test-suite-a/testinterface-interface/)
 
-Test interface
+Test \[interface]\(https\://www\.typescriptlang.org/docs/handbook/interfaces.html).
+
+Cheers!
 
 <h2 id="testinterface-signature">Signature</h2>
 

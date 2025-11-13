@@ -13,11 +13,21 @@ parameters:
 - name: packageManagerInstallCommand
   type: string
 
+- name: primaryRegistry
+  type: string
+  default: $(ado-feeds-primary-registry)
+
+- name: userNpmrcPath
+  type: string
+  default: $(Agent.TempDirectory)/.npmrc
+
 steps:
   - ${{ if eq(parameters.packageManager, 'pnpm') }}:
     - template: /tools/pipelines/templates/include-install-pnpm.yml@self
       parameters:
         buildDirectory: ${{ parameters.buildDirectory }}
+        primaryRegistry: ${{ parameters.primaryRegistry }}
+        userNpmrcPath: ${{ parameters.userNpmrcPath }}
 
   - task: Bash@3
     displayName: Install dependencies

@@ -9,12 +9,14 @@ import type {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
-import {
-	MessageType,
-	type ISequencedDocumentMessage,
-} from "@fluidframework/driver-definitions/internal";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
-import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import type {
+	ISummaryTreeWithStats,
+	IRuntimeMessageCollection,
+	IRuntimeMessagesContent,
+	ISequencedMessageEnvelope,
+} from "@fluidframework/runtime-definitions/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
 	SharedObject,
@@ -26,9 +28,19 @@ import type { ISharedCounter, ISharedCounterEvents } from "./interfaces.js";
 /**
  * Describes the operation (op) format for incrementing the {@link SharedCounter}.
  */
-interface IIncrementOperation {
+export interface IIncrementOperation {
 	type: "increment";
 	incrementAmount: number;
+}
+
+/**
+ * Represents a pending op that has been submitted but not yet ack'd.
+ * Includes the messageId that was used when submitting the op.
+ */
+interface IPendingOperation {
+	type: "increment";
+	incrementAmount: number;
+	messageId: number;
 }
 
 /**
@@ -62,6 +74,16 @@ export class SharedCounter
 	private _value: number = 0;
 
 	/**
+	 * Tracks pending local ops that have not been ack'd yet.
+	 */
+	private readonly pendingOps: IPendingOperation[] = [];
+
+	/**
+	 * The next message id to be used when submitting an op.
+	 */
+	private nextPendingMessageId: number = 0;
+
+	/**
 	 * {@inheritDoc ISharedCounter.value}
 	 */
 	public get value(): number {
@@ -82,9 +104,14 @@ export class SharedCounter
 			type: "increment",
 			incrementAmount,
 		};
+		const messageId = this.nextPendingMessageId++;
 
 		this.incrementCore(incrementAmount);
-		this.submitLocalMessage(op);
+		// We don't need to send the op if we are not attached yet.
+		if (this.isAttached()) {
+			this.pendingOps.push({ ...op, messageId });
+			this.submitLocalMessage(op, messageId);
+		}
 	}
 
 	private incrementCore(incrementAmount: number): void {
@@ -122,30 +149,48 @@ export class SharedCounter
 	protected onDisconnect(): void {}
 
 	/**
-	 * Process a counter operation (op).
-	 *
-	 * @param message - The message to prepare.
-	 * @param local - Whether or not the message was sent by the local client.
-	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
-	 * For messages from a remote client, this will be `undefined`.
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
 	 */
-	protected processCore(
-		message: ISequencedDocumentMessage,
+	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+		const { envelope, local, messagesContent } = messagesCollection;
+		for (const messageContent of messagesContent) {
+			this.processMessage(envelope, messageContent, local);
+		}
+	}
+
+	private processMessage(
+		messageEnvelope: ISequencedMessageEnvelope,
+		messageContent: IRuntimeMessagesContent,
 		local: boolean,
-		localOpMetadata: unknown,
 	): void {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-		if (message.type === MessageType.Operation && !local) {
-			const op = message.contents as IIncrementOperation;
+		if (messageEnvelope.type === MessageType.Operation) {
+			const op = messageContent.contents as IIncrementOperation;
 
-			switch (op.type) {
-				case "increment": {
-					this.incrementCore(op.incrementAmount);
-					break;
-				}
+			// If the message is local we have already optimistically processed
+			// and we should now remove it from this.pendingOps.
+			// If the message is from a remote client, we should process it.
+			if (local) {
+				const pendingOp = this.pendingOps.shift();
+				const messageId = messageContent.localOpMetadata;
+				assert(typeof messageId === "number", 0xc8e /* localOpMetadata should be a number */);
+				assert(
+					pendingOp !== undefined &&
+						pendingOp.messageId === messageId &&
+						pendingOp.type === op.type &&
+						pendingOp.incrementAmount === op.incrementAmount,
+					0xc8f /* local op mismatch */,
+				);
+			} else {
+				switch (op.type) {
+					case "increment": {
+						this.incrementCore(op.incrementAmount);
+						break;
+					}
 
-				default: {
-					throw new Error("Unknown operation");
+					default: {
+						throw new Error("Unknown operation");
+					}
 				}
 			}
 		}
@@ -163,4 +208,39 @@ export class SharedCounter
 
 		this.increment(counterOp.incrementAmount);
 	}
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.rollback}
+	 * @sealed
+	 */
+	protected rollback(content: unknown, localOpMetadata: unknown): void {
+		assertIsIncrementOp(content);
+		assert(
+			typeof localOpMetadata === "number",
+			0xc90 /* localOpMetadata should be a number */,
+		);
+		const pendingOp = this.pendingOps.pop();
+		assert(
+			pendingOp !== undefined &&
+				pendingOp.messageId === localOpMetadata &&
+				pendingOp.type === content.type &&
+				pendingOp.incrementAmount === content.incrementAmount,
+			0xc91 /* op to rollback mismatch with pending op */,
+		);
+		// To rollback the optimistic increment we can increment by the opposite amount.
+		// This will also emit another incremented event with the opposite amount.
+		this.incrementCore(-content.incrementAmount);
+	}
+}
+
+function assertIsIncrementOp(op: unknown): asserts op is IIncrementOperation {
+	assert(
+		typeof op === "object" &&
+			op !== null &&
+			"type" in op &&
+			"incrementAmount" in op &&
+			op.type === "increment" &&
+			typeof op.incrementAmount === "number",
+		0xc92 /* invalid increment op format */,
+	);
 }

@@ -10,7 +10,7 @@ import path from "path";
 import { isJsonSnapshot, timeoutPromise, validateCommandLineArgs } from "../utils.js";
 
 import { _dirname } from "./dirname.cjs";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { fluidExport } from "./sampleCodeLoaders/sampleCodeLoader.js";
 
 describe("utils", () => {

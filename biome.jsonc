@@ -28,6 +28,7 @@
 			// Generated files
 			"**/src/**/test/types/*.generated.ts",
 			"**/src/packageVersion.ts",
+			"**/src/layerGenerationState.ts",
 
 			// Dependencies
 			"**/node_modules/*",

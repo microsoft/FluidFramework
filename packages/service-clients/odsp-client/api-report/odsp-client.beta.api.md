@@ -8,6 +8,11 @@
 export type IOdspAudience = IServiceAudience<OdspMember>;
 
 // @beta
+export interface IOdspFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema> extends IFluidContainer<TContainerSchema> {
+    attach(props?: ContainerAttachProps<OdspContainerAttachProps>): Promise<string>;
+}
+
+// @beta
 export interface IOdspTokenProvider {
     fetchStorageToken(siteUrl: string, refresh: boolean): Promise<TokenResponse>;
     fetchWebsocketToken(siteUrl: string, refresh: boolean): Promise<TokenResponse>;
@@ -18,12 +23,12 @@ export class OdspClient {
     constructor(properties: OdspClientProps);
     // (undocumented)
     createContainer<T extends ContainerSchema>(containerSchema: T): Promise<{
-        container: IFluidContainer<T>;
+        container: IOdspFluidContainer<T>;
         services: OdspContainerServices;
     }>;
     // (undocumented)
     getContainer<T extends ContainerSchema>(id: string, containerSchema: T): Promise<{
-        container: IFluidContainer<T>;
+        container: IOdspFluidContainer<T>;
         services: OdspContainerServices;
     }>;
 }
@@ -41,6 +46,12 @@ export interface OdspConnectionConfig {
     filePath: string;
     siteUrl: string;
     tokenProvider: IOdspTokenProvider;
+}
+
+// @beta (undocumented)
+export interface OdspContainerAttachProps {
+    fileName: string | undefined;
+    filePath: string | undefined;
 }
 
 // @beta

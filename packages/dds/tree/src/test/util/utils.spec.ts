@@ -12,6 +12,7 @@ import {
 	defineLazyCachedProperty,
 	iterableHasSome,
 	mapIterable,
+	oneFromIterable,
 	transformObjectMap,
 } from "../../util/index.js";
 import { benchmark } from "@fluid-tools/benchmark";
@@ -163,5 +164,15 @@ describe("Utils", () => {
 		assert(!iterableHasSome([]));
 		assert(iterableHasSome([1]));
 		assert(!iterableHasSome(new Map([])));
+	});
+
+	it("oneFromIterable", () => {
+		assert.equal(oneFromIterable([undefined]), undefined);
+		assert.equal(oneFromIterable([]), undefined);
+		assert.equal(oneFromIterable(["x"]), "x");
+		assert.equal(oneFromIterable(["x", "x"]), undefined);
+		assert.equal(oneFromIterable(new Set([])), undefined);
+		assert.equal(oneFromIterable(new Set([5])), 5);
+		assert.equal(oneFromIterable(new Set([1, 2])), undefined);
 	});
 });

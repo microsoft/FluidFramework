@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import { SchemaFactory, type NodeFromSchema } from "../../simple-tree/index.js";
 import { describeHydration } from "./utils.js";
 import { Tree } from "../../shared-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { isTreeNode } from "../../simple-tree/core/index.js";
 
 const schemaFactory = new SchemaFactory("Test");

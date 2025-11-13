@@ -6,8 +6,9 @@
 import {
 	type TreeView,
 	type TreeViewAlpha,
+	type TreeViewBeta,
 	type ImplicitFieldSchema,
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	asTreeViewAlpha,
 } from "./simple-tree/index.js";
 
@@ -25,6 +26,16 @@ import {
 export function asAlpha<TSchema extends ImplicitFieldSchema>(
 	view: TreeView<TSchema>,
 ): TreeViewAlpha<TSchema> {
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	return asTreeViewAlpha(view);
+}
+
+/**
+ * Retrieve the {@link TreeViewBeta | beta API} for a {@link TreeView}.
+ * @beta
+ */
+export function asBeta<TSchema extends ImplicitFieldSchema>(
+	view: TreeView<TSchema>,
+): TreeViewBeta<TSchema> {
+	return view as TreeViewBeta<TSchema>;
 }

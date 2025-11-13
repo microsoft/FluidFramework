@@ -15,10 +15,7 @@ import {
 	Loader,
 	waitContainerToCatchUp as waitContainerToCatchUp_original,
 } from "@fluidframework/container-loader/internal";
-import {
-	type IContainerRuntimeOptionsInternal,
-	type MinimumVersionForCollab,
-} from "@fluidframework/container-runtime/internal";
+import { type IContainerRuntimeOptionsInternal } from "@fluidframework/container-runtime/internal";
 import {
 	IRequestHeader,
 	ITelemetryBaseEvent,
@@ -33,6 +30,7 @@ import {
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import { isOdspResolvedUrl } from "@fluidframework/odsp-driver/internal";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import {
 	type ITelemetryGenericEventExt,
 	createChildLogger,

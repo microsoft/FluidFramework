@@ -14,7 +14,7 @@ import type {
 	IFluidHandle,
 	IFluidLoadable,
 } from "@fluidframework/core-interfaces";
-// eslint-disable-next-line import/no-deprecated
+// eslint-disable-next-line import-x/no-deprecated
 import type { IProvideFluidHandle } from "@fluidframework/core-interfaces/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import type { ISharedObject, SharedObject } from "@fluidframework/shared-object-base/internal";
@@ -494,7 +494,7 @@ export async function visualizeChildData(
 		};
 	}
 
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	if ((data as IProvideFluidHandle)?.IFluidHandle !== undefined) {
 		// If we encounter a Fluid handle, register it for future rendering, and return a node with its ID.
 		const handle = data as IFluidHandle;

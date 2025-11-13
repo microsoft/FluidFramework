@@ -568,7 +568,7 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 				The error we want to ignore is TS2322 specifically but there is no way to only ignore specific TS errors.
 
 				TODO: we should look for an alternative to replace this library. AB#18876
-				// @ts-ignore */}
+				// @ts-expect-error See comment above */}
 			<SplitPane
 				split="vertical"
 				minSize={540}

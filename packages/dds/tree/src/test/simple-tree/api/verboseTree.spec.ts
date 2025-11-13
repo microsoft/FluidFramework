@@ -21,12 +21,12 @@ import {
 	replaceVerboseTreeHandles,
 	verboseFromCursor,
 	type VerboseTree,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/verboseTree.js";
 import type { ITreeCursor } from "../../../core/index.js";
 import { cursorForJsonableTreeNode } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
 
 const schema = new SchemaFactory("Test");

@@ -5,11 +5,12 @@
 
 import { strict as assert } from "node:assert";
 
+import { bufferToString } from "@fluid-internal/client-utils";
 import { type ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 
 import {
 	combineAppAndProtocolSummary,
-	getSnapshotTreeAndBlobsFromSerializedContainer,
+	getISnapshotFromSerializedContainer,
 } from "../utils.js";
 
 describe("Dehydrate Container", () => {
@@ -62,9 +63,9 @@ describe("Dehydrate Container", () => {
 
 	it("Summary to baseSnapshot and snapshotBlobs conversion", async () => {
 		const combinedSummary = combineAppAndProtocolSummary(appSummary, protocolSummary);
-		const { baseSnapshot, snapshotBlobs } =
-			getSnapshotTreeAndBlobsFromSerializedContainer(combinedSummary);
-
+		const snapshot = getISnapshotFromSerializedContainer(combinedSummary);
+		const baseSnapshot = snapshot.snapshotTree;
+		const snapshotBlobs = snapshot.blobContents;
 		assert.strictEqual(Object.keys(baseSnapshot.trees).length, 2, "2 trees should be there");
 		assert.strictEqual(
 			Object.keys(baseSnapshot.trees[".protocol"].blobs).length,
@@ -74,20 +75,20 @@ describe("Dehydrate Container", () => {
 
 		// Validate the ".component" blob.
 		const defaultDataStoreBlobId = baseSnapshot.trees.default.blobs[".component"];
-		const defaultDataStoreBlob = snapshotBlobs[defaultDataStoreBlobId];
+		const defaultDataStoreBlob = snapshotBlobs.get(defaultDataStoreBlobId);
 		assert.strict(defaultDataStoreBlob, "defaultDataStoreBlob undefined");
 		assert.strictEqual(
-			JSON.parse(defaultDataStoreBlob),
+			JSON.parse(bufferToString(defaultDataStoreBlob, "utf8")),
 			"defaultDataStore",
 			"The .component blob's content is incorrect",
 		);
 
 		// Validate "root" sub-tree.
 		const rootAttributesBlobId = baseSnapshot.trees.default.trees.root.blobs.attributes;
-		const rootAttributesBlob = snapshotBlobs[rootAttributesBlobId];
+		const rootAttributesBlob = snapshotBlobs.get(rootAttributesBlobId);
 		assert.strict(rootAttributesBlob, "rootAttributesBlob undefined");
 		assert.strictEqual(
-			JSON.parse(rootAttributesBlob),
+			JSON.parse(bufferToString(rootAttributesBlob, "utf8")),
 			"rootattributes",
 			"The root sub-tree's content is incorrect",
 		);

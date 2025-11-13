@@ -9,6 +9,8 @@ import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import type {
 	IDocumentService,
 	IDocumentServiceFactory,
+	IFileEntry,
+	IPersistedCache,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
 import {
@@ -17,9 +19,7 @@ import {
 } from "@fluidframework/driver-utils/internal";
 import {
 	type HostStoragePolicy,
-	type IFileEntry,
 	type IOdspUrlParts,
-	type IPersistedCache,
 	type IRelaySessionAwareDriverFactory,
 	type ISharingLinkKind,
 	type ISocketStorageDiscovery,
@@ -30,6 +30,7 @@ import {
 	type TokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+
 import { v4 as uuid } from "uuid";
 
 import { useCreateNewModule } from "./createFile/index.js";

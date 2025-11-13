@@ -45,7 +45,7 @@ export function Uint8ArrayToString(
  *
  * @internal
  */
-export const stringToBuffer = (input: string, encoding: string): ArrayBufferLike =>
+export const stringToBuffer = (input: string, encoding: string): ArrayBuffer =>
 	IsoBuffer.from(input, encoding).buffer;
 
 /**

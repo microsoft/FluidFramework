@@ -69,8 +69,8 @@ describe("SharedSignal", () => {
 			localSharedSignal.notify(mockHandle);
 			containerRuntimeFactory.processAllMessages();
 
-			assert.ok(localCalls[0]);
-			assert.ok(remoteCalls[0]);
+			assert(localCalls[0] !== undefined);
+			assert(remoteCalls[0] !== undefined);
 
 			assert.equal(localCalls[0].absolutePath, mockHandle.absolutePath);
 			assert.equal(remoteCalls[0].absolutePath, mockHandle.absolutePath);

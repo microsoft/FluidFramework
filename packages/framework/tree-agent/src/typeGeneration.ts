@@ -189,6 +189,12 @@ function getOrCreateType(
 ): ZodTypeAny {
 	const simpleNodeSchema = definitionMap.get(definition) ?? fail("Unexpected definition");
 	return getOrCreate(objectCache, simpleNodeSchema, () => {
+		// Handle recursive types: temporarily create a zod "lazy" type that can be referenced by a recursive call to getOrCreateType.
+		let type: ZodTypeAny | undefined;
+		objectCache.set(
+			simpleNodeSchema,
+			z.lazy(() => type ?? fail("Recursive type used before creation")),
+		);
 		switch (simpleNodeSchema.kind) {
 			case NodeKind.Object: {
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -213,73 +219,75 @@ function getOrCreateType(
 					properties[name] = zodFunction;
 				}
 
-				return z.object(properties).describe(simpleNodeSchema.metadata?.description ?? "");
+				return (type = z
+					.object(properties)
+					.describe(simpleNodeSchema.metadata?.description ?? ""));
 			}
 			case NodeKind.Map: {
 				const zodType = z.map(
 					z.string(),
 					getTypeForAllowedTypes(
 						definitionMap,
-						simpleNodeSchema.allowedTypesIdentifiers,
+						new Set(simpleNodeSchema.simpleAllowedTypes.keys()),
 						objectCache,
 						bindableSchemas,
 					),
 				);
-				return addBindingIntersectionIfNeeded(
+				return (type = addBindingIntersectionIfNeeded(
 					"map",
 					zodType,
 					definition,
 					simpleNodeSchema,
 					bindableSchemas,
-				);
+				));
 			}
 			case NodeKind.Record: {
 				const zodType = z.record(
 					getTypeForAllowedTypes(
 						definitionMap,
-						simpleNodeSchema.allowedTypesIdentifiers,
+						new Set(simpleNodeSchema.simpleAllowedTypes.keys()),
 						objectCache,
 						bindableSchemas,
 					),
 				);
-				return addBindingIntersectionIfNeeded(
+				return (type = addBindingIntersectionIfNeeded(
 					"record",
 					zodType,
 					definition,
 					simpleNodeSchema,
 					bindableSchemas,
-				);
+				));
 			}
 			case NodeKind.Array: {
 				const zodType = z.array(
 					getTypeForAllowedTypes(
 						definitionMap,
-						simpleNodeSchema.allowedTypesIdentifiers,
+						new Set(simpleNodeSchema.simpleAllowedTypes.keys()),
 						objectCache,
 						bindableSchemas,
 					),
 				);
-				return addBindingIntersectionIfNeeded(
+				return (type = addBindingIntersectionIfNeeded(
 					"array",
 					zodType,
 					definition,
 					simpleNodeSchema,
 					bindableSchemas,
-				);
+				));
 			}
 			case NodeKind.Leaf: {
 				switch (simpleNodeSchema.leafKind) {
 					case ValueSchema.Boolean: {
-						return z.boolean();
+						return (type = z.boolean());
 					}
 					case ValueSchema.Number: {
-						return z.number();
+						return (type = z.number());
 					}
 					case ValueSchema.String: {
-						return z.string();
+						return (type = z.string());
 					}
 					case ValueSchema.Null: {
-						return z.null();
+						return (type = z.null());
 					}
 					default: {
 						throw new Error(`Unsupported leaf kind ${NodeKind[simpleNodeSchema.leafKind]}.`);
@@ -319,7 +327,7 @@ function getOrCreateTypeForField(
 
 	const field = getTypeForAllowedTypes(
 		definitionMap,
-		fieldSchema.allowedTypesIdentifiers,
+		new Set(fieldSchema.simpleAllowedTypes.keys()),
 		objectCache,
 		bindableSchemas,
 	).describe(

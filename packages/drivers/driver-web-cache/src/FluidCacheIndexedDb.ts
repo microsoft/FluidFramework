@@ -4,10 +4,6 @@
  */
 
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import {
-	ICacheEntry,
-	getKeyForCacheEntry as odspGetKeyForCacheEntry,
-} from "@fluidframework/odsp-driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { DBSchema, DeleteDBCallbacks, IDBPDatabase, deleteDB, openDB } from "idb";
 
@@ -26,10 +22,6 @@ export const oldVersionNameMapping: Partial<{ [key: number]: string }> = {
 	1: "diverStorage",
 	2: "diverStorage.V2",
 };
-
-export function getKeyForCacheEntry(entry: ICacheEntry) {
-	return odspGetKeyForCacheEntry(entry);
-}
 
 export function getFluidCacheIndexedDbInstance(
 	logger?: ITelemetryBaseLogger,

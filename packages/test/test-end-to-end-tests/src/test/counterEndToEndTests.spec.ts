@@ -5,11 +5,8 @@
 
 import { strict as assert } from "assert";
 
-import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import {
-	ContainerErrorTypes,
-	IContainer,
-} from "@fluidframework/container-definitions/internal";
+import { describeCompat } from "@fluid-private/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import type { ISharedCounter, SharedCounter } from "@fluidframework/counter/internal";
@@ -212,6 +209,7 @@ describeCompat(
 		let dataStore: ITestFluidObject;
 		let sharedCounter: SharedCounter;
 		let containerRuntime: IContainerRuntime;
+		let incrementedEvents: { incrementAmount: number; newValue: number }[] = [];
 
 		const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 			getRawConfig: (name: string): ConfigTypes => settings[name],
@@ -232,33 +230,44 @@ describeCompat(
 			dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 			sharedCounter = await dataStore.getSharedObject<SharedCounter>(counterId);
 			containerRuntime = dataObject.context.containerRuntime as IContainerRuntime;
+			incrementedEvents = [];
+			sharedCounter.on("incremented", (incrementAmount: number, newValue: number) => {
+				incrementedEvents.push({ incrementAmount, newValue });
+			});
 		});
 
-		itExpects(
-			"Closes container when rollback fails",
-			[
-				{
-					eventName: "fluid:telemetry:Container:ContainerClose",
-					error: "RollbackError: Unsupported DDS feature",
-					errorType: ContainerErrorTypes.dataProcessingError,
-					featureName: "rollback",
-				},
-			],
-			async () => {
-				let error: Error | undefined;
-				try {
-					containerRuntime.orderSequentially(() => {
-						sharedCounter.increment(1);
-						throw new Error(errorMessage);
-					});
-				} catch (err) {
-					error = err as Error;
-				}
-
-				assert.notEqual(error, undefined, "No error");
-				assert.ok(error?.message.startsWith("RollbackError:"), "Unexpected error message");
-				assert.equal(container.closed, true);
-			},
-		);
+		it("can rollback increment op", async () => {
+			let error: Error | undefined;
+			try {
+				containerRuntime.orderSequentially(() => {
+					sharedCounter.increment(1);
+					throw new Error(errorMessage);
+				});
+			} catch (err) {
+				error = err as Error;
+			}
+			assert.notEqual(error, undefined, "No error");
+			assert.equal(error?.message, errorMessage, "Unexpected error message");
+			assert.equal(containerRuntime.disposed, false, "Container disposed");
+			assert.equal(
+				incrementedEvents.length,
+				2,
+				"should be exactly 2 incremented events fired",
+			);
+			assert.equal(
+				incrementedEvents[0].incrementAmount,
+				1,
+				"incorrect incrementAmount pre-rollback",
+			);
+			assert.equal(incrementedEvents[0].newValue, 1, "incorrect newValue pre-rollback");
+			// rollback
+			assert.equal(sharedCounter.value, 0, "Counter value incorrect after rollback");
+			assert.equal(
+				incrementedEvents[1].incrementAmount,
+				-1,
+				"incorrect incrementAmount post-rollback",
+			);
+			assert.equal(incrementedEvents[1].newValue, 0, "incorrect newValue post-rollback");
+		});
 	},
 );

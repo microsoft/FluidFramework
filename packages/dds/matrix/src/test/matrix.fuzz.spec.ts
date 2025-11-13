@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "node:path";
-
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	createDDSFuzzSuite,
+	registerOracle,
+	type DDSFuzzHarnessEvents,
 	type DDSFuzzModel,
 	type DDSFuzzSuiteOptions,
 } from "@fluid-private/test-dds-utils";
@@ -14,8 +15,17 @@ import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 import type { SharedMatrixFactory } from "../runtime.js";
 
-import { _dirname } from "./dirname.cjs";
 import { baseSharedMatrixModel, type Operation } from "./fuzz.js";
+import { SharedMatrixOracle, type IChannelWithOracles } from "./matrixOracle.js";
+
+const oracleEmitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
+
+oracleEmitter.on("clientCreate", (client) => {
+	const channel = client.channel as IChannelWithOracles;
+	const sharedMatrixOracle = new SharedMatrixOracle(channel);
+	channel.matrixOracle = sharedMatrixOracle;
+	registerOracle(sharedMatrixOracle);
+});
 
 describe("Matrix fuzz tests", function () {
 	/**
@@ -39,7 +49,7 @@ describe("Matrix fuzz tests", function () {
 			clientAddProbability: 0.1,
 		},
 		reconnectProbability: 0,
-		saveFailures: { directory: path.join(_dirname, "../../src/test/results") },
+		emitter: oracleEmitter,
 	};
 
 	const nameModel = (workloadName: string): DDSFuzzModel<SharedMatrixFactory, Operation> => ({

@@ -13,7 +13,7 @@ import {
 	createDetachedContainer,
 	loadExistingContainer,
 } from "@fluidframework/container-loader/legacy";
-// eslint-disable-next-line import/no-internal-modules -- #26987: `local-driver` internal LocalSessionStorageDbFactory used in examples
+// eslint-disable-next-line import-x/no-internal-modules -- #26987: `local-driver` internal LocalSessionStorageDbFactory used in examples
 import { LocalSessionStorageDbFactory } from "@fluidframework/local-driver/internal";
 import {
 	LocalDocumentServiceFactory,
@@ -28,6 +28,7 @@ import { v4 as uuid } from "uuid";
 
 import {
 	DiceRollerContainerRuntimeFactory,
+	type EntryPoint,
 	type IDiceRoller,
 } from "../src/container/index.js";
 import { DiceRollerView } from "../src/view.js";
@@ -75,7 +76,7 @@ async function createContainerAndRenderInElement(element: HTMLDivElement): Promi
 		});
 	}
 
-	const diceRoller = (await container.getEntryPoint()) as IDiceRoller;
+	const { diceRoller } = (await container.getEntryPoint()) as EntryPoint;
 	const render = (diceRoller: IDiceRoller) => {
 		const appRoot = createRoot(element);
 		appRoot.render(createElement(DiceRollerView, { diceRoller }));

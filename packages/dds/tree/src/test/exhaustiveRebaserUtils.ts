@@ -4,7 +4,7 @@
  */
 
 import type { RevisionMetadataSource, RevisionTag, TaggedChange } from "../core/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { RebaseRevisionMetadata } from "../feature-libraries/modular-schema/index.js";
 
 /**
@@ -57,7 +57,7 @@ export interface BoundFieldChangeRebaser<TChangeset> {
 	/**
 	 * Rebase the provided change over the composition of a set of base changes.
 	 *
-	 * @remarks - A revision metadata source is provided to this function currently in order to retain
+	 * @remarks A revision metadata source is provided to this function currently in order to retain
 	 * metadata from original edits in the case of repeated composition (i.e. what happens when sandwich
 	 * rebasing). This is a bit inconsistent with the spirit of the rest of this interface, and depending
 	 * on further refactoring would be nice to remove.
@@ -106,8 +106,8 @@ export interface NamedChangeset<TChangeset> {
  * Because the tree is structured as an up-tree (stores parent pointers), the series of actions taken from
  * some initial state to get to the state at a given node can be recovered by walking up the tree.
  *
- * This concept is similar to trees constructed in [state space search](https://en.wikipedia.org/wiki/State_space_search)
- * or the tree implicit to the [minimax algorithm](https://en.wikipedia.org/wiki/Minimax).
+ * This concept is similar to trees constructed in {@link https://en.wikipedia.org/wiki/State_space_search | state space search}
+ * or the tree implicit to the {@link https://en.wikipedia.org/wiki/Minimax | minimax algorithm}.
  *
  * It's a useful data structure for testing rebasing because it allows more automatic test case generation, e.g.
  * by exhaustively validating axioms against particular nodes in the tree up to a certain depth, or randomly selecting

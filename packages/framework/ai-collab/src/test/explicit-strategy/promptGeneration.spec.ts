@@ -5,9 +5,9 @@
 
 import { strict as assert } from "node:assert";
 
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import {
 	getSimpleSchema,
@@ -15,13 +15,13 @@ import {
 	SharedTree,
 	Tree,
 	TreeViewConfiguration,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/tree/internal";
 import { describe, it } from "mocha";
 
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { applyAgentEdit } from "../../explicit-strategy/agentEditReducer.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { IdGenerator } from "../../explicit-strategy/idGenerator.js";
 import {
 	getEditingSystemPrompt,
@@ -29,7 +29,7 @@ import {
 	getReviewSystemPrompt,
 	toDecoratedJson,
 	type EditLog,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../explicit-strategy/promptGeneration.js";
 
 import { MochaSnapshotUnitTester } from "./utils.js";

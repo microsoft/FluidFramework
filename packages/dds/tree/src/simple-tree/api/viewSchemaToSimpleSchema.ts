@@ -67,7 +67,7 @@ export function toSimpleTreeSchema(
 	return {
 		root: copySchemaObjects
 			? ({
-					allowedTypesIdentifiers: normalizedSchema.allowedTypesIdentifiers,
+					simpleAllowedTypes: normalizedSchema.simpleAllowedTypes,
 					kind: normalizedSchema.kind,
 					metadata: normalizedSchema.metadata,
 					persistedMetadata: normalizedSchema.persistedMetadata,
@@ -82,7 +82,7 @@ export function toSimpleTreeSchema(
  *
  * @remarks Caches the result on the input schema for future calls.
  */
-function copySimpleNodeSchema(schema: SimpleNodeSchema): SimpleNodeSchema {
+export function copySimpleNodeSchema(schema: SimpleNodeSchema): SimpleNodeSchema {
 	const kind = schema.kind;
 	switch (kind) {
 		case NodeKind.Leaf:
@@ -112,7 +112,7 @@ function copySimpleSchemaWithAllowedTypes(
 ): SimpleMapNodeSchema | SimpleArrayNodeSchema | SimpleRecordNodeSchema {
 	return {
 		kind: schema.kind,
-		allowedTypesIdentifiers: schema.allowedTypesIdentifiers,
+		simpleAllowedTypes: schema.simpleAllowedTypes,
 		metadata: schema.metadata,
 		persistedMetadata: schema.persistedMetadata,
 	};
@@ -122,19 +122,88 @@ function copySimpleObjectSchema(schema: SimpleObjectNodeSchema): SimpleObjectNod
 	const fields: Map<string, SimpleObjectFieldSchema> = new Map();
 	for (const [propertyKey, field] of schema.fields) {
 		// field already is a SimpleObjectFieldSchema, but copy the subset of the properties needed by this interface to get a clean simple object.
-		fields.set(propertyKey, {
+		const simpleField = {
 			kind: field.kind,
-			allowedTypesIdentifiers: field.allowedTypesIdentifiers,
+			simpleAllowedTypes: field.simpleAllowedTypes,
 			metadata: field.metadata,
 			persistedMetadata: field.persistedMetadata,
 			storedKey: field.storedKey,
-		});
+		};
+
+		fields.set(propertyKey, simpleField);
 	}
 
-	return {
+	const simpleObject = {
 		kind: NodeKind.Object,
 		fields,
 		metadata: schema.metadata,
 		persistedMetadata: schema.persistedMetadata,
+		allowUnknownOptionalFields: schema.allowUnknownOptionalFields,
+	} satisfies SimpleObjectNodeSchema;
+
+	return simpleObject;
+}
+
+/**
+ * Creates a copy of a SimpleTreeSchema without metadata fields. This is useful for comparing deserialized view schemas with in-memory schemas.
+ * metadata and persistedMetadata are not relevant for schema compatibility checks and are not serialized by the Simple Schema serializer.
+ * @see {@link simpleSchemaSerializer.ts} for the serialization logic.
+ *
+ * @param schema - The SimpleTreeSchema to remove fields from.
+ * @param fieldsToRemove - An object specifying which fields to remove.
+ * @returns A new SimpleTreeSchema without the specified fields.
+ */
+export function copySimpleTreeSchemaWithoutMetadata(
+	schema: SimpleTreeSchema,
+): SimpleTreeSchema {
+	const definitions = new Map<string, SimpleNodeSchema>();
+
+	for (const [identifier, nodeSchema] of schema.definitions.entries()) {
+		const kind = nodeSchema.kind;
+		switch (kind) {
+			case NodeKind.Array:
+			case NodeKind.Map:
+			case NodeKind.Record:
+			case NodeKind.Leaf: {
+				const outputNodeSchema = {
+					...nodeSchema,
+					metadata: {},
+					persistedMetadata: undefined,
+				};
+				definitions.set(identifier, outputNodeSchema);
+				break;
+			}
+			case NodeKind.Object: {
+				const outputFields = new Map<string, SimpleObjectFieldSchema>();
+				for (const [propertyKey, fieldSchema] of nodeSchema.fields.entries()) {
+					const outputField: SimpleObjectFieldSchema = {
+						...fieldSchema,
+						metadata: {},
+						persistedMetadata: undefined,
+					};
+					outputFields.set(propertyKey, outputField);
+				}
+				const outputNodeSchema = {
+					...nodeSchema,
+					metadata: {},
+					persistedMetadata: undefined,
+					fields: outputFields,
+				};
+				definitions.set(identifier, outputNodeSchema);
+				break;
+			}
+			default:
+				unreachableCase(kind);
+		}
+	}
+
+	return {
+		root: {
+			kind: schema.root.kind,
+			simpleAllowedTypes: schema.root.simpleAllowedTypes,
+			metadata: {},
+			persistedMetadata: undefined,
+		},
+		definitions,
 	};
 }

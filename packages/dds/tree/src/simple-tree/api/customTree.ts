@@ -35,7 +35,7 @@ import { isObjectNodeSchema } from "../node-kinds/index.js";
 
 /**
  * Options for how to interpret or encode a tree when schema information is available.
- * @alpha
+ * @beta
  * @input
  */
 export interface TreeEncodingOptions<TKeyOptions = KeyEncodingOptions> {
@@ -44,7 +44,7 @@ export interface TreeEncodingOptions<TKeyOptions = KeyEncodingOptions> {
 	 * @remarks
 	 * Has no effect on {@link NodeKind}s other than {@link NodeKind.Object}.
 	 *
-	 * {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields|Unknown optional field} will be omitted when using property keys.
+	 * {@link ObjectSchemaOptions.allowUnknownOptionalFields|Unknown optional field} will be omitted when using property keys.
 	 * @defaultValue {@link KeyEncodingOptions.usePropertyKeys}.
 	 */
 	readonly keys?: TKeyOptions;
@@ -61,7 +61,7 @@ export type TreeParsingOptions = TreeEncodingOptions<
 
 /**
  * Options for how to encode keys in a tree.
- * @alpha
+ * @beta
  * @input
  */
 export enum KeyEncodingOptions {
@@ -69,21 +69,21 @@ export enum KeyEncodingOptions {
 	 * Use property keys.
 	 * @remarks
 	 * Supported for import and export.
-	 * {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields|Unknown optional fields} will be omitted when using property keys.
+	 * {@link ObjectSchemaOptions.allowUnknownOptionalFields|Unknown optional fields} will be omitted when using property keys.
 	 */
 	usePropertyKeys = "usePropertyKeys",
 	/**
-	 * Use stored keys, and include {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields|Unknown optional fields}.
+	 * Use stored keys, and include {@link ObjectSchemaOptions.allowUnknownOptionalFields|Unknown optional fields}.
 	 * @remarks
 	 * Currently only supported for export.
 	 */
 	allStoredKeys = "allStoredKeys",
 	/**
-	 * Use stored keys but do not include {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields|Unknown optional fields}.
+	 * Use stored keys but do not include {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields}.
 	 * @remarks
 	 * Supported for import and export.
 	 * For export, this omits unknown optional fields.
-	 * For import, any unexpected fields are errors, regardless of {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields}.
+	 * For import, any unexpected fields are errors, regardless of {@link ObjectSchemaOptions.allowUnknownOptionalFields}.
 	 */
 	knownStoredKeys = "knownStoredKeys",
 }

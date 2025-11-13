@@ -51,7 +51,7 @@ import {
 } from "@fluidframework/tree";
 import { SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
 import type { FixRecursiveArraySchema, ObjectNodeSchema } from "@fluidframework/tree/alpha";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { requireAssignableTo } from "@fluidframework/tree/internal";
 
 // Due to limitation of the TypeScript compiler, errors like the following can be produced when exporting types from another package:
@@ -125,7 +125,7 @@ export class RecursiveArray extends schema.arrayRecursive("RA", [() => Recursive
 /**
  * This is an anti-pattern: not creating a named class for schema that are part of the recursive path causes generated .d.ts files to get type `any`.
  * This happens (without errors!) even if NoImplicitAny is enabled.
- * See the [TypeScript Issue](https://github.com/microsoft/TypeScript/issues/55832) for more details.
+ * See the {@link https://github.com/microsoft/TypeScript/issues/55832 | TypeScript Issue} for more details.
  */
 export const BadArraySelf = schema.arrayRecursive("BadArraySelf", [() => BadArraySelf]);
 {

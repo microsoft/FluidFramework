@@ -13,7 +13,7 @@ import {
 	TreeStoredSchemaRepository,
 	rootFieldKey,
 } from "../../../core/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { Context } from "../../../feature-libraries/flex-tree/context.js";
 import {
 	defaultSchemaPolicy,

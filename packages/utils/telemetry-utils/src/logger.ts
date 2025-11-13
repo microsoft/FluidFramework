@@ -108,7 +108,7 @@ export function formatTick(tick: number): number {
  * String used to concatenate the namespace of parent loggers and their child loggers.
  * @internal
  */
-export const eventNamespaceSeparator = ":" as const;
+export const eventNamespaceSeparator = ":";
 
 /**
  * TelemetryLogger class contains various helper telemetry methods,

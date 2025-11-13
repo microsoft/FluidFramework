@@ -56,9 +56,9 @@ import {
 	type NodeRange,
 	type ForkMergeOperation,
 } from "./operationTypes.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { SchematizingSimpleTreeView } from "../../../shared-tree/schematizingTreeView.js";
-import { getOrCreateInnerNode } from "../../../simple-tree/index.js";
+import { getInnerNode } from "../../../simple-tree/index.js";
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
@@ -72,7 +72,7 @@ import { asAlpha } from "../../../api.js";
 export type FuzzView = SchematizingSimpleTreeView<typeof fuzzFieldSchema> & {
 	/**
 	 * This client's current stored schema, which dictates allowable edits that the client may perform.
-	 * @remarks - The type of this field isn't totally correct, since the supported schema for fuzz nodes changes
+	 * @remarks The type of this field isn't totally correct, since the supported schema for fuzz nodes changes
 	 * at runtime to support different primitives (this allows fuzz testing of schema changes).
 	 * However, fuzz schemas always have the same field names, so schema-dependent
 	 * APIs such as the tree reading API will work correctly anyway.
@@ -86,7 +86,7 @@ export type FuzzView = SchematizingSimpleTreeView<typeof fuzzFieldSchema> & {
 export type FuzzTransactionView = SchematizingSimpleTreeView<typeof fuzzFieldSchema> & {
 	/**
 	 * This client's current stored schema, which dictates allowable edits that the client may perform.
-	 * @remarks - The type of this field isn't totally correct, since the supported schema for fuzz nodes changes
+	 * @remarks The type of this field isn't totally correct, since the supported schema for fuzz nodes changes
 	 * at runtime to support different primitives (this allows fuzz testing of schema changes).
 	 * However, fuzz schemas always have the same field names, so schema-dependent
 	 * APIs such as the tree reading API will work correctly anyway.
@@ -246,7 +246,7 @@ export interface FieldSelectionWeights {
 	/**
 	 * Whether the selected field is acceptable for use.
 	 *
-	 * @remarks - This can be helpful for restricting tests to only use certain types of fields
+	 * @remarks This can be helpful for restricting tests to only use certain types of fields
 	 */
 	filter?: FieldFilter;
 }
@@ -777,7 +777,7 @@ export interface FieldPathWithCount {
 }
 
 function upPathFromNode(node: TreeNode): UpPath {
-	const flexNode = getOrCreateInnerNode(node);
+	const flexNode = getInnerNode(node);
 	assert(flexNode.isHydrated());
 	const anchorNode = flexNode.anchorNode;
 	return anchorNode;

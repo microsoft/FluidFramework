@@ -13,12 +13,12 @@ import type {
 	IDocumentServiceEvents,
 	IDocumentServicePolicies,
 	IDocumentStorageService,
+	IEntry,
 	IResolvedUrl,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import type {
 	HostStoragePolicy,
-	IEntry,
 	IOdspResolvedUrl,
 	InstrumentedStorageTokenFetcher,
 	TokenFetchOptions,

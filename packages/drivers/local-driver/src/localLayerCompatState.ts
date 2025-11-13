@@ -19,7 +19,7 @@ export const localDriverCompatDetailsForLoader: ILayerCompatDetails = {
 	/**
 	 * The current generation of the Local Driver layer.
 	 */
-	generation: 1,
+	generation: 2,
 	/**
 	 * The features supported by the Local Driver layer across the Driver / Loader boundary.
 	 */

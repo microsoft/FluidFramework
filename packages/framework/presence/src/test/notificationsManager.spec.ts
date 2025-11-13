@@ -43,7 +43,7 @@ describe("Presence", () => {
 		let clock: SinonFakeTimers;
 		let presence: PresenceWithNotifications;
 		let processSignal: ProcessSignalFunction;
-		// eslint-disable-next-line @typescript-eslint/ban-types
+		// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/ban-types
 		let notificationsWorkspace: NotificationsWorkspace<{}>;
 
 		before(async () => {
@@ -137,12 +137,16 @@ describe("Presence", () => {
 				{
 					type: "Pres:DatastoreUpdate",
 					content: {
-						"sendTimestamp": 1020,
+						"sendTimestamp": clock.now,
 						"avgLatency": 10,
 						"data": {
 							"system:presence": {
 								"clientToSessionId": {
-									[connectionId2]: { "rev": 0, "timestamp": 1000, "value": attendeeId2 },
+									[connectionId2]: {
+										"rev": 0,
+										"timestamp": initialTime,
+										"value": attendeeId2,
+									},
 								},
 							},
 							"n:name:testNotificationWorkspace": {
@@ -190,12 +194,16 @@ describe("Presence", () => {
 				{
 					type: "Pres:DatastoreUpdate",
 					content: {
-						"sendTimestamp": 1020,
+						"sendTimestamp": clock.now,
 						"avgLatency": 10,
 						"data": {
 							"system:presence": {
 								"clientToSessionId": {
-									[connectionId2]: { "rev": 0, "timestamp": 1000, "value": attendeeId2 },
+									[connectionId2]: {
+										"rev": 0,
+										"timestamp": initialTime,
+										"value": attendeeId2,
+									},
 								},
 							},
 							"n:name:testNotificationWorkspace": {

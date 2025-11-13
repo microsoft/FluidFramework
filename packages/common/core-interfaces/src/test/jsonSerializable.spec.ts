@@ -7,6 +7,20 @@
 
 import { strict as assert } from "node:assert";
 
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type {
+	InternalUtilityTypes,
+	JsonDeserialized,
+	JsonSerializable,
+	JsonSerializableOptions,
+	JsonTypeWith,
+	NonNullJsonObjectWith,
+	OpaqueJsonDeserialized,
+	OpaqueJsonSerializable,
+	SerializationErrorPerNonPublicProperties,
+	SerializationErrorPerUndefinedArrayElement,
+} from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
+
 import {
 	assertIdenticalTypes,
 	createInstanceOf,
@@ -18,6 +32,7 @@ import type {
 	ObjectWithOptionalRecursion,
 	ObjectWithSymbolOrRecursion,
 } from "./testValues.js";
+// This import list should be kept mostly in-sync with jsonDeserialized.spec.ts. Deltas should be commented.
 import {
 	boolean,
 	number,
@@ -79,6 +94,8 @@ import {
 	objectWithUndefined,
 	objectWithUnknown,
 	objectWithOptionalUnknown,
+	// See tests in jsonSerializable.exactOptionalPropertyTypes.(true|false).spec.ts
+	// objectWithOptionalUndefined,
 	objectWithOptionalSymbol,
 	objectWithOptionalBigint,
 	objectWithNumberKey,
@@ -202,21 +219,13 @@ import {
 	opaqueSerializableObjectExpectingBigintSupport,
 	opaqueDeserializedObjectExpectingBigintSupport,
 	opaqueSerializableAndDeserializedObjectExpectingBigintSupport,
+	jsonStringOfString,
+	jsonStringOfObjectWithArrayOfNumbers,
+	jsonStringOfStringRecordOfNumbers,
+	jsonStringOfStringRecordOfNumberOrUndefined,
+	jsonStringOfBigInt,
+	jsonStringOfUnknown,
 } from "./testValues.js";
-
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import type {
-	InternalUtilityTypes,
-	JsonDeserialized,
-	JsonSerializable,
-	JsonSerializableOptions,
-	JsonTypeWith,
-	NonNullJsonObjectWith,
-	OpaqueJsonDeserialized,
-	OpaqueJsonSerializable,
-	SerializationErrorPerNonPublicProperties,
-	SerializationErrorPerUndefinedArrayElement,
-} from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
 /**
  * Defined using `JsonSerializable` type filter tests `JsonSerializable` at call site.
@@ -237,8 +246,7 @@ import type {
 export function passThru<
 	const T,
 	TExpected,
-	// eslint-disable-next-line @typescript-eslint/ban-types
-	Options extends JsonSerializableOptions = {},
+	Options extends JsonSerializableOptions = Record<never, never>,
 >(
 	filteredIn: JsonSerializable<T, Options>,
 	expectedDeserialization?: JsonDeserialized<TExpected>,
@@ -439,6 +447,36 @@ describe("JsonSerializable", () => {
 			it("branded `string`", () => {
 				const { filteredIn, out } = passThru(brandedString);
 				assertIdenticalTypes(filteredIn, brandedString);
+				assertIdenticalTypes(filteredIn, out);
+			});
+			it("`JsonString<string>`", () => {
+				const { filteredIn, out } = passThru(jsonStringOfString);
+				assertIdenticalTypes(filteredIn, jsonStringOfString);
+				assertIdenticalTypes(filteredIn, out);
+			});
+			it("`JsonString<{ arrayOfNumbers: number[] }>`", () => {
+				const { filteredIn, out } = passThru(jsonStringOfObjectWithArrayOfNumbers);
+				assertIdenticalTypes(filteredIn, jsonStringOfObjectWithArrayOfNumbers);
+				assertIdenticalTypes(filteredIn, out);
+			});
+			it("`JsonString<Record<string, number>>`", () => {
+				const { filteredIn, out } = passThru(jsonStringOfStringRecordOfNumbers);
+				assertIdenticalTypes(filteredIn, jsonStringOfStringRecordOfNumbers);
+				assertIdenticalTypes(filteredIn, out);
+			});
+			it("`JsonString<Record<string, number | undefined>>`", () => {
+				const { filteredIn, out } = passThru(jsonStringOfStringRecordOfNumberOrUndefined);
+				assertIdenticalTypes(filteredIn, jsonStringOfStringRecordOfNumberOrUndefined);
+				assertIdenticalTypes(filteredIn, out);
+			});
+			it("JsonString<bigint>", () => {
+				const { filteredIn, out } = passThru(jsonStringOfBigInt);
+				assertIdenticalTypes(filteredIn, jsonStringOfBigInt);
+				assertIdenticalTypes(filteredIn, out);
+			});
+			it("JsonString<unknown>", () => {
+				const { filteredIn, out } = passThru(jsonStringOfUnknown);
+				assertIdenticalTypes(filteredIn, jsonStringOfUnknown);
 				assertIdenticalTypes(filteredIn, out);
 			});
 		});
@@ -1434,6 +1472,30 @@ describe("JsonSerializable", () => {
 					);
 					assertIdenticalTypes(filteredIn, createInstanceOf<Record<string, boolean>>());
 				});
+				it("object with exactly `unknown`", () => {
+					const { filteredIn } = passThru(
+						// @ts-expect-error not assignable to type '{ "error required property may not allow `unknown` value": never; }'
+						objectWithUnknown,
+					);
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<{
+							unknown: { "error required property may not allow `unknown` value": never };
+						}>(),
+					);
+				});
+				it("object with optional `unknown`", () => {
+					const { filteredIn } = passThru(
+						// @ts-expect-error `unknown` is not supported (expects `JsonTypeWith<never> | OpaqueJsonSerializable<unknown>`)
+						objectWithOptionalUnknown,
+					);
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<{
+							optUnknown?: JsonTypeWith<never> | OpaqueJsonSerializable<unknown>;
+						}>(),
+					);
+				});
 
 				it("object with array of `bigint`s", () => {
 					const { filteredIn } = passThruThrows(
@@ -1566,8 +1628,10 @@ describe("JsonSerializable", () => {
 				});
 
 				it("`string` indexed record of `unknown`", () => {
-					// @ts-expect-error not assignable to parameter of type '{ [x: string]: JsonTypeWith<never> | OpaqueJsonSerializable<unknown>; }'.
-					const { filteredIn } = passThru(stringRecordOfUnknown);
+					const { filteredIn } = passThru(
+						// @ts-expect-error not assignable to parameter of type '{ [x: string]: JsonTypeWith<never> | OpaqueJsonSerializable<unknown>; }'.
+						stringRecordOfUnknown,
+					);
 					assertIdenticalTypes(
 						filteredIn,
 						createInstanceOf<{
@@ -1576,8 +1640,10 @@ describe("JsonSerializable", () => {
 					);
 				});
 				it("`Partial<>` `string` indexed record of `unknown`", () => {
-					// @ts-expect-error not assignable to parameter of type '{ [x: string]: JsonTypeWith<never> | OpaqueJsonSerializable<unknown>; }'.
-					const { filteredIn } = passThru(partialStringRecordOfUnknown);
+					const { filteredIn } = passThru(
+						// @ts-expect-error not assignable to parameter of type '{ [x: string]: JsonTypeWith<never> | OpaqueJsonSerializable<unknown>; }'.
+						partialStringRecordOfUnknown,
+					);
 					assertIdenticalTypes(
 						filteredIn,
 						createInstanceOf<{
@@ -1593,8 +1659,11 @@ describe("JsonSerializable", () => {
 					// Allowing `undefined` is possible if all indexed properties are
 					// identifiable. But rather than that, an implementation of `Partial<>`
 					// that doesn't add `| undefined` for index signatures would be preferred.
-					// @ts-expect-error not assignable to type '{ "error required property may not allow `undefined` value": never; }'
-					const { filteredIn } = passThru(partialStringRecordOfNumbers, { key1: 0 });
+					const { filteredIn } = passThru(
+						// @ts-expect-error not assignable to type '{ "error required property may not allow `undefined` value": never; }'
+						partialStringRecordOfNumbers,
+						{ key1: 0 },
+					);
 					assertIdenticalTypes(
 						filteredIn,
 						createInstanceOf<{
@@ -1611,8 +1680,11 @@ describe("JsonSerializable", () => {
 					// Allowing `undefined` is possible if all indexed properties are
 					// identifiable. But rather than that, an implementation of `Partial<>`
 					// that doesn't add `| undefined` for index signatures would be preferred.
-					// @ts-expect-error not assignable to type '{ "error required property may not allow `undefined` value": never; }'
-					const { filteredIn } = passThru(partialTemplatedRecordOfNumbers, { key1: 0 });
+					const { filteredIn } = passThru(
+						// @ts-expect-error not assignable to type '{ "error required property may not allow `undefined` value": never; }'
+						partialTemplatedRecordOfNumbers,
+						{ key1: 0 },
+					);
 					assertIdenticalTypes(
 						filteredIn,
 						createInstanceOf<{

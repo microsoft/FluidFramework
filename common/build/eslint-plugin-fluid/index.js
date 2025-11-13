@@ -13,6 +13,12 @@
 module.exports = {
 	rules: {
 		/**
+		 * Disallow `-` following JSDoc/TSDoc tags.
+		 * Full name: "@fluid-internal/fluid/no-hyphen-after-jsdoc-tag"
+		 */
+		"no-hyphen-after-jsdoc-tag": require("./src/rules/no-hyphen-after-jsdoc-tag"),
+
+		/**
 		 * Disallow file path links in JSDoc/TSDoc comments.
 		 * Full name: "@fluid-internal/fluid/no-file-path-links-in-jsdoc"
 		 */

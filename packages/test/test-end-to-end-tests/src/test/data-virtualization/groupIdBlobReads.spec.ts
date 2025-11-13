@@ -31,7 +31,6 @@ describeCompat("Odsp Network calls", "NoCompat", (getTestObjectProvider) => {
 	};
 	const configProvider = createTestConfigProvider({
 		"Fluid.Container.UseLoadingGroupIdForSnapshotFetch2": true,
-		"Fluid.Container.enableOfflineLoad": true,
 	});
 
 	let provider: ITestObjectProvider;

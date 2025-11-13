@@ -12,7 +12,7 @@ import {
 } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ISummarizer } from "@fluidframework/container-runtime/internal";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { IGarbageCollectionState } from "@fluidframework/container-runtime/internal/test/gc";
 import { ISummaryBlob, SummaryType } from "@fluidframework/driver-definitions";
 import { gcBlobPrefix, gcTreeKey } from "@fluidframework/runtime-definitions/internal";

@@ -45,7 +45,7 @@ export namespace SummaryType {
 	 * Represents a sub-tree in the summary.
 	 * @public
 	 */
-	export const Tree: Tree = 1 as const;
+	export const Tree: Tree = 1;
 
 	/**
 	 * Represents a blob of data that is added to the summary.
@@ -53,13 +53,13 @@ export namespace SummaryType {
 	 * such as data store / channel attributes.
 	 * @public
 	 */
-	export const Blob: Blob = 2 as const;
+	export const Blob: Blob = 2;
 
 	/**
 	 * Path to a summary tree object from the last successful summary.
 	 * @public
 	 */
-	export const Handle: Handle = 3 as const;
+	export const Handle: Handle = 3;
 
 	/**
 	 * Unique identifier to larger blobs uploaded outside of the summary.
@@ -67,7 +67,7 @@ export namespace SummaryType {
 	 * receive an Id that can be used in the summary.
 	 * @public
 	 */
-	export const Attachment: Attachment = 4 as const;
+	export const Attachment: Attachment = 4;
 }
 
 /**

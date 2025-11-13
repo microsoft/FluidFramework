@@ -10,13 +10,18 @@ export {
 	tryGetTreeNodeSchema,
 	type InnerNode,
 	tryDisposeTreeNode,
-	getOrCreateInnerNode,
+	getInnerNode,
 	treeNodeFromAnchor,
 	getSimpleNodeSchemaFromInnerNode,
 	SimpleContextSlot,
 	withBufferedTreeEvents,
 } from "./treeNodeKernel.js";
-export { type WithType, typeNameSymbol, typeSchemaSymbol } from "./withType.js";
+export {
+	type WithType,
+	typeNameSymbol,
+	typeSchemaSymbol,
+	contentSchemaSymbol,
+} from "./withType.js";
 export {
 	type Unhydrated,
 	type InternalTreeNode,
@@ -53,31 +58,33 @@ export {
 	isAnnotatedAllowedTypes,
 	isAnnotatedAllowedType,
 	normalizeAllowedTypes,
-	normalizeAnnotatedAllowedTypes,
+	normalizeAndEvaluateAnnotatedAllowedTypes,
 	normalizeToAnnotatedAllowedType,
-	unannotateImplicitAllowedTypes,
 	markSchemaMostDerived,
 	evaluateLazySchema,
 	createSchemaUpgrade,
-	type SchemaUpgrade,
+	AnnotatedAllowedTypesInternal,
+	normalizeAllowedTypesInternal,
 } from "./allowedTypes.js";
 export type {
 	AnnotatedAllowedType,
-	NormalizedAnnotatedAllowedTypes,
+	AllowedTypesFullEvaluated,
 	ImplicitAllowedTypes,
-	ImplicitAnnotatedAllowedTypes,
-	UnannotateImplicitAllowedTypes,
 	AllowedTypesMetadata,
 	AllowedTypes,
 	TreeNodeFromImplicitAllowedTypes,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	InsertableTreeNodeFromAllowedTypes,
 	Input,
-	UnannotateAllowedTypes,
-	UnannotateAllowedType,
 	UnannotateAllowedTypesList,
 	AllowedTypeMetadata,
 	AnnotatedAllowedTypes,
+	AnnotateAllowedTypesList,
+	SchemaUpgrade,
+	AllowedTypesFullInternal,
+	AllowedTypesFull,
+	AllowedTypesFullFromMixed,
+	NumberKeys,
 } from "./allowedTypes.js";
 export { walkAllowedTypes, walkNodeSchema, type SchemaVisitor } from "./walkSchema.js";
 export { Context, HydratedContext } from "./context.js";

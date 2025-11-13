@@ -11,7 +11,7 @@ import {
 import type { SharedString } from "@fluidframework/sequence/legacy";
 import React, { useEffect, useState } from "react";
 
-// eslint-disable-next-line import/no-unassigned-import
+// eslint-disable-next-line import-x/no-unassigned-import
 import "./style.css";
 import { type TodoItem } from "../Todo/index.js";
 import { useTree } from "../Utils/index.js";

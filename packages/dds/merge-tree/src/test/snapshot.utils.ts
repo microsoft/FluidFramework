@@ -88,11 +88,11 @@ export class TestString {
 	}
 
 	public removeRange(start: number, end: number, increaseMsn: boolean): void {
-		this.queue(this.client.removeRangeLocal(start, end)!, increaseMsn);
+		this.queue(this.client.removeRangeLocal(start, end), increaseMsn);
 	}
 
 	public obliterateRange(start: number, end: number, increaseMsn: boolean): void {
-		this.queue(this.client.obliterateRangeLocal(start, end)!, increaseMsn);
+		this.queue(this.client.obliterateRangeLocal(start, end), increaseMsn);
 	}
 
 	// Ensures the client's text matches the `expected` string and round-trips through a snapshot

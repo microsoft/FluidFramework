@@ -7,7 +7,10 @@ import { strict as assert } from "node:assert";
 
 import { IsoBuffer } from "@fluid-internal/client-utils";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import type { IEnvelope } from "@fluidframework/runtime-definitions/internal";
+import type {
+	FluidDataStoreMessage,
+	IEnvelope,
+} from "@fluidframework/runtime-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { compress } from "lz4js";
 
@@ -22,13 +25,20 @@ interface ITestMessageContents {
 	contents: string;
 }
 
+function generateTestOpContents(valueIndex: number): IEnvelope<FluidDataStoreMessage> {
+	return {
+		address: `testDataStoreId`,
+		contents: { type: "op", content: `value${valueIndex}` },
+	} satisfies IEnvelope<FluidDataStoreMessage>;
+}
+
 function generateCompressedBatchMessage(length: number): ISequencedDocumentMessage {
 	const batch: InboundContainerRuntimeMessage[] = [];
 	for (let i = 0; i < length; i++) {
 		// Actual Op and contents aren't important. Values are not realistic.
 		batch.push({
 			type: ContainerMessageType.FluidDataStoreOp,
-			contents: `value${i}` as unknown as IEnvelope,
+			contents: generateTestOpContents(i),
 		});
 	}
 
@@ -98,7 +108,10 @@ describe("OpDecompressor", () => {
 		decompressor.decompressAndStore(message);
 		assert.equal(decompressor.currentlyUnrolling, true);
 		message = decompressor.unroll(message);
-		assert.strictEqual((message.contents as ITestMessageContents).contents, "value0");
+		assert.deepEqual(
+			(message.contents as ITestMessageContents).contents,
+			generateTestOpContents(0),
+		);
 		assert.strictEqual(
 			(message.metadata as { compressed?: unknown } | undefined)?.compressed,
 			undefined,
@@ -116,7 +129,10 @@ describe("OpDecompressor", () => {
 		assert.equal(decompressor.currentlyUnrolling, true);
 		message = decompressor.unroll(message);
 
-		assert.strictEqual((message.contents as ITestMessageContents).contents, "value0");
+		assert.deepEqual(
+			(message.contents as ITestMessageContents).contents,
+			generateTestOpContents(0),
+		);
 		assert.strictEqual(
 			(message.metadata as { compressed?: unknown } | undefined)?.compressed,
 			undefined,
@@ -146,7 +162,10 @@ describe("OpDecompressor", () => {
 		assert.equal(decompressor.currentlyUnrolling, true);
 		const firstMessage = decompressor.unroll(rootMessage);
 
-		assert.strictEqual((firstMessage.contents as ITestMessageContents).contents, "value0");
+		assert.deepEqual(
+			(firstMessage.contents as ITestMessageContents).contents,
+			generateTestOpContents(0),
+		);
 		assert.strictEqual(
 			(firstMessage.metadata as { compressed?: unknown } | undefined)?.compressed,
 			undefined,
@@ -156,7 +175,10 @@ describe("OpDecompressor", () => {
 		for (let i = 1; i < 4; i++) {
 			assert.equal(decompressor.currentlyUnrolling, true);
 			const message = decompressor.unroll(emptyMessage);
-			assert.strictEqual((message.contents as ITestMessageContents).contents, `value${i}`);
+			assert.deepEqual(
+				(message.contents as ITestMessageContents).contents,
+				generateTestOpContents(i),
+			);
 			assert.strictEqual(
 				(message.metadata as { compressed?: unknown } | undefined)?.compressed,
 				undefined,
@@ -166,7 +188,10 @@ describe("OpDecompressor", () => {
 
 		assert.equal(decompressor.currentlyUnrolling, true);
 		const lastMessage = decompressor.unroll(endBatchEmptyMessage);
-		assert.strictEqual((lastMessage.contents as ITestMessageContents).contents, "value4");
+		assert.deepEqual(
+			(lastMessage.contents as ITestMessageContents).contents,
+			generateTestOpContents(4),
+		);
 		assert.strictEqual(
 			(lastMessage.metadata as { compressed?: unknown } | undefined)?.compressed,
 			undefined,
@@ -180,7 +205,10 @@ describe("OpDecompressor", () => {
 		assert.equal(decompressor.currentlyUnrolling, true);
 		const firstMessage = decompressor.unroll(rootMessage);
 
-		assert.strictEqual((firstMessage.contents as ITestMessageContents).contents, "value0");
+		assert.deepEqual(
+			(firstMessage.contents as ITestMessageContents).contents,
+			generateTestOpContents(0),
+		);
 
 		assert.equal(decompressor.currentlyUnrolling, true);
 		assert.throws(() => decompressor.unroll({ ...emptyMessage, contents: {} }));
@@ -192,31 +220,49 @@ describe("OpDecompressor", () => {
 		assert.equal(decompressor.currentlyUnrolling, true);
 		const firstMessage = decompressor.unroll(rootMessage);
 
-		assert.strictEqual((firstMessage.contents as ITestMessageContents).contents, "value0");
+		assert.deepEqual(
+			(firstMessage.contents as ITestMessageContents).contents,
+			generateTestOpContents(0),
+		);
 
 		for (let i = 1; i < 4; i++) {
 			assert.equal(decompressor.currentlyUnrolling, true);
 			const message = decompressor.unroll(emptyMessage);
-			assert.strictEqual((message.contents as ITestMessageContents).contents, `value${i}`);
+			assert.deepEqual(
+				(message.contents as ITestMessageContents).contents,
+				generateTestOpContents(i),
+			);
 		}
 
 		assert.equal(decompressor.currentlyUnrolling, true);
 		const lastMessage = decompressor.unroll(endBatchEmptyMessage);
-		assert.strictEqual((lastMessage.contents as ITestMessageContents).contents, "value4");
+		assert.deepEqual(
+			(lastMessage.contents as ITestMessageContents).contents,
+			generateTestOpContents(4),
+		);
 
 		const nextRootMessage = generateCompressedBatchMessage(3);
 		decompressor.decompressAndStore(nextRootMessage);
 		assert.equal(decompressor.currentlyUnrolling, true);
 		const nextFirstMessage = decompressor.unroll(nextRootMessage);
-		assert.strictEqual((nextFirstMessage.contents as ITestMessageContents).contents, "value0");
+		assert.deepEqual(
+			(nextFirstMessage.contents as ITestMessageContents).contents,
+			generateTestOpContents(0),
+		);
 
 		assert.equal(decompressor.currentlyUnrolling, true);
 		const middleMessage = decompressor.unroll(emptyMessage);
-		assert.strictEqual((middleMessage.contents as ITestMessageContents).contents, "value1");
+		assert.deepEqual(
+			(middleMessage.contents as ITestMessageContents).contents,
+			generateTestOpContents(1),
+		);
 
 		assert.equal(decompressor.currentlyUnrolling, true);
 		const endBatchMessage = decompressor.unroll(endBatchEmptyMessage);
-		assert.strictEqual((endBatchMessage.contents as ITestMessageContents).contents, "value2");
+		assert.deepEqual(
+			(endBatchMessage.contents as ITestMessageContents).contents,
+			generateTestOpContents(2),
+		);
 	});
 
 	it("Ignores ops without compression", () => {

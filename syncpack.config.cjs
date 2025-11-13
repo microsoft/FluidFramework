@@ -119,6 +119,12 @@ module.exports = {
 			label: "Must use tilde dependency ranges",
 			dependencies: [
 				"@biomejs/biome",
+				"@eslint-community/*",
+				"@rushstack/eslint-*",
+				"@typescript-eslint/*",
+				"eslint-config-*",
+				"eslint-config-prettier",
+				"eslint-import-resolver-typescript",
 				"eslint-plugin-*",
 				"eslint-config-prettier",
 				"eslint",
@@ -145,6 +151,15 @@ module.exports = {
 			dependencyTypes: ["dev"],
 			packages: ["**"],
 			range: "",
+		},
+
+		// @fluid-example/import-testing typescript versions should use ~
+		{
+			label: "@fluid-example/import-testing typescript versions should use ~",
+			dependencies: ["typescript-*"],
+			dependencyTypes: ["dev"],
+			packages: ["@fluid-example/import-testing"],
+			range: "~",
 		},
 
 		// All deps should use caret ranges unless previously overridden
@@ -193,7 +208,8 @@ module.exports = {
 				"@fluidframework/build-common",
 				"@fluidframework/build-tools",
 				"@fluidframework/common-utils",
-				"@fluidframework/eslint-config-fluid",
+				// Temporarily disabled while eslint-config-fluid is part of the client release group
+				// "@fluidframework/eslint-config-fluid",
 				"@fluidframework/protocol-definitions",
 				"@fluidframework/test-tools",
 			],

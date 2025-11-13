@@ -8,7 +8,7 @@ import { TestChange, TestChangeRebaser } from "../testChange.js";
 import { CommitKind, type GraphCommit } from "../../core/index.js";
 import { mintRevisionTag } from "../utils.js";
 import { TestChangeEnricher } from "./utils.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { BranchCommitEnricher } from "../../shared-tree-core/branchCommitEnricher.js";
 
 const rebaser = new TestChangeRebaser();

@@ -26,7 +26,7 @@ import { getJoinSessionCacheKey } from "../odspUtils.js";
 import { SocketIOClientStatic } from "../socketModule.js";
 import { fetchJoinSession } from "../vroom.js";
 
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { ClientSocketMock } from "./socketTests/socketMock.js";
 
 describe("expose joinSessionInfo Tests", () => {

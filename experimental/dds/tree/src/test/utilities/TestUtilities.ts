@@ -12,7 +12,7 @@ import {
 	type IFluidCodeDetails,
 	type IHostLoader,
 } from '@fluidframework/container-definitions/internal';
-import { IContainerExperimental, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader/internal';
+import { asLegacyAlpha, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader/internal';
 import { DefaultSummaryConfiguration, SummaryCollection } from '@fluidframework/container-runtime/internal';
 import type { ConfigTypes, IConfigProviderBase, IFluidHandle, IRequestHeader } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
@@ -321,7 +321,6 @@ export async function setUpLocalServerTestSharedTree(
 	} = options;
 
 	const featureGates = options.featureGates ?? {};
-	featureGates['Fluid.Container.enableOfflineLoad'] = true;
 
 	const treeId = id ?? 'test';
 	let factory: SharedTreeFactory;
@@ -690,13 +689,13 @@ export async function waitForSummary(mainContainer: IContainer): Promise<string>
  */
 export async function withContainerOffline<TReturn>(
 	provider: ITestObjectProvider,
-	container: IContainerExperimental,
+	container: IContainer,
 	action: () => TReturn
 ): Promise<{ actionReturn: TReturn; pendingLocalState: string }> {
 	await provider.ensureSynchronized();
 	await provider.opProcessingController.pauseProcessing(container);
 	const actionReturn = action();
-	const pendingLocalState = await container.getPendingLocalState?.();
+	const pendingLocalState = await asLegacyAlpha(container).getPendingLocalState();
 	container.close();
 	assert(pendingLocalState !== undefined, 0x726 /* pendingLocalState should be defined */);
 	return { actionReturn, pendingLocalState };

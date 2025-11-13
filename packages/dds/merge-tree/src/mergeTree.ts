@@ -714,7 +714,7 @@ export class MergeTree {
 
 	/**
 	 * Compute the net length of this segment leaf from some perspective.
-	 * @returns - Undefined if the segment has been removed and its removal is common knowledge to all collaborators (and therefore
+	 * @returns Undefined if the segment has been removed and its removal is common knowledge to all collaborators (and therefore
 	 * may not even be present on clients that have loaded from a summary beyond this point). Otherwise, the length of the segment.
 	 */
 	public leafLength(

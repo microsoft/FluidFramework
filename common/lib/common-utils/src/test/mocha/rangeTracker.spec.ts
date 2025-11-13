@@ -92,7 +92,27 @@ describe("Routerlicious", () => {
 
 				it("Should be able to create a serialized copy of the range tracker", () => {
 					const serialized = rangeTracker.serialize();
-					assert.ok(serialized);
+					assert.deepEqual(serialized, {
+						lastPrimary: 10,
+						lastSecondary: 20,
+						ranges: [
+							{
+								length: 0,
+								primary: 0,
+								secondary: 0,
+							},
+							{
+								length: 0,
+								primary: 5,
+								secondary: 10,
+							},
+							{
+								length: 0,
+								primary: 10,
+								secondary: 20,
+							},
+						],
+					});
 				});
 
 				it("Should be able to load a serialized copy", () => {

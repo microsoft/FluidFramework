@@ -49,7 +49,7 @@ export function tryAddToNestedMap<Key1, Key2, Value>(
  * @param destination - The map to copy data into. Both the outer and inner map may be mutated.
  * @param override - Whether existing entries in `destination` should be replaced by corresponding entries in `source`.
  *
- * @remarks - This function performs deep copying when necessary.
+ * @remarks This function performs deep copying when necessary.
  * This ensures that mutating `destination` after this call will not result in unexpected mutations to `source`.
  */
 export function populateNestedMap<Key1, Key2, Value>(

@@ -24,7 +24,7 @@ import {
 import { brand } from "../../util/index.js";
 import {
 	NodeKind,
-	normalizeAnnotatedAllowedTypes,
+	normalizeAndEvaluateAnnotatedAllowedTypes,
 	type AnnotatedAllowedType,
 	type TreeNodeSchema,
 } from "../core/index.js";
@@ -90,12 +90,12 @@ export interface AllowedTypeDiscrepancy extends FieldDiscrepancyLocation {
 	readonly mismatch: "allowedTypes";
 	/**
 	 * Annotated allowed types in viewed schema
-	 * (excluding {@link SchemaStaticsAlpha.staged | staged} schema) which are not allowed in stored schema.
+	 * (excluding {@link SchemaStaticsBeta.staged | staged} schema) which are not allowed in stored schema.
 	 */
 	readonly view: readonly AnnotatedAllowedType<TreeNodeSchema>[];
 	/**
 	 * Allowed type identifiers in stored schema which are not allowed in view schema
-	 * (including the view schema's {@link SchemaStaticsAlpha.staged | staged} schema).
+	 * (including the view schema's {@link SchemaStaticsBeta.staged | staged} schema).
 	 */
 	readonly stored: readonly TreeNodeSchemaIdentifier[];
 }
@@ -237,7 +237,7 @@ function* getNodeDiscrepancies(
 			}
 
 			yield* getAllowedTypeDiscrepancies(
-				normalizeAnnotatedAllowedTypes(view.info).types,
+				normalizeAndEvaluateAnnotatedAllowedTypes(view.info).types,
 				arrayStoredSchema,
 				brand(view.identifier),
 				EmptyKey,
@@ -346,7 +346,7 @@ function* getFieldDiscrepancies(
 		0xbee /* all field schema should be FieldSchemaAlpha */,
 	);
 	yield* getAllowedTypeDiscrepancies(
-		view.annotatedAllowedTypesNormalized.types,
+		view.allowedTypesFull.evaluate().types,
 		stored.types,
 		identifier,
 		fieldKey,
