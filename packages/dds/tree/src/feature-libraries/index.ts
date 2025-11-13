@@ -81,7 +81,6 @@ export {
 	genericFieldKind,
 	type HasFieldChanges,
 	type NodeExistsConstraint,
-	FieldKindWithEditor,
 	ModularChangeFamily,
 	type RelevantRemovedRootsFromChild,
 	EncodedModularChangeset,
@@ -145,13 +144,16 @@ export {
 	fieldKindConfigurations,
 	intoDelta,
 	relevantRemovedRoots,
+	getCodecTreeForModularChangeFormat,
+	type ModularChangeFormatVersion,
+} from "./default-schema/index.js";
+
+export {
 	SchemaValidationError,
 	isNodeInSchema,
 	isFieldInSchema,
 	throwOutOfSchema,
-	getCodecTreeForModularChangeFormat,
-	type ModularChangeFormatVersion,
-} from "./default-schema/index.js";
+} from "./schemaChecker.js";
 
 export {
 	type FlexTreeOptionalField,

@@ -18,22 +18,26 @@ import {
 	type FieldEditor,
 	type FieldKindConfiguration,
 	type FieldKindConfigurationEntry,
-	FieldKindWithEditor,
-	type FlexFieldKind,
+	FlexFieldKind,
+	type FullSchemaPolicy,
 	type ToDelta,
 	allowsTreeSchemaIdentifierSuperset,
 	referenceFreeFieldChangeRebaser,
 } from "../modular-schema/index.js";
 import {
 	type OptionalChangeset,
+	type OptionalFieldEditor,
 	optionalChangeHandler,
 	optionalFieldEditor,
 } from "../optional-field/index.js";
-import { sequenceFieldChangeHandler } from "../sequence-field/index.js";
+import {
+	sequenceFieldChangeHandler,
+	type SequenceFieldEditor,
+} from "../sequence-field/index.js";
 
 import { noChangeCodecFamily } from "./noChangeCodecs.js";
 import type { CodecTree } from "../../codec/index.js";
-import { brand, type Brand } from "../../util/index.js";
+import { brand, brandConst, type Brand } from "../../util/index.js";
 
 /**
  * ChangeHandler that only handles no-op / identity changes.
@@ -63,11 +67,11 @@ export interface ValueFieldEditor extends FieldEditor<OptionalChangeset> {
 	set(ids: { fill: ChangeAtomId; detach: ChangeAtomId }): OptionalChangeset;
 }
 
-const optionalIdentifier = "Optional";
+const optionalIdentifier = brandConst("Optional")<FieldKindIdentifier>();
 /**
  * 0 or 1 items.
  */
-export const optional = new FieldKindWithEditor(
+export const optional = new FlexFieldKind(
 	optionalIdentifier,
 	Multiplicity.Optional,
 	optionalChangeHandler,
@@ -90,12 +94,12 @@ export const valueChangeHandler: FieldChangeHandler<OptionalChangeset, ValueFiel
 	editor: valueFieldEditor,
 };
 
-const requiredIdentifier = "Value";
+const requiredIdentifier = brandConst("Value")<FieldKindIdentifier>();
 
 /**
  * Exactly one item.
  */
-export const required = new FieldKindWithEditor(
+export const required = new FlexFieldKind(
 	requiredIdentifier,
 	Multiplicity.Single,
 	valueChangeHandler,
@@ -112,12 +116,12 @@ export const required = new FieldKindWithEditor(
 	new Set(),
 );
 
-const sequenceIdentifier = "Sequence";
+const sequenceIdentifier = brandConst("Sequence")<FieldKindIdentifier>();
 
 /**
  * 0 or more items.
  */
-export const sequence = new FieldKindWithEditor(
+export const sequence = new FlexFieldKind(
 	sequenceIdentifier,
 	Multiplicity.Sequence,
 	sequenceFieldChangeHandler,
@@ -128,12 +132,12 @@ export const sequence = new FieldKindWithEditor(
 	new Set([]),
 );
 
-const identifierFieldIdentifier = "Identifier";
+const identifierFieldIdentifier = brandConst("Identifier")<FieldKindIdentifier>();
 
 /**
  * Exactly one identifier.
  */
-export const identifier = new FieldKindWithEditor(
+export const identifier = new FlexFieldKind(
 	identifierFieldIdentifier,
 	Multiplicity.Single,
 	noChangeHandler,
@@ -175,7 +179,7 @@ export const identifier = new FieldKindWithEditor(
  *
  * See {@link emptyField} for a constant, reusable field using Forbidden.
  */
-export const forbidden = new FieldKindWithEditor(
+export const forbidden = new FlexFieldKind(
 	forbiddenFieldKindIdentifier,
 	Multiplicity.Forbidden,
 	noChangeHandler,
@@ -256,7 +260,7 @@ export function getCodecTreeForModularChangeFormat(
  * Before making a SharedTree format change which impacts which set of field kinds are allowed,
  * code which uses this should be audited for compatibility considerations.
  */
-export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map(
+export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind> = new Map(
 	[required, optional, sequence, identifier, forbidden].map((s) => [s.identifier, s]),
 );
 
@@ -265,12 +269,16 @@ export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> =
 // TODO: Find a way to make docs like {@inheritDoc required} work in vscode.
 // TODO: ensure thy work in generated docs.
 // TODO: add these comments to the rest of the cases below.
-export interface Required extends FlexFieldKind<"Value", Multiplicity.Single> {}
-export interface Optional extends FlexFieldKind<"Optional", Multiplicity.Optional> {}
-export interface Sequence extends FlexFieldKind<"Sequence", Multiplicity.Sequence> {}
-export interface Identifier extends FlexFieldKind<"Identifier", Multiplicity.Single> {}
+export interface Required
+	extends FlexFieldKind<ValueFieldEditor, "Value", Multiplicity.Single> {}
+export interface Optional
+	extends FlexFieldKind<OptionalFieldEditor, "Optional", Multiplicity.Optional> {}
+export interface Sequence
+	extends FlexFieldKind<SequenceFieldEditor, "Sequence", Multiplicity.Sequence> {}
+export interface Identifier
+	extends FlexFieldKind<FieldEditor<0>, "Identifier", Multiplicity.Single> {}
 export interface Forbidden
-	extends FlexFieldKind<typeof forbiddenFieldKindIdentifier, Multiplicity.Forbidden> {}
+	extends FlexFieldKind<FieldEditor<0>, "Forbidden", Multiplicity.Forbidden> {}
 
 /**
  * Default FieldKinds with their editor types erased.
@@ -283,3 +291,10 @@ export const FieldKinds: {
 	readonly identifier: Identifier;
 	readonly forbidden: Forbidden;
 } = { required, optional, sequence, identifier, forbidden };
+
+/**
+ * FullSchemaPolicy with the default field kinds.
+ */
+export const defaultSchemaPolicy: FullSchemaPolicy = {
+	fieldKinds,
+};
