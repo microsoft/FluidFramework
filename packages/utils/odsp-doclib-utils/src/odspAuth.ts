@@ -231,26 +231,6 @@ export interface UserPassCredentials {
 	password: string;
 }
 
-interface CleanupArgs {
-	reservationId?: string;
-	odspEndpoint?: "prod" | "dogfood" | "df";
-}
-
-const importTenantCleanupPackage = async (args: CleanupArgs): Promise<void> => {
-	if (process.env.FLUID_TENANT_SETUP_PKG_SPECIFIER !== undefined) {
-		// We expect that the specified package provides a releaseTenants function.
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const { releaseTenants } = await import(process.env.FLUID_TENANT_SETUP_PKG_SPECIFIER);
-		assert(
-			typeof releaseTenants === "function",
-			"A releaseTenants function was not provided from the specified package",
-		);
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
-		return releaseTenants(args);
-	}
-	return undefined;
-};
-
 /**
  * Fetch fresh tokens.
  * @param server - The server to auth against
@@ -271,11 +251,6 @@ export async function refreshTokens(
 	const refresh_token = tokens.refreshToken;
 	assert(refresh_token.length > 0, 0x1ec /* "No refresh token provided." */);
 
-	await importTenantCleanupPackage({
-		reservationId: clientConfig.reservationId,
-		odspEndpoint: clientConfig.endpointName === "odsp" ? "prod" : "dogfood",
-	});
-	// might also need to setup again?????
 	const credentials: TokenRequestCredentials = {
 		grant_type: "refresh_token",
 		refresh_token,

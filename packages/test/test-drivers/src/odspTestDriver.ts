@@ -104,17 +104,35 @@ interface SetupArgs {
 	odspEndpoint?: "prod" | "dogfood" | "df";
 }
 
-const importTenantSetupPackage = async (
-	args: SetupArgs,
-): Promise<TenantSetupResult | undefined> => {
+interface CleanupArgs {
+	reservationId?: string;
+	odspEndpoint?: "prod" | "dogfood" | "df";
+}
+
+const importTenantManagerPackage = async (
+	args: SetupArgs | CleanupArgs,
+	setup: boolean,
+): Promise<TenantSetupResult | void | undefined> => {
 	if (process.env.FLUID_TENANT_SETUP_PKG_SPECIFIER !== undefined) {
-		// We expect that the specified package provides a setupTenants function.
-		const { setupTenants } = await import(process.env.FLUID_TENANT_SETUP_PKG_SPECIFIER);
-		assert(
-			typeof setupTenants === "function",
-			"A setupTenants function was not provided from the specified package",
-		);
-		return setupTenants(args) as Promise<TenantSetupResult>;
+		if (setup) {
+			// We expect that the specified package provides a setupTenants function.
+			const { setupTenants } = await import(process.env.FLUID_TENANT_SETUP_PKG_SPECIFIER);
+			assert(
+				typeof setupTenants === "function",
+				"A setupTenants function was not provided from the specified package",
+			);
+			assert("waitTime" in args, "waitTime must be provided for tenant setup");
+			return setupTenants(args) as Promise<TenantSetupResult>;
+		} else {
+			// We expect that the specified package provides a releaseTenants function.
+			const { releaseTenants } = await import(process.env.FLUID_TENANT_SETUP_PKG_SPECIFIER);
+			assert(
+				typeof releaseTenants === "function",
+				"A releaseTenants function was not provided from the specified package",
+			);
+			assert("reservationId" in args, "reservationId must be provided for tenant cleanup");
+			return releaseTenants(args) as Promise<void>;
+		}
 	}
 	return undefined;
 };
@@ -133,11 +151,14 @@ export async function getOdspCredentials(
 	const creds: UserPassCredentials[] = [];
 	const odspEndpoint = odspEndpointName === "odsp" ? "prod" : "dogfood";
 
-	const result = await importTenantSetupPackage({
-		waitTime: 3600,
-		accessToken: process.env.SYSTEM_ACCESSTOKEN,
-		odspEndpoint,
-	});
+	const result = await importTenantManagerPackage(
+		{
+			waitTime: 3600,
+			accessToken: process.env.SYSTEM_ACCESSTOKEN,
+			odspEndpoint,
+		},
+		true,
+	);
 	assert(result !== undefined, "Tenant setup result is undefined.");
 	const { userPass, reservationId, appClientId } = result;
 
@@ -251,8 +272,16 @@ export class OdspTestDriver implements ITestDriver {
 		try {
 			return await getDriveId(siteUrl, "", undefined, {
 				accessToken: await this.getStorageToken({ siteUrl, refresh: false }, tokenConfig),
-				refreshTokenFn: async () =>
-					this.getStorageToken({ siteUrl, refresh: true }, tokenConfig),
+				refreshTokenFn: async () => {
+					await importTenantManagerPackage(
+						{
+							reservationId: tokenConfig.reservationId,
+							odspEndpoint: tokenConfig.endpointName === "odsp" ? "prod" : "dogfood",
+						},
+						false,
+					);
+					return this.getStorageToken({ siteUrl, refresh: true }, tokenConfig);
+				},
 			});
 		} catch (ex) {
 			if (tokenConfig.supportsBrowserAuth !== true) {
@@ -417,10 +446,20 @@ export class OdspTestDriver implements ITestDriver {
 		}
 		// This function can handle token request for any multiple sites.
 		// Where the test driver is for a specific site.
+		const result = await importTenantManagerPackage(
+			{
+				waitTime: 3600,
+				accessToken: process.env.SYSTEM_ACCESSTOKEN,
+				odspEndpoint: config.endpointName === "odsp" ? "prod" : "dogfood",
+			},
+			true,
+		);
+		assert(result !== undefined, "Tenant setup result is undefined.");
+		const { userPass, reservationId } = result;
 		const tokens = await this.odspTokenManager.getOdspTokens(
 			host,
-			config,
-			passwordTokenConfig(config.username, config.password),
+			{ reservationId, ...config },
+			passwordTokenConfig(userPass[0]?.username, userPass[0]?.password),
 			options.refresh,
 		);
 		return tokens.accessToken;
