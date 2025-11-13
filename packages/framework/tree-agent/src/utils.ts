@@ -29,6 +29,7 @@ import { NodeKind, normalizeFieldSchema } from "@fluidframework/tree/internal";
 import { z } from "zod";
 
 import { FunctionWrapper } from "./methodBinding.js";
+import { PropertyWrapper } from "./propertyBinding.js";
 
 /**
  * Subset of Map interface.
@@ -214,11 +215,13 @@ export function unqualifySchema(schemaIdentifier: string): string {
  */
 export interface SchemaDetails {
 	hasHelperMethods: boolean;
+	hasHelperProperties: boolean;
 }
 
 // TODO: yuck, this entire file has too many statics. we should rewrite it as a generic zod schema walk.
 let detailsI: SchemaDetails = {
 	hasHelperMethods: false,
+	hasHelperProperties: false,
 };
 
 /**
@@ -235,7 +238,7 @@ export function getZodSchemaAsTypeScript(
 	schema: Record<string, z.ZodType>,
 	details?: SchemaDetails,
 ): string {
-	detailsI = details ?? { hasHelperMethods: false };
+	detailsI = details ?? { hasHelperMethods: false, hasHelperProperties: false };
 	let result = "";
 	let startOfLine = true;
 	let indent = 0;
@@ -434,6 +437,26 @@ export function getZodSchemaAsTypeScript(
 		}
 	}
 
+	function appendBoundProperties(type: z.ZodType): void {
+		const property = (type as unknown as { property?: PropertyWrapper }).property;
+
+		if (!(property instanceof PropertyWrapper)) {
+			if (type.description !== undefined && type.description !== "") {
+				append(` // ${type.description}`);
+			}
+			return;
+		}
+
+		detailsI.hasHelperProperties = true;
+
+		if (property.readOnly === true) {
+			append(" // readonly");
+		}
+		if (property.description !== undefined && property.description !== "") {
+			append(` - ${property.description}`);
+		}
+	}
+
 	function appendArrayType(arrayType: z.ZodType) {
 		appendType((arrayType._def as z.ZodArrayDef).type, TypePrecedence.Object);
 		append("[]");
@@ -446,6 +469,7 @@ export function getZodSchemaAsTypeScript(
 		// eslint-disable-next-line prefer-const
 		for (let [name, type] of Object.entries((objectType._def as z.ZodObjectDef).shape())) {
 			const method = (type as unknown as { method: object | undefined }).method;
+
 			if (method === undefined || !(method instanceof FunctionWrapper)) {
 				append(name);
 				if (getTypeKind(type) === z.ZodFirstPartyTypeKind.ZodOptional) {
@@ -455,8 +479,7 @@ export function getZodSchemaAsTypeScript(
 				append(": ");
 				appendType(type);
 				append(";");
-				const comment = type.description;
-				if (comment !== undefined && comment !== "") append(` // ${comment}`);
+				appendBoundProperties(type);
 				appendNewLine();
 			}
 		}

@@ -27,6 +27,7 @@ import { z, type ZodTypeAny } from "zod";
 
 import type { BindableSchema } from "./methodBinding.js";
 import { FunctionWrapper, getExposedMethods } from "./methodBinding.js";
+import { getExposedProperties } from "./propertyBinding.js";
 import {
 	fail,
 	getOrCreate,
@@ -80,6 +81,11 @@ export function generateEditTypesForPrompt(
 					objectTypeSchemas.add(n);
 					const exposedMethods = getExposedMethods(n);
 					for (const t of exposedMethods.referencedTypes) {
+						allSchemas.add(t);
+						objectTypeSchemas.add(t);
+					}
+					const exposedProperties = getExposedProperties(n);
+					for (const t of exposedProperties.referencedTypes) {
 						allSchemas.add(t);
 						objectTypeSchemas.add(t);
 					}
@@ -146,12 +152,35 @@ function getBoundMethodsForBindable(bindableSchema: BindableSchema): {
 	return { methods: methodTypes, referencedTypes: methods.referencedTypes };
 }
 
+function getBoundPropertiesForBindable(bindableSchema: BindableSchema): {
+	referencedTypes: Set<TreeNodeSchema>;
+	properties: [string, ZodTypeAny][];
+} {
+	const propTypes: [string, ZodTypeAny][] = [];
+	const props = getExposedProperties(bindableSchema);
+	for (const [name, prop] of Object.entries(props.properties)) {
+		const schema = prop.schema;
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+		(schema as any).property = prop;
+		propTypes.push([name, prop.schema]);
+	}
+	return { properties: propTypes, referencedTypes: props.referencedTypes };
+}
+
 function getBoundMethods(
 	definition: string,
 	bindableSchemas: Map<string, BindableSchema>,
 ): [string, ZodTypeAny][] {
 	const bindableSchema = bindableSchemas.get(definition) ?? fail("Unknown definition");
 	return getBoundMethodsForBindable(bindableSchema).methods;
+}
+
+function getBoundProperties(
+	definition: string,
+	bindableSchemas: Map<string, BindableSchema>,
+): [string, ZodTypeAny][] {
+	const bindableSchema = bindableSchemas.get(definition) ?? fail("unknown definition");
+	return getBoundPropertiesForBindable(bindableSchema).properties;
 }
 
 function addBindingIntersectionIfNeeded(
@@ -164,6 +193,7 @@ function addBindingIntersectionIfNeeded(
 	let zodType = zodTypeBound;
 	let description = simpleNodeSchema.metadata?.description ?? "";
 	const boundMethods = getBoundMethods(definition, bindableSchemas);
+	const boundProperties = getBoundProperties(definition, bindableSchemas);
 	if (boundMethods.length > 0) {
 		const methods: Record<string, z.ZodTypeAny> = {};
 		for (const [name, zodFunction] of boundMethods) {
@@ -175,9 +205,32 @@ function addBindingIntersectionIfNeeded(
 			methods[name] = zodFunction;
 		}
 		zodType = z.intersection(zodType, z.object(methods));
-		const methodNote = `Note: this ${typeString} has custom user-defined methods directly on it.`;
-		description = description === "" ? methodNote : `${description} - ${methodNote}`;
 	}
+	if (boundProperties.length > 0) {
+		const propsObj: Record<string, z.ZodTypeAny> = {};
+		for (const [name, zodTypeAny] of boundProperties) {
+			if (propsObj[name] !== undefined) {
+				throw new UsageError(
+					`Property ${name} conflicts with field of the same name in schema ${definition}`,
+				);
+			}
+			propsObj[name] = zodTypeAny;
+		}
+		zodType = z.intersection(zodType, z.object(propsObj));
+	}
+
+	let note = "";
+	if (boundMethods.length > 0 && boundProperties.length > 0) {
+		note = `Note: this ${typeString} has custom user-defined methods and properties directly on it.`;
+	} else if (boundMethods.length > 0) {
+		note = `Note: this ${typeString} has custom user-defined methods directly on it.`;
+	} else if (boundProperties.length > 0) {
+		note = `Note: this ${typeString} has custom user-defined properties directly on it.`;
+	}
+	if (note !== "") {
+		description = description === "" ? note : `${description} - ${note}`;
+	}
+
 	return zodType.describe(description);
 }
 
@@ -217,6 +270,16 @@ function getOrCreateType(
 						);
 					}
 					properties[name] = zodFunction;
+				}
+
+				// Add exposed properties directly on object nodes
+				for (const [name, zodTypeAny] of getBoundProperties(definition, bindableSchemas)) {
+					if (properties[name] !== undefined) {
+						throw new UsageError(
+							`Property ${name} conflict with field of the same name in schema ${definition}`,
+						);
+					}
+					properties[name] = zodTypeAny;
 				}
 
 				return (type = z
