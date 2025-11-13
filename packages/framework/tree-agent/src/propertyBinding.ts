@@ -85,7 +85,7 @@ export class PropertyDef {
  */
 export interface ExposedProperties {
 	exposeProperty<
-		S extends BindableSchema & Ctor<any>,
+		S extends BindableSchema & Ctor,
 		K extends string & ExposableKeys<InstanceType<S>>,
 		TZ extends ZodTypeAny,
 	>(
@@ -125,7 +125,7 @@ class ExposedPropertiesI implements ExposedProperties {
 	public constructor(private readonly schemaClass: BindableSchema) {}
 
 	public exposeProperty<
-		S extends BindableSchema & Ctor<any>,
+		S extends BindableSchema & Ctor,
 		K extends string & ExposableKeys<InstanceType<S>>,
 		TZ extends ZodTypeAny,
 	>(

@@ -61,7 +61,7 @@ export interface ExposedMethods {
 // @alpha
 export interface ExposedProperties {
     // (undocumented)
-    exposeProperty<S extends BindableSchema & Ctor<any>, K extends string & ExposableKeys<InstanceType<S>>, TZ extends ZodTypeAny>(schema: S, name: K, def: {
+    exposeProperty<S extends BindableSchema & Ctor, K extends string & ExposableKeys<InstanceType<S>>, TZ extends ZodTypeAny>(schema: S, name: K, def: {
         schema: TZ;
         description?: string;
     } & ReadOnlyRequirement<InstanceType<S>, K> & TypeMatchOrError<InstanceType<S>[K], infer<TZ>>): void;
