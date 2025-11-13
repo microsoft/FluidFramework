@@ -16,7 +16,6 @@ import {
 	makeRandom,
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
-import { v4 as uuid } from "uuid";
 import type {
 	DDSFuzzModel,
 	DDSFuzzSuiteOptions,
@@ -28,7 +27,6 @@ import type { IConsensusOrderedCollection, IOrderedCollection } from "../interfa
 import { ConsensusResult } from "../interfaces.js";
 
 import { _dirname } from "./dirname.cjs";
-import { createEmitter } from "@fluid-internal/client-utils";
 
 /**
  * Config options for generating ConsensusOrderedCollection operations
@@ -48,10 +46,6 @@ const valueConfigs: Required<ConsensusOrderedCollectionValueConfig> = {
 	valuePoolSize: 3,
 	valueStringLength: 5,
 };
-
-interface ResolveEvent {
-	resolve: (callbackId: string, result: ConsensusResult) => void;
-}
 
 /**
  * Default options for ConsensusOrderedCollection fuzz testing
@@ -75,23 +69,13 @@ export interface AddOperation {
 
 export interface AcquireOperation {
 	type: "acquire";
-	pendingCallbacks: Map<string, string>;
-}
-
-export interface ResolveOperation {
-	type: "resolve";
 	result: ConsensusResult;
-	pendingCallbacks: Map<string, string>;
-	callbackId: string;
 }
 
 /**
  * Represents ConsensusOrderedCollection operation types for fuzz testing
  */
-export type ConsensusOrderedCollectionOperation =
-	| AddOperation
-	| AcquireOperation
-	| ResolveOperation;
+export type ConsensusOrderedCollectionOperation = AddOperation | AcquireOperation;
 
 function makeOperationGenerator(): Generator<
 	ConsensusOrderedCollectionOperation,
@@ -120,16 +104,7 @@ function makeOperationGenerator(): Generator<
 	async function acquire(state: OpSelectionState): Promise<AcquireOperation> {
 		return {
 			type: "acquire",
-			pendingCallbacks: state.pendingCallbacks,
-		};
-	}
-
-	async function resolve(state: OpSelectionState): Promise<ResolveOperation> {
-		return {
-			type: "resolve",
 			result: state.random.pick([ConsensusResult.Complete, ConsensusResult.Release]),
-			pendingCallbacks: state.pendingCallbacks,
-			callbackId: state.random.pick([...state.pendingCallbacks.keys()]),
 		};
 	}
 
@@ -139,7 +114,6 @@ function makeOperationGenerator(): Generator<
 	>([
 		[add, 1],
 		[acquire, 1],
-		[resolve, 1, (state) => state.pendingCallbacks.size > 0],
 	]);
 
 	return async (state: FuzzTestState) =>
@@ -151,50 +125,16 @@ function makeOperationGenerator(): Generator<
 }
 
 function makeReducer(): Reducer<ConsensusOrderedCollectionOperation, FuzzTestState> {
-	const callbackResolver = createEmitter<ResolveEvent>();
-
 	const reducer = combineReducers<ConsensusOrderedCollectionOperation, FuzzTestState>({
 		add: ({ client }, { value }) => {
 			client.channel.add(value).catch((error) => {
 				throw error;
 			});
 		},
-		acquire: ({ client }, { pendingCallbacks }) => {
-			const callback = async (value: string): Promise<ConsensusResult> => {
-				const callbackId = uuid();
-				pendingCallbacks.set(callbackId, value);
-				return new Promise<ConsensusResult>((resolve) => {
-					const onCallbackResolve = (id: string, result: ConsensusResult): void => {
-						if (id === callbackId) {
-							callbackResolver.off("resolve", onCallbackResolve);
-							resolve(result);
-						}
-					};
-					callbackResolver.on("resolve", onCallbackResolve);
-				});
-			};
-			client.channel.acquire(callback).catch((error) => {
-				throw error;
-			});
-		},
-		resolve: ({ client }, { result, pendingCallbacks, callbackId }) => {
-			new Promise<string>((resolve) => {
-				if (result === ConsensusResult.Complete) {
-					client.channel.once("localComplete", (value: string) => {
-						resolve(value);
-					});
-				} else {
-					client.channel.once("localRelease", (value: string) => {
-						resolve(value);
-					});
-				}
-			})
-				.then((resolvedValue: string) => {
-					const value = pendingCallbacks.get(callbackId);
-					if (resolvedValue === value) {
-						pendingCallbacks.delete(callbackId);
-						callbackResolver.emit("resolve", callbackId, result);
-					}
+		acquire: ({ client }, { result }) => {
+			client.channel
+				.acquire(async (_value: string): Promise<ConsensusResult> => {
+					return result;
 				})
 				.catch((error) => {
 					throw error;
