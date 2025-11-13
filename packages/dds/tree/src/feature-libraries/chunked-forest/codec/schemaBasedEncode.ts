@@ -43,7 +43,6 @@ import type { IncrementalEncoder } from "./codecs.js";
 import { NodeShapeBasedEncoder } from "./nodeEncoder.js";
 import { defaultIncrementalEncodingPolicy } from "./incrementalEncodingPolicy.js";
 import { brand, oneFromIterable } from "../../../util/index.js";
-import type { FullSchemaPolicy } from "../../modular-schema/index.js";
 
 /**
  * Encode data from `fieldBatch` in into an `EncodedChunk` using {@link FieldBatchFormatVersion.v1}.
