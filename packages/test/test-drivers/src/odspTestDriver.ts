@@ -53,23 +53,24 @@ interface IOdspTestDriverConfig extends TokenConfig {
 	options: HostStoragePolicy | undefined;
 }
 
-// specific a range of user name from <prefix><start> to <prefix><start + count - 1> all having the same password
-interface LoginTenantRange {
-	prefix: string;
-	start: number;
-	count: number;
-	password: string;
-}
+// // specific a range of user name from <prefix><start> to <prefix><start + count - 1> all having the same password
+// interface LoginTenantRange {
+// 	prefix: string;
+// 	start: number;
+// 	count: number;
+// 	password: string;
+// }
 
-interface LoginTenants {
-	[tenant: string]: {
-		range: LoginTenantRange;
-		// add different format here
-	};
-}
+// interface LoginTenants {
+// 	[tenant: string]: {
+// 		range: LoginTenantRange;
+// 		// add different format here
+// 	};
+// }
 
 /**
  * A simplified version of the credentials returned by the tenant pool containing only username and password values.
+ * @internal
  */
 export interface UserPassCredentials {
 	username: string;
@@ -88,7 +89,10 @@ export function assertOdspEndpoint(
 	throw new TypeError("Not a odsp endpoint");
 }
 
-interface TenantSetupResult {
+/**
+ * @internal
+ */
+export interface TenantSetupResult {
 	userPass: UserPassCredentials[];
 	reservationId: string;
 	appClientId: string;
@@ -127,11 +131,6 @@ export async function getOdspCredentials(
 	requestedUserName?: string,
 ): Promise<TenantSetupResult> {
 	const creds: UserPassCredentials[] = [];
-
-	/**
-	 * call trips here to populate username, password, and app client id
-	 * save reservation id somewhere to clean up in the refresh case
-	 */
 	const odspEndpoint = odspEndpointName === "odsp" ? "prod" : "dogfood";
 
 	const result = await importTenantSetupPackage({
