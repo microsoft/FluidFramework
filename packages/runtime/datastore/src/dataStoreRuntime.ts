@@ -245,6 +245,11 @@ export class FluidDataStoreRuntime
 		return this;
 	}
 
+	private localOpActivity: "applyStashed" | "rollback" | undefined = undefined;
+	public get activeLocalOperationActivity(): "applyStashed" | "rollback" | undefined {
+		return this.localOpActivity;
+	}
+
 	private _disposed = false;
 	public get disposed(): boolean {
 		return this._disposed;
@@ -1333,69 +1338,83 @@ export class FluidDataStoreRuntime
 		localOpMetadata: unknown,
 	): void {
 		this.verifyNotClosed();
+		assert(!this.localOpActivity, "localOpActivity must be undefined when entering rollback");
+		this.localOpActivity = "rollback";
+		try {
+			// The op being rolled back was not/will not be submitted, so decrement the count.
+			--this.pendingOpCount.value;
 
-		// The op being rolled back was not/will not be submitted, so decrement the count.
-		--this.pendingOpCount.value;
+			switch (type) {
+				case DataStoreMessageType.ChannelOp: {
+					// For Operations, find the right channel and trigger resubmission on it.
+					const envelope = content as IEnvelope;
+					const channelContext = this.contexts.get(envelope.address);
+					assert(!!channelContext, 0x2ed /* "There should be a channel context for the op" */);
 
-		switch (type) {
-			case DataStoreMessageType.ChannelOp: {
-				// For Operations, find the right channel and trigger resubmission on it.
-				const envelope = content as IEnvelope;
-				const channelContext = this.contexts.get(envelope.address);
-				assert(!!channelContext, 0x2ed /* "There should be a channel context for the op" */);
-
-				channelContext.rollback(envelope.contents, localOpMetadata);
-				break;
+					channelContext.rollback(envelope.contents, localOpMetadata);
+					break;
+				}
+				default: {
+					throw new LoggingError(`Can't rollback ${type} message`);
+				}
 			}
-			default: {
-				throw new LoggingError(`Can't rollback ${type} message`);
-			}
+		} finally {
+			this.localOpActivity = undefined;
 		}
 	}
 
 	// TODO: use something other than `any` here
 	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
 	public async applyStashedOp(content: any): Promise<unknown> {
-		// The op being applied may have been submitted in a previous session, so we increment the count here.
-		// Either the ack will arrive and be processed, or that previous session's connection will end, at which point the op will be resubmitted.
-		++this.pendingOpCount.value;
+		assert(
+			!this.localOpActivity,
+			"localOpActivity must be undefined when entering applyStashedOp",
+		);
+		this.localOpActivity = "applyStashed";
+		try {
+			// The op being applied may have been submitted in a previous session, so we increment the count here.
+			// Either the ack will arrive and be processed, or that previous session's connection will end, at which point the op will be resubmitted.
+			++this.pendingOpCount.value;
 
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		const type = content?.type as DataStoreMessageType;
-		switch (type) {
-			case DataStoreMessageType.Attach: {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				const attachMessage = content.content as IAttachMessage;
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			const type = content?.type as DataStoreMessageType;
+			switch (type) {
+				case DataStoreMessageType.Attach: {
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+					const attachMessage = content.content as IAttachMessage;
 
-				const flatBlobs = new Map<string, ArrayBufferLike>();
-				const snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
+					const flatBlobs = new Map<string, ArrayBufferLike>();
+					const snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
 
-				const channelContext = this.createRehydratedLocalChannelContext(
-					attachMessage.id,
-					snapshotTree,
-					flatBlobs,
-				);
-				await channelContext.getChannel();
-				this.contexts.set(attachMessage.id, channelContext);
-				if (this.attachState === AttachState.Detached) {
-					this.localChannelContextQueue.set(attachMessage.id, channelContext);
-				} else {
-					channelContext.makeVisible();
-					this.pendingAttach.add(attachMessage.id);
+					const channelContext = this.createRehydratedLocalChannelContext(
+						attachMessage.id,
+						snapshotTree,
+						flatBlobs,
+					);
+					await channelContext.getChannel();
+					this.contexts.set(attachMessage.id, channelContext);
+					if (this.attachState === AttachState.Detached) {
+						this.localChannelContextQueue.set(attachMessage.id, channelContext);
+					} else {
+						channelContext.makeVisible();
+						this.pendingAttach.add(attachMessage.id);
+					}
+					return;
 				}
-				return;
+				case DataStoreMessageType.ChannelOp: {
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+					const envelope = content.content as IEnvelope;
+					const channelContext = this.contexts.get(envelope.address);
+					assert(!!channelContext, 0x184 /* "There should be a channel context for the op" */);
+					await channelContext.getChannel();
+					return channelContext.applyStashedOp(envelope.contents);
+				}
+				default: {
+					unreachableCase(type);
+				}
 			}
-			case DataStoreMessageType.ChannelOp: {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				const envelope = content.content as IEnvelope;
-				const channelContext = this.contexts.get(envelope.address);
-				assert(!!channelContext, 0x184 /* "There should be a channel context for the op" */);
-				await channelContext.getChannel();
-				return channelContext.applyStashedOp(envelope.contents);
-			}
-			default: {
-				unreachableCase(type);
-			}
+		} finally {
+			this.localOpActivity = undefined;
 		}
 	}
 

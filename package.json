@@ -1,6 +1,6 @@
 {
 	"name": "client-release-group-root",
-	"version": "2.72.0",
+	"version": "2.73.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -403,6 +403,7 @@
 			"@vvago/vale",
 			"classic-level",
 			"core-js",
+			"esbuild",
 			"keytar",
 			"msgpackr-extract",
 			"puppeteer",

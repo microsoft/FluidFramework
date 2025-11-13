@@ -1,5 +1,9 @@
 # @fluidframework/fluid-static
 
+## 2.72.0
+
+Dependency updates only.
+
 ## 2.71.0
 
 Dependency updates only.
@@ -123,7 +127,6 @@ Dependency updates only.
   Similarly, `IDeltaManager.outbound` contained functionality that could break core runtime features such as generation of batches and chunking. Data loss or corruption could occur when `IDeltaManger.inbound.pause()` or `IDeltaManager.inbound.resume()` were called.
 
   #### Alternatives
-
   - Alternatives to `IDeltaManager.inbound.on("op", ...)` are `IDeltaManager.on("op", ...)`
   - Alternatives to calling `IDeltaManager.inbound.pause`, `IDeltaManager.outbound.pause` for `IContainer` disconnect use `IContainer.disconnect`.
   - Alternatives to calling `IDeltaManager.inbound.resume`, `IDeltaManager.outbound.resume` for `IContainer` reconnect use `IContainer.connect`.
@@ -162,7 +165,6 @@ Dependency updates only.
 
   Access to these now less public types should not be required for users of the `@public` "declarative API" exposed in the `fluid-framework` package, but can still be accessed for those who need them under the `/legacy` import paths.
   The full list of such types is:
-
   - `SharedTree` as exported from `@fluidframwork/tree`: It is still exported as `@public` from `fluid-framework` as `SharedObjectKind`.
   - `ISharedObjectKind`: See new `SharedObjectKind` type for use in `@public` APIs.
     `ISharedObject`
@@ -180,7 +182,6 @@ Dependency updates only.
   - `IProvideFluidHandleContext`
 
   Removed APIs:
-
   - `DataObjectClass`: Usages replaced with `SharedObjectKind`.
   - `LoadableObjectClass`: Replaced with `SharedObjectKind`.
   - `LoadableObjectClassRecord`: Replaced with `Record<string, SharedObjectKind>`.
@@ -199,7 +200,6 @@ Dependency updates only.
 ### Minor Changes
 
 - Rename `AzureMember.userName` to `AzureMember.name` and `IMember.userId` to `IMember.id` [96872186d0](https://github.com/microsoft/FluidFramework/commit/96872186d0d0f245c1fece7d19b3743e501679b6)
-
   1. Renamed `AzureMember.userName` to `AzureMember.name` to establish uniform naming across odsp-client and azure-client.
   2. Renamed `IMember.userId` to `IMember.id` to align with the properties received from AFR.
 
@@ -214,7 +214,6 @@ Dependency updates only.
   TypeScript types and implementation code.
 
   This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
-
   - `"moduleResolution": "Node16"` with `"module": "Node16"`
   - `"moduleResolution": "Bundler"` with `"module": "ESNext"`
 
@@ -255,7 +254,6 @@ Dependency updates only.
 - Updated server dependencies ([#19122](https://github.com/microsoft/FluidFramework/issues/19122)) [25366b4229](https://github.com/microsoft/FluidFramework/commits/25366b422918cb43685c5f328b50450749592902)
 
   The following Fluid server dependencies have been updated to the latest version, 3.0.0. [See the full changelog.](https://github.com/microsoft/FluidFramework/releases/tag/server_v3.0.0)
-
   - @fluidframework/gitresources
   - @fluidframework/server-kafka-orderer
   - @fluidframework/server-lambdas
@@ -291,7 +289,6 @@ Dependency updates only.
   Several FluidStatic classes were unnecessarily exposed and were deprecated in an earlier release. They have been replaced with creation functions. This helps us
   keep implementations decoupled from usage which is easier to maintain and extend. It has very minimal impact on the
   public surface area of downstream packages. The removed classes are as follows:
-
   - `AzureAudience` (use `IAzureAudience` instead)
   - `TinyliciousAudience` (use `ITinyliciousAudience` instead)
   - `DOProviderContainerRuntimeFactory`
@@ -307,7 +304,6 @@ Dependency updates only.
   Several FluidStatic classes were unnecessarily exposed. They have been replaced with creation functions. This helps us
   keep implementations decoupled from usage which is easier to maintain and extend. It has very minimal impact on the
   public surface area of downstream packages. The deprecated classes are as follows:
-
   - `AzureAudience` (use `IAzureAudience` instead)
   - `TinyliciousAudience` (use `ITinyliciousAudience` instead)
   - `DOProviderContainerRuntimeFactory`
@@ -333,7 +329,6 @@ Dependency updates only.
 - Dependencies on @fluidframework/protocol-definitions package updated to 3.0.0 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
   This included the following changes from the protocol-definitions release:
-
   - Updating signal interfaces for some planned improvements. The intention is split the interface between signals
     submitted by clients to the server and the resulting signals sent from the server to clients.
     - A new optional type member is available on the ISignalMessage interface and a new ISentSignalMessage interface has
@@ -344,7 +339,6 @@ Dependency updates only.
 - Server upgrade: dependencies on Fluid server packages updated to 2.0.1 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
   Dependencies on the following Fluid server package have been updated to version 2.0.1:
-
   - @fluidframework/gitresources: 2.0.1
   - @fluidframework/server-kafka-orderer: 2.0.1
   - @fluidframework/server-lambdas: 2.0.1
@@ -369,7 +363,6 @@ Dependency updates only.
 - test-utils: provideEntryPoint is required [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
   The optional `provideEntryPoint` method has become required on a number of constructors. A value will need to be provided to the following classes:
-
   - `BaseContainerRuntimeFactory`
   - `RuntimeFactory`
   - `ContainerRuntime` (constructor and `loadRuntime`)
@@ -402,7 +395,6 @@ Dependency updates only.
 
   The **@fluidframework/common-definitions** package is being deprecated, so the following interfaces and types are now
   imported from the **@fluidframework/core-interfaces** package:
-
   - interface IDisposable
   - interface IErrorEvent
   - interface IErrorEvent
@@ -462,7 +454,6 @@ Dependency updates only.
 ### Major Changes
 
 - The following functions and classes were deprecated in previous releases and have been removed: [8b242fdc79](https://github.com/microsoft/FluidFramework/commits/8b242fdc796714cf1da9ad3f90d02efb122af0c2)
-
   - `PureDataObject.getFluidObjectFromDirectory`
   - `IProvideContainerRuntime` and its `IContainerRuntime` member.
   - `ContainerRuntime`'s `IProvideContainerRuntime` has also been removed.

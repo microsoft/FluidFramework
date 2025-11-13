@@ -117,6 +117,9 @@ export const ArrayNodeSchema: {
 // @alpha
 export function asAlpha<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): TreeViewAlpha<TSchema>;
 
+// @alpha
+export function asAlpha<TSchema extends ImplicitFieldSchema>(view: TreeViewConfiguration<TSchema>): TreeViewConfigurationAlpha<TSchema>;
+
 // @beta
 export function asBeta<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): TreeViewBeta<TSchema>;
 
@@ -328,6 +331,7 @@ export const FluidClientVersion: {
     readonly v2_0: "2.0.0";
     readonly v2_43: "2.43.0";
     readonly v2_52: "2.52.0";
+    readonly v2_73: "2.73.0";
 };
 
 // @beta

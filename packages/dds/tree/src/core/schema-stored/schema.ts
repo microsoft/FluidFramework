@@ -10,7 +10,7 @@ import {
 	type Brand,
 	type JsonCompatibleReadOnlyObject,
 	type MakeNominal,
-	brand,
+	brandConst,
 	invertMap,
 } from "../../util/index.js";
 
@@ -160,7 +160,7 @@ export interface TreeFieldStoredSchema {
  *
  * 2. The schema used for out of schema fields (which thus must be empty/not exist) on object and leaf nodes.
  */
-export const forbiddenFieldKindIdentifier: FieldKindIdentifier = brand("Forbidden");
+export const forbiddenFieldKindIdentifier = brandConst("Forbidden")<FieldKindIdentifier>();
 
 /**
  * A schema for empty fields (fields which must always be empty).

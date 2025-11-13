@@ -12,13 +12,13 @@ import {
 	isFieldInSchema,
 	isNodeInSchema,
 	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/default-schema/schemaChecker.js";
+} from "../../feature-libraries/schemaChecker.js";
 import {
 	cursorForJsonableTreeNode,
 	defaultSchemaPolicy,
 	FieldKinds,
 	mapTreeFromCursor,
-} from "../../../feature-libraries/index.js";
+} from "../../feature-libraries/index.js";
 import {
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
@@ -34,10 +34,10 @@ import {
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 	type Value,
-} from "../../../core/index.js";
-import { brand } from "../../../util/index.js";
-import { testTrees } from "../../testTrees.js";
-import { testIdCompressor } from "../../utils.js";
+} from "../../core/index.js";
+import { brand } from "../../util/index.js";
+import { testTrees } from "../testTrees.js";
+import { testIdCompressor } from "../utils.js";
 
 /**
  * Creates a schema and policy. Indicates stored schema validation should be performed.
