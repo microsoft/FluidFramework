@@ -1084,6 +1084,7 @@ export class ModularChangeFamily
 			builds: change.builds,
 			destroys: change.destroys,
 			refreshers: change.refreshers,
+			rebaseVersion,
 		});
 
 		// XXX: This is an expensive assert which should be disabled before merging.
