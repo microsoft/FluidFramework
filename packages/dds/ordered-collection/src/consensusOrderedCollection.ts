@@ -173,13 +173,12 @@ export class ConsensusOrderedCollection<T = any>
 
 		switch (res) {
 			case ConsensusResult.Complete: {
-				this.emit("localComplete", result.value);
 				await this.complete(result.acquireId);
 				break;
 			}
 			case ConsensusResult.Release: {
-				this.emit("localRelease", result.value, true /* intentional */);
 				this.release(result.acquireId);
+				this.emit("localRelease", result.value, true /* intentional */);
 				break;
 			}
 			default: {
