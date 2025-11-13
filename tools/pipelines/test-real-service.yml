@@ -192,3 +192,4 @@ stages:
       env:
         FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains createTestLogger impl to inject
         FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
+        FLUID_TENANT_SETUP_PKG_SPECIFIER: '@ff-internal/trips-setup'

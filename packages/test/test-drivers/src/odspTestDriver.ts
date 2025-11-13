@@ -72,8 +72,8 @@ interface LoginTenants {
  * A simplified version of the credentials returned by the tenant pool containing only username and password values.
  */
 export interface UserPassCredentials {
-	UserPrincipalName: string;
-	Password: string;
+	username: string;
+	password: string;
 }
 
 /**
@@ -88,106 +88,154 @@ export function assertOdspEndpoint(
 	throw new TypeError("Not a odsp endpoint");
 }
 
+interface TenantSetupResult {
+	userPass: UserPassCredentials[];
+	reservationId: string;
+	appClientId: string;
+}
+
+interface SetupArgs {
+	waitTime?: number;
+	accessToken?: string;
+	odspEndpoint?: "prod" | "dogfood" | "df";
+}
+
+const importTenantSetupPackage = async (
+	args: SetupArgs,
+): Promise<TenantSetupResult | undefined> => {
+	if (process.env.FLUID_TENANT_SETUP_PKG_SPECIFIER !== undefined) {
+		// We expect that the specified package provides a setupTenants function.
+		const { setupTenants } = await import(process.env.FLUID_TENANT_SETUP_PKG_SPECIFIER);
+		assert(
+			typeof setupTenants === "function",
+			"A setupTenants function was not provided from the specified package",
+		);
+		return setupTenants(args) as Promise<TenantSetupResult>;
+	}
+	return undefined;
+};
+
 /**
  * Get from the env a set of credentials to use from a single tenant
  * @param tenantIndex - integer to choose the tenant from array of options (if multiple tenants are available)
  * @param requestedUserName - specific user name to filter to
  * @internal
  */
-export function getOdspCredentials(
+export async function getOdspCredentials(
 	odspEndpointName: OdspEndpoint,
 	tenantIndex: number,
 	requestedUserName?: string,
-): { username: string; password: string }[] {
-	const creds: { username: string; password: string }[] = [];
-	const loginTenants =
-		odspEndpointName === "odsp"
-			? process.env.login__odsp__test__tenants
-			: process.env.login__odspdf__test__tenants;
+): Promise<TenantSetupResult> {
+	const creds: UserPassCredentials[] = [];
 
-	if (loginTenants !== undefined) {
-		/**
-		 * Parse login credentials using the new tenant format for e2e tests.
-		 * For the expected format of loginTenants, see {@link UserPassCredentials}
-		 */
-		if (loginTenants.includes("UserPrincipalName")) {
-			const output: UserPassCredentials[] = JSON.parse(loginTenants);
-			if (output?.[tenantIndex] === undefined) {
-				throw new Error("No resources found in the login tenants");
-			}
+	/**
+	 * call trips here to populate username, password, and app client id
+	 * save reservation id somewhere to clean up in the refresh case
+	 */
+	const odspEndpoint = odspEndpointName === "odsp" ? "prod" : "dogfood";
 
-			// Return the set of accounts to choose from a single tenant
-			for (const account of output) {
-				const username = account.UserPrincipalName;
-				const password = account.Password;
-				if (username === undefined || password === undefined) {
-					throw new Error(
-						`username or password should not be undefined when getting odsp credentials - user: ${username}, pass: ${password}`,
-					);
-				}
-				if (requestedUserName === undefined || requestedUserName === username) {
-					creds.push({ username, password });
-				}
-			}
-		} else {
-			/**
-			 * Parse login credentials using the tenant format for stress tests.
-			 * For the expected format of loginTenants, see {@link LoginTenants}
-			 */
-			const tenants: LoginTenants = JSON.parse(loginTenants);
-			const tenantNames = Object.keys(tenants);
-			const tenant = tenantNames[tenantIndex % tenantNames.length];
-			if (tenant === undefined) {
-				throw new Error("tenant should not be undefined when getting odsp credentials");
-			}
-			const tenantInfo = tenants[tenant];
-			if (tenantInfo === undefined) {
-				throw new Error("tenantInfo should not be undefined when getting odsp credentials");
-			}
-			// Translate all the user from that user to the full user principal name by appending the tenant domain
-			const range = tenantInfo.range;
+	const result = await importTenantSetupPackage({
+		waitTime: 3600,
+		accessToken: process.env.SYSTEM_ACCESSTOKEN,
+		odspEndpoint,
+	});
+	assert(result !== undefined, "Tenant setup result is undefined.");
+	const { userPass, reservationId, appClientId } = result;
 
-			// Return the set of account to choose from a single tenant
-			for (let i = 0; i < range.count; i++) {
-				const username = `${range.prefix}${range.start + i}@${tenant}`;
-				if (requestedUserName === undefined || requestedUserName === username) {
-					creds.push({ username, password: range.password });
-				}
-			}
-		}
-	} else {
-		const loginAccounts =
-			odspEndpointName === "odsp"
-				? process.env.login__odsp__test__accounts
-				: process.env.login__odspdf__test__accounts;
-		if (loginAccounts === undefined) {
-			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-			const inCi = !!process.env.TF_BUILD;
-			const odspOrOdspdf = odspEndpointName === "odsp" ? "odsp" : "odspdf";
-			assert.fail(
-				`Missing secrets from environment. At least one of login__${odspOrOdspdf}__test__tenants or login__${odspOrOdspdf}__test__accounts must be set.${
-					inCi ? "" : "\n\nRun getkeys to populate these environment variables."
-				}`,
-			);
-		}
-
-		// Expected format of login__odsp__test__accounts is simply string key-value pairs of username and password
-		const passwords: { [user: string]: string } = JSON.parse(loginAccounts);
-
-		// Need to choose one out of the set as these account might be from different tenant
-		const username = requestedUserName ?? Object.keys(passwords)[0];
-		if (username === undefined) {
-			throw new Error("username should not be undefined when getting odsp credentials");
-		}
-		const userPass = passwords[username];
-		if (userPass === undefined) {
+	// Return the set of accounts to choose from a single tenant
+	for (const account of userPass) {
+		const { username, password } = account;
+		if (username === undefined || password === undefined) {
 			throw new Error(
-				"password for username should not be undefined when getting odsp credentials",
+				`username or password should not be undefined when getting odsp credentials - user: ${username}, pass: ${password}`,
 			);
 		}
-		creds.push({ username, password: userPass });
+		if (requestedUserName === undefined || requestedUserName === username) {
+			creds.push({ username, password });
+		}
 	}
-	return creds;
+
+	const tenantSetupResult: TenantSetupResult = {
+		userPass: creds,
+		reservationId,
+		appClientId,
+	};
+	return tenantSetupResult;
+
+	// const loginTenants =
+	// 	odspEndpointName === "odsp"
+	// 		? process.env.login__odsp__test__tenants
+	// 		: process.env.login__odspdf__test__tenants;
+
+	// if (loginTenants !== undefined) {
+	// 	/**
+	// 	 * Parse login credentials using the new tenant format for e2e tests.
+	// 	 * For the expected format of loginTenants, see {@link UserPassCredentials}
+	// 	 */
+	// 	if (loginTenants.includes("UserPrincipalName")) {
+	// 		const output: UserPassCredentials[] = JSON.parse(loginTenants);
+	// 		if (output?.[tenantIndex] === undefined) {
+	// 			throw new Error("No resources found in the login tenants");
+	// 		}
+	// 	} else {
+	// 		/**
+	// 		 * Parse login credentials using the tenant format for stress tests.
+	// 		 * For the expected format of loginTenants, see {@link LoginTenants}
+	// 		 */
+	// 		const tenants: LoginTenants = JSON.parse(loginTenants);
+	// 		const tenantNames = Object.keys(tenants);
+	// 		const tenant = tenantNames[tenantIndex % tenantNames.length];
+	// 		if (tenant === undefined) {
+	// 			throw new Error("tenant should not be undefined when getting odsp credentials");
+	// 		}
+	// 		const tenantInfo = tenants[tenant];
+	// 		if (tenantInfo === undefined) {
+	// 			throw new Error("tenantInfo should not be undefined when getting odsp credentials");
+	// 		}
+	// 		// Translate all the user from that user to the full user principal name by appending the tenant domain
+	// 		const range = tenantInfo.range;
+
+	// 		// Return the set of account to choose from a single tenant
+	// 		for (let i = 0; i < range.count; i++) {
+	// 			const username = `${range.prefix}${range.start + i}@${tenant}`;
+	// 			if (requestedUserName === undefined || requestedUserName === username) {
+	// 				creds.push({ username, password: range.password });
+	// 			}
+	// 		}
+	// 	}
+	// } else {
+	// 	const loginAccounts =
+	// 		odspEndpointName === "odsp"
+	// 			? process.env.login__odsp__test__accounts
+	// 			: process.env.login__odspdf__test__accounts;
+	// 	if (loginAccounts === undefined) {
+	// 		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+	// 		const inCi = !!process.env.TF_BUILD;
+	// 		const odspOrOdspdf = odspEndpointName === "odsp" ? "odsp" : "odspdf";
+	// 		assert.fail(
+	// 			`Missing secrets from environment. At least one of login__${odspOrOdspdf}__test__tenants or login__${odspOrOdspdf}__test__accounts must be set.${
+	// 				inCi ? "" : "\n\nRun getkeys to populate these environment variables."
+	// 			}`,
+	// 		);
+	// 	}
+
+	// 	// Expected format of login__odsp__test__accounts is simply string key-value pairs of username and password
+	// 	const passwords: { [user: string]: string } = JSON.parse(loginAccounts);
+
+	// 	// Need to choose one out of the set as these account might be from different tenant
+	// 	const username = requestedUserName ?? Object.keys(passwords)[0];
+	// 	if (username === undefined) {
+	// 		throw new Error("username should not be undefined when getting odsp credentials");
+	// 	}
+	// 	const userPass = passwords[username];
+	// 	if (userPass === undefined) {
+	// 		throw new Error(
+	// 			"password for username should not be undefined when getting odsp credentials",
+	// 		);
+	// 	}
+	// 	creds.push({ username, password: userPass });
+	// }
+	// return creds;
 }
 
 /**
@@ -236,7 +284,12 @@ export class OdspTestDriver implements ITestDriver {
 		const tenantIndex = config?.tenantIndex ?? 0;
 		assertOdspEndpoint(config?.odspEndpointName);
 		const endpointName = config?.odspEndpointName ?? "odsp";
-		const creds = getOdspCredentials(endpointName, tenantIndex, config?.username);
+		// DEAL WITH THIS
+		const {
+			reservationId,
+			appClientId,
+			userPass: creds,
+		} = await getOdspCredentials(endpointName, tenantIndex, config?.username);
 		// Pick a random one on the list (only supported for >= 0.46)
 		const randomUserIndex =
 			compare(api.version, "0.46.0") >= 0
@@ -278,6 +331,8 @@ export class OdspTestDriver implements ITestDriver {
 			tenantName,
 			userIndex,
 			endpointName,
+			reservationId,
+			appClientId,
 		);
 	}
 
@@ -305,10 +360,14 @@ export class OdspTestDriver implements ITestDriver {
 		tenantName?: string,
 		userIndex?: number,
 		endpointName?: string,
+		reservationId?: string,
+		appClientId?: string,
 	) {
 		const tokenConfig: TokenConfig = {
 			...loginConfig,
-			...getMicrosoftConfiguration(),
+			clientId: appClientId ?? getMicrosoftConfiguration().clientId,
+			endpointName,
+			reservationId,
 		};
 
 		const driveId = await this.getDriveId(loginConfig.siteUrl, tokenConfig);

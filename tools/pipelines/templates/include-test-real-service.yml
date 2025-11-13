@@ -406,7 +406,7 @@ stages:
               ${{ pair.key }}: ${{ pair.value }}
             # ODSP tenant setup script injects the values here (appClientId, tenantCreds).
             # The e2e test workload references the keys (login__*).
-            login__microsoft__clientId: $(appClientId)
+            # login__microsoft__clientId: $(appClientId)
             # ${{ if eq(parameters.odspTenantType, 'dogfood') }}:
             #   login__odspdf__test__tenants: $(tenantCreds)
             # ${{ elseif eq(parameters.odspTenantType, 'prod') }}:
@@ -418,54 +418,54 @@ stages:
             script: |
               set -eu -o pipefail
 
-              if [[ "${{ parameters.odspTenantType }}" != "none" ]]; then
-                SETUP_OUTPUT=$(node -e "
-                  (async () => {
-                    try {
-                      const tenantSetupPackage = '${{ parameters.tenantSetupPackage }}';
-                      const { setupTenants } = await import(tenantSetupPackage);
-                      const result = await setupTenants({
-                        waitTime: 3600,
-                        accessToken: process.env.SYSTEM_ACCESSTOKEN,
-                        odspEndpoint: '${{ parameters.odspTenantType }}'
-                      });
-                      fs.writeFileSync('/tmp/setup_result.json', result);
-                    } catch (e) {
-                      console.error('Error during tenant setup: ', e);
-                      fs.unlinkSync('/tmp/setup_result.json');
-                      process.exit(1);
-                    }
-                  })();
-                ")
+              # if [[ "${{ parameters.odspTenantType }}" != "none" ]]; then
+              #   SETUP_OUTPUT=$(node -e "
+              #     (async () => {
+              #       try {
+              #         const tenantSetupPackage = '${{ parameters.tenantSetupPackage }}';
+              #         const { setupTenants } = await import(tenantSetupPackage);
+              #         const result = await setupTenants({
+              #           waitTime: 3600,
+              #           accessToken: process.env.SYSTEM_ACCESSTOKEN,
+              #           odspEndpoint: '${{ parameters.odspTenantType }}'
+              #         });
+              #         fs.writeFileSync('/tmp/setup_result.json', result);
+              #       } catch (e) {
+              #         console.error('Error during tenant setup: ', e);
+              #         fs.unlinkSync('/tmp/setup_result.json');
+              #         process.exit(1);
+              #       }
+              #     })();
+              #   ")
 
-                # Read JSON from temp file
-                JSON_OUTPUT=$(cat /tmp/setup_result.json)
+              #   # Read JSON from temp file
+              #   JSON_OUTPUT=$(cat /tmp/setup_result.json)
 
-                # Now safely parse the JSON
-                RESERVATION_ID=$(echo "$JSON_OUTPUT" | jq -r '.reservationId // "null"')
-                USER_PASS=$(echo "$JSON_OUTPUT" | jq '.userPass // "null"')
+              #   # Now safely parse the JSON
+              #   RESERVATION_ID=$(echo "$JSON_OUTPUT" | jq -r '.reservationId // "null"')
+              #   USER_PASS=$(echo "$JSON_OUTPUT" | jq '.userPass // "null"')
 
-                # Only set variables if parsing succeeded
-                if [[ "$RESERVATION_ID" != "null" && "$RESERVATION_ID" != "" ]]; then
-                  export tenant__reservationId="$RESERVATION_ID"
+              #   # Only set variables if parsing succeeded
+              #   if [[ "$RESERVATION_ID" != "null" && "$RESERVATION_ID" != "" ]]; then
+              #     export tenant__reservationId="$RESERVATION_ID"
 
-                  # Set Azure DevOps variables for cleanup task
-                  echo "##vso[task.setvariable variable=stringBearerToken]$RESERVATION_ID"
-                  echo "##vso[task.setvariable variable=tenantCreds]$USER_PASS"
+              #     # Set Azure DevOps variables for cleanup task
+              #     echo "##vso[task.setvariable variable=stringBearerToken]$RESERVATION_ID"
+              #     echo "##vso[task.setvariable variable=tenantCreds]$USER_PASS"
 
-                  if [[ "${{ parameters.odspTenantType }}" == "dogfood" ]]; then
-                    export login__odspdf__test__tenants="$USER_PASS"
-                  elif [[ "${{ parameters.odspTenantType }}" == "prod" ]]; then
-                    export login__odsp__test__tenants="$USER_PASS"
-                  fi
+              #     if [[ "${{ parameters.odspTenantType }}" == "dogfood" ]]; then
+              #       export login__odspdf__test__tenants="$USER_PASS"
+              #     elif [[ "${{ parameters.odspTenantType }}" == "prod" ]]; then
+              #       export login__odsp__test__tenants="$USER_PASS"
+              #     fi
 
-                else
-                  echo "ERROR: Failed to parse reservationId from setup output"
-                  exit 1
-                fi
-                # Clean up temp file
-                rm -f /tmp/setup_result.json
-              fi
+              #   else
+              #     echo "ERROR: Failed to parse reservationId from setup output"
+              #     exit 1
+              #   fi
+              #   # Clean up temp file
+              #   rm -f /tmp/setup_result.json
+              # fi
 
               pnpm run ${{ parameters.testCommand }} -- ${{ variant.flags }}
 
