@@ -920,6 +920,7 @@ async function synchronizeClients(connectedClients: Client[]) {
 				// for the initial saved event. To ensure we process all ops we wait for two JS turns.
 				// The first allows any ops generated during the processing of ops to be submitted.
 				// The second allows for the processing of those ops.
+				// TODO: AB#53704: Support async reducers in DDS Fuzz models to avoid this workaround.
 				setImmediate(() => {
 					setImmediate(() => {
 						resolve();
