@@ -9,6 +9,7 @@ import { BTree } from "@tylerbu/sorted-btree-es6";
 import {
 	type DeltaDetachedNodeId,
 	type DeltaMark,
+	type FieldKindIdentifier,
 	Multiplicity,
 	type RevisionTag,
 	replaceAtomRevisions,
@@ -24,10 +25,11 @@ import type {
 	RelevantRemovedRootsFromChild,
 	ToDelta,
 } from "./fieldChangeHandler.js";
-import { FieldKindWithEditor } from "./fieldKindWithEditor.js";
 import { makeGenericChangeCodec } from "./genericFieldKindCodecs.js";
 import { newGenericChangeset, type GenericChangeset } from "./genericFieldKindTypes.js";
 import type { NodeId } from "./modularChangeTypes.js";
+import { FlexFieldKind } from "./fieldKind.js";
+import { brandConst } from "../../util/index.js";
 
 /**
  * {@link FieldChangeHandler} implementation for {@link GenericChangeset}.
@@ -164,8 +166,8 @@ function replaceRevisions(
 /**
  * {@link FieldKind} used to represent changes to elements of a field in a field-kind-agnostic format.
  */
-export const genericFieldKind: FieldKindWithEditor = new FieldKindWithEditor(
-	"ModularEditBuilder.Generic",
+export const genericFieldKind: FlexFieldKind = new FlexFieldKind(
+	brandConst("ModularEditBuilder.Generic")<FieldKindIdentifier>(),
 	Multiplicity.Sequence,
 	genericChangeHandler,
 	(types, other) => false,
