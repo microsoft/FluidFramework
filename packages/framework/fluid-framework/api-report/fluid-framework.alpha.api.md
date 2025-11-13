@@ -1539,10 +1539,6 @@ export namespace System_TableSchema {
         readonly schemaFactory: TSchemaFactory;
     }
     // @sealed @system
-    export interface Row<TCell extends ImplicitAllowedTypes, TProps extends ImplicitFieldSchema = ImplicitFieldSchema> extends TableSchema.Row<TCell, TProps> {
-        readonly cells: TreeRecordNode<TCell>;
-    }
-    // @sealed @system
     export type RowSchemaBase<TScope extends string | undefined = string | undefined, TCellSchema extends ImplicitAllowedTypes = ImplicitAllowedTypes, TPropsSchema extends ImplicitFieldSchema = ImplicitFieldSchema> = ReturnType<typeof createRowSchema<TScope, TCellSchema, TPropsSchema>>;
     // @system
     export type TableFactoryOptionsBase<TSchemaFactory extends SchemaFactoryBeta = SchemaFactoryBeta, TCell extends ImplicitAllowedTypes = ImplicitAllowedTypes> = OptionsWithSchemaFactory<TSchemaFactory> & OptionsWithCellSchema<TCell>;

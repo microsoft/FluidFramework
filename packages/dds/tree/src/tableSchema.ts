@@ -49,6 +49,28 @@ const tableSchemaFactorySubScope = "table";
 const tableSchemaSymbol: unique symbol = Symbol("tableNode");
 
 /**
+ * A row in a table.
+ * @typeParam TCell - The type of the cells in the {@link TableSchema.Table}.
+ * @typeParam TProps - Additional properties to associate with the row.
+ * @privateRemarks Private counterpart to the {@link TableSchema.Row}.
+ * Exposes internal properties needed for table operations (publicly exposed via {@link TableSchema.Table}).
+ * @sealed
+ */
+export interface RowPrivate<
+	TCell extends ImplicitAllowedTypes,
+	TProps extends ImplicitFieldSchema = ImplicitFieldSchema,
+> extends TableSchema.Row<TCell, TProps> {
+	/**
+	 * The row's cells.
+	 * @remarks This is a user-defined schema that can be used to store additional information about the row.
+	 * @privateRemarks
+	 * Note: these docs are duplicated on the inline type definitions in {@link System_TableSchema.createRowSchema}.
+	 * If you update the docs here, please also update the inline type definitions.
+	 */
+	readonly cells: TreeRecordNode<TCell>;
+}
+
+/**
  * Not intended for use outside of this package.
  *
  * @privateRemarks
@@ -239,28 +261,6 @@ export namespace System_TableSchema {
 	// #region Row
 
 	/**
-	 * A row in a table.
-	 * @typeParam TCell - The type of the cells in the {@link TableSchema.Table}.
-	 * @typeParam TProps - Additional properties to associate with the row.
-	 * @privateRemarks Internal/System counterpart to the public-facing row interface.
-	 * Exposes internal properties needed for table operations (publicly exposed via {@link TableSchema.Table}).
-	 * @sealed @system @alpha
-	 */
-	export interface Row<
-		TCell extends ImplicitAllowedTypes,
-		TProps extends ImplicitFieldSchema = ImplicitFieldSchema,
-	> extends TableSchema.Row<TCell, TProps> {
-		/**
-		 * The row's cells.
-		 * @remarks This is a user-defined schema that can be used to store additional information about the row.
-		 * @privateRemarks
-		 * Note: these docs are duplicated on the inline type definitions in {@link System_TableSchema.createRowSchema}.
-		 * If you update the docs here, please also update the inline type definitions.
-		 */
-		readonly cells: TreeRecordNode<TCell>;
-	}
-
-	/**
 	 * Base options for creating table row schema.
 	 * @remarks Includes parameters common to all row factory overloads.
 	 * @system @alpha
@@ -446,7 +446,7 @@ export namespace System_TableSchema {
 		type RowValueType = TreeNodeFromImplicitAllowedTypes<TRowSchema>;
 
 		// Internal version of RowValueType that exposes the `cells` property for use within Table methods.
-		type RowValueInternalType = RowValueType & Row<TCellSchema>;
+		type RowValueInternalType = RowValueType & RowPrivate<TCellSchema>;
 
 		/**
 		 * {@link Table} fields.
