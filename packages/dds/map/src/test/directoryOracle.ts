@@ -110,26 +110,57 @@ export class SharedDirectoryOracle {
 	};
 
 	public validate(): void {
-		for (const [pathKey, value] of this.model.entries()) {
-			const parts = pathKey.split("/").filter((p) => p.length > 0);
-			assert(parts.length > 0, "Invalid path, cannot extract key");
+		// Validate all keys and subdirectories recursively
+		this.validateDirectory(this.sharedDir, "/");
+	}
 
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const leafKey = parts.pop()!; // The actual key
-			let dir: IDirectory | undefined = this.sharedDir;
-
-			for (const part of parts) {
-				dir = dir.getWorkingDirectory(part);
-				if (!dir) break;
-			}
-
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-			const actual = dir?.get(leafKey);
+	private validateDirectory(dir: IDirectory, path: string): void {
+		// Validate keys (entries() returns key-value pairs, NOT subdirectories)
+		for (const [key, value] of dir.entries()) {
+			const fullPath = path === "/" ? `/${key}` : `${path}/${key}`;
+			const oracleValue = this.model.get(fullPath);
 			assert.deepStrictEqual(
-				actual,
 				value,
-				`SharedDirectoryOracle mismatch at path="${pathKey}" with actual value = ${actual} and oracle value = ${value}}}`,
+				oracleValue,
+				`SharedDirectoryOracle key mismatch at path="${fullPath}": actual value = ${JSON.stringify(value)}, oracle value = ${JSON.stringify(oracleValue)}`,
 			);
+		}
+
+		// Validate subdirectories (subdirectories() returns subdirectory pairs)
+		for (const [subdirName, subdir] of dir.subdirectories()) {
+			const fullPath = path === "/" ? `/${subdirName}` : `${path}/${subdirName}`;
+			assert(
+				this.model.has(fullPath),
+				`SharedDirectoryOracle missing subdirectory at path="${fullPath}"`,
+			);
+			// Recursively validate the subdirectory
+			this.validateDirectory(subdir, fullPath);
+		}
+
+		// Also verify oracle doesn't have extra keys or subdirs that don't exist in the actual directory
+		for (const [oraclePath] of this.model.entries()) {
+			if (oraclePath.startsWith(path) && oraclePath !== path) {
+				// Check if this is a direct child of the current path
+				const relativePath =
+					path === "/" ? oraclePath.slice(1) : oraclePath.slice(path.length + 1);
+				if (!relativePath.includes("/")) {
+					// This is a direct child - verify it exists
+					const childValue = this.model.get(oraclePath);
+					if (childValue === undefined) {
+						// This is a subdirectory
+						assert(
+							dir.getSubDirectory(relativePath) !== undefined,
+							`Actual directory missing subdirectory "${relativePath}" at path="${path}" that exists in oracle`,
+						);
+					} else {
+						// This is a key
+						assert(
+							dir.has(relativePath),
+							`Actual directory missing key "${relativePath}" at path="${path}" that exists in oracle`,
+						);
+					}
+				}
+			}
 		}
 	}
 
