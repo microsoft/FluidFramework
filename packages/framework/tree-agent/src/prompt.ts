@@ -77,7 +77,7 @@ export function getPrompt<TRoot extends ImplicitFieldSchema>(args: {
 	}
 
 	const stringified = stringifyTree(field);
-	const details: SchemaDetails = { hasHelperMethods: false };
+	const details: SchemaDetails = { hasHelperMethods: false, hasHelperProperties: false };
 	const typescriptSchemaTypes = getZodSchemaAsTypeScript(domainTypes, details);
 	const exampleTypeName =
 		nodeTypeUnion === undefined
@@ -121,23 +121,23 @@ export function getPrompt<TRoot extends ImplicitFieldSchema>(args: {
 	 * ${`Example: Check if a node is a ${exampleTypeName} with \`if (context.is.${exampleTypeName}(node)) {}\``}
 	 */
 	is: Record<string, <T extends TreeData>(data: unknown) => data is T>;
-	
+
 	/**
 	 * Checks if the provided data is an array.
 	 * @remarks
 	 * DO NOT use \`Array.isArray\` to check if tree data is an array - use this function instead.
-	 * 
+	 *
 	 * This function will also work for native JavaScript arrays.
 	 *
 	 * ${`Example: \`if (context.isArray(node)) {}\``}
 	 */
 	isArray(data: any): boolean;
-	
+
 	/**
 	 * Checks if the provided data is a map.
 	 * @remarks
 	 * DO NOT use \`instanceof Map\` to check if tree data is a map - use this function instead.
-	 * 
+	 *
 	 * This function will also work for native JavaScript Map instances.
 	 *
 	 * ${`Example: \`if (context.isMap(node)) {}\``}
@@ -178,6 +178,10 @@ export function getPrompt<TRoot extends ImplicitFieldSchema>(args: {
 	key(child: TreeData): string | number;
 }
 \`\`\``;
+
+	const helperPropertyExplanation = details.hasHelperProperties
+		? "Some schema types expose additional helper properties directly on the objects (including readonly properties). When these properties are available, you may read them and use them in your logic."
+		: "";
 
 	const helperMethodExplanation = details.hasHelperMethods
 		? `Manipulating the data using the APIs described below is allowed, but when possible ALWAYS prefer to use any application helper methods exposed on the schema TypeScript types if the goal can be accomplished that way.
@@ -276,6 +280,7 @@ There are other additional helper functions available on the \`context\` object 
 Here is the definition of the \`Context\` interface:
 ${context}
 ${helperMethodExplanation}
+${helperPropertyExplanation}
 ${hasArrays ? arrayEditing : ""}${hasMaps ? mapEditing : ""}#### Additional Notes
 
 Before outputting the edit function, you should check that it is valid according to both the application tree's schema and any restrictions of the editing APIs described above.
