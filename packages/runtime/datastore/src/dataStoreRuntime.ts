@@ -1599,7 +1599,7 @@ export const mixinSummaryHandler = (
 					telemetryContext?.set(
 						currentSummarizeStepPrefix,
 						currentSummarizeStepPropertyName,
-						currentStep,
+						`mixinSummaryHandler:${currentStep}`,
 					),
 				);
 				if (content !== undefined) {
