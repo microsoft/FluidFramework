@@ -149,8 +149,9 @@ const runtimeOptionsAffectingDocSchemaConfigMap: ConfigMap<RuntimeOptionsAffecti
 			// Although sweep is supported in 2.x, it is disabled by default until minVersionForCollab>=3.0.0 to be extra safe.
 			// Note that enabling this is a significant change, that should likely be announced in the relevant version:
 			// It would be bad if this simple caused the enablement when when the current package version passed this point without anyone being aware.
-			// This is configurations targeting future versions are not supported.
-			// TODO: when preparing 3.0 (or at some later point), consider enabling this by default for clients 3.0 or newer (and including a changeset to announce it).
+			// This is configuration targeting a future versions, which is not supported.
+			// TODO: when preparing 3.0 (or at some later point), consider enabling this by default for clients 3.0 or newer
+			// (and add user facing documentation indicating this is enabled by that version).
 			// "3.0.0": { enableGCSweep: true },
 		},
 		createBlobPayloadPending: {
