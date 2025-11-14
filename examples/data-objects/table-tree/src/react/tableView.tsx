@@ -8,7 +8,7 @@ import { Add24Regular } from "@fluentui/react-icons";
 import React, { useState, type DragEvent } from "react";
 
 import type { TableDataObject } from "../dataObject.js";
-import { type Column, Row } from "../schema.js";
+import { Row } from "../schema.js";
 
 import { TableHeaderView } from "./tableHeaderView.js";
 import { TableRowView } from "./tableRowView.js";
@@ -40,34 +40,12 @@ export const TableView: React.FC<{ tableModel: TableDataObject }> = ({ tableMode
 	const [draggedColumnIndex, setDraggedColumnIndex] = useState<number | undefined>(undefined);
 
 	const table = tableModel.treeView.root;
-
 	useTree(table);
-
-	const columns = [...table.columns];
-	const rows = [...table.rows];
 
 	const handleAppendNewRow = (): void => {
 		table.insertRows({
 			rows: [new Row({ cells: {} })],
 		});
-	};
-
-	const handleRemoveRow = (index: number): void => {
-		if (index >= 0 && index < rows.length) {
-			table.removeRows(index, 1);
-		}
-	};
-
-	const handleAppendNewColumn = (newColumn: Column): void => {
-		table.insertColumns({
-			columns: [newColumn],
-		});
-	};
-
-	const handleRemoveColumn = (index: number): void => {
-		if (index >= 0 && index < columns.length) {
-			table.removeColumns(index, 1);
-		}
 	};
 
 	const handleRowDragStart = (index: number): void => {
@@ -108,24 +86,20 @@ export const TableView: React.FC<{ tableModel: TableDataObject }> = ({ tableMode
 			<div className="table-scroll">
 				<Table aria-label="Fluid-based dynamic table" className="custom-table">
 					<TableHeaderView
-						columns={columns}
+						table={table}
 						onColumnDragStart={handleColumnDragStart}
 						onColumnDragOver={handleColumnDragOver}
 						onColumnDrop={handleColumnDrop}
-						onRemoveColumn={handleRemoveColumn}
-						handleAppendColumn={handleAppendNewColumn}
 					/>
 					<TableBody>
-						{rows.map((row, index) => (
+						{table.rows.map((row, index) => (
 							<TableRowView
 								key={row.id}
-								row={row}
-								columns={columns}
-								index={index}
+								table={table}
+								rowIndex={index}
 								onRowDragStart={handleRowDragStart}
 								onRowDragOver={handleRowDragOver}
 								onRowDrop={handleRowDrop}
-								onRemoveRow={handleRemoveRow}
 							/>
 						))}
 					</TableBody>
