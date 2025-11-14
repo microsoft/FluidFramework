@@ -127,7 +127,7 @@ export class DetachedFieldIndexSummarizer implements Summarizable {
 				parse,
 			);
 			assert(
-				metadata.version >= DetachedFieldIndexSummaryVersion.v1,
+				metadata.version === DetachedFieldIndexSummaryVersion.v1,
 				"Unsupported detached field index summary",
 			);
 		}

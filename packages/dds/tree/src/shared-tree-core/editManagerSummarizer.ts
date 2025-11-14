@@ -146,7 +146,7 @@ export class EditManagerSummarizer<TChangeset> implements Summarizable {
 				parse,
 			);
 			assert(
-				metadata.version >= EditManagerSummaryVersion.v1,
+				metadata.version === EditManagerSummaryVersion.v1,
 				"Unsupported edit manager summary",
 			);
 		}

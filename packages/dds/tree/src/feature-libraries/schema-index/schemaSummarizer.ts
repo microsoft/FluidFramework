@@ -156,7 +156,7 @@ export class SchemaSummarizer implements Summarizable {
 				services,
 				parse,
 			);
-			assert(metadata.version >= SchemaSummaryVersion.v1, "Unsupported schema summary");
+			assert(metadata.version === SchemaSummaryVersion.v1, "Unsupported schema summary");
 		}
 
 		const schemaBuffer: ArrayBufferLike = await services.readBlob(schemaStringKey);

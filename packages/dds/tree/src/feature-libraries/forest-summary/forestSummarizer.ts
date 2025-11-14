@@ -169,7 +169,7 @@ export class ForestSummarizer implements Summarizable {
 				services,
 				parse,
 			);
-			assert(metadata.version >= ForestSummaryVersion.v1, "Unsupported forest summary");
+			assert(metadata.version === ForestSummaryVersion.v1, "Unsupported forest summary");
 		}
 
 		// Load the incremental summary builder so that it can download any incremental chunks in the

@@ -267,7 +267,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				services,
 				(contents) => this.serializer.parse(contents),
 			);
-			assert(metadata.version >= SharedTreeSummaryVersion.v1, "Unsupported tree summary");
+			assert(metadata.version === SharedTreeSummaryVersion.v1, "Unsupported tree summary");
 		}
 		const [editManagerSummarizer, ...summarizables] = this.summarizables;
 		const loadEditManager = this.loadSummarizable(editManagerSummarizer, services);
