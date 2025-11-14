@@ -265,6 +265,11 @@ export interface IFluidContainerInternal extends ContainerExtensionStore {
 	 * @remarks This method is used to expose uploadBlob to the IFluidContainer level. UploadBlob will upload data to server side (as of now, ODSP only). There is no downloadBlob provided as it is not needed(blob lifetime managed by server).
 	 */
 	uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
+
+	/**
+	 * Serialize a detached container to a string representation. This can be saved for later rehydration.
+	 */
+	serialize(): string;
 }
 
 /**
@@ -400,5 +405,14 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 
 	public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
 		return this.rootDataObject.uploadBlob(blob);
+	}
+
+	public serialize(): string {
+		if (this.container.closed || this.container.attachState !== AttachState.Detached) {
+			throw new Error(
+				"Cannot serialize container. Container must be in detached state and not closed.",
+			);
+		}
+		return this.container.serialize();
 	}
 }
