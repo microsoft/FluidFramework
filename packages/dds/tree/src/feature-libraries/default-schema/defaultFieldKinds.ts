@@ -62,7 +62,7 @@ export const noChangeHandler: FieldChangeHandler<0> = {
 /**
  * {@link FieldEditor} for required fields (always contain exactly 1 child).
  * @remarks
- * This shared code with optional fields, since they are the same edit wise except setting to empty is not allowed,
+ * This shares code with optional fields, since they are the same edit wise except setting to empty is not allowed,
  * and the content is always assumed to not be empty.
  * This means the actual edits implemented for optional fields are sufficient to support required fields
  * which is why this is defined and implemented in terms of optional fields.
