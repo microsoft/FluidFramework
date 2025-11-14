@@ -81,6 +81,12 @@
 		"broken": {
 			"Enum_CommonProperties": {
 				"backCompat": false
+			},
+			"Enum_LumberEventName": {
+				"backCompat": false
+			},
+			"Class_Lumber": {
+				"backCompat": false
 			}
 		},
 		"entrypoint": "public"

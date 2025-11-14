@@ -29,10 +29,12 @@ export {
 	type ISummaryReader,
 	type ISummaryWriter,
 	type ISummaryWriteResponse,
+	type ISummaryWriterFactory,
 	ScribeLambda,
 	ScribeLambdaFactory,
 	SummaryReader,
 	SummaryWriter,
+	SummaryWriterFactory,
 } from "./scribe";
 export { ScriptoriumLambda, ScriptoriumLambdaFactory } from "./scriptorium";
 export {
