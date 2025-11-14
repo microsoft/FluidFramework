@@ -913,8 +913,20 @@ async function synchronizeClients(connectedClients: Client[]) {
 							connectedClients[0].container.deltaManager.lastSequenceNumber,
 				)
 			) {
-				resolve();
-				off();
+				// There are some cases where more ops are generated as a result of processing ops.
+				// For example, for ConsensusOrderedCollection, a `complete`/`release` op will be generated
+				// when processing an `acquire` op.
+				// If that type of op is the last op before a final sync, then we will miss it by waiting
+				// for the initial saved event. To ensure we process all ops we wait for two JS turns.
+				// The first allows any ops generated during the processing of ops to be submitted.
+				// The second allows for the processing of those ops.
+				// TODO: AB#53704: Support async reducers in DDS Fuzz models to avoid this workaround.
+				setTimeout(() => {
+					setTimeout(() => {
+						resolve();
+						off();
+					}, 0);
+				}, 0);
 			}
 		};
 		// if you hit timeout issues in the

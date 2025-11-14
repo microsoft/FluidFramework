@@ -7,26 +7,19 @@ import { TableRow, TableCell, Input, Button, Checkbox } from "@fluentui/react-co
 import { Delete24Regular } from "@fluentui/react-icons";
 import React, { type DragEvent } from "react";
 
-import type { Column, Row } from "../schema.js";
+import type { Table } from "../schema.js";
+import { useTree } from "./utilities.js";
 
 /**
  * Props for the `TableRowView` component, which renders a single row in the table.
  */
 export interface TableRowViewProps {
-	/**
-	 * The row data object representing the current table row to render.
-	 */
-	readonly row: Row;
+	readonly table: Table;
 
 	/**
-	 * The list of columns used to determine the structure and cell rendering for this row.
+	 * The index of the row being displayed.
 	 */
-	readonly columns: Column[];
-
-	/**
-	 * The index of the row within the table, used for drag-and-drop operations and styling.
-	 */
-	index: number;
+	readonly rowIndex: number;
 
 	/**
 	 * Callback fired when a row drag operation starts. Receives the index of the dragged row.
@@ -42,57 +35,67 @@ export interface TableRowViewProps {
 	 * Callback fired when a dragged row is dropped onto this row. Receives the target index.
 	 */
 	onRowDrop: (index: number) => void;
-
-	/**
-	 * Callback to remove this row from the table, typically triggered by a delete button.
-	 */
-	onRemoveRow: (index: number) => void;
 }
 
 export const TableRowView: React.FC<TableRowViewProps> = ({
-	row,
-	columns,
-	index,
+	table,
+	rowIndex,
 	onRowDragStart,
 	onRowDragOver,
 	onRowDrop,
-	onRemoveRow,
-}) => (
-	<TableRow
-		key={row.id}
-		draggable
-		onDragStart={() => onRowDragStart(index)}
-		onDragOver={onRowDragOver}
-		onDrop={() => onRowDrop(index)}
-		className={`custom-table-row ${index % 2 === 0 ? "even" : "odd"}`}
-	>
-		<TableCell className="custom-cell id-cell">
-			<span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-				<Button
-					appearance="subtle"
-					size="small"
-					onClick={() => onRemoveRow(index)}
-					icon={<Delete24Regular />}
-					style={{ padding: 0, minWidth: "auto" }}
-				/>
-			</span>
-		</TableCell>
-		{columns.map((col) => {
-			const cell = row.getCell(col);
-			const hint = col.props?.hint ?? "text";
+}) => {
+	useTree(table);
 
-			return (
-				<TableCell key={col.id} className="custom-cell">
-					<TableCellView
-						cell={cell}
-						hint={hint}
-						onUpdateCell={(newValue) => row.setCell(col, newValue)}
+	const row = table.getRow(rowIndex) ?? fail("Row not found");
+
+	return (
+		<TableRow
+			key={row.id}
+			draggable
+			onDragStart={() => onRowDragStart(rowIndex)}
+			onDragOver={onRowDragOver}
+			onDrop={() => onRowDrop(rowIndex)}
+			className={`custom-table-row ${rowIndex % 2 === 0 ? "even" : "odd"}`}
+		>
+			<TableCell className="custom-cell id-cell">
+				<span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+					<Button
+						appearance="subtle"
+						size="small"
+						onClick={() => table.removeRows(rowIndex, 1)}
+						icon={<Delete24Regular />}
+						style={{ padding: 0, minWidth: "auto" }}
 					/>
-				</TableCell>
-			);
-		})}
-	</TableRow>
-);
+				</span>
+			</TableCell>
+			{table.columns.map((column) => {
+				const cell = table.getCell({
+					column,
+					row,
+				});
+				const hint = column.props?.hint ?? "text";
+
+				return (
+					<TableCell key={column.id} className="custom-cell">
+						<TableCellView
+							cell={cell}
+							hint={hint}
+							onUpdateCell={(newValue) =>
+								table.setCell({
+									key: {
+										column,
+										row,
+									},
+									cell: newValue,
+								})
+							}
+						/>
+					</TableCell>
+				);
+			})}
+		</TableRow>
+	);
+};
 
 interface TableCellViewProps {
 	readonly cell: string | undefined;
