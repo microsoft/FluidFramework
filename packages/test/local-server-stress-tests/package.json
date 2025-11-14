@@ -114,7 +114,10 @@
 				"@fluidframework/matrix#build:test",
 				"@fluidframework/tree#build:test",
 				"@fluidframework/task-manager#build:test",
-				"@fluidframework/legacy-dds#build:test"
+				"@fluidframework/legacy-dds#build:test",
+				"@fluidframework/task-manager#build:test",
+				"@fluidframework/counter#build:test",
+				"@fluidframework/register-collection#build:test"
 			]
 		}
 	},
