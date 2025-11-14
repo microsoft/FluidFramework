@@ -13,10 +13,10 @@ import {
 	MapNodeStoredSchema,
 	Multiplicity,
 	type SchemaAndPolicy,
-} from "../../core/index.js";
-import { allowsValue } from "../valueUtilities.js";
-import type { MapTreeFieldViewGeneric, MinimalMapTreeNodeView } from "../mapTreeCursor.js";
-import { iterableHasSome, mapIterable } from "../../util/index.js";
+} from "../core/index.js";
+import { allowsValue } from "./valueUtilities.js";
+import type { MapTreeFieldViewGeneric, MinimalMapTreeNodeView } from "./mapTreeCursor.js";
+import { iterableHasSome, mapIterable } from "../util/index.js";
 
 export enum SchemaValidationError {
 	Field_KindNotInSchemaPolicy,
