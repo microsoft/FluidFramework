@@ -196,7 +196,7 @@ export function makeFieldBatchCodec(options: CodecWriteOptions): FieldBatchCodec
 					if (context.schema !== undefined) {
 						encoded = schemaCompressedEncodeFn(
 							context.schema.schema,
-							context.schema.policy as FullSchemaPolicy,
+							context.schema.policy,
 							data,
 							context.idCompressor,
 							incrementalEncoder,
