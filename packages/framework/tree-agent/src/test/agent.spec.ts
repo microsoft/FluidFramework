@@ -538,4 +538,46 @@ context.root = context.create.Gradient({ startColor: white, endColor: white });`
 		const response = await agent.query("Query");
 		assert.equal(response, "Done");
 	});
+
+	it("context provides helpers for editing", async () => {
+		const sfLocal = new SchemaFactory("ContextHelpers");
+		class Child extends sfLocal.object("Child", {
+			value: sfLocal.required(sfLocal.string),
+		}) {}
+		class NumberMap extends sfLocal.map("NumberMap", sfLocal.number) {}
+		class Parent extends sfLocal.object("Parent", {
+			child: Child,
+			values: NumberMap,
+		}) {}
+		const view = independentView(new TreeViewConfiguration({ schema: Parent }), {});
+		view.initialize(
+			new Parent({
+				child: new Child({ value: "Initial" }),
+				values: new NumberMap(new Map([["x", 1]])),
+			}),
+		);
+		const context = createContext(view);
+		assert.equal(context.root.child.value, "Initial");
+		const createParent = context.create.Parent;
+		assert.ok(createParent !== undefined, "Expected Parent constructor");
+		const createChild = context.create.Child;
+		assert.ok(createChild !== undefined, "Expected Child constructor");
+		const replacementRoot = createParent({
+			child: createChild({ value: "Created" }),
+			values: new NumberMap(new Map([["y", 2]])),
+		}) as Parent;
+		context.root = replacementRoot;
+		assert.equal(view.root.child.value, "Created");
+		const isParent = context.is.Parent;
+		assert.ok(isParent !== undefined, "Expected Parent type guard");
+		assert.ok(isParent(view.root));
+		assert.equal(context.isMap(view.root.values), true);
+		assert.equal(context.isMap(new Map()), true);
+		assert.equal(context.isMap({}), false);
+		const parent = context.parent(view.root.child);
+		assert.equal(parent, view.root);
+		assert.equal(context.parent(view.root), undefined);
+		const key = context.key(view.root.child);
+		assert.equal(key, "child");
+	});
 });
