@@ -89,10 +89,10 @@ export class FlexFieldKind<
 }
 
 /**
- * Compatibility portion of a {@link FlexFieldKind}.
+ * Additional options for {@link FlexFieldKind}.
  *
  * @remarks
- * Specifies everything needed to determine if a given field schema upgrade is allowed.
+ * Puts the more confusing parameters into this object so they get explicit names to help with clarity.
  */
 export interface FieldKindOptions<TFieldChangeHandler> {
 	/**
