@@ -119,10 +119,15 @@ function makeOperationGenerator(
 		});
 }
 
+// Track async errors that occur during fire-and-forget operations
+let pendingAsyncError: Error | undefined;
+
 function makeReducer(): Reducer<Operation, FuzzTestState> {
 	return combineReducers<Operation, FuzzTestState>({
 		write: ({ client }, { key, value }) => {
-			void client.channel.write(key, value);
+			client.channel.write(key, value).catch((error) => {
+				pendingAsyncError = error;
+			});
 		},
 	});
 }
@@ -161,6 +166,12 @@ export const baseRegisterCollectionModel: DDSFuzzModel<
 	workloadName: "default configuration",
 	generatorFactory: () => take(100, makeOperationGenerator()),
 	reducer: makeReducer(),
-	validateConsistency: (a, b) => assertEqualConsensusRegisterCollections(a.channel, b.channel),
+	validateConsistency: (a, b) => {
+		// Check if any async errors occurred during fire-and-forget operations
+		if (pendingAsyncError !== undefined) {
+			throw pendingAsyncError;
+		}
+		assertEqualConsensusRegisterCollections(a.channel, b.channel);
+	},
 	factory: new ConsensusRegisterCollectionFactory(),
 };
