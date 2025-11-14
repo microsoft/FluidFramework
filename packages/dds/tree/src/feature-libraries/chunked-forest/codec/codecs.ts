@@ -44,7 +44,6 @@ import type { MinimumVersionForCollab } from "@fluidframework/runtime-definition
 import type { IncrementalEncodingPolicy } from "./incrementalEncodingPolicy.js";
 import { uncompressedEncodeV1, uncompressedEncodeV2 } from "./uncompressedEncode.js";
 import { schemaCompressedEncodeV1, schemaCompressedEncodeV2 } from "./schemaBasedEncode.js";
-import type { FullSchemaPolicy } from "../../modular-schema/index.js";
 
 /**
  * Reference ID for a chunk that is incrementally encoded.
