@@ -328,7 +328,7 @@ export namespace System_TableSchema {
 				// Will make it easier to evolve this schema in the future.
 				allowUnknownOptionalFields: true,
 			})
-			implements TableSchema.Row<TCellSchema, TPropsSchema> {}
+			implements RowPrivate<TCellSchema, TPropsSchema> {}
 
 		type RowValueType = TreeNode &
 			TableSchema.Row<TCellSchema, TPropsSchema> &
