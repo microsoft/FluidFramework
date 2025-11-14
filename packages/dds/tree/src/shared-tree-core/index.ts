@@ -29,6 +29,11 @@ export {
 	type ClonableSchemaAndPolicy,
 	type SharedTreeCoreOptionsInternal as SharedTreCoreOptionsInternal,
 } from "./sharedTreeCore.js";
+export {
+	SharedTreeSummaryVersion,
+	type SharedTreeSummaryMetadata,
+	treeSummaryMetadataKey,
+} from "./summaryTypes.js";
 
 export type { ResubmitMachine } from "./resubmitMachine.js";
 export { DefaultResubmitMachine } from "./defaultResubmitMachine.js";

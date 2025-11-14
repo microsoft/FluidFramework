@@ -44,6 +44,7 @@ import {
 	type WithBreakable,
 	throwIfBroken,
 	breakingClass,
+	readAndParseSnapshotBlob,
 } from "../util/index.js";
 
 import type { BranchId, SharedTreeBranch } from "./branch.js";
@@ -62,9 +63,13 @@ import {
 import type { DecodedMessage } from "./messageTypes.js";
 import type { ResubmitMachine } from "./resubmitMachine.js";
 import type { MessageFormatVersion } from "./messageFormat.js";
-
-// TODO: Organize this to be adjacent to persisted types.
-const summarizablesTreeKey = "indexes";
+import {
+	minVersionToSharedTreeSummaryVersion,
+	SharedTreeSummaryVersion,
+	summarizablesTreeKey,
+	treeSummaryMetadataKey,
+	type SharedTreeSummaryMetadata,
+} from "./summaryTypes.js";
 
 export interface ClonableSchemaAndPolicy extends SchemaAndPolicy {
 	schema: TreeStoredSchemaRepository;
@@ -112,6 +117,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	public readonly mintRevisionTag: () => RevisionTag;
 
 	private readonly schemaAndPolicy: ClonableSchemaAndPolicy;
+
+	private readonly summaryWriteVersion: SharedTreeSummaryVersion;
 
 	/**
 	 * @param summarizables - Summarizers for all indexes used by this tree
@@ -173,11 +180,15 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			revisionTagCodec,
 			options,
 		);
+		this.summaryWriteVersion = minVersionToSharedTreeSummaryVersion(
+			options.minVersionForCollab,
+		);
 		this.summarizables = [
 			new EditManagerSummarizer(
 				this.editManager,
 				editManagerCodec,
 				this.idCompressor,
+				options.minVersionForCollab,
 				this.schemaAndPolicy,
 			),
 			...summarizables,
@@ -234,8 +245,14 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				}),
 			);
 		}
-
 		builder.addWithStats(summarizablesTreeKey, summarizableBuilder.getSummaryTree());
+
+		if (this.summaryWriteVersion >= SharedTreeSummaryVersion.v1) {
+			const metadata: SharedTreeSummaryMetadata = {
+				version: this.summaryWriteVersion,
+			};
+			builder.addBlob(treeSummaryMetadataKey, JSON.stringify(metadata));
+		}
 		return builder.getSummaryTree();
 	}
 
@@ -244,6 +261,14 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			this.getLocalBranch().getHead() === this.editManager.getTrunkHead("main"),
 			0xaaa /* All local changes should be applied to the trunk before loading from summary */,
 		);
+		if (await services.contains(treeSummaryMetadataKey)) {
+			const metadata = await readAndParseSnapshotBlob<SharedTreeSummaryMetadata>(
+				treeSummaryMetadataKey,
+				services,
+				(contents) => this.serializer.parse(contents),
+			);
+			assert(metadata.version >= SharedTreeSummaryVersion.v1, "Unsupported tree summary");
+		}
 		const [editManagerSummarizer, ...summarizables] = this.summarizables;
 		const loadEditManager = this.loadSummarizable(editManagerSummarizer, services);
 		const loadSummarizables = summarizables.map(async (s) =>

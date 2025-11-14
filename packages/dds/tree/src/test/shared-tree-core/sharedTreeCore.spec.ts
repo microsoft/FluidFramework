@@ -41,14 +41,17 @@ import type {
 	ModularChangeset,
 } from "../../feature-libraries/index.js";
 import { Tree } from "../../shared-tree/index.js";
-import type {
-	ChangeEnricherReadonlyCheckout,
-	EditManager,
-	ResubmitMachine,
-	SharedTreeCore,
-	Summarizable,
-	SummaryElementParser,
-	SummaryElementStringifier,
+import {
+	SharedTreeSummaryVersion,
+	treeSummaryMetadataKey,
+	type ChangeEnricherReadonlyCheckout,
+	type EditManager,
+	type ResubmitMachine,
+	type SharedTreeCore,
+	type SharedTreeSummaryMetadata,
+	type Summarizable,
+	type SummaryElementParser,
+	type SummaryElementStringifier,
 } from "../../shared-tree-core/index.js";
 import { brand, disposeSymbol } from "../../util/index.js";
 import {
@@ -58,15 +61,21 @@ import {
 	TestTreeProviderLite,
 } from "../utils.js";
 
-import { createTree, createTreeSharedObject, TestSharedTreeCore } from "./utils.js";
+import {
+	createTree,
+	createTreeSharedObject,
+	testCodecOptions,
+	TestSharedTreeCore,
+} from "./utils.js";
 import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
 import { mockSerializer } from "../mockSerializer.js";
+import { FluidClientVersion } from "../../codec/index.js";
 
 const enableSchemaValidation = true;
 
 describe("SharedTreeCore", () => {
 	it("summarizes without indexes", async () => {
-		const tree = createTree([]);
+		const tree = createTree({ indexes: [] });
 		const { summary, stats } = tree.summarizeCore(mockSerializer);
 		assert(summary !== undefined);
 		assert(stats !== undefined);
@@ -81,8 +90,8 @@ describe("SharedTreeCore", () => {
 			let loaded = false;
 			summarizable.on("loaded", () => (loaded = true));
 			const summarizables = [summarizable] as const;
-			const tree = createTree(summarizables);
-			const defaultSummary = createTree([]).summarizeCore(mockSerializer);
+			const tree = createTree({ indexes: summarizables });
+			const defaultSummary = createTree({ indexes: [] }).summarizeCore(mockSerializer);
 			await tree.loadCore(
 				MockSharedObjectServices.createFromSummary(defaultSummary.summary).objectStorage,
 			);
@@ -98,7 +107,7 @@ describe("SharedTreeCore", () => {
 				}
 			});
 			const summarizables = [summarizable] as const;
-			const tree = createTree(summarizables);
+			const tree = createTree({ indexes: summarizables });
 			const { summary } = tree.summarizeCore(mockSerializer);
 			await tree.loadCore(MockSharedObjectServices.createFromSummary(summary).objectStorage);
 			assert.equal(loadedBlob, true);
@@ -112,7 +121,7 @@ describe("SharedTreeCore", () => {
 			let summarizedB = false;
 			summarizableB.on("summarizeAttached", () => (summarizedB = true));
 			const summarizables = [summarizableA, summarizableB] as const;
-			const tree = createTree(summarizables);
+			const tree = createTree({ indexes: summarizables });
 			const { summary, stats } = tree.summarizeCore(mockSerializer);
 			assert(summarizedA, "Expected summarizable A to summarize");
 			assert(summarizedB, "Expected summarizable B to summarize");
@@ -131,6 +140,62 @@ describe("SharedTreeCore", () => {
 				stats.treeNodeCount,
 				5,
 				"Expected summary stats to correctly count tree nodes",
+			);
+		});
+	});
+
+	describe.only("Summary metadata validation", () => {
+		it("does not write metadata blob for minVersionForCollab < 2.73.0", async () => {
+			const tree = createTree({
+				indexes: [],
+				codecOptions: { ...testCodecOptions, minVersionForCollab: FluidClientVersion.v2_52 },
+			});
+			const { summary } = tree.summarizeCore(mockSerializer);
+			const metadataBlob: SummaryObject | undefined = summary.tree[treeSummaryMetadataKey];
+			assert(metadataBlob === undefined, "Metadata blob should not exist");
+		});
+
+		it("writes metadata blob with version 1 for minVersionForCollab 2.73.0", async () => {
+			const tree = createTree({
+				indexes: [],
+				codecOptions: { ...testCodecOptions, minVersionForCollab: FluidClientVersion.v2_73 },
+			});
+			const { summary } = tree.summarizeCore(mockSerializer);
+			const metadataBlob: SummaryObject | undefined = summary.tree[treeSummaryMetadataKey];
+			assert(metadataBlob !== undefined, "Metadata blob should exist");
+			assert.equal(metadataBlob.type, SummaryType.Blob, "Metadata should be a blob");
+			const metadataContent = JSON.parse(
+				metadataBlob.content as string,
+			) as SharedTreeSummaryMetadata;
+			assert.equal(
+				metadataContent.version,
+				SharedTreeSummaryVersion.v1,
+				"Metadata version should be 1",
+			);
+		});
+
+		it("loads with metadata blob with version >= 1", async () => {
+			const tree = createTree({
+				indexes: [],
+				codecOptions: { ...testCodecOptions, minVersionForCollab: FluidClientVersion.v2_73 },
+			});
+			const { summary } = tree.summarizeCore(mockSerializer);
+			const metadataBlob: SummaryObject | undefined = summary.tree[treeSummaryMetadataKey];
+			assert(metadataBlob !== undefined, "Metadata blob should exist");
+			assert.equal(metadataBlob.type, SummaryType.Blob, "Metadata should be a blob");
+			const metadataContent = JSON.parse(
+				metadataBlob.content as string,
+			) as SharedTreeSummaryMetadata;
+			assert.equal(
+				metadataContent.version,
+				SharedTreeSummaryVersion.v1,
+				"Metadata version should be 1",
+			);
+
+			await assert.doesNotReject(
+				async () =>
+					tree.loadCore(MockSharedObjectServices.createFromSummary(summary).objectStorage),
+				"Should load successfully with metadata version >= 1",
 			);
 		});
 	});

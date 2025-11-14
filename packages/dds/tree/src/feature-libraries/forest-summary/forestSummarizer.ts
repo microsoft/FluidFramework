@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { bufferToString } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
@@ -32,7 +31,7 @@ import type {
 	SummaryElementParser,
 	SummaryElementStringifier,
 } from "../../shared-tree-core/index.js";
-import { idAllocatorFromMaxId, type JsonCompatible } from "../../util/index.js";
+import { idAllocatorFromMaxId, readAndParseSnapshotBlob } from "../../util/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { chunkFieldSingle, defaultChunkPolicy } from "../chunked-forest/chunkTree.js";
 import {
@@ -46,17 +45,16 @@ import { type ForestCodec, makeForestSummarizerCodec } from "./codec.js";
 import {
 	ForestIncrementalSummaryBehavior,
 	ForestIncrementalSummaryBuilder,
-	forestSummaryContentKey,
 } from "./incrementalSummaryBuilder.js";
 import { TreeCompressionStrategyExtended } from "../treeCompressionUtils.js";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
-
-/**
- * The key for the tree that contains the overall forest's summary tree.
- * This tree is added by the parent of the forest summarizer.
- * See {@link ForestIncrementalSummaryBuilder} for details on the summary structure.
- */
-export const forestSummaryKey = "Forest";
+import {
+	forestSummaryContentKey,
+	forestSummaryKey,
+	forestSummaryMetadataKey,
+	ForestSummaryVersion,
+	minVersionToForestSummaryVersion,
+	type ForestSummaryMetadata,
+} from "./summaryTypes.js";
 
 /**
  * Provides methods for summarizing and loading a forest.
@@ -89,6 +87,7 @@ export class ForestSummarizer implements Summarizable {
 			(cursor: ITreeCursorSynchronous) => this.forest.chunkField(cursor),
 			shouldEncodeIncrementally,
 			initialSequenceNumber,
+			minVersionToForestSummaryVersion(options.minVersionForCollab),
 		);
 	}
 
@@ -164,24 +163,30 @@ export class ForestSummarizer implements Summarizable {
 			0xc21 /* Forest summary content missing in snapshot */,
 		);
 
-		const readAndParseBlob = async <T extends JsonCompatible<IFluidHandle>>(
-			id: string,
-		): Promise<T> => {
-			const treeBuffer = await services.readBlob(id);
-			const treeBufferString = bufferToString(treeBuffer, "utf8");
-			return parse(treeBufferString) as T;
-		};
+		if (await services.contains(forestSummaryMetadataKey)) {
+			const metadata = await readAndParseSnapshotBlob<ForestSummaryMetadata>(
+				forestSummaryMetadataKey,
+				services,
+				parse,
+			);
+			assert(metadata.version >= ForestSummaryVersion.v1, "Unsupported forest summary");
+		}
 
 		// Load the incremental summary builder so that it can download any incremental chunks in the
 		// snapshot.
-		await this.incrementalSummaryBuilder.load(services, readAndParseBlob);
+		await this.incrementalSummaryBuilder.load(services, async (id: string) =>
+			readAndParseSnapshotBlob(id, services, parse),
+		);
 
 		// TODO: this code is parsing data without an optional validator, this should be defined in a typebox schema as part of the
 		// forest summary format.
-		const fields = this.codec.decode(await readAndParseBlob(forestSummaryContentKey), {
-			...this.encoderContext,
-			incrementalEncoderDecoder: this.incrementalSummaryBuilder,
-		});
+		const fields = this.codec.decode(
+			await readAndParseSnapshotBlob(forestSummaryContentKey, services, parse),
+			{
+				...this.encoderContext,
+				incrementalEncoderDecoder: this.incrementalSummaryBuilder,
+			},
+		);
 		const allocator = idAllocatorFromMaxId();
 		const fieldChanges: [FieldKey, DeltaFieldChanges][] = [];
 		const build: DeltaDetachedNodeBuild[] = [];
