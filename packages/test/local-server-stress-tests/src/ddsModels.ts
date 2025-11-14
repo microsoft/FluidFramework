@@ -18,6 +18,7 @@ import {
 } from "@fluidframework/sequence/internal/test";
 import { baseTaskManagerModel } from "@fluidframework/task-manager/internal/test";
 import { baseTreeModel } from "@fluidframework/tree/internal/test";
+import { baseRegisterCollectionModel } from "@fluidframework/register-collection/internal/test";
 
 function repeatFactoryAsync<T, TState = void>(
 	factory: () => AsyncGenerator<T, TState>,
@@ -75,5 +76,6 @@ export const ddsModelMap = generateSubModelMap(
 	baseSharedArrayModel,
 	baseTaskManagerModel,
 	baseCounterModel,
+	baseRegisterCollectionModel,
 	baseConsensusOrderedCollectionModel,
 );

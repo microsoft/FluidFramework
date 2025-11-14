@@ -80,6 +80,7 @@
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/matrix": "workspace:~",
 		"@fluidframework/ordered-collection": "workspace:~",
+		"@fluidframework/register-collection": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
@@ -115,7 +116,10 @@
 				"@fluidframework/tree#build:test",
 				"@fluidframework/task-manager#build:test",
 				"@fluidframework/legacy-dds#build:test",
-				"@fluidframework/ordered-collection#build:test"
+				"@fluidframework/ordered-collection#build:test",
+				"@fluidframework/task-manager#build:test",
+				"@fluidframework/counter#build:test",
+				"@fluidframework/register-collection#build:test"
 			]
 		}
 	},
