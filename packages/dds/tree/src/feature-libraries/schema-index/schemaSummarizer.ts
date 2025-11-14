@@ -57,6 +57,10 @@ export const SchemaSummaryVersion = {
 	 * Version 1 adds metadata to the schema summary.
 	 */
 	v1: 1,
+	/**
+	 * The latest version of the schema summary. Must be updated when a new version is added.
+	 */
+	vLatest: 1,
 } as const;
 export type SchemaSummaryVersion = Brand<
 	(typeof SchemaSummaryVersion)[keyof typeof SchemaSummaryVersion],
@@ -68,7 +72,7 @@ export type SchemaSummaryVersion = Brand<
  * Using type definition instead of interface to make this compatible with JsonCompatible.
  */
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-type SchemaSummaryMetadata = {
+export type SchemaSummaryMetadata = {
 	/** The version of the schema summary. */
 	readonly version: SchemaSummaryVersion;
 };

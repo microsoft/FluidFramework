@@ -31,6 +31,10 @@ export const SharedTreeSummaryVersion = {
 	 * Version 1 adds metadata to the SharedTree summary.
 	 */
 	v1: 1,
+	/**
+	 * The latest version of the SharedTree summary. Must be updated when a new version is added.
+	 */
+	vLatest: 1,
 } as const;
 export type SharedTreeSummaryVersion = Brand<
 	(typeof SharedTreeSummaryVersion)[keyof typeof SharedTreeSummaryVersion],

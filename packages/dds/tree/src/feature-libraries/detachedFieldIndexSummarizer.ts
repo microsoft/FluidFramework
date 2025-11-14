@@ -51,6 +51,10 @@ export const DetachedFieldIndexSummaryVersion = {
 	 * Version 1 adds metadata to the detached field index summary.
 	 */
 	v1: 1,
+	/**
+	 * The latest version of the detached field index summary. Must be updated when a new version is added.
+	 */
+	vLatest: 1,
 } as const;
 export type DetachedFieldIndexSummaryVersion = Brand<
 	(typeof DetachedFieldIndexSummaryVersion)[keyof typeof DetachedFieldIndexSummaryVersion],

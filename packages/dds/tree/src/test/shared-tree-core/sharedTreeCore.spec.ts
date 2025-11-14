@@ -26,6 +26,7 @@ import {
 	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
 	MockStorage,
+	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 
 import {
@@ -144,7 +145,7 @@ describe("SharedTreeCore", () => {
 		});
 	});
 
-	describe.only("Summary metadata validation", () => {
+	describe("Summary metadata validation", () => {
 		it("does not write metadata blob for minVersionForCollab < 2.73.0", async () => {
 			const tree = createTree({
 				indexes: [],
@@ -174,7 +175,7 @@ describe("SharedTreeCore", () => {
 			);
 		});
 
-		it("loads with metadata blob with version >= 1", async () => {
+		it("loads with metadata blob with version 1", async () => {
 			const tree = createTree({
 				indexes: [],
 				codecOptions: { ...testCodecOptions, minVersionForCollab: FluidClientVersion.v2_73 },
@@ -195,7 +196,31 @@ describe("SharedTreeCore", () => {
 			await assert.doesNotReject(
 				async () =>
 					tree.loadCore(MockSharedObjectServices.createFromSummary(summary).objectStorage),
-				"Should load successfully with metadata version >= 1",
+				"Should load successfully with metadata version 1",
+			);
+		});
+
+		it("fail to load with metadata blob with version > latest", async () => {
+			const tree = createTree({
+				indexes: [],
+				codecOptions: { ...testCodecOptions, minVersionForCollab: FluidClientVersion.v2_73 },
+			});
+			const { summary } = tree.summarizeCore(mockSerializer);
+
+			// Modify metadata to have version > latest
+			const metadataBlob: SummaryObject | undefined = summary.tree[treeSummaryMetadataKey];
+			assert(metadataBlob !== undefined, "Metadata blob should exist");
+			assert.equal(metadataBlob.type, SummaryType.Blob, "Metadata should be a blob");
+			const modifiedMetadata: SharedTreeSummaryMetadata = {
+				version: (SharedTreeSummaryVersion.vLatest + 1) as SharedTreeSummaryVersion,
+			};
+			metadataBlob.content = JSON.stringify(modifiedMetadata);
+
+			// Should fail to load with version > latest
+			await assert.rejects(
+				async () =>
+					tree.loadCore(MockSharedObjectServices.createFromSummary(summary).objectStorage),
+				(e: Error) => validateAssertionError(e, /Unsupported tree summary/),
 			);
 		});
 	});

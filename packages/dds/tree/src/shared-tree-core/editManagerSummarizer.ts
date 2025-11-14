@@ -47,8 +47,19 @@ export const editManagerMetadataKey = ".metadata";
  * v1: Adds a metadata blob to the summary, containing the version of the summary.
  */
 export const EditManagerSummaryVersion = {
+	/**
+	 * Version 0 represents summaries before versioning was added. This version is not written.
+	 * It is only used to avoid undefined checks.
+	 */
 	v0: 0,
+	/**
+	 * Version 1 adds metadata to the schema summary.
+	 */
 	v1: 1,
+	/**
+	 * The latest version of the edit manager summary. Must be updated when a new version is added.
+	 */
+	vLatest: 1,
 } as const;
 export type EditManagerSummaryVersion = Brand<
 	(typeof EditManagerSummaryVersion)[keyof typeof EditManagerSummaryVersion],
