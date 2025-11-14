@@ -11,6 +11,7 @@ import type { IChannelFactory } from "@fluidframework/datastore-definitions/inte
 import { baseSharedArrayModel } from "@fluidframework/legacy-dds/internal/test";
 import { baseMapModel, baseDirModel } from "@fluidframework/map/internal/test";
 import { baseSharedMatrixModel } from "@fluidframework/matrix/internal/test";
+import { baseConsensusOrderedCollectionModel } from "@fluidframework/ordered-collection/internal/test";
 import {
 	baseSharedStringModel,
 	baseIntervalModel,
@@ -74,4 +75,5 @@ export const ddsModelMap = generateSubModelMap(
 	baseSharedArrayModel,
 	baseTaskManagerModel,
 	baseCounterModel,
+	baseConsensusOrderedCollectionModel,
 );
