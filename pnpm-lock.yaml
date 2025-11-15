@@ -3816,6 +3816,9 @@ importers:
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../../packages/common/core-interfaces
+      '@fluidframework/react':
+        specifier: workspace:~
+        version: link:../../../packages/framework/react
       '@fluidframework/runtime-utils':
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-utils
@@ -3946,6 +3949,9 @@ importers:
       '@fluidframework/map':
         specifier: workspace:~
         version: link:../../../packages/dds/map
+      '@fluidframework/react':
+        specifier: workspace:~
+        version: link:../../../packages/framework/react
       '@fluidframework/runtime-utils':
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-utils
@@ -8607,6 +8613,9 @@ importers:
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
+      '@fluid-private/stochastic-test-utils':
+        specifier: workspace:~
+        version: link:../../test/stochastic-test-utils
       '@fluid-private/test-dds-utils':
         specifier: workspace:~
         version: link:../test-dds-utils
@@ -8792,6 +8801,9 @@ importers:
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
+      '@fluid-private/stochastic-test-utils':
+        specifier: workspace:~
+        version: link:../../test/stochastic-test-utils
       '@fluid-private/test-dds-utils':
         specifier: workspace:~
         version: link:../test-dds-utils
@@ -14047,6 +14059,12 @@ importers:
       '@fluidframework/matrix':
         specifier: workspace:~
         version: link:../../dds/matrix
+      '@fluidframework/ordered-collection':
+        specifier: workspace:~
+        version: link:../../dds/ordered-collection
+      '@fluidframework/register-collection':
+        specifier: workspace:~
+        version: link:../../dds/register-collection
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../runtime/runtime-definitions

@@ -175,22 +175,22 @@ export class TreeViewConfiguration<
 	/**
 	 * {@inheritDoc ITreeViewConfiguration.schema}
 	 */
-	public readonly schema: TSchema;
+	public readonly schema!: TSchema;
 
 	/**
 	 * {@inheritDoc ITreeConfigurationOptions.enableSchemaValidation}
 	 */
-	public readonly enableSchemaValidation: boolean;
+	public readonly enableSchemaValidation!: boolean;
 
 	/**
 	 * {@inheritDoc ITreeConfigurationOptions.preventAmbiguity}
 	 */
-	public readonly preventAmbiguity: boolean;
+	public readonly preventAmbiguity!: boolean;
 
 	/**
 	 * {@link TreeSchema.definitions} but with public types.
 	 */
-	protected readonly definitionsInternal: ReadonlyMap<string, TreeNodeSchema>;
+	protected readonly definitionsInternal!: ReadonlyMap<string, TreeNodeSchema>;
 
 	/**
 	 * Construct a new {@link TreeViewConfiguration}.
@@ -206,6 +206,17 @@ export class TreeViewConfiguration<
 	 * since this would be a cyclic dependency that will cause an error when constructing this configuration.
 	 */
 	public constructor(props: ITreeViewConfiguration<TSchema>) {
+		if (this.constructor === TreeViewConfiguration) {
+			// Ensure all TreeViewConfiguration instances are actually TreeViewConfigurationAlpha, allowing `asAlpha` to work correctly.
+			// If everything in TreeViewConfigurationAlpha is stabilized and this is removed, the `!` on the properties above should be removed to restore better type safety.
+			return new TreeViewConfigurationAlpha(props);
+		}
+		assert(
+			// The type cast here is needed to avoid this assert narrowing "this" to never, breaking the code below.
+			(this.constructor as unknown) === TreeViewConfigurationAlpha,
+			"Invalid configuration class constructed.",
+		);
+
 		const config = { ...defaultTreeConfigurationOptions, ...props };
 		this.schema = config.schema;
 		this.enableSchemaValidation = config.enableSchemaValidation;
@@ -252,6 +263,8 @@ export class TreeViewConfiguration<
 
 /**
  * {@link TreeViewConfiguration} extended with some alpha APIs.
+ * @remarks
+ * See {@link (asAlpha:2)} for an API to downcast from {@link TreeViewConfiguration} to this type.
  * @sealed @alpha
  */
 export class TreeViewConfigurationAlpha<

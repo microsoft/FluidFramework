@@ -15,7 +15,8 @@ import {
 import { Add24Regular, Checkmark24Regular, Delete24Regular } from "@fluentui/react-icons";
 import React, { type DragEvent, useState } from "react";
 
-import { Column } from "../schema.js";
+import { Column, type Table } from "../schema.js";
+import { useTree } from "./utilities.js";
 
 /**
  * Props for the `TableHeaderView` component, which renders the header row of the table.
@@ -24,10 +25,7 @@ import { Column } from "../schema.js";
  * to add new columns with optional metadata such as label and hint.
  */
 export interface TableHeaderViewProps {
-	/**
-	 * The list of columns currently present in the table.
-	 */
-	readonly columns: readonly Column[];
+	readonly table: Table;
 
 	/**
 	 * Callback fired when a column drag operation starts. Receives the index of the dragged column.
@@ -44,16 +42,6 @@ export interface TableHeaderViewProps {
 	 * Receives the target index to reposition the dragged column.
 	 */
 	onColumnDrop: (index: number) => void;
-
-	/**
-	 * Callback to remove a column from the table. Receives the index of the column to remove.
-	 */
-	onRemoveColumn: (index: number) => void;
-
-	/**
-	 * Handler invoked when the user confirms adding a new column.
-	 */
-	handleAppendColumn: (newColumn: Column) => void;
 }
 
 /**
@@ -68,18 +56,17 @@ export interface TableHeaderViewProps {
  * @returns A React element representing the table header.
  */
 export const TableHeaderView: React.FC<TableHeaderViewProps> = ({
-	columns,
+	table,
 	onColumnDragStart,
 	onColumnDragOver,
 	onColumnDrop,
-	onRemoveColumn,
-	handleAppendColumn,
 }) => {
+	useTree(table);
 	const [showAddColumnInput, setShowAddColumnInput] = useState(false);
 
 	const handleChangeColumnHint = (index: number, hint: string): void => {
-		const column = columns[index];
-		if (column?.props !== undefined && column.getCells().length === 0) {
+		const column = table.getColumn(index);
+		if (column?.props !== undefined) {
 			column.props.hint = hint;
 		}
 	};
@@ -88,9 +75,9 @@ export const TableHeaderView: React.FC<TableHeaderViewProps> = ({
 		<TableHeader>
 			{showAddColumnInput && (
 				<InsertColumnDialogue
-					columns={columns}
+					columnCount={table.columns.length}
 					handleAppendColumn={(newColumn) => {
-						handleAppendColumn(newColumn);
+						table.insertColumns({ columns: [newColumn] });
 						setShowAddColumnInput(false);
 					}}
 				/>
@@ -104,7 +91,7 @@ export const TableHeaderView: React.FC<TableHeaderViewProps> = ({
 						onClick={() => setShowAddColumnInput(true)}
 					/>
 				</TableHeaderCell>
-				{columns.map((col, index) => (
+				{table.columns.map((col, index) => (
 					<TableHeaderCell
 						key={col.id}
 						className="custom-header-cell"
@@ -115,24 +102,24 @@ export const TableHeaderView: React.FC<TableHeaderViewProps> = ({
 					>
 						<div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
 							<div style={{ display: "flex", gap: "4px", width: "100%" }}>
-								<span style={{ wordBreak: "break-word" }}>{col.props?.label ?? col.id}</span>
+								<span style={{ wordBreak: "break-word" }}>{col.props.label ?? col.id}</span>
 								<Button
 									appearance="subtle"
 									size="small"
-									onClick={() => onRemoveColumn(index)}
+									onClick={() => table.removeColumns(index, 1)}
 									icon={<Delete24Regular />}
 									style={{ padding: 0, minWidth: "auto" }}
 								/>
 							</div>
 							<Dropdown
 								placeholder="Type"
-								value={col.props?.hint ?? ""}
+								value={col.props.hint ?? ""}
 								onOptionSelect={(_, data) => {
 									if (data.optionValue !== undefined) {
 										handleChangeColumnHint(index, data.optionValue);
 									}
 								}}
-								disabled={col.getCells().length > 0}
+								disabled={table.columns.length > 0}
 								size="small"
 								style={{ marginTop: "4px" }}
 							>
@@ -150,9 +137,9 @@ export const TableHeaderView: React.FC<TableHeaderViewProps> = ({
 
 interface InsertColumnDialogueProps {
 	/**
-	 * The list of columns currently present in the table.
+	 * The number of columns currently in the table.
 	 */
-	readonly columns: readonly Column[];
+	readonly columnCount: number;
 
 	/**
 	 * Handler invoked when the user confirms adding a new column.
@@ -161,7 +148,7 @@ interface InsertColumnDialogueProps {
 }
 
 const InsertColumnDialogue: React.FC<InsertColumnDialogueProps> = ({
-	columns,
+	columnCount,
 	handleAppendColumn,
 }) => {
 	const [newColumnLabel, setNewColumnLabel] = useState("");
@@ -169,7 +156,7 @@ const InsertColumnDialogue: React.FC<InsertColumnDialogueProps> = ({
 
 	return (
 		<TableRow className="custom-header-row">
-			<TableHeaderCell colSpan={columns.length + 1}>
+			<TableHeaderCell colSpan={columnCount + 1}>
 				<div style={{ display: "flex", gap: "8px" }}>
 					<Input
 						type="text"

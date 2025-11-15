@@ -3144,9 +3144,129 @@ describe("treeNodeApi", () => {
 			});
 
 			it("object", () => {
-				const A = schema.object("A", { x: schema.number });
+				class A extends schema.object("A", { x: schema.number }) {}
 				const a = TreeBeta.importConcise(A, { x: 1 });
-				assert.deepEqual(a, { x: 1 });
+				expectTreesEqual(a, new A({ x: 1 }));
+			});
+
+			it("unsupported number", () => {
+				assert.throws(
+					() => TreeBeta.importConcise(schema.number, Number.NaN),
+					validateUsageError(/Received unsupported numeric value: NaN./),
+				);
+			});
+
+			it("unsupported number normalized", () => {
+				assert.deepEqual(
+					TreeBeta.importConcise([schema.number, schema.null], Number.NaN),
+					null,
+				);
+			});
+
+			it("unsupported number as null", () => {
+				assert.throws(
+					() => TreeBeta.importConcise(schema.null, Number.NaN),
+					validateUsageError(
+						/The provided data is incompatible with all of the types allowed by the schema/,
+					),
+				);
+			});
+
+			it("unsupported number field", () => {
+				class A extends schema.object("A", { x: schema.number }) {}
+				const content = { x: Number.NaN };
+				assert.throws(
+					() => TreeBeta.importConcise(A, content),
+					validateUsageError(/Received unsupported numeric value: NaN./),
+				);
+			});
+
+			it("unsupported number field normalized", () => {
+				class A extends schema.object("A", { x: [schema.number, schema.null] }) {}
+				const content = { x: Number.NaN };
+				TreeAlpha.tagContentSchema(A, content);
+				const a = TreeBeta.importConcise(A, content);
+				expectTreesEqual(a, new A({ x: null }));
+			});
+
+			it("out of schema", () => {
+				class A extends schema.object("A", { x: [() => B] }) {}
+				class B extends schema.object("B", { x: schema.number }) {}
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				const content = { x: TreeAlpha.tagContentSchema(B, {} as any) };
+				TreeAlpha.tagContentSchema(A, content);
+				assert.throws(
+					() => TreeBeta.importConcise(A, content),
+					validateUsageError(
+						/The provided data is incompatible with all of the types allowed by the schema/,
+					),
+				);
+			});
+
+			it("unsupported number field tagged", () => {
+				class A extends schema.object("A", { x: schema.number }) {}
+				const content = { x: Number.NaN };
+				TreeAlpha.tagContentSchema(A, content);
+				assert.throws(
+					() => TreeBeta.importConcise(A, content),
+					validateUsageError(/Received unsupported numeric value: NaN./),
+				);
+			});
+
+			it("missing field, tagged", () => {
+				class A extends schema.object("A", { x: [() => B] }) {}
+				class B extends schema.object("B", {}) {}
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				const content = TreeAlpha.tagContentSchema(A, {} as any);
+				assert.throws(
+					() => TreeBeta.importConcise(A, content),
+					validateUsageError(
+						/The provided data is incompatible with all of the types allowed by the schema/,
+					),
+				);
+			});
+
+			it("does not use type other than tagged", () => {
+				class A extends schema.object("A", { x: [() => B] }) {}
+				class B extends schema.object("B", {}) {}
+				const content = {};
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				TreeAlpha.tagContentSchema(A, content as any);
+				assert.throws(
+					() => TreeBeta.importConcise([A, B], content),
+					validateUsageError(
+						/The provided data is incompatible with all of the types allowed by the schema/,
+					),
+				);
+			});
+
+			// These tests don't really belong here, but they are mostly ensuring that the same validation that importConcise does (checked above) also happens in constructors.
+			it("constructors", () => {
+				class A extends schema.object("A", { x: [() => B] }) {}
+				class B extends schema.object("B", {}) {}
+				class C extends schema.object("C", {}) {}
+
+				assert.throws(
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					() => new A({} as any),
+					validateUsageError(
+						/The provided data is incompatible with all of the types allowed by the schema/,
+					),
+				);
+
+				assert.throws(
+					() => new B(TreeAlpha.tagContentSchema(C, {})),
+					validateUsageError(
+						/The provided data is incompatible with all of the types allowed by the schema/,
+					),
+				);
+
+				const content2 = { x: new C({}) as TreeNode as B };
+				TreeAlpha.tagContentSchema(A, content2);
+				assert.throws(
+					() => new A(content2),
+					validateUsageError(/Invalid schema for this context/),
+				);
 			});
 		});
 
