@@ -89,6 +89,8 @@ export {
 	channelsTreeName,
 	CreateSummarizerNodeSource,
 	totalBlobSizePropertyName,
+	currentSummarizeStepPrefix,
+	currentSummarizeStepPropertyName,
 } from "./summary.js";
 export type { MinimumVersionForCollab } from "./compatibilityDefinitions.js";
 

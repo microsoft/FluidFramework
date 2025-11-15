@@ -387,3 +387,13 @@ export const blobCountPropertyName = "BlobCount";
  * @internal
  */
 export const totalBlobSizePropertyName = "TotalBlobSize";
+
+/**
+ * @internal
+ */
+export const currentSummarizeStepPrefix = "";
+
+/**
+ * @internal
+ */
+export const currentSummarizeStepPropertyName = "CurrentSummarizeStep";
