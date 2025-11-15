@@ -9,8 +9,14 @@ import {
 	type ISummaryTree,
 	type SummaryObject,
 } from "@fluidframework/driver-definitions";
-import type { IExperimentalIncrementalSummaryContext } from "@fluidframework/runtime-definitions/internal";
-import { MockStorage } from "@fluidframework/test-runtime-utils/internal";
+import type {
+	IExperimentalIncrementalSummaryContext,
+	MinimumVersionForCollab,
+} from "@fluidframework/runtime-definitions/internal";
+import {
+	MockStorage,
+	validateAssertionError,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index.js";
@@ -49,8 +55,13 @@ import {
 	TreeViewConfigurationAlpha,
 } from "../../../simple-tree/index.js";
 import { fieldJsonCursor } from "../../json/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { forestSummaryContentKey } from "../../../feature-libraries/forest-summary/incrementalSummaryBuilder.js";
+import {
+	forestSummaryContentKey,
+	forestSummaryMetadataKey,
+	ForestSummaryVersion,
+	type ForestSummaryMetadata,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/forest-summary/summaryTypes.js";
 import type { FieldKey, TreeNodeSchemaIdentifier } from "../../../core/index.js";
 
 function createForestSummarizer(args: {
@@ -61,6 +72,7 @@ function createForestSummarizer(args: {
 	// The content and schema to initialize the forest with. By default, it is an empty forest.
 	initialContent?: TreeStoredContentStrict;
 	shouldEncodeIncrementally?: IncrementalEncodingPolicy;
+	minVersionForCollab?: MinimumVersionForCollab;
 }): { forestSummarizer: ForestSummarizer; checkout: TreeCheckout } {
 	const {
 		initialContent = {
@@ -70,10 +82,11 @@ function createForestSummarizer(args: {
 		encodeType,
 		forestType,
 		shouldEncodeIncrementally,
+		minVersionForCollab = FluidClientVersion.v2_73,
 	} = args;
 	const options: CodecWriteOptions = {
 		jsonValidator: FormatValidatorBasic,
-		minVersionForCollab: FluidClientVersion.v2_73,
+		minVersionForCollab,
 	};
 	const fieldBatchCodec = makeFieldBatchCodec(options);
 	const checkout = checkoutWithContent(initialContent, {
@@ -195,7 +208,11 @@ describe("ForestSummarizer", () => {
 		];
 		for (const { encodeType, testType, forestType } of testCases) {
 			it(`can summarize empty ${testType} forest and load from it`, async () => {
-				const { forestSummarizer } = createForestSummarizer({ encodeType, forestType });
+				const { forestSummarizer } = createForestSummarizer({
+					encodeType,
+					forestType,
+					minVersionForCollab: FluidClientVersion.v2_52,
+				});
 				const summary = forestSummarizer.summarize({ stringify: JSON.stringify });
 				assert(
 					Object.keys(summary.summary.tree).length === 1,
@@ -213,6 +230,7 @@ describe("ForestSummarizer", () => {
 				const { forestSummarizer: forestSummarizer2 } = createForestSummarizer({
 					encodeType,
 					forestType,
+					minVersionForCollab: FluidClientVersion.v2_52,
 				});
 				await assert.doesNotReject(async () => {
 					await forestSummarizer2.load(mockStorage, JSON.parse);
@@ -231,6 +249,7 @@ describe("ForestSummarizer", () => {
 					initialContent,
 					encodeType,
 					forestType,
+					minVersionForCollab: FluidClientVersion.v2_52,
 				});
 				const summary = forestSummarizer.summarize({ stringify: JSON.stringify });
 				assert(
@@ -249,6 +268,7 @@ describe("ForestSummarizer", () => {
 				const { forestSummarizer: forestSummarizer2 } = createForestSummarizer({
 					encodeType,
 					forestType,
+					minVersionForCollab: FluidClientVersion.v2_52,
 				});
 				await assert.doesNotReject(async () => {
 					await forestSummarizer2.load(mockStorage, JSON.parse);
@@ -262,13 +282,13 @@ describe("ForestSummarizer", () => {
 
 		function validateSummaryIsIncremental(summary: ISummaryTree) {
 			assert(
-				Object.keys(summary.tree).length >= 2,
+				Object.keys(summary.tree).length >= 3,
 				"There should be at least one node for incremental fields",
 			);
 
 			for (const [key, value] of Object.entries(summary.tree)) {
-				if (key === forestSummaryContentKey) {
-					assert(value.type === SummaryType.Blob, "Forest summary contents not found");
+				if (key === forestSummaryContentKey || key === forestSummaryMetadataKey) {
+					assert(value.type === SummaryType.Blob, "Forest summary blob not as expected");
 				} else {
 					assert(value.type === SummaryType.Tree, "Incremental summary node should be a tree");
 				}
@@ -661,6 +681,117 @@ describe("ForestSummarizer", () => {
 					lastSummary: summary1.summary,
 				});
 			});
+		});
+	});
+
+	describe("Summary metadata validation", () => {
+		it("does not write metadata blob for minVersionForCollab < 2.73.0", () => {
+			const { forestSummarizer } = createForestSummarizer({
+				encodeType: TreeCompressionStrategy.Compressed,
+				forestType: ForestTypeOptimized,
+				minVersionForCollab: FluidClientVersion.v2_52,
+			});
+
+			const summary = forestSummarizer.summarize({ stringify: JSON.stringify });
+
+			// Check if metadata blob exists
+			const metadataBlob: SummaryObject | undefined =
+				summary.summary.tree[forestSummaryMetadataKey];
+			assert(metadataBlob === undefined, "Metadata blob should not exist");
+		});
+
+		it("writes metadata blob with version 1 for minVersionForCollab 2.73.0", () => {
+			const { forestSummarizer } = createForestSummarizer({
+				encodeType: TreeCompressionStrategy.Compressed,
+				forestType: ForestTypeOptimized,
+				minVersionForCollab: FluidClientVersion.v2_73,
+			});
+
+			const summary = forestSummarizer.summarize({ stringify: JSON.stringify });
+
+			// Check if metadata blob exists
+			const metadataBlob: SummaryObject | undefined =
+				summary.summary.tree[forestSummaryMetadataKey];
+			assert(metadataBlob !== undefined, "Metadata blob should exist");
+			assert.equal(metadataBlob.type, SummaryType.Blob, "Metadata should be a blob");
+			const metadataContent = JSON.parse(
+				metadataBlob.content as string,
+			) as ForestSummaryMetadata;
+			assert.equal(
+				metadataContent.version,
+				ForestSummaryVersion.v1,
+				"Metadata version should be 1",
+			);
+		});
+
+		it("loads with metadata blob with version 1", async () => {
+			const { forestSummarizer } = createForestSummarizer({
+				encodeType: TreeCompressionStrategy.Compressed,
+				forestType: ForestTypeOptimized,
+				minVersionForCollab: FluidClientVersion.v2_73,
+			});
+
+			const summary = forestSummarizer.summarize({ stringify: JSON.stringify });
+
+			// Verify metadata exists and has version = 1
+			const metadataBlob: SummaryObject | undefined =
+				summary.summary.tree[forestSummaryMetadataKey];
+			assert(metadataBlob !== undefined, "Metadata blob should exist");
+			assert.equal(metadataBlob.type, SummaryType.Blob, "Metadata should be a blob");
+			const metadataContent = JSON.parse(
+				metadataBlob.content as string,
+			) as ForestSummaryMetadata;
+			assert.equal(
+				metadataContent.version,
+				ForestSummaryVersion.v1,
+				"Metadata version should be 1",
+			);
+
+			// Create a new ForestSummarizer and load with the above summary
+			const mockStorage = MockStorage.createFromSummary(summary.summary);
+			const { forestSummarizer: forestSummarizer2 } = createForestSummarizer({
+				encodeType: TreeCompressionStrategy.Compressed,
+				forestType: ForestTypeOptimized,
+			});
+
+			// Should load successfully with version 1
+			await assert.doesNotReject(
+				async () => forestSummarizer2.load(mockStorage, JSON.parse),
+				"Should load successfully with metadata version 1",
+			);
+		});
+
+		it("fail to load with metadata blob with version > latest", async () => {
+			const { forestSummarizer } = createForestSummarizer({
+				encodeType: TreeCompressionStrategy.Compressed,
+				forestType: ForestTypeOptimized,
+				minVersionForCollab: FluidClientVersion.v2_73,
+			});
+
+			const summary = forestSummarizer.summarize({ stringify: JSON.stringify });
+
+			// Modify metadata to have version > latest
+			const metadataBlob: SummaryObject | undefined =
+				summary.summary.tree[forestSummaryMetadataKey];
+			assert(metadataBlob !== undefined, "Metadata blob should exist");
+			assert.equal(metadataBlob.type, SummaryType.Blob, "Metadata should be a blob");
+			const modifiedMetadata: ForestSummaryMetadata = {
+				version: (ForestSummaryVersion.vLatest + 1) as ForestSummaryVersion,
+			};
+			metadataBlob.content = JSON.stringify(modifiedMetadata);
+
+			// Create a new ForestSummarizer and load with the above summary
+			const mockStorage = MockStorage.createFromSummary(summary.summary);
+			const { forestSummarizer: forestSummarizer2 } = createForestSummarizer({
+				encodeType: TreeCompressionStrategy.Compressed,
+				forestType: ForestTypeOptimized,
+			});
+
+			// Should fail to load with version > latest
+			await assert.rejects(
+				async () => forestSummarizer2.load(mockStorage, JSON.parse),
+				(e: Error) => validateAssertionError(e, /Unsupported forest summary/),
+			);
 		});
 	});
 });

@@ -241,6 +241,7 @@ export class SharedTreeKernel
 				getCurrentSeq: lastSequenceNumber,
 			},
 			schemaCodec,
+			options.minVersionForCollab,
 		);
 		const fieldBatchCodec = makeFieldBatchCodec(options);
 
@@ -263,7 +264,10 @@ export class SharedTreeKernel
 			initialSequenceNumber,
 			options.shouldEncodeIncrementally,
 		);
-		const removedRootsSummarizer = new DetachedFieldIndexSummarizer(removedRoots);
+		const removedRootsSummarizer = new DetachedFieldIndexSummarizer(
+			removedRoots,
+			options.minVersionForCollab,
+		);
 		const innerChangeFamily = new SharedTreeChangeFamily(
 			revisionTagCodec,
 			fieldBatchCodec,

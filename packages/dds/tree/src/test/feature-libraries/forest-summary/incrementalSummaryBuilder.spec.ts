@@ -17,6 +17,8 @@ import {
 	ForestSummaryTrackingState,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/forest-summary/incrementalSummaryBuilder.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { ForestSummaryVersion } from "../../../feature-libraries/forest-summary/summaryTypes.js";
 import {
 	type EncodedFieldBatch,
 	type ChunkReferenceId,
@@ -102,6 +104,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 			},
 			defaultIncrementalEncodingPolicy,
 			initialSequenceNumber,
+			brand(ForestSummaryVersion.v1),
 		);
 	}
 
