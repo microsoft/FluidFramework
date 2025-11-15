@@ -15,6 +15,7 @@
 
 export type {
 	IOdspAudience,
+	IOdspContainerServicesEvents,
 	IOdspFluidContainer,
 	OdspClientProps,
 	OdspConnectionConfig,
