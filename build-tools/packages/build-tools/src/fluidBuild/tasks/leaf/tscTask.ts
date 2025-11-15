@@ -463,6 +463,134 @@ export class TscTask extends LeafTask {
 			!parsed.watchOptions
 		);
 	}
+
+	/**
+	 * Get cache input files for TscTask.
+	 * Includes all TypeScript source files that tsc would compile.
+	 */
+	protected async getCacheInputFiles(): Promise<string[] | undefined> {
+		try {
+			const config = this.readTsConfig();
+			if (!config) {
+				return undefined;
+			}
+
+			const configFileFullPath = this.configFileFullPath;
+			if (!configFileFullPath) {
+				return undefined;
+			}
+
+			// Collect all input files:
+			// 1. All source files from TypeScript config
+			const inputFiles = [...config.fileNames];
+
+			// 2. Add the tsconfig.json itself as an input
+			inputFiles.push(configFileFullPath);
+
+			// 3. If there are project references, add those config files too
+			if (config.projectReferences) {
+				for (const ref of config.projectReferences) {
+					inputFiles.push(ref.path);
+				}
+			}
+
+			// Convert to relative paths from package directory
+			const pkgDir = this.node.pkg.directory;
+			return inputFiles.map((f) => path.relative(pkgDir, f));
+		} catch (e) {
+			this.traceError(`Error getting cache input files: ${e}`);
+			return undefined;
+		}
+	}
+
+	/**
+	 * Get cache output files for TscTask.
+	 * Includes all compiled output files (.js, .d.ts, .map files) and .tsbuildinfo.
+	 */
+	protected async getCacheOutputFiles(): Promise<string[] | undefined> {
+		try {
+			const config = this.readTsConfig();
+			if (!config) {
+				return undefined;
+			}
+
+			const outputFiles: string[] = [];
+			const pkgDir = this.node.pkg.directory;
+
+			// 1. Add .tsbuildinfo file if incremental compilation is enabled
+			const tsBuildInfoPath = this.tsBuildInfoFileFullPath;
+			if (tsBuildInfoPath) {
+				outputFiles.push(path.relative(pkgDir, tsBuildInfoPath));
+			}
+
+			// 2. Compute output files based on input files and TypeScript configuration
+			const outDir = config.options.outDir;
+			const rootDir = config.options.rootDir;
+			const declaration = config.options.declaration ?? false;
+			const declarationMap = config.options.declarationMap ?? false;
+			const sourceMap = config.options.sourceMap ?? false;
+
+			// For each source file, compute the corresponding output files
+			for (const sourceFile of config.fileNames) {
+				// Compute output directory
+				let outputDir: string;
+				if (outDir) {
+					if (rootDir) {
+						const relative = path.relative(rootDir, path.dirname(sourceFile));
+						outputDir = path.join(outDir, relative);
+					} else {
+						outputDir = outDir;
+					}
+				} else {
+					outputDir = path.dirname(sourceFile);
+				}
+
+				const parsed = path.parse(sourceFile);
+				const baseName = parsed.name;
+				const ext = parsed.ext;
+
+				// Determine output file extensions based on source file extension
+				let jsExt = ".js";
+				let dtsExt = ".d.ts";
+				if (ext === ".cts") {
+					jsExt = ".cjs";
+					dtsExt = ".d.cts";
+				} else if (ext === ".mts") {
+					jsExt = ".mjs";
+					dtsExt = ".d.mts";
+				}
+
+				// Only add .js if not noEmit
+				if (!config.options.noEmit) {
+					outputFiles.push(path.relative(pkgDir, path.join(outputDir, `${baseName}${jsExt}`)));
+
+					if (sourceMap) {
+						outputFiles.push(
+							path.relative(pkgDir, path.join(outputDir, `${baseName}${jsExt}.map`)),
+						);
+					}
+				}
+
+				// Add declaration files
+				if (declaration) {
+					outputFiles.push(
+						path.relative(pkgDir, path.join(outputDir, `${baseName}${dtsExt}`)),
+					);
+
+					if (declarationMap) {
+						outputFiles.push(
+							path.relative(pkgDir, path.join(outputDir, `${baseName}${dtsExt}.map`)),
+						);
+					}
+				}
+			}
+
+			return outputFiles;
+		} catch (e) {
+			this.traceError(`Error getting cache output files: ${e}`);
+			return undefined;
+		}
+	}
 }
 
 // Base class for tasks that are dependent on a tsc compile
@@ -515,4 +643,56 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 	}
 	protected abstract get configFileFullPaths(): string[];
 	protected abstract getToolVersion(): Promise<string>;
+
+	protected override async getCacheInputFiles(): Promise<string[] | undefined> {
+		try {
+			const inputFiles: string[] = [];
+			const pkgDir = this.node.pkg.directory;
+
+			const configFiles = this.configFileFullPaths;
+			for (const configFile of configFiles) {
+				if (existsSync(configFile)) {
+					inputFiles.push(path.relative(pkgDir, configFile));
+				}
+			}
+
+			const tscTasks = [...this.getDependentLeafTasks()].filter(
+				(task) => task instanceof TscTask,
+			) as TscTask[];
+			const ownTscTasks = tscTasks.filter((task) => task.package == this.package);
+			const tasks = (ownTscTasks.length === 0 ? tscTasks : ownTscTasks).sort((a, b) =>
+				a.name.localeCompare(b.name),
+			);
+
+			for (const dep of tasks) {
+				const tsBuildInfo = await dep.readTsBuildInfo();
+				if (tsBuildInfo === undefined) {
+					return undefined;
+				}
+
+				for (const fileName of tsBuildInfo.program.fileNames) {
+					const absolutePath = path.isAbsolute(fileName)
+						? fileName
+						: path.join(dep.package.directory, fileName);
+					const relativePath = path.relative(pkgDir, absolutePath);
+					if (!relativePath.startsWith("..") && !path.isAbsolute(relativePath)) {
+						inputFiles.push(relativePath);
+					}
+				}
+			}
+
+			return inputFiles;
+		} catch (e: any) {
+			this.traceError(`error getting cache input files: ${e.message}`);
+			return undefined;
+		}
+	}
+
+	protected override async getCacheOutputFiles(): Promise<string[] | undefined> {
+		return this.getTaskSpecificOutputFiles();
+	}
+
+	protected getTaskSpecificOutputFiles(): Promise<string[] | undefined> {
+		return Promise.resolve(undefined);
+	}
 }
