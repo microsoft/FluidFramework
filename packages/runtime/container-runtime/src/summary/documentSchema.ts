@@ -109,6 +109,8 @@ export interface IDocumentSchemaInfo {
 	 * @remarks
 	 * We use `SemanticVersion` instead of `MinimumVersionForCollab` since we may open future documents that with a
 	 * minVersionForCollab version that `MinimumVersionForCollab` does not support.
+	 * Note that in such a case (where minVersionForCollab is not a valid `MinimumVersionForCollab`),
+	 * loading the document might not work since this version of the runtime may not support it.
 	 */
 	minVersionForCollab: SemanticVersion;
 }

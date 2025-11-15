@@ -1219,6 +1219,7 @@ export class ContainerRuntime
 			createBlobPayloadPending,
 		};
 
+		semanticVersionToMinimumVersionForCollab(updatedMinVersionForCollab);
 		const runtime = new containerRuntimeCtor(
 			context,
 			registry,
@@ -1236,7 +1237,7 @@ export class ContainerRuntime
 			documentSchemaController,
 			featureGatesForTelemetry,
 			provideEntryPoint,
-			semanticVersionToMinimumVersionForCollab(updatedMinVersionForCollab),
+			updatedMinVersionForCollab,
 			requestHandler,
 			undefined, // summaryConfiguration
 			recentBatchInfo,
