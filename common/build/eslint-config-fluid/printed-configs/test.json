@@ -29,8 +29,6 @@
         "promise",
         "jsdoc",
         "@typescript-eslint",
-        "@rushstack/security",
-        "@rushstack",
         "unicorn",
         "tsdoc"
     ],
@@ -74,12 +72,6 @@
         ],
         "@fluid-internal/fluid/no-unchecked-record-access": [
             "error"
-        ],
-        "@rushstack/no-new-null": [
-            "error"
-        ],
-        "@rushstack/typedef-var": [
-            "off"
         ],
         "@stylistic/array-bracket-newline": [
             "off"
@@ -845,6 +837,17 @@
                         "message": "Use `strict` instead. E.g. `import { strict as assert } from \"node:assert\";`"
                     }
                 ]
+            }
+        ],
+        "@typescript-eslint/no-restricted-types": [
+            "error",
+            {
+                "types": {
+                    "null": {
+                        "message": "Use 'undefined' instead of 'null'",
+                        "fixWith": "undefined"
+                    }
+                }
             }
         ],
         "@typescript-eslint/no-shadow": [
@@ -1948,7 +1951,7 @@
             "error"
         ],
         "unicorn/no-null": [
-            "error"
+            "off"
         ],
         "unicorn/no-object-as-default-parameter": [
             "error"
