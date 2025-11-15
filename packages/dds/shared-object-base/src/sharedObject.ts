@@ -819,8 +819,15 @@ export abstract class SharedObject<
 		telemetryContext?: ITelemetryContext,
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 	): Promise<ISummaryTreeWithStats> {
+		// Create a fresh serializer instance with forSummarizer: true
+		// This will skip the "bind" side effect of FluidSerializer, which is asserted to be a no-op in this case.
+		const summarizerSerializer = new FluidSerializer(
+			this.runtime.channelsRoutingContext,
+			true /* forSummarizer */,
+		);
+
 		const result = this.summarizeCore(
-			this.serializer,
+			summarizerSerializer,
 			telemetryContext,
 			incrementalSummaryContext,
 			fullTree,
