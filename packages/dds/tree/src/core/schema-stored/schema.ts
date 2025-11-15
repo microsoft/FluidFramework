@@ -91,13 +91,24 @@ export enum ValueSchema {
 export type TreeTypeSet = ReadonlySet<TreeNodeSchemaIdentifier>;
 
 /**
- * Declarative portion of a Field Kind.
+ * Declarative portion of a {@link FlexFieldKind}.
  *
  * @remarks
  * Enough info about a field kind to know if a given tree is is schema.
+ *
+ * Note that compatibility between trees and schema is not sufficient to evaluate if a schema upgrade should be allowed.
+ * Currently schema upgrades are restricted to field kind changes which can not be cyclic (like version upgrades but not down grades).
+ * See {@link FlexFieldKind.allowsFieldSuperset} for more details.
  */
 export interface FieldKindData {
+	/**
+	 * Globally scoped identifier.
+	 */
 	readonly identifier: FieldKindIdentifier;
+	/**
+	 * Bound on the number of children that fields of this kind may have.
+	 * TODO: consider replacing this with numeric upper and lower bounds.
+	 */
 	readonly multiplicity: Multiplicity;
 }
 

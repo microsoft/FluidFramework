@@ -36,43 +36,34 @@ export class FlexFieldKind<
 	// TODO: stronger typing
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	TEditor extends FieldEditor<any> = FieldEditor<any>,
-	TName extends string = string,
+	TName extends FieldKindIdentifier = FieldKindIdentifier,
 	TMultiplicity extends Multiplicity = Multiplicity,
 > implements FieldKindData
 {
 	protected _typeCheck!: MakeNominal;
 
 	/**
-	 * @param identifier - Globally scoped identifier.
-	 * @param multiplicity - bound on the number of children that fields of this kind may have.
-	 * TODO: replace with numeric upper and lower bounds.
-	 * @param changeHandler - Change handling policy.
-	 * @param allowsTreeSupersetOf - returns true iff `superset` supports all that this does
-	 * and `superset` is an allowed upgrade. Does not have to handle the `never` cases.
-	 * See {@link isNeverField}.
-	 * TODO: when used as a method (instead of a free function like the other superset related functions),
-	 * this name is/signature is confusing and seems backwards.
-	 * @param handlesEditsFrom - Kinds (in addition to this) whose edits can be processed by changeHandler.
-	 * If the kind of a field changes, and edits are rebased across that kind change,
-	 * listing the other old kind here can prevent those edits from being conflicted and
-	 * provide a chance to handle them.
+	 * Change handling policy.
 	 */
+	// TODO: stronger typing
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	public readonly changeHandler: FieldChangeHandler<any, TEditor>;
+
 	public constructor(
-		public readonly identifier: TName & FieldKindIdentifier,
+		public readonly identifier: TName,
 		public readonly multiplicity: TMultiplicity,
 		// TODO: stronger typing
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		public readonly changeHandler: FieldChangeHandler<any, TEditor>,
-		private readonly allowsTreeSupersetOf: (
-			originalTypes: TreeTypeSet,
-			superset: TreeFieldStoredSchema,
-		) => boolean,
-		public readonly handlesEditsFrom: ReadonlySet<FieldKindIdentifier>,
-	) {}
+		private readonly options: FieldKindOptions<FieldChangeHandler<any, TEditor>>,
+	) {
+		this.changeHandler = options.changeHandler;
+	}
 
 	/**
 	 * Returns true if and only if `superset` permits a (non-strict) superset of the subtrees
 	 * allowed by field made from `this` and `originalTypes`.
+	 *
+	 * TODO: clarify the relationship between this and FieldKindData, and issues with cyclic schema upgrades.
 	 */
 	public allowsFieldSuperset(
 		policy: SchemaPolicy,
@@ -93,8 +84,41 @@ export class FlexFieldKind<
 		if (isNeverField(policy, originalData, superset)) {
 			return false;
 		}
-		return this.allowsTreeSupersetOf(originalTypes, superset);
+		return this.options.allowsTreeSupersetOf(originalTypes, superset);
 	}
+}
+
+/**
+ * Additional options for {@link FlexFieldKind}.
+ *
+ * @remarks
+ * Puts the more confusing parameters into this object so they get explicit names to help with clarity.
+ */
+export interface FieldKindOptions<TFieldChangeHandler> {
+	/**
+	 * Change handling policy.
+	 */
+	readonly changeHandler: TFieldChangeHandler;
+
+	/**
+	 * Returns true if and only if `superset` permits a (non-strict) superset of the subtrees
+	 * allowed by field made from `this` and `originalTypes`.
+	 * @remarks
+	 * Used by {@link FlexFieldKind.allowsFieldSuperset}, which handles the `never` cases before calling this.
+	 */
+	readonly allowsTreeSupersetOf: (
+		originalTypes: TreeTypeSet,
+		superset: TreeFieldStoredSchema,
+	) => boolean;
+
+	/**
+	 * Kinds (in addition to this) whose edits can be processed by changeHandler.
+	 * If the kind of a field changes, and edits are rebased across that kind change,
+	 * listing the other old kind here can prevent those edits from being conflicted and
+	 * provide a chance to handle them.
+	 */
+	// TODO: provide this and use it for improved support for rebasing changes across schema upgrades.
+	// readonly handlesEditsFrom: ReadonlySet<FieldKindIdentifier>;
 }
 
 /**
