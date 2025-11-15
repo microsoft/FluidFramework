@@ -42,8 +42,15 @@ import {
 	type FlexTreeHydratedContextMinimal,
 } from "../../feature-libraries/index.js";
 import { validateUsageError } from "../utils.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { contentSchemaSymbol, UnhydratedFlexTreeNode } from "../../simple-tree/core/index.js";
+import {
+	CompatibilityLevel,
+	contentSchemaSymbol,
+	privateDataSymbol,
+	UnhydratedFlexTreeNode,
+	type TreeNodeSchemaInitializedData,
+	type TreeNodeSchemaPrivateData,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../simple-tree/core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { getUnhydratedContext } from "../../simple-tree/createContext.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -1460,7 +1467,7 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 			);
 		});
 
-		it("with contentSchemaSymbol", () => {
+		describe("with contentSchemaSymbol", () => {
 			const f = new SchemaFactory("test");
 			class A extends f.object("A", {
 				value: f.string,
@@ -1468,19 +1475,75 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 			class B extends f.object("B", {
 				value: f.string,
 			}) {}
-			// Type symbol specified when there is only one valid option
-			const content = { [contentSchemaSymbol]: "test.A", value: "hello" };
-			assert.deepEqual(getPossibleTypes(new Set([A]), content), [A]);
 
-			// Type symbol specified when there are multiple valid options
-			const ambiguousContent = { [contentSchemaSymbol]: "test.B", value: "hello" };
-			// Only B, even though A is also valid based on properties
-			assert.deepEqual(getPossibleTypes(new Set([A, B]), ambiguousContent), [B]);
+			it("Type symbol specified when there is only one valid option", () => {
+				// Type symbol specified when there is only one valid option
+				const content = { [contentSchemaSymbol]: "test.A", value: "hello" };
+				assert.deepEqual(getPossibleTypes(new Set([A]), content), [A]);
+			});
 
-			// Type symbol specified that does not match any options
-			const invalidContent = { [contentSchemaSymbol]: "test.C", value: "hello" };
-			// Should report no valid types
-			assert.deepEqual(getPossibleTypes(new Set([]), invalidContent), []);
+			it("Type symbol specified when there are multiple valid options", () => {
+				// Type symbol specified when there are multiple valid options
+				const ambiguousContent = { [contentSchemaSymbol]: "test.B", value: "hello" };
+				// Only B, even though A is also valid based on properties
+				assert.deepEqual(getPossibleTypes(new Set([A, B]), ambiguousContent), [B]);
+			});
+
+			it("Type symbol specified that does not match any options", () => {
+				// Type symbol specified that does not match any options
+				const invalidContent = { [contentSchemaSymbol]: "test.B", value: "hello" };
+				// Should report no valid types
+				assert.deepEqual(getPossibleTypes(new Set([]), invalidContent), []);
+				assert.deepEqual(getPossibleTypes(new Set([A]), invalidContent), []);
+			});
+
+			it("Type symbol with invalid content that passes shallowCompatibilityTest", () => {
+				const invalidContent = { [contentSchemaSymbol]: "test.A", value: 42 };
+				assert.deepEqual(getPossibleTypes(new Set([A]), invalidContent), [A]);
+
+				assert.deepEqual(getPossibleTypes(new Set([A]), { value: 42 }), [A]);
+			});
+
+			it("Type symbol with invalid content - missing field", () => {
+				const invalidContent = { [contentSchemaSymbol]: "test.A", wrong: 42 };
+				assert.deepEqual(getPossibleTypes(new Set([A]), invalidContent), []);
+			});
+
+			it("Respects shallowCompatibilityTest even when contentSchemaSymbol is provided", () => {
+				const tagged = { [contentSchemaSymbol]: "test.A" };
+				const log: string[] = [];
+				let level = CompatibilityLevel.None;
+				const inner: TreeNodeSchemaInitializedData = {
+					shallowCompatibilityTest: () => {
+						log.push("called");
+						return level;
+					},
+				} satisfies Pick<
+					TreeNodeSchemaInitializedData,
+					"shallowCompatibilityTest"
+				> as unknown as TreeNodeSchemaInitializedData;
+
+				const dummySchema = {
+					[privateDataSymbol]: {
+						idempotentInitialize: () => inner,
+					} satisfies Pick<TreeNodeSchemaPrivateData, "idempotentInitialize">,
+					identifier: "test.A",
+				};
+
+				assert.deepEqual(
+					getPossibleTypes(new Set([dummySchema as unknown as typeof A]), tagged),
+					[],
+				);
+				assert.deepEqual(log, ["called"]);
+				log.length = 0;
+
+				level = CompatibilityLevel.Low;
+				assert.deepEqual(
+					getPossibleTypes(new Set([dummySchema as unknown as typeof A]), tagged),
+					[dummySchema],
+				);
+				assert.deepEqual(log, ["called"]);
+			});
 		});
 	});
 
