@@ -3,15 +3,34 @@
  * Licensed under the MIT License.
  */
 
+import type { SharedDirectory } from "../../directoryFactory.js";
 import type { ISharedMap } from "../../interfaces.js";
 import type { SharedMap } from "../../mapFactory.js";
+import { SharedDirectoryOracle } from "../directoryOracle.js";
 import { SharedMapOracle } from "../mapOracle.js";
+
+/**
+ * @internal
+ */
+export interface ISharedDirectoryWithOracle extends SharedDirectory {
+	sharedDirectoryOracle: SharedDirectoryOracle;
+}
 
 /**
  * @internal
  */
 export interface ISharedMapWithOracle extends ISharedMap {
 	sharedMapOracle: SharedMapOracle;
+}
+
+/**
+ * Type guard for directory
+ * @internal
+ */
+export function hasSharedDirectoryOracle(s: SharedDirectory): s is ISharedDirectoryWithOracle {
+	return (
+		"sharedDirectoryOracle" in s && s.sharedDirectoryOracle instanceof SharedDirectoryOracle
+	);
 }
 
 /**
