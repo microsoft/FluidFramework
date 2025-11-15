@@ -4,6 +4,7 @@
  */
 
 import { CollaborativeInput } from "@fluid-example/example-utils";
+import { useTree } from "@fluidframework/react/alpha";
 import { SharedString, type ISharedString } from "@fluidframework/sequence/legacy";
 import React, { useEffect, useRef, useState } from "react";
 
@@ -11,7 +12,6 @@ import React, { useEffect, useRef, useState } from "react";
 import "./style.css";
 
 import { TodoItemView } from "../TodoItem/index.js";
-import { useTree } from "../Utils/index.js";
 
 import type { TodoListDataObject } from "./DataObject.js";
 
