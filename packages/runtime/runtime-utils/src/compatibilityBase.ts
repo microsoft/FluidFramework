@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { compare, gt, gte, lte, valid } from "semver-ts";
+import { compare, gt, gte, lte, valid, parse } from "semver-ts";
 
 import { pkgVersion } from "./packageVersion.js";
 
@@ -181,6 +181,36 @@ export function isValidMinVersionForCollab(
 	return isValidSemver && isGteLowestMinVersion && isLtePkgVersion;
 }
 
+const parsedPackageVersion = parse(pkgVersion) ?? fail("Invalid package version");
+
+/**
+ * `pkgVersion` version without pre-release.
+ * @remarks
+ * This is the version that the code in the current version of the codebase will have when officially released.
+ * Generally, compatibility of prerelease builds is not guaranteed (especially for how they interact with future releases).
+ * So while technically a prerelease build is less (older) than the released version which follows it and thus supports less features,
+ * it makes sense for them to claim to support the same features as the following release so they can be used to test how the release would actually behave.
+ *
+ * To accomplish this, the version the next release will have is provided here as `cleanedPackageVersion` while `pkgVersion` may be a prerelease in some cases,
+ * like when running tests on CI, or in an actual prerelease published package.
+ * This is then used in {@link semanticVersionToMinimumVersionForCollab} to allow the version shown on main to be usable as a `minVersionForCollab`, even in CI and prerelease packages.
+ *
+ * This is of particular note in two cases:
+ * 1. When landing a new feature, and setting the minVersionForCollab which enables it to be the version that the next release will have.
+ * Having that version be valid on main, pass tests locally, then fail on CI and when using published prerelease packages would be confusing, and probably undesired.
+ * 2. Setting the minVersionForCollab to the current version for scenarios that do no involve collab with other package versions seems like it should be valid.
+ * This is useful for testing new features, and also non collaborative scenarios where the latest features are desired.
+ *
+ * To accommodate some uses of the second case, it might be useful to package export this in the future.
+ *
+ * @privateRemarks
+ * Since this is used by semanticVersionToMinimumVersionForCollab, the type case to MinimumVersionForCollab can not use it directly.
+ * Thus this is just `as` cast here, and a test confirms it is valid according to semanticVersionToMinimumVersionForCollab.
+ *
+ */
+export const cleanedPackageVersion =
+	`${parsedPackageVersion.major}.${parsedPackageVersion.minor}.${parsedPackageVersion.patch}` as MinimumVersionForCollab;
+
 /**
  * Converts a SemanticVersion to a MinimumVersionForCollab.
  * @remarks
@@ -203,7 +233,7 @@ export function semanticVersionToMinimumVersionForCollab(
 		throw new UsageError(
 			`Version ${minVersionForCollab} is not a valid MinimumVersionForCollab. ` +
 				`It must be in a valid semver format, at least ${lowestMinVersionForCollab}, ` +
-				`and less than or equal to the current package version ${pkgVersion}. ` +
+				`and less than or equal to the current package version ${cleanedPackageVersion}. ` +
 				`Details: { isValidSemver: ${isValidSemver}, isGteLowestMinVersion: ${isGteLowestMinVersion}, isLtePkgVersion: ${isLtePkgVersion} }`,
 		);
 	}

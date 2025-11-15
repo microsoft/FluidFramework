@@ -17,10 +17,16 @@ import {
 	configValueToMinVersionForCollab,
 	lowestMinVersionForCollab,
 	checkValidMinVersionForCollabVerbose,
+	cleanedPackageVersion,
+	semanticVersionToMinimumVersionForCollab,
 } from "../compatibilityBase.js";
 import { pkgVersion } from "../packageVersion.js";
 
 describe("compatibilityBase", () => {
+	it("cleanedPackageVersion", () => {
+		semanticVersionToMinimumVersionForCollab(cleanedPackageVersion);
+	});
+
 	describe("getConfigsForMinVersionForCollab", () => {
 		// eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- type required for ConfigMap processing
 		type ITestConfigMap = {
@@ -220,7 +226,7 @@ describe("compatibilityBase", () => {
 				},
 			},
 			{
-				minVersionForCollab: "2.73.0",
+				minVersionForCollab: cleanedPackageVersion,
 				expectedConfig: {
 					featureA: "a4",
 					featureB: "b4",
