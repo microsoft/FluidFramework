@@ -127,9 +127,21 @@ export class ClickerReactView extends React.Component<ClickerProps, ClickerState
 					{this.state.value}
 				</span>
 				<button
-					onClick={() => {
-						this.props.clicker.increment();
+					style={{
+						padding: "10px 20px",
+						fontSize: "20px",
+						borderRadius: "8px",
+						cursor: "pointer",
+						backgroundColor: "#4CAF50",
+						color: "white",
+						border: "none",
+						boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+						transition: "all 0.2s ease",
+						marginLeft: "10px",
 					}}
+					onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#45a049")}
+					onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#4CAF50")}
+					onClick={() => this.props.clicker.increment()}
 				>
 					+
 				</button>
