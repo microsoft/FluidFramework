@@ -142,6 +142,9 @@ export interface BranchableTree extends ViewableTree {
 }
 
 // @alpha
+export function checkCompatibility(viewWhichCreatedStoredSchema: TreeViewConfiguration, view: TreeViewConfiguration): Omit<SchemaCompatibilityStatus, "canInitialize">;
+
+// @alpha
 export function cloneWithReplacements(root: unknown, rootKey: string, replacer: (key: string, value: unknown) => {
     clone: boolean;
     value: unknown;
@@ -289,6 +292,9 @@ export abstract class ErasedType<out Name = unknown> {
 
 // @alpha
 export function evaluateLazySchema<T extends TreeNodeSchema>(value: LazyItem<T>): T;
+
+// @alpha
+export function exportCompatibilitySchemaSnapshot(config: Pick<TreeViewConfiguration, "schema">): JsonCompatibleReadOnly;
 
 // @public @system
 type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
@@ -731,6 +737,9 @@ export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
 
 // @public
 export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
+
+// @alpha
+export function importCompatibilitySchemaSnapshot(config: JsonCompatibleReadOnly): TreeViewConfiguration;
 
 // @alpha
 export function independentInitializedView<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options: ForestOptions & ICodecOptions, content: ViewContent): TreeViewAlpha<TSchema>;

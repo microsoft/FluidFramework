@@ -650,9 +650,8 @@ function assertUniqueKeys<
 }
 
 /**
- * {@link TreeNodeSchemaInitializedData.toFlexContent} for Map nodes.
+ * {@link TreeNodeSchemaInitializedData.toFlexContent} for object nodes.
  *
- * Transforms data under an Object schema.
  * @param data - The tree data to be transformed. Must be a Record-like object.
  * @param schema - The schema to comply with.
  */
