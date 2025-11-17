@@ -3,7 +3,7 @@
 	"name": "Fluid Framework Developer Tools",
 	"description": "Devtools extension for viewing live data about your Fluid application.",
 	"author": "Microsoft",
-	"version": "1.0.2",
+	"version": "1.1.0",
 	"action": {
 		"default_icon": {
 			"16": "icons/icon_16.png",

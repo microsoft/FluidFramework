@@ -18,7 +18,7 @@
 // 	NodeId,
 // 	RelevantRemovedRootsFromChild,
 // } from "../../../feature-libraries/index.js";
-// // eslint-disable-next-line import/no-internal-modules
+// // eslint-disable-next-line import-x/no-internal-modules
 // import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 // import {
 // 	type OptionalChangeset,
@@ -26,7 +26,7 @@
 // 	optionalChangeRebaser,
 // 	optionalFieldEditor,
 // 	optionalFieldIntoDelta,
-// 	// eslint-disable-next-line import/no-internal-modules
+// 	// eslint-disable-next-line import-x/no-internal-modules
 // } from "../../../feature-libraries/optional-field/index.js";
 // import { brand, fakeIdAllocator, idAllocatorFromMaxId } from "../../../util/index.js";
 // import {
@@ -46,7 +46,7 @@ import { testRebaserAxioms } from "./optionalChangeRebaser.test.js";
 // import type {
 // 	FieldChangeDelta,
 // 	NestedChangesIndices,
-// 	// eslint-disable-next-line import/no-internal-modules
+// 	// eslint-disable-next-line import-x/no-internal-modules
 // } from "../../../feature-libraries/modular-schema/fieldChangeHandler.js";
 
 // /**

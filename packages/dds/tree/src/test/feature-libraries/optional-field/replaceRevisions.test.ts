@@ -10,7 +10,7 @@
 // import {
 // 	type OptionalChangeset,
 // 	optionalChangeRebaser,
-// 	// eslint-disable-next-line import/no-internal-modules
+// 	// eslint-disable-next-line import-x/no-internal-modules
 // } from "../../../feature-libraries/optional-field/index.js";
 // import { Change, assertEqual } from "./optionalFieldUtils.js";
 

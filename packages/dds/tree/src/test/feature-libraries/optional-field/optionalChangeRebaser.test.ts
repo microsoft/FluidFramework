@@ -12,14 +12,14 @@ import {
 	rootFieldKey,
 	tagChange,
 } from "../../../core/index.js";
-import type {
-	ModularChangeset,
-	NodeId,
-	// eslint-disable-next-line import/no-internal-modules
+import {
+	type ModularChangeset,
+	type NodeId,
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import {
 	optionalFieldEditor,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/optional-field/index.js";
 import { brand } from "../../../util/index.js";
 import {

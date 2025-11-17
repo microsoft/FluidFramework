@@ -228,7 +228,7 @@ function getOrCreateType(
 					z.string(),
 					getTypeForAllowedTypes(
 						definitionMap,
-						simpleNodeSchema.allowedTypesIdentifiers,
+						new Set(simpleNodeSchema.simpleAllowedTypes.keys()),
 						objectCache,
 						bindableSchemas,
 					),
@@ -245,7 +245,7 @@ function getOrCreateType(
 				const zodType = z.record(
 					getTypeForAllowedTypes(
 						definitionMap,
-						simpleNodeSchema.allowedTypesIdentifiers,
+						new Set(simpleNodeSchema.simpleAllowedTypes.keys()),
 						objectCache,
 						bindableSchemas,
 					),
@@ -262,7 +262,7 @@ function getOrCreateType(
 				const zodType = z.array(
 					getTypeForAllowedTypes(
 						definitionMap,
-						simpleNodeSchema.allowedTypesIdentifiers,
+						new Set(simpleNodeSchema.simpleAllowedTypes.keys()),
 						objectCache,
 						bindableSchemas,
 					),
@@ -327,7 +327,7 @@ function getOrCreateTypeForField(
 
 	const field = getTypeForAllowedTypes(
 		definitionMap,
-		fieldSchema.allowedTypesIdentifiers,
+		new Set(fieldSchema.simpleAllowedTypes.keys()),
 		objectCache,
 		bindableSchemas,
 	).describe(

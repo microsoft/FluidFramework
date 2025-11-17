@@ -203,6 +203,19 @@ export interface OnDemandSummaryResults {
     readonly summarySubmitted: boolean;
 }
 
+// @alpha @legacy
+export class PendingLocalStateStore<TKey> {
+    [Symbol.iterator](): Iterator<[TKey, string]>;
+    clear(): void;
+    delete(key: TKey): boolean;
+    entries(): Iterator<[TKey, string]>;
+    get(key: TKey): string | undefined;
+    has(key: TKey): boolean;
+    keys(): IterableIterator<TKey>;
+    set(key: TKey, pendingLocalState: string): this;
+    get size(): number;
+}
+
 // @beta @legacy
 export type ProtocolHandlerBuilder = (attributes: IDocumentAttributes, snapshot: IQuorumSnapshot, sendProposal: (key: string, value: any) => number) => IProtocolHandler;
 

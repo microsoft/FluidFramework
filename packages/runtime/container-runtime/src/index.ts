@@ -20,11 +20,16 @@ export {
 } from "./containerRuntime.js";
 export type { ICompressionRuntimeOptions } from "./compressionDefinitions.js";
 export { CompressionAlgorithms, disabledCompressionConfig } from "./compressionDefinitions.js";
-export {
-	ContainerMessageType,
-	type UnknownContainerRuntimeMessage,
+export type {
+	ContainerRuntimeAliasMessage,
+	ContainerRuntimeDataStoreOpMessage,
+	OutboundContainerRuntimeAttachMessage,
+	TypedContainerRuntimeMessage,
+	UnknownContainerRuntimeMessage,
 } from "./messageTypes.js";
+export { ContainerMessageType } from "./messageTypes.js";
 export type { IBlobManagerLoadInfo } from "./blobManager/index.js";
+export type { IDataStoreAliasMessage } from "./dataStore.js";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
 export {
 	detectOutboundReferences,

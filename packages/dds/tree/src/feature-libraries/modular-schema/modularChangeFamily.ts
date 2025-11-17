@@ -81,7 +81,6 @@ import {
 	NodeAttachState,
 	type RebaseRevisionMetadata,
 } from "./fieldChangeHandler.js";
-import { type FieldKindWithEditor, withEditor } from "./fieldKindWithEditor.js";
 import { convertGenericChange, genericFieldKind } from "./genericFieldKind.js";
 import type { GenericChangeset } from "./genericFieldKindTypes.js";
 import {
@@ -106,6 +105,7 @@ import {
 	type RootNodeTable,
 	setInChangeAtomIdMap,
 } from "./modularChangeTypes.js";
+import type { FlexFieldKind } from "./fieldKind.js";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
@@ -118,10 +118,10 @@ export class ModularChangeFamily
 {
 	public static readonly emptyChange: ModularChangeset = makeModularChangeset();
 
-	public readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>;
+	public readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>;
 
 	public constructor(
-		fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+		fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 		public readonly codecs: ICodecFamily<ModularChangeset, ChangeEncodingContext>,
 	) {
 		this.fieldKinds = fieldKinds;
@@ -2285,7 +2285,7 @@ function invertBuilds(
  */
 export function* relevantRemovedRoots(
 	change: ModularChangeset,
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): Iterable<DeltaDetachedNodeId> {
 	const rootIds: ChangeAtomIdRangeMap<boolean> = newChangeAtomIdRangeMap();
 	addAttachesToSet(change, rootIds);
@@ -2442,7 +2442,7 @@ export function updateRefreshers(
  */
 export function intoDelta(
 	taggedChange: TaggedChange<ModularChangeset>,
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): DeltaRoot {
 	const change = taggedChange.change;
 	const rootDelta: Mutable<DeltaRoot> = {};
@@ -2537,7 +2537,7 @@ function intoDeltaImpl(
 	change: FieldChangeMap,
 	nodeChanges: ChangeAtomIdBTree<NodeChangeset>,
 	nodeAliases: ChangeAtomIdBTree<NodeId>,
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): Map<FieldKey, DeltaFieldChanges> {
 	const delta: Map<FieldKey, DeltaFieldChanges> = new Map();
 
@@ -2560,7 +2560,7 @@ function deltaFromNodeChange(
 	change: NodeChangeset,
 	nodeChanges: ChangeAtomIdBTree<NodeChangeset>,
 	nodeAliases: ChangeAtomIdBTree<NodeId>,
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): DeltaFieldMap {
 	if (change.fieldChanges !== undefined) {
 		return intoDeltaImpl(change.fieldChanges, nodeChanges, nodeAliases, fieldKinds);
@@ -2579,7 +2579,7 @@ function deltaFromNodeChange(
  * For example, when rebasing change B from a local branch [A, B, C] over a branch [X, Y], the `baseRevisions` must include
  * revisions [A⁻¹ X, Y, A] if rebasing over the composition of all those changes, or
  * revision [A⁻¹] for the first rebase, then [X], etc. if rebasing over edits individually.
- * @returns - RebaseRevisionMetadata to be passed to `FieldChangeRebaser.rebase`*
+ * @returns RebaseRevisionMetadata to be passed to `FieldChangeRebaser.rebase`*
  */
 export function rebaseRevisionMetadataFromInfo(
 	revInfos: readonly RevisionInfo[],
@@ -2610,19 +2610,19 @@ function isEmptyNodeChangeset(change: NodeChangeset): boolean {
 }
 
 export function getFieldKind(
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 	kind: FieldKindIdentifier,
-): FieldKindWithEditor {
+): FlexFieldKind {
 	if (kind === genericFieldKind.identifier) {
 		return genericFieldKind;
 	}
 	const fieldKind = fieldKinds.get(kind);
 	assert(fieldKind !== undefined, 0x3ad /* Unknown field kind */);
-	return withEditor(fieldKind);
+	return fieldKind;
 }
 
 export function getChangeHandler(
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 	kind: FieldKindIdentifier,
 ): FieldChangeHandler<unknown> {
 	return getFieldKind(fieldKinds, kind).changeHandler;
@@ -3554,7 +3554,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 
 	public constructor(
 		family: ChangeFamily<ChangeFamilyEditor, ModularChangeset>,
-		private readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+		private readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 		changeReceiver: (change: TaggedChange<ModularChangeset>) => void,
 	) {
 		super(family, changeReceiver);

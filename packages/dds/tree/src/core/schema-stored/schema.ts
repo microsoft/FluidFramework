@@ -10,7 +10,7 @@ import {
 	type Brand,
 	type JsonCompatibleReadOnlyObject,
 	type MakeNominal,
-	brand,
+	brandConst,
 	invertMap,
 } from "../../util/index.js";
 
@@ -33,14 +33,17 @@ import type { Multiplicity } from "./multiplicity.js";
 /**
  * The format version for the schema.
  */
-export enum SchemaVersion {
-	v1 = 1,
+export const SchemaFormatVersion = {
+	v1: 1,
 	/**
 	 * Adds persisted metadata to the node schema and field schema.
 	 */
-	v2 = 2,
-}
-export type SchemaFormatVersion = Brand<SchemaVersion, "SchemaFormatVersion">;
+	v2: 2,
+} as const;
+export type SchemaFormatVersion = Brand<
+	(typeof SchemaFormatVersion)[keyof typeof SchemaFormatVersion],
+	"SchemaFormatVersion"
+>;
 
 type FieldSchemaFormat = FieldSchemaFormatV1 | FieldSchemaFormatV2;
 
@@ -157,7 +160,7 @@ export interface TreeFieldStoredSchema {
  *
  * 2. The schema used for out of schema fields (which thus must be empty/not exist) on object and leaf nodes.
  */
-export const forbiddenFieldKindIdentifier: FieldKindIdentifier = brand("Forbidden");
+export const forbiddenFieldKindIdentifier = brandConst("Forbidden")<FieldKindIdentifier>();
 
 /**
  * A schema for empty fields (fields which must always be empty).

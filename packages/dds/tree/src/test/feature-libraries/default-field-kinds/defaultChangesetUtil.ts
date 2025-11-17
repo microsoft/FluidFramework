@@ -26,7 +26,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import { strict as assert } from "node:assert";
-import type { ICodecOptions } from "../../../index.js";
+import type { CodecWriteOptions } from "../../../index.js";
 import { ajvValidator } from "../../codec/index.js";
 import { defaultRevInfosFromChanges, testRevisionTagCodec } from "../../utils.js";
 import type { BoundFieldChangeRebaser } from "../../exhaustiveRebaserUtils.js";
@@ -41,9 +41,11 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import type { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/index.js";
 import { brand } from "../../../util/index.js";
+import { currentVersion } from "../../../codec/index.js";
 
-const codecOptions: ICodecOptions = {
+const codecOptions: CodecWriteOptions = {
 	jsonValidator: ajvValidator,
+	minVersionForCollab: currentVersion,
 };
 
 const fieldKindConfiguration: FieldKindConfiguration =
@@ -56,7 +58,7 @@ assert(
 const codec = makeModularChangeCodecFamily(
 	new Map([[1, fieldKindConfiguration]]),
 	testRevisionTagCodec,
-	makeFieldBatchCodec(codecOptions, 1),
+	makeFieldBatchCodec(codecOptions),
 	codecOptions,
 );
 

@@ -67,8 +67,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.58.3
-        version: 0.58.3(@types/node@18.19.76)
+        specifier: ^0.60.0
+        version: 0.60.0(@types/node@18.19.76)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.1.0
         version: 6.1.0(eslint@8.57.1)(typescript@5.9.2)
@@ -260,8 +260,8 @@ packages:
     resolution: {directory: ../markdown-magic, type: directory}
     hasBin: true
 
-  '@fluid-tools/version-tools@0.58.3':
-    resolution: {integrity: sha512-qRsjnm6L+7i3wHsWmnR7CaQuD4LIUp7aIM04a9qqjC3uf+sXA36PKOrKS8I0Ty/r1mIiVCEQywT+eMnGP7KzLQ==}
+  '@fluid-tools/version-tools@0.60.0':
+    resolution: {integrity: sha512-QwIbFMqFMwKkvtZXFKVmaUiH8u29D7UNcZDqrdvSQtav908y58KutezF8pu/Xa9a60gw1e7L0olhR4ukcI/SAg==}
     engines: {node: '>=20.15.1'}
     hasBin: true
 
@@ -269,8 +269,8 @@ packages:
     resolution: {integrity: sha512-1LU/2uyCeMxf63z5rhFOFEBvFyBogZ7ZXwzXLxyBhSgq/fGiq8PLjBW7uX++r0LcVCdaWyopf7w060eJpANYdg==}
     hasBin: true
 
-  '@fluidframework/build-tools@0.58.3':
-    resolution: {integrity: sha512-NECrjdHIrmDrEGgfSwgiOLAygKe0bfI2+TcNhsX9DZ9JT6Go7BF8sMOX3yu31u1edQvm6+gU1uyZyPBW0Xb2GQ==}
+  '@fluidframework/build-tools@0.60.0':
+    resolution: {integrity: sha512-yR4nb6ohL7qpx5n3VlYIzG6M5jrvpu9R8tSxXNSfrKKFT5EvZFjv31vfdOkl1VpqWVnvKkDgg5xH8T5n48wzRA==}
     engines: {node: '>=20.15.1'}
     hasBin: true
 
@@ -3670,7 +3670,7 @@ snapshots:
       - markdown-magic
       - supports-color
 
-  '@fluid-tools/version-tools@0.58.3(@types/node@18.19.76)':
+  '@fluid-tools/version-tools@0.60.0(@types/node@18.19.76)':
     dependencies:
       '@oclif/core': 4.2.8
       '@oclif/plugin-autocomplete': 3.2.24
@@ -3688,9 +3688,9 @@ snapshots:
 
   '@fluidframework/build-common@2.0.3': {}
 
-  '@fluidframework/build-tools@0.58.3(@types/node@18.19.76)':
+  '@fluidframework/build-tools@0.60.0(@types/node@18.19.76)':
     dependencies:
-      '@fluid-tools/version-tools': 0.58.3(@types/node@18.19.76)
+      '@fluid-tools/version-tools': 0.60.0(@types/node@18.19.76)
       '@manypkg/get-packages': 2.2.2
       async: 3.2.6
       cosmiconfig: 8.3.6(typescript@5.4.5)

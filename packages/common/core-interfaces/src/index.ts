@@ -7,8 +7,17 @@ export type { BrandedType } from "./brandedType.js";
 
 export type { IDisposable } from "./disposable.js";
 
-export type { IErrorBase, IGenericError, IUsageError, IThrottlingWarning } from "./error.js";
-export { FluidErrorTypes } from "./error.js";
+export type {
+	IErrorBase,
+	IGenericError,
+	IUsageError,
+	IThrottlingWarning,
+	ILayerIncompatibilityError,
+} from "./error.js";
+export {
+	FluidErrorTypes,
+	FluidErrorTypesAlpha,
+} from "./error.js";
 
 export type {
 	ExtendEventProvider,

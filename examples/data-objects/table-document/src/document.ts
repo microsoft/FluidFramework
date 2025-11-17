@@ -12,7 +12,7 @@ import {
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/legacy";
-// eslint-disable-next-line import/no-internal-modules -- #26904: `sequence` internals used in examples
+// eslint-disable-next-line import-x/no-internal-modules -- #26904: `sequence` internals used in examples
 import { createEndpointIndex } from "@fluidframework/sequence/internal";
 import {
 	PropertySet,

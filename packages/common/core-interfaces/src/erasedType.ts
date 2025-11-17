@@ -96,10 +96,10 @@ export abstract class ErasedType<out Name = unknown> {
  *
  * This class should only be a `type` package export, preventing users from extending it directly.
  *
- * Since {@link ErasedTypeImplementation} is exported as `@internal`, this restricts implementations of the sealed interfaces to users of `@internal` APIs, which should be anything withing this release group.
+ * Since {@link ErasedTypeImplementation} is exported as `@internal`, this restricts implementations of the sealed interfaces to users of `@internal` APIs, which should be anything within this release group.
  * Any finer grained restrictions can be done as documentation, but not type enforced.
  * @sealed
- * @alpha
+ * @beta
  * @system
  */
 export abstract class ErasedBaseType<out Name = unknown> {

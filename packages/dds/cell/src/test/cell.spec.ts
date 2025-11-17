@@ -502,24 +502,15 @@ describe("Cell", () => {
 				this.cell2 = createConnectedCell("cell2", this.containerRuntimeFactory);
 			}
 
-			/**
-			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.sharedObject}
-			 */
 			public get sharedObject(): ISharedCell {
 				// Return the remote SharedCell because we want to verify its summary data.
 				return this.cell2;
 			}
 
-			/**
-			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.expectedOutboundRoutes}
-			 */
 			public get expectedOutboundRoutes(): string[] {
 				return this._expectedRoutes;
 			}
 
-			/**
-			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.addOutboundRoutes}
-			 */
 			public async addOutboundRoutes(): Promise<void> {
 				const newSubCell = createDetachedCell(`subCell-${++this.subCellCount}`);
 				this.cell1.set(newSubCell.handle);
@@ -527,18 +518,12 @@ describe("Cell", () => {
 				this.containerRuntimeFactory.processAllMessages();
 			}
 
-			/**
-			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.deleteOutboundRoutes}
-			 */
 			public async deleteOutboundRoutes(): Promise<void> {
 				this.cell2.delete();
 				this._expectedRoutes = [];
 				this.containerRuntimeFactory.processAllMessages();
 			}
 
-			/**
-			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.addNestedHandles}
-			 */
 			public async addNestedHandles(): Promise<void> {
 				const newSubCell = createDetachedCell(`subCell-${++this.subCellCount}`);
 				const newSubCell2 = createDetachedCell(`subCell-${++this.subCellCount}`);

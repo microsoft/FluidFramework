@@ -318,7 +318,7 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 	 * Since the {@link SimpleTreeSchema.allowedTypes} of each children node is only accessible at the parent field level,
 	 * each node's allowed types are computed at the parent field level.
 	 */
-	const allowedTypes = treeSimpleSchema.root.allowedTypesIdentifiers;
+	const allowedTypes = new Set(treeSimpleSchema.root.simpleAllowedTypes.keys());
 	const isRequired = treeSimpleSchema.root.kind === FieldKind.Required;
 
 	if (treeView === undefined) {

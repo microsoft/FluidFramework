@@ -28,8 +28,7 @@ export function walkNodeSchema(
 	// Since walkNodeSchema is used in the implementation of TreeNodeSchemaPrivateData.idempotentInitialize,
 	// Avoid depending on it here to avoid circular dependencies for recursive schema.
 	// Instead normalize/evaluate the allowed types as needed.
-	const annotatedAllowedTypes =
-		getTreeNodeSchemaPrivateData(schema).childAnnotatedAllowedTypes;
+	const annotatedAllowedTypes = getTreeNodeSchemaPrivateData(schema).childAllowedTypes;
 
 	for (const fieldAllowedTypes of annotatedAllowedTypes) {
 		walkAllowedTypes(

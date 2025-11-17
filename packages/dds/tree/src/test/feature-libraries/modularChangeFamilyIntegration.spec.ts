@@ -28,7 +28,7 @@ import {
 } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 import {
 	DefaultEditBuilder,
-	type FieldKindWithEditor,
+	type FlexFieldKind,
 	type ModularChangeset,
 	type SequenceField as SF,
 	type EditDescription,
@@ -40,7 +40,7 @@ import {
 import {
 	ModularChangeFamily,
 	intoDelta,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/modular-schema/modularChangeFamily.js";
 import { brand } from "../../util/index.js";
 import {
@@ -58,9 +58,9 @@ import {
 
 import type {
 	NodeId,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/modular-schema/modularChangeTypes.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { MarkMaker } from "./sequence-field/testEdits.js";
 import {
 	assertEqual,
@@ -72,27 +72,29 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "./modular-schema/modularChangesetUtil.js";
 // eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { newGenericChangeset } from "../../feature-libraries/modular-schema/genericFieldKindTypes.js";
 import type { SessionId } from "@fluidframework/id-compressor";
-import type { ICodecOptions } from "../../codec/index.js";
+import { currentVersion, type CodecWriteOptions } from "../../codec/index.js";
 import { ajvValidator } from "../codec/index.js";
 
-const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map<
+const fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind> = new Map<
 	FieldKindIdentifier,
-	FieldKindWithEditor
+	FlexFieldKind
 >([
 	[sequence.identifier, sequence],
 	[optional.identifier, optional],
 ]);
 
-const codecOptions: ICodecOptions = {
+const codecOptions: CodecWriteOptions = {
 	jsonValidator: ajvValidator,
+	minVersionForCollab: currentVersion,
 };
 
 const codec = makeModularChangeCodecFamily(
 	fieldKindConfigurations,
 	testRevisionTagCodec,
-	makeFieldBatchCodec(codecOptions, 1),
+	makeFieldBatchCodec(codecOptions),
 	codecOptions,
 );
 

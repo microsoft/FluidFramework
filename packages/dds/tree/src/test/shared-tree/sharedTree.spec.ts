@@ -29,11 +29,12 @@ import {
 	type ChangeFamily,
 	type ChangeFamilyEditor,
 	EmptyKey,
+	ValueSchema,
 } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import {
 	ChunkedForest,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/chunked-forest/chunkedForest.js";
 import {
 	flexTreeSlot,
@@ -43,7 +44,7 @@ import {
 } from "../../feature-libraries/index.js";
 import {
 	ObjectForest,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/object-forest/objectForest.js";
 import {
 	ForestTypeExpensiveDebug,
@@ -51,13 +52,12 @@ import {
 	ForestTypeReference,
 	getBranch,
 	type ITreePrivate,
-	SharedTreeFormatVersion,
 	Tree,
 	type TreeCheckout,
 } from "../../shared-tree/index.js";
 import {
 	SchematizingSimpleTreeView,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree/schematizingTreeView.js";
 import type { EditManager } from "../../shared-tree-core/index.js";
 import {
@@ -69,6 +69,10 @@ import {
 	SchemaFactoryAlpha,
 	type ITree,
 	toInitialSchema,
+	NodeKind,
+	type SimpleTreeSchema,
+	FieldKind,
+	type SimpleLeafNodeSchema,
 } from "../../simple-tree/index.js";
 import { brand } from "../../util/index.js";
 import {
@@ -95,6 +99,7 @@ import {
 } from "../utils.js";
 import {
 	configuredSharedTree,
+	resolveOptions,
 	SharedTree as SharedTreeKind,
 	type ISharedTree,
 } from "../../treeFactory.js";
@@ -109,11 +114,11 @@ import { JsonAsTree } from "../../jsonDomainSchema.js";
 import {
 	toSimpleTreeSchema,
 	TreeBeta,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/api/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { simpleTreeNodeSlot } from "../../simple-tree/core/treeNodeKernel.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { TreeSimpleContent } from "../feature-libraries/flex-tree/utils.js";
 import { FluidClientVersion } from "../../codec/index.js";
 import { asAlpha } from "../../api.js";
@@ -1640,7 +1645,7 @@ describe("SharedTree", () => {
 					2,
 					configuredSharedTree({
 						jsonValidator: FormatValidatorBasic,
-						formatVersion: SharedTreeFormatVersion.vSharedBranches,
+						enableSharedBranches: true,
 					}).getFactory(),
 				);
 
@@ -2323,9 +2328,9 @@ describe("SharedTree", () => {
 			// Create and initialize the runtime factory
 			const runtime = new MockSharedTreeRuntime();
 
-			// Enable Shared Tree format v5, which corresponds to schema format v2. Create a Shared Tree instance.
+			// Enable schema format v2
 			const tree = configuredSharedTree({
-				formatVersion: SharedTreeFormatVersion.v5,
+				minVersionForCollab: FluidClientVersion.v2_43,
 			}).create(runtime);
 			const schemaFactory = new SchemaFactoryAlpha("com.example");
 
@@ -2499,7 +2504,29 @@ describe("SharedTree", () => {
 		view.initialize(10);
 
 		assert.deepEqual(tree.exportVerbose(), 10);
-		assert.deepEqual(tree.exportSimpleSchema(), toSimpleTreeSchema(numberSchema, true));
+
+		const expected: SimpleTreeSchema = {
+			root: {
+				kind: FieldKind.Required,
+				simpleAllowedTypes: new Map([
+					["com.fluidframework.leaf.number", { isStaged: undefined }],
+				]),
+				metadata: {},
+				persistedMetadata: undefined,
+			},
+			definitions: new Map([
+				[
+					"com.fluidframework.leaf.number",
+					{
+						kind: NodeKind.Leaf,
+						leafKind: ValueSchema.Number,
+						metadata: {},
+						persistedMetadata: undefined,
+					} satisfies SimpleLeafNodeSchema,
+				],
+			]),
+		};
+		assert.deepEqual(tree.exportSimpleSchema(), expected);
 	});
 
 	it("supports multiple shared branches", () => {
@@ -2507,7 +2534,7 @@ describe("SharedTree", () => {
 			2,
 			configuredSharedTree({
 				jsonValidator: FormatValidatorBasic,
-				formatVersion: SharedTreeFormatVersion.vSharedBranches,
+				enableSharedBranches: true,
 			}).getFactory(),
 		);
 		const tree1 = provider.trees[0];
@@ -2551,12 +2578,11 @@ describe("SharedTree", () => {
 			"based on a commit outside the collab window",
 		] as const) {
 			it(subCase, async () => {
+				const internalOption = resolveOptions({ enableSharedBranches: true });
 				const provider = await TestTreeProvider.create(
 					1,
 					SummarizeType.onDemand,
-					new SharedTreeTestFactory(() => {}, undefined, {
-						formatVersion: SharedTreeFormatVersion.vSharedBranches,
-					}),
+					new SharedTreeTestFactory(() => {}, undefined, internalOption),
 				);
 				const tree1 = provider.trees[0];
 				const config = new TreeViewConfiguration({

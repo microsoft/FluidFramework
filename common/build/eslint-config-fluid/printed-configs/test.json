@@ -10,7 +10,8 @@
         "SharedArrayBuffer": "readonly"
     },
     "ignorePatterns": [
-        "**/packageVersion.ts"
+        "**/packageVersion.ts",
+        "**/layerGenerationState.ts"
     ],
     "parserOptions": {
         "ecmaFeatures": {
@@ -21,8 +22,8 @@
         "sourceType": "module"
     },
     "plugins": [
+        "@eslint-community/eslint-comments",
         "import-x",
-        "eslint-comments",
         "@fluid-internal/fluid",
         "unused-imports",
         "promise",
@@ -41,11 +42,29 @@
         "@babel/semi": [
             "off"
         ],
+        "@eslint-community/eslint-comments/disable-enable-pair": [
+            "error",
+            {
+                "allowWholeFile": true
+            }
+        ],
+        "@eslint-community/eslint-comments/no-aggregating-enable": [
+            "error"
+        ],
+        "@eslint-community/eslint-comments/no-duplicate-disable": [
+            "error"
+        ],
+        "@eslint-community/eslint-comments/no-unlimited-disable": [
+            "error"
+        ],
+        "@eslint-community/eslint-comments/no-unused-enable": [
+            "error"
+        ],
         "@fluid-internal/fluid/no-file-path-links-in-jsdoc": [
             "error"
         ],
         "@fluid-internal/fluid/no-hyphen-after-jsdoc-tag": [
-            "error"
+            "off"
         ],
         "@fluid-internal/fluid/no-markdown-links-in-jsdoc": [
             "error"
@@ -1064,24 +1083,6 @@
             "error",
             "smart"
         ],
-        "eslint-comments/disable-enable-pair": [
-            "error",
-            {
-                "allowWholeFile": true
-            }
-        ],
-        "eslint-comments/no-aggregating-enable": [
-            "error"
-        ],
-        "eslint-comments/no-duplicate-disable": [
-            "error"
-        ],
-        "eslint-comments/no-unlimited-disable": [
-            "error"
-        ],
-        "eslint-comments/no-unused-enable": [
-            "error"
-        ],
         "flowtype/boolean-style": [
             "off"
         ],
@@ -1213,12 +1214,17 @@
         "import-x/order": [
             "error",
             {
-                "newlines-between": "always",
-                "alphabetize": {
-                    "order": "asc",
-                    "caseInsensitive": false,
-                    "orderImportKind": "ignore"
-                },
+                "newlines-between": "ignore",
+                "groups": [
+                    [
+                        "builtin",
+                        "external",
+                        "internal",
+                        "parent",
+                        "sibling",
+                        "index"
+                    ]
+                ],
                 "distinctGroup": true,
                 "sortTypesGroup": false,
                 "named": false,
@@ -2336,30 +2342,27 @@
             ]
         },
         "import-x/resolver": {
-            "name": "tsResolver",
-            "options": {
-                "typescript": {
-                    "extensions": [
-                        ".ts",
-                        ".tsx",
-                        ".d.ts",
-                        ".js",
-                        ".jsx"
-                    ],
-                    "conditionNames": [
-                        "allow-ff-test-exports",
-                        "types",
-                        "import",
-                        "esm2020",
-                        "es2020",
-                        "es2015",
-                        "require",
-                        "node",
-                        "node-addons",
-                        "browser",
-                        "default"
-                    ]
-                }
+            "typescript": {
+                "extensions": [
+                    ".ts",
+                    ".tsx",
+                    ".d.ts",
+                    ".js",
+                    ".jsx"
+                ],
+                "conditionNames": [
+                    "allow-ff-test-exports",
+                    "types",
+                    "import",
+                    "esm2020",
+                    "es2020",
+                    "es2015",
+                    "require",
+                    "node",
+                    "node-addons",
+                    "browser",
+                    "default"
+                ]
             },
             "resolver": {
                 "DEFAULT_CONFIGS": [
@@ -2455,8 +2458,7 @@
                     "main"
                 ],
                 "interfaceVersion": 2
-            },
-            "typescript": true
+            }
         },
         "jsdoc": {
             "mode": "typescript",

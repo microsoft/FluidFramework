@@ -5,7 +5,7 @@
 
 import type { ChangeAtomId, ChangesetLocalId, RevisionTag } from "../../../core/index.js";
 import type { NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { CellId } from "../../../feature-libraries/sequence-field/index.js";
 import { TestChange } from "../../testChange.js";
 import { mintRevisionTag } from "../../utils.js";

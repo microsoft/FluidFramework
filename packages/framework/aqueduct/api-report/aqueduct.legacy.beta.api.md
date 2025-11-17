@@ -15,7 +15,7 @@ export class BaseContainerRuntimeFactory extends RuntimeFactoryHelper implements
     preInitialize(context: IContainerContext, existing: boolean): Promise<IContainerRuntime & IRuntime>;
 }
 
-// @beta @legacy
+// @beta @legacy @input
 export interface BaseContainerRuntimeFactoryProps {
     // @deprecated (undocumented)
     dependencyContainer?: IFluidDependencySynthesizer;

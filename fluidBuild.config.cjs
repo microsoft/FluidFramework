@@ -49,7 +49,7 @@ module.exports = {
 			script: false,
 		},
 		"compile": {
-			dependsOn: ["commonjs", "build:esnext", "api", "build:test", "build:copy"],
+			dependsOn: ["commonjs", "build:esnext", "build:test", "build:copy"],
 			script: false,
 		},
 		"commonjs": {
@@ -70,6 +70,7 @@ module.exports = {
 		},
 		"build:copy": [],
 		"build:genver": [],
+		"layerGeneration:gen": [],
 		"typetests:gen": [],
 		"ts2esm": [],
 		"tsc": tscDependsOn,
@@ -77,12 +78,11 @@ module.exports = {
 		// Generic build:test script should be replaced by :esm or :cjs specific versions.
 		// "tsc" would be nice to eliminate from here, but plenty of packages still focus
 		// on CommonJS.
-		"build:test": ["typetests:gen", "tsc", "api-extractor:commonjs", "api-extractor:esnext"],
-		"build:test:cjs": ["typetests:gen", "tsc", "api-extractor:commonjs"],
-		"build:test:esm": ["typetests:gen", "build:esnext", "api-extractor:esnext"],
+		"build:test": ["typetests:gen", "tsc"],
+		"build:test:cjs": ["typetests:gen", "tsc"],
+		"build:test:esm": ["typetests:gen", "build:esnext"],
 		"api": {
 			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
-			// dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
 			script: false,
 		},
 		"api-extractor:commonjs": ["tsc"],
@@ -170,7 +170,7 @@ module.exports = {
 		},
 	},
 
-	multiCommandExecutables: ["oclif", "syncpack"],
+	multiCommandExecutables: ["oclif", "syncpack", "tsx"],
 	declarativeTasks: {
 		// fluid-build lowercases the executable name, so we need to use buildversion instead of buildVersion.
 		"flub check buildversion": {
@@ -203,6 +203,12 @@ module.exports = {
 				"{azure,examples,experimental,packages}/*/*/*/*/*.md",
 				"tools/markdown-magic/**/*.md",
 			],
+			gitignore: ["input", "output"],
+		},
+		// eslint-config-fluid specific declarative task to print configs
+		"tsx scripts/print-configs.ts printed-configs": {
+			inputGlobs: ["scripts/print-configs.ts", "src/**/*.ts", "src/**/*.tsx", "*.js"],
+			outputGlobs: ["printed-configs/*.json"],
 			gitignore: ["input", "output"],
 		},
 		"oclif manifest": {
@@ -289,7 +295,8 @@ module.exports = {
 		},
 
 		// Independent packages
-		"build": "common/build",
+		"build-common": "common/build/build-common",
+		"eslint-plugin-fluid": "common/build/eslint-plugin-fluid",
 		"common-utils": "common/lib/common-utils",
 		"protocol-def": "common/lib/protocol-definitions",
 
@@ -485,6 +492,9 @@ module.exports = {
 				"^build-tools/packages/build-infrastructure/src/test/data/testRepo/",
 			],
 			"npm-private-packages": [
+				// TODO: Temporarily disabled for this package while it's a part of the client release group.
+				"^common/build/eslint-config-fluid/",
+
 				// test packages
 				"^build-tools/packages/build-infrastructure/src/test/data/testRepo/",
 			],

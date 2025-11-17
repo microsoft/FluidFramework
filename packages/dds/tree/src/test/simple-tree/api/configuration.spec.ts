@@ -17,8 +17,9 @@ import { independentView } from "../../../shared-tree/index.js";
 
 import {
 	TreeViewConfiguration,
+	TreeViewConfigurationAlpha,
 	checkUnion,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/configuration.js";
 
 const schema = new SchemaFactory("com.example");
@@ -256,5 +257,10 @@ describe("simple-tree configuration", () => {
 				],
 			);
 		});
+	});
+
+	it("creates TreeViewConfigurationAlpha", () => {
+		const config = new TreeViewConfiguration({ schema: [] });
+		assert(config instanceof TreeViewConfigurationAlpha);
 	});
 });

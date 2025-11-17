@@ -15,14 +15,14 @@ import {
 	ForestIncrementalSummaryBehavior,
 	ForestIncrementalSummaryBuilder,
 	ForestSummaryTrackingState,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/forest-summary/incrementalSummaryBuilder.js";
 import {
 	type EncodedFieldBatch,
 	type ChunkReferenceId,
 	type TreeChunk,
 	defaultIncrementalEncodingPolicy,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/index.js";
 import type { ITreeCursorSynchronous } from "../../../core/index.js";
 import { brand, type JsonCompatible } from "../../../util/index.js";
@@ -98,7 +98,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 		return new ForestIncrementalSummaryBuilder(
 			true /* enableIncrementalSummary */,
 			(cursor: ITreeCursorSynchronous) => {
-				return mockChunk;
+				return [mockChunk];
 			},
 			defaultIncrementalEncodingPolicy,
 			initialSequenceNumber,
