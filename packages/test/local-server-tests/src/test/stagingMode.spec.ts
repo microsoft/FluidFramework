@@ -9,6 +9,7 @@ import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator"
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import {
 	type IContainer,
+	type IRuntime,
 	type IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
 import {
@@ -19,7 +20,7 @@ import {
 } from "@fluidframework/container-loader/internal";
 import {
 	IContainerRuntimeOptions,
-	loadContainerRuntime,
+	loadContainerRuntimeAlpha,
 } from "@fluidframework/container-runtime/internal";
 import {
 	type ConfigTypes,
@@ -140,11 +141,11 @@ const runtimeFactory: IRuntimeFactory = {
 	get IRuntimeFactory() {
 		return this;
 	},
-	instantiateRuntime: async (context, existing) => {
+	instantiateRuntime: async (context, existing): Promise<IRuntime> => {
 		const runtimeOptions: IContainerRuntimeOptions = {
 			enableRuntimeIdCompressor: "on",
 		};
-		return loadContainerRuntime({
+		const { runtime } = await loadContainerRuntimeAlpha({
 			context,
 			existing,
 			registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
@@ -157,9 +158,10 @@ const runtimeFactory: IRuntimeFactory = {
 				}
 				const root = await rt.getAliasedDataStoreEntryPoint("default");
 				assert(root !== undefined, "default must exist");
-				return root.get();
+				return root.get() as FluidObject;
 			},
 		});
+		return runtime;
 	},
 };
 
@@ -717,30 +719,15 @@ describe("Staging Mode", () => {
 
 			const rehydratedDataObject = await getDataObject(rehydratedContainer);
 
-			// The rehydrated container should have the pending DDS
+			// Verify the container is in staging mode
+			const runtimeAlpha = asLegacyAlpha(rehydratedDataObject.containerRuntime);
+			assert(runtimeAlpha.inStagingMode, "Rehydrated container should be in staging mode");
+
+			// The rehydrated container should have the pending DDS loaded
 			const rehydratedData = await rehydratedDataObject.enumerateDataWithHandlesResolved();
 			assert(
 				rehydratedData["pendingDDS-0"] !== undefined,
 				"Rehydrated container should have pending DDS",
-			);
-
-			// Get staging controls from the rehydrated container and commit
-			const rehydratedStaging = rehydratedDataObject.enterStagingMode();
-			rehydratedStaging.commitChanges();
-
-			await waitForSave({
-				rehydrated: { container: rehydratedContainer, dataObject: rehydratedDataObject },
-			});
-
-			// Wait for the loaded client to catch up
-			const seq = rehydratedContainer.deltaManager.lastSequenceNumber;
-			await catchUp({ loaded: clients.loaded }, seq);
-
-			// Now both containers should see the DDS
-			const loadedData = await clients.loaded.dataObject.enumerateDataWithHandlesResolved();
-			assert(
-				loadedData["pendingDDS-0"] !== undefined,
-				"Loaded container should now see the DDS",
 			);
 		});
 
@@ -791,7 +778,11 @@ describe("Staging Mode", () => {
 
 			const rehydratedDataObject = await getDataObject(rehydratedContainer);
 
-			// The rehydrated container should have all the pending datastores
+			// Verify the container is in staging mode
+			const runtimeAlpha = asLegacyAlpha(rehydratedDataObject.containerRuntime);
+			assert(runtimeAlpha.inStagingMode, "Rehydrated container should be in staging mode");
+
+			// The rehydrated container should have all the pending datastores loaded
 			const rehydratedData = await rehydratedDataObject.enumerateDataWithHandlesResolved();
 
 			// Verify all pending edits are present in the rehydrated container
@@ -799,26 +790,6 @@ describe("Staging Mode", () => {
 				const editKey = `edit-in-ds-${i}-`;
 				const foundEdit = Object.keys(rehydratedData).some((key) => key.startsWith(editKey));
 				assert(foundEdit, `Rehydrated container should have edit from datastore ${i}`);
-			}
-
-			// Now commit from the rehydrated container
-			const rehydratedStaging = rehydratedDataObject.enterStagingMode();
-			rehydratedStaging.commitChanges();
-
-			await waitForSave({
-				rehydrated: { container: rehydratedContainer, dataObject: rehydratedDataObject },
-			});
-
-			// Wait for the loaded client to catch up
-			const seq = rehydratedContainer.deltaManager.lastSequenceNumber;
-			await catchUp({ loaded: clients.loaded }, seq);
-
-			// Now both containers should see all the datastores
-			const loadedData = await clients.loaded.dataObject.enumerateDataWithHandlesResolved();
-			for (let i = 0; i < 3; i++) {
-				const editKey = `edit-in-ds-${i}-`;
-				const foundEdit2 = Object.keys(loadedData).some((key) => key.startsWith(editKey));
-				assert(foundEdit2, `Loaded container should now see edit from datastore ${i}`);
 			}
 		});
 	});

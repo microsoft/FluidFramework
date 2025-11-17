@@ -760,6 +760,11 @@ export class FluidDataStoreRuntime
 	public loadPendingChannels(
 		pendingChannelSnapshots: ReadonlyMap<string, ISnapshotTree>,
 	): void {
+		if (pendingChannelSnapshots.size > 0) {
+			throw new Error(
+				`loadPendingChannels called with ${pendingChannelSnapshots.size} channels`,
+			);
+		}
 		for (const [channelId, snapshotTree] of pendingChannelSnapshots) {
 			// Skip if this channel already exists
 			if (this.contexts.has(channelId)) {

@@ -1737,14 +1737,18 @@ export class ChannelCollection
 				// Datastore already exists - it has pending channels that need to be added
 				// Convert the summary tree to an ITree, then to a snapshot tree
 				const itree = convertSummaryTreeToITree(summary.summary);
-				const pendingChannelsSnapshot = buildSnapshotTree(itree.entries, new Map());
+				const datastoreSnapshot = buildSnapshotTree(itree.entries, new Map());
+
+				// Get the .channels subtree which contains the DDSes
+				const channelsSnapshot = datastoreSnapshot.trees?.[channelsTreeName];
+				if (channelsSnapshot === undefined) {
+					continue;
+				}
 
 				// Realize the datastore runtime and load the pending channels into it
 				const channel = await existingContext.realize();
 				const pendingChannels = new Map<string, ISnapshotTree>();
-				for (const [channelId, channelTree] of Object.entries(
-					pendingChannelsSnapshot.trees ?? {},
-				)) {
+				for (const [channelId, channelTree] of Object.entries(channelsSnapshot.trees ?? {})) {
 					pendingChannels.set(channelId, channelTree);
 				}
 
