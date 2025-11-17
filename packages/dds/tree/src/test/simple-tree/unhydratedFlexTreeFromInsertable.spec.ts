@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import {
 	MockHandle,
 	validateAssertionError,
+	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { deepCopyMapTree, EmptyKey, type FieldKey, type MapTree } from "../../core/index.js";
@@ -41,7 +42,6 @@ import {
 	MockNodeIdentifierManager,
 	type FlexTreeHydratedContextMinimal,
 } from "../../feature-libraries/index.js";
-import { validateUsageError } from "../utils.js";
 import {
 	CompatibilityLevel,
 	contentSchemaSymbol,

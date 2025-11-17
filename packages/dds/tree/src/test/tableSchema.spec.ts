@@ -4,6 +4,7 @@
  */
 
 import { strict as assert, fail } from "node:assert";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { Tree, TreeAlpha } from "../shared-tree/index.js";
 import {
@@ -21,7 +22,6 @@ import type {
 	JsonCompatibleReadOnly,
 	requireTrue,
 } from "../util/index.js";
-import { validateUsageError } from "./utils.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshots/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { describeHydration } from "./simple-tree/utils.js";
