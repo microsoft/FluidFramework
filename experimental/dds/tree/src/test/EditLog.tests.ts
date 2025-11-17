@@ -5,7 +5,7 @@
 
 import { strict as assert } from 'assert';
 
-import { validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
+import { validateAssertionError2 as validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
 import { expect } from 'chai';
 
 import { assertNotUndefined } from '../Common.js';
@@ -163,7 +163,7 @@ describe('EditLog', () => {
 					sequenceNumber: 44,
 					referenceSequenceNumber: 43,
 				}),
-			(e: Error) => validateAssertionError(e, /min number/)
+			validateAssertionError(/min number/)
 		);
 	});
 
@@ -174,7 +174,7 @@ describe('EditLog', () => {
 		log.addLocalEdit(edit1);
 		assert.throws(
 			() => log.addSequencedEdit(edit1, { sequenceNumber: 1, referenceSequenceNumber: 0 }),
-			(e: Error) => validateAssertionError(e, /ordering/)
+			validateAssertionError(/ordering/)
 		);
 	});
 
@@ -201,7 +201,7 @@ describe('EditLog', () => {
 		log.addSequencedEdit(edit0, { sequenceNumber: 1, referenceSequenceNumber: 0 });
 		assert.throws(
 			() => log.addSequencedEdit(edit0, { sequenceNumber: 1, referenceSequenceNumber: 0 }),
-			(e: Error) => validateAssertionError(e, /Duplicate/)
+			validateAssertionError(/Duplicate/)
 		);
 	});
 
