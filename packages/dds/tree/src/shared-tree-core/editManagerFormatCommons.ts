@@ -170,6 +170,7 @@ export const editManagerFormatVersions: ReadonlySet<EditManagerFormatVersion> = 
 	EditManagerFormatVersion.v3,
 	EditManagerFormatVersion.v4,
 	EditManagerFormatVersion.v5,
+	EditManagerFormatVersion.vDetachedRoots,
 ] as EditManagerFormatVersion[]);
 
 /* eslint-enable @typescript-eslint/explicit-function-return-type */
