@@ -13,7 +13,6 @@ import type {
 import {
 	createMockLoggerExt,
 	type IMockLoggerExt,
-	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
