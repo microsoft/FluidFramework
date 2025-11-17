@@ -163,7 +163,7 @@ export function checkValidMinVersionForCollabVerbose(minVersionForCollab: Semant
 		// We have to check if the value is a valid semver before calling gte/lte, otherwise they will throw when parsing the version.
 		isGteLowestMinVersion:
 			isValidSemver && gte(minVersionForCollab, lowestMinVersionForCollab),
-		isLtePkgVersion: isValidSemver && lte(minVersionForCollab, pkgVersion),
+		isLtePkgVersion: isValidSemver && lte(minVersionForCollab, cleanedPackageVersion),
 	};
 }
 
