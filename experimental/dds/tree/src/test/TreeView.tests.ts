@@ -5,7 +5,7 @@
 
 import { strict as assert } from 'assert';
 
-import { validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
+import { validateAssertionError2 as validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
 import { expect } from 'chai';
 
 import { Definition, TraitLabel } from '../Identifiers.js';
@@ -44,7 +44,7 @@ describe('TreeView', () => {
 			const viewB = RevisionView.fromTree(testTree.buildLeaf(testTree.generateNodeId()));
 			assert.throws(
 				() => viewA.delta(viewB),
-				(e: Error) => validateAssertionError(e, 'Delta can only be calculated between views that share a root')
+				validateAssertionError('Delta can only be calculated between views that share a root')
 			);
 		});
 
