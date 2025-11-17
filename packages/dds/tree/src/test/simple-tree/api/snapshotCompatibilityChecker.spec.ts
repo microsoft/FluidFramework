@@ -11,6 +11,9 @@ import {
 	exportCompatibilitySchemaSnapshot,
 	TreeViewConfiguration,
 	type SchemaCompatibilityStatus,
+	SchemaFactoryBeta,
+	stringSchema,
+	numberSchema,
 } from "../../../simple-tree/index.js";
 import { strict as assert } from "node:assert";
 
@@ -98,5 +101,50 @@ describe("snapshotCompatibilityChecker", () => {
 		// we assert that there is forwards compatibility break:
 		// this means these two versions of the application cannot collaborate on content using these schema.
 		assert.equal(forwardsCompatibilityStatus.canView, false);
+	});
+
+	it("checkCompatibility: allowUnknownOptionalFields", () => {
+		const factory = new SchemaFactoryBeta("test");
+
+		// Point2D is constructed with allowUnknownOptionalFields, so it can read Point3D trees
+		// even though it does not know about the optional field `z`.
+		class Point2D extends factory.object(
+			"Point",
+			{
+				x: factory.number,
+				y: factory.number,
+			},
+			{ allowUnknownOptionalFields: true },
+		) {}
+		class Point3D extends factory.object("Point", {
+			x: factory.number,
+			y: factory.number,
+			z: factory.optional(factory.number),
+		}) {}
+
+		const oldViewSchema = new TreeViewConfiguration({ schema: Point2D });
+		const currentViewSchema = new TreeViewConfiguration({ schema: Point3D });
+
+		// Test what the old version of the application would do with a tree using the new schema:
+		const forwardsCompatibilityStatus = checkCompatibility(currentViewSchema, oldViewSchema);
+
+		// Point2D is forwards compatible with Point3D trees
+		assert.equal(forwardsCompatibilityStatus.canView, true);
+	});
+
+	it("checkCompatibility: staged schema", () => {
+		const factory = new SchemaFactoryBeta("test");
+		const oldSchema = factory.optional(factory.types([factory.staged(stringSchema)]));
+		const currentSchema = factory.optional(factory.types([stringSchema, numberSchema]));
+
+		const oldViewSchema = new TreeViewConfiguration({ schema: oldSchema });
+		const currentViewSchema = new TreeViewConfiguration({ schema: currentSchema });
+
+		const backwardsCompatibilityStatus = checkCompatibility(oldViewSchema, currentViewSchema);
+
+		// While the new schema's allowed types are a superset of the old schema's allowed types, one of the old schema's allowed
+		// types is staged. Therefore, we can upgrade the schema, but cannot yet view it.
+		assert.equal(backwardsCompatibilityStatus.canView, false);
+		assert.equal(backwardsCompatibilityStatus.canUpgrade, true);
 	});
 });
