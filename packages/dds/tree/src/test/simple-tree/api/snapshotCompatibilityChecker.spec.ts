@@ -134,7 +134,7 @@ describe("snapshotCompatibilityChecker", () => {
 
 	it("checkCompatibility: staged schema", () => {
 		const factory = new SchemaFactoryBeta("test");
-		const oldSchema = factory.optional(factory.types([factory.staged(stringSchema)]));
+		const oldSchema = factory.optional(factory.types([factory.numberSchema, factory.staged(stringSchema)]));
 		const currentSchema = factory.optional(factory.types([stringSchema, numberSchema]));
 
 		const oldViewSchema = new TreeViewConfiguration({ schema: oldSchema });
