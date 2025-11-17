@@ -25,8 +25,8 @@ import {
 /**
  * Produces a "system" prompt for the tree agent, based on the provided subtree.
  */
-export function getPrompt<TRoot extends ImplicitFieldSchema>(args: {
-	subtree: Subtree<TRoot>;
+export function getPrompt(args: {
+	subtree: Pick<Subtree<ImplicitFieldSchema>, "schema" | "field">;
 	editToolName: string | undefined;
 	domainHints?: string;
 }): string {

@@ -11,9 +11,7 @@
 
 export {
 	SharedTreeSemanticAgent,
-	bindEditor,
-	bindEditorImpl,
-	defaultEditor,
+	createContext,
 } from "./agent.js";
 export type {
 	EditResult,
@@ -23,8 +21,11 @@ export type {
 	SemanticAgentOptions,
 	SynchronousEditor,
 	AsynchronousEditor,
+	TreeView,
+	ViewOrTree,
+	Context,
 } from "./api.js";
-export { type TreeView, llmDefault } from "./utils.js";
+export { llmDefault } from "./utils.js";
 export {
 	buildFunc,
 	exposeMethodsSymbol,

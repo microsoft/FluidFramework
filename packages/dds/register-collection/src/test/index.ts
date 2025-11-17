@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { useTree } from "./Utils.js";
+export { baseRegisterCollectionModel } from "./fuzzUtils.js";
