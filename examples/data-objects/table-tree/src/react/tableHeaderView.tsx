@@ -14,9 +14,9 @@ import {
 } from "@fluentui/react-components";
 import { Add24Regular, Checkmark24Regular, Delete24Regular } from "@fluentui/react-icons";
 import React, { type DragEvent, useState } from "react";
+import { useTree } from "@fluidframework/react/alpha";
 
 import { Column, type Table } from "../schema.js";
-import { useTree } from "./utilities.js";
 
 /**
  * Props for the `TableHeaderView` component, which renders the header row of the table.
