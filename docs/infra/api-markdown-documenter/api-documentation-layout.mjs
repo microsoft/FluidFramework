@@ -27,15 +27,19 @@ const customThrowsSectionTitle = "Error Handling";
  * A paragraph containing a link to the Fluid Framework API support documentation.
  * @type Paragraph
  */
-const supportDocsLinkParagraph = { type: "paragraph", children: [
-	{type: "text", value: "For more information about our API support guarantees, see "},
-	{type: "link",
-		children: [{type: "text", value: "here"}],
-		// Is there a URL that would be relative to the current site? (For development use)
-		url: "https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels",
-	},
-	{type: "text", value: "."},
-]};
+const supportDocsLinkParagraph = {
+	type: "paragraph",
+	children: [
+		{ type: "text", value: "For more information about our API support guarantees, see " },
+		{
+			type: "link",
+			children: [{ type: "text", value: "here" }],
+			// Is there a URL that would be relative to the current site? (For development use)
+			url: "https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels",
+		},
+		{ type: "text", value: "." },
+	],
+};
 
 /**
  * A special use notice for the "@system" tag.
@@ -237,7 +241,7 @@ export function layoutContent(apiItem, itemSpecificContent, config) {
 	 */
 	function addSection(node) {
 		if (node !== undefined) {
-			sections.push(node.type === "section" ? node : {type: "section", children: [node]});
+			sections.push(node.type === "section" ? node : { type: "section", children: [node] });
 			return true;
 		}
 		return false;
