@@ -134,17 +134,18 @@ describe("snapshotCompatibilityChecker", () => {
 
 	it("checkCompatibility: staged schema", () => {
 		const factory = new SchemaFactoryBeta("test");
-		const oldSchema = factory.optional(factory.types([factory.numberSchema, factory.staged(stringSchema)]));
+		const oldSchema = factory.optional(
+			factory.types([numberSchema, factory.staged(stringSchema)]),
+		);
 		const currentSchema = factory.optional(factory.types([stringSchema, numberSchema]));
 
 		const oldViewSchema = new TreeViewConfiguration({ schema: oldSchema });
 		const currentViewSchema = new TreeViewConfiguration({ schema: currentSchema });
 
+		// Check to see if the document created by the historical view schema can be opened with the current view schema
 		const backwardsCompatibilityStatus = checkCompatibility(oldViewSchema, currentViewSchema);
 
-		// While the new schema's allowed types are a superset of the old schema's allowed types, one of the old schema's allowed
-		// types is staged. Therefore, we can upgrade the schema, but cannot yet view it.
-		assert.equal(backwardsCompatibilityStatus.canView, false);
-		assert.equal(backwardsCompatibilityStatus.canUpgrade, true);
+		// The staged string schema in the old schema is supported in the current schema
+		assert.equal(backwardsCompatibilityStatus.canView, true);
 	});
 });
