@@ -310,10 +310,6 @@ export class DefaultStressDataObject extends StressDataObject {
 	}
 
 	public inStagingMode(): boolean {
-		assert(
-			this.containerRuntimeExp.inStagingMode !== undefined,
-			"inStagingMode must be defined",
-		);
 		return this.containerRuntimeExp.inStagingMode;
 	}
 

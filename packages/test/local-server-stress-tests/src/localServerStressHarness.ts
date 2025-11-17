@@ -480,11 +480,6 @@ function mixinAddRemoveClient<TOperation extends BaseOperation>(
 				1,
 			)[0];
 
-			// AB#46464: Add support for serializing pending state while in staging mode
-			if (removed.entryPoint.inStagingMode()) {
-				console.log(true);
-			}
-
 			// in order to validate we need to disconnect to ensure
 			// no changes arrive between capturing the state and validating
 			// the state against the source container

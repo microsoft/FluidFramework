@@ -131,6 +131,8 @@ import type {
 	IContainerRuntimeBaseInternal,
 	MinimumVersionForCollab,
 	ContainerExtensionExpectations,
+	ContainerRuntimeBaseAlpha,
+	StageControlsAlpha,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
@@ -809,6 +811,36 @@ export async function loadContainerRuntime(
 	return ContainerRuntime.loadRuntime(params);
 }
 
+/**
+ * Alpha variant of {@link loadContainerRuntime} that returns additional staging mode controls.
+ *
+ * This function is used when loading a container runtime from pending local state that includes
+ * pending changes from staging mode. It returns both the runtime and staging mode controls, which
+ * allow the caller to commit or discard the pending staged changes.
+ *
+ * @param params - An object which specifies all required and optional params necessary to instantiate a runtime.
+ * @returns An object containing:
+ * - `runtime`: The container runtime instance
+ * - `stageControls`: Controls for managing staged changes if the container was loaded with pending staged state,
+ * or `undefined` if there is no pending staged state
+ *
+ * @remarks
+ * When loading from pending local state, the returned `stageControls`
+ * can be used to either commit the staged changes (making them visible to other clients) or discard them.
+ * If the container is being loaded normally (not from pending staged state), `stageControls` will be `undefined`.
+ *
+ * @legacy @alpha
+ */
+export async function loadContainerRuntimeAlpha(params: LoadContainerRuntimeParams): Promise<{
+	runtime: IContainerRuntime & ContainerRuntimeBaseAlpha & IRuntime;
+	stageControls: StageControlsAlpha | undefined;
+}> {
+	return ContainerRuntime.loadRuntime2({
+		...params,
+		registry: new FluidDataStoreRegistry(params.registryEntries),
+	});
+}
+
 const defaultMaxConsecutiveReconnects = 7;
 
 /**
@@ -885,7 +917,7 @@ export class ContainerRuntime
 		return ContainerRuntime.loadRuntime2({
 			...params,
 			registry: new FluidDataStoreRegistry(params.registryEntries),
-		});
+		}).then((r) => r.runtime);
 	}
 	/* eslint-enable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag */
 
@@ -912,7 +944,7 @@ export class ContainerRuntime
 			 */
 			runtimeOptions?: IContainerRuntimeOptionsInternal;
 		},
-	): Promise<ContainerRuntime> {
+	): Promise<{ runtime: ContainerRuntime; stageControls: StageControlsInternal | undefined }> {
 		const {
 			context,
 			registry,
@@ -1246,7 +1278,17 @@ export class ContainerRuntime
 			recentBatchInfo,
 		);
 
+		const stageControls =
+			context.pendingLocalState === undefined ? undefined : runtime.enterStagingMode();
+
 		runtime.sharePendingBlobs();
+
+		// Load pending attachment summaries before initializing base state and applying ops.
+		// This rehydrates datastores that were referenced but not yet attached.
+		const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
+		await runtime.channelCollection.loadPendingAttachmentSummaries(
+			pendingRuntimeState?.pendingAttachmentSummaries,
+		);
 
 		// Initialize the base state of the runtime before it's returned.
 		await runtime.initializeBaseState(context.loader);
@@ -1255,7 +1297,7 @@ export class ContainerRuntime
 		// or zero. This must be done before Container replays saved ops.
 		await runtime.pendingStateManager.applyStashedOpsAt(runtimeSequenceNumber ?? 0);
 
-		return runtime;
+		return { runtime, stageControls };
 	}
 
 	public readonly options: Record<string | number, unknown>;

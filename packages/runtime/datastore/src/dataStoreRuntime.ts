@@ -752,6 +752,31 @@ export class FluidDataStoreRuntime
 		this.pendingHandlesToMakeVisible.add(toFluidHandleInternal(handle));
 	}
 
+	/**
+	 * Load pending channels from pending attachment summaries.
+	 * This is called during container load to rehydrate channels that were referenced but not yet attached.
+	 * @param pendingChannelSnapshots - Map of channel id to snapshot tree
+	 */
+	public loadPendingChannels(
+		pendingChannelSnapshots: ReadonlyMap<string, ISnapshotTree>,
+	): void {
+		for (const [channelId, snapshotTree] of pendingChannelSnapshots) {
+			// Skip if this channel already exists
+			if (this.contexts.has(channelId)) {
+				continue;
+			}
+
+			// Create a RehydratedLocalChannelContext for this pending channel
+			const channelContext = this.createRehydratedLocalChannelContext(channelId, snapshotTree);
+
+			// Add it to the contexts
+			this.contexts.set(channelId, channelContext);
+
+			// Add to local channel context queue since it's not yet globally visible
+			this.localChannelContextQueue.set(channelId, channelContext);
+		}
+	}
+
 	public setConnectionState(connected: boolean, clientId?: string): void {
 		this.verifyNotClosed();
 

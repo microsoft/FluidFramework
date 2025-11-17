@@ -1695,6 +1695,70 @@ export class ChannelCollection
 		}
 		return summaries;
 	}
+
+	/**
+	 * Load pending attachment summaries from pending state.
+	 * This is called during container load to rehydrate datastores that were referenced but not yet attached.
+	 * This must be called before ops are applied to ensure the datastores are available.
+	 */
+	public async loadPendingAttachmentSummaries(
+		pendingAttachmentSummaries: Record<string, ISummaryTreeWithStats> | undefined,
+	): Promise<void> {
+		if (pendingAttachmentSummaries === undefined) {
+			return;
+		}
+
+		for (const [id, summary] of Object.entries(pendingAttachmentSummaries)) {
+			const existingContext = this.contexts.get(id);
+
+			if (existingContext === undefined) {
+				// Datastore doesn't exist yet - create it from the summary
+				// Convert the summary tree to an ITree, then to a snapshot tree
+				const itree = convertSummaryTreeToITree(summary.summary);
+				const snapshotTree = buildSnapshotTree(itree.entries, new Map());
+
+				// Create a LocalFluidDataStoreContext for this datastore
+				const dataStoreContext = new LocalFluidDataStoreContext({
+					id,
+					pkg: undefined,
+					parentContext: this.wrapContextForInnerChannel(id),
+					storage: this.parentContext.storage,
+					scope: this.parentContext.scope,
+					createSummarizerNodeFn: this.parentContext.getCreateChildSummarizerNodeFn(id, {
+						type: CreateSummarizerNodeSource.Local,
+					}),
+					makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(id),
+					snapshotTree,
+				});
+
+				// Add it to the contexts as unbound (not yet attached)
+				this.contexts.addUnbound(dataStoreContext);
+			} else {
+				// Datastore already exists - it has pending channels that need to be added
+				// Convert the summary tree to an ITree, then to a snapshot tree
+				const itree = convertSummaryTreeToITree(summary.summary);
+				const pendingChannelsSnapshot = buildSnapshotTree(itree.entries, new Map());
+
+				// Realize the datastore runtime and load the pending channels into it
+				const channel = await existingContext.realize();
+				const pendingChannels = new Map<string, ISnapshotTree>();
+				for (const [channelId, channelTree] of Object.entries(
+					pendingChannelsSnapshot.trees ?? {},
+				)) {
+					pendingChannels.set(channelId, channelTree);
+				}
+
+				// Cast to access the loadPendingChannels method (from FluidDataStoreRuntime)
+				if ("loadPendingChannels" in channel) {
+					(
+						channel as {
+							loadPendingChannels: (channels: ReadonlyMap<string, ISnapshotTree>) => void;
+						}
+					).loadPendingChannels(pendingChannels);
+				}
+			}
+		}
+	}
 }
 
 export function getSummaryForDatastores(

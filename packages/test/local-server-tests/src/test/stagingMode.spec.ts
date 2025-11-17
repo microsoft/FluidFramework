@@ -13,6 +13,7 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import {
 	ConnectionState,
+	type ContainerAlpha,
 	createDetachedContainer,
 	loadExistingContainer,
 } from "@fluidframework/container-loader/internal";
@@ -679,5 +680,146 @@ describe("Staging Mode", () => {
 			/Cannot set aliases while in staging mode/,
 			"Should not be able to set an alias in staging mode",
 		);
+	});
+
+	describe("Pending state rehydration", () => {
+		it("rehydrates pending DDS from pending state", async () => {
+			const deltaConnectionServer = LocalDeltaConnectionServer.create();
+			const clients = await createClients(deltaConnectionServer);
+
+			// Enter staging mode and create a new DDS
+			clients.original.dataObject.enterStagingMode();
+			clients.original.dataObject.addDDS("pendingDDS");
+
+			// Get the pending local state before committing
+			const pendingState = await (
+				clients.original.container as ContainerAlpha
+			).getPendingLocalState();
+			assert(pendingState !== undefined, "Pending state should exist");
+
+			// Close the original container
+			clients.original.container.close();
+
+			// Create a new loader and rehydrate from pending state
+			const rehydrateLoader = createLoader({
+				deltaConnectionServer,
+				runtimeFactory,
+			});
+
+			const url = await clients.loaded.container.getAbsoluteUrl("");
+			assert(url !== undefined, "must have url");
+
+			const rehydratedContainer = await loadExistingContainer({
+				...rehydrateLoader.loaderProps,
+				request: { url },
+				pendingLocalState: pendingState,
+			});
+
+			const rehydratedDataObject = await getDataObject(rehydratedContainer);
+
+			// The rehydrated container should have the pending DDS
+			const rehydratedData = await rehydratedDataObject.enumerateDataWithHandlesResolved();
+			assert(
+				rehydratedData["pendingDDS-0"] !== undefined,
+				"Rehydrated container should have pending DDS",
+			);
+
+			// Get staging controls from the rehydrated container and commit
+			const rehydratedStaging = rehydratedDataObject.enterStagingMode();
+			rehydratedStaging.commitChanges();
+
+			await waitForSave({
+				rehydrated: { container: rehydratedContainer, dataObject: rehydratedDataObject },
+			});
+
+			// Wait for the loaded client to catch up
+			const seq = rehydratedContainer.deltaManager.lastSequenceNumber;
+			await catchUp({ loaded: clients.loaded }, seq);
+
+			// Now both containers should see the DDS
+			const loadedData = await clients.loaded.dataObject.enumerateDataWithHandlesResolved();
+			assert(
+				loadedData["pendingDDS-0"] !== undefined,
+				"Loaded container should now see the DDS",
+			);
+		});
+
+		it("rehydrates multiple pending datastores with DDS", async () => {
+			const deltaConnectionServer = LocalDeltaConnectionServer.create();
+			const clients = await createClients(deltaConnectionServer);
+
+			// Enter staging mode
+			clients.original.dataObject.enterStagingMode();
+
+			// Create multiple datastores with DDS
+			for (let i = 0; i < 3; i++) {
+				const newDataStore =
+					await clients.original.dataObject.containerRuntime.createDataStore(
+						dataObjectFactory.type,
+					);
+				const newDataObject =
+					(await newDataStore.entryPoint.get()) as DataObjectWithStagingMode;
+
+				// Create a DDS in each datastore
+				newDataObject.addDDS(`dds-in-ds-${i}`);
+				newDataObject.makeEdit(`edit-in-ds-${i}`);
+			}
+
+			// Get the pending local state before committing
+			const pendingState = await (
+				clients.original.container as ContainerAlpha
+			).getPendingLocalState();
+			assert(pendingState !== undefined, "Pending state should exist");
+
+			// Close the original container
+			clients.original.container.close();
+
+			// Create a new loader and rehydrate from pending state
+			const rehydrateLoader = createLoader({
+				deltaConnectionServer,
+				runtimeFactory,
+			});
+
+			const url = await clients.loaded.container.getAbsoluteUrl("");
+			assert(url !== undefined, "must have url");
+
+			const rehydratedContainer = await loadExistingContainer({
+				...rehydrateLoader.loaderProps,
+				request: { url },
+				pendingLocalState: pendingState,
+			});
+
+			const rehydratedDataObject = await getDataObject(rehydratedContainer);
+
+			// The rehydrated container should have all the pending datastores
+			const rehydratedData = await rehydratedDataObject.enumerateDataWithHandlesResolved();
+
+			// Verify all pending edits are present in the rehydrated container
+			for (let i = 0; i < 3; i++) {
+				const editKey = `edit-in-ds-${i}-`;
+				const foundEdit = Object.keys(rehydratedData).some((key) => key.startsWith(editKey));
+				assert(foundEdit, `Rehydrated container should have edit from datastore ${i}`);
+			}
+
+			// Now commit from the rehydrated container
+			const rehydratedStaging = rehydratedDataObject.enterStagingMode();
+			rehydratedStaging.commitChanges();
+
+			await waitForSave({
+				rehydrated: { container: rehydratedContainer, dataObject: rehydratedDataObject },
+			});
+
+			// Wait for the loaded client to catch up
+			const seq = rehydratedContainer.deltaManager.lastSequenceNumber;
+			await catchUp({ loaded: clients.loaded }, seq);
+
+			// Now both containers should see all the datastores
+			const loadedData = await clients.loaded.dataObject.enumerateDataWithHandlesResolved();
+			for (let i = 0; i < 3; i++) {
+				const editKey = `edit-in-ds-${i}-`;
+				const foundEdit2 = Object.keys(loadedData).some((key) => key.startsWith(editKey));
+				assert(foundEdit2, `Loaded container should now see edit from datastore ${i}`);
+			}
+		});
 	});
 });
