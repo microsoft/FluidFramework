@@ -26,7 +26,7 @@ export function validateAssertionError(error: Error, expectedErrorMsg: string | 
 	}
 	const mappedMsg = split.join("\n");
 
-	if (testErrorMessage(error, expectedErrorMsg)) {
+	if (testErrorMessage(mappedMsg, expectedErrorMsg)) {
 		// This throws an Error instead of an AssertionError because AssertionError would require a dependency on the
 		// node assert library, which we don't want to do for this library because it's used in the browser.
 		const message = `Unexpected assertion thrown\nActual: ${error.message === mappedMsg ? error.message : `${error.message} ('${mappedMsg}')}`}\nExpected: ${expectedErrorMsg}`;
@@ -88,7 +88,7 @@ export function validateError(
 ): (error: Error) => true {
 	return (error: Error) => {
 		assert(error instanceof errorType, `Expected ${errorType.name}, got ${error}`);
-		if (testErrorMessage(error, expectedErrorMsg)) {
+		if (testErrorMessage(error.message, expectedErrorMsg)) {
 			throw new Error(
 				`Unexpected ${errorType.name} thrown\nActual: ${error.message}\nExpected: ${expectedErrorMsg}`,
 			);
@@ -97,8 +97,8 @@ export function validateError(
 	};
 }
 
-function testErrorMessage(error: Error, expectedErrorMsg: string | RegExp): boolean {
+function testErrorMessage(actualMessage: string, expectedErrorMsg: string | RegExp): boolean {
 	return typeof expectedErrorMsg === "string"
-		? error.message !== expectedErrorMsg
-		: !expectedErrorMsg.test(error.message);
+		? actualMessage !== expectedErrorMsg
+		: !expectedErrorMsg.test(actualMessage);
 }
