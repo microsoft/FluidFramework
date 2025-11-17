@@ -17,7 +17,7 @@ import {
 	type FieldChangeHandler,
 	genericFieldKind,
 	type ModularChangeset,
-	FieldKindWithEditor,
+	FlexFieldKind,
 	type RelevantRemovedRootsFromChild,
 	defaultChunkPolicy,
 	type TreeChunk,
@@ -58,6 +58,7 @@ import {
 import {
 	type Mutable,
 	brand,
+	brandConst,
 	idAllocatorFromMaxId,
 	nestedMapFromFlatList,
 	newTupleBTree,
@@ -161,8 +162,8 @@ const singleNodeHandler: FieldChangeHandler<SingleNodeChangeset> = {
 	getCrossFieldKeys: (_change) => [],
 };
 
-const singleNodeField = new FieldKindWithEditor(
-	"SingleNode",
+const singleNodeField = new FlexFieldKind(
+	brandConst("SingleNode")<FieldKindIdentifier>(),
 	Multiplicity.Single,
 	singleNodeHandler,
 	(a, b) => false,
@@ -177,7 +178,7 @@ export const fieldKindConfiguration: FieldKindConfiguration = new Map<
 	[valueField.identifier, { kind: valueField, formatVersion: 1 }],
 ]);
 
-const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map(
+const fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind> = new Map(
 	[singleNodeField, valueField].map((field) => [field.identifier, field]),
 );
 
@@ -1171,7 +1172,7 @@ describe("ModularChangeFamily", () => {
 				];
 			},
 		} as unknown as FieldChangeHandler<HasRemovedRootsRefs, FieldEditor<HasRemovedRootsRefs>>;
-		const hasRemovedRootsRefsField = new FieldKindWithEditor(
+		const hasRemovedRootsRefsField = new FlexFieldKind(
 			fieldKind,
 			Multiplicity.Single,
 			handler,

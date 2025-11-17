@@ -280,3 +280,10 @@ export {
 	nullSchema,
 } from "./leafNodeSchema.js";
 export type { LeafSchema } from "./leafNodeSchema.js";
+export {
+	encodeSimpleSchema,
+	decodeSimpleSchema,
+	exportCompatibilitySchemaSnapshot,
+	importCompatibilitySchemaSnapshot,
+	checkCompatibility,
+} from "./api/index.js";

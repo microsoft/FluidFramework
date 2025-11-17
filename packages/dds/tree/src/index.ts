@@ -283,6 +283,11 @@ export {
 	type SchemaFactory_base,
 	type NumberKeys,
 	type SimpleAllowedTypeAttributes,
+	encodeSimpleSchema,
+	decodeSimpleSchema,
+	exportCompatibilitySchemaSnapshot,
+	importCompatibilitySchemaSnapshot,
+	checkCompatibility,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
