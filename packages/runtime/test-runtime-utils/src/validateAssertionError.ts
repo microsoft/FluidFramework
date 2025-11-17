@@ -36,7 +36,7 @@ export function validateAssertionError(error: Error, expectedErrorMsg: string | 
 }
 
 /**
- * Validates that an error thrown by our assert() function has the expected message, or a
+ * Validates that an error thrown by our `assert()` function has the expected message, or a
  * short code that corresponds to that message.
  *
  * @remarks
@@ -87,7 +87,7 @@ export function validateError(
 	errorType: new (...args: any[]) => Error = Error,
 ): (error: Error) => true {
 	return (error: Error) => {
-		assert(error instanceof errorType, `Expected ${errorType.name}, got ${error}`);
+		assert(error instanceof errorType, `Expected an error of type "${errorType.name}", but got "${error}"`);
 		if (testErrorMessage(error.message, expectedErrorMsg)) {
 			throw new Error(
 				`Unexpected ${errorType.name} thrown\nActual: ${error.message}\nExpected: ${expectedErrorMsg}`,
