@@ -19,7 +19,7 @@ import { z } from "zod";
 import { buildFunc, exposeMethodsSymbol, type ExposedMethods } from "../methodBinding.js";
 import { getPrompt } from "../prompt.js";
 import { Subtree } from "../subtree.js";
-import type { TreeView } from "../utils.js";
+import type { TreeView } from "../api.js";
 
 const sf = new SchemaFactory("test");
 

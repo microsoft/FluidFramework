@@ -19,7 +19,7 @@ There are some differences because this guide describes the example as a real sc
 We start with a schema that only supports numbers and initialize the tree with it:
 ```typescript
 // Schema A: only number allowed
-const schemaA = SchemaFactoryAlpha.optional([SchemaFactoryAlpha.number]);
+const schemaA = SchemaFactoryBeta.optional([SchemaFactoryBeta.number]);
 
 // initialize with schema A
 const configA = new TreeViewConfiguration({
@@ -36,9 +36,9 @@ To add support for reading strings, we import the alpha APIs and use [`staged`](
 
 ```typescript
 // Schema B: number or string (string is staged)
-const schemaB = SchemaFactoryAlpha.optional(SchemaFactoryAlpha.types([
-    SchemaFactoryAlpha.number,
-    SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+const schemaB = SchemaFactoryBeta.optional(SchemaFactoryBeta.types([
+    SchemaFactoryBeta.number,
+    SchemaFactoryBeta.staged(SchemaFactoryBeta.string),
 ]));
 ```
 
@@ -79,9 +79,9 @@ Once client saturation has been reached, remove the [`staged()`](../../../api/fl
 
 ```typescript
 // Schema C: number or string, both fully allowed
-const schemaC = SchemaFactoryAlpha.optional([
-    SchemaFactoryAlpha.number,
-    SchemaFactoryAlpha.string,
+const schemaC = SchemaFactoryBeta.optional([
+    SchemaFactoryBeta.number,
+    SchemaFactoryBeta.string,
 ]);
 
 // view third tree with schema C

@@ -12,10 +12,8 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { ImplicitFieldSchema, TreeNodeSchemaClass } from "@fluidframework/tree";
 import type {
 	InsertableContent,
-	TreeBranchAlpha,
 	TreeNode,
 	TreeNodeSchema,
-	TreeViewAlpha,
 	UnsafeUnknownSchema,
 } from "@fluidframework/tree/alpha";
 import {
@@ -85,17 +83,6 @@ export function getOrCreate<K, V>(
 	}
 	return value;
 }
-
-/**
- * TODO
- * @alpha
- * @privateRemarks This is a subset of the TreeViewAlpha functionality because if take it wholesale, it causes problems with invariance of the generic parameters.
- */
-export type TreeView<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema> = Pick<
-	TreeViewAlpha<TRoot>,
-	"root" | "fork" | "merge" | "rebaseOnto" | "schema" | "events"
-> &
-	TreeBranchAlpha;
 
 /**
  * TODO
