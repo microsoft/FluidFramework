@@ -26,6 +26,7 @@ import type {
 	ITelemetryLoggerExt,
 	ITelemetryLoggerPropertyBag,
 } from "@fluidframework/telemetry-utils/internal";
+import type { TelemetryContext } from "@fluidframework/runtime-utils/internal";
 
 import type { SummarizeReason } from "./summarizerUtils.js";
 import type {
@@ -167,6 +168,10 @@ export interface ISubmitSummaryOptions extends ISummarizeOptions {
 	 * The sequence number of the latest summary used to validate if summary state is correct before summarizing
 	 */
 	readonly latestSummaryRefSeqNum: number;
+	/**
+	 * Shared telemetry context for the current summarize attempt.
+	 */
+	telemetryContext?: TelemetryContext;
 }
 
 /**

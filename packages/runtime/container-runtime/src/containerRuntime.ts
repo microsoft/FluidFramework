@@ -3931,6 +3931,10 @@ export class ContainerRuntime
 		 * True to run GC sweep phase after the mark phase
 		 */
 		runSweep?: boolean;
+		/**
+		 * Telemetry context to populate during summarization.
+		 */
+		telemetryContext?: TelemetryContext;
 	}): Promise<ISummaryTreeWithStats> {
 		this.verifyNotClosed();
 
@@ -3941,9 +3945,10 @@ export class ContainerRuntime
 			runGC = this.garbageCollector.shouldRunGC,
 			runSweep,
 			fullGC,
+			telemetryContext: providedTelemetryContext,
 		} = options;
 
-		const telemetryContext = new TelemetryContext();
+		const telemetryContext = providedTelemetryContext ?? new TelemetryContext();
 		// Add the options that are used to generate this summary to the telemetry context.
 		telemetryContext.setMultiple("fluid_Summarize", "Options", {
 			fullTree,
@@ -4185,6 +4190,7 @@ export class ContainerRuntime
 			summaryLogger,
 			latestSummaryRefSeqNum,
 		} = options;
+		const telemetryContext = options.telemetryContext ?? new TelemetryContext();
 		// The summary number for this summary. This will be updated during the summary process, so get it now and
 		// use it for all events logged during this summary.
 		const summaryNumber = this.nextSummaryNumber;
@@ -4372,6 +4378,7 @@ export class ContainerRuntime
 					trackState: true,
 					summaryLogger: summaryNumberLogger,
 					runGC: this.garbageCollector.shouldRunGC,
+					telemetryContext,
 				});
 			} catch (error) {
 				return {
