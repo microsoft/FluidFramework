@@ -9,7 +9,7 @@ import { stringToBuffer } from "@fluid-internal/client-utils";
 import type { IExperimentalIncrementalSummaryContext } from "@fluidframework/runtime-definitions/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import { SummaryType, type ISnapshotTree } from "@fluidframework/driver-definitions/internal";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import { validateAssertionError2 as validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	ForestIncrementalSummaryBehavior,
@@ -159,7 +159,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 						incrementalSummaryContext,
 						stringify,
 					}),
-				(error: Error) => validateAssertionError(error, /Already tracking/),
+				validateAssertionError(/Already tracking/),
 			);
 			assert.equal(builder.forestSummaryState, ForestSummaryTrackingState.Tracking);
 		});
@@ -225,7 +225,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 						incrementalSummaryContext: localIncrementalSummaryContext,
 						forestSummaryContent: mockForestSummaryContent,
 					}),
-				(error: Error) => validateAssertionError(error, /Not tracking/),
+				validateAssertionError(/Not tracking/),
 			);
 			assert.equal(builder.forestSummaryState, ForestSummaryTrackingState.ReadyToTrack);
 		});
@@ -350,7 +350,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 			const builder = createIncrementalSummaryBuilder();
 			assert.throws(
 				() => builder.encodeIncrementalField(testCursor, () => mockEncodedChunk),
-				(error: Error) => validateAssertionError(error, /Not tracking/),
+				validateAssertionError(/Not tracking/),
 			);
 		});
 
@@ -570,7 +570,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 					builder.decodeIncrementalChunk(999 as ChunkReferenceId, (encoded) => {
 						return getMockChunk();
 					}),
-				(error: Error) => validateAssertionError(error, "Encoded incremental chunk not found"),
+				validateAssertionError("Encoded incremental chunk not found"),
 			);
 		});
 	});

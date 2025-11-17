@@ -48,7 +48,7 @@ import {
 import {
 	MockDeltaManager,
 	MockFluidDataStoreRuntime,
-	validateAssertionError,
+	validateAssertionError2 as validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 
 import {
@@ -112,7 +112,7 @@ describe("Data Store Context Tests", () => {
 					});
 
 				assert.throws(codeBlock, (e: Error) =>
-					validateAssertionError(e, "Data store ID contains slash"),
+					validateAssertionError("Data store ID contains slash"),
 				);
 			});
 
@@ -670,7 +670,7 @@ describe("Data Store Context Tests", () => {
 					});
 
 				assert.throws(codeBlock, (e: Error) =>
-					validateAssertionError(e, "Data store ID contains slash"),
+					validateAssertionError("Data store ID contains slash"),
 				);
 			});
 			describe("writing with isolated channels enabled", () =>
@@ -1071,7 +1071,7 @@ describe("Data Store Context Tests", () => {
 					});
 
 				assert.throws(codeBlock, (e: Error) =>
-					validateAssertionError(e, "Data store ID contains slash"),
+					validateAssertionError("Data store ID contains slash"),
 				);
 			});
 

@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import { validateAssertionError2 as validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	allowUnused,
@@ -397,14 +397,14 @@ describe("allowedTypes", () => {
 		it("in an array", () => {
 			assert.throws(
 				() => normalizeAllowedTypes([Foo, Bar]),
-				(error: Error) => validateAssertionError(error, /Encountered an undefined schema/),
+				validateAssertionError(/Encountered an undefined schema/),
 			);
 		});
 
 		it("directly", () => {
 			assert.throws(
 				() => normalizeAllowedTypes(Bar),
-				(error: Error) => validateAssertionError(error, /Encountered an undefined schema/),
+				validateAssertionError(/Encountered an undefined schema/),
 			);
 		});
 
@@ -412,7 +412,7 @@ describe("allowedTypes", () => {
 			const normalized = normalizeAllowedTypes([() => Bar]);
 			assert.throws(
 				() => normalized.evaluate(),
-				(error: Error) => validateAssertionError(error, /Encountered an undefined schema/),
+				validateAssertionError(/Encountered an undefined schema/),
 			);
 		});
 	});

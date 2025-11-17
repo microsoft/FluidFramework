@@ -24,7 +24,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockFluidDataStoreContext,
-	validateAssertionError,
+	validateAssertionError2 as validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 import sinon from "sinon";
 
@@ -100,7 +100,6 @@ describe("FluidDataStoreRuntime Tests", () => {
 			);
 		assert.throws(codeBlock, (e: Error) =>
 			validateAssertionError(
-				e,
 				"Id cannot contain slashes. DataStoreContext should have validated this.",
 			),
 		);

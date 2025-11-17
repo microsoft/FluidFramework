@@ -22,7 +22,7 @@ import { isSerializedHandle } from "@fluidframework/runtime-utils/internal";
 import {
 	MockFluidDataStoreRuntime,
 	MockHandle,
-	validateAssertionError,
+	validateAssertionError2 as validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 import sinon from "sinon";
 
@@ -129,7 +129,7 @@ describe("SharedObject", () => {
 		const invalidId = "beforeSlash/afterSlash";
 		const codeBlock = (): SharedObject => new MySharedObject(invalidId);
 		assert.throws(codeBlock, (e: Error) =>
-			validateAssertionError(e, "Id cannot contain slashes"),
+			validateAssertionError("Id cannot contain slashes"),
 		);
 	});
 });
@@ -139,7 +139,7 @@ describe("SharedObjectCore", () => {
 		const invalidId = "beforeSlash/afterSlash";
 		const codeBlock = (): SharedObjectCore => new MySharedObjectCore({ id: invalidId });
 		assert.throws(codeBlock, (e: Error) =>
-			validateAssertionError(e, "Id cannot contain slashes"),
+			validateAssertionError("Id cannot contain slashes"),
 		);
 	});
 

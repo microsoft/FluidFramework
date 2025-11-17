@@ -10,7 +10,7 @@ import {
 	createMockLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import {
-	validateAssertionError,
+	validateAssertionError2 as validateAssertionError,
 	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
 
@@ -662,19 +662,14 @@ describe("sharedTreeView", () => {
 			const viewBranch = treeBranch.viewWith(view.config);
 			viewBranch.root.insertAtEnd("42");
 
-			assert.throws(
-				() => {
-					Tree.runTransaction(view, () => {
-						view.root.insertAtEnd("43");
-						tree.merge(treeBranch, true);
-					});
-				},
-				(e: Error) =>
-					validateAssertionError(
-						e,
-						"Views cannot be merged into a view while it has a pending transaction",
-					),
-			);
+			assert.throws(() => {
+				Tree.runTransaction(view, () => {
+					view.root.insertAtEnd("43");
+					tree.merge(treeBranch, true);
+				});
+			}, validateAssertionError(
+				"Views cannot be merged into a view while it has a pending transaction",
+			));
 		});
 
 		itView("rejects rebases while a transaction is in progress", ({ view, tree }) => {
@@ -686,11 +681,9 @@ describe("sharedTreeView", () => {
 				viewBranch.root.insertAtEnd("43");
 				assert.throws(
 					() => treeBranch.rebaseOnto(tree),
-					(e: Error) =>
-						validateAssertionError(
-							e,
-							"A view cannot be rebased while it has a pending transaction",
-						),
+					validateAssertionError(
+						"A view cannot be rebased while it has a pending transaction",
+					),
 				);
 			});
 			assert.equal(viewBranch.root[0], "43");
@@ -716,7 +709,7 @@ describe("sharedTreeView", () => {
 			view.root.insertAtEnd("A");
 			assert.throws(
 				() => viewBranch.checkout.transaction.commit(),
-				(e: Error) => validateAssertionError(e, "No transaction to commit"),
+				validateAssertionError("No transaction to commit"),
 			);
 		});
 
