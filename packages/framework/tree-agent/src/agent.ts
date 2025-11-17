@@ -248,6 +248,7 @@ function createDefaultEditor<
 		const context = createContext(tree);
 		// eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
 		const fn = new Function("context", code);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 		await fn(context);
 	};
 }
