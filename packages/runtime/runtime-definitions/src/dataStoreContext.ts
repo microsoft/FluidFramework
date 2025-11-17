@@ -28,6 +28,7 @@ import type {
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import type { MinimumVersionForCollab } from "./compatibilityDefinitions.js";
+import type { ContainerExtensionProvider } from "./containerExtensionProvider.js";
 import type {
 	IFluidDataStoreFactory,
 	IProvideFluidDataStoreFactory,
@@ -81,7 +82,7 @@ export enum FlushModeExperimental {
 	 * This feature requires a version of the loader which supports reference sequence numbers. If an older version of
 	 * the loader is used, the runtime will fall back on FlushMode.TurnBased.
 	 *
-	 * @experimental - Not ready for use
+	 * @experimental Not ready for use
 	 */
 	Async = 2,
 }
@@ -248,7 +249,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/README.md | README}.
 	 */
 	createDetachedDataStore(
-		pkg: Readonly<string[]>,
+		pkg: readonly string[],
 		loadingGroupId?: string,
 	): IFluidDataStoreContextDetached;
 
@@ -307,60 +308,6 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	): Promise<{ snapshotTree: ISnapshotTree; sequenceNumber: number }>;
 }
 
-/**
- * @experimental
- * @deprecated - These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
- * @legacy @beta
- * @sealed
- */
-export interface CommitStagedChangesOptionsExperimental {
-	/**
-	 * If true, intermediate states created by changes made while in staging mode will be "squashed" out of the
-	 * ops which were created during staging mode.
-	 * Defaults to false.
-	 * @remarks
-	 * The squash parameter is analogous to `git squash` but differs in a notable way: ops created by a client exiting staging mode
-	 * are not necessarily coalesced into a single op or something like it.
-	 * It still does have the desirable property that "unnecessary changes" (such as inserting some content then removing it) will
-	 * be removed from the set of submitted ops, which means it helps reduce network traffic and the chance of unwanted data being
-	 * persisted--even if only temporarily--in the document.
-	 *
-	 * By not attempting to reduce the set of changes to a single op a la `git squash`, we can better preserve the ordering of
-	 * changes that remote clients see such that they better align with the client which submitted the changes.
-	 */
-	squash?: boolean;
-}
-
-/**
- * @experimental
- * @deprecated - These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
- * @legacy @beta
- * @sealed
- */
-export interface StageControlsExperimental {
-	/**
-	 * Exit staging mode and commit to any changes made while in staging mode.
-	 * This will cause them to be sent to the ordering service, and subsequent changes
-	 * made by this container will additionally flow freely to the ordering service.
-	 * @param options - Options when committing changes.
-	 */
-	readonly commitChanges: (options?: Partial<CommitStagedChangesOptionsExperimental>) => void;
-	/**
-	 * Exit staging mode and discard any changes made while in staging mode.
-	 */
-	readonly discardChanges: () => void;
-}
-
-/**
- * @experimental
- * @deprecated - These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
- * @legacy @beta
- * @sealed
- */
-export interface IContainerRuntimeBaseExperimental extends IContainerRuntimeBase {
-	enterStagingMode?(): StageControlsExperimental;
-	readonly inStagingMode?: boolean;
-}
 /**
  * These policies can be set by the author of the data store via its data store runtime to influence behaviors.
  *
@@ -454,7 +401,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	 * @param clientId - ID of the client. It's old ID when in disconnected state and
 	 * it's new client ID when we are connecting or connected.
 	 */
-	setConnectionState(connected: boolean, clientId?: string);
+	setConnectionState(connected: boolean, clientId?: string): void;
 
 	/**
 	 * Notifies this object about changes in the readonly state
@@ -480,7 +427,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	 * See remarks about squashing contract on `CommitStagedChangesOptionsExperimental`.
 	 */
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
-	reSubmit(type: string, content: any, localOpMetadata: unknown, squash?: boolean);
+	reSubmit(type: string, content: any, localOpMetadata: unknown, squash?: boolean): void;
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
 	applyStashedOp(content: any): Promise<unknown>;
@@ -536,7 +483,8 @@ export interface IPendingMessagesState {
  * Therefore the semantics of these two interfaces is not really distinct.
  *
  * @privateRemarks
- * In addition to the use for datastores via IFluidDataStoreContext, this is implemented by ContainerRuntime to provide context to the ChannelCollection.
+ * In addition to the use for datastores via IFluidDataStoreContext, this is
+ * partially implemented by ContainerRuntime to provide context to the ChannelCollection.
  *
  * @legacy @beta
  */
@@ -745,6 +693,20 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 		childFactory: T,
 	): ReturnType<Exclude<T["createDataStore"], undefined>>;
 }
+
+/**
+ * Internal extension to {@link IFluidDataStoreContext} for use across FluidFramework packages.
+ *
+ * @remarks
+ * Important: this interface does cross layer boundaries and must follow `@legacy`
+ * layer compatibility patterns.
+ * This is meant to be a staging ground ahead of adding properties to {@link IFluidDataStoreContext}.
+ *
+ * @internal
+ */
+export interface FluidDataStoreContextInternal
+	extends IFluidDataStoreContext,
+		ContainerExtensionProvider {}
 
 /**
  * @legacy @beta

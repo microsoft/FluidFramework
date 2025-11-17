@@ -15,4 +15,9 @@ export {
 export { ConsensusQueueFactory, ConsensusQueue } from "./consensusOrderedCollectionFactory.js";
 export { ConsensusOrderedCollection } from "./consensusOrderedCollection.js";
 export { ConsensusQueueClass } from "./consensusQueue.js";
-export { acquireAndComplete, waitAcquireAndComplete } from "./testUtils.js";
+export {
+	acquireAndComplete,
+	waitAcquireAndComplete,
+	acquireAndRelease,
+	waitAcquireAndRelease,
+} from "./testUtils.js";

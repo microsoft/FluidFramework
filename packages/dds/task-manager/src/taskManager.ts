@@ -14,10 +14,14 @@ import type {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
-import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
-import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import type {
+	ISummaryTreeWithStats,
+	IRuntimeMessageCollection,
+	IRuntimeMessagesContent,
+	ISequencedMessageEnvelope,
+} from "@fluidframework/runtime-definitions/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
 	SharedObject,
@@ -62,7 +66,7 @@ function assertIsTaskManagerOperation(op: unknown): asserts op is ITaskManagerOp
 			typeof op.taskId === "string" &&
 			"type" in op &&
 			(op.type === "volunteer" || op.type === "abandon" || op.type === "complete"),
-		"Not a TaskManager operation",
+		0xc3b /* Not a TaskManager operation */,
 	);
 }
 
@@ -89,7 +93,7 @@ export class TaskManagerClass
 	 */
 	private readonly taskQueues = new Map<string, string[]>();
 
-	// opWatcher emits for every op on this data store.  This is just a repackaging of processCore into events.
+	// opWatcher emits for every op on this data store.  This is just a repackaging of processMessagesCore into events.
 	private readonly opWatcher: EventEmitter = new EventEmitter();
 	// queueWatcher emits an event whenever the consensus state of the task queues changes
 	private readonly queueWatcher: EventEmitter = new EventEmitter();
@@ -101,6 +105,8 @@ export class TaskManagerClass
 	private readonly completedWatcher: EventEmitter = new EventEmitter();
 	// rollbackWatcher emits an event whenever a pending op is rolled back.
 	private readonly rollbackWatcher: EventEmitter = new EventEmitter();
+	// attachedWatcher emits an event whenever the client becomes attached.
+	private readonly attachedWatcher: EventEmitter = new EventEmitter();
 
 	private nextPendingMessageId: number = 0;
 	/**
@@ -116,8 +122,8 @@ export class TaskManagerClass
 	/**
 	 * Returns the clientId. Will return a placeholder if the runtime is detached and not yet assigned a clientId.
 	 */
-	private get clientId(): string | undefined {
-		return this.isAttached() ? this.runtime.clientId : placeholderClientId;
+	private get clientId(): string {
+		return this.runtime.clientId ?? placeholderClientId;
 	}
 
 	/**
@@ -146,11 +152,11 @@ export class TaskManagerClass
 			(taskId: string, clientId: string, local: boolean, messageId: number | undefined) => {
 				if (local) {
 					const latestPendingOps = this.latestPendingOps.get(taskId);
-					assert(latestPendingOps !== undefined, "No pending ops for task");
+					assert(latestPendingOps !== undefined, 0xc3c /* No pending ops for task */);
 					const pendingOp = latestPendingOps.shift();
 					assert(
 						pendingOp !== undefined && pendingOp.messageId === messageId,
-						"Unexpected op",
+						0xc3d /* Unexpected op */,
 					);
 					assert(pendingOp.type === "volunteer", 0x07c /* "Unexpected op type" */);
 					if (latestPendingOps.length === 0) {
@@ -167,11 +173,11 @@ export class TaskManagerClass
 			(taskId: string, clientId: string, local: boolean, messageId: number | undefined) => {
 				if (local) {
 					const latestPendingOps = this.latestPendingOps.get(taskId);
-					assert(latestPendingOps !== undefined, "No pending ops for task");
+					assert(latestPendingOps !== undefined, 0xc3e /* No pending ops for task */);
 					const pendingOp = latestPendingOps.shift();
 					assert(
 						pendingOp !== undefined && pendingOp.messageId === messageId,
-						"Unexpected op",
+						0xc3f /* Unexpected op */,
 					);
 					assert(pendingOp.type === "abandon", 0x07e /* "Unexpected op type" */);
 					if (latestPendingOps.length === 0) {
@@ -189,11 +195,11 @@ export class TaskManagerClass
 			(taskId: string, clientId: string, local: boolean, messageId: number | undefined) => {
 				if (local) {
 					const latestPendingOps = this.latestPendingOps.get(taskId);
-					assert(latestPendingOps !== undefined, "No pending ops for task");
+					assert(latestPendingOps !== undefined, 0xc40 /* No pending ops for task */);
 					const pendingOp = latestPendingOps.shift();
 					assert(
 						pendingOp !== undefined && pendingOp.messageId === messageId,
-						"Unexpected op",
+						0xc41 /* Unexpected op */,
 					);
 					assert(pendingOp.type === "complete", 0x401 /* Unexpected op type */);
 					if (latestPendingOps.length === 0) {
@@ -220,11 +226,6 @@ export class TaskManagerClass
 					return;
 				}
 
-				// Exit early if we are still catching up on reconnect -- we can't be the leader yet anyway.
-				if (this.clientId === undefined) {
-					return;
-				}
-
 				if (oldLockHolder !== this.clientId && newLockHolder === this.clientId) {
 					this.emit("assigned", taskId);
 				} else if (oldLockHolder === this.clientId && newLockHolder !== this.clientId) {
@@ -234,8 +235,6 @@ export class TaskManagerClass
 		);
 
 		this.connectionWatcher.on("disconnect", () => {
-			assert(this.clientId !== undefined, 0x1d3 /* "Missing client id on disconnect" */);
-
 			// Emit "lost" for any tasks we were assigned to.
 			for (const [taskId, clientQueue] of this.taskQueues.entries()) {
 				if (this.isAttached() && clientQueue[0] === this.clientId) {
@@ -325,7 +324,6 @@ export class TaskManagerClass
 
 		if (this.isDetached()) {
 			// Simulate auto-ack in detached scenario
-			assert(this.clientId !== undefined, 0x472 /* clientId should not be undefined */);
 			this.addClientToQueue(taskId, this.clientId);
 			return true;
 		}
@@ -382,6 +380,7 @@ export class TaskManagerClass
 			};
 
 			const rejectOnDisconnect = (): void => {
+				this.abandon(taskId);
 				removeListeners();
 				reject(new Error("Disconnected before acquiring task assignment"));
 			};
@@ -430,6 +429,7 @@ export class TaskManagerClass
 		}
 
 		let volunteerOpMessageId: number | undefined;
+		let abandoned = false;
 
 		const submitVolunteerOp = (): void => {
 			volunteerOpMessageId = this.nextPendingMessageId;
@@ -445,14 +445,16 @@ export class TaskManagerClass
 		const removeListeners = (): void => {
 			this.abandonWatcher.off("abandon", checkIfAbandoned);
 			this.connectionWatcher.off("disconnect", disconnectHandler);
-			this.connectionWatcher.off("connect", submitVolunteerOp);
 			this.completedWatcher.off("completed", checkIfCompleted);
 			this.rollbackWatcher.off("rollback", checkIfRolledBack);
 		};
-
 		const disconnectHandler = (): void => {
-			// Wait to be connected again and then re-submit volunteer op
-			this.connectionWatcher.once("connect", submitVolunteerOp);
+			// If we are disconnected and have not already sent a volunteer op, then we should
+			// submit another volunteer op while disconnected. This will allow the op to be
+			// picked up by resubmitCore() and resubmitted when we reconnect.
+			if (!this.queuedOptimistically(taskId)) {
+				submitVolunteerOp();
+			}
 		};
 
 		const checkIfAbandoned = (eventTaskId: string, messageId: number | undefined): void => {
@@ -475,6 +477,7 @@ export class TaskManagerClass
 			}
 			removeListeners();
 			this.subscribedTasks.delete(taskId);
+			abandoned = true;
 		};
 
 		const checkIfCompleted = (eventTaskId: string, messageId: number | undefined): void => {
@@ -506,23 +509,18 @@ export class TaskManagerClass
 
 		if (this.isDetached()) {
 			// Simulate auto-ack in detached scenario
-			assert(this.clientId !== undefined, 0x473 /* clientId should not be undefined */);
 			this.addClientToQueue(taskId, this.clientId);
 			// Because we volunteered with placeholderClientId, we need to wait for when we attach and are assigned
 			// a real clientId. At that point we should re-enter the queue with a real volunteer op (assuming we are
 			// connected).
-			this.runtime.once("attached", () => {
+			this.attachedWatcher.once("attached", () => {
 				// We call scrubClientsNotInQuorum() in case our clientId changed during the attach process.
 				this.scrubClientsNotInQuorum();
-				if (this.connected) {
+				// Make sure abandon() was not called while we were detached.
+				if (!abandoned) {
 					submitVolunteerOp();
-				} else {
-					this.connectionWatcher.once("connect", submitVolunteerOp);
 				}
 			});
-		} else if (!this.connected) {
-			// If we are disconnected (and attached), wait to be connected and submit volunteer op
-			disconnectHandler();
 		} else if (!this.queuedOptimistically(taskId)) {
 			// We don't need to send a second volunteer op if we just sent one.
 			submitVolunteerOp();
@@ -543,7 +541,6 @@ export class TaskManagerClass
 
 		if (this.isDetached()) {
 			// Simulate auto-ack in detached scenario
-			assert(this.clientId !== undefined, 0x474 /* clientId is undefined */);
 			this.removeClientFromQueue(taskId, this.clientId);
 			this.abandonWatcher.emit("abandon", taskId);
 			return;
@@ -573,7 +570,6 @@ export class TaskManagerClass
 			return false;
 		}
 
-		assert(this.clientId !== undefined, 0x07f /* "clientId undefined" */);
 		return this.taskQueues.get(taskId)?.includes(this.clientId) ?? false;
 	}
 
@@ -624,7 +620,7 @@ export class TaskManagerClass
 	 * @returns the summary of the current state of the task manager
 	 */
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
-		if (this.runtime.clientId === undefined) {
+		if (this.clientId === placeholderClientId) {
 			// If the runtime has still not been assigned a clientId, we should not summarize with the placeholder
 			// clientIds and instead remove them from the queues and require the client to re-volunteer when assigned
 			// a new clientId.
@@ -682,48 +678,74 @@ export class TaskManagerClass
 	protected reSubmitCore(content: unknown, localOpMetadata: number): void {
 		assertIsTaskManagerOperation(content);
 		const pendingOps = this.latestPendingOps.get(content.taskId);
-		assert(pendingOps !== undefined, "No pending ops for task on resubmit attempt");
+		assert(pendingOps !== undefined, 0xc42 /* No pending ops for task on resubmit attempt */);
 		const pendingOpIndex = pendingOps.findIndex(
 			(op) => op.messageId === localOpMetadata && op.type === content.type,
 		);
-		assert(pendingOpIndex !== -1, "Could not match pending op on resubmit attempt");
+		assert(pendingOpIndex !== -1, 0xc43 /* Could not match pending op on resubmit attempt */);
 		pendingOps.splice(pendingOpIndex, 1);
+		if (
+			content.type === "volunteer" &&
+			pendingOps[pendingOps.length - 1]?.type !== "abandon"
+		) {
+			this.submitVolunteerOp(content.taskId);
+		}
 		if (pendingOps.length === 0) {
 			this.latestPendingOps.delete(content.taskId);
 		}
 	}
 
 	/**
-	 * Process a task manager operation
-	 *
-	 * @param message - the message to prepare
-	 * @param local - whether the message was sent by the local client
-	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
-	 * For messages from a remote client, this will be undefined.
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
 	 */
-	protected processCore(
-		message: ISequencedDocumentMessage,
+	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+		const { envelope, local, messagesContent } = messagesCollection;
+		for (const messageContent of messagesContent) {
+			this.processMessage(envelope, messageContent, local);
+		}
+	}
+
+	private processMessage(
+		messageEnvelope: ISequencedMessageEnvelope,
+		messageContent: IRuntimeMessagesContent,
 		local: boolean,
-		localOpMetadata: number | undefined,
 	): void {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-		if (message.type === MessageType.Operation) {
-			const op = message.contents as ITaskManagerOperation;
-			const messageId = localOpMetadata;
+		if (messageEnvelope.type === MessageType.Operation) {
+			const op = messageContent.contents as ITaskManagerOperation;
+			const messageId = messageContent.localOpMetadata;
 
 			switch (op.type) {
 				case "volunteer": {
-					this.opWatcher.emit("volunteer", op.taskId, message.clientId, local, messageId);
+					this.opWatcher.emit(
+						"volunteer",
+						op.taskId,
+						messageEnvelope.clientId,
+						local,
+						messageId,
+					);
 					break;
 				}
 
 				case "abandon": {
-					this.opWatcher.emit("abandon", op.taskId, message.clientId, local, messageId);
+					this.opWatcher.emit(
+						"abandon",
+						op.taskId,
+						messageEnvelope.clientId,
+						local,
+						messageId,
+					);
 					break;
 				}
 
 				case "complete": {
-					this.opWatcher.emit("complete", op.taskId, message.clientId, local, messageId);
+					this.opWatcher.emit(
+						"complete",
+						op.taskId,
+						messageEnvelope.clientId,
+						local,
+						messageId,
+					);
 					break;
 				}
 
@@ -837,12 +859,6 @@ export class TaskManagerClass
 	 * for the latest pending ops.
 	 */
 	private queuedOptimistically(taskId: string): boolean {
-		if (this.isAttached() && !this.connected) {
-			return false;
-		}
-
-		assert(this.clientId !== undefined, 0x07f /* "clientId undefined" */);
-
 		const inQueue = this.taskQueues.get(taskId)?.includes(this.clientId) ?? false;
 		const latestPendingOps = this.latestPendingOps.get(taskId);
 
@@ -879,18 +895,28 @@ export class TaskManagerClass
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.rollback}
 	 */
 	protected rollback(content: unknown, localOpMetadata: unknown): void {
-		assert(typeof localOpMetadata === "number", "Expect localOpMetadata to be a number");
+		assert(
+			typeof localOpMetadata === "number",
+			0xc45 /* Expect localOpMetadata to be a number */,
+		);
 		assertIsTaskManagerOperation(content);
 		const latestPendingOps = this.latestPendingOps.get(content.taskId);
-		assert(latestPendingOps !== undefined, "No pending ops when trying to rollback");
+		assert(latestPendingOps !== undefined, 0xc46 /* No pending ops when trying to rollback */);
 		const pendingOpToRollback = latestPendingOps.pop();
 		assert(
 			pendingOpToRollback !== undefined && pendingOpToRollback.messageId === localOpMetadata,
-			"pending op mismatch",
+			0xc47 /* pending op mismatch */,
 		);
 		if (latestPendingOps.length === 0) {
 			this.latestPendingOps.delete(content.taskId);
 		}
 		this.rollbackWatcher.emit("rollback", content.taskId);
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.didAttach}
+	 */
+	protected didAttach(): void {
+		this.attachedWatcher.emit("attached");
 	}
 }

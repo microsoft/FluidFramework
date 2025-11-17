@@ -35,7 +35,7 @@ describe("SharedSummaryBlock", () => {
 
 	describe("Api", () => {
 		it("can create a shared summary block", () => {
-			assert.ok(sharedSummaryBlock);
+			assert(sharedSummaryBlock !== undefined);
 		});
 
 		it("can set and get shared summary block data", async () => {

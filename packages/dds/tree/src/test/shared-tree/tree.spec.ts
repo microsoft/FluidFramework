@@ -15,7 +15,6 @@ import {
 	type InsertableTypedNode,
 	type TreeNodeSchema,
 	type NodeFromSchema,
-	asTreeViewAlpha,
 	type TreeViewAlpha,
 	type TransactionConstraint,
 	type rollback,
@@ -27,15 +26,16 @@ import {
 	validateUsageError,
 } from "../utils.js";
 
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { hydrate } from "../simple-tree/utils.js";
 import type { requireAssignableTo } from "../../util/index.js";
 
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { runTransaction, Tree } from "../../shared-tree/tree.js";
 // Including tests for TreeAlpha here so they don't have to move if/when stabilized
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { TreeAlpha } from "../../shared-tree/treeAlpha.js";
+import { asAlpha } from "../../api.js";
 
 describe("treeApi", () => {
 	describe("runTransaction", () => {
@@ -426,9 +426,6 @@ describe("treeApi", () => {
 			new TreeViewConfiguration({ schema: schemaFactory.null, enableSchemaValidation: true }),
 		);
 		view.initialize(null);
-		assert.equal(
-			asTreeViewAlpha(view) satisfies TreeViewAlpha<typeof schemaFactory.null>,
-			view,
-		);
+		assert.equal(asAlpha(view) satisfies TreeViewAlpha<typeof schemaFactory.null>, view);
 	});
 });

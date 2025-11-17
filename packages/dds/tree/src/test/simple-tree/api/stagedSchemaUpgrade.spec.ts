@@ -24,7 +24,7 @@ import {
 	TreeAlpha,
 	type ViewContent,
 } from "../../../shared-tree/index.js";
-import { typeboxValidator } from "../../../external-utilities/index.js";
+import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import { FluidClientVersion } from "../../../codec/index.js";
 
 // Some documentation links to this file on GitHub: renaming it may break those links.
@@ -34,10 +34,12 @@ describe("staged schema upgrade", () => {
 	const schemaA = SchemaFactoryAlpha.optional([SchemaFactoryAlpha.number]);
 
 	// Schema B: number or string (string is staged)
-	const schemaB = SchemaFactoryAlpha.optional([
-		SchemaFactoryAlpha.number,
-		SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
-	]);
+	const schemaB = SchemaFactoryAlpha.optional(
+		SchemaFactoryAlpha.types([
+			SchemaFactoryAlpha.number,
+			SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+		]),
+	);
 
 	// Schema C: number or string, both fully allowed
 	const schemaC = SchemaFactoryAlpha.optional([
@@ -171,7 +173,7 @@ describe("staged schema upgrade", () => {
 				idCompressor,
 
 				// TODO: this should use the framework level options, not this packages temporary placeholder
-				oldestCompatibleClient: FluidClientVersion.v2_0,
+				minVersionForCollab: FluidClientVersion.v2_0,
 			}),
 
 			// TODO: we need a way to get the stored schema from independent views. Allow constructing a ViewAbleTree instead of a view directly (maybe an independentTree API?)?
@@ -181,7 +183,7 @@ describe("staged schema upgrade", () => {
 
 		const viewB = independentInitializedView(
 			configB,
-			{ jsonValidator: typeboxValidator },
+			{ jsonValidator: FormatValidatorBasic },
 			content,
 		);
 		// check that we can read the tree
@@ -201,7 +203,7 @@ describe("staged schema upgrade", () => {
 
 		const viewC = independentInitializedView(
 			configC,
-			{ jsonValidator: typeboxValidator },
+			{ jsonValidator: FormatValidatorBasic },
 			content,
 		);
 

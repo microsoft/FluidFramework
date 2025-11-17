@@ -12,7 +12,7 @@ import {
 	StableRange,
 	type TraitLabel,
 } from "@fluid-experimental/tree";
-import { Serializable } from "@fluidframework/datastore-definitions/legacy";
+import type { Serializable } from "@fluidframework/datastore-definitions/legacy";
 
 import { NodeKind, fromJson } from "./treeutils.js";
 
@@ -36,7 +36,7 @@ function getChild(
 	}
 }
 
-// eslint-disable-next-line @typescript-eslint/ban-types
+// eslint-disable-next-line @typescript-eslint/no-wrapper-object-types, @typescript-eslint/ban-types
 export const TreeObjectProxy = <T extends Object>(
 	tree: SharedTree,
 	nodeId: NodeId,

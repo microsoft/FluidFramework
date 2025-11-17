@@ -12,7 +12,7 @@ import {
 	serializeHandles,
 } from "@fluidframework/shared-object-base/internal";
 
-// eslint-disable-next-line import/no-deprecated
+// eslint-disable-next-line import-x/no-deprecated
 import type { ISerializableValue, ISerializedValue } from "./internalInterfaces.js";
 
 /**
@@ -50,7 +50,7 @@ export const serializeValue = (
  * @param serializable - The serializable value to potentially convert.
  */
 export const migrateIfSharedSerializable = (
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	serializable: ISerializableValue,
 	serializer: IFluidSerializer,
 	bind: IFluidHandle,

@@ -8,7 +8,7 @@ import {
 	CollaborativeTextArea,
 	SharedStringHelper,
 } from "@fluid-example/example-utils";
-import { useTree } from "@fluid-experimental/tree-react-api";
+import { useTree } from "@fluidframework/react/alpha";
 import type { IFluidContainer, IFluidHandle } from "fluid-framework";
 import type { ISharedString } from "fluid-framework/legacy";
 import React, { useEffect, useRef, useState } from "react";
@@ -16,7 +16,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { createTodoItem, type TodoListContainerSchema } from "./fluid.js";
 import type { TodoList, TodoItem } from "./schema.js";
 
-// eslint-disable-next-line import/no-unassigned-import
+// eslint-disable-next-line import-x/no-unassigned-import
 import "./style.css";
 
 /**

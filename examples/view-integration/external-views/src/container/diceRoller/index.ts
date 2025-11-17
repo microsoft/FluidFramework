@@ -4,7 +4,8 @@
  */
 
 export { DiceRollerFactory } from "./diceRoller.js";
-export {
+export type {
+	EntryPoint,
 	IDiceRoller,
 	IDiceRollerEvents,
 } from "./interface.js";

@@ -46,6 +46,7 @@ import {
 	type EncodedNestedArrayShape,
 	type EncodedNodeShape,
 	type EncodedValueShape,
+	FieldBatchFormatVersion,
 	SpecialField,
 } from "./format.js";
 import type { IncrementalDecoder } from "./codecs.js";
@@ -238,27 +239,33 @@ export class InlineArrayDecoder implements ChunkDecoder {
  * Decoder for {@link EncodedIncrementalChunkShape}s.
  */
 export class IncrementalChunkDecoder implements ChunkDecoder {
-	public constructor(private readonly cache: DecoderContext<EncodedChunkShape>) {}
+	public constructor(private readonly context: DecoderContext<EncodedChunkShape>) {}
 	public decode(_: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
 		assert(
-			this.cache.incrementalDecoder !== undefined,
+			this.context.incrementalDecoder !== undefined,
 			0xc27 /* incremental decoder not available for incremental field decoding */,
 		);
+
+		const chunkDecoder = (batch: EncodedFieldBatch): TreeChunk => {
+			assert(
+				batch.version >= FieldBatchFormatVersion.v2,
+				"Unsupported FieldBatchFormatVersion for incremental chunks; must be v2 or higher",
+			);
+			const context = new DecoderContext(
+				batch.identifiers,
+				batch.shapes,
+				this.context.idDecodingContext,
+				this.context.incrementalDecoder,
+			);
+			const chunks = genericDecode(decoderLibrary, context, batch, anyDecoder);
+			return aggregateChunks(chunks);
+		};
+
 		const chunkReferenceId = readStreamNumber(stream);
-		const batch = this.cache.incrementalDecoder.getEncodedIncrementalChunk(
+		return this.context.incrementalDecoder.decodeIncrementalChunk(
 			brand(chunkReferenceId),
+			chunkDecoder,
 		);
-		assert(batch !== undefined, 0xc28 /* Incremental chunk data missing */);
-		// The incremental chunk data is self-describing, i.e., it contain its own shapes list and identifier table.
-		// Use these to create a new decoder context to be used to decode the incremental chunk's data.
-		const context = new DecoderContext(
-			batch.identifiers,
-			batch.shapes,
-			this.cache.idDecodingContext,
-			this.cache.incrementalDecoder,
-		);
-		const chunks = genericDecode(decoderLibrary, context, batch, anyDecoder);
-		return aggregateChunks(chunks);
 	}
 }
 

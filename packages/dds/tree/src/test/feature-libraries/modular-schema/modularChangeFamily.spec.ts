@@ -7,12 +7,17 @@ import { strict as assert } from "node:assert";
 
 import type { SessionId } from "@fluidframework/id-compressor";
 
-import { type ICodecOptions, type IJsonCodec, makeCodecFamily } from "../../../codec/index.js";
+import {
+	type CodecWriteOptions,
+	currentVersion,
+	type IJsonCodec,
+	makeCodecFamily,
+} from "../../../codec/index.js";
 import {
 	type FieldChangeHandler,
 	genericFieldKind,
 	type ModularChangeset,
-	FieldKindWithEditor,
+	FlexFieldKind,
 	type RelevantRemovedRootsFromChild,
 	defaultChunkPolicy,
 	type TreeChunk,
@@ -53,6 +58,7 @@ import {
 import {
 	type Mutable,
 	brand,
+	brandConst,
 	idAllocatorFromMaxId,
 	nestedMapFromFlatList,
 	newTupleBTree,
@@ -81,20 +87,20 @@ import {
 	type FieldChangeMap,
 	type FieldId,
 	type NodeChangeset,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeTypes.js";
 import {
 	getFieldKind,
 	intoDelta,
 	updateRefreshers,
 	relevantRemovedRoots as relevantDetachedTreesImplementation,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import type {
 	EncodedNodeChangeset,
 	FieldChangeDelta,
 	FieldChangeEncodingContext,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import { deepFreeze as deepFreezeBase } from "@fluidframework/test-runtime-utils/internal";
 import { BTree } from "@tylerbu/sorted-btree-es6";
@@ -156,8 +162,8 @@ const singleNodeHandler: FieldChangeHandler<SingleNodeChangeset> = {
 	getCrossFieldKeys: (_change) => [],
 };
 
-const singleNodeField = new FieldKindWithEditor(
-	"SingleNode",
+const singleNodeField = new FlexFieldKind(
+	brandConst("SingleNode")<FieldKindIdentifier>(),
 	Multiplicity.Single,
 	singleNodeHandler,
 	(a, b) => false,
@@ -172,18 +178,19 @@ export const fieldKindConfiguration: FieldKindConfiguration = new Map<
 	[valueField.identifier, { kind: valueField, formatVersion: 1 }],
 ]);
 
-const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map(
+const fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind> = new Map(
 	[singleNodeField, valueField].map((field) => [field.identifier, field]),
 );
 
-const codecOptions: ICodecOptions = {
+const codecOptions: CodecWriteOptions = {
 	jsonValidator: ajvValidator,
+	minVersionForCollab: currentVersion,
 };
 
 const codec = makeModularChangeCodecFamily(
 	new Map([[1, fieldKindConfiguration]]),
 	testRevisionTagCodec,
-	makeFieldBatchCodec(codecOptions, 1),
+	makeFieldBatchCodec(codecOptions),
 	codecOptions,
 );
 const family = new ModularChangeFamily(fieldKinds, codec);
@@ -1165,7 +1172,7 @@ describe("ModularChangeFamily", () => {
 				];
 			},
 		} as unknown as FieldChangeHandler<HasRemovedRootsRefs, FieldEditor<HasRemovedRootsRefs>>;
-		const hasRemovedRootsRefsField = new FieldKindWithEditor(
+		const hasRemovedRootsRefsField = new FlexFieldKind(
 			fieldKind,
 			Multiplicity.Single,
 			handler,

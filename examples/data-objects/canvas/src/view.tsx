@@ -7,7 +7,7 @@ import { type IColor, InkCanvas } from "@fluid-experimental/ink";
 import React, { useEffect, useRef, useState } from "react";
 
 import type { Canvas } from "./canvas.js";
-// eslint-disable-next-line import/no-unassigned-import
+// eslint-disable-next-line import-x/no-unassigned-import
 import "./style.less";
 
 const colorPickerColors: IColor[] = [

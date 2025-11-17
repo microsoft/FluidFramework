@@ -17,13 +17,16 @@ import {
 	type IVersion,
 	type ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
-import { NonRetryableError, RateLimiter } from "@fluidframework/driver-utils/internal";
+import {
+	getKeyForCacheEntry,
+	NonRetryableError,
+	RateLimiter,
+} from "@fluidframework/driver-utils/internal";
 import {
 	type IOdspResolvedUrl,
 	type ISnapshotOptions,
 	type InstrumentedStorageTokenFetcher,
 	OdspErrorTypes,
-	getKeyForCacheEntry,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	type ITelemetryLoggerExt,
@@ -38,7 +41,7 @@ import {
 import type {
 	HostStoragePolicyInternal,
 	IDocumentStorageGetVersionsResponse,
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	ISnapshotCachedEntry,
 	ISnapshotCachedEntry2,
 	IVersionedValueWithEpoch,
@@ -295,7 +298,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 						)
 						.then(
 							async (
-								// eslint-disable-next-line import/no-deprecated
+								// eslint-disable-next-line import-x/no-deprecated
 								snapshotCachedEntry: ISnapshotCachedEntry | ISnapshotCachedEntry2,
 							) => {
 								if (snapshotCachedEntry !== undefined) {

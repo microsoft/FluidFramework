@@ -9,7 +9,11 @@ export {
 } from "./editableTreeBinder.js";
 export { allowsValue, assertAllowedValue, isTreeValue } from "./valueUtilities.js";
 
-export { ForestSummarizer } from "./forest-summary/index.js";
+export {
+	ForestSummarizer,
+	getCodecTreeForForestFormat,
+	type ForestFormatVersion,
+} from "./forest-summary/index.js";
 export {
 	cursorForMapTreeField,
 	cursorForMapTreeNode,
@@ -28,6 +32,8 @@ export {
 	encodeTreeSchema,
 	makeSchemaCodec,
 	makeSchemaCodecs,
+	getCodecTreeForSchemaFormat,
+	clientVersionToSchemaVersion,
 } from "./schema-index/index.js";
 export {
 	stackTreeNodeCursor,
@@ -75,7 +81,6 @@ export {
 	genericFieldKind,
 	type HasFieldChanges,
 	type NodeExistsConstraint,
-	FieldKindWithEditor,
 	ModularChangeFamily,
 	type RelevantRemovedRootsFromChild,
 	EncodedModularChangeset,
@@ -98,11 +103,15 @@ export {
 	defaultChunkPolicy,
 	type FieldBatch,
 	type FieldBatchCodec,
+	FieldBatchFormatVersion,
+	getCodecTreeForFieldBatchFormat,
 	makeTreeChunker,
 	makeFieldBatchCodec,
-	fluidVersionToFieldBatchCodecWriteVersion,
 	type FieldBatchEncodingContext,
 	emptyChunk,
+	combineChunks,
+	type IncrementalEncodingPolicy,
+	defaultIncrementalEncodingPolicy,
 } from "./chunked-forest/index.js";
 
 export {
@@ -135,11 +144,16 @@ export {
 	fieldKindConfigurations,
 	intoDelta,
 	relevantRemovedRoots,
+	getCodecTreeForModularChangeFormat,
+	type ModularChangeFormatVersion,
+} from "./default-schema/index.js";
+
+export {
 	SchemaValidationError,
 	isNodeInSchema,
 	isFieldInSchema,
 	throwOutOfSchema,
-} from "./default-schema/index.js";
+} from "./schemaChecker.js";
 
 export {
 	type FlexTreeOptionalField,
@@ -171,6 +185,9 @@ export {
 	type FlexTreeHydratedContextMinimal,
 	type HydratedFlexTreeNode,
 	getOrCreateHydratedFlexTreeNode,
+	currentObserver,
+	withObservation,
+	type Observer,
 } from "./flex-tree/index.js";
 
 export {
@@ -187,6 +204,7 @@ export {
 	type SchemaChange,
 	makeSchemaChangeCodecs,
 	EncodedSchemaChange,
+	getCodecTreeForSchemaChangeFormat,
 } from "./schema-edits/index.js";
 
 export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily.js";

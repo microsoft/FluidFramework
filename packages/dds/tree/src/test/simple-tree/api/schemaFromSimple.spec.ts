@@ -12,10 +12,13 @@ import {
 	toInitialSchema,
 	type ImplicitFieldSchema,
 	type ValidateRecursiveSchema,
+	type SimpleObjectNodeSchema,
+	isObjectNodeSchema,
+	SchemaFactoryAlpha,
 } from "../../../simple-tree/index.js";
 import { exportSimpleSchema } from "../../../shared-tree/index.js";
 import { testTreeSchema } from "../../cursorTestSuite.js";
-import { testSimpleTrees } from "../../testTrees.js";
+import { HasUnknownOptionalFields, testSimpleTrees } from "../../testTrees.js";
 
 describe("schemaFromSimple", () => {
 	function roundtrip(root: ImplicitFieldSchema): void {
@@ -67,6 +70,82 @@ describe("schemaFromSimple", () => {
 		}
 		it("test schema union", () => {
 			roundtrip(testTreeSchema);
+		});
+	});
+
+	describe("compatibility fields", () => {
+		it("handles allowUnknownOptionalFields = true", () => {
+			const root = HasUnknownOptionalFields;
+			const simpleSchema = getSimpleSchema(root);
+			const simpleObjectSchema = simpleSchema.definitions.get(
+				"test.hasUnknownOptionalFields",
+			) as SimpleObjectNodeSchema;
+			assert.equal(simpleObjectSchema.allowUnknownOptionalFields, true);
+
+			const viewSchema = generateSchemaFromSimpleSchema(simpleSchema);
+			const objectViewSchema = viewSchema.definitions.get("test.hasUnknownOptionalFields");
+			assert(
+				objectViewSchema !== undefined && isObjectNodeSchema(objectViewSchema),
+				"expected object node schema",
+			);
+			assert.equal(objectViewSchema.allowUnknownOptionalFields, true);
+		});
+
+		it("handles allowUnknownOptionalFields = false", () => {
+			const factory = new SchemaFactoryAlpha("test");
+			class HasNoUnknownOptionalFields extends factory.objectAlpha(
+				"hasNoUnknownOptionalFields",
+				{},
+				{
+					allowUnknownOptionalFields: false,
+				},
+			) {}
+			const root = HasNoUnknownOptionalFields;
+			const simpleSchema = getSimpleSchema(root);
+			const simpleObjectSchema = simpleSchema.definitions.get(
+				"test.hasNoUnknownOptionalFields",
+			) as SimpleObjectNodeSchema;
+			assert.equal(simpleObjectSchema.allowUnknownOptionalFields, false);
+
+			const viewSchema = generateSchemaFromSimpleSchema(simpleSchema);
+			const objectViewSchema = viewSchema.definitions.get("test.hasNoUnknownOptionalFields");
+			assert(
+				objectViewSchema !== undefined && isObjectNodeSchema(objectViewSchema),
+				"expected object node schema",
+			);
+			assert.equal(objectViewSchema.allowUnknownOptionalFields, false);
+		});
+
+		it("handles staged allowed types", () => {
+			const root = SchemaFactoryAlpha.types([
+				SchemaFactoryAlpha.number,
+				SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+			]);
+			const simpleSchema = getSimpleSchema(root);
+			const rootField = simpleSchema.root;
+
+			assert.equal(
+				rootField.simpleAllowedTypes.get("com.fluidframework.leaf.string")?.isStaged,
+				true,
+			);
+
+			assert.equal(
+				rootField.simpleAllowedTypes.get("com.fluidframework.leaf.number")?.isStaged,
+				false,
+			);
+
+			const viewSchema = generateSchemaFromSimpleSchema(simpleSchema);
+			const rootFieldView = viewSchema.root;
+
+			assert.equal(
+				rootFieldView.simpleAllowedTypes.get("com.fluidframework.leaf.string")?.isStaged,
+				true,
+			);
+
+			assert.equal(
+				rootFieldView.simpleAllowedTypes.get("com.fluidframework.leaf.number")?.isStaged,
+				false,
+			);
 		});
 	});
 });
