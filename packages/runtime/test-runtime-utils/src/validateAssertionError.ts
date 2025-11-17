@@ -87,7 +87,10 @@ export function validateError(
 	errorType: new (...args: any[]) => Error = Error,
 ): (error: Error) => true {
 	return (error: Error) => {
-		assert(error instanceof errorType, `Expected an error of type "${errorType.name}", but got "${error}"`);
+		assert(
+			error instanceof errorType,
+			`Expected an error of type "${errorType.name}", but got "${error}"`,
+		);
 		if (testErrorMessage(error.message, expectedErrorMsg)) {
 			throw new Error(
 				`Unexpected ${errorType.name} thrown\nActual: ${error.message}\nExpected: ${expectedErrorMsg}`,
