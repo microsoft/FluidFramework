@@ -216,7 +216,7 @@ export const cleanedPackageVersion =
 	`${parsedPackageVersion.major}.${parsedPackageVersion.minor}.${parsedPackageVersion.patch}` as MinimumVersionForCollab;
 
 /**
- * Narrows the type of the provided {@link SemanticVersion} to a {@link MinimumVersionForCollab}, throwing a UsageError if it is not valid.
+ * Narrows the type of the provided {@link SemanticVersion} to a {@link @fluidframework/runtime-definitions#MinimumVersionForCollab}, throwing a UsageError if it is not valid.
  * @remarks
  * This is more strict than the type constraints imposed by `MinimumVersionForCollab`.
  * Currently there is no type which is used to separate semantically valid and typescript allowed MinimumVersionForCollab values:
