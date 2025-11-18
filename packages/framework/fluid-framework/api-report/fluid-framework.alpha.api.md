@@ -1400,18 +1400,6 @@ export interface SharedTreeFormatOptions {
     treeEncodeType: TreeCompressionStrategy;
 }
 
-// @alpha
-export const SharedTreeFormatVersion: {
-    readonly v1: 1;
-    readonly v2: 2;
-    readonly v3: 3;
-    readonly v5: 5;
-    readonly vSharedBranches: 100;
-};
-
-// @alpha
-export type SharedTreeFormatVersion = typeof SharedTreeFormatVersion;
-
 // @alpha @input
 export interface SharedTreeOptions extends Partial<CodecWriteOptions>, Partial<SharedTreeFormatOptions>, SharedTreeOptionsBeta {
     readonly enableSharedBranches?: boolean;
