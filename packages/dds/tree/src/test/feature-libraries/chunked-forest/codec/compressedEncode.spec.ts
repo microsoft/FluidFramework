@@ -8,7 +8,7 @@ import { strict as assert, fail } from "node:assert";
 import { compareArrays } from "@fluidframework/core-utils/internal";
 import {
 	MockHandle,
-	validateAssertionError,
+	validateAssertionError2 as validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 
 import {
@@ -498,16 +498,11 @@ describe("compressedEncode", () => {
 				fieldBatchVersion,
 			);
 
-			assert.throws(
-				() => {
-					checkFieldEncode(incrementalFieldEncoder, context, [{ type: brand("foo") }]);
-				},
-				(error: Error) =>
-					validateAssertionError(
-						error,
-						"incremental encoder must be defined to use incrementalFieldEncoder",
-					),
-			);
+			assert.throws(() => {
+				checkFieldEncode(incrementalFieldEncoder, context, [{ type: brand("foo") }]);
+			}, validateAssertionError(
+				"incremental encoder must be defined to use incrementalFieldEncoder",
+			));
 		});
 
 		it("has correct shape", () => {
@@ -527,7 +522,7 @@ describe("compressedEncode", () => {
 
 			assert.throws(
 				() => checkFieldEncode(incrementalFieldEncoder, context, []),
-				(error: Error) => validateAssertionError(error, /Unsupported FieldBatchFormatVersion/),
+				validateAssertionError(/Unsupported FieldBatchFormatVersion/),
 			);
 		});
 	});

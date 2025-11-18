@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import { validateAssertionError2 as validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	type GraphCommit,
@@ -421,10 +421,10 @@ describe("Branches", () => {
 	}
 
 	function assertDisposed(fn: () => void): void {
-		assert.throws(fn, (e: Error) => validateAssertionError(e, "Branch is disposed"));
+		assert.throws(fn, validateAssertionError("Branch is disposed"));
 	}
 
 	function assertNotDisposed(fn: () => void): void {
-		assert.doesNotThrow(fn, (e: Error) => validateAssertionError(e, /\*/));
+		assert.doesNotThrow(fn, validateAssertionError(/\*/));
 	}
 });

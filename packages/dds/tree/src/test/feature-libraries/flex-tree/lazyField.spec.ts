@@ -7,7 +7,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import { validateAssertionError2 as validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	type FieldAnchor,
@@ -93,13 +93,11 @@ describe("LazyField", () => {
 		cursor.free();
 		assert.throws(
 			() => optionalField.editor.set(undefined, optionalField.length === undefined),
-			(e: Error) =>
-				validateAssertionError(e, /only allowed on fields with TreeStatus.InDocument status/),
+			validateAssertionError(/only allowed on fields with TreeStatus.InDocument status/),
 		);
 		assert.throws(
 			() => valueField.editor.set(mapTreeFromCursor(singleJsonCursor({}))),
-			(e: Error) =>
-				validateAssertionError(e, /only allowed on fields with TreeStatus.InDocument status/),
+			validateAssertionError(/only allowed on fields with TreeStatus.InDocument status/),
 		);
 	});
 

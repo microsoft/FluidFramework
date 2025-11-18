@@ -13,7 +13,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockFluidDataStoreContext,
-	validateAssertionError,
+	validateAssertionError2 as validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { FluidDataStoreRuntime, type ISharedObjectRegistry } from "../dataStoreRuntime.js";
@@ -61,7 +61,7 @@ describe("RemoteChannelContext Tests", () => {
 			);
 		assert.throws(
 			codeBlock,
-			(e: Error) => validateAssertionError(e, "Channel context ID cannot contain slashes"),
+			validateAssertionError("Channel context ID cannot contain slashes"),
 			"Expected exception was not thrown",
 		);
 	});

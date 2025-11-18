@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 import {
 	MockHandle,
-	validateAssertionError,
+	validateAssertionError2 as validateAssertionError,
 	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
 import { isStableId } from "@fluidframework/id-compressor/internal";
@@ -1550,11 +1550,7 @@ describe("treeNodeApi", () => {
 			});
 			assert.throws(
 				() => Tree.shortId(view.root),
-				(error: Error) =>
-					validateAssertionError(
-						error,
-						/may not be called on a node with more than one identifier/,
-					),
+				validateAssertionError(/may not be called on a node with more than one identifier/),
 			);
 		});
 
@@ -1661,11 +1657,7 @@ describe("treeNodeApi", () => {
 			});
 			assert.throws(
 				() => TreeAlpha.identifier(view.root),
-				(error: Error) =>
-					validateAssertionError(
-						error,
-						/may not be called on a node with more than one identifier/,
-					),
+				validateAssertionError(/may not be called on a node with more than one identifier/),
 			);
 		});
 
@@ -1762,11 +1754,7 @@ describe("treeNodeApi", () => {
 				});
 				assert.throws(
 					() => TreeAlpha.identifier.getShort(view.root),
-					(error: Error) =>
-						validateAssertionError(
-							error,
-							/may not be called on a node with more than one identifier/,
-						),
+					validateAssertionError(/may not be called on a node with more than one identifier/),
 				);
 			});
 
