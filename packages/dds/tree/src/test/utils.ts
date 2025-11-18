@@ -1130,8 +1130,8 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 				it("throws when encoding", () => {
 					assert(encodingTestData.successes.length > 0);
 					const [name, data, context] = encodingTestData.successes[0];
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					assert.throws(
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 						() => jsonCodec.encode(data, context!),
 						validateUsageError(/Cannot encode data to format/),
 					);
@@ -1139,8 +1139,8 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 				it("throws when decoding", () => {
 					assert(encodingTestData.successes.length > 0);
 					const [name, data, context] = encodingTestData.successes[0];
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					assert.throws(
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 						() => jsonCodec.decode({ version }, context!),
 						validateUsageError(/Cannot decode data to format/),
 					);
