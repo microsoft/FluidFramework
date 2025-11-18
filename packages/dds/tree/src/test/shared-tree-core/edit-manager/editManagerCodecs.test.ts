@@ -211,7 +211,8 @@ export function testCodec() {
 			family,
 			testCases,
 			assertEquivalentSummaryDataIgnoreOriginator,
-			[1, 2, 3, 4],
+			[3, 4],
+			[1, 2],
 		);
 
 		makeEncodingTestSuite(family, testCases, undefined, [5]);
