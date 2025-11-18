@@ -5,7 +5,7 @@
 
 import { strict as assert, fail } from "node:assert";
 import {
-	validateAssertionError,
+	validateAssertionError2 as validateAssertionError,
 	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
 
@@ -153,15 +153,9 @@ describe("TreeNodeValid", () => {
 			}
 		}
 
-		assert.throws(
-			() => new Subclass(),
-			(error: Error) => validateAssertionError(error, /invalid schema class/),
-		);
+		assert.throws(() => new Subclass(), validateAssertionError(/invalid schema class/));
 		// Ensure oneTimeSetup doesn't prevent error from rethrowing
-		assert.throws(
-			() => new Subclass(),
-			(error: Error) => validateAssertionError(error, /invalid schema class/),
-		);
+		assert.throws(() => new Subclass(), validateAssertionError(/invalid schema class/));
 	});
 
 	it("multiple subclass valid", () => {

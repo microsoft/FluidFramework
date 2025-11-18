@@ -17,7 +17,7 @@ import type {
 	SequenceDeltaEvent,
 	SharedString,
 } from "@fluidframework/sequence/internal";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import { validateAssertionError2 as validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -176,7 +176,7 @@ describeCompat("Multiple DDS orderSequentially", "NoCompat", (getTestObjectProvi
 		async () => {
 			sharedMap.set("key", "BEFORE");
 
-			try {
+			assert.throws(() => {
 				containerRuntime.orderSequentially(() => {
 					sharedMap.set("key", "SHOULD BE ROLLED BACK");
 
@@ -185,12 +185,8 @@ describeCompat("Multiple DDS orderSequentially", "NoCompat", (getTestObjectProvi
 						type: "rejoin",
 					});
 				});
-			} catch (err) {
-				error = err as Error;
-			}
+			}, validateAssertionError("Unexpected message type submitted in Staging Mode"));
 
-			assert(error !== undefined, "No error");
-			validateAssertionError(error, "Unexpected message type submitted in Staging Mode");
 			assert.equal(
 				changedEventData.length,
 				3,

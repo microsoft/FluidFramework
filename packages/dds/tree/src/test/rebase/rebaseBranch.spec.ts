@@ -5,7 +5,7 @@
 
 import { strict as assert, fail } from "node:assert";
 
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import { validateAssertionError2 as validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 // Allow importing from these specific files which are being tested:
 import {
@@ -85,12 +85,12 @@ describe("rebaseBranch", () => {
 
 		assert.throws(
 			() => rebaseBranch(mintRevisionTag, new TestChangeRebaser(), n3, n2),
-			(e: Error) => validateAssertionError(e, "branches must be related"),
+			validateAssertionError("branches must be related"),
 		);
 
 		assert.throws(
 			() => rebaseBranch(mintRevisionTag, new TestChangeRebaser(), n2, n3, n1),
-			(e: Error) => validateAssertionError(e, "target commit is not in target branch"),
+			validateAssertionError("target commit is not in target branch"),
 		);
 	});
 

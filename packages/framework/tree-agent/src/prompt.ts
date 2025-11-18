@@ -121,23 +121,23 @@ export function getPrompt(args: {
 	 * ${`Example: Check if a node is a ${exampleTypeName} with \`if (context.is.${exampleTypeName}(node)) {}\``}
 	 */
 	is: Record<string, <T extends TreeData>(data: unknown) => data is T>;
-	
+
 	/**
 	 * Checks if the provided data is an array.
 	 * @remarks
 	 * DO NOT use \`Array.isArray\` to check if tree data is an array - use this function instead.
-	 * 
+	 *
 	 * This function will also work for native JavaScript arrays.
 	 *
 	 * ${`Example: \`if (context.isArray(node)) {}\``}
 	 */
 	isArray(data: any): boolean;
-	
+
 	/**
 	 * Checks if the provided data is a map.
 	 * @remarks
 	 * DO NOT use \`instanceof Map\` to check if tree data is a map - use this function instead.
-	 * 
+	 *
 	 * This function will also work for native JavaScript Map instances.
 	 *
 	 * ${`Example: \`if (context.isMap(node)) {}\``}
