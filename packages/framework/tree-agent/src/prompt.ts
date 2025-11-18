@@ -77,7 +77,7 @@ export function getPrompt(args: {
 	}
 
 	const stringified = stringifyTree(field);
-	const details: SchemaDetails = { hasHelperMethods: false, hasHelperProperties: false };
+	const details: SchemaDetails = { hasHelperMethods: false };
 	const typescriptSchemaTypes = getZodSchemaAsTypeScript(domainTypes, details);
 	const exampleTypeName =
 		nodeTypeUnion === undefined
@@ -179,10 +179,6 @@ export function getPrompt(args: {
 }
 \`\`\``;
 
-	const helperPropertyExplanation = details.hasHelperProperties
-		? "Some schema types expose additional helper properties directly on the objects (including readonly properties). When these properties are available, you may read them and use them in your logic."
-		: "";
-
 	const helperMethodExplanation = details.hasHelperMethods
 		? `Manipulating the data using the APIs described below is allowed, but when possible ALWAYS prefer to use any application helper methods exposed on the schema TypeScript types if the goal can be accomplished that way.
 It will often not be possible to fully accomplish the goal using those helpers. When this is the case, mutate the objects as normal, taking into account the following guidance.`
@@ -280,7 +276,6 @@ There are other additional helper functions available on the \`context\` object 
 Here is the definition of the \`Context\` interface:
 ${context}
 ${helperMethodExplanation}
-${helperPropertyExplanation}
 ${hasArrays ? arrayEditing : ""}${hasMaps ? mapEditing : ""}#### Additional Notes
 
 Before outputting the edit function, you should check that it is valid according to both the application tree's schema and any restrictions of the editing APIs described above.

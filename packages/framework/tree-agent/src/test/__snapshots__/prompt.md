@@ -141,7 +141,6 @@ Here is the definition of the `Context` interface:
 ```
 Manipulating the data using the APIs described below is allowed, but when possible ALWAYS prefer to use any application helper methods exposed on the schema TypeScript types if the goal can be accomplished that way.
 It will often not be possible to fully accomplish the goal using those helpers. When this is the case, mutate the objects as normal, taking into account the following guidance.
-Some schema types expose additional helper properties directly on the objects (including readonly properties). When these properties are available, you may read them and use them in your logic.
 #### Editing Arrays
 
 The arrays in the tree are somewhat different than normal JavaScript `Array`s.

@@ -152,37 +152,6 @@ export type ReadOnlyRequirement<TObj, K extends keyof TObj> = {
 }[K];
 
 // @alpha
-export class PropertyDef {
-    constructor(name: string, description: string | undefined, schema: ZodTypeAny, readOnly: boolean);
-    // (undocumented)
-    readonly description: string | undefined;
-    // (undocumented)
-    readonly name: string;
-    // (undocumented)
-    readonly readOnly: boolean;
-    // (undocumented)
-    readonly schema: ZodTypeAny;
-}
-
-// @alpha
-export type ReadonlyKeys<T> = {
-    [P in keyof T]-?: IfEquals<{
-        [Q in P]: T[P];
-    }, {
-        -readonly [Q in P]: T[P];
-    }, never, P>;
-}[keyof T];
-
-// @alpha
-export type ReadOnlyRequirement<TObj, K extends keyof TObj> = {
-    [P in K]-?: P extends ReadonlyKeys<TObj> ? {
-        readOnly: true;
-    } : {
-        readOnly?: false;
-    };
-}[K];
-
-// @alpha
 export interface SemanticAgentOptions<TSchema extends ImplicitFieldSchema> {
     domainHints?: string;
     editor?: SynchronousEditor<TSchema> | AsynchronousEditor<TSchema>;
@@ -217,14 +186,13 @@ export type SynchronousEditor<TSchema extends ImplicitFieldSchema> = (tree: View
 export type TreeView<TRoot extends ImplicitFieldSchema> = Pick<TreeViewAlpha<TRoot>, "root" | "fork" | "merge" | "rebaseOnto" | "schema" | "events"> & TreeBranchAlpha;
 
 // @alpha
-export type ViewOrTree<TSchema extends ImplicitFieldSchema> = TreeView<TSchema> | (ReadableField<TSchema> & TreeNode);
-export type TreeView<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema> = Pick<TreeViewAlpha<TRoot>, "root" | "fork" | "merge" | "rebaseOnto" | "schema" | "events"> & TreeBranchAlpha;
-
-// @alpha
 export type TypeMatchOrError<Expected, Received> = [Received] extends [Expected] ? unknown : {
     __error__: "Zod schema value type does not match the property's declared type";
     expected: Expected;
     received: Received;
 };
+
+// @alpha
+export type ViewOrTree<TSchema extends ImplicitFieldSchema> = TreeView<TSchema> | (ReadableField<TSchema> & TreeNode);
 
 ```

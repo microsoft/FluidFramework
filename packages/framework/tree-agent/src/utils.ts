@@ -202,13 +202,11 @@ export function unqualifySchema(schemaIdentifier: string): string {
  */
 export interface SchemaDetails {
 	hasHelperMethods: boolean;
-	hasHelperProperties: boolean;
 }
 
 // TODO: yuck, this entire file has too many statics. we should rewrite it as a generic zod schema walk.
 let detailsI: SchemaDetails = {
 	hasHelperMethods: false,
-	hasHelperProperties: false,
 };
 
 /**
@@ -225,7 +223,7 @@ export function getZodSchemaAsTypeScript(
 	schema: Record<string, z.ZodType>,
 	details?: SchemaDetails,
 ): string {
-	detailsI = details ?? { hasHelperMethods: false, hasHelperProperties: false };
+	detailsI = details ?? { hasHelperMethods: false };
 	let result = "";
 	let startOfLine = true;
 	let indent = 0;
@@ -433,8 +431,6 @@ export function getZodSchemaAsTypeScript(
 			}
 			return;
 		}
-
-		detailsI.hasHelperProperties = true;
 
 		if (property.readOnly === true) {
 			append(" // readonly");

@@ -144,11 +144,8 @@ describe("Prompt generation", () => {
 				subtree: new Subtree(view),
 				editToolName: "EditTreeTool",
 			});
-			assert.ok(
-				prompt.includes(
-					"Some schema types expose additional helper properties directly on the objects (including readonly properties).",
-				),
-			);
+			assert.ok(prompt.includes("name: string; // readonly"));
+			assert.ok(prompt.includes("testProperty: string; // readonly"));
 		}
 	});
 
