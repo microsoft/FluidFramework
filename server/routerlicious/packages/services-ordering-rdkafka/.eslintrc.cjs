@@ -18,5 +18,8 @@ module.exports = {
 		// TODO: remove usages of deprecated APIs and remove this override
 		"import-x/no-deprecated": "warn",
 		"import-x/no-nodejs-modules": "off",
+
+		// TODO: re-enable once eslint is v9+ and @typescript-eslint is upgraded accordingly
+		"@typescript-eslint/no-unsafe-return": "off",
 	},
 };
