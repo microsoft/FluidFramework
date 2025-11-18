@@ -129,10 +129,7 @@ export function makeEditManagerCodecs<TChangeset>(
 		switch (version) {
 			case EditManagerFormatVersion.v1:
 			case EditManagerFormatVersion.v2:
-				return [
-					version,
-					makeDiscontinuedCodecVersion<any, any>(options, new Set([version]), "2.73.0"),
-				];
+				return [version, makeDiscontinuedCodecVersion(options, version, "2.73.0")];
 			case EditManagerFormatVersion.v3:
 			case EditManagerFormatVersion.v4: {
 				const changeCodec = changeCodecs.resolve(dependentChangeFormatVersion.lookup(version));

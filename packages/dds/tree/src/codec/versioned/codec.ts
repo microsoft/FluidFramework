@@ -79,29 +79,28 @@ export function makeVersionedValidatedCodec<
 }
 
 export function makeDiscontinuedCodecVersion<
-	TDecoded extends Versioned,
+	TDecoded,
 	TEncoded extends Versioned = JsonCompatibleReadOnly & Versioned,
 	TContext = unknown,
 >(
 	options: ICodecOptions,
-	discontinuedVersions: Set<FormatVersion>,
+	discontinuedVersion: FormatVersion,
 	discontinuedSince: SemanticVersion,
 ): IJsonCodec<TDecoded, TEncoded, TEncoded, TContext> {
 	const schema = Type.Object(
 		{
-			version: Type.Union(
-				Array.from(discontinuedVersions).map((v) =>
-					v === undefined ? Type.Undefined() : Type.Literal(v),
-				),
-			),
+			version:
+				discontinuedVersion === undefined
+					? Type.Undefined()
+					: Type.Literal(discontinuedVersion),
 		},
 		// Using `additionalProperties: true` allows this schema to be used when loading data encoded by older versions even though they contain additional properties.
 		{ additionalProperties: true },
 	);
 	const codec: IJsonCodec<TDecoded, TEncoded, TEncoded, TContext> = {
-		encode: (data: TDecoded): TEncoded => {
+		encode: (_: TDecoded): TEncoded => {
 			throw new UsageError(
-				`Cannot encode data to format ${data.version}. The codec was discontinued in FF version ${discontinuedSince}.`,
+				`Cannot encode data to format ${discontinuedVersion}. The codec was discontinued in FF version ${discontinuedSince}.`,
 			);
 		},
 		decode: (data: TEncoded): TDecoded => {
@@ -110,7 +109,7 @@ export function makeDiscontinuedCodecVersion<
 			);
 		},
 	};
-	return makeVersionedValidatedCodec(options, discontinuedVersions, schema, codec);
+	return makeVersionedValidatedCodec(options, new Set([discontinuedVersion]), schema, codec);
 }
 
 /**

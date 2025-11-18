@@ -132,11 +132,7 @@ export function makeMessageCodecs<TChangeset>(
 					version === MessageFormatVersion.undefined ? undefined : version;
 				return [
 					versionOrUndefined,
-					makeDiscontinuedCodecVersion<any, any>(
-						options,
-						new Set([versionOrUndefined]),
-						"2.73.0",
-					),
+					makeDiscontinuedCodecVersion(options, versionOrUndefined, "2.73.0"),
 				];
 			}
 			case MessageFormatVersion.v3:
