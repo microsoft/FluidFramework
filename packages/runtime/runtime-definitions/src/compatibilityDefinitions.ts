@@ -12,9 +12,9 @@
  *
  * Must be at least {@link @fluidframework/runtime-utils#lowestMinVersionForCollab} and cannot exceed the current version.
  *
- * {@link @fluidframework/runtime-utils#semanticVersionToMinimumVersionForCollab} can be used to check these invariants at runtime.
+ * {@link @fluidframework/runtime-utils#validateMinimumVersionForCollab} can be used to check these invariants at runtime.
  * Since TypeScript cannot enforce them all for literals in code,
- * it may be useful to use `semanticVersionToMinimumVersionForCollab` values which may come from constants in the codebase typed as a `MinimumVersionForCollab`.
+ * it may be useful to use `validateMinimumVersionForCollab` values which may come from constants in the codebase typed as a `MinimumVersionForCollab`.
  *
  * @privateRemarks
  * Since this uses the semver notion of "greater" (which might not actually mean a later release, or supporting more features), care must be taken with how this is used.

@@ -86,13 +86,17 @@ export type ConfigMap<T extends Record<string, unknown>> = {
 /**
  * Entry in {@link ConfigMap} associating {@link MinimumMinorSemanticVersion} with configuration values that became supported in that version.
  * @remarks
- * All entries must at least provide an entry for {@link lowestMinVersionForCollab}
+ * All entries must at least provide an entry for {@link lowestMinVersionForCollab}.
  * @internal
  */
 export interface ConfigMapEntry<T> {
+	// This index signature (See https://www.typescriptlang.org/docs/handbook/2/objects.html#index-signatures) requires all properties on this type to to have keys that are a MinimumMinorSemanticVersion and values of type T.
+	// Note that the "version" part of this syntax is really just documentation and has no impact on the type checking (other than some identifier being required to the syntax here to differentiate it from the computed property syntax).
 	[version: MinimumMinorSemanticVersion]: T;
 	// Require an entry for the defaultMinVersionForCollab:
 	// this ensures that all versions of lowestMinVersionForCollab or later have a specified value in the ConfigMap.
+	// Note that this is NOT an index signature.
+	// This is a regular property with a computed name (See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Object_initializer#computed_property_names).
 	[lowestMinVersionForCollab]: T;
 }
 
@@ -117,14 +121,14 @@ export function getConfigsForMinVersionForCollab<T extends Record<SemanticVersio
 	minVersionForCollab: MinimumVersionForCollab,
 	configMap: ConfigMap<T> & Record<keyof T, unknown>,
 ): T {
-	semanticVersionToMinimumVersionForCollab(minVersionForCollab);
+	validateMinimumVersionForCollab(minVersionForCollab);
 	const defaultConfigs: Partial<T> = {};
 	// Iterate over configMap to get default values for each option.
 	for (const [key, config] of Object.entries(configMap)) {
 		const entries: [string, unknown][] = Object.entries(config); // Assigning this to a typed variable to convert the "any" into unknown.
 		// Validate and strongly type the versions from the configMap.
 		const versions: [MinimumVersionForCollab, unknown][] = entries.map(([version, value]) => {
-			semanticVersionToMinimumVersionForCollab(version);
+			validateMinimumVersionForCollab(version);
 			return [version, value];
 		});
 		// Sort the versions in descending order to find the largest compatible entry.
@@ -193,7 +197,7 @@ const parsedPackageVersion = parse(pkgVersion) ?? fail("Invalid package version"
  *
  * To accomplish this, the version the next release will have is provided here as `cleanedPackageVersion` while `pkgVersion` may be a prerelease in some cases,
  * like when running tests on CI, or in an actual prerelease published package.
- * This is then used in {@link semanticVersionToMinimumVersionForCollab} to allow the version shown on main to be usable as a `minVersionForCollab`, even in CI and prerelease packages.
+ * This is then used in {@link validateMinimumVersionForCollab} to allow the version shown on main to be usable as a `minVersionForCollab`, even in CI and prerelease packages.
  *
  * This is of particular note in two cases:
  * 1. When landing a new feature, and setting the minVersionForCollab which enables it to be the version that the next release will have.
@@ -204,26 +208,25 @@ const parsedPackageVersion = parse(pkgVersion) ?? fail("Invalid package version"
  * To accommodate some uses of the second case, it might be useful to package export this in the future.
  *
  * @privateRemarks
- * Since this is used by semanticVersionToMinimumVersionForCollab, the type case to MinimumVersionForCollab can not use it directly.
- * Thus this is just `as` cast here, and a test confirms it is valid according to semanticVersionToMinimumVersionForCollab.
+ * Since this is used by validateMinimumVersionForCollab, the type case to MinimumVersionForCollab can not use it directly.
+ * Thus this is just `as` cast here, and a test confirms it is valid according to validateMinimumVersionForCollab.
  *
  */
 export const cleanedPackageVersion =
 	`${parsedPackageVersion.major}.${parsedPackageVersion.minor}.${parsedPackageVersion.patch}` as MinimumVersionForCollab;
 
 /**
- * Converts a SemanticVersion to a MinimumVersionForCollab.
+ * Narrows the type of the provided {@link SemanticVersion} to a {@link MinimumVersionForCollab}, throwing a UsageError if it is not valid.
  * @remarks
  * This is more strict than the type constraints imposed by `MinimumVersionForCollab`.
- * Currently there is no type which is used to separate valid and possibly MinimumVersionForCollab values:
- * thus users that care about strict validation may want to call this on a `MinimumVersionForCollab` value.
- * @param semanticVersion - The version to convert.
- * @returns The version as a MinimumVersionForCollab.
+ * Currently there is no type which is used to separate semantically valid and typescript allowed MinimumVersionForCollab values:
+ * thus users that care about strict validation may want to call this on un-validated `MinimumVersionForCollab` values.
+ * @param semanticVersion - The version to check.
  * @throws UsageError if the version is not a valid MinimumVersionForCollab.
  *
  * @internal
  */
-export function semanticVersionToMinimumVersionForCollab(
+export function validateMinimumVersionForCollab(
 	semanticVersion: string,
 ): asserts semanticVersion is MinimumVersionForCollab {
 	const minVersionForCollab = semanticVersion as MinimumVersionForCollab;

@@ -18,13 +18,13 @@ import {
 	lowestMinVersionForCollab,
 	checkValidMinVersionForCollabVerbose,
 	cleanedPackageVersion,
-	semanticVersionToMinimumVersionForCollab,
+	validateMinimumVersionForCollab,
 } from "../compatibilityBase.js";
 import { pkgVersion } from "../packageVersion.js";
 
 describe("compatibilityBase", () => {
 	it("cleanedPackageVersion", () => {
-		semanticVersionToMinimumVersionForCollab(cleanedPackageVersion);
+		validateMinimumVersionForCollab(cleanedPackageVersion);
 	});
 
 	describe("getConfigsForMinVersionForCollab", () => {

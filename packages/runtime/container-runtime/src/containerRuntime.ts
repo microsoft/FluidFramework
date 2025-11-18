@@ -143,7 +143,7 @@ import {
 	isValidMinVersionForCollab,
 	RequestParser,
 	RuntimeHeaders,
-	semanticVersionToMinimumVersionForCollab,
+	validateMinimumVersionForCollab,
 	seqFromTree,
 	TelemetryContext,
 } from "@fluidframework/runtime-utils/internal";
@@ -1219,7 +1219,7 @@ export class ContainerRuntime
 			createBlobPayloadPending,
 		};
 
-		semanticVersionToMinimumVersionForCollab(updatedMinVersionForCollab);
+		validateMinimumVersionForCollab(updatedMinVersionForCollab);
 		const runtime = new containerRuntimeCtor(
 			context,
 			registry,
