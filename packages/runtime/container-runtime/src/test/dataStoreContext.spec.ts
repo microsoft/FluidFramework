@@ -48,7 +48,7 @@ import {
 import {
 	MockDeltaManager,
 	MockFluidDataStoreRuntime,
-	validateAssertionError,
+	validateAssertionError2 as validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 
 import {
@@ -111,9 +111,7 @@ describe("Data Store Context Tests", () => {
 						snapshotTree: undefined,
 					});
 
-				assert.throws(codeBlock, (e: Error) =>
-					validateAssertionError(e, "Data store ID contains slash"),
-				);
+				assert.throws(codeBlock, validateAssertionError("Data store ID contains slash"));
 			});
 
 			it("Errors thrown during realize are wrapped as DataProcessingError", async () => {
@@ -669,9 +667,7 @@ describe("Data Store Context Tests", () => {
 						snapshot: undefined,
 					});
 
-				assert.throws(codeBlock, (e: Error) =>
-					validateAssertionError(e, "Data store ID contains slash"),
-				);
+				assert.throws(codeBlock, validateAssertionError("Data store ID contains slash"));
 			});
 			describe("writing with isolated channels enabled", () =>
 				testGenerateAttributes({
@@ -1070,9 +1066,7 @@ describe("Data Store Context Tests", () => {
 						channelToDataStoreFn,
 					});
 
-				assert.throws(codeBlock, (e: Error) =>
-					validateAssertionError(e, "Data store ID contains slash"),
-				);
+				assert.throws(codeBlock, validateAssertionError("Data store ID contains slash"));
 			});
 
 			describe("should error on attach if data store cannot be constructed/initialized", () => {

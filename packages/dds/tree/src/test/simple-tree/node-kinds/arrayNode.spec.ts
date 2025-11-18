@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 import {
-	validateAssertionError,
+	validateAssertionError2 as validateAssertionError,
 	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
 import { describeHydration, hydrate } from "../utils.js";
@@ -770,8 +770,7 @@ describe("ArrayNode", () => {
 
 				assert.throws(
 					() => init(Array, [0, 1, 2]),
-					(error: Error) =>
-						validateAssertionError(error, /Shadowing of array indices is not permitted/),
+					validateAssertionError(/Shadowing of array indices is not permitted/),
 				);
 			});
 
@@ -786,8 +785,7 @@ describe("ArrayNode", () => {
 
 				assert.throws(
 					() => init(Array, [0, 1, 2]),
-					(error: Error) =>
-						validateAssertionError(error, /Shadowing of array indices is not permitted/),
+					validateAssertionError(/Shadowing of array indices is not permitted/),
 				);
 			});
 
@@ -805,8 +803,7 @@ describe("ArrayNode", () => {
 
 				assert.throws(
 					() => init(Array, [0, 1, 2]),
-					(error: Error) =>
-						validateAssertionError(error, /Shadowing of array indices is not permitted/),
+					validateAssertionError(/Shadowing of array indices is not permitted/),
 				);
 			});
 		},
@@ -827,8 +824,7 @@ describe("ArrayNode", () => {
 					// False positive
 					// eslint-disable-next-line @typescript-eslint/no-array-constructor
 					() => new Array([0, 1, 2], 42),
-					(error: Error) =>
-						validateAssertionError(error, /Shadowing of array indices is not permitted/),
+					validateAssertionError(/Shadowing of array indices is not permitted/),
 				);
 			});
 		},

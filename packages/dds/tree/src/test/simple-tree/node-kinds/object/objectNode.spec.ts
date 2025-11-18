@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import { validateAssertionError2 as validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import { isStableId } from "@fluidframework/id-compressor/internal";
 
 import {
@@ -719,7 +719,7 @@ describeHydration(
 
 				assert.throws(
 					() => new Schema({ foo: undefined }),
-					(e: Error) => validateAssertionError(e, /this shadowing will not work/),
+					validateAssertionError(/this shadowing will not work/),
 				);
 			});
 		});

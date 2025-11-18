@@ -10,7 +10,7 @@ import {
 	TransactionStack,
 	type OnPop,
 } from "../../shared-tree-core/index.js";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import { validateAssertionError2 as validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import {
 	DefaultChangeFamily,
 	type DefaultChangeset,
@@ -118,7 +118,7 @@ describe("TransactionStacks", () => {
 		const transaction = new TransactionStack();
 		assert.throws(
 			() => transaction.commit(),
-			(e: Error) => validateAssertionError(e, "No transaction to commit"),
+			validateAssertionError("No transaction to commit"),
 		);
 	});
 
@@ -126,7 +126,7 @@ describe("TransactionStacks", () => {
 		const transaction = new TransactionStack();
 		assert.throws(
 			() => transaction.abort(),
-			(e: Error) => validateAssertionError(e, "No transaction to abort"),
+			validateAssertionError("No transaction to abort"),
 		);
 	});
 
@@ -137,23 +137,17 @@ describe("TransactionStacks", () => {
 		assert.equal(transaction.disposed, true);
 		assert.throws(
 			() => transaction.isInProgress(),
-			(e: Error) => validateAssertionError(e, "Transactor is disposed"),
+			validateAssertionError("Transactor is disposed"),
 		);
-		assert.throws(
-			() => transaction.start(),
-			(e: Error) => validateAssertionError(e, "Transactor is disposed"),
-		);
+		assert.throws(() => transaction.start(), validateAssertionError("Transactor is disposed"));
 		assert.throws(
 			() => transaction.commit(),
-			(e: Error) => validateAssertionError(e, "Transactor is disposed"),
+			validateAssertionError("Transactor is disposed"),
 		);
-		assert.throws(
-			() => transaction.abort(),
-			(e: Error) => validateAssertionError(e, "Transactor is disposed"),
-		);
+		assert.throws(() => transaction.abort(), validateAssertionError("Transactor is disposed"));
 		assert.throws(
 			() => transaction.dispose(),
-			(e: Error) => validateAssertionError(e, "Transactor is disposed"),
+			validateAssertionError("Transactor is disposed"),
 		);
 	});
 

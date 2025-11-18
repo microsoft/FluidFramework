@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import { validateAssertionError2 as validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import {
 	makeFieldBatchCodec,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -96,7 +96,7 @@ describe("makeFieldBatchCodec", () => {
 
 			assert.throws(
 				() => codec.encode([input], context),
-				(error: Error) => validateAssertionError(error, /Unsupported FieldBatchFormatVersion/),
+				validateAssertionError(/Unsupported FieldBatchFormatVersion/),
 			);
 		});
 	});
