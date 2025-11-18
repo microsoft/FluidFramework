@@ -4,7 +4,10 @@
  */
 
 import { strict as assert, fail } from "node:assert";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import {
+	validateAssertionError,
+	validateUsageError,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	createTreeNodeSchemaPrivateData,
@@ -16,7 +19,6 @@ import {
 import type { FlexTreeNode } from "../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { numberSchema } from "../../simple-tree/leafNodeSchema.js";
-import { validateUsageError } from "../utils.js";
 import { brand } from "../../util/index.js";
 import {
 	getTreeNodeSchemaInitializedData,

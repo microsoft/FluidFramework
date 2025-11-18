@@ -9,7 +9,10 @@ import {
 	type IMockLoggerExt,
 	createMockLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import {
+	validateAssertionError,
+	validateUsageError,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	type Revertible,
@@ -41,7 +44,6 @@ import {
 	mintRevisionTag,
 	testIdCompressor,
 	testRevisionTagCodec,
-	validateUsageError,
 	viewCheckout,
 } from "../utils.js";
 import { brand } from "../../util/index.js";

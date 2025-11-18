@@ -13,7 +13,6 @@ import type {
 import {
 	createMockLoggerExt,
 	type IMockLoggerExt,
-	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
@@ -1394,44 +1393,6 @@ export class MockTreeCheckout implements ITreeCheckout {
 	public locate(anchor: Anchor): AnchorNode | undefined {
 		throw new Error("Method 'locate' not implemented in MockTreeCheckout.");
 	}
-}
-
-/**
- * {@link validateError} for `UsageError`.
- */
-export function validateUsageError(expectedErrorMsg: string | RegExp): (error: Error) => true {
-	return validateError(expectedErrorMsg, UsageError);
-}
-
-/**
- * {@link validateError} for `TypeError`.
- */
-export function validateTypeError(expectedErrorMsg: string | RegExp): (error: Error) => true {
-	return validateError(expectedErrorMsg, TypeError);
-}
-
-/**
- * Validates that a specific kind of error was thrown with the expected message.
- *
- * Intended for use with NodeJS's `assert.throws`.
- */
-export function validateError(
-	expectedErrorMsg: string | RegExp,
-	errorType: new (...args: any[]) => Error = Error,
-): (error: Error) => true {
-	return (error: Error) => {
-		assert(error instanceof errorType, `Expected ${errorType.name}, got ${error}`);
-		if (
-			typeof expectedErrorMsg === "string"
-				? error.message !== expectedErrorMsg
-				: !expectedErrorMsg.test(error.message)
-		) {
-			throw new Error(
-				`Unexpected ${errorType.name} thrown\nActual: ${error.message}\nExpected: ${expectedErrorMsg}`,
-			);
-		}
-		return true;
-	};
 }
 
 function normalizeNewFieldContent(

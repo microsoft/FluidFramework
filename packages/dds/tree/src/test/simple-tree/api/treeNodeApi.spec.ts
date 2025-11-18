@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 import {
 	MockHandle,
 	validateAssertionError,
+	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
 import { isStableId } from "@fluidframework/id-compressor/internal";
 
@@ -46,7 +47,6 @@ import {
 	getView,
 	testIdCompressor,
 	TestTreeProviderLite,
-	validateUsageError,
 	type TreeStoredContentStrict,
 } from "../../utils.js";
 import { describeHydration, getViewForForkedBranch, hydrate } from "../utils.js";
