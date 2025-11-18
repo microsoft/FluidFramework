@@ -81,6 +81,7 @@ module.exports = {
 		"build:test": ["typetests:gen", "tsc"],
 		"build:test:cjs": ["typetests:gen", "tsc"],
 		"build:test:esm": ["typetests:gen", "build:esnext"],
+		// Everything needed for the API of the package to be consumable by its dependencies.
 		"api": {
 			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
 			script: false,
@@ -129,9 +130,10 @@ module.exports = {
 		},
 		"check:biome": [],
 		"check:prettier": [],
-		// ADO #7297: Review why the direct dependency on 'build:esm:test' is necessary.
-		//            Should 'compile' be enough?  compile -> build:test -> build:test:esm
-		"eslint": ["compile", "build:test:esm"],
+		// Linting can require resolving imports into dependencies, and thus "^api".
+		// The lint task does not seem to invalidate properly, so we take a dependency on "build:test:esm" as well so lint will rerun when the code changes.
+		// This may be related to AB#7297.
+		"eslint": ["^api", "build:test:esm"],
 		"good-fences": [],
 		"format:biome": [],
 		"format:prettier": [],

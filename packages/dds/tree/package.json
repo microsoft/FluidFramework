@@ -231,6 +231,10 @@
 				"...",
 				"@fluidframework/id-compressor#build:test:esm"
 			],
+			"eslint": [
+				"...",
+				"@fluidframework/id-compressor#build:test:esm"
+			],
 			"ci:build:docs": [
 				"build:esnext"
 			]
