@@ -68,7 +68,7 @@ export type SemanticVersion =
 	| `${bigint}.${bigint}.${bigint}-${string}`;
 
 /**
- * Converts a record into a configuration map that associates each key with with an instance of its value type that based on a {@link MinimumMinorSemanticVersion}.
+ * Converts a record into a configuration map that associates each key with an instance of its value type that is based on a {@link MinimumMinorSemanticVersion}.
  * @remarks
  * For a given input {@link @fluidframework/runtime-definitions#MinimumVersionForCollab},
  * the corresponding configuration values can be found by using the entry in the inner objects with the highest {@link MinimumMinorSemanticVersion}
