@@ -6,7 +6,6 @@
 export {
 	makeSchemaChangeCodecs,
 	getCodecTreeForSchemaChangeFormat,
-	type SchemaChangeFormatVersion,
 } from "./schemaChangeCodecs.js";
 export type { SchemaChange } from "./schemaChangeTypes.js";
 export { EncodedSchemaChange } from "./schemaChangeFormat.js";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-internal-modules */
+/* eslint-disable import-x/no-internal-modules */
 import { done, type AsyncGenerator } from "@fluid-private/stochastic-test-utils";
 import { DDSFuzzModel, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
 import { baseCounterModel } from "@fluidframework/counter/internal/test";
@@ -17,6 +17,7 @@ import {
 } from "@fluidframework/sequence/internal/test";
 import { baseTaskManagerModel } from "@fluidframework/task-manager/internal/test";
 import { baseTreeModel } from "@fluidframework/tree/internal/test";
+import { baseRegisterCollectionModel } from "@fluidframework/register-collection/internal/test";
 
 function repeatFactoryAsync<T, TState = void>(
 	factory: () => AsyncGenerator<T, TState>,
@@ -74,4 +75,5 @@ export const ddsModelMap = generateSubModelMap(
 	baseSharedArrayModel,
 	baseTaskManagerModel,
 	baseCounterModel,
+	baseRegisterCollectionModel,
 );

@@ -31,8 +31,8 @@ export const runtimeCoreCompatDetails = {
 	/**
 	 * The current generation of the Runtime layer.
 	 */
-	generation: 1,
-};
+	generation: 2,
+} as const;
 
 /**
  * Runtime's compatibility details that is exposed to the Loader layer.

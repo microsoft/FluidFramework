@@ -8,13 +8,13 @@ import { strict as assert } from "node:assert";
 import { compareArrays } from "@fluidframework/core-utils/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { BasicChunk } from "../../../../feature-libraries/chunked-forest/basicChunk.js";
 import {
 	type ChunkDecoder,
 	type StreamCursor,
 	readStream,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities.js";
 import {
 	InlineArrayDecoder,
@@ -26,28 +26,29 @@ import {
 	deaggregateChunks,
 	decode,
 	readValue,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { DecoderContext } from "../../../../feature-libraries/chunked-forest/codec/chunkDecodingGeneric.js";
 import {
 	type EncodedChunkShape,
 	SpecialField,
-	version,
+	FieldBatchFormatVersion,
 	type EncodedFieldBatch,
 	type EncodedNodeShape,
-	// eslint-disable-next-line import/no-internal-modules
+	validVersions,
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/format.js";
 import type {
 	ChunkReferenceId,
 	IncrementalDecoder,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/codecs.js";
 import {
 	emptyChunk,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/emptyChunk.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { SequenceChunk } from "../../../../feature-libraries/chunked-forest/sequenceChunk.js";
 import type { TreeChunk } from "../../../../feature-libraries/index.js";
 import { type ReferenceCountedBase, brand } from "../../../../util/index.js";
@@ -88,22 +89,27 @@ const idDecodingContext = {
 	idCompressor: testIdCompressor,
 	originatorId: testIdCompressor.localSessionId,
 };
+
 describe("chunkDecoding", () => {
 	describe("decode", () => {
 		// Smoke test for top level decode function.
 		// All real functionality should be tested in more specific tests.
-		it("minimal", () => {
-			const result = decode(
-				{
-					version,
-					identifiers: [],
-					shapes: [{ a: 0 }],
-					data: [[0, []]],
-				},
-				idDecodingContext,
-			);
-			assert.deepEqual(result, [emptyChunk]);
-		});
+		for (const version of validVersions) {
+			describe(`FieldBatchFormatVersion ${version}`, () => {
+				it("minimal", () => {
+					const result = decode(
+						{
+							version: brand(version),
+							identifiers: [],
+							shapes: [{ a: 0 }],
+							data: [[0, []]],
+						},
+						idDecodingContext,
+					);
+					assert.deepEqual(result, [emptyChunk]);
+				});
+			});
+		}
 	});
 
 	describe("readValue", () => {
@@ -422,6 +428,8 @@ describe("chunkDecoding", () => {
 	});
 
 	describe("EncodedIncrementalChunkShape", () => {
+		const fieldBatchVersion = brand<FieldBatchFormatVersion>(FieldBatchFormatVersion.v2);
+
 		function createMockIncrementalDecoder(
 			chunksMap: Map<ChunkReferenceId, EncodedFieldBatch>,
 		): IncrementalDecoder {
@@ -444,7 +452,7 @@ describe("chunkDecoding", () => {
 				fields: [],
 			};
 			return {
-				version,
+				version: fieldBatchVersion,
 				identifiers: [],
 				shapes: [
 					{
@@ -458,7 +466,7 @@ describe("chunkDecoding", () => {
 		it("empty", () => {
 			const referenceId = brand<ChunkReferenceId>(0);
 			const emptyBatch: EncodedFieldBatch = {
-				version,
+				version: fieldBatchVersion,
 				identifiers: [],
 				shapes: [{ a: 0 }],
 				data: [[0, []]],
@@ -506,7 +514,7 @@ describe("chunkDecoding", () => {
 			const nodeIdentifier: TreeNodeSchemaIdentifier = brand("identifier");
 			// The encoded incremental chunk contains a nested array with another incremental chunk.
 			const batch1: EncodedFieldBatch = {
-				version,
+				version: fieldBatchVersion,
 				identifiers: [],
 				shapes: [
 					{
@@ -561,6 +569,28 @@ describe("chunkDecoding", () => {
 						error,
 						"incremental decoder not available for incremental field decoding",
 					),
+			);
+		});
+
+		it("fails for unsupported FieldBatchFormatVersion.v1", () => {
+			const referenceId = brand<ChunkReferenceId>(0);
+			const emptyBatch: EncodedFieldBatch = {
+				version: brand(FieldBatchFormatVersion.v1),
+				identifiers: [],
+				shapes: [{ a: 0 }],
+				data: [[0, []]],
+			};
+			const chunksMap = new Map<ChunkReferenceId, EncodedFieldBatch>();
+			chunksMap.set(referenceId, emptyBatch);
+
+			const mockIncrementalDecoder = createMockIncrementalDecoder(chunksMap);
+			const cache = new DecoderContext([], [], idDecodingContext, mockIncrementalDecoder);
+			const decoder = new IncrementalChunkDecoder(cache);
+			const stream = { data: [referenceId], offset: 0 };
+
+			assert.throws(
+				() => decoder.decode([], stream),
+				(error: Error) => validateAssertionError(error, /Unsupported FieldBatchFormatVersion/),
 			);
 		});
 	});

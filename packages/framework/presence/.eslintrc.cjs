@@ -15,7 +15,7 @@ module.exports = {
 		// TODO: Reenable no-explicit-any once need with ValueDirectoryOrState is
 		// understood. If `any` is still needed disable is on a per line basis.
 		"@typescript-eslint/no-explicit-any": "off",
-		"import/no-internal-modules": [
+		"import-x/no-internal-modules": [
 			"error",
 			{
 				"allow": [
@@ -35,7 +35,7 @@ module.exports = {
 				"@typescript-eslint/no-explicit-any": "error",
 
 				// Test files are run in node only so additional node libraries can be used.
-				"import/no-nodejs-modules": ["error", { allow: ["node:assert"] }],
+				"import-x/no-nodejs-modules": ["error", { allow: ["node:assert"] }],
 			},
 		},
 	],

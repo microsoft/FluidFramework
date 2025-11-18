@@ -4,7 +4,10 @@
  */
 
 import { strict as assert } from "node:assert";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import {
+	validateAssertionError,
+	validateUsageError,
+} from "@fluidframework/test-runtime-utils/internal";
 import { describeHydration, hydrate } from "../utils.js";
 import {
 	SchemaFactory,
@@ -25,9 +28,9 @@ import type {
 	requireTrue,
 	UnionToIntersection,
 } from "../../../util/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { asIndex } from "../../../simple-tree/node-kinds/index.js";
-import { TestTreeProviderLite, validateUsageError } from "../../utils.js";
+import { TestTreeProviderLite } from "../../utils.js";
 
 const schemaFactory = new SchemaFactory("ArrayNodeTest");
 const PojoEmulationNumberArray = schemaFactory.array(schemaFactory.number);

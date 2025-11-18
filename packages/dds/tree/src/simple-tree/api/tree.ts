@@ -431,7 +431,7 @@ export interface SchemaCompatibilityStatus {
 	 *
 	 * Note that other content in the stored schema that does not impact document compatibility, like {@link NodeSchemaOptionsAlpha.persistedMetadata}, does not affect this field.
 	 *
-	 * For the computation of this equivalence, {@link SchemaStaticsAlpha.staged | staged} schemas are not included.
+	 * For the computation of this equivalence, {@link SchemaStaticsBeta.staged | staged} schemas are not included.
 	 * If there are any unknown optional fields, even if allowed by {@link ObjectSchemaOptions.allowUnknownOptionalFields}, `isEquivalent` will be false.
 	 */
 	readonly isEquivalent: boolean;
@@ -445,7 +445,7 @@ export interface SchemaCompatibilityStatus {
 	 *
 	 * - An object node with {@link ObjectSchemaOptions.allowUnknownOptionalFields} to set to true that has additional optional fields in the stored schema beyond those mentioned in its view schema.
 	 *
-	 * - An additional type allowed at a location in the stored schema where it is {@link SchemaStaticsAlpha.staged | staged} in the view schema.
+	 * - An additional type allowed at a location in the stored schema where it is {@link SchemaStaticsBeta.staged | staged} in the view schema.
 	 *
 	 * In these cases `canUpgrade` and `isEquivalent` will be false.
 	 *
@@ -577,7 +577,7 @@ export interface TreeViewEvents {
 /**
  * Retrieve the {@link TreeViewAlpha | alpha API} for a {@link TreeView}.
  * @alpha
- * @deprecated Use {@link asAlpha} instead.
+ * @deprecated Use {@link (asAlpha:1)} instead.
  * @privateRemarks Despite being deprecated, this function should be used within the tree package (outside of tests) rather than `asAlpha` in order to avoid circular import dependencies.
  */
 export function asTreeViewAlpha<TSchema extends ImplicitFieldSchema>(

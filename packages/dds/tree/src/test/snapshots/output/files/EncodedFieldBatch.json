@@ -1,148 +1,300 @@
 {
-  "additionalProperties": false,
-  "type": "object",
-  "properties": {
-    "version": {
-      "allOf": [
-        {
-          "type": "number"
+  "anyOf": [
+    {
+      "additionalProperties": false,
+      "type": "object",
+      "properties": {
+        "version": {
+          "allOf": [
+            {
+              "type": "number"
+            },
+            {
+              "const": 1,
+              "type": "number"
+            }
+          ]
         },
-        {
-          "const": 1,
-          "type": "number"
-        }
-      ]
-    },
-    "identifiers": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "data": {
-      "type": "array",
-      "items": {
-        "type": "array",
-        "items": {}
-      }
-    },
-    "shapes": {
-      "type": "array",
-      "items": {
-        "additionalProperties": false,
-        "minProperties": 1,
-        "maxProperties": 1,
-        "type": "object",
-        "properties": {
-          "a": {
-            "multipleOf": 1,
-            "minimum": 0,
-            "type": "number"
-          },
-          "b": {
+        "identifiers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {}
+          }
+        },
+        "shapes": {
+          "type": "array",
+          "items": {
             "additionalProperties": false,
+            "minProperties": 1,
+            "maxProperties": 1,
             "type": "object",
             "properties": {
-              "length": {
+              "a": {
                 "multipleOf": 1,
                 "minimum": 0,
                 "type": "number"
               },
-              "shape": {
-                "multipleOf": 1,
-                "minimum": 0,
-                "type": "number"
-              }
-            },
-            "required": [
-              "length",
-              "shape"
-            ]
-          },
-          "c": {
-            "additionalProperties": false,
-            "type": "object",
-            "properties": {
-              "type": {
-                "anyOf": [
-                  {
-                    "type": "string"
+              "b": {
+                "additionalProperties": false,
+                "type": "object",
+                "properties": {
+                  "length": {
+                    "multipleOf": 1,
+                    "minimum": 0,
+                    "type": "number"
                   },
-                  {
+                  "shape": {
                     "multipleOf": 1,
                     "minimum": 0,
                     "type": "number"
                   }
+                },
+                "required": [
+                  "length",
+                  "shape"
                 ]
               },
-              "value": {
-                "anyOf": [
-                  {
-                    "type": "boolean"
+              "c": {
+                "additionalProperties": false,
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "multipleOf": 1,
+                        "minimum": 0,
+                        "type": "number"
+                      }
+                    ]
                   },
-                  {
-                    "minItems": 1,
-                    "maxItems": 1,
+                  "value": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "minItems": 1,
+                        "maxItems": 1,
+                        "type": "array",
+                        "items": {}
+                      },
+                      {
+                        "const": 0,
+                        "type": "number"
+                      }
+                    ]
+                  },
+                  "fields": {
                     "type": "array",
-                    "items": {}
-                  },
-                  {
-                    "const": 0,
-                    "type": "number"
-                  }
-                ]
-              },
-              "fields": {
-                "type": "array",
-                "items": {
-                  "type": "array",
-                  "items": [
-                    {
-                      "anyOf": [
+                    "items": {
+                      "type": "array",
+                      "items": [
                         {
-                          "type": "string"
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "multipleOf": 1,
+                              "minimum": 0,
+                              "type": "number"
+                            }
+                          ]
                         },
                         {
                           "multipleOf": 1,
                           "minimum": 0,
                           "type": "number"
                         }
-                      ]
-                    },
-                    {
-                      "multipleOf": 1,
-                      "minimum": 0,
-                      "type": "number"
+                      ],
+                      "additionalItems": false,
+                      "minItems": 2,
+                      "maxItems": 2
                     }
-                  ],
-                  "additionalItems": false,
-                  "minItems": 2,
-                  "maxItems": 2
+                  },
+                  "extraFields": {
+                    "multipleOf": 1,
+                    "minimum": 0,
+                    "type": "number"
+                  }
                 }
               },
-              "extraFields": {
-                "multipleOf": 1,
-                "minimum": 0,
+              "d": {
+                "const": 0,
+                "type": "number"
+              },
+              "e": {
+                "const": 0,
                 "type": "number"
               }
             }
-          },
-          "d": {
-            "const": 0,
-            "type": "number"
-          },
-          "e": {
-            "const": 0,
-            "type": "number"
           }
         }
-      }
+      },
+      "required": [
+        "version",
+        "identifiers",
+        "data",
+        "shapes"
+      ]
+    },
+    {
+      "additionalProperties": false,
+      "type": "object",
+      "properties": {
+        "version": {
+          "allOf": [
+            {
+              "type": "number"
+            },
+            {
+              "const": 2,
+              "type": "number"
+            }
+          ]
+        },
+        "identifiers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {}
+          }
+        },
+        "shapes": {
+          "type": "array",
+          "items": {
+            "additionalProperties": false,
+            "minProperties": 1,
+            "maxProperties": 1,
+            "type": "object",
+            "properties": {
+              "a": {
+                "multipleOf": 1,
+                "minimum": 0,
+                "type": "number"
+              },
+              "b": {
+                "additionalProperties": false,
+                "type": "object",
+                "properties": {
+                  "length": {
+                    "multipleOf": 1,
+                    "minimum": 0,
+                    "type": "number"
+                  },
+                  "shape": {
+                    "multipleOf": 1,
+                    "minimum": 0,
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "length",
+                  "shape"
+                ]
+              },
+              "c": {
+                "additionalProperties": false,
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "multipleOf": 1,
+                        "minimum": 0,
+                        "type": "number"
+                      }
+                    ]
+                  },
+                  "value": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "minItems": 1,
+                        "maxItems": 1,
+                        "type": "array",
+                        "items": {}
+                      },
+                      {
+                        "const": 0,
+                        "type": "number"
+                      }
+                    ]
+                  },
+                  "fields": {
+                    "type": "array",
+                    "items": {
+                      "type": "array",
+                      "items": [
+                        {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "multipleOf": 1,
+                              "minimum": 0,
+                              "type": "number"
+                            }
+                          ]
+                        },
+                        {
+                          "multipleOf": 1,
+                          "minimum": 0,
+                          "type": "number"
+                        }
+                      ],
+                      "additionalItems": false,
+                      "minItems": 2,
+                      "maxItems": 2
+                    }
+                  },
+                  "extraFields": {
+                    "multipleOf": 1,
+                    "minimum": 0,
+                    "type": "number"
+                  }
+                }
+              },
+              "d": {
+                "const": 0,
+                "type": "number"
+              },
+              "e": {
+                "const": 0,
+                "type": "number"
+              }
+            }
+          }
+        }
+      },
+      "required": [
+        "version",
+        "identifiers",
+        "data",
+        "shapes"
+      ]
     }
-  },
-  "required": [
-    "version",
-    "identifiers",
-    "data",
-    "shapes"
   ]
 }

@@ -16,7 +16,7 @@ import {
 	TreeViewConfiguration,
 } from "@fluidframework/tree/alpha";
 
-import { SharedTreeSemanticAgent, bindEditor } from "../agent.js";
+import { createContext, SharedTreeSemanticAgent } from "../agent.js";
 import type { EditResult, SharedTreeChatModel } from "../api.js";
 
 const sf = new SchemaFactory(undefined);
@@ -495,57 +495,89 @@ context.root = context.create.Gradient({ startColor: white, endColor: white });`
 		assert.ok(!context.includes("Parent"));
 	});
 
-	describe("bindEditor", () => {
-		interface TestContext {
-			root: string;
-		}
-
-		it("binds a synchronous editor and returns a void runner", () => {
-			const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
-			view.initialize("Initial");
-			const syncEditor = (context, _code): void => {
-				(context as unknown as TestContext).root = "SyncEdit";
-			};
-			const run = bindEditor(view, syncEditor);
-			const result = run("ignored");
-			assert.equal(view.root, "SyncEdit");
-			assert.equal(result, undefined, "Synchronous runner should return void");
+	it("runs custom editors", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
+		view.initialize("Content");
+		const model: SharedTreeChatModel = {
+			editToolName,
+			async query({ edit }) {
+				const result = await edit("Code");
+				assert(result.type === "success", result.message);
+				return "Done";
+			},
+		};
+		const agent = new SharedTreeSemanticAgent(model, view, {
+			editor: async (tree, js) => {
+				const context = createContext(tree);
+				assert.equal(context.root, "Content");
+				assert.equal(js, "Code");
+				context.root = "Edited";
+			},
 		});
+		const response = await agent.query("Query");
+		assert.equal(response, "Done");
+		assert.equal(view.root, "Edited");
+	});
 
-		it("binds an asynchronous editor and returns a Promise runner", async () => {
-			const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
-			view.initialize("Initial");
-			const asyncEditor = async (context, _code): Promise<void> => {
-				(context as unknown as TestContext).root = "AsyncEdit";
-			};
-			const run = bindEditor(view, asyncEditor);
-			const promise = run("ignored");
-			assert.ok(typeof (promise as unknown as { then?: unknown }).then === "function");
-			await promise;
-			assert.equal(view.root, "AsyncEdit");
+	it("catches errors from custom editors", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
+		view.initialize("Content");
+		const model: SharedTreeChatModel = {
+			editToolName,
+			async query({ edit }) {
+				const result = await edit("Code");
+				assert(result.type === "editingError", "Expected editingError from editor");
+				return "Done";
+			},
+		};
+		const agent = new SharedTreeSemanticAgent(model, view, {
+			editor: async () => {
+				throw new Error("Boom");
+			},
 		});
+		const response = await agent.query("Query");
+		assert.equal(response, "Done");
+	});
 
-		it("propagates synchronous errors", () => {
-			const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
-			view.initialize("Initial");
-			const syncErrorEditor = (_context, _code): void => {
-				throw new Error("syncBoom");
-			};
-			const run = bindEditor(view, syncErrorEditor);
-			assert.throws(() => run("ignored"), /syncBoom/);
-			assert.equal(view.root, "Initial", "Tree should not have changed after error");
-		});
-
-		it("propagates asynchronous errors (Promise rejection)", async () => {
-			const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
-			view.initialize("Initial");
-			const asyncErrorEditor = async (): Promise<void> => {
-				throw new Error("asyncBoom");
-			};
-			const run = bindEditor(view, asyncErrorEditor);
-			const promise = run("ignored");
-			await assert.rejects(promise, /asyncBoom/);
-			assert.equal(view.root, "Initial", "Tree should not have changed after async error");
-		});
+	it("context provides helpers for editing", async () => {
+		const sfLocal = new SchemaFactory("ContextHelpers");
+		class Child extends sfLocal.object("Child", {
+			value: sfLocal.required(sfLocal.string),
+		}) {}
+		class NumberMap extends sfLocal.map("NumberMap", sfLocal.number) {}
+		class Parent extends sfLocal.object("Parent", {
+			child: Child,
+			values: NumberMap,
+		}) {}
+		const view = independentView(new TreeViewConfiguration({ schema: Parent }), {});
+		view.initialize(
+			new Parent({
+				child: new Child({ value: "Initial" }),
+				values: new NumberMap(new Map([["x", 1]])),
+			}),
+		);
+		const context = createContext(view);
+		assert.equal(context.root.child.value, "Initial");
+		const createParent = context.create.Parent;
+		assert.ok(createParent !== undefined, "Expected Parent constructor");
+		const createChild = context.create.Child;
+		assert.ok(createChild !== undefined, "Expected Child constructor");
+		const replacementRoot = createParent({
+			child: createChild({ value: "Created" }),
+			values: new NumberMap(new Map([["y", 2]])),
+		}) as Parent;
+		context.root = replacementRoot;
+		assert.equal(view.root.child.value, "Created");
+		const isParent = context.is.Parent;
+		assert.ok(isParent !== undefined, "Expected Parent type guard");
+		assert.ok(isParent(view.root));
+		assert.equal(context.isMap(view.root.values), true);
+		assert.equal(context.isMap(new Map()), true);
+		assert.equal(context.isMap({}), false);
+		const parent = context.parent(view.root.child);
+		assert.equal(parent, view.root);
+		assert.equal(context.parent(view.root), undefined);
+		const key = context.key(view.root.child);
+		assert.equal(key, "child");
 	});
 });

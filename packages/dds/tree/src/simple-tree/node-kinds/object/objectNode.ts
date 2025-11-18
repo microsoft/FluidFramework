@@ -32,7 +32,7 @@ import {
 	type TreeNodeSchema,
 	NodeKind,
 	type WithType,
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	typeNameSymbol,
 	typeSchemaSymbol,
 	type InternalTreeNode,
@@ -275,7 +275,7 @@ function createProxyHandler(
 			if (propertyKey === typeSchemaSymbol) {
 				return schema;
 			}
-			// eslint-disable-next-line import/no-deprecated
+			// eslint-disable-next-line import-x/no-deprecated
 			if (propertyKey === typeNameSymbol) {
 				return schema.identifier;
 			}
@@ -573,7 +573,7 @@ export function objectSchema<
 		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
 			nodeOptions.persistedMetadata;
 
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated
 		public get [typeNameSymbol](): TName {
 			return identifier;
 		}
@@ -650,9 +650,8 @@ function assertUniqueKeys<
 }
 
 /**
- * {@link TreeNodeSchemaInitializedData.toFlexContent} for Map nodes.
+ * {@link TreeNodeSchemaInitializedData.toFlexContent} for object nodes.
  *
- * Transforms data under an Object schema.
  * @param data - The tree data to be transformed. Must be a Record-like object.
  * @param schema - The schema to comply with.
  */
@@ -767,10 +766,13 @@ function applyFieldChange(
 	const proxy =
 		from.kind === "proxy"
 			? from.node
-			: (targetToProxy.get(from.node) ?? fail("missing proxy"));
+			: (targetToProxy.get(from.node) ?? fail(0xc95 /* missing proxy */));
 	const inner = getInnerNode(proxy);
 	const storedSchema = inner.context.schema.nodeSchema.get(brand(schema.identifier));
-	assert(storedSchema instanceof ObjectNodeStoredSchema, "Expected ObjectNodeStoredSchema");
+	assert(
+		storedSchema instanceof ObjectNodeStoredSchema,
+		0xc96 /* Expected ObjectNodeStoredSchema */,
+	);
 
 	if (value === undefined && inner.tryGetField(fieldInfo.storedKey) === undefined) {
 		return;

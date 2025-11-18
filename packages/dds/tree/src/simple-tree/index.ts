@@ -74,6 +74,7 @@ export {
 	type ITreeConfigurationOptions,
 	SchemaFactory,
 	SchemaFactoryBeta,
+	type SchemaStaticsBeta,
 	SchemaFactoryAlpha,
 	type ObjectSchemaOptionsAlpha,
 	type ObjectSchemaOptions,
@@ -180,7 +181,6 @@ export {
 	type TreeChangeEvents,
 	type NodeSchemaOptions,
 	type NodeSchemaOptionsAlpha,
-	type SchemaStaticsAlpha,
 	KeyEncodingOptions,
 	type TreeParsingOptions,
 	incrementalSummaryHint,
@@ -280,3 +280,10 @@ export {
 	nullSchema,
 } from "./leafNodeSchema.js";
 export type { LeafSchema } from "./leafNodeSchema.js";
+export {
+	encodeSimpleSchema,
+	decodeSimpleSchema,
+	exportCompatibilitySchemaSnapshot,
+	importCompatibilitySchemaSnapshot,
+	checkCompatibility,
+} from "./api/index.js";

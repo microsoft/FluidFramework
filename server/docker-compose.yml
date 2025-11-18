@@ -1,24 +1,52 @@
 services:
+  proxy:
+    platform: linux/amd64
+    image: nginx:latest
+    depends_on:
+      alfred:
+        condition: service_healthy
+      historian:
+        condition: service_healthy
+      nexus:
+        condition: service_healthy
+    volumes:
+      - ./routerlicious/nginx.conf:/etc/nginx/nginx.conf
+    ports:
+      - "3003:3003"
+      - "3002:3002"
+      - "3001:3001"
   alfred:
     image: ${REGISTRY_URL:-mcr.microsoft.com}/fluidframework/routerlicious/server:${ALFRED_IMAGE_TAG:-latest}
-    ports:
-      - "3003:3000"
+    expose:
+      - "3000"
     command: node packages/routerlicious/dist/alfred/www.js
     environment:
       - DEBUG=fluid:*
       - NODE_ENV=development
       - IS_FLUID_SERVER=true
     restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/healthz/startup", "--max-time", "3"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 20s
   nexus:
     image: ${REGISTRY_URL:-mcr.microsoft.com}/fluidframework/routerlicious/server:${ALFRED_IMAGE_TAG:-latest}
-    ports:
-      - "3002:3000"
+    expose:
+      - "3000"
     command: node packages/routerlicious/dist/nexus/www.js
     environment:
       - DEBUG=fluid:*
       - NODE_ENV=development
       - IS_FLUID_SERVER=true
     restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/healthz/ping", "--max-time", "3"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 20s
   deli:
     image: ${REGISTRY_URL:-mcr.microsoft.com}/fluidframework/routerlicious/server:${ALFRED_IMAGE_TAG:-latest}
     command: node packages/routerlicious/dist/kafka-service/index.js deli /usr/src/server/packages/routerlicious/dist/deli/index.js
@@ -63,15 +91,21 @@ services:
     restart: always
   historian:
     image: ${REGISTRY_URL:-mcr.microsoft.com}/fluidframework/routerlicious/historian:${HISTORIAN_IMAGE_TAG:-latest}
-    ports:
-      - "3001:3000"
+    expose:
+      - "3000"
     environment:
       - DEBUG=fluid:*
       - NODE_ENV=development
       - IS_FLUID_SERVER=true
     restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/healthz/startup", "--max-time", "3"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 20s
   gitrest:
-    image: ${REGISTRY_URL:-mcr.microsoft.com}/fluidframework/routerlicious/gitrest:${HISTORIAN_IMAGE_TAG:-latest}
+    image: ${REGISTRY_URL:-mcr.microsoft.com}/fluidframework/routerlicious/gitrest:${GITREST_IMAGE_TAG:-latest}
     environment:
       - DEBUG=fluid:*
       - NODE_ENV=development
@@ -80,7 +114,7 @@ services:
       - git:/home/node/documents
     restart: always
   git:
-    image: ${REGISTRY_URL:-mcr.microsoft.com}/fluidframework/routerlicious/gitssh:${HISTORIAN_IMAGE_TAG:-latest}
+    image: ${REGISTRY_URL:-mcr.microsoft.com}/fluidframework/routerlicious/gitssh:${GITSSH_IMAGE_TAG:-latest}
     ports:
       - "3022:22"
     volumes:

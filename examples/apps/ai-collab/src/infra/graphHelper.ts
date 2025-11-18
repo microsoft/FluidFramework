@@ -20,7 +20,7 @@ import { Client } from "@microsoft/microsoft-graph-client";
 import {
 	AuthCodeMSALBrowserAuthenticationProvider,
 	type AuthCodeMSALBrowserAuthenticationProviderOptions,
-	// eslint-disable-next-line import/no-internal-modules -- Not exported in the public API; docs use this pattern.
+	// eslint-disable-next-line import-x/no-internal-modules -- Not exported in the public API; docs use this pattern.
 } from "@microsoft/microsoft-graph-client/authProviders/authCodeMsalBrowser";
 import type { Site } from "@microsoft/microsoft-graph-types";
 
