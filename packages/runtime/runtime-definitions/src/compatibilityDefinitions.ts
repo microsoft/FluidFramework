@@ -13,7 +13,7 @@
  * Must be at least {@link @fluidframework/runtime-utils#lowestMinVersionForCollab} and cannot exceed the current version.
  *
  * {@link @fluidframework/runtime-utils#semanticVersionToMinimumVersionForCollab} can be used to check these invariants at runtime.
- * Sine TypeScript can not enforce them all for literals in code,
+ * Since TypeScript cannot enforce them all for literals in code,
  * it may be useful to use `semanticVersionToMinimumVersionForCollab` values which may come from constants in the codebase typed as a `MinimumVersionForCollab`.
  *
  * @privateRemarks
