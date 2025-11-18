@@ -145,21 +145,21 @@ describe("snapshotCompatibilityChecker", () => {
 		const oldSchema = factory.optional(
 			factory.types([numberSchema, factory.staged(stringSchema)]),
 		);
-		const currentSchema = factory.optional(factory.types([stringSchema, numberSchema]));
+		const currentSchema = factory.optional([stringSchema, numberSchema]);
 
 		const oldViewSchema = new TreeViewConfiguration({ schema: oldSchema });
 		const currentViewSchema = new TreeViewConfiguration({ schema: currentSchema });
-
-		// Check to see if a document created with the current view schema can be opened with the historical view schema
-		const forwardsCompatibilityStatus = checkCompatibility(currentViewSchema, oldViewSchema);
-
-		// The current schema's string schema is supported by the old schema's staged string schema
-		assert.equal(forwardsCompatibilityStatus.canView, true);
 
 		// Check to see if the document created by the historical view schema can be opened with the current view schema
 		const backwardsCompatibilityStatus = checkCompatibility(oldViewSchema, currentViewSchema);
 
 		// The staged string schema in the old schema is supported in the current schema
 		assert.equal(backwardsCompatibilityStatus.canView, true);
+
+		// Check to see if a document created with the current view schema can be opened with the historical view schema
+		const forwardsCompatibilityStatus = checkCompatibility(currentViewSchema, oldViewSchema);
+
+		// The current schema's string schema is supported by the old schema's staged string schema
+		assert.equal(forwardsCompatibilityStatus.canView, true);
 	});
 });
