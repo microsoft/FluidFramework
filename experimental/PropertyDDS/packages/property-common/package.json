@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-common",
-	"version": "2.61.0",
+	"version": "2.73.0",
 	"description": "common functions used in properties",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -22,8 +22,8 @@
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
-		"eslint": "eslint --format stylish src",
-		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
+		"eslint": "eslint --quiet --format stylish src",
+		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
 		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
@@ -71,8 +71,7 @@
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.58.1",
-		"@fluidframework/eslint-config-fluid": "^6.0.0",
+		"@fluidframework/build-tools": "^0.60.0",
 		"@microsoft/api-extractor": "7.52.11",
 		"@types/chai": "^4.0.0",
 		"@types/debug": "^4.1.5",
@@ -84,7 +83,7 @@
 		"c8": "^10.1.3",
 		"chai": "^4.2.0",
 		"cross-env": "^7.0.3",
-		"eslint": "~8.55.0",
+		"eslint": "~8.57.1",
 		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
 		"nock": "^13.3.3",
@@ -93,8 +92,6 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"disabled": true,
-		"broken": {},
-		"entrypoint": "internal"
+		"disabled": true
 	}
 }

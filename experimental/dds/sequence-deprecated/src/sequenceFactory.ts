@@ -22,19 +22,19 @@ import { SharedObjectSequenceClass } from "./sharedObjectSequence.js";
 
 /**
  * @deprecated SharedObjectSequence is not recommended for use and will be removed in an upcoming release.
- * For more info, please see [Github issue 8526](https://github.com/microsoft/FluidFramework/issues/8526)
+ * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}
  * @internal
  */
 export class SharedObjectSequenceFactory implements IChannelFactory {
 	/**
 	 * @deprecated SharedObjectSequence is not recommended for use and will be removed in an upcoming release.
-	 * For more info, please see [Github issue 8526](https://github.com/microsoft/FluidFramework/issues/8526)
+	 * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}
 	 */
 	public static Type = "https://graph.microsoft.com/types/mergeTree/object-sequence";
 
 	/**
 	 * @deprecated SharedObjectSequence is not recommended for use and will be removed in an upcoming release.
-	 * For more info, please see [Github issue 8526](https://github.com/microsoft/FluidFramework/issues/8526)
+	 * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}
 	 */
 	public static readonly Attributes: IChannelAttributes = {
 		type: SharedObjectSequenceFactory.Type,
@@ -44,7 +44,7 @@ export class SharedObjectSequenceFactory implements IChannelFactory {
 
 	/**
 	 * @deprecated SharedObjectSequence is not recommended for use and will be removed in an upcoming release.
-	 * For more info, please see [Github issue 8526](https://github.com/microsoft/FluidFramework/issues/8526)
+	 * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}
 	 */
 	public static segmentFromSpec(segSpec: IJSONSegment): SubSequence<object> {
 		const runSegment = segSpec as IJSONRunSegment<object>;
@@ -57,7 +57,7 @@ export class SharedObjectSequenceFactory implements IChannelFactory {
 
 	/**
 	 * @deprecated SharedObjectSequence is not recommended for use and will be removed in an upcoming release.
-	 * For more info, please see [Github issue 8526](https://github.com/microsoft/FluidFramework/issues/8526)
+	 * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}
 	 */
 	public get type() {
 		return SharedObjectSequenceFactory.Type;
@@ -65,7 +65,7 @@ export class SharedObjectSequenceFactory implements IChannelFactory {
 
 	/**
 	 * @deprecated SharedObjectSequence is not recommended for use and will be removed in an upcoming release.
-	 * For more info, please see [Github issue 8526](https://github.com/microsoft/FluidFramework/issues/8526)
+	 * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}
 	 */
 	public get attributes() {
 		return SharedObjectSequenceFactory.Attributes;
@@ -75,7 +75,7 @@ export class SharedObjectSequenceFactory implements IChannelFactory {
 	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
 	 *
 	 * @deprecated SharedObjectSequence is not recommended for use and will be removed in an upcoming release.
-	 * For more info, please see [Github issue 8526](https://github.com/microsoft/FluidFramework/issues/8526)
+	 * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}
 	 */
 	public async load(
 		runtime: IFluidDataStoreRuntime,
@@ -90,7 +90,7 @@ export class SharedObjectSequenceFactory implements IChannelFactory {
 
 	/**
 	 * @deprecated SharedObjectSequence is not recommended for use and will be removed in an upcoming release.
-	 * For more info, please see [Github issue 8526](https://github.com/microsoft/FluidFramework/issues/8526)
+	 * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}
 	 */
 	public create(document: IFluidDataStoreRuntime, id: string): ISharedObject {
 		const sharedString = new SharedObjectSequenceClass(document, id, this.attributes);
@@ -101,19 +101,19 @@ export class SharedObjectSequenceFactory implements IChannelFactory {
 
 /**
  * @deprecated SharedNumberSequence is not recommended for use and will be removed in an upcoming release.
- * For more info, please see [Github issue 8526](https://github.com/microsoft/FluidFramework/issues/8526)
+ * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}
  * @internal
  */
 export class SharedNumberSequenceFactory implements IChannelFactory {
 	/**
 	 * @deprecated SharedNumberSequence is not recommended for use and will be removed in an upcoming release.
-	 * For more info, please see [Github issue 8526](https://github.com/microsoft/FluidFramework/issues/8526)
+	 * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}
 	 */
 	public static Type = "https://graph.microsoft.com/types/mergeTree/number-sequence";
 
 	/**
 	 * @deprecated SharedNumberSequence is not recommended for use and will be removed in an upcoming release.
-	 * For more info, please see [Github issue 8526](https://github.com/microsoft/FluidFramework/issues/8526)
+	 * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}
 	 */
 	public static readonly Attributes: IChannelAttributes = {
 		type: SharedNumberSequenceFactory.Type,
@@ -123,7 +123,7 @@ export class SharedNumberSequenceFactory implements IChannelFactory {
 
 	/**
 	 * @deprecated SharedNumberSequence is not recommended for use and will be removed in an upcoming release.
-	 * For more info, please see [Github issue 8526](https://github.com/microsoft/FluidFramework/issues/8526)
+	 * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}
 	 */
 	public static segmentFromSpec(segSpec: IJSONSegment): SubSequence<number> {
 		const runSegment = segSpec as IJSONRunSegment<number>;
@@ -136,7 +136,7 @@ export class SharedNumberSequenceFactory implements IChannelFactory {
 
 	/**
 	 * @deprecated SharedNumberSequence is not recommended for use and will be removed in an upcoming release.
-	 * For more info, please see [Github issue 8526](https://github.com/microsoft/FluidFramework/issues/8526)
+	 * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}
 	 */
 	public get type() {
 		return SharedNumberSequenceFactory.Type;
@@ -144,7 +144,7 @@ export class SharedNumberSequenceFactory implements IChannelFactory {
 
 	/**
 	 * @deprecated SharedNumberSequence is not recommended for use and will be removed in an upcoming release.
-	 * For more info, please see [Github issue 8526](https://github.com/microsoft/FluidFramework/issues/8526)
+	 * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}
 	 */
 	public get attributes() {
 		return SharedNumberSequenceFactory.Attributes;
@@ -154,7 +154,7 @@ export class SharedNumberSequenceFactory implements IChannelFactory {
 	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
 	 *
 	 * @deprecated SharedNumberSequence is not recommended for use and will be removed in an upcoming release.
-	 * For more info, please see [Github issue 8526](https://github.com/microsoft/FluidFramework/issues/8526)
+	 * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}
 	 */
 	public async load(
 		runtime: IFluidDataStoreRuntime,
@@ -169,7 +169,7 @@ export class SharedNumberSequenceFactory implements IChannelFactory {
 
 	/**
 	 * @deprecated SharedNumberSequence is not recommended for use and will be removed in an upcoming release.
-	 * For more info, please see [Github issue 8526](https://github.com/microsoft/FluidFramework/issues/8526)
+	 * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}
 	 */
 	public create(document: IFluidDataStoreRuntime, id: string): ISharedObject {
 		const sharedString = new SharedNumberSequenceClass(document, id, this.attributes);

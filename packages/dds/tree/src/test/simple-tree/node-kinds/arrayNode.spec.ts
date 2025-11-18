@@ -4,7 +4,10 @@
  */
 
 import { strict as assert } from "node:assert";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import {
+	validateAssertionError2 as validateAssertionError,
+	validateUsageError,
+} from "@fluidframework/test-runtime-utils/internal";
 import { describeHydration, hydrate } from "../utils.js";
 import {
 	SchemaFactory,
@@ -25,9 +28,9 @@ import type {
 	requireTrue,
 	UnionToIntersection,
 } from "../../../util/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { asIndex } from "../../../simple-tree/node-kinds/index.js";
-import { TestTreeProviderLite, validateUsageError } from "../../utils.js";
+import { TestTreeProviderLite } from "../../utils.js";
 
 const schemaFactory = new SchemaFactory("ArrayNodeTest");
 const PojoEmulationNumberArray = schemaFactory.array(schemaFactory.number);
@@ -71,6 +74,18 @@ describe("ArrayNode", () => {
 			n.insertAtStart(3);
 			assert.equal(n.y, 3);
 			assert.deepEqual(thisList, [n, n]);
+		});
+
+		it("does not pass Array.isArray", () => {
+			const array = init(CustomizableNumberArray, [1, 2, 3]);
+			assert.equal(Array.isArray(array), false);
+		});
+	});
+
+	describeHydration("pojo-emulation", (init) => {
+		it("passes Array.isArray", () => {
+			const array = init(PojoEmulationNumberArray, [1, 2, 3]);
+			assert.equal(Array.isArray(array), true);
 		});
 	});
 
@@ -755,8 +770,7 @@ describe("ArrayNode", () => {
 
 				assert.throws(
 					() => init(Array, [0, 1, 2]),
-					(error: Error) =>
-						validateAssertionError(error, /Shadowing of array indices is not permitted/),
+					validateAssertionError(/Shadowing of array indices is not permitted/),
 				);
 			});
 
@@ -771,8 +785,7 @@ describe("ArrayNode", () => {
 
 				assert.throws(
 					() => init(Array, [0, 1, 2]),
-					(error: Error) =>
-						validateAssertionError(error, /Shadowing of array indices is not permitted/),
+					validateAssertionError(/Shadowing of array indices is not permitted/),
 				);
 			});
 
@@ -790,8 +803,7 @@ describe("ArrayNode", () => {
 
 				assert.throws(
 					() => init(Array, [0, 1, 2]),
-					(error: Error) =>
-						validateAssertionError(error, /Shadowing of array indices is not permitted/),
+					validateAssertionError(/Shadowing of array indices is not permitted/),
 				);
 			});
 		},
@@ -812,8 +824,7 @@ describe("ArrayNode", () => {
 					// False positive
 					// eslint-disable-next-line @typescript-eslint/no-array-constructor
 					() => new Array([0, 1, 2], 42),
-					(error: Error) =>
-						validateAssertionError(error, /Shadowing of array indices is not permitted/),
+					validateAssertionError(/Shadowing of array indices is not permitted/),
 				);
 			});
 		},

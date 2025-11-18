@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import { validateAssertionError2 as validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import { ContainerMessageType } from "../../index.js";
 import {
@@ -81,13 +81,9 @@ describe("OpCompressor", () => {
 					() => {
 						compressor.compressBatch(batch as OutboundSingletonBatch); // The need to cast indicates this is not going to work
 					},
-					(error: Error) => {
-						validateAssertionError(
-							error,
-							"Batch should not be empty and should contain a single message",
-						); // 0x5a4
-						return true;
-					},
+					validateAssertionError(
+						"Batch should not be empty and should contain a single message", // 0x5a4
+					),
 					"Expected error was not thrown",
 				);
 			});

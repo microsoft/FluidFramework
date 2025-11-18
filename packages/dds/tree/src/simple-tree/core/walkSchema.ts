@@ -4,9 +4,9 @@
  */
 
 import {
-	normalizeAnnotatedAllowedTypes,
+	normalizeAndEvaluateAnnotatedAllowedTypes,
 	type AnnotatedAllowedType,
-	type NormalizedAnnotatedAllowedTypes,
+	type AllowedTypesFullEvaluated,
 } from "./allowedTypes.js";
 import { getTreeNodeSchemaPrivateData, type TreeNodeSchema } from "./treeNodeSchema.js";
 
@@ -28,11 +28,14 @@ export function walkNodeSchema(
 	// Since walkNodeSchema is used in the implementation of TreeNodeSchemaPrivateData.idempotentInitialize,
 	// Avoid depending on it here to avoid circular dependencies for recursive schema.
 	// Instead normalize/evaluate the allowed types as needed.
-	const annotatedAllowedTypes =
-		getTreeNodeSchemaPrivateData(schema).childAnnotatedAllowedTypes;
+	const annotatedAllowedTypes = getTreeNodeSchemaPrivateData(schema).childAllowedTypes;
 
 	for (const fieldAllowedTypes of annotatedAllowedTypes) {
-		walkAllowedTypes(normalizeAnnotatedAllowedTypes(fieldAllowedTypes), visitor, visitedSet);
+		walkAllowedTypes(
+			normalizeAndEvaluateAnnotatedAllowedTypes(fieldAllowedTypes),
+			visitor,
+			visitedSet,
+		);
 	}
 
 	// This visit is done at the end so the traversal order is most inner types first.
@@ -47,7 +50,7 @@ export function walkNodeSchema(
  * @internal
  */
 export function walkAllowedTypes(
-	annotatedAllowedTypes: NormalizedAnnotatedAllowedTypes,
+	annotatedAllowedTypes: AllowedTypesFullEvaluated,
 	visitor: SchemaVisitor,
 	visitedSet: Set<TreeNodeSchema> = new Set(),
 ): void {
@@ -77,7 +80,7 @@ export interface SchemaVisitor {
 	 *
 	 * After this is called {@link SchemaVisitor.allowedTypeFilter} is applied to each allowed type in the schema to determine which of them are walked into.
 	 */
-	allowedTypes?: (allowedTypes: NormalizedAnnotatedAllowedTypes) => void;
+	allowedTypes?: (allowedTypes: AllowedTypesFullEvaluated) => void;
 	/**
 	 * If true, will walk into this `allowedType`.
 	 * If false, the `allowedType` will not be walked into.

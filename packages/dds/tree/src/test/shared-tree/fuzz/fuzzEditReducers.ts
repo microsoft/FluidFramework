@@ -52,8 +52,8 @@ import {
 	type ForkMergeOperation,
 } from "./operationTypes.js";
 
-import { getOrCreateInnerNode } from "../../../simple-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
+import { getInnerNode } from "../../../simple-tree/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
 import { isObjectNodeSchema } from "../../../simple-tree/node-kinds/index.js";
 import {
 	SchemaFactory,
@@ -437,7 +437,7 @@ export function applyConstraint(state: FuzzTestState, constraint: Constraint) {
 				: undefined;
 
 			if (constraintNode !== undefined) {
-				const flex = getOrCreateInnerNode(constraintNode);
+				const flex = getInnerNode(constraintNode);
 				assert(flex.isHydrated());
 				tree.checkout.editor.addNodeExistsConstraint(flex.anchorNode);
 			}

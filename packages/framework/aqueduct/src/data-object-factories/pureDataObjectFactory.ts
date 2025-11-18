@@ -385,7 +385,7 @@ export class PureDataObjectFactory<
 	public async createInstanceWithDataStore(
 		containerRuntime: IContainerRuntimeBase,
 		initialState?: I["InitialState"],
-		packagePath?: Readonly<string[]>,
+		packagePath?: readonly string[],
 		loadingGroupId?: string,
 	): Promise<[TObj, IDataStore]> {
 		const context = containerRuntime.createDetachedDataStore(
@@ -413,7 +413,7 @@ export class PureDataObjectFactory<
 	 * @returns an object created by this factory. Data store and objects created are not attached to container.
 	 * They get attached only when a handle to one of them is attached to already attached objects.
 	 *
-	 * @deprecated - the issue is that it does not allow the customer to decide the conflict resolution policy when an
+	 * @deprecated the issue is that it does not allow the customer to decide the conflict resolution policy when an
 	 * aliasing conflict occurs. Use {@link PureDataObjectFactory.createInstanceWithDataStore} instead.
 	 */
 	public async createRootInstance(
@@ -440,7 +440,7 @@ export class PureDataObjectFactory<
 
 	protected async createNonRootInstanceCore(
 		containerRuntime: IContainerRuntimeBase,
-		packagePath: Readonly<string[]>,
+		packagePath: readonly string[],
 		initialState?: I["InitialState"],
 		loadingGroupId?: string,
 	): Promise<TObj> {

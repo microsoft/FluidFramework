@@ -3,12 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
+
 import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
 import { describe, it, after, afterEach, before, beforeEach } from "mocha";
 import { useFakeTimers, type SinonFakeTimers } from "sinon";
 
 import type { PresenceWithNotifications } from "../../index.js";
 import { toOpaqueJson } from "../../internalUtils.js";
+import { broadcastJoinResponseDelaysMs } from "../../presenceDatastoreManager.js";
 import type { OutboundDatastoreUpdateMessage } from "../../protocol.js";
 import { MockEphemeralRuntime } from "../mockEphemeralRuntime.js";
 import type { ProcessSignalFunction } from "../testUtils.js";
@@ -35,75 +38,19 @@ interface Point3D {
 	z: number;
 }
 
-const attendeeUpdate = {
-	"clientToSessionId": {
-		"client1": {
-			"rev": 0,
-			"timestamp": 0,
-			"value": attendeeId1,
-		},
-	},
-} as const;
-const latestUpdate = {
-	"latest": {
-		[attendeeId1]: {
-			"rev": 1,
-			"timestamp": 0,
-			"value": toOpaqueJson({ x: 1, y: 1, z: 1 }),
-		},
-	},
-} as const;
-const latestMapUpdate = {
-	"latestMap": {
-		[attendeeId1]: {
-			"rev": 1,
-			"items": {
-				"key1": {
-					"rev": 1,
-					"timestamp": 0,
-					"value": toOpaqueJson({ a: 1, b: 1 }),
-				},
-				"key2": {
-					"rev": 1,
-					"timestamp": 0,
-					// out of schema value
-					"value": toOpaqueJson({ b: 1, d: 1 }),
-				},
-			},
-		},
-	},
-} as const;
-
 describe("Presence", () => {
 	describe("Runtime schema validation", () => {
 		const afterCleanUp: (() => void)[] = [];
-		const initialTime = 1000;
-
-		type UpdateContent = typeof latestUpdate & typeof latestMapUpdate;
+		const initialTime = 500;
+		const attendee1ValueRevisionTimestamp = 600;
+		const testStartTime = 1010;
+		let localAttendee1ValueRevisionTimestamp: number;
 
 		let clock: SinonFakeTimers;
 		let logger: EventAndErrorTrackingLogger;
 		let presence: PresenceWithNotifications;
 		let processSignal: ProcessSignalFunction;
 		let runtime: MockEphemeralRuntime;
-
-		function processUpdates(valueManagerUpdates: Record<string, UpdateContent>): void {
-			const updates = { "system:presence": attendeeUpdate, ...valueManagerUpdates };
-
-			processSignal(
-				[],
-				{
-					type: "Pres:DatastoreUpdate",
-					content: {
-						sendTimestamp: clock.now - 10,
-						avgLatency: 20,
-						data: updates,
-					},
-					clientId: "client1",
-				},
-				false,
-			);
-		}
 
 		before(async () => {
 			clock = useFakeTimers();
@@ -115,7 +62,8 @@ describe("Presence", () => {
 			clock.setSystemTime(initialTime);
 
 			// Create Presence joining session as attendeeId-2.
-			({ presence, processSignal } = prepareConnectedPresence(
+			let localAvgLatency: number;
+			({ presence, processSignal, localAvgLatency } = prepareConnectedPresence(
 				runtime,
 				attendeeId2,
 				connectionId2,
@@ -123,14 +71,69 @@ describe("Presence", () => {
 				logger,
 			));
 
-			// Pass a little time (to mimic reality)
-			clock.tick(10);
+			// Note that while the initialTime was set to 500, the prepareConnectedPresence call advances
+			// it. Set a consistent start time for all tests.
+			const deltaToStart = testStartTime - clock.now;
+			assert(deltaToStart >= 10);
+			clock.tick(deltaToStart - 10);
 
 			// Process remote client update signal (attendeeId-1 is then part of local client's known session).
-			const workspace = {
-				"s:name:testWorkspace": { ...latestUpdate, ...latestMapUpdate },
-			};
-			processUpdates(workspace);
+			const attendee1UpdateSendTimestamp = deltaToStart - 20;
+			const attendee1AvgLatency = 20;
+			const attendee1ToLocalTimeDelta =
+				clock.now - (localAvgLatency + attendee1AvgLatency + attendee1UpdateSendTimestamp);
+			localAttendee1ValueRevisionTimestamp =
+				attendee1ValueRevisionTimestamp + attendee1ToLocalTimeDelta;
+			processSignal(
+				[],
+				{
+					type: "Pres:DatastoreUpdate",
+					content: {
+						sendTimestamp: attendee1UpdateSendTimestamp,
+						avgLatency: attendee1AvgLatency,
+						data: {
+							"system:presence": {
+								"clientToSessionId": {
+									"client1": {
+										"rev": 0,
+										"timestamp": initialTime + 40,
+										"value": attendeeId1,
+									},
+								},
+							},
+							"s:name:testWorkspace": {
+								"latest": {
+									[attendeeId1]: {
+										"rev": 1,
+										"timestamp": attendee1ValueRevisionTimestamp,
+										"value": toOpaqueJson({ x: 1, y: 1, z: 1 }),
+									},
+								},
+								"latestMap": {
+									[attendeeId1]: {
+										"rev": 1,
+										"items": {
+											"key1": {
+												"rev": 1,
+												"timestamp": attendee1ValueRevisionTimestamp,
+												"value": toOpaqueJson({ a: 1, b: 1 }),
+											},
+											"key2": {
+												"rev": 1,
+												"timestamp": attendee1ValueRevisionTimestamp,
+												// out of schema value
+												"value": toOpaqueJson({ b: 1, d: 1 }),
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					clientId: "client1",
+				},
+				false,
+			);
 
 			// Pass a little time (to mimic reality)
 			clock.tick(10);
@@ -161,8 +164,9 @@ describe("Presence", () => {
 
 				// Check Join response without active validators
 				const attendeeId4 = createSpecificAttendeeId("attendeeId-4");
-				const connectionId4 = "client4" as const;
-				const newAttendeeSignal = generateBasicClientJoin(clock.now - 50, {
+				const connectionId4 = "client4";
+				const client4JoinTime = clock.now - 50;
+				const newAttendeeSignal = generateBasicClientJoin(client4JoinTime, {
 					averageLatency: 50,
 					attendeeId: attendeeId4,
 					clientConnectionId: connectionId4,
@@ -174,9 +178,6 @@ describe("Presence", () => {
 						"avgLatency": 10,
 						"data": {
 							"system:presence": {
-								// Original response does not contain the requestor (attendeeId-4)
-								// information (for efficiency). Note that the efficiency might be
-								// compromising robust data and may change.
 								"clientToSessionId": {
 									[connectionId2]: {
 										"rev": 0,
@@ -185,8 +186,13 @@ describe("Presence", () => {
 									},
 									[connectionId1]: {
 										"rev": 0,
-										"timestamp": 0,
+										"timestamp": initialTime + 40,
 										"value": attendeeId1,
+									},
+									[connectionId4]: {
+										"rev": 0,
+										"timestamp": client4JoinTime,
+										"value": attendeeId4,
 									},
 								},
 							},
@@ -194,7 +200,7 @@ describe("Presence", () => {
 								"latest": {
 									[attendeeId1]: {
 										"rev": 1,
-										"timestamp": -20,
+										"timestamp": localAttendee1ValueRevisionTimestamp,
 										"value": toOpaqueJson({ x: 1, y: 1, z: 1 }),
 									},
 								},
@@ -204,12 +210,12 @@ describe("Presence", () => {
 										"items": {
 											"key1": {
 												"rev": 1,
-												"timestamp": -20,
+												"timestamp": localAttendee1ValueRevisionTimestamp,
 												"value": toOpaqueJson({ a: 1, b: 1 }),
 											},
 											"key2": {
 												"rev": 1,
-												"timestamp": -20,
+												"timestamp": localAttendee1ValueRevisionTimestamp,
 												"value": toOpaqueJson({ b: 1, d: 1 }),
 											},
 										},
@@ -218,12 +224,14 @@ describe("Presence", () => {
 							},
 						},
 						"isComplete": true,
-						"sendTimestamp": clock.now,
+						"joinResponseFor": [connectionId4],
+						"sendTimestamp": clock.now + broadcastJoinResponseDelaysMs.namedResponder,
 					},
 				} as const satisfies OutboundDatastoreUpdateMessage;
 				{
 					runtime.signalsExpected.push([expectedSetupJoinResponse]);
 					processSignal([], newAttendeeSignal, false);
+					clock.tick(broadcastJoinResponseDelaysMs.namedResponder);
 				}
 				// Pass a little time (to distinguish between signals)
 				clock.tick(10);
@@ -237,6 +245,12 @@ describe("Presence", () => {
 					latest: StateFactory.latest({
 						local: { x: 0, y: 0, z: 0 },
 						validator: point3DValidatorFunction,
+						settings: {
+							// To prevent sending messages ahead of full broadcast from
+							// join below, set the allowable latency to twice expected
+							// join response time.
+							allowableUpdateLatencyMs: 2 * broadcastJoinResponseDelaysMs.namedResponder,
+						},
 					}),
 				});
 				const latest = statesWorkspace.states.latest;
@@ -252,15 +266,6 @@ describe("Presence", () => {
 							"system:presence": {
 								"clientToSessionId": {
 									...originalJoinResponseData["system:presence"].clientToSessionId,
-									// Original response does not contain the requestor information
-									// (for efficiency), but this secondary request will have that
-									// connection data. Note the the efficiency might be compromising
-									// robust data and may change.
-									[connectionId4]: {
-										"rev": 0,
-										"timestamp": initialTime - 20,
-										"value": attendeeId4,
-									},
 								},
 							},
 							"s:name:testWorkspace": {
@@ -278,13 +283,15 @@ describe("Presence", () => {
 							},
 						},
 						"isComplete": true,
-						"sendTimestamp": clock.now,
+						"joinResponseFor": [connectionId4],
+						"sendTimestamp": clock.now + broadcastJoinResponseDelaysMs.namedResponder,
 					},
 				} as const satisfies OutboundDatastoreUpdateMessage;
 				runtime.signalsExpected.push([expectedJoinResponse]);
 
 				// Act & Verify - resend new attendee Join signal
 				processSignal([], newAttendeeSignal, false);
+				clock.tick(broadcastJoinResponseDelaysMs.namedResponder);
 			});
 		});
 	});

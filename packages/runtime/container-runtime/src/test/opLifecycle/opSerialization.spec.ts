@@ -67,7 +67,10 @@ describe("opSerialization", () => {
 
 			const op: LocalContainerRuntimeMessage = {
 				type: ContainerMessageType.FluidDataStoreOp,
-				contents: { address: "123", contents: { hereIsAHandle: mockHandle } },
+				contents: {
+					address: "123",
+					contents: { type: "op", content: { address: "test", contents: mockHandle } },
+				},
 			};
 
 			const serialized = serializeOp(op);
@@ -89,7 +92,11 @@ describe("opSerialization", () => {
 				contents: {
 					address: "123",
 					contents: {
-						alreadyEncodedHandle: encodeHandleForSerialization(new MockHandle({})),
+						type: "op",
+						content: {
+							address: "test",
+							contents: encodeHandleForSerialization(new MockHandle({})),
+						},
 					},
 				},
 			};

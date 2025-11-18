@@ -9,9 +9,23 @@
  * @packageDocumentation
  */
 
-export { createSemanticAgent } from "./agent.js";
-export type { Log, SharedTreeSemanticAgent } from "./agent.js";
-export type { TreeView, llmDefault, instanceOf } from "./utils.js";
+export {
+	SharedTreeSemanticAgent,
+	createContext,
+} from "./agent.js";
+export type {
+	EditResult,
+	SharedTreeChatModel,
+	SharedTreeChatQuery,
+	Logger,
+	SemanticAgentOptions,
+	SynchronousEditor,
+	AsynchronousEditor,
+	TreeView,
+	ViewOrTree,
+	Context,
+} from "./api.js";
+export { llmDefault } from "./utils.js";
 export {
 	buildFunc,
 	exposeMethodsSymbol,
@@ -20,7 +34,7 @@ export {
 	type Arg,
 	type FunctionDef,
 	type MethodKeys,
-	type NodeSchema,
+	type BindableSchema,
 	type Ctor,
 	type Infer,
 	type IExposedMethods,

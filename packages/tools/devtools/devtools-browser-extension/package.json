@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/devtools-browser-extension",
-	"version": "2.61.0",
+	"version": "2.73.0",
 	"private": true,
 	"description": "A browser extension for visualizing Fluid Framework stats and operations",
 	"homepage": "https://fluidframework.com",
@@ -24,8 +24,8 @@
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"clean": "rimraf --glob coverage dist lib nyc \"**/*.tsbuildinfo\" \"**/*.build.log\"",
-		"eslint": "eslint src",
-		"eslint:fix": "eslint src --fix",
+		"eslint": "eslint --quiet src",
+		"eslint:fix": "eslint --quiet src --fix",
 		"format": "npm run format:biome",
 		"format-and-build": "npm run format && npm run build",
 		"format-and-compile": "npm run format && npm run build:compile",
@@ -41,7 +41,7 @@
 		"test:jest": "jest --ci",
 		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest --ci",
 		"test:mocha": "npm run test:mocha:esm && npm run test:mocha:cjs",
-		"test:mocha:cjs": "cross-env MOCHA_SPEC=dist/tsc/test mocha",
+		"test:mocha:cjs": "cross-env FLUID_TEST_MODULE_SYSTEM=CJS MOCHA_SPEC=dist/tsc/test mocha",
 		"test:mocha:esm": "cross-env MOCHA_SPEC=lib/tsc/test mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run mocha -- --verbose",
 		"test:unit": "npm run test:mocha",
@@ -91,11 +91,11 @@
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.58.1",
+		"@fluidframework/build-tools": "^0.60.0",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^6.0.0",
+		"@fluidframework/eslint-config-fluid": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
@@ -119,8 +119,8 @@
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"dotenv-webpack": "^7.0.3",
-		"eslint": "~8.55.0",
-		"eslint-config-prettier": "~9.0.0",
+		"eslint": "~8.57.1",
+		"eslint-config-prettier": "~10.1.8",
 		"eslint-plugin-chai-expect": "~3.0.0",
 		"expect-puppeteer": "^9.0.2",
 		"good-fences": "^1.1.1",
@@ -143,8 +143,6 @@
 		"webpack-cli": "^5.1.4"
 	},
 	"typeValidation": {
-		"disabled": true,
-		"broken": {},
-		"entrypoint": "internal"
+		"disabled": true
 	}
 }

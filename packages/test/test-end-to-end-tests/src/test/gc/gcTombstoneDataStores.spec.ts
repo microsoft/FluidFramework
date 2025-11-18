@@ -37,7 +37,7 @@ import {
 import { responseToException } from "@fluidframework/runtime-utils/internal";
 import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base/internal";
 import { MockLogger, TelemetryDataTag } from "@fluidframework/telemetry-utils/internal";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import { validateAssertionError2 as validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
@@ -1541,8 +1541,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				() => getGCStateFromSummary(summary2.summaryTree),
 				// Assertion error message text changed in Node 20.18.1 to append the failed comparison info.
 				// This validation can be made more strict again once the repo requires Node >= 20.18.1
-				(e: Error) =>
-					validateAssertionError(e, /^getGCStateFromSummary: GC state is not a blob/),
+				validateAssertionError(/^getGCStateFromSummary: GC state is not a blob/),
 			);
 			const tombstoneState = getGCTombstoneStateFromSummary(summary2.summaryTree);
 			assert(
@@ -1556,11 +1555,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				() => getGCTombstoneStateFromSummary(summary3.summaryTree),
 				// Assertion error message text changed in Node 20.18.1 to append the failed comparison info.
 				// This validation can be made more strict again once the repo requires Node >= 20.18.1
-				(e: Error) =>
-					validateAssertionError(
-						e,
-						/^getGCTombstoneStateFromSummary: GC data should be a tree/,
-					),
+				validateAssertionError(/^getGCTombstoneStateFromSummary: GC data should be a tree/),
 			);
 		});
 

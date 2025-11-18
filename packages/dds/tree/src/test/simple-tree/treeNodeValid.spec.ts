@@ -4,24 +4,26 @@
  */
 
 import { strict as assert, fail } from "node:assert";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import {
+	validateAssertionError2 as validateAssertionError,
+	validateUsageError,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	createTreeNodeSchemaPrivateData,
 	type MostDerivedData,
 	TreeNodeValid,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/core/treeNodeValid.js";
 
 import type { FlexTreeNode } from "../../feature-libraries/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { numberSchema } from "../../simple-tree/leafNodeSchema.js";
-import { validateUsageError } from "../utils.js";
 import { brand } from "../../util/index.js";
 import {
 	getTreeNodeSchemaInitializedData,
 	getUnhydratedContext,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/createContext.js";
 import {
 	inPrototypeChain,
@@ -31,12 +33,11 @@ import {
 	type InternalTreeNode,
 	type TreeNodeSchema,
 	UnhydratedFlexTreeNode,
-	type NormalizedAnnotatedAllowedTypes,
 	type TreeNodeSchemaInitializedData,
 	privateDataSymbol,
 	CompatibilityLevel,
 	type TreeNodeSchemaPrivateData,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/core/index.js";
 import { LeafNodeStoredSchema, ValueSchema } from "../../core/index.js";
 
@@ -94,8 +95,6 @@ describe("TreeNodeValid", () => {
 			}
 
 			public static readonly childTypes: ReadonlySet<TreeNodeSchema> = new Set();
-			public static readonly childAnnotatedAllowedTypes: readonly NormalizedAnnotatedAllowedTypes[] =
-				[];
 
 			public override get [typeNameSymbol](): string {
 				throw new Error("Method not implemented.");
@@ -154,15 +153,9 @@ describe("TreeNodeValid", () => {
 			}
 		}
 
-		assert.throws(
-			() => new Subclass(),
-			(error: Error) => validateAssertionError(error, /invalid schema class/),
-		);
+		assert.throws(() => new Subclass(), validateAssertionError(/invalid schema class/));
 		// Ensure oneTimeSetup doesn't prevent error from rethrowing
-		assert.throws(
-			() => new Subclass(),
-			(error: Error) => validateAssertionError(error, /invalid schema class/),
-		);
+		assert.throws(() => new Subclass(), validateAssertionError(/invalid schema class/));
 	});
 
 	it("multiple subclass valid", () => {
@@ -176,8 +169,6 @@ describe("TreeNodeValid", () => {
 			public static readonly info = numberSchema;
 			public static readonly implicitlyConstructable: false;
 			public static readonly childTypes: ReadonlySet<TreeNodeSchema> = new Set();
-			public static readonly childAnnotatedAllowedTypes: readonly NormalizedAnnotatedAllowedTypes[] =
-				[];
 
 			public static override buildRawNode<T2>(
 				this: typeof TreeNodeValid<T2>,
@@ -243,8 +234,6 @@ describe("TreeNodeValid", () => {
 			public static readonly info = numberSchema;
 			public static readonly implicitlyConstructable: false;
 			public static readonly childTypes: ReadonlySet<TreeNodeSchema> = new Set();
-			public static readonly childAnnotatedAllowedTypes: readonly NormalizedAnnotatedAllowedTypes[] =
-				[];
 
 			public static override buildRawNode<T2>(
 				this: typeof TreeNodeValid<T2>,
