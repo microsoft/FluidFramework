@@ -78,6 +78,9 @@ export function makeVersionedValidatedCodec<
 	);
 }
 
+/**
+ * Creates a codec which always throws a UsageError when encoding or decoding, indicating that the format version is discontinued.
+ */
 export function makeDiscontinuedCodecVersion<
 	TDecoded,
 	TEncoded extends Versioned = JsonCompatibleReadOnly & Versioned,
