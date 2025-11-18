@@ -362,7 +362,7 @@ export class MyExposingClass {
  *
  * @remarks
  * This does not work for asserts that get "tagging" see {@link @fluidframework/test-runtime-utils#validateAssertionError} for that.
- * This avoids a dependency on `@fluidframework/test-runtime-utils` since this package cannot use it.
+ * This function exists here to avoid a dependency on `@fluidframework/test-runtime-utils` since this package cannot use it.
  */
 function validateError(expectedErrorMsg: string | RegExp): (error: Error) => true {
 	return (error: Error) => {
