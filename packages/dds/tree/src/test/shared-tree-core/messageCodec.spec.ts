@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 import type { SessionId } from "@fluidframework/id-compressor";
 import { createSessionId } from "@fluidframework/id-compressor/internal";
 
@@ -26,7 +27,6 @@ import {
 	mintRevisionTag,
 	testIdCompressor,
 	testRevisionTagCodec,
-	validateUsageError,
 } from "../utils.js";
 import { currentVersion, DependentFormatVersion } from "../../codec/index.js";
 import { MessageFormatVersion } from "../../shared-tree-core/index.js";

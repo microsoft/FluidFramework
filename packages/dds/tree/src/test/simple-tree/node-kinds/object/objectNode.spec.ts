@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import { isStableId } from "@fluidframework/id-compressor/internal";
@@ -46,7 +47,7 @@ import type {
 	requireTrue,
 	RestrictiveStringRecord,
 } from "../../../../util/index.js";
-import { getView, validateUsageError } from "../../../utils.js";
+import { getView } from "../../../utils.js";
 import { Tree } from "../../../../shared-tree/index.js";
 import { FieldKinds } from "../../../../feature-libraries/index.js";
 

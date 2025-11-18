@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
@@ -56,7 +57,6 @@ import {
 	type UnannotateAllowedTypesList,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/core/allowedTypes.js";
-import { validateUsageError } from "../../utils.js";
 
 const schema = new SchemaFactory("com.example");
 
