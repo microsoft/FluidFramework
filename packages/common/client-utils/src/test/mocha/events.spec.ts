@@ -361,8 +361,8 @@ export class MyExposingClass {
  * @returns an error validation function suitable for use with NodeJS's `assert.throws()`.
  *
  * @remarks
- * This does not work for asserts which get "tagging" see {@link @fluidframework/test-runtime-utils#validateAssertionError} for that.
- * This avoids a dependency on `@fluidframework/test-runtime-utils` since this package cannot use it.
+ * This does not work for asserts that get "tagging" see {@link @fluidframework/test-runtime-utils#validateAssertionError} for that.
+ * This function exists here to avoid a dependency on `@fluidframework/test-runtime-utils` since this package cannot use it.
  */
 function validateError(expectedErrorMsg: string | RegExp): (error: Error) => true {
 	return (error: Error) => {
