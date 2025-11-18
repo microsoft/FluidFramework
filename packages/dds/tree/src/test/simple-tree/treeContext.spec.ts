@@ -15,7 +15,7 @@ import {
 import { getView } from "../utils.js";
 import { TreeAlpha } from "../../shared-tree/index.js";
 import type { requireAssignableTo } from "../../util/index.js";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import { validateAssertionError2 as validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 describe("TreeBranch", () => {
 	const schemaFactory = new SchemaFactory(undefined);
@@ -115,7 +115,7 @@ describe("TreeBranch", () => {
 			assert.deepEqual([...branchBranch.root], ["y"]);
 			assert.throws(
 				() => view.rebaseOnto(branch),
-				(e: Error) => validateAssertionError(e, /cannot be rebased onto another branch./),
+				validateAssertionError(/cannot be rebased onto another branch./),
 			);
 		});
 

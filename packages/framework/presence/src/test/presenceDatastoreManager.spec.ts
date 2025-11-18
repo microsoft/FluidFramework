@@ -10,7 +10,7 @@ import type {
 	RawInboundExtensionMessage,
 } from "@fluidframework/container-runtime-definitions/internal";
 import type { JsonSerializable, TypedMessage } from "@fluidframework/core-interfaces/internal";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import { validateAssertionError2 as validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
 import type { SinonFakeTimers } from "sinon";
 import { useFakeTimers, spy } from "sinon";
@@ -783,8 +783,7 @@ describe("Presence", () => {
 				// Act & Verify
 				assert.throws(
 					() => processUnrecognizedMessage({ optional: false }),
-					(e: Error) =>
-						validateAssertionError(e, /Unrecognized message type in critical message/),
+					validateAssertionError(/Unrecognized message type in critical message/),
 				);
 
 				// Verify

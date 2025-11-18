@@ -27,7 +27,7 @@ import {
 	MockEmptyDeltaConnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-	validateAssertionError,
+	validateAssertionError2 as validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { SharedStringFactory, type SharedString } from "../sequenceFactory.js";
@@ -253,8 +253,7 @@ describe("SharedString", () => {
 				() => {
 					sharedString.annotateMarker(simpleMarker, newIdProps);
 				},
-				(e: Error) =>
-					validateAssertionError(e, "Cannot change the markerId of an existing marker"),
+				validateAssertionError("Cannot change the markerId of an existing marker"),
 				"Error from attempting to update marker was not thrown or was not the expected error",
 			);
 		});
@@ -273,8 +272,7 @@ describe("SharedString", () => {
 				() => {
 					sharedString.annotateMarker(simpleMarker, newIdProps);
 				},
-				(e: Error) =>
-					validateAssertionError(e, "Cannot change the markerId of an existing marker"),
+				validateAssertionError("Cannot change the markerId of an existing marker"),
 				"Error from attempting to update marker was not thrown or was not the expected error",
 			);
 		});
@@ -293,8 +291,7 @@ describe("SharedString", () => {
 				() => {
 					sharedString.annotateMarker(simpleMarker, newIdProps);
 				},
-				(e: Error) =>
-					validateAssertionError(e, "Cannot change the markerId of an existing marker"),
+				validateAssertionError("Cannot change the markerId of an existing marker"),
 				"Error from attempting to update marker was not thrown or was not the expected error",
 			);
 		});

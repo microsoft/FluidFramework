@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { compareArrays } from "@fluidframework/core-utils/internal";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import { validateAssertionError2 as validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 // eslint-disable-next-line import-x/no-internal-modules
 import { BasicChunk } from "../../../../feature-libraries/chunked-forest/basicChunk.js";
@@ -564,11 +564,9 @@ describe("chunkDecoding", () => {
 
 			assert.throws(
 				() => decoder.decode([], stream),
-				(error: Error) =>
-					validateAssertionError(
-						error,
-						"incremental decoder not available for incremental field decoding",
-					),
+				validateAssertionError(
+					"incremental decoder not available for incremental field decoding",
+				),
 			);
 		});
 
@@ -590,7 +588,7 @@ describe("chunkDecoding", () => {
 
 			assert.throws(
 				() => decoder.decode([], stream),
-				(error: Error) => validateAssertionError(error, /Unsupported FieldBatchFormatVersion/),
+				validateAssertionError(/Unsupported FieldBatchFormatVersion/),
 			);
 		});
 	});

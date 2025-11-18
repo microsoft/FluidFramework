@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import {
 	MockHandle,
-	validateAssertionError,
+	validateAssertionError2 as validateAssertionError,
 	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
 
@@ -172,7 +172,7 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 
 		assert.throws(
 			() => unhydratedFlexTreeFromInsertable(tree, Foo),
-			(error: Error) => validateAssertionError(error, /Encountered an undefined schema/),
+			validateAssertionError(/Encountered an undefined schema/),
 		);
 	});
 
@@ -181,11 +181,9 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 
 		assert.throws(
 			() => unhydratedFlexTreeFromInsertable("Hello world", [schemaFactory.number]),
-			(error: Error) =>
-				validateAssertionError(
-					error,
-					/The provided data is incompatible with all of the types allowed by the schema/,
-				),
+			validateAssertionError(
+				/The provided data is incompatible with all of the types allowed by the schema/,
+			),
 		);
 	});
 
