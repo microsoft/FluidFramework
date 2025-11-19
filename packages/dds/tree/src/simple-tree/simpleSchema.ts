@@ -5,7 +5,7 @@
 
 import type { ValueSchema } from "../core/index.js";
 import type { JsonCompatibleReadOnlyObject } from "../util/index.js";
-import type { NodeKind, SimpleNodeSchemaBase } from "./core/index.js";
+import type { NodeKind, SchemaUpgrade, SimpleNodeSchemaBase } from "./core/index.js";
 import type { FieldKind, FieldSchemaMetadata } from "./fieldSchema.js";
 
 /*
@@ -38,6 +38,15 @@ export interface SimpleNodeSchemaBaseAlpha<
 	 */
 	readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined;
 }
+
+/**
+ * {@link AllowedTypes} for a location in the tree, expressed for use in the Simple Schema layer of abstraction.
+ *
+ * @remarks
+ * Refers to the types by identifier.
+ * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
+ */
+export type SimpleAllowedTypes = ReadonlyMap<string, SimpleAllowedTypeAttributes>;
 
 /**
  * A {@link SimpleNodeSchema} for an object node.
@@ -179,13 +188,13 @@ export type SimpleNodeSchema =
  */
 export interface SimpleAllowedTypeAttributes {
 	/**
-	 * True if this schema is included as a {@link SchemaStaticsBeta.staged | staged} schema upgrade,
+	 * {@link SchemaUpgrade} if this schema is included as a {@link SchemaStaticsBeta.staged | staged} schema upgrade,
 	 * allowing the view schema be compatible with stored schema with (post upgrade) or without it (pre-upgrade).
 	 * New documents and schema upgrades will omit any staged schema.
 	 *
 	 * Undefined if derived from a stored schema.
 	 */
-	readonly isStaged: boolean | undefined;
+	readonly isStaged: false | SchemaUpgrade | undefined;
 }
 
 /**

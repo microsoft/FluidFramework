@@ -44,7 +44,7 @@ export {
 	type UnannotateAllowedTypesList,
 	type AllowedTypeMetadata,
 	type AnnotatedAllowedTypes,
-	type SchemaUpgrade,
+	SchemaUpgrade,
 	type LazyItem,
 	type FlexList,
 	type FlexListToUnion,

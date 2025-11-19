@@ -18,6 +18,8 @@ import {
 	type SimpleObjectNodeSchema,
 	type SimpleTreeSchema,
 } from "../../../simple-tree/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { createSchemaUpgrade } from "../../../simple-tree/core/index.js";
 import { ValueSchema } from "../../../core/index.js";
 
 import {
@@ -584,7 +586,9 @@ describe("getSimpleSchema", () => {
 			const expected: SimpleTreeSchema = {
 				root: {
 					kind: FieldKind.Optional,
-					simpleAllowedTypes: new Map([[leafSchema.identifier, { isStaged: true }]]),
+					simpleAllowedTypes: new Map([
+						[leafSchema.identifier, { isStaged: createSchemaUpgrade() }],
+					]),
 					metadata: {},
 					persistedMetadata: undefined,
 				},
