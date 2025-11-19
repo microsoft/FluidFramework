@@ -143,7 +143,9 @@ export function toStoredSchema(
  * To correctly support view schema here, this would need to filter out unreferenced schema after excluding staged schema.
  * @see {@link ExpectStored}.
  */
-export function toSimpleStoredToStoredSchema(treeSchema: SimpleTreeSchema): TreeStoredSchema {
+export function simpleStoredSchemaToStoredSchema(
+	treeSchema: SimpleTreeSchema,
+): TreeStoredSchema {
 	const result: TreeStoredSchema = {
 		nodeSchema: transformMapValues(treeSchema.definitions, (schema) =>
 			getStoredSchema(schema, ExpectStored),

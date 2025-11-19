@@ -44,7 +44,7 @@ export function allowedTypeFilter(
 	if (options === ExpectStored) {
 		if (data.isStaged !== undefined) {
 			throw new UsageError(
-				"ExpectStored indicated input schema should be a stored schema, but it had `isStaged` not set to `undefined`.",
+				"Failed to covert view schema to stored schema. The simple schema provided was indicated to a stored schema by the use of `ExpectStored`, but view schema specific content was encountered which requires a `StoredFromViewSchemaGenerationOptions` to process.",
 			);
 		}
 		return true;
@@ -52,7 +52,7 @@ export function allowedTypeFilter(
 
 	if (data.isStaged === undefined) {
 		throw new UsageError(
-			"Cannot interpret simple schema for a stored schema as view schema when converting it to a stored schema. This case must use ExpectStored to indicate input is already a stored schema.",
+			"Failed to covert view schema to stored schema. The simple schema provided as the view schema was actually a stored schema. If this was intended used `ExpectStored` for the `StoredSchemaGenerationOptions` to indicate the input is already a stored schema and only a format conversion is required.",
 		);
 	}
 
@@ -65,7 +65,7 @@ export function allowedTypeFilter(
 }
 
 /**
- * Converts an {@link SimpleAllowedTypes} to a stored schema.
+ * Converts a {@link SimpleAllowedTypes} to a stored schema.
  * @param schema - The schema to convert.
  * @param options - The options to use for filtering.
  * @returns The converted stored schema.
