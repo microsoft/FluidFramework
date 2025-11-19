@@ -80,7 +80,7 @@ describe("toStoredSchema", () => {
 					) {
 						// If the document is relying on forwards compatibility options (staged schema or unknown optional fields),
 						// then we do not expect to be able to get the same stored schema as in the document by deriving a stored schema from the view schema.
-						// For cases just using staged schema, this does validate that the staged schema is being discarded due to restrictiveStoredSchemaGenerationOptions,
+						// For cases just using staged schema, this validates that the staged schema is being discarded due to restrictiveStoredSchemaGenerationOptions,
 						// but the main reason for this conditional is to avoid these cases breaking the "Matches document" case below.
 						it("Does not match document", () => {
 							const restrictive = toStoredSchema(
@@ -113,7 +113,7 @@ describe("toStoredSchema", () => {
 
 						// The restrictive case, used for initial schemas and upgrades, does not include any allowed types schema.
 						// The permissive case, used for unhydrated trees, includes all staged allowed types.
-						// They should be equal if an only iff there are no staged allowed types.
+						// They should be equal if an only if there are no staged allowed types.
 						if (testCase.hasStagedSchema) {
 							assert.notDeepEqual(restrictive, permissive);
 						} else {
@@ -124,10 +124,10 @@ describe("toStoredSchema", () => {
 							cursorForJsonableTreeField(testCase.treeFactory()),
 						);
 
-						// Our test case has a actual tree which is known to comply with its existing stored schema, and the test case's view schema.
+						// Our test case has an actual tree which is known to comply with its existing stored schema, and the test case's view schema.
 						// Therefore, the tree must be in schema for the permissive case, with the exception of any unknown optional fields.
 						// We can assert this here.
-						// This is a sanity check that the produced permissive schema actually allows the trees its supposed to.
+						// This is a sanity check that the produced permissive schema actually allows the trees it's supposed to.
 						// This could catch bugs where simple to stored to simple round trip is correct, but the corresponding stored schema is wrong.
 						isFieldInSchema(
 							tree,
@@ -158,7 +158,7 @@ describe("toStoredSchema", () => {
 								testCase.hasUnknownOptionalFields === true,
 						);
 
-						// These arn't the tests for "exportSimpleSchema", but toStored should work with them, so we can use them to check consistency and round trip.
+						// These aren't the tests for "exportSimpleSchema", but toStored should work with them, so we can use them to check consistency and round trip.
 						const simpleFromRestrictive = exportSimpleSchema(restrictive);
 						const simpleFromPermissive = exportSimpleSchema(permissive);
 
