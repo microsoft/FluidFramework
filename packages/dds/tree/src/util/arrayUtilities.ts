@@ -19,7 +19,7 @@ export function validateSafeInteger(index: number, apiName: string): void {
 }
 
 /**
- * Validates that the provided index is a non-negative safe integer.
+ * Validates that the provided index is a 0 or greater safe integer.
  * @param index - The index to validate.
  * @param apiName - The name of the API performing the validation.
  * @throws If the index is invalid.
@@ -62,10 +62,13 @@ export function validateIndex(
 }
 
 /**
- * Validates that the provided range is valid and within the bounds of the provided array or 1 past its end.
+ * Validates that the provided range `[startIndex, endIndex)` is valid and within the bounds of the provided array.
+ * @remarks
+ * This is intended for ranges which are inclusive for the lower bound, and exclusive for the upper bound,
+ * and permits 0 length ranges, even `[array.length, array.length)`.
  * @throws If the index is invalid.
- * @param startIndex - The index that starts the range.
- * @param endIndex - The index that ends the range.
+ * @param startIndex - The index that starts the range (inclusive).
+ * @param endIndex - The index that ends the range (exclusive).
  * @param array - The array to validate against.
  * @param apiName - The name of the API performing the validation.
  */
