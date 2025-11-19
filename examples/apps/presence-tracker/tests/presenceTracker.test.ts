@@ -178,7 +178,7 @@ describe("presence-tracker", () => {
 								expected: Record<string, string>,
 							) => boolean
 						)(expectation),
-					{ timeout: 100 },
+					{ timeout: 300 },
 					expected,
 				)
 				.catch(async () => {

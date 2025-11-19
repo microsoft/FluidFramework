@@ -7,12 +7,12 @@ export {
 	type ITreePrivate,
 	type SharedTreeOptionsInternal,
 	type SharedTreeOptions,
+	type SharedTreeOptionsBeta,
 	SharedTreeKernel,
 	getBranch,
 	type ForestType,
 	type SharedTreeContentSnapshot,
 	type SharedTreeFormatOptions,
-	SharedTreeFormatVersion,
 	buildConfiguredForest,
 	defaultSharedTreeOptions,
 	type ForestOptions,
@@ -23,6 +23,7 @@ export {
 	exportSimpleSchema,
 	type SharedTreeKernelView,
 	persistedToSimpleSchema,
+	getCodecTreeForSharedTreeFormat,
 } from "./sharedTree.js";
 
 export {
@@ -37,6 +38,8 @@ export {
 
 export { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 
+export { initialize, initializerFromChunk } from "./schematizeTree.js";
+
 export type {
 	ISharedTreeEditor,
 	ISchemaEditor,
@@ -49,12 +52,20 @@ export type { RunTransaction } from "./tree.js";
 export {
 	TreeAlpha,
 	type TreeIdentifierUtils,
+	type ObservationResults,
 } from "./treeAlpha.js";
 
 export {
 	independentInitializedView,
 	type ViewContent,
 	independentView,
+	createIndependentTreeBeta,
+	createIndependentTreeAlpha,
 } from "./independentView.js";
 
 export type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
+
+export {
+	getCodecTreeForChangeFormat,
+	type SharedTreeChangeFormatVersion,
+} from "./sharedTreeChangeCodecs.js";

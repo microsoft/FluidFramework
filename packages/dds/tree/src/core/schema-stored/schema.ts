@@ -7,9 +7,10 @@ import { fail } from "@fluidframework/core-utils/internal";
 
 import { DiscriminatedUnionDispatcher } from "../../codec/index.js";
 import {
+	type Brand,
 	type JsonCompatibleReadOnlyObject,
 	type MakeNominal,
-	brand,
+	brandConst,
 	invertMap,
 } from "../../util/index.js";
 
@@ -32,13 +33,17 @@ import type { Multiplicity } from "./multiplicity.js";
 /**
  * The format version for the schema.
  */
-export enum SchemaVersion {
-	v1 = 1,
+export const SchemaFormatVersion = {
+	v1: 1,
 	/**
 	 * Adds persisted metadata to the node schema and field schema.
 	 */
-	v2 = 2,
-}
+	v2: 2,
+} as const;
+export type SchemaFormatVersion = Brand<
+	(typeof SchemaFormatVersion)[keyof typeof SchemaFormatVersion],
+	"SchemaFormatVersion"
+>;
 
 type FieldSchemaFormat = FieldSchemaFormatV1 | FieldSchemaFormatV2;
 
@@ -86,13 +91,24 @@ export enum ValueSchema {
 export type TreeTypeSet = ReadonlySet<TreeNodeSchemaIdentifier>;
 
 /**
- * Declarative portion of a Field Kind.
+ * Declarative portion of a {@link FlexFieldKind}.
  *
  * @remarks
  * Enough info about a field kind to know if a given tree is is schema.
+ *
+ * Note that compatibility between trees and schema is not sufficient to evaluate if a schema upgrade should be allowed.
+ * Currently schema upgrades are restricted to field kind changes which can not be cyclic (like version upgrades but not down grades).
+ * See {@link FlexFieldKind.allowsFieldSuperset} for more details.
  */
 export interface FieldKindData {
+	/**
+	 * Globally scoped identifier.
+	 */
 	readonly identifier: FieldKindIdentifier;
+	/**
+	 * Bound on the number of children that fields of this kind may have.
+	 * TODO: consider replacing this with numeric upper and lower bounds.
+	 */
 	readonly multiplicity: Multiplicity;
 }
 
@@ -155,7 +171,7 @@ export interface TreeFieldStoredSchema {
  *
  * 2. The schema used for out of schema fields (which thus must be empty/not exist) on object and leaf nodes.
  */
-export const forbiddenFieldKindIdentifier: FieldKindIdentifier = brand("Forbidden");
+export const forbiddenFieldKindIdentifier = brandConst("Forbidden")<FieldKindIdentifier>();
 
 /**
  * A schema for empty fields (fields which must always be empty).
@@ -202,8 +218,7 @@ export abstract class TreeNodeStoredSchema {
 
 export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 	/**
-	 * @param objectNodeFields -
-	 * Schema for fields with keys scoped to this TreeNodeStoredSchema.
+	 * @param objectNodeFields - Schema for fields with keys scoped to this TreeNodeStoredSchema.
 	 * This refers to the TreeFieldStoredSchema directly
 	 * (as opposed to just supporting FieldSchemaIdentifier and having a central FieldKey -\> TreeFieldStoredSchema map).
 	 * This allows us short friendly field keys which can be ergonomically used as field names in code.
@@ -259,8 +274,7 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 
 export class MapNodeStoredSchema extends TreeNodeStoredSchema {
 	/**
-	 * @param mapFields -
-	 * Allows using the fields as a map, with the keys being
+	 * @param mapFields - Allows using the fields as a map, with the keys being
 	 * FieldKeys and the values being constrained by this TreeFieldStoredSchema.
 	 * Usually `FieldKind.Value` should NOT be used here
 	 * since no nodes can ever be in schema if you use `FieldKind.Value` here
@@ -291,8 +305,7 @@ export class MapNodeStoredSchema extends TreeNodeStoredSchema {
 
 export class LeafNodeStoredSchema extends TreeNodeStoredSchema {
 	/**
-	 * @param leafValue -
-	 * There are several approaches for how to store actual data in the tree
+	 * @param leafValue - There are several approaches for how to store actual data in the tree
 	 * (special node types, special field contents, data on nodes etc.)
 	 * as well as several options about how the data should be modeled at this level
 	 * (byte sequence? javascript type? json?),

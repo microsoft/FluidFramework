@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/devtools-test-app",
-	"version": "2.62.0",
+	"version": "2.73.0",
 	"private": true,
 	"description": "An example application demonstrating how Fluid's devtools can be integrated into an application",
 	"homepage": "https://fluidframework.com",
@@ -20,8 +20,8 @@
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"clean": "rimraf --glob _api-extractor-temp coverage dist lib nyc \"**/*.tsbuildinfo\" \"**/*.build.log\"",
-		"eslint": "eslint src",
-		"eslint:fix": "eslint src --fix",
+		"eslint": "eslint --quiet src",
+		"eslint:fix": "eslint --quiet src --fix",
 		"format": "npm run format:biome",
 		"format-and-build": "npm run format && npm run build",
 		"format-and-compile": "npm run format && npm run build:compile",
@@ -45,7 +45,6 @@
 		"@fluentui/react-components": "^9.47.5",
 		"@fluentui/react-icons": "^2.0.233",
 		"@fluid-example/example-utils": "workspace:~",
-		"@fluid-experimental/tree-react-api": "workspace:~",
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluid-internal/devtools-view": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
@@ -61,6 +60,7 @@
 		"@fluidframework/fluid-static": "workspace:~",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/matrix": "workspace:~",
+		"@fluidframework/react": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
@@ -75,8 +75,8 @@
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.58.3",
-		"@fluidframework/eslint-config-fluid": "^6.0.0",
+		"@fluidframework/build-tools": "^0.60.0",
+		"@fluidframework/eslint-config-fluid": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
 		"@testing-library/dom": "^10.4.0",
 		"@testing-library/jest-dom": "^5.16.5",
@@ -89,8 +89,8 @@
 		"@types/testing-library__jest-dom": "^5.14.5",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
-		"eslint": "~8.55.0",
-		"eslint-config-prettier": "~9.0.0",
+		"eslint": "~8.57.1",
+		"eslint-config-prettier": "~10.1.8",
 		"eslint-plugin-jest": "~27.4.2",
 		"eslint-plugin-react": "~7.33.2",
 		"eslint-plugin-react-hooks": "~4.6.0",
@@ -120,8 +120,6 @@
 		}
 	},
 	"typeValidation": {
-		"disabled": true,
-		"broken": {},
-		"entrypoint": "internal"
+		"disabled": true
 	}
 }

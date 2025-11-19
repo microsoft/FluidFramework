@@ -5,7 +5,8 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import type { TSchema } from "@sinclair/typebox";
+import type { SemanticVersion } from "@fluidframework/runtime-utils/internal";
+import { Type, type TSchema } from "@sinclair/typebox";
 
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
 import {
@@ -14,12 +15,12 @@ import {
 	type IJsonCodec,
 	withSchemaValidation,
 	type FormatVersion,
-	type FluidClientVersion,
 	type CodecWriteOptions,
 } from "../codec.js";
 
 import { Versioned } from "./format.js";
 import { pkgVersion } from "../../packageVersion.js";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 
 export function makeVersionedCodec<
 	TDecoded,
@@ -45,7 +46,7 @@ export function makeVersionedCodec<
 			if (!supportedVersions.has(versioned.version)) {
 				throw new UsageError(
 					`Unsupported version ${versioned.version} encountered while decoding data. Supported versions for this data are: ${Array.from(supportedVersions).join(", ")}.
-The client which encoded this data likely specified an "oldestCompatibleClient" value which corresponds to a version newer than the version of this client ("${pkgVersion}").`,
+The client which encoded this data likely specified an "minVersionForCollab" value which corresponds to a version newer than the version of this client ("${pkgVersion}").`,
 				);
 			}
 			const decoded = inner.decode(data, context);
@@ -66,7 +67,7 @@ export function makeVersionedValidatedCodec<
 	TContext = void,
 >(
 	options: ICodecOptions,
-	supportedVersions: Set<number>,
+	supportedVersions: Set<FormatVersion>,
 	schema: EncodedSchema,
 	codec: IJsonCodec<TDecoded, TEncoded, TValidate, TContext>,
 ): IJsonCodec<TDecoded, TEncoded, TValidate, TContext> {
@@ -75,6 +76,43 @@ export function makeVersionedValidatedCodec<
 		options,
 		withSchemaValidation(schema, codec, options.jsonValidator),
 	);
+}
+
+/**
+ * Creates a codec which always throws a UsageError when encoding or decoding, indicating that the format version is discontinued.
+ */
+export function makeDiscontinuedCodecVersion<
+	TDecoded,
+	TEncoded extends Versioned = JsonCompatibleReadOnly & Versioned,
+	TContext = unknown,
+>(
+	options: ICodecOptions,
+	discontinuedVersion: FormatVersion,
+	discontinuedSince: SemanticVersion,
+): IJsonCodec<TDecoded, TEncoded, TEncoded, TContext> {
+	const schema = Type.Object(
+		{
+			version:
+				discontinuedVersion === undefined
+					? Type.Undefined()
+					: Type.Literal(discontinuedVersion),
+		},
+		// Using `additionalProperties: true` allows this schema to be used when loading data encoded by older versions even though they contain additional properties.
+		{ additionalProperties: true },
+	);
+	const codec: IJsonCodec<TDecoded, TEncoded, TEncoded, TContext> = {
+		encode: (_: TDecoded): TEncoded => {
+			throw new UsageError(
+				`Cannot encode data to format ${discontinuedVersion}. The codec was discontinued in FF version ${discontinuedSince}.`,
+			);
+		},
+		decode: (data: TEncoded): TDecoded => {
+			throw new UsageError(
+				`Cannot decode data to format ${data.version}. The codec was discontinued in FF version ${discontinuedSince}.`,
+			);
+		},
+	};
+	return makeVersionedValidatedCodec(options, new Set([discontinuedVersion]), schema, codec);
 }
 
 /**
@@ -103,7 +141,7 @@ export function makeVersionDispatchingCodec<TDecoded, TContext>(
 }
 
 /**
- * Creates a codec which dispatches to the appropriate member of a codec family based on the `oldestCompatibleClient` for encode and the
+ * Creates a codec which dispatches to the appropriate member of a codec family based on the `minVersionForCollab` for encode and the
  * version number in data it encounters for decode.
  * @privateRemarks
  * This is a two stage builder so the first stage can encapsulate all codec specific details and the second can bring in configuration.
@@ -115,17 +153,17 @@ export class ClientVersionDispatchingCodecBuilder<TDecoded, TContext> {
 		 */
 		private readonly family: ICodecFamily<TDecoded, TContext>,
 		/**
-		 * A function which maps a {@link FluidClientVersion} to a version number for the codec family which is supported by that version.
+		 * A function which maps a {@link MinimumVersionForCollab} to a version number for the codec family which is supported by that version.
 		 * This can (and typically does) pick the newest version of the codec which is known to be compatible with the client version so that
 		 * any improvements in newer versions of the codec can be used when allowed.
 		 */
-		private readonly versionMapping: (oldestCompatibleClient: FluidClientVersion) => number,
+		private readonly versionMapping: (minVersionForCollab: MinimumVersionForCollab) => number,
 	) {}
 
 	public build(
 		options: CodecWriteOptions,
 	): IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext> {
-		const writeVersion = this.versionMapping(options.oldestCompatibleClient);
+		const writeVersion = this.versionMapping(options.minVersionForCollab);
 		return makeVersionDispatchingCodec(this.family, { ...options, writeVersion });
 	}
 }

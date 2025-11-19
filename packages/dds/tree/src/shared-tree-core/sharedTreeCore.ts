@@ -25,7 +25,7 @@ import type {
 } from "@fluidframework/shared-object-base/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
-import type { ICodecOptions, IJsonCodec } from "../codec/index.js";
+import type { CodecWriteOptions, DependentFormatVersion, IJsonCodec } from "../codec/index.js";
 import {
 	type ChangeFamily,
 	type ChangeFamilyEditor,
@@ -51,24 +51,29 @@ import { BranchCommitEnricher } from "./branchCommitEnricher.js";
 import { type ChangeEnricherReadonlyCheckout, NoOpChangeEnricher } from "./changeEnricher.js";
 import { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
 import { EditManager, minimumPossibleSequenceNumber } from "./editManager.js";
-import { makeEditManagerCodec } from "./editManagerCodecs.js";
-import type { SeqNumber } from "./editManagerFormatCommons.js";
+import { makeEditManagerCodec, type EditManagerCodecOptions } from "./editManagerCodecs.js";
+import type { EditManagerFormatVersion, SeqNumber } from "./editManagerFormatCommons.js";
 import { EditManagerSummarizer } from "./editManagerSummarizer.js";
-import { type MessageEncodingContext, makeMessageCodec } from "./messageCodecs.js";
+import {
+	type MessageCodecOptions,
+	type MessageEncodingContext,
+	makeMessageCodec,
+} from "./messageCodecs.js";
 import type { DecodedMessage } from "./messageTypes.js";
 import type { ResubmitMachine } from "./resubmitMachine.js";
+import type { MessageFormatVersion } from "./messageFormat.js";
 
 // TODO: Organize this to be adjacent to persisted types.
 const summarizablesTreeKey = "indexes";
 
-export interface ExplicitCoreCodecVersions {
-	editManager: number;
-	message: number;
-}
-
 export interface ClonableSchemaAndPolicy extends SchemaAndPolicy {
 	schema: TreeStoredSchemaRepository;
 }
+
+export interface SharedTreeCoreOptionsInternal
+	extends CodecWriteOptions,
+		EditManagerCodecOptions,
+		MessageCodecOptions {}
 
 /**
  * Generic shared tree, which needs to be configured with indexes, field kinds and other configuration.
@@ -124,8 +129,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		logger: ITelemetryBaseLogger | undefined,
 		summarizables: readonly Summarizable[],
 		protected readonly changeFamily: ChangeFamily<TEditor, TChange>,
-		options: ICodecOptions,
-		formatOptions: ExplicitCoreCodecVersions,
+		options: SharedTreeCoreOptionsInternal,
+		changeFormatVersionForEditManager: DependentFormatVersion<EditManagerFormatVersion>,
+		changeFormatVersionForMessage: DependentFormatVersion<MessageFormatVersion>,
 		protected readonly idCompressor: IIdCompressor,
 		schema: TreeStoredSchemaRepository,
 		schemaPolicy: SchemaPolicy,
@@ -163,9 +169,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		const revisionTagCodec = new RevisionTagCodec(idCompressor);
 		const editManagerCodec = makeEditManagerCodec(
 			this.editManager.changeFamily.codecs,
+			changeFormatVersionForEditManager,
 			revisionTagCodec,
 			options,
-			formatOptions.editManager,
 		);
 		this.summarizables = [
 			new EditManagerSummarizer(
@@ -183,9 +189,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 
 		this.messageCodec = makeMessageCodec(
 			changeFamily.codecs,
+			changeFormatVersionForMessage,
 			new RevisionTagCodec(idCompressor),
 			options,
-			formatOptions.message,
 		);
 
 		this.registerSharedBranchForEditing(
@@ -320,6 +326,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				this.editManager.localSessionId,
 				newRevision,
 				this.detachedRevision,
+				branchId,
 			);
 			this.editManager.advanceMinimumSequenceNumber(newRevision, false);
 			return undefined;
@@ -450,8 +457,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		);
 
 		// Update the resubmit machine for each commit applied.
-		for (const _ of commits) {
-			this.tryGetResubmitMachine(branchId)?.onSequencedCommitApplied(isLocal);
+		for (const commit of commits) {
+			this.tryGetResubmitMachine(branchId)?.onSequencedCommitApplied(commit.revision, isLocal);
 		}
 	}
 
@@ -473,7 +480,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	}
 
 	protected addBranch(branchId: BranchId): void {
-		this.editManager.addBranch(branchId);
+		this.editManager.addNewBranch(branchId);
 	}
 
 	public getSharedBranch(branchId: BranchId): SharedTreeBranch<TEditor, TChange> {
@@ -499,24 +506,24 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				} = message;
 
 				const resubmitMachine = this.getResubmitMachine(branchId);
-				// If a resubmit phase is not already in progress, then this must be the first commit of a new resubmit phase.
-				if (resubmitMachine.isInResubmitPhase === false) {
+
+				const getLocalCommits = (): GraphCommit<TChange>[] => {
 					const localCommits = this.editManager.getLocalCommits(branchId);
 					const revisionIndex = localCommits.findIndex((c) => c.revision === revision);
 					assert(revisionIndex >= 0, 0xbdb /* revision must exist in local commits */);
-					const toResubmit = localCommits.slice(revisionIndex);
-					resubmitMachine.prepareForResubmit(toResubmit);
-				}
+					return localCommits.slice(revisionIndex);
+				};
+
 				assert(
 					isClonableSchemaPolicy(localOpMetadata),
 					0x95e /* Local metadata must contain schema and policy. */,
 				);
-				assert(
-					resubmitMachine.isInResubmitPhase !== false,
-					0x984 /* Invalid resubmit outside of resubmit phase */,
-				);
-				const enrichedCommit = resubmitMachine.peekNextCommit();
-				this.submitCommit(branchId, enrichedCommit, localOpMetadata, true);
+
+				const enrichedCommit = resubmitMachine.getEnrichedCommit(revision, getLocalCommits);
+				if (enrichedCommit !== undefined) {
+					this.submitCommit(branchId, enrichedCommit, localOpMetadata, true);
+				}
+
 				break;
 			}
 			case "branch": {
@@ -543,8 +550,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				} = message;
 				const branch = this.editManager.getLocalBranch(branchId);
 				const head = branch.getHead();
-				assert(head.revision === revision, "Can only rollback latest commit");
-				const newHead = head.parent ?? fail("must have parent");
+				assert(head.revision === revision, 0xc6b /* Can only rollback latest commit */);
+				const newHead = head.parent ?? fail(0xc6c /* must have parent */);
 				branch.removeAfter(newHead);
 				this.getResubmitMachine(branchId).onCommitRollback(head);
 				break;
@@ -575,7 +582,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				break;
 			}
 			case "branch": {
-				this.editManager.addBranch(message.branchId);
+				this.editManager.addNewBranch(message.branchId);
 				break;
 			}
 			default:
@@ -590,7 +597,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	): void {
 		const changeEnricher = enricher ?? new NoOpChangeEnricher();
 		const commitEnricher = new BranchCommitEnricher(this.changeFamily.rebaser, changeEnricher);
-		assert(!this.enrichers.has(branchId), "Branch already registered");
+		assert(!this.enrichers.has(branchId), 0xc6d /* Branch already registered */);
 		this.enrichers.set(branchId, {
 			enricher: commitEnricher,
 			resubmitMachine:
@@ -618,7 +625,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	private getEnricherState(branchId: BranchId): EnricherState<TChange> {
 		return (
 			this.tryGetEnricherState(branchId) ??
-			fail("Expected to have a resubmit machine for this branch")
+			fail(0xc6e /* Expected to have a resubmit machine for this branch */)
 		);
 	}
 
@@ -710,7 +717,7 @@ function scopeStorageService(
 			return service.list(`${scope}${path}`);
 		},
 		getSnapshotTree(): ISnapshotTree | undefined {
-			const snapshotTree = service.getSnapshotTree?.();
+			const snapshotTree = service.getSnapshotTree();
 			if (snapshotTree === undefined) {
 				return undefined;
 			}

@@ -102,6 +102,8 @@ export {
 	cursorChunk,
 	tryGetChunk,
 	type ChunkedCursor,
+	type DetachedFieldIndexFormatVersion,
+	getCodecTreeForDetachedFieldIndexFormat,
 } from "./tree/index.js";
 
 export {
@@ -149,7 +151,7 @@ export {
 	type SchemaAndPolicy,
 	Multiplicity,
 	type SchemaPolicy,
-	SchemaVersion,
+	SchemaFormatVersion,
 } from "./schema-stored/index.js";
 
 export {

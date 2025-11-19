@@ -9,23 +9,25 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import type {
-	ImplicitFieldSchema,
-	TreeLeafValue,
-	TreeNodeSchemaClass,
-} from "@fluidframework/tree";
+import type { ImplicitFieldSchema, TreeNodeSchemaClass } from "@fluidframework/tree";
 import type {
 	InsertableContent,
-	TreeBranch,
 	TreeNode,
 	TreeNodeSchema,
-	TreeViewAlpha,
 	UnsafeUnknownSchema,
 } from "@fluidframework/tree/alpha";
-import { ObjectNodeSchema, Tree, TreeAlpha } from "@fluidframework/tree/alpha";
+import {
+	ArrayNodeSchema,
+	MapNodeSchema,
+	ObjectNodeSchema,
+	RecordNodeSchema,
+	TreeAlpha,
+} from "@fluidframework/tree/alpha";
+import { NodeKind, normalizeFieldSchema } from "@fluidframework/tree/internal";
 import { z } from "zod";
 
 import { FunctionWrapper } from "./methodBinding.js";
+import { PropertyDef } from "./propertyBinding.js";
 
 /**
  * Subset of Map interface.
@@ -85,17 +87,6 @@ export function getOrCreate<K, V>(
 
 /**
  * TODO
- * @alpha
- * @privateRemarks This is a subset of the TreeViewAlpha functionality because if take it wholesale, it causes problems with invariance of the generic parameters.
- */
-export type TreeView<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema> = Pick<
-	TreeViewAlpha<TRoot>,
-	"root" | "fork" | "merge" | "rebaseOnto" | "schema" | "events"
-> &
-	TreeBranch;
-
-/**
- * TODO
  */
 export function tryGetSingleton<T>(set: ReadonlySet<T>): T | undefined {
 	if (set.size === 1) {
@@ -151,40 +142,57 @@ export function constructNode(schema: TreeNodeSchema, value: InsertableContent):
 }
 
 /**
- * Get a human-readable representation of a tree value's type.
+ * Returns the unqualified name of a tree value's schema (e.g. a node with schema identifier `"my.scope.MyNode"` returns `"MyNode"`).
+ * @remarks If the schema is an inlined array, map, or record type, then it has no name and this function will return a string representation of the type (e.g., `"MyNode[]"` or `"Map<string, MyNode>"`).
  */
-export function getFriendlySchema(value: TreeNode | TreeLeafValue | undefined): string {
-	if (value === undefined) {
-		return "undefined";
+export function getFriendlyName(schema: TreeNodeSchema): string {
+	if (schema.kind === NodeKind.Leaf || isNamedSchema(schema.identifier)) {
+		return unqualifySchema(schema.identifier);
 	}
-	if (value === null) {
-		return "null";
+
+	const childNames = Array.from(schema.childTypes, (t) => getFriendlyName(t));
+	if (schema instanceof ArrayNodeSchema) {
+		return childNames.length > 1 ? `(${childNames.join(" | ")})[]` : `${childNames[0]}[]`;
 	}
-	if (["string", "number", "boolean"].includes(typeof value)) {
-		return typeof value;
+	if (schema instanceof MapNodeSchema) {
+		return childNames.length > 1
+			? `Map<string, (${childNames.join(" | ")})>`
+			: `Map<string, ${childNames[0]}>`;
 	}
-	if (isFluidHandle(value)) {
-		return "FluidHandle";
+	if (schema instanceof RecordNodeSchema) {
+		return childNames.length > 1
+			? `Record<string, (${childNames.join(" | ")})>`
+			: `Record<string, ${childNames[0]}>`;
 	}
-	const schema = Tree.schema(value);
-	return getFriendlySchemaName(schema.identifier) ?? schema.identifier;
+	fail("Unexpected node schema");
 }
 
 /**
- * TODO
- * @remarks Returns undefined if the schema should not be included in the prompt (and therefore should not ever be seen by the LLM).
+ * Returns true if the schema identifier represents a named schema (object, named array, named map, or named record).
+ * @remarks This does not include primitive schemas or inlined array/map/record schemas.
  */
-export function getFriendlySchemaName(schemaName: string): string | undefined {
-	// TODO: Kludge
-	const arrayTypes = schemaName.match(/Array<\["(.*)"]>/);
-	if (arrayTypes?.[1] !== undefined) {
-		return undefined;
+export function isNamedSchema(schemaIdentifier: string): boolean {
+	if (
+		["string", "number", "boolean", "null", "handle"].includes(
+			unqualifySchema(schemaIdentifier),
+		)
+	) {
+		return false;
 	}
 
-	const matches = schemaName.match(/[^.]+$/);
+	return schemaIdentifier.match(/(?:Array|Map|Record)<\["(.*)"]>/) === null;
+}
+
+/**
+ * Returns the unqualified name of a schema (e.g. `"my.scope.MyNode"` returns `"MyNode"`).
+ * @remarks This works by removing all characters before the last dot in the schema name.
+ * If there is a dot in a user's schema name, this might produce unexpected results.
+ */
+export function unqualifySchema(schemaIdentifier: string): string {
+	// Get the unqualified name by removing the scope (everything before the last dot).
+	const matches = schemaIdentifier.match(/[^.]+$/);
 	if (matches === null) {
-		// empty scope
-		return schemaName;
+		return schemaIdentifier; // Return the original name if it is unscoped.
 	}
 	return matches[0];
 }
@@ -356,11 +364,7 @@ export function getZodSchemaAsTypeScript(
 							`Unsupported zod effects type when transforming class method: ${getTypeKind(type)}`,
 						);
 					}
-					const name =
-						getFriendlySchemaName(objectNodeSchema.identifier) ??
-						fail("Expected object node schema to have a friendly name");
-
-					return append(name);
+					return append(getFriendlyName(objectNodeSchema));
 				}
 				throw new Error(
 					"Unsupported zod effects type. Did you use z.instanceOf? Use ExposedMethods.instanceOf function to reference schema classes in methods.",
@@ -368,6 +372,9 @@ export function getZodSchemaAsTypeScript(
 			}
 			case z.ZodFirstPartyTypeKind.ZodVoid: {
 				return append("void");
+			}
+			case z.ZodFirstPartyTypeKind.ZodLazy: {
+				return appendType((type._def as z.ZodLazyDef).getter());
 			}
 			default: {
 				throw new UsageError(
@@ -415,6 +422,24 @@ export function getZodSchemaAsTypeScript(
 		}
 	}
 
+	function appendBoundProperties(type: z.ZodType): void {
+		const property = (type as unknown as { property?: PropertyDef }).property;
+
+		if (!(property instanceof PropertyDef)) {
+			if (type.description !== undefined && type.description !== "") {
+				append(` // ${type.description}`);
+			}
+			return;
+		}
+
+		if (property.readOnly === true) {
+			append(" // readonly");
+		}
+		if (property.description !== undefined && property.description !== "") {
+			append(` - ${property.description}`);
+		}
+	}
+
 	function appendArrayType(arrayType: z.ZodType) {
 		appendType((arrayType._def as z.ZodArrayDef).type, TypePrecedence.Object);
 		append("[]");
@@ -427,6 +452,7 @@ export function getZodSchemaAsTypeScript(
 		// eslint-disable-next-line prefer-const
 		for (let [name, type] of Object.entries((objectType._def as z.ZodObjectDef).shape())) {
 			const method = (type as unknown as { method: object | undefined }).method;
+
 			if (method === undefined || !(method instanceof FunctionWrapper)) {
 				append(name);
 				if (getTypeKind(type) === z.ZodFirstPartyTypeKind.ZodOptional) {
@@ -436,8 +462,7 @@ export function getZodSchemaAsTypeScript(
 				append(": ");
 				appendType(type);
 				append(";");
-				const comment = type.description;
-				if (comment !== undefined && comment !== "") append(` // ${comment}`);
+				appendBoundProperties(type);
 				appendNewLine();
 			}
 		}
@@ -571,3 +596,44 @@ export function instanceOf<T extends TreeNodeSchemaClass>(
 }
 
 const instanceOfs = new WeakMap<z.ZodTypeAny, ObjectNodeSchema>();
+
+/**
+ * Adds all (optionally filtered) schemas reachable from the given schema to the given set.
+ * @returns The set of schemas added (same as the `schemas` parameter, if supplied).
+ */
+export function findSchemas(
+	schema: ImplicitFieldSchema,
+	filter: (schema: TreeNodeSchema) => boolean = () => true,
+	schemas = new Set<TreeNodeSchema>(),
+): Set<TreeNodeSchema> {
+	for (const nodeSchema of normalizeFieldSchema(schema).allowedTypeSet) {
+		if (!schemas.has(nodeSchema)) {
+			if (filter(nodeSchema)) {
+				schemas.add(nodeSchema);
+			}
+			findSchemas([...nodeSchema.childTypes], filter, schemas);
+		}
+	}
+	return schemas;
+}
+
+/**
+ * De-capitalize (the first letter of) a string.
+ */
+export function communize(str: string): string {
+	return str.charAt(0).toLowerCase() + str.slice(1);
+}
+
+/**
+ * Stringify an unknown error value
+ */
+export function toErrorString(error: unknown): string {
+	if (error instanceof Error) {
+		return error.message;
+	}
+	try {
+		return JSON.stringify(error);
+	} catch {
+		return String(error);
+	}
+}

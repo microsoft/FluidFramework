@@ -54,13 +54,15 @@ export type {
 	ReplaceIEventThisPlaceHolder,
 	FluidObject, // Linked in doc comment
 	FluidObjectProviderKeys, // Used by FluidObject
-	/* eslint-disable import/export -- The event APIs are known to conflict, and this is intended as the exports via `@fluidframework/core-interfaces` are preferred over the deprecated ones from `@fluidframework/tree`. */
+	/* eslint-disable import-x/export -- The event APIs are known to conflict, and this is intended as the exports via `@fluidframework/core-interfaces` are preferred over the deprecated ones from `@fluidframework/tree`. */
 	Listeners,
 	IsListener,
 	Listenable,
 	Off,
-	/* eslint-enable import/export */
+	/* eslint-enable import-x/export */
 } from "@fluidframework/core-interfaces";
+export type { ErasedBaseType } from "@fluidframework/core-interfaces/internal";
+
 // This is an alpha API, but this package doesn't have an alpha entry point so its imported from "internal".
 export { onAssertionFailure } from "@fluidframework/core-utils/internal";
 
@@ -70,8 +72,8 @@ export type { isFluidHandle } from "@fluidframework/runtime-utils";
 // Note: this only surfaces the `@public, @beta and @alpha` API items from the tree package.
 /* eslint-disable-next-line
 	no-restricted-syntax,
-	import/no-internal-modules,
-	import/export -- This re-exports all non-conflicting APIs from `@fluidframework/tree`. In cases where * exports conflict with named exports, the named exports take precedence per https://tc39.es/ecma262/multipage/ecmascript-language-scripts-and-modules.html#sec-getexportednames. This does trigger the `import/export` lint warning (which is intentionally disabled here). This approach ensures that the non-deprecated versions of the event APIs from `@fluidframework/core-interfaces` (provided as named indirect exports) eclipse the deprecated ones from `@fluidframework/tree`. The preferred versions of the event APIs are those exported via `@fluidframework/core-interfaces`.
+	import-x/no-internal-modules,
+	import-x/export -- This re-exports all non-conflicting APIs from `@fluidframework/tree`. In cases where * exports conflict with named exports, the named exports take precedence per https://tc39.es/ecma262/multipage/ecmascript-language-scripts-and-modules.html#sec-getexportednames. This does trigger the `import-x/export` lint warning (which is intentionally disabled here). This approach ensures that the non-deprecated versions of the event APIs from `@fluidframework/core-interfaces` (provided as named indirect exports) eclipse the deprecated ones from `@fluidframework/tree`. The preferred versions of the event APIs are those exported via `@fluidframework/core-interfaces`.
 	*/
 export * from "@fluidframework/tree/alpha";
 
@@ -104,18 +106,23 @@ export const SharedTree: SharedObjectKind<ITree> = OriginalSharedTree;
 /**
  * {@link SharedTree} but allowing a non-default configuration.
  * @remarks
- * This is useful for debugging and testing to opt into extra validation or see if opting out of some optimizations fixes an issue.
+ * This is useful for debugging and testing.
+ * For example, it can be used to opt into extra validation or see if opting out of some optimizations fixes an issue.
+ *
+ * With great care, and knowledge of the support and stability of the options exposed here,
+ * this can also be used to opt into some features early or for performance tuning.
+ *
  * @example
  * ```typescript
  * import {
- * 	ForestType,
  * 	TreeCompressionStrategy,
  * 	configuredSharedTree,
- * 	typeboxValidator,
- * } from "@fluid-framework/alpha";
+ * 	FormatValidatorBasic,
+ * 	ForestTypeReference,
+ * } from "fluid-framework/alpha";
  * const SharedTree = configuredSharedTree({
  * 	forest: ForestTypeReference,
- * 	jsonValidator: typeboxValidator,
+ * 	jsonValidator: FormatValidatorBasic,
  * 	treeEncodeType: TreeCompressionStrategy.Uncompressed,
  * });
  * ```

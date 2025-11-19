@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 import type { SessionId } from "@fluidframework/id-compressor";
 import { createSessionId } from "@fluidframework/id-compressor/internal";
 
@@ -12,12 +13,12 @@ import type {
 	GraphCommit,
 	ChangeEncodingContext,
 } from "../../core/index.js";
-import { typeboxValidator } from "../../external-utilities/index.js";
-// eslint-disable-next-line import/no-internal-modules
+import { FormatValidatorBasic } from "../../external-utilities/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
 import { makeMessageCodec, makeMessageCodecs } from "../../shared-tree-core/messageCodecs.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { Message } from "../../shared-tree-core/messageFormatV1ToV4.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { DecodedMessage } from "../../shared-tree-core/messageTypes.js";
 import { TestChange } from "../testChange.js";
 import {
@@ -26,8 +27,8 @@ import {
 	mintRevisionTag,
 	testIdCompressor,
 	testRevisionTagCodec,
-	validateUsageError,
 } from "../utils.js";
+import { currentVersion, DependentFormatVersion } from "../../codec/index.js";
 
 const commit1 = {
 	revision: mintRevisionTag(),
@@ -140,21 +141,26 @@ const testCases: EncodingTestData<
 };
 
 describe("message codec", () => {
-	const family = makeMessageCodecs(TestChange.codecs, testRevisionTagCodec, {
-		jsonValidator: typeboxValidator,
-	});
+	const family = makeMessageCodecs(
+		TestChange.codecs,
+		DependentFormatVersion.fromUnique(1),
+		testRevisionTagCodec,
+		{
+			jsonValidator: FormatValidatorBasic,
+		},
+	);
 
-	makeEncodingTestSuite(family, testCases);
+	makeEncodingTestSuite(family, testCases, undefined, [3, 4, 5], [undefined, 1, 2]);
 
 	describe("dispatching codec", () => {
-		const version = 1;
 		const codec = makeMessageCodec(
 			TestChange.codecs,
+			DependentFormatVersion.fromUnique(1),
 			testRevisionTagCodec,
 			{
-				jsonValidator: typeboxValidator,
+				jsonValidator: FormatValidatorBasic,
+				minVersionForCollab: currentVersion,
 			},
-			version,
 		);
 
 		const sessionId: SessionId = "sessionId" as SessionId;
@@ -183,55 +189,6 @@ describe("message codec", () => {
 					change: TestChange.mint([], 1),
 				},
 			});
-		});
-
-		it("accepts unversioned messages as version 1", () => {
-			const revision = 1 as EncodedRevisionTag;
-			const originatorId = createSessionId();
-			const encoded = JSON.stringify({
-				revision,
-				originatorId,
-				changeset: {},
-			} satisfies Message);
-			const actual = codec.decode(JSON.parse(encoded), { idCompressor: testIdCompressor });
-			assert.deepEqual(actual, {
-				type: "commit",
-				commit: {
-					revision: testRevisionTagCodec.decode(revision, {
-						originatorId,
-						revision: undefined,
-						idCompressor: testIdCompressor,
-					}),
-					change: {},
-				},
-				sessionId: originatorId,
-				branchId: "main",
-			} satisfies DecodedMessage<unknown>);
-		});
-
-		it("accepts version 1 messages as version 1", () => {
-			const revision = 1 as EncodedRevisionTag;
-			const originatorId = createSessionId();
-			const encoded = JSON.stringify({
-				revision,
-				originatorId,
-				changeset: {},
-				version: 1,
-			} satisfies Message);
-			const actual = codec.decode(JSON.parse(encoded), { idCompressor: testIdCompressor });
-			assert.deepEqual(actual, {
-				type: "commit",
-				commit: {
-					revision: testRevisionTagCodec.decode(revision, {
-						originatorId,
-						revision: undefined,
-						idCompressor: testIdCompressor,
-					}),
-					change: {},
-				},
-				sessionId: originatorId,
-				branchId: "main",
-			} satisfies DecodedMessage<unknown>);
 		});
 
 		it("rejects messages with invalid versions", () => {

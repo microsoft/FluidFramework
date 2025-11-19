@@ -6,8 +6,8 @@
 import type { SessionId } from "@fluidframework/id-compressor";
 
 import type { ChangeEncodingContext } from "../../../core/index.js";
-import { typeboxValidator } from "../../../external-utilities/index.js";
-// eslint-disable-next-line import/no-internal-modules
+import { FormatValidatorBasic } from "../../../external-utilities/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
 import { makeEditManagerCodecs } from "../../../shared-tree-core/editManagerCodecs.js";
 import type { SharedBranchSummaryData, SummaryData } from "../../../shared-tree-core/index.js";
 import { brand } from "../../../util/index.js";
@@ -20,6 +20,7 @@ import {
 	testRevisionTagCodec,
 } from "../../utils.js";
 import { strict as assert } from "node:assert";
+import { DependentFormatVersion } from "../../../codec/index.js";
 
 const tags = Array.from({ length: 3 }, mintRevisionTag);
 
@@ -196,16 +197,22 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodi
 
 export function testCodec() {
 	describe("Codec", () => {
-		const family = makeEditManagerCodecs(TestChange.codecs, testRevisionTagCodec, {
-			jsonValidator: typeboxValidator,
-		});
+		const family = makeEditManagerCodecs(
+			TestChange.codecs,
+			DependentFormatVersion.fromUnique(1),
+			testRevisionTagCodec,
+			{
+				jsonValidator: FormatValidatorBasic,
+			},
+		);
 
 		// Versions 1 through 4 do not encode the summary originator ID.
 		makeEncodingTestSuite(
 			family,
 			testCases,
 			assertEquivalentSummaryDataIgnoreOriginator,
-			[1, 2, 3, 4],
+			[3, 4],
+			[1, 2],
 		);
 
 		makeEncodingTestSuite(family, testCases, undefined, [5]);

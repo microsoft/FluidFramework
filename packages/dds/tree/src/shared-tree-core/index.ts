@@ -22,12 +22,12 @@ export {
 } from "./transaction.js";
 
 export {
-	type ExplicitCoreCodecVersions,
 	SharedTreeCore,
 	type Summarizable,
 	type SummaryElementParser,
 	type SummaryElementStringifier,
 	type ClonableSchemaAndPolicy,
+	type SharedTreeCoreOptionsInternal as SharedTreCoreOptionsInternal,
 } from "./sharedTreeCore.js";
 
 export type { ResubmitMachine } from "./resubmitMachine.js";
@@ -39,7 +39,17 @@ export {
 	NoOpChangeEnricher,
 } from "./changeEnricher.js";
 
-export { makeEditManagerCodec } from "./editManagerCodecs.js";
+export {
+	makeEditManagerCodec,
+	getCodecTreeForEditManagerFormatWithChange,
+	type EditManagerCodecOptions,
+	clientVersionToEditManagerFormatVersion,
+	editManagerFormatVersionSelectorForSharedBranches,
+} from "./editManagerCodecs.js";
+export {
+	EditManagerFormatVersion,
+	supportedEditManagerFormatVersions,
+} from "./editManagerFormatCommons.js";
 export { EditManagerSummarizer } from "./editManagerSummarizer.js";
 export {
 	EditManager,
@@ -54,3 +64,14 @@ export type {
 	SummarySessionBranch,
 	EncodedCommit,
 } from "./editManagerFormatCommons.js";
+
+export {
+	getCodecTreeForMessageFormatWithChange,
+	clientVersionToMessageFormatVersion,
+	messageFormatVersionSelectorForSharedBranches,
+} from "./messageCodecs.js";
+export {
+	MessageFormatVersion,
+	messageFormatVersions,
+	supportedMessageFormatVersions,
+} from "./messageFormat.js";

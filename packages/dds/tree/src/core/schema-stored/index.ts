@@ -23,7 +23,7 @@ export {
 	storedSchemaDecodeDispatcher,
 	type SchemaAndPolicy,
 	type SchemaPolicy,
-	SchemaVersion,
+	SchemaFormatVersion,
 } from "./schema.js";
 export {
 	type TreeStoredSchemaSubscription,

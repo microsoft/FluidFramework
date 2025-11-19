@@ -53,6 +53,7 @@ import {
 import { LazyEntity } from "./lazyEntity.js";
 import { type LazyTreeNode, getOrCreateHydratedFlexTreeNode } from "./lazyNode.js";
 import { indexForAt, treeStatusFromAnchorCache } from "./utilities.js";
+import { combineChunks } from "../chunked-forest/index.js";
 
 /**
  * Reuse fields.
@@ -247,7 +248,8 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 	protected getEditor(): IDefaultEditBuilder<ITreeCursorSynchronous> {
 		return new MappedEditBuilder(
 			this.context.checkout.editor,
-			(cursor: ITreeCursorSynchronous) => this.context.checkout.forest.chunkField(cursor),
+			(cursor: ITreeCursorSynchronous) =>
+				combineChunks(this.context.checkout.forest.chunkField(cursor)),
 		);
 	}
 }
