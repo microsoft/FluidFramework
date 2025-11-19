@@ -15,7 +15,7 @@ import {
 import { getView } from "../utils.js";
 import { TreeAlpha } from "../../shared-tree/index.js";
 import type { requireAssignableTo } from "../../util/index.js";
-import { validateAssertionError2 as validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 describe("TreeBranch", () => {
 	const schemaFactory = new SchemaFactory(undefined);
