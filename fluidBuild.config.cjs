@@ -131,6 +131,8 @@ module.exports = {
 		"check:biome": [],
 		"check:prettier": [],
 		// Linting can require resolving imports into dependencies, and thus "^api".
+		// If all packages only linted esm build this could be "^api-extractor:esnext:, but some, like
+		// experimental/PropertyDDS/packages/property-properties lint commonjs builds.
 		// Linting also requires all the code to lint to exist, so we depend on "typetests:gen":
 		// That could be omitted if we ensure that generated code is not linted.
 		// The lint task does not seem to invalidate properly, so we take a dependency on "build:test:esm" as well so lint will rerun when the code changes.
