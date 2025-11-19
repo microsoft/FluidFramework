@@ -131,9 +131,11 @@ module.exports = {
 		"check:biome": [],
 		"check:prettier": [],
 		// Linting can require resolving imports into dependencies, and thus "^api".
+		// Linting also requires all the code to lint to exist, so we depend on "typetests:gen":
+		// That could be omitted if we ensure that generated code is not linted.
 		// The lint task does not seem to invalidate properly, so we take a dependency on "build:test:esm" as well so lint will rerun when the code changes.
 		// This may be related to AB#7297.
-		"eslint": ["^api", "build:test:esm"],
+		"eslint": ["^api", "typetests:gen", "build:test:esm"],
 		"good-fences": [],
 		"format:biome": [],
 		"format:prettier": [],
@@ -338,14 +340,10 @@ module.exports = {
 		// Exclusion per handler
 		handlerExclusions: {
 			"fluid-build-tasks-eslint": [
-				// There are no built files, but a tsconfig.json is present to simplify the
-				// eslint config.
-				"azure/packages/azure-local-service/package.json",
-				// eslint doesn't really depend on build. Doing so just slows down a package build.
-				"^packages/test/snapshots/package.json",
-				"^packages/test/test-utils/package.json",
-				// TODO: AB#7630 uses lint only ts projects for coverage which don't have representative tsc scripts
-				"^packages/tools/fluid-runner/package.json",
+				// This rule forces dependencies on "Tsc" for the package being linted, which is undesired.
+				// Additionally this rule's validation was very complex compared to expressing the requirements here and already needed many exceptions, and thus is not offering much value.
+				// Future versions of build tools may remove this rule entirely.
+				".*",
 			],
 			"fluid-build-tasks-tsc": [],
 			"html-copyright-file-header": [
