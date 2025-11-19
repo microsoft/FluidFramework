@@ -176,8 +176,8 @@ describe("toStoredSchema", () => {
 
 						// To further ensure toStoredSchema works with the other schema transforming APIs,
 						// validate it with generateSchemaFromSimpleSchema to round trip through view schema.
-						// View schema generated from stored schema will never contain staged schema
-						// (they will either be already removed, or baked in with the fact they ere staged lost).
+						// View schema generated from stored schema will never contain staged schema:
+						// they will either have been removed, or baked in (with the fact they were staged having been lost).
 						const restrictive3 = toStoredSchema(
 							generateSchemaFromSimpleSchema(simpleFromRestrictive).root,
 							{
