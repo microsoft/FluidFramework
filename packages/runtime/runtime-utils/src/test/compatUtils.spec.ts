@@ -10,17 +10,23 @@ import { isFluidError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	getConfigsForMinVersionForCollab,
-	getValidationForRuntimeOptions,
+	validateConfigMapOverrides,
 	type ConfigMap,
 	type SemanticVersion,
 	type ConfigValidationMap,
 	configValueToMinVersionForCollab,
 	lowestMinVersionForCollab,
 	checkValidMinVersionForCollabVerbose,
+	cleanedPackageVersion,
+	validateMinimumVersionForCollab,
 } from "../compatibilityBase.js";
 import { pkgVersion } from "../packageVersion.js";
 
 describe("compatibilityBase", () => {
+	it("cleanedPackageVersion", () => {
+		validateMinimumVersionForCollab(cleanedPackageVersion);
+	});
+
 	describe("getConfigsForMinVersionForCollab", () => {
 		// eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- type required for ConfigMap processing
 		type ITestConfigMap = {
@@ -29,82 +35,84 @@ describe("compatibilityBase", () => {
 			featureC: string;
 			featureD: string;
 			featureE: string;
-			featureF: string;
+			featureF: number;
 		};
 		const testConfigMap: ConfigMap<ITestConfigMap> = {
 			featureA: {
-				"0.5.0": "a1",
 				"2.0.0": "a2",
-				"8.0.0": "a4",
-				"5.0.0": "a3",
+				"2.0.0-defaults": "a1",
+				"2.50.0": "a4",
+				"2.40.0": "a3",
+				"1.0.0": "a0",
 			},
 			featureB: {
-				"0.0.0-defaults": "b1",
-				"3.0.0": "b2",
-				"9.0.0": "b4",
-				"6.0.0": "b3",
+				"1.0.0": "b1",
+				"2.30.0": "b2",
+				"2.60.0": "b4",
+				"2.46.0": "b3",
 			},
 			featureC: {
 				"1.0.0": "c1",
-				"4.0.0": "c2",
-				"10.0.0": "c4",
-				"7.0.0": "c3",
+				"2.40.0": "c2",
+				"2.70.0": "c4",
+				"2.50.0": "c3",
 			},
 			featureD: {
-				"5.5.0": "d3",
-				"0.1.0": "d1",
+				"2.46.0": "d3",
 				"2.5.0": "d2",
-				"8.5.0": "d4",
+				"2.55.0": "d4",
+				"1.0.0": "d1",
 			},
 			featureE: {
-				"3.5.0": "e2",
-				"9.5.0": "e4",
-				"6.5.0": "e3",
-				"0.9.0": "e1",
+				"2.35.0": "e2",
+				"2.73.0": "e4",
+				"2.65.0": "e3",
+				"1.0.0": "e1",
 			},
 			featureF: {
-				"4.5.0": "f2",
-				"1.5.0": "f1",
-				"10.5.0": "f4",
-				"7.5.0": "f3",
+				"1.0.0": 0,
+				"2.45.0": 2,
+				"1.5.0": 1,
+				"2.71.0": 4,
+				"2.65.0": 3,
 			},
 		};
 
 		const testCases: {
-			minVersionForCollab: SemanticVersion;
-			expectedConfig: Partial<ITestConfigMap>;
+			minVersionForCollab: MinimumVersionForCollab;
+			expectedConfig: ITestConfigMap;
 		}[] = [
-			{
-				minVersionForCollab: "0.5.0",
-				expectedConfig: {
-					featureA: "a1",
-					featureB: "b1",
-					// featureC: undefined,
-					featureD: "d1",
-					// featureE: undefined,
-					// featureF: undefined,
-				},
-			},
 			{
 				minVersionForCollab: "1.0.0",
 				expectedConfig: {
-					featureA: "a1",
+					featureA: "a0",
 					featureB: "b1",
 					featureC: "c1",
 					featureD: "d1",
 					featureE: "e1",
-					// featureF: undefined,
+					featureF: 0,
 				},
 			},
 			{
 				minVersionForCollab: "1.5.0",
 				expectedConfig: {
+					featureA: "a0",
+					featureB: "b1",
+					featureC: "c1",
+					featureD: "d1",
+					featureE: "e1",
+					featureF: 1,
+				},
+			},
+			{
+				minVersionForCollab: "2.0.0-defaults",
+				expectedConfig: {
 					featureA: "a1",
 					featureB: "b1",
 					featureC: "c1",
 					featureD: "d1",
 					featureE: "e1",
-					featureF: "f1",
+					featureF: 1,
 				},
 			},
 			{
@@ -115,7 +123,7 @@ describe("compatibilityBase", () => {
 					featureC: "c1",
 					featureD: "d1",
 					featureE: "e1",
-					featureF: "f1",
+					featureF: 1,
 				},
 			},
 			{
@@ -126,7 +134,7 @@ describe("compatibilityBase", () => {
 					featureC: "c1",
 					featureD: "d1",
 					featureE: "e1",
-					featureF: "f1",
+					featureF: 1,
 				},
 			},
 			{
@@ -137,84 +145,95 @@ describe("compatibilityBase", () => {
 					featureC: "c1",
 					featureD: "d2",
 					featureE: "e1",
-					featureF: "f1",
+					featureF: 1,
 				},
 			},
 			{
-				minVersionForCollab: "3.0.0",
+				minVersionForCollab: "2.30.0",
 				expectedConfig: {
 					featureA: "a2",
 					featureB: "b2",
 					featureC: "c1",
 					featureD: "d2",
 					featureE: "e1",
-					featureF: "f1",
+					featureF: 1,
 				},
 			},
 			{
-				minVersionForCollab: "3.7.2",
+				minVersionForCollab: "2.37.2",
 				expectedConfig: {
 					featureA: "a2",
 					featureB: "b2",
 					featureC: "c1",
 					featureD: "d2",
 					featureE: "e2",
-					featureF: "f1",
+					featureF: 1,
 				},
 			},
 			{
-				minVersionForCollab: "5.0.1",
+				minVersionForCollab: "2.45.1",
 				expectedConfig: {
 					featureA: "a3",
 					featureB: "b2",
 					featureC: "c2",
 					featureD: "d2",
 					featureE: "e2",
-					featureF: "f2",
+					featureF: 2,
 				},
 			},
 			{
-				minVersionForCollab: "6.9.9",
+				minVersionForCollab: "2.49.9",
 				expectedConfig: {
 					featureA: "a3",
 					featureB: "b3",
 					featureC: "c2",
 					featureD: "d3",
-					featureE: "e3",
-					featureF: "f2",
+					featureE: "e2",
+					featureF: 2,
 				},
 			},
 			{
-				minVersionForCollab: "8.2.3",
+				minVersionForCollab: "2.50.0",
 				expectedConfig: {
 					featureA: "a4",
 					featureB: "b3",
 					featureC: "c3",
 					featureD: "d3",
-					featureE: "e3",
-					featureF: "f3",
+					featureE: "e2",
+					featureF: 2,
 				},
 			},
 			{
-				minVersionForCollab: "9.7.0",
+				minVersionForCollab: "2.52.3",
+				expectedConfig: {
+					featureA: "a4",
+					featureB: "b3",
+					featureC: "c3",
+					featureD: "d3",
+					featureE: "e2",
+					featureF: 2,
+				},
+			},
+			{
+				minVersionForCollab: "2.63.0",
 				expectedConfig: {
 					featureA: "a4",
 					featureB: "b4",
 					featureC: "c3",
 					featureD: "d4",
-					featureE: "e4",
-					featureF: "f3",
+					featureE: "e2",
+					featureF: 2,
 				},
 			},
 			{
-				minVersionForCollab: "10.0.0",
+				minVersionForCollab: cleanedPackageVersion,
 				expectedConfig: {
 					featureA: "a4",
 					featureB: "b4",
 					featureC: "c4",
 					featureD: "d4",
 					featureE: "e4",
-					featureF: "f3",
+					featureF: 4,
 				},
 			},
 		];
@@ -234,7 +253,7 @@ describe("compatibilityBase", () => {
 		}
 	});
 
-	describe("getValidationForRuntimeOptions", () => {
+	describe("validateRuntimeOptions", () => {
 		type FeatureAType = string;
 		type FeatureBType = boolean;
 		type FeatureCType = object;
@@ -252,7 +271,7 @@ describe("compatibilityBase", () => {
 				["a4", "8.0.0"],
 			]),
 			featureB: configValueToMinVersionForCollab([
-				[false, "0.0.0-defaults"],
+				[false, "0.0.0"],
 				[true, "3.0.0"],
 			]),
 			featureC: configValueToMinVersionForCollab([
@@ -339,7 +358,7 @@ describe("compatibilityBase", () => {
 		for (const test of compatibleCases) {
 			it(`does not throw for compatible options: ${JSON.stringify(test)}`, () => {
 				assert.doesNotThrow(() => {
-					getValidationForRuntimeOptions(
+					validateConfigMapOverrides(
 						test.minVersionForCollab,
 						test.runtimeOptions,
 						testConfigValidationMap,
@@ -351,7 +370,7 @@ describe("compatibilityBase", () => {
 			it(`throws for incompatible options: ${JSON.stringify({ minVersionForCollab: test.minVersionForCollab, runtimeOptions: test.runtimeOptions })}`, () => {
 				assert.throws(
 					() => {
-						getValidationForRuntimeOptions(
+						validateConfigMapOverrides(
 							test.minVersionForCollab,
 							test.runtimeOptions,
 							testConfigValidationMap,
