@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase, fail } from "@fluidframework/core-utils/internal";
+import {
+	unreachableCase,
+	fail,
+	transformMapValues,
+} from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -24,6 +28,7 @@ import { brand, getOrCreate, type JsonCompatibleReadOnlyObject } from "../util/i
 import {
 	allowedTypeFilter,
 	convertAllowedTypes,
+	ExpectStored,
 	NodeKind,
 	type SimpleNodeSchemaBase,
 	type StoredFromViewSchemaGenerationOptions,
@@ -34,6 +39,7 @@ import type {
 	SimpleAllowedTypes,
 	SimpleFieldSchema,
 	SimpleNodeSchema,
+	SimpleTreeSchema,
 } from "./simpleSchema.js";
 import { walkFieldSchema } from "./walkFieldSchema.js";
 
@@ -82,6 +88,9 @@ export const toUnhydratedSchema = permissiveStoredSchemaGenerationOptions;
  * TODO:#38722 When runtime schema upgrades are implemented, this will need to be updated to check if
  * a staged allowed type has been upgraded and if so, include it in the conversion.
  *
+ * Even if this took in a SimpleTreeSchema,
+ * it would still need to walk the schema to avoid including schema that become unreachable due to filtered out staged schema.
+ *
  * @throws
  * Throws a `UsageError` if multiple schemas are encountered with the same identifier.
  */
@@ -124,6 +133,24 @@ export function toStoredSchema(
 		};
 		return result;
 	});
+}
+
+/**
+ * Convert a {@link SimpleTreeSchema} for a stored schema into a {@link TreeStoredSchema}.
+ * @remarks
+ * This only supports simple schemas that are already logically stored schemas.
+ * @privateRemarks
+ * To correctly support view schema here, this would need to filter out unreferenced schema after excluding staged schema.
+ * @see {@link ExpectStored}.
+ */
+export function toSimpleStoredToStoredSchema(treeSchema: SimpleTreeSchema): TreeStoredSchema {
+	const result: TreeStoredSchema = {
+		nodeSchema: transformMapValues(treeSchema.definitions, (schema) =>
+			getStoredSchema(schema, ExpectStored),
+		) as Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>,
+		rootFieldSchema: convertField(treeSchema.root, ExpectStored),
+	};
+	return result;
 }
 
 /**

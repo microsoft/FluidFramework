@@ -118,4 +118,5 @@ export {
 	convertAllowedTypes,
 	allowedTypeFilter,
 	type StoredFromViewSchemaGenerationOptions,
+	ExpectStored,
 } from "./toStored.js";
