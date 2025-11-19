@@ -22,7 +22,7 @@ import { isSerializedHandle } from "@fluidframework/runtime-utils/internal";
 import {
 	MockFluidDataStoreRuntime,
 	MockHandle,
-	validateAssertionError2 as validateAssertionError,
+	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 import sinon from "sinon";
 

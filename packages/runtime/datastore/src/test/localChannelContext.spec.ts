@@ -10,7 +10,7 @@ import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal"
 import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockFluidDataStoreContext,
-	validateAssertionError2 as validateAssertionError,
+	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { FluidDataStoreRuntime, type ISharedObjectRegistry } from "../dataStoreRuntime.js";

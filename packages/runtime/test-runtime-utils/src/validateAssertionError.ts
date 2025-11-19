@@ -8,34 +8,6 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { shortCodeMap } from "./assertionShortCodesMap.js";
 
 /**
- * Legacy variant of of {@link validateAssertionError2} with a less ergonomic syntax for use with NodeJS's `assert.throws`.
- *
- * @deprecated Use {@link validateAssertionError2} instead.
- * @privateRemarks
- * TODO: rename this file.
- * TODO: migrate off this API to `validateAssertionError2` then remove this and reexport `validateAssertionError2` under this name, migrate back and delete `validateAssertionError2`.
- * @internal
- */
-export function validateAssertionError(error: Error, expectedErrorMsg: string | RegExp): true {
-	// Asserts with custom debugMessageBuilder put extra content on the second line of the message, even when tagged.
-	// Thus extract the first line, which will be the assert tag if there is one, and replace it with the message from the shortCodeMap.
-	const split = error.message.split("\n");
-	const possibleShortCode = split[0].trim();
-	if (possibleShortCode in shortCodeMap) {
-		split[0] = shortCodeMap[possibleShortCode];
-	}
-	const mappedMsg = split.join("\n");
-
-	if (testErrorMessage(mappedMsg, expectedErrorMsg)) {
-		// This throws an Error instead of an AssertionError because AssertionError would require a dependency on the
-		// node assert library, which we don't want to do for this library because it's used in the browser.
-		const message = `Unexpected assertion thrown\nActual: ${error.message === mappedMsg ? error.message : `${error.message} ('${mappedMsg}')}`}\nExpected: ${expectedErrorMsg}`;
-		throw new Error(message);
-	}
-	return true;
-}
-
-/**
  * Validates that an error thrown by our `assert()` function has the expected message, or a
  * short code that corresponds to that message.
  *
@@ -50,11 +22,26 @@ export function validateAssertionError(error: Error, expectedErrorMsg: string | 
  * @returns an error validation function suitable for use with NodeJS's `assert.throws()`.
  * @internal
  */
-export function validateAssertionError2(
+export function validateAssertionError(
 	expectedErrorMsg: string | RegExp,
 ): (error: Error) => true {
 	return (error: Error) => {
-		return validateAssertionError(error, expectedErrorMsg);
+		// Asserts with custom debugMessageBuilder put extra content on the second line of the message, even when tagged.
+		// Thus extract the first line, which will be the assert tag if there is one, and replace it with the message from the shortCodeMap.
+		const split = error.message.split("\n");
+		const possibleShortCode = split[0].trim();
+		if (possibleShortCode in shortCodeMap) {
+			split[0] = shortCodeMap[possibleShortCode];
+		}
+		const mappedMsg = split.join("\n");
+
+		if (testErrorMessage(mappedMsg, expectedErrorMsg)) {
+			// This throws an Error instead of an AssertionError because AssertionError would require a dependency on the
+			// node assert library, which we don't want to do for this library because it's used in the browser.
+			const message = `Unexpected assertion thrown\nActual: ${error.message === mappedMsg ? error.message : `${error.message} ('${mappedMsg}')}`}\nExpected: ${expectedErrorMsg}`;
+			throw new Error(message);
+		}
+		return true;
 	};
 }
 
@@ -78,7 +65,7 @@ export function validateTypeError(expectedErrorMsg: string | RegExp): (error: Er
  * Validates that a specific kind of error was thrown with the expected message.
  * @remarks
  * Intended for use with NodeJS's `assert.throws`.
- * @see {@link validateAssertionError2}, {@link validateUsageError}, {@link validateTypeError} for more specialized versions.
+ * @see {@link validateAssertionError}, {@link validateUsageError}, {@link validateTypeError} for more specialized versions.
  * @returns an error validation function suitable for use with NodeJS's `assert.throws()`.
  * @internal
  */
