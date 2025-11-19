@@ -322,7 +322,7 @@
                     "repair-3"
                   ],
                   "fields": {
-                    "version": 1,
+                    "version": 2,
                     "identifiers": [],
                     "shapes": [
                       {

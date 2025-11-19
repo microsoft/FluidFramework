@@ -322,25 +322,12 @@
                     "repair-3"
                   ],
                   "fields": {
-                    "version": 1,
+                    "version": 2,
                     "identifiers": [],
                     "shapes": [
                       {
                         "c": {
-                          "type": "com.fluidframework.leaf.number",
-                          "value": true
-                        }
-                      },
-                      {
-                        "c": {
-                          "type": "competing-removes.Array<[\"com.fluidframework.leaf.number\"]>",
-                          "value": false,
-                          "fields": [
-                            [
-                              "",
-                              2
-                            ]
-                          ]
+                          "extraFields": 1
                         }
                       },
                       {
@@ -351,14 +338,35 @@
                       [
                         1,
                         [
-                          0,
-                          2,
-                          3
+                          "competing-removes.Array<[\"com.fluidframework.leaf.number\"]>",
+                          false,
+                          [
+                            "",
+                            [
+                              "com.fluidframework.leaf.number",
+                              true,
+                              0,
+                              [],
+                              "com.fluidframework.leaf.number",
+                              true,
+                              2,
+                              [],
+                              "com.fluidframework.leaf.number",
+                              true,
+                              3,
+                              []
+                            ]
+                          ]
                         ]
                       ],
                       [
-                        0,
-                        1
+                        1,
+                        [
+                          "com.fluidframework.leaf.number",
+                          true,
+                          1,
+                          []
+                        ]
                       ]
                     ]
                   },

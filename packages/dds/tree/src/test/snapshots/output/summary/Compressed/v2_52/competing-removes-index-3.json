@@ -20,7 +20,7 @@
                         {
                           "data": {
                             "maxId": 1,
-                            "fieldChanges": [
+                            "changes": [
                               {
                                 "fieldKey": "rootFieldKey",
                                 "fieldKind": "ModularEditBuilder.Generic",
@@ -51,9 +51,7 @@
                                   ]
                                 ]
                               }
-                            ],
-                            "rootNodes": [],
-                            "nodeRenames": []
+                            ]
                           }
                         }
                       ],
@@ -66,7 +64,7 @@
                         {
                           "data": {
                             "maxId": 1,
-                            "fieldChanges": [
+                            "changes": [
                               {
                                 "fieldKey": "rootFieldKey",
                                 "fieldKind": "ModularEditBuilder.Generic",
@@ -101,17 +99,6 @@
                                   ]
                                 ]
                               }
-                            ],
-                            "rootNodes": [],
-                            "nodeRenames": [
-                              {
-                                "oldId": [
-                                  0,
-                                  4
-                                ],
-                                "newId": 0,
-                                "count": 1
-                              }
                             ]
                           }
                         }
@@ -125,7 +112,7 @@
                         {
                           "data": {
                             "maxId": 1,
-                            "fieldChanges": [
+                            "changes": [
                               {
                                 "fieldKey": "rootFieldKey",
                                 "fieldKind": "ModularEditBuilder.Generic",
@@ -160,17 +147,6 @@
                                   ]
                                 ]
                               }
-                            ],
-                            "rootNodes": [],
-                            "nodeRenames": [
-                              {
-                                "oldId": [
-                                  0,
-                                  516
-                                ],
-                                "newId": 0,
-                                "count": 1
-                              }
                             ]
                           }
                         }
@@ -191,7 +167,7 @@
                               {
                                 "data": {
                                   "maxId": 1,
-                                  "fieldChanges": [
+                                  "changes": [
                                     {
                                       "fieldKey": "rootFieldKey",
                                       "fieldKind": "ModularEditBuilder.Generic",
@@ -222,9 +198,7 @@
                                         ]
                                       ]
                                     }
-                                  ],
-                                  "rootNodes": [],
-                                  "nodeRenames": []
+                                  ]
                                 }
                               }
                             ],
@@ -244,7 +218,7 @@
                               {
                                 "data": {
                                   "maxId": 1,
-                                  "fieldChanges": [
+                                  "changes": [
                                     {
                                       "fieldKey": "rootFieldKey",
                                       "fieldKind": "ModularEditBuilder.Generic",
@@ -275,9 +249,7 @@
                                         ]
                                       ]
                                     }
-                                  ],
-                                  "rootNodes": [],
-                                  "nodeRenames": []
+                                  ]
                                 }
                               }
                             ],
@@ -288,11 +260,7 @@
                       }
                     ]
                   ],
-<<<<<<<< HEAD:packages/dds/tree/src/test/snapshots/summary/Compressed/vDetachedRoots/competing-removes-index-3.json
-                  "version": 101
-========
                   "version": 4
->>>>>>>> main:packages/dds/tree/src/test/snapshots/output/summary/Compressed/v2_52/competing-removes-index-3.json
                 },
                 "encoding": "utf-8"
               }

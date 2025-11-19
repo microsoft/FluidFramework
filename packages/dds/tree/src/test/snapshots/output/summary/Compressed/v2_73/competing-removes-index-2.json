@@ -34,7 +34,7 @@
                                           "fieldKind": "Sequence",
                                           "change": [
                                             {
-                                              "count": 1
+                                              "count": 2
                                             },
                                             {
                                               "count": 1,
@@ -78,7 +78,7 @@
                                           "fieldKind": "Sequence",
                                           "change": [
                                             {
-                                              "count": 1
+                                              "count": 2
                                             },
                                             {
                                               "count": 1,
@@ -126,7 +126,7 @@
                                           "fieldKind": "Sequence",
                                           "change": [
                                             {
-                                              "count": 1
+                                              "count": 2
                                             },
                                             {
                                               "count": 1,
@@ -181,7 +181,7 @@
                                                 "fieldKind": "Sequence",
                                                 "change": [
                                                   {
-                                                    "count": 1
+                                                    "count": 2
                                                   },
                                                   {
                                                     "count": 1,
@@ -232,7 +232,7 @@
                                                 "fieldKind": "Sequence",
                                                 "change": [
                                                   {
-                                                    "count": 1
+                                                    "count": 2
                                                   },
                                                   {
                                                     "count": 1,
@@ -322,7 +322,7 @@
                     "repair-3"
                   ],
                   "fields": {
-                    "version": 1,
+                    "version": 2,
                     "identifiers": [],
                     "shapes": [
                       {
@@ -352,13 +352,13 @@
                         1,
                         [
                           0,
-                          2,
+                          1,
                           3
                         ]
                       ],
                       [
                         0,
-                        1
+                        2
                       ]
                     ]
                   },

@@ -20,7 +20,7 @@
                         {
                           "data": {
                             "maxId": 2,
-                            "fieldChanges": [
+                            "changes": [
                               {
                                 "fieldKey": "rootFieldKey",
                                 "fieldKind": "ModularEditBuilder.Generic",
@@ -46,8 +46,6 @@
                                 ]
                               }
                             ],
-                            "rootNodes": [],
-                            "nodeRenames": [],
                             "builds": {
                               "builds": [
                                 [
@@ -90,7 +88,7 @@
                         {
                           "data": {
                             "maxId": 4,
-                            "fieldChanges": [
+                            "changes": [
                               {
                                 "fieldKey": "rootFieldKey",
                                 "fieldKind": "Optional",
@@ -103,8 +101,6 @@
                                 }
                               }
                             ],
-                            "rootNodes": [],
-                            "nodeRenames": [],
                             "builds": {
                               "builds": [
                                 [
@@ -166,7 +162,7 @@
                         {
                           "data": {
                             "maxId": 7,
-                            "fieldChanges": [
+                            "changes": [
                               {
                                 "fieldKey": "rootFieldKey",
                                 "fieldKind": "Optional",
@@ -178,7 +174,6 @@
                                   },
                                   "c": [
                                     [
-<<<<<<<< HEAD:packages/dds/tree/src/test/snapshots/summary/Compressed/vDetachedRoots/optional-field-scenarios-final.json
                                       4,
                                       {
                                         "fieldChanges": [
@@ -197,8 +192,6 @@
                                       }
                                     ],
                                     [
-========
->>>>>>>> main:packages/dds/tree/src/test/snapshots/output/summary/Compressed/v2_73/optional-field-scenarios-final.json
                                       [
                                         3,
                                         516
@@ -214,27 +207,6 @@
                                                 "d": 0,
                                                 "s": 1
                                               }
-<<<<<<<< HEAD:packages/dds/tree/src/test/snapshots/summary/Compressed/vDetachedRoots/optional-field-scenarios-final.json
-========
-                                            }
-                                          }
-                                        ]
-                                      }
-                                    ],
-                                    [
-                                      4,
-                                      {
-                                        "fieldChanges": [
-                                          {
-                                            "fieldKey": "root 3 child",
-                                            "fieldKind": "Optional",
-                                            "change": {
-                                              "r": {
-                                                "e": true,
-                                                "d": 5,
-                                                "s": 6
-                                              }
->>>>>>>> main:packages/dds/tree/src/test/snapshots/output/summary/Compressed/v2_73/optional-field-scenarios-final.json
                                             }
                                           }
                                         ]
@@ -244,48 +216,6 @@
                                 }
                               }
                             ],
-                            "rootNodes": [
-                              {
-                                "detachId": 4,
-                                "nodeChangeset": {
-                                  "fieldChanges": [
-                                    {
-                                      "fieldKey": "root 3 child",
-                                      "fieldKind": "Optional",
-                                      "change": {
-                                        "r": {
-                                          "e": true,
-                                          "d": 5,
-                                          "s": 6
-                                        }
-                                      }
-                                    }
-                                  ]
-                                }
-                              },
-                              {
-                                "detachId": [
-                                  3,
-                                  516
-                                ],
-                                "nodeChangeset": {
-                                  "fieldChanges": [
-                                    {
-                                      "fieldKey": "root 1 child",
-                                      "fieldKind": "Optional",
-                                      "change": {
-                                        "r": {
-                                          "e": false,
-                                          "d": 0,
-                                          "s": 1
-                                        }
-                                      }
-                                    }
-                                  ]
-                                }
-                              }
-                            ],
-                            "nodeRenames": [],
                             "builds": {
                               "builds": [
                                 [
@@ -357,7 +287,7 @@
                         {
                           "data": {
                             "maxId": 9,
-                            "fieldChanges": [
+                            "changes": [
                               {
                                 "fieldKey": "rootFieldKey",
                                 "fieldKind": "Optional",
@@ -385,8 +315,6 @@
                                 }
                               }
                             ],
-                            "rootNodes": [],
-                            "nodeRenames": [],
                             "builds": {
                               "builds": [
                                 [
@@ -434,11 +362,7 @@
                       }
                     ]
                   ],
-<<<<<<<< HEAD:packages/dds/tree/src/test/snapshots/summary/Compressed/vDetachedRoots/optional-field-scenarios-final.json
-                  "version": 101
-========
                   "version": 4
->>>>>>>> main:packages/dds/tree/src/test/snapshots/output/summary/Compressed/v2_73/optional-field-scenarios-final.json
                 },
                 "encoding": "utf-8"
               }

@@ -20,7 +20,7 @@
                         {
                           "data": {
                             "maxId": 2,
-                            "changes": [
+                            "fieldChanges": [
                               {
                                 "fieldKey": "rootFieldKey",
                                 "fieldKind": "ModularEditBuilder.Generic",
@@ -46,6 +46,8 @@
                                 ]
                               }
                             ],
+                            "rootNodes": [],
+                            "nodeRenames": [],
                             "builds": {
                               "builds": [
                                 [
@@ -95,7 +97,7 @@
                         {
                           "data": {
                             "maxId": 4,
-                            "changes": [
+                            "fieldChanges": [
                               {
                                 "fieldKey": "rootFieldKey",
                                 "fieldKind": "Optional",
@@ -108,6 +110,8 @@
                                 }
                               }
                             ],
+                            "rootNodes": [],
+                            "nodeRenames": [],
                             "builds": {
                               "builds": [
                                 [
@@ -164,7 +168,7 @@
                         {
                           "data": {
                             "maxId": 7,
-                            "changes": [
+                            "fieldChanges": [
                               {
                                 "fieldKey": "rootFieldKey",
                                 "fieldKind": "Optional",
@@ -218,6 +222,48 @@
                                 }
                               }
                             ],
+                            "rootNodes": [
+                              {
+                                "detachId": 4,
+                                "nodeChangeset": {
+                                  "fieldChanges": [
+                                    {
+                                      "fieldKey": "root 3 child",
+                                      "fieldKind": "Optional",
+                                      "change": {
+                                        "r": {
+                                          "e": true,
+                                          "d": 5,
+                                          "s": 6
+                                        }
+                                      }
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "detachId": [
+                                  3,
+                                  516
+                                ],
+                                "nodeChangeset": {
+                                  "fieldChanges": [
+                                    {
+                                      "fieldKey": "root 1 child",
+                                      "fieldKind": "Optional",
+                                      "change": {
+                                        "r": {
+                                          "e": false,
+                                          "d": 0,
+                                          "s": 1
+                                        }
+                                      }
+                                    }
+                                  ]
+                                }
+                              }
+                            ],
+                            "nodeRenames": [],
                             "builds": {
                               "builds": [
                                 [
@@ -292,7 +338,7 @@
                         {
                           "data": {
                             "maxId": 9,
-                            "changes": [
+                            "fieldChanges": [
                               {
                                 "fieldKey": "rootFieldKey",
                                 "fieldKind": "Optional",
@@ -320,6 +366,8 @@
                                 }
                               }
                             ],
+                            "rootNodes": [],
+                            "nodeRenames": [],
                             "builds": {
                               "builds": [
                                 [
@@ -374,7 +422,7 @@
                       }
                     ]
                   ],
-                  "version": 4
+                  "version": 101
                 },
                 "encoding": "utf-8"
               }

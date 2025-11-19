@@ -20,7 +20,7 @@
                         {
                           "data": {
                             "maxId": 1,
-                            "changes": [
+                            "fieldChanges": [
                               {
                                 "fieldKey": "rootFieldKey",
                                 "fieldKind": "ModularEditBuilder.Generic",
@@ -34,7 +34,7 @@
                                           "fieldKind": "Sequence",
                                           "change": [
                                             {
-                                              "count": 1
+                                              "count": 2
                                             },
                                             {
                                               "count": 1,
@@ -51,7 +51,9 @@
                                   ]
                                 ]
                               }
-                            ]
+                            ],
+                            "rootNodes": [],
+                            "nodeRenames": []
                           }
                         }
                       ],
@@ -64,7 +66,7 @@
                         {
                           "data": {
                             "maxId": 1,
-                            "changes": [
+                            "fieldChanges": [
                               {
                                 "fieldKey": "rootFieldKey",
                                 "fieldKind": "ModularEditBuilder.Generic",
@@ -78,7 +80,7 @@
                                           "fieldKind": "Sequence",
                                           "change": [
                                             {
-                                              "count": 1
+                                              "count": 2
                                             },
                                             {
                                               "count": 1,
@@ -99,6 +101,17 @@
                                   ]
                                 ]
                               }
+                            ],
+                            "rootNodes": [],
+                            "nodeRenames": [
+                              {
+                                "oldId": [
+                                  0,
+                                  4
+                                ],
+                                "newId": 0,
+                                "count": 1
+                              }
                             ]
                           }
                         }
@@ -112,7 +125,7 @@
                         {
                           "data": {
                             "maxId": 1,
-                            "changes": [
+                            "fieldChanges": [
                               {
                                 "fieldKey": "rootFieldKey",
                                 "fieldKind": "ModularEditBuilder.Generic",
@@ -126,7 +139,7 @@
                                           "fieldKind": "Sequence",
                                           "change": [
                                             {
-                                              "count": 1
+                                              "count": 2
                                             },
                                             {
                                               "count": 1,
@@ -146,6 +159,17 @@
                                     }
                                   ]
                                 ]
+                              }
+                            ],
+                            "rootNodes": [],
+                            "nodeRenames": [
+                              {
+                                "oldId": [
+                                  0,
+                                  516
+                                ],
+                                "newId": 0,
+                                "count": 1
                               }
                             ]
                           }
@@ -167,7 +191,7 @@
                               {
                                 "data": {
                                   "maxId": 1,
-                                  "changes": [
+                                  "fieldChanges": [
                                     {
                                       "fieldKey": "rootFieldKey",
                                       "fieldKind": "ModularEditBuilder.Generic",
@@ -181,7 +205,7 @@
                                                 "fieldKind": "Sequence",
                                                 "change": [
                                                   {
-                                                    "count": 1
+                                                    "count": 2
                                                   },
                                                   {
                                                     "count": 1,
@@ -198,7 +222,9 @@
                                         ]
                                       ]
                                     }
-                                  ]
+                                  ],
+                                  "rootNodes": [],
+                                  "nodeRenames": []
                                 }
                               }
                             ],
@@ -218,7 +244,7 @@
                               {
                                 "data": {
                                   "maxId": 1,
-                                  "changes": [
+                                  "fieldChanges": [
                                     {
                                       "fieldKey": "rootFieldKey",
                                       "fieldKind": "ModularEditBuilder.Generic",
@@ -232,7 +258,7 @@
                                                 "fieldKind": "Sequence",
                                                 "change": [
                                                   {
-                                                    "count": 1
+                                                    "count": 2
                                                   },
                                                   {
                                                     "count": 1,
@@ -249,7 +275,9 @@
                                         ]
                                       ]
                                     }
-                                  ]
+                                  ],
+                                  "rootNodes": [],
+                                  "nodeRenames": []
                                 }
                               }
                             ],
@@ -260,7 +288,7 @@
                       }
                     ]
                   ],
-                  "version": 4
+                  "version": 101
                 },
                 "encoding": "utf-8"
               }
@@ -322,7 +350,7 @@
                     "repair-3"
                   ],
                   "fields": {
-                    "version": 1,
+                    "version": 2,
                     "identifiers": [],
                     "shapes": [
                       {
@@ -352,13 +380,13 @@
                         1,
                         [
                           0,
-                          2,
+                          1,
                           3
                         ]
                       ],
                       [
                         0,
-                        1
+                        2
                       ]
                     ]
                   },

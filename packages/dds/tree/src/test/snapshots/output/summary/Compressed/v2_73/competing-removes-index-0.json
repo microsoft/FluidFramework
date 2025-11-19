@@ -34,9 +34,6 @@
                                           "fieldKind": "Sequence",
                                           "change": [
                                             {
-                                              "count": 1
-                                            },
-                                            {
                                               "count": 1,
                                               "effect": {
                                                 "remove": {
@@ -77,9 +74,6 @@
                                           "fieldKey": "",
                                           "fieldKind": "Sequence",
                                           "change": [
-                                            {
-                                              "count": 1
-                                            },
                                             {
                                               "count": 1,
                                               "effect": {
@@ -125,9 +119,6 @@
                                           "fieldKey": "",
                                           "fieldKind": "Sequence",
                                           "change": [
-                                            {
-                                              "count": 1
-                                            },
                                             {
                                               "count": 1,
                                               "effect": {
@@ -181,9 +172,6 @@
                                                 "fieldKind": "Sequence",
                                                 "change": [
                                                   {
-                                                    "count": 1
-                                                  },
-                                                  {
                                                     "count": 1,
                                                     "effect": {
                                                       "remove": {
@@ -231,9 +219,6 @@
                                                 "fieldKey": "",
                                                 "fieldKind": "Sequence",
                                                 "change": [
-                                                  {
-                                                    "count": 1
-                                                  },
                                                   {
                                                     "count": 1,
                                                     "effect": {
@@ -322,7 +307,7 @@
                     "repair-3"
                   ],
                   "fields": {
-                    "version": 1,
+                    "version": 2,
                     "identifiers": [],
                     "shapes": [
                       {
@@ -351,14 +336,14 @@
                       [
                         1,
                         [
-                          0,
+                          1,
                           2,
                           3
                         ]
                       ],
                       [
                         0,
-                        1
+                        0
                       ]
                     ]
                   },
