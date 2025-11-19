@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-const tsResolver = require("eslint-import-resolver-typescript");
-
 /**
  * Base configuration from which all of our exported configs extends.
  */
@@ -404,7 +402,6 @@ module.exports = {
 					"default",
 				],
 			},
-			resolver: tsResolver, // required
 		},
 	},
 };
