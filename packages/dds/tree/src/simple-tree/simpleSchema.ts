@@ -193,6 +193,10 @@ export interface SimpleAllowedTypeAttributes {
 	 * New documents and schema upgrades will omit any staged schema.
 	 *
 	 * Undefined if derived from a stored schema.
+	 *
+	 * @privateRemarks
+	 * The false and undefined cases here are a bit odd.
+	 * This API should be reevaluated before stabilizing.
 	 */
 	readonly isStaged: false | SchemaUpgrade | undefined;
 }
