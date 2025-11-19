@@ -347,7 +347,10 @@ module.exports = {
 				// Future versions of build tools may remove this rule entirely.
 				".*",
 			],
-			"fluid-build-tasks-tsc": [],
+			"fluid-build-tasks-tsc": [
+				// Server packages need to be cleaned up; excluding as a workaround
+				"^server/routerlicious/packages/.*/package.json",
+			],
 			"html-copyright-file-header": [
 				// Tests generate HTML "snapshot" artifacts
 				"tools/api-markdown-documenter/src/test/snapshots/.*",
