@@ -8,9 +8,9 @@
 
 // import { makeAnonChange } from "../../../core/index.js";
 // import {
-// 	type ValueFieldEditor,
-// 	valueChangeHandler,
-// 	valueFieldEditor,
+// 	type RequiredFieldEditor,
+// 	requiredFieldChangeHandler,
+// 	requiredFieldEditor,
 // 	// Allow import from file being tested.
 // 	// eslint-disable-next-line import-x/no-internal-modules
 // } from "../../../feature-libraries/default-schema/defaultFieldKinds.js";
@@ -73,16 +73,30 @@
 // 		});
 // 	});
 
-// 	// TODO:
-// 	// These tests are covering value field usage patterns of optional field's rebaser (which value field uses).
-// 	// These patterns should be covered in the optional field tests and not be needed here (except perhaps for a minimal integration test).
-// 	describe("value field rebaser", () => {
-// 		const fieldHandler: FieldChangeHandler<OptionalChangeset, ValueFieldEditor> =
-// 			valueChangeHandler;
+// describe("defaultFieldKinds", () => {
+// 	describe("requiredFieldEditor.set", () => {
+// 		it("requiredFieldEditor.set", () => {
+// 			const expected = Change.atOnce(
+// 				Change.clear("self", brand(1)),
+// 				Change.move(brand(41), "self"),
+// 			);
+// 			const revision = mintRevisionTag();
+// 			assertEqual(
+// 				requiredFieldEditor.set({
+// 					detach: { localId: brand(1), revision },
+// 					fill: { localId: brand(41), revision },
+// 				}),
+// 				expected,
+// 			);
+// 		});
+// 	});
 
-// 		const childChange1 = Change.child(nodeChange1);
-// 		const childChange2 = Change.child(nodeChange2);
-// 		const childChange3 = Change.child(arbitraryChildChange);
+// 	// TODO:
+// 	// These tests are covering required field usage patterns of optional field's rebaser (which required field uses).
+// 	// These patterns should be covered in the optional field tests and not be needed here (except perhaps for a minimal integration test).
+// 	describe("required field rebaser", () => {
+// 		const fieldHandler: FieldChangeHandler<OptionalChangeset, RequiredFieldEditor> =
+// 			requiredFieldChangeHandler;
 
 // 		const revision1 = mintRevisionTag();
 // 		const change1 = tagChangeInline(

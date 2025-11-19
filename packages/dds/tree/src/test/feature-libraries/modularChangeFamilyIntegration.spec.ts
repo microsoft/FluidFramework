@@ -2341,12 +2341,11 @@ describe("ModularChangeFamily integration", () => {
 			],
 		};
 
-		// XXX: Make sure we don't need to support versions older than 3.
 		makeEncodingTestSuite(
 			family.codecs,
 			encodingTestData,
 			assertModularChangesetsEqual,
-			[3, 100],
+			[3, 4],
 		);
 
 		// In the detached root format, we no longer encode information about root locations.
@@ -2354,7 +2353,7 @@ describe("ModularChangeFamily integration", () => {
 			family.codecs,
 			encodingTestData,
 			assertModularChangesetsEqualIgnoreRebaseVersion,
-			[101, undefined],
+			[101],
 		);
 	});
 });

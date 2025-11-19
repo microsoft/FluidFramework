@@ -16,6 +16,7 @@ import {
 	type ICodecOptions,
 	type IJsonCodec,
 	makeCodecFamily,
+	makeDiscontinuedCodecVersion,
 } from "../codec/index.js";
 import { makeVersionDispatchingCodec } from "../codec/index.js";
 import type {
@@ -127,22 +128,26 @@ export function makeEditManagerCodecs<TChangeset>(
 			EditManagerEncodingContext
 		>,
 	][] = Array.from(editManagerFormatVersions, (version) => {
-		const changeCodec = changeCodecs.resolve(dependentChangeFormatVersion.lookup(version));
 		switch (version) {
 			case EditManagerFormatVersion.v1:
 			case EditManagerFormatVersion.v2:
+				return [version, makeDiscontinuedCodecVersion(options, version, "2.73.0")];
 			case EditManagerFormatVersion.v3:
 			case EditManagerFormatVersion.v4:
-			case EditManagerFormatVersion.vDetachedRoots:
+			case EditManagerFormatVersion.vDetachedRoots: {
+				const changeCodec = changeCodecs.resolve(dependentChangeFormatVersion.lookup(version));
 				return [
 					version,
 					makeV1CodecWithVersion(changeCodec, revisionTagCodec, options, version),
 				];
-			case EditManagerFormatVersion.v5:
+			}
+			case EditManagerFormatVersion.v5: {
+				const changeCodec = changeCodecs.resolve(dependentChangeFormatVersion.lookup(version));
 				return [
 					version,
 					makeV5CodecWithVersion(changeCodec, revisionTagCodec, options, version),
 				];
+			}
 			default:
 				unreachableCase(version);
 		}

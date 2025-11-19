@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-deprecated
+// eslint-disable-next-line import-x/no-deprecated
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import type { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import { LocalOrdererManager } from "@fluidframework/server-local-server";
@@ -98,7 +98,7 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
 		);
 
 		const collaborationSessionEventEmitter =
-			// eslint-disable-next-line import/no-deprecated
+			// eslint-disable-next-line import-x/no-deprecated
 			new TypedEventEmitter<ICollaborationSessionEvents>();
 
 		return new TinyliciousResources(

@@ -7,7 +7,10 @@ import { strict as assert } from 'assert';
 
 import { LoaderHeader } from '@fluidframework/container-definitions/internal';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
-import { MockFluidDataStoreRuntime, validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
+import {
+	MockFluidDataStoreRuntime,
+	validateAssertionError2 as validateAssertionError,
+} from '@fluidframework/test-runtime-utils/internal';
 import { expect } from 'chai';
 
 import { BuildNode, Change, StablePlace, StableRange } from '../../ChangeTypes.js';
@@ -132,7 +135,7 @@ export function runSharedTreeVersioningTests(
 			applyNoop(newerTree);
 			assert.throws(
 				() => containerRuntimeFactory.processAllMessages(),
-				(e: Error) => validateAssertionError(e, 'Newer op version received by a client that has yet to be updated.')
+				validateAssertionError('Newer op version received by a client that has yet to be updated.')
 			);
 		});
 
@@ -576,7 +579,7 @@ export function runSharedTreeVersioningTests(
 				expect(events.some(matchesFailedVersionUpdate)).to.equal(false);
 				assert.throws(
 					() => containerRuntimeFactory.processAllMessages(),
-					(e: Error) => validateAssertionError(e, /Simulated issue in update/)
+					validateAssertionError(/Simulated issue in update/)
 				);
 				expect(events.some(matchesFailedVersionUpdate)).to.equal(true);
 			});

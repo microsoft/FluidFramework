@@ -156,9 +156,7 @@ const singleNodeHandler: FieldChangeHandler<SingleNodeChangeset> = {
 const singleNodeField = new FlexFieldKind(
 	brandConst("SingleNode")<FieldKindIdentifier>(),
 	Multiplicity.Single,
-	singleNodeHandler,
-	(a, b) => false,
-	new Set(),
+	{ changeHandler: singleNodeHandler, allowsTreeSupersetOf: (a, b) => false },
 );
 
 export const fieldKindConfiguration: FieldKindConfiguration = new Map<
@@ -1174,13 +1172,10 @@ describe("ModularChangeFamily", () => {
 	// 		];
 	// 	},
 	// } as unknown as FieldChangeHandler<HasRemovedRootsRefs, FieldEditor<HasRemovedRootsRefs>>;
-	// const hasRemovedRootsRefsField = new FlexFieldKind(
-	// 	fieldKind,
-	// 	Multiplicity.Single,
-	// 	handler,
-	// 	() => false,
-	// 	new Set(),
-	// );
+	// const hasRemovedRootsRefsField = new FlexFieldKind(fieldKind, Multiplicity.Single, {
+	// 	changeHandler: handler,
+	// 	allowsTreeSupersetOf: (a, b) => false,
+	// });
 	// const mockFieldKinds = new Map([[fieldKind, hasRemovedRootsRefsField]]);
 
 	// 	function relevantRemovedRoots(input: ModularChangeset): DeltaDetachedNodeId[] {

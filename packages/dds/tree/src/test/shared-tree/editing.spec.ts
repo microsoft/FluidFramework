@@ -4,6 +4,7 @@
  */
 
 import { strict as assert, fail } from "node:assert";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 
@@ -16,7 +17,7 @@ import {
 	type NormalizedUpPath,
 	type TreeNodeSchemaIdentifier,
 } from "../../core/index.js";
-import { SharedTreeFormatVersion, Tree, type ITreeCheckout } from "../../shared-tree/index.js";
+import { Tree, type ITreeCheckout } from "../../shared-tree/index.js";
 import { type JsonCompatible, brand, makeArray } from "../../util/index.js";
 import {
 	checkoutWithContent,
@@ -28,7 +29,6 @@ import {
 	makeTreeFromJson,
 	moveWithin,
 	TestTreeProviderLite,
-	validateUsageError,
 	type TreeStoredContentStrict,
 } from "../utils.js";
 import { insert, makeTreeFromJsonSequence, remove } from "../sequenceRootUtils.js";
