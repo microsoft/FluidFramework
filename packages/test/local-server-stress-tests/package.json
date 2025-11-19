@@ -117,7 +117,6 @@
 				"@fluidframework/task-manager#build:test",
 				"@fluidframework/legacy-dds#build:test",
 				"@fluidframework/ordered-collection#build:test",
-				"@fluidframework/task-manager#build:test",
 				"@fluidframework/counter#build:test",
 				"@fluidframework/register-collection#build:test"
 			]
