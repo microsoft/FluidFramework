@@ -939,8 +939,8 @@ async function synchronizeClients(connectedClients: Client[]) {
 								off();
 								resolve();
 							} else {
-								// If after we wait two JS turns and we are still not synchronized, then we should
-								// re-setup the listeners to wait for the clients to sync.
+								// If after we are not synchronized after two JS turns, then we should
+								// re-setup the listeners and wait again.
 								off();
 								setupListeners();
 							}
