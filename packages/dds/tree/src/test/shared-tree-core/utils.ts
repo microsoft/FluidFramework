@@ -47,9 +47,9 @@ import {
 	type ChangeEnricherMutableCheckout,
 	NoOpChangeEnricher,
 	type EditManagerFormatVersion,
-	editManagerFormatVersions,
+	supportedEditManagerFormatVersions,
 	type MessageFormatVersion,
-	messageFormatVersions,
+	supportedMessageFormatVersions,
 } from "../../shared-tree-core/index.js";
 import { testIdCompressor } from "../utils.js";
 import { strict as assert, fail } from "node:assert";
@@ -177,7 +177,7 @@ const modularChangeFormatVersionForEditManager: DependentFormatVersion<
 	EditManagerFormatVersion,
 	ModularChangeFormatVersion
 > = DependentFormatVersion.fromPairs(
-	Array.from(editManagerFormatVersions, (e) => [
+	Array.from(supportedEditManagerFormatVersions, (e) => [
 		e,
 		dependenciesForChangeFormat.get(changeFormatVersionForEditManager.lookup(e))
 			?.modularChange ?? fail("Unknown change format"),
@@ -192,7 +192,7 @@ const modularChangeFormatVersionForMessage: DependentFormatVersion<
 	MessageFormatVersion,
 	ModularChangeFormatVersion
 > = DependentFormatVersion.fromPairs(
-	Array.from(messageFormatVersions, (m) => [
+	Array.from(supportedMessageFormatVersions, (m) => [
 		m,
 		dependenciesForChangeFormat.get(changeFormatVersionForMessage.lookup(m))?.modularChange ??
 			fail("Unknown change format"),
