@@ -13,7 +13,6 @@ export {
 	type ForestType,
 	type SharedTreeContentSnapshot,
 	type SharedTreeFormatOptions,
-	SharedTreeFormatVersion,
 	buildConfiguredForest,
 	defaultSharedTreeOptions,
 	type ForestOptions,
@@ -39,6 +38,8 @@ export {
 
 export { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 
+export { initialize, initializerFromChunk } from "./schematizeTree.js";
+
 export type {
 	ISharedTreeEditor,
 	ISchemaEditor,
@@ -58,6 +59,8 @@ export {
 	independentInitializedView,
 	type ViewContent,
 	independentView,
+	createIndependentTreeBeta,
+	createIndependentTreeAlpha,
 } from "./independentView.js";
 
 export type { SharedTreeChange } from "./sharedTreeChangeTypes.js";

@@ -6,7 +6,7 @@
 import { storedEmptyFieldSchema } from "../../../core/index.js";
 import {
 	encodeTreeSchema,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/schema-index/schemaSummarizer.js";
 import { toInitialSchema } from "../../../simple-tree/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";

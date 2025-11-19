@@ -10,16 +10,18 @@ import { makeCodecFamily } from "../../../codec/index.js";
 import {
 	makeDetachedNodeId,
 	Multiplicity,
+	type FieldKindIdentifier,
 	type DeltaFieldChanges,
 } from "../../../core/index.js";
 import {
 	type FieldChangeEncodingContext,
 	type FieldChangeHandler,
 	type FieldChangeRebaser,
-	FieldKindWithEditor,
+	FlexFieldKind,
 	referenceFreeFieldChangeRebaser,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
+import { brandConst, type Mutable } from "../../../util/index.js";
 import { makeValueCodec } from "../../codec/index.js";
 
 /**
@@ -106,10 +108,8 @@ export const valueHandler = {
 	getCrossFieldKeys: (_change) => [],
 } satisfies FieldChangeHandler<ValueChangeset>;
 
-export const valueField = new FieldKindWithEditor(
-	"Value",
+export const valueField = new FlexFieldKind(
+	brandConst("Value")<FieldKindIdentifier>(),
 	Multiplicity.Single,
-	valueHandler,
-	(a, b) => false,
-	new Set(),
+	{ changeHandler: valueHandler, allowsTreeSupersetOf: (a, b) => false },
 );

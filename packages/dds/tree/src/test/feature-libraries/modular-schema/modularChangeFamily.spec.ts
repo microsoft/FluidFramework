@@ -7,12 +7,17 @@ import { strict as assert } from "node:assert";
 
 import type { SessionId } from "@fluidframework/id-compressor";
 
-import { type ICodecOptions, type IJsonCodec, makeCodecFamily } from "../../../codec/index.js";
+import {
+	type CodecWriteOptions,
+	currentVersion,
+	type IJsonCodec,
+	makeCodecFamily,
+} from "../../../codec/index.js";
 import {
 	type FieldChangeHandler,
 	genericFieldKind,
 	type ModularChangeset,
-	FieldKindWithEditor,
+	FlexFieldKind,
 	defaultChunkPolicy,
 	type TreeChunk,
 	chunkFieldSingle,
@@ -49,6 +54,8 @@ import {
 } from "../../../core/index.js";
 import {
 	brand,
+	brandConst,
+	idAllocatorFromMaxId,
 	nestedMapFromFlatList,
 	newTupleBTree,
 	tryGetFromNestedMap,
@@ -68,19 +75,20 @@ import {
 import { type ValueChangeset, valueField } from "./basicRebasers.js";
 import { ajvValidator } from "../../codec/index.js";
 import { fieldJsonCursor } from "../../json/index.js";
-import type {
-	NodeChangeset,
-	// eslint-disable-next-line import/no-internal-modules
+import {
+	type NodeChangeset,
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeTypes.js";
 import {
 	intoDelta,
 	updateRefreshers,
-	// eslint-disable-next-line import/no-internal-modules
+	relevantRemovedRoots as relevantDetachedTreesImplementation,
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import type {
 	EncodedNodeChangeset,
 	FieldChangeEncodingContext,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import { deepFreeze as deepFreezeBase } from "@fluidframework/test-runtime-utils/internal";
 import { BTree } from "@tylerbu/sorted-btree-es6";
@@ -145,12 +153,10 @@ const singleNodeHandler: FieldChangeHandler<SingleNodeChangeset> = {
 	getCrossFieldKeys: (_change) => [],
 };
 
-const singleNodeField = new FieldKindWithEditor(
-	"SingleNode",
+const singleNodeField = new FlexFieldKind(
+	brandConst("SingleNode")<FieldKindIdentifier>(),
 	Multiplicity.Single,
-	singleNodeHandler,
-	(a, b) => false,
-	new Set(),
+	{ changeHandler: singleNodeHandler, allowsTreeSupersetOf: (a, b) => false },
 );
 
 export const fieldKindConfiguration: FieldKindConfiguration = new Map<
@@ -161,18 +167,19 @@ export const fieldKindConfiguration: FieldKindConfiguration = new Map<
 	[valueField.identifier, { kind: valueField, formatVersion: 1 }],
 ]);
 
-const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map(
+const fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind> = new Map(
 	[singleNodeField, valueField].map((field) => [field.identifier, field]),
 );
 
-const codecOptions: ICodecOptions = {
+const codecOptions: CodecWriteOptions = {
 	jsonValidator: ajvValidator,
+	minVersionForCollab: currentVersion,
 };
 
 const codec = makeModularChangeCodecFamily(
 	new Map([[1, fieldKindConfiguration]]),
 	testRevisionTagCodec,
-	makeFieldBatchCodec(codecOptions, 1),
+	makeFieldBatchCodec(codecOptions),
 	codecOptions,
 );
 const family = new ModularChangeFamily(fieldKinds, codec);
@@ -1151,28 +1158,25 @@ describe("ModularChangeFamily", () => {
 	// 		nested: NodeId[];
 	// 	}
 
-	// 	const handler: FieldChangeHandler<
-	// 		HasRemovedRootsRefs,
-	// 		FieldEditor<HasRemovedRootsRefs>
-	// 	> = {
-	// 		relevantRemovedRoots: (
-	// 			change: HasRemovedRootsRefs,
-	// 			relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
-	// 		) => {
-	// 			return [
-	// 				...change.shallow.map((id) => makeDetachedNodeId(id.major, id.minor)),
-	// 				...change.nested.flatMap((c) => Array.from(relevantRemovedRootsFromChild(c))),
-	// 			];
-	// 		},
-	// 	} as unknown as FieldChangeHandler<HasRemovedRootsRefs, FieldEditor<HasRemovedRootsRefs>>;
-	// 	const hasRemovedRootsRefsField = new FieldKindWithEditor(
-	// 		fieldKind,
-	// 		Multiplicity.Single,
-	// 		handler,
-	// 		() => false,
-	// 		new Set(),
-	// 	);
-	// 	const mockFieldKinds = new Map([[fieldKind, hasRemovedRootsRefsField]]);
+	// const handler: FieldChangeHandler<
+	// 	HasRemovedRootsRefs,
+	// 	FieldEditor<HasRemovedRootsRefs>
+	// > = {
+	// 	relevantRemovedRoots: (
+	// 		change: HasRemovedRootsRefs,
+	// 		relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
+	// 	) => {
+	// 		return [
+	// 			...change.shallow.map((id) => makeDetachedNodeId(id.major, id.minor)),
+	// 			...change.nested.flatMap((c) => Array.from(relevantRemovedRootsFromChild(c))),
+	// 		];
+	// 	},
+	// } as unknown as FieldChangeHandler<HasRemovedRootsRefs, FieldEditor<HasRemovedRootsRefs>>;
+	// const hasRemovedRootsRefsField = new FlexFieldKind(fieldKind, Multiplicity.Single, {
+	// 	changeHandler: handler,
+	// 	allowsTreeSupersetOf: (a, b) => false,
+	// });
+	// const mockFieldKinds = new Map([[fieldKind, hasRemovedRootsRefsField]]);
 
 	// 	function relevantRemovedRoots(input: ModularChangeset): DeltaDetachedNodeId[] {
 	// 		deepFreeze(input);

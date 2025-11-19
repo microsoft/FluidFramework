@@ -23,9 +23,9 @@ import {
 	type TreeChunk,
 	tryGetChunk,
 	type SchemaAndPolicy,
+	type SchemaPolicy,
 } from "../../core/index.js";
 import { getOrCreate } from "../../util/index.js";
-import type { FullSchemaPolicy } from "../modular-schema/index.js";
 import { isStableNodeIdentifier } from "../node-identifier/index.js";
 
 import { BasicChunk } from "./basicChunk.js";
@@ -44,7 +44,7 @@ export interface Disposable {
  */
 export function makeTreeChunker(
 	schema: TreeStoredSchemaSubscription,
-	policy: FullSchemaPolicy,
+	policy: SchemaPolicy,
 	shouldEncodeIncrementally: IncrementalEncodingPolicy,
 ): IChunker {
 	return new Chunker(
@@ -113,7 +113,7 @@ export class Chunker implements IChunker {
 
 	public constructor(
 		public readonly schema: TreeStoredSchemaSubscription,
-		public readonly policy: FullSchemaPolicy,
+		public readonly policy: SchemaPolicy,
 		public readonly sequenceChunkSplitThreshold: number,
 		public readonly sequenceChunkInlineThreshold: number,
 		public readonly uniformChunkNodeCount: number,
@@ -197,6 +197,15 @@ export function chunkFieldSingle(
 	policy: ChunkCompressor,
 ): TreeChunk {
 	const chunks = chunkField(cursor, policy);
+	return combineChunks(chunks);
+}
+
+/**
+ * Create a single TreeChunk from an array of TreeChunks.
+ * @remarks
+ * This takes ownership of the provided TreeChunk references, and returns an owned referenced.
+ */
+export function combineChunks(chunks: TreeChunk[]): TreeChunk {
 	if (chunks.length === 1) {
 		return chunks[0] ?? oob();
 	}

@@ -6,13 +6,13 @@
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import type { ChangeAtomId } from "../../../core/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { CellMark } from "../../../feature-libraries/sequence-field/index.js";
 import type {
 	Attach,
 	Detach,
 	MarkEffect,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/sequence-field/types.js";
 import { TestNodeId } from "../../testNodeId.js";
 import { type Populated, brand } from "../../../util/index.js";
@@ -23,7 +23,7 @@ export type PopulatedMark = Populated<CellMark<Populated<MarkEffect>>>;
 /**
  * Generates a list of marks with all fields populated.
  *
- * @remarks - New objects are generated every time this function is called. This is to ensure that stable IDs are
+ * @remarks New objects are generated every time this function is called. This is to ensure that stable IDs are
  * generated when appropriate.
  */
 export function generatePopulatedMarks(idCompressor: IIdCompressor): PopulatedMark[] {

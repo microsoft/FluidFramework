@@ -26,6 +26,22 @@ import type { RestrictiveStringRecord } from "../../../util/index.js";
  * Therefore code assigning to these fields must explicitly construct nodes using the schema's constructor or create method,
  * or using some other method like {@link (TreeAlpha:interface).create}.
  *
+ * Field Assignment and Deletion
+ *
+ * Unlike JavaScript's `Record` type, assigning `undefined` to a key in {@link TreeRecordNode} behaves like a `delete` operation,
+ * removing the field's contents.
+ *
+ * This is to stay consistent with {@link TreeObjectNode} behavior.
+ *
+ * Example:
+ * ```ts
+ * const Numbers = schemaFactory.record("Numbers", schemaFactory.number);
+ * const record = new Numbers({ a:1, b:2 });
+ *
+ * // This is equivalent to delete record.a, and removes the entry.
+ * record.a = undefined
+ * ```
+ *
  * @beta
  */
 export interface TreeRecordNode<

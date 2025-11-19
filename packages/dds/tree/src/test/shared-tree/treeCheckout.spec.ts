@@ -9,7 +9,10 @@ import {
 	type IMockLoggerExt,
 	createMockLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import {
+	validateAssertionError2 as validateAssertionError,
+	validateUsageError,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	type Revertible,
@@ -41,11 +44,10 @@ import {
 	mintRevisionTag,
 	testIdCompressor,
 	testRevisionTagCodec,
-	validateUsageError,
 	viewCheckout,
 } from "../utils.js";
 import { brand } from "../../util/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
 import {
 	getInnerNode,
@@ -57,7 +59,7 @@ import {
 	type InsertableTreeFieldFromImplicitField,
 	type TreeBranch,
 } from "../../simple-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { stringSchema } from "../../simple-tree/leafNodeSchema.js";
 import { asAlpha } from "../../api.js";
 
@@ -660,19 +662,14 @@ describe("sharedTreeView", () => {
 			const viewBranch = treeBranch.viewWith(view.config);
 			viewBranch.root.insertAtEnd("42");
 
-			assert.throws(
-				() => {
-					Tree.runTransaction(view, () => {
-						view.root.insertAtEnd("43");
-						tree.merge(treeBranch, true);
-					});
-				},
-				(e: Error) =>
-					validateAssertionError(
-						e,
-						"Views cannot be merged into a view while it has a pending transaction",
-					),
-			);
+			assert.throws(() => {
+				Tree.runTransaction(view, () => {
+					view.root.insertAtEnd("43");
+					tree.merge(treeBranch, true);
+				});
+			}, validateAssertionError(
+				"Views cannot be merged into a view while it has a pending transaction",
+			));
 		});
 
 		itView("rejects rebases while a transaction is in progress", ({ view, tree }) => {
@@ -684,11 +681,9 @@ describe("sharedTreeView", () => {
 				viewBranch.root.insertAtEnd("43");
 				assert.throws(
 					() => treeBranch.rebaseOnto(tree),
-					(e: Error) =>
-						validateAssertionError(
-							e,
-							"A view cannot be rebased while it has a pending transaction",
-						),
+					validateAssertionError(
+						"A view cannot be rebased while it has a pending transaction",
+					),
 				);
 			});
 			assert.equal(viewBranch.root[0], "43");
@@ -714,7 +709,7 @@ describe("sharedTreeView", () => {
 			view.root.insertAtEnd("A");
 			assert.throws(
 				() => viewBranch.checkout.transaction.commit(),
-				(e: Error) => validateAssertionError(e, "No transaction to commit"),
+				validateAssertionError("No transaction to commit"),
 			);
 		});
 

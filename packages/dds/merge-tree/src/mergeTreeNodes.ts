@@ -613,7 +613,7 @@ export class CollaborationWindow {
 	 * Semantically, `localSeq`s provide an ordering on in-flight merge-tree operations:
 	 * for operations stamped with localSeqs `a` and `b`, `a < b` if and only if `a` was submitted before `b`.
 	 *
-	 * @remarks - This field is analogous to the `clientSequenceNumber` field on ops, but it's accessible to merge-tree
+	 * @remarks This field is analogous to the `clientSequenceNumber` field on ops, but it's accessible to merge-tree
 	 * at op submission time rather than only at ack time. This enables more natural state tracking for in-flight ops.
 	 *
 	 * It's useful to stamp ops with such an incrementing counter because it enables reasoning about which segments existed from

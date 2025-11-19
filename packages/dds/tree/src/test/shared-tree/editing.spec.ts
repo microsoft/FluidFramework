@@ -4,6 +4,7 @@
  */
 
 import { strict as assert, fail } from "node:assert";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 
@@ -16,7 +17,7 @@ import {
 	type NormalizedUpPath,
 	type TreeNodeSchemaIdentifier,
 } from "../../core/index.js";
-import { SharedTreeFormatVersion, Tree, type ITreeCheckout } from "../../shared-tree/index.js";
+import { Tree, type ITreeCheckout } from "../../shared-tree/index.js";
 import { type JsonCompatible, brand, makeArray } from "../../util/index.js";
 import {
 	checkoutWithContent,
@@ -28,7 +29,6 @@ import {
 	makeTreeFromJson,
 	moveWithin,
 	TestTreeProviderLite,
-	validateUsageError,
 	type TreeStoredContentStrict,
 } from "../utils.js";
 import { insert, makeTreeFromJsonSequence, remove } from "../sequenceRootUtils.js";
@@ -43,6 +43,7 @@ import { fieldJsonCursor } from "../json/index.js";
 import { TreeStatus } from "../../feature-libraries/index.js";
 import { configuredSharedTree } from "../../treeFactory.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
+import { FluidClientVersion } from "../../codec/index.js";
 
 const rootField: NormalizedFieldUpPath = {
 	parent: undefined,
@@ -2791,7 +2792,7 @@ describe("Editing", () => {
 							2,
 							configuredSharedTree({
 								jsonValidator: FormatValidatorBasic,
-								formatVersion: SharedTreeFormatVersion.vDetachedRoots,
+								minVersionForCollab: FluidClientVersion.vDetachedRoots,
 							}).getFactory(),
 						);
 						const viewA = provider.trees[0].viewWith(
@@ -2931,7 +2932,7 @@ describe("Editing", () => {
 					2,
 					configuredSharedTree({
 						jsonValidator: FormatValidatorBasic,
-						formatVersion: SharedTreeFormatVersion.vDetachedRoots,
+						minVersionForCollab: FluidClientVersion.vDetachedRoots,
 					}).getFactory(),
 				);
 				const config = new TreeViewConfiguration({
@@ -2982,7 +2983,7 @@ describe("Editing", () => {
 					2,
 					configuredSharedTree({
 						jsonValidator: FormatValidatorBasic,
-						formatVersion: SharedTreeFormatVersion.vDetachedRoots,
+						minVersionForCollab: FluidClientVersion.vDetachedRoots,
 					}).getFactory(),
 				);
 				const config = new TreeViewConfiguration({
@@ -3034,7 +3035,7 @@ describe("Editing", () => {
 					2,
 					configuredSharedTree({
 						jsonValidator: FormatValidatorBasic,
-						formatVersion: SharedTreeFormatVersion.vDetachedRoots,
+						minVersionForCollab: FluidClientVersion.vDetachedRoots,
 					}).getFactory(),
 				);
 				const config = new TreeViewConfiguration({

@@ -40,12 +40,12 @@ import type {
 	FieldEditDescription,
 	FieldKindConfiguration,
 	NodeId,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
 import {
 	ModularChangeFamily,
 	rebaseRevisionMetadataFromInfo,
-	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import { ChangesetWrapper } from "../../changesetWrapper.js";
 import {
@@ -70,7 +70,7 @@ import {
 } from "./utils.js";
 import { ChangeMaker as Change, MarkMaker as Mark } from "./testEdits.js";
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
-import type { ICodecOptions } from "../../../index.js";
+import type { CodecWriteOptions } from "../../../index.js";
 import { ajvValidator } from "../../codec/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import {
@@ -79,6 +79,7 @@ import {
 } from "../../../feature-libraries/default-schema/defaultFieldKinds.js";
 // eslint-disable-next-line import/no-internal-modules
 import { defaultFieldRebaser } from "../default-field-kinds/defaultChangesetUtil.js";
+import { currentVersion } from "../../../codec/index.js";
 
 // TODO: Rename these to make it clear which ones are used in `testChanges`.
 const tag0: RevisionTag = mintRevisionTag();
@@ -551,8 +552,9 @@ interface TestConfig {
 
 type SequenceFieldTestState = FieldStateTree<TestState, DefaultChangeset>;
 
-const codecOptions: ICodecOptions = {
+const codecOptions: CodecWriteOptions = {
 	jsonValidator: ajvValidator,
+	minVersionForCollab: currentVersion,
 };
 
 const fieldKindConfiguration: FieldKindConfiguration =
@@ -565,7 +567,7 @@ assert(
 const codec = makeModularChangeCodecFamily(
 	new Map([[1, fieldKindConfiguration]]),
 	testRevisionTagCodec,
-	makeFieldBatchCodec(codecOptions, 1),
+	makeFieldBatchCodec(codecOptions),
 	codecOptions,
 );
 const family = new ModularChangeFamily(fieldKinds, codec);

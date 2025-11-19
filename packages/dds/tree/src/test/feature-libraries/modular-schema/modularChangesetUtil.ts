@@ -27,7 +27,7 @@ import {
 	type ComposeNodeManager,
 	type FieldChangeHandler,
 	type FieldChangeMap,
-	type FieldKindWithEditor,
+	type FlexFieldKind,
 	type ModularChangeFamily,
 	type ModularChangeset,
 	type NodeId,
@@ -135,14 +135,14 @@ export function assertModularChangesetsEqualIgnoreRebaseVersion(
 
 export function normalizeChangeset(
 	change: ModularChangeset,
-	fieldKinds?: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+	fieldKinds?: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): ModularChangeset {
 	return normalizeRangeMaps(normalizeNodeIds(removeAliases(change), fieldKinds));
 }
 
 function normalizeNodeIds(
 	change: ModularChangeset,
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = defaultFieldKinds,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind> = defaultFieldKinds,
 ): ModularChangeset {
 	const idAllocator = idAllocatorFromMaxId();
 

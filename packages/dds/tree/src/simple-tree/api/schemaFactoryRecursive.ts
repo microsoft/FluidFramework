@@ -182,6 +182,7 @@ export type ValidateRecursiveSchemaTemplate<T extends TreeNodeSchemaClass> =
 		}[T["kind"]]
 	>;
 
+/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive AB#50920 */
 /**
  * Workaround for "Type instantiation is excessively deep and possibly infinite.ts" errors.
  * @remarks
@@ -239,6 +240,7 @@ export type ValidateRecursiveSchemaTemplate<T extends TreeNodeSchemaClass> =
  */
 export type FixRecursiveRecursionLimit<T extends TreeNodeSchemaClass> =
 	T extends ValidateRecursiveSchemaTemplate<T> ? undefined : undefined;
+/* eslint-enable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag */
 
 /**
  * Does nothing with the provided value, but appears to use it to make unused locals warnings and errors go away.

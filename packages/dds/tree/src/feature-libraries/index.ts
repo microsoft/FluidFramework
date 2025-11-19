@@ -33,6 +33,7 @@ export {
 	makeSchemaCodec,
 	makeSchemaCodecs,
 	getCodecTreeForSchemaFormat,
+	clientVersionToSchemaVersion,
 } from "./schema-index/index.js";
 export {
 	stackTreeNodeCursor,
@@ -82,7 +83,6 @@ export {
 	genericFieldKind,
 	type HasFieldChanges,
 	type NodeExistsConstraint,
-	FieldKindWithEditor,
 	ModularChangeFamily,
 	EncodedModularChangeset,
 	updateRefreshers,
@@ -104,13 +104,13 @@ export {
 	defaultChunkPolicy,
 	type FieldBatch,
 	type FieldBatchCodec,
-	type FieldBatchFormatVersion,
+	FieldBatchFormatVersion,
 	getCodecTreeForFieldBatchFormat,
 	makeTreeChunker,
 	makeFieldBatchCodec,
-	fluidVersionToFieldBatchCodecWriteVersion,
 	type FieldBatchEncodingContext,
 	emptyChunk,
+	combineChunks,
 	type IncrementalEncodingPolicy,
 	defaultIncrementalEncodingPolicy,
 } from "./chunked-forest/index.js";
@@ -145,13 +145,16 @@ export {
 	fieldKindConfigurations,
 	intoDelta,
 	relevantRemovedRoots,
+	getCodecTreeForModularChangeFormat,
+	type ModularChangeFormatVersion,
+} from "./default-schema/index.js";
+
+export {
 	SchemaValidationError,
 	isNodeInSchema,
 	isFieldInSchema,
 	throwOutOfSchema,
-	getCodecTreeForModularChangeFormat,
-	type ModularChangeFormatVersion,
-} from "./default-schema/index.js";
+} from "./schemaChecker.js";
 
 export {
 	type FlexTreeOptionalField,
@@ -203,7 +206,6 @@ export {
 	makeSchemaChangeCodecs,
 	EncodedSchemaChange,
 	getCodecTreeForSchemaChangeFormat,
-	type SchemaChangeFormatVersion,
 } from "./schema-edits/index.js";
 
 export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily.js";

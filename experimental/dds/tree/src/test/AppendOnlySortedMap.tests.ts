@@ -7,7 +7,7 @@
 
 import { strict as assert } from 'assert';
 
-import { validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
+import { validateAssertionError2 as validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
 import { expect } from 'chai';
 
 import { assertNotUndefined, compareFiniteNumbers } from '../Common.js';
@@ -18,10 +18,7 @@ function runAppendOnlyMapTests(mapBuilder: () => AppendOnlySortedMap<number, num
 		const map = mapBuilder();
 		map.append(0, 0);
 		const exception = 'Inserted key must be > all others in the map.';
-		assert.throws(
-			() => map.append(-1, 1),
-			(e: Error) => validateAssertionError(e, exception)
-		);
+		assert.throws(() => map.append(-1, 1), validateAssertionError(exception));
 		map.append(1, 2);
 	});
 
@@ -196,10 +193,7 @@ describe('AppendOnlyDoublySortedMap', () => {
 		const map = mapBuilder();
 		map.append(0, 0);
 		const exception = 'Inserted value must be > all others in the map.';
-		assert.throws(
-			() => map.append(1, -1),
-			(e: Error) => validateAssertionError(e, exception)
-		);
+		assert.throws(() => map.append(1, -1), validateAssertionError(exception));
 		map.append(2, 1);
 	});
 
@@ -242,9 +236,6 @@ describe('AppendOnlyDoublySortedMap', () => {
 		map.append([0], [0]);
 		map.append([1], [1]);
 		assertNotUndefined(map.get([1]))[0] = -1; // mutate value
-		assert.throws(
-			() => map.assertValid(),
-			(e: Error) => validateAssertionError(e, 'Values in map must be sorted.')
-		);
+		assert.throws(() => map.assertValid(), validateAssertionError('Values in map must be sorted.'));
 	});
 });

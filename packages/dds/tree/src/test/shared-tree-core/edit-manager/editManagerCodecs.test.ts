@@ -7,13 +7,18 @@ import type { SessionId } from "@fluidframework/id-compressor";
 
 import type { ChangeEncodingContext } from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { makeEditManagerCodecs } from "../../../shared-tree-core/editManagerCodecs.js";
-import type { SharedBranchSummaryData, SummaryData } from "../../../shared-tree-core/index.js";
+import {
+	EditManagerFormatVersion,
+	type SharedBranchSummaryData,
+	type SummaryData,
+} from "../../../shared-tree-core/index.js";
 import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import {
 	type EncodingTestData,
+	makeDiscontinuedEncodingTestSuite,
 	makeEncodingTestSuite,
 	mintRevisionTag,
 	testIdCompressor,
@@ -206,20 +211,24 @@ export function testCodec() {
 			},
 		);
 
-		// Versions 1 through 4 do not encode the summary originator ID.
-		makeEncodingTestSuite(family, testCases, assertEquivalentSummaryDataIgnoreOriginator, [
-			undefined,
-			4,
+		makeDiscontinuedEncodingTestSuite(family, [
+			EditManagerFormatVersion.v1,
+			EditManagerFormatVersion.v2,
 		]);
 
 		makeEncodingTestSuite(
 			family,
 			testCases,
 			assertEquivalentSummaryDataIgnoreOriginator,
-			[101, 101],
+			// Versions that do not encode the summary originator ID.
+			[
+				EditManagerFormatVersion.v3,
+				EditManagerFormatVersion.v4,
+				EditManagerFormatVersion.vDetachedRoots,
+			],
 		);
 
-		makeEncodingTestSuite(family, testCases, undefined, [5, 100]);
+		makeEncodingTestSuite(family, testCases, undefined, [EditManagerFormatVersion.v5]);
 
 		// TODO: testing EditManagerSummarizer class itself, specifically for attachment and normal summaries.
 		// TODO: format compatibility tests to detect breaking of existing documents.

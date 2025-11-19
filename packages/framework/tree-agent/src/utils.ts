@@ -12,10 +12,8 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { ImplicitFieldSchema, TreeNodeSchemaClass } from "@fluidframework/tree";
 import type {
 	InsertableContent,
-	TreeBranch,
 	TreeNode,
 	TreeNodeSchema,
-	TreeViewAlpha,
 	UnsafeUnknownSchema,
 } from "@fluidframework/tree/alpha";
 import {
@@ -29,6 +27,7 @@ import { NodeKind, normalizeFieldSchema } from "@fluidframework/tree/internal";
 import { z } from "zod";
 
 import { FunctionWrapper } from "./methodBinding.js";
+import { PropertyDef } from "./propertyBinding.js";
 
 /**
  * Subset of Map interface.
@@ -85,17 +84,6 @@ export function getOrCreate<K, V>(
 	}
 	return value;
 }
-
-/**
- * TODO
- * @alpha
- * @privateRemarks This is a subset of the TreeViewAlpha functionality because if take it wholesale, it causes problems with invariance of the generic parameters.
- */
-export type TreeView<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema> = Pick<
-	TreeViewAlpha<TRoot>,
-	"root" | "fork" | "merge" | "rebaseOnto" | "schema" | "events"
-> &
-	TreeBranch;
 
 /**
  * TODO
@@ -434,6 +422,24 @@ export function getZodSchemaAsTypeScript(
 		}
 	}
 
+	function appendBoundProperties(type: z.ZodType): void {
+		const property = (type as unknown as { property?: PropertyDef }).property;
+
+		if (!(property instanceof PropertyDef)) {
+			if (type.description !== undefined && type.description !== "") {
+				append(` // ${type.description}`);
+			}
+			return;
+		}
+
+		if (property.readOnly === true) {
+			append(" // readonly");
+		}
+		if (property.description !== undefined && property.description !== "") {
+			append(` - ${property.description}`);
+		}
+	}
+
 	function appendArrayType(arrayType: z.ZodType) {
 		appendType((arrayType._def as z.ZodArrayDef).type, TypePrecedence.Object);
 		append("[]");
@@ -446,6 +452,7 @@ export function getZodSchemaAsTypeScript(
 		// eslint-disable-next-line prefer-const
 		for (let [name, type] of Object.entries((objectType._def as z.ZodObjectDef).shape())) {
 			const method = (type as unknown as { method: object | undefined }).method;
+
 			if (method === undefined || !(method instanceof FunctionWrapper)) {
 				append(name);
 				if (getTypeKind(type) === z.ZodFirstPartyTypeKind.ZodOptional) {
@@ -455,8 +462,7 @@ export function getZodSchemaAsTypeScript(
 				append(": ");
 				appendType(type);
 				append(";");
-				const comment = type.description;
-				if (comment !== undefined && comment !== "") append(` // ${comment}`);
+				appendBoundProperties(type);
 				appendNewLine();
 			}
 		}
@@ -592,25 +598,23 @@ export function instanceOf<T extends TreeNodeSchemaClass>(
 const instanceOfs = new WeakMap<z.ZodTypeAny, ObjectNodeSchema>();
 
 /**
- * Adds all named object, map, array, and record schemas reachable from the given schema to the given set.
- * @remarks This includes transitive child/descendant schemas.
- * It does not include primitive schemas or inlined array/map/record schemas.
- * @returns The set of named schemas added (same as the `schemas` parameter, if supplied).
+ * Adds all (optionally filtered) schemas reachable from the given schema to the given set.
+ * @returns The set of schemas added (same as the `schemas` parameter, if supplied).
  */
-export function findNamedSchemas(
+export function findSchemas(
 	schema: ImplicitFieldSchema,
+	filter: (schema: TreeNodeSchema) => boolean = () => true,
 	schemas = new Set<TreeNodeSchema>(),
 ): Set<TreeNodeSchema> {
-	const set = schemas ?? new Set();
 	for (const nodeSchema of normalizeFieldSchema(schema).allowedTypeSet) {
-		if (!set.has(nodeSchema)) {
-			if (isNamedSchema(nodeSchema.identifier)) {
-				set.add(nodeSchema);
+		if (!schemas.has(nodeSchema)) {
+			if (filter(nodeSchema)) {
+				schemas.add(nodeSchema);
 			}
-			findNamedSchemas([...nodeSchema.childTypes], set);
+			findSchemas([...nodeSchema.childTypes], filter, schemas);
 		}
 	}
-	return set;
+	return schemas;
 }
 
 /**

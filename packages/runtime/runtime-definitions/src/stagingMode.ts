@@ -7,14 +7,9 @@ import type { IContainerRuntimeBase } from "./dataStoreContext.js";
 
 /**
  * Options for committing staged changes in experimental staging mode.
- *
- * @experimental
- * @deprecated These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
- * @legacy @beta
- * @sealed
- * @privateRemarks After partners move to the alpha interfaces this interface should be renamed and tagged to be internal.
+ * @internal
  */
-export interface CommitStagedChangesOptionsExperimental {
+export interface CommitStagedChangesOptionsInternal {
 	/**
 	 * If true, intermediate states created by changes made while in staging mode will be "squashed" out of the
 	 * ops which were created during staging mode.
@@ -36,25 +31,16 @@ export interface CommitStagedChangesOptionsExperimental {
  * Controls for managing staged changes in experimental staging mode.
  *
  * Provides methods to either commit or discard changes made while in staging mode.
- *
- * @experimental
- * @deprecated These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
- * @legacy @beta
- * @sealed
- * @privateRemarks After partners move to the alpha interfaces this interface should be renamed and tagged to be internal.
+ * @internal
  */
-export interface StageControlsExperimental {
+export interface StageControlsInternal extends StageControlsAlpha {
 	/**
 	 * Exit staging mode and commit to any changes made while in staging mode.
 	 * This will cause them to be sent to the ordering service, and subsequent changes
 	 * made by this container will additionally flow freely to the ordering service.
 	 * @param options - Options when committing changes.
 	 */
-	readonly commitChanges: (options?: Partial<CommitStagedChangesOptionsExperimental>) => void;
-	/**
-	 * Exit staging mode and discard any changes made while in staging mode.
-	 */
-	readonly discardChanges: () => void;
+	readonly commitChanges: (options?: Partial<CommitStagedChangesOptionsInternal>) => void;
 }
 
 /**
@@ -80,23 +66,14 @@ export interface StageControlsAlpha {
 
 /**
  * Experimental extension of {@link IContainerRuntimeBase} to support staging mode.
- *
- * @experimental
- * @deprecated These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
- * @legacy @beta
- * @sealed
- * @privateRemarks After partners move to the alpha interfaces this interface should be renamed and tagged to be internal.
+ * @internal
  */
-export interface IContainerRuntimeBaseExperimental extends IContainerRuntimeBase {
+export interface IContainerRuntimeBaseInternal extends ContainerRuntimeBaseAlpha {
 	/**
 	 * Enters staging mode, allowing changes to be staged before being committed or discarded.
 	 * @returns Controls for committing or discarding staged changes.
 	 */
-	enterStagingMode?(): StageControlsExperimental;
-	/**
-	 * Indicates whether the container is currently in staging mode.
-	 */
-	readonly inStagingMode?: boolean;
+	enterStagingMode(): StageControlsInternal;
 }
 
 /**
