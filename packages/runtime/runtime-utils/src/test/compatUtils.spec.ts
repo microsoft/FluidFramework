@@ -35,7 +35,7 @@ describe("compatibilityBase", () => {
 			assert.equal(config, "X");
 		});
 		it("sorting", () => {
-			// These checks are designed toi fail if the items are not sorted according to semver, and are either left as ordered or sorted lexically.
+			// These checks are designed to fail if the items are not sorted according to semver, and are either left as ordered or sorted lexically.
 			const config = { "1.0.0": "A", "1.500.0": "D", "1.58.0": "B", "1.60.0": "C" };
 			assert.equal(getConfigForMinVersionForCollab("1.50.0", config), "A");
 			assert.equal(getConfigForMinVersionForCollab("1.58.0", config), "B");
