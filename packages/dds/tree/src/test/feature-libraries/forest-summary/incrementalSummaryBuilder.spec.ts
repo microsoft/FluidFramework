@@ -9,7 +9,7 @@ import { stringToBuffer } from "@fluid-internal/client-utils";
 import type { IExperimentalIncrementalSummaryContext } from "@fluidframework/runtime-definitions/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import { SummaryType, type ISnapshotTree } from "@fluidframework/driver-definitions/internal";
-import { validateAssertionError2 as validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	ForestIncrementalSummaryBehavior,

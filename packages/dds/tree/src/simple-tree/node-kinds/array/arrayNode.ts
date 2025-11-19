@@ -45,7 +45,6 @@ import {
 	createTreeNodeSchemaPrivateData,
 	type FlexContent,
 	type TreeNodeSchemaPrivateData,
-	convertAllowedTypes,
 	withBufferedTreeEvents,
 	AnnotatedAllowedTypesInternal,
 } from "../../core/index.js";
@@ -68,7 +67,6 @@ import type {
 } from "./arrayNodeTypes.js";
 import { brand, type JsonCompatibleReadOnlyObject } from "../../../util/index.js";
 import { nullSchema } from "../../leafNodeSchema.js";
-import { arrayNodeStoredSchema } from "../../toStoredSchema.js";
 import type { SimpleAllowedTypeAttributes } from "../../simpleSchema.js";
 
 /**
@@ -1282,12 +1280,7 @@ export function arraySchema<
 		}
 
 		public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
-			return (privateData ??= createTreeNodeSchemaPrivateData(
-				this,
-				[normalizedTypes],
-				(storedOptions) =>
-					arrayNodeStoredSchema(convertAllowedTypes(info, storedOptions), persistedMetadata),
-			));
+			return (privateData ??= createTreeNodeSchemaPrivateData(this, [normalizedTypes]));
 		}
 	}
 

@@ -27,7 +27,7 @@ import {
 	MockEmptyDeltaConnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-	validateAssertionError2 as validateAssertionError,
+	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { SharedStringFactory, type SharedString } from "../sequenceFactory.js";

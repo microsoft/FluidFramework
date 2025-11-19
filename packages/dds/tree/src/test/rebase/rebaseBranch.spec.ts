@@ -5,7 +5,7 @@
 
 import { strict as assert, fail } from "node:assert";
 
-import { validateAssertionError2 as validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 // Allow importing from these specific files which are being tested:
 import {

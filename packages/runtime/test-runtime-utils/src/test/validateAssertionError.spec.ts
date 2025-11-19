@@ -8,7 +8,7 @@ import { strict } from "assert";
 import { assert, fail } from "@fluidframework/core-utils/internal";
 
 import { shortCodeMap } from "../assertionShortCodesMap.js";
-import { validateAssertionError2 as validateAssertionError } from "../validateAssertionError.js";
+import { validateAssertionError } from "../validateAssertionError.js";
 
 describe("validateAssertionError(", () => {
 	it("untagged", () => {
