@@ -111,7 +111,7 @@ describe("toStoredSchema", () => {
 							permissiveStoredSchemaGenerationOptions,
 						);
 
-						// The restrictive case, used for initial schemas and upgrades, does not include any allowed types schema.
+						// The restrictive case, used for initial schemas and upgrades, does not include any staged allowed types.
 						// The permissive case, used for unhydrated trees, includes all staged allowed types.
 						// They should be equal if an only if there are no staged allowed types.
 						if (testCase.hasStagedSchema) {
