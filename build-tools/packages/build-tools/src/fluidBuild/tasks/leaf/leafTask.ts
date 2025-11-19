@@ -587,12 +587,12 @@ export class UnknownLeafTask extends LeafTask {
  */
 export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask {
 	/**
-	 * @returns the list of absolute paths to files that this task depends on.
+	 * @returns the list of package relative or absolute paths to files that this task depends on.
 	 */
 	protected abstract getInputFiles(): Promise<string[]>;
 
 	/**
-	 * @returns the list of absolute paths to files that this task generates.
+	 * @returns the list of package relative or absolute paths to files that this task generates.
 	 */
 	protected abstract getOutputFiles(): Promise<string[]>;
 
@@ -608,69 +608,69 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 	}
 
 	protected async getDoneFileContent(): Promise<string | undefined> {
-		if (this.useHashes) {
-			return this.getHashDoneFileContent();
-		}
-
+		let srcFiles: string[];
+		let dstFiles: string[];
 		// Gather the file information
 		try {
-			const srcFiles = await this.getInputFiles();
-			const dstFiles = await this.getOutputFiles();
-			const srcTimesP = Promise.all(
-				srcFiles
-					.map((match) => this.getPackageFileFullPath(match))
-					.map((match) => stat(match)),
+			srcFiles = (await this.getInputFiles()).map((match) =>
+				this.getPackageFileFullPath(match),
 			);
-			const dstTimesP = Promise.all(
-				dstFiles
-					.map((match) => this.getPackageFileFullPath(match))
-					.map((match) => stat(match)),
+			dstFiles = (await this.getOutputFiles()).map((match) =>
+				this.getPackageFileFullPath(match),
 			);
-			const [srcTimes, dstTimes] = await Promise.all([srcTimesP, dstTimesP]);
-
-			const srcInfo = srcTimes.map((srcTime) => {
-				return { mtimeMs: srcTime.mtimeMs, size: srcTime.size };
-			});
-			const dstInfo = dstTimes.map((dstTime) => {
-				return { mtimeMs: dstTime.mtimeMs, size: dstTime.size };
-			});
-			return JSON.stringify({ srcFiles, dstFiles, srcInfo, dstInfo });
 		} catch (e: any) {
-			this.traceError(`error comparing file times: ${e.message}`);
+			this.traceError(`error collecting files: ${e.message}`);
 			this.traceTrigger("failed to get file stats");
 			return undefined;
 		}
-	}
 
-	private async getHashDoneFileContent(): Promise<string | undefined> {
-		const mapHash = async (name: string) => {
-			const hash = await this.node.context.fileHashCache.getFileHash(
-				this.getPackageFileFullPath(name),
-			);
-			return { name, hash };
-		};
+		// sort by path for determinism
+		srcFiles.sort();
+		dstFiles.sort();
 
-		try {
-			const srcFiles = await this.getInputFiles();
-			const dstFiles = await this.getOutputFiles();
-			const srcHashesP = Promise.all(srcFiles.map(mapHash));
-			const dstHashesP = Promise.all(dstFiles.map(mapHash));
+		if (!this.useHashes) {
+			try {
+				const srcTimesP = Promise.all(srcFiles.map((match) => stat(match)));
+				const dstTimesP = Promise.all(dstFiles.map((match) => stat(match)));
+				const [srcTimes, dstTimes] = await Promise.all([srcTimesP, dstTimesP]);
 
-			const [srcHashes, dstHashes] = await Promise.all([srcHashesP, dstHashesP]);
+				const srcInfo = srcTimes.map((srcTime) => ({
+					mtimeMs: srcTime.mtimeMs,
+					size: srcTime.size,
+				}));
+				const dstInfo = dstTimes.map((dstTime) => ({
+					mtimeMs: dstTime.mtimeMs,
+					size: dstTime.size,
+				}));
+				return JSON.stringify({ srcFiles, dstFiles, srcInfo, dstInfo });
+			} catch (e: any) {
+				this.traceError(`error comparing file times: ${e.message}`);
+				this.traceTrigger("failed to get file stats");
+				return undefined;
+			}
+		} else {
+			const mapHash = async (name: string) => {
+				const hash = await this.node.context.fileHashCache.getFileHash(name);
+				return { name, hash };
+			};
 
-			// sort by name for determinism
-			srcHashes.sort(sortByName);
-			dstHashes.sort(sortByName);
+			try {
+				const srcFiles = await this.getInputFiles();
+				const dstFiles = await this.getOutputFiles();
+				const srcHashesP = Promise.all(srcFiles.map(mapHash));
+				const dstHashesP = Promise.all(dstFiles.map(mapHash));
 
-			const output = JSON.stringify({
-				srcHashes,
-				dstHashes,
-			});
-			return output;
-		} catch (e: any) {
-			this.traceError(`error calculating file hashes: ${e.message}`);
-			this.traceTrigger("failed to get file hash");
-			return undefined;
+				const [srcHashes, dstHashes] = await Promise.all([srcHashesP, dstHashesP]);
+				const output = JSON.stringify({
+					srcHashes,
+					dstHashes,
+				});
+				return output;
+			} catch (e: any) {
+				this.traceError(`error calculating file hashes: ${e.message}`);
+				this.traceTrigger("failed to get file hash");
+				return undefined;
+			}
 		}
 	}
 }
@@ -746,14 +746,4 @@ export abstract class LeafWithGlobInputOutputDoneFileTask extends LeafWithFileSt
 		});
 		return files;
 	}
-}
-
-function sortByName(a: { name: string }, b: { name: string }): number {
-	if (a.name < b.name) {
-		return -1;
-	}
-	if (a.name > b.name) {
-		return 1;
-	}
-	return 0;
 }

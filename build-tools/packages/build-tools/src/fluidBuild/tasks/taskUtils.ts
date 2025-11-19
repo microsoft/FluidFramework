@@ -40,22 +40,22 @@ export async function getInstalledPackageVersion(packageName: string, cwd: strin
 
 /**
  * Given a directory path, returns an array of all files within the path, rooted in the provided path.
+ * @remarks
+ * Order might not be stable.
  */
-export async function getRecursiveFiles(pathName: string) {
-	const files = await readdir(pathName, { withFileTypes: true });
-	const result: string[] = [];
-	for (let i = 0; i < files.length; i++) {
-		const dirent = files[i];
-		const subPathName = path.join(pathName, dirent.name);
-		if (dirent.name !== "node_modules" && !dirent.name.startsWith(".")) {
-			if (dirent.isDirectory()) {
-				result.push(...(await getRecursiveFiles(subPathName)));
-			} else {
-				result.push(subPathName);
+export async function getRecursiveFiles(...pathName: string[]): Promise<string[]> {
+	const files: string[] = [];
+	await Promise.all(
+		pathName.map(async (dir) => {
+			const contents = await readdir(dir, { withFileTypes: true, recursive: true });
+			for (const item of contents) {
+				if (item.isFile()) {
+					files.push(path.join(item.parentPath, item.name));
+				}
 			}
-		}
-	}
-	return result;
+		}),
+	);
+	return files;
 }
 
 /**
