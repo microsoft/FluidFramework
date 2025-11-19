@@ -403,6 +403,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 				const deleteOp: IDeleteOperation = {
 					type: OperationType.deleteEntry,
 					entryId: arrayOp.entryId,
+					isRollback: true,
 				};
 				this.emitValueChangedEvent(deleteOp, true /* isLocal */);
 				break;
@@ -442,6 +443,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 					type: OperationType.moveEntry,
 					entryId: newEntryId,
 					changedToEntryId: oldEntryId,
+					isRollback: true,
 				};
 				this.emitValueChangedEvent(moveOp, true /* isLocal */);
 				break;
@@ -684,7 +686,11 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	}
 
 	private handleToggleOp(op: IToggleOperation, local: boolean): void {
-		const opEntry = this.getEntryForId(op.entryId);
+		const opEntry = this.idToEntryMap.get(op.entryId);
+		if (opEntry === undefined) {
+			assert(local === false, 0xb96 /* Entry must exist for remote toggle op */);
+			return;
+		}
 		if (local) {
 			// decrement the local pending delete op as its already applied to local state
 			if (opEntry.isLocalPendingDelete) {
@@ -698,7 +704,11 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	}
 
 	private handleToggleMoveOp(op: IToggleMoveOperation, local: boolean): void {
-		const opEntry = this.getEntryForId(op.entryId);
+		const opEntry = this.idToEntryMap.get(op.entryId);
+		if (opEntry === undefined) {
+			assert(local === false, 0xb96 /* Entry must exist for remote toggle move op */);
+			return;
+		}
 		if (local) {
 			// decrement the local pending move op as its already applied to local state
 			if (opEntry.isLocalPendingMove) {

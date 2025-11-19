@@ -35,6 +35,7 @@ export interface IInsertOperation<T = unknown> {
 export interface IDeleteOperation {
 	type: typeof OperationType.deleteEntry;
 	entryId: string;
+	isRollback?: boolean;
 }
 
 /**
@@ -45,6 +46,7 @@ export interface IMoveOperation {
 	entryId: string;
 	insertAfterEntryId?: string;
 	changedToEntryId: string;
+	isRollback?: boolean;
 }
 
 /**
