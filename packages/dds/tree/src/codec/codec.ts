@@ -531,7 +531,7 @@ export const FluidClientVersion = {
 	 * Used for testing detached root support.
 	 * @privateRemarks TODO: introduce or reuse official version when merging into main.
 	 */
-	vDetachedRoots: "2.101.0",
+	vDetachedRoots: "2.99999.0",
 } as const satisfies Record<string, MinimumVersionForCollab>;
 
 /**
