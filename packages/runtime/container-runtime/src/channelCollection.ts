@@ -18,10 +18,12 @@ import type {
 } from "@fluidframework/core-interfaces/internal";
 import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
-import type {
-	ISnapshot,
-	ISnapshotTree,
-	ISequencedDocumentMessage,
+import {
+	type ISnapshot,
+	type ISnapshotTree,
+	type ISequencedDocumentMessage,
+	SummaryType,
+	type ISummaryTree,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	buildSnapshotTree,
@@ -1681,13 +1683,13 @@ export class ChannelCollection
 			visitedDataStores.add(datastoreId);
 			const context = this.contexts.get(datastoreId);
 			assert(context !== undefined, "must have context");
+			const summary = context.getAttachSummary();
+
 			if (this.contexts.isNotBound(datastoreId)) {
-				const summary = context.getAttachSummary();
 				summaries ??= {};
 				summaries[datastoreId] = summary;
 				paths.push(...findAllHandlePaths(summary));
 			} else if (channelId) {
-				const summary = context.getAttachSummary();
 				summaries ??= {};
 				summaries[datastoreId] = summary;
 				paths.push(...findAllHandlePaths(summary));
@@ -1735,30 +1737,19 @@ export class ChannelCollection
 				this.contexts.addUnbound(dataStoreContext);
 			} else {
 				// Datastore already exists - it has pending channels that need to be added
-				// Convert the summary tree to an ITree, then to a snapshot tree
-				const itree = convertSummaryTreeToITree(summary.summary);
-				const datastoreSnapshot = buildSnapshotTree(itree.entries, new Map());
-
 				// Get the .channels subtree which contains the DDSes
-				const channelsSnapshot = datastoreSnapshot.trees?.[channelsTreeName];
-				if (channelsSnapshot === undefined) {
-					continue;
-				}
+				const channelsTree = summary.summary.tree[channelsTreeName];
+				assert(channelsTree?.type === SummaryType.Tree, "must have channels tree");
 
 				// Realize the datastore runtime and load the pending channels into it
 				const channel = await existingContext.realize();
-				const pendingChannels = new Map<string, ISnapshotTree>();
-				for (const [channelId, channelTree] of Object.entries(channelsSnapshot.trees ?? {})) {
-					pendingChannels.set(channelId, channelTree);
-				}
-
 				// Cast to access the loadPendingChannels method (from FluidDataStoreRuntime)
 				if ("loadPendingChannels" in channel) {
 					(
 						channel as {
-							loadPendingChannels: (channels: ReadonlyMap<string, ISnapshotTree>) => void;
+							loadPendingChannels: (channels: ISummaryTree) => void;
 						}
-					).loadPendingChannels(pendingChannels);
+					).loadPendingChannels(channelsTree);
 				}
 			}
 		}

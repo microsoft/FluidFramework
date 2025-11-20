@@ -85,6 +85,7 @@ class DataObjectWithStagingMode extends DataObject {
 
 	public addDDS(prefix: string): void {
 		const newMap = SharedMap.create(this.runtime);
+		newMap.set("self", `${prefix}-${this.instanceNumber}`);
 		this.root.set(`${prefix}-${this.instanceNumber}`, newMap.handle);
 	}
 
@@ -105,17 +106,17 @@ class DataObjectWithStagingMode extends DataObject {
 	 * Enumerate the data store's data, traversing handles to other DDSes and including their data as nested keys.
 	 */
 	public async enumerateDataWithHandlesResolved(): Promise<Record<string, unknown>> {
-		const state: Record<string, unknown> = {};
 		const loadStateInt = async (map) => {
+			const state: Record<string, unknown> = {};
 			for (const key of map.keys()) {
 				const value = (state[key] = map.get(key));
 				if (isFluidHandle(value)) {
 					state[key] = await loadStateInt(await value.get());
 				}
 			}
+			return state;
 		};
-		await loadStateInt(this.root);
-		return state;
+		return loadStateInt(this.root);
 	}
 
 	public enterStagingMode(): StageControlsInternal {

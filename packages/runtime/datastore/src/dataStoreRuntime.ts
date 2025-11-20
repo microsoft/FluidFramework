@@ -757,22 +757,22 @@ export class FluidDataStoreRuntime
 	 * This is called during container load to rehydrate channels that were referenced but not yet attached.
 	 * @param pendingChannelSnapshots - Map of channel id to snapshot tree
 	 */
-	public loadPendingChannels(
-		pendingChannelSnapshots: ReadonlyMap<string, ISnapshotTree>,
-	): void {
-		if (pendingChannelSnapshots.size > 0) {
-			throw new Error(
-				`loadPendingChannels called with ${pendingChannelSnapshots.size} channels`,
-			);
-		}
-		for (const [channelId, snapshotTree] of pendingChannelSnapshots) {
-			// Skip if this channel already exists
-			if (this.contexts.has(channelId)) {
-				continue;
-			}
+	public loadPendingChannels(channelsTree: ISummaryTree): void {
+		for (const [channelId, summary] of Object.entries(channelsTree.tree)) {
+			assert(!this.contexts.has(channelId), "channel must not exist");
+			assert(summary.type === SummaryType.Tree, "must be a tree");
+			// Datastore doesn't exist yet - create it from the summary
+			// Convert the summary tree to an ITree, then to a snapshot tree
+			const itree = convertSummaryTreeToITree(summary);
+			const blobs = new Map<string, ArrayBufferLike>();
+			const snapshotTree = buildSnapshotTree(itree.entries, blobs);
 
 			// Create a RehydratedLocalChannelContext for this pending channel
-			const channelContext = this.createRehydratedLocalChannelContext(channelId, snapshotTree);
+			const channelContext = this.createRehydratedLocalChannelContext(
+				channelId,
+				snapshotTree,
+				blobs,
+			);
 
 			// Add it to the contexts
 			this.contexts.set(channelId, channelContext);
@@ -1202,7 +1202,8 @@ export class FluidDataStoreRuntime
 
 				if (
 					!visitedContexts.has(contextId) &&
-					!this.notBoundedChannelContextSet.has(contextId)
+					(runtimeExp.inStagingMode === true ||
+						!this.notBoundedChannelContextSet.has(contextId))
 				) {
 					visitor(contextId, context);
 					visitedContexts.add(contextId);
