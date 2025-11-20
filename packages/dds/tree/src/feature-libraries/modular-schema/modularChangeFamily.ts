@@ -1674,7 +1674,6 @@ export class ModularChangeFamily
 		if (node.nodeExistsConstraint !== undefined) {
 			const isNowViolated = inputAttachState === NodeAttachState.Detached;
 			if (node.nodeExistsConstraint.violated !== isNowViolated) {
-				// XXX: This can mutate the input changeset
 				updatedNode.nodeExistsConstraint = {
 					...node.nodeExistsConstraint,
 					violated: isNowViolated,
