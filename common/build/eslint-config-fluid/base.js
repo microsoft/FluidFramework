@@ -102,6 +102,17 @@ module.exports = {
 		"@typescript-eslint/no-misused-new": "error",
 		"@typescript-eslint/no-non-null-assertion": "error",
 		"@typescript-eslint/no-require-imports": "error",
+		"@typescript-eslint/no-restricted-types": [
+			"error",
+			{
+				types: {
+					null: {
+						message: "Use 'undefined' instead of 'null'",
+						fixWith: "undefined",
+					},
+				},
+			},
+		],
 		"@typescript-eslint/no-shadow": [
 			"error",
 			{
