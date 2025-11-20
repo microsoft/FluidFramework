@@ -205,7 +205,7 @@ describe("Runtime batching", () => {
 
 			assert.throws(
 				() => processBatch(batch, containerRuntime),
-				(e: Error) => validateAssertionError(e, "batch presence was validated above"),
+				validateAssertionError("batch presence was validated above"),
 				"Batch end without batch start should fail",
 			);
 		});
@@ -217,7 +217,7 @@ describe("Runtime batching", () => {
 
 			assert.throws(
 				() => processBatch(batch, containerRuntime),
-				(e: Error) => validateAssertionError(e, "there can't be active batch"),
+				validateAssertionError("there can't be active batch"),
 				"Batch with multiple batch starts should fail",
 			);
 		});
@@ -357,7 +357,7 @@ describe("Runtime batching", () => {
 			} as unknown as ISequencedDocumentMessage;
 			assert.throws(
 				() => containerRuntime.process(modernRuntimeMessage, false /* local */),
-				(e: Error) => validateAssertionError(e, "Failed processing op in test"),
+				validateAssertionError("Failed processing op in test"),
 				"Message processing should have failed",
 			);
 
@@ -403,7 +403,7 @@ describe("Runtime batching", () => {
 
 			assert.throws(
 				() => containerRuntime.process(legacyMessage, false /* local */),
-				(e: Error) => validateAssertionError(e, "Failed processing op in test"),
+				validateAssertionError("Failed processing op in test"),
 				"Message processing should have failed",
 			);
 
@@ -447,7 +447,7 @@ describe("Runtime batching", () => {
 
 			assert.throws(
 				() => containerRuntime.process(nonRuntimeMessage, false /* local */),
-				(e: Error) => validateAssertionError(e, "Failed processing op in test"),
+				validateAssertionError("Failed processing op in test"),
 				"Message processing should have failed",
 			);
 

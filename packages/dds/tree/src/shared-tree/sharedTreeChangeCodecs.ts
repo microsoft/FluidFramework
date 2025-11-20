@@ -74,10 +74,7 @@ interface ChangeFormatDependencies {
 	readonly schemaChange: SchemaFormatVersion;
 }
 
-export type SharedTreeChangeFormatVersion = Brand<
-	1 | 2 | 3 | 4,
-	"SharedTreeChangeFormatVersion"
->;
+export type SharedTreeChangeFormatVersion = Brand<3 | 4, "SharedTreeChangeFormatVersion">;
 
 /**
  * Defines for each SharedTree change format the corresponding dependent formats to use.
@@ -89,8 +86,6 @@ export const dependenciesForChangeFormat: Map<
 	SharedTreeChangeFormatVersion,
 	ChangeFormatDependencies
 > = new Map([
-	[brand(1), { modularChange: brand(1), schemaChange: brand(SchemaFormatVersion.v1) }],
-	[brand(2), { modularChange: brand(2), schemaChange: brand(SchemaFormatVersion.v1) }],
 	[brand(3), { modularChange: brand(3), schemaChange: brand(SchemaFormatVersion.v1) }],
 	[brand(4), { modularChange: brand(4), schemaChange: brand(SchemaFormatVersion.v1) }],
 ]);

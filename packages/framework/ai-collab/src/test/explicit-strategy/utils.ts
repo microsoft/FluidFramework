@@ -7,28 +7,7 @@ import { strict as assert } from "node:assert";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
-// eslint-disable-next-line import-x/no-internal-modules
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { OpenAI, AzureOpenAI } from "openai";
-
-/**
- * Validates that the error is a UsageError with the expected error message.
- */
-export function validateUsageError(expectedErrorMsg: string | RegExp): (error: Error) => true {
-	return (error: Error) => {
-		assert(error instanceof UsageError);
-		if (
-			typeof expectedErrorMsg === "string"
-				? error.message !== expectedErrorMsg
-				: !expectedErrorMsg.test(error.message)
-		) {
-			throw new Error(
-				`Unexpected assertion thrown\nActual: ${error.message}\nExpected: ${expectedErrorMsg}`,
-			);
-		}
-		return true;
-	};
-}
 
 /**
  * Creates an OpenAI Client session.

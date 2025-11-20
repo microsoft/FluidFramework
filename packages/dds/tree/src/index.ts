@@ -60,7 +60,6 @@ export {
 	type SharedTreeOptionsBeta,
 	type ForestType,
 	type SharedTreeFormatOptions,
-	SharedTreeFormatVersion,
 	Tree,
 	type RunTransaction,
 	type ForestOptions,

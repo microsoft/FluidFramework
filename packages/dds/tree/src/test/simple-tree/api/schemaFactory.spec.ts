@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { oob, unreachableCase } from "@fluidframework/core-utils/internal";
-import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
+import { MockHandle, validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { TreeStatus } from "../../../feature-libraries/index.js";
 import {
@@ -62,7 +62,7 @@ import {
 } from "../../../util/index.js";
 
 import { hydrate } from "../utils.js";
-import { getView, TestTreeProviderLite, validateUsageError } from "../../utils.js";
+import { getView, TestTreeProviderLite } from "../../utils.js";
 import type { SchematizingSimpleTreeView } from "../../../shared-tree/index.js";
 import { EmptyKey } from "../../../core/index.js";
 
