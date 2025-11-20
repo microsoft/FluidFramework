@@ -526,7 +526,7 @@ export class ModularChangeFamily
 		);
 
 		// We clone the node changeset before mutating it, as it may be from one of the input changesets.
-		const nodeChangeset = cloneNodeChangeset(
+		const nodeChangeset: Mutable<NodeChangeset> = cloneNodeChangeset(
 			nodeChangeFromId(composedNodes, table.baseChange.nodeAliases, nodeId),
 		);
 		setInChangeAtomIdMap(composedNodes, nodeId, nodeChangeset);
@@ -715,7 +715,7 @@ export class ModularChangeFamily
 			revisionMetadata,
 		);
 
-		const composedNodeChange: NodeChangeset = {};
+		const composedNodeChange: Mutable<NodeChangeset> = {};
 
 		if (composedFieldChanges.size > 0) {
 			composedNodeChange.fieldChanges = composedFieldChanges;
@@ -901,7 +901,7 @@ export class ModularChangeFamily
 		revisionMetadata: RevisionMetadataSource,
 		revisionForInvert: RevisionTag,
 	): NodeChangeset {
-		const inverse: NodeChangeset = {};
+		const inverse: Mutable<NodeChangeset> = {};
 
 		// If the node has a constraint, it should be inverted to a node-exist-on-revert constraint. This ensure that if
 		// the inverse is inverted again, the original input constraint will be restored.
@@ -1340,13 +1340,19 @@ export class ModularChangeFamily
 		}
 		const rebasedNode = getFromChangeAtomIdMap(rebasedNodes, nodeId);
 		if (rebasedNode !== undefined) {
-			if (rebasedNode.fieldChanges === undefined) {
-				rebasedNode.fieldChanges = new Map([[fieldKey, rebasedField]]);
+			const updatedRebasedNode: Mutable<NodeChangeset> = cloneNodeChangeset(rebasedNode);
+			setInChangeAtomIdMap(rebasedNodes, nodeId, updatedRebasedNode);
+
+			if (updatedRebasedNode.fieldChanges === undefined) {
+				updatedRebasedNode.fieldChanges = new Map([[fieldKey, rebasedField]]);
 				return;
 			}
 
-			assert(!rebasedNode.fieldChanges.has(fieldKey), 0x9c4 /* Expected an empty field */);
-			rebasedNode.fieldChanges.set(fieldKey, rebasedField);
+			assert(
+				!updatedRebasedNode.fieldChanges.has(fieldKey),
+				0x9c4 /* Expected an empty field */,
+			);
+			updatedRebasedNode.fieldChanges.set(fieldKey, rebasedField);
 			return;
 		}
 
@@ -1572,7 +1578,7 @@ export class ModularChangeFamily
 					)
 				: change.fieldChanges;
 
-		const rebasedChange: NodeChangeset = {};
+		const rebasedChange: Mutable<NodeChangeset> = {};
 
 		if (fieldChanges !== undefined && fieldChanges.size > 0) {
 			rebasedChange.fieldChanges = fieldChanges;
@@ -1660,13 +1666,16 @@ export class ModularChangeFamily
 		constraintState: ConstraintState,
 		revertConstraintState: ConstraintState,
 	): void {
-		const node =
-			nodes.get([nodeId.revision, nodeId.localId]) ?? fail(0xb24 /* Unknown node ID */);
+		const node = getFromChangeAtomIdMap(nodes, nodeId) ?? fail(0xb24 /* Unknown node ID */);
+
+		const updatedNode: Mutable<NodeChangeset> = { ...node };
+		setInChangeAtomIdMap(nodes, nodeId, updatedNode);
+
 		if (node.nodeExistsConstraint !== undefined) {
 			const isNowViolated = inputAttachState === NodeAttachState.Detached;
 			if (node.nodeExistsConstraint.violated !== isNowViolated) {
 				// XXX: This can mutate the input changeset
-				node.nodeExistsConstraint = {
+				updatedNode.nodeExistsConstraint = {
 					...node.nodeExistsConstraint,
 					violated: isNowViolated,
 				};
@@ -1676,7 +1685,7 @@ export class ModularChangeFamily
 		if (node.nodeExistsConstraintOnRevert !== undefined) {
 			const isNowViolated = outputAttachState === NodeAttachState.Detached;
 			if (node.nodeExistsConstraintOnRevert.violated !== isNowViolated) {
-				node.nodeExistsConstraintOnRevert = {
+				updatedNode.nodeExistsConstraintOnRevert = {
 					...node.nodeExistsConstraintOnRevert,
 					violated: isNowViolated,
 				};

@@ -352,7 +352,7 @@ export function makeModularChangeCodecV2(
 		decodeNode: NodeDecoder,
 		idAllocator: IdAllocator,
 	): NodeChangeset {
-		const decodedChange: NodeChangeset = {};
+		const decodedChange: Mutable<NodeChangeset> = {};
 		const { fieldChanges, nodeExistsConstraint } = encodedChange;
 
 		if (fieldChanges !== undefined) {

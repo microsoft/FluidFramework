@@ -204,15 +204,16 @@ export interface NodeExistsConstraint {
  */
 export interface NodeChangeset extends HasFieldChanges {
 	/** Keeps track of whether node exists constraint has been violated by this change */
-	nodeExistsConstraint?: NodeExistsConstraint;
+	readonly nodeExistsConstraint?: NodeExistsConstraint;
+
 	/** Keeps track of whether node exists constraint will be violated when this change is reverted */
-	nodeExistsConstraintOnRevert?: NodeExistsConstraint;
+	readonly nodeExistsConstraintOnRevert?: NodeExistsConstraint;
 }
 
 export type NodeId = ChangeAtomId;
 
 export interface HasFieldChanges {
-	fieldChanges?: FieldChangeMap;
+	readonly fieldChanges?: FieldChangeMap;
 }
 
 export type FieldChangeMap = Map<FieldKey, FieldChange>;

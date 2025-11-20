@@ -182,7 +182,7 @@ function normalizeNodeIds(
 		const newParent = remapNodeLocation(parent);
 		nodeToParent.set([newId.revision, newId.localId], newParent);
 
-		const normalizedNodeChangeset: NodeChangeset = { ...nodeChangeset };
+		const normalizedNodeChangeset: Mutable<NodeChangeset> = { ...nodeChangeset };
 		if (normalizedNodeChangeset.fieldChanges !== undefined) {
 			normalizedNodeChangeset.fieldChanges = normalizeNodeIdsInFields(
 				normalizedNodeChangeset.fieldChanges,
