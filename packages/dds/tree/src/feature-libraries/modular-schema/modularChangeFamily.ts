@@ -3180,7 +3180,6 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 			result = { value: entry.value, length: entry.length };
 		} else {
 			// The detached nodes are still detached in the new change's input context.
-			// XXX: Do we need to dealias whenever pulling node IDs out of the root node table?
 			const rootEntry = rangeQueryChangeAtomIdMap(
 				this.table.newChange.rootNodes.nodeChanges,
 				baseDetachId,
@@ -4270,9 +4269,11 @@ function rebaseRename(
 }
 
 function addNodesToCompose(table: ComposeTable, id1: NodeId, id2: NodeId): void {
-	if (getFromChangeAtomIdMap(table.newToBaseNodeId, id2) === undefined) {
-		setInChangeAtomIdMap(table.newToBaseNodeId, id2, id1);
-		table.pendingCompositions.nodeIdsToCompose.push([id1, id2]);
+	const normalizedId1 = normalizeNodeId(id1, table.baseChange.nodeAliases);
+	const normalizedId2 = normalizeNodeId(id2, table.newChange.nodeAliases);
+	if (getFromChangeAtomIdMap(table.newToBaseNodeId, normalizedId2) === undefined) {
+		setInChangeAtomIdMap(table.newToBaseNodeId, normalizedId2, normalizedId1);
+		table.pendingCompositions.nodeIdsToCompose.push([normalizedId1, normalizedId2]);
 	}
 }
 
