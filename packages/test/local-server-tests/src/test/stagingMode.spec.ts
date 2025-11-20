@@ -83,10 +83,12 @@ class DataObjectWithStagingMode extends DataObject {
 		});
 	}
 
-	public addDDS(prefix: string): void {
+	public addDDS<T extends string>(prefix: T): `${typeof prefix}-${number}` {
+		const id: `${typeof prefix}-${number}` = `${prefix}-${this.instanceNumber}`;
 		const newMap = SharedMap.create(this.runtime);
-		newMap.set("self", `${prefix}-${this.instanceNumber}`);
-		this.root.set(`${prefix}-${this.instanceNumber}`, newMap.handle);
+		newMap.set("self", id);
+		this.root.set(id, newMap.handle);
+		return id;
 	}
 
 	/**
@@ -692,7 +694,7 @@ describe("Staging Mode", () => {
 
 			// Enter staging mode and create a new DDS
 			clients.original.dataObject.enterStagingMode();
-			clients.original.dataObject.addDDS("pendingDDS");
+			const pendingDDSId = clients.original.dataObject.addDDS("pendingDDS");
 
 			// Get the pending local state before committing
 			const pendingState = await (
@@ -727,7 +729,7 @@ describe("Staging Mode", () => {
 			// The rehydrated container should have the pending DDS loaded
 			const rehydratedData = await rehydratedDataObject.enumerateDataWithHandlesResolved();
 			assert(
-				rehydratedData["pendingDDS-0"] !== undefined,
+				rehydratedData[pendingDDSId] !== undefined,
 				"Rehydrated container should have pending DDS",
 			);
 		});
