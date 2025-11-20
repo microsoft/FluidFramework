@@ -6,12 +6,11 @@
 import { strict as assert } from "node:assert";
 import { SummaryType, type SummaryObject } from "@fluidframework/driver-definitions/internal";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
-import { MockStorage } from "@fluidframework/test-runtime-utils/internal";
+import { MockStorage, validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	EditManagerSummarizer,
 	makeEditManagerCodec,
-	editManagerFormatVersions,
 	type SharedTreeSummarizableMetadata,
 } from "../../shared-tree-core/index.js";
 import {
@@ -19,8 +18,12 @@ import {
 	EditManagerSummaryVersion,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree-core/editManagerSummarizer.js";
+import {
+	editManagerFormatVersions,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../shared-tree-core/editManagerFormatCommons.js";
 import { DependentFormatVersion, FluidClientVersion } from "../../codec/index.js";
-import { testIdCompressor, validateUsageError } from "../utils.js";
+import { testIdCompressor } from "../utils.js";
 import { RevisionTagCodec } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 // eslint-disable-next-line import-x/no-internal-modules

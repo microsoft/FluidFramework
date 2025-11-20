@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 import { SummaryType, type SummaryObject } from "@fluidframework/driver-definitions/internal";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
-import { MockStorage } from "@fluidframework/test-runtime-utils/internal";
+import { MockStorage, validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { storedEmptyFieldSchema, TreeStoredSchemaRepository } from "../../../core/index.js";
 import {
@@ -25,7 +25,6 @@ import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index
 import type { CollabWindow } from "../../../feature-libraries/incrementalSummarizationUtils.js";
 import { makeSchemaCodec } from "../../../feature-libraries/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
-import { validateUsageError } from "../../utils.js";
 import type { SharedTreeSummarizableMetadata } from "../../../shared-tree-core/index.js";
 
 describe("schemaSummarizer", () => {

@@ -26,6 +26,7 @@ import {
 	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
 	MockStorage,
+	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
 
 import {
@@ -59,7 +60,6 @@ import {
 	SharedTreeTestFactory,
 	StringArray,
 	TestTreeProviderLite,
-	validateUsageError,
 } from "../utils.js";
 
 import {

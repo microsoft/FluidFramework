@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 import { SummaryType, type SummaryObject } from "@fluidframework/driver-definitions/internal";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
-import { MockStorage } from "@fluidframework/test-runtime-utils/internal";
+import { MockStorage, validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { DetachedFieldIndex, type ForestRootId } from "../../core/index.js";
 import {
@@ -16,7 +16,7 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/detachedFieldIndexSummarizer.js";
 import { FluidClientVersion } from "../../codec/index.js";
-import { testIdCompressor, testRevisionTagCodec, validateUsageError } from "../utils.js";
+import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
 import { type IdAllocator, idAllocatorFromMaxId } from "../../util/index.js";
 import type { SharedTreeSummarizableMetadata } from "../../shared-tree-core/index.js";
 

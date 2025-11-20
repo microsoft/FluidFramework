@@ -5,13 +5,9 @@
 
 import { strict as assert } from "node:assert";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
-import {
-	SummaryType,
-	type ISummaryBlob,
-	type SummaryObject,
-} from "@fluidframework/driver-definitions/internal";
+import { SummaryType, type ISummaryBlob } from "@fluidframework/driver-definitions/internal";
 import type { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
-import { MockStorage } from "@fluidframework/test-runtime-utils/internal";
+import { MockStorage, validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	VersionedSummarizer,
@@ -20,7 +16,6 @@ import {
 	type SummaryElementParser,
 	type SummaryElementStringifier,
 } from "../../shared-tree-core/index.js";
-import { validateUsageError } from "../utils.js";
 
 class TestVersionedSummarizer extends VersionedSummarizer {
 	public summarizeInternalCalled = false;
@@ -102,7 +97,7 @@ describe("VersionedSummarizer", () => {
 
 			const summaryWithStats = summarizer.summarize({ stringify });
 
-			const testContentBlob = summaryWithStats.summary.tree[summarizer.key] as SummaryObject;
+			const testContentBlob = summaryWithStats.summary.tree[summarizer.key];
 			assert(testContentBlob !== undefined, "Test content should exist in summary");
 			assert.equal(testContentBlob.type, SummaryType.Blob, "Test content should be a blob");
 		});

@@ -10,7 +10,11 @@ import type {
 	ITelemetryContext,
 	MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
-import type { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+import {
+	getConfigForMinVersionForCollab,
+	lowestMinVersionForCollab,
+	type SummaryTreeBuilder,
+} from "@fluidframework/runtime-utils/internal";
 
 import type { DetachedFieldIndex } from "../core/index.js";
 import {
@@ -57,7 +61,10 @@ const supportedReadVersions = new Set<DetachedFieldIndexSummaryVersion>([
 function minVersionToDetachedFieldIndexSummaryVersion(
 	version: MinimumVersionForCollab,
 ): DetachedFieldIndexSummaryVersion | undefined {
-	return version < FluidClientVersion.v2_73 ? undefined : DetachedFieldIndexSummaryVersion.v1;
+	return getConfigForMinVersionForCollab(version, {
+		[lowestMinVersionForCollab]: undefined,
+		[FluidClientVersion.v2_73]: DetachedFieldIndexSummaryVersion.v1,
+	});
 }
 
 /**

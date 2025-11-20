@@ -12,7 +12,11 @@ import type {
 	ITelemetryContext,
 	MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
-import type { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+import {
+	getConfigForMinVersionForCollab,
+	lowestMinVersionForCollab,
+	type SummaryTreeBuilder,
+} from "@fluidframework/runtime-utils/internal";
 
 import { FluidClientVersion, type IJsonCodec } from "../codec/index.js";
 import type { ChangeFamily, ChangeFamilyEditor, SchemaAndPolicy } from "../core/index.js";
@@ -59,7 +63,10 @@ const supportedReadVersions = new Set<EditManagerSummaryVersion>([
 function minVersionToEditManagerSummaryVersion(
 	version: MinimumVersionForCollab,
 ): EditManagerSummaryVersion | undefined {
-	return version < FluidClientVersion.v2_73 ? undefined : EditManagerSummaryVersion.v1;
+	return getConfigForMinVersionForCollab(version, {
+		[lowestMinVersionForCollab]: undefined,
+		[FluidClientVersion.v2_73]: EditManagerSummaryVersion.v1,
+	});
 }
 
 /**

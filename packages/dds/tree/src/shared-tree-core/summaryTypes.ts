@@ -10,6 +10,10 @@ import type {
 	ITelemetryContext,
 	MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
+import {
+	getConfigForMinVersionForCollab,
+	lowestMinVersionForCollab,
+} from "@fluidframework/runtime-utils/internal";
 import { FluidClientVersion } from "../codec/index.js";
 
 // TODO: Organize this to be adjacent to persisted types.
@@ -112,5 +116,8 @@ export const supportedSharedTreeSummaryReadVersions = new Set<SharedTreeSummaryV
 export function minVersionToSharedTreeSummaryVersion(
 	version: MinimumVersionForCollab,
 ): SharedTreeSummaryVersion | undefined {
-	return version < FluidClientVersion.v2_73 ? undefined : SharedTreeSummaryVersion.v1;
+	return getConfigForMinVersionForCollab(version, {
+		[lowestMinVersionForCollab]: undefined,
+		[FluidClientVersion.v2_73]: SharedTreeSummaryVersion.v1,
+	});
 }

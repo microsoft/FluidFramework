@@ -13,7 +13,7 @@ import type {
 	IExperimentalIncrementalSummaryContext,
 	MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
-import { MockStorage } from "@fluidframework/test-runtime-utils/internal";
+import { MockStorage, validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index.js";
@@ -32,7 +32,6 @@ import {
 	fieldCursorFromInsertable,
 	testIdCompressor,
 	testRevisionTagCodec,
-	validateUsageError,
 	type TreeStoredContentStrict,
 } from "../../utils.js";
 import { jsonSequenceRootSchema } from "../../sequenceRootUtils.js";

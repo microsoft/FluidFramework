@@ -4,6 +4,10 @@
  */
 
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import {
+	getConfigForMinVersionForCollab,
+	lowestMinVersionForCollab,
+} from "@fluidframework/runtime-utils/internal";
 import { FluidClientVersion } from "../../codec/index.js";
 
 /**
@@ -58,5 +62,8 @@ export const supportedForestSummaryReadVersions = new Set<ForestSummaryVersion>(
 export function minVersionToForestSummaryVersion(
 	version: MinimumVersionForCollab,
 ): ForestSummaryVersion | undefined {
-	return version < FluidClientVersion.v2_73 ? undefined : ForestSummaryVersion.v1;
+	return getConfigForMinVersionForCollab(version, {
+		[lowestMinVersionForCollab]: undefined,
+		[FluidClientVersion.v2_73]: ForestSummaryVersion.v1,
+	});
 }
