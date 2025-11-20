@@ -137,9 +137,6 @@ export function getConfigsForMinVersionForCollab<T extends Record<SemanticVersio
 /**
  * Returns a default configuration given minVersionForCollab and {@link ConfigMapEntry}.
  *
- * @privateRemarks
- * The extra `Record` type for the `configMap` is just used to allow the body of this function to be more type-safe due to limitations of generic types in TypeScript.
- * It should have no impact on the user of this function.
  * @internal
  */
 export function getConfigForMinVersionForCollab<T>(
