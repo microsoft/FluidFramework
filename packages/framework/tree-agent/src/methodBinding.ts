@@ -4,7 +4,8 @@
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { NodeKind, TreeNodeSchema, TreeNodeSchemaClass } from "@fluidframework/tree";
+import type { TreeNodeSchema, TreeNodeSchemaClass } from "@fluidframework/tree";
+import { NodeKind } from "@fluidframework/tree";
 import type { z } from "zod";
 
 import { instanceOf } from "./utils.js";
@@ -32,6 +33,18 @@ export type BindableSchema =
 	| TreeNodeSchema<string, NodeKind.Record>
 	| TreeNodeSchema<string, NodeKind.Array>
 	| TreeNodeSchema<string, NodeKind.Map>;
+
+/**
+ * A type guard to check if a schema is {@link BindableSchema | bindable}.
+ */
+export function isBindableSchema(schema: TreeNodeSchema): schema is BindableSchema {
+	return (
+		schema.kind === NodeKind.Object ||
+		schema.kind === NodeKind.Record ||
+		schema.kind === NodeKind.Array ||
+		schema.kind === NodeKind.Map
+	);
+}
 
 /**
  * Get the exposed methods of a schema class.

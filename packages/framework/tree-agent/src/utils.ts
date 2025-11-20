@@ -26,9 +26,6 @@ import {
 import { NodeKind, normalizeFieldSchema } from "@fluidframework/tree/internal";
 import { z } from "zod";
 
-import { FunctionWrapper } from "./methodBinding.js";
-import { PropertyDef } from "./propertyBinding.js";
-
 /**
  * Subset of Map interface.
  *
@@ -198,18 +195,6 @@ export function unqualifySchema(schemaIdentifier: string): string {
 }
 
 /**
- * Details about the properties of a TypeScript schema represented as Zod.
- */
-export interface SchemaDetails {
-	hasHelperMethods: boolean;
-}
-
-// TODO: yuck, this entire file has too many statics. we should rewrite it as a generic zod schema walk.
-let detailsI: SchemaDetails = {
-	hasHelperMethods: false,
-};
-
-/**
  * Returns the TypeScript source code corresponding to a Zod schema. The schema is supplied as an object where each
  * property provides a name for an associated Zod type. The return value is a string containing the TypeScript source
  * code corresponding to the schema. Each property of the schema object is emitted as a named `interface` or `type`
@@ -219,343 +204,267 @@ let detailsI: SchemaDetails = {
  * @param details - Optional details about the schema. The fields will be set according to the details in the given schema.
  * @returns The TypeScript source code corresponding to the schema.
  */
-export function getZodSchemaAsTypeScript(
-	schema: Record<string, z.ZodType>,
-	details?: SchemaDetails,
-): string {
-	detailsI = details ?? { hasHelperMethods: false };
-	let result = "";
-	let startOfLine = true;
-	let indent = 0;
-	const entries = [...Object.entries(schema)];
-	const namedTypes = new Map<object, string>(
-		entries.map(([name, type]) => [getTypeIdentity(type), name]),
-	);
-	for (const [name, type] of entries) {
-		if (result) {
-			appendNewLine();
-		}
-		const description = type._def.description;
-		if (description !== undefined && description !== "") {
-			for (const comment of description.split("\n")) {
-				append(`// ${comment}`);
-				appendNewLine();
-			}
-		}
-		if (getTypeKind(type) === z.ZodFirstPartyTypeKind.ZodObject) {
-			append(`interface ${name} `);
-			appendObjectType(type as z.ZodObject<z.ZodRawShape>);
-		} else {
-			append(`type ${name} = `);
-			appendTypeDefinition(type);
-			append(";");
-		}
-		appendNewLine();
-	}
-	return result;
+export function formatZodType(type: z.ZodTypeAny): string {
+	const writer = new ZodTypeWriter();
+	writer.appendType(type);
+	return writer.toString();
+}
 
-	function append(s: string) {
-		if (startOfLine) {
-			result += "    ".repeat(indent);
-			startOfLine = false;
+class ZodTypeWriter {
+	private result = "";
+	private startOfLine = true;
+	private indent = 0;
+
+	public appendType(type: z.ZodTypeAny, minPrecedence = TypePrecedence.Object): void {
+		const shouldParenthesize = getTypePrecendece(type) < minPrecedence;
+		if (shouldParenthesize) {
+			this.append("(");
 		}
-		result += s;
-	}
-
-	function appendNewLine() {
-		append("\n");
-		startOfLine = true;
-	}
-
-	function appendType(type: z.ZodType, minPrecedence = TypePrecedence.Object) {
-		const name = namedTypes.get(getTypeIdentity(type));
-		if (name === undefined) {
-			const parenthesize = getTypePrecendece(type) < minPrecedence;
-			if (parenthesize) append("(");
-			appendTypeDefinition(type);
-			if (parenthesize) append(")");
-		} else {
-			append(name);
+		this.appendTypeDefinition(type);
+		if (shouldParenthesize) {
+			this.append(")");
 		}
 	}
 
-	function appendTypeDefinition(type: z.ZodType) {
+	public toString(): string {
+		return this.result;
+	}
+
+	private append(s: string): void {
+		if (this.startOfLine) {
+			this.result += "    ".repeat(this.indent);
+			this.startOfLine = false;
+		}
+		this.result += s;
+	}
+
+	private appendNewLine(): void {
+		this.append("\n");
+		this.startOfLine = true;
+	}
+
+	private appendTypeDefinition(type: z.ZodTypeAny): void {
 		switch (getTypeKind(type)) {
 			case z.ZodFirstPartyTypeKind.ZodString: {
-				return append("string");
+				this.append("string");
+				return;
 			}
 			case z.ZodFirstPartyTypeKind.ZodNumber: {
-				return append("number");
+				this.append("number");
+				return;
 			}
 			case z.ZodFirstPartyTypeKind.ZodBoolean: {
-				return append("boolean");
+				this.append("boolean");
+				return;
 			}
 			case z.ZodFirstPartyTypeKind.ZodDate: {
-				return append("Date");
+				this.append("Date");
+				return;
 			}
 			case z.ZodFirstPartyTypeKind.ZodUndefined: {
-				return append("undefined");
+				this.append("undefined");
+				return;
 			}
 			case z.ZodFirstPartyTypeKind.ZodNull: {
-				return append("null");
+				this.append("null");
+				return;
 			}
 			case z.ZodFirstPartyTypeKind.ZodUnknown: {
-				return append("unknown");
+				this.append("unknown");
+				return;
 			}
 			case z.ZodFirstPartyTypeKind.ZodArray: {
-				return appendArrayType(type);
+				this.appendArrayType(type);
+				return;
 			}
 			case z.ZodFirstPartyTypeKind.ZodObject: {
-				return appendObjectType(type);
+				this.appendObjectType(type);
+				return;
 			}
 			case z.ZodFirstPartyTypeKind.ZodUnion: {
-				return appendUnionOrIntersectionTypes(
+				this.appendUnionOrIntersectionTypes(
 					(type._def as z.ZodUnionDef).options,
 					TypePrecedence.Union,
 				);
+				return;
 			}
 			case z.ZodFirstPartyTypeKind.ZodDiscriminatedUnion: {
-				return appendUnionOrIntersectionTypes(
+				this.appendUnionOrIntersectionTypes(
 					[...(type._def as z.ZodDiscriminatedUnionDef<string>).options.values()],
 					TypePrecedence.Union,
 				);
+				return;
 			}
 			case z.ZodFirstPartyTypeKind.ZodIntersection: {
-				return appendUnionOrIntersectionTypes(
+				this.appendUnionOrIntersectionTypes(
 					[
 						(type._def as z.ZodIntersectionDef).left,
 						(type._def as z.ZodIntersectionDef).right,
 					],
 					TypePrecedence.Intersection,
 				);
+				return;
 			}
 			case z.ZodFirstPartyTypeKind.ZodTuple: {
-				return appendTupleType(type);
+				this.appendTupleType(type);
+				return;
 			}
 			case z.ZodFirstPartyTypeKind.ZodRecord: {
-				return appendRecordType(type);
+				this.appendRecordType(type);
+				return;
 			}
 			case z.ZodFirstPartyTypeKind.ZodMap: {
-				return appendMapType(type);
+				this.appendMapType(type);
+				return;
 			}
 			case z.ZodFirstPartyTypeKind.ZodLiteral: {
-				return appendLiteral((type._def as z.ZodLiteralDef).value);
+				this.appendLiteral((type._def as z.ZodLiteralDef).value);
+				return;
 			}
 			case z.ZodFirstPartyTypeKind.ZodEnum: {
-				return append(
+				this.append(
 					(type._def as z.ZodEnumDef).values.map((value) => JSON.stringify(value)).join(" | "),
 				);
+				return;
 			}
 			case z.ZodFirstPartyTypeKind.ZodOptional: {
-				return appendUnionOrIntersectionTypes(
+				this.appendUnionOrIntersectionTypes(
 					[(type._def as z.ZodOptionalDef).innerType, z.undefined()],
 					TypePrecedence.Union,
 				);
+				return;
 			}
 			case z.ZodFirstPartyTypeKind.ZodReadonly: {
-				return appendReadonlyType(type);
+				this.appendReadonlyType(type);
+				return;
 			}
 			case z.ZodFirstPartyTypeKind.ZodEffects: {
-				// Currently, this only handles schema class instances, but there are other cases in which a ZodEffects could theoretically be used.
-				if (instanceOfs.has(type)) {
-					const objectNodeSchema = instanceOfs.get(type);
-					if (objectNodeSchema === undefined) {
-						throw new UsageError(
-							`Unsupported zod effects type when transforming class method: ${getTypeKind(type)}`,
-						);
-					}
-					return append(getFriendlyName(objectNodeSchema));
+				const schema = instanceOfs.get(type);
+				if (schema === undefined) {
+					throw new UsageError(
+						`Unsupported zod effects type when formatting helper types: ${getTypeKind(type)}`,
+					);
 				}
-				throw new Error(
-					"Unsupported zod effects type. Did you use z.instanceOf? Use ExposedMethods.instanceOf function to reference schema classes in methods.",
-				);
+				this.append(getFriendlyName(schema));
+				return;
 			}
 			case z.ZodFirstPartyTypeKind.ZodVoid: {
-				return append("void");
+				this.append("void");
+				return;
 			}
 			case z.ZodFirstPartyTypeKind.ZodLazy: {
-				return appendType((type._def as z.ZodLazyDef).getter());
+				this.appendType((type._def as z.ZodLazyDef).getter());
+				return;
 			}
 			default: {
 				throw new UsageError(
-					`Unsupported type when transforming class method: ${getTypeKind(type)}`,
+					`Unsupported type when formatting helper types: ${getTypeKind(type)}`,
 				);
 			}
 		}
 	}
 
-	function appendBoundMethods(boundType: z.ZodType): void {
+	private appendArrayType(arrayType: z.ZodTypeAny): void {
+		this.appendType((arrayType._def as z.ZodArrayDef).type, TypePrecedence.Object);
+		this.append("[]");
+	}
+
+	private appendObjectType(objectType: z.ZodTypeAny): void {
+		this.append("{");
+		this.appendNewLine();
+		this.indent++;
 		// eslint-disable-next-line prefer-const
-		for (let [name, type] of Object.entries((boundType._def as z.ZodObjectDef).shape())) {
-			// Special handling of methods on objects
-			const method = (type as unknown as { method: object | undefined }).method;
-			if (method !== undefined && method instanceof FunctionWrapper) {
-				detailsI.hasHelperMethods = true;
-				append(name);
-				append("(");
-				let first = true;
-				for (const [argName, argType] of method.args) {
-					if (!first) append(", ");
-					if (getTypeKind(argType) === z.ZodFirstPartyTypeKind.ZodOptional) {
-						append(`${argName}?: `);
-						appendType((argType._def as z.ZodOptionalDef).innerType, TypePrecedence.Object);
-					} else {
-						append(`${argName}: `);
-						appendType(argType);
-					}
-					first = false;
-				}
-				if (method.rest !== null) {
-					if (!first) append(", ");
-					append("...rest: ");
-					appendType(method.rest, TypePrecedence.Object);
-					append("[]");
-				}
-				append(`): `);
-				appendType(method.returns, TypePrecedence.Object);
-				append(";");
-				if (method.description !== undefined) {
-					append(` // ${method.description}`);
-				}
-				appendNewLine();
+		for (let [name, propertyType] of Object.entries(
+			(objectType._def as z.ZodObjectDef).shape(),
+		)) {
+			this.append(name);
+			if (getTypeKind(propertyType) === z.ZodFirstPartyTypeKind.ZodOptional) {
+				this.append("?");
+				propertyType = (propertyType._def as z.ZodOptionalDef).innerType;
 			}
+			this.append(": ");
+			this.appendType(propertyType);
+			this.append(";");
+			this.appendNewLine();
 		}
+		this.indent--;
+		this.append("}");
 	}
 
-	function appendBoundProperties(type: z.ZodType): void {
-		const property = (type as unknown as { property?: PropertyDef }).property;
-
-		if (!(property instanceof PropertyDef)) {
-			if (type.description !== undefined && type.description !== "") {
-				append(` // ${type.description}`);
-			}
-			return;
-		}
-
-		if (property.readOnly === true) {
-			append(" // readonly");
-		}
-		if (property.description !== undefined && property.description !== "") {
-			append(` - ${property.description}`);
-		}
-	}
-
-	function appendArrayType(arrayType: z.ZodType) {
-		appendType((arrayType._def as z.ZodArrayDef).type, TypePrecedence.Object);
-		append("[]");
-	}
-
-	function appendObjectType(objectType: z.ZodType) {
-		append("{");
-		appendNewLine();
-		indent++;
-		// eslint-disable-next-line prefer-const
-		for (let [name, type] of Object.entries((objectType._def as z.ZodObjectDef).shape())) {
-			const method = (type as unknown as { method: object | undefined }).method;
-
-			if (method === undefined || !(method instanceof FunctionWrapper)) {
-				append(name);
-				if (getTypeKind(type) === z.ZodFirstPartyTypeKind.ZodOptional) {
-					append("?");
-					type = (type._def as z.ZodOptionalDef).innerType;
-				}
-				append(": ");
-				appendType(type);
-				append(";");
-				appendBoundProperties(type);
-				appendNewLine();
-			}
-		}
-		appendBoundMethods(objectType);
-		indent--;
-		append("}");
-	}
-
-	function appendUnionOrIntersectionTypes(
-		types: readonly z.ZodType[],
+	private appendUnionOrIntersectionTypes(
+		types: readonly z.ZodTypeAny[],
 		minPrecedence: TypePrecedence,
-	) {
+	): void {
 		let first = true;
 		for (const type of types) {
-			if (!first) append(minPrecedence === TypePrecedence.Intersection ? " & " : " | ");
-			appendType(type, minPrecedence);
+			if (!first) {
+				this.append(minPrecedence === TypePrecedence.Intersection ? " & " : " | ");
+			}
+			this.appendType(type, minPrecedence);
 			first = false;
 		}
 	}
 
-	function appendTupleType(tupleType: z.ZodType) {
-		append("[");
+	private appendTupleType(tupleType: z.ZodTypeAny): void {
+		this.append("[");
 		let first = true;
 		for (const type of (tupleType._def as z.ZodTupleDef<z.ZodTupleItems, z.ZodType>).items) {
-			if (!first) append(", ");
+			if (!first) {
+				this.append(", ");
+			}
 			if (getTypeKind(type) === z.ZodFirstPartyTypeKind.ZodOptional) {
-				appendType((type._def as z.ZodOptionalDef).innerType, TypePrecedence.Object);
-				append("?");
+				this.appendType((type._def as z.ZodOptionalDef).innerType, TypePrecedence.Object);
+				this.append("?");
 			} else {
-				appendType(type);
+				this.appendType(type);
 			}
 			first = false;
 		}
 		const rest = (tupleType._def as z.ZodTupleDef<z.ZodTupleItems, z.ZodType | null>).rest;
 		if (rest !== null) {
-			if (!first) append(", ");
-			append("...");
-			appendType(rest, TypePrecedence.Object);
-			append("[]");
+			if (!first) {
+				this.append(", ");
+			}
+			this.append("...");
+			this.appendType(rest, TypePrecedence.Object);
+			this.append("[]");
 		}
-		append("]");
+		this.append("]");
 	}
 
-	function appendRecordType(recordType: z.ZodType) {
-		append("Record<");
-		appendType((recordType._def as z.ZodRecordDef).keyType);
-		append(", ");
-		appendType((recordType._def as z.ZodRecordDef).valueType);
-		append(">");
+	private appendRecordType(recordType: z.ZodTypeAny): void {
+		this.append("Record<");
+		this.appendType((recordType._def as z.ZodRecordDef).keyType);
+		this.append(", ");
+		this.appendType((recordType._def as z.ZodRecordDef).valueType);
+		this.append(">");
 	}
 
-	function appendMapType(mapType: z.ZodType) {
-		append("Map<");
-		appendType((mapType._def as z.ZodMapDef).keyType);
-		append(", ");
-		appendType((mapType._def as z.ZodMapDef).valueType);
-		append(">");
+	private appendMapType(mapType: z.ZodTypeAny): void {
+		this.append("Map<");
+		this.appendType((mapType._def as z.ZodMapDef).keyType);
+		this.append(", ");
+		this.appendType((mapType._def as z.ZodMapDef).valueType);
+		this.append(">");
 	}
 
-	function appendLiteral(value: unknown) {
-		append(
+	private appendLiteral(value: unknown): void {
+		this.append(
 			typeof value === "string" || typeof value === "number" || typeof value === "boolean"
 				? JSON.stringify(value)
 				: "any",
 		);
 	}
 
-	function appendReadonlyType(readonlyType: z.ZodType) {
-		append("Readonly<");
-		appendType((readonlyType._def as z.ZodReadonlyDef).innerType);
-		append(">");
+	private appendReadonlyType(readonlyType: z.ZodType): void {
+		this.append("Readonly<");
+		this.appendType((readonlyType._def as z.ZodReadonlyDef).innerType);
+		this.append(">");
 	}
 }
 
 function getTypeKind(type: z.ZodType): z.ZodFirstPartyTypeKind {
 	return (type._def as z.ZodTypeDef & { typeName: z.ZodFirstPartyTypeKind }).typeName;
-}
-
-function getTypeIdentity(type: z.ZodType): object {
-	switch (getTypeKind(type)) {
-		case z.ZodFirstPartyTypeKind.ZodObject: {
-			return (type._def as z.ZodObjectDef).shape();
-		}
-		case z.ZodFirstPartyTypeKind.ZodEnum: {
-			return (type._def as z.ZodEnumDef).values;
-		}
-		case z.ZodFirstPartyTypeKind.ZodUnion: {
-			return (type._def as z.ZodUnionDef).options;
-		}
-		default: {
-			return type;
-		}
-	}
 }
 
 const enum TypePrecedence {
