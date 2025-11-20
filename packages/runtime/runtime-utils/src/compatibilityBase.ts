@@ -125,27 +125,41 @@ export function getConfigsForMinVersionForCollab<T extends Record<SemanticVersio
 	const defaultConfigs: Partial<T> = {};
 	// Iterate over configMap to get default values for each option.
 	for (const [key, config] of Object.entries(configMap)) {
-		const entries: [string, unknown][] = Object.entries(config); // Assigning this to a typed variable to convert the "any" into unknown.
-		// Validate and strongly type the versions from the configMap.
-		const versions: [MinimumVersionForCollab, unknown][] = entries.map(([version, value]) => {
-			validateMinimumVersionForCollab(version);
-			return [version, value];
-		});
-		// Sort the versions in descending order to find the largest compatible entry.
-		// TODO: Enforcing a sorted order might be a good idea. For now tolerates any order.
-		versions.sort((a, b) => compare(b[0], a[0]));
-		// For each config, we iterate over the keys and check if minVersionForCollab is greater than or equal to the version.
-		// If so, we set it as the default value for the option.
-		for (const [version, value] of versions) {
-			if (gte(minVersionForCollab, version)) {
-				defaultConfigs[key] = value;
-				break;
-			}
-		}
-		assert(key in defaultConfigs, "missing config map entry");
+		defaultConfigs[key] = getConfigForMinVersionForCollab(
+			minVersionForCollab,
+			config as ConfigMapEntry<unknown>,
+		);
 	}
-	// We have populated very key, so casting away the Partial is now safe:
+	// We have populated every key, so casting away the Partial is now safe:
 	return defaultConfigs as T;
+}
+
+/**
+ * Returns a default configuration given minVersionForCollab and {@link ConfigMapEntry}.
+ *
+ * @internal
+ */
+export function getConfigForMinVersionForCollab<T>(
+	minVersionForCollab: MinimumVersionForCollab,
+	config: ConfigMapEntry<T>,
+): T {
+	const entries: [string, unknown][] = Object.entries(config); // Assigning this to a typed variable to convert the "any" into unknown.
+	// Validate and strongly type the versions from the configMap.
+	const versions: [MinimumVersionForCollab, unknown][] = entries.map(([version, value]) => {
+		validateMinimumVersionForCollab(version);
+		return [version, value];
+	});
+	// Sort the versions in descending order to find the largest compatible entry.
+	// TODO: Enforcing a sorted order might be a good idea. For now tolerates any order.
+	versions.sort((a, b) => compare(b[0], a[0]));
+	// For each config, we iterate over the keys and check if minVersionForCollab is greater than or equal to the version.
+	// If so, we set it as the default value for the option.
+	for (const [version, value] of versions) {
+		if (gte(minVersionForCollab, version)) {
+			return value as T;
+		}
+	}
+	fail("No config map entry for version");
 }
 
 /**

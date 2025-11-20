@@ -17,7 +17,7 @@ import type {
 	SequenceDeltaEvent,
 	SharedString,
 } from "@fluidframework/sequence/internal";
-import { validateAssertionError2 as validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,

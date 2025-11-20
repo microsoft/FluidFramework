@@ -10,7 +10,7 @@ import {
 	TransactionStack,
 	type OnPop,
 } from "../../shared-tree-core/index.js";
-import { validateAssertionError2 as validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import {
 	DefaultChangeFamily,
 	type DefaultChangeset,
