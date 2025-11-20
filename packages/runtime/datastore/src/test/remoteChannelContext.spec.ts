@@ -13,7 +13,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockFluidDataStoreContext,
-	validateAssertionError2 as validateAssertionError,
+	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { FluidDataStoreRuntime, type ISharedObjectRegistry } from "../dataStoreRuntime.js";

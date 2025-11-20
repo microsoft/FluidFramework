@@ -1410,7 +1410,7 @@ export type SharedTreeOptionsBeta = ForestOptions;
 
 // @alpha @sealed
 export interface SimpleAllowedTypeAttributes {
-    readonly isStaged: boolean | undefined;
+    readonly isStaged: false | SchemaUpgrade | undefined;
 }
 
 // @alpha @sealed

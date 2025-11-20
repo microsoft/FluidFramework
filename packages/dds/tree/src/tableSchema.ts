@@ -29,6 +29,7 @@ import {
 	withBufferedTreeEvents,
 	type TreeRecordNode,
 } from "./simple-tree/index.js";
+import { validateIndex, validateIndexRange } from "./util/index.js";
 
 // Future improvement TODOs:
 // - Omit `cells` property from Row insertion type.
@@ -503,17 +504,15 @@ export namespace System_TableSchema {
 				columns,
 				index,
 			}: TableSchema.InsertColumnsParameters<TColumnSchema>): ColumnValueType[] {
-				// Ensure index is valid
-				if (index !== undefined) {
-					Table.validateInsertionIndex(index, this.columns);
-				}
-
 				// TypeScript is unable to narrow the column type correctly here, hence the casts below.
 				// See: https://github.com/microsoft/TypeScript/issues/52144
 				if (index === undefined) {
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					this.columns.insertAtEnd(TreeArrayNode.spread(columns) as any);
 				} else {
+					// Ensure specified index is valid
+					validateIndex(index, this.columns, "Table.insertColumns", true);
+
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					this.columns.insertAt(index, TreeArrayNode.spread(columns) as any);
 				}
@@ -528,9 +527,9 @@ export namespace System_TableSchema {
 			}: TableSchema.InsertRowsParameters<TRowSchema>): RowValueType[] {
 				// #region Input validation
 
-				// Ensure index is valid
+				// Ensure specified index is valid
 				if (index !== undefined) {
-					Table.validateInsertionIndex(index, this.rows);
+					validateIndex(index, this.rows, "Table.insertRows", true);
 				}
 
 				// Note: TypeScript is unable to narrow the type of the row type correctly here, hence the casts below.
@@ -587,19 +586,19 @@ export namespace System_TableSchema {
 				if (typeof indexOrColumns === "number" || indexOrColumns === undefined) {
 					let removedColumns: ColumnValueType[] | undefined;
 					const startIndex = indexOrColumns ?? 0;
-					const _count = count ?? this.columns.length - startIndex;
+					const endIndex = count === undefined ? this.columns.length : startIndex + count;
 
 					// If there are no columns to remove, do nothing
-					if (_count === 0) {
+					if (startIndex === endIndex) {
 						return [];
 					}
 
-					assertValidRange({ index: startIndex, count: _count }, this.columns);
+					validateIndexRange(startIndex, endIndex, this.columns, "Table.removeColumns");
 
 					this.#applyEditsInBatch(() => {
 						const columnsToRemove = this.columns.slice(
 							startIndex,
-							startIndex + _count,
+							endIndex,
 						) as ColumnValueType[];
 
 						// First, remove all cells that correspond to each column from each row:
@@ -608,13 +607,7 @@ export namespace System_TableSchema {
 						}
 
 						// Second, remove the column nodes:
-						Table._removeRange(
-							{
-								index: startIndex,
-								count: _count,
-							},
-							this.columns,
-						);
+						removeRangeFromArray(startIndex, endIndex, this.columns, "Table.removeColumns");
 						removedColumns = columnsToRemove;
 					});
 					return removedColumns ?? fail(0xc1f /* Transaction did not complete. */);
@@ -660,20 +653,14 @@ export namespace System_TableSchema {
 			): RowValueType[] {
 				if (typeof indexOrRows === "number" || indexOrRows === undefined) {
 					const startIndex = indexOrRows ?? 0;
-					const _count = count ?? this.columns.length - startIndex;
+					const endIndex = count === undefined ? this.columns.length : startIndex + count;
 
 					// If there are no rows to remove, do nothing
-					if (_count === 0) {
+					if (startIndex === endIndex) {
 						return [];
 					}
 
-					return Table._removeRange(
-						{
-							index: startIndex,
-							count: _count,
-						},
-						this.rows,
-					);
+					return removeRangeFromArray(startIndex, endIndex, this.rows, "Table.removeRows");
 				}
 
 				// If there are no rows to remove, do nothing
@@ -899,47 +886,6 @@ export namespace System_TableSchema {
 					`The specified row node with ID "${rowOrIdOrIndex.id}" does not exist in the table.`,
 				);
 			}
-
-			private static _removeRange<TNodeSchema extends ImplicitAllowedTypes>(
-				range: { index: number; count: number },
-				array: TreeArrayNode<TNodeSchema>,
-			): TreeNodeFromImplicitAllowedTypes<TNodeSchema>[] {
-				assertValidRange(range, array);
-
-				const { index, count } = range;
-				const end = index + count; // exclusive
-
-				// TypeScript is unable to narrow the array element type correctly here, hence the cast.
-				// See: https://github.com/microsoft/TypeScript/issues/52144
-				const removedRows = array.slice(
-					index,
-					end,
-				) as TreeNodeFromImplicitAllowedTypes<TNodeSchema>[];
-				array.removeRange(index, end);
-
-				return removedRows;
-			}
-
-			/**
-			 * Ensure that the specified index is a valid location for item insertion in the destination list.
-			 * @throws Throws a usage error if the destination is invalid.
-			 */
-			private static validateInsertionIndex(
-				index: number,
-				destinationList: readonly unknown[],
-			): void {
-				if (index < 0) {
-					throw new UsageError("The index must be greater than or equal to 0.");
-				}
-
-				if (index > destinationList.length) {
-					throw new UsageError("The index specified for insertion is out of bounds.");
-				}
-
-				if (!Number.isInteger(index)) {
-					throw new UsageError("The index must be an integer.");
-				}
-			}
 		}
 
 		// Set a private symbol on the schema class that marks it as having been generated by this factory.
@@ -992,27 +938,27 @@ export namespace System_TableSchema {
 	// #endregion
 }
 
-// TODO: this should be deduplicated with the similar validation logic in ArrayNode.
-function assertValidRange<T>(
-	range: { index: number; count: number },
-	array: readonly T[],
-): void {
-	const { index, count } = range;
-	if (index < 0 || index >= array.length) {
-		throw new UsageError(
-			`Start index out of bounds. Expected index to be on [0, ${array.length - 1}], but got ${index}.`,
-		);
-	}
-	if (count < 0) {
-		throw new UsageError(`Expected non-negative count. Got ${count}.`);
-	}
+/**
+ * Removes the specified range of elements from the array.
+ * @returns The removed elements.
+ */
+function removeRangeFromArray<TNodeSchema extends ImplicitAllowedTypes>(
+	startIndex: number,
+	endIndex: number,
+	array: TreeArrayNode<TNodeSchema>,
+	methodName: string,
+): TreeNodeFromImplicitAllowedTypes<TNodeSchema>[] {
+	validateIndexRange(startIndex, endIndex, array, methodName);
 
-	const end = index + count; // exclusive
-	if (end > array.length) {
-		throw new UsageError(
-			`End index out of bounds. Expected end to be on [${index}, ${array.length}], but got ${end}.`,
-		);
-	}
+	// TypeScript is unable to narrow the array element type correctly here, hence the cast.
+	// See: https://github.com/microsoft/TypeScript/issues/52144
+	const removedRows = array.slice(
+		startIndex,
+		endIndex,
+	) as TreeNodeFromImplicitAllowedTypes<TNodeSchema>[];
+	array.removeRange(startIndex, endIndex);
+
+	return removedRows;
 }
 
 /**

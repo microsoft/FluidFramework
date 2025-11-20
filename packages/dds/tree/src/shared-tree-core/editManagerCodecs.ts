@@ -5,6 +5,10 @@
 
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
+import {
+	getConfigForMinVersionForCollab,
+	lowestMinVersionForCollab,
+} from "@fluidframework/runtime-utils/internal";
 
 import {
 	type CodecTree,
@@ -50,10 +54,13 @@ export function clientVersionToEditManagerFormatVersion(
 	clientVersion: MinimumVersionForCollab,
 	writeVersionOverride?: EditManagerFormatVersion,
 ): EditManagerFormatVersion {
-	const compatibleVersion: EditManagerFormatVersion =
-		clientVersion < FluidClientVersion.v2_43
-			? brand(EditManagerFormatVersion.v3)
-			: brand(EditManagerFormatVersion.v4);
+	const compatibleVersion: EditManagerFormatVersion = brand(
+		getConfigForMinVersionForCollab(clientVersion, {
+			[lowestMinVersionForCollab]: EditManagerFormatVersion.v3,
+			[FluidClientVersion.v2_43]: EditManagerFormatVersion.v4,
+		}),
+	);
+
 	return writeVersionOverride ?? compatibleVersion;
 }
 

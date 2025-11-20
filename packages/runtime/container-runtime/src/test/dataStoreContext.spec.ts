@@ -48,7 +48,7 @@ import {
 import {
 	MockDeltaManager,
 	MockFluidDataStoreRuntime,
-	validateAssertionError2 as validateAssertionError,
+	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 
 import {

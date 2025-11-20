@@ -14059,6 +14059,9 @@ importers:
       '@fluidframework/matrix':
         specifier: workspace:~
         version: link:../../dds/matrix
+      '@fluidframework/ordered-collection':
+        specifier: workspace:~
+        version: link:../../dds/ordered-collection
       '@fluidframework/register-collection':
         specifier: workspace:~
         version: link:../../dds/register-collection

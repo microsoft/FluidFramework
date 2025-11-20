@@ -37,7 +37,7 @@ import {
 import { responseToException } from "@fluidframework/runtime-utils/internal";
 import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base/internal";
 import { MockLogger, TelemetryDataTag } from "@fluidframework/telemetry-utils/internal";
-import { validateAssertionError2 as validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
