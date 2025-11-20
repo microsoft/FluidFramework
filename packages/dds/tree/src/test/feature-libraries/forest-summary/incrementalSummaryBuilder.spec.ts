@@ -68,11 +68,11 @@ function createMockStorageService(
 
 function getReadAndParseChunk<T extends JsonCompatible<IFluidHandle>>(
 	chunkMap: Map<string, string>,
-): (id: string) => Promise<T> {
-	return async (id: string): Promise<T> => {
-		const blob = chunkMap.get(id);
+): (chunkPath: string) => Promise<T> {
+	return async (chunkPath: string): Promise<T> => {
+		const blob = chunkMap.get(chunkPath);
 		if (blob === undefined) {
-			throw new Error(`Blob not found: ${id}`);
+			throw new Error(`Blob not found: ${chunkPath}`);
 		}
 		return blob as T;
 	};
@@ -252,7 +252,10 @@ describe("ForestIncrementalSummaryBuilder", () => {
 		it("returns early when snapshot tree is not available", async () => {
 			const builder = createIncrementalSummaryBuilder();
 			const storageService = createMockStorageService(); // No snapshot tree
-			await builder.load(storageService, getReadAndParseChunk(new Map()));
+			await builder.load({
+				services: storageService,
+				readAndParseChunk: getReadAndParseChunk(new Map()),
+			});
 		});
 
 		it("loads chunk contents from snapshot tree", async () => {
@@ -284,7 +287,10 @@ describe("ForestIncrementalSummaryBuilder", () => {
 			};
 			const storageService = createMockStorageService(mockSnapshotTree, blobMap);
 
-			await builder.load(storageService, getReadAndParseChunk(blobMap));
+			await builder.load({
+				services: storageService,
+				readAndParseChunk: getReadAndParseChunk(blobMap),
+			});
 
 			// Verify chunks can be retrieved
 			builder.decodeIncrementalChunk(referenceId0, (encoded) => {
@@ -326,7 +332,10 @@ describe("ForestIncrementalSummaryBuilder", () => {
 				blobs: {},
 			};
 			const storageService = createMockStorageService(mockSnapshotTree, blobMap);
-			await builder.load(storageService, getReadAndParseChunk(blobMap));
+			await builder.load({
+				services: storageService,
+				readAndParseChunk: getReadAndParseChunk(blobMap),
+			});
 
 			// Verify both parent and nested chunks can be retrieved
 			builder.decodeIncrementalChunk(referenceId0, (encoded) => {
@@ -352,7 +361,11 @@ describe("ForestIncrementalSummaryBuilder", () => {
 			};
 			const storageService = createMockStorageService(mockSnapshotTree, new Map());
 			await assert.rejects(
-				async () => builder.load(storageService, getReadAndParseChunk(new Map())),
+				async () =>
+					builder.load({
+						services: storageService,
+						readAndParseChunk: getReadAndParseChunk(new Map()),
+					}),
 				(error: Error) => {
 					assert(error.message.includes("Cannot find contents for incremental chunk"));
 					return true;
@@ -552,7 +565,10 @@ describe("ForestIncrementalSummaryBuilder", () => {
 				blobs: {},
 			};
 			const storageService = createMockStorageService(mockSnapshotTree, blobMap);
-			await builder.load(storageService, getReadAndParseChunk(blobMap));
+			await builder.load({
+				services: storageService,
+				readAndParseChunk: getReadAndParseChunk(blobMap),
+			});
 
 			// Notify the builder that the chunk with the above reference ID was decoded.
 			builder.decodeIncrementalChunk(referenceId, () => getMockChunk());
@@ -597,7 +613,10 @@ describe("ForestIncrementalSummaryBuilder", () => {
 			};
 
 			const storageService = createMockStorageService(mockSnapshotTree, blobMap);
-			await builder.load(storageService, getReadAndParseChunk(blobMap));
+			await builder.load({
+				services: storageService,
+				readAndParseChunk: getReadAndParseChunk(blobMap),
+			});
 			builder.decodeIncrementalChunk(referenceId0, (encoded) => {
 				assert.deepEqual(encoded, blobMap.get(chunkContentsPath0));
 				return getMockChunk();

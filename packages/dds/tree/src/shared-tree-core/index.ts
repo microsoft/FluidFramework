@@ -33,6 +33,7 @@ export {
 	type SummaryElementParser,
 	type SummaryElementStringifier,
 	summarizablesMetadataKey,
+	preSummaryValidationVersion,
 } from "./summaryTypes.js";
 export { VersionedSummarizer } from "./versionedSummarizer.js";
 

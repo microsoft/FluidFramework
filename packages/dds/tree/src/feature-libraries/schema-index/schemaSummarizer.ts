@@ -26,6 +26,7 @@ import {
 	schemaDataIsEmpty,
 } from "../../core/index.js";
 import {
+	preSummaryValidationVersion,
 	VersionedSummarizer,
 	type Summarizable,
 	type SummaryElementParser,
@@ -42,6 +43,10 @@ const schemaStringKey = "SchemaString";
  * The versions for the schema summary.
  */
 export const enum SchemaSummaryVersion {
+	/**
+	 * Version representing summaries generated before summary versioning was introduced.
+	 */
+	vPreVersioning = preSummaryValidationVersion,
 	/**
 	 * Version 1. This version adds metadata to the SharedTree summary.
 	 */
@@ -60,9 +65,9 @@ const supportedReadVersions = new Set<SchemaSummaryVersion>([SchemaSummaryVersio
  */
 function minVersionToSchemaSummaryVersion(
 	version: MinimumVersionForCollab,
-): SchemaSummaryVersion | undefined {
+): SchemaSummaryVersion {
 	return getConfigForMinVersionForCollab(version, {
-		[lowestMinVersionForCollab]: undefined,
+		[lowestMinVersionForCollab]: SchemaSummaryVersion.vPreVersioning,
 		[FluidClientVersion.v2_73]: SchemaSummaryVersion.v1,
 	});
 }

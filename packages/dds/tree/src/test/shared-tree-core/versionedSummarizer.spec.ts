@@ -18,8 +18,8 @@ import {
 } from "../../shared-tree-core/index.js";
 
 class TestVersionedSummarizer extends VersionedSummarizer {
-	public summarizeInternalCalled = false;
-	public loadInternalCalled = false;
+	public summarizeInternalCallCount = 0;
+	public loadInternalCallCount = 0;
 
 	protected summarizeInternal(props: {
 		stringify: SummaryElementStringifier;
@@ -27,7 +27,7 @@ class TestVersionedSummarizer extends VersionedSummarizer {
 		trackState?: boolean;
 		builder: SummaryTreeBuilder;
 	}): void {
-		this.summarizeInternalCalled = true;
+		this.summarizeInternalCallCount++;
 		// Add some test content to the builder
 		props.builder.addBlob(this.key, props.stringify({ data: "test" }));
 	}
@@ -36,7 +36,7 @@ class TestVersionedSummarizer extends VersionedSummarizer {
 		services: IChannelStorageService,
 		parse: SummaryElementParser,
 	): Promise<void> {
-		this.loadInternalCalled = true;
+		this.loadInternalCallCount++;
 	}
 }
 
@@ -53,7 +53,10 @@ describe("VersionedSummarizer", () => {
 			});
 
 			summarizer.summarize({ stringify });
-			assert(summarizer.summarizeInternalCalled, "summarizeInternal should be called");
+			assert(
+				summarizer.summarizeInternalCallCount === 1,
+				"summarizeInternal should be called once",
+			);
 		});
 
 		it("writes metadata blob when writeVersion is defined", () => {
@@ -83,7 +86,6 @@ describe("VersionedSummarizer", () => {
 			});
 
 			const summary = summarizer.summarize({ stringify });
-
 			const metadataBlob = summary.summary.tree[summarizablesMetadataKey];
 			assert(metadataBlob === undefined, "Metadata blob should not exist");
 		});
@@ -96,7 +98,6 @@ describe("VersionedSummarizer", () => {
 			});
 
 			const summaryWithStats = summarizer.summarize({ stringify });
-
 			const testContentBlob = summaryWithStats.summary.tree[summarizer.key];
 			assert(testContentBlob !== undefined, "Test content should exist in summary");
 			assert.equal(testContentBlob.type, SummaryType.Blob, "Test content should be a blob");
@@ -113,7 +114,24 @@ describe("VersionedSummarizer", () => {
 
 			const storage = new MockStorage();
 			await summarizer.load(storage, parse);
-			assert(summarizer.loadInternalCalled, "loadInternal should be called");
+			assert(summarizer.loadInternalCallCount === 1, "loadInternal should be called once");
+		});
+
+		it("loads successfully when there is no metadata", async () => {
+			const summarizer = new TestVersionedSummarizer({
+				key: "testKey",
+				writeVersion: undefined,
+				supportedReadVersions: new Set([1]),
+			});
+
+			// Create a summary with metadata
+			const summary = summarizer.summarize({ stringify });
+			const metadataBlob = summary.summary.tree[summarizablesMetadataKey];
+			assert(metadataBlob === undefined, "Metadata blob should not exist");
+
+			// Load from the summary
+			const storage = MockStorage.createFromSummary(summary.summary);
+			await assert.doesNotReject(summarizer.load(storage, parse));
 		});
 
 		it("loads successfully when metadata version is supported", async () => {
@@ -172,29 +190,6 @@ describe("VersionedSummarizer", () => {
 			});
 			const storage = MockStorage.createFromSummary(summary.summary);
 			await assert.doesNotReject(summarizer2.load(storage, parse));
-		});
-	});
-
-	describe("Round-trip summarize/load", () => {
-		it("backward compatibility: newer reader can load older version", async () => {
-			// Create summary with version 1
-			const summarizer1 = new TestVersionedSummarizer({
-				key: "testKey",
-				writeVersion: 1,
-				supportedReadVersions: new Set([1]),
-			});
-			const summary = summarizer1.summarize({ stringify });
-
-			// Load with a reader that supports versions 1 and 2
-			const summarizer2 = new TestVersionedSummarizer({
-				key: "testKey",
-				writeVersion: 2,
-				supportedReadVersions: new Set([1, 2]),
-			});
-			const storage = MockStorage.createFromSummary(summary.summary);
-			await summarizer2.load(storage, parse);
-
-			assert(summarizer2.loadInternalCalled, "loadInternal should be called");
 		});
 	});
 });

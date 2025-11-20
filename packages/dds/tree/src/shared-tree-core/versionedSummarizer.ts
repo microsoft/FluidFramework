@@ -12,6 +12,7 @@ import type {
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
+	preSummaryValidationVersion,
 	summarizablesMetadataKey,
 	type SharedTreeSummarizableMetadata,
 	type Summarizable,
@@ -21,20 +22,20 @@ import {
 import { readAndParseSnapshotBlob } from "../util/index.js";
 
 /**
- * Base class from which all {@link Summarizable}s derive.
+ * Utility for implementing {@link Summarizable}s classes with versioning.
  * It handles versioning of summaries - writing version metadata to summaries
  * and checking version compatibility when loading.
  */
 export abstract class VersionedSummarizer implements Summarizable {
 	public readonly key: string;
-	private readonly writeVersion: number | undefined;
+	private readonly writeVersion: number;
 	private readonly supportedReadVersions: Set<number>;
 
 	public constructor(props: {
 		/** {@link Summarizable.key} */
 		key: string;
 		/** The version number to write in the summary metadata. If undefined, no version metadata is written. */
-		writeVersion: number | undefined;
+		writeVersion: number;
 		/** The set of supported versions that a summary can have for this summarizer to load it. */
 		supportedReadVersions: Set<number>;
 	}) {
@@ -72,7 +73,7 @@ export abstract class VersionedSummarizer implements Summarizable {
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext;
 	}): ISummaryTreeWithStats {
 		const builder = new SummaryTreeBuilder();
-		if (this.writeVersion !== undefined) {
+		if (this.writeVersion > preSummaryValidationVersion) {
 			const metadata: SharedTreeSummarizableMetadata = {
 				version: this.writeVersion,
 			};

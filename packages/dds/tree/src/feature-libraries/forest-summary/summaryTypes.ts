@@ -9,6 +9,7 @@ import {
 	lowestMinVersionForCollab,
 } from "@fluidframework/runtime-utils/internal";
 import { FluidClientVersion } from "../../codec/index.js";
+import { preSummaryValidationVersion } from "../../shared-tree-core/index.js";
 
 /**
  * The key for the tree that contains the overall forest's summary tree.
@@ -37,6 +38,10 @@ export const chunkContentsBlobKey = "contents";
  */
 export enum ForestSummaryVersion {
 	/**
+	 * Version representing summaries generated before summary versioning was introduced.
+	 */
+	vPreVersioning = preSummaryValidationVersion,
+	/**
 	 * Version 1. This version adds metadata to the SharedTree summary.
 	 */
 	v1 = 1,
@@ -56,9 +61,9 @@ export const supportedForestSummaryReadVersions = new Set<ForestSummaryVersion>(
  */
 export function minVersionToForestSummaryVersion(
 	version: MinimumVersionForCollab,
-): ForestSummaryVersion | undefined {
+): ForestSummaryVersion {
 	return getConfigForMinVersionForCollab(version, {
-		[lowestMinVersionForCollab]: undefined,
+		[lowestMinVersionForCollab]: ForestSummaryVersion.vPreVersioning,
 		[FluidClientVersion.v2_73]: ForestSummaryVersion.v1,
 	});
 }

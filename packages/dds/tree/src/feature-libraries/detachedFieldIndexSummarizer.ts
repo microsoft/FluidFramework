@@ -18,6 +18,7 @@ import {
 
 import type { DetachedFieldIndex } from "../core/index.js";
 import {
+	preSummaryValidationVersion,
 	type Summarizable,
 	type SummaryElementParser,
 	type SummaryElementStringifier,
@@ -35,6 +36,10 @@ const detachedFieldIndexBlobKey = "DetachedFieldIndexBlob";
  * The versions for the detached field index summary.
  */
 export const enum DetachedFieldIndexSummaryVersion {
+	/**
+	 * Version representing summaries generated before summary versioning was introduced.
+	 */
+	vPreVersioning = preSummaryValidationVersion,
 	/**
 	 * Version 1. This version adds metadata to the SharedTree summary.
 	 */
@@ -55,9 +60,9 @@ const supportedReadVersions = new Set<DetachedFieldIndexSummaryVersion>([
  */
 function minVersionToDetachedFieldIndexSummaryVersion(
 	version: MinimumVersionForCollab,
-): DetachedFieldIndexSummaryVersion | undefined {
+): DetachedFieldIndexSummaryVersion {
 	return getConfigForMinVersionForCollab(version, {
-		[lowestMinVersionForCollab]: undefined,
+		[lowestMinVersionForCollab]: DetachedFieldIndexSummaryVersion.vPreVersioning,
 		[FluidClientVersion.v2_73]: DetachedFieldIndexSummaryVersion.v1,
 	});
 }

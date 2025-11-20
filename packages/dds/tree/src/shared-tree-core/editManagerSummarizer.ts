@@ -24,10 +24,11 @@ import type { JsonCompatibleReadOnly } from "../util/index.js";
 
 import type { EditManager, SummaryData } from "./editManager.js";
 import type { EditManagerEncodingContext } from "./editManagerCodecs.js";
-import type {
-	Summarizable,
-	SummaryElementParser,
-	SummaryElementStringifier,
+import {
+	preSummaryValidationVersion,
+	type Summarizable,
+	type SummaryElementParser,
+	type SummaryElementStringifier,
 } from "./summaryTypes.js";
 import { VersionedSummarizer } from "./versionedSummarizer.js";
 
@@ -37,6 +38,10 @@ const stringKey = "String";
  * The summary version of the edit manager.
  */
 export const enum EditManagerSummaryVersion {
+	/**
+	 * Version representing summaries generated before summary versioning was introduced.
+	 */
+	vPreVersioning = preSummaryValidationVersion,
 	/**
 	 * Version 1. This version adds metadata to the SharedTree summary.
 	 */
@@ -57,9 +62,9 @@ const supportedReadVersions = new Set<EditManagerSummaryVersion>([
  */
 function minVersionToEditManagerSummaryVersion(
 	version: MinimumVersionForCollab,
-): EditManagerSummaryVersion | undefined {
+): EditManagerSummaryVersion {
 	return getConfigForMinVersionForCollab(version, {
-		[lowestMinVersionForCollab]: undefined,
+		[lowestMinVersionForCollab]: EditManagerSummaryVersion.vPreVersioning,
 		[FluidClientVersion.v2_73]: EditManagerSummaryVersion.v1,
 	});
 }

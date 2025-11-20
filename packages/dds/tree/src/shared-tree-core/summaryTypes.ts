@@ -93,9 +93,19 @@ export type SharedTreeSummarizableMetadata = {
 };
 
 /**
+ * The version representing summaries that are generated before summary versioning is turned on.
+ * These summaries will not write metadata containing the summary version.
+ */
+export const preSummaryValidationVersion = 0;
+
+/**
  * The versions for the SharedTree summary.
  */
 export const enum SharedTreeSummaryVersion {
+	/**
+	 * Version representing summaries generated before summary versioning was introduced.
+	 */
+	vPreVersioning = preSummaryValidationVersion,
 	/**
 	 * Version 1. This version adds metadata to the SharedTree summary.
 	 */
@@ -116,9 +126,9 @@ export const supportedSharedTreeSummaryReadVersions = new Set<SharedTreeSummaryV
  */
 export function minVersionToSharedTreeSummaryVersion(
 	version: MinimumVersionForCollab,
-): SharedTreeSummaryVersion | undefined {
+): SharedTreeSummaryVersion {
 	return getConfigForMinVersionForCollab(version, {
-		[lowestMinVersionForCollab]: undefined,
+		[lowestMinVersionForCollab]: SharedTreeSummaryVersion.vPreVersioning,
 		[FluidClientVersion.v2_73]: SharedTreeSummaryVersion.v1,
 	});
 }
