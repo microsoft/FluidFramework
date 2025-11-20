@@ -1432,8 +1432,12 @@ export class IntervalCollection
 			}
 
 			if (deltaProps !== undefined && Object.keys(deltaProps).length > 0) {
-				this.emit("propertyChanged", latestInterval, deltaProps, local, op);
-				this.emit("changed", latestInterval, deltaProps, undefined, local, false);
+				// Use newInterval instead of latestInterval because latestInterval can be undefined
+				// when the interval has been deleted from the collection but property changes are
+				// still being acknowledged from pending ops. newInterval is guaranteed to be defined
+				// because it comes from intervalToChange which was validated earlier.
+				this.emit("propertyChanged", newInterval, deltaProps, local, op);
+				this.emit("changed", newInterval, deltaProps, undefined, local, false);
 			}
 			return newInterval;
 		}

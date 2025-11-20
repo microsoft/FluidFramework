@@ -39,11 +39,26 @@ export class IntervalCollectionOracle {
 
 		// initial snapshot
 		for (const interval of this.collection) {
-			this.addInterval(interval);
+			// Initialize with dummy values for local and op since we're just snapshotting existing intervals
+			this.intervals.set(interval.getIntervalId(), {
+				id: interval.getIntervalId(),
+				start: interval.start,
+				end: interval.end,
+				properties: { ...interval.properties },
+			});
 		}
 	}
 
-	private readonly addInterval = (interval: SequenceInterval) => {
+	private readonly addInterval = (interval: SequenceInterval, local: boolean, op: any) => {
+		assert(interval, "addInterval event received with undefined interval");
+		assert(
+			typeof local === "boolean",
+			`addInterval 'local' parameter must be boolean, got ${typeof local}`,
+		);
+		assert(
+			!this.intervals.has(interval.getIntervalId()),
+			`addInterval event for interval ${interval.getIntervalId()} that already exists in oracle`,
+		);
 		this.intervals.set(interval.getIntervalId(), {
 			id: interval.getIntervalId(),
 			start: interval.start,
@@ -52,23 +67,84 @@ export class IntervalCollectionOracle {
 		});
 	};
 
-	private readonly deleteInterval = (interval: SequenceInterval) => {
+	private readonly deleteInterval = (interval: SequenceInterval, local: boolean, op: any) => {
+		assert(interval, "deleteInterval event received with undefined interval");
+		assert(
+			typeof local === "boolean",
+			`deleteInterval 'local' parameter must be boolean, got ${typeof local}`,
+		);
+		const existing = this.intervals.get(interval.getIntervalId());
+		assert(
+			existing,
+			`deleteInterval event for interval ${interval.getIntervalId()} that doesn't exist in oracle`,
+		);
 		this.intervals.delete(interval.getIntervalId());
 	};
 
-	private readonly changeInterval = (interval: SequenceInterval) => {
+	private readonly changeInterval = (
+		interval: SequenceInterval,
+		previousInterval: SequenceInterval,
+		local: boolean,
+		op: any,
+		slide: boolean,
+	) => {
+		assert(
+			interval,
+			"changeInterval event received with undefined interval - violates ISequenceIntervalCollectionEvents contract",
+		);
+		assert(
+			previousInterval,
+			"changeInterval event received with undefined previousInterval - violates ISequenceIntervalCollectionEvents contract",
+		);
+		assert(
+			typeof local === "boolean",
+			`changeInterval 'local' parameter must be boolean, got ${typeof local}`,
+		);
+		assert(
+			typeof slide === "boolean",
+			`changeInterval 'slide' parameter must be boolean, got ${typeof slide}`,
+		);
 		const existing = this.intervals.get(interval.getIntervalId());
-		if (existing) {
-			existing.start = interval.start;
-			existing.end = interval.end;
-			existing.properties = interval.properties;
-		}
+		assert(
+			existing,
+			`changeInterval event received for interval ${interval.getIntervalId()} that doesn't exist in oracle - interval may have been deleted`,
+		);
+		existing.start = interval.start;
+		existing.end = interval.end;
+		existing.properties = interval.properties;
 	};
 
-	private readonly propertyChanged = (interval: SequenceInterval, propertyDeltas: any) => {
-		if (!interval) return;
+	private readonly propertyChanged = (
+		interval: SequenceInterval,
+		propertyDeltas: any,
+		local: boolean,
+		op: any,
+	) => {
+		// Oracle strict validation: The 'interval' parameter should NEVER be undefined per ISequenceIntervalCollectionEvents.
+		// However, there's a bug in intervalCollection.ts ackChange() where latestInterval can be undefined when:
+		// 1. An interval has been deleted from the collection (latestInterval = undefined)
+		// 2. But property changes are still being acknowledged from pending ops (intervalToChange exists from consensus)
+		// 3. The code emits events with undefined latestInterval, violating the type contract
+		// This assertion catches that bug during fuzz testing.
+		assert(
+			interval,
+			"propertyChanged event received with undefined interval - violates ISequenceIntervalCollectionEvents contract. " +
+				"See intervalCollection.ts ackChange() line 1439 where latestInterval can be undefined.",
+		);
+		assert(
+			typeof local === "boolean",
+			`propertyChanged 'local' parameter must be boolean, got ${typeof local}`,
+		);
+		assert(
+			propertyDeltas && typeof propertyDeltas === "object",
+			"propertyChanged 'propertyDeltas' must be a non-null object",
+		);
 		const existing = this.intervals.get(interval.getIntervalId());
-		if (existing && propertyDeltas) {
+		assert(
+			existing,
+			`propertyChanged event received for interval ${interval.getIntervalId()} that doesn't exist in oracle - interval may have been deleted`,
+		);
+		if (propertyDeltas) {
 			for (const key of Object.keys(propertyDeltas)) {
 				existing.properties[key] = interval.properties[key];
 			}
@@ -79,18 +155,47 @@ export class IntervalCollectionOracle {
 		interval: SequenceInterval,
 		propertyDeltas: any,
 		previousInterval: any,
+		local: boolean,
+		slide: boolean,
 	) => {
-		if (!interval) return;
+		// Oracle strict validation: The 'interval' parameter should NEVER be undefined per ISequenceIntervalCollectionEvents.
+		// Note: 'previousInterval' (3rd param) CAN legitimately be undefined for property-only changes.
+		// However, there's a bug in intervalCollection.ts ackChange() where latestInterval can be undefined when:
+		// 1. An interval has been deleted from the collection (latestInterval = undefined)
+		// 2. But property changes are still being acknowledged from pending ops (intervalToChange exists from consensus)
+		// 3. The code emits events with undefined latestInterval, violating the type contract
+		// This assertion catches that bug during fuzz testing.
+		assert(
+			interval,
+			"changed event received with undefined interval - violates ISequenceIntervalCollectionEvents contract. " +
+				"See intervalCollection.ts ackChange() line 1440 where latestInterval can be undefined.",
+		);
+		assert(
+			typeof local === "boolean",
+			`changed 'local' parameter must be boolean, got ${typeof local}`,
+		);
+		assert(
+			typeof slide === "boolean",
+			`changed 'slide' parameter must be boolean, got ${typeof slide}`,
+		);
+		// Validate previousInterval is undefined only for property-only changes
+		if (previousInterval === undefined && propertyDeltas === undefined) {
+			assert.fail(
+				"changed event has both previousInterval and propertyDeltas undefined - at least one should be defined",
+			);
+		}
 		const existing = this.intervals.get(interval.getIntervalId());
-		if (existing) {
-			if (previousInterval) {
-				existing.start = interval.start;
-				existing.end = interval.end;
-			}
-			if (propertyDeltas) {
-				for (const key of Object.keys(propertyDeltas)) {
-					existing.properties[key] = interval.properties[key];
-				}
+		assert(
+			existing,
+			`changed event received for interval ${interval.getIntervalId()} that doesn't exist in oracle - interval may have been deleted`,
+		);
+		if (previousInterval) {
+			existing.start = interval.start;
+			existing.end = interval.end;
+		}
+		if (propertyDeltas) {
+			for (const key of Object.keys(propertyDeltas)) {
+				existing.properties[key] = interval.properties[key];
 			}
 		}
 	};
@@ -98,7 +203,10 @@ export class IntervalCollectionOracle {
 	validate(sharedString: SharedString) {
 		for (const [id, snapshot] of this.intervals) {
 			const actual = this.collection.getIntervalById(id);
-			if (!actual) continue;
+			assert(
+				actual,
+				`Interval ${id} exists in oracle but not in collection - interval was unexpectedly removed or collection is out of sync`,
+			);
 
 			const expectedStart = sharedString.localReferencePositionToPosition(snapshot.start);
 			const expectedEnd = sharedString.localReferencePositionToPosition(snapshot.end);
