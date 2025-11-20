@@ -46,8 +46,6 @@ export interface ModularChangeset extends HasFieldChanges {
 	 * Maps from this changeset's canonical ID for a node (see comment on node aliases) to the changes for that node.
 	 */
 	readonly nodeChanges: ChangeAtomIdBTree<NodeChangeset>;
-
-	// XXX: Could this be merged with nodeAliases?
 	readonly rootNodes: RootNodeTable;
 
 	/**

@@ -1607,8 +1607,8 @@ export class ModularChangeFamily
 		);
 
 		for (const [_detachId, nodeId] of rebasedRoots.nodeChanges.entries()) {
-			// XXX: This is only incorrect if the rebased changeset attaches the node.
-			// Efficiently computing this would require maintaining a mapping from node ID to attach ID.
+			// XXX: This is incorrect if the rebased changeset attaches the node.
+			// Efficiently computing whether the changeset attaches the node would require maintaining a mapping from node ID to attach ID.
 			const detachedInOutput = true;
 			this.updateConstraintsForNode(
 				nodeId,
@@ -1632,8 +1632,8 @@ export class ModularChangeFamily
 		for (const field of fields.values()) {
 			const handler = getChangeHandler(this.fieldKinds, field.fieldKind);
 			for (const [nodeId] of handler.getNestedChanges(field.change)) {
-				// XXX: This is only incorrect in the case where the rebased changeset detaches this node.
-				// Efficiently computing this would require maintaining a mapping from node ID to detach ID.
+				// XXX: This is incorrect if the rebased changeset detaches this node.
+				// Efficiently computing whether the changeset detaches the node would require maintaining a mapping from node ID to detach ID.
 				const isOutputDetached = false;
 				const outputAttachState =
 					parentOutputAttachState === NodeAttachState.Detached || isOutputDetached
@@ -2902,7 +2902,6 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 	): RangeQueryResult<RebaseDetachedNodeEntry | undefined> {
 		let countToProcess = count;
 
-		// XXX: This should not longer be necessary.
 		const detachEntry = firstDetachIdFromAttachId(
 			this.table.baseChange.rootNodes,
 			baseAttachId,
@@ -2919,9 +2918,6 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 
 		countToProcess = nodeEntry.length;
 		const newNodeId = nodeEntry.value;
-
-		// XXX: Can we do this in `rebaseRoots` instead?
-		deleteRebasedRoot(this.table, detachEntry.value);
 
 		const newRenameEntry = this.table.newChange.rootNodes.oldToNewId.getFirst(
 			detachEntry.value,
@@ -3145,13 +3141,7 @@ function assignRootChange(
 		setInChangeAtomIdMap(nodeToParent, nodeId, { root: detachId });
 	}
 
-	// XXX: Invalidate field?
 	table.detachLocations.set(detachId, 1, detachLocation);
-}
-
-function deleteRebasedRoot(table: RebaseTable, detachId: ChangeAtomId): void {
-	table.rebasedRootNodes.nodeChanges.delete([detachId.revision, detachId.localId]);
-	table.rebasedRootNodes.detachLocations.delete(detachId, 1);
 }
 
 class ComposeNodeManagerI implements ComposeNodeManager {
@@ -3167,18 +3157,9 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 	): RangeQueryResult<DetachedNodeEntry | undefined> {
 		let countToProcess = count;
 
-		// XXX: There should no longer be a rename entry for a node detached by the same changeset.
-		const baseRenameEntry = firstAttachIdFromDetachId(
-			this.table.baseChange.rootNodes,
-			baseDetachId,
-			count,
-		);
-
-		countToProcess = baseRenameEntry.length;
-
 		const baseAttachEntry = getFirstFieldForCrossFieldKey(
 			this.table.baseChange,
-			{ target: CrossFieldTarget.Destination, ...baseRenameEntry.value },
+			{ target: CrossFieldTarget.Destination, ...baseDetachId },
 			countToProcess,
 		);
 
@@ -3195,14 +3176,14 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 			// XXX: Do we need to dealias whenever pulling node IDs out of the root node table?
 			const rootEntry = rangeQueryChangeAtomIdMap(
 				this.table.newChange.rootNodes.nodeChanges,
-				baseRenameEntry.value,
+				baseDetachId,
 				countToProcess,
 			);
 
 			countToProcess = rootEntry.length;
 
 			const newRenameEntry = this.table.newChange.rootNodes.oldToNewId.getFirst(
-				baseRenameEntry.value,
+				baseDetachId,
 				countToProcess,
 			);
 
@@ -3393,7 +3374,7 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 			}
 		}
 
-		// XXX: No longer true
+		// XXX: The following reasoning is no longer true, but this invalidation is still necessary. Why?
 		// We invalidate the detach location even if there are no new changes because adding the rename entry
 		// may affect the result of `composeDetachAttach` at that location.
 		this.invalidateBaseFields(detachFields);
@@ -4584,18 +4565,9 @@ function doesChangeDetachNodes(
 	id: ChangeAtomId,
 	count: number,
 ): RangeQueryResultFragment<boolean>[] {
-	// XXX: Should have type which is a fragment with non-null value.
 	return table
 		.getAll2({ ...id, target: CrossFieldTarget.Source }, count)
 		.map((entry) => ({ ...entry, value: entry.value !== undefined }));
-}
-
-function getDetachFields(
-	table: CrossFieldKeyTable,
-	id: ChangeAtomId,
-	count: number,
-): RangeQueryResultFragment<FieldId | undefined>[] {
-	return table.getAll2({ ...id, target: CrossFieldTarget.Source }, count);
 }
 
 export function getFirstDetachField(
