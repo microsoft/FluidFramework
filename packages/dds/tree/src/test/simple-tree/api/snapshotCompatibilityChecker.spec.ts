@@ -11,6 +11,9 @@ import {
 	exportCompatibilitySchemaSnapshot,
 	TreeViewConfiguration,
 	type SchemaCompatibilityStatus,
+	SchemaFactoryBeta,
+	stringSchema,
+	numberSchema,
 } from "../../../simple-tree/index.js";
 import { strict as assert } from "node:assert";
 
@@ -32,7 +35,7 @@ describe("snapshotCompatibilityChecker", () => {
 		);
 	});
 
-	it("checkCompatibility detects incompatible schemas", () => {
+	it("checkCompatibility detects upgradeable schemas", () => {
 		const factory = new SchemaFactory("test");
 		class Point2D extends factory.object("Point", {
 			x: factory.number,
@@ -56,7 +59,7 @@ describe("snapshotCompatibilityChecker", () => {
 		assert.deepEqual(compatibility, expected);
 	});
 
-	it("checkCompatibility detects compatible schemas", () => {
+	it("checkCompatibility detects upgradeable schemas - snapshot test", () => {
 		const factory = new SchemaFactory("test");
 
 		// The past view schema, for the purposes of illustration. This wouldn't normally appear as a concrete schema in the test
@@ -98,5 +101,65 @@ describe("snapshotCompatibilityChecker", () => {
 		// we assert that there is forwards compatibility break:
 		// this means these two versions of the application cannot collaborate on content using these schema.
 		assert.equal(forwardsCompatibilityStatus.canView, false);
+	});
+
+	it("checkCompatibility: allowUnknownOptionalFields", () => {
+		const factory = new SchemaFactoryBeta("test");
+
+		// Point2D is constructed with allowUnknownOptionalFields, so it can read Point3D trees
+		// even though it does not know about the optional field `z`.
+		class Point2D extends factory.object(
+			"Point",
+			{
+				x: factory.number,
+				y: factory.number,
+			},
+			{ allowUnknownOptionalFields: true },
+		) {}
+		class Point3D extends factory.object("Point", {
+			x: factory.number,
+			y: factory.number,
+			z: factory.optional(factory.number),
+		}) {}
+
+		const oldViewSchema = new TreeViewConfiguration({ schema: Point2D });
+		const currentViewSchema = new TreeViewConfiguration({ schema: Point3D });
+
+		// Check to see if a document created with the current view schema can be opened with the historical view schema
+		const backwardsCompatibilityStatus = checkCompatibility(oldViewSchema, currentViewSchema);
+
+		// The current view schema has a superset of the fields on the old view schema, so the schema must be upgraded to add the new
+		// optional field `z`.
+		assert.equal(backwardsCompatibilityStatus.canView, false);
+		assert.equal(backwardsCompatibilityStatus.canUpgrade, true);
+
+		// Test what the old version of the application would do with a tree using the new schema:
+		const forwardsCompatibilityStatus = checkCompatibility(currentViewSchema, oldViewSchema);
+
+		// Content created with the current schema can be viewed by the old schema due to allowUnknownOptionalFields
+		assert.equal(forwardsCompatibilityStatus.canView, true);
+	});
+
+	it("checkCompatibility: staged schema", () => {
+		const factory = new SchemaFactoryBeta("test");
+		const oldSchema = factory.optional(
+			factory.types([numberSchema, factory.staged(stringSchema)]),
+		);
+		const currentSchema = factory.optional([stringSchema, numberSchema]);
+
+		const oldViewSchema = new TreeViewConfiguration({ schema: oldSchema });
+		const currentViewSchema = new TreeViewConfiguration({ schema: currentSchema });
+
+		// Check to see if the document created by the historical view schema can be opened with the current view schema
+		const backwardsCompatibilityStatus = checkCompatibility(oldViewSchema, currentViewSchema);
+
+		// The staged string schema in the old schema is supported in the current schema
+		assert.equal(backwardsCompatibilityStatus.canView, true);
+
+		// Check to see if a document created with the current view schema can be opened with the historical view schema
+		const forwardsCompatibilityStatus = checkCompatibility(currentViewSchema, oldViewSchema);
+
+		// The current schema's string schema is supported by the old schema's staged string schema
+		assert.equal(forwardsCompatibilityStatus.canView, true);
 	});
 });
