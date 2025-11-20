@@ -27,6 +27,7 @@ import {
 	type FluidObject,
 	type IConfigProviderBase,
 	type IErrorBase,
+	type IFluidHandle,
 } from "@fluidframework/core-interfaces/internal";
 import type { SessionSpaceCompressedId } from "@fluidframework/id-compressor/internal";
 import { SharedMap } from "@fluidframework/map/internal";
@@ -91,6 +92,10 @@ class DataObjectWithStagingMode extends DataObject {
 		return id;
 	}
 
+	public setHandle(key: string, handle: IFluidHandle): void {
+		this.root.set(key, handle);
+	}
+
 	/**
 	 * Enumerate the data store's data, encoding handles to get a synchronously-available representation.
 	 */
@@ -113,7 +118,10 @@ class DataObjectWithStagingMode extends DataObject {
 			for (const key of map.keys()) {
 				const value = (state[key] = map.get(key));
 				if (isFluidHandle(value)) {
-					state[key] = await loadStateInt(await value.get());
+					const obj = await value.get();
+					state[key] = await (obj instanceof DataObjectWithStagingMode
+						? obj.enumerateDataWithHandlesResolved()
+						: loadStateInt(obj));
 				}
 			}
 			return state;
@@ -694,13 +702,15 @@ describe("Staging Mode", () => {
 
 			// Enter staging mode and create a new DDS
 			clients.original.dataObject.enterStagingMode();
-			const pendingDDSId = clients.original.dataObject.addDDS("pendingDDS");
+			clients.original.dataObject.addDDS("pendingDDS");
 
 			// Get the pending local state before committing
 			const pendingState = await (
 				clients.original.container as ContainerAlpha
 			).getPendingLocalState();
 			assert(pendingState !== undefined, "Pending state should exist");
+			const originalData =
+				await clients.original.dataObject.enumerateDataWithHandlesResolved();
 
 			// Close the original container
 			clients.original.container.close();
@@ -728,39 +738,40 @@ describe("Staging Mode", () => {
 
 			// The rehydrated container should have the pending DDS loaded
 			const rehydratedData = await rehydratedDataObject.enumerateDataWithHandlesResolved();
-			assert(
-				rehydratedData[pendingDDSId] !== undefined,
+			assert.deepEqual(
+				rehydratedData,
+				originalData,
 				"Rehydrated container should have pending DDS",
 			);
 		});
 
-		it("rehydrates multiple pending datastores with DDS", async () => {
+		it("rehydrates pending datastore with DDS", async () => {
 			const deltaConnectionServer = LocalDeltaConnectionServer.create();
 			const clients = await createClients(deltaConnectionServer);
 
 			// Enter staging mode
 			clients.original.dataObject.enterStagingMode();
 
-			// Create multiple datastores with DDS
-			for (let i = 0; i < 3; i++) {
-				const newDataStore =
-					await clients.original.dataObject.containerRuntime.createDataStore(
-						dataObjectFactory.type,
-					);
-				const newDataObject =
-					(await newDataStore.entryPoint.get()) as DataObjectWithStagingMode;
+			// Create a datastore with DDS
+			const newDataStore = await clients.original.dataObject.containerRuntime.createDataStore(
+				dataObjectFactory.type,
+			);
+			const newDataObject = (await newDataStore.entryPoint.get()) as DataObjectWithStagingMode;
 
-				// Create a DDS in each datastore
-				newDataObject.addDDS(`dds-in-ds-${i}`);
-				newDataObject.makeEdit(`edit-in-ds-${i}`);
-			}
+			// Create a DDS in the datastore and make an edit
+			newDataObject.addDDS("pendingDDS");
+			newDataObject.makeEdit("pendingEdit");
+
+			// Store handle to the new datastore in root so we can access it after rehydration
+			clients.original.dataObject.setHandle("pendingDatastore", newDataStore.entryPoint);
 
 			// Get the pending local state before committing
 			const pendingState = await (
 				clients.original.container as ContainerAlpha
 			).getPendingLocalState();
 			assert(pendingState !== undefined, "Pending state should exist");
-
+			const originalData =
+				await clients.original.dataObject.enumerateDataWithHandlesResolved();
 			// Close the original container
 			clients.original.container.close();
 
@@ -785,15 +796,13 @@ describe("Staging Mode", () => {
 			const runtimeAlpha = asLegacyAlpha(rehydratedDataObject.containerRuntime);
 			assert(runtimeAlpha.inStagingMode, "Rehydrated container should be in staging mode");
 
-			// The rehydrated container should have all the pending datastores loaded
+			// Verify the handle to the pending datastore was rehydrated
 			const rehydratedData = await rehydratedDataObject.enumerateDataWithHandlesResolved();
-
-			// Verify all pending edits are present in the rehydrated container
-			for (let i = 0; i < 3; i++) {
-				const editKey = `edit-in-ds-${i}-`;
-				const foundEdit = Object.keys(rehydratedData).some((key) => key.startsWith(editKey));
-				assert(foundEdit, `Rehydrated container should have edit from datastore ${i}`);
-			}
+			assert.deepEqual(
+				rehydratedData,
+				originalData,
+				"Rehydrated container should have handle to pending datastore",
+			);
 		});
 	});
 });

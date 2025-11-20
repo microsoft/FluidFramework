@@ -1047,7 +1047,8 @@ export class ChannelCollection
 			);
 		}
 
-		const context = await this.contexts.getBoundOrRemoted(id, headerData.wait);
+		const context =
+			this.contexts.get(id) ?? (await this.contexts.getBoundOrRemoted(id, headerData.wait));
 		if (context === undefined) {
 			// The requested data store does not exits. Throw a 404 response exception.
 			const request: IRequest = { url: id };
@@ -1717,14 +1718,15 @@ export class ChannelCollection
 				// Datastore doesn't exist yet - create it from the summary
 				// Convert the summary tree to an ITree, then to a snapshot tree
 				const itree = convertSummaryTreeToITree(summary.summary);
-				const snapshotTree = buildSnapshotTree(itree.entries, new Map());
+				const blobs = new Map<string, ArrayBufferLike>();
+				const snapshotTree = buildSnapshotTree(itree.entries, blobs);
 
 				// Create a LocalFluidDataStoreContext for this datastore
 				const dataStoreContext = new LocalFluidDataStoreContext({
 					id,
 					pkg: undefined,
 					parentContext: this.wrapContextForInnerChannel(id),
-					storage: this.parentContext.storage,
+					storage: new StorageServiceWithAttachBlobs(this.parentContext.storage, blobs),
 					scope: this.parentContext.scope,
 					createSummarizerNodeFn: this.parentContext.getCreateChildSummarizerNodeFn(id, {
 						type: CreateSummarizerNodeSource.Local,
