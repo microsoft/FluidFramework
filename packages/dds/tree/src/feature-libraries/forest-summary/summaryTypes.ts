@@ -25,11 +25,6 @@ export const forestSummaryKey = "Forest";
 export const forestSummaryContentKey = "ForestTree";
 
 /**
- * The storage key for the blob containing metadata for the forest's summary.
- */
-export const forestSummaryMetadataKey = ".metadata";
-
-/**
  * The contents of an incremental chunk is under a summary tree node with its {@link ChunkReferenceId} as the key.
  * The inline portion of the chunk content is encoded with the forest codec is stored in a blob with this key.
  * The rest of the chunk contents  is stored in the summary tree under the summary tree node.

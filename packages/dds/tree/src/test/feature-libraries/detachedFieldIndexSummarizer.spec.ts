@@ -10,7 +10,6 @@ import { MockStorage, validateUsageError } from "@fluidframework/test-runtime-ut
 
 import { DetachedFieldIndex, type ForestRootId } from "../../core/index.js";
 import {
-	detachedFieldIndexMetadataKey,
 	DetachedFieldIndexSummarizer,
 	DetachedFieldIndexSummaryVersion,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -18,7 +17,10 @@ import {
 import { FluidClientVersion } from "../../codec/index.js";
 import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
 import { type IdAllocator, idAllocatorFromMaxId } from "../../util/index.js";
-import type { SharedTreeSummarizableMetadata } from "../../shared-tree-core/index.js";
+import {
+	summarizablesMetadataKey,
+	type SharedTreeSummarizableMetadata,
+} from "../../shared-tree-core/index.js";
 
 function createDetachedFieldIndexSummarizer(options?: {
 	minVersionForCollab?: MinimumVersionForCollab;
@@ -52,7 +54,7 @@ describe("DetachedFieldIndexSummarizer", () => {
 
 			// Check if metadata blob exists
 			const metadataBlob: SummaryObject | undefined =
-				summary.summary.tree[detachedFieldIndexMetadataKey];
+				summary.summary.tree[summarizablesMetadataKey];
 			assert(metadataBlob === undefined, "Metadata blob should not exist");
 		});
 
@@ -67,7 +69,7 @@ describe("DetachedFieldIndexSummarizer", () => {
 
 			// Check if metadata blob exists
 			const metadataBlob: SummaryObject | undefined =
-				summary.summary.tree[detachedFieldIndexMetadataKey];
+				summary.summary.tree[summarizablesMetadataKey];
 			assert(metadataBlob !== undefined, "Metadata blob should exist");
 			assert.equal(metadataBlob.type, SummaryType.Blob, "Metadata should be a blob");
 			const metadataContent = JSON.parse(
@@ -91,7 +93,7 @@ describe("DetachedFieldIndexSummarizer", () => {
 
 			// Verify metadata exists and has version = 1
 			const metadataBlob: SummaryObject | undefined =
-				summary.summary.tree[detachedFieldIndexMetadataKey];
+				summary.summary.tree[summarizablesMetadataKey];
 			assert(metadataBlob !== undefined, "Metadata blob should exist");
 			assert.equal(metadataBlob.type, SummaryType.Blob, "Metadata should be a blob");
 			const metadataContent = JSON.parse(
@@ -125,7 +127,7 @@ describe("DetachedFieldIndexSummarizer", () => {
 
 			// Modify metadata to have version > latest
 			const metadataBlob: SummaryObject | undefined =
-				summary.summary.tree[detachedFieldIndexMetadataKey];
+				summary.summary.tree[summarizablesMetadataKey];
 			assert(metadataBlob !== undefined, "Metadata blob should exist");
 			assert.equal(metadataBlob.type, SummaryType.Blob, "Metadata should be a blob");
 			const modifiedMetadata: SharedTreeSummarizableMetadata = {

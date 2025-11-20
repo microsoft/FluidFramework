@@ -44,7 +44,7 @@ import type {
 import { Tree } from "../../shared-tree/index.js";
 import {
 	SharedTreeSummaryVersion,
-	treeSummaryMetadataKey,
+	summarizablesMetadataKey,
 	type ChangeEnricherReadonlyCheckout,
 	type EditManager,
 	type ResubmitMachine,
@@ -152,7 +152,7 @@ describe("SharedTreeCore", () => {
 				codecOptions: { ...testCodecOptions, minVersionForCollab: FluidClientVersion.v2_52 },
 			});
 			const { summary } = tree.summarizeCore(mockSerializer);
-			const metadataBlob: SummaryObject | undefined = summary.tree[treeSummaryMetadataKey];
+			const metadataBlob: SummaryObject | undefined = summary.tree[summarizablesMetadataKey];
 			assert(metadataBlob === undefined, "Metadata blob should not exist");
 		});
 
@@ -162,7 +162,7 @@ describe("SharedTreeCore", () => {
 				codecOptions: { ...testCodecOptions, minVersionForCollab: FluidClientVersion.v2_73 },
 			});
 			const { summary } = tree.summarizeCore(mockSerializer);
-			const metadataBlob: SummaryObject | undefined = summary.tree[treeSummaryMetadataKey];
+			const metadataBlob: SummaryObject | undefined = summary.tree[summarizablesMetadataKey];
 			assert(metadataBlob !== undefined, "Metadata blob should exist");
 			assert.equal(metadataBlob.type, SummaryType.Blob, "Metadata should be a blob");
 			const metadataContent = JSON.parse(
@@ -181,7 +181,7 @@ describe("SharedTreeCore", () => {
 				codecOptions: { ...testCodecOptions, minVersionForCollab: FluidClientVersion.v2_73 },
 			});
 			const { summary } = tree.summarizeCore(mockSerializer);
-			const metadataBlob: SummaryObject | undefined = summary.tree[treeSummaryMetadataKey];
+			const metadataBlob: SummaryObject | undefined = summary.tree[summarizablesMetadataKey];
 			assert(metadataBlob !== undefined, "Metadata blob should exist");
 			assert.equal(metadataBlob.type, SummaryType.Blob, "Metadata should be a blob");
 			const metadataContent = JSON.parse(
@@ -208,7 +208,7 @@ describe("SharedTreeCore", () => {
 			const { summary } = tree.summarizeCore(mockSerializer);
 
 			// Modify metadata to have version > latest
-			const metadataBlob: SummaryObject | undefined = summary.tree[treeSummaryMetadataKey];
+			const metadataBlob: SummaryObject | undefined = summary.tree[summarizablesMetadataKey];
 			assert(metadataBlob !== undefined, "Metadata blob should exist");
 			assert.equal(metadataBlob.type, SummaryType.Blob, "Metadata should be a blob");
 			const modifiedMetadata: SharedTreeSummarizableMetadata = {

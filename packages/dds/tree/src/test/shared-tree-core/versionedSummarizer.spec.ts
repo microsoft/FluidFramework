@@ -11,7 +11,7 @@ import { MockStorage, validateUsageError } from "@fluidframework/test-runtime-ut
 
 import {
 	VersionedSummarizer,
-	treeSummaryMetadataKey,
+	summarizablesMetadataKey,
 	type SharedTreeSummarizableMetadata,
 	type SummaryElementParser,
 	type SummaryElementStringifier,
@@ -65,7 +65,7 @@ describe("VersionedSummarizer", () => {
 
 			const summary = summarizer.summarize({ stringify });
 
-			const metadataBlob = summary.summary.tree[treeSummaryMetadataKey] as ISummaryBlob;
+			const metadataBlob = summary.summary.tree[summarizablesMetadataKey] as ISummaryBlob;
 			assert(metadataBlob !== undefined, "Metadata blob should exist");
 			assert.equal(metadataBlob.type, SummaryType.Blob, "Metadata should be a blob");
 
@@ -84,7 +84,7 @@ describe("VersionedSummarizer", () => {
 
 			const summary = summarizer.summarize({ stringify });
 
-			const metadataBlob = summary.summary.tree[treeSummaryMetadataKey];
+			const metadataBlob = summary.summary.tree[summarizablesMetadataKey];
 			assert(metadataBlob === undefined, "Metadata blob should not exist");
 		});
 

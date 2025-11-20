@@ -54,12 +54,14 @@ import {
 import { fieldJsonCursor } from "../../json/index.js";
 import {
 	forestSummaryContentKey,
-	forestSummaryMetadataKey,
 	ForestSummaryVersion,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/forest-summary/summaryTypes.js";
 import type { FieldKey, TreeNodeSchemaIdentifier } from "../../../core/index.js";
-import type { SharedTreeSummarizableMetadata } from "../../../shared-tree-core/index.js";
+import {
+	summarizablesMetadataKey,
+	type SharedTreeSummarizableMetadata,
+} from "../../../shared-tree-core/index.js";
 
 function createForestSummarizer(args: {
 	// The encoding strategy to use when summarizing the forest.
@@ -286,7 +288,7 @@ describe("ForestSummarizer", () => {
 			);
 
 			for (const [key, value] of Object.entries(summary.tree)) {
-				if (key === forestSummaryContentKey || key === forestSummaryMetadataKey) {
+				if (key === forestSummaryContentKey || key === summarizablesMetadataKey) {
 					assert(value.type === SummaryType.Blob, "Forest summary blob not as expected");
 				} else {
 					assert(value.type === SummaryType.Tree, "Incremental summary node should be a tree");
@@ -695,7 +697,7 @@ describe("ForestSummarizer", () => {
 
 			// Check if metadata blob exists
 			const metadataBlob: SummaryObject | undefined =
-				summary.summary.tree[forestSummaryMetadataKey];
+				summary.summary.tree[summarizablesMetadataKey];
 			assert(metadataBlob === undefined, "Metadata blob should not exist");
 		});
 
@@ -710,7 +712,7 @@ describe("ForestSummarizer", () => {
 
 			// Check if metadata blob exists
 			const metadataBlob: SummaryObject | undefined =
-				summary.summary.tree[forestSummaryMetadataKey];
+				summary.summary.tree[summarizablesMetadataKey];
 			assert(metadataBlob !== undefined, "Metadata blob should exist");
 			assert.equal(metadataBlob.type, SummaryType.Blob, "Metadata should be a blob");
 			const metadataContent = JSON.parse(
@@ -734,7 +736,7 @@ describe("ForestSummarizer", () => {
 
 			// Verify metadata exists and has version = 1
 			const metadataBlob: SummaryObject | undefined =
-				summary.summary.tree[forestSummaryMetadataKey];
+				summary.summary.tree[summarizablesMetadataKey];
 			assert(metadataBlob !== undefined, "Metadata blob should exist");
 			assert.equal(metadataBlob.type, SummaryType.Blob, "Metadata should be a blob");
 			const metadataContent = JSON.parse(
@@ -771,7 +773,7 @@ describe("ForestSummarizer", () => {
 
 			// Modify metadata to have version > latest
 			const metadataBlob: SummaryObject | undefined =
-				summary.summary.tree[forestSummaryMetadataKey];
+				summary.summary.tree[summarizablesMetadataKey];
 			assert(metadataBlob !== undefined, "Metadata blob should exist");
 			assert.equal(metadataBlob.type, SummaryType.Blob, "Metadata should be a blob");
 			const modifiedMetadata: SharedTreeSummarizableMetadata = {

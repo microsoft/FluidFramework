@@ -32,11 +32,6 @@ import { FluidClientVersion } from "../codec/index.js";
 const detachedFieldIndexBlobKey = "DetachedFieldIndexBlob";
 
 /**
- * The storage key for the blob containing metadata for the detached field index's summary.
- */
-export const detachedFieldIndexMetadataKey = ".metadata";
-
-/**
  * The versions for the detached field index summary.
  */
 export const enum DetachedFieldIndexSummaryVersion {

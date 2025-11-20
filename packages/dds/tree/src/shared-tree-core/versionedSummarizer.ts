@@ -12,7 +12,7 @@ import type {
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
-	treeSummaryMetadataKey,
+	summarizablesMetadataKey,
 	type SharedTreeSummarizableMetadata,
 	type Summarizable,
 	type SummaryElementParser,
@@ -76,7 +76,7 @@ export abstract class VersionedSummarizer implements Summarizable {
 			const metadata: SharedTreeSummarizableMetadata = {
 				version: this.writeVersion,
 			};
-			builder.addBlob(treeSummaryMetadataKey, props.stringify(metadata));
+			builder.addBlob(summarizablesMetadataKey, props.stringify(metadata));
 		}
 		this.summarizeInternal({ ...props, builder });
 		return builder.getSummaryTree();
@@ -86,9 +86,9 @@ export abstract class VersionedSummarizer implements Summarizable {
 		services: IChannelStorageService,
 		parse: SummaryElementParser,
 	): Promise<void> {
-		if (await services.contains(treeSummaryMetadataKey)) {
+		if (await services.contains(summarizablesMetadataKey)) {
 			const metadata = await readAndParseSnapshotBlob<SharedTreeSummarizableMetadata>(
-				treeSummaryMetadataKey,
+				summarizablesMetadataKey,
 				services,
 				(contents) => parse(contents),
 			);

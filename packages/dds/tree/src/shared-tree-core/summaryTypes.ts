@@ -23,9 +23,9 @@ import { FluidClientVersion } from "../codec/index.js";
 export const summarizablesTreeKey = "indexes";
 
 /**
- * The storage key for the blob containing metadata for the SharedTree's summary.
+ * The storage key for the blob containing metadata for the summarizable's summary.
  */
-export const treeSummaryMetadataKey = ".metadata";
+export const summarizablesMetadataKey = ".metadata";
 
 /**
  * Specifies the behavior of a component that puts data in a summary.

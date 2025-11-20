@@ -39,11 +39,6 @@ import { encodeRepo } from "./codec.js";
 const schemaStringKey = "SchemaString";
 
 /**
- * The storage key for the blob containing metadata for the schema's summary.
- */
-export const schemaMetadataKey = ".metadata";
-
-/**
  * The versions for the schema summary.
  */
 export const enum SchemaSummaryVersion {

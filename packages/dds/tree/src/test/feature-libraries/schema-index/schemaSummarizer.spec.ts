@@ -13,7 +13,6 @@ import {
 	encodeTreeSchema,
 	SchemaSummarizer,
 	SchemaSummaryVersion,
-	schemaMetadataKey,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/schema-index/schemaSummarizer.js";
 import { toInitialSchema } from "../../../simple-tree/index.js";
@@ -25,7 +24,10 @@ import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index
 import type { CollabWindow } from "../../../feature-libraries/incrementalSummarizationUtils.js";
 import { makeSchemaCodec } from "../../../feature-libraries/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
-import type { SharedTreeSummarizableMetadata } from "../../../shared-tree-core/index.js";
+import {
+	summarizablesMetadataKey,
+	type SharedTreeSummarizableMetadata,
+} from "../../../shared-tree-core/index.js";
 
 describe("schemaSummarizer", () => {
 	describe("encodeTreeSchema", () => {
@@ -76,7 +78,8 @@ describe("schemaSummarizer", () => {
 			});
 
 			// Check if metadata blob exists
-			const metadataBlob: SummaryObject | undefined = summary.summary.tree[schemaMetadataKey];
+			const metadataBlob: SummaryObject | undefined =
+				summary.summary.tree[summarizablesMetadataKey];
 			assert(metadataBlob === undefined, "Metadata blob should not exist");
 		});
 
@@ -90,7 +93,8 @@ describe("schemaSummarizer", () => {
 			});
 
 			// Check if metadata blob exists
-			const metadataBlob: SummaryObject | undefined = summary.summary.tree[schemaMetadataKey];
+			const metadataBlob: SummaryObject | undefined =
+				summary.summary.tree[summarizablesMetadataKey];
 			assert(metadataBlob !== undefined, "Metadata blob should exist");
 			assert.equal(metadataBlob.type, SummaryType.Blob, "Metadata should be a blob");
 			const metadataContent = JSON.parse(
@@ -113,7 +117,8 @@ describe("schemaSummarizer", () => {
 			});
 
 			// Verify metadata exists and has version = 1
-			const metadataBlob: SummaryObject | undefined = summary.summary.tree[schemaMetadataKey];
+			const metadataBlob: SummaryObject | undefined =
+				summary.summary.tree[summarizablesMetadataKey];
 			assert(metadataBlob !== undefined, "Metadata blob should exist");
 			assert.equal(metadataBlob.type, SummaryType.Blob, "Metadata should be a blob");
 			const metadataContent = JSON.parse(
@@ -142,7 +147,8 @@ describe("schemaSummarizer", () => {
 			});
 
 			// Modify metadata to have version > latest
-			const metadataBlob: SummaryObject | undefined = summary.summary.tree[schemaMetadataKey];
+			const metadataBlob: SummaryObject | undefined =
+				summary.summary.tree[summarizablesMetadataKey];
 			assert(metadataBlob !== undefined, "Metadata blob should exist");
 			assert.equal(metadataBlob.type, SummaryType.Blob, "Metadata should be a blob");
 			const modifiedMetadata = {

@@ -11,10 +11,10 @@ import { MockStorage, validateUsageError } from "@fluidframework/test-runtime-ut
 import {
 	EditManagerSummarizer,
 	makeEditManagerCodec,
+	summarizablesMetadataKey,
 	type SharedTreeSummarizableMetadata,
 } from "../../shared-tree-core/index.js";
 import {
-	editManagerMetadataKey,
 	EditManagerSummaryVersion,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree-core/editManagerSummarizer.js";
@@ -68,7 +68,7 @@ describe("EditManagerSummarizer", () => {
 
 			// Check if metadata blob exists
 			const metadataBlob: SummaryObject | undefined =
-				summary.summary.tree[editManagerMetadataKey];
+				summary.summary.tree[summarizablesMetadataKey];
 			assert(metadataBlob === undefined, "Metadata blob should not exist");
 		});
 
@@ -83,7 +83,7 @@ describe("EditManagerSummarizer", () => {
 
 			// Check if metadata blob exists
 			const metadataBlob: SummaryObject | undefined =
-				summary.summary.tree[editManagerMetadataKey];
+				summary.summary.tree[summarizablesMetadataKey];
 			assert(metadataBlob !== undefined, "Metadata blob should exist");
 			assert.equal(metadataBlob.type, SummaryType.Blob, "Metadata should be a blob");
 			const metadataContent = JSON.parse(
@@ -107,7 +107,7 @@ describe("EditManagerSummarizer", () => {
 
 			// Verify metadata exists and has version = 1
 			const metadataBlob: SummaryObject | undefined =
-				summary.summary.tree[editManagerMetadataKey];
+				summary.summary.tree[summarizablesMetadataKey];
 			assert(metadataBlob !== undefined, "Metadata blob should exist");
 			assert.equal(metadataBlob.type, SummaryType.Blob, "Metadata should be a blob");
 			const metadataContent = JSON.parse(
@@ -141,7 +141,7 @@ describe("EditManagerSummarizer", () => {
 
 			// Modify metadata to have version > latest
 			const metadataBlob: SummaryObject | undefined =
-				summary.summary.tree[editManagerMetadataKey];
+				summary.summary.tree[summarizablesMetadataKey];
 			assert(metadataBlob !== undefined, "Metadata blob should exist");
 			assert.equal(metadataBlob.type, SummaryType.Blob, "Metadata should be a blob");
 			const modifiedMetadata: SharedTreeSummarizableMetadata = {

@@ -32,7 +32,7 @@ export {
 	type Summarizable,
 	type SummaryElementParser,
 	type SummaryElementStringifier,
-	treeSummaryMetadataKey,
+	summarizablesMetadataKey,
 } from "./summaryTypes.js";
 export { VersionedSummarizer } from "./versionedSummarizer.js";
 

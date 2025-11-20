@@ -34,11 +34,6 @@ import { VersionedSummarizer } from "./versionedSummarizer.js";
 const stringKey = "String";
 
 /**
- * The storage key for the blob containing metadata for the edit manager's summary.
- */
-export const editManagerMetadataKey = ".metadata";
-
-/**
  * The summary version of the edit manager.
  */
 export const enum EditManagerSummaryVersion {
