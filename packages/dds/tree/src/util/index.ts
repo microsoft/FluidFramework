@@ -4,6 +4,12 @@
  */
 
 export {
+	validateIndex,
+	validateIndexRange,
+	validatePositiveIndex,
+	validateSafeInteger,
+} from "./arrayUtilities.js";
+export {
 	brand,
 	type Brand,
 	BrandedType,

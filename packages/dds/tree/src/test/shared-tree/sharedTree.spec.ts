@@ -12,6 +12,7 @@ import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
+	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
 import {
 	type TestFluidObjectInternal,
@@ -85,7 +86,6 @@ import {
 	expectSchemaEqual,
 	validateTreeConsistency,
 	validateTreeContent,
-	validateUsageError,
 	StringArray,
 	NumberArray,
 	validateViewConsistency,

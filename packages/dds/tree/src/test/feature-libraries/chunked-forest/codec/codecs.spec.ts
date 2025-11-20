@@ -96,7 +96,7 @@ describe("makeFieldBatchCodec", () => {
 
 			assert.throws(
 				() => codec.encode([input], context),
-				(error: Error) => validateAssertionError(error, /Unsupported FieldBatchFormatVersion/),
+				validateAssertionError(/Unsupported FieldBatchFormatVersion/),
 			);
 		});
 	});

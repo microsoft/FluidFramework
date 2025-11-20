@@ -27,6 +27,7 @@ import { z, type ZodTypeAny } from "zod";
 
 import type { BindableSchema } from "./methodBinding.js";
 import { FunctionWrapper, getExposedMethods } from "./methodBinding.js";
+import { getExposedProperties } from "./propertyBinding.js";
 import {
 	fail,
 	getOrCreate,
@@ -83,6 +84,11 @@ export function generateEditTypesForPrompt(
 						allSchemas.add(t);
 						objectTypeSchemas.add(t);
 					}
+					const exposedProperties = getExposedProperties(n);
+					for (const t of exposedProperties.referencedTypes) {
+						allSchemas.add(t);
+						objectTypeSchemas.add(t);
+					}
 				}
 			},
 		});
@@ -131,27 +137,39 @@ function generateEditTypes(
 	};
 }
 
-function getBoundMethodsForBindable(bindableSchema: BindableSchema): {
+function getBoundMembersForBindable(bindableSchema: BindableSchema): {
 	referencedTypes: Set<TreeNodeSchema>;
-	methods: [string, ZodTypeAny][];
+	members: [string, ZodTypeAny][];
 } {
-	const methodTypes: [string, ZodTypeAny][] = [];
+	const memberTypes: [string, ZodTypeAny][] = [];
+
 	const methods = getExposedMethods(bindableSchema);
 	for (const [name, method] of Object.entries(methods.methods)) {
 		const zodFunction = z.instanceof(FunctionWrapper);
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 		(zodFunction as any).method = method;
-		methodTypes.push([name, zodFunction]);
+		memberTypes.push([name, zodFunction]);
 	}
-	return { methods: methodTypes, referencedTypes: methods.referencedTypes };
+	const props = getExposedProperties(bindableSchema);
+	for (const [name, prop] of Object.entries(props.properties)) {
+		const schema = prop.schema;
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+		(schema as any).property = prop;
+		memberTypes.push([name, prop.schema]);
+	}
+
+	return {
+		members: memberTypes,
+		referencedTypes: new Set([...props.referencedTypes, ...methods.referencedTypes]),
+	};
 }
 
-function getBoundMethods(
+function getBoundMembers(
 	definition: string,
 	bindableSchemas: Map<string, BindableSchema>,
 ): [string, ZodTypeAny][] {
-	const bindableSchema = bindableSchemas.get(definition) ?? fail("Unknown definition");
-	return getBoundMethodsForBindable(bindableSchema).methods;
+	const bindableSchema = bindableSchemas.get(definition) ?? fail("unknown definition");
+	return getBoundMembersForBindable(bindableSchema).members;
 }
 
 function addBindingIntersectionIfNeeded(
@@ -163,21 +181,68 @@ function addBindingIntersectionIfNeeded(
 ): ZodTypeAny {
 	let zodType = zodTypeBound;
 	let description = simpleNodeSchema.metadata?.description ?? "";
-	const boundMethods = getBoundMethods(definition, bindableSchemas);
-	if (boundMethods.length > 0) {
-		const methods: Record<string, z.ZodTypeAny> = {};
-		for (const [name, zodFunction] of boundMethods) {
-			if (methods[name] !== undefined) {
-				throw new UsageError(
-					`Method ${name} conflicts with field of the same name in schema ${definition}`,
-				);
+
+	const boundMembers = getBoundMembers(definition, bindableSchemas);
+	const methods: Record<string, z.ZodTypeAny> = {};
+	const properties: Record<string, z.ZodTypeAny> = {};
+
+	let hasProperties: boolean = false;
+	let hasMethods: boolean = false;
+
+	if (boundMembers.length > 0) {
+		for (const [name, zodMember] of boundMembers) {
+			const kind =
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+				(zodMember as any).method === undefined
+					? // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+						(zodMember as any).property === undefined
+						? "Unknown"
+						: "Property"
+					: "Method";
+
+			if (kind === "Unknown") {
+				throw new UsageError(`Unrecognized bound member ${name} in schema ${definition}`);
 			}
-			methods[name] = zodFunction;
+			if (kind === "Method") {
+				if (methods[name] !== undefined) {
+					throw new UsageError(
+						`${kind} ${name} conflicts with field of the same name in schema ${definition}`,
+					);
+				}
+				methods[name] = zodMember;
+			}
+			if (kind === "Property") {
+				if (properties[name] !== undefined) {
+					throw new UsageError(
+						`${kind} ${name} conflicts with field of the same name in schema ${definition}`,
+					);
+				}
+				properties[name] = zodMember;
+			}
 		}
-		zodType = z.intersection(zodType, z.object(methods));
-		const methodNote = `Note: this ${typeString} has custom user-defined methods directly on it.`;
-		description = description === "" ? methodNote : `${description} - ${methodNote}`;
+		hasMethods = Object.keys(methods).length > 0 ? true : false;
+		hasProperties = Object.keys(properties).length > 0 ? true : false;
+
+		if (hasMethods) {
+			zodType = z.intersection(zodType, z.object(methods));
+		}
+		if (hasProperties) {
+			zodType = z.intersection(zodType, z.object(properties));
+		}
 	}
+
+	let note = "";
+	if (hasMethods && hasProperties) {
+		note = `Note: this ${typeString} has custom user-defined methods and properties directly on it.`;
+	} else if (hasMethods) {
+		note = `Note: this ${typeString} has custom user-defined methods directly on it.`;
+	} else if (hasProperties) {
+		note = `Note: this ${typeString} has custom user-defined properties directly on it.`;
+	}
+	if (note !== "") {
+		description = description === "" ? note : `${description} - ${note}`;
+	}
+
 	return zodType.describe(description);
 }
 
@@ -209,14 +274,15 @@ function getOrCreateType(
 						.filter(([, value]) => value !== undefined),
 				);
 
-				// Unlike arrays/maps/records, object nodes include methods directly on them rather than using an intersection
-				for (const [name, zodFunction] of getBoundMethods(definition, bindableSchemas)) {
+				for (const [name, zodMember] of getBoundMembers(definition, bindableSchemas)) {
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+					const kind = (zodMember as any).method === undefined ? "Property" : "Method";
 					if (properties[name] !== undefined) {
 						throw new UsageError(
-							`Method ${name} conflicts with field of the same name in schema ${definition}`,
+							`${kind} ${name} conflicts with field of the same name in schema ${definition}`,
 						);
 					}
-					properties[name] = zodFunction;
+					properties[name] = zodMember;
 				}
 
 				return (type = z

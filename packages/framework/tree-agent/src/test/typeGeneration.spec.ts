@@ -16,6 +16,7 @@ import {
 import { z } from "zod";
 
 import { buildFunc, exposeMethodsSymbol, type ExposedMethods } from "../methodBinding.js";
+import { exposePropertiesSymbol, type ExposedProperties } from "../propertyBinding.js";
 import { generateEditTypesForPrompt } from "../typeGeneration.js";
 import { unqualifySchema, getZodSchemaAsTypeScript, isNamedSchema } from "../utils.js";
 
@@ -174,6 +175,88 @@ type MapWithMethod = Map<string, string> & {
 
 interface Obj {
 }
+`,
+			);
+		});
+	});
+
+	describe("for schemas with properties", () => {
+		it("works on object nodes", () => {
+			class ObjWithProperty extends sf.object("ObjWithProperty", {}) {
+				public testProperty: string = "property";
+				public get property(): string {
+					return this.testProperty;
+				}
+				public static [exposePropertiesSymbol](properties: ExposedProperties): void {
+					properties.exposeProperty(ObjWithProperty, "testProperty", { schema: z.string() });
+					properties.exposeProperty(ObjWithProperty, "property", {
+						schema: z.string(),
+						readOnly: true,
+					});
+				}
+			}
+
+			const arrayDomainSchemaString = getDomainSchemaString(ObjWithProperty, {});
+			assert.deepEqual(
+				arrayDomainSchemaString,
+				`interface ObjWithProperty {
+    testProperty: string;
+    property: string; // readonly
+}
+`,
+			);
+		});
+
+		it("works on array nodes", () => {
+			class ArrayWithProperty extends sf.array("ArrayWithProperty", sf.string) {
+				public testProperty: string = "property";
+				public get property(): string {
+					return this.testProperty;
+				}
+				public static [exposePropertiesSymbol](properties: ExposedProperties): void {
+					properties.exposeProperty(ArrayWithProperty, "testProperty", { schema: z.string() });
+					properties.exposeProperty(ArrayWithProperty, "property", {
+						schema: z.string(),
+						readOnly: true,
+					});
+				}
+			}
+
+			const arrayDomainSchemaString = getDomainSchemaString(ArrayWithProperty, ["test"]);
+			assert.deepEqual(
+				arrayDomainSchemaString,
+				`// Note: this array has custom user-defined properties directly on it.
+type ArrayWithProperty = string[] & {
+    testProperty: string;
+    property: string; // readonly
+};
+`,
+			);
+		});
+
+		it("works on map nodes", () => {
+			class MapWithProperty extends sf.map("MapWithProperty", sf.string) {
+				public testProperty: string = "testProperty";
+				public get property(): string {
+					return this.testProperty;
+				}
+				public static [exposePropertiesSymbol](properties: ExposedProperties): void {
+					properties.exposeProperty(MapWithProperty, "testProperty", { schema: z.string() });
+					properties.exposeProperty(MapWithProperty, "property", {
+						schema: z.string(),
+						readOnly: true,
+					});
+				}
+			}
+
+			const mapDomainSchemaString = getDomainSchemaString(MapWithProperty, new Map());
+			assert.deepEqual(
+				mapDomainSchemaString,
+				`// Note: this map has custom user-defined properties directly on it.
+type MapWithProperty = Map<string, string> & {
+    testProperty: string;
+    property: string; // readonly
+};
 `,
 			);
 		});

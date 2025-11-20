@@ -79,6 +79,7 @@
 		"@fluidframework/local-driver": "workspace:~",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/matrix": "workspace:~",
+		"@fluidframework/register-collection": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
@@ -113,7 +114,10 @@
 				"@fluidframework/matrix#build:test",
 				"@fluidframework/tree#build:test",
 				"@fluidframework/task-manager#build:test",
-				"@fluidframework/legacy-dds#build:test"
+				"@fluidframework/legacy-dds#build:test",
+				"@fluidframework/task-manager#build:test",
+				"@fluidframework/counter#build:test",
+				"@fluidframework/register-collection#build:test"
 			]
 		}
 	},

@@ -60,7 +60,6 @@ export {
 	type SharedTreeOptionsBeta,
 	type ForestType,
 	type SharedTreeFormatOptions,
-	SharedTreeFormatVersion,
 	Tree,
 	type RunTransaction,
 	type ForestOptions,
@@ -285,6 +284,9 @@ export {
 	type SimpleAllowedTypeAttributes,
 	encodeSimpleSchema,
 	decodeSimpleSchema,
+	exportCompatibilitySchemaSnapshot,
+	importCompatibilitySchemaSnapshot,
+	checkCompatibility,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,

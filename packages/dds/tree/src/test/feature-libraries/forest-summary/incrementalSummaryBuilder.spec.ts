@@ -165,7 +165,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 						stringify,
 						builder: new SummaryTreeBuilder(),
 					}),
-				(error: Error) => validateAssertionError(error, /Already tracking/),
+				validateAssertionError(/Already tracking/),
 			);
 			assert.equal(builder.forestSummaryState, ForestSummaryTrackingState.Tracking);
 		});
@@ -242,7 +242,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 						forestSummaryContent: mockForestSummaryContent,
 						builder: new SummaryTreeBuilder(),
 					}),
-				(error: Error) => validateAssertionError(error, /Not tracking/),
+				validateAssertionError(/Not tracking/),
 			);
 			assert.equal(builder.forestSummaryState, ForestSummaryTrackingState.ReadyToTrack);
 		});
@@ -367,7 +367,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 			const builder = createIncrementalSummaryBuilder();
 			assert.throws(
 				() => builder.encodeIncrementalField(testCursor, () => mockEncodedChunk),
-				(error: Error) => validateAssertionError(error, /Not tracking/),
+				validateAssertionError(/Not tracking/),
 			);
 		});
 
@@ -611,7 +611,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 					builder.decodeIncrementalChunk(999 as ChunkReferenceId, (encoded) => {
 						return getMockChunk();
 					}),
-				(error: Error) => validateAssertionError(error, "Encoded incremental chunk not found"),
+				validateAssertionError("Encoded incremental chunk not found"),
 			);
 		});
 	});

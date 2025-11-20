@@ -54,7 +54,7 @@ export {
 } from "./editManagerCodecs.js";
 export {
 	EditManagerFormatVersion,
-	editManagerFormatVersions,
+	supportedEditManagerFormatVersions,
 } from "./editManagerFormatCommons.js";
 export { EditManagerSummarizer } from "./editManagerSummarizer.js";
 export {
@@ -76,4 +76,8 @@ export {
 	clientVersionToMessageFormatVersion,
 	messageFormatVersionSelectorForSharedBranches,
 } from "./messageCodecs.js";
-export { MessageFormatVersion, messageFormatVersions } from "./messageFormat.js";
+export {
+	MessageFormatVersion,
+	messageFormatVersions,
+	supportedMessageFormatVersions,
+} from "./messageFormat.js";

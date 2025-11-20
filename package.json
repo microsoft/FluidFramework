@@ -403,6 +403,7 @@
 			"@vvago/vale",
 			"classic-level",
 			"core-js",
+			"esbuild",
 			"keytar",
 			"msgpackr-extract",
 			"puppeteer",
