@@ -11,6 +11,7 @@ import { MockStorage, validateUsageError } from "@fluidframework/test-runtime-ut
 
 import {
 	VersionedSummarizer,
+	preSummaryValidationVersion,
 	summarizablesMetadataKey,
 	type SharedTreeSummarizableMetadata,
 	type SummaryElementParser,
@@ -78,10 +79,10 @@ describe("VersionedSummarizer", () => {
 			assert.equal(metadata.version, 1, "Metadata version should be 1");
 		});
 
-		it("does not write metadata blob when writeVersion is undefined", () => {
+		it("does not write metadata blob when writeVersion is preSummaryValidationVersion", () => {
 			const summarizer = new TestVersionedSummarizer({
 				key: "testKey",
-				writeVersion: undefined,
+				writeVersion: preSummaryValidationVersion,
 				supportedReadVersions: new Set([1]),
 			});
 
@@ -120,7 +121,7 @@ describe("VersionedSummarizer", () => {
 		it("loads successfully when there is no metadata", async () => {
 			const summarizer = new TestVersionedSummarizer({
 				key: "testKey",
-				writeVersion: undefined,
+				writeVersion: preSummaryValidationVersion,
 				supportedReadVersions: new Set([1]),
 			});
 
