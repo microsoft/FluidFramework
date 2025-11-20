@@ -6,22 +6,19 @@
 import { strict as assert } from "node:assert";
 import { SummaryType, type SummaryObject } from "@fluidframework/driver-definitions/internal";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
-import {
-	MockStorage,
-	validateAssertionError,
-} from "@fluidframework/test-runtime-utils/internal";
+import { MockStorage } from "@fluidframework/test-runtime-utils/internal";
 
 import { DetachedFieldIndex, type ForestRootId } from "../../core/index.js";
 import {
 	detachedFieldIndexMetadataKey,
 	DetachedFieldIndexSummarizer,
 	DetachedFieldIndexSummaryVersion,
-	type DetachedFieldIndexSummaryMetadata,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/detachedFieldIndexSummarizer.js";
 import { FluidClientVersion } from "../../codec/index.js";
-import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
-import { brand, type IdAllocator, idAllocatorFromMaxId } from "../../util/index.js";
+import { testIdCompressor, testRevisionTagCodec, validateUsageError } from "../utils.js";
+import { type IdAllocator, idAllocatorFromMaxId } from "../../util/index.js";
+import type { SharedTreeSummarizableMetadata } from "../../shared-tree-core/index.js";
 
 function createDetachedFieldIndexSummarizer(options?: {
 	minVersionForCollab?: MinimumVersionForCollab;
@@ -75,7 +72,7 @@ describe("DetachedFieldIndexSummarizer", () => {
 			assert.equal(metadataBlob.type, SummaryType.Blob, "Metadata should be a blob");
 			const metadataContent = JSON.parse(
 				metadataBlob.content as string,
-			) as DetachedFieldIndexSummaryMetadata;
+			) as SharedTreeSummarizableMetadata;
 			assert.equal(
 				metadataContent.version,
 				DetachedFieldIndexSummaryVersion.v1,
@@ -99,7 +96,7 @@ describe("DetachedFieldIndexSummarizer", () => {
 			assert.equal(metadataBlob.type, SummaryType.Blob, "Metadata should be a blob");
 			const metadataContent = JSON.parse(
 				metadataBlob.content as string,
-			) as DetachedFieldIndexSummaryMetadata;
+			) as SharedTreeSummarizableMetadata;
 			assert.equal(
 				metadataContent.version,
 				DetachedFieldIndexSummaryVersion.v1,
@@ -131,10 +128,8 @@ describe("DetachedFieldIndexSummarizer", () => {
 				summary.summary.tree[detachedFieldIndexMetadataKey];
 			assert(metadataBlob !== undefined, "Metadata blob should exist");
 			assert.equal(metadataBlob.type, SummaryType.Blob, "Metadata should be a blob");
-			const modifiedMetadata: DetachedFieldIndexSummaryMetadata = {
-				version: brand(
-					(DetachedFieldIndexSummaryVersion.vLatest + 1) as DetachedFieldIndexSummaryVersion,
-				),
+			const modifiedMetadata: SharedTreeSummarizableMetadata = {
+				version: DetachedFieldIndexSummaryVersion.vLatest + 1,
 			};
 			metadataBlob.content = JSON.stringify(modifiedMetadata);
 
@@ -145,7 +140,7 @@ describe("DetachedFieldIndexSummarizer", () => {
 			// Should fail to load with version > latest
 			await assert.rejects(
 				async () => summarizer2.load(mockStorage, JSON.parse),
-				(e: Error) => validateAssertionError(e, /Unsupported detached field index summary/),
+				validateUsageError(/Cannot read version/),
 			);
 		});
 	});

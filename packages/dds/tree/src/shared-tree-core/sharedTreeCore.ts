@@ -44,7 +44,6 @@ import {
 	type WithBreakable,
 	throwIfBroken,
 	breakingClass,
-	readAndParseSnapshotBlob,
 } from "../util/index.js";
 
 import type { BranchId, SharedTreeBranch } from "./branch.js";
@@ -65,11 +64,13 @@ import type { ResubmitMachine } from "./resubmitMachine.js";
 import type { MessageFormatVersion } from "./messageFormat.js";
 import {
 	minVersionToSharedTreeSummaryVersion,
-	SharedTreeSummaryVersion,
 	summarizablesTreeKey,
-	treeSummaryMetadataKey,
-	type SharedTreeSummaryMetadata,
+	supportedSharedTreeSummaryReadVersions,
+	type Summarizable,
+	type SummaryElementParser,
+	type SummaryElementStringifier,
 } from "./summaryTypes.js";
+import { VersionedSummarizer } from "./versionedSummarizer.js";
 
 export interface ClonableSchemaAndPolicy extends SchemaAndPolicy {
 	schema: TreeStoredSchemaRepository;
@@ -85,7 +86,8 @@ export interface SharedTreeCoreOptionsInternal
  */
 @breakingClass
 export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
-	implements WithBreakable
+	extends VersionedSummarizer
+	implements WithBreakable, Summarizable
 {
 	private readonly editManager: EditManager<TEditor, TChange, ChangeFamily<TEditor, TChange>>;
 	private readonly summarizables: readonly [EditManagerSummarizer<TChange>, ...Summarizable[]];
@@ -118,8 +120,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 
 	private readonly schemaAndPolicy: ClonableSchemaAndPolicy;
 
-	private readonly summaryWriteVersion: SharedTreeSummaryVersion;
-
 	/**
 	 * @param summarizables - Summarizers for all indexes used by this tree
 	 * @param changeFamily - The change family
@@ -146,6 +146,12 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		enricher?: ChangeEnricherReadonlyCheckout<TChange>,
 		public readonly getEditor: () => TEditor = () => this.getLocalBranch().editor,
 	) {
+		super({
+			key: summarizablesTreeKey,
+			writeVersion: minVersionToSharedTreeSummaryVersion(options.minVersionForCollab),
+			supportedReadVersions: supportedSharedTreeSummaryReadVersions,
+		});
+
 		this.schemaAndPolicy = {
 			schema,
 			policy: schemaPolicy,
@@ -180,9 +186,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			revisionTagCodec,
 			options,
 		);
-		this.summaryWriteVersion = minVersionToSharedTreeSummaryVersion(
-			options.minVersionForCollab,
-		);
 		this.summarizables = [
 			new EditManagerSummarizer(
 				this.editManager,
@@ -214,14 +217,16 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 
 	// TODO: SharedObject's merging of the two summary methods into summarizeCore is not what we want here:
 	// We might want to not subclass it, or override/reimplement most of its functionality.
-	@throwIfBroken
-	public summarizeCore(
-		serializer: IFluidSerializer,
-		telemetryContext?: ITelemetryContext,
-		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
-		fullTree?: boolean,
-	): ISummaryTreeWithStats {
-		const builder = new SummaryTreeBuilder();
+	protected summarizeInternal(props: {
+		stringify: SummaryElementStringifier;
+		fullTree?: boolean;
+		trackState?: boolean;
+		telemetryContext?: ITelemetryContext;
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext;
+		builder: SummaryTreeBuilder;
+	}): void {
+		const { stringify, fullTree, telemetryContext, incrementalSummaryContext, builder } =
+			props;
 		const summarizableBuilder = new SummaryTreeBuilder();
 		// Merge the summaries of all summarizables together under a single ISummaryTree
 		for (const s of this.summarizables) {
@@ -237,8 +242,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			summarizableBuilder.addWithStats(
 				s.key,
 				s.summarize({
-					stringify: (contents: unknown) =>
-						serializer.stringify(contents, this.sharedObject.handle),
+					stringify,
 					fullTree,
 					telemetryContext,
 					incrementalSummaryContext: childIncrementalSummaryContext,
@@ -246,33 +250,16 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			);
 		}
 		builder.addWithStats(summarizablesTreeKey, summarizableBuilder.getSummaryTree());
-
-		if (this.summaryWriteVersion >= SharedTreeSummaryVersion.v1) {
-			const metadata: SharedTreeSummaryMetadata = {
-				version: this.summaryWriteVersion,
-			};
-			builder.addBlob(treeSummaryMetadataKey, JSON.stringify(metadata));
-		}
-		return builder.getSummaryTree();
 	}
 
-	public async loadCore(services: IChannelStorageService): Promise<void> {
-		assert(
-			this.getLocalBranch().getHead() === this.editManager.getTrunkHead("main"),
-			0xaaa /* All local changes should be applied to the trunk before loading from summary */,
-		);
-		if (await services.contains(treeSummaryMetadataKey)) {
-			const metadata = await readAndParseSnapshotBlob<SharedTreeSummaryMetadata>(
-				treeSummaryMetadataKey,
-				services,
-				(contents) => this.serializer.parse(contents),
-			);
-			assert(metadata.version === SharedTreeSummaryVersion.v1, "Unsupported tree summary");
-		}
+	protected async loadInternal(
+		services: IChannelStorageService,
+		parse: SummaryElementParser,
+	): Promise<void> {
 		const [editManagerSummarizer, ...summarizables] = this.summarizables;
-		const loadEditManager = this.loadSummarizable(editManagerSummarizer, services);
+		const loadEditManager = this.loadSummarizable(editManagerSummarizer, services, parse);
 		const loadSummarizables = summarizables.map(async (s) =>
-			this.loadSummarizable(s, services),
+			this.loadSummarizable(s, services, parse),
 		);
 
 		if (this.detachedRevision !== undefined) {
@@ -293,6 +280,30 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		}
 	}
 
+	@throwIfBroken
+	public summarizeCore(
+		serializer: IFluidSerializer,
+		telemetryContext?: ITelemetryContext,
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
+		fullTree?: boolean,
+	): ISummaryTreeWithStats {
+		return this.summarize({
+			stringify: (contents: unknown) =>
+				serializer.stringify(contents, this.sharedObject.handle),
+			fullTree,
+			telemetryContext,
+			incrementalSummaryContext,
+		});
+	}
+
+	public async loadCore(services: IChannelStorageService): Promise<void> {
+		assert(
+			this.getLocalBranch().getHead() === this.editManager.getTrunkHead("main"),
+			0xaaa /* All local changes should be applied to the trunk before loading from summary */,
+		);
+		await super.load(services, (contents) => this.serializer.parse(contents));
+	}
+
 	private registerSharedBranch(branchId: BranchId): void {
 		this.editManager.getLocalBranch(branchId).events.on("beforeChange", (change) => {
 			if (change.type === "append") {
@@ -311,10 +322,11 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	private async loadSummarizable(
 		summarizable: Summarizable,
 		services: IChannelStorageService,
+		parse: SummaryElementParser,
 	): Promise<void> {
 		return summarizable.load(
 			scopeStorageService(services, summarizablesTreeKey, summarizable.key),
-			(contents) => this.serializer.parse(contents),
+			parse,
 		);
 	}
 
@@ -670,57 +682,6 @@ function isClonableSchemaPolicy(
 	const schemaAndPolicy = maybeSchemaPolicy as ClonableSchemaAndPolicy;
 	return schemaAndPolicy.schema !== undefined && schemaAndPolicy.policy !== undefined;
 }
-
-/**
- * Specifies the behavior of a component that puts data in a summary.
- */
-export interface Summarizable {
-	/**
-	 * Field name in summary json under which this element stores its data.
-	 */
-	readonly key: string;
-
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).summarize}
-	 * @param stringify - Serializes the contents of the component (including {@link (IFluidHandle:interface)}s) for storage.
-	 * @param fullTree - A flag indicating whether the attempt should generate a full
-	 * summary tree without any handles for unchanged subtrees. It should only be set to true when generating
-	 * a summary from the entire container. The default value is false.
-	 * @param trackState - An optimization for tracking state of objects across summaries. If the state
-	 * of an object did not change since last successful summary, an
-	 * {@link @fluidframework/protocol-definitions#ISummaryHandle} can be used
-	 * instead of re-summarizing it. If this is `false`, the expectation is that you should never
-	 * send an `ISummaryHandle`, since you are not expected to track state. The default value is true.
-	 * @param telemetryContext - See {@link @fluidframework/runtime-definitions#ITelemetryContext}.
-	 * @param incrementalSummaryContext - See {@link @fluidframework/runtime-definitions#IExperimentalIncrementalSummaryContext}.
-	 */
-	summarize(props: {
-		stringify: SummaryElementStringifier;
-		fullTree?: boolean;
-		trackState?: boolean;
-		telemetryContext?: ITelemetryContext;
-		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext;
-	}): ISummaryTreeWithStats;
-
-	/**
-	 * Allows the component to perform custom loading. The storage service is scoped to this component and therefore
-	 * paths in this component will not collide with those in other components, even if they are the same string.
-	 * @param service - Storage used by the component
-	 * @param parse - Parses serialized data from storage into runtime objects for the component
-	 */
-	load(service: IChannelStorageService, parse: SummaryElementParser): Promise<void>;
-}
-
-/**
- * Serializes the given contents into a string acceptable for storing in summaries, i.e. all
- * Fluid handles have been replaced appropriately by an IFluidSerializer
- */
-export type SummaryElementStringifier = (contents: unknown) => string;
-
-/**
- * Parses a serialized/summarized string into an object, rehydrating any Fluid handles as necessary
- */
-export type SummaryElementParser = (contents: string) => unknown;
 
 /**
  * Compose an {@link IChannelStorageService} which prefixes all paths before forwarding them to the original service

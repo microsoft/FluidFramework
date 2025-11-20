@@ -6,15 +6,13 @@
 import { strict as assert } from "node:assert";
 import { SummaryType, type SummaryObject } from "@fluidframework/driver-definitions/internal";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
-import {
-	MockStorage,
-	validateAssertionError,
-} from "@fluidframework/test-runtime-utils/internal";
+import { MockStorage } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	EditManagerSummarizer,
 	makeEditManagerCodec,
 	editManagerFormatVersions,
+	type SharedTreeSummarizableMetadata,
 } from "../../shared-tree-core/index.js";
 import {
 	editManagerMetadataKey,
@@ -22,7 +20,7 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree-core/editManagerSummarizer.js";
 import { DependentFormatVersion, FluidClientVersion } from "../../codec/index.js";
-import { testIdCompressor } from "../utils.js";
+import { testIdCompressor, validateUsageError } from "../utils.js";
 import { RevisionTagCodec } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -85,9 +83,9 @@ describe("EditManagerSummarizer", () => {
 				summary.summary.tree[editManagerMetadataKey];
 			assert(metadataBlob !== undefined, "Metadata blob should exist");
 			assert.equal(metadataBlob.type, SummaryType.Blob, "Metadata should be a blob");
-			const metadataContent = JSON.parse(metadataBlob.content as string) as {
-				version: number;
-			};
+			const metadataContent = JSON.parse(
+				metadataBlob.content as string,
+			) as SharedTreeSummarizableMetadata;
 			assert.equal(
 				metadataContent.version,
 				EditManagerSummaryVersion.v1,
@@ -109,9 +107,9 @@ describe("EditManagerSummarizer", () => {
 				summary.summary.tree[editManagerMetadataKey];
 			assert(metadataBlob !== undefined, "Metadata blob should exist");
 			assert.equal(metadataBlob.type, SummaryType.Blob, "Metadata should be a blob");
-			const metadataContent = JSON.parse(metadataBlob.content as string) as {
-				version: number;
-			};
+			const metadataContent = JSON.parse(
+				metadataBlob.content as string,
+			) as SharedTreeSummarizableMetadata;
 			assert.equal(
 				metadataContent.version,
 				EditManagerSummaryVersion.v1,
@@ -143,7 +141,7 @@ describe("EditManagerSummarizer", () => {
 				summary.summary.tree[editManagerMetadataKey];
 			assert(metadataBlob !== undefined, "Metadata blob should exist");
 			assert.equal(metadataBlob.type, SummaryType.Blob, "Metadata should be a blob");
-			const modifiedMetadata = {
+			const modifiedMetadata: SharedTreeSummarizableMetadata = {
 				version: EditManagerSummaryVersion.vLatest + 1,
 			};
 			metadataBlob.content = JSON.stringify(modifiedMetadata);
@@ -155,7 +153,7 @@ describe("EditManagerSummarizer", () => {
 			// Should fail to load with version > latest
 			await assert.rejects(
 				async () => summarizer2.load(mockStorage, JSON.parse),
-				(e: Error) => validateAssertionError(e, /Unsupported edit manager summary/),
+				validateUsageError(/Cannot read version/),
 			);
 		});
 	});

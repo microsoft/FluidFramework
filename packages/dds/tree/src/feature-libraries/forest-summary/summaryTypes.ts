@@ -5,7 +5,6 @@
 
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import { FluidClientVersion } from "../../codec/index.js";
-import { brand, type Brand } from "../../util/index.js";
 
 /**
  * The key for the tree that contains the overall forest's summary tree.
@@ -37,43 +36,27 @@ export const chunkContentsBlobKey = "contents";
 /**
  * The versions for the forest summary.
  */
-export const ForestSummaryVersion = {
+export enum ForestSummaryVersion {
 	/**
-	 * Version 0 represents summaries before versioning was added. This version is not written.
-	 * It is only used to avoid undefined checks.
+	 * Version 1. This version adds metadata to the SharedTree summary.
 	 */
-	v0: 0,
-	/**
-	 * Version 1 adds metadata to the forest summary.
-	 */
-	v1: 1,
+	v1 = 1,
 	/**
 	 * The latest version of the forest summary. Must be updated when a new version is added.
 	 */
-	vLatest: 1,
-} as const;
-export type ForestSummaryVersion = Brand<
-	(typeof ForestSummaryVersion)[keyof typeof ForestSummaryVersion],
-	"ForestSummaryVersion"
->;
+	vLatest = v1,
+}
 
-/**
- * The type for the metadata in forest's summary.
- * Using type definition instead of interface to make this compatible with JsonCompatible.
- */
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-export type ForestSummaryMetadata = {
-	/** The version of the forest summary. */
-	readonly version: ForestSummaryVersion;
-};
+export const supportedForestSummaryReadVersions = new Set<ForestSummaryVersion>([
+	ForestSummaryVersion.v1,
+]);
 
 /**
  * Returns the summary version to use as per the given minimum version for collab.
+ * Undefined is returned if the given version is lower than the one where summary versioning was introduced.
  */
 export function minVersionToForestSummaryVersion(
 	version: MinimumVersionForCollab,
-): ForestSummaryVersion {
-	return version < FluidClientVersion.v2_73
-		? brand(ForestSummaryVersion.v0)
-		: brand(ForestSummaryVersion.v1);
+): ForestSummaryVersion | undefined {
+	return version < FluidClientVersion.v2_73 ? undefined : ForestSummaryVersion.v1;
 }

@@ -8,9 +8,9 @@ import type { IChannelStorageService } from "@fluidframework/datastore-definitio
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
 	IExperimentalIncrementalSummaryContext,
-	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
+import type { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 
 import type { CodecWriteOptions } from "../../codec/index.js";
 import {
@@ -26,10 +26,11 @@ import {
 	forEachField,
 	makeDetachedFieldIndex,
 } from "../../core/index.js";
-import type {
-	Summarizable,
-	SummaryElementParser,
-	SummaryElementStringifier,
+import {
+	VersionedSummarizer,
+	type Summarizable,
+	type SummaryElementParser,
+	type SummaryElementStringifier,
 } from "../../shared-tree-core/index.js";
 import { idAllocatorFromMaxId, readAndParseSnapshotBlob } from "../../util/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -50,18 +51,14 @@ import { TreeCompressionStrategyExtended } from "../treeCompressionUtils.js";
 import {
 	forestSummaryContentKey,
 	forestSummaryKey,
-	forestSummaryMetadataKey,
-	ForestSummaryVersion,
 	minVersionToForestSummaryVersion,
-	type ForestSummaryMetadata,
+	supportedForestSummaryReadVersions,
 } from "./summaryTypes.js";
 
 /**
  * Provides methods for summarizing and loading a forest.
  */
-export class ForestSummarizer implements Summarizable {
-	public readonly key = forestSummaryKey;
-
+export class ForestSummarizer extends VersionedSummarizer implements Summarizable {
 	private readonly codec: ForestCodec;
 
 	private readonly incrementalSummaryBuilder: ForestIncrementalSummaryBuilder;
@@ -79,6 +76,12 @@ export class ForestSummarizer implements Summarizable {
 		initialSequenceNumber: number,
 		shouldEncodeIncrementally: IncrementalEncodingPolicy = defaultIncrementalEncodingPolicy,
 	) {
+		super({
+			key: forestSummaryKey,
+			writeVersion: minVersionToForestSummaryVersion(options.minVersionForCollab),
+			supportedReadVersions: supportedForestSummaryReadVersions,
+		});
+
 		// TODO: this should take in CodecWriteOptions, and use it to pick the write version.
 		this.codec = makeForestSummarizerCodec(options, fieldBatchCodec);
 		this.incrementalSummaryBuilder = new ForestIncrementalSummaryBuilder(
@@ -87,7 +90,6 @@ export class ForestSummarizer implements Summarizable {
 			(cursor: ITreeCursorSynchronous) => this.forest.chunkField(cursor),
 			shouldEncodeIncrementally,
 			initialSequenceNumber,
-			minVersionToForestSummaryVersion(options.minVersionForCollab),
 		);
 	}
 
@@ -101,14 +103,15 @@ export class ForestSummarizer implements Summarizable {
 	 *
 	 * TODO: when perf matters, this should be replaced with a chunked async version using a binary format.
 	 */
-	public summarize(props: {
+	protected summarizeInternal(props: {
 		stringify: SummaryElementStringifier;
 		fullTree?: boolean;
 		trackState?: boolean;
 		telemetryContext?: ITelemetryContext;
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext;
-	}): ISummaryTreeWithStats {
-		const { stringify, fullTree = false, incrementalSummaryContext } = props;
+		builder: SummaryTreeBuilder;
+	}): void {
+		const { stringify, fullTree = false, incrementalSummaryContext, builder } = props;
 
 		const rootCursor = this.forest.getCursorAboveDetachedFields();
 		const fieldMap: Map<FieldKey, ITreeCursorSynchronous & ITreeSubscriptionCursor> =
@@ -131,6 +134,7 @@ export class ForestSummarizer implements Summarizable {
 			fullTree,
 			incrementalSummaryContext,
 			stringify,
+			builder,
 		});
 		const encoderContext: FieldBatchEncodingContext = {
 			...this.encoderContext,
@@ -142,13 +146,14 @@ export class ForestSummarizer implements Summarizable {
 		const encoded = this.codec.encode(fieldMap, encoderContext);
 		fieldMap.forEach((value) => value.free());
 
-		return this.incrementalSummaryBuilder.completeSummary({
+		this.incrementalSummaryBuilder.completeSummary({
 			incrementalSummaryContext,
 			forestSummaryContent: stringify(encoded),
+			builder,
 		});
 	}
 
-	public async load(
+	protected async loadInternal(
 		services: IChannelStorageService,
 		parse: SummaryElementParser,
 	): Promise<void> {
@@ -162,15 +167,6 @@ export class ForestSummarizer implements Summarizable {
 			await services.contains(forestSummaryContentKey),
 			0xc21 /* Forest summary content missing in snapshot */,
 		);
-
-		if (await services.contains(forestSummaryMetadataKey)) {
-			const metadata = await readAndParseSnapshotBlob<ForestSummaryMetadata>(
-				forestSummaryMetadataKey,
-				services,
-				parse,
-			);
-			assert(metadata.version === ForestSummaryVersion.v1, "Unsupported forest summary");
-		}
 
 		// Load the incremental summary builder so that it can download any incremental chunks in the
 		// snapshot.

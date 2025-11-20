@@ -4,28 +4,22 @@
  */
 
 import { bufferToString } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type {
 	IExperimentalIncrementalSummaryContext,
-	ISummaryTreeWithStats,
 	ITelemetryContext,
 	MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+import type { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 
 import type { DetachedFieldIndex } from "../core/index.js";
-import type {
-	Summarizable,
-	SummaryElementParser,
-	SummaryElementStringifier,
-} from "../shared-tree-core/index.js";
 import {
-	brand,
-	readAndParseSnapshotBlob,
-	type Brand,
-	type JsonCompatibleReadOnly,
-} from "../util/index.js";
+	type Summarizable,
+	type SummaryElementParser,
+	type SummaryElementStringifier,
+	VersionedSummarizer,
+} from "../shared-tree-core/index.js";
+import type { JsonCompatibleReadOnly } from "../util/index.js";
 import { FluidClientVersion } from "../codec/index.js";
 
 /**
@@ -41,101 +35,63 @@ export const detachedFieldIndexMetadataKey = ".metadata";
 /**
  * The versions for the detached field index summary.
  */
-export const DetachedFieldIndexSummaryVersion = {
+export const enum DetachedFieldIndexSummaryVersion {
 	/**
-	 * Version 0 represents summaries before versioning was added. This version is not written.
-	 * It is only used to avoid undefined checks.
+	 * Version 1. This version adds metadata to the SharedTree summary.
 	 */
-	v0: 0,
-	/**
-	 * Version 1 adds metadata to the detached field index summary.
-	 */
-	v1: 1,
+	v1 = 1,
 	/**
 	 * The latest version of the detached field index summary. Must be updated when a new version is added.
 	 */
-	vLatest: 1,
-} as const;
-export type DetachedFieldIndexSummaryVersion = Brand<
-	(typeof DetachedFieldIndexSummaryVersion)[keyof typeof DetachedFieldIndexSummaryVersion],
-	"DetachedFieldIndexSummaryVersion"
->;
+	vLatest = v1,
+}
 
-/**
- * The type for the metadata in the detached field index's summary.
- * Using type definition instead of interface to make this compatible with JsonCompatible.
- */
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-export type DetachedFieldIndexSummaryMetadata = {
-	/** The version of the detached field index summary. */
-	readonly version: DetachedFieldIndexSummaryVersion;
-};
+const supportedReadVersions = new Set<DetachedFieldIndexSummaryVersion>([
+	DetachedFieldIndexSummaryVersion.v1,
+]);
 
 /**
  * Returns the summary version to use as per the given minimum version for collab.
+ * Undefined is returned if the given version is lower than the one where summary versioning was introduced.
  */
 function minVersionToDetachedFieldIndexSummaryVersion(
 	version: MinimumVersionForCollab,
-): DetachedFieldIndexSummaryVersion {
-	return version < FluidClientVersion.v2_73
-		? brand(DetachedFieldIndexSummaryVersion.v0)
-		: brand(DetachedFieldIndexSummaryVersion.v1);
+): DetachedFieldIndexSummaryVersion | undefined {
+	return version < FluidClientVersion.v2_73 ? undefined : DetachedFieldIndexSummaryVersion.v1;
 }
 
 /**
  * Provides methods for summarizing and loading a tree index.
  */
-export class DetachedFieldIndexSummarizer implements Summarizable {
-	public readonly key = "DetachedFieldIndex";
-
-	// The summary version to write in the metadata for the detached field index summary.
-	private readonly summaryWriteVersion: DetachedFieldIndexSummaryVersion;
-
+export class DetachedFieldIndexSummarizer extends VersionedSummarizer implements Summarizable {
 	public constructor(
 		private readonly detachedFieldIndex: DetachedFieldIndex,
 		minVersionForCollab: MinimumVersionForCollab,
 	) {
-		this.summaryWriteVersion =
-			minVersionToDetachedFieldIndexSummaryVersion(minVersionForCollab);
+		super({
+			key: "DetachedFieldIndex",
+			writeVersion: minVersionToDetachedFieldIndexSummaryVersion(minVersionForCollab),
+			supportedReadVersions,
+		});
 	}
 
-	public summarize(props: {
+	protected summarizeInternal(props: {
 		stringify: SummaryElementStringifier;
 		fullTree?: boolean;
 		trackState?: boolean;
 		telemetryContext?: ITelemetryContext;
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext;
-	}): ISummaryTreeWithStats {
+		builder: SummaryTreeBuilder;
+	}): void {
+		const { stringify, builder } = props;
 		const data = this.detachedFieldIndex.encode();
-		const builder = new SummaryTreeBuilder();
-		builder.addBlob(detachedFieldIndexBlobKey, props.stringify(data));
-
-		if (this.summaryWriteVersion >= DetachedFieldIndexSummaryVersion.v1) {
-			const metadata: DetachedFieldIndexSummaryMetadata = {
-				version: this.summaryWriteVersion,
-			};
-			builder.addBlob(detachedFieldIndexMetadataKey, JSON.stringify(metadata));
-		}
-
-		return builder.getSummaryTree();
+		builder.addBlob(detachedFieldIndexBlobKey, stringify(data));
 	}
 
-	public async load(
+	protected async loadInternal(
 		services: IChannelStorageService,
 		parse: SummaryElementParser,
 	): Promise<void> {
-		if (await services.contains(detachedFieldIndexMetadataKey)) {
-			const metadata = await readAndParseSnapshotBlob<DetachedFieldIndexSummaryMetadata>(
-				detachedFieldIndexMetadataKey,
-				services,
-				parse,
-			);
-			assert(
-				metadata.version === DetachedFieldIndexSummaryVersion.v1,
-				"Unsupported detached field index summary",
-			);
-		}
-
 		if (await services.contains(detachedFieldIndexBlobKey)) {
 			const detachedFieldIndexBuffer = await services.readBlob(detachedFieldIndexBlobKey);
 			const treeBufferString = bufferToString(detachedFieldIndexBuffer, "utf8");

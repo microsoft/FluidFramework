@@ -3,8 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
-import { brand, type Brand } from "../util/index.js";
+import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
+import type {
+	IExperimentalIncrementalSummaryContext,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
+	MinimumVersionForCollab,
+} from "@fluidframework/runtime-definitions/internal";
 import { FluidClientVersion } from "../codec/index.js";
 
 // TODO: Organize this to be adjacent to persisted types.
@@ -19,45 +24,93 @@ export const summarizablesTreeKey = "indexes";
 export const treeSummaryMetadataKey = ".metadata";
 
 /**
- * The versions for the SharedTree summary.
+ * Specifies the behavior of a component that puts data in a summary.
  */
-export const SharedTreeSummaryVersion = {
+export interface Summarizable {
 	/**
-	 * Version 0 represents summaries before versioning was added. This version is not written.
-	 * It is only used to avoid undefined checks.
+	 * Field name in summary json under which this element stores its data.
 	 */
-	v0: 0,
+	readonly key: string;
+
 	/**
-	 * Version 1 adds metadata to the SharedTree summary.
+	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).summarize}
+	 * @param stringify - Serializes the contents of the component (including {@link (IFluidHandle:interface)}s) for storage.
+	 * @param fullTree - A flag indicating whether the attempt should generate a full
+	 * summary tree without any handles for unchanged subtrees. It should only be set to true when generating
+	 * a summary from the entire container. The default value is false.
+	 * @param trackState - An optimization for tracking state of objects across summaries. If the state
+	 * of an object did not change since last successful summary, an
+	 * {@link @fluidframework/protocol-definitions#ISummaryHandle} can be used
+	 * instead of re-summarizing it. If this is `false`, the expectation is that you should never
+	 * send an `ISummaryHandle`, since you are not expected to track state. The default value is true.
+	 * @param telemetryContext - See {@link @fluidframework/runtime-definitions#ITelemetryContext}.
+	 * @param incrementalSummaryContext - See {@link @fluidframework/runtime-definitions#IExperimentalIncrementalSummaryContext}.
 	 */
-	v1: 1,
+	summarize(props: {
+		stringify: SummaryElementStringifier;
+		fullTree?: boolean;
+		trackState?: boolean;
+		telemetryContext?: ITelemetryContext;
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext;
+	}): ISummaryTreeWithStats;
+
 	/**
-	 * The latest version of the SharedTree summary. Must be updated when a new version is added.
+	 * Allows the component to perform custom loading. The storage service is scoped to this component and therefore
+	 * paths in this component will not collide with those in other components, even if they are the same string.
+	 * @param service - Storage used by the component
+	 * @param parse - Parses serialized data from storage into runtime objects for the component
 	 */
-	vLatest: 1,
-} as const;
-export type SharedTreeSummaryVersion = Brand<
-	(typeof SharedTreeSummaryVersion)[keyof typeof SharedTreeSummaryVersion],
-	"SharedTreeSummaryVersion"
->;
+	load(service: IChannelStorageService, parse: SummaryElementParser): Promise<void>;
+}
 
 /**
- * The type for the metadata in SharedTree's summary.
- * Using type definition instead of interface to make this compatible with JsonCompatible.
+ * Serializes the given contents into a string acceptable for storing in summaries, i.e. all
+ * Fluid handles have been replaced appropriately by an IFluidSerializer
  */
+export type SummaryElementStringifier = (contents: unknown) => string;
+
+/**
+ * Parses a serialized/summarized string into an object, rehydrating any Fluid handles as necessary
+ */
+export type SummaryElementParser = (contents: string) => unknown;
+
+/**
+ * The type for the metadata in the summarizable's summary.
+ * @remarks
+ * This is common metadata used by all summarizables. If a summarizable needs to add more metadata,
+ * it should define its own metadata type that extends this type.
+ */
+// Using type definition instead of interface to make this compatible with JsonCompatible.
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-export type SharedTreeSummaryMetadata = {
+export type SharedTreeSummarizableMetadata = {
 	/** The version of the SharedTree summary. */
-	readonly version: SharedTreeSummaryVersion;
+	readonly version: number;
 };
 
 /**
+ * The versions for the SharedTree summary.
+ */
+export const enum SharedTreeSummaryVersion {
+	/**
+	 * Version 1. This version adds metadata to the SharedTree summary.
+	 */
+	v1 = 1,
+	/**
+	 * The latest version of the SharedTree summary. Must be updated when a new version is added.
+	 */
+	vLatest = v1,
+}
+
+export const supportedSharedTreeSummaryReadVersions = new Set<SharedTreeSummaryVersion>([
+	SharedTreeSummaryVersion.v1,
+]);
+
+/**
  * Returns the summary version to use as per the given minimum version for collab.
+ * Undefined is returned if no summary version should be written.
  */
 export function minVersionToSharedTreeSummaryVersion(
 	version: MinimumVersionForCollab,
-): SharedTreeSummaryVersion {
-	return version < FluidClientVersion.v2_73
-		? brand(SharedTreeSummaryVersion.v0)
-		: brand(SharedTreeSummaryVersion.v1);
+): SharedTreeSummaryVersion | undefined {
+	return version < FluidClientVersion.v2_73 ? undefined : SharedTreeSummaryVersion.v1;
 }

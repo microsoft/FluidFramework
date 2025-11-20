@@ -13,10 +13,7 @@ import type {
 	IExperimentalIncrementalSummaryContext,
 	MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
-import {
-	MockStorage,
-	validateAssertionError,
-} from "@fluidframework/test-runtime-utils/internal";
+import { MockStorage } from "@fluidframework/test-runtime-utils/internal";
 
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index.js";
@@ -35,6 +32,7 @@ import {
 	fieldCursorFromInsertable,
 	testIdCompressor,
 	testRevisionTagCodec,
+	validateUsageError,
 	type TreeStoredContentStrict,
 } from "../../utils.js";
 import { jsonSequenceRootSchema } from "../../sequenceRootUtils.js";
@@ -59,10 +57,10 @@ import {
 	forestSummaryContentKey,
 	forestSummaryMetadataKey,
 	ForestSummaryVersion,
-	type ForestSummaryMetadata,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/forest-summary/summaryTypes.js";
 import type { FieldKey, TreeNodeSchemaIdentifier } from "../../../core/index.js";
+import type { SharedTreeSummarizableMetadata } from "../../../shared-tree-core/index.js";
 
 function createForestSummarizer(args: {
 	// The encoding strategy to use when summarizing the forest.
@@ -281,6 +279,8 @@ describe("ForestSummarizer", () => {
 		const sf = new SchemaFactoryAlpha("IncrementalSummarization");
 
 		function validateSummaryIsIncremental(summary: ISummaryTree) {
+			// Forest summary contains one blob for top-level forest content and one blob for metadata.
+			// For incremental summaries, it should contain at least one other node making total >= 3.
 			assert(
 				Object.keys(summary.tree).length >= 3,
 				"There should be at least one node for incremental fields",
@@ -716,7 +716,7 @@ describe("ForestSummarizer", () => {
 			assert.equal(metadataBlob.type, SummaryType.Blob, "Metadata should be a blob");
 			const metadataContent = JSON.parse(
 				metadataBlob.content as string,
-			) as ForestSummaryMetadata;
+			) as SharedTreeSummarizableMetadata;
 			assert.equal(
 				metadataContent.version,
 				ForestSummaryVersion.v1,
@@ -740,7 +740,7 @@ describe("ForestSummarizer", () => {
 			assert.equal(metadataBlob.type, SummaryType.Blob, "Metadata should be a blob");
 			const metadataContent = JSON.parse(
 				metadataBlob.content as string,
-			) as ForestSummaryMetadata;
+			) as SharedTreeSummarizableMetadata;
 			assert.equal(
 				metadataContent.version,
 				ForestSummaryVersion.v1,
@@ -775,8 +775,8 @@ describe("ForestSummarizer", () => {
 				summary.summary.tree[forestSummaryMetadataKey];
 			assert(metadataBlob !== undefined, "Metadata blob should exist");
 			assert.equal(metadataBlob.type, SummaryType.Blob, "Metadata should be a blob");
-			const modifiedMetadata: ForestSummaryMetadata = {
-				version: (ForestSummaryVersion.vLatest + 1) as ForestSummaryVersion,
+			const modifiedMetadata: SharedTreeSummarizableMetadata = {
+				version: ForestSummaryVersion.vLatest + 1,
 			};
 			metadataBlob.content = JSON.stringify(modifiedMetadata);
 
@@ -790,7 +790,7 @@ describe("ForestSummarizer", () => {
 			// Should fail to load with version > latest
 			await assert.rejects(
 				async () => forestSummarizer2.load(mockStorage, JSON.parse),
-				(e: Error) => validateAssertionError(e, /Unsupported forest summary/),
+				validateUsageError(/Cannot read version/),
 			);
 		});
 	});

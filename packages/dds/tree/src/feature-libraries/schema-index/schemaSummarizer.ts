@@ -9,11 +9,10 @@ import type { IChannelStorageService } from "@fluidframework/datastore-definitio
 import { SummaryType } from "@fluidframework/driver-definitions";
 import type {
 	IExperimentalIncrementalSummaryContext,
-	ISummaryTreeWithStats,
 	ITelemetryContext,
 	MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+import type { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 
 import { FluidClientVersion, type IJsonCodec } from "../../codec/index.js";
 import {
@@ -22,17 +21,13 @@ import {
 	type TreeStoredSchema,
 	schemaDataIsEmpty,
 } from "../../core/index.js";
-import type {
-	Summarizable,
-	SummaryElementParser,
-	SummaryElementStringifier,
-} from "../../shared-tree-core/index.js";
 import {
-	brand,
-	readAndParseSnapshotBlob,
-	type Brand,
-	type JsonCompatible,
-} from "../../util/index.js";
+	VersionedSummarizer,
+	type Summarizable,
+	type SummaryElementParser,
+	type SummaryElementStringifier,
+} from "../../shared-tree-core/index.js";
+import type { JsonCompatible } from "../../util/index.js";
 import type { CollabWindow } from "../incrementalSummarizationUtils.js";
 
 import { encodeRepo } from "./codec.js";
@@ -47,57 +42,34 @@ export const schemaMetadataKey = ".metadata";
 /**
  * The versions for the schema summary.
  */
-export const SchemaSummaryVersion = {
+export const enum SchemaSummaryVersion {
 	/**
-	 * Version 0 represents summaries before versioning was added. This version is not written.
-	 * It is only used to avoid undefined checks.
+	 * Version 1. This version adds metadata to the SharedTree summary.
 	 */
-	v0: 0,
-	/**
-	 * Version 1 adds metadata to the schema summary.
-	 */
-	v1: 1,
+	v1 = 1,
 	/**
 	 * The latest version of the schema summary. Must be updated when a new version is added.
 	 */
-	vLatest: 1,
-} as const;
-export type SchemaSummaryVersion = Brand<
-	(typeof SchemaSummaryVersion)[keyof typeof SchemaSummaryVersion],
-	"SchemaSummaryVersion"
->;
+	vLatest = v1,
+}
 
-/**
- * The type for the metadata in schema's summary.
- * Using type definition instead of interface to make this compatible with JsonCompatible.
- */
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-export type SchemaSummaryMetadata = {
-	/** The version of the schema summary. */
-	readonly version: SchemaSummaryVersion;
-};
+const supportedReadVersions = new Set<SchemaSummaryVersion>([SchemaSummaryVersion.v1]);
 
 /**
  * Returns the summary version to use as per the given minimum version for collab.
+ * Undefined is returned if the given version is lower than the one where summary versioning was introduced.
  */
 function minVersionToSchemaSummaryVersion(
 	version: MinimumVersionForCollab,
-): SchemaSummaryVersion {
-	return version < FluidClientVersion.v2_73
-		? brand(SchemaSummaryVersion.v0)
-		: brand(SchemaSummaryVersion.v1);
+): SchemaSummaryVersion | undefined {
+	return version < FluidClientVersion.v2_73 ? undefined : SchemaSummaryVersion.v1;
 }
 
 /**
  * Provides methods for summarizing and loading a schema repository.
  */
-export class SchemaSummarizer implements Summarizable {
-	public readonly key = "Schema";
-
+export class SchemaSummarizer extends VersionedSummarizer implements Summarizable {
 	private schemaIndexLastChangedSeq: number | undefined;
-
-	/** The summary version to write in the metadata for the schema summary. */
-	private readonly summaryWriteVersion: SchemaSummaryVersion;
 
 	public constructor(
 		private readonly schema: MutableTreeStoredSchema,
@@ -105,24 +77,27 @@ export class SchemaSummarizer implements Summarizable {
 		private readonly codec: IJsonCodec<TreeStoredSchema>,
 		minVersionForCollab: MinimumVersionForCollab,
 	) {
+		super({
+			key: "Schema",
+			writeVersion: minVersionToSchemaSummaryVersion(minVersionForCollab),
+			supportedReadVersions,
+		});
 		this.schema.events.on("afterSchemaChange", () => {
 			// Invalidate the cache, as we need to regenerate the blob if the schema changes
 			// We are assuming that schema changes from remote ops are valid, as we are in a summarization context.
 			this.schemaIndexLastChangedSeq = collabWindow.getCurrentSeq();
 		});
-		this.summaryWriteVersion = minVersionToSchemaSummaryVersion(minVersionForCollab);
 	}
 
-	public summarize(props: {
+	protected summarizeInternal(props: {
 		stringify: SummaryElementStringifier;
 		fullTree?: boolean;
 		trackState?: boolean;
 		telemetryContext?: ITelemetryContext;
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext;
-	}): ISummaryTreeWithStats {
-		const incrementalSummaryContext = props.incrementalSummaryContext;
-		const builder = new SummaryTreeBuilder();
-		const fullTree = props.fullTree ?? false;
+		builder: SummaryTreeBuilder;
+	}): void {
+		const { builder, incrementalSummaryContext, stringify, fullTree = false } = props;
 		if (
 			!fullTree &&
 			incrementalSummaryContext !== undefined &&
@@ -135,34 +110,15 @@ export class SchemaSummarizer implements Summarizable {
 				`${incrementalSummaryContext.summaryPath}/${schemaStringKey}`,
 			);
 		} else {
-			const dataString = JSON.stringify(this.codec.encode(this.schema));
+			const dataString = stringify(this.codec.encode(this.schema));
 			builder.addBlob(schemaStringKey, dataString);
 		}
-
-		// Add metadata if the summary version is v1 or higher.
-		if (this.summaryWriteVersion >= SchemaSummaryVersion.v1) {
-			const metadata: SchemaSummaryMetadata = {
-				version: this.summaryWriteVersion,
-			};
-			builder.addBlob(schemaMetadataKey, JSON.stringify(metadata));
-		}
-		return builder.getSummaryTree();
 	}
 
-	public async load(
+	protected async loadInternal(
 		services: IChannelStorageService,
 		parse: SummaryElementParser,
 	): Promise<void> {
-		// Read the metadata blob if present and validate the version.
-		if (await services.contains(schemaMetadataKey)) {
-			const metadata = await readAndParseSnapshotBlob<SchemaSummaryMetadata>(
-				schemaMetadataKey,
-				services,
-				parse,
-			);
-			assert(metadata.version === SchemaSummaryVersion.v1, "Unsupported schema summary");
-		}
-
 		const schemaBuffer: ArrayBufferLike = await services.readBlob(schemaStringKey);
 		// After the awaits, validate that the schema is in a clean state.
 		// This detects any schema that could have been accidentally added through

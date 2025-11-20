@@ -23,17 +23,18 @@ export {
 
 export {
 	SharedTreeCore,
-	type Summarizable,
-	type SummaryElementParser,
-	type SummaryElementStringifier,
 	type ClonableSchemaAndPolicy,
 	type SharedTreeCoreOptionsInternal as SharedTreCoreOptionsInternal,
 } from "./sharedTreeCore.js";
 export {
 	SharedTreeSummaryVersion,
-	type SharedTreeSummaryMetadata,
+	type SharedTreeSummarizableMetadata,
+	type Summarizable,
+	type SummaryElementParser,
+	type SummaryElementStringifier,
 	treeSummaryMetadataKey,
 } from "./summaryTypes.js";
+export { VersionedSummarizer } from "./versionedSummarizer.js";
 
 export type { ResubmitMachine } from "./resubmitMachine.js";
 export { DefaultResubmitMachine } from "./defaultResubmitMachine.js";

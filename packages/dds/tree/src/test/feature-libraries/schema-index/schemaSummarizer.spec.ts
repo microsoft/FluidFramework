@@ -6,15 +6,11 @@
 import { strict as assert } from "node:assert";
 import { SummaryType, type SummaryObject } from "@fluidframework/driver-definitions/internal";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
-import {
-	MockStorage,
-	validateAssertionError,
-} from "@fluidframework/test-runtime-utils/internal";
+import { MockStorage } from "@fluidframework/test-runtime-utils/internal";
 
 import { storedEmptyFieldSchema, TreeStoredSchemaRepository } from "../../../core/index.js";
 import {
 	encodeTreeSchema,
-	type SchemaSummaryMetadata,
 	SchemaSummarizer,
 	SchemaSummaryVersion,
 	schemaMetadataKey,
@@ -29,6 +25,8 @@ import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index
 import type { CollabWindow } from "../../../feature-libraries/incrementalSummarizationUtils.js";
 import { makeSchemaCodec } from "../../../feature-libraries/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
+import { validateUsageError } from "../../utils.js";
+import type { SharedTreeSummarizableMetadata } from "../../../shared-tree-core/index.js";
 
 describe("schemaSummarizer", () => {
 	describe("encodeTreeSchema", () => {
@@ -98,7 +96,7 @@ describe("schemaSummarizer", () => {
 			assert.equal(metadataBlob.type, SummaryType.Blob, "Metadata should be a blob");
 			const metadataContent = JSON.parse(
 				metadataBlob.content as string,
-			) as SchemaSummaryMetadata;
+			) as SharedTreeSummarizableMetadata;
 			assert.equal(
 				metadataContent.version,
 				SchemaSummaryVersion.v1,
@@ -121,7 +119,7 @@ describe("schemaSummarizer", () => {
 			assert.equal(metadataBlob.type, SummaryType.Blob, "Metadata should be a blob");
 			const metadataContent = JSON.parse(
 				metadataBlob.content as string,
-			) as SchemaSummaryMetadata;
+			) as SharedTreeSummarizableMetadata;
 			assert.equal(metadataContent.version, 1, "Metadata version should be 1");
 
 			// Create a new SchemaSummarizer and load with the above summary
@@ -160,7 +158,7 @@ describe("schemaSummarizer", () => {
 			// Should fail to load with version > latest
 			await assert.rejects(
 				async () => summarizer2.load(mockStorage, JSON.parse),
-				(e: Error) => validateAssertionError(e, /Unsupported schema summary/),
+				validateUsageError(/Cannot read version/),
 			);
 		});
 	});
