@@ -56,7 +56,6 @@ const supportedReadVersions = new Set<DetachedFieldIndexSummaryVersion>([
 
 /**
  * Returns the summary version to use as per the given minimum version for collab.
- * Undefined is returned if the given version is lower than the one where summary versioning was introduced.
  */
 function minVersionToDetachedFieldIndexSummaryVersion(
 	version: MinimumVersionForCollab,

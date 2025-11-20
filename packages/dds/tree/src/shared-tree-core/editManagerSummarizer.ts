@@ -58,7 +58,6 @@ const supportedReadVersions = new Set<EditManagerSummaryVersion>([
 
 /**
  * Returns the summary version to use as per the given minimum version for collab.
- * Undefined is returned if the given version is lower than the one where summary versioning was introduced.
  */
 function minVersionToEditManagerSummaryVersion(
 	version: MinimumVersionForCollab,

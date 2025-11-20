@@ -34,7 +34,7 @@ export abstract class VersionedSummarizer implements Summarizable {
 	public constructor(props: {
 		/** {@link Summarizable.key} */
 		key: string;
-		/** The version number to write in the summary metadata. If undefined, no version metadata is written. */
+		/** The version number to write in the summary metadata. If preSummaryValidationVersion or older, no metadata is written. */
 		writeVersion: number;
 		/** The set of supported versions that a summary can have for this summarizer to load it. */
 		supportedReadVersions: Set<number>;

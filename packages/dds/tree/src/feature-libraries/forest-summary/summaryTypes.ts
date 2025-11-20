@@ -57,7 +57,6 @@ export const supportedForestSummaryReadVersions = new Set<ForestSummaryVersion>(
 
 /**
  * Returns the summary version to use as per the given minimum version for collab.
- * Undefined is returned if the given version is lower than the one where summary versioning was introduced.
  */
 export function minVersionToForestSummaryVersion(
 	version: MinimumVersionForCollab,

@@ -122,7 +122,6 @@ export const supportedSharedTreeSummaryReadVersions = new Set<SharedTreeSummaryV
 
 /**
  * Returns the summary version to use as per the given minimum version for collab.
- * Undefined is returned if no summary version should be written.
  */
 export function minVersionToSharedTreeSummaryVersion(
 	version: MinimumVersionForCollab,
