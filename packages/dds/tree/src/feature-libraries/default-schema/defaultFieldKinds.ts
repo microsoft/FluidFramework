@@ -194,26 +194,6 @@ export const fieldKindConfigurations: ReadonlyMap<
 	FieldKindConfiguration
 > = new Map([
 	[
-		brand(1),
-		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
-			[required.identifier, { kind: required, formatVersion: 1 }],
-			[optional.identifier, { kind: optional, formatVersion: 1 }],
-			[sequence.identifier, { kind: sequence, formatVersion: 1 }],
-			[forbidden.identifier, { kind: forbidden, formatVersion: 1 }],
-			[identifier.identifier, { kind: identifier, formatVersion: 1 }],
-		]),
-	],
-	[
-		brand(2),
-		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
-			[required.identifier, { kind: required, formatVersion: 2 }],
-			[optional.identifier, { kind: optional, formatVersion: 2 }],
-			[sequence.identifier, { kind: sequence, formatVersion: 1 }],
-			[forbidden.identifier, { kind: forbidden, formatVersion: 1 }],
-			[identifier.identifier, { kind: identifier, formatVersion: 1 }],
-		]),
-	],
-	[
 		brand(3),
 		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
 			[required.identifier, { kind: required, formatVersion: 2 }],
@@ -235,7 +215,7 @@ export const fieldKindConfigurations: ReadonlyMap<
 	],
 ]);
 
-export type ModularChangeFormatVersion = Brand<1 | 2 | 3 | 4, "ModularChangeFormatVersion">;
+export type ModularChangeFormatVersion = Brand<3 | 4, "ModularChangeFormatVersion">;
 export function getCodecTreeForModularChangeFormat(
 	version: ModularChangeFormatVersion,
 ): CodecTree {

@@ -34,6 +34,7 @@ import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
+	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
 import {
 	type ChannelFactoryRegistry,
@@ -1052,10 +1053,11 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 	family: ICodecFamily<TDecoded, TContext>,
 	encodingTestData: EncodingTestData<TDecoded, TEncoded, TContext>,
 	assertEquivalent: (a: TDecoded, b: TDecoded) => void = assertDeepEqual,
-	versions?: FormatVersion[],
+	supportedVersions?: FormatVersion[],
+	discontinuedVersions?: FormatVersion[],
 ): void {
-	const versionsToTest = versions ?? family.getSupportedFormats();
-	for (const version of versionsToTest) {
+	const supportedVersionsToTest = supportedVersions ?? family.getSupportedFormats();
+	for (const version of supportedVersionsToTest) {
 		describe(`version ${version}`, () => {
 			const codec = family.resolve(version);
 			// A common pattern to avoid validating the same portion of encoded data multiple times
@@ -1116,6 +1118,35 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 				});
 			}
 		});
+	}
+	if (discontinuedVersions !== undefined) {
+		for (const version of discontinuedVersions) {
+			describe(`discontinued version ${version}`, () => {
+				const codec = family.resolve(version);
+				const jsonCodec =
+					codec.json.encodedSchema !== undefined
+						? withSchemaValidation(codec.json.encodedSchema, codec.json, FormatValidatorBasic)
+						: codec.json;
+				it("throws when encoding", () => {
+					assert(encodingTestData.successes.length > 0);
+					const [name, data, context] = encodingTestData.successes[0];
+					assert.throws(
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						() => jsonCodec.encode(data, context!),
+						validateUsageError(/Cannot encode data to format/),
+					);
+				});
+				it("throws when decoding", () => {
+					assert(encodingTestData.successes.length > 0);
+					const [name, data, context] = encodingTestData.successes[0];
+					assert.throws(
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						() => jsonCodec.decode({ version }, context!),
+						validateUsageError(/Cannot decode data to format/),
+					);
+				});
+			});
+		}
 	}
 }
 

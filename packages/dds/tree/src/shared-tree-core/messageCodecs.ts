@@ -15,6 +15,7 @@ import {
 	type ICodecOptions,
 	type IJsonCodec,
 	makeCodecFamily,
+	makeDiscontinuedCodecVersion,
 	makeVersionDispatchingCodec,
 } from "../codec/index.js";
 import type {
@@ -123,29 +124,36 @@ export function makeMessageCodecs<TChangeset>(
 			MessageEncodingContext
 		>,
 	][] = Array.from(messageFormatVersions).map((version) => {
-		const changeCodec = changeCodecs.resolve(
-			dependentChangeFormatVersion.lookup(version),
-		).json;
 		switch (version) {
 			case MessageFormatVersion.undefined:
 			case MessageFormatVersion.v1:
-			case MessageFormatVersion.v2:
-			case MessageFormatVersion.v3:
-			case MessageFormatVersion.v4:
+			case MessageFormatVersion.v2: {
+				const versionOrUndefined =
+					version === MessageFormatVersion.undefined ? undefined : version;
 				return [
-					version === MessageFormatVersion.undefined ? undefined : version,
-					makeV1ToV4CodecWithVersion(
-						changeCodec,
-						revisionTagCodec,
-						options,
-						version === MessageFormatVersion.undefined ? MessageFormatVersion.v1 : version,
-					),
+					versionOrUndefined,
+					makeDiscontinuedCodecVersion(options, versionOrUndefined, "2.73.0"),
 				];
-			case MessageFormatVersion.v5:
+			}
+			case MessageFormatVersion.v3:
+			case MessageFormatVersion.v4: {
+				const changeCodec = changeCodecs.resolve(
+					dependentChangeFormatVersion.lookup(version),
+				).json;
+				return [
+					version,
+					makeV1ToV4CodecWithVersion(changeCodec, revisionTagCodec, options, version),
+				];
+			}
+			case MessageFormatVersion.v5: {
+				const changeCodec = changeCodecs.resolve(
+					dependentChangeFormatVersion.lookup(version),
+				).json;
 				return [
 					version,
 					makeV5CodecWithVersion(changeCodec, revisionTagCodec, options, version),
 				];
+			}
 			default:
 				unreachableCase(version);
 		}

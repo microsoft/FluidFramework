@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { validateAssertionError2 as validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import type { BatchResubmitInfo } from "../opLifecycle/index.js";
 import { BatchRunCounter, RunCounter } from "../runCounter.js";

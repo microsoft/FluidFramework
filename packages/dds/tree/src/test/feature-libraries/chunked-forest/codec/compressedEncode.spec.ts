@@ -8,7 +8,7 @@ import { strict as assert, fail } from "node:assert";
 import { compareArrays } from "@fluidframework/core-utils/internal";
 import {
 	MockHandle,
-	validateAssertionError2 as validateAssertionError,
+	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 
 import {
