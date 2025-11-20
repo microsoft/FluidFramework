@@ -5,6 +5,10 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
+import {
+	getConfigForMinVersionForCollab,
+	lowestMinVersionForCollab,
+} from "@fluidframework/runtime-utils/internal";
 
 import {
 	type CodecTree,
@@ -133,9 +137,12 @@ export type FieldBatchCodec = IJsonCodec<
 function clientVersionToFieldBatchVersion(
 	clientVersion: MinimumVersionForCollab,
 ): FieldBatchFormatVersion {
-	return clientVersion < FluidClientVersion.v2_73
-		? brand(FieldBatchFormatVersion.v1)
-		: brand(FieldBatchFormatVersion.v2);
+	return brand(
+		getConfigForMinVersionForCollab(clientVersion, {
+			[lowestMinVersionForCollab]: FieldBatchFormatVersion.v1,
+			[FluidClientVersion.v2_73]: FieldBatchFormatVersion.v2,
+		}),
+	);
 }
 
 export function makeFieldBatchCodec(options: CodecWriteOptions): FieldBatchCodec {
