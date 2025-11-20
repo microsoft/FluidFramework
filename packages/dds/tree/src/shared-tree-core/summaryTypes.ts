@@ -80,6 +80,7 @@ export type SummaryElementParser = (contents: string) => unknown;
 
 /**
  * The type for the metadata in the summarizable's summary.
+ * The metadata is stored under the {@link summarizablesMetadataKey} key in the summary.
  * @remarks
  * This is common metadata used by all summarizables. If a summarizable needs to add more metadata,
  * it should define its own metadata type that extends this type.

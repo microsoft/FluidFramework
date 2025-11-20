@@ -523,6 +523,11 @@ export const FluidClientVersion = {
 	 * @remarks
 	 * New formats introduced in 2.73:
 	 * - FieldBatchFormatVersion v2
+	 * - SharedTreeSummaryVersion v1
+	 * - DetachedFieldIndexSummaryVersion v1
+	 * - SchemaSummaryVersion v1
+	 * - EditManagerSummaryVersion v1
+	 * - ForestSummaryVersion v1
 	 */
 	v2_73: "2.73.0",
 } as const satisfies Record<string, MinimumVersionForCollab>;

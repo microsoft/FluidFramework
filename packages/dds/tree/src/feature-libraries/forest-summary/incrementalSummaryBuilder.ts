@@ -282,11 +282,13 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 	 * contents of the chunks.
 	 * @param readAndParse - A function that reads and parses a blob from the storage service.
 	 */
-	public async load(
-		services: IChannelStorageService,
-		readAndParseChunk: <T extends JsonCompatible<IFluidHandle>>(id: string) => Promise<T>,
-	): Promise<void> {
-		const forestTree = services.getSnapshotTree?.();
+	public async load(args: {
+		services: IChannelStorageService;
+		readAndParseChunk: <T extends JsonCompatible<IFluidHandle>>(
+			chunkBlobPath: string,
+		) => Promise<T>;
+	}): Promise<void> {
+		const forestTree = args.services.getSnapshotTree?.();
 		// Snapshot tree should be available when loading forest's contents. However, it is an optional function
 		// and may not be implemented by the storage service.
 		if (forestTree === undefined) {
@@ -304,12 +306,13 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 			for (const [chunkReferenceId, chunkSnapshotTree] of Object.entries(snapshotTree.trees)) {
 				const chunkSubTreePath = `${parentTreeKey}${chunkReferenceId}`;
 				const chunkContentsPath = `${chunkSubTreePath}/${chunkContentsBlobKey}`;
-				if (!(await services.contains(chunkContentsPath))) {
+				if (!(await args.services.contains(chunkContentsPath))) {
 					throw new LoggingError(
 						`SharedTree: Cannot find contents for incremental chunk ${chunkContentsPath}`,
 					);
 				}
-				const chunkContents = await readAndParseChunk<EncodedFieldBatch>(chunkContentsPath);
+				const chunkContents =
+					await args.readAndParseChunk<EncodedFieldBatch>(chunkContentsPath);
 				this.loadedChunksMap.set(chunkReferenceId, {
 					encodedContents: chunkContents,
 					summaryPath: chunkSubTreePath,

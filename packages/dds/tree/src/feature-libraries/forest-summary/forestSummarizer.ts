@@ -170,9 +170,11 @@ export class ForestSummarizer extends VersionedSummarizer implements Summarizabl
 
 		// Load the incremental summary builder so that it can download any incremental chunks in the
 		// snapshot.
-		await this.incrementalSummaryBuilder.load(services, async (id: string) =>
-			readAndParseSnapshotBlob(id, services, parse),
-		);
+		await this.incrementalSummaryBuilder.load({
+			services,
+			readAndParseChunk: async (chunkBlobPath: string) =>
+				readAndParseSnapshotBlob(chunkBlobPath, services, parse),
+		});
 
 		// TODO: this code is parsing data without an optional validator, this should be defined in a typebox schema as part of the
 		// forest summary format.
