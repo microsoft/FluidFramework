@@ -2957,7 +2957,6 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		}
 
 		if (result.value?.nodeChange !== undefined) {
-			// XXX: Can we do this in `rebaseRoots` instead?
 			setInChangeAtomIdMap(this.table.rebasedNodeToParent, result.value.nodeChange, {
 				field: this.fieldId,
 			});
