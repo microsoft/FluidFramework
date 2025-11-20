@@ -640,11 +640,17 @@ describe("SharedString", () => {
 
 			segmentCount = 0;
 			const segmentLengths2: number[] = [];
-			sharedString2.walkSegments((segment: ISegmentInternal) => {
-				segmentCount++;
-				segmentLengths2.push(segment.cachedLength);
-				return true;
-			});
+			sharedString2.walkSegments(
+				(segment: ISegmentInternal) => {
+					segmentCount++;
+					segmentLengths2.push(segment.cachedLength);
+					return true;
+				},
+				0,
+				sharedString.getLength(),
+				undefined,
+				true,
+			);
 			assert.equal(segmentCount, 1, `Expected one segment, saw ${segmentCount} segments`);
 			assert.equal(
 				segmentLengths2.length,
