@@ -48,8 +48,8 @@ jobs:
         run: |
           ./validateHashes.sh
       - name: Upload site artifact
-        # release notes: https://github.com/actions/upload-artifact/releases/tag/v4.4.3
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # ratchet:actions/upload-artifact@v4
+        # release notes: https://github.com/actions/upload-artifact/releases/tag/v5.0.0
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # ratchet:actions/upload-artifact@v5
         with:
           name: fluidframework-site
           path: docs/build
@@ -101,8 +101,8 @@ jobs:
           cache-dependency-path: docs/pnpm-lock.yaml
 
       - name: Download site artifact
-         # release notes: https://github.com/actions/download-artifact/releases/tag/v4.1.8
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # ratchet:actions/download-artifact@v4
+        # release notes: https://github.com/actions/download-artifact/releases/tag/v5.0.0
+        uses: actions/download-artifact@a1b6e7e2e2e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1 # ratchet:actions/download-artifact@v5
         with:
           name: fluidframework-site
           path: docs/build
@@ -136,8 +136,8 @@ jobs:
         run: mkdir -p ./results
 
       - name: Download site artifact
-         # release notes: https://github.com/actions/download-artifact/releases/tag/v4.1.8
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # ratchet:actions/download-artifact@v4
+        # release notes: https://github.com/actions/download-artifact/releases/tag/v5.0.0
+        uses: actions/download-artifact@a1b1c6e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2 # ratchet:actions/download-artifact@v5
         with:
           name: fluidframework-site
           path: docs/build
@@ -159,8 +159,8 @@ jobs:
           cat ./results/linkcheck-output.txt | tee -a ./results/linkcheck
           echo -e "\n\`\`\`" | tee -a ./results/linkcheck
       - name: Upload results artifact
-        # release notes: https://github.com/actions/upload-artifact/releases/tag/v4.4.3
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # ratchet:actions/upload-artifact@v4
+        # release notes: https://github.com/actions/upload-artifact/releases/tag/v5.0.0
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # ratchet:actions/upload-artifact@v5
         with:
           name: website-validation-results
           path: ./docs/results
