@@ -1026,6 +1026,8 @@ export class ModularChangeFamily
 			genId,
 		);
 
+		fixupRebasedDetachLocations(crossFieldTable);
+
 		const constraintState = newConstraintState(change.constraintViolationCount ?? 0);
 		const revertConstraintState = newConstraintState(
 			change.constraintViolationCountOnRevert ?? 0,
@@ -4193,13 +4195,27 @@ function rebaseRoots(
 			rebasedNodeToParent.delete(detachIdKey);
 		} else {
 			const renamedDetachId = firstAttachIdFromDetachId(base.rootNodes, detachId, 1).value;
-			// XXX: Handle base move of detach location.
+			const baseOutputDetachLocation = base.rootNodes.outputDetachLocations.getFirst(
+				renamedDetachId,
+				1,
+			).value;
+
+			if (baseOutputDetachLocation !== undefined) {
+				affectedBaseFields.set(fieldIdKeyFromFieldId(baseOutputDetachLocation), true);
+			}
+
+			const detachLocation =
+				baseOutputDetachLocation ??
+				change.rootNodes.detachLocations.getFirst(detachId, 1).value;
+
+			// Note that `baseOutputDetachLocation` may contain a node ID from the base changeset.
+			// We will replace the detach location entry with the node ID from the rebased changeset in `fixupRebasedDetachLocations`
 			assignRootChange(
 				rebasedRoots,
 				rebasedNodeToParent,
 				renamedDetachId,
 				nodeId,
-				change.rootNodes.detachLocations.getFirst(detachId, 1).value,
+				detachLocation,
 				rebaseVersion,
 			);
 		}
@@ -4265,6 +4281,32 @@ function rebaseRename(
 			base,
 			affectedBaseFields,
 		);
+	}
+}
+
+/**
+ * For each root detach location, replaces any node ID from the base changeset
+ * with the corresponding ID in the new changeset.
+ */
+function fixupRebasedDetachLocations(table: RebaseTable): void {
+	for (const {
+		start,
+		length,
+		value: detachLocation,
+	} of table.rebasedRootNodes.detachLocations.entries()) {
+		if (detachLocation.nodeId !== undefined) {
+			const rebasedNodeId = getFromChangeAtomIdMap(
+				table.baseToRebasedNodeId,
+				detachLocation.nodeId,
+			);
+
+			if (rebasedNodeId !== undefined) {
+				table.rebasedRootNodes.detachLocations.set(start, length, {
+					...detachLocation,
+					nodeId: rebasedNodeId,
+				});
+			}
+		}
 	}
 }
 

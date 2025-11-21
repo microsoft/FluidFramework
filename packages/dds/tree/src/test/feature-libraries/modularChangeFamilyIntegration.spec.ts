@@ -1230,6 +1230,85 @@ describe("ModularChangeFamily integration", () => {
 			assertEqual(rebased, expected);
 		});
 
+		it("root change over detached move", () => {
+			const oldId: ChangeAtomId = { revision: tag0, localId: brand(0) };
+			const moveId: ChangeAtomId = { revision: tag1, localId: brand(1) };
+			const newId: ChangeAtomId = { revision: tag1, localId: brand(3) };
+
+			const fieldAId = { nodeId: undefined, field: fieldA };
+			const fieldBId = { nodeId: undefined, field: fieldB };
+
+			const detachedMove = Change.build(
+				{
+					family,
+					renames: [{ oldId, newId, count: 1, detachLocation: fieldAId }],
+					detachedMoves: [{ detachId: newId, count: 1, newLocation: fieldBId }],
+					revisions: [{ revision: tag1 }],
+					maxId: 3,
+				},
+				Change.field(fieldA, sequence.identifier, [MarkMaker.rename(1, oldId, moveId)]),
+				Change.field(fieldB, sequence.identifier, [
+					MarkMaker.rename(1, { revision: tag1, localId: brand(2) }, newId),
+				]),
+			);
+
+			const rootChange = Change.build(
+				{
+					family,
+					roots: [
+						{
+							detachId: oldId,
+							detachLocation: fieldAId,
+							change: Change.nodeWithId(
+								0,
+								{ revision: tag2, localId: brand(0) },
+								Change.field(fieldC, sequence.identifier, [
+									MarkMaker.remove(1, { revision: tag2, localId: brand(1) }),
+								]),
+							),
+						},
+					],
+					maxId: 1,
+					revisions: [{ revision: tag2 }],
+				},
+				Change.field(fieldA, sequence.identifier, [
+					MarkMaker.tomb(oldId.revision, oldId.localId, 1),
+				]),
+			);
+
+			const expected = Change.build(
+				{
+					family,
+					roots: [
+						{
+							detachId: newId,
+							detachLocation: fieldBId,
+							change: Change.nodeWithId(
+								0,
+								{ revision: tag2, localId: brand(0) },
+								Change.field(fieldC, sequence.identifier, [
+									MarkMaker.remove(1, { revision: tag2, localId: brand(1) }),
+								]),
+							),
+						},
+					],
+					maxId: 3,
+					revisions: [{ revision: tag2 }],
+				},
+				Change.field(fieldB, sequence.identifier, [
+					MarkMaker.tomb(newId.revision, newId.localId, 1),
+				]),
+			);
+
+			const rebased = family.rebase(
+				tagChange(rootChange, tag2),
+				tagChange(detachedMove, tag1),
+				revisionMetadataSourceFromInfo([{ revision: tag1 }, { revision: tag2 }]),
+			);
+
+			assertEqual(rebased, expected);
+		});
+
 		it("prunes its output", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
 			const editor = new DefaultEditBuilder(family, mintRevisionTag, changeReceiver);
