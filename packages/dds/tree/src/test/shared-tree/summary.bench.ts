@@ -60,7 +60,7 @@ describe("Summary benchmarks", () => {
 			const { summary } = tree.getAttachSummary(true);
 			const summaryString = JSON.stringify(summary);
 			const summarySize = IsoBuffer.from(summaryString).byteLength;
-			assert(summarySize < 700);
+			assert(summarySize < 900);
 		});
 
 		function processSummary(
