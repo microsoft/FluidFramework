@@ -9,13 +9,13 @@ import type { ImplicitFieldSchema, SimpleTreeSchema } from "@fluidframework/tree
 import type { BindableSchema } from "./methodBinding.js";
 import { getExposedMethods, isBindableSchema } from "./methodBinding.js";
 import { getExposedProperties } from "./propertyBinding.js";
-import { SchemaTypeScriptRenderer } from "./schemaTypeScriptRenderer.js";
+import {
+	renderSchemaTypeScript,
+	type SchemaTypeScriptRenderResult,
+} from "./renderSchemaTypeScript.js";
 import { getOrCreate } from "./utils.js";
 
-const promptSchemaCache = new WeakMap<
-	SimpleTreeSchema,
-	ReturnType<SchemaTypeScriptRenderer["render"]>
->();
+const promptSchemaCache = new WeakMap<SimpleTreeSchema, SchemaTypeScriptRenderResult>();
 
 /**
  * Generates TypeScript declarations for the schemas reachable from the provided root field schema.
@@ -23,7 +23,7 @@ const promptSchemaCache = new WeakMap<
 export function generateEditTypesForPrompt(
 	rootSchema: ImplicitFieldSchema,
 	schema: SimpleTreeSchema,
-): ReturnType<SchemaTypeScriptRenderer["render"]> {
+): SchemaTypeScriptRenderResult {
 	return getOrCreate(promptSchemaCache, schema, () =>
 		buildPromptSchemaDescription(rootSchema),
 	);
@@ -31,7 +31,7 @@ export function generateEditTypesForPrompt(
 
 function buildPromptSchemaDescription(
 	rootSchema: ImplicitFieldSchema,
-): ReturnType<SchemaTypeScriptRenderer["render"]> {
+): SchemaTypeScriptRenderResult {
 	const bindableSchemas = new Map<string, BindableSchema>();
 
 	walkFieldSchema(rootSchema, {
@@ -57,6 +57,5 @@ function buildPromptSchemaDescription(
 	});
 
 	const simpleTreeSchema = getSimpleSchema(rootSchema);
-	const renderer = new SchemaTypeScriptRenderer(simpleTreeSchema.definitions, bindableSchemas);
-	return renderer.render();
+	return renderSchemaTypeScript(simpleTreeSchema.definitions, bindableSchemas);
 }
