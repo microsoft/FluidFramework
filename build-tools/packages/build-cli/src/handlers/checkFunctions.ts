@@ -905,7 +905,7 @@ export const checkValidReleaseGroup: StateHandlerFunction = async (
 };
 
 /**
- * Checks whether layer compat generation needs to be updated.
+ * Checks whether the compatibility generation value for Fluid's layers need to been updated.
  *
  * @param state - The current state machine state.
  * @param machine - The state machine.
@@ -914,7 +914,7 @@ export const checkValidReleaseGroup: StateHandlerFunction = async (
  * @param data - An object with handler-specific contextual data.
  * @returns True if the state was handled; false otherwise.
  */
-export const checkLayerCompatGeneration: StateHandlerFunction = async (
+export const checkCompatLayerGeneration: StateHandlerFunction = async (
 	state: MachineState,
 	machine: Machine<unknown>,
 	testMode: boolean,
@@ -924,7 +924,6 @@ export const checkLayerCompatGeneration: StateHandlerFunction = async (
 	if (testMode) return true;
 
 	const { context, bumpType } = data;
-	const gitRepo = await context.getGitRepository();
 
 	if (bumpType === "patch") {
 		log.verbose(`Skipping layer compat generation check for patch release.`);
@@ -940,6 +939,7 @@ export const checkLayerCompatGeneration: StateHandlerFunction = async (
 	log.verbose(result.stdout);
 
 	// check for policy check violation
+	const gitRepo = await context.getGitRepository();
 	const afterPolicyCheckStatus = await gitRepo.gitClient.status();
 	const isClean = afterPolicyCheckStatus.isClean();
 	if (!isClean) {

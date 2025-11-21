@@ -68,7 +68,7 @@ Init 'success'
 => CheckDependenciesInstalled 'success'
 => CheckPolicy 'success'
 => CheckAssertTagging 'success'
-=> CheckLayerCompatGeneration 'success'
+=> checkCompatLayerGeneration 'success'
 => CheckReleaseNotes 'success'
 => CheckChangelogs 'success'
 => CheckHasRemote 'success'
@@ -96,7 +96,7 @@ CheckAssertTagging
 ] 'failure' -> PromptToCommitPolicy;
 
 [
-CheckLayerCompatGeneration
+checkCompatLayerGeneration
 ] 'failure' -> PromptToCommitPolicy;
 
 [
