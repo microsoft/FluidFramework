@@ -15,7 +15,7 @@ import { DeclarativeLeafTask } from "./leaf/declarativeTask";
 import { FlubCheckLayerTask, FlubCheckPolicyTask, FlubListTask } from "./leaf/flubTasks";
 import { GenerateEntrypointsTask } from "./leaf/generateEntrypointsTask.js";
 import { type LeafTask, UnknownLeafTask } from "./leaf/leafTask";
-import { EsLintTask, TsLintTask } from "./leaf/lintTasks";
+import { EsLintTask } from "./leaf/lintTasks";
 import {
 	CopyfilesTask,
 	DepCruiseTask,
@@ -25,7 +25,6 @@ import {
 	LesscTask,
 	TypeValidationTask,
 } from "./leaf/miscTasks";
-import { PrettierTask } from "./leaf/prettierTask";
 import { Ts2EsmTask } from "./leaf/ts2EsmTask";
 import { TscTask } from "./leaf/tscTask";
 import { WebpackTask } from "./leaf/webpackTask";
@@ -39,14 +38,12 @@ const executableToLeafTask: {
 	"ts2esm": Ts2EsmTask,
 	"tsc": TscTask,
 	"fluid-tsc": TscTask,
-	"tslint": TsLintTask,
 	"eslint": EsLintTask,
 	"webpack": WebpackTask,
 	"parallel-webpack": WebpackTask,
 	"lessc": LesscTask,
 	"copyfiles": CopyfilesTask,
 	"echo": EchoTask,
-	"prettier": PrettierTask,
 	"gen-version": GenVerTask,
 	"gf": GoodFence,
 	"api-extractor": ApiExtractorTask,

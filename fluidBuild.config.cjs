@@ -81,6 +81,7 @@ module.exports = {
 		"build:test": ["typetests:gen", "tsc"],
 		"build:test:cjs": ["typetests:gen", "tsc"],
 		"build:test:esm": ["typetests:gen", "build:esnext"],
+		// Everything needed for the API of the package to be consumable by its dependencies.
 		"api": {
 			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
 			script: false,
@@ -129,9 +130,14 @@ module.exports = {
 		},
 		"check:biome": [],
 		"check:prettier": [],
-		// ADO #7297: Review why the direct dependency on 'build:esm:test' is necessary.
-		//            Should 'compile' be enough?  compile -> build:test -> build:test:esm
-		"eslint": ["compile", "build:test:esm"],
+		// Linting can require resolving imports into dependencies, and thus "^api".
+		// If all packages only linted esm build this could be "^api-extractor:esnext:, but some, like
+		// experimental/PropertyDDS/packages/property-properties lint commonjs builds.
+		// Linting also requires all the code to lint to exist, so we depend on "typetests:gen":
+		// That could be omitted if we ensure that generated code is not linted.
+		// The lint task does not seem to invalidate properly, so we take a dependency on "build:test:esm" as well so lint will rerun when the code changes.
+		// This may be related to AB#7297.
+		"eslint": ["^api", "typetests:gen", "build:test:esm"],
 		"good-fences": [],
 		"format:biome": [],
 		"format:prettier": [],
@@ -336,17 +342,10 @@ module.exports = {
 		// Exclusion per handler
 		handlerExclusions: {
 			"fluid-build-tasks-eslint": [
-				// There are no built files, but a tsconfig.json is present to simplify the
-				// eslint config.
-				"azure/packages/azure-local-service/package.json",
-				// eslint doesn't really depend on build. Doing so just slows down a package build.
-				"^packages/test/snapshots/package.json",
-				"^packages/test/test-utils/package.json",
-				// TODO: AB#7630 uses lint only ts projects for coverage which don't have representative tsc scripts
-				"^packages/tools/fluid-runner/package.json",
-
-				// Server packages need to be cleaned up; excluding as a workaround
-				"^server/routerlicious/packages/.*/package.json",
+				// This rule forces dependencies on "Tsc" for the package being linted, which is undesired.
+				// Additionally this rule's validation was very complex compared to expressing the requirements here and already needed many exceptions, and thus is not offering much value.
+				// Future versions of build tools may remove this rule entirely.
+				".*",
 			],
 			"fluid-build-tasks-tsc": [
 				// Server packages need to be cleaned up; excluding as a workaround

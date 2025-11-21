@@ -3,29 +3,39 @@
  * Licensed under the MIT License.
  */
 
-import { getEsLintConfigFilePath, getInstalledPackageVersion } from "../taskUtils";
-import { TscDependentTask } from "./tscTask";
+import path from "node:path";
+import { existsSync } from "node:fs";
 
-export class TsLintTask extends TscDependentTask {
-	protected get configFileFullPaths() {
-		return [this.getPackageFileFullPath("tslint.json")];
-	}
+import {
+	getEsLintConfigFilePath,
+	getInstalledPackageVersion,
+	getRecursiveFiles,
+} from "../taskUtils";
+import { LeafWithFileStatDoneFileTask } from "./leafTask";
 
-	protected async getToolVersion() {
-		return getInstalledPackageVersion("tslint", this.node.pkg.directory);
-	}
-}
+export class EsLintTask extends LeafWithFileStatDoneFileTask {
+	protected async getInputFiles(): Promise<string[]> {
+		// Files which might be linted
+		// To be truly correct, this would read the config file, interpret the config, find the projects files, and include those, then include the files from their blobs.
+		// This would be difficult with the current config file format, which will also be changing soon, so not worth doing.
+		// Assuming all packages have a similar structure, and just lint these files is close enough.
+		const lintDirectories = ["src", "tests", "test"];
 
-export class EsLintTask extends TscDependentTask {
-	private _configFileFullPath: string | undefined;
-	protected get configFileFullPaths() {
-		if (!this._configFileFullPath) {
-			this._configFileFullPath = getEsLintConfigFilePath(this.package.directory);
-			if (!this._configFileFullPath) {
-				throw new Error(`Unable to find config file for eslint ${this.command}`);
-			}
+		const files: string[] = await getRecursiveFiles(
+			...lintDirectories
+				.map((dir) => path.join(this.node.pkg.directory, dir))
+				.filter((dir) => existsSync(dir)),
+		);
+		// Include config file if present
+		const config = getEsLintConfigFilePath(this.node.pkg.directory);
+		if (config) {
+			files.push(config);
 		}
-		return [this._configFileFullPath];
+
+		return files;
+	}
+	protected async getOutputFiles(): Promise<string[]> {
+		return [];
 	}
 
 	protected get useWorker() {
