@@ -27,13 +27,12 @@ export {
 	type SharedTreeCoreOptionsInternal as SharedTreCoreOptionsInternal,
 } from "./sharedTreeCore.js";
 export {
-	SharedTreeSummaryVersion,
+	SharedTreeSummaryFormatVersion,
 	type SharedTreeSummarizableMetadata,
 	type Summarizable,
 	type SummaryElementParser,
 	type SummaryElementStringifier,
 	summarizablesMetadataKey,
-	preSummaryValidationVersion,
 } from "./summaryTypes.js";
 export { VersionedSummarizer } from "./versionedSummarizer.js";
 

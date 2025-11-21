@@ -43,7 +43,7 @@ import type {
 } from "../../feature-libraries/index.js";
 import { Tree } from "../../shared-tree/index.js";
 import {
-	SharedTreeSummaryVersion,
+	SharedTreeSummaryFormatVersion,
 	summarizablesMetadataKey,
 	type ChangeEnricherReadonlyCheckout,
 	type EditManager,
@@ -62,15 +62,9 @@ import {
 	TestTreeProviderLite,
 } from "../utils.js";
 
-import {
-	createTree,
-	createTreeSharedObject,
-	testCodecOptions,
-	TestSharedTreeCore,
-} from "./utils.js";
+import { createTree, createTreeSharedObject, TestSharedTreeCore } from "./utils.js";
 import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
 import { mockSerializer } from "../mockSerializer.js";
-import { FluidClientVersion } from "../../codec/index.js";
 
 const enableSchemaValidation = true;
 
@@ -81,7 +75,11 @@ describe("SharedTreeCore", () => {
 		assert(summary !== undefined);
 		assert(stats !== undefined);
 		assert.equal(stats.treeNodeCount, 3);
-		assert.equal(stats.blobNodeCount, 1); // EditManager is always summarized
+		// EditManager is always summarized. So, there should be 3 blobs
+		// 1. Tree's metadata blob
+		// 2. EditManager's content blob
+		// 3. EditManager's metadata blob
+		assert.equal(stats.blobNodeCount, 3);
 		assert.equal(stats.handleNodeCount, 0);
 	});
 
@@ -146,20 +144,9 @@ describe("SharedTreeCore", () => {
 	});
 
 	describe("Summary metadata validation", () => {
-		it("does not write metadata blob for minVersionForCollab < 2.73.0", async () => {
+		it("writes metadata blob with version 2", async () => {
 			const tree = createTree({
 				indexes: [],
-				codecOptions: { ...testCodecOptions, minVersionForCollab: FluidClientVersion.v2_52 },
-			});
-			const { summary } = tree.summarizeCore(mockSerializer);
-			const metadataBlob: SummaryObject | undefined = summary.tree[summarizablesMetadataKey];
-			assert(metadataBlob === undefined, "Metadata blob should not exist");
-		});
-
-		it("writes metadata blob with version 1 for minVersionForCollab 2.73.0", async () => {
-			const tree = createTree({
-				indexes: [],
-				codecOptions: { ...testCodecOptions, minVersionForCollab: FluidClientVersion.v2_73 },
 			});
 			const { summary } = tree.summarizeCore(mockSerializer);
 			const metadataBlob: SummaryObject | undefined = summary.tree[summarizablesMetadataKey];
@@ -170,15 +157,14 @@ describe("SharedTreeCore", () => {
 			) as SharedTreeSummarizableMetadata;
 			assert.equal(
 				metadataContent.version,
-				SharedTreeSummaryVersion.v1,
-				"Metadata version should be 1",
+				SharedTreeSummaryFormatVersion.v2,
+				"Metadata version should be 2",
 			);
 		});
 
-		it("loads with metadata blob with version 1", async () => {
+		it("loads with metadata blob with version 2", async () => {
 			const tree = createTree({
 				indexes: [],
-				codecOptions: { ...testCodecOptions, minVersionForCollab: FluidClientVersion.v2_73 },
 			});
 			const { summary } = tree.summarizeCore(mockSerializer);
 			const metadataBlob: SummaryObject | undefined = summary.tree[summarizablesMetadataKey];
@@ -189,8 +175,8 @@ describe("SharedTreeCore", () => {
 			) as SharedTreeSummarizableMetadata;
 			assert.equal(
 				metadataContent.version,
-				SharedTreeSummaryVersion.v1,
-				"Metadata version should be 1",
+				SharedTreeSummaryFormatVersion.v2,
+				"Metadata version should be 2",
 			);
 
 			await assert.doesNotReject(
@@ -200,10 +186,24 @@ describe("SharedTreeCore", () => {
 			);
 		});
 
+		it("loads with no metadata blob", async () => {
+			const tree = createTree({
+				indexes: [],
+			});
+			const { summary } = tree.summarizeCore(mockSerializer);
+
+			// Delete metadata blob from the summary
+			Reflect.deleteProperty(summary.tree, summarizablesMetadataKey);
+
+			// Should load successfully
+			await assert.doesNotReject(async () =>
+				tree.loadCore(MockSharedObjectServices.createFromSummary(summary).objectStorage),
+			);
+		});
+
 		it("fail to load with metadata blob with version > latest", async () => {
 			const tree = createTree({
 				indexes: [],
-				codecOptions: { ...testCodecOptions, minVersionForCollab: FluidClientVersion.v2_73 },
 			});
 			const { summary } = tree.summarizeCore(mockSerializer);
 
@@ -212,7 +212,7 @@ describe("SharedTreeCore", () => {
 			assert(metadataBlob !== undefined, "Metadata blob should exist");
 			assert.equal(metadataBlob.type, SummaryType.Blob, "Metadata should be a blob");
 			const modifiedMetadata: SharedTreeSummarizableMetadata = {
-				version: SharedTreeSummaryVersion.vLatest + 1,
+				version: SharedTreeSummaryFormatVersion.vLatest + 1,
 			};
 			metadataBlob.content = JSON.stringify(modifiedMetadata);
 

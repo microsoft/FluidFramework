@@ -10,11 +10,6 @@ import type {
 	ITelemetryContext,
 	MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
-import {
-	getConfigForMinVersionForCollab,
-	lowestMinVersionForCollab,
-} from "@fluidframework/runtime-utils/internal";
-import { FluidClientVersion } from "../codec/index.js";
 
 // TODO: Organize this to be adjacent to persisted types.
 /**
@@ -93,41 +88,35 @@ export type SharedTreeSummarizableMetadata = {
 };
 
 /**
- * The version representing summaries that are generated before summary versioning is turned on.
- * These summaries will not write metadata containing the summary version.
+ * The versions for the SharedTree summary format.
  */
-export const preSummaryValidationVersion = 0;
-
-/**
- * The versions for the SharedTree summary.
- */
-export const enum SharedTreeSummaryVersion {
+export const enum SharedTreeSummaryFormatVersion {
 	/**
-	 * Version representing summaries generated before summary versioning was introduced.
-	 */
-	vPreVersioning = preSummaryValidationVersion,
-	/**
-	 * Version 1. This version adds metadata to the SharedTree summary.
+	 * This version represents summary format before summary versioning was introduced.
 	 */
 	v1 = 1,
 	/**
+	 * This version adds metadata to the summary. This is backward compatible with version 1.
+	 */
+	v2 = 2,
+	/**
 	 * The latest version of the SharedTree summary. Must be updated when a new version is added.
 	 */
-	vLatest = v1,
+	vLatest = v2,
 }
 
-export const supportedSharedTreeSummaryReadVersions = new Set<SharedTreeSummaryVersion>([
-	SharedTreeSummaryVersion.v1,
-]);
+export const supportedSharedTreeSummaryFormatVersions =
+	new Set<SharedTreeSummaryFormatVersion>([
+		SharedTreeSummaryFormatVersion.v1,
+		SharedTreeSummaryFormatVersion.v2,
+	]);
 
 /**
  * Returns the summary version to use as per the given minimum version for collab.
  */
-export function minVersionToSharedTreeSummaryVersion(
+export function minVersionToSharedTreeSummaryFormatVersion(
 	version: MinimumVersionForCollab,
-): SharedTreeSummaryVersion {
-	return getConfigForMinVersionForCollab(version, {
-		[lowestMinVersionForCollab]: SharedTreeSummaryVersion.vPreVersioning,
-		[FluidClientVersion.v2_73]: SharedTreeSummaryVersion.v1,
-	});
+): SharedTreeSummaryFormatVersion {
+	// Currently, version 2 is written which adds metadata blob to the summary.
+	return SharedTreeSummaryFormatVersion.v2;
 }

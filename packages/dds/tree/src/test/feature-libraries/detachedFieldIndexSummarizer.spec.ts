@@ -11,7 +11,7 @@ import { MockStorage, validateUsageError } from "@fluidframework/test-runtime-ut
 import { DetachedFieldIndex, type ForestRootId } from "../../core/index.js";
 import {
 	DetachedFieldIndexSummarizer,
-	DetachedFieldIndexSummaryVersion,
+	DetachedFieldIndexSummaryFormatVersion,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/detachedFieldIndexSummarizer.js";
 import { FluidClientVersion } from "../../codec/index.js";
@@ -43,25 +43,8 @@ function createDetachedFieldIndexSummarizer(options?: {
 
 describe("DetachedFieldIndexSummarizer", () => {
 	describe("Summary metadata validation", () => {
-		it("does not write metadata blob for minVersionForCollab < 2.73.0", () => {
-			const { summarizer } = createDetachedFieldIndexSummarizer({
-				minVersionForCollab: FluidClientVersion.v2_52,
-			});
-
-			const summary = summarizer.summarize({
-				stringify: JSON.stringify,
-			});
-
-			// Check if metadata blob exists
-			const metadataBlob: SummaryObject | undefined =
-				summary.summary.tree[summarizablesMetadataKey];
-			assert(metadataBlob === undefined, "Metadata blob should not exist");
-		});
-
-		it("writes metadata blob with version 1 for minVersionForCollab 2.73.0", () => {
-			const { summarizer } = createDetachedFieldIndexSummarizer({
-				minVersionForCollab: FluidClientVersion.v2_73,
-			});
+		it("writes metadata blob with version 2", () => {
+			const { summarizer } = createDetachedFieldIndexSummarizer();
 
 			const summary = summarizer.summarize({
 				stringify: JSON.stringify,
@@ -77,21 +60,19 @@ describe("DetachedFieldIndexSummarizer", () => {
 			) as SharedTreeSummarizableMetadata;
 			assert.equal(
 				metadataContent.version,
-				DetachedFieldIndexSummaryVersion.v1,
-				"Metadata version should be 1",
+				DetachedFieldIndexSummaryFormatVersion.v2,
+				"Metadata version should be 2",
 			);
 		});
 
-		it("loads with metadata blob with version 1", async () => {
-			const { summarizer } = createDetachedFieldIndexSummarizer({
-				minVersionForCollab: FluidClientVersion.v2_73,
-			});
+		it("loads with metadata blob with version 2", async () => {
+			const { summarizer } = createDetachedFieldIndexSummarizer();
 
 			const summary = summarizer.summarize({
 				stringify: JSON.stringify,
 			});
 
-			// Verify metadata exists and has version = 1
+			// Verify metadata exists and has version = 2
 			const metadataBlob: SummaryObject | undefined =
 				summary.summary.tree[summarizablesMetadataKey];
 			assert(metadataBlob !== undefined, "Metadata blob should exist");
@@ -101,25 +82,37 @@ describe("DetachedFieldIndexSummarizer", () => {
 			) as SharedTreeSummarizableMetadata;
 			assert.equal(
 				metadataContent.version,
-				DetachedFieldIndexSummaryVersion.v1,
-				"Metadata version should be 1",
+				DetachedFieldIndexSummaryFormatVersion.v2,
+				"Metadata version should be 2",
 			);
 
 			// Create a new DetachedFieldIndexSummarizer and load with the above summary
 			const mockStorage = MockStorage.createFromSummary(summary.summary);
 			const { summarizer: summarizer2 } = createDetachedFieldIndexSummarizer();
 
-			// Should load successfully with version 1
-			await assert.doesNotReject(
-				async () => summarizer2.load(mockStorage, JSON.parse),
-				"Should load successfully with metadata version 1",
-			);
+			// Should load successfully with version 2
+			await assert.doesNotReject(async () => summarizer2.load(mockStorage, JSON.parse));
+		});
+
+		it("loads with no metadata blob", async () => {
+			const { summarizer } = createDetachedFieldIndexSummarizer();
+
+			const summary = summarizer.summarize({
+				stringify: JSON.stringify,
+			});
+
+			// Delete metadata blob from the summary
+			Reflect.deleteProperty(summary.summary.tree, summarizablesMetadataKey);
+
+			// Should load successfully
+			const mockStorage = MockStorage.createFromSummary(summary.summary);
+			const { summarizer: summarizer2 } = createDetachedFieldIndexSummarizer();
+
+			await assert.doesNotReject(async () => summarizer2.load(mockStorage, JSON.parse));
 		});
 
 		it("fail to load with metadata blob with version > latest", async () => {
-			const { summarizer } = createDetachedFieldIndexSummarizer({
-				minVersionForCollab: FluidClientVersion.v2_73,
-			});
+			const { summarizer } = createDetachedFieldIndexSummarizer();
 
 			const summary = summarizer.summarize({
 				stringify: JSON.stringify,
@@ -131,7 +124,7 @@ describe("DetachedFieldIndexSummarizer", () => {
 			assert(metadataBlob !== undefined, "Metadata blob should exist");
 			assert.equal(metadataBlob.type, SummaryType.Blob, "Metadata should be a blob");
 			const modifiedMetadata: SharedTreeSummarizableMetadata = {
-				version: DetachedFieldIndexSummaryVersion.vLatest + 1,
+				version: DetachedFieldIndexSummaryFormatVersion.vLatest + 1,
 			};
 			metadataBlob.content = JSON.stringify(modifiedMetadata);
 

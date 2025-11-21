@@ -12,7 +12,7 @@ import { storedEmptyFieldSchema, TreeStoredSchemaRepository } from "../../../cor
 import {
 	encodeTreeSchema,
 	SchemaSummarizer,
-	SchemaSummaryVersion,
+	SchemaSummaryFormatVersion,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/schema-index/schemaSummarizer.js";
 import { toInitialSchema } from "../../../simple-tree/index.js";
@@ -68,25 +68,8 @@ describe("schemaSummarizer", () => {
 			return new SchemaSummarizer(schema, collabWindow, codec, minVersionForCollab);
 		}
 
-		it("does not write metadata blob for minVersionForCollab < 2.73.0", () => {
-			const summarizer = createSchemaSummarizer({
-				minVersionForCollab: FluidClientVersion.v2_52,
-			});
-
-			const summary = summarizer.summarize({
-				stringify: JSON.stringify,
-			});
-
-			// Check if metadata blob exists
-			const metadataBlob: SummaryObject | undefined =
-				summary.summary.tree[summarizablesMetadataKey];
-			assert(metadataBlob === undefined, "Metadata blob should not exist");
-		});
-
-		it("writes metadata blob with version 1 for minVersionForCollab 2.73.0", () => {
-			const summarizer = createSchemaSummarizer({
-				minVersionForCollab: FluidClientVersion.v2_73,
-			});
+		it("writes metadata blob with version 2", () => {
+			const summarizer = createSchemaSummarizer();
 
 			const summary = summarizer.summarize({
 				stringify: JSON.stringify,
@@ -102,21 +85,19 @@ describe("schemaSummarizer", () => {
 			) as SharedTreeSummarizableMetadata;
 			assert.equal(
 				metadataContent.version,
-				SchemaSummaryVersion.v1,
-				"Metadata version should be 1",
+				SchemaSummaryFormatVersion.v2,
+				"Metadata version should be 2",
 			);
 		});
 
-		it("loads with metadata blob with version 1", async () => {
-			const summarizer = createSchemaSummarizer({
-				minVersionForCollab: FluidClientVersion.v2_73,
-			});
+		it("loads with metadata blob with version 2", async () => {
+			const summarizer = createSchemaSummarizer();
 
 			const summary = summarizer.summarize({
 				stringify: JSON.stringify,
 			});
 
-			// Verify metadata exists and has version = 1
+			// Verify metadata exists and has version = 2
 			const metadataBlob: SummaryObject | undefined =
 				summary.summary.tree[summarizablesMetadataKey];
 			assert(metadataBlob !== undefined, "Metadata blob should exist");
@@ -124,23 +105,39 @@ describe("schemaSummarizer", () => {
 			const metadataContent = JSON.parse(
 				metadataBlob.content as string,
 			) as SharedTreeSummarizableMetadata;
-			assert.equal(metadataContent.version, 1, "Metadata version should be 1");
+			assert.equal(
+				metadataContent.version,
+				SchemaSummaryFormatVersion.v2,
+				"Metadata version should be 2",
+			);
 
 			// Create a new SchemaSummarizer and load with the above summary
 			const mockStorage = MockStorage.createFromSummary(summary.summary);
 			const summarizer2 = createSchemaSummarizer();
 
-			// Should load successfully with version 1
-			await assert.doesNotReject(
-				async () => summarizer2.load(mockStorage, JSON.parse),
-				"Should load successfully with metadata version 1",
-			);
+			// Should load successfully with version 2
+			await assert.doesNotReject(async () => summarizer2.load(mockStorage, JSON.parse));
+		});
+
+		it("loads with no metadata blob", async () => {
+			const summarizer = createSchemaSummarizer();
+
+			const summary = summarizer.summarize({
+				stringify: JSON.stringify,
+			});
+
+			// Delete metadata blob from the summary
+			Reflect.deleteProperty(summary.summary.tree, summarizablesMetadataKey);
+
+			// Should load successfully
+			const mockStorage = MockStorage.createFromSummary(summary.summary);
+			const summarizer2 = createSchemaSummarizer();
+
+			await assert.doesNotReject(async () => summarizer2.load(mockStorage, JSON.parse));
 		});
 
 		it("fail to load with metadata blob with version > latest", async () => {
-			const summarizer = createSchemaSummarizer({
-				minVersionForCollab: FluidClientVersion.v2_73,
-			});
+			const summarizer = createSchemaSummarizer();
 
 			const summary = summarizer.summarize({
 				stringify: JSON.stringify,
@@ -152,7 +149,7 @@ describe("schemaSummarizer", () => {
 			assert(metadataBlob !== undefined, "Metadata blob should exist");
 			assert.equal(metadataBlob.type, SummaryType.Blob, "Metadata should be a blob");
 			const modifiedMetadata = {
-				version: SchemaSummaryVersion.vLatest + 1,
+				version: SchemaSummaryFormatVersion.vLatest + 1,
 			};
 			metadataBlob.content = JSON.stringify(modifiedMetadata);
 

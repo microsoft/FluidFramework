@@ -54,7 +54,7 @@ import {
 import { fieldJsonCursor } from "../../json/index.js";
 import {
 	forestSummaryContentKey,
-	ForestSummaryVersion,
+	ForestSummaryFormatVersion,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/forest-summary/summaryTypes.js";
 import type { FieldKey, TreeNodeSchemaIdentifier } from "../../../core/index.js";
@@ -213,9 +213,11 @@ describe("ForestSummarizer", () => {
 					minVersionForCollab: FluidClientVersion.v2_52,
 				});
 				const summary = forestSummarizer.summarize({ stringify: JSON.stringify });
-				assert(
-					Object.keys(summary.summary.tree).length === 1,
-					"Summary tree should only contain one entry for the forest contents",
+				// The summary tree should have 2 entries - one for forest contents and one for metadata
+				assert.equal(
+					Object.keys(summary.summary.tree).length,
+					2,
+					"Summary tree should only contain two entries",
 				);
 				const forestContentsBlob: SummaryObject | undefined =
 					summary.summary.tree[forestSummaryContentKey];
@@ -251,9 +253,11 @@ describe("ForestSummarizer", () => {
 					minVersionForCollab: FluidClientVersion.v2_52,
 				});
 				const summary = forestSummarizer.summarize({ stringify: JSON.stringify });
-				assert(
-					Object.keys(summary.summary.tree).length === 1,
-					"Summary tree should only contain one entry for the forest contents",
+				// The summary tree should have 2 entries - one for forest contents and one for metadata
+				assert.equal(
+					Object.keys(summary.summary.tree).length,
+					2,
+					"Summary tree should only contain two entries",
 				);
 				const forestContentsBlob: SummaryObject | undefined =
 					summary.summary.tree[forestSummaryContentKey];
@@ -686,26 +690,10 @@ describe("ForestSummarizer", () => {
 	});
 
 	describe("Summary metadata validation", () => {
-		it("does not write metadata blob for minVersionForCollab < 2.73.0", () => {
+		it("writes metadata blob with version 2", () => {
 			const { forestSummarizer } = createForestSummarizer({
 				encodeType: TreeCompressionStrategy.Compressed,
 				forestType: ForestTypeOptimized,
-				minVersionForCollab: FluidClientVersion.v2_52,
-			});
-
-			const summary = forestSummarizer.summarize({ stringify: JSON.stringify });
-
-			// Check if metadata blob exists
-			const metadataBlob: SummaryObject | undefined =
-				summary.summary.tree[summarizablesMetadataKey];
-			assert(metadataBlob === undefined, "Metadata blob should not exist");
-		});
-
-		it("writes metadata blob with version 1 for minVersionForCollab 2.73.0", () => {
-			const { forestSummarizer } = createForestSummarizer({
-				encodeType: TreeCompressionStrategy.Compressed,
-				forestType: ForestTypeOptimized,
-				minVersionForCollab: FluidClientVersion.v2_73,
 			});
 
 			const summary = forestSummarizer.summarize({ stringify: JSON.stringify });
@@ -720,21 +708,20 @@ describe("ForestSummarizer", () => {
 			) as SharedTreeSummarizableMetadata;
 			assert.equal(
 				metadataContent.version,
-				ForestSummaryVersion.v1,
-				"Metadata version should be 1",
+				ForestSummaryFormatVersion.v2,
+				"Metadata version should be 2",
 			);
 		});
 
-		it("loads with metadata blob with version 1", async () => {
+		it("loads with metadata blob with version 2", async () => {
 			const { forestSummarizer } = createForestSummarizer({
 				encodeType: TreeCompressionStrategy.Compressed,
 				forestType: ForestTypeOptimized,
-				minVersionForCollab: FluidClientVersion.v2_73,
 			});
 
 			const summary = forestSummarizer.summarize({ stringify: JSON.stringify });
 
-			// Verify metadata exists and has version = 1
+			// Verify metadata exists and has version = 2
 			const metadataBlob: SummaryObject | undefined =
 				summary.summary.tree[summarizablesMetadataKey];
 			assert(metadataBlob !== undefined, "Metadata blob should exist");
@@ -744,8 +731,8 @@ describe("ForestSummarizer", () => {
 			) as SharedTreeSummarizableMetadata;
 			assert.equal(
 				metadataContent.version,
-				ForestSummaryVersion.v1,
-				"Metadata version should be 1",
+				ForestSummaryFormatVersion.v2,
+				"Metadata version should be 2",
 			);
 
 			// Create a new ForestSummarizer and load with the above summary
@@ -755,18 +742,35 @@ describe("ForestSummarizer", () => {
 				forestType: ForestTypeOptimized,
 			});
 
-			// Should load successfully with version 1
-			await assert.doesNotReject(
-				async () => forestSummarizer2.load(mockStorage, JSON.parse),
-				"Should load successfully with metadata version 1",
-			);
+			// Should load successfully with version 2
+			await assert.doesNotReject(async () => forestSummarizer2.load(mockStorage, JSON.parse));
+		});
+
+		it("loads with no metadata blob", async () => {
+			const { forestSummarizer } = createForestSummarizer({
+				encodeType: TreeCompressionStrategy.Compressed,
+				forestType: ForestTypeOptimized,
+			});
+
+			const summary = forestSummarizer.summarize({ stringify: JSON.stringify });
+
+			// Delete metadata blob from the summary
+			Reflect.deleteProperty(summary.summary.tree, summarizablesMetadataKey);
+
+			// Should load successfully
+			const mockStorage = MockStorage.createFromSummary(summary.summary);
+			const { forestSummarizer: forestSummarizer2 } = createForestSummarizer({
+				encodeType: TreeCompressionStrategy.Compressed,
+				forestType: ForestTypeOptimized,
+			});
+
+			await assert.doesNotReject(async () => forestSummarizer2.load(mockStorage, JSON.parse));
 		});
 
 		it("fail to load with metadata blob with version > latest", async () => {
 			const { forestSummarizer } = createForestSummarizer({
 				encodeType: TreeCompressionStrategy.Compressed,
 				forestType: ForestTypeOptimized,
-				minVersionForCollab: FluidClientVersion.v2_73,
 			});
 
 			const summary = forestSummarizer.summarize({ stringify: JSON.stringify });
@@ -777,7 +781,7 @@ describe("ForestSummarizer", () => {
 			assert(metadataBlob !== undefined, "Metadata blob should exist");
 			assert.equal(metadataBlob.type, SummaryType.Blob, "Metadata should be a blob");
 			const modifiedMetadata: SharedTreeSummarizableMetadata = {
-				version: ForestSummaryVersion.vLatest + 1,
+				version: ForestSummaryFormatVersion.vLatest + 1,
 			};
 			metadataBlob.content = JSON.stringify(modifiedMetadata);
 

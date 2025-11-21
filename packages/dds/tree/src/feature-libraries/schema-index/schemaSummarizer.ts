@@ -12,13 +12,9 @@ import type {
 	ITelemetryContext,
 	MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
-import {
-	getConfigForMinVersionForCollab,
-	lowestMinVersionForCollab,
-	type SummaryTreeBuilder,
-} from "@fluidframework/runtime-utils/internal";
+import type { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 
-import { FluidClientVersion, type IJsonCodec } from "../../codec/index.js";
+import type { IJsonCodec } from "../../codec/index.js";
 import {
 	type MutableTreeStoredSchema,
 	type SchemaFormatVersion,
@@ -26,7 +22,6 @@ import {
 	schemaDataIsEmpty,
 } from "../../core/index.js";
 import {
-	preSummaryValidationVersion,
 	VersionedSummarizer,
 	type Summarizable,
 	type SummaryElementParser,
@@ -40,35 +35,36 @@ import { encodeRepo } from "./codec.js";
 const schemaStringKey = "SchemaString";
 
 /**
- * The versions for the schema summary.
+ * The versions for the schema summary format.
  */
-export const enum SchemaSummaryVersion {
+export const enum SchemaSummaryFormatVersion {
 	/**
-	 * Version representing summaries generated before summary versioning was introduced.
-	 */
-	vPreVersioning = preSummaryValidationVersion,
-	/**
-	 * Version 1. This version adds metadata to the SharedTree summary.
+	 * This version represents summary format before summary versioning was introduced.
 	 */
 	v1 = 1,
 	/**
-	 * The latest version of the schema summary. Must be updated when a new version is added.
+	 * This version adds metadata to the summary. This is backward compatible with version 1.
 	 */
-	vLatest = v1,
+	v2 = 2,
+	/**
+	 * The latest version of the summary. Must be updated when a new version is added.
+	 */
+	vLatest = v2,
 }
 
-const supportedReadVersions = new Set<SchemaSummaryVersion>([SchemaSummaryVersion.v1]);
+const supportedVersions = new Set<SchemaSummaryFormatVersion>([
+	SchemaSummaryFormatVersion.v1,
+	SchemaSummaryFormatVersion.v2,
+]);
 
 /**
  * Returns the summary version to use as per the given minimum version for collab.
  */
-function minVersionToSchemaSummaryVersion(
+function minVersionToSchemaSummaryFormatVersion(
 	version: MinimumVersionForCollab,
-): SchemaSummaryVersion {
-	return getConfigForMinVersionForCollab(version, {
-		[lowestMinVersionForCollab]: SchemaSummaryVersion.vPreVersioning,
-		[FluidClientVersion.v2_73]: SchemaSummaryVersion.v1,
-	});
+): SchemaSummaryFormatVersion {
+	// Currently, version 2 is written which adds metadata blob to the summary.
+	return SchemaSummaryFormatVersion.v2;
 }
 
 /**
@@ -85,8 +81,9 @@ export class SchemaSummarizer extends VersionedSummarizer implements Summarizabl
 	) {
 		super({
 			key: "Schema",
-			writeVersion: minVersionToSchemaSummaryVersion(minVersionForCollab),
-			supportedReadVersions,
+			writeVersion: minVersionToSchemaSummaryFormatVersion(minVersionForCollab),
+			supportedVersions,
+			defaultVersion: SchemaSummaryFormatVersion.v1,
 		});
 		this.schema.events.on("afterSchemaChange", () => {
 			// Invalidate the cache, as we need to regenerate the blob if the schema changes

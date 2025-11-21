@@ -4,12 +4,6 @@
  */
 
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
-import {
-	getConfigForMinVersionForCollab,
-	lowestMinVersionForCollab,
-} from "@fluidframework/runtime-utils/internal";
-import { FluidClientVersion } from "../../codec/index.js";
-import { preSummaryValidationVersion } from "../../shared-tree-core/index.js";
 
 /**
  * The key for the tree that contains the overall forest's summary tree.
@@ -36,33 +30,32 @@ export const chunkContentsBlobKey = "contents";
 /**
  * The versions for the forest summary.
  */
-export enum ForestSummaryVersion {
+export enum ForestSummaryFormatVersion {
 	/**
-	 * Version representing summaries generated before summary versioning was introduced.
-	 */
-	vPreVersioning = preSummaryValidationVersion,
-	/**
-	 * Version 1. This version adds metadata to the SharedTree summary.
+	 * This version represents summary format before summary versioning was introduced.
 	 */
 	v1 = 1,
 	/**
-	 * The latest version of the forest summary. Must be updated when a new version is added.
+	 * This version adds metadata to the summary. This is backward compatible with version 1.
 	 */
-	vLatest = v1,
+	v2 = 2,
+	/**
+	 * The latest version of the summary. Must be updated when a new version is added.
+	 */
+	vLatest = v2,
 }
 
-export const supportedForestSummaryReadVersions = new Set<ForestSummaryVersion>([
-	ForestSummaryVersion.v1,
+export const supportedForestSummaryFormatVersions = new Set<ForestSummaryFormatVersion>([
+	ForestSummaryFormatVersion.v1,
+	ForestSummaryFormatVersion.v2,
 ]);
 
 /**
  * Returns the summary version to use as per the given minimum version for collab.
  */
-export function minVersionToForestSummaryVersion(
+export function minVersionToForestSummaryFormatVersion(
 	version: MinimumVersionForCollab,
-): ForestSummaryVersion {
-	return getConfigForMinVersionForCollab(version, {
-		[lowestMinVersionForCollab]: ForestSummaryVersion.vPreVersioning,
-		[FluidClientVersion.v2_73]: ForestSummaryVersion.v1,
-	});
+): ForestSummaryFormatVersion {
+	// Currently, version 2 is written which adds metadata blob to the summary.
+	return ForestSummaryFormatVersion.v2;
 }

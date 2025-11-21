@@ -15,7 +15,7 @@ import {
 	type SharedTreeSummarizableMetadata,
 } from "../../shared-tree-core/index.js";
 import {
-	EditManagerSummaryVersion,
+	EditManagerSummaryFormatVersion,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree-core/editManagerSummarizer.js";
 import {
@@ -57,25 +57,8 @@ function createEditManagerSummarizer(options?: {
 
 describe("EditManagerSummarizer", () => {
 	describe("Summary metadata validation", () => {
-		it("does not write metadata blob for minVersionForCollab < 2.73.0", () => {
-			const { summarizer } = createEditManagerSummarizer({
-				minVersionForCollab: FluidClientVersion.v2_52,
-			});
-
-			const summary = summarizer.summarize({
-				stringify: JSON.stringify,
-			});
-
-			// Check if metadata blob exists
-			const metadataBlob: SummaryObject | undefined =
-				summary.summary.tree[summarizablesMetadataKey];
-			assert(metadataBlob === undefined, "Metadata blob should not exist");
-		});
-
-		it("writes metadata blob with version 1 for minVersionForCollab 2.73.0", () => {
-			const { summarizer } = createEditManagerSummarizer({
-				minVersionForCollab: FluidClientVersion.v2_73,
-			});
+		it("writes metadata blob with version 2", () => {
+			const { summarizer } = createEditManagerSummarizer();
 
 			const summary = summarizer.summarize({
 				stringify: JSON.stringify,
@@ -91,12 +74,12 @@ describe("EditManagerSummarizer", () => {
 			) as SharedTreeSummarizableMetadata;
 			assert.equal(
 				metadataContent.version,
-				EditManagerSummaryVersion.v1,
-				"Metadata version should be 1",
+				EditManagerSummaryFormatVersion.v2,
+				"Metadata version should be 2",
 			);
 		});
 
-		it("loads with metadata blob with version 1", async () => {
+		it("loads with metadata blob with version 2", async () => {
 			const { summarizer } = createEditManagerSummarizer({
 				minVersionForCollab: FluidClientVersion.v2_73,
 			});
@@ -105,7 +88,7 @@ describe("EditManagerSummarizer", () => {
 				stringify: JSON.stringify,
 			});
 
-			// Verify metadata exists and has version = 1
+			// Verify metadata exists and has version = 2
 			const metadataBlob: SummaryObject | undefined =
 				summary.summary.tree[summarizablesMetadataKey];
 			assert(metadataBlob !== undefined, "Metadata blob should exist");
@@ -115,19 +98,35 @@ describe("EditManagerSummarizer", () => {
 			) as SharedTreeSummarizableMetadata;
 			assert.equal(
 				metadataContent.version,
-				EditManagerSummaryVersion.v1,
-				"Metadata version should be 1",
+				EditManagerSummaryFormatVersion.v2,
+				"Metadata version should be 2",
 			);
 
 			// Create a new EditManagerSummarizer and load with the above summary
 			const mockStorage = MockStorage.createFromSummary(summary.summary);
 			const { summarizer: summarizer2 } = createEditManagerSummarizer();
 
-			// Should load successfully with version 1
-			await assert.doesNotReject(
-				async () => summarizer2.load(mockStorage, JSON.parse),
-				"Should load successfully with metadata version 1",
-			);
+			// Should load successfully with version 2
+			await assert.doesNotReject(async () => summarizer2.load(mockStorage, JSON.parse));
+		});
+
+		it("loads with no metadata blob", async () => {
+			const { summarizer } = createEditManagerSummarizer({
+				minVersionForCollab: FluidClientVersion.v2_73,
+			});
+
+			const summary = summarizer.summarize({
+				stringify: JSON.stringify,
+			});
+
+			// Delete metadata blob from the summary
+			Reflect.deleteProperty(summary.summary.tree, summarizablesMetadataKey);
+
+			// Should load successfully
+			const mockStorage = MockStorage.createFromSummary(summary.summary);
+			const { summarizer: summarizer2 } = createEditManagerSummarizer();
+
+			await assert.doesNotReject(async () => summarizer2.load(mockStorage, JSON.parse));
 		});
 
 		it("fail to load with metadata blob with version > latest", async () => {
@@ -145,7 +144,7 @@ describe("EditManagerSummarizer", () => {
 			assert(metadataBlob !== undefined, "Metadata blob should exist");
 			assert.equal(metadataBlob.type, SummaryType.Blob, "Metadata should be a blob");
 			const modifiedMetadata: SharedTreeSummarizableMetadata = {
-				version: EditManagerSummaryVersion.vLatest + 1,
+				version: EditManagerSummaryFormatVersion.vLatest + 1,
 			};
 			metadataBlob.content = JSON.stringify(modifiedMetadata);
 

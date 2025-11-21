@@ -29,7 +29,7 @@ export type ForestCodec = IJsonCodec<FieldSet, Format, Format, FieldBatchEncodin
  * @param clientVersion - The MinimumVersionForCollab to convert.
  * @returns The ForestFormatVersion that corresponds to the provided MinimumVersionForCollab.
  */
-function clientVersionToForestSummaryVersion(
+function clientVersionToForestSummaryFormatVersion(
 	clientVersion: MinimumVersionForCollab,
 ): ForestFormatVersion {
 	// Currently, forest summary codec only writes in version 1.
@@ -44,7 +44,7 @@ export function makeForestSummarizerCodec(
 	// TODO: AB#41865
 	// This needs to be updated to support multiple versions.
 	// The second version will be used to enable incremental summarization.
-	const writeVersion = clientVersionToForestSummaryVersion(options.minVersionForCollab);
+	const writeVersion = clientVersionToForestSummaryFormatVersion(options.minVersionForCollab);
 	return makeVersionedValidatedCodec(options, new Set([ForestFormatVersion.v1]), Format, {
 		encode: (data: FieldSet, context: FieldBatchEncodingContext): Format => {
 			const keys: FieldKey[] = [];
@@ -70,5 +70,5 @@ export function makeForestSummarizerCodec(
 export function getCodecTreeForForestFormat(
 	clientVersion: MinimumVersionForCollab,
 ): CodecTree {
-	return { name: "Forest", version: clientVersionToForestSummaryVersion(clientVersion) };
+	return { name: "Forest", version: clientVersionToForestSummaryFormatVersion(clientVersion) };
 }

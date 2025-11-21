@@ -10,22 +10,16 @@ import type {
 	ITelemetryContext,
 	MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
-import {
-	getConfigForMinVersionForCollab,
-	lowestMinVersionForCollab,
-	type SummaryTreeBuilder,
-} from "@fluidframework/runtime-utils/internal";
+import type { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 
 import type { DetachedFieldIndex } from "../core/index.js";
 import {
-	preSummaryValidationVersion,
 	type Summarizable,
 	type SummaryElementParser,
 	type SummaryElementStringifier,
 	VersionedSummarizer,
 } from "../shared-tree-core/index.js";
 import type { JsonCompatibleReadOnly } from "../util/index.js";
-import { FluidClientVersion } from "../codec/index.js";
 
 /**
  * The storage key for the blob in the summary containing schema data
@@ -33,37 +27,36 @@ import { FluidClientVersion } from "../codec/index.js";
 const detachedFieldIndexBlobKey = "DetachedFieldIndexBlob";
 
 /**
- * The versions for the detached field index summary.
+ * The versions for the detached field index summary format.
  */
-export const enum DetachedFieldIndexSummaryVersion {
+export const enum DetachedFieldIndexSummaryFormatVersion {
 	/**
-	 * Version representing summaries generated before summary versioning was introduced.
-	 */
-	vPreVersioning = preSummaryValidationVersion,
-	/**
-	 * Version 1. This version adds metadata to the SharedTree summary.
+	 * This version represents summary format before summary versioning was introduced.
 	 */
 	v1 = 1,
 	/**
-	 * The latest version of the detached field index summary. Must be updated when a new version is added.
+	 * This version adds metadata to the summary. This is backward compatible with version 1.
 	 */
-	vLatest = v1,
+	v2 = 2,
+	/**
+	 * The latest version of the summary. Must be updated when a new version is added.
+	 */
+	vLatest = v2,
 }
 
-const supportedReadVersions = new Set<DetachedFieldIndexSummaryVersion>([
-	DetachedFieldIndexSummaryVersion.v1,
+const supportedVersions = new Set<DetachedFieldIndexSummaryFormatVersion>([
+	DetachedFieldIndexSummaryFormatVersion.v1,
+	DetachedFieldIndexSummaryFormatVersion.v2,
 ]);
 
 /**
  * Returns the summary version to use as per the given minimum version for collab.
  */
-function minVersionToDetachedFieldIndexSummaryVersion(
+function minVersionToDetachedFieldIndexSummaryFormatVersion(
 	version: MinimumVersionForCollab,
-): DetachedFieldIndexSummaryVersion {
-	return getConfigForMinVersionForCollab(version, {
-		[lowestMinVersionForCollab]: DetachedFieldIndexSummaryVersion.vPreVersioning,
-		[FluidClientVersion.v2_73]: DetachedFieldIndexSummaryVersion.v1,
-	});
+): DetachedFieldIndexSummaryFormatVersion {
+	// Currently, version 2 is written which adds metadata blob to the summary.
+	return DetachedFieldIndexSummaryFormatVersion.v2;
 }
 
 /**
@@ -76,8 +69,9 @@ export class DetachedFieldIndexSummarizer extends VersionedSummarizer implements
 	) {
 		super({
 			key: "DetachedFieldIndex",
-			writeVersion: minVersionToDetachedFieldIndexSummaryVersion(minVersionForCollab),
-			supportedReadVersions,
+			writeVersion: minVersionToDetachedFieldIndexSummaryFormatVersion(minVersionForCollab),
+			supportedVersions,
+			defaultVersion: DetachedFieldIndexSummaryFormatVersion.v1,
 		});
 	}
 

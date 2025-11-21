@@ -63,9 +63,10 @@ import type { DecodedMessage } from "./messageTypes.js";
 import type { ResubmitMachine } from "./resubmitMachine.js";
 import type { MessageFormatVersion } from "./messageFormat.js";
 import {
-	minVersionToSharedTreeSummaryVersion,
+	minVersionToSharedTreeSummaryFormatVersion,
+	SharedTreeSummaryFormatVersion,
 	summarizablesTreeKey,
-	supportedSharedTreeSummaryReadVersions,
+	supportedSharedTreeSummaryFormatVersions,
 	type Summarizable,
 	type SummaryElementParser,
 	type SummaryElementStringifier,
@@ -148,8 +149,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	) {
 		super({
 			key: summarizablesTreeKey,
-			writeVersion: minVersionToSharedTreeSummaryVersion(options.minVersionForCollab),
-			supportedReadVersions: supportedSharedTreeSummaryReadVersions,
+			writeVersion: minVersionToSharedTreeSummaryFormatVersion(options.minVersionForCollab),
+			supportedVersions: supportedSharedTreeSummaryFormatVersions,
+			defaultVersion: SharedTreeSummaryFormatVersion.v1,
 		});
 
 		this.schemaAndPolicy = {

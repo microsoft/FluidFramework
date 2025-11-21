@@ -50,9 +50,10 @@ import {
 import { TreeCompressionStrategyExtended } from "../treeCompressionUtils.js";
 import {
 	forestSummaryContentKey,
+	ForestSummaryFormatVersion,
 	forestSummaryKey,
-	minVersionToForestSummaryVersion,
-	supportedForestSummaryReadVersions,
+	minVersionToForestSummaryFormatVersion,
+	supportedForestSummaryFormatVersions,
 } from "./summaryTypes.js";
 
 /**
@@ -78,8 +79,9 @@ export class ForestSummarizer extends VersionedSummarizer implements Summarizabl
 	) {
 		super({
 			key: forestSummaryKey,
-			writeVersion: minVersionToForestSummaryVersion(options.minVersionForCollab),
-			supportedReadVersions: supportedForestSummaryReadVersions,
+			writeVersion: minVersionToForestSummaryFormatVersion(options.minVersionForCollab),
+			supportedVersions: supportedForestSummaryFormatVersions,
+			defaultVersion: ForestSummaryFormatVersion.v1,
 		});
 
 		// TODO: this should take in CodecWriteOptions, and use it to pick the write version.

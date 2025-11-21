@@ -12,7 +12,6 @@ import type {
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
-	preSummaryValidationVersion,
 	summarizablesMetadataKey,
 	type SharedTreeSummarizableMetadata,
 	type Summarizable,
@@ -29,19 +28,26 @@ import { readAndParseSnapshotBlob } from "../util/index.js";
 export abstract class VersionedSummarizer implements Summarizable {
 	public readonly key: string;
 	private readonly writeVersion: number;
-	private readonly supportedReadVersions: Set<number>;
+	private readonly supportedVersions: Set<number>;
+	private readonly defaultVersion: number;
 
 	public constructor(props: {
 		/** {@link Summarizable.key} */
 		key: string;
-		/** The version number to write in the summary metadata. If preSummaryValidationVersion or older, no metadata is written. */
+		/** The format version of the summary to write in the summary metadata. */
 		writeVersion: number;
 		/** The set of supported versions that a summary can have for this summarizer to load it. */
-		supportedReadVersions: Set<number>;
+		supportedVersions: Set<number>;
+		/**
+		 * The default format version to use if the summary doesn't have metadata blob.
+		 * This is true for summaries that were written before versioning was added for summaries.
+		 */
+		defaultVersion: number;
 	}) {
 		this.key = props.key;
 		this.writeVersion = props.writeVersion;
-		this.supportedReadVersions = props.supportedReadVersions;
+		this.supportedVersions = props.supportedVersions;
+		this.defaultVersion = props.defaultVersion;
 	}
 
 	/**
@@ -73,12 +79,10 @@ export abstract class VersionedSummarizer implements Summarizable {
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext;
 	}): ISummaryTreeWithStats {
 		const builder = new SummaryTreeBuilder();
-		if (this.writeVersion > preSummaryValidationVersion) {
-			const metadata: SharedTreeSummarizableMetadata = {
-				version: this.writeVersion,
-			};
-			builder.addBlob(summarizablesMetadataKey, props.stringify(metadata));
-		}
+		const metadata: SharedTreeSummarizableMetadata = {
+			version: this.writeVersion,
+		};
+		builder.addBlob(summarizablesMetadataKey, props.stringify(metadata));
 		this.summarizeInternal({ ...props, builder });
 		return builder.getSummaryTree();
 	}
@@ -87,17 +91,20 @@ export abstract class VersionedSummarizer implements Summarizable {
 		services: IChannelStorageService,
 		parse: SummaryElementParser,
 	): Promise<void> {
+		// This is the version before metadata blob with version is written into the summary.
+		let version = this.defaultVersion;
 		if (await services.contains(summarizablesMetadataKey)) {
 			const metadata = await readAndParseSnapshotBlob<SharedTreeSummarizableMetadata>(
 				summarizablesMetadataKey,
 				services,
 				(contents) => parse(contents),
 			);
-			if (!this.supportedReadVersions.has(metadata.version)) {
-				throw new UsageError(
-					`Cannot read version ${metadata.version} of shared tree summary. Upgrade to a supported version.`,
-				);
-			}
+			version = metadata.version;
+		}
+		if (!this.supportedVersions.has(version)) {
+			throw new UsageError(
+				`Cannot read version ${version} of shared tree summary. Upgrade to a supported version.`,
+			);
 		}
 		await this.loadInternal(services, parse);
 	}

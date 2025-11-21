@@ -12,60 +12,54 @@ import type {
 	ITelemetryContext,
 	MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
-import {
-	getConfigForMinVersionForCollab,
-	lowestMinVersionForCollab,
-	type SummaryTreeBuilder,
-} from "@fluidframework/runtime-utils/internal";
+import type { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 
-import { FluidClientVersion, type IJsonCodec } from "../codec/index.js";
+import type { IJsonCodec } from "../codec/index.js";
 import type { ChangeFamily, ChangeFamilyEditor, SchemaAndPolicy } from "../core/index.js";
 import type { JsonCompatibleReadOnly } from "../util/index.js";
 
 import type { EditManager, SummaryData } from "./editManager.js";
 import type { EditManagerEncodingContext } from "./editManagerCodecs.js";
-import {
-	preSummaryValidationVersion,
-	type Summarizable,
-	type SummaryElementParser,
-	type SummaryElementStringifier,
+import type {
+	Summarizable,
+	SummaryElementParser,
+	SummaryElementStringifier,
 } from "./summaryTypes.js";
 import { VersionedSummarizer } from "./versionedSummarizer.js";
 
 const stringKey = "String";
 
 /**
- * The summary version of the edit manager.
+ * The versions for the edit manager summary format.
  */
-export const enum EditManagerSummaryVersion {
+export const enum EditManagerSummaryFormatVersion {
 	/**
-	 * Version representing summaries generated before summary versioning was introduced.
-	 */
-	vPreVersioning = preSummaryValidationVersion,
-	/**
-	 * Version 1. This version adds metadata to the SharedTree summary.
+	 * This version represents summary format before summary versioning was introduced.
 	 */
 	v1 = 1,
 	/**
-	 * The latest version of the edit manager summary. Must be updated when a new version is added.
+	 * This version adds metadata to the summary. This is backward compatible with version 1.
 	 */
-	vLatest = v1,
+	v2 = 2,
+	/**
+	 * The latest version of the summary. Must be updated when a new version is added.
+	 */
+	vLatest = v2,
 }
 
-const supportedReadVersions = new Set<EditManagerSummaryVersion>([
-	EditManagerSummaryVersion.v1,
+const supportedVersions = new Set<EditManagerSummaryFormatVersion>([
+	EditManagerSummaryFormatVersion.v1,
+	EditManagerSummaryFormatVersion.v2,
 ]);
 
 /**
  * Returns the summary version to use as per the given minimum version for collab.
  */
-function minVersionToEditManagerSummaryVersion(
+function minVersionToEditManagerSummaryFormatVersion(
 	version: MinimumVersionForCollab,
-): EditManagerSummaryVersion {
-	return getConfigForMinVersionForCollab(version, {
-		[lowestMinVersionForCollab]: EditManagerSummaryVersion.vPreVersioning,
-		[FluidClientVersion.v2_73]: EditManagerSummaryVersion.v1,
-	});
+): EditManagerSummaryFormatVersion {
+	// Currently, version 2 is written which adds metadata blob to the summary.
+	return EditManagerSummaryFormatVersion.v2;
 }
 
 /**
@@ -93,8 +87,9 @@ export class EditManagerSummarizer<TChangeset>
 	) {
 		super({
 			key: "EditManager",
-			writeVersion: minVersionToEditManagerSummaryVersion(minVersionForCollab),
-			supportedReadVersions,
+			writeVersion: minVersionToEditManagerSummaryFormatVersion(minVersionForCollab),
+			supportedVersions,
+			defaultVersion: EditManagerSummaryFormatVersion.v1,
 		});
 	}
 

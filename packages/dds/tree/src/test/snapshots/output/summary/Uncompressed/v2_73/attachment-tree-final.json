@@ -6,7 +6,7 @@
       ".metadata": {
         "type": "blob",
         "content": {
-          "version": 1
+          "version": 2
         },
         "encoding": "utf-8"
       }
@@ -26,7 +26,7 @@
                   ".metadata": {
                     "type": "blob",
                     "content": {
-                      "version": 1
+                      "version": 2
                     },
                     "encoding": "utf-8"
                   }
@@ -56,7 +56,7 @@
                   ".metadata": {
                     "type": "blob",
                     "content": {
-                      "version": 1
+                      "version": 2
                     },
                     "encoding": "utf-8"
                   }
@@ -109,7 +109,7 @@
                   ".metadata": {
                     "type": "blob",
                     "content": {
-                      "version": 1
+                      "version": 2
                     },
                     "encoding": "utf-8"
                   }
@@ -176,7 +176,7 @@
                   ".metadata": {
                     "type": "blob",
                     "content": {
-                      "version": 1
+                      "version": 2
                     },
                     "encoding": "utf-8"
                   }
