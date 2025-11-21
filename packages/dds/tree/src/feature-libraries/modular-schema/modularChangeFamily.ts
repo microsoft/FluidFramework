@@ -3362,6 +3362,10 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 			// The base attach is part of a move in the base changeset.
 			const prevEntry = this.table.entries.getFirst(baseDetachId, 1).value ?? {};
 			this.table.entries.set(baseDetachId, 1, { ...prevEntry, nodeChange: newChanges });
+
+			if (newChanges !== undefined) {
+				this.invalidateBaseFields(detachFields);
+			}
 		} else {
 			const baseNodeId = getFromChangeAtomIdMap(
 				this.table.baseChange.rootNodes.nodeChanges,
@@ -3381,11 +3385,6 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 				);
 			}
 		}
-
-		// XXX: The following reasoning is no longer true, but this invalidation is still necessary. Why?
-		// We invalidate the detach location even if there are no new changes because adding the rename entry
-		// may affect the result of `composeDetachAttach` at that location.
-		this.invalidateBaseFields(detachFields);
 	}
 
 	private areSameNodes(
