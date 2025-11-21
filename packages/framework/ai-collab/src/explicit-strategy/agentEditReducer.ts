@@ -239,8 +239,8 @@ export function applyAgentEdit(
 					}
 					// If the LLM attempts to use the wrong type for a field, we generate a useful error message that can be used as part of the feedback loop.
 					const isInvalidTypeError =
-						error.message.match(
-							/The provided data is incompatible with all of the types allowed by the schema./,
+						/The provided data is incompatible with all of the types allowed by the schema./.exec(
+							error.message,
 						) !== null;
 					if (isInvalidTypeError === true) {
 						const errorMessage = createInvalidModifyFeedbackMsg(
@@ -409,6 +409,7 @@ function createInvalidModifyFeedbackMsg(
 	} else if (errorType === "INVALID_TYPE") {
 		const allowedTypeIdentifiers = getAllowedTypeIdentifiers(modifyEdit.field);
 		// TODO: If the invalid modification is a new object, it won't be clear what part of the object is invalid for the given type. If we could give some more detailed guidance on what was wrong with the object it would be ideal.
+		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		messageSuffix = ` You cannot set the node's field \`${modifyEdit.field}\` to the value \`${modifyEdit.modification}\` with type \`${typeof modifyEdit.modification}\` because this type is incompatible with all of the types allowed by the field's schema. The set of allowed types are \`[${allowedTypeIdentifiers.map((id) => `'${id}'`).join(", ")}]\`.`;
 	}
 

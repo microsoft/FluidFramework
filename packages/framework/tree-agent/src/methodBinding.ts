@@ -127,7 +127,7 @@ export type Infer<T> = T extends FunctionDef<infer Args, infer Return, infer Res
 export interface ExposedMethods {
 	expose<
 		const K extends string & keyof MethodKeys<InstanceType<S>>,
-		S extends BindableSchema & Ctor<{ [P in K]: Infer<Z> }> & IExposedMethods,
+		S extends BindableSchema & Ctor<Record<K, Infer<Z>>> & IExposedMethods,
 		Z extends FunctionDef<any, any, any>,
 	>(schema: S, methodName: K, zodFunction: Z): void;
 
@@ -173,7 +173,7 @@ class ExposedMethodsI implements ExposedMethods {
 
 	public expose<
 		const K extends string & keyof MethodKeys<InstanceType<S>>,
-		S extends BindableSchema & Ctor<{ [P in K]: Infer<Z> }> & IExposedMethods,
+		S extends BindableSchema & Ctor<Record<K, Infer<Z>>> & IExposedMethods,
 		Z extends FunctionDef<readonly Arg[], z.ZodTypeAny, z.ZodTypeAny | null>,
 	>(schema: S, methodName: K, functionDef: Z): void {
 		if (schema !== this.schemaClass) {

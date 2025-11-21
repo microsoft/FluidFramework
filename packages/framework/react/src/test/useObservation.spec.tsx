@@ -36,7 +36,7 @@ describe("useObservation", () => {
 		] as const;
 
 		for (const useObservationHook of observationHooks) {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type, @typescript-eslint/ban-types
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 			describe((useObservationHook as Function).name, () => {
 				for (const reactStrictMode of [false, true]) {
 					/**

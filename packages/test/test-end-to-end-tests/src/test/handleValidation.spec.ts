@@ -403,6 +403,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 											reject(new Error("No values found in consensus queue."));
 										}
 									})
+									// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
 									.catch((error) => reject(error));
 							}),
 							{ errorMsg: "Timeout waiting for acquiring value from consensus queue." },

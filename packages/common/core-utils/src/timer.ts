@@ -249,6 +249,7 @@ export interface IPromiseTimer extends ITimer {
 	 * Starts the timer and returns a promise that
 	 * resolves when the timer times out or is canceled.
 	 */
+	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	start(): Promise<IPromiseTimerResult>;
 }
 
