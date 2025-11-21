@@ -188,7 +188,7 @@ describe("SharedString", () => {
 			}
 		});
 
-		it("can annotate single multi-character segment", () => {
+		it("can annotate single multi-character segment in a local SharedString", () => {
 			sharedString.insertText(0, "Blocker");
 			sharedString.annotateRange(0, 7, { bold: true });
 			let segmentCount = 0;
@@ -608,7 +608,7 @@ describe("SharedString", () => {
 			}
 		});
 
-		it("can annotate single multi-character segment", () => {
+		it("can annotate single multi-character segment with a remote SharedString", () => {
 			sharedString.insertText(0, "Blocker");
 			sharedString.annotateRange(0, 7, { bold: true });
 			containerRuntimeFactory.processAllMessages();
