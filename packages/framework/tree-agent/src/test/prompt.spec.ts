@@ -9,7 +9,7 @@ import * as path from "node:path";
 
 import {
 	independentView,
-	SchemaFactory,
+	SchemaFactoryAlpha,
 	TreeViewConfiguration,
 	type ImplicitFieldSchema,
 	type InsertableField,
@@ -22,7 +22,7 @@ import { exposePropertiesSymbol, type ExposedProperties } from "../propertyBindi
 import { Subtree } from "../subtree.js";
 import type { TreeView } from "../api.js";
 
-const sf = new SchemaFactory("test");
+const sf = new SchemaFactoryAlpha("test");
 
 describe("Prompt generation", () => {
 	it("gives instructions for editing if an editing tool is supplied", () => {
@@ -144,8 +144,8 @@ describe("Prompt generation", () => {
 				subtree: new Subtree(view),
 				editToolName: "EditTreeTool",
 			});
-			assert.ok(prompt.includes("name: string; // readonly"));
-			assert.ok(prompt.includes("testProperty: string; // readonly"));
+			assert.ok(prompt.includes("    readonly name: string;"));
+			assert.ok(prompt.includes("    readonly testProperty: string;"));
 		}
 	});
 
@@ -211,12 +211,17 @@ describe("Prompt snapshot", () => {
 	});
 
 	it("with all options enabled", () => {
-		class TestMap extends sf.map("TestMap", sf.number) {
+		class TestMap extends sf.mapAlpha("TestMap", sf.number, {
+			metadata: { description: "A test map" },
+		}) {
 			public static [exposeMethodsSymbol](methods: ExposedMethods): void {
 				methods.expose(
 					TestMap,
 					"length",
-					buildFunc({ returns: methods.instanceOf(NumberValue) }),
+					buildFunc({
+						returns: methods.instanceOf(NumberValue),
+						description: "Gets the length of the map",
+					}),
 				);
 			}
 
@@ -225,7 +230,11 @@ describe("Prompt snapshot", () => {
 					schema: z.string(),
 					readOnly: true,
 				});
-				properties.exposeProperty(TestMap, "property", { schema: z.string(), readOnly: true });
+				properties.exposeProperty(TestMap, "property", {
+					schema: z.string(),
+					readOnly: true,
+					description: "A test property",
+				});
 			}
 
 			public readonly testProperty: string = "testProperty";

@@ -18,7 +18,6 @@ import { z } from "zod";
 import { buildFunc, exposeMethodsSymbol, type ExposedMethods } from "../methodBinding.js";
 import { exposePropertiesSymbol, type ExposedProperties } from "../propertyBinding.js";
 import { generateEditTypesForPrompt } from "../typeGeneration.js";
-import { unqualifySchema, getZodSchemaAsTypeScript, isNamedSchema } from "../utils.js";
 
 const sf = new SchemaFactory("test");
 
@@ -172,9 +171,6 @@ type MapWithMethod = Map<string, string> & {
 type MapWithMethod = Map<string, string> & {
     method(n: string): Obj;
 };
-
-interface Obj {
-}
 `,
 			);
 		});
@@ -201,7 +197,7 @@ interface Obj {
 				arrayDomainSchemaString,
 				`interface ObjWithProperty {
     testProperty: string;
-    property: string; // readonly
+    readonly property: string;
 }
 `,
 			);
@@ -228,7 +224,7 @@ interface Obj {
 				`// Note: this array has custom user-defined properties directly on it.
 type ArrayWithProperty = string[] & {
     testProperty: string;
-    property: string; // readonly
+    readonly property: string;
 };
 `,
 			);
@@ -255,7 +251,7 @@ type ArrayWithProperty = string[] & {
 				`// Note: this map has custom user-defined properties directly on it.
 type MapWithProperty = Map<string, string> & {
     testProperty: string;
-    property: string; // readonly
+    readonly property: string;
 };
 `,
 			);
@@ -268,19 +264,9 @@ type MapWithProperty = Map<string, string> & {
 
 		const schema = getSimpleSchema(view.schema);
 
-		const { domainTypes } = generateEditTypesForPrompt(view.schema, schema);
-		for (const [key, value] of Object.entries(domainTypes)) {
-			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-			delete domainTypes[key];
-			if (isNamedSchema(key)) {
-				const friendlyKey = unqualifySchema(key);
-				domainTypes[friendlyKey] = value;
-			}
-		}
-
-		const domainSchemaString = getZodSchemaAsTypeScript(domainTypes);
+		const { schemaText } = generateEditTypesForPrompt(view.schema, schema);
 		assert.notDeepEqual(
-			domainSchemaString,
+			schemaText,
 			`interface Todo {
 			title: string;
 			completed: boolean;
@@ -305,14 +291,6 @@ function getDomainSchemaString<TSchema extends ImplicitFieldSchema>(
 	const view = independentView(new TreeViewConfiguration({ schema: schemaClass }), {});
 	view.initialize(initialValue);
 	const schema = getSimpleSchema(view.schema);
-	const { domainTypes } = generateEditTypesForPrompt(view.schema, schema);
-	for (const [key, value] of Object.entries(domainTypes)) {
-		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-		delete domainTypes[key];
-		if (isNamedSchema(key)) {
-			const friendlyKey = unqualifySchema(key);
-			domainTypes[friendlyKey] = value;
-		}
-	}
-	return getZodSchemaAsTypeScript(domainTypes);
+	const { schemaText } = generateEditTypesForPrompt(view.schema, schema);
+	return schemaText;
 }
