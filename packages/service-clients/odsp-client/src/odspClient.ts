@@ -11,6 +11,7 @@ import type {
 import {
 	createDetachedContainer,
 	loadExistingContainer,
+	rehydrateDetachedContainer,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
 import type {
@@ -24,6 +25,7 @@ import type { ContainerAttachProps, ContainerSchema } from "@fluidframework/flui
 import {
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
+	isInternalFluidContainer,
 } from "@fluidframework/fluid-static/internal";
 import {
 	OdspDocumentServiceFactory,
@@ -136,6 +138,40 @@ export class OdspClient {
 		return { container: fluidContainer, services };
 	}
 
+	/**
+	 * Create a new container from the serialized state of a detached container.
+	 *
+	 * @param serializedContainer - Serialized string representation of the container.
+	 * @param containerSchema - The schema of the container to rehydrate.
+	 */
+	public async rehydrateContainer<T extends ContainerSchema>(
+		serializedContainer: string,
+		containerSchema: T,
+	): Promise<{
+		container: IOdspFluidContainer<T>;
+		services: IOdspContainerServices;
+	}> {
+		const loaderProps = this.getLoaderProps(containerSchema);
+
+		const container = await rehydrateDetachedContainer({
+			...loaderProps,
+			serializedState: serializedContainer,
+		});
+
+		const fluidContainer = await this.createFluidContainer<T>(
+			container,
+			this.connectionConfig,
+		);
+		// Perform type guard to access internal APIs exposed by OdspFluidContainer.
+		if (!isInternalFluidContainer(fluidContainer)) {
+			throw new Error("Fluid container is not internal");
+		}
+
+		const services = await this.getContainerServices(container);
+
+		return { container: fluidContainer, services };
+	}
+
 	public async getContainer<T extends ContainerSchema>(
 		id: string,
 		containerSchema: T,
@@ -155,6 +191,10 @@ export class OdspClient {
 		const fluidContainer = await createFluidContainer<T>({
 			container,
 		});
+		// Perform type guard to access internal APIs exposed by OdspFluidContainer.
+		if (!isInternalFluidContainer(fluidContainer)) {
+			throw new Error("Fluid container is not internal");
+		}
 		const services = await this.getContainerServices(container);
 		return { container: fluidContainer, services };
 	}
@@ -226,7 +266,14 @@ export class OdspClient {
 			 */
 			return resolvedUrl.itemId;
 		};
-		const fluidContainer = await createFluidContainer<T>({ container });
+		const fluidContainer = await createFluidContainer<T>({
+			container,
+		});
+		// Perform type guard to access internal APIs exposed by OdspFluidContainer.
+		if (!isInternalFluidContainer(fluidContainer)) {
+			throw new Error("Fluid container is not internal");
+		}
+		// Assign custom attach method
 		fluidContainer.attach = attach;
 		return fluidContainer;
 	}
