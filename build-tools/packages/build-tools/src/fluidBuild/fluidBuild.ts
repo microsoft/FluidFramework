@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { existsSync } from "node:fs";
+import * as path from "node:path";
 import chalk from "picocolors";
 import { Spinner } from "picospinner";
 
@@ -11,11 +13,15 @@ import { defaultLogger } from "../common/logging";
 import { Timer } from "../common/timer";
 import { type BuildGraph } from "./buildGraph";
 import { BuildResult } from "./buildResult";
+import { STATUS_SYMBOLS } from "./buildStatusSymbols";
 import { commonOptions } from "./commonOptions";
 import { DEFAULT_FLUIDBUILD_CONFIG } from "./fluidBuildConfig";
 import { FluidRepoBuild } from "./fluidRepoBuild";
 import { getFluidBuildConfig, getResolvedFluidRoot } from "./fluidUtils";
 import { options, parseOptions } from "./options";
+import { loadCacheConfiguration } from "./sharedCache/configFile";
+import { hashFile } from "./sharedCache/fileOperations";
+import { SharedCacheManager } from "./sharedCache/sharedCacheManager";
 
 const { log, errorLog: error, warning: warn } = defaultLogger;
 
@@ -31,11 +37,90 @@ async function main() {
 		: "";
 	log(`Build Root: ${resolvedRoot}${suffix}`);
 
+	// Load cache configuration with proper precedence: CLI > env > config file > defaults
+	const cacheConfig = loadCacheConfiguration(
+		{
+			cacheDir: options.cacheDir,
+			skipCacheWrite: options.skipCacheWrite ? true : undefined,
+			verifyIntegrity: options.verifyCacheIntegrity ? true : undefined,
+		},
+		resolvedRoot,
+	);
+
+	// Initialize shared cache if cache directory is specified
+	let sharedCache: SharedCacheManager | undefined;
+	if (cacheConfig.cacheDir) {
+		try {
+			// Find and hash the lockfile
+			const lockfilePath = path.join(resolvedRoot, "pnpm-lock.yaml");
+			if (!existsSync(lockfilePath)) {
+				warn(`Lockfile not found at ${lockfilePath}, cache disabled`);
+			} else {
+				const lockfileHash = await hashFile(lockfilePath);
+
+				// Collect cache bust environment variables
+				const cacheBustVars: Record<string, string> = {};
+				for (const [key, value] of Object.entries(process.env)) {
+					if (key.startsWith("FLUID_BUILD_CACHE_BUST") && value !== undefined) {
+						cacheBustVars[key] = value;
+					}
+				}
+
+				sharedCache = new SharedCacheManager({
+					cacheDir: cacheConfig.cacheDir,
+					repoRoot: resolvedRoot,
+					globalKeyComponents: {
+						cacheSchemaVersion: 1,
+						nodeVersion: process.version,
+						arch: process.arch,
+						platform: process.platform,
+						lockfileHash,
+						nodeEnv: process.env.NODE_ENV,
+						cacheBustVars: Object.keys(cacheBustVars).length > 0 ? cacheBustVars : undefined,
+					},
+					verifyIntegrity: cacheConfig.verifyIntegrity,
+					skipCacheWrite: cacheConfig.skipCacheWrite,
+				});
+				log(`Shared cache enabled: ${cacheConfig.cacheDir}`);
+			}
+		} catch (e) {
+			warn(`Failed to initialize shared cache: ${(e as Error).message}`);
+		}
+	}
+
+	// Handle cache management commands (these exit immediately)
+	if (options.cacheStats || options.cacheClean || options.cachePrune || options.cacheVerify) {
+		if (!sharedCache) {
+			error("Cache management commands require --cache-dir to be specified");
+			process.exit(-1);
+		}
+
+		try {
+			if (options.cacheStats) {
+				await sharedCache.displayStatistics();
+			} else if (options.cacheClean) {
+				await sharedCache.cleanCache();
+			} else if (options.cachePrune) {
+				await sharedCache.pruneCache(
+					options.cachePruneMaxSizeMB,
+					options.cachePruneMaxAgeDays,
+				);
+			} else if (options.cacheVerify) {
+				await sharedCache.verifyCache(options.cacheVerifyFix);
+			}
+			process.exit(0);
+		} catch (e) {
+			error(`Cache operation failed: ${(e as Error).message}`);
+			process.exit(-1);
+		}
+	}
+
 	// Load the packages
 	const repo = new FluidRepoBuild({
 		repoRoot: resolvedRoot,
 		gitRepo: new GitRepo(resolvedRoot),
 		fluidBuildConfig: fluidConfig,
+		sharedCache,
 	});
 
 	timer.time("Package scan completed");
@@ -81,9 +166,9 @@ async function main() {
 
 	let failureSummary = "";
 	let exitCode = 0;
+	let buildGraph: BuildGraph | undefined;
 	if (options.buildTaskNames.length !== 0) {
 		// build the graph
-		let buildGraph: BuildGraph;
 		const spinner = new Spinner("Creating build graph...");
 		try {
 			// Warning any text output to terminal before spinner is halted
@@ -105,6 +190,62 @@ async function main() {
 			process.exit(-10);
 		}
 		timer.time("Check install completed");
+
+		// Setup signal handlers for graceful shutdown
+		const cleanup = async (signal: string) => {
+			log(`\n${chalk.yellowBright(`Received ${signal}, cleaning up...`)}`);
+
+			// Persist cache statistics
+			if (sharedCache) {
+				try {
+					await sharedCache.persistStatistics();
+				} catch (e) {
+					warn(`Failed to persist cache statistics: ${(e as Error).message}`);
+				}
+			}
+
+			// Display current stats
+			const totalTime = timer.getTotalTime();
+			const timeInMinutes =
+				totalTime > 60000
+					? ` (${Math.floor(totalTime / 60000)}m ${((totalTime % 60000) / 1000).toFixed(3)}s)`
+					: "";
+			log(`Total time: ${(totalTime / 1000).toFixed(3)}s${timeInMinutes}`);
+
+			// Display task statistics if build graph was created
+			if (buildGraph) {
+				const taskStats = buildGraph.taskStats;
+				const notRunCount =
+					taskStats.leafTotalCount - taskStats.leafUpToDateCount - taskStats.leafBuiltCount;
+				log(
+					chalk.yellowBright(
+						`Tasks: ${taskStats.leafBuiltCount} built, ${taskStats.leafUpToDateCount} up-to-date, ${notRunCount} not run (interrupted)`,
+					),
+				);
+
+				// Display cache statistics if available
+				const cacheStats = buildGraph.cacheStatsSummary;
+				if (cacheStats) {
+					log(cacheStats);
+				}
+
+				// Display status symbol legend if tasks were built
+				if (taskStats.leafBuiltCount > 0) {
+					displayStatusSymbolLegend();
+				}
+
+				// Display failed tasks if any
+				const currentFailureSummary = buildGraph.taskFailureSummary;
+				if (currentFailureSummary !== "") {
+					log(`\n${currentFailureSummary}`);
+				}
+			}
+
+			process.exit(130); // Standard exit code for SIGINT
+		};
+
+		process.on("SIGINT", () => cleanup("SIGINT"));
+		process.on("SIGTERM", () => cleanup("SIGTERM"));
 
 		// Run the build
 		const buildResult = await buildGraph.build(timer);
@@ -138,6 +279,29 @@ async function main() {
 			: "";
 	log(`Total time: ${(totalTime / 1000).toFixed(3)}s${timeInMinutes}`);
 
+	// Persist cache statistics on normal exit
+	if (sharedCache) {
+		try {
+			await sharedCache.persistStatistics();
+		} catch (e) {
+			warn(`Failed to persist cache statistics: ${(e as Error).message}`);
+		}
+	}
+
+	// Display cache statistics if available
+	if (buildGraph) {
+		const cacheStats = buildGraph.cacheStatsSummary;
+		if (cacheStats) {
+			log(cacheStats);
+		}
+
+		// Display status symbol legend if tasks were built
+		const taskStats = buildGraph.taskStats;
+		if (taskStats.leafBuiltCount > 0) {
+			displayStatusSymbolLegend();
+		}
+	}
+
 	if (failureSummary !== "") {
 		log(`\n${failureSummary}`);
 	}
@@ -152,7 +316,26 @@ function buildResultString(buildResult: BuildResult) {
 			return chalk.redBright("failed");
 		case BuildResult.UpToDate:
 			return chalk.cyanBright("up to date");
+		case BuildResult.CachedSuccess:
+			return chalk.magentaBright("restored from cache");
+		case BuildResult.SuccessWithCacheWrite:
+			return chalk.greenBright("succeeded and cached");
+		case BuildResult.LocalCacheHit:
+			return chalk.yellowBright("local cache hit");
 	}
+}
+
+function displayStatusSymbolLegend() {
+	log("\nStatus symbols:");
+	log(
+		`  ${chalk.yellowBright(STATUS_SYMBOLS.SUCCESS)} Success (executed)              ${chalk.blueBright(STATUS_SYMBOLS.CACHED_SUCCESS)} Remote cache hit (downloaded)`,
+	);
+	log(
+		`  ${chalk.cyanBright(STATUS_SYMBOLS.UP_TO_DATE)} Up-to-date (skipped)            ${chalk.greenBright(STATUS_SYMBOLS.SUCCESS_WITH_CACHE_WRITE)} Cache write (uploaded)`,
+	);
+	log(
+		`  ${chalk.redBright(STATUS_SYMBOLS.FAILED)} Failed                          ${chalk.greenBright(STATUS_SYMBOLS.LOCAL_CACHE_HIT)} Local cache hit (donefile)`,
+	);
 }
 
 main().catch((e) => {
