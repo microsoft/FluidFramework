@@ -5,7 +5,7 @@
 
 /**
  * This module provided collection of minimal (slim) helpers to support
- * DataObject creation for temporary {@link ExperimentalPresenceManager}.
+ * DataObject creation for otherwise empty container.
  */
 
 import type {
@@ -14,14 +14,14 @@ import type {
 	IRequest,
 	IResponse,
 } from "@fluidframework/core-interfaces";
-import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
-import { assert } from "@fluidframework/core-utils/internal";
-import { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/legacy";
+import { assert } from "@fluidframework/core-utils/legacy";
+import { FluidDataStoreRuntime } from "@fluidframework/datastore/legacy";
 import type {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
-} from "@fluidframework/runtime-definitions/internal";
-import { create404Response } from "@fluidframework/runtime-utils/internal";
+} from "@fluidframework/runtime-definitions/legacy";
+import { create404Response } from "@fluidframework/runtime-utils/legacy";
 
 /**
  * `BasicFluidDataStoreRuntime` extends the FluidDataStoreRuntime to provide a request
