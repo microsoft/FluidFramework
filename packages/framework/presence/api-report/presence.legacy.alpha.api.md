@@ -211,6 +211,7 @@ export interface LatestMap<T, Keys extends string | number = string | number, TR
 
 // @beta @input
 export interface LatestMapArguments<T, Keys extends string | number = string | number> extends LatestMapArgumentsRaw<T, Keys> {
+    keyValidator?: StateSchemaValidator<Keys>;
     validator: StateSchemaValidator<T>;
 }
 

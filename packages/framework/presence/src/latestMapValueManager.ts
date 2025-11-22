@@ -465,6 +465,7 @@ class LatestMapValueManagerImpl<
 		public readonly value: InternalTypes.MapValueState<T, Keys>,
 		controlSettings: BroadcastControlSettings | undefined,
 		private readonly validator: StateSchemaValidator<T> | undefined,
+		private readonly keyValidator: StateSchemaValidator<Keys> | undefined,
 	) {
 		this.controls = new OptionalBroadcastControl(controlSettings);
 
@@ -477,6 +478,10 @@ class LatestMapValueManagerImpl<
 				});
 			},
 		);
+	}
+
+	private isInvalidKey(key: Keys): boolean {
+		return this.keyValidator !== undefined && this.keyValidator(key) === undefined;
 	}
 
 	public get presence(): Presence {
@@ -513,6 +518,9 @@ class LatestMapValueManagerImpl<
 		}
 		const items = new Map<Keys, LatestData<T, ValueAccessor<T>>>();
 		for (const [key, item] of objectEntries(clientStateMap.items)) {
+			if (this.isInvalidKey(key)) {
+				continue;
+			}
 			if (isValueRequiredState(item)) {
 				items.set(key, {
 					value: createValidatedGetter(item, validator),
@@ -561,6 +569,9 @@ class LatestMapValueManagerImpl<
 		};
 		const postUpdateActions: PostUpdateAction[] = [];
 		for (const key of updatedItemKeys) {
+			if (this.isInvalidKey(key)) {
+				continue;
+			}
 			const item = value.items[key];
 			const hadPriorValue = currentState.items[key]?.value;
 			currentState.items[key] = item;
@@ -625,10 +636,16 @@ export interface LatestMapArgumentsRaw<T, Keys extends string | number = string 
 export interface LatestMapArguments<T, Keys extends string | number = string | number>
 	extends LatestMapArgumentsRaw<T, Keys> {
 	/**
-	 * An optional function that will be called at runtime to validate the presence data. A runtime validator is strongly
+	 * An optional function that will be called at runtime to validate the key presence data value. A runtime validator is strongly
 	 * recommended. See {@link StateSchemaValidator}.
 	 */
 	validator: StateSchemaValidator<T>;
+	/**
+	 * An optional function that will be called at runtime to validate the presence
+	 * data key. A runtime validator is strongly recommended when key type is not
+	 * simply `string | number`. See {@link StateSchemaValidator}.
+	 */
+	keyValidator?: StateSchemaValidator<Keys>;
 }
 
 // #region factory function overloads
@@ -691,6 +708,7 @@ export const latestMap: LatestMapFactory = <
 	const settings = args?.settings;
 	const initialValues = args?.local;
 	const validator = args?.validator;
+	const keyValidator = args?.keyValidator;
 
 	const timestamp = Date.now();
 	const value: InternalTypes.MapValueState<
@@ -730,6 +748,7 @@ export const latestMap: LatestMapFactory = <
 				value,
 				settings,
 				validator,
+				keyValidator,
 			),
 		),
 	});
