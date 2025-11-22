@@ -3,16 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import {
-	getPresence,
-	// eslint-disable-next-line import-x/no-deprecated
-	getPresenceViaDataObject,
-	// eslint-disable-next-line import-x/no-deprecated
-	ExperimentalPresenceManager,
-} from "@fluidframework/presence/alpha";
+import { getPresence } from "@fluidframework/presence/beta";
 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
 import type { ContainerSchema, IFluidContainer } from "fluid-framework";
 
+import { EmptyDOEntry } from "./datastoreFactory.js";
 import { FocusTracker } from "./FocusTracker.js";
 import { MouseTracker } from "./MouseTracker.js";
 import { initializeReactions } from "./reactions.js";
@@ -26,9 +21,8 @@ import { renderControlPanel, renderFocusPresence, renderMousePresence } from "./
 // data object requires 2.41 or later.
 const containerSchema = {
 	initialObjects: {
-		// Optional Presence Manager object placed within container schema for experimental presence access
-		// eslint-disable-next-line import-x/no-deprecated
-		presence: ExperimentalPresenceManager,
+		// schema requires at least one initial object
+		nothing: EmptyDOEntry,
 	},
 } satisfies ContainerSchema;
 
@@ -63,12 +57,7 @@ async function start() {
 		({ container } = await client.getContainer(id, containerSchema, "2"));
 	}
 
-	const useDataObject = new URLSearchParams(location.search).has("useDataObject");
-	const presence = useDataObject
-		? // Retrieve a reference to the presence APIs via the data object.
-			// eslint-disable-next-line import-x/no-deprecated
-			getPresenceViaDataObject(container.initialObjects.presence)
-		: getPresence(container);
+	const presence = getPresence(container);
 
 	// Get the states workspace for the tracker data. This workspace will be created if it doesn't exist.
 	// We create it with no states; we will pass the workspace to the Mouse and Focus trackers, and they will create value
