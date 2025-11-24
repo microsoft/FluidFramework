@@ -41,6 +41,8 @@ import { ConsensusRegisterCollection } from "@fluidframework/register-collection
 import * as sequence from "@fluidframework/sequence/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 import { TestFluidObjectFactory } from "@fluidframework/test-utils/internal";
+import * as treeCurrent from "@fluidframework/tree/internal";
+import { SharedTree } from "@fluidframework/tree/internal";
 
 // ContainerRuntime and Data Runtime API
 import * as semver from "semver";
@@ -81,6 +83,7 @@ const packageList = [
 	"@fluidframework/odsp-driver",
 	"@fluidframework/routerlicious-driver",
 	"@fluidframework/agent-scheduler",
+	"@fluidframework/tree",
 ];
 
 /**
@@ -166,6 +169,7 @@ export const DataRuntimeApi = {
 		SparseMatrix,
 		SharedArray,
 		SharedSignal,
+		SharedTree,
 	},
 	/**
 	 * Contains all APIs from imported DDS packages.
@@ -187,6 +191,7 @@ export const DataRuntimeApi = {
 		sequence,
 		sequenceDeprecated,
 		agentScheduler,
+		tree: treeCurrent,
 	},
 };
 
@@ -283,6 +288,14 @@ async function loadDataRuntime(
 			),
 			loadPackage(modulePath, "@fluidframework/agent-scheduler"),
 		]);
+		// SharedTree was added in version 2.0.0.
+		// For earlier versions, load it from the current package. This means that cross-client compat tests
+		// will use the latest SharedTree version for slow trains. However, this is acceptable since it will
+		// give cross-client coverage for fast trains.
+		const tree = semver.lt(version, "2.0.0")
+			? treeCurrent
+			: await loadPackage(modulePath, "@fluidframework/tree");
+
 		const { FluidDataStoreRuntime } = datastore;
 		const { SharedCell } = cell;
 		const { SharedCounter } = counter;
@@ -292,6 +305,7 @@ async function loadDataRuntime(
 		const { ConsensusRegisterCollection } = registerCollection;
 		const { SharedString } = sequence;
 		const { SparseMatrix } = sequenceDeprecated;
+		const { SharedTree } = tree;
 		/* eslint-enable @typescript-eslint/no-shadow */
 
 		const dataRuntime = {
@@ -312,6 +326,7 @@ async function loadDataRuntime(
 				SparseMatrix,
 				SharedArray,
 				SharedSignal,
+				SharedTree,
 			},
 			packages: {
 				datastore,
@@ -324,6 +339,7 @@ async function loadDataRuntime(
 				registerCollection,
 				sequenceDeprecated,
 				agentScheduler,
+				tree,
 			},
 		};
 		dataRuntimeCache.set(version, dataRuntime);
