@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/register-collection",
-	"version": "2.73.0",
+	"version": "2.74.0",
 	"description": "Consensus Register",
 	"homepage": "https://fluidframework.com",
 	"repository": {
