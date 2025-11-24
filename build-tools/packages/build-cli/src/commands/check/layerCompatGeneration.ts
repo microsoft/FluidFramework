@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { readFile } from "node:fs/promises";
-import path from "node:path";
 import type { Package } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { PackageCommand } from "../../BasePackageCommand.js";
@@ -13,9 +11,7 @@ import {
 	DEFAULT_GENERATION_DIR,
 	DEFAULT_GENERATION_FILE_NAME,
 	DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
-	generateLayerFileContent,
-	isCurrentPackageVersionPatch,
-	maybeGetNewGeneration,
+	checkPackageLayerGeneration,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../library/layerCompatGeneration.js";
 
@@ -49,68 +45,21 @@ export default class CheckLayerCompatGenerationCommand extends PackageCommand<
 
 	protected async processPackage(pkg: Package): Promise<void> {
 		const { generationDir, outFile, minimumCompatWindowMonths } = this.flags;
-		const generationFileFullPath = path.join(pkg.directory, generationDir, outFile);
 
-		const currentPkgVersion = pkg.version;
-
-		// Skip patch versions (they don't trigger generation updates)
-		if (isCurrentPackageVersionPatch(currentPkgVersion)) {
-			this.verbose(`${pkg.name}: Patch version detected; skipping check.`);
-			return;
-		}
-
-		// Check if package has the required metadata
-		const { fluidCompatMetadata } = pkg.packageJson;
-		if (fluidCompatMetadata === undefined) {
-			this.verbose(
-				`${pkg.name}: No fluidCompatMetadata found in package.json; skipping (lenient check).`,
-			);
-			return;
-		}
-
-		this.verbose(
-			`${pkg.name}: Checking generation metadata - Generation: ${fluidCompatMetadata.generation}, ` +
-				`Release Date: ${fluidCompatMetadata.releaseDate}, Package Version: ${fluidCompatMetadata.releasePkgVersion}`,
-		);
-
-		// Check if the generation file exists
-		let fileContent: string;
-		try {
-			fileContent = await readFile(generationFileFullPath, "utf8");
-		} catch {
-			this.verbose(
-				`${pkg.name}: Generation file not found at ${generationFileFullPath}; skipping (lenient check).`,
-			);
-			return;
-		}
-
-		// Check if a new generation should be created based on version/time
-		const newGeneration = maybeGetNewGeneration(
-			currentPkgVersion,
-			fluidCompatMetadata,
+		const result = await checkPackageLayerGeneration(
+			pkg,
+			generationDir,
+			outFile,
 			minimumCompatWindowMonths,
 			this.logger,
 		);
 
-		if (newGeneration !== undefined) {
+		if (result.needsUpdate && result.reason !== undefined) {
 			this.packagesNeedingUpdate.push({
 				pkg,
-				reason: `Generation should be updated from ${fluidCompatMetadata.generation} to ${newGeneration}`,
+				reason: result.reason,
 			});
-			return;
 		}
-
-		// Verify the file content matches the expected generation
-		const expectedContent = generateLayerFileContent(fluidCompatMetadata.generation);
-		if (fileContent !== expectedContent) {
-			this.packagesNeedingUpdate.push({
-				pkg,
-				reason: `Generation file content does not match expected content for generation ${fluidCompatMetadata.generation}`,
-			});
-			return;
-		}
-
-		this.verbose(`${pkg.name}: Layer generation metadata is up to date.`);
 	}
 
 	public async run(): Promise<void> {

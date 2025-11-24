@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { readFile } from "node:fs/promises";
-import path from "node:path";
 import { MonoRepo, type Package } from "@fluidframework/build-tools";
 import execa from "execa";
 import { ResetMode } from "simple-git";
@@ -13,9 +11,7 @@ import {
 	DEFAULT_GENERATION_DIR,
 	DEFAULT_GENERATION_FILE_NAME,
 	DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
-	generateLayerFileContent,
-	isCurrentPackageVersionPatch,
-	maybeGetNewGeneration,
+	checkPackageLayerGeneration,
 } from "./layerCompatGeneration.js";
 import { getPreReleaseDependencies } from "./package.js";
 
@@ -255,57 +251,18 @@ export const CheckLayerCompatGeneration: CheckFunction = async (
 	const packagesNeedingUpdate: { pkg: Package; reason: string }[] = [];
 
 	for (const pkg of packagesToCheck) {
-		const generationFileFullPath = path.join(
-			pkg.directory,
+		// eslint-disable-next-line no-await-in-loop -- Need to check files sequentially
+		const result = await checkPackageLayerGeneration(
+			pkg,
 			DEFAULT_GENERATION_DIR,
 			DEFAULT_GENERATION_FILE_NAME,
-		);
-
-		const currentPkgVersion = pkg.version;
-
-		// Skip patch versions (they don't trigger generation updates)
-		if (isCurrentPackageVersionPatch(currentPkgVersion)) {
-			continue;
-		}
-
-		// Check if package has the required metadata
-		const { fluidCompatMetadata } = pkg.packageJson;
-		if (fluidCompatMetadata === undefined) {
-			// Lenient check - skip packages without metadata
-			continue;
-		}
-
-		// Check if the generation file exists
-		let fileContent: string;
-		try {
-			// eslint-disable-next-line no-await-in-loop -- Need to check files sequentially
-			fileContent = await readFile(generationFileFullPath, "utf8");
-		} catch {
-			// Lenient check - skip packages without generation files
-			continue;
-		}
-
-		// Check if a new generation should be created based on version/time
-		const newGeneration = maybeGetNewGeneration(
-			currentPkgVersion,
-			fluidCompatMetadata,
 			DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
 		);
 
-		if (newGeneration !== undefined) {
+		if (result.needsUpdate && result.reason !== undefined) {
 			packagesNeedingUpdate.push({
 				pkg,
-				reason: `Generation should be updated from ${fluidCompatMetadata.generation} to ${newGeneration}`,
-			});
-			continue;
-		}
-
-		// Verify the file content matches the expected generation
-		const expectedContent = generateLayerFileContent(fluidCompatMetadata.generation);
-		if (fileContent !== expectedContent) {
-			packagesNeedingUpdate.push({
-				pkg,
-				reason: `Generation file content does not match expected content for generation ${fluidCompatMetadata.generation}`,
+				reason: result.reason,
 			});
 		}
 	}
