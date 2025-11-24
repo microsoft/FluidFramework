@@ -88,6 +88,63 @@ The value passed here should be a filter string for the logger namespace.
 > To print all messages, provide `--log '*'` or `--log 'fluid:*'`. For example, to filter to only Container logs,
 > provide something like: `-l 'fluid:telemetry:Container:*'`.
 
+#### --mixedVersions
+
+Enables mixed-version compatibility testing where some clients run with the previous major version (N-1) while others run with the current version. This helps test version compatibility scenarios.
+
+#### --previousVersionRatio \<ratio\>
+
+When mixed-version testing is enabled, specifies what ratio of clients should use the previous version. Value should be between 0.0 and 1.0. For example:
+- `0.3` means 30% of clients use the previous version
+- `0.5` means 50% of clients use the previous version (default)
+
+#### --previousVersionOverride \<version\>
+
+Overrides the automatically calculated previous version. By default, the system calculates N-1 based on the current version (e.g., if current is 2.72.0, previous would be 2.60.0).
+
+### Mixed-Version Testing
+
+The stress tests support mixed-version compatibility testing to validate that different versions of Fluid Framework can work together. This is crucial for ensuring smooth upgrades in production environments.
+
+#### Usage Examples
+
+```bash
+# Run mixed-version test with default profile
+npm run start:mixedVersion
+
+# Run with custom ratio (30% previous version, 70% current)
+npm run start:mixedVersion:custom
+
+# Run with explicit version override
+node ./dist/main.js --profile mini --mixedVersions --previousVersionOverride "2.60.0"
+```
+
+#### How It Works
+
+1. **Version Calculation**: The system automatically calculates the previous major version (N-1) based on Fluid Framework's versioning scheme
+2. **Client Distribution**: Clients are distributed between current and previous versions based on the specified ratio
+3. **Separate Processes**: Each version runs in its own process to ensure proper isolation
+4. **Shared Container**: All clients connect to the same Fluid container regardless of version
+
+#### Configuration
+
+You can configure mixed-version testing in `testConfig.json`:
+
+```json
+{
+  "profiles": {
+    "myMixedVersionProfile": {
+      "numClients": 10,
+      "mixedVersions": {
+        "enabled": true,
+        "previousVersionRatio": 0.4,
+        "previousVersionOverride": "2.60.0"
+      }
+    }
+  }
+}
+```
+
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->

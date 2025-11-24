@@ -121,6 +121,28 @@ export interface TestConfiguration {
 		 */
 		numClients?: number;
 	};
+
+	/**
+	 * Configuration for mixed-version compatibility testing.
+	 * When enabled, some clients will run with the previous major version (N-1).
+	 */
+	mixedVersions?: {
+		/**
+		 * Enable mixed-version testing
+		 */
+		enabled: boolean;
+		/**
+		 * Percentage of clients that should run with the previous major version (N-1).
+		 * Value between 0 and 1. For example, 0.3 means 30% of clients use N-1 version.
+		 * Default is 0.5 (50% split).
+		 */
+		previousVersionRatio?: number;
+		/**
+		 * Override for previous version string. If not provided, will auto-calculate N-1.
+		 * Format should be like "2.6X.0" for previous major version.
+		 */
+		previousVersionOverride?: string;
+	};
 }
 
 export interface OptionOverride {

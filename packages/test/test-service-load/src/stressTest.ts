@@ -15,6 +15,7 @@ import ps from "ps-node";
 import type { TestUsers } from "./getTestUsers.js";
 import type { TestConfiguration } from "./testConfigFile.js";
 import { initialize } from "./utils.js";
+import { getRunnerVersion, getVersionInfo, type VersionInfo } from "./versionUtils.js";
 
 const createLoginEnv = (userName: string, password: string) =>
 	`{"${userName}": "${password}"}`;
@@ -36,6 +37,9 @@ export async function stressTest(
 		profileName: string;
 		logger: ITelemetryLoggerExt;
 		outputDir: string;
+		mixedVersions?: boolean;
+		previousVersionRatio?: number;
+		previousVersionOverride?: string;
 	},
 ) {
 	const {
@@ -49,7 +53,18 @@ export async function stressTest(
 		profileName,
 		logger,
 		outputDir,
+		mixedVersions: cmdMixedVersions = false,
+		previousVersionRatio: cmdPreviousVersionRatio = 0.5,
+		previousVersionOverride: cmdPreviousVersionOverride,
 	} = args;
+
+	// Check if mixed versions should be enabled from profile or command line
+	const mixedVersions = cmdMixedVersions || (profile.mixedVersions?.enabled ?? false);
+	const previousVersionRatio = cmdMixedVersions
+		? cmdPreviousVersionRatio
+		: (profile.mixedVersions?.previousVersionRatio ?? 0.5);
+	const previousVersionOverride =
+		cmdPreviousVersionOverride ?? profile.mixedVersions?.previousVersionOverride;
 
 	const url = await (testId !== undefined && !createTestId
 		? // If testId is provided and createTestId is false, then load the file;
@@ -73,10 +88,47 @@ export async function stressTest(
 	console.log(`Estimated run time: ${estRunningTimeMin} minutes\n`);
 	console.log(`Start time: ${startTime} ms\n`);
 
+	// Handle mixed-version testing
+	let versionInfo: VersionInfo | undefined;
+	if (mixedVersions) {
+		versionInfo = getVersionInfo(previousVersionOverride);
+		const numberOfPreviousVersionClients = Math.floor(
+			profile.numClients * previousVersionRatio,
+		);
+		console.log(`Mixed-version testing enabled:`);
+		console.log(
+			`  Current version (${versionInfo.current}): ${profile.numClients - numberOfPreviousVersionClients} clients`,
+		);
+		console.log(
+			`  Previous version (${versionInfo.previousMajor}): ${numberOfPreviousVersionClients} clients\n`,
+		);
+
+		// For now, provide guidance on setting up previous version
+		// TODO: Integrate with test-version-utils for automatic installation
+		const legacyPath = `./node_modules/.legacy/${versionInfo.previousMajor}`;
+		console.log(
+			`NOTE: Mixed-version testing requires the previous version to be available at: ${legacyPath}`,
+		);
+		console.log(
+			`To set up the previous version, you may need to manually install and build version ${versionInfo.previousMajor}`,
+		);
+		console.log(
+			`This feature will be enhanced in future iterations to auto-install previous versions.\n`,
+		);
+	}
+
 	const runnerArgs: string[][] = [];
 	for (let i = 0; i < profile.numClients; i++) {
+		// Determine which version this runner should use
+		const runnerVersionInfo =
+			mixedVersions && versionInfo
+				? getRunnerVersion(i, profile.numClients, previousVersionRatio, versionInfo)
+				: { version: "current", isPreviousVersion: false };
+
 		const childArgs: string[] = [
-			"./dist/runner.js",
+			runnerVersionInfo.isPreviousVersion
+				? `./node_modules/.legacy/${runnerVersionInfo.version}/dist/runner.js`
+				: "./dist/runner.js",
 			"--driver",
 			testDriver.type,
 			"--profile",
@@ -90,6 +142,11 @@ export async function stressTest(
 			"--outputDir",
 			outputDir,
 		];
+
+		// Add version info to telemetry for mixed-version testing
+		if (runnerVersionInfo.isPreviousVersion) {
+			childArgs.push("--version", runnerVersionInfo.version);
+		}
 		if (debug) {
 			const debugPort = 9230 + i; // 9229 is the default and will be used for the root orchestrator process
 			childArgs.unshift(`--inspect-brk=${debugPort}`);
