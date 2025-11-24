@@ -193,7 +193,7 @@ export function makeFieldBatchCodec(options: CodecWriteOptions): FieldBatchCodec
 				case TreeCompressionStrategyExtended.CompressedIncremental:
 					assert(
 						writeVersion >= FieldBatchFormatVersion.v2,
-						"Unsupported FieldBatchFormatVersion for incremental encoding; must be v2 or higher",
+						0xca0 /* Unsupported FieldBatchFormatVersion for incremental encoding; must be v2 or higher */,
 					);
 					// Incremental encoding is only supported for CompressedIncremental.
 					incrementalEncoder = context.incrementalEncoderDecoder;
