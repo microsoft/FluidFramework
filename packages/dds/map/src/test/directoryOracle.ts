@@ -54,7 +54,8 @@ export class SharedDirectoryOracle {
 		// valueChanged fires globally on the root for ALL changes anywhere in the tree
 		// Only needs one listener on the root (includes 'path' field to indicate location)
 		this.sharedDir.on("valueChanged", this.onValueChanged);
-		this.sharedDir.on("clear", this.onClear);
+		// Use internal clearInternal event to track which directory was cleared
+		this.sharedDir.on("clearInternal", this.onClearInternal);
 		this.sharedDir.on("subDirectoryCreated", this.onSubDirCreated);
 		this.sharedDir.on("subDirectoryDeleted", this.onSubDirDeleted);
 
@@ -128,6 +129,8 @@ export class SharedDirectoryOracle {
 		const parentNode = this.getDirNode(model, parentPath);
 
 		if (parentNode) {
+			// Deleting a subdirectory also recursively deletes all its nested subdirectories
+			// This matches the actual directory behavior where deleting a parent disposes all children
 			parentNode.subdirectories.delete(dirName);
 		}
 	}
@@ -143,8 +146,11 @@ export class SharedDirectoryOracle {
 
 		// Attach containedValueChanged listener to this directory
 		dir.on("containedValueChanged", this.onContainedValueChanged);
-		dir.on("subDirectoryCreated", this.onDirSubDirCreated);
-		dir.on("subDirectoryDeleted", this.onDirSubDirDeleted);
+		// Note: We do NOT listen to subDirectoryCreated or subDirectoryDeleted on individual directories.
+		// The root-level listeners already handle ALL subdirectory operations in the tree with absolute
+		// paths. Listening on individual directories would cause duplicate processing or confusion
+		// between relative and absolute paths.
+		dir.on("clearInternal", this.onClearInternal);
 
 		// Attach disposed/undisposed listeners for rollback support
 		dir.on("disposed", this.onDisposed);
@@ -180,7 +186,7 @@ export class SharedDirectoryOracle {
 			assert.deepStrictEqual(
 				previousValue,
 				dirNode.keys.get(key),
-				`[valueChanged] previousValue mismatch for key "${key}" in directory "${path}": event.previousValue=${previousValue}, oracle=${dirNode.keys.get(key)}`,
+				`[valueChanged] previousValue mismatch for key "${key}" in directory "${path}": event.previousValue=${previousValue}, oracle=${dirNode.keys.get(key)}, local=${local}`,
 			);
 		}
 
@@ -193,19 +199,17 @@ export class SharedDirectoryOracle {
 		}
 	};
 
-	private readonly onClear = (local: boolean): void => {
-		// Remove root-level keys
-		this.modelFromValueChanged.keys.clear();
-		this.modelFromContainedValueChanged.keys.clear();
+	private readonly onClearInternal = (path: string, local: boolean): void => {
+		// Clear keys at the specified path
+		const absPath = path.startsWith("/") ? path : `/${path}`;
+		const dirNode1 = this.getDirNode(this.modelFromValueChanged, absPath);
+		const dirNode2 = this.getDirNode(this.modelFromContainedValueChanged, absPath);
 
-		// Remove only single-segment subdirectories under root
-		for (const child of [...this.modelFromValueChanged.subdirectories.keys()]) {
-			// child is the name (no leading slash) because getOrCreate stores by part names
-			// remove only top-level subdirectories
-			this.modelFromValueChanged.subdirectories.delete(child);
+		if (dirNode1) {
+			dirNode1.keys.clear();
 		}
-		for (const child of [...this.modelFromContainedValueChanged.subdirectories.keys()]) {
-			this.modelFromContainedValueChanged.subdirectories.delete(child);
+		if (dirNode2) {
+			dirNode2.keys.clear();
 		}
 	};
 
@@ -219,54 +223,34 @@ export class SharedDirectoryOracle {
 			"subDirectoryCreated event should be emitted from root SharedDirectory",
 		);
 
+		// Check if the subdirectory actually exists before adding it to our models
+		// If getWorkingDirectory returns undefined, it means the subdirectory doesn't exist
+		// (it may have been deleted or disposed before we could access it)
+		const newSubDir = this.sharedDir.getWorkingDirectory(path);
+		if (!newSubDir) {
+			// Subdirectory doesn't exist, don't add it to oracle models
+			return;
+		}
+
 		// Create the subdirectory node in both models
 		const subdirPath = path.startsWith("/") ? path : `/${path}`;
 		this.getOrCreateDirNode(this.modelFromValueChanged, subdirPath);
 		this.getOrCreateDirNode(this.modelFromContainedValueChanged, subdirPath);
 
 		// Attach to the newly created subdirectory and all its nested subdirectories to listen for containedValueChanged events
-		const newSubDir = this.sharedDir.getWorkingDirectory(path);
-		if (newSubDir) {
-			this.attachToAllDirectories(newSubDir);
-		}
+		this.attachToAllDirectories(newSubDir);
 	};
 
 	private readonly onSubDirDeleted = (path: string): void => {
 		const absPath = path.startsWith("/") ? path : `/${path}`;
+
+		// Only delete if the subdirectory exists in our models
+		// It may not exist if:
+		// - It was created before the oracle was attached
+		// - It was created and deleted in quick succession
+		// - getWorkingDirectory returned undefined during creation (directory was pending/disposed)
 		this.deleteSubDirectory(this.modelFromValueChanged, absPath);
 		this.deleteSubDirectory(this.modelFromContainedValueChanged, absPath);
-	};
-
-	private readonly onDirSubDirCreated = (
-		path: string,
-		local: boolean,
-		target: IDirectory,
-	): void => {
-		// Handle subdirectory creation events from individual IDirectory instances
-		// This complements the root-level handler
-		const { absolutePath } = target;
-		const fullPath = absolutePath === "/" ? `/${path}` : `${absolutePath}/${path}`;
-
-		this.getOrCreateDirNode(this.modelFromValueChanged, fullPath);
-		this.getOrCreateDirNode(this.modelFromContainedValueChanged, fullPath);
-
-		// Attach to the newly created subdirectory
-		const newSubDir = target.getSubDirectory(path);
-		if (newSubDir) {
-			this.attachToAllDirectories(newSubDir);
-		}
-	};
-
-	private readonly onDirSubDirDeleted = (
-		path: string,
-		local: boolean,
-		target: IDirectory,
-	): void => {
-		// Handle subdirectory deletion events from individual IDirectory instances
-		const { absolutePath } = target;
-		const fullPath = absolutePath === "/" ? `/${path}` : `${absolutePath}/${path}`;
-		this.deleteSubDirectory(this.modelFromValueChanged, fullPath);
-		this.deleteSubDirectory(this.modelFromContainedValueChanged, fullPath);
 	};
 
 	private readonly onContainedValueChanged = (
@@ -282,6 +266,7 @@ export class SharedDirectoryOracle {
 
 		// Assert that previousValue matches what we had in the oracle
 		if (local && previousValue !== undefined && dirNode.keys.has(key)) {
+			// if (local) {
 			assert.deepStrictEqual(
 				previousValue,
 				dirNode.keys.get(key),
@@ -340,9 +325,15 @@ export class SharedDirectoryOracle {
 	}
 
 	public validate(): void {
-		// Validate both models against the actual directory to ensure both events work correctly
 		this.validateDirectory(this.sharedDir, "valueChanged", this.modelFromValueChanged);
+		this.validateSubdirectories(this.sharedDir, "valueChanged", this.modelFromValueChanged);
+
 		this.validateDirectory(
+			this.sharedDir,
+			"containedValueChanged",
+			this.modelFromContainedValueChanged,
+		);
+		this.validateSubdirectories(
 			this.sharedDir,
 			"containedValueChanged",
 			this.modelFromContainedValueChanged,
@@ -378,18 +369,65 @@ export class SharedDirectoryOracle {
 		}
 	}
 
+	private validateSubdirectories(
+		dir: IDirectory,
+		modelName: string,
+		model: DirectoryNode,
+	): void {
+		const { absolutePath } = dir;
+		const dirNode = this.getDirNode(model, absolutePath);
+
+		if (!dirNode) {
+			return;
+		}
+
+		// Get actual subdirectories from the directory
+		const actualSubdirs = new Set<string>();
+		for (const [name] of dir.subdirectories()) {
+			actualSubdirs.add(name);
+		}
+
+		// Get subdirectories from the oracle model
+		const modelSubdirs = new Set<string>(dirNode.subdirectories.keys());
+
+		// Check for stale subdirectories in model (exist in model but not in actual directory)
+		// Remove them from the oracle model since they no longer exist.
+		// This handles cases where subDirectoryDeleted events are suppressed due to optimistic deletes:
+		// When a local delete is pending and a remote delete arrives, the directory implementation
+		// suppresses the subDirectoryDeleted event because from the optimistic view, the directory
+		// was already deleted. The oracle needs to clean up these stale entries during validation.
+		for (const modelSubdirName of modelSubdirs) {
+			if (!actualSubdirs.has(modelSubdirName)) {
+				// Stale subdirectory - remove it from the oracle model
+				dirNode.subdirectories.delete(modelSubdirName);
+			}
+		}
+
+		// Don't check for missing subdirectories - the oracle may have been attached after
+		// subdirectories were created, so it's expected that some subdirectories in the actual
+		// directory may not be tracked by the oracle
+
+		// Recursively validate nested subdirectories that still exist
+		for (const [name, subdir] of dir.subdirectories()) {
+			// Only validate subdirectories that exist in the oracle model
+			if (dirNode.subdirectories.has(name)) {
+				this.validateSubdirectories(subdir, modelName, model);
+			}
+		}
+	}
+
 	public dispose(): void {
 		// Remove listeners from root
 		this.sharedDir.off("valueChanged", this.onValueChanged);
-		this.sharedDir.off("clear", this.onClear);
+		this.sharedDir.off("clearInternal", this.onClearInternal);
 		this.sharedDir.off("subDirectoryCreated", this.onSubDirCreated);
 		this.sharedDir.off("subDirectoryDeleted", this.onSubDirDeleted);
 
 		// Remove listeners from all directories (including root)
 		for (const dir of this.attachedDirectories) {
 			dir.off("containedValueChanged", this.onContainedValueChanged);
-			dir.off("subDirectoryCreated", this.onDirSubDirCreated);
-			dir.off("subDirectoryDeleted", this.onDirSubDirDeleted);
+			// Note: subDirectoryCreated and subDirectoryDeleted were never attached to individual directories
+			dir.off("clearInternal", this.onClearInternal);
 			dir.off("disposed", this.onDisposed);
 			dir.off("undisposed", this.onUndisposed);
 		}

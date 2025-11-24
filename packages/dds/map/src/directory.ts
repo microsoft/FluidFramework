@@ -871,6 +871,27 @@ export class SharedDirectory
 				}
 			},
 		});
+
+		this.messageHandlers.set("clearInternal", {
+			process: (
+				msgEnvelope: ISequencedMessageEnvelope,
+				op: IDirectoryClearOperation,
+				local: boolean,
+				localOpMetadata: ClearLocalOpMetadata | undefined,
+				clientSequenceNumber: number,
+			) => {
+				const subdir = this.getSequencedWorkingDirectory(op.path) as SubDirectory | undefined;
+				if (subdir !== undefined && !subdir?.disposed) {
+					subdir.processClearMessage(msgEnvelope, op, local, localOpMetadata);
+				}
+			},
+			resubmit: (op: IDirectoryClearOperation, localOpMetadata: ClearLocalOpMetadata) => {
+				const targetSubdir = localOpMetadata.subdir;
+				if (!targetSubdir.disposed) {
+					targetSubdir.resubmitClearMessage(op, localOpMetadata);
+				}
+			},
+		});
 		this.messageHandlers.set("delete", {
 			process: (
 				msgEnvelope: ISequencedMessageEnvelope,
@@ -1570,6 +1591,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		if (!this.directory.isAttached()) {
 			this.sequencedStorageData.clear();
 			this.directory.emit("clear", true, this.directory);
+			// Emit internal event with path for oracle tracking on root
+			this.directory.emit("clearInternal", this.absolutePath, true, this.directory);
+			// Also emit on this subdirectory for listeners attached to it
+			this.emit("clearInternal", this.absolutePath, true, this);
 			return;
 		}
 
@@ -1581,6 +1606,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		this.pendingStorageData.push(pendingClear);
 
 		this.directory.emit("clear", true, this.directory);
+		// Emit internal event with path for oracle tracking on root
+		this.directory.emit("clearInternal", this.absolutePath, true, this.directory);
+		// Also emit on this subdirectory for listeners attached to it
+		this.emit("clearInternal", this.absolutePath, true, this);
 		const op: IDirectoryOperation = {
 			type: "clear",
 			path: this.absolutePath,
@@ -1907,6 +1936,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			// is no optimistically-applied local pending clear that would supersede this remote clear.
 			if (!this.pendingStorageData.some((entry) => entry.type === "clear")) {
 				this.directory.emit("clear", local, this.directory);
+				// Emit internal event with path for oracle tracking on root
+				this.directory.emit("clearInternal", this.absolutePath, local, this.directory);
+				// Also emit on this subdirectory for listeners attached to it
+				this.emit("clearInternal", this.absolutePath, local, this);
 			}
 
 			// For pending set operations, emit valueChanged events
@@ -2019,11 +2052,27 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			if (pendingEntry.keySets.length === 0) {
 				this.pendingStorageData.splice(pendingEntryIndex, 1);
 			}
+			const previousValue: unknown = this.sequencedStorageData.get(key);
 			this.sequencedStorageData.set(key, pendingKeySet.value);
+			// Emit internal event with sequenced previous value (never suppressed)
+			const internalEvent: IDirectoryValueChanged = {
+				key,
+				path: this.absolutePath,
+				previousValue,
+			};
+			this.directory.emit("valueChangedInternal", internalEvent, local, this.directory);
 		} else {
 			// Get the previous value before setting the new value
 			const previousValue: unknown = this.sequencedStorageData.get(key);
 			this.sequencedStorageData.set(key, value);
+
+			// Emit internal event with sequenced previous value (never suppressed)
+			const internalEvent: IDirectoryValueChanged = {
+				key,
+				path: this.absolutePath,
+				previousValue,
+			};
+			this.directory.emit("valueChangedInternal", internalEvent, local, this.directory);
 
 			// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
 			if (
