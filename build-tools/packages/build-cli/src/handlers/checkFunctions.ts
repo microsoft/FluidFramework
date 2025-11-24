@@ -22,8 +22,6 @@ import {
 	getPreReleaseDependencies,
 	getReleaseSourceForReleaseGroup,
 	isReleased,
-	// library is overloaded with too much stuff now, and we should consider allowing interior imports.
-	// eslint-disable-next-line import/no-internal-modules
 	runCompatLayerGenerationCheck,
 } from "../library/index.js";
 import type { CommandLogger } from "../logging.js";
