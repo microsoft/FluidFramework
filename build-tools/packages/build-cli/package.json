@@ -225,6 +225,9 @@
 			"check": {
 				"description": "Check commands are used to verify repo state, apply policy, etc."
 			},
+			"deprecated": {
+				"description": "Deprecated commands that have been replaced by newer implementations."
+			},
 			"generate": {
 				"description": "Generate commands are used to create/update code, docs, readmes, etc."
 			},

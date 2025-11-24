@@ -36,6 +36,7 @@ USAGE
 * [`flub bump`](docs/bump.md) - Bump the version of packages, release groups, and their dependencies.
 * [`flub check`](docs/check.md) - Check commands are used to verify repo state, apply policy, etc.
 * [`flub commands`](docs/commands.md) - List all flub commands.
+* [`flub deprecated`](docs/deprecated.md) - Deprecated commands that have been replaced by newer implementations.
 * [`flub exec`](docs/exec.md) - Run a shell command in the context of a package or release group.
 * [`flub generate`](docs/generate.md) - Generate commands are used to create/update code, docs, readmes, etc.
 * [`flub help`](docs/help.md) - Display help for flub.
