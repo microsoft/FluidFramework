@@ -225,17 +225,17 @@
 			"check": {
 				"description": "Check commands are used to verify repo state, apply policy, etc."
 			},
-			"deprecated": {
-				"description": "Deprecated commands that have been replaced by newer implementations."
-			},
 			"generate": {
 				"description": "Generate commands are used to create/update code, docs, readmes, etc."
+			},
+			"legacy": {
+				"description": "Legacy commands that have been replaced by newer implementations."
 			},
 			"modify": {
 				"description": "Modify commands are used to modify projects to add or remove dependencies, update Fluid imports, etc."
 			},
 			"release": {
-				"description": "Release commands are used to manage the Fluid release process."
+				"description": "Release commands are used to manage the Fluid Release process."
 			},
 			"publish": {
 				"description": "Publish commands are used to publish packages to an npm registry."

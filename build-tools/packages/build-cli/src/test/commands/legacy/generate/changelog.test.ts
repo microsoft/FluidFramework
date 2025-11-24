@@ -6,9 +6,9 @@
 import { strict as assert } from "node:assert";
 import { describe, it } from "mocha";
 
-describe("deprecated generate changelog command", () => {
+describe("legacy generate changelog command", () => {
 	/**
-	 * NOTE: These are placeholder tests for the deprecated generate changelog command.
+	 * NOTE: These are placeholder tests for the legacy generate changelog command.
 	 * Full integration tests would require:
 	 * - Mocking the build project infrastructure
 	 * - Setting up temporary git repositories

@@ -1,11 +1,11 @@
-`flub deprecated`
-=================
+`flub legacy`
+=============
 
-Deprecated commands that have been replaced by newer implementations.
+Legacy commands that have been replaced by newer implementations.
 
-* [`flub deprecated generate changelog`](#flub-deprecated-generate-changelog)
+* [`flub legacy generate changelog`](#flub-legacy-generate-changelog)
 
-## `flub deprecated generate changelog`
+## `flub legacy generate changelog`
 
 **Deprecated:** This command is deprecated. Use 'flub generate changelog' instead.
 
@@ -13,7 +13,7 @@ Deprecated commands that have been replaced by newer implementations.
 
 ```
 USAGE
-  $ flub deprecated generate changelog -g <value> [-v | --quiet] [--version <value>] [--install]
+  $ flub legacy generate changelog -g <value> [-v | --quiet] [--version <value>] [--install]
 
 FLAGS
   -g, --releaseGroup=<value>  (required) Name of a release group.
@@ -31,7 +31,7 @@ DESCRIPTION
 EXAMPLES
   Generate changelogs for the client release group.
 
-    $ flub deprecated generate changelog --releaseGroup client
+    $ flub legacy generate changelog --releaseGroup client
 ```
 
-_See code: [src/commands/deprecated/generate/changelog.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/deprecated/generate/changelog.ts)_
+_See code: [src/commands/legacy/generate/changelog.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/legacy/generate/changelog.ts)_

@@ -36,11 +36,11 @@ USAGE
 * [`flub bump`](docs/bump.md) - Bump the version of packages, release groups, and their dependencies.
 * [`flub check`](docs/check.md) - Check commands are used to verify repo state, apply policy, etc.
 * [`flub commands`](docs/commands.md) - List all flub commands.
-* [`flub deprecated`](docs/deprecated.md) - Deprecated commands that have been replaced by newer implementations.
 * [`flub exec`](docs/exec.md) - Run a shell command in the context of a package or release group.
 * [`flub generate`](docs/generate.md) - Generate commands are used to create/update code, docs, readmes, etc.
 * [`flub help`](docs/help.md) - Display help for flub.
 * [`flub info`](docs/info.md) - Get info about the repo, release groups, and packages.
+* [`flub legacy`](docs/legacy.md) - Legacy commands that have been replaced by newer implementations.
 * [`flub list`](docs/list.md) - List packages in a release group in topological order.
 * [`flub merge`](docs/merge.md) - Sync branches depending on the batch size passed
 * [`flub modify`](docs/modify.md) - Modify commands are used to modify projects to add or remove dependencies, update Fluid imports, etc.
