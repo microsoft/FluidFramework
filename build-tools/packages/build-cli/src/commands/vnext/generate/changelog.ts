@@ -32,6 +32,12 @@ async function replaceInFile(
 }
 
 /**
+ * Generate a changelog for packages based on changesets. Note that this process deletes the changeset files!
+ *
+ * The reason we use a search/replace approach to update the version strings in the changelogs is largely because of
+ * https://github.com/changesets/changesets/issues/595. What we would like to do is generate the changelogs without
+ * doing version bumping, but that feature does not exist in the changeset tools.
+ *
  * @deprecated This command is deprecated. Use 'flub generate changelog' instead.
  */
 export default class GenerateChangeLogCommand extends BaseCommand<

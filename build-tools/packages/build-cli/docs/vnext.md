@@ -35,7 +35,9 @@ _See code: [src/commands/vnext/check/latestVersions.ts](https://github.com/micro
 
 ## `flub vnext generate changelog`
 
-Generate a changelog for packages based on changesets. Note that this process deletes the changeset files!
+**Deprecated:** This command is deprecated. Use 'flub generate changelog' instead.
+
+[DEPRECATED] Generate a changelog for packages based on changesets. Use 'flub generate changelog' instead.
 
 ```
 USAGE
@@ -51,7 +53,7 @@ LOGGING FLAGS
       --quiet    Disable all logging.
 
 DESCRIPTION
-  Generate a changelog for packages based on changesets. Note that this process deletes the changeset files!
+  [DEPRECATED] Generate a changelog for packages based on changesets. Use 'flub generate changelog' instead.
 
 ALIASES
   $ flub vnext generate changelogs
